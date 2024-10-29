@@ -8,6 +8,8 @@ category: DataCommunication
 
 ## 1.3.1 Local Area Network (LAN)
 
+![DC LAN](/../public/postImg/2024-07-12-DC_LAN.jpg)
+
 - **정의**: LAN은 비교적 좁은 지역 내에서 컴퓨터, IP 전화기 등의 장비를 연결하는 네트워크입니다. 학교, 회사, 가정 내에서 사용되며, 여러 장치 간의 1대1 직접 연결이 아닌 공유기나 스위치와 같은 네트워크 장비를 통해 연결됩니다.
 - **특징**: LAN은 이더넷이라는 프로토콜을 사용하며, 낮은 유지보수 비용으로 운영될 수 있습니다. 이를 통해 고속 데이터 전송이 가능합니다.
 
@@ -15,21 +17,51 @@ category: DataCommunication
 
 - **정의**: WAN은 LAN과 LAN 사이를 넓은 지역에 걸쳐 연결한 네트워크입니다. LAN은 지역 내 네트워크이지만, WAN은 이를 연결하여 더 큰 네트워크를 형성합니다.
   - **Point-to-Point WAN**: 두 통신 장치가 케이블 또는 공기를 통해 연결된 네트워크 상태를 말합니다.
+  ![DC P2P WAN](/../public/postImg/2024-07-12-DC_P2P_WAN.jpg)
   - **Switched WAN**: 두 개 이상의 종단 장치가 다수의 스위치를 통해 연결된 네트워크입니다. 현재의 글로벌 연결 사회에서 여러 Point-to-Point WAN이 스위치를 통해 결합된 형태입니다.
+  ![DC Switched WAN](/../public/postImg/2024-07-12-DC_Switched_WAN.jpg)
   - **Internetwork**: 두 개 이상의 네트워크를 서로 연결하여 통신이 가능하도록 한 방식입니다. 이를 통해 '네트워크들의 네트워크(A Network of Networks)'라고 불리며, 인터넷의 기본적인 구성 방식입니다.
+  ![DC Internetwork](/../public/postImg/2024-07-12-DC_Internetwork.jpg)
 
 ## 1.3.3 Switching
 
 스위칭은 네트워크 내에서 데이터를 다른 네트워크로 전송할 때 필요한 기술입니다.
 
 - **Circuit-Switched Network (회선교환방식)**:
+
+  ![DC Circuit-Switched Network](/../public/postImg/2024-07-12-DC_circuit-switched_Network.jpg)
+
   - 예시로, A가 B에게 전화를 걸면 B가 전화를 받을 때까지 회선이 독점되며, B가 다른 사람과 통화 중이라면 통화 중임을 알립니다. A와 B가 통화할 수 있는 안정적인 연결이 완료되면 통신이 지속적으로 이루어집니다.
-  - **장점**: 고속 데이터 전송, 고정 대역폭 사용, 안정적인 연결 등.
-  - **단점**: 비효율적인 회선 이용률, 고비용, 다양한 속도나 기종 간 통신이 어려움.
+
+  - **장점**: 
+   -- 대용량 데이터 고속 전송
+   -- 고정 대역폭(Bandwidth) 사용
+   -- 접속에는 긴 시간이 소요되나 접속 이후에는 접속이 항상 유지되어 전송 지연이 없으며, 데이터 전송률이 일정함
+   -- 안정적인 연결
+   -- 연속적인 전송에 적합
+
+  - **단점**: 
+   -- 고비용
+   -- 비효율적인 회선 이용률
+   -- 연결된 두 장치는 반드시 같은 전송률과 같은 기종 사이에 송수신이 요구됨(다양한 속도를 지닌 개체 간 통신 제약)
+   -- 실시간 전송보다 에러 없는 데이터 전송이 요구되는 구조에서는 부적합하다
+   -- 속도나 코드의 변환이 불가능(교환망 내에서의 에러 제어 기능이 어렵다)
+
 - **Packet-Switched Network (패킷교환방식)**:
+
+  ![DC Packet-Switched Network](/../public/postImg/2024-07-12-DC_Packet-Switched_Network.jpg)
+
   - 데이터 전송 시 메시지를 일정한 크기의 패킷으로 분해하여 송신하고, 수신 측에서 이를 다시 원래의 메시지로 조립하는 방식입니다.
-  - **장점**: 회선 효율성 증가, 경로 선택 및 오류 제어 가능, 고신뢰성.
-  - **단점**: 전송 지연 발생 가능성, 헤더로 인한 오버헤드.
+  - **장점**:
+   -- 회선 이용률이 높고, 속도 변환, 프로토콜 변환이 가능하며, 음성 통신도 가능하다
+   -- 고 신뢰성 : (경로선택, 전송 여부 판별 및 장애 유무 등) 상황에 따라 교환기 및 회선 등의 장애가 발생하더라도 패킷의 우회 전송이 가능하므로 전송의 신뢰성이 보장된다.
+   -- 고품질 : 디지털 전송이므로 인접 교환기 간 또는 단말기와 교환기 간에 전송 오류검사를 실시 하여 오류 발생 시 재전송이 가능함
+   -- 고효율 : 다중화를 사용하므로 사용 효율이 좋음
+   -- 이 기종 단말장치 간 통신 : 전송 속도, 전송 제어 절차가 다르더라도 교환망이 변환 처리를 제공하므로 통신이 가능
+  - **단점**:
+   -- 경로에서의 각 교환기에서 다소의 지연이 발생한다
+   -- 이러한 지연은 가변적이다. 즉, 전송량이 증가함에 따라 지연이 더욱 심할 수도 있다.
+
 
 ## 1.3.4 The Internet
 
@@ -75,6 +107,9 @@ category: DataCommunication
 
 - **인터넷 표준 (Internet Standard, STD)**: 인터넷에서 사용되는 기술과 방법론을 표준화한 규격입니다.
 - **RFC (Request for Comments)**: 인터넷 기술과 관련된 연구, 혁신 등을 담은 문서로, 인터넷 표준의 기반이 됩니다.
+
+  ![DC RFC](/../public/postImg/2024-07-12-DC_RFC.jpg)
+
 - **Maturity Levels (성숙도 단계)**:
   - **Proposed Standard**: 인터넷 커뮤니티에 관심을 끌기 위한 초기 단계의 표준.
   - **Draft Standard**: 독립적인 실험 결과를 바탕으로 한 다음 단계.
@@ -90,6 +125,8 @@ category: DataCommunication
   - **Not Recommended**: 일반적으로 부적절하여 추천되지 않는 기술.
 
 ## 1.5.2 Internet Administration
+
+  ![DC Internet Administration(/../public/postImg/2024-07-12-DC_Internet_Administration.jpg)
 
 - **Internet Society (ISOC)**: 인터넷의 최상위 관리 기관으로, 인터넷과 관련된 모든 활동을 총괄합니다.
 - **Internet Architecture Board (IAB)**: ISOC의 기술적 조언자로서, 인터넷의 기술적 관리와 표준을 담당합니다.
