@@ -3,8 +3,15 @@ layout: post
 title: 데이터 통신 3장 - Introduction to physical layer (1)
 date: 2024-07-14 19:20:23 +0900
 category: DataCommunication
+use_math: true
 ---
 # 3. Introduction to Physical Layer
+
+$$
+\lim_{x\to 0}{\frac{e^x-1}{2x}}
+\overset{\left[\frac{0}{0}\right]}{\underset{\mathrm{H}}{=}}
+\lim_{x\to 0}{\frac{e^x}{2}}={\frac{1}{2}}
+$$
 
 ## 3.1 Data and Signals
 
@@ -73,9 +80,13 @@ category: DataCommunication
   - 시간 영역에서 완벽한 사인파는 주파수 영역에서 하나의 스파이크로 나타낼 수 있다.
 
 ![DC Time and Frequency Domains](/../public/postImg/2024-07-14-DC_Time and Frequency Domains.JPG)
-![DC Time and Frequency Domains](/../public/postImg/2024-07-14-DC_Time and Frequency Domains2.JPG)
+![DC Time and Frequency Domains2](/../public/postImg/2024-07-14-DC_Time and Frequency Domains2.JPG)
 
 ### 3.2.5 Composite Signals (합성 신호)
+
+![DC Composite](/../public/postImg/2024-07-14-DC_Composite.JPG)
+![DC Composite2](/../public/postImg/2024-07-14-DC_Composite2.JPG)
+
 - 합성 신호는 여러 개의 사인파로 만들어진다.
   - 단일 주파수 사인파는 데이터 통신에서는 필요하지 않으며, 여러 사인파로 구성된 합성 신호가 필요하다.
   - **Fourier Analysis**: 합성 신호를 주파수, 진폭, 위상이 다른 사인파로 분해한다.
@@ -86,6 +97,9 @@ category: DataCommunication
 - 수직선 높이는 주파수 진폭에 해당한다.
 
 ### 3.2.6 Bandwidth (대역폭)
+
+![DC Bandwidth](/../public/postImg/2024-07-14-DC_bandwidth.JPG)
+
 - **Bandwidth**: 특정 기능을 수행하는 주파수의 범위. 단위는 Hz이다.
 - 합성 신호의 대역폭은 최대 주파수와 최소 주파수 차이이다.
 
