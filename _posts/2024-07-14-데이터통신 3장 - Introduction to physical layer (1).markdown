@@ -6,6 +6,8 @@ category: DataCommunication
 ---
 # 3. Introduction to Physical Layer
 
+$$a^2 + b^2 = c^2$$
+
 ## 3.1 Data and Signals
 
 $$a^2 + b^2 = c^2$$
