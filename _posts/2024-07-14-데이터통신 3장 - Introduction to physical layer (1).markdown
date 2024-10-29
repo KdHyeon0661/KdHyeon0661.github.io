@@ -1,22 +1,17 @@
 ---
 layout: post
-title: 데이터 통신 3장 - Introduction to physical layer (1)
+title: 데이터 통신 3장 - Introduction to Physical Layer (1)
 date: 2024-07-14 19:20:23 +0900
 category: DataCommunication
-use_math: true
 ---
 # 3. Introduction to Physical Layer
-$$
-\lim_{x\to 0}{\frac{e^x-1}{2x}}
-\overset{\left[\frac{0}{0}\right]}{\underset{\mathrm{H}}{=}}
-\lim_{x\to 0}{\frac{e^x}{2}}={\frac{1}{2}}
-$$
+
 ## 3.1 Data and Signals
 
 ![DC physical_layer](/../public/postImg/2024-07-14-DC_physical_layer.JPG)
 
 ### 3.1.1 Analog and Digital Data
-- **Analog Data**: 연속적인 데이터s
+- **Analog Data**: 연속적인 데이터
 - **Digital Data**: 이산적인 데이터
 
 ### 3.1.2 Analog and Digital Signals
@@ -41,7 +36,7 @@ $$
 
   - **Period**: 시간의 양으로, 보통 1 사이클을 의미합니다.
   - **Frequency**: 1초에 주기(period)의 양을 나타낸다. 주기와 주파수는 서로 역관계가 있습니다:
-    - \( f = \frac{1}{T} \), \( T = \frac{1}{f} \)
+    - $$ f = \frac{1}{T} $$, $$ T = \frac{1}{f} $$
     - 단위는 초당 Hertz (Hz)입니다.
 
   ![DC Frequency](/../public/postImg/2024-07-14-DC_frequency.JPG)
@@ -55,21 +50,21 @@ $$
 
 ### 3.2.2 Phase (위상)
 - **Phase**: 반복되는 파형의 한 주기에서 첫 시작점의 각도 또는 특정 순간의 위치를 나타낸다. 각도나 라디안으로 표시된다:
-  - \( 360^\circ = 2\pi \)
+  - $$ 360^\circ = 2\pi $$
 
 ![DC Phase](/../public/postImg/2024-07-14-DC_phase.JPG)
 
-- **예시**: 사인파가 0에서 다시 0으로 돌아오는데 \( \frac{1}{6} \) 사이클이 걸린다면, 위상은:
-  - \( \frac{1}{6} \times 360^\circ = 60^\circ = \frac{\pi}{3} \) 라디안이다.
+- **예시**: 사인파가 0에서 다시 0으로 돌아오는데 $$ \frac{1}{6} $$ 사이클이 걸린다면, 위상은:
+  - $$ \frac{1}{6} \times 360^\circ = 60^\circ = \frac{\pi}{3} $$ 라디안이다.
 
 ### 3.2.3 Wavelength (파장)
 - **Wavelength**: 공간에서 파동이 주기적으로 반복되는 구간의 길이.
-  - \( \text{Wavelength} = \text{Propagation Speed} \times \text{Period} \)
-  - \( \text{Wavelength} = \frac{\text{Propagation Speed}}{\text{Frequency}} = c \cdot f \)
+  - $$ \text{Wavelength} = \text{Propagation Speed} \times \text{Period} $$
+  - $$ \text{Wavelength} = \frac{\text{Propagation Speed}}{\text{Frequency}} = c \cdot f $$
   - 전파 속도는 매체와 신호의 주파수에 따라 다르다.
-    - 예: 진공 상태에서 빛의 전파 속도는 \( 3 \times 10^8 \) m/s로, 케이블이나 공기보다 빠르다.
-- **예시**: 적외선 주파수 \( 4 \times 10^4 \)와 공기에서의 전파 속도일 때:
-  - \( \lambda = \frac{3 \times 10^8}{4 \times 10^4} = 0.75 \times 10^{-6} \) m = 0.75 m.
+    - 예: 진공 상태에서 빛의 전파 속도는 $$ 3 \times 10^8 $$ m/s로, 케이블이나 공기보다 빠르다.
+- **예시**: 적외선 주파수 $$ 4 \times 10^4 $$와 공기에서의 전파 속도일 때:
+  - $$ \lambda = \frac{3 \times 10^8}{4 \times 10^4} = 0.75 \times 10^{-6} $$ m = 0.75 m.
 
 ### 3.2.4 Time and Frequency Domains
 - **Time Domain**: 신호 진폭이 시간에 따라 어떻게 변하는지 보여준다.
@@ -89,10 +84,13 @@ $$
   - 단일 주파수 사인파는 데이터 통신에서는 필요하지 않으며, 여러 사인파로 구성된 합성 신호가 필요하다.
   - **Fourier Analysis**: 합성 신호를 주파수, 진폭, 위상이 다른 사인파로 분해한다.
   - 주기적인 합성 신호는 이산 주파수 시리즈로 분해되며, 비주기적인 신호는 연속 주파수 시리즈로 분해된다.
-- **Fundamental Frequency (기본 주파수)**: 합성 신호에서 기준이 되는 주파수.
-  - \( 3f \)는 \( f \)의 3배 주파수를 가진다.
-- 주기적 신호는 정수배로 나타나며, 비주기적 신호는 연속적인 값으로 나타난다.
-- 수직선 높이는 주파수 진폭에 해당한다.
+  - **Fundamental Frequency (기본 주파수, 조파, first harmonic)**: 합성 신호에서 기준이 되는 주파수.
+  - $$ 3f $$는 $$ f $$의 3배 주파수를 가진다.
+
+![DC nonperiodic signal](/../public/postImg/2024-07-14-DC_nonperiodic signal.JPG)
+
+- 다음과 같이 비주기적인 신호는 신호 분해시 연속적인 숫자들로 표현된다. 
+- 비주기적인 신호의 수직선 높이는 주파수 진폭에 해당한다.
 
 ### 3.2.6 Bandwidth (대역폭)
 
@@ -102,4 +100,4 @@ $$
 - 합성 신호의 대역폭은 최대 주파수와 최소 주파수 차이이다.
 
 - **예시**: 주파수가 100, 300, 500, 700, 900 Hz인 신호의 대역폭:
-  - Bandwidth = \( 900 - 100 = 800 \) Hz.
+  - Bandwidth = $$ 900 - 100 = 800 $$ Hz.
