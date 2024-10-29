@@ -19,7 +19,7 @@ category: DataCommunication
   - **Point-to-Point WAN**: 두 통신 장치가 케이블 또는 공기를 통해 연결된 네트워크 상태를 말합니다.
   ![DC P2P WAN](/../public/postImg/2024-07-12-DC_P2P_WAN.JPG)
   - **Switched WAN**: 두 개 이상의 종단 장치가 다수의 스위치를 통해 연결된 네트워크입니다. 현재의 글로벌 연결 사회에서 여러 Point-to-Point WAN이 스위치를 통해 결합된 형태입니다.
-  ![DC Switched WAN](/../public/postImg/2024-07-12-DC_Switched_WAN.jpg)
+  ![DC Switched WAN](/../public/postImg/2024-07-12-DC_Switched_WAN.JPG)
   - **Internetwork**: 두 개 이상의 네트워크를 서로 연결하여 통신이 가능하도록 한 방식입니다. 이를 통해 '네트워크들의 네트워크(A Network of Networks)'라고 불리며, 인터넷의 기본적인 구성 방식입니다.
   ![DC Internetwork](/../public/postImg/2024-07-12-DC_Internetwork.JPG)
 
