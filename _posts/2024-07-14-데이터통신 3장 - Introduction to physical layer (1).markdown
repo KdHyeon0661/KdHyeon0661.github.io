@@ -3,15 +3,8 @@ layout: post
 title: 데이터 통신 3장 - Introduction to physical layer (1)
 date: 2024-07-14 19:20:23 +0900
 category: DataCommunication
-use_math: true
 ---
 # 3. Introduction to Physical Layer
-
-$$
-\lim_{x\to 0}{\frac{e^x-1}{2x}}
-\overset{\left[\frac{0}{0}\right]}{\underset{\mathrm{H}}{=}}
-\lim_{x\to 0}{\frac{e^x}{2}}={\frac{1}{2}}
-$$
 
 ## 3.1 Data and Signals
 
