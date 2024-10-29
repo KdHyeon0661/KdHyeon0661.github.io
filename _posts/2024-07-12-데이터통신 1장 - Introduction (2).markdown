@@ -126,7 +126,7 @@ category: DataCommunication
 
 ## 1.5.2 Internet Administration
 
-  ![DC Internet Administration(/../public/postImg/2024-07-12-DC_Internet_Administration.jpg)
+  ![DC Internet Administration](/../public/postImg/2024-07-12-DC_Internet_Administration.jpg)
 
 - **Internet Society (ISOC)**: 인터넷의 최상위 관리 기관으로, 인터넷과 관련된 모든 활동을 총괄합니다.
 - **Internet Architecture Board (IAB)**: ISOC의 기술적 조언자로서, 인터넷의 기술적 관리와 표준을 담당합니다.
