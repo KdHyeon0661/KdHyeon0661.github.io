@@ -8,7 +8,7 @@ category: DataCommunication
 
 ## 1.3.1 Local Area Network (LAN)
 
-![DC LAN](/../public/postImg/2024-07-12-DC_LAN.jpg)
+![DC LAN](/../public/postImg/2024-07-12-DC_LAN.JPG)
 
 - **정의**: LAN은 비교적 좁은 지역 내에서 컴퓨터, IP 전화기 등의 장비를 연결하는 네트워크입니다. 학교, 회사, 가정 내에서 사용되며, 여러 장치 간의 1대1 직접 연결이 아닌 공유기나 스위치와 같은 네트워크 장비를 통해 연결됩니다.
 - **특징**: LAN은 이더넷이라는 프로토콜을 사용하며, 낮은 유지보수 비용으로 운영될 수 있습니다. 이를 통해 고속 데이터 전송이 가능합니다.
@@ -17,11 +17,11 @@ category: DataCommunication
 
 - **정의**: WAN은 LAN과 LAN 사이를 넓은 지역에 걸쳐 연결한 네트워크입니다. LAN은 지역 내 네트워크이지만, WAN은 이를 연결하여 더 큰 네트워크를 형성합니다.
   - **Point-to-Point WAN**: 두 통신 장치가 케이블 또는 공기를 통해 연결된 네트워크 상태를 말합니다.
-  ![DC P2P WAN](/../public/postImg/2024-07-12-DC_P2P_WAN.jpg)
+  ![DC P2P WAN](/../public/postImg/2024-07-12-DC_P2P_WAN.JPG)
   - **Switched WAN**: 두 개 이상의 종단 장치가 다수의 스위치를 통해 연결된 네트워크입니다. 현재의 글로벌 연결 사회에서 여러 Point-to-Point WAN이 스위치를 통해 결합된 형태입니다.
-  ![DC Switched WAN](/../public/postImg/2024-07-12-DC_Switched_WAN.jpg)
+  ![DC Switched WAN](/../public/postImg/2024-07-12-DC_Switched_WAN.JPG)
   - **Internetwork**: 두 개 이상의 네트워크를 서로 연결하여 통신이 가능하도록 한 방식입니다. 이를 통해 '네트워크들의 네트워크(A Network of Networks)'라고 불리며, 인터넷의 기본적인 구성 방식입니다.
-  ![DC Internetwork](/../public/postImg/2024-07-12-DC_Internetwork.jpg)
+  ![DC Internetwork](/../public/postImg/2024-07-12-DC_Internetwork.JPG)
 
 ## 1.3.3 Switching
 
@@ -29,7 +29,7 @@ category: DataCommunication
 
 - **Circuit-Switched Network (회선교환방식)**:
 
-  ![DC Circuit-Switched Network](/../public/postImg/2024-07-12-DC_circuit-switched_Network.jpg)
+  ![DC Circuit-Switched Network](/../public/postImg/2024-07-12-DC_circuit-switched_Network.JPG)
 
   - 예시로, A가 B에게 전화를 걸면 B가 전화를 받을 때까지 회선이 독점되며, B가 다른 사람과 통화 중이라면 통화 중임을 알립니다. A와 B가 통화할 수 있는 안정적인 연결이 완료되면 통신이 지속적으로 이루어집니다.
 
@@ -49,7 +49,7 @@ category: DataCommunication
 
 - **Packet-Switched Network (패킷교환방식)**:
 
-  ![DC Packet-Switched Network](/../public/postImg/2024-07-12-DC_Packet-Switched_Network.jpg)
+  ![DC Packet-Switched Network](/../public/postImg/2024-07-12-DC_Packet-Switched_Network.JPG)
 
   - 데이터 전송 시 메시지를 일정한 크기의 패킷으로 분해하여 송신하고, 수신 측에서 이를 다시 원래의 메시지로 조립하는 방식입니다.
   - **장점**:
@@ -108,7 +108,7 @@ category: DataCommunication
 - **인터넷 표준 (Internet Standard, STD)**: 인터넷에서 사용되는 기술과 방법론을 표준화한 규격입니다.
 - **RFC (Request for Comments)**: 인터넷 기술과 관련된 연구, 혁신 등을 담은 문서로, 인터넷 표준의 기반이 됩니다.
 
-  ![DC RFC](/../public/postImg/2024-07-12-DC_RFC.jpg)
+  ![DC RFC](/../public/postImg/2024-07-12-DC_RFC.JPG)
 
 - **Maturity Levels (성숙도 단계)**:
   - **Proposed Standard**: 인터넷 커뮤니티에 관심을 끌기 위한 초기 단계의 표준.
@@ -126,7 +126,7 @@ category: DataCommunication
 
 ## 1.5.2 Internet Administration
 
-  ![DC Internet Administration(/../public/postImg/2024-07-12-DC_Internet_Administration.jpg)
+  ![DC Internet Administration(/../public/postImg/2024-07-12-DC_Internet_Administration.JPG)
 
 - **Internet Society (ISOC)**: 인터넷의 최상위 관리 기관으로, 인터넷과 관련된 모든 활동을 총괄합니다.
 - **Internet Architecture Board (IAB)**: ISOC의 기술적 조언자로서, 인터넷의 기술적 관리와 표준을 담당합니다.
