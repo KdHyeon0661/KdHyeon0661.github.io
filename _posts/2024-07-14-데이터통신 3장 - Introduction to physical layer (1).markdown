@@ -8,6 +8,8 @@ category: DataCommunication
 
 ## 3.1 Data and Signals
 
+$$a^2 + b^2 = c^2$$
+
 ![DC physical_layer](/../public/postImg/2024-07-14-DC_physical_layer.JPG)
 
 ### 3.1.1 Analog and Digital Data
