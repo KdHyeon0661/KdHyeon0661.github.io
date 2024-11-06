@@ -1,7 +1,7 @@
 ---
 layout: post
-title: 데이터 통신 4장 - Analog Transmission (1)
-date: 2024-07-22 19:20:23 +0900
+title: 데이터 통신 5장 - Analog Transmission (2)
+date: 2024-07-23 19:20:23 +0900
 category: DataCommunication
 ---
 ## 5.2 Analog-to-Analog conversion
