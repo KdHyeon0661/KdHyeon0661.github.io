@@ -28,7 +28,6 @@ github_username: KdHyeon0661
 markdown: kramdown
 kramdown:
   math_engine: mathjax
-  input: GFM
 highlighter: rouge
 svg:
   optimize: true
