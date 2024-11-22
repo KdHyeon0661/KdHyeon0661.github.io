@@ -161,7 +161,7 @@ print(decoded)  # '안녕하세요'
 | `\a`        | 벨 소리                                          |
 | `\b`        | 백 스페이스                                      |
 | `\000`      | 널 문자                                          |
----
+
 
 ```python
 text = "Hello\nWorld"
