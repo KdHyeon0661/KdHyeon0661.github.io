@@ -78,23 +78,6 @@ code {
 	margin: 0px;
 }
 
-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin: 20px 0;
-    font-size: 16px;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
-}
-
-th {
-    background-color: #f4f4f4;
-}
-
 .container {
 	min-height: 100%;
 	display: flex;
@@ -241,6 +224,23 @@ blockquote {
 p {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 20px 0;
+    font-size: 16px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f4f4f4;
 }
 
 article h1,
