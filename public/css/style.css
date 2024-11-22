@@ -63,11 +63,6 @@ a:hover {
 	text-decoration: underline;
 }
 
-hr {
-    border: 1px solid #ccc;
-    margin: 20px 0;
-}
-
 pre {
 	display: block;
 	overflow: auto;
