@@ -1,0 +1,80 @@
+---
+layout: post
+title: 파이썬 - 딕셔너리
+date: 2024-08-02 19:20:23 +0900
+category: Python
+---
+# 딕셔너리(Dictionary)
+
+딕셔너리는 키(key)와 값(value)의 쌍으로 이루어진 데이터 구조입니다. 파이썬에서는 중괄호 {}를 사용하여 딕셔너리를 생성하고, 각 항목은 키와 값이 콜론(:)으로 구분됩니다.
+
+## 1. 주요 특징
+- 순서가 없는 자료형: 파이썬 3.7 이후 딕셔너리는 삽입 순서를 유지하지만, 본질적으로 순서가 없습니다.
+- 키-값 쌍: 키는 고유해야 하며, 값을 통해 키를 참조할 수 있습니다.
+- 변경 가능(mutable): 딕셔너리의 값은 변경할 수 있지만, 키는 변경할 수 없습니다.
+- 중복된 키 없음: 딕셔너리 내에 동일한 키를 두 번 사용할 수 없습니다. 만약 두 번 정의된 키가 있으면, 후속 정의가 이전 값을 덮어씁니다.
+- 딕셔너리 예시
+```python
+my_dict = {
+    "name": "John",
+    "age": 30,
+    "city": "New York"
+}
+```
+
+## 2. 딕셔너리 관련 주요 메서드
+
+| 메서드                  | 설명                                         | 예제                                 |
+|-------------------------|--------------------------------------------|--------------------------------------|
+| `get(key)`              | 키에 해당하는 값을 반환, 없으면 `None` 반환  | `my_dict.get("name")`               |
+| `keys()`                | 딕셔너리의 모든 키를 반환                   | `my_dict.keys()`                    |
+| `values()`              | 딕셔너리의 모든 값을 반환                   | `my_dict.values()`                  |
+| `items()`               | 딕셔너리의 모든 키-값 쌍을 반환              | `my_dict.items()`                   |
+| `update(other_dict)`    | 다른 딕셔너리와 병합                       | `my_dict.update({"country": "USA"})`|
+| `pop(key)`              | 해당 키에 대한 값을 삭제하고 반환           | `my_dict.pop("age")`                |
+| `popitem()`             | 임의의 키-값 쌍을 삭제하고 반환               | `my_dict.popitem()`                 |
+| `clear()`               | 모든 키-값 쌍을 삭제                         | `my_dict.clear()`                   |
+| `setdefault(key, default)` | 키가 존재하지 않으면 기본값을 추가하고 반환  | `my_dict.setdefault("gender", "Male")` |
+
+### 예시 코드
+```python
+# 딕셔너리 생성
+person = {
+    "name": "Alice",
+    "age": 25,
+    "job": "Engineer"
+}
+
+# 값에 접근
+print(person["name"])  # 출력: Alice
+
+# get() 메서드 사용
+print(person.get("age"))  # 출력: 25
+print(person.get("salary", "Not Available"))  # 출력: Not Available
+
+# 키-값 쌍을 반환
+print(person.items())  # 출력: dict_items([('name', 'Alice'), ('age', 25), ('job', 'Engineer')])
+
+# 값을 업데이트
+person.update({"city": "Paris"})
+print(person)  # 출력: {'name': 'Alice', 'age': 25, 'job': 'Engineer', 'city': 'Paris'}
+
+# 키 삭제
+person.pop("job")
+print(person)  # 출력: {'name': 'Alice', 'age': 25, 'city': 'Paris'}
+
+# 모든 항목 삭제
+person.clear()
+print(person)  # 출력: {}
+```
+
+## 3. 주의 사항
+키는 불변(immutable) 타입이어야 한다: 숫자, 문자열, 튜플 등은 키로 사용 가능하지만, 리스트나 다른 딕셔너리처럼 변경 가능한 객체는 키로 사용할 수 없습니다.
+
+```python
+# 올바른 키 사용
+my_dict = {(1, 2): "point1"}  # 튜플은 키로 사용 가능
+
+# 잘못된 키 사용
+# my_dict = {[1, 2]: "point2"}  # 리스트는 키로 사용할 수 없음
+```
