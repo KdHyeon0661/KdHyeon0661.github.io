@@ -131,7 +131,6 @@ print(deep_copy)   # [[1, 2], [3, 4]]
 | `count()`      | 특정 값의 개수를 반환                 | `lst.count(10)`                 |
 | `clear()`      | 리스트의 모든 요소 제거               | `lst.clear()`                   |
 | `del`          | 특정 요소 또는 전체 리스트 삭제         | `del lst[2]`, `del lst`         |
----
 
 ### 리스트 메서드 사용 예시
 ```python
