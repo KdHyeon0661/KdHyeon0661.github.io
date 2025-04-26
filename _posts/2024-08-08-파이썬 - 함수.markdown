@@ -1,0 +1,121 @@
+---
+layout: post
+title: 파이썬 - 함수
+date: 2024-08-08 19:20:23 +0900
+category: Python
+---
+# 함수
+함수는 특정 작업을 수행하는 코드 블록으로, 재사용성과 가독성을 높이는 데 도움을 줍니다. 파이썬에서는 def 키워드를 사용해 함수를 정의합니다.
+
+## 1. 함수의 기본 구조
+```python
+def 함수명(매개변수1, 매개변수2, ...):
+    """문서화 문자열 (선택)"""
+    실행할 코드
+    return 반환값 (선택)
+```
+
+ - **def** : 함수를 정의할 때 사용하는 키워드.
+ - **함수명** : 함수를 호출할 때 사용하는 이름.
+ - **매개변수** : 함수에 전달된 값을 받기 위한 변수 (선택 사항).
+ - **return** : 함수의 결과를 반환 (선택 사항).
+
+## 2. 함수 정의 및 호출 예제
+매개변수 없는 함수
+```python
+def say_hello():
+    print("Hello, World!")
+
+say_hello()
+# 출력: Hello, World!
+```
+
+매개변수와 반환값이 있는 함수
+```python
+def add(a, b):
+    return a + b
+
+result = add(3, 5)
+print(result)
+# 출력: 8
+```
+
+함수의 특징
+코드 재사용: 여러 번 반복해서 호출할 수 있습니다.
+모듈화: 프로그램을 더 작은 블록으로 나눌 수 있습니다.
+가독성: 코드의 목적이 명확해져 가독성이 향상됩니다.
+
+매개변수의 종류
+기본 매개변수
+기본 값을 제공해 선택적으로 매개변수를 받을 수 있습니다.
+
+```python
+def greet(name="Guest"):
+    print(f"Hello, {name}!")
+
+greet()        # 출력: Hello, Guest!
+greet("Alice") # 출력: Hello, Alice!
+```
+
+가변 매개변수 (*args)
+개수 제한 없이 매개변수를 받을 수 있습니다.
+
+```python
+def sum_all(*args):
+    return sum(args)
+
+print(sum_all(1, 2, 3, 4)) # 출력: 10
+```
+키워드 가변 매개변수 (**kwargs)
+키-값 쌍을 전달받을 수 있습니다.
+
+```python
+def print_info(**kwargs):
+    for key, value in kwargs.items():
+        print(f"{key}: {value}")
+
+print_info(name="Alice", age=25)
+# 출력:
+# name: Alice
+# age: 25
+```
+반환값이 없는 함수
+return을 생략하면 None이 반환됩니다.
+
+```python
+def no_return():
+    print("This function has no return value.")
+
+result = no_return()
+print(result) # 출력: None
+```
+
+함수 내부와 외부 변수 (스코프)
+지역 변수와 전역 변수
+함수 내부에서 정의된 변수는 지역 변수, 외부에서 정의된 변수는 전역 변수입니다.
+
+```python
+x = 10 # 전역 변수
+
+def modify():
+    x = 5 # 지역 변수
+    print("함수 내부:", x)
+
+modify()           # 출력: 함수 내부: 5
+print("함수 외부:", x) # 출력: 함수 외부: 10
+```
+
+global 키워드
+함수 내부에서 전역 변수를 수정할 때 사용합니다.
+
+```python
+x = 10
+
+def modify_global():
+    global x
+    x = 5
+
+modify_global()
+print(x) # 출력: 5
+```
+
