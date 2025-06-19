@@ -1,7 +1,7 @@
 ---
 layout: post
-title: 파이썬 - if문
-date: 2024-08-05 19:20:23 +0900
+title: 파이썬 - 클래스
+date: 2024-08-11 19:20:23 +0900
 category: Python
 ---
 # `if`문
