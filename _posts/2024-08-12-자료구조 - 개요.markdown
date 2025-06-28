@@ -1,7 +1,7 @@
 ---
 layout: post
-title: 파이썬 - if문
-date: 2024-08-05 19:20:23 +0900
+title: 자료구조 - 개요
+date: 2024-08-12 19:20:23 +0900
 category: Python
 ---
 # `if`문
