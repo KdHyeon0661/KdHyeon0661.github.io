@@ -1,20 +1,20 @@
 ---
 layout: post
-title: 파이썬 - 알아두면 좋은 함수들
+title: 파이썬 - 내장함수
 date: 2024-08-10 19:20:23 +0900
 category: Python
 ---
 # 파이썬 내장 함수 예제 모음
-
-파이썬 내장 함수는 강력하면서도 간단합니다.  
-이번에는 각 함수별로 **직관적인 예제 코드**를 함께 정리했습니다.  
-복사해서 실행해보세요!
 
 ---
 
 ## 출력 및 입력
 
 ### `print()` / `input()` / `format()`
+
+- print : 프롬프트에 주어진 파라미터를 출력합니다.
+- input : 프롬프트에 값을 입력합니다.
+- format : 문자열 안에 변수나 값을 삽입하거나, 원하는 형식으로 데이터를 출력할 수 있게 해주는 문자열 포매팅 함수
 
 ```python
 name = input("이름을 입력하세요: ")
@@ -28,12 +28,16 @@ print("오늘은 {}년 {}월입니다.".format(2025, 6))
 
 ### `len()`
 
+- len(이터레이터) : 리스트, 문자열, 튜플, 딕셔너리, 셋 등 다양한 데이터의 "길이" 또는 "요소 개수"를 반환하는 내장 함수
+
 ```python
 print(len("hello"))       # 5
 print(len([1, 2, 3]))      # 3
 ```
 
 ### `range()`
+
+ - range(이터레이터) : 정수 시퀀스를 생성하는 함수
 
 ```python
 for i in range(3):
@@ -42,22 +46,32 @@ for i in range(3):
 
 ### `enumerate()`
 
+ - enumerate(이터레이터) : 시퀀스를 반복하면서 각 요소의 인덱스와 값을 동시에 얻고 싶을 때 사용하는 함수
+
 ```python
 colors = ['red', 'blue']
 for idx, color in enumerate(colors):
     print(idx, color)
+    # 0 red
+    # 1 blue
 ```
 
 ### `zip()`
+
+ - zip(이터레이터1, 이터레이터2, ...) : 이터레이터(리스트, 튜플 등)의 요소들을 같은 인덱스끼리 묶어주는 함수
 
 ```python
 names = ['Tom', 'Jane']
 scores = [90, 85]
 for name, score in zip(names, scores):
     print(f"{name}: {score}")
+    # Tom 90
+    # Jane 85
 ```
 
 ### `reversed()`
+
+- reversed(이터레이터) : 이터레이터(리스트, 튜플, 문자열 등)를 역순으로 순회할 수 있는 iterator를 반환
 
 ```python
 for ch in reversed("abc"):
@@ -65,6 +79,8 @@ for ch in reversed("abc"):
 ```
 
 ### `sorted()`
+
+- sorted(이터레이터) : 이터레이터(리스트, 튜플, 문자열 등)를 정렬한 새로운 리스트를 반환
 
 ```python
 numbers = [3, 1, 2]
@@ -77,6 +93,10 @@ print(sorted(numbers))  # [1, 2, 3]
 
 ### `sum()`, `max()`, `min()`
 
+- sum(이터레이터) : 주어진 리스트의 합을 출력한다.
+- max(이터레이터) : 주어진 리스트에서 가장 큰 값을 출력한다.
+- min(이터레이터) : 주어진 리스트에서 가장 작은 값을 출력한다.
+
 ```python
 nums = [1, 5, 3]
 print(sum(nums))  # 9
@@ -86,11 +106,15 @@ print(min(nums))  # 1
 
 ### `abs()`
 
+- abs(값) : 절대값을 반환합니다.
+
 ```python
 print(abs(-7))  # 7
 ```
 
 ### `round()`
+
+- round(값, 반올림할 자리) : 반올림한다.
 
 ```python
 print(round(3.14159, 2))  # 3.14
@@ -98,11 +122,15 @@ print(round(3.14159, 2))  # 3.14
 
 ### `pow()`
 
+- pow(밑, 지수) : 제곱한 값을 출력한다.
+
 ```python
 print(pow(2, 3))  # 8
 ```
 
 ### `divmod()`
+
+- divmod(제수, 피제수) : 몫과 나머지를 출력한다.
 
 ```python
 q, r = divmod(10, 3)
@@ -115,6 +143,9 @@ print(q, r)  # 3 1
 
 ### `all()` / `any()`
 
+- all(이터레이터) : 이터레이터의 모든 요소가 참이면 참을 출력한다.
+- any(이터레이터) : 이터레이터의 요소 중 하나라도 참이면 참을 출력한다.
+
 ```python
 print(all([True, True, False]))   # False
 print(any([False, False, True]))  # True
@@ -122,12 +153,17 @@ print(any([False, False, True]))  # True
 
 ### `bool()`
 
+- bool(파라미터) : 파라미터가 참이면 참을 출력한다.
+
 ```python
 print(bool(""))     # False
 print(bool("hi"))   # True
 ```
 
 ### `isinstance()` / `callable()`
+
+- isinstance(object, classinfo) : 객체가 특정 클래스(또는 타입)의 인스턴스인지 출력한다.
+- callable(object) : 함수처럼 괄호 ()를 붙여 실행할 수 있는지 출력한다. 객체를 함수처럼 쓸 수 있는지 사전 확인하여 런타임 오류 방지한다.
 
 ```python
 print(isinstance(5, int))     # True
@@ -141,6 +177,10 @@ print(callable(3))            # False
 
 ### `int()`, `float()`, `str()`
 
+- int(object) : 파라미터를 정수로 바꾼다.
+- float(object) : 파라미터를 실수로 바꾼다.
+- str(object) : 파라미터를 문자열로 바꾼다.
+
 ```python
 print(int("10"))     # 10
 print(float("3.14")) # 3.14
@@ -149,12 +189,19 @@ print(str(123))      # "123"
 
 ### `chr()` / `ord()`
 
+- chr(int) : 정수를 아스키 코드로 변환한다.
+- ord() : 아스키 코드를 정수로 변환한다.
+
 ```python
 print(chr(65))  # 'A'
 print(ord('A')) # 65
 ```
 
 ### `bin()` / `oct()` / `hex()`
+
+- bin(int) : 2진수 변환한다.
+- oct(int) : 8진수 변환한다.
+- hex(int) : 16진수 변환한다.
 
 ```python
 print(bin(10))  # '0b1010'
@@ -247,6 +294,6 @@ print(hasattr(p, 'name'))     # False
 ## 팁
 
 - 이 모든 함수들은 공식 문서에서 확인할 수 있습니다: [https://docs.python.org/3/library/functions.html](https://docs.python.org/3/library/functions.html)
-- 가끔 `help(함수이름)`을 활용해 직접 도움말을 확인하면 학습에 큰 도움이 됩니다!
+- `help(함수이름)`을 활용해 직접 도움말을 확인하면 학습에 큰 도움이 됩니다.
 
 ---
