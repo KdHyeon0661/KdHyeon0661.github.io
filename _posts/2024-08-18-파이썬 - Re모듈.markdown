@@ -1,7 +1,7 @@
 ---
 layout: post
-title: 파이썬 - 예외처리
-date: 2024-08-17 19:20:23 +0900
+title: 파이썬 - Re 모듈
+date: 2024-08-18 19:20:23 +0900
 category: Python
 ---
 # 파이썬 `re` 모듈
@@ -31,8 +31,8 @@ import re
 
 text = "hello world"
 
-print(re.search(r"world", text))  # ✅ 찾음
-print(re.match(r"world", text))  # ❌ 처음이 아니므로 실패
+print(re.search(r"world", text))  # 찾음
+print(re.match(r"world", text))  # 처음이 아니므로 실패
 ```
 
 ---
@@ -78,7 +78,7 @@ print(emails)
 
 ---
 
-## ⚙️ re.compile() 사용
+## re.compile() 사용
 
 ```python
 pattern = re.compile(r"[0-9]+")

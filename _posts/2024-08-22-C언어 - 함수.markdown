@@ -1,0 +1,170 @@
+---
+layout: post
+title: C - 함수
+date: 2024-08-22 19:20:23 +0900
+category: C
+---
+# 함수(Function)
+
+**함수의 선언 및 호출 방법**, **매개변수 전달 방식**, 그리고 **코드 분리(헤더와 소스 파일)** 에 대해 배웁니다.
+
+---
+
+## 함수란?
+
+- 코드의 **재사용성**을 높이기 위한 기능
+- 하나의 작업을 수행하는 **코드 블록**
+- 선언 → 정의 → 호출 순서로 구성됨
+
+---
+
+## 함수의 기본 구조
+
+```c
+반환형 함수이름(매개변수 선언) {
+    // 함수 내용
+    return 반환값;
+}
+```
+
+### 예시:
+
+```c
+int add(int a, int b) {
+    return a + b;
+}
+```
+
+### 호출:
+
+```c
+int result = add(3, 4);  // result = 7
+```
+
+---
+
+## 함수 반환형
+
+| 반환형 | 설명 |
+|--------|------|
+| `int`, `float`, `char` 등 | 결과값 반환 |
+| `void` | 반환값 없음 (실행만) |
+
+```c
+void greet() {
+    printf("Hello!\n");
+}
+```
+
+---
+
+## 매개변수 전달 방식
+
+### 1. 값에 의한 전달 (Call by Value)
+
+- **기본 전달 방식**
+- 인자의 복사본이 함수에 전달됨 → **원본은 변경되지 않음**
+
+```c
+void change(int x) {
+    x = 10;
+}
+
+int main() {
+    int a = 5;
+    change(a);
+    printf("%d", a);  // 결과: 5
+}
+```
+
+### 2. 주소에 의한 전달 (Call by Reference)
+
+- **포인터를 이용한 원본 수정 가능**
+
+```c
+void change(int* x) {
+    *x = 10;
+}
+
+int main() {
+    int a = 5;
+    change(&a);
+    printf("%d", a);  // 결과: 10
+}
+```
+
+---
+
+## 함수 오버로딩은 없음
+
+C는 **함수 오버로딩을 지원하지 않음** → 같은 이름의 함수는 선언 불가  
+이름이 겹치지 않도록 함수명을 명확히 작성해야 함.
+
+```c
+// 두 함수 모두 int형이지만 이름이 다름
+int square(int x) { return x * x; }
+int cube(int x)   { return x * x * x; }
+```
+
+---
+
+## 함수 분리 (헤더 파일)
+
+대규모 프로젝트에서는 함수를 **.h (헤더)와 .c (구현)** 파일로 분리하여 관리합니다.
+
+### calc.h
+
+```c
+#ifndef CALC_H
+#define CALC_H
+
+int add(int a, int b);
+int subtract(int a, int b);
+
+#endif
+```
+
+### calc.c
+
+```c
+#include "calc.h"
+
+int add(int a, int b) {
+    return a + b;
+}
+
+int subtract(int a, int b) {
+    return a - b;
+}
+```
+
+### main.c
+
+```c
+#include <stdio.h>
+#include "calc.h"
+
+int main() {
+    printf("%d\n", add(5, 3));       // 8
+    printf("%d\n", subtract(5, 3));  // 2
+    return 0;
+}
+```
+
+### 컴파일 명령어
+
+```bash
+gcc main.c calc.c -o app
+```
+
+---
+
+## 정리
+
+| 항목 | 설명 |
+|------|------|
+| 함수 선언 | 반환형, 이름, 매개변수 |
+| 호출 방법 | `함수명(인자);` |
+| 전달 방식 | 값(기본), 주소(포인터) |
+| 헤더 파일 | 선언만 담고 `.c` 파일에서 정의 |
+| 반환형 `void` | 반환값 없음 |
