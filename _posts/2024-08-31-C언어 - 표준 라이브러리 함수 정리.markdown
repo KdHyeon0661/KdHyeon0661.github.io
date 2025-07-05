@@ -1,0 +1,299 @@
+---
+layout: post
+title: C - 표준 라이브러리 함수 정리
+date: 2024-08-31 19:20:23 +0900
+category: C
+---
+# 표준 라이브러리 함수 정리 (stdlib.h, math.h, time.h 등)
+
+이번 편에서는 C 언어의 **표준 라이브러리에서 자주 사용되는 함수들**을 범주별로 정리합니다. 수학 계산, 난수 생성, 변환 함수, 정렬, 시간 함수 등 실무에서 자주 활용되는 기능들입니다.
+
+---
+
+## `stdlib.h` – 유틸리티 함수
+
+### 형 변환
+
+```c
+int atoi(const char* str);      // 문자열 → int
+long atol(const char* str);     // 문자열 → long
+double atof(const char* str);   // 문자열 → double
+```
+
+```c
+#include <stdio.h>
+#include <stdlib.h>  // atoi, atol, atof 함수가 선언된 헤더
+
+int main() {
+    const char *intStr = "12345";
+    const char *longStr = "1234567890";
+    const char *doubleStr = "3.14159";
+
+    int intValue = atoi(intStr);         // 문자열 → int
+    long longValue = atol(longStr);      // 문자열 → long
+    double doubleValue = atof(doubleStr);// 문자열 → double
+
+    printf("문자열 \"%s\" → int: %d\n", intStr, intValue);
+    printf("문자열 \"%s\" → long: %ld\n", longStr, longValue);
+    printf("문자열 \"%s\" → double: %f\n", doubleStr, doubleValue);
+
+    return 0;
+
+    // 문자열 "12345" → int: 12345
+    // 문자열 "1234567890" → long: 1234567890
+    // 문자열 "3.14159" → double: 3.141590
+}
+```
+
+### 문자열 ↔ 숫자 변환 (안전한 버전)
+
+```c
+int strtol(), strtod(), strtoul() 등
+```
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    const char *numStr1 = "12345abc";
+    const char *numStr2 = "4294967295xyz";
+    const char *numStr3 = "3.14159pi";
+
+    char *endptr;
+
+    // strtol: 문자열 → long
+    long l = strtol(numStr1, &endptr, 10);
+    printf("strtol: \"%s\" → %ld, 변환 끝 위치: \"%s\"\n", numStr1, l, endptr);
+
+    // strtoul: 문자열 → unsigned long
+    unsigned long ul = strtoul(numStr2, &endptr, 10);
+    printf("strtoul: \"%s\" → %lu, 변환 끝 위치: \"%s\"\n", numStr2, ul, endptr);
+
+    // strtod: 문자열 → double
+    double d = strtod(numStr3, &endptr);
+    printf("strtod: \"%s\" → %f, 변환 끝 위치: \"%s\"\n", numStr3, d, endptr);
+
+    return 0;
+
+    // strtol: "12345abc" → 12345, 변환 끝 위치: "abc"
+    // strtoul: "4294967295xyz" → 4294967295, 변환 끝 위치: "xyz"
+    // strtod: "3.14159pi" → 3.141590, 변환 끝 위치: "pi"
+}
+```
+
+---
+
+### 메모리 관련
+
+```c
+void* malloc(size_t size);
+void* calloc(size_t n, size_t size);
+void* realloc(void* ptr, size_t new_size);
+void free(void* ptr);
+```
+
+---
+
+### 난수 생성
+
+```c
+#include <stdlib.h>
+#include <time.h>
+
+srand(time(NULL));      // 초기화
+int r = rand();         // 0~RAND_MAX
+int r2 = rand() % 100;  // 0~99
+```
+
+---
+
+### 정렬과 탐색
+
+```c
+void qsort(void* base, size_t n, size_t size, int (*cmp)(const void*, const void*));
+void* bsearch(const void* key, const void* base, size_t n, size_t size, int (*cmp)(const void*, const void*));
+```
+
+#### 예제: 정수 배열 정렬
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+// 비교 함수 (오름차순)
+int compare_ints(const void *a, const void *b) {
+    int arg1 = *(const int*)a;
+    int arg2 = *(const int*)b;
+    return (arg1 > arg2) - (arg1 < arg2); // arg1-arg2 도 가능
+}
+
+int main() {
+    int arr[] = { 50, 20, 40, 10, 30 };
+    size_t n = sizeof(arr) / sizeof(arr[0]);
+    int key = 30;
+
+    // 정렬
+    qsort(arr, n, sizeof(int), compare_ints);
+
+    printf("정렬된 배열: ");
+    for (size_t i = 0; i < n; ++i) {
+        printf("%d ", arr[i]);
+    }
+    printf("\n");
+
+    // 이진 탐색
+    int *found = (int*)bsearch(&key, arr, n, sizeof(int), compare_ints);
+    if (found != NULL) {
+        printf("값 %d 발견! 인덱스: %ld\n", key, found - arr);
+    } else {
+        printf("값 %d를 찾을 수 없습니다.\n", key);
+    }
+
+    return 0;
+
+    // 정렬된 배열: 10 20 30 40 50 
+    // 값 30 발견! 인덱스: 2
+}
+```
+
+---
+
+## `math.h` – 수학 함수
+
+| 함수 | 설명 |
+|------|------|
+| `sqrt(x)` | 제곱근 |
+| `pow(x, y)` | x의 y제곱 |
+| `abs(x)` | 정수 절댓값 |
+| `fabs(x)` | 실수 절댓값 |
+| `sin(x), cos(x), tan(x)` | 삼각함수 (라디안) |
+| `log(x), log10(x)` | 로그 |
+| `ceil(x), floor(x)` | 올림/내림 |
+
+```c
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h> // abs
+
+int main() {
+    double x = 9.0;
+    double y = 2.0;
+    int n = -10;
+    double d = -3.14;
+
+    // 제곱근
+    printf("sqrt(%.2f) = %.2f\n", x, sqrt(x));
+
+    // 거듭제곱
+    printf("pow(%.2f, %.2f) = %.2f\n", x, y, pow(x, y));
+
+    // 정수 절댓값
+    printf("abs(%d) = %d\n", n, abs(n));
+
+    // 실수 절댓값
+    printf("fabs(%.2f) = %.2f\n", d, fabs(d));
+
+    // 삼각함수 (라디안)
+    printf("sin(%.2f) = %.2f\n", x, sin(x));
+    printf("cos(%.2f) = %.2f\n", x, cos(x));
+    printf("tan(%.2f) = %.2f\n", x, tan(x));
+
+    // 자연로그, 상용로그
+    printf("log(%.2f) = %.2f\n", x, log(x));      // 자연로그 (밑 e)
+    printf("log10(%.2f) = %.2f\n", x, log10(x));  // 상용로그 (밑 10)
+
+    // 올림, 내림
+    printf("ceil(%.2f) = %.2f\n", d, ceil(d));
+    printf("floor(%.2f) = %.2f\n", d, floor(d));
+
+    return 0;
+
+    /* sqrt(9.00) = 3.00
+    pow(9.00, 2.00) = 81.00
+    abs(-10) = 10
+    fabs(-3.14) = 3.14
+    sin(9.00) = 0.41
+    cos(9.00) = -0.91
+    tan(9.00) = -0.45
+    log(9.00) = 2.20
+    log10(9.00) = 0.95
+    ceil(-3.14) = -3.00
+    floor(-3.14) = -4.00 */
+}
+```
+
+---
+
+## `time.h` – 시간 관련 함수
+
+```c
+#include <time.h>
+
+time_t now = time(NULL);
+printf("현재 시간: %ld\n", now);
+```
+
+### 포맷 출력
+
+- localtime() 구조체의 구조
+
+```c
+struct tm {
+    int tm_sec;   // 초 (0~59)
+    int tm_min;   // 분 (0~59)
+    int tm_hour;  // 시 (0~23)
+    int tm_mday;  // 일 (1~31)
+    int tm_mon;   // 월 (0~11, 0=1월)
+    int tm_year;  // 년 (1900년 이후 경과 연도, 예: 2024년이면 124)
+    int tm_wday;  // 요일 (0~6, 0=일요일)
+    int tm_yday;  // 1년 중 경과일 (0~365)
+    int tm_isdst; // 서머타임 적용 여부 (양수: 적용, 0: 미적용, 음수: 정보 없음)
+};
+```
+
+```c
+struct tm* t = localtime(&now);
+printf("%d-%02d-%02d\n", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday);
+```
+
+---
+
+## 기타 유용한 함수들
+
+### 환경 변수
+
+```c
+char* getenv(const char* name);
+printf("%s\n", getenv("PATH"));
+```
+
+### 프로그램 종료
+
+```c
+exit(0);    // 정상 종료
+exit(1);    // 비정상 종료
+```
+
+---
+
+## 정리
+
+| 헤더 | 주요 함수 |
+|------|-----------|
+| `stdlib.h` | `malloc`, `rand`, `qsort`, `atoi`, `exit` 등 |
+| `math.h`   | `sqrt`, `pow`, `abs`, `ceil`, `log` 등 |
+| `time.h`   | `time`, `localtime`, `strftime` 등 |
+| `string.h` | `strcpy`, `strlen`, `strcat`, `strcmp` 등 |
+
+---
+
+## 주의사항
+
+- `rand()`는 완전한 난수 아님 → `srand()`로 초기화 필요
+- `qsort()`의 비교 함수는 반드시 `int` 반환
+- `math.h` 함수는 **실수 연산**이므로 `-lm` 옵션 필요할 수 있음 (gcc 사용 시)
+
+```bash
+gcc main.c -lm
+```
