@@ -202,5 +202,3 @@ tie(x, y, z) = t;
 ```cpp
 tie(x, ignore, z) = t;
 ```
-
----

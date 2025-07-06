@@ -106,7 +106,7 @@ int main() {
 
 ## 3. 구조적 바인딩 (C++17)
 
-`std::pair`, `std::tuple` 등을 **변수 분해**해서 받을 수 있음
+- `std::pair`, `std::tuple` 등을 **변수 분해**해서 받을 수 있음
 
 ```cpp
 #include <iostream>
@@ -115,7 +115,7 @@ int main() {
 using namespace std;
 
 int main() {
-    map<string, int> scores = {{"Tom", 90}, {"Jane", 85}};
+    map<string, int> scores = { {"Tom", 90}, {"Jane", 85} };
 
     // 구조적 바인딩: [name, score]로 분해
     for (const auto& [name, score] : scores) {

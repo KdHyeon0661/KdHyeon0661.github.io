@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Cpp - 스마트 포인터 내부 구조
+title: C++ - 스마트 포인터 내부 구조
 date: 2024-09-22 19:20:23 +0900
-category: Cpp
+category: C++
 ---
 # 스마트 포인터 내부 구조 분석: shared_ptr vs unique_ptr
 
