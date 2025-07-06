@@ -1,7 +1,7 @@
 ---
 layout: post
-title: C++ - STL
-date: 2024-09-14 19:20:23 +0900
+title: C++ - 함수 객체, 람다, 구조적 바인딩
+date: 2024-09-11 19:20:23 +0900
 category: C++
 ---
 # 함수 객체(Functor), 람다, 구조적 바인딩

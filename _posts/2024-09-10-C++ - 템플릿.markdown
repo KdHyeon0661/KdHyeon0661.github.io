@@ -1,7 +1,7 @@
 ---
 layout: post
-title: C++ - STL
-date: 2024-09-09 19:20:23 +0900
+title: C++ - 템플릿
+date: 2024-09-10 19:20:23 +0900
 category: C++
 ---
 # 템플릿
