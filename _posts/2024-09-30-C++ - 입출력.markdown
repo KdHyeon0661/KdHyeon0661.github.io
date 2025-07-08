@@ -1,0 +1,172 @@
+---
+layout: post
+title: C++ - 입출력
+date: 2024-09-30 19:20:23 +0900
+category: C++
+---
+# 입출력 완전 정리: `cin`, `cout`, `fstream`, `iomanip`, `cerr`, `stringstream`
+
+---
+
+## 콘솔 입출력: `<iostream>`
+
+```cpp
+#include <iostream>
+```
+
+C++ 입출력의 핵심 헤더로, 다음과 같은 표준 스트림을 제공합니다.
+
+| 스트림        | 설명                                 |
+|---------------|--------------------------------------|
+| `std::cin`    | 표준 입력 스트림 (키보드)            |
+| `std::cout`   | 표준 출력 스트림 (화면)              |
+| `std::cerr`   | 표준 에러 출력 (버퍼 없이 즉시 출력) |
+| `std::clog`   | 표준 로그 출력 (버퍼 있음)           |
+
+---
+
+### 🔹 `cout` & `cin` 예시
+
+```cpp
+int a;
+std::cout << "정수를 입력하세요: ";
+std::cin >> a;
+std::cout << "입력한 값: " << a << "\n";
+```
+
+- `<<` : 출력 연산자
+- `>>` : 입력 연산자
+
+---
+
+### `cerr` vs `clog`
+
+```cpp
+std::cerr << "즉시 출력되는 에러 메시지\n";
+std::clog << "버퍼를 사용하는 일반 로그 메시지\n";
+```
+
+- `cerr`: flush 자동 수행 → 에러 메시지 출력에 적합
+- `clog`: 성능을 위해 flush를 지연
+
+---
+
+## 개행 & 버퍼 비우기: `std::endl`, `std::flush`
+
+```cpp
+std::cout << "Hello" << std::endl;  // 개행 + flush
+std::cout << "World" << std::flush; // flush only
+```
+
+| 조작자       | 기능             |
+|--------------|------------------|
+| `std::endl`  | 줄바꿈 + flush    |
+| `std::flush` | 줄바꿈 없이 flush |
+
+---
+
+## 파일 입출력: `<fstream>`
+
+```cpp
+#include <fstream>
+```
+
+### 파일에 쓰기 (`ofstream`)
+
+```cpp
+std::ofstream fout("output.txt");
+fout << "파일에 저장될 텍스트입니다\n";
+fout.close();
+```
+
+### 파일에서 읽기 (`ifstream`)
+
+```cpp
+std::ifstream fin("output.txt");
+std::string line;
+while (std::getline(fin, line)) {
+    std::cout << line << "\n";
+}
+fin.close();
+```
+
+### 열기 실패 확인
+
+```cpp
+std::ifstream fin("data.txt");
+if (!fin) {
+    std::cerr << "파일 열기 실패\n";
+}
+```
+
+---
+
+## 출력 서식 지정: `<iomanip>`
+
+```cpp
+#include <iomanip>
+```
+
+### 소수점 자리 지정
+
+```cpp
+double pi = 3.14159;
+std::cout << std::fixed << std::setprecision(2) << pi;  // 3.14
+```
+
+### 필드 너비 / 정렬 / 채우기
+
+```cpp
+std::cout << std::setw(10) << 42 << "\n";                // 오른쪽 정렬
+std::cout << std::left << std::setw(10) << 42 << "\n";   // 왼쪽 정렬
+std::cout << std::setfill('-') << std::setw(10) << 42;   // -------42
+```
+
+---
+
+## 문자열 스트림: `<sstream>`
+
+```cpp
+#include <sstream>
+```
+
+### `std::istringstream`: 문자열에서 입력
+
+```cpp
+std::string data = "100 3.14 Hello";
+std::istringstream iss(data);
+
+int i; double d; std::string s;
+iss >> i >> d >> s;
+
+std::cout << i << ", " << d << ", " << s << "\n";  // 100, 3.14, Hello
+```
+
+### `std::ostringstream`: 문자열로 출력
+
+```cpp
+std::ostringstream oss;
+oss << "Name: " << "Tom" << ", Age: " << 25;
+std::string result = oss.str();  // 문자열 생성
+
+std::cout << result << "\n";  // Name: Tom, Age: 25
+```
+
+---
+
+## ✅ 정리표
+
+| 기능           | 헤더         | 스트림/도구                      |
+|----------------|--------------|----------------------------------|
+| 콘솔 입출력     | `<iostream>` | `cin`, `cout`, `cerr`, `clog`   |
+| 파일 입출력     | `<fstream>`  | `ifstream`, `ofstream`, `fstream` |
+| 서식 지정       | `<iomanip>`  | `setw`, `setprecision`, `setfill` 등 |
+| 문자열 입출력   | `<sstream>`  | `istringstream`, `ostringstream` |
+| 버퍼 제어       | `<iostream>` | `std::endl`, `std::flush`       |
+
+---
+
+## 🧠 마무리
+
+C++의 입출력 스트림은 매우 강력하며 유연합니다.  
+단순한 입력/출력뿐 아니라, 파일 처리, 문자열 처리, 로깅, 서식 출력까지 모두 커버할 수 있습니다.

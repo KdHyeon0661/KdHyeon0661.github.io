@@ -1,0 +1,110 @@
+---
+layout: post
+title: C++ - 스마트 포인터 구현 (5)
+date: 2024-09-27 19:20:23 +0900
+category: C++
+---
+# 🧭 스마트 포인터 완전 정리 – 실전 요약편
+
+C++의 스마트 포인터는 자원의 자동 관리를 도와주는 강력한 도구입니다.  
+이 시리즈에서는 `unique_ptr`, `shared_ptr`, `weak_ptr`, 그리고 내부 구조와 커스텀 구현까지 다뤘습니다.  
+이제 중요한 개념을 한 눈에 정리해봅시다.
+
+---
+
+## 📌 스마트 포인터 종류 요약
+
+| 종류           | 특징                         | 복사 여부  | 쓰임 |
+|----------------|------------------------------|------------|------|
+| `unique_ptr`   | 단독 소유권                   | ❌ (move만 가능) | 자원 소유권 이전이 필요한 경우 |
+| `shared_ptr`   | 공유 소유권, 참조 카운트      | ✅         | 여러 곳에서 공유되는 객체 |
+| `weak_ptr`     | 소유권 없음, shared 참조 추적 | ✅         | 순환 참조 방지용 |
+
+---
+
+## 🔧 내부 구조 핵심
+
+### 📦 shared_ptr 구조 요약
+
+```text
+[shared_ptr] ─┬─> [T*]
+              └─> [ControlBlock]
+                    ├─ ref_count
+                    └─ weak_count
+```
+
+- **ControlBlock**은 참조 카운트 및 삭제자 등을 포함
+- `shared_ptr` 복사 → `ref_count++`
+- 마지막 `shared_ptr` 소멸 → `ref_count == 0` → 객체 삭제
+- `weak_ptr`까지 사라짐 → ControlBlock 삭제
+
+---
+
+## 🛠 make_shared 최적화 요약
+
+| 항목                     | 일반 new + shared_ptr | make_shared           |
+|--------------------------|------------------------|------------------------|
+| 메모리 할당 횟수         | 2번 (T + ControlBlock) | 1번 (통합)            |
+| 예외 안전성              | 낮음                   | 높음                  |
+| 성능                     | 보통                   | 우수 (캐시 친화적)     |
+
+```cpp
+auto p = std::make_shared<MyClass>();  // ✅ 추천
+```
+
+---
+
+## 🤝 shared_from_this 사용법 요약
+
+- 클래스 내부에서 `shared_ptr`을 반환하려면 `enable_shared_from_this` 상속 필요
+
+```cpp
+class MyClass : public std::enable_shared_from_this<MyClass> {
+public:
+    std::shared_ptr<MyClass> getPtr() {
+        return shared_from_this();
+    }
+};
+```
+
+- 생성자는 `shared_ptr`과 연결되지 않으므로, 생성자 내부에서 `shared_from_this()` 호출 금지!
+
+---
+
+## ⚠️ 실수 방지 체크리스트
+
+✅ `new T()` 대신 `make_shared<T>()`를 쓰자  
+✅ 절대 `shared_ptr<T>(this)` 금지 (이중 삭제 위험)  
+✅ `unique_ptr`은 복사 금지, `std::move`로 넘기자  
+✅ `shared_ptr`로 순환 참조 생기면 `weak_ptr`로 끊자  
+✅ `enable_shared_from_this`는 꼭 상속 구조에 맞게 사용하자
+
+---
+
+## 📁 직접 구현 시 기억할 점
+
+| 기능                        | 핵심 포인트                          |
+|-----------------------------|---------------------------------------|
+| 커스텀 `SharedPtr<T>`        | ControlBlock 설계, 참조 관리         |
+| `WeakPtr<T>` 구현            | ControlBlock 유지, lock()로 공유 복원 |
+| `make_shared` 구현          | `placement new`, 단일 메모리 블록 사용 |
+| `enable_shared_from_this`   | 내부 `weak_ptr` 저장, 자동 연결 필요 |
+
+---
+
+## 💡 언제 어떤 스마트 포인터를 써야 할까?
+
+| 상황                                 | 적절한 스마트 포인터 |
+|--------------------------------------|------------------------|
+| 단독 자원 소유                         | `unique_ptr`           |
+| 여러 객체가 소유                      | `shared_ptr`           |
+| 참조는 하되 생명 주기는 소유하지 않음 | `weak_ptr`             |
+| 내부에서 자기 자신을 안전하게 참조     | `shared_from_this()`   |
+
+---
+
+## 🧠 마무리: 스마트 포인터 철학
+
+스마트 포인터는 단순한 포인터를 대체하는 도구가 아닙니다.  
+그 목적은 C++의 철학인 **RAII(Resource Acquisition Is Initialization)** 를 실현하며,  
+메모리 해제와 자원 관리를 **자동화하고 명확하게** 만드는 것입니다.
