@@ -1,0 +1,140 @@
+---
+layout: post
+title: C++ - 메타프로그래밍
+date: 2024-10-02 19:20:23 +0900
+category: C++
+---
+# 🧠 C++ 타입 추론과 메타프로그래밍 기초
+
+---
+
+## 🔍 1. 타입 추론이란?
+
+C++은 컴파일 타임에 변수의 타입을 **자동으로 추론**할 수 있습니다.  
+대표적인 키워드는 `auto`와 `decltype`입니다.
+
+### ✅ `auto` 키워드
+
+```cpp
+auto x = 10;            // int
+auto y = 3.14;          // double
+auto name = "Tom";      // const char*
+```
+
+- 반복자(iterator) 등 복잡한 타입 선언을 간단하게!
+
+```cpp
+std::vector<int>::iterator it = v.begin();  // 👎
+auto it = v.begin();                        // 👍
+```
+
+> 함수 반환 타입 추론에도 사용 가능 (C++14 이상):
+
+```cpp
+auto sum(int a, int b) {
+    return a + b;
+}
+```
+
+---
+
+### ✅ `decltype` 키워드
+
+다른 표현식의 **타입 그대로**를 추론:
+
+```cpp
+int x = 0;
+decltype(x) y = 5;  // int 타입으로 추론
+
+int a = 10;
+decltype(a + 3.14) b = 0.0;  // double
+```
+
+> 변수 이름이 아니라 **표현식 전체**를 기반으로 추론함
+
+---
+
+## 🧮 2. 타입 traits (`<type_traits>`)
+
+템플릿에서 **타입의 성질을 판별하거나 변형**할 때 사용됩니다.
+
+```cpp
+#include <type_traits>
+
+std::is_integral<int>::value     // true
+std::is_floating_point<double>() // true
+std::is_pointer<int*>::value     // true
+```
+
+### 🔹 조건부 타입 선택
+
+```cpp
+std::conditional<true, int, double>::type x;  // int
+```
+
+---
+
+## 🔁 3. `constexpr`: 컴파일 타임 계산
+
+```cpp
+constexpr int square(int x) {
+    return x * x;
+}
+
+int a[square(3)];  // 정적 배열 크기 (컴파일 타임)
+```
+
+- 런타임이 아니라 **컴파일 타임**에 계산
+- 재귀, if-else도 가능 (C++14 이상)
+
+---
+
+## ⚙️ 4. 간단한 템플릿 메타프로그래밍 예제
+
+```cpp
+template <int N>
+struct Factorial {
+    static constexpr int value = N * Factorial<N - 1>::value;
+};
+
+template <>
+struct Factorial<0> {
+    static constexpr int value = 1;
+};
+
+// 사용 예
+int main() {
+    int x = Factorial<5>::value;  // 120
+}
+```
+
+- 재귀적으로 **컴파일 타임에 팩토리얼 계산**
+- `constexpr`와는 다른 방식의 컴파일 타임 연산
+
+---
+
+## 📐 5. `decltype(auto)`와 `std::remove_reference`
+
+함수의 반환값이 참조일 수도 있을 때, 정확히 추론하기 위해:
+
+```cpp
+int x = 5;
+
+decltype(auto) foo() {
+    return (x);  // 참조 반환
+}
+```
+
+`type_traits`를 통해 레퍼런스 제거:
+
+```cpp
+std::remove_reference<int&>::type   // int
+```
+
+---
+
+## 🧠 마무리
+
+- `auto`, `decltype`, `constexpr`, `type_traits` 등은 C++ 코드의 **유연성과 안전성**을 높이는 도구입니다.
+- 메타프로그래밍은 C++의 강력한 특징 중 하나이며, 조건 분기, 최적화, 특수화 등에 자주 활용됩니다.
+- 추후에는 **SFINAE**, **concepts**, **enable_if**, **template 특수화** 등도 함께 공부하면 좋습니다.

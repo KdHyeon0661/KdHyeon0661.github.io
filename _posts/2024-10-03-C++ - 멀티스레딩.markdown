@@ -1,0 +1,128 @@
+---
+layout: post
+title: C++ - 멀티스레딩
+date: 2024-10-03 19:20:23 +0900
+category: C++
+---
+# 멀티스레딩과 동기화 기초 정리
+
+---
+
+## `std::thread`: 스레드 생성
+
+```cpp
+#include <thread>
+
+void task() {
+    std::cout << "스레드에서 실행 중\n";
+}
+
+int main() {
+    std::thread t(task);  // 새 스레드 실행
+    t.join();             // 메인 스레드가 기다림
+}
+```
+
+### 🔹 주요 함수
+
+| 메서드      | 설명                            |
+|-------------|---------------------------------|
+| `join()`    | 스레드 종료까지 기다림          |
+| `detach()`  | 독립 실행 (종료 기다리지 않음)  |
+| `joinable()`| 스레드가 `join` 가능한 상태인지 |
+
+---
+
+## 🔒 2. `std::mutex`: 상호 배제 (Mutual Exclusion)
+
+멀티스레드 환경에서 **공유 자원 보호**에 사용
+
+```cpp
+#include <mutex>
+
+std::mutex mtx;
+int counter = 0;
+
+void safe_increment() {
+    mtx.lock();
+    ++counter;
+    mtx.unlock();
+}
+```
+
+### 🔹 더 안전한 방법: `std::lock_guard`
+
+```cpp
+void safe_increment() {
+    std::lock_guard<std::mutex> lock(mtx);
+    ++counter;
+    // lock 해제는 자동으로 수행됨
+}
+```
+
+---
+
+## 📦 3. `std::unique_lock`: 유연한 락 관리
+
+```cpp
+std::unique_lock<std::mutex> lock(mtx);
+lock.unlock();   // 중간에 락 해제 가능
+lock.lock();     // 다시 락
+```
+
+> lock을 나중에 걸거나, 해제했다가 다시 걸고 싶을 때 `unique_lock`을 사용합니다.
+
+---
+
+## ⚡ 4. `std::async`와 `std::future`: 비동기 실행
+
+```cpp
+#include <future>
+
+int compute() {
+    return 42;
+}
+
+int main() {
+    std::future<int> f = std::async(compute);
+    std::cout << "계산 결과: " << f.get();  // 결과 대기
+}
+```
+
+- `std::async`은 **함수를 백그라운드에서 실행**
+- `std::future::get()`으로 결과를 받아옴 (block됨)
+
+---
+
+## 📢 5. 여러 스레드에서 출력 시 주의점
+
+```cpp
+std::mutex print_mtx;
+
+void print_message(const std::string& msg) {
+    std::lock_guard<std::mutex> lock(print_mtx);
+    std::cout << msg << "\n";
+}
+```
+
+> `cout`은 공유 자원이므로 스레드 간 동기화 필요
+
+---
+
+## 🧠 마무리 요약
+
+| 기능              | 도구                           |
+|-------------------|--------------------------------|
+| 스레드 실행       | `std::thread`, `join()`        |
+| 스레드 간 동기화  | `std::mutex`, `lock_guard`     |
+| 유연한 락         | `std::unique_lock`             |
+| 비동기 계산       | `std::async`, `std::future`    |
+| 출력 동기화       | `mutex`를 사용한 `cout` 보호   |
+
+---
+
+## 🧪 실전 팁
+
+- `detach()`는 남용하지 말 것 (스레드가 끝나기 전에 main이 종료되면 문제 발생)
+- 데이터 레이스를 막기 위한 락 전략 설계 중요
+- 복잡한 공유 상태 → `std::atomic`, `condition_variable`, `thread pool` 도 고려
