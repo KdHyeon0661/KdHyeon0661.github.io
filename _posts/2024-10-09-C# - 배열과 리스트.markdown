@@ -1,0 +1,145 @@
+---
+layout: post
+title: C# - 배열과 리스트
+date: 2024-10-09 19:20:23 +0900
+category: C#
+---
+# C# 배열과 리스트(List)
+
+이번 글에서는 C#에서 가장 기본적인 자료 구조인 **배열(Array)**과, 더 유연한 크기를 지원하는 **리스트(List)**를 다룹니다.
+
+---
+
+## 🔷 배열(Array)
+
+### ✅ 배열 선언 및 초기화
+
+```csharp
+int[] numbers = new int[5];           // 크기만 지정
+int[] scores = new int[] { 90, 80, 70 };
+string[] names = { "Alice", "Bob", "Charlie" };
+```
+
+- 배열은 **고정된 크기**를 가짐
+- 인덱스는 **0부터 시작**
+
+### ✅ 배열 접근
+
+```csharp
+Console.WriteLine(scores[1]); // 80
+
+scores[2] = 75;               // 값 변경
+```
+
+### ✅ 배열 순회
+
+```csharp
+for (int i = 0; i < names.Length; i++)
+{
+    Console.WriteLine(names[i]);
+}
+
+foreach (string name in names)
+{
+    Console.WriteLine(name);
+}
+```
+
+---
+
+## 🔷 다차원 배열
+
+### ✅ 2차원 배열
+
+```csharp
+int[,] matrix = new int[2, 3]
+{
+    {1, 2, 3},
+    {4, 5, 6}
+};
+
+Console.WriteLine(matrix[1, 2]); // 6
+```
+
+> `[행, 열]` 형식으로 접근
+
+---
+
+## 🔷 리스트 (List<T>)
+
+C#의 `List<T>`는 배열과 유사하지만, **크기를 자유롭게 조절 가능**한 컬렉션입니다.
+
+### ✅ using 선언
+
+```csharp
+using System.Collections.Generic;
+```
+
+### ✅ List 선언 및 초기화
+
+```csharp
+List<int> list = new List<int>();
+list.Add(10);
+list.Add(20);
+```
+
+또는:
+
+```csharp
+List<string> fruits = new List<string> { "사과", "바나나", "포도" };
+```
+
+---
+
+### ✅ 주요 메서드
+
+| 메서드 | 설명 |
+|--------|------|
+| `Add(value)` | 값 추가 |
+| `Insert(index, value)` | 특정 위치에 삽입 |
+| `Remove(value)` | 특정 값 제거 |
+| `RemoveAt(index)` | 특정 인덱스 제거 |
+| `Count` | 요소 개수 |
+| `Clear()` | 전체 삭제 |
+| `Contains(value)` | 포함 여부 확인 |
+
+```csharp
+fruits.Add("딸기");
+fruits.Remove("바나나");
+Console.WriteLine(fruits.Contains("사과")); // true
+Console.WriteLine(fruits.Count);            // 3
+```
+
+---
+
+### ✅ List 순회
+
+```csharp
+foreach (string fruit in fruits)
+{
+    Console.WriteLine(fruit);
+}
+```
+
+---
+
+## 🔄 배열 vs 리스트 비교
+
+| 항목 | 배열 (Array) | 리스트 (List<T>) |
+|------|---------------|------------------|
+| 크기 | 고정 | 가변 |
+| 선언 | `int[] arr` | `List<int> list` |
+| 네임스페이스 | 없음 | `System.Collections.Generic` 필요 |
+| 기능 | 단순 | 다양한 메서드 지원 |
+| 속도 | 더 빠름 (단순 구조) | 약간 느릴 수 있음 (추가 기능 많음) |
+
+---
+
+## ✅ 정리
+
+| 개념 | 요약 |
+|------|------|
+| 배열 | 고정 크기, 빠른 접근 속도, 기본 구조 |
+| List<T> | 가변 크기, 다양한 메서드 제공, 일반적으로 더 많이 사용됨 |
+| 반복문 | `for`, `foreach` 모두 사용 가능 |
+| 다차원 배열 | `[ , ]` 형태로 선언 |

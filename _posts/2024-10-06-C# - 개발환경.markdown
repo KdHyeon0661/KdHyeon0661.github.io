@@ -1,7 +1,7 @@
 ---
 layout: post
 title: C# - 개발환경
-date: 2024-10-05 19:20:23 +0900
+date: 2024-10-06 19:20:23 +0900
 category: C#
 ---
 # C# 개발 환경 설정 (VS Code 기준)
@@ -10,14 +10,14 @@ C#은 Visual Studio와 함께 사용하는 것이 일반적이지만, 가볍고 
 
 ---
 
-## 🔧 1. .NET SDK 설치
+## .NET SDK 설치
 
 C# 개발을 위해서는 **.NET SDK**가 필요합니다.
 
-### ✅ 설치 경로
+### 설치 경로
 - [.NET 공식 다운로드 페이지](https://dotnet.microsoft.com/en-us/download)
 
-### ✅ 설치 확인
+### 설치 확인
 터미널(명령 프롬프트, PowerShell, zsh 등)에서 다음 명령어를 실행합니다:
 
 ```bash
@@ -28,18 +28,18 @@ dotnet --version
 
 ---
 
-## 🧰 2. Visual Studio Code 설치
+## Visual Studio Code 설치
 
 VS Code는 Microsoft에서 만든 **경량 개발 도구**입니다.
 
-### ✅ 설치 링크
+### 설치 링크
 - [VS Code 공식 다운로드](https://code.visualstudio.com/)
 
 설치 후 실행하면 다음 단계로 넘어갑니다.
 
 ---
 
-## 🧩 3. C# 확장 설치
+## C# 확장 설치
 
 VS Code에서 C#을 사용하려면 **C# 확장**을 설치해야 합니다.
 
@@ -52,9 +52,9 @@ VS Code에서 C#을 사용하려면 **C# 확장**을 설치해야 합니다.
 
 ---
 
-## 📁 4. 첫 C# 프로젝트 생성
+## 4. 첫 C# 프로젝트 생성
 
-### ✅ 콘솔 앱 생성
+### 콘솔 앱 생성
 
 터미널에서 원하는 디렉터리로 이동 후, 아래 명령어 실행:
 
@@ -65,7 +65,7 @@ dotnet new console -n HelloCSharp
 - `HelloCSharp`이라는 폴더가 생성되고,
 - C# 기본 콘솔 앱 구조가 자동으로 만들어집니다.
 
-### ✅ 프로젝트 폴더 열기
+### 프로젝트 폴더 열기
 
 ```bash
 cd HelloCSharp
@@ -76,9 +76,9 @@ code .
 
 ---
 
-## ▶️ 5. 실행 및 디버깅
+## 실행 및 디버깅
 
-### ✅ 실행하기
+### 실행하기
 
 VS Code에서 다음 명령어로 프로그램 실행:
 
@@ -88,7 +88,7 @@ dotnet run
 
 또는, 상단 메뉴 → **Run > Run Without Debugging (Ctrl+F5)** 선택
 
-### ✅ 디버깅 설정 (선택)
+### 디버깅 설정 (선택)
 
 1. VS Code 상단 메뉴 → **Run > Add Configuration**
 2. `.vscode/launch.json`이 생성됨
@@ -96,7 +96,7 @@ dotnet run
 
 ---
 
-## 📄 예제 코드 (Program.cs)
+## 예제 코드 (Program.cs)
 
 ```csharp
 using System;
@@ -112,14 +112,14 @@ class Program
 
 ---
 
-## 💡 팁: 터미널 통합 사용
+## 팁: 터미널 통합 사용
 
 - `Ctrl + ~` 단축키로 터미널을 빠르게 열고 명령 실행 가능
 - `dotnet build`, `dotnet run`, `dotnet new` 등 다양한 명령 지원
 
 ---
 
-## ✅ 정리
+## 정리
 
 | 항목 | 설명 |
 |------|------|

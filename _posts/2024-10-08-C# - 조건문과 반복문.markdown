@@ -1,21 +1,21 @@
 ---
 layout: post
-title: C# - 개발환경
-date: 2024-10-05 19:20:23 +0900
+title: C# - 조건문과 반복문
+date: 2024-10-08 19:20:23 +0900
 category: C#
 ---
-# C# 조건문과 반복문
+# 조건문과 반복문
 
 이번 글에서는 C#에서 **조건문(if, switch)**과 **반복문(for, while, foreach)**을 사용하는 방법을 소개합니다.  
 이 문법들은 프로그램의 흐름 제어, 반복 처리 등에 필수적인 요소입니다.
 
 ---
 
-## 🔷 조건문 (Conditional Statements)
+## 조건문 (Conditional Statements)
 
 조건문은 특정 조건에 따라 실행 흐름을 분기시킬 때 사용합니다.
 
-### ✅ if, else if, else
+### if, else if, else
 
 ```csharp
 int score = 85;
@@ -39,7 +39,7 @@ else
 
 ---
 
-### ✅ 중첩 if문
+### 중첩 if문
 
 ```csharp
 int age = 20;
@@ -56,7 +56,7 @@ if (age >= 18)
 
 ---
 
-### ✅ 삼항 연산자
+### 삼항 연산자
 
 ```csharp
 int num = 10;
@@ -68,7 +68,7 @@ Console.WriteLine(result);
 
 ---
 
-### ✅ switch문
+### switch문
 
 ```csharp
 int menu = 2;
@@ -92,13 +92,13 @@ switch (menu)
 
 ---
 
-## 🔷 반복문 (Loops)
+## 반복문 (Loops)
 
 반복문은 코드 블록을 **조건이 만족될 때까지 반복 실행**하는 데 사용합니다.
 
 ---
 
-### ✅ for문
+### for문
 
 ```csharp
 for (int i = 0; i < 5; i++)
@@ -111,7 +111,7 @@ for (int i = 0; i < 5; i++)
 
 ---
 
-### ✅ while문
+### while문
 
 ```csharp
 int count = 0;
@@ -127,7 +127,7 @@ while (count < 3)
 
 ---
 
-### ✅ do-while문
+### do-while문
 
 ```csharp
 int num = 0;
@@ -143,7 +143,7 @@ do
 
 ---
 
-### ✅ foreach문
+### foreach문
 
 컬렉션(배열, 리스트 등)을 순회할 때 유용한 반복문입니다.
 
@@ -160,7 +160,7 @@ foreach (string fruit in fruits)
 
 ---
 
-## 🔷 break, continue
+## break, continue
 
 - `break`: 반복문을 즉시 종료
 - `continue`: 다음 반복으로 건너뜀
@@ -180,7 +180,7 @@ for (int i = 0; i < 5; i++)
 
 ---
 
-## ✅ 정리
+## 정리
 
 | 문법 | 설명 |
 |------|------|
