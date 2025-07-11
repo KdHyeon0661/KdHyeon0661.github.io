@@ -1,0 +1,161 @@
+---
+layout: post
+title: C# - 병렬 처리 고급
+date: 2024-10-25 19:20:23 +0900
+category: C#
+---
+# C# 병렬 처리 고급: Concurrent Collections와 Thread-Safe 설계
+
+멀티스레드 환경에서 **데이터 경쟁(Race Condition)**을 막고 **안정적인 처리를 위한 설계**가 필요합니다.  
+이번 글에서는 C#에서 제공하는 Thread-Safe 컬렉션과 대표적인 병렬 설계 기법을 정리합니다.
+
+---
+
+## 🔷 1. 일반 컬렉션의 문제점
+
+```csharp
+List<int> list = new List<int>();
+
+Parallel.For(0, 1000, i =>
+{
+    list.Add(i); // 예외 발생 가능 (스레드 충돌)
+});
+```
+
+- `List<T>`, `Dictionary<K,V>` 등은 기본적으로 **스레드 안전(Thread-Safe)이 아님**
+- 여러 스레드가 동시에 접근 시 `InvalidOperationException`, 데이터 손실 가능
+
+---
+
+## 🔷 2. Concurrent Collections 소개
+
+.NET에서는 다음과 같은 **동시성 컬렉션**을 제공합니다:
+
+| 타입 | 설명 |
+|------|------|
+| `ConcurrentQueue<T>` | 안전한 큐(FIFO) |
+| `ConcurrentStack<T>` | 안전한 스택(LIFO) |
+| `ConcurrentBag<T>` | 무순서 컬렉션 |
+| `ConcurrentDictionary<K,V>` | 스레드 안전한 키-값 저장소 |
+| `BlockingCollection<T>` | 제한된 생산/소비 패턴에 유용 |
+
+---
+
+## 🔷 3. ConcurrentQueue 예제
+
+```csharp
+ConcurrentQueue<int> queue = new ConcurrentQueue<int>();
+
+Parallel.For(0, 1000, i =>
+{
+    queue.Enqueue(i);
+});
+
+while (queue.TryDequeue(out int item))
+{
+    Console.WriteLine(item);
+}
+```
+
+---
+
+## 🔷 4. ConcurrentDictionary 예제
+
+```csharp
+ConcurrentDictionary<string, int> dict = new();
+
+Parallel.For(0, 1000, i =>
+{
+    dict.AddOrUpdate("count", 1, (key, oldValue) => oldValue + 1);
+});
+
+Console.WriteLine(dict["count"]); // 1000
+```
+
+---
+
+## 🔷 5. Thread-Safe 패턴: lock 사용
+
+```csharp
+object locker = new object();
+int total = 0;
+
+Parallel.For(0, 1000, i =>
+{
+    lock (locker)
+    {
+        total++;
+    }
+});
+```
+
+> ✅ 단점: 병목(bottleneck), 과도한 락 경쟁
+
+---
+
+## 🔷 6. Interlocked – 락 없는 정수 연산
+
+```csharp
+int total = 0;
+
+Parallel.For(0, 1000, i =>
+{
+    Interlocked.Increment(ref total); // 락 없이 안전한 증가
+});
+```
+
+- `Interlocked.Increment`, `Decrement`, `Add`, `CompareExchange` 등 제공
+- **가벼운 락 없이 정수 연산 처리** 가능
+
+---
+
+## 🔷 7. Lazy<T> – 지연 초기화와 스레드 안전
+
+```csharp
+Lazy<MyService> service = new(() => new MyService());
+
+var instance = service.Value; // 최초 접근 시 초기화
+```
+
+- 기본적으로 **스레드 안전**
+- Singleton 패턴 구현 시 유용
+
+---
+
+## 🔷 8. BlockingCollection – 생산자/소비자 패턴
+
+```csharp
+BlockingCollection<int> buffer = new();
+
+Task producer = Task.Run(() =>
+{
+    for (int i = 0; i < 10; i++)
+    {
+        buffer.Add(i);
+    }
+    buffer.CompleteAdding(); // 더 이상 추가 안 함
+});
+
+Task consumer = Task.Run(() =>
+{
+    foreach (int item in buffer.GetConsumingEnumerable())
+    {
+        Console.WriteLine($"소비: {item}");
+    }
+});
+
+await Task.WhenAll(producer, consumer);
+```
+
+---
+
+## ✅ 요약 정리
+
+| 도구/패턴 | 설명 |
+|-----------|------|
+| `ConcurrentDictionary` | 락 없이 키-값 저장 가능 |
+| `ConcurrentQueue` | 안전한 FIFO 큐 |
+| `BlockingCollection` | 생산자-소비자 구현 |
+| `Interlocked` | 락 없이 정수 연산 |
+| `lock` | 일반적인 동기화 방식 (단점: 병목) |
+| `Lazy<T>` | 지연 초기화 + 스레드 안전 |

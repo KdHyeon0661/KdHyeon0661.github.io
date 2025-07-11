@@ -1,0 +1,133 @@
+---
+layout: post
+title: C# - 유닛 테스트
+date: 2024-10-23 19:20:23 +0900
+category: C#
+---
+# C# 유닛 테스트와 xUnit 정리 (기초부터 실전까지)
+
+유닛 테스트는 **개별 기능(함수, 클래스 등)이 예상대로 동작하는지 검증**하는 자동화 테스트입니다.  
+C#에서는 `xUnit`, `NUnit`, `MSTest` 등의 프레임워크가 있으며, 본 글에서는 가장 널리 쓰이는 `xUnit`을 중심으로 설명합니다.
+
+---
+
+## 🔷 1. 유닛 테스트란?
+
+- 개발자가 작성한 **코드의 일부분(단위)**이 **예상한 대로 작동하는지 확인**하는 테스트
+- **반복 실행 가능**, 자동화 가능, 회귀 테스트에 유리
+- TDD(Test-Driven Development) 기반
+
+---
+
+## 🔷 2. xUnit 소개 및 설치
+
+### ✅ 설치 방법
+
+1. Visual Studio 또는 VS Code에서 테스트 프로젝트 생성  
+   (콘솔 프로젝트에서 따로 구성도 가능)
+
+2. NuGet 패키지 설치:
+```
+dotnet add package xunit
+dotnet add package xunit.runner.visualstudio
+dotnet add package Microsoft.NET.Test.Sdk
+```
+
+3. 테스트 파일은 보통 `MyClassTests.cs` 형태로 작성
+
+---
+
+## 🔷 3. 테스트 클래스와 메서드 구조
+
+```csharp
+using Xunit;
+
+public class CalculatorTests
+{
+    [Fact] // 테스트 메서드임을 명시
+    public void Add_ReturnsCorrectSum()
+    {
+        // Arrange
+        var calc = new Calculator();
+
+        // Act
+        int result = calc.Add(2, 3);
+
+        // Assert
+        Assert.Equal(5, result);
+    }
+}
+```
+
+- `[Fact]`: 인자가 없는 테스트
+- `[Theory]`: 매개변수를 주입하여 테스트
+
+---
+
+## 🔷 4. Theory + InlineData
+
+```csharp
+[Theory]
+[InlineData(2, 3, 5)]
+[InlineData(10, -5, 5)]
+public void Add_ReturnsExpected(int a, int b, int expected)
+{
+    var calc = new Calculator();
+    var result = calc.Add(a, b);
+    Assert.Equal(expected, result);
+}
+```
+
+> ✅ 다양한 입력을 반복 테스트할 수 있어 생산성이 높음
+
+---
+
+## 🔷 5. 주요 Assert 메서드
+
+| 메서드 | 설명 |
+|--------|------|
+| `Assert.Equal(expected, actual)` | 값 비교 |
+| `Assert.NotEqual(...)` | 서로 다름 확인 |
+| `Assert.True(condition)` | 조건이 true인지 |
+| `Assert.False(condition)` | false인지 |
+| `Assert.Null(object)` | null 여부 |
+| `Assert.NotNull(object)` | null 아님 확인 |
+| `Assert.Throws<T>(...)` | 예외 발생 확인 |
+
+---
+
+## 🔷 6. 테스트 실행 방법
+
+### ✅ 명령줄에서 실행
+
+```
+dotnet test
+```
+
+### ✅ VS 또는 VS Code에서
+
+- 테스트 탐색기(Test Explorer)를 통해 버튼 클릭으로 실행 가능
+
+---
+
+## 🔷 7. 테스트에서의 의존성 제거 – Mocking 개념
+
+- 외부 의존성을 제거하여 **순수한 로직만 테스트**
+- `Moq`, `NSubstitute`, `FakeItEasy` 등의 라이브러리 사용
+
+```csharp
+var mockService = new Mock<IMyService>();
+mockService.Setup(s => s.GetValue()).Returns(42);
+```
+
+---
+
+## ✅ 요약 정리
+
+| 항목 | 설명 |
+|------|------|
+| `Fact` | 단일 입력 테스트 |
+| `Theory` + `InlineData` | 다양한 입력 테스트 |
+| `Assert.Equal()` 등 | 테스트 결과 확인 |
+| `dotnet test` | CLI 테스트 실행 |
+| `Mocking` | 외부 의존성 제거 기법 |

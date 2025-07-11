@@ -1,0 +1,171 @@
+---
+layout: post
+title: C# - 가상 함수와 상속 제어 키워드
+date: 2024-10-13 19:20:23 +0900
+category: C#
+---
+# C# 가상 함수와 상속 제어 키워드 (virtual, override, new, abstract, sealed)
+
+C#에서 **상속 관계를 설계할 때** 사용하는 주요 키워드들을 정리합니다.  
+이 키워드들은 메서드의 재정의 여부와 방식을 제어하며, 객체지향 설계의 유연성과 안정성을 동시에 확보하는 데 사용됩니다.
+
+---
+
+## 🔷 virtual / override
+
+### ✅ virtual: 부모 클래스에서 **재정의 가능함을 명시**
+
+```csharp
+class Animal
+{
+    public virtual void Speak()
+    {
+        Console.WriteLine("동물이 소리를 냅니다");
+    }
+}
+```
+
+### ✅ override: 자식 클래스에서 **재정의**
+
+```csharp
+class Dog : Animal
+{
+    public override void Speak()
+    {
+        Console.WriteLine("멍멍");
+    }
+}
+```
+
+### 사용 예
+
+```csharp
+Animal a = new Dog();
+a.Speak();  // "멍멍"
+```
+
+> 부모 클래스 타입으로 호출해도 **자식의 오버라이딩된 메서드**가 실행됨 → 다형성 구현
+
+---
+
+## 🔷 new: 메서드 숨기기 (재정의 아님)
+
+`new` 키워드는 **부모 클래스의 메서드를 완전히 숨기고 새로 정의**할 때 사용합니다.
+
+```csharp
+class Animal
+{
+    public void Eat()
+    {
+        Console.WriteLine("먹는다");
+    }
+}
+
+class Cat : Animal
+{
+    public new void Eat()
+    {
+        Console.WriteLine("고양이가 먹는다");
+    }
+}
+```
+
+```csharp
+Animal a = new Cat();
+a.Eat(); // "먹는다" ← 부모 메서드 호출
+```
+
+- `override`와 달리 **다형성 적용되지 않음**
+- 부모 타입으로 호출하면 부모 메서드가 실행됨
+
+---
+
+## 🔷 abstract: 추상 메서드/클래스
+
+### ✅ abstract 메서드
+
+- 메서드 **선언만 있고 구현 없음**
+- 반드시 **파생 클래스에서 override 필수**
+
+```csharp
+abstract class Shape
+{
+    public abstract double GetArea();  // 구현 없음
+}
+
+class Rectangle : Shape
+{
+    public override double GetArea()
+    {
+        return 10 * 20;  // 예시
+    }
+}
+```
+
+### ✅ abstract 클래스
+
+- 인스턴스 생성 불가능 (`new Shape()` 불가)
+- **공통 로직 + 추상 정의 혼합 가능**
+
+```csharp
+abstract class Animal
+{
+    public void Breathe()
+    {
+        Console.WriteLine("숨 쉰다");
+    }
+
+    public abstract void Speak();
+}
+```
+
+---
+
+## 🔷 sealed: 재정의 금지
+
+`sealed`는 **상속 또는 오버라이딩을 더 이상 허용하지 않음**을 의미합니다.
+
+### ✅ sealed 클래스: 상속 불가
+
+```csharp
+sealed class Tool
+{
+    public void Use() { }
+}
+
+// class Hammer : Tool { } // ❌ 에러: sealed 클래스는 상속 불가
+```
+
+### ✅ sealed 메서드: 오버라이딩 금지
+
+```csharp
+class Animal
+{
+    public virtual void Speak() { }
+}
+
+class Dog : Animal
+{
+    public sealed override void Speak()
+    {
+        Console.WriteLine("멍멍");
+    }
+}
+
+class Bulldog : Dog
+{
+    // public override void Speak() { } // ❌ 에러: sealed 메서드는 더 이상 override 불가
+}
+```
+
+---
+
+## ✅ 요약 정리
+
+| 키워드 | 용도 | 특징 |
+|--------|------|------|
+| `virtual` | 부모 클래스 메서드에 재정의 허용 | 자식 클래스에서 `override` 가능 |
+| `override` | 자식 클래스가 부모 메서드 재정의 | 다형성 동작 |
+| `new` | 부모 메서드를 숨기고 새로 정의 | 다형성 비적용, 부모 타입으로 호출 시 부모 메서드 실행 |
+| `abstract` | 메서드: 선언만 있음, 클래스: 인스턴스 생성 불가 | 자식 클래스에서 반드시 `override` |
+| `sealed` | 클래스: 상속 불가, 메서드: 더 이상 재정의 금지 | 상속 및 확장 제한 가능 |

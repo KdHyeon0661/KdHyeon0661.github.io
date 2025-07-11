@@ -1,0 +1,147 @@
+---
+layout: post
+title: C# - 델리게이트, 람다, 이벤트
+date: 2024-10-19 20:20:23 +0900
+category: C#
+---
+# C# 델리게이트, 람다, 이벤트 완전 정리
+
+C#에서는 **함수를 변수처럼 전달**할 수 있는 기능을 델리게이트(delegate)로 제공합니다.  
+이를 기반으로 한 람다 표현식, 이벤트(event)는 **비동기 처리, UI, LINQ 등 핵심 기능**의 기반입니다.
+
+---
+
+## 🔷 1. 델리게이트(Delegate)란?
+
+- 델리게이트는 **메서드 참조를 저장하는 타입**입니다.
+- 일종의 **함수 포인터** 역할을 하며, 매개변수와 반환형이 동일한 메서드만 저장할 수 있습니다.
+
+### ✅ 기본 예제
+
+```csharp
+public delegate int Calculator(int a, int b); // 델리게이트 선언
+
+int Add(int x, int y) => x + y;
+
+Calculator calc = Add; // 메서드 참조 저장
+int result = calc(3, 4); // 호출 → 7
+```
+
+---
+
+## 🔷 2. 익명 메서드
+
+델리게이트에 직접 **무명 함수**를 할당할 수 있습니다.
+
+```csharp
+Calculator calc = delegate(int a, int b)
+{
+    return a * b;
+};
+```
+
+---
+
+## 🔷 3. 람다 표현식 (Lambda Expression)
+
+람다는 **간결한 함수 표현 방식**입니다.  
+→ `(매개변수) => 식` 또는 `{문장}` 형태로 사용합니다.
+
+```csharp
+Calculator calc = (a, b) => a + b;
+
+Func<int, int, int> multiply = (x, y) => x * y;
+```
+
+---
+
+## 🔷 4. Func / Action / Predicate
+
+### ✅ Func<T1, ..., TResult>
+
+- 반환값이 있는 람다
+
+```csharp
+Func<int, int, int> add = (x, y) => x + y;
+```
+
+### ✅ Action<T1, ..., Tn>
+
+- 반환값이 없는 람다
+
+```csharp
+Action<string> greet = name => Console.WriteLine($"Hello {name}");
+```
+
+### ✅ Predicate<T>
+
+- `bool`을 반환하는 조건 함수
+
+```csharp
+Predicate<int> isEven = x => x % 2 == 0;
+```
+
+---
+
+## 🔷 5. 이벤트(Event)
+
+델리게이트는 단독으로도 사용되지만, UI나 시스템 메시지에서 흔히 쓰이는 **이벤트 시스템의 기반**이 됩니다.
+
+### ✅ 기본 구조
+
+```csharp
+public delegate void OnChangedHandler();
+
+public class Button
+{
+    public event OnChangedHandler OnClick;
+
+    public void Click()
+    {
+        OnClick?.Invoke(); // 이벤트 발생
+    }
+}
+```
+
+### ✅ 구독/사용
+
+```csharp
+Button btn = new Button();
+btn.OnClick += () => Console.WriteLine("버튼 클릭!");
+btn.Click(); // 출력: 버튼 클릭!
+```
+
+---
+
+## 🔷 6. EventHandler, EventArgs – 표준 이벤트 패턴
+
+.NET에서는 다음과 같은 **표준 이벤트 패턴**을 사용합니다.
+
+```csharp
+public event EventHandler<MyEventArgs> SomethingHappened;
+
+public class MyEventArgs : EventArgs
+{
+    public string Message { get; set; }
+}
+```
+
+이벤트 발생:
+
+```csharp
+SomethingHappened?.Invoke(this, new MyEventArgs { Message = "발생!" });
+```
+
+---
+
+## ✅ 요약 정리
+
+| 요소 | 설명 |
+|------|------|
+| `delegate` | 메서드를 참조하는 형식 |
+| `Action<T>` | 반환값 없는 람다 |
+| `Func<T, TResult>` | 반환값 있는 람다 |
+| `Predicate<T>` | bool 반환 조건 함수 |
+| `event` | 델리게이트 기반 이벤트 시스템 |
+| `lambda` | 간결한 함수 정의 문법 |
+| `EventHandler<T>` | .NET 표준 이벤트 패턴 |

@@ -1,0 +1,165 @@
+---
+layout: post
+title: C# - 비관리 메모리 접근 및 네이티브 연동
+date: 2024-10-17 19:20:23 +0900
+category: C#
+---
+# C# 비관리 메모리 접근 및 네이티브 연동 총정리 (P/Invoke, Marshal, NativeMemory, Span<byte>)
+
+C#은 기본적으로 **관리 메모리 환경(.NET GC)**에서 실행되지만,  
+필요에 따라 **비관리 메모리(unmanaged memory)**나 **네이티브 라이브러리(C/C++)**와 상호작용할 수 있습니다.
+
+이 글에서는 그런 고급 기능들을 정리합니다.
+
+---
+
+## 🔷 1. 비관리 메모리란?
+
+.NET에서 관리되지 않고 GC의 제어를 받지 않는 메모리 영역.
+
+| 구분 | 설명 |
+|------|------|
+| **관리 메모리** | GC가 추적/회수 (new로 할당된 객체) |
+| **비관리 메모리** | C/C++처럼 직접 할당/해제 필요 (GC가 모름) |
+
+---
+
+## 🔷 2. Marshal 클래스 - 비관리 메모리 다루기
+
+`System.Runtime.InteropServices.Marshal`은  
+C#에서 **비관리 메모리에 접근하거나 조작**할 때 사용됩니다.
+
+### ✅ 메모리 할당 / 해제
+
+```csharp
+IntPtr ptr = Marshal.AllocHGlobal(100); // 100바이트 할당
+Marshal.FreeHGlobal(ptr);               // 해제
+```
+
+### ✅ 구조체 → 포인터
+
+```csharp
+MyStruct data = new MyStruct();
+IntPtr p = Marshal.AllocHGlobal(Marshal.SizeOf<MyStruct>());
+Marshal.StructureToPtr(data, p, false);
+```
+
+### ✅ 포인터 → 구조체
+
+```csharp
+MyStruct recovered = Marshal.PtrToStructure<MyStruct>(p);
+```
+
+---
+
+## 🔷 3. NativeMemory – .NET 6+ 고성능 메모리 API
+
+.NET 6부터는 `System.Runtime.InteropServices.NativeMemory`를 사용해  
+**비관리 메모리를 더 빠르고 직관적으로** 제어할 수 있습니다.
+
+```csharp
+nint p = NativeMemory.Alloc(100);
+NativeMemory.Free(p);
+```
+
+- `nint`: 플랫폼 크기에 따라 자동 조정되는 정수(IntPtr 대체)
+- 속도가 더 빠르고 GC 개입 없음
+- Marshal보다 현대적이고 간결함
+
+---
+
+## 🔷 4. Span<byte>와 비관리 메모리 연결
+
+`Span<T>`는 비관리 메모리를 안전하게 다루는 데 적합한 타입입니다.
+
+```csharp
+nint p = NativeMemory.Alloc(10);
+Span<byte> span = new Span<byte>((void*)p, 10);
+
+span[0] = 42;
+NativeMemory.Free(p);
+```
+
+> ✅ 포인터 → Span 연결 시 안전하게 범위 검사 등 지원됨
+
+---
+
+## 🔷 5. P/Invoke (Platform Invocation)
+
+C#에서 외부 **C/C++ DLL 함수 호출**을 지원하는 기능입니다.
+
+### ✅ 선언 예시
+
+```csharp
+[DllImport("user32.dll")]
+public static extern int MessageBox(IntPtr hWnd, string text, string caption, uint type);
+```
+
+### ✅ 호출
+
+```csharp
+MessageBox(IntPtr.Zero, "Hello", "PInvoke", 0);
+```
+
+> `DllImport`는 `System.Runtime.InteropServices`에 있음
+
+### ✅ C 함수 예제 (C로 만든 DLL)
+
+```c
+// C 함수 정의 (export DLL)
+__declspec(dllexport) int Add(int a, int b) {
+    return a + b;
+}
+```
+
+그리고 C#에서:
+
+```csharp
+[DllImport("MyDll.dll")]
+public static extern int Add(int a, int b);
+```
+
+---
+
+## 🔷 6. GCHandle – 관리 객체를 비관리 코드에 넘길 때
+
+비관리 코드에 .NET 객체를 전달할 때 GC가 객체를 이동시키지 않도록 고정해야 함.
+
+```csharp
+GCHandle handle = GCHandle.Alloc(myObject, GCHandleType.Pinned);
+IntPtr ptr = handle.AddrOfPinnedObject();
+
+// ... 네이티브 호출 등
+
+handle.Free(); // 반드시 해제!
+```
+
+---
+
+## 🔷 7. Unsafe 코드로 직접 접근
+
+```csharp
+unsafe static void UnsafePointer()
+{
+    byte* p = (byte*)NativeMemory.Alloc(10);
+    p[0] = 0xFF;
+    NativeMemory.Free(p);
+}
+```
+
+- `unsafe` 키워드 필요
+- 고속 버퍼 처리, 이미지 조작 등에 유용
+- 관리 메모리에서 사용 불가
+
+---
+
+## ✅ 요약 비교
+
+| 기술 | 역할 | 사용 시점 |
+|------|------|------------|
+| `Marshal` | 구조체 변환, 비관리 메모리 접근 | 호환성용 |
+| `NativeMemory` | 고속 비관리 메모리 할당/해제 | .NET 6+ 권장 |
+| `Span<T>` | 안전한 메모리 접근 | 버퍼 조작, stackalloc 등 |
+| `P/Invoke` | C/C++ DLL 호출 | Win32 API 연동 등 |
+| `GCHandle` | .NET 객체 고정 | 네이티브 호출 시 필요 |
+| `unsafe` 포인터 | 직접 메모리 조작 | 고성능 처리, 시스템 프로그래밍 |

@@ -1,0 +1,153 @@
+---
+layout: post
+title: C# - 열거형, 구조체, 튜플
+date: 2024-10-15 19:20:23 +0900
+category: C#
+---
+# C# 열거형(enum), 구조체(struct), 튜플(tuple) 사용법
+
+이번 글에서는 **열거형(enum)**, **구조체(struct)**, **튜플(tuple)**의 선언과 사용법을 간단한 예제와 함께 설명합니다.
+
+---
+
+## 🔷 enum (열거형)
+
+`enum`은 이름 붙은 정수 상수 집합을 정의합니다. 코드 가독성과 의미 전달에 유리합니다.
+
+### ✅ 선언
+
+```csharp
+enum DayOfWeek
+{
+    Sunday,
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday
+}
+```
+
+- 기본값: 0부터 시작하여 1씩 증가
+- 원하는 값으로 초기화 가능
+
+```csharp
+enum Level
+{
+    Low = 1,
+    Medium = 2,
+    High = 3
+}
+```
+
+### ✅ 사용 예시
+
+```csharp
+DayOfWeek today = DayOfWeek.Monday;
+
+if (today == DayOfWeek.Monday)
+{
+    Console.WriteLine("월요일입니다.");
+}
+```
+
+---
+
+## 🔷 struct (구조체)
+
+`struct`는 값 타입(value type)으로, **간단한 데이터를 묶는 데 사용**됩니다.  
+클래스와 비슷하지만 **상속이 불가능**하며, 일반적으로 **작고 불변한 데이터에 적합**합니다.
+
+### ✅ 선언
+
+```csharp
+struct Point
+{
+    public int X;
+    public int Y;
+
+    public Point(int x, int y)
+    {
+        X = x;
+        Y = y;
+    }
+
+    public void Print()
+    {
+        Console.WriteLine($"({X}, {Y})");
+    }
+}
+```
+
+### ✅ 사용 예시
+
+```csharp
+Point p = new Point(3, 5);
+p.Print(); // (3, 5)
+```
+
+### ✅ struct vs class
+
+| 항목 | struct | class |
+|------|--------|-------|
+| 기본 유형 | 값 타입 | 참조 타입 |
+| 상속 | 불가능 | 가능 |
+| 생성자 | 매개변수 있는 생성자만 허용 | 여러 형태 허용 |
+| 메모리 | 스택에 저장 | 힙에 저장 (GC 관리) |
+| 용도 | 작고 단순한 데이터 | 복잡한 데이터 및 동작 |
+
+---
+
+## 🔷 tuple (튜플)
+
+튜플은 **여러 값을 묶어 반환하거나 전달할 때** 사용하는 경량 구조입니다.
+
+### ✅ 선언 및 사용
+
+```csharp
+var tuple = (1, "Apple", true);
+Console.WriteLine(tuple.Item1); // 1
+Console.WriteLine(tuple.Item2); // Apple
+```
+
+### ✅ 명명된 튜플
+
+```csharp
+(string name, int age) person = ("Alice", 30);
+Console.WriteLine(person.name); // Alice
+```
+
+### ✅ 메서드에서 튜플 반환
+
+```csharp
+(string, int) GetUser()
+{
+    return ("Bob", 25);
+}
+
+var user = GetUser();
+Console.WriteLine(user.Item1); // Bob
+```
+
+또는
+
+```csharp
+(string name, int age) GetUser()
+{
+    return ("Bob", 25);
+}
+
+var (name, age) = GetUser();
+Console.WriteLine($"{name}, {age}");
+```
+
+---
+
+## ✅ 정리
+
+| 개념 | 설명 | 특징 |
+|------|------|------|
+| `enum` | 상수 집합 | 정수 기반, 이름으로 표현 |
+| `struct` | 값 타입 사용자 정의 | 상속 불가, 가벼운 데이터용 |
+| `tuple` | 여러 값 묶음 | 간단한 다중 반환/전달에 유용 |

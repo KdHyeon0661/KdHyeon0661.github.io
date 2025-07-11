@@ -1,0 +1,141 @@
+---
+layout: post
+title: C# - 컬렉션
+date: 2024-10-18 19:20:23 +0900
+category: C#
+---
+# C# 컬렉션 클래스 총정리 (List, Dictionary, Queue, Stack, HashSet 등)
+
+C#에서 컬렉션(Collection)은 데이터를 저장하고 관리하는 데 사용되는 **컨테이너 클래스**입니다.  
+.NET은 다양한 상황에 맞는 컬렉션들을 제공하며, 주요 컬렉션은 `System.Collections.Generic` 네임스페이스에 있습니다.
+
+---
+
+## 🔷 1. List<T> – 가변 길이 배열
+
+```csharp
+List<string> fruits = new List<string>();
+fruits.Add("Apple");
+fruits.Add("Banana");
+fruits.Remove("Apple");
+Console.WriteLine(fruits[0]); // Banana
+```
+
+### ✅ 주요 기능
+
+- `Add`, `Insert`, `Remove`, `Contains`, `Sort`, `Clear`
+- 인덱스를 통해 요소 접근
+- 배열보다 유연하며 크기 자동 증가
+
+---
+
+## 🔷 2. Dictionary<TKey, TValue> – 키-값 쌍 저장
+
+```csharp
+Dictionary<string, int> scores = new Dictionary<string, int>();
+scores["Alice"] = 90;
+scores["Bob"] = 85;
+Console.WriteLine(scores["Alice"]); // 90
+```
+
+### ✅ 주요 기능
+
+- 고속 검색: 키를 통해 직접 접근
+- `ContainsKey`, `TryGetValue`, `Remove`
+- 키 중복 불가, 값은 중복 가능
+
+---
+
+## 🔷 3. Queue<T> – FIFO(선입선출) 큐
+
+```csharp
+Queue<string> q = new Queue<string>();
+q.Enqueue("First");
+q.Enqueue("Second");
+string item = q.Dequeue(); // "First"
+```
+
+### ✅ 주요 기능
+
+- `Enqueue`: 추가
+- `Dequeue`: 제거 및 반환
+- `Peek`: 첫 항목 확인 (제거 안 함)
+
+> ✅ **대기열 처리, 메시지 큐 구현 등에 적합**
+
+---
+
+## 🔷 4. Stack<T> – LIFO(후입선출) 스택
+
+```csharp
+Stack<int> stack = new Stack<int>();
+stack.Push(10);
+stack.Push(20);
+int top = stack.Pop(); // 20
+```
+
+### ✅ 주요 기능
+
+- `Push`: 추가
+- `Pop`: 제거 및 반환
+- `Peek`: 마지막 항목 확인
+
+> ✅ **재귀 구조, 히스토리 저장 등에 적합**
+
+---
+
+## 🔷 5. HashSet<T> – 중복 없는 집합
+
+```csharp
+HashSet<int> set = new HashSet<int>();
+set.Add(1);
+set.Add(2);
+set.Add(1); // 중복이라 추가되지 않음
+```
+
+### ✅ 주요 기능
+
+- 중복 자동 제거
+- `UnionWith`, `IntersectWith`, `ExceptWith` 등의 집합 연산 지원
+- `Contains`로 빠른 포함 여부 확인
+
+> ✅ 빠르고 메모리 효율적인 중복 제거 도구
+
+---
+
+## 🔷 6. 컬렉션 반복
+
+모든 컬렉션은 `foreach`를 사용할 수 있습니다.
+
+```csharp
+foreach (var item in fruits)
+{
+    Console.WriteLine(item);
+}
+```
+
+---
+
+## 🔷 7. 컬렉션 초기화 문법
+
+```csharp
+var colors = new List<string> { "Red", "Green", "Blue" };
+
+var capitals = new Dictionary<string, string>
+{
+    { "Korea", "Seoul" },
+    { "Japan", "Tokyo" }
+};
+```
+
+---
+
+## ✅ 요약 정리
+
+| 컬렉션 | 구조 | 주요 특징 |
+|--------|------|------------|
+| `List<T>` | 배열 | 인덱스 기반, 크기 자동 증가 |
+| `Dictionary<K,V>` | 해시 테이블 | 키로 빠른 검색 |
+| `Queue<T>` | FIFO | 순차 처리 |
+| `Stack<T>` | LIFO | 역순 처리 |
+| `HashSet<T>` | 집합 | 중복 없음, 빠른 탐색 |

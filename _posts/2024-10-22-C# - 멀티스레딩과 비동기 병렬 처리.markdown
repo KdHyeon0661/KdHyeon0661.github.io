@@ -1,0 +1,146 @@
+---
+layout: post
+title: C# - 멀티스레딩과 비동기 병렬 처리
+date: 2024-10-22 19:20:23 +0900
+category: C#
+---
+# C# 멀티스레딩과 비동기 병렬 처리 (Thread, Task, async/await, lock 완전 정리)
+
+C#에서는 멀티스레딩과 비동기 프로그래밍을 통해 **UI 응답성 유지**, **병렬 작업 처리**, **IO 대기 시간 단축**이 가능합니다.  
+이번 글에서는 Thread, Task, async/await, 병렬 루프, lock 등을 차근히 정리합니다.
+
+---
+
+## 🔷 1. Thread – 전통적인 멀티스레드
+
+```csharp
+using System.Threading;
+
+Thread t = new Thread(() =>
+{
+    Console.WriteLine("스레드 실행 중...");
+});
+t.Start();
+```
+
+> `Thread`는 직접 스레드를 생성하는 방식으로, 제어는 많지만 무겁고 잘 사용하지 않습니다.
+
+---
+
+## 🔷 2. Task – 기본 비동기 단위
+
+```csharp
+using System.Threading.Tasks;
+
+Task t = Task.Run(() =>
+{
+    Console.WriteLine("Task 작업 실행 중...");
+});
+await t;
+```
+
+### ✅ 반환값이 있는 Task
+
+```csharp
+Task<int> task = Task.Run(() => 1 + 2);
+int result = await task; // 3
+```
+
+---
+
+## 🔷 3. async / await – 비동기 함수 정의
+
+### ✅ 기본 구조
+
+```csharp
+async Task SayHelloAsync()
+{
+    await Task.Delay(1000); // 1초 대기
+    Console.WriteLine("Hello async!");
+}
+
+await SayHelloAsync();
+```
+
+- `Task`: 반환값 없음
+- `Task<T>`: 반환값 있음
+- `await`: 해당 작업이 끝날 때까지 기다림
+
+> UI 쓰레드를 막지 않기 때문에 **윈도우 앱, 웹 앱에 필수**입니다.
+
+---
+
+## 🔷 4. 병렬 처리 (Parallel.For / Parallel.ForEach)
+
+### ✅ 병렬 반복문
+
+```csharp
+Parallel.For(0, 5, i =>
+{
+    Console.WriteLine($"Index: {i}");
+});
+```
+
+```csharp
+var list = new List<string> { "A", "B", "C" };
+
+Parallel.ForEach(list, item =>
+{
+    Console.WriteLine(item);
+});
+```
+
+> 병렬 반복은 CPU 코어를 활용해 **빠르게 대량 작업을 처리**할 수 있습니다.
+
+---
+
+## 🔷 5. lock – 스레드 간 공유 자원 보호
+
+여러 스레드가 동시에 접근하는 자원을 보호하려면 `lock`을 사용해야 합니다.
+
+```csharp
+object locker = new object();
+int counter = 0;
+
+Parallel.For(0, 1000, i =>
+{
+    lock (locker)
+    {
+        counter++;
+    }
+});
+
+Console.WriteLine(counter); // 1000
+```
+
+---
+
+## 🔷 6. CancellationToken – 비동기 작업 취소
+
+```csharp
+CancellationTokenSource cts = new CancellationTokenSource();
+
+Task t = Task.Run(() =>
+{
+    while (!cts.Token.IsCancellationRequested)
+    {
+        // 작업 수행
+    }
+}, cts.Token);
+
+// 나중에 취소
+cts.Cancel();
+```
+
+---
+
+## ✅ 요약 정리
+
+| 기능 | 설명 |
+|------|------|
+| `Thread` | 직접 스레드 생성. 제어 가능, 무거움 |
+| `Task` | 경량 스레드 작업 단위. `Run()`, `Delay()` |
+| `async/await` | 비동기 함수 작성. UI 응답성 유지 |
+| `Parallel.For` | 병렬 반복 처리 |
+| `lock` | 공유 자원 동기화 |
+| `CancellationToken` | 비동기 작업 취소 제어 |

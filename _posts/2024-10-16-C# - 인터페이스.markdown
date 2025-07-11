@@ -1,0 +1,154 @@
+---
+layout: post
+title: C# - 인터페이스
+date: 2024-10-16 19:20:23 +0900
+category: C#
+---
+# C# 인터페이스(interface) 완전 정리
+
+인터페이스는 C#에서 **다형성과 추상화**를 지원하는 강력한 도구입니다.  
+클래스가 반드시 구현해야 하는 **계약(Contract)**을 정의하는 역할을 하며,  
+대규모 시스템에서 유연한 구조 설계에 필수적입니다.
+
+---
+
+## 🔷 1. 인터페이스란?
+
+- 인터페이스는 **메서드, 속성, 이벤트, 인덱서의 시그니처만 정의**합니다.
+- 실제 구현은 인터페이스를 **상속받은 클래스에서 수행**합니다.
+- 다중 상속이 가능하며, 클래스의 구현을 분리하는 데 유리합니다.
+
+---
+
+## 🔷 2. 기본 문법
+
+```csharp
+public interface IShape
+{
+    void Draw();
+    double GetArea();
+}
+```
+
+### 인터페이스 구현 클래스
+
+```csharp
+public class Circle : IShape
+{
+    public double Radius { get; set; }
+
+    public void Draw()
+    {
+        Console.WriteLine("원을 그립니다.");
+    }
+
+    public double GetArea()
+    {
+        return Math.PI * Radius * Radius;
+    }
+}
+```
+
+---
+
+## 🔷 3. 인터페이스 사용 예시
+
+```csharp
+void RenderShape(IShape shape)
+{
+    shape.Draw();
+    Console.WriteLine($"넓이: {shape.GetArea()}");
+}
+```
+
+```csharp
+IShape s = new Circle { Radius = 5 };
+RenderShape(s);
+```
+
+> ✅ **장점**: `IShape`로 타입을 통일하면 다양한 도형을 동일한 방식으로 처리 가능 (다형성)
+
+---
+
+## 🔷 4. 다중 인터페이스 구현
+
+인터페이스는 **다중 상속**이 가능합니다.
+
+```csharp
+public interface IFlyable
+{
+    void Fly();
+}
+
+public interface ISwimmable
+{
+    void Swim();
+}
+
+public class Duck : IFlyable, ISwimmable
+{
+    public void Fly() => Console.WriteLine("날다");
+    public void Swim() => Console.WriteLine("헤엄치다");
+}
+```
+
+---
+
+## 🔷 5. 인터페이스 vs 추상 클래스
+
+| 구분 | 인터페이스 | 추상 클래스 |
+|------|-------------|---------------|
+| 다중 상속 | 가능 | 불가능 |
+| 필드 | ❌ 불가 | ⭕ 가능 |
+| 접근 제한자 | 모든 멤버는 public | 제한자 지정 가능 |
+| 목적 | 계약 정의 | 공통 구현 제공 가능 |
+
+> ✅ 공통 구현이 필요 없고, **구현 강제만** 하고 싶을 때는 **인터페이스 사용이 적절**합니다.
+
+---
+
+## 🔷 6. 인터페이스 상속 (인터페이스끼리 상속)
+
+```csharp
+public interface IReadable
+{
+    void Read();
+}
+
+public interface IWritable : IReadable
+{
+    void Write();
+}
+```
+
+- `IWritable`을 구현하는 클래스는 `Read()`도 반드시 구현해야 합니다.
+
+---
+
+## 🔷 7. 기본 구현 (C# 8.0 이상)
+
+C# 8.0부터 인터페이스에 **기본 구현(default implementation)**도 제공할 수 있습니다.
+
+```csharp
+public interface ILogger
+{
+    void Log(string message)
+    {
+        Console.WriteLine($"[기본 로그] {message}");
+    }
+}
+```
+
+> 하지만 **기본 구현은 일반적으로 남용하지 않도록 주의**해야 합니다. 복잡도 증가 가능성 있음.
+
+---
+
+## ✅ 요약 정리
+
+| 항목 | 설명 |
+|------|------|
+| 인터페이스 | 메서드/속성 시그니처만 정의하는 추상적 계약 |
+| 클래스 구현 | `: 인터페이스명` 으로 구현 |
+| 다중 구현 | 인터페이스는 다중 상속 가능 |
+| 용도 | 추상화, 테스트 용이성, 유연한 구조 설계 |
+| C# 8 이상 | 기본 구현도 일부 허용됨 |

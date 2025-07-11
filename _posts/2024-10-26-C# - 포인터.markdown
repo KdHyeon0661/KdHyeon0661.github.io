@@ -1,0 +1,195 @@
+---
+layout: post
+title: C# - 포인터
+date: 2024-10-16 19:20:23 +0900
+category: C#
+---
+# C# 포인터 완전 정리 (unsafe, fixed, *, &, ->, IntPtr, Span<T> 등)
+
+C#은 메모리 안정성과 안전성을 지향하는 언어이지만, `unsafe` 키워드를 사용하면 C/C++처럼 **포인터(pointer)**를 사용할 수 있습니다.  
+이 글에서는 C# 포인터의 개념부터 문법, 주의사항, 대체 기술들까지 **총망라**합니다.
+
+---
+
+## 🔷 1. 포인터란?
+
+**포인터(pointer)**는 **메모리 주소를 저장하는 변수**입니다.  
+다른 변수의 주소를 저장하고, 그 주소를 통해 해당 변수에 접근할 수 있습니다.
+
+---
+
+## 🔷 2. C#에서 포인터 사용 조건
+
+C#에서는 포인터 사용이 기본적으로 제한되며, 다음과 같은 조건이 필요합니다:
+
+| 조건 | 설명 |
+|------|------|
+| `unsafe` | 포인터를 사용하는 블록을 감쌈 |
+| `/unsafe` | 컴파일러에서 unsafe 코드 허용 설정 |
+| 값 형식만 허용 | `int`, `float`, `char`, `struct` 등만 가능 |
+| 참조형에는 사용 제한 | `class`, `string` 등은 직접 포인터 접근 불가 |
+
+---
+
+## 🔷 3. 기본 포인터 사용 예제
+
+```csharp
+using System;
+
+class Program
+{
+    unsafe static void Main()
+    {
+        int a = 10;
+        int* ptr = &a;
+
+        Console.WriteLine($"값: {*ptr}");       // 역참조
+        Console.WriteLine($"주소: {(long)ptr}"); // 포인터 주소 출력
+    }
+}
+```
+
+### 설명:
+- `int* ptr`: `int`형 포인터 선언
+- `&a`: 변수 a의 주소
+- `*ptr`: ptr이 가리키는 주소의 값 (역참조)
+
+> ⚠️ 이 코드를 실행하려면 컴파일 시 `/unsafe` 옵션이 필요합니다.
+
+---
+
+## 🔷 4. fixed 키워드 - 참조형 고정
+
+C#에서는 배열, 문자열 등 **참조형 변수의 주소를 얻으려면 메모리를 고정**해야 합니다.  
+GC(Garbage Collector)가 메모리를 이동시키지 못하도록 막기 위해 `fixed` 키워드를 사용합니다.
+
+```csharp
+unsafe static void Main()
+{
+    int[] arr = { 10, 20, 30 };
+
+    fixed (int* p = arr)
+    {
+        for (int i = 0; i < arr.Length; i++)
+            Console.WriteLine(p[i]);
+    }
+}
+```
+
+- `fixed`는 GC가 arr를 옮기지 않도록 고정
+- 포인터 `p`를 통해 배열 요소 직접 접근 가능
+
+---
+
+## 🔷 5. 포인터 연산
+
+| 연산 | 설명 | 예시 |
+|------|------|------|
+| `*ptr` | 역참조 (포인터가 가리키는 값) | `*ptr = 5;` |
+| `&var` | 주소 | `int* p = &a;` |
+| `ptr + n` | 주소 이동 (n번째 요소) | `*(ptr + 2)` |
+| `->` | 구조체 멤버 접근 | `point->X` |
+
+---
+
+## 🔷 6. 구조체와 포인터
+
+포인터는 **구조체(struct)**에 주로 사용됩니다.
+
+```csharp
+struct Point
+{
+    public int X;
+    public int Y;
+}
+
+unsafe static void StructExample()
+{
+    Point p = new Point { X = 1, Y = 2 };
+    Point* ptr = &p;
+
+    Console.WriteLine(ptr->X); // 1
+    Console.WriteLine(ptr->Y); // 2
+}
+```
+
+---
+
+## 🔷 7. 포인터 배열
+
+```csharp
+unsafe static void PointerArray()
+{
+    int a = 1, b = 2;
+    int*[] pointers = new int*[2];
+
+    fixed (int* p1 = &a, p2 = &b)
+    {
+        pointers[0] = p1;
+        pointers[1] = p2;
+
+        Console.WriteLine(*pointers[0]); // 1
+        Console.WriteLine(*pointers[1]); // 2
+    }
+}
+```
+
+- 포인터도 배열로 관리 가능
+- 여러 주소를 순회하거나 관리할 때 유용
+
+---
+
+## 🔷 8. IntPtr: 포인터를 대체하는 구조체
+
+`IntPtr`은 포인터를 **포장한 안전한 구조체**로, .NET에서 포인터 연산을 하지 않고 주소를 저장하거나 처리할 때 사용됩니다.
+
+```csharp
+IntPtr ptr = (IntPtr)123456;
+Console.WriteLine(ptr.ToInt64()); // 주소 값 출력
+```
+
+> C#의 `Marshal` API나 Win32 API 연동 시 자주 사용
+
+---
+
+## 🔷 9. Span<T> / Memory<T>: 안전한 포인터 대안
+
+.NET Core 이후에는 `Span<T>`와 `Memory<T>`를 사용해 포인터처럼 메모리를 **고성능, 안전하게 다룰 수 있습니다.**
+
+```csharp
+Span<byte> buffer = stackalloc byte[10];
+buffer[0] = 42;
+```
+
+- `stackalloc`으로 스택에 직접 메모리 할당
+- `Span<T>`는 GC 관리 안 되는 메모리 사용을 안전하게 감싸줌
+
+| 타입 | 설명 |
+|------|------|
+| `Span<T>` | 스택 메모리 참조 (빠름) |
+| `Memory<T>` | 힙 메모리 참조 (비동기, 버퍼 용도) |
+
+---
+
+## 🔷 10. 포인터 사용할 때 주의할 점
+
+- `unsafe` 코드는 보안 및 안정성에 취약
+- 가비지 컬렉터가 개입할 수 없으므로 **메모리 손상 가능**
+- 일반적인 C# 애플리케이션에서는 추천되지 않음
+- 포인터는 주로:
+  - 네이티브 API와의 상호작용
+  - 이미지, 버퍼, 비트 연산 등 성능이 중요한 경우
+  - `stackalloc`, `Span<T>`를 통한 대체 가능
+
+---
+
+## ✅ 요약 정리
+
+| 항목 | 설명 |
+|------|------|
+| `unsafe` | 포인터 사용 가능 코드 블록 |
+| `*`, `&`, `->` | 포인터 선언, 주소 연산, 멤버 접근 |
+| `fixed` | 참조형 데이터의 주소를 GC로부터 고정 |
+| `IntPtr` | 포인터를 대체하는 구조체형 |
+| `Span<T>` / `Memory<T>` | 안전한 포인터 대안, 고성능 메모리 조작 |
+| 포인터 사용 용도 | 성능 최적화, 네이티브 연동, 버퍼 접근 등 |

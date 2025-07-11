@@ -1,0 +1,165 @@
+---
+layout: post
+title: C# - 인터페이스와 다형성, 타입 검사
+date: 2024-10-14 19:20:23 +0900
+category: C#
+---
+# C# 인터페이스와 다형성, 타입 검사 (is/as/typeof)
+
+이번 글에서는 객체지향 설계의 핵심인 **인터페이스(interface)**와 **다형성(polymorphism)** 개념을 정리하고,  
+**is**, **as**, **typeof** 등의 **타입 확인 및 변환 키워드** 사용법도 함께 살펴봅니다.
+
+---
+
+## 🔷 인터페이스란?
+
+인터페이스는 **구현을 포함하지 않고 메서드/속성의 "형식만 정의"하는 틀**입니다.
+
+```csharp
+interface IAnimal
+{
+    void Speak();
+}
+```
+
+- `interface` 키워드를 사용
+- 모든 멤버는 **public**이며, **구현을 포함할 수 없음**
+- 클래스는 인터페이스를 `implements`하는 게 아니라 **상속**함 (`:` 사용)
+
+---
+
+## 🔷 인터페이스 구현
+
+```csharp
+class Dog : IAnimal
+{
+    public void Speak()
+    {
+        Console.WriteLine("멍멍");
+    }
+}
+
+class Cat : IAnimal
+{
+    public void Speak()
+    {
+        Console.WriteLine("야옹");
+    }
+}
+```
+
+---
+
+## 🔷 인터페이스를 통한 다형성
+
+인터페이스 타입으로 여러 구현체를 참조할 수 있습니다.
+
+```csharp
+IAnimal a1 = new Dog();
+IAnimal a2 = new Cat();
+
+a1.Speak(); // 멍멍
+a2.Speak(); // 야옹
+```
+
+- **하나의 인터페이스 타입으로 여러 클래스 다루기 가능**
+- 다형성(Polymorphism)의 핵심 구현 방식
+
+---
+
+## 🔷 인터페이스 다중 상속
+
+클래스는 **다중 상속 불가**하지만, **인터페이스는 다중 상속 가능**합니다.
+
+```csharp
+interface IRunnable
+{
+    void Run();
+}
+
+interface IWalker
+{
+    void Walk();
+}
+
+class Robot : IRunnable, IWalker
+{
+    public void Run() { Console.WriteLine("달린다"); }
+    public void Walk() { Console.WriteLine("걷는다"); }
+}
+```
+
+---
+
+## 🔷 is 키워드: 타입 확인
+
+```csharp
+object obj = new Dog();
+
+if (obj is Dog)
+{
+    Console.WriteLine("obj는 Dog 타입입니다.");
+}
+```
+
+- `obj is Dog` → `obj`가 `Dog` 또는 `Dog` 파생 타입이면 true
+
+---
+
+## 🔷 as 키워드: 안전한 형변환
+
+```csharp
+object obj = new Dog();
+
+Dog dog = obj as Dog;
+if (dog != null)
+{
+    dog.Speak();
+}
+```
+
+- 실패 시 `null` 반환 (예외 X)
+- `as`는 **참조형 타입**에만 사용 가능
+
+---
+
+## 🔷 typeof: 타입 자체를 가져옴
+
+```csharp
+Type t = typeof(string);
+Console.WriteLine(t.FullName); // System.String
+```
+
+---
+
+## ✅ is / as / typeof 비교
+
+| 키워드 | 역할 | 특징 |
+|--------|------|------|
+| `is` | 타입 확인 | true/false 반환 |
+| `as` | 안전한 캐스팅 | 실패 시 null 반환 |
+| `typeof` | 타입 정보 객체 가져오기 | `Type` 객체로 반환 |
+
+---
+
+## ✅ 인터페이스 vs 추상 클래스 비교
+
+| 항목 | 인터페이스 | 추상 클래스 |
+|------|-------------|--------------|
+| 구현 포함 | ❌ 전부 미구현 | ⭕ 일부 구현 가능 |
+| 다중 상속 | ⭕ 가능 | ❌ 불가 |
+| 상속 키워드 | `:` | `:` |
+| 인스턴스 생성 | ❌ 불가 | ❌ 불가 |
+| 목적 | 역할 정의 | 공통 기반 제공 + 부분 구현 |
+
+---
+
+## ✅ 정리
+
+| 개념 | 설명 |
+|------|------|
+| 인터페이스 | 메서드/속성의 틀만 정의, 구현은 없음 |
+| 다형성 | 부모 타입(인터페이스)으로 다양한 구현체 다룸 |
+| is | 타입 비교 (true/false) |
+| as | 실패 시 null 반환하는 캐스팅 |
+| typeof | 타입 정보 반환 (리플렉션 등에서 사용) |

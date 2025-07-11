@@ -4,15 +4,15 @@ title: C# - 배열과 리스트
 date: 2024-10-09 19:20:23 +0900
 category: C#
 ---
-# C# 배열과 리스트(List)
+# 배열과 리스트(List)
 
 이번 글에서는 C#에서 가장 기본적인 자료 구조인 **배열(Array)**과, 더 유연한 크기를 지원하는 **리스트(List)**를 다룹니다.
 
 ---
 
-## 🔷 배열(Array)
+## 배열(Array)
 
-### ✅ 배열 선언 및 초기화
+### 배열 선언 및 초기화
 
 ```csharp
 int[] numbers = new int[5];           // 크기만 지정
@@ -23,7 +23,7 @@ string[] names = { "Alice", "Bob", "Charlie" };
 - 배열은 **고정된 크기**를 가짐
 - 인덱스는 **0부터 시작**
 
-### ✅ 배열 접근
+### 배열 접근
 
 ```csharp
 Console.WriteLine(scores[1]); // 80
@@ -31,7 +31,7 @@ Console.WriteLine(scores[1]); // 80
 scores[2] = 75;               // 값 변경
 ```
 
-### ✅ 배열 순회
+### 배열 순회
 
 ```csharp
 for (int i = 0; i < names.Length; i++)
@@ -47,9 +47,9 @@ foreach (string name in names)
 
 ---
 
-## 🔷 다차원 배열
+## 다차원 배열
 
-### ✅ 2차원 배열
+### 2차원 배열
 
 ```csharp
 int[,] matrix = new int[2, 3]
@@ -65,17 +65,17 @@ Console.WriteLine(matrix[1, 2]); // 6
 
 ---
 
-## 🔷 리스트 (List<T>)
+## 리스트 (List<T>)
 
 C#의 `List<T>`는 배열과 유사하지만, **크기를 자유롭게 조절 가능**한 컬렉션입니다.
 
-### ✅ using 선언
+### using 선언
 
 ```csharp
 using System.Collections.Generic;
 ```
 
-### ✅ List 선언 및 초기화
+### List 선언 및 초기화
 
 ```csharp
 List<int> list = new List<int>();
@@ -91,7 +91,7 @@ List<string> fruits = new List<string> { "사과", "바나나", "포도" };
 
 ---
 
-### ✅ 주요 메서드
+### 주요 메서드
 
 | 메서드 | 설명 |
 |--------|------|
@@ -112,7 +112,7 @@ Console.WriteLine(fruits.Count);            // 3
 
 ---
 
-### ✅ List 순회
+### List 순회
 
 ```csharp
 foreach (string fruit in fruits)
