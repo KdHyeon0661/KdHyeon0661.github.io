@@ -1,7 +1,7 @@
 ---
 layout: post
 title: C# - 포인터
-date: 2024-10-16 19:20:23 +0900
+date: 2024-10-26 19:20:23 +0900
 category: C#
 ---
 # C# 포인터 완전 정리 (unsafe, fixed, *, &, ->, IntPtr, Span<T> 등)

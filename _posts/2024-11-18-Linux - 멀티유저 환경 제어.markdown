@@ -1,0 +1,334 @@
+---
+layout: post
+title: Linux - 멀티유저 환경 제어
+date: 2024-11-18 19:20:23 +0900
+category: Linux
+---
+# 리눅스 17편: 🐙 멀티유저 환경 제어
+> ulimit, limits.conf, 세션 및 사용자 리소스 관리
+
+---
+
+## 🔧 1. `ulimit` - 현재 세션 리소스 제한 확인 및 설정
+
+`ulimit`은 **현재 쉘 세션에서 사용 가능한 리소스 제한**을 조회하거나 설정하는 명령어입니다.
+
+### ✅ 사용 예시
+
+```bash
+ulimit -a          # 현재 설정 전체 확인
+ulimit -n 4096     # 열 수 있는 파일 최대 개수 설정
+ulimit -u 2048     # 생성 가능한 프로세스 수 제한
+```
+
+### ✅ 주요 옵션
+
+| 옵션 | 설명 |
+|------|------|
+| `-a` | 전체 제한 정보 표시 |
+| `-n` | 열 수 있는 파일 수 (nofile) |
+| `-u` | 사용자당 프로세스 수 |
+| `-f` | 파일 크기 제한 (KB 단위) |
+| `-v` | 가상 메모리 사용량 제한 (KB) |
+| `-t` | CPU 시간 제한 (초) |
+
+> ulimit 설정은 현재 세션에만 적용되며, **재부팅 시 초기화**됩니다.
+
+---
+
+## 🧩 2. `/etc/security/limits.conf` - 영구 리소스 제한 설정
+
+멀티유저 시스템에서는 각 사용자별로 자원 제한을 적용해야 할 수 있습니다. 이때 사용되는 설정 파일이:
+
+```text
+/etc/security/limits.conf
+```
+
+### ✅ 형식
+
+```conf
+<사용자> <soft/hard> <항목> <값>
+```
+
+### ✅ 예시
+
+```conf
+james   soft  nofile  2048
+james   hard  nofile  4096
+
+*       soft  nproc   1024
+*       hard  nproc   2048
+```
+
+| 항목명   | 의미 |
+|----------|------|
+| `nofile` | 열 수 있는 파일 최대 수 |
+| `nproc`  | 생성 가능한 프로세스 수 |
+| `fsize`  | 파일 최대 크기 |
+| `cpu`    | CPU 시간 |
+| `memlock`| 잠글 수 있는 메모리 용량 |
+
+> `soft`: 사용자 조정 가능  
+> `hard`: 절대 상한
+
+### ✅ 적용 방법
+
+1. PAM 모듈 설정 확인:
+
+```bash
+cat /etc/pam.d/common-session
+```
+
+- 아래 줄이 반드시 있어야 함:
+
+```bash
+session required pam_limits.so
+```
+
+2. 재로그인하면 적용됨
+
+---
+
+## 👥 3. 세션 및 사용자 정보 명령어
+
+### ✅ `who` - 현재 로그인 사용자 확인
+
+```bash
+who
+```
+
+| 옵션 | 설명 |
+|------|------|
+| `-u` | 로그인 시간, 프로세스 ID 표시 |
+| `-H` | 헤더 포함 |
+
+### ✅ `w` - 사용자 + 프로세스 + 부하 정보
+
+```bash
+w
+```
+
+- 로그인 사용자, 명령어, 시스템 부하(load average)까지 확인 가능
+
+### ✅ `last` - 로그인 이력 확인
+
+```bash
+last
+```
+
+| 옵션 | 설명 |
+|------|------|
+| `-n <숫자>` | 최근 N개 항목 출력 |
+| `-x` | 시스템 재부팅, 종료 등 이벤트도 포함 |
+
+### ✅ `loginctl` - systemd 기반 세션 관리
+
+```bash
+loginctl list-sessions       # 현재 세션 목록
+loginctl show-session <ID>   # 세션 상세 정보
+loginctl terminate-session <ID>  # 세션 강제 종료
+```
+
+> 데스크탑/멀티로그인 환경에서 주로 사용되며, `systemd` 기반 시스템에서만 동작합니다.
+
+---
+
+## 🧪 실전 예시
+
+### 예시 1: 현재 사용자 ulimit 확인 및 수정
+
+```bash
+ulimit -n        # 열 수 있는 파일 수 확인
+ulimit -n 8192   # 현재 세션에서 8192개로 설정
+```
+
+### 예시 2: 특정 사용자 리소스 제한 추가
+
+```conf
+# /etc/security/limits.conf
+alice  soft  nofile  1024
+alice  hard  nofile  4096
+```
+
+### 예시 3: 로그인 세션 확인과 강제 종료
+
+```bash
+who
+w
+loginctl list-sessions
+loginctl terminate-session 4
+```
+
+### 예시 4: 최근 로그인 이력 추적
+
+```bash
+last -n 10       # 최근 10개 로그인
+last reboot      # 재부팅 이력 확인
+```
+
+---
+
+## 🔒 4. pam_limits - 사용자 리소스 영구 제한
+
+리눅스는 사용자별로 **파일 핸들 수, 프로세스 수, 메모리 제한** 등을 설정할 수 있으며, `/etc/security/limits.conf`와 PAM 모듈로 이를 영구 적용합니다.
+
+### ✅ 적용 구성
+
+#### `/etc/security/limits.conf` 예시
+```
+# 사용자 devkim의 리소스 제한 설정
+devkim  soft  nofile  2048
+devkim  hard  nofile  4096
+devkim  soft  nproc   1000
+devkim  hard  nproc   2000
+```
+
+#### 그룹 전체 제한도 가능
+```
+@developers  hard  core  0
+```
+
+### ✅ PAM 모듈 활성화
+
+`limits.conf` 설정을 시스템에 반영하려면 PAM 구성에서 다음 줄이 활성화되어 있어야 합니다.
+
+#### Debian/Ubuntu
+```
+/etc/pam.d/common-session
+```
+
+#### RedHat 계열
+```
+/etc/pam.d/login
+```
+
+```bash
+session required pam_limits.so
+```
+
+> ⚠️ 이 줄이 없으면 `limits.conf`는 적용되지 않습니다.
+
+---
+
+## 🧑‍💻 5. systemd-logind - 세션 및 사용자 상태 관리
+
+`systemd-logind`는 **로그인 세션을 추적**하고 **멀티유저 환경에서 사용자를 제어**하는 systemd 구성 요소입니다.
+
+### ✅ 주요 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `loginctl` | 세션 및 사용자 정보 확인 |
+| `loginctl list-users` | 로그인한 사용자 목록 |
+| `loginctl list-sessions` | 세션 목록 출력 |
+| `loginctl terminate-session <ID>` | 특정 세션 종료 |
+| `loginctl enable-linger <user>` | 로그아웃 후에도 프로세스 유지 |
+
+### ✅ 예시
+
+```bash
+loginctl list-sessions
+loginctl show-session 3 -p Name,State
+loginctl terminate-session 3
+```
+
+```bash
+# 사용자 로그아웃 후에도 데몬 유지 가능
+sudo loginctl enable-linger devkim
+```
+
+### ✅ 세션 제어 속성 예시 (`loginctl show-user devkim`)
+```
+Linger=yes
+RuntimePath=/run/user/1001
+State=active
+```
+
+---
+
+## 💽 6. 디스크 사용 제한 - 사용자 Quota 설정
+
+멀티유저 시스템에서 **디스크 공간 남용을 방지**하려면 `quota` 시스템을 설정해야 합니다.
+
+### ✅ 1) 마운트 옵션 수정 (`/etc/fstab`)
+
+```fstab
+UUID=xxxx-xxxx  /home  ext4  defaults,usrquota  0  2
+```
+
+- `usrquota`: 사용자 디스크 사용량 추적
+- `grpquota`: 그룹 단위 추적도 가능
+
+```bash
+# 마운트 재적용
+sudo mount -o remount /home
+```
+
+---
+
+### ✅ 2) 쿼터 초기화 및 활성화
+
+```bash
+sudo quotacheck -cum /home
+sudo quotaon /home
+```
+
+- `-c`: 새 쿼터 파일 생성
+- `-u`: 사용자 기준
+- `-m`: 마운트 여부 무시
+
+---
+
+### ✅ 3) 사용자별 제한 설정
+
+```bash
+sudo edquota devkim
+```
+
+#### 편집 예시
+```
+Disk quotas for user devkim (uid 1001):
+Filesystem  blocks  soft  hard  inodes  soft  hard
+/dev/sda1   102400 150000 200000   2000   3000  4000
+```
+
+- `blocks`: 사용량 (1 block = 1KB)
+- `inodes`: 파일 수 기준 제한
+
+---
+
+### ✅ 4) 사용자 쿼터 확인
+
+```bash
+quota -u devkim
+```
+
+---
+
+### ✅ 5) 경고 메일 설정 (선택)
+
+- `warnquota` 명령으로 쿼터 초과 사용자에게 경고 메일 발송 가능  
+- 메일 서버(MTA) 연동 필요
+
+---
+
+## 📎 명령어 요약
+
+| 명령어 | 설명 |
+|--------|------|
+| `ulimit` | 세션 내 자원 제한 설정 |
+| `limits.conf` | 사용자별 영구 제한 설정 |
+| `who`, `w` | 로그인 사용자 및 세션 확인 |
+| `last` | 로그인 기록 조회 |
+| `loginctl` | systemd 기반 세션 관리 도구 |
+| `edquota`, `quota`, `quotacheck`, `quotaon` | 사용자 디스크 제한 |
+| `loginctl` | 사용자 세션 및 상태 관리 |
+| `pam_limits.so` | 리소스 제한 PAM 모듈 |
+
+---
+
+## ✨ 마무리
+
+멀티유저 리눅스 시스템에서는 **각 사용자의 리소스 제한**을 통해 안정성과 보안을 확보할 수 있습니다.  
+`ulimit`은 즉시 확인/적용 가능한 반면, `limits.conf`는 **정책 기반의 영구 설정**에 적합합니다.  
+`who`, `w`, `last`, `loginctl`은 **실시간 또는 과거의 사용자 활동을 추적**할 수 있어, 서버 운영자에게 꼭 필요한 도구입니다.

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: C# - 메모리 흐름
-date: 2024-10-18 19:20:23 +0900
+date: 2024-10-28 19:20:23 +0900
 category: C#
 ---
 # C# 메서드 호출 시 메모리 흐름과 성능 최적화 키워드 (ref/in/out, stackalloc, Span<T> 등)
