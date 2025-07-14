@@ -1,0 +1,191 @@
+---
+layout: post
+title: Linux - SELinux & AppArmor 보안 모듈
+date: 2024-11-27 19:20:23 +0900
+category: Linux
+---
+# 리눅스 25편: SELinux & AppArmor 보안 모듈
+> 시스템을 더 강력하게 보호하는 MAC(Mandatory Access Control) 기법
+
+---
+
+## 🔐 1. SELinux란?
+
+**SELinux(Security-Enhanced Linux)**는 미국 NSA에서 개발한 **강제 접근 제어(MAC)** 시스템입니다.  
+사용자와 프로세스에 **세밀한 정책 기반 권한**을 부여하여 루트 사용자조차 제한할 수 있습니다.
+
+### 🔍 SELinux 상태 모드
+
+| 모드 | 설명 |
+|------|------|
+| `enforcing` | 정책을 **강제 적용**함 (차단) |
+| `permissive` | 정책 위반을 **로그로 기록**하지만 차단 X |
+| `disabled` | 비활성화 |
+
+```bash
+getenforce        # 현재 모드 출력
+setenforce 0      # permissive로 전환
+setenforce 1      # enforcing으로 전환
+```
+
+> `/etc/selinux/config` 파일에서 부팅 시 적용 모드 설정 가능
+
+---
+
+## 🧠 SELinux 핵심 개념
+
+### ✅ 보안 컨텍스트 (Security Context)
+
+```bash
+ls -Z /var/www/html/index.html
+```
+
+출력 예시:
+```
+-rw-r--r--. root root **unconfined_u:object_r:httpd_sys_content_t:s0**
+```
+
+- `user:role:type:level` 구조
+- 핵심은 `type` (예: `httpd_sys_content_t`)
+
+### ✅ 정책 타입
+
+| 정책 | 설명 |
+|------|------|
+| Targeted | 일반 사용자에 초점 (대부분 사용) |
+| Strict   | 모든 항목에 적용 (실험적) |
+| MLS      | 보안 등급 기반 정책 |
+
+---
+
+## 🛠️ SELinux 관리 도구
+
+| 명령어 | 설명 |
+|--------|------|
+| `sestatus` | 전체 SELinux 상태 확인 |
+| `semanage` | 포트/파일 컨텍스트 관리 |
+| `restorecon` | 기본 보안 컨텍스트 복구 |
+| `chcon` | 일시적 컨텍스트 변경 |
+| `audit2why` | 접근 거부 원인 분석 |
+| `audit2allow` | 접근 허용 정책 생성 제안 |
+
+```bash
+# Apache가 사용하는 포트를 추가하려면
+sudo semanage port -a -t http_port_t -p tcp 8081
+```
+
+```bash
+# 파일에 httpd용 보안 컨텍스트 지정
+sudo chcon -t httpd_sys_content_t /srv/www/index.html
+sudo restorecon -Rv /srv/www/
+```
+
+---
+
+## 🧪 SELinux 실전 예시
+
+### 예시 1: SELinux 차단 로그 분석
+
+```bash
+sudo ausearch -m avc -ts recent
+```
+
+또는
+
+```bash
+sudo journalctl -t setroubleshoot
+```
+
+출력된 로그를 `audit2why`로 분석:
+
+```bash
+sudo cat /var/log/audit/audit.log | audit2why
+```
+
+---
+
+### 예시 2: 사용자 포트 허용 및 적용
+
+```bash
+sudo semanage port -a -t ssh_port_t -p tcp 2222
+sudo semanage port -l | grep ssh
+```
+
+---
+
+## 🧰 AppArmor란?
+
+**AppArmor(Application Armor)**는 **프로세스별 허용된 파일/기능을 정의한 프로파일**을 사용하는 **MAC 방식 보안 모듈**입니다.
+
+- Ubuntu 계열에서 기본 활성화됨
+- SELinux보다 설정이 간단하지만 유연성은 떨어짐
+
+---
+
+## 📂 AppArmor 프로필 구조
+
+- 프로필 위치: `/etc/apparmor.d/`
+- 각 실행 파일마다 하나의 프로필 작성
+
+```bash
+/etc/apparmor.d/usr.sbin.mysqld
+/etc/apparmor.d/usr.bin.curl
+```
+
+### 프로필 예시
+```bash
+/usr/bin/curl {
+  # 읽기 가능
+  /etc/resolv.conf r,
+  /usr/share/ca-certificates/** r,
+
+  # 실행 가능
+  /bin/ping Pix,
+
+  # 네트워크 허용
+  network inet stream,
+
+  # 로그 기록
+  deny /etc/shadow r,
+}
+```
+
+---
+
+## 🛠️ AppArmor 관리 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `aa-status` | 전체 AppArmor 상태 확인 |
+| `aa-enable`, `aa-disable` | 프로필 활성화/비활성화 |
+| `aa-complain`, `aa-enforce` | 허용 모드/강제 모드 전환 |
+| `aa-logprof` | 로그 기반으로 프로필 보정 |
+| `apparmor_parser` | 수동으로 프로필 로드 |
+
+```bash
+sudo aa-status
+sudo aa-enforce /etc/apparmor.d/usr.sbin.nginx
+```
+
+---
+
+## 🔍 SELinux vs AppArmor 비교
+
+| 항목 | SELinux | AppArmor |
+|------|---------|----------|
+| 정책 구조 | 태그 기반(Type Enforcement) | 프로필 기반 (경로 기반) |
+| 복잡도 | 높음 | 낮음 |
+| 적용 범위 | 시스템 전체, 프로세스, 포트 등 | 프로세스 중심 |
+| 사용자 편의성 | 낮음 (정책 이해 필요) | 높음 |
+| 배포판 | RHEL, CentOS, Fedora | Ubuntu, Debian 등 |
+
+---
+
+## ✨ 마무리
+
+SELinux와 AppArmor는 모두 **루트 권한을 가진 프로세스도 제어 가능한 강력한 보안 모듈**입니다.  
+- SELinux는 **정교한 정책과 높은 보안성**,  
+- AppArmor는 **간단한 설정과 경량화**가 강점입니다.
+
+실무에서는 시스템의 배포판과 요구사항에 따라 선택해 사용하며,  
+**로그 분석 → 정책 보완 → 재적용**의 순환이 중요합니다.

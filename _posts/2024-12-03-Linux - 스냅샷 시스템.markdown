@@ -1,0 +1,150 @@
+---
+layout: post
+title: Linux - 스냅샷 시스템
+date: 2024-12-03 19:20:23 +0900
+category: Linux
+---
+# 리눅스 32편: 🧊 스냅샷 시스템(Btrfs, ZFS)과 공간 절약 전략
+
+---
+
+## 📸 1. 스냅샷(Snapshot)이란?
+
+**스냅샷**은 파일 시스템의 **특정 시점 상태를 즉시 캡처**하는 기술입니다.  
+- 백업, 복구, 테스트 환경 등에서 유용합니다.
+- 일반 복사와 달리 **블록 수준에서의 변경만 추적**하므로 **공간 절약**이 가능합니다.
+- 주로 **Btrfs**, **ZFS**와 같은 최신 파일 시스템에서 지원됩니다.
+
+---
+
+## 🌲 2. Btrfs 스냅샷
+
+Btrfs는 **Copy-on-Write(CoW)** 기반의 고급 파일 시스템으로, 기본적으로 스냅샷 기능을 제공합니다.
+
+### ✅ 서브볼륨 생성과 스냅샷 예시
+
+```bash
+# Btrfs 파티션 마운트
+sudo mount /dev/sdX1 /mnt
+
+# 서브볼륨 생성
+sudo btrfs subvolume create /mnt/mydata
+
+# 스냅샷 생성
+sudo btrfs subvolume snapshot /mnt/mydata /mnt/mydata_snapshot
+```
+
+- 생성된 스냅샷은 **독립적인 디렉토리처럼 보이지만, 실제로는 공간을 거의 차지하지 않음**
+- 변경된 블록만 저장됨
+
+### ✅ 스냅샷 관리 명령어
+
+| 명령어 | 설명 |
+|--------|------|
+| `btrfs subvolume list` | 서브볼륨 및 스냅샷 목록 확인 |
+| `btrfs subvolume snapshot` | 스냅샷 생성 |
+| `btrfs subvolume delete` | 스냅샷 또는 서브볼륨 삭제 |
+| `btrfs filesystem df` | 공간 사용 현황 보기 |
+
+---
+
+## 💽 3. ZFS 스냅샷
+
+ZFS는 Btrfs보다 더 강력하고 안정적인 기능을 제공하는 **기업용 고급 파일 시스템**입니다.
+
+### ✅ 스냅샷 생성
+
+```bash
+# 스냅샷 생성
+sudo zfs snapshot poolname/dataset@snapshot_name
+
+# 스냅샷 목록 확인
+sudo zfs list -t snapshot
+
+# 롤백 (스냅샷 시점으로 되돌리기)
+sudo zfs rollback poolname/dataset@snapshot_name
+```
+
+### ✅ ZFS 스냅샷 특징
+
+- 읽기 전용
+- **디퍼런셜 백업**처럼, 변경된 데이터만 기록
+- 스냅샷을 **복사해서 새로운 파일 시스템으로 복제** 가능 (`zfs clone`)
+
+| 명령어 | 설명 |
+|--------|------|
+| `zfs snapshot` | 스냅샷 생성 |
+| `zfs rollback` | 스냅샷 시점으로 되돌리기 |
+| `zfs destroy` | 스냅샷 삭제 |
+| `zfs send | receive` | 스냅샷을 다른 시스템으로 전송 |
+
+---
+
+## 🧠 4. 공간 절약 전략
+
+### ✅ Copy-on-Write(CoW)
+- 데이터를 수정할 때 원본을 유지한 채 변경된 블록만 새로 작성
+- Btrfs, ZFS, OverlayFS 등에서 사용
+
+### ✅ 중복 제거 (Deduplication)
+- 동일한 데이터 블록이 여러 번 저장될 경우 **하나만 유지**하고 참조
+- ZFS는 `dedup=on` 옵션으로 사용 가능
+
+### ✅ 압축
+- Btrfs, ZFS는 파일 시스템 레벨에서 압축 가능  
+```bash
+# Btrfs 압축 마운트 예시
+mount -o compress=zstd /dev/sdX1 /mnt
+```
+
+### ✅ 공간 확인 및 관리
+
+| 명령어 | 설명 |
+|--------|------|
+| `btrfs filesystem df` | Btrfs 실제 공간 사용 보기 |
+| `zfs list` | ZFS 볼륨 정보와 사용량 확인 |
+| `du -sh` | 디렉토리 용량 |
+| `df -h` | 디스크 전체 용량 확인 |
+
+---
+
+## 🧪 실전 예시
+
+### 예시 1: /home 백업 스냅샷 만들기 (Btrfs)
+
+```bash
+sudo btrfs subvolume snapshot /home /home_snapshot_$(date +%F)
+```
+
+### 예시 2: ZFS 스냅샷 주기적 생성 (cron 활용)
+
+```bash
+0 2 * * * root zfs snapshot tank/data@daily_$(date +\%Y\%m\%d)
+```
+
+### 예시 3: ZFS 압축 + 중복 제거
+
+```bash
+zfs set compression=on pool/data
+zfs set dedup=on pool/data
+```
+
+---
+
+## 📎 요약
+
+| 기능 | Btrfs | ZFS |
+|------|-------|-----|
+| CoW | ✅ | ✅ |
+| 스냅샷 | ✅ (`btrfs subvolume snapshot`) | ✅ (`zfs snapshot`) |
+| 압축 | ✅ (zlib/lzo/zstd) | ✅ (lz4/gzip/zstd) |
+| 중복 제거 | ❌ (일부 실험적) | ✅ |
+| 백업 전송 | 제한적 | `zfs send | receive` |
+
+---
+
+## ✨ 마무리
+
+스냅샷과 CoW 기술을 이용하면 시스템 복구, 백업, 테스트 환경을 훨씬 안전하고 효율적으로 운영할 수 있습니다.  
+특히 Btrfs와 ZFS는 **고급 기능을 내장한 차세대 파일 시스템**으로,  
+**데이터 무결성과 공간 절약**을 동시에 달성하고 싶은 경우 강력한 선택지입니다.
