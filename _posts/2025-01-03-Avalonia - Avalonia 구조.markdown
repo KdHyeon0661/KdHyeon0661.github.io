@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - 개요
-date: 2024-12-26 19:20:23 +0900
+title: Avalonia - Avalonia 구조
+date: 2025-01-03 19:20:23 +0900
 category: Avalonia
 ---
 # 🏗️ Avalonia 기본 템플릿 구조 분석 및 확장 방법

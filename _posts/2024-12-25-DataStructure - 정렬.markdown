@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Data Structure - 펜윅 트리
-date: 2024-12-09 19:20:23 +0900
+title: Data Structure - 정렬
+date: 2024-12-25 19:20:23 +0900
 category: Data Structure
 ---
 # 📚 정렬(Sorting) 알고리즘 정리

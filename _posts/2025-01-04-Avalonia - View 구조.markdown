@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - 개요
-date: 2024-12-26 19:20:23 +0900
+title: Avalonia - View 구조
+date: 2025-01-04 19:20:23 +0900
 category: Avalonia
 ---
 # 🖼️ Avalonia의 View 구조와 확장 방법

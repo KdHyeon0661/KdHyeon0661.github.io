@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Data Structure - 펜윅 트리
-date: 2024-12-09 20:20:23 +0900
+title: Data Structure - 가중치 그래프
+date: 2024-12-26 20:20:23 +0900
 category: Data Structure
 ---
 # 💰 가중치 그래프 예시

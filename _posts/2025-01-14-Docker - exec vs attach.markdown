@@ -1,8 +1,8 @@
 ---
 layout: post
-title: 알고리즘 - 알고리즘이란
-date: 2024-12-26 19:20:23 +0900
-category: 알고리즘
+title: Docker - exec vs attach
+date: 2025-01-14 19:20:23 +0900
+category: Docker
 ---
 # 🔍 `docker exec` vs `docker attach` 차이점 정리
 

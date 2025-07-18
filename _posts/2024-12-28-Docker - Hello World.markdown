@@ -1,8 +1,8 @@
 ---
 layout: post
-title: 알고리즘 - 알고리즘이란
-date: 2024-12-26 19:20:23 +0900
-category: 알고리즘
+title: Docker - Hello World
+date: 2024-12-28 22:20:23 +0900
+category: Docker
 ---
 # 🐳 첫 번째 Docker 컨테이너 실행하기: Hello World
 

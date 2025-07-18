@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Docker - Docker 아키텍처
-date: 2024-12-26 19:20:23 +0900
+date: 2024-12-28 21:20:23 +0900
 category: Docker
 ---
 # 🐳 Docker 아키텍처: 이미지, 컨테이너, 레지스트리, 데몬

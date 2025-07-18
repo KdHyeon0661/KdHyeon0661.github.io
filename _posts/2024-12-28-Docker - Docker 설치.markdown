@@ -1,8 +1,8 @@
 ---
 layout: post
-title: 알고리즘 - 알고리즘이란
-date: 2024-12-26 19:20:23 +0900
-category: 알고리즘
+title: Docker - Docker 설치
+date: 2024-12-28 20:20:23 +0900
+category: Docker
 ---
 # 🐳 Docker 설치 방법 (Windows / Linux)
 

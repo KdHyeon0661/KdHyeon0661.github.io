@@ -1,8 +1,8 @@
 ---
 layout: post
-title: 알고리즘 - 알고리즘이란
+title: Docker - 주의사항
 date: 2025-01-30 19:20:23 +0900
-category: 알고리즘
+category: Docker
 ---
 # 🔐 Docker 보안 강화 방법
 

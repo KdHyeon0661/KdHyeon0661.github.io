@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - 개요
-date: 2024-12-26 19:20:23 +0900
+title: Avalonia - MVVM
+date: 2025-01-03 20:20:23 +0900
 category: Avalonia
 ---
 # 🧭 MVVM 패턴이란? (Model-View-ViewModel)

@@ -1,8 +1,8 @@
 ---
 layout: post
-title: 알고리즘 - 알고리즘이란
-date: 2024-12-26 19:20:23 +0900
-category: 알고리즘
+title: Docker - Docker 컨테이너
+date: 2025-01-11 19:20:23 +0900
+category: Docker
 ---
 # 📦 Docker 컨테이너란? 상태와 수명주기 자세히 정리
 

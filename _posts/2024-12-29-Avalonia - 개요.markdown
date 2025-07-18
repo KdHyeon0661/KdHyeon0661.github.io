@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Avalonia - 개요
-date: 2024-12-26 19:20:23 +0900
+date: 2024-12-29 19:20:23 +0900
 category: Avalonia
 ---
 # 🌈 Avalonia 소개 및 VSCode에서 시작하기

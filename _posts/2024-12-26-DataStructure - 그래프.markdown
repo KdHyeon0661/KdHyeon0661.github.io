@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Data Structure - 펜윅 트리
-date: 2024-12-09 19:20:23 +0900
+title: Data Structure - 그래프
+date: 2024-12-26 19:20:23 +0900
 category: Data Structure
 ---
 # 🔗 그래프(Graph) 자료구조 - 이론부터 구현까지
