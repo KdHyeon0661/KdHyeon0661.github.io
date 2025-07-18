@@ -1,0 +1,211 @@
+---
+layout: post
+title: 알고리즘 - 덱 관련 문제
+date: 2024-12-26 19:20:23 +0900
+category: 알고리즘
+---
+# 🔖 집합(Set)과 맵(Map)을 활용한 알고리즘
+
+파이썬에서 **Set(집합)**과 **Map(딕셔너리)**은 빠른 탐색, 중복 제거, 카운팅 등에서 매우 유용합니다.  
+특히 **시간복잡도 O(1)**로 원소를 확인하거나 추가할 수 있어 **정렬 없이도 탐색 문제를 효율적으로** 해결할 수 있습니다.
+
+---
+
+## ✅ 1. 집합(Set)
+
+### 📌 특징
+
+- **중복을 허용하지 않음**
+- **탐색, 추가, 삭제 연산이 평균 O(1)**
+- **정렬되지 않음**
+
+### 🔎 사용 예시
+```python
+s = set()
+s.add(3)
+s.add(5)
+s.discard(3)
+print(5 in s)   # True
+```
+
+---
+
+## ✅ 2. 맵(Map, 딕셔너리 dict)
+
+### 📌 특징
+
+- **키-값(key-value)** 구조
+- **빠른 카운팅, 인덱싱, 매핑에 유리**
+- **탐색, 삽입, 삭제 평균 O(1)**
+
+### 🔎 사용 예시
+```python
+d = {}
+d["apple"] = 3
+d["banana"] = 5
+print(d.get("apple", 0))  # 3
+```
+
+---
+
+## 📌 대표 문제 ① - 숫자 카드  
+- **문제 번호**: [백준 10815](https://www.acmicpc.net/problem/10815)  
+- **유형**: Set, 탐색
+
+### 문제 설명
+상근이가 숫자 카드 N장을 가지고 있고,  
+M개의 숫자에 대해 카드가 있는지 **O(1)**로 빠르게 판별해야 함.
+
+### 핵심 아이디어
+- 입력을 **set()에 저장**하고 `in` 연산자로 탐색
+
+### ✅ 예제 코드
+```python
+n = int(input())
+cards = set(map(int, input().split()))
+m = int(input())
+targets = list(map(int, input().split()))
+
+print(' '.join(['1' if t in cards else '0' for t in targets]))
+```
+
+---
+
+## 📌 대표 문제 ② - 숫자 카드 2 (카운팅)  
+- **문제 번호**: [백준 10816](https://www.acmicpc.net/problem/10816)  
+- **유형**: Map(dict), Counter
+
+### 문제 설명
+중복된 숫자 카드가 있음. 각 숫자가 **몇 개씩** 있는지 빠르게 출력.
+
+### ✅ 예제 코드
+```python
+from collections import Counter
+
+n = int(input())
+cards = list(map(int, input().split()))
+counter = Counter(cards)
+
+m = int(input())
+targets = list(map(int, input().split()))
+
+print(' '.join([str(counter[t]) for t in targets]))
+```
+
+---
+
+## 📌 대표 문제 ③ - 회사에 있는 사람  
+- **문제 번호**: [백준 7785](https://www.acmicpc.net/problem/7785)  
+- **유형**: Set, 시뮬레이션
+
+### 문제 설명
+사람이 출근하면 `enter`, 퇴근하면 `leave`.  
+회사에 남아 있는 사람을 **이름순 내림차순**으로 출력.
+
+### ✅ 예제 코드
+```python
+n = int(input())
+office = set()
+
+for _ in range(n):
+    name, status = input().split()
+    if status == 'enter':
+        office.add(name)
+    else:
+        office.discard(name)
+
+for name in sorted(office, reverse=True):
+    print(name)
+```
+
+---
+
+## 📌 대표 문제 ④ - 걸그룹 마스터  
+- **문제 번호**: [백준 16165](https://www.acmicpc.net/problem/16165)  
+- **유형**: 딕셔너리, 문자열 매핑
+
+### 문제 설명
+걸그룹 이름 → 멤버 목록, 멤버 이름 → 걸그룹 이름  
+두 가지 쿼리를 처리하는 문제
+
+### ✅ 예제 코드
+```python
+group_map = {}
+member_map = {}
+
+n, m = map(int, input().split())
+
+for _ in range(n):
+    group = input()
+    cnt = int(input())
+    members = [input() for _ in range(cnt)]
+    group_map[group] = sorted(members)
+    for name in members:
+        member_map[name] = group
+
+for _ in range(m):
+    q = input()
+    qtype = int(input())
+    if qtype == 0:
+        for name in group_map[q]:
+            print(name)
+    else:
+        print(member_map[q])
+```
+
+---
+
+## 📌 대표 문제 ⑤ - 서로 다른 부분 문자열 개수  
+- **문제 번호**: [백준 11478](https://www.acmicpc.net/problem/11478)  
+- **유형**: Set, 문자열
+
+### 문제 설명
+한 문자열의 **모든 부분 문자열 중 서로 다른 개수** 구하기
+
+### ✅ 예제 코드
+```python
+s = input()
+subs = set()
+
+for i in range(len(s)):
+    for j in range(i+1, len(s)+1):
+        subs.add(s[i:j])
+
+print(len(subs))
+```
+
+---
+
+## ✅ 활용 요약
+
+| 상황 | 자료구조 | 이유 |
+|------|----------|------|
+| 중복 제거 | `set()` | 자동 제거됨 |
+| 빠른 존재 확인 | `x in set/map` | 평균 O(1) |
+| 개수 세기 | `dict` or `Counter` | 카운팅이 편리 |
+| 문자열 ↔ 그룹 매핑 | `dict[str]` | 키-값 구조 |
+| 정렬 없는 탐색 | `set` / `dict` | 불필요한 정렬 제거 |
+
+---
+
+## 🧪 관련 백준 추천 문제
+
+| 번호 | 문제 | 주제 |
+|------|------|------|
+| 10815 | 숫자 카드 | Set 탐색 |
+| 10816 | 숫자 카드 2 | Map 카운팅 |
+| 14425 | 문자열 집합 | Set |
+| 1620 | 나는야 포켓몬 마스터 | 이름 ↔ 번호 Map |
+| 9375 | 패션왕 신해빈 | 조합, Map |
+| 7785 | 회사에 있는 사람 | Set 시뮬레이션 |
+| 11478 | 서로 다른 부분 문자열 | 문자열 + Set |
+
+---
+
+## ✅ 마무리
+
+**집합과 맵**은 알고리즘에서 자주 등장하는 효율적인 구조입니다.
+
+- 중복 제거, 빠른 탐색, 카운팅, 이름 매핑 등에 강력
+- 정렬이 필요 없을 때도 정렬된 리스트보다 유리함
+- 대부분의 경우 시간복잡도 **O(1)** (최악은 O(N), 드물게 발생)

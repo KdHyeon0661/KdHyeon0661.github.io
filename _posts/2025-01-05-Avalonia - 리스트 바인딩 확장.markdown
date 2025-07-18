@@ -1,0 +1,223 @@
+---
+layout: post
+title: Avalonia - 개요
+date: 2024-12-26 19:20:23 +0900
+category: Avalonia
+---
+# 📋 Avalonia 리스트 확장 기능 예제 (추가, 삭제, 필터, 상세 보기)
+
+## 🧩 기능 요약
+
+이번 예제에서는 다음 기능들을 하나의 리스트에 구현해봅니다:
+
+- ✅ 항목 추가/삭제
+- 🔍 텍스트로 필터링
+- 🗂️ `ListView`로 테이블 형태 출력
+- 👁️ 항목 클릭 시 상세 정보 표시
+
+---
+
+## 📁 프로젝트 구조
+
+```
+MyAvaloniaApp/
+├── Models/
+│   └── Person.cs
+├── ViewModels/
+│   └── PeopleViewModel.cs
+├── Views/
+│   └── PeopleView.axaml
+```
+
+---
+
+## 👤 Model: `Person.cs`
+
+```csharp
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+```
+
+---
+
+## 🎛️ ViewModel: `PeopleViewModel.cs`
+
+```csharp
+using ReactiveUI;
+using System.Collections.ObjectModel;
+using System.Reactive;
+using System.Linq;
+
+public class PeopleViewModel : ReactiveObject
+{
+    private string _filterText;
+    private string _nameInput;
+    private int _ageInput;
+    private Person _selectedPerson;
+
+    public ObservableCollection<Person> People { get; } = new();
+    public ObservableCollection<Person> FilteredPeople { get; } = new();
+
+    public string FilterText
+    {
+        get => _filterText;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _filterText, value);
+            ApplyFilter();
+        }
+    }
+
+    public string NameInput
+    {
+        get => _nameInput;
+        set => this.RaiseAndSetIfChanged(ref _nameInput, value);
+    }
+
+    public int AgeInput
+    {
+        get => _ageInput;
+        set => this.RaiseAndSetIfChanged(ref _ageInput, value);
+    }
+
+    public Person SelectedPerson
+    {
+        get => _selectedPerson;
+        set => this.RaiseAndSetIfChanged(ref _selectedPerson, value);
+    }
+
+    public ReactiveCommand<Unit, Unit> AddCommand { get; }
+    public ReactiveCommand<Unit, Unit> DeleteCommand { get; }
+
+    public PeopleViewModel()
+    {
+        People.Add(new Person { Name = "홍길동", Age = 30 });
+        People.Add(new Person { Name = "김철수", Age = 25 });
+        People.Add(new Person { Name = "이영희", Age = 28 });
+
+        ApplyFilter();
+
+        AddCommand = ReactiveCommand.Create(AddPerson);
+        DeleteCommand = ReactiveCommand.Create(DeletePerson);
+    }
+
+    private void AddPerson()
+    {
+        if (!string.IsNullOrWhiteSpace(NameInput) && AgeInput > 0)
+        {
+            var person = new Person { Name = NameInput, Age = AgeInput };
+            People.Add(person);
+            NameInput = "";
+            AgeInput = 0;
+            ApplyFilter();
+        }
+    }
+
+    private void DeletePerson()
+    {
+        if (SelectedPerson != null)
+        {
+            People.Remove(SelectedPerson);
+            ApplyFilter();
+        }
+    }
+
+    private void ApplyFilter()
+    {
+        FilteredPeople.Clear();
+        foreach (var person in People)
+        {
+            if (string.IsNullOrWhiteSpace(FilterText) ||
+                person.Name.Contains(FilterText, StringComparison.OrdinalIgnoreCase))
+            {
+                FilteredPeople.Add(person);
+            }
+        }
+    }
+}
+```
+
+---
+
+## 🖼️ View: `PeopleView.axaml`
+
+```xml
+<UserControl xmlns="https://github.com/avaloniaui"
+             x:Class="MyAvaloniaApp.Views.PeopleView"
+             xmlns:vm="clr-namespace:MyAvaloniaApp.ViewModels"
+             Width="600" Height="400">
+    
+    <UserControl.DataContext>
+        <vm:PeopleViewModel/>
+    </UserControl.DataContext>
+
+    <StackPanel Margin="10">
+        <!-- 🔍 필터 입력 -->
+        <TextBox Watermark="이름으로 검색" Text="{Binding FilterText}" Margin="0,0,0,10"/>
+
+        <!-- 🗂️ 리스트 출력 -->
+        <ListView Items="{Binding FilteredPeople}"
+                  SelectedItem="{Binding SelectedPerson}"
+                  Height="150">
+            <ListView.Columns>
+                <GridViewColumn Header="이름" Width="200" DisplayMemberBinding="{Binding Name}" />
+                <GridViewColumn Header="나이" Width="100" DisplayMemberBinding="{Binding Age}" />
+            </ListView.Columns>
+        </ListView>
+
+        <!-- 👁️ 상세 정보 -->
+        <TextBlock Text="선택된 사람:" FontWeight="Bold" Margin="0,10,0,0"/>
+        <TextBlock Text="{Binding SelectedPerson.Name}" />
+        <TextBlock Text="{Binding SelectedPerson.Age}" />
+
+        <!-- ➕ 추가 -->
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0" Spacing="10">
+            <TextBox Width="150" Watermark="이름 입력" Text="{Binding NameInput}" />
+            <TextBox Width="100" Watermark="나이 입력" Text="{Binding AgeInput}" />
+            <Button Content="추가" Command="{Binding AddCommand}" />
+        </StackPanel>
+
+        <!-- ❌ 삭제 -->
+        <Button Content="선택 삭제" Command="{Binding DeleteCommand}" Margin="0,10,0,0"/>
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+## 📌 주요 기능 요약
+
+| 기능 | 설명 |
+|------|------|
+| `ObservableCollection` | 리스트 바인딩에 사용 |
+| `FilteredPeople` | 필터링된 리스트를 UI에 표시 |
+| `AddCommand`, `DeleteCommand` | ReactiveCommand로 MVVM식 버튼 처리 |
+| `SelectedItem` | 선택된 항목을 ViewModel에서 추적 |
+| `ListView.Columns` | 테이블 형태로 리스트 표시 |
+| `TextBox + FilterText` | 실시간 필터 구현 |
+
+---
+
+## 💡 확장 아이디어
+
+- 🔁 항목 수정 기능 추가
+- 📦 리스트를 파일(JSON)로 저장하고 불러오기
+- 🧪 단위 테스트로 리스트 기능 검증
+- 🌍 다국어 지원 (이름/나이 라벨 번역)
+
+---
+
+## ✅ 정리
+
+이제 Avalonia MVVM 구조에서 다음을 할 수 있습니다:
+
+- 리스트를 바인딩하고,
+- 필터링하여 표시하며,
+- 항목을 추가/삭제하고,
+- 선택된 항목의 정보를 보여주는 기능
+
+이러한 기능은 다양한 **관리형 UI 애플리케이션**의 기본 구조가 됩니다.  
+앞으로는 이 구조를 기반으로 **탭뷰**, **다중 뷰 전환**, **데이터 저장** 등으로 확장할 수 있습니다!

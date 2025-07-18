@@ -1,0 +1,146 @@
+---
+layout: post
+title: Avalonia - 개요
+date: 2024-12-26 19:20:23 +0900
+category: Avalonia
+---
+# 🔘 Avalonia MVVM에서 버튼 기능 추가하기
+
+## ✅ 목표
+
+- ReactiveCommand를 사용한 버튼 기능 구현
+- 버튼 비활성화/활성화 제어 (`CanExecute`)
+- 비동기 처리 (`async Command`)
+- 버튼 클릭 후 UI 업데이트
+
+---
+
+## 🧩 사용 기술
+
+| 기술 | 설명 |
+|------|------|
+| `ReactiveCommand` | MVVM 방식의 버튼 이벤트 처리 |
+| `CanExecute` | 조건에 따라 버튼 활성/비활성 |
+| `async` / `await` | 비동기 처리 지원 |
+| `RaiseCanExecuteChanged` | 조건 변화에 따라 버튼 상태 갱신 |
+
+---
+
+## 📁 구조
+
+- View: `ButtonView.axaml`
+- ViewModel: `ButtonViewModel.cs`
+
+---
+
+## 🎛️ ViewModel: `ButtonViewModel.cs`
+
+```csharp
+using ReactiveUI;
+using System;
+using System.Reactive;
+using System.Reactive.Linq;
+using System.Threading.Tasks;
+
+public class ButtonViewModel : ReactiveObject
+{
+    private string _status;
+    private bool _canClick = true;
+
+    public string Status
+    {
+        get => _status;
+        set => this.RaiseAndSetIfChanged(ref _status, value);
+    }
+
+    public bool CanClick
+    {
+        get => _canClick;
+        set => this.RaiseAndSetIfChanged(ref _canClick, value);
+    }
+
+    public ReactiveCommand<Unit, Unit> ClickCommand { get; }
+    public ReactiveCommand<Unit, Unit> AsyncCommand { get; }
+
+    public ButtonViewModel()
+    {
+        Status = "대기 중...";
+
+        var canClickObservable = this.WhenAnyValue(x => x.CanClick);
+
+        ClickCommand = ReactiveCommand.Create(OnClick, canClickObservable);
+        AsyncCommand = ReactiveCommand.CreateFromTask(OnAsyncClick, canClickObservable);
+    }
+
+    private void OnClick()
+    {
+        Status = $"[{DateTime.Now:T}] 버튼 클릭됨!";
+    }
+
+    private async Task OnAsyncClick()
+    {
+        CanClick = false;
+        Status = "처리 중...";
+
+        await Task.Delay(2000); // 2초 대기
+
+        Status = $"[{DateTime.Now:T}] 완료!";
+        CanClick = true;
+    }
+}
+```
+
+---
+
+## 🖼️ View: `ButtonView.axaml`
+
+```xml
+<UserControl xmlns="https://github.com/avaloniaui"
+             x:Class="MyAvaloniaApp.Views.ButtonView"
+             xmlns:vm="clr-namespace:MyAvaloniaApp.ViewModels"
+             Width="400" Height="200">
+
+    <UserControl.DataContext>
+        <vm:ButtonViewModel/>
+    </UserControl.DataContext>
+
+    <StackPanel Margin="20" Spacing="10">
+        <TextBlock Text="{Binding Status}" FontSize="16"/>
+
+        <Button Content="동기 버튼 클릭"
+                Command="{Binding ClickCommand}" />
+
+        <Button Content="비동기 버튼 클릭 (2초 대기)"
+                Command="{Binding AsyncCommand}" />
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+## 🔎 기능 설명
+
+| 버튼 기능 | 설명 |
+|-----------|------|
+| ✅ 기본 클릭 | `OnClick()`으로 즉시 반응 |
+| ⏳ 비동기 클릭 | `async Task`로 처리 후 완료 표시 |
+| 🔒 상태 제어 | `CanClick` 값에 따라 버튼 활성/비활성 |
+| 🔄 자동 상태 업데이트 | `WhenAnyValue`로 Reactive하게 처리 |
+
+---
+
+## 🧠 고급 확장 팁
+
+| 기능 | 구현 방식 |
+|------|-----------|
+| 로딩 중 버튼 비활성화 | `CanClick = false` 처리 |
+| 버튼 클릭 시 스피너 표시 | `IsBusy` 상태 바인딩 + 애니메이션 |
+| 입력 조건 만족 시 활성화 | `WhenAnyValue(x => x.InputText, ...)` |
+
+---
+
+## ✅ 정리
+
+- 버튼은 **ReactiveCommand**로 처리하면 MVVM에 적합합니다.
+- 상태에 따라 버튼을 활성화/비활성화하려면 `CanExecute`에 해당하는 `Observable`을 연결합니다.
+- 비동기 처리도 쉽게 가능하며 UI와 상태 갱신이 자연스럽게 연결됩니다.

@@ -1,0 +1,201 @@
+---
+layout: post
+title: Avalonia - TextBox 양방향 바인딩
+date: 2024-12-26 19:20:23 +0900
+category: Avalonia
+---
+# 🌗 Avalonia에서 다크/라이트 모드 전환 기능 구현 (MVVM 기반)
+
+Avalonia는 강력한 스타일 시스템을 제공하며, 이를 이용해 앱 전체의 테마(Theme)를 다크 모드 또는 라이트 모드로 전환할 수 있습니다.
+
+---
+
+## ✅ 구현 목표
+
+- 라이트/다크 테마를 리소스 기반으로 설정
+- MVVM 구조로 전환 처리
+- 사용자의 설정을 JSON 등으로 저장하여 앱 재실행 시 복원 (선택)
+
+---
+
+## 📁 구조 예시
+
+```
+MyAvaloniaApp/
+├── Themes/
+│   ├── DarkTheme.axaml
+│   └── LightTheme.axaml
+├── ViewModels/
+│   └── ThemeViewModel.cs
+├── Views/
+│   └── ThemeToggleView.axaml
+├── App.axaml
+```
+
+---
+
+# 🎨 1. 테마 리소스 만들기
+
+## 📄 `Themes/LightTheme.axaml`
+
+```xml
+<ResourceDictionary xmlns="https://github.com/avaloniaui">
+  <Color x:Key="BackgroundColor">#FFFFFFFF</Color>
+  <Color x:Key="ForegroundColor">#FF000000</Color>
+
+  <SolidColorBrush x:Key="BackgroundBrush" Color="{DynamicResource BackgroundColor}" />
+  <SolidColorBrush x:Key="ForegroundBrush" Color="{DynamicResource ForegroundColor}" />
+</ResourceDictionary>
+```
+
+## 📄 `Themes/DarkTheme.axaml`
+
+```xml
+<ResourceDictionary xmlns="https://github.com/avaloniaui">
+  <Color x:Key="BackgroundColor">#FF1E1E1E</Color>
+  <Color x:Key="ForegroundColor">#FFFFFFFF</Color>
+
+  <SolidColorBrush x:Key="BackgroundBrush" Color="{DynamicResource BackgroundColor}" />
+  <SolidColorBrush x:Key="ForegroundBrush" Color="{DynamicResource ForegroundColor}" />
+</ResourceDictionary>
+```
+
+---
+
+# 🖌️ 2. App.axaml에서 리소스 설정
+
+## 📄 `App.axaml`
+
+```xml
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MyAvaloniaApp.App">
+
+  <Application.Styles>
+    <!-- 기본 테마는 Light로 시작 -->
+    <FluentTheme Mode="Light" />
+    <ResourceInclude Source="avares://MyAvaloniaApp/Themes/LightTheme.axaml" x:Key="AppTheme"/>
+  </Application.Styles>
+</Application>
+```
+
+> ⚠️ `x:Key="AppTheme"`로 리소스를 추적할 수 있도록 명시해줘야 나중에 제거/교체가 쉬워집니다.
+
+---
+
+# ⚙️ 3. ViewModel로 테마 전환 구현
+
+## 📄 `ThemeViewModel.cs`
+
+```csharp
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml.Styling;
+using ReactiveUI;
+using System.Reactive;
+
+public class ThemeViewModel : ReactiveObject
+{
+    private bool _isDark;
+
+    public bool IsDark
+    {
+        get => _isDark;
+        set => this.RaiseAndSetIfChanged(ref _isDark, value);
+    }
+
+    public ReactiveCommand<Unit, Unit> ToggleThemeCommand { get; }
+
+    public ThemeViewModel()
+    {
+        ToggleThemeCommand = ReactiveCommand.Create(ToggleTheme);
+    }
+
+    private void ToggleTheme()
+    {
+        var app = Avalonia.Application.Current;
+        if (app == null) return;
+
+        // 기존 테마 제거
+        var currentTheme = app.Styles.FirstOrDefault(s => s is ResourceInclude ri && ri.Source?.ToString().Contains("Theme") == true);
+        if (currentTheme != null)
+            app.Styles.Remove(currentTheme);
+
+        // 새로운 테마 로드
+        var newThemeSource = IsDark
+            ? "avares://MyAvaloniaApp/Themes/DarkTheme.axaml"
+            : "avares://MyAvaloniaApp/Themes/LightTheme.axaml";
+
+        var newTheme = new ResourceInclude(new Uri(newThemeSource))
+        {
+            Source = new Uri(newThemeSource)
+        };
+
+        app.Styles.Add(newTheme);
+    }
+}
+```
+
+---
+
+# 🖼️ 4. View에서 스위치 UI 구성
+
+## 📄 `ThemeToggleView.axaml`
+
+```xml
+<UserControl xmlns="https://github.com/avaloniaui"
+             x:Class="MyAvaloniaApp.Views.ThemeToggleView"
+             xmlns:vm="clr-namespace:MyAvaloniaApp.ViewModels"
+             Width="300" Height="100">
+
+  <UserControl.DataContext>
+    <vm:ThemeViewModel/>
+  </UserControl.DataContext>
+
+  <StackPanel Margin="20" Spacing="10">
+    <ToggleSwitch IsChecked="{Binding IsDark}" Content="다크 모드" />
+    <Button Content="테마 적용" Command="{Binding ToggleThemeCommand}" />
+  </StackPanel>
+</UserControl>
+```
+
+> ✅ 사용자가 `ToggleSwitch`를 토글하고 버튼을 클릭하면 테마가 즉시 전환됩니다.
+
+---
+
+# 🧪 5. 적용 예시 (다크/라이트 색상 반영)
+
+## 📄 View 내부 예시 (`MainView.axaml`)
+
+```xml
+<StackPanel Background="{DynamicResource BackgroundBrush}" Padding="20">
+  <TextBlock Text="테마 테스트 중" Foreground="{DynamicResource ForegroundBrush}" />
+</StackPanel>
+```
+
+---
+
+# 💾 6. 선택 사항: 테마 설정 저장하기
+
+## 📄 SettingsService.cs 일부 추가
+
+```csharp
+public class Settings
+{
+    public bool IsDarkMode { get; set; }
+}
+```
+
+- 앱 종료 시 `IsDark`를 JSON에 저장하고
+- 앱 시작 시 `ThemeViewModel`에 초기화하면 됩니다.
+
+---
+
+## ✅ 정리
+
+| 항목 | 내용 |
+|------|------|
+| 테마 정의 | `ResourceDictionary`로 스타일 분리 |
+| 동적 변경 | 기존 테마 제거 후 새 테마 추가 |
+| MVVM 구조 | `IsDark`와 `ToggleThemeCommand`로 분리 |
+| 적용 방법 | `{DynamicResource}`로 색상 바인딩 |
+| 확장 | 테마 설정을 JSON으로 저장하면 재실행 시 유지 가능

@@ -1,0 +1,493 @@
+---
+layout: post
+title: Avalonia - 개요
+date: 2024-12-26 19:20:23 +0900
+category: Avalonia
+---
+# 🔘 Avalonia 버튼 확장 기능 총정리 (다이얼로그, 애니메이션, 페이지 전환 등)
+
+Avalonia MVVM 구조에서 버튼 클릭과 함께 자주 쓰는 고급 기능들을 정리했습니다.
+
+---
+
+## 🧩 포함 기능
+
+| 기능 | 설명 |
+|------|------|
+| 1️⃣ 다이얼로그 표시 | 메시지 박스, 파일 열기 등 |
+| 2️⃣ 로딩 애니메이션 | 처리 중 스피너나 텍스트 |
+| 3️⃣ 확인창(Yes/No) | 사용자 입력 확인 |
+| 4️⃣ 뷰 전환 | ContentControl을 이용한 화면 전환 |
+
+---
+
+## 📁 구조 개요
+
+```
+MyAvaloniaApp/
+├── Views/
+│   ├── MainView.axaml
+│   ├── SettingsView.axaml
+├── ViewModels/
+│   ├── MainViewModel.cs
+│   ├── SettingsViewModel.cs
+├── Services/
+│   └── IDialogService.cs
+```
+
+---
+
+## 1️⃣ 다이얼로그 띄우기
+
+### 🔧 DialogService
+
+```csharp
+public interface IDialogService
+{
+    Task ShowMessageAsync(string title, string message);
+    Task<bool> ShowConfirmAsync(string title, string message);
+}
+```
+
+```csharp
+public class DialogService : IDialogService
+{
+    public async Task ShowMessageAsync(string title, string message)
+    {
+        var dialog = new Window
+        {
+            Title = title,
+            Content = new TextBlock { Text = message, Margin = new Thickness(20) },
+            Width = 300,
+            Height = 150,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen
+        };
+        await dialog.ShowDialog(App.Current.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime);
+    }
+
+    public async Task<bool> ShowConfirmAsync(string title, string message)
+    {
+        var result = MessageBox.Avalonia.MessageBoxManager
+            .GetMessageBoxStandardWindow(title, message, MessageBox.Avalonia.Enums.ButtonEnum.YesNo);
+        var res = await result.Show();
+        return res == MessageBox.Avalonia.Enums.ButtonResult.Yes;
+    }
+}
+```
+
+> 💡 `MessageBox.Avalonia` NuGet 패키지 필요
+
+---
+
+## 2️⃣ 로딩 애니메이션
+
+ViewModel에서 `IsBusy` 상태를 바인딩합니다.
+
+```csharp
+private bool _isBusy;
+public bool IsBusy
+{
+    get => _isBusy;
+    set => this.RaiseAndSetIfChanged(ref _isBusy, value);
+}
+```
+
+```csharp
+public ReactiveCommand<Unit, Unit> LoadCommand { get; }
+
+public MainViewModel()
+{
+    LoadCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+        IsBusy = true;
+        await Task.Delay(2000); // 작업 중
+        IsBusy = false;
+    });
+}
+```
+
+```xml
+<Button Content="데이터 로드" Command="{Binding LoadCommand}" />
+<TextBlock Text="로딩 중..." IsVisible="{Binding IsBusy}" Foreground="Red"/>
+```
+
+---
+
+## 3️⃣ 확인창 Yes/No
+
+```csharp
+public ReactiveCommand<Unit, Unit> ConfirmCommand { get; }
+
+public MainViewModel(IDialogService dialogService)
+{
+    ConfirmCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+        var confirmed = await dialogService.ShowConfirmAsync("삭제", "정말 삭제할까요?");
+        if (confirmed)
+            await dialogService.ShowMessageAsync("결과", "삭제 완료!");
+        else
+            await dialogService.ShowMessageAsync("결과", "취소됨.");
+    });
+}
+```
+
+---
+
+## 4️⃣ View 전환 (페이지 변경)
+
+### 🔧 ViewModel 전환
+
+```csharp
+private ViewModelBase _currentViewModel;
+public ViewModelBase CurrentViewModel
+{
+    get => _currentViewModel;
+    set => this.RaiseAndSetIfChanged(ref _currentViewModel, value);
+}
+```
+
+```csharp
+public ReactiveCommand<Unit, Unit> GoSettingsCommand { get; }
+
+public MainViewModel()
+{
+    CurrentViewModel = new DashboardViewModel();
+
+    GoSettingsCommand = ReactiveCommand.Create(() =>
+    {
+        CurrentViewModel = new SettingsViewModel();
+    });
+}
+```
+
+### 📄 MainView.axaml
+
+```xml
+<StackPanel>
+    <Button Content="설정으로 이동" Command="{Binding GoSettingsCommand}" />
+    <ContentControl Content="{Binding CurrentViewModel}" />
+</StackPanel>
+```
+
+### 📄 App.axaml의 DataTemplate 등록
+
+```xml
+<Application.DataTemplates>
+    <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+        <views:DashboardView />
+    </DataTemplate>
+    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+        <views:SettingsView />
+    </DataTemplate>
+</Application.DataTemplates>
+```
+
+---
+
+## 🧠 확장 팁
+
+| 기능 | 기술 |
+|------|------|
+| Spinner 넣기 | `ProgressRing` or 애니메이션 이미지 사용 |
+| 다이얼로그에 입력창 포함 | Custom Window 만들기 |
+| Navigation 구조 관리 | `INavigationService`로 추상화 |
+| 여러 창 띄우기 | `Show()` 또는 `ShowDialog()` 사용 |
+
+---
+
+## ✅ 정리
+
+| 기능 | 핵심 기술 | MVVM 처리 방식 |
+|------|------------|----------------|
+| 다이얼로그 | MessageBox.Avalonia | DialogService로 분리 |
+| 로딩 표시 | IsBusy, Task.Delay | 상태 바인딩 |
+| 확인창 | Custom Confirm or MessageBox | await + 조건 |
+| 페이지 전환 | ContentControl + DataTemplate | ViewModel 교체 |
+
+---
+
+## ▶️ 다음 확장 아이디어
+
+- 입력 폼 유효성 검증 (Validation)
+- 파일 열기/저장 기능
+- 설정 저장 (JSON, SQLite)
+- 다국어 지원
+- 탭 구조 UI 구성
+
+---
+
+원하는 기능을 말씀해 주시면 해당 주제를 자세히 정리해드릴게요!
+이제 UI 전환, 다이얼로그, 로딩 처리, 조건 확인 등 기본적인 UI 흐름을 다룰 수 있게 되었어요.
+이후엔 입력 폼 검증, 데이터 저장, 다국어(i18n) 등으로 발전시킬 수 있습니다.
+
+어떤 걸 다음으로 할까요?
+
+
+
+
+
+
+
+
+나의 말:
+다국어 빼고 2개해줘
+
+
+ChatGPT의 말:
+좋아요! 그러면 다국어는 제외하고, 다음 두 가지 확장 기능을 Avalonia MVVM 스타일로 정리해드릴게요:
+
+✅ 오늘의 주제
+🧪 입력 폼 유효성 검증 (Validation)
+
+💾 설정 저장 및 불러오기 (JSON 기반)
+
+두 기능 모두 실무에서도 매우 유용하며, 앱을 사용자 친화적으로 만드는 데 필수입니다.
+
+markdown
+복사
+편집
+# 🧪 Avalonia MVVM에서 입력 검증과 설정 저장 기능 구현
+
+## 🧩 이번에 구현할 기능
+
+| 기능 | 설명 |
+|------|------|
+| 1️⃣ 입력 폼 검증 | 이름과 나이 등 필수 입력값 체크, 오류 메시지 출력 |
+| 2️⃣ 설정 저장 | JSON으로 사용자 설정 저장/불러오기
+
+---
+
+## 📁 예제 구조
+
+```
+MyAvaloniaApp/
+├── Models/
+│   └── UserSettings.cs
+├── ViewModels/
+│   └── SettingsViewModel.cs
+├── Views/
+│   └── SettingsView.axaml
+├── Services/
+│   └── ISettingsService.cs / SettingsService.cs
+```
+
+---
+
+# ✅ 1. 입력 폼 유효성 검증
+
+## 📄 SettingsViewModel.cs
+
+```csharp
+using ReactiveUI;
+using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reactive;
+
+public class SettingsViewModel : ReactiveObject, IValidatableObject
+{
+    private string _userName;
+    private int _age;
+    private string _error;
+
+    public string UserName
+    {
+        get => _userName;
+        set => this.RaiseAndSetIfChanged(ref _userName, value);
+    }
+
+    public int Age
+    {
+        get => _age;
+        set => this.RaiseAndSetIfChanged(ref _age, value);
+    }
+
+    public string Error
+    {
+        get => _error;
+        private set => this.RaiseAndSetIfChanged(ref _error, value);
+    }
+
+    public ReactiveCommand<Unit, Unit> SubmitCommand { get; }
+
+    public SettingsViewModel()
+    {
+        SubmitCommand = ReactiveCommand.Create(OnSubmit);
+    }
+
+    private void OnSubmit()
+    {
+        var results = new List<ValidationResult>();
+        var context = new ValidationContext(this);
+        bool isValid = Validator.TryValidateObject(this, context, results, true);
+
+        if (isValid)
+        {
+            Error = "✅ 저장 성공!";
+            // 설정 저장할 수 있음
+        }
+        else
+        {
+            Error = string.Join("\n", results.Select(r => $"❌ {r.ErrorMessage}"));
+        }
+    }
+
+    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    {
+        if (string.IsNullOrWhiteSpace(UserName))
+            yield return new ValidationResult("이름을 입력하세요.", new[] { nameof(UserName) });
+
+        if (Age <= 0)
+            yield return new ValidationResult("나이는 0보다 커야 합니다.", new[] { nameof(Age) });
+    }
+}
+```
+
+---
+
+## 🖼️ SettingsView.axaml
+
+```xml
+<UserControl xmlns="https://github.com/avaloniaui"
+             x:Class="MyAvaloniaApp.Views.SettingsView"
+             xmlns:vm="clr-namespace:MyAvaloniaApp.ViewModels"
+             Width="400" Height="300">
+    
+    <UserControl.DataContext>
+        <vm:SettingsViewModel/>
+    </UserControl.DataContext>
+
+    <StackPanel Margin="20" Spacing="10">
+        <TextBlock Text="사용자 설정" FontSize="18"/>
+
+        <TextBox Watermark="이름 입력" Text="{Binding UserName}" />
+        <TextBox Watermark="나이 입력" Text="{Binding Age}" />
+
+        <Button Content="저장" Command="{Binding SubmitCommand}" />
+
+        <TextBlock Text="{Binding Error}" Foreground="Red" TextWrapping="Wrap"/>
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+# 💾 2. 설정 저장 및 불러오기
+
+## 📄 Models/UserSettings.cs
+
+```csharp
+public class UserSettings
+{
+    public string UserName { get; set; }
+    public int Age { get; set; }
+}
+```
+
+---
+
+## 📄 Services/ISettingsService.cs
+
+```csharp
+public interface ISettingsService
+{
+    Task SaveAsync(UserSettings settings);
+    Task<UserSettings?> LoadAsync();
+}
+```
+
+---
+
+## 📄 Services/SettingsService.cs
+
+```csharp
+using System.Text.Json;
+using System.IO;
+using System.Threading.Tasks;
+
+public class SettingsService : ISettingsService
+{
+    private const string FilePath = "user-settings.json";
+
+    public async Task SaveAsync(UserSettings settings)
+    {
+        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        await File.WriteAllTextAsync(FilePath, json);
+    }
+
+    public async Task<UserSettings?> LoadAsync()
+    {
+        if (!File.Exists(FilePath))
+            return null;
+
+        var json = await File.ReadAllTextAsync(FilePath);
+        return JsonSerializer.Deserialize<UserSettings>(json);
+    }
+}
+```
+
+---
+
+## 🛠 ViewModel에 적용
+
+```csharp
+private readonly ISettingsService _settingsService;
+
+public ReactiveCommand<Unit, Unit> LoadCommand { get; }
+
+public SettingsViewModel(ISettingsService settingsService)
+{
+    _settingsService = settingsService;
+
+    LoadCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+        var loaded = await _settingsService.LoadAsync();
+        if (loaded != null)
+        {
+            UserName = loaded.UserName;
+            Age = loaded.Age;
+            Error = "📦 설정 불러옴";
+        }
+        else
+        {
+            Error = "⚠️ 설정 없음";
+        }
+    });
+
+    SubmitCommand = ReactiveCommand.CreateFromTask(async () =>
+    {
+        var validationResults = new List<ValidationResult>();
+        var context = new ValidationContext(this);
+        bool isValid = Validator.TryValidateObject(this, context, validationResults, true);
+
+        if (isValid)
+        {
+            await _settingsService.SaveAsync(new UserSettings { UserName = UserName, Age = Age });
+            Error = "✅ 저장 완료!";
+        }
+        else
+        {
+            Error = string.Join("\n", validationResults.Select(r => $"❌ {r.ErrorMessage}"));
+        }
+    });
+}
+```
+
+---
+
+## 🖼️ 버튼 추가 (SettingsView.axaml)
+
+```xml
+<Button Content="설정 불러오기" Command="{Binding LoadCommand}" />
+```
+
+---
+
+## ✅ 정리
+
+| 기능 | 사용 기술 |
+|------|-----------|
+| 입력 검증 | `IValidatableObject`, `Validator` |
+| 메시지 출력 | `TextBlock` 바인딩 |
+| 설정 저장 | `JsonSerializer` → 파일 저장 |
+| 설정 불러오기 | JSON → ViewModel 상태 복원 |

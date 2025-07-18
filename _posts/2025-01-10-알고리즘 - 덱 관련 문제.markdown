@@ -1,0 +1,197 @@
+---
+layout: post
+title: 알고리즘 - 덱 관련 문제
+date: 2024-12-26 19:20:23 +0900
+category: 알고리즘
+---
+# 🔁 덱(Deque)을 활용한 알고리즘 문제 (백준 기반)
+
+**덱(Deque)**은 Double-Ended Queue의 줄임말로, **양쪽에서 삽입과 삭제가 가능한 자료구조**입니다.  
+파이썬에서는 `collections.deque` 모듈로 간편하게 사용할 수 있으며, 큐보다 더 유연한 시뮬레이션이 가능하여 다양한 문제에 쓰입니다.
+
+---
+
+## ✅ 덱 기본 개념
+
+| 연산 | 설명 |
+|------|------|
+| `append(x)` | 오른쪽 끝에 x 삽입 |
+| `appendleft(x)` | 왼쪽 끝에 x 삽입 |
+| `pop()` | 오른쪽 끝에서 제거 |
+| `popleft()` | 왼쪽 끝에서 제거 |
+
+```python
+from collections import deque
+
+dq = deque()
+dq.append(1)        # 뒤에 추가
+dq.appendleft(2)    # 앞에 추가
+dq.pop()            # 뒤에서 제거
+dq.popleft()        # 앞에서 제거
+```
+
+---
+
+## 📌 대표 문제 ① - 덱 구현  
+- **문제 번호**: 백준 10866 - [덱](https://www.acmicpc.net/problem/10866)  
+- **유형**: 자료구조, 구현
+
+### 📝 문제 설명
+덱 자료구조를 구현하여 다양한 명령어(`push_front`, `push_back`, `pop_front`, `pop_back` 등)를 처리하는 문제입니다.
+
+### ✅ 예제 코드
+```python
+from collections import deque
+import sys
+
+dq = deque()
+n = int(sys.stdin.readline())
+
+for _ in range(n):
+    cmd = sys.stdin.readline().strip().split()
+
+    if cmd[0] == 'push_front':
+        dq.appendleft(cmd[1])
+    elif cmd[0] == 'push_back':
+        dq.append(cmd[1])
+    elif cmd[0] == 'pop_front':
+        print(dq.popleft() if dq else -1)
+    elif cmd[0] == 'pop_back':
+        print(dq.pop() if dq else -1)
+    elif cmd[0] == 'size':
+        print(len(dq))
+    elif cmd[0] == 'empty':
+        print(0 if dq else 1)
+    elif cmd[0] == 'front':
+        print(dq[0] if dq else -1)
+    elif cmd[0] == 'back':
+        print(dq[-1] if dq else -1)
+```
+
+---
+
+## 📌 대표 문제 ② - 회전하는 큐  
+- **문제 번호**: 백준 1021 - [회전하는 큐](https://www.acmicpc.net/problem/1021)  
+- **유형**: 덱, 시뮬레이션
+
+### 📝 문제 설명
+1부터 N까지의 숫자가 들어있는 큐에서, 특정 원소를 **최소 이동 횟수**로 꺼내는 문제입니다.  
+왼쪽으로 회전, 오른쪽으로 회전이 모두 가능하고, 각 회전은 1회 연산으로 셉니다.
+
+### 💡 핵심 아이디어
+- `rotate()` 함수를 사용하거나 직접 덱을 회전시킴
+- 원하는 값이 **앞쪽에서 더 가까운지, 뒤쪽에서 더 가까운지** 판단
+
+### ✅ 예제 코드
+```python
+from collections import deque
+
+n, m = map(int, input().split())
+targets = list(map(int, input().split()))
+dq = deque(range(1, n + 1))
+
+count = 0
+for t in targets:
+    idx = dq.index(t)
+    if idx < len(dq) // 2:
+        while dq[0] != t:
+            dq.append(dq.popleft())
+            count += 1
+    else:
+        while dq[0] != t:
+            dq.appendleft(dq.pop())
+            count += 1
+    dq.popleft()
+
+print(count)
+```
+
+---
+
+## 📌 대표 문제 ③ - AC (파서 구현)  
+- **문제 번호**: 백준 5430 - [AC](https://www.acmicpc.net/problem/5430)  
+- **유형**: 덱, 문자열, 시뮬레이션
+
+### 📝 문제 설명
+명령어 문자열 `RDD`가 주어지고, 숫자 배열이 주어질 때:
+- `R`: 배열을 뒤집기
+- `D`: 앞에서 하나 삭제 (에러 발생 가능)
+
+덱을 이용해 **뒤집지 않고도 뒤에서 제거**할 수 있다는 점을 이용해야 함.
+
+### 💡 핵심 아이디어
+- `reverse` 플래그 사용
+- `D` 명령 시 `popleft()` 또는 `pop()`을 조건적으로 실행
+
+### ✅ 예제 코드
+```python
+from collections import deque
+import sys
+
+t = int(sys.stdin.readline())
+for _ in range(t):
+    p = sys.stdin.readline().strip()
+    n = int(sys.stdin.readline())
+    arr = sys.stdin.readline().strip()[1:-1]
+    dq = deque(arr.split(',')) if arr else deque()
+    is_reversed = False
+    error = False
+
+    for cmd in p:
+        if cmd == 'R':
+            is_reversed = not is_reversed
+        elif cmd == 'D':
+            if dq:
+                if is_reversed:
+                    dq.pop()
+                else:
+                    dq.popleft()
+            else:
+                error = True
+                break
+
+    if error:
+        print("error")
+    else:
+        if is_reversed:
+            dq.reverse()
+        print('[' + ','.join(dq) + ']')
+```
+
+---
+
+## 📌 대표 문제 ④ - 슬라이딩 윈도우 최솟값  
+- **문제 번호**: 백준 11003 - [최솟값 찾기](https://www.acmicpc.net/problem/11003)  
+- **유형**: 덱, 슬라이딩 윈도우, 최적화
+
+### 📝 문제 설명
+크기가 N인 수열에서 윈도우 크기 L을 기준으로 **각 윈도우의 최솟값**을 출력합니다.  
+단순 구현 시 O(NL) → 시간 초과!
+
+### 💡 핵심 아이디어
+- 덱에 **인덱스를 저장**
+- 덱에서 오래된 인덱스 제거, 새 값보다 큰 수 제거 → **단조 증가 덱 유지**
+
+### ✅ 예제 코드
+```python
+from collections import deque
+import sys
+
+n, l = map(int, sys.stdin.readline().split())
+nums = list(map(int, sys.stdin.readline().split()))
+dq = deque()
+
+for i in range(n):
+    while dq and dq[-1][0] > nums[i]:
+        dq.pop()
+    dq.append((nums[i], i))
+    if dq[0][1] <= i - l:
+        dq.popleft()
+    print(dq[0][0], end=' ')
+```
+
+---
+
+## ✅ 마무리
+
+덱은 큐보다 **더 유연한 시뮬레이션**, **양방향 접근**, **슬라이딩 윈도우 최적화** 등에서 매우 유용합니다.

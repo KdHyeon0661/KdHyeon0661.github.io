@@ -1,0 +1,138 @@
+---
+layout: post
+title: Avalonia - 개요
+date: 2024-12-26 19:20:23 +0900
+category: Avalonia
+---
+# 📋 Avalonia에서 리스트(ListBox/ListView) 바인딩하기
+
+## ✅ 목표
+
+- `ObservableCollection`을 이용해 ViewModel에서 리스트 관리
+- `ListBox` 또는 `ListView`에 바인딩
+- 항목 선택 및 반응형 UI 구성
+- `DataTemplate`으로 리스트 항목의 UI 구성
+
+---
+
+## 📁 예제 구조
+
+```
+MyAvaloniaApp/
+├── Views/
+│   └── PeopleView.axaml
+├── ViewModels/
+│   └── PeopleViewModel.cs
+├── Models/
+│   └── Person.cs
+```
+
+---
+
+## 👤 Model: Person.cs
+
+```csharp
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+```
+
+---
+
+## 🎛️ ViewModel: PeopleViewModel.cs
+
+```csharp
+using ReactiveUI;
+using System.Collections.ObjectModel;
+
+public class PeopleViewModel : ReactiveObject
+{
+    public ObservableCollection<Person> People { get; }
+    private Person _selectedPerson;
+
+    public Person SelectedPerson
+    {
+        get => _selectedPerson;
+        set => this.RaiseAndSetIfChanged(ref _selectedPerson, value);
+    }
+
+    public PeopleViewModel()
+    {
+        People = new ObservableCollection<Person>
+        {
+            new Person { Name = "홍길동", Age = 30 },
+            new Person { Name = "김철수", Age = 25 },
+            new Person { Name = "이영희", Age = 28 }
+        };
+    }
+}
+```
+
+---
+
+## 🪟 View: PeopleView.axaml
+
+```xml
+<UserControl xmlns="https://github.com/avaloniaui"
+             x:Class="MyAvaloniaApp.Views.PeopleView"
+             xmlns:vm="clr-namespace:MyAvaloniaApp.ViewModels"
+             xmlns:d="https://github.com/avaloniaui"
+             xmlns:models="clr-namespace:MyAvaloniaApp.Models"
+             Width="400" Height="300">
+
+    <UserControl.DataContext>
+        <vm:PeopleViewModel/>
+    </UserControl.DataContext>
+
+    <StackPanel Margin="10">
+        <TextBlock Text="사람 목록" FontSize="20" Margin="0,0,0,10"/>
+        
+        <ListBox Items="{Binding People}"
+                 SelectedItem="{Binding SelectedPerson}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <TextBlock Text="{Binding Name}" />
+                        <TextBlock Text="{Binding Age}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Text="---" Margin="0,10,0,0"/>
+        <TextBlock Text="{Binding SelectedPerson.Name}" FontWeight="Bold"/>
+    </StackPanel>
+</UserControl>
+```
+
+---
+
+## 📝 주요 포인트 요약
+
+| 기능 | 설명 |
+|------|------|
+| `ObservableCollection<T>` | 리스트 바인딩용 컬렉션. 변경 자동 반영됨 |
+| `SelectedItem` | 현재 선택된 항목 바인딩 |
+| `DataTemplate` | 리스트 항목 UI 구조 정의 |
+| `ListBox`, `ListView` | 목록 출력 컨트롤. 필요한 기능에 따라 선택 |
+
+---
+
+## 🧪 확장 아이디어
+
+- `Button`을 눌러 리스트에 항목 추가/삭제하기  
+- 리스트 항목 클릭 시 상세 화면으로 전환  
+- 검색 필터 추가 (`CollectionView`)  
+- `ListView`로 열 머리글(column) 구성하기  
+
+---
+
+## ✅ 정리
+
+Avalonia의 MVVM 패턴을 따르면서 리스트 UI를 구성하려면:
+
+- ViewModel에서 `ObservableCollection`으로 데이터를 준비하고,
+- View에서 `Items`, `SelectedItem`으로 바인딩하며,
+- `DataTemplate`을 통해 원하는 모양으로 커스터마이징하면 됩니다.
