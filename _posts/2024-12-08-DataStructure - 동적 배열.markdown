@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Data Structure - 자료구조란
-date: 2024-12-07 20:20:23 +0900
+title: Data Structure - 동적 배열
+date: 2024-12-08 20:20:23 +0900
 category: Data Structure
 ---
 # 직접 구현하는 동적 배열 (Dynamic Array) in C++

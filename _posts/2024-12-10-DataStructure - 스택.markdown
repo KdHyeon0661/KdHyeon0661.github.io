@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Data Structure - 스택
-date: 2024-12-09 19:20:23 +0900
+date: 2024-12-10 19:20:23 +0900
 category: Data Structure
 ---
 # 스택(Stack) — 자료구조의 기초

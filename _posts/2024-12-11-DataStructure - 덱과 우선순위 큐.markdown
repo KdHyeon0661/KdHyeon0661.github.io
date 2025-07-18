@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Data Structure - 큐
-date: 2024-12-09 19:20:23 +0900
+title: Data Structure - 덱과 우선순위 큐
+date: 2024-12-11 19:20:23 +0900
 category: Data Structure
 ---
 # 덱(Deque)과 우선순위 큐(Priority Queue) — 큐의 진화형 구조들

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Data Structure - 힙
-date: 2024-12-09 19:20:23 +0900
+date: 2024-12-12 19:20:23 +0900
 category: Data Structure
 ---
 # 힙(Heap) — 우선순위를 다루는 강력한 트리 구조

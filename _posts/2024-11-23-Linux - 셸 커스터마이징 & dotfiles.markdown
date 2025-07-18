@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Linux - 셸 커스터마이징 & dotfiles
-date: 2024-11-21 19:20:23 +0900
+date: 2024-11-23 19:20:23 +0900
 category: Linux
 ---
 # 리눅스 22편: 🐚 셸 커스터마이징 & dotfiles

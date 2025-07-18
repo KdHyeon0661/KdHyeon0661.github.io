@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Linux - cgroups와 프로세스 격리
-date: 2024-11-29 19:20:23 +0900
+date: 2024-11-30 19:20:23 +0900
 category: Linux
 ---
 # 리눅스 29편: 🧱 cgroups와 프로세스 격리

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Data Structure - 큐
-date: 2024-12-09 19:20:23 +0900
+date: 2024-12-10 19:20:23 +0900
 category: Data Structure
 ---
 # 큐(Queue) — 선입선출(FIFO) 구조의 이해
