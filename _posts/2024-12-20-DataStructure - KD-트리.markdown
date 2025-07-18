@@ -178,14 +178,14 @@ void rangeSearch(KDNode* root, Point low, Point high, int depth = 0) {
 ```cpp
 int main() {
     vector<Point> points = {
-        {{3, 6}}, {{17, 15}}, {{13, 15}}, {{6, 12}}, {{9, 1}}, {{2, 7}}, {{10, 19}}
+        { {3, 6} }, { {17, 15} }, { {13, 15} }, { {6, 12} }, { {9, 1} }, { {2, 7} }, { {10, 19} }
     };
 
     KDNode* root = nullptr;
     for (auto p : points)
         root = insert(root, p);
 
-    Point low = {{0, 0}}, high = {{10, 15}};
+    Point low = { {0, 0} }, high = { {10, 15} };
     cout << "Points in range [(0,0)-(10,15)]: ";
     rangeSearch(root, low, high);
     cout << endl;
@@ -294,7 +294,7 @@ void knn(KDNode* root, Point target, int K, priority_queue<PD>& pq, int depth = 
 ```cpp
 int main() {
     vector<Point> points = {
-        {{3, 6}}, {{17, 15}}, {{13, 15}}, {{6, 12}}, {{9, 1}}, {{2, 7}}, {{10, 19}}
+        { {3, 6} }, { {17, 15} }, { {13, 15} }, { {6, 12} }, { {9, 1} }, { {2, 7} }, { {10, 19} }
     };
 
     KDNode* root = nullptr;
@@ -302,14 +302,14 @@ int main() {
         root = insert(root, p);
 
     // 최근접 탐색
-    Point query = {{10, 9}};
+    Point query = { {10, 9} };
     KDNode* best = nullptr;
     double bestDist = 1e9;
     nearest(root, query, best, bestDist);
     cout << "Nearest to (10,9): (" << best->point.coords[0] << ", " << best->point.coords[1] << ")\n";
 
     // 삭제 예시
-    root = deleteNode(root, {{6, 12}});
+    root = deleteNode(root, { {6, 12} });
 
     // KNN 탐색
     priority_queue<PD> pq;
