@@ -8,7 +8,7 @@ category: DataCommunication
 
 #### 2.1.1 Scenarios
 
-![DC Scenarios](/../assets/img/network/2024-07-13-DC_Scenarios.JPG)
+![DC Scenarios](/../assets/img/network/2024-07-13-DC_Scenarios.jpg)
 
 - Layering을 하게 되면 한 층에서 Protocol이 수행해야하는 행동 범위가 많이 줄어들면서 각자 자신의 임무만 명확히 수행하게 될 수 있는 장점이 생깁니다.
  따라서 Protocol Layering이라는 것은 복잡한 업무를 작은 일의 단위로 나누어 간단한 업무를 부담하게 하는 것으로 볼 수 있습니다.
@@ -22,7 +22,7 @@ category: DataCommunication
 
 #### 2.1.3 Logical Connections(논리적 연결)
 
-![DC Logical Connections](/../assets/img/network/2024-07-13-DC_Logical_Connections.JPG)
+![DC Logical Connections](/../assets/img/network/2024-07-13-DC_Logical_Connections.jpg)
 
 - 위 원칙에 따라 논리적 연결은 각 계층 간 종단 간 통신을 가능하게 하여 계층 간 올바른 상호 작용을 보장합니다.
 
@@ -30,19 +30,19 @@ category: DataCommunication
 
 #### 2.2.1 Layered Architecture
 
-![DC Layered Architecture](/../assets/img/network/2024-07-13-DC_Layered_Architecture.JPG)
+![DC Layered Architecture](/../assets/img/network/2024-07-13-DC_Layered_Architecture.jpg)
 
 Layer 1~5까지 전부 포함되어있는 시스템은 양 끝단에 있는 단말기(터미널)밖에 없습니다. 적어도 중간에서 그들 사이를 이어주는 단계에서는 Application 계층을 포함해서는 안됩니다. Application 계층에서는 Data가 Information으로 바뀌는데 중간 단계에서 이러한 작업이 일어나면 개인의 정보가 유츌되거나 도청될 우려가 있습니다.
 
 #### 2.2.2 Layers in the TCP/IP Protocol Suite
 
-![DC Layered Architecture](/../assets/img/network/2024-07-13-DC_Logical_Connections_between_TCPIP.JPG)
+![DC Layered Architecture](/../assets/img/network/2024-07-13-DC_Logical_Connections_between_TCPIP.jpg)
 
 - 그림으로 알 수 있듯이 application, transport, network는 end-to-end(종단간) 연결이고, data link와 physical은 hop-to-hop(기기간) 연결이다. 여기서 hop은 라우터나 호스트를 의미합니다.
 
 #### 2.2.3 Description of Each Layer
 
-![DC Layer](/../assets/img/network/2024-07-13-DC_Layers.JPG)
+![DC Layer](/../assets/img/network/2024-07-13-DC_Layers.jpg)
 
 ##### Physical Layer (물리 계층)
 - 매체를 통해 비트 데이터를 스트림 형태로 전송하고 받으며, 기계적·전기적 특성을 제공합니다.
@@ -79,13 +79,13 @@ Layer 1~5까지 전부 포함되어있는 시스템은 양 끝단에 있는 단�
 
 #### 2.2.4 Encapsulation and Decapsulation(캡슐화와 역캡슐화)
 
-[DC capsulation](/../assets/img/network/2024-07-13-DC_Capsule.JPG)
+[DC capsulation](/../assets/img/network/2024-07-13-DC_Capsule.jpg)
 
 - 처음 application에서 메시지가 생성되면 하위 계층으로 내려가면서 캡슐화로 감쌉니다. 중간에 라우터에서는 캡슐화를 풀고 다시 캡슐화를 한니다. 도착지에 오면 캡슐화를 풀면서 상위 계층에 올라갑니다. 도착지의 application에 메세지가 들어옵니다.
 
 #### 2.2.5 Addressing
  
-![DC Addressing](/../assets/img/network/2024-07-13-DC_Addressing.JPG)
+![DC Addressing](/../assets/img/network/2024-07-13-DC_Addressing.jpg)
 
 - link-layer address는 **MAC**이라 부르는데 네트워크(LAN or WAN) 안의 호스트나 라우터를 구별짓는 주소입니다. 
 - network layer의 주소는 인터넷 범위에서 유일한 장치임을 구별하기 위해서있습니다.
@@ -94,20 +94,20 @@ Layer 1~5까지 전부 포함되어있는 시스템은 양 끝단에 있는 단�
 
 #### 2.2.6 Multiplexing and Demultiplexing
  
-![DC Multiplexing](/../assets/img/network/2024-07-13-DC_Multiplexing.JPG)
+![DC Multiplexing](/../assets/img/network/2024-07-13-DC_Multiplexing.jpg)
 
 - multiplexing : 출발지에서 이뤄지며, 상위 계층에서 패킷을 캡슐화하는 것입니다.
 - demultiplexing : 도착지에서 이뤄지며, 상위 계층 프로토콜에서 패킷을 캡슐화를 해제하는 것입니다.
 
 ### 2.3 The OSI Model
 
-![DC OSI 7](/../assets/img/network/2024-07-13-DC_OSI7.JPG)
+![DC OSI 7](/../assets/img/network/2024-07-13-DC_OSI7.jpg)
 
 - ISO에서 1947년에 제정한 것이다. Open Systems Interconnection(OSI)라 불립니다.
 
 #### 2.3.1 OSI vs TCP/IP
 
-![DC OSI vs TCP/IP](/../assets/img/network/2024-07-13-DC_OSI7vsTCPIP.JPG)
+![DC OSI vs TCP/IP](/../assets/img/network/2024-07-13-DC_OSI7vsTCPIP.jpg)
 
   - 차이점
     - tcp/ip의 transport layer에 프로토콜이 많은데 일부 프로토콜이 OSI에서 세션 계층으로 넘어갔기 때문입니다.
