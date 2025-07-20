@@ -77,9 +77,9 @@ category: DataCommunication
 
 ### 3.2.5 Composite Signals (합성 신호)
 
-![DC Composite](/../assets/img/network/2024-07-14-DC_Composite.jpg)
+![DC Composite](/assets/img/network/2024-07-14-DC_Composite.jpg)
 
-![DC Composite2](/../assets/img/network/2024-07-14-DC_Composite2.jpg)
+![DC Composite2](/assets/img/network/2024-07-14-DC_Composite2.jpg)
 
 - 합성 신호는 여러 개의 사인파로 만들어진다.
   - 단일 주파수 사인파는 데이터 통신에서는 필요하지 않으며, 여러 사인파로 구성된 합성 신호가 필요하다.
