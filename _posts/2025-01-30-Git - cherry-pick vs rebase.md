@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Git - SSH 키
-date: 2025-01-14 19:20:23 +0900
+title: Git - cherry-pick vs rebase
+date: 2025-01-30 20:20:23 +0900
 category: Git
 ---
 # Git cherry-pick vs rebase  

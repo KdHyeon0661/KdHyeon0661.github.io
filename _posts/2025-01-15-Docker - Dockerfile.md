@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Docker - exec vs attach
-date: 2025-01-14 19:20:23 +0900
+title: Docker - Dockerfile
+date: 2025-01-15 19:20:23 +0900
 category: Docker
 ---
 # 🧾 Dockerfile 완전 정복: 기본 문법과 개념 설명

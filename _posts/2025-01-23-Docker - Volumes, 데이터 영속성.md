@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Docker - exec vs attach
-date: 2025-01-14 19:20:23 +0900
+title: Docker - Volumes, 데이터 영속성
+date: 2025-01-23 19:20:23 +0900
 category: Docker
 ---
 # 📦 Docker Volumes: 데이터 영속성 유지하기

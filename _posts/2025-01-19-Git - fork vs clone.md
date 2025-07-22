@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Git - 개요
-date: 2025-01-14 19:20:23 +0900
+title: Git - Fork vs Clone
+date: 2025-01-19 20:20:23 +0900
 category: Git
 ---
 # GitHub의 Fork란 무엇인가?  

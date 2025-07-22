@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - MVVM 로그인 및 인증 구조 설계
-date: 2025-01-22 19:20:23 +0900
+title: Avalonia - Avalonia 설정 저장 및 불러오기
+date: 2025-02-03 19:20:23 +0900
 category: Avalonia
 ---
 # ⚙️ Avalonia 설정 저장 및 불러오기 (JSON, SQLite 방식)

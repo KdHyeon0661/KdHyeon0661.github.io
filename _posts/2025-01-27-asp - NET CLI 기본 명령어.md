@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Asp - .NET CLI 기본 명령어
-date: 2025-01-14 19:20:23 +0900
+title: Asp - .NET CLI 기본 명령어 정리
+date: 2025-01-27 19:20:23 +0900
 category: asp
 ---
 # ⚙️ .NET CLI 기본 명령어 정리

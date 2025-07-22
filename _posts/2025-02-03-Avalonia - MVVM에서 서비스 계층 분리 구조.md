@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Avalonia - MVVM에서 서비스 계층 분리 구조
-date: 2025-01-22 19:20:23 +0900
+date: 2025-02-03 21:20:23 +0900
 category: Avalonia
 ---
 # 🧱 Avalonia MVVM에서 서비스 계층 분리 구조 (Service, Repository 등)

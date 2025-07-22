@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Docker - Docker 이미지
-date: 2024-01-11 20:20:23 +0900
+date: 2025-01-11 20:20:23 +0900
 category: Docker
 ---
 # 📦 Docker 이미지란? 계층 구조 이해하기

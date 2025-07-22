@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Git - SSH 키
-date: 2025-01-14 19:20:23 +0900
+title: Git - cherry-pick 충돌 해결
+date: 2025-01-30 21:20:23 +0900
 category: Git
 ---
 # Rebase & Cherry-pick 충돌 해결 예제

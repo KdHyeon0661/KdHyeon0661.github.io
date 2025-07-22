@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Docker - exec vs attach
-date: 2025-01-14 19:20:23 +0900
+title: Docker - Docker Volume vs Bind Mount
+date: 2025-01-23 20:20:23 +0900
 category: Docker
 ---
 # 🔄 Docker Volume vs Bind Mount: 완벽 비교

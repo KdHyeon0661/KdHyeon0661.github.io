@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - 다양한 컨트롤 바인딩 (DatePicker, ComboBox, CheckBox 등)
-date: 2025-01-22 19:20:23 +0900
+title: Avalonia - DI(Dependency Injection)
+date: 2025-02-01 20:20:23 +0900
 category: Avalonia
 ---
 # 🧩 Avalonia MVVM에서의 Dependency Injection 구조 정리

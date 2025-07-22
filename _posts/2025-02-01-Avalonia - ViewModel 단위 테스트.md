@@ -1,93 +1,53 @@
 ---
 layout: post
 title: Avalonia - 다양한 컨트롤 바인딩 (DatePicker, ComboBox, CheckBox 등)
-date: 2025-01-22 19:20:23 +0900
+date: 2025-02-01 19:20:23 +0900
 category: Avalonia
 ---
-# 🧩 Avalonia MVVM에서의 Dependency Injection 구조 정리
+# ✅ Avalonia MVVM: ViewModel 단위 테스트 작성 가이드
 
 ---
 
-## ✅ 왜 DI가 필요한가요?
+## 🧪 왜 ViewModel을 테스트해야 하나요?
 
-| 항목 | 이유 |
+| 이유 | 설명 |
 |------|------|
-| **결합도 감소** | ViewModel → Service 직접 참조 제거 |
-| **테스트 가능성 향상** | Mock 객체로 대체 가능 |
-| **확장성 확보** | 서비스 교체/버전 변경 시 유리 |
-| **중앙 집중 관리** | 싱글턴, 범위, 임시 객체 수명 주기 관리
+| UI 없는 테스트 가능 | Avalonia 없이 순수 C# 단위 테스트 가능 |
+| 로직 검증 | 사용자 입력 → 상태 변화 → 검증까지 체크 |
+| 회귀 방지 | 검증 로직, 커맨드, 조건부 처리 오류 방지 |
+| CI/CD 자동화 | GUI 없이 빠르게 자동 검증 가능 |
 
 ---
 
-## 🔧 사용 도구
+## 🧱 테스트 구성 요소 요약
 
-- DI 컨테이너: `Microsoft.Extensions.DependencyInjection`
-- 라이프사이클 제어: `AddSingleton`, `AddTransient`, `AddScoped`
-- ViewModel/Service 연결: 생성자 주입 방식
-- App.xaml.cs → `ConfigureServices()`로 구성
+| 항목 | 예시 |
+|------|------|
+| 테스트 프레임워크 | xUnit / NUnit / MSTest |
+| Assertion | FluentAssertions, Shouldly, 기본 Assert |
+| Mocking | Moq / NSubstitute (의존성 주입 테스트용) |
+| Reactive 지원 | ReactiveUI.Testing, TestScheduler (Rx 전용) |
 
 ---
 
-## 📁 기본 구조 예시
+## 📁 프로젝트 구조 예시
 
 ```
-MyAvaloniaApp/
-├── App.xaml / App.xaml.cs
+MyApp/
 ├── ViewModels/
-│   ├── MainViewModel.cs
 │   └── LoginViewModel.cs
-├── Views/
-│   └── LoginView.axaml
-├── Services/
-│   └── IAuthService.cs
-│   └── AuthService.cs
-└── Program.cs
+MyApp.Tests/
+├── ViewModels/
+│   └── LoginViewModelTests.cs
 ```
 
 ---
 
-# 1️⃣ 서비스 인터페이스 및 구현
-
-## 📄 IAuthService.cs
-
-```csharp
-public interface IAuthService
-{
-    Task<bool> LoginAsync(string username, string password);
-}
-```
-
-## 📄 AuthService.cs
-
-```csharp
-public class AuthService : IAuthService
-{
-    public Task<bool> LoginAsync(string username, string password)
-    {
-        // 실제 로그인 처리 로직 (예: API 호출)
-        return Task.FromResult(username == "admin" && password == "1234");
-    }
-}
-```
-
----
-
-# 2️⃣ ViewModel에 서비스 주입
-
-## 📄 LoginViewModel.cs
+# 1️⃣ 기본 ViewModel 예시 (테스트 대상)
 
 ```csharp
 public class LoginViewModel : ReactiveObject
 {
-    private readonly IAuthService _authService;
-
-    public LoginViewModel(IAuthService authService)
-    {
-        _authService = authService;
-
-        LoginCommand = ReactiveCommand.CreateFromTask(ExecuteLogin);
-    }
-
     private string _username = "";
     public string Username
     {
@@ -104,169 +64,183 @@ public class LoginViewModel : ReactiveObject
 
     public ReactiveCommand<Unit, bool> LoginCommand { get; }
 
-    private async Task<bool> ExecuteLogin()
+    public LoginViewModel()
     {
-        return await _authService.LoginAsync(Username, Password);
+        var canLogin = this.WhenAnyValue(
+            x => x.Username, x => x.Password,
+            (u, p) => !string.IsNullOrWhiteSpace(u) && !string.IsNullOrWhiteSpace(p));
+
+        LoginCommand = ReactiveCommand.CreateFromTask(async () =>
+        {
+            await Task.Delay(100); // 서버 호출 시뮬레이션
+            return Username == "admin" && Password == "1234";
+        }, canLogin);
     }
 }
 ```
 
 ---
 
-# 3️⃣ DI 등록 설정: App.xaml.cs 또는 Program.cs
+# 2️⃣ 단위 테스트 코드 작성 (xUnit + FluentAssertions)
 
-### Avalonia 11+ 기준
-
-## 📄 App.xaml.cs
+## 📄 LoginViewModelTests.cs
 
 ```csharp
-public class App : Application
-{
-    public static IServiceProvider Services { get; private set; } = default!;
+using Xunit;
+using FluentAssertions;
+using MyApp.ViewModels;
+using System.Threading.Tasks;
 
-    public override void Initialize()
+public class LoginViewModelTests
+{
+    [Fact]
+    public void LoginCommand_ShouldBeDisabled_WhenFieldsAreEmpty()
     {
-        AvaloniaXamlLoader.Load(this);
+        var vm = new LoginViewModel();
+
+        vm.LoginCommand.CanExecute.FirstAsync().Result.Should().BeFalse();
+
+        vm.Username = "admin";
+        vm.Password = "";
+
+        vm.LoginCommand.CanExecute.FirstAsync().Result.Should().BeFalse();
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    [Fact]
+    public async Task LoginCommand_ShouldReturnTrue_WhenCorrectCredentials()
     {
-        var serviceCollection = new ServiceCollection();
-
-        ConfigureServices(serviceCollection);
-        Services = serviceCollection.BuildServiceProvider();
-
-        var mainWindow = new MainWindow
+        var vm = new LoginViewModel
         {
-            DataContext = Services.GetRequiredService<MainViewModel>()
+            Username = "admin",
+            Password = "1234"
         };
 
-        ApplicationLifetime!.MainWindow = mainWindow;
-
-        base.OnFrameworkInitializationCompleted();
+        var result = await vm.LoginCommand.Execute();
+        result.Should().BeTrue();
     }
 
-    private void ConfigureServices(IServiceCollection services)
+    [Fact]
+    public async Task LoginCommand_ShouldReturnFalse_WhenWrongPassword()
     {
-        // Service 등록
-        services.AddSingleton<IAuthService, AuthService>();
+        var vm = new LoginViewModel
+        {
+            Username = "admin",
+            Password = "wrong"
+        };
 
-        // ViewModel 등록
-        services.AddSingleton<MainViewModel>();
-        services.AddTransient<LoginViewModel>();
+        var result = await vm.LoginCommand.Execute();
+        result.Should().BeFalse();
     }
 }
 ```
 
+> ✅ `FirstAsync().Result`로 `IObservable<bool>`을 검사할 수 있습니다  
+> ✅ `ReactiveCommand.Execute()`는 async이므로 `await` 테스트 필요
+
 ---
 
-# 4️⃣ View와 ViewModel 연결
+# 3️⃣ 검증 포함 ViewModel 테스트 (ReactiveUI.Validation)
 
-## 📄 MainWindow.xaml.cs
+### 📄 SignUpViewModel.cs (일부 발췌)
 
 ```csharp
-public partial class MainWindow : Window
+this.ValidationRule(
+    vm => vm.Email,
+    email => Regex.IsMatch(email ?? "", @"^[\w\.-]+@[\w\.-]+\.\w+$"),
+    "이메일 형식이 잘못되었습니다");
+
+public bool CanSubmit => !HasErrors;
+```
+
+### 📄 SignUpViewModelTests.cs
+
+```csharp
+[Fact]
+public void EmailValidation_ShouldFail_WithInvalidEmail()
 {
-    public MainWindow()
+    var vm = new SignUpViewModel
     {
-        InitializeComponent();
+        Email = "invalid@@@"
+    };
 
-        DataContext = App.Services.GetRequiredService<MainViewModel>();
-    }
+    vm.HasErrors.Should().BeTrue();
+    vm.ValidationContext.Text.Should().Contain("이메일 형식이 잘못되었습니다");
 }
 ```
 
-## 📄 View 내부에서 ViewModel 생성 안함 ❌
+---
 
-```csharp
-// ❌ 이런 방식은 지양
-<DataContext>
-    <vm:LoginViewModel />
-</DataContext>
-```
+# 4️⃣ Command 테스트 팁
 
-> 대신 DI 컨테이너로부터 인스턴스를 주입받는 방식 사용
+| 시나리오 | 예시 |
+|----------|------|
+| 커맨드 조건 만족 여부 | `LoginCommand.CanExecute.First()` |
+| 커맨드 실행 결과 | `await LoginCommand.Execute()` |
+| 커맨드 중복 실행 방지 | `IsExecuting` 체크 가능 |
+| 커맨드 예외 처리 | `ThrownExceptions.Subscribe(...)` 테스트 가능 |
 
 ---
 
-# 5️⃣ 네비게이션 시 ViewModel DI 사용
+# 5️⃣ 의존성 주입된 ViewModel 테스트
+
+### ViewModel에 의존성 주입
 
 ```csharp
-public class MainViewModel : ReactiveObject
+public class ProfileViewModel
 {
-    private readonly Func<LoginViewModel> _loginVmFactory;
+    private readonly IUserService _userService;
 
-    public MainViewModel(Func<LoginViewModel> loginVmFactory)
+    public ProfileViewModel(IUserService userService)
     {
-        _loginVmFactory = loginVmFactory;
+        _userService = userService;
     }
 
-    public void NavigateToLogin()
+    public async Task LoadUser()
     {
-        var loginVm = _loginVmFactory();
-        CurrentPage = loginVm;
+        User = await _userService.GetCurrentUser();
     }
 
-    private ReactiveObject? _currentPage;
-    public ReactiveObject? CurrentPage
-    {
-        get => _currentPage;
-        set => this.RaiseAndSetIfChanged(ref _currentPage, value);
-    }
+    public User? User { get; private set; }
 }
 ```
 
-> ✅ `Func<T>`를 등록하면 매번 새로운 ViewModel을 DI를 통해 생성할 수 있음
-
----
-
-## 🔁 라이프사이클 선택 가이드
-
-| 등록 방식 | 사용 예 |
-|-----------|----------|
-| `AddSingleton<T>` | 앱 전체 공유 (예: 설정, 전역 상태) |
-| `AddTransient<T>` | 매번 새 인스턴스 (ViewModel 등) |
-| `AddScoped<T>` | 웹 전용, Avalonia에서는 사용 안 함 |
-
----
-
-## 🧪 테스트에서 DI 활용
+### 테스트 코드 (Moq 사용)
 
 ```csharp
-var services = new ServiceCollection();
-services.AddTransient<IAuthService, FakeAuthService>();
-services.AddTransient<LoginViewModel>();
+[Fact]
+public async Task LoadUser_ShouldSetUser_WhenServiceReturnsUser()
+{
+    var mock = new Mock<IUserService>();
+    mock.Setup(s => s.GetCurrentUser()).ReturnsAsync(new User { Name = "홍길동" });
 
-var provider = services.BuildServiceProvider();
-var loginVm = provider.GetRequiredService<LoginViewModel>();
+    var vm = new ProfileViewModel(mock.Object);
+    await vm.LoadUser();
+
+    vm.User.Should().NotBeNull();
+    vm.User!.Name.Should().Be("홍길동");
+}
 ```
 
 ---
 
-## 🧱 확장: NavigationService, MessageBus 도입 시
+## 📦 팁: 테스트 프레임워크 선택 비교
 
-```csharp
-services.AddSingleton<INavigationService, NavigationService>();
-services.AddSingleton<IMessageBus, MessageBus>();
-```
-
----
-
-# ✅ 결론: Avalonia + DI 아키텍처 정리
-
-| 역할 | 구현 방법 |
-|------|-----------|
-| 서비스 등록 | `ConfigureServices`에서 명시 |
-| ViewModel 생성 | DI로 주입받기 (생성자 주입) |
-| View 연결 | `App.Services.GetRequiredService<>()` |
-| 테스트 유연성 | 모킹된 서비스 주입 가능 |
-| 네비게이션 유연화 | ViewModel Factory 활용 |
+| 프레임워크 | 특징 |
+|------------|------|
+| **xUnit** | 널리 사용, 간결함, async 테스트 기본 지원 |
+| **NUnit** | 풍부한 기능, `SetUp`, `TearDown` |
+| **MSTest** | Microsoft 기본, Visual Studio 친화적 |
+| **FluentAssertions** | 가독성 높은 문법 (`x.Should().Be(...)`) |
+| **Moq / NSubstitute** | Mocking용 (DI 테스트 필수) |
 
 ---
 
-## 📘 다음 주제 추천
+## ✅ 결론: ViewModel 테스트 전략
 
-- 🧭 NavigationService로 ViewModel 간 이동 구조화
-- 🧪 ViewModel 단위 테스트에서 DI 활용
-- 🧩 Scoped lifetime 없이 ViewModel 상태 공유 방법 (StateContainer)
-- 🧬 MessageBus or EventAggregator와 DI 결합
+| 항목 | 테스트 내용 |
+|------|-------------|
+| 속성 변경 | RaisePropertyChanged 발생 여부 |
+| 커맨드 | 조건부 실행, 결과, 예외 |
+| 유효성 검사 | ValidationContext, HasErrors 등 |
+| 외부 서비스 호출 | Mocking으로 주입 후 확인 |
+| 전체 플로우 | 입력 → 상태 → 실행 → 결과 확인

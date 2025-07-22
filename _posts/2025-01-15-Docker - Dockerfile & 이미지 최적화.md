@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Docker - exec vs attach
-date: 2025-01-14 19:20:23 +0900
+title: Docker - Dockerfile & 이미지 최적화
+date: 2025-01-15 20:20:23 +0900
 category: Docker
 ---
 # 🧠 Dockerfile & 이미지 최적화 베스트 프랙티스

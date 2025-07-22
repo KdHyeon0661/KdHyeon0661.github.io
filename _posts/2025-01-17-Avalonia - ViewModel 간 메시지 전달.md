@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - 여러 페이지 구조
-date: 2024-12-26 19:20:23 +0900
+title: Avalonia - ViewModel 간 메시지 전달
+date: 2025-01-17 19:20:23 +0900
 category: Avalonia
 ---
 # 📡 Avalonia MVVM: ViewModel 간 메시지 전달 (이벤트 / MessageBus)

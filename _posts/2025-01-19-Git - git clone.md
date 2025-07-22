@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Git - 개요
-date: 2025-01-14 19:20:23 +0900
+title: Git - git clone
+date: 2025-01-19 19:20:23 +0900
 category: Git
 ---
 # Git 클론(clone)에 대해 자세히 알아보기

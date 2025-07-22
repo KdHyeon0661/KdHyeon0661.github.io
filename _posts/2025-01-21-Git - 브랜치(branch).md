@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Git - SSH 키
-date: 2025-01-14 19:20:23 +0900
+title: Git - branch
+date: 2025-01-21 19:20:23 +0900
 category: Git
 ---
 # Git 브랜치 생성 및 관리  

@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Avalonia - 다양한 컨트롤 바인딩 (DatePicker, ComboBox, CheckBox 등)
-date: 2025-01-22 19:20:23 +0900
+title: Avalonia - 입력 검증 및 ErrorTemplate
+date: 2025-01-22 20:20:23 +0900
 category: Avalonia
 ---
 # ✅ Avalonia MVVM: 입력 검증(Validation)과 ErrorTemplate 구현
