@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Docker - Macvlan, Overlay, Compose
-date: 2025-01-14 19:20:23 +0900
+date: 2025-01-28 19:20:23 +0900
 category: Docker
 ---
 # 🧠 Docker 고급 네트워크 정리: Macvlan, Overlay, Compose 설정

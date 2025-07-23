@@ -51,6 +51,7 @@ category: DataCommunication
 
   - **broadband transmission** (modulation, 광대역 전송): 디지털 신호를 전송하기 위해 아날로그 신호로 변조 후 사용한다. 이때 밴드패스 채널 (Bandpass Channel, 대역폭이 0으로 시작하지 않는 채널)을 사용한다. 이것은 로우패스 채널보다 더 가능하게 합니다.
 
+![DC broadband requirements](/../assets/img/network/2024-07-15-DC_broadband requirements.jpg)
 ![DC broadband transmission](/../assets/img/network/2024-07-15-DC_broadband transmission.jpg)
 
   - 아래 그림은 디지털 신호를 변조하는 과정을 나타냅니다. 디지털 신호는 복합 아날로그 신호로 변환되는데, Carrier라는 단일 주파수 신호를 이용합니다. Carrier의 진폭 변화를 통해 아날로그 신호를 디지털 신호처럼 보이도록 하는 것입니다.
