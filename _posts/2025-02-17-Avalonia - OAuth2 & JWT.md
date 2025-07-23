@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Avalonia - OAuth2 & JWT 인증
-date: 2025-02-16 21:20:23 +0900
+date: 2025-02-17 20:20:23 +0900
 category: Avalonia
 ---
 # 🔒 Avalonia MVVM + OAuth2 / JWT 인증 구조화

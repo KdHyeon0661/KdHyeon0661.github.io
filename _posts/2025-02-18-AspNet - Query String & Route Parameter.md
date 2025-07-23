@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - Query String & Route Parameter
-date: 2025-02-10 19:20:23 +0900
+date: 2025-02-18 19:20:23 +0900
 category: AspNet
 ---
 # 🌐 Razor Pages에서 Query String과 Route Parameter 다루기

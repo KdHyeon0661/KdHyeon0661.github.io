@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - PageModel 구조
-date: 2025-02-10 19:20:23 +0900
+date: 2025-02-16 16:20:23 +0900
 category: AspNet
 ---
 # 🧠 Razor Pages의 PageModel 구조 완전 정복
