@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Docker - 환경변수와 `.env` 파일 관리
+title: Docker - 환경변수와 '.env' 파일 관리
 date: 2025-02-20 19:20:23 +0900
 category: Docker
 ---

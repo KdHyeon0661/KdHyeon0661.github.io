@@ -1,6 +1,6 @@
 ---
 layout: post
-title: DB - WHERE 절
+title: DB - 함수(Function)
 date: 2025-02-21 20:20:23 +0900
 category: DB
 ---
