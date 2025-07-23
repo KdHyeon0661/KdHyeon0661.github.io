@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Asp - Razor 문법 기초 (2)
+title: AspNet - Razor 문법 기초 (2)
 date: 2025-02-10 20:20:23 +0900
 category: AspNet
 ---

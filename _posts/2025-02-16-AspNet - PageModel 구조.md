@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Asp - PageModel 구조
+title: AspNet - PageModel 구조
 date: 2025-02-10 19:20:23 +0900
 category: AspNet
 ---
