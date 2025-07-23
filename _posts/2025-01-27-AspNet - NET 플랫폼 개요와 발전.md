@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Asp - NET 플랫폼 개요와 발전
+title: AspNet - NET 플랫폼 개요와 발전
 date: 2025-01-27 19:20:23 +0900
-category: Asp
+category: AspNet
 ---
 # 🌐 .NET 플랫폼 개요와 발전
 

@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Asp - .NET CLI 고급 명령어 정리
+title: AspNet - .NET CLI 고급 명령어 정리
 date: 2025-01-27 19:20:23 +0900
-category: asp
+category: AspNet
 ---
 # 🛠️ .NET CLI 고급 명령어 정리
 
