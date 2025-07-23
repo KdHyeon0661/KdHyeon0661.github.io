@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Asp - Razor Pages 기본 구조
-date: 2025-01-27 19:20:23 +0900
+date: 2025-02-10 19:20:23 +0900
 category: Asp
 ---
 # 📘 Razor Pages 기본 구조 완벽 분석

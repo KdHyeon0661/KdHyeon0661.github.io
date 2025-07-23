@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Docker - Docker Compose 예제: WordPress + MySQL 블로그 스택 구성
-date: 2025-02-05 19:20:23 +0900
+title: Docker - Docker Compose 예제(WordPress + MySQL 블로그 스택 구성)
+date: 2025-02-08 19:20:23 +0900
 category: Docker
 ---
 # 📝 Docker Compose 예제 : WordPress + MySQL 블로그 스택 구성하기

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Git - reset --soft vs --hard
-date: 2025-02-06 19:20:23 +0900
+date: 2025-02-11 19:20:23 +0900
 category: Git
 ---
 # `git reset --soft` vs `git reset --hard`

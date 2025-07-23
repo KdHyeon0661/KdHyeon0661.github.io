@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Git - GitHub 웹에서 PR 충돌 해결
+title: Git - pull --rebase & squash merge
 date: 2025-02-06 19:20:23 +0900
 category: Git
 ---
