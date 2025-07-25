@@ -191,11 +191,3 @@ docker secret rm db_password
 | 접근 | `/run/secrets/<name>` 경로로 읽기 |
 | 보안성 | 로그/환경변수 노출 차단, 자동 암호화 |
 | 제약 | Swarm 모드 필요, 수정 불가 |
-
----
-
-## 🔐 관련 보안 연계 주제
-
-- Vault / AWS Secrets Manager / GCP Secret Manager 연동
-- GitHub Actions 내 secret과 Docker 연계
-- Kubernetes Secrets vs Docker Secrets 비교
