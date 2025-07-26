@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Avalonia - Core Web API 기본 프로젝트 구조
+title: AspNet - Core Web API 기본 프로젝트 구조
 date: 2025-03-22 19:20:23 +0900
-category: Avalonia
+category: AspNet
 ---
 # 🌐 ASP.NET Core Web API 기본 프로젝트 구조 완전 정리
 

@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Avalonia - Core Web API 특성
+title: AspNet - Core Web API 특성
 date: 2025-03-28 19:20:23 +0900
-category: Avalonia
+category: AspNet
 ---
 # 🏷️ ASP.NET Core Web API 특성(Attribute) 완전 정리
 

@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Avalonia - Partial View와 Layout
+title: AspNet - Partial View와 Layout
 date: 2025-03-25 20:20:23 +0900
-category: Avalonia
+category: AspNet
 ---
 # 🧩 Partial View와 Layout 적용 완전 정리 (ASP.NET Core MVC 기준)
 

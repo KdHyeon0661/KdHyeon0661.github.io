@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Avalonia - RESTful API
+title: AspNet - RESTful API
 date: 2025-03-28 20:20:23 +0900
-category: Avalonia
+category: AspNet
 ---
 # 🌐 RESTful API 설계 완전 정리
 

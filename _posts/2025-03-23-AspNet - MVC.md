@@ -1,8 +1,8 @@
 ---
 layout: post
-title: Avalonia - MVC
+title: AspNet - MVC
 date: 2025-03-22 21:20:23 +0900
-category: Avalonia
+category: AspNet
 ---
 # 🧩 ASP.NET Core MVC의 Controller / Action / View 구조 완전 정복
 

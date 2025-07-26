@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Avalonia - 모바일 대응 및 PWA 내장 전략
-date: 2025-03-15 19:20:23 +0900
+date: 2025-03-15 20:20:23 +0900
 category: Avalonia
 ---
 # 📱 Avalonia의 모바일 대응 및 PWA 내장 전략 (실험적)
