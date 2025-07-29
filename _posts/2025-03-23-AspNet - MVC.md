@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - MVC
-date: 2025-03-22 21:20:23 +0900
+date: 2025-03-23 21:20:23 +0900
 category: AspNet
 ---
 # 🧩 ASP.NET Core MVC의 Controller / Action / View 구조 완전 정복

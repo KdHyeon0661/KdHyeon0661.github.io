@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Docker - Kubernetes 클러스터에 Docker 이미지 배포
-date: 2025-03-21 20:20:23 +0900
+date: 2025-03-24 20:20:23 +0900
 category: Docker
 ---
 # 🚢 Kubernetes 클러스터에 Docker 이미지 배포하기

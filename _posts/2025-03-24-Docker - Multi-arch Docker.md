@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Docker - Multi-arch Docker
-date: 2025-03-21 21:20:23 +0900
+date: 2025-03-24 21:20:23 +0900
 category: Docker
 ---
 # 🏗️ Multi-arch Docker 이미지 만들기 (ARM/M1 대응)

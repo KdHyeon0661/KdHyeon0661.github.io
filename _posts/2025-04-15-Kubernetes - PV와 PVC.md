@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Docker - exec vs attach
-date: 2025-01-14 19:20:23 +0900
+title: Docker - PV와 PVC
+date: 2025-04-15 20:20:23 +0900
 category: Docker
 ---
 # 🧊 Kubernetes에서의 볼륨 이해하기: PV와 PVC

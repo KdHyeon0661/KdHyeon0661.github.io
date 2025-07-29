@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - CRUD 구현
-date: 2025-03-22 19:20:23 +0900
+date: 2025-03-23 19:20:23 +0900
 category: AspNet
 ---
 # 🛠️ Razor Pages + EF Core 기반 CRUD 구현

@@ -11,7 +11,7 @@ C++에서는 문자열을 다룰 때 예전에는 `char[]`이나 `C-style 문자
 
 ---
 
-## string의 기본 사용
+## 1. string의 기본 사용
 
 ```cpp
 #include <string>
@@ -27,28 +27,28 @@ int main() {
 
 ---
 
-## 주요 기능
+## 2. 주요 기능
 
-### ▶ 문자열 길이
+### 문자열 길이
 
 ```cpp
 s.length();   // 또는 s.size();
 ```
 
-### ▶ 부분 문자열 추출
+### 부분 문자열 추출
 
 ```cpp
 string s = "abcdef";
 string sub = s.substr(1, 3);  // "bcd"
 ```
 
-### ▶ 문자열 비교
+### 문자열 비교
 
 ```cpp
 if (s1 == s2) { ... }  // ==, !=, <, > 가능
 ```
 
-### ▶ 문자 접근
+### 문자 접근
 
 ```cpp
 char c = s[0];      // 인덱스로 접근
@@ -57,9 +57,9 @@ s[1] = 'a';         // 수정 가능
 
 ---
 
-## 문자열 찾기 & 변경
+## 3. 문자열 찾기 & 변경
 
-### ▶ 문자열 찾기: `find()`
+### 문자열 찾기: `find()`
 
 ```cpp
 #include <iostream>
@@ -83,7 +83,7 @@ int main() {
 }
 ```
 
-### ▶ 문자열 교체: `replace()`
+### 문자열 교체: `replace()`
 
 ```cpp
 string s = "hello world";
@@ -92,7 +92,7 @@ s.replace(0, 5, "hi");  // "hi world"
 
 ---
 
-## 문자열 삭제 및 삽입
+## 4. 문자열 삭제 및 삽입
 
 ```cpp
 string s = "hello world";
@@ -101,7 +101,7 @@ s.replace(0, 5, "hi");  // "hi world"
 
 ---
 
-## 숫자 <-> 문자열 변환
+## 5. 숫자 <-> 문자열 변환
 
 ```cpp
 #include <iostream>
@@ -125,9 +125,9 @@ int main() {
 
 ---
 
-## 문자열 반복 & 전처리
+## 6. 문자열 반복 & 전처리
 
-### ▶ 문자 하나씩 순회
+### 문자 하나씩 순회
 
 ```cpp
 for (char c : s) {
@@ -135,7 +135,7 @@ for (char c : s) {
 }
 ```
 
-### ▶ 공백 기준으로 자르기 (istringstream)
+### 공백 기준으로 자르기 (istringstream)
 
 ```cpp
 #include <sstream>
@@ -149,7 +149,7 @@ while (iss >> word) {
 
 ---
 
-## string과 C 문자열(char*) 비교
+## 7. string과 C 문자열(char*) 비교
 
 | 항목         | char* 또는 char[] | std::string     |
 |--------------|--------------------|-----------------|
@@ -159,7 +159,7 @@ while (iss >> word) {
 
 ---
 
-## 마무리
+## 8. 마무리
 
 - `std::string`은 C++에서 문자열 처리의 핵심 도구입니다.
 - 대부분의 경우 `char*` 대신 `string`을 사용하는 것이 **안전하고 효율적**입니다.

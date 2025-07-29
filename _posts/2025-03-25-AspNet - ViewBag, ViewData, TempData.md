@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - ViewBag, ViewData, TempData
-date: 2025-03-22 19:20:23 +0900
+date: 2025-03-25 19:20:23 +0900
 category: AspNet
 ---
 # 🧰 ASP.NET Core에서 ViewBag, ViewData, TempData 완전 정리

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: HTML - input 요소 속성
-date: 2025-03-26 19:20:23 +0900
+date: 2025-03-30 19:20:23 +0900
 category: HTML
 ---
 # 🧾 HTML & HTML5의 `<input>` 요소 속성 완전 정리

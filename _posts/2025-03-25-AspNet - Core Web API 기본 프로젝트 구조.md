@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - Core Web API 기본 프로젝트 구조
-date: 2025-03-22 19:20:23 +0900
+date: 2025-03-25 19:20:23 +0900
 category: AspNet
 ---
 # 🌐 ASP.NET Core Web API 기본 프로젝트 구조 완전 정리

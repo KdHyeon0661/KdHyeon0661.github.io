@@ -1,7 +1,7 @@
 ---
 layout: post
 title: AspNet - JWT 인증
-date: 2025-04-02 19:20:23 +0900
+date: 2025-04-05 19:20:23 +0900
 category: AspNet
 ---
 # 🔐 ASP.NET Core JWT 인증 기본 구성
