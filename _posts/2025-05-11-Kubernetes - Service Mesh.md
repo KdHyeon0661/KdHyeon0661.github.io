@@ -1,7 +1,7 @@
 ---
 layout: post
 title: Kubernetes - Service Mesh
-date: 2025-05-05 19:20:23 +0900
+date: 2025-05-11 19:20:23 +0900
 category: Kubernetes
 ---
 # Service Mesh란? Istio vs Linkerd 개요

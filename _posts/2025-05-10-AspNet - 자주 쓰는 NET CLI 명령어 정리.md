@@ -1,7 +1,7 @@
 ---
 layout: post
-title: AspNet - NET CLI 명령어 정리
-date: 2025-05-10 19:20:23 +0900
+title: AspNet - 자주 쓰는 .NET CLI 명령어 정리
+date: 2025-05-10 20:20:23 +0900
 category: AspNet
 ---
 # 🛠 자주 쓰는 .NET CLI 명령어 정리

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: JavaScript - WeakMap, WeakSet, FinalizationRegistry, 최적화 전략, SPA 메모리 누수 추적
-date: 2025-04-28 22:20:23 +0900
+date: 2025-04-28 23:20:23 +0900
 category: JavaScript
 ---
 # 🧠 고급 메모리 관리: WeakMap / WeakSet, FinalizationRegistry, 최적화 전략, SPA 메모리 누수 추적
