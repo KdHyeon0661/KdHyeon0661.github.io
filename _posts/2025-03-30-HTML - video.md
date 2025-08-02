@@ -24,7 +24,7 @@ HTML5에서는 웹 페이지에 **플러그인 없이 비디오를 직접 삽입
 ```html
 <video controls>
   <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-  <source src="./../assets/video/movie.webm" type="video/webm">
+  <source src="/../assets/video/movie.webm" type="video/webm">
   <p>지원되지 않는 브라우저입니다.</p>
 </video>
 ```
@@ -60,7 +60,7 @@ HTML5에서는 웹 페이지에 **플러그인 없이 비디오를 직접 삽입
 ```html
 <video controls>
   <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-  <source src="./../assets/video/movie.webm" type="video/webm">
+  <source src="/../assets/video/movie.webm" type="video/webm">
   <p>해당 브라우저는 비디오를 지원하지 않습니다.</p>
 </video>
 ```
@@ -167,7 +167,7 @@ HTML5에서는 자막도 `<video>` 내부에 추가할 수 있습니다.
 ```html
 <video controls width="100%" poster="preview.jpg">
   <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-  <source src="./../assets/video/movie.webm" type="video/webm">
+  <source src="/../assets/video/movie.webm" type="video/webm">
   <track src="subs_ko.vtt" kind="subtitles" srclang="ko" label="Korean">
   <p>브라우저가 비디오를 지원하지 않습니다.</p>
 </video>
