@@ -172,13 +172,3 @@ function App() {
 | 초보자 진입 | 쉬움 | 개념 학습 필요 |
 | 유연성 | 매우 높음 | 명확한 제약 속 유연함 |
 | 유지보수 | 어렵지만 자유 | 쉽고 체계적 |
-
----
-
-## 🔗 참고 링크
-
-- [vanilla-js.com](http://vanilla-js.com/)
-- [React 공식 문서](https://reactjs.org/)
-- [Vue 공식 문서](https://vuejs.org/)
-- [Angular 공식 문서](https://angular.io/)
-- [Svelte 공식 문서](https://svelte.dev/)

@@ -10,7 +10,7 @@ category: Csharp
 
 ---
 
-## 🔷 생성자(Constructor)
+## 1. 생성자(Constructor)
 
 **생성자**는 객체가 생성될 때 자동으로 호출되는 메서드입니다. 주로 **초기화 작업**에 사용됩니다.
 
@@ -26,7 +26,7 @@ class Person
 }
 ```
 
-### ✅ 객체 생성 시 자동 호출
+### 객체 생성 시 자동 호출
 
 ```csharp
 Person p = new Person(); // 생성자가 자동 실행됨
@@ -35,7 +35,7 @@ Console.WriteLine(p.Name); // "이름 없음"
 
 ---
 
-## 🔷 매개변수가 있는 생성자
+## 2. 매개변수가 있는 생성자
 
 ```csharp
 class Person
@@ -56,7 +56,7 @@ Console.WriteLine(p.Name); // "홍길동"
 
 ---
 
-## 🔷 this 키워드
+## 3. this 키워드
 
 `this`는 **현재 객체 자신**을 가리킬 때 사용합니다.
 
@@ -72,7 +72,7 @@ class Person
 }
 ```
 
-### ✅ this() 생성자 호출
+### 4. this() 생성자 호출
 
 ```csharp
 class Person
@@ -95,31 +95,61 @@ class Person
 
 ---
 
-## 🔷 base 키워드
+## 5. base 키워드
 
 `base`는 **부모 클래스의 멤버 또는 생성자**를 호출할 때 사용합니다.
 
 ```csharp
+using System;
+
 class Animal
 {
+    public string Name { get; }
+
     public Animal(string name)
     {
-        Console.WriteLine("Animal 생성자: " + name);
+        Name = name;
+        Console.WriteLine("Animal 생성자 호출: " + Name);
+    }
+
+    public virtual void Speak()
+    {
+        Console.WriteLine($"{Name}이(가) 소리를 냅니다.");
     }
 }
 
 class Dog : Animal
 {
-    public Dog(string name) : base(name)
+    public string Breed { get; }
+
+    public Dog(string name, string breed) : base(name)
     {
-        Console.WriteLine("Dog 생성자: " + name);
+        Breed = breed;
+        Console.WriteLine("Dog 생성자 호출: " + Name + ", 품종: " + Breed);
+    }
+
+    public override void Speak()
+    {
+        Console.WriteLine($"{Name} (품종: {Breed})가 멍멍 짖습니다!");
+    }
+}
+
+class Program
+{
+    static void Main()
+    {
+        Dog dog = new Dog("토리", "골든 리트리버");
+        dog.Speak();
+        // Animal 생성자 호출: 토리
+        // Dog 생성자 호출: 토리, 품종: 골든 리트리버
+        // 토리 (품종: 골든 리트리버)가 멍멍 짖습니다!
     }
 }
 ```
 
 ---
 
-## 🔷 생성자 오버로딩
+## 6. 생성자 오버로딩
 
 **여러 개의 생성자**를 정의하여 다양한 방식으로 객체를 초기화할 수 있습니다.
 
@@ -149,7 +179,37 @@ class Rectangle
 
 ---
 
-## 🔷 메서드 오버라이딩 (Method Overriding)
+## 🔷8. 메서드 오버로딩 (Method Overloading)
+
+**같은 이름의 메서드를 매개변수만 다르게** 정의하는 기법입니다.
+
+```csharp
+class Printer
+{
+    public void Print(string msg)
+    {
+        Console.WriteLine(msg);
+    }
+
+    public void Print(int number)
+    {
+        Console.WriteLine("숫자: " + number);
+    }
+
+    public void Print(string msg, int repeat)
+    {
+        for (int i = 0; i < repeat; i++)
+            Console.WriteLine(msg);
+    }
+}
+```
+
+- 반환형이 달라져도 **매개변수가 같으면 오버로딩 불가**
+- 메서드 이름은 같고 **매개변수 개수 또는 타입**이 달라야 합니다.
+
+---
+
+## 7. 메서드 오버라이딩 (Method Overriding)
 
 **상속 관계에서 부모 클래스의 메서드를 자식 클래스에서 재정의**하는 기능입니다.
 
@@ -181,37 +241,7 @@ a.Speak(); // "야옹" 출력
 
 ---
 
-## 🔷 메서드 오버로딩 (Method Overloading)
-
-**같은 이름의 메서드를 매개변수만 다르게** 정의하는 기법입니다.
-
-```csharp
-class Printer
-{
-    public void Print(string msg)
-    {
-        Console.WriteLine(msg);
-    }
-
-    public void Print(int number)
-    {
-        Console.WriteLine("숫자: " + number);
-    }
-
-    public void Print(string msg, int repeat)
-    {
-        for (int i = 0; i < repeat; i++)
-            Console.WriteLine(msg);
-    }
-}
-```
-
-- 반환형이 달라져도 **매개변수가 같으면 오버로딩 불가**
-- 메서드 이름은 같고 **매개변수 개수 또는 타입**이 달라야 함
-
----
-
-## ✅ 정리
+## 9. 정리
 
 | 개념 | 설명 |
 |------|------|

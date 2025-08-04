@@ -11,7 +11,7 @@ category: Cpp
 
 ---
 
-## 왜 필요한가?
+## 1. 왜 필요한가?
 
 ```cpp
 struct MyClass {
@@ -21,10 +21,12 @@ struct MyClass {
 };
 ```
 
-### 문제점:
+### 문제점 :
 
-- 이미 `shared_ptr`로 관리 중인 객체에서 다시 `shared_ptr(this)`를 만들면, **참조 카운트가 꼬여서 이중 삭제(double free)** 발생 가능!
-- 그 이유는 같은 객체를 관리하는 shared_ptr가 2개 생깁니다. 각 shared_ptr는 서로 독립적인 참조 카운트를 가집니다.
+- shared_ptr는 소유권을 가진 스마트 포인터로, 소유하는 객체가 모두 소멸될 때 메모리를 해제합니다.
+- shared_ptr<MyClass>(this)는 현재 객체에 대해 새로운 소유권을 만들기 때문에, 이 객체를 두 개 이상의 shared_ptr가 독립적으로 소유하는 상황이 됩니다.
+- 만약 MyClass 객체가 원래 어떤 다른 shared_ptr에 의해 관리되고 있다면, 서로 다른 두 shared_ptr가 같은 객체를 별도로 소유하고 관리하게 되어 중복 해제(double delete) 와 같은 심각한 문제를 일으킵니다.
+- 즉, 객체의 메모리가 두 번 이상 해제되거나, 프로그램이 비정상 종료될 수 있습니다.
 
 ```cpp
 shared_ptr<MyClass> p1 = make_shared<MyClass>();
@@ -35,7 +37,7 @@ shared_ptr<MyClass> p2 = p1->getSelf(); // p2도 p1과 같은 객체를 가리�
 
 ---
 
-## 안전한 방법: `enable_shared_from_this`
+## 2. 안전한 방법: `enable_shared_from_this`
 
 > C++ 표준 라이브러리에 포함된 `enable_shared_from_this`를 상속하면,  
 > 객체 자신을 안전하게 `shared_ptr`로 가져올 수 있습니다.
@@ -69,7 +71,7 @@ int main() {
 
 ---
 
-## 주의: `shared_from_this()`는 shared_ptr로 만들어야만 동작
+## 4. 주의: `shared_from_this()`는 shared_ptr로 만들어야만 동작
 
 ```cpp
 MyClass* raw = new MyClass();
@@ -81,7 +83,7 @@ auto self = raw->shared_from_this();  // ❌ 예외 발생!
 
 ---
 
-## 요약
+## 5. 요약
 
 | 개념 | 설명 |
 |------|------|
@@ -92,7 +94,7 @@ auto self = raw->shared_from_this();  // ❌ 예외 발생!
 
 ---
 
-## 사용 예시: 콜백 전달 등
+## 6. 사용 예시: 콜백 전달 등
 
 ```cpp
 #include <iostream>
@@ -136,7 +138,7 @@ int main() {
 
 ---
 
-## 마무리
+## 7. 마무리
 
 - `shared_from_this`는 **객체 자신을 안전하게 참조**해야 할 때 필수 도구입니다.
 - 반드시 `make_shared`로 생성해야 안전하게 동작합니다.
