@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Kubernetes - 실습 : 블로그 플랫폼을 쿠버네티스로 배포하기
+title: Kubernetes - 블로그 플랫폼을 쿠버네티스로 배포하기
 date: 2025-06-14 19:20:23 +0900
 category: Kubernetes
 ---

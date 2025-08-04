@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Kubernetes - 실습 : AI/ML 모델을 Kubernetes에서 운영하기
-date: 2025-06-13 22:20:23 +0900
+title: Kubernetes - AI/ML 모델을 Kubernetes에서 운영하기
+date: 2025-06-14 22:20:23 +0900
 category: Kubernetes
 ---
 # 🧠 실습: AI/ML 모델을 Kubernetes에서 운영하기

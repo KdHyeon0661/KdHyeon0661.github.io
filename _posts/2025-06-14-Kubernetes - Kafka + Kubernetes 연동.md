@@ -1,7 +1,7 @@
 ---
 layout: post
-title: Kubernetes - 실습 : Kafka + Kubernetes 연동
-date: 2025-06-13 21:20:23 +0900
+title: Kubernetes - Kafka + Kubernetes 연동
+date: 2025-06-14 21:20:23 +0900
 category: Kubernetes
 ---
 # 🛠️ 실습: Kafka + Kubernetes 연동

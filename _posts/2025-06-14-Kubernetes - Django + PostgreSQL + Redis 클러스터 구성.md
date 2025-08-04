@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Kubernetes - 실습 : Django + PostgreSQL + Redis 클러스터 구성
+title: Kubernetes - Django + PostgreSQL + Redis 클러스터 구성
 date: 2025-06-14 20:20:23 +0900
 category: Kubernetes
 ---
