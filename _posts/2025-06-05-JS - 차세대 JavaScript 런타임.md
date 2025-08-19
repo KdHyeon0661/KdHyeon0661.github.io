@@ -4,11 +4,11 @@ title: JavaScript - 차세대 JavaScript 런타임
 date: 2025-06-05 21:20:23 +0900
 category: JavaScript
 ---
-# ⚡ 차세대 JavaScript 런타임: Bun과 Deno 완전 정복
+# 차세대 JavaScript 런타임: Bun과 Deno 완전 정복
 
 ---
 
-## 📌 JavaScript 런타임이란?
+## 1. JavaScript 런타임이란?
 
 > **JavaScript 런타임**은 JS 코드를 실행할 수 있도록 해주는 환경입니다.  
 웹 브라우저 외부에서 JS를 실행할 수 있게 해주는 대표적인 런타임이 **Node.js**입니다.
