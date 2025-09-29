@@ -192,6 +192,11 @@ defaults:
     values:
       layout: page
       permalink: /:title/
+  - scope:
+      path: ""
+      type: posts
+    values:
+      math: true
 
 sass:
   style: compressed

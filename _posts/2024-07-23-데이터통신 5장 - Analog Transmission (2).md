@@ -26,7 +26,7 @@ category: DataCommunication
   $$
   B_{FM} = 2(1 + \Delta) B
   $$
-  (여기서 $$ \Delta $$는 변조 인덱스를 나타내며, 보통 4를 가진다.)
+  여기서 $$ \Delta $$는 변조 인덱스를 나타내며, 보통 4를 가진다.
 
 - FM 기지국은 다음과 같이 구성된다.
 
