@@ -4,17 +4,7 @@ title: 정보통신기사 - OSI vs TCP/IP, 흐름/오류제어
 date: 2025-08-22 12:25:23 +0900
 category: 정보통신기사
 ---
-# OSI vs TCP/IP, 흐름/오류제어(ARQ/윈도우) 총정리 (tx-osi-tcpip-arq-window)
-
-> **목표**: 정보통신기사 필기·실무에서 자주 얽히는  
-> (1) **OSI 7계층 vs TCP/IP 모델**, **캡슐화/주소체계/PDU**  
-> (2) **오류검출/정정**과 **흐름제어/혼잡제어**의 역할 분담  
-> (3) **ARQ(정지-대기, GBN, SR)**와 **슬라이딩 윈도우**의 원리·성능식  
-> (4) **TCP의 윈도우·RTT·재전송 타이머·혼잡제어**  
-> (5) 수치 예제/미니 계산기/연습문제까지 **생략 없이** 정리합니다.  
-> 수식은 **MathJax**, 계산은 **Python 스니펫**으로 제공합니다.
-
----
+# OSI vs TCP/IP, 흐름/오류제어(ARQ/윈도우) 총정리
 
 ## 0) 큰 그림 한 장
 
@@ -81,23 +71,23 @@ category: 정보통신기사
 - **순환 비트**(0/1)로 중복검출. 단순하지만 **대역지연 제품(BDP)** 큰 링크에서 **효율↓**.
 
 **주기 시간**  
-\[
+$$
 T_\text{cycle} = T_\text{tx} + T_\text{prop, fwd} + T_\text{ack} + T_\text{prop, rev}
-\]
-- \(T_\text{tx}=L/R\) (프레임 L비트, 링크율 R), \(T_\text{prop}\)= 전파지연.
+$$
+- $T_\text{tx}=L/R$ (프레임 L비트, 링크율 R), $T_\text{prop}$= 전파지연.
 
-**성능(오류확률 \(p\), 성공확률 \(1-p\))**  
-\[
+**성능(오류확률 $p$, 성공확률 $1-p$)**  
+$$
 \text{Throughput}_\text{SW} = \frac{(1-p)\,L}{T_\text{tx}+T_\text{ack}+T_\text{prop,f}+T_\text{prop,r}}
-\]
-> 해석: 성공 1회당 평균 전송 시도 \(1/(1-p)\) → 평균 주기 늘어남 → 유효 처리량은 \((1-p)\)가 곱해짐.
+$$
+> 해석: 성공 1회당 평균 전송 시도 $1/(1-p)$ → 평균 주기 늘어남 → 유효 처리량은 $(1-p)$가 곱해짐.
 
-**이용률(무오류 근사, ack 무시, 왕복전파 \(2T_p\))**  
-\[
+**이용률(무오류 근사, ack 무시, 왕복전파 $2T_p$)**  
+$$
 U_\text{SW} \approx \frac{T_\text{tx}}{T_\text{tx}+2T_p}
 = \frac{1}{1+2a},\quad a=\frac{T_p}{T_\text{tx}}
-\]
-- \(a\)가 클수록(=긴 RTT/짧은 프레임) **U ↓**.
+$$
+- $a$가 클수록(=긴 RTT/짧은 프레임) **U ↓**.
 
 ### 3.2 Go-Back-N (GBN)
 
@@ -105,16 +95,16 @@ U_\text{SW} \approx \frac{T_\text{tx}}{T_\text{tx}+2T_p}
 - **누적 ACK**(cumulative ACK). 구현 간단, 손실 시 **연쇄 재전송**(낭비↑).
 
 **무오류 이용률 근사**  
-\[
+$$
 U_\text{GBN} \approx 
 \begin{cases}
 \frac{W}{1+2a}, & W<1+2a\\
 1, & W\ge 1+2a
 \end{cases}
-\]
-- 파이프라인을 가득 채우려면 **\(W \ge 1+2a\)** 필요(= **BDP 조건**).
+$$
+- 파이프라인을 가득 채우려면 **$W \ge 1+2a$** 필요(= **BDP 조건**).
 
-**에러 존재 시 직감**: \(p\)가 작을수록 SR과 격차↓, \(p\)가 크면 **GBN 손해** 커짐.
+**에러 존재 시 직감**: $p$가 작을수록 SR과 격차↓, $p$가 크면 **GBN 손해** 커짐.
 
 ### 3.3 Selective Repeat (SR)
 
@@ -136,22 +126,22 @@ U_\text{GBN} \approx
 
 ### 4.1 BDP(Bandwidth–Delay Product)
 
-\[
+$$
 \mathrm{BDP}[\mathrm{bits}] = \text{대역폭 }R[\mathrm{bit/s}] \times \text{RTT }T[\mathrm{s}]
-\]
+$$
 - 파이프라인을 채우려면 **송신 중 미확인 데이터 ≥ BDP** 필요.  
-- 프레임/세그먼트 크기 \(L\)일 때 **윈도우(세그먼트 수)** 최소:
-\[
+- 프레임/세그먼트 크기 $L$일 때 **윈도우(세그먼트 수)** 최소:
+$$
 W_\text{min} \approx \left\lceil \frac{\mathrm{BDP}}{L} \right\rceil
-\]
+$$
 
 **예)** 100 Mb/s, RTT 50 ms, MSS 1460 B(=11680 b)  
-\(\mathrm{BDP}=100\times10^6 \times 0.05 = 5\times 10^6\) b → \(W\approx 5\mathrm{e}6/11680\approx 428\) 세그먼트.  
+$\mathrm{BDP}=100\times10^6 \times 0.05 = 5\times 10^6$ b → $W\approx 5\mathrm{e}6/11680\approx 428$ 세그먼트.  
 → **윈도우 스케일** 없으면 불가(기본 65,535B 한계). **윈도우 스케일 옵션** 필수.
 
 ### 4.2 Stop-and-Wait의 병목
 
-- 사실상 \(W=1\). 위 예에서 활용률 \(U\approx 1/(1+2a)\)로 **극저**. → **슬라이딩 윈도우 필수**.
+- 사실상 $W=1$. 위 예에서 활용률 $U\approx 1/(1+2a)$로 **극저**. → **슬라이딩 윈도우 필수**.
 
 ---
 
@@ -179,14 +169,14 @@ W_\text{min} \approx \left\lceil \frac{\mathrm{BDP}}{L} \right\rceil
 ### 5.4 RTT 추정과 RTO (Jacobson/Karels + Karn)
 
 - **SRTT/RTTVAR** 갱신:
-\[
+$$
 \begin{aligned}
 \text{Err} &= \text{RTT}_\text{sample}-\text{SRTT}\\
 \text{SRTT} &\leftarrow \text{SRTT} + \alpha\cdot \text{Err}\quad(\alpha\approx 1/8)\\
 \text{RTTVAR} &\leftarrow \text{RTTVAR} + \beta\cdot (|\text{Err}|-\text{RTTVAR}),\ \beta\approx 1/4\\
 \text{RTO} &= \text{SRTT} + \max(G, K\cdot\text{RTTVAR}),\ K=4
 \end{aligned}
-\]
+$$
 - **Karn’s Algorithm**: 재전송된 세그먼트의 RTT는 **샘플에서 제외**.
 
 ### 5.5 Nagle, Delayed ACK
@@ -200,21 +190,21 @@ W_\text{min} \approx \left\lceil \frac{\mathrm{BDP}}{L} \right\rceil
 
 ### 예제 1) Stop-and-Wait 효율
 - 링크 10 Mb/s, 프레임 10 kB, 거리 왕복 전파 40 ms(=RTT), ACK 40 B 무시.  
-- \(T_\text{tx} = 10\,\text{kB} \times 8 / (10\,\text{Mb/s}) = 8\,\text{ms}\)  
-- \(U \approx \frac{8}{8+40} = \mathbf{0.167}\) (≈16.7%). → **비효율**, 슬라이딩 윈도우 필요.
+- $T_\text{tx} = 10\,\text{kB} \times 8 / (10\,\text{Mb/s}) = 8\,\text{ms}$  
+- $U \approx \frac{8}{8+40} = \mathbf{0.167}$ (≈16.7%). → **비효율**, 슬라이딩 윈도우 필요.
 
 ### 예제 2) GBN 윈도우로 파이프 채우기
-- 위 링크에서 \(a=T_p/T_{tx}=20/8=2.5\), \(1+2a=6\).  
-- **\(W \ge 6\)**이면 **U→1**(무오류 근사). 실제는 ACK/헤더/손실 고려해 약간↓.
+- 위 링크에서 $a=T_p/T_{tx}=20/8=2.5$, $1+2a=6$.  
+- **$W \ge 6$**이면 **U→1**(무오류 근사). 실제는 ACK/헤더/손실 고려해 약간↓.
 
 ### 예제 3) BDP로 TCP 윈도우 요구량
 - 1 Gb/s, RTT 30 ms, MSS 1448 B  
-  - BDP = \(1\mathrm{e}9\times 0.03 = 30\,\mathrm{Mb} = 3.75\,\mathrm{MB}\)  
-  - 세그먼트 수 ≈ \(3.75\text{MB}/1448 \approx 2666\) → **윈도우스케일 필요**(`wscale`로 2^n 배 확장).
+  - BDP = $1\mathrm{e}9\times 0.03 = 30\,\mathrm{Mb} = 3.75\,\mathrm{MB}$  
+  - 세그먼트 수 ≈ $3.75\text{MB}/1448 \approx 2666$ → **윈도우스케일 필요**(`wscale`로 2^n 배 확장).
 
 ### 예제 4) 손실이 있는 SW 처리량
-- 손실확률 \(p=0.01\), 예제1의 분모 동일:  
-  \(\text{Throughput}=(1-p)\cdot L /(T_\text{cycle})=0.99\cdot 80\,\text{kbit}/48\,\text{ms}\approx \mathbf{1.65\,Mb/s}\).  
+- 손실확률 $p=0.01$, 예제1의 분모 동일:  
+  $\text{Throughput}=(1-p)\cdot L /(T_\text{cycle})=0.99\cdot 80\,\text{kbit}/48\,\text{ms}\approx \mathbf{1.65\,Mb/s}$.  
   (무손실 1.67 Mb/s 대비 소폭 감소)
 
 ### 예제 5) TCP cwnd 성장(개념)
@@ -228,14 +218,14 @@ W_\text{min} \approx \left\lceil \frac{\mathrm{BDP}}{L} \right\rceil
 ```python
 import math
 
-# 1) Stop-and-Wait 처리량 (b/s)
+# 1) Stop-and-Wait 처리량
 def sw_throughput_bps(R_bps, L_bytes, RTT_s, p_loss=0.0, ack_bytes=0):
     Ttx = (L_bytes*8)/R_bps
     Tack = (ack_bytes*8)/R_bps
     Tcycle = Ttx + RTT_s + Tack
     return (1.0 - p_loss) * (L_bytes*8) / Tcycle
 
-# 2) GBN 무오류 이용률 근사 (ack/processing 무시)
+# 2) GBN 무오류 이용률 근사
 def gbn_utilization(W, R_bps, L_bytes, RTT_s):
     Ttx = (L_bytes*8)/R_bps
     a = (RTT_s/2)/Ttx  # one-way prop/Ttx
@@ -243,7 +233,7 @@ def gbn_utilization(W, R_bps, L_bytes, RTT_s):
         return W/(1+2*a)
     return 1.0
 
-# 3) BDP와 윈도우(세그먼트 수)
+# 3) BDP와 윈도우
 def window_for_bdp(R_bps, RTT_s, MSS_bytes):
     bdp_bits = R_bps*RTT_s
     return math.ceil(bdp_bits/(MSS_bytes*8))
@@ -316,14 +306,14 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 ## 12) 연습문제(풀이 포함)
 
 ### Q1. 50 Mb/s 링크, RTT 80 ms, MSS 1460 B. 파이프를 채우는 최소 세그먼트 윈도우?
-**풀이**: BDP = \(50\mathrm{e}6 \times 0.08 = 4\mathrm{e}6\,b = 500{,}000\,B\).  
+**풀이**: BDP = $50\mathrm{e}6 \times 0.08 = 4\mathrm{e}6\,b = 500{,}000\,B$.  
 세그먼트 수 ≈ 500,000 / 1460 ≈ **343**.
 
-### Q2. Stop-and-Wait에서 \(L=5\) kB, \(R=5\) Mb/s, RTT=60 ms일 때 이용률?
-**풀이**: \(T_{tx}= (5k\times8)/5M = 8\,\text{ms}\). \(U=8/(8+60)=\mathbf{0.117}\) (11.7%).
+### Q2. Stop-and-Wait에서 $L=5$ kB, $R=5$ Mb/s, RTT=60 ms일 때 이용률?
+**풀이**: $T_{tx}= (5k\times8)/5M = 8\,\text{ms}$. $U=8/(8+60)=\mathbf{0.117}$ (11.7%).
 
-### Q3. GBN에서 \(a=3\)일 때 \(W=7\)이면 무오류 이용률은?
-**풀이**: \(1+2a=7\). \(W=7\Rightarrow U=1\) (파이프 채움).
+### Q3. GBN에서 $a=3$일 때 $W=7$이면 무오류 이용률은?
+**풀이**: $1+2a=7$. $W=7\Rightarrow U=1$ (파이프 채움).
 
 ### Q4. TCP의 송신 가능량을 제한하는 두 창은? 그리고 실제 송신 허용은?
 **풀이**: **rwnd(흐름제어)**, **cwnd(혼잡제어)**. 실제 허용 = **min(rwnd, cwnd)**.
@@ -340,11 +330,11 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 - **OSI→TCP/IP**: (L7~L5)응용 / L4전송 / L3인터넷 / (L2+L1)네트워크접근  
 - **PDU**: L4=세그먼트, L3=패킷, L2=프레임  
-- **SW 이용률** \(=1/(1+2a)\), \(a=T_p/T_{tx}\)  
-- **GBN/SR**: \(W \ge 1+2a\) → 파이프 가득  
-- **BDP** \(=R\cdot RTT\); 윈도우(세그먼트) \(\approx \lceil\mathrm{BDP}/\mathrm{MSS}\rceil\)  
-- **TCP 송신 허용** \(=\min(rwnd, cwnd)\)  
-- **RTO** \(=\text{SRTT}+4\cdot\text{RTTVAR}\) (개념)  
+- **SW 이용률** $=1/(1+2a)$, $a=T_p/T_{tx}$  
+- **GBN/SR**: $W \ge 1+2a$ → 파이프 가득  
+- **BDP** $=R\cdot RTT$; 윈도우(세그먼트) $\approx \lceil\mathrm{BDP}/\mathrm{MSS}\rceil$  
+- **TCP 송신 허용** $=\min(rwnd, cwnd)$  
+- **RTO** $=\text{SRTT}+4\cdot\text{RTTVAR}$ (개념)  
 - **Nagle**: 소패킷 억제, **Delayed ACK**: ACK 지연(상호작용 주의)  
 - **SACK/윈도우 스케일/ECN**: 현대 필수 옵션
 

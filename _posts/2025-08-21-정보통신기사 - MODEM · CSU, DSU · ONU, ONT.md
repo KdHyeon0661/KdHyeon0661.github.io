@@ -4,13 +4,7 @@ title: 정보통신기사 - MODEM · CSU/DSU · ONU/ONT
 date: 2025-08-21 22:25:23 +0900
 category: 정보통신기사
 ---
-# MODEM · CSU/DSU · ONU/ONT 이해 총정리 (tx-modem-csu-dsu-pon)
-
-> **목표**: 정보통신기사 필기+실무 감각으로 **MODEM**, **CSU/DSU**, **ONU/ONT**를 한 자리에 정리합니다.  
-> (1) 개념/역할 · (2) 물리/링크 계층 동작 · (3) 성능지표/계산 · (4) 구성/배치 · (5) 트러블슈팅 · (6) 예제 문제  
-> 수식은 **MathJax**, 실무 체크리스트와 수치 예제를 곁들입니다.
-
----
+# MODEM · CSU/DSU · ONU/ONT 이해 총정리
 
 ## 0) 큰 그림 한 장
 
@@ -52,10 +46,10 @@ category: 정보통신기사
   - **벡터링(G.993.5)**: 다심선 간 괴통간섭 제거 → 속도↑ 안정성↑.
 
 **비트로딩 근사**  
-\[
+$$
 b_k \approx \log_2\!\big(1+\mathrm{SNR}_k/\Gamma\big),\ \Gamma: \text{SNR가드}(≈9.8\ \mathrm{dB})
-\]
-톤별 \(b_k\) 합과 심볼율로 **총 스루풋** 산출.
+$$
+톤별 $b_k$ 합과 심볼율로 **총 스루풋** 산출.
 
 ---
 
@@ -135,8 +129,8 @@ QAM256 1채널(6 MHz) → 5.36 Msym/s × 8 bit/sym × 효율(0.95) ≈ **~41 Mb/
 - **OMCI(G.988)**: ONU 관리(서비스 프로파일/포트/VLAN/펌웨어).
 
 ### 3.5 광 예산(Optical Budget) 계산 감각
-- **버짓** \(\mathrm{OB}\) = Tx 파워(dBm) – Rx 민감도(dBm).  
-- 경로 손실 \(\mathrm{L}_\text{path}\) = **섬유 감쇠(α·거리)** + **커넥터/융착 손실** + **스플리터 손실** + **마진**.
+- **버짓** $\mathrm{OB}$ = Tx 파워(dBm) – Rx 민감도(dBm).  
+- 경로 손실 $\mathrm{L}_\text{path}$ = **섬유 감쇠(α·거리)** + **커넥터/융착 손실** + **스플리터 손실** + **마진**.
 
 **예제(GPON Class B+)**  
 - OLT Tx: +3 dBm, ONU Rx Sens.: −28 dBm → **OB=31 dB**.  
@@ -174,23 +168,23 @@ QAM256 1채널(6 MHz) → 5.36 Msym/s × 8 bit/sym × 효율(0.95) ≈ **~41 Mb/
 ## 5) 수치/공식 모음 (시험/현업 감 잡기)
 
 ### 5.1 케이블/DOCSIS 채널 용량 근사
-- **QAM256(하향, 6 MHz)**: \(\approx 38\) Mb/s/채널.  
-- **OFDM(DOCSIS 3.1)**: 유효 서브캐리어 수 × 심볼율 × \(\log_2 M\) × 코딩/프로토콜 효율.
+- **QAM256(하향, 6 MHz)**: $\approx 38$ Mb/s/채널.  
+- **OFDM(DOCSIS 3.1)**: 유효 서브캐리어 수 × 심볼율 × $\log_2 M$ × 코딩/프로토콜 효율.
 
 ### 5.2 xDSL DMT 총 속도 근사
-\[
+$$
 R \approx \sum_{k \in \text{사용톤}} b_k \cdot \Delta f
-\]
-- \(\Delta f=4.3125\ \mathrm{kHz}\) (ADSL). 톤당 \(b_k\)는 SNR/마진 의존.
+$$
+- $\Delta f=4.3125\ \mathrm{kHz}$ (ADSL). 톤당 $b_k$는 SNR/마진 의존.
 
 ### 5.3 T1/E1 기본
-- **T1**: 1.544 Mb/s = \(8000\ \mathrm{fps} \times 193\ \mathrm{bit/frame}\) (24×8+프레임비트).  
-- **E1**: 2.048 Mb/s = \(8000 \times 256\) (32×8). TS0 프레이밍, CRC-4 옵션.
+- **T1**: 1.544 Mb/s = $8000\ \mathrm{fps} \times 193\ \mathrm{bit/frame}$ (24×8+프레임비트).  
+- **E1**: 2.048 Mb/s = $8000 \times 256$ (32×8). TS0 프레이밍, CRC-4 옵션.
 
 ### 5.4 광버짓
-\[
+$$
 \mathrm{OB(dB)} \ge \alpha(\lambda)\cdot L + L_\text{conn} + L_\text{split} + M
-\]
+$$
 
 ---
 
@@ -248,8 +242,8 @@ R \approx \sum_{k \in \text{사용톤}} b_k \cdot \Delta f
 - **서비스 플랜**: 200 Mb/s 제공 시 공유여유 고려(혼잡 시간대 채널 확장/3.1 혼용 검토).
 
 ### 8.2 VDSL2 17a 프로파일 성능 추정
-- **거리** 600 m, 라인감쇠 24 dB, 평균 톤 SNR 20 dB, 가드 \(\Gamma=9.8\) dB.  
-- 비트/톤 \(b \approx \log_2(1+10^{(20-9.8)/10}) \approx \log_2(1+10^{1.02}) \approx \log_2(10.5) \approx 3.39\).  
+- **거리** 600 m, 라인감쇠 24 dB, 평균 톤 SNR 20 dB, 가드 $\Gamma=9.8$ dB.  
+- 비트/톤 $b \approx \log_2(1+10^{(20-9.8)/10}) \approx \log_2(1+10^{1.02}) \approx \log_2(10.5) \approx 3.39$.  
 - 유효 톤 2000개, 심볼율 4 ksym/s → **총속도** ≈ 3.39×2000×4k ≈ **27.1 Mb/s** (오버헤드/INP 고려시 하향 조정).
 
 ### 8.3 T1 CSU/DSU BERT

@@ -4,14 +4,7 @@ title: 정보통신기사 - 무선LAN · CSMA/CA · 보안
 date: 2025-08-22 14:25:23 +0900
 category: 정보통신기사
 ---
-# 무선LAN · CSMA/CA · 보안 개념 총정리 (tx-wlan-csma-ca-sec)
-
-> **목표**: 정보통신기사 필기·실무를 아우르는 **무선 LAN(IEEE 802.11)**, **CSMA/CA 매체접근**, **보안(인증·암호)**을  
-> (1) 물리·MAC 기본 → (2) CSMA/CA/EDCA·RTS/CTS → (3) 11n/ac/ax 기능(AMSDU/AMPDU, MU-MIMO, OFDMA, BSS Coloring, TWT) →  
-> (4) 처리량/에어타임 계산 → (5) 보안(WEP→WPA2/WPA3, 802.1X/EAP, 4-Way) → (6) 채널 설계·로밍 → (7) 트러블슈팅·연습문제 순으로 **생략 없이** 정리합니다.  
-> 수식은 **MathJax**, 표/예제/계산은 코드블록으로 제공합니다.
-
----
+# 무선LAN · CSMA/CA · 보안 개념 총정리
 
 ## 0) 큰 그림: 802.11 네트워크 한 장
 
@@ -73,7 +66,7 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 
 ### 3.4 BEB (Binary Exponential Backoff)
 - 재시도 i번째: `CW = min(2^i*(CWmin+1)-1, CWmax)`  
-- **기대 백오프 슬롯** \(\mathbb{E}[k] \approx \frac{CW}{2}\).  
+- **기대 백오프 슬롯** $\mathbb{E}[k] \approx \frac{CW}{2}$.  
 - 재시도 한계/드롭은 드라이버/칩셋 정책.
 
 ### 3.5 NAV/가상 캐리어 감지
@@ -106,22 +99,22 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 ## 6) 처리량(Throughput)과 에어타임(Airtime) 계산
 
 ### 6.1 기본 아이디어
-- **유효 처리량** \(\approx \dfrac{\text{유저 페이로드}}{\text{에어타임 총합}}\)  
+- **유효 처리량** $\approx \dfrac{\text{유저 페이로드}}{\text{에어타임 총합}}$  
 - 총합 = **프리앰블/PLCP + (DIFS/AIFS + 백오프) + PPDU + SIFS + ACK** (+ RTS/CTS/BA 등).  
 - **Aggregation/BA**를 쓰면 페이로드↑, ACK 수↓ → 효율↑.
 
 ### 6.2 근사 수식(단일 프레임)
-\[
+$$
 T_\text{air} \approx T_\text{preamble} + T_\text{AIFS} + T_\text{bo} + T_\text{data} + T_\text{SIFS} + T_\text{ACK}
-\]
-- \(T_\text{data}=\dfrac{L_\text{MAC+LLC+IP+TCP}+ \text{MAC 헤더}+FCS}{R_\text{PHY, data}}\) (물리 부호화 반올림 존재)  
+$$
+- $T_\text{data}=\dfrac{L_\text{MAC+LLC+IP+TCP}+ \text{MAC 헤더}+FCS}{R_\text{PHY, data}}$ (물리 부호화 반올림 존재)  
 - **블록ACK + A-MPDU**라면 `ACK` 1회로 다수 MPDU 승인.
 
 ### 6.3 예제(개념 수치)
 - **가정**: 11n, 20 MHz, MCS 7(65 Mb/s, GI=800ns), A-MPDU로 20개 MPDU(각 1500B 유저 페이로드), BA 사용.  
 - 대략:  
   - **Data 에어타임** ≈ (20 × (1500+MAC/FCS 등) / 65 Mb/s)  
-  - **오버헤드**: 프리앰블(PLCP~), AIFS+백오프(평균 \(CW/2\) 슬롯×슬롯타임), SIFS, BA.  
+  - **오버헤드**: 프리앰블(PLCP~), AIFS+백오프(평균 $CW/2$ 슬롯×슬롯타임), SIFS, BA.  
 - **교훈**: A-MPDU 미사용/RTS/CTS 상시 → 처리량 큰 폭 감소. 실무는 **AMPDU+BA** 활성, **RTS 임계** 튜닝.
 
 > 엄밀 계산은 PHY 표 기반 심볼/서브캐리어/코딩율 반올림을 적용해야 합니다. 여기선 조망만 제공합니다.
@@ -162,7 +155,7 @@ T_\text{air} \approx T_\text{preamble} + T_\text{AIFS} + T_\text{bo} + T_\text{d
 
 ### 9.4 키 계층·핸드셰이크 요약
 - **PMK**: PSK 또는 802.1X(EAP)로 생성.  
-- **4-Way**: \(\text{PTK} = \mathrm{PRF}(\text{PMK}, \text{ANonce}, \text{SNonce}, \text{AA}, \text{SA})\)  
+- **4-Way**: $\text{PTK} = \mathrm{PRF}(\text{PMK}, \text{ANonce}, \text{SNonce}, \text{AA}, \text{SA})$  
 - **GTK**: 브로드/멀티캐스트용 **그룹키**(주기적 재키).  
 - **회선 보안**: **CCMP(AES-CTR+CBC-MAC)**, 최신은 **GCMP**(성능↑).
 
@@ -225,9 +218,9 @@ wlan.fc.retry == 1
 - 실무 체감: **2~3배**↑도 흔함(환경/에러율 의존).
 
 ### 12.3 Airtime 비중
-\[
+$$
 \text{Airtime} = \frac{\text{Bytes} \times 8}{\text{PHY Rate}} + \sum \text{오버헤드(µs)}
-\]
+$$
 - PHY Rate↑라도 **오버헤드(µs)**는 동일/가깝다 → **짧은 프레임**일수록 오버헤드 지배.
 
 ---
@@ -265,7 +258,7 @@ wlan.fc.retry == 1
 **A.** **AIFS(또는 DIFS)** 후 **무작위 백오프**. 성공 시 수신측은 **SIFS 후 ACK**.
 
 **Q2.** 평균 백오프 슬롯 수는? (CW=31)  
-**A.** \(\mathbb{E}[k]=\frac{CW}{2}=15.5\) 슬롯.
+**A.** $\mathbb{E}[k]=\frac{CW}{2}=15.5$ 슬롯.
 
 **Q3.** 히든 노드 완화 2가지는?  
 **A.** **RTS/CTS(또는 CTS-to-Self)**, **셀 설계/출력 조정**(CCA 임계, AP 배치).
@@ -287,7 +280,7 @@ wlan.fc.retry == 1
 ## 16) 미니 계산기 (개념용 Python)
 
 ```python
-# 단순 Airtime 근사 계산기(교육용)
+# 단순 Airtime 근사 계산기
 def airtime_us(payload_bytes, mac_header=34, llc_snap=8, fcs=4,
                phy_rate_mbps=65.0, preamble_us=36, aifs_us=28, sifs_us=10, ack_us=30,
                cw_slots=7.5, slot_us=9.0):

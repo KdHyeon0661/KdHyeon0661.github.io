@@ -1,7 +1,7 @@
 ---
 layout: post
-title: 기계학습 - AdaBoost
-date: 2025-08-19 20:25:23 +0900
+title: 기계학습 - XGBoost, LightGBM, CatBoost
+date: 2025-08-19 21:25:23 +0900
 category: 기계학습
 ---
 # 🌳 XGBoost / LightGBM / CatBoost 비교 및 상세 정리

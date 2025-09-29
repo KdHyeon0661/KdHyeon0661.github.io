@@ -4,14 +4,7 @@ title: 정보통신기사 - VLAN, STP, RSTP
 date: 2025-08-22 17:25:23 +0900
 category: 정보통신기사
 ---
-# VLAN / STP / RSTP 개념과 설계 총정리 (tx-vlan-stp-rstp)
-
-> **목표**: 정보통신기사 필기·실무에서 자주 나오는 **VLAN(802.1Q)**, **STP(802.1D)**, **RSTP(802.1w)**를  
-> (1) 개념 → (2) 프레임/포트/태깅 → (3) STP/RSTP 동작·타이머·코스트 → (4) 설계 가이드 → (5) 보안/가용성 →  
-> (6) 예제 설정/로그 → (7) 트러블슈팅/체크리스트 → (8) 연습문제 순으로, **생략 없이** 정리합니다.  
-> 수식은 **MathJax**, 설정·표·로그는 **코드블록**으로 제공합니다.
-
----
+# VLAN / STP / RSTP 개념과 설계 총정리
 
 ## 0) 큰 그림: “레이어2의 분리(브로드캐스트 도메인)와 루프 억제”
 
@@ -55,7 +48,7 @@ category: 정보통신기사
 
 ### 2.2 루트 브리지와 경로 비용
 - **루트 브리지**: **가장 낮은 Bridge ID(BID)** 보유 스위치가 선출.  
-  - \(\text{BID} = \text{Priority(4bit)} \parallel \text{Extended System ID(VLAN)} \parallel \text{MAC}\)  
+  - $\text{BID} = \text{Priority(4bit)} \parallel \text{Extended System ID(VLAN)} \parallel \text{MAC}$  
   - **우선순위** 기본 `32768`(PVST+/RSTP-VLAN별), **작을수록 우선**.
 - **경로 비용(Path Cost)**: 링크 속도에 따라 **합산**.  
   - **클래식 코스트(예)**: 10M=100, 100M=19, 1G=4, 10G=2  
@@ -114,15 +107,15 @@ category: 정보통신기사
 ## 6) STP/RSTP 동작을 수식으로 요약
 
 - **BID 비교**:  
-  \[
+  $$
   \text{BID} = \text{Priority} \cdot 2^{52} + \text{VLAN(Ext Sys ID)} \cdot 2^{48} + \text{MAC}
-  \]
+  $$
   → **가장 작은 BID**가 루트. (개념: 우선순위가 **압도적 비중**)
 
 - **Path Cost 합**:  
-  \[
+  $$
   \text{Root Path Cost} = \sum \text{(링크 코스트)}
-  \]
+  $$
   → 각 브리지는 **Root Path Cost가 최소**인 이웃을 **Root Port**로 선택.
 
 - **포트 역할 선택 규칙(요지)**  
@@ -305,7 +298,7 @@ show errdisable recovery
 3) Sender Port ID ↓
 
 ```python
-# 교육용: RSTP 우월성 비교(간단)
+# 교육용: RSTP 우월성 비교
 from dataclasses import dataclass
 @dataclass(order=True)
 class BPDU:

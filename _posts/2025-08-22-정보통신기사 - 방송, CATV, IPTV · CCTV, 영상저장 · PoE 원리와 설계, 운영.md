@@ -5,10 +5,6 @@ date: 2025-08-22 10:25:23 +0900
 category: 정보통신기사
 ---
 # 방송/CATV/IPTV · CCTV/영상저장 · PoE 원리와 설계/운영 완전정리
-> 정보통신기사 필기/실무 대비. **“원리 → 구성요소 → 설계수치 → 예제 → 점검체크리스트 → 트러블슈팅”** 순으로, 방송/케이블/IPTV와 CCTV/저장/P0E를 한 번에 묶어 정리합니다.  
-> 수식은 MathJax, 설정/스크립트는 코드블록으로 제공합니다.
-
----
 
 ## 0) 큰 그림(1페이지)
 
@@ -79,16 +75,16 @@ category: 정보통신기사
 
 ### 스위치 예시 설정(베이직)
 ```shell
-# VLAN, IGMP 스누핑, 쿼리어(엣지 역할)
+# VLAN, IGMP 스누핑, 쿼리어
 vlan 200
  igmp snooping
  ip igmp snooping querier 10.10.200.1
 
-# 멀티캐스트 라우터 포트 힌트(코어쪽)
+# 멀티캐스트 라우터 포트 힌트
 interface gi1/0/24
  ip igmp snooping mrouter
 
-# 가입자 포트(셋톱)
+# 가입자 포트
 interface gi1/0/3
  switchport access vlan 200
  spanning-tree portfast
@@ -148,21 +144,21 @@ interface gi1/0/3
 ---
 
 ## B-3) 저장용량 계산(핵심 공식)
-카메라 i의 평균 비트레이트 \(R_i\) [Mbps], 보관일수 \(D\) 일, 24시간 촬영이라면
+카메라 i의 평균 비트레이트 $R_i$ [Mbps], 보관일수 $D$ 일, 24시간 촬영이라면
 
-\[
+$$
 \text{Storage [TB]} \approx \frac{\sum_i R_i\ (\text{Mbps}) \times 3600 \times 24 \times D}{8\times 10^6}
 = 0.0108 \times D \times \sum_i R_i
-\]
+$$
 
-> 유효값: 1TB = \(10^{12}\) bytes(디스크 마케팅 단위)에 근사.
+> 유효값: 1TB = $10^{12}$ bytes(디스크 마케팅 단위)에 근사.
 
 ### 예제 1) 매장 30대, 1080p@15fps, H.265 1.5 Mbps/대, 30일 보관
-- \(\sum R_i = 30 \times 1.5 = 45\) Mbps  
-- \(\text{TB} \approx 0.0108 \times 30 \times 45 = 14.58 \) → **약 15 TB**(+ 파일시스템/RAID 오버헤드 10~20% 여유)
+- $\sum R_i = 30 \times 1.5 = 45$ Mbps  
+- $\text{TB} \approx 0.0108 \times 30 \times 45 = 14.58 $ → **약 15 TB**(+ 파일시스템/RAID 오버헤드 10~20% 여유)
 
 ### 예제 2) 주차장 4K 20대, 6 Mbps/대, 30일
-- \(\sum R_i = 120\) Mbps → \(0.0108 \times 30 \times 120 = 38.88\) → **약 40 TB**
+- $\sum R_i = 120$ Mbps → $0.0108 \times 30 \times 120 = 38.88$ → **약 40 TB**
 
 > **Tip**: 모션녹화(활동률 30~50%)를 쓰면 **용량 절감**. 단, **증거 보전** 정책과 상충되지 않는지 확인.
 
@@ -176,11 +172,11 @@ interface gi1/0/3
 - **보안**: 계정 최소권한, **암호 정책**, **로그**(접속/다운로드), **워터마킹**.
 
 ### RAID 용량 근사
-- RAID5: \( (N-1) \times \text{Disk} \)  
-- RAID6: \( (N-2) \times \text{Disk} \)  
-- RAID10: \( (N/2) \times \text{Disk} \)
+- RAID5: $ (N-1) \times \text{Disk} $  
+- RAID6: $ (N-2) \times \text{Disk} $  
+- RAID10: $ (N/2) \times \text{Disk} $
 
-**예**) 12TB × 8HDD, RAID6 → 유효 \(= (8-2) \times 12 = 72\)TB.  
+**예**) 12TB × 8HDD, RAID6 → 유효 $= (8-2) \times 12 = 72$TB.  
 **주의**: 파일시스템/메타/스페어 여유 10~20% 추가.
 
 ---
@@ -244,22 +240,22 @@ ip igmp snooping vlan 10
 동선 DC 루프저항(채널 기준, 2페어/4페어)에 따라 전압강하/손실이 결정.
 
 - **대략**: Cat6 24AWG 기준 **DC 루프저항 ≈ 19 Ω/100m** (2페어 사용 시).  
-- 전류 \(I = \frac{P_{PD}}{V_{cable}}\) (케이블 상 전압).  
-- 전압강하 \(\Delta V = I \cdot R\), 손실 \(P_{loss} = I^2 R\).
+- 전류 $I = \frac{P_{PD}}{V_{cable}}$ (케이블 상 전압).  
+- 전압강하 $\Delta V = I \cdot R$, 손실 $P_{loss} = I^2 R$.
 
 > **실무팁**: **채널 100m** 가깝고 **bt Type4**처럼 고전력일수록 **전압 강하/발열**이 민감. **케이블 등급/번들링**(온도)과 **환경**(상온/고온) 고려.
 
 ### 예제 1) 802.3at, PD 20W, 100m, 2페어
 가정: 케이블 구간 전압 약 52V, 루프저항 19Ω/100m  
-- \(I \approx \frac{20}{52} \approx 0.385 A\)  
-- \(\Delta V = 0.385 \times 19 \approx 7.3 V\)  
+- $I \approx \frac{20}{52} \approx 0.385 A$  
+- $\Delta V = 0.385 \times 19 \approx 7.3 V$  
 - 케이블 입력 ~52V → PD 단 ~44.7V (허용범위 내)  
-- 손실 \(P_{loss} = I^2 R \approx 0.148 \times 19 \approx 2.8 W\)
+- 손실 $P_{loss} = I^2 R \approx 0.148 \times 19 \approx 2.8 W$
 
 ### 예제 2) 802.3bt Type 4, PD 70W, 90m, 4페어
 4페어면 **루프저항 절반**으로 근사(병렬 효과). 19Ω → **~9.5Ω/100m** → 90m ≈ 8.55Ω  
-- \(I \approx \frac{70}{52} \approx 1.346 A\) (4페어 분전으로 페어당 전류↓)  
-- \(\Delta V \approx 1.346 \times 8.55 \approx 11.5 V\)  
+- $I \approx \frac{70}{52} \approx 1.346 A$ (4페어 분전으로 페어당 전류↓)  
+- $\Delta V \approx 1.346 \times 8.55 \approx 11.5 V$  
 - 케이블 입력 52V → PD 약 40.5V (경계). **케이블/연결부 품질·온도상승**에 따라 위험.  
 → **대책**: 케이블 길이 단축, **굵은 도체/저저항 케이블**, **중간 스위치**, **48V보다 높은 소스(표준 범위 내)**, **동시율 제어**.
 
@@ -276,15 +272,15 @@ ip igmp snooping vlan 10
 ## C-4) PSE 전원예산 계산
 
 ### 공식
-\[
+$$
 P_{PSE,\ total} \ge \sum_j P_{port,\ max,j} \times U \times \gamma
-\]
-- \(U\): **동시사용율**(예: 0.6~0.8)  
-- \(\gamma\): **여유계수**(예: 1.1~1.25, 환경/노후/확장 고려)
+$$
+- $U$: **동시사용율**(예: 0.6~0.8)  
+- $\gamma$: **여유계수**(예: 1.1~1.25, 환경/노후/확장 고려)
 
 ### 예제) 48포트 PoE+ 스위치, 카메라 30대(각 12W), AP 8대(각 20W), 동시율 0.8, 여유 1.15
-- \( \sum P_{max} = 30 \times 12 + 8 \times 20 = 360 + 160 = 520 W\)  
-- 필요 \( \approx 520 \times 0.8 \times 1.15 \approx 478 W\)  
+- $ \sum P_{max} = 30 \times 12 + 8 \times 20 = 360 + 160 = 520 W$  
+- 필요 $ \approx 520 \times 0.8 \times 1.15 \approx 478 W$  
 → **500~600W 파워 서플라이** 선택(팬/고온 시 추가 여유).
 
 ---
@@ -360,7 +356,7 @@ policy-map QOS_UPLINK
 
 ---
 
-# PART E. 현장 점검 체크리스트(압축)
+# PART E. 현장 점검 체크리스트
 
 ### E-1) 방송/CATV/IPTV
 - [ ] QAM/OFDM 파라미터, **레벨 플랜(dBmV)**  
@@ -402,29 +398,29 @@ A. 전원 접지/EMI, LED 등 조명 주파수, 셔터/게인 설정, UTP와 전
 
 ---
 
-# PART G. 공식/계산 모음(요약 암기)
+# PART G. 공식/계산 모음
 
 1) **저장용량**  
-\[
+$$
 \text{TB} \approx 0.0108 \times D \times \sum R_i(\text{Mbps})
-\]
+$$
 
 2) **전압강하/손실**  
-\[
+$$
 \Delta V = I\cdot R,\quad P_{loss}=I^2R,\quad I \approx \frac{P_{PD}}{V}
-\]
+$$
 
 3) **PSE 예산**  
-\[
+$$
 P_{total} \ge \sum P_{max} \cdot U \cdot \gamma
-\]
+$$
 
 4) **RAID 유효**  
-- R5: \((N-1)\), R6: \((N-2)\), R10: \(N/2\) (× 디스크 용량)
+- R5: $(N-1)$, R6: $(N-2)$, R10: $N/2$ (× 디스크 용량)
 
 ---
 
-# PART H. 설계 도면/라벨링 예(요약)
+# PART H. 설계 도면/라벨링 예
 
 ```
 VLAN 10 (CCTV): 192.168.10.0/24
@@ -438,7 +434,7 @@ MDF-ODF1:T2:F01→IDF3-ODF1:T1:F01 (SM 12C)
 
 ---
 
-# PART I. 미니 실습(스크립트/수식)
+# PART I. 미니 실습
 
 ## I-1) 저장용량 산출 파이썬(개념 확인용)
 ```python
@@ -477,7 +473,7 @@ print(poe_drop(20, 52.0, 19.0, 100.0, 2))   # (약 44.7V, 7.3V, 2.8W 근사)
 
 ---
 
-# PART K. 한 장 요약(핵심 메시지 12개)
+# PART K. 한 장 요약
 
 1) **CATV=QAM, 지상파=OFDM, IPTV=멀티캐스트**.  
 2) HFC는 **헤드엔드-광노드-동축**: **레벨 플랜**이 관건.  
