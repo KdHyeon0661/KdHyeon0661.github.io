@@ -139,6 +139,7 @@ replicaCount: 2
 
 **`deployment.yaml` 예시 템플릿:**
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -160,6 +161,7 @@ spec:
         ports:
         - containerPort: 8080
 ```
+{% endraw %}
 
 ---
 
@@ -171,7 +173,7 @@ spec:
 | Kubernetes CLI | kubectl, Helm 등 사용 가능 |
 | Credentials Binding | Secret, 인증서 관리 |
 | Git Plugin | Git 연동 |
-| Blue Ocean | 파이프라인 시각화 UI
+| Blue Ocean | 파이프라인 시각화 UI |
 
 ---
 
@@ -190,7 +192,7 @@ spec:
 | Multi-branch Pipeline | 브랜치별 자동 배포 파이프라인 가능 |
 | Slack 알림 | 실패 시 Slack Webhook으로 통보 |
 | 재시도 전략 | `retry(n)` 블록으로 불안정한 단계 보완 |
-| Helm Diff | 실 배포 전에 차이점 미리보기 (`helm diff plugin`)
+| Helm Diff | 실 배포 전에 차이점 미리보기 (`helm diff plugin`) |
 
 ---
 
@@ -213,7 +215,7 @@ spec:
 | Jenkins | 유연성과 확장성 높은 전통적인 CI/CD 도구 |
 | Helm | 템플릿 기반 K8s 배포 자동화 |
 | Kubernetes | Jenkins + Helm을 통해 안전하고 반복 가능한 배포 가능 |
-| 추천 방식 | Git → Jenkins → Docker → Helm → K8s 자동화 구성
+| 추천 방식 | Git → Jenkins → Docker → Helm → K8s 자동화 구성 |
 
 ---
 

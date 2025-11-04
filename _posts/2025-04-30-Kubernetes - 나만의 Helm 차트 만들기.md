@@ -56,7 +56,7 @@ service:
   port: 8080
 ```
 
-→ 템플릿 내에서 `{{ .Values.image.repository }}` 식으로 사용됩니다.
+→ 템플릿 내에서 `{% raw %}{{ .Values.image.repository }}{% endraw %}` 식으로 사용됩니다.
 
 ---
 
@@ -64,6 +64,7 @@ service:
 
 기본 생성된 `templates/deployment.yaml`을 자신의 앱에 맞게 수정합니다.
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -86,6 +87,7 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port }}
 ```
+{% endraw %}
 
 → `include`, `.Chart`, `.Values` 등의 헬퍼 변수를 활용
 
@@ -93,6 +95,7 @@ spec:
 
 ## ✅ 4. 템플릿 수정: service.yaml
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Service
@@ -106,6 +109,7 @@ spec:
   selector:
     app: {{ include "mychart.name" . }}
 ```
+{% endraw %}
 
 ---
 
@@ -113,6 +117,7 @@ spec:
 
 `_helpers.tpl` 파일은 반복되는 이름 등을 템플릿 함수로 재사용할 수 있게 도와줍니다.
 
+{% raw %}
 ```yaml
 {{- define "mychart.name" -}}
 {{ .Chart.Name }}
@@ -122,6 +127,7 @@ spec:
 {{ .Release.Name }}-{{ .Chart.Name }}
 {{- end }}
 ```
+{% endraw %}
 
 ---
 
@@ -155,7 +161,7 @@ helm install myapp ./mychart -f my-values.yaml
 
 ## ✅ 8. 업그레이드 및 수정
 
-설정 변경 후:
+설치 변경 후:
 
 ```bash
 helm upgrade myapp ./mychart -f my-values.yaml

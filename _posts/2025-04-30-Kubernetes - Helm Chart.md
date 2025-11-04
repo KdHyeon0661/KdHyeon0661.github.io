@@ -69,7 +69,7 @@ env:
     value: debug
 ```
 
-→ 템플릿 파일 안에서 `{{ .Values.image.repository }}` 형태로 사용됩니다.
+→ 템플릿 파일 안에서 `{% raw %}{{ .Values.image.repository }}{% endraw %}` 형태로 사용됩니다.
 
 ---
 
@@ -81,6 +81,7 @@ Helm은 Go 템플릿 엔진을 사용하며, 여기에 `values.yaml`의 값을 �
 
 ### 예: `deployment.yaml`
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -106,6 +107,7 @@ spec:
           value: {{ .value }}
         {{- end }}
 ```
+{% endraw %}
 
 > `.Release.Name`, `.Values`, `.Chart`, `.Capabilities` 등 내장 변수 사용 가능
 
@@ -117,17 +119,21 @@ spec:
 
 예:
 
+{% raw %}
 ```yaml
 {{- define "mychart.fullname" -}}
 {{ .Release.Name }}-{{ .Chart.Name }}
 {{- end }}
 ```
+{% endraw %}
 
 템플릿에서 호출:
 
+{% raw %}
 ```yaml
 name: {{ include "mychart.fullname" . }}
 ```
+{% endraw %}
 
 → 유지보수성 향상, 중복 제거에 유용
 
