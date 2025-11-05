@@ -239,11 +239,13 @@ class CSPNonceMiddleware(MiddlewareMixin):
 ```
 
 템플릿(Jinja2/DTL):
+{% raw %}
 ```html
 <script nonce="{{ request.csp_nonce }}">
   // 부트스트랩
 </script>
 ```
+{% endraw %}
 
 ---
 
@@ -285,6 +287,7 @@ def index():
 ```
 
 `index.html`:
+{% raw %}
 ```html
 <script nonce="{{ nonce }}">
   // 부트스트랩
@@ -293,6 +296,7 @@ def index():
   document.head.appendChild(s);  // strict-dynamic으로 허용
 </script>
 ```
+{% endraw %}
 
 ---
 
@@ -468,6 +472,7 @@ res.set('Content-Security-Policy',
 ```
 
 ### HTML
+{% raw %}
 ```html
 <script nonce="{{nonce}}">
   // 부트스트랩 → 동적 로드
@@ -476,6 +481,7 @@ res.set('Content-Security-Policy',
   document.head.appendChild(s);
 </script>
 ```
+{% endraw %}
 
 > 이 구성을 기반으로, **스타일/폰트/연결 정책**은 서비스 요구에 맞게 더욱 제한적으로 다듬으세요.
 

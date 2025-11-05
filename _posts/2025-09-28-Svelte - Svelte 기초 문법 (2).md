@@ -483,6 +483,7 @@ export function tooltip(node: HTMLElement, params: Params) {
 }
 ```
 
+{% raw %}
 ```svelte
 <script lang="ts">
   import { tooltip } from '$lib/actions/tooltip';
@@ -499,6 +500,7 @@ export function tooltip(node: HTMLElement, params: Params) {
   }
 </style>
 ```
+{% endraw %}
 
 - 부모에서 `msg`가 바뀌면 **액션의 `update`**가 호출되어 DOM을 갱신한다.
 
@@ -543,9 +545,11 @@ export function intersect(node: Element, onEnter: () => void) {
 - 스크롤 **끝에 닿을 때마다** 더 로드하는 패턴을 **한 줄(use:intersect)** 로 재사용할 수 있다.
 
 ### 2.4.5 여러 액션 동시 부착
+{% raw %}
 ```svelte
 <input use:autoFocus use:tooltip={{ text: '자동 포커스 됩니다' }} />
 ```
+{% endraw %}
 - 여러 `use:`를 **띄어쓰기**로 나란히 적으면 된다.
 
 ### 2.4.6 액션의 장점 요약

@@ -294,6 +294,7 @@ INSTALLED_APPS = [
 
 ### (4) 템플릿(DTL)로 전환
 `apps/core/templates/core/home.html`:
+{% raw %}
 ```html
 <!doctype html>
 <html>
@@ -307,6 +308,7 @@ INSTALLED_APPS = [
   </body>
 </html>
 ```
+{% endraw %}
 
 `apps/core/views.py`:
 ```python
@@ -734,6 +736,7 @@ class ArticleForm(forms.ModelForm):
 
 ### Templates
 `apps/core/templates/core/article_list.html`:
+{% raw %}
 ```html
 {% extends "base.html" %}
 {% block content %}
@@ -751,8 +754,10 @@ class ArticleForm(forms.ModelForm):
 <p><a href="{% url 'core:article_new' %}">New Article</a></p>
 {% endblock %}
 ```
+{% endraw %}
 
 `apps/core/templates/core/article_detail.html`:
+{% raw %}
 ```html
 {% extends "base.html" %}
 {% block content %}
@@ -762,8 +767,10 @@ class ArticleForm(forms.ModelForm):
 <p><a href="{% url 'core:article_list' %}">Back</a></p>
 {% endblock %}
 ```
+{% endraw %}
 
 `apps/core/templates/core/article_form.html`:
+{% raw %}
 ```html
 {% extends "base.html" %}
 {% block content %}
@@ -775,8 +782,10 @@ class ArticleForm(forms.ModelForm):
 </form>
 {% endblock %}
 ```
+{% endraw %}
 
 전역 베이스(`templates/base.html`, 선택):
+{% raw %}
 ```html
 <!doctype html>
 <html>
@@ -794,6 +803,7 @@ class ArticleForm(forms.ModelForm):
   </body>
 </html>
 ```
+{% endraw %}
 
 ---
 

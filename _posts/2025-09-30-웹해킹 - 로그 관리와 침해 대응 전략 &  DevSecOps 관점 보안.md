@@ -357,6 +357,7 @@ fields:
 ```
 
 **Alertmanager → Slack 라우팅 예**
+{% raw %}
 ```yaml
 receivers:
   - name: "sec-slack"
@@ -366,6 +367,7 @@ receivers:
         title: "[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}"
         text: "{{ range .Alerts }}*{{ .Labels.severity }}* - {{ .Annotations.summary }} ({{ .Labels.instance }})\n{{ end }}"
 ```
+{% endraw %}
 
 ---
 

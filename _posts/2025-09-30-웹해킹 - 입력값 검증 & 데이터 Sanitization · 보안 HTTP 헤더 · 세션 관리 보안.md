@@ -336,11 +336,13 @@ app.post("/logout", (req, res) => {
 ```
 
 #### CSRF 토큰(세션 쿠키와 함께)
+{% raw %}
 ```javascript
 import csurf from "csurf";
 app.use(csurf({ cookie: false })); // 세션 기반 토큰
 // 폼에 {{ csrfToken }} 삽입, AJAX는 헤더(X-CSRF-Token)로 전송
 ```
+{% endraw %}
 
 > 프론트에서 쿠키에 접근할 필요가 **없습니다**. 토큰은 서버가 렌더링(또는 별도의 엔드포인트에서 JSON으로) 내려주고, 요청 헤더/바디에 담아 보냅니다.
 

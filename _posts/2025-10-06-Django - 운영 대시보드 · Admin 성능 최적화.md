@@ -215,6 +215,7 @@ class AuditLogListView(ListView):
 
 템플릿(요약):
 
+{% raw %}
 ```html
 {# templates/ops/dashboard.html #}
 <h1>운영 대시보드</h1>
@@ -248,6 +249,7 @@ class AuditLogListView(ListView):
   </tbody>
 </table>
 ```
+{% endraw %}
 
 > **성능 팁**: KPI는 실시간 계산 대신 **야간 배치**(Celery Beat)로 `DailyKPI`에 저장. 감사 로그 조회는 **필터/인덱스** 기반.
 
@@ -378,6 +380,7 @@ class BulkJobListView(ListView):
 
 템플릿:
 
+{% raw %}
 ```html
 {# templates/ops/bulk_jobs.html #}
 <h1>대량 작업</h1>
@@ -396,6 +399,7 @@ class BulkJobListView(ListView):
   </tbody>
 </table>
 ```
+{% endraw %}
 
 > **핵심**:  
 > - Admin 액션은 **큐 등록**만.  
@@ -426,6 +430,7 @@ class ProductAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context)
 ```
 
+{% raw %}
 ```html
 {# templates/admin/shop/product/change_list.html #}
 {% extends "admin/change_list.html" %}
@@ -434,6 +439,7 @@ class ProductAdmin(admin.ModelAdmin):
   <li><a href="{{ bulk_jobs_url }}">대량 작업 상태</a></li>
 {% endblock %}
 ```
+{% endraw %}
 
 ---
 
@@ -658,11 +664,13 @@ def process_response(self, request, response):
 - 내부 Admin의 메뉴에 **운영 대시보드 링크** 추가.  
 - 파트너 Admin에도 **자기 테넌트 대시보드** 제공(쿼리 자동 필터).
 
+{% raw %}
 ```python
 # templates/admin/base.html (또는 change_list 확장)
 <li><a href="{% url 'ops:dashboard' %}">운영 대시보드</a></li>
 <li><a href="{% url 'ops:bulk_jobs' %}">대량 작업</a></li>
 ```
+{% endraw %}
 
 파트너 버전 대시보드:
 

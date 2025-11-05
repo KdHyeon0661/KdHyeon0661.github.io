@@ -52,6 +52,7 @@ acme/
 ### B-1. CI 기본(Gradle 캐시 + JDK + 테스트/커버리지/정적분석/패키징)
 
 `.github/workflows/ci.yml`
+{% raw %}
 ```yaml
 name: CI
 on:
@@ -159,6 +160,7 @@ jobs:
             echo "Critical vulnerabilities found"; exit 1
           fi
 ```
+{% endraw %}
 
 **설명 포인트**
 - **Gradle 캐시/Wrapper 검증**으로 속도/안전.
@@ -176,6 +178,7 @@ jobs:
 ### C-1. Docker/BuildKit + 멀티플랫폼 + 캐시 + cosign 서명
 
 `.github/workflows/image-publish.yml`
+{% raw %}
 ```yaml
 name: Build & Push Image
 on:
@@ -234,6 +237,7 @@ jobs:
         uses: sigstore/cosign-installer@v3
       - run: cosign sign --yes ${{ env.IMAGE }}:${{ env.VERSION }}
 ```
+{% endraw %}
 
 **포인트**
 - **multi-arch** 빌드로 AMD64/ARM64 동시 푸시(운영 노드 아키텍처 혼재 대비).
@@ -329,6 +333,7 @@ spec:
 ### D-2. GitOps 업데이트(이미지 태그 갱신 → PR)
 
 `.github/workflows/gitops-pr.yml`
+{% raw %}
 ```yaml
 name: GitOps Bump (stage)
 on:
@@ -367,6 +372,7 @@ jobs:
           draft: false
           labels: bump
 ```
+{% endraw %}
 
 → 머지되면 Argo CD가 **stage**를 자동 동기화. 승인이 끝나면 **prod**도 같은 방식으로 PR을 열어 **수동 승인 후 배포**.
 
@@ -515,6 +521,7 @@ Actions에서:
 4) semantic-release가 **버전/릴리스/체인지로그** 생성 → 게시
 
 **프로모션 워크플로 예**
+{% raw %}
 ```yaml
 name: Promote to Prod
 on:
@@ -545,6 +552,7 @@ jobs:
           labels: promote
           reviewers: team-leads
 ```
+{% endraw %}
 
 ---
 
