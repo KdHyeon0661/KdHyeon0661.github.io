@@ -4,7 +4,7 @@ title: 웹해킹 - HTTP Parameter Pollution
 date: 2025-09-30 23:25:23 +0900
 category: 웹해킹
 ---
-# 🧯 7. HTTP Parameter Pollution (HPP)
+# 7. HTTP Parameter Pollution (HPP)
 
 ## 0) 한눈에 보기 (Executive Summary)
 
