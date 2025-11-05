@@ -6,8 +6,7 @@ category: flask
 ---
 # 부록 A. Flask CLI & 스크립팅
 
-> 이 부록은 **Flask CLI**를 이용해 운영에 필요한 **커스텀 커맨드**를 만들고, **마이그레이션/시드 데이터**를 안전하게 적용하며, **크론 대체(스케줄링)** 를 구현/운영하는 법을 **끝까지** 정리한다.  
-> 모든 코드는 ``` 로 감싸며, 수식이 있으면 반드시 $$...$$ 로 표기한다(본 부록은 수식이 거의 없다).
+> 이 부록은 **Flask CLI**를 이용해 운영에 필요한 **커스텀 커맨드**를 만들고, **마이그레이션/시드 데이터**를 안전하게 적용하며, **크론 대체(스케줄링)** 를 구현/운영하는 법을 **끝까지** 정리한다.
 
 ---
 
@@ -626,6 +625,7 @@ def test_seed_idempotent(runner, db):
 
 ### A.12.1 GitHub Actions로 주기 작업
 
+{% raw %}
 ```yaml
 # .github/workflows/nightly.yml
 name: nightly
@@ -646,6 +646,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: flask ops recompute-scores --yes
 ```
+{% endraw %}
 
 ### A.12.2 배포 훅에 마이그레이션/시드
 
