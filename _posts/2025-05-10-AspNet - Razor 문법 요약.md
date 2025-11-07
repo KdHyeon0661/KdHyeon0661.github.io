@@ -4,248 +4,535 @@ title: AspNet - Razor 문법 요약
 date: 2025-05-10 21:20:23 +0900
 category: AspNet
 ---
-# 🧩 Razor 문법 요약 (ASP.NET Core)
+# Razor 문법 완전 정리 (ASP.NET Core)
+## 0) Razor란?
+
+- HTML 안에 **C#**을 자연스럽게 섞을 수 있게 하는 **뷰 템플릿 엔진**.
+- 파일 확장자: `.cshtml`
+- **기본 HTML 인코딩**으로 XSS에 강함(필요 시 `Html.Raw`로 예외 처리).
 
 ---
 
-## ✅ Razor란?
+## 1) Razor의 핵심: `@` 전환과 출력
 
-Razor는 ASP.NET Core에서 사용되는 **서버 사이드 템플릿 엔진**입니다.
-
-- HTML 안에 **C# 코드를 삽입**할 수 있음
-- `.cshtml` 확장자 파일에서 사용됨
-- MVC와 Razor Pages 모두에서 사용 가능
-
----
-
-## 📝 기본 문법
-
-### 🔹 `@` 기호
-
-Razor에서 C# 코드를 시작할 때 `@`를 사용해요.
-
+### 1.1 인라인 전환
 ```razor
 <p>Hello, @Model.UserName!</p>
+<p>합계: @(Model.Price * Model.Quantity)</p>  <!-- 복잡 표현은 괄호 권장 -->
 ```
 
+### 1.2 코드 블록
 ```razor
 @{
     var now = DateTime.Now;
-}
-<p>현재 시간: @now</p>
-```
-
----
-
-## 🔁 흐름 제어문
-
-### 🔹 if / else
-
-```razor
-@if (Model.IsAdmin)
-{
-    <p>관리자입니다.</p>
-}
-else
-{
-    <p>일반 사용자입니다.</p>
-}
-```
-
-### 🔹 foreach
-
-```razor
-<ul>
-@foreach (var item in Model.Products)
-{
-    <li>@item.Name - @item.Price 원</li>
-}
-</ul>
-```
-
-### 🔹 for
-
-```razor
-@for (int i = 0; i < 3; i++)
-{
-    <p>Index: @i</p>
-}
-```
-
----
-
-## 📦 변수, 메서드
-
-```razor
-@{
     var title = "Razor 예제";
     int Sum(int a, int b) => a + b;
 }
 <h1>@title</h1>
+<p>현재 시간: @now</p>
 <p>2 + 3 = @Sum(2, 3)</p>
 ```
 
----
-
-## 📄 HTML 인코딩
-
-Razor는 **기본적으로 HTML 인코딩**을 합니다.
-
+### 1.3 문자열/HTML 출력과 인코딩
 ```razor
-@("<b>Bold</b>")     → 출력: &lt;b&gt;Bold&lt;/b&gt;
-@Html.Raw("<b>Bold</b>") → 출력: <b>Bold</b>
+@("<b>Bold</b>")            <!-- &lt;b&gt;Bold&lt;/b&gt; 로 인코딩되어 출력 -->
+@Html.Raw("<b>Bold</b>")    <!-- 실제 <b>Bold</b> 로 렌더링 -->
+```
+
+### 1.4 `@` 자체를 문자로 출력
+```razor
+@@  <!-- 결과: @ -->
 ```
 
 ---
 
-## 📬 Model 바인딩
+## 2) 흐름 제어(제어문/표현식)
 
+### 2.1 조건/반복
 ```razor
-@model MyApp.Models.User
+@if (Model.IsAdmin) { <p>관리자입니다.</p> } else { <p>일반 사용자입니다.</p> }
 
-<h1>@Model.UserName 님 환영합니다!</h1>
-```
-
-- `@model`은 해당 View의 **모델 타입을 지정**
-- `Model`은 클래스 인스턴스를 참조함
-
----
-
-## 📋 폼 바인딩과 입력 처리
-
-### 🔹 입력 바인딩 (Tag Helper)
-
-```razor
-<form method="post">
-    <input asp-for="Email" />
-    <span asp-validation-for="Email"></span>
-</form>
-```
-
-### 🔹 처리 메서드 (Razor Pages)
-
-```csharp
-public class IndexModel : PageModel
-{
-    [BindProperty]
-    public string Email { get; set; }
-
-    public void OnPost()
-    {
-        // Email 처리
-    }
-}
-```
-
----
-
-## 🧾 유효성 검사 메시지
-
-```razor
-<span asp-validation-for="Email" class="text-danger"></span>
-```
-
-→ Data Annotation과 연동되어 자동으로 메시지를 출력
-
----
-
-## 🌐 Partial View / Layout
-
-### 🔹 Layout 지정
-
-```razor
-@{
-    Layout = "_Layout";
-}
-```
-
-### 🔹 Partial 포함
-
-```razor
-<partial name="_LoginPartial" />
-```
-
----
-
-## 🔗 링크/페이지 이동
-
-### 🔹 MVC 스타일
-
-```razor
-<a asp-controller="Home" asp-action="About">소개</a>
-```
-
-### 🔹 Razor Pages 스타일
-
-```razor
-<a asp-page="/Contact">문의하기</a>
-```
-
----
-
-## 🔐 조건부 렌더링
-
-### 🔹 `@* 주석 *@`
-
-```razor
-@* 이건 Razor 주석입니다 *@
-```
-
----
-
-## 🔤 문자열 출력
-
-```razor
-@Model.Title         → HTML 인코딩됨
-@Html.Raw(Model.Body) → HTML로 렌더링됨
-```
-
----
-
-## 💡 팁: 복잡한 표현은 괄호로 감싸기
-
-```razor
-<p>합계: @(Model.Price * Model.Quantity)</p>
-```
-
----
-
-## 🎯 Razor 문법 예제 종합
-
-```razor
-@model MyApp.Models.Product
-
-@{
-    var isOnSale = Model.Price < 10000;
-}
-
-<h2>@Model.Name</h2>
-
-@if (isOnSale)
-{
-    <p class="text-success">할인 중!</p>
-}
-
-<p>가격: @Model.Price 원</p>
+@for (var i = 0; i < 3; i++) { <p>Index: @i</p> }
 
 <ul>
-@foreach (var tag in Model.Tags)
+@foreach (var p in Model.Products)
 {
-    <li>@tag</li>
+    <li>@p.Name - @p.Price.ToString("N0") 원</li>
 }
 </ul>
 ```
 
+### 2.2 switch
+```razor
+@switch (Model.Status)
+{
+    case Status.Pending: <span class="text-warning">대기</span>; break;
+    case Status.Active:  <span class="text-success">활성</span>; break;
+    default:             <span>기타</span>; break;
+}
+```
+
+### 2.3 null 전파/조건부
+```razor
+<p>@Model?.Profile?.DisplayName ?? "이름 없음"</p>
+```
+
 ---
 
-## ✅ 요약
+## 3) 모델 바인딩 & 형식 지정
 
-| 구문 | 역할 |
-|------|------|
-| `@` | C# 코드 시작 |
-| `@{ }` | 코드 블록 |
-| `@if`, `@for`, `@foreach` | 흐름 제어 |
-| `@model` | 모델 타입 지정 |
-| `@Html.Raw` | HTML 직접 출력 |
-| `asp-for`, `asp-page` | Tag Helper |
-| `@* *@` | Razor 주석 |
+### 3.1 뷰의 모델 타입 지정
+```razor
+@model MyApp.Models.User
+<h1>@Model.UserName 님 환영합니다!</h1>
+```
+
+### 3.2 날짜/숫자 포맷(문화권 반영)
+```razor
+@DateTime.Now.ToString("D", System.Globalization.CultureInfo.CurrentCulture)
+@1234567.ToString("N", System.Globalization.CultureInfo.CurrentCulture)
+```
+
+---
+
+## 4) 레이아웃, 섹션, 시작 파일
+
+### 4.1 레이아웃 지정
+```razor
+@{
+    Layout = "_Layout"; // /Views/Shared/_Layout.cshtml 또는 /Pages/Shared/_Layout.cshtml
+}
+```
+
+### 4.2 섹션 정의/렌더링
+_레이아웃 내:_
+```razor
+<body>
+    @RenderBody()
+    @RenderSection("Scripts", required: false)
+</body>
+```
+_각 View에서:_
+```razor
+@section Scripts {
+    <script src="..."></script>
+}
+```
+
+### 4.3 `_ViewStart.cshtml` / `_ViewImports.cshtml`
+- `_ViewStart.cshtml`: 모든 뷰의 공통 설정(예: `Layout`) 지정.
+- `_ViewImports.cshtml`: 공통 `@using`, Tag Helper, 네임스페이스 등.
+```razor
+@* _ViewImports.cshtml *@
+@using MyApp.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+```
+
+---
+
+## 5) 주석과 텍스트
+
+- Razor 주석(클라이언트에 출력 안 됨):
+```razor
+@* 이건 Razor 주석입니다 *@
+```
+- HTML 주석(클라이언트로 전달됨):
+```html
+<!-- 클라이언트에서 보이는 주석 -->
+```
+
+---
+
+## 6) 폼/바인딩/검증(태그 헬퍼)
+
+### 6.1 폼 + Tag Helper
+```razor
+@model MyApp.Models.ContactInput
+
+<form asp-action="Submit" asp-controller="Contact" method="post">
+    <div class="mb-2">
+        <label asp-for="Email"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="mb-2">
+        <label asp-for="Message"></label>
+        <textarea asp-for="Message" class="form-control"></textarea>
+        <span asp-validation-for="Message" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">보내기</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+```
+
+> `asp-for`는 모델 속성 이름을 기반으로 name/id/value, validation 속성 등을 자동 구성.
+
+### 6.2 Razor Pages의 POST 핸들러
+```csharp
+public class IndexModel : PageModel
+{
+    [BindProperty] public string Email { get; set; } = "";
+    [BindProperty] public string Message { get; set; } = "";
+
+    public IActionResult OnPost()
+    {
+        if (!ModelState.IsValid) return Page();
+        // 처리 로직
+        return RedirectToPage("Success");
+    }
+}
+```
+
+### 6.3 검증 메시지와 요약
+```razor
+<div asp-validation-summary="All" class="text-danger"></div>
+<span asp-validation-for="Email" class="text-danger"></span>
+```
+
+### 6.4 Anti-forgery(기본)
+- `form` Tag Helper가 자동으로 `__RequestVerificationToken` 생성(컨트롤러/페이지에서 `[ValidateAntiForgeryToken]` 기본 활성).
+- Ajax 시 토큰 헤더 포함 필요.
+
+---
+
+## 7) 링크/라우팅 Tag Helper
+
+### 7.1 MVC 링크
+```razor
+<a asp-controller="Home" asp-action="About">소개</a>
+<a asp-controller="Users" asp-action="Detail" asp-route-id="5">유저</a>
+```
+
+### 7.2 Razor Pages 링크
+```razor
+<a asp-page="/Contact">문의하기</a>
+<a asp-page="/Products/Detail" asp-route-id="10">제품 상세</a>
+```
+
+### 7.3 환경별 자원 로딩
+```razor
+<environment include="Development">
+    <script src="~/lib/jquery/jquery.js"></script>
+</environment>
+<environment exclude="Development">
+    <script src="~/lib/jquery/jquery.min.js"></script>
+</environment>
+```
+
+---
+
+## 8) Partial View, View Component, Editor/Display Templates
+
+### 8.1 Partial View
+```razor
+<partial name="_LoginPartial" />
+@await Html.PartialAsync("_ProductCard", product)
+```
+- **장점**: 재사용 가능, 간단.
+- **주의**: 데이터 전달은 모델/뷰데이터/뷰백 등.
+
+### 8.2 View Component(로직+뷰 결합 재사용)
+**클래스:**
+```csharp
+public class CartSummaryViewComponent : ViewComponent
+{
+    private readonly ICartService _cart;
+    public CartSummaryViewComponent(ICartService cart) => _cart = cart;
+
+    public IViewComponentResult Invoke()
+    {
+        var model = _cart.GetSummary();
+        return View(model); // Views/Shared/Components/CartSummary/Default.cshtml
+    }
+}
+```
+**호출:**
+```razor
+@await Component.InvokeAsync("CartSummary")
+```
+- **장점**: DI/비즈니스 로직 포함한 캡슐화된 UI 블록.
+
+### 8.3 Editor/Display Templates(이름 규칙 기반)
+- 위치: `Views/Shared/EditorTemplates/TypeName.cshtml`, `Views/Shared/DisplayTemplates/TypeName.cshtml`
+```razor
+@Html.EditorFor(m => m.Address)   // Address 타입 템플릿 자동 찾음
+@Html.DisplayFor(m => m.Address)
+```
+- **장점**: 타입별 UI 표준화, 반복 제거.
+
+---
+
+## 9) 조건부/동적 특성 렌더링
+
+### 9.1 조건부 속성
+```razor
+<input class="@(Model.IsError ? "form-control is-invalid" : "form-control")" />
+
+<button disabled="@(Model.IsBusy ? "disabled" : null)">저장</button>
+```
+
+### 9.2 반복으로 속성 합성
+```razor
+@{
+    var attrs = new Dictionary<string, object> {
+        ["class"] = "btn btn-primary",
+        ["data-id"] = Model.Id
+    };
+}
+<button @attributes="attrs">확인</button>  @* Blazor에서 주로 사용(참고) *@
+```
+> MVC Razor에서는 위와 같은 `@attributes` 패턴은 적용되지 않는다(Blazor 문법). MVC에서는 문자열로 조립하자.
+
+---
+
+## 10) 비동기/await & HtmlHelper
+
+### 10.1 비동기 호출
+```razor
+@await Html.PartialAsync("_User", Model.User)
+@await Component.InvokeAsync("CartSummary")
+```
+
+### 10.2 Url/Html/Json 헬퍼 예시
+```razor
+@Url.Action("Detail", "Products", new { id = 5 })     <!-- /Products/Detail/5 -->
+@Html.DisplayNameFor(m => m.UserName)
+@Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+@Html.Raw(Json.Serialize(Model))  @* 필요 시 JSON 출력(직접 유틸 작성/주입) *@
+```
+
+---
+
+## 11) 지시문(Directives) 핵심 모음
+
+| 지시문 | 설명 | 예시 |
+|---|---|---|
+| `@model` | 뷰 모델 지정 | `@model MyApp.Models.User` |
+| `@using` | using 선언 | `@using MyApp.Common` |
+| `@inject` | DI 주입 | `@inject ILogger<IndexModel> Log` |
+| `@inherits` | 커스텀 베이스 뷰 | `@inherits MyBaseView<TModel>` |
+| `@section` | 레이아웃 섹션 정의 | `@section Scripts { ... }` |
+| `@addTagHelper` / `@removeTagHelper` | Tag Helper 범위 설정 | `_ViewImports.cshtml`에서 관리 |
+| `@page` | Razor Pages에서 페이지로 지정 | `@page "{id:int}"`(Pages 전용) |
+| `@functions` | (MVC Razor) 뷰 내부 C# 멤버 | `@functions { string Hi() => "hi"; }` |
+
+### 11.1 `@inject` 예
+```razor
+@inject Microsoft.Extensions.Logging.ILogger<IndexModel> Logger
+@{ Logger.LogInformation("뷰 렌더링"); }
+```
+
+### 11.2 `@inherits` 베이스 뷰
+```csharp
+public abstract class MyBaseView<T> : RazorPage<T>
+{
+    public string AppName => "MyApp";
+}
+```
+뷰에서:
+```razor
+@inherits MyApp.Infrastructure.MyBaseView<MyApp.Models.User>
+<h1>@AppName - @Model.UserName</h1>
+```
+
+---
+
+## 12) 라우팅(Razor Pages) — `@page`
+
+```razor
+@page "{id:int?}"
+@model Pages.Products.DetailModel
+<h2>제품 상세: @Model.Id</h2>
+```
+- `@page`가 있으면 해당 `.cshtml`이 **엔드포인트**.
+- 경로 패턴, 제약(`int`, `min`, `max`) 지정 가능.
+
+---
+
+## 13) 환경/정적 파일/버전 태그
+
+### 13.1 정적 파일 버전 태그
+```razor
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+<script src="~/js/site.js" asp-append-version="true"></script>
+```
+- 파일 해시를 쿼리스트링에 붙여 캐시 무효화.
+
+### 13.2 환경 태그
+```razor
+<environment include="Development">
+    <script src="~/js/dev-only.js"></script>
+</environment>
+<environment exclude="Development">
+    <script src="~/js/prod-only.min.js"></script>
+</environment>
+```
+
+---
+
+## 14) 보안/권한과 Razor
+
+### 14.1 인증 상태에 따른 출력
+```razor
+@using Microsoft.AspNetCore.Authorization
+@inject Microsoft.AspNetCore.Identity.SignInManager<MyUser> SignInManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <a asp-controller="Account" asp-action="Logout">로그아웃</a>
+}
+else
+{
+    <a asp-controller="Account" asp-action="Login">로그인</a>
+}
+```
+
+### 14.2 권한 체크
+```razor
+@inject IAuthorizationService Authz
+@{
+    var allowed = (await Authz.AuthorizeAsync(User, "AdminPolicy")).Succeeded;
+}
+@if (allowed) { <a asp-page="/Admin">관리</a> }
+```
+
+---
+
+## 15) 성능/운영 팁
+
+- **인코딩 규칙**: 기본 HTML 인코딩. `HtmlString`/`IHtmlContent`는 신중 사용.
+- **부분 뷰 남발 주의**: 렌더링 비용 + 모델 준비 비용 고려. 캐싱/뷰 컴포넌트와 균형.
+- **정적 리소스**: `asp-append-version`, CDN/압축/HTTP/2 활용.
+- **러닝 타임 변경**: 개발 중에만 Runtime Compilation(개발환경 패키지) 고려.
+- **반복 내 비싼 계산**: 뷰에서 계산 최소화하고 컨트롤러/페이지 모델에서 준비.
+
+---
+
+## 16) 실전 예제 — 제품 목록 + 상세 카드 + 검증 + 섹션
+
+### 16.1 `_ViewImports.cshtml`
+```razor
+@using MyApp.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+```
+
+### 16.2 `_Layout.cshtml`
+```razor
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - MyApp</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header><a asp-controller="Home" asp-action="Index">Home</a></header>
+    <main class="container">
+        @RenderBody()
+    </main>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+```
+
+### 16.3 `Views/Products/Index.cshtml`
+```razor
+@model IEnumerable<Product>
+@{
+    ViewData["Title"] = "제품 목록";
+    Layout = "_Layout";
+}
+<h1>제품 목록</h1>
+<div class="row">
+@foreach (var p in Model)
+{
+    <div class="col-4 mb-3">
+        @await Html.PartialAsync("_ProductCard", p)
+    </div>
+}
+</div>
+```
+
+### 16.4 `Views/Shared/_ProductCard.cshtml` (Partial)
+```razor
+@model Product
+<div class="card">
+  <div class="card-body">
+    <h5 class="card-title">@Model.Name</h5>
+    <p class="card-text">가격: @Model.Price.ToString("N0") 원</p>
+    <a class="btn btn-sm btn-primary"
+       asp-controller="Products"
+       asp-action="Detail" asp-route-id="@Model.Id">자세히</a>
+  </div>
+</div>
+```
+
+### 16.5 `Views/Products/Create.cshtml` (검증/폼)
+```razor
+@model ProductInput
+@{
+    ViewData["Title"] = "제품 등록";
+    Layout = "_Layout";
+}
+<h1>제품 등록</h1>
+
+<form asp-action="Create" method="post">
+  <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+  <div class="mb-2">
+    <label asp-for="Name" class="form-label"></label>
+    <input asp-for="Name" class="form-control" />
+    <span asp-validation-for="Name" class="text-danger"></span>
+  </div>
+  <div class="mb-2">
+    <label asp-for="Price" class="form-label"></label>
+    <input asp-for="Price" class="form-control" />
+    <span asp-validation-for="Price" class="text-danger"></span>
+  </div>
+  <button type="submit" class="btn btn-primary">저장</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+```
+
+---
+
+## 17) 디버깅/문제 해결 체크
+
+| 증상 | 가능 원인 | 해결 힌트 |
+|---|---|---|
+| Tag Helper 작동 안 함 | `_ViewImports.cshtml`에 `@addTagHelper` 없음 | `@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers` 추가 |
+| 링크 생성 경로 이상 | 라우트 값/영역/컨트롤러 액션명 오타 | `asp-area/asp-controller/asp-action/asp-page` 재확인 |
+| 검증 메시지 미출력 | 스크립트 누락/모델 상태 미검증 | `_ValidationScriptsPartial`, 서버측 ModelState 점검 |
+| XSS 우려 | `Html.Raw` 남용 | 반드시 신뢰된 HTML만 사용, 가능하면 피함 |
+| 성능 저하 | 부분 뷰 과다/루프 내부 복잡 계산 | 컨트롤러에서 ViewModel로 계산/정리, 캐시 고려 |
+
+---
+
+## 18) 요약 테이블
+
+| 구분 | 핵심 |
+|---|---|
+| 출력/전환 | `@`, `@{ }`, 괄호로 복잡식 `@( )` |
+| 모델 | `@model`, `asp-for`, 검증/요약 |
+| 레이아웃/섹션 | `Layout`, `@section` + `@RenderSection` |
+| 라우팅 링크 | `asp-controller/action`, `asp-page`, `asp-route-*` |
+| 파셜/컴포넌트 | `partial`, `Html.PartialAsync`, `ViewComponent` |
+| 지시문 | `@using`, `@inject`, `@inherits`, `@page`(Pages) |
+| 보안/검증 | 기본 인코딩, Anti-forgery, DataAnnotations |
+| 성능 팁 | 정적 리소스 버전, 부분 뷰·계산 최소화, 캐시 |
+
+---
+
+### 부록) 간단한 수식 포맷(블로그 표기용)
+- Razor 자체는 수식을 렌더링하지 않지만, 블로그에 수학을 적을 경우 MathJax 등과 함께 다음처럼 마크업할 수 있다:
+```
+$$
+S = \sum_{i=1}^{n} p_i \cdot q_i
+$$
+```
+> 실제 웹에서는 MathJax 스크립트를 레이아웃에 추가해 렌더링한다.

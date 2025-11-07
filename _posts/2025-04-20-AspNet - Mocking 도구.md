@@ -4,183 +4,548 @@ title: AspNet - Mocking 도구
 date: 2025-04-10 22:20:23 +0900
 category: AspNet
 ---
-# 🧪 Mocking 도구 소개 (Moq 중심 + 대안 도구 비교)
+# Mocking 도구 완전 정리
+
+## 0) 테스트 더블 용어 정리(빠른 리마인드)
+
+| 용어 | 핵심 | Moq에서 보통 |
+|---|---|---|
+| Dummy | 의미 없는 채움값 | `Guid.Empty`, 기본값 |
+| **Stub** | 반환만 정의 | `Setup(...).Returns(...)` |
+| **Mock** | Stub + 호출 검증 | `Verify(..., Times.Once)` |
+| Fake | 간이 구현체(메모리 DB 등) | 직접 클래스 작성 |
+| Spy | 호출 기록 저장 | `Callback(...)`로 일부 대체 |
+
+> 실무에서는 Stub + Mock 조합이 가장 흔하다.
 
 ---
 
-## ✅ 1. Mock란?
-
-**Mock 객체**는 테스트 중 실제 구현 대신 사용되는 **가짜 객체**로,  
-다음과 같은 상황에서 사용됨:
-
-- DB, API 같은 **외부 의존성 제거**
-- **단위 테스트 격리** 및 빠른 실행
-- **예외 상황/특정 조건** 시뮬레이션
-
----
-
-## 🔧 2. 대표 Mocking 도구 비교
-
-| 도구 | 특징 | 사용 언어 | 인기 |
-|------|------|-----------|------|
-| ✅ Moq | 가장 널리 쓰이는 .NET용 Mock 라이브러리 | C# | 매우 높음 |
-| NSubstitute | 간단하고 문법이 직관적 | C# | 중간 |
-| FakeItEasy | 깔끔한 API, BDD 스타일 | C# | 중간 |
-| Rhino Mocks | 오래된 레거시용 | C# | 낮음 |
-
-> 이 문서에서는 가장 많이 쓰이는 **Moq**을 중심으로 설명하고,  
-> 다른 도구들과의 차이점은 마지막에 비교해줘.
-
----
-
-## 📦 3. Moq 설치
+## 1) 프로젝트 준비
 
 ```bash
+dotnet new xunit -n Demo.Tests
+cd Demo.Tests
 dotnet add package Moq
+dotnet add package FluentAssertions
 ```
 
-또는 프로젝트 `.csproj` 파일에 수동 추가 가능:
-
-```xml
-<PackageReference Include="Moq" Version="4.18.4" />
-```
-
----
-
-## 🧪 4. 기본 사용법
-
-### 👇 인터페이스 예시
+테스트 대상 도메인(샘플):
 
 ```csharp
 public interface IUserService
 {
-    string GetUserName(int id);
+    Task<User?> GetAsync(int id, CancellationToken ct = default);
+    Task<bool> CreateAsync(UserCreate dto, CancellationToken ct = default);
+    IAsyncEnumerable<User> StreamAllAsync(CancellationToken ct = default);
+}
+
+public record User(int Id, string Name, string Email);
+public record UserCreate(string Name, string Email);
+
+public sealed class UserController
+{
+    private readonly IUserService _svc;
+    public UserController(IUserService svc) => _svc = svc;
+
+    public async Task<IResult> Get(int id, CancellationToken ct = default)
+    {
+        var u = await _svc.GetAsync(id, ct);
+        return u is null ? Results.NotFound() : Results.Ok(u);
+    }
+
+    public async Task<IResult> Post(UserCreate dto, CancellationToken ct = default)
+    {
+        var ok = await _svc.CreateAsync(dto, ct);
+        return ok ? Results.Created($"/users/{dto.Email}", dto) : Results.BadRequest();
+    }
+
+    public IAsyncEnumerable<User> Stream(CancellationToken ct = default)
+        => _svc.StreamAllAsync(ct);
 }
 ```
 
-### 👇 Mocking & 테스트
+---
+
+## 2) Moq 기본 — `Setup`, `Returns`, `Verify`
 
 ```csharp
 public class UserControllerTests
 {
     [Fact]
-    public void GetUserName_ShouldReturnMockedName()
+    public async Task Get_Should_Return_Ok_When_User_Exists()
     {
-        // 1. Mock 객체 생성
         var mock = new Mock<IUserService>();
+        mock.Setup(s => s.GetAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new User(1, "Alice", "a@x.io"));
 
-        // 2. 동작 지정
-        mock.Setup(s => s.GetUserName(1)).Returns("TestUser");
+        var sut = new UserController(mock.Object);
 
-        // 3. 객체 주입
-        var controller = new UserController(mock.Object);
+        var result = await sut.Get(1);
 
-        // 4. 테스트 실행
-        var result = controller.GetUserName(1) as OkObjectResult;
+        result.Should().BeOfType<Ok<User>>()
+              .Which.Value.Name.Should().Be("Alice");
 
-        Assert.Equal("TestUser", result?.Value);
+        mock.Verify(s => s.GetAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+        mock.VerifyNoOtherCalls();
     }
+}
+```
+
+핵심 포인트
+- `It.IsAny<T>()` 남용은 테스트 신뢰도 저하 → **가능하면 조건 명시**.
+- 마지막에 `VerifyNoOtherCalls()`로 **의도치 않은 상호작용 차단**.
+
+---
+
+## 3) Strict vs Loose, DefaultValue
+
+```csharp
+// 기본: Loose(정의되지 않은 호출은 default 반환)
+var loose = new Mock<IUserService>(MockBehavior.Loose);
+
+// Strict: 정의 안 한 호출 → 예외
+var strict = new Mock<IUserService>(MockBehavior.Strict);
+
+strict.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+      .ReturnsAsync((int id, CancellationToken _) => new User(id, "X", "x@y.z"));
+```
+
+- **Strict**는 회귀 방지에 강력하지만 유지보수 비용↑. 레거시·핵심 서비스에 국소 적용 추천.
+- `DefaultValueProvider`/`DefaultValue.Mock`로 **깊은 Stub**도 가능(복잡 계층 테스트를 빠르게 시동).
+
+```csharp
+var deep = new Mock<IDepA> { DefaultValue = DefaultValue.Mock };
+// deep.Object.B.B2.C까지 자동 Mock 생성
+```
+
+---
+
+## 4) 파라미터 매칭 — `It.Is`, `It.IsIn`, `It.IsRegex`
+
+```csharp
+mock.Setup(s => s.CreateAsync(
+        It.Is<UserCreate>(x => x.Email.EndsWith("@company.com")),
+        It.IsAny<CancellationToken>()))
+    .ReturnsAsync(true);
+
+mock.Setup(s => s.GetAsync(It.IsIn(1,2,3), It.IsAny<CancellationToken>()))
+    .ReturnsAsync((int id, CancellationToken _) => new User(id, "P", "p@x.io));
+```
+
+문자열 패턴:
+
+```csharp
+mock.Setup(s => s.CreateAsync(
+        It.Is<UserCreate>(x => System.Text.RegularExpressions.Regex.IsMatch(x.Email, @"^\S+@\S+$")),
+        It.IsAny<CancellationToken>()))
+    .ReturnsAsync(true);
+```
+
+---
+
+## 5) 예외/콜백/상태 캡처 — `Throws`, `Callback`, `Returns`
+
+```csharp
+[Fact]
+public async Task Post_Should_Return_BadRequest_On_Service_Exception()
+{
+    var mock = new Mock<IUserService>();
+    mock.Setup(s => s.CreateAsync(It.IsAny<UserCreate>(), It.IsAny<CancellationToken>()))
+        .ThrowsAsync(new InvalidOperationException("dup"));
+
+    var sut = new UserController(mock.Object);
+
+    var res = await sut.Post(new("A", "a@x.io"));
+    res.Should().BeOfType<BadRequest>();
+}
+```
+
+콜백으로 기록/검증:
+
+```csharp
+[Fact]
+public async Task Post_Should_Pass_Exact_Payload()
+{
+    var captured = new List<UserCreate>();
+    var mock = new Mock<IUserService>();
+    mock.Setup(s => s.CreateAsync(It.IsAny<UserCreate>(), It.IsAny<CancellationToken>()))
+        .Callback<UserCreate, CancellationToken>((dto, _) => captured.Add(dto))
+        .ReturnsAsync(true);
+
+    var sut = new UserController(mock.Object);
+    await sut.Post(new("B", "b@x.io"));
+
+    captured.Should().ContainSingle(x => x.Name == "B" && x.Email == "b@x.io");
+}
+```
+
+`SetupSequence`로 순차 동작:
+
+```csharp
+mock.SetupSequence(s => s.GetAsync(10, It.IsAny<CancellationToken>()))
+    .ReturnsAsync((User?)null)
+    .ReturnsAsync(new User(10, "Retried", "r@x.io"))
+    .ThrowsAsync(new TimeoutException());
+```
+
+---
+
+## 6) 속성/인덱서/이벤트/`ref/out`/비가상 멤버
+
+- 속성:
+
+```csharp
+var m = new Mock<IConfig>();
+m.SetupGet(c => c.RetryCount).Returns(3);
+m.SetupProperty(c => c.Enabled, true); // set/get 추적
+```
+
+- 이벤트:
+
+```csharp
+var m = new Mock<IWatcher>();
+EventHandler? captured;
+m.SetupAdd(w => w.Changed += It.IsAny<EventHandler>())
+ .Callback<EventHandler>(h => captured = h);
+```
+
+- `out`/`ref`:
+
+```csharp
+public interface IParser { bool TryParse(string s, out int value); }
+
+var mp = new Mock<IParser>();
+mp.Setup(p => p.TryParse("42", out It.Ref<int>.IsAny))
+  .Callback(new TryParseCallback((string s, out int v) => v = 42))
+  .Returns(true);
+
+delegate void TryParseCallback(string s, out int value);
+```
+
+- 주의: **Moq는 비가상/정적/비인터페이스 멤버**를 직접 Mock 못한다.  
+  → 설계 개선(인터페이스/virtual), 혹은 JustMock/TypeMock/Mocklis/Proxy 기반 대안 고려.
+
+---
+
+## 7) 비동기 & 스트리밍 — `Task`, `IAsyncEnumerable<T>`
+
+```csharp
+[Fact]
+public async Task Stream_Should_Yield_Items()
+{
+    var mock = new Mock<IUserService>();
+    mock.Setup(s => s.StreamAllAsync(It.IsAny<CancellationToken>()))
+        .Returns(async (CancellationToken ct) =>
+        {
+            async IAsyncEnumerable<User> Impl([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken token)
+            {
+                yield return new User(1, "A", "a@x.io");
+                await Task.Delay(1, token);
+                yield return new User(2, "B", "b@x.io");
+            }
+            return Impl(ct);
+        });
+
+    var sut = new UserController(mock.Object);
+    var list = new List<User>();
+    await foreach (var u in sut.Stream())
+        list.Add(u);
+
+    list.Should().HaveCount(2);
+}
+```
+
+- `EnumeratorCancellation` 어트리뷰트로 CT 전달.
+- 실무에선 대량 스트림 대신 **소형 샘플**로 로직 검증.
+
+---
+
+## 8) 상호작용 검증 — `Verify`, `Times`, `InSequence`, 호출 순서
+
+```csharp
+[Fact]
+public async Task Get_Should_Call_Service_Once_Then_NoMore()
+{
+    var mock = new Mock<IUserService>();
+    mock.Setup(s => s.GetAsync(5, It.IsAny<CancellationToken>()))
+        .ReturnsAsync(new User(5, "E", "e@x"));
+
+    var sut = new UserController(mock.Object);
+    await sut.Get(5);
+
+    mock.Verify(s => s.GetAsync(5, It.IsAny<CancellationToken>()), Times.Once);
+    mock.VerifyNoOtherCalls();
+}
+```
+
+순서 제약은 Moq 내장 지원이 제한적 → **Moq.Sequences**(외부) 또는 캡처/플래그로 우회:
+
+```csharp
+var order = new List<string>();
+mock.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+    .Callback(() => order.Add("Get"))
+    .ReturnsAsync(new User(1,"X","x@x"));
+mock.Setup(s => s.CreateAsync(It.IsAny<UserCreate>(), It.IsAny<CancellationToken>()))
+    .Callback(() => order.Add("Create"))
+    .ReturnsAsync(true);
+
+// 실행 후:
+order.Should().ContainInOrder("Get", "Create");
+```
+
+---
+
+## 9) DI/조합 — `As<T>`, 다중 인터페이스, AutoFixture
+
+여러 인터페이스를 한 Mock로:
+
+```csharp
+var m = new Mock<IPrimary>();
+m.As<ISecondary>().Setup(x => x.Ping()).Returns(true);
+var composite = m.Object; // IPrimary & ISecondary 동시
+```
+
+AutoFixture로 생성 편의:
+
+```csharp
+dotnet add package AutoFixture
+dotnet add package AutoFixture.AutoMoq
+```
+
+```csharp
+var fixture = new Fixture().Customize(new AutoMoqCustomization { ConfigureMembers = true });
+
+var mock = fixture.Freeze<Mock<IUserService>>();
+mock.Setup(s => s.GetAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+    .ReturnsAsync(new User(9,"Auto","auto@x"));
+
+var sut = fixture.Create<UserController>();
+var res = await sut.Get(9);
+res.Should().BeOfType<Ok<User>>();
+```
+
+---
+
+## 10) 시간/랜덤/환경 추상화 — 테스트 안정성
+
+**안정적 테스트**를 위해 `DateTime.UtcNow`, `Guid.NewGuid`, `Random` 등을 직접 호출하지 않고 **추상화**:
+
+```csharp
+public interface IClock { DateTimeOffset UtcNow { get; } }
+public sealed class SysClock : IClock { public DateTimeOffset UtcNow => DateTimeOffset.UtcNow; }
+
+public sealed class TokenService(IClock clock)
+{
+    public string Issue() => $"{clock.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid()}";
+}
+```
+
+테스트:
+
+```csharp
+var clock = new Mock<IClock>();
+clock.SetupGet(c => c.UtcNow).Returns(new DateTimeOffset(2025,1,1,0,0,0,TimeSpan.Zero));
+
+var svc = new TokenService(clock.Object);
+var token = svc.Issue();
+token.Should().StartWith("20250101000000-");
+```
+
+---
+
+## 11) 웹 계층 실전 — 컨트롤러/미들웨어/필터
+
+컨트롤러에서 서비스 Mock 주입은 위 예시 참고.  
+미들웨어 단위 테스트는 **`DefaultHttpContext`**와 파이프라인 델리게이트를 조립:
+
+```csharp
+[Fact]
+public async Task Middleware_Should_Append_Header()
+{
+    var ctx = new DefaultHttpContext();
+    var next = new RequestDelegate(_ => Task.CompletedTask);
+
+    var mw = new CustomHeaderMiddleware(next);
+    await mw.InvokeAsync(ctx);
+
+    ctx.Response.Headers.Should().ContainKey("X-Powered-By");
+}
+```
+
+필터/바인더는 **Moq로 `ActionContext`/`HttpContext`/`ModelState`**를 스텁.
+
+---
+
+## 12) EF Core, HttpClient, 외부 API
+
+- EF Core는 **Mock보다 InMemory/Sqlite**가 더 적합(쿼리 변환 차이 최소화 위해 **Sqlite InMemory** 권장).
+- `HttpClient`는 `HttpMessageHandler`를 Mock:
+
+```csharp
+public class StubHandler(HttpResponseMessage res) : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        => Task.FromResult(res);
+}
+
+[Fact]
+public async Task Client_Should_Parse_Json()
+{
+    var res = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+    {
+        Content = new StringContent("""{"id":1,"name":"A"}""", System.Text.Encoding.UTF8, "application/json")
+    };
+    var http = new HttpClient(new StubHandler(res)) { BaseAddress = new Uri("https://api.local") };
+
+    // IExternalApi(client) 등 주입받아 테스트
 }
 ```
 
 ---
 
-## 🧩 5. Moq 주요 메서드 정리
+## 13) 레거시/난이도 높은 영역
 
-| 메서드 | 설명 |
-|--------|------|
-| `Setup()` | 특정 메서드 호출 시 반환값 지정 |
-| `Returns()` | 반환값 지정 |
-| `Throws()` | 예외 발생 설정 |
-| `Verify()` | 특정 메서드가 호출되었는지 검증 |
-| `It.IsAny<T>()` | 어떤 값이든 매칭 |
-| `It.Is<T>(...)` | 특정 조건에 맞는 인자만 매칭 |
+- **정적 메서드/비가상/Sealed**: Moq 한계. 리팩터(래퍼 인터페이스) 또는 **JustMock(상용)/TypeMock** 검토.
+- **Thread/Timer/Background**: `IHostedService`/`PeriodicTimer`를 추상화하고 CT 활용.
+- **파일/프로세스/네트워크**: `IFileSystem`(System.IO.Abstractions) 같은 추상화 계층 사용.
 
 ---
 
-### 📌 `Throws()` 예제
+## 14) 안티패턴 & 베스트 프랙티스
 
-```csharp
-mock.Setup(s => s.GetUserName(0)).Throws<ArgumentException>();
-```
+안티패턴
+- `It.IsAny<T>()` 범람 → 테스트 약화.
+- `Verify` 남발(구현 상세에 결박) → **관찰 가능한 결과** 위주 검증.
+- 과도한 Strict → 유지비용 폭증.
 
----
-
-### 📌 `Verify()` 예제
-
-```csharp
-mock.Verify(s => s.GetUserName(1), Times.Once());
-```
-
----
-
-### 📌 매개변수 조건 매칭
-
-```csharp
-mock.Setup(s => s.GetUserName(It.Is<int>(id => id > 0)))
-    .Returns("ValidUser");
-```
+베스트
+- **작은 단위**로 Mock(1~2 의존성), Given-When-Then 구조 명확화.
+- Side effect는 `Callback`으로 제한적 검증, Return 값 기반 결과 위주.
+- `VerifyNoOtherCalls()`로 **의도치 않은 상호작용** 방지.
+- Fixture/Builder 패턴으로 **테스트 데이터 중복 제거**.
 
 ---
 
-## 🔄 6. 콜백 & 상태 기반 테스트
+## 15) NSubstitute/FakeItEasy 비교(요약)
 
-### 👉 콜백으로 값 캡처
-
-```csharp
-string captured = "";
-mock.Setup(s => s.GetUserName(It.IsAny<int>()))
-    .Callback<int>(id => captured = $"ID: {id}")
-    .Returns("Done");
-```
-
----
-
-## 🧠 7. Stub vs Mock vs Fake 비교
-
-| 용어 | 의미 | 예시 |
-|------|------|------|
-| **Stub** | 반환값만 설정, 동작은 없음 | `.Returns(...)` |
-| **Mock** | Stub + 호출 검증 (`Verify`) | `.Verify(...)` |
-| **Fake** | 실제 동작하는 가짜 객체 | `InMemoryDbContext` 등 |
-
-> 실무에서는 대부분 Stub + Mock 조합을 사용함.
-
----
-
-## 🔀 8. 다른 Mock 프레임워크 간 비교
-
-| 기능 | Moq | NSubstitute | FakeItEasy |
-|------|-----|-------------|-------------|
-| 기본 문법 | `mock.Setup(...)` | `sub.SomeMethod().Returns(...)` | `A.CallTo(...).Returns(...)` |
-| BDD 스타일 | ❌ | ✅ | ✅ |
-| 익명 객체 사용 | 가능 | 매우 쉬움 | 쉬움 |
+| 항목 | **Moq** | **NSubstitute** | **FakeItEasy** |
+|---|---|---|---|
+| 기본 문법 | `mock.Setup(...).Returns(...)` | `sub.Some().Returns(...)` | `A.CallTo(...).Returns(...)` |
 | 진입 장벽 | 낮음 | 매우 낮음 | 낮음 |
+| BDD 친화 | 보통 | 높음 | 높음 |
+| 호출 검증 | `Verify(..., Times.Once)` | `Received(1)` | `MustHaveHappenedOnceExactly()` |
+| 학습 자료/커뮤니티 | 매우 풍부 | 풍부 | 보통 |
+| 정적/비가상 | 불가(같음) | 불가 | 불가 |
 
-### 🔹 NSubstitute 예
+예시(동일 시나리오):
 
 ```csharp
-var sub = Substitute.For<IUserService>();
-sub.GetUserName(1).Returns("User123");
+// NSubstitute
+var s = Substitute.For<IUserService>();
+s.GetAsync(1, default).Returns(new User(1,"A","a@x"));
+await s.Received(1).GetAsync(1, default);
+
+// FakeItEasy
+var f = A.Fake<IUserService>();
+A.CallTo(() => f.GetAsync(1, A<CancellationToken>._))
+ .Returns(new User(1,"A","a@x"));
+A.CallTo(() => f.GetAsync(1, A<CancellationToken>._))
+ .MustHaveHappenedOnceExactly();
 ```
 
----
-
-## 🚀 9. 실전 활용 팁
-
-- Mock은 **서비스, DB, API** 등에 주로 사용 (예: `IUserRepository`)
-- `Verify`를 통해 **서비스가 호출됐는지 확인**
-- `It.IsAny<T>()`를 남용하면 **불명확한 테스트**가 될 수 있음
-- 외부 리소스(Mock DB, 파일, API 등)는 최대한 **인터페이스화**하고 테스트 분리
+선택 가이드
+- 빠른 온보딩·자료 풍부: **Moq**.
+- 문법 간결/Bdd 스타일: **NSubstitute**.
+- BDD/명료한 API: **FakeItEasy**.
 
 ---
 
-## ✅ 요약
+## 16) 종합 실전 예제 — 실패 재시도·로그·순서·예외
 
-| 항목 | 내용 |
-|------|------|
-| Mocking 목적 | 의존성 격리, 빠른 테스트, 예외 시뮬레이션 |
-| 가장 많이 쓰는 도구 | Moq |
-| 핵심 메서드 | `Setup()`, `Returns()`, `Throws()`, `Verify()` |
-| 대체 도구 | NSubstitute, FakeItEasy |
-| 실전 팁 | 호출 횟수 검증, 조건 지정, 콜백 활용 가능 |
+```csharp
+public interface IRetryingService
+{
+    Task<User?> GetWithRetryAsync(int id, int maxRetry, CancellationToken ct = default);
+}
+
+public sealed class RetryingService(IUserService inner, ILogger<RetryingService> log) : IRetryingService
+{
+    public async Task<User?> GetWithRetryAsync(int id, int maxRetry, CancellationToken ct = default)
+    {
+        for (var i = 0; i <= maxRetry; i++)
+        {
+            try
+            {
+                var u = await inner.GetAsync(id, ct);
+                if (u is not null) return u;
+            }
+            catch (TimeoutException ex) when (i < maxRetry)
+            {
+                log.LogWarning(ex, "timeout, retry {Attempt}", i + 1);
+                await Task.Delay(10, ct);
+            }
+        }
+        return null;
+    }
+}
+
+public class RetryingServiceTests
+{
+    [Fact]
+    public async Task Should_Retry_On_Timeout_And_Succeed()
+    {
+        var svc = new Mock<IUserService>(MockBehavior.Strict);
+        svc.SetupSequence(s => s.GetAsync(7, It.IsAny<CancellationToken>()))
+           .ThrowsAsync(new TimeoutException())
+           .ReturnsAsync(new User(7,"OK","ok@x"));
+
+        var logger = new Mock<ILogger<RetryingService>>();
+        var sut = new RetryingService(svc.Object, logger.Object);
+
+        var u = await sut.GetWithRetryAsync(7, maxRetry: 2);
+
+        u.Should().NotBeNull().And.Subject.As<User>().Id.Should().Be(7);
+
+        svc.Verify(s => s.GetAsync(7, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        logger.Verify(l => l.Log(
+            LogLevel.Warning,
+            It.IsAny<EventId>(),
+            It.Is<It.IsAnyType>((state, _) => state.ToString()!.Contains("timeout, retry")),
+            It.IsAny<Exception>(),
+            It.IsAny<Func<It.IsAnyType, Exception?, string>>()), Times.Once);
+        svc.VerifyNoOtherCalls();
+    }
+}
+```
+
+포인트
+- `SetupSequence`로 실패→성공 시나리오.
+- 로거 검증은 템플릿 문자열 포함 여부로 최소화.
+- `Strict`로 의도 외 호출 방지.
+
+---
+
+## 17) 체크리스트
+
+- [ ] 인터페이스/virtual로 **테스트 가능 설계** 만들기
+- [ ] 입력 매칭은 구체적(값/조건), `It.IsAny` 최소화
+- [ ] `VerifyNoOtherCalls`로 부수 호출 차단
+- [ ] 시간/랜덤/환경 추상화(`IClock` 등)
+- [ ] EF는 Mock보다 **Sqlite InMemory** 권장
+- [ ] 외부 HTTP는 `HttpMessageHandler` Stub
+- [ ] 전역 상태/정적 의존성 피하기(불가 시 래퍼)
+- [ ] 실패/예외/경계값/순서 테스트 포함
+- [ ] 테스트는 **속도·독립성**이 생명(대규모 테스트셋의 90%는 단위 테스트로)
+
+---
+
+## 18) 요약
+
+| 주제 | 핵심 |
+|---|---|
+| 목적 | 외부 의존성 격리, 빠르고 결정적 테스트 |
+| Moq 핵심 | `Setup/Returns/Throws/Verify/Sequence/Callback/VerifyNoOtherCalls` |
+| 고급 | `IAsyncEnumerable`, `ref/out`, `Strict`, `DefaultValue.Mock`, 다중 인터페이스 |
+| 설계 | 시간/랜덤/환경 추상화, 테스트 가능 구조 |
+| 대안 | NSubstitute(간결), FakeItEasy(BDD), 정적/비가상은 리팩터 or 상용 |
+| 실무 팁 | 구체 매칭, 결과 중심 검증, 부수효과 최소화, 속도 유지 |

@@ -4,39 +4,32 @@ title: AspNet - 로깅 시스템 구성 (ILogger, Serilog, NLog)
 date: 2025-04-10 21:20:23 +0900
 category: AspNet
 ---
-# 📋 ASP.NET Core 로깅 시스템 구성 (`ILogger`, `Serilog`, `NLog`)
+# ASP.NET Core 로깅 시스템 완전 가이드
 
----
+## 1) ASP.NET Core 로깅 추상화 개요
 
-## ✅ 1. ASP.NET Core 로깅 개요
-
-ASP.NET Core는 강력한 **로깅 추상화 시스템**을 제공하여  
-`ILogger` 인터페이스를 기반으로 다양한 로깅 제공자(콘솔, 파일, DB 등)를 쉽게 설정할 수 있음.
-
----
-
-## 🧩 2. 기본 로깅 구성 (`ILogger` 사용)
-
-ASP.NET Core는 `ILogger<T>`를 기본 DI로 제공함.
-
-### 🔹 사용 예
+- 모든 로그는 `Microsoft.Extensions.Logging`의 **`ILogger<T>` 추상화**를 통해 기록.
+- 실제 출력(콘솔/파일/DB/Elastic/Seq/Cloud)은 **프로바이더**가 담당(플러그 가능).
+- 장점: 코드 변경 없이 구성만 바꿔 **Serilog/NLog** 등으로 **갈아끼우기**가 용이.
 
 ```csharp
-public class HomeController : Controller
+public sealed class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
+    public HomeController(ILogger<HomeController> logger) => _logger = logger;
 
     public IActionResult Index()
     {
         _logger.LogInformation("홈페이지 접근됨");
-        _logger.LogWarning("주의가 필요한 이벤트!");
-        _logger.LogError("오류 발생!");
-
+        _logger.LogWarning("주의가 필요한 이벤트");
+        try
+        {
+            // ...
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Index 처리 중 오류");
+        }
         return View();
     }
 }
@@ -44,181 +37,577 @@ public class HomeController : Controller
 
 ---
 
-## 🪵 3. 로그 레벨
+## 2) 로그 레벨, 카테고리, 필터링
 
-| 로그 레벨 | 설명 |
-|-----------|------|
-| `Trace`   | 가장 상세한 로그 (디버깅용) |
-| `Debug`   | 디버깅 정보 |
-| `Information` | 일반 흐름 정보 |
-| `Warning` | 예상된 문제 |
-| `Error`   | 예외 발생 등 심각한 오류 |
-| `Critical` | 시스템 다운 등의 치명적 오류 |
+### 2.1 로그 레벨
 
-### 🔹 appsettings.json 설정
+| 레벨 | 용도 |
+|---|---|
+| Trace | 최세부(핫패스 디버깅) |
+| Debug | 개발·진단 |
+| Information | 정상 플로우 이벤트 |
+| Warning | 경고·한계치 도달 |
+| Error | 실패 이벤트(복구 필요) |
+| Critical | 시스템 중단 급 |
+
+### 2.2 `appsettings.json` 필터
 
 ```json
 {
   "Logging": {
     "LogLevel": {
       "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+      "Microsoft": "Warning",
+      "Microsoft.AspNetCore.Hosting": "Information",
+      "MyApp.Infrastructure": "Debug"
     }
   }
 }
 ```
 
----
-
-## 🧪 4. 파일/콘솔 로깅 (기본 제공)
-
-ASP.NET Core는 기본적으로 `Console`, `Debug`, `EventSource`를 지원함.
-
-- 콘솔 출력: 개발 시
-- 디버그 출력: Visual Studio Output 창 등
+- **카테고리** = 일반적으로 클래스 **네임스페이스**.  
+- 특정 영역(예: `MyApp.Infrastructure`)만 수준 상향/하향 가능.
 
 ---
 
-## 💎 5. Serilog로 로깅 고급화하기
+## 3) `ILogger` 핵심 패턴 — 구조화, 스코프, 이벤트 ID
 
-### 🔹 Serilog란?
+### 3.1 구조화 메시지(파라미터를 필드로)
 
-- 구조화 로깅(structured logging) 지원
-- 다양한 Sink (파일, 콘솔, DB, ElasticSearch 등) 제공
-- 강력한 템플릿, 필터링, 출력 포맷 가능
+```csharp
+_logger.LogInformation("사용자 {UserId}가 {Action}을 수행", userId, action);
+```
+
+- Serilog/NLog 등 **구조화 가능한 프로바이더**에서 `{UserId}`, `{Action}`이 **필드**로 저장되어 조회·쿼리 가능.
+
+### 3.2 스코프(`BeginScope`) — 요청/트랜잭션 상관관계
+
+```csharp
+using (_logger.BeginScope(new Dictionary<string, object?>
+{
+    ["CorrelationId"] = HttpContext.TraceIdentifier,
+    ["User"] = User.Identity?.Name ?? "anonymous"
+}))
+{
+    _logger.LogInformation("주문 조회 시작: {OrderId}", orderId);
+    // ...
+}
+```
+
+- 스코프 내 모든 로그에 **공통 메타데이터**가 자동 첨부.
+
+### 3.3 이벤트 ID
+
+```csharp
+public static class LogEvents
+{
+    public static readonly EventId OrderFetched = new(1001, nameof(OrderFetched));
+}
+
+_logger.LogInformation(LogEvents.OrderFetched, "주문 {OrderId} 조회", orderId);
+```
+
+- SIEM/대시보드에서 **이벤트 유형 기반** 분석에 유용.
 
 ---
 
-### 📦 설치
+## 4) 콘솔/디버그/이벤트소스 기본 프로바이더
+
+Program.cs(또는 `builder.Logging`)에서 활성화/제거 가능:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+builder.Logging
+    .ClearProviders()       // 선택: 기본 제공 모두 제거
+    .AddConsole()
+    .AddDebug();            // VS Output 창
+```
+
+- **개발**: 콘솔/디버그 중심.
+- **운영**: 파일/원격 싱크(Serilog/NLog/Otel 등) 권장.
+
+---
+
+## 5) Serilog — 구조화 로깅의 표준
+
+### 5.1 패키지
 
 ```bash
 dotnet add package Serilog.AspNetCore
+dotnet add package Serilog.Sinks.Console
 dotnet add package Serilog.Sinks.File
+# 선택: Elastic/Seq/ApplicationInsights/ConsoleJson 등
 ```
 
----
-
-### 🛠️ 구성 예 (Program.cs)
+### 5.2 부트스트랩(가장 먼저 구성)
 
 ```csharp
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
-    .MinimumLevel.Debug()
+    .MinimumLevel.Information()
+    .Enrich.FromLogContext()                        // 스코프/HTTP 컨텍스트
+    .Enrich.WithMachineName().Enrich.WithThreadId()
     .WriteTo.Console()
-    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .WriteTo.File("logs/app-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 7)
     .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
-
-// 기존 로깅 제거 + Serilog 사용
-builder.Host.UseSerilog();
+builder.Host.UseSerilog(); // ASP.NET Core 로깅 파이프에 연결
 
 var app = builder.Build();
-
-app.MapGet("/", (ILogger<Program> logger) =>
-{
-    logger.LogInformation("요청 처리됨!");
-    return "Hello, world!";
-});
-
+// ...
 app.Run();
 ```
 
----
+### 5.3 JSON 기반 구성(appsettings) + 자동 재로드
 
-### 📄 구조화 로깅 예
-
-```csharp
-logger.LogInformation("유저 {UserId}가 {Action}을 수행했습니다", userId, action);
-```
-
-결과:
 ```json
 {
-  "UserId": 42,
-  "Action": "로그인",
-  "Message": "유저 42가 로그인 을 수행했습니다"
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.File" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "MyApp": "Debug"
+      }
+    },
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ],
+    "WriteTo": [
+      { "Name": "Console" },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/app-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 7
+        }
+      }
+    ]
+  }
 }
 ```
 
+Program.cs에서 읽기:
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration, sectionName: "Serilog")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+```
+
+> `builder.Configuration`에 `reloadOnChange: true`가 기본 활성화되어 있으면 파일 변경 시 **동적 반영** 가능(일부 항목).
+
+### 5.4 Serilog Request Logging(자동 요청/응답 로그)
+
+```csharp
+app.UseSerilogRequestLogging(options =>
+{
+    options.MessageTemplate = "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+    options.EnrichDiagnosticContext = (ctx, http) =>
+    {
+        ctx.Set("User", http.User.Identity?.Name);
+        ctx.Set("TraceId", http.TraceIdentifier);
+    };
+});
+```
+
+- 각 요청 단위의 지표(지연/상태 코드/사용자)를 표준화.
+
+### 5.5 민감 정보 마스킹 — 메시지 템플릿/필터
+
+```csharp
+// 예: 비밀번호 마스킹
+_logger.LogInformation("로그인 시도: user={User}, password={Password}", user, "[FILTERED]");
+```
+
+Serilog 필터(고급):
+
+```csharp
+dotnet add package Serilog.Expressions
+```
+
+```csharp
+Log.Logger = new LoggerConfiguration()
+    .Filter.ByExcluding("@m like '%password=%'") // 메시지에 패턴 포함 시 제외
+    .CreateLogger();
+```
+
+### 5.6 동적 레벨 스위치
+
+```csharp
+var levelSwitch = new Serilog.Core.LoggingLevelSwitch(Serilog.Events.LogEventLevel.Information);
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.ControlledBy(levelSwitch)
+    .WriteTo.Console()
+    .CreateLogger();
+
+// 런타임에서: levelSwitch.MinimumLevel = LogEventLevel.Debug;
+```
+
+운영 중 **진단 레벨 상향**에 유용.
+
 ---
 
-## 🧰 6. NLog 설정하기 (대안 로거)
+## 6) NLog — 고성능·XML 구성 선호 환경
 
-- 성능이 좋고 설정 파일을 XML로 관리 가능
-- 기업 환경에서도 많이 사용됨
-
----
-
-### 📦 설치
+### 6.1 패키지 & 기본 설정
 
 ```bash
 dotnet add package NLog.Web.AspNetCore
 ```
 
----
-
-### 📁 nlog.config 파일 생성
+`nlog.config`:
 
 ```xml
-<nlog>
+<nlog xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <targets>
-    <target name="file" xsi:type="File" fileName="Logs/nlog.txt" />
+    <target name="console" xsi:type="Console" layout="${longdate}|${uppercase:${level}}|${logger}|${message} ${exception:format=ToString}" />
+    <target name="file" xsi:type="File" fileName="logs/nlog-${shortdate}.log" archiveNumbering="Rolling" maxArchiveFiles="7" />
   </targets>
   <rules>
-    <logger name="*" minlevel="Info" writeTo="file" />
+    <logger name="*" minlevel="Info" writeTo="console,file" />
   </rules>
 </nlog>
 ```
 
----
-
-### 🛠️ Program.cs에 설정
+Program.cs:
 
 ```csharp
+var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Host.UseNLog();
+
+var app = builder.Build();
+app.Run();
+```
+
+### 6.2 레이아웃 렌더러로 상관관계/사용자 출력
+
+```xml
+<target name="file" xsi:type="File" fileName="logs/app-${shortdate}.log"
+        layout="${longdate}|${level}|${logger}|trace=${aspnet-traceidentifier}|user=${aspnet-user-identity}|${message} ${exception}" />
 ```
 
 ---
 
-## 🔐 7. 민감 정보 필터링
+## 7) 보안/프라이버시 — PII 마스킹·GDPR
 
-로그에 개인정보, 비밀번호 등이 포함되지 않도록 주의!
+- 로그에 **암호/토큰/주민번호/카드번호** 등 **PII** 저장 금지.
+- 수집 최소화(원칙), 보존 주기(예: 7~30일)와 파기 정책 명시.
+- 샘플 코드(마스킹 헬퍼):
 
 ```csharp
-logger.LogInformation("비밀번호 입력: {Password}", "[FILTERED]");
+public static class PiiMask
+{
+    public static string MaskEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@')) return "[FILTERED]";
+        var parts = email.Split('@');
+        return parts[0][..1] + "***@" + parts[1];
+    }
+}
+// 사용
+_logger.LogInformation("가입: {Email}", PiiMask.MaskEmail(email));
 ```
 
-또는 Serilog/NLog에서 자체적으로 `Filter` 기능을 통해 필터링 가능
+---
+
+## 8) 상관관계/분산 추적 — `Activity`/OpenTelemetry 연동
+
+### 8.1 `Activity`로 Trace/Span 추적
+
+```csharp
+using System.Diagnostics;
+
+app.Use(async (ctx, next) =>
+{
+    var traceId = Activity.Current?.TraceId.ToString() ?? ctx.TraceIdentifier;
+    using (_ = _logger.BeginScope(new Dictionary<string, object?> { ["TraceId"] = traceId }))
+    {
+        await next();
+    }
+});
+```
+
+### 8.2 OpenTelemetry(OTel) 로깅/트레이싱
+
+```bash
+dotnet add package OpenTelemetry.Extensions.Hosting
+dotnet add package OpenTelemetry.Exporter.Otlp
+dotnet add package OpenTelemetry.Instrumentation.AspNetCore
+dotnet add package OpenTelemetry.Instrumentation.Http
+```
+
+```csharp
+builder.Services.AddOpenTelemetry()
+    .WithTracing(b => b
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddOtlpExporter())  // OTLP → Grafana Tempo/Jaeger/Collector
+    .WithMetrics(b => b
+        .AddAspNetCoreInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter());
+```
+
+- Serilog와 함께 사용해도 무방(로그↔트레이스 상호 참조는 `TraceId`로).
 
 ---
 
-## ✅ 8. 요약 비교
+## 9) 전역 예외 처리와 로깅 통합
 
-| 항목 | 기본 `ILogger` | Serilog | NLog |
-|------|----------------|---------|------|
-| 내장 제공 | ✅ | ❌ | ❌ |
-| 파일 로깅 | 간단 | 고급 가능 | 고급 가능 |
-| 구조화 로깅 | 제한적 | ✅ 매우 우수 | 제한적 |
-| 설정 파일 분리 | JSON | JSON or 코드 | XML 기반 |
-| 확장성 | 보통 | 매우 우수 | 우수 |
+- 글로벌 예외 미들웨어(혹은 `UseExceptionHandler`)에서 **`LogError(ex, ...)`** + **`ProblemDetails`** 반환.
+
+```csharp
+app.UseExceptionHandler(err =>
+{
+    err.Run(async ctx =>
+    {
+        var feature = ctx.Features.Get<IExceptionHandlerFeature>();
+        var ex = feature?.Error;
+        var status = ex is NotFoundException ? 404 : 500;
+
+        // 로깅
+        var traceId = Activity.Current?.Id ?? ctx.TraceIdentifier;
+        ctx.RequestServices.GetRequiredService<ILogger<Program>>()
+           .LogError(ex, "Unhandled exception. traceId={TraceId}", traceId);
+
+        ctx.Response.StatusCode = status;
+        ctx.Response.ContentType = "application/problem+json";
+        await ctx.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = status,
+            Title = status == 404 ? "Not Found" : "Internal Server Error",
+            Detail = app.Environment.IsDevelopment() ? ex?.ToString() : null,
+            Instance = ctx.Request.Path,
+            Extensions = { ["traceId"] = traceId }
+        });
+    });
+});
+```
 
 ---
 
-## 📊 9. 로깅 팁
+## 10) 성능: 비동기·배칭·롤링·필터
 
-- `ILogger`는 **모든 클래스에 DI로 주입 가능**
-- 실시간 분석이 필요하면 **Serilog + Elastic Stack** 추천
-- `Try-Catch` 내에서 `LogError(ex, "...")` 활용 필수
-- `LogCritical`은 시스템 종료나 다운 시점에 사용
+- **비동기/배칭**: 파일/네트워크 싱크에서 I/O 병목 최소화(Serilog/NLog 기본 제공).
+- **롤링 파일**: 일별/용량별 분할 + 보존 개수 제한.
+- **필터**: 불필요한 대량 로그(Trace/Debug, 특정 카테고리) 차단으로 비용 절감.
+- **샘플링**: 트래픽 폭증 구간에서 일부만 기록(고급 구성).
+
+Serilog File Sink 예:
+
+```csharp
+.WriteTo.File(
+   path: "logs/app-.log",
+   rollingInterval: RollingInterval.Day,
+   retainedFileCountLimit: 7,
+   buffered: true,               // 버퍼링(기본)
+   shared: false)
+```
 
 ---
 
-## 🔜 추천 다음 주제
+## 11) 환경별 구성/핫 리로드
 
-- ✅ Serilog의 Enrichers로 사용자 정보 포함시키기
-- ✅ 로그 레벨 동적 변경 (`appsettings.json` → 실시간 변경)
-- ✅ Cloud logging: AWS CloudWatch / Azure Monitor 연동
-- ✅ `ILoggerFactory`를 통한 커스텀 로거 구현
+`appsettings.Development.json`과 `Production.json`에서 로그 레벨/싱크 분리:
+
+```jsonc
+// appsettings.Production.json
+{
+  "Serilog": {
+    "MinimumLevel": { "Default": "Information" },
+    "WriteTo": [
+      { "Name": "File", "Args": { "path": "logs/app-.log", "rollingInterval": "Day" } }
+      // 선택: Seq/Elastic/Azure Monitor 등
+    ]
+  }
+}
+```
+
+- 운영에선 **Console만으로는 부족** → 파일/원격 수집 꼭 추가.
+- `reloadOnChange`: 일부 공급자에서 레벨/필터 동적 반영.
+
+---
+
+## 12) 각 계층에서의 로깅 패턴
+
+### 12.1 미들웨어(요청 전후/지표)
+
+```csharp
+app.Use(async (ctx, next) =>
+{
+    var sw = Stopwatch.StartNew();
+    await next();
+    sw.Stop();
+
+    var log = ctx.RequestServices.GetRequiredService<ILogger<Program>>();
+    log.LogInformation("HTTP {Method} {Path} => {Status} in {Elapsed} ms",
+        ctx.Request.Method, ctx.Request.Path, ctx.Response.StatusCode, sw.ElapsedMilliseconds);
+});
+```
+
+### 12.2 EF Core 로깅(쿼리·성능)
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Microsoft.EntityFrameworkCore.Database.Command": "Information",
+      "Microsoft.EntityFrameworkCore.Infrastructure": "Warning"
+    }
+  }
+}
+```
+
+- `Information` 이상으로 설정 시 SQL/시간/파라미터 출력(PII 주의).
+
+### 12.3 HttpClient(외부 호출)
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "System.Net.Http.HttpClient": "Information"
+    }
+  }
+}
+```
+
+- 요청/응답 요약 로깅(헤더/본문 PII 주의).
+
+### 12.4 백그라운드 작업(HostedService)
+
+```csharp
+public sealed class Worker : BackgroundService
+{
+    private readonly ILogger<Worker> _log;
+    public Worker(ILogger<Worker> log) => _log = log;
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        _log.LogInformation("Worker 시작");
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            using (_log.BeginScope("{Tick}", DateTimeOffset.UtcNow))
+                _log.LogDebug("주기 작업 실행");
+            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+        }
+    }
+}
+```
+
+---
+
+## 13) 클라우드/집중 수집: Elastic/Seq/CloudWatch/Application Insights
+
+- **Serilog**: `Serilog.Sinks.Elasticsearch`, `Serilog.Sinks.Seq`, `Serilog.Sinks.ApplicationInsights`.
+- **NLog**: Elastic/DB 타깃 등 다양한 타깃.
+- 쿼리 예(Seq): `@Level = 'Error' and User = 'kimdohyun' and RequestPath = '/api/orders'`.
+
+---
+
+## 14) 운영 가이드 — 알람/보존/용량/비용
+
+- **알람**: `Error/Critical` 폭증, 5xx 비율 증가, 특정 이벤트 ID 임계값 초과.
+- **보존**: 규정/보안 기준에 따라 7~90일. 일일 롤링 + 자동 삭제.
+- **샘플링**: 피크 타임에는 일부만 저장하거나 카테고리 필터.
+- **비용**: 원격 로그 스토리지(Elastic/Seq/Cloud) 과금 주의.
+
+---
+
+## 15) 종합 예시 — Serilog + 글로벌 예외 + 요청 로깅 + EF/HTTP 튜닝
+
+```csharp
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(new ConfigurationBuilder()
+        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+        .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
+        .AddEnvironmentVariables()
+        .Build(), sectionName: "Serilog")
+    .CreateLogger();
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
+builder.Services.AddControllers();
+
+// 로깅 필터(기본)
+builder.Logging.AddFilter("Microsoft", LogLevel.Warning);
+builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
+builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
+
+var app = builder.Build();
+
+// 요청 로깅
+app.UseSerilogRequestLogging(o =>
+{
+    o.MessageTemplate = "HTTP {RequestMethod} {RequestPath} => {StatusCode} in {Elapsed:0.0000} ms";
+});
+
+// 예외 처리 + ProblemDetails
+app.UseExceptionHandler(err =>
+{
+    err.Run(async ctx =>
+    {
+        var ex = ctx.Features.Get<IExceptionHandlerFeature>()?.Error;
+        var status = ex is NotFoundException ? 404 : 500;
+        var traceId = Activity.Current?.Id ?? ctx.TraceIdentifier;
+
+        Log.ForContext("TraceId", traceId)
+           .Error(ex, "Unhandled exception");
+
+        ctx.Response.StatusCode = status;
+        ctx.Response.ContentType = "application/problem+json";
+        await ctx.Response.WriteAsJsonAsync(new ProblemDetails
+        {
+            Status = status,
+            Title = status == 404 ? "Not Found" : "Internal Server Error",
+            Detail = app.Environment.IsDevelopment() ? ex?.ToString() : null,
+            Instance = ctx.Request.Path,
+            Extensions = { ["traceId"] = traceId }
+        });
+    });
+});
+
+app.MapControllers();
+app.Run();
+```
+
+---
+
+## 16) 체크리스트 — 실제 프로젝트에 적용하기
+
+- [ ] 카테고리별 로그 레벨 정의(개발/운영 분리)
+- [ ] 구조화 로깅(메시지 템플릿 파라미터 적극 사용)
+- [ ] 스코프/TraceId/사용자/요청 ID 부여
+- [ ] 민감 정보 마스킹/필터 정책
+- [ ] 전역 예외 처리 + `ProblemDetails` 표준
+- [ ] 성능: 비동기/배칭/롤링/필터
+- [ ] 원격 싱크(Elastic/Seq/Cloud) + 알람
+- [ ] 보존 정책/용량 관리/비용 추적
+- [ ] 환경별 구성/동적 레벨 스위치
+- [ ] EF/HttpClient/BackgroundService 로그 조정
+
+---
+
+## 17) 요약
+
+| 항목 | 핵심 |
+|---|---|
+| 추상화 | `ILogger<T>`로 코드 독립성 확보 |
+| 구조화 | 메시지 템플릿 `{Field}`로 필드화 |
+| Serilog/NLog | 강력한 싱크·필터·성능·구성 |
+| 보안 | PII 마스킹, 최소 수집, 보존·파기 |
+| 관찰성 | TraceId/스코프/OTel로 상관관계 |
+| 안정성 | 전역 예외 + 표준 오류(JSON) |
+| 운영 | 알람/보존/비용 + 동적 레벨 제어 |
+
+잘 설계된 로깅은 **디버깅 시간 절감**, **운영 가시성 향상**, **보안/컴플라이언스 준수**를 동시에 달성한다.  
+위 패턴들을 조합해, 개발부터 운영까지 **한 번에 통과하는 로깅 체계**를 구축하자.
