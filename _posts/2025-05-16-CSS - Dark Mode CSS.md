@@ -310,9 +310,12 @@ html, body, .card, .button {
 3) SSR 환경에선 서버에서 쿠키/설정으로 초깃값 렌더.
 
 **SSR 예시(개념):**
+
+{% raw %}
 ```html
 <html data-theme="{{cookie.theme || systemPref}}">
 ```
+{% endraw %}
 
 ---
 

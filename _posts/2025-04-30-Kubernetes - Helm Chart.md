@@ -130,6 +130,7 @@ global:                      # 서브차트까지 전파되는 글로벌 키
 
 ### Deployment 템플릿 예시
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -165,9 +166,11 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 ```
+{% endraw %}
 
 ### Service 템플릿(조건부 생성)
 
+{% raw %}
 ```yaml
 {{- if .Values.service }}
 apiVersion: v1
@@ -186,9 +189,11 @@ spec:
       targetPort: 80
 {{- end }}
 ```
+{% endraw %}
 
 ### Ingress 템플릿(활성화 시에만)
 
+{% raw %}
 ```yaml
 {{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
@@ -220,11 +225,13 @@ spec:
   {{- end }}
 {{- end }}
 ```
+{% endraw %}
 
 ---
 
 ## _helpers.tpl — 네이밍/라벨 표준화
 
+{% raw %}
 ```tpl
 {{- define "mychart.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
@@ -249,6 +256,7 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 ```
+{% endraw %}
 
 - **표준 라벨**(app.kubernetes.io/*)을 통일하면 추적성과 선택자가 쉬워진다.
 
@@ -293,6 +301,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 `templates/NOTES.txt`는 사용자에게 **접속 방법/다음 단계**를 알려준다.
 
+{% raw %}
 ```tpl
 {{- if .Values.ingress.enabled -}}
 1. Access:
@@ -303,6 +312,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
    curl http://localhost:8080
 {{- end -}}
 ```
+{% endraw %}
 
 ---
 
@@ -310,6 +320,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 Job/ConfigMap 등에 **훅 애노테이션**을 달아 특정 타이밍에 실행할 수 있다.
 
+{% raw %}
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -328,6 +339,7 @@ spec:
           image: "{{ .Values.migrate.image }}"
           args: ["./migrate.sh"]
 ```
+{% endraw %}
 
 - **hook 순서/가중치**로 여러 훅의 실행 순서를 관리한다.
 - **delete-policy**로 훅 리소스 수거 정책을 정한다.
@@ -338,6 +350,7 @@ spec:
 
 `templates/tests/` 디렉터리의 Job은 `helm test RELEASE`로 실행된다.
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -352,6 +365,7 @@ spec:
       image: curlimages/curl
       args: ["-sf", "http://{{ include "mychart.fullname" . }}:{{ .Values.service.port }}/healthz"]
 ```
+{% endraw %}
 
 ---
 
@@ -394,6 +408,7 @@ global:
 
 ### `tpl` — 값 안의 템플릿도 렌더링
 
+{% raw %}
 ```yaml
 # values.yaml
 config:
@@ -404,25 +419,29 @@ data:
   message: |-
     {{ tpl .Values.config.welcome . }}
 ```
+{% endraw %}
 
 ### `lookup` — 클러스터 조회(주의)
 
+{% raw %}
 ```yaml
 {{- $cm := (lookup "v1" "ConfigMap" .Release.Namespace "shared-config") -}}
 {{- if $cm }}
 dataFromCluster: {{ $cm.data | toYaml | nindent 2 }}
 {{- end }}
 ```
+{% endraw %}
 
 - 재현성/테스트성을 해칠 수 있어 **가급적 선언형**으로 유지하되, 마이그레이션/참조 시 신중히 사용.
 
 ### 조건부 리소스 생성
-
+{% raw %}
 ```yaml
 {{- if .Values.hpa.enabled }}
 # hpa.yaml …
 {{- end }}
 ```
+{% endraw %}
 
 ---
 
@@ -465,6 +484,7 @@ Helm 자체는 Secret 암호화를 제공하지 않는다. 일반적으로는:
 
 예: External Secrets Operator 값 연동(개요)
 
+{% raw %}
 ```yaml
 # templates/external-secret.yaml
 apiVersion: external-secrets.io/v1beta1
@@ -480,6 +500,7 @@ spec:
       remoteRef:
         key: {{ .Values.secrets.db.passwordKey }}
 ```
+{% endraw %}
 
 ---
 
@@ -537,6 +558,8 @@ resources:
 ```
 
 ### templates/deployment.yaml
+
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -562,8 +585,11 @@ spec:
             httpGet: { path: /livez,  port: 8080 }
           resources: {{- toYaml .Values.resources | nindent 12 }}
 ```
+{% endraw %}
 
 ### templates/service.yaml
+
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Service
@@ -577,8 +603,11 @@ spec:
       port: {{ .Values.service.port }}
       targetPort: 8080
 ```
+{% endraw %}
 
 ### templates/ingress.yaml
+
+{% raw %}
 ```yaml
 {{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
@@ -603,6 +632,7 @@ spec:
   {{- end }}
 {{- end }}
 ```
+{% endraw %}
 
 설치/검증:
 

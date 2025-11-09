@@ -60,6 +60,7 @@ MyApp/
 - GitHub Actions가 **클라우드에 신뢰 토큰을 교환**하여 **장기 키 없이** 로그인
 - Azure 예시: **Entra ID**에 **Federated Credentials** 생성 → 워크플로에서 `azure/login@v2`로 로그인
 
+{% raw %}
 ```yaml
 - name: Azure login via OIDC
   uses: azure/login@v2
@@ -68,6 +69,7 @@ MyApp/
     tenant-id:  ${{ secrets.AZURE_TENANT_ID }}
     subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 ```
+{% endraw %}
 
 장점: 키 없는 보안, 중앙 관리.  
 권장: 운영 계정은 **가능하면 OIDC**를 기본으로.
@@ -76,6 +78,7 @@ MyApp/
 
 ## 5) NuGet 캐시/속도 최적화 베스트 프랙티스
 
+{% raw %}
 ```yaml
 - name: Setup .NET
   uses: actions/setup-dotnet@v4
@@ -90,6 +93,7 @@ MyApp/
     restore-keys: |
       ${{ runner.os }}-nuget-
 ```
+{% endraw %}
 
 - `hashFiles('**/*.csproj')`로 의존성 변경 시 자동 무효화  
 - **checkout 깊이**: `actions/checkout@v3` with `fetch-depth: 0`은 버전/체인지로그 계산에 유용
@@ -98,6 +102,7 @@ MyApp/
 
 ## 6) CI 워크플로(확장형)
 
+{% raw %}
 ```yaml
 name: CI
 
@@ -156,6 +161,7 @@ jobs:
         name: coverage
         path: "**/TestResults/coverage.cobertura.xml"
 ```
+{% endraw %}
 
 포인트:
 - `dotnet format`으로 포맷 일관성
@@ -178,7 +184,7 @@ jobs:
     fi
 ```
 
-`dotnet publish -p:Version=${{ steps.ver.outputs.version }}`로 주입.
+{% raw %}`dotnet publish -p:Version=${{ steps.ver.outputs.version }}`{% endraw %}로 주입.
 
 ### 7.2 릴리스 노트
 ```yaml
@@ -196,6 +202,8 @@ jobs:
 ## 8) CD: Azure App Service(슬롯/승인/롤백)
 
 ### 8.1 Staging 자동 배포
+
+{% raw %}
 ```yaml
 name: CD-Staging
 
@@ -231,10 +239,12 @@ jobs:
         slot-name: 'staging'
         package: ./publish
 ```
+{% endraw %}
 
 ### 8.2 운영 수동 승인(Environments 보호 규칙)
 - GitHub → Settings → Environments → `production` → **Required reviewers** 지정
 
+{% raw %}
 ```yaml
 name: CD-Prod
 
@@ -259,6 +269,7 @@ jobs:
               --resource-group ${{ secrets.AZURE_RG }} \
               --slot staging --target-slot production
 ```
+{% endraw %}
 
 - 롤백: **역방향 슬롯 스왑** 또는 이전 릴리스 재배포
 
@@ -285,6 +296,8 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 ```
 
 ### 9.2 GH Actions: buildx + 캐시 + 푸시
+
+{% raw %}
 ```yaml
 - name: Set up QEMU
   uses: docker/setup-qemu-action@v3
@@ -309,6 +322,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
     cache-to: type=gha,mode=max
     platforms: linux/amd64,linux/arm64
 ```
+{% endraw %}
 
 - 멀티플랫폼 이미지와 GH 캐시를 활용해 **속도/호환성** 극대화
 
@@ -319,6 +333,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 - 매니페스트/Helm 차트 관리, 이미지 태그로 롤링 업데이트
 - 예: `kubectl set image deploy/myapp myapp=myuser/myapp:${{ steps.ver.outputs.version }}`
 
+{% raw %}
 ```yaml
 - name: Set Kube context
   uses: azure/k8s-set-context@v3
@@ -329,6 +344,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 - name: Rolling update
   run: kubectl set image deployment/myapp myapp=myuser/myapp:${{ steps.ver.outputs.version }}
 ```
+{% endraw %}
 
 - 카나리/블루그린: **서비스 셀렉터** 또는 **Ingress 라우팅**으로 점진 전환
 
@@ -338,6 +354,8 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 - 방법: Web Deploy(MSDeploy) / WinRM / FTP
 - 간단 FTP 예시:
+
+{% raw %}
 ```yaml
 - name: Deploy via FTP
   uses: SamKirkland/FTP-Deploy-Action@v4
@@ -348,6 +366,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
     local-dir: ./publish
     server-dir: /site/wwwroot
 ```
+{% endraw %}
 
 ---
 
@@ -356,6 +375,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 - 스테이징/운영 배포 전후에 **마이그레이션 명령** 실행
 - 무중단을 위해 **백필드/점진 스키마** 전략 적용
 
+{% raw %}
 ```yaml
 - name: EF Core migration (App Service Exec)
   uses: azure/cli@v2
@@ -365,6 +385,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
                     --resource-group ${{ secrets.AZURE_RG }} \
                     --command "dotnet MyApp.dll --migrate"
 ```
+{% endraw %}
 
 또는 별도 **DB 마이그레이션 작업 컨테이너**를 만들어 배포 훅에서 실행.
 
@@ -375,11 +396,13 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 - `appsettings.{ENV}.json` + **환경 변수** 오버라이드
 - GH Actions의 **Environment Variables / Secrets**로 안전하게 주입
 
+{% raw %}
 ```yaml
 env:
   ASPNETCORE_ENVIRONMENT: "Production"
   ConnectionStrings__DefaultConnection: ${{ secrets.PROD_DB }}
 ```
+{% endraw %}
 
 ---
 
@@ -521,6 +544,7 @@ jobs:
 
 ## 부록 A) 단일 파일 예시(ci-cd.yml, Azure Web App 배포)
 
+{% raw %}
 ```yaml
 name: ASP.NET Core CI/CD
 
@@ -561,11 +585,13 @@ jobs:
         slot-name: 'staging'
         package: ./publish
 ```
+{% endraw %}
 
 ---
 
 ## 부록 B) Docker 빌드 후 쿠버네티스 롤링 업데이트 예시
 
+{% raw %}
 ```yaml
 name: CI-Docker-K8s
 
@@ -612,3 +638,4 @@ jobs:
         kubectl set image deployment/myapp myapp=myuser/myapp:${{ needs.build-push.outputs.version }}
         kubectl rollout status deployment/myapp --timeout=120s
 ```
+{% endraw %}
