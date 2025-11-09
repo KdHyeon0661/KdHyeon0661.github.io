@@ -6,8 +6,7 @@ category: Kubernetes
 ---
 # Kind(Kubernetes in Docker)로 클러스터 구성하기
 
-## 들어가며 — 기존 글의 핵심을 뽑아 확장하기
-기존 글은 **설치 → 기본 생성 → 이미지 로딩 → 삭제 → Minikube 비교**의 뼈대를 잘 담고 있었다. 여기서는 다음을 **더 깊이** 보완한다.
+## 들어가며
 
 - **커스텀 클러스터 설정**: `extraPortMappings`, `extraMounts`, `kubeadmConfigPatches`, `nodeImage` 선택
 - **Ingress(ingress-nginx) 외부 접근**과 **MetalLB + LoadBalancer** 실습

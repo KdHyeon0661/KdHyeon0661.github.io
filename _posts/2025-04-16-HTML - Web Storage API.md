@@ -4,13 +4,7 @@ title: HTML - Web Storage API
 date: 2025-04-09 19:20:23 +0900
 category: HTML
 ---
-# Web Storage API 완전 정리 (localStorage vs sessionStorage) — 실무 패턴, 보안, 성능까지
-
-**Web Storage API**는 브라우저에 **키–값 문자열**을 저장하는 간단하고 빠른 저장소입니다.  
-쿠키보다 용량이 크고(≈5–10MB), 요청마다 서버로 전송되지 않으며, 프론트엔드 상태/설정/캐시를 손쉽게 유지할 수 있습니다.  
-이 글은 당신이 정리한 초안을 **확장**하여 API, 호환성, 보안 주의점, 동기화, 만료(TTL), 네임스페이스, 마이그레이션, 테스트, 에러처리까지 실무에서 꼭 쓰는 패턴을 예제와 함께 모았습니다.
-
----
+# Web Storage API 완전 정리 (localStorage vs sessionStorage)
 
 ## 0. 큰 그림: 언제 무엇을 쓰나?
 

@@ -7,12 +7,6 @@ category: Kubernetes
 # 리소스 부족 및 스케줄링 실패 대응 가이드 (Kubernetes)
 
 Kubernetes에서 `Pending`, `FailedScheduling`, `Insufficient CPU/Memory` 메시지는 **스케줄러가 배치할 수 있는 노드가 없을 때** 나타납니다.  
-이 글은 다음 순서로 문제를 닫습니다.
-
-- **증상 정리**와 빠른 진단 루틴  
-- **원인 유형별** 심층 분석 (리소스/제약/정책/스토리지)  
-- **즉시 조치**(튜닝·라벨·테인트/톨러레이션·Quota) → **중장기 전략**(Autoscaler·우선순위·SLO)  
-- 실전 **케이스 스터디**와 **운영 체크리스트**
 
 ---
 

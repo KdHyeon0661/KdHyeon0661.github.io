@@ -4,11 +4,7 @@ title: Kubernetes - Rolling Update & Rollback
 date: 2025-05-28 21:20:23 +0900
 category: Kubernetes
 ---
-# Kubernetes 배포 전략: Rolling Update & Rollback 완전 정복
-
-기본 **RollingUpdate**는 “점진 교체로 무중단 배포”를 실현합니다. 하지만 실전에서는 **트래픽 절반만 새 버전으로** 보내는 Canary, **두 색(환경)을 전환**하는 Blue/Green, **자동 롤백·메트릭 게이트** 같은 고급 패턴이 필요합니다. 이 글은 기존 요약을 바탕으로 **운영 심화**까지 확장합니다.
-
----
+# Kubernetes 배포 전략: Rolling Update & Rollback
 
 ## 1) Rolling Update — 원리와 수학적 직관
 

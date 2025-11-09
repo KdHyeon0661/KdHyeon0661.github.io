@@ -4,9 +4,7 @@ title: CSS - 아이콘과 Font Awesome
 date: 2025-04-06 19:20:23 +0900
 category: CSS
 ---
-# CSS 아이콘과 Font Awesome 활용법 — 실전 패턴, 접근성, 성능까지
-
-당신이 준 초안을 **확장**해 다음을 보강했습니다.
+# CSS 아이콘과 Font Awesome 활용법
 
 - 순수 CSS 아이콘을 위한 **의미론/레이어링/애니메이션** 패턴
 - **currentColor**, `mask-image`, 인라인 **SVG**와의 비교 및 선택 가이드

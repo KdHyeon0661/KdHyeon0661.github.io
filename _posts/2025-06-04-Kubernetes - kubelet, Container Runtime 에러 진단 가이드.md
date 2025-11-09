@@ -7,8 +7,6 @@ category: Kubernetes
 # kubelet, Container Runtime 에러 진단 가이드
 
 `kubectl describe`/`kubectl logs`만으로 원인이 안 보일 때, **노드의 kubelet·런타임 계층**을 확인해야 합니다.  
-아래는 **역할 → 로그/명령어 → 대표 에러 패턴 → 원인/해결**을 순서대로 정리한 **현장용 플레이북**입니다.  
-모든 명령은 바로 복사해 실행 가능하도록 작성했습니다.
 
 ---
 

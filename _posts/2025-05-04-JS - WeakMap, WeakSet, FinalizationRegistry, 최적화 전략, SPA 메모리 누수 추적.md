@@ -6,10 +6,6 @@ category: JavaScript
 ---
 # 고급 메모리 관리: WeakMap / WeakSet, FinalizationRegistry, 최적화 전략, SPA 메모리 누수 추적
 
-**요약**: 자동 GC가 있어도 **참조를 잡고 있으면** 메모리는 해제되지 않습니다. 이 글은 현대 JS에서 제공하는 **약참조 컨테이너(WeakMap/WeakSet/WeakRef)**, **수거 시 후처리(FinalizationRegistry)**를 심층 설명하고, **SPA(단일 페이지 앱)**에서의 누수 패턴, **DevTools 기반 추적 절차**, **안전한 클린업 코드 레시피**까지 실무 중심으로 정리합니다.
-
----
-
 ## 1. 개요
 
 ### 1.1 왜 “약한 참조(weak reference)”가 필요한가

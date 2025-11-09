@@ -4,11 +4,7 @@ title: Kubernetes - Volume, PersistentVolume, PersistentVolumeClaim(PVC)
 date: 2025-04-11 19:20:23 +0900
 category: Kubernetes
 ---
-# Volume, PersistentVolume, PersistentVolumeClaim(PVC) 완전 정복
-
-이 문서는 기존 초안의 논리 흐름을 유지하면서, 실무에서 바로 적용 가능한 예제와 운영 지식을 대폭 확장하였다. 특히 동적 프로비저닝, 접근 모드/리클레임 정책의 선택 기준, 퍼미션/보안 컨텍스트, StatefulSet과 스냅샷, 볼륨 확장, 트러블슈팅 루틴을 체계적으로 정리한다.
-
----
+# Volume, PersistentVolume, PersistentVolumeClaim(PVC)
 
 ## 1. 왜 Volume이 필요한가
 

@@ -4,12 +4,7 @@ title: JavaScript - Serverless와 JavaScript
 date: 2025-06-05 20:20:23 +0900
 category: JavaScript
 ---
-# Serverless와 JavaScript: 서버 없이도 백엔드를 구축하는 방법 (확장판)
-
-본 글은 기존 초안을 바탕으로 **실전 배포 흐름, 보안·성능·비용·테스트 전략**까지 한 번에 정리한 확장판이다.  
-프론트엔드 개발자가 **“코드만으로 백엔드”**를 만들고 유지보수하는 데 필요한 모든 것을 JS 중심으로 담았다.
-
----
+# Serverless와 JavaScript: 서버 없이도 백엔드를 구축하는 방법
 
 ## 0. 핵심 요약
 

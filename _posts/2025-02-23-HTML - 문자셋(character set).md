@@ -4,14 +4,7 @@ title: HTML - 문자셋(character set)
 date: 2025-02-23 19:20:23 +0900
 category: HTML
 ---
-# 문자셋(Character Set)이란? — 웹 개발자를 위한 실전 확장 가이드
-
-당신이 제공한 초안의 **핵심(개념/역사/UTF-8 권장/HTML 메타/서버-DB 일관성/검증 포인트)**을 유지하면서,  
-실무에서 자주 마주치는 **엣지 케이스(이모지/조합문자/Normalization/BOM/혼합 인코딩)**와  
-**환경별 설정 방법(브라우저/HTTP/Node.js/Flask/Django/PHP/Nginx/Apache/MySQL/PostgreSQL/이메일/CSV/API)**,  
-**디버깅/마이그레이션 체크리스트**까지 빠짐없이 보강했습니다.
-
----
+# 문자셋(Character Set)이란?
 
 ## 1) 개념 정리 — 문자셋·인코딩·유니코드·코드포인트
 

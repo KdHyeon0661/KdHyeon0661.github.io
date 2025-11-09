@@ -6,10 +6,6 @@ category: Kubernetes
 ---
 # Helm이란? 왜 사용하는가?
 
-Kubernetes는 유연하지만 실제 배포에는 여러 리소스(Deployment, Service, ConfigMap, Secret, Ingress, PVC 등)를 다양한 환경(dev/stage/prod)에 맞춰 관리해야 한다. 수십 개의 YAML을 복사/붙여넣기하며 값만 바꾸는 접근은 **중복·실수·검증 난이도**를 키운다. Helm은 이를 **템플릿(templates) + 값(values)** 구조로 표준화해, **한 번의 명령**으로 설치/업그레이드/롤백 가능한 **패키지 매니저** 역할을 한다.
-
----
-
 ## 개념 요약
 
 - **Chart**: Kubernetes 애플리케이션 패키지(메타데이터 + 템플릿 + 기본값).

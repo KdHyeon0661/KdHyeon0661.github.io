@@ -6,9 +6,6 @@ category: Docker
 ---
 # Kubernetes에서의 볼륨 이해하기: PV와 PVC
 
-이 문서는 기존 초안을 바탕으로 개념을 정리하고, 실제 운영에서 바로 사용할 수 있는 예제와 체크리스트, 트러블슈팅을 포함하여 확장하였다.  
-목표는 다음과 같다.
-
 - Pod의 일시성 한계를 이해하고, 영속 스토리지를 안전하게 다루기
 - PersistentVolume(PV) / PersistentVolumeClaim(PVC)의 동작과 바인딩 모델 숙지
 - StorageClass, 접근 모드, 리클레임 정책, 확장과 권한, 보안 컨텍스트 설계

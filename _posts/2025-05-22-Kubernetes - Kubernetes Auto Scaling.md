@@ -4,12 +4,7 @@ title: Kubernetes - Kubernetes Auto Scaling
 date: 2025-05-22 22:20:23 +0900
 category: Kubernetes
 ---
-# Kubernetes Auto Scaling 완벽 가이드
-
-이 글은 기존 요약본의 핵심을 잃지 않되, **깊이 있는 운영 디테일**(알고리즘, 정책, 튜닝 포인트, 관측/테스트, 장애대응)을 추가한 **실전형 레퍼런스**입니다.  
-대상: 실무 운영자/개발자/플랫폼 엔지니어.
-
----
+# Kubernetes Auto Scaling
 
 ## 0) 큰 그림: 레이어별 오토스케일
 

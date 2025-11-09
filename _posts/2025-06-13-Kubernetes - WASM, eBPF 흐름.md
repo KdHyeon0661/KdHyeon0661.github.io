@@ -9,8 +9,6 @@ category: Kubernetes
 Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만, **콜드스타트**, **관측 사각지대**, **L7 정책 한계**, **플랫폼 이식성** 같은 과제가 남아 있습니다.  
 여기에 **WASM(WebAssembly)** 과 **eBPF(Extended BPF)** 가 더해지면, **실행(Execution)** 과 **관측/제어(Observability/Control)** 를 각각 업그레이드할 수 있습니다.
 
-이 글은 기존 초안을 **핵심을 추리고, 실전 예제와 운영 패턴을 보강**해 확장한 버전입니다.
-
 ---
 
 ## 1) 기존 K8s의 구조적 한계와 개선 목표

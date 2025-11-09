@@ -4,15 +4,7 @@ title: CSS - position 속성
 date: 2025-04-01 20:20:23 +0900
 category: CSS
 ---
-# position 속성 (static, relative, absolute, fixed, sticky) — 개념·컨테이닝 블록·스택킹 컨텍스트·엣지케이스·실전 레시피
-
-아래 글은 당신이 준 초안(다섯 값의 정의, 특징, 전체 예제, 비교표, 팁)을 **핵심 유지**하면서,  
-실전에서 자주 부딪히는 **containing block(기준 상자)**, **stacking context(z-index·페인팅 순서)**,  
-**offset 논리 속성(`inset`, `inset-inline/block`)**, **transform/fixed의 기준 전환**, **sticky의 제약 조건**,  
-**퍼센트 오프셋 기준**, **스크롤·안전영역(safe area)**, **테이블/리플레이스드 요소**까지 **확장**한 가이드입니다.  
-모든 코드는 ``` 로 감싸고, 필요 시 수식은 $$ 로 표기합니다.
-
----
+# position 속성 (static, relative, absolute, fixed, sticky)
 
 ## 0) 큰 그림 요약
 

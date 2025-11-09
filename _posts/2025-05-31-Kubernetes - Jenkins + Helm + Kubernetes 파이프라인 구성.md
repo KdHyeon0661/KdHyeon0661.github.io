@@ -6,7 +6,6 @@ category: Kubernetes
 ---
 # Jenkins + Helm + Kubernetes 파이프라인 구성하기
 
-기존 초안(빌드→푸시→`helm upgrade`)을 **엔터프라이즈 운영 수준**으로 확장합니다.  
 핵심은 다음 네 축입니다.
 
 1. **재현 가능한 이미지**: 태깅 전략·캐시 최적화·멀티스테이지 Dockerfile

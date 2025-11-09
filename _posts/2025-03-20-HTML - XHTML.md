@@ -4,11 +4,7 @@ title: HTML - XHTML
 date: 2025-03-20 20:20:23 +0900
 category: HTML
 ---
-# 📘 XHTML 완전 정복 — HTML보다 엄격한 문법의 마크업 언어
-
-초안의 틀(정의→문서 구조→규칙→HTML과 차이→서버 설정→주의점)을 유지하면서, **MIME/인코딩 규칙**, **엔티티 처리 차이**, **빈 요소와 불린 속성(serialization)**, **XML 네임스페이스 & SVG/MathML 포함**, **스크립트/스타일 CDATA**, **오류 처리 모델(브라우저 vs XML 파서)**, **Polyglot/XHTML5 전략**, **서버 설정 예시(Apache/Nginx)**까지 실무에서 헷갈리기 쉬운 부분을 확장·보완했다.
-
----
+# XHTML 완전 정복
 
 ## 1) XHTML이란?
 

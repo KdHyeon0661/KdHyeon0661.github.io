@@ -4,11 +4,7 @@ title: HTML - iframe
 date: 2025-03-07 19:20:23 +0900
 category: HTML
 ---
-# HTML `<iframe>` 완벽 가이드 — 사용법·성능·보안·접근성·통신까지
-
-초안의 구조(정의 → 기본 속성 → 활용 → 보안 리스크/대응)를 유지하면서, **현대 브라우저 기능(지연 로딩, Permissions Policy, CSP, postMessage, 반응형/리사이징, `srcdoc`, 샌드박스 토큰, 접근성, SEO, COOP/COEP 개요)**까지 확장했습니다. 모든 코드는 즉시 붙여 넣어 실험할 수 있도록 최소 의존으로 구성했습니다.
-
----
+# HTML `<iframe>`
 
 ## 1) `<iframe>` 기본 구조와 핵심 속성
 

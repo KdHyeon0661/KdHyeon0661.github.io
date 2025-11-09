@@ -4,11 +4,7 @@ title: HTML - input
 date: 2025-03-07 22:20:23 +0900
 category: HTML
 ---
-# HTML `<input>` 태그 완벽 가이드 — 타입·속성·유효성·접근성·보안·모바일 UX까지
-
-기존 초안의 흐름(정의 → 타입 → 속성 → 접근성/보안 → 실전 예제)을 유지하면서, **HTML5/현대 브라우저 중심의 고급 기능**(Constraint Validation API, 자동완성 토큰, `inputmode`/`enterkeyhint`, `datalist`, `form*` 파생 속성, 파일 업로드 보안, 모바일/국제화 UX)을 대폭 확장했습니다. 모든 코드는 즉시 붙여넣어 실험할 수 있도록 구성했습니다.
-
----
+# HTML `<input>` 태그
 
 ## 1) `<input>`이란?
 

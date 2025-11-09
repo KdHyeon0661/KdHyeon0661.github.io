@@ -6,9 +6,6 @@ category: Kubernetes
 ---
 # Kubernetes 핵심 개념: Namespace, Label, Selector
 
-쿠버네티스가 커질수록 **논리적 분리**(Namespace)·**의미 부여**(Label)·**정확한 선택**(Selector)이 운영 품질을 결정한다.  
-기존 초안의 골격(정의·예시)을 유지하면서, 아래 내용을 **확장·정교화**했다:
-
 - 팀/환경별 **네임스페이스 전략** + ResourceQuota/LimitRange/DNS 범위
 - **표준 라벨 체계**(app.kubernetes.io/*)와 라이프사이클·토폴로지 라벨
 - **Equality/Set 기반 Selector**, 컨트롤러별 불변성/가변성

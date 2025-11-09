@@ -4,12 +4,7 @@ title: Kubernetes - Kubernetes 리소스 제한
 date: 2025-05-28 19:20:23 +0900
 category: Kubernetes
 ---
-# Kubernetes 리소스 제한 (CPU, Memory Requests/Limits) 완전 정복
-
-앞선 요약 글을 **운영 레벨 실전 가이드**로 확장했습니다.  
-**스케줄링·성능·안정성**을 모두 잡으려면 `requests/limits`를 올바로 설정해야 합니다.
-
----
+# Kubernetes 리소스 제한 (CPU, Memory Requests/Limits)
 
 ## 0) 핵심 개념 리마인드
 

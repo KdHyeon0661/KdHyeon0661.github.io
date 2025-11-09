@@ -6,11 +6,6 @@ category: Kubernetes
 ---
 # eBPF 기반 성능 최적화
 
-eBPF(extended Berkeley Packet Filter)는 **커널을 재빌드하거나 재부팅하지 않고** 커널 경로에 **안전하게 코드 조각을 삽입**해 동작을 확장·가속하는 기술이다.  
-이 글은 개념 요약에 그치지 않고, **도구 선택→실습→튜닝→운영** 흐름으로 **현업에서 바로 쓰는 레시피**를 정리한다.
-
----
-
 ## 0) 요약: 언제 eBPF를 쓰면 이득인가?
 
 - **네트워크**: iptables 규칙 폭증/Conntrack 병목 → eBPF로 L3/L4 처리(XDP/tc), **Cilium**로 CNI 가속

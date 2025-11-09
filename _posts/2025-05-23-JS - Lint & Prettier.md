@@ -4,12 +4,7 @@ title: JavaScript - Lint / Prettier
 date: 2025-05-23 21:20:23 +0900
 category: JavaScript
 ---
-# Lint / Prettier 사용법 정리 — ESLint v8/9(Flat Config), Prettier, React/TypeScript/Next.js, Git Hook·CI 통합까지
-
-현대 JavaScript/TypeScript 프로젝트에서 **코드 품질(버그 탐지)과 스타일 일관성**은 생산성과 협업 효율을 좌우합니다.  
-이 글은 **ESLint(린팅)**과 **Prettier(포맷팅)**을 함께 쓰는 표준 워크플로를, **Flat Config(신형)**/`.eslintrc`(구형) 두 방식과 **React/TypeScript/Next.js/Node 라이브러리**까지 아우르는 **실전 예제 중심**으로 정리했습니다.
-
----
+# Lint / Prettier 사용법 정리
 
 ## 1) 개념 정리 — Lint vs Prettier 역할 구분
 
@@ -473,5 +468,3 @@ export default [
 - 신형 **Flat Config**는 구성 파일을 **표준 JS로 명시**하고, **오버라이드와 모듈화**가 간결합니다.
 - **Husky + lint-staged + CI**로 “변경분만 빠르게 체크 → PR에서 자동 검증” 흐름을 만들면 **코드리뷰가 본질(설계/로직)에 집중**됩니다.
 - 팀/프로젝트에 맞는 **규칙 최소 집합**으로 시작해, 점진적으로 강화하세요.
-
-이 템플릿을 바로 복사해 프로젝트에 적용하고, 필요한 곳(React/TS/Next/Node)에 맞춰 `files` 블록과 규칙만 추가·조정하면 됩니다.
