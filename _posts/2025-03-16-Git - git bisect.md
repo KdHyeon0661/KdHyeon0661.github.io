@@ -332,7 +332,7 @@ jobs:
           git bisect run ./test-script.sh || true
           git bisect reset
 ```
-{% raw %}
+{% endraw %}
 
 - CI 러너에서 **중간 커밋마다 깨끗한 환경**이 제공되므로 bisect 자동화에 적합하다.
 - 다만 실행 시간이 길어질 수 있으니 **경로 제한/테스트 축소**를 병행하자.

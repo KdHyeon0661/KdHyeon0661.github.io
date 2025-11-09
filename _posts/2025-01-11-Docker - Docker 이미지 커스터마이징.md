@@ -524,6 +524,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ## 부록 A) 빠른 치트시트
 
+{% raw %}
 ```bash
 # 빌드/실행
 docker build -t app:1 .
@@ -547,6 +548,7 @@ docker run --rm nginx@sha256:...
 docker save -o app.tar app:1
 docker load -i app.tar
 ```
+{% endraw %}
 
 ## 부록 B) Python requirements 잠금/최적화 팁
 
