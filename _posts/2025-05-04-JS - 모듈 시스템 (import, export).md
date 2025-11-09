@@ -4,218 +4,491 @@ title: JavaScript - 모듈 시스템 (import, export)
 date: 2025-05-04 20:20:23 +0900
 category: JavaScript
 ---
-# 자바스크립트 모듈 시스템 (import, export) 완전 정복
+# 자바스크립트 모듈 시스템 (import / export)
 
-자바스크립트는 처음에는 모듈 개념이 없었지만, 규모가 커진 애플리케이션을 위해 다양한 **모듈 시스템**이 등장했고,  
-최근에는 표준인 **ES Modules (ESM)**이 공식적으로 도입되었습니다.
+## 1. 모듈 개념과 기본 규칙
 
-이 글에서는 자바스크립트의 모듈 개념과 `import`, `export` 사용법을 포함한 **ESM 중심 모듈 시스템**을 정리합니다.
+### 1.1 모듈이란?
+- **독립 파일 단위**의 코드 블록. 파일마다 **자체 스코프**를 가지며 전역 오염을 막습니다.
+- 모듈 그래프(Module Graph): `import`가 만든 **유향 그래프**로, 엔진은 이를 정적으로 분석합니다.
 
----
-
-## ✅ 1. 모듈이란?
-
-> 모듈은 독립적인 기능 단위의 **자바스크립트 파일**입니다.
-
-모듈을 사용하면 코드를 다음처럼 나눌 수 있습니다:
-
-- 파일 간 **기능 분리 및 재사용성 향상**
-- **글로벌 변수 오염 방지**
-- **코드 유지보수 용이**
+### 1.2 핵심 특징
+- **정적 import/export**: 구문이 정적이라 빌드/로더가 **의존성 분석·트리 셰이킹** 가능.
+- **strict mode 자동**: 각 모듈 파일은 ‘use strict’ 상태.
+- **라이브 바인딩(live binding)**: `export` 값은 참조로 연결되어 **값 변경이 반영**됩니다(재할당은 불가).
+- **단 한 번 평가**: 동일 URL(해시/쿼리 포함) 모듈은 한 번만 실행되고 **캐시 공유**.
 
 ---
 
-## ✅ 2. ES6 모듈 시스템 (ESM: ECMAScript Modules)
+## 2. export — 내보내기 문법
 
-### 특징
-- 파일 단위로 작동
-- `strict mode` 자동 적용
-- **정적 구조** → 빌드 타임에 `import`/`export` 파악 가능
-
----
-
-## ✅ 3. export 문법
-
-### ➤ 1) Named Export (여러 개 가능)
-
+### 2.1 Named Export (여러 개 가능)
 ```js
 // math.js
-export const PI = 3.14159;
-export function add(a, b) {
-  return a + b;
-}
+export const PI = 3.1415926535;
+export function add(a, b) { return a + b; }
+const hidden = 42;
+export { hidden as SECRET };
 ```
 
-- 여러 개를 내보낼 수 있음
-- 이름 그대로 가져와야 함
-
-### ➤ 2) Default Export (파일당 하나)
-
+### 2.2 Default Export (파일당 1개)
 ```js
 // logger.js
-export default function log(message) {
-  console.log("LOG:", message);
+export default function log(msg) { console.log(`[LOG] ${msg}`); }
+```
+- 파일당 **최대 1개**. 가져올 때 **이름은 자유**.
+
+### 2.3 재수출(Re-export)
+```js
+// index.js
+export * from './math.js';                 // math의 내보내기 모두 재수출(기본값 제외)
+export { add as sum } from './math.js';    // 선택적 재수출(이름 변경)
+export { default as log } from './logger.js';
+```
+
+### 2.4 선언과 동시에 export vs 묶어서 export
+```js
+// 동시
+export const E = 2.718;
+// 묶어서
+const TAU = Math.PI * 2;
+function circle(r){ return TAU * r; }
+export { TAU, circle };
+```
+
+---
+
+## 3. import — 가져오기 문법
+
+### 3.1 Named Import
+```js
+import { PI, add } from './math.js';
+import { SECRET as HIDDEN } from './math.js';
+```
+
+### 3.2 Default Import
+```js
+import log from './logger.js';
+log('hello');
+```
+
+### 3.3 네임스페이스 Import
+```js
+import * as math from './math.js';
+console.log(math.PI, math.add(2,3));
+```
+
+### 3.4 혼합 Import
+```js
+import log, { PI, add as sum } from './pkg/index.js';
+```
+
+### 3.5 주의: 정적 구조
+- `import`/`export`는 **문서 최상위(top level)** 에서만 사용.
+- 조건부/동적 경로는 **동적 import**를 사용(아래 §7).
+
+---
+
+## 4. 라이브 바인딩과 재할당 규칙
+
+### 4.1 라이브 바인딩 동작
+```js
+// counter.js
+export let count = 0;
+export function inc(){ count += 1; }
+
+// main.js
+import { count, inc } from './counter.js';
+console.log(count); // 0
+inc();
+console.log(count); // 1  ← 라이브 바인딩 반영
+```
+
+### 4.2 재할당 금지(읽기 전용 바인딩)
+```js
+import { count } from './counter.js';
+// count = 10;  // TypeError: read-only binding
+```
+- **값 변경은 export 모듈 내부**에서만 수행하고, 가져오는 쪽은 **참조만** 보유.
+
+---
+
+## 5. 브라우저에서의 ESM
+
+### 5.1 기본 사용
+```html
+<!-- index.html -->
+<script type="module" src="/main.js"></script>
+```
+- 모듈 스크립트는 **defer처럼 동작**(HTML 파싱 후 실행).
+- **CORS 규칙** 준수, 같은 출처 또는 허용된 Origin만 로드.
+- **확장자/정확한 URL 필요**: `./utils.js` (생략 불가).
+
+### 5.2 모듈 스코프의 this / import.meta
+```js
+console.log(this);          // undefined (strict)
+console.log(import.meta.url); // 현재 모듈 URL(절대경로)
+```
+
+### 5.3 캐시/단일 평가와 싱글톤 패턴
+```js
+// store.js
+let id = 0;
+export function nextId(){ return ++id; }
+
+// a.js / b.js 각각에서 nextId() 호출 → 같은 카운터 공유(모듈은 한 번만 평가)
+```
+
+### 5.4 Import Maps (경로 별칭)
+```html
+<script type="importmap">
+{
+  "imports": {
+    "lib/": "/static/lib/",
+    "lodash": "https://cdn.example.com/lodash-es.js"
+  }
+}
+</script>
+<script type="module">
+  import { debounce } from 'lodash';
+  import { foo } from 'lib/foo.js';
+</script>
+```
+- **정식 표준**. 브라우저가 **경로 별칭/버전 고정**을 이해.
+
+### 5.5 JSON/CSS 등 Import(실험/환경 별)
+- 일부 환경/번들러는 `import json from './data.json' assert { type: 'json' }` 를 지원.
+- 브라우저 네이티브 지원 상황은 환경에 따라 다르므로 배포 타겟을 확인.
+
+---
+
+## 6. Node.js에서의 모듈
+
+### 6.1 두 체계 공존
+| 체계 | 확장자 | 활성화 방법 | 불러오기 |
+|---|---|---|---|
+| **CommonJS** | `.cjs` / (기본 `.js`) | 기본(또는 `"type":"commonjs"`) | `require`, `module.exports` |
+| **ESM** | `.mjs` / `.js` | `"type":"module"` | `import`, `export` |
+
+#### 6.1.1 package.json로 ESM 활성화
+```json
+{
+  "type": "module"
+}
+```
+- 이제 `.js`도 ESM로 파싱.
+
+### 6.2 Node ESM 예시
+```js
+// math.js (ESM)
+export const add = (a,b)=>a+b;
+
+// main.js (ESM)
+import { add } from './math.js';
+console.log(add(1,2));
+```
+
+### 6.3 CommonJS ↔ ESM 상호운용
+
+#### 6.3.1 ESM에서 CommonJS 불러오기
+```js
+// ESM 파일
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const cjs = require('./legacy.cjs');
+```
+
+#### 6.3.2 CommonJS에서 ESM 불러오기
+```js
+// CJS 파일
+(async () => {
+  const { add } = await import('./math.js');
+  console.log(add(1,2));
+})();
+```
+
+### 6.4 패키지의 내보내기 제어 (exports 필드)
+```json
+{
+  "name": "pkg",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  }
+}
+```
+- Node는 **조건부 내보내기**로 **ESM/CJS 소비자**를 구분해 적절한 파일을 제공합니다.
+
+---
+
+## 7. 동적 import와 코드 스플리팅
+
+### 7.1 동적 import 기본
+```js
+button.addEventListener('click', async () => {
+  const { track } = await import('./analytics.js');
+  track('clicked');
+});
+```
+- **Promise** 반환, 런타임 조건에 따라 모듈을 로드.
+- 번들러는 이를 **코드 스플리팅** 포인트로 사용.
+
+### 7.2 매개변수화 경로(안전 패턴)
+```js
+const pages = { home: './pages/home.js', about: './pages/about.js' };
+const mod = await import(pages[route]);
+```
+- 완전 동적인 문자열은 정적 분석이 어려워 **화이트리스트 매핑**을 권장.
+
+---
+
+## 8. Top-Level Await(TLA)
+
+### 8.1 기본
+```js
+// data.mjs
+const res = await fetch('https://example.com/data.json');
+export const data = await res.json();
+```
+- **모듈 전체가 비동기**가 되어, 이를 import하는 상위 모듈의 평가가 **해당 await 완료까지 대기**합니다.
+
+### 8.2 주의
+- **모듈 그래프에 비동기 경로가 전파**되어 초기 로딩이 지연될 수 있음.
+- SSR/번들 환경에서 TLA 지원 여부를 확인.
+
+---
+
+## 9. 순환 의존(cyclic dependency)과 초기화 순서
+
+### 9.1 문제 사례
+```js
+// a.js
+import { b } from './b.js';
+export const a = 'A';
+console.log('in a, b =', b);
+
+// b.js
+import { a } from './a.js';
+export const b = 'B';
+console.log('in b, a =', a);
+```
+- ESM은 순환을 지원하지만 **평가 타이밍**에 따라 `undefined` 관측 가능.
+
+### 9.2 안전 패턴
+- **함수로 디퍼(지연) 참조**:
+```js
+// a.js
+import { getB } from './b.js';
+export function useB(){ return `use ${getB()}`; }
+
+// b.js
+import { useB } from './a.js';
+export function getB(){ return 'B'; }
+console.log(useB()); // 사이클이더라도 사용 시점에 값이 준비
+```
+
+---
+
+## 10. 트리 셰이킹과 사이드이펙트
+
+### 10.1 트리 셰이킹 전제
+- **정적 import/export**와 **사이드이펙트 없는 모듈**이 전제.
+- 번들러는 미사용 export를 제거하여 번들 크기를 줄입니다.
+
+### 10.2 package.json에서 힌트 제공
+```json
+{
+  "sideEffects": false
+}
+```
+- 모듈 최상위 부작용이 없음을 선언. CSS/폴리필 등 부작용 파일이 있다면 배열 예외 설정:
+```json
+{ "sideEffects": ["./polyfills.js", "*.css"] }
+```
+
+### 10.3 흔한 함정
+- 모듈 최상위에서 **전역 등록/DOM 접근/콘솔/데이터 변경**은 부작용으로 간주 → 트리 셰이킹에 방해.
+
+---
+
+## 11. 브라우저 네트워킹/보안 세부
+
+### 11.1 CORS/동일 출처
+- 모듈 로드는 **CORS 정책**을 따릅니다. CDN/서브도메인 사용 시 **CORS 헤더** 설정 필요.
+
+### 11.2 MIME/요청
+- 올바른 MIME(`text/javascript`)과 존재하는 URL, 확장자 명시가 필요.
+
+### 11.3 서브리소스 무결성(SRI, 번들 시 주로)
+```html
+<script type="module" src="/main.js" integrity="sha384-..."></script>
+```
+
+---
+
+## 12. 모듈 범용 유틸리티
+
+### 12.1 import.meta
+```js
+console.log(import.meta.url);        // 현재 모듈의 절대 URL
+// 일부 빌드도구는 import.meta.env.* 등을 주입(Vite 등)
+```
+
+### 12.2 URL 기반 리소스 로딩
+```js
+const img = new URL('./assets/pic.png', import.meta.url);
+document.querySelector('img').src = img.href;
+```
+
+---
+
+## 13. 실전 폴더 구조와 예시
+
+### 13.1 구조
+```
+src/
+  lib/
+    math.js
+    logger.js
+  features/
+    report/
+      index.js
+      view.js
+  main.js
+index.html
+```
+
+### 13.2 코드
+```js
+// src/lib/math.js
+export const sum = (a,b)=>a+b;
+export const mean = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+
+// src/lib/logger.js
+export default function log(...args){ console.log('[app]', ...args); }
+
+// src/features/report/index.js
+import log from '../../lib/logger.js';
+import { mean } from '../../lib/math.js';
+export function report(title, numbers){
+  log(title, mean(numbers));
+}
+
+// src/main.js
+import { report } from './features/report/index.js';
+report('avg', [10,20,30]);
+```
+
+```html
+<!-- index.html -->
+<script type="module" src="/src/main.js"></script>
+```
+
+---
+
+## 14. 번들러(webpack/rollup/vite)와 ESM
+
+### 14.1 번들링 이유
+- **HTTP 요청 수 감소**, 레거시 브라우저 트랜스파일, **코드 스플리팅/캐싱/해시 버전**.
+
+### 14.2 코드 스플리팅(동적 import)
+```js
+// routes.js
+export async function loadPage(name){
+  const mod = await import(`./pages/${name}.js`); // 빌드 도구가 청크 분할
+  return mod.default();
 }
 ```
 
-- 한 파일에 하나만 가능
-- `import` 시 이름을 자유롭게 정할 수 있음
+### 14.3 트리 셰이킹 팁
+- Named export 사용 선호, 최상위 **부작용 최소화**, `sideEffects:false` 설정.
 
 ---
 
-## ✅ 4. import 문법
+## 15. 자주 하는 실수/FAQ
 
-### ➤ 1) Named Import
+### 15.1 “import는 최상위에서만?”
+- 정적 `import`/`export`는 **최상위에서만**. 런타임 조건은 `await import()` 사용.
 
-```js
-import { PI, add } from "./math.js";
+### 15.2 “브라우저에서 확장자 생략?”
+- 네이티브 ESM은 **확장자 필수**(`.js`, `.mjs`). Node의 해석 규칙과 다를 수 있음.
 
-console.log(PI); // 3.14159
-console.log(add(2, 3)); // 5
-```
+### 15.3 “Default vs Named 뭐가 좋나?”
+- **트리 셰이킹/자동 리팩토링** 측면에서 **Named** 선호. 라이브러리 외부 API 명확성↑.
+- 단일 주력 기능을 내보내는 파일은 **default**도 가독성 좋음.
 
-- `{}` 안에 정확한 이름으로 가져와야 함
-- 이름 바꾸기:
+### 15.4 “모듈이 두 번 실행되나요?”
+- 같은 URL은 **한 번만 평가**. 쿼리/해시가 다르면 다른 모듈로 간주.
 
-```js
-import { add as sum } from "./math.js";
-```
-
-### ➤ 2) Default Import
-
-```js
-import log from "./logger.js";
-
-log("Hello"); // LOG: Hello
-```
-
-- 이름은 자유롭게 지정 가능
-
-### ➤ 3) 전체 가져오기
-
-```js
-import * as math from "./math.js";
-
-console.log(math.PI);
-console.log(math.add(1, 2));
-```
+### 15.5 “순환 의존으로 undefined 나와요”
+- **지연 참조(함수/게터) 도입**, 초기화 순서 정리, 의존 분리/합치기.
 
 ---
 
-## ✅ 5. export 문법 요약
+## 16. 보너스: 모듈 테스트/배포 체크리스트
 
-| 구분 | 문법 |
-|------|------|
-| Named Export | `export const`, `export function` 등 |
-| Default Export | `export default` |
-| 여러 개 내보내기 | `export { a, b as c }` |
-| 한 줄에서 내보내기 | `export { PI, add };` |
-
----
-
-## ✅ 6. 모듈은 파일 단위로 동작
-
-- `.js` 파일 자체가 모듈로 취급
-- `<script type="module">` 태그로 HTML에서 사용 가능:
-
-```html
-<script type="module" src="main.js"></script>
-```
-
-- 모듈은 **지연 실행(deferred)** → DOMContentLoaded 이전에 실행되지 않음
-- **`this`는 undefined**, **strict mode** 적용됨
+- [ ] 브라우저: `<script type="module">`, 올바른 경로/확장자
+- [ ] CORS: CDN/서브도메인 자원은 **Access-Control-Allow-Origin**
+- [ ] Node: `"type":"module"` 또는 `.mjs`/`.cjs` 명시
+- [ ] 패키지: `exports`/`types`(TS) 필드 구성, `sideEffects` 선언
+- [ ] 번들: 코드 스플리팅 포인트(동적 import) 설정
+- [ ] 트리 셰이킹: 부작용 제거, Named export 선호
+- [ ] 순환 의존: 구조 점검(ESLint import/no-cycle 등)
+- [ ] 캐시 전략: 해시 파일명/Cache-Control
 
 ---
 
-## ✅ 7. 브라우저에서 모듈 사용 시 주의사항
-
-- `type="module"`이 반드시 필요
-- 같은 도메인 또는 CORS 허용된 경로여야 함
-- 파일 확장자 `.js` 반드시 명시해야 함 (`./utils.js`, ❌ `./utils`)
-- 상대 경로 또는 절대 경로만 허용 (`node_modules`처럼 생략 불가)
-
----
-
-## ✅ 8. Node.js에서 모듈 사용
-
-Node.js는 다음 두 가지 모듈 시스템을 지원합니다:
-
-| 시스템 | 확장자 | 선언 방식 | 사용 방식 |
-|--------|--------|------------|-----------|
-| CommonJS | `.js` (기본) | `require()` / `module.exports` | 전통 방식 |
-| ESM     | `.mjs` 또는 `package.json`에 `"type": "module"` 설정 | `import` / `export` | 최신 방식 |
-
-### CommonJS 예시
+## 17. 미니 퀴즈
 
 ```js
-// math.js
-module.exports = {
-  add: (a, b) => a + b
-};
+// Q1: 다음 중 문법 오류는?
+// A)
+import x from './a.js';
+if (cond) { import { y } from './b.js'; }  // ?
+// B)
+export { foo as default, bar } from './m.js';
+// C)
+import * as ns from './n.js'; ns = {};     // ?
+// D)
+export default 123;
+
+// Q2: 다음 코드의 출력?
+// counter.js
+export let c = 0;
+export function inc(){ c += 1; }
 
 // main.js
-const math = require("./math");
-console.log(math.add(1, 2));
+import { c, inc } from './counter.js';
+console.log(c);
+inc();
+console.log(c);
+
+// Q3: 브라우저 네이티브 ESM에서 허용되는가?
+// import data from './data.json';
+
+// Q4: 순환 의존 시 안전한 패턴은?
+// (보기) A) 초기화 전에 값 사용  B) 함수로 지연 참조  C) default 덮어쓰기
+
+// Q5: Node에서 ESM 파일이 CJS를 불러오려면?
+// (보기) A) require() 바로 사용  B) createRequire 사용  C) import로 가능
 ```
 
-### ES Modules (Node.js >= v12)
-
-```js
-// math.mjs
-export const add = (a, b) => a + b;
-
-// main.mjs
-import { add } from './math.mjs';
-console.log(add(1, 2));
-```
-
-> `package.json`에 `"type": "module"`을 추가하면 `.js`에서도 ESM 가능
+**힌트**  
+- Q1: A(정적 import는 최상위에서만), C(네임스페이스 바인딩은 읽기 전용).  
+- Q2: 0, 1 (라이브 바인딩).  
+- Q3: 환경에 따라 다름. 표준적으로는 `import ... assert { type:'json' }`가 필요하며 지원 여부 확인.  
+- Q4: B.  
+- Q5: B(`createRequire(import.meta.url)`).
 
 ---
 
-## ✅ 9. 동적 import (Dynamic Import)
+## 18. 결론
 
-> 실행 중에 모듈을 불러오는 문법
-
-```js
-button.addEventListener("click", async () => {
-  const module = await import("./analytics.js");
-  module.track();
-});
-```
-
-- 조건부로 모듈을 불러올 수 있음
-- 반환값은 **Promise**
-
----
-
-## ✅ 10. 모듈 번들러와 모듈 시스템
-
-실제 대규모 애플리케이션에서는 모듈 번들러를 사용하여 모듈을 하나의 파일로 결합합니다.
-
-### 대표적인 번들러
-- **Webpack**
-- **Vite**
-- **Rollup**
-- **Parcel**
-
----
-
-## ✅ 11. 마무리 요약
-
-| 개념           | 설명 |
-|----------------|------|
-| Named Export   | 여러 개 가능, 이름으로 가져옴 |
-| Default Export | 한 개만 가능, 자유 이름으로 가져옴 |
-| import         | 필요한 방식에 따라 선택 |
-| 모듈 실행 시점 | defer됨, strict mode 적용 |
-| 브라우저에서 사용 | `type="module"`, 확장자 명시 필요 |
-| Node.js        | CommonJS vs ES Modules 둘 다 지원 |
-
----
-
-## 📌 보너스: 자주 하는 실수
-
-- `import`/`export`는 **파일 최상단에서만 사용 가능**
-- 브라우저에서 `.js` 확장자 생략 시 오류 발생
-- `default`는 중괄호 없이 가져와야 함
+- **ESM은 현대 JS의 표준 모듈 시스템**으로, 정적 구조·라이브 바인딩·단일 평가·트리 셰이킹 친화성을 제공합니다.  
+- 브라우저/Node의 **활성화 규칙과 URL·확장자·CORS**를 이해하면 배포 문제를 크게 줄일 수 있습니다.  
+- **동적 import/Top-Level Await**로 유연한 로딩 전략을 취하되 초기 로딩 지연에 유의하세요.  
+- 레거시 **CommonJS와의 상호운용**은 `createRequire`/동적 import로 해결하고, 패키지는 `exports`로 양 체계를 안전하게 지원합니다.  
+- 마지막으로, **순환 참조/사이드이펙트**를 관리하고 **트리 셰이킹**을 극대화하는 설계가 번들 크기와 성능을 좌우합니다.

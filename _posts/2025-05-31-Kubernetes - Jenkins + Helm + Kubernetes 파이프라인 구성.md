@@ -6,85 +6,333 @@ category: Kubernetes
 ---
 # Jenkins + Helm + Kubernetes 파이프라인 구성하기
 
-Jenkins는 오랜 기간 신뢰받아 온 오픈소스 CI/CD 도구로, Helm과 Kubernetes를 결합하면 강력한 **엔터프라이즈 수준의 배포 자동화**를 구성할 수 있습니다.
+기존 초안(빌드→푸시→`helm upgrade`)을 **엔터프라이즈 운영 수준**으로 확장합니다.  
+핵심은 다음 네 축입니다.
 
-이 글에서는 Jenkins + Helm + K8s로 다음을 구성하는 방법을 다룹니다:
-
-- CI 빌드
-- Docker 이미지 생성 및 푸시
-- Helm 차트를 통한 K8s 배포
-- 파이프라인 자동화
+1. **재현 가능한 이미지**: 태깅 전략·캐시 최적화·멀티스테이지 Dockerfile
+2. **보안 내장**: 이미지 스캔(Trivy) + 서명(Cosign) + 정책 게이트(Conftest/OPA)  
+3. **신뢰성 배포**: Helm 차트 구조화(환경 오버레이, Helmfile 옵션), rollout 검증/자동 롤백
+4. **운영 자동화**: 멀티브랜치, 동적 환경(Preview), Slack/Teams 알림, Helm diff, 재시도
 
 ---
 
-## ✅ 아키텍처 개요
+## 0) 아키텍처 개요(확장)
 
 ```mermaid
 graph TD
-A[GitHub Push] --> B[Jenkins Pipeline Trigger]
-B --> C[Docker Build & Push to Registry]
-C --> D[Helm Upgrade/Install]
-D --> E[Kubernetes Cluster]
+A[개발자 Git push] --> B[Jenkins 멀티브랜치 파이프라인]
+B --> C[Docker Buildx 캐시 활용 빌드]
+C --> D[Trivy 이미지 스캔]
+D --> E[Cosign 서명]
+E --> F[(Container Registry)]
+F --> G[Helm upgrade --install]
+G --> H[Kubernetes Cluster]
+H --> I[롤아웃 검증(readiness/metric)]
+I --> J[알림/자동 롤백/체인지로그]
 ```
 
 ---
 
-## ✅ 사전 준비 사항
+## 1) 사전 준비 체크리스트
 
-| 항목 | 설명 |
-|------|------|
-| Jenkins 설치 | 로컬 또는 Kubernetes 내 설치 가능 |
-| Docker 실행 환경 | Docker CLI, 권한 필요 |
-| Helm 설치 | Jenkins에서 Helm 명령 사용 가능해야 함 |
-| kubeconfig 설정 | Jenkins가 K8s에 접근 가능해야 함 |
-| Git 저장소 | 앱 코드 및 Helm 차트 포함 |
-
----
-
-## ✅ Jenkins 구성 요소 요약
-
-| 구성 | 설명 |
-|------|------|
-| Jenkinsfile | 파이프라인 정의 |
-| Docker | 이미지 빌드 및 Registry 푸시 |
-| Helm | 배포 자동화 |
-| Kubernetes | Helm을 통해 배포되는 대상 |
+| 항목 | 선택/예시 | 비고 |
+|---|---|---|
+| Jenkins | LTS 또는 JCasC | JNLP/Inbound agent 또는 Kubernetes plugin 에이전트 |
+| Docker | 빌더 노드(권한 분리) | Buildx/QEMU 포함 |
+| Registry | Docker Hub/ECR/GCR/ACR | 리드 전용 토큰 분리 권장 |
+| Helm | v3 이상 | `helm diff` 플러그인 추천 |
+| Kube 접근 | kubeconfig 또는 클라우드 OIDC | 최소 권한 ServiceAccount + RBAC |
+| 시크릿 | Jenkins Credentials | Registry, kubeconfig, Cosign key, Slack webhook 등 |
+| 보안 스캔 | Trivy(권장) | 임계치에 따른 fail 게이트 |
 
 ---
 
-## ✅ Jenkinsfile 예제 (Declarative)
+## 2) Jenkins 필수 플러그인
+
+- **Docker Pipeline**: `docker.build`, `withDockerRegistry`
+- **Kubernetes CLI** 또는 `sh`로 직접 설치
+- **Credentials Binding**: 시크릿/파일 주입
+- **Git** / **Pipeline: Multibranch** / **Blue Ocean**(선택)
+- **AnsiColor**(로그 가독성), **Slack Notification**(선택)
+- **Pipeline Utility Steps**(YAML/JSON 파싱)
+
+---
+
+## 3) 레포 구조(권장)
+
+```
+.
+├─ Jenkinsfile
+├─ Dockerfile
+├─ helm-chart/
+│  ├─ Chart.yaml
+│  ├─ values.yaml
+│  ├─ values-stg.yaml
+│  ├─ values-prod.yaml
+│  └─ templates/
+│     ├─ deployment.yaml
+│     ├─ service.yaml
+│     ├─ hpa.yaml           # 선택
+│     └─ ingress.yaml       # 선택
+├─ ops/
+│  ├─ policies/             # conftest/OPA 정책
+│  ├─ scripts/              # smoke test, rollout check 등
+│  └─ k8s-rbac/             # SA/Role/RoleBinding
+└─ .jenkins/
+   └─ jenkins.yaml          # JCasC(선택)
+```
+
+---
+
+## 4) Dockerfile 최적화(멀티스테이지 + 캐시)
+
+```dockerfile
+# syntax=docker/dockerfile:1.7
+FROM --platform=$BUILDPLATFORM node:20-alpine AS deps
+WORKDIR /src
+COPY package*.json ./
+RUN npm ci
+
+FROM deps AS build
+COPY . .
+RUN npm run build
+
+FROM node:20-alpine AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=deps /src/node_modules /app/node_modules
+COPY --from=build /src/dist /app/dist
+USER node
+EXPOSE 3000
+CMD ["node", "dist/main.js"]
+```
+
+- `npm ci` → 재현성
+- 런타임 이미지 최소화, `USER`로 비루트 실행
+
+---
+
+## 5) Helm 차트 핵심 템플릿
+
+**`helm-chart/values.yaml`**
+
+```yaml
+image:
+  repository: yourname/yourapp
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: "1"
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  port: 80
+
+containerPort: 3000
+
+probes:
+  enabled: true
+  readinessPath: /healthz/ready
+  livenessPath: /healthz/live
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+```
+
+**`helm-chart/templates/deployment.yaml`**
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chart.name" . }}
+  labels:
+    app: {{ include "chart.name" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: {{ include "chart.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "chart.name" . }}
+    spec:
+      serviceAccountName: {{ include "chart.serviceAccountName" . | default "cd-bot" }}
+      containers:
+      - name: {{ include "chart.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.containerPort }}
+        resources:
+{{- toYaml .Values.resources | nindent 10 }}
+{{- if .Values.probes.enabled }}
+        startupProbe:
+          httpGet:
+            path: /healthz/startup
+            port: {{ .Values.containerPort }}
+          failureThreshold: 60
+          periodSeconds: 2
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.probes.readinessPath }}
+            port: {{ .Values.containerPort }}
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.probes.livenessPath }}
+            port: {{ .Values.containerPort }}
+          periodSeconds: 10
+{{- end }}
+```
+
+환경별 값(`values-stg.yaml`, `values-prod.yaml`)로 **리소스·레플리카·도메인**만 오버라이드.
+
+---
+
+## 6) RBAC(최소 권한) 예시
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cd-bot
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cd-deployer
+  namespace: default
+rules:
+- apiGroups: ["", "apps", "batch", "extensions"]
+  resources: ["deployments","services","configmaps","secrets","pods"]
+  verbs: ["get","list","watch","create","update","patch","delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cd-deployer-binding
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: cd-bot
+  namespace: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cd-deployer
+```
+
+---
+
+## 7) Jenkins Credentials 설계
+
+| ID | 타입 | 예시 |
+|---|---|---|
+| `docker-hub-credentials` | Username/Password | 이미지 푸시 |
+| `kubeconfig-id` | Secret file | kubeconfig 최소권한 |
+| `COSIGN_PRIVATE_KEY` | Secret text/file | Cosign 서명 키 |
+| `COSIGN_PASSWORD` | Secret text | 키 비밀번호 |
+| `SLACK_WEBHOOK_URL` | Secret text | 알림 |
+
+---
+
+## 8) Jenkinsfile(Declarative, 엔드투엔드)
 
 ```groovy
 pipeline {
   agent any
 
+  options {
+    ansiColor('xterm')
+    timestamps()
+    buildDiscarder(logRotator(numToKeepStr: '50'))
+    timeout(time: 30, unit: 'MINUTES')
+  }
+
   environment {
-    DOCKER_IMAGE = "yourname/yourapp:${env.BUILD_NUMBER}"
-    REGISTRY_CREDENTIALS = 'docker-hub-credentials'
+    REGISTRY_CREDENTIALS   = 'docker-hub-credentials'
     KUBECONFIG_CREDENTIALS = 'kubeconfig-id'
+    IMAGE_NAME             = 'yourname/yourapp'
+    GIT_SHA                = "${env.GIT_COMMIT ?: env.BUILD_NUMBER}"
+    IMAGE_TAG              = "${env.BUILD_NUMBER}" // 또는 GIT_SHA
+    COSIGN_PRIV            = credentials('COSIGN_PRIVATE_KEY')
+    COSIGN_PASS            = credentials('COSIGN_PASSWORD')
   }
 
   stages {
     stage('Checkout') {
       steps {
-        git url: 'https://github.com/your-org/your-repo.git', branch: 'main'
+        checkout scm
+        sh 'git rev-parse --short HEAD'
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Docker Build & Push') {
       steps {
         script {
-          docker.build(DOCKER_IMAGE)
+          docker.withRegistry('', REGISTRY_CREDENTIALS) {
+            sh """
+              docker buildx create --use || true
+              docker buildx build \
+                --platform linux/amd64 \
+                --tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                --tag ${IMAGE_NAME}:latest \
+                --push .
+            """
+          }
         }
       }
     }
 
-    stage('Push Image') {
+    stage('Security Scan (Trivy)') {
       steps {
-        withCredentials([usernamePassword(credentialsId: "${REGISTRY_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+        sh """
+          docker run --rm aquasec/trivy:latest \
+            image --exit-code 1 --ignore-unfixed \
+            ${IMAGE_NAME}:${IMAGE_TAG} || { echo 'Trivy failed'; exit 1; }
+        """
+      }
+    }
+
+    stage('Sign Image (Cosign)') {
+      steps {
+        sh """
+          echo "${COSIGN_PRIV}" > cosign.key
+          COSIGN_PASSWORD='${COSIGN_PASS}' cosign sign --key cosign.key ${IMAGE_NAME}:${IMAGE_TAG}
+          rm -f cosign.key
+        """
+      }
+    }
+
+    stage('Helm Diff (Preview)') {
+      steps {
+        withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIALS}", variable: 'KCFG')]) {
           sh """
-            echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-            docker push $DOCKER_IMAGE
+            export KUBECONFIG=$KCFG
+            helm repo add stable https://charts.helm.sh/stable || true
+            helm plugin install https://github.com/databus23/helm-diff || true
+            helm diff upgrade myapp ./helm-chart \
+              --namespace default --allow-unreleased \
+              --set image.repository=${IMAGE_NAME} \
+              --set image.tag=${IMAGE_TAG} || true
           """
         }
       }
@@ -92,11 +340,27 @@ pipeline {
 
     stage('Deploy with Helm') {
       steps {
-        withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIALS}", variable: 'KUBECONFIG')]) {
+        withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIALS}", variable: 'KCFG')]) {
           sh """
-            helm upgrade --install yourapp ./helm-chart \
-              --set image.repository=${DOCKER_IMAGE} \
-              --kubeconfig=$KUBECONFIG
+            export KUBECONFIG=$KCFG
+            helm upgrade --install myapp ./helm-chart \
+              --namespace default --create-namespace \
+              --set image.repository=${IMAGE_NAME} \
+              --set image.tag=${IMAGE_TAG}
+          """
+        }
+      }
+    }
+
+    stage('Rollout Verification') {
+      steps {
+        withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIALS}", variable: 'KCFG')]) {
+          sh """
+            export KUBECONFIG=$KCFG
+            kubectl rollout status deploy/myapp -n default --timeout=240s
+            # 간단 스모크 테스트
+            kubectl -n default run curltest --rm -it --image=curlimages/curl --restart=Never -- \
+              curl -fsS http://myapp.default.svc.cluster.local/healthz/ready
           """
         }
       }
@@ -104,11 +368,202 @@ pipeline {
   }
 
   post {
+    success {
+      echo '✅ Deployment Success'
+      script {
+        if (env.SLACK_WEBHOOK_URL) {
+          sh """
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"Deployment succeeded: ${IMAGE_NAME}:${IMAGE_TAG}"}' \
+            '${SLACK_WEBHOOK_URL}'
+          """
+        }
+      }
+    }
+    failure {
+      echo '❌ Deployment Failed'
+      script {
+        if (env.SLACK_WEBHOOK_URL) {
+          sh """
+            curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"Deployment failed: ${IMAGE_NAME}:${IMAGE_TAG}"}' \
+            '${SLACK_WEBHOOK_URL}'
+          """
+        }
+      }
+    }
     always {
       echo 'Pipeline Finished.'
     }
-    failure {
-      echo 'Deployment Failed.'
+  }
+}
+```
+
+포인트:
+- **Trivy 실패 시 빌드 중단** → 보안 게이트
+- **Cosign 서명** → 이미지 무결성
+- **Helm diff** → 적용 전 변화량 시각화
+- **rollout status + 스모크** → 기능적 검증
+
+---
+
+## 9) 멀티브랜치/환경 전략
+
+- `develop` → **staging**: `values-stg.yaml` 사용
+- `main` → **prod**: `values-prod.yaml` 사용
+
+Jenkinsfile에서 **브랜치 조건**:
+
+```groovy
+def valuesFile = (env.BRANCH_NAME == 'main') ? 'values-prod.yaml' : 'values-stg.yaml'
+
+sh """
+  helm upgrade --install myapp ./helm-chart \
+    -f helm-chart/${valuesFile} \
+    --set image.repository=${IMAGE_NAME} \
+    --set image.tag=${IMAGE_TAG} \
+    --namespace ${(env.BRANCH_NAME == 'main') ? 'prod' : 'stg'} --create-namespace
+"""
+```
+
+---
+
+## 10) Canary/Blue-Green(Helm 값으로 제어)
+
+단순 **Canary**: 동일 차트 두 릴리스(`myapp`, `myapp-canary`) 운영 → Service 셀렉터/Ingress 경로/가중치로 트래픽 조절.
+
+```bash
+helm upgrade --install myapp-canary ./helm-chart \
+  --set image.tag=${IMAGE_TAG} \
+  --set replicaCount=1 \
+  --set service.canary=true
+```
+
+Ingress 컨트롤러(NGINX, Istio) 기능으로 **가중치 전환**, 정상 시 **본선 릴리스** 업데이트 후 `canary` 제거.
+
+---
+
+## 11) Helmfile(선택)로 다수 차트/환경 동시 관리
+
+`helmfile.yaml`:
+
+```yaml
+releases:
+- name: myapp
+  namespace: prod
+  chart: ./helm-chart
+  values:
+  - values-prod.yaml
+  set:
+  - name: image.repository
+    value: yourname/yourapp
+  - name: image.tag
+    value: {{ requiredEnv "IMAGE_TAG" }}
+```
+
+Jenkins 단계:
+
+```groovy
+sh """
+  export IMAGE_TAG=${IMAGE_TAG}
+  helmfile apply
+"""
+```
+
+---
+
+## 12) 시크릿 관리(Sealed Secrets/SOPS 권장)
+
+- **Sealed Secrets**: 암호화된 `SealedSecret`만 Git에 저장 → 클러스터에서 복호화
+- **SOPS**: `*.enc.yaml`로 저장, 에이전트에서 복호화 후 `kubectl apply`
+
+Jenkins에서 복호화 후 적용:
+
+```bash
+sops -d k8s/secret.enc.yaml | kubectl apply -f -
+```
+
+---
+
+## 13) 성과지표(개념적 모델)
+
+배포 성공 확률 \(p_s\), 실패 확률 \(p_f = 1 - p_s\), 평균 복구시간 MTTR \(T_r\), 배포 빈도 \(f_d\)일 때,
+운영 효용(개념) \(U\):
+
+$$
+U = f_d \cdot p_s - \alpha \cdot T_r \cdot (1 - p_s)
+$$
+
+- 보안 스캔/정책/서명 → \(p_s \uparrow\)
+- 자동 롤백/롤아웃 검증 → \(T_r \downarrow\)
+- 캐시/병렬화 → \(f_d \uparrow\)
+
+---
+
+## 14) 트러블슈팅 빠른표
+
+| 증상 | 진단 명령 | 흔한 원인 | 해결 |
+|---|---|---|---|
+| `ImagePullBackOff` | `kubectl describe pod` | 레지스트리 인증/태그 오타 | 자격증명, 태그 일치 점검 |
+| `CrashLoopBackOff` | `kubectl logs --previous` | 프로브, ENV, 메모리 | `startupProbe` 튜닝, ENV/limits 재설정 |
+| 롤아웃 정지 | `kubectl rollout status` | readiness 실패 | 헬스엔드포인트/DB 의존성 확인 |
+| Helm 실패 | `helm get`/`helm diff` | 값 오버라이드 충돌 | values 병합/스키마 확인 |
+| 권한 거부 | `kubectl auth can-i` | RBAC 부족 | Role/Binding 보완(최소권한) |
+
+---
+
+## 15) 확장 팁
+
+- **재시도**: 일시적 네트워크 문제는 `retry(n)` 블록으로 래핑
+- **Helm 작동 건전성**: `--atomic` 옵션으로 실패 시 자동 롤백
+- **서버사이드 Apply**: 선언형 충돌 최소화  
+  `kubectl apply --server-side -f <rendered>`
+- **메트릭 기반 게이트**: Prometheus API로 슬로우 에러율·레이턴시 체크 후 승인/중단
+- **프리뷰 환경**: PR 번호 기반 네임스페이스 동적 생성 → 머지 시 정리
+
+---
+
+## 16) 최소 동작 예제(빠른 시도용)
+
+### Jenkinsfile(라이트 버전)
+
+```groovy
+pipeline {
+  agent any
+  environment {
+    REGISTRY_CREDENTIALS = 'docker-hub-credentials'
+    KUBECONFIG_CREDENTIALS = 'kubeconfig-id'
+    IMAGE_NAME = 'yourname/yourapp'
+    TAG = "${env.BUILD_NUMBER}"
+  }
+  stages {
+    stage('Checkout'){ steps { checkout scm } }
+    stage('Build & Push'){
+      steps {
+        script {
+          docker.withRegistry('', REGISTRY_CREDENTIALS) {
+            sh """
+              docker build -t ${IMAGE_NAME}:${TAG} -t ${IMAGE_NAME}:latest .
+              docker push ${IMAGE_NAME}:${TAG}
+              docker push ${IMAGE_NAME}:latest
+            """
+          }
+        }
+      }
+    }
+    stage('Deploy'){
+      steps {
+        withCredentials([file(credentialsId: "${KUBECONFIG_CREDENTIALS}", variable: 'KCFG')]) {
+          sh """
+            export KUBECONFIG=$KCFG
+            helm upgrade --install myapp ./helm-chart \
+              --namespace default --create-namespace \
+              --set image.repository=${IMAGE_NAME} \
+              --set image.tag=${TAG}
+            kubectl rollout status deploy/myapp -n default --timeout=180s
+          """
+        }
+      }
     }
   }
 }
@@ -116,112 +571,37 @@ pipeline {
 
 ---
 
-## ✅ Helm 차트 구조 예시
+## 17) 운영 점검 체크리스트
 
-```
-helm-chart/
-├── Chart.yaml
-├── values.yaml
-├── templates/
-│   ├── deployment.yaml
-│   └── service.yaml
-```
-
-**`values.yaml` 예시:**
-
-```yaml
-image:
-  repository: yourname/yourapp
-  tag: latest
-
-replicaCount: 2
-```
-
-**`deployment.yaml` 예시 템플릿:**
-
-{% raw %}
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ .Chart.Name }}
-spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ .Chart.Name }}
-  template:
-    metadata:
-      labels:
-        app: {{ .Chart.Name }}
-    spec:
-      containers:
-      - name: {{ .Chart.Name }}
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-        ports:
-        - containerPort: 8080
-```
-{% endraw %}
+- [ ] 레포·차트 구조: 환경 오버레이 분리
+- [ ] Docker 빌드 캐시/멀티스테이지 적용
+- [ ] 이미지 태그는 **SHA/빌드번호** 고정값
+- [ ] Trivy 스캔, Cosign 서명 게이트
+- [ ] RBAC 최소권한 SA 사용
+- [ ] `startupProbe/readinessProbe` 정확히 설정
+- [ ] `helm diff`로 변경사항 인지
+- [ ] 롤아웃 검증 + 스모크테스트
+- [ ] 실패 시 알림 및 즉시 롤백 경로 확보
+- [ ] 시크릿은 Sealed Secrets/SOPS로 Git 관리
 
 ---
 
-## ✅ Jenkins에 필요한 플러그인
+## 결론
 
-| 플러그인 이름 | 용도 |
-|---------------|------|
-| Docker Pipeline | Docker 명령 지원 |
-| Kubernetes CLI | kubectl, Helm 등 사용 가능 |
-| Credentials Binding | Secret, 인증서 관리 |
-| Git Plugin | Git 연동 |
-| Blue Ocean | 파이프라인 시각화 UI |
+- Jenkins는 **자유도가 높아** 엔터프라이즈 요구(보안/통제/온프레미스)에 적합합니다.
+- Helm으로 **환경별 값을 선언형**으로 관리하고, Jenkins 파이프라인에서 **보안·신뢰성 게이트**(스캔/서명/정책/검증)를 통합하면,  
+  **반복 가능하고 안전한 배포 자동화**가 완성됩니다.
+- 규모가 커지면, 빌드는 Jenkins, 최종 배포는 **GitOps(Argo CD)**로 분리하는 하이브리드도 유효합니다.
 
 ---
 
-## ✅ Jenkins 보안 설정 팁
+## 참고 자료
 
-- Docker 실행 노드는 권한 분리 필수
-- Kubeconfig는 최소 권한 계정 사용 (RBAC 제한)
-- Registry/Cluster 접근은 Jenkins Credential Store 사용
+- Jenkins Pipeline 문서
+- Helm 공식 문서
+- Kubernetes RBAC 가이드
+- Trivy / Cosign / Conftest
+- Helm Diff 플러그인
+- Sealed Secrets / SOPS
 
----
-
-## ✅ 운영 시 유용한 기능
-
-| 기능 | 설명 |
-|------|------|
-| Multi-branch Pipeline | 브랜치별 자동 배포 파이프라인 가능 |
-| Slack 알림 | 실패 시 Slack Webhook으로 통보 |
-| 재시도 전략 | `retry(n)` 블록으로 불안정한 단계 보완 |
-| Helm Diff | 실 배포 전에 차이점 미리보기 (`helm diff plugin`) |
-
----
-
-## ✅ Jenkins vs GitHub Actions vs ArgoCD
-
-| 항목 | Jenkins | GitHub Actions | ArgoCD |
-|------|---------|----------------|--------|
-| 배포방식 | 직접 배포 | CI 이벤트 기반 | GitOps (상태 기반) |
-| 유연성 | 매우 높음 | 중간 | Git 기준 유지 |
-| 보안 | 자체 관리 | GitHub 관리 | 클러스터 내부 관리 |
-| 시각화 | 제한적 (Blue Ocean) | 없음 | 강력한 Web UI |
-| 적합 환경 | 엔터프라이즈, 고도화 커스터마이징 | 간단한 CI/CD | GitOps 기반 CD 중심 |
-
----
-
-## ✅ 결론
-
-| 항목 | 요약 |
-|------|------|
-| Jenkins | 유연성과 확장성 높은 전통적인 CI/CD 도구 |
-| Helm | 템플릿 기반 K8s 배포 자동화 |
-| Kubernetes | Jenkins + Helm을 통해 안전하고 반복 가능한 배포 가능 |
-| 추천 방식 | Git → Jenkins → Docker → Helm → K8s 자동화 구성 |
-
----
-
-## ✅ 참고 자료
-
-- [Jenkins Pipeline 문서](https://www.jenkins.io/doc/book/pipeline/syntax/)
-- [Helm 공식 문서](https://helm.sh/docs/)
-- [kubectl + Helm CLI 설치](https://kubernetes.io/docs/tasks/tools/)
-- [Kubernetes RBAC 가이드](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+이 구성으로 시작해 **보안·관측·자동화**를 점진적으로 추가하면, 팀의 배포 신뢰도와 속도를 동시에 끌어올릴 수 있습니다.
