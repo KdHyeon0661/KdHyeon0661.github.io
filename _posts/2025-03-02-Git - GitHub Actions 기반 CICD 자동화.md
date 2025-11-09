@@ -30,6 +30,7 @@ category: Git
 
 기본 예제에 캐시와 타 버전 테스트를 더하면 다음과 같다.
 
+{% raw %}
 ```yaml
 # .github/workflows/ci.yml
 name: CI
@@ -77,6 +78,7 @@ jobs:
           path: reports/junit.xml
           retention-days: 7
 ```
+{% endraw %}
 
 핵심 포인트
 - `strategy.matrix`로 **멀티 런타임** 테스트
@@ -167,6 +169,7 @@ jobs:
 
 ### 3.1 Node/PNPM/Yarn 등 수동 캐시 키 제어
 
+{% raw %}
 ```yaml
 - name: Cache node_modules
   uses: actions/cache@v4
@@ -177,9 +180,11 @@ jobs:
     restore-keys: |
       ${{ runner.os }}-modules-
 ```
+{% endraw %}
 
 ### 3.2 Docker Buildx + 레이어 캐시
 
+{% raw %}
 ```yaml
 # .github/workflows/docker-build.yml
 name: Docker Build
@@ -220,6 +225,7 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
           cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
 ```
+{% endraw %}
 
 ---
 
@@ -227,6 +233,7 @@ jobs:
 
 ### 4.1 커버리지 업로드(예: Codecov)
 
+{% raw %}
 ```yaml
 - name: Run tests with coverage
   run: npm run test:coverage
@@ -237,9 +244,11 @@ jobs:
     token: ${{ secrets.CODECOV_TOKEN }} # 조직 설정에 따라 불필요할 수 있음
     files: ./coverage/lcov.info
 ```
+{% endraw %}
 
 ### 4.2 실패 라인에 주석 달기(ESLint 결과 Annotations)
 
+{% raw %}
 ```yaml
 - name: ESLint
   run: npm run lint:ci
@@ -252,6 +261,7 @@ jobs:
     repo-token: ${{ secrets.GITHUB_TOKEN }}
     report-json: "./reports/eslint.json"
 ```
+{% endraw %}
 
 ---
 
@@ -376,6 +386,7 @@ jobs:
 
 ### 8.1 Netlify
 
+{% raw %}
 ```yaml
 - name: Deploy to Netlify
   uses: nwtgck/actions-netlify@v2
@@ -385,9 +396,11 @@ jobs:
     netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
     site-id: ${{ secrets.NETLIFY_SITE_ID }}
 ```
+{% endraw %}
 
 ### 8.2 Firebase Hosting
 
+{% raw %}
 ```yaml
 - name: Setup Node
   uses: actions/setup-node@v4
@@ -402,11 +415,13 @@ jobs:
   env:
     FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 ```
+{% endraw %}
 
 ---
 
 ## 9) Kubernetes 배포(kubectl), Helm
 
+{% raw %}
 ```yaml
 # .github/workflows/deploy-k8s.yml
 name: Deploy to Kubernetes
@@ -444,9 +459,11 @@ jobs:
       - name: Rollout status
         run: kubectl rollout status deployment/web -n prod
 ```
+{% endaw %}
 
 Helm 이용시:
 
+{% raw %}
 ```yaml
 - name: Helm Upgrade
   run: |
@@ -455,11 +472,13 @@ Helm 이용시:
       --namespace prod \
       --set image.tag=${{ inputs.imageTag }}
 ```
+{% endraw %}
 
 ---
 
 ## 10) 모노레포 최적화 — paths-filter로 변경 영역만 실행
 
+{% raw %}
 ```yaml
 # .github/workflows/ci-monorepo.yml
 name: CI Monorepo
@@ -501,11 +520,13 @@ jobs:
       - uses: actions/checkout@v4
       - run: echo "Run Web tests only"
 ```
+{% endraw %}
 
 ---
 
 ## 11) 동시성·취소·타임아웃 — 불필요한 실행 줄이기
 
+{% raw %}
 ```yaml
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -519,6 +540,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: npm ci && npm test
 ```
+{% endraw %}
 
 ---
 
@@ -526,6 +548,7 @@ jobs:
 
 ### 12.1 호출 당하는 워크플로
 
+{% raw %}
 ```yaml
 # .github/workflows/reusable-test.yml (in org/reusable repo)
 name: Reusable Test
@@ -548,6 +571,7 @@ jobs:
       - run: npm ci
       - run: npm test
 ```
+{% endraw %}
 
 ### 12.2 호출하는 쪽
 
@@ -568,6 +592,7 @@ jobs:
 
 ## 13) 수동 실행(workflow_dispatch) + 입력 파라미터·승인
 
+{% raw %}
 ```yaml
 on:
   workflow_dispatch:
@@ -587,6 +612,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: echo "Deploying to ${{ inputs.env }} ..."
 ```
+{% endraw %}
 
 - `environment`가 `production`이면 환경 보호 규칙(승인자)로 배포 전 승인 절차 수행.
 
@@ -613,6 +639,7 @@ jobs:
 
 Slack 예:
 
+{% raw %}
 ```yaml
 - name: Notify Slack (on failure)
   if: failure()
@@ -625,6 +652,7 @@ Slack 예:
   env:
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
+{% endraw %}
 
 ---
 
@@ -632,11 +660,13 @@ Slack 예:
 
 ### 16.1 PR 라벨링(크기별)
 
+{% raw %}
 ```yaml
 - uses: actions/labeler@v5
   with:
     repo-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+{% endaw %}
 
 `.github/labeler.yml` 예:
 
@@ -654,6 +684,7 @@ size/S:
 
 ### 16.2 Dependabot 자동 병합(조건부)
 
+{% raw %}
 ```yaml
 # .github/workflows/auto-merge.yml
 name: Auto-merge dependabot
@@ -671,6 +702,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
+{% endraw %}
 
 ---
 
@@ -691,6 +723,7 @@ jobs:
 
 ### 18.1 스텝/잡 Output
 
+{% raw %}
 ```yaml
 - name: Compute version
   id: ver
@@ -699,9 +732,11 @@ jobs:
 - name: Use version
   run: echo "Version is ${{ steps.ver.outputs.VERSION }}"
 ```
+{% endraw %}
 
 ### 18.2 잡 Output → 다음 잡
 
+{% raw %}
 ```yaml
 jobs:
   build:
@@ -717,6 +752,7 @@ jobs:
     steps:
       - run: echo "Rel version ${{ needs.build.outputs.version }}"
 ```
+{% endraw %}
 
 ---
 
@@ -816,6 +852,7 @@ jobs:
 
 ## 부록 A) 하나로 묶은 “PR → CI → 배포(스테이징) → 릴리스” 샘플
 
+{% raw %}
 ```yaml
 # .github/workflows/full-pipeline.yml
 name: Full Pipeline
@@ -926,6 +963,7 @@ jobs:
           files: |
             dist/**.zip
 ```
+{% endraw %}
 
 ---
 

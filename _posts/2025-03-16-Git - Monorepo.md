@@ -257,6 +257,7 @@ pnpm --filter "@org/ui" build
 
 변경된 영역만 테스트/빌드:
 
+{% raw %}
 ```yaml
 # .github/workflows/ci-monorepo.yml
 name: CI Monorepo
@@ -302,6 +303,7 @@ jobs:
       - run: pnpm i --frozen-lockfile
       - run: pnpm --filter ./apps/web test
 ```
+{% endraw %}
 
 ### 5.2 Nx/Turbo 기반 Affected Only
 
@@ -331,6 +333,7 @@ Turborepo:
 
 ### 5.4 캐시
 
+{% raw %}
 ```yaml
 - uses: actions/setup-node@v4
   with:
@@ -344,6 +347,7 @@ Turborepo:
       node_modules/.cache/nx
     key: ${{ runner.os }}-mono-${{ hashFiles('**/pnpm-lock.yaml', '**/turbo.json', '**/nx.json') }}
 ```
+{% endraw %}
 
 ---
 
@@ -376,6 +380,7 @@ pnpm changeset publish          # 레지스트리로 배포
 
 CI 자동화 예(태그 푸시 시):
 
+{% raw %}
 ```yaml
 - name: Version packages
   run: pnpm changeset version
@@ -384,6 +389,7 @@ CI 자동화 예(태그 푸시 시):
   env:
     NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
+{% endraw %}
 
 ### 6.3 Conventional Commits + 자동 버전
 
@@ -541,6 +547,7 @@ use (
 
 ### 11.4 GitHub Actions 전체 예시(변경 영향 + 캐시 + 릴리스)
 
+{% raw %}
 ```yaml
 # .github/workflows/ci.yml
 name: Monorepo CI
@@ -627,6 +634,7 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
+{% endraw %}
 
 ---
 

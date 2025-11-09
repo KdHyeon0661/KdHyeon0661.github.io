@@ -289,6 +289,7 @@ git bisect start HEAD v1.12.3   # v1.12.3은 정상 태그
 
 > 워크플로에서 재현 가능한 실패가 있고, “마지막 정상 SHA”가 기록되어 있다면, Actions에서 자동 bisect를 시도할 수 있다. 아래는 아이디어 스니펫이다(실운영 전 리소스/시간 검토 필요).
 
+{% raw %}
 ```yaml
 # .github/workflows/bisect.yml
 name: Bisect
@@ -331,6 +332,7 @@ jobs:
           git bisect run ./test-script.sh || true
           git bisect reset
 ```
+{% raw %}
 
 - CI 러너에서 **중간 커밋마다 깨끗한 환경**이 제공되므로 bisect 자동화에 적합하다.
 - 다만 실행 시간이 길어질 수 있으니 **경로 제한/테스트 축소**를 병행하자.

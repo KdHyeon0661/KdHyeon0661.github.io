@@ -221,11 +221,14 @@ declare module "some-legacy-sdk" {
 ```
 
 ### 6.3 JSDoc로 외부 스크립트 난국 완화
+
+{% raw %}
 ```js
 // @ts-check
 /** @type {{ track: (ev: string, props?: Record<string, unknown>) => void }} */
 const Analytics = window.Analytics;
 ```
+{% endraw %}
 
 ---
 
@@ -485,6 +488,7 @@ export function toKRW(amount, { currency = "KRW" } = {}) {
 
 ### 15.2 JSDoc로 타입 힌트
 
+{% raw %}
 ```js
 // @ts-check
 
@@ -497,6 +501,7 @@ export function toKRW(amount, opts = {}) {
   return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(amount);
 }
 ```
+{% endraw %}
 
 ### 15.3 `.ts` 변환
 
