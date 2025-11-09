@@ -70,6 +70,7 @@ CMD ["app/main.py"]
 ## 2. GitHub Actions
 
 ### 2.1 최소 파이프라인(빌드+푸시)
+{% raw %}
 ```yaml
 # .github/workflows/docker.yml
 name: docker-ci
@@ -113,6 +114,7 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/myapp:buildcache
         cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/myapp:buildcache,mode=max
 ```
+{% endraw %}
 
 #### 포인트
 - `permissions`에서 **OIDC 사용 가능**(ECR/GAR 무비밀 인증).
@@ -120,6 +122,7 @@ jobs:
 - 태그는 `:latest` + `:gitSHA`를 동시에 푸시(환경 프로모션에 활용).
 
 ### 2.2 보안 스캔/품질 게이트 추가(Trivy + SBOM + Cosign)
+{% raw %}
 ```yaml
   security:
     runs-on: ubuntu-latest
@@ -152,8 +155,10 @@ jobs:
       env:
         COSIGN_EXPERIMENTAL: 1
 ```
+{% endraw %}
 
 ### 2.3 OIDC로 AWS ECR에 로그인(무비밀)
+{% raw %}
 ```yaml
     - name: Configure AWS credentials (OIDC)
       uses: aws-actions/configure-aws-credentials@v4
@@ -172,8 +177,10 @@ jobs:
         push: true
         tags: <ACCOUNT_ID>.dkr.ecr.ap-northeast-2.amazonaws.com/myapp:${{ github.sha }}
 ```
+{% endraw %}
 
 ### 2.4 배포(단일 서버/Compose) — SSH 액션
+{% raw %}
 ```yaml
   deploy:
     runs-on: ubuntu-latest
@@ -189,8 +196,10 @@ jobs:
           docker pull $DOCKER_USER/myapp:${GITHUB_SHA}
           docker compose -f /srv/myapp/docker-compose.yml up -d
 ```
+{% endraw %}
 
 ### 2.5 배포(Kubernetes) — kubectl/Helm/ArgoCD
+{% raw %}
 ```yaml
     - name: Set image in Helm and deploy
       run: |
@@ -198,6 +207,7 @@ jobs:
           --set image.repository=${{ secrets.DOCKER_USERNAME }}/myapp \
           --set image.tag=${{ github.sha }}
 ```
+{% endraw %}
 - ArgoCD를 쓰면 “이미지 태그 변경 → GitOps 레포 자동 싱크”로 전환 가능.
 
 ---
@@ -607,6 +617,7 @@ strategy:
 ---
 
 ## 부록 A. GitHub Actions “재사용 가능한 워크플로”로 표준화
+{% raw %}
 ```yaml
 # .github/workflows/reusable-docker-build.yml
 name: reusable-docker-build
@@ -633,6 +644,7 @@ jobs:
         push: true
         tags: ${{ inputs.image }}:latest,${{ inputs.image }}:${{ github.sha }}
 ```
+{% endraw %}
 
 ---
 

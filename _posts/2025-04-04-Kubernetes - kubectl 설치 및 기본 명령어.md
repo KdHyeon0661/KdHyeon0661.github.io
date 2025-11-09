@@ -123,6 +123,7 @@ kubectl get pods --field-selector status.phase=Running
 ```
 
 ### custom-columns & JSONPath & go-template
+{% raw %}
 ```bash
 # custom-columns
 kubectl get pod -o=custom-columns=NAME:.metadata.name,IP:.status.podIP,NODE:.spec.nodeName
@@ -133,6 +134,7 @@ kubectl get pod -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.conta
 # go-template
 kubectl get svc web -o go-template='{{.spec.clusterIP}}{{"\n"}}'
 ```
+{% endraw %}
 
 ---
 

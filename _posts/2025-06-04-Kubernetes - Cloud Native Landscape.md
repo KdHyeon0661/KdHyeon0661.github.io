@@ -322,6 +322,7 @@ resources:
   limits:   {cpu: "1",  memory: 512Mi}
 ```
 
+{% raw %}
 ```yaml
 # templates/deployment.yaml (발췌)
 apiVersion: apps/v1
@@ -337,6 +338,7 @@ spec:
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         resources: {{- toYaml .Values.resources | nindent 10 }}
 ```
+{% endraw %}
 
 ### 10.2 Kustomize 오버레이
 ```
@@ -367,6 +369,7 @@ spec:
 ```
 
 **ApplicationSet(다중 환경 생성)**
+{% raw %}
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -392,8 +395,10 @@ spec:
         namespace: "{{namespace}}"
       syncPolicy: {automated: {prune: true, selfHeal: true}}
 ```
+{% endraw %}
 
 ### 10.4 CI(예: GitHub Actions → 이미지 빌드/푸시)
+{% raw %}
 ```yaml
 name: ci
 on: {push: {branches: [main]}}
@@ -413,6 +418,7 @@ jobs:
         docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
         docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
 ```
+{% endraw %}
 
 ---
 

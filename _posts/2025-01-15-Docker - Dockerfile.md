@@ -361,10 +361,12 @@ docker run --rm \
 ## 19. 재현성과 태깅
 
 - 태그보다 **다이제스트 고정** 권장:
+{% raw %}
 ```bash
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 docker run --rm nginx@sha256:...
 ```
+{% endraw %}
 - 의존성 잠금: `package-lock.json`/`poetry.lock`/`go.sum`/`pom.xml` 재현 빌드 설정.
 - SBOM/서명: `syft`/`trivy`/`cosign` 등 도구로 공급망 신뢰 강화.
 

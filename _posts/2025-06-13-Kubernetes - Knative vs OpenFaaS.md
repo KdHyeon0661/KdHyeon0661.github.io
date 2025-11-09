@@ -291,6 +291,7 @@ spec:
 
 ### 7.2 OpenFaaS + GitHub Actions
 - `faas-cli build/push/deploy` 파이프라인
+{% raw %}
 ```yaml
 name: openfaas-cicd
 on: { push: { branches: [main] } }
@@ -303,6 +304,7 @@ jobs:
     - run: faas-cli login --username admin --password ${{ secrets.OF_PASS }} --gateway ${{ secrets.OF_GATEWAY }}
     - run: faas-cli up -f stack.yml --gateway ${{ secrets.OF_GATEWAY }}
 ```
+{% endraw %}
 
 ---
 

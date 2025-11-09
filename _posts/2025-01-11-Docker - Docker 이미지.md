@@ -223,12 +223,14 @@ docker system df
 - **tag**: 사람이 읽기 쉬운 버전 라벨(가변)
 - **digest(sha256)**: **내용 해시(불변)** — 재현 가능한 배포에 권장
 
+{% raw %}
 ```bash
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 예: nginx@sha256:abc...
 docker run --rm -p 8080:80 nginx@sha256:abc...
 ```
+{% endraw %}
 
 ---
 

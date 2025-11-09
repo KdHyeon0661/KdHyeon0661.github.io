@@ -301,6 +301,7 @@ cosign verify registry.example.com/demo/app:1.0.0
 ## 11. CI/CD에서 사설 레지스트리 사용
 
 ### 11.1 GitHub Actions 예
+{% raw %}
 ```yaml
 name: push-to-private-registry
 on: [push]
@@ -328,6 +329,7 @@ jobs:
           docker push $IMAGE:$TAG
           docker push $IMAGE:latest
 ```
+{% endraw %}
 - 사설 CA는 **Secrets**에 PEM 문자열로 저장.
 
 ---

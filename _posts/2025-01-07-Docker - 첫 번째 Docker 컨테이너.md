@@ -173,12 +173,14 @@ docker network rm appnet
 
 태그는 가변, **digest** 는 이미지 내용 해시로 **불변**입니다. 재현 가능한 실행을 원한다면 digest 고정이 유리합니다.
 
+{% raw %}
 ```bash
 docker pull hello-world:latest
 docker inspect --format='{{index .RepoDigests 0}}' hello-world:latest
 # 출력 예: hello-world@sha256:abcdef...
 docker run --rm hello-world@sha256:abcdef...
 ```
+{% endraw %}
 
 ---
 

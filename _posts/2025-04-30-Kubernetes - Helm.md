@@ -111,6 +111,7 @@ affinity: {}
 
 ### templates/_helpers.tpl
 
+{% raw %}
 ```tpl
 {{- define "mychart.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
@@ -135,9 +136,11 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 ```
+{% endraw %}
 
 ### templates/deployment.yaml
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -169,9 +172,11 @@ spec:
             httpGet: { path: /livez,  port: 8080 }
           resources: {{- toYaml .Values.resources | nindent 12 }}
 ```
+{% endraw %}
 
 ### templates/service.yaml
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Service
@@ -186,9 +191,11 @@ spec:
       port: {{ .Values.service.port }}
       targetPort: 8080
 ```
+{% endraw %}
 
 ### templates/ingress.yaml
 
+{% raw %}
 ```yaml
 {{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
@@ -217,6 +224,7 @@ spec:
   {{- end }}
 {{- end }}
 ```
+{% endraw %}
 
 ### 설치/업그레이드
 
@@ -276,6 +284,7 @@ helm diff upgrade web ./mychart -f values-prod.yaml
 
 ### Hooks(예: 마이그레이션 사전 실행)
 
+{% raw %}
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -294,9 +303,11 @@ spec:
           image: "{{ .Values.migrate.image }}"
           args: ["./migrate.sh"]
 ```
+{% endraw %}
 
 ### Test(설치 후 가용성 확인)
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -311,6 +322,7 @@ spec:
       image: curlimages/curl
       args: ["-sf", "http://{{ include "mychart.fullname" . }}:{{ .Values.service.port }}/healthz"]
 ```
+{% endraw %}
 
 ```bash
 helm test web -n app
@@ -387,6 +399,7 @@ OCI는 **표준 컨테이너 레지스트리**로 권한·감사·미러링을 �
 
 예: External Secrets Operator 연동 템플릿
 
+{% raw %}
 ```yaml
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
@@ -403,6 +416,7 @@ spec:
       remoteRef:
         key: {{ .Values.secrets.db.passwordKey }}
 ```
+{% endraw %}
 
 추가적으로:
 - PodSecurity/NetworkPolicy/PSA 등 정책과 함께 사용.
@@ -430,6 +444,7 @@ spec:
 
 ### GitHub Actions(OCI로 푸시·배포)
 
+{% raw %}
 ```yaml
 name: helm-release
 on: { push: { branches: [ main ], paths: [ "charts/mychart/**" ] } }
@@ -452,6 +467,7 @@ jobs:
           echo $CR_PAT | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
           helm push dist/mychart-*.tgz oci://ghcr.io/acme/helm
 ```
+{% endraw %}
 
 Argo CD에서는 `source: helm`을 지정하고 `valueFiles`/`parameters`로 환경 값을 주입한다.
 
@@ -474,6 +490,7 @@ Argo CD에서는 `source: helm`을 지정하고 `valueFiles`/`parameters`로 환
 
 ### ConfigMap + Secret(템플릿)
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -491,9 +508,11 @@ stringData:
   DB_USER: {{ .Values.db.user | quote }}
   DB_PASS: {{ .Values.db.pass | quote }}
 ```
+{% endraw %}
 
 ### HPA(조건부)
 
+{% raw %}
 ```yaml
 {{- if .Values.hpa.enabled }}
 apiVersion: autoscaling/v2
@@ -516,9 +535,11 @@ spec:
           averageUtilization: {{ .Values.hpa.cpu | default 70 }}
 {{- end }}
 ```
+{% endraw %}
 
 ### PodDisruptionBudget
 
+{% raw %}
 ```yaml
 {{- if .Values.pdb.enabled }}
 apiVersion: policy/v1
@@ -531,6 +552,7 @@ spec:
   minAvailable: {{ .Values.pdb.minAvailable | default "50%" }}
 {{- end }}
 ```
+{% endraw %}
 
 ---
 

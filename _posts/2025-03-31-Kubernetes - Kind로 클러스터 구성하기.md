@@ -68,9 +68,11 @@ kubectl get nodes
 - 기본 이름: `kind`
 - 구성: 단일 control-plane 노드
 - Docker 컨테이너 목록에서 노드 확인 가능:
+{% raw %}
 ```bash
 docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
 ```
+{% endraw %}
 
 ---
 

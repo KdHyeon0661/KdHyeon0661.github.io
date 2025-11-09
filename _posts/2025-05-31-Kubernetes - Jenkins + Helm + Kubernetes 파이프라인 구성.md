@@ -149,6 +149,7 @@ affinity: {}
 
 **`helm-chart/templates/deployment.yaml`**
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -200,6 +201,7 @@ spec:
           periodSeconds: 10
 {{- end }}
 ```
+{% endraw %}
 
 환경별 값(`values-stg.yaml`, `values-prod.yaml`)로 **리소스·레플리카·도메인**만 오버라이드.
 
@@ -446,6 +448,7 @@ Ingress 컨트롤러(NGINX, Istio) 기능으로 **가중치 전환**, 정상 시
 
 `helmfile.yaml`:
 
+{% raw %}
 ```yaml
 releases:
 - name: myapp
@@ -459,6 +462,7 @@ releases:
   - name: image.tag
     value: {{ requiredEnv "IMAGE_TAG" }}
 ```
+{% endraw %}
 
 Jenkins 단계:
 

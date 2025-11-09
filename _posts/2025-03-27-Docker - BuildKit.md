@@ -300,6 +300,7 @@ CMD ["java","-jar","/app/app.jar"]
 ## 8) CI/CD 통합 (GitHub/GitLab/Jenkins) — 캐시를 파이프라인의 “첫급유소”로
 
 ### 8.1 GitHub Actions (레지스트리 캐시)
+{% raw %}
 ```yaml
 name: Build & Push with Remote Cache
 on:
@@ -333,6 +334,7 @@ jobs:
           cache-from: type=registry,ref=yourname/myapp:buildcache
           cache-to:   type=registry,ref=yourname/myapp:buildcache,mode=max
 ```
+{% endraw %}
 
 ### 8.2 GitLab CI (Docker-in-Docker)
 ```yaml

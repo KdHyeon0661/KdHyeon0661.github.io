@@ -589,10 +589,12 @@ docker run --rm --read-only --pids-limit=256 --memory=256m --cpus=0.5 \
 
 ## 7.1 컨테이너가 즉시 종료됨
 
+{% raw %}
 ```bash
 docker logs <CONTAINER>
 docker inspect <CONTAINER> --format '{{.State.ExitCode}}'
 ```
+{% endraw %}
 
 - Entrypoint/Command 오타, 실행 파일 권한 문제, 환경변수 누락 점검
 

@@ -456,6 +456,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ### 11.1 Cilium FQDN Chart 템플릿 스니펫
 
+{% raw %}
 ```yaml
 # templates/fqdn.yaml
 apiVersion: cilium.io/v2
@@ -475,6 +476,7 @@ spec:
             - port: "443"
               protocol: TCP
 ```
+{% endraw %}
 
 ```yaml
 # values.yaml

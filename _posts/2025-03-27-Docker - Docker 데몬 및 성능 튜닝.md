@@ -367,10 +367,12 @@ du -sh /var/lib/docker/* 2>/dev/null
 
 ### 11.1 “로그 폭주로 디스크 100%” 대처
 1. 긴급: 문제 컨테이너 로그 truncate/회전
+{% raw %}
 ```bash
 docker inspect <cid> --format '{{.LogPath}}'
 sudo truncate -s 0 /var/lib/docker/containers/<cid>/<cid>-json.log
 ```
+{% endraw %}
 2. `daemon.json`에 회전 정책 입력(§3.2) → 재시작
 3. 중앙 로깅 경로 구축(Fluent Bit/Vector) + 알람
 

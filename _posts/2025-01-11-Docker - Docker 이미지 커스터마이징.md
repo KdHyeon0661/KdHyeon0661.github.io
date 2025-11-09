@@ -270,12 +270,14 @@ docker run -d --name pg \
 - **tag**: 사람이 읽기 쉬움(가변)
 - **digest(sha256)**: 내용 기준(불변). 재현 가능 배포에 **권장**
 
+{% raw %}
 ```bash
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 예: nginx@sha256:abcd...
 docker run --rm -p 8080:80 nginx@sha256:abcd...
 ```
+{% endraw %}
 
 오프라인/에어갭 배포:
 ```bash

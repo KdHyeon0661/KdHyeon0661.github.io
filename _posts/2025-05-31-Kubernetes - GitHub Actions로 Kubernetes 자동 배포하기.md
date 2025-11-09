@@ -46,14 +46,17 @@ on:
 - `latest`는 **사람용**; **머신/배포에는 Git SHA** 활용
 - 환경별 태그: `myapp:prod-<sha>`, `myapp:stg-<sha>`
 
+{% raw %}
 ```bash
 IMAGE_REG=${{ secrets.DOCKER_USERNAME }}/myapp
 TAG=${{ github.sha }}
 # 결과: <registry>/myapp:<sha>
 ```
+{% endraw %}
 
 ### 2.2 Buildx + 캐시 (속도·비용 최적화)
 
+{% raw %}
 ```yaml
 - name: Set up QEMU
   uses: docker/setup-qemu-action@v3
@@ -73,6 +76,7 @@ TAG=${{ github.sha }}
     cache-from: type=gha
     cache-to: type=gha,mode=max
 ```
+{% endraw %}
 
 ---
 
@@ -80,6 +84,7 @@ TAG=${{ github.sha }}
 
 ### 3.1 Trivy로 취약점 스캔
 
+{% raw %}
 ```yaml
 - name: Scan image (Trivy)
   uses: aquasecurity/trivy-action@0.24.0
@@ -89,11 +94,13 @@ TAG=${{ github.sha }}
     exit-code: '1'
     ignore-unfixed: true
 ```
+{% endraw %}
 
 > 실패 시 파이프라인 중단(기본 임계값을 팀 정책에 맞춰 조정)
 
 ### 3.2 Cosign으로 서명 & 검증
 
+{% raw %}
 ```yaml
 - name: Install Cosign
   uses: sigstore/cosign-installer@v3.7.0
@@ -106,9 +113,11 @@ TAG=${{ github.sha }}
     COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
     COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
 ```
+{% endraw %}
 
 배포 전 검증(클러스터 쪽 Admission/Policy 연계도 가능):
 
+{% raw %}
 ```yaml
 - name: Verify signature (pre-deploy)
   run: |
@@ -116,6 +125,7 @@ TAG=${{ github.sha }}
   env:
     COSIGN_PUBLIC_KEY: ${{ secrets.COSIGN_PUBLIC_KEY }}
 ```
+{% endraw %}
 
 ### 3.3 정책 게이트(옵션)
 
@@ -141,11 +151,13 @@ cat ~/.kube/config | base64 -w0
 
 워크플로우에서:
 
+{% raw %}
 ```yaml
 - name: Set kubeconfig
   run: |
     echo "${{ secrets.KUBECONFIG_DATA }}" | base64 -d > $HOME/.kube/config
 ```
+{% endraw %}
 
 ### 4.2 권장(클라우드): **ServiceAccount + RBAC + OIDC**  
 - GitHub Actions의 **OIDC 토큰**으로 클러스터에서 **짧은 수명의 자격** 발급  
@@ -197,6 +209,7 @@ roleRef:
 
 ### 6.1 kubectl (가장 단순)
 
+{% raw %}
 ```yaml
 - name: Install kubectl
   uses: azure/setup-kubectl@v4
@@ -209,6 +222,7 @@ roleRef:
     kubectl apply -f k8s/                # 필요한 리소스 전체 적용
     kubectl rollout status deployment/myapp -n default --timeout=180s
 ```
+{% endraw %}
 
 ### 6.2 Kustomize (환경 오버레이)
 
@@ -240,6 +254,7 @@ k8s/
 
 ### 6.3 Helm (복잡한 차트/값 관리)
 
+{% raw %}
 ```yaml
 - name: Setup Helm
   uses: azure/setup-helm@v4
@@ -254,6 +269,7 @@ k8s/
       --set replicaCount=3
     kubectl rollout status deploy/myapp -n prod
 ```
+{% endraw %}
 
 ---
 
@@ -261,6 +277,7 @@ k8s/
 
 `.github/workflows/deploy.yml`
 
+{% raw %}
 ```yaml
 name: Deploy to Kubernetes
 
@@ -372,6 +389,7 @@ jobs:
           --set replicaCount=4
         kubectl rollout status deploy/myapp -n prod --timeout=240s
 ```
+{% endraw %}
 
 > 필요 시 `argocd app sync` 같은 **GitOps 연동**으로 전환 가능합니다(아래 §12).
 
@@ -468,6 +486,7 @@ spec:
 
 ### 10.2 슬랙/디스코드 알림
 
+{% raw %}
 ```yaml
 - name: Slack notify
   uses: slackapi/slack-github-action@v1.27.0
@@ -479,11 +498,13 @@ spec:
   env:
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
+{% endraw %}
 
 ---
 
 ## 11) 멀티 클러스터/환경 배포 (matrix)
 
+{% raw %}
 ```yaml
 strategy:
   matrix:
@@ -504,6 +525,7 @@ steps:
   run: |
     kustomize build k8s/overlays/${{ matrix.env }} | kubectl apply -n ${{ matrix.namespace }} -f -
 ```
+{% endraw %}
 
 ---
 
@@ -617,6 +639,7 @@ $$
 
 ### A) `.github/workflows/deploy-min.yml`
 
+{% raw %}
 ```yaml
 name: Deploy (min)
 
@@ -652,6 +675,7 @@ jobs:
         kubectl set image deploy/myapp myapp=${{ env.IMAGE }}:${{ github.sha }} -n default
         kubectl rollout status deploy/myapp -n default --timeout=180s
 ```
+{% endraw %}
 
 ### B) `k8s/base/deployment.yaml` (필수 값만)
 

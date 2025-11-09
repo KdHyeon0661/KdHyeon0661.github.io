@@ -300,12 +300,14 @@ ENTRYPOINT ["nginx","-g","daemon off;"]
 ## 9) 재현성·서명·SBOM
 
 ### 9.1 다이제스트 고정
+{% raw %}
 ```bash
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # nginx@sha256:...
 docker run --rm nginx@sha256:...
 ```
+{% endraw %}
 
 ### 9.2 의존성 잠금
 - Python: `pip-tools`, `poetry.lock`
@@ -458,6 +460,7 @@ $$
 
 ## 18) 참고 명령 모음
 
+{% raw %}
 ```bash
 # 이미지/레이어/디스크
 docker images
@@ -478,3 +481,4 @@ docker build --secret id=npmrc,src=$HOME/.npmrc --ssh default -t app:opt .
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 docker run --rm nginx@sha256:...
 ```
+{% endraw %}

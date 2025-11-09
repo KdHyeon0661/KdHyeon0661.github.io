@@ -117,12 +117,14 @@ docker run --rm hello-world:latest
 ```
 
 ## 4.3 digest 고정 실행(정확성/재현성 강화)
+{% raw %}
 ```bash
 docker pull hello-world:latest
 docker inspect --format='{{index .RepoDigests 0}}' hello-world:latest
 # 출력 예: hello-world@sha256:abcdef...
 docker run --rm hello-world@sha256:abcdef...   # digest로 고정 실행
 ```
+{% endraw %}
 - **태그(tag)** 는 바뀔 수 있으나, **다이제스트(digest)** 는 내용 기반이므로 배포 재현성에 유리합니다.
 
 ---
@@ -293,11 +295,13 @@ docker compose down
   동일 digest는 **내용 동일**을 보장합니다.
 
 실습:
+{% raw %}
 ```bash
 docker pull alpine:3.20
 docker inspect --format='{{index .RepoDigests 0}}' alpine:3.20
 docker run --rm alpine@sha256:... uname -a
 ```
+{% endraw %}
 - CI/CD나 보안 민감 환경에서는 **digest 고정**을 권장합니다.
 
 ---
@@ -398,6 +402,7 @@ docker system prune -f      # 주의: 필요 자원이 삭제될 수 있음
 | 이미지 삭제 | `docker rmi hello-world` |
 
 보강:
+{% raw %}
 ```bash
 # 정확성: digest 고정
 docker inspect --format='{{index .RepoDigests 0}}' hello-world:latest
@@ -406,3 +411,4 @@ docker inspect --format='{{index .RepoDigests 0}}' hello-world:latest
 docker history hello-world:latest
 docker image inspect hello-world:latest | jq '.[0].RootFS.Layers'
 ```
+{% endraw %}

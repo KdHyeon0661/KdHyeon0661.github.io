@@ -355,12 +355,14 @@ secret:
 
 템플릿에서 주입 후, `.Values` 변경 시 checksum 애노테이션을 통해 롤아웃.
 
+{% raw %}
 ```yaml
 metadata:
   annotations:
     checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
 ```
+{% endraw %}
 
 ### 8.3 GitOps(SOPS/Sealed Secrets)
 - 레포에 비밀을 평문으로 두지 않기 위해 **SOPS**(KMS/PGP 기반 파일 암호화) 또는 **Sealed Secrets**(클러스터 퍼블릭 키로 암호화) 사용.

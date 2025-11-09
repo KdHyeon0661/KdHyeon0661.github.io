@@ -349,6 +349,7 @@ affinity:
 
 ### 12.1 사전 마이그레이션 훅(Job)
 
+{% raw %}
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -367,9 +368,11 @@ spec:
           image: ghcr.io/acme/migrator:1.0.0
           args: ["./migrate.sh"]
 ```
+{% endraw %}
 
 ### 12.2 배포 검증 테스트
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -384,6 +387,7 @@ spec:
       image: curlimages/curl
       args: ["-sf", "http://{{ include "mychart.fullname" . }}:8080/healthz"]
 ```
+{% endraw %}
 
 실행
 

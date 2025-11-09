@@ -62,11 +62,13 @@ docker image inspect demo-web:1 | jq '.[0].RootFS'
 - **태그**: 사람이 읽기 쉬운 별칭. `nginx:1.27-alpine`
 - **다이제스트**: **내용 불변 식별자**. `nginx@sha256:...`
 - 재현 가능한 배포를 원하면 **다이제스트 고정**을 사용:
+{% raw %}
 ```bash
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 결과를 Kubernetes/Compose에 고정하면 드리프트 방지
 ```
+{% endraw %}
 
 ## 1.4 SBOM·서명·취약점 스캔(운영 보강)
 
@@ -400,10 +402,12 @@ docker system prune -af  # 주의: 필요 자원 삭제
 - 디스크 압박 시 **중복 레이어 제거/미사용 자원 정리**.
 
 ## 11.2 컨테이너 즉시 종료
+{% raw %}
 ```bash
 docker logs <NAME>
 docker inspect <NAME> --format '{{.State.ExitCode}}'
 ```
+{% endraw %}
 - Entrypoint/Command 오류, 권한/경로 문제 확인.
 
 ## 11.3 네트워크 이슈

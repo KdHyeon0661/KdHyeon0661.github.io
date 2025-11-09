@@ -346,6 +346,7 @@ rollingUpdate:
   maxSurge: 1
   maxUnavailable: 0
 ```
+{% raw %}
 ```yaml
 # templates/deploy.yaml
 strategy:
@@ -354,6 +355,7 @@ strategy:
     maxSurge: {{ .Values.rollingUpdate.maxSurge }}
     maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
 ```
+{% endraw %}
 
 ### 13.2 GitOps(Argo CD/Flux)
 - `rollout pause/resume`를 PR 리뷰·승인과 연동

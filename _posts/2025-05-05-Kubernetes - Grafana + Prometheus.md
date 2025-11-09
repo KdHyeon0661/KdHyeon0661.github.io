@@ -310,6 +310,7 @@ spec:
 
 ### 8.1 경보 예시: 노드 CPU 고사용
 
+{% raw %}
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -330,6 +331,7 @@ spec:
             summary: "High CPU on {{ $labels.instance }}"
             description: "CPU usage > 90% for 10m"
 ```
+{% endraw %}
 
 ### 8.2 Alertmanager 라우팅(예: Slack)
 
@@ -467,6 +469,7 @@ spec:
 
 ### 14.2 경보: 네임스페이스별 CPU 사용률 과다
 
+{% raw %}
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -488,6 +491,7 @@ spec:
             summary: "High CPU usage in {{ $labels.namespace }}"
             description: "Namespace CPU usage > 200% of requests for 15m"
 ```
+{% endraw %}
 
 전제: 위 `ns:cpu_usage_seconds:rate5m`는 Recording Rule로 정의되어 있다고 가정.
 
@@ -657,6 +661,7 @@ spec:
 
 ### A.3 샘플 Alert(노드 CPU)
 
+{% raw %}
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -676,6 +681,7 @@ spec:
           annotations:
             summary: "High CPU on {{ $labels.instance }}"
 ```
+{% endraw %}
 
 ### A.4 Grafana 포트포워드
 

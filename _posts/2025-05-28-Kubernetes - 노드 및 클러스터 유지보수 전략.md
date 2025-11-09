@@ -287,6 +287,7 @@ echo "[✓] Done"
 
 ### 11.1 Kyverno 정책 예시
 
+{% raw %}
 ```yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
@@ -313,6 +314,7 @@ spec:
           operator: Equals
           value: 0
 ```
+{% endraw %}
 
 > Gatekeeper(OPA)로도 유사한 제약 가능.
 

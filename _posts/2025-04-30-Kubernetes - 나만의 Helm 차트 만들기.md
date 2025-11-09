@@ -86,6 +86,7 @@ affinity: {}
 
 `templates/deployment.yaml` (핵심 부분만 발췌)
 
+{% raw %}
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -132,6 +133,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
 ```
+{% endraw %}
 
 템플릿 포인트:
 - `include`로 헬퍼 호출, `toYaml|nindent`로 들여쓰기·가독성 유지
@@ -142,6 +144,7 @@ spec:
 
 ## 4) Service 템플릿
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Service
@@ -158,11 +161,13 @@ spec:
   selector:
     {{- include "mychart.selectorLabels" . | nindent 4 }}
 ```
+{% endraw %}
 
 ---
 
 ## 5) Ingress(옵션)
 
+{% raw %}
 ```yaml
 {{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
@@ -198,11 +203,13 @@ spec:
   {{- end }}
 {{- end }}
 ```
+{% endraw %}
 
 ---
 
 ## 6) _helpers.tpl — 네이밍/라벨 표준화
 
+{% raw %}
 ```yaml
 {{- define "mychart.name" -}}
 {{ .Chart.Name }}
@@ -229,6 +236,7 @@ app.kubernetes.io/name: {{ include "mychart.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 ```
+{% endraw %}
 
 - **app.kubernetes.io/\*** 표준 라벨을 일관되게 사용 → 운영·모니터링·셀렉터에 유리
 - 길이 제한(63) 고려해 `trunc` 사용
@@ -239,6 +247,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 ### 7.1 조건/반복/기본값
 
+{% raw %}
 ```yaml
 {{- if .Values.metrics.enabled }}
 # ServiceMonitor 혹은 PodMonitor 등 CRD 사용 시
@@ -250,31 +259,38 @@ env:
     value: {{ $v | quote }}
   {{- end }}
 ```
+{% endraw %}
 
 ### 7.2 `tpl`로 동적 렌더링
 
 values에 템플릿 문자열이 들어온 경우 해석:
 
+{% raw %}
 ```yaml
 {{- $rendered := tpl (.Values.someTemplatedString | default "") . -}}
 ```
+{% endraw %}
 
 ### 7.3 파일 삽입
 
+{% raw %}
 ```yaml
 data:
   application.yaml: |
     {{- .Files.Get "files/application.yaml" | nindent 4 }}
 ```
+{% endraw %}
 
 ### 7.4 `required`, `default`, `quote`, `b64enc`
 
+{% raw %}
 ```yaml
 - name: DB_HOST
   value: {{ required "db.host is required" .Values.db.host | quote }}
 - name: SECRET_B64
   value: {{ .Values.secret | b64enc }}
 ```
+{% endraw %}
 
 ---
 
@@ -363,6 +379,7 @@ helm rollback myapp 2
 
 ### 11.1 마이그레이션 Hook(Job)
 
+{% raw %}
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -381,9 +398,11 @@ spec:
           image: ghcr.io/acme/migrator:1.4.0
           args: ["./migrate.sh"]
 ```
+{% endraw %}
 
 ### 11.2 설치 검증 테스트(helm test)
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -398,6 +417,7 @@ spec:
       image: curlimages/curl
       args: ["-sf", "http://{{ include "mychart.fullname" . }}:{{ .Values.service.port }}/healthz"]
 ```
+{% endraw %}
 
 실행:
 
@@ -409,6 +429,7 @@ helm test myapp
 
 `templates/NOTES.txt` 예시:
 
+{% raw %}
 ```
 1) Service:
    kubectl get svc {{ include "mychart.fullname" . }}
@@ -423,6 +444,7 @@ helm test myapp
    (ingress disabled)
 {{- end }}
 ```
+{% endraw %}
 
 ---
 

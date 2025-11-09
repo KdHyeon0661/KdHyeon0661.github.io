@@ -45,12 +45,14 @@ docker push yourname/myapp:latest
 ### 1.1 다이제스트 고정 이미지(권장)
 K8s 매니페스트에는 태그 대신 **다이제스트**를 고정 사용하면 재현성이 좋아진다.
 
+{% raw %}
 ```bash
 # 다이제스트 조회
 docker pull yourname/myapp:1.0.0
 docker inspect --format='{{index .RepoDigests 0}}' yourname/myapp:1.0.0
 # 출력 예: yourname/myapp@sha256:abcdef...
 ```
+{% endraw %}
 
 배포 시:
 ```yaml

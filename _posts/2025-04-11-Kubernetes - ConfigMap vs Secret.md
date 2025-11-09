@@ -377,11 +377,13 @@ generatorOptions:
 ```
 
 ### 10.2 Helm — 체크섬 애노테이션
+{% raw %}
 ```yaml
 metadata:
   annotations:
     checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
 ```
+{% endraw %}
 > ConfigMap/Secret 변경 시 Pod 템플릿 애노테이션 값이 달라져 **자동 롤링**.
 
 ---

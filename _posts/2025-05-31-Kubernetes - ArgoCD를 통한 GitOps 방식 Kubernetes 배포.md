@@ -140,6 +140,7 @@ spec:
 
 **템플릿 + 제너레이터**로 Application 다발 생성 (환경/리전 확장에 탁월)
 
+{% raw %}
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -171,6 +172,7 @@ spec:
       syncPolicy:
         automated: { prune: true, selfHeal: true }
 ```
+{% endraw %}
 
 **Cluster generator**, **Git generator**, **Matrix generator** 조합으로 대규모 확장 자동화.
 
@@ -472,6 +474,7 @@ spec: { template: { spec: { containers: [{name: m, image: alpine, args: ["sh","-
 
 ### 15.4 ApplicationSet — 폴더 스캔으로 자동 생성(Git generator)
 
+{% raw %}
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
@@ -499,6 +502,7 @@ spec:
         namespace: '{{path.basename}}'
       syncPolicy: { automated: { prune: true, selfHeal: true } }
 ```
+{% endraw %}
 
 ---
 

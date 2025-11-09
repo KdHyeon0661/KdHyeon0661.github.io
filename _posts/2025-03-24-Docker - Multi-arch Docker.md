@@ -266,6 +266,7 @@ docker buildx build \
 
 ### 8.1 GitHub Actions (multi-arch + 캐시 + 서명/리포트 예시)
 
+{% raw %}
 ```yaml
 name: Build & Push Multi-arch
 
@@ -304,6 +305,7 @@ jobs:
 
       # (선택) SBOM 생성/추출 또는 cosign 서명 단계 추가
 ```
+{% endraw %}
 
 ### 8.2 GitLab CI
 

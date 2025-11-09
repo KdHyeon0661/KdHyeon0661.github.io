@@ -402,6 +402,7 @@ sudo systemctl enable --now web-reload.path
 컨테이너가 unhealthy일 때 **강제 재시작**하려면 ExecStartPost로 간단한 감시 루프를 둘 수 있다(간단 구현 예).
 
 `/usr/local/bin/watch-health.sh`
+{% raw %}
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -417,6 +418,7 @@ while sleep "$INTERVAL"; do
   fi
 done
 ```
+{% endraw %}
 유닛에 추가:
 ```ini
 ExecStartPost=/usr/bin/env SERVICE_NAME=web /usr/local/bin/watch-health.sh web 10

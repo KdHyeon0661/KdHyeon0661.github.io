@@ -161,6 +161,7 @@ docker buildx build \
 - 코드 푸시 시 Hub가 자동 빌드·푸시 수행
 
 ### 8.2 GitHub Actions(CI)로 직접 빌드·푸시(권장 예시)
+{% raw %}
 ```yaml
 name: docker-publish
 
@@ -198,6 +199,7 @@ jobs:
             johndoe/myapp:${{ github.sha }}
           platforms: linux/amd64,linux/arm64
 ```
+{% endraw %}
 - 비밀번호 대신 **토큰**을 Secrets에 저장해 사용.
 - 필요 시 `cache-from`/`cache-to`로 빌드 캐시 최적화.
 
@@ -381,6 +383,7 @@ curl localhost
 
 ## 부록 A. 자주 쓰는 명령 모음
 
+{% raw %}
 ```bash
 # 로그인/로그아웃
 docker login
@@ -404,6 +407,7 @@ docker scout quickview johndoe/myapp:1.0.0
 # 다이제스트 확인
 docker inspect --format='{{index .RepoDigests 0}}' johndoe/myapp:1.0.0
 ```
+{% endraw %}
 
 ---
 

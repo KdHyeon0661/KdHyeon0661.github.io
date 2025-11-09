@@ -439,6 +439,7 @@ services:
 | SELinux로 마운트 실패 | 컨텍스트 불일치 | `:z`/`:Z` 옵션 적용 |
 
 유용 명령:
+{% raw %}
 ```bash
 # 네트워크/볼륨 현황
 docker network ls
@@ -450,6 +451,7 @@ docker volume inspect <vol>
 docker inspect <container> --format '{{json .NetworkSettings.Networks}}'
 docker inspect <container> --format '{{json .Mounts}}' | jq
 ```
+{% endraw %}
 
 ---
 

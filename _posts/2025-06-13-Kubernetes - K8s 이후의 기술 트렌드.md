@@ -215,6 +215,7 @@ spec:
 ```
 
 ### 6.2 GitHub Actions로 이미지 빌드→K3s 배포(요약)
+{% raw %}
 ```yaml
 name: build-and-deploy
 on: { push: { branches: [main] } }
@@ -235,6 +236,7 @@ jobs:
         KUBECONFIG=$PWD/kubeconfig kubectl -n default set image deploy/edge-app app=${{ secrets.DOCKER_USER }}/edge-app:${{ github.sha }}
         KUBECONFIG=$PWD/kubeconfig kubectl rollout status deploy/edge-app -n default
 ```
+{% endraw %}
 
 ---
 

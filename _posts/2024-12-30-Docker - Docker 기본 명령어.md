@@ -76,12 +76,14 @@ docker run -d --name web -p 8080:80 nginx     # 백그라운드 웹
 ```
 
 ## 2.3 digest 고정(재현성 강화)
+{% raw %}
 ```bash
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 예: nginx@sha256:abcd...
 docker run --rm -p 8080:80 nginx@sha256:abcd...
 ```
+{% endraw %}
 
 ---
 

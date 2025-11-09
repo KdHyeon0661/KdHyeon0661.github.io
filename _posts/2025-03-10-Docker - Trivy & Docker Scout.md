@@ -73,6 +73,7 @@ trivy config infra/
 ```
 
 ### 1.5 CI/CD 연동(예: GitHub Actions)
+{% raw %}
 ```yaml
 # .github/workflows/trivy.yml
 name: trivy
@@ -102,6 +103,7 @@ jobs:
         with:
           sarif_file: trivy.sarif
 ```
+{% endraw %}
 
 옵션 요령
 - `ignore-unfixed`: 아직 **Fix 미제공 취약점**은 경고만(팀 정책에 맞게).

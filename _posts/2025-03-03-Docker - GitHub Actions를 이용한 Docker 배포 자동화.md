@@ -82,6 +82,7 @@ CMD ["app/main.py"]
 
 ### `.github/workflows/docker-publish.yml`
 
+{% raw %}
 ```yaml
 name: docker-publish
 
@@ -138,6 +139,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 ```
+{% endraw %}
 
 포인트:
 - **metadata-action**으로 태그/레이블 자동 생성(커밋 SHA, 브랜치, semver)
@@ -150,6 +152,7 @@ jobs:
 
 GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 
+{% raw %}
 ```yaml
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -168,6 +171,7 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
             type=sha
             type=ref,event=branch
 ```
+{% endraw %}
 
 이미지 참조: `ghcr.io/<owner>/<repo>/my-app:latest`
 
@@ -177,6 +181,7 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 
 ### 4.1 SBOM 생성(Syft)
 
+{% raw %}
 ```yaml
       - name: Generate SBOM (Syft)
         uses: anchore/sbom-action@v0
@@ -191,9 +196,11 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
           name: sbom
           path: sbom.spdx.json
 ```
+{% endraw %}
 
 ### 4.2 취약점 스캔(Trivy)
 
+{% raw %}
 ```yaml
       - name: Scan image (Trivy)
         uses: aquasecurity/trivy-action@0.22.0
@@ -203,9 +210,11 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
           severity: CRITICAL,HIGH
           ignore-unfixed: true
 ```
+{% endraw %}
 
 ### 4.3 컨테이너 이미지 서명(Cosign)
 
+{% raw %}
 ```yaml
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3.6.0
@@ -214,6 +223,7 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
         run: |
           cosign sign --yes ${{ secrets.DOCKER_USERNAME }}/my-app:latest
 ```
+{% endraw %}
 
 > OIDC 기반 **keyless** 서명을 쓰면 별도 키 보관 없이 서명 가능(레지스트리/정책과 연계해 배포 신뢰성 강화).
 
@@ -227,6 +237,7 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 
 `.github/workflows/deploy-ssh.yml`:
 
+{% raw %}
 ```yaml
 name: deploy-ssh
 on:
@@ -260,6 +271,7 @@ jobs:
             docker compose -f /srv/my-app/docker-compose.yml up -d
             docker image prune -af --filter "until=168h"
 ```
+{% endraw %}
 
 서버 측 `docker-compose.yml`(예시):
 
@@ -382,6 +394,7 @@ concurrency:
 
 `.github/workflows/rollback.yml`:
 
+{% raw %}
 ```yaml
 name: rollback
 on:
@@ -409,6 +422,7 @@ jobs:
             sed -i "s#image: .*#image: $IMG#g" /srv/my-app/docker-compose.yml
             docker compose -f /srv/my-app/docker-compose.yml up -d
 ```
+{% endraw %}
 
 ---
 
@@ -453,6 +467,7 @@ on:
 
 ## 13) 종합 예제 — 확장형 워크플로(요약)
 
+{% raw %}
 ```yaml
 name: ci-cd
 
@@ -547,6 +562,7 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}/my-app:latest
             docker compose -f /srv/my-app/docker-compose.yml up -d
 ```
+{% endraw %}
 
 ---
 
@@ -576,6 +592,7 @@ jobs:
 
 ## 16) 빠른 시작(최소 버전)
 
+{% raw %}
 ```yaml
 # .github/workflows/docker-publish.yml
 name: docker-publish
@@ -596,6 +613,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/my-app:latest
 ```
+{% endraw %}
 
 ---
 

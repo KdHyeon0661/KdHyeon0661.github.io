@@ -393,6 +393,7 @@ resources:
 
 `templates/namespace.yaml`:
 
+{% raw %}
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -403,6 +404,7 @@ metadata:
     tenant/contact: {{ .Values.tenant.contact }}
     pod-security.kubernetes.io/enforce: "restricted"
 ```
+{% endraw %}
 
 `templates/quota.yaml`, `templates/limitrange.yaml`, `templates/networkpolicies/*.yaml`, `templates/rbac.yaml` 등을 같은 차트에 포함해서 **한 번에 테넌트 온보딩**이 가능하도록 설계한다.
 

@@ -264,10 +264,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 ## 6) 검증·측정 — 실제로 얼마나 줄었나
 
 ### 이미지·히스토리 확인
+{% raw %}
 ```bash
 docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
 docker history your/app:tag
 ```
+{% endraw %}
 
 ### 컨텐츠 비교(변경 감지)
 ```bash
