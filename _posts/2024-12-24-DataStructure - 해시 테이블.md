@@ -641,6 +641,7 @@ i = (h1 + t*h2) & (m-1);
 
 ## 부록 B. Cuckoo Hashing(개요 코드)
 
+{% raw %}
 ```cpp
 // 간략 개념 스케치(실전용 아님)
 template<class K, class V, class H1, class H2>
@@ -663,5 +664,6 @@ struct Cuckoo {
     }
 };
 ```
+{% endraw %}
 
 실전 구현은 **재해시**, **사이클 탐지**, **로드 팩터 관리**가 중요.

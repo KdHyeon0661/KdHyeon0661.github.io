@@ -382,6 +382,8 @@ std::vector<double> bucketSort(std::vector<double> a){
 ## 5. C++에서 **정렬을 올바르게** 쓰는 법
 
 ### 5.1 비교자(Comparator) — 올바른 정의가 먼저
+
+{% raw %}
 ```cpp
 #include <vector>
 #include <string>
@@ -400,6 +402,8 @@ int main(){
     std::sort(v.begin(), v.end(), comp); // strict-weak-ordering 준수
 }
 ```
+{% endraw %}
+
 - `return a.key < b.key;` 규칙을 지키며 **비교의 추이성** 깨지지 않게 주의
 - 부동소수점에 **NaN** 포함 시, 비교 불능(반사성 위배) → 정렬 전 필터링/정의 처리
 
