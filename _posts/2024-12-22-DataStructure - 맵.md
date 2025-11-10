@@ -1,249 +1,536 @@
 ---
 layout: post
-title: Data Structure - 펜윅 트리
-date: 2024-12-09 19:20:23 +0900
+title: Data Structure - 맵
+date: 2024-12-22 19:20:23 +0900
 category: Data Structure
 ---
-# 📌 C++ std::map과 내부 구조 구현
+# C++ `std::map` 완전 정복
 
----
+## 1) `std::map` 한눈에 보기
 
-## 1️⃣ std::map 개념
+`std::map<Key, T>`는 **정렬된 키**에 대해 **유일한 매핑**을 제공하는 연관 컨테이너다.
 
-> `std::map<Key, Value>`는 키-값 쌍을 저장하는 **연관 컨테이너**입니다.
-
-- 모든 키는 **유일(unique)** 해야 함
-- 내부적으로는 **Red-Black Tree(RBT)** 를 사용
-- 자동으로 **키 기준 정렬** (기본은 `<` 연산자 기준)
+- 내부: **Red-Black Tree(RBT)** 기반(대부분의 표준 라이브러리 구현)
+- 정렬: 기본은 `std::less<Key>` — 즉 `operator<` (커스텀 비교자 사용 가능)
+- 복잡도: 삽입/탐색/삭제 모두 **O(log n)**
+- 반복: **정렬 순서**로 순회
+- 값 접근: `operator[]`, `at`, `insert`, `emplace`, `try_emplace`, `insert_or_assign` 등
 
 ```cpp
 #include <map>
+#include <string>
 #include <iostream>
-using namespace std;
+int main(){
+    std::map<std::string,int> m;
+    m["apple"]  = 5;            // 존재 없으면 노드 생성(값 기본생성) 후 대입
+    m.insert({"banana", 2});    // 삽입 (중복키면 무시)
+    m.emplace("orange", 7);     // 제자리 생성
 
-int main() {
-    map<string, int> m;
-    m["apple"] = 5;
-    m["banana"] = 2;
-    m["orange"] = 7;
-
-    for (auto& [key, value] : m)
-        cout << key << ": " << value << endl;
-    return 0;
+    for (auto const& [k,v] : m) // 키 정렬 순서
+        std::cout << k << ": " << v << "\n";
 }
 ```
 
-> 출력은 키의 **정렬 순서**:  
-```
-apple: 5  
-banana: 2  
-orange: 7
-```
+---
+
+## 2) 핵심 연산 빠르게 훑기
+
+| 분류 | 멤버 | 설명/특징 |
+|---|---|---|
+| 조회 | `find`, `contains(C++20)`, `count`, `at` | `at`은 실패 시 예외 |
+| 범위 | `lower_bound`, `upper_bound`, `equal_range` | 정렬기반 범위 탐색 |
+| 삽입 | `insert`, `emplace`, `try_emplace(C++17)`, `insert_or_assign(C++17)` | 키 존재 시 행동이 다름 |
+| 수정 | `operator[]`, `erase`, `extract(C++17)`, `merge(C++17)` | `extract`로 node handle 이동 |
+| 반복 | `begin/end`, `rbegin/rend` | 정렬 순서(양방향 반복자) |
+| 기타 | `key_comp`, `value_comp`, `get_allocator` | 비교자/할당자 조회 |
+
+> **팁**: 키가 존재할 수도 없을 수도 있을 때
+>
+> - “없으면 생성, 있으면 건드리지 않기” → `try_emplace(k, ctor_args...)`
+> - “없으면 생성, 있으면 값만 바꾸기” → `insert_or_assign(k, value)`
 
 ---
 
-## 2️⃣ std::map 특징 요약
+## 3) 정렬·비교자와 “strict weak ordering”
 
-| 항목 | 내용 |
-|------|------|
-| 키 중복 | ❌ 불가능 (자동 덮어쓰기) |
-| 정렬 기준 | 기본 `operator<` |
-| 삽입/탐색/삭제 | O(log n) (트리 높이) |
-| 순회 순서 | 키의 정렬 순서 |
-| 내부 구현 | **Red-Black Tree** |
+비교자는 기본적으로 `std::less<Key>`이며 **엄격 약순서(strict weak ordering)** 를 만족해야 한다.  
+그렇지 않으면(예: 비추이/비정합 비교) **트리 불변식이 깨지고 UB**(정의되지 않은 동작)가 발생할 수 있다.
 
----
+### 이형(heterogeneous) 조회 — 투명 비교자(C++14)
 
-## 3️⃣ 내부 구조는 Red-Black Tree?
-
-`std::map`은 일반적으로 **Red-Black Tree (균형 이진 탐색 트리)** 로 구현됩니다.
-
-> 🎯 Red-Black Tree는 다음 조건을 만족하는 **자체 균형 이진 탐색 트리**입니다:
-
-- 노드는 빨간색(Red) 또는 검정색(Black)
-- 루트 노드는 항상 검정색
-- 모든 리프(NIL)는 검정색
-- 빨간 노드의 자식은 모두 검정색
-- 임의 노드에서 리프까지의 경로에 있는 검정 노드 수는 동일
-
-✅ 이렇게 하면 **최악의 경우에도 O(log n)** 보장!
-
----
-
-## 4️⃣ 내부 구조 구현
-
-> 🛠 아래 코드는 간단한 map 기능(BST + Red Black Tree 기반 삽입/검색/순회)을 구현한 예입니다.
+대규모 문자열 키에서 “`std::string` vs `std::string_view`”를 복사 없이 비교하려면 **투명 비교자** 사용:
 
 ```cpp
-#include <iostream>
+#include <map>
+#include <string>
+#include <string_view>
+
+struct transparent_less {
+    using is_transparent = void; // 핵심: 투명 태그
+    template<class L, class R>
+    bool operator()(L const& l, R const& r) const { return l < r; }
+};
+
+int main(){
+    std::map<std::string, int, transparent_less> m;
+    m.emplace("alpha", 1);
+    // string_view로 이형 탐색 (키 복사 없음)
+    auto it = m.find(std::string_view{"alpha"});
+}
+```
+
+---
+
+## 4) RBT 높이 경계와 시간복잡도(스케치)
+
+RBT는 다음 불변식을 갖는다:
+
+1. 각 노드는 **빨강 또는 검정**.
+2. 루트는 검정.
+3. 모든 NIL(리프 센티넬)은 검정.
+4. 빨강 노드의 자식은 둘 다 **검정**.
+5. 임의 노드에서 내려가는 **모든 단순 경로**의 **검정 노드 수(black-height)** 는 동일.
+
+이때, 흑높이를 \(bh\) 라 하면 최소 노드 수는
+\[
+n \ge 2^{bh}-1
+\]
+을 만족한다. 또한 “빨강은 연속될 수 없음”에서 **경로 길이 \(h\)** 는
+\[
+h \le 2 \cdot bh \le 2 \log_2(n+1)
+\]
+따라서 탐색/삽입/삭제의 단일 연산 경로 길이는 **O(log n)** 이고, 회전은 O(1)이므로 총 **O(log n)**.
+
+---
+
+## 5) 반복자와 예외/유효성 규칙
+
+- **삽입**: 기존 반복자는 **무효화되지 않음** (트리 노드가 재배치되지 않음)
+- **삭제**: 삭제된 원소에 대한 반복자만 무효화. 다른 반복자는 유효
+- **예외 안전성**:
+  - 비교자/할당자/노드 생성에서 던져질 수 있음
+  - 표준 컨테이너는 대체로 **strong/commit 또는 basic guarantee** 유지
+
+---
+
+## 6) 값 접근·삽입 패턴 정리
+
+```cpp
+std::map<std::string, int> m;
+
+// 1) []: 없으면 default-construct 후 참조 반환
+m["cat"] += 1;         // 키 없으면 0으로 생성 후 1
+
+// 2) at: 없으면 std::out_of_range
+try { m.at("dog") = 5; } catch (...) { /* no key */ }
+
+// 3) insert: 중복키 무시
+m.insert({"ant", 2});  // pair<iterator,bool> 반환
+
+// 4) emplace: 제자리 생성(불필요 복사 감소)
+m.emplace("bee", 3);
+
+// 5) try_emplace: 키 없을 때만 생성자 호출
+m.try_emplace("cow", 7);         // cow 없으면 생성
+m.try_emplace("bee", 9);         // bee 있으므로 아무 것도 안 함
+
+// 6) insert_or_assign: 있으면 대입
+m.insert_or_assign("bee", 9);    // bee -> 9
+```
+
+---
+
+## 7) 범위 탐색 — lower/upper/equal_range
+
+```cpp
+auto it = m.lower_bound("fox");  // fox 이상 첫 원소
+auto jt = m.upper_bound("fox");  // fox 초과 첫 원소
+auto [lb, ub] = m.equal_range("fox"); // [lb, ub) = 키==fox 범위
+```
+
+---
+
+## 8) 노드 핸들 — `extract` / `merge` (C++17)
+
+컨테이너 간에 **노드를 이동**하며 비교자/할당자 제약을 피하기 좋다.
+
+```cpp
+std::map<std::string,int> a, b;
+a.emplace("x", 1);
+auto nh = a.extract("x");  // a에서 노드 분리 (비어 있으면 empty)
+if (nh) {
+    nh.key() = "y";        // 키 수정 가능!
+    b.insert(std::move(nh)); // b로 이동
+}
+```
+
+---
+
+## 9) 성능 팁과 함정
+
+- **비교자 비용** 줄이기: 문자열 → 투명 비교자 + `string_view` 입력
+- `operator[]`는 **없으면 생성**이므로 단순 조회는 `find/contains` 를 쓰자
+- 커스텀 비교자에서 **엄격 약순서** 위반 금지
+- 대량 삽입은 **정렬된 입력**일 때도 `std::map`은 균형유지로 O(n log n) — 대량 빌드는 `std::vector` 정렬 + `std::map` 교체(또는 `std::pmr`/커스텀 트리) 고려
+
+---
+
+## 10) 교육용 Red-Black Tree 기반 미니 `map` 구현
+
+> 학습용으로 **삽입/검색/순회/삭제** 가 되는 간단 구현을 제시한다.  
+> 실사용 목적이면 표준 컨테이너를 쓰자(예외·경계·이동·노드핸들 등 미비).
+
+### 10.1 전체 코드
+
+```cpp
+// rbt_map.cpp (교육용 예제 — 단일 파일)
+// 빌드: g++ -std=c++20 -O2 rbt_map.cpp
+
+#include <bits/stdc++.h>
 using namespace std;
 
 enum Color { RED, BLACK };
 
-struct Node {
-    string key;
-    int value;
-    Color color;
-    Node *left, *right, *parent;
+template <class Key, class T, class Cmp = std::less<Key>>
+class rb_map {
+    struct Node {
+        Key   key;
+        T     val;
+        Color color;
+        Node *p, *l, *r;
+        Node(Key k, T v, Color c, Node* nil)
+            : key(std::move(k)), val(std::move(v)), color(c), p(nil), l(nil), r(nil) {}
+    };
 
-    Node(string k, int v) : key(k), value(v), color(RED), left(nullptr), right(nullptr), parent(nullptr) {}
-};
+    Node* root;
+    Node* NIL;            // 공용 센티넬(검정)
+    size_t sz = 0;
+    Cmp cmp;
 
-class RBMap {
-    Node* root = nullptr;
+public:
+    rb_map(): cmp() {
+        NIL = (Node*)::operator new(sizeof(Node));
+        // NIL 내용은 쓰지 않지만 포인터/색만 활용
+        NIL->color = BLACK; NIL->p = NIL->l = NIL->r = NIL;
+        root = NIL;
+    }
+    ~rb_map(){ clear_node(root); ::operator delete(NIL); }
 
-    void leftRotate(Node* x) {
-        Node* y = x->right;
-        x->right = y->left;
-        if (y->left) y->left->parent = x;
-        y->parent = x->parent;
-        if (!x->parent) root = y;
-        else if (x == x->parent->left) x->parent->left = y;
-        else x->parent->right = y;
-        y->left = x;
-        x->parent = y;
+    rb_map(rb_map const&) = delete;
+    rb_map& operator=(rb_map const&) = delete;
+
+    // --- public API ---
+    size_t size()  const { return sz; }
+    bool   empty() const { return sz==0; }
+
+    // 삽입: 키 존재 시 값 갱신 (std::map과 다르게 insert_or_assign 형태)
+    void insert_or_assign(Key key, T val){
+        Node* z = new Node(std::move(key), std::move(val), RED, NIL);
+        Node* y = NIL; Node* x = root;
+
+        while (x != NIL) {
+            y = x;
+            if (cmp(z->key, x->key)) x = x->l;
+            else if (cmp(x->key, z->key)) x = x->r;
+            else {
+                // 키 동일 — 갱신 후 삭제
+                x->val = std::move(z->val);
+                delete z;
+                return;
+            }
+        }
+        z->p = y;
+        if (y == NIL) root = z;
+        else if (cmp(z->key, y->key)) y->l = z;
+        else y->r = z;
+        ++sz;
+        insert_fix(z);
     }
 
-    void rightRotate(Node* x) {
-        Node* y = x->left;
-        x->left = y->right;
-        if (y->right) y->right->parent = x;
-        y->parent = x->parent;
-        if (!x->parent) root = y;
-        else if (x == x->parent->right) x->parent->right = y;
-        else x->parent->left = y;
-        y->right = x;
-        x->parent = y;
+    // 탐색
+    T* get(Key const& k){
+        Node* x = root;
+        while (x != NIL) {
+            if (cmp(k, x->key)) x = x->l;
+            else if (cmp(x->key, k)) x = x->r;
+            else return &x->val;
+        }
+        return nullptr;
     }
 
-    void fixInsert(Node* z) {
-        while (z->parent && z->parent->color == RED) {
-            Node* gp = z->parent->parent;
-            if (z->parent == gp->left) {
-                Node* y = gp->right;
-                if (y && y->color == RED) {
-                    z->parent->color = BLACK;
-                    y->color = BLACK;
-                    gp->color = RED;
-                    z = gp;
-                } else {
-                    if (z == z->parent->right) {
-                        z = z->parent;
-                        leftRotate(z);
-                    }
-                    z->parent->color = BLACK;
-                    gp->color = RED;
-                    rightRotate(gp);
-                }
+    // 하한(>= key)
+    pair<Key const*, T*> lower_bound_ptr(Key const& k){
+        Node* x = root; Node* ans = NIL;
+        while (x != NIL){
+            if (!cmp(x->key, k)) { ans = x; x = x->l; }
+            else x = x->r;
+        }
+        if (ans==NIL) return {nullptr,nullptr};
+        return { &ans->key, &ans->val };
+    }
+
+    // 삭제: 키 존재 시 한 개 삭제
+    bool erase(Key const& k){
+        Node* z = root;
+        while (z != NIL){
+            if (cmp(k, z->key)) z = z->l;
+            else if (cmp(z->key, k)) z = z->r;
+            else break;
+        }
+        if (z==NIL) return false;
+
+        Node* y = z;
+        Node* x = NIL;
+        Color yorig = y->color;
+
+        if (z->l == NIL) {
+            x = z->r;
+            transplant(z, z->r);
+        } else if (z->r == NIL) {
+            x = z->l;
+            transplant(z, z->l);
+        } else {
+            y = minimum(z->r);
+            yorig = y->color;
+            x = y->r;
+            if (y->p == z) {
+                x->p = y;
             } else {
-                Node* y = gp->left;
-                if (y && y->color == RED) {
-                    z->parent->color = BLACK;
-                    y->color = BLACK;
-                    gp->color = RED;
-                    z = gp;
-                } else {
-                    if (z == z->parent->left) {
-                        z = z->parent;
-                        rightRotate(z);
-                    }
-                    z->parent->color = BLACK;
-                    gp->color = RED;
-                    leftRotate(gp);
+                transplant(y, y->r);
+                y->r = z->r; y->r->p = y;
+            }
+            transplant(z, y);
+            y->l = z->l; y->l->p = y;
+            y->color = z->color;
+        }
+
+        delete z; --sz;
+        if (yorig == BLACK) erase_fix(x);
+        return true;
+    }
+
+    // 중위순회 출력(디버깅)
+    void debug_inorder() const {
+        inorder(root); std::cout << "\n";
+    }
+
+    // RBT 불변식 검사(디버깅): 모든 경로의 black-height 동일?
+    bool check_invariants() const {
+        if (root==NIL) return true;
+        if (root->color != BLACK) return false;
+        int target=-1;
+        return dfs_check(root, 0, target);
+    }
+
+private:
+    // --- 내부 유틸 ---
+    void clear_node(Node* x){
+        if (x==NIL) return;
+        clear_node(x->l); clear_node(x->r);
+        delete x;
+    }
+    void inorder(Node* x) const {
+        if (x==NIL) return;
+        inorder(x->l);
+        std::cout << x->key << "(" << (x->color==RED?'R':'B') << "):" << x->val << " ";
+        inorder(x->r);
+    }
+    Node* minimum(Node* x){ while (x->l!=NIL) x=x->l; return x; }
+
+    void left_rotate(Node* x){
+        Node* y = x->r;
+        x->r = y->l;
+        if (y->l != NIL) y->l->p = x;
+        y->p = x->p;
+        if (x->p==NIL) root=y;
+        else if (x==x->p->l) x->p->l=y; else x->p->r=y;
+        y->l = x; x->p=y;
+    }
+    void right_rotate(Node* x){
+        Node* y = x->l;
+        x->l = y->r;
+        if (y->r != NIL) y->r->p = x;
+        y->p = x->p;
+        if (x->p==NIL) root=y;
+        else if (x==x->p->r) x->p->r=y; else x->p->l=y;
+        y->r = x; x->p=y;
+    }
+    void insert_fix(Node* z){
+        while (z->p->color == RED){
+            if (z->p == z->p->p->l){
+                Node* y = z->p->p->r; // 삼촌
+                if (y->color == RED){
+                    z->p->color = BLACK;
+                    y->color    = BLACK;
+                    z->p->p->color = RED;
+                    z = z->p->p;
+                }else{
+                    if (z == z->p->r){ z = z->p; left_rotate(z); }
+                    z->p->color = BLACK;
+                    z->p->p->color = RED;
+                    right_rotate(z->p->p);
+                }
+            }else{
+                Node* y = z->p->p->l;
+                if (y->color == RED){
+                    z->p->color = BLACK;
+                    y->color    = BLACK;
+                    z->p->p->color = RED;
+                    z = z->p->p;
+                }else{
+                    if (z == z->p->l){ z = z->p; right_rotate(z); }
+                    z->p->color = BLACK;
+                    z->p->p->color = RED;
+                    left_rotate(z->p->p);
                 }
             }
         }
         root->color = BLACK;
     }
-
-    void inorder(Node* node) {
-        if (!node) return;
-        inorder(node->left);
-        cout << node->key << " (" << (node->color == RED ? "R" : "B") << "): " << node->value << endl;
-        inorder(node->right);
+    void transplant(Node* u, Node* v){
+        if (u->p==NIL) root=v;
+        else if (u==u->p->l) u->p->l=v; else u->p->r=v;
+        v->p = u->p;
     }
-
-public:
-    void insert(string key, int value) {
-        Node* z = new Node(key, value);
-        Node* y = nullptr;
-        Node* x = root;
-
-        while (x) {
-            y = x;
-            if (key < x->key) x = x->left;
-            else if (key > x->key) x = x->right;
-            else {
-                x->value = value;
-                delete z;
-                return;
+    void erase_fix(Node* x){
+        while (x!=root && x->color==BLACK){
+            if (x==x->p->l){
+                Node* w=x->p->r;
+                if (w->color==RED){
+                    w->color=BLACK; x->p->color=RED; left_rotate(x->p);
+                    w=x->p->r;
+                }
+                if (w->l->color==BLACK && w->r->color==BLACK){
+                    w->color=RED; x=x->p;
+                }else{
+                    if (w->r->color==BLACK){
+                        w->l->color=BLACK; w->color=RED; right_rotate(w);
+                        w=x->p->r;
+                    }
+                    w->color = x->p->color;
+                    x->p->color=BLACK;
+                    w->r->color=BLACK;
+                    left_rotate(x->p);
+                    x=root;
+                }
+            }else{
+                Node* w=x->p->l;
+                if (w->color==RED){
+                    w->color=BLACK; x->p->color=RED; right_rotate(x->p);
+                    w=x->p->l;
+                }
+                if (w->r->color==BLACK && w->l->color==BLACK){
+                    w->color=RED; x=x->p;
+                }else{
+                    if (w->l->color==BLACK){
+                        w->r->color=BLACK; w->color=RED; left_rotate(w);
+                        w=x->p->l;
+                    }
+                    w->color = x->p->color;
+                    x->p->color=BLACK;
+                    w->l->color=BLACK;
+                    right_rotate(x->p);
+                    x=root;
+                }
             }
         }
-
-        z->parent = y;
-        if (!y) root = z;
-        else if (key < y->key) y->left = z;
-        else y->right = z;
-
-        fixInsert(z);
+        x->color=BLACK;
     }
 
-    bool get(string key, int& out) {
-        Node* node = root;
-        while (node) {
-            if (key == node->key) {
-                out = node->value;
-                return true;
-            } else if (key < node->key) node = node->left;
-            else node = node->right;
+    bool dfs_check(Node* x, int blacks, int& target) const {
+        if (x==NIL){
+            if (target<0) target=blacks;
+            return target==blacks;
         }
-        return false;
-    }
-
-    void print() {
-        inorder(root);
+        if (x->color==BLACK) ++blacks;
+        // 빨강 부모-자식 연속 금지
+        if (x->color==RED){
+            if (x->l->color==RED || x->r->color==RED) return false;
+        }
+        return dfs_check(x->l,blacks,target) && dfs_check(x->r,blacks,target);
     }
 };
 
-// -------------------------
-// 🚀 테스트 예시
-// -------------------------
-int main() {
-    RBMap map;
-    map.insert("banana", 3);
-    map.insert("apple", 1);
-    map.insert("cherry", 2);
-    map.insert("banana", 5); // 업데이트
+// --- 데모 ---
+int main(){
+    rb_map<std::string,int> M;
+    M.insert_or_assign("banana", 3);
+    M.insert_or_assign("apple",  1);
+    M.insert_or_assign("cherry", 2);
+    M.insert_or_assign("banana", 5); // 갱신
 
-    int v;
-    if (map.get("banana", v)) cout << "banana = " << v << endl;
+    if (auto p = M.get("banana")) std::cout << "banana=" << *p << "\n";
 
-    map.print();
-    return 0;
+    auto [kptr, vptr] = M.lower_bound_ptr("blue");
+    if (kptr) std::cout << "lower_bound(blue) -> " << *kptr << ":" << *vptr << "\n";
+
+    std::cout << "inorder: "; M.debug_inorder();
+    std::cout << "erase apple -> " << M.erase("apple") << "\n";
+    std::cout << "inorder: "; M.debug_inorder();
+
+    std::cout << "RBT invariants: " << (M.check_invariants() ? "OK" : "BROKEN") << "\n";
 }
+```
 
+#### 구현 포인트
+
+- **센티넬 `NIL`(검정)**: null 대신 공용 노드를 사용해 분기 단순화
+- **회전/수선**: 삽입 `insert_fix`, 삭제 `erase_fix` — 표준 RBT 알고리즘
+- **높이 보장**: 삽입/삭제 각 \(O(\log n)\)
+- **학습용**: 예외/이동/반복자/노드 핸들 등은 생략
+
+---
+
+## 11) `std::map`로 동일 시나리오 작성(참고)
+
+```cpp
+#include <map>
+#include <iostream>
+#include <string>
+
+int main(){
+    std::map<std::string,int> m;
+    m.insert_or_assign("banana", 3);
+    m.insert_or_assign("apple",  1);
+    m.insert_or_assign("cherry", 2);
+    m.insert_or_assign("banana", 5); // 갱신
+
+    if (auto it = m.find("banana"); it!=m.end())
+        std::cout << "banana=" << it->second << "\n";
+
+    auto lb = m.lower_bound("blue");
+    if (lb!=m.end())
+        std::cout << "lower_bound(blue) -> " << lb->first << ":" << lb->second << "\n";
+
+    for (auto const& [k,v] : m) std::cout << k << ":" << v << " ";
+    std::cout << "\n";
+
+    m.erase("apple");
+    for (auto const& [k,v] : m) std::cout << k << ":" << v << " ";
+    std::cout << "\n";
+}
 ```
 
 ---
 
-## 5️⃣ std::map vs std::unordered_map
+## 12) 자주 묻는 질문(FAQ)
 
-| 항목 | map | unordered_map |
-|------|-----|----------------|
-| 내부 구조 | Red-Black Tree | Hash Table |
-| 시간 복잡도 | O(log n) | 평균 O(1), 최악 O(n) |
-| 키 정렬 | ✅ 지원 | ❌ 없음 |
-| 반복 순서 | 정렬 순 | 임의 순 |
-| 메모리 사용 | 보통 | 더 큼 |
-| 커스텀 정렬 | 가능 (comparator) | 불가능 |
+- **Q. 키를 수정해도 되나요?**  
+  **안 됩니다.** 키는 정렬 순서를 결정하므로, 요소를 통해 키를 변경하면 트리 불변식이 깨진다. 키를 바꾸려면 **`extract` → `key()` 수정 → `insert`**.
+
+- **Q. 대량 삽입이 느린데요?**  
+  트리 특성상 균형유지로 \(O(n\log n)\). 미리 데이터를 정렬해도 큰 개선은 없다.  
+  오프라인 대량 구축은 다른 자료구조/전용 빌더를 고려.
+
+- **Q. `unordered_map`과 무엇이 다른가요?**  
+  정렬 보장이 필요하면 `std::map`. 해시 테이블은 평균 \(O(1)\) 이지만 순서가 없다.
 
 ---
 
-## ✅ 요약
+## 13) 마무리 요약
 
-| 키워드 | 요약 |
-|--------|------|
-| std::map | 정렬된 키 기반, RBT로 구현된 연관 컨테이너 |
-| 시간 복잡도 | 삽입/탐색/삭제 O(log n) |
-| 구현 | 일반적으로 Red-Black Tree 기반 |
-| 대안 | 정렬 필요 없다면 `unordered_map` 고려 |
+- `std::map`은 **정렬 보장 + 로그 시간 연산**을 제공하는 **RBT 기반** 연관 컨테이너.
+- **비교자**는 **엄격 약순서**를 지켜야 하며, **투명 비교자**로 이형 조회 최적화 가능.
+- **삽입 패턴**을 올바르게 선택(`try_emplace`, `insert_or_assign` 등)하면 **불필요한 생성/복사**를 줄일 수 있다.
+- 내부적으로는 **RBT 회전/수선**으로 **높이 \( \le 2\log_2(n+1) \)** 를 유지 → **O(log n)** 보장.
+- 본문 교육용 **RBT 구현**으로 핵심 동작을 추적해보면, 표준 컨테이너의 동작/복잡도 보장이 더 명확해진다.

@@ -1,29 +1,17 @@
 ---
 layout: post
 title: Data Structure - 이진 트리
-date: 2024-12-09 19:20:23 +0900
+date: 2024-12-15 19:20:23 +0900
 category: Data Structure
 ---
-# 🌲 AVL 트리 - 자가 균형 이진 탐색 트리 (Self-Balancing BST)
+# AVL 트리 — 자가 균형 이진 탐색 트리 (Self-Balancing BST)
 
-**AVL 트리**는 1962년에 G. M. Adelson-Velsky와 E. M. Landis가 고안한 트리입니다.  
-기본적인 **이진 탐색 트리(BST)**의 삽입/삭제 연산 후에도 **항상 균형을 유지**하도록 만들어진 트리입니다.
+## 0) 왜 AVL 트리인가?
 
----
-
-## ⚠️ 왜 AVL 트리가 필요한가?
-
-### ❗ BST의 문제점
-
-일반적인 **이진 탐색 트리(BST)**는 다음 규칙만 만족합니다:
-
-> 왼쪽 자식 < 부모 < 오른쪽 자식
-
-하지만 **삽입 순서에 따라 트리가 심하게 한쪽으로 기울 수 있습니다**:
+일반 BST는 **삽입 순서에 따라 편향**될 수 있다.
 
 ```text
-삽입 순서: 10 → 20 → 30 → 40 → 50
-BST 구조:
+삽입: 10 → 20 → 30 → 40 → 50
 
     10
       \
@@ -36,318 +24,653 @@ BST 구조:
             50
 ```
 
-- 이 구조는 **사실상 연결 리스트**와 같고,  
-- 탐색/삽입/삭제의 시간 복잡도는 O(**n**)으로 퇴화합니다.
+- 사실상 **연결 리스트**와 동일.
+- 탐색/삽입/삭제 시간: \(O(n)\) 로 **퇴화**.
+
+**자가 균형 트리**(AVL)는 삽입/삭제 후 **자동 회전(rotation)**으로 **높이 \(O(\log n)\)**을 보장한다.
 
 ---
 
-## 💡 자가 균형 트리란?
+## 1) 정의와 불변식
 
-> 삽입/삭제 이후에도 **자동으로 균형을 맞추는 이진 탐색 트리**
+**AVL 트리**는 모든 노드 \(v\)에 대해
 
-**AVL 트리**는 그 대표적인 예입니다.  
-트리의 **모든 노드**에 대해 왼쪽과 오른쪽 서브트리 높이 차이가 ±1을 넘지 않도록 유지합니다.
+$$
+\mathrm{bf}(v) \;=\; \mathrm{height}(v_\text{left}) - \mathrm{height}(v_\text{right}) \;\in\; \{-1, 0, +1\}
+$$
 
-| 트리 종류 | 균형 조건 유지 방식 | 예시 |
-|-----------|--------------------|------|
-| 일반 BST | 없음               | 불균형 가능 |
-| AVL 트리 | 높이 차이 ≤ 1     | 회전으로 균형 유지 |
-| Red-Black 트리 | 색상 규칙 기반 | 로그 높이 보장 |
+을 유지한다.  
+여기서 빈 서브트리 높이는 \(0\) 또는 \(-1\) 중 하나로 정의할 수 있지만, 이 글에서는 **빈 노드 높이 0**, 실제 노드 높이는
+
+$$
+\mathrm{height}(v) \;=\; 1 + \max(\mathrm{height}(v_\text{left}), \mathrm{height}(v_\text{right}))
+$$
+
+를 사용한다.
+
+> 관례: 구현에서 높이 필드를 1-기준으로 저장(리프=1, 널=0).  
+> 수학 서술과 구현의 기준만 **일관**되게 유지하면 된다.
 
 ---
 
-## 📌 1. AVL 트리란?
+## 2) 회전(Rotation)
 
-> AVL 트리는 **모든 노드의 왼쪽 서브트리와 오른쪽 서브트리 높이 차이(균형 계수)**가 **-1, 0, +1**을 유지하는 이진 탐색 트리입니다.
+불균형이 발생한 **최상위 조상**(불균형 첫 노드)을 \(z\)라 하자.  
+\(z\)의 **무거운 쪽** 자식을 \(y\), \(y\)의 무거운 쪽 자식을 \(x\)라 두면 아래 4가지 케이스로 귀결된다.
 
-### 🔸 균형 계수 (Balance Factor)
+### 2.1 LL (Left-Left)
+
+- 상황: 왼쪽 서브트리의 **왼쪽**에 삽입/높이 증가  
+- 처방: **오른쪽 회전** \( \text{RightRotate}(z) \)
 
 ```
-balance = height(left subtree) - height(right subtree)
+    z                      y
+   / \                   /   \
+  y   C     →           A     z
+ / \                         / \
+A   B                       B   C
 ```
 
-- 균형 계수 ∈ { -1, 0, 1 } → 정상
-- 이 범위를 벗어나면 **회전(rotation)**을 통해 균형을 되찾습니다.
+### 2.2 RR (Right-Right)
+
+- 상황: 오른쪽 서브트리의 **오른쪽**에 삽입/높이 증가  
+- 처방: **왼쪽 회전** \( \text{LeftRotate}(z) \)
+
+```
+  z                          y
+ / \                       /   \
+A   y        →            z     C
+   / \                   / \
+  B   C                 A   B
+```
+
+### 2.3 LR (Left-Right)
+
+- 상황: 왼쪽 서브트리의 **오른쪽**에 삽입/높이 증가  
+- 처방: \(y\)에 **LeftRotate**, 이어서 \(z\)에 **RightRotate**
+
+```
+    z                        z                         x
+   / \                      / \                      /   \
+  y   D      →            x   D       →            y       z
+ / \                      / \                      / \     / \
+A   x                    y   C                    A   B   C   D
+   / \                  / \
+  B   C                A   B
+```
+
+### 2.4 RL (Right-Left)
+
+- 상황: 오른쪽 서브트리의 **왼쪽**에 삽입/높이 증가  
+- 처방: \(y\)에 **RightRotate**, 이어서 \(z\)에 **LeftRotate**
+
+```
+  z                          z                           x
+ / \                        / \                        /   \
+A   y        →             A   x        →            z       y
+   / \                        / \                    / \     / \
+  x   D                      B   y                  A   B   C   D
+ / \                            / \
+B   C                          C   D
+```
 
 ---
 
-## 🔁 2. 회전(Rotation)의 종류
-
-| 유형 | 상황 | 처리 방법 |
-|------|------|-----------|
-| LL (Left-Left) | 왼쪽 자식의 왼쪽에 삽입됨 | **오른쪽 회전(Right Rotation)** |
-| RR (Right-Right) | 오른쪽 자식의 오른쪽에 삽입됨 | **왼쪽 회전(Left Rotation)** |
-| LR (Left-Right) | 왼쪽 자식의 오른쪽에 삽입됨 | **왼쪽-오른쪽 이중 회전 (Left-Right)** |
-| RL (Right-Left) | 오른쪽 자식의 왼쪽에 삽입됨 | **오른쪽-왼쪽 이중 회전 (Right-Left)** |
-
----
-
-## 🧱 3. 노드 구조와 높이 계산 (C++)
+## 3) C++ 기본 뼈대
 
 ```cpp
-#include <iostream>
-#include <algorithm>
+#include <bits/stdc++.h>
 using namespace std;
 
 struct Node {
-    int data;
-    Node* left;
-    Node* right;
-    int height;
-
-    Node(int val) : data(val), left(nullptr), right(nullptr), height(1) {}
+    int key;
+    Node *left, *right;
+    int height; // 1-based (leaf=1, null=0)
+    explicit Node(int k): key(k), left(nullptr), right(nullptr), height(1) {}
 };
 
-int getHeight(Node* node) {
-    return node ? node->height : 0;
-}
+int h(Node* n) { return n ? n->height : 0; }
 
-int getBalance(Node* node) {
-    return node ? getHeight(node->left) - getHeight(node->right) : 0;
-}
+int bf(Node* n) { return n ? h(n->left) - h(n->right) : 0; }
 
-void updateHeight(Node* node) {
-    if (node)
-        node->height = 1 + max(getHeight(node->left), getHeight(node->right));
+void pull(Node* n) {
+    if (n) n->height = 1 + max(h(n->left), h(n->right));
 }
 ```
 
----
-
-## 🔄 4. 회전 함수들
+### 회전 구현
 
 ```cpp
-Node* rightRotate(Node* y) {
+Node* rotateRight(Node* y) {
     Node* x = y->left;
     Node* T2 = x->right;
 
+    // 회전
     x->right = y;
     y->left = T2;
 
-    updateHeight(y);
-    updateHeight(x);
-
+    // 높이 갱신 (아래→위)
+    pull(y);
+    pull(x);
     return x;
 }
 
-Node* leftRotate(Node* x) {
+Node* rotateLeft(Node* x) {
     Node* y = x->right;
     Node* T2 = y->left;
 
+    // 회전
     y->left = x;
     x->right = T2;
 
-    updateHeight(x);
-    updateHeight(y);
-
+    // 높이 갱신
+    pull(x);
+    pull(y);
     return y;
 }
 ```
 
 ---
 
-## ➕ 5. 삽입 연산 with 재균형
+## 4) 삽입(재귀) + 재균형
+
+AVL 삽입은 **BST 삽입 → 올라오며 높이/균형 검사 → 필요한 회전** 순서로 진행된다.  
+중복 정책은 본 구현에서 “**금지**”로 둔다(필요 시 카운트 보강으로 확장).
 
 ```cpp
-Node* insert(Node* node, int key) {
-    if (!node) return new Node(key);
+Node* rebalance(Node* n) {
+    pull(n);
+    int B = bf(n);
 
-    if (key < node->data)
-        node->left = insert(node->left, key);
-    else if (key > node->data)
-        node->right = insert(node->right, key);
-    else
-        return node; // 중복 허용 안함
+    // LL
+    if (B > 1 && bf(n->left) >= 0) return rotateRight(n);
 
-    updateHeight(node);
-    int balance = getBalance(node);
-
-    // LL Case
-    if (balance > 1 && key < node->left->data)
-        return rightRotate(node);
-
-    // RR Case
-    if (balance < -1 && key > node->right->data)
-        return leftRotate(node);
-
-    // LR Case
-    if (balance > 1 && key > node->left->data) {
-        node->left = leftRotate(node->left);
-        return rightRotate(node);
+    // LR
+    if (B > 1 && bf(n->left) < 0) {
+        n->left = rotateLeft(n->left);
+        return rotateRight(n);
     }
 
-    // RL Case
-    if (balance < -1 && key < node->right->data) {
-        node->right = rightRotate(node->right);
-        return leftRotate(node);
+    // RR
+    if (B < -1 && bf(n->right) <= 0) return rotateLeft(n);
+
+    // RL
+    if (B < -1 && bf(n->right) > 0) {
+        n->right = rotateRight(n->right);
+        return rotateLeft(n);
     }
 
-    return node;
+    return n; // already balanced
+}
+
+Node* insert(Node* root, int key) {
+    if (!root) return new Node(key);
+    if (key < root->key)      root->left  = insert(root->left, key);
+    else if (key > root->key) root->right = insert(root->right, key);
+    else return root; // 중복 금지
+
+    return rebalance(root);
 }
 ```
 
-## 6. AVL 트리의 삭제 연산
+> 사실 삽입 시 **최대 한 번의 단/복합 회전**(single/double)만 발생한다.
 
-AVL 트리에서 삭제 연산은 다음 두 가지 과정을 포함합니다:
+### 삽입 단계 예시(LL)
 
-1. **일반 BST 삭제 방식**으로 노드를 제거
-2. **균형이 깨진 노드에 대해 회전**을 수행하여 자가 균형 유지
+```
+빈 → 30 삽입
+    30
 
----
+→ 20 삽입
+    30
+   /
+  20
 
-### BST 삭제 요약
-
-삭제할 노드 `x`를 찾은 후 다음 중 하나로 처리합니다:
-
-| 상황 | 처리 방식 |
-|------|-----------|
-| 자식 없음 (리프) | 그냥 제거 |
-| 자식 1개 | 자식을 부모와 연결 |
-| 자식 2개 | 오른쪽 서브트리의 최솟값(또는 왼쪽 서브트리의 최댓값)으로 교체 후 삭제 |
-
----
-
-### 삭제 시 필요한 회전 처리
-
-삭제로 인해 서브트리의 높이 차이가 ±1을 넘는 경우, 다음 회전이 필요할 수 있습니다:
-
-| Case | 조건 | 처리 |
-|------|------|------|
-| **LL** | 왼쪽이 2 이상 크고, 왼쪽 자식의 왼쪽이 더 큼 | **오른쪽 회전** |
-| **LR** | 왼쪽이 2 이상 크고, 왼쪽 자식의 오른쪽이 더 큼 | **왼쪽 후 오른쪽 회전** |
-| **RR** | 오른쪽이 2 이상 크고, 오른쪽 자식의 오른쪽이 더 큼 | **왼쪽 회전** |
-| **RL** | 오른쪽이 2 이상 크고, 오른쪽 자식의 왼쪽이 더 큼 | **오른쪽 후 왼쪽 회전** |
+→ 10 삽입 (z=30, y=20, x=10 → LL)
+      30                20
+     /        →        /  \
+    20               10    30
+   /
+  10
+```
 
 ---
 
-### AVL 트리 삭제 함수
+## 5) 삭제(재귀) + 재균형
+
+삭제는 **BST 삭제 로직**으로 노드를 제거한 뒤, **재균형**을 수행한다.  
+삭제에서는 **경로 상 여러 위치에서 회전이 반복**될 수 있다(최대 \(O(\log n)\)회).
 
 ```cpp
-Node* minValueNode(Node* node) {
-    Node* current = node;
-    while (current && current->left)
-        current = current->left;
-    return current;
-}
+Node* minNode(Node* n) { while (n && n->left) n = n->left; return n; }
 
-Node* deleteNode(Node* root, int key) {
+Node* erase(Node* root, int key) {
     if (!root) return nullptr;
 
-    // BST 삭제 로직
-    if (key < root->data)
-        root->left = deleteNode(root->left, key);
-    else if (key > root->data)
-        root->right = deleteNode(root->right, key);
+    if (key < root->key)      root->left  = erase(root->left, key);
+    else if (key > root->key) root->right = erase(root->right, key);
     else {
-        // Case 1/2/3: 삭제 대상 노드 찾음
+        // 0 or 1 child
         if (!root->left || !root->right) {
-            Node* temp = root->left ? root->left : root->right;
+            Node* t = root->left ? root->left : root->right;
             delete root;
-            return temp;
+            return t;
         }
-        // Case 4: 두 자식이 있는 경우
-        Node* temp = minValueNode(root->right);  // 또는 maxValueNode(root->left)
-        root->data = temp->data;
-        root->right = deleteNode(root->right, temp->data);
+        // 2 children: in-order successor로 대체
+        Node* s = minNode(root->right);
+        root->key = s->key;
+        root->right = erase(root->right, s->key);
+    }
+    return rebalance(root);
+}
+```
+
+### 삭제 회전 케이스 표
+
+| Case | 조건(노드 `v`) | 조치 |
+|---|---|---|
+| LL | `bf(v) = +2` and `bf(v->left) ≥ 0` | `rotateRight(v)` |
+| LR | `bf(v) = +2` and `bf(v->left) < 0` | `v->left=rotateLeft(v->left)` → `rotateRight(v)` |
+| RR | `bf(v) = -2` and `bf(v->right) ≤ 0` | `rotateLeft(v)` |
+| RL | `bf(v) = -2` and `bf(v->right) > 0` | `v->right=rotateRight(v->right)` → `rotateLeft(v)` |
+
+> 삭제는 삽입과 달리 **여러 조상**에서 연쇄적으로 균형이 깨질 수 있으므로 루트까지 **되올라가며** 검사한다.
+
+---
+
+## 6) 순회/검증/유틸
+
+```cpp
+void inorder(Node* n){ if(!n) return; inorder(n->left); cout<<n->key<<" "; inorder(n->right); }
+void preorder(Node* n){ if(!n) return; cout<<n->key<<" "; preorder(n->left); preorder(n->right); }
+void postorder(Node* n){ if(!n) return; postorder(n->left); postorder(n->right); cout<<n->key<<" "; }
+
+bool isAVL(Node* n, int& outHeight) {
+    if (!n) { outHeight = 0; return true; }
+    int hl, hr;
+    if (!isAVL(n->left, hl)) return false;
+    if (!isAVL(n->right, hr)) return false;
+    int bal = hl - hr;
+    bool ok = (bal >= -1 && bal <= 1);
+    outHeight = 1 + max(hl, hr);
+    return ok && (n->height == outHeight);
+}
+
+void levelOrder(Node* root){
+    if(!root) return;
+    queue<Node*> q; q.push(root);
+    while(!q.empty()){
+        auto* u=q.front(); q.pop();
+        cout<<u->key<<" ";
+        if(u->left) q.push(u->left);
+        if(u->right) q.push(u->right);
+    }
+}
+```
+
+### floor / ceil (lower/upper bound)
+
+```cpp
+Node* floorKey(Node* n, int x){ // <= x 중 최대
+    Node* ans=nullptr;
+    while(n){
+        if(n->key==x) return n;
+        if(n->key < x){ ans=n; n=n->right; }
+        else n=n->left;
+    }
+    return ans;
+}
+Node* ceilKey(Node* n, int x){ // >= x 중 최소
+    Node* ans=nullptr;
+    while(n){
+        if(n->key==x) return n;
+        if(n->key > x){ ans=n; n=n->left; }
+        else n=n->right;
+    }
+    return ans;
+}
+```
+
+---
+
+## 7) 예제: 삽입/삭제 동작
+
+```cpp
+int main(){
+    Node* root=nullptr;
+    for(int x: {30, 20, 40, 10, 25, 35, 50, 5, 4}) {
+        root = insert(root, x);
     }
 
-    // 높이 갱신 및 균형 확인
-    updateHeight(root);
-    int balance = getBalance(root);
+    cout<<"Inorder: "; inorder(root); cout<<"\n";
+    cout<<"Level:   "; levelOrder(root); cout<<"\n";
 
-    // LL Case
-    if (balance > 1 && getBalance(root->left) >= 0)
-        return rightRotate(root);
+    int hh=0;
+    cout<<"isAVL? "<<(isAVL(root, hh) ? "true" : "false")<<", height="<<hh<<"\n";
 
-    // LR Case
-    if (balance > 1 && getBalance(root->left) < 0) {
-        root->left = leftRotate(root->left);
-        return rightRotate(root);
+    // 삭제 테스트
+    for(int del: {20, 40, 30}) {
+        root = erase(root, del);
+        cout<<"After erase("<<del<<") Inorder: "; inorder(root); cout<<"\n";
+        cout<<"Level: "; levelOrder(root); cout<<"\n";
+        cout<<"AVL? "<<(isAVL(root, hh) ? "true" : "false")<<", height="<<hh<<"\n";
+    }
+}
+```
+
+---
+
+## 8) 반복형 삽입(경로 스택 이용)
+
+부모 포인터 없이도, 삽입 경로를 스택에 기록해 **되올라가며** `pull+rebalance`를 수행할 수 있다.
+
+```cpp
+Node* insertIter(Node* root, int key){
+    if(!root) return new Node(key);
+
+    // 1) BST 삽입 + 경로 스택
+    vector<Node*> path;
+    Node* cur=root;
+    while(cur){
+        path.push_back(cur);
+        if(key == cur->key) return root; // 중복 금지
+        cur = (key < path.back()->key) ? path.back()->left : path.back()->right;
     }
 
-    // RR Case
-    if (balance < -1 && getBalance(root->right) <= 0)
-        return leftRotate(root);
+    // 실제 삽입 지점 찾기
+    Node* parent = path.back();
+    Node* leaf = new Node(key);
+    if(key < parent->key) parent->left = leaf; else parent->right = leaf;
 
-    // RL Case
-    if (balance < -1 && getBalance(root->right) > 0) {
-        root->right = rightRotate(root->right);
-        return leftRotate(root);
+    // 2) 되올라가며 재균형
+    for(int i=(int)path.size()-1; i>=0; --i){
+        Node* p = path[i];
+
+        // p의 자식 링크를 rebalance 결과로 치환해줘야 함.
+        // 부모가 있으면 부모의 좌/우를 갱신, 없으면 root를 갱신.
+        Node* pp = (i>0) ? path[i-1] : nullptr;
+
+        Node* newp = rebalance(p);
+        if(!pp) root = newp;
+        else {
+            if(pp->left == p)  pp->left = newp;
+            else               pp->right = newp;
+        }
     }
-
     return root;
 }
 ```
 
+> 반복형 삭제도 동일 아이디어로 구현 가능(경로 스택 또는 부모 포인터로 되올라가기).
+
 ---
 
-## 📤 6. 중위 순회 (Inorder Traversal)
+## 9) 정렬 배열 → AVL 빌드
+
+정렬 배열로부터 **완전 균형 BST**를 만들면, 이는 자동으로 AVL 조건을 만족한다.
 
 ```cpp
-void inorder(Node* root) {
-    if (!root) return;
-    inorder(root->left);
-    cout << root->data << " ";
-    inorder(root->right);
+Node* buildFromSorted(const vector<int>& a, int l, int r){
+    if(l>r) return nullptr;
+    int m = (l+r)/2;
+    Node* n = new Node(a[m]);
+    n->left  = buildFromSorted(a, l, m-1);
+    n->right = buildFromSorted(a, m+1, r);
+    pull(n);
+    return n;
 }
 ```
 
 ---
 
-
-## 🧪 4. 전체 사용 예시
+## 10) 범위 쿼리 예시
 
 ```cpp
-int main() {
-    Node* root = nullptr;
-    int values[] = { 30, 20, 40, 10, 25, 35, 50 };
-    for (int val : values)
-        root = insert(root, val);
-
-    cout << "Inorder before deletion: ";
-    inorder(root);
-    cout << endl;
-
-    root = deleteNode(root, 20);
-
-    cout << "Inorder after deletion: ";
-    inorder(root);
-    cout << endl;
-
-    return 0;
+void rangePrint(Node* n, int L, int R){
+    if(!n) return;
+    if(n->key > L) rangePrint(n->left, L, R);
+    if(L <= n->key && n->key <= R) cout<<n->key<<" ";
+    if(n->key < R) rangePrint(n->right, L, R);
 }
 ```
 
-### 🔽 출력 예시
-```
-Inorder before deletion: 10 20 25 30 35 40 50  
-Inorder after deletion: 10 25 30 35 40 50
-```
 ---
 
-## ✅ 8. AVL 트리의 시간 복잡도
+## 11) 중복 키 정책 확장(카운트 보강)
 
-| 연산 | 시간 복잡도 |
-|------|-------------|
-| 탐색 | O(log n) |
-| 삽입 | O(log n) |
-| 삭제 | O(log n) |
+간단히 `count` 필드를 추가하면 **멀티셋**처럼 동작한다.
 
-AVL 트리는 항상 **O(log n)** 높이를 유지하기 때문에,  
-불균형한 BST보다 훨씬 안정적입니다.
+```cpp
+struct MNode {
+    int key, count, height;
+    MNode *left, *right;
+    explicit MNode(int k): key(k), count(1), height(1), left(nullptr), right(nullptr) {}
+};
+// insert: 동일 키면 count++, erase: count>1이면 count-- 후 반환
+// 나머지 rebalance 로직은 동일 (높이 갱신은 key와 무관)
+```
 
 ---
 
-## 🧠 마무리 요약
+## 12) 수학: 높이 상계와 회전 수
 
-| 키워드 | 설명 |
-|--------|------|
-| BST의 단점 | 삽입 순서에 따라 선형 구조로 퇴화 가능 |
-| AVL 트리 | 자가 균형 이진 탐색 트리 |
-| 균형 조건 | 각 노드의 왼쪽·오른쪽 서브트리 높이 차 ≤ 1 |
-| 회전 종류 | LL, RR, LR, RL |
-| 삭제 원리 | 일반 BST 삭제 방식 + 균형 유지 |
-| 회전 종류 | LL, RR, LR, RL |
-| 장점 | 탐색, 삽입, 삭제 모두 O(log n) |
-| 단점 | 삽입/삭제가 일반 BST보다 약간 느릴 수 있음 (회전 필요) |
-| 주의 | 회전 후 `height` 갱신 필수 |
+### 12.1 최소 노드 수 재귀
+
+높이가 \(h\)인 AVL 트리의 **최소 노드 수**를 \(N(h)\)라 하자(리프=높이 1, 널=0 기준).  
+균형계수 \(\in\{-1,0,+1\}\) 조건으로부터
+
+$$
+N(h) \;=\; 1 + N(h-1) + N(h-2),\quad N(1)=1,\; N(0)=0
+$$
+
+을 얻는다. 이는 사실상 **피보나치**와 같은 점화식이다.  
+귀납적으로
+
+$$
+N(h) \;\ge\; F_{h+1} \;\;\Rightarrow\;\; h \;\le\; \mathcal{O}(\log n)
+$$
+
+이며, 좀 더 정밀히는
+
+$$
+h \;\le\; 1.44 \,\log_2(n + 2) \;-\; 0.328 \quad \text{(근사)}
+$$
+
+를 얻는다. 즉 **항상 로그 높이**가 보장된다.
+
+### 12.2 회전 수
+
+- **삽입**: 불균형 **최상위 한 곳**에서 **단/복합 회전 1회**면 충분. ⇒ **회전 수 \(O(1)\)**  
+- **삭제**: 높이가 감소하며 **여러 조상**에서 연쇄적으로 불균형이 날 수 있어, **최대 \(O(\log n)\)** 회전.
+
+---
+
+## 13) 복잡도
+
+| 연산 | 시간 | 비고 |
+|---|---|---|
+| 탐색 | \(O(\log n)\) | BST와 동일(항상 로그 높이) |
+| 삽입 | \(O(\log n)\) | 경로 갱신 + **회전 \(O(1)\)** |
+| 삭제 | \(O(\log n)\) | 경로 갱신 + **회전 \(O(\log n)\)** 가능 |
+| 공간 | \(O(n)\) | 노드 1개당 `key,left,right,height` |
+
+---
+
+## 14) 직렬화/역직렬화(전위 + 널 토큰)
+
+BST/AVL 모두에 사용 가능한 간결한 방법이다.
+
+```cpp
+void serialize(Node* n, ostream& os){
+    if(!n){ os<<"# "; return; }
+    os<<n->key<<" ";
+    serialize(n->left, os);
+    serialize(n->right, os);
+}
+Node* deserialize(istringstream& iss){
+    string t; if(!(iss>>t)) return nullptr;
+    if(t=="#") return nullptr;
+    Node* n=new Node(stoi(t));
+    n->left  = deserialize(iss);
+    n->right = deserialize(iss);
+    pull(n);
+    return n;
+}
+```
+
+---
+
+## 15) 실전 팁과 버그 포인트
+
+1. **pull 순서**: 회전 직후 **아래 노드부터** 높이를 갱신하고, 그 다음 상위 노드를 갱신한다.  
+2. **bf 분기**: `>=, <=` 경계 실수 주의(삽입/삭제 케이스 표와 일치시킬 것).  
+3. **중복 정책**: 금지/카운트 보강 중 하나를 **일관되게**.  
+4. **메모리 관리**: 테스트 종료 시 모든 노드 `delete`(리크 검사).  
+5. **검증 도구**: `isAVL`로 높이/균형/저장 height 일치까지 확인.  
+6. **반복 구현**: 경로 스택으로 부모 포인터 없이도 회전 결과를 부모에 **재연결**하는 코드가 핵심.
+
+---
+
+## 16) 종합 예제(하나의 파일)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node {
+    int key; Node *left,*right; int height;
+    explicit Node(int k): key(k), left(nullptr), right(nullptr), height(1) {}
+};
+
+int h(Node* n){ return n? n->height:0; }
+void pull(Node* n){ if(n) n->height = 1 + max(h(n->left), h(n->right)); }
+int bf(Node* n){ return n? h(n->left)-h(n->right):0; }
+
+Node* rotateRight(Node* y){
+    Node* x=y->left; Node* T2=x->right;
+    x->right=y; y->left=T2;
+    pull(y); pull(x);
+    return x;
+}
+Node* rotateLeft(Node* x){
+    Node* y=x->right; Node* T2=y->left;
+    y->left=x; x->right=T2;
+    pull(x); pull(y);
+    return y;
+}
+
+Node* rebalance(Node* n){
+    pull(n);
+    int B = bf(n);
+    if(B > 1 && bf(n->left) >= 0) return rotateRight(n);              // LL
+    if(B > 1 && bf(n->left) <  0){ n->left=rotateLeft(n->left); return rotateRight(n);} // LR
+    if(B < -1 && bf(n->right)<= 0) return rotateLeft(n);              // RR
+    if(B < -1 && bf(n->right)>  0){ n->right=rotateRight(n->right); return rotateLeft(n);} // RL
+    return n;
+}
+
+Node* insert(Node* root, int key){
+    if(!root) return new Node(key);
+    if(key < root->key)      root->left  = insert(root->left, key);
+    else if(key > root->key) root->right = insert(root->right, key);
+    else return root; // dup forbid
+    return rebalance(root);
+}
+
+Node* minNode(Node* n){ while(n&&n->left) n=n->left; return n; }
+
+Node* erase(Node* root, int key){
+    if(!root) return nullptr;
+    if(key < root->key)      root->left  = erase(root->left, key);
+    else if(key > root->key) root->right = erase(root->right, key);
+    else{
+        if(!root->left || !root->right){
+            Node* t = root->left? root->left : root->right;
+            delete root; return t;
+        }
+        Node* s = minNode(root->right);
+        root->key = s->key;
+        root->right = erase(root->right, s->key);
+    }
+    return rebalance(root);
+}
+
+void inorder(Node* n){ if(!n) return; inorder(n->left); cout<<n->key<<" "; inorder(n->right); }
+void levelOrder(Node* root){
+    if(!root) return; queue<Node*> q; q.push(root);
+    while(!q.empty()){ auto* u=q.front(); q.pop(); cout<<u->key<<" ";
+        if(u->left) q.push(u->left); if(u->right) q.push(u->right); }
+}
+bool isAVL(Node* n, int& outH){
+    if(!n){ outH=0; return true; }
+    int hl,hr;
+    if(!isAVL(n->left, hl)) return false;
+    if(!isAVL(n->right, hr)) return false;
+    outH = 1+max(hl,hr);
+    if(n->height != outH) return false;
+    int B = hl-hr;
+    return (B>=-1 && B<=1);
+}
+
+int main(){
+    Node* root=nullptr;
+    vector<int> seq = {30, 20, 40, 10, 25, 35, 50, 5, 4, 45, 42, 43};
+    for(int x: seq){ root = insert(root, x); }
+
+    cout<<"Inorder : "; inorder(root); cout<<"\n";
+    cout<<"Level   : "; levelOrder(root); cout<<"\n";
+    int hh=0; cout<<"isAVL? "<<(isAVL(root, hh)?"true":"false")<<", height="<<hh<<"\n";
+
+    for(int del : {20, 40, 30}) {
+        root = erase(root, del);
+        cout<<"After erase("<<del<<")\n";
+        cout<<"  Inorder: "; inorder(root); cout<<"\n";
+        cout<<"  Level  : "; levelOrder(root); cout<<"\n";
+        cout<<"  AVL? "<<(isAVL(root, hh)?"true":"false")<<", height="<<hh<<"\n";
+    }
+}
+```
+
+---
+
+## 17) Red-Black 트리와 비교(요지)
+
+| 항목 | AVL | Red-Black |
+|---|---|---|
+| 균형 기준 | 높이 차이 \(\le 1\) (더 엄격) | 색 규칙(느슨) |
+| 탐색 성능 | **더 좋음**(평균 높이 낮음) | 다소 불리 |
+| 삽입 회전 | \(O(1)\) (최대 2회) | 최대 2회 |
+| 삭제 회전 | **최대 \(O(\log n)\)** | 평균 적음(색 재도색多) |
+| 적용 | **읽기 빈번**(DB 인덱스/캐시 등) | **갱신 빈번**(OS 맵/언어 런타임) |
+
+---
+
+## 18) 퍼징/테스트 아이디어
+
+- 무작위 연산열(삽입/삭제/탐색)을 생성해 `std::multiset<int>`과 **정렬 결과**를 비교.
+- 매 스텝 `isAVL`로 높이/균형/저장 height 일치 확인.
+- 삭제 반복 시 **루트까지 재균형**이 잘 전파되는지 확인.
+
+```cpp
+// pseudo
+// for t in trials:
+//   Node* root=nullptr; multiset<int> ms;
+//   for step in steps:
+//     pick op in {ins, del, chk}:
+//       if ins: x=rand(); root=insert(root,x); ms.insert(x);
+//       if del: x=rand(); root=erase(root,x); auto it=ms.find(x); if(it!=ms.end()) ms.erase(it);
+//       if chk: vector<int> v1; inorderCollect(root,v1);
+//               vector<int> v2(ms.begin(), ms.end());
+//               assert(v1==v2); int hh; assert(isAVL(root,hh));
+```
+
+---
+
+## 19) 정리
+
+- **AVL 불변식**: 모든 노드에서 \( \mathrm{bf} \in \{-1,0,+1\} \).
+- **삽입**: BST 삽입 후 **단/복합 회전 1회**로 복구.  
+- **삭제**: BST 삭제 후 경로 따라 **여러 회전** 가능.  
+- **항상 로그 높이**(피보나치 하계로 도출), 탐색/삽입/삭제는 \(O(\log n)\).  
+- **검증/유틸**(isAVL, level, floor/ceil, 직렬화)과 **반복형 삽입**으로 실전성을 강화.  
+- 읽기 성능이 중요한 시나리오에서 **AVL**은 여전히 강력한 선택지다.

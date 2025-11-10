@@ -4,253 +4,553 @@ title: AWS - Kinesis Data Analytics
 date: 2025-07-28 18:20:23 +0900
 category: AWS
 ---
-# 📊 AWS Kinesis Data Analytics 완전 정복
+# AWS Kinesis Data Analytics
 
-**Kinesis Data Analytics(KDA)**는 실시간으로 들어오는 스트리밍 데이터를 **SQL, Java, Apache Flink**를 활용해 분석할 수 있게 해주는 완전관리형 서비스입니다.  
-빅데이터, 실시간 대시보드, 이상 탐지, IoT 등 다양한 분야에서 활용됩니다.
-
----
-
-## 1. 🔍 Kinesis Data Analytics 개요
-
-Kinesis Data Analytics는 스트리밍 데이터를 실시간으로 처리하고 분석하는 완전 관리형 서비스입니다.  
-데이터 소스는 다음과 같은 서비스와 연결됩니다:
-
-- **Kinesis Data Streams**
-- **Kinesis Data Firehose**
-- **Amazon MSK (Managed Kafka)**
-
-이 데이터를 SQL 또는 Flink 애플리케이션으로 처리하여:
-
-- 실시간 대시보드로 시각화
-- 이상 탐지
-- 알림 발송
-- 데이터 적재(S3, Redshift, Lambda)
-
-등을 수행할 수 있습니다.
-
----
-
-## 2. 🧩 주요 특징
-
-| 기능 | 설명 |
-|------|------|
-| 실시간 스트리밍 분석 | 실시간으로 수집된 데이터에 대해 분석 실행 |
-| SQL/Flink 지원 | SQL 기반 또는 Apache Flink 애플리케이션 생성 가능 |
-| 자동 확장 | 데이터량에 따라 자동 확장 |
-| 통합 | Kinesis, Firehose, MSK 등과 통합 |
-| 운영 용이성 | 완전관리형으로 유지보수 부담 없음 |
-
----
-
-## 3. 🏗 아키텍처 구성
+## 0) 한눈에 보는 전체 아키텍처
 
 ```text
-Data Source → Kinesis Data Stream / Firehose / MSK
-           → Kinesis Data Analytics(SQL 또는 Flink)
-           → S3, Redshift, OpenSearch, Lambda, CloudWatch 등
+┌────────────┐    PutRecord      ┌────────────────────┐
+│  Producers │ ─────────────────▶│ Kinesis Data Streams│
+│  (Apps/IoT)│                   └────────────────────┘
+└────────────┘                           │
+                                         │ (Streams / MSK / Firehose)
+                                         ▼
+                              ┌────────────────────────────┐
+                              │ Kinesis Data Analytics     │
+                              │  • SQL  • Apache Flink     │
+                              └────────────────────────────┘
+                         ┌──────────────┬───────────────┬──────────────┐
+                         ▼              ▼               ▼              ▼
+                  Amazon S3        Lambda           Redshift     OpenSearch
+                  (Data Lake)      (Actions)        (DWH)        (Search/Logs)
 ```
 
----
-
-## 4. 💻 지원 언어: SQL vs Apache Flink
-
-### SQL 기반 KDA
-- 초보자 친화적
-- 빠른 시나리오 구축 가능
-- 기본적인 필터링, 집계, 조인 가능
-
-### Apache Flink 기반 KDA
-- Java/Scala 기반
-- 복잡한 상태 기반 연산, 타임윈도우, 이벤트 시간 지원
-- 강력한 커스터마이징 가능
+**핵심 판단 기준**
+- **SQL 애플리케이션**: 빠른 구축, 운영 단순, 집계/필터/윈도우/간단 조인.  
+- **Flink 애플리케이션**: 이벤트타임·상태 기반·CEP·세밀한 backpressure 제어·Exactly-once.
 
 ---
 
-## 5. 🔌 데이터 소스 연결 (Input)
+## 1) 입력 소스와 레코드 스키마
 
-애플리케이션을 만들면 Input source를 지정해야 합니다.
+### 1.1 지원 소스
+- **Kinesis Data Streams (KDS)**, **Amazon MSK (Kafka)**, **Kinesis Data Firehose**(일부 경로)
+- 포맷: JSON/CSV/Avro 등(직접 파싱). **스키마 정의**는 SQL 런타임에 필수.
 
-### 지원 소스
-- Amazon Kinesis Data Streams
-- Amazon Kinesis Data Firehose
-- Amazon MSK (Kafka)
+### 1.2 JSON 스키마 예시 (클릭 이벤트)
+```json
+{
+  "timestamp": "2025-11-10T02:31:12Z",
+  "user_id": "u-1932",
+  "action": "click",
+  "page": "/products/42",
+  "device": "mobile",
+  "country": "KR",
+  "value": 1
+}
+```
 
-### 예: Data Stream 연결
+**이벤트 타임 추출 규칙**
+- 원천 메시지의 `timestamp`를 SQL/Flink에서 **ROWTIME**로 매핑해 **Event Time** 기반 처리.
+
+---
+
+## 2) KDA for SQL — 실무 문법 총정리
+
+### 2.1 입력 매핑 (Application Schema)
+KDA 콘솔/CLI에서 입력 스키마를 정의:
 
 ```json
 {
   "Input": {
-    "NamePrefix": "MyInput",
+    "NamePrefix": "evt",
     "KinesisStreamsInput": {
-      "ResourceARN": "arn:aws:kinesis:region:acct:stream/MyStream"
+      "ResourceARN": "arn:aws:kinesis:ap-northeast-2:123456789012:stream/app-events"
     },
     "InputSchema": {
-      "RecordFormat": {
-        "RecordFormatType": "JSON"
-      },
+      "RecordFormat": {"RecordFormatType": "JSON"},
       "RecordColumns": [
-        {"Name": "event_time", "SqlType": "TIMESTAMP", "Mapping": "$.timestamp"},
-        {"Name": "user_id", "SqlType": "VARCHAR(64)", "Mapping": "$.user_id"},
-        {"Name": "action", "SqlType": "VARCHAR(20)", "Mapping": "$.action"}
+        {"Name":"ROWTIME","SqlType":"TIMESTAMP","Mapping":"$.timestamp"},
+        {"Name":"user_id","SqlType":"VARCHAR(64)","Mapping":"$.user_id"},
+        {"Name":"action","SqlType":"VARCHAR(20)","Mapping":"$.action"},
+        {"Name":"page","SqlType":"VARCHAR(256)","Mapping":"$.page"},
+        {"Name":"country","SqlType":"VARCHAR(8)","Mapping":"$.country"},
+        {"Name":"value","SqlType":"INTEGER","Mapping":"$.value"}
       ]
     }
   }
 }
 ```
 
----
+> **TIP**: `ROWTIME`는 예약 컬럼(이벤트 타임). 없으면 프로세싱 타임으로 동작해 늦게 도착한 이벤트 보정이 어렵다.
 
-## 6. ⚙️ 데이터 처리 (SQL)
-
-SQL 기반에서는 다음과 같은 연산을 수행할 수 있습니다:
-
-- 필터링 (`WHERE`)
-- 집계 (`SUM`, `AVG`, `COUNT`)
-- 윈도우 함수 (`TUMBLING`, `SLIDING`, `SESSION`)
-- JOIN
-
-### 윈도우 예제
+### 2.2 인-애플리케이션 스트림/펌프
+SQL 모듈은 **STREAM**(결과 버퍼)과 **PUMP**(연산 파이프) 개념 사용.
 
 ```sql
-CREATE OR REPLACE STREAM "DEST_STREAM" (
-  user_id VARCHAR(64),
-  click_count INTEGER
+-- 결과 스트림 정의
+CREATE OR REPLACE STREAM "s_agg_action_country" (
+  country VARCHAR(8),
+  action  VARCHAR(20),
+  cnt     BIGINT
 );
 
-CREATE OR REPLACE PUMP "STREAM_PUMP" AS
-INSERT INTO "DEST_STREAM"
-SELECT user_id, COUNT(*) AS click_count
-FROM "SOURCE_STREAM"
+-- 1분 Tumbling 윈도우 집계
+CREATE OR REPLACE PUMP "p_agg_action_country" AS
+INSERT INTO "s_agg_action_country"
+SELECT country, action, COUNT(*) AS cnt
+FROM "evt_001"
 WINDOWED BY TUMBLING (INTERVAL '1' MINUTE)
+GROUP BY country, action;
+```
+
+### 2.3 시간 윈도우
+- **TUMBLING(M)**: 고정크기, 겹침 없음  
+- **SLIDING(M, step)**: 겹치는 창(슬라이드)  
+- **SESSION(gap)**: 활동-휴지간격으로 묶음
+
+```sql
+-- 5분 윈도우를 1분 간격으로 굴리고 상위 페이지 계산
+CREATE OR REPLACE STREAM "s_top_pages" (
+  page VARCHAR(256),
+  cnt  BIGINT
+);
+
+CREATE OR REPLACE PUMP "p_top_pages" AS
+INSERT INTO "s_top_pages"
+SELECT page, COUNT(*) cnt
+FROM "evt_001"
+WINDOWED BY SLIDING (INTERVAL '5' MINUTE, INTERVAL '1' MINUTE)
+GROUP BY page;
+```
+
+### 2.4 조인(스트림-스트림, 스트림-레퍼런스)
+- 스트림-스트림 조인: 동일 윈도우 또는 키 기반, 시간 조건 필요.
+- 레퍼런스(정적) 조인: S3에 주기 싱크된 **Reference Table** 지원.
+
+```sql
+-- KV 형태의 레퍼런스(타겟 국가만 패스)
+CREATE OR REPLACE REFERENCE TABLE "t_allowed_country" (
+  country VARCHAR(8) PRIMARY KEY
+);
+
+CREATE OR REPLACE STREAM "s_allowed_clicks" (
+  user_id VARCHAR(64),
+  country VARCHAR(8)
+);
+
+CREATE OR REPLACE PUMP "p_allowed" AS
+INSERT INTO "s_allowed_clicks"
+SELECT e.user_id, e.country
+FROM "evt_001" AS e
+JOIN "t_allowed_country" r
+ON e.country = r.country
+WHERE e.action = 'click';
+```
+
+### 2.5 결과 출력(DESTINATION)
+- Output을 **Kinesis stream**, **Lambda**, **Firehose→S3**, **MSK** 등으로 보냄.
+
+```sql
+-- 출력 스트림 메타
+CREATE OR REPLACE STREAM "s_out_to_s3" (
+  country VARCHAR(8),
+  action  VARCHAR(20),
+  cnt     BIGINT
+);
+-- 실제 펌프에선 s_agg_action_country를 s_out_to_s3로 라우팅
+CREATE OR REPLACE PUMP "p_out" AS
+INSERT INTO "s_out_to_s3"
+SELECT * FROM "s_agg_action_country";
+```
+
+> 콘솔에서 **Output**을 생성하며 대상과 포맷/배치 옵션을 지정한다.
+
+### 2.6 지연 이벤트와 Out-of-Order
+- SQL 런타임은 **Event Time** 및 **Out-of-Order 허용**(윈도우 폐쇄 시점 설정) 지원.  
+- **RUNTIME 설정**에서 늦게 도착 허용(Time to Live) 파라미터를 보정.
+
+---
+
+## 3) KDA for Apache Flink — 프로덕션 패턴
+
+### 3.1 필수 개념
+- **Event Time + Watermark**  
+- 상태(State): **Keyed State**, RocksDB 백엔드  
+- **Exactly-once**: Kinesis/Checkpointing 설정 필요  
+- **Window/CEP**: Session·Sliding·Pattern
+
+### 3.2 Maven 의존성(개요)
+```xml
+<dependencies>
+  <dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-streaming-java</artifactId>
+    <version>${flink.version}</version>
+    <scope>provided</scope>
+  </dependency>
+  <dependency>
+    <groupId>org.apache.flink</groupId>
+    <artifactId>flink-connector-kinesis</artifactId>
+    <version>${flink.version}</version>
+  </dependency>
+  <!-- OpenSearch/S3/Parquet sink 등 필요에 맞게 추가 -->
+</dependencies>
+```
+
+### 3.3 Flink 코드 예제 (Kinesis → 윈도우 집계 → Kinesis)
+```java
+import org.apache.flink.api.common.eventtime.*;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.common.state.ValueState;
+import org.apache.flink.api.common.state.ValueStateDescriptor;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.datastream.*;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.connectors.kinesis.FlinkKinesisConsumer;
+import org.apache.flink.streaming.connectors.kinesis.FlinkKinesisProducer;
+import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.time.Time;
+
+import java.time.Duration;
+import java.util.Properties;
+
+public class KdaFlinkApp {
+  public static void main(String[] args) throws Exception {
+    final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+
+    // Checkpointing: Exactly-once를 위해 필수
+    env.enableCheckpointing(60000); // 60s
+    env.getCheckpointConfig().setMinPauseBetweenCheckpoints(30000);
+
+    // Kinesis Consumer
+    Properties consumerProps = new Properties();
+    consumerProps.setProperty("aws.region", "ap-northeast-2");
+    consumerProps.setProperty("flink.stream.initpos", "LATEST");
+
+    DataStream<String> raw = env.addSource(
+        new FlinkKinesisConsumer<>("app-events", new SimpleStringSchema(), consumerProps));
+
+    // Timestamp/Watermark (5초 지연 허용)
+    DataStream<Event> events = raw
+      .map(JsonParsers::toEvent) // user code: String -> Event(timestamp, userId, action, page, country, value)
+      .assignTimestampsAndWatermarks(
+        WatermarkStrategy.<Event>forBoundedOutOfOrderness(Duration.ofSeconds(5))
+          .withTimestampAssigner((e, ts) -> e.getTimestamp()));
+
+    // 상태 기반 집계 (5분 윈도우를 1분 슬라이드)
+    DataStream<Aggregate> agg = events
+      .keyBy(Event::keyByCountryAction) // country#action
+      .window(SlidingEventTimeWindows.of(Time.minutes(5), Time.minutes(1)))
+      .aggregate(new Aggregators.CountPerKey());
+
+    // Kinesis Producer
+    Properties producerProps = new Properties();
+    producerProps.setProperty("aws.region", "ap-northeast-2");
+    FlinkKinesisProducer<String> sink = new FlinkKinesisProducer<>(
+        new SimpleStringSchema(), producerProps);
+    sink.setDefaultStream("analytics-agg");
+    sink.setDefaultPartition("0");
+
+    agg.map(Aggregate::toJson).addSink(sink);
+
+    env.execute("KDA Flink Analytics");
+  }
+}
+```
+
+### 3.4 Checkpoint/Savepoint/Parallelism
+- KDA 콘솔에서 **병렬도**, **Autoscaling**, **Checkpoint interval**, **State backend**를 설정  
+- 롤링 배포: **Savepoint** 생성 → 새 버전으로 **Restore** (무중단/데이터 무손실)
+
+### 3.5 CEP(Complex Event Processing) 예
+```java
+// 클릭 후 10분 내 구매 패턴
+Pattern<Event, ?> pattern = Pattern.<Event>begin("click")
+  .where(e -> "click".equals(e.getAction()))
+  .next("purchase").where(e -> "purchase".equals(e.getAction()))
+  .within(Time.minutes(10));
+```
+
+---
+
+## 4) 출력(싱크) 전략
+
+### 4.1 S3 (Parquet)로 적재 — 배치/마이크로배치
+- Flink: **FileSystem sink** + **Bucket assigner**로 파티션(날짜/시간) 저장  
+- SQL: **Output→Firehose→S3** 경로가 운영 단순
+
+### 4.2 OpenSearch/Redshift/Lambda
+- 집계/지표는 OpenSearch 대시보드  
+- 사실 테이블은 S3→Glue→Athena/Redshift Spectrum  
+- 실시간 액션은 Lambda 구독(알림/차단 등)
+
+---
+
+## 5) 성능·비용 최적화
+
+### 5.1 처리량과 레이턴시 모델
+$$
+\text{Throughput} \approx \text{Parallelism} \times \text{Per-Task Rate} \times \text{Scale Factor}
+$$
+
+- Kinesis 샤드 수(읽기 2MB/s·초당 5회 읽기), Flink 병렬도, 다운스트림 쓰기 한계 고려  
+- **Backpressure** 지표 모니터링, Operator 별 busy-time 확인
+
+### 5.2 SQL 최적화
+- **SELECT * 금지**: 필요한 컬럼만  
+- 윈도우 크기 최소화(지연 허용·정확도 균형)  
+- 레퍼런스 테이블 **키 인덱스** 구성, 갱신 주기 관리
+
+### 5.3 Flink 최적화
+- **RocksDB State** 사용 + 블룸필터/압축 튜닝  
+- **Watermark** 허용 지연 최소화  
+- **Rescale**: 병렬도 상향, Operator Chain 활용  
+- S3 sink: 파일 **소형화 방지**(Rolling policy), Parquet 128~256MB 타깃
+
+### 5.4 코스트 모델(개략)
+$$
+\text{Total Cost} \approx \text{KDS Shards} + \text{KDA (vCPU·Mem·Hours)} + \text{Downstream (e.g., S3 GB, OpenSearch ingests)}
+$$
+
+- SQL: vCPU 시간 기반  
+- Flink: JobManager/TaskManager 리소스·병렬도·운영시간
+
+---
+
+## 6) 보안·네트워킹·권한
+
+### 6.1 VPC 연동
+- KDA 애플리케이션을 **VPC에 연결**해 프라이빗 리소스(RDS/ElastiCache) 접근  
+- **서브넷/보안그룹** 최소 권한, NAT/엔드포인트 구성
+
+### 6.2 IAM 역할 (필수 권한 예시)
+```json
+{
+  "Version":"2012-10-17",
+  "Statement":[
+    {"Effect":"Allow","Action":["kinesis:*"],"Resource":"arn:aws:kinesis:ap-northeast-2:123456789012:stream/*"},
+    {"Effect":"Allow","Action":["logs:*"],"Resource":"*"},
+    {"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:ListBucket"],"Resource":["arn:aws:s3:::datalake","arn:aws:s3:::datalake/*"]},
+    {"Effect":"Allow","Action":["kms:Decrypt","kms:Encrypt","kms:GenerateDataKey"],"Resource":"arn:aws:kms:ap-northeast-2:123456789012:key/xxxx"}
+  ]
+}
+```
+
+### 6.3 암호화
+- Kinesis/KDA/S3/OpenSearch 전 구간 **KMS** 암호화  
+- MSK는 TLS/SASL, VPC 보안그룹 세분화
+
+---
+
+## 7) 모니터링·가시성·운영
+
+### 7.1 CloudWatch 지표
+- **KDA SQL**: Input/Output 레코드, MillisBehindLatest, BackpressuredTime  
+- **KDA Flink**: Checkpoint Duration/Alignment, Busy Time, Watermark Lag  
+- 경보(Alarm) → SNS/Lambda 조치
+
+### 7.2 로그
+- **애플리케이션 로그**(stderr/stdout)  
+- Flink **TaskManager/JobManager** 로그  
+- 실패 레코드 Dead-letter 경로(Firehose Backup/S3) 설계
+
+### 7.3 배포·버전 관리
+- SQL: 애플리케이션 버전 저장, **롤백 버튼**  
+- Flink: **Savepoint** 기반 blue/green 롤아웃  
+- IaC: CloudFormation/SAM/Terraform으로 KDS/KDA/Outputs 일괄 프로비저닝
+
+---
+
+## 8) 운영급 실전 예제
+
+### 8.1 시나리오
+- 목표: **1분 단위 국가·액션별 카운트**, 5분 이동 윈도우 트렌드, S3 파이프라인  
+- 입력: `app-events` (JSON)  
+- 출력: `analytics-agg` (Kinesis) + Firehose→S3 (Parquet)
+
+#### (A) SQL 애플리케이션 정의
+```sql
+-- 1) 결과 스트림들
+CREATE OR REPLACE STREAM "s_cnt_1m" (country VARCHAR(8), action VARCHAR(20), cnt BIGINT);
+CREATE OR REPLACE STREAM "s_trend_5m" (country VARCHAR(8), action VARCHAR(20), cnt BIGINT);
+
+-- 2) 1분 튜블링
+CREATE OR REPLACE PUMP "p_cnt_1m" AS
+INSERT INTO "s_cnt_1m"
+SELECT country, action, COUNT(*) AS cnt
+FROM "evt_001"
+WINDOWED BY TUMBLING (INTERVAL '1' MINUTE)
+GROUP BY country, action;
+
+-- 3) 5분 슬라이딩(1분 단위)
+CREATE OR REPLACE PUMP "p_trend_5m" AS
+INSERT INTO "s_trend_5m"
+SELECT country, action, COUNT(*) AS cnt
+FROM "evt_001"
+WINDOWED BY SLIDING (INTERVAL '5' MINUTE, INTERVAL '1' MINUTE)
+GROUP BY country, action;
+```
+
+> 콘솔에서 `s_cnt_1m`, `s_trend_5m`를 **Output**으로 등록(하나는 Kinesis, 하나는 Firehose→S3).
+
+#### (B) Firehose → S3 (Parquet) 설정 포인트
+- **Buffer Size/Interval**: 64–128MiB / 60–300s  
+- **Parquet + Snappy**, Glue Schema Registry(선택)
+
+---
+
+## 9) 고급 Flink 예제 (CEP + 상태)
+
+### 9.1 “의심 행동” 탐지: 10분 내 5회 이상 ‘login_failed’ → 알림
+```java
+events
+  .filter(e -> "login_failed".equals(e.getAction()))
+  .keyBy(Event::getUserId)
+  .window(SlidingEventTimeWindows.of(Time.minutes(10), Time.minutes(1)))
+  .process(new ProcessWindowFunction<Event, Alert, String, TimeWindow>() {
+    @Override
+    public void process(String userId, Context ctx, Iterable<Event> input, Collector<Alert> out) {
+      long c = 0;
+      for (Event e : input) c++;
+      if (c >= 5) out.collect(new Alert(userId, c, ctx.window().getEnd()));
+    }
+  })
+  .map(Alert::toJson)
+  .addSink(new FlinkKinesisProducer<>(new SimpleStringSchema(), props));
+```
+
+### 9.2 Exactly-once 싱크(OpenSearch 예)
+- Flink OpenSearch Sink v2는 **two-phase commit** 유사 시맨틱 지원(버전에 따름)  
+- 실패 시 재시도 + backoff, **index template** 선등록
+
+---
+
+## 10) 테스트·검증·데이터 품질
+
+- **로컬/샘플 스트림**으로 SQL/Flink 로직 단위 테스트  
+- 데이터 품질 규칙: **Null/타입/범위/카디널리티** 쿼리로 자동 점검
+```sql
+-- 품질 검증 예: 허용되지 않은 국가
+SELECT country, COUNT(*) c
+FROM "evt_001"
+WHERE country NOT IN ('KR','US','JP','DE')
+WINDOWED BY TUMBLING (INTERVAL '5' MINUTE)
+GROUP BY country;
+```
+- **리플레이**: 테스트 스트림에 과거 데이터 재생, 윈도우/지연 처리 확인
+
+---
+
+## 11) 트러블슈팅 모음
+
+| 증상 | 원인 | 해결 |
+|---|---|---|
+| SQL 결과가 비거나 늦음 | ROWTIME 미설정/포맷 문제 | 입력 스키마의 `ROWTIME` 매핑 재확인, 시간대·ISO8601 통일 |
+| 지연 이벤트 누락 | 허용 지연 짧음 | Out-of-order 허용 시간 확대, 윈도우 폐쇄 지연 |
+| Flink 백프레셔 | 다운스트림 불능/느린 sink | 병렬도 상향, 배치 사이즈 조정, sink 재시도/버퍼 튜닝 |
+| Checkpoint 실패 | 네트워크/KMS 권한 | VPC/NAT/KMS 권한/엔드포인트 확인, interval 증가 |
+| 비용 급증 | 샤드 과다/쿼리 비효율 | 샤드·병렬도/윈도우 크기 최적화, 필터/컬럼 최소화 |
+| 중복/유실 의심 | Exactly-once 미구현 | Checkpoint/commit 보장 sink 사용, 멱등키 설계 |
+
+---
+
+## 12) 거버넌스/보안 체크리스트
+
+- [ ] **IAM 최소 권한**: Kinesis, Logs, S3, KMS, OpenSearch  
+- [ ] **전송·저장 암호화**: TLS, SSE-KMS  
+- [ ] **VPC 엔드포인트**: S3/Kinesis/Logs 엔드포인트로 사설 경로  
+- [ ] **비밀 관리**: Secrets Manager/Parameter Store  
+- [ ] **데이터 마스킹/PII 제거**: SQL/Lambda/Flink 단계에서 필수
+
+---
+
+## 13) 비용 통제 레시피
+
+- SQL: **vCPU 축소 + 윈도우/집계 최소화**, 필요 스트림만 출력  
+- Flink: 병렬도/체크포인트 간격/상태 크기 관리, **compact sink**  
+- 다운스트림: S3 **Parquet + 파티션**, OpenSearch 인덱스 정책(ILM/수명)
+
+---
+
+## 14) 산출물·IaC 예시 스니펫
+
+### 14.1 Kinesis Stream (CloudFormation)
+```yaml
+Resources:
+  AppEvents:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: app-events
+      ShardCount: 4
+```
+
+### 14.2 KDA SQL App (요지)
+```yaml
+Resources:
+  KdaSqlApp:
+    Type: AWS::KinesisAnalyticsV2::Application
+    Properties:
+      RuntimeEnvironment: SQL-1_0
+      ServiceExecutionRole: arn:aws:iam::123456789012:role/kda-sql-role
+      ApplicationConfiguration:
+        SqlApplicationConfiguration:
+          Inputs:
+            - NamePrefix: evt
+              InputSchema: ... # 위 스키마
+              KinesisStreamsInput:
+                ResourceARN: arn:aws:kinesis:ap-northeast-2:123456789012:stream/app-events
+        ApplicationCodeConfiguration:
+          CodeContent:
+            TextContent: |
+              -- SQL들 (CREATE STREAM/PUMP ...)
+```
+
+---
+
+## 15) 요약
+
+- **KDA SQL**: 가장 빠르게 **실시간 집계/필터/윈도우**를 제품화. 운영 단순.  
+- **KDA Flink**: **Event Time·State·CEP·Exactly-once**가 필요한 **엔터프라이즈 스트리밍**의 정석.  
+- 핵심 성공 요인: **정확한 이벤트타임/워터마크 설계**, **상태와 체크포인트**, **적절한 싱크 패턴**, **모니터링·알람·자동복구**, **보안·VPC·KMS**.
+
+---
+
+## 부록 A) SQL 참조 — 세션 윈도우
+```sql
+CREATE OR REPLACE STREAM "s_session" (user_id VARCHAR(64), clicks BIGINT);
+
+CREATE OR REPLACE PUMP "p_session" AS
+INSERT INTO "s_session"
+SELECT user_id, COUNT(*) AS clicks
+FROM "evt_001"
+-- 10분 동안 아무 이벤트 없으면 세션 종료
+WINDOWED BY SESSION (INTERVAL '10' MINUTE)
 GROUP BY user_id;
 ```
 
----
-
-## 7. 📤 결과 저장 (Output)
-
-처리된 결과는 다양한 서비스로 출력할 수 있습니다:
-
-- **S3** (ETL 후 저장)
-- **Lambda** (이벤트 기반 후속 처리)
-- **Redshift** (분석용 데이터 적재)
-- **OpenSearch** (로그 검색)
-- **Firehose** (중간 전달)
-
----
-
-## 8. 📘 실시간 분석 예제 (SQL 기반)
-
-### 사용자 이벤트 실시간 집계
-
-```sql
--- CREATE STREAM
-CREATE OR REPLACE STREAM "OUTPUT_STREAM" (
-  action VARCHAR(20),
-  count_per_min INTEGER
-);
-
--- PUMP 정의
-CREATE OR REPLACE PUMP "ACTION_PUMP" AS
-INSERT INTO "OUTPUT_STREAM"
-SELECT action, COUNT(*) as count_per_min
-FROM "INPUT_STREAM"
-WINDOWED BY TUMBLING (INTERVAL '1' MINUTE)
-GROUP BY action;
-```
-
----
-
-## 9. 🚀 Flink 기반 고급 분석
-
-Flink를 사용하면 다음과 같은 기능을 사용할 수 있습니다:
-
-- 이벤트 시간 기반 처리
-- 복잡한 타임윈도우, 세션윈도우
-- 상태 저장 (Stateful Processing)
-- CEP (Complex Event Processing)
-
+## 부록 B) Flink — 파케이 싱크 스니펫(파일 롤링)
 ```java
-DataStream<Event> events = env
-  .addSource(new FlinkKinesisConsumer<>(...))
-  .assignTimestampsAndWatermarks(...);
+final FileSink<String> sink = FileSink
+  .forRowFormat(new Path("s3://datalake/realtime/"), new SimpleStringEncoder<String>("UTF-8"))
+  .withRollingPolicy(DefaultRollingPolicy.builder()
+     .withRolloverInterval(Duration.ofMinutes(5)).withInactivityInterval(Duration.ofMinutes(1))
+     .withMaxPartSize(MemorySize.ofMebiBytes(256)).build())
+  .build();
 
-events
-  .keyBy(event -> event.getUserId())
-  .window(SlidingEventTimeWindows.of(Time.minutes(5), Time.minutes(1)))
-  .aggregate(new EventCountAggregator())
-  .addSink(new FlinkKinesisProducer(...));
+events.map(Event::toJson).sinkTo(sink);
 ```
 
----
-
-## 10. 🔄 통합 예시
-
-### Kinesis → KDA → S3 저장
-
-1. Kinesis Data Stream에 JSON 로그 삽입
-2. KDA SQL 애플리케이션에서 필터링 및 집계
-3. Firehose를 통해 S3 버킷에 저장
+## 부록 C) 간단 비용 산식
+$$
+\text{KDA Cost} \approx \text{vCPU Hours} \times \text{Unit Price} \quad (+ \text{Memory Premium if any})
+$$
+$$
+\text{Total} \approx \text{KDS Shards} + \text{KDA} + \text{S3/OpenSearch/Firehose} + \text{Data Transfer}
+$$
 
 ---
 
-## 11. 🧪 운영 및 모니터링
-
-- **CloudWatch**: 메트릭/로그 확인
-- **Checkpointing**: 상태 기반 Flink 애플리케이션에서는 Checkpoint 기능 지원
-- **Application Versioning**: 버전별 롤백 가능
-- **Monitoring UI**: Input/Output 레코드 수, 처리 지연 확인 가능
-
----
-
-## 12. 💰 비용
-
-- **SQL 기반**: 사용한 vCPU 시간당 요금
-- **Flink 기반**: 병렬 작업 수, 메모리, vCPU 기준 요금
-- 데이터 전송량은 별도 과금 (예: Kinesis, S3, Firehose 등)
-
-**예시:**
-- $0.11/vCPU-시간 (SQL)
-- $0.10/GB (Firehose → S3)
-
----
-
-## 13. 🔐 보안
-
-- VPC 통합 가능
-- IAM 역할/정책으로 접근 제어
-- 데이터 암호화 지원 (KMS)
-- 소스/싱크 서비스의 권한 위임 필요
-
----
-
-## 14. 🧠 사용 사례
-
-| 사용 사례 | 설명 |
-|-----------|------|
-| 실시간 대시보드 | 웹 이벤트를 실시간으로 시각화 |
-| IoT 센서 분석 | 시간 기반 윈도우로 이상 탐지 |
-| 마케팅 캠페인 분석 | 유저 행동 기반 실시간 피드백 |
-| 보안 로그 분석 | 실시간 공격 탐지 |
-| 금융 트랜잭션 분석 | 이상 탐지 및 경보 |
-
----
-
-## 15. 📌 요약
-
-| 항목 | 내용 |
-|------|------|
-| 데이터 처리 | 실시간 스트리밍 데이터 처리 |
-| 입력 소스 | Kinesis Stream, Firehose, MSK |
-| 처리 방식 | SQL 또는 Apache Flink |
-| 출력 대상 | S3, Redshift, Lambda, Firehose 등 |
-| 확장성 | 자동 확장, 상태 저장 |
-| 운영 | 완전관리형, CloudWatch 통합 |
-
----
-
-## ✅ 마무리
-
-Kinesis Data Analytics는 AWS의 스트리밍 분석 중심에 있는 서비스입니다.  
-SQL의 단순함과 Flink의 복잡한 기능 모두를 지원하므로, 데이터 파이프라인 및 실시간 분석에 매우 유용한 도구입니다.
+### 마무리
+Kinesis Data Analytics는 **“즉시 쓸 수 있는 SQL”**과 **“무한히 정교해지는 Flink”** 두 축으로 실시간 파이프라인을 완성한다.  
+본 가이드의 설계/코드/운영 체크리스트를 템플릿 삼아, **작게 시작해 확장 가능하게** 만들자. 그러면 대시보드·알림·머신러닝 피쳐링까지 **한 흐름**으로 자연스럽게 이어진다.
