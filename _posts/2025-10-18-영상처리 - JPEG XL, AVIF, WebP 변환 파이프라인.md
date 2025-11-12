@@ -14,7 +14,7 @@ category: 영상처리
 
 ---
 
-## 1) 세 코덱/포맷 한눈에 보기
+## 1. 세 코덱/포맷 한눈에 보기
 
 | 항목 | AVIF | JPEG XL (JXL) | WebP |
 |---|---|---|---|
@@ -32,7 +32,7 @@ category: 영상처리
 
 ---
 
-## 2) 파이프라인 큰 그림
+## 2. 파이프라인 큰 그림
 
 ```
 [입력: JPEG/PNG/RAW(+ICC/EXIF)]
@@ -52,7 +52,7 @@ category: 영상처리
 
 ---
 
-## 3) 설치/의존(요약)
+## 3. 설치/의존(요약)
 
 - **Windows(vcpkg)**: `vcpkg install libavif libjxl libwebp aom svt-av1 lcms`  
 - **macOS(brew)**: `brew install libavif libjxl webp aom svt-av1`  
@@ -60,7 +60,7 @@ category: 영상처리
 
 ---
 
-## 4) CLI **배치 변환 예제(권장 시작점)**
+## 4. CLI **배치 변환 예제(권장 시작점)**
 
 ### 4.1 AVIF (libavif, aom/rav1e/SVT 선택)
 
@@ -117,7 +117,7 @@ cwebp -lossless -m 6 -mt -metadata all input.png -o out_ll.webp
 
 ---
 
-## 5) **C++ 라이브러리** 직접 호출 (핵심 스니펫)
+## 5. **C++ 라이브러리** 직접 호출 (핵심 스니펫)
 
 ### 5.1 libavif — RGB(A) → AVIF
 
@@ -253,7 +253,7 @@ bool EncodeJXL_RGBA(const uint8_t* rgba, int w, int h, int stride,
 
 ---
 
-## 6) **품질·속도 계측**(내장 도구 + 자가 지표)
+## 6. **품질·속도 계측**(내장 도구 + 자가 지표)
 
 ### 6.1 PSNR/SSIM 간단 구현
 
@@ -292,7 +292,7 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 
 ---
 
-## 7) **메타데이터/색관리**(ICC/EXIF/XMP) 보존
+## 7. **메타데이터/색관리**(ICC/EXIF/XMP) 보존
 
 - **AVIF**: `--icc/--exif/--xmp` 로 명시 부착 권장(소스에서 추출 후 주입).  
 - **JXL**: 기본 보존 경향이나, 파이프라인 일관성을 위해 **명시 정책**(보존/익명화) 도입, 필요 시 `--strip`(툴 기준) 옵션.  
@@ -301,7 +301,7 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 
 ---
 
-## 8) **프리셋 전략**(현장 검증된 스타팅 포인트)
+## 8. **프리셋 전략**(현장 검증된 스타팅 포인트)
 
 | 용도 | AVIF | JXL | WebP |
 |---|---|---|---|
@@ -314,7 +314,7 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 
 ---
 
-## 9) **배포 & 폴백** 설계
+## 9. **배포 & 폴백** 설계
 
 ### 9.1 HTML `<picture>` 폴백
 
@@ -349,7 +349,7 @@ location ~* ^/images/(.*)\.(jpg|jpeg|png)$ {
 
 ---
 
-## 10) **온디맨드 변환 캐시 서비스**(간단 설계)
+## 10. **온디맨드 변환 캐시 서비스**(간단 설계)
 
 - 키: `hash(path + resize + format + quality + color_profile)`  
 - 1차 요청: 원본 Fetch → 변환 → `ETag`/`Cache-Control`과 함께 저장  
@@ -359,7 +359,7 @@ location ~* ^/images/(.*)\.(jpg|jpeg|png)$ {
 
 ---
 
-## 11) **마이그레이션 로드맵**
+## 11. **마이그레이션 로드맵**
 
 1. **자산 인벤토리**: 유형(사진/UI/애니메), 해상도, 평균 바이트, 메타 정책  
 2. **표본 코호트** 1~5% 샘플링 → **AVIF/JXL/WebP 동시 변환** → PSNR/SSIM/주관검수 + 바이트/시간 로깅  
@@ -376,7 +376,7 @@ location ~* ^/images/(.*)\.(jpg|jpeg|png)$ {
 
 ---
 
-## 12) **배치 변환 스크립트** (디렉터리 일괄)
+## 12. **배치 변환 스크립트** (디렉터리 일괄)
 
 ```bash
 #!/usr/bin/env bash
@@ -413,7 +413,7 @@ done
 
 ---
 
-## 13) **실전 튜닝 포인트**
+## 13. **실전 튜닝 포인트**
 
 - **색/감마 정합**: 전처리 연산은 **선형광**에서 수행 후, 최종 인코드는 **sRGB 코드**로.  
 - **샘플링**: 사진은 420가 일반적, UI/폰트는 444 권장.  
@@ -424,7 +424,7 @@ done
 
 ---
 
-## 14) **문제해결(트러블슈팅)**
+## 14. **문제해결(트러블슈팅)**
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -436,7 +436,7 @@ done
 
 ---
 
-## 15) **바이트 타깃 인코딩**(이진 탐색 예시: WebP)
+## 15. **바이트 타깃 인코딩**(이진 탐색 예시: WebP)
 
 ```cpp
 bool EncodeWebP_TargetSize(const uint8_t* rgba, int w, int h, int stride,
@@ -458,7 +458,7 @@ bool EncodeWebP_TargetSize(const uint8_t* rgba, int w, int h, int stride,
 
 ---
 
-## 16) **성능 계측 로거**(시간/메모리)
+## 16. **성능 계측 로거**(시간/메모리)
 
 ```cpp
 #include <chrono>
@@ -473,7 +473,7 @@ double MeasureAVIF(const uint8_t* rgba, int w,int h,int stride, std::vector<uint
 
 ---
 
-## 17) 라이선스/배포 노트(요지)
+## 17. 라이선스/배포 노트(요지)
 
 - **libavif/libaom/rav1e/SVT-AV1**, **libjxl**, **libwebp**는 일반적으로 **관대한 오픈소스 라이선스**입니다.  
 - 제품 배포 시 **라이선스 고지 파일** 포함(OSS NOTICE).  
@@ -481,7 +481,7 @@ double MeasureAVIF(const uint8_t* rgba, int w,int h,int stride, std::vector<uint
 
 ---
 
-## 18) 최종 정리
+## 18. 최종 정리
 
 - **AVIF/JXL/WebP** 는 “**한 가지가 만능**”이 아닙니다. **콘텐츠 특성·운영 목표**에 따라 **혼용**이 현실적 최선.  
 - **AVIF**: 사진·캡처, 10bit/HDR, 고효율.  

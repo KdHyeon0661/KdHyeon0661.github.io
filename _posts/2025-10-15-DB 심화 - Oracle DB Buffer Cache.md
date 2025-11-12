@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 0) 큰 그림 — “블록” 단위 I/O와 캐시 생태계
+## 0. 큰 그림 — “블록” 단위 I/O와 캐시 생태계
 
 오라클 **버퍼 캐시(Buffer Cache)** 는 디스크의 **데이터파일 블록**을 **메모리**에 적재해 **논리적 I/O**(consistent/current)로 빠르게 접근하게 하는 영역입니다.  
 핵심 키워드:
@@ -28,7 +28,7 @@ category: DB 심화
 
 ---
 
-## 1) 버퍼 캐시 내부 구조 — “버퍼 프레임 + 버퍼 헤더”
+## 1. 버퍼 캐시 내부 구조 — “버퍼 프레임 + 버퍼 헤더”
 
 ### 1.1 버퍼 프레임(Buffer Frame)과 클래스
 
@@ -76,7 +76,7 @@ ORDER  BY tch DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 2) Cache Buffer Chains(CBC) — 해시 버킷과 래치 경합
+## 2. Cache Buffer Chains(CBC) — 해시 버킷과 래치 경합
 
 ### 2.1 CBC 동작 원리
 
@@ -139,7 +139,7 @@ PARTITIONS 16;
 
 ---
 
-## 3) LRU 체인 — 냉/온 리스트와 터치 카운트
+## 3. LRU 체인 — 냉/온 리스트와 터치 카운트
 
 ### 3.1 개념 업데이트: “순수 LRU”가 아니다
 
@@ -185,7 +185,7 @@ ALTER TABLE fact_tx STORAGE (BUFFER_POOL RECYCLE);
 
 ---
 
-## 4) CR(Consistent Read)와 버퍼 — 같은 블록의 “여러 버전”
+## 4. CR(Consistent Read)와 버퍼 — 같은 블록의 “여러 버전”
 
 ### 4.1 왜 CR가 필요한가?
 
@@ -210,7 +210,7 @@ WHERE  name IN ('consistent gets', 'db block gets', 'physical reads');
 
 ---
 
-## 5) 실습: 눈으로 보는 버퍼 캐시
+## 5. 실습: 눈으로 보는 버퍼 캐시
 
 ### 5.1 준비 — 샘플 테이블/인덱스
 
@@ -347,7 +347,7 @@ ALTER TABLE dim_code STORAGE (BUFFER_POOL KEEP);
 
 ---
 
-## 6) 운영·튜닝 관점 — 어떤 지표를 보나?
+## 6. 운영·튜닝 관점 — 어떤 지표를 보나?
 
 ### 6.1 상위 대기 이벤트·세션 관측
 
@@ -400,7 +400,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 7) RAC 관점 한 줄 — 글로벌 캐시와 핫 블록
+## 7. RAC 관점 한 줄 — 글로벌 캐시와 핫 블록
 
 - RAC에서는 **같은 데이터베이스**를 **여러 인스턴스**가 공유. 블록 소유권 전환에 **GCS/GES** 개입.  
 - **핫 블록**은 **인스턴스 간** 지속 왕복으로 `gc buffer busy`, `gc cr request` 등의 **gc 대기**로 표출.  
@@ -408,7 +408,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 8) 자주 하는 질문(FAQ)
+## 8. 자주 하는 질문(FAQ)
 
 **Q1. LRU 체인을 “강제로” 조정할 수 있나?**  
 - 직접 조정은 불가. 대신 **KEEP/RECYCLE 풀**, **오브젝트 설계**, **쿼리 패턴**을 조정해 **LRU 결과**를 바꿉니다.
@@ -424,7 +424,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 9) 체크리스트 — 버퍼 캐시 튜닝 12선
+## 9. 체크리스트 — 버퍼 캐시 튜닝 12선
 
 1. **Top Waits** 에 `latch: cache buffers chains` 있는가?  
 2. **핫 블록**(x$bh.tch가 비정상 고카운트) 존재? 해당 오브젝트/인덱스 리프/루트 편향?  
@@ -441,7 +441,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 10) 통합 실습 시나리오 — “문제 만들고, 관측하고, 고친다”
+## 10. 통합 실습 시나리오 — “문제 만들고, 관측하고, 고친다”
 
 ### 10.1 CBC 핫 블록 만들기
 
@@ -526,7 +526,7 @@ SHOW PARAMETER undo_retention;
 
 ---
 
-## 11) 참고 SQL 묶음 — 진단 단축키
+## 11. 참고 SQL 묶음 — 진단 단축키
 
 ```sql
 -- 11.1 v$bh: 오브젝트별 블록 분포
@@ -565,7 +565,7 @@ ORDER  BY pr DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 12) 결론 요약
+## 12. 결론 요약
 
 - **CBC**: (파일#, 블록#) → **해시 버킷** → **체인 탐색**. **핫 블록**은 `latch: cache buffers chains`로 드러남 — **접근 분산/쿼리 리라이트/인덱스 설계**가 핵심 처방.  
 - **LRU**: 순수 LRU가 아니라 **터치 카운트 기반 핫/콜드**. **KEEP/RECYCLE**로 워킹셋 의도적 보존/격리.  

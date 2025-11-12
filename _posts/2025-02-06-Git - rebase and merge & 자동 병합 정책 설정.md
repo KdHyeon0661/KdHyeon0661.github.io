@@ -6,7 +6,7 @@ category: Git
 ---
 # GitHub의 `Rebase and merge`
 
-## 0) 한눈에 보기 — 무엇이, 왜 필요한가
+## 0. 한눈에 보기 — 무엇이, 왜 필요한가
 
 - **Rebase and merge**: PR의 커밋들을 **base 브랜치(main)의 최신 커밋 뒤에 순서대로 재적용**하여 병합 커밋 없이 **선형(linear) 이력**을 만든다.
 - **장점**: 이력이 간결해지고 `git log --oneline --graph` 가 깔끔하다. `git bisect` 흐름도 직관적이다.
@@ -15,7 +15,7 @@ category: Git
 
 ---
 
-# 1) 개념과 작동 원리
+# 1. 개념과 작동 원리
 
 ## 1.1 GitHub 병합 방식 3종
 - Create a merge commit
@@ -48,7 +48,7 @@ main:    A---B---C---D'---E'
 
 ---
 
-# 2) 실전 사용법(웹·CLI)과 재현 가능한 예제
+# 2. 실전 사용법(웹·CLI)과 재현 가능한 예제
 
 ## 2.1 웹에서 절차
 1. PR 페이지 하단의 병합 드롭다운에서 **Rebase and merge** 선택
@@ -99,7 +99,7 @@ git commit -am "feat(main): x"
 
 ---
 
-# 3) 충돌 해결 플로우(웹/로컬)
+# 3. 충돌 해결 플로우(웹/로컬)
 
 ## 3.1 왜 웹에서 바로 안 되나?
 - Rebase and merge는 GitHub가 서버 측 rebase를 수행한 뒤 fast-forward 병합을 시도한다.
@@ -109,21 +109,21 @@ git commit -am "feat(main): x"
 
 ## 3.2 로컬에서 충돌 해결 절차
 ```bash
-# 1) 최신 base(main) 반영
+# 1. 최신 base(main) 반영
 git fetch origin
 git checkout feature/my-pr
 git rebase origin/main
 
-# 2) 충돌 시 파일 열어 마커(<<<<<<<, =======, >>>>>>>) 해결
+# 2. 충돌 시 파일 열어 마커(<<<<<<<, =======, >>>>>>>) 해결
 git add <파일들>
 
-# 3) 계속 진행
+# 3. 계속 진행
 git rebase --continue
 
-# 4) 반복 충돌 시 rerere 권장
+# 4. 반복 충돌 시 rerere 권장
 git config --global rerere.enabled true
 
-# 5) rebase 완료 → 원격 업데이트
+# 5. rebase 완료 → 원격 업데이트
 git push --force-with-lease
 ```
 - PR이 업데이트되며, 상태 체크가 다시 돌고, 이제 “Rebase and merge”가 성공할 수 있다.
@@ -138,7 +138,7 @@ git add path/to/file
 
 ---
 
-# 4) 서명·검증 정책과의 상호작용
+# 4. 서명·검증 정책과의 상호작용
 
 ## 4.1 GPG 서명(Require signed commits)
 - **커밋 재작성(rebase)** 시 커밋 해시가 바뀌므로, **서명이 깨질 수 있음**.
@@ -159,7 +159,7 @@ git add path/to/file
 
 ---
 
-# 5) Branch Protection Rules(브랜치 보호 규칙)
+# 5. Branch Protection Rules(브랜치 보호 규칙)
 
 ## 5.1 설정 위치
 - 저장소 → Settings → Branches → Branch protection rules → Add rule → `main` 지정
@@ -186,7 +186,7 @@ git add path/to/file
 
 ---
 
-# 6) CI·Auto-merge·Merge queue와의 연동
+# 6. CI·Auto-merge·Merge queue와의 연동
 
 ## 6.1 Status Checks(예: GitHub Actions)
 - Rebase and merge는 최종적으로 base 상태가 바뀌므로, **병합 직전**에 다시 상태 체크가 돌 수 있다.
@@ -224,7 +224,7 @@ jobs:
 
 ---
 
-# 7) Rebase and merge vs Squash and merge vs Merge commit
+# 7. Rebase and merge vs Squash and merge vs Merge commit
 
 | 기준 | Rebase and merge | Squash and merge | Merge commit |
 |---|---|---|---|
@@ -237,7 +237,7 @@ jobs:
 
 ---
 
-# 8) 트러블슈팅
+# 8. 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -250,7 +250,7 @@ jobs:
 
 ---
 
-# 9) 체크리스트
+# 9. 체크리스트
 
 - [ ] 저장소 설정에서 **Allow rebase merges** 활성화
 - [ ] **Require linear history** 로 merge commit 차단
@@ -262,7 +262,7 @@ jobs:
 
 ---
 
-# 10) 명령어 모음(로컬 보조)
+# 10. 명령어 모음(로컬 보조)
 
 ```bash
 # 최신 base 반영 및 rebase
@@ -297,7 +297,7 @@ git range-diff origin/main...HEAD
 
 ---
 
-# 11) 결론
+# 11. 결론
 
 - **Rebase and merge** 는 PR 병합 시 **병합 커밋 없이 선형 이력**을 유지하는 강력한 방식이다.  
 - 다만 **커밋 재작성**으로 인한 서명·정책 상호작용과 **충돌 처리** 부담을 이해해야 한다.  

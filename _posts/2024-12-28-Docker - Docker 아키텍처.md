@@ -32,7 +32,7 @@ $$
 
 ### Dockerfile 예제(기존 예의 확장 버전)
 ```Dockerfile
-# 1) 빌드 스테이지(툴 포함)
+# 1. 빌드 스테이지(툴 포함)
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
@@ -40,7 +40,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# 2) 런타임 스테이지(슬림)
+# 2. 런타임 스테이지(슬림)
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 ```

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # xUnit 사용법
 
-## 0) 왜 xUnit인가? (요약 복습)
+## 0. 왜 xUnit인가? (요약 복습)
 
 - .NET Core/ASP.NET Core 팀이 실무에서 사용하는 **경량·확장성·비동기 친화** 프레임워크  
 - MSTest/NUnit 대비 장점:  
@@ -15,7 +15,7 @@ category: AspNet
 
 ---
 
-## 1) 프로젝트 스캐폴딩 & 솔루션 연결
+## 1. 프로젝트 스캐폴딩 & 솔루션 연결
 
 ```bash
 # 앱 & 테스트 프로젝트 생성
@@ -52,7 +52,7 @@ MyApp.Tests/
 
 ---
 
-## 2) 첫 테스트 — `[Fact]` / `[Theory]`
+## 2. 첫 테스트 — `[Fact]` / `[Theory]`
 
 ### 시스템 언더 테스트(SUT)
 
@@ -124,7 +124,7 @@ public class CalculatorMemberDataTests
 
 ---
 
-## 3) 비동기/예외/시간 제어
+## 3. 비동기/예외/시간 제어
 
 ### 비동기: `async Task` 반환
 
@@ -184,7 +184,7 @@ public void Deterministic_Time_By_Abstraction()
 
 ---
 
-## 4) xUnit 수명주기 — 생성자/`IDisposable`/Fixture
+## 4. xUnit 수명주기 — 생성자/`IDisposable`/Fixture
 
 ### 클래스 단위 Setup/Teardown
 
@@ -240,7 +240,7 @@ public class RepoTestsB { /* ... */ }
 
 ---
 
-## 5) 로깅·출력 — `ITestOutputHelper`
+## 5. 로깅·출력 — `ITestOutputHelper`
 
 ```csharp
 public class OutputTests
@@ -259,7 +259,7 @@ public class OutputTests
 
 ---
 
-## 6) ASP.NET Core — 컨트롤러/Minimal API/미들웨어 단위 테스트
+## 6. ASP.NET Core — 컨트롤러/Minimal API/미들웨어 단위 테스트
 
 ### 컨트롤러(서비스 모킹)
 
@@ -345,7 +345,7 @@ public async Task Middleware_Should_Add_Header()
 
 ---
 
-## 7) 통합 테스트 — `TestServer` / `WebApplicationFactory<T>`
+## 7. 통합 테스트 — `TestServer` / `WebApplicationFactory<T>`
 
 ### Minimal API를 통합 테스트
 
@@ -397,7 +397,7 @@ public class MinimalApiTests : IClassFixture<ApiFactory>
 
 ---
 
-## 8) EF Core 테스트 — InMemory vs SQLite(InMemory)
+## 8. EF Core 테스트 — InMemory vs SQLite(InMemory)
 
 - **InMemory Provider**: LINQ 동작이 실제 DB와 다를 수 있음(관계/제약 X)  
 - **SQLite InMemory**: 실제 SQL 실행(제약/쿼리 변환 유사), **권장**
@@ -457,7 +457,7 @@ public class EfRepositoryTests : IDisposable
 
 ---
 
-## 9) JSON 응답 검증 — `System.Text.Json` / `FluentAssertions`
+## 9. JSON 응답 검증 — `System.Text.Json` / `FluentAssertions`
 
 ```csharp
 dotnet add MyApp.Tests package FluentAssertions
@@ -479,7 +479,7 @@ public async Task Should_Return_ProblemDetails_On_Validation_Error()
 
 ---
 
-## 10) Moq로 DI 의존성 제거 (요약)
+## 10. Moq로 DI 의존성 제거 (요약)
 
 ```csharp
 dotnet add MyApp.Tests package Moq
@@ -505,7 +505,7 @@ public async Task Controller_Uses_Service_Exactly_Once()
 
 ---
 
-## 11) 병렬·순서·카테고리·조건부 실행
+## 11. 병렬·순서·카테고리·조건부 실행
 
 ### 병렬 실행 전역 설정 (`MyApp.Tests.csproj`)
 
@@ -569,7 +569,7 @@ public class Conditional
 
 ---
 
-## 12) 커버리지 — Coverlet & 리포트
+## 12. 커버리지 — Coverlet & 리포트
 
 ```bash
 dotnet add MyApp.Tests package coverlet.collector
@@ -586,7 +586,7 @@ reportgenerator -reports:**/coverage.cobertura.xml -targetdir:coveragereport
 
 ---
 
-## 13) GitHub Actions로 CI 구성 (샘플)
+## 13. GitHub Actions로 CI 구성 (샘플)
 
 ```yaml
 name: ci
@@ -606,7 +606,7 @@ jobs:
 
 ---
 
-## 14) 실전 팁 (정확성·유지보수·속도)
+## 14. 실전 팁 (정확성·유지보수·속도)
 
 - **AAA 패턴**(Arrange-Act-Assert)을 지켜 가독성 확보  
 - 테스트 이름: `메서드_상태_기대결과` (예: `Get_Returns404_WhenNotFound`)  
@@ -619,7 +619,7 @@ jobs:
 
 ---
 
-## 15) 확장 체크리스트
+## 15. 확장 체크리스트
 
 - [ ] `[Fact]`/`[Theory]`/`MemberData`/`ClassData` 사용
 - [ ] 비동기/예외 모두 커버

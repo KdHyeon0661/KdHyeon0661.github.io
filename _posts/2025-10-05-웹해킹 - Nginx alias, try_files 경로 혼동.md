@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 🧱 8. Nginx `alias` / `try_files` 경로 혼동
 
-## 0) 핵심 요약 (Executive Summary)
+## 0. 핵심 요약 (Executive Summary)
 
 - **문제**  
   - `location /static/ { alias /srv/static/; }` 같은 **경로 매핑**에서  
@@ -22,7 +22,7 @@ category: 웹해킹
 
 ---
 
-# 1) `root` vs `alias` — **개념 차이**
+# 1. `root` vs `alias` — **개념 차이**
 
 - `root` : 요청 URI **그대로** 뒤에 붙습니다.  
   ```nginx
@@ -43,7 +43,7 @@ category: 웹해킹
 
 ---
 
-# 2) 흔한 실수 패턴과 안전 대체
+# 2. 흔한 실수 패턴과 안전 대체
 
 ## 2.1 후행 슬래시 불일치
 
@@ -80,7 +80,7 @@ location ~ ^/media/(.*)$ {
 
 **✅ 안전 대체 (정규식 → rewrite + root)**
 ```nginx
-# 1) 정규식으로 필요한 부분만 리라이트
+# 1. 정규식으로 필요한 부분만 리라이트
 location ~ ^/media/(.*)$ {
   rewrite ^/media/(.*)$ /$1 break;
   root /srv/media;      # → /srv/media/<$1>
@@ -133,7 +133,7 @@ location /assets/private/ { return 404; }  # 별칭 영역 특정 서브패스 �
 
 ---
 
-# 3) **웹루트 밖 파일 노출**이 일어나는 경로
+# 3. **웹루트 밖 파일 노출**이 일어나는 경로
 
 1) `alias` 후행 슬래시 누락 → 경로가 **붙어**버려 상위로 치우침  
 2) 정규식 캡처/디코딩 조합 → `..`, `%2e%2e/` 같은 **우회 문자열**이 의도치 않게 관통  
@@ -144,7 +144,7 @@ location /assets/private/ { return 404; }  # 별칭 영역 특정 서브패스 �
 
 ---
 
-# 4) **안전한 레시피 모음** (복붙 가능)
+# 4. **안전한 레시피 모음** (복붙 가능)
 
 ## 4.1 정적 파일 전용 매핑 (가장 흔한 케이스)
 ```nginx
@@ -221,16 +221,16 @@ location @app {
 
 ---
 
-# 5) **경로 정규화** & **심볼릭 링크** 방어
+# 5. **경로 정규화** & **심볼릭 링크** 방어
 
 ```nginx
-# 1) 심볼릭 링크 제한: 소유자 기준/전면 차단
+# 1. 심볼릭 링크 제한: 소유자 기준/전면 차단
 disable_symlinks on;             # 또는 'if_not_owner' (버전에 따라)
-# 2) 이중 디코딩/슬래시 혼선 방지
+# 2. 이중 디코딩/슬래시 혼선 방지
 merge_slashes on;
 absolute_redirect on;
 port_in_redirect off;            # (필요시)
-# 3) 숨김/민감 파일 차단(예: .git, env, key)
+# 3. 숨김/민감 파일 차단(예: .git, env, key)
 location ~ /\.(git|svn|hg)|(^|/)\.env {
   deny all;
 }
@@ -240,7 +240,7 @@ location ~ /\.(git|svn|hg)|(^|/)\.env {
 
 ---
 
-# 6) **테스트 시나리오(스테이징만)** — “항상 404여야 하는 것들”
+# 6. **테스트 시나리오(스테이징만)** — “항상 404여야 하는 것들”
 
 > 아래는 **유효성 검사** 아이디어입니다(운영/타사 금지).  
 > 의도는 **노출이 없음을 증명**하는 것 — 성공 기준은 **404/403/415/405** 등 **거절**입니다.
@@ -248,19 +248,19 @@ location ~ /\.(git|svn|hg)|(^|/)\.env {
 ```bash
 BASE=https://staging.example.com
 
-# 1) 상위로 나가기 시도(정규화/디코딩)
+# 1. 상위로 나가기 시도(정규화/디코딩)
 curl -si "$BASE/static/..%2f..%2fetc/passwd" | head -n1
 curl -si "$BASE/static/../../../../etc/hosts" | head -n1
 
-# 2) .git/.env 같은 숨김 파일
+# 2. .git/.env 같은 숨김 파일
 curl -si "$BASE/static/.git/config" | head -n1
 curl -si "$BASE/.env" | head -n1
 
-# 3) 슬래시 변형/이중 디코딩
+# 3. 슬래시 변형/이중 디코딩
 curl -si "$BASE/static//a.css" | head -n1
 curl -si "$BASE/static/%2f/a.css" | head -n1
 
-# 4) 디렉터리 인덱스 금지 확인
+# 4. 디렉터리 인덱스 금지 확인
 curl -si "$BASE/static/" | grep -i "autoindex" -n || true  # 인덱스 페이지가 나오면 취약
 ```
 
@@ -268,7 +268,7 @@ curl -si "$BASE/static/" | grep -i "autoindex" -n || true  # 인덱스 페이지
 
 ---
 
-# 7) `try_files` 고급 팁
+# 7. `try_files` 고급 팁
 
 - **정적 제공**:  
   - `try_files $uri $uri/ =404;` → 파일 또는 **디렉터리 인덱스**가 의도라면 `index` 지시어를 명시.  
@@ -286,7 +286,7 @@ curl -si "$BASE/static/" | grep -i "autoindex" -n || true  # 인덱스 페이지
 
 ---
 
-# 8) **위치(location) 우선순위** 주의
+# 8. **위치(location) 우선순위** 주의
 
 - `=`(정확일치) > `^~`(접두 고정) > 정규식(`~`, `~*`) > 일반 접두.  
 - 정규식이 뒤에 선언되어도 **우선순위 규칙**에 따라 매칭됩니다.  
@@ -303,7 +303,7 @@ location @app { proxy_pass http://app; }
 
 ---
 
-# 9) 멀티테넌트/브랜드별 정적(서브도메인) — **화이트리스트만**
+# 9. 멀티테넌트/브랜드별 정적(서브도메인) — **화이트리스트만**
 
 도메인에 따라 정적 루트를 바꾸는 경우 **사용자 입력을 경로에 끼우지 마세요.**  
 **도메인→디렉터리**는 **사전 매핑**으로만.
@@ -331,7 +331,7 @@ server {
 
 ---
 
-# 10) 운영 하드닝 추가 항목
+# 10. 운영 하드닝 추가 항목
 
 - `autoindex off;`(전역/정적 위치)  
 - `client_max_body_size` 제한 (업로드/경로 프로빙 남용 억제)  
@@ -341,7 +341,7 @@ server {
 
 ---
 
-# 11) **CI/검수 자동화 아이디어**
+# 11. **CI/검수 자동화 아이디어**
 
 - **Nginx 정적 검증**:  
   ```bash
@@ -358,7 +358,7 @@ server {
 
 ---
 
-# 12) 체크리스트 (현장용)
+# 12. 체크리스트 (현장용)
 
 - [ ] 접두 location(`/path/`) ↔ `alias /real/dir/;` **슬래시 일치**  
 - [ ] 정규식 location + `alias` **지양**, 필요시 `rewrite + root`로 단순화  

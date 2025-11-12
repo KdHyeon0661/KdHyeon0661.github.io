@@ -6,7 +6,7 @@ category: Docker
 ---
 # `docker-compose.yml` 문법
 
-## 0) 실행/검증 기본 명령(요약)
+## 0. 실행/검증 기본 명령(요약)
 
 ```bash
 # (신규) Compose V2: 'docker compose'  ← 권장
@@ -26,7 +26,7 @@ docker compose config          # 병합·확장·env 적용된 최종 YAML 출�
 
 ---
 
-## 1) YAML 기본 골격: services / networks / volumes / (secrets, configs)
+## 1. YAML 기본 골격: services / networks / volumes / (secrets, configs)
 
 ```yaml
 version: "3.9"        # Compose 파일 포맷. 최신 Compose(V2)는 version 생략도 허용.
@@ -86,7 +86,7 @@ secrets:
 
 ---
 
-## 2) 필수 키워드 정리(심화)
+## 2. 필수 키워드 정리(심화)
 
 ### 2.1 `image` / `build`
 ```yaml
@@ -179,7 +179,7 @@ restart: "unless-stopped"   # always / on-failure / unless-stopped
 
 ---
 
-## 3) 네트워크 심화: 이름 통신·멀티 네트워크·외부 네트워크
+## 3. 네트워크 심화: 이름 통신·멀티 네트워크·외부 네트워크
 
 ### 3.1 이름 통신
 - 같은 네트워크에서는 `db:5432`처럼 **서비스명**으로 접근.
@@ -209,7 +209,7 @@ networks:
 
 ---
 
-## 4) 보안/리소스/런타임 고급 옵션
+## 4. 보안/리소스/런타임 고급 옵션
 
 ```yaml
 services:
@@ -237,7 +237,7 @@ services:
 
 ---
 
-## 5) Compose로 “빌드 최적화 + 런타임 경량화”(멀티 스테이지)
+## 5. Compose로 “빌드 최적화 + 런타임 경량화”(멀티 스테이지)
 
 ### 5.1 Node.js 프런트엔드(정적 배포)
 ```yaml
@@ -261,7 +261,7 @@ services:
 
 ---
 
-## 6) Secrets / Configs — 민감정보·설정 분리
+## 6. Secrets / Configs — 민감정보·설정 분리
 
 ### 6.1 secrets
 ```yaml
@@ -294,7 +294,7 @@ configs:
 
 ---
 
-## 7) Profiles — 상황별 부분 기동
+## 7. Profiles — 상황별 부분 기동
 
 ```yaml
 services:
@@ -310,7 +310,7 @@ docker compose --profile monitoring up -d
 
 ---
 
-## 8) Anchors & Extension Fields — 중복 줄이기
+## 8. Anchors & Extension Fields — 중복 줄이기
 
 ```yaml
 x-base: &base
@@ -338,7 +338,7 @@ networks:
 
 ---
 
-## 9) Compose 파일 오버레이(환경별 구성)
+## 9. Compose 파일 오버레이(환경별 구성)
 
 ```
 compose.yaml
@@ -361,7 +361,7 @@ docker compose -f compose.yaml -f compose.prod.yaml config
 
 ---
 
-## 10) 포트·네트워크 트러블슈팅(체크리스트)
+## 10. 포트·네트워크 트러블슈팅(체크리스트)
 
 | 증상 | 진단 | 해결 |
 |---|---|---|
@@ -384,7 +384,7 @@ docker compose exec web sh -lc "ip addr; ip route; getent hosts api"
 
 ---
 
-## 11) 실전 예제 1 — 3계층: Nginx(프록시)/API/Postgres
+## 11. 실전 예제 1 — 3계층: Nginx(프록시)/API/Postgres
 
 ```yaml
 version: "3.9"
@@ -459,7 +459,7 @@ server {
 
 ---
 
-## 12) 실전 예제 2 — 로컬 개발(핫리로드), 운영(세이프)
+## 12. 실전 예제 2 — 로컬 개발(핫리로드), 운영(세이프)
 
 **dev**
 ```yaml
@@ -488,7 +488,7 @@ services:
 
 ---
 
-## 13) 수식 직관: 공개 포트 최소화의 위험 감소
+## 13. 수식 직관: 공개 포트 최소화의 위험 감소
 공격면 \(A\)를 공개 포트 수 \(k\)와 각 포트의 위협 가중치 \(w_i\)로 단순 모델링:
 $$
 A \approx \sum_{i=1}^{k} w_i
@@ -497,7 +497,7 @@ $$
 
 ---
 
-## 14) 베스트 프랙티스(요약)
+## 14. 베스트 프랙티스(요약)
 
 1. **사용자 정의 브리지 네트워크**로 서비스 분리(프런트/백).  
 2. **secrets/configs**로 민감정보/설정 분리, 환경변수 과다 노출 금지.  
@@ -512,7 +512,7 @@ $$
 
 ---
 
-## 15) 빠른 참고 치트시트
+## 15. 빠른 참고 치트시트
 
 ```bash
 # 올리고 내리고 보기
@@ -538,7 +538,7 @@ docker compose up -d api
 
 ---
 
-## 16) 참고 링크
+## 16. 참고 링크
 - 공식 Compose 사양(파일 리퍼런스): https://docs.docker.com/compose/compose-file/
 - Compose CLI: https://docs.docker.com/compose/
 - YAML 문법: https://yaml.org/spec/

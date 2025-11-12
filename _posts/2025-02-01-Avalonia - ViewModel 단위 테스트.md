@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM: ViewModel 단위 테스트
 
-## 0) 테스트 철학 요약
+## 0. 테스트 철학 요약
 
 - **ViewModel = 순수 클래스**: UI 의존 제거(파일/다이얼로그/네비게이션/테마 등은 서비스 인터페이스로 추상화).
 - **시간·스레드 결정성**: Rx/비동기 코드는 **스케줄러/클럭 주입**으로 테스트 가능하게 만든다.
@@ -15,7 +15,7 @@ category: Avalonia
 
 ---
 
-## 1) 프로젝트/솔루션 구조(샘플)
+## 1. 프로젝트/솔루션 구조(샘플)
 
 ```
 MyApp/
@@ -52,7 +52,7 @@ MyApp/
 
 ---
 
-## 2) 기본 ViewModel(테스트 대상) — 개선 버전
+## 2. 기본 ViewModel(테스트 대상) — 개선 버전
 
 초안의 `LoginViewModel`을 **테스트 친화적**으로 정돈한다.
 
@@ -165,7 +165,7 @@ public sealed class SystemClock : IClock
 
 ---
 
-## 3) 테스트 인프라: Rx/TestScheduler/Clock/DI 유틸
+## 3. 테스트 인프라: Rx/TestScheduler/Clock/DI 유틸
 
 **결정성** 확보를 위해 ReactiveUI/Rx 스케줄러와 시간을 제어한다.
 
@@ -246,7 +246,7 @@ public static class DI
 
 ---
 
-## 4) xUnit + FluentAssertions + Rx 스케줄러 제어 테스트
+## 4. xUnit + FluentAssertions + Rx 스케줄러 제어 테스트
 
 ```csharp
 // Tests/ViewModels/LoginViewModelTests.cs
@@ -335,7 +335,7 @@ public class LoginViewModelTests
 
 ---
 
-## 5) ReactiveUI.Validation 테스트(폼 검증)
+## 5. ReactiveUI.Validation 테스트(폼 검증)
 
 ```csharp
 // MyApp/ViewModels/SignUpViewModel.cs
@@ -439,7 +439,7 @@ public class SignUpViewModelTests
 
 ---
 
-## 6) DI 의존 ViewModel 테스트 — Moq/NSubstitute 예시
+## 6. DI 의존 ViewModel 테스트 — Moq/NSubstitute 예시
 
 서비스로 외부 의존을 숨기고, Mock으로 주입하여 **상호작용**을 검증한다.
 
@@ -530,7 +530,7 @@ public class ProfileViewModelNSubstituteTests
 
 ---
 
-## 7) 커맨드/예외/중복 실행 테스트 팁
+## 7. 커맨드/예외/중복 실행 테스트 팁
 
 ```csharp
 // MyApp/ViewModels/DashboardViewModel.cs
@@ -612,7 +612,7 @@ public class DashboardViewModelTests
 
 ---
 
-## 8) 속성 변경/알림 테스트(Notify)
+## 8. 속성 변경/알림 테스트(Notify)
 
 ```csharp
 // Tests/TestInfra/TestHelpers.cs
@@ -663,7 +663,7 @@ public class LoginViewModel_PropertyChanged_Tests
 
 ---
 
-## 9) 시간·지연·폴링 테스트 — 가짜 클럭/스케줄러
+## 9. 시간·지연·폴링 테스트 — 가짜 클럭/스케줄러
 
 - `Task.Delay` 대신 **스케줄러 기반 지연**을 VM에서 사용하거나, 시간 기준 로직은 `IClock`을 주입.
 - Rx 타이머/Interval은 `TestScheduler`로 제어(AdvanceBy/AdvanceTo).
@@ -723,7 +723,7 @@ public class TimerViewModelTests
 
 ---
 
-## 10) NUnit/MSTest 차이 간단 정리
+## 10. NUnit/MSTest 차이 간단 정리
 
 | 항목 | xUnit | NUnit | MSTest |
 |---|---|---|---|
@@ -736,7 +736,7 @@ public class TimerViewModelTests
 
 ---
 
-## 11) CI에서의 실용 팁
+## 11. CI에서의 실용 팁
 
 - **Flaky 방지**: Task.Delay/Thread.Sleep 제거, 스케줄러/클럭으로 결정성 확보.
 - **병렬 테스트**: 상태 공유하는 싱글턴을 테스트 범위에서 사용하면 **격리** 필요(테스트용 DI 구축).
@@ -744,7 +744,7 @@ public class TimerViewModelTests
 
 ---
 
-## 12) 종합 예시: “입력 → 상태 → 실행 → 결과/검증”
+## 12. 종합 예시: “입력 → 상태 → 실행 → 결과/검증”
 
 ```csharp
 // Tests/ViewModels/EndToEnd_Login_Flow_Tests.cs
@@ -790,7 +790,7 @@ public class EndToEnd_Login_Flow_Tests
 
 ---
 
-## 13) 보너스: Golden Master/스냅샷 테스트(간단 문자열 상태)
+## 13. 보너스: Golden Master/스냅샷 테스트(간단 문자열 상태)
 
 뷰모델이 내보내는 “요약 문자열/로그 라인”이 안정적으로 유지되는지 스냅샷 파일로 검증.
 
@@ -832,7 +832,7 @@ public class SnapshotTests
 
 ---
 
-## 14) 결론 — 테스트 전략 체크리스트
+## 14. 결론 — 테스트 전략 체크리스트
 
 | 항목 | 실천 포인트 |
 |---|---|

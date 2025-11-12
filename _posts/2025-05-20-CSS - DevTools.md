@@ -6,7 +6,7 @@ category: CSS
 ---
 # 디버깅을 위한 DevTools(개발자 도구) 활용 가이드
 
-## 0) DevTools 빠르게 열기 & 환경 준비
+## 0. DevTools 빠르게 열기 & 환경 준비
 
 - 단축키
   - **열기**: `F12`, `Ctrl+Shift+I`(Win/Linux), `Cmd+Opt+I`(macOS)
@@ -19,7 +19,7 @@ category: CSS
 
 ---
 
-## 1) Elements 패널 — DOM·CSS 실시간 수정의 중심
+## 1. Elements 패널 — DOM·CSS 실시간 수정의 중심
 
 ### 1.1 필수 기능
 - **DOM 트리 편집**: 더블클릭/Enter로 태그/텍스트/속성 수정
@@ -54,7 +54,7 @@ category: CSS
 
 ---
 
-## 2) Styles / Computed / Layout — CSS 충돌과 우선순위 끝장내기
+## 2. Styles / Computed / Layout — CSS 충돌과 우선순위 끝장내기
 
 - **Styles**: 규칙 정의 순서/특이성/오버라이드 흐름 확인, 체크박스로 즉시 토글
 - **Computed**: 최종 계산값(색상/크기/폰트 등) 및 **상속 경로** 확인
@@ -71,7 +71,7 @@ category: CSS
 
 ---
 
-## 3) Console — JS 가시성 극대화 & 순간 분석
+## 3. Console — JS 가시성 극대화 & 순간 분석
 
 ### 3.1 실전 단축 기능
 - `$0`: Elements에서 마지막 선택 요소
@@ -96,7 +96,7 @@ console.groupEnd();
 
 ---
 
-## 4) Sources — 중단점 & 실행 흐름 완전 제어
+## 4. Sources — 중단점 & 실행 흐름 완전 제어
 
 ### 4.1 브레이크포인트 종류
 - **Line**: 특정 줄에서 정지
@@ -125,7 +125,7 @@ function total(items) {
 
 ---
 
-## 5) Network — API·리소스·캐시 문제의 진원지
+## 5. Network — API·리소스·캐시 문제의 진원지
 
 ### 5.1 핵심 시나리오
 - **CORS/인증**: 응답 헤더/상태코드 확인, `www-authenticate`/`set-cookie` 확인
@@ -140,7 +140,7 @@ function total(items) {
 
 ---
 
-## 6) Performance — 레이아웃/페인트/스크립팅 병목 추적
+## 6. Performance — 레이아웃/페인트/스크립팅 병목 추적
 
 ### 6.1 절차
 1) **Record** 시작 → 실사용 동작 재현(스크롤/탭 전환/검색)
@@ -161,7 +161,7 @@ function total(items) {
 
 ---
 
-## 7) Lighthouse & Core Web Vitals — 품질 지표 자동 리포트
+## 7. Lighthouse & Core Web Vitals — 품질 지표 자동 리포트
 
 - **Performance/SEO/Accessibility/Best Practices** 점수와 **LCP/FID/CLS** 지표 제공
 - **기능 제안(To-do)**을 항목별로 확인 → 실전 리팩토링 항목 선정
@@ -171,7 +171,7 @@ function total(items) {
 
 ---
 
-## 8) Application — 스토리지·서비스워커·PWA
+## 8. Application — 스토리지·서비스워커·PWA
 
 ### 8.1 스토리지
 - **Local/SessionStorage, Cookies, IndexedDB, Cache Storage** 관찰·수정·삭제
@@ -189,7 +189,7 @@ document.cookie = "exp=0; path=/";
 
 ---
 
-## 9) Rendering / Sensors / Layers / Coverage — 숨은 보석들
+## 9. Rendering / Sensors / Layers / Coverage — 숨은 보석들
 
 ### 9.1 Rendering
 - **Paint flashing**: 페인트 영역 시각화
@@ -208,7 +208,7 @@ document.cookie = "exp=0; path=/";
 
 ---
 
-## 10) 보너스: DevTools로 재현 가능한 대표 버그 8선
+## 10. 보너스: DevTools로 재현 가능한 대표 버그 8선
 
 ### 10.1 Margin Collapsing
 ```html
@@ -267,7 +267,7 @@ input, button {
 
 ---
 
-## 11) 팀 생산성을 높이는 DevTools 루틴
+## 11. 팀 생산성을 높이는 DevTools 루틴
 
 1) **Issue 템플릿**: “어떤 URL/해상도/브라우저/재현 절차/기대/실제/스크린샷/Har/프로파일”  
 2) **Command Palette**로 기능 검색 → `:screenshots`, `:show rulers`, `:coverage` 등 즉시 실행  
@@ -276,7 +276,7 @@ input, button {
 
 ---
 
-## 12) 실전 시나리오 3종 — 처음부터 끝까지
+## 12. 실전 시나리오 3종 — 처음부터 끝까지
 
 ### 12.1 “검색창 입력 시 렉이 걸린다”
 - **Performance** 녹화 → `Recalculate Style` & `Layout` 급증 확인  
@@ -309,7 +309,7 @@ input.addEventListener('input', debounce(onInput, 120));
 
 ---
 
-## 13) 자주 쓰는 콘솔 스니펫 모음
+## 13. 자주 쓰는 콘솔 스니펫 모음
 
 ```js
 // 1) 이벤트 리스너 목록 확인
@@ -338,7 +338,7 @@ async function retry(fn, n=3){
 
 ---
 
-## 14) 단축키·팁 총정리
+## 14. 단축키·팁 총정리
 
 | 항목 | 단축키/팁 |
 |---|---|
@@ -354,7 +354,7 @@ async function retry(fn, n=3){
 
 ---
 
-## 15) 체크리스트 요약
+## 15. 체크리스트 요약
 
 - DOM/CSS: **Elements + Styles/Computed/Layout**로 충돌/우선순위/겹침 해소  
 - JS: **Console/Sources**로 로그·중단점·흐름 제어  

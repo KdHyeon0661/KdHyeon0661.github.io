@@ -849,7 +849,7 @@ jobs:
 # 빠른 스모크 테스트
 python manage.py createsuperuser
 python manage.py runserver
-# 1) /api/token/ 로 토큰 발급
-# 2) /api/v1/projects/ POST (Bearer 토큰)
-# 3) /api/docs/ Swagger에서 Try it out
+# 1. /api/token/ 로 토큰 발급
+# 2. /api/v1/projects/ POST (Bearer 토큰)
+# 3. /api/docs/ Swagger에서 Try it out
 ```

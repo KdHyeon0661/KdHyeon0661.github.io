@@ -6,7 +6,7 @@ category: CSS
 ---
 # Flexbox 완전 가이드 (Flexbox Complete Guide)
 
-## 0) 큰 그림 한 장
+## 0. 큰 그림 한 장
 
 - **Flex Container**: `display: flex | inline-flex` (축 설정, 줄바꿈, 정렬, 간격)
 - **Flex Item**: `flex: grow shrink basis`(크기 정책), `align-self`, `order`
@@ -14,7 +14,7 @@ category: CSS
 
 ---
 
-## 1) 핵심 개념 복습
+## 1. 핵심 개념 복습
 
 ```html
 <div class="flex">
@@ -36,7 +36,7 @@ category: CSS
 
 ---
 
-## 2) 컨테이너 속성 총정리
+## 2. 컨테이너 속성 총정리
 
 | 속성 | 값(대표) | 설명 |
 |---|---|---|
@@ -83,7 +83,7 @@ category: CSS
 
 ---
 
-## 3) 아이템 속성 총정리
+## 3. 아이템 속성 총정리
 
 | 속성 | 설명 |
 |---|---|
@@ -115,7 +115,7 @@ category: CSS
 
 ---
 
-## 4) 정렬 속성 심화
+## 4. 정렬 속성 심화
 
 ### 4.1 주축 정렬 — `justify-content`
 ```css
@@ -159,7 +159,7 @@ category: CSS
 
 ---
 
-## 5) 수학으로 보는 공간 분배(직관)
+## 5. 수학으로 보는 공간 분배(직관)
 
 여유 공간이 \(F\), 각 아이템의 `flex-grow`가 \(g_i\)일 때  
 **증가분** \(\Delta w_i\)는
@@ -176,7 +176,7 @@ $$
 
 ---
 
-## 6) `gap` 적극 활용(마진보다 안전하고 직관적)
+## 6. `gap` 적극 활용(마진보다 안전하고 직관적)
 
 ```css
 .row-gap-1 {
@@ -194,7 +194,7 @@ $$
 
 ---
 
-## 7) 반응형·실전 패턴 모음
+## 7. 반응형·실전 패턴 모음
 
 ### 7.1 수직 가운데 정렬(뷰포트 가득)
 ```css
@@ -272,7 +272,7 @@ $$
 
 ---
 
-## 8) Flex vs width/height — 충돌·우선순위 이해
+## 8. Flex vs width/height — 충돌·우선순위 이해
 
 - `flex-basis`와 `width/height`가 **둘 다** 존재할 때:
   - 기본적으로 **`flex-basis`가 우선**(단, `flex-basis:auto`이면 width/height 또는 content size가 반영)
@@ -284,7 +284,7 @@ $$
 
 ---
 
-## 9) order(시각 순서)와 접근성
+## 9. order(시각 순서)와 접근성
 
 ```css
 /* 시각상 순서만 바뀜, DOM 순서는 그대로 → 키보드/스크린리더 순서 문제 가능 */
@@ -297,7 +297,7 @@ $$
 
 ---
 
-## 10) 스크롤·넘침과의 상호작용
+## 10. 스크롤·넘침과의 상호작용
 
 - Flex 아이템이 넘칠 때: `min-width: 0`(수평) or `min-height: 0`(수직) 지정 필요할 때가 많음.  
   일부 브라우저는 기본 min-size가 auto여서 **스크롤이 안 생기는** 오해를 유발.
@@ -315,7 +315,7 @@ $$
 
 ---
 
-## 11) 디버깅 체크리스트
+## 11. 디버깅 체크리스트
 
 1. **축 방향 확인**: `flex-direction`이 의도와 일치하는가?  
 2. **여유/부족 공간**: `flex-grow`/`flex-shrink` 기본값(1) 때문에 의도치 않게 늘/줄고 있지 않은가?  
@@ -328,7 +328,7 @@ $$
 
 ---
 
-## 12) 실전 샘플 모음(독립 실행)
+## 12. 실전 샘플 모음(독립 실행)
 
 ### 12.1 히어로 센터링 + CTA
 ```html
@@ -427,7 +427,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 13) 고급 주제
+## 13. 고급 주제
 
 ### 13.1 `aspect-ratio`와 Flex
 이미지/카드를 **비율 고정**하면서 Flex로 정렬:
@@ -461,7 +461,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 14) 성능·유지보수·팀 규칙 제안
+## 14. 성능·유지보수·팀 규칙 제안
 
 - **간격은 `gap`** 우선 → 마진 규칙을 최소화(일관성↑, 예외↓).
 - **유틸리티 클래스화**: `.flex`, `.items-center`, `.justify-between`, `.flex-1`, `.flex-none` 등.  
@@ -471,7 +471,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 15) 요약 표(핵심만 재정리)
+## 15. 요약 표(핵심만 재정리)
 
 | 분류 | 키 속성 | 기억 포인트 |
 |---|---|---|
@@ -482,7 +482,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 16) 마무리
+## 16. 마무리
 
 - Flexbox는 **1차원 정렬·간격·크기 분배**의 최강 도구입니다.  
 - `flex-basis` vs `width`, `gap` vs margin, `grow/shrink` 기본값 등 **작은 디테일**이 결과를 좌우합니다.  

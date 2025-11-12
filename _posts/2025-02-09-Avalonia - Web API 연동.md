@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM에서 Web API 연동
 
-## 0) 핵심 설계 요약
+## 0. 핵심 설계 요약
 
 - **Repository 패턴**으로 API 호출을 캡슐화 → ViewModel 테스트 용이성.
 - **DI + HttpClientFactory**로 HttpClient 수명/핸들러 파이프라인 제어.
@@ -16,7 +16,7 @@ category: Avalonia
 
 ---
 
-## 1) 데이터 모델과 결과 래퍼
+## 1. 데이터 모델과 결과 래퍼
 
 ### 1.1 도메인 모델
 
@@ -60,7 +60,7 @@ public sealed class ApiError
 
 ---
 
-## 2) Repository 인터페이스(확장형)
+## 2. Repository 인터페이스(확장형)
 
 초안의 CRUD에서 **페이징/정렬/필터**, **조건적 요청(ETag)**, **취소 토큰**을 포함한다.
 
@@ -92,7 +92,7 @@ public interface IProductRepository
 
 ---
 
-## 3) HttpClientFactory 및 핸들러 파이프라인
+## 3. HttpClientFactory 및 핸들러 파이프라인
 
 ### 3.1 인증/상태 핸들러
 
@@ -177,7 +177,7 @@ public static class Policies
 
 ---
 
-## 4) JSON 직렬화 옵션
+## 4. JSON 직렬화 옵션
 
 ```csharp
 // Services/Http/JsonOptions.cs
@@ -196,7 +196,7 @@ public static class JsonOptions
 
 ---
 
-## 5) API 구현(ProductApiRepository)
+## 5. API 구현(ProductApiRepository)
 
 ### 5.1 공통 헬퍼
 
@@ -345,7 +345,7 @@ public sealed class ProductApiRepository : IProductRepository
 
 ---
 
-## 6) DI 구성(App.axaml.cs)
+## 6. DI 구성(App.axaml.cs)
 
 HttpClientFactory + 핸들러 파이프라인 + Polly 정책을 **Named Client**로 등록한다.
 
@@ -406,7 +406,7 @@ public class App : Application
 
 ---
 
-## 7) ViewModel: 로딩/에러/취소/정렬/검색
+## 7. ViewModel: 로딩/에러/취소/정렬/검색
 
 ```csharp
 // ViewModels/ProductListViewModel.cs
@@ -498,7 +498,7 @@ public sealed class ProductListViewModel : ReactiveObject
 
 ---
 
-## 8) View 예시
+## 8. View 예시
 
 ```xml
 <!-- Views/ProductListView.axaml -->
@@ -535,7 +535,7 @@ public sealed class ProductListViewModel : ReactiveObject
 
 ---
 
-## 9) 개별 항목 읽기/동시성 제어(ETag)
+## 9. 개별 항목 읽기/동시성 제어(ETag)
 
 리소스 버전 충돌 방지: 서버가 `ETag` 제공 → 수정 시 `If-Match` 헤더로 낙관적 동시성 제어.
 
@@ -550,7 +550,7 @@ await _repo.UpdateAsync(item! with { Price = 19900m }, ifMatch: etag);
 
 ---
 
-## 10) 429(레이트 리밋)/백오프 처리
+## 10. 429(레이트 리밋)/백오프 처리
 
 Polly로 재시도하되, 서버가 `Retry-After` 헤더를 줄 경우 해당 시간을 우선한다.  
 지터 백오프의 직관적 기대 지연 합은 \( \sum_{k=1}^n E[T_k] \)이며, 단순 선형 증가 근사로  
@@ -561,7 +561,7 @@ $$
 
 ---
 
-## 11) 단위 테스트
+## 11. 단위 테스트
 
 ### 11.1 ViewModel: Repository 모킹
 
@@ -646,7 +646,7 @@ public sealed class ProductApiRepositoryTests
 
 ---
 
-## 12) 보안·운영 팁
+## 12. 보안·운영 팁
 
 - **비밀번호 입력**: Avalonia `TextBox` 대신 PasswordBox/Masking 사용(별도 컨트롤/커스텀).
 - **토큰 저장**: 메모리 우선, 자동 로그인 필요 시 OS별 안전 저장소(예: DPAPI/Mac Keychain/SecretService) 고려. JSON 파일 평문 저장 지양.
@@ -656,7 +656,7 @@ public sealed class ProductApiRepositoryTests
 
 ---
 
-## 13) 전체 흐름 도식
+## 13. 전체 흐름 도식
 
 1) View → ViewModel: 사용자 액션(검색/정렬/페이지)  
 2) ViewModel → Repository: 쿼리 파라미터와 함께 API 요청  
@@ -667,7 +667,7 @@ public sealed class ProductApiRepositoryTests
 
 ---
 
-## 14) 요약 표
+## 14. 요약 표
 
 | 항목 | 구현 포인트 | 테스트 포인트 |
 |------|-------------|---------------|
@@ -679,7 +679,7 @@ public sealed class ProductApiRepositoryTests
 
 ---
 
-## 15) 결론
+## 15. 결론
 
 - 초안의 기본 CRUD 예시를 **HttpClientFactory/Polly/DelegatingHandler**로 **운영 내구성**있게 확장했다.
 - **Repository 캡슐화** 덕분에 ViewModel 테스트는 간단하며, API 변화에도 UI는 안정적이다.

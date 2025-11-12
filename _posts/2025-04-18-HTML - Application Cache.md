@@ -6,7 +6,7 @@ category: HTML
 ---
 # Application Cache (AppCache)
 
-## 0) 왜 이 글인가? — 지금도 알아야 하는 실무적 이유
+## 0. 왜 이 글인가? — 지금도 알아야 하는 실무적 이유
 
 - **레거시 시스템** 유지보수: 오래된 사내 포털/키오스크/내장 브라우저에 AppCache 흔적이 남아 있을 수 있음  
 - **마이그레이션**: AppCache에서 **Service Worker**로 옮겨야 할 때 위험 포인트를 미리 파악  
@@ -14,7 +14,7 @@ category: HTML
 
 ---
 
-## 1) AppCache란 무엇이었나?
+## 1. AppCache란 무엇이었나?
 
 HTML5 초기에 제안된 오프라인 기술로, **매니페스트(manifest) 파일**에 적힌 리소스를 브라우저가 **일괄 캐시**하여  
 네트워크가 없어도 페이지를 열 수 있게 했습니다.
@@ -28,7 +28,7 @@ HTML5 초기에 제안된 오프라인 기술로, **매니페스트(manifest) �
 
 ---
 
-## 2) 최소 사용 예제 (역사적 참고용)
+## 2. 최소 사용 예제 (역사적 참고용)
 
 > ⚠️ 대부분의 최신 브라우저에서 **더 이상 동작하지 않습니다.**  
 > 아래 예제는 “구조 이해”가 목적입니다.
@@ -75,7 +75,7 @@ FALLBACK:
 
 ---
 
-## 3) AppCache 매니페스트 구조와 규칙
+## 3. AppCache 매니페스트 구조와 규칙
 
 | 섹션 | 의미 |
 |---|---|
@@ -93,7 +93,7 @@ FALLBACK:
 
 ---
 
-## 4) AppCache는 왜 실패했나? (설계적 결함 요약)
+## 4. AppCache는 왜 실패했나? (설계적 결함 요약)
 
 | 문제 | 실제로 겪는 증상 |
 |---|---|
@@ -107,7 +107,7 @@ FALLBACK:
 
 ---
 
-## 5) 실무: “망가진 AppCache”에서 **빠져나오기**
+## 5. 실무: “망가진 AppCache”에서 **빠져나오기**
 
 레거시 서비스가 아직 **AppCache 잔재** 때문에 캐시가 고착(갱신 불가)된 경우:
 
@@ -133,7 +133,7 @@ NETWORK:
 
 ---
 
-## 6) 정식 대안: **Service Worker + Cache API** (현 표준)
+## 6. 정식 대안: **Service Worker + Cache API** (현 표준)
 
 > 목적: **요청 단위로** 캐시·네트워크 정책을 정밀 제어. 오프라인/백그라운드/푸시/동기 등 PWA 기능 제공.  
 > 필수: **HTTPS**(또는 `localhost`), 명시적 스코프, 명확한 생명주기(`install`→`activate`→`fetch`).
@@ -254,7 +254,7 @@ workbox.routing.registerRoute(
 
 ---
 
-## 7) AppCache → Service Worker **마이그레이션 체크리스트**
+## 7. AppCache → Service Worker **마이그레이션 체크리스트**
 
 1. **HTML에서 manifest 제거**  
 2. **오프라인 폴백 페이지** 준비: `/offline.html`
@@ -269,7 +269,7 @@ workbox.routing.registerRoute(
 
 ---
 
-## 8) 디버깅 & 운영 팁
+## 8. 디버깅 & 운영 팁
 
 ### 8.1 DevTools (Chrome 기준)
 - **Application** 패널 → “Service Workers”:  
@@ -287,7 +287,7 @@ workbox.routing.registerRoute(
 
 ---
 
-## 9) 보안 고려사항
+## 9. 보안 고려사항
 
 - **HTTPS 필수** (Service Worker 등록 요구)  
 - **XSS 방어**: SW/캐시에 악성 스크립트가 고착되지 않도록 CSP·SRI 적용  
@@ -296,7 +296,7 @@ workbox.routing.registerRoute(
 
 ---
 
-## 10) 흔한 Q&A
+## 10. 흔한 Q&A
 
 **Q1. IE11만 사용하는 사내망 키오스크에서 AppCache가 여전히 필요합니까?**  
 A1. 기술적으로 동작할 수 있으나, **운영 리스크**(갱신 지연·디버깅 난이도)가 큽니다. 가능하다면 **내장 브라우저 업그레이드 + SW 전환**을 권장.
@@ -309,7 +309,7 @@ A3. 적절한 전략(문서는 Network First, 정적은 Cache First 등)과 캐�
 
 ---
 
-## 11) “레거시 AppCache”와 “현대 SW”를 나란히 비교
+## 11. “레거시 AppCache”와 “현대 SW”를 나란히 비교
 
 | 항목 | AppCache | Service Worker + Cache API |
 |---|---|---|
@@ -322,7 +322,7 @@ A3. 적절한 전략(문서는 Network First, 정적은 Cache First 등)과 캐�
 
 ---
 
-## 12) 실전 템플릿 — “기본 PWA 오프라인 셸”
+## 12. 실전 템플릿 — “기본 PWA 오프라인 셸”
 
 ### 12.1 파일 구조
 

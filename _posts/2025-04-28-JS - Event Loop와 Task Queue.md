@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # 이벤트 루프(Event Loop)와 태스크 큐(Task Queue)
 
-## 0) 한눈에 보는 규칙
+## 0. 한눈에 보는 규칙
 
 - **콜 스택(Call Stack)** 이 비면, 이벤트 루프가 **마이크로태스크(Microtask) 큐**를 **먼저** 비우고, 그 다음 **매크로태스크(Macro task)** 를 1개 실행합니다.
 - **Microtask**: `Promise.then/catch/finally`, `queueMicrotask`, `MutationObserver`, **(Node)** `process.nextTick(특수)`.
@@ -16,7 +16,7 @@ category: JavaScript
 
 ---
 
-## 1) 실행 모델과 구성요소
+## 1. 실행 모델과 구성요소
 
 ### 1.1 콜 스택(Call Stack)
 - 현재 실행 중인 프레임(함수 호출)이 쌓이는 스택.
@@ -39,7 +39,7 @@ console.log("B"); // A → B 순서로 즉시 실행
 
 ---
 
-## 2) 큐의 종류와 대표 작업
+## 2. 큐의 종류와 대표 작업
 
 ### 2.1 마이크로태스크(Microtask)
 - **브라우저**: `Promise.then/catch/finally`, `queueMicrotask`, `MutationObserver`.
@@ -71,7 +71,7 @@ requestAnimationFrame(() => {
 
 ---
 
-## 3) 브라우저 이벤트 루프(개략 알고리즘)
+## 3. 브라우저 이벤트 루프(개략 알고리즘)
 
 ### 3.1 한 턴의 흐름
 1) **콜 스택**이 비면  
@@ -103,7 +103,7 @@ console.log("4");
 
 ---
 
-## 4) Node.js 이벤트 루프(libuv) 개요
+## 4. Node.js 이벤트 루프(libuv) 개요
 
 ### 4.1 phases 순서(간단화)
 1) **timers**: `setTimeout`/`setInterval` 만기 콜백  
@@ -128,7 +128,7 @@ Promise.resolve().then(() => console.log("promise"));
 
 ---
 
-## 5) 실험 예제 모음(브라우저)
+## 5. 실험 예제 모음(브라우저)
 
 ### 5.1 Microtask 여러 개와 순서
 ```js
@@ -175,7 +175,7 @@ console.log("sync");
 
 ---
 
-## 6) 실험 예제 모음(Node.js)
+## 6. 실험 예제 모음(Node.js)
 
 ### 6.1 nextTick의 초고우선
 ```js
@@ -201,7 +201,7 @@ fs.readFile(__filename, () => {
 
 ---
 
-## 7) 렌더링 타이밍과 프레임(브라우저)
+## 7. 렌더링 타이밍과 프레임(브라우저)
 
 ### 7.1 렌더링 파이프라인
 - **스타일 계산 → 레이아웃 → 페인트 → 합성**.
@@ -222,7 +222,7 @@ requestAnimationFrame(step);
 
 ---
 
-## 8) 실전 패턴: 순차 vs 병렬, 백오프, 타임슬라이스
+## 8. 실전 패턴: 순차 vs 병렬, 백오프, 타임슬라이스
 
 ### 8.1 순차 vs 배치 처리
 ```js
@@ -251,7 +251,7 @@ async function chunkedWork(items, chunk = 100) {
 
 ---
 
-## 9) 디버깅/관찰 도구
+## 9. 디버깅/관찰 도구
 
 ### 9.1 브라우저
 - **DevTools Performance**: Main/Task/Microtask/rAF 타이밍, Long Task 확인.
@@ -279,7 +279,7 @@ setInterval(() => console.log('EL delay p95(ms):', Math.round(h.percentiles.get(
 
 ---
 
-## 10) 자주 하는 실수/함정
+## 10. 자주 하는 실수/함정
 
 ### 10.1 `forEach` + `async` 오해
 ```js
@@ -308,7 +308,7 @@ arr.forEach(async v => {
 
 ---
 
-## 11) 순서 추론 예제(해설 포함)
+## 11. 순서 추론 예제(해설 포함)
 
 ### 11.1 기본
 ```js
@@ -341,7 +341,7 @@ fs.readFile(__filename, () => {
 
 ---
 
-## 12) 실전 레시피
+## 12. 실전 레시피
 
 ### 12.1 Microtask 안전한 배치 실행
 ```js
@@ -383,7 +383,7 @@ function withTimeout(promise, ms = 3000) {
 
 ---
 
-## 13) 체크리스트
+## 13. 체크리스트
 
 - [ ] **Microtask 먼저**: `Promise/queueMicrotask`가 `setTimeout`보다 앞선다.
 - [ ] **렌더 타이밍**: 마이크로태스크가 다 비워져야 렌더 기회. rAF는 렌더 직전.
@@ -394,7 +394,7 @@ function withTimeout(promise, ms = 3000) {
 
 ---
 
-## 14) 미니 퀴즈
+## 14. 미니 퀴즈
 
 ```js
 // Q1) 출력 순서?
@@ -425,7 +425,7 @@ fs.readFile(__filename, () => {
 
 ---
 
-## 15) 요약
+## 15. 요약
 
 - **스택이 비면** 이벤트 루프는 **Microtask 전부 → Macro task 1개** 순서로 소비합니다.  
 - 브라우저는 이 사이사이에 **렌더링**이 개입하며, rAF는 **렌더 직전** 실행됩니다.  

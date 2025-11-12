@@ -10,7 +10,7 @@ category: Kubernetes
 
 ---
 
-## 0) 한눈에 보는 선택 가이드
+## 0. 한눈에 보는 선택 가이드
 
 | 상황 | 추천 | 핵심 근거 | 즉시 시작 커맨드 |
 |---|---|---|---|
@@ -22,7 +22,7 @@ category: Kubernetes
 
 ---
 
-## 1) 왜 경량 Kubernetes인가?
+## 1. 왜 경량 Kubernetes인가?
 
 ### 리소스·운영·네트워크 현실
 - **컨트롤 플레인 다중 컴포넌트**(apiserver, controller, scheduler, etcd, CNI, CSI, Ingress…)가 **RAM/CPU**를 상시 점유
@@ -37,7 +37,7 @@ $$
 
 ---
 
-## 2) K3s — Rancher가 만든 초경량 CNCF 호환 K8s
+## 2. K3s — Rancher가 만든 초경량 CNCF 호환 K8s
 
 ### 2.1 핵심 특성
 - **단일 바이너리**(`k3s`)에 핵심 컴포넌트 내장, **ARM(aarch64)** 우수
@@ -80,7 +80,7 @@ curl -sfL https://get.k3s.io | K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN sh -
 
 ---
 
-## 3) MicroK8s — Canonical의 개발·AI/ML 친화 경량 K8s
+## 3. MicroK8s — Canonical의 개발·AI/ML 친화 경량 K8s
 
 ### 3.1 설치부터 애드온까지 5분
 ```bash
@@ -110,7 +110,7 @@ microk8s join <IP>:<PORT>/<TOKEN>
 
 ---
 
-## 4) Edge K8s — 클라우드–엣지 하이브리드의 핵심
+## 4. Edge K8s — 클라우드–엣지 하이브리드의 핵심
 
 ### 4.1 공통 요구사항
 - **간헐적/불안정 네트워크**: 로컬 자율 운영 + 연결 시 **상태 동기화**
@@ -154,7 +154,7 @@ flowchart LR
 
 ---
 
-## 5) 네트워킹·스토리지·보안·관측 — 경량/엣지 특화 설계
+## 5. 네트워킹·스토리지·보안·관측 — 경량/엣지 특화 설계
 
 ### 5.1 네트워킹(CNI)
 - K3s 기본 **Flannel** → 간단/경량  
@@ -190,7 +190,7 @@ kubectl label ns prod pod-security.kubernetes.io/enforce=restricted
 
 ---
 
-## 6) GitOps / CI·CD in 경량·엣지
+## 6. GitOps / CI·CD in 경량·엣지
 
 ### 6.1 ArgoCD로 K3s 동기화
 ```yaml
@@ -240,7 +240,7 @@ jobs:
 
 ---
 
-## 7) 실전 예제 모음
+## 7. 실전 예제 모음
 
 ### 7.1 K3s + Nginx Ingress + Longhorn + HPA
 
@@ -348,7 +348,7 @@ spec:
 
 ---
 
-## 8) 에어갭(오프라인)·불안정 네트워크 전략
+## 8. 에어갭(오프라인)·불안정 네트워크 전략
 
 - **사전 이미지 패킹**: 레지스트리 미러(Registry in-a-box) 또는 tar 번들
 - **K3s airgap**: `/var/lib/rancher/k3s/agent/images/`에 이미지 tar 배치 후 설치
@@ -357,7 +357,7 @@ spec:
 
 ---
 
-## 9) eBPF · WASM · AI@Edge — 확장 트렌드
+## 9. eBPF · WASM · AI@Edge — 확장 트렌드
 
 - **eBPF(Cilium)**: 커널 레벨 빠른 네트워킹/정책/가시성
 - **WASM(WasmEdge/Spin+k8s)**: 경량 함수 실행(콜드 스타트↓/격리↑)
@@ -366,7 +366,7 @@ spec:
 
 ---
 
-## 10) 성능·용량 감각 잡기(실무 휴리스틱)
+## 10. 성능·용량 감각 잡기(실무 휴리스틱)
 
 - **싱글 보드(4GB RAM)**: K3s + 1~3개 경량 워크로드  
 - **로컬 데스크톱(16GB)**: MicroK8s + Ingress + Prom/Grafana + 소규모 ML  
@@ -379,7 +379,7 @@ $$
 
 ---
 
-## 11) 트러블슈팅·운영 체크리스트
+## 11. 트러블슈팅·운영 체크리스트
 
 - 설치 직후:
 ```bash
@@ -406,7 +406,7 @@ sudo crictl ps -a
 
 ---
 
-## 12) 보안 운영 요약
+## 12. 보안 운영 요약
 
 - **PSA restricted**, 네임스페이스 라벨 강제
 - Ingress mTLS, 내부 서비스 mTLS(메시/사이드카 없이 cert-manager+SPIFFE도 가능)
@@ -416,7 +416,7 @@ sudo crictl ps -a
 
 ---
 
-## 13) 결론
+## 13. 결론
 
 | 포인트 | 정리 |
 |---|---|
@@ -431,11 +431,11 @@ sudo crictl ps -a
 ## 부록 A. 빠른 PoC 스크립트(라즈베리파이 K3s + MetalLB + Nginx)
 
 ```bash
-# 1) K3s 설치
+# 1. K3s 설치
 curl -sfL https://get.k3s.io | sh -
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-# 2) MetalLB
+# 2. MetalLB
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
 cat <<EOF | kubectl apply -f -
 apiVersion: metallb.io/v1beta1
@@ -449,7 +449,7 @@ metadata: { name: l2, namespace: metallb-system }
 spec: {}
 EOF
 
-# 3) Nginx 배포 + LoadBalancer
+# 3. Nginx 배포 + LoadBalancer
 kubectl create deploy web --image=nginx
 kubectl expose deploy web --port=80 --type=LoadBalancer
 kubectl get svc web -w

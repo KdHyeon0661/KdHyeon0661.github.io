@@ -6,7 +6,7 @@ category: 영상처리
 ---
 # ImageTool 프로그램
 
-## 1) 프로젝트 생성
+## 1. 프로젝트 생성
 
 1. Visual Studio → **Create a new project** → **Windows Desktop Application**(C++/Empty Project) 선택  
 2. 프로젝트 이름: `ImageTool`  
@@ -22,7 +22,7 @@ category: 영상처리
 
 ---
 
-## 2) 영상 클래스 추가하기 — `IppDib.hpp`
+## 2. 영상 클래스 추가하기 — `IppDib.hpp`
 
 다음 헤더는 **BI_RGB(무압축) 8/24bpp** BMP 입출력, **Top→Down 내부 저장**, **그리기(StretchDIBits)** 를 지원합니다.
 
@@ -214,7 +214,7 @@ public:
 
 ---
 
-## 3) 애플리케이션 — `ImageTool.cpp`
+## 3. 애플리케이션 — `ImageTool.cpp`
 
 - **시작 시 빈 창을 띄우지 않음**: 창을 **숨긴 상태로 생성** → 파일 열기 대화상자 → 성공 시 **창 크기를 영상 크기에 맞춘 뒤** 표시. 취소하면 바로 종료.
 - **BMP 불러오기/저장**: 메뉴 **파일→열기(O)… / 다른 이름으로 저장(S)…**
@@ -471,7 +471,7 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow) {
 
 ---
 
-## 4) 동작 확인 체크리스트
+## 4. 동작 확인 체크리스트
 
 1. **실행 즉시** 파일 열기 대화상자 표시 → **BMP 선택**  
    - 취소하면 **종료**(빈 창 없음)  
@@ -484,7 +484,7 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow) {
 
 ---
 
-## 5) 구현 포인트(생략 없이 요약)
+## 5. 구현 포인트(생략 없이 요약)
 
 - **Top→Down 내부표현**: 그리기 시 `biHeight = -height`(음수)로 전달 → `StretchDIBits`가 **뒤집지 않고** 그려줌.  
   저장 시엔 **Bottom→Up**으로 뒤집어 씁니다(전통 BMP 호환).
@@ -497,7 +497,7 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow) {
 
 ---
 
-## 6) 다음 확장 아이디어
+## 6. 다음 확장 아이디어
 
 - **스케일(확대/축소) 보기** 옵션(Nearest/Bilinear)  
 - **드래그&드롭** 파일 열기, MRU(최근 파일)  

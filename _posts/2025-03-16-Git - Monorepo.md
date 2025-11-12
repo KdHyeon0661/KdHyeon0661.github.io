@@ -77,17 +77,17 @@ category: Git
 대규모 저장소에서 **필요 디렉터리만** 빠르게 내려받는다.
 
 ```bash
-# 1) 히스토리/Blob 최소화
+# 1. 히스토리/Blob 최소화
 git clone --filter=blob:none --no-checkout https://github.com/your-org/monorepo.git
 cd monorepo
 
-# 2) sparse 모드 활성화
+# 2. sparse 모드 활성화
 git sparse-checkout init --cone
 
-# 3) 필요한 디렉터리만
+# 3. 필요한 디렉터리만
 git sparse-checkout set apps/web packages/ui
 
-# 4) 필요한 시점에만 다른 경로 추가
+# 4. 필요한 시점에만 다른 경로 추가
 git sparse-checkout add packages/auth
 ```
 

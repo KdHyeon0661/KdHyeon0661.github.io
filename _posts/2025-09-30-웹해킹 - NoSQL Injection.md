@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 🧪 5. NoSQL Injection (MongoDB / Elasticsearch)
 
-## 0) 요약 (Executive Summary)
+## 0. 요약 (Executive Summary)
 
 - **문제(패턴)**  
   - **MongoDB**: 애플리케이션이 사용자 JSON을 **그대로** 쿼리에 바인딩하면, 키로 시작하는 **연산자(`$ne`, `$gt`, `$regex`, `$where` 등)** 가 주입되어 **인증 우회 / 대량 조회 / 서버측 JS 평가** 위험이 발생.  
@@ -21,7 +21,7 @@ category: 웹해킹
 
 ---
 
-# 1) 위협 모델과 발생 지점
+# 1. 위협 모델과 발생 지점
 
 ### 1.1 MongoDB
 - **안티패턴**:  
@@ -40,7 +40,7 @@ category: 웹해킹
 
 ---
 
-# 2) 안전한 재현/탐지 (스테이징 전용, 차단 확인용)
+# 2. 안전한 재현/탐지 (스테이징 전용, 차단 확인용)
 
 > 아래는 “**우리가 차단에 성공하는지**” 확인하기 위한 **안전 테스트**입니다. (운영/타 시스템 금지)
 
@@ -64,7 +64,7 @@ curl -si 'https://es.staging.example.com/my-index/_search?q=anything' | head -n1
 
 ---
 
-# 3) Node.js(Express) + Mongo(Mongoose/PyMongo 유사) — **차단/정규화 미들웨어**
+# 3. Node.js(Express) + Mongo(Mongoose/PyMongo 유사) — **차단/정규화 미들웨어**
 
 ## 3.1 “연산자/점(.) 키” 재귀 필터
 ```js
@@ -210,7 +210,7 @@ app.get("/users", async (req,res) => {
 
 ---
 
-# 4) Python(FastAPI/Flask) + PyMongo — 동일 원칙
+# 4. Python(FastAPI/Flask) + PyMongo — 동일 원칙
 
 ```python
 # security/mongo_sanitize.py
@@ -249,7 +249,7 @@ def build_query(filters):
 
 ---
 
-# 5) Mongoose 스키마/옵션으로 **추가 방어**
+# 5. Mongoose 스키마/옵션으로 **추가 방어**
 
 ```js
 const UserSchema = new Schema({
@@ -269,7 +269,7 @@ const UserSchema = new Schema({
 
 ---
 
-# 6) MongoDB Aggregation — **화이트리스트 파이프라인**만 허용
+# 6. MongoDB Aggregation — **화이트리스트 파이프라인**만 허용
 
 ```js
 // 안전한 aggregation 빌더 예시(정렬/집계 몇 가지만 허용)
@@ -303,7 +303,7 @@ function buildAgg(specs=[]){
 
 ---
 
-# 7) Elasticsearch — 안전 설계 가이드 & 코드
+# 7. Elasticsearch — 안전 설계 가이드 & 코드
 
 ## 7.1 **Query String** 사용 금지, **Query DSL**만
 ```js
@@ -395,7 +395,7 @@ location ~ ^/.+/_search$ {
 
 ---
 
-# 8) 로깅/탐지/모니터링
+# 8. 로깅/탐지/모니터링
 
 ## 8.1 애플리케이션 로그(구조화)
 - 필드: `ts`, `route`, `user_id`, `filters_count`, `rejected_reason(opkey|dotkey|badfield)`, `limit`, `source=api|ui`  
@@ -429,7 +429,7 @@ index=app event=reject_filter reason IN ("operator_key","dot_key","bad_field")
 
 ---
 
-# 9) 구성/플랫폼 수준 수칙
+# 9. 구성/플랫폼 수준 수칙
 
 - **MongoDB**
   - 앱에서 `$where` **사용 금지**. (서버측 JS 의존 로직 제거)  
@@ -449,7 +449,7 @@ index=app event=reject_filter reason IN ("operator_key","dot_key","bad_field")
 
 ---
 
-# 10) OpenAPI + JSON Schema 검증 (언어 무관 패턴)
+# 10. OpenAPI + JSON Schema 검증 (언어 무관 패턴)
 
 ```yaml
 # openapi.yaml (일부) — /users 검색
@@ -479,7 +479,7 @@ paths:
 
 ---
 
-# 11) CI/SAST 방어선
+# 11. CI/SAST 방어선
 
 - **정규식/grep 룰 예시**
   - Mongo: `findOne\(\s*req\.body` / `find\(\s*req\.query`  
@@ -497,7 +497,7 @@ paths:
 
 ---
 
-# 12) 체크리스트 (현장용)
+# 12. 체크리스트 (현장용)
 
 - [ ] **스키마 검증**: 필드/타입/열거값 화이트리스트  
 - [ ] **연산자/점 키 차단**: 입력 JSON 재귀 필터, `$`/`.` 거절  

@@ -18,7 +18,7 @@ category: Docker
 
 ---
 
-## 1) 개요 — Docker 네트워크 드라이버 지도
+## 1. 개요 — Docker 네트워크 드라이버 지도
 
 | 드라이버     | 주 용도                              | 핵심 특징 |
 |--------------|--------------------------------------|-----------|
@@ -32,7 +32,7 @@ category: Docker
 
 ---
 
-## 2) Macvlan — 컨테이너가 진짜 장비처럼 보이게
+## 2. Macvlan — 컨테이너가 진짜 장비처럼 보이게
 
 > 컨테이너마다 **고유 MAC** 을 부여하고, 물리 네트워크(L2)에 직접 붙이는 방식.  
 > 프린터/IoT/NAS처럼 **LAN 상의 실체 IP** 로 보여야 할 때 매우 적합.
@@ -56,14 +56,14 @@ Linux macvlan은 대표적으로 다음 모드를 가집니다.
 ### 2.3 빠른 생성 예제 (수동 CLI)
 
 ```bash
-# 1) macvlan 네트워크 생성
+# 1. macvlan 네트워크 생성
 docker network create -d macvlan \
   --subnet=192.168.1.0/24 \
   --gateway=192.168.1.1 \
   -o parent=eth0 \
   my-macvlan
 
-# 2) 컨테이너를 macvlan에 연결 (정적 IP 부여)
+# 2. 컨테이너를 macvlan에 연결 (정적 IP 부여)
 docker run -d --name printer \
   --network my-macvlan \
   --ip 192.168.1.50 \
@@ -132,7 +132,7 @@ docker network create -d macvlan \
 
 ---
 
-## 3) Overlay — 여러 호스트에 걸친 가상 네트워크
+## 3. Overlay — 여러 호스트에 걸친 가상 네트워크
 
 > **Swarm 모드**에서 활성화되는 L2.5 가상망(VXLAN).  
 > 노드 여러 대에 걸친 컨테이너들이 **동일 네트워크** 처럼 통신.
@@ -147,16 +147,16 @@ docker network create -d macvlan \
 ### 3.2 기본 흐름
 
 ```bash
-# 1) Swarm 초기화 (첫 노드에서)
+# 1. Swarm 초기화 (첫 노드에서)
 docker swarm init
 
-# 2) overlay 네트워크 생성(+ attachable)
+# 2. overlay 네트워크 생성(+ attachable)
 docker network create -d overlay --attachable my-overlay
 
-# 3) 서비스(스웜 리소스)로 붙이기
+# 3. 서비스(스웜 리소스)로 붙이기
 docker service create --name web --network my-overlay nginx:alpine
 
-# 4) 일반 컨테이너도 붙일 수 있음
+# 4. 일반 컨테이너도 붙일 수 있음
 docker run -d --name debug --network my-overlay nicolaka/netshoot
 ```
 
@@ -243,7 +243,7 @@ $$
 
 ---
 
-## 4) Compose에서 네트워크 직접 설정 — 분리/연결/외부 활용
+## 4. Compose에서 네트워크 직접 설정 — 분리/연결/외부 활용
 
 ### 4.1 다중 네트워크 분리(프런트/백)
 
@@ -316,7 +316,7 @@ services:
 
 ---
 
-## 5) 보안/성능/운영 베스트 프랙티스
+## 5. 보안/성능/운영 베스트 프랙티스
 
 ### 5.1 보안
 
@@ -340,7 +340,7 @@ services:
 
 ---
 
-## 6) 트러블슈팅 체크리스트
+## 6. 트러블슈팅 체크리스트
 
 | 증상 | 원인 후보 | 진단/해결 |
 |------|-----------|-----------|
@@ -374,7 +374,7 @@ docker compose config
 
 ---
 
-## 7) 부록
+## 7. 부록
 
 ### 7.1 토폴로지 예시 (문자 다이어그램)
 

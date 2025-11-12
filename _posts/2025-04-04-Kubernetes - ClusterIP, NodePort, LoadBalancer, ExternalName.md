@@ -443,7 +443,7 @@ spec:
         ports: [{ containerPort: 5678 }]
 
 ---
-# 1) ClusterIP
+# 1. ClusterIP
 apiVersion: v1
 kind: Service
 metadata: { name: demo-clusterip }
@@ -452,7 +452,7 @@ spec:
   ports: [{ name: http, port: 80, targetPort: 5678 }]
 
 ---
-# 2) NodePort
+# 2. NodePort
 apiVersion: v1
 kind: Service
 metadata: { name: demo-nodeport }
@@ -466,7 +466,7 @@ spec:
     nodePort: 30081
 
 ---
-# 3) LoadBalancer (MetalLB/클라우드 필요)
+# 3. LoadBalancer (MetalLB/클라우드 필요)
 apiVersion: v1
 kind: Service
 metadata: { name: demo-lb }
@@ -480,7 +480,7 @@ spec:
     targetPort: 5678
 
 ---
-# 4) ExternalName
+# 4. ExternalName
 apiVersion: v1
 kind: Service
 metadata: { name: demo-external }

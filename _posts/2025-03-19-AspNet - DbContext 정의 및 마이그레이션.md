@@ -6,7 +6,7 @@ category: AspNet
 ---
 # EF Core - DbContext 정의 및 마이그레이션
 
-## 0) 큰 그림: EF Core로 보는 애플리케이션-DB 상호작용
+## 0. 큰 그림: EF Core로 보는 애플리케이션-DB 상호작용
 
 1. **엔티티**(모델 클래스) 작성  
 2. **DbContext**에 `DbSet<TEntity>` 노출 + `OnModelCreating`에서 구성  
@@ -16,7 +16,7 @@ category: AspNet
 
 ---
 
-## 1) 모델 클래스(Entity) 정의
+## 1. 모델 클래스(Entity) 정의
 
 초안의 `Blog`를 확장해 **제약/탐색 속성/인덱스 후보**를 포함한다.
 
@@ -51,7 +51,7 @@ public class Post
 
 ---
 
-## 2) DbContext 클래스 정의
+## 2. DbContext 클래스 정의
 
 초안에서 **Fluent API**, **인덱스**, **제약**, **고급 구성**까지 확장한다.
 
@@ -109,7 +109,7 @@ public class AppDbContext : DbContext
 
 ---
 
-## 3) Program.cs 구성과 연결 문자열
+## 3. Program.cs 구성과 연결 문자열
 
 초안의 SQL Server 예시에 더해 **Provider 별 패턴**을 한 번에 보여준다.
 
@@ -162,7 +162,7 @@ app.Run();
 
 ---
 
-## 4) 마이그레이션(Migration) 총정리
+## 4. 마이그레이션(Migration) 총정리
 
 ### 4.1 dotnet-ef 도구 설치 (최초 1회)
 ```bash
@@ -217,7 +217,7 @@ dotnet ef migrations bundle --configuration Release --self-contained
 
 ---
 
-## 5) 마이그레이션 파일 anatomy
+## 5. 마이그레이션 파일 anatomy
 
 예시(일부):
 
@@ -281,7 +281,7 @@ public partial class InitialCreate : Migration
 
 ---
 
-## 6) 데이터 시드(Seed)와 초기화
+## 6. 데이터 시드(Seed)와 초기화
 
 ### 6.1 Fluent API 시드 (마이그레이션 기반)
 ```csharp
@@ -321,7 +321,7 @@ await DbInitializer.SeedAsync(app.Services);
 
 ---
 
-## 7) 실제 사용: CRUD, 관계, 로딩 전략
+## 7. 실제 사용: CRUD, 관계, 로딩 전략
 
 ### 7.1 추가/수정/삭제
 ```csharp
@@ -382,7 +382,7 @@ var list = await _db.Blogs.AsNoTracking().ToListAsync();
 
 ---
 
-## 8) 고급 구성: 소유 타입(Owned), 값 변환기(ValueConverter), 그림자 속성(Shadow), 동시성 토큰
+## 8. 고급 구성: 소유 타입(Owned), 값 변환기(ValueConverter), 그림자 속성(Shadow), 동시성 토큰
 
 ### 8.1 Owned 타입(복합 값 객체)
 ```csharp
@@ -469,7 +469,7 @@ catch (DbUpdateConcurrencyException ex)
 
 ---
 
-## 9) 트랜잭션/유닛오브워크/원자성
+## 9. 트랜잭션/유닛오브워크/원자성
 
 기본적으로 `SaveChanges()`는 트랜잭션을 포함한다. 여러 `DbContext` 또는 외부 리소스 동시 작업 시 명시적 트랜잭션 사용.
 
@@ -491,7 +491,7 @@ catch
 
 ---
 
-## 10) Raw SQL 과 안전한 파라미터화
+## 10. Raw SQL 과 안전한 파라미터화
 
 ### 10.1 읽기 쿼리
 ```csharp
@@ -514,7 +514,7 @@ var rows = await _db.Database
 
 ---
 
-## 11) 성능 체크리스트
+## 11. 성능 체크리스트
 
 - **컨텍스트 풀링**(`AddDbContextPool`)로 할당/GC 감축  
 - **읽기 쿼리 `AsNoTracking()`**  
@@ -532,7 +532,7 @@ private static readonly Func<AppDbContext, int, Task<Post?>> _getPostById =
 
 ---
 
-## 12) 설계/운영: 다중 DbContext, 다중 마이그레이션, 스키마 분리
+## 12. 설계/운영: 다중 DbContext, 다중 마이그레이션, 스키마 분리
 
 - **다중 컨텍스트**: Bounded Context 별 분리(`AppDbContext`, `ReportingDbContext` 등)
 - **마이그레이션 세트 분리**: `--context` 옵션으로 컨텍스트별 마이그레이션 폴더 관리
@@ -543,7 +543,7 @@ dotnet ef migrations add InitReporting --context ReportingDbContext --output-dir
 
 ---
 
-## 13) 테스트: InMemory/Sqlite/컨테이너
+## 13. 테스트: InMemory/Sqlite/컨테이너
 
 ### 13.1 InMemory 기능 테스트(관계/제약이 약함)
 ```csharp
@@ -562,7 +562,7 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(keepAlive));
 
 ---
 
-## 14) 보안/탄력성
+## 14. 보안/탄력성
 
 - **연결 재시도**, **명령 타임아웃** 설정
 ```csharp
@@ -575,7 +575,7 @@ opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(1
 
 ---
 
-## 15) 종합 예제: API + EF Core
+## 15. 종합 예제: API + EF Core
 
 ### 15.1 DTO/요청 검증
 ```csharp
@@ -629,7 +629,7 @@ app.Run();
 
 ---
 
-## 16) 트러블슈팅 FAQ
+## 16. 트러블슈팅 FAQ
 
 - **마이그레이션 생성 안 됨**: 올바른 `Startup/Program` 구성/`DbContext` 생성자/Provider 체크  
 - **스냅샷 충돌**: 수동 편집 시 주의. 필요 시 `remove` 후 재생성  
@@ -640,7 +640,7 @@ app.Run();
 
 ---
 
-## 17) 요약 표
+## 17. 요약 표
 
 | 항목 | 키 포인트 |
 |------|-----------|

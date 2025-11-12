@@ -47,15 +47,15 @@ category: 시스템보안
 ```powershell
 Import-Module ActiveDirectory
 
-# 1) SPN 보유 계정 나열 (서비스 계정 후보)
+# 1. SPN 보유 계정 나열 (서비스 계정 후보)
 Get-ADUser -LDAPFilter "(servicePrincipalName=*)" -Properties servicePrincipalName, userAccountControl |
   Select-Object SamAccountName, Enabled, userAccountControl, servicePrincipalName
 
-# 2) RC4 허용 여부(예시: "이 계정은 RC4만 허용" 같은 플래그를 직접 검사하기보다는
+# 2. RC4 허용 여부(예시: "이 계정은 RC4만 허용" 같은 플래그를 직접 검사하기보다는
 #    도메인 Kerberos 정책과 계정 암호 업데이트 시점/암호화 정책을 함께 봅니다.)
 (Get-ADDefaultDomainPasswordPolicy).KerberosEncryptionType
 
-# 3) 최근 TGS(4769)에서 Ticket Encryption Type 추출(DC에서 실행 권장)
+# 3. 최근 TGS(4769)에서 Ticket Encryption Type 추출(DC에서 실행 권장)
 $since = (Get-Date).AddHours(-8)
 Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4769; StartTime=$since} |
   ForEach-Object {
@@ -206,13 +206,13 @@ Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\Microsoft\Windows\D
 
 ### 생성/배포 예시(안전)
 ```powershell
-# 1) KDS 루트 키(포리스트 최초 1회) — 랩임을 가정
+# 1. KDS 루트 키(포리스트 최초 1회) — 랩임을 가정
 Add-KdsRootKey -EffectiveImmediately
 
-# 2) gMSA 생성 (IISApp용 예)
+# 2. gMSA 생성 (IISApp용 예)
 New-ADServiceAccount -Name "gmsa-IISApp" -DNSHostName "ad.lab.local" -PrincipalsAllowedToRetrieveManagedPassword "LAB-IIS01$"
 
-# 3) 대상 서버에서 설치/테스트
+# 3. 대상 서버에서 설치/테스트
 Install-ADServiceAccount -Identity "gmsa-IISApp"
 Test-ADServiceAccount -Identity "gmsa-IISApp"
 ```

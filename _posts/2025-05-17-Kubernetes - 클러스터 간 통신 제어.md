@@ -11,7 +11,7 @@ category: Kubernetes
 
 ---
 
-## 0) 개요 다이어그램
+## 0. 개요 다이어그램
 
 ```
 ┌───────────────┐        L3/L7          ┌───────────────┐
@@ -26,7 +26,7 @@ category: Kubernetes
 
 ---
 
-## 1) 왜 Multi-Cluster인가?
+## 1. 왜 Multi-Cluster인가?
 
 | 이유 | 설명 | 직접 효과 |
 |---|---|---|
@@ -38,7 +38,7 @@ category: Kubernetes
 
 ---
 
-## 2) 아키텍처 유형과 선택 기준
+## 2. 아키텍처 유형과 선택 기준
 
 | 유형 | 통신 레벨 | 요약 | 강점 | 주의 |
 |---|---|---|---|---|
@@ -53,7 +53,7 @@ category: Kubernetes
 
 ---
 
-## 3) 실전 시나리오(예시)
+## 3. 실전 시나리오(예시)
 
 - **cluster-a**: `frontend` 사용자를 수용
 - **cluster-b**: `backend` API를 제공
@@ -61,7 +61,7 @@ category: Kubernetes
 
 ---
 
-## 4) L3 기반 연결
+## 4. L3 기반 연결
 
 ### 4.1 VPN/WireGuard(개념)
 - 노드/게이트웨이 간 터널로 **사설 라우팅**.
@@ -96,7 +96,7 @@ metadata:
 
 ---
 
-## 5) L7 기반(서비스 메쉬) — Istio 예제
+## 5. L7 기반(서비스 메쉬) — Istio 예제
 
 ### 5.1 토폴로지
 - **Primary/Remote** 또는 **Replicated Control Plane**.
@@ -167,7 +167,7 @@ spec:
 
 ---
 
-## 6) Linkerd 멀티클러스터(경량)
+## 6. Linkerd 멀티클러스터(경량)
 
 - **Linkerd Multicluster**는 **gateway + service mirror**로 단순 연결.
 - 기본 **mTLS** 강력, 경량·쉬운 배포. 고급 L7 정책은 Istio 대비 제한적.
@@ -187,7 +187,7 @@ linkerd multicluster link --cluster-name cluster-b | kubectl apply -f -
 
 ---
 
-## 7) Cilium ClusterMesh (eBPF/ID 기반)
+## 7. Cilium ClusterMesh (eBPF/ID 기반)
 
 - 다중 클러스터를 **ID/정책**으로 정합, **Hubble**로 가시성 탁월.
 - **CNI=Cilium** 권장. 레벨3 라우팅 + L7 정책(HTTP/gRPC)도 병행 가능.
@@ -219,7 +219,7 @@ spec:
 
 ---
 
-## 8) DNS/서비스 디스커버리 전략
+## 8. DNS/서비스 디스커버리 전략
 
 | 방법 | 사용처 | 장점 | 주의 |
 |---|---|---|---|
@@ -243,7 +243,7 @@ spec:
 
 ---
 
-## 9) 네트워크 정책(egress/ingress)와 방화벽
+## 9. 네트워크 정책(egress/ingress)와 방화벽
 
 MC 환경에서도 **각 클러스터 내부**의 **네트워크 정책**은 기본이다.
 
@@ -270,7 +270,7 @@ spec:
 
 ---
 
-## 10) 보안: mTLS·ID·제로트러스트
+## 10. 보안: mTLS·ID·제로트러스트
 
 - **Service Mesh**: 자동 **mTLS**(TLS 인증서/회전 관리), 정책(RBAC) 적용.
 - **SPIFFE/SPIRE**: ID 기반 워크로드 인증서(`spiffe://trust-domain/ns/app/sa/default`).
@@ -299,7 +299,7 @@ spec:
 
 ---
 
-## 11) 트래픽 전략: 카나리/스플릿/페일오버
+## 11. 트래픽 전략: 카나리/스플릿/페일오버
 
 ### 11.1 Istio(카나리)
 앞서 `VirtualService`의 `weight`로 비율 제어.  
@@ -340,7 +340,7 @@ spec:
 
 ---
 
-## 12) 관측: 메트릭/로그/트레이싱 일원화
+## 12. 관측: 메트릭/로그/트레이싱 일원화
 
 | 영역 | 선택지 | 포인트 |
 |---|---|---|
@@ -356,7 +356,7 @@ Cluster A/B: Prometheus Sidecar ─→ Thanos Store/Query ─→ Grafana
 
 ---
 
-## 13) SLO/에러 예산 간단 수식
+## 13. SLO/에러 예산 간단 수식
 
 월간 SLO 99.9%의 허용 다운타임(초) 계산:
 
@@ -372,7 +372,7 @@ $$
 
 ---
 
-## 14) 실습: “Cluster-A에서 Cluster-B API 호출” 3가지 경로
+## 14. 실습: “Cluster-A에서 Cluster-B API 호출” 3가지 경로
 
 ### 14.1 ExternalName(+TLS) — 최소 구성
 ```yaml
@@ -431,7 +431,7 @@ spec:
 
 ---
 
-## 15) 운영 체크리스트
+## 15. 운영 체크리스트
 
 **네트워크/주소**
 - [ ] Pod/Service CIDR 충돌 없는가?
@@ -458,7 +458,7 @@ spec:
 
 ---
 
-## 16) 트러블슈팅 가이드
+## 16. 트러블슈팅 가이드
 
 | 증상 | 원인 후보 | 확인/조치 |
 |---|---|---|
@@ -471,7 +471,7 @@ spec:
 
 ---
 
-## 17) 비용/성능 힌트
+## 17. 비용/성능 힌트
 
 - **데이터 경로 짧게**: 리전간 왕복 최소화(Geo-routing).
 - **L7 정책은 필요한 곳에만**: 사이드카 오버헤드 고려(istio-ambient도 검토).
@@ -480,7 +480,7 @@ spec:
 
 ---
 
-## 18) 참조 YAML 모음
+## 18. 참조 YAML 모음
 
 ### 18.1 A 클러스터 egress allowlist + 메쉬 mTLS
 ```yaml
@@ -527,7 +527,7 @@ spec:
 
 ---
 
-## 19) 결론
+## 19. 결론
 
 - **연결 방식**은 다양하지만, **정책/보안/관측**을 **일관**되게 관리해야 **안전한 멀티클러스터**가 된다.
 - 단순 연결(VPN/Submariner) → **L7 보안/정책(메쉬)** → **관측 일원화(Thanos/Loki/Trace)** 순으로 **성숙도**를 올려라.
@@ -536,20 +536,20 @@ spec:
 
 ---
 
-## 20) 빠른 실행 요약(메모)
+## 20. 빠른 실행 요약(메모)
 
 ```bash
-# 1) 네트워크 연결(택1): VPN/Submariner/Cilium ClusterMesh/메쉬 게이트웨이
-# 2) 서비스 디스커버리: ExternalName or Export/Import or Mesh DNS
-# 3) 보안: mTLS(메쉬), egress allowlist, FQDN 정책
-# 4) 트래픽: 카나리/스플릿/페일오버(메쉬)
-# 5) 관측: Thanos/Loki/Tracing/Hubble
-# 6) 운영: SLO·플레이북·정기 DR 연습
+# 1. 네트워크 연결(택1): VPN/Submariner/Cilium ClusterMesh/메쉬 게이트웨이
+# 2. 서비스 디스커버리: ExternalName or Export/Import or Mesh DNS
+# 3. 보안: mTLS(메쉬), egress allowlist, FQDN 정책
+# 4. 트래픽: 카나리/스플릿/페일오버(메쉬)
+# 5. 관측: Thanos/Loki/Tracing/Hubble
+# 6. 운영: SLO·플레이북·정기 DR 연습
 ```
 
 ---
 
-## 21) 참고(심화 읽기)
+## 21. 참고(심화 읽기)
 - Istio Multi-Cluster 설치/토폴로지
 - Linkerd Multicluster & SMI TrafficSplit
 - Cilium ClusterMesh & Hubble

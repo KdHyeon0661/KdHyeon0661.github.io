@@ -27,7 +27,7 @@ category: AspNet
 
 ---
 
-## 1) REST 핵심 복습 — 리소스·표현·상태 전이
+## 1. REST 핵심 복습 — 리소스·표현·상태 전이
 
 - **리소스(Resource)**: 식별 가능한 대상(사용자, 주문, 결제 등) — **URI**로 식별.
 - **표현(Representation)**: 리소스를 나타내는 구체 포맷(JSON/XML 등).
@@ -37,7 +37,7 @@ category: AspNet
 
 ---
 
-## 2) 리소스 모델링 — URI 규칙, 계층·연관, 다형성, 수집 설계
+## 2. 리소스 모델링 — URI 규칙, 계층·연관, 다형성, 수집 설계
 
 ### 2.1 URI 규칙(권장)
 
@@ -67,7 +67,7 @@ category: AspNet
 
 ---
 
-## 3) 요청 설계 — 페이징/정렬/필터/검색, 필드 마스킹, Include
+## 3. 요청 설계 — 페이징/정렬/필터/검색, 필드 마스킹, Include
 
 ### 3.1 페이징
 
@@ -97,7 +97,7 @@ category: AspNet
 
 ---
 
-## 4) 응답 규격 — JSON 스키마, 메타/링크/HATEOAS 최소형, Enveloping
+## 4. 응답 규격 — JSON 스키마, 메타/링크/HATEOAS 최소형, Enveloping
 
 ### 4.1 단일/목록 응답 스켈레톤
 
@@ -127,7 +127,7 @@ category: AspNet
 
 ---
 
-## 5) 상태 코드·표준 헤더 — 일관성 표
+## 5. 상태 코드·표준 헤더 — 일관성 표
 
 | 상황 | 상태 | 헤더/설명 |
 |---|---|---|
@@ -146,7 +146,7 @@ category: AspNet
 
 ---
 
-## 6) 오류 처리 — ProblemDetails 규격(추천)
+## 6. 오류 처리 — ProblemDetails 규격(추천)
 
 ### 6.1 표준 오류 포맷
 
@@ -175,7 +175,7 @@ if (!ModelState.IsValid)
 
 ---
 
-## 7) 부분 업데이트 — PUT vs PATCH
+## 7. 부분 업데이트 — PUT vs PATCH
 
 - **PUT**: **전체 교체**(클라이언트가 리소스 전체 표현을 제공)
 - **PATCH**: **부분 업데이트**(일부 필드만 변경)
@@ -197,7 +197,7 @@ Content-Type: application/merge-patch+json
 
 ---
 
-## 8) 멱등성·동시성 — Idempotency-Key, ETag/If-Match
+## 8. 멱등성·동시성 — Idempotency-Key, ETag/If-Match
 
 ### 8.1 멱등성(Idempotency)
 
@@ -228,7 +228,7 @@ If-Match: "v3-7b2c..."
 
 ---
 
-## 9) 캐싱 전략 — Cache-Control, ETag, Last-Modified, 304
+## 9. 캐싱 전략 — Cache-Control, ETag, Last-Modified, 304
 
 - **ETag** 또는 **Last-Modified**를 제공
 - 재검사 요청:
@@ -240,7 +240,7 @@ If-Match: "v3-7b2c..."
 
 ---
 
-## 10) 장기 작업·비동기 — 202 + Location/Retry-After
+## 10. 장기 작업·비동기 — 202 + Location/Retry-After
 
 대량 처리/외부 연동 등 **즉시 완료 불가**:
 - **202 Accepted** 반환 + **Location: /operations/{id}**
@@ -263,7 +263,7 @@ Retry-After: 5
 
 ---
 
-## 11) 파일 업로드·큰 요청
+## 11. 파일 업로드·큰 요청
 
 - **multipart/form-data** + `IFormFile`(ASP.NET Core)
 - 서버·프록시 **요청 크기 한도** 설정, 확장자/시그니처 검증, 바이러스 스캔
@@ -271,7 +271,7 @@ Retry-After: 5
 
 ---
 
-## 12) 버전 관리 — URI/헤더/협상, Deprecation 시그널
+## 12. 버전 관리 — URI/헤더/협상, Deprecation 시그널
 
 - **URI 방식(권장)**: `/api/v1/users`
 - **헤더/미디어 타입**: `Accept: application/vnd.myapp.v2+json` (운영 복잡도↑)
@@ -281,7 +281,7 @@ Retry-After: 5
 
 ---
 
-## 13) 보안 — 인증·인가, CORS, 입력 검증, Rate Limit
+## 13. 보안 — 인증·인가, CORS, 입력 검증, Rate Limit
 
 - **HTTPS 필수**, HSTS 적용
 - **JWT/OAuth2/OIDC**: 표준 기반 인증, 최소 권한(Scopes/Claims)
@@ -293,7 +293,7 @@ Retry-After: 5
 
 ---
 
-## 14) 문서화 — OpenAPI(Swagger)
+## 14. 문서화 — OpenAPI(Swagger)
 
 - **정확한 스키마**(요청/응답), **상태코드**, **예제** 포함
 - 가능한 한 **DTO를 명확히 분리**(엔티티 직접 노출 금지)
@@ -312,7 +312,7 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 15) 테스트·운영 체크리스트
+## 15. 테스트·운영 체크리스트
 
 - **계약 테스트(Consumer-Driven)**: 프런트/클라이언트 기대와 서버 API 계약 검증
 - **회귀 테스트**: 버전·엔드포인트·상태코드·스키마 변경 감지
@@ -322,7 +322,7 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 16) 통합 예제 — Users/Posts 도메인
+## 16. 통합 예제 — Users/Posts 도메인
 
 ### 16.1 URI/요청/응답 예시
 

@@ -4,21 +4,21 @@ title: WPF - INotifyPropertyChanged와 ObservableCollection
 date: 2025-09-02 18:25:23 +0900
 category: WPF
 ---
-# 🔔 WPF 데이터 변경 알림: `INotifyPropertyChanged`와 `ObservableCollection`
+# WPF 데이터 변경 알림: `INotifyPropertyChanged`와 `ObservableCollection`
 
 WPF의 데이터 바인딩은 **데이터 소스(ViewModel)**의 값이 변경될 때 자동으로 UI에 반영되도록 설계되어 있습니다.  
 이를 가능하게 해주는 핵심 인터페이스가 바로 **`INotifyPropertyChanged`**와 **`ObservableCollection<T>`**입니다.  
 
 ---
 
-## 1️⃣ `INotifyPropertyChanged`란?
+## `INotifyPropertyChanged`란?
 
-### 📌 개념
+### 개념
 - .NET에서 **객체의 속성(Property)이 변경되었음을 알리는 인터페이스**.
 - ViewModel에서 UI에 데이터 변경 사실을 알릴 때 사용합니다.
 - UI는 이 알림을 받고 바인딩된 값을 자동으로 갱신합니다.
 
-### 📜 정의
+### 정의
 ```csharp
 public interface INotifyPropertyChanged
 {
@@ -58,7 +58,7 @@ public class PersonViewModel : INotifyPropertyChanged
 }
 ```
 
-### ✅ 동작 원리
+### 동작 원리
 1. `Name` 속성이 변경됨
 2. `OnPropertyChanged("Name")` 실행 → `PropertyChanged` 이벤트 발생
 3. WPF 바인딩 엔진이 이벤트를 감지
@@ -66,21 +66,21 @@ public class PersonViewModel : INotifyPropertyChanged
 
 ---
 
-## 2️⃣ `ObservableCollection<T>`란?
+## `ObservableCollection<T>`란?
 
-### 📌 개념
+### 개념
 - **컬렉션(리스트) 데이터 변경을 UI에 알릴 수 있는 컬렉션 클래스**.
 - `Add`, `Remove`, `Clear` 등 요소의 추가/삭제를 감지해 UI에 반영합니다.
 - 일반 `List<T>`는 데이터 추가/삭제를 UI에 알리지 못하기 때문에, WPF에서는 `ObservableCollection<T>`를 사용해야 합니다.
 
-### 📜 정의
+### 정의
 ```csharp
 public class ObservableCollection<T> : Collection<T>, INotifyCollectionChanged, INotifyPropertyChanged
 ```
 - `INotifyCollectionChanged` 구현 → 컬렉션의 구조적 변경 알림 (`CollectionChanged` 이벤트).
 - `INotifyPropertyChanged` 구현 → `Count` 등 속성 변경 알림.
 
-### ⚡ 예제
+### 예제
 ```csharp
 using System.Collections.ObjectModel;
 
@@ -110,7 +110,7 @@ public class PeopleViewModel
 
 ---
 
-## 3️⃣ `INotifyPropertyChanged` vs `ObservableCollection<T>`
+## `INotifyPropertyChanged` vs `ObservableCollection<T>`
 
 | 기능 | INotifyPropertyChanged | ObservableCollection<T> |
 |------|-----------------------|--------------------------|
@@ -121,7 +121,7 @@ public class PeopleViewModel
 
 ---
 
-## 4️⃣ 두 가지를 함께 사용하는 예제
+## 두 가지를 함께 사용하는 예제
 
 보통 `INotifyPropertyChanged`와 `ObservableCollection<T>`는 **동시에 사용**됩니다.
 
@@ -168,7 +168,7 @@ public class MainViewModel : INotifyPropertyChanged
 
 ---
 
-# 📌 결론
+# 결론
 - **속성 변경 알림 → `INotifyPropertyChanged`**
 - **컬렉션 변경 알림 → `ObservableCollection<T>`**
 - MVVM 패턴에서 UI와 ViewModel을 동기화하려면 이 두 가지는 사실상 필수적입니다.

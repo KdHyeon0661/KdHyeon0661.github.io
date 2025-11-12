@@ -13,7 +13,7 @@ category: DB 심화
 
 ---
 
-## 0) 기초 개념: 메모리 vs 디스크 I/O의 시간 규모
+## 0. 기초 개념: 메모리 vs 디스크 I/O의 시간 규모
 
 - 메모리(서버 RAM, SGA 버퍼 캐시): 수십~수백 ns ~ 수 μs  
 - 로컬 SSD/NVMe: 수백 μs ~ 수 ms (Queue·Saturation·GC에 따라 변동)  
@@ -30,7 +30,7 @@ $$
 
 ---
 
-## 1) I/O 효율화 튜닝의 중요성
+## 1. I/O 효율화 튜닝의 중요성
 
 ### 1.1 왜 중요한가?
 - OLTP의 많은 대기 이벤트 상위는 대체로 **`db file sequential read`(단일 블록)**, **`log file sync`**, **`buffer busy`**, **`read by other session`** 등 I/O 관여 항목이 차지.  
@@ -48,7 +48,7 @@ $$
 
 ---
 
-## 2) 버퍼 캐시 히트율(Buffer Cache Hit Ratio, BCHR)
+## 2. 버퍼 캐시 히트율(Buffer Cache Hit Ratio, BCHR)
 
 ### 2.1 정의와 통상 계산식
 - 용어:  
@@ -101,7 +101,7 @@ ORDER  BY disk_reads DESC FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 3) 튜닝 전략: “메모리 승격” + “물리 I/O 품질 개선”
+## 3. 튜닝 전략: “메모리 승격” + “물리 I/O 품질 개선”
 
 ### 3.1 메모리 승격(히트율↑) 전략
 1) **워크로드 축소**:  
@@ -136,7 +136,7 @@ WHERE  order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -3);
 
 ---
 
-## 4) 네트워크 파일시스템(NFS/NAS) 캐시가 I/O 효율에 미치는 영향
+## 4. 네트워크 파일시스템(NFS/NAS) 캐시가 I/O 효율에 미치는 영향
 
 ### 4.1 레이어별 캐시
 - **Oracle SGA 버퍼 캐시**: 데이터 블록 캐시(1차)  
@@ -188,7 +188,7 @@ mount -t nfs -o vers=3,proto=tcp,rsize=1048576,wsize=1048576,hard,timeo=600,retr
 
 ---
 
-## 5) 측정과 진단: “히트율 숫자”보다 “어디서 낭비되는가”
+## 5. 측정과 진단: “히트율 숫자”보다 “어디서 낭비되는가”
 
 ### 5.1 상위 대기·I/O 프로파일
 ```sql
@@ -232,7 +232,7 @@ WHERE  name LIKE 'physical reads direct%';  -- direct path read, direct temp
 
 ---
 
-## 6) 시나리오별 실전 처방
+## 6. 시나리오별 실전 처방
 
 ### 6.1 OLTP: 랜덤 I/O가 상위(단일 블록)
 **증상**: `db file sequential read` 상위, SQL은 **NL + BY ROWID** 반복, 인덱스 부적합  
@@ -280,7 +280,7 @@ GROUP  BY cust_id;
 
 ---
 
-## 7) “히트율 교조주의”에 대한 반례와 균형
+## 7. “히트율 교조주의”에 대한 반례와 균형
 
 - **반례 1**: 1TB 보고 쿼리, 히트율 60% → 해시 조인 + Direct Path로 **히트율 30%**가 되었지만 **RT 40% 단축**.  
 - **반례 2**: OLTP 단건 조회, 히트율 99.5% → 인덱스 커버링으로 **99.3%**가 되었지만 **RT 20% 단축**(BY ROWID 제거).  
@@ -288,7 +288,7 @@ GROUP  BY cust_id;
 
 ---
 
-## 8) 실습: “히트율·I/O·계획” 전·후 비교 루틴
+## 8. 실습: “히트율·I/O·계획” 전·후 비교 루틴
 
 ```sql
 ALTER SESSION SET statistics_level=ALL;
@@ -305,7 +305,7 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ---
 
-## 9) 네트워크 파일시스템 구성 체크리스트
+## 9. 네트워크 파일시스템 구성 체크리스트
 
 - [ ] **dNFS** 사용 가능한가? (`v$dnfs_servers`/`v$dnfs_channels` 확인)  
 - [ ] 커널 NFS라면 **rsize/wsize**, **hard/timeo/retrans**, **noatime**, **actimeo** 적정?  
@@ -316,7 +316,7 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ---
 
-## 10) 요약 처방전
+## 10. 요약 처방전
 
 1) **I/O 효율화의 1원칙**: **읽지 않는 것이 최고** — 부분범위처리, 커버링 인덱스, 중복 연산 제거.  
 2) **2원칙**: **읽어야 한다면 잘 읽자** — 해시 조인 + 프루닝/블룸, 순차/병렬, Direct Path.  

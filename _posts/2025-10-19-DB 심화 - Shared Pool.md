@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 큰 그림 — Shared Pool이 하는 일
+## 0. 큰 그림 — Shared Pool이 하는 일
 
 - **SGA의 Shared Pool** 은 **SQL/PLSQL 실행에 필요한 공용 메타데이터**와 **코드/실행 계획**을 캐시하여,  
   - **파싱 비용 감소**(Hard Parse → Soft Parse),  
@@ -33,7 +33,7 @@ category: DB 심화
 
 ---
 
-## 1) Shared Pool 사이징·상태 점검
+## 1. Shared Pool 사이징·상태 점검
 
 ```sql
 -- Shared Pool 전체 상태(메모리, 프리, Reserved)
@@ -57,7 +57,7 @@ SHOW PARAMETER shared_pool_reserved_size;
 
 ---
 
-## 2) Dictionary Cache (Row Cache)
+## 2. Dictionary Cache (Row Cache)
 
 ### 2.1 무엇을 담나?
 
@@ -118,7 +118,7 @@ ORDER  BY sec DESC;
 
 ---
 
-## 3) Library Cache
+## 3. Library Cache
 
 ### 3.1 무엇을 담나?
 
@@ -172,7 +172,7 @@ WHERE  sql_id = :sql_id;
 
 ---
 
-## 4) 예제 시나리오 — 리터럴 남발 vs 바인드 변수
+## 4. 예제 시나리오 — 리터럴 남발 vs 바인드 변수
 
 ### 4.1 준비
 
@@ -246,7 +246,7 @@ ORDER  BY parse_calls DESC;
 
 ---
 
-## 5) Bind Peeking & Adaptive Cursor Sharing(ACS)
+## 5. Bind Peeking & Adaptive Cursor Sharing(ACS)
 
 - **Bind Peeking**: 최초 하드 파싱 시 **바인드 값**을 엿보고 통계·선택도를 기반으로 **플랜 결정**  
 - 이후 **바인드 값 분포**가 다양하면, **ACS** 가 **바인드 셀렉티비티 히스토리**를 학습해 **다른 Child Cursor** 를 생성(= 값 범주별 최적 플랜)
@@ -265,7 +265,7 @@ WHERE  sql_id = :sql_id;
 
 ---
 
-## 6) Invalidation(무효화) — 언제/왜 생기나?
+## 6. Invalidation(무효화) — 언제/왜 생기나?
 
 - **DDL**(테이블 구조 변경, 인덱스 생성/삭제)  
 - **통계 갱신**(표본/히스토그램)으로 선택도 변동  
@@ -284,7 +284,7 @@ WHERE  namespace IN ('SQL AREA','TABLE/PROCEDURE','BODY','TRIGGER');
 
 ---
 
-## 7) Library Cache/Row Cache 관련 대기 이벤트 빠르게 읽기
+## 7. Library Cache/Row Cache 관련 대기 이벤트 빠르게 읽기
 
 | 이벤트 | 의미 | 원인/대응 |
 |---|---|---|
@@ -296,7 +296,7 @@ WHERE  namespace IN ('SQL AREA','TABLE/PROCEDURE','BODY','TRIGGER');
 
 ---
 
-## 8) DBMS_SHARED_POOL.KEEP — 핫 오브젝트 핀(Pin)
+## 8. DBMS_SHARED_POOL.KEEP — 핫 오브젝트 핀(Pin)
 
 - 자주 사용하는 **패키지/PLSQL/커서 템플릿** 등을 **Shared Pool에서 축출되지 않게 고정**  
 - **주의**: 과도한 KEEP은 **메모리 고정 낭비** → **엄선** 필요
@@ -316,7 +316,7 @@ WHERE  sql_text LIKE 'SELECT /* bind */ COUNT(*) FROM t_sales WHERE cid=:1';
 
 ---
 
-## 9) 세션/커서 캐시 — 소프트 파싱 보조
+## 9. 세션/커서 캐시 — 소프트 파싱 보조
 
 ```sql
 -- 세션 단 캐시
@@ -334,7 +334,7 @@ ORDER  BY name;
 
 ---
 
-## 10) ORA-04031 대비 체크리스트
+## 10. ORA-04031 대비 체크리스트
 
 1. **리터럴 유입 통제**: 바인드 변수, `CURSOR_SHARING=FORCE`(임시), SQL 표준화  
 2. **Child Cursor 폭증 관리**: 타입/길이 일관성, NLS/환경 일치, ACS 과도화 점검  
@@ -346,7 +346,7 @@ ORDER  BY name;
 
 ---
 
-## 11) 종합 실습 — “나쁜 패턴 → 개선 → 지표 비교”
+## 11. 종합 실습 — “나쁜 패턴 → 개선 → 지표 비교”
 
 ### 11.1 나쁜 패턴 실행
 - 리터럴 남발 루프(§4.2)  
@@ -380,7 +380,7 @@ FROM   v$rowcache;
 
 ---
 
-## 12) 수학적 감각(개념식)
+## 12. 수학적 감각(개념식)
 
 - **평균 파싱 비용**  
   $$ \mathrm{Parse\ Cost} \approx \alpha \cdot \mathrm{HardParse} + \beta \cdot \mathrm{SoftParse} $$
@@ -391,7 +391,7 @@ FROM   v$rowcache;
 
 ---
 
-## 13) 마무리 요약
+## 13. 마무리 요약
 
 - **Dictionary Cache(=Row Cache)** 는 **메타데이터**를 행 단위로 캐시해 **파싱/권한체크**를 빠르게 합니다.  
   - 경합 시 **`row cache mutex/lock`**, DDL/권한 변경/Hard Parse 폭주가 흔한 원인.  

@@ -16,7 +16,7 @@ category: Docker
 
 ---
 
-## 1) 왜 Volume Plugin인가?
+## 1. 왜 Volume Plugin인가?
 
 기본 `local` 볼륨은 도커 호스트의 로컬 디스크에 저장됩니다. 다음 상황에서는 **외부 스토리지**가 필요합니다.
 
@@ -33,7 +33,7 @@ $$
 
 ---
 
-## 2) 개념/아키텍처: Docker Volume Driver vs Plugin
+## 2. 개념/아키텍처: Docker Volume Driver vs Plugin
 
 - **Volume Driver**: Docker가 특정 스토리지를 **볼륨처럼** 취급하도록 하는 드라이버.  
 - **Docker Plugin**: 드라이버/네트워크 등 기능을 **외부 플러그인** 프로세스로 제공(수명/설정/권한을 엔진과 분리).
@@ -56,7 +56,7 @@ docker run --mount type=volume,source=<vol>,target=/path ...
 
 ---
 
-## 3) 스토리지 유형과 선택 기준(요약)
+## 3. 스토리지 유형과 선택 기준(요약)
 
 | 유형 | 예시 | 장점 | 주의 |
 |---|---|---|---|
@@ -66,7 +66,7 @@ docker run --mount type=volume,source=<vol>,target=/path ...
 
 ---
 
-## 4) NFS with Docker — 가장 간단한 멀티호스트 공유
+## 4. NFS with Docker — 가장 간단한 멀티호스트 공유
 
 ### 4.1 전제: NFS 서버
 - 서버 예: `10.0.0.1:/exports/data`
@@ -121,7 +121,7 @@ volumes:
 
 ---
 
-## 5) 클라우드 블록 스토리지 — EBS / PD / Azure Disk
+## 5. 클라우드 블록 스토리지 — EBS / PD / Azure Disk
 
 > 원칙: **블록 디바이스는 기본적으로 단일 EC2/VM에 어태치**(읽기/읽기쓰기 모드 제약). 멀티 노드 공유가 필요하면 파일시스템 레이어(NFS/FSx for Lustre/Filestore/ANF 등)를 별도로 구성.
 
@@ -172,7 +172,7 @@ docker run -d --mount type=volume,source=gpd-1,target=/data busybox sleep 3600
 
 ---
 
-## 6) 오브젝트 스토리지(S3/MinIO) — FUSE로 “마운트처럼” 쓰기
+## 6. 오브젝트 스토리지(S3/MinIO) — FUSE로 “마운트처럼” 쓰기
 
 > 오브젝트 스토리지는 **디렉터리/원자성/락/퍼미션**이 파일시스템과 다릅니다.  
 > DB/트랜잭션/빈번한 작은 쓰기에는 부적합. 정적 파일/백업/로그 적합.
@@ -209,7 +209,7 @@ docker run -d --name web \
 
 ---
 
-## 7) 보안 — 자격증명/네트워크/SELinux/Kerberos
+## 7. 보안 — 자격증명/네트워크/SELinux/Kerberos
 
 - 자격증명:  
   - 클라우드 플러그인은 **인스턴스 롤/서비스 계정** 활용(키 저장 최소화)  
@@ -233,7 +233,7 @@ docker run -d \
 
 ---
 
-## 8) 성능 — 마운트 옵션/캐시/IOPS/스루풋
+## 8. 성능 — 마운트 옵션/캐시/IOPS/스루풋
 
 - **NFS**: `nfsvers=4.1/4.2`, `rsize/wsize`, `timeo`, `retrans`, `noatime` 고려.  
 - **블록**: 스토리지 클래스(gp3/io2, pd-ssd 등)와 **크기→IOPS/Throughput** 관계 숙지.  
@@ -249,7 +249,7 @@ $$
 
 ---
 
-## 9) 백업/복구/스냅샷/마이그레이션
+## 9. 백업/복구/스냅샷/마이그레이션
 
 ### 9.1 Volume 내용 tar 백업/복구
 ```bash
@@ -275,7 +275,7 @@ docker run --rm \
 
 ---
 
-## 10) Compose 패턴 총정리
+## 10. Compose 패턴 총정리
 
 ### 10.1 NFS
 ```yaml
@@ -309,7 +309,7 @@ services:
 
 ---
 
-## 11) 트러블슈팅 표
+## 11. 트러블슈팅 표
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -322,7 +322,7 @@ services:
 
 ---
 
-## 12) 실습 시나리오 묶음
+## 12. 실습 시나리오 묶음
 
 ### 12.1 “멀티 호스트 공유 정적 자산” — NFS
 ```bash
@@ -373,7 +373,7 @@ docker run -d -p 8081:80 \
 
 ---
 
-## 13) 운영 체크리스트
+## 13. 운영 체크리스트
 
 - [ ] 데이터 유형별 스토리지 선택(NFS/블록/S3)  
 - [ ] DB/트랜잭션 파일은 **POSIX 파일시스템**(NFS/블록) 사용  
@@ -387,7 +387,7 @@ docker run -d -p 8081:80 \
 
 ---
 
-## 14) 명령 요약
+## 14. 명령 요약
 
 ```bash
 # 플러그인
@@ -409,7 +409,7 @@ docker run --mount type=bind,source=/host/path,target=/path image
 
 ---
 
-## 15) 참고(개념적 구분)
+## 15. 참고(개념적 구분)
 - Docker Volume Plugin/Driver는 **Docker 엔진 생태계**의 확장 메커니즘  
 - Kubernetes 환경에서는 **CSI(컨테이너 스토리지 인터페이스)** 가 표준(개념은 유사, 구현·리소스/정책은 다름)
 

@@ -152,16 +152,16 @@ server {
 
 **테스트용 CA/클라이언트 인증서(학습용 OpenSSL)**  
 ```bash
-# 1) 루트 CA(테스트용)
+# 1. 루트 CA(테스트용)
 openssl req -x509 -newkey rsa:4096 -days 365 -nodes \
   -keyout ca.key -out ca.crt -subj "/CN=LabCA"
 
-# 2) 서버 CSR & 발급
+# 2. 서버 CSR & 발급
 openssl req -newkey rsa:2048 -nodes -keyout srv.key -out srv.csr -subj "/CN=internal.example.local"
 openssl x509 -req -in srv.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out srv.crt -days 180
 cat srv.crt ca.crt > srv_fullchain.pem
 
-# 3) 클라이언트 CSR & 발급
+# 3. 클라이언트 CSR & 발급
 openssl req -newkey rsa:2048 -nodes -keyout cli.key -out cli.csr -subj "/CN=developer01"
 openssl x509 -req -in cli.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out cli.crt -days 180
 # 브라우저 테스트용 P12
@@ -401,10 +401,10 @@ networks: { labnet: { driver: bridge } }
 
 **TShark 자동 채점 예시**  
 ```bash
-# 1) ARP Reply 카운트(윈도 내) 기준
+# 1. ARP Reply 카운트(윈도 내) 기준
 tshark -r pcap/arp_churn_ok.pcap -Y "arp.opcode == 2" | wc -l
 
-# 2) DHCP Offer 송신자 수
+# 2. DHCP Offer 송신자 수
 tshark -r pcap/dhcp_dual_offer.pcap -Y "bootp.option.dhcp == 2" -T fields -e ip.src | sort -u | wc -l
 ```
 
@@ -421,9 +421,9 @@ jq -r 'select(.event_type=="tls") | .tls.ja3_hash' eve.json | sort | uniq -c | s
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-# 1) Suricata로 오프라인 분석
+# 1. Suricata로 오프라인 분석
 suricata -r pcap/arp_churn_ok.pcap -l out/arp --runmode=single
-# 2) 기대치와 비교
+# 2. 기대치와 비교
 hits=$(jq -r 'select(.alert and .alert.signature_id==4202001)' out/arp/eve.json | wc -l)
 if [ "$hits" -lt 1 ]; then
   echo "[FAIL] ARP storm alert not triggered"; exit 1

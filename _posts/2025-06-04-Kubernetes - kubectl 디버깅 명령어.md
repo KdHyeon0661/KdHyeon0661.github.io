@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # kubectl 디버깅 명령어 모음
 
-## 0) 30초 초진단(One-Liners)
+## 0. 30초 초진단(One-Liners)
 
 ```bash
 # 0-1. 전체 리소스 건강 점검(현재 ns)
@@ -34,7 +34,7 @@ kubectl logs <pod> -c <container> --previous --timestamps | tail -n 100
 
 ---
 
-## 1) 기본 정보 조회 — 넓게 보고 깊게 들어가기
+## 1. 기본 정보 조회 — 넓게 보고 깊게 들어가기
 
 ### 1.1 모든 리소스/특정 리소스
 
@@ -67,7 +67,7 @@ kubectl get deploy api -o jsonpath='{.spec.template.spec.containers[0].image}'; 
 
 ---
 
-## 2) Pod 상태/이벤트 분석 — 원인 힌트는 거의 여기 있다
+## 2. Pod 상태/이벤트 분석 — 원인 힌트는 거의 여기 있다
 
 ### 2.1 describe로 전부 훑기
 
@@ -95,7 +95,7 @@ kubectl get pods | grep CrashLoopBackOff
 
 ---
 
-## 3) 로그 분석 — 현재/직전/실시간
+## 3. 로그 분석 — 현재/직전/실시간
 
 ```bash
 # 현재 컨테이너
@@ -113,7 +113,7 @@ kubectl logs <pod> --since=10m --tail=500 --timestamps
 
 ---
 
-## 4) exec로 내부 디버깅 — 재현과 관측
+## 4. exec로 내부 디버깅 — 재현과 관측
 
 ```bash
 # 쉘 진입
@@ -133,7 +133,7 @@ kubectl exec <pod> -- curl -sS http://localhost:8080/healthz
 
 ---
 
-## 5) 리소스/노드 상태 — 스케줄러 관점과 런타임 관점
+## 5. 리소스/노드 상태 — 스케줄러 관점과 런타임 관점
 
 ```bash
 kubectl get nodes -o wide
@@ -148,7 +148,7 @@ kubectl top pods -A
 
 ---
 
-## 6) 네트워크 디버깅 — DNS/Service/라우팅
+## 6. 네트워크 디버깅 — DNS/Service/라우팅
 
 ```bash
 # 서비스 존재/포트/엔드포인트
@@ -168,7 +168,7 @@ kubectl exec -it <pod> -- wget -qO- http://<other-svc>.<ns>.svc.cluster.local:80
 
 ---
 
-## 7) YAML 확인·수정 — 원하는 상태(Desired State)를 보라
+## 7. YAML 확인·수정 — 원하는 상태(Desired State)를 보라
 
 ```bash
 kubectl get pod <pod> -o yaml
@@ -187,7 +187,7 @@ kubectl diff -f myapp.yaml
 
 ---
 
-## 8) 트러블슈팅 유틸 — 임시 파드·테스트 툴킷
+## 8. 트러블슈팅 유틸 — 임시 파드·테스트 툴킷
 
 ```bash
 # 간편 디버그 파드
@@ -199,7 +199,7 @@ kubectl run netshoot --rm -it --image=nicolaka/netshoot -- bash
 
 ---
 
-## 9) 특수 상황 진단 — 시나리오별 빠른 절차
+## 9. 특수 상황 진단 — 시나리오별 빠른 절차
 
 ### 9.1 CrashLoopBackOff
 ```bash
@@ -254,7 +254,7 @@ kubectl auth can-i create secrets --as system:serviceaccount:dev:app-sa -n dev
 
 ---
 
-## 10) Ephemeral Containers — 실행 중 파드에 디버거 주입
+## 10. Ephemeral Containers — 실행 중 파드에 디버거 주입
 
 Kubernetes 1.25+에서 사용. 원 컨테이너 변경 없이 **임시 컨테이너**를 붙여 검사.
 
@@ -267,7 +267,7 @@ kubectl debug pod/<pod> -n <ns> --image=nicolaka/netshoot -it --target=<app-cont
 
 ---
 
-## 11) 스케줄링/배포 관점 진단 — rollout, scale, pdb
+## 11. 스케줄링/배포 관점 진단 — rollout, scale, pdb
 
 ```bash
 # 배포 진행/이력
@@ -285,7 +285,7 @@ kubectl describe pdb <pdb>
 
 ---
 
-## 12) 노드 유지보수/격리 — cordon/drain/uncordon (안전조치)
+## 12. 노드 유지보수/격리 — cordon/drain/uncordon (안전조치)
 
 ```bash
 kubectl cordon <node>                                   # 새 스케줄 막기
@@ -298,7 +298,7 @@ kubectl uncordon <node>
 
 ---
 
-## 13) 네임스페이스/쿼터/리밋 — 정책에 막히는 경우
+## 13. 네임스페이스/쿼터/리밋 — 정책에 막히는 경우
 
 ```bash
 kubectl get resourcequota -n <ns>
@@ -311,7 +311,7 @@ kubectl get limitrange -n <ns> -o yaml
 
 ---
 
-## 14) JSONPath/Label·Field Selector — “정확히” 집어내기
+## 14. JSONPath/Label·Field Selector — “정확히” 집어내기
 
 ```bash
 # 레이블로 특정 앱 팟만
@@ -329,7 +329,7 @@ kubectl get po -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}'
 
 ---
 
-## 15) 네트워크·DNS 정밀 체커 — 아키텍처 단위로 테스트
+## 15. 네트워크·DNS 정밀 체커 — 아키텍처 단위로 테스트
 
 ```bash
 # 클러스터 DNS 레졸버 파악
@@ -347,7 +347,7 @@ kubectl exec -it <pod> -- nslookup api.default.svc.cluster.local
 
 ---
 
-## 16) 보안/권한/Secret — 최소권한·가시성
+## 16. 보안/권한/Secret — 최소권한·가시성
 
 ```bash
 # 권한 검증
@@ -362,7 +362,7 @@ kubectl get secret my-tls -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x
 
 ---
 
-## 17) 스토리지/CSI 문제 — 바인딩/접근모드/존 일치
+## 17. 스토리지/CSI 문제 — 바인딩/접근모드/존 일치
 
 ```bash
 kubectl get sc
@@ -377,7 +377,7 @@ kubectl get pv
 
 ---
 
-## 18) 자주 쓰는 alias/함수 — 손에 익히기
+## 18. 자주 쓰는 alias/함수 — 손에 익히기
 
 ```bash
 # ~/.bashrc or ~/.zshrc
@@ -404,7 +404,7 @@ kerr () {
 
 ---
 
-## 19) krew(플러그인 매니저) — kubectl 확장
+## 19. krew(플러그인 매니저) — kubectl 확장
 
 ```bash
 # 설치(공식 문서 참고)
@@ -416,7 +416,7 @@ kubectl neat -f obj.yaml              # 매니페스트 정리
 
 ---
 
-## 20) 실전 플레이북 — 10분 내 10가지 사고 대응
+## 20. 실전 플레이북 — 10분 내 10가지 사고 대응
 
 1. **느려짐(레이트 상승)**  
    `kubectl top pods` → 과도한 CPU? → `kubectl describe hpa`(있다면) → 임시 scale ↑ → 원인 탐색
@@ -450,7 +450,7 @@ kubectl neat -f obj.yaml              # 매니페스트 정리
 
 ---
 
-## 21) 요약 치트시트
+## 21. 요약 치트시트
 
 | 목적 | 명령어 |
 |---|---|
@@ -467,7 +467,7 @@ kubectl neat -f obj.yaml              # 매니페스트 정리
 
 ---
 
-## 22) 추천 도구
+## 22. 추천 도구
 
 - [`k9s`](https://k9scli.io) — 터미널 UI로 리소스 탐색/조작
 - [`stern`](https://github.com/stern/stern) — 레이블로 다중 파드 로그 실시간 tail
@@ -477,7 +477,7 @@ kubectl neat -f obj.yaml              # 매니페스트 정리
 
 ---
 
-## 23) 마무리
+## 23. 마무리
 
 - **describe + events + logs**의 삼단 콤보로 가설을 세우고,  
 - **exec/port-forward**로 재현·검증,  

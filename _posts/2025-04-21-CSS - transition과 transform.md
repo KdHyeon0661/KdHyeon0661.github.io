@@ -6,7 +6,7 @@ category: CSS
 ---
 # CSS `transition`과 `transform`
 
-## 0) 개요
+## 0. 개요
 
 - **`transition`**: 어떤 *상태 변화*가 일어날 때, 그 *변화 과정*을 부드럽게 보이게 함.  
 - **`transform`**: 요소의 기하학적 변형(이동/회전/확대/기울임)을 시각적으로 적용. 레이아웃엔 영향 없음(= reflow 유발 X).
@@ -15,7 +15,7 @@ category: CSS
 
 ---
 
-## 1) `transition` 핵심
+## 1. `transition` 핵심
 
 ```css
 .box {
@@ -42,7 +42,7 @@ category: CSS
 
 ---
 
-## 2) `transform` 핵심
+## 2. `transform` 핵심
 
 ```css
 .target {
@@ -100,7 +100,7 @@ transform: scale(1.2) rotate(45deg);
 
 ---
 
-## 3) 타이밍 함수 깊게 보기
+## 3. 타이밍 함수 깊게 보기
 
 타이밍 함수는 시간 \(t \in [0,1]\)에 대한 *진행도* \(p = f(t)\)를 정의합니다.  
 대표적인 **Cubic Bezier**는 네 점 \((0,0), (x_1, y_1), (x_2, y_2), (1,1)\)로 정의:
@@ -122,7 +122,7 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 
 ---
 
-## 4) 상태 변화 패턴 모음
+## 4. 상태 변화 패턴 모음
 
 ### 4.1 카드 호버 리프트(권장 패턴: transform+shadow)
 ```html
@@ -206,7 +206,7 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 
 ---
 
-## 5) 이벤트 훅: `transitionend`
+## 5. 이벤트 훅: `transitionend`
 
 상태 전환 완료 후 DOM 조작이 필요할 때:
 
@@ -223,7 +223,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 6) 성능 체크리스트
+## 6. 성능 체크리스트
 
 - **합성 단계**에서 끝나는 속성만 전환: `transform`, `opacity`  
 - `top/left/width/height` 등 레이아웃 변화는 피하기 → 필요하면 `transform`으로 **대체**  
@@ -236,7 +236,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 7) 접근성 고려
+## 7. 접근성 고려
 
 - 모션 민감 사용자: `prefers-reduced-motion` 반영
 ```css
@@ -249,7 +249,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 8) 스태킹/레이어링과 트랜스폼
+## 8. 스태킹/레이어링과 트랜스폼
 
 - `transform`을 적용하면 요소는 **새 스태킹 컨텍스트**를 생성(일반적으로).  
 - `z-index` 계산이 달라질 수 있으니, 모달/툴팁/드롭다운 계층은 **레이어 토큰**으로 명시 관리:
@@ -260,7 +260,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 9) 3D 카드 플립 예제
+## 9. 3D 카드 플립 예제
 
 ```html
 <div class="scene">
@@ -293,7 +293,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 10) 실전 컴포넌트: 토스트 알림
+## 10. 실전 컴포넌트: 토스트 알림
 
 ```html
 <button id="show">토스트</button>
@@ -326,7 +326,7 @@ btn.addEventListener('click', () => {
 
 ---
 
-## 11) 스크롤 구동 인터랙션(기본형)
+## 11. 스크롤 구동 인터랙션(기본형)
 
 스크롤에 따라 클래스만 토글하고, 실제 애니메이션은 `transition`이 처리.
 
@@ -348,7 +348,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 12) 개별 트랜스폼 속성(Transforms Level 2)
+## 12. 개별 트랜스폼 속성(Transforms Level 2)
 
 현대 브라우저는 `transform` 단일 속성 외에 **개별 속성**도 지원:
 
@@ -365,7 +365,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 13) 디버깅 팁
+## 13. 디버깅 팁
 
 - DevTools → **Elements** 패널에서 `:hov` 상태 강제, `computed`에서 전환 중 속성 확인.
 - **Performance**/**Layers**(또는 Rendering)로 합성 경로와 레이어 승격 여부 확인.
@@ -373,7 +373,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 14) 흔한 함정과 해결책
+## 14. 흔한 함정과 해결책
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -385,7 +385,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 15) 종합 예제: 카드 리스트
+## 15. 종합 예제: 카드 리스트
 
 ```html
 <ul class="cards">
@@ -423,7 +423,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 16) 요약
+## 16. 요약
 
 | 항목 | 핵심 정리 |
 |---|---|

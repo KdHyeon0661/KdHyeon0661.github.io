@@ -72,7 +72,7 @@ category: DataCommunication
 
 ## 1.1.3 Data Representation (데이터 표현)
 
-### 1) Text (텍스트)
+### 1. Text (텍스트)
 - 코드체계: **ASCII(7-bit)**, **Unicode(UTF-8/16)**.  
 - UTF-8은 가변길이. 영문은 1바이트로 효율적, 한글/이모지는 다바이트.
 
@@ -83,7 +83,7 @@ print(len(s.encode("utf-8")))   # 바이트 길이
 print(len(s.encode("utf-16")))  # BOM 포함 길이
 ```
 
-### 2) Numbers (숫자)
+### 2. Numbers (숫자)
 - **이진수** 표현, 2의 보수(정수), IEEE 754(실수).  
 - 엔디언(Little/Big) 이슈에 주의 — 네트워크 바이트 오더는 **Big Endian**.
 
@@ -96,18 +96,18 @@ host = struct.unpack("!I", net)[0]
 assert x == host
 ```
 
-### 3) Image (이미지)
+### 3. Image (이미지)
 - **픽셀 래스터**: RGB/YCbCr/Grayscale, 알파 채널.  
 - 압축: 무손실(PNG), 손실(JPEG, WebP).  
 - 전송 시 **색공간/프로파일**(sRGB) 명시가 중요.
 
-### 4) Audio (오디오)
+### 4. Audio (오디오)
 - 아날로그 → **표본화**(샘플링) & **양자화**(비트 폭).  
 - 나이키스트:  
   $$ f_s \ge 2 f_\text{max} $$
 - 예: 44.1kHz/16bit 스테레오 PCM. 전송은 AAC/Opus 같은 코덱 활용.
 
-### 5) Video (비디오)
+### 5. Video (비디오)
 - 프레임(초당 24~120fps), 해상도, 색공간(4:2:0).  
 - 인코딩: H.264/H.265/AV1. **GOP**(I/P/B 프레임), **비트레이트 제어**(CBR/VBR).
 
@@ -115,15 +115,15 @@ assert x == host
 
 ## 1.1.4 Data Flow (데이터 흐름)
 
-### 1) Simplex (단방향)
+### 1. Simplex (단방향)
 - 한쪽 방향으로만 전송(예: 센서→수집기, 방송).
 - **장점**: 단순/효율적. **단점**: 피드백 불가(ARQ 미사용).
 
-### 2) Half-Duplex (반이중)
+### 2. Half-Duplex (반이중)
 - 양방향 가능하나 **동시 전송 불가**(무전기).
 - 충돌 회피/전환 프로토콜 필요(토큰 기반/RTS-CTS 등).
 
-### 3) Full-Duplex (전이중)
+### 3. Full-Duplex (전이중)
 - **동시에 양방향** 전송(전화, 스위치 이더넷).  
 - 물리적/논리적 분리(쌍선 분리, 주파수 분할, 시분할).
 
@@ -144,7 +144,7 @@ A <---> B  (동시에 송수신)
 
 ## 1.2.1 Network Criteria (네트워크 기준)
 
-### 1) Performance (성능)
+### 1. Performance (성능)
 
 - **처리량(Throughput)**:  
   $$ \text{Throughput} = \frac{\text{성공적으로 전달된 비트 수}}{\text{시간}} $$
@@ -179,14 +179,14 @@ def simulate(n=1000, base_gap_ms=10, jitter_ms=5, loss_prob=0.02):
 print(simulate())
 ```
 
-### 2) Reliability (신뢰도)
+### 2. Reliability (신뢰도)
 
 - **MTBF(평균고장간격)**, **MTTR(평균복구시간)**.  
   가용도(Availability):  
   $$ A = \frac{\text{MTBF}}{\text{MTBF} + \text{MTTR}} $$
 - **지점별 중복**(링크/장비/전원), **경로 다양성**, **Failover/VRRP/HSRP**, **ECMP**.
 
-### 3) Security (보안)
+### 3. Security (보안)
 
 - **CIA**(기밀성·무결성·가용성).  
 - 위협: 무단 접근, 스푸핑/스니핑, MITM, DoS/DDoS, 악성코드, 공급망.  
@@ -196,7 +196,7 @@ print(simulate())
 
 ## 1.2.2 Physical Structures (물리적 구조)
 
-### 1) Type of Connection (연결 유형)
+### 1. Type of Connection (연결 유형)
 
 - **Point-to-Point (점대점)**: 두 노드가 직접 연결.  
   - 예: 서버↔스위치 업링크, 전용회선, 직결 DAC/광모듈.  
@@ -217,7 +217,7 @@ Multipoint (Shared Bus/Medium)
  B --+       +-- D
 ```
 
-### 2) Physical Topology (물리적 토폴로지)
+### 2. Physical Topology (물리적 토폴로지)
 
 #### (1) Mesh Topology (그물망형)
 

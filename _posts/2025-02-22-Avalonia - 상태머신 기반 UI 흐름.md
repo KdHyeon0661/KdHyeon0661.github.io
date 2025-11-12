@@ -16,7 +16,7 @@ category: Avalonia
 
 ---
 
-## 0) 용어와 표기
+## 0. 용어와 표기
 
 - **State(상태)**: UI의 단계(예: `Email` → `Password` → `Complete`)
 - **Event(이벤트)**: 사용자/시스템 입력(예: `NEXT`, `BACK`, `SUBMIT`)
@@ -34,7 +34,7 @@ $$
 
 ---
 
-## 1) 예제 도메인 시나리오(회원가입 Wizard)
+## 1. 예제 도메인 시나리오(회원가입 Wizard)
 
 - Step1: 이메일 입력 및 **서버 중복 검사**  
 - Step2: 비밀번호/확인 입력 및 **규칙 검증**  
@@ -75,7 +75,7 @@ MyApp/
 
 ---
 
-## 2) 모델과 상태/이벤트 정의
+## 2. 모델과 상태/이벤트 정의
 
 ### Models/SignupData.cs
 
@@ -131,7 +131,7 @@ public enum SignupEvent
 
 ---
 
-## 3) 상태머신 코어(범용)와 가드/전이
+## 3. 상태머신 코어(범용)와 가드/전이
 
 ### StateMachine/IStateManager.cs (범용 인터페이스)
 
@@ -250,7 +250,7 @@ public sealed class StateMachineCore<TState, TEvent> : IStateManager<TState, TEv
 
 ---
 
-## 4) 도메인 상태머신 작성: SignupFlowStateMachine
+## 4. 도메인 상태머신 작성: SignupFlowStateMachine
 
 서버 연동(이메일 중복 검사, 가입 API 호출)은 Service에 위임한다.
 
@@ -374,7 +374,7 @@ public sealed class SignupFlowStateMachine
 
 ---
 
-## 5) 각 Step ViewModel + Shell(SignupFlowViewModel)
+## 5. 각 Step ViewModel + Shell(SignupFlowViewModel)
 
 ### ViewModels/Step1ViewModel.cs
 
@@ -540,7 +540,7 @@ public sealed class SignupFlowViewModel : ReactiveObject
 
 ---
 
-## 6) 뷰 구성과 DataTemplate 바인딩
+## 6. 뷰 구성과 DataTemplate 바인딩
 
 ### Views/Step1View.axaml
 
@@ -618,7 +618,7 @@ public sealed class SignupFlowViewModel : ReactiveObject
 
 ---
 
-## 7) 가드 실패 사유를 UI로 전달하는 방법
+## 7. 가드 실패 사유를 UI로 전달하는 방법
 
 위 VM에서 `Error`를 단순 메시지 슬롯으로 사용했다. 더 정교하게 하려면:
 
@@ -629,7 +629,7 @@ public sealed class SignupFlowViewModel : ReactiveObject
 
 ---
 
-## 8) 고급 전이: 조건부 분기, 스킵, 루프, 타임아웃
+## 8. 고급 전이: 조건부 분기, 스킵, 루프, 타임아웃
 
 복잡한 흐름에서 특정 조건에 따라 **스텝 스킵**이 필요할 수 있다.  
 예: 이메일이 사내 도메인이면 `Step2_Password`로, 외부 도메인이면 추가 Step `Step2B_ExtraVerification`을 거치도록.
@@ -666,7 +666,7 @@ GuardAsync = async () =>
 
 ---
 
-## 9) 상태 유지/복원(직렬화)
+## 9. 상태 유지/복원(직렬화)
 
 위저드가 길거나 앱 재시작 후 이어하기가 필요하면 `SignupData` + 현재 상태를 저장한다.
 
@@ -691,7 +691,7 @@ public static class FlowPersistence
 
 ---
 
-## 10) DI 구성과 테스트 전략
+## 10. DI 구성과 테스트 전략
 
 DI 등록:
 
@@ -739,7 +739,7 @@ public async Task Submit_To_Step3_Fails_When_Server_Signup_Fails()
 
 ---
 
-## 11) UI/UX 향상: 버튼 상태, 진행 표시, 단축키
+## 11. UI/UX 향상: 버튼 상태, 진행 표시, 단축키
 
 - 버튼 활성화: `IsBusy` 동안 `Next`/`Submit` 비활성화  
 - 단축키: `Enter` → Next/Submit, `Esc` → Back 바인딩  
@@ -771,7 +771,7 @@ XAML:
 
 ---
 
-## 12) 상태 전이 로깅/관측/테레메트리
+## 12. 상태 전이 로깅/관측/테레메트리
 
 `StateLogger`로 이력 저장 외에, 전이 시 마다 이벤트를 발행하여 로그/분석에 보낸다.
 
@@ -786,7 +786,7 @@ public sealed class TelemetryService
 
 ---
 
-## 13) 상태 패턴(객체지향)과의 비교
+## 13. 상태 패턴(객체지향)과의 비교
 
 본 글은 테이블 기반(Transition 리스트) 상태머신이다.  
 대안: 각 상태를 클래스로 만들고 `Handle(event)`에서 다음 상태를 반환(GoF **State 패턴**).  
@@ -825,7 +825,7 @@ public sealed class EmailState : SignupState
 
 ---
 
-## 14) 계층형/병렬 상태(HFSM), 타이머 상태
+## 14. 계층형/병렬 상태(HFSM), 타이머 상태
 
 복잡한 플로우에서 **서브머신**(예: 인증 과정 내에서 또 다른 wizard)을 상태 하나로 포함시키거나,  
 타이머 이벤트(예: 일정 시간 후 자동 Next)를 도입할 수 있다.
@@ -835,7 +835,7 @@ public sealed class EmailState : SignupState
 
 ---
 
-## 15) 라우팅/딥링크와 상태 진입 제한
+## 15. 라우팅/딥링크와 상태 진입 제한
 
 URL 쿼리로 직접 `Step2`로 진입하려는 시도가 있을 수 있다(웹/하이브리드).  
 상태머신 입구에서 “이전 단계 완료 여부”를 가드로 체크하여 **진입 제한**한다.
@@ -857,7 +857,7 @@ new Transition<SignupStep, SignupEvent>
 
 ---
 
-## 16) 검증(ReactiveUI.Validation 등)과 결합
+## 16. 검증(ReactiveUI.Validation 등)과 결합
 
 - 각 Step VM에 필드 검증(동기)  
 - 서버 연동은 Guard(비동기)  
@@ -876,7 +876,7 @@ Shell에서는 `Submit` 클릭 시 먼저 `CanSubmitLocal` 확인 → 실패면 
 
 ---
 
-## 17) 실전 체크리스트
+## 17. 실전 체크리스트
 
 - 가드 실패 사유를 사용자에게 **명확히** 전달  
 - 재시도 UX: 실패 후 다시 시도 버튼/자동 재시도  
@@ -886,7 +886,7 @@ Shell에서는 `Submit` 클릭 시 먼저 `CanSubmitLocal` 확인 → 실패면 
 
 ---
 
-## 18) 전체 흐름 요약(개념)
+## 18. 전체 흐름 요약(개념)
 
 1) Shell VM이 **상태머신을 소유**하고, 상태가 바뀔 때 현재 Step VM을 새로 생성  
 2) 각 Step VM은 **입력 모델**에 바인딩  
@@ -897,7 +897,7 @@ Shell에서는 `Submit` 클릭 시 먼저 `CanSubmitLocal` 확인 → 실패면 
 
 ---
 
-## 19) 결론
+## 19. 결론
 
 - 상태머신을 도입하면 **흐름 제어, 검증, 서버 연동**을 체계화할 수 있다.  
 - Guard/Effect로 비즈니스 조건과 사이드이펙트를 분리하면 테스트 용이성이 높아진다.  

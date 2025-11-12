@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Compose 예제 : WordPress + MySQL 블로그 스택 구성하기
 
-## 1) 목표 & 아키텍처 개요
+## 1. 목표 & 아키텍처 개요
 
 - **목표**
   - WordPress 웹사이트와 MySQL DB를 **Docker Compose**로 손쉽게 구성
@@ -31,7 +31,7 @@ category: Docker
 
 ---
 
-## 2) 폴더 구조
+## 2. 폴더 구조
 
 ```plaintext
 wordpress-docker/
@@ -48,7 +48,7 @@ wordpress-docker/
 
 ---
 
-## 3) 기본 docker-compose.yml (확장/강화 버전)
+## 3. 기본 docker-compose.yml (확장/강화 버전)
 
 > 초안의 스택을 기반으로 **healthcheck**, **restart 정책**, **명시적 버전 태그**, **리소스 제한(옵션)**, **로깅 제한** 등을 추가했습니다.
 
@@ -136,7 +136,7 @@ networks:
 
 ---
 
-## 4) .env 예시(민감값/포트 분리)
+## 4. .env 예시(민감값/포트 분리)
 
 ```env
 WEB_PORT=8080
@@ -150,16 +150,16 @@ MYSQL_ROOT_PASSWORD=very_strong_root
 
 ---
 
-## 5) 실행 & 초기 접근
+## 5. 실행 & 초기 접근
 
 ```bash
-# 1) 실행
+# 1. 실행
 docker compose up -d --build
 
-# 2) 상태 확인
+# 2. 상태 확인
 docker compose ps
 
-# 3) 브라우저 접속
+# 3. 브라우저 접속
 # http://localhost:8080
 ```
 
@@ -167,7 +167,7 @@ docker compose ps
 
 ---
 
-## 6) 볼륨 설계 & 백업/복구 전략
+## 6. 볼륨 설계 & 백업/복구 전략
 
 ### 6.1 볼륨 역할
 | 볼륨 | 컨테이너 경로 | 설명 |
@@ -210,7 +210,7 @@ cat backup/20240101_120000/wordpress.tgz | \
 
 ---
 
-## 7) phpMyAdmin 추가(선택)
+## 7. phpMyAdmin 추가(선택)
 
 ```yaml
   phpmyadmin:
@@ -233,7 +233,7 @@ cat backup/20240101_120000/wordpress.tgz | \
 
 ---
 
-## 8) wp-cli 자동화(설치/플러그인/테마/유저)
+## 8. wp-cli 자동화(설치/플러그인/테마/유저)
 
 ### 8.1 ad-hoc 실행
 ```bash
@@ -277,7 +277,7 @@ fi
 
 ---
 
-## 9) Nginx 리버스 프록시 & HTTPS(선택)
+## 9. Nginx 리버스 프록시 & HTTPS(선택)
 
 ### 9.1 목적
 - WordPress 컨테이너의 포트를 **내부로만 노출**하고, 외부는 Nginx가 SSL/TLS 종료.
@@ -329,7 +329,7 @@ server {
 
 ---
 
-## 10) 운영 보안 체크리스트
+## 10. 운영 보안 체크리스트
 
 - **비밀번호/Secret 분리**: `.env`는 반드시 Git 제외. 운영은 Secret Manager/Vault로 관리.
 - **최소 권한**: DB 계정은 `wp_db`만 접근 권한. 루트 사용 금지.
@@ -341,7 +341,7 @@ server {
 
 ---
 
-## 11) 성능 & 확장
+## 11. 성능 & 확장
 
 - **OPcache/오브젝트 캐시**: Redis 캐시 연동(별도 컨테이너)로 DB 부하 완화.
 - **업로드 공유 문제**: WordPress 복수 인스턴스(Scale-out) 시 업로드를 **공유 볼륨/S3 호환**으로 외부화.
@@ -351,7 +351,7 @@ server {
 
 ---
 
-## 12) 기존 사이트 마이그레이션(핵심 단계)
+## 12. 기존 사이트 마이그레이션(핵심 단계)
 
 1. 원본 서버에서 DB 덤프:
    ```bash
@@ -378,7 +378,7 @@ server {
 
 ---
 
-## 13) 트러블슈팅(증상→원인→조치)
+## 13. 트러블슈팅(증상→원인→조치)
 
 | 증상 | 원인 | 조치 |
 |---|---|---|
@@ -399,7 +399,7 @@ docker compose exec wordpress wp core version --allow-root
 
 ---
 
-## 14) Compose 파일(최소/기본/전체) 비교
+## 14. Compose 파일(최소/기본/전체) 비교
 
 ### 14.1 최소 구성(학습/로컬)
 ```yaml
@@ -434,7 +434,7 @@ volumes: {wordpress_data:, db_data:}
 
 ---
 
-## 15) 마무리 요약
+## 15. 마무리 요약
 
 - **핵심**: *Compose로 WordPress + MySQL를 빠르게 올리고*, **Named Volume**으로 영속성 확보, **헬스체크/로그/리소스**까지 챙긴다.
 - **운영 필수**: 비밀값 분리(.env 제한), 정기 백업(덤프+파일), 보안(WAF/업데이트/권한), 모니터링.

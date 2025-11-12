@@ -6,7 +6,7 @@ category: Csharp
 ---
 # C# Span<T>와 Memory<T> 심화: 고성능 메모리 조작 기법
 
-## 0) 준비: 왜 이 도구들이 성능을 바꾸는가?
+## 0. 준비: 왜 이 도구들이 성능을 바꾸는가?
 
 GC 관점의 비용 모델을 간단히 수식화하면:
 
@@ -22,7 +22,7 @@ GC 관점의 비용 모델을 간단히 수식화하면:
 
 ---
 
-## 1) Span<T> — 스택 전용 고성능 슬라이스
+## 1. Span<T> — 스택 전용 고성능 슬라이스
 
 ### 1.1 기본 사용
 
@@ -61,7 +61,7 @@ ReadOnlySpan<char> inner = s[7..12];     // "World"
 
 ---
 
-## 2) ReadOnlySpan<T> — 읽기 전용, API 안정성↑
+## 2. ReadOnlySpan<T> — 읽기 전용, API 안정성↑
 
 - 읽기 전용 뷰로 API를 정의하면 **방어적 복사 없이** 안전한 불변 계약을 제공.
 - 문자열 파싱·토큰화에 최적.
@@ -79,7 +79,7 @@ int c = CountComma("a,b,c".AsSpan()); // 2
 
 ---
 
-## 3) Memory<T> / ReadOnlyMemory<T> — 비동기·필드 저장 가능
+## 3. Memory<T> / ReadOnlyMemory<T> — 비동기·필드 저장 가능
 
 - `Memory<T>`는 **힙에 저장 가능**한 슬라이스로, `Span<T>`의 **장기 저장/비동기 전달** 대안
 - 필요 시 `.Span`으로 순간 뷰 획득
@@ -102,7 +102,7 @@ class BufferHolder
 
 ---
 
-## 4) stackalloc — 힙을 건너뛰는 초저지연 임시 버퍼
+## 4. stackalloc — 힙을 건너뛰는 초저지연 임시 버퍼
 
 - **작고 일시적인 버퍼**에 최적 (수백~수천 바이트 수준 권장)
 - 스코프 종료 시 자동 해제 → **GC 압력 0**
@@ -116,7 +116,7 @@ Span<byte> tmp = stackalloc byte[64];
 
 ---
 
-## 5) 고급 문자열/바이너리 처리 with Span
+## 5. 고급 문자열/바이너리 처리 with Span
 
 ### 5.1 Substring 없이 토큰화
 
@@ -163,7 +163,7 @@ uint v = BinaryPrimitives.ReadUInt32LittleEndian(b); // 0x11223344
 
 ---
 
-## 6) MemoryMarshal/Unsafe — 구조 재해석과 브리지 (주의!)
+## 6. MemoryMarshal/Unsafe — 구조 재해석과 브리지 (주의!)
 
 ### 6.1 구조체 ↔ 바이트 캐스팅
 
@@ -195,7 +195,7 @@ first = 0xFF;
 
 ---
 
-## 7) ArrayPool<T> vs MemoryPool<T> — 장수명 버퍼 재사용
+## 7. ArrayPool<T> vs MemoryPool<T> — 장수명 버퍼 재사용
 
 ### 7.1 ArrayPool<T> — 배열 재사용(가장 흔함)
 
@@ -234,7 +234,7 @@ Memory<byte> mem = owner.Memory[..2048];
 
 ---
 
-## 8) IBufferWriter<T> / SequenceReader<T> — 스트리밍 핵심
+## 8. IBufferWriter<T> / SequenceReader<T> — 스트리밍 핵심
 
 ### 8.1 IBufferWriter<T>
 
@@ -293,7 +293,7 @@ static async Task<int> SumAsync(PipeReader reader)
 
 ---
 
-## 9) 고급 팁: `string.Create`, `SpanAction`, `TryFormat`
+## 9. 고급 팁: `string.Create`, `SpanAction`, `TryFormat`
 
 ### 9.1 string.Create — 문자열 생성 시 버퍼 직접 채우기
 
@@ -320,7 +320,7 @@ if (12345.TryFormat(tmp, out int written))
 
 ---
 
-## 10) 성능 패턴/안티패턴
+## 10. 성능 패턴/안티패턴
 
 ### 10.1 권장 패턴
 - **입출력 경계에만** 복사: 내부는 슬라이스/Span로 전달
@@ -338,7 +338,7 @@ if (12345.TryFormat(tmp, out int written))
 
 ---
 
-## 11) 실전 예제 모음
+## 11. 실전 예제 모음
 
 ### 11.1 CSV 라인 파싱 (복사 0회)
 
@@ -434,7 +434,7 @@ ReadOnlySpan<byte> written = writer.WrittenSpan;
 
 ---
 
-## 12) 체크리스트 (현장 적용 가이드)
+## 12. 체크리스트 (현장 적용 가이드)
 
 - [ ] **핫 패스**에서 Substring/ToArray 남발 여부 점검 → Span/슬라이스로 전환
 - [ ] 대형 임시 버퍼 → ArrayPool/MemoryPool로 전환 + 수명 규약 명시

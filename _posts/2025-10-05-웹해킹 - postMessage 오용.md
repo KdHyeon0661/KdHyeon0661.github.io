@@ -12,7 +12,7 @@ category: 웹해킹
 
 ---
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **문제**  
   - `window.postMessage` 수신 시 **`event.origin` 검증**이 없거나 느슨(`*` 등)하면,  
@@ -30,7 +30,7 @@ category: 웹해킹
 
 ---
 
-## 1) `postMessage` 보안 모델 요약
+## 1. `postMessage` 보안 모델 요약
 
 - **발신**: `targetWindow.postMessage(message, targetOrigin, [transfer])`  
   - `targetOrigin`에 **정확한 오리진**을 넣으면 브라우저가 **그 오리진이 아닐 경우 배송 자체를 차단**합니다.  
@@ -44,7 +44,7 @@ category: 웹해킹
 
 ---
 
-## 2) 위험 시나리오
+## 2. 위험 시나리오
 
 ### 2.1 Origin 검증 누락
 ```js
@@ -80,7 +80,7 @@ if (event.origin.includes("example.com")) { /* … */ }
 
 ---
 
-## 3) “안전 재현” 점검(스테이징 전용) — **막혀야 정상 ✅**
+## 3. “안전 재현” 점검(스테이징 전용) — **막혀야 정상 ✅**
 
 > 목적: 허용되지 않은 오리진/소스에서 온 메시지가 **무시**되는지, 스키마가 잘 **검증**되는지 확인
 
@@ -93,7 +93,7 @@ if (event.origin.includes("example.com")) { /* … */ }
 
 ---
 
-## 4) 안전한 설계 패턴 (정리)
+## 4. 안전한 설계 패턴 (정리)
 
 - **발신 측**
   - `postMessage(payload, exactOrigin)` — 절대 `*` 사용 금지(디버깅 외).
@@ -111,7 +111,7 @@ if (event.origin.includes("example.com")) { /* … */ }
 
 ---
 
-## 5) 견고한 수신 코드 (Vanilla JS + Zod 스키마 예)
+## 5. 견고한 수신 코드 (Vanilla JS + Zod 스키마 예)
 
 ```html
 <!-- host.html (수신자, 예: https://app.example.com/host.html) -->
@@ -204,7 +204,7 @@ function setTheme(t){ document.documentElement.dataset.theme = t; }
 
 ---
 
-## 6) 안전한 발신 코드 (위젯/임베디드 측)
+## 6. 안전한 발신 코드 (위젯/임베디드 측)
 
 ```html
 <!-- https://widget.partner.com/embed.html (발신자) -->
@@ -235,7 +235,7 @@ requestProfile();
 
 ---
 
-## 7) 로컬 “안전 재현” 환경 (두 오리진) — Express 2개 포트
+## 7. 로컬 “안전 재현” 환경 (두 오리진) — Express 2개 포트
 
 > **목적**: 서로 다른 오리진(예: `http://localhost:3000` vs `http://localhost:4000`)에서  
 > 비허용 오리진 메시지가 **무시**되는지, 허용 오리진만 **응답**하는지 눈으로 확인
@@ -261,7 +261,7 @@ app.listen(4000, ()=>console.log("Widget http://localhost:4000"));
 
 ---
 
-## 8) React/Hooks로 안전 구현(수신자 관점)
+## 8. React/Hooks로 안전 구현(수신자 관점)
 
 ```tsx
 // useSecurePostMessage.tsx
@@ -288,7 +288,7 @@ export function useSecurePostMessage(iframeRef: React.RefObject<HTMLIFrameElemen
 
 ---
 
-## 9) 고급 토픽
+## 9. 고급 토픽
 
 ### 9.1 핸드셰이크 & 채널 바인딩
 - 최초 통신 시:
@@ -312,7 +312,7 @@ export function useSecurePostMessage(iframeRef: React.RefObject<HTMLIFrameElemen
 
 ---
 
-## 10) 보안 헤더/프레임 정책과의 연계
+## 10. 보안 헤더/프레임 정책과의 연계
 
 - **CSP**
   - `frame-ancestors 'self' https://trusted-embedder.com`  
@@ -328,7 +328,7 @@ export function useSecurePostMessage(iframeRef: React.RefObject<HTMLIFrameElemen
 
 ---
 
-## 11) 로깅·모니터링
+## 11. 로깅·모니터링
 
 - **로그 필드**: `ts`, `page`, `allowed(boolean)`, `origin`, `sourceMatched`, `type`, `validSchema`, `nonceOk`, `userId`  
 - **탐지 룰 예시**
@@ -338,7 +338,7 @@ export function useSecurePostMessage(iframeRef: React.RefObject<HTMLIFrameElemen
 
 ---
 
-## 12) 테스트/CI 자동화
+## 12. 테스트/CI 자동화
 
 ### 12.1 프론트 단위 테스트(예: Jest + JSDOM)
 - **Origin/Source** 체크 로직을 모킹해 **허용/거절 케이스** 검증.
@@ -360,7 +360,7 @@ test("disallowed origin is ignored", async ({ page, context }) => {
 
 ---
 
-## 13) 안티패턴/주의사항 요약
+## 13. 안티패턴/주의사항 요약
 
 - `postMessage(..., "*")`로 **남발 전송** 금지  
 - 수신 시 **`event.origin`을 `includes`/정규식 느슨 검증** 금지 → **정확 문자열 매칭**  
@@ -372,7 +372,7 @@ test("disallowed origin is ignored", async ({ page, context }) => {
 
 ---
 
-## 14) 체크리스트 (현장용)
+## 14. 체크리스트 (현장용)
 
 - [ ] 발신: `targetOrigin`에 **정확 오리진** 지정(`*` 금지)  
 - [ ] 수신: `event.origin` **화이트리스트 정확 매칭**, `null` 거절  

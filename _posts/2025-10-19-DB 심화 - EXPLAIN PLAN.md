@@ -17,7 +17,7 @@ category: DB 심화
 
 ---
 
-## 0) 한눈 핵심
+## 0. 한눈 핵심
 
 - `EXPLAIN PLAN FOR <SQL>` 은 **지금 이 세션의 Optimizer**가 **지금 보이는 통계/바인드**(대개 **리터럴**만 반영)로 **예상** 계획을 **PLAN_TABLE**에 기록한다.  
 - 실제로 실행하지 않는다 → **실제 실행 경로/행수/시간**은 다를 수 있다.  
@@ -30,7 +30,7 @@ category: DB 심화
 
 ---
 
-## 1) 준비 — PLAN_TABLE과 기본 사용
+## 1. 준비 — PLAN_TABLE과 기본 사용
 
 ### 1.1 PLAN_TABLE 확인/생성
 ```sql
@@ -58,7 +58,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY()); -- plan_table에서 최신 캡처
 
 ---
 
-## 2) 예제 데이터 준비
+## 2. 예제 데이터 준비
 
 ```sql
 -- 고객·주문 예제
@@ -103,7 +103,7 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,'ORDERS',cascade=>TRUE);
 
 ---
 
-## 3) `EXPLAIN PLAN` 출력 읽기 — 핵심 칼럼/라인 해석
+## 3. `EXPLAIN PLAN` 출력 읽기 — 핵심 칼럼/라인 해석
 
 ### 3.1 샘플 플랜
 ```sql
@@ -135,7 +135,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS +PROJECT
 
 ---
 
-## 4) `EXPLAIN PLAN` vs 실제 — 차이와 함께 보기
+## 4. `EXPLAIN PLAN` vs 실제 — 차이와 함께 보기
 
 ### 4.1 실제 실행 계획·통계(권장)
 ```sql
@@ -155,7 +155,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 
 ---
 
-## 5) 카디널리티(행수)·코스트 모델 빠르게 이해
+## 5. 카디널리티(행수)·코스트 모델 빠르게 이해
 
 ### 5.1 용어 감각
 - **Selectivity(선택도)**: 조건이 행을 통과시킬 확률 \(0..1\)  
@@ -194,7 +194,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +NOTE'));
 
 ---
 
-## 6) 조인 전략 읽기 — NL/Hash/Merge 비교
+## 6. 조인 전략 읽기 — NL/Hash/Merge 비교
 
 ### 6.1 NL (Nested Loops)
 - **드라이빙 소량** + **인덱스 탐색** 유리, OLTP 선호.  
@@ -232,7 +232,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +NOTE'));
 
 ---
 
-## 7) 파티션/병렬/서브쿼리/뷰
+## 7. 파티션/병렬/서브쿼리/뷰
 
 ### 7.1 파티션 프루닝
 ```sql
@@ -262,7 +262,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PARALLEL +NOTE'));
 
 ---
 
-## 8) DML의 `EXPLAIN PLAN` (INSERT/UPDATE/DELETE/MERGE)
+## 8. DML의 `EXPLAIN PLAN` (INSERT/UPDATE/DELETE/MERGE)
 
 ```sql
 EXPLAIN PLAN FOR
@@ -278,7 +278,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 9) `DBMS_XPLAN` 옵션 모음 (실무 즐겨 쓰기 세트)
+## 9. `DBMS_XPLAN` 옵션 모음 (실무 즐겨 쓰기 세트)
 
 - `ALL +PREDICATE +ALIAS +PROJECTION +NOTE` : **예상** 계획 상세  
 - `DISPLAY_CURSOR(..., 'ALLSTATS LAST +PEEKED_BINDS +OUTLINE +PROJECTION +ALIAS +NOTE')` : **실제**  
@@ -286,7 +286,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 10) 힌트/아웃라인/베이스라인과의 관계
+## 10. 힌트/아웃라인/베이스라인과의 관계
 
 - `EXPLAIN PLAN` 결과에 `OUTLINE`을 붙여보면 옵티마이저가 선택한 **힌트 세트**가 보인다.  
 - 동일한 결과를 반복 강제하려면 **SQL Plan Baseline**/**SQL Profile**/힌트의 적절한 조합을 고려.  
@@ -294,7 +294,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 11) 바인드 피킹/ACS(Adaptive Cursor Sharing)와 `EXPLAIN PLAN`
+## 11. 바인드 피킹/ACS(Adaptive Cursor Sharing)와 `EXPLAIN PLAN`
 
 - `EXPLAIN PLAN`은 종종 **대표 바인드** 가정으로 추정 → **특정 바인드 값에 따른 플랜 차이** 미표시.  
 - 실제로는 **`DISPLAY_CURSOR +PEEKED_BINDS`** 로 값별 플랜이 갈리는지 확인.  
@@ -302,14 +302,14 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 12) 적응 계획(Adaptive)·통계 피드백
+## 12. 적응 계획(Adaptive)·통계 피드백
 
 - 12c+에서는 실행 중 **부분 통계**를 보고 **조인 전략 전환**(예: NL ↔ Hash) 가능.  
 - `EXPLAIN PLAN`엔 **최종 실행 경로**가 반영되지 않을 수 있음 → **SQL Monitor/ALLSTATS LAST** 필수.
 
 ---
 
-## 13) 실행계획 분석 **표준 절차** (템플릿)
+## 13. 실행계획 분석 **표준 절차** (템플릿)
 
 1) **문제 SQL/상황 정의**: 요구/입력 범위/슬로우 지표  
 2) **EXPLAIN PLAN**으로 **예상 경로** 파악, `+PREDICATE/+NOTE`로 **프루닝/힌트/동적샘플링** 확인  
@@ -321,7 +321,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 14) 케이스 스터디
+## 14. 케이스 스터디
 
 ### 14.1 잘못된 카디널리티로 해시 스필
 ```sql
@@ -375,7 +375,7 @@ WHERE  c.region='APAC' AND c.grade>=4;
 
 ---
 
-## 15) 자주 쓰는 `DBMS_XPLAN` 레시피
+## 15. 자주 쓰는 `DBMS_XPLAN` 레시피
 
 ```sql
 -- 1) 최신 explain plan
@@ -395,7 +395,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 16) 주의할 함정(요약)
+## 16. 주의할 함정(요약)
 
 - `EXPLAIN PLAN`만 보고 튜닝 결론 내리면 **반쯤 틀릴 수 있다**: 실제는 **ALLSTATS LAST/Monitor**로 검증.  
 - 바인드·스큐·적응 계획은 **런타임**에 갈려서 **예상 플랜과 달라진다**.  
@@ -404,7 +404,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 17) 수학 한 줄(개념)
+## 17. 수학 한 줄(개념)
 
 - 총 코스트 근사:  
   $$ \text{Cost} \approx \sum_i \big( \alpha \cdot \text{IO}_i + \beta \cdot \text{CPU}_i \big) $$
@@ -412,7 +412,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 18) 마무리
+## 18. 마무리
 
 - `EXPLAIN PLAN`은 **예상**이다. **실행**의 진실은 `DISPLAY_CURSOR(ALLSTATS LAST)`와 **SQL Monitor**가 말해 준다.  
 - 분석은 **(1) 예상 → (2) 실제 → (3) 차이 원인(통계/히스토그램/바인드/조인순서/프루닝)** 의 3단 고정 루틴으로.  

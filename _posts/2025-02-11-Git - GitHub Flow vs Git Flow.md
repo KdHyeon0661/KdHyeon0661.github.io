@@ -6,7 +6,7 @@ category: Git
 ---
 # GitHub Flow vs Git Flow
 
-## 0) 한눈 요약(리마스터)
+## 0. 한눈 요약(리마스터)
 
 | 구분 | Git Flow | GitHub Flow |
 |---|---|---|
@@ -19,7 +19,7 @@ category: Git
 
 ---
 
-# 1) Git Flow — 릴리스 단위로 계획·격리·검증
+# 1. Git Flow — 릴리스 단위로 계획·격리·검증
 
 ## 1.1 핵심 개념(요약 복원)
 Vincent Driessen 모델. **기능(feature)** → **통합(develop)** → **릴리스 준비(release)** → **배포(main + 태그)** → 필요 시 **핫픽스(hotfix)** 의 명확한 경로.
@@ -42,11 +42,11 @@ main ← hotfix/*
 
 ## 1.2 명령 라인 예제(탄탄히)
 ```bash
-# 1) develop 준비
+# 1. develop 준비
 git checkout -b develop main
 git push -u origin develop
 
-# 2) 기능 개발
+# 2. 기능 개발
 git checkout -b feature/login develop
 # ... 작업 ...
 git commit -m "feat(login): implement form + validation"
@@ -55,7 +55,7 @@ git push -u origin feature/login
 git branch -d feature/login
 git push origin --delete feature/login
 
-# 3) 릴리스 준비
+# 3. 릴리스 준비
 git checkout -b release/1.0.0 develop
 # 버전 동결, 번역/문서, 마지막 버그픽스
 git commit -m "chore(release): freeze 1.0.0"
@@ -63,7 +63,7 @@ git commit -m "chore(release): freeze 1.0.0"
 git tag -a v1.0.0 -m "Release 1.0.0"
 git push origin v1.0.0
 
-# 4) 핫픽스
+# 4. 핫픽스
 git checkout -b hotfix/1.0.1 main
 # ... 수정 ...
 git commit -m "fix: urgent crash on startup"
@@ -82,7 +82,7 @@ git commit -m "fix: urgent crash on startup"
 
 ---
 
-# 2) GitHub Flow — 작게·자주, 자동화로 안전 확보
+# 2. GitHub Flow — 작게·자주, 자동화로 안전 확보
 
 ## 2.1 핵심 개념(요약 복원)
 항상 배포 가능한 `main`. 작업은 **짧은 수명**의 `feature/*` 에서 진행 → PR 리뷰/CI 통과 → `main` 병합과 동시에 배포.
@@ -108,7 +108,7 @@ git push -u origin feature/login
 
 ---
 
-# 3) 배포·버전·태깅 — 두 모델 공통의 필수 레이어
+# 3. 배포·버전·태깅 — 두 모델 공통의 필수 레이어
 
 ## 3.1 버전(semver)과 태깅
 - 태그는 **빌드·아티팩트·릴리스 노트**의 기준점.
@@ -141,7 +141,7 @@ chore: deps bump
 
 ---
 
-# 4) CI/CD 파이프라인 예제(GitHub Actions)
+# 4. CI/CD 파이프라인 예제(GitHub Actions)
 
 ## 4.1 GitHub Flow용(환경별 배포)
 ```yaml
@@ -189,7 +189,7 @@ jobs:
 
 ---
 
-# 5) 핫픽스·백포트·릴리스 격리의 정석
+# 5. 핫픽스·백포트·릴리스 격리의 정석
 
 ## 5.1 Git Flow
 - `hotfix/*` → `main` 병합/태그 → 동일 변경을 **`develop` 혹은 진행 중 `release/*`에 백포트**.
@@ -202,7 +202,7 @@ jobs:
 
 ---
 
-# 6) 브랜치 보호·리뷰·서명·병합 정책
+# 6. 브랜치 보호·리뷰·서명·병합 정책
 
 ## 6.1 보호 브랜치 설정 아이디어
 - Require pull request reviews: 1~2명 이상 승인
@@ -218,7 +218,7 @@ jobs:
 
 ---
 
-# 7) 하이브리드 모델 — “간소화된 Git Flow”와 “릴리스 브랜치만 추가한 GitHub Flow”
+# 7. 하이브리드 모델 — “간소화된 Git Flow”와 “릴리스 브랜치만 추가한 GitHub Flow”
 
 ## 7.1 간소화된 Git Flow
 - `develop` 제거 → **`main`이 통합 브랜치**.  
@@ -231,7 +231,7 @@ jobs:
 
 ---
 
-# 8) 모노레포/다중 서비스에 대한 고려
+# 8. 모노레포/다중 서비스에 대한 고려
 
 ## 8.1 모노레포에서의 플로우
 - GitHub Flow 권장. **경로 기반 CI** 로 변경된 패키지/서비스만 빌드·배포.
@@ -254,7 +254,7 @@ jobs:
 
 ---
 
-# 9) 전환 가이드 — Git Flow → GitHub Flow(또는 역방향)
+# 9. 전환 가이드 — Git Flow → GitHub Flow(또는 역방향)
 
 ## 9.1 Git Flow → GitHub Flow
 1) `develop` 잔여 PR·커밋을 `main` 으로 정리(충돌 해결).  
@@ -269,7 +269,7 @@ jobs:
 
 ---
 
-# 10) 품질·보안·규정 준수(두 모델 공통의 필수 가드레일)
+# 10. 품질·보안·규정 준수(두 모델 공통의 필수 가드레일)
 
 - PR 체크: 유닛/통합/정적분석(SAST)/의존성 스캔(SCA)/라이선스/시크릿 스캔.  
 - 환경별 승인 게이트: staging → prod 승인을 GitHub Environments로 관리.
@@ -293,7 +293,7 @@ jobs:
 
 ---
 
-# 11) 안티패턴/사고 유형과 대응
+# 11. 안티패턴/사고 유형과 대응
 
 | 안티패턴 | 증상 | 대응 |
 |---|---|---|
@@ -306,7 +306,7 @@ jobs:
 
 ---
 
-# 12) 실제 시나리오 제안
+# 12. 실제 시나리오 제안
 
 ## 12.1 스타트업 웹 서비스
 - GitHub Flow.  
@@ -324,7 +324,7 @@ jobs:
 
 ---
 
-# 13) 브랜치/커밋 네이밍·PR 템플릿
+# 13. 브랜치/커밋 네이밍·PR 템플릿
 
 ## 13.1 브랜치 네이밍
 ```
@@ -362,7 +362,7 @@ chore(deps): bump axios to 1.7.0
 
 ---
 
-# 14) 명령/설정 치트시트
+# 14. 명령/설정 치트시트
 
 ```bash
 # 공통
@@ -389,7 +389,7 @@ git push origin v1.2.3
 
 ---
 
-# 15) 결정 가이드 — 무엇을 선택할까?
+# 15. 결정 가이드 — 무엇을 선택할까?
 
 - **릴리스 단위 검증/번역/캠페인**이 크다 → **Git Flow** 혹은 **하이브리드**  
 - **지속 배포·작게/자주**가 목표 → **GitHub Flow**  
@@ -403,7 +403,7 @@ git push origin v1.2.3
 
 ---
 
-# 16) 마무리
+# 16. 마무리
 
 - Git Flow는 **격리와 릴리스 통제**, GitHub Flow는 **단순성과 속도**를 제공한다.  
 - 어느 쪽이든 **보호 브랜치/CI/병합 정책/태깅/체인지로그**가 품질을 좌우한다.  

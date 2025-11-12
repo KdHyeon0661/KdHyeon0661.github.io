@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core에서 구성 객체 `IConfiguration`
 
-## 1) `IConfiguration` 개요와 키 원리
+## 1. `IConfiguration` 개요와 키 원리
 
 - **계층형 키**: `:`(JSON/명령줄) 또는 `__`(환경 변수) 구분자 사용  
 - **소스 병합**: 여러 소스에서 읽은 값을 **우선순위**에 따라 병합(뒤에서 추가된 공급자가 우선)  
@@ -35,7 +35,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 2) 기본 JSON 구성과 환경별 파일
+## 2. 기본 JSON 구성과 환경별 파일
 
 ### 2.1 `appsettings.json`
 ```json
@@ -79,7 +79,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 ---
 
-## 3) 문자열 키 접근 vs 바인딩(타입 안전)
+## 3. 문자열 키 접근 vs 바인딩(타입 안전)
 
 ### 3.1 Key 접근
 ```csharp
@@ -133,7 +133,7 @@ public class HomeController : Controller
 
 ---
 
-## 4) Options 고급: Snapshot/Monitor/Validation/Named
+## 4. Options 고급: Snapshot/Monitor/Validation/Named
 
 ### 4.1 `IOptions<T>` / `IOptionsSnapshot<T>` / `IOptionsMonitor<T>`
 
@@ -219,7 +219,7 @@ builder.Services.AddSingleton<IConfigureOptions<AppSettings>, ConfigureMyFeature
 
 ---
 
-## 5) 환경 변수/명령줄/시크릿(비밀) — 우선순위·키 규칙
+## 5. 환경 변수/명령줄/시크릿(비밀) — 우선순위·키 규칙
 
 ### 5.1 환경 변수
 - `__`(더블 언더스코어)로 **계층 표현**
@@ -259,7 +259,7 @@ var stripe = config["ApiKeys:Stripe"];
 
 ---
 
-## 6) 배열/컬렉션 바인딩
+## 6. 배열/컬렉션 바인딩
 
 JSON:
 ```json
@@ -291,7 +291,7 @@ public class Endpoint { public string Name { get; set; } = ""; public string Url
 
 ---
 
-## 7) 최소호스트/Minimal API에서의 구성 사용
+## 7. 최소호스트/Minimal API에서의 구성 사용
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -316,7 +316,7 @@ app.Run();
 
 ---
 
-## 8) 실시간 재로딩(reloadOnChange)와 파일 감시
+## 8. 실시간 재로딩(reloadOnChange)와 파일 감시
 
 ```csharp
 builder.Configuration
@@ -332,7 +332,7 @@ builder.Configuration
 
 ---
 
-## 9) 로깅과 구성의 연동
+## 9. 로깅과 구성의 연동
 
 `appsettings.json`에서 로깅 레벨 제어:
 ```json
@@ -357,7 +357,7 @@ logger.LogInformation("SiteName={Site}", builder.Configuration["AppSettings:Site
 
 ---
 
-## 10) 사용자 지정 구성 공급자(파일/DB/외부 API)
+## 10. 사용자 지정 구성 공급자(파일/DB/외부 API)
 
 ### 10.1 간단한 INI/CSV 등 커스텀 Provider
 ```csharp
@@ -417,7 +417,7 @@ builder.Configuration.AddSimpleText("custom.config", optional: true);
 
 ---
 
-## 11) 컨테이너·쿠버네티스에서의 구성
+## 11. 컨테이너·쿠버네티스에서의 구성
 
 ### 11.1 Docker 환경 변수 주입
 ```dockerfile
@@ -434,7 +434,7 @@ ENV AppSettings__SiteName="ContainerApp"
 
 ---
 
-## 12) 연결 문자열과 `IConfiguration`
+## 12. 연결 문자열과 `IConfiguration`
 
 관례적으로 `ConnectionStrings` 섹션:
 ```json
@@ -453,7 +453,7 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(cs));
 
 ---
 
-## 13) 국제화/문화권과 바인딩 주의
+## 13. 국제화/문화권과 바인딩 주의
 
 - 숫자/날짜 파싱은 현재 문화권의 포맷 영향을 받는다.  
 - 배포 환경에서 문화권이 달라질 수 있으므로 숫자에는 `GetValue<int>`처럼 타입 지정 바인딩을 권장.  
@@ -461,7 +461,7 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(cs));
 
 ---
 
-## 14) 구성 유효성 검증과 실패 전략
+## 14. 구성 유효성 검증과 실패 전략
 
 **부팅 시 치명 설정 검증**:
 ```csharp
@@ -476,7 +476,7 @@ builder.Services.AddOptions<AppSettings>()
 
 ---
 
-## 15) 테스트에서의 구성 주입
+## 15. 테스트에서의 구성 주입
 
 ### 15.1 단위 테스트(가짜 구성)
 ```csharp
@@ -510,7 +510,7 @@ public class MyFactory : WebApplicationFactory<Program>
 
 ---
 
-## 16) 보안 모범 사례
+## 16. 보안 모범 사례
 
 - 비밀은 `user-secrets`(개발) 또는 **보안 비밀 관리 서비스**(운영)에 저장  
 - 로그에 구성 값(특히 비밀/토큰) 출력 금지  
@@ -519,7 +519,7 @@ public class MyFactory : WebApplicationFactory<Program>
 
 ---
 
-## 17) 실전 예제: Razor Pages + OptionsSnapshot + TempData 메시지
+## 17. 실전 예제: Razor Pages + OptionsSnapshot + TempData 메시지
 
 ### 17.1 `appsettings.json`
 ```json
@@ -578,7 +578,7 @@ public class SettingsModel : PageModel
 
 ---
 
-## 18) 실전 예제: Named HttpClient + Named Options
+## 18. 실전 예제: Named HttpClient + Named Options
 
 ### 18.1 JSON
 ```json
@@ -638,7 +638,7 @@ public class ApiService
 
 ---
 
-## 19) 구성 탐색/디버깅 유틸
+## 19. 구성 탐색/디버깅 유틸
 
 ### 19.1 트리 전개
 ```csharp
@@ -664,7 +664,7 @@ foreach (var kv in builder.Configuration.AsEnumerable(makePathsRelative: false))
 
 ---
 
-## 20) 수학적 관점의 우선순위 모델(직관)
+## 20. 수학적 관점의 우선순위 모델(직관)
 
 각 공급자(provider)를 $$ P_1, P_2, \dots, P_n $$라 하고,  
 이들이 같은 키 $$ k $$에 대해 값을 제공하면 **뒤에서 추가된** 공급자 $$ P_n $$의 값이 최종값이다.  
@@ -677,7 +677,7 @@ $$
 
 ---
 
-## 21) 체크리스트와 모범 사례
+## 21. 체크리스트와 모범 사례
 
 - [ ] 비밀은 절대 `appsettings.json`에 하드코딩하지 말 것(Secrets/Key Vault 등)  
 - [ ] `reloadOnChange` + `IOptionsMonitor`로 동적 구성을 설계  
@@ -690,7 +690,7 @@ $$
 
 ---
 
-## 22) 요약
+## 22. 요약
 
 | 주제 | 핵심 포인트 |
 |---|---|
@@ -705,7 +705,7 @@ $$
 
 ---
 
-## 23) 부록: 전체 샘플(Program.cs)
+## 23. 부록: 전체 샘플(Program.cs)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);

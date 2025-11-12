@@ -250,19 +250,19 @@ Defaults:www    !authenticate
 
 ### 예시 모음
 ```text
-# 1) 전체 권한 (지양)
+# 1. 전체 권한 (지양)
 devkim ALL=(ALL) ALL
 
-# 2) 서비스 재시작 전용(비번 無)
+# 2. 서비스 재시작 전용(비번 無)
 %deploy ALL=(root) NOPASSWD: /bin/systemctl restart myapp
 
-# 3) 특정 유저로만 실행 허용
+# 3. 특정 유저로만 실행 허용
 ops  ALL=(www-data) NOPASSWD: /usr/bin/ps, /usr/bin/kill, /usr/bin/ls
 
-# 4) 로그 조회만 허용
+# 4. 로그 조회만 허용
 support ALL=(root) NOPASSWD: /usr/bin/journalctl -u myapp --since *@
 
-# 5) 편집은 sudoedit로만
+# 5. 편집은 sudoedit로만
 Defaults!sudoedit secure_path=/usr/bin:/bin
 devops ALL=(root) sudoedit /etc/myapp/*.conf
 ```
@@ -273,17 +273,17 @@ devops ALL=(root) sudoedit /etc/myapp/*.conf
 
 ### 플레이북 A — 신규 개발자 온보딩(팀 표준)
 ```bash
-# 1) 사용자 생성 + 초기 비밀번호
+# 1. 사용자 생성 + 초기 비밀번호
 sudo adduser devkim --gecos "Dev Kim,,,"
 sudo passwd -e devkim                   # 최초 로그인 시 변경
 
-# 2) 그룹/협업 디렉터리
+# 2. 그룹/협업 디렉터리
 sudo groupadd -f devs
 sudo usermod -aG devs devkim
 sudo install -d -m 2775 -o root -g devs /srv/project
 setfacl -m d:g:devs:rwx /srv/project
 
-# 3) sudo 최소 권한(배포 스크립트만)
+# 3. sudo 최소 권한(배포 스크립트만)
 sudo visudo -f /etc/sudoers.d/deploy
 # 내용:
 # %devs ALL=(root) NOPASSWD:/usr/local/bin/deploy_myapp
@@ -291,17 +291,17 @@ sudo visudo -f /etc/sudoers.d/deploy
 
 ### 플레이북 B — 퇴사자 처리(계정 비활성→자산 이동→삭제)
 ```bash
-# 1) 즉시 잠금
+# 1. 즉시 잠금
 sudo passwd -l devkim
 sudo chage -E 0 devkim
 
-# 2) 파일 소유권 이전/아카이브(예시)
+# 2. 파일 소유권 이전/아카이브(예시)
 sudo find / -xdev -user devkim -print0 | sudo tar --null -cvf /root/devkim_backup.tar --files-from=-
 
-# 3) sudoers/그룹 정리(드롭인 파일 제거)
+# 3. sudoers/그룹 정리(드롭인 파일 제거)
 sudo rm -f /etc/sudoers.d/devkim*
 
-# 4) 일정 기간 보관 후 삭제
+# 4. 일정 기간 보관 후 삭제
 sudo userdel -r devkim
 ```
 

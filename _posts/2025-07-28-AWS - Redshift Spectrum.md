@@ -6,7 +6,7 @@ category: AWS
 ---
 # Redshift Spectrum: S3 데이터를 Redshift에서 바로 쿼리하기
 
-## 0) 큰 그림: 왜 Spectrum인가?
+## 0. 큰 그림: 왜 Spectrum인가?
 
 - **데이터 레이크(S3)** 에 무한히 쌓이는 원시/정제 데이터를 **DW(Redshift)** 에 **적재(복사) 없이** 곧바로 분석
 - **열 지향 포맷(Parquet/ORC)** + **파티셔닝(연/월/일 등)** + **Glue Data Catalog** 로 **스캔 바이트 ↓ → 비용 ↓ / 성능 ↑**
@@ -14,7 +14,7 @@ category: AWS
 
 ---
 
-## 1) 아키텍처와 동작
+## 1. 아키텍처와 동작
 
 ```text
 S3 (데이터)  ←→  Glue Data Catalog (메타데이터)
@@ -33,7 +33,7 @@ Redshift 클러스터 ───┴─────(Redshift Spectrum 엔진)─�
 
 ---
 
-## 2) 권한과 네트워킹(IAM, Lake Formation, VPC)
+## 2. 권한과 네트워킹(IAM, Lake Formation, VPC)
 
 ### 2.1 IAM Role (Redshift → S3/Glue 접근)
 - **신뢰 정책**: `redshift.amazonaws.com`
@@ -68,7 +68,7 @@ Redshift 클러스터 ───┴─────(Redshift Spectrum 엔진)─�
 
 ---
 
-## 3) 외부 스키마/테이블 생성(Glue 카탈로그 기반)
+## 3. 외부 스키마/테이블 생성(Glue 카탈로그 기반)
 
 ### 3.1 외부 스키마 만들기
 ```sql
@@ -133,7 +133,7 @@ LOCATION 's3://my-bucket/events/json/';
 
 ---
 
-## 4) 첫 쿼리 & 조인
+## 4. 첫 쿼리 & 조인
 
 ### 4.1 기본 집계
 ```sql
@@ -169,7 +169,7 @@ ORDER BY revenue DESC;
 
 ---
 
-## 5) 비용 모델 & 수식
+## 5. 비용 모델 & 수식
 
 - Spectrum 요금은 **스캔 바이트(GB)** 기준. (Region별 단가 상이)
 - **열 포맷/압축/파티셔닝/프레디케이트**로 스캔 데이터량을 줄이는 것이 핵심
@@ -188,7 +188,7 @@ $$
 
 ---
 
-## 6) 성능 최적화: 핵심 7계명
+## 6. 성능 최적화: 핵심 7계명
 
 ### 6.1 파일 포맷 & 압축
 - **Parquet + Snappy** (권장), ORC도 우수
@@ -232,7 +232,7 @@ SET TABLE PROPERTIES (
 
 ---
 
-## 7) 머티리얼라이즈: UNLOAD/CTAS/외부 테이블 변환
+## 7. 머티리얼라이즈: UNLOAD/CTAS/외부 테이블 변환
 
 ### 7.1 외부 → 내부로 스냅샷(고속 BI 필요 구간)
 ```sql
@@ -253,7 +253,7 @@ FORMAT PARQUET PARTITION BY (dt);
 
 ---
 
-## 8) 실전 랩: 엔드투엔드 구축
+## 8. 실전 랩: 엔드투엔드 구축
 
 ### 8.1 S3 예시 데이터
 ```
@@ -293,7 +293,7 @@ ORDER BY 2 DESC;
 
 ---
 
-## 9) 데이터 품질/스키마 진화
+## 9. 데이터 품질/스키마 진화
 
 - Parquet 스키마 변경(**컬럼 추가/nullable**)은 비교적 유연하나 **타입 변경**은 주의  
 - **Glue 스키마 버저닝**과 **백필(Backfill)** 전략 병행  
@@ -301,7 +301,7 @@ ORDER BY 2 DESC;
 
 ---
 
-## 10) 보안·컴플라이언스
+## 10. 보안·컴플라이언스
 
 - **SSE-S3/SSE-KMS** 로 S3 암호화, IAM Role에 KMS 권한 포함
 - 민감 컬럼은 **Tokenization/Hashing** 후 저장, 또는 **LF Cell-Level 권한**(Lake Formation 고급)
@@ -309,7 +309,7 @@ ORDER BY 2 DESC;
 
 ---
 
-## 11) 트러블슈팅 FAQ
+## 11. 트러블슈팅 FAQ
 
 **Q. `Permission denied` / `Access Denied`**  
 A. IAM Role/S3 정책/Glue 권한/Lake Formation 권한 모두 점검. LF 사용 시 Redshift 프린시펄에 **SELECT/Describe** 부여 필요.
@@ -325,7 +325,7 @@ A. Glue/Spark(EMR)로 **Compaction** 배치 수행 → 큰 파일로 합치기.
 
 ---
 
-## 12) IaC 스니펫(CloudFormation/Terraform)
+## 12. IaC 스니펫(CloudFormation/Terraform)
 
 ### 12.1 CloudFormation(외부 스키마는 SQL로 생성)
 ```yaml
@@ -375,7 +375,7 @@ resource "aws_iam_role_policy" "spectrum_policy" {
 
 ---
 
-## 13) 고급: Federated Query/Athena/LF와의 공존
+## 13. 고급: Federated Query/Athena/LF와의 공존
 
 - **Athena** 와 **Redshift Spectrum** 은 **Glue 카탈로그**를 **공유**할 수 있다 → 동일 S3/스키마를 두 엔진에서 소비
 - **Federated Query**(RDS/Aurora 등 외부 DB) + Spectrum를 조합하면 **데이터 레이크/소스 DB/Redshift 내부**를 아우르는 **전체 SQL 계층** 구축
@@ -383,7 +383,7 @@ resource "aws_iam_role_policy" "spectrum_policy" {
 
 ---
 
-## 14) 요약(치트시트)
+## 14. 요약(치트시트)
 
 | 주제 | 권장안 |
 |---|---|

@@ -6,7 +6,7 @@ category: HTML
 ---
 # Web Storage API (localStorage vs sessionStorage)
 
-## 0) Web Storage 한눈에 보기
+## 0. Web Storage 한눈에 보기
 
 - **정의**: 브라우저에 **Key-Value(문자열)** 쌍을 저장하는 동기 API.
 - **종류**
@@ -19,7 +19,7 @@ category: HTML
 
 ---
 
-## 1) 기본 사용법 리마인드
+## 1. 기본 사용법 리마인드
 
 ```js
 // localStorage
@@ -39,7 +39,7 @@ sessionStorage.clear();
 
 ---
 
-## 2) 문자열 전용 → JSON 안전 래퍼
+## 2. 문자열 전용 → JSON 안전 래퍼
 
 ```js
 const storage = {
@@ -63,7 +63,7 @@ console.log(storage.get('user').name); // "Kim"
 
 ---
 
-## 3) TTL(만료) 기능 직접 구현하기
+## 3. TTL(만료) 기능 직접 구현하기
 
 Web Storage에는 만료 개념이 없습니다. **메타데이터를 함께 저장**해 만료를 흉내 냅니다.
 
@@ -95,7 +95,7 @@ ttlStore.set('profile', { id: 1, name: 'Alice' }, 10 * 60 * 1000);
 
 ---
 
-## 4) 네임스페이스/버전/마이그레이션 전략
+## 4. 네임스페이스/버전/마이그레이션 전략
 
 여러 기능이 한 스토리지를 공유하면 **키 충돌/청소**가 힘들어집니다. **접두사/버전**을 두세요.
 
@@ -135,7 +135,7 @@ function wipeNamespace(ns = NS) {
 
 ---
 
-## 5) 교차 탭 동기화 — `storage` 이벤트
+## 5. 교차 탭 동기화 — `storage` 이벤트
 
 같은 도메인의 **다른 탭**에서 `localStorage`가 변경되면 이벤트가 발생합니다. (단, **변경을 수행한 탭에는 트리거되지 않음**)
 
@@ -154,7 +154,7 @@ window.addEventListener('storage', (e) => {
 
 ---
 
-## 6) 예외/쿼터(용량 초과) 처리 — 안전한 저장
+## 6. 예외/쿼터(용량 초과) 처리 — 안전한 저장
 
 모바일/사파리/프라이빗 모드에선 **쿼터가 작은 경우**가 있습니다. 반드시 try/catch.
 
@@ -183,7 +183,7 @@ function safeSetItem(k, v) {
 
 ---
 
-## 7) 성능/동기성 주의 (메인 스레드)
+## 7. 성능/동기성 주의 (메인 스레드)
 
 - API는 **동기**이므로 대량 쓰기/루프는 프레임 드랍 유발 가능 → **배치/디바운스** 권장
 - 큰 JSON을 자주 `stringify/parse` 하면 CPU 비용 큼 → 필요한 필드만 분리 저장 고려
@@ -211,7 +211,7 @@ function flush() {
 
 ---
 
-## 8) 보안 고려(중요)
+## 8. 보안 고려(중요)
 
 | 이슈 | 설명/가이드 |
 |---|---|
@@ -237,7 +237,7 @@ async function encryptAndStore(key, name, obj) {
 
 ---
 
-## 9) 환경/가용성 체크
+## 9. 환경/가용성 체크
 
 ```js
 function storageAvailable(type = 'localStorage') {
@@ -254,7 +254,7 @@ function storageAvailable(type = 'localStorage') {
 
 ---
 
-## 10) React 훅/Vanilla 유틸
+## 10. React 훅/Vanilla 유틸
 
 ### 10.1 React: `useLocalStorage` 훅
 
@@ -339,7 +339,7 @@ export function createStore(ns='app:v1:') {
 
 ---
 
-## 11) 실전 예시 시나리오
+## 11. 실전 예시 시나리오
 
 ### 11.1 “로그인 유지(비민감) + 사용자 설정 + 장바구니”
 
@@ -381,7 +381,7 @@ window.addEventListener('storage', (e) => {
 
 ---
 
-## 12) Web Storage vs IndexedDB vs 쿠키 vs Service Worker
+## 12. Web Storage vs IndexedDB vs 쿠키 vs Service Worker
 
 | 항목 | Web Storage | IndexedDB | 쿠키 | Service Worker/Cache |
 |---|---|---|---|---|
@@ -399,7 +399,7 @@ window.addEventListener('storage', (e) => {
 
 ---
 
-## 13) 테스트/디버깅 팁
+## 13. 테스트/디버깅 팁
 
 - DevTools → Application(Storage) 패널에서 **키/값/크기** 확인/삭제
 - **유닛 테스트**: JSDOM/테스트 러너에서 `localStorage` 목/스텁 주입
@@ -421,7 +421,7 @@ function approximateStorageSize() {
 
 ---
 
-## 14) 브라우저 호환/주의
+## 14. 브라우저 호환/주의
 
 - 지원: Chrome/Firefox/Safari/Edge(모바일 포함).  
 - IE8+ 일부 지원(레거시 환경에선 폴리필 고려).
@@ -429,7 +429,7 @@ function approximateStorageSize() {
 
 ---
 
-## 15) 보일러플레이트: 안전한 “Config 저장소”
+## 15. 보일러플레이트: 안전한 “Config 저장소”
 
 ```js
 // 앱 전역 설정/토글/최신 사용 문서 등
@@ -453,7 +453,7 @@ export const AppConfig = {
 
 ---
 
-## 16) 요약 표(확장)
+## 16. 요약 표(확장)
 
 | 항목 | localStorage | sessionStorage |
 |---|---|---|
@@ -466,7 +466,7 @@ export const AppConfig = {
 
 ---
 
-## 17) 체크리스트
+## 17. 체크리스트
 
 - [ ] **민감정보 저장 금지**(토큰/PII)  
 - [ ] XSS 방어(CSP/템플릿 인코딩/라이브러리 검증)  

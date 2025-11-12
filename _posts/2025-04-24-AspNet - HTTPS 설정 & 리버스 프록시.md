@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core HTTPS 설정 & 리버스 프록시(Nginx, Apache)
 
-## 0) 큰 그림: 왜 리버스 프록시인가?
+## 0. 큰 그림: 왜 리버스 프록시인가?
 
 - `Kestrel`은 고성능이지만 **엣지(Edge) 보안/암호화/로깅/로드밸런싱**은 프록시(Nginx/Apache)가 더 유리
 - 공통 패턴  
@@ -15,7 +15,7 @@ category: AspNet
 
 ---
 
-## 1) 개발 환경에서 HTTPS (로컬)
+## 1. 개발 환경에서 HTTPS (로컬)
 
 ### 1.1 launchSettings.json 확인
 
@@ -44,7 +44,7 @@ dotnet dev-certs https --trust
 
 ---
 
-## 2) Kestrel에 직접 HTTPS 바인딩(선택)
+## 2. Kestrel에 직접 HTTPS 바인딩(선택)
 
 > 운영에서는 보통 프록시에서 TLS 종료(Termination)를 하지만, **직접 바인딩도 가능**.
 
@@ -110,7 +110,7 @@ openssl pkcs12 -export -out site.pfx -inkey privkey.pem -in fullchain.pem -passw
 
 ---
 
-## 3) HTTPS 기본 보강: 리다이렉션 + HSTS
+## 3. HTTPS 기본 보강: 리다이렉션 + HSTS
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -137,7 +137,7 @@ app.Run();
 
 ---
 
-## 4) 리버스 프록시: Nginx 구성 (Ubuntu 기준)
+## 4. 리버스 프록시: Nginx 구성 (Ubuntu 기준)
 
 ### 4.1 설치
 
@@ -222,7 +222,7 @@ sudo certbot renew --dry-run
 
 ---
 
-## 5) Apache 리버스 프록시
+## 5. Apache 리버스 프록시
 
 ### 5.1 모듈 활성화
 
@@ -262,7 +262,7 @@ sudo systemctl restart apache2
 
 ---
 
-## 6) 프록시 뒤 ASP.NET Core 필수: Forwarded Headers
+## 6. 프록시 뒤 ASP.NET Core 필수: Forwarded Headers
 
 프록시(공인 IP) 뒤에 숨은 앱은 실제 클라이언트 정보(원 IP/프로토콜)를 프록시 헤더로 받는다.
 
@@ -292,7 +292,7 @@ app.Run();
 
 ---
 
-## 7) WebSocket, gRPC, HTTP/2/3
+## 7. WebSocket, gRPC, HTTP/2/3
 
 ### 7.1 WebSocket
 
@@ -328,7 +328,7 @@ server {
 
 ---
 
-## 8) 보안 헤더/강화 체크리스트
+## 8. 보안 헤더/강화 체크리스트
 
 - HSTS: `Strict-Transport-Security`  
 - CSP(Content-Security-Policy): XSS 방어  
@@ -340,7 +340,7 @@ server {
 
 ---
 
-## 9) systemd 서비스로 .NET 앱 데몬화
+## 9. systemd 서비스로 .NET 앱 데몬화
 
 `/etc/systemd/system/myapp.service`:
 
@@ -376,7 +376,7 @@ sudo systemctl status myapp
 
 ---
 
-## 10) 방화벽/포트
+## 10. 방화벽/포트
 
 - 프록시는 80/443, 앱은 5000/5001(내부)  
 - UFW 예시:
@@ -390,7 +390,7 @@ sudo ufw status
 
 ---
 
-## 11) Docker/Compose로 배포(선택)
+## 11. Docker/Compose로 배포(선택)
 
 ### 11.1 Dockerfile(.NET)
 
@@ -437,7 +437,7 @@ services:
 
 ---
 
-## 12) 운영 체크리스트
+## 12. 운영 체크리스트
 
 | 항목 | 점검 |
 |---|---|
@@ -453,7 +453,7 @@ services:
 
 ---
 
-## 13) 실전 예제 모음
+## 13. 실전 예제 모음
 
 ### 13.1 최소 ASP.NET Core 앱(HTTPS 리다이렉트, 프록시 헤더, 헬스 체크)
 
@@ -504,7 +504,7 @@ app.Run();
 
 ---
 
-## 14) 자주 겪는 문제와 해법
+## 14. 자주 겪는 문제와 해법
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -517,7 +517,7 @@ app.Run();
 
 ---
 
-## 15) 마무리 요약
+## 15. 마무리 요약
 
 - 개발: `dotnet dev-certs https --trust`, 로컬 HTTPS  
 - 운영: **리버스 프록시에서 TLS 종료**, Kestrel은 HTTP로 단순화  

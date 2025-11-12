@@ -6,7 +6,7 @@ category: AWS
 ---
 # Amazon Aurora, Auto Scaling, 장애 복구 테스트, RDS 비용 절감 전략
 
-## 0) 한 장 요약
+## 0. 한 장 요약
 
 - **Aurora**는 **컴퓨트(인스턴스)**와 **분산 스토리지(6-way, 3AZ)**를 분리한 **관리형 RDB**로, **고성능/고가용/확장성**을 제공한다.  
 - **Auto Scaling**은 **Serverless v2(세밀한 ACU 스케일)**, **리드 리플리카 자동 증감**, **글로벌 읽기** 등으로 달성한다.  
@@ -15,7 +15,7 @@ category: AWS
 
 ---
 
-## 1) Amazon Aurora란 무엇인가? (초안 보강)
+## 1. Amazon Aurora란 무엇인가? (초안 보강)
 
 ### 1.1 개요 & 특징
 
@@ -42,7 +42,7 @@ category: AWS
 
 ---
 
-## 2) Auto Scaling (서버리스 v2, 리플리카, 글로벌)
+## 2. Auto Scaling (서버리스 v2, 리플리카, 글로벌)
 
 ### 2.1 Aurora Serverless v2 (세밀 탄력)
 
@@ -101,7 +101,7 @@ resource "aws_appautoscaling_policy" "aurora_scale_out" {
 
 ---
 
-## 3) 연결/성능 운영 (실전 팁)
+## 3. 연결/성능 운영 (실전 팁)
 
 ### 3.1 RDS Proxy
 
@@ -132,7 +132,7 @@ aws rds create-db-proxy \
 
 ---
 
-## 4) 장애 복구(Failover) 테스트 (게임데이 Runbook 포함)
+## 4. 장애 복구(Failover) 테스트 (게임데이 Runbook 포함)
 
 ### 4.1 장애 시 처리 흐름 (초안 정리 + 보강)
 
@@ -174,7 +174,7 @@ aws rds reboot-db-instance \
 
 ---
 
-## 5) 백업/복구/클로닝/백트래킹
+## 5. 백업/복구/클로닝/백트래킹
 
 ### 5.1 백업/스냅샷
 
@@ -203,7 +203,7 @@ aws rds restore-db-cluster-from-snapshot \
 
 ---
 
-## 6) 보안/컴플라이언스
+## 6. 보안/컴플라이언스
 
 ### 6.1 암호화/네트워크
 
@@ -223,7 +223,7 @@ aws rds restore-db-cluster-from-snapshot \
 
 ---
 
-## 7) 관측성(Observability)
+## 7. 관측성(Observability)
 
 ### 7.1 CloudWatch 지표(샘플)
 
@@ -256,7 +256,7 @@ LIMIT 20;
 
 ---
 
-## 8) 비용 모델과 최적화 (수식 포함)
+## 8. 비용 모델과 최적화 (수식 포함)
 
 ### 8.1 근사비용 수식
 
@@ -301,7 +301,7 @@ aws rds modify-db-instance \
 
 ---
 
-## 9) IaC & 배포 파이프라인
+## 9. IaC & 배포 파이프라인
 
 ### 9.1 Terraform (개념 요약: Aurora 클러스터 + 파라미터 그룹)
 
@@ -360,7 +360,7 @@ jobs:
 
 ---
 
-## 10) 마이그레이션/호환/개발자 경험
+## 10. 마이그레이션/호환/개발자 경험
 
 - **호환성**: 기존 **MySQL/PostgreSQL 드라이버/ORM** 그대로 사용 가능(버전 제약 확인).  
 - **스키마 관리**: Flyway/Liquibase/Alembic으로 **버전형 마이그레이션** 표준화.  
@@ -368,7 +368,7 @@ jobs:
 
 ---
 
-## 11) 트러블슈팅 & 체크리스트
+## 11. 트러블슈팅 & 체크리스트
 
 ### 11.1 자주 겪는 이슈
 
@@ -393,7 +393,7 @@ jobs:
 
 ---
 
-## 12) 실습: 읽기/쓰기 라우팅 & 간단 부하 테스트
+## 12. 실습: 읽기/쓰기 라우팅 & 간단 부하 테스트
 
 ### 12.1 애플리케이션 라우팅(Python 예)
 
@@ -432,7 +432,7 @@ wrk -t8 -c100 -d30s http://api.example.com/orders?user=42
 
 ---
 
-## 13) 마무리 요약 (초안 + 보강)
+## 13. 마무리 요약 (초안 + 보강)
 
 | 주제 | 핵심 |
 |---|---|

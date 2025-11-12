@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 용어 정리 — “락(lock)”, “래치(latch)/뮤텍스(mutex)”, “핀(pin)”, “엔큐(enqueue)”
+## 0. 용어 정리 — “락(lock)”, “래치(latch)/뮤텍스(mutex)”, “핀(pin)”, “엔큐(enqueue)”
 
 Oracle에서 **동시성 제어**는 서로 다른 레벨의 원자성을 가진 여러 메커니즘이 겹쳐 작동합니다. “버퍼 락”이라는 표현은 주로 **버퍼 블록을 보호/고정**하는 내부 동작을 통칭하는 **관용적 표현**입니다. 정확히는 아래처럼 구분합니다.
 
@@ -32,7 +32,7 @@ Oracle에서 **동시성 제어**는 서로 다른 레벨의 원자성을 가진
 
 ---
 
-## 1) Buffer Handle(=Buffer Header) — 무엇이고 어디에 있나?
+## 1. Buffer Handle(=Buffer Header) — 무엇이고 어디에 있나?
 
 **버퍼 캐시**는 “**버퍼 프레임**(8KB 등 블록 1개를 담는 메모리) + **버퍼 헤더**”로 구성됩니다. 이 **버퍼 헤더**(내부적으로 **Buffer Handle**로 불리기도 함)는 다음 메타를 가집니다.
 
@@ -63,7 +63,7 @@ ORDER  BY cnt DESC;
 
 ---
 
-## 2) Pinning(핀) — 왜 필요한가? (필요성 · 의미 · 수명)
+## 2. Pinning(핀) — 왜 필요한가? (필요성 · 의미 · 수명)
 
 ### 2.1 필요성
 
@@ -87,7 +87,7 @@ ORDER  BY cnt DESC;
 
 ---
 
-## 3) “버퍼 락”과 대표 대기 이벤트
+## 3. “버퍼 락”과 대표 대기 이벤트
 
 실전에서 “버퍼 락 걸렸다”라고 말할 때 보통 아래 **대기 이벤트**들이 등장합니다.
 
@@ -129,7 +129,7 @@ ORDER  BY misses DESC;
 
 ---
 
-## 4) 블록 레벨에서 무슨 일이? — Current vs CR, 핀/변경/대체
+## 4. 블록 레벨에서 무슨 일이? — Current vs CR, 핀/변경/대체
 
 ### 4.1 Current(현재) 버전: 쓰기 전용 보호
 
@@ -150,7 +150,7 @@ ORDER  BY misses DESC;
 
 ---
 
-## 5) 실습 시나리오 — “버퍼 pin/락 대기를 직접 만들어 보고 완화하기”
+## 5. 실습 시나리오 — “버퍼 pin/락 대기를 직접 만들어 보고 완화하기”
 
 > 아래 실습은 **테스트 환경**에서만 실행하세요. (권한: 일반적으로 DBA 권한 필요)
 
@@ -311,7 +311,7 @@ AND    id BETWEEN 10000 AND 12000;
 
 ---
 
-## 6) “버퍼 핀”과 “행 락(TX)”의 차이 — 헷갈리기 쉬운 포인트
+## 6. “버퍼 핀”과 “행 락(TX)”의 차이 — 헷갈리기 쉬운 포인트
 
 - **버퍼 핀**: **블록 프레임 자체**를 고정(대체·동시 변경 방지). **내부 메커니즘**, **래치/뮤텍스**와 결합.  
 - **TX(Row-level) 락**: **특정 행**의 논리적 동시 업데이트 방지. **엔큐** 기반, 커밋/롤백까지 지속.
@@ -337,7 +337,7 @@ ORDER  BY buf_busy DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 7) ITL 부족과 버퍼 대기 — “버퍼 락처럼 보이는” 전형적 사례
+## 7. ITL 부족과 버퍼 대기 — “버퍼 락처럼 보이는” 전형적 사례
 
 **ITL(Interested Transaction List)** 은 **블록 헤더** 안에 있는 **트랜잭션 슬롯**입니다. 동시에 여러 트랜잭션이 하나의 블록을 갱신하려면 **충분한 ITL** 이 필요합니다.
 
@@ -358,7 +358,7 @@ ALTER INDEX ix_t_hot_k REBUILD;
 
 ---
 
-## 8) LRU·DBWn·Pin 상호작용 — `free buffer waits` / `write complete waits`
+## 8. LRU·DBWn·Pin 상호작용 — `free buffer waits` / `write complete waits`
 
 - **free buffer waits**: **LRU에서 비어있는 버퍼를 얻지 못해** 대기.  
   - 원인: **Dirty가 많은데 DBWn 쓰기 지연**, **버퍼 캐시가 너무 작아 evict 불가**(핀 다수) 등.  
@@ -379,7 +379,7 @@ SELECT * FROM v$instance_recovery;
 
 ---
 
-## 9) RAC에서의 “버퍼 락” 체감 — 글로벌 캐시(GCS)와 핫 블록
+## 9. RAC에서의 “버퍼 락” 체감 — 글로벌 캐시(GCS)와 핫 블록
 
 - RAC는 **블록 소유권/버전**을 인스턴스 간 교환.  
 - 동일 블록에 접근이 집중되면 **gc 관련 대기**(`gc buffer busy`, `gc current request`, `gc cr request`)가 다발.  
@@ -387,7 +387,7 @@ SELECT * FROM v$instance_recovery;
 
 ---
 
-## 10) 관측·진단 SQL 모음(현업 단축키)
+## 10. 관측·진단 SQL 모음(현업 단축키)
 
 ```sql
 -- 10.1 상위 이벤트/세션
@@ -434,7 +434,7 @@ ORDER  BY tch DESC FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 11) 튜닝 체크리스트 — “버퍼 락/핀 병목”을 볼 때 무엇을 바꿀 것인가?
+## 11. 튜닝 체크리스트 — “버퍼 락/핀 병목”을 볼 때 무엇을 바꿀 것인가?
 
 1. **핫 블록 패턴** 탐지: `x$bh.tch` 상위, `v$segment_statistics`(`buffer busy waits`) 상위  
 2. **CBC 래치** 경합 유무: `latch: cache buffers chains` 미스/슬립 비정상 증가?  
@@ -449,7 +449,7 @@ ORDER  BY tch DESC FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 12) 미니 실전 예제 — “버퍼 핀 줄이기로 보고서 가속”
+## 12. 미니 실전 예제 — “버퍼 핀 줄이기로 보고서 가속”
 
 ### 상황
 - 보고서 쿼리가 **같은 소수 블록**의 차원 테이블을 **수천 세션이 동시 조회** → `read by other session`·`buffer busy waits` 증가  
@@ -482,7 +482,7 @@ GROUP  BY dp.product_code, dp.product_name, dp.category;
 
 ---
 
-## 13) 수학적 감각(보조 지표) — “핀/경합의 간접 신호”
+## 13. 수학적 감각(보조 지표) — “핀/경합의 간접 신호”
 
 > 지표는 어디까지나 **참고용**입니다. 결론은 **AWR/ASH의 대기/SQL 근거**로 내리세요.
 
@@ -497,7 +497,7 @@ GROUP  BY dp.product_code, dp.product_name, dp.category;
 
 ---
 
-## 14) 요약
+## 14. 요약
 
 - “**버퍼 락**”은 정확히는 **버퍼 pin(고정)** 과 이를 둘러싼 **래치/뮤텍스/엔큐** 상호작용을 **관용적으로 묶어 부르는 말**입니다.  
 - **Buffer Handle(=Buffer Header/X$BH)** 는 각 **버퍼 프레임**의 메타(상태/핀카운트/링크/tch 등)를 보유하며, **Cache Buffer Chains**(해시 버킷)과 **LRU 체인**에 연결됩니다.  

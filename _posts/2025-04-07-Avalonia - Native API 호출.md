@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia에서 Native API 호출 심화 가이드
 
-## 0) 언제 Native API가 필요한가?
+## 0. 언제 Native API가 필요한가?
 
 | 예시 | 사용 계층 | 설명 |
 |------|-----------|------|
@@ -20,7 +20,7 @@ category: Avalonia
 
 ---
 
-## 1) 기본: P/Invoke(Platform Invocation)로 C API 호출
+## 1. 기본: P/Invoke(Platform Invocation)로 C API 호출
 
 ### 1.1 Win32 예시: `MessageBoxW`
 
@@ -81,7 +81,7 @@ public struct MyNativeInfo
 
 ---
 
-## 2) 플랫폼 분기와 안전한 자원 해제
+## 2. 플랫폼 분기와 안전한 자원 해제
 
 ### 2.1 플랫폼 감지
 
@@ -111,7 +111,7 @@ public sealed class SafeNativeHandle : SafeHandle
 
 ---
 
-## 3) 직결 가능한 케이스: .NET `SerialPort` (Windows/Linux/macOS)
+## 3. 직결 가능한 케이스: .NET `SerialPort` (Windows/Linux/macOS)
 
 ### 3.1 최소 예제
 
@@ -164,7 +164,7 @@ public sealed class SerialEcho
 
 ---
 
-## 4) Bluetooth — 운영체제별 스택과 전략
+## 4. Bluetooth — 운영체제별 스택과 전략
 
 Bluetooth는 **플랫폼별 스택이 완전히 다르므로** P/Invoke만으로 통일하기 어렵습니다. 대표 3가지:
 
@@ -239,7 +239,7 @@ public interface IBluezAdapter
 
 ---
 
-## 5) Avalonia와 네이티브 API의 **구조화**: 인터페이스 + DI + OS별 구현
+## 5. Avalonia와 네이티브 API의 **구조화**: 인터페이스 + DI + OS별 구현
 
 ### 5.1 공통 계약
 
@@ -269,7 +269,7 @@ else if (OperatingSystem.IsMacOS())
 
 ---
 
-## 6) 네이티브 라이브러리 번들링/배포 (RID별 native assets)
+## 6. 네이티브 라이브러리 번들링/배포 (RID별 native assets)
 
 **Self-contained** 배포에서 네이티브 의존성(DLL/.so/.dylib)을 함께 내보냅니다.
 
@@ -303,7 +303,7 @@ MyApp/
 
 ---
 
-## 7) UI 스레드와 네이티브 콜백 — Dispatcher 사용
+## 7. UI 스레드와 네이티브 콜백 — Dispatcher 사용
 
 네이티브 콜백/백그라운드 스레드에서 UI를 건드리면 크래시합니다.
 
@@ -324,7 +324,7 @@ void OnDeviceLineArrived(string line)
 
 ---
 
-## 8) 권한/보안/샌드박스
+## 8. 권한/보안/샌드박스
 
 | OS | 고려 사항 |
 |----|-----------|
@@ -336,7 +336,7 @@ void OnDeviceLineArrived(string line)
 
 ---
 
-## 9) 파일/폴더 대화 상자 — 네이티브 vs Avalonia
+## 9. 파일/폴더 대화 상자 — 네이티브 vs Avalonia
 
 Avalonia는 `IStorageProvider`로 크로스플랫폼 파일 대화상자를 제공합니다(권장):
 
@@ -354,7 +354,7 @@ var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
 
 ---
 
-## 10) 고급 상호운용: C/C++ 라이브러리 래핑
+## 10. 고급 상호운용: C/C++ 라이브러리 래핑
 
 ### 10.1 C API Wrapper를 만들고 P/Invoke
 
@@ -395,7 +395,7 @@ internal static class MyApi
 
 ---
 
-## 11) 샘플: 공통 인터페이스 + OS별 구현 + Avalonia UI
+## 11. 샘플: 공통 인터페이스 + OS별 구현 + Avalonia UI
 
 ### 11.1 계약
 
@@ -541,7 +541,7 @@ public sealed class SerialViewModel : ReactiveObject
 
 ---
 
-## 12) 단위 테스트/모킹/시뮬레이터
+## 12. 단위 테스트/모킹/시뮬레이터
 
 - **인터페이스 기반**이므로 I/O 없는 **Fake/Mock** 구현으로 ViewModel 테스트가 쉽습니다.
 
@@ -571,7 +571,7 @@ public sealed class FakeSerialService : ISerialService
 
 ---
 
-## 13) 성능/안정성/디버깅 팁
+## 13. 성능/안정성/디버깅 팁
 
 - **장시간 연결**: CancellationToken/타임아웃/재연결 루프를 설계합니다.
 - **리소스 릭**: SafeHandle/IDisposable/DisposeAsync로 확실한 해제.
@@ -581,14 +581,14 @@ public sealed class FakeSerialService : ISerialService
 
 ---
 
-## 14) 보안/개인정보
+## 14. 보안/개인정보
 
 - BLE 주소/장치 이름/시리얼 로그에 **개인정보/식별자**가 포함될 수 있습니다. 업로드 전 **마스킹** 및 **동의** 절차를 거칩니다.
 - macOS 권한 문자열(예: Bluetooth) 누락 시 앱이 조용히 실패할 수 있습니다. 배포 파이프라인에서 **정적 검사**로 방지합니다.
 
 ---
 
-## 15) 문제해결 체크리스트
+## 15. 문제해결 체크리스트
 
 1. **`DllNotFoundException`**: RID/native 경로/파일 권한 확인  
 2. **`EntryPointNotFoundException`**: 함수 이름/콜링 컨벤션/문자셋 점검  
@@ -599,7 +599,7 @@ public sealed class FakeSerialService : ISerialService
 
 ---
 
-## 16) 미니 프로젝트 템플릿 구조
+## 16. 미니 프로젝트 템플릿 구조
 
 ```
 src/
@@ -616,7 +616,7 @@ src/
 
 ---
 
-## 17) 수식이 필요한 경우(버퍼 스루풋/타이밍 계산 예)
+## 17. 수식이 필요한 경우(버퍼 스루풋/타이밍 계산 예)
 
 예: 직렬 포트에서 버퍼 초과를 막기 위한 추정(보드레이트 \(B\), 바이트/초 \(\approx B/10\)).
 

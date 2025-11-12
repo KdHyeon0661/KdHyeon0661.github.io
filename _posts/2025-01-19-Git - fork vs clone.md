@@ -89,16 +89,16 @@ git push -u origin feature/add-cool-thing
 
 ### 5.1 안전하고 흔한 패턴: fetch + rebase
 ```bash
-# 1) 원본 최신을 가져옴
+# 1. 원본 최신을 가져옴
 git fetch upstream
 
-# 2) 내 로컬 main을 체크아웃
+# 2. 내 로컬 main을 체크아웃
 git checkout main
 
-# 3) upstream/main 위로 rebase (선형 이력 유지)
+# 3. upstream/main 위로 rebase (선형 이력 유지)
 git rebase upstream/main
 
-# 4) 내 포크(origin)에도 최신 main 반영
+# 4. 내 포크(origin)에도 최신 main 반영
 git push -f origin main
 ```
 - `-f`(force)는 리베이스로 이력이 바뀌었을 때 필요할 수 있습니다. 팀에서 허용되는지 확인하십시오.
@@ -300,8 +300,8 @@ git push -f origin feature/my-work
 
 ### 13.3 “원본 저장소를 바로 clone했는데 push 권한이 없다”
 ```bash
-# 1) GitHub에서 원본을 Fork
-# 2) 로컬 원격 교체(내 포크로)
+# 1. GitHub에서 원본을 Fork
+# 2. 로컬 원격 교체(내 포크로)
 git remote set-url origin git@github.com:myusername/repo.git
 # 또는 새로 내 포크를 clone한 뒤 기존 작업을 옮긴다(브랜치/패치 등)
 ```
@@ -327,31 +327,31 @@ git push -u origin feature/x
 ## 15. 예제: 최초 Fork부터 첫 PR까지 전체 로그
 
 ```bash
-# 0) GitHub 웹에서 Fork 수행 후
+# 0. GitHub 웹에서 Fork 수행 후
 git clone git@github.com:myusername/awesome-lib.git
 cd awesome-lib
 
-# 1) upstream 추가
+# 1. upstream 추가
 git remote add upstream https://github.com/original-owner/awesome-lib.git
 git fetch upstream
 
-# 2) 로컬 main을 upstream/main으로 맞춤
+# 2. 로컬 main을 upstream/main으로 맞춤
 git checkout main
 git rebase upstream/main
 git push -f origin main
 
-# 3) 작업 브랜치 생성
+# 3. 작업 브랜치 생성
 git checkout -b fix/typo-in-docs
 
-# 4) 수정 및 커밋
+# 4. 수정 및 커밋
 sed -i 's/Awseome/Awesome/g' docs/intro.md
 git add docs/intro.md
 git commit -m "docs: fix typo in intro"
 
-# 5) 내 포크로 push
+# 5. 내 포크로 push
 git push -u origin fix/typo-in-docs
 
-# 6) GitHub에서 PR 생성(또는 gh CLI)
+# 6. GitHub에서 PR 생성(또는 gh CLI)
 # gh pr create --fill --base main --head myusername:fix/typo-in-docs
 ```
 

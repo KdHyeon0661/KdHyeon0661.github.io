@@ -6,7 +6,7 @@ category: AspNet
 ---
 # 자주 쓰는 .NET CLI 명령어 정리
 
-## 0) CLI를 쓰는 이유 — “IDE 없이 끝까지 간다”
+## 0. CLI를 쓰는 이유 — “IDE 없이 끝까지 간다”
 
 - 로컬 개발: `dotnet new/run/watch/test`
 - 패키지/참조 관리: `dotnet add package/reference`
@@ -17,7 +17,7 @@ category: AspNet
 
 ---
 
-## 1) 핵심 명령어 — 상시 쓰는 핫키 모음
+## 1. 핵심 명령어 — 상시 쓰는 핫키 모음
 
 | 명령 | 핵심 역할 | 실전 옵션/메모 |
 |---|---|---|
@@ -40,7 +40,7 @@ category: AspNet
 
 ---
 
-## 2) `dotnet new` — 템플릿 파헤치기
+## 2. `dotnet new` — 템플릿 파헤치기
 
 ### 2.1 자주 쓰는 생성
 
@@ -72,7 +72,7 @@ dotnet new mvc -n Shop.Web \
 
 ---
 
-## 3) 솔루션/참조/패키지 — 멀티 프로젝트 구조 빠르게
+## 3. 솔루션/참조/패키지 — 멀티 프로젝트 구조 빠르게
 
 ```bash
 dotnet new sln -n Shop
@@ -91,7 +91,7 @@ dotnet remove src/Shop.Api/Shop.Api.csproj package Bogus
 
 ---
 
-## 4) 실행/빌드 — 속도·재현성·진단 옵션
+## 4. 실행/빌드 — 속도·재현성·진단 옵션
 
 ```bash
 dotnet restore --force-evaluate --locked-mode   # lock파일 기반 재현 복원
@@ -105,7 +105,7 @@ dotnet run --project src/Shop.Api/Shop.Api.csproj
 
 ---
 
-## 5) 테스트 — 필터/로그/커버리지
+## 5. 테스트 — 필터/로그/커버리지
 
 ```bash
 dotnet test tests/Shop.Api.Tests/Shop.Api.Tests.csproj \
@@ -129,7 +129,7 @@ dotnet watch test --project tests/Shop.Api.Tests
 
 ---
 
-## 6) `dotnet watch` — Hot Reload & 프론트감성 반복
+## 6. `dotnet watch` — Hot Reload & 프론트감성 반복
 
 ```bash
 dotnet watch run --project src/Shop.Web
@@ -142,7 +142,7 @@ dotnet watch run --project src/Shop.Web
 
 ---
 
-## 7) 배포: `dotnet publish` — 모드/플랫폼/최적화 매트릭스
+## 7. 배포: `dotnet publish` — 모드/플랫폼/최적화 매트릭스
 
 ### 7.1 기본형
 
@@ -205,7 +205,7 @@ dotnet publish -c Release -r linux-x64 \
 
 ---
 
-## 8) NuGet — 패키징/푸시/소스
+## 8. NuGet — 패키징/푸시/소스
 
 ```bash
 # 패키지 만들기
@@ -222,7 +222,7 @@ dotnet nuget push ./nupkgs/Shop.Core.1.2.3.nupkg \
 
 ---
 
-## 9) 도구/워크로드 — 개발 경험 확장
+## 9. 도구/워크로드 — 개발 경험 확장
 
 ### 9.1 전역/로컬 도구
 
@@ -247,7 +247,7 @@ dotnet workload list
 
 ---
 
-## 10) EF Core CLI(도구 조합 예시)
+## 10. EF Core CLI(도구 조합 예시)
 
 ```bash
 # 디자인 패키지(프로젝트에)
@@ -263,7 +263,7 @@ dotnet ef database update --project src/Shop.Api --startup-project src/Shop.Api
 
 ---
 
-## 11) 개발 편의 — 시크릿/개발인증서/포맷/애널라이저
+## 11. 개발 편의 — 시크릿/개발인증서/포맷/애널라이저
 
 ```bash
 # User Secrets
@@ -280,7 +280,7 @@ dotnet format analyzers
 
 ---
 
-## 12) 환경 고정 — `global.json`와 SDK 매칭
+## 12. 환경 고정 — `global.json`와 SDK 매칭
 
 ```json
 {
@@ -295,7 +295,7 @@ dotnet format analyzers
 
 ---
 
-## 13) 고급 빌드/구성 — 공통 속성/경고·품질 강제
+## 13. 고급 빌드/구성 — 공통 속성/경고·품질 강제
 
 ### 13.1 `Directory.Build.props` (솔루션 루트)
 
@@ -324,7 +324,7 @@ dotnet format analyzers
 
 ---
 
-## 14) 성능/용량 기본기 — 빠른 스타트, 작은 배포
+## 14. 성능/용량 기본기 — 빠른 스타트, 작은 배포
 
 - **ReadyToRun**: 초기 JIT 부담 완화(파일↑)
 - **SingleFile**: 파일/배포 간소화
@@ -335,7 +335,7 @@ dotnet format analyzers
 
 ---
 
-## 15) 트러블슈팅 TOP 10
+## 15. 트러블슈팅 TOP 10
 
 1. **패키지 복원 실패**: `dotnet nuget locals all --clear`, 프록시/인증 확인, `--interactive`
 2. **SDK 충돌**: `dotnet --list-sdks`, `global.json` 고정
@@ -350,7 +350,7 @@ dotnet format analyzers
 
 ---
 
-## 16) 실전 레시피 — “3줄로 끝내는” 상황별 스니펫
+## 16. 실전 레시피 — “3줄로 끝내는” 상황별 스니펫
 
 ### 16.1 API 템플릿+패키지+실행
 ```bash
@@ -385,7 +385,7 @@ dotnet format
 
 ---
 
-## 17) 빠른 치트시트
+## 17. 빠른 치트시트
 
 ```bash
 # 템플릿
@@ -421,7 +421,7 @@ dotnet dev-certs https --trust
 
 ---
 
-## 18) 결론
+## 18. 결론
 
 - **CLI는 표준화된 자동화의 언어**다. 한 번 정립한 스크립트는 로컬·CI·서버 어디서나 동일하게 동작한다.
 - **빌드/배포 최적화(Trim/SingleFile/ReadyToRun/AOT)**는 효과와 리스크를 함께 가진다.  

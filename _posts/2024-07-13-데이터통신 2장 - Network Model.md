@@ -313,7 +313,7 @@ for p in (8080, 9090):
 
 # 퀵 실습: 캡슐화 관찰하기
 
-## 1) 패킷 캡처 필터
+## 1. 패킷 캡처 필터
 
 ```bash
 # TCP 443(HTTPS) 트래픽 캡처
@@ -322,7 +322,7 @@ sudo tcpdump -i eth0 -n -vv 'tcp port 443' -w tls.pcap
 
 - 캡슐화 단계별 헤더를 **Wireshark**에서 관찰(L2/L3/L4/App).
 
-## 2) ICMP와 라우팅 (Hop-to-Hop 확인)
+## 2. ICMP와 라우팅 (Hop-to-Hop 확인)
 
 ```bash
 traceroute 1.1.1.1

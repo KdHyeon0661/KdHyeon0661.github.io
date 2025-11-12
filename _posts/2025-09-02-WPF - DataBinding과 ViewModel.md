@@ -11,7 +11,7 @@ WPF에서 **DataBinding**은 View(XAML)와 ViewModel(C#)을 **느슨하게 결�
 
 ---
 
-## 1) DataContext란? (바인딩의 출발점)
+## 1. DataContext란? (바인딩의 출발점)
 
 - **DataContext**는 해당 요소와 그 **자식 트리**가 바인딩할 **기본 데이터 원본**입니다.
 - 어느 컨트롤에도 `DataContext`를 지정하지 않으면 **부모의 DataContext를 상속**받습니다.
@@ -41,7 +41,7 @@ WPF에서 **DataBinding**은 View(XAML)와 ViewModel(C#)을 **느슨하게 결�
 
 ---
 
-## 2) ViewModel 기본 골격
+## 2. ViewModel 기본 골격
 
 ViewModel은 **프레젠테이션 상태**와 **동작**(ICommand)을 노출합니다.
 
@@ -92,7 +92,7 @@ public class Order { public string Id { get; set; } = ""; public decimal Total {
 
 ---
 
-## 3) View와 ViewModel 연결 방법
+## 3. View와 ViewModel 연결 방법
 
 ### 3.1 XAML에서 직접 생성 (가장 간단)
 ```xml
@@ -158,7 +158,7 @@ public partial class App : Application
 
 ---
 
-## 4) 바인딩 핵심 구문 & 옵션
+## 4. 바인딩 핵심 구문 & 옵션
 
 ### 4.1 기본
 ```xml
@@ -218,7 +218,7 @@ public partial class App : Application
 
 ---
 
-## 5) ItemsControl / DataTemplate 안에서의 “컨텍스트 전환”
+## 5. ItemsControl / DataTemplate 안에서의 “컨텍스트 전환”
 
 - `ItemsControl` 내부의 `DataTemplate` **DataContext는 각 아이템**입니다.
 - **상위 뷰모델 커맨드**를 호출하려면 **AncestorType** 또는 **x:Reference**를 사용합니다.
@@ -241,7 +241,7 @@ public partial class App : Application
 
 ---
 
-## 6) 유효성 검사(Validation)와 바인딩
+## 6. 유효성 검사(Validation)와 바인딩
 
 ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하면, XAML에서 검증 UI를 쉽게 붙일 수 있습니다.
 
@@ -265,7 +265,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 7) 디자인 타임 데이터 (미리보기 개선)
+## 7. 디자인 타임 데이터 (미리보기 개선)
 
 디자이너에서 보기 좋게:
 ```xml
@@ -285,7 +285,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 8) 디버깅 & 성능 팁
+## 8. 디버깅 & 성능 팁
 
 - **바인딩 오류**는 출력 창에 기록됩니다. 빠르게 찾으려면:
 ```xml
@@ -297,7 +297,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 9) 흔한 문제 & 체크리스트
+## 9. 흔한 문제 & 체크리스트
 
 - (문제) 컨트롤 안에서 바인딩이 동작하지 않음  
   → (확인) 그 위치의 **DataContext가 무엇인지** Live Visual Tree로 확인
@@ -310,7 +310,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 10) 최소 예제(요약)
+## 10. 최소 예제(요약)
 
 **MainViewModel.cs**
 ```csharp

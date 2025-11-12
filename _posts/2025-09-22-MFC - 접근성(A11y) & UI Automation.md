@@ -8,7 +8,7 @@ category: MFC
 **UIA 패턴 노출 · High-Contrast/컬러 필터 대응 · 키보드 내비 · 스크린리더(내레이터) 호환 체크리스트**
 
 
-## 0) 큰 그림: “표준 컨트롤 + 올바른 이름 + 키보드 + 시스템 색상”이 80%를 만든다
+## 0. 큰 그림: “표준 컨트롤 + 올바른 이름 + 키보드 + 시스템 색상”이 80%를 만든다
 
 - **표준/공용 컨트롤 사용**: `BUTTON`, `EDIT`, `STATIC`, `LISTVIEW`, `TREEVIEW`, `REBAR`, `RIBBON(MFC Feature Pack)` 등은 OS가 **IAccessible/UIA Provider**를 내장합니다.  
   → **먼저 표준 컨트롤로 구성**하고, 스타일/테마만 얹어도 기본 접근성은 확보됩니다.
@@ -19,7 +19,7 @@ category: MFC
 
 ---
 
-## 1) UI Automation 핵심 용어 5분 요약
+## 1. UI Automation 핵심 용어 5분 요약
 
 - **UIA 트리**: Control View / Content View / Raw View(세분화). 스크린리더는 **Control/Content** 중심으로 순회.  
 - **ControlType**: `Button`, `Edit`, `List`, `ListItem`, `Tree`, `Menu`… **역할(Role)**.  
@@ -29,7 +29,7 @@ category: MFC
 
 ---
 
-## 2) “기본기”부터: 이름, 라벨, 접근키(Access Key), 탭 순서
+## 2. “기본기”부터: 이름, 라벨, 접근키(Access Key), 탭 순서
 
 ### 2.1 레이블-컨트롤 연결 (Win32)
 ```cpp
@@ -63,7 +63,7 @@ BOOL CMainDlg::OnInitDialog() {
 
 ---
 
-## 3) High-Contrast / 컬러 필터 / 시스템 색상 대응
+## 3. High-Contrast / 컬러 필터 / 시스템 색상 대응
 
 ### 3.1 High-Contrast 감지 & 반응
 ```cpp
@@ -98,7 +98,7 @@ LRESULT WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
 
 ---
 
-## 4) 키보드 내비게이션: 탭/화살표/Enter/Esc/공간/메뉴
+## 4. 키보드 내비게이션: 탭/화살표/Enter/Esc/공간/메뉴
 
 - `WS_TABSTOP`와 **Tab Order**로 포커스 흐름.  
 - 그룹 구분: **첫 컨트롤에 `WS_GROUP`**.  
@@ -118,7 +118,7 @@ BOOL CMainDlg::PreTranslateMessage(MSG* p) {
 
 ---
 
-## 5) “이름/역할/상태”를 바르게: UIA Name/AutomationId/HelpText/ItemStatus
+## 5. “이름/역할/상태”를 바르게: UIA Name/AutomationId/HelpText/ItemStatus
 
 - **Name**: 시각적 라벨과 동일/근접.  
 - **AutomationId**: **자동화 스크립트**가 요소를 찾을 수 있는 **안정된 ID**(리소스 ID/고정 문자열).  
@@ -130,7 +130,7 @@ BOOL CMainDlg::PreTranslateMessage(MSG* p) {
 
 ---
 
-## 6) UIA Live Region / 알림(Announcement)
+## 6. UIA Live Region / 알림(Announcement)
 
 ### 6.1 UiaRaiseAutomationNotification (Windows 10+)
 ```cpp
@@ -152,7 +152,7 @@ void Announce(HWND hwnd, const wchar_t* msg) {
 
 ---
 
-## 7) UI Automation Provider: 커스텀 컨트롤 노출
+## 7. UI Automation Provider: 커스텀 컨트롤 노출
 
 ### 7.1 최소 골격 (Host Raw Provider from HWND)
 ```cpp
@@ -266,7 +266,7 @@ class MyEditProvider :
 
 ---
 
-## 8) 텍스트(에디터/뷰어) 고급: TextPattern
+## 8. 텍스트(에디터/뷰어) 고급: TextPattern
 
 - `ITextProvider`/`ITextRangeProvider` 를 구현하면 **스크린리더의 읽기/선택/이동**이 정확해집니다.  
 - **HitTest**: 좌표→문자 범위, **Range 이동**: 단어/문장/행 경계, **속성**: 굵게/밑줄/링크.  
@@ -290,7 +290,7 @@ class MyTextProvider : public ITextProvider {
 
 ---
 
-## 9) 구조 변경/속성 변경/포커스 이벤트
+## 9. 구조 변경/속성 변경/포커스 이벤트
 
 - 포커스 이동 시 **AutomationFocusChanged** 이벤트 자동 발생(일반 컨트롤). 커스텀 컨트롤은 필요 시 `UiaRaiseAutomationEvent`.  
 - 항목 추가/삭제/이동: **StructureChanged** 이벤트로 알림.  
@@ -303,7 +303,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 10) 가상화(Virtualization) & 수천/수만 항목
+## 10. 가상화(Virtualization) & 수천/수만 항목
 
 - **VirtualizedItemPattern**: 실제 HWND나 실체를 만들지 않고도 항목을 **논리적으로 노출**.  
 - 사용자(스크린리더)가 항목에 접근하려 할 때 `Realize()`(또는 `ScrollIntoView`)에서 **행을 생성/데이터 바인딩**.  
@@ -314,7 +314,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 11) 스크린리더 호환 체크리스트
+## 11. 스크린리더 호환 체크리스트
 
 - [ ] **Inspect.exe** 로 트리/속성/패턴 확인 (Windows SDK 도구).  
 - [ ] **AccEvent.exe** 로 이벤트 발생 확인(포커스/속성/구조 변경).  
@@ -327,7 +327,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 12) Ribbon/리본 & 공용 컨트롤 접근성
+## 12. Ribbon/리본 & 공용 컨트롤 접근성
 
 - MFC Feature Pack 리본은 **UIA를 기본 노출**(Windows 10+).  
 - 커스텀 갤러리/버튼은 **항목 이름/도구팁**을 정확히 설정.  
@@ -335,7 +335,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 13) 도형/캔버스형 커스텀 UI의 접근성 설계
+## 13. 도형/캔버스형 커스텀 UI의 접근성 설계
 
 - **포커서블 오브젝트**를 **논리적 아이템**으로 모델링: 각 셰이프→`ListItem`/`DataItem`.  
 - 선택/토글/편집 상태를 패턴으로 노출 (`SelectionItem`, `Toggle`, `Value`).  
@@ -344,7 +344,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 14) 폼 검증 UX: 메시지박스만으로 끝내지 말고 “화면 리더에게도 알려라”
+## 14. 폼 검증 UX: 메시지박스만으로 끝내지 말고 “화면 리더에게도 알려라”
 
 - 검증 실패 시:  
   1) **문자열**로 사용자에게 설명(레이블 하단/ToolTip).  
@@ -354,7 +354,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 15) 국제화/다국어 접근성
+## 15. 국제화/다국어 접근성
 
 - **Locale**에 맞는 **날짜/숫자/시간** 읽기(문자열 포맷).  
 - **RTL**(아랍어/히브리어) 레이아웃/포커스 순서 재점검.  
@@ -362,7 +362,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 16) 성능과 안정성
+## 16. 성능과 안정성
 
 - UIA Provider는 **필요한 패턴만 구현**(YAGNI).  
 - **대량 항목 = 가상화**.  
@@ -371,7 +371,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 17) 미니 레시피 모음
+## 17. 미니 레시피 모음
 
 ### 17.1 버튼형 커스텀 캔버스 “셀” 접근화
 - ControlType: `ListItem`  
@@ -390,7 +390,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 18) 빠른 점검 스니펫: High-Contrast + 시스템 색 브러시
+## 18. 빠른 점검 스니펫: High-Contrast + 시스템 색 브러시
 
 ```cpp
 struct ThemeBrushes {
@@ -420,7 +420,7 @@ LRESULT CALLBACK WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
 
 ---
 
-## 19) 최종 체크리스트(요약)
+## 19. 최종 체크리스트(요약)
 
 - **표준 컨트롤** 우선, **커스텀은 UIA Provider 최소 패턴**으로  
 - **Name/AutomationId/ControlType** 제대로  

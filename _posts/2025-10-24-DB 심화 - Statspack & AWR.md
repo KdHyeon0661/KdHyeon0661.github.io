@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Oracle **Statspack & AWR**
 
-## 0) 큰 그림: Statspack vs AWR
+## 0. 큰 그림: Statspack vs AWR
 
 | 항목 | Statspack | AWR (Automatic Workload Repository) |
 |---|---|---|
@@ -21,7 +21,7 @@ category: DB 심화
 
 ---
 
-## 1) Statspack: 설치 → 스냅샷 → 리포트
+## 1. Statspack: 설치 → 스냅샷 → 리포트
 
 ### 1.1 설치(최초 1회)
 ```sql
@@ -60,7 +60,7 @@ ORDER  BY snap_id DESC;
 
 ---
 
-## 2) AWR: 설정 → 리포트 → 비교/SQL 전용/다중 인스턴스
+## 2. AWR: 설정 → 리포트 → 비교/SQL 전용/다중 인스턴스
 
 ### 2.1 스냅샷 주기/보관 기간 조정
 ```sql
@@ -101,7 +101,7 @@ EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 
 ---
 
-## 3) 리포트 읽는 순서(탑다운 루틴)
+## 3. 리포트 읽는 순서(탑다운 루틴)
 
 > **핵심**: “**느리다**”를 **시간**으로 해체 → **CPU vs WAIT** → **어떤 WAIT?** → **누가 발생? (SQL/세그먼트/파일/라인)**
 
@@ -127,7 +127,7 @@ EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 
 ---
 
-## 4) 예제 시나리오 & 리포트 읽기
+## 4. 예제 시나리오 & 리포트 읽기
 
 > 아래 예제는 “월말 보고서가 **느려진 피크 30분**” 구간을 AWR로 분석한다는 가정. (Statspack도 거의 동일)
 
@@ -235,7 +235,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 5) Statspack 리포트 분석(동일 루틴 적용)
+## 5. Statspack 리포트 분석(동일 루틴 적용)
 
 `spreport.sql` 결과의 핵심 섹션도 **Top 5 Timed Events**, **Load Profile**, **SQL ordered by…**, **Instance Activity** 등 **유사**하다.
 
@@ -247,7 +247,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 6) **비교 리포트**로 “튜닝 효과/회귀” 증명
+## 6. **비교 리포트**로 “튜닝 효과/회귀” 증명
 
 ### 6.1 AWR Diff Report
 ```sql
@@ -267,7 +267,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 7) **베이스라인**(AWR)으로 “좋을 때 상태” 고정
+## 7. **베이스라인**(AWR)으로 “좋을 때 상태” 고정
 
 ### 7.1 베이스라인 생성/관리
 ```sql
@@ -310,7 +310,7 @@ END;
 
 ---
 
-## 8) **특정 SQL** 리포트/해석(AWR)
+## 8. **특정 SQL** 리포트/해석(AWR)
 
 ### 8.1 `awrsqrpt.sql` — SQL 한 건 집중
 ```sql
@@ -330,7 +330,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', NULL,
 
 ---
 
-## 9) **리포트 해석 체크리스트**(암기 카드)
+## 9. **리포트 해석 체크리스트**(암기 카드)
 
 1) **구간 고정**: 피크 30분 등 **일관된** 범위  
 2) **DB Time vs DB CPU**: 대기 비중 판단  
@@ -345,7 +345,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', NULL,
 
 ---
 
-## 10) 자동화/스크립트(샘플)
+## 10. 자동화/스크립트(샘플)
 
 ### 10.1 최신 6시간 스냅샷 범위에서 AWR HTML 리포트 생성
 ```sql
@@ -379,7 +379,7 @@ ORDER  BY samples DESC FETCH FIRST 10 ROWS ONLY;
 
 ---
 
-## 11) 일반 함정 & 베스트 프랙티스
+## 11. 일반 함정 & 베스트 프랙티스
 
 **함정**  
 - 스냅샷 **구간 길이**가 너무 길면 스파이크가 **희석**된다. 너무 짧으면 **노이즈**. (보통 15~30분 추천)  
@@ -396,7 +396,7 @@ ORDER  BY samples DESC FETCH FIRST 10 ROWS ONLY;
 
 ---
 
-## 12) 미니 실습(끝까지 따라하기)
+## 12. 미니 실습(끝까지 따라하기)
 
 ### 12.1 피크 구간 리포트 → 병목 SQL → 라인
 1) **AWR 리포트**: 10:30~11:00  
@@ -417,7 +417,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 13) 수학(개념 리마인드)
+## 13. 수학(개념 리마인드)
 
 - **응답시간 분해**  
   $$ T_{\text{elapsed}} = T_{\text{CPU}} + \sum_k T_{\text{wait}_k} $$
@@ -428,7 +428,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 14) 결론
+## 14. 결론
 
 - **Statspack/AWR**는 **시계열 성능 DNA**를 남기는 표준 도구다.  
 - 리포트는 **Top Events → Top SQL → Plan 라인 → 세그먼트/I/O** 순서로 읽는다.  

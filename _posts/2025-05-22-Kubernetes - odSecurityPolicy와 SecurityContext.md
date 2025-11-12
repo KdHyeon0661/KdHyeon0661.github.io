@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # PodSecurityPolicy와 SecurityContext로 보안 강화하기
 
-## 0) 큰 그림: “정책”과 “실행 프로파일”의 역할 분리
+## 0. 큰 그림: “정책”과 “실행 프로파일”의 역할 분리
 
 - **정책(Policy)**: *허용 경계*를 정의하고, 위반 시 **거부/경고/감사**. (PSA, Gatekeeper, Kyverno)
 - **실행 프로파일(SecurityContext)**: 파드/컨테이너 **실제 런타임 속성**(사용자/권한/커널 인터페이스)을 명시.
@@ -24,7 +24,7 @@ category: Kubernetes
 
 ---
 
-## 1) SecurityContext — 런타임 보안 설정의 핵심
+## 1. SecurityContext — 런타임 보안 설정의 핵심
 
 `Pod.spec.securityContext` (파드 수준)와 `Pod.spec.containers[*].securityContext` (컨테이너 수준) 두 레벨에서 설정합니다.  
 컨테이너 수준이 **보다 구체적**이며, 파드 수준 기본값을 **오버라이드**합니다.
@@ -98,7 +98,7 @@ spec:
 
 ---
 
-## 2) PodSecurityPolicy(PSP) — 제거 배경과 교훈
+## 2. PodSecurityPolicy(PSP) — 제거 배경과 교훈
 
 - PSP는 **Admission Controller**로, 파드 생성 시 보안 조건을 검사/거부.  
 - **v1.25에서 제거(Deprecated→Removed)**: UX 복잡성·권한 모델 혼란·운영 난이도.  
@@ -110,7 +110,7 @@ spec:
 
 ---
 
-## 3) PodSecurity Admission(PSA) — PSP의 내장 대체
+## 3. PodSecurity Admission(PSA) — PSP의 내장 대체
 
 **네임스페이스 라벨**로 정책 수준을 지정합니다.
 
@@ -156,7 +156,7 @@ kubectl label namespace prod \
 
 ---
 
-## 4) 실패/성공 예제로 이해하는 PSA + SecurityContext
+## 4. 실패/성공 예제로 이해하는 PSA + SecurityContext
 
 ### 4.1 실패 예 — restricted 네임스페이스에서 루트/권한상승 시도
 
@@ -206,7 +206,7 @@ spec:
 
 ---
 
-## 5) Gatekeeper(OPA) / Kyverno — PSA로 부족한 “세밀 제어” 채우기
+## 5. Gatekeeper(OPA) / Kyverno — PSA로 부족한 “세밀 제어” 채우기
 
 ### 5.1 Gatekeeper (ConstraintTemplate + Constraint)
 
@@ -289,7 +289,7 @@ spec:
 
 ---
 
-## 6) seccomp / AppArmor / SELinux — 커널 인터페이스 최소화
+## 6. seccomp / AppArmor / SELinux — 커널 인터페이스 최소화
 
 ### 6.1 seccomp
 
@@ -329,7 +329,7 @@ securityContext:
 
 ---
 
-## 7) 위험한 볼륨/옵션 식별과 대체 전략
+## 7. 위험한 볼륨/옵션 식별과 대체 전략
 
 | 항목 | 위험 | 대체/완화 |
 |---|---|---|
@@ -341,7 +341,7 @@ securityContext:
 
 ---
 
-## 8) PSA 전환 전략 (PSP → PSA 마이그레이션)
+## 8. PSA 전환 전략 (PSP → PSA 마이그레이션)
 
 1. **현황 수집**: 기존 파드 스펙에서 위험 옵션 사용 조사(`jq`/`kubectl`/폴리시 스캐너).  
 2. **샌드박스**: `warn=`/`audit=`부터 적용하여 영향 범위 확인.  
@@ -352,7 +352,7 @@ securityContext:
 
 ---
 
-## 9) 운영 점검/디버깅 레시피
+## 9. 운영 점검/디버깅 레시피
 
 ### 9.1 빠른 스캔(예시)
 
@@ -378,7 +378,7 @@ kubectl get pods -A -o json \
 
 ---
 
-## 10) “안전한 기본 템플릿” 3종 (복붙용)
+## 10. “안전한 기본 템플릿” 3종 (복붙용)
 
 ### 10.1 API 서버 뒤 단순 웹앱 (Restricted 호환)
 
@@ -450,7 +450,7 @@ volumes:
 
 ---
 
-## 11) 체크리스트 요약
+## 11. 체크리스트 요약
 
 - [ ] 네임스페이스에 **PSA 라벨** 설정: `enforce=restricted`(운영), `warn/audit` 병행.  
 - [ ] 모든 워크로드에 **`runAsNonRoot: true`** + **비루트 UID/GID** 명시.  
@@ -464,7 +464,7 @@ volumes:
 
 ---
 
-## 12) FAQ
+## 12. FAQ
 
 **Q. PSA만으로 충분한가요?**  
 A. 기본선엔 충분하지만, 조직별/앱별 예외와 변이(자동 패치)가 필요하면 **Kyverno**, 검증 규칙의 코드화가 필요하면 **Gatekeeper**를 병행하세요.

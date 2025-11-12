@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 공통 스키마 & 데이터
+## 0. 실습 공통 스키마 & 데이터
 
 ```sql
 -- 대용량 테이블
@@ -50,7 +50,7 @@ END;
 
 ---
 
-## 1) 왜 Array Processing인가? — **성능 모델**
+## 1. 왜 Array Processing인가? — **성능 모델**
 
 **왕복 기반 응답시간 근사**  
 $$
@@ -64,7 +64,7 @@ $$
 
 ---
 
-## 2) PL/SQL — **BULK COLLECT / FORALL** 기본 패턴
+## 2. PL/SQL — **BULK COLLECT / FORALL** 기본 패턴
 
 ### 2.1 Array SELECT: `BULK COLLECT` (+ LIMIT)
 
@@ -171,7 +171,7 @@ END;
 
 ---
 
-## 3) 클라이언트 드라이버 — **배열 바인드/배치 & 배열 페치**
+## 3. 클라이언트 드라이버 — **배열 바인드/배치 & 배열 페치**
 
 ### 3.1 JDBC
 
@@ -270,7 +270,7 @@ conn.commit()
 
 ---
 
-## 4) 고급: **배열 바인드로 IN-list** 처리(정적 SQL 유지)
+## 4. 고급: **배열 바인드로 IN-list** 처리(정적 SQL 유지)
 
 ### 4.1 스키마 타입 + TABLE 연산자
 
@@ -303,7 +303,7 @@ WHERE  s.order_dt BETWEEN :d1 AND :d2;
 
 ---
 
-## 5) 오류 처리 — **배치와 부분 실패**
+## 5. 오류 처리 — **배치와 부분 실패**
 
 ### 5.1 PL/SQL: `SAVE EXCEPTIONS` + `SQL%BULK_EXCEPTIONS`
 - 이미 예제 제시. 문제 행만 로깅/분리 처리 → **대부분 성공 유지**.
@@ -324,7 +324,7 @@ try {
 
 ---
 
-## 6) Array 크기 결정 — **메모리 vs 왕복의 균형**
+## 6. Array 크기 결정 — **메모리 vs 왕복의 균형**
 
 - **SELECT**: `fetchSize/arraysize`를 **행당 평균 크기 × N** 이 **수 MB~수십 MB** 정도가 되도록.  
   - 예) 행당 200B × 1000행 ≈ 200KB (작다) → 5000~10000으로 키우기.  
@@ -340,7 +340,7 @@ try {
 
 ---
 
-## 7) 검증: SQL Trace/TKPROF로 **전/후 비교**
+## 7. 검증: SQL Trace/TKPROF로 **전/후 비교**
 
 ### 7.1 트레이스 켜기
 ```sql
@@ -358,7 +358,7 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ---
 
-## 8) 시나리오 별 **설계 레시피**
+## 8. 시나리오 별 **설계 레시피**
 
 ### 8.1 대량 마이그레이션/적재
 - `INSERT /*+ APPEND */` + **배치 커밋** + **인덱스/트리거 최소화**  
@@ -383,7 +383,7 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ---
 
-## 9) 자주 하는 실수 & 교정
+## 9. 자주 하는 실수 & 교정
 
 1) **Auto-commit ON**으로 배치 무력화 → **OFF**로 전환, 주기 커밋  
 2) IN-list 문자열 조립(동적 SQL 폭증) → **스키마 타입 배열 바인드**/GTT  
@@ -393,7 +393,7 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ---
 
-## 10) 미니 벤치(요약 스크립트): Row-by-Row vs Array
+## 10. 미니 벤치(요약 스크립트): Row-by-Row vs Array
 
 ```plsql
 -- Row-by-Row
@@ -430,7 +430,7 @@ END;
 
 ---
 
-## 11) 보안·무결성·락 관점 주의
+## 11. 보안·무결성·락 관점 주의
 
 - 대량 DML은 **락 유지 시간**이 길어질 수 있음 → **배치 크기 조절**  
 - FK/Unique 제약 위반은 **SAVE EXCEPTIONS**로 분기 처리  
@@ -438,7 +438,7 @@ END;
 
 ---
 
-## 12) 체크리스트 (운영 투입 전)
+## 12. 체크리스트 (운영 투입 전)
 
 - [ ] SELECT: **배열 페치 크기** 실측 튜닝(네트워크/메모리 밸런스)  
 - [ ] DML: **Batch/Array 크기**·**커밋 주기** 설정, `SAVE EXCEPTIONS` 적용  
@@ -449,7 +449,7 @@ END;
 
 ---
 
-## 13) 결론
+## 13. 결론
 
 Array Processing은 **“적게, 크게, 한 번에”**의 구현 기술이다.  
 - **적게**: 호출 수(user calls)를 줄이고,  

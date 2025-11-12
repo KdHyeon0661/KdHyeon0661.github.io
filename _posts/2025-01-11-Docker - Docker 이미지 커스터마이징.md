@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker 이미지 생성 및 커스터마이징
 
-## 0) 빠른 개요(핵심 복습)
+## 0. 빠른 개요(핵심 복습)
 
 - **이미지(Image)**: 컨테이너 실행을 위한 **읽기 전용 템플릿**. 여러 **레이어**의 스택이며 내용 해시로 관리됩니다.
 - **Dockerfile**: 이미지를 어떻게 만들지 지시하는 **명령어 모음 파일**.
@@ -15,7 +15,7 @@ category: Docker
 
 ---
 
-# 1) Dockerfile 기본
+# 1. Dockerfile 기본
 
 ### 1.1 디렉터리 레이아웃(예)
 ```
@@ -27,20 +27,20 @@ my-app/
 
 ### 1.2 가장 단순한 Flask 예제(기본 버전)
 ```Dockerfile
-# 1) 베이스 이미지
+# 1. 베이스 이미지
 FROM python:3.10-slim
 
-# 2) 작업 디렉토리
+# 2. 작업 디렉토리
 WORKDIR /app
 
-# 3) 의존성 설치 (캐시 최대화: 먼저 requirements만 복사)
+# 3. 의존성 설치 (캐시 최대화: 먼저 requirements만 복사)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4) 앱 코드 복사
+# 4. 앱 코드 복사
 COPY . .
 
-# 5) 실행 명령
+# 5. 실행 명령
 CMD ["python", "app.py"]
 ```
 
@@ -54,7 +54,7 @@ docker run -d -p 5000:5000 --name my-flask-app my-flask-app
 
 ---
 
-# 2) 레이어와 캐시를 이해하고 이기는 설계
+# 2. 레이어와 캐시를 이해하고 이기는 설계
 
 Dockerfile의 각 명령은 **상위에 레이어**를 하나 추가합니다. **입력(파일/환경변수/명령문)이 동일**하면 해당 레이어는 **캐시 히트**로 다시 만들지 않습니다.
 
@@ -70,7 +70,7 @@ $$
 
 ---
 
-# 3) `.dockerignore` — 컨텍스트 다이어트
+# 3. `.dockerignore` — 컨텍스트 다이어트
 
 ### 3.1 예시
 ```dockerignore
@@ -88,7 +88,7 @@ build/
 
 ---
 
-# 4) 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 가볍게”
+# 4. 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 가볍게”
 
 런타임 이미지에서 **컴파일러/툴체인**을 제거하고, **산출물만** 가져옵니다.
 
@@ -173,7 +173,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 ---
 
-# 5) ENTRYPOINT vs CMD — 정확히 알고 쓰기
+# 5. ENTRYPOINT vs CMD — 정확히 알고 쓰기
 
 - **ENTRYPOINT**: “항상 실행되는 고정 바이너리/스크립트” 지정
 - **CMD**: 기본 인자(또는 셸 커맨드) 지정. `docker run ... <override>` 로 덮을 수 있음
@@ -195,7 +195,7 @@ ENTRYPOINT gunicorn -w 1 -b 0.0.0.0:5000 app:app
 
 ---
 
-# 6) 환경 변수/ARG/Label/헬스체크
+# 6. 환경 변수/ARG/Label/헬스체크
 
 ## 6.1 ENV & ARG
 ```Dockerfile
@@ -220,7 +220,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 
 ---
 
-# 7) 보안·권한·파일시스템 — 기본 방어선
+# 7. 보안·권한·파일시스템 — 기본 방어선
 
 - **비루트(USER)**: root 대신 **일반 사용자** 실행
 - **읽기 전용 루트FS**: `--read-only` + 필요한 경로는 `--tmpfs /tmp` 등
@@ -241,7 +241,7 @@ docker run --rm \
 
 ---
 
-# 8) 네트워크/포트·볼륨/영속화 — 빠른 실습
+# 8. 네트워크/포트·볼륨/영속화 — 빠른 실습
 
 ## 8.1 정적 파일 서빙(Nginx 커스터마이징)
 ```Dockerfile
@@ -265,7 +265,7 @@ docker run -d --name pg \
 
 ---
 
-# 9) 재현성·배포: 태그 vs 다이제스트, 저장/로드
+# 9. 재현성·배포: 태그 vs 다이제스트, 저장/로드
 
 - **tag**: 사람이 읽기 쉬움(가변)
 - **digest(sha256)**: 내용 기준(불변). 재현 가능 배포에 **권장**
@@ -288,7 +288,7 @@ docker load -i custom-nginx.tar
 
 ---
 
-# 10) BuildKit — 캐시/시크릿/SSH/병렬 빌드
+# 10. BuildKit — 캐시/시크릿/SSH/병렬 빌드
 
 환경 변수로 켜기:
 ```bash
@@ -313,7 +313,7 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 ---
 
-# 11) `.env` / Compose로 개발자 경험(DX) 개선
+# 11. `.env` / Compose로 개발자 경험(DX) 개선
 
 ## 11.1 Compose 예시(Flask + Nginx)
 ```yaml
@@ -343,7 +343,7 @@ docker compose down -v
 
 ---
 
-# 12) 트러블슈팅 — 원인별 빠른 표
+# 12. 트러블슈팅 — 원인별 빠른 표
 
 | 증상/오류 | 가능 원인 | 해결 |
 |---|---|---|
@@ -357,7 +357,7 @@ docker compose down -v
 
 ---
 
-# 13) 언어별 Dockerfile “좋은 습관” 스니펫
+# 13. 언어별 Dockerfile “좋은 습관” 스니펫
 
 ## 13.1 Python
 ```Dockerfile
@@ -394,7 +394,7 @@ ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app/app.jar"]
 
 ---
 
-# 14) 이미지 크기 줄이기 — 체크리스트
+# 14. 이미지 크기 줄이기 — 체크리스트
 
 - `alpine`/`slim` 베이스 고려(호환성 이슈 확인)
 - 패키지 설치 후 **캐시 삭제**(apk/apt의 캐시 디렉터리)
@@ -405,7 +405,7 @@ ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app/app.jar"]
 
 ---
 
-# 15) 실습: Flask 프로덕션 템플릿(보안/헬스체크 포함)
+# 15. 실습: Flask 프로덕션 템플릿(보안/헬스체크 포함)
 
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
@@ -440,7 +440,7 @@ ENTRYPOINT ["python","app.py"]
 
 ---
 
-# 16) 실습: Nginx 커스터마이징(확장)
+# 16. 실습: Nginx 커스터마이징(확장)
 
 ### 16.1 사용자 정의 conf 포함
 ```Dockerfile
@@ -469,17 +469,17 @@ curl http://localhost:8080/health
 
 ---
 
-# 17) 이미지 업데이트 & 롤링 재배포(수동 프로세스)
+# 17. 이미지 업데이트 & 롤링 재배포(수동 프로세스)
 
 ```bash
-# 1) 코드/ Dockerfile 변경 → 재빌드
+# 1. 코드/ Dockerfile 변경 → 재빌드
 docker build -t my-flask-app:2 .
 
-# 2) 구버전 정지/삭제
+# 2. 구버전 정지/삭제
 docker stop my-flask-app || true
 docker rm my-flask-app || true
 
-# 3) 신버전 실행
+# 3. 신버전 실행
 docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 ```
 
@@ -487,7 +487,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-# 18) 고급 팁 — 레지스트리/메타데이터/서명/스캔
+# 18. 고급 팁 — 레지스트리/메타데이터/서명/스캔
 
 - 레지스트리 로그인/푸시:
   ```bash
@@ -499,7 +499,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-# 19) 문제해결 레시피(원인→진단→처방)
+# 19. 문제해결 레시피(원인→진단→처방)
 
 | 상황 | 진단 명령 | 처방 |
 |---|---|---|
@@ -512,7 +512,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-# 20) 요약
+# 20. 요약
 
 1. **레이어/캐시** 원리를 이해하고 **.dockerignore + 레이어 순서**로 빌드를 빠르게.  
 2. **멀티스테이지**로 런타임을 **작고 안전하게**.  

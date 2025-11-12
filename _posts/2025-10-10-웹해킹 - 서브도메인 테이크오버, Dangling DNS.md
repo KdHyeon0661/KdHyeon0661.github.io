@@ -7,7 +7,7 @@ category: 웹해킹
 # 20. 서브도메인 테이크오버 / Dangling DNS
 **— 개념 · 공격 시나리오 · 안전 재현(막혀야 정상) · 클라우드/웹 서비스별 특징 · 즉시 적용 방어(동기화·퍼지 스캔·정책) · IaC/코드 예제 · 운영 체크리스트**
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **정의**  
   **서브도메인 테이크오버**는 `app.example.com` 같은 호스트가 **CNAME/ALIAS/NS** 등으로 **외부 리소스**를 가리키는데,  
@@ -32,7 +32,7 @@ category: 웹해킹
 
 ---
 
-## 1) 공격 시나리오(개념 → 안전 재현 포인트)
+## 1. 공격 시나리오(개념 → 안전 재현 포인트)
 
 ### 1.1 CNAME → 비존재 리소스
 ```
@@ -62,7 +62,7 @@ dev.example.com   NS      ns1.old-dns.com.
 
 ---
 
-## 2) 방어 아키텍처
+## 2. 방어 아키텍처
 
 1) **IaC 중심 동기화**  
    - Terraform/CloudFormation/ARM 등으로 **DNS 레코드와 해당 리소스**를 **같은 모듈**에서 생성/삭제.  
@@ -86,7 +86,7 @@ dev.example.com   NS      ns1.old-dns.com.
 
 ---
 
-## 3) 운영팀용 “막혀야 정상” 점검 시나리오
+## 3. 운영팀용 “막혀야 정상” 점검 시나리오
 
 - [ ] **삭제된 리소스 CNAME**을 만들고(스테이징) → **사내 스캐너가 24h 내 자동 PR** 생성?  
 - [ ] **TXT 검증 토큰 없이** CNAME만 배포 → **SaaS 측 바인딩 실패**가 기본 정책인가?  
@@ -95,28 +95,28 @@ dev.example.com   NS      ns1.old-dns.com.
 
 ---
 
-## 4) 툴링: 빠른 수동 점검 (현장 명령어)
+## 4. 툴링: 빠른 수동 점검 (현장 명령어)
 
 ```bash
-# 1) 레코드 확인
+# 1. 레코드 확인
 dig +nocmd app.example.com CNAME +noall +answer
 host app.example.com
 
-# 2) 대상 호스트 존재 여부(예: S3 Website)
+# 2. 대상 호스트 존재 여부(예: S3 Website)
 dig nonexistent-bucket.s3-website-ap-northeast-2.amazonaws.com
 
-# 3) HTTP 배너/시그니처
+# 3. HTTP 배너/시그니처
 curl -i http://app.example.com
 curl -i https://app.example.com
 
-# 4) NS Delegation
+# 4. NS Delegation
 dig dev.example.com NS +short
 whois old-dns.com | egrep -i 'Registrar|Expiry|Status'
 ```
 
 ---
 
-## 5) 자동 스캐너 (Python, 비침투형)
+## 5. 자동 스캐너 (Python, 비침투형)
 
 > **기능**:  
 > (1) 존의 CNAME/NS 수집 → (2) HTTP/HTTPS 배너 확인 → (3) 서비스 시그니처 매칭 → (4) Dangling 후보 리포트.  
@@ -188,7 +188,7 @@ if __name__ == "__main__":
 
 ---
 
-## 6) IaC(예: Terraform) — 리소스·DNS 동수명(Lifecycle) 설계
+## 6. IaC(예: Terraform) — 리소스·DNS 동수명(Lifecycle) 설계
 
 ### 6.1 AWS S3 Static + CloudFront(권장: 직접 S3 Website CNAME 지양)
 
@@ -258,7 +258,7 @@ lifecycle {
 
 ---
 
-## 7) NS Delegation 위험 줄이기
+## 7. NS Delegation 위험 줄이기
 
 - **위임 최소화**: 꼭 필요한 서브도메인만 NS 위임.  
 - **소유권 모니터링**: 위임 대상 네임서버 도메인의 **등록자/만료** 자동 검사.  
@@ -295,7 +295,7 @@ for sub in ["dev.example.com", "legacy.example.com"]:
 
 ---
 
-## 8) SaaS(커스텀 도메인) — 안전한 연결 원칙
+## 8. SaaS(커스텀 도메인) — 안전한 연결 원칙
 
 - **반드시 TXT 검증**(도메인 소유권 토큰) 후에만 연결 승인.  
 - **CNAME만으로 연결 허용 금지**(사내 표준).  
@@ -307,7 +307,7 @@ for sub in ["dev.example.com", "legacy.example.com"]:
 
 ---
 
-## 9) 다운로드/렌더링 리스크 제한(피해 최소화)
+## 9. 다운로드/렌더링 리스크 제한(피해 최소화)
 
 테이크오버를 **완전히** 막지 못했을 때의 피해를 줄이기 위한 보조수단:
 
@@ -320,7 +320,7 @@ for sub in ["dev.example.com", "legacy.example.com"]:
 
 ---
 
-## 10) 지속 퍼지 스캔 — CI/스케줄 예시
+## 10. 지속 퍼지 스캔 — CI/스케줄 예시
 
 ### 10.1 GitHub Actions (매일 1회)
 
@@ -351,7 +351,7 @@ jobs:
 
 ---
 
-## 11) “현장형” 체크리스트
+## 11. “현장형” 체크리스트
 
 - [ ] **DNS ↔ 리소스** 동수명(IaC 한 모듈)  
 - [ ] **S3 Website 직접 CNAME 금지**(CDN/고유 엔드포인트 사용)  
@@ -366,7 +366,7 @@ jobs:
 
 ---
 
-## 12) 안티패턴(피해야 할 것)
+## 12. 안티패턴(피해야 할 것)
 
 - 리소스 삭제 후 **DNS 방치**(가장 흔함)  
 - “테스트용”으로 만든 **와일드카드 CNAME**(전체 서브도메인 노출)  
@@ -377,7 +377,7 @@ jobs:
 
 ---
 
-## 13) 맺음말
+## 13. 맺음말
 
 **서브도메인 테이크오버**는 “**DNS 레코드는 남고, 리소스는 사라지는 순간**” 시작됩니다.  
 **IaC로 동수명**, **정기 퍼지 스캔**, **소유권 검증 강제**라는 3축을 표준으로 삼으면  

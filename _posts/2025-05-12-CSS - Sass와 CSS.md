@@ -6,7 +6,7 @@ category: CSS
 ---
 # Sass와 CSS의 차이점
 
-## 0) 한눈에 보는 결론
+## 0. 한눈에 보는 결론
 
 - **CSS**: 런타임(브라우저)에서 동작. 표준/호환성/간결함. 최신 사양(`:has()`, `@layer`, 컨테이너쿼리, 부분적 네스팅 등)도 빠르게 채택 중.  
 - **Sass(SCSS)**: 컴파일 타임에 **구조화/재사용/자동화**를 돕는 도구. 큰 코드베이스/디자인시스템에서 **토큰·유틸 자동생성**, **모듈화**, **반복 제거**에 탁월.  
@@ -14,7 +14,7 @@ category: CSS
 
 ---
 
-## 1) 기본 개념 비교
+## 1. 기본 개념 비교
 
 | 구분 | CSS | Sass(SCSS) |
 |---|---|---|
@@ -25,7 +25,7 @@ category: CSS
 
 ---
 
-## 2) 기능 차이 핵심 요약
+## 2. 기능 차이 핵심 요약
 
 | 기능 | CSS | Sass(SCSS) |
 |---|---|---|
@@ -42,7 +42,7 @@ category: CSS
 
 ---
 
-## 3) 예제로 보는 차이
+## 3. 예제로 보는 차이
 
 ### 3.1 변수
 
@@ -105,7 +105,7 @@ $spacings: (sm: .5rem, md: 1rem, lg: 1.5rem);
 
 ---
 
-## 4) Sass 모듈 시스템: `@use` / `@forward` (실무 필수)
+## 4. Sass 모듈 시스템: `@use` / `@forward` (실무 필수)
 
 > `@import`는 비권장. **네임스페이스 / API 관리**를 위해 `@use`/`@forward` 사용.
 
@@ -137,7 +137,7 @@ $bp: ("md": 768px, "lg": 1024px);
 
 ---
 
-## 5) CSS 변수와 Sass의 **하이브리드 전략**
+## 5. CSS 변수와 Sass의 **하이브리드 전략**
 
 - **Sass**로 **설계 토큰·유틸리티/컴포넌트 CSS 생성**,  
 - **CSS 변수**로 **런타임 테마/환경 선호도** 대응.
@@ -169,7 +169,7 @@ $brand: #2563eb;
 
 ---
 
-## 6) 반응형·타이포·레이아웃 토큰 패턴 (Sass 베스트)
+## 6. 반응형·타이포·레이아웃 토큰 패턴 (Sass 베스트)
 
 ### 6.1 브레이크포인트 맵 + 믹스인
 
@@ -215,7 +215,7 @@ h1 { font-size: fluid(1.5rem, 3rem); } /* 화면폭에 비례해 부드럽게 */
 
 ---
 
-## 7) 실전 미니 프로젝트(구조·예제)
+## 7. 실전 미니 프로젝트(구조·예제)
 
 ```
 scss/
@@ -288,7 +288,7 @@ $spaces: (0: 0, 1: .25rem, 2: .5rem, 3: .75rem, 4: 1rem);
 
 ---
 
-## 8) 빌드/도구 세팅(요점)
+## 8. 빌드/도구 세팅(요점)
 
 ### 8.1 Dart Sass (CLI)
 
@@ -318,7 +318,7 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ---
 
-## 9) 품질: Stylelint/Prettier/레이어링
+## 9. 품질: Stylelint/Prettier/레이어링
 
 - **Stylelint(standard-scss)**로 규칙/일관성 확보, **Prettier**로 포맷.  
 - CSS의 **`@layer`**로 우선순위 층 나누기(초기화/base → 컴포넌트 → 유틸 → 페이지 오버라이드).  
@@ -326,7 +326,7 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ---
 
-## 10) Sass vs CSS 변수: 역할 분담 정리
+## 10. Sass vs CSS 변수: 역할 분담 정리
 
 | 축 | CSS 변수(`--x`) | Sass 변수(`$x`) |
 |---|---|---|
@@ -338,7 +338,7 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ---
 
-## 11) 언제 무엇을 쓰나? (의사결정 가이드)
+## 11. 언제 무엇을 쓰나? (의사결정 가이드)
 
 - **소규모/순수 마크업**: 최신 CSS만으로도 충분(`:has()`, `@layer`, 컨테이너쿼리, 제한적 네스팅).  
 - **디자인 시스템/대규모**: **Sass + CSS 변수 하이브리드** 권장.  
@@ -348,7 +348,7 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ---
 
-## 12) 마이그레이션: `@import` → `@use/@forward`
+## 12. 마이그레이션: `@import` → `@use/@forward`
 
 **Before**
 ```scss
@@ -369,7 +369,7 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ---
 
-## 13) 트러블슈팅/주의점
+## 13. 트러블슈팅/주의점
 
 - **슬래시 나눗셈 경고**: `10px/2` → `@use "sass:math"; math.div(10px, 2)` 사용.  
 - **과도한 중첩**: 특이도 폭발/유지보수 악화 → 3~4단계 이내.  
@@ -380,7 +380,7 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ---
 
-## 14) 종합 예제: 테마 + 반응형 + 유틸 자동생성(요약)
+## 14. 종합 예제: 테마 + 반응형 + 유틸 자동생성(요약)
 
 ```scss
 /* abstracts/_tokens.scss */
@@ -439,7 +439,7 @@ $bp: ("md": 768px, "lg": 1024px);
 
 ---
 
-## 15) 참고 링크
+## 15. 참고 링크
 
 - Sass 공식 문서: https://sass-lang.com/documentation  
 - Sass 설치: https://sass-lang.com/install  

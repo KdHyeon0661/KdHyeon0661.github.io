@@ -11,7 +11,7 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 
 ---
 
-## 1) Cloud Native란 무엇인가 — 운영 관점 재정의
+## 1. Cloud Native란 무엇인가 — 운영 관점 재정의
 
 > **정의**: 불변(Immutable) 아티팩트와 선언형(Declarative) 스펙으로 시스템을 구성하고, 자동화된 파이프라인과 컨트롤루프(Reconciler)로 **원하는 상태(Desired State)** 를 일관되게 유지/복구하는 접근.
 
@@ -29,7 +29,7 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 
 ---
 
-## 2) CNCF Landscape 한 장으로 보기
+## 2. CNCF Landscape 한 장으로 보기
 
 주요 카테고리
 1. **Provisioning & Infrastructure**: IaC, 클러스터 부트스트랩
@@ -49,7 +49,7 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 
 ---
 
-## 3) Provisioning & Infrastructure — IaC로 시작과 끝을 관리
+## 3. Provisioning & Infrastructure — IaC로 시작과 끝을 관리
 
 ### 3.1 Terraform로 EKS 예시(핵심만)
 ```hcl
@@ -77,7 +77,7 @@ module "eks" {
 
 ---
 
-## 4) Orchestration & Management — Kubernetes 운영 패턴
+## 4. Orchestration & Management — Kubernetes 운영 패턴
 
 ### 4.1 기본 배포 매니페스트(검증 지향)
 ```yaml
@@ -119,14 +119,14 @@ spec:
 
 ---
 
-## 5) Runtime — 컨테이너 런타임 & Wasm
+## 5. Runtime — 컨테이너 런타임 & Wasm
 
 - **containerd**(권장), **CRI-O**: Kubernetes 친화적인 경량 런타임.
 - **Wasm**(WasmEdge/Wasmtime): 콜드스타트·보안 장점. **게이트웨이 플러그인/필터**나 **경량 함수형 워크로드**에서 파일럿 도입.
 
 ---
 
-## 6) Networking — CNI, Ingress, Gateway API, Mesh
+## 6. Networking — CNI, Ingress, Gateway API, Mesh
 
 ### 6.1 CNI 예시: Cilium (eBPF)
 - **장점**: 고성능 데이터패스, L3-L7 정책, Hubble로 **흐름 관측**.
@@ -168,7 +168,7 @@ spec:
 
 ---
 
-## 7) Storage — CSI, 분산 스토리지, 백업/복구
+## 7. Storage — CSI, 분산 스토리지, 백업/복구
 
 ### 7.1 PVC + StorageClass
 ```yaml
@@ -193,7 +193,7 @@ velero backup create daily-$(date +%F) --include-namespaces prod --wait
 
 ---
 
-## 8) Observability — Prometheus/Loki/Tempo/OTel/Grafana
+## 8. Observability — Prometheus/Loki/Tempo/OTel/Grafana
 
 ### 8.1 Prometheus + Alertmanager
 **간단 ServiceMonitor (prometheus-operator)**
@@ -242,7 +242,7 @@ service:
 
 ---
 
-## 9) Security & Compliance — Shift Left + Runtime
+## 9. Security & Compliance — Shift Left + Runtime
 
 ### 9.1 이미지 스캔: Trivy
 ```bash
@@ -308,7 +308,7 @@ spec:
 
 ---
 
-## 10) App Definition & DevOps — Helm/Kustomize/GitOps/CI
+## 10. App Definition & DevOps — Helm/Kustomize/GitOps/CI
 
 ### 10.1 Helm 차트 베이스(템플릿 추상화)
 ```yaml
@@ -422,7 +422,7 @@ jobs:
 
 ---
 
-## 11) Chaos/Resilience — Litmus / Chaos Mesh
+## 11. Chaos/Resilience — Litmus / Chaos Mesh
 
 - 장애 주입으로 **SLO·오토스케일·헬스 체크** 유효성 검증.
 ```yaml
@@ -437,7 +437,7 @@ spec:
 
 ---
 
-## 12) 선택 가이드 — 상황별 추천 조합
+## 12. 선택 가이드 — 상황별 추천 조합
 
 | 요구/규모 | 네트워킹 | 배포 | 관측 | 보안 | 스토리지 |
 |---|---|---|---|---|---|
@@ -451,7 +451,7 @@ spec:
 
 ---
 
-## 13) 비용·성능·안정성 최적화 체크리스트
+## 13. 비용·성능·안정성 최적화 체크리스트
 
 - **Requests/Limits 적정화**: HPA 기준·Throttling/OOM 방지
 - **노드 풀 분리**: CPU/GPU/메모리 최적, 스팟 혼용(비핵심)
@@ -463,7 +463,7 @@ spec:
 
 ---
 
-## 14) 레퍼런스 아키텍처(요약 다이어그램 텍스트)
+## 14. 레퍼런스 아키텍처(요약 다이어그램 텍스트)
 
 ```
 [Dev] --(Git Push)--> [CI: Actions/Tekton] --(Image)--> [Registry]
@@ -480,7 +480,7 @@ spec:
 
 ---
 
-## 15) 실전 운영 런북(핵심 절차)
+## 15. 실전 운영 런북(핵심 절차)
 
 1) **문제 인입**(지연/오류율): SLO 대시보드 확인 → 영향 범위
 2) **서비스 경로 추적**: Gateway/Route/Mesh → 대상 워크로드 식별
@@ -493,7 +493,7 @@ spec:
 
 ---
 
-## 16) 안티패턴 경계
+## 16. 안티패턴 경계
 
 - `latest` 태그 남용(재현 불가/롤백 불가)
 - Requests 미설정(스케줄 편향/HPA 오작동)

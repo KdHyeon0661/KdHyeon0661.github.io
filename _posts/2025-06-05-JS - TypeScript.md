@@ -19,7 +19,7 @@ category: JavaScript
 
 ---
 
-## 1) TypeScript란? 왜 지금 도입해야 하는가
+## 1. TypeScript란? 왜 지금 도입해야 하는가
 
 > TypeScript는 JavaScript의 **상위 집합**(Superset)으로, 정적 타입 시스템을 제공하여  
 > **런타임 이전**에 오류를 포착하고, 에디터 지능(Autocomplete/Refactor/Go-to-Definition)을 강화한다.
@@ -32,7 +32,7 @@ category: JavaScript
 
 ---
 
-## 2) 설치와 최소 tsconfig 템플릿
+## 2. 설치와 최소 tsconfig 템플릿
 
 ```bash
 npm i -D typescript
@@ -75,7 +75,7 @@ npx tsc --init
 
 ---
 
-## 3) 점진적 마이그레이션 전략 (중요)
+## 3. 점진적 마이그레이션 전략 (중요)
 
 ### 3.1 가장 쉬운 시작: JS 유지 + 타입 검사
 **파일은 그대로 JS**로 두고, 상단에 체크만 켠다.
@@ -111,7 +111,7 @@ const sdk = window.ExternalSdk;
 
 ---
 
-## 4) 도메인 타입 설계 패턴
+## 4. 도메인 타입 설계 패턴
 
 ### 4.1 타입 vs 인터페이스
 - **상호 확장/선언 병합**이 필요하면 `interface`, 변형/조합은 `type` 선호
@@ -163,7 +163,7 @@ findUser(asUserId("u_123"));
 
 ---
 
-## 5) React/JSX에서 TSX로 전환
+## 5. React/JSX에서 TSX로 전환
 
 ### 5.1 기본 패턴
 ```tsx
@@ -205,7 +205,7 @@ type User = ApiResponse["user"];
 
 ---
 
-## 6) 외부 라이브러리 타입
+## 6. 외부 라이브러리 타입
 
 ### 6.1 DefinitelyTyped
 ```bash
@@ -232,7 +232,7 @@ const Analytics = window.Analytics;
 
 ---
 
-## 7) 빌드/번들 통합: Vite, Webpack, SWC, ESBuild
+## 7. 빌드/번들 통합: Vite, Webpack, SWC, ESBuild
 
 ### 7.1 “타입체크”와 “트랜스파일” 분리 원칙
 - **빠른 개발 빌드**: SWC/ESBuild로 트랜스파일만
@@ -278,7 +278,7 @@ module.exports = {
 
 ---
 
-## 8) 테스트: Vitest/Jest + TS
+## 8. 테스트: Vitest/Jest + TS
 
 ### 8.1 Vitest (권장: Vite와 궁합 우수)
 ```bash
@@ -321,7 +321,7 @@ module.exports = {
 
 ---
 
-## 9) ESLint/Prettier와 충돌 없이 쓰기
+## 9. ESLint/Prettier와 충돌 없이 쓰기
 
 ```bash
 npm i -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-config-prettier prettier
@@ -352,7 +352,7 @@ module.exports = {
 
 ---
 
-## 10) 경로 별칭과 모노레포
+## 10. 경로 별칭과 모노레포
 
 ### 10.1 경로 별칭
 ```json
@@ -401,7 +401,7 @@ Vite/Webpack도 동일 별칭을 plugin/resolve에 반영.
 
 ---
 
-## 11) 런타임 안전 보강 (Zod/Valibot + TS)
+## 11. 런타임 안전 보강 (Zod/Valibot + TS)
 
 정적 타입만으로 부족한 **런타임 입력 검증**은 스키마로 보강.
 
@@ -424,7 +424,7 @@ export function createUser(body: unknown) {
 
 ---
 
-## 12) 빌드/배포 파이프라인 예(웹 + 서버/서버리스)
+## 12. 빌드/배포 파이프라인 예(웹 + 서버/서버리스)
 
 ### 12.1 웹 앱 (Vite)
 - Dev: Vite HMR + `vite-plugin-checker`
@@ -452,7 +452,7 @@ export function createUser(body: unknown) {
 
 ---
 
-## 13) 흔한 에러/함정과 해결
+## 13. 흔한 에러/함정과 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -464,7 +464,7 @@ export function createUser(body: unknown) {
 
 ---
 
-## 14) 팀 규약과 지표로 굳히기
+## 14. 팀 규약과 지표로 굳히기
 
 - **규약**: `strict` 유지, `any` 허용 정책, 외부 경계에서만 `unknown→narrowing`
 - **지표**:  
@@ -475,7 +475,7 @@ export function createUser(body: unknown) {
 
 ---
 
-## 15) 예제: JS → TS 전환(작게 시작해 보기)
+## 15. 예제: JS → TS 전환(작게 시작해 보기)
 
 ### 15.1 기존 JS 유틸
 
@@ -525,7 +525,7 @@ toKRW(1000, { currency: "USD" }); // OK
 
 ---
 
-## 16) 고급: 제네릭, 조건부 타입, 매핑 타입 한 방에
+## 16. 고급: 제네릭, 조건부 타입, 매핑 타입 한 방에
 
 ```ts
 // 엔드포인트 응답 매핑
@@ -556,7 +556,7 @@ type CreatePost = z.infer<typeof CreatePost>;
 
 ---
 
-## 17) 마이그레이션 로드맵(예시)
+## 17. 마이그레이션 로드맵(예시)
 
 1. **주 1~2일**: JSDoc + `//@ts-check`로 경고 줄이기
 2. 1차 전환: **공통 유틸/퓨어 함수**를 `.ts`로 변경
@@ -568,7 +568,7 @@ type CreatePost = z.infer<typeof CreatePost>;
 
 ---
 
-## 18) 결론
+## 18. 결론
 
 TypeScript 도입은 “한 번에”가 아니라 **지속 가능한 속도로 부채를 상환**하며 **DX와 안정성을 동반 상승**시키는 장기 전략이다.  
 **작게 시작**하되, CI 게이트/팀 규약/지표로 **일관성**을 확보하면, 전환 비용보다 **리팩토링·협업·품질 향상 이득**이 더 크다.

@@ -152,18 +152,18 @@ docker image prune -a -f      # 미사용 이미지 모두 삭제(주의)
 # 5. 실전 흐름 예시(한 번에)
 
 ```bash
-# 1) 이미지
+# 1. 이미지
 docker pull nginx
 
-# 2) 실행
+# 2. 실행
 docker run -d --name web_server -p 8080:80 nginx
 
-# 3) 상태/로그/탐색
+# 3. 상태/로그/탐색
 docker ps
 docker logs -f web_server
 docker exec -it web_server sh -lc 'nginx -v; ls -al /usr/share/nginx/html'
 
-# 4) 정지/삭제
+# 4. 정지/삭제
 docker stop web_server
 docker rm web_server
 docker rmi nginx

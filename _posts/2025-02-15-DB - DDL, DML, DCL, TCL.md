@@ -6,7 +6,7 @@ category: DB
 ---
 # SQL 명령어 분류: DDL, DML, DCL
 
-## 0) 용어 관점 정리(빠르게 복습)
+## 0. 용어 관점 정리(빠르게 복습)
 - **DDL**: 오브젝트(스키마) 정의/변경/삭제. 대부분 DB에서 **암묵적 커밋**(자동 커밋) 동반.
 - **DML**: 데이터 조작(SELECT/INSERT/UPDATE/DELETE…); **트랜잭션 제어 대상**.
 - **DCL**: 권한 부여/회수(GRANT/REVOKE…); 사용자·롤 기반 접근 제어.
@@ -17,7 +17,7 @@ category: DB
 
 ---
 
-## 1) DDL(데이터 정의) — 구조 설계·변경의 성능/가용성 이슈까지
+## 1. DDL(데이터 정의) — 구조 설계·변경의 성능/가용성 이슈까지
 
 ### 1.1 핵심 명령과 공통 개념
 ```sql
@@ -109,7 +109,7 @@ CREATE INDEX ix_users_email_norm ON users ((lower(email)));
 
 ---
 
-## 2) DML(데이터 조작) — 트랜잭션, 격리수준, 벌크·머지, UPSERT
+## 2. DML(데이터 조작) — 트랜잭션, 격리수준, 벌크·머지, UPSERT
 
 ### 2.1 기본과 트랜잭션 제어
 ```sql
@@ -183,7 +183,7 @@ LIMIT 50;
 
 ---
 
-## 3) DCL(접근 제어) — 롤 기반 설계, 최소권한, RLS
+## 3. DCL(접근 제어) — 롤 기반 설계, 최소권한, RLS
 
 ### 3.1 기본 권한
 ```sql
@@ -232,7 +232,7 @@ REVOKE GRANT OPTION FOR SELECT ON employee FROM analyst; -- 위임능력 회수
 
 ---
 
-## 4) TCL(트랜잭션 제어) — 세이브포인트, 예외 복구, 배포 전략
+## 4. TCL(트랜잭션 제어) — 세이브포인트, 예외 복구, 배포 전략
 
 ```sql
 BEGIN;
@@ -261,7 +261,7 @@ ALTER TABLE payments ADD CONSTRAINT uq_req UNIQUE (request_id);
 
 ---
 
-## 5) 케이스 스터디 — 쇼핑몰 주문/정산 도메인
+## 5. 케이스 스터디 — 쇼핑몰 주문/정산 도메인
 
 ### 5.1 DDL: 핵심 테이블·제약
 ```sql
@@ -361,7 +361,7 @@ COMMIT;
 
 ---
 
-## 6) 성능/안전 안티패턴과 교정
+## 6. 성능/안전 안티패턴과 교정
 
 | 안티패턴 | 결과 | 교정 |
 |---|---|---|
@@ -374,7 +374,7 @@ COMMIT;
 
 ---
 
-## 7) 이식성 체크리스트(DDL/DML/DCL/TCL)
+## 7. 이식성 체크리스트(DDL/DML/DCL/TCL)
 
 - **자동 증가 키**: Postgres `SERIAL/IDENTITY`, MySQL `AUTO_INCREMENT`, SQL Server `IDENTITY`, Oracle `IDENTITY/SEQUENCE` — **표준화는 `GENERATED ... AS IDENTITY`**.
 - **UPSERT**: `ON CONFLICT`(PG) / `ON DUPLICATE KEY`(MySQL) / `MERGE`(MSSQL/Oracle).  
@@ -386,7 +386,7 @@ COMMIT;
 
 ---
 
-## 8) 감사(Compliance)·운영 거버넌스
+## 8. 감사(Compliance)·운영 거버넌스
 
 - **DDL 변경 기록**: 마이그레이션 도구(Flyway/Liquibase)로 **버전드 DDL**.  
 - **DML 중요 테이블**: CDC(Change Data Capture)/감사 트리거/로그 테이블.  
@@ -395,7 +395,7 @@ COMMIT;
 
 ---
 
-## 9) 연습용 미니 프로젝트 스크립트(통합)
+## 9. 연습용 미니 프로젝트 스크립트(통합)
 
 ### 9.1 스키마(DDL)
 ```sql
@@ -444,7 +444,7 @@ GRANT report_reader TO dev_analyst;
 
 ---
 
-## 10) 정리 — 실무에서의 작동 순서·원칙
+## 10. 정리 — 실무에서의 작동 순서·원칙
 
 1. **DDL**: 스키마/인덱스/제약 설계 → 온라인 DDL 여부 확인 → 배포 창/백업 계획.  
 2. **DCL**: 롤 기반 최소권한 → 컬럼/행 단위 제어 필요 시 RLS·마스킹.  

@@ -15,7 +15,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 환경 준비
+## 0. 실습 환경 준비
 
 ```sql
 -- 스키마 정리
@@ -57,7 +57,7 @@ END;
 
 ---
 
-## 1) 커서 구조 이해 — Parent/Child, 공유의 단위
+## 1. 커서 구조 이해 — Parent/Child, 공유의 단위
 
 ### 1.1 Parent vs Child
 - **Parent Cursor**: **SQL 텍스트** 단위의 상위 핸들(정규화된 텍스트+env).  
@@ -84,7 +84,7 @@ SELECT * FROM v$sql_shared_cursor WHERE sql_id = :sql_id;
 
 ---
 
-## 2) 바인드 변수 vs 리터럴 — “공유”의 출발점
+## 2. 바인드 변수 vs 리터럴 — “공유”의 출발점
 
 ### 2.1 리터럴 난사(나쁜 예)
 ```sql
@@ -109,7 +109,7 @@ WHERE status = :b;
 
 ---
 
-## 3) `CURSOR_SHARING` 파라미터 — **강제 유사-텍스트 공유**
+## 3. `CURSOR_SHARING` 파라미터 — **강제 유사-텍스트 공유**
 
 ```sql
 SHOW PARAMETER cursor_sharing;
@@ -137,7 +137,7 @@ ORDER  BY parse_calls DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 4) **Bind Peeking** & **Adaptive Cursor Sharing(ACS)**
+## 4. **Bind Peeking** & **Adaptive Cursor Sharing(ACS)**
 
 ### 4.1 개념
 - **Bind Peeking**: 커서 최초 하드 파싱 때 **바인드 값**을 **엿보고(peek)** 그 값 기준으로 **선택도/플랜** 결정.  
@@ -174,7 +174,7 @@ WHERE  sql_text LIKE 'SELECT /* CS_DEMO */%';
 
 ---
 
-## 5) 세션 커서 캐시 vs 라이브러리 캐시 — “Soft Parse 줄이기”
+## 5. 세션 커서 캐시 vs 라이브러리 캐시 — “Soft Parse 줄이기”
 
 - **라이브러리 캐시**: DB 전체 공유, Parent/Child 커서가 **SGA**에 존재.  
 - **세션 커서 캐시(session cached cursors)**: **세션 프로세스**(UGA/PGA) 레벨에서 **최근 사용 커서 핸들**을 보관 → **REPARSE 비용 감소**, `parse count (total)`↓.  
@@ -193,7 +193,7 @@ AND    st.sid = SYS_CONTEXT('USERENV','SID');
 
 ---
 
-## 6) Child Cursor 폭증(Versioning) — 원인과 해법
+## 6. Child Cursor 폭증(Versioning) — 원인과 해법
 
 ### 6.1 원인(일부)
 - **바인드 타입/길이/정확성 불일치**(예: 숫자 컬럼에 문자열 바인드)  
@@ -220,7 +220,7 @@ SELECT * FROM v$sql_shared_cursor WHERE sql_id = :sql_id;
 
 ---
 
-## 7) 애플리케이션 레이어에서의 Cursor Sharing 베스트프랙티스
+## 7. 애플리케이션 레이어에서의 Cursor Sharing 베스트프랙티스
 
 ### 7.1 JDBC
 ```java
@@ -271,7 +271,7 @@ END;
 
 ---
 
-## 8) `CURSOR_SHARING=FORCE` 의 사용 가이드(임시처방)
+## 8. `CURSOR_SHARING=FORCE` 의 사용 가이드(임시처방)
 
 ### 8.1 언제 유용한가
 - 레거시 앱이 **모든 SQL을 리터럴로** 발행 → 하드 파싱 폭발/Shared Pool 압박.  
@@ -288,7 +288,7 @@ END;
 
 ---
 
-## 9) 바인드 + 리터럴 **하이브리드 전략**(현실적)
+## 9. 바인드 + 리터럴 **하이브리드 전략**(현실적)
 
 - 대부분의 조건은 **바인드**로 **공유 극대화**.  
 - **극단적 편중 컬럼**(상위 몇 값)만 **리터럴 분리**:
@@ -309,7 +309,7 @@ FROM cs_demo WHERE status='HOT';
 
 ---
 
-## 10) 모니터링 & 진단 레시피
+## 10. 모니터링 & 진단 레시피
 
 ### 10.1 파싱/커서 지표
 ```sql
@@ -347,7 +347,7 @@ GROUP  BY event ORDER  BY samples DESC;
 
 ---
 
-## 11) 트러블슈팅 시나리오
+## 11. 트러블슈팅 시나리오
 
 ### 11.1 “바인드화 했더니 느려졌다”
 - **현상**: `CURSOR_SHARING=FORCE` 또는 앱 바인드 도입 후 **전체 느려짐**.
@@ -368,7 +368,7 @@ GROUP  BY event ORDER  BY samples DESC;
 
 ---
 
-## 12) 실전 체크리스트
+## 12. 실전 체크리스트
 
 - [ ] **바인드 변수**를 **항상** 기본값으로(타입/길이 일치).  
 - [ ] `CURSOR_SHARING`은 **EXACT** 유지, 불가피할 때만 **FORCE(임시)**.  
@@ -380,7 +380,7 @@ GROUP  BY event ORDER  BY samples DESC;
 
 ---
 
-## 13) 요약
+## 13. 요약
 
 - Cursor Sharing은 **파싱된 SQL을 최대한 재사용**하는 기술/관행의 총합이다.  
 - **바인드 변수**가 정석, **ACS+히스토그램**이 편중 문제를 해결한다.  

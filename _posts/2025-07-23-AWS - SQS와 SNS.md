@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS 메시징 시스템: SQS와 SNS
 
-## 0) 한 장 요약
+## 0. 한 장 요약
 
 - **SQS**: Poll 기반 **큐**(표준/ FIFO). 백엔드 비동기 처리, 버퍼링, 스로틀 보호, **일시적 장애 흡수**에 최적.  
 - **SNS**: Push 기반 **토픽**. 이벤트 브로드캐스트, 멀티 구독자(Email/SMS/HTTP/Lambda/SQS), **필터링·팬아웃**에 최적.  
@@ -14,7 +14,7 @@ category: AWS
 
 ---
 
-## 1) 개념 모델 — 역할과 데이터 흐름
+## 1. 개념 모델 — 역할과 데이터 흐름
 
 ### 1.1 용어 정리
 
@@ -39,7 +39,7 @@ category: AWS
 
 ---
 
-## 2) SQS 심화 — 표준 vs FIFO, 동작·튜닝·패턴
+## 2. SQS 심화 — 표준 vs FIFO, 동작·튜닝·패턴
 
 ### 2.1 표준(Standard) vs FIFO
 
@@ -96,7 +96,7 @@ $$
 
 ---
 
-## 3) SNS 심화 — 토픽, 구독, 필터링·재시도
+## 3. SNS 심화 — 토픽, 구독, 필터링·재시도
 
 ### 3.1 토픽/구독/전달
 
@@ -126,7 +126,7 @@ $$
 
 ---
 
-## 4) 보안 — IAM/KMS/리소스 정책/VPC Endpoint
+## 4. 보안 — IAM/KMS/리소스 정책/VPC Endpoint
 
 ### 4.1 최소권한 IAM 예시
 
@@ -192,7 +192,7 @@ $$
 
 ---
 
-## 5) 운영·관측성 — 메트릭·알람·로그
+## 5. 운영·관측성 — 메트릭·알람·로그
 
 ### 5.1 주요 메트릭(SQS)
 
@@ -215,7 +215,7 @@ $$
 
 ---
 
-## 6) 비용 모델·계산
+## 6. 비용 모델·계산
 
 ### 6.1 SQS
 
@@ -242,7 +242,7 @@ $$
 
 ---
 
-## 7) SQS — CLI/SDK 빠른 실습
+## 7. SQS — CLI/SDK 빠른 실습
 
 ### 7.1 CLI
 
@@ -291,7 +291,7 @@ def handler(event, _):
 
 ---
 
-## 8) SNS — CLI/필터링/팬아웃
+## 8. SNS — CLI/필터링/팬아웃
 
 ```bash
 # 토픽 생성
@@ -315,7 +315,7 @@ aws sns publish --topic-arn $TOPIC_ARN \
 
 ---
 
-## 9) SQS + SNS 팬아웃 — 아키텍처와 리소스 정책
+## 9. SQS + SNS 팬아웃 — 아키텍처와 리소스 정책
 
 **시나리오**: `orders-topic` → `orders-processor-queue`, `orders-email-queue`, `orders-analytics-queue`  
 - 각 큐에 **서로 다른 FilterPolicy** 적용.  
@@ -325,7 +325,7 @@ aws sns publish --topic-arn $TOPIC_ARN \
 
 ---
 
-## 10) Lambda 통합 — SQS Pull / SNS Push
+## 10. Lambda 통합 — SQS Pull / SNS Push
 
 ### 10.1 SQS → Lambda (이벤트 소스 매핑)
 
@@ -363,7 +363,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 11) IaC — Terraform & SAM 스니펫
+## 11. IaC — Terraform & SAM 스니펫
 
 ### 11.1 Terraform (SNS + 두 개의 SQS + 필터)
 
@@ -479,7 +479,7 @@ Resources:
 
 ---
 
-## 12) 고급 패턴
+## 12. 고급 패턴
 
 - **Outbox 패턴**: 트랜잭션 DB에 이벤트 레코드 저장 → 별도 워커가 SNS/SQS로 퍼블리시.  
 - **Saga/Orchestration**: 단계별 보상 트랜잭션 → **Step Functions + SNS/SQS** 조합.  
@@ -489,7 +489,7 @@ Resources:
 
 ---
 
-## 13) 실전 엔드투엔드 — 주문 이벤트 파이프라인
+## 13. 실전 엔드투엔드 — 주문 이벤트 파이프라인
 
 ### 요구
 - 주문 생성/취소 이벤트를 발행 → **HighPriority**(우선처리), **Billing**, **Audit**에 각각 전달.  
@@ -549,7 +549,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 14) 체크리스트
+## 14. 체크리스트
 
 - [ ] **롱폴링** 활성화(ReceiveMessageWaitTimeSeconds).  
 - [ ] **가시성 타임아웃 ≥ 처리시간 + 여유**.  
@@ -563,7 +563,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 15) 부록 — 자주 쓰는 스니펫
+## 15. 부록 — 자주 쓰는 스니펫
 
 ### 15.1 큐 속성 변경(롱폴링/가시성)
 ```bash

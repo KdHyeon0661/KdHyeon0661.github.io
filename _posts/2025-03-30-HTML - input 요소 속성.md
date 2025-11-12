@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML & HTML5의 `<input>` 요소 속성
 
-## 0) 제출(submit)과 전송(payload)의 기본 원리 한 장 요약
+## 0. 제출(submit)과 전송(payload)의 기본 원리 한 장 요약
 
 - 폼 전송 시 **서버로 전송되는 키**는 `name` 속성이다. `id`는 **전송되지 않는다**(라벨 연결/JS 선택용).  
 - 전송 포함 조건:
@@ -17,7 +17,7 @@ category: HTML
 
 ---
 
-## 1) HTML 기본 `<input>` 속성 (핵심 & 차이점 포함)
+## 1. HTML 기본 `<input>` 속성 (핵심 & 차이점 포함)
 
 ### 1.1 `name` (전송 키)
 ```html
@@ -62,7 +62,7 @@ category: HTML
 
 ---
 
-## 2) HTML5/현대 브라우저 확장 속성 (입력 UX/검증/연결)
+## 2. HTML5/현대 브라우저 확장 속성 (입력 UX/검증/연결)
 
 ### 2.1 `placeholder` (힌트)
 ```html
@@ -155,7 +155,7 @@ category: HTML
 
 ---
 
-## 3) `<form>` 연계 속성 (폼 외부·버튼별 제어)
+## 3. `<form>` 연계 속성 (폼 외부·버튼별 제어)
 
 ### 3.1 `form` (연결) — 폼 밖의 필드/버튼을 특정 폼에 연결
 ```html
@@ -185,7 +185,7 @@ category: HTML
 
 ---
 
-## 4) 타입별 특화 속성 (파일/이미지/비밀번호 등)
+## 4. 타입별 특화 속성 (파일/이미지/비밀번호 등)
 
 ### 4.1 파일 업로드: `type="file"` — `accept`/`multiple`/`capture`
 ```html
@@ -217,7 +217,7 @@ category: HTML
 
 ---
 
-## 5) 유효성 검사(Constraint Validation) — HTML만으로도 강력
+## 5. 유효성 검사(Constraint Validation) — HTML만으로도 강력
 
 ### 5.1 기본 흐름
 - 브라우저는 `required`, `type`, `min/max/step`, `pattern`, `minlength/maxlength` 등을 종합해 **제출 시 자동 검증**.
@@ -268,7 +268,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 6) 접근성(a11y) & 국제화(i18n)
+## 6. 접근성(a11y) & 국제화(i18n)
 
 ### 6.1 라벨 연결(필수)
 ```html
@@ -295,7 +295,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 7) 보안(Security) — 클라이언트 검증은 **보조**일 뿐
+## 7. 보안(Security) — 클라이언트 검증은 **보조**일 뿐
 
 | 위험 | 요약 | 대응 |
 |---|---|---|
@@ -309,7 +309,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 8) 모바일 UX 강화 속성/패턴
+## 8. 모바일 UX 강화 속성/패턴
 
 - `inputmode`, `enterkeyhint`, `autocomplete` 토큰 조합으로 **가상 키보드 품질** 향상.
 - `type="tel"` + `pattern`으로 지역 포맷 힌트 제공.
@@ -324,7 +324,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 9) “버튼별 다른 제출” 실전 패턴 (검색 vs 저장)
+## 9. “버튼별 다른 제출” 실전 패턴 (검색 vs 저장)
 
 ```html
 <form id="postForm" action="/posts" method="post">
@@ -343,7 +343,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 10) 대형 폼 최적화 체크리스트
+## 10. 대형 폼 최적화 체크리스트
 
 - [ ] **라벨**은 모든 컨트롤과 연결되어 있는가?  
 - [ ] `name`은 서버 모델과 1:1 매핑되는가?  
@@ -357,7 +357,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 11) 속성 레퍼런스 테이블(요약)
+## 11. 속성 레퍼런스 테이블(요약)
 
 | 분류 | 속성 | 비고 |
 |---|---|---|
@@ -372,7 +372,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 12) 실전 통합 예제 (제출·검증·접근성·모바일)
+## 12. 실전 통합 예제 (제출·검증·접근성·모바일)
 
 ```html
 <!doctype html>
@@ -481,7 +481,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 13) 흔한 질문(FAQ)
+## 13. 흔한 질문(FAQ)
 
 **Q1. `disabled`와 `readonly` 차이?**  
 - `disabled`: 전송 제외, 포커스 불가, 보조기술 탐색 어려움.  
@@ -500,7 +500,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 14) 마무리
+## 14. 마무리
 
 - `<input>`은 **속성의 조합**으로 UX/검증/보안을 크게 끌어올릴 수 있다.  
 - **폼 전송의 핵심은 `name`**이며, `disabled`/`readonly`의 차이, 버튼별 `form*` 속성으로 제출 흐름을 분기하라.  

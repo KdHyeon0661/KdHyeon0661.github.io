@@ -6,7 +6,7 @@ category: HTML
 ---
 # XHTML 완전 정복
 
-## 1) XHTML이란?
+## 1. XHTML이란?
 
 - **XHTML (eXtensible HyperText Markup Language)**: **HTML을 XML 문법으로 재정의**한 마크업 언어.
 - **W3C 표준**(XHTML 1.0/1.1). HTML의 표현력 + XML의 **엄격/일관/도구친화성**.
@@ -28,7 +28,7 @@ category: HTML
 
 ---
 
-## 2) XHTML 문서 기본 구조와 직렬화(Serialization)
+## 2. XHTML 문서 기본 구조와 직렬화(Serialization)
 
 ### 2.1 XHTML 1.0 기본 예제(Strict)
 
@@ -60,7 +60,7 @@ category: HTML
 
 ---
 
-## 3) XHTML 필수 문법 규칙(잘 틀리는 것들)
+## 3. XHTML 필수 문법 규칙(잘 틀리는 것들)
 
 | 규칙 | 설명 | 예/비예 |
 |---|---|---|
@@ -83,7 +83,7 @@ category: HTML
 
 ---
 
-## 4) HTML과의 차이 — 파서·오류 모델·속성 직렬화
+## 4. HTML과의 차이 — 파서·오류 모델·속성 직렬화
 
 | 항목 | HTML (text/html) | XHTML (application/xhtml+xml) |
 |---|---|---|
@@ -100,7 +100,7 @@ category: HTML
 
 ---
 
-## 5) 스크립트/스타일 포함 — CDATA와 이스케이프
+## 5. 스크립트/스타일 포함 — CDATA와 이스케이프
 
 XML 파서는 `<`/`&`에 민감하므로, `script`/`style` 내용에 **문자 데이터**가 들어갈 때 CDATA 또는 이스케이프가 필요하다.
 
@@ -131,7 +131,7 @@ XML 파서는 `<`/`&`에 민감하므로, `script`/`style` 내용에 **문자 �
 
 ---
 
-## 6) 네임스페이스와 XML 통합 — SVG/MathML 포함
+## 6. 네임스페이스와 XML 통합 — SVG/MathML 포함
 
 XHTML의 강점: **다중 XML 네임스페이스 통합**.
 
@@ -158,7 +158,7 @@ XHTML의 강점: **다중 XML 네임스페이스 통합**.
 
 ---
 
-## 7) MIME 타입과 서버 설정
+## 7. MIME 타입과 서버 설정
 
 ### 7.1 권장 MIME
 - **진짜 XHTML로서 파싱**: `application/xhtml+xml`  
@@ -192,7 +192,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 8) DTO/폼/불린 속성 직렬화 — 자주 하는 실수
+## 8. DTO/폼/불린 속성 직렬화 — 자주 하는 실수
 
 ### 8.1 폼 요소와 불린 속성
 ```html
@@ -215,7 +215,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 9) 오류 모델 — 디버깅/검증
+## 9. 오류 모델 — 디버깅/검증
 
 - HTML: 에러를 **가능한 복구**. 표시되지만 의도와 다를 수 있다.  
 - XHTML(XML): **치명적인 오류 시 렌더 중단**(노출되지 않음).  
@@ -227,7 +227,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 10) Polyglot & XHTML5 — 현대적 전략
+## 10. Polyglot & XHTML5 — 현대적 전략
 
 ### 10.1 Polyglot Markup(양쪽 파서 호환)
 - 문법을 **HTML 파서·XML 파서 모두에서 합법**이 되도록 제약.  
@@ -257,7 +257,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 11) 접근성·SEO·국제화
+## 11. 접근성·SEO·국제화
 
 - `lang` + `xml:lang`: 언어 인식 향상(스크린 리더, 검색엔진).  
 - 제목 구조 `<h1>`~`<h6>` 엄격 중첩, 리스트/테이블 시맨틱 태그 준수.  
@@ -265,7 +265,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 12) 실전 종합 예제(보안·SVG·스크립트 포함)
+## 12. 실전 종합 예제(보안·SVG·스크립트 포함)
 
 ```html
 <?xml version="1.0" encoding="UTF-8"?>
@@ -327,7 +327,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 13) 체크리스트(요약)
+## 13. 체크리스트(요약)
 
 - [ ] 태그/속성 **소문자**  
 - [ ] **모든 속성값 인용**  
@@ -342,7 +342,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 14) 자주 묻는 질문(FAQ)
+## 14. 자주 묻는 질문(FAQ)
 
 **Q. .xhtml로 저장만 하면 XHTML인가요?**  
 A. **아니오.** **문법(Well-formed) + 올바른 MIME/인코딩**이 만족되어야 XML로서 XHTML이다.
@@ -358,7 +358,7 @@ A. **XHTML5(HTML 어휘의 XML 직렬화)** 또는 **Polyglot**을 고려. 레�
 
 ---
 
-## 15) 결론
+## 15. 결론
 
 - XHTML은 **엄격한 문법 + XML 생태계 통합**이 강점.  
 - 현대 웹앱은 대부분 **HTML5**로 충분하지만, **전자문서/출판/정적 변환 파이프라인**에서는 XHTML이 여전히 가치가 크다.  

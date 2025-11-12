@@ -12,7 +12,7 @@ category: WPF
 
 ---
 
-## 0) 데모 시나리오 (끝까지 이어질 예시)
+## 0. 데모 시나리오 (끝까지 이어질 예시)
 
 - **도메인**: Todo(할 일)  
 - **로컬 저장소**: `SQLite` (파일: `%LOCALAPPDATA%\TodoDemo\todo.db`)  
@@ -22,7 +22,7 @@ category: WPF
 
 ---
 
-## 1) 프로젝트 구조
+## 1. 프로젝트 구조
 
 ```
 TodoDemo/
@@ -36,7 +36,7 @@ TodoDemo/
 
 ---
 
-## 2) 패키지 설치
+## 2. 패키지 설치
 
 ```bash
 # EF Core + SQLite
@@ -59,7 +59,7 @@ dotnet add TodoDemo.App package CommunityToolkit.Mvvm
 
 ---
 
-## 3) 도메인/엔티티 설계
+## 3. 도메인/엔티티 설계
 
 ### 3.1 엔티티 (동기화/동시성 필드 포함)
 ```csharp
@@ -82,7 +82,7 @@ public class Todo
 
 ---
 
-## 4) DbContext 구성
+## 4. DbContext 구성
 
 ```csharp
 // TodoDemo.Data/AppDbContext.cs
@@ -163,7 +163,7 @@ public partial class App : Application
 
 ---
 
-## 5) 마이그레이션
+## 5. 마이그레이션
 
 ```bash
 dotnet ef migrations add InitialCreate --project TodoDemo.Data --startup-project TodoDemo.App
@@ -174,7 +174,7 @@ dotnet ef database update --project TodoDemo.Data --startup-project TodoDemo.App
 
 ---
 
-## 6) 리포지토리/유닛오브워크 (선택)
+## 6. 리포지토리/유닛오브워크 (선택)
 
 EF Core 자체가 UoW를 제공하지만, 테스트 용이성과 API 인터페이스화를 위해 래핑해 봅니다.
 
@@ -241,7 +241,7 @@ services.AddScoped<ITodoRepository, TodoRepository>();
 
 ---
 
-## 7) WPF(MVVM)와 EF Core 바인딩
+## 7. WPF(MVVM)와 EF Core 바인딩
 
 ### 7.1 ViewModel 기본 (CommunityToolkit.Mvvm)
 ```csharp
@@ -331,7 +331,7 @@ services.AddSingleton<MainViewModel>();
 
 ---
 
-## 8) REST API 클라이언트
+## 8. REST API 클라이언트
 
 ### 8.1 DTO & 매퍼
 ```csharp
@@ -457,7 +457,7 @@ services.AddTodoApi("https://api.example.com");  // 앱 구성에서 BaseAddress
 
 ---
 
-## 9) 오프라인·동기화 서비스
+## 9. 오프라인·동기화 서비스
 
 ### 9.1 Sync 전략(핵심 아이디어)
 1) **푸시**: 로컬 `IsDirty==true` 항목 → 서버 Upsert/Delete (If-Match: ETag)  
@@ -567,7 +567,7 @@ services.AddScoped<SyncService>();
 
 ---
 
-## 10) 동시성/트랜잭션
+## 10. 동시성/트랜잭션
 
 - **EF Core**: `DbContext`는 **단일 스레드/스코프 단위** 사용.  
 - 여러 저장 작업을 **하나의 트랜잭션**에 묶기:
@@ -583,7 +583,7 @@ await tx.CommitAsync(ct);
 
 ---
 
-## 11) 성능 최적화 체크리스트
+## 11. 성능 최적화 체크리스트
 
 - **쿼리**: 필요한 컬럼만(ProjectTo DTO) / `AsNoTracking` 활용  
 - **배치**: 대량 삽입/업데이트 시 `SaveChanges` 호출 횟수 최소화  
@@ -597,7 +597,7 @@ await _db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
 
 ---
 
-## 12) 오류/네트워크 회복력
+## 12. 오류/네트워크 회복력
 
 - **Polly** 재시도(지수 백오프), 429/5xx 처리  
 - **타임아웃**: HttpClient.Timeout / 개별 요청 `CancellationToken`  
@@ -606,7 +606,7 @@ await _db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
 
 ---
 
-## 13) 보안/토큰 관리
+## 13. 보안/토큰 관리
 
 - **Auth**: Bearer Token(Access/Refresh), HttpClientFactory에서 메시지 핸들러로 자동 주입  
 - **보존**: Windows DPAPI/ProtectedData, MSAL(기업 환경), 또는 OS 보안 저장소  
@@ -614,7 +614,7 @@ await _db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
 
 ---
 
-## 14) 테스트 전략
+## 14. 테스트 전략
 
 - **도메인**: 순수 단위 테스트(로직/밸리데이션)  
 - **데이터**: **SQLite In-Memory**(주의: 관계/제약 반영)로 통합 테스트
@@ -632,7 +632,7 @@ db.Database.EnsureCreated();
 
 ---
 
-## 15) 실제 운영 팁
+## 15. 실제 운영 팁
 
 - **마이그레이션 버전 관리**: 앱 시작 시 자동 적용하되, 실패 시 백업/롤백 전략  
 - **DB 백업**: 앱 종료 시/주기적으로 `.db` 백업(파일 잠금 주의)  
@@ -642,7 +642,7 @@ db.Database.EnsureCreated();
 
 ---
 
-## 16) 끝까지 이어지는 **전체 흐름 요약**
+## 16. 끝까지 이어지는 **전체 흐름 요약**
 
 1. **App 시작** → Db 폴더 생성 → **Migrate**  
 2. **MainViewModel.Load** → 로컬 DB에서 목록 로드  
@@ -655,7 +655,7 @@ db.Database.EnsureCreated();
 
 ---
 
-## 17) 추가 코드 조각 (필요할 때 가져다 쓰기)
+## 17. 추가 코드 조각 (필요할 때 가져다 쓰기)
 
 ### 17.1 ValueConverter: 완료 시 취소선
 ```csharp
@@ -680,7 +680,7 @@ _db.ChangeTracker.AutoDetectChangesEnabled = false;
 
 ---
 
-## 18) 자주 묻는 질문(FAQ)
+## 18. 자주 묻는 질문(FAQ)
 
 **Q. EF Core 추적 엔티티를 그대로 바인딩해도 되나요?**  
 A. 소규모는 OK. 대규모 목록에서는 `AsNoTracking`으로 DTO를 뷰에 바인딩 → 편집 시 선택 항목만 Attach/Update를 권장.
@@ -696,7 +696,7 @@ A. SyncService에서 412/409 응답을 분기하여 “서버 우선/클라 우�
 
 ---
 
-## 19) 결론
+## 19. 결론
 
 - **EF Core + SQLite**로 **오프라인 친화적인 로컬 저장소**를 만들고,  
 - **HttpClientFactory + Polly**로 **회복력 있는 API 연동**을 구성하며,  

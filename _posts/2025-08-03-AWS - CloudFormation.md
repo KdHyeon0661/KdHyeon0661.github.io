@@ -6,7 +6,7 @@ category: AWS
 ---
 # CloudFormation: 인프라의 코드화(Infrastructure as Code)
 
-## 0) CloudFormation 한눈에 보기
+## 0. CloudFormation 한눈에 보기
 
 - **템플릿(Template)**: YAML/JSON으로 AWS 리소스를 선언
 - **스택(Stack)**: 템플릿의 실행 인스턴스(리소스 묶음)
@@ -16,7 +16,7 @@ category: AWS
 
 ---
 
-## 1) 템플릿의 표준 구조와 내장 함수
+## 1. 템플릿의 표준 구조와 내장 함수
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -72,7 +72,7 @@ Resources:
 
 ---
 
-## 2) 스택 생명주기와 안전장치
+## 2. 스택 생명주기와 안전장치
 
 ### 2.1 기본 CLI
 
@@ -123,7 +123,7 @@ aws cloudformation describe-stack-resource-drifts --stack-name app-prod
 
 ---
 
-## 3) **DeletionPolicy/UpdateReplacePolicy**와 데이터 보호
+## 3. **DeletionPolicy/UpdateReplacePolicy**와 데이터 보호
 
 ```yaml
 Resources:
@@ -139,7 +139,7 @@ Resources:
 
 ---
 
-## 4) 조건/매핑으로 **환경별 분기**와 **리전별 값 관리**
+## 4. 조건/매핑으로 **환경별 분기**와 **리전별 값 관리**
 
 ```yaml
 Parameters:
@@ -168,7 +168,7 @@ Parameters:
 
 ---
 
-## 5) **실전 네트워킹 템플릿** (VPC + 서브넷 + IGW + NAT + RT)
+## 5. **실전 네트워킹 템플릿** (VPC + 서브넷 + IGW + NAT + RT)
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -286,7 +286,7 @@ Outputs:
 
 ---
 
-## 6) 애플리케이션 계층 예시 — ALB + ASG(LaunchTemplate) + UserData + 신호
+## 6. 애플리케이션 계층 예시 — ALB + ASG(LaunchTemplate) + UserData + 신호
 
 **권장 패턴:** `CreationPolicy` + **`cfn-signal`**로 **정상 구동을 확인**하고 AutoRollback.
 
@@ -331,7 +331,7 @@ Resources:
 
 ---
 
-## 7) **Exports/Imports**로 스택 간 느슨한 결합
+## 7. **Exports/Imports**로 스택 간 느슨한 결합
 
 **네트워크 스택**에서 `VpcId`/`Subnets`를 Export → **앱 스택**에서 Import:
 
@@ -346,7 +346,7 @@ Parameters:
 
 ---
 
-## 8) **Nested Stacks**로 대형 템플릿 분해
+## 8. **Nested Stacks**로 대형 템플릿 분해
 
 루트 템플릿 → `AWS::CloudFormation::Stack` 리소스로 **하위 템플릿 포함**
 
@@ -363,7 +363,7 @@ Resources:
 
 ---
 
-## 9) **StackSets** — 멀티계정·멀티리전 일괄 배포
+## 9. **StackSets** — 멀티계정·멀티리전 일괄 배포
 
 - 조직 OU 대상으로 **IAM/가드레일/표준 로깅 버킷** 등 전사 공통 배포
 - 배포 모드: Self-managed vs Service-managed(Organizations 연동)
@@ -371,7 +371,7 @@ Resources:
 
 ---
 
-## 10) 거버넌스: **CloudFormation Guard**와 **cfn-lint**
+## 10. 거버넌스: **CloudFormation Guard**와 **cfn-lint**
 
 ### 10.1 Guard 규칙(예)
 
@@ -397,7 +397,7 @@ cfn-lint main.yml
 
 ---
 
-## 11) 보안 베스트 프랙티스
+## 11. 보안 베스트 프랙티스
 
 - S3: **Block Public Access**, 버전·수명주기, **KMS 암호화**
 - KMS KeyPolicy 최소화(루트 풀권한 지양), **Key Rotation**
@@ -408,7 +408,7 @@ cfn-lint main.yml
 
 ---
 
-## 12) 서버리스/매크로/확장
+## 12. 서버리스/매크로/확장
 
 - **AWS SAM(Transform: AWS::Serverless-2016-10-31)**: 간결한 서버리스 템플릿로 컴파일 → CFN  
 - **매크로(Macros)**: 템플릿을 배포 전 **커스텀 변환**(예: 공통 태그/보안 자동 주입)
@@ -435,7 +435,7 @@ Resources:
 
 ---
 
-## 13) 비용 근사와 최적화 감각
+## 13. 비용 근사와 최적화 감각
 
 - NAT 게이트웨이, ALB, 데이터 전송, EBS/RDS 스토리지, Lambda GB-초, KMS API 등 **누적 비용**에 주의
 - 예) NAT GW 월 비용 근사:  
@@ -445,7 +445,7 @@ Resources:
 
 ---
 
-## 14) 운영 전 점검 체크리스트
+## 14. 운영 전 점검 체크리스트
 
 - [ ] `cfn-lint`/`Guard` 통과  
 - [ ] 변경은 **Change Set**로 검토, **스택 정책** 설정  
@@ -458,7 +458,7 @@ Resources:
 
 ---
 
-## 15) 통합 예제: **VPC + ALB + ASG + RDS + S3 + CloudWatch 경보 + 스택정책 + 롤백트리거**
+## 15. 통합 예제: **VPC + ALB + ASG + RDS + S3 + CloudWatch 경보 + 스택정책 + 롤백트리거**
 
 > 실제 운영에 쓰는 **축약판**입니다(핵심 패턴 위주). RDS는 Snapshot 보호, ASG는 cfn-signal, ALB 헬스체크, 경보를 롤백 트리거로 연동.
 
@@ -635,7 +635,7 @@ Outputs:
 
 ---
 
-## 16) 문제 해결(트러블슈팅) 모음
+## 16. 문제 해결(트러블슈팅) 모음
 
 - **CREATE_FAILED**: 이벤트 탭에서 원인 리소스 확인 → **DependsOn** 또는 IAM 권한/서브넷/SG 상호 참조 검토
 - **UPDATE_ROLLBACK_FAILED**: 리커버리 가이드에 따라 수동 정리 후 `continue-update-rollback`
@@ -644,7 +644,7 @@ Outputs:
 
 ---
 
-## 17) CloudFormation vs CDK vs Terraform 간 빠른 선택 가이드
+## 17. CloudFormation vs CDK vs Terraform 간 빠른 선택 가이드
 
 | 항목 | CloudFormation | CDK | Terraform |
 |---|---|---|---|
@@ -658,7 +658,7 @@ Outputs:
 
 ---
 
-## 18) 마무리 — 운영형 CloudFormation의 핵심 10계명
+## 18. 마무리 — 운영형 CloudFormation의 핵심 10계명
 
 1) **Change Set**으로 배포 전 변경 검토  
 2) **Stack Policy**로 핵심 리소스 보호  

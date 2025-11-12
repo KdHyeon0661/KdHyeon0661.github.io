@@ -9,11 +9,9 @@ category: WPF
 WPF에서 **ICommand**는 버튼/메뉴/단축키 등의 **사용자 입력을 뷰모델의 동작**으로 연결하는 표준 인터페이스입니다.  
 그 구현체로 가장 널리 쓰이는 것이 **RelayCommand**(DelegateCommand)이며, 동기/비동기/제네릭 버전을 상황에 맞게 사용합니다.
 
-아래는 **개념 → 동기/제네릭 구현 → 비동기 구현(취소/재진입 방지) → 사용법 → 주의점/베스트 프랙티스** 순서로 정리했습니다.
-
 ---
 
-## 1) ICommand 기본
+## 1. ICommand 기본
 
 ```csharp
 public interface ICommand
@@ -32,7 +30,7 @@ public interface ICommand
 
 ---
 
-## 2) 가장 기본적인 RelayCommand (동기)
+## 2. 가장 기본적인 RelayCommand (동기)
 
 ### 2.1 비제네릭 버전
 ```csharp
@@ -134,7 +132,7 @@ public sealed class RelayCommand<T> : ICommand
 
 ---
 
-## 3) 비동기 명령 (AsyncRelayCommand)
+## 3. 비동기 명령 (AsyncRelayCommand)
 
 비동기는 `async void`가 되기 쉬워 **예외/동시 실행/취소** 관리가 어렵습니다.  
 아래 구현은 **재진입 방지**, **취소 토큰**, **예외 안전성**을 고려했습니다.
@@ -218,7 +216,7 @@ public sealed class AsyncRelayCommand : ICommand
 
 ---
 
-## 4) 뷰모델에서의 사용 예
+## 4. 뷰모델에서의 사용 예
 
 ```csharp
 using System.Collections.ObjectModel;
@@ -303,7 +301,7 @@ public class MainViewModel : INotifyPropertyChanged
 
 ---
 
-## 5) XAML에서 바인딩
+## 5. XAML에서 바인딩
 
 ```xml
 <Grid xmlns:i="http://schemas.microsoft.com/xaml/behaviors">
@@ -343,7 +341,7 @@ public class MainViewModel : INotifyPropertyChanged
 
 ---
 
-## 6) RoutedCommand / ApplicationCommands와의 차이
+## 6. RoutedCommand / ApplicationCommands와의 차이
 
 - **RoutedCommand / RoutedUICommand**: **요소 트리**를 타고 올라가며 `CommandBinding`이 있는 곳에서 처리(뷰 코드비하인드 중심).  
 - **ICommand(RelayCommand)**: **뷰모델**에 두고 바인딩으로 직접 호출(MVVM 친화).  
@@ -352,7 +350,7 @@ public class MainViewModel : INotifyPropertyChanged
 
 ---
 
-## 7) 흔한 실수 & 베스트 프랙티스
+## 7. 흔한 실수 & 베스트 프랙티스
 
 1. **`async void` 남발 금지**  
    - 비동기 커맨드는 `AsyncRelayCommand` 같은 **Task 기반**으로 구현하여 예외/취소/재진입을 관리하세요.
@@ -368,7 +366,7 @@ public class MainViewModel : INotifyPropertyChanged
 
 ---
 
-## 8) 프레임워크/툴킷 활용 (선택)
+## 8. 프레임워크/툴킷 활용 (선택)
 
 보일러플레이트를 줄이려면 **CommunityToolkit.Mvvm**을 고려하세요.
 
@@ -398,7 +396,7 @@ public partial class OrdersViewModel : ObservableObject
 
 ---
 
-## 9) 단위 테스트 포인트
+## 9. 단위 테스트 포인트
 
 - **CanExecute**: 상태에 따라 `true/false`가 올바르게 변하는지  
 - **Execute**: 동작이 기대대로 호출되는지  

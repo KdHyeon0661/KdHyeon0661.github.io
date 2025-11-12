@@ -6,7 +6,7 @@ category: Docker
 ---
 # Dockerfile & 이미지 최적화 베스트 프랙티스
 
-## 0) 빠른 개요(핵심 복습)
+## 0. 빠른 개요(핵심 복습)
 
 - **캐시**: Dockerfile **위→아래**로 레이어 캐시. **윗단 변경 = 아랫단 전부 무효화**.
 - **.dockerignore**: 빌드 컨텍스트 다이어트(성능·보안·크기).
@@ -17,7 +17,7 @@ category: Docker
 
 ---
 
-## 1) 캐시(Cache) 제대로 활용하기
+## 1. 캐시(Cache) 제대로 활용하기
 
 ### 1.1 원칙
 - Dockerfile은 **위에서 아래로** 평가·레이어화.
@@ -55,7 +55,7 @@ $$
 
 ---
 
-## 2) .dockerignore로 컨텍스트 다이어트
+## 2. .dockerignore로 컨텍스트 다이어트
 
 ### 2.1 예시
 ```dockerignore
@@ -82,7 +82,7 @@ tests/
 
 ---
 
-## 3) 경량 베이스 이미지 선택
+## 3. 경량 베이스 이미지 선택
 
 | 언어/플랫폼 | 경량 추천 | 비고 |
 |---|---|---|
@@ -95,7 +95,7 @@ tests/
 
 ---
 
-## 4) 레이어 줄이기와 APT 모범 사례
+## 4. 레이어 줄이기와 APT 모범 사례
 
 ### 4.1 RUN 묶기 + 캐시 삭제
 ```Dockerfile
@@ -127,7 +127,7 @@ RUN apt-get update \
 
 ---
 
-## 5) 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 슬림하게”
+## 5. 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 슬림하게”
 
 ### 5.1 Node → Nginx
 ```Dockerfile
@@ -183,7 +183,7 @@ ENTRYPOINT ["/app"]
 
 ---
 
-## 6) BuildKit 고급 기능: 캐시·시크릿·SSH
+## 6. BuildKit 고급 기능: 캐시·시크릿·SSH
 
 BuildKit 활성화:
 ```bash
@@ -227,7 +227,7 @@ docker build --ssh default -t app:git .
 
 ---
 
-## 7) 언어별 최적화 패턴
+## 7. 언어별 최적화 패턴
 
 ### 7.1 Python
 ```Dockerfile
@@ -270,7 +270,7 @@ ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app/app.jar"]
 
 ---
 
-## 8) 보안·권한·실행옵션
+## 8. 보안·권한·실행옵션
 
 ### 8.1 USER 전환
 ```Dockerfile
@@ -297,7 +297,7 @@ ENTRYPOINT ["nginx","-g","daemon off;"]
 
 ---
 
-## 9) 재현성·서명·SBOM
+## 9. 재현성·서명·SBOM
 
 ### 9.1 다이제스트 고정
 {% raw %}
@@ -323,7 +323,7 @@ docker run --rm nginx@sha256:...
 
 ---
 
-## 10) 이미지 크기 줄이기 체크리스트
+## 10. 이미지 크기 줄이기 체크리스트
 
 - `*-slim`/`alpine`/`distroless`/`scratch` 검토.
 - 멀티스테이지로 **산출물만** 복사.
@@ -334,7 +334,7 @@ docker run --rm nginx@sha256:...
 
 ---
 
-## 11) 측정·검증 도구
+## 11. 측정·검증 도구
 
 ```bash
 docker images                       # 크기
@@ -346,7 +346,7 @@ docker run -it --rm <image> sh      # 실제 파일 시스템 확인
 
 ---
 
-## 12) 트러블슈팅 표
+## 12. 트러블슈팅 표
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -359,7 +359,7 @@ docker run -it --rm <image> sh      # 실제 파일 시스템 확인
 
 ---
 
-## 13) 예제: 실전 Flask 서비스 최적화(종합)
+## 13. 예제: 실전 Flask 서비스 최적화(종합)
 
 ```
 my-app/
@@ -410,7 +410,7 @@ docker run -d --name api -p 5000:5000 \
 
 ---
 
-## 14) 예제: 프런트엔드(React/Vite) → Nginx 배포
+## 14. 예제: 프런트엔드(React/Vite) → Nginx 배포
 
 ```Dockerfile
 FROM node:20-slim AS build
@@ -428,7 +428,7 @@ RUN printf "events {}\nhttp { server { listen 80; location /health { return 200 
 
 ---
 
-## 15) 베이스 선택 의사결정 간단 가이드
+## 15. 베이스 선택 의사결정 간단 가이드
 
 1) 네이티브 확장/빌드 필요한가? → 그렇다면 `slim` 우선.  
 2) 순수 정적 산출물? → `alpine`/`distroless`/`scratch` 고려.  
@@ -436,7 +436,7 @@ RUN printf "events {}\nhttp { server { listen 80; location /health { return 200 
 
 ---
 
-## 16) 수학 메모(캐시 적중률과 빌드 비용 직관)
+## 16. 수학 메모(캐시 적중률과 빌드 비용 직관)
 
 레이어별 캐시 적중률 \(p_i\), 레이어 비용 \(c_i\)일 때:
 $$
@@ -446,7 +446,7 @@ $$
 
 ---
 
-## 17) 결론 요약
+## 17. 결론 요약
 
 | 목표 | 전략 |
 |---|---|
@@ -458,7 +458,7 @@ $$
 
 ---
 
-## 18) 참고 명령 모음
+## 18. 참고 명령 모음
 
 {% raw %}
 ```bash

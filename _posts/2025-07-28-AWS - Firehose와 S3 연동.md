@@ -6,7 +6,7 @@ category: AWS
 ---
 # Kinesis Data Firehose → S3 연동
 
-## 0) 한눈에 보는 아키텍처
+## 0. 한눈에 보는 아키텍처
 
 ```
 [Producers: App/Agent/IoT/KDS] --(PutRecord/Batched)-->
@@ -29,7 +29,7 @@ category: AWS
 
 ---
 
-## 1) 소스 옵션(Direct PUT vs Kinesis Data Streams)
+## 1. 소스 옵션(Direct PUT vs Kinesis Data Streams)
 
 | 소스 | 특징 | 권장 상황 |
 |---|---|---|
@@ -40,7 +40,7 @@ category: AWS
 
 ---
 
-## 2) S3 대상 설계(폴더 구조·프리픽스·압축·포맷)
+## 2. S3 대상 설계(폴더 구조·프리픽스·압축·포맷)
 
 ### 2.1 S3 Prefix(폴더) 설계
 
@@ -67,7 +67,7 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 
 ---
 
-## 3) IAM·S3 정책(필수 권한 템플릿)
+## 3. IAM·S3 정책(필수 권한 템플릿)
 
 ### 3.1 Firehose 전송 역할(IAM Role)
 
@@ -122,7 +122,7 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 
 ---
 
-## 4) 버퍼링·전달 파라미터(튜닝 전략)
+## 4. 버퍼링·전달 파라미터(튜닝 전략)
 
 - **Buffer Size**: 1~128MiB (기본 5MiB)  
 - **Buffer Interval**: 60~900초 (기본 300초)
@@ -138,7 +138,7 @@ $$
 
 ---
 
-## 5) Lambda 변환(ETL) — PII 마스킹·정규화
+## 5. Lambda 변환(ETL) — PII 마스킹·정규화
 
 ### 5.1 입력·출력 계약
 
@@ -186,7 +186,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 6) Parquet 변환 + Glue 스키마 레지스트리
+## 6. Parquet 변환 + Glue 스키마 레지스트리
 
 - 콘솔/CLI에서 **Record format conversion** 활성화 → 출력 포맷 Parquet/ORC 지정  
 - **Glue Schemas**에서 **JSON→Avro→Parquet** 변환 파이프라인을 자동화  
@@ -210,7 +210,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 7) 동적 파티셔닝(Dynamic Partitioning)
+## 7. 동적 파티셔닝(Dynamic Partitioning)
 
 - 레코드 내 키(예: `app`, `region`)를 파티션 키로 사용하여 S3 프리픽스 분배  
 - **장점**: 파티션 프루닝으로 Athena·Spark 비용/속도 개선  
@@ -222,7 +222,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 8) CLI로 빠른 실습(Direct PUT)
+## 8. CLI로 빠른 실습(Direct PUT)
 
 ### 8.1 전달 스트림 생성(JSON→GZIP→S3)
 
@@ -254,7 +254,7 @@ aws firehose put-record \
 
 ---
 
-## 9) 모니터링·알람(CloudWatch)
+## 9. 모니터링·알람(CloudWatch)
 
 **주요 메트릭**
 - `DeliveryToS3.Records`, `DeliveryToS3.DataFreshness`, `DeliveryToS3.Success`, `DeliveryToS3.Failures`
@@ -279,7 +279,7 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 10) 분석: Athena DDL & CTAS
+## 10. 분석: Athena DDL & CTAS
 
 ### 10.1 Hive 스타일 파티션 테이블(JSON)
 
@@ -317,7 +317,7 @@ WHERE yyyymmdd='2025-11-10';
 
 ---
 
-## 11) IaC 모음
+## 11. IaC 모음
 
 ### 11.1 Terraform(핵심만)
 
@@ -433,7 +433,7 @@ Resources:
 
 ---
 
-## 12) 에이전트·수집기(Fluent Bit/Kinesis Agent)
+## 12. 에이전트·수집기(Fluent Bit/Kinesis Agent)
 
 ### 12.1 Fluent Bit → Firehose(HTTP)
 
@@ -456,7 +456,7 @@ Resources:
 
 ---
 
-## 13) 백업·에러 경로·재처리
+## 13. 백업·에러 경로·재처리
 
 - **ErrorOutputPrefix** 하위에 Firehose가 실패 유형별 폴더 생성(예: 변환 실패/대상 실패)  
 - 재처리 파이프라인:
@@ -465,7 +465,7 @@ Resources:
 
 ---
 
-## 14) 보안·네트워킹
+## 14. 보안·네트워킹
 
 - **SSE-KMS**: S3·Firehose 모두 KMS 키 사용, **키 정책**에 Firehose Role 허용  
 - **VPC 엔드포인트(Interface/Gateway)**: S3·Firehose PrivateLink → 인터넷 없이 전송  
@@ -474,7 +474,7 @@ Resources:
 
 ---
 
-## 15) 비용 모델 & 계산 감각
+## 15. 비용 모델 & 계산 감각
 
 - Firehose **수집/전송 요금**: GB당  
 - **변환 비용**: Parquet/ORC 변환 사용 시 추가 과금  
@@ -489,7 +489,7 @@ $$
 
 ---
 
-## 16) 성능·운영 베스트 프랙티스
+## 16. 성능·운영 베스트 프랙티스
 
 - **소파일 문제**: 버퍼 사이즈↑, Interval↑, 다운스트림 **Compact Job(CTAS)** 주기화  
 - **스키마 진화**: 필드 추가 중심, 중대한 변경은 **새 경로/테이블**  
@@ -499,7 +499,7 @@ $$
 
 ---
 
-## 17) 트러블슈팅 체크리스트
+## 17. 트러블슈팅 체크리스트
 
 - [ ] S3 권한 오류: 버킷/오브젝트 ARN, 역할 Principal, KMS 키 정책 점검  
 - [ ] 변환 실패 급증: Lambda 타임아웃/메모리/로그, 레코드 크기·인코딩 확인  
@@ -509,7 +509,7 @@ $$
 
 ---
 
-## 18) 엔드투엔드 실전 시나리오(요약)
+## 18. 엔드투엔드 실전 시나리오(요약)
 
 **목표**: 웹 액세스 로그 → Firehose → S3(Parquet, 파티션) → Athena 분석
 
@@ -527,7 +527,7 @@ $$
 
 ---
 
-## 19) 참고 쿼리(Athena)
+## 19. 참고 쿼리(Athena)
 
 **시간대별 요청 수**
 ```sql
@@ -549,7 +549,7 @@ ORDER BY c DESC;
 
 ---
 
-## 20) 마무리 요약
+## 20. 마무리 요약
 
 | 영역 | 핵심 |
 |---|---|

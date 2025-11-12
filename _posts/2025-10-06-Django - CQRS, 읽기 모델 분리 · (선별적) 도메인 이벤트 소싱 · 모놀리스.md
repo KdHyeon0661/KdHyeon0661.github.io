@@ -6,7 +6,7 @@ category: Django
 ---
 # CQRS / 읽기 모델 분리 · (선별적) 도메인 이벤트 소싱 · 모놀리스 → 모듈 분해 전략
 
-## 1) CQRS — 읽기 모델 분리
+## 1. CQRS — 읽기 모델 분리
 
 ### 1-1. 왜 CQRS인가?
 
@@ -249,7 +249,7 @@ class MyOrdersView(ListView):
 
 ---
 
-## 2) (선별적) 도메인 이벤트 소싱
+## 2. (선별적) 도메인 이벤트 소싱
 
 > “모든 애그리게이트를 이벤트 소싱”이 아니라, **감사·규정 준수·예측/팩트 재생**이 필요한 **핵심 애그리게이트만** 이벤트 소싱을 적용합니다.
 
@@ -480,7 +480,7 @@ def upcast(ev):
 
 ---
 
-## 3) 모놀리스 → 모듈/서비스 분해 전략
+## 3. 모놀리스 → 모듈/서비스 분해 전략
 
 > 목표는 “마이크로서비스”가 아니라 **경계 명확화 + 독립 배포 가능한 모듈**로의 안전한 단계적 전환입니다.
 
@@ -638,7 +638,7 @@ log.info("saga.order_payment.end", order_id=oid, status="PAID", trace_id=tid)
 
 ---
 
-## 4) 테스트 전략
+## 4. 테스트 전략
 
 ### 4-1. 단위 테스트
 
@@ -669,7 +669,7 @@ def test_projection_updates_readmodel(db):
 
 ---
 
-## 5) 보안/컴플라이언스 고려
+## 5. 보안/컴플라이언스 고려
 
 - 이벤트 payload에 **개인정보 최소화**(키만, 본문은 tokenized).  
 - **삭제 요청(DRR)**: 이벤트 소싱 환경에선 삭제가 어려움 → **암호화/키 폐기** 방식, 또는 **파생 읽기 모델**에서 삭제·마스킹.  
@@ -677,7 +677,7 @@ def test_projection_updates_readmodel(db):
 
 ---
 
-## 6) 운영 체크리스트 (요약)
+## 6. 운영 체크리스트 (요약)
 
 **CQRS**
 - [ ] Outbox + Projector 도입  
@@ -699,7 +699,7 @@ def test_projection_updates_readmodel(db):
 
 ---
 
-## 7) 부록: End-to-End 시나리오 (요약 코드)
+## 7. 부록: End-to-End 시나리오 (요약 코드)
 
 1) **주문 생성(쓰기)** → Order/OrderItem 저장 + Outbox(`OrderCreated`).  
 2) **Projector** → `OrderSummary` upsert.  
@@ -709,7 +709,7 @@ def test_projection_updates_readmodel(db):
 
 ---
 
-## 8) FAQ
+## 8. FAQ
 
 - **Django에서 CQRS가 과하지 않나요?**  
   - CRUD 위주 소규모 앱이면 과합니다. **읽기 트래픽이 크거나 목록/검색이 복잡한 핵심 흐름**만 부분 적용하세요.
@@ -725,7 +725,7 @@ def test_projection_updates_readmodel(db):
 
 ---
 
-## 9) 마무리
+## 9. 마무리
 
 - **CQRS** 로 읽기 경로를 가볍고 빠르게, **쓰기 경로**는 도메인 규칙과 트랜잭션에 집중시킵니다.  
 - **선별적 이벤트 소싱**은 진짜 필요한 애그리게이트에만 도입하여 **감사/재생/확장성**을 확보하세요.  

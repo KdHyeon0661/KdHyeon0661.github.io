@@ -14,7 +14,7 @@ category: MFC
 
 ---
 
-## 1) DPI-Aware: Per-Monitor v2까지 제대로
+## 1. DPI-Aware: Per-Monitor v2까지 제대로
 
 ### 1-1. 핵심 개념
 - **DPI 가상화(DPI Virtualization)**: DPI-미인지 앱은 OS가 강제로 확대(블러) → 글자/아이콘 번짐.
@@ -159,7 +159,7 @@ CRect DluToPx(CWnd* dlg, int x, int y, int w, int h) {
 
 ---
 
-## 2) 다국어/현지화: 리소스 전환 전략
+## 2. 다국어/현지화: 리소스 전환 전략
 
 ### 2-1. 기본 원칙
 - 모든 UI 문자열은 **리소스(STRINGTABLE/RC/Ribbon XML)**로 분리  
@@ -273,7 +273,7 @@ CStringW FormatDate(const SYSTEMTIME& st) {
 
 ---
 
-## 3) 배포: 재배포 패키지, 매니페스트/UAC, 코드 서명, WiX/Inno
+## 3. 배포: 재배포 패키지, 매니페스트/UAC, 코드 서명, WiX/Inno
 
 ### 3-1. 매니페스트/UAC
 - **UAC 실행 권한**:  
@@ -497,7 +497,7 @@ Filename: "{cmd}"; Parameters: "/c netsh advfirewall firewall add rule name=""Ph
 
 ---
 
-## 4) 종합 샘플: “DPI-Aware + 다국어 + 설치/서명” 스캐폴딩
+## 4. 종합 샘플: “DPI-Aware + 다국어 + 설치/서명” 스캐폴딩
 
 ### 4-1. 프로젝트 구성
 ```
@@ -538,7 +538,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 5) 베스트 프랙티스 요약(한 장)
+## 5. 베스트 프랙티스 요약(한 장)
 
 - **DPI**  
   - Per-Monitor v2 선언 + `WM_DPICHANGED` 처리  
@@ -559,7 +559,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 6) 부록: 실용 스니펫 모음
+## 6. 부록: 실용 스니펫 모음
 
 ### 6-1. 현재 모니터 DPI로 픽셀 보정
 ```cpp

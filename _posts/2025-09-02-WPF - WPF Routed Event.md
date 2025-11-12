@@ -6,12 +6,7 @@ category: WPF
 ---
 # WPF Routed Event 완전 정복 — 터널링(Preview*) / 버블링(*Without Preview)
 
-> 이 문서는 **WPF의 Routed Event 시스템**을 “빠짐없이” 다룹니다.  
-> **터널링(Tunneling, `Preview*`)**, **버블링(Bubbling, `*` 일반)**, **Direct**, **클래스 핸들러**, **명시적 라우트 빌드**, **템플릿 내부/외부 전파**, **`Handled`/`AddHandler(…, handledEventsToo)`**, **커스텀 라우티드 이벤트 정의/소유자 추가(AddOwner)**, **명령(Command) 라우팅 연동**, **측정/성능/디버깅**까지 실제 프로젝트에서 겪는 상황 위주로 설명합니다.
-
----
-
-## 0) 한눈 개념: Routed Event란?
+## 0. 한눈 개념: Routed Event란?
 
 - **Routed Event** = “이벤트가 **트리를 따라 이동**하는” WPF 이벤트. 세 가지 라우팅 전략:
   1) **Direct**: 발생한 요소에서만 처리 (WinForms 스타일)
@@ -27,7 +22,7 @@ category: WPF
 
 ---
 
-## 1) 라우팅 전략 비교 요약
+## 1. 라우팅 전략 비교 요약
 
 | 전략 | 경로 | 대표 이벤트 | 사용 목적 |
 |---|---|---|---|
@@ -37,7 +32,7 @@ category: WPF
 
 ---
 
-## 2) “버블링 vs 터널링” 기본 감각 예제
+## 2. “버블링 vs 터널링” 기본 감각 예제
 
 ### 2.1 XAML 구조
 ```xml
@@ -91,7 +86,7 @@ private void Button_Click(object s, RoutedEventArgs e) => Log("Button.Click", e)
 
 ---
 
-## 3) `e.Handled`의 의미와 “이벤트가 안 온다” 문제
+## 3. `e.Handled`의 의미와 “이벤트가 안 온다” 문제
 
 - **`e.Handled = true`**: “이 이벤트는 처리됨” → **동일 이벤트의 라우트 이후 단계에서 더 이상 호출되지 않음**  
   (단, **강제 구독**하는 방법 있음: `AddHandler(RoutedEvent, Handler, handledEventsToo: true)`)
@@ -125,7 +120,7 @@ private void CatchAll_MouseDown(object s, MouseButtonEventArgs e) =>
 
 ---
 
-## 4) Routed Event의 “라우트(Route)”는 어떻게 구성될까?
+## 4. Routed Event의 “라우트(Route)”는 어떻게 구성될까?
 
 - 이벤트 발생 시 프레임워크가 **히트된 시각 요소**(`OriginalSource`)에서 시작해 **Visual Tree**를 따라 “경로”를 만들고,  
   전략에 따라 **내려가거나(터널)** **올라오면서(버블)** 각 노드의 클래스 핸들러/인스턴스 핸들러를 호출합니다.
@@ -135,7 +130,7 @@ private void CatchAll_MouseDown(object s, MouseButtonEventArgs e) =>
 
 ---
 
-## 5) RoutedEvent vs CLR 이벤트
+## 5. RoutedEvent vs CLR 이벤트
 
 | 비교 | Routed Event | CLR Event |
 |---|---|---|
@@ -146,7 +141,7 @@ private void CatchAll_MouseDown(object s, MouseButtonEventArgs e) =>
 
 ---
 
-## 6) 템플릿 내부 요소가 낸 이벤트를 Control에서 처리하기
+## 6. 템플릿 내부 요소가 낸 이벤트를 Control에서 처리하기
 
 컨트롤 템플릿 안 버튼이 낸 클릭을 **컨트롤 외부에서** 처리하고 싶을 때:
 
@@ -206,7 +201,7 @@ public class Card : Control
 
 ---
 
-## 7) 커스텀 Routed Event 정의 (직접 발화/버블/터널)
+## 7. 커스텀 Routed Event 정의 (직접 발화/버블/터널)
 
 ### 7.1 선언/등록
 ```csharp
@@ -261,7 +256,7 @@ private void Stepper_StepChanged(object s, RoutedPropertyChangedEventArgs<int> e
 
 ---
 
-## 8) “소유자 추가(AddOwner)”로 이벤트 재사용
+## 8. “소유자 추가(AddOwner)”로 이벤트 재사용
 
 - WPF 기본 컨트롤이 가진 RoutedEvent를 **내 컨트롤도 동일 의미로** 노출하고 싶다면:
 
@@ -290,7 +285,7 @@ public class HyperLabel : Label
 
 ---
 
-## 9) 명령(Command) 라우팅과의 관계
+## 9. 명령(Command) 라우팅과의 관계
 
 - `ICommand`/`RoutedCommand`는 내부적으로 **Input(키/마우스) RoutedEvent**와 결합됩니다.
 - 예: `Button` 클릭 → `Click`(RoutedEvent) → `Command` 실행  
@@ -316,7 +311,7 @@ private void Copy_Executed(object s, ExecutedRoutedEventArgs e) { /* 수행 */ }
 
 ---
 
-## 10) `OriginalSource` vs `Source`
+## 10. `OriginalSource` vs `Source`
 
 - **`OriginalSource`**: 히트 테스트(실제 클릭)로 가장 **안쪽**의 요소 (템플릿 자식, Run, Border 등)
 - **`Source`**: 라우팅 과정에서 “현재 핸들러 관점의 소스”(상황에 따라 상위로 치환될 수 있음)
@@ -332,7 +327,7 @@ private void Any_MouseDown(object s, MouseButtonEventArgs e)
 
 ---
 
-## 11) 템플릿/컨트롤 경계에서의 라우팅 팁
+## 11. 템플릿/컨트롤 경계에서의 라우팅 팁
 
 - **ControlTemplate 내부**의 요소가 일으킨 버블 이벤트는 **컨트롤 인스턴스**까지 쭉 올라옵니다.  
   → 외부에서는 “Control이 낸 것처럼” 다룰 수 있어 **구현 은닉**이 됩니다.
@@ -341,7 +336,7 @@ private void Any_MouseDown(object s, MouseButtonEventArgs e)
 
 ---
 
-## 12) 입력 이벤트 모음 (대표)
+## 12. 입력 이벤트 모음 (대표)
 
 | 카테고리 | 터널링(Preview*) | 버블링(*) | 메모 |
 |---|---|---|---|
@@ -353,7 +348,7 @@ private void Any_MouseDown(object s, MouseButtonEventArgs e)
 
 ---
 
-## 13) 고급: `OnPreview*` / `On*` 오버라이드 순서
+## 13. 고급: `OnPreview*` / `On*` 오버라이드 순서
 
 컨트롤 파생 시 보통 다음 순서로 호출됩니다.
 
@@ -378,7 +373,7 @@ protected override void OnMouseDown(MouseButtonEventArgs e)
 
 ---
 
-## 14) 라우트를 “가로세로” 모두 활용하는 실전 패턴
+## 14. 라우트를 “가로세로” 모두 활용하는 실전 패턴
 
 ### 14.1 글로벌 키 필터(ESC로 다이얼로그 닫기)
 ```csharp
@@ -413,7 +408,7 @@ private void Window_PreviewKeyDown(object s, KeyEventArgs e)
 
 ---
 
-## 15) `AddHandler` 고급: 특정 타입만 필터하기
+## 15. `AddHandler` 고급: 특정 타입만 필터하기
 
 모든 `MouseDown`을 다 받으면 노이즈가 큼. **원본 타입**으로 필터:
 
@@ -434,7 +429,7 @@ AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler((s, e) =>
 
 ---
 
-## 16) 성능과 안정성 체크리스트
+## 16. 성능과 안정성 체크리스트
 
 - **핸들러 최소화**: 최상위(Window)에 광범위한 핸들러를 많이 달면 불필요한 호출 증가  
   → **정말 필요한 이벤트만** 구독, 내부에서 **조기 필터** (예: 타입/Name)
@@ -444,7 +439,7 @@ AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler((s, e) =>
 
 ---
 
-## 17) “왜 내 이벤트가 안 오지?” 체크리스트
+## 17. “왜 내 이벤트가 안 오지?” 체크리스트
 
 1. **다른 곳에서 `Handled = true` 했나?**  
    → `AddHandler(ev, handler, handledEventsToo:true)`로 확인/우회
@@ -457,7 +452,7 @@ AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler((s, e) =>
 
 ---
 
-## 18) 실습: 간단한 “이벤트 스파이” 컨트롤
+## 18. 실습: 간단한 “이벤트 스파이” 컨트롤
 
 ### 18.1 XAML
 ```xml
@@ -514,7 +509,7 @@ public class Spy : Decorator
 
 ---
 
-## 19) RoutedEvent와 “가상화 컨테이너” (ItemsControl)
+## 19. RoutedEvent와 “가상화 컨테이너” (ItemsControl)
 
 - `ListBox`/`ListView`의 **가상화**가 켜져 있으면(기본) **화면에 보이는 아이템만** 컨테이너가 생성됩니다.  
   → 스크롤로 “새로운 컨테이너”가 만들어지면 **클래스 핸들러**가 자동 적용되(도록 설계),  
@@ -523,7 +518,7 @@ public class Spy : Decorator
 
 ---
 
-## 20) 실전 Q&A (면접/코드 리뷰에서 자주 나오는 포인트)
+## 20. 실전 Q&A (면접/코드 리뷰에서 자주 나오는 포인트)
 
 **Q1. 터널링과 버블링을 각각 언제 쓰나요?**  
 - **터널링**: **사전 필터**(예: 특정 영역 클릭 금지, 글로벌 단축키 선점, 모달 오버레이)  
@@ -541,7 +536,7 @@ public class Spy : Decorator
 
 ---
 
-## 21) 유틸: 조상 탐색 도우미
+## 21. 유틸: 조상 탐색 도우미
 
 ```csharp
 public static class VisualTreeHelpers
@@ -560,7 +555,7 @@ public static class VisualTreeHelpers
 
 ---
 
-## 22) Drag&Drop와 RoutedEvent
+## 22. Drag&Drop와 RoutedEvent
 
 - Drag 시작은 보통 `MouseMove`+`LeftButtonDown` 조합 → `DoDragDrop` 호출  
 - Drop 대상은 **`AllowDrop=true`** 필요 + `DragEnter/Over/Leave/Drop`(Routed)  
@@ -568,7 +563,7 @@ public static class VisualTreeHelpers
 
 ---
 
-## 23) Popup/Adorner/Topmost 경계
+## 23. Popup/Adorner/Topmost 경계
 
 - `Popup`은 **별도 윈도우**로 떠서 **Visual Tree가 분리**됩니다.  
   → 라우팅이 **부모 창으로 버블되지 않음**. 필요하면 **`PlacementTarget`**로 상호작용 설계.  
@@ -576,7 +571,7 @@ public static class VisualTreeHelpers
 
 ---
 
-## 24) 입력 제스처와 터널링 조합 (핫키 처리 예)
+## 24. 입력 제스처와 터널링 조합 (핫키 처리 예)
 
 ```csharp
 // 상위에서 ESC/Enter 핫키 공통 처리
@@ -590,7 +585,7 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 
 ---
 
-## 25) 테스트 전략
+## 25. 테스트 전략
 
 - **단위 테스트**: ViewModel/Command 로직은 테스트 쉽지만, 이벤트 라우팅은 **UI 런타임 필요**  
   → **UI 테스트 프레임워크**(Playwright-WPF 브릿지, TestStack.White 등) 또는 **시뮬레이터** 사용
@@ -598,7 +593,7 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 
 ---
 
-## 26) 미니 캡스톤: “클릭 차단 레이어” 구현
+## 26. 미니 캡스톤: “클릭 차단 레이어” 구현
 
 ### 요구
 - 특정 영역을 “모달”로 막고, 내부 Dialog 외의 클릭은 **모두 흡수**(작동 금지)
@@ -638,7 +633,7 @@ private void Overlay_PreviewKeyDown(object s, KeyEventArgs e)
 
 ---
 
-## 27) 요약 체크리스트
+## 27. 요약 체크리스트
 
 - [ ] 터널링 = **Preview** 하향식, 버블링 = 상향식  
 - [ ] `Handled`는 라우트 **차단** / `AddHandler(…, true)`로 **무시** 가능  
@@ -650,7 +645,7 @@ private void Overlay_PreviewKeyDown(object s, KeyEventArgs e)
 
 ---
 
-## 28) 마무리
+## 28. 마무리
 
 Routed Event는 단순 “이벤트가 위아래로 움직인다”가 아니라,  
 **입력 정책의 중앙집중, 템플릿 캡슐화, 상위 명령 승격, 모달/오버레이, 고급 단축키 처리**까지  

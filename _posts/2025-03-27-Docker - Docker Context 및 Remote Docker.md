@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Context 및 Remote Docker
 
-## 0) 컨셉 빠른 요약
+## 0. 컨셉 빠른 요약
 
 - **Docker Context** = “CLI가 어떤 Docker 엔진(데몬)과 통신할지”를 **프로파일**로 저장/전환하는 기능
 - 기본은 로컬 소켓(`unix:///var/run/docker.sock`)이지만, **SSH** 또는 **TLS TCP**로 **원격 데몬**에 연결 가능
@@ -15,7 +15,7 @@ category: Docker
 
 ---
 
-## 1) Context 기초 — 생성/조회/전환
+## 1. Context 기초 — 생성/조회/전환
 
 ### 1.1 현재 Context 목록 / 사용 중인 Context
 ```bash
@@ -47,7 +47,7 @@ docker --context prod images
 
 ---
 
-## 2) SSH 기반 Remote Context — 가장 안전하고 쉬운 방법
+## 2. SSH 기반 Remote Context — 가장 안전하고 쉬운 방법
 
 > 전제: 원격 서버에 **SSH 접속 가능**, **docker 설치**, 접속 사용자에게 `sudo 없이` docker 사용 권한이 있어야 편하다(예: `docker` 그룹).
 
@@ -110,7 +110,7 @@ docker context create dc-a \
 
 ---
 
-## 3) TLS TCP 기반 Remote Context — 데몬을 TCP로 노출(상용/데이터센터)
+## 3. TLS TCP 기반 Remote Context — 데몬을 TCP로 노출(상용/데이터센터)
 
 > **절대 무방비로 2375(plain TCP)를 열지 말 것.** **2376/TLS** + **양방향 인증(mTLS)** 필수.
 
@@ -144,7 +144,7 @@ docker context create prod \
 
 ---
 
-## 4) Compose × Remote Context — 팀 개발/운영 루틴
+## 4. Compose × Remote Context — 팀 개발/운영 루틴
 
 > Context 전환 후 `docker compose`도 **원격에서** 실행된다.  
 > **볼륨/바인드 경로는 “원격 서버의 파일시스템 기준”** 임을 반드시 기억.
@@ -178,7 +178,7 @@ docker compose ps
 
 ---
 
-## 5) Buildx × Remote Context — 멀티 아키텍처/원격 리소스 활용
+## 5. Buildx × Remote Context — 멀티 아키텍처/원격 리소스 활용
 
 ### 5.1 원격 빌더 노드 구성
 ```bash
@@ -204,7 +204,7 @@ docker buildx build \
 
 ---
 
-## 6) 성능 최적화 — 업로드·캐시·네트워크
+## 6. 성능 최적화 — 업로드·캐시·네트워크
 
 ### 6.1 빌드 컨텍스트 최소화
 - `.dockerignore`로 **컨텍스트 축소** (거대한 `.git`, `node_modules`, `venv`, `dist` 제외)
@@ -236,7 +236,7 @@ $$
 
 ---
 
-## 7) 보안/권한 — SSH·TLS·rootless·감사
+## 7. 보안/권한 — SSH·TLS·rootless·감사
 
 ### 7.1 SSH 권장
 - SSH 키 페어 + `known_hosts` 관리
@@ -264,7 +264,7 @@ systemctl --user enable docker
 
 ---
 
-## 8) 운영 실전 팁 — “원격은 원격이다”
+## 8. 운영 실전 팁 — “원격은 원격이다”
 
 | 주제 | 체크리스트 |
 |---|---|
@@ -278,7 +278,7 @@ systemctl --user enable docker
 
 ---
 
-## 9) 트러블슈팅 표
+## 9. 트러블슈팅 표
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -292,7 +292,7 @@ systemctl --user enable docker
 
 ---
 
-## 10) 실습 시나리오: “원격 우분투에서 Nginx 띄우기”
+## 10. 실습 시나리오: “원격 우분투에서 Nginx 띄우기”
 
 1) Context 만들기
 ```bash
@@ -327,7 +327,7 @@ docker compose up -d
 
 ---
 
-## 11) 원격에서의 “개발자 루프” 패턴
+## 11. 원격에서의 “개발자 루프” 패턴
 
 - **패턴 A (권장)**: 로컬에서 개발 → git push → **원격 CI 러너/서버에서 build** → 레지스트리 push → 원격 배포  
   - 장점: 컨텍스트 전송이 없다. 캐시/비밀/빌드 환경이 일관.
@@ -337,7 +337,7 @@ docker compose up -d
 
 ---
 
-## 12) 명령어 치트시트
+## 12. 명령어 치트시트
 
 ```bash
 # 목록/전환
@@ -368,7 +368,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t repo/app:latest --push
 
 ---
 
-## 13) 구성 템플릿 모음
+## 13. 구성 템플릿 모음
 
 ### 13.1 SSH Config (bastion 포함)
 ```sshconfig
@@ -410,7 +410,7 @@ __pycache__
 
 ---
 
-## 14) FAQ
+## 14. FAQ
 
 **Q1. 로컬에서 `-p 8080:80` 했는데 접속이 안 됩니다.**  
 A. 원격에서 포트를 열었습니다. **원격 서버 IP**로 접속해야 하며, 원격 서버 방화벽/보안 그룹 확인.
@@ -429,7 +429,7 @@ A. 네임스페이스 구분(프로젝트별 접두사), 포트 충돌 회피, C
 
 ---
 
-## 15) 결론
+## 15. 결론
 
 - **Docker Context**로 **“로컬 조작, 원격 실행”**이 쉬워진다.  
 - **SSH Context**는 보안/운영 난이도 대비 생산성이 뛰어나 **가장 실용적**.  

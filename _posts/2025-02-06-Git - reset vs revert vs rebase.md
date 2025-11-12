@@ -6,7 +6,7 @@ category: Git
 ---
 # Git: `reset` vs `revert` vs `rebase`
 
-## 0) 기초 복습 — Git의 3가지 “상태”
+## 0. 기초 복습 — Git의 3가지 “상태”
 
 - **HEAD**: 현재 체크아웃한 커밋(정확히는 브랜치 참조 또는 detached HEAD의 커밋)을 가리키는 포인터  
 - **Index(= Staging area)**: 다음 커밋을 만들기 위해 모아둔 스냅샷  
@@ -16,7 +16,7 @@ category: Git
 
 ---
 
-# 1) `git reset` — 과거로 포인터를 되돌리는 강력하고 위험한 도구
+# 1. `git reset` — 과거로 포인터를 되돌리는 강력하고 위험한 도구
 
 ## 1.1 개념(복습 강화)
 `reset`은 **브랜치 포인터(HEAD)** 를 과거의 커밋로 이동시키고, 옵션에 따라 **Index / Working tree**를 그 상태로 **맞춥니다**.
@@ -78,7 +78,7 @@ git switch -c rescue HEAD@{2}
 
 ---
 
-# 2) `git revert` — 기존 커밋은 보존하고 “반대 동작 커밋”을 쌓는 방법
+# 2. `git revert` — 기존 커밋은 보존하고 “반대 동작 커밋”을 쌓는 방법
 
 ## 2.1 개념(복습 강화)
 `revert`는 지정 커밋의 변경을 **반대로 적용하는 새 커밋**을 생성합니다.  
@@ -121,7 +121,7 @@ git revert <revert-commit-id>
 
 ---
 
-# 3) `git rebase` — 커밋을 다른 기반 위로 “재생성”하여 히스토리를 정렬
+# 3. `git rebase` — 커밋을 다른 기반 위로 “재생성”하여 히스토리를 정렬
 
 ## 3.1 개념(복습 강화)
 `rebase`는 **현재 브랜치의 커밋들을 다른 브랜치의 끝으로 재배치**합니다.  
@@ -175,7 +175,7 @@ git rebase --abort
 
 ---
 
-# 4) reset vs revert vs rebase — 본질적 차이와 안전 지침
+# 4. reset vs revert vs rebase — 본질적 차이와 안전 지침
 
 ## 4.1 목적/영향/안전성(강화 표)
 | 항목 | `reset` | `revert` | `rebase` |
@@ -198,7 +198,7 @@ git rebase --abort
 
 ---
 
-# 5) 충돌/실수 복구 — 현장에서 가장 중요한 부분
+# 5. 충돌/실수 복구 — 현장에서 가장 중요한 부분
 
 ## 5.1 충돌 마커와 해결 절차
 충돌 시 파일에는 다음 마커가 들어갑니다.
@@ -233,7 +233,7 @@ git switch -c rescue HEAD@{2}  # 안전 브랜치 확보
 
 ---
 
-# 6) 협업 정책/보호 브랜치/서명과의 상호작용
+# 6. 협업 정책/보호 브랜치/서명과의 상호작용
 
 ## 6.1 보호 브랜치(Branch protection rules)
 - Require pull request reviews  
@@ -254,7 +254,7 @@ git config --global commit.gpgsign true
 
 ---
 
-# 7) 대규모 히스토리 정리 실전 팁
+# 7. 대규모 히스토리 정리 실전 팁
 
 - **rebase -i + autosquash** 로 잔 커밋을 `fixup!/squash!` 패턴으로 자동 압축  
 - **rebase --rebase-merges** 로 서브토픽 구조를 보존하며 정리  
@@ -268,7 +268,7 @@ git switch -c backup/2025-11-06
 
 ---
 
-# 8) 재현 가능한 랩(전체 스크립트) — 로컬에서 바로 실습
+# 8. 재현 가능한 랩(전체 스크립트) — 로컬에서 바로 실습
 
 ## 8.1 reset 실습
 ```bash
@@ -366,7 +366,7 @@ git log --oneline --graph --decorate --all
 
 ---
 
-# 9) 고급: reset과 rebase의 혼합 시나리오
+# 9. 고급: reset과 rebase의 혼합 시나리오
 
 ## 9.1 최근 커밋을 분해해서 메시지/내용 재구성
 ```bash
@@ -394,7 +394,7 @@ git push --force-with-lease
 
 ---
 
-# 10) FAQ — 실무에서 자주 받는 질문
+# 10. FAQ — 실무에서 자주 받는 질문
 
 **Q1. 이미 push한 커밋을 reset으로 지워도 되나?**  
 A. 공개 브랜치에서는 지양. 동료 이력에 충돌을 유발. revert가 안전.
@@ -414,7 +414,7 @@ A. Squash는 여러 커밋을 1개로 압축하는 병합 방식이고, revert�
 
 ---
 
-# 11) 명령어/옵션 치트시트
+# 11. 명령어/옵션 치트시트
 
 ```bash
 # reset
@@ -450,7 +450,7 @@ git config --global rerere.enabled true
 
 ---
 
-# 12) 결론
+# 12. 결론
 
 - **reset**: 강력하지만 위험. 로컬 정리/최근 실수 바로잡기에만 사용. 공개 브랜치에는 부적절.  
 - **revert**: 협업 친화. 히스토리를 보존하며 “취소” 사실을 기록. 운영 중 “빠른 복구”에 최적.  

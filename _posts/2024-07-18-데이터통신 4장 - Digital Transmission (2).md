@@ -6,7 +6,7 @@ category: DataCommunication
 ---
 # 4.1.2 Line Coding Schemes
 
-## 0) 들어가며 — 라인 코딩에서 반드시 점검할 7가지 축
+## 0. 들어가며 — 라인 코딩에서 반드시 점검할 7가지 축
 1. **심볼/레벨 수**: 레벨이 \(L\)개면 심볼당 정보량은 \(\log_2 L\) 비트.  
    $$ r = \log_2 L $$
 2. **신호율 vs 비트율**: 비트율 \(N\) (bps), 신호율 \(S\) (baud).  
@@ -20,7 +20,7 @@ category: DataCommunication
 
 ---
 
-## 1) Unipolar Scheme (단극)
+## 1. Unipolar Scheme (단극)
 
 **정의**: 전압이 한쪽 극성(+만 혹은 0/+). 보통 교육용.
 
@@ -47,7 +47,7 @@ def unipolar_nrz(bits, V=1.0):
 
 ---
 
-## 2) Polar Scheme (양·음 극성)
+## 2. Polar Scheme (양·음 극성)
 
 양/음 두 극성 사용으로 평균 0 근접 설계가 쉬움.
 
@@ -84,7 +84,7 @@ def nrzi(bits, V=1.0):
 
 ---
 
-## 3) Biphase (Manchester / Differential Manchester)
+## 3. Biphase (Manchester / Differential Manchester)
 
 비트 **중간 전이**를 의무화해 **CDR 최강**, 평균 0.
 
@@ -117,7 +117,7 @@ def manchester(bits, V=1.0):
 
 ---
 
-## 4) Bipolar Scheme (삼전위: +V/0/−V)
+## 4. Bipolar Scheme (삼전위: +V/0/−V)
 
 **핵심**: **1**(또는 0)을 **+/−로 번갈아** 보내 평균 0 유지.
 
@@ -154,7 +154,7 @@ def ami(bits, V=1.0):
 
 ---
 
-## 5) Multilevel (다준위) — 2B1Q / 8B6T / 4D-PAM5
+## 5. Multilevel (다준위) — 2B1Q / 8B6T / 4D-PAM5
 
 ### 5.0 매핑 조건과 여분 패턴 활용
 - \(m\) 데이터 비트 → \(2^m\) 패턴, \(n\) 신호 요소/레벨 \(L\) → \(L^n\) 패턴.  
@@ -195,7 +195,7 @@ def encode_2b1q(bitstr):
 
 ---
 
-## 6) Multi-transition: MLT-3
+## 6. Multi-transition: MLT-3
 
 - **상태 순환**: \(-V \rightarrow 0 \rightarrow +V \rightarrow 0 \rightarrow -V \rightarrow \cdots\)  
 - **입력 ‘1’에서만 다음 상태로 이동**, ‘0’이면 유지.  
@@ -218,7 +218,7 @@ def mlt3(bits, V=1.0):
 
 ---
 
-## 7) 스펙트럼(정성), DC, 전이, CDR — 종합 비교
+## 7. 스펙트럼(정성), DC, 전이, CDR — 종합 비교
 
 | 계열 | 대표 | 평균(DC) | 전이 밀도/동기화 | 대역 감각(근사) | 장단점 요약 |
 |---|---|---|---|---|---|
@@ -232,7 +232,7 @@ def mlt3(bits, V=1.0):
 
 ---
 
-## 8) 스크램블·블록코딩·RLL과의 결합
+## 8. 스크램블·블록코딩·RLL과의 결합
 
 ### 8.1 스크램블러(예: LFSR)
 - **목표**: 데이터 통계에 상관없이 **전이/스펙트럼**을 평탄화 → **CDR/EMI 개선**.  
@@ -257,7 +257,7 @@ def lfsr_scramble(bits, taps=(7,4), seed=0b1111111):
 
 ---
 
-## 9) 실전 PHY 파이프라인 예
+## 9. 실전 PHY 파이프라인 예
 
 ### 9.1 100BASE-TX (Cat5 UTP)
 - **PCS**: 4B/5B 블록코딩 → NRZ-I  
@@ -271,7 +271,7 @@ def lfsr_scramble(bits, taps=(7,4), seed=0b1111111):
 
 ---
 
-## 10) 계산/연습 문제 (해설 힌트 포함)
+## 10. 계산/연습 문제 (해설 힌트 포함)
 
 ### Q1. Manchester의 DC-free 증명(평균)
 랜덤 \(p(1)=p(0)=0.5\)에서 한 비트 평균을 구하라.  
@@ -294,7 +294,7 @@ def lfsr_scramble(bits, taps=(7,4), seed=0b1111111):
 
 ---
 
-## 11) 실습 코드 번들 — 전이수/평균레벨/간단 비교
+## 11. 실습 코드 번들 — 전이수/평균레벨/간단 비교
 
 ```python
 def transitions(seq):
@@ -328,7 +328,7 @@ print("  MLT-3        :", avg_level(w_mlt3))
 
 ---
 
-## 12) 결론 — 선택의 기준을 한 장으로
+## 12. 결론 — 선택의 기준을 한 장으로
 - **CDR 최강/간단한 수신**: Manchester/DM  
 - **대역 절약**: 다준위(PAM-4/5/…) + 블록코딩 + 이퀄라이저  
 - **EMI 억제/중간 주파수로 타협**: MLT-3  

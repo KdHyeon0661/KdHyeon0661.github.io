@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 0) 전체 개요 — “인스턴스(메모리+프로세스) ↔ 데이터베이스(파일)”
+## 0. 전체 개요 — “인스턴스(메모리+프로세스) ↔ 데이터베이스(파일)”
 
 오라클은 **인스턴스(Instance)** 와 **데이터베이스(Database)** 로 분리된 **논리 모델**을 갖습니다.
 
@@ -31,7 +31,7 @@ category: DB 심화
 
 ---
 
-## 1) 프로세스 아키텍처 — 백그라운드/서버/리스너
+## 1. 프로세스 아키텍처 — 백그라운드/서버/리스너
 
 ### 1.1 프로세스 유형
 
@@ -73,7 +73,7 @@ lsnrctl services
 
 ---
 
-## 2) 메모리 아키텍처 — SGA / PGA / (옵션) In-Memory
+## 2. 메모리 아키텍처 — SGA / PGA / (옵션) In-Memory
 
 ### 2.1 SGA(System Global Area) 구성
 
@@ -136,7 +136,7 @@ SHOW PARAMETER memory_target;
 
 ---
 
-## 3) 저장소 아키텍처 — 데이터/컨트롤/리두/아카이브/임시/UNDO
+## 3. 저장소 아키텍처 — 데이터/컨트롤/리두/아카이브/임시/UNDO
 
 ### 3.1 컨트롤 파일(Control Files)
 
@@ -207,7 +207,7 @@ CREATE SPFILE FROM PFILE='/tmp/initORCL.ora';
 
 ---
 
-## 4) 일관성/SCN/Redo/Undo — 읽기/쓰기의 핵심 메커니즘
+## 4. 일관성/SCN/Redo/Undo — 읽기/쓰기의 핵심 메커니즘
 
 ### 4.1 SCN(System Change Number)
 
@@ -256,7 +256,7 @@ WHERE name LIKE 'table scan rows gotten' OR name LIKE 'consistent gets';
 
 ---
 
-## 5) 체크포인트 & 리커버리 — 장애/재시작 시나리오
+## 5. 체크포인트 & 리커버리 — 장애/재시작 시나리오
 
 ### 5.1 체크포인트(Checkpoint)
 
@@ -292,7 +292,7 @@ SHOW PARAMETER db_recovery_file_dest_size;
 
 ---
 
-## 6) 동시성 제어 — 래치/뮤텍스/엔큐/트랜잭션 락
+## 6. 동시성 제어 — 래치/뮤텍스/엔큐/트랜잭션 락
 
 ### 6.1 래치(Latch) & 뮤텍스(Mutex)
 
@@ -329,7 +329,7 @@ WHERE state <> 'WAITED SHORT TIME';
 
 ---
 
-## 7) 옵티마이저/실행계획/버퍼 캐시 동작(아키텍처 관점 요약)
+## 7. 옵티마이저/실행계획/버퍼 캐시 동작(아키텍처 관점 요약)
 
 - **코스트 기반 옵티마이저(CBO)**: 통계(카디널리티/히스토그램/NDV)와 시스템 상태를 기반으로 액세스/조인 전략 선택.
 - **버퍼 캐시**: 
@@ -351,7 +351,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
 ---
 
-## 8) 인스턴스 라이프사이클 — STARTUP/SHUTDOWN & NOMOUNT/MOUNT/OPEN
+## 8. 인스턴스 라이프사이클 — STARTUP/SHUTDOWN & NOMOUNT/MOUNT/OPEN
 
 ### 8.1 단계
 
@@ -388,7 +388,7 @@ ALTER SYSTEM SWITCH LOGFILE;
 
 ---
 
-## 9) 네트워킹/서비스/리스너 — 다중 서비스와 로드밸런싱(개요)
+## 9. 네트워킹/서비스/리스너 — 다중 서비스와 로드밸런싱(개요)
 
 - **서비스(Service)** 개념: 하나의 DB에서 여러 개 **서비스 명**을 노출. 워크로드 분리/로드 밸런싱/Failover 정책에 활용.
 - **TNS** 이름 → **서비스명** 매핑. 클라이언트에서 **EZCONNECT**(`host:port/service`) 도 흔히 사용.
@@ -405,7 +405,7 @@ WHERE username IS NOT NULL;
 
 ---
 
-## 10) RAC/ASM/메타 아키텍처(개요)
+## 10. RAC/ASM/메타 아키텍처(개요)
 
 - **RAC**(Real Application Clusters): 여러 인스턴스가 **하나의 데이터베이스**(공유 스토리지)를 **동시에** 오픈.  
   - **GCS/GES**(Global Cache/Enqueue Service)로 버퍼/락 일관성 유지.  
@@ -417,7 +417,7 @@ WHERE username IS NOT NULL;
 
 ---
 
-## 11) 모니터링/진단 — 동시성, I/O, 리두, Undo, 메모리
+## 11. 모니터링/진단 — 동시성, I/O, 리두, Undo, 메모리
 
 ### 11.1 시스템 지표 훑어보기
 
@@ -473,7 +473,7 @@ ORDER BY mb_used DESC;
 
 ---
 
-## 12) 실습 시나리오 — “작게 만들어 보고 아키텍처 관측하기”
+## 12. 실습 시나리오 — “작게 만들어 보고 아키텍처 관측하기”
 
 ### 12.1 준비: 샘플 스키마/테이블 생성
 
@@ -556,7 +556,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 13) 성능·용량 감각을 위한 간단 수식(개념적 가이드)
+## 13. 성능·용량 감각을 위한 간단 수식(개념적 가이드)
 
 > **주의**: 아래 수식들은 “감각 형성”을 위한 개념적 지표입니다. 실전 튜닝은 **대기 이벤트/프로파일링/실측** 중심으로 하세요.
 
@@ -572,7 +572,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 14) 운영 팁 — 기본 아키텍처를 살리는 설정/관행
+## 14. 운영 팁 — 기본 아키텍처를 살리는 설정/관행
 
 1. **ARCHIVELOG + 적절한 FRA**: 무정지 백업/PITR/Data Guard 가능성 확보.
 2. **리두 로그 크기/개수 설계**: 너무 잦은 로그 스위치는 체크포인트 빈발/아카이브 부하.  
@@ -586,7 +586,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 15) 체크리스트 — “기본 아키텍처 점검 10선”
+## 15. 체크리스트 — “기본 아키텍처 점검 10선”
 
 1. `ARCHIVELOG` 모드 여부/아카이브 대상/FRA 용량.
 2. 온라인 리두 로그 **그룹 수/크기/IOPS** 적정성.
@@ -601,7 +601,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 16) 부록 — 자주 보는 뷰(빠른 탐색)
+## 16. 부록 — 자주 보는 뷰(빠른 탐색)
 
 ```sql
 -- 인스턴스/DB
@@ -637,7 +637,7 @@ SELECT * FROM dba_tab_statistics WHERE table_name='SALES_DEMO';
 
 ---
 
-## 17) 마무리 요약
+## 17. 마무리 요약
 
 - 오라클의 **기본 아키텍처**는 “**인스턴스(메모리+프로세스)** 가 **데이터베이스(파일)** 를 관리”하는 구조입니다.
 - **Redo/Undo/SCN** 삼각 구도가 **원자성/일관성/내구성**을 구현합니다.

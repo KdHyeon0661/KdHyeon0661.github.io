@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core: `appsettings.json`과 환경 변수
 
-## 1) 설정 시스템 한눈에 보기 (우선순위와 병합)
+## 1. 설정 시스템 한눈에 보기 (우선순위와 병합)
 
 ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한다. **나중에 추가된 소스가 먼저 것들을 덮어쓴다**.
 
@@ -27,7 +27,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 
 ---
 
-## 2) `appsettings.json` + 환경별 파일
+## 2. `appsettings.json` + 환경별 파일
 
 ### 2.1 기본/환경별 파일 구조
 
@@ -93,7 +93,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 
 ---
 
-## 3) `Program.cs` — 설정 파이프라인/서비스 구성
+## 3. `Program.cs` — 설정 파이프라인/서비스 구성
 
 템플릿은 이미 환경별 파일/유저 시크릿/환경변수/명령줄까지 자동 추가한다.  
 필요 시 **명시적 구성**으로 제어할 수 있다.
@@ -154,7 +154,7 @@ public sealed class NestedSettings
 
 ---
 
-## 4) `IConfiguration`으로 직접 읽기 + 기본값
+## 4. `IConfiguration`으로 직접 읽기 + 기본값
 
 ```csharp
 public class MyService
@@ -175,7 +175,7 @@ public class MyService
 
 ---
 
-## 5) Options 패턴 심화 — IOptions / IOptionsSnapshot / IOptionsMonitor
+## 5. Options 패턴 심화 — IOptions / IOptionsSnapshot / IOptionsMonitor
 
 | 인터페이스 | 특징 | 용도 |
 |------------|------|------|
@@ -199,7 +199,7 @@ monitor.OnChange(newVal =>
 
 ---
 
-## 6) 환경 변수를 통한 덮어쓰기 — 규칙/예제
+## 6. 환경 변수를 통한 덮어쓰기 — 규칙/예제
 
 - **키 구분자 `:` 대신 `__`** 사용.
 - 부울/정수/배열 등 **문자열로 전달**되며 Binder가 적절히 변환함.
@@ -247,7 +247,7 @@ export Map__us="United States"
 
 ---
 
-## 7) 명령줄 인자(가장 강력한 우선순위 중 하나)
+## 7. 명령줄 인자(가장 강력한 우선순위 중 하나)
 
 ```bash
 dotnet run --MySettings:MaxItems=777 --MySettings:Nested:Endpoint=https://override
@@ -257,7 +257,7 @@ dotnet run --MySettings:MaxItems=777 --MySettings:Nested:Endpoint=https://overri
 
 ---
 
-## 8) User Secrets (개발 전용 민감정보)
+## 8. User Secrets (개발 전용 민감정보)
 
 개발 환경에서만 로딩되며, 파일은 사용자 프로필에 저장(프로젝트와 분리).
 
@@ -276,7 +276,7 @@ builder.Configuration.AddUserSecrets<Program>();
 
 ---
 
-## 9) 로깅/레벨을 설정으로 제어
+## 9. 로깅/레벨을 설정으로 제어
 
 ```json
 // appsettings.json
@@ -298,7 +298,7 @@ export Logging__LogLevel__MyApp.Namespace=Trace
 
 ---
 
-## 10) 실시간 변경: `reloadOnChange`와 한계
+## 10. 실시간 변경: `reloadOnChange`와 한계
 
 - `AddJsonFile(..., reloadOnChange:true)` → 파일 변경 시 **파일 SystemWatcher**로 자동 반영.
 - **환경 변수/명령줄**은 **재로딩 불가**(일반적으로 프로세스 재시작 필요).
@@ -308,7 +308,7 @@ export Logging__LogLevel__MyApp.Namespace=Trace
 
 ---
 
-## 11) Azure/클라우드 연계
+## 11. Azure/클라우드 연계
 
 ### 11.1 Azure Key Vault (비밀 저장)
 
@@ -342,7 +342,7 @@ builder.Configuration.AddAzureAppConfiguration(options =>
 
 ---
 
-## 12) Docker/Kubernetes 배포 전략
+## 12. Docker/Kubernetes 배포 전략
 
 ### 12.1 Docker
 
@@ -392,7 +392,7 @@ env:
 
 ---
 
-## 13) 강타입 바인딩 팁/주의
+## 13. 강타입 바인딩 팁/주의
 
 - **Enum/TimeSpan**: Binder가 문자열을 변환하므로 `"Warning"`, `"00:00:05"` 형식 지원.
 - **복합 타입/중첩 클래스/레코드** 지원.
@@ -431,7 +431,7 @@ builder.Services.AddOptions<AdvancedSettings>()
 
 ---
 
-## 14) 컨트롤러/Minimal API에서의 사용
+## 14. 컨트롤러/Minimal API에서의 사용
 
 ```csharp
 app.MapGet("/cfg", (IConfiguration cfg) =>
@@ -445,7 +445,7 @@ app.MapGet("/opt", (IOptionsSnapshot<MySettings> opt) => Results.Json(opt.Value)
 
 ---
 
-## 15) 배포/운영 체크리스트
+## 15. 배포/운영 체크리스트
 
 | 항목 | 포인트 |
 |-----|--------|
@@ -459,7 +459,7 @@ app.MapGet("/opt", (IOptionsSnapshot<MySettings> opt) => Results.Json(opt.Value)
 
 ---
 
-## 16) 커스텀 설정 제공자 — DB에서 읽기 (샘플)
+## 16. 커스텀 설정 제공자 — DB에서 읽기 (샘플)
 
 > 구성 저장소를 DB에 두고, 변경 신호(테이블 타임스탬프 등)로 **수동 리프레시**.
 
@@ -500,7 +500,7 @@ builder.Host.ConfigureAppConfiguration((ctx, config) =>
 
 ---
 
-## 17) 통합 예시 — 한 번에 묶어서 보기
+## 17. 통합 예시 — 한 번에 묶어서 보기
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -542,7 +542,7 @@ app.Run();
 
 ---
 
-## 18) 흔한 오류/함정 모음
+## 18. 흔한 오류/함정 모음
 
 - **환경 변수 구분자**: `:`가 아니라 **`__`**. (`MySettings__Nested__Endpoint`)
 - **JSON 문법 오류**: **끝에 쉼표** 금지, 문자열 큰따옴표 필수.
@@ -552,7 +552,7 @@ app.Run();
 
 ---
 
-## 19) 보너스: 실전 시나리오 3종
+## 19. 보너스: 실전 시나리오 3종
 
 ### 19.1 기능 플래그(Feature Toggle)
 
@@ -582,7 +582,7 @@ builder.Services.Configure<FeatureOptions>(builder.Configuration.GetSection("Fea
 
 ---
 
-## 20) 요약
+## 20. 요약
 
 - **구성 우선순위**: 파일 → 환경별 파일 → User Secrets(개발) → **환경 변수** → **명령줄** (나중이 강함)
 - **키 계층**: `:` / 환경 변수는 `__`

@@ -26,7 +26,7 @@ category: AspNet
 
 ---
 
-## 1) 핵심 요약(빠른 스타트)
+## 1. 핵심 요약(빠른 스타트)
 
 ```bash
 dotnet add package Swashbuckle.AspNetCore
@@ -56,7 +56,7 @@ app.Run();
 
 ---
 
-## 2) 기본 설정(패키지, Program.cs, Development/Production 분기)
+## 2. 기본 설정(패키지, Program.cs, Development/Production 분기)
 
 ### 2.1 필수 패키지
 
@@ -129,7 +129,7 @@ app.Run();
 
 ---
 
-## 3) 문서 메타데이터 & XML 주석 & Annotations
+## 3. 문서 메타데이터 & XML 주석 & Annotations
 
 ### 3.1 csproj 설정
 
@@ -164,7 +164,7 @@ public class UsersController : ControllerBase
 
 ---
 
-## 4) 보안 연동(JWT, OAuth2)과 테스트 흐름
+## 4. 보안 연동(JWT, OAuth2)과 테스트 흐름
 
 ### 4.1 JWT Bearer 버튼
 
@@ -236,7 +236,7 @@ app.UseSwaggerUI(ui =>
 
 ---
 
-## 5) API 버전 관리와 Swagger 다중 문서
+## 5. API 버전 관리와 Swagger 다중 문서
 
 ### 5.1 Microsoft.AspNetCore.Mvc.Versioning 연동(선택)
 
@@ -300,7 +300,7 @@ app.UseSwaggerUI(ui =>
 
 ---
 
-## 6) 예제 페이로드/응답 스니펫(Example) 넣기
+## 6. 예제 페이로드/응답 스니펫(Example) 넣기
 
 ### 6.1 Swashbuckle.Filters 사용(간결)
 
@@ -345,7 +345,7 @@ c.MapType<DateOnly>(() => new OpenApiSchema
 
 ---
 
-## 7) 스키마 커스터마이징(Enums, Nullable, Polymorphism)
+## 7. 스키마 커스터마이징(Enums, Nullable, Polymorphism)
 
 ### 7.1 Enums 문자열로 노출 + 설명
 
@@ -422,7 +422,7 @@ c.OperationFilter<PolymorphismOperationFilter>();
 
 ---
 
-## 8) Operation 커스터마이징(헤더/필터/상태코드 표준화)
+## 8. Operation 커스터마이징(헤더/필터/상태코드 표준화)
 
 ### 8.1 공통 헤더(예: X-Request-Id) 추가
 
@@ -482,7 +482,7 @@ c.OperationFilter<ProblemDetailsOperationFilter>();
 
 ---
 
-## 9) Minimal API와 Swagger(WithOpenApi)
+## 9. Minimal API와 Swagger(WithOpenApi)
 
 ```csharp
 var app = builder.Build();
@@ -503,7 +503,7 @@ app.Run();
 
 ---
 
-## 10) 파일 업로드/다운로드 문서화
+## 10. 파일 업로드/다운로드 문서화
 
 ### 10.1 업로드
 
@@ -534,14 +534,14 @@ public IActionResult Download(int id)
 
 ---
 
-## 11) ProblemDetails 및 에러 응답 문서화
+## 11. ProblemDetails 및 에러 응답 문서화
 
 - ASP.NET Core의 **ProblemDetails** 사용 권장(`application/problem+json`)
 - 전역 예외 처리 미들웨어에서 변환 → Swagger에 4xx/5xx 응답으로 기술(앞선 OperationFilter 참고)
 
 ---
 
-## 12) 캐싱/ETag/조건부 요청 문서화
+## 12. 캐싱/ETag/조건부 요청 문서화
 
 ```csharp
 [HttpGet("{id}")]
@@ -559,7 +559,7 @@ Swagger 설명에 `ETag`, `If-None-Match`, `If-Match`의 사용법을 주석/Ope
 
 ---
 
-## 13) Swagger UI 커스터마이징, ReDoc 병행
+## 13. Swagger UI 커스터마이징, ReDoc 병행
 
 ### 13.1 Swagger UI 옵션
 
@@ -594,7 +594,7 @@ app.UseReDoc(o =>
 
 ---
 
-## 14) 배포/운영 Tips(보안, 성능, 문서 품질 체크리스트)
+## 14. 배포/운영 Tips(보안, 성능, 문서 품질 체크리스트)
 
 - **보안**: 운영에서 Swagger 노출 시 **IP 제한/Auth** 적용, 관리자만 접근
 - **성능**: 대형 스키마 생성 비용 → 캐시/사전 생성 사용 고려
@@ -607,7 +607,7 @@ app.UseReDoc(o =>
 
 ---
 
-## 15) 종합 예제
+## 15. 종합 예제
 
 ### 15.1 DTO
 

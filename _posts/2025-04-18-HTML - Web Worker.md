@@ -6,7 +6,7 @@ category: HTML
 ---
 # Web Worker (HTML5 비동기 처리의 핵심)
 
-## 0) 한눈에 개요
+## 0. 한눈에 개요
 
 - **정의**: 메인(UI) 스레드와 분리된 **백그라운드 스레드**에서 JS를 실행.  
 - **목표**: **무거운 연산/블로킹 I/O**를 워커로 넘겨 **UI 멈춤 방지**.  
@@ -16,7 +16,7 @@ category: HTML
 
 ---
 
-## 1) 기본 구조와 왕초보 예제
+## 1. 기본 구조와 왕초보 예제
 
 ### 폴더 구조
 ```
@@ -75,7 +75,7 @@ self.onmessage = (e) => {
 
 ---
 
-## 2) 데이터 전달: Structured Clone vs Transferable
+## 2. 데이터 전달: Structured Clone vs Transferable
 
 메시지는 **Structured Clone** 규칙으로 복사됩니다. 대용량 데이터는 **복사 비용**이 큼 → **Transferable**로 **소유권 이전** 권장.
 
@@ -105,7 +105,7 @@ self.onmessage = (e) => {
 
 ---
 
-## 3) 프로그레스, 취소, 에러 설계
+## 3. 프로그레스, 취소, 에러 설계
 
 ### 3.1 진행률 전송
 ```js
@@ -187,7 +187,7 @@ try {
 
 ---
 
-## 4) Module Worker, MIME, CORS
+## 4. Module Worker, MIME, CORS
 
 ### 4.1 Module Worker
 현대 환경에서는 ESM 권장.
@@ -223,7 +223,7 @@ worker.postMessage('hello');
 
 ---
 
-## 5) SharedWorker, Service Worker와의 차이
+## 5. SharedWorker, Service Worker와의 차이
 
 | 구분 | Dedicated Worker | SharedWorker | Service Worker |
 |---|---|---|---|
@@ -257,7 +257,7 @@ onconnect = (e) => {
 
 ---
 
-## 6) OffscreenCanvas + Worker로 캔버스 렌더링
+## 6. OffscreenCanvas + Worker로 캔버스 렌더링
 
 메인 UI 스레드 대신 **워커**에서 캔버스 렌더링을 수행 → 애니메이션/그림 처리 시 **프레임 드랍 감소**.
 
@@ -293,7 +293,7 @@ function draw(t = 0) {
 
 ---
 
-## 7) Atomics + SharedArrayBuffer 로 락·신호·프로그레스
+## 7. Atomics + SharedArrayBuffer 로 락·신호·프로그레스
 
 고급 패턴: **복사/이전 없이** 워커·메인 간 **동일 버퍼 공유**.  
 단, **Cross-Origin Isolation** 필요(헤더: COOP/COEP). 배포 시 서버 설정 필수.
@@ -336,7 +336,7 @@ onmessage = (e) => {
 
 ---
 
-## 8) 워커 풀(Worker Pool)로 병렬 처리
+## 8. 워커 풀(Worker Pool)로 병렬 처리
 
 단일 워커도 UI를 살리지만, **작업을 여러 워커로 분할**하면 **병렬 처리량**이 늘어남.
 
@@ -412,7 +412,7 @@ onmessage = (e) => {
 
 ---
 
-## 9) 네트워크/스트리밍/파일 처리 in Worker
+## 9. 네트워크/스트리밍/파일 처리 in Worker
 
 워커에서도 `fetch`/`Response.body` 스트림, `FileReader`(또는 `Blob.arrayBuffer`) 사용 가능.
 
@@ -435,7 +435,7 @@ onmessage = async (e) => {
 
 ---
 
-## 10) 번들러/프레임워크 연동
+## 10. 번들러/프레임워크 연동
 
 ### 10.1 Vite/webpack + ESM
 ```js
@@ -467,7 +467,7 @@ export function useWorker(url, { module = true } = {}) {
 
 ---
 
-## 11) 성능 최적화 체크리스트
+## 11. 성능 최적화 체크리스트
 
 - **전달 비용 최소화**: 대용량은 **Transferable**(예: `ArrayBuffer`)로 전달.
 - **작고 잦은 메시지 지양**: 배치/버퍼링 후 전송.
@@ -479,7 +479,7 @@ export function useWorker(url, { module = true } = {}) {
 
 ---
 
-## 12) 보안/배포 체크리스트
+## 12. 보안/배포 체크리스트
 
 - **CSP(Content-Security-Policy)**: 워커 스크립트 출처 허용(`worker-src`/`script-src`).
 - **COOP/COEP**(Cross-Origin Isolation): `SharedArrayBuffer`/`Atomics`/고급 API 필요 시 서버 헤더 설정.
@@ -489,7 +489,7 @@ export function useWorker(url, { module = true } = {}) {
 
 ---
 
-## 13) 디버깅/테스트 팁
+## 13. 디버깅/테스트 팁
 
 - DevTools Sources → **Workers** 패널에서 코드/콘솔 확인.
 - 워커 내부 `console.log`도 브라우저에 노출됨(브라우저별 위치 상이).
@@ -498,7 +498,7 @@ export function useWorker(url, { module = true } = {}) {
 
 ---
 
-## 14) 실전 미니 프로젝트 예시
+## 14. 실전 미니 프로젝트 예시
 
 ### 14.1 이미지 그레이스케일 변환 (Transferable 활용)
 
@@ -557,7 +557,7 @@ onmessage = (e) => {
 
 ---
 
-## 15) 자주 하는 실수와 방지법
+## 15. 자주 하는 실수와 방지법
 
 - DOM 접근 시도 → 워커는 DOM 없음. **OffscreenCanvas** 또는 메시지로 UI 위임.
 - 많은 작은 메시지 스팸 → **배치/디바운스**로 묶어서 전송.
@@ -568,7 +568,7 @@ onmessage = (e) => {
 
 ---
 
-## 16) 마무리 요약
+## 16. 마무리 요약
 
 - 워커는 **UI 멈춤 없이** 무거운 연산을 수행하는 가장 쉬운 브라우저 병렬화 도구.
 - 성능의 핵심은 **메시지 비용 최소화**(Transferable), **적절한 워커 수**, **올바른 분할 전략**.

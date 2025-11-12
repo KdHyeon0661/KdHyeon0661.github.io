@@ -6,7 +6,7 @@ category: Linux
 ---
 # 셸 커스터마이징 & dotfiles
 
-## 0) Dotfiles란? — 어디에 무엇을 넣는가
+## 0. Dotfiles란? — 어디에 무엇을 넣는가
 
 ### 핵심 파일과 역할
 | 파일 | 용도(권장 내용) |
@@ -28,7 +28,7 @@ source ~/.zshrc      # Zsh
 
 ---
 
-## 1) alias — 타이핑 비용을 줄이는 최소 단위
+## 1. alias — 타이핑 비용을 줄이는 최소 단위
 
 ### 기본 예시 (`~/.bashrc` 또는 `~/.zshrc`)
 ```bash
@@ -54,7 +54,7 @@ fi
 
 ---
 
-## 2) 함수(Function) — 반복 작업 자동화
+## 2. 함수(Function) — 반복 작업 자동화
 
 ### 만능 압축 해제
 ```bash
@@ -88,7 +88,7 @@ path_prepend "$HOME/.local/bin"
 
 ---
 
-## 3) 프롬프트(PS1) — 보기 좋고, **깨지지 않는** 프롬프트
+## 3. 프롬프트(PS1) — 보기 좋고, **깨지지 않는** 프롬프트
 
 ### Bash 기본
 ```bash
@@ -140,7 +140,7 @@ PROMPT='%{$fg_bold[green]%}%n@%m %{$fg_bold[blue]%}%~%{$reset_color%} %# '
 
 ---
 
-## 4) 자동완성(Completion) — “탭 두 번”이 주는 차이
+## 4. 자동완성(Completion) — “탭 두 번”이 주는 차이
 
 ### Bash
 ```bash
@@ -177,7 +177,7 @@ eval "$(fzf --bash)"
 
 ---
 
-## 5) 히스토리 — “어제 그 명령”을 정확히
+## 5. 히스토리 — “어제 그 명령”을 정확히
 
 ### Bash (`~/.bashrc`)
 ```bash
@@ -203,7 +203,7 @@ setopt HIST_REDUCE_BLANKS
 
 ---
 
-## 6) 키 바인딩/편집 — Readline & ZLE
+## 6. 키 바인딩/편집 — Readline & ZLE
 
 ### Bash(Readline)
 ```bash
@@ -223,7 +223,7 @@ bindkey '^N' down-line-or-search
 
 ---
 
-## 7) 안전한 셸 옵션 — 스크립트에서 생존율 높이기
+## 7. 안전한 셸 옵션 — 스크립트에서 생존율 높이기
 
 ### Bash 강모드(스크립트 상단)
 ```bash
@@ -239,7 +239,7 @@ set -euo pipefail
 
 ---
 
-## 8) 테마/프롬프트 프레임워크 — Starship & Powerlevel10k
+## 8. 테마/프롬프트 프레임워크 — Starship & Powerlevel10k
 
 ### Starship(크로스 셸)
 설치:
@@ -293,7 +293,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 
 ---
 
-## 9) 플러그인 관리 — 가볍고, 재현 가능한 방식
+## 9. 플러그인 관리 — 가볍고, 재현 가능한 방식
 
 ### Zsh 플러그인(oh-my-zsh 또는 경량 매니저)
 - oh-my-zsh: 간편하지만 무겁다는 평.  
@@ -315,7 +315,7 @@ EOF
 
 ---
 
-## 10) 도구 묶음(fzf/fd/rg/bat/eza/delta) — 현대적 CLI
+## 10. 도구 묶음(fzf/fd/rg/bat/eza/delta) — 현대적 CLI
 
 설치(배포판별 패키지명 상이):
 ```bash
@@ -343,7 +343,7 @@ gcof() { git branch --all | sed 's/.* //; s#remotes/[^/]*/##' | sort -u | fzf | 
 
 ---
 
-## 11) 컬러/LS_COLORS/dircolors
+## 11. 컬러/LS_COLORS/dircolors
 
 ```bash
 # GNU dircolors
@@ -357,7 +357,7 @@ fi
 
 ---
 
-## 12) 환경/버전 관리자 — asdf, pyenv, nvm
+## 12. 환경/버전 관리자 — asdf, pyenv, nvm
 
 ### asdf(다언어)
 ```bash
@@ -371,7 +371,7 @@ asdf global nodejs 20.11.1
 
 ---
 
-## 13) 디렉터리별 환경 — direnv
+## 13. 디렉터리별 환경 — direnv
 
 프로젝트마다 환경변수가 달라야 하면:
 ```bash
@@ -389,7 +389,7 @@ export DJANGO_DEBUG=True
 
 ---
 
-## 14) 성능/지연 분석 — 느린 셸을 빠르게
+## 14. 성능/지연 분석 — 느린 셸을 빠르게
 
 ### Zsh 프로파일링
 ```zsh
@@ -407,7 +407,7 @@ bash -xlic 'exit' 2>bash_profile_trace.log
 
 ---
 
-## 15) dotfiles 버전 관리 — 구조·부트스트랩
+## 15. dotfiles 버전 관리 — 구조·부트스트랩
 
 ### 구조 예시
 ```text
@@ -475,7 +475,7 @@ echo "Done. Open a new shell."
 
 ---
 
-## 16) 비밀/민감 정보 — 안전하게 분리
+## 16. 비밀/민감 정보 — 안전하게 분리
 
 - **절대 커밋하지 말 것**: 토큰/SSH 개인키/API Key.
 - `.gitignore_global`에 다음 포함:
@@ -495,7 +495,7 @@ echo "Done. Open a new shell."
 
 ---
 
-## 17) 호스트/OS별 조건부 설정
+## 17. 호스트/OS별 조건부 설정
 
 ```bash
 case "$(uname -s)" in
@@ -511,7 +511,7 @@ esac
 
 ---
 
-## 18) tmux/터미널과 연동
+## 18. tmux/터미널과 연동
 
 ### tmux 기본
 ```bash
@@ -531,7 +531,7 @@ fi
 
 ---
 
-## 19) 실전 시나리오 모음
+## 19. 실전 시나리오 모음
 
 ### 시나리오 1: “어제 그 긴 kubectl” — 히스토리+fzf
 ```bash
@@ -570,7 +570,7 @@ zprof   # 실행 후 상단에 오래 걸린 함수/스크립트 확인
 
 ---
 
-## 20) 점검 체크리스트
+## 20. 점검 체크리스트
 
 - [ ] 로그인/인터랙티브 분리 (`.bash_profile` → `source ~/.bashrc`)
 - [ ] 프롬프트 색상은 **비출력 시퀀스 감싸기**(Bash `\[ \]`)

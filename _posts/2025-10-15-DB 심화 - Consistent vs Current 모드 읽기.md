@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 한눈 요약
+## 0. 한눈 요약
 
 - **Consistent 모드 읽기**: **문장 시작 시점의 SCN**으로 **과거 버전**을 재구성하여 읽는 것.  
   - 내부적으로 **Undo** 를 적용해 **CR(Consistent Read) 버퍼**를 만들어서 반환.  
@@ -27,7 +27,7 @@ category: DB 심화
 
 ---
 
-## 1) Consistent vs Current — 개념과 내부 동작
+## 1. Consistent vs Current — 개념과 내부 동작
 
 ### 1.1 Consistent Read (CR, consistent gets)
 
@@ -47,7 +47,7 @@ category: DB 심화
 
 ---
 
-## 2) “Consistent로 갱신 대상을 식별하고, Current로 갱신” — 표준 DML 경로
+## 2. “Consistent로 갱신 대상을 식별하고, Current로 갱신” — 표준 DML 경로
 
 > UPDATE/DELETE 는 두 단계로 이해하면 쉽다.
 >
@@ -70,7 +70,7 @@ category: DB 심화
 
 ---
 
-## 3) “Consistent로 갱신할 때 생기는 현상”은?
+## 3. “Consistent로 갱신할 때 생기는 현상”은?
 
 > **정확히 말해 ‘Consistent로 갱신’이라는 동작은 없다.**  
 > Consistent 모드는 **읽기에서만** 사용된다.  
@@ -89,7 +89,7 @@ category: DB 심화
 
 ---
 
-## 4) “Current로 갱신할 때 생기는 현상”
+## 4. “Current로 갱신할 때 생기는 현상”
 
 - **현재 버전**을 대상으로 **행 잠금(TX)** 과 **ITL 슬롯** 확보 후 **즉시** 갱신한다.  
 - **동일 행 경쟁** 시:  
@@ -101,7 +101,7 @@ category: DB 심화
 
 ---
 
-## 5) 예제: READ COMMITTED에서 “읽기는 Consistent, 쓰기는 Current”
+## 5. 예제: READ COMMITTED에서 “읽기는 Consistent, 쓰기는 Current”
 
 ### 5.1 준비
 
@@ -155,7 +155,7 @@ COMMIT;
 
 ---
 
-## 6) 예제: SELECT로 Consistent 읽고, 나중에 UPDATE(Current) — “잃어버린 갱신(Lost Update)” 가능?
+## 6. 예제: SELECT로 Consistent 읽고, 나중에 UPDATE(Current) — “잃어버린 갱신(Lost Update)” 가능?
 
 > **Lost Update** 정의: 두 세션이 **같은 행의 “옛 값”을 읽고** 그 값을 바탕으로 **서로 덮어쓴다** → **먼저 쓴 값이 마지막 커밋에 의해 사라짐**.
 
@@ -201,7 +201,7 @@ COMMIT;
 
 ---
 
-## 7) 예제: Serializable에서 Consistent→Current 갱신 시 **ORA-08177**
+## 7. 예제: Serializable에서 Consistent→Current 갱신 시 **ORA-08177**
 
 **Serializable** 은 트랜잭션 전체를 스냅샷 기준으로 보장하려고 시도한다.  
 이때 **읽은 후** 같은 데이터에 **경쟁 변경이 커밋**되면, 나중에 **Current로 갱신**하려는 순간 **ORA-08177**(can’t serialize)로 실패할 수 있다.
@@ -242,7 +242,7 @@ COMMIT;
 
 ---
 
-## 8) “Consistent로 갱신 대상을 식별하고 Current로 갱신” — 정밀 타임라인
+## 8. “Consistent로 갱신 대상을 식별하고 Current로 갱신” — 정밀 타임라인
 
 다음은 UPDATE가 내부적으로 거치는 과정을 **행 단위**로 그린 것이다.
 
@@ -262,7 +262,7 @@ COMMIT;
 
 ---
 
-## 9) “오라클에서 일관성 없게 값을 갱신하는 사례” — 어떤 장면을 의미?
+## 9. “오라클에서 일관성 없게 값을 갱신하는 사례” — 어떤 장면을 의미?
 
 문장 수준 일관성은 **읽기**를 위한 개념이다.  
 **갱신의 일관성 부족(= 업데이트 anomaly)** 은 보통 다음과 같은 장면을 가리킨다.
@@ -327,7 +327,7 @@ COMMIT;
 
 ---
 
-## 10) SELECT FOR UPDATE — Consistent vs Current의 연결 고리
+## 10. SELECT FOR UPDATE — Consistent vs Current의 연결 고리
 
 - `SELECT ... FOR UPDATE` 는 **행 잠금**을 얻는 **Current Read** 이다.  
 - 이 구문으로 **갱신 대상을 식별**하면, 이어지는 UPDATE/DELETE에서 **동일 행을 즉시 수정**할 수 있으며, **Lost Update** 를 방지한다.
@@ -346,7 +346,7 @@ UPDATE t_lu SET val = val + 10 WHERE id=1;   -- A의 커밋까지 TX row lock co
 
 ---
 
-## 11) 진단/관측에 유용한 뷰
+## 11. 진단/관측에 유용한 뷰
 
 ```sql
 -- 읽기/쓰기 패턴 감: 일관/현재/물리 I/O
@@ -369,7 +369,7 @@ ORDER  BY seconds_in_wait DESC;
 
 ---
 
-## 12) 체크리스트 — 설계/코드에서 무엇을 선택할 것인가?
+## 12. 체크리스트 — 설계/코드에서 무엇을 선택할 것인가?
 
 1. **Lost Update 방지**가 필요한가?  
    - 예/금액/포인트 등 누적형 → `SELECT ... FOR UPDATE` / 버전 컬럼(낙관적 잠금) / MQ 단일 처리
@@ -385,7 +385,7 @@ ORDER  BY seconds_in_wait DESC;
 
 ---
 
-## 13) 수학적 감각(개념식)
+## 13. 수학적 감각(개념식)
 
 - **가시성 규칙(문장 수준)**  
   $$ \text{Visible(row)} \iff \text{row.commit\_scn} \le S $$
@@ -400,7 +400,7 @@ ORDER  BY seconds_in_wait DESC;
 
 ---
 
-## 14) 정리
+## 14. 정리
 
 - **Consistent**: **읽기 일관성**을 위한 모드(Undo 기반 CR). 문장 시작 시점의 스냅샷을 끝까지 지킨다.  
 - **Current**: **수정/락**을 위한 모드(현재 버전). DML/`FOR UPDATE` 시 사용한다.  

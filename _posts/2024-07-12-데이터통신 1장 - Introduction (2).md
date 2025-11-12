@@ -75,15 +75,15 @@ sudo tcpdump -i eth0 -n 'arp or broadcast'
 
 ### WAN 연결 유형
 
-#### 1) Point-to-Point WAN
+#### 1. Point-to-Point WAN
 - **두 지점 간 전용 링크**. 예: 본사–DR 센터 전용회선.  
 - 예측 가능한 지연과 대역폭, 보안 우수. **비용↑**.
 
-#### 2) Switched WAN
+#### 2. Switched WAN
 - 서비스 사업자(운영자)의 **교환망**을 경유해 다수 지점 연결.  
 - **MPLS VPN**이 대표적: 라우팅 격리·QoS·트래픽 엔지니어링 가능.
 
-#### 3) Internetwork (네트워크의 네트워크)
+#### 3. Internetwork (네트워크의 네트워크)
 - **다수의 네트워크를 라우터로 상호연결**.  
 - 정책 라우팅, 경계 보안, 주소 설계, NAT/CGNAT, IPv6 전개까지 포함.
 
@@ -111,7 +111,7 @@ router bgp 65001
 
 **스위칭**은 입력 인터페이스로 들어온 프레임/패킷을 **어디로 보내야 할지 결정**하고 **전달**하는 기능이다.
 
-### 1) 회선 교환(Circuit Switching)
+### 1. 회선 교환(Circuit Switching)
 
 - **특징**: 통화/전송 동안 **독점 회선·고정 대역폭** 할당. 접속 설정에 시간 소요, 설정 이후 **일정 지연**.  
 - **장점**: 일정 품질(지연·지터 예측성), 연속 전송 적합(전통 음성).  
@@ -125,7 +125,7 @@ router bgp 65001
   $$ U = \frac{\sum_i t_i}{T} $$
   - \(t_i\): 세션 i의 점유 시간, \(T\): 관측 시간
 
-### 2) 패킷 교환(Packet Switching)
+### 2. 패킷 교환(Packet Switching)
 
 - **메시지를 패킷**으로 나누어 전송, 각 패킷은 독립 라우팅(데이터그램) 또는 **가상회선(VC)** 을 통할 수 있음.
 - **장점**: 자원 **통계적 다중화**로 효율↑, 속도/프로토콜 변환 가능, 장애 시 **우회 가능**, 오류 제어·재전송 가능.  
@@ -195,27 +195,27 @@ print("to known BB -> unicast:", sw.forward("BB:BB:BB:BB:BB:BB", 1, ports))
 
 > 다양한 **라스트마일**(가정/지사) 접속 기술과 **엔터프라이즈 직결** 유형을 정리한다.
 
-### 1) 전화망 기반
+### 1. 전화망 기반
 
 - **Dial-up**: 모뎀으로 PSTN 회선 사용(레거시, 매우 저속).  
 - **DSL(ADSL/VDSL)**: 동축 쌍선 기반 고속 전송. 거리 의존, 업/다운 비대칭(ADSL).
 
-### 2) 케이블/DOCSIS
+### 2. 케이블/DOCSIS
 
 - 케이블 방송 동축망 공유, **DOCSIS** 규격. 다운스트림 대역폭 우수, **세그먼트 혼잡** 변동.
 
-### 3) 광(FTTx)
+### 3. 광(FTTx)
 
 - **FTTH/FTTP(PON: GPON/XG-PON/25G-PON)**: 고속·저지연·대역폭 대칭 가능.  
 - **Active Ethernet**: 전용 광포트, 고품질/비용↑.
 
-### 4) 무선
+### 4. 무선
 
 - **Wi-Fi**: 가정/사무실 액세스, 백홀은 유선.  
 - **4G/5G**: eMBB/URLLC/mMTC 등 프로필. **5G FWA(고정 무선)** 로 유선 대체도 가능.  
 - **위성(Low Earth Orbit)**: 광역 커버리지, 지연/이중화 고려.
 
-### 5) 엔터프라이즈/기관 전용
+### 5. 엔터프라이즈/기관 전용
 
 - **전용회선**(L2/L3), **MPLS VPN**, **SD-WAN(오버레이+멀티회선)**, **클라우드 전용 회선**(Direct Connect/ExpressRoute 등).
 
@@ -346,7 +346,7 @@ print(re.findall(r"\b(MUST|SHOULD|MAY)\b", text))
 
 ## 부록: 손에 잡히는 네트워킹 실습 스니펫
 
-### 1) 소켓 에코 서버/클라이언트(로컬 테스트)
+### 1. 소켓 에코 서버/클라이언트(로컬 테스트)
 
 ```python
 # server.py
@@ -373,7 +373,7 @@ with socket.create_connection(("127.0.0.1", 9000)) as s:
     print(s.recv(4096))
 ```
 
-### 2) 경로/지연 가시화(traceroute + 간이 파서)
+### 2. 경로/지연 가시화(traceroute + 간이 파서)
 
 ```bash
 traceroute example.com
@@ -390,7 +390,7 @@ for ln in lines:
 print("Hops:", len(hops), "Last Hop:", hops[-1] if hops else None)
 ```
 
-### 3) iperf3 로 접속 품질 보기
+### 3. iperf3 로 접속 품질 보기
 
 ```bash
 # 서버

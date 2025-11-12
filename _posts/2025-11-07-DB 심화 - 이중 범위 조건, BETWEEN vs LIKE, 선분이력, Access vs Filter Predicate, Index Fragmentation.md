@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # 같은 컬럼 **이중 범위 조건**, `BETWEEN` vs `LIKE` 스캔 범위, **선분이력** 인덱스 스캔 효율, **Access vs Filter Predicate**, **Index Fragmentation**까지 한 번에 정리
 
-## 0) 실습 공통 준비
+## 0. 실습 공통 준비
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD HH24:MI:SS';

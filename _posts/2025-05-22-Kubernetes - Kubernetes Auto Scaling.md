@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes Auto Scaling
 
-## 0) 큰 그림: 레이어별 오토스케일
+## 0. 큰 그림: 레이어별 오토스케일
 
 ```
 요청 트래픽/큐 -> 메트릭 수집(Metrics Server/Prometheus/KEDA)
@@ -26,7 +26,7 @@ category: Kubernetes
 
 ---
 
-## 1) 전제 조건 체크리스트
+## 1. 전제 조건 체크리스트
 
 | 항목 | 왜 중요한가 | 빠른 확인 |
 |---|---|---|
@@ -38,7 +38,7 @@ category: Kubernetes
 
 ---
 
-## 2) HPA (Horizontal Pod Autoscaler) — 수평 확장
+## 2. HPA (Horizontal Pod Autoscaler) — 수평 확장
 
 ### 2.1 기본 흐름과 핵심 개념
 
@@ -221,7 +221,7 @@ spec:
 
 ---
 
-## 3) VPA (Vertical Pod Autoscaler) — 수직 확장
+## 3. VPA (Vertical Pod Autoscaler) — 수직 확장
 
 ### 3.1 개념/전략
 - 컨테이너의 `requests/limits`를 **추천**하고(Off/Initial), **자동 반영**(Auto) 가능.
@@ -273,7 +273,7 @@ spec:
 
 ---
 
-## 4) Cluster Autoscaler — 노드 자동 확장
+## 4. Cluster Autoscaler — 노드 자동 확장
 
 ### 4.1 동작 개요
 - 새 Pod이 **스케줄 불가**(자원 부족) → 노드 증가.
@@ -300,7 +300,7 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 
 ---
 
-## 5) 레이어 조합 전략
+## 5. 레이어 조합 전략
 
 | 시나리오 | 권장 조합 | 메모 |
 |---|---|---|
@@ -316,7 +316,7 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 
 ---
 
-## 6) 운영 튜닝: Behavior/쿨다운/워밍업
+## 6. 운영 튜닝: Behavior/쿨다운/워밍업
 
 - **stabilizationWindowSeconds**: 급격한 변동 억제(특히 scaleDown).
 - **policies**: 분당/퍼센트 상한으로 과잉 확장/축소 방지.
@@ -325,7 +325,7 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 
 ---
 
-## 7) 실전: 샘플 애플리케이션 스케일링
+## 7. 실전: 샘플 애플리케이션 스케일링
 
 ### 7.1 예제 디플로이 + HPA + PDB
 
@@ -414,7 +414,7 @@ kubectl run -it --rm load --image=busybox --restart=Never -- /bin/sh -c \
 
 ---
 
-## 8) 수학/알고리즘 디테일
+## 8. 수학/알고리즘 디테일
 
 ### 8.1 리소스 메트릭(평균 활용률) 공식
 
@@ -436,7 +436,7 @@ $$
 
 ---
 
-## 9) 테스트 전략/시나리오
+## 9. 테스트 전략/시나리오
 
 | 시나리오 | 목표 | 방법 |
 |---|---|---|
@@ -448,7 +448,7 @@ $$
 
 ---
 
-## 10) 트러블슈팅 표
+## 10. 트러블슈팅 표
 
 | 증상 | 원인 후보 | 해결 가이드 |
 |---|---|---|
@@ -462,7 +462,7 @@ $$
 
 ---
 
-## 11) 보안/거버넌스 포인트
+## 11. 보안/거버넌스 포인트
 
 - **리소스 요청 표준화**(팀별 가이드/최소값).
 - **네임스페이스/라벨링** 일관성: HPA/어댑터 셀렉터가 명확히 매칭되도록.
@@ -471,7 +471,7 @@ $$
 
 ---
 
-## 12) 운영 예시 플레이북(요약)
+## 12. 운영 예시 플레이북(요약)
 
 1) 메트릭 소스 준비(Metrics Server/Prometheus).  
 2) 워크로드에 **requests/limits** 정의.  
@@ -484,7 +484,7 @@ $$
 
 ---
 
-## 13) 부록: 실무형 템플릿 모음
+## 13. 부록: 실무형 템플릿 모음
 
 ### 13.1 CPU+메모리+큐 혼합 HPA
 
@@ -573,7 +573,7 @@ spec:
 
 ---
 
-## 14) 마무리
+## 14. 마무리
 
 - **HPA**는 레플리카, **VPA**는 리소스 사이징, **Cluster Autoscaler**는 노드 용량을 맡는다.
 - 기본은 **HPA + Cluster Autoscaler**, 사이징 개선은 **VPA(Off/Initial)** 로 **추천→반영 루프**.

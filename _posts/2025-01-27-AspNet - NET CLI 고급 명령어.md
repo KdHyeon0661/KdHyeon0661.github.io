@@ -64,14 +64,14 @@ template-pack.nupkg
 
 ### 1.4 커스텀 템플릿 제작(요지)
 ```bash
-# 1) 베이스 프로젝트 생성
+# 1. 베이스 프로젝트 생성
 dotnet new webapi -n MyCompany.Api.Template
 
-# 2) .template.config 디렉터리와 template.json 추가
+# 2. .template.config 디렉터리와 template.json 추가
 mkdir -p MyCompany.Api.Template/.template.config
 # template.json은 필수 스키마를 준수
 
-# 3) 템플릿 팩으로 패키징(NuGet)
+# 3. 템플릿 팩으로 패키징(NuGet)
 dotnet new classlib -n DummyPack   # 임시 csproj를 팩 컨테이너로 활용
 # DummyPack.csproj <Content>에 템플릿 폴더 포함 후
 dotnet pack -c Release
@@ -422,12 +422,12 @@ dotnet restore --locked-mode            # 잠금 파일 기반 복원(버전 고
 ## 14. 실전 흐름(종합)
 
 ```bash
-# 1) 템플릿/워크로드 준비
+# 1. 템플릿/워크로드 준비
 dotnet new --list
 dotnet workload list
 dotnet sdk check
 
-# 2) 솔루션/프로젝트 생성
+# 2. 솔루션/프로젝트 생성
 dotnet new sln -n Suite
 dotnet new webapp -n Web
 dotnet new api -n Api
@@ -436,24 +436,24 @@ dotnet sln Suite.sln add Web/Web.csproj Api/Api.csproj Core/Core.csproj
 dotnet add Web/Web.csproj reference Core/Core.csproj
 dotnet add Api/Api.csproj reference Core/Core.csproj
 
-# 3) 패키지/도구/비밀
+# 3. 패키지/도구/비밀
 dotnet add Api/Api.csproj package Swashbuckle.AspNetCore
 dotnet new tool-manifest
 dotnet tool install dotnet-ef
 dotnet tool restore
 dotnet user-secrets init
 
-# 4) 빌드/테스트/분석
+# 4. 빌드/테스트/분석
 dotnet restore
 dotnet build -c Release --no-restore
 dotnet test --logger "trx;LogFileName=test.trx"
 dotnet list package --outdated
 
-# 5) 배포 최적화
+# 5. 배포 최적화
 dotnet publish Web/Web.csproj -c Release -o out/web
 dotnet publish Api/Api.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -o out/api
 
-# 6) 문제 발생 시
+# 6. 문제 발생 시
 dotnet build --verbosity:diagnostic
 dotnet build-server shutdown
 dotnet nuget locals all --clear

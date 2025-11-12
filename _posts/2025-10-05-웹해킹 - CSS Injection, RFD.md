@@ -13,7 +13,7 @@ category: 웹해킹
 
 ---
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **CSS Injection**  
   - **문제**: 사용자 입력이 **`<style>`/`style=`/CSS 값/선택자**에 주입되면,  
@@ -37,7 +37,7 @@ category: 웹해킹
 
 ---
 
-# 1) CSS Injection — 원리와 벡터
+# 1. CSS Injection — 원리와 벡터
 
 ### 1.1 어디서 새나가나?
 - **HTML 인라인 스타일**: `<div style="color:${user}">`  
@@ -56,7 +56,7 @@ category: 웹해킹
 
 ---
 
-# 2) CSS Injection — “안전 재현(스테이징)” 시나리오
+# 2. CSS Injection — “안전 재현(스테이징)” 시나리오
 
 > 목표: 보안 설정이 **제대로 막고 있는지** 확인(차단/무력화가 **정상**)
 
@@ -74,7 +74,7 @@ category: 웹해킹
 
 ---
 
-# 3) CSS Injection — 방어 레시피 (애플리케이션)
+# 3. CSS Injection — 방어 레시피 (애플리케이션)
 
 ## 3.1 CSP로 외부 요청 통제
 ```nginx
@@ -147,7 +147,7 @@ app.get("/echo", (req,res)=>{
 
 ---
 
-# 4) RFD(Reflected File Download) — 원리와 위험
+# 4. RFD(Reflected File Download) — 원리와 위험
 
 ### 4.1 무엇이 문제인가
 - URL 파라미터를 **파일명/내용**에 반사해서 브라우저에게 **다운로드** 시키는 엔드포인트가 있을 때,  
@@ -163,7 +163,7 @@ https://trusted.example.com/download?fn=invoice.bat&body=@echo off
 
 ---
 
-# 5) RFD — “안전 재현(스테이징)” 시나리오
+# 5. RFD — “안전 재현(스테이징)” 시나리오
 
 1) **실행 확장자 강제 실패**  
    - `?fn=evil.bat` 요청 → 서버가 **`attachment`+화이트리스트 확장자**로 **`.txt`로 강제**되어야 정상.  
@@ -174,7 +174,7 @@ https://trusted.example.com/download?fn=invoice.bat&body=@echo off
 
 ---
 
-# 6) RFD — 방어 레시피 (애플리케이션·프록시)
+# 6. RFD — 방어 레시피 (애플리케이션·프록시)
 
 ## 6.1 안전한 다운로드 엔드포인트
 ```ts
@@ -219,7 +219,7 @@ location /download/ {
 
 ---
 
-# 7) 종합 하드닝 — 헤더/정책 세트
+# 7. 종합 하드닝 — 헤더/정책 세트
 
 ```nginx
 # 공통 보안 헤더
@@ -241,7 +241,7 @@ add_header Cross-Origin-Resource-Policy "same-origin" always;
 
 ---
 
-# 8) 개발·리뷰 체크 포인트
+# 8. 개발·리뷰 체크 포인트
 
 - **템플릿**:  
   - 절대 **사용자 입력을 `<style>`/`style=`/CSS 값/선택자**에 그대로 삽입하지 말 것.  
@@ -262,7 +262,7 @@ add_header Cross-Origin-Resource-Policy "same-origin" always;
 
 ---
 
-# 9) 로깅·모니터링 & 테스트
+# 9. 로깅·모니터링 & 테스트
 
 ## 9.1 탐지 아이디어
 - **의심 CSS 로드**: `@import`/외부 `font-src`/특이 도메인 `img-src` 발생 시 경보  
@@ -291,7 +291,7 @@ test("다운로드는 attachment + 안전한 확장자", async ({ page }) => {
 
 ---
 
-# 10) 안티패턴(피해야 할 것)
+# 10. 안티패턴(피해야 할 것)
 
 - 사용자 입력을 **그대로** `style=`/`<style>`/CSS 값/선택자에 삽입  
 - **외부 CSS/폰트** 와일드카드 허용(`*`)  
@@ -301,7 +301,7 @@ test("다운로드는 attachment + 안전한 확장자", async ({ page }) => {
 
 ---
 
-# 11) 체크리스트 (현장용)
+# 11. 체크리스트 (현장용)
 
 - [ ] 모든 응답에 **`X-Content-Type-Options: nosniff`**  
 - [ ] 정적/동적 **`Content-Type` 정확히 설정**  

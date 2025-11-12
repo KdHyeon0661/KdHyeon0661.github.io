@@ -11,7 +11,7 @@ category: Kubernetes
 
 ---
 
-## 0) Pending의 정확한 의미: 흐름 상의 위치
+## 0. Pending의 정확한 의미: 흐름 상의 위치
 
 > **Pending = 스케줄링 또는 준비 단계에서 멈춘 상태**  
 > (이미 Node에 할당된 뒤 컨테이너 이미지를 풀거나, 볼륨을 attach/마운트하는 과정에서도 Pending으로 보일 수 있음)
@@ -28,7 +28,7 @@ category: Kubernetes
 
 ---
 
-## 1) 5분 런북: 가장 빠른 진단 절차
+## 1. 5분 런북: 가장 빠른 진단 절차
 
 | 단계 | 명령 | 확인 포인트 |
 |---|---|---|
@@ -43,7 +43,7 @@ category: Kubernetes
 
 ---
 
-## 2) 빈 패턴별 원인 → 재현 예제 → 해결책
+## 2. 빈 패턴별 원인 → 재현 예제 → 해결책
 
 아래는 **실제에서 가장 흔한 Pending 원인**을 “증상 → 예제 YAML → 수정안” 형태로 정리했습니다.
 
@@ -329,7 +329,7 @@ spec:
 
 ---
 
-## 3) 자동 진단 스니펫 모음
+## 3. 자동 진단 스니펫 모음
 
 ### 3.1 Pending 원인 퀵리포트(쉘)
 
@@ -358,7 +358,7 @@ kubectl get nodes -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.a
 
 ---
 
-## 4) “원인→수정” 시나리오 7선
+## 4. “원인→수정” 시나리오 7선
 
 ### 시나리오 A: 과도한 requests로 스케줄 실패
 - **원인**: `requests.cpu=4`인데 2코어 노드만 존재
@@ -390,7 +390,7 @@ kubectl get nodes -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.a
 
 ---
 
-## 5) 재현 가능한 데모: 4가지 실패와 해결
+## 5. 재현 가능한 데모: 4가지 실패와 해결
 
 > 아래는 하나씩 켰다 껐다 해보며 Pending→해결까지 체험하는 **학습용 세트**입니다.
 
@@ -509,7 +509,7 @@ spec:
 
 ---
 
-## 6) 운영 자동화: “Pending 알람 → 원인 요약 → 제안”
+## 6. 운영 자동화: “Pending 알람 → 원인 요약 → 제안”
 
 프로메테우스 + 알러팅(예: Alertmanager)으로 **`kube_pod_status_phase{phase="Pending"}`** 비율 임계 초과 시 알림 →  
 아래 스크립트로 **이벤트 요약** 후 Slack에 첨부.
@@ -529,7 +529,7 @@ cat "$OUT"
 
 ---
 
-## 7) 체크리스트(현장용)
+## 7. 체크리스트(현장용)
 
 - [ ] `describe pod` Events에서 **문장형 원인** 확인  
 - [ ] PVC/PV/SC/CSI 상태 점검 (Zone/AccessModes 일치)  
@@ -545,7 +545,7 @@ cat "$OUT"
 
 ---
 
-## 8) 부록: 예제 Manifest(수정 전/후)
+## 8. 부록: 예제 Manifest(수정 전/후)
 
 ### 8.1 수정 전(문제)
 ```yaml

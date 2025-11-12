@@ -14,7 +14,7 @@ category: WPF
 
 ---
 
-## 0) 한눈에 요약
+## 0. 한눈에 요약
 
 | 항목 | **StaticResource** | **DynamicResource** |
 |---|---|---|
@@ -29,7 +29,7 @@ category: WPF
 
 ---
 
-## 1) 리소스 탐색/해석 **내부 동작**
+## 1. 리소스 탐색/해석 **내부 동작**
 
 ### 1.1 리소스 탐색 경로(스코프)
 리소스를 찾을 때 WPF는 **가까운 곳부터 먼 곳으로** 다음 순서로 탐색합니다.
@@ -55,7 +55,7 @@ category: WPF
 
 ---
 
-## 2) 기본 예제 — 같은 코드를 `Static`/`Dynamic`으로 비교
+## 2. 기본 예제 — 같은 코드를 `Static`/`Dynamic`으로 비교
 
 ### 2.1 팔레트 정의(리소스 파일)
 ```xml
@@ -116,7 +116,7 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 3) “선언 순서”/“해석 시점” 차이
+## 3. “선언 순서”/“해석 시점” 차이
 
 ### 3.1 StaticResource는 선언 순서에 민감
 ```xml
@@ -137,7 +137,7 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 4) 시스템/OS 설정과의 연동(High Contrast, SystemColors)
+## 4. 시스템/OS 설정과의 연동(High Contrast, SystemColors)
 
 **OS 테마/고대비 전환**을 **자동 반영**하려면 **DynamicResource**를 사용해야 합니다.
 
@@ -155,7 +155,7 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 5) 스타일/템플릿에서의 차이와 패턴
+## 5. 스타일/템플릿에서의 차이와 패턴
 
 ### 5.1 ControlTemplate 내부: TemplateBinding + (Dynamic/Static)
 템플릿 내부에서는 **`TemplateBinding`** 로 **경량 전달**이 기본입니다.  
@@ -198,7 +198,7 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 6) 코드 비하인드에서의 사용
+## 6. 코드 비하인드에서의 사용
 
 ### 6.1 Static: `FindResource` / `TryFindResource`
 ```csharp
@@ -216,7 +216,7 @@ MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
 
 ---
 
-## 7) Freezable(Brush/Geometry)과 DynamicResource
+## 7. Freezable(Brush/Geometry)과 DynamicResource
 
 - **Freezable**(예: `SolidColorBrush`)는 `Freeze()` 되면 **속성 변경 불가**.  
 - DynamicResource는 **엔트리 교체**를 감지해 업데이트합니다.  
@@ -231,7 +231,7 @@ MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
 
 ---
 
-## 8) 성능 고려
+## 8. 성능 고려
 
 - **StaticResource**: 파싱 시 한 번만 해석 → **초기 비용↑**(큰 딕셔너리도 한 번에) but 런타임 오버헤드 없음.  
 - **DynamicResource**: 초기 가벼움 → 런타임에 **구독/재해석/무효화**가 일어남.  
@@ -244,7 +244,7 @@ MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
 
 ---
 
-## 9) MergedDictionaries 교체와 즉시 반영(테마 스위처)
+## 9. MergedDictionaries 교체와 즉시 반영(테마 스위처)
 
 ### 9.1 전형적인 스위처 구현
 ```csharp
@@ -282,7 +282,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 10) StaticResource가 필요한 순간들
+## 10. StaticResource가 필요한 순간들
 
 - **스타일/템플릿 내 성능 최적화**: 자주 참조되는 고정 리소스(두께, 코너 라운드, 고정 색 등)  
 - **리소스 선언 순서가 확실**하고 **변경 의도가 전혀 없는 값**  
@@ -290,7 +290,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 11) DynamicResource가 필요한 순간들
+## 11. DynamicResource가 필요한 순간들
 
 - **테마 전환**(Light/Dark/Brand Color Switch)  
 - **OS 설정 변경 반영**(고대비, 시스템 색/폰트 크기)  
@@ -315,7 +315,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 12) 리소스 키/네임 충돌 & 탐색 우선순위 함정
+## 12. 리소스 키/네임 충돌 & 탐색 우선순위 함정
 
 - 같은 키를 **여러 사전**에서 정의하면 **가까운 스코프**가 우선.  
 - 템플릿 내부에 같은 키가 있어 **의도치 않은 값**을 잡을 수 있음 → **접두사** 전략으로 키를 구분하세요.  
@@ -323,7 +323,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 13) DataTemplate/ControlTemplate 내부의 해석 타이밍
+## 13. DataTemplate/ControlTemplate 내부의 해석 타이밍
 
 - **StaticResource**: 템플릿이 **적용될 때 1회** 해석되어 **고정**됩니다.  
 - **DynamicResource**: 템플릿 적용 후에도 **리소스 교체**를 **추적**하여 **갱신**됩니다.  
@@ -331,7 +331,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 14) 애니메이션과 리소스(공유주의!)
+## 14. 애니메이션과 리소스(공유주의!)
 
 - **공유 Brush**(리소스 브러시)를 애니메이션하면 **모든 참조자**가 함께 바뀝니다.  
   - 개별 컨트롤만 애니메이션하려면 **로컬 브러시**를 생성하거나 **`x:Shared="False"`**.  
@@ -339,7 +339,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 15) 디버깅/트러블슈팅
+## 15. 디버깅/트러블슈팅
 
 ### 15.1 “리소스가 안 잡혀요”
 - **StaticResource + 선언 순서** 문제인지 확인(파서 에러/무시).  
@@ -359,7 +359,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 16) 고급: 코드에서 “전역 팔레트 값” 교체
+## 16. 고급: 코드에서 “전역 팔레트 값” 교체
 
 ```csharp
 public static class Palette
@@ -378,7 +378,7 @@ public static class Palette
 
 ---
 
-## 17) 실전 템플릿: 라이트/다크/하이콘트라스트 3종
+## 17. 실전 템플릿: 라이트/다크/하이콘트라스트 3종
 
 ### 17.1 팔레트 키 표준화
 ```xml
@@ -427,7 +427,7 @@ public static class Palette
 
 ---
 
-## 18) 체크리스트(베스트 프랙티스)
+## 18. 체크리스트(베스트 프랙티스)
 
 - [ ] **변할 수 있는 값**(테마/OS/사용자 설정)은 **DynamicResource**  
 - [ ] **절대값/상수**는 **StaticResource** (성능·예측성↑)  
@@ -439,7 +439,7 @@ public static class Palette
 
 ---
 
-## 19) 미니 Q&A
+## 19. 미니 Q&A
 
 **Q. DynamicResource는 값 변경 이벤트를 어떻게 감지하나요?**  
 A. 리소스 엔트리(딕셔너리의 해당 키)가 **새 인스턴스로 교체되는 것**을 추적합니다. 객체 내부 속성 변경은 보장하지 않습니다(특히 `Freeze`된 `Freezable`).  
@@ -452,7 +452,7 @@ A. 가능합니다. 다만 **템플릿 적용 시점**과 **실시간 갱신 범
 
 ---
 
-## 20) 전체 샘플(요약 · 붙여 넣어 실행 가능)
+## 20. 전체 샘플(요약 · 붙여 넣어 실행 가능)
 
 ### 20.1 App.xaml
 ```xml

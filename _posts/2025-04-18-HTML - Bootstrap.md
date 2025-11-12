@@ -6,7 +6,7 @@ category: HTML
 ---
 # Bootstrap(부트스트랩)
 
-## 0) Bootstrap 한눈에 보기
+## 0. Bootstrap 한눈에 보기
 
 - **정의**: 반응형 UI를 빠르게 구성하는 CSS·JS 프레임워크
 - **철학**: 모바일 우선, 일관된 디자인 시스템, 컴포넌트 기반
@@ -46,7 +46,7 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 
 ---
 
-## 1) 그리드 시스템 (Grid) — 레이아웃의 뼈대
+## 1. 그리드 시스템 (Grid) — 레이아웃의 뼈대
 
 ### 1.1 컨테이너와 행/열
 
@@ -100,7 +100,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 2) 유틸리티(Utilities) — “CSS 없이” 빠르게 스타일링
+## 2. 유틸리티(Utilities) — “CSS 없이” 빠르게 스타일링
 
 ### 2.1 여백·정렬·디스플레이
 
@@ -130,7 +130,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 3) 폼(Form) — 입력 UI와 검증
+## 3. 폼(Form) — 입력 UI와 검증
 
 ### 3.1 기본 폼과 그리드 조합
 
@@ -199,7 +199,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 4) 컴포넌트(Component) — 생산성의 핵심
+## 4. 컴포넌트(Component) — 생산성의 핵심
 
 ### 4.1 버튼/버튼 그룹
 
@@ -343,7 +343,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 5) 테이블/이미지/미디어
+## 5. 테이블/이미지/미디어
 
 ### 5.1 반응형 테이블
 
@@ -368,7 +368,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 6) 아이콘과 브랜딩
+## 6. 아이콘과 브랜딩
 
 - **Bootstrap Icons**(별도 패키지): `https://icons.getbootstrap.com/`
 - SVG inline 또는 아이콘 폰트 사용 가능
@@ -380,7 +380,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 7) 접근성(A11y) — 시맨틱 + ARIA + 포커스
+## 7. 접근성(A11y) — 시맨틱 + ARIA + 포커스
 
 - 컴포넌트는 기본적으로 **ARIA 속성**과 키보드 탐색을 지원
 - **스크린 리더 텍스트**: `.visually-hidden`
@@ -397,7 +397,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 8) 성능/번들/빌드 — 필요한 것만, 빠르게
+## 8. 성능/번들/빌드 — 필요한 것만, 빠르게
 
 ### 8.1 개별 JS 임포트
 
@@ -422,7 +422,7 @@ import Dropdown from 'bootstrap/js/dist/dropdown';
 
 ---
 
-## 9) Sass 커스터마이징 — 디자인 시스템 내 것으로
+## 9. Sass 커스터마이징 — 디자인 시스템 내 것으로
 
 > Bootstrap 5는 Dart Sass 기준의 `@use` 문법 권장.
 
@@ -487,7 +487,7 @@ $enable-rounded: true;
 
 ---
 
-## 10) 다크 모드/테마 토글(실전)
+## 10. 다크 모드/테마 토글(실전)
 
 ```html
 <button id="themeToggle" class="btn btn-sm btn-outline-secondary">Theme</button>
@@ -511,7 +511,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 11) 실전 레이아웃 패턴
+## 11. 실전 레이아웃 패턴
 
 ### 11.1 대시보드(고정 사이드바 + 컨텐츠)
 
@@ -565,7 +565,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 12) 프레임워크와 결합
+## 12. 프레임워크와 결합
 
 - **React**: React-Bootstrap, Reactstrap 또는 기본 Bootstrap + data-bs-* / 직접 JS  
 - **Vue**: BootstrapVueNext(Community), 기본 적용  
@@ -574,7 +574,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 13) 마이그레이션(v4 → v5) 요약
+## 13. 마이그레이션(v4 → v5) 요약
 
 - jQuery 의존성 제거 → `data-bs-*` 속성명으로 변경
 - `.form-group` → **공백 유틸리티**로 대체, 폼 구조 단순화
@@ -584,7 +584,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 14) 테스트/디버깅/접근성 검증
+## 14. 테스트/디버깅/접근성 검증
 
 - DevTools **Rendering** 패널로 모바일/색 약/모션 감소 체크
 - Lighthouse/axe-core로 접근성 자동 점검
@@ -593,7 +593,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 15) 자주 겪는 문제와 해결
+## 15. 자주 겪는 문제와 해결
 
 | 문제 | 원인/대응 |
 |---|---|
@@ -605,7 +605,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 16) 보안/정책/엔터프라이즈 운영
+## 16. 보안/정책/엔터프라이즈 운영
 
 - CDN 사용 시 **SRI + crossorigin** 지정
 - 사내망은 사설 NPM/사내 CDN 구성
@@ -614,7 +614,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 17) 체크리스트: 실전 프로젝트 시작 전
+## 17. 체크리스트: 실전 프로젝트 시작 전
 
 - 디자인 토큰(색/타이포/간격/둥글기) → Sass 변수 정의  
 - **Utilities API**로 팀 표준 헬퍼 세트 정의  
@@ -625,7 +625,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 18) 최소 템플릿(실행 가능한 스타터)
+## 18. 최소 템플릿(실행 가능한 스타터)
 
 ```html
 <!doctype html>
@@ -713,7 +713,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 19) 결론
+## 19. 결론
 
 - **빠른 프로토타이핑**과 **안정적인 디자인 시스템** 구축에 탁월  
 - v5의 **jQuery 제거/유틸리티 API/Sass 변수/다크모드/RTL**로 **현대적 요구** 충족  

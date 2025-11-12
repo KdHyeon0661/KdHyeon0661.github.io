@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML에서 JavaScript와 CSS 다루기
 
-## 1) CSS — HTML에 스타일을 더하는 3가지 기본 방법
+## 1. CSS — HTML에 스타일을 더하는 3가지 기본 방법
 
 ### 1.1 인라인 스타일(Inline)
 ```html
@@ -50,7 +50,7 @@ h1 { color: var(--brand); }
 
 ---
 
-## 2) CSS를 “어디에” 둘 것인가 — 위치와 성능
+## 2. CSS를 “어디에” 둘 것인가 — 위치와 성능
 
 - `<link rel="stylesheet">`는 **반드시 `<head>`**에.  
   브라우저는 CSS를 **렌더 차단** 리소스로 다루므로, head 초반에 로드해야 **FOUC(깜빡임)** 최소화.
@@ -71,7 +71,7 @@ h1 { color: var(--brand); }
 
 ---
 
-## 3) JavaScript — HTML에 “동작”을 더하는 3가지 방법
+## 3. JavaScript — HTML에 “동작”을 더하는 3가지 방법
 
 ### 3.1 인라인 스크립트(이벤트 속성) — 비권장
 ```html
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 4) 스크립트 “위치”와 로드 전략 — defer vs async vs module
+## 4. 스크립트 “위치”와 로드 전략 — defer vs async vs module
 
 | 속성/위치 | 실행 타이밍 | 의존성/순서 | 사용처 |
 |---|---|---|---|
@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 5) 통합 예제 — HTML + CSS + JS (접근성/성능/보안 포함)
+## 5. 통합 예제 — HTML + CSS + JS (접근성/성능/보안 포함)
 
 ```html
 <!DOCTYPE html>
@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 6) CSS 실전 토픽 — 선택자·특이성·레이어·변수
+## 6. CSS 실전 토픽 — 선택자·특이성·레이어·변수
 
 ### 6.1 특이성(Specificity) 요약
 - 인라인 > ID > 클래스/속성/가상 > 태그/가상요소.
@@ -280,7 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 7) JavaScript 실전 토픽 — DOM, 이벤트, 모듈, 대기열
+## 7. JavaScript 실전 토픽 — DOM, 이벤트, 모듈, 대기열
 
 ### 7.1 DOMContentLoaded vs load
 - **DOMContentLoaded**: DOM 트리가 준비되면 실행(이미지/스타일 로드 기다리지 않음).
@@ -307,7 +307,7 @@ document.body.addEventListener('click', (e) => {
 
 ---
 
-## 8) 보안 — CSP, SRI, 교차 출처
+## 8. 보안 — CSP, SRI, 교차 출처
 
 ### 8.1 CSP(Content-Security-Policy) 기본
 ```http
@@ -334,7 +334,7 @@ Content-Security-Policy:
 
 ---
 
-## 9) 성능 — 로딩/페인트/인터랙션 최적화 체크리스트
+## 9. 성능 — 로딩/페인트/인터랙션 최적화 체크리스트
 
 - CSS: **크리티컬 인라인 + 비차단 로드**, `@import` 지양.
 - JS: **defer** 기본, 광고/분석은 **async**.
@@ -346,7 +346,7 @@ Content-Security-Policy:
 
 ---
 
-## 10) 유지보수 — 아키텍처와 네이밍
+## 10. 유지보수 — 아키텍처와 네이밍
 
 - CSS: **BEM**(`.card__title--large`), ITCSS/레이어링(@layer)로 예측 가능한 우선순위.
 - JS: 기능 단위 모듈(`user.mjs`, `cart.mjs`) + index에서 조립.
@@ -354,7 +354,7 @@ Content-Security-Policy:
 
 ---
 
-## 11) 반응형·다크모드·설정 저장까지 한 번에
+## 11. 반응형·다크모드·설정 저장까지 한 번에
 
 ### 11.1 반응형 컨테이너/그리드
 ```css
@@ -376,7 +376,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 12) 디버깅 팁
+## 12. 디버깅 팁
 
 - **DevTools**: Elements(Computed)로 충돌/특이성 확인.
 - **Coverage**: 미사용 CSS/JS 파악.
@@ -385,7 +385,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 13) 자주 겪는 문제와 해결
+## 13. 자주 겪는 문제와 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -397,7 +397,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 14) 요약 표
+## 14. 요약 표
 
 | 구분 | 방식 | 장점 | 단점 | 권장도 |
 |---|---|---|---|---|
@@ -413,7 +413,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 15) 다음 단계 제안
+## 15. 다음 단계 제안
 
 - CSS: **Flexbox/Grid** 레이아웃, `@container`(지원 브라우저에서)
 - JS: **모듈·동적 import**, 이벤트 위임 패턴, Fetch/Streams

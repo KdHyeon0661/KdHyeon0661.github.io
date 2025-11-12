@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes RBAC (Role-Based Access Control)
 
-## 0) 빅픽처: 인증→인가 파이프라인
+## 0. 빅픽처: 인증→인가 파이프라인
 
 ```
 [인증(Authentication)]  OIDC/SAML/x509/SA 토큰
@@ -23,7 +23,7 @@ category: Kubernetes
 
 ---
 
-## 1) 핵심 리소스 4종 요약 (정확한 의미)
+## 1. 핵심 리소스 4종 요약 (정확한 의미)
 
 | 리소스 | 범위 | 목적 | 자주 혼동되는 포인트 |
 |---|---|---|---|
@@ -37,7 +37,7 @@ category: Kubernetes
 
 ---
 
-## 2) 권한 평가 모델(개념 수식)
+## 2. 권한 평가 모델(개념 수식)
 
 RBAC의 허용 여부는 다음 **실현가능한 논리식**으로 이해할 수 있습니다.
 
@@ -55,7 +55,7 @@ $$
 
 ---
 
-## 3) Role/Binding 최소 단위 예제(기본기)
+## 3. Role/Binding 최소 단위 예제(기본기)
 
 ### 3.1 읽기 전용 Role (NS 한정)
 
@@ -91,7 +91,7 @@ roleRef:
 
 ---
 
-## 4) ClusterRole을 네임스페이스 한정으로 쓰기
+## 4. ClusterRole을 네임스페이스 한정으로 쓰기
 
 > **패턴**: 표준 `view`/`edit`/`admin` ClusterRole을 **RoleBinding**으로 특정 NS에만 제한.
 
@@ -113,7 +113,7 @@ roleRef:
 
 ---
 
-## 5) ServiceAccount(워크로드 아이덴티티) 권한 부여
+## 5. ServiceAccount(워크로드 아이덴티티) 권한 부여
 
 ### 5.1 SA 생성 + RoleBinding
 
@@ -153,7 +153,7 @@ roleRef:
 
 ---
 
-## 6) 흔한 과제와 실전 패턴
+## 6. 흔한 과제와 실전 패턴
 
 ### 6.1 “로그는 보되, 리소스 수정은 금지”
 - `pods/log` 서브리소스에 대한 `get` 허용, 그 외는 read-only.
@@ -223,7 +223,7 @@ rules:
 
 ---
 
-## 7) Aggregated ClusterRole (확장형 역할)
+## 7. Aggregated ClusterRole (확장형 역할)
 
 CRD 설치 시, 운영자는 **라벨 기반 집계**로 역할을 자동 확장할 수 있습니다.
 
@@ -244,7 +244,7 @@ rules:
 
 ---
 
-## 8) CRD/리소스 세부 권한(서브리소스/리소스네임)
+## 8. CRD/리소스 세부 권한(서브리소스/리소스네임)
 
 - **서브리소스**: `"deployments/scale"`, `"pods/log"`, `"pods/exec"` 등은 **별개 리소스**로 취급.
 - **resourceNames**: 특정 **이름**으로 제한 가능.
@@ -259,7 +259,7 @@ rules:
 
 ---
 
-## 9) 비자원 URL(nonResourceURLs) — 헬스/메트릭 엔드포인트
+## 9. 비자원 URL(nonResourceURLs) — 헬스/메트릭 엔드포인트
 
 클러스터 전역의 API 경로(예: `/healthz`, `/metrics`):
 
@@ -277,7 +277,7 @@ rules:
 
 ---
 
-## 10) 권한 에스컬레이션 방지 가이드
+## 10. 권한 에스컬레이션 방지 가이드
 
 - `*`(와일드카드) **지양**: 특히 `verbs: ["*"]`, `resources: ["*"]`.
 - `secrets` 읽기(특히 전역) 남발 금지.  
@@ -287,7 +287,7 @@ rules:
 
 ---
 
-## 11) 멀티테넌시 RBAC 패턴(요약)
+## 11. 멀티테넌시 RBAC 패턴(요약)
 
 | 요구 | 패턴 |
 |---|---|
@@ -298,7 +298,7 @@ rules:
 
 ---
 
-## 12) 점검/검증/감사
+## 12. 점검/검증/감사
 
 ### 12.1 능동 질의: `kubectl auth can-i`
 
@@ -331,7 +331,7 @@ kubectl get rolebinding -A -o json | jq '.items[] | select(.subjects[]?.kind=="S
 
 ---
 
-## 13) 트러블슈팅 테이블
+## 13. 트러블슈팅 테이블
 
 | 증상 | 흔한 원인 | 해결 |
 |---|---|---|
@@ -344,7 +344,7 @@ kubectl get rolebinding -A -o json | jq '.items[] | select(.subjects[]?.kind=="S
 
 ---
 
-## 14) 역할 카탈로그(실무형 템플릿)
+## 14. 역할 카탈로그(실무형 템플릿)
 
 ### 14.1 View-Logs Only (NS)
 
@@ -437,7 +437,7 @@ rules:
 
 ---
 
-## 15) 자동화/리뷰 팁
+## 15. 자동화/리뷰 팁
 
 - 모든 RBAC YAML은 **PR 게이트**(Code Review + 정책 스캔)로만 반영.
 - **기본 세트(카탈로그)**에서 조합: `view-logs`, `readonly`, `deployer`…
@@ -445,14 +445,14 @@ rules:
 
 ---
 
-## 16) 실전 점검 스크립트(샘플)
+## 16. 실전 점검 스크립트(샘플)
 
 ```bash
-# 1) 전체 RBAC 오브젝트 요약
+# 1. 전체 RBAC 오브젝트 요약
 kubectl get clusterrole,clusterrolebinding
 kubectl get role,rolebinding -A
 
-# 2) 민감 권한 스팟체크(Secrets, RBAC 수정)
+# 2. 민감 권한 스팟체크(Secrets, RBAC 수정)
 kubectl get clusterrole -o json | jq -r '
  .items[] | select(.rules[]? | (.resources? // []) | index("secrets")) |
  .metadata.name'
@@ -460,7 +460,7 @@ kubectl get clusterrole -o json | jq -r '
  .items[] | select(.rules[]? | (.resources? // []) | inside(["roles","rolebindings","clusterroles","clusterrolebindings"])) |
  .metadata.name'
 
-# 3) 특정 사용자 권한 스모크
+# 3. 특정 사용자 권한 스모크
 kubectl auth can-i get secrets --as alice -n prod
 kubectl auth can-i create role --as alice -n prod
 kubectl auth can-i get nodes --as alice            # 전역 리소스
@@ -468,7 +468,7 @@ kubectl auth can-i get nodes --as alice            # 전역 리소스
 
 ---
 
-## 17) 수학적 관점(선택)
+## 17. 수학적 관점(선택)
 
 RBAC의 규칙 집합을 \( \mathcal{R} \)라 하면, 특정 요청 \(q=(u,n,r,v)\)에 대한 허용 여부는:
 
@@ -484,7 +484,7 @@ $$
 
 ---
 
-## 18) 베스트 프랙티스 요약 체크리스트
+## 18. 베스트 프랙티스 요약 체크리스트
 
 - [ ] **Least Privilege**: 필요한 리소스/동사만.
 - [ ] **서브리소스 명시**: exec/portforward/log/scale는 별도.
@@ -497,7 +497,7 @@ $$
 
 ---
 
-## 19) 결론
+## 19. 결론
 
 - RBAC는 쿠버네티스 **보안/거버넌스의 중심축**입니다.
 - **정확한 스코프 모델(역할 vs 바인딩)**과 **서브리소스 인식**, **최소권한 설계**가 안정 운영의 관건.

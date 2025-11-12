@@ -6,7 +6,7 @@ category: CSS
 ---
 # CSS 커스텀 속성(CSS Variables)
 
-## 1) 핵심 요약 (한 장)
+## 1. 핵심 요약 (한 장)
 
 - **선언**: `--token-name: value;` (접두사 `--` 필수)  
 - **사용**: `var(--token-name, fallback)` (두 번째 인자는 **폴백**)  
@@ -17,7 +17,7 @@ category: CSS
 
 ---
 
-## 2) 기본 문법 & 스코프/상속
+## 2. 기본 문법 & 스코프/상속
 
 ```css
 /* 전역(문서 루트) 설계 토큰 */
@@ -43,7 +43,7 @@ category: CSS
 
 ---
 
-## 3) 계산 규칙 & 폴백 & 에러(Invalid at computed value time)
+## 3. 계산 규칙 & 폴백 & 에러(Invalid at computed value time)
 
 ### 3.1 `var()`는 **computed 단계**에서 치환
 - `var(--a)`가 해석 불가하면 해당 **선언 전체가 무효**(shorthand 포함).
@@ -77,7 +77,7 @@ category: CSS
 
 ---
 
-## 4) 설계 토큰(Design Tokens)로 체계화
+## 4. 설계 토큰(Design Tokens)로 체계화
 
 ### 4.1 원천 토큰(primitive) → 의미 토큰(semantic) 구분
 
@@ -123,7 +123,7 @@ category: CSS
 
 ---
 
-## 5) 테마 관리(라이트/다크/브랜드) & 사용자 프리퍼런스
+## 5. 테마 관리(라이트/다크/브랜드) & 사용자 프리퍼런스
 
 ### 5.1 Attribute/클래스로 테마 스왑
 
@@ -173,7 +173,7 @@ root.setAttribute('data-theme', next);
 
 ---
 
-## 6) 타이포그래피/레이아웃/컴포넌트 실전 패턴
+## 6. 타이포그래피/레이아웃/컴포넌트 실전 패턴
 
 ### 6.1 유동 타이포(미디어쿼리 없이)
 
@@ -245,7 +245,7 @@ f(w) = \mathrm{clamp}\big(f_{\min}, a \cdot w + b, f_{\max}\big)
 
 ---
 
-## 7) JavaScript 연동 (읽기/쓰기/테마 저장)
+## 7. JavaScript 연동 (읽기/쓰기/테마 저장)
 
 ```js
 const root = document.documentElement;
@@ -268,7 +268,7 @@ if (saved) root.dataset.theme = saved;
 
 ---
 
-## 8) 애니메이션/전환과 커스텀 속성
+## 8. 애니메이션/전환과 커스텀 속성
 
 - **변수가 바뀌면** 이를 **참조**하는 속성(`background`, `transform`, `opacity` 등)이 **변경**되어 **그 속성에 `transition`이 걸려 있으면** 부드럽게 전환됨.
 - 커스텀 속성 **자체를 애니메이션**하려면 **CSS Properties and Values API**의 `@property`로 **타입 등록** 필요.
@@ -304,7 +304,7 @@ if (saved) root.dataset.theme = saved;
 
 ---
 
-## 9) Cascade Layers, 컨테이너/미디어/지원쿼리와의 결합
+## 9. Cascade Layers, 컨테이너/미디어/지원쿼리와의 결합
 
 ### 9.1 Cascade Layers로 우선순위 체계화
 
@@ -338,7 +338,7 @@ if (saved) root.dataset.theme = saved;
 
 ---
 
-## 10) Shadow DOM(웹 컴포넌트)와 커스텀 속성
+## 10. Shadow DOM(웹 컴포넌트)와 커스텀 속성
 
 - **커스텀 속성은 Shadow 경계도 통과**(상속) → 호스트에서 테마/토큰 주입 가능.
 
@@ -355,7 +355,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 11) 성능/안정성/팀 협업 규칙
+## 11. 성능/안정성/팀 협업 규칙
 
 - **네이밍**: `--scope-role-state`(예: `--btn-bg-hover`) / **프리픽스**로 도메인 구분(`--app-*`).  
 - **중첩 계산**을 줄이고, **토큰 분해**(원천/의미/컴포넌트 단위).  
@@ -364,7 +364,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 12) 디버깅 체크리스트
+## 12. 디버깅 체크리스트
 
 - [ ] `var(--x, fallback)`의 **폴백**이 실제로 유효한 타입/단위인가?  
 - [ ] shorthand 속성에서 `var()` 실패 시 **선언 전체 무효** → longhand로 분리?  
@@ -375,7 +375,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 13) 완성 예제 — “테마 가능한 대시보드 카드”
+## 13. 완성 예제 — “테마 가능한 대시보드 카드”
 
 ```html
 <main class="wrap">
@@ -484,7 +484,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 14) 브라우저 지원 & 폴백
+## 14. 브라우저 지원 & 폴백
 
 | 기능                         | Chrome/Edge | Firefox | Safari | IE11 |
 |------------------------------|-------------|---------|--------|------|
@@ -497,7 +497,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 15) 참고/도구
+## 15. 참고/도구
 
 - MDN: *Using CSS Custom Properties*, *@property*, *color-mix()*  
 - CSS-Tricks: *A Complete Guide to Custom Properties*  

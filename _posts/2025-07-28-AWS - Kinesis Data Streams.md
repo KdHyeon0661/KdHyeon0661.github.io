@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Kinesis Data Streams 실습
 
-## 0) 전체 아키텍처 한눈에
+## 0. 전체 아키텍처 한눈에
 
 ```text
 Producers (App, Web, IoT, Logs, ETL)
@@ -26,7 +26,7 @@ Consumers
 
 ---
 
-## 1) 스트림 생성 (콘솔/CLI/IaC)
+## 1. 스트림 생성 (콘솔/CLI/IaC)
 
 ### 1.1 콘솔
 - **Stream name**: `my-data-stream`
@@ -53,7 +53,7 @@ resource "aws_kinesis_stream" "main" {
 
 ---
 
-## 2) Producer: 단일/배치/고성능 전송
+## 2. Producer: 단일/배치/고성능 전송
 
 ### 2.1 CLI로 단건 전송
 ```bash
@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
 ---
 
-## 3) Consumer: 3가지 접근법
+## 3. Consumer: 3가지 접근법
 
 ### 3.1 CLI(Shard Iterator 기반) – 학습용
 ```bash
@@ -149,7 +149,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 4) KCL (Kinesis Client Library)로 안정적인 소비
+## 4. KCL (Kinesis Client Library)로 안정적인 소비
 
 ### 4.1 왜 KCL?
 - 샤드 할당/밸런싱, 체크포인팅, 재시작·리샤딩 대응 자동화
@@ -195,7 +195,7 @@ class RecordProcessor implements ShardRecordProcessor {
 
 ---
 
-## 5) 샤드·파티션 키·처리량 공식
+## 5. 샤드·파티션 키·처리량 공식
 
 ### 5.1 샤드 처리량
 - **쓰기(Shard당)**: 최대 **1 MB/s** or **1,000 records/s**
@@ -217,7 +217,7 @@ $$
 
 ---
 
-## 6) 리샤딩(Scale out/in)
+## 6. 리샤딩(Scale out/in)
 
 ### 6.1 수동 Resharding
 ```bash
@@ -234,7 +234,7 @@ aws kinesis merge-shards --stream-name my-data-stream \
 
 ---
 
-## 7) 순서 보장·중복·재처리
+## 7. 순서 보장·중복·재처리
 
 ### 7.1 순서
 - **샤드 내** 파티션 키 단위 순서 보장
@@ -250,7 +250,7 @@ aws kinesis merge-shards --stream-name my-data-stream \
 
 ---
 
-## 8) 보안: IAM/KMS/VPC
+## 8. 보안: IAM/KMS/VPC
 
 ### 8.1 IAM(생산자/소비자 최소권한)
 ```json
@@ -268,7 +268,7 @@ aws kinesis merge-shards --stream-name my-data-stream \
 
 ---
 
-## 9) 모니터링/알람/로그
+## 9. 모니터링/알람/로그
 
 ### 9.1 CloudWatch 지표
 - Producers: `PutRecord.Success`, `PutRecords.ThrottledRecords`
@@ -289,7 +289,7 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 10) 비용·성능 최적화
+## 10. 비용·성능 최적화
 
 ### 10.1 비용 구성
 - **Provisioned**: 샤드/시간, PUT 요청 수
@@ -309,7 +309,7 @@ $$
 
 ---
 
-## 11) 운영 체크리스트
+## 11. 운영 체크리스트
 
 - [ ] **용량 모드**(Provisioned/On-demand)와 초기 샤드 수 결정  
 - [ ] **파티션 키** 분산성 테스트(샘플 해시 분포)  
@@ -321,7 +321,7 @@ $$
 
 ---
 
-## 12) 고급: Enhanced Fan-Out(EFO) & KDA/Flink
+## 12. 고급: Enhanced Fan-Out(EFO) & KDA/Flink
 
 ### 12.1 EFO
 - 소비자당 **전용 2MB/s** 푸시 기반 전송(지연 수 ms)
@@ -340,7 +340,7 @@ events
 
 ---
 
-## 13) 실전 시나리오 (End-to-End)
+## 13. 실전 시나리오 (End-to-End)
 
 ### 13.1 생산자(웹/모바일) → KDS
 ```javascript
@@ -359,7 +359,7 @@ fetch('/ingest', { method:'POST', body: JSON.stringify({ user, action, ts: Date.
 
 ---
 
-## 14) 예제: Lambda Consumer + DynamoDB 멱등 Upsert
+## 14. 예제: Lambda Consumer + DynamoDB 멱등 Upsert
 
 ```python
 import base64, json, boto3, os, hashlib
@@ -380,7 +380,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 15) 실습 확장: PutRecords 스트레스 테스트
+## 15. 실습 확장: PutRecords 스트레스 테스트
 
 ```python
 import boto3, json, random, time
@@ -408,7 +408,7 @@ if __name__ == "__main__":
 
 ---
 
-## 16) 자주 묻는 질문(FAQ)
+## 16. 자주 묻는 질문(FAQ)
 
 **Q. Record 최대 크기?**  
 A. 1MB/레코드(압축은 앱 레벨). 요청(배치) 최대 5MB, 500레코드.
@@ -424,7 +424,7 @@ A. 트래픽 가변/초기 예측 어려움 → **On-demand**. 안정적·예측
 
 ---
 
-## 17) 마무리 요약
+## 17. 마무리 요약
 
 | 주제 | 요점 |
 |---|---|

@@ -251,10 +251,10 @@ kind load docker-image my-app:dev --name my-cluster
 킨드 문서의 패턴을 따라 **도커 레지스트리**를 띄우고, 킨드 노드에 **미러로 인식**시키면 팀/CI와 연계가 쉬워진다.
 
 ```bash
-# 1) 레지스트리 컨테이너
+# 1. 레지스트리 컨테이너
 docker run -d --restart=always -p "5001:5000" --name registry registry:2
 
-# 2) registry 미러를 사용하는 kind 클러스터
+# 2. registry 미러를 사용하는 kind 클러스터
 cat <<EOF > kind-with-registry.yaml
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -269,10 +269,10 @@ nodes:
   - role: worker
 EOF
 
-# 3) 클러스터 생성
+# 3. 클러스터 생성
 kind create cluster --config kind-with-registry.yaml
 
-# 4) registry 컨테이너를 kind 네트워크에 붙임
+# 4. registry 컨테이너를 kind 네트워크에 붙임
 docker network connect kind registry || true
 ```
 

@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # 테이블 **Random Access 최소화 튜닝**
 
-## 0) 실습 스키마 준비
+## 0. 실습 스키마 준비
 
 ```sql
 -- 깨끗이
@@ -55,7 +55,7 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST를 위해
 
 ---
 
-# 1) 랜덤 I/O(테이블 랜덤 액세스) 최소화의 **핵심 논리**
+# 1. 랜덤 I/O(테이블 랜덤 액세스) 최소화의 **핵심 논리**
 
 - 인덱스 스캔 후 **ROWID로 힙 테이블을 찌르는** 오퍼레이터:  
   `TABLE ACCESS BY INDEX ROWID [BATCHED]` → **db file sequential read**(싱글블록, 랜덤).
@@ -76,7 +76,7 @@ $$
 
 ---
 
-# 2) **인덱스 컬럼 추가**로 테이블 방문 제거(=Index-Only/커버링)
+# 2. **인덱스 컬럼 추가**로 테이블 방문 제거(=Index-Only/커버링)
 
 ## 2.1 베이스라인: 테이블 랜덤 방문이 발생하는 예
 
@@ -134,7 +134,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 3) 정렬까지 인덱스로 해결(Stopkey/Keyset와 궁합)
+# 3. 정렬까지 인덱스로 해결(Stopkey/Keyset와 궁합)
 
 ```sql
 -- 최신 50건(특정 고객)
@@ -165,7 +165,7 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-# 4) **PK 인덱스에 컬럼 추가** — 무엇이 가능하고, 어떻게 해야 안전한가
+# 4. **PK 인덱스에 컬럼 추가** — 무엇이 가능하고, 어떻게 해야 안전한가
 
 ## 4.1 중요한 전제
 - **PK 인덱스는 PK 제약의 컬럼 집합**과 **동일**해야 합니다.  
@@ -230,7 +230,7 @@ CREATE INDEX ix_orders_pk_cover
 
 ---
 
-# 5) **클러스터링 팩터(CF)**와 “컬럼 추가”의 상호작용
+# 5. **클러스터링 팩터(CF)**와 “컬럼 추가”의 상호작용
 
 ## 5.1 CF란?
 - 인덱스 **키 순서대로** 테이블을 읽을 때, **테이블 블록 재사용 정도**를 나타내는 척도.  
@@ -302,7 +302,7 @@ WHERE  table_name='RA_ORDERS';
 
 ---
 
-# 6) 운영 반영 시 **안전 절차**: Invisible/Online/검증
+# 6. 운영 반영 시 **안전 절차**: Invisible/Online/검증
 
 1) **Invisible Index**로 새 설계를 **그림자 배치**
 ```sql
@@ -329,7 +329,7 @@ ALTER INDEX ix_orders_cdt_cov_inv VISIBLE;
 
 ---
 
-# 7) 조인/페이지 시나리오와의 결합
+# 7. 조인/페이지 시나리오와의 결합
 
 - **Nested Loops** 내부 테이블이 `TABLE BY ROWID` 폭탄이면  
   → **커버링 인덱스**로 내부 테이블을 **미방문화**하거나, **Hash Join**으로 전략 전환.  
@@ -338,7 +338,7 @@ ALTER INDEX ix_orders_cdt_cov_inv VISIBLE;
 
 ---
 
-# 8) 종합 실험 템플릿
+# 8. 종합 실험 템플릿
 
 ```sql
 ALTER SESSION SET statistics_level = ALL;
@@ -380,7 +380,7 @@ WHERE  table_name='RA_ORDERS';
 
 ---
 
-# 9) 자주 묻는 질문(FAQ)
+# 9. 자주 묻는 질문(FAQ)
 
 **Q1. “PK 인덱스에 컬럼만 ‘추가’하면 되나요?”**  
 A. **아니요.** PK 인덱스는 **PK 제약 컬럼과 동일**해야 합니다. 컬럼을 더하려면 **PK 자체를 재정의**해야 하며,  
@@ -400,7 +400,7 @@ A. 옵티마이저가 조건/통계에 따라 선택합니다. 우리는 **커�
 
 ---
 
-# 10) 체크리스트
+# 10. 체크리스트
 
 - [ ] **핫 경로** 쿼리의 SELECT-LIST가 **인덱스만으로 충족**되게 설계(커버링).  
 - [ ] **정렬 일치**(+DESC)와 **Stopkey/Keyset**으로 **앞부분만** 읽기.  

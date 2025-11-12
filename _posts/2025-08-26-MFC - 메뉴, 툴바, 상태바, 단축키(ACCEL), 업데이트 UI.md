@@ -12,7 +12,7 @@ category: MFC
 
 ---
 
-## 0) 큰 그림: “명령 ID로 4가지 입력을 통합” (A)
+## 0. 큰 그림: “명령 ID로 4가지 입력을 통합” (A)
 MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 입력 경로**를 동시에 대표합니다.
 
 1) **메뉴 항목** → `WM_COMMAND`  
@@ -24,7 +24,7 @@ MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 �
 
 ---
 
-## 1) 메뉴(Menu) (A)
+## 1. 메뉴(Menu) (A)
 
 ### 1-1. 리소스 에디터에서 만드는 법
 - **리소스 뷰 → Menu → 새 메뉴** 생성.
@@ -61,7 +61,7 @@ MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 �
 ### ▶ 실전 예제: SDI 메뉴 리소스 & 문자열 테이블 (B)
 ## 예시 A) SDI 앱: 메뉴/툴바/상태바 + 단축키 + 업데이트 UI
 
-### 1) `resource.h` (ID 정의)
+### 1. `resource.h` (ID 정의)
 ```cpp
 #pragma once
 
@@ -77,7 +77,7 @@ MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 �
 #define ID_INDICATOR_READY     59100
 ```
 
-### 2) 메뉴 리소스(`.rc`) — 상태바 힌트(문자열 리소스와 연동)
+### 2. 메뉴 리소스(`.rc`) — 상태바 힌트(문자열 리소스와 연동)
 ```rc
 IDR_MAINMENU MENU
 BEGIN
@@ -108,7 +108,7 @@ END
 
 ---
 
-## 2) 툴바(Toolbar) (A)
+## 2. 툴바(Toolbar) (A)
 
 ### 2-1. 고전 `CToolBar` vs Feature Pack `CMFCToolBar`
 - **`CToolBar`(클래식)**: 가볍고 전통적인 툴바. 이미지 스트립(비트맵) 기반.  
@@ -137,7 +137,7 @@ END
 ---
 
 ### ▶ 실전 예제: 툴바 리소스 & MainFrame 생성/토글/업데이트 (B)
-### 3) 툴바 리소스(`.rc`)
+### 3. 툴바 리소스(`.rc`)
 ```rc
 IDR_MAINFRAME TOOLBAR 16,15
 BEGIN
@@ -152,7 +152,7 @@ BEGIN
 END
 ```
 
-### 6) 메인 프레임(`MainFrm.h/.cpp`) — 툴바/상태바 생성, 토글 + 업데이트 UI
+### 6. 메인 프레임(`MainFrm.h/.cpp`) — 툴바/상태바 생성, 토글 + 업데이트 UI
 ```cpp
 // MainFrm.h
 #pragma once
@@ -271,7 +271,7 @@ void CMainFrame::OnUpdateViewStatusBar(CCmdUI* pCmdUI)
 
 ---
 
-## 3) 상태바(Status Bar) (A)
+## 3. 상태바(Status Bar) (A)
 
 ### 3-1. 구조와 “인디케이터” 개념
 - 상태바는 보통 **여러 개의 “Pane(인디케이터)”**로 분할됩니다.  
@@ -328,7 +328,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 ---
 
-## 4) 단축키(Accelerator, ACCEL) (A)
+## 4. 단축키(Accelerator, ACCEL) (A)
 
 ### 4-1. 작동 원리(메시지 루프)
 - 메시지 루프에서 `TranslateAccelerator`가 **키 입력을 명령(=ID)**로 변환합니다.  
@@ -352,7 +352,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 ---
 
 ### ▶ 실전 예제: 가속기 리소스 (SDI) & 다이얼로그에서 TranslateAccelerator (B)
-### 4) 가속기(Accelerator) 리소스(`.rc`)
+### 4. 가속기(Accelerator) 리소스(`.rc`)
 ```rc
 IDR_MAINFRAME ACCELERATORS
 BEGIN
@@ -366,7 +366,7 @@ BEGIN
 END
 ```
 
-### 2) 대화상자 구현(`MainDlg.cpp`)
+### 2. 대화상자 구현(`MainDlg.cpp`)
 ```cpp
 #include "pch.h"
 #include "resource.h"
@@ -432,7 +432,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 5) ON_UPDATE_COMMAND_UI — “지금 이 순간의 UI 상태” (A)
+## 5. ON_UPDATE_COMMAND_UI — “지금 이 순간의 UI 상태” (A)
 
 ### 5-1. 무엇을 하는가
 - 메뉴/툴바/리본 항목의 **활성화(Enable)**, **체크/라디오(상태)**, **캡션(Text)** 등을 **실시간**으로 갱신합니다.  
@@ -470,7 +470,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 ---
 
 ### ▶ 실전 예제: SDI(문서 수정 여부로 Save 활성) + Dialog(UpdateDialogControls 트리거) (B)
-### 7) 문서 클래스(`MyDoc.h/.cpp`) — **저장 가능 상태**에 따라 `Save` 버튼 활성화
+### 7. 문서 클래스(`MyDoc.h/.cpp`) — **저장 가능 상태**에 따라 `Save` 버튼 활성화
 ```cpp
 // MyDoc.h
 #pragma once
@@ -525,7 +525,7 @@ void CMyDoc::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 대화상자 앱은 프레임 기반 자동 업데이트가 약하므로, **`UpdateDialogControls(this, FALSE)`를 직접 호출**해 UI를 갱신합니다.
 
-### 1) 대화상자 헤더(`MainDlg.h`)
+### 1. 대화상자 헤더(`MainDlg.h`)
 ```cpp
 #pragma once
 #include <afxwin.h>
@@ -551,7 +551,7 @@ protected:
 };
 ```
 
-### 2) 대화상자 구현(`MainDlg.cpp`)
+### 2. 대화상자 구현(`MainDlg.cpp`)
 ```cpp
 #include "pch.h"
 #include "resource.h"
@@ -617,7 +617,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 6) 통합 작동 시나리오 (A)
+## 6. 통합 작동 시나리오 (A)
 
 1) 사용자가 **문서를 열어 편집** → 앱 내부 상태 `isDirty = true`.  
 2) Idle 타임에 `ON_UPDATE_COMMAND_UI`가 호출됨 →  
@@ -632,7 +632,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 7) 디버깅/트러블슈팅 (A)
+## 7. 디버깅/트러블슈팅 (A)
 
 - **업데이트가 안 된다**  
   - 프레임 앱: `ON_UPDATE_COMMAND_UI`가 정의된 **클래스와 라우팅 경로**가 맞는지 확인.  
@@ -650,7 +650,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 8) 품질 체크리스트 (A)
+## 8. 품질 체크리스트 (A)
 
 - 명령 ID/문자열 리소스/가속기 테이블 간 **ID 일관성 유지**  
 - `ON_UPDATE_COMMAND_UI`는 **빠르고 결정적**인 로직만 수행  
@@ -664,7 +664,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 9) 요약 (A)
+## 9. 요약 (A)
 
 - **메뉴·툴바·단축키**는 **하나의 명령 ID**로 수렴하며,  
 - **상태바**는 그 명령의 **설명 텍스트**를 사용자에게 피드백합니다.  
@@ -684,7 +684,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ## 예시 A) SDI 앱: 메뉴/툴바/상태바 + 단축키 + 업데이트 UI
 
-### 1) `resource.h` (ID 정의)
+### 1. `resource.h` (ID 정의)
 ```cpp
 #pragma once
 
@@ -700,7 +700,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 #define ID_INDICATOR_READY     59100
 ```
 
-### 2) 메뉴 리소스(`.rc`) — 상태바 힌트(문자열 리소스와 연동)
+### 2. 메뉴 리소스(`.rc`) — 상태바 힌트(문자열 리소스와 연동)
 ```rc
 IDR_MAINMENU MENU
 BEGIN
@@ -729,7 +729,7 @@ BEGIN
 END
 ```
 
-### 3) 툴바 리소스(`.rc`)
+### 3. 툴바 리소스(`.rc`)
 ```rc
 IDR_MAINFRAME TOOLBAR 16,15
 BEGIN
@@ -744,7 +744,7 @@ BEGIN
 END
 ```
 
-### 4) 가속기(Accelerator) 리소스(`.rc`)
+### 4. 가속기(Accelerator) 리소스(`.rc`)
 ```rc
 IDR_MAINFRAME ACCELERATORS
 BEGIN
@@ -758,7 +758,7 @@ BEGIN
 END
 ```
 
-### 5) 문자열 테이블 — **메뉴 캡션 + 상태바 힌트**(개행 `\n` 뒤 힌트가 상태바에 자동 표시)
+### 5. 문자열 테이블 — **메뉴 캡션 + 상태바 힌트**(개행 `\n` 뒤 힌트가 상태바에 자동 표시)
 ```rc
 STRINGTABLE
 BEGIN
@@ -774,7 +774,7 @@ BEGIN
 END
 ```
 
-### 6) 메인 프레임(`MainFrm.h/.cpp`) — 툴바/상태바 생성, 토글 + 업데이트 UI
+### 6. 메인 프레임(`MainFrm.h/.cpp`) — 툴바/상태바 생성, 토글 + 업데이트 UI
 ```cpp
 // MainFrm.h
 #pragma once
@@ -891,7 +891,7 @@ void CMainFrame::OnUpdateViewStatusBar(CCmdUI* pCmdUI)
 }
 ```
 
-### 7) 문서 클래스(`MyDoc.h/.cpp`) — **저장 가능 상태**에 따라 `Save` 버튼 활성화
+### 7. 문서 클래스(`MyDoc.h/.cpp`) — **저장 가능 상태**에 따라 `Save` 버튼 활성화
 ```cpp
 // MyDoc.h
 #pragma once
@@ -942,7 +942,7 @@ void CMyDoc::OnUpdateFileSave(CCmdUI* pCmdUI)
 }
 ```
 
-### 8) 뷰 클래스(`MyView.cpp`) — **상태바 텍스트 갱신** & 편의 예시
+### 8. 뷰 클래스(`MyView.cpp`) — **상태바 텍스트 갱신** & 편의 예시
 ```cpp
 // 마우스 클릭 위치를 상태바에 표시하는 간단 예
 void CMyView::OnLButtonDown(UINT nFlags, CPoint point)
@@ -970,7 +970,7 @@ void CMyView::OnLButtonDown(UINT nFlags, CPoint point)
 
 대화상자 앱은 프레임 기반 자동 업데이트가 약하므로, **`UpdateDialogControls(this, FALSE)`를 직접 호출**해 UI를 갱신합니다.
 
-### 1) 대화상자 헤더(`MainDlg.h`)
+### 1. 대화상자 헤더(`MainDlg.h`)
 ```cpp
 #pragma once
 #include <afxwin.h>
@@ -996,7 +996,7 @@ protected:
 };
 ```
 
-### 2) 대화상자 구현(`MainDlg.cpp`)
+### 2. 대화상자 구현(`MainDlg.cpp`)
 ```cpp
 #include "pch.h"
 #include "resource.h"

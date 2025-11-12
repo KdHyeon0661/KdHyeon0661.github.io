@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # 실습: Kafka + Kubernetes 연동
 
-## 1) 아키텍처 개요
+## 1. 아키텍처 개요
 
 ```text
 [Client Pod / kcat / Python]  ──(ClusterIP)──> [Kafka Brokers (StatefulSet)]
@@ -24,7 +24,7 @@ category: Kubernetes
 
 ---
 
-## 2) 배포 방식 선택: Helm, Operator, 수동 YAML
+## 2. 배포 방식 선택: Helm, Operator, 수동 YAML
 
 | 방식 | 장점 | 단점 | 추천 상황 |
 |---|---|---|---|
@@ -36,7 +36,7 @@ category: Kubernetes
 
 ---
 
-## 3) Helm으로 Kafka + ZooKeeper 배포 (내부접속용)
+## 3. Helm으로 Kafka + ZooKeeper 배포 (내부접속용)
 
 > 로컬/내부 접근만 필요한 **기본 PLAINTEXT**.  
 > 시작은 단순하게, 이후 외부접속·보안으로 확장합니다.
@@ -100,7 +100,7 @@ kubectl get svc
 
 ---
 
-## 4) 파드 내부에서 토픽/메시지 테스트
+## 4. 파드 내부에서 토픽/메시지 테스트
 
 ### 4.1 브로커 파드 접속
 
@@ -129,7 +129,7 @@ kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic demo-topic -
 
 ---
 
-## 5) kcat로 테스트 (권장 도구)
+## 5. kcat로 테스트 (권장 도구)
 
 > 다양한 옵션/헤더/키/오프셋 제어에 편리.
 
@@ -154,7 +154,7 @@ kcat -b my-kafka.default.svc.cluster.local:9092 -t demo-topic -o beginning -e
 
 ---
 
-## 6) Python Producer/Consumer를 Kubernetes로 배포
+## 6. Python Producer/Consumer를 Kubernetes로 배포
 
 ### 6.1 코드
 
@@ -276,7 +276,7 @@ kubectl logs deploy/kafka-consumer -f
 
 ---
 
-## 7) 외부 접속(클러스터 밖에서) — NodePort/LoadBalancer
+## 7. 외부 접속(클러스터 밖에서) — NodePort/LoadBalancer
 
 Kafka는 **클라이언트가 브로커에 재접속**하기 때문에 `advertised.listeners`를 **외부 IP/도메인**으로 맞춰야 합니다.
 
@@ -332,7 +332,7 @@ kcat -b $(minikube ip):30092 -L
 
 ---
 
-## 8) 보안(옵션): SASL/PLAIN + TLS 개요
+## 8. 보안(옵션): SASL/PLAIN + TLS 개요
 
 운영환경에서는 **최소 SASL/PLAIN**, 가능하면 **TLS**를 적용합니다. Bitnami Chart는 다음을 지원:
 
@@ -363,7 +363,7 @@ tls:
 
 ---
 
-## 9) 토픽 자동 생성: Job로 초기화
+## 9. 토픽 자동 생성: Job로 초기화
 
 환경 부팅 시 필요한 **토픽/파티션/리텐션**을 **코드처럼 관리**하는 것이 중요합니다.
 
@@ -399,7 +399,7 @@ kubectl logs job/kafka-init-topics -f
 
 ---
 
-## 10) Kafka UI 배포 (Provectus)
+## 10. Kafka UI 배포 (Provectus)
 
 ```yaml
 apiVersion: apps/v1
@@ -443,7 +443,7 @@ http://<노드IP>:30080
 
 ---
 
-## 11) 모니터링: JMX Exporter + Prometheus
+## 11. 모니터링: JMX Exporter + Prometheus
 
 Bitnami Kafka는 JMX Exporter 연동을 지원합니다(차트 옵션 참고).
 
@@ -466,7 +466,7 @@ serviceMonitor:
 
 ---
 
-## 12) 리소스/가용성/네트워크
+## 12. 리소스/가용성/네트워크
 
 - **리소스**: 브로커는 디스크/IO/메모리 영향 큼. `requests/limits` + 적절한 스토리지 클래스(IOPS).
 - **PDB**: 점검 시 최소 가용 브로커 유지. 예: 3브로커 구성 시 `minAvailable: 2`.
@@ -519,7 +519,7 @@ spec:
 
 ---
 
-## 13) ZooKeeper vs KRaft(무ZK)
+## 13. ZooKeeper vs KRaft(무ZK)
 
 - **ZooKeeper 모드**: 안정적이며 풍부한 레퍼런스. Bitnami 기본값.
 - **KRaft 모드**: 최근 Kafka의 **내장 메타데이터 관리**. 구성 단순화, ZK 제거.  
@@ -535,7 +535,7 @@ spec:
 
 ---
 
-## 14) 트러블슈팅 체크리스트
+## 14. 트러블슈팅 체크리스트
 
 - `kubectl get events --sort-by=.lastTimestamp`: 스케줄 실패/리소스 부족
 - 브로커 로그: `kubectl logs my-kafka-0 -c kafka -f`
@@ -550,7 +550,7 @@ spec:
 
 ---
 
-## 15) 전체 정리 · 삭제
+## 15. 전체 정리 · 삭제
 
 ```bash
 # UI

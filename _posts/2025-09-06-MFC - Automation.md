@@ -14,7 +14,7 @@ MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하�
 
 ---
 
-## 0) 큰 그림: Automation이 뭐고, 왜 쓰는가?
+## 0. 큰 그림: Automation이 뭐고, 왜 쓰는가?
 
 - **COM Automation** = 인터페이스 `IDispatch` 기반의 **늦은 바인딩** 모델.  
   - **클라이언트**: `IDispatch::GetIDsOfNames`로 **이름 → DISPID**를 얻고, `Invoke`로 **메서드/프로퍼티 호출**.  
@@ -29,7 +29,7 @@ MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하�
 
 ---
 
-## 1) 클라이언트(Consumer)로 쓰기: 외부 앱 자동화
+## 1. 클라이언트(Consumer)로 쓰기: 외부 앱 자동화
 
 ### 1-1. COM 초기화와 아파트먼트
 - 기본: **STA**(Single-Threaded Apartment) 권장 — 대부분의 Office/스크립팅은 STA 가정  
@@ -166,7 +166,7 @@ VARIANT arr; VariantInit(&arr); arr.vt = VT_ARRAY|VT_VARIANT; arr.parray = psa;
 
 ---
 
-## 2) 서버(Provider)로 노출: 우리 앱을 자동화 가능하게 만들기
+## 2. 서버(Provider)로 노출: 우리 앱을 자동화 가능하게 만들기
 
 ### 2-1. MFC OLE Automation(레거시) 빠른 길
 - `AfxOleInit()`, `DECLARE_DISPATCH_MAP`, `BEGIN_DISPATCH_MAP` 매크로 기반  
@@ -300,7 +300,7 @@ CAppSink sink; AtlAdvise(app, &sink, __uuidof(_IAppEvents), &cookie);
 
 ---
 
-## 3) 스크립팅 엔진과의 통합
+## 3. 스크립팅 엔진과의 통합
 
 ### 3-1. Windows Script Host(WSH)에서 우리 객체 사용 (VBScript/JScript)
 
@@ -365,7 +365,7 @@ engine->SetScriptState(SCRIPTSTATE_CONNECTED);
 
 ---
 
-## 4) 설계: “스크립팅 가능한 애플리케이션”의 객체 모델
+## 4. 설계: “스크립팅 가능한 애플리케이션”의 객체 모델
 
 ### 4-1. 오브젝트 트리 예(도면 앱 가정)
 ```
@@ -405,7 +405,7 @@ dispinterface IDocuments {
 
 ---
 
-## 5) 메모리/형 변환 규칙(실무 필수)
+## 5. 메모리/형 변환 규칙(실무 필수)
 
 - 문자열: **BSTR** ( `SysAllocString` / `_bstr_t` )  
 - 값: **VARIANT** ( `_variant_t` )  
@@ -415,7 +415,7 @@ dispinterface IDocuments {
 
 ---
 
-## 6) 배포/레지스트리/64비트
+## 6. 배포/레지스트리/64비트
 
 - ProgID → CLSID 매핑: `HKCR\MyApp.App\CLSID`  
 - CLSID → 서버: `HKCR\CLSID\{...}\LocalServer32`(EXE) / `InprocServer32`(DLL)  
@@ -425,7 +425,7 @@ dispinterface IDocuments {
 
 ---
 
-## 7) 이벤트/콜백(스크립트→앱, 앱→스크립트) 활용 아이디어
+## 7. 이벤트/콜백(스크립트→앱, 앱→스크립트) 활용 아이디어
 
 - **진행률 이벤트**: 긴 작업 중 `OnProgress(pct)` 발행 → 스크립트에서 UI/로그로 반영  
 - **취소 토큰**: 스크립트가 `App.Cancel` 호출 → 앱에서 작업 중단  
@@ -433,7 +433,7 @@ dispinterface IDocuments {
 
 ---
 
-## 8) 보안/안전 가이드
+## 8. 보안/안전 가이드
 
 - 자동화는 사실상 **원격 코드 실행과 유사**: 신뢰할 수 있는 스크립트만 허용  
 - 샌드박스: 제한된 오브젝트만 노출, 파일시스템/레지스트리 접근 최소화  
@@ -442,7 +442,7 @@ dispinterface IDocuments {
 
 ---
 
-## 9) 문제해결/디버깅 팁
+## 9. 문제해결/디버깅 팁
 
 - `oleview.exe`(OLE/COM Object Viewer)로 **TypeLib 확인**  
 - 스크립트 오류 → **EXCEPINFO** 내용과 `HRESULT` 로깅  
@@ -452,7 +452,7 @@ dispinterface IDocuments {
 
 ---
 
-## 10) “양방향 샘플” — 우리 앱을 노출하고 PowerShell에서 자동화
+## 10. “양방향 샘플” — 우리 앱을 노출하고 PowerShell에서 자동화
 
 ### 10-1. 서버(IDL/ATL) — 핵심만
 ```idl
@@ -524,7 +524,7 @@ $app.DoWork("C:\temp\in.txt", 0)
 
 ---
 
-## 11) 통합 아이디어(제품화 관점)
+## 11. 통합 아이디어(제품화 관점)
 
 1. **스크립트 콘솔** 내장:  
    - PowerShell 또는 JS/Lua 콘솔 패널, **App** 객체 바인딩, 즉시 실행/히스토리  
@@ -539,7 +539,7 @@ $app.DoWork("C:\temp\in.txt", 0)
 
 ---
 
-## 12) 체크리스트 요약
+## 12. 체크리스트 요약
 
 - [ ] `CoInitializeEx(COINIT_APARTMENTTHREADED)` / STA  
 - [ ] 서버: **IDL(TypeLib)**, `IDispatchImpl`, `ConnectionPoint`(이벤트)  

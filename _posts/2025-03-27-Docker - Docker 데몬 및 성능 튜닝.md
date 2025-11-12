@@ -6,13 +6,13 @@ category: Docker
 ---
 # Docker 데몬 설정 및 성능 튜닝
 
-## 0) 빠른 개요 — 왜 데몬 튜닝이 중요한가
+## 0. 빠른 개요 — 왜 데몬 튜닝이 중요한가
 - 컨테이너 성능은 **애플리케이션 코드** 뿐 아니라, **데몬(엔진) 구성**·**커널 기능(cgroups/네임스페이스)**·**스토리지/네트워크** 설정에 크게 좌우된다.
 - 데몬 설정은 **기본값이 무난**하지만, 고부하/대용량 로그/빅이미지/쿠버네티스 연동/프라이빗 레지스트리 등 **특수 워크로드**에선 **명시적 튜닝**이 필수다.
 
 ---
 
-## 1) Docker 데몬이 하는 일 (재정의)
+## 1. Docker 데몬이 하는 일 (재정의)
 - 컨테이너/이미지/볼륨/네트워크 라이프사이클 관리
 - CLI/REST API 수신·실행
 - 로깅 드라이버, 스토리지 드라이버 관리
@@ -21,7 +21,7 @@ category: Docker
 
 ---
 
-## 2) 표준 설정 파일과 재시작 방법
+## 2. 표준 설정 파일과 재시작 방법
 리눅스 표준 경로: `/etc/docker/daemon.json` (JSON)
 
 ```json
@@ -52,7 +52,7 @@ journalctl -u docker -n 200 --no-pager
 
 ---
 
-## 3) 성능 핵심: 스토리지/로그/자원 상한/데이터 경로
+## 3. 성능 핵심: 스토리지/로그/자원 상한/데이터 경로
 
 ### 3.1 스토리지 드라이버 = `overlay2`
 - 대다수 배포판에서 **overlay2** 권장 (안정/성능 균형).
@@ -111,7 +111,7 @@ $$
 
 ---
 
-## 4) 네트워크/이미지 풀 최적화
+## 4. 네트워크/이미지 풀 최적화
 
 ### 4.1 레지스트리 미러
 해외 망/사내 프록시 환경에서 이미지 풀 가속:
@@ -159,7 +159,7 @@ $$
 
 ---
 
-## 5) 쿠버네티스/컨테이너 오케스트레이션과의 정합
+## 5. 쿠버네티스/컨테이너 오케스트레이션과의 정합
 
 ### 5.1 cgroup driver 일치
 kubelet/CRI가 `systemd`를 사용하면 Docker도 동일:
@@ -181,7 +181,7 @@ kubelet/CRI가 `systemd`를 사용하면 Docker도 동일:
 
 ---
 
-## 6) 빌드 성능/안전: BuildKit & 비밀 주입
+## 6. 빌드 성능/안전: BuildKit & 비밀 주입
 
 ### 6.1 BuildKit 기본 활성화
 ```json
@@ -220,7 +220,7 @@ docker build --secret id=npm_token,src=./.secrets/npm_token .
 
 ---
 
-## 7) 보안/격리: userns-remap, rootless, TLS
+## 7. 보안/격리: userns-remap, rootless, TLS
 
 ### 7.1 사용자 네임스페이스(UID 매핑)
 호스트 UID와 컨테이너 UID를 매핑해 **호스트 보호**:
@@ -253,7 +253,7 @@ docker context create prod \
 
 ---
 
-## 8) systemd Drop-in / 커맨드라인 인자
+## 8. systemd Drop-in / 커맨드라인 인자
 
 ### 8.1 직접 인자
 ```bash
@@ -287,7 +287,7 @@ sudo systemctl restart docker
 
 ---
 
-## 9) 모니터링/진단: 실무 루틴
+## 9. 모니터링/진단: 실무 루틴
 
 ### 9.1 상태/환경
 ```bash
@@ -314,7 +314,7 @@ du -sh /var/lib/docker/* 2>/dev/null
 
 ---
 
-## 10) 워크로드별 추천 프로파일 (템플릿)
+## 10. 워크로드별 추천 프로파일 (템플릿)
 
 ### 10.1 고부하 웹/프록시 노드
 ```json
@@ -363,7 +363,7 @@ du -sh /var/lib/docker/* 2>/dev/null
 
 ---
 
-## 11) 시나리오 기반 실전 예제
+## 11. 시나리오 기반 실전 예제
 
 ### 11.1 “로그 폭주로 디스크 100%” 대처
 1. 긴급: 문제 컨테이너 로그 truncate/회전
@@ -391,7 +391,7 @@ sudo truncate -s 0 /var/lib/docker/containers/<cid>/<cid>-json.log
 
 ---
 
-## 12) 운영 관리: 청소/프룬/쿼터
+## 12. 운영 관리: 청소/프룬/쿼터
 
 ### 12.1 시스템 정리
 ```bash
@@ -409,7 +409,7 @@ docker system prune -af --volumes
 
 ---
 
-## 13) 커널/시스템 파라미터(상황별)
+## 13. 커널/시스템 파라미터(상황별)
 > 애플리케이션 특성에 따라 조정. 무분별한 상향 금지, **측정-조정-검증** 순서.
 
 - inotify:
@@ -426,7 +426,7 @@ sudo sysctl vm.max_map_count=262144
 
 ---
 
-## 14) 검증 플랜(권장 체크리스트)
+## 14. 검증 플랜(권장 체크리스트)
 1. **기준선 확보**: 튜닝 전후 `docker system df -v`, `fio`, `hey/wrk`로 수치 확보  
 2. **한 번에 한 가지** 변경 → 유의미한 차이인지 확인  
 3. **부하·장기 테스트**: 24~72시간 soak (로그 회전/메모리 누수/디스크 사용 추세)  
@@ -434,7 +434,7 @@ sudo sysctl vm.max_map_count=262144
 
 ---
 
-## 15) 종합 예시: 운영 서버용 `daemon.json`
+## 15. 종합 예시: 운영 서버용 `daemon.json`
 ```json
 {
   "data-root": "/mnt/docker",
@@ -457,7 +457,7 @@ sudo sysctl vm.max_map_count=262144
 
 ---
 
-## 16) 명령 요약
+## 16. 명령 요약
 | 목적 | 명령 |
 |---|---|
 | 설정 반영 | `systemctl restart docker` |
@@ -468,7 +468,7 @@ sudo sysctl vm.max_map_count=262144
 
 ---
 
-## 17) 참고
+## 17. 참고
 - Docker Daemon: `man dockerd`, https://docs.docker.com/engine/reference/commandline/dockerd/  
 - 리소스 제약: https://docs.docker.com/config/containers/resource_constraints/  
 - Rootless: https://docs.docker.com/engine/security/rootless/  

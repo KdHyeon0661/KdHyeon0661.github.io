@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS DynamoDB: NoSQL 데이터베이스 완벽 가이드
 
-## 0) 한 장 요약
+## 0. 한 장 요약
 
 - **핵심 철학**: DynamoDB는 **요청 패턴을 중심으로 스키마(=키 설계)**를 만든다. 정규화보다 **조회 키 설계**가 최우선.  
 - **기본 키**: `PK(Partition Key)`와 `SK(Sort Key)` 조합으로 **1:N 항목 집합(Item Collection)**을 만든다.  
@@ -17,7 +17,7 @@ category: AWS
 
 ---
 
-## 1) DynamoDB란 무엇인가?
+## 1. DynamoDB란 무엇인가?
 
 - **완전관리형 NoSQL 키-값/문서형 DB**. 서버 관리 없음. 자동 확장. 고가용성(AZ 분산).
 - **유연한 스키마**: JSON 유사 문서. 아이템마다 다른 속성 가능.
@@ -39,7 +39,7 @@ category: AWS
 
 ---
 
-## 2) 데이터 모델: 테이블/아이템/속성/키
+## 2. 데이터 모델: 테이블/아이템/속성/키
 
 ### 2.1 테이블과 기본 키
 - **단일 키(Partition Key)**: `PK` 하나로 샤딩. `GetItem/Query` 성능 최고.
@@ -75,7 +75,7 @@ category: AWS
 
 ---
 
-## 3) 읽기/쓰기 API와 패턴
+## 3. 읽기/쓰기 API와 패턴
 
 ### 3.1 쓰기
 - `PutItem`: 삽입/덮어쓰기(조건식 가능)
@@ -97,7 +97,7 @@ ConditionExpression 예시:
 
 ---
 
-## 4) 인덱스: LSI vs GSI
+## 4. 인덱스: LSI vs GSI
 
 | 항목 | LSI(Local Secondary Index) | GSI(Global Secondary Index) |
 |---|---|---|
@@ -111,7 +111,7 @@ ConditionExpression 예시:
 
 ---
 
-## 5) 용량 모드: 온디맨드 vs 프로비저닝
+## 5. 용량 모드: 온디맨드 vs 프로비저닝
 
 ### 5.1 온디맨드(On-Demand)
 - 예측 불필요, 요청량 기반 과금. 버스트/급변 트래픽에 유리.
@@ -144,7 +144,7 @@ $$
 
 ---
 
-## 6) 트랜잭션(ACID)와 일관성
+## 6. 트랜잭션(ACID)와 일관성
 
 - `TransactWriteItems`, `TransactGetItems`로 **원자적 다중 아이템** 처리(최대 25건).
 - **비용**: 트랜잭션 오버헤드 존재(읽기/쓰기 2배 과금 기준 참고).
@@ -152,7 +152,7 @@ $$
 
 ---
 
-## 7) DynamoDB Streams & 이벤트 설계
+## 7. DynamoDB Streams & 이벤트 설계
 
 - **변경 스트림**(INSERT/MODIFY/REMOVE)을 **비동기 처리**(Lambda, Kinesis 소비).
 - 이벤트 소싱/아웃박스 패턴/비동기 사가에 활용.
@@ -180,7 +180,7 @@ def handler(event, context):
 
 ---
 
-## 8) 글로벌 테이블(Global Tables)
+## 8. 글로벌 테이블(Global Tables)
 
 - 멀티리전 **멀티마스터** 복제(충돌은 최근 쓰기 우선 기반).  
 - 장점: 리전 독립 읽기/쓰기, 재해복구(RTO↓, RPO≈0).  
@@ -188,7 +188,7 @@ def handler(event, context):
 
 ---
 
-## 9) TTL/백업/PITR/보안
+## 9. TTL/백업/PITR/보안
 
 - **TTL**: 만료 시 자동 삭제(비동기). 임시/세션/로그 데이터 비용 절감.
 - **백업**: 온디맨드 스냅샷, **PITR**(최대 35일 시점 복구).
@@ -214,7 +214,7 @@ IAM 예시(자기 소유 데이터만 접근):
 
 ---
 
-## 10) DAX(Accelerator) & 캐시 전략
+## 10. DAX(Accelerator) & 캐시 전략
 
 - **DAX**: DynamoDB 전용 인메모리 캐시. **서브-ms 읽기**. 쓰기 스루 방식.  
 - 읽기 집중/핫키 시 레이턴시 낮추고 RCU 절감.  
@@ -234,7 +234,7 @@ await docClient.get({ TableName: 'AppTable', Key: { PK: 'USER#u1', SK: 'PROFILE'
 
 ---
 
-## 11) 모델링: 단일 테이블 실제 예제
+## 11. 모델링: 단일 테이블 실제 예제
 
 ### 11.1 요구사항(액세스 패턴)
 - 사용자 프로필 조회: `GET /users/{id}`  
@@ -269,7 +269,7 @@ GSI 투영 속성: 쿼리에 필요한 필드만 **Projected**(ALL/KEYS_ONLY/INC
 
 ---
 
-## 12) SDK/CLI/PartiQL 예제
+## 12. SDK/CLI/PartiQL 예제
 
 ### 12.1 Node.js(DocumentClient) CRUD + 조건식
 ```js
@@ -377,7 +377,7 @@ aws dynamodb query \
 
 ---
 
-## 13) 페이지네이션/정렬/패턴
+## 13. 페이지네이션/정렬/패턴
 
 - `Query` 기본 정렬: `SK` 오름차순. `ScanIndexForward=false`로 내림차순(최신 우선).
 - 페이지네이션: `LastEvaluatedKey`/`ExclusiveStartKey` 사용. **토큰 보존**.
@@ -385,7 +385,7 @@ aws dynamodb query \
 
 ---
 
-## 14) 성능/확장/핫 파티션
+## 14. 성능/확장/핫 파티션
 
 - 파티션은 **키 해시** 기반 분배. **PK 카디널리티**를 충분히 높여 **균등 분산**.  
 - **핫 파티션** 방지: `PK`에 **접두 랜덤화**(예: `USER#u123#shard#07`), 쓰기 샤딩, 타임버킷.
@@ -393,7 +393,7 @@ aws dynamodb query \
 
 ---
 
-## 15) 운영/관측/테스트
+## 15. 운영/관측/테스트
 
 - **메트릭**: `ConsumedRead/WriteCapacityUnits`, `ThrottledRequests`, `SystemErrors`, `ReturnedItemCount`.  
 - **경보**: 스로틀 발생률, 지연 증가, 온디맨드 급증 비용.  
@@ -413,7 +413,7 @@ const client = new DynamoDBClient({
 
 ---
 
-## 16) 비용 구조와 최적화
+## 16. 비용 구조와 최적화
 
 ### 16.1 근사 비용 수식
 $$
@@ -435,7 +435,7 @@ $$
 
 ---
 
-## 17) 보안/거버넌스
+## 17. 보안/거버넌스
 
 - **KMS 기본 암호화**. 고객관리키(CMK)로 접근 제어.  
 - **IAM 미세 권한**: 파티션 키 기반 조건(`dynamodb:LeadingKeys`).  
@@ -444,7 +444,7 @@ $$
 
 ---
 
-## 18) 실습: 풀스택 미니 프로젝트(서버리스)
+## 18. 실습: 풀스택 미니 프로젝트(서버리스)
 
 ### 18.1 요구
 - API: `POST /users/{id}/orders`, `GET /users/{id}/orders`, `GET /orders/{orderId}`
@@ -533,7 +533,7 @@ def handler(event, context):
 
 ---
 
-## 19) 고급 토픽
+## 19. 고급 토픽
 
 ### 19.1 조건부 유니크 제약
 - 이메일 유니크: `PK=EMAIL#addr`, `SK=USER#id` 항목을 **조건식**으로 확보(`attribute_not_exists(PK)`).
@@ -558,7 +558,7 @@ await dc.update({
 
 ---
 
-## 20) 체크리스트
+## 20. 체크리스트
 
 - [ ] 액세스 패턴을 글머리표로 **먼저** 나열했는가?  
 - [ ] `PK/SK` 네이밍이 쿼리 요구를 모두 만족하는가?  
@@ -572,7 +572,7 @@ await dc.update({
 
 ---
 
-## 21) 마무리
+## 21. 마무리
 
 DynamoDB는 **액세스 패턴 중심 설계**를 전제로 하면, 초고성능·초확장·고가용성을 **낮은 운영 부담**으로 달성하게 해준다.  
 본 가이드의 단일 테이블 예제, 조건식/트랜잭션, Streams, TTL·PITR·Global Tables, DAX, 비용 최적화까지 조합하면, **실전 서비스**에서 요구하는 성능·안정성·비용 균형을 빠르게 확보할 수 있다.

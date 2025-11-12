@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core MVC — Partial View와 Layout
 
-## 1) View 계층 개관 (복습 + 확장)
+## 1. View 계층 개관 (복습 + 확장)
 
 ```
 _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터/공통 스크립트)
@@ -22,7 +22,7 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 
 ---
 
-## 2) Layout — _Layout.cshtml 구조와 모범 사례
+## 2. Layout — _Layout.cshtml 구조와 모범 사례
 
 ### 2.1 기본 위치/지정
 - 기본 위치: `Views/Shared/_Layout.cshtml`
@@ -95,7 +95,7 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 
 ---
 
-## 3) Partial View — 4가지 호출 방식과 데이터 전달
+## 3. Partial View — 4가지 호출 방식과 데이터 전달
 
 ### 3.1 위치/명명
 - 위치: `Views/Shared/` 또는 `Views/{Controller}/`
@@ -171,7 +171,7 @@ Partial 내에서:
 
 ---
 
-## 4) Partial vs Layout vs ViewComponent — 언제 무엇을?
+## 4. Partial vs Layout vs ViewComponent — 언제 무엇을?
 
 | 대상 | 사용 상황 | 장점 | 주의 |
 |---|---|---|---|
@@ -214,7 +214,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 5) Section — 페이지별 스크립트/스타일 주입
+## 5. Section — 페이지별 스크립트/스타일 주입
 
 ### 5.1 Layout에 정의
 
@@ -239,7 +239,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 6) _ViewStart / _ViewImports — 전역 Razor 설정
+## 6. _ViewStart / _ViewImports — 전역 Razor 설정
 
 ### 6.1 _ViewStart.cshtml
 - 모든 뷰에 **기본 Layout** 지정
@@ -264,7 +264,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 7) Partial로 폼 조립하기 — 중첩 폼 주의 & 검증 스크립트
+## 7. Partial로 폼 조립하기 — 중첩 폼 주의 & 검증 스크립트
 
 ### 7.1 중첩 폼 금지
 HTML 표준상 **폼 안에 폼**은 허용되지 않는다.  
@@ -310,7 +310,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 8) Partial Tag Helper 고급 옵션
+## 8. Partial Tag Helper 고급 옵션
 
 ```cshtml
 <partial name="_ProductCard"
@@ -324,7 +324,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 9) EditorTemplates/DisplayTemplates — Partial과 다른 “형식 템플릿”
+## 9. EditorTemplates/DisplayTemplates — Partial과 다른 “형식 템플릿”
 
 - 위치: `Views/Shared/EditorTemplates/` 또는 `Views/{Controller}/EditorTemplates/`
 - 파일명 = 타입명(또는 별칭)
@@ -353,7 +353,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 10) 캐시/환경 분기/조건부 렌더링
+## 10. 캐시/환경 분기/조건부 렌더링
 
 ### 10.1 Cache Tag Helper (부분 캐싱)
 
@@ -380,7 +380,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 11) 동적 레이아웃 전환 패턴
+## 11. 동적 레이아웃 전환 패턴
 
 ### 11.1 _ViewStart에서 조건 분기
 
@@ -402,7 +402,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 12) 메뉴 활성화(Active) — 현재 라우트 반영
+## 12. 메뉴 활성화(Active) — 현재 라우트 반영
 
 ```cshtml
 @* Views/Shared/_Navbar.cshtml *@
@@ -420,7 +420,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 13) Areas와 레이아웃/Partial 배치
+## 13. Areas와 레이아웃/Partial 배치
 
 구조:
 
@@ -439,7 +439,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 14) 다국어(Localization) — 뷰/레이아웃에서 문자열
+## 14. 다국어(Localization) — 뷰/레이아웃에서 문자열
 
 ```cshtml
 @* _Layout.cshtml *@
@@ -455,7 +455,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 15) 실전 예시 — “목록 + 카드 + 상세 + 레이아웃 섹션 스크립트” 종합
+## 15. 실전 예시 — “목록 + 카드 + 상세 + 레이아웃 섹션 스크립트” 종합
 
 ### 15.1 ViewModel
 
@@ -517,7 +517,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 
 ---
 
-## 16) 모듈화 팁 & 성능/안전 체크리스트
+## 16. 모듈화 팁 & 성능/안전 체크리스트
 
 - **모듈화**
   - 작은 Partial로 쪼개고 조립(카드/리스트/필터/폼 섹션)
@@ -538,7 +538,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 
 ---
 
-## 17) 자주 겪는 실수와 해결책
+## 17. 자주 겪는 실수와 해결책
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -551,7 +551,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 
 ---
 
-## 18) 마무리 요약
+## 18. 마무리 요약
 
 | 개념 | 핵심 |
 |---|---|

@@ -6,7 +6,7 @@ category: Linux
 ---
 # cgroups와 프로세스 격리
 
-## 0) 왜 cgroups/namespace/seccomp인가
+## 0. 왜 cgroups/namespace/seccomp인가
 
 - **cgroups**: CPU/메모리/IO/PIDs/hugetlb 등 **리소스의 “얼마까지 쓸 수 있는가”**를 **그룹 단위**로 강제/계측.
 - **namespaces**: PID/Network/Mount/UTS/User/IPC/Cgroup 등 **“무엇을 보게 할 것인가”**를 분리.
@@ -16,7 +16,7 @@ category: Linux
 
 ---
 
-## 1) cgroups 전체 지도 — v1 vs v2, 컨트롤러
+## 1. cgroups 전체 지도 — v1 vs v2, 컨트롤러
 
 ### 1.1 버전 차이 요약
 | 항목 | v1 | v2 |
@@ -41,7 +41,7 @@ category: Linux
 
 ---
 
-## 2) cgroups v2: 실습으로 이해
+## 2. cgroups v2: 실습으로 이해
 
 ### 2.1 마운트 및 준비
 ```bash
@@ -92,7 +92,7 @@ cat /sys/fs/cgroup/work/pids.current
 
 ---
 
-## 3) cgroups v1: 레거시 인터페이스 빠르게 익히기
+## 3. cgroups v1: 레거시 인터페이스 빠르게 익히기
 
 ### 3.1 메모리 제한 (v1)
 ```bash
@@ -119,7 +119,7 @@ echo "8:0 10485760" | sudo tee /sys/fs/cgroup/blkio/mycg/blkio.throttle.read_bps
 
 ---
 
-## 4) systemd와 cgroups — services/slices/scopes의 세계
+## 4. systemd와 cgroups — services/slices/scopes의 세계
 
 systemd는 **모든 유닛을 cgroup로 표현**한다.
 
@@ -168,7 +168,7 @@ cat /sys/fs/cgroup/<unit path>/memory.current
 
 ---
 
-## 5) 네임스페이스: 무엇을 보게 할 것인가
+## 5. 네임스페이스: 무엇을 보게 할 것인가
 
 ### 5.1 종류와 쓰임
 | NS | 격리 객체 | 예시 툴 |
@@ -204,7 +204,7 @@ mount --make-rshared /
 
 ---
 
-## 6) seccomp: 시스템콜 필터로 공격면 축소
+## 6. seccomp: 시스템콜 필터로 공격면 축소
 
 ### 6.1 개념
 - BPF(또는 eBPF) 기반 **시스템콜 허용/거부** 정책.  
@@ -221,7 +221,7 @@ docker run --security-opt seccomp=/path/seccomp-min.json alpine:3.20
 
 ---
 
-## 7) 실전 시나리오
+## 7. 실전 시나리오
 
 ### 7.1 “빌드 잡은 CPU 200%·메모리 2GiB 이내로”
 #### cgroups v2 수동
@@ -252,7 +252,7 @@ systemd-run --scope -p IOWriteBandwidthMax=/dev/nvme0n1 5M ./loggy
 
 ---
 
-## 8) 컨테이너 런타임과의 연결고리
+## 8. 컨테이너 런타임과의 연결고리
 
 ### 8.1 Docker
 ```bash
@@ -269,7 +269,7 @@ docker run --cpus=1.5 --memory=512m --pids-limit=128 --memory-swap=512m \
 
 ---
 
-## 9) 관측·디버깅·안정성
+## 9. 관측·디버깅·안정성
 
 ### 9.1 PSI(Pressure Stall Information)
 리소스 압박을 퍼센트로 노출. **스로틀/경합**을 수치화.
@@ -299,7 +299,7 @@ cat /sys/fs/cgroup/<grp>/cgroup.events      # frozen, populated 등
 
 ---
 
-## 10) 자동화 스니펫
+## 10. 자동화 스니펫
 
 ### 10.1 워크로드를 묶어 띄우는 스크립트(v2)
 ```bash
@@ -350,7 +350,7 @@ sudo systemctl enable --now worker@alpha worker@beta
 
 ---
 
-## 11) 수학 한 컷: CPU 쿼터의 직관
+## 11. 수학 한 컷: CPU 쿼터의 직관
 CPU 쿼터가 `T` 주기 동안 `Q`만큼 허용될 때 **최대 사용률**은
 $$
 \text{CPU Utilization}_{\max} = \frac{Q}{T}\times 100\ \%.
@@ -362,7 +362,7 @@ $$
 
 ---
 
-## 12) 명령·파일 요약표
+## 12. 명령·파일 요약표
 
 | 범주 | v2 파일/명령 | 요지 |
 |---|---|---|

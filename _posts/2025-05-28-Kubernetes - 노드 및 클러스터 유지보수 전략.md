@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes 노드 및 클러스터 유지보수 전략
 
-## 0) 빠른 개요 — 표준 유지보수 사이클
+## 0. 빠른 개요 — 표준 유지보수 사이클
 
 1. **사전 점검**: PDB·HPA 상태, 노드 용량, 경보 정상 동작
 2. **격리**: `cordon`(새 스케줄 금지) → **옵션**: `taint`로 강한 격리
@@ -18,7 +18,7 @@ category: Kubernetes
 
 ---
 
-## 1) 개념 정리: Cordon/Drain/Uncordon + Eviction + PDB 수식
+## 1. 개념 정리: Cordon/Drain/Uncordon + Eviction + PDB 수식
 
 ### 1.1 Cordon/Drain/Uncordon
 
@@ -58,7 +58,7 @@ $$
 
 ---
 
-## 2) 사전 점검 체크리스트 (Preflight)
+## 2. 사전 점검 체크리스트 (Preflight)
 
 | 항목 | 확인 포인트 | 명령/방법 |
 |---|---|---|
@@ -73,7 +73,7 @@ $$
 
 ---
 
-## 3) 유지보수 격리: taint/toleration + label
+## 3. 유지보수 격리: taint/toleration + label
 
 ### 3.1 유지보수 노드 강제 격리
 
@@ -94,7 +94,7 @@ kubectl label node NODE role=ingress  # 예: 역할별 드레인 순서 관리
 
 ---
 
-## 4) Drain 전략 튜닝 & 실패 처리
+## 4. Drain 전략 튜닝 & 실패 처리
 
 ### 4.1 권장 drain 명령
 
@@ -122,7 +122,7 @@ kubectl drain NODE \
 
 ---
 
-## 5) 노드 작업: OS/커널/런타임/Kubelet
+## 5. 노드 작업: OS/커널/런타임/Kubelet
 
 ### 5.1 런타임(containerd) & kubelet 버전 정합
 
@@ -153,7 +153,7 @@ sudo reboot
 
 ---
 
-## 6) 복귀(uncordon) 전 검증 포인트
+## 6. 복귀(uncordon) 전 검증 포인트
 
 ```bash
 # 노드 Ready & 조건
@@ -173,7 +173,7 @@ kubectl get pods -A -o wide | grep NODE
 
 ---
 
-## 7) 클러스터 업그레이드 전략
+## 7. 클러스터 업그레이드 전략
 
 ### 7.1 kubeadm(자가 운영)
 
@@ -191,7 +191,7 @@ kubectl get pods -A -o wide | grep NODE
 
 ---
 
-## 8) 디스크/메모리 압력과 Eviction 운영
+## 8. 디스크/메모리 압력과 Eviction 운영
 
 ### 8.1 Kubelet Eviction Thresholds (예시)
 
@@ -225,7 +225,7 @@ sudo logrotate -f /etc/logrotate.d/container-logs
 
 ---
 
-## 9) HPA/CA/PDB 상호작용 설계
+## 9. HPA/CA/PDB 상호작용 설계
 
 - **HPA**: 부하 중 다운스케일 방지 → `minReplicas` 적절
 - **PDB**: 유지보수 중 동시에 비울 수 있는 파드 수를 보장
@@ -237,7 +237,7 @@ sudo logrotate -f /etc/logrotate.d/container-logs
 
 ---
 
-## 10) 운영 자동화 — 안전 스크립트 & Kured
+## 10. 운영 자동화 — 안전 스크립트 & Kured
 
 ### 10.1 안전 Drain/Uncordon 스크립트
 
@@ -283,7 +283,7 @@ echo "[✓] Done"
 
 ---
 
-## 11) 정책 강제: “모든 배포는 PDB를 가져야 한다”
+## 11. 정책 강제: “모든 배포는 PDB를 가져야 한다”
 
 ### 11.1 Kyverno 정책 예시
 
@@ -320,7 +320,7 @@ spec:
 
 ---
 
-## 12) 관측/알림 — Prometheus 룰 & 대시보드
+## 12. 관측/알림 — Prometheus 룰 & 대시보드
 
 ### 12.1 알림 룰 예시
 
@@ -355,7 +355,7 @@ groups:
 
 ---
 
-## 13) 사고 수습 런북(시나리오 기반)
+## 13. 사고 수습 런북(시나리오 기반)
 
 ### 13.1 Drain 중 PDB로 멈춤
 1. `kubectl describe pdb`로 대상 파드·요구치 확인  
@@ -374,7 +374,7 @@ groups:
 
 ---
 
-## 14) 무중단 업그레이드 플랜(예시)
+## 14. 무중단 업그레이드 플랜(예시)
 
 - **윈도우**: 주 2회 02:00–04:00 (현지 시간)  
 - **동시성**: AZ별 **Max 1 노드** (PDB 기반 계산)  
@@ -385,7 +385,7 @@ groups:
 
 ---
 
-## 15) 계산 예 — PDB와 유지보수 속도
+## 15. 계산 예 — PDB와 유지보수 속도
 
 서비스 파드 수 \( r=20 \), PDB가 `minAvailable: 90%`라면
 $$
@@ -396,7 +396,7 @@ $$
 
 ---
 
-## 16) 예제: “안전한 노드 롤링 유지보수” 파이프라인 YAML
+## 16. 예제: “안전한 노드 롤링 유지보수” 파이프라인 YAML
 
 ### 16.1 크론잡으로 순차 유지보수 트리거(태그된 노드)
 
@@ -436,7 +436,7 @@ spec:
 
 ---
 
-## 17) 운영 팁 모음
+## 17. 운영 팁 모음
 
 - **Readiness/Liveness/Startup** 철저히: 유지보수 중 **트래픽 오작배분 방지**
 - **Ingress/Gateway Pod 분리 배치**: 노드 교체 시 프런트 도메인 가용성 확보
@@ -447,7 +447,7 @@ spec:
 
 ---
 
-## 18) 자주 쓰는 명령 요약
+## 18. 자주 쓰는 명령 요약
 
 ```bash
 # 노드/상태

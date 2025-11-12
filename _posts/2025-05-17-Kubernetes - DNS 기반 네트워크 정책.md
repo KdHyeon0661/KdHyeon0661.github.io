@@ -15,7 +15,7 @@ Kubernetes 기본 `NetworkPolicy`는 **Pod/Namespace/IP** 기준의 L3/L4 제어
 
 ---
 
-## 0) 요구사항 정리 & 베이스라인
+## 0. 요구사항 정리 & 베이스라인
 
 - **요구:** 특정 워크로드가 **허용된 외부 도메인만** 나가게 하라(Allowlist).
 - **제약:** 외부 서비스의 **IP 변경**을 자동 추적해야 함.
@@ -34,7 +34,7 @@ kubectl -n fqdn-lab run tbox --image=curlimages/curl -it --rm -- bash
 
 ---
 
-## 1) 동작 원리(공통)
+## 1. 동작 원리(공통)
 
 FQDN 정책의 핵심은 **“DNS 해석 결과(IP) 캐시”** 를 정책 평가에 활용하는 것이다.
 
@@ -47,7 +47,7 @@ FQDN 정책의 핵심은 **“DNS 해석 결과(IP) 캐시”** 를 정책 평�
 
 ---
 
-## 2) 반드시 먼저: DNS(코어DNS) 통신 허용
+## 2. 반드시 먼저: DNS(코어DNS) 통신 허용
 
 FQDN 정책을 적용하면 **기본 Egress가 막히는** 상황이 흔하다. DNS가 막히면 FQDN 해석 자체가 안 된다.  
 다음은 Calico 기준의 예시(네임스페이스 한정). Cilium도 유사한 개념으로 53 포트를 허용해야 한다.
@@ -80,7 +80,7 @@ spec:
 
 ---
 
-## 3) Calico로 FQDN 제어
+## 3. Calico로 FQDN 제어
 
 Calico는 **FQDN 기반 egress** 를 **NetworkPolicy** 또는 **GlobalNetworkPolicy** 로 지원한다.  
 (버전에 따라 **와일드카드(\*.example.com)** 지원 범위가 다를 수 있으므로 **배포 버전 릴리스 노트로 확인** 권장. 안전하게는 **정확한 FQDN 매칭**을 우선 사용하라.)
@@ -164,7 +164,7 @@ spec:
 
 ---
 
-## 4) Cilium로 FQDN 제어
+## 4. Cilium로 FQDN 제어
 
 Cilium은 `CiliumNetworkPolicy` 의 `toFQDNs` (및 `matchName`, `matchPattern`) 로 풍부한 도메인 매칭을 제공한다.  
 또한 eBPF를 활용하여 DNS 관찰/캐시를 효율적으로 처리한다.
@@ -240,7 +240,7 @@ spec:
 
 ---
 
-## 5) **베이스라인 Deny** + **정책 레이어링** (권장)
+## 5. **베이스라인 Deny** + **정책 레이어링** (권장)
 
 **원칙:** “기본 차단(Default Deny) → 필요한 것만 허용(Allowlist)”.
 
@@ -282,7 +282,7 @@ spec:
 
 ---
 
-## 6) 실전 시나리오 레시피
+## 6. 실전 시나리오 레시피
 
 ### 6.1 SaaS 3곳만 허용
 
@@ -365,7 +365,7 @@ FQDN 정책만으로는 **HTTP 경로/메서드** 까지 통제하기 어렵다.
 
 ---
 
-## 7) 테스트·검증·관측
+## 7. 테스트·검증·관측
 
 ### 7.1 빠른 검증 명령
 
@@ -403,7 +403,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 8) 운영 팁(성능·신뢰·안전)
+## 8. 운영 팁(성능·신뢰·안전)
 
 ### 8.1 DNS 캐시 & TTL
 
@@ -432,7 +432,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 9) 자주 만나는 오류 & 트러블슈팅
+## 9. 자주 만나는 오류 & 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -444,7 +444,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 10) 대안·보완 아키텍처
+## 10. 대안·보완 아키텍처
 
 - **Egress Gateway(서비스 메쉬) 경유:** Istio EgressGateway/Envoy로 **SNI/Host** 기준 제어 + 중앙 IP 고정(NAT) + 로깅 일원화.
 - **HTTP L7 정책:** Calico Application Layer(HTTP)나 EnvoyFilter로 **메서드/경로/헤더** 기반 통제.
@@ -452,7 +452,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 11) Helm·GitOps로 구성 관리(샘플)
+## 11. Helm·GitOps로 구성 관리(샘플)
 
 ### 11.1 Cilium FQDN Chart 템플릿 스니펫
 
@@ -531,7 +531,7 @@ patches:
 
 ---
 
-## 12) 요약(치트시트)
+## 12. 요약(치트시트)
 
 - **필수:** 먼저 **DNS 허용** → 그 다음 **FQDN Allowlist** → 마지막 **기본 차단**.
 - **Calico:** `dns.names`/`domains`(버전별 차이). **와일드카드 가용성은 버전 확인**.

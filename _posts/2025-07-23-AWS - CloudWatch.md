@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS CloudWatch: 모니터링 · 로깅 · 알림
 
-## 0) 한 장 요약
+## 0. 한 장 요약
 
 - **CloudWatch Metrics**: 표준/상세 메트릭, **고해상도(1초)**, 커스텀 메트릭, **메트릭 수학**과 **이상탐지(Anomaly Detection)**, **합성 알람(Composite Alarms)**.  
 - **CloudWatch Logs**: 로그 그룹/스트림, **Logs Insights** 분석, **메트릭 필터**(로그→메트릭), **서브스크립션 필터**(Lambda/Firehose/SIEM 연동), 보존 정책.  
@@ -17,7 +17,7 @@ category: AWS
 
 ---
 
-## 1) CloudWatch의 주요 기능 (보강 요약)
+## 1. CloudWatch의 주요 기능 (보강 요약)
 
 | 기능 | 핵심 포인트 | 실무 팁 |
 |---|---|---|
@@ -30,7 +30,7 @@ category: AWS
 
 ---
 
-## 2) CloudWatch Metrics — 표준·커스텀·고해상도
+## 2. CloudWatch Metrics — 표준·커스텀·고해상도
 
 ### 2.1 메트릭 모델 핵심
 - **네임스페이스**(예: `AWS/EC2`, `MyApp`), **메트릭 이름**, **차원**(Dimensions: `InstanceId`, `FunctionName` 등), **통계**(Average/Sum/pNN), **주기(Period)**.
@@ -69,7 +69,7 @@ $$
 
 ---
 
-## 3) CloudWatch Logs — 수집·분석·전파
+## 3. CloudWatch Logs — 수집·분석·전파
 
 ### 3.1 로그 그룹/보존/암호화
 ```bash
@@ -161,7 +161,7 @@ aws logs put-subscription-filter \
 
 ---
 
-## 4) 알람(Alarm) — 단일/합성·이상탐지·액션
+## 4. 알람(Alarm) — 단일/합성·이상탐지·액션
 
 ### 4.1 단일 알람(예: EC2 CPU)
 ```bash
@@ -210,7 +210,7 @@ aws cloudwatch put-composite-alarm \
 
 ---
 
-## 5) 대시보드(Dashboard) — JSON · IaC
+## 5. 대시보드(Dashboard) — JSON · IaC
 
 ### 5.1 단일 위젯 예
 ```json
@@ -244,7 +244,7 @@ aws cloudwatch put-dashboard \
 
 ---
 
-## 6) EventBridge(구 CloudWatch Events) — 이벤트 자동화
+## 6. EventBridge(구 CloudWatch Events) — 이벤트 자동화
 
 ### 6.1 스케줄러(크론/레이트)
 ```bash
@@ -265,7 +265,7 @@ aws events put-rule \
 
 ---
 
-## 7) 서버리스/컨테이너/프런트엔드
+## 7. 서버리스/컨테이너/프런트엔드
 
 ### 7.1 Lambda
 - 기본 메트릭: `Invocations/Duration/Errors/Throttles/IteratorAge`.  
@@ -294,7 +294,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 8) 비용 모델 & 최적화
+## 8. 비용 모델 & 최적화
 
 ### 8.1 근사 수식
 $$
@@ -315,7 +315,7 @@ $$
 
 ---
 
-## 9) 보안/거버넌스
+## 9. 보안/거버넌스
 
 - **KMS 암호화**(로그 그룹, 대시보드 데이터는 메타 수준), **전송구간 TLS**.  
 - **IAM 최소권한**: `logs:PutLogEvents`, `cloudwatch:PutMetricData` 최소 스코프.  
@@ -324,7 +324,7 @@ $$
 
 ---
 
-## 10) 런북(운영 절차) 예시
+## 10. 런북(운영 절차) 예시
 
 ### 10.1 알람: API 5xx 급증
 1. 대시보드에서 **Req/5xx/ErrorRate/p95 Latency** 동시 확인  
@@ -340,7 +340,7 @@ $$
 
 ---
 
-## 11) 트러블슈팅 Q&A
+## 11. 트러블슈팅 Q&A
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -351,7 +351,7 @@ $$
 
 ---
 
-## 12) 실전 시나리오 모음
+## 12. 실전 시나리오 모음
 
 ### 12.1 백엔드 API SLO(99% 가용, p95<300ms)
 - **메트릭**: `Req`, `5xx`, `Latency(p95)`  
@@ -372,7 +372,7 @@ $$
 
 ---
 
-## 13) IaC 스니펫(요약)
+## 13. IaC 스니펫(요약)
 
 ### 13.1 CloudFormation: 대시보드 리소스
 ```yaml
@@ -438,7 +438,7 @@ resource "aws_cloudwatch_metric_alarm" "error_rate" {
 
 ---
 
-## 14) 마무리 요약(초안 + 보강)
+## 14. 마무리 요약(초안 + 보강)
 
 | 주제 | 핵심 |
 |---|---|

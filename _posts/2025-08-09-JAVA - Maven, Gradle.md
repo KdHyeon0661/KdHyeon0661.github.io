@@ -6,76 +6,81 @@ category: Java
 ---
 # Maven, Gradle 개요 및 비교
 
-Java/JVM 생태계에서 가장 널리 쓰이는 빌드 도구는 **Maven**과 **Gradle**입니다.  
-두 도구는 공통적으로 **의존성 관리, 빌드/테스트/패키징/배포 자동화, 멀티모듈 프로젝트**를 지원하지만, 철학과 사용성, 성능 최적화 방식에서 차이가 큽니다.
+## 0. 개요
+
+- **Maven**: 선언형(XML)·관례 중심. 표준 수명주기/플러그인으로 **안정적**이고 **예측 가능한** 빌드. 온보딩 용이.
+- **Gradle**: DSL 기반(Task 그래프)·증분/캐시·병렬화로 **빠르고 유연**. 복잡한 빌드/대규모 멀티모듈에서 강력.
+
+선택 기준(요약):
+
+| 상황 | 권장 |
+|---|---|
+| 정형화된 프로젝트, 표준 우선, 팀 경험이 Maven 중심 | **Maven** |
+| 빌드 시간 절감, 복잡한 커스터마이징, 대규모 멀티모듈/모노레포 | **Gradle** |
+| Spring Boot/Android 대규모, 캐시/병렬 극대화 | **Gradle** |
+| 사내 표준이 Maven, 규정 준수가 최우선 | **Maven** |
 
 ---
 
-## 1) 한눈에 개요
+## 1. 철학과 동작 모델
 
-- **Maven**
-  - **선언형(Convention over Configuration)** 중심. `pom.xml`에 표준화된 모델로 기술.
-  - 일관된 디렉터리 구조·수명주기(phase)·플러그인 중심 확장.
-  - 학습 곡선 낮고, 문서/예제 풍부. “정형화된” 빌드에 강함.
+### 1.1 Maven — Convention over Configuration
+- **POM 모델**로 GAV(Group/Artifact/Version), 의존성, 플러그인을 선언.
+- **수명주기(phase)**에 **goal**(플러그인 실행)을 바인딩하여 실행.
+- 디렉터리 구조·패키징 타입·플러그인 구성이 **관례로 표준화**.
 
-- **Gradle**
-  - **스크립트(DSL) 기반(구로비/Groovy 또는 코틀린/Kotlin)**, **작업(Task) 지향**.
-  - 증분 빌드, 빌드캐시, 병렬화 등 **성능 최적화**에 강함.
-  - 복잡한 빌드 로직·커스터마이징에 유연.
+간단 구조:
+```
+validate → compile → test → package → verify → install → deploy
+```
+
+### 1.2 Gradle — Task Graph & Incremental
+- **Task** 간 의존 그래프를 구성해 필요한 작업만 실행(증분).
+- **입출력 스냅샷**, **빌드 캐시(로컬/원격)**, **병렬 실행**으로 속도 최적화.
+- Groovy/Kotlin DSL로 로직을 **코드처럼** 표현(조건/반복/함수화).
+
+Task 예(개념):
+```
+:compileJava → :processResources → :classes → :jar → :check → :build
+```
 
 ---
 
-## 2) 기본 구조 & 핵심 개념
+## 2. 기본 골격 비교(예제 포함)
 
-### Maven
-- **주요 파일**
-  - `pom.xml` : 프로젝트 객체 모델(Project Object Model). 그룹/아티팩트/버전(GAV), 의존성, 플러그인, 빌드 설정.
-  - `settings.xml` : 레포지토리 자격증명, 미러, 프로필 등 사용자/전역 설정.
-- **기본 디렉터리**
-  ```
-  src
-   ├─ main
-   │   ├─ java
-   │   └─ resources
-   └─ test
-       ├─ java
-       └─ resources
-  ```
-- **수명주기(대표)**
-  - `validate` → `compile` → `test` → `package` → `verify` → `install` → `deploy`
-- **의존성 범위(scope)**: `compile`, `provided`, `runtime`, `test`, `system`, `import(BOM)`
-- **확장**: 플러그인(goal). 예) `maven-compiler-plugin`, `maven-surefire-plugin`, `maven-deploy-plugin`
+### 2.1 디렉터리 관례(공통)
+```
+src
+ ├─ main
+ │   ├─ java
+ │   └─ resources
+ └─ test
+     ├─ java
+     └─ resources
+```
 
-예시 `pom.xml`:
+### 2.2 Maven 최소 POM
 ```xml
-<project>
+<!-- pom.xml -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.example</groupId>
   <artifactId>demo</artifactId>
   <version>1.0.0</version>
 
   <properties>
-    <java.version>17</java.version>
+    <maven.compiler.release>17</maven.compiler.release>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <version>3.3.0</version>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.13</version>
     </dependency>
-    <!-- BOM 가져오기(import) -->
-    <dependencyManagement>
-      <dependencies>
-        <dependency>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-dependencies</artifactId>
-          <version>3.3.0</version>
-          <type>pom</type>
-          <scope>import</scope>
-        </dependency>
-      </dependencies>
-    </dependencyManagement>
   </dependencies>
 
   <build>
@@ -84,8 +89,7 @@ Java/JVM 생태계에서 가장 널리 쓰이는 빌드 도구는 **Maven**과 *
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
+          <release>${maven.compiler.release}</release>
         </configuration>
       </plugin>
     </plugins>
@@ -93,20 +97,14 @@ Java/JVM 생태계에서 가장 널리 쓰이는 빌드 도구는 **Maven**과 *
 </project>
 ```
 
-### Gradle
-- **주요 파일**
-  - `build.gradle` / `build.gradle.kts` : 빌드 스크립트(DSL).
-  - `settings.gradle` / `settings.gradle.kts` : 루트명/모듈 포함 설정.
-  - `gradle.properties` : 공통 속성, JVM 옵션 등.
-- **핵심 개념**
-  - **Task**: 작업 단위(`compileJava`, `test`, `jar` 등). 의존관계 그래프로 실행.
-  - **플러그인**: 기능 번들(`java`, `application`, `maven-publish`, `spring-boot` 등).
-  - **구성(configuration)**: 의존성 구성(`implementation`, `api`, `runtimeOnly`, `testImplementation`).
-  - **증분 빌드**와 **빌드 캐시**: 입력/출력 스냅샷 기반 변경 감지로 빠른 빌드.
-- **DSL**: Groovy 또는 Kotlin(정적 타입, IDE 지원 ↑)
-
-예시 `build.gradle.kts`:
+### 2.3 Gradle 최소 Kotlin DSL
 ```kotlin
+// settings.gradle.kts
+rootProject.name = "demo"
+```
+
+```kotlin
+// build.gradle.kts
 plugins {
     java
     application
@@ -116,18 +114,14 @@ java {
     toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
 }
 
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
     implementation("org.slf4j:slf4j-api:2.0.13")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
+tasks.test { useJUnitPlatform() }
 
 application {
     mainClass.set("com.example.Main")
@@ -136,184 +130,505 @@ application {
 
 ---
 
-## 3) 의존성 관리: 범위/구성, 충돌 해결
+## 3. 의존성 관리 — 범위/구성, 전이, BOM/카탈로그, 충돌 해결
 
-- **Maven**
-  - 범위: `compile`(기본), `provided`, `runtime`, `test`, `system`.
-  - **의존성 전이(Transitive)**: 상위 의존성의 의존성을 자동 포함.
-  - **충돌 해결**: **근접 우선(Nearest-Wins)** + 선언 순서. `dependencyManagement`에서 버전 고정.
-  - **BOM**: `scope=import`로 다수 아티팩트 버전을 일괄 관리.
+### 3.1 Maven
+- **범위(scope)**: `compile`(기본), `provided`, `runtime`, `test`, `system`, `import(BOM)`
+- **전이 의존성**: 상위 의존의 의존성을 자동 포함
+- **충돌 해결**: **가장 가까운(Nearest) 선언 우선** → 명시 버전 고정은 `dependencyManagement`
+- **BOM**: 여러 아티팩트 버전을 **일괄 고정**
 
-- **Gradle**
-  - 구성(configuration): `api`, `implementation`, `runtimeOnly`, `compileOnly`, `testImplementation` 등.
-  - **버전 충돌 전략**: 기본은 **엄격한 상향 선택** 또는 정해진 전략. `resolutionStrategy` 커스터마이징.
-  - **버전 카탈로그(Version Catalogs)**: `libs.versions.toml`로 라이브러리/버전 중앙 관리.
-  - **Platforms/BOM**: `implementation(platform("group:artifact:version"))`로 BOM 적용.
+BOM 적용:
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-dependencies</artifactId>
+      <version>3.3.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
 
-Gradle BOM 예:
+<dependencies>
+  <dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-web</artifactId>
+  </dependency>
+</dependencies>
+```
+
+### 3.2 Gradle
+- **구성(configuration)**: `api`/`implementation`/`compileOnly`/`runtimeOnly`/`testImplementation` …
+  - `api`는 상위 모듈의 **공개 API**(하위 의존 전파), `implementation`은 내부 구현(은닉)
+- **버전 카탈로그**(`libs.versions.toml`)로 버전·별칭 중앙 관리
+- **플랫폼(BOM)** 적용: `implementation(platform("group:artifact:ver"))`
+- **충돌 전략**: 기본 선출 + `resolutionStrategy` 커스터마이징 가능
+
+버전 카탈로그 예:
+```toml
+# gradle/libs.versions.toml
+[versions]
+junit = "5.10.2"
+slf4j = "2.0.13"
+
+[libraries]
+junit = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit" }
+slf4j = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+```
+
 ```kotlin
+// build.gradle.kts
 dependencies {
-    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.3.0"))
-    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation(libs.slf4j)
+    testImplementation(libs.junit)
 }
 ```
 
 ---
 
-## 4) 멀티모듈(다중 프로젝트) 빌드
+## 4. 멀티모듈/모노레포
 
-### Maven
-- 루트 `pom.xml`에 **packaging `pom`** + `<modules>` 목록.
+### 4.1 Maven 멀티모듈
+루트 POM:
 ```xml
 <project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>demo-parent</artifactId>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
+
   <modules>
     <module>core</module>
     <module>api</module>
+    <module>app</module>
   </modules>
 </project>
 ```
 
-### Gradle
-- `settings.gradle(.kts)`에서 `include("core", "api")`.
+모듈 간 의존:
+```xml
+<dependency>
+  <groupId>com.example</groupId>
+  <artifactId>core</artifactId>
+  <version>${project.version}</version>
+</dependency>
+```
+
+### 4.2 Gradle 멀티프로젝트
+```
+demo
+ ├─ settings.gradle.kts
+ ├─ build.gradle.kts (루트 공통)
+ ├─ core/build.gradle.kts
+ ├─ api/build.gradle.kts
+ └─ app/build.gradle.kts
+```
+
 ```kotlin
 // settings.gradle.kts
 rootProject.name = "demo"
-include("core", "api")
+include("core", "api", "app")
 ```
-- 각 서브프로젝트 공통 설정을 루트 `build.gradle(.kts)`에서 `subprojects {}` 또는 플러그인으로 공유.
+
+루트에서 공통 설정:
+```kotlin
+// build.gradle.kts (root)
+subprojects {
+    apply(plugin = "java")
+
+    repositories { mavenCentral() }
+
+    extensions.configure<JavaPluginExtension> {
+        toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+    }
+
+    dependencies {
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    }
+    tasks.test { useJUnitPlatform() }
+}
+```
+
+모듈 간 의존:
+```kotlin
+// api/build.gradle.kts
+dependencies {
+    implementation(project(":core"))
+}
+```
+
+**팁**: Gradle은 **convention plugin**(build-logic)으로 공통 설정을 캡슐화하면 유지보수가 쉬워집니다.
 
 ---
 
-## 5) 성능 & 생산성
+## 5. 성능 — 증분·캐시·병렬·Configuration Cache
 
 | 항목 | Maven | Gradle |
 |---|---|---|
-| 증분 빌드 | 기본적(모듈 단위) | **고급 증분/입출력 추적**, 변경 시 부분 실행 |
-| 빌드 캐시 | 제한적(플러그인별) | **로컬/원격 캐시** 정식 지원 |
-| 병렬 | `-T` 옵션(목록/모듈 병렬) | **태스크/프로젝트 병렬** 및 워커 API |
-| 스크립팅 | XML 선언형 | **DSL 기반(유연)**, 복잡한 로직 쉽게 구현 |
-| 표준화 | 매우 높음 | 높음(+커스터마이징 자유도 ↑) |
-| 생태계 | 방대, 예제 풍부 | 빠르게 성장, 현대적 기능 풍부 |
-| 보고/진단 | 플러그인 중심 | **Build Scan**, Task 그래프 시각화, 프로파일러 |
+| 증분 | 모듈 단위(플러그인 의존) | **입출력 스냅샷 기반** Task 증분 |
+| 캐시 | 제한적 | **로컬/원격 빌드 캐시** |
+| 병렬 | `-T` 옵션(모듈 병렬) | **Task/Project 병렬**(Worker API) |
+| 구성 캐시 | - | **Configuration Cache**(초기 구성 시간 단축) |
+| 빌드 스캔 | 플러그인 | **--scan**으로 프로파일/공유 |
 
-> 대규모/빈번한 빌드 환경에서는 Gradle의 **캐시+증분+병렬**로 체감 성능 이점이 크며, 정형화된 표준 빌드·학습비용 최소화가 중요하면 Maven이 유리합니다.
+Gradle 성능 플래그(gradle.properties):
+```
+org.gradle.parallel=true
+org.gradle.caching=true
+org.gradle.configuration-cache=true
+org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
+```
 
 ---
 
-## 6) 테스트·패키징·배포
+## 6. 테스트 전략(단위/통합), 소스셋 확장
 
-- **Maven**
-  - 테스트: Surefire(단위), Failsafe(통합) 플러그인.
-  - 패키징: `jar`, `war`, `ear` 등 `packaging` 타입.
-  - 배포: `install`(로컬), `deploy`(원격 레포). `maven-deploy-plugin`/`maven-release-plugin`.
+### 6.1 Maven
+- **Surefire**(단위), **Failsafe**(통합) 분리:
+```xml
+<plugin>
+  <artifactId>maven-surefire-plugin</artifactId>
+  <version>3.2.5</version>
+  <configuration>
+    <includes>
+      <include>**/*Test.java</include>
+    </includes>
+  </configuration>
+</plugin>
 
-- **Gradle**
-  - 테스트: `test`(JUnit Platform), `integrationTest` 커스텀 소스셋 확장 용이.
-  - 패키징: `jar`, `war`, `bootJar`(Spring Boot).
-  - 배포: `maven-publish`로 Maven 리포지토리 퍼블리시, `signing` 연동.
+<plugin>
+  <artifactId>maven-failsafe-plugin</artifactId>
+  <version>3.2.5</version>
+  <executions>
+    <execution>
+      <goals><goal>integration-test</goal><goal>verify</goal></goals>
+    </execution>
+  </executions>
+</plugin>
+```
 
-Gradle `maven-publish` 예:
+### 6.2 Gradle
+- **소스셋**으로 통합 테스트 분리:
 ```kotlin
-plugins {
-    `maven-publish`
-    signing
+// build.gradle.kts
+sourceSets {
+    val integrationTest by creating {
+        compileClasspath += sourceSets.main.get().output + configurations.testRuntimeClasspath.get()
+        runtimeClasspath += output + compileClasspath
+        java.srcDir("src/integrationTest/java")
+        resources.srcDir("src/integrationTest/resources")
+    }
 }
+configurations {
+    val integrationTestImplementation by getting { extendsFrom(configurations.testImplementation.get()) }
+    val integrationTestRuntimeOnly by getting { extendsFrom(configurations.testRuntimeOnly.get()) }
+}
+tasks.register<Test>("integrationTest") {
+    description = "Runs integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    useJUnitPlatform()
+    shouldRunAfter("test")
+}
+tasks.check { dependsOn("integrationTest") }
+```
+
+---
+
+## 7. 패키징·실행·배포
+
+### 7.1 공통 개념
+- **JAR**: 라이브러리/실행 JAR
+- **Fat/Shadow JAR**: 의존 JAR을 하나로 병합(충돌/라이선스 주의)
+- **Spring Boot**: Boot 플러그인(Gradle `bootJar`, Maven `spring-boot-maven-plugin`)
+- **퍼블리시**: 사내/중앙 리포지토리(Nexus, Artifactory)
+
+### 7.2 Maven 실행형 JAR
+```xml
+<plugin>
+  <artifactId>maven-jar-plugin</artifactId>
+  <version>3.3.0</version>
+  <configuration>
+    <archive>
+      <manifest>
+        <mainClass>com.example.Main</mainClass>
+      </manifest>
+    </archive>
+  </configuration>
+</plugin>
+```
+
+### 7.3 Gradle 실행형 JAR
+```kotlin
+tasks.jar {
+    manifest { attributes["Main-Class"] = "com.example.Main" }
+}
+```
+
+### 7.4 Fat JAR(Gradle Shadow 예)
+```kotlin
+plugins { id("com.github.johnrengelman.shadow") version "8.1.1" }
+tasks.shadowJar {
+    archiveClassifier.set("all")
+    mergeServiceFiles() // ServiceLoader 리소스 병합
+}
+```
+
+### 7.5 퍼블리시
+
+**Maven**
+```xml
+<distributionManagement>
+  <repository>
+    <id>releases</id>
+    <url>https://repo.example.com/releases</url>
+  </repository>
+</distributionManagement>
+```
+
+**Gradle**
+```kotlin
+plugins { `maven-publish`; signing }
 
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            groupId = "com.example"
-            artifactId = "demo"
-            version = "1.0.0"
+            groupId = "com.example"; artifactId = "demo"; version = "1.0.0"
         }
     }
     repositories {
         maven {
             url = uri("https://repo.example.com/releases")
-            credentials { username = "user"; password = "pass" }
+            credentials { username = findProperty("repoUser") as String; password = findProperty("repoPass") as String }
         }
     }
 }
-
 signing { sign(publishing.publications["mavenJava"]) }
 ```
 
 ---
 
-## 7) 명령어 & 래퍼(Wrapper)
+## 8. JPMS(모듈 시스템)·jlink·jdeps와의 연계
 
-- **Maven**
-  - `mvn -v`, `mvn clean package`, `mvn -T 4 install`
-  - **Wrapper**: `mvn -N io.takari:maven:wrapper` → `mvnw`/`mvnw.cmd` 고정 버전 사용
+### 8.1 Maven
+```xml
+<properties>
+  <maven.compiler.release>17</maven.compiler.release>
+</properties>
+```
+JPMS 사용 시 `module-info.java` 포함, 테스트/프레임워크 리플렉션은 `--add-opens` 혹은 설계상 `opens` 사용.
 
-- **Gradle**
-  - `gradle -v`, `gradle clean build`, `gradle test --info --scan`
-  - **Wrapper**: `gradle wrapper` → `gradlew`/`gradlew.bat`로 팀 내 버전 고정
+### 8.2 Gradle
+```kotlin
+tasks.withType<JavaCompile>().configureEach {
+    options.compilerArgs.addAll(listOf("--release", "17"))
+}
+```
 
----
-
-## 8) CI/CD & 재현 가능한 빌드
-
-- 공통: **Wrapper로 빌드 도구 버전 고정**, 사내 Nexus/Artifactory 사용, 캐시/병렬 활용.
-- **Maven**: `enforcer` 플러그인으로 JDK/플러그인/버전 규칙 강제, `flatten-maven-plugin`으로 POM 정리.
-- **Gradle**: **Configuration Cache**, **Build Cache**, **Version Catalog**, `--scan`으로 성능/문제 분석, `dependency-locking`으로 버전 잠금.
-
----
-
-## 9) 선택 가이드(요약)
-
-- **Maven 권장 상황**
-  - 팀에 XML 기반 표준 프로세스가 익숙.
-  - 빌드가 비교적 단순/정형화되어 있음.
-  - 신규 인원 온보딩을 최대한 쉽게.
-
-- **Gradle 권장 상황**
-  - **대규모 멀티모듈**·**고빈도 빌드**로 빌드 시간 절감이 중요.
-  - 복잡한 커스텀 빌드 로직 필요.
-  - Kotlin DSL로 **정적 타입**/IDE 자동완성 극대화.
+**jlink** 파이프라인(공통 아이디어):
+1) `jdeps --print-module-deps`로 필요한 모듈 파악  
+2) `jlink --module-path "$JAVA_HOME/jmods:mods" --add-modules com.example.app ...`
 
 ---
 
-## 10) 자주 겪는 문제 & 팁
+## 9. CI/CD — 재현 가능 빌드
 
-- **의존성 충돌**
-  - Maven: `mvn dependency:tree`, `dependencyManagement`로 버전 고정.
-  - Gradle: `gradle dependencies`, `dependencyInsight`, `platform()`/카탈로그로 정리.
+### 공통 원칙
+- **Wrapper**로 도구 버전 고정: `mvnw` / `gradlew`
+- 중앙 리포 미러/캐시, 사내 프록시, 의존성 잠금(BOM/Locking)
+- 병렬/캐시 활성화
 
-- **JDK/도구 버전 불일치**
-  - Maven: `maven-toolchain-plugin` 또는 `properties`에 `maven.compiler.release`.
-  - Gradle: `java.toolchain` 사용(프로젝트별 JDK 자동 관리).
+**Maven**
+- `maven-enforcer-plugin`으로 JDK/플러그인 버전 규칙 강제
+- `-T 4` 병렬 빌드
 
-- **빌드 성능**
-  - Gradle: `org.gradle.caching=true`, `org.gradle.parallel=true`, `org.gradle.configuration-cache=true`.
-  - Maven: `-T` 병렬, 불필요한 플러그인/프로필 최소화.
+**Gradle**
+- `--scan`으로 성능/문제 리포트
+- 원격 캐시(예: Gradle Enterprise 또는 사내 캐시 서버)로 **CI 빌드 재사용**
 
 ---
 
-## 11) 가장 짧은 스타터 예제
+## 10. 마이그레이션 가이드
+
+### 10.1 Maven → Gradle
+1. `gradle init`으로 기본 변환(의존성/소스세트 반영)
+2. BOM → `platform(...)` 또는 버전 카탈로그로 치환
+3. Maven profile → Gradle **플래그/프로퍼티/전역 조건**로 매핑
+4. 멀티모듈은 `settings.gradle.kts` + convention plugin으로 공통화
+5. CI에서 캐시/병렬/Configuration Cache 활성화
+
+### 10.2 Gradle → Maven
+1. 의존성/버전/플러그인을 POM으로 반영 (`dependencyManagement`로 버전 중앙화)
+2. 커스텀 Task 로직은 Maven 플러그인/스크립트(또는 Exec 플러그인)로 전환
+3. 프로필 기반 빌드 조건 설정
+
+---
+
+## 11. Android·Spring Boot·Kotlin·Annotation Processing
+
+- **Android**: Gradle 표준. Android Gradle Plugin(AGP) 사용.
+- **Spring Boot**: Maven/Gradle 모두 원활. Gradle의 `bootRun`/`bootJar`가 생산적.
+- **Kotlin**: Gradle Kotlin DSL과 궁합↑. Maven도 `kotlin-maven-plugin`으로 가능.
+- **Annotation Processing**:
+  - Maven: `maven-compiler-plugin`의 `annotationProcessorPaths`
+  - Gradle: `annotationProcessor("...")` / Kotlin은 `kapt("...")`
+
+Maven APT 예:
+```xml
+<plugin>
+  <artifactId>maven-compiler-plugin</artifactId>
+  <configuration>
+    <annotationProcessorPaths>
+      <path>
+        <groupId>org.projectlombok</groupId>
+        <artifactId>lombok</artifactId>
+        <version>1.18.34</version>
+      </path>
+    </annotationProcessorPaths>
+  </configuration>
+</plugin>
+```
+
+Gradle APT 예:
+```kotlin
+dependencies {
+    annotationProcessor("org.projectlombok:lombok:1.18.34")
+    compileOnly("org.projectlombok:lombok:1.18.34")
+}
+```
+
+---
+
+## 12. 트러블슈팅 매트릭스
+
+| 증상 | Maven 원인/해결 | Gradle 원인/해결 |
+|---|---|---|
+| 의존성 버전 충돌 | `mvn dependency:tree`, `dependencyManagement`로 버전 고정 | `gradle dependencyInsight`, `platform()`/카탈로그/`resolutionStrategy` |
+| 빌드 느림 | 불필요 플러그인 제거, `-T` 병렬 | 캐시/병렬/Configuration Cache 활성화, 무효화 Task 점검 |
+| 테스트가 모듈 접근 실패 | `--add-opens` 또는 설계상 `opens` | `jvmArgs("--add-opens", "...")` 또는 `opens` |
+| Fat JAR 실행 실패 | 리소스 충돌/Service 파일 병합 누락 | Shadow `mergeServiceFiles()` 사용, 충돌 전략 설정 |
+| 릴리즈 서명/배포 실패 | settings/server 크리덴셜·GPG | `publishing/signing` 자격 증명·환경 변수 확인 |
+
+---
+
+## 13. 보안·정책·라이선스
+
+- **Checksum 검증**: 사내 리포지토리 프록시(Nexus/Artifactory)에서 검증/미러링
+- **서명**: Maven `maven-gpg-plugin`, Gradle `signing`
+- **라이선스 감사**: Maven/Gradle 모두 OSS 라이선스 리포트 플러그인 활용
+
+---
+
+## 14. 의사결정 체크리스트
+
+1. 팀의 기존 경험/온보딩 속도는? → Maven 유리
+2. 빌드 시간/대규모 멀티모듈? → Gradle 유리
+3. 복잡한 커스텀 로직/플러그인 개발? → Gradle 유리
+4. 규정 준수/감사 흔한 환경? → Maven 생태계 성숙
+5. Android/현대 Spring 대규모? → Gradle 지지
+
+---
+
+## 15. 명령어 치트시트
 
 **Maven**
 ```bash
 mvn -v
-mvn archetype:generate -DgroupId=com.example -DartifactId=demo -DarchetypeArtifactId=maven-archetype-quickstart -DinteractiveMode=false
-cd demo
-mvn package
-java -cp target/demo-1.0-SNAPSHOT.jar com.example.App
+mvn clean package -DskipTests
+mvn test -Dtest=MyTest
+mvn deploy -P release
+mvn dependency:tree
 ```
 
-**Gradle (Kotlin DSL)**
+**Gradle**
 ```bash
 gradle -v
-gradle init --type java-application --dsl kotlin --test-framework junit-jupiter
-./gradlew build
-./gradlew run
+./gradlew clean build -x test
+./gradlew test --tests "com.example.MyTest"
+./gradlew publish
+./gradlew dependencies
+./gradlew dependencyInsight --dependency slf4j-api
+./gradlew --scan
+```
+
+Wrapper 생성:
+```bash
+# Maven
+mvn -N io.takari:maven:wrapper
+# Gradle
+gradle wrapper
+```
+
+---
+
+## 16. 실전 템플릿 — 최소/가벼운 멀티모듈
+
+### 16.1 Maven Parent + Modules
+```xml
+<!-- parent/pom.xml -->
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId><artifactId>parent</artifactId><version>1.0.0</version>
+  <packaging>pom</packaging>
+  <modules><module>core</module><module>app</module></modules>
+  <properties><maven.compiler.release>17</maven.compiler.release></properties>
+</project>
+```
+
+```xml
+<!-- core/pom.xml -->
+<project>
+  <parent><groupId>com.example</groupId><artifactId>parent</artifactId><version>1.0.0</version></parent>
+  <artifactId>core</artifactId>
+</project>
+```
+
+```xml
+<!-- app/pom.xml -->
+<project>
+  <parent><groupId>com.example</groupId><artifactId>parent</artifactId><version>1.0.0</version></parent>
+  <artifactId>app</artifactId>
+  <dependencies>
+    <dependency><groupId>com.example</groupId><artifactId>core</artifactId><version>${project.version}</version></dependency>
+  </dependencies>
+</project>
+```
+
+### 16.2 Gradle Root + Subprojects
+```kotlin
+// settings.gradle.kts
+rootProject.name = "demo"
+include("core", "app")
+```
+
+```kotlin
+// build.gradle.kts (root)
+subprojects {
+    apply(plugin = "java")
+    repositories { mavenCentral() }
+    extensions.configure<JavaPluginExtension> {
+        toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+    }
+    dependencies { testImplementation("org.junit.jupiter:junit-jupiter:5.10.2") }
+    tasks.test { useJUnitPlatform() }
+}
+```
+
+```kotlin
+// app/build.gradle.kts
+dependencies { implementation(project(":core")) }
 ```
 
 ---
 
 ## 결론
 
-- **Maven = 안정적·표준화·학습 쉬움**, **Gradle = 빠름·유연함·현대적 기능**.  
-- 팀/프로젝트의 **복잡도, 성능 요구, 커스터마이징 필요성**에 따라 도구를 선택하고, Wrapper와 버전/의존성 정책을 통해 **재현 가능한 빌드**를 보장하세요.
+- **Maven**은 **표준화·안정성·학습 비용 절감**에, **Gradle**은 **유연성·성능·대규모 확장성**에 강점이 있습니다.  
+- 팀의 맥락(규정/경험/규모/성능 요구)에 맞추어 선택하되, 공통적으로 **Wrapper 고정, 의존성 버전 중앙 관리(BOM/카탈로그), 캐시/병렬 활용, CI 재현성**을 확보하는 것이 핵심입니다.  
+- 모듈 시스템(JPMS)·jlink·jdeps·컨테이너 최적화까지 고려하면 **장기 유지보수성/보안/배포 효율**을 크게 높일 수 있습니다.

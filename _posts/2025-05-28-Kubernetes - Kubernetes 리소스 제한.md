@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes 리소스 제한 (CPU, Memory Requests/Limits)
 
-## 0) 핵심 개념 리마인드
+## 0. 핵심 개념 리마인드
 
 | 용어 | 의미 | 스케줄러/런타임 관점 |
 |---|---|---|
@@ -27,7 +27,7 @@ resources:
 
 ---
 
-## 1) QoS 클래스 — 왜 같은 상황에서도 어떤 Pod는 죽고, 어떤 Pod는 살아남나?
+## 1. QoS 클래스 — 왜 같은 상황에서도 어떤 Pod는 죽고, 어떤 Pod는 살아남나?
 
 K8s는 **리소스 기술 방식**으로 Pod QoS를 결정합니다.
 
@@ -44,7 +44,7 @@ K8s는 **리소스 기술 방식**으로 Pod QoS를 결정합니다.
 
 ---
 
-## 2) 스케줄링과 노드 할당 가능량(Allocatable) 계산
+## 2. 스케줄링과 노드 할당 가능량(Allocatable) 계산
 
 노드 자원은 `capacity`에서 kubelet/system-reserved/eviction-reserved가 빠진 **allocatable**만 스케줄됩니다.
 
@@ -57,7 +57,7 @@ limits는 배치 결정엔 영향 없음(단, CPUManager static 정책, NUMA/Top
 
 ---
 
-## 3) CPU — CFS 스로틀링과 실제 성능
+## 3. CPU — CFS 스로틀링과 실제 성능
 
 - CPU limit는 **CFS(quota/period)**로 구현: 기본 `period=100ms`, quota=limit×period.
 - 예) limit 1 vCPU → `quota=100ms`, 100ms마다 최대 100ms만 실행. 초과는 **Throttle**.
@@ -76,7 +76,7 @@ kubectl exec -it <pod> -- cat /sys/fs/cgroup/cpu.stat        # throttled_usec �
 
 ---
 
-## 4) Memory — 캐시와 피크, OOMKill의 본질
+## 4. Memory — 캐시와 피크, OOMKill의 본질
 
 - Memory limit 초과 시 커널 OOM. 로그:
   - `kubectl describe pod`의 `Last State: OOMKilled`
@@ -96,7 +96,7 @@ kubectl exec -it <pod> -- cat /sys/fs/cgroup/memory.current
 
 ---
 
-## 5) 네임스페이스 기본값: **LimitRange** + 용량 상한: **ResourceQuota**
+## 5. 네임스페이스 기본값: **LimitRange** + 용량 상한: **ResourceQuota**
 
 ### 5.1 LimitRange — 미지정 시 기본값/최대-최소 강제
 
@@ -144,7 +144,7 @@ spec:
 
 ---
 
-## 6) 실제 배포 스니펫(Deployment)
+## 6. 실제 배포 스니펫(Deployment)
 
 ```yaml
 apiVersion: apps/v1
@@ -177,7 +177,7 @@ spec:
 
 ---
 
-## 7) 워크로드 유형별 설정 가이드(현업 감각)
+## 7. 워크로드 유형별 설정 가이드(현업 감각)
 
 | 유형 | CPU | Memory | 비고 |
 |---|---|---|---|
@@ -189,7 +189,7 @@ spec:
 
 ---
 
-## 8) HPA/VPA/Cluster Autoscaler와의 상호작용
+## 8. HPA/VPA/Cluster Autoscaler와의 상호작용
 
 - **HPA**: 기본 CPU/Memory **Utilization = 실제 사용량 / requests**.  
   - 너무 큰 `requests` ⇒ 낮은 Utilization ⇒ 스케일아웃 지연  
@@ -201,7 +201,7 @@ spec:
 
 ---
 
-## 9) 테스트·관측·경계값 설정
+## 9. 테스트·관측·경계값 설정
 
 ### 9.1 인위적 부하로 HPA/Throttle/OOM 재현
 
@@ -229,7 +229,7 @@ kubectl get events --sort-by=.lastTimestamp -A
 
 ---
 
-## 10) 언어/런타임별 메모리/CPU 튜닝
+## 10. 언어/런타임별 메모리/CPU 튜닝
 
 ### Go
 - GOGC(기본 100). 메모리 압박 시 `GOGC=50~100` 조정.  
@@ -250,7 +250,7 @@ kubectl get events --sort-by=.lastTimestamp -A
 
 ---
 
-## 11) Pod·컨테이너 수명주기별 리소스
+## 11. Pod·컨테이너 수명주기별 리소스
 
 - **initContainers**도 `resources` 별도 지정 가능(초기 마이그레이션/다운로드 시 피크에 맞춰).  
 - **사이드카**(예: Envoy, Fluent Bit)는 누적 오버헤드 → 반드시 리소스 명시.
@@ -266,7 +266,7 @@ initContainers:
 
 ---
 
-## 12) 노드/커널 레벨: Eviction & OOMScore
+## 12. 노드/커널 레벨: Eviction & OOMScore
 
 - 노드 메모리 압박 시 kubelet이 **Soft/Hard Eviction**.  
   - `--eviction-hard=memory.available<500Mi` 등
@@ -278,7 +278,7 @@ initContainers:
 
 ---
 
-## 13) Ephemeral Storage(임시 디스크)도 관리
+## 13. Ephemeral Storage(임시 디스크)도 관리
 
 로그/템프 파일로 노드 디스크 고갈 → 전체 장애.  
 `ephemeral-storage` requests/limits를 반드시 넣습니다.
@@ -293,7 +293,7 @@ resources:
 
 ---
 
-## 14) 스케줄링 품질 향상 옵션(심화)
+## 14. 스케줄링 품질 향상 옵션(심화)
 
 - **Topology Spread Constraints**: 노드/존 분산
 - **Pod Priority & Preemption**: 더 중요한 워크로드에 자원 선점 허용
@@ -302,7 +302,7 @@ resources:
 
 ---
 
-## 15) 단위·표기 실수 방지
+## 15. 단위·표기 실수 방지
 
 - CPU `m` vs Memory `Mi` 혼동 금지.  
   - `500m`(CPU) ↔ `512Mi`(Memory).  
@@ -310,7 +310,7 @@ resources:
 
 ---
 
-## 16) 데이터 기반 설정(간단 모델)
+## 16. 데이터 기반 설정(간단 모델)
 
 모니터링 윈도우 \(T\) 동안
 - 평균 CPU 사용률 \(\bar{u}_{cpu}\), p95 \(\hat{u}_{cpu,95}\)
@@ -332,7 +332,7 @@ $$
 
 ---
 
-## 17) 트러블슈팅 시나리오
+## 17. 트러블슈팅 시나리오
 
 ### 17.1 CPU가 한계인데 지연만 커지고 Pod는 안 죽음
 - 증상: p95/timeout↑, `container_cpu_cfs_throttled_seconds_total`↑
@@ -355,7 +355,7 @@ $$
 
 ---
 
-## 18) 팀 템플릿(Helm/베이스 YAML) 제안
+## 18. 팀 템플릿(Helm/베이스 YAML) 제안
 
 ```yaml
 resources:
@@ -375,7 +375,7 @@ resources:
 
 ---
 
-## 19) 실전 점검 명령 모음
+## 19. 실전 점검 명령 모음
 
 ```bash
 # 리소스 사용
@@ -398,7 +398,7 @@ cat /sys/fs/cgroup/memory.current
 
 ---
 
-## 20) 체크리스트 요약
+## 20. 체크리스트 요약
 
 - [ ] **모든 컨테이너에 최소 requests 지정** (BestEffort 금지)  
 - [ ] 메모리는 OOM 방지 위해 **여유 포함 limits**  

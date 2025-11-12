@@ -6,7 +6,7 @@ category: AWS
 ---
 # ECS / EKS: 컨테이너 서비스
 
-## 0) 빠른 개요: 언제 ECS? 언제 EKS?
+## 0. 빠른 개요: 언제 ECS? 언제 EKS?
 
 | 질문 | ECS 권장 | EKS 권장 |
 |---|---|---|
@@ -21,7 +21,7 @@ category: AWS
 
 ---
 
-## 1) 공통 토대: 컨테이너 아키텍처 핵심
+## 1. 공통 토대: 컨테이너 아키텍처 핵심
 
 ### 1.1 네트워킹(VPC) 설계 기본
 - **퍼블릭 서브넷**: ALB/NLB, NAT GW 등 외부 노출 리소스
@@ -47,7 +47,7 @@ Git → Build(gha/CodeBuild) → ECR Push → IaC(CDK/CFn/Terraform) → ECS/EKS
 
 ---
 
-## 2) Amazon ECS 완전 가이드
+## 2. Amazon ECS 완전 가이드
 
 ### 2.1 핵심 개념 복습
 - **Task Definition**: 컨테이너 이미지/리소스/환경/로깅/볼륨 등 정의(JSON)
@@ -172,7 +172,7 @@ aws application-autoscaling put-scaling-policy \
 
 ---
 
-## 3) Amazon EKS 완전 가이드
+## 3. Amazon EKS 완전 가이드
 
 ### 3.1 핵심 개념 복습
 - **Control Plane**: AWS 관리(HA)
@@ -296,7 +296,7 @@ spec:
 
 ---
 
-## 4) ECS vs EKS: 운영·배포 전략 비교
+## 4. ECS vs EKS: 운영·배포 전략 비교
 
 | 주제 | ECS | EKS |
 |---|---|---|
@@ -309,7 +309,7 @@ spec:
 
 ---
 
-## 5) 실습 I — ECS Fargate 표준 패턴(End-to-End)
+## 5. 실습 I — ECS Fargate 표준 패턴(End-to-End)
 
 ### 5.1 전제
 - **프라이빗 서브넷** 2개, **퍼블릭 서브넷** 2개, **ALB** 퍼블릭에 배치
@@ -333,7 +333,7 @@ aws ec2 authorize-security-group-ingress --group-id sg-app --protocol tcp --port
 
 ---
 
-## 6) 실습 II — EKS 표준 패턴(End-to-End)
+## 6. 실습 II — EKS 표준 패턴(End-to-End)
 
 ### 6.1 클러스터
 ```bash
@@ -357,7 +357,7 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ---
 
-## 7) 패턴·참고 설계
+## 7. 패턴·참고 설계
 
 ### 7.1 멀티테넌시
 - **ECS**: 서비스/클러스터 분리 + Task Role/SG/네임스페이스 태깅
@@ -376,7 +376,7 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ---
 
-## 8) 트러블슈팅 체크리스트
+## 8. 트러블슈팅 체크리스트
 
 - **접속 실패**: ALB 헬스체크 경로/보안그룹/서브넷 라우팅 확인  
 - **DNS 불가**: VPC DNS Hostnames/Support 켜기, CoreDNS/조건부포워딩(eks)  
@@ -387,7 +387,7 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ---
 
-## 9) 비용·성능 최적화 포인트
+## 9. 비용·성능 최적화 포인트
 
 - **ECS Fargate**: vCPU/메모리 티어 최소화, **서브 프로세스/스레드 수 조정**으로 오버프로비 방지
 - **EKS**: Spot + Karpenter, 바이너리 최적화(distroless/Alpine), **멀티스테이지 빌드**로 이미지 크기↓
@@ -396,7 +396,7 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ---
 
-## 10) IaC: CDK 스니펫(요약)
+## 10. IaC: CDK 스니펫(요약)
 
 ### 10.1 CDK로 ECS Fargate 서비스
 ```ts
@@ -449,7 +449,7 @@ export class EksStack extends cdk.Stack {
 
 ---
 
-## 11) 요약 테이블
+## 11. 요약 테이블
 
 | 항목 | ECS | EKS |
 |---|---|---|
@@ -464,7 +464,7 @@ export class EksStack extends cdk.Stack {
 
 ---
 
-## 12) 결론
+## 12. 결론
 
 - **ECS**는 **빠른 가치실현과 운영 단순성**이 강점 — Fargate와 결합하면 서버 관리 부담이 사실상 0에 수렴.  
 - **EKS**는 **표준 쿠버네티스 생태계와 유연성**을 최대화 — 대규모/복잡한 조직에 적합.

@@ -6,7 +6,7 @@ category: AWS
 ---
 # Elastic Beanstalk: 앱 배포 자동화
 
-## 0) 왜 Elastic Beanstalk(EB)인가?
+## 0. 왜 Elastic Beanstalk(EB)인가?
 
 Elastic Beanstalk(이하 EB)은 **PaaS 성향의 관리형 배포 프레임워크**입니다.  
 코드를 업로드하면 EB가 **EC2 / ALB / Auto Scaling / CloudWatch / IAM** 등을 **템플릿+오케스트레이션**으로 묶어 자동 구성·운영합니다.
@@ -19,7 +19,7 @@ Elastic Beanstalk(이하 EB)은 **PaaS 성향의 관리형 배포 프레임워�
 
 ---
 
-## 1) 아키텍처 구성 요소 상세
+## 1. 아키텍처 구성 요소 상세
 
 ### 1.1 개념 계층
 - **Application**: 논리적 묶음(여러 Environment, 다수 Version 포함)
@@ -38,7 +38,7 @@ Elastic Beanstalk(이하 EB)은 **PaaS 성향의 관리형 배포 프레임워�
 
 ---
 
-## 2) 플랫폼/런타임 선택과 폴더 구조
+## 2. 플랫폼/런타임 선택과 폴더 구조
 
 ### 2.1 표준 플랫폼
 - Node.js, Python, Java(Tomcat/Corretto), .NET on Windows/IIS, PHP, Ruby, Go
@@ -114,7 +114,7 @@ CMD ["node", "app.js"]
 
 ---
 
-## 3) EB CLI/콘솔 배포 플로우와 베스트 프랙티스
+## 3. EB CLI/콘솔 배포 플로우와 베스트 프랙티스
 
 ### 3.1 EB CLI 설치 및 초기화
 ```bash
@@ -148,7 +148,7 @@ jobs:
 
 ---
 
-## 4) 환경 구성: .ebextensions / .platform 훅 / nginx 커스텀
+## 4. 환경 구성: .ebextensions / .platform 훅 / nginx 커스텀
 
 ### 4.1 .ebextensions (YAML)
 - 패키지 설치, 파일 템플릿, 서비스 설정, 환경 옵션 세팅 등
@@ -219,7 +219,7 @@ add_header Content-Security-Policy "default-src 'self'";
 
 ---
 
-## 5) 배포 전략(무중단/안전성)과 Blue/Green
+## 5. 배포 전략(무중단/안전성)과 Blue/Green
 
 ### 5.1 전략 비교
 | 전략 | 특성 | 다운타임 | 비용 | 비고 |
@@ -243,7 +243,7 @@ aws elasticbeanstalk swap-environment-cnames \
 
 ---
 
-## 6) 오토스케일링/캐패시티 계획/헬스체크
+## 6. 오토스케일링/캐패시티 계획/헬스체크
 
 ### 6.1 용량 추정(대략치)
 - 초당 요청 수를 $$R$$, 인스턴스 1대의 안정 처리량을 $$C$$라 하면 필요한 인스턴스 수:
@@ -273,7 +273,7 @@ option_settings:
 
 ---
 
-## 7) 보안: 네트워크/IAM/시크릿/HTTPS/WAF
+## 7. 보안: 네트워크/IAM/시크릿/HTTPS/WAF
 
 ### 7.1 네트워크
 - **프라이빗 서브넷**에 인스턴스 배치 + 퍼블릭 서브넷에 ALB
@@ -298,7 +298,7 @@ option_settings:
 
 ---
 
-## 8) 로깅/모니터링/트레이싱
+## 8. 로깅/모니터링/트레이싱
 
 ### 8.1 애플리케이션 로그
 - EB 플랫폼 로그 → **CloudWatch Logs** 자동 스트림
@@ -314,7 +314,7 @@ option_settings:
 
 ---
 
-## 9) RDS 연동 및 데이터 마이그레이션
+## 9. RDS 연동 및 데이터 마이그레이션
 
 ### 9.1 권장 패턴
 - EB 환경 **외부**에서 RDS 생성(CloudFormation/CDK/Terraform)
@@ -326,7 +326,7 @@ option_settings:
 
 ---
 
-## 10) Worker 환경(SQS)과 스케줄링
+## 10. Worker 환경(SQS)과 스케줄링
 
 ### 10.1 Worker Environment
 - EB가 SQS 폴링 → 메시지를 HTTP로 **/queue** 엔드포인트에 POST
@@ -358,7 +358,7 @@ cron:
 
 ---
 
-## 11) Docker로 EB 사용(멀티 컨테이너/ECS 기반)
+## 11. Docker로 EB 사용(멀티 컨테이너/ECS 기반)
 
 ### 11.1 Dockerrun.aws.json v2 (멀티 컨테이너)
 ```json
@@ -385,7 +385,7 @@ cron:
 
 ---
 
-## 12) 비용 최적화
+## 12. 비용 최적화
 
 - 인스턴스 타입/크기 적정화(프로파일링 → vCPU/메모리 요구 파악)
 - **Auto Scaling** 임계치 적절화, 두텁지 않은 배치 전략 선택
@@ -395,7 +395,7 @@ cron:
 
 ---
 
-## 13) 트러블슈팅 체크리스트
+## 13. 트러블슈팅 체크리스트
 
 - **헬스체크 실패**: HealthCheckPath 응답 200 확인, 앱 바인딩 포트(8080) 일치?
 - **배포 실패(4xx/5xx)**: EB 이벤트/`/var/log/eb-activity.log`, CloudWatch Logs 확인
@@ -406,7 +406,7 @@ cron:
 
 ---
 
-## 14) 예제: EB + Flask + RDS(Secrets) + HTTPS 리다이렉트
+## 14. 예제: EB + Flask + RDS(Secrets) + HTTPS 리다이렉트
 
 ### 14.1 Flask (간략)
 ```python
@@ -450,7 +450,7 @@ server {
 
 ---
 
-## 15) CloudFormation / CDK로 EB 자동화(요약)
+## 15. CloudFormation / CDK로 EB 자동화(요약)
 
 ### 15.1 CloudFormation 스니펫(요지)
 ```yaml
@@ -518,7 +518,7 @@ export class EbStack extends cdk.Stack {
 
 ---
 
-## 16) 체크리스트(운영/보안/신뢰성)
+## 16. 체크리스트(운영/보안/신뢰성)
 
 - [ ] 최소 2AZ, MinSize ≥ 2
 - [ ] 헬스체크 경로 분리(/health), DB 등 외부의존성 배제
@@ -532,7 +532,7 @@ export class EbStack extends cdk.Stack {
 
 ---
 
-## 17) 요약
+## 17. 요약
 
 - **Elastic Beanstalk = “코드에 집중”**을 가능케 하는 AWS의 PaaS 스타일 배포 자동화.  
 - 인프라 생성/운영(EC2/ALB/ASG/CloudWatch/IAM)을 추상화하고, **배포 전략/스케일링/모니터링**까지 일괄 제공.  

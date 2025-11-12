@@ -11,7 +11,7 @@ category: 선형대수
 
 ---
 
-## 1) 정의와 예시
+## 1. 정의와 예시
 
 ### 1.1 정의
 정사각 복소 행렬 $$A\in\mathbb{C}^{n\times n}$$ 에 대해
@@ -41,7 +41,7 @@ $$
 
 ---
 
-## 2) 기본 성질(증명 스케치 포함)
+## 2. 기본 성질(증명 스케치 포함)
 
 | 성질 | 내용 |
 |---|---|
@@ -77,7 +77,7 @@ $$
 
 ---
 
-## 3) 스펙트럼 정리(에르미트)
+## 3. 스펙트럼 정리(에르미트)
 
 **스펙트럼 정리**: Hermitian $$A$$ 에 대해 **유니터리** $$U$$ 와 **실수 대각** $$\Lambda$$ 가 존재하여
 $$
@@ -92,7 +92,7 @@ $$
   
 ---
 
-## 4) 양의 정부호/반정부호, 이차형식, 레일리 몫
+## 4. 양의 정부호/반정부호, 이차형식, 레일리 몫
 
 ### 4.1 부호성과 이차형식
 Hermitian $$A$$ 와 임의 벡터 $$x$$ 에 대해 **이차형식**
@@ -121,7 +121,7 @@ $$
 
 ---
 
-## 5) 자주 쓰는 예와 해석
+## 5. 자주 쓰는 예와 해석
 
 ### 5.1 공분산/그람(Gram) 행렬
 데이터 행렬 $$X\in\mathbb{R}^{m\times n}$$ 의 평균 중심화 후 공분산:
@@ -145,7 +145,7 @@ $$
 
 ---
 
-## 6) 수치 계산과 실전 팁
+## 6. 수치 계산과 실전 팁
 
 - **eigh vs eig**: Hermitian에는 **`np.linalg.eigh`**(실수 스펙트럼/정규직교 벡터 보장, 수치안정) 사용 권장. 일반 `eig`는 복소 스펙트럼 전용.
 - **정렬**: `eigh`는 보통 오름차순으로 고유값 반환.
@@ -154,7 +154,7 @@ $$
 
 ---
 
-## 7) 손으로 푸는 2×2 복합 예제
+## 7. 손으로 푸는 2×2 복합 예제
 
 다음 Hermitian:
 $$
@@ -207,7 +207,7 @@ $$
 
 ---
 
-## 8) Python 실습(NumPy): 판정·대각화·최소최대·Cholesky
+## 8. Python 실습(NumPy): 판정·대각화·최소최대·Cholesky
 
 ```python
 import numpy as np
@@ -215,7 +215,7 @@ import numpy as np
 def is_hermitian(A, tol=1e-12):
     return np.allclose(A, A.conj().T, atol=tol)
 
-# 1) Hermitian 판정과 고유분해
+# 1. Hermitian 판정과 고유분해
 A = np.array([[2, 1j],
               [-1j, 2]], dtype=complex)
 
@@ -231,7 +231,7 @@ Lambda = np.diag(lam)
 A_rec = U @ Lambda @ U.conj().T
 print("||A - UΛU^*||_F =", np.linalg.norm(A - A_rec))
 
-# 2) Rayleigh quotient로 λ_min/λ_max 확인
+# 2. Rayleigh quotient로 λ_min/λ_max 확인
 def rayleigh(A, x):
     x = x.astype(complex)
     return (x.conj().T @ A @ x) / (x.conj().T @ x)
@@ -241,7 +241,7 @@ xs = rng.normal(size=(1000, 2)) + 1j*rng.normal(size=(1000, 2))
 rq_vals = np.array([rayleigh(A, x) for x in xs])
 print("min R_A(x) ~", np.min(rq_vals.real), "  max R_A(x) ~", np.max(rq_vals.real))
 
-# 3) PSD 판정과 Cholesky (A가 PSD면 가능)
+# 3. PSD 판정과 Cholesky (A가 PSD면 가능)
 # 예: B = [[2,1],[1,2]] 는 실대칭(=Hermitian)이고 PD
 B = np.array([[2.,1.],
               [1.,2.]])
@@ -256,7 +256,7 @@ print("Cholesky L:\n", L)
 
 ---
 
-## 9) 실전 응용 시나리오
+## 9. 실전 응용 시나리오
 
 ### 9.1 PCA/통계
 공분산 $$C=X^TX/(m-1)$$ 은 Hermitian(실대칭) & PSD.  
@@ -276,7 +276,7 @@ print("Cholesky L:\n", L)
 
 ---
 
-## 10) 자주 하는 실수와 체크리스트
+## 10. 자주 하는 실수와 체크리스트
 
 - [ ] 복소 데이터에서 **대칭 $$A^T=A$$** 와 **Hermitian $$A=A^*$$** 를 혼동하지 않기.  
 - [ ] Hermitian이 아닌데 `eigh` 사용 → 결과 보증 불가. 일반 행렬은 `eig`.  
@@ -285,7 +285,7 @@ print("Cholesky L:\n", L)
 
 ---
 
-## 11) 심화 토막지식
+## 11. 심화 토막지식
 
 - **Gershgorin 원반**: Hermitian이면 모든 원반이 실축에 대해 대칭 → 스펙트럼이 **실수축**에만 놓임.  
 - **Weyl 부등식(섭동)**: $$A=H+E$$, 작은 Hermitian 섭동에서 고유값 이동이 제한됨(안정성 근거).  
@@ -294,7 +294,7 @@ print("Cholesky L:\n", L)
 
 ---
 
-## 12) 연습문제(스스로 해보기)
+## 12. 연습문제(스스로 해보기)
 
 1) 무작위 복소 행렬 $$M$$ 에 대해 $$A=\tfrac12(M+M^*)$$ 를 만들고 `eigh`로 고유분해. $$A$$ 가 Hermitian/실수 스펙트럼임을 확인.  
 2) 임의의 PD Hermitian $$A$$ 에 대해 Cholesky로 $$A=LL^*$$ 를 구하고, `solve(L^* y=b)`→`solve(L x=y)` 로 선형계 풀이.  
@@ -302,7 +302,7 @@ print("Cholesky L:\n", L)
 
 ---
 
-## 13) 요약 표
+## 13. 요약 표
 
 | 항목 | Hermitian 핵심 |
 |---|---|
@@ -315,7 +315,7 @@ print("Cholesky L:\n", L)
 
 ---
 
-## 14) 추가 Python 예제: 무작위 Hermitian 생성·검증
+## 14. 추가 Python 예제: 무작위 Hermitian 생성·검증
 
 ```python
 import numpy as np

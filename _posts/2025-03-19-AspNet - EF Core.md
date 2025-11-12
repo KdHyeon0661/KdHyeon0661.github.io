@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Entity Framework Core (EF Core) 소개 및 설치
 
-## 1) EF Core란?
+## 1. EF Core란?
 
 **EF Core**는 .NET 애플리케이션에서 **객체-관계 매핑(ORM)**을 제공하여 C# 객체로 데이터베이스를 다룰 수 있게 한다.
 
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 2) EF Core의 주요 특징 정리
+## 2. EF Core의 주요 특징 정리
 
 | 기능 | 요점 |
 |---|---|
@@ -33,7 +33,7 @@ category: AspNet
 
 ---
 
-## 3) 지원 데이터베이스와 선택 기준
+## 3. 지원 데이터베이스와 선택 기준
 
 - **SQL Server**: 기본 선택, 기능·도구 지원이 가장 풍부  
 - **SQLite**: 로컬/임베디드/테스트에 적합  
@@ -48,7 +48,7 @@ category: AspNet
 
 ---
 
-## 4) 설치 — 패키지 의존 관계와 권장 조합
+## 4. 설치 — 패키지 의존 관계와 권장 조합
 
 ### 4.1 필수 패키지(프로바이더 + 도구)
 
@@ -77,7 +77,7 @@ dotnet add package Microsoft.EntityFrameworkCore.Design
 
 ---
 
-## 5) 프로젝트에 DbContext 등록
+## 5. 프로젝트에 DbContext 등록
 
 ### 5.1 엔티티(Entity)와 DbContext
 
@@ -179,7 +179,7 @@ app.Run();
 
 ---
 
-## 6) 마이그레이션 도입과 운용
+## 6. 마이그레이션 도입과 운용
 
 ### 6.1 dotnet-ef 도구 설치(최초 1회)
 ```bash
@@ -227,7 +227,7 @@ dotnet ef migrations bundle --configuration Release --self-contained
 
 ---
 
-## 7) LINQ 사용 예 — 쿼리/정렬/프로젝션
+## 7. LINQ 사용 예 — 쿼리/정렬/프로젝션
 
 ```csharp
 public class IndexModel : PageModel
@@ -262,7 +262,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 8) CRUD 패턴과 트랜잭션
+## 8. CRUD 패턴과 트랜잭션
 
 ### 8.1 추가/수정/삭제
 
@@ -317,7 +317,7 @@ catch
 
 ---
 
-## 9) 로딩 전략 — Eager/Explicit/Lazy
+## 9. 로딩 전략 — Eager/Explicit/Lazy
 
 - **Eager**: `Include`로 즉시 합류
 ```csharp
@@ -337,7 +337,7 @@ await _db.Entry(blog).Collection(b => b.Posts).LoadAsync();
 
 ---
 
-## 10) 고급 매핑 — ValueConverter/Owned/Shadow/동시성
+## 10. 고급 매핑 — ValueConverter/Owned/Shadow/동시성
 
 ### 10.1 ValueConverter
 ```csharp
@@ -400,7 +400,7 @@ catch (DbUpdateConcurrencyException) { /* 재시도/사용자 병합 로직 */ }
 
 ---
 
-## 11) Raw SQL 과 안전한 파라미터화
+## 11. Raw SQL 과 안전한 파라미터화
 
 ```csharp
 // 엔티티 반환
@@ -421,7 +421,7 @@ var rows = await _db.Database
 
 ---
 
-## 12) 시드(Seed) 데이터
+## 12. 시드(Seed) 데이터
 
 ### 12.1 Fluent API 기반(마이그레이션 포함)
 ```csharp
@@ -451,7 +451,7 @@ public static class DbInit
 
 ---
 
-## 13) 성능 최적화 체크리스트
+## 13. 성능 최적화 체크리스트
 
 - **AsNoTracking**: 읽기 전용 쿼리  
 - **Include 최소화** + 필요한 속성만 `Select`  
@@ -469,7 +469,7 @@ private static readonly Func<AppDbContext,int,Task<Post?>> GetPostById =
 
 ---
 
-## 14) DbContext 수명과 DI
+## 14. DbContext 수명과 DI
 
 - DbContext는 **Scoped**가 표준(요청당 1개)  
 - Singleton에서 DbContext 직접 주입 금지(스코프 불일치). 필요 시 `IServiceScopeFactory`로 스코프 생성  
@@ -493,7 +493,7 @@ public class MySingleton
 
 ---
 
-## 15) 테스트 전략 — InMemory/Sqlite/Testcontainers
+## 15. 테스트 전략 — InMemory/Sqlite/Testcontainers
 
 - **InMemory**: 빠르지만 관계/제약 검증 한계
 ```csharp
@@ -511,7 +511,7 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite(keep));
 
 ---
 
-## 16) 트러블슈팅 FAQ
+## 16. 트러블슈팅 FAQ
 
 - **마이그레이션이 안 생김**: `DbContext`가 DI에 등록됐는지, 생성자/Provider 확인  
 - **스냅샷 충돌**: 수동 편집 주의. 필요 시 마지막 마이그레이션 제거 후 재생성  
@@ -521,7 +521,7 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite(keep));
 
 ---
 
-## 17) 실전 예제 — Minimal API + EF Core
+## 17. 실전 예제 — Minimal API + EF Core
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -550,7 +550,7 @@ app.Run();
 
 ---
 
-## 18) 요약
+## 18. 요약
 
 | 단계 | 핵심 |
 |---|---|

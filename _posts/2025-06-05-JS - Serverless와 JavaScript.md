@@ -16,7 +16,7 @@ category: JavaScript
 
 ---
 
-## 1) Serverless란 무엇인가
+## 1. Serverless란 무엇인가
 
 > **Serverless(서버리스)**는 서버의 준비·패치·확장·장애복구를 클라우드가 맡고, 개발자는 **핵심 로직만 함수로 작성**하는 실행 모델이다.
 
@@ -31,7 +31,7 @@ $$
 
 ---
 
-## 2) JS와 Serverless가 잘 맞는 이유
+## 2. JS와 Serverless가 잘 맞는 이유
 
 | 이유 | 설명 |
 |---|---|
@@ -42,7 +42,7 @@ $$
 
 ---
 
-## 3) 대표 플랫폼과 최소 예제
+## 3. 대표 플랫폼과 최소 예제
 
 ### 3.1 AWS Lambda (Node.js 18/20)
 
@@ -120,7 +120,7 @@ exports.helloWorld = functions.https.onRequest((req, res) => {
 
 ---
 
-## 4) 실전 시나리오별 레퍼런스 구현
+## 4. 실전 시나리오별 레퍼런스 구현
 
 ### 4.1 Contact Form → 이메일 전송 (Vercel)
 
@@ -266,7 +266,7 @@ export default {
 
 ---
 
-## 5) 데이터베이스·세션·상태 관리
+## 5. 데이터베이스·세션·상태 관리
 
 서버리스는 **무상태**. 상태는 외부로 분리한다.
 
@@ -292,7 +292,7 @@ if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma;
 
 ---
 
-## 6) 인증·권한 (AuthN/AuthZ)
+## 6. 인증·권한 (AuthN/AuthZ)
 
 - OAuth: GitHub/Google 등 **OAuth Redirect**와 **Callback**을 서버리스 함수로 처리
 - JWT: 만료시간, audience, issuer 검증. **키 회전(JWKs)** 캐시
@@ -309,7 +309,7 @@ export { GET, POST } from 'next-auth';
 
 ---
 
-## 7) 성능 최적화·콜드스타트 대응
+## 7. 성능 최적화·콜드스타트 대응
 
 - Edge 런타임(Cloudflare, Vercel Edge) 사용 → **콜드스타트 최소화**
 - 번들 최적화: **ESBuild/SWC**, tree-shaking, **최소 의존성**, 동적 import
@@ -319,7 +319,7 @@ export { GET, POST } from 'next-auth';
 
 ---
 
-## 8) 보안·비밀관리·컴플라이언스
+## 8. 보안·비밀관리·컴플라이언스
 
 - Secrets: 플랫폼의 **환경변수/시크릿 매니저** 사용(AWS Secrets Manager, Vercel Env, Cloudflare Secrets)
 - 입력 검증: Zod/Yup 등 스키마 검증
@@ -329,7 +329,7 @@ export { GET, POST } from 'next-auth';
 
 ---
 
-## 9) 로컬 개발·테스트·관측
+## 9. 로컬 개발·테스트·관측
 
 ### 9.1 로컬/스테이징
 - Firebase: **Emulators** (Auth/Functions/Firestore/Storage)
@@ -368,7 +368,7 @@ it('should reject bad body', async () => {
 
 ---
 
-## 10) 배포 자동화(IaC/CI)
+## 10. 배포 자동화(IaC/CI)
 
 ### 10.1 Serverless Framework (AWS)
 ```yaml
@@ -409,7 +409,7 @@ vercel --prod
 
 ---
 
-## 11) 비용 모델링과 최적화
+## 11. 비용 모델링과 최적화
 
 개념적 비용:
 $$
@@ -425,7 +425,7 @@ $$
 
 ---
 
-## 12) 안티패턴과 회피법
+## 12. 안티패턴과 회피법
 
 | 안티패턴 | 문제 | 해결책 |
 |---|---|---|
@@ -438,7 +438,7 @@ $$
 
 ---
 
-## 13) 아키텍처 패턴(캔드 레시피)
+## 13. 아키텍처 패턴(캔드 레시피)
 
 ### 13.1 백엔드 for 프런트엔드(BFF)
 - Next.js Route Handlers(Vercel) 또는 Workers에서 **외부 API 합치기 + 캐시**
@@ -454,7 +454,7 @@ $$
 
 ---
 
-## 14) 프런트 개발자를 위한 빠른 선택 가이드
+## 14. 프런트 개발자를 위한 빠른 선택 가이드
 
 | 상황 | 권장 스택 |
 |---|---|
@@ -466,7 +466,7 @@ $$
 
 ---
 
-## 15) 실전 프로젝트 뼈대(Next.js + Vercel + Prisma)
+## 15. 실전 프로젝트 뼈대(Next.js + Vercel + Prisma)
 
 ```
 my-app/
@@ -502,7 +502,7 @@ export async function POST(req: Request) {
 
 ---
 
-## 16) 체크리스트(런칭 전)
+## 16. 체크리스트(런칭 전)
 
 - [ ] 모든 엔드포인트 스키마 검증(Zod)
 - [ ] 비밀/환경변수 분리, 프리뷰/프로덕션 분리
@@ -514,7 +514,7 @@ export async function POST(req: Request) {
 
 ---
 
-## 17) 비용 감각 잡기(예시 계산)
+## 17. 비용 감각 잡기(예시 계산)
 
 가정: 월 200만 호출, 평균 80ms, 256MB(=0.25GB), GB-sec 단가 \(P\)
 
@@ -531,7 +531,7 @@ $$
 
 ---
 
-## 18) 결론
+## 18. 결론
 
 Serverless는 프런트엔드 개발자가 **백엔드의 80%**를 즉시 구현·운영하게 해주는 강력한 레버리지다.  
 남은 20%(고성능 장기 잡, 장시간 스트리밍, 대규모 배치)는 **이벤트/큐/엣지/워크플로우**와 조합하거나, 필요 시 **컨테이너/일반 서버**와 혼용하자.  

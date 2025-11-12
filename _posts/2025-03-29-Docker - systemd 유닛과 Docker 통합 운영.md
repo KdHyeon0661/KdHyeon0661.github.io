@@ -6,7 +6,7 @@ category: Docker
 ---
 # systemd 유닛과 Docker 통합 운영
 
-## 0) 왜 systemd 연동인가? (운영 관점 재정의)
+## 0. 왜 systemd 연동인가? (운영 관점 재정의)
 
 | 요구 | Docker만 | systemd 연동 시 이점 |
 |---|---|---|
@@ -19,7 +19,7 @@ category: Docker
 
 ---
 
-## 1) 기초: 단일 컨테이너를 systemd로 실행
+## 1. 기초: 단일 컨테이너를 systemd로 실행
 
 ### 1.1 최소 예시 (nginx)
 `/etc/systemd/system/nginx-container.service`
@@ -60,7 +60,7 @@ sudo journalctl -u nginx-container.service -f
 
 ---
 
-## 2) 운영형 패턴: 사전 pull + 존재 시 중복 제거 + 명시적 옵션
+## 2. 운영형 패턴: 사전 pull + 존재 시 중복 제거 + 명시적 옵션
 
 단일 파일 내 *pull → run* 절차를 넣으면 **업그레이드/재배포**가 간결해진다.
 
@@ -76,11 +76,11 @@ Requires=docker.service
 Type=exec
 Restart=always
 RestartSec=5s
-# 1) 이미지 최신화(혹은 특정 태그 유지)
+# 1. 이미지 최신화(혹은 특정 태그 유지)
 ExecStartPre=/usr/bin/docker pull my-registry.example.com/myorg/web:1.2.3
-# 2) 기존 컨테이너 정리(있을 때만)
+# 2. 기존 컨테이너 정리(있을 때만)
 ExecStartPre=/usr/bin/docker rm -f web || true
-# 3) 실행
+# 3. 실행
 ExecStart=/usr/bin/docker run --name web \
   --label app=web --label version=1.2.3 \
   --log-driver=json-file --log-opt max-size=10m --log-opt max-file=5 \
@@ -89,7 +89,7 @@ ExecStart=/usr/bin/docker run --name web \
   --cap-drop=ALL --cap-add=NET_BIND_SERVICE \
   -p 8080:8080 \
   my-registry.example.com/myorg/web:1.2.3
-# 4) 그레이스풀 종료 및 후처리
+# 4. 그레이스풀 종료 및 후처리
 ExecStop=/usr/bin/docker stop -t 15 web
 ExecStopPost=/usr/bin/docker rm -f web
 
@@ -108,7 +108,7 @@ WantedBy=multi-user.target
 
 ---
 
-## 3) `.env` / 환경변수 파일과 시크릿 연동
+## 3. `.env` / 환경변수 파일과 시크릿 연동
 
 ### 3.1 systemd `EnvironmentFile` + Docker env 전달
 `/etc/systemd/system/api.service`
@@ -146,7 +146,7 @@ DB_PASS=change_me
 
 ---
 
-## 4) `docker compose`를 systemd로 제어
+## 4. `docker compose`를 systemd로 제어
 
 Compose v2는 `docker compose`(단일 바이너리) 호출을 권장한다.
 
@@ -183,7 +183,7 @@ WantedBy=multi-user.target
 
 ---
 
-## 5) 종속성/순서 제어 (DB → 앱 → 프록시)
+## 5. 종속성/순서 제어 (DB → 앱 → 프록시)
 
 ### 5.1 유닛 간 의존
 ```ini
@@ -204,7 +204,7 @@ ExecStartPre=/usr/bin/bash -lc 'for i in {1..30}; do nc -z 127.0.0.1 5432 && exi
 
 ---
 
-## 6) 템플릿 유닛으로 반복 줄이기
+## 6. 템플릿 유닛으로 반복 줄이기
 
 여러 인스턴스를 돌릴 때 `@` 템플릿이 유용하다.
 
@@ -237,7 +237,7 @@ sudo systemctl enable --now app@8082.service
 
 ---
 
-## 7) Watchdog/StartLimit로 플래핑(무한 재시작) 제어
+## 7. Watchdog/StartLimit로 플래핑(무한 재시작) 제어
 
 ```ini
 [Service]
@@ -250,7 +250,7 @@ StartLimitBurst=5
 
 ---
 
-## 8) systemd 샌드박싱(실행 컨텍스트 하드닝)
+## 8. systemd 샌드박싱(실행 컨텍스트 하드닝)
 
 컨테이너 속 **애플리케이션 보안**은 컨테이너 옵션으로 다루지만, Docker CLI 자체 실행 맥락도 다듬을 수 있다(특히 rootless/전용 계정 운용 시).
 
@@ -272,7 +272,7 @@ SystemCallFilter=@system-service
 
 ---
 
-## 9) 롤링 업그레이드/롤백 절차 (단일 호스트)
+## 9. 롤링 업그레이드/롤백 절차 (단일 호스트)
 
 ### 9.1 버전 올리기
 1) 유닛 파일의 이미지 태그 변경(`version=1.2.3 → 1.2.4`)  
@@ -293,7 +293,7 @@ sudo journalctl -u web.service -n 200 --no-pager
 
 ---
 
-## 10) 로그 운영: journald + 회전/필터
+## 10. 로그 운영: journald + 회전/필터
 
 - 유닛 로그:
 ```bash
@@ -315,7 +315,7 @@ sudo systemctl restart systemd-journald
 
 ---
 
-## 11) Docker 데몬과의 올바른 의존성
+## 11. Docker 데몬과의 올바른 의존성
 
 - **항상** `After=docker.service` + `Requires=docker.service` 지정  
 - 네트워크 준비 필요 시 `network-online.target` 사용 (`systemd-networkd-wait-online.service` 확보)  
@@ -323,7 +323,7 @@ sudo systemctl restart systemd-journald
 
 ---
 
-## 12) Rootless Docker / 사용자 단위 유닛
+## 12. Rootless Docker / 사용자 단위 유닛
 
 Rootless 환경에선 **user** systemd를 사용한다.
 
@@ -339,7 +339,7 @@ journalctl --user -u myproject.service -f
 
 ---
 
-## 13) 정리·청소 자동화: Timer/Path 유닛
+## 13. 정리·청소 자동화: Timer/Path 유닛
 
 ### 13.1 이미지/컨테이너 정리(주간 prune)
 `/etc/systemd/system/docker-prune.service`
@@ -397,7 +397,7 @@ sudo systemctl enable --now web-reload.path
 
 ---
 
-## 14) HealthCheck와 systemd 연동 (심화)
+## 14. HealthCheck와 systemd 연동 (심화)
 
 컨테이너가 unhealthy일 때 **강제 재시작**하려면 ExecStartPost로 간단한 감시 루프를 둘 수 있다(간단 구현 예).
 
@@ -427,7 +427,7 @@ ExecStartPost=/usr/bin/env SERVICE_NAME=web /usr/local/bin/watch-health.sh web 1
 
 ---
 
-## 15) 보안·격리 모범값(컨테이너 실행 옵션)
+## 15. 보안·격리 모범값(컨테이너 실행 옵션)
 
 컨테이너 하드닝은 **유닛 내부의 docker run 라인**에서 통합한다.
 
@@ -455,7 +455,7 @@ ExecStart=/usr/bin/docker run --name secure-app \
 
 ---
 
-## 16) 트러블슈팅 베스트 프랙티스
+## 16. 트러블슈팅 베스트 프랙티스
 
 | 증상 | 확인/조치 |
 |---|---|
@@ -468,7 +468,7 @@ ExecStart=/usr/bin/docker run --name secure-app \
 
 ---
 
-## 17) 종합 샘플 — API + DB + Nginx 리버스 프록시
+## 17. 종합 샘플 — API + DB + Nginx 리버스 프록시
 
 ```
 /etc/systemd/system/
@@ -556,7 +556,7 @@ sudo systemctl enable --now db.service api.service proxy.service
 
 ---
 
-## 18) 요약 체크리스트
+## 18. 요약 체크리스트
 
 - 유닛 위치: `/etc/systemd/system/*.service` → 변경 시 `daemon-reload`
 - 항상 `After=docker.service` + `Requires=docker.service`

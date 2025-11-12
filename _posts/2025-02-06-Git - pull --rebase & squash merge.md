@@ -6,7 +6,7 @@ category: Git
 ---
 # `git pull --rebase` 완벽 가이드 + GitHub `Squash and merge` 심화
 
-## 0) 빠른 개요
+## 0. 빠른 개요
 
 - **`git pull --rebase`**: 원격의 최신 커밋을 가져온 뒤, **내 로컬 커밋들을 ‘꺼냈다가’ 최신 위로 다시 재생성**해 **선형 이력**을 만든다.  
 - **GitHub `Squash and merge`**: PR 내 **여러 커밋을 하나의 커밋**으로 압축(squash)하여 병합한다.  
@@ -14,7 +14,7 @@ category: Git
 
 ---
 
-# 1) `git pull --rebase`: 깔끔한 로컬 병합
+# 1. `git pull --rebase`: 깔끔한 로컬 병합
 
 ## 1.1 개념 복습
 
@@ -70,7 +70,7 @@ git config --global rerere.enabled true
 ```bash
 git pull --rebase
 # 충돌 발생 시:
-#   1) 파일 열어 충돌 마커(<<<<<<<, =======, >>>>>>>) 해결
+# 1. 파일 열어 충돌 마커(<<<<<<<, =======, >>>>>>>) 해결
 git add <수정파일>
 git rebase --continue
 
@@ -176,7 +176,7 @@ git switch -c rescue HEAD@{2}
 
 ---
 
-# 2) GitHub `Squash and merge` 심화
+# 2. GitHub `Squash and merge` 심화
 
 ## 2.1 개념 복습
 - PR의 **모든 커밋을 단 하나의 커밋으로 압축**해 base 브랜치에 병합.
@@ -283,7 +283,7 @@ gh pr merge <PR_NUMBER> --squash --admin
 ## 2.7 재현 가능한 PR 시뮬레이션(로컬 → GitHub)
 
 ```bash
-# 1) 로컬 새 레포
+# 1. 로컬 새 레포
 rm -rf squash-lab && mkdir squash-lab && cd squash-lab
 git init
 git config user.name  "lab"
@@ -292,7 +292,7 @@ git branch -M main
 echo "v1" > README.md
 git add . && git commit -m "chore: init"
 
-# 2) 기능 브랜치 커밋 여러 개
+# 2. 기능 브랜치 커밋 여러 개
 git checkout -b feature/login
 echo "- login form" >> README.md
 git commit -am "feat: login form"
@@ -301,17 +301,17 @@ git commit -am "fix: button style"
 echo "- rename vars" >> README.md
 git commit -am "refactor: rename vars"
 
-# 3) 원격 생성 및 푸시(실제 사용 시 본인 리포로 교체)
+# 3. 원격 생성 및 푸시(실제 사용 시 본인 리포로 교체)
 #   gh repo create <owner>/<name> --public --source=. --push
 #   gh pr create --fill --base main --head feature/login
 
-# 4) PR 화면에서 Squash and merge 선택 →
+# 4. PR 화면에서 Squash and merge 선택 →
 #    최종 메시지 정리 → Confirm.
 ```
 
 ---
 
-# 3) 종합 체크리스트
+# 3. 종합 체크리스트
 
 ### A. `git pull --rebase`
 - [ ] 개인 브랜치에서만 사용(공유 브랜치 rebase 금지)
@@ -330,7 +330,7 @@ git commit -am "refactor: rename vars"
 
 ---
 
-# 4) 명령어 요약
+# 4. 명령어 요약
 
 ```bash
 # pull --rebase 기본
@@ -361,7 +361,7 @@ git switch -c rescue HEAD@{N}
 
 ---
 
-## 5) 결론
+## 5. 결론
 
 - **`git pull --rebase`** 는 로컬 협업의 마찰을 줄이고 **선형 이력**을 만든다.  
 - **`Squash and merge`** 는 PR을 **기능 단위 1커밋**으로 정리해 읽기 쉬운 히스토리를 만든다.  

@@ -4,378 +4,434 @@ title: Java - Thread 생성 방법
 date: 2025-07-29 19:20:23 +0900
 category: Java
 ---
-# Thread 생성 방법 (Thread, Runnable) — 자세 정리
+# Thread 생성 방법 (Thread, Runnable)
 
-Java에서 **스레드(Thread)**는 병렬(또는 동시) 작업을 수행하기 위한 실행 흐름이다.  
-스레드를 생성하는 전통적인 방법은 크게 두 가지이다:
+## 0. 한눈에 요약
 
-1. `Thread` 클래스를 **상속**하는 방법  
-2. `Runnable` 인터페이스를 **구현**하는 방법
-
-아래에서 두 방법의 문법, 차이, 예제, 관련 API(시작/종료/인터럽트/동기화)와 실무 권장사항까지 자세히 설명한다.
-
----
-
-## 목차
-1. Thread vs Runnable 개념 차이  
-2. 방법 A — `Thread` 상속 (예제)  
-3. 방법 B — `Runnable` 구현 (예제)  
-4. 람다/익명 클래스 방식  
-5. 스레드 시작과 `run()`의 차이 (`start()` vs `run()`)  
-6. 스레드 생명주기 주요 메서드 (`join`, `interrupt`, `isAlive`, `sleep`, `yield`)  
-7. 데몬 스레드(daemon)와 사용자 스레드(user thread)  
-8. 동기화 & 스레드 안전 (예: race condition, `synchronized`, `volatile`, `AtomicInteger`)  
-9. 예외 처리 및 UncaughtExceptionHandler  
-10. 성능/실무 팁 — 스레드 풀(Executors) 및 Callable/Future  
-11. 요약 / 권장 관행
+| 항목 | 핵심 포인트 |
+|---|---|
+| 생성 방식 | **A)** `class X extends Thread` → `new X().start()` / **B)** `class X implements Runnable` → `new Thread(new X(), "name").start()` |
+| 권장 기본 | **Runnable 구현 + `new Thread(r, name)` (또는 스레드 풀)** — 단일 상속 제약 회피, 재사용/테스트 용이 |
+| `start()` vs `run()` | `start()`가 **새 스레드 생성** 후 내부에서 `run()` 호출. `run()` 직접 호출은 **새 스레드 아님** |
+| 종료 | `interrupt()`로 **협력적 종료**(루프 내 `isInterrupted()`/`InterruptedException` 처리) |
+| 동기화 | `Atomic*`, `synchronized`, `Lock`, `volatile`로 **가시성/원자성** 보장. 공유 상태 최소화 |
+| 예외 | 스레드 내부 미처리 예외는 **스레드만 종료**. `UncaughtExceptionHandler`로 로깅/알림 |
+| 데몬 | 백그라운드용. **모든 user 스레드 종료 시 JVM 즉시 종료**(정리 코드 기대 금지) |
+| 금지 API | `stop/suspend/resume` **사용 금지**. `run()` 직호출, `available()` 오용, 인터럽트 무시 금지 |
+| 현대적 대안 | 스레드 풀(`ExecutorService`), **가벼운 스레드(Java 21+ Virtual Thread)** |
 
 ---
 
-## 1. Thread vs Runnable 개념 차이
-- **Thread 상속**: `Thread`를 서브클래스로 만들어 `run()`을 오버라이드. 간단하지만 Java는 단일 상속만 허용하므로 유연성이 떨어짐.
-- **Runnable 구현**: 스레드에서 실행될 작업(테스크)을 `Runnable`에 넣고 `new Thread(runnable).start()`로 실행. 재사용성과 확장성(다중 상속 회피)에서 유리.
+## 1. Thread vs Runnable — 개념과 선택
+
+| 비교 항목 | `extends Thread` | `implements Runnable` (권장) |
+|---|---|---|
+| 상속 제약 | 단일 상속으로 유연성 낮음 | 다른 클래스를 상속하면서 **작업만** 캡슐화 |
+| 역할 분리 | **작업**과 **실행체**가 결합 | 작업(Runnable)과 실행체(Thread) **분리** |
+| 재사용성/테스트 | 비교적 낮음 | 높음(동일 Runnable을 다양한 Thread/풀에서 실행) |
+| 스레드 이름 지정 | `new MyThread("name")` 등 | `new Thread(r, "name")`로 손쉬운 네이밍 |
+
+> **권장**: 작업 로직은 `Runnable`/`Callable`에 담고, 실행은 `Thread` 또는 **스레드 풀**에 맡기기.
 
 ---
 
-## 2. 방법 A — `Thread` 상속 예제
+## 2. 방법 A — `Thread` 상속 (예제와 주의)
 
 ```java
 public class MyThread extends Thread {
-    private String name;
+    public MyThread(String name) { super(name); }
 
-    public MyThread(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public void run() {
-        // 스레드가 실행할 코드
-        for (int i = 0; i < 5; i++) {
-            System.out.println(name + " - count: " + i);
-            try {
-                Thread.sleep(500); // 0.5초 대기
-            } catch (InterruptedException e) {
-                System.out.println(name + " interrupted");
-                return; // 종료
+    @Override public void run() {
+        try {
+            for (int i = 0; i < 5; i++) {
+                System.out.printf("[%s] i=%d%n", getName(), i);
+                Thread.sleep(500);
             }
+        } catch (InterruptedException ie) {
+            // 인터럽트 복원 후 종료
+            Thread.currentThread().interrupt();
+            System.out.printf("[%s] interrupted%n", getName());
         }
     }
 
     public static void main(String[] args) {
-        Thread t1 = new MyThread("T1");
-        t1.start(); // run()을 별도 스레드에서 실행
+        Thread t = new MyThread("T-Worker");
+        t.start();           // ✔ 새 스레드
+        // t.run();          // ✘ 같은(메인) 스레드에서 실행
     }
 }
 ```
 
+- **주의**: **같은 Thread 인스턴스에 `start()` 2회 호출** → `IllegalThreadStateException`.
+
 ---
 
-## 3. 방법 B — `Runnable` 구현 예제 (권장 방식)
+## 3. 방법 B — `Runnable` 구현 (권장 기본)
 
 ```java
 public class MyRunnable implements Runnable {
     private final String name;
+    public MyRunnable(String name) { this.name = name; }
 
-    public MyRunnable(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public void run() {
-        for (int i = 0; i < 5; i++) {
-            System.out.println(name + " - count: " + i);
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                System.out.println(name + " interrupted");
-                return;
+    @Override public void run() {
+        try {
+            for (int i = 1; i <= 3; i++) {
+                System.out.printf("[%s] task step %d%n", name, i);
+                Thread.sleep(300);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.out.printf("[%s] interrupted%n", name);
         }
     }
 
     public static void main(String[] args) {
-        Thread t = new Thread(new MyRunnable("Worker-1"), "Worker-1");
+        Thread t = new Thread(new MyRunnable("R-Worker"), "R-Worker");
         t.start();
     }
 }
 ```
 
-**장점**: 작업(Runnable)과 스레드(Thread)를 분리해 재사용성↑, 테스트 용이성↑.
+- 작업 로직을 **Thread와 분리**하므로 **스레드 풀**, **테스트**에 그대로 재사용 가능.
 
 ---
 
-## 4. 람다/익명 클래스 방식 (간결)
+## 4. 람다/익명 클래스 — 보일러플레이트 최소화
 
 ```java
 // 익명 클래스
 new Thread(new Runnable() {
-    @Override
-    public void run() {
-        System.out.println("익명 Runnable 실행");
-    }
-}).start();
+    @Override public void run() { System.out.println("익명 Runnable"); }
+}, "Anon").start();
 
 // 람다 (Java 8+)
-new Thread(() -> {
-    System.out.println("람다 Runnable 실행");
-}, "LambdaThread").start();
+new Thread(() -> System.out.println("람다 Runnable"), "Lambda").start();
 ```
 
 ---
 
-## 5. `start()` vs `run()`의 차이
-- `start()` : 새 스레드를 생성하고 JVM이 새 스레드에서 `run()`을 호출하도록 한다. **항상** `start()`를 사용해서 새로운 스레드에서 실행해야 한다.
-- `run()` : 단순한 메서드 호출일 뿐, 현재 스레드(예: main)에서 실행된다. (새 스레드가 생성되지 않음)
+## 5. `start()` vs `run()` — 헷갈리는 포인트 정리
 
 ```java
-Thread t = new Thread(() -> System.out.println("hi"));
-t.run();   // main 스레드에서 실행
-t.start(); // 새 스레드에서 실행
+Thread t = new Thread(() -> System.out.println(Thread.currentThread().getName()));
+t.run();   // 출력: main (새 스레드 X)
+t.start(); // 출력: Thread-0 (새 스레드 O)
+```
+
+- **항상 `start()`**로 **새 스레드**를 시작.  
+- `run()` 직접 호출은 **일반 메서드 호출**과 동일.
+
+---
+
+## 6. 스레드 생명주기와 주요 메서드
+
+### 6.1 상태(State)
+`NEW → RUNNABLE ↔ BLOCKED/WAITING/TIMED_WAITING → TERMINATED`
+
+| 메서드/상황 | 효과 |
+|---|---|
+| `start()` | `NEW → RUNNABLE` |
+| `sleep(ms)` | `TIMED_WAITING`(시간 경과/인터럽트 시 깨어남) |
+| `wait()/notify` | 모니터 조건 대기/깨움 (`synchronized` 블록 내에서만) |
+| `join()` | **다른 스레드 종료 대기** → 호출자 `WAITING/TIMED_WAITING` |
+| **종료** | `run()` 종료 또는 미처리 예외 → `TERMINATED` |
+
+### 6.2 `join()` 패턴
+```java
+Thread t1 = new Thread(task1, "t1");
+Thread t2 = new Thread(task2, "t2");
+t1.start(); t2.start();
+t1.join();  // t1 끝까지
+t2.join(1000); // 최대 1초만 대기
 ```
 
 ---
 
-## 6. 스레드 제어 주요 메서드
+## 7. 인터럽트(Interrupt) — 안전한 종료의 표준
 
-- `join()` : 다른 스레드가 끝날 때까지 현재 스레드를 대기시킴.
-- `interrupt()` : 스레드에 인터럽트 신호를 보냄; `sleep()`/`wait()` 중이면 `InterruptedException` 발생.
-- `isAlive()` : 스레드가 아직 실행 중인지 여부.
-- `sleep(long millis)`(static) : 현재 스레드를 잠깐 멈춤(예외 처리 필요).
-- `yield()`(static) : 같은 우선순위 다른 스레드에게 실행 기회 양보.
+### 7.1 핵심 규칙
+- `interrupt()`는 **요청**일 뿐 **강제 종료 아님**.
+- 차단 메서드(`sleep`, `wait`, `join`, 일부 I/O 등)는 **`InterruptedException`** 발생.
+- 루프에서는 `Thread.currentThread().isInterrupted()` **폴링** 또는 예외 캐치로 **협력 종료**.
 
-```java
-Thread t = new Thread(() -> {
-    try {
-        Thread.sleep(2000);
-    } catch (InterruptedException e) {
-        System.out.println("interrupted");
-    }
-});
-
-t.start();
-t.interrupt(); // sleep 중이면 InterruptedException 발생
-try {
-    t.join(); // t가 종료될 때까지 대기
-} catch (InterruptedException e) { /* handle */ }
-```
-
----
-
-## 7. 데몬 스레드(daemon)와 사용자 스레드
-- 기본 스레드는 **user thread**: JVM은 모든 user thread가 종료될 때까지 실행을 유지.
-- **daemon thread**: 백그라운드 서비스용, JVM은 모든 user thread 종료 시 daemon 스레드 강제 종료.
-- 설정: `thread.setDaemon(true)` — 반드시 `start()` 전에 설정해야 함.
-
-```java
-Thread daemon = new Thread(() -> {
-    while (true) {
-        System.out.println("데몬 실행");
-        try { Thread.sleep(1000); } catch (InterruptedException e) { break; }
-    }
-});
-daemon.setDaemon(true);
-daemon.start();
-```
-
----
-
-## 8. 동기화 & 스레드 안전 (race condition 예시)
-
-### 문제: 동시 접근에 의한 race condition
-
-```java
-// RaceConditionExample.java
-public class RaceConditionExample {
-    static class Counter implements Runnable {
-        private int count = 0;
-        public void run() {
-            for (int i = 0; i < 10000; i++) {
-                count++; // 비원자적 연산: read-modify-write
-            }
-        }
-        public int getCount() { return count; }
-    }
-
-    public static void main(String[] args) throws InterruptedException {
-        Counter c = new Counter();
-        Thread t1 = new Thread(c);
-        Thread t2 = new Thread(c);
-        t1.start(); t2.start();
-        t1.join(); t2.join();
-        System.out.println("count = " + c.getCount()); // 예상 20000이 아닐 수 있음
-    }
-}
-```
-
-### 해결 1: `synchronized` 사용
-
-```java
-class SafeCounter implements Runnable {
-    private int count = 0;
-    public synchronized void increment() { count++; }
-    public void run() {
-        for (int i = 0; i < 10000; i++) increment();
-    }
-    public int getCount() { return count; }
-}
-```
-
-### 해결 2: `AtomicInteger` 사용 (권장)
-
-```java
-import java.util.concurrent.atomic.AtomicInteger;
-
-class AtomicCounter implements Runnable {
-    private AtomicInteger count = new AtomicInteger(0);
-    public void run() {
-        for (int i = 0; i < 10000; i++) count.incrementAndGet();
-    }
-    public int getCount() { return count.get(); }
-}
-```
-
-**권장사항**: 가능한 경우 `synchronized`보다 `java.util.concurrent`의 원자 타입/락/컨커런시 유틸을 사용.
-
----
-
-## 9. 인터럽트(Interrupt) 설계 패턴
-
-- 스레드를 종료시키려면 `interrupt()`를 호출하고 스레드는 `InterruptedException`을 확인하거나 `Thread.currentThread().isInterrupted()`로 플래그를 점검해 안전히 종료한다.
-
+### 7.2 패턴: 루프 + 슬립
 ```java
 public void run() {
     while (!Thread.currentThread().isInterrupted()) {
-        // 작업
         try {
-            Thread.sleep(1000);
+            // 작업...
+            Thread.sleep(200);
         } catch (InterruptedException e) {
-            // 인터럽트 시 루프 종료(또는 정리)
-            Thread.currentThread().interrupt(); // 상태 복원 후 종료
-            break;
+            Thread.currentThread().interrupt(); // 상태 복원
+            break; // 정리 후 종료
         }
     }
 }
 ```
 
+- **인터럽트 삼키지 말 것**: 예외를 잡은 뒤 `interrupt()`로 **상태 복원**하거나 종료.
+
 ---
 
-## 10. 예외 처리 및 UncaughtExceptionHandler
-
-- 스레드 안에서 처리되지 않은 예외가 발생하면 스레드는 종료된다. 전역 또는 스레드별로 언캐치 예외 핸들러를 설정할 수 있다.
+## 8. 데몬(daemon) vs 사용자(user) 스레드
 
 ```java
-Thread t = new Thread(() -> { throw new RuntimeException("oops"); });
-t.setUncaughtExceptionHandler((thread, ex) -> {
-    System.err.println(thread.getName() + " threw " + ex);
+Thread daemon = new Thread(() -> { /* 백그라운드 */ }, "daemon");
+daemon.setDaemon(true); // 반드시 start() 전에
+daemon.start();
+```
+
+- **모든 user 스레드가 종료되면** JVM은 **데몬을 강제 종료**.  
+- 데몬에서 파일/네트워크 **정리 작업 기대 금지**(언제든 중단될 수 있음).
+
+---
+
+## 9. 동기화 & 메모리 모델 — 원자성/가시성/순서
+
+### 9.1 왜 문제가 생기는가?
+- `count++`는 **원자적 아님**(읽기→증가→쓰기). 다중 스레드에서 **레이스 컨디션**.
+
+### 9.2 해결 옵션
+
+#### A) `synchronized` (내장 락)
+```java
+class SafeCounter {
+    private int n;
+    public synchronized void inc() { n++; }
+    public synchronized int get() { return n; }
+}
+```
+- **진입/이탈**이 **happens-before**를 형성 → **가시성** 보장.
+
+#### B) `AtomicInteger` (무잠금 CAS)
+```java
+AtomicInteger n = new AtomicInteger();
+n.incrementAndGet();
+```
+
+#### C) `volatile` (가시성 전용)
+```java
+volatile boolean running = true; // 플래그 변경이 즉시 보임
+```
+- **원자성 보장 X**. 카운터 등엔 부적합.
+
+#### D) `Lock` (`ReentrantLock`) — 고급 기능
+```java
+Lock lock = new ReentrantLock();
+lock.lock();
+try { /* 임계 구역 */ }
+finally { lock.unlock(); }
+```
+
+### 9.3 안전한 게시(Safe Publication)
+- 불변/`final` 필드, 정적 초기화, 락/volatile 경유, 스레드 안전 컨테이너를 통해 **초기화가 완료된 객체**를 공개.
+
+### 9.4 금지 패턴: 잘못된 DCL
+```java
+// 잘못된 예시
+class Lazy {
+  private static Helper h;
+  static Helper get() {
+    if (h == null) {         // 레이스
+      synchronized(Lazy.class) {
+        if (h == null) h = new Helper(); // h에 volatile 필요
+      }
+    }
+    return h;
+  }
+}
+```
+- **해결**: `h`를 `volatile`로.
+
+---
+
+## 10. UncaughtExceptionHandler — 보이지 않는 예외 잡기
+
+```java
+Thread t = new Thread(() -> { throw new RuntimeException("Boom"); }, "Worker");
+t.setUncaughtExceptionHandler((th, ex) -> {
+    System.err.printf("Thread %s crashed: %s%n", th.getName(), ex);
 });
 t.start();
 ```
 
-또는 전역:
+- 전역 설정: `Thread.setDefaultUncaughtExceptionHandler(...)`
+- 스레드 풀을 쓰면 **작업 예외는 `Future.get()` or 핸들러에서 처리**(별도 주제).
+
+---
+
+## 11. 스레드 이름/우선순위/팩토리
+
 ```java
-Thread.setDefaultUncaughtExceptionHandler((thread, ex) -> {
-    // 로깅 등
-});
+Thread t = new Thread(r, "ETL-Worker-1");
+t.setPriority(Thread.NORM_PRIORITY); // 우선순위 의존 로직은 지양
 ```
 
----
-
-## 11. 성능/실무 팁 — 스레드 풀(Executors) 및 Callable/Future
-
-**직접 Thread를 생성하는 것보다 스레드 풀을 통한 작업 제출이 권장**된다(오버헤드/자원 관리).
-
-### ExecutorService 예제 (권장)
-
+`ThreadFactory`로 **일관된 네이밍/데몬/우선순위/핸들러** 지정:
 ```java
-import java.util.concurrent.*;
-
-public class ExecutorExample {
-    public static void main(String[] args) throws Exception {
-        ExecutorService pool = Executors.newFixedThreadPool(4);
-
-        Runnable task = () -> {
-            System.out.println(Thread.currentThread().getName() + " 실행");
-        };
-        pool.submit(task);
-
-        // Callable (반환값 지원)
-        Callable<Integer> callable = () -> {
-            return 42;
-        };
-        Future<Integer> future = pool.submit(callable);
-        System.out.println("result = " + future.get()); // blocking
-
-        pool.shutdown();
-    }
-}
-```
-
-**장점**:
-- 스레드 생성 비용 절감
-- 작업 큐잉, 구성 가능한 정책, graceful shutdown 등 제공
-
----
-
-## 12. Callable & Future (스레드의 결과 받기)
-
-```java
-ExecutorService ex = Executors.newSingleThreadExecutor();
-Future<String> f = ex.submit(() -> {
-    Thread.sleep(500);
-    return "완료";
-});
-System.out.println(f.get()); // "완료"
-ex.shutdown();
-```
-
----
-
-## 13. 스레드 이름, 우선순위, 그룹
-
-- 이름: `new Thread(r, "Worker-1")` 또는 `thread.setName("...")`
-- 우선순위: `thread.setPriority(Thread.MAX_PRIORITY)` (권장 비의존적 사용)
-- 그룹: `ThreadGroup` (현대 코드에서는 잘 안 씀)
-
----
-
-## 14. 권장 관행(요약)
-- 작업을 **Runnable/Callable**로 정의하고 **스레드 풀(Executors)**을 이용해 실행하라.  
-- 가능한 경우 **고수준 동시성 API**(`ExecutorService`, `CompletableFuture`, `Concurrent` 컬렉션 등)를 사용하라.  
-- **절대** `run()`이 아니라 `start()`를 호출하라.  
-- 공유 상태는 최소화 하고, 동기화가 필요하면 `Atomic*` 또는 `synchronized`/락으로 보호하라.  
-- 스레드 종료는 `interrupt()`를 통해 신호를 보내고 스레드가 자율적으로 종료하도록 설계하라.  
-- 리소스 관리(파일/소켓)는 반드시 try-with-resources 혹은 finally에서 닫아라.  
-- 스레드 수는 CPU 코어 수와 작업 유형(IO-bound vs CPU-bound)을 고려해 설정하라.
-
----
-
-### 마무리 예제: Runnable + ExecutorService + AtomicInteger
-```java
-import java.util.concurrent.*;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class PoolCounterExample {
-    public static void main(String[] args) throws InterruptedException {
-        ExecutorService pool = Executors.newFixedThreadPool(4);
-        AtomicInteger counter = new AtomicInteger(0);
-
-        Runnable job = () -> {
-            for (int i = 0; i < 10000; i++) {
-                counter.incrementAndGet();
-            }
-        };
-
-        for (int i = 0; i < 4; i++) pool.submit(job);
-
-        pool.shutdown();
-        pool.awaitTermination(1, TimeUnit.MINUTES);
-        System.out.println("counter = " + counter.get()); // 40000
+class NamedFactory implements ThreadFactory {
+    private final AtomicInteger seq = new AtomicInteger();
+    public Thread newThread(Runnable r) {
+        Thread t = new Thread(r, "app-worker-" + seq.incrementAndGet());
+        t.setUncaughtExceptionHandler((th, ex) -> ex.printStackTrace());
+        return t;
     }
 }
 ```
 
 ---
 
-## 결론
-- 스레드를 직접 생성하는 법(extends `Thread`, implements `Runnable`)을 이해하는 것은 중요하지만, **실무에서는 스레드 풀과 고수준 동시성 유틸을 사용**하는 것이 안전하고 효율적이다.  
-- 동시성은 오류가 발생하기 쉬우므로, 공유 자원 관리와 예외·중단 처리에 특히 신경 써야 한다.
+## 12. 반드시 피할 것(안티패턴)
+
+- `stop() / suspend() / resume()` **금지**(데드락/일관성 파괴).
+- `run()` 직접 호출(새 스레드 미생성).
+- 인터럽트 **무시**(무한 대기/종료 불가).
+- 공유 변경 상태 방치(레이스/가시성 버그).
+- 데몬 스레드에서 **파일/DB 정리** 기대.
+- `Thread.sleep()`으로 **락 대기/폴링** 해결 시도(깨짐). 조건/락/동시성 유틸 사용.
+
+---
+
+## 13. 스레드 풀/고수준 API와의 접점 (간단 스니펫)
+
+> 대량/반복 작업은 **직접 Thread 생성 대신 스레드 풀** 권장
+
+```java
+import java.util.concurrent.*;
+
+ExecutorService pool = Executors.newFixedThreadPool(4, new NamedFactory());
+Future<Integer> f = pool.submit(() -> 42); // Callable
+int v = f.get(); // 예외/취소 처리 생략
+pool.shutdown();
+```
+
+---
+
+## 14. (선택) Virtual Thread — Java 21+ 가벼운 스레드
+
+> **개념**: OS 스레드보다 **훨씬 가벼운** JVM 스케줄 스레드. **블로킹 동작을 가독성 그대로** 유지하며 대규모 동시성 구현.
+
+```java
+// 1) 직접 생성
+Thread.ofVirtual().start(() -> System.out.println(Thread.currentThread()));
+
+// 2) 작업당 가상 스레드 실행기
+try (var exec = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+    exec.submit(() -> { /* 블로킹 호출도 OK */ });
+} // 자동 종료
+```
+
+- 여전히 **`Runnable`** 실행 모델. 기존 패턴과 호환.  
+- CPU 바운드 대량 작업에는 스레드 수 조절/풀 전략을 함께 고려.
+
+---
+
+## 15. 실전 체크리스트
+
+- [ ] 작업은 `Runnable/Callable`로, 실행은 `Thread/Executor`.
+- [ ] **항상 `start()`**, 동일 스레드 2중 시작 금지.
+- [ ] 종료는 **`interrupt()` 기반 협력적** 설계.
+- [ ] 공유 상태 최소화. 필요 시 `Atomic*`/`synchronized`/`Lock`/`volatile`.
+- [ ] **try-with-resources**로 외부 자원 정리.
+- [ ] `UncaughtExceptionHandler`로 **예외 로깅/알림**.
+- [ ] 데몬 스레드는 **정리 로직 금지**.
+- [ ] 금지 API 사용하지 않기.
+
+---
+
+## 16. 끝판왕 종합 예제 — 안전 종료·예외 로깅·조인·동기화
+
+```java
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class ThreadPlayground {
+    static class Worker implements Runnable {
+        private final String name;
+        private final AtomicInteger counter;
+        private final CountDownLatch started;
+        Worker(String name, AtomicInteger counter, CountDownLatch started) {
+            this.name = name; this.counter = counter; this.started = started;
+        }
+        @Override public void run() {
+            try {
+                started.countDown(); // 시작 신호
+                while (!Thread.currentThread().isInterrupted()) {
+                    counter.incrementAndGet(); // 원자적 증가
+                    // 업무 로직...
+                    Thread.sleep(100); // 차단 메서드 → 인터럽트 반응
+                    if (counter.get() > 20) throw new IllegalStateException("테스트 예외");
+                }
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();        // 상태 복원
+                System.out.printf("[%s] interrupted%n", name);
+            }
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        AtomicInteger shared = new AtomicInteger();
+        CountDownLatch started = new CountDownLatch(2);
+
+        Thread t1 = new Thread(new Worker("W1", shared, started), "W1");
+        Thread t2 = new Thread(new Worker("W2", shared, started), "W2");
+
+        // 스레드별 UncaughtExceptionHandler
+        Thread.UncaughtExceptionHandler ueh = (th, ex) ->
+            System.err.printf("Crash@%s: %s%n", th.getName(), ex);
+        t1.setUncaughtExceptionHandler(ueh);
+        t2.setUncaughtExceptionHandler(ueh);
+
+        t1.start(); t2.start();
+
+        // 두 스레드가 모두 시작될 때까지 대기
+        started.await();
+
+        // 1초 뒤, 정상 종료 시도
+        Thread.sleep(1000);
+        t1.interrupt();
+        t2.interrupt();
+
+        // 종료 동기화
+        t1.join(2000);
+        t2.join(2000);
+
+        System.out.printf("shared=%d, alive: t1=%s, t2=%s%n",
+                shared.get(), t1.isAlive(), t2.isAlive());
+    }
+}
+```
+
+**포인트**
+- `CountDownLatch`로 **시작 동기화**.
+- `AtomicInteger`로 **경량 원자 카운터**.
+- `InterruptedException` 처리 시 **re-interrupt** + 종료.
+- 예외는 `UncaughtExceptionHandler`로 **로깅**.
+- `join(timeout)`으로 **그레이스풀 종료** 기다림.
+
+---
+
+## 17. 자주 묻는 질문(FAQ)
+
+- **Q. 왜 `run()`을 호출하면 안 되나요?**  
+  A. 별도 스레드가 생성되지 않고 **현재 스레드**에서 실행됩니다.
+
+- **Q. 인터럽트는 강제 종료인가요?**  
+  A. 아니요. **협력적 신호**입니다. 루프/차단 지점에서 **반드시 처리**하도록 작성해야 합니다.
+
+- **Q. `volatile`만 쓰면 충분한가요?**  
+  A. 가시성만 보장합니다. **증감/집계**에는 `Atomic*` 또는 락이 필요합니다.
+
+- **Q. 데몬 스레드에서 파일 닫기/DB 커밋 가능?**  
+  A. 보장할 수 없습니다. **모든 user 스레드가 끝나면 즉시 종료**될 수 있습니다.
+
+---
+
+## 18. 마무리
+
+- **학습용**으로 `Thread`/`Runnable` 생성법을 익히되, **실무**에서는 스레드 풀/고수준 동시성 도구를 우선 사용하세요.  
+- 올바른 종료(인터럽트), 확실한 동기화, 예외 로깅/모니터링을 갖춘 스레드만이 **운영 환경에서 견고**합니다.  
+- Java 21+라면 **Virtual Thread**로 **읽기 쉬운 동시성**을 누리되, 자원 경합/동기화 원리는 동일하게 적용됩니다.

@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Helm으로 패키지 설치 및 커스터마이징
 
-## 1) 리포지토리 추가 및 동기화
+## 1. 리포지토리 추가 및 동기화
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -17,7 +17,7 @@ helm repo update
 
 ---
 
-## 2) 설치 가능한 차트 검색
+## 2. 설치 가능한 차트 검색
 
 ```bash
 helm search repo nginx
@@ -34,7 +34,7 @@ bitnami/nginx    15.3.2         1.25.2       NGINX Open Source
 
 ---
 
-## 3) 기본 설치(가장 빠른 길)
+## 3. 기본 설치(가장 빠른 길)
 
 ```bash
 helm install my-nginx bitnami/nginx
@@ -54,7 +54,7 @@ kubectl get deploy,svc,cm,secret,pod
 
 ---
 
-## 4) 커스터마이징(값 오버라이드) 세 가지 방식
+## 4. 커스터마이징(값 오버라이드) 세 가지 방식
 
 ### 4.1 CLI로 즉시 오버라이드
 
@@ -108,7 +108,7 @@ helm install my-nginx bitnami/nginx -f default-values.yaml
 
 ---
 
-## 5) 설치 후 값 변경(업그레이드)
+## 5. 설치 후 값 변경(업그레이드)
 
 설치 이후에도 values를 수정하여 업그레이드 가능하다.
 
@@ -137,7 +137,7 @@ helm upgrade --install my-nginx bitnami/nginx \
 
 ---
 
-## 6) 릴리스 이력·상태·롤백
+## 6. 릴리스 이력·상태·롤백
 
 ```bash
 helm history my-nginx
@@ -149,7 +149,7 @@ helm rollback my-nginx 2
 
 ---
 
-## 7) 릴리스 삭제
+## 7. 릴리스 삭제
 
 ```bash
 helm uninstall my-nginx
@@ -159,7 +159,7 @@ helm uninstall my-nginx
 
 ---
 
-## 8) 환경별 values 분리 패턴
+## 8. 환경별 values 분리 패턴
 
 - `values.yaml`: 공통 기본값
 - `values-dev.yaml`, `values-stage.yaml`, `values-prod.yaml`: 환경별 오버라이드
@@ -179,7 +179,7 @@ CI/CD에서는 **브랜치/태그/환경 변수**로 파일 조합을 결정한�
 
 ---
 
-## 9) 실전 예제 모음
+## 9. 실전 예제 모음
 
 ### 9.1 Redis 설치 및 커스터마이징(Bitnami)
 
@@ -234,7 +234,7 @@ helm upgrade --install mon prometheus-community/kube-prometheus-stack \
 
 ---
 
-## 10) 설치 전 렌더링·검증·스키마
+## 10. 설치 전 렌더링·검증·스키마
 
 변환 결과 미리 보기(적용하지 않음)
 
@@ -271,7 +271,7 @@ helm lint ./mychart
 
 ---
 
-## 11) 일반적인 커스터마이징 패턴
+## 11. 일반적인 커스터마이징 패턴
 
 ### 11.1 이미지 태그 고정 및 릴리스에 커밋 주입
 
@@ -345,7 +345,7 @@ affinity:
 
 ---
 
-## 12) 설치 전후 작업: Hooks·Test·NOTES
+## 12. 설치 전후 작업: Hooks·Test·NOTES
 
 ### 12.1 사전 마이그레이션 훅(Job)
 
@@ -401,7 +401,7 @@ helm test myrel -n app
 
 ---
 
-## 13) 보안·비밀 관리
+## 13. 보안·비밀 관리
 
 Helm 자체는 값 파일 암호화를 제공하지 않는다. 운영에서는 다음 패턴을 사용한다.
 
@@ -424,7 +424,7 @@ helm upgrade --install web ./mychart -f values-prod.yaml -f secrets-prod.yaml
 
 ---
 
-## 14) OCI 레지스트리 활용(권장 추세)
+## 14. OCI 레지스트리 활용(권장 추세)
 
 차트를 컨테이너 레지스트리(예: GHCR, ECR, GAR)에 저장
 
@@ -440,7 +440,7 @@ OCI는 인증, 감사, 캐시/미러를 레지스트리 수준에서 통합 관�
 
 ---
 
-## 15) GitOps 연계(Argo CD/Flux)
+## 15. GitOps 연계(Argo CD/Flux)
 
 Argo CD 예시(요지)
 
@@ -454,7 +454,7 @@ Argo CD 예시(요지)
 
 ---
 
-## 16) 트러블슈팅 체크리스트
+## 16. 트러블슈팅 체크리스트
 
 1. 렌더 확인: `helm template --debug --dry-run -f <values>.yaml`
 2. 린트: `helm lint`
@@ -469,7 +469,7 @@ Argo CD 예시(요지)
 
 ---
 
-## 17) 명령어 요약
+## 17. 명령어 요약
 
 | 명령 | 설명 |
 |---|---|
@@ -492,40 +492,40 @@ Argo CD 예시(요지)
 
 ---
 
-## 18) 완전한 설치 흐름 예시(요약)
+## 18. 완전한 설치 흐름 예시(요약)
 
 ```bash
-# 1) 리포 등록
+# 1. 리포 등록
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 
-# 2) 후보 차트 조사
+# 2. 후보 차트 조사
 helm search repo nginx
 helm show values bitnami/nginx > base.yaml
 
-# 3) 환경별 값 파일 준비
+# 3. 환경별 값 파일 준비
 cp base.yaml values-prod.yaml
 vim values-prod.yaml  # LB, Ingress, 리소스, HPA 등 수정
 
-# 4) 사전 검증
+# 4. 사전 검증
 helm template my-nginx bitnami/nginx -f values-prod.yaml | kubeconform -strict -
 helm lint bitnami/nginx
 
-# 5) 안정적 설치
+# 5. 안정적 설치
 helm upgrade --install my-nginx bitnami/nginx \
   -f values-prod.yaml \
   --atomic --wait --timeout 5m
 
-# 6) 상태/지표 확인
+# 6. 상태/지표 확인
 helm status my-nginx
 kubectl get all
 kubectl logs deploy/my-nginx
 
-# 7) 값 변경/업그레이드
+# 7. 값 변경/업그레이드
 helm diff upgrade my-nginx bitnami/nginx -f values-prod.yaml
 helm upgrade my-nginx bitnami/nginx -f values-prod.yaml --atomic --wait
 
-# 8) 문제 시 롤백
+# 8. 문제 시 롤백
 helm history my-nginx
 helm rollback my-nginx 2
 ```

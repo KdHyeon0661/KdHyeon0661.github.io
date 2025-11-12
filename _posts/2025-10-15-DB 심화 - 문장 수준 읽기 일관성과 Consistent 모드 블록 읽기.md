@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 한눈에 보는 결론
+## 0. 한눈에 보는 결론
 
 - 오라클은 **기본 SELECT** 에 대해 **“문장 시작 시점의 데이터 일관성”** 을 **항상 보장**한다.  
 - 문장 시작 시 오라클은 내부적으로 **쿼리 SCN(= S)** 을 잡는다. 그 문장이 끝날 때까지,  
@@ -25,7 +25,7 @@ category: DB 심화
 
 ---
 
-## 1) 문장 수준 읽기 일관성(Statement-Level Read Consistency)란?
+## 1. 문장 수준 읽기 일관성(Statement-Level Read Consistency)란?
 
 ### 1.1 정의
 
@@ -42,7 +42,7 @@ category: DB 심화
 
 ---
 
-## 2) Consistent 모드 블록 읽기(Consistent Get, CR Read)의 큰 그림
+## 2. Consistent 모드 블록 읽기(Consistent Get, CR Read)의 큰 그림
 
 ### 2.1 Current vs Consistent
 
@@ -69,7 +69,7 @@ ORDER  BY name;
 
 ---
 
-## 3) 블록 내부 구조와 일관성 — ITL · Row Lock Byte · 트랜잭션 슬롯
+## 3. 블록 내부 구조와 일관성 — ITL · Row Lock Byte · 트랜잭션 슬롯
 
 - **블록 헤더의 ITL 슬롯**:  
   “이 블록을 현재/최근 변경한 **트랜잭션(XID)**” 의 자리표.  
@@ -84,7 +84,7 @@ ORDER  BY name;
 
 ---
 
-## 4) CR Read의 세부 알고리즘(개념적 단계)
+## 4. CR Read의 세부 알고리즘(개념적 단계)
 
 SELECT가 블록을 읽을 때, 내부적으로 아래와 같은 절차를 밟는다(요약):
 
@@ -111,7 +111,7 @@ $$
 
 ---
 
-## 5) 세션 시나리오로 보는 문장 수준 일관성
+## 5. 세션 시나리오로 보는 문장 수준 일관성
 
 ### 5.1 데이터 준비
 
@@ -166,7 +166,7 @@ COMMIT;
 
 ---
 
-## 6) 인덱스/테이블 조인 시 CR — “인덱스는 현재 버전, 테이블은 CR로”
+## 6. 인덱스/테이블 조인 시 CR — “인덱스는 현재 버전, 테이블은 CR로”
 
 - 오라클은 **인덱스 구조 탐색**에서 대부분 **현재 버전**을 사용하되,  
 - **테이블 행 데이터** 를 가져올 때 그 행의 **커밋 시점** 을 확인해 **필요 시 CR** 로 되돌린다.
@@ -185,7 +185,7 @@ WHERE  grp = 7;
 
 ---
 
-## 7) SELECT FOR UPDATE와 Current Read
+## 7. SELECT FOR UPDATE와 Current Read
 
 - `SELECT ... FOR UPDATE` 는 **행 잠금**을 위해 **현재 버전**(current)을 본다(= **db block gets**).  
 - 이는 문장 수준 **읽기 일관성** 과는 다른 목적(락 취득)이므로 주의.  
@@ -202,7 +202,7 @@ SELECT COUNT(*) FROM t_cr WHERE grp = 0 FOR UPDATE;   -- 행 잠금 + current re
 
 ---
 
-## 8) ORA-01555(snapshot too old) — 왜 터지나?
+## 8. ORA-01555(snapshot too old) — 왜 터지나?
 
 ### 8.1 원인
 
@@ -231,7 +231,7 @@ ORDER  BY begin_time DESC FETCH FIRST 24 ROWS ONLY;
 
 ---
 
-## 9) 지연 클린아웃(Deferred Cleanout)과 CR 비용
+## 9. 지연 클린아웃(Deferred Cleanout)과 CR 비용
 
 - 트랜잭션 **커밋 직후**, 모든 관련 블록의 ITL에 **커밋 SCN** 을 **즉시** 기록하지 못할 수 있다(부담/타이밍 문제).  
 - **다음에 해당 블록을 읽는 세션** 이 **트랜잭션 테이블** 을 확인해 **커밋 SCN** 을 알아내고, **ITL 엔트리** 에 그것을 적어 넣는다(**클린아웃**).  
@@ -250,7 +250,7 @@ ORDER  BY sec DESC;
 
 ---
 
-## 10) “Consistent gets” 가 높다는 건 나쁜가?
+## 10. “Consistent gets” 가 높다는 건 나쁜가?
 
 - **아니다.** 일관성을 지키려면 필요한 비용이다.  
 - 다만, **불필요한 스캔/조인/중복 읽기** 로 **consistent gets** 가 과도하게 많다면 **쿼리 튜닝 신호**일 수 있다.  
@@ -262,14 +262,14 @@ ORDER  BY sec DESC;
 
 ---
 
-## 11) RAC에서의 CR — GC 대기와의 연동(한 줄 요약)
+## 11. RAC에서의 CR — GC 대기와의 연동(한 줄 요약)
 
 - RAC에선 블록이 **인스턴스 간** 이동/요청되며, **CR 이미지를 원격에서 조립**/전송하는 경로도 있다.  
 - `gc cr request`, `gc buffer busy` 등 **GC 대기**가 표출될 수 있으며, **서비스 기반 파티셔닝/로컬리티** 설계가 중요.
 
 ---
 
-## 12) 실습: CR 동작을 체감하는 미니 데모
+## 12. 실습: CR 동작을 체감하는 미니 데모
 
 ### 12.1 준비
 
@@ -320,7 +320,7 @@ COMMIT;
 
 ---
 
-## 13) 진단/관측 SQL 단축키
+## 13. 진단/관측 SQL 단축키
 
 ```sql
 -- 시스템 전반 일관성/현재 읽기/물리I/O 감
@@ -346,7 +346,7 @@ ORDER  BY begin_time DESC FETCH FIRST 24 ROWS ONLY;
 
 ---
 
-## 14) 성능/안정성 체크리스트 (CR 관점)
+## 14. 성능/안정성 체크리스트 (CR 관점)
 
 1. **ORA-01555** 가 보이면  
    - `UNDO_RETENTION` / Undo TS 용량 / DML·보고서 시간 분리 / 쿼리 튜닝  
@@ -364,7 +364,7 @@ ORDER  BY begin_time DESC FETCH FIRST 24 ROWS ONLY;
 
 ---
 
-## 15) 보너스: 수식으로 보는 CR 판정 규칙(개념)
+## 15. 보너스: 수식으로 보는 CR 판정 규칙(개념)
 
 - 쿼리 시작 시 **SCN = S**  
 - 각 행의 “유효 커밋 SCN” 을 **C** 라고 하면, 보여줄 값의 조건은
@@ -382,7 +382,7 @@ $$
 
 ---
 
-## 16) 마무리 요약
+## 16. 마무리 요약
 
 - 오라클은 **기본적으로 모든 SELECT** 에 대해 **문장 수준 일관성** 을 제공한다.  
 - 구현의 핵심은 **Consistent 모드 블록 읽기(CR Read)** 이며, **Undo/ITL/Row Lock Byte/커밋 SCN/지연 클린아웃** 이 맞물려 동작한다.  

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # SignalR로 실시간 기능 구현하기
 
-## 0) 빠른 개요
+## 0. 빠른 개요
 
 - **SignalR**: ASP.NET Core의 **양방향 실시간 통신** 프레임워크
 - **전송 자동 선택**: WebSocket → SSE → Long Polling
@@ -15,7 +15,7 @@ category: AspNet
 
 ---
 
-## 1) 프로젝트 뼈대 & 의존성
+## 1. 프로젝트 뼈대 & 의존성
 
 ### 1.1 디렉터리 구조(권장)
 
@@ -57,7 +57,7 @@ dotnet add tests/MyChatApp.Tests package Microsoft.AspNetCore.SignalR
 
 ---
 
-## 2) 최소 동작 예제 — 브로드캐스트 채팅
+## 2. 최소 동작 예제 — 브로드캐스트 채팅
 
 ### 2.1 Hub (서버)
 
@@ -230,7 +230,7 @@ function appendLine(text) {
 
 ---
 
-## 3) DM(1:1)과 방(그룹) — 실제 현업 패턴
+## 3. DM(1:1)과 방(그룹) — 실제 현업 패턴
 
 ### 3.1 UserIdentifier 매핑 (커스텀 사용자 키)
 
@@ -289,7 +289,7 @@ await connection.invoke('SendDirect', 'alice', 'DM hi!');
 
 ---
 
-## 4) Presence(접속/상태) 추적
+## 4. Presence(접속/상태) 추적
 
 ### 4.1 In-Memory 트래커(단일 인스턴스)
 
@@ -352,7 +352,7 @@ public class ChatHub : Hub<IChatClient>
 
 ---
 
-## 5) 인증/권한(쿠키 or JWT)
+## 5. 인증/권한(쿠키 or JWT)
 
 ### 5.1 쿠키 인증(간단)
 
@@ -406,7 +406,7 @@ const connection = new signalR.HubConnectionBuilder()
 
 ---
 
-## 6) 메시지 영속화(EF Core) & 최근 메시지 로드
+## 6. 메시지 영속화(EF Core) & 최근 메시지 로드
 
 ### 6.1 모델 & DbContext
 
@@ -479,7 +479,7 @@ history.forEach(m => appendLine(`[${new Date(m.utc).toLocaleTimeString()}] ${m.f
 
 ---
 
-## 7) 스트리밍 & 바이너리(대용량) 전송
+## 7. 스트리밍 & 바이너리(대용량) 전송
 
 ### 7.1 서버→클라이언트 스트리밍
 
@@ -520,7 +520,7 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ---
 
-## 8) 성능 최적화: MessagePack / 전송량 절약 / 배치
+## 8. 성능 최적화: MessagePack / 전송량 절약 / 배치
 
 - **MessagePack 프로토콜** 사용(위 Program.cs 참고)
 - 메시지 **최대 길이 제한/필터링**(욕설/금지 단어)
@@ -529,7 +529,7 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ---
 
-## 9) 재연결/네트워크 회복 전략
+## 9. 재연결/네트워크 회복 전략
 
 - `withAutomaticReconnect()` + **백오프**  
 - **상태 표시**: `onreconnecting/onreconnected/onclose`에서 UI 갱신  
@@ -537,7 +537,7 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ---
 
-## 10) 스케일아웃(다중 인스턴스): Redis / Azure SignalR Service
+## 10. 스케일아웃(다중 인스턴스): Redis / Azure SignalR Service
 
 ### 10.1 Redis 백플레인
 
@@ -557,7 +557,7 @@ builder.Services.AddSignalR()
 
 ---
 
-## 11) 보안/운영 체크리스트
+## 11. 보안/운영 체크리스트
 
 | 항목 | 권장 |
 |---|---|
@@ -604,7 +604,7 @@ public async Task SafeSend(string message)
 
 ---
 
-## 12) 프런트엔드 UX 패턴(채팅 특화)
+## 12. 프런트엔드 UX 패턴(채팅 특화)
 
 - 타이핑 표시: `SetTyping`(디바운스 1~2초)
 - 읽음 표시: 메시지 ID 기반 **read receipt** 이벤트
@@ -613,7 +613,7 @@ public async Task SafeSend(string message)
 
 ---
 
-## 13) 리버스 프록시(Nginx) 설정
+## 13. 리버스 프록시(Nginx) 설정
 
 WebSocket 업그레이드 헤더 필수:
 
@@ -639,7 +639,7 @@ server {
 
 ---
 
-## 14) 컨테이너 & docker-compose
+## 14. 컨테이너 & docker-compose
 
 ```yaml
 # docker-compose.yml
@@ -660,7 +660,7 @@ services:
 
 ---
 
-## 15) 테스트(단위/통합)
+## 15. 테스트(단위/통합)
 
 ### 15.1 Hub 단위테스트 (xUnit + Moq)
 
@@ -707,7 +707,7 @@ public class ChatHubTests
 
 ---
 
-## 16) 고급: 관리자/모더레이션/감사
+## 16. 고급: 관리자/모더레이션/감사
 
 - `KickUser(toUser)`, `MuteUser(toUser)` 등 **권한별 허브 메서드**
 - 메시지 삭제/신고: 메시지 ID로 상태 업데이트 후 **이벤트 브로드캐스트**
@@ -721,7 +721,7 @@ public Task KickUser(string userId) =>
 
 ---
 
-## 17) 장애 대응 & 트러블슈팅
+## 17. 장애 대응 & 트러블슈팅
 
 | 증상 | 점검 |
 |---|---|
@@ -733,7 +733,7 @@ public Task KickUser(string userId) =>
 
 ---
 
-## 18) 확장 아이디어
+## 18. 확장 아이디어
 
 - **알림 센터**: 주문 상태/빌드 상태/댓글 알림
 - **협업 편집**: 문서/화이트보드 동시 편집(Operational Transform)

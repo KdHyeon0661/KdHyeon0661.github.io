@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # WebSocket CSRF (Cross-Site WebSocket Hijacking)
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **문제**  
   - WebSocket은 **HTTP Upgrade**로 시작하지만 **CORS에 의해 보호되지 않습니다**.  
@@ -27,7 +27,7 @@ category: 웹해킹
 
 ---
 
-## 1) 동작 원리와 위험
+## 1. 동작 원리와 위험
 
 ### 1.1 WebSocket 핸드셰이크 요약
 브라우저:
@@ -67,7 +67,7 @@ Sec-WebSocket-Accept: <...>
 
 ---
 
-## 2) “안전 재현” 점검(스테이징 전용) — **막혀야 정상**
+## 2. “안전 재현” 점검(스테이징 전용) — **막혀야 정상**
 
 > 아래 스모크 테스트는 **차단 확인** 목적입니다. 운영·외부 시스템 금지.
 
@@ -96,7 +96,7 @@ Sec-WebSocket-Accept: <...>
 
 ---
 
-## 3) 방어 전략(설계 → 구현 → 운영)
+## 3. 방어 전략(설계 → 구현 → 운영)
 
 1) **인증/권한 모델**  
    - 연결 직후 **세션/토큰을 재검증**하고, 각 메시지에 대해 **권한 확인**(특히 상태 변경).  
@@ -115,7 +115,7 @@ Sec-WebSocket-Accept: <...>
 
 ---
 
-## 4) 프레임워크별 구현 레시피
+## 4. 프레임워크별 구현 레시피
 
 ### 4.1 Node.js — `ws` 라이브러리
 
@@ -378,7 +378,7 @@ public class CsrfHandshakeInterceptor implements HandshakeInterceptor {
 
 ---
 
-## 5) 리버스 프록시/LB에서 선차단
+## 5. 리버스 프록시/LB에서 선차단
 
 ### 5.1 Nginx — `Origin` ACL로 Upgrade 거절
 ```nginx
@@ -422,7 +422,7 @@ frontend fe
 
 ---
 
-## 6) 토큰 설계 패턴(실무)
+## 6. 토큰 설계 패턴(실무)
 
 1) **더블 서브밋 쿠키**  
    - `csrfCookie`(쿠키, HttpOnly 아님)와 `?csrf`(쿼리)를 비교.  
@@ -438,7 +438,7 @@ frontend fe
 
 ---
 
-## 7) 메시지 레벨 방어(연결 후)
+## 7. 메시지 레벨 방어(연결 후)
 
 - **메시지 스키마 검증**: JSON Schema/유효성 체크(타입/범위/길이).  
 - **리플레이 차단**: 상태 변경 오퍼레이션은 **idempotency key** 필요.  
@@ -448,7 +448,7 @@ frontend fe
 
 ---
 
-## 8) 로깅/탐지/알림
+## 8. 로깅/탐지/알림
 
 - **로그 필드**: `ts`, `remote_ip`, `origin`, `allowed`, `token_ok`, `user_id`, `path`, `closed_reason`  
 - **탐지 룰**  
@@ -472,7 +472,7 @@ index=app service=ws event=handshake allowed=false
 
 ---
 
-## 9) 테스트/CI 자동화
+## 9. 테스트/CI 자동화
 
 - **유닛/통합**:  
   - 비허용 `Origin` → 403/close  
@@ -488,7 +488,7 @@ index=app service=ws event=handshake allowed=false
 
 ---
 
-## 10) 체크리스트 (현장용)
+## 10. 체크리스트 (현장용)
 
 - [ ] **핸드셰이크에서 `Origin` 화이트리스트**(정확 호스트·프로토콜·포트)  
 - [ ] `Origin: null` **거절**(필요 시 예외 경로만)  

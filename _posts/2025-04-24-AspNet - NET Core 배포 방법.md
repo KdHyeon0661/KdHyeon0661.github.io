@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 배포 방법 완전 정복 (IIS, Linux, Docker, Azure)
 
-## 0) 배포 전략 큰 그림
+## 0. 배포 전략 큰 그림
 
 - ASP.NET Core는 **자체 웹서버(Kestrel)** 를 포함한다. 엣지(Edge) 역활은 IIS/Nginx/Apache(리버스 프록시)가 담당.
 - 배포 4대 축
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 1) 사전 공통: Publish 산출물과 런타임 모드
+## 1. 사전 공통: Publish 산출물과 런타임 모드
 
 ### 1.1 Self-contained vs Framework-dependent
 
@@ -48,7 +48,7 @@ export ConnectionStrings__Default="Server=db;Database=app;User Id=app;Password=*
 
 ---
 
-## 2) Windows IIS 배포 (Internet Information Services)
+## 2. Windows IIS 배포 (Internet Information Services)
 
 ### 2.1 준비물
 
@@ -137,7 +137,7 @@ HTTP→HTTPS 강제, www 제거 등은 URL Rewrite 모듈로 처리.
 
 ---
 
-## 3) Linux + Nginx + Kestrel
+## 3. Linux + Nginx + Kestrel
 
 ### 3.1 .NET Runtime 설치(런타임형 배포 시)
 
@@ -256,7 +256,7 @@ app.Run();
 
 ---
 
-## 4) Docker 배포(단독 컨테이너/Compose)
+## 4. Docker 배포(단독 컨테이너/Compose)
 
 ### 4.1 Dockerfile (멀티스테이지)
 
@@ -350,7 +350,7 @@ docker compose up -d --build
 
 ---
 
-## 5) Azure App Service (PaaS)
+## 5. Azure App Service (PaaS)
 
 ### 5.1 장점/특징
 
@@ -406,7 +406,7 @@ jobs:
 
 ---
 
-## 6) HTTPS/보안/성능 필수 체크리스트
+## 6. HTTPS/보안/성능 필수 체크리스트
 
 - HTTPS 강제(리다이렉트) + HSTS(프로덕션만)
 - TLS 1.2+ 제한, 약한 Cipher 제외
@@ -420,7 +420,7 @@ jobs:
 
 ---
 
-## 7) 무중단/점진 배포(Blue-Green/Canary)
+## 7. 무중단/점진 배포(Blue-Green/Canary)
 
 - **Nginx 업스트림 이원화**: `upstream app { server A; server B; }` 로 새 버전 가중치 조절
 - Azure App Service **슬롯 스왑**: 표준 기능
@@ -429,7 +429,7 @@ jobs:
 
 ---
 
-## 8) 헬스체크/상태 페이지
+## 8. 헬스체크/상태 페이지
 
 ### 8.1 .NET 내장 헬스체크
 
@@ -458,7 +458,7 @@ app.MapGet("/status", () =>
 
 ---
 
-## 9) 로그/모니터링 권장
+## 9. 로그/모니터링 권장
 
 - **Serilog** + Console/File/Seq/Elastic sink
 - Nginx/IIS 액세스 로그와 상관관계 분석
@@ -481,7 +481,7 @@ builder.Host.UseSerilog();
 
 ---
 
-## 10) 트러블슈팅 모음
+## 10. 트러블슈팅 모음
 
 | 증상 | 원인 | 대처 |
 |---|---|---|
@@ -494,7 +494,7 @@ builder.Host.UseSerilog();
 
 ---
 
-## 11) 보너스: Windows 서비스(Worker) 배포
+## 11. 보너스: Windows 서비스(Worker) 배포
 
 웹이 아닌 백그라운드 서비스:
 
@@ -517,7 +517,7 @@ host.Run();
 
 ---
 
-## 12) 최종 요약: 상황별 추천
+## 12. 최종 요약: 상황별 추천
 
 | 상황 | 추천 |
 |---|---|
@@ -528,7 +528,7 @@ host.Run();
 
 ---
 
-## 13) 실습 지향 QuickStart 레시피
+## 13. 실습 지향 QuickStart 레시피
 
 ### 13.1 최소 API + 헬스 + HTTPS 리다이렉트 + 프록시 헤더
 

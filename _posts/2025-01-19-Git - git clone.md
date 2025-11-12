@@ -150,23 +150,23 @@ git submodule update --init --recursive --depth 1
 ```bash
 cd repo-name
 
-# 1) 원격 확인
+# 1. 원격 확인
 git remote -v
 
-# 2) 유저 정보(이 저장소 범위로만 설정)
+# 2. 유저 정보(이 저장소 범위로만 설정)
 git config user.name  "홍길동"
 git config user.email "hong@example.com"
 
-# 3) 브랜치 확인
+# 3. 브랜치 확인
 git branch -a
 
-# 4) 최신 동기화(필요 시)
+# 4. 최신 동기화(필요 시)
 git pull --rebase
 
-# 5) 작업 브랜치 생성
+# 5. 작업 브랜치 생성
 git checkout -b feature/my-work
 
-# 6) 의존성/도구 설치 (언어·프로젝트별)
+# 6. 의존성/도구 설치 (언어·프로젝트별)
 # 예) Node
 npm ci
 npm test

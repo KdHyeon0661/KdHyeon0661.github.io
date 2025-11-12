@@ -13,7 +13,7 @@ category: CSS
 
 ---
 
-## 0) Animate.css 한 줄 정의
+## 0. Animate.css 한 줄 정의
 
 - **오픈소스** CSS 애니메이션 컬렉션 (by Daniel Eden, v4+)
 - 요소에 `animate__animated` + **효과 이름**(예: `animate__fadeInUp`) 클래스를 붙이면 **즉시 실행**
@@ -21,7 +21,7 @@ category: CSS
 
 ---
 
-## 1) 설치
+## 1. 설치
 
 ### 1.1 CDN (가장 빠름)
 
@@ -45,7 +45,7 @@ npm install animate.css --save
 
 ---
 
-## 2) 기본 사용법
+## 2. 기본 사용법
 
 ```html
 <div class="animate__animated animate__bounce">Hello!</div>
@@ -67,7 +67,7 @@ npm install animate.css --save
 
 ---
 
-## 3) 유틸(옵션) 클래스 & CSS 변수로 미세 제어
+## 3. 유틸(옵션) 클래스 & CSS 변수로 미세 제어
 
 ### 3.1 속도/지연/반복 (미리 정의된 유틸)
 
@@ -104,7 +104,7 @@ npm install animate.css --save
 
 ---
 
-## 4) 즉시 써먹는 실전 스니펫
+## 4. 즉시 써먹는 실전 스니펫
 
 ### 4.1 “아래에서 위로 페이드 인” 히어로 카피
 
@@ -181,7 +181,7 @@ function onInDone() {
 
 ---
 
-## 5) 스크롤 진입 시 애니메이션(Intersection Observer만으로)
+## 5. 스크롤 진입 시 애니메이션(Intersection Observer만으로)
 
 WOW/AOS 없이도 **표준 API**로 충분히 구현 가능합니다.
 
@@ -212,7 +212,7 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 ---
 
-## 6) WOW.js / AOS와의 연동(선택)
+## 6. WOW.js / AOS와의 연동(선택)
 
 ### 6.1 WOW.js
 
@@ -230,7 +230,7 @@ AOS는 자체 `data-aos` 속성을 사용합니다. Animate.css와 **함께 쓸 
 
 ---
 
-## 7) 재실행/한정 실행/상태 제어 패턴
+## 7. 재실행/한정 실행/상태 제어 패턴
 
 ### 7.1 (재실행) `animationend`로 클래스 제거
 
@@ -275,7 +275,7 @@ function closeDrawer(el){
 
 ---
 
-## 8) 성능·접근성 체크리스트
+## 8. 성능·접근성 체크리스트
 
 ### 8.1 성능
 
@@ -300,7 +300,7 @@ function closeDrawer(el){
 
 ---
 
-## 9) 커스터마이징(선택)
+## 9. 커스터마이징(선택)
 
 - Animate.css는 **Sass** 기반 — 필요 효과만 빌드하여 **크기 최적화** 가능
 - 또는 애니메이션 이름은 유지하고 **CSS 변수**로 팀 가이드에 맞게 전역 Duration/Delay를 조정
@@ -312,7 +312,7 @@ function closeDrawer(el){
 
 ---
 
-## 10) 실전 컴포넌트 레시피
+## 10. 실전 컴포넌트 레시피
 
 ### 10.1 배너 “ZoomIn + 페이드 업” 병렬
 
@@ -379,7 +379,7 @@ document.getElementById('menuBtn').addEventListener('click', () => {
 
 ---
 
-## 11) 프레임워크 연동 스니펫
+## 11. 프레임워크 연동 스니펫
 
 ### 11.1 React (컴포넌트 마운트 때 1회 등장)
 
@@ -418,7 +418,7 @@ defineProps({ open: Boolean });
 
 ---
 
-## 12) 디버깅 FAQ
+## 12. 디버깅 FAQ
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -430,7 +430,7 @@ defineProps({ open: Boolean });
 
 ---
 
-## 13) 종합 예제 — 랜딩 히어로 + 스크롤 리빌 + 버튼 피드백
+## 13. 종합 예제 — 랜딩 히어로 + 스크롤 리빌 + 버튼 피드백
 
 ```html
 <header class="hero">

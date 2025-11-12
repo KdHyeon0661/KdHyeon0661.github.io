@@ -23,7 +23,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 스키마 & 공통 환경
+## 0. 실습 스키마 & 공통 환경
 
 ```sql
 -- 실습용 큰 테이블 생성
@@ -65,7 +65,7 @@ END;
 
 ---
 
-## 1) Direct Path의 큰 그림
+## 1. Direct Path의 큰 그림
 
 ### 1.1 무엇을 “우회(bypass)”하나?
 - **버퍼 캐시(SGA) 우회**: 전통적 버퍼드 읽기/쓰기(캐시에 블록 적재)를 건너뛰고,
@@ -91,7 +91,7 @@ END;
 
 ---
 
-## 2) `direct path read temp` / `direct path write temp` — TEMP 기반 Direct I/O
+## 2. `direct path read temp` / `direct path write temp` — TEMP 기반 Direct I/O
 
 ### 2.1 개념
 - **정렬(SORT)**, **해시 조인/해시 집계**, **Analytic** 윈도우, **ORDER BY + FETCH** 등 **작업 영역(workarea)** 이 **PGA 용량을 초과**하면,  
@@ -149,7 +149,7 @@ WHERE  name IN ('physical writes direct temporary',
 
 ---
 
-## 3) `direct path read` — 데이터파일 직접 읽기
+## 3. `direct path read` — 데이터파일 직접 읽기
 
 ### 3.1 개념
 - 테이블/인덱스 **세그먼트**에서 대량 연속 I/O가 필요할 때, **버퍼 캐시를 거치지 않고** 세션 버퍼로 **직접 읽음**.
@@ -208,7 +208,7 @@ GROUP  BY status;
 
 ---
 
-## 4) `direct path write` — 데이터파일 직접 쓰기
+## 4. `direct path write` — 데이터파일 직접 쓰기
 
 ### 4.1 개념
 - **대량 적재/변경** 시, 세션 버퍼에서 데이터파일로 **직접 쓰기** 수행.  
@@ -252,7 +252,7 @@ WHERE  name IN ('physical writes direct', 'physical writes direct temporary');
 
 ---
 
-## 5) Direct Path I/O와 실행계획/트레이스 진단
+## 5. Direct Path I/O와 실행계획/트레이스 진단
 
 ### 5.1 플랜·실행 통계 확인
 ```sql
@@ -301,7 +301,7 @@ ORDER  BY samples DESC;
 
 ---
 
-## 6) 튜닝 전략 총정리 — 언제/어떻게 Direct Path를 취할 것인가?
+## 6. 튜닝 전략 총정리 — 언제/어떻게 Direct Path를 취할 것인가?
 
 ### 6.1 읽기 측면
 - **DW/보고·배치**:  
@@ -325,7 +325,7 @@ ORDER  BY samples DESC;
 
 ---
 
-## 7) BEFORE → AFTER 시나리오
+## 7. BEFORE → AFTER 시나리오
 
 ### 7.1 (보고) 최근 분기 집계 보고서
 
@@ -398,7 +398,7 @@ FETCH FIRST 5000 ROWS ONLY;
 
 ---
 
-## 8) 체크리스트
+## 8. 체크리스트
 
 - [ ] **보고/배치**: `direct path read`로 **순차 대량 읽기**를 가져왔는가? (프루닝/병렬/블룸)  
 - [ ] **적재/변경**: APPEND/CTAS로 **`direct path write`**를 활용하는가? (연속성/NOLOGGING 정책)  
@@ -408,7 +408,7 @@ FETCH FIRST 5000 ROWS ONLY;
 
 ---
 
-## 9) 수식으로 보는 의사 의사결정
+## 9. 수식으로 보는 의사 의사결정
 
 - **대량 스캔 처리량 근사**  
   $$ \text{Throughput} \approx \frac{\text{Read Size per IO} \times \text{IOPS}}{\text{Concurrency Penalty}} $$
@@ -419,7 +419,7 @@ FETCH FIRST 5000 ROWS ONLY;
 
 ---
 
-## 10) 명령·질의 스니펫 모음 (복사/붙여넣기)
+## 10. 명령·질의 스니펫 모음 (복사/붙여넣기)
 
 **10.1 이벤트·통계 한눈에**
 ```sql

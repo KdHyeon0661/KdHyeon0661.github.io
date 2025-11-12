@@ -16,7 +16,7 @@ category: MFC
 
 ---
 
-## 0) 큰 그림: MFC 스레드 모델 요약
+## 0. 큰 그림: MFC 스레드 모델 요약
 
 | 구분 | CWinThread 생성 방식 | 메시지 펌프 | UI 생성 가능 | 주 사용처 |
 |---|---|---|---|---|
@@ -30,7 +30,7 @@ category: MFC
 
 ---
 
-## 1) 스레드 시작하기: 두 가지 API
+## 1. 스레드 시작하기: 두 가지 API
 
 ### 1-1. Worker Thread (가장 흔함)
 
@@ -84,7 +84,7 @@ CWinThread* pThread = AfxBeginThread(RUNTIME_CLASS(CPreviewThread));
 
 ---
 
-## 2) 스레드와 메시지: 안전한 교신 패턴
+## 2. 스레드와 메시지: 안전한 교신 패턴
 
 ### 2-1. 사용자 정의 메시지와 `PostMessage`
 
@@ -143,7 +143,7 @@ UINT AFX_CDECL Work_Looping(LPVOID p) {
 
 ---
 
-## 3) 스레드 안전한 UI 갱신
+## 3. 스레드 안전한 UI 갱신
 
 **절대 금지**: Worker에서 직접 `SetWindowText`, `ListCtrl.InsertItem` 등 UI 호출.  
 **올바른 방법**: `PostMessage`/`SendMessageTimeout`/`CWnd::PostMessage`로 **UI 스레드에 위임**.
@@ -168,7 +168,7 @@ afx_msg LRESULT OnAddRow(WPARAM, LPARAM lp) {
 
 ---
 
-## 4) 동기화 객체와 RAII
+## 4. 동기화 객체와 RAII
 
 MFC 래퍼와 Win32 원본을 혼용 가능. **RAII가 중요**.
 
@@ -199,7 +199,7 @@ void PushSafe(int v) {
 
 ---
 
-## 5) 취소/타임아웃/중단 가능한 작업 패턴
+## 5. 취소/타임아웃/중단 가능한 작업 패턴
 
 ### 5-1. 취소 플래그 + 배리어
 
@@ -247,7 +247,7 @@ UINT AFX_CDECL Work_EventCancelable(LPVOID lp) {
 
 ---
 
-## 6) COM 초기화와 스레딩 모델
+## 6. COM 초기화와 스레딩 모델
 
 - 스레드에서 COM 사용 시 **반드시** `CoInitializeEx` 호출 후 `CoUninitialize`.
 - UI 스레드는 **STA**가 일반적: `CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)`  
@@ -265,7 +265,7 @@ UINT AFX_CDECL Work_ComMta(LPVOID) {
 
 ---
 
-## 7) “진행률 & 취소 버튼” 대화상자 + Worker 예제
+## 7. “진행률 & 취소 버튼” 대화상자 + Worker 예제
 
 ### 7-1. 대화상자 골격
 
@@ -331,7 +331,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 8) 작업 큐/스레드 풀(경량 구현)
+## 8. 작업 큐/스레드 풀(경량 구현)
 
 ### 8-1. 고정 스레드 N + 작업 큐
 
@@ -384,7 +384,7 @@ public:
 
 ---
 
-## 9) 메시지 펌프와 Wait: `MsgWaitForMultipleObjects`
+## 9. 메시지 펌프와 Wait: `MsgWaitForMultipleObjects`
 
 UI 스레드에서 **핵심 핸들(Event/Process) 대기**와 **메시지 처리**를 병행할 때:
 
@@ -411,7 +411,7 @@ void WaitWithPump(HANDLE hEvent, DWORD timeout) {
 
 ---
 
-## 10) 타이머: UI vs Worker
+## 10. 타이머: UI vs Worker
 
 - **UI 타이머**: `SetTimer`(WM_TIMER). **UI 스레드**에서만 자연스럽게 동작.
 - **Worker 타이머**: `CreateWaitableTimer` or `RegisterWaitForSingleObject` or **메시지 루프를 갖춘 Worker에서 `SetTimer`**.
@@ -430,7 +430,7 @@ for(;;) {
 
 ---
 
-## 11) 네트워크/IO + 스레드 (아주 짧게)
+## 11. 네트워크/IO + 스레드 (아주 짧게)
 
 - `CAsyncSocket`은 UI 스레드 메시지 기반이므로 **UI 또는 전용 UI thread**와 궁합.  
 - 블로킹 소켓/파일 IO는 Worker에 배치. UI와는 **메시지**로 교신.  
@@ -438,7 +438,7 @@ for(;;) {
 
 ---
 
-## 12) 데드락/재진입/수명관리 체크리스트
+## 12. 데드락/재진입/수명관리 체크리스트
 
 1. **SendMessage** 교차 호출 금지: UI ↔ Worker 간에는 가급적 **PostMessage**.  
 2. **락 순서** 통일: 다중 락 취득 시 순서 정의.  
@@ -448,7 +448,7 @@ for(;;) {
 
 ---
 
-## 13) 고급: UI Thread 안에 모델리스 폼 & 작업자 결합
+## 13. 고급: UI Thread 안에 모델리스 폼 & 작업자 결합
 
 - **UI Thread**(CWinThread 파생)가 **도구창/프리뷰**를 표시하고, 그 내부에서 **Worker**를 구동.  
 - 큰 도면/이미지 처리 중에도 프리뷰 스레드 UI는 부드럽게 반응.
@@ -469,7 +469,7 @@ public:
 
 ---
 
-## 14) 실무 자주 쓰는 패턴 모음
+## 14. 실무 자주 쓰는 패턴 모음
 
 ### 14-1. 큰 파일 처리(체크섬/변환) + 진행률
 
@@ -487,7 +487,7 @@ public:
 
 ---
 
-## 15) 실수·버그 예방 리스트
+## 15. 실수·버그 예방 리스트
 
 - [ ] UI 스레드 외부에서 UI API 호출 X  
 - [ ] 취소 가능 지점 충분히 배치(루프 중 break)  
@@ -499,7 +499,7 @@ public:
 
 ---
 
-## 16) 빠른 스타터: 템플릿 세트
+## 16. 빠른 스타터: 템플릿 세트
 
 ### 16-1. Worker + 진행률 + 취소
 
@@ -545,7 +545,7 @@ LRESULT CMainDlg::OnWorkDone(WPARAM, LPARAM)   { /*버튼/상태 복구*/ return
 
 ---
 
-## 17) 디버깅·프로파일링 팁
+## 17. 디버깅·프로파일링 팁
 
 - **스레드 이름** 설정: `SetThreadDescription(pThread->m_hThread, L"Worker-FileScan");`  
 - **디버거**: Threads 창에서 스택 확인, **Deadlock** 시 **Wait Chain Traversal**(WCT) 도구.  
@@ -554,7 +554,7 @@ LRESULT CMainDlg::OnWorkDone(WPARAM, LPARAM)   { /*버튼/상태 복구*/ return
 
 ---
 
-## 18) 요약
+## 18. 요약
 
 - **역할 분리**: **UI는 빠르고 반응성 유지**, **Worker가 무거운 일**.  
 - **통신은 메시지/큐**로, **SendMessage 교착** 금지.  

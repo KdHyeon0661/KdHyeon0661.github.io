@@ -4,7 +4,7 @@ title: 영상처리 - Huffman 최적화 / Restart 마커
 date: 2025-10-14 16:25:23 +0900
 category: 영상처리
 ---
-# 2) **Huffman 최적화 / Restart 마커**의 기본 정책  
+# 2. **Huffman 최적화 / Restart 마커**의 기본 정책  
 *(네트워크 견고성 & 파일 크기 최적화 — TurboJPEG/jpeglib 실전 가이드)*
 
 > 핵심 요약  
@@ -13,7 +13,7 @@ category: 영상처리
 
 ---
 
-## 0) 왜 둘 다 중요할까?
+## 0. 왜 둘 다 중요할까?
 
 - 저장/배포(**정적 파일**)에는 **최소 용량**이 중요 → **Huffman 최적화 ON**, **Restart OFF(=0)** 가 보통 최적.  
 - 전송/스트리밍(**네트워크**)에는 **오류 격리/빠른 복구**가 중요 → **Restart ON**(간격을 짧게), Huffman 최적화도 함께 ON 권장.  
@@ -22,7 +22,7 @@ category: 영상처리
 
 ---
 
-## 1) JPEG 허프만 최적화(Optimize Coding)
+## 1. JPEG 허프만 최적화(Optimize Coding)
 
 ### 1.1 개념
 JPEG 기본 인코드는 **표준 허프만 테이블**이나 **품질 기반의 고정 테이블**을 쓸 수 있습니다.  
@@ -101,7 +101,7 @@ jpeg_destroy_compress(&c);
 
 ---
 
-## 2) Restart 마커 — **오류 격리와 병렬성**
+## 2. Restart 마커 — **오류 격리와 병렬성**
 
 ### 2.1 구조
 - **DRI(Define Restart Interval)**: `0xFFDD` 마커 + 길이(4) + **Ri(2바이트)**. 여기서 **Ri = 세그먼트당 MCU 수**.  
@@ -152,7 +152,7 @@ N_{\text{seg}} \approx \left\lceil \frac{MCU\_rows}{n} \right\rceil \times MCU\_
 
 ---
 
-## 3) 구현 — jpeglib에서 Restart 간격 주기
+## 3. 구현 — jpeglib에서 Restart 간격 주기
 
 ### 3.1 “row 단위”로 지정하기
 - `cinfo.restart_in_rows = n;` : **MCU row 단위**(권장, 직관적).  
@@ -212,7 +212,7 @@ c.restart_interval = Ri; // MCU count per segment (DRI Ri)
 
 ---
 
-## 4) TurboJPEG에서의 Restart 제어
+## 4. TurboJPEG에서의 Restart 제어
 
 - **클래식 TurboJPEG API**(tjCompress2)는 **Restart 간격을 직접 노출하지 않습니다**.  
 - **정밀 제어**(DRI 필요)는 **jpeglib** 경로를 사용하세요.  
@@ -222,7 +222,7 @@ c.restart_interval = Ri; // MCU count per segment (DRI Ri)
 
 ---
 
-## 5) **정책 설계** — 실전 권장값
+## 5. **정책 설계** — 실전 권장값
 
 ### 5.1 저장/배포(정적 파일)
 - **Huffman 최적화**: **ON**  
@@ -242,7 +242,7 @@ c.restart_interval = Ri; // MCU count per segment (DRI Ri)
 
 ---
 
-## 6) “세그먼트 크기 목표”로 **Restart 간격 자동 튜닝**
+## 6. “세그먼트 크기 목표”로 **Restart 간격 자동 튜닝**
 
 **목표**: 세그먼트(두 Restart 사이) 평균 크기를 **4–16KB** 수준으로 맞추고 싶다(오류 격리/캐시 친화).  
 **방법**: **프로브 인코딩**(일단 Restart=0으로 한 번 압축) → **평균 바이트/MCU-row**를 추정 → 그 값으로 `restart_in_rows` 계산 → **재인코딩**.
@@ -315,7 +315,7 @@ bool Encode_WithTargetSegment(const IppDib& img, int quality, JpegChroma cs,
 
 ---
 
-## 7) 시나리오별 레시피
+## 7. 시나리오별 레시피
 
 ### 7.1 **모바일 업로드(메신저/클라우드)**
 - **사진**: 420, Q=85–92, **Optimize ON**, **Restart OFF**  
@@ -332,7 +332,7 @@ bool Encode_WithTargetSegment(const IppDib& img, int quality, JpegChroma cs,
 
 ---
 
-## 8) 검증과 측정 포인트
+## 8. 검증과 측정 포인트
 
 - **파일 크기**: Optimize ON/OFF 차이(%, ms).  
 - **Restart 간격**: rows=0/2/4/8 별 파일 크기(‰), 오류 주입 시 **손상 면적**.  
@@ -342,7 +342,7 @@ bool Encode_WithTargetSegment(const IppDib& img, int quality, JpegChroma cs,
 
 ---
 
-## 9) MathJax — 오버헤드 근사식
+## 9. MathJax — 오버헤드 근사식
 
 세그먼트 개수 \(N_{\text{seg}}\) 와 오버헤드 \(O\):
 \[
@@ -354,7 +354,7 @@ O \approx 4 + 2 \cdot N_{\text{seg}} \ \text{(bytes)}
 
 ---
 
-## 10) UI/도구 통합(권장 UX)
+## 10. UI/도구 통합(권장 UX)
 
 - [x] 체크박스 **“허프만 최적화(용량 감소)”** (기본 ON)  
 - [x] 체크박스 **“Restart 마커(네트워크 견고성)”** + 콤보 **행 간격(2/4/8/16)**  
@@ -366,7 +366,7 @@ O \approx 4 + 2 \cdot N_{\text{seg}} \ \text{(bytes)}
 
 ---
 
-## 11) 요약 결론
+## 11. 요약 결론
 
 - **허프만 최적화**: 항상 켜두고(특히 배치 변환/보관/클라우드), **무료 용량 절감**을 챙기자.  
 - **Restart 마커**: **네트워크/스트리밍**/불안정 채널에선 **짧은 간격(2~8 rows)** 으로 **오류 격리**를 보장.  
@@ -375,7 +375,7 @@ O \approx 4 + 2 \cdot N_{\text{seg}} \ \text{(bytes)}
 
 ---
 
-## 12) 간단 실험 코드(크기 비교 & 손상 시뮬)
+## 12. 간단 실험 코드(크기 비교 & 손상 시뮬)
 
 ```cpp
 // 1) 허프만 최적화 ON/OFF 크기 비교

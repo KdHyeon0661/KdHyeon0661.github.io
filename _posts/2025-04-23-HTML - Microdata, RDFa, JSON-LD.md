@@ -6,7 +6,7 @@ category: HTML
 ---
 # Microdata, RDFa, JSON-LD
 
-## 0) 공통 기반 — Schema.org란?
+## 0. 공통 기반 — Schema.org란?
 
 - **schema.org**는 웹의 대표 검색엔진들이 합의한 **공통 어휘(vocabulary) 집합**입니다.
 - 대표 타입: `Product`, `Article`, `Event`, `FAQPage`, `HowTo`, `Organization`, `Person`, `BreadcrumbList`, `VideoObject` 등.
@@ -14,7 +14,7 @@ category: HTML
 
 ---
 
-## 1) 세 방식 한눈에 비교
+## 1. 세 방식 한눈에 비교
 
 | 구분 | Microdata | RDFa (Lite) | JSON-LD |
 |---|---|---|---|
@@ -28,7 +28,7 @@ category: HTML
 
 ---
 
-## 2) “같은 상품 페이지”를 세 방식으로 — 축약 기본 예제
+## 2. “같은 상품 페이지”를 세 방식으로 — 축약 기본 예제
 
 아래는 동일한 `Product` 정보를 Microdata/RDFa/JSON-LD로 각각 마크업하는 최소 예시입니다.
 
@@ -86,7 +86,7 @@ category: HTML
 
 ---
 
-## 3) JSON-LD 실무 패턴 — 꼭 알아야 할 10가지
+## 3. JSON-LD 실무 패턴 — 꼭 알아야 할 10가지
 
 JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확장 기능이 강력합니다.
 
@@ -327,7 +327,7 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 
 ---
 
-## 4) Microdata/RDFa 심화 포인트
+## 4. Microdata/RDFa 심화 포인트
 
 ### 4.1 Microdata 중첩(offers/review 등)
 ```html
@@ -355,7 +355,7 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 
 ---
 
-## 5) SPA/SSR 환경: 삽입·동기화 전략
+## 5. SPA/SSR 환경: 삽입·동기화 전략
 
 ### 5.1 Next.js에서 JSON-LD 주입
 ```jsx
@@ -395,7 +395,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 6) 리치결과 대상별 필수/권장 필드 베스트 프랙티스
+## 6. 리치결과 대상별 필수/권장 필드 베스트 프랙티스
 
 | 대상 | 필수/권장 포인트 |
 |---|---|
@@ -410,7 +410,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 7) 검증/모니터링 — 배포 전·후 체크리스트
+## 7. 검증/모니터링 — 배포 전·후 체크리스트
 
 1. **스키마 문법 검사**
    - Google **Rich Results Test**
@@ -430,7 +430,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 8) 자주 발생하는 오류와 해결
+## 8. 자주 발생하는 오류와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -442,7 +442,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 9) Microdata/RDFa ↔ JSON-LD 전환 요령
+## 9. Microdata/RDFa ↔ JSON-LD 전환 요령
 
 - **전략**: 우선 JSON-LD로 핵심 스니펫(Organization/WebSite/Product/Article/FAQ)을 구축 →  
   Microdata/RDFa 잔존 시 **중복·충돌**을 피하도록 **동일 사실을 두 번 마크업하지 않기**(특히 Product 가격 등).
@@ -450,7 +450,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 10) 예제 모음 — “한 페이지에 필요한 전형 조합”
+## 10. 예제 모음 — “한 페이지에 필요한 전형 조합”
 
 ### 10.1 블로그 포스트 + 빵크럼 + 사이트 정보
 ```html
@@ -538,7 +538,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 11) 운영 관점 체크리스트(팀 적용)
+## 11. 운영 관점 체크리스트(팀 적용)
 
 - [ ] **스키마 카탈로그** 작성(페이지 유형별: 제품/기사/이벤트/FAQ/동영상)
 - [ ] 필수/권장 필드 표준 정의(가격/통화/날짜 형식/이미지 규격)
@@ -550,7 +550,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 12) Microdata/RDFa 예제 확장(참고)
+## 12. Microdata/RDFa 예제 확장(참고)
 
 ### 12.1 Microdata로 FAQ
 ```html
@@ -576,7 +576,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 13) 테스트 도구 & 참고 링크
+## 13. 테스트 도구 & 참고 링크
 
 - Google **Rich Results Test** / **Search Console**(리치결과 보고서)
 - **Schema.org Validator**

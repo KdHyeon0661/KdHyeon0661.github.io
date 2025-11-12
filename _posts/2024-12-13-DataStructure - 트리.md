@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 트리(Tree)
 
-## 0) 수학적 정의(스냅샷)
+## 0. 수학적 정의(스냅샷)
 
 - **트리** \(T=(V,E)\): **연결**이고 **사이클 없음**. \(|E|=|V|-1\).
 - 임의 루트 \(r\)를 잡으면 **부모/자식**·**깊이/높이**가 정의된다.
@@ -15,7 +15,7 @@ category: Data Structure
 
 ---
 
-## 1) 구현 전략 1: `vector<TreeNode*>` — 직관·STL 친화
+## 1. 구현 전략 1: `vector<TreeNode*>` — 직관·STL 친화
 
 ### 1.1 기본 구조
 
@@ -114,7 +114,7 @@ int subtreeSize(const NodeV* u){
 
 ---
 
-## 2) 구현 전략 2: Child–Sibling 표현 — 이진화 트릭
+## 2. 구현 전략 2: Child–Sibling 표현 — 이진화 트릭
 
 **모든 일반 트리**는 다음의 두 포인터로 **이진 트리**처럼 표현 가능:
 
@@ -178,7 +178,7 @@ void levelOrderCS(const NodeCS* root){
 
 ---
 
-## 3) 두 표현의 **상호 변환**
+## 3. 두 표현의 **상호 변환**
 
 ### 3.1 Vector → Child–Sibling
 
@@ -217,7 +217,7 @@ NodeV* convertCStoV(const NodeCS* u){
 
 ---
 
-## 4) 빌더: 입력으로부터 트리 만들기
+## 4. 빌더: 입력으로부터 트리 만들기
 
 ### 4.1 부모 배열(parent[i] = 부모 인덱스, root의 parent=-1)
 
@@ -254,7 +254,7 @@ NodeV* buildFromEdges(int n, const vector<pair<int,int>>& edges){
 
 ---
 
-## 5) 순회 패턴/Iterator
+## 5. 순회 패턴/Iterator
 
 ### 5.1 전위/후위/레벨(개념)
 
@@ -293,7 +293,7 @@ struct PreorderIter {
 
 ---
 
-## 6) 트리 알고리즘: 필수 루틴
+## 6. 트리 알고리즘: 필수 루틴
 
 ### 6.1 트리 지름(Diameter) — 임의 루트 DFS 2회
 
@@ -368,7 +368,7 @@ void eulerTour(const NodeV* u, vector<int>& in, vector<int>& out, int& t){
 
 ---
 
-## 7) 직렬화/역직렬화
+## 7. 직렬화/역직렬화
 
 ### 7.1 괄호 표기(전위): `value(children...)` 형식
 
@@ -392,7 +392,7 @@ void serialize(const NodeV* u, ostream& os){
 
 ---
 
-## 8) 메모리/소유권/예외 안정성
+## 8. 메모리/소유권/예외 안정성
 
 - **Row 포인터 원시 관리**(new/delete)는 **소유권 불명확**·예외에 취약 → **스마트 포인터 권장**.
 - `unique_ptr` 기반(단일 소유) 일반 트리:
@@ -416,7 +416,7 @@ void addChild(unique_ptr<NodeU>& parent, unique_ptr<NodeU> child){
 
 ---
 
-## 9) 성능 관점: 캐시/할당/순회 비용
+## 9. 성능 관점: 캐시/할당/순회 비용
 
 - `vector<Node*>`는 자식 벡터가 **분산 할당** → 캐시 미스 증가 가능  
   → **풀 할당**/**arena**(메모리 풀)로 **연속 할당**시 유리
@@ -426,7 +426,7 @@ void addChild(unique_ptr<NodeU>& parent, unique_ptr<NodeU> child){
 
 ---
 
-## 10) 실전 예시: 파일 시스템(간단), 씬 그래프
+## 10. 실전 예시: 파일 시스템(간단), 씬 그래프
 
 ### 10.1 파일 시스템(디렉토리=내부 노드, 파일=리프)
 
@@ -469,7 +469,7 @@ void updateWorld(SceneNode* u, const Mat& parentWorld){
 
 ---
 
-## 11) 종합 예제: 두 표현 모두 제공 + 구조 변환 + 기본 알고리즘
+## 11. 종합 예제: 두 표현 모두 제공 + 구조 변환 + 기본 알고리즘
 
 ```cpp
 ```cpp
@@ -586,7 +586,7 @@ int main(){
 
 ---
 
-## 12) 복잡도 및 선택 가이드
+## 12. 복잡도 및 선택 가이드
 
 | 항목 | `vector<Node*>` | Child–Sibling |
 |---|---|---|
@@ -599,7 +599,7 @@ int main(){
 
 ---
 
-## 13) 테스트/디버깅 체크리스트
+## 13. 테스트/디버깅 체크리스트
 
 1. **루트 식별**: parent 배열 or indegree로 검증.
 2. **메모리 소유권**: new/delete 누수 방지—**스마트 포인터**를 우선.
@@ -618,7 +618,7 @@ int main(){
 
 ---
 
-## 14) 수학 스냅샷
+## 14. 수학 스냅샷
 
 ### 14.1 트리 기본 성질
 노드 수 \(n\), 간선 수 \(m\)에 대하여 트리는 **연결+비순환**이므로
@@ -634,7 +634,7 @@ $$
 
 ---
 
-## 15) 마무리 요약
+## 15. 마무리 요약
 
 - **일반 트리**는 자식 수 무제한의 계층을 표현하는 **핵심 구조**.
 - 구현은 **vector 기반**(직관/알고리즘 친화)과 **child–sibling**(이진화/메모리 예측) 두 축.

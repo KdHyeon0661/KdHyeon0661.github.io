@@ -11,7 +11,7 @@ WPF 애플리케이션의 **진입점(App.xaml)**과 **첫 화면(MainWindow.xam
 
 ---
 
-## 1) App.xaml: 애플리케이션 진입점 & 전역 리소스
+## 1. App.xaml: 애플리케이션 진입점 & 전역 리소스
 
 ### 1.1 App.xaml의 역할
 - **애플리케이션 수명주기**: 시작(Startup), 종료(Exit), 세션 종료(SessionEnding) 이벤트 연결
@@ -125,7 +125,7 @@ public static class ThemeManager
 
 ---
 
-## 2) MainWindow.xaml: 루트 창 & 화면 구성
+## 2. MainWindow.xaml: 루트 창 & 화면 구성
 
 ### 2.1 MainWindow.xaml의 역할
 - **최초 표시되는 화면**(혹은 Shell): 메뉴/내비게이션/컨텐츠 영역/상태바 등 **앱 골격**
@@ -268,7 +268,7 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 
 ---
 
-## 3) 리소스(스타일/템플릿) 조직 전략
+## 3. 리소스(스타일/템플릿) 조직 전략
 
 ### 3.1 전역 vs 창 전용
 - **전역(App.xaml)**: 공통 스타일/색상/템플릿(앱 전체에 일관성)
@@ -302,7 +302,7 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 
 ---
 
-## 4) App.xaml + MainWindow.xaml 통합 샘플(요약)
+## 4. App.xaml + MainWindow.xaml 통합 샘플(요약)
 
 **App.xaml**
 ```xml
@@ -365,7 +365,7 @@ public partial class App : Application
 
 ---
 
-## 5) 체크리스트(요약)
+## 5. 체크리스트(요약)
 
 - **App.xaml**
   - `MergedDictionaries`로 리소스 모듈화(Colors/Styles/Templates/DataTemplates)

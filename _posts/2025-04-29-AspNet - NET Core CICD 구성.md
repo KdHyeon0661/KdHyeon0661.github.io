@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core CI/CD 구성 (with GitHub Actions)
 
-## 1) CI/CD 핵심 개념(요약 복습)
+## 1. CI/CD 핵심 개념(요약 복습)
 
 | 구분 | 핵심 |
 |---|---|
@@ -16,7 +16,7 @@ category: AspNet
 
 ---
 
-## 2) GitHub Actions 기본 빌딩 블록
+## 2. GitHub Actions 기본 빌딩 블록
 
 | 요소 | 설명 | 팁 |
 |---|---|---|
@@ -27,7 +27,7 @@ category: AspNet
 
 ---
 
-## 3) 표준 리포지토리 구조와 브랜치 전략
+## 3. 표준 리포지토리 구조와 브랜치 전략
 
 ```bash
 MyApp/
@@ -47,7 +47,7 @@ MyApp/
 
 ---
 
-## 4) 안전한 자격 증명: Secrets vs OIDC 연동
+## 4. 안전한 자격 증명: Secrets vs OIDC 연동
 
 ### 4.1 Secrets
 - 위치: GitHub → Repository → Settings → Secrets and variables → Actions
@@ -76,7 +76,7 @@ MyApp/
 
 ---
 
-## 5) NuGet 캐시/속도 최적화 베스트 프랙티스
+## 5. NuGet 캐시/속도 최적화 베스트 프랙티스
 
 {% raw %}
 ```yaml
@@ -100,7 +100,7 @@ MyApp/
 
 ---
 
-## 6) CI 워크플로(확장형)
+## 6. CI 워크플로(확장형)
 
 {% raw %}
 ```yaml
@@ -170,7 +170,7 @@ jobs:
 
 ---
 
-## 7) 아티팩트/버전/릴리스 노트 자동화
+## 7. 아티팩트/버전/릴리스 노트 자동화
 
 ### 7.1 버전 자동화(태그 기반)
 ```yaml
@@ -199,7 +199,7 @@ jobs:
 
 ---
 
-## 8) CD: Azure App Service(슬롯/승인/롤백)
+## 8. CD: Azure App Service(슬롯/승인/롤백)
 
 ### 8.1 Staging 자동 배포
 
@@ -275,7 +275,7 @@ jobs:
 
 ---
 
-## 9) Docker 기반 배포(빌드 캐시/멀티플랫폼)
+## 9. Docker 기반 배포(빌드 캐시/멀티플랫폼)
 
 ### 9.1 Dockerfile(멀티스테이지)
 ```dockerfile
@@ -328,7 +328,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 10) Kubernetes 배포(옵션)
+## 10. Kubernetes 배포(옵션)
 
 - 매니페스트/Helm 차트 관리, 이미지 태그로 롤링 업데이트
 - 예: `kubectl set image deploy/myapp myapp=myuser/myapp:${{ steps.ver.outputs.version }}`
@@ -350,7 +350,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 11) IIS/Windows 서버 배포(옵션)
+## 11. IIS/Windows 서버 배포(옵션)
 
 - 방법: Web Deploy(MSDeploy) / WinRM / FTP
 - 간단 FTP 예시:
@@ -370,7 +370,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 12) 데이터베이스 마이그레이션(EF Core)
+## 12. 데이터베이스 마이그레이션(EF Core)
 
 - 스테이징/운영 배포 전후에 **마이그레이션 명령** 실행
 - 무중단을 위해 **백필드/점진 스키마** 전략 적용
@@ -391,7 +391,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 13) 환경 변수/설정 주입
+## 13. 환경 변수/설정 주입
 
 - `appsettings.{ENV}.json` + **환경 변수** 오버라이드
 - GH Actions의 **Environment Variables / Secrets**로 안전하게 주입
@@ -406,7 +406,7 @@ env:
 
 ---
 
-## 14) 정적 분석/보안/라이선스/SBOM
+## 14. 정적 분석/보안/라이선스/SBOM
 
 - `dotnet analyzers`, `dotnet format`, `SonarCloud`, `CodeQL`(GitHub 제공)
 - SBOM/서명:
@@ -424,7 +424,7 @@ env:
 
 ---
 
-## 15) 모노레포/조건부 실행/재사용 워크플로
+## 15. 모노레포/조건부 실행/재사용 워크플로
 
 ### 조건부 실행(특정 경로 변경 시에만)
 ```yaml
@@ -447,7 +447,7 @@ jobs:
 
 ---
 
-## 16) 실패 자동 롤백/배포 잠금/동시성
+## 16. 실패 자동 롤백/배포 잠금/동시성
 
 - **동시성**: 같은 브랜치의 배포 충돌 방지
 ```yaml
@@ -461,14 +461,14 @@ concurrency:
 
 ---
 
-## 17) 셀프 호스티드 러너(옵션)
+## 17. 셀프 호스티드 러너(옵션)
 
 - 장점: 사내 네트워크/비공개 자원 접근, 속도/캐시 향상
 - 주의: **보안 격리**, 최소 권한 PAT/OIDC, 러너 자동 패치
 
 ---
 
-## 18) 통합 예: CI → Staging → 승인 → Prod
+## 18. 통합 예: CI → Staging → 승인 → Prod
 
 아래는 **CI**, **Staging CD**, **Prod CD**를 분리한 현실적인 구성 예다.
 
@@ -515,7 +515,7 @@ jobs:
 
 ---
 
-## 19) 문제 해결 체크리스트
+## 19. 문제 해결 체크리스트
 
 | 증상 | 원인/해결 |
 |---|---|
@@ -529,7 +529,7 @@ jobs:
 
 ---
 
-## 20) 결론 요약
+## 20. 결론 요약
 
 | 항목 | 권장사항 |
 |---|---|

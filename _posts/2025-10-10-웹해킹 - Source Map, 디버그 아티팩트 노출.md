@@ -13,7 +13,7 @@ category: 웹해킹
 
 ---
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **문제**  
   - `.map`(JS/CSS source map)·디버그 파일(예: webpack stats, stacktrace 심볼, 자바스크립트 인라인 소스맵, 모바일 dSYM/mapping.txt)이 **공개 경로**에 있으면,  
@@ -29,7 +29,7 @@ category: 웹해킹
 
 ---
 
-## 1) 소스맵이 뭐고 왜 위험한가?
+## 1. 소스맵이 뭐고 왜 위험한가?
 
 - **Source Map**: 번들·난독화된 코드 ↔ 원본 파일/라인으로 **매핑**하는 JSON.  
   브라우저 디버거는 이 파일을 가지고 **개발자 경험**을 좋게 합니다.  
@@ -46,7 +46,7 @@ category: 웹해킹
 
 ---
 
-## 2) 프로덕션 전략 설계 (권장 아키텍처)
+## 2. 프로덕션 전략 설계 (권장 아키텍처)
 
 ### A) 사용자 브라우저에는 **소스맵을 제공하지 않기**
 - JS/CSS 산출물 끝에서 **`sourceMappingURL` 주석 제거**.
@@ -67,7 +67,7 @@ category: 웹해킹
 
 ---
 
-## 3) 프레임워크/번들러별 설정
+## 3. 프레임워크/번들러별 설정
 
 ### 3.1 Webpack
 - 프로덕션 추천: `devtool: 'hidden-source-map'` 또는 `false`
@@ -187,7 +187,7 @@ export default defineNuxtConfig({
 
 ---
 
-## 4) 빌드 후 **후처리(Strip/검사)**
+## 4. 빌드 후 **후처리(Strip/검사)**
 
 ### 4.1 CI에서 **.map 파일 차단**
 ```bash
@@ -246,20 +246,20 @@ grep -R -E --include="*.{js,css,html}" -n "(sourceMappingURL|__webpack_require__
 
 ---
 
-## 5) 서버/엣지에서 접근 차단
+## 5. 서버/엣지에서 접근 차단
 
 ### 5.1 Nginx
 ```nginx
-# 1) 디폴트: 모든 .map 접근 거부
+# 1. 디폴트: 모든 .map 접근 거부
 location ~* \.map$ { return 403; }
 
-# 2) 자산 경로 한정 (예: /assets/만)
+# 2. 자산 경로 한정 (예: /assets/만)
 location ^~ /assets/ {
   location ~* \.map$ { return 403; }
   try_files $uri =404;
 }
 
-# 3) 기타 내부 파일 흔적도 차단
+# 3. 기타 내부 파일 흔적도 차단
 location ~* /\.(git|env|htaccess|bash|log) { deny all; }
 ```
 
@@ -292,7 +292,7 @@ export default {
 
 ---
 
-## 6) 오류 추적 도구 연동(공개 노출 없이)
+## 6. 오류 추적 도구 연동(공개 노출 없이)
 
 ### 6.1 Sentry(예)
 - 전략: 프로덕션 **번들에는 주석 없음**(hidden) + `.map`은 **Sentry로 업로드**.
@@ -332,7 +332,7 @@ jobs:
 
 ---
 
-## 7) 모바일/백엔드 디버그 아티팩트도 고려
+## 7. 모바일/백엔드 디버그 아티팩트도 고려
 
 - **Android**: ProGuard/R8 `mapping.txt` → **공개 배포 금지**, Crashlytics/사내 서버에만 업로드.
 - **iOS**: dSYM(심볼) → **사설 업로드**, 공개 저장 금지.
@@ -343,7 +343,7 @@ jobs:
 
 ---
 
-## 8) “막혀야 정상” 테스트 시나리오
+## 8. “막혀야 정상” 테스트 시나리오
 
 1) **.map 직접 접근 차단**
 ```bash
@@ -363,7 +363,7 @@ grep -R "sourceMappingURL=data:application/json" dist && { echo "❌ inline map 
 
 ---
 
-## 9) 사고 발생 시(이미 노출됨)
+## 9. 사고 발생 시(이미 노출됨)
 
 1) **캐시 무효화/파일 제거**: CDN·오리진에서 `.map`·디버그 파일 즉시 삭제/무효화.
 2) **키/토큰 교체**: 리포지터리·코드 내 주석/변수에 민감값이 있었으면 **전면 회수/로테이션**.
@@ -372,7 +372,7 @@ grep -R "sourceMappingURL=data:application/json" dist && { echo "❌ inline map 
 
 ---
 
-## 10) 운영 체크리스트
+## 10. 운영 체크리스트
 
 - [ ] 프로덕션 **소스맵 비공개**(기본) / 필요 시 **hidden + 내부 업로드**  
 - [ ] 번들에 **`sourceMappingURL` 주석 없음**  
@@ -385,7 +385,7 @@ grep -R "sourceMappingURL=data:application/json" dist && { echo "❌ inline map 
 
 ---
 
-## 11) 작게 시작하는 베이스라인(복붙 레시피)
+## 11. 작게 시작하는 베이스라인(복붙 레시피)
 
 1) **번들러**  
    - Webpack: `devtool: 'hidden-source-map'`  
@@ -403,7 +403,7 @@ grep -R "sourceMappingURL=data:application/json" dist && { echo "❌ inline map 
 
 ---
 
-## 12) 예제: Express 정적 호스팅에서 .map 차단
+## 12. 예제: Express 정적 호스팅에서 .map 차단
 
 ```js
 import express from 'express';
@@ -424,7 +424,7 @@ app.listen(8080, () => console.log('listening on :8080'));
 
 ---
 
-## 13) 부록: 팀 내 가이드라인(1페이지 버전)
+## 13. 부록: 팀 내 가이드라인(1페이지 버전)
 
 - 프로덕션 배포물에는 **.map/디버그 아티팩트 금지**  
 - 예외(내부 역매핑 필요) 시: **hidden-source-map + 내부 업로드**, 공개 오리진 업로드 금지  

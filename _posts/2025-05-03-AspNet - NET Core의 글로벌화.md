@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core의 글로벌화(Localization)
 
-## 0) 로드맵
+## 0. 로드맵
 
 1) **리소스 준비**: `.resx` or DB/JSON  
 2) **미들웨어**: `AddLocalization` + `UseRequestLocalization`  
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 1) 필수 구성: 서비스와 미들웨어
+## 1. 필수 구성: 서비스와 미들웨어
 
 ### 1.1 Program.cs (기본형 + 다중 Provider + 리소스 경로)
 ```csharp
@@ -74,7 +74,7 @@ app.Run();
 
 ---
 
-## 2) 리소스(.resx) 구성 — 규칙/패턴
+## 2. 리소스(.resx) 구성 — 규칙/패턴
 
 ### 2.1 폴더 구조(권장)
 ```
@@ -111,7 +111,7 @@ public class LayoutModel : PageModel
 
 ---
 
-## 3) Razor Pages/MVC에서 문자열 로컬라이징
+## 3. Razor Pages/MVC에서 문자열 로컬라이징
 
 ### 3.1 PageModel에서 사용
 ```csharp
@@ -143,7 +143,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 4) 문화권 전환 UI — 쿠키/쿼리/링크
+## 4. 문화권 전환 UI — 쿠키/쿼리/링크
 
 ### 4.1 Razor Pages 핸들러(쿠키 기록)
 ```csharp
@@ -176,7 +176,7 @@ public IActionResult OnPostSetLanguage(string culture, string? returnUrl = null)
 
 ---
 
-## 5) 라우트 기반 Localization (`/{culture}/...`)
+## 5. 라우트 기반 Localization (`/{culture}/...`)
 
 > SEO/북마크/시맨틱 URL에 유리. 예) `/ko-KR/products/42`
 
@@ -223,7 +223,7 @@ builder.Services.PostConfigure<RequestLocalizationOptions>(opt =>
 
 ---
 
-## 6) 데이터 주석/검증 메시지 다국어
+## 6. 데이터 주석/검증 메시지 다국어
 
 ### 6.1 서비스 구성(이미 등록됨)
 ```csharp
@@ -258,7 +258,7 @@ NameLength = 이름은 2자 이상 30자 이하여야 합니다.
 
 ---
 
-## 7) 날짜/숫자/통화/모델바인딩
+## 7. 날짜/숫자/통화/모델바인딩
 
 - **출력**: `ToString("C", CultureInfo.CurrentCulture)` → 통화  
 - **입력/모델바인딩**: 폼의 숫자/날짜 패턴은 **현재 Culture**를 따른다  
@@ -277,7 +277,7 @@ NameLength = 이름은 2자 이상 30자 이하여야 합니다.
 
 ---
 
-## 8) Minimal API/Blazor에서의 Localization
+## 8. Minimal API/Blazor에서의 Localization
 
 ### 8.1 Minimal API 예
 ```csharp
@@ -310,7 +310,7 @@ app.MapGet("/hello", (IStringLocalizer<SharedResource> L) => new { message = L["
 
 ---
 
-## 9) 플러럴(복수)·성별·포매팅 — 실무 패턴
+## 9. 플러럴(복수)·성별·포매팅 — 실무 패턴
 
 `.resx`는 기본적으로 **단순 키-값**이다. 다음 패턴 중 하나를 고려:
 
@@ -340,7 +340,7 @@ ItemsCount_Other=항목이 {0}개 있습니다.
 
 ---
 
-## 10) 동적 번역(데이터베이스/JSON) — 커스텀 Localizer
+## 10. 동적 번역(데이터베이스/JSON) — 커스텀 Localizer
 
 > 운영 중 자주 바뀌는 문구를 **DB**에서 관리하고 싶을 때
 
@@ -385,7 +385,7 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ---
 
-## 11) 성능/캐싱/보안
+## 11. 성능/캐싱/보안
 
 ### 11.1 성능
 - `.resx → 위성 어셈블리`는 **ResourceManager** 레벨 캐싱이 기본 제공
@@ -404,7 +404,7 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ---
 
-## 12) 국제화와 데이터 계층/정렬
+## 12. 국제화와 데이터 계층/정렬
 
 - **DB 정렬/Collation**(예: SQL Server `Korean_100_CI_AI` vs `Latin1_General_*`)은 **검색/정렬**에 큰 영향  
 - UI 문화권과 DB Collation이 다르면 정렬 결과가 사용자 기대와 다를 수 있음 → **문서화/정책화**
@@ -412,7 +412,7 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ---
 
-## 13) 테스트(단위/통합) 시 문화 고정
+## 13. 테스트(단위/통합) 시 문화 고정
 
 ### 13.1 단위 테스트에서 Culture 스코프
 ```csharp
@@ -455,7 +455,7 @@ var res = await _client.SendAsync(req);
 
 ---
 
-## 14) 진짜로 자주 겪는 실무 이슈 & 해결
+## 14. 진짜로 자주 겪는 실무 이슈 & 해결
 
 | 이슈 | 원인 | 해결 |
 |---|---|---|
@@ -467,7 +467,7 @@ var res = await _client.SendAsync(req);
 
 ---
 
-## 15) 샘플: 종합 예제(페이지 + 라우트 + 공용/검증)
+## 15. 샘플: 종합 예제(페이지 + 라우트 + 공용/검증)
 
 ### 15.1 Program.cs 요약
 ```csharp
@@ -542,7 +542,7 @@ EmailInvalid=올바른 이메일 형식이 아닙니다.
 
 ---
 
-## 16) 운영 체크리스트 (요약)
+## 16. 운영 체크리스트 (요약)
 
 - [ ] `UseRequestLocalization`을 Routing 전에 구성  
 - [ ] Provider 순서: Route/Query/Cookie/Header 중 정책화  

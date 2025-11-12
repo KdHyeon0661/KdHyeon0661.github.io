@@ -12,7 +12,7 @@ category: 웹해킹
 
 ---
 
-## 0) 큰 그림(Why)
+## 0. 큰 그림(Why)
 
 - **입력값 검증(Validation)**: *의도된 스펙*만 통과시키는 “게이트”. (_들어오기 전_ 막기)
 - **Sanitization(정화)**: *콘텐츠(HTML/마크다운 등)*를 제한된 형태로 “무해화”. (_보여주기 전_ 씻기)
@@ -23,7 +23,7 @@ category: 웹해킹
 
 ---
 
-## 1) 입력값 검증(Validation)과 데이터 Sanitization
+## 1. 입력값 검증(Validation)과 데이터 Sanitization
 
 ### 1.1 기본 원칙 7가지
 
@@ -169,7 +169,7 @@ String safeHtml = POLICY.sanitize(userHtml);
 
 ---
 
-## 2) 보안 HTTP 헤더 적용(브라우저 보안 정책)
+## 2. 보안 HTTP 헤더 적용(브라우저 보안 정책)
 
 > **핵심**: CSP(콘텐츠 보안 정책)를 중심으로 **X-Frame-Options·HSTS·nosniff·Referrer-Policy** 등과 **세트**로 설정.
 
@@ -281,7 +281,7 @@ add_header Cache-Control "no-store" always;
 
 ---
 
-## 3) 세션 관리 보안 — 쿠키 속성과 운영 전략
+## 3. 세션 관리 보안 — 쿠키 속성과 운영 전략
 
 ### 3.1 쿠키 속성 요약
 
@@ -423,7 +423,7 @@ class SecurityConfig {
 
 ---
 
-## 4) “끝에서 끝까지” 예제 — Express 미니 앱
+## 4. “끝에서 끝까지” 예제 — Express 미니 앱
 
 ### 4.1 기능
 - 입력 검증(zod)  
@@ -524,7 +524,7 @@ app.listen(3000, ()=>console.log("https://localhost:3000"));
 
 ---
 
-## 5) 리버스 프록시(Nginx) 스니펫
+## 5. 리버스 프록시(Nginx) 스니펫
 
 ```nginx
 server {
@@ -562,7 +562,7 @@ server {
 
 ---
 
-## 6) 테스트 페이로드 & 기대 행동(“막혀야 정상”)
+## 6. 테스트 페이로드 & 기대 행동(“막혀야 정상”)
 
 - **HTML 주입**: `<img src=x onerror=alert(1)>` → Sanitizer로 제거  
 - **자바스크립트 링크**: `<a href="javascript:alert(1)">` → 링크 스킴 검사로 거절/무력화  
@@ -575,7 +575,7 @@ server {
 
 ---
 
-## 7) “마이그레이션” 전략(CSP·세션·헤더)
+## 7. “마이그레이션” 전략(CSP·세션·헤더)
 
 1. **관측 먼저**: CSP **Report-Only**로 위반 리포트 수집 → 외부 스크립트/스타일 정리  
 2. **Nonce 전환**: 인라인 스크립트에 nonce 부여, `unsafe-inline` 제거  
@@ -585,7 +585,7 @@ server {
 
 ---
 
-## 8) 자주 하는 실수 ↔ 교정
+## 8. 자주 하는 실수 ↔ 교정
 
 | 실수 | 문제 | 교정 |
 |---|---|---|
@@ -599,7 +599,7 @@ server {
 
 ---
 
-## 9) 보안 체크리스트(현장용 요약)
+## 9. 보안 체크리스트(현장용 요약)
 
 - [ ] 모든 입력 **스키마 검증**(서버) + 오류/속도 제한  
 - [ ] 표시용 콘텐츠는 **Sanitizer**로 정화 + **링크 스킴 화이트리스트**  

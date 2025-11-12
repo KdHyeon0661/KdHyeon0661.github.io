@@ -15,7 +15,7 @@ category: Kubernetes
 
 ---
 
-## 0) 아키텍처 개요(확장)
+## 0. 아키텍처 개요(확장)
 
 ```mermaid
 graph TD
@@ -32,7 +32,7 @@ I --> J[알림/자동 롤백/체인지로그]
 
 ---
 
-## 1) 사전 준비 체크리스트
+## 1. 사전 준비 체크리스트
 
 | 항목 | 선택/예시 | 비고 |
 |---|---|---|
@@ -46,7 +46,7 @@ I --> J[알림/자동 롤백/체인지로그]
 
 ---
 
-## 2) Jenkins 필수 플러그인
+## 2. Jenkins 필수 플러그인
 
 - **Docker Pipeline**: `docker.build`, `withDockerRegistry`
 - **Kubernetes CLI** 또는 `sh`로 직접 설치
@@ -57,7 +57,7 @@ I --> J[알림/자동 롤백/체인지로그]
 
 ---
 
-## 3) 레포 구조(권장)
+## 3. 레포 구조(권장)
 
 ```
 .
@@ -83,7 +83,7 @@ I --> J[알림/자동 롤백/체인지로그]
 
 ---
 
-## 4) Dockerfile 최적화(멀티스테이지 + 캐시)
+## 4. Dockerfile 최적화(멀티스테이지 + 캐시)
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
@@ -111,7 +111,7 @@ CMD ["node", "dist/main.js"]
 
 ---
 
-## 5) Helm 차트 핵심 템플릿
+## 5. Helm 차트 핵심 템플릿
 
 **`helm-chart/values.yaml`**
 
@@ -207,7 +207,7 @@ spec:
 
 ---
 
-## 6) RBAC(최소 권한) 예시
+## 6. RBAC(최소 권한) 예시
 
 ```yaml
 apiVersion: v1
@@ -243,7 +243,7 @@ roleRef:
 
 ---
 
-## 7) Jenkins Credentials 설계
+## 7. Jenkins Credentials 설계
 
 | ID | 타입 | 예시 |
 |---|---|---|
@@ -255,7 +255,7 @@ roleRef:
 
 ---
 
-## 8) Jenkinsfile(Declarative, 엔드투엔드)
+## 8. Jenkinsfile(Declarative, 엔드투엔드)
 
 ```groovy
 pipeline {
@@ -408,7 +408,7 @@ pipeline {
 
 ---
 
-## 9) 멀티브랜치/환경 전략
+## 9. 멀티브랜치/환경 전략
 
 - `develop` → **staging**: `values-stg.yaml` 사용
 - `main` → **prod**: `values-prod.yaml` 사용
@@ -429,7 +429,7 @@ sh """
 
 ---
 
-## 10) Canary/Blue-Green(Helm 값으로 제어)
+## 10. Canary/Blue-Green(Helm 값으로 제어)
 
 단순 **Canary**: 동일 차트 두 릴리스(`myapp`, `myapp-canary`) 운영 → Service 셀렉터/Ingress 경로/가중치로 트래픽 조절.
 
@@ -444,7 +444,7 @@ Ingress 컨트롤러(NGINX, Istio) 기능으로 **가중치 전환**, 정상 시
 
 ---
 
-## 11) Helmfile(선택)로 다수 차트/환경 동시 관리
+## 11. Helmfile(선택)로 다수 차트/환경 동시 관리
 
 `helmfile.yaml`:
 
@@ -475,7 +475,7 @@ sh """
 
 ---
 
-## 12) 시크릿 관리(Sealed Secrets/SOPS 권장)
+## 12. 시크릿 관리(Sealed Secrets/SOPS 권장)
 
 - **Sealed Secrets**: 암호화된 `SealedSecret`만 Git에 저장 → 클러스터에서 복호화
 - **SOPS**: `*.enc.yaml`로 저장, 에이전트에서 복호화 후 `kubectl apply`
@@ -488,7 +488,7 @@ sops -d k8s/secret.enc.yaml | kubectl apply -f -
 
 ---
 
-## 13) 성과지표(개념적 모델)
+## 13. 성과지표(개념적 모델)
 
 배포 성공 확률 \(p_s\), 실패 확률 \(p_f = 1 - p_s\), 평균 복구시간 MTTR \(T_r\), 배포 빈도 \(f_d\)일 때,
 운영 효용(개념) \(U\):
@@ -503,7 +503,7 @@ $$
 
 ---
 
-## 14) 트러블슈팅 빠른표
+## 14. 트러블슈팅 빠른표
 
 | 증상 | 진단 명령 | 흔한 원인 | 해결 |
 |---|---|---|---|
@@ -515,7 +515,7 @@ $$
 
 ---
 
-## 15) 확장 팁
+## 15. 확장 팁
 
 - **재시도**: 일시적 네트워크 문제는 `retry(n)` 블록으로 래핑
 - **Helm 작동 건전성**: `--atomic` 옵션으로 실패 시 자동 롤백
@@ -526,7 +526,7 @@ $$
 
 ---
 
-## 16) 최소 동작 예제(빠른 시도용)
+## 16. 최소 동작 예제(빠른 시도용)
 
 ### Jenkinsfile(라이트 버전)
 
@@ -574,7 +574,7 @@ pipeline {
 
 ---
 
-## 17) 운영 점검 체크리스트
+## 17. 운영 점검 체크리스트
 
 - [ ] 레포·차트 구조: 환경 오버레이 분리
 - [ ] Docker 빌드 캐시/멀티스테이지 적용

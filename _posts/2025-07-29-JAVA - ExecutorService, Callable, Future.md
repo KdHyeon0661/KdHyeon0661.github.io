@@ -4,268 +4,481 @@ title: Java - ExecutorService, Callable, Future
 date: 2025-07-29 22:20:23 +0900
 category: Java
 ---
-# ExecutorService, Callable, Future — 자세하게 정리
+# ExecutorService, Callable, Future
 
-Java에서 병렬/비동기 작업 관리를 할 때 `ExecutorService`, `Callable`, `Future`는 가장 핵심이 되는 API입니다.  
-아래에 개념, 주요 동작, 사용 예제, 모범 사례와 주의사항까지 **실무 관점에서 자세하게** 정리했습니다.
+## 0. 한눈에 개념 맵
 
----
-
-## 개요 (한줄 요약)
-- **ExecutorService**: 스레드 풀을 관리하고 `Runnable`/`Callable` 작업을 제출해 실행하도록 하는 고수준 추상화 (스레드 생성/관리 책임을 대신 담당).  
-- **Callable<V>**: 결과를 반환하거나 체크 예외를 던질 수 있는 작업 단위(제네릭 반환 타입).  
-- **Future<V>**: 비동기 작업의 결과를 나타내는 핸들(결과 가져오기, 취소, 완료 여부 확인 등).
-
----
-
-## 1. ExecutorService
-
-### 1.1 무엇인가?
-- `ExecutorService`는 `Executor`의 확장으로, 작업 제출, 종료(shutdown) 등을 지원합니다.
-- 스레드 생성·재사용, 큐잉, 정책(거부 처리) 등을 담당하므로 **직접 `new Thread(...)`를 하는 것보다 안전**하고 효율적입니다.
-
-### 1.2 생성(대표 팩토리)
-(간단한 팩토리 메서드 — 주의: unbounded/특성 이해 필요)
-
-```java
-ExecutorService fixed = Executors.newFixedThreadPool(10);
-ExecutorService cached = Executors.newCachedThreadPool();
-ExecutorService single = Executors.newSingleThreadExecutor();
-ScheduledExecutorService scheduled = Executors.newScheduledThreadPool(4);
+```
++--------------------+      submit(...)      +--------------------+      get()/cancel()
+|  ExecutorService   |  ------------------>  |       Future       |  ------------------>
+| (스레드 풀, 큐,정책) |                      | (비동기 결과 핸들)  |   (결과, 예외, 취소) |
++--------------------+                       +--------------------+
+         ^
+         | execute/submit
+         |
+   +---------------+
+   | Runnable/     |
+   | Callable<V>   |  ← 작업 단위
+   +---------------+
 ```
 
-> **주의**: `Executors`의 일부 팩토리(예: `newCachedThreadPool`, `newFixedThreadPool`)는 내부적으로 **무제한 작업 큐** 또는 **무제한 스레드 생성** 정책을 가질 수 있어, 실무에서는 `ThreadPoolExecutor`를 직접 구성해 **bounded queue + 적절한 RejectedExecutionHandler**를 설정하는 것이 안전합니다.
-
-### 1.3 ThreadPoolExecutor (주요 파라미터)
-- `corePoolSize`, `maximumPoolSize`, `keepAliveTime`, `workQueue`, `ThreadFactory`, `RejectedExecutionHandler`
-
-```java
-ThreadPoolExecutor pool = new ThreadPoolExecutor(
-    4,                       // core
-    20,                      // max
-    60L, TimeUnit.SECONDS,   // keepAlive
-    new ArrayBlockingQueue<>(100), // bounded queue
-    Executors.defaultThreadFactory(),
-    new ThreadPoolExecutor.AbortPolicy() // 거부 정책
-);
-```
+- **ExecutorService**: 스레드/큐/거부 정책을 관리하는 **실행기(스레드 풀)**.
+- **Callable\<V>**: 값을 **반환**하고 **체크 예외**를 던질 수 있는 작업.
+- **Future\<V>**: 비동기 작업의 **결과/상태**를 다루는 핸들(완료 대기, 취소, 예외 확인).
 
 ---
 
-## 2. Callable vs Runnable
+## 1. 왜 ExecutorService를 쓰는가?
 
-### 2.1 Runnable
-- `void run()` — 반환값 없음, 체크 예외 던질 수 없음(던지면 런타임 예외로 포장됨).
-- `executor.execute(runnable)` 또는 `executor.submit(runnable)` 사용.
+- 직접 `new Thread(...)` 남발 → **스레드 폭주, 자원 고갈, 종료 누락, 예외 유실**.
+- ExecutorService는 **스레드 재사용 + 큐잉 + 백프레셔(거부 정책) + 표준 종료 절차**를 제공.
+- **자체 메모리 장벽**: 작업 제출 시점과 실행 시점 사이에 happens-before 관계가 형성되어, 제출한 쓰기가 작업에서 보임(가시성 보장).
 
-### 2.2 Callable<V>
-- `V call()` — 제네릭 타입 `V` 반환, 체크 예외 던질 수 있음.
-- `executor.submit(callable)` 사용하면 `Future<V>` 반환.
+---
+
+## 2. 생성: Executors vs ThreadPoolExecutor
+
+### 2.1 빠른 시작 (팩토리)
+```java
+ExecutorService fixed    = Executors.newFixedThreadPool(8);
+ExecutorService cached   = Executors.newCachedThreadPool();
+ExecutorService single   = Executors.newSingleThreadExecutor();
+ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
+```
+
+> 주의: 일부 팩토리는 **무제한 큐/스레드**로 설정되어 운영 환경에서 메모리 폭증 위험.  
+> 실무에서는 가급적 **`ThreadPoolExecutor`를 직접 구성**해 **bounded queue** + **거부 정책**을 명시하세요.
+
+### 2.2 안전한 표준 풀 (권장 템플릿)
+```java
+import java.util.UUID;
+import java.util.concurrent.*;
+
+public final class Pools {
+  public static ExecutorService ioBound(int core, int queueCapacity, String namePrefix) {
+    BlockingQueue<Runnable> q = new ArrayBlockingQueue<>(queueCapacity);
+    ThreadFactory tf = r -> {
+      Thread t = new Thread(r);
+      t.setName(namePrefix + "-" + UUID.randomUUID());
+      t.setDaemon(false);
+      return t;
+    };
+    return new ThreadPoolExecutor(
+        core, core, 0L, TimeUnit.MILLISECONDS,
+        q, tf,
+        new ThreadPoolExecutor.CallerRunsPolicy() // 자연스러운 백프레셔
+    );
+  }
+}
+```
+
+- **유한 큐**: 메모리 상한.  
+- **CallerRunsPolicy**: 과부하 시 **제출자 스레드가 직접 실행** → 자동 속도 제한.
+
+---
+
+## 3. 작업 단위: Runnable vs Callable
+
+| 항목 | Runnable | Callable\<V> |
+|---|---|---|
+| 시그니처 | `void run()` | `V call() throws Exception` |
+| 반환 | 없음 | **있음** |
+| 체크 예외 | 던질 수 없음 | **던질 수 있음** |
+| 제출 | `execute/submit` | **`submit`** |
 
 ```java
 Callable<Integer> task = () -> {
-    // 작업 수행
-    return 42;
+  // 비지니스 로직, 예외 가능
+  return 42;
 };
 Future<Integer> f = executor.submit(task);
 ```
 
 ---
 
-## 3. Future — 주요 메서드와 동작
+## 4. Future — 결과, 예외, 취소
 
-| 메서드 | 설명 |
-|--------|------|
-| `V get()` | 작업 완료 시 결과 반환(블록). |
-| `V get(long timeout, TimeUnit unit)` | 타임아웃 후 `TimeoutException` 발생 가능. |
-| `boolean cancel(boolean mayInterruptIfRunning)` | 작업 취소 요청. 이미 실행 중이면 인터럽트 시도(매개변수에 따라). |
-| `boolean isCancelled()` | 취소되었는지. |
-| `boolean isDone()` | 완료(성공/예외/취소 포함)되었는지. |
-
-### 예외 처리
-- `get()`은 `InterruptedException`과 `ExecutionException`을 던짐.  
-- `ExecutionException`의 `getCause()`에서 실제 예외 원인을 확인.
+### 4.1 핵심 메서드
+| 메서드 | 의미 |
+|---|---|
+| `get()` | 완료까지 블록하고 결과 반환(성공/예외/취소 포함) |
+| `get(timeout, unit)` | 타임아웃 시 `TimeoutException` |
+| `isDone()/isCancelled()` | 상태 조회 |
+| `cancel(mayInterruptIfRunning)` | **협력적 취소** 요청(인터럽트 시도) |
 
 ```java
 try {
-    Integer result = future.get(5, TimeUnit.SECONDS);
+  Integer v = f.get(3, TimeUnit.SECONDS);
 } catch (InterruptedException e) {
-    Thread.currentThread().interrupt();
-} catch (ExecutionException e) {
-    Throwable cause = e.getCause();
-    // 실제 예외 처리
+  Thread.currentThread().interrupt(); // 정책: 인터럽트 재설정
 } catch (TimeoutException e) {
-    // 타임아웃 처리
+  f.cancel(true); // 타임아웃 → 취소 시도
+} catch (ExecutionException e) {
+  Throwable cause = e.getCause(); // 실제 예외
+  // 로깅/보상 처리
 }
 ```
 
-### 취소와 인터럽트
-- `cancel(true)` → 가능하면 스레드를 인터럽트하여 중단을 요청.  
-- 취소는 협력적: 작업 내부에서 `Thread.currentThread().isInterrupted()` 또는 `InterruptedException`을 체크/처리해야 안전히 종료 가능.
-
----
-
-## 4. 제출 방식: execute vs submit
-- `execute(Runnable)` — 반환값 없음; 예외는 `UncaughtExceptionHandler`로 전달됨.  
-- `submit(...)` — `Future`를 반환해 결과 확인/예외 캡처/취소 가능. (Runnable 제출 시 Future.get()은 `null` 반환)
-
-권장: 결과를 받아야 하면 `submit(Callable)` 사용.
-
----
-
-## 5. 모아 제출: invokeAll / invokeAny
-
-### 5.1 `invokeAll(Collection<? extends Callable<T>>)`
-
-- 모든 태스크를 제출하고 **모두 완료**될 때까지 대기 후 `List<Future<T>>` 반환.
-- 각 Future는 `get()`으로 결과 또는 예외를 확인.
-
+### 4.2 협력적 취소(중요)
 ```java
-List<Callable<Integer>> tasks = Arrays.asList(() -> 1, () -> 2);
-List<Future<Integer>> futures = executor.invokeAll(tasks);
-for (Future<Integer> f : futures) {
-    System.out.println(f.get()); // 블록 없이 바로 결과 가능(이미 완료)
-}
-```
-
-### 5.2 `invokeAny(Collection<? extends Callable<T>>)`
-
-- 작업들 중 **하나가 성공적으로 완료된 결과**(가장 먼저 성공한 것)를 반환하고, 나머지 작업을 취소하려 시도함.
-- 성공한 결과 반환, 실패 시 예외 던짐.
-
----
-
-## 6. ScheduledExecutorService (예약/주기 작업)
-- 지연 실행 및 주기적 실행을 위한 스케줄러.
-
-```java
-ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
-
-// 1) 지연 실행
-ScheduledFuture<String> sf = scheduler.schedule(() -> "done", 5, TimeUnit.SECONDS);
-
-// 2) 주기 실행 (fixed rate)
-scheduler.scheduleAtFixedRate(() -> {
-    // 작업
-}, 0, 10, TimeUnit.SECONDS);
-
-// 3) 주기 실행 (fixed delay)
-scheduler.scheduleWithFixedDelay(() -> {
-    // 작업
-}, 0, 10, TimeUnit.SECONDS);
-```
-
-> 주의: `scheduleAtFixedRate`는 작업이 오래 걸리면 다음 실행이 바로 시작될 수 있으므로 작업 시간이 불확실하면 `scheduleWithFixedDelay` 권장.
-
----
-
-## 7. graceful shutdown (중요!)
-항상 `ExecutorService`는 종료해야 합니다. 안전한 패턴:
-
-```java
-executor.shutdown(); // 더 이상 새로운 작업 받지 않음
-try {
-    if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-        executor.shutdownNow(); // 즉시 취소 시도
-        if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
-            System.err.println("풀 종료 실패");
-        }
+Callable<Void> cancellable = () -> {
+  while (!Thread.currentThread().isInterrupted()) {
+    // 작업...
+    // 차단 호출 사용 시 InterruptedException 처리
+    try {
+      Thread.sleep(50);
+    } catch (InterruptedException ie) {
+      Thread.currentThread().interrupt(); // 재설정 후 정리
+      break;
     }
-} catch (InterruptedException ie) {
-    executor.shutdownNow();
-    Thread.currentThread().interrupt();
-}
-```
-
-- `shutdown()` → 기존 작업은 완료, 신규 작업 거부.
-- `shutdownNow()` → 대기 중인 작업 목록 반환, 실행 중인 스레드에 인터럽트 보냄.
-
----
-
-## 8. FutureTask & 직접 사용
-- `FutureTask<V>`는 `RunnableFuture<V>` 구현체로, 직접 생성해 스레드나 executor로 실행 가능.  
-- 디버깅/조합용으로 유용.
-
-```java
-FutureTask<Integer> task = new FutureTask<>(() -> 123);
-new Thread(task).start();
-Integer v = task.get();
-```
-
----
-
-## 9. 예제: Callable 제출과 결과 처리
-
-```java
-ExecutorService ex = Executors.newFixedThreadPool(4);
-try {
-    Callable<Integer> job = () -> {
-        // 예외 던질 수 있음
-        return 1 + 1;
-    };
-    Future<Integer> f = ex.submit(job);
-
-    // 비차단 작업 예: 다른 일 수행
-
-    // 결과 가져오기 (블록)
-    Integer result = f.get(); // InterruptedException, ExecutionException 처리 필요
-    System.out.println("Result: " + result);
-} finally {
-    ex.shutdown();
-}
-```
-
----
-
-## 10. 예외 & 실패 처리 패턴
-- `ExecutionException` → `getCause()`로 실제 원인 확인.
-- 작업 내부에서 체크 예외가 발생하면 `ExecutionException`에 래핑됨.
-- 주기 작업에서 예외가 발생하면 해당 태스크는 종료될 수 있으므로 **주기 작업 내부에서 예외를 잡고 처리**하거나 스케줄러에서 재등록 패턴 필요.
-
----
-
-## 11. ThreadFactory, 이름 지정, 모니터링
-- `ThreadFactory`를 제공하면 스레드 이름, 데몬 여부, 우선순위 설정 및 로깅이 쉬워짐.
-
-```java
-ThreadFactory tf = r -> {
-    Thread t = new Thread(r);
-    t.setName("worker-" + counter.incrementAndGet());
-    t.setDaemon(false);
-    return t;
+  }
+  return null;
 };
-ExecutorService pool = Executors.newFixedThreadPool(4, tf);
 ```
 
 ---
 
-## 12. 풀 사이즈 결정(간단 가이드)
-- **CPU-bound** 작업: `Nthreads ≈ numCores` (일반적으로 `Runtime.getRuntime().availableProcessors()` 사용)
-- **I/O-bound** 작업: `Nthreads > numCores`, 대기 시간 고려(예: `numCores * (1 + waitTime/computeTime)`)
-- 실무: 부하/성능 테스트로 최적 설정 권장.
+## 5. 제출 방식: execute vs submit
+
+- `execute(Runnable)`: 반환 없음, 예외는 **스레드의 UncaughtExceptionHandler**로.
+- `submit(...)`: **Future 반환**, 예외는 `ExecutionException`에 래핑되어 `get()` 시점에 관찰.
+
+> 결과/예외/취소 제어가 필요하면 **항상 `submit`**.
 
 ---
 
-## 13. 성능/안정성 권장사항 (요약)
-- `Executors`의 기본 팩토리를 쓸 수 있지만, **운영 환경에선 ThreadPoolExecutor를 직접 구성**(bounded queue, 적절한 RejectedExecutionHandler) 권장.
-- 작업은 가능한 **무상태(stateless)**로 만들고 공유 자원 동기화 주의.
-- `Future.get()`을 오래 블록시키지 말고 타임아웃 사용 고려.
-- **예외 발생 시 로깅**을 빠짐없이 수행하라 (누락된 예외는 문제 추적 어렵다).
-- 비동기 파이프라인(복합 작업)엔 `CompletableFuture`를 검토하라 — 더 강력한 조합/에러 처리 API 제공.
+## 6. 여러 작업 한꺼번에: invokeAll / invokeAny
 
----
-
-## 14. CompletableFuture 한 줄 (참고)
-- Java 8부터 `CompletableFuture`는 `Executor`와 결합해 비동기 파이프라인(thenApply, thenCompose 등)을 쉽게 구성할 수 있다.
 ```java
-CompletableFuture.supplyAsync(() -> compute(), executor)
-                 .thenApply(result -> process(result))
-                 .exceptionally(ex -> handle(ex));
+List<Callable<Integer>> tasks = List.of(
+  () -> slowCompute(1), () -> slowCompute(2), () -> slowCompute(3)
+);
+
+// 1) 모두 완료될 때까지 대기
+List<Future<Integer>> fs = executor.invokeAll(tasks); // 개별 get()
+
+// 2) 가장 먼저 "성공"한 결과 하나만
+Integer first = executor.invokeAny(tasks); // 나머지는 취소 시도
+```
+
+- `invokeAll`은 **전체 완료**(실패 포함).  
+- `invokeAny`는 **최초 성공** 결과를 반환(실패만 있다면 예외).
+
+---
+
+## 7. 스케줄링: ScheduledExecutorService
+
+```java
+ScheduledExecutorService sch = Executors.newScheduledThreadPool(2);
+
+// 지연 실행
+ScheduledFuture<String> sf = sch.schedule(() -> "done", 2, TimeUnit.SECONDS);
+
+// 고정 비율(시각 격자 유지; 드리프트 발생 가능)
+sch.scheduleAtFixedRate(() -> heartbeat(), 0, 5, TimeUnit.SECONDS);
+
+// 고정 지연(이전 종료→지연→다음 시작)
+sch.scheduleWithFixedDelay(() -> poll(), 0, 1, TimeUnit.MINUTES);
+```
+
+> **주기 작업 내부에서 예외를 반드시 잡으세요.** 던지면 태스크가 중단되어 더 이상 실행되지 않을 수 있습니다.
+
+---
+
+## 8. 안전한 종료(필수)
+
+```java
+executor.shutdown(); // 신규 제출 거부
+try {
+  if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+    executor.shutdownNow(); // 대기 중 작업 취소 + 인터럽트
+    if (!executor.awaitTermination(30, TimeUnit.SECONDS)) {
+      System.err.println("풀 종료 실패");
+    }
+  }
+} catch (InterruptedException ie) {
+  executor.shutdownNow();
+  Thread.currentThread().interrupt();
+}
+```
+
+- **항상 종료**: try/finally 또는 애플리케이션 종료 훅에서.
+
+---
+
+## 9. 예외 처리 — 누수 없이 보기 좋게
+
+### 9.1 작업 내부
+```java
+Callable<Integer> safe = () -> {
+  try {
+    return dangerous();
+  } catch (SpecificException se) {
+    // 로깅/보상
+    throw se; // 체크 예외면 그대로; 언체크면 래핑 고려
+  }
+};
+```
+
+### 9.2 Future에서
+```java
+try {
+  f.get();
+} catch (ExecutionException ee) {
+  log.error("task failed", ee.getCause());
+}
+```
+
+### 9.3 주기 작업
+```java
+sch.scheduleAtFixedRate(() -> {
+  try {
+    doWork();
+  } catch (Throwable t) {
+    log.error("periodic task failed", t); // 삼켜지지 않게!
+  }
+}, 0, 10, TimeUnit.SECONDS);
 ```
 
 ---
 
-## 결론
-- `ExecutorService` + `Callable` + `Future`는 자바에서 **비동기 작업의 표준 패턴**입니다.  
-- 올바른 스레드 풀 구성, 예외/취소/종료 전략, 작업 설계(인터럽트 가능, 상태 최소화)를 지키면 안정적이고 확장 가능한 동시성 시스템을 만들 수 있습니다.  
-- 복잡한 비동기 조합이나 파이프라인이 필요하면 `CompletableFuture`를 고려하세요.
+## 10. CompletionService — “먼저 끝난 것부터” 수확
+
+```java
+ExecutorService pool = Executors.newFixedThreadPool(8);
+CompletionService<String> ecs = new ExecutorCompletionService<>(pool);
+
+for (String url : urls) {
+  ecs.submit(() -> fetch(url));
+}
+
+for (int i = 0; i < urls.size(); i++) {
+  Future<String> f = ecs.take();     // 완료 순서대로
+  try {
+    System.out.println(f.get());
+  } catch (ExecutionException e) {
+    log.warn("fetch failed", e.getCause());
+  }
+}
+pool.shutdown();
+```
+
+---
+
+## 11. FutureTask — 직접 제어가 필요할 때
+
+```java
+FutureTask<Integer> ft = new FutureTask<>(() -> 123);
+new Thread(ft, "single-worker").start();
+System.out.println(ft.get());
+```
+
+- `Runnable`이면서 `Future`이기도 한 **양면 객체**: 캐시-스탬피드 방지, 재사용, 래핑에 쓸모.
+
+---
+
+## 12. 타임아웃·취소 유틸(레시피)
+
+### 12.1 타임아웃 래퍼
+```java
+static <T> T getOrCancel(Future<T> f, long timeout, TimeUnit unit, T fallback) {
+  try { return f.get(timeout, unit); }
+  catch (TimeoutException te) { f.cancel(true); return fallback; }
+  catch (InterruptedException ie) { f.cancel(true); Thread.currentThread().interrupt(); return fallback; }
+  catch (ExecutionException ee) { return fallback; }
+}
+```
+
+### 12.2 첫 성공 or 타임아웃
+```java
+static <T> T firstSuccessOrTimeout(ExecutorService ex, List<Callable<T>> tasks, long t, TimeUnit u) throws Exception {
+  List<Future<T>> fs = new java.util.ArrayList<>(tasks.size());
+  try {
+    for (Callable<T> c : tasks) fs.add(ex.submit(c));
+    long deadline = System.nanoTime() + u.toNanos(t);
+    while (!fs.isEmpty()) {
+      for (var it = fs.iterator(); it.hasNext();) {
+        Future<T> f = it.next();
+        if (f.isDone()) {
+          try { return f.get(); }
+          catch (ExecutionException ee) { it.remove(); } // 실패면 다른 것 대기
+        }
+      }
+      if (System.nanoTime() > deadline) throw new TimeoutException();
+      Thread.sleep(5);
+    }
+    throw new Exception("모든 작업 실패");
+  } finally {
+    for (Future<T> f : fs) f.cancel(true);
+  }
+}
+```
+
+---
+
+## 13. ThreadFactory & 모니터링
+
+```java
+import java.util.concurrent.atomic.AtomicInteger;
+
+ThreadFactory tf = new ThreadFactory() {
+  private final AtomicInteger seq = new AtomicInteger(1);
+  public Thread newThread(Runnable r) {
+    Thread t = new Thread(r);
+    t.setName("api-" + seq.getAndIncrement());
+    t.setDaemon(false);
+    // t.setUncaughtExceptionHandler((th, ex) -> log.error("uncaught", ex));
+    return t;
+  }
+};
+ExecutorService pool = Executors.newFixedThreadPool(8, tf);
+```
+
+- 이름 규칙은 **스레드 덤프/로그 상관관계**에 매우 유용.
+- (선택) **UncaughtExceptionHandler** 등록.
+
+---
+
+## 14. 스케줄링 선택: fixed-rate vs fixed-delay
+
+| 메서드 | 기준 | 적합 사례 |
+|---|---|---|
+| `scheduleAtFixedRate` | **이상적 시작 시각 간격** 고정 | 메트릭 출力처럼 주기 **격자**가 중요한 경우 |
+| `scheduleWithFixedDelay` | **이전 종료→지연** 후 시작 | 폴링/청소처럼 작업 시간 변동이 큰 경우 |
+
+---
+
+## 15. 풀 크기 가이드 (근사)
+
+- **CPU 바운드**: `≈ CPU 코어 수`  
+- **I/O 바운드**: 대기 비율에 따라 더 크게  
+  $$ N_{\text{threads}} \approx N_{\text{cores}} \times \left(1 + \frac{T_{\text{wait}}}{T_{\text{compute}}}\right) $$
+- 정답은 **부하/성능 테스트**.
+
+---
+
+## 16. 실전 시나리오 — “I/O 바운드 호출 + 캐시 스탬피드 방지 + 백프레셔”
+
+```java
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.*;
+
+class DataService {
+  private final ConcurrentHashMap<String, Future<String>> cache = new ConcurrentHashMap<>();
+  private final ExecutorService ioPool;
+
+  DataService() {
+    this.ioPool = new ThreadPoolExecutor(
+      16, 16, 0, TimeUnit.MILLISECONDS,
+      new ArrayBlockingQueue<>(1000),
+      r -> { Thread t = new Thread(r); t.setName("io-"+UUID.randomUUID()); return t; },
+      new ThreadPoolExecutor.CallerRunsPolicy()
+    );
+  }
+
+  public String get(String key) throws Exception {
+    while (true) {
+      Future<String> f = cache.get(key);
+      if (f == null) {
+        Callable<String> eval = () -> fetchRemote(key); // 느린 I/O
+        FutureTask<String> ft = new FutureTask<>(eval);
+        f = cache.putIfAbsent(key, ft);
+        if (f == null) {
+          f = ft;
+          ioPool.execute(ft); // 최초 1회만 실행
+        }
+      }
+      try {
+        return f.get(2, TimeUnit.SECONDS);
+      } catch (CancellationException | ExecutionException e) {
+        cache.remove(key, f); // 실패 → 캐시 제거
+        throw e;
+      } catch (TimeoutException te) {
+        f.cancel(true);       // 오래 걸림 → 취소 시도 및 제거
+        cache.remove(key, f);
+        throw te;
+      } catch (InterruptedException ie) {
+        Thread.currentThread().interrupt();
+        throw ie;
+      }
+    }
+  }
+
+  private String fetchRemote(String key) throws Exception {
+    // 모의 I/O
+    Thread.sleep(150);
+    return "V:" + key;
+  }
+
+  public void shutdown() { ioPool.shutdown(); }
+}
+```
+
+포인트:
+- **키별 단일 계산 공유(FutureTask)** 로 **스탬피드 방지**.
+- **타임아웃/실패 시 캐시 제거**로 일관성 유지.
+- **유한 큐 + CallerRunsPolicy**로 **백프레셔** 확보.
+
+---
+
+## 17. 흔한 실수 & 대안
+
+| 실수 | 문제 | 대안 |
+|---|---|---|
+| 무제한 큐(LinkedBlockingQueue 기본) | 메모리 폭증 | **ArrayBlockingQueue(용량 지정)** |
+| `newCachedThreadPool` 남용 | 스레드 폭증 | 고정/유한 풀 + 큐 |
+| `Future.get()` 무한 대기 | 장애 전파 지연 | **타임아웃 + 취소** |
+| 주기 작업에서 예외 미처리 | 태스크 조기 종료 | **try/catch** 로깅/복구 |
+| 인터럽트 무시 | 종료 불능 | 인터럽트 **정책 준수** |
+| 스레드 이름 미설정 | 디버깅 지옥 | **ThreadFactory**로 이름 지정 |
+
+---
+
+## 18. 테스트/운영 체크리스트
+
+- 풀 메트릭: **큐 길이, 활성 스레드, 완료 작업 수, 거부 횟수**를 모니터링.
+- 종료 테스트: **`shutdown`+`awaitTermination` 시 정상 종료** 확인.
+- 실패 주입: 일부 태스크에서 **의도적 예외/타임아웃**으로 회복 시나리오 검증.
+- 로깅: **`ExecutionException.getCause()`** 반드시 기록.
+- 마이크로벤치: JMH로 **워밍업/분산/노이즈** 통제.
+
+---
+
+## 19. 보너스: CompletableFuture로의 확장(간단 브리지)
+
+```java
+static <T> java.util.concurrent.CompletableFuture<T>
+toCompletable(Future<T> f, Executor e) {
+  return java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+    try { return f.get(); }
+    catch (ExecutionException ee) { throw new RuntimeException(ee.getCause()); }
+    catch (InterruptedException ie) { Thread.currentThread().interrupt(); throw new RuntimeException(ie); }
+  }, e);
+}
+```
+
+- 복합 비동기 파이프라인이 필요하면 **CompletableFuture**로 조합/에러/타임아웃을 더 우아하게 다룰 수 있음.
+
+---
+
+## 20. 요약 표
+
+| 주제 | 핵심 포인트 |
+|---|---|
+| 생성 | 운영은 **ThreadPoolExecutor + bounded queue + 거부 정책** |
+| 제출 | 결과·예외·취소 필요 → **submit(Callable)** |
+| Future | `get(timeout)`, `cancel(true)`로 **타임아웃·취소** |
+| 스케줄링 | **fixedRate**(격자), **fixedDelay**(변동시간) |
+| 예외 | 작업/주기 작업에서 **반드시 처리**하고 로깅 |
+| 종료 | `shutdown` → `awaitTermination` → `shutdownNow` |
+| 백프레셔 | 유한 큐 + `CallerRunsPolicy` |
+| 튜닝 | CPU vs I/O 바운드, 식:  $$N \approx C \times (1 + \frac{T_w}{T_c})$$ |
+
+---
+
+## 21. 결론
+
+- **ExecutorService + Callable + Future**는 자바 비동기의 **표준 뼈대**입니다.  
+- 올바른 풀 구성(유한 큐, 거부 정책), **타임아웃/취소**, **예외/로깅**, **안전한 종료**만 지켜도 안정성은 급상승합니다.  
+- 복잡한 파이프라인은 **CompletableFuture**로 자연스럽게 확장하세요.

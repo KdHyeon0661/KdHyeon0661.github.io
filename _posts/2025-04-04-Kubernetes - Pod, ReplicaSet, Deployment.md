@@ -16,7 +16,7 @@ category: Kubernetes
 
 ---
 
-## 1) Pod — 쿠버네티스의 최소 실행 단위
+## 1. Pod — 쿠버네티스의 최소 실행 단위
 
 ### 1.1 개념 확장
 - **Pod = 하나 이상의 컨테이너 + 공유 네임스페이스**(네트워크/IPC) + **공유 볼륨**.
@@ -132,7 +132,7 @@ spec:
 
 ---
 
-## 2) ReplicaSet — Pod “개수”를 보장하는 컨트롤러
+## 2. ReplicaSet — Pod “개수”를 보장하는 컨트롤러
 
 ### 2.1 개념 확장
 - **Replica 개수 유지**가 역할의 전부. 템플릿에 따라 Pod를 생성/추가/복구한다.
@@ -168,7 +168,7 @@ spec:
 
 ---
 
-## 3) Deployment — 선언적 업데이트의 표준
+## 3. Deployment — 선언적 업데이트의 표준
 
 ### 3.1 개념 확장
 - **ReplicaSet의 상위 컨트롤러**. RS를 생성·교체하여 **롤링 업데이트/롤백**을 자동화.
@@ -267,7 +267,7 @@ kubectl rollout undo deploy/nginx-deploy --to-revision=3
 
 ---
 
-## 4) 세 오브젝트의 관계(복습 도식)
+## 4. 세 오브젝트의 관계(복습 도식)
 ```
 [ Deployment ]   --(관리/교체)-->   [ ReplicaSet ]   --(생성/보장)-->   [ Pod ] -> 컨테이너
 ```
@@ -277,7 +277,7 @@ kubectl rollout undo deploy/nginx-deploy --to-revision=3
 
 ---
 
-## 5) 실습 — Nginx 배포·노출·업데이트 루틴
+## 5. 실습 — Nginx 배포·노출·업데이트 루틴
 
 ### 5.1 배포 + 서비스(NodePort)
 ```bash
@@ -320,7 +320,7 @@ kubectl rollout undo deploy/nginx
 
 ---
 
-## 6) 운영 팁 — 라벨·셀렉터·리소스·스케줄링 체크리스트
+## 6. 운영 팁 — 라벨·셀렉터·리소스·스케줄링 체크리스트
 
 - **라벨/셀렉터 정합성**: `kubectl get ep <svc>`로 Service↔Pod 연결 검증.
 - **리소스 request/limit**: HPA/VPA와 연동, 과대요청은 비용 상승·밀도 저하.
@@ -330,7 +330,7 @@ kubectl rollout undo deploy/nginx
 
 ---
 
-## 7) 디버깅 루틴(명령 스니펫)
+## 7. 디버깅 루틴(명령 스니펫)
 ```bash
 kubectl get pods -o wide
 kubectl describe pod <POD>
@@ -347,7 +347,7 @@ curl -I http://<SVC_NAME>.<NS>.svc.cluster.local
 
 ---
 
-## 8) 흔한 문제와 해결
+## 8. 흔한 문제와 해결
 
 | 증상 | 1차 확인 | 원인 후보 | 해결 |
 |---|---|---|---|
@@ -360,7 +360,7 @@ curl -I http://<SVC_NAME>.<NS>.svc.cluster.local
 
 ---
 
-## 9) 간단 용량·레플리카 산정(학습용)
+## 9. 간단 용량·레플리카 산정(학습용)
 요청률(QPS)과 평균 처리시간 \(t\) 초, 파드당 안정 처리량 \(\text{cap}_{pod}\) (동시 처리 가능 요청 수)가 있을 때 필요한 **최소 레플리카**는
 $$
 \text{replicas}_{\min} \approx 
@@ -371,7 +371,7 @@ $$
 
 ---
 
-## 10) 요약 — 언제 무엇을 쓸까?
+## 10. 요약 — 언제 무엇을 쓸까?
 | 목적 | 오브젝트 | 설명/메모 |
 |---|---|---|
 | 임시 실습·단발 테스트 | **Pod** | 직접 생성 가능하나 운영 비권장 |

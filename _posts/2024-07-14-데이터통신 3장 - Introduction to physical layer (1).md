@@ -151,7 +151,7 @@ $$
 import math, random
 import numpy as np
 
-# 1) 합성 신호 만들기: 150Hz, 450Hz, 900Hz 성분 + 약간의 잡음
+# 1. 합성 신호 만들기: 150Hz, 450Hz, 900Hz 성분 + 약간의 잡음
 fs = 8000            # 샘플링 주파수(Hz)
 T  = 1.0             # 관측 시간(초)
 N  = int(fs*T)       # 샘플 수
@@ -166,12 +166,12 @@ for (f, a, p) in zip(freqs, amps, phi):
     x += a*np.sin(2*math.pi*f*t + p)
 x += 0.05*np.random.randn(N)      # 소량의 가우시안 잡음
 
-# 2) FFT로 주파수 성분 관찰
+# 2. FFT로 주파수 성분 관찰
 X = np.fft.rfft(x)                 # 실수 신호의 양수 주파수만
 F = np.fft.rfftfreq(N, d=1.0/fs)
 mag = np.abs(X)/ (N/2)             # 대략적 스케일링
 
-# 3) 상위 피크 주파수 Top-k 출력
+# 3. 상위 피크 주파수 Top-k 출력
 k = 5
 idx = np.argsort(mag)[-k:][::-1]
 peaks = [(F[i], mag[i]) for i in idx]
@@ -179,7 +179,7 @@ print("Top peaks (Hz, magnitude):")
 for f, m in peaks:
     print(f"{f:.1f} Hz -> {m:.3f}")
 
-# 4) 실효 대역폭(예: 에너지 99% 포함 구간) 근사
+# 4. 실효 대역폭(예: 에너지 99% 포함 구간) 근사
 power = mag**2
 cum = np.cumsum(np.sort(power))
 total = power.sum()

@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia에서 TextBox 양방향 바인딩 구현하기
 
-## 1) 목표
+## 1. 목표
 
 - `TextBox.Text` ↔ ViewModel 속성을 **양방향**으로 동기화한다.
 - 입력이 바뀌면 **즉시 혹은 포커스 아웃 시** ViewModel이 업데이트되도록 제어한다.
@@ -14,7 +14,7 @@ category: Avalonia
 
 ---
 
-## 2) 예제 구조 (확장판)
+## 2. 예제 구조 (확장판)
 
 ```
 MyAvaloniaApp/
@@ -33,7 +33,7 @@ MyAvaloniaApp/
 
 ---
 
-## 3) 가장 기본: ReactiveObject + TextBox TwoWay
+## 3. 가장 기본: ReactiveObject + TextBox TwoWay
 
 초안의 핵심 그대로, Avalonia는 `TextBox.Text` 바인딩이 **기본 TwoWay**이다. 명시적으로 `Mode=TwoWay`를 적어도 무방하다.
 
@@ -83,7 +83,7 @@ public class BindingViewModel : ReactiveObject
 
 ---
 
-## 4) 바인딩 모드/갱신 시점(중요)
+## 4. 바인딩 모드/갱신 시점(중요)
 
 Avalonia 바인딩은 **Mode**와 **UpdateSourceTrigger**로 동작 타이밍을 제어할 수 있다.
 
@@ -107,7 +107,7 @@ Avalonia 바인딩은 **Mode**와 **UpdateSourceTrigger**로 동작 타이밍을
 
 ---
 
-## 5) 값 변환/포맷: 숫자·소수점·문화권 처리
+## 5. 값 변환/포맷: 숫자·소수점·문화권 처리
 
 문자열 ↔ 숫자 변환, 소수점 자리 포맷 등은 변환기(`IValueConverter`)를 사용한다.
 
@@ -182,7 +182,7 @@ public sealed class DoubleFormatConverter : IValueConverter
 
 ---
 
-## 6) 검증(Validation): `IDataErrorInfo` / `INotifyDataErrorInfo`
+## 6. 검증(Validation): `IDataErrorInfo` / `INotifyDataErrorInfo`
 
 ### 6.1 간단: `IDataErrorInfo`
 
@@ -327,7 +327,7 @@ Avalonia는 바인딩 오류/검증 오류가 있을 때 컨트롤에 스타일�
 
 ---
 
-## 7) 입력 제어: 숫자 전용/마스킹/정규식
+## 7. 입력 제어: 숫자 전용/마스킹/정규식
 
 WPF의 `PreviewTextInput`와 유사하게 Avalonia도 입력 이벤트를 가로채어 제어할 수 있지만, **MVVM 순수성을 유지**하려면 “검증 + 시각적 피드백” 권장. 그래도 하드 제약이 필요하면 다음과 같이 **부작용 최소화**로 구현한다.
 
@@ -383,7 +383,7 @@ XAML:
 
 ---
 
-## 8) 디바운스(Throttle)로 실시간 입력 반응을 제어
+## 8. 디바운스(Throttle)로 실시간 입력 반응을 제어
 
 검색창처럼 입력이 자주 바뀌는 UI는 **디바운스**로 과도한 처리(네트워크/쿼리)를 줄인다.
 
@@ -451,7 +451,7 @@ public sealed class ThrottledSearchViewModel : ReactiveObject
 
 ---
 
-## 9) 단위 테스트(뷰 없이 ViewModel만)
+## 9. 단위 테스트(뷰 없이 ViewModel만)
 
 뷰 없이도 바인딩 로직(상태 변화)을 검증할 수 있다.
 
@@ -487,7 +487,7 @@ public class BindingTests
 
 ---
 
-## 10) 자주 겪는 문제와 해결책
+## 10. 자주 겪는 문제와 해결책
 
 - **바인딩이 안 먹는다**  
   네임스페이스(`using:`), 프로퍼티 이름 오타, `ReactiveObject` 상속/`RaiseAndSetIfChanged` 누락 여부 확인. 출력 창의 바인딩 오류 로그를 확인하자.
@@ -502,7 +502,7 @@ public class BindingTests
 
 ---
 
-## 11) 핵심 요약 표
+## 11. 핵심 요약 표
 
 | 주제 | 권장 패턴 |
 |------|-----------|
@@ -516,7 +516,7 @@ public class BindingTests
 
 ---
 
-## 12) 결론
+## 12. 결론
 
 본 글은 기본적인 **TextBox ⇄ ViewModel 양방향 바인딩**을 넘어, 실무에서 요구되는 **검증, 변환, 포맷, 디바운스, 입력 제어**까지 통합하는 방법을 다뤘다.  
 초안의 간결한 예제를 그대로 시작점으로 삼고, 여기서 소개한 확장 포인트를 상황에 맞게 조합하면 **견고하고 유연한 폼 입력 경험**을 만들 수 있다.

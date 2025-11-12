@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 시크릿 매니저(Secret Manager) 사용법
 
-## 1) Secret Manager란? — “개발 시 로컬에서 비밀을 소스코드 밖에 두는 도구”
+## 1. Secret Manager란? — “개발 시 로컬에서 비밀을 소스코드 밖에 두는 도구”
 
 - **목적**: 개발 환경에서 **민감 정보(API 키, DB 비밀번호 등)**를 `appsettings.json`에 넣지 않고, **개발자 로컬 프로필**에 따로 저장해 **버전관리(Git)에서 격리**.
 - **저장 방식**: 사용자 프로필 경로의 **JSON 파일**에 저장된다.  
@@ -24,7 +24,7 @@ category: AspNet
 
 ---
 
-## 2) 사용 전 준비
+## 2. 사용 전 준비
 
 - .NET SDK 설치
 - 프로젝트(`.csproj`)에 `UserSecretsId` 존재(없으면 `init`로 생성)
@@ -32,7 +32,7 @@ category: AspNet
 
 ---
 
-## 3) 프로젝트에 Secret Manager 활성화
+## 3. 프로젝트에 Secret Manager 활성화
 
 ```bash
 dotnet user-secrets init
@@ -51,7 +51,7 @@ dotnet user-secrets init
 
 ---
 
-## 4) 비밀 값 저장/조회/삭제 — CLI 실습
+## 4. 비밀 값 저장/조회/삭제 — CLI 실습
 
 ### 4.1 저장(Set)
 
@@ -96,7 +96,7 @@ dotnet user-secrets clear
 
 ---
 
-## 5) 코드에서 사용하기 — `IConfiguration`/Options 패턴
+## 5. 코드에서 사용하기 — `IConfiguration`/Options 패턴
 
 ### 5.1 기본: `IConfiguration`로 직접 읽기
 
@@ -135,7 +135,7 @@ app.Run();
 
 ---
 
-## 6) EF Core/DB 연결 문자열을 Secret로 관리
+## 6. EF Core/DB 연결 문자열을 Secret로 관리
 
 ### 6.1 CLI로 저장
 
@@ -162,7 +162,7 @@ dotnet run
 
 ---
 
-## 7) JWT/서드파티 키 — Secret + Swagger 연동까지
+## 7. JWT/서드파티 키 — Secret + Swagger 연동까지
 
 ### 7.1 시크릿 저장
 
@@ -206,7 +206,7 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 8) 우선순위/덮어쓰기 규칙 — Secret은 어디에 끼어드나?
+## 8. 우선순위/덮어쓰기 규칙 — Secret은 어디에 끼어드나?
 
 일반 템플릿의 구성 추가 순서 예(아래로 갈수록 우선순위 ↑):
 
@@ -221,7 +221,7 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 9) 멀티 프로젝트/솔루션/테스트에서의 사용
+## 9. 멀티 프로젝트/솔루션/테스트에서의 사용
 
 ### 9.1 여러 프로젝트가 같은 비밀을 공유해야 한다면?
 
@@ -249,7 +249,7 @@ public class TestFactory : WebApplicationFactory<Program>
 
 ---
 
-## 10) Docker/Kubernetes/CI-CD와 Secret Manager
+## 10. Docker/Kubernetes/CI-CD와 Secret Manager
 
 - Secret Manager는 **호스트(개발 PC) 사용자 프로필**에 저장되므로, **컨테이너 내부**에서는 접근 불가.
 - 컨테이너/클러스터 배포 시:
@@ -262,7 +262,7 @@ public class TestFactory : WebApplicationFactory<Program>
 
 ---
 
-## 11) 설정 진단 — 안전하게 값 확인하기
+## 11. 설정 진단 — 안전하게 값 확인하기
 
 실무 중 “왜 값이 안 들어오지?”를 빨리 확인하려면 **일부 키만 노출**하는 진단 엔드포인트를 만든다.
 
@@ -285,7 +285,7 @@ app.MapGet("/__cfg-check", (IConfiguration cfg) =>
 
 ---
 
-## 12) 자주 하는 실수 & 트러블슈팅
+## 12. 자주 하는 실수 & 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |------|------|------|
@@ -298,7 +298,7 @@ app.MapGet("/__cfg-check", (IConfiguration cfg) =>
 
 ---
 
-## 13) 시크릿 스키마를 Options로 강타입/검증
+## 13. 시크릿 스키마를 Options로 강타입/검증
 
 ```csharp
 public sealed class SmtpOptions
@@ -321,7 +321,7 @@ builder.Services.AddOptions<SmtpOptions>()
 
 ---
 
-## 14) 예제: Razor Pages 로그인용 쿠키 키/Anti-CSRF/외부 API 키
+## 14. 예제: Razor Pages 로그인용 쿠키 키/Anti-CSRF/외부 API 키
 
 ```bash
 dotnet user-secrets set "Auth:CookieName" ".MyApp.Auth"
@@ -352,7 +352,7 @@ builder.Services.AddHttpClient("openai", (sp, http) =>
 
 ---
 
-## 15) 실무 운영 전환(Production) 권장 패턴
+## 15. 실무 운영 전환(Production) 권장 패턴
 
 - **개발**: Secret Manager  
 - **스테이징/운영**:  
@@ -372,7 +372,7 @@ builder.Configuration.AddAzureKeyVault(
 
 ---
 
-## 16) 전체 샘플 — EF/JWT/SMTP/외부키를 Secret으로 관리
+## 16. 전체 샘플 — EF/JWT/SMTP/외부키를 Secret으로 관리
 
 ### 16.1 시크릿 넣기
 
@@ -441,7 +441,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 17) 보안 주의사항 — 핵심 요약
+## 17. 보안 주의사항 — 핵심 요약
 
 - Secret Manager는 **개발 전용**. 운영에서는 쓰지 않는다.
 - Secret 파일은 **암호화되어 있지 않다**. 사용자 프로필 권한 보호에 의존.
@@ -451,7 +451,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 18) 체크리스트
+## 18. 체크리스트
 
 - [ ] `.csproj`에 `UserSecretsId`가 있는가?
 - [ ] `ASPNETCORE_ENVIRONMENT=Development`인가(혹은 `AddUserSecrets` 수동 추가)?
@@ -461,7 +461,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 19) 요약
+## 19. 요약
 
 | 항목 | 내용 |
 |------|------|

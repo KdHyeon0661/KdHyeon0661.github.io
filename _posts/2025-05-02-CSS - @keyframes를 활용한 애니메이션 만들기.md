@@ -6,7 +6,7 @@ category: CSS
 ---
 # `@keyframes`로 만드는 CSS 애니메이션
 
-## 0) 애니메이션의 철학: 언제, 왜 쓰나
+## 0. 애니메이션의 철학: 언제, 왜 쓰나
 
 - **의미 있는 변화**만 애니메이션: 상태 전환, 피드백, 주의 환기, 정보 흐름 유도
 - **레이아웃 영향 최소화**: 가능하면 `transform`, `opacity` 중심(합성 단계)
@@ -15,7 +15,7 @@ category: CSS
 
 ---
 
-## 1) 기본 개념 & 문법
+## 1. 기본 개념 & 문법
 
 ```css
 @keyframes fade-up {
@@ -53,7 +53,7 @@ category: CSS
 
 ---
 
-## 2) 키프레임 정의 패턴
+## 2. 키프레임 정의 패턴
 
 ### 2.1 `%` vs `from`/`to`
 
@@ -87,7 +87,7 @@ category: CSS
 
 ---
 
-## 3) 타이밍 함수 깊게 보기
+## 3. 타이밍 함수 깊게 보기
 
 ### 3.1 `cubic-bezier` 사용자 곡선
 
@@ -112,7 +112,7 @@ category: CSS
 
 ---
 
-## 4) 반복/방향/채움/재생 상태
+## 4. 반복/방향/채움/재생 상태
 
 ```css
 .loader {
@@ -146,7 +146,7 @@ el.addEventListener('animationend', () => console.log('done'));
 
 ---
 
-## 5) 여러 애니메이션 결합(병렬·직렬)
+## 5. 여러 애니메이션 결합(병렬·직렬)
 
 ### 5.1 병렬(동시에)
 
@@ -183,7 +183,7 @@ el.addEventListener('animationend', () => console.log('done'));
 
 ---
 
-## 6) 실전 패턴 라이브러리
+## 6. 실전 패턴 라이브러리
 
 ### 6.1 로딩 스피너(경계선 회전)
 
@@ -331,7 +331,7 @@ el.addEventListener('animationend', () => console.log('done'));
 
 ---
 
-## 7) 상태 기계처럼 쓰기 — 클래스 전환 & 이벤트 훅
+## 7. 상태 기계처럼 쓰기 — 클래스 전환 & 이벤트 훅
 
 ```html
 <button id="save">저장</button>
@@ -360,7 +360,7 @@ document.getElementById('save').addEventListener('click', () => {
 
 ---
 
-## 8) 성능·접근성·호환성
+## 8. 성능·접근성·호환성
 
 ### 8.1 성능
 
@@ -387,7 +387,7 @@ document.getElementById('save').addEventListener('click', () => {
 
 ---
 
-## 9) 고급 주제
+## 9. 고급 주제
 
 ### 9.1 여러 이름/여러 값 매칭 규칙
 
@@ -435,7 +435,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 ---
 
-## 10) 데모 모음(복습)
+## 10. 데모 모음(복습)
 
 ### 10.1 “왼쪽 → 오른쪽” 이동 (초안 확장)
 
@@ -473,7 +473,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 ---
 
-## 11) 흔한 이슈와 해결
+## 11. 흔한 이슈와 해결
 
 | 이슈 | 설명 | 해결 |
 |---|---|---|
@@ -485,7 +485,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 ---
 
-## 12) 통합 예제 — 카드 리스트 등장 + Skeleton → 실제 콘텐츠 치환
+## 12. 통합 예제 — 카드 리스트 등장 + Skeleton → 실제 콘텐츠 치환
 
 ```html
 <section class="cards loading">

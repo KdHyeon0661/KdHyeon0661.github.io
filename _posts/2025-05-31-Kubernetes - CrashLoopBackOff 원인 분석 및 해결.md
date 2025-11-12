@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # CrashLoopBackOff 원인 분석 및 해결 방법
 
-## 1) CrashLoopBackOff란?
+## 1. CrashLoopBackOff란?
 
 - **Crash**: 컨테이너 프로세스(파드의 각 컨테이너 엔트리포인트)가 **비정상 종료(0이 아닌 코드)**.
 - **Loop**: kubelet이 재시작 정책에 따라 **반복 재기동**.
@@ -32,7 +32,7 @@ kubectl get pod myapp-abc123
 
 ---
 
-## 2) 첫 60초 진단 루틴(현장에서 바로 쓰는 순서)
+## 2. 첫 60초 진단 루틴(현장에서 바로 쓰는 순서)
 
 1. **상태 요약**
    ```bash
@@ -63,7 +63,7 @@ kubectl get pod myapp-abc123
 
 ---
 
-## 3) 원인 카테고리 맵(20가지)
+## 3. 원인 카테고리 맵(20가지)
 
 | 카테고리 | 대표 로그/증상 | 핵심 조치 |
 |---|---|---|
@@ -90,7 +90,7 @@ kubectl get pod myapp-abc123
 
 ---
 
-## 4) 케이스별 **로그→원인→수정 YAML** 레시피
+## 4. 케이스별 **로그→원인→수정 YAML** 레시피
 
 ### 4.1 잘못된 엔트리포인트
 
@@ -323,7 +323,7 @@ bind: address already in use
 
 ---
 
-## 5) 관찰 아키텍처(무엇을 봐야 하나?)
+## 5. 관찰 아키텍처(무엇을 봐야 하나?)
 
 - **컨테이너 로그**: `--previous` 포함
 - **Probe 결과**: `describe`의 `Liveness/Readiness` 실패 카운트
@@ -334,7 +334,7 @@ bind: address already in use
 
 ---
 
-## 6) 디버그 기법 모음
+## 6. 디버그 기법 모음
 
 ### 6.1 빠르게 “살려서” 들여다보기
 
@@ -363,7 +363,7 @@ terminationMessagePolicy: FallbackToLogsOnError
 
 ---
 
-## 7) 프로브 설계 모범사례
+## 7. 프로브 설계 모범사례
 
 - **`startupProbe` 먼저**: 부팅이 긴 앱(언어 런타임/캐시 예열/마이그) → liveness 발동 지연
 - **`livenessProbe`는 “자체 복구 불가능” 상태만**: 단순 의존성 장애는 **프로세스 kill보다 재시도**가 낫다.
@@ -393,7 +393,7 @@ readinessProbe:
 
 ---
 
-## 8) 리소스 튜닝(Throttle·OOM을 Crash로 오인하지 않기)
+## 8. 리소스 튜닝(Throttle·OOM을 Crash로 오인하지 않기)
 
 - **CPU**: 과도한 throttling은 **느린 시작 → liveness 실패**를 유발
   - 해결: `requests.cpu`를 **현실적**으로 상향, `limits.cpu`를 너무 낮추지 않기
@@ -408,7 +408,7 @@ resources:
 
 ---
 
-## 9) 배포/롤백 연계(무한 Crash 차단)
+## 9. 배포/롤백 연계(무한 Crash 차단)
 
 - **Deployment 진행 중 Crash**는 **롤링**이 멈추거나 느려짐 → `kubectl rollout status`로 감시
 - **빠른 철회**
@@ -419,7 +419,7 @@ resources:
 
 ---
 
-## 10) 운영 체크리스트 (변경 전/후)
+## 10. 운영 체크리스트 (변경 전/후)
 
 **변경 전**
 - [ ] 프로브 경로를 **로컬에서 검증** (`port-forward` → `curl`)
@@ -436,7 +436,7 @@ resources:
 
 ---
 
-## 11) 재현 가능한 **미니 워크로드** (연습 용)
+## 11. 재현 가능한 **미니 워크로드** (연습 용)
 
 ### 11.1 의도적 Crash(명령 오류)
 
@@ -491,7 +491,7 @@ spec:
 
 ---
 
-## 12) FAQ
+## 12. FAQ
 
 **Q1. `ImagePullBackOff`와 다른가요?**  
 A. 예. 이는 **이미지 풀 실패** 상태이며, 애초에 컨테이너가 시작되지 않습니다. CrashLoopBackOff는 **시작 후 크래시**.
@@ -508,7 +508,7 @@ A. `containerStatuses`에서 문제 컨테이너만 골라 로그/상태 확인,
 
 ---
 
-## 13) 요약(한 장)
+## 13. 요약(한 장)
 
 - CrashLoopBackOff는 **“시작은 했으나 곧 죽고, 지수 백오프로 재시작”** 상태.
 - 60초 루틴: `describe` → `logs --previous` → `events` → 필요 시 `debug`/`startupProbe`.

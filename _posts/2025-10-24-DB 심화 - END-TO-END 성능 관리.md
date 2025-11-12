@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # END-TO-END 성능 관리(End-to-End Performance Management)
 
-## 0) 큰 그림: E2E 성능 관리가 **왜** 어렵나?
+## 0. 큰 그림: E2E 성능 관리가 **왜** 어렵나?
 - 성능은 **단일 지점**이 아니라 **연쇄 경로**의 함수:  
   **Client(브라우저/앱)** → **CDN/Edge** → **API Gateway/LB** → **Microservices** → **DB/Cache/Queue** → **Storage**.  
 - 한 구간의 지연이 전체를 지배(병목), 또한 **부하·분산·키 분포**에 따라 병목 위치가 바뀐다.  
@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 1) 성능 목표 설계: **SLI/SLO/SLA** + **성능 예산**
+## 1. 성능 목표 설계: **SLI/SLO/SLA** + **성능 예산**
 
 ### 1.1 SLI/SLO 정의
 - **SLI(Service Level Indicator)**: 측정 가능한 품질 지표(예: `/search` **p95 응답시간**, 성공률).  
@@ -43,7 +43,7 @@ category: DB 심화
 
 ---
 
-## 2) 이론 감각(필수 최소치)
+## 2. 이론 감각(필수 최소치)
 
 ### 2.1 리틀의 법칙
 $$ L = \lambda \times W $$
@@ -64,7 +64,7 @@ $$ T_{\text{db}} = T_{\text{CPU}} + \sum_k T_{\text{wait},k} $$
 
 ---
 
-## 3) 계측 전략: **Trace/Metric/Log** 삼각 관측
+## 3. 계측 전략: **Trace/Metric/Log** 삼각 관측
 
 ### 3.1 상관키(Correlation ID) 설계
 - **W3C Trace Context**: `traceparent`, `tracestate` 헤더를 전 구간 전파  
@@ -117,7 +117,7 @@ try (Connection c = ds.getConnection()) {
 
 ---
 
-## 4) E2E 대시보드(필수 위젯)
+## 4. E2E 대시보드(필수 위젯)
 1. **요청 지연**: p50/p90/p99, 루트 경로/서비스별  
 2. **오류율**: HTTP 5xx/4xx  
 3. **스루풋**: RPS, 동시세션/큐 길이  
@@ -128,7 +128,7 @@ try (Connection c = ds.getConnection()) {
 
 ---
 
-## 5) 성능 테스트 체계(자동화 관점)
+## 5. 성능 테스트 체계(자동화 관점)
 
 ### 5.1 타입
 - **Smoke/샘플**: 회귀 빠른 감지  
@@ -163,7 +163,7 @@ export default function () {
 
 ---
 
-## 6) 엔드투엔드 병목 해부: **계층별 진단→처방**
+## 6. 엔드투엔드 병목 해부: **계층별 진단→처방**
 
 ### 6.1 클라이언트/브라우저
 - **RUM(Real User Monitoring)**: FCP/LCP/INP/CLS, 네트워크 유형(3G/4G/Wi-Fi)  
@@ -197,7 +197,7 @@ export default function () {
 
 ---
 
-## 7) **Oracle 연동 심화**: 요청→세션→SQL→라인까지 **한 줄로**
+## 7. **Oracle 연동 심화**: 요청→세션→SQL→라인까지 **한 줄로**
 
 ### 7.1 요청-단위 태깅(모듈/액션/클라이언트)
 ```sql
@@ -246,7 +246,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(:sql_id, NULL,
 
 ---
 
-## 8) 알람 설계(잡음 억제 + 빠른 탐지)
+## 8. 알람 설계(잡음 억제 + 빠른 탐지)
 
 ### 8.1 임계치
 - API 별 **p95 응답**: 예산 초과 **3분 연속** 시 경보  
@@ -259,7 +259,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(:sql_id, NULL,
 
 ---
 
-## 9) 변화 관리: 성능 회귀를 막는 **게이트**
+## 9. 변화 관리: 성능 회귀를 막는 **게이트**
 
 ### 9.1 CI에서 성능 테스트 게이트
 - 가벼운 **k6 smoke**: p95 예산 초과/오류율 초과 시 **PR 실패**  
@@ -270,7 +270,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(:sql_id, NULL,
 
 ---
 
-## 10) 운영 레시피(자주 겪는 상황 4선)
+## 10. 운영 레시피(자주 겪는 상황 4선)
 
 ### 10.1 월말 리포트 느림(정렬 스필 급증)
 - **징후**: p95 ↑, DB AWR에서 `direct path read temp` 상위  
@@ -294,7 +294,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(:sql_id, NULL,
 
 ---
 
-## 11) 표준 스크립트 모음(복붙)
+## 11. 표준 스크립트 모음(복붙)
 
 ### 11.1 최근 15분 E2E 프로파일(서비스/모듈 기준)
 ```sql
@@ -350,14 +350,14 @@ FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 12) 보안/개인정보 & 비용 고려
+## 12. 보안/개인정보 & 비용 고려
 - **클라이언트 식별자/로그**에 PII 포함 시 **마스킹/보존주기/접근권한** 정책 필수.  
 - **진단팩 라이선스** 준수(ASH/AWR/ADDM/Real-Time SQL Monitor 등).  
 - 과도한 고해상도 추적은 **스토리지/쿼리 비용** 폭증 → **샘플링/요약** 전략 설계.
 
 ---
 
-## 13) 체크리스트(요약)
+## 13. 체크리스트(요약)
 
 1) **SLO**를 먼저 쓰고, **성능 예산**으로 나눈다.  
 2) **Trace Context**와 **Oracle 세션 태깅**으로 호출을 **끝까지 관통**시킨다.  
@@ -368,7 +368,7 @@ FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 14) 결론
+## 14. 결론
 엔드투엔드 성능 관리는 **측정되지 않으면 존재하지 않는다**는 명제를 전제로,  
 **SLI/SLO-예산 → 계측(Trace/Metric/Log) → 분해(RTA) → 상관(Trace↔DB) → 처방 → 재검증**의 루프를 자동화하는 일이다.  
 **Oracle** 계층은 `DBMS_APPLICATION_INFO + AWR/ASH/DBMS_XPLAN`으로 **서비스 호출-단위**로 정밀하게 닫을 수 있다.  

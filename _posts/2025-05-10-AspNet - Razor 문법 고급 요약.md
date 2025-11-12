@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Razor 문법 **고급편**
 
-## 0) 전략 요약 — 언제 **무엇**을 쓰나?
+## 0. 전략 요약 — 언제 **무엇**을 쓰나?
 
 | 상황 | 권장 도구 | 이유 |
 |---|---|---|
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 1) View 내부 **Custom Helper** (경량/한 파일 한정)
+## 1. View 내부 **Custom Helper** (경량/한 파일 한정)
 
 ### 1.1 `@functions`로 간단 헬퍼
 ```razor
@@ -43,7 +43,7 @@ category: AspNet
 
 ---
 
-## 2) 재사용을 **전역화**: HtmlHelper 확장 메서드
+## 2. 재사용을 **전역화**: HtmlHelper 확장 메서드
 
 ### 2.1 `IHtmlHelper` 확장 (전역 재사용)
 ```csharp
@@ -79,7 +79,7 @@ public static class HtmlHelperExtensions
 
 ---
 
-## 3) **Partial View** — 뷰 조각 재사용
+## 3. **Partial View** — 뷰 조각 재사용
 
 ### 3.1 기본
 ```razor
@@ -110,7 +110,7 @@ public static class HtmlHelperExtensions
 
 ---
 
-## 4) **ViewComponent** — DI·로직·테스트 가능한 컴포넌트
+## 4. **ViewComponent** — DI·로직·테스트 가능한 컴포넌트
 
 ### 4.1 예제: 장바구니 요약
 ```csharp
@@ -149,7 +149,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 5) **Custom Tag Helper** — HTML 친화 DSL
+## 5. **Custom Tag Helper** — HTML 친화 DSL
 
 > 속성/마크업 레벨에서 재사용/규칙을 강제하고 싶을 때.
 
@@ -223,7 +223,7 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 6) 조건부 HTML 생성 — 깨끗한 패턴
+## 6. 조건부 HTML 생성 — 깨끗한 패턴
 
 ### 6.1 클래스/속성 조건
 ```razor
@@ -258,7 +258,7 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 7) 성능 & 보안 **핵심 체크리스트**
+## 7. 성능 & 보안 **핵심 체크리스트**
 
 ### 7.1 성능
 - **부분 뷰 남발** 주의: 큰 루프 내부의 Partial 렌더링은 비용↑ → ViewComponent/Batch 처리/캐시 고려.
@@ -273,7 +273,7 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 8) 테스트 전략 (단위/통합)
+## 8. 테스트 전략 (단위/통합)
 
 ### 8.1 ViewComponent 단위 테스트
 ```csharp
@@ -303,7 +303,7 @@ public class CartSummaryViewComponentTests
 
 ---
 
-## 9) 국제화(Localization)와 조합
+## 9. 국제화(Localization)와 조합
 
 ### 9.1 IStringLocalizer 헬퍼화
 ```csharp
@@ -323,7 +323,7 @@ public static class HtmlL10nExtensions
 
 ---
 
-## 10) 예제 — “조건부 뱃지 · 카드 · 구매 버튼” 컴포넌트 풀셋
+## 10. 예제 — “조건부 뱃지 · 카드 · 구매 버튼” 컴포넌트 풀셋
 
 ### 10.1 HtmlHelper 확장(통화/뱃지)
 ```csharp
@@ -418,7 +418,7 @@ public class ProductCardVM
 
 ---
 
-## 11) 폼/검증 고급 — 동적 필드 표시, 부분 유효성
+## 11. 폼/검증 고급 — 동적 필드 표시, 부분 유효성
 
 ### 11.1 조건부 입력 필드
 ```razor
@@ -438,14 +438,14 @@ public class ProductCardVM
 
 ---
 
-## 12) 응답 조각 **캐싱**(성능)
+## 12. 응답 조각 **캐싱**(성능)
 
 - Output Caching(.NET 8+) 또는 Response Caching으로 **ViewComponent/Partial** 결과를 캐시.
 - **키 전략**(언어, 인증, 쿼리)에 유의.
 
 ---
 
-## 13) 디자이너/퍼블리셔 협업 팁
+## 13. 디자이너/퍼블리셔 협업 팁
 
 - **Tag Helper**로 “디자인 규칙”을 코드화 → 마크업을 선언적으로.
 - `_ViewImports.cshtml`에 디자이너가 쓸 네임스페이스·TagHelper만 노출.
@@ -453,7 +453,7 @@ public class ProductCardVM
 
 ---
 
-## 14) 안티패턴 🚫
+## 14. 안티패턴 🚫
 
 - **`Html.Raw` 남용**: 사용자 입력 포함시 XSS 위험.
 - **루프 안에서 DB 호출**: 데이터는 컨트롤러/VC에서 **미리 수집**.
@@ -462,7 +462,7 @@ public class ProductCardVM
 
 ---
 
-## 15) 요약
+## 15. 요약
 
 | 주제 | 한 줄 가이드 |
 |---|---|

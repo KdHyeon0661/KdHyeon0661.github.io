@@ -152,13 +152,13 @@ kubectl get events --sort-by=.lastTimestamp
 
 ## 생성 — Imperative vs Declarative
 
-### 1) Imperative(즉석)
+### 1. Imperative(즉석)
 ```bash
 kubectl create deployment web --image=nginx:1.27-alpine
 kubectl expose deployment web --port=80 --type=ClusterIP
 ```
 
-### 2) Declarative(YAML)
+### 2. Declarative(YAML)
 ```yaml
 # web-deploy.yaml
 apiVersion: apps/v1
@@ -292,14 +292,14 @@ kubectl uncordon <NODE>
 
 ## 컨텍스트별 빠른 실습(요약)
 
-### 1) Nginx 배포 & NodePort 노출
+### 1. Nginx 배포 & NodePort 노출
 ```bash
 kubectl create deployment nginx --image=nginx
 kubectl expose deployment nginx --type=NodePort --port=80
 kubectl get svc nginx -o wide
 ```
 
-### 2) Health Probe 추가(선언형)
+### 2. Health Probe 추가(선언형)
 ```yaml
 # patch-probe.yaml
 apiVersion: apps/v1

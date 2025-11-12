@@ -11,7 +11,7 @@ category: MFC
 
 ---
 
-## 0) 큰 그림: 왜 Doc/View인가?
+## 0. 큰 그림: 왜 Doc/View인가?
 
 - **분리(Separation of Concerns)**
   - **`CDocument`**: 데이터·모델(파일 로드/저장, 직렬화, 변경 여부, 뷰에 방송)
@@ -24,7 +24,7 @@ category: MFC
 
 ---
 
-## 1) 핵심 클래스의 역할과 경계
+## 1. 핵심 클래스의 역할과 경계
 
 ### 1-1. `CDocument` (모델)
 - **데이터 보유** 및 **직렬화**
@@ -119,7 +119,7 @@ public:
 
 ---
 
-## 2) DocTemplate: 문서-프레임-뷰를 연결하는 허브
+## 2. DocTemplate: 문서-프레임-뷰를 연결하는 허브
 
 ### 2-1. 역할
 - **런타임 클래스 3종**(Doc/Frame/View) 연결
@@ -176,7 +176,7 @@ m_pMainWnd = pMainFrame;
 
 ---
 
-## 3) 수명 주기: 생성·열기·저장·닫기
+## 3. 수명 주기: 생성·열기·저장·닫기
 
 ### 3-1. 새 문서(SDI 기본 흐름)
 1) `InitInstance` → DocTemplate 등록  
@@ -198,7 +198,7 @@ m_pMainWnd = pMainFrame;
 
 ---
 
-## 4) 명령/업데이트 라우팅 (핵심)
+## 4. 명령/업데이트 라우팅 (핵심)
 
 ### 4-1. 검색 순서
 
@@ -242,7 +242,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 5) 멀티 뷰/스플리터/Hint 패턴
+## 5. 멀티 뷰/스플리터/Hint 패턴
 
 ### 5-1. 한 문서—여러 뷰
 - `UpdateAllViews`로 **방송**
@@ -305,7 +305,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT, CCreateContext* pCC)
 
 ---
 
-## 6) 프린팅 파이프라인 (요약 & 연결)
+## 6. 프린팅 파이프라인 (요약 & 연결)
 
 1) `CView::OnPreparePrinting` → 페이지 수 계산  
 2) `OnBeginPrinting` → 폰트/펜/브러시  
@@ -317,7 +317,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT, CCreateContext* pCC)
 
 ---
 
-## 7) MDI 전용 이슈(SDI와 다른 지점)
+## 7. MDI 전용 이슈(SDI와 다른 지점)
 
 - **Child Frame**: 문서마다 독립 창 (`CMDIChildWndEx`)  
 - **명령/업데이트 기준**: **활성 Child**의 뷰/문서가 우선  
@@ -336,7 +336,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 8) 명령 설계 베스트 프랙티스
+## 8. 명령 설계 베스트 프랙티스
 
 1. **데이터 변경 명령**은 **문서**에, **표시/선택/도구 명령**은 **뷰**에
 2. **ON_UPDATE_COMMAND_UI**는 빠르게: 상태 비트/캐시 읽기만
@@ -347,7 +347,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 9) 문제 해결 가이드
+## 9. 문제 해결 가이드
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -359,7 +359,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 10) SDI vs MDI 선택 가이드
+## 10. SDI vs MDI 선택 가이드
 
 | 항목 | SDI | MDI |
 |---|---|---|
@@ -371,7 +371,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 11) 한 장으로 보는 전체 시퀀스
+## 11. 한 장으로 보는 전체 시퀀스
 
 ```
 [사용자] --(ID_FILE_OPEN)--> [App]
@@ -389,7 +389,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 12) 실무용 코드 모음 (스니펫)
+## 12. 실무용 코드 모음 (스니펫)
 
 ### 12-1. 문서→뷰 방송(선택 변경 힌트)
 
@@ -437,7 +437,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 13) 체크리스트 (요약)
+## 13. 체크리스트 (요약)
 
 - [ ] Doc/View/Frame **역할 분리**가 명확한가  
 - [ ] **DocTemplate** 등록/DocString 구성 적절한가  

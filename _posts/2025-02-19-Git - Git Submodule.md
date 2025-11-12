@@ -6,7 +6,7 @@ category: Git
 ---
 # Git Submodule
 
-## 0) 서브모듈 한 줄 요약
+## 0. 서브모듈 한 줄 요약
 
 - **서브모듈(Submodule)** = 상위 리포 안에서 **별도 Git 리포를 디렉터리로 연결**하는 링크.  
 - 상위 리포는 **서브모듈의 “커밋 해시(정확한 한 점)”만 기록**한다.  
@@ -15,7 +15,7 @@ category: Git
 
 ---
 
-## 1) 언제 서브모듈을 선택할까?
+## 1. 언제 서브모듈을 선택할까?
 
 - 여러 프로젝트가 공유하는 **내부 공용 라이브러리**를 모듈화하여 **독립적 릴리스/권한**을 유지하고 싶은 경우
 - **외부 오픈소스**를 특정 커밋에 고정하여 재현성을 극대화하고 싶은 경우
@@ -25,7 +25,7 @@ category: Git
 
 ---
 
-## 2) 기본 사용 — 추가→커밋→클론/초기화→업데이트
+## 2. 기본 사용 — 추가→커밋→클론/초기화→업데이트
 
 ### 2.1 서브모듈 추가
 
@@ -80,7 +80,7 @@ git submodule update --init --recursive
 
 ---
 
-## 3) 내부 구조와 사고방식
+## 3. 내부 구조와 사고방식
 
 - 상위 리포는 서브모듈 디렉터리를 **Git 트리에서 “링크(특별한 엔트리)”**로 보유하고, 해당 링크가 **특정 커밋 해시**를 참조한다.
 - 상위 리포의 커밋에는 “서브모듈 디렉터리 → 커밋 해시” 매핑이 포함된다.
@@ -97,20 +97,20 @@ $$
 
 ---
 
-## 4) 서브모듈 “버전 업(핀 이동)” 표준 절차
+## 4. 서브모듈 “버전 업(핀 이동)” 표준 절차
 
 상위 리포에서 서브모듈을 최신으로 끌어올리고 싶을 때:
 
 ```bash
-# 1) 서브모듈 디렉터리로 진입
+# 1. 서브모듈 디렉터리로 진입
 cd libs/common-ui
 
-# 2) 원하는 기준으로 업데이트 (브랜치 최신, 특정 태그 등)
+# 2. 원하는 기준으로 업데이트 (브랜치 최신, 특정 태그 등)
 git fetch origin
 git checkout main
 git pull origin main
 
-# 3) 상위로 돌아와 "핀 이동" 커밋
+# 3. 상위로 돌아와 "핀 이동" 커밋
 cd ../..
 git add libs/common-ui       # 서브모듈 디렉터리의 pointer 변경을 stage
 git commit -m "Bump common-ui to <new-commit>"
@@ -121,7 +121,7 @@ git push
 
 ---
 
-## 5) `.gitmodules` 고급 설정 — 브랜치 추적/업데이트 정책/깊은 클론
+## 5. `.gitmodules` 고급 설정 — 브랜치 추적/업데이트 정책/깊은 클론
 
 ```ini
 [submodule "libs/common-ui"]
@@ -152,7 +152,7 @@ git commit -m "Track common-ui to latest main"
 
 ---
 
-## 6) 팀 협업 관점의 워크플로
+## 6. 팀 협업 관점의 워크플로
 
 ### 6.1 PR 흐름(상위에만 변경)
 1. 기여자는 상위 리포에서 서브모듈 **포인터만** 변경해 PR 생성.
@@ -167,7 +167,7 @@ git commit -m "Track common-ui to latest main"
 
 ---
 
-## 7) CI/CD — GitHub Actions 예제
+## 7. CI/CD — GitHub Actions 예제
 
 ### 7.1 기본(재귀 체크아웃)
 
@@ -215,7 +215,7 @@ jobs:
 
 ---
 
-## 8) 권한/토큰/프라이빗 서브모듈
+## 8. 권한/토큰/프라이빗 서브모듈
 
 - **프라이빗 서브모듈**은 체크아웃 시 **개별 인증**이 필요하다.
 - GitHub Actions의 경우 **동일 Org 프라이빗 서브모듈**은 `actions/checkout@v4`가 **GITHUB_TOKEN**으로 처리 가능(리포 권한 설정 필요).
@@ -229,13 +229,13 @@ jobs:
 
 ---
 
-## 9) 서브모듈 삭제/경로 변경/URL 변경
+## 9. 서브모듈 삭제/경로 변경/URL 변경
 
 ### 9.1 삭제(정식 절차)
 
 ```bash
-# 1) .gitmodules에서 항목 제거
-# 2) .git/config에서 submodule.<path> 섹션 제거 (자동 동기화 가능)
+# 1. .gitmodules에서 항목 제거
+# 2. .git/config에서 submodule.<path> 섹션 제거 (자동 동기화 가능)
 git submodule deinit -f libs/common-ui
 git rm -f libs/common-ui
 rm -rf .git/modules/libs/common-ui
@@ -266,7 +266,7 @@ git commit -m "Point submodule to new remote"
 
 ---
 
-## 10) 자주 쓰는 명령어 모음(치트시트)
+## 10. 자주 쓰는 명령어 모음(치트시트)
 
 ```bash
 # 상태/초기화/업데이트
@@ -295,7 +295,7 @@ git submodule sync --recursive
 
 ---
 
-## 11) 중첩 서브모듈(Nested Submodules)과 모노레포
+## 11. 중첩 서브모듈(Nested Submodules)과 모노레포
 
 - **중첩 구조**: A(상위) → B(서브모듈) → C(서브모듈).  
   `--recursive` 옵션으로 한 번에 초기화/업데이트 가능하나, 권한/토큰/네트워크 비용이 누적된다.
@@ -304,7 +304,7 @@ git submodule sync --recursive
 
 ---
 
-## 12) 서브모듈 트러블슈팅
+## 12. 서브모듈 트러블슈팅
 
 ### 12.1 “서브모듈 디렉토리가 비어 보임”
 - 초기화/업데이트 안 한 상태.  
@@ -333,7 +333,7 @@ git submodule sync --recursive
 
 ---
 
-## 13) 서브모듈 vs 서브트리(Subtree) — 실전 비교
+## 13. 서브모듈 vs 서브트리(Subtree) — 실전 비교
 
 | 항목 | Submodule | Subtree |
 |---|---|---|
@@ -349,7 +349,7 @@ git submodule sync --recursive
 
 ---
 
-## 14) 시나리오 예제
+## 14. 시나리오 예제
 
 ### 14.1 공통 UI 라이브러리를 여러 서비스가 공용 사용
 
@@ -414,7 +414,7 @@ git commit -m "Track common-ui: update to latest main"
 
 ---
 
-## 15) 성능/안정성 최적화
+## 15. 성능/안정성 최적화
 
 - 서브모듈 수를 신중히 제한(네트워크/CI 비용 선형 증가).
 - **얕은 클론(shallow)** + **부분 초기화**로 필요한 것만 받는다.
@@ -423,7 +423,7 @@ git commit -m "Track common-ui: update to latest main"
 
 ---
 
-## 16) 전체 흐름 명령 요약(한 컷)
+## 16. 전체 흐름 명령 요약(한 컷)
 
 ```bash
 # 추가
@@ -459,7 +459,7 @@ git submodule sync --recursive
 
 ---
 
-## 17) 자주 묻는 질문(FAQ)
+## 17. 자주 묻는 질문(FAQ)
 
 **Q1. 서브모듈이 왜 “브랜치”가 아니라 “커밋”을 가리키나요?**  
 A. 상위 리포의 재현성을 보장하려면 “시간에 따라 움직이지 않는 한 점”이 필요하기 때문이다. 브랜치를 추적하고 싶다면 `.gitmodules`의 `branch` + `update --remote`를 활용하되, **결국 상위에서 다시 커밋**해야 고정점이 바뀐다.
@@ -472,7 +472,7 @@ A. 가능하면 패키지 매니저를 권장한다. 서브모듈은 “소스 �
 
 ---
 
-## 18) 결론
+## 18. 결론
 
 - 서브모듈은 **정밀한 고정/경계/권한 분리**에 매우 강력하지만, **명시적 관리 비용**이 따른다.
 - 팀에서는 **온보딩 문서·CI 체크아웃 설정·포인터 업데이트 절차**를 표준화하여 “서브모듈이 어렵다”는 인식을 없애자.

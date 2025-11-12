@@ -6,7 +6,7 @@ category: Docker
 ---
 # `docker exec` vs `docker attach`
 
-## 0) 한눈에 비교(정밀 보강판)
+## 0. 한눈에 비교(정밀 보강판)
 
 | 구분 | `docker exec` | `docker attach` |
 |---|---|---|
@@ -23,7 +23,7 @@ category: Docker
 
 ---
 
-## 1) 멘탈 모델: 무엇이 어디에 붙는가?
+## 1. 멘탈 모델: 무엇이 어디에 붙는가?
 
 ### 1.1 `docker exec` — 새 프로세스 스폰
 ```
@@ -42,7 +42,7 @@ category: Docker
 
 ---
 
-## 2) 실전 사용 패턴
+## 2. 실전 사용 패턴
 
 ### 2.1 셸 진입/디버깅(권장: exec)
 ```bash
@@ -71,7 +71,7 @@ docker logs --since=10m web
 
 ---
 
-## 3) 옵션·TTY·STDIN 핵심
+## 3. 옵션·TTY·STDIN 핵심
 
 ### 3.1 `-i` / `-t` 의미
 - `-i`(interactive): **STDIN을 열어둠**(입력 전송 가능)
@@ -89,7 +89,7 @@ docker exec -i web sh -lc 'cat -v' # stdin만 필요, tty 불필요
 
 ---
 
-## 4) 신호(signals)와 PID 1
+## 4. 신호(signals)와 PID 1
 
 ### 4.1 stop vs kill
 ```bash
@@ -114,7 +114,7 @@ CMD ["-w","2","-b","0.0.0.0:8080","app:app"]
 
 ---
 
-## 5) 안전 분리(detach)와 키 커스텀
+## 5. 안전 분리(detach)와 키 커스텀
 
 ### 5.1 기본 분리 키
 - `attach`에서 **분리(detach)**: `Ctrl + P` → `Ctrl + Q`
@@ -131,7 +131,7 @@ CMD ["-w","2","-b","0.0.0.0:8080","app:app"]
 
 ---
 
-## 6) 다중 attach와 출력 섞임
+## 6. 다중 attach와 출력 섞임
 
 - **여러 터미널에서 동시에 attach 가능**합니다.  
 - 단, **모두가 같은 STDIN/STDOUT**을 공유하므로 입력이 충돌하고 출력이 섞입니다.
@@ -139,7 +139,7 @@ CMD ["-w","2","-b","0.0.0.0:8080","app:app"]
 
 ---
 
-## 7) 보안·권한·감사 포인트
+## 7. 보안·권한·감사 포인트
 
 ### 7.1 최소 권한 원칙
 ```bash
@@ -162,7 +162,7 @@ docker run --rm \
 
 ---
 
-## 8) 문제 해결(attach/exec 관련)
+## 8. 문제 해결(attach/exec 관련)
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -175,7 +175,7 @@ docker run --rm \
 
 ---
 
-## 9) 상황별 레시피
+## 9. 상황별 레시피
 
 ### 9.1 “서비스는 계속, 내부만 보고 싶다”
 ```bash
@@ -205,7 +205,7 @@ docker attach --sig-proxy=true web    # 기본값, PID 1에게 신호 전달
 
 ---
 
-## 10) 케이스 스터디
+## 10. 케이스 스터디
 
 ### 10.1 Nginx 컨테이너
 ```bash
@@ -225,14 +225,14 @@ docker attach lab
 
 ---
 
-## 11) 고급: nsenter와의 비교(참고)
+## 11. 고급: nsenter와의 비교(참고)
 
 - `nsenter`는 **호스트에서 컨테이너 네임스페이스**에 진입(별도 런타임 경유 X).  
 - Docker 표준 사용성/이식성은 `docker exec`이 우수. `nsenter`는 낮은 레벨의 리눅스 운영/디버깅에 적합.
 
 ---
 
-## 12) 치트시트
+## 12. 치트시트
 
 ```bash
 # 셸 진입(권장)
@@ -258,7 +258,7 @@ docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
 
 ---
 
-## 13) 결론 요약
+## 13. 결론 요약
 
 - **운영/디버깅 표준**은 `docker exec` 입니다. 안전하고, 컨테이너 수명에 **영향 최소**.  
 - `docker attach`는 **PID 1 IO에 직결**되어 위험(종료·입력 충돌·로그 오염). 꼭 필요할 때만, **detach 키** 숙지.  

@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 15. Service Worker 남용 / 캐시 포이즈닝
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **문제(요약)**  
   - 악성 SW가 등록되면 **해당 스코프의 모든 요청**을 가로채서 **변조/유출/캐시 포이즈닝**을 할 수 있음.  
@@ -20,7 +20,7 @@ category: 웹해킹
 
 ---
 
-# 1) 배경 — SW가 “오프라인 프록시”인 이유
+# 1. 배경 — SW가 “오프라인 프록시”인 이유
 
 - **핵심 API**: `self.addEventListener('fetch', ...)` 에서 **모든 네트워크 요청**을 가로채 **임의 응답** 가능.  
 - **지속성**: 등록되면 브라우저 저장소(서비스워커·CacheStorage)에 남음 → **로그아웃/쿠키 삭제와 무관**.  
@@ -28,7 +28,7 @@ category: 웹해킹
 
 ---
 
-# 2) 대표 위험 시나리오
+# 2. 대표 위험 시나리오
 
 ## 2.1 “루트 스코프” 과도 제어
 ```js
@@ -52,7 +52,7 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' });
 
 ---
 
-# 3) “안전 재현” 점검(스테이징) — **막혀야 정상 ✅**
+# 3. “안전 재현” 점검(스테이징) — **막혀야 정상 ✅**
 
 1) **루트 스코프 등록 거절**  
    ```js
@@ -74,7 +74,7 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' });
 
 ---
 
-# 4) 클라이언트(앱) — 안전한 등록/해제 패턴
+# 4. 클라이언트(앱) — 안전한 등록/해제 패턴
 
 ## 4.1 등록 시 스코프 최소화 + 출처 고정
 ```js
@@ -128,7 +128,7 @@ async function unregisterAllSW() {
 
 ---
 
-# 5) 서버 — “등록 경로 보호” 헤더/서빙
+# 5. 서버 — “등록 경로 보호” 헤더/서빙
 
 ## 5.1 Nginx (정적 sw.js 전용, 안전 헤더)
 ```nginx
@@ -164,7 +164,7 @@ app.get('/app/sw.js', (req,res)=>{
 
 ---
 
-# 6) Service Worker 내부 — **안전한 fetch/캐시** 구현
+# 6. Service Worker 내부 — **안전한 fetch/캐시** 구현
 
 ## 6.1 기본 골격(스코프 한정·무분별 차단)
 ```js
@@ -267,7 +267,7 @@ self.addEventListener('message', (event) => {
 
 ---
 
-# 7) SRI와의 결합 — **강한 무결성**
+# 7. SRI와의 결합 — **강한 무결성**
 
 - **SRI(Subresource Integrity)**는 `<script src="...">`, `<link rel="stylesheet">`에 대해 **해시 검증**을 수행합니다.  
 - SW가 제공하는 정적 자산에도 SRI를 걸어두면, **SW가 변조된 파일을 서빙해도 브라우저 로드가 실패** → **알림/롤백**.
@@ -284,7 +284,7 @@ self.addEventListener('message', (event) => {
 
 ---
 
-# 8) “스코프 제한”과 `Service-Worker-Allowed` 주의
+# 8. “스코프 제한”과 `Service-Worker-Allowed` 주의
 
 - 기본적으로 **`/app/sw.js` → `/app/` 이하만** 제어.  
 - `Service-Worker-Allowed: /`를 설정하면 **루트까지 확장**됩니다(❌ 가급적 금지).  
@@ -297,7 +297,7 @@ add_header Service-Worker-Allowed "/app/" always;
 
 ---
 
-# 9) 구역 분리 — 사용자 콘텐츠/관리자/정적
+# 9. 구역 분리 — 사용자 콘텐츠/관리자/정적
 
 - **사용자 생성 콘텐츠(UGC)**는 **별도 서브도메인**(예: `cdn-user.example.com`)에 격리하고,  
   그 도메인에는 **SW 등록 자체 금지**(페이지 CSP: `worker-src 'none'`).  
@@ -310,7 +310,7 @@ add_header Service-Worker-Allowed "/app/" always;
 
 ---
 
-# 10) Clear-Site-Data — **강제 정리(캐시/스토리지/SW)**
+# 10. Clear-Site-Data — **강제 정리(캐시/스토리지/SW)**
 보안사고/계약해지/테넌트 삭제 등에서 **원격으로 모든 로컬 데이터**를 정리합니다.
 
 ```http
@@ -323,7 +323,7 @@ Clear-Site-Data: "cache", "cookies", "storage"
 
 ---
 
-# 11) 운영 체크리스트
+# 11. 운영 체크리스트
 
 - [ ] SW는 **루트가 아닌** `/app/` 등 한정 스코프에만  
 - [ ] `/app/sw.js`는 **정적 빌드 산출물**로 제공(동적 라우트/반사 금지)  
@@ -339,7 +339,7 @@ Clear-Site-Data: "cache", "cookies", "storage"
 
 ---
 
-## 12) 미니 E2E(Playwright) “막혀야 정상” 테스트
+## 12. 미니 E2E(Playwright) “막혀야 정상” 테스트
 
 ```ts
 test('루트 스코프 등록 차단', async ({ page }) => {

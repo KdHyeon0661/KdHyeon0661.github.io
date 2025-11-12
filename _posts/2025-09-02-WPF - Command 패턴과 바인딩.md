@@ -4,14 +4,14 @@ title: WPF - Command 패턴과 바인딩
 date: 2025-09-02 21:25:23 +0900
 category: WPF
 ---
-# Command 패턴과 바인딩 (WPF·MVVM 실전 가이드)
+# Command 패턴과 바인딩
 
 WPF의 **Command**는 GoF의 **Command 패턴**을 UI에 최적화해 구현한 것입니다.  
 이 글에서는 **개념→WPF 커맨딩 모델→MVVM 바인딩(실전)→다양한 시나리오→베스트 프랙티스** 순서로 정리합니다.
 
 ---
 
-## 1) Command 패턴 한눈에 (GoF 관점)
+## 1. Command 패턴 한눈에 (GoF 관점)
 
 - **목표**: “사용자 액션(요청)”을 **객체(커맨드)**로 캡슐화 → 호출자(버튼/단축키)와 수신자(실행 로직) **분리**  
 - **효과**: 실행 취소/재실행(undo/redo), 큐잉, 로깅, 권한 제어, 단축키 바인딩 등 **유연성** 확보
@@ -19,7 +19,7 @@ WPF의 **Command**는 GoF의 **Command 패턴**을 UI에 최적화해 구현한 
 
 ---
 
-## 2) WPF 커맨딩 모델 구성요소
+## 2. WPF 커맨딩 모델 구성요소
 
 ### 2.1 ICommand (기본)
 ```csharp
@@ -71,7 +71,7 @@ void OnExport(object s, ExecutedRoutedEventArgs e)      => DoExport();
 
 ---
 
-## 3) MVVM에서의 커맨드 (바인딩 중심)
+## 3. MVVM에서의 커맨드 (바인딩 중심)
 
 MVVM에서는 **뷰모델이 ICommand 구현체**(예: `RelayCommand`)를 노출하고, **XAML에서 바인딩**합니다.
 
@@ -128,7 +128,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 4) CommandParameter 바인딩 패턴
+## 4. CommandParameter 바인딩 패턴
 
 ### 4.1 강타입 파라미터 (RelayCommand\<T\>)
 ```xml
@@ -188,7 +188,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 5) RoutedCommand vs MVVM ICommand 비교
+## 5. RoutedCommand vs MVVM ICommand 비교
 
 | 항목 | RoutedCommand (뷰 중심) | ViewModel ICommand (MVVM) |
 |---|---|---|
@@ -203,7 +203,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 6) Event → Command (이벤트를 커맨드로)
+## 6. Event → Command (이벤트를 커맨드로)
 
 버튼 외에도 **아무 이벤트**를 커맨드로 연결하고 싶다면 **Behaviors**를 사용합니다.
 
@@ -223,7 +223,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 7) 비동기 커맨드(Async)와 재진입 방지
+## 7. 비동기 커맨드(Async)와 재진입 방지
 
 긴 작업은 **UI 프리징 방지**와 **중복 실행 차단**이 필요합니다.
 
@@ -243,7 +243,7 @@ LoadCommand = new AsyncRelayCommand(async ct => await LoadAsync(ct), () => !IsBu
 
 ---
 
-## 8) 베스트 프랙티스 & 체크리스트
+## 8. 베스트 프랙티스 & 체크리스트
 
 1. **Click 핸들러 대신 Command**: 테스트/재사용/단축키 연계가 쉬움  
 2. **CanExecute 즉시 갱신**: 관련 속성 Setter에서 `RaiseCanExecuteChanged()` 호출  
@@ -256,7 +256,7 @@ LoadCommand = new AsyncRelayCommand(async ct => await LoadAsync(ct), () => !IsBu
 
 ---
 
-## 9) 미니 예제 (동작하는 전형 패턴)
+## 9. 미니 예제 (동작하는 전형 패턴)
 
 **ViewModel**
 ```csharp

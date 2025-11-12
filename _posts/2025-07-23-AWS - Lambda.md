@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Lambda: 서버리스 함수 실행
 
-## 0) 한 장 요약
+## 0. 한 장 요약
 
 - **서버리스** = 서버가 *없다*가 아니라, **프로비저닝/패치/스케일링을 신경쓰지 않는다**.  
 - **Lambda 실행 흐름**: **Init**(부트스트랩/핸들러 로딩/네트워크 준비) → **Invoke**(요청 처리) → **(빈번 시) 재사용**.  
@@ -17,7 +17,7 @@ category: AWS
 
 ---
 
-## 1) Lambda 핵심 개념
+## 1. Lambda 핵심 개념
 
 ### 1.1 서버리스란?
 - OS/패치/Auto Scaling/고가용성은 **AWS가 관리**. 사용자는 **핸들러 코드**와 **구성(메모리/타임아웃/역할/환경변수)** 에 집중.
@@ -28,7 +28,7 @@ category: AWS
 
 ---
 
-## 2) 실행 수명주기 & 콜드스타트
+## 2. 실행 수명주기 & 콜드스타트
 
 ### 2.1 단계
 1) **Init**: 런타임 부팅, 코드/Layers 로딩, `global` 스코프 초기화, 확장: VPC ENI 준비, Extension 시작.  
@@ -41,7 +41,7 @@ category: AWS
 
 ---
 
-## 3) 동시성·자동확장·제어
+## 3. 동시성·자동확장·제어
 
 - **동시성(Concurrency)**: 동시에 실행 중인 함수 인스턴스 수. 이벤트가 몰리면 **자동 수평 확장**.  
 - **예약 동시성(Reserved Concurrency)**: 특정 함수의 **최대 동시성 상한/최소 보장**.  
@@ -50,7 +50,7 @@ category: AWS
 
 ---
 
-## 4) 비용 모델 (간단 공식)
+## 4. 비용 모델 (간단 공식)
 
 - **요청 요금** + **컴퓨팅 요금(GB-초)** + (선택) **프로비저닝 동시성**  
 - 컴퓨팅 비용 추정:
@@ -62,7 +62,7 @@ $$
 
 ---
 
-## 5) 트리거·통합 개요
+## 5. 트리거·통합 개요
 
 | 트리거 | 호출 유형 | 재시도/배치 | 부분실패 | 비고 |
 |---|---|---|---|---|
@@ -74,7 +74,7 @@ $$
 
 ---
 
-## 6) 핸들러/언어별 기본 예제
+## 6. 핸들러/언어별 기본 예제
 
 ### 6.1 Python 핸들러(기본)
 ```python
@@ -115,7 +115,7 @@ public class Handler implements RequestHandler<Map<String,Object>, Map<String,Ob
 
 ---
 
-## 7) 이벤트 소스(폴링) 상세: SQS / Kinesis / DDB Streams
+## 7. 이벤트 소스(폴링) 상세: SQS / Kinesis / DDB Streams
 
 ### 7.1 SQS 소비자 (배치·부분실패)
 - **배치 크기**/**가시성 타임아웃**/**동시성**을 조정.  
@@ -139,7 +139,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 8) 오류 처리·재시도·DLQ/대상지(Asynchronous Destinations)
+## 8. 오류 처리·재시도·DLQ/대상지(Asynchronous Destinations)
 
 | 유형 | 재시도 | 실패 후 |
 |---|---|---|
@@ -152,7 +152,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 9) 네트워킹: VPC/EFS/엔드포인트
+## 9. 네트워킹: VPC/EFS/엔드포인트
 
 - **VPC 연결**: 사설 RDS/ElastiCache 접근 시 필요. 서브넷/보안그룹 지정.  
 - 최신 Lambda는 **하이퍼플레인 ENI** 최적화로 콜드스타트 영향이 과거보다 감소.  
@@ -161,7 +161,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 10) 파일·성능·리소스
+## 10. 파일·성능·리소스
 
 - **메모리**: 128MB~10GB. **CPU/네트워크 비례 증가**.  
 - **에페메럴 스토리지(`/tmp`)**: 기본 512MB, 최대 10GB까지 확장 가능. 대용량 임시 작업(Gzip, 이미지 처리)에 유용.  
@@ -172,7 +172,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 11) 보안/IAM/비밀
+## 11. 보안/IAM/비밀
 
 - **실행 역할(Execution Role)**: 최소권한으로 S3/DDB/… 접근.  
 - **환경변수**: 민감 값은 **KMS 암호화**.  
@@ -182,7 +182,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 12) 관측성: 로그/지표/추적
+## 12. 관측성: 로그/지표/추적
 
 - **CloudWatch Logs**: 구조화(JSON) 로깅, 상관ID(correlation id) 포함.  
 - **지표**: `Invocations`, `Duration`, `Errors`, `Throttles`, `IteratorAge`(Streams), `ConcurrentExecutions`.  
@@ -192,7 +192,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 13) HTTP 통합: API Gateway / ALB / Function URL
+## 13. HTTP 통합: API Gateway / ALB / Function URL
 
 - **API Gateway(REST/HTTP)**: 인증/인가·쿼터·변환·캐시 등 API 관리 필요 시.  
 - **ALB**: 경량 HTTP 트리거, 경로/호스트 기반 라우팅.  
@@ -209,7 +209,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 14) 엔드투엔드 예제 1 — 이미지 썸네일 파이프라인(S3→Lambda→S3)
+## 14. 엔드투엔드 예제 1 — 이미지 썸네일 파이프라인(S3→Lambda→S3)
 
 ### 14.1 IAM 역할 요약(최소)
 ```json
@@ -255,7 +255,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 15) 엔드투엔드 예제 2 — SQS 워커(배치·부분실패·멱등성)
+## 15. 엔드투엔드 예제 2 — SQS 워커(배치·부분실패·멱등성)
 
 ```python
 import json, boto3, os
@@ -294,7 +294,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 16) IaC 배포 스니펫
+## 16. IaC 배포 스니펫
 
 ### 16.1 SAM 템플릿(HTTP API + Lambda + 권한)
 ```yaml
@@ -360,7 +360,7 @@ resource "aws_lambda_function" "img" {
 
 ---
 
-## 17) 고급 기능
+## 17. 고급 기능
 
 - **Provisioned Concurrency**: 예열된 실행환경 유지 → 지연 안정화(비용 추가).  
 - **SnapStart for Java**: Init 완료 상태를 스냅샷, **콜드스타트 단축**.  
@@ -371,7 +371,7 @@ resource "aws_lambda_function" "img" {
 
 ---
 
-## 18) 성능·비용 최적화 체크리스트
+## 18. 성능·비용 최적화 체크리스트
 
 - [ ] **의존성 슬림/트리셰이킹**, 지연 로딩(필요 시 import).  
 - [ ] **메모리 상향 후 실행시간 변화** 측정 → **총비용 최솟값 탐색**.  
@@ -383,7 +383,7 @@ resource "aws_lambda_function" "img" {
 
 ---
 
-## 19) 보안·규정 준수
+## 19. 보안·규정 준수
 
 - **최소권한 IAM**(액션/리소스 구체화).  
 - **비밀은 Secrets Manager/SSM** 사용 + **캐시**.  
@@ -394,7 +394,7 @@ resource "aws_lambda_function" "img" {
 
 ---
 
-## 20) 트러블슈팅 빠른 가이드
+## 20. 트러블슈팅 빠른 가이드
 
 - **TimeOut**: 외부 API 지연? VPC/NAT/DNS? 라이브러리 콜드로드?  
 - **Throttle(429)**: 동시성 부족 → 예약 동시성/프로비저닝/큐잉 도입.  
@@ -404,7 +404,7 @@ resource "aws_lambda_function" "img" {
 
 ---
 
-## 21) 엔드투엔드 예제 3 — API Gateway + Lambda + DynamoDB (서버리스 CRUD)
+## 21. 엔드투엔드 예제 3 — API Gateway + Lambda + DynamoDB (서버리스 CRUD)
 
 ### 21.1 테이블
 - PK: `id` (문자열)
@@ -459,7 +459,7 @@ const error = (e) => ({ statusCode: 500, body: JSON.stringify({ error: e.message
 
 ---
 
-## 22) 비용 시뮬레이션(개념)
+## 22. 비용 시뮬레이션(개념)
 
 - 월 **N** 요청, 평균 실행시간 **T(ms)**, 메모리 **M(GB)**, 요청요금 단가 **C_req**, 컴퓨팅 단가 **C_gbs** 일 때:
 $$
@@ -469,7 +469,7 @@ $$
 
 ---
 
-## 23) 체크리스트 (배포 전)
+## 23. 체크리스트 (배포 전)
 
 - [ ] 타임아웃/메모리/에페메럴 스토리지 적정 설정  
 - [ ] 최소 권한 IAM + KMS/비밀관리 + 환경변수 관리  

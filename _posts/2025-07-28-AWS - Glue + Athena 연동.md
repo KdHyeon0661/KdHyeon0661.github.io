@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Glue + Athena 연동
 
-## 0) 한눈에 보는 아키텍처와 제작 체크리스트
+## 0. 한눈에 보는 아키텍처와 제작 체크리스트
 
 ```text
 ┌──────────┐   putObject    ┌───────────────┐  crawl(schema)  ┌──────────────┐   query(SQL)
@@ -32,7 +32,7 @@ category: AWS
 
 ---
 
-## 1) 데이터 레이크 물리 설계: S3 경로·파티션·포맷
+## 1. 데이터 레이크 물리 설계: S3 경로·파티션·포맷
 
 ### 1.1 디렉터리/파티션 레이아웃
 일반적인 시간 파티션:
@@ -58,7 +58,7 @@ s3://datalake/refined/access_logs/dt=2025-11-10/hour=02/...
 
 ---
 
-## 2) Glue 데이터 카탈로그 모델링
+## 2. Glue 데이터 카탈로그 모델링
 
 ### 2.1 데이터베이스/테이블 설계
 - `db_raw`, `db_refined`, `db_curated` 등 **영역별 DB**  
@@ -92,7 +92,7 @@ TBLPROPERTIES (
 
 ---
 
-## 3) Glue Crawler: 스키마 수집·자동화
+## 3. Glue Crawler: 스키마 수집·자동화
 
 ### 3.1 크롤러 스코프 최소화
 - `raw` 쪽에만 적용하거나, `refined`도 필요 시 별도 크롤러  
@@ -122,7 +122,7 @@ aws glue create-crawler \
 
 ---
 
-## 4) Glue ETL(Job/Studio): 정제·포맷 변환
+## 4. Glue ETL(Job/Studio): 정제·포맷 변환
 
 ### 4.1 PySpark(Glue 4.0) 예제: 원천→정제(Parquet) + 파티션 작성
 ```python
@@ -139,10 +139,10 @@ glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 job = Job(glueContext); job.init(args['JOB_NAME'], args)
 
-# 1) 로드 (원본 텍스트/CSV/JSON 가정)
+# 1. 로드 (원본 텍스트/CSV/JSON 가정)
 df = spark.read.json(args['src'])  # 예: s3://datalake/raw/access_logs/...
 
-# 2) 정제/타이핑
+# 2. 정제/타이핑
 df2 = (df
    .withColumn("status_code", col("status").cast("int"))
    .withColumn("bytes_sent", col("size").cast("long"))
@@ -151,7 +151,7 @@ df2 = (df
    .withColumn("hour", regexp_extract(col("ts").cast("string"), "T(\\d{2})", 1))
    .select("client_ip","method","path","status_code","bytes_sent","user_agent","ts","dt","hour"))
 
-# 3) 쓰기(Parquet, 파티션)
+# 3. 쓰기(Parquet, 파티션)
 (df2.write
    .mode("append")
    .partitionBy("dt","hour")
@@ -180,7 +180,7 @@ ALTER TABLE db_refined.access_logs ADD IF NOT EXISTS
 
 ---
 
-## 5) Athena: 쿼리, 비용·성능 최적화, 관리
+## 5. Athena: 쿼리, 비용·성능 최적화, 관리
 
 ### 5.1 결과 저장 버킷/암호화
 - WorkGroup별 결과 경로 지정, SSE-KMS 권장  
@@ -227,7 +227,7 @@ EXPLAIN SELECT ...;
 
 ---
 
-## 6) 심화: 파티션 프로젝션, CTAS/UNLOAD, Iceberg
+## 6. 심화: 파티션 프로젝션, CTAS/UNLOAD, Iceberg
 
 ### 6.1 CTAS (Create Table As Select)
 정제 결과를 **또 다른 테이블**로 생성(Parquet/압축/정렬).
@@ -291,7 +291,7 @@ ALTER TABLE db_refined.events_iceberg ADD COLUMN new_col string;
 
 ---
 
-## 7) 권한/보안: IAM, KMS, Lake Formation
+## 7. 권한/보안: IAM, KMS, Lake Formation
 
 ### 7.1 IAM 최소권한
 - Glue Crawler/Job Role: S3 경로 제한, Glue Catalog 특정 DB/테이블 권한  
@@ -320,7 +320,7 @@ ALTER TABLE db_refined.events_iceberg ADD COLUMN new_col string;
 
 ---
 
-## 8) 운영 자동화: 워크플로, 스케줄, 파이프라인
+## 8. 운영 자동화: 워크플로, 스케줄, 파이프라인
 
 ### 8.1 Glue Workflow/Trigger
 - **크롤러 → ETL → 파티션 메타 반영** 순의 DAG 구성  
@@ -352,7 +352,7 @@ Resources:
 
 ---
 
-## 9) 모니터링/품질/카탈로그 거버넌스
+## 9. 모니터링/품질/카탈로그 거버넌스
 
 - Glue Job Metrics: Spark UI/CloudWatch 지표(입출력, task 실패)  
 - Athena WorkGroup: 쿼리/스캔 바이트 대시보드, 가드레일(쿼리 제한)  
@@ -365,7 +365,7 @@ SELECT count(DISTINCT client_ip) FROM db_refined.access_logs WHERE dt='2025-11-1
 
 ---
 
-## 10) 트러블슈팅 모음
+## 10. 트러블슈팅 모음
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -378,7 +378,7 @@ SELECT count(DISTINCT client_ip) FROM db_refined.access_logs WHERE dt='2025-11-1
 
 ---
 
-## 11) 비용 최적화 레시피
+## 11. 비용 최적화 레시피
 
 - Parquet(+Snappy), **컬럼·파티션 프루닝**  
 - 파티션 프로젝션으로 메타 관리 비용↓  
@@ -388,7 +388,7 @@ SELECT count(DISTINCT client_ip) FROM db_refined.access_logs WHERE dt='2025-11-1
 
 ---
 
-## 12) 실전 예제: Nginx 액세스 로그 → Refined Parquet → Athena 대시보드
+## 12. 실전 예제: Nginx 액세스 로그 → Refined Parquet → Athena 대시보드
 
 ### 12.1 원천 업로드(예)
 ```
@@ -428,7 +428,7 @@ ORDER BY dt, hour;
 
 ---
 
-## 13) 검증/리그레션 테스트(개발자 관점)
+## 13. 검증/리그레션 테스트(개발자 관점)
 
 - **샘플 파티션**에 대해 ETL 실행 → 기대 결과와 **골든 결과** 비교  
 - 스키마 변경 시 **DDL/뷰/쿼리 호환성** 회귀 테스트  
@@ -436,7 +436,7 @@ ORDER BY dt, hour;
 
 ---
 
-## 14) 수학적 감: 스캔 바이트와 파티션 프루닝 효과
+## 14. 수학적 감: 스캔 바이트와 파티션 프루닝 효과
 
 $$
 \text{Bytes Scanned} \approx \sum_{f \in \text{Files Read}} \text{FileSize}(f) \times \text{Selectivity}(columns)
@@ -447,7 +447,7 @@ $$
 
 ---
 
-## 15) 요약 체크리스트 (현장 적용)
+## 15. 요약 체크리스트 (현장 적용)
 
 - [ ] **S3 파티션/포맷**: Parquet, 128–512MB, 키=값 디렉토리  
 - [ ] **Glue Crawler**: 범위 최소화, Classifier, 스키마 안정화  

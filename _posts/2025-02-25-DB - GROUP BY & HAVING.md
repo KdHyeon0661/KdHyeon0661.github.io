@@ -6,7 +6,7 @@ category: DB
 ---
 # GROUP BY & HAVING
 
-## 0) 빠른 로드맵
+## 0. 빠른 로드맵
 
 1. 개념·실행 순서(논리적 단계)  
 2. GROUP BY 핵심 규칙(함정 포함)  
@@ -22,7 +22,7 @@ category: DB
 
 ---
 
-## 1) 개념과 실행 순서(논리적 파이프라인)
+## 1. 개념과 실행 순서(논리적 파이프라인)
 
 **GROUP BY**는 동일 키를 가진 행을 묶어 **집계 함수**(`SUM/AVG/COUNT/MIN/MAX/STDDEV/VARIANCE …`)를 계산한다.  
 **HAVING**은 **그룹** 단위로 **집계 결과**를 필터링한다.
@@ -42,7 +42,7 @@ SQL의 **논리적 실행 순서(개념적)**
 
 ---
 
-## 2) GROUP BY 핵심 규칙과 흔한 함정
+## 2. GROUP BY 핵심 규칙과 흔한 함정
 
 ### 2.1 비집계 컬럼 규칙
 - ANSI SQL에서 **`SELECT`에 나오는 비집계 컬럼은 전부 `GROUP BY`에 포함**되어야 한다.
@@ -86,7 +86,7 @@ ORDER BY d;
 
 ---
 
-## 3) HAVING 핵심 규칙 — 행 vs 그룹
+## 3. HAVING 핵심 규칙 — 행 vs 그룹
 
 - `WHERE`은 **개별 행 조건**. 집계 함수 사용 불가.
 - `HAVING`은 **그룹 조건**. 집계 함수 사용 가능.
@@ -104,7 +104,7 @@ HAVING AVG(salary) >= 300;
 
 ---
 
-## 4) NULL, DISTINCT, 조건부 집계
+## 4. NULL, DISTINCT, 조건부 집계
 
 ### 4.1 NULL과 COUNT의 차이
 - `COUNT(*)` : NULL 포함 **전체 행수**  
@@ -145,7 +145,7 @@ FROM Orders;
 
 ---
 
-## 5) 다중 컬럼·표현식 그룹핑 & 날짜 버킷팅
+## 5. 다중 컬럼·표현식 그룹핑 & 날짜 버킷팅
 
 ### 5.1 다중 컬럼 그룹핑
 ```sql
@@ -187,7 +187,7 @@ ORDER BY ym;
 
 ---
 
-## 6) 고급 집계 — ROLLUP, CUBE, GROUPING SETS
+## 6. 고급 집계 — ROLLUP, CUBE, GROUPING SETS
 
 ### 6.1 ROLLUP (계층 소계 + 총계)
 ```sql
@@ -232,7 +232,7 @@ ORDER BY dept_id, job;
 
 ---
 
-## 7) 집계 vs 윈도 함수 — 언제 무엇을 쓰나
+## 7. 집계 vs 윈도 함수 — 언제 무엇을 쓰나
 
 | 요구 | 사용 |
 |---|---|
@@ -252,7 +252,7 @@ FROM sales_by_product;
 
 ---
 
-## 8) 성능 최적화 핵심
+## 8. 성능 최적화 핵심
 
 ### 8.1 WHERE로 먼저 줄여라
 - `HAVING` 대신 **가능한 조건은 `WHERE`**로 내려 **행 수 줄이기**.
@@ -297,7 +297,7 @@ CREATE INDEX ix_orders_ym_first ON dbo.Orders(ym_first);
 
 ---
 
-## 9) 실전 시나리오 10선
+## 9. 실전 시나리오 10선
 
 ### 9.1 부서별 평균 급여 + 평균 300 이상만 (기본기)
 ```sql
@@ -426,7 +426,7 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 
 ---
 
-## 10) 다이얼렉트 차이 요약
+## 10. 다이얼렉트 차이 요약
 
 | 항목 | MySQL | SQL Server | PostgreSQL | Oracle |
 |---|---|---|---|---|
@@ -441,7 +441,7 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 
 ---
 
-## 11) 체크리스트
+## 11. 체크리스트
 
 - [ ] **비집계 컬럼 = 전부 GROUP BY** (표준 준수)  
 - [ ] 행 필터는 **WHERE**, 그룹 필터는 **HAVING**  

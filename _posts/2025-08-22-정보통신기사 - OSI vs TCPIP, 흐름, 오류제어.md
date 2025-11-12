@@ -6,7 +6,7 @@ category: 정보통신기사
 ---
 # OSI vs TCP/IP, 흐름/오류제어(ARQ/윈도우) 총정리
 
-## 0) 큰 그림 한 장
+## 0. 큰 그림 한 장
 
 - **OSI 7계층**: 이론적 모델(**표준화·용어 정리**)  
 - **TCP/IP 4~5계층**: 실제 인터넷 스택(**구현·배포**)  
@@ -18,7 +18,7 @@ category: 정보통신기사
 
 ---
 
-## 1) OSI 7계층 vs TCP/IP
+## 1. OSI 7계층 vs TCP/IP
 
 ### 1.1 계층 매핑 표
 
@@ -48,7 +48,7 @@ category: 정보통신기사
 
 ---
 
-## 2) 오류제어 vs 흐름제어 vs 혼잡제어
+## 2. 오류제어 vs 흐름제어 vs 혼잡제어
 
 - **오류제어(Error Control)**: 에러 검출/정정/재전송(ARQ).  
   - **링크계층**: 무선(L2 ARQ, Hybrid-ARQ), 유선(Ethernet은 재전송 없음·상위에 맡김).  
@@ -63,7 +63,7 @@ category: 정보통신기사
 
 ---
 
-## 3) ARQ(Automatic Repeat reQuest)와 슬라이딩 윈도우
+## 3. ARQ(Automatic Repeat reQuest)와 슬라이딩 윈도우
 
 ### 3.1 정지-대기(Stop-and-Wait, SW)
 
@@ -122,7 +122,7 @@ $$
 
 ---
 
-## 4) BDP와 윈도우 크기
+## 4. BDP와 윈도우 크기
 
 ### 4.1 BDP(Bandwidth–Delay Product)
 
@@ -145,7 +145,7 @@ $\mathrm{BDP}=100\times10^6 \times 0.05 = 5\times 10^6$ b → $W\approx 5\mathrm
 
 ---
 
-## 5) TCP 핵심 메커니즘 (흐름·오류·혼잡·타이머)
+## 5. TCP 핵심 메커니즘 (흐름·오류·혼잡·타이머)
 
 ### 5.1 흐름제어: **수신창(rwnd)**
 
@@ -186,7 +186,7 @@ $$
 
 ---
 
-## 6) 수치 예제
+## 6. 수치 예제
 
 ### 예제 1) Stop-and-Wait 효율
 - 링크 10 Mb/s, 프레임 10 kB, 거리 왕복 전파 40 ms(=RTT), ACK 40 B 무시.  
@@ -213,19 +213,19 @@ $$
 
 ---
 
-## 7) Python 미니 계산기
+## 7. Python 미니 계산기
 
 ```python
 import math
 
-# 1) Stop-and-Wait 처리량
+# 1. Stop-and-Wait 처리량
 def sw_throughput_bps(R_bps, L_bytes, RTT_s, p_loss=0.0, ack_bytes=0):
     Ttx = (L_bytes*8)/R_bps
     Tack = (ack_bytes*8)/R_bps
     Tcycle = Ttx + RTT_s + Tack
     return (1.0 - p_loss) * (L_bytes*8) / Tcycle
 
-# 2) GBN 무오류 이용률 근사
+# 2. GBN 무오류 이용률 근사
 def gbn_utilization(W, R_bps, L_bytes, RTT_s):
     Ttx = (L_bytes*8)/R_bps
     a = (RTT_s/2)/Ttx  # one-way prop/Ttx
@@ -233,12 +233,12 @@ def gbn_utilization(W, R_bps, L_bytes, RTT_s):
         return W/(1+2*a)
     return 1.0
 
-# 3) BDP와 윈도우
+# 3. BDP와 윈도우
 def window_for_bdp(R_bps, RTT_s, MSS_bytes):
     bdp_bits = R_bps*RTT_s
     return math.ceil(bdp_bits/(MSS_bytes*8))
 
-# 4) Jacobson/Karels RTO 갱신
+# 4. Jacobson/Karels RTO 갱신
 def rto_series(samples, alpha=1/8, beta=1/4, G=0.001, K=4):
     SRTT = samples[0]
     RTTVAR = samples[0]/2
@@ -261,7 +261,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 8) 링크/계층별 오류·흐름제어 배치 감
+## 8. 링크/계층별 오류·흐름제어 배치 감
 
 - **L1/L2**: 비트/프레임 수준 오류 → **FEC/ARQ/CRC**. 무선은 **HARQ(Soft-Combining)**로 지연 낮춤.  
 - **L3**: IPv6는 헤더 체크섬 없음(상하위에 맡김). ICMP는 진단용.  
@@ -270,7 +270,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 9) TCP 고급 토픽 압축 정리
+## 9. TCP 고급 토픽 압축 정리
 
 - **윈도우 스케일**: `WSopt = 2^s`, `AdvertisedWindow << s`로 확장.  
 - **SACK**: 구간 단위로 도착 범위 알림 → 재전송 효율 ↑.  
@@ -280,7 +280,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 10) 자주 틀리는 포인트(정오표)
+## 10. 자주 틀리는 포인트(정오표)
 
 1) **흐름제어 vs 혼잡제어** 혼동 금지: **rwnd(수신버퍼)** vs **cwnd(네트워크 상태)**.  
 2) **Stop-and-Wait**는 RTT 큰 링크에서 **거의 사용 안 함**(교육용). 실제는 **슬라이딩 윈도우**.  
@@ -292,7 +292,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 11) 체크리스트(설계/튜닝)
+## 11. 체크리스트(설계/튜닝)
 
 - [ ] RTT·대역폭으로 **BDP** 계산 → `rwnd/cwnd` 목표치 가늠  
 - [ ] **윈도우 스케일/SACK/ECN** 활성(가능 시)  
@@ -303,7 +303,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 12) 연습문제(풀이 포함)
+## 12. 연습문제(풀이 포함)
 
 ### Q1. 50 Mb/s 링크, RTT 80 ms, MSS 1460 B. 파이프를 채우는 최소 세그먼트 윈도우?
 **풀이**: BDP = $50\mathrm{e}6 \times 0.08 = 4\mathrm{e}6\,b = 500{,}000\,B$.  
@@ -326,7 +326,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 13) 빠른 암기표(Cheat Sheet)
+## 13. 빠른 암기표(Cheat Sheet)
 
 - **OSI→TCP/IP**: (L7~L5)응용 / L4전송 / L3인터넷 / (L2+L1)네트워크접근  
 - **PDU**: L4=세그먼트, L3=패킷, L2=프레임  
@@ -340,7 +340,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 14) 마무리
+## 14. 마무리
 
 - **링크가 빠른데도 느리다?** 거의 항상 **BDP 대비 윈도우/RTT/손실/큐** 문제입니다.  
 - **학습 순서 추천**: (1) SW 직감 → (2) GBN/SR로 파이프라인 → (3) BDP로 윈도우 산출 → (4) TCP의 rwnd/cwnd/RTO/SACK/ECN 조립.

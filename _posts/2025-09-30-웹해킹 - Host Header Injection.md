@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 🏷️ 3. Host Header Injection
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **문제**  
   - 프록시/앱이 **`Host`** 또는 **`X-Forwarded-Host`(XFH)** 를 **신뢰**해 절대 URL, 리다이렉트, 이메일의 **비밀번호 재설정 링크** 등을 만들면,  
@@ -26,7 +26,7 @@ category: 웹해킹
 
 ---
 
-# 1) Host Header Injection이 발생하는 지점
+# 1. Host Header Injection이 발생하는 지점
 
 - **절대 URL 생성**: 이메일·푸시·템플릿(`https://<host>/reset?token=...`)  
 - **리다이렉트**: 로그인 후 리디렉트·캔니컬·`Location` 헤더  
@@ -39,7 +39,7 @@ category: 웹해킹
 
 ---
 
-# 2) 안전한 재현(테스트 전용) — **우리 앱이 Host를 신뢰하는지** 확인
+# 2. 안전한 재현(테스트 전용) — **우리 앱이 Host를 신뢰하는지** 확인
 
 > **반드시 사내 스테이징/개인 랩**에서만. 운영/외부 타 시스템 금지.
 
@@ -88,7 +88,7 @@ run();
 
 ---
 
-# 3) 프록시/게이트웨이 레벨의 **선제 방어**
+# 3. 프록시/게이트웨이 레벨의 **선제 방어**
 
 > 목표: **엣지에서 Host를 “정답”으로 고정**하고, 앱에는 **오직 정해진 Host**만 도달하게 하기.
 
@@ -180,7 +180,7 @@ route_config:
 
 ---
 
-# 4) 애플리케이션 레벨 **정석 패턴**
+# 4. 애플리케이션 레벨 **정석 패턴**
 
 > 원칙: “**앱이 아는 ORIGIN**”으로만 절대 URL/리디렉트를 만들고, **허용 호스트 검증**을 통과하지 못하면 **400/421**으로 거절.
 
@@ -455,7 +455,7 @@ $link = config('app.app_origin') . '/reset/verify?token=' . urlencode($token);
 
 ---
 
-# 5) 이메일/리다이렉트 **안전 패턴**
+# 5. 이메일/리다이렉트 **안전 패턴**
 
 - **이메일 템플릿**: `{{APP_ORIGIN}}/reset/verify?token=...` 만 사용. `req.host` 사용 금지.  
 - **리다이렉트**: `return redirect(APP_ORIGIN + safePath)` — **외부 도메인 금지**.  
@@ -464,7 +464,7 @@ $link = config('app.app_origin') . '/reset/verify?token=' . urlencode($token);
 
 ---
 
-# 6) 로깅/모니터링/탐지 룰
+# 6. 로깅/모니터링/탐지 룰
 
 - **이상치**  
   - `Host` 가 서비스 도메인이 아닌 값으로 들어옴 (빈번/다양)  
@@ -486,14 +486,14 @@ index=edge msg=http_access NOT (host="app.example.com" OR host="www.example.com"
 
 ---
 
-# 7) 캐시/리버스 프록시와의 **상호작용 위험**(간략)
+# 7. 캐시/리버스 프록시와의 **상호작용 위험**(간략)
 
 - Host 오염이 **Web Cache Poisoning**과 결합하면 “**오염된 절대 URL**이 캐시에 장시간 보존”될 수 있음.  
 - 방어는 다음과 동일: **캐시 키 명시화(Host/Path/Query)**, 전달용 헤더(XFH) 제거, **민감 `no-store`**.
 
 ---
 
-# 8) 사고 대응(런북 요약)
+# 8. 사고 대응(런북 요약)
 
 1. **식별**: 재설정 링크/이메일·HTML 내 도메인이 서비스 도메인이 아닌 사례 포착.  
 2. **격리**: 프록시에서 즉시 **XFH 제거 + Host 고정** 배포, 비정상 Host 400/421.  
@@ -504,7 +504,7 @@ index=edge msg=http_access NOT (host="app.example.com" OR host="www.example.com"
 
 ---
 
-# 9) 체크리스트 (현장용)
+# 9. 체크리스트 (현장용)
 
 - [ ] 프록시에서 **Host 고정 전달**, **XFH 제거**  
 - [ ] 앱에서 **허용 호스트 검증**(IDNA/소문자 정규화 후 **정확 매칭**)  

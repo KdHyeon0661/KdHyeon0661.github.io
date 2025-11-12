@@ -5,7 +5,7 @@ date: 2025-05-10 21:20:23 +0900
 category: AspNet
 ---
 # Razor 문법 완전 정리 (ASP.NET Core)
-## 0) Razor란?
+## 0. Razor란?
 
 - HTML 안에 **C#**을 자연스럽게 섞을 수 있게 하는 **뷰 템플릿 엔진**.
 - 파일 확장자: `.cshtml`
@@ -13,7 +13,7 @@ category: AspNet
 
 ---
 
-## 1) Razor의 핵심: `@` 전환과 출력
+## 1. Razor의 핵심: `@` 전환과 출력
 
 ### 1.1 인라인 전환
 ```razor
@@ -46,7 +46,7 @@ category: AspNet
 
 ---
 
-## 2) 흐름 제어(제어문/표현식)
+## 2. 흐름 제어(제어문/표현식)
 
 ### 2.1 조건/반복
 ```razor
@@ -79,7 +79,7 @@ category: AspNet
 
 ---
 
-## 3) 모델 바인딩 & 형식 지정
+## 3. 모델 바인딩 & 형식 지정
 
 ### 3.1 뷰의 모델 타입 지정
 ```razor
@@ -95,7 +95,7 @@ category: AspNet
 
 ---
 
-## 4) 레이아웃, 섹션, 시작 파일
+## 4. 레이아웃, 섹션, 시작 파일
 
 ### 4.1 레이아웃 지정
 ```razor
@@ -130,7 +130,7 @@ _각 View에서:_
 
 ---
 
-## 5) 주석과 텍스트
+## 5. 주석과 텍스트
 
 - Razor 주석(클라이언트에 출력 안 됨):
 ```razor
@@ -143,7 +143,7 @@ _각 View에서:_
 
 ---
 
-## 6) 폼/바인딩/검증(태그 헬퍼)
+## 6. 폼/바인딩/검증(태그 헬퍼)
 
 ### 6.1 폼 + Tag Helper
 ```razor
@@ -198,7 +198,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 7) 링크/라우팅 Tag Helper
+## 7. 링크/라우팅 Tag Helper
 
 ### 7.1 MVC 링크
 ```razor
@@ -224,7 +224,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 8) Partial View, View Component, Editor/Display Templates
+## 8. Partial View, View Component, Editor/Display Templates
 
 ### 8.1 Partial View
 ```razor
@@ -265,7 +265,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 9) 조건부/동적 특성 렌더링
+## 9. 조건부/동적 특성 렌더링
 
 ### 9.1 조건부 속성
 ```razor
@@ -288,7 +288,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 10) 비동기/await & HtmlHelper
+## 10. 비동기/await & HtmlHelper
 
 ### 10.1 비동기 호출
 ```razor
@@ -306,7 +306,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 11) 지시문(Directives) 핵심 모음
+## 11. 지시문(Directives) 핵심 모음
 
 | 지시문 | 설명 | 예시 |
 |---|---|---|
@@ -340,7 +340,7 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 12) 라우팅(Razor Pages) — `@page`
+## 12. 라우팅(Razor Pages) — `@page`
 
 ```razor
 @page "{id:int?}"
@@ -352,7 +352,7 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 13) 환경/정적 파일/버전 태그
+## 13. 환경/정적 파일/버전 태그
 
 ### 13.1 정적 파일 버전 태그
 ```razor
@@ -373,7 +373,7 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 14) 보안/권한과 Razor
+## 14. 보안/권한과 Razor
 
 ### 14.1 인증 상태에 따른 출력
 ```razor
@@ -401,7 +401,7 @@ else
 
 ---
 
-## 15) 성능/운영 팁
+## 15. 성능/운영 팁
 
 - **인코딩 규칙**: 기본 HTML 인코딩. `HtmlString`/`IHtmlContent`는 신중 사용.
 - **부분 뷰 남발 주의**: 렌더링 비용 + 모델 준비 비용 고려. 캐싱/뷰 컴포넌트와 균형.
@@ -411,7 +411,7 @@ else
 
 ---
 
-## 16) 실전 예제 — 제품 목록 + 상세 카드 + 검증 + 섹션
+## 16. 실전 예제 — 제품 목록 + 상세 카드 + 검증 + 섹션
 
 ### 16.1 `_ViewImports.cshtml`
 ```razor
@@ -501,7 +501,7 @@ else
 
 ---
 
-## 17) 디버깅/문제 해결 체크
+## 17. 디버깅/문제 해결 체크
 
 | 증상 | 가능 원인 | 해결 힌트 |
 |---|---|---|
@@ -513,7 +513,7 @@ else
 
 ---
 
-## 18) 요약 테이블
+## 18. 요약 테이블
 
 | 구분 | 핵심 |
 |---|---|

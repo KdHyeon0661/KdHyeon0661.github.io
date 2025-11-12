@@ -333,13 +333,13 @@ seed:
 ## 10. 기동 및 상태 확인
 
 ```bash
-# 1) 최초 기동
+# 1. 최초 기동
 docker-compose up --build -d
 
-# 2) 상태
+# 2. 상태
 docker-compose ps
 
-# 3) 로그 추적
+# 3. 로그 추적
 docker-compose logs -f --tail=200
 ```
 

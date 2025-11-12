@@ -6,7 +6,7 @@ category: DB
 ---
 # SQL 함수(Function)
 
-## 1) 함수 분류와 3값 논리
+## 1. 함수 분류와 3값 논리
 
 ### 1.1 함수 분류(재정의)
 
@@ -28,7 +28,7 @@ category: DB
 
 ---
 
-## 2) 문자열 함수 — MySQL vs SQL Server
+## 2. 문자열 함수 — MySQL vs SQL Server
 
 ### 2.1 길이와 바이트: `LENGTH` vs `CHAR_LENGTH` vs `LEN` vs `DATALENGTH`
 
@@ -85,7 +85,7 @@ SELECT value FROM STRING_SPLIT('a,b,c', ',');
 
 ---
 
-## 3) 숫자/수학 함수 — 반올림·절삭·안전 계산
+## 3. 숫자/수학 함수 — 반올림·절삭·안전 계산
 
 | 기능 | MySQL | SQL Server | 메모 |
 |---|---|---|---|
@@ -116,7 +116,7 @@ SELECT ISNULL(1.0 * numerator / NULLIF(denominator, 0), 0);
 
 ---
 
-## 4) 날짜/시간 함수 — 경계, 타임존, 리포트
+## 4. 날짜/시간 함수 — 경계, 타임존, 리포트
 
 | 기능 | MySQL | SQL Server |
 |---|---|---|
@@ -145,7 +145,7 @@ WHERE order_dt >= DATEFROMPARTS(2025, 01, 01)
 
 ---
 
-## 5) NULL/조건/집계 — 조건부 집계의 정석
+## 5. NULL/조건/집계 — 조건부 집계의 정석
 
 ### 5.1 NULL 처리를 통일
 
@@ -193,7 +193,7 @@ FROM orders;
 
 ---
 
-## 6) 윈도 함수 — 누계/이동 집계/그룹 Top-N
+## 6. 윈도 함수 — 누계/이동 집계/그룹 Top-N
 
 > MySQL 8.0+, SQL Server 2012+ 지원
 
@@ -263,7 +263,7 @@ ORDER BY category_id, cum_amt DESC;
 
 ---
 
-## 7) 형변환·타입 검사 — 안전 변환과 성능
+## 7. 형변환·타입 검사 — 안전 변환과 성능
 
 | 기능 | MySQL | SQL Server | 메모 |
 |---|---|---|---|
@@ -278,7 +278,7 @@ SELECT TRY_CONVERT(INT, '123'), TRY_CONVERT(INT, '12A');  -- 123, NULL
 
 ---
 
-## 8) JSON 함수 — 반정규화/스키마 유연성 대처
+## 8. JSON 함수 — 반정규화/스키마 유연성 대처
 
 ### 8.1 MySQL
 
@@ -314,7 +314,7 @@ SELECT * FROM dbo.events WHERE item_id = 'A001';
 
 ---
 
-## 9) 보안·암호화·마스킹(간단 정리)
+## 9. 보안·암호화·마스킹(간단 정리)
 
 - MySQL: `AES_ENCRYPT/AES_DECRYPT`(주의: 키 관리), `SHA2`, `MD5`(비권장).  
 - SQL Server: `HASHBYTES`, `ENCRYPTBYKEY/DECRYPTBYKEY`, 동적 데이터 마스킹(Dynamic Data Masking), Always Encrypted.  
@@ -322,7 +322,7 @@ SELECT * FROM dbo.events WHERE item_id = 'A001';
 
 ---
 
-## 10) 인덱스와 함수 — SARGability 핵심
+## 10. 인덱스와 함수 — SARGability 핵심
 
 ### 10.1 함수가 인덱스를 막는 경우
 
@@ -358,7 +358,7 @@ CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
 
 ---
 
-## 11) UDF(사용자 정의 함수) — 성능·보안·가이드
+## 11. UDF(사용자 정의 함수) — 성능·보안·가이드
 
 ### 11.1 유형
 
@@ -386,7 +386,7 @@ CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
 
 ---
 
-## 12) 실전 시나리오 8종
+## 12. 실전 시나리오 8종
 
 ### 12.1 “Gmail 사용자만, 이메일 소문자 매칭 + 인덱스”
 
@@ -530,7 +530,7 @@ ORDER BY dt DESC, id DESC;
 
 ---
 
-## 13) 체크리스트(요약·실무 가드)
+## 13. 체크리스트(요약·실무 가드)
 
 - **NULL**: `= NULL` 금지 → `IS NULL`. `NOT IN` + NULL 함정 피하고 `NOT EXISTS` 사용.  
 - **SARGability**: 컬럼을 함수/연산으로 감싸지 말고, **함수는 인덱스로 끌어내리기**(계산 열/함수 인덱스).  

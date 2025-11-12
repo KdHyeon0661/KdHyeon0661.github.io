@@ -5,15 +5,8 @@ date: 2025-09-02 23:25:23 +0900
 category: WPF
 ---
 # WPF **Styles & ControlTemplate** 
-*(예제 위주 · 개념 누락 없이 최대한 자세하게)*
 
-이 문서는 WPF에서 **일관된 UI 스타일링**과 **컨트롤 스킨 교체**를 담당하는 두 축,  
-**`Style`** 과 **`ControlTemplate`** 를 **기본 → 실전 → 고급 트릭** 순서로 정리합니다.  
-(코드는 전부 **WPF .NET 5+** 기준이며, .NET Framework에서도 동일하게 동작합니다.)
-
----
-
-## 0) 큰 그림 요약
+## 0. 큰 그림 요약
 
 - **Style**  
   - 특정 타입(예: `Button`) 또는 키가 있는 요소에 **속성 값(Setter)·트리거(Trigger)·이벤트(EventSetter)** 를 일괄 적용.
@@ -29,7 +22,7 @@ category: WPF
 
 ---
 
-## 1) 스타일의 기본: Setter / TargetType / 암시적 스타일
+## 1. 스타일의 기본: Setter / TargetType / 암시적 스타일
 
 ### 1.1 암시적 스타일(Implicit) — 해당 범위의 **모든 버튼**에 적용
 ```xml
@@ -89,7 +82,7 @@ category: WPF
 
 ---
 
-## 2) Style 트리거: Trigger / DataTrigger / MultiTrigger
+## 2. Style 트리거: Trigger / DataTrigger / MultiTrigger
 
 ### 2.1 Trigger — **의존 속성** 값 변화에 반응
 ```xml
@@ -140,7 +133,7 @@ category: WPF
 
 ---
 
-## 3) EventSetter – XAML에서 이벤트 핸들러 연결
+## 3. EventSetter – XAML에서 이벤트 핸들러 연결
 
 ```xml
 <Style TargetType="Button" x:Key="LogButtonStyle">
@@ -158,7 +151,7 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
 
 ---
 
-## 4) 리소스/테마/머지 — 유지보수 구조화
+## 4. 리소스/테마/머지 — 유지보수 구조화
 
 ### 4.1 App 레벨 테마 분리
 ```xml
@@ -193,7 +186,7 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
 
 ---
 
-## 5) ControlTemplate — 컨트롤 **외형 전체 교체**
+## 5. ControlTemplate — 컨트롤 **외형 전체 교체**
 
 ### 5.1 Button 스킨을 완전히 바꾸기
 ```xml
@@ -247,7 +240,7 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
 
 ---
 
-## 6) VisualStateManager(VSM) — 상태 기반 템플릿
+## 6. VisualStateManager(VSM) — 상태 기반 템플릿
 
 WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.  
 대표 그룹: **CommonStates**(Normal/MouseOver/Pressed/Disabled), **FocusStates**(Focused/Unfocused)
@@ -311,7 +304,7 @@ WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.
 
 ---
 
-## 7) ControlTemplate의 핵심 요소들
+## 7. ControlTemplate의 핵심 요소들
 
 ### 7.1 ContentPresenter / ItemsPresenter
 - **ContentPresenter**: `ContentControl`의 콘텐츠 표시(예: `Button`, `Label`).
@@ -365,7 +358,7 @@ WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.
 
 ---
 
-## 8) **UserControl** vs **CustomControl** (템플릿 관점)
+## 8. **UserControl** vs **CustomControl** (템플릿 관점)
 
 - **UserControl**  
   - 내부 XAML이 고정. 스킨을 **템플릿으로 교체**하긴 어려움(재정의 지점 제한).
@@ -444,7 +437,7 @@ public class TagChip : Control
 
 ---
 
-## 9) 애니메이션/트리거 — Storyboard, EventTrigger, Enter/Exit Actions
+## 9. 애니메이션/트리거 — Storyboard, EventTrigger, Enter/Exit Actions
 
 ### 9.1 Style 트리거 + Storyboard
 ```xml
@@ -499,7 +492,7 @@ public class TagChip : Control
 
 ---
 
-## 10) ItemsControl 재템플릿 — 가상화/스크롤 주의
+## 10. ItemsControl 재템플릿 — 가상화/스크롤 주의
 
 ```xml
 <Style TargetType="ListBox" x:Key="ChipList">
@@ -528,7 +521,7 @@ public class TagChip : Control
 
 ---
 
-## 11) StaticResource vs DynamicResource (스타일/템플릿에서)
+## 11. StaticResource vs DynamicResource (스타일/템플릿에서)
 
 - **StaticResource**: 로드 시 **한 번만 해석**. 빠르고 안전.
 - **DynamicResource**: 런타임에 리소스 **변경 감지**. 테마 전환/사용자 커스터마이즈에 유용.
@@ -542,7 +535,7 @@ public class TagChip : Control
 
 ---
 
-## 12) 성능/안정성 체크리스트
+## 12. 성능/안정성 체크리스트
 
 - **TemplateBinding** 우선(경량) → 복잡 바인딩 필요 시 `TemplatedParent` 바인딩.
 - **Freezable(Brush/Geometry)** 리소스는 **동적 변경 없으면 Freeze**(WPF 내부가 자동 Freeze).
@@ -552,7 +545,7 @@ public class TagChip : Control
 
 ---
 
-## 13) 실전: **토글 스위치**(CheckBox → 스위치 UI) 템플릿
+## 13. 실전: **토글 스위치**(CheckBox → 스위치 UI) 템플릿
 
 ```xml
 <Style TargetType="CheckBox" x:Key="ToggleSwitch">
@@ -608,7 +601,7 @@ public class TagChip : Control
 
 ---
 
-## 14) 실전: **TextBox 오류 상태 스타일**(검증 UI)
+## 14. 실전: **TextBox 오류 상태 스타일**(검증 UI)
 
 ```xml
 <Style TargetType="TextBox" x:Key="ErrorTextBox">
@@ -632,7 +625,7 @@ public class TagChip : Control
 
 ---
 
-## 15) 고급 팁 모음
+## 15. 고급 팁 모음
 
 ### 15.1 스타일에서 **AttachedProperty** Setter
 ```xml
@@ -675,7 +668,7 @@ public class TagChip : Control
 
 ---
 
-## 16) “왜 적용이 안 되지?” 트러블슈팅
+## 16. “왜 적용이 안 되지?” 트러블슈팅
 
 1. **암시적 스타일 범위**가 다름?  
    - 그 컨트롤이 다른 Resource 스코프에 있지 않은지(예: DataTemplate 내부 ItemsControl 등).
@@ -692,7 +685,7 @@ public class TagChip : Control
 
 ---
 
-## 17) 실습: “카드 카드” 컨트롤 – 스타일 & 템플릿 결합 예
+## 17. 실습: “카드 카드” 컨트롤 – 스타일 & 템플릿 결합 예
 
 ### 17.1 Card 스타일
 ```xml
@@ -752,7 +745,7 @@ public class TagChip : Control
 
 ---
 
-## 18) 스타일/템플릿의 테스트 전략
+## 18. 스타일/템플릿의 테스트 전략
 
 - **시각 스냅샷 테스트**: 동일 렌더링 보장(픽셀 비교).  
 - **시각 트리 규칙 검사**: `Template.FindName` / UI 자동화 트리로 필수 요소(PART) 존재 검증.  
@@ -761,7 +754,7 @@ public class TagChip : Control
 
 ---
 
-## 19) 마무리 요약
+## 19. 마무리 요약
 
 - **Style**  
   - 속성/트리거/이벤트를 범위 단위로 묶어 **일관성**과 **재사용성**을 확보.  

@@ -10,19 +10,19 @@ Kubernetes에서 `Pending`, `FailedScheduling`, `Insufficient CPU/Memory` 메시
 
 ---
 
-## 0) 3분 초진단 루틴
+## 0. 3분 초진단 루틴
 
 ```bash
-# 1) 파드/이벤트: 왜 못 올라가는지 스케줄러의 근거부터 본다
+# 1. 파드/이벤트: 왜 못 올라가는지 스케줄러의 근거부터 본다
 kubectl describe pod <pod> | sed -n '/Events:/,$p'
 kubectl get events -A --sort-by='.lastTimestamp' | tail -n 50
 
-# 2) 노드 상태/압력: 조건부 거부(Pressure, Taints)와 가용량 확인
+# 2. 노드 상태/압력: 조건부 거부(Pressure, Taints)와 가용량 확인
 kubectl describe node <node-name> | egrep -i 'Taints|Pressure|Allocatable|Condition'
 kubectl top nodes
 kubectl top pod -A
 
-# 3) 스토리지(있다면): PVC 바인딩·프로비저닝 상태
+# 3. 스토리지(있다면): PVC 바인딩·프로비저닝 상태
 kubectl get pvc -A
 kubectl describe pvc <pvc-name>
 ```
@@ -36,7 +36,7 @@ kubectl describe pvc <pvc-name>
 
 ---
 
-## 1) 증상 요약과 기본 예시
+## 1. 증상 요약과 기본 예시
 
 ```bash
 kubectl get pods
@@ -56,7 +56,7 @@ Warning  FailedScheduling  default-scheduler
 
 ---
 
-## 2) 원인 분류표 (무엇이 스케줄을 막는가)
+## 2. 원인 분류표 (무엇이 스케줄을 막는가)
 
 | 범주 | 대표 원인 | 스케줄러 메시지 힌트 | 첫 확인 명령 |
 |---|---|---|---|
@@ -71,7 +71,7 @@ Warning  FailedScheduling  default-scheduler
 
 ---
 
-## 3) 리소스 부족(Insufficient CPU/Memory) — 해법 설계
+## 3. 리소스 부족(Insufficient CPU/Memory) — 해법 설계
 
 ### 3.1 핵심 개념 복습
 
@@ -162,7 +162,7 @@ spec:
 
 ---
 
-## 4) 정책·배치 제약으로 인한 실패
+## 4. 정책·배치 제약으로 인한 실패
 
 ### 4.1 Taints/Tolerations
 
@@ -218,7 +218,7 @@ affinity:
 
 ---
 
-## 5) 네임스페이스 한도·기본값에 막히는 경우
+## 5. 네임스페이스 한도·기본값에 막히는 경우
 
 ### 5.1 ResourceQuota 초과
 
@@ -258,7 +258,7 @@ spec:
 
 ---
 
-## 6) 스토리지(PVC)로 인한 Pending
+## 6. 스토리지(PVC)로 인한 Pending
 
 ### 6.1 상태 확인
 
@@ -297,7 +297,7 @@ parameters:
 
 ---
 
-## 7) 우선순위·선점(Preemption)·PDB 상호작용
+## 7. 우선순위·선점(Preemption)·PDB 상호작용
 
 ### 7.1 PriorityClass로 중요도 선언
 
@@ -337,7 +337,7 @@ spec:
 
 ---
 
-## 8) 관측 기반 용량 추정 — 실무 팁
+## 8. 관측 기반 용량 추정 — 실무 팁
 
 ### 8.1 프로메테우스 지표로 requests 대비 실제 사용률 측정
 
@@ -354,7 +354,7 @@ spec:
 
 ---
 
-## 9) 케이스 스터디
+## 9. 케이스 스터디
 
 ### 9.1 `Insufficient memory`로 신규 릴리즈가 Pending
 
@@ -398,7 +398,7 @@ tolerations:
 
 ---
 
-## 10) 운영 템플릿 모음
+## 10. 운영 템플릿 모음
 
 ### 10.1 ResourceQuota (팀 한도 관리)
 ```yaml
@@ -446,7 +446,7 @@ spec:
 
 ---
 
-## 11) 스케줄링 실패 트러블슈팅 명령 세트
+## 11. 스케줄링 실패 트러블슈팅 명령 세트
 
 ```bash
 # 이벤트 타임라인
@@ -473,7 +473,7 @@ kubectl describe pvc <pvc>
 
 ---
 
-## 12) 베스트 프랙티스 요약
+## 12. 베스트 프랙티스 요약
 
 - **항상 requests 지정**: 스케줄러 정확도와 비용 최적화의 출발점
 - **메모리는 보수적으로**, CPU는 HPA 전제라면 낮게 시작 후 확장
@@ -484,7 +484,7 @@ kubectl describe pvc <pvc>
 
 ---
 
-## 13) 결론
+## 13. 결론
 
 | 키포인트 | 요약 |
 |---|---|

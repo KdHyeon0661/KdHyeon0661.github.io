@@ -6,7 +6,7 @@ category: Csharp
 ---
 # C# LINQ 기초부터 실전까지 (Where, Select, GroupBy, Any, All, etc.)
 
-## 0) 준비 — 네임스페이스와 컬렉션
+## 0. 준비 — 네임스페이스와 컬렉션
 
 ```csharp
 using System;
@@ -19,7 +19,7 @@ using System.Collections.Generic;
 
 ---
 
-## 1) 문법 두 가지: Method vs Query
+## 1. 문법 두 가지: Method vs Query
 
 ```csharp
 var result1 = list.Where(x => x > 10).Select(x => x * 2);        // Method 문법
@@ -31,7 +31,7 @@ var result2 = from x in list where x > 10 select x * 2;           // Query 문�
 
 ---
 
-## 2) 지연 실행(Deferred Execution) & 즉시 평가(Materialization)
+## 2. 지연 실행(Deferred Execution) & 즉시 평가(Materialization)
 
 - `Where/Select/GroupBy/OrderBy` 등은 **열거할 때 실행**됩니다.
 - 즉시 결과가 필요하면 **`ToList()`/`ToArray()`/`ToDictionary()`** 등으로 materialize.
@@ -45,7 +45,7 @@ var even = q.ToList();                   // 여기서 실행(평가)
 
 ---
 
-## 3) 가장 많이 쓰는 연산자
+## 3. 가장 많이 쓰는 연산자
 
 ### 3.1 Where — 필터링
 ```csharp
@@ -93,7 +93,7 @@ var    max   = people.Max(p => p.Score);
 
 ---
 
-## 4) GroupBy — 그룹화와 집계
+## 4. GroupBy — 그룹화와 집계
 
 ```csharp
 var groups = people.GroupBy(p => p.Age);
@@ -126,7 +126,7 @@ foreach (var p in lookup[30]) Console.WriteLine(p.Name);
 
 ---
 
-## 5) 집합 연산: Distinct / Union / Intersect / Except
+## 5. 집합 연산: Distinct / Union / Intersect / Except
 
 ```csharp
 var unique      = list.Distinct();
@@ -148,7 +148,7 @@ var uniqByEmail = users.DistinctBy(u => u.Email);
 
 ---
 
-## 6) 투영 확장: SelectMany — 평탄화(flatten)
+## 6. 투영 확장: SelectMany — 평탄화(flatten)
 
 ```csharp
 var words = new[] { "hi", "there" };
@@ -162,7 +162,7 @@ var allItems = orders.SelectMany(o => o.Items);
 
 ---
 
-## 7) 조인(Join/GroupJoin)과 Left Join 패턴
+## 7. 조인(Join/GroupJoin)과 Left Join 패턴
 
 ### 7.1 내부 조인(Inner Join)
 ```csharp
@@ -198,7 +198,7 @@ var left =
 
 ---
 
-## 8) 페이징/슬라이딩/청크/Zip
+## 8. 페이징/슬라이딩/청크/Zip
 
 ```csharp
 var page = list.Skip((pageIndex - 1) * pageSize).Take(pageSize);
@@ -212,7 +212,7 @@ var zipped = xs.Zip(ys, (x,y) => (x,y)); // 두 시퀀스 병렬 결합
 
 ---
 
-## 9) 사전/그룹 구조로 바로 만들기
+## 9. 사전/그룹 구조로 바로 만들기
 
 ```csharp
 var dic = people.ToDictionary(p => p.Id);                 // 키 중복시 예외
@@ -226,7 +226,7 @@ var byDept = people.GroupBy(p => p.Department)
 
 ---
 
-## 10) 고급 집계: Aggregate / Scan(누적) / MaxBy-MinBy
+## 10. 고급 집계: Aggregate / Scan(누적) / MaxBy-MinBy
 
 ```csharp
 var factorial = Enumerable.Range(1, 5).Aggregate((acc, x) => acc * x); // 120
@@ -243,7 +243,7 @@ IEnumerable<int> Scan(IEnumerable<int> src)
 
 ---
 
-## 11) Query 문법 확장 — let/into
+## 11. Query 문법 확장 — let/into
 
 ```csharp
 var q =
@@ -264,7 +264,7 @@ var q =
 
 ---
 
-## 12) 지연 실행 함정과 “다중 열거” 이슈
+## 12. 지연 실행 함정과 “다중 열거” 이슈
 
 ```csharp
 var q = ExpensiveSource().Where(x => x > 0);
@@ -285,7 +285,7 @@ var b = materialized.Sum();
 
 ---
 
-## 13) 클로저(Closure) 캡처 함정
+## 13. 클로저(Closure) 캡처 함정
 
 ```csharp
 var actions = new List<Action>();
@@ -308,7 +308,7 @@ LINQ 람다에서도 동일 규칙이 적용됩니다.
 
 ---
 
-## 14) IEnumerable vs IQueryable — 번역 가능한 식만!
+## 14. IEnumerable vs IQueryable — 번역 가능한 식만!
 
 - `IEnumerable<T>`: **메모리 내 컬렉션**에 대한 **즉시/지연 계산**(C# 코드 그대로 실행).  
 - `IQueryable<T>`: **식 트리**를 DB 등 프로바이더가 **쿼리로 번역**(예: EF Core → SQL).  
@@ -329,7 +329,7 @@ var grouped = rows.GroupBy(r => r.Age / 10).ToList(); // 메모리 내 후처리
 
 ---
 
-## 15) 성능 팁
+## 15. 성능 팁
 
 1) **필요한 열만 Select** (투영 최소화)  
 2) **필터 먼저 → 정렬/집계** 순(데이터 축소 후 비싼 연산)  
@@ -347,7 +347,7 @@ $$
 
 ---
 
-## 16) PLINQ(병렬 LINQ) — CPU 바운드 시 가속
+## 16. PLINQ(병렬 LINQ) — CPU 바운드 시 가속
 
 ```csharp
 using System.Linq;
@@ -366,7 +366,7 @@ var parallel =
 
 ---
 
-## 17) 실전 예제 1 — 상위 N 카테고리 매출(Left Join 포함)
+## 17. 실전 예제 1 — 상위 N 카테고리 매출(Left Join 포함)
 
 요구:  
 1) 모든 카테고리 이름을 표기(주문 없는 카테고리도 0으로).  
@@ -417,7 +417,7 @@ foreach (var x in top3)
 
 ---
 
-## 18) 실전 예제 2 — 로그 분석: 상태코드별 상위 URL, 이동 평균
+## 18. 실전 예제 2 — 로그 분석: 상태코드별 상위 URL, 이동 평균
 
 ```csharp
 public record Log(DateTime Ts, string Url, int Status, int Ms);
@@ -457,7 +457,7 @@ Console.WriteLine($"윈도우 평균: {string.Join(", ", window3.Select(x => x?.
 
 ---
 
-## 19) 고급 트릭 모음
+## 19. 고급 트릭 모음
 
 - **DefaultIfEmpty**: 빈 시퀀스에 기본값을 하나 주입(Left Join 구현에 핵심).
 - **Prepend/Append**: 시퀀스의 앞/뒤에 원소 하나 추가.
@@ -472,14 +472,14 @@ var zeros = Enumerable.Repeat(0, 3);        // 0,0,0
 
 ---
 
-## 20) 테스트 가능성과 예측 가능성
+## 20. 테스트 가능성과 예측 가능성
 
 - 쿼리의 **순서 보장**: `OrderBy`를 써서 명시. 해시 기반 집합/사전은 순서가 의미 없음.  
 - **시계/랜덤**과 섞지 말고, 필요 시 외부에서 값을 주입(재현성↑).
 
 ---
 
-## 21) 체크리스트
+## 21. 체크리스트
 
 **설계**
 - [ ] 데이터량 큰가? 먼저 **Where**로 줄이고 그다음 정렬/그룹
@@ -501,7 +501,7 @@ var zeros = Enumerable.Repeat(0, 3);        // 0,0,0
 
 ---
 
-## 22) 요약 표
+## 22. 요약 표
 
 | 범주 | 핵심 메서드 | 비고 |
 |---|---|---|
@@ -517,7 +517,7 @@ var zeros = Enumerable.Repeat(0, 3);        // 0,0,0
 
 ---
 
-## 23) 마무리
+## 23. 마무리
 
 LINQ는 “**작은 연산자의 조합**으로 **큰 질의**를 읽기 쉽게 표현”하는 도구입니다.  
 핵심은 **지연 실행을 이해**하고, **한 번만 평가**하며, **필요한 최소 데이터만** 다루는 것.  

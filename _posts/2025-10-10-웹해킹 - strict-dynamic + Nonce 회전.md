@@ -7,7 +7,7 @@ category: 웹해킹
 # 25. CSP `strict-dynamic` + Nonce 회전
 **— 개념·동작 원리 · 위협 모델 · 실무 설계(Nonce 생성/회전/캐싱 고려) · 프레임워크별 설정(Express/Nginx/Spring/Django/Flask) · 안전한 동적 로더 패턴 · 마이그레이션(인라인 이벤트 제거) · 롤아웃/모니터링(Report-Only/Reporting API) · 테스트/체크리스트**
 
-## 0) 한눈에 보기 (Executive Summary)
+## 0. 한눈에 보기 (Executive Summary)
 
 - **효과**  
   - `script-src 'nonce-…' 'strict-dynamic'`을 쓰면, **Nonce가 붙은 부트스트랩 스크립트**(초기 신뢰 스크립트)가 **동적으로 추가하는 `<script>` 요소**도 **자동으로 신뢰**됩니다(추가 `<script>`에 Nonce를 또 붙이지 않아도 됨).  
@@ -19,7 +19,7 @@ category: 웹해킹
 
 ---
 
-## 1) 위협 모델 & 동작 원리 (왜 `strict-dynamic`인가?)
+## 1. 위협 모델 & 동작 원리 (왜 `strict-dynamic`인가?)
 
 ### 1.1 기본 CSP의 한계
 - 호스트 화이트리스트(예: `script-src 'self' https://cdn.example.com`)만으로는  
@@ -35,7 +35,7 @@ category: 웹해킹
 
 ---
 
-## 2) Nonce(난수) 설계 & 회전(재사용 금지)
+## 2. Nonce(난수) 설계 & 회전(재사용 금지)
 
 ### 2.1 생성 규칙
 - **CSPRNG**(cryptographically secure)로 **128비트 이상**을 생성, **Base64** 등으로 인코딩.  
@@ -53,7 +53,7 @@ category: 웹해킹
 
 ---
 
-## 3) 표준 정책 스니펫(추천 기본형)
+## 3. 표준 정책 스니펫(추천 기본형)
 
 > **목표**: ① XSS/주입 차단, ② 필요한 동적 로드만 허용, ③ 보고·롤백 용이
 
@@ -86,7 +86,7 @@ Content-Security-Policy:
 
 ---
 
-## 4) 서버·프레임워크별 구현 예
+## 4. 서버·프레임워크별 구현 예
 
 ### 4.1 Node/Express — **요청마다 Nonce 생성 & 헤더 설정**
 ```js
@@ -300,7 +300,7 @@ def index():
 
 ---
 
-## 5) 안전한 동적 로더 패턴 (허용/차단 데모)
+## 5. 안전한 동적 로더 패턴 (허용/차단 데모)
 
 ### 5.1 허용(의도된 체인)
 ```html
@@ -329,7 +329,7 @@ def index():
 
 ---
 
-## 6) 인라인 이벤트 핸들러 → **addEventListener** 마이그레이션
+## 6. 인라인 이벤트 핸들러 → **addEventListener** 마이그레이션
 
 ### 6.1 나쁜 예
 ```html
@@ -354,7 +354,7 @@ def index():
 
 ---
 
-## 7) 구형 브라우저/레거시 호환 전략
+## 7. 구형 브라우저/레거시 호환 전략
 
 - **원칙**: Nonce를 인식하지 못하는 환경을 위해  
   1) **부트스트랩을 외부 파일**로 분리(호스트 화이트리스트와 병행), 또는  
@@ -368,14 +368,14 @@ Content-Security-Policy:
 
 ---
 
-## 8) CDN/캐싱/엣지 고려
+## 8. CDN/캐싱/엣지 고려
 
 - **HTML 캐싱 주의**: Nonce가 **응답별로 달라야** 하므로, **캐시 키**에 세션/쿠키/변수 반영 또는 **엣지에서 Nonce 주입**.  
 - **정적 자산**(JS/CSS)은 **캐시 가능**. Nonce는 **HTML에만**(부트스트랩 또는 외부 로더에 필요 시).
 
 ---
 
-## 9) 롤아웃(Report-Only → Enforce) & 리포팅
+## 9. 롤아웃(Report-Only → Enforce) & 리포팅
 
 ### 9.1 단계적 적용
 1) **Report-Only**로 시작:  
@@ -399,7 +399,7 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ---
 
-## 10) 흔한 실수(안티패턴)
+## 10. 흔한 실수(안티패턴)
 
 - **Nonce 재사용**(캐시/템플릿 버그) → **주입 재이용** 가능성↑  
 - **`'unsafe-inline'` 추가** → Nonce의 의미 퇴색  
@@ -410,7 +410,7 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ---
 
-## 11) 테스트 시나리오(“막혀야 정상”)
+## 11. 테스트 시나리오(“막혀야 정상”)
 
 1) **Nonce 없는 인라인 `<script>`**  
    - 기대: 차단, 콘솔에 CSP 위반 기록.
@@ -423,7 +423,7 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ---
 
-## 12) 보조 강화 옵션
+## 12. 보조 강화 옵션
 
 - **`require-trusted-types-for 'script'` + Trusted Types**: DOM XSS 표면 감소(크롬 계열).  
 - **`object-src 'none'` / `base-uri 'self'` / `frame-ancestors 'self'`**: 레거시 플러그인/프레이밍 차단.  
@@ -431,7 +431,7 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ---
 
-## 13) 미니 체크리스트
+## 13. 미니 체크리스트
 
 - [ ] **요청마다 Nonce** 생성(128비트+, CSPRNG, Base64)  
 - [ ] `script-src 'nonce-…' 'strict-dynamic'` + `script-src-attr 'none'`  
@@ -443,7 +443,7 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ---
 
-## 14) FAQ
+## 14. FAQ
 
 - **Q. 모든 동적 로드가 자동 허용되나요?**  
   A. **“신뢰된(Nonce/해시로 허용된) 스크립트가 추가한 것”**만 허용됩니다. 임의로 DOM에 삽입된 `<script>`는 Nonce가 없으므로 차단됩니다.
@@ -456,7 +456,7 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ---
 
-## 15) 요약 템플릿(복붙)
+## 15. 요약 템플릿(복붙)
 
 ### 서버(Express)
 ```js

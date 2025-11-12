@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes 배포 전략: Rolling Update & Rollback
 
-## 1) Rolling Update — 원리와 수학적 직관
+## 1. Rolling Update — 원리와 수학적 직관
 
 ### 1.1 동작 원리
 1. 기존 `ReplicaSet(old)` 유지
@@ -63,7 +63,7 @@ $$
 
 ---
 
-## 2) 배포 헬스체크: Readiness/Liveness/Startup
+## 2. 배포 헬스체크: Readiness/Liveness/Startup
 
 **헬스 프로브**는 롤링의 품질을 좌우합니다.
 
@@ -91,7 +91,7 @@ startupProbe:
 
 ---
 
-## 3) 배포·롤백 명령 모음(기본기 철저)
+## 3. 배포·롤백 명령 모음(기본기 철저)
 
 ```bash
 # 배포 상태 모니터링
@@ -119,7 +119,7 @@ kubectl rollout undo deploy my-app --to-revision=3
 
 ---
 
-## 4) 실전 전략 1 — “보수적” RollingUpdate 프로파일
+## 4. 실전 전략 1 — “보수적” RollingUpdate 프로파일
 
 트래픽 민감·코어 서비스에 추천:
 
@@ -136,7 +136,7 @@ strategy:
 
 ---
 
-## 5) 실전 전략 2 — “속도 우선” 프로파일
+## 5. 실전 전략 2 — “속도 우선” 프로파일
 
 비핵심 서비스·스테이징·대량 마이크로서비스에:
 
@@ -151,7 +151,7 @@ rollingUpdate:
 
 ---
 
-## 6) Canary 스타일 RollingUpdate(경량 버전)
+## 6. Canary 스타일 RollingUpdate(경량 버전)
 
 **전체 트래픽 중 일부만** 새 버전에 흘려 문제를 감지:
 
@@ -173,7 +173,7 @@ spec: {replicas: 2, template: {metadata: {labels:{track: canary}}}}
 
 ---
 
-## 7) Blue/Green(무중단 스위치) — Service 전환
+## 7. Blue/Green(무중단 스위치) — Service 전환
 
 **두 환경(Blue=현재, Green=신규)**를 병렬 운영 후 **한 번에 스위치**. 다운타임 없이 전환이 가능하고 **즉시 롤백이 간단**.
 
@@ -189,7 +189,7 @@ kubectl patch svc my-svc -p '{"spec":{"selector":{"app":"my-app","version":"gree
 
 ---
 
-## 8) Argo Rollouts로 Canary/BlueGreen 자동화
+## 8. Argo Rollouts로 Canary/BlueGreen 자동화
 
 **CRD 기반**의 고급 롤링 컨트롤러. **메트릭 게이트**, **자동 롤백**, **트래픽 셰이핑** 지원.
 
@@ -234,7 +234,7 @@ strategy:
 
 ---
 
-## 9) 배포와 다른 리소스의 상호작용
+## 9. 배포와 다른 리소스의 상호작용
 
 ### 9.1 HPA(수평 오토스케일러)
 - 배포 중 **증설/감축**이 겹칠 수 있음 → **`maxSurge` 여유** vs **노드 자원/CA** 확인
@@ -256,7 +256,7 @@ spec:
 
 ---
 
-## 10) 실전 예제 — “안전한 점진 배포 + 빠른 롤백”
+## 10. 실전 예제 — “안전한 점진 배포 + 빠른 롤백”
 
 ### 10.1 매니페스트(배포·프로브·PDB 포함)
 ```yaml
@@ -313,7 +313,7 @@ kubectl rollout status deploy shop-api
 
 ---
 
-## 11) 트러블슈팅 체크리스트
+## 11. 트러블슈팅 체크리스트
 
 | 증상 | 원인 후보 | 해결 |
 |---|---|---|
@@ -325,7 +325,7 @@ kubectl rollout status deploy shop-api
 
 ---
 
-## 12) 데이터베이스/스키마와 롤백
+## 12. 데이터베이스/스키마와 롤백
 
 **스키마 변경**이 수반되면 단순 롤백이 파괴적일 수 있습니다.  
 권장 패턴: **Expand → Code Switch → Contract**
@@ -337,7 +337,7 @@ kubectl rollout status deploy shop-api
 
 ---
 
-## 13) Helm·GitOps·파이프라인 팁
+## 13. Helm·GitOps·파이프라인 팁
 
 ### 13.1 Helm 값으로 전략 주입
 ```yaml
@@ -363,7 +363,7 @@ strategy:
 
 ---
 
-## 14) 모니터링 메트릭과 SLO 게이트
+## 14. 모니터링 메트릭과 SLO 게이트
 
 **배포 단계별**로 다음을 감시:
 - **에러율**(HTTP 5xx RPS, 비율)
@@ -378,7 +378,7 @@ strategy:
 
 ---
 
-## 15) 운영 레시피 요약
+## 15. 운영 레시피 요약
 
 1. **헬스 프로브**를 먼저 튜닝(Startup → Readiness → Liveness)
 2. **보수적 시작**: `maxUnavailable: 0`, 작은 `maxSurge`

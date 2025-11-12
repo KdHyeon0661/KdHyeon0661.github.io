@@ -421,7 +421,7 @@ spec:
 ## 15. 전체 예시 묶음(YAML 일괄)
 
 ```yaml
-# 1) Deployment + Service
+# 1. Deployment + Service
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -452,7 +452,7 @@ spec:
   - port: 80
     targetPort: 80
 ---
-# 2) HPA v2 with behavior
+# 2. HPA v2 with behavior
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

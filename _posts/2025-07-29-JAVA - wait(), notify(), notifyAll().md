@@ -4,252 +4,397 @@ title: Java - wait(), notify(), notifyAll()
 date: 2025-07-29 21:20:23 +0900
 category: Java
 ---
-# `wait()`, `notify()`, `notifyAll()` — 자세한 정리
+# `wait()`, `notify()`, `notifyAll()`
 
-Java의 `wait()` / `notify()` / `notifyAll()`은 **저수준 스레드 협력(통신)** API입니다. 이들 메서드는 `Object`에 정의되어 있고 **모니터(monitor)**, 즉 `synchronized`와 함께 사용되어야 합니다. 올바르게 쓰지 않으면 `IllegalMonitorStateException`, 교착(Deadlock), 논리적 버그(예: missed notification, spurious wakeup) 등이 발생하므로 주의가 필요합니다.
+## 0. 한눈에 핵심 요약
 
----
+| 메서드 | 하는 일 | 반드시 필요한 전제 | 깨어난 뒤 |
+|---|---|---|---|
+| `wait()` | **현재 스레드를 대기**시키며 **해당 객체 모니터 락을 해제** | **`synchronized(obj)` 내부**에서만 호출 | **다시 같은 모니터 락을 획득**해야 다음 줄부터 진행 |
+| `notify()` | 같은 모니터의 **대기(wait set) 중 임의의 1개** 스레드를 깨움 | **`synchronized(obj)` 내부** | 깨워진 스레드는 **호출자가 락을 풀고 나서** 락 경쟁 후 진행 |
+| `notifyAll()` | 같은 모니터의 **모든 대기 스레드**를 깨움 | **`synchronized(obj)` 내부** | 모두 락 경쟁 → **조건 재검사** 필요(`while`) |
 
-## 1. 핵심 요약 (한눈에)
-- `wait()` : 현재 스레드를 **대기 상태**로 만들고, **모니터 락을 해제**한다. 다른 스레드가 `notify()`/`notifyAll()`하거나 타임아웃이 걸리면(또는 스레드가 인터럽트되면) 깨어난다. 반드시 모니터(즉 `synchronized` 블록/메서드) 안에서 호출해야 한다.
-- `notify()` : 같은 모니터를 기다리고 있는 스레드 중 **임의의 하나**를 깨운다(스케줄러/VM에 따라 어떤 스레드인지 불명). 깨워진 스레드는 **모니터 락을 다시 얻어야** 실행을 계속한다.
-- `notifyAll()` : 같은 모니터를 기다리고 있는 **모든 스레드**를 깨운다. 이후 각 스레드는 락 획득 순서에 따라 실행 재개 여부가 결정된다.
-- 항상 **조건을 while 루프로 체크**(not if) — `while(condition) lock.wait();` — *spurious wakeup* 및 재검사를 위해 필수.
-
----
-
-## 2. 동작 원리(정밀)
-1. `wait()` 호출 시:
-   - 반드시 현재 스레드가 해당 객체의 모니터(락)를 소유하고 있어야 함(즉 synchronized 내부).
-   - 스레드는 모니터를 **반납(release)** 하고 **wait set**(대기 큐)에 들어감.
-   - 나중에 `notify()`/`notifyAll()`에 의해 깨이거나 `wait(long)` 타임아웃으로 깨어나거나 `interrupt()`로 `InterruptedException`을 받음.
-   - 깨어나면 곧바로 실행되는 것이 아니라 **모니터 락을 다시 획득한 후** `wait()` 다음 명령부터 실행.
-
-2. `notify()` / `notifyAll()` 호출 시:
-   - 역시 `synchronized` 내부에서 호출해야 함.
-   - `notify()`는 wait set에서 하나의 스레드를 선택해 '깨움' 표시(선택된 스레드는 runnable 대기 상태가 됨).
-   - `notifyAll()`은 wait set의 모든 스레드에 대해 깨움 표시.
-   - 깨워진 스레드들은 **모니터 락이 해제될 때**(즉 notify를 호출한 스레드가 synchronized 블록을 빠져나갈 때) 락을 획득하려 경쟁함.
-
-3. 중요한 포인트:
-   - `notify()` 호출 직후에도 호출한 스레드가 synchronized 블록을 벗어나기 전까지 깨운 스레드는 **실제로 진행하지 못함**. 즉 notify는 *신호(signal)*만 보내고 락 해제까지는 기다림.
-   - 만약 `notify()`를 호출했을 때 **대기 중인 스레드가 없으면** 그 신호는 사라짐(나중에 기다리는 스레드에게 전달되지 않음). — **lost notification** 문제
-
----
-
-## 3. 필수 규칙 및 예외
-- `wait()` / `notify()` / `notifyAll()`은 **반드시** 모니터 소유 상태(즉 `synchronized(obj) { ... }` 또는 `synchronized` 메서드)에서 호출해야 함. 그렇지 않으면 `IllegalMonitorStateException` 발생.
-- `wait()`는 `InterruptedException`을 던질 수 있으므로 적절히 처리(try/catch)해야 함.
-- `wait(long millis)`와 `wait(long millis, int nanos)`로 타임아웃 지정 가능.
-
----
-
-## 4. 꼭 지켜야 할 패턴: **조건 검사 → while → wait**
-항상 조건을 `while`로 검사해야 합니다. 이유는:
-- `notifyAll()`로 여러 스레드가 깨여나 모두 동일한 조건을 재검사해야 할 수도 있음.
-- *Spurious wakeups* (드물게, 이유 없이 깨어남)가 있기 때문.
+**규칙**: 조건은 항상 `while`로 감싸 재검사  
 ```java
 synchronized (lock) {
-    while (!condition) {
-        lock.wait();
+    while (!condition()) {
+        lock.wait(); // 또는 wait(timeout)
     }
-    // 조건 성립 시 작업 수행
-}
-```
-`if`로 검사하면 스퍼리어스 웨이크업이나 경쟁으로 인해 잘못된 실행을 할 수 있음.
-
----
-
-## 5. 잘못된 사용 예 (실수 사례)
-
-### 5.1 `wait()`를 synchronized 없이 호출 → 예외
-```java
-Object lock = new Object();
-lock.wait(); // IllegalMonitorStateException
-```
-
-### 5.2 `if`로 검사하면 race / spurious wakeup 문제
-```java
-synchronized(lock) {
-    if (queue.isEmpty()) {
-        lock.wait(); // 잘못된 패턴: wakeup 후 바로 poll하면 null 가능
-    }
-    Object x = queue.poll();
+    // 조건 성립 이후의 작업
 }
 ```
 
 ---
 
-## 6. 실전 예제 — 생산자/소비자 (Producer-Consumer) (올바른 패턴)
-아래는 고전적인 버퍼(한 칸) 구현. `notifyAll()`을 사용해 안전하게 여러 소비자/생산자 동작을 지원.
+## 1. 동작 원리 (정밀)
+
+1. `wait()`  
+   - 호출 스레드는 **해당 객체의 모니터를 반드시 보유**해야 함(= `synchronized(obj)` 안).  
+   - 호출 즉시 **모니터를 반납**하고 **wait set**으로 이동하여 대기.  
+   - 다음 중 하나로 깨어남:  
+     - 다른 스레드의 `notify()/notifyAll()`  
+     - `wait(long[, int])` 타임아웃 만료  
+     - `interrupt()` → `InterruptedException` 발생  
+   - 깨어난 직후 곧바로 실행되는 것이 아니라, **다시 같은 모니터 락을 획득해야** `wait()` 다음 줄부터 이어감.
+
+2. `notify()` / `notifyAll()`  
+   - 역시 **모니터 보유 중** 호출해야 하며, 호출 시점에는 **단지 신호만 설정**.  
+   - 실제로 깨워진 스레드가 실행 재개하려면 **호출 스레드가 모니터를 해제**해야 함(블록/메서드 종료).
+
+3. **Lost notification**  
+   - 대기자가 없을 때 `notify()`가 호출되면 신호는 **사라짐**(버퍼링되지 않음).  
+   - 그러므로 **항상 상태(조건)를 먼저 기록 → 그 다음 신호**가 안전한 패턴.
+
+---
+
+## 2. 필수 규칙 · 예외
+
+- `wait/notify/notifyAll`은 **반드시** 해당 객체의 모니터를 가진 상태에서 호출(아니면 `IllegalMonitorStateException`).  
+- `wait()`는 `InterruptedException`을 던짐 → **catch 후 인터럽트 상태 복원** 또는 **상위로 전파**.  
+- 타임아웃 버전: `wait(long millis)`, `wait(long millis, int nanos)`  
+- `while` 가드 필수: **spurious wakeup**(이유 없는 깨움)과 **경쟁 조건** 방지.
+
+---
+
+## 3. 안전 패턴 ① — Guarded Suspension (while + wait)
 
 ```java
-public class BoundedBuffer<T> {
-    private T item = null;
+final class Mailbox<T> {
     private final Object lock = new Object();
+    private T message; // null = empty
 
-    public void put(T value) throws InterruptedException {
+    public void put(T m) throws InterruptedException {
         synchronized (lock) {
-            while (item != null) {      // 버퍼가 가득하면 대기
+            while (message != null) {     // 가드 조건(가득 차면 대기)
                 lock.wait();
             }
-            item = value;
-            lock.notifyAll();           // 소비자 깨우기
+            message = m;                   // 상태 변경
+            lock.notifyAll();              // 상태 변경 후 신호
         }
     }
 
     public T take() throws InterruptedException {
         synchronized (lock) {
-            while (item == null) {      // 버퍼가 비어 있으면 대기
+            while (message == null) {      // 비어 있으면 대기
                 lock.wait();
             }
-            T value = item;
-            item = null;
-            lock.notifyAll();           // 생산자 깨우기
-            return value;
+            T m = message;
+            message = null;                // 상태 변경
+            lock.notifyAll();              // 생산자 깨우기
+            return m;
         }
     }
 }
 ```
 
-사용 예:
-```java
-// 생산자
-new Thread(() -> {
-    try {
-        buffer.put("data");
-    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-}).start();
-
-// 소비자
-new Thread(() -> {
-    try {
-        String s = buffer.take();
-    } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-}).start();
-```
-
-> **권장**: `notifyAll()`을 기본으로 사용하고, 성능 이슈가 명확히 증명될 때만 `notify()` 고려.
+**포인트**  
+- **상태 변경 → notifyAll()** 순서로 신호를 보냄(가시성/순서 보장).  
+- **조건은 while**(스퍼리어스·경쟁 모두 방어).  
+- 신호는 **버퍼링되지 않는다** → 반드시 **상태 변수**로 의도를 기록.
 
 ---
 
-## 7. wait(long timeout) — 타임아웃 대기
-- `wait(long millis)`는 타임아웃 후 자동으로 깨어날 수 있음. 깨어났다고 해서 조건이 반드시 만족되는 것은 아니므로 역시 `while` 루프 사용.
-- 타임아웃은 **대체 전략(fallback)** 으로 유용. 예: 주기적으로 상태 점검, 데드락 감지, 종료 신호 확인 등.
+## 4. 안전 패턴 ② — 타임아웃 대기 (`wait(timeout)`)
+
+**벽시계(clock) 오류 방지**를 위해 `System.nanoTime()` 기반 남은시간 재계산:
 
 ```java
-synchronized(lock) {
-    long end = System.currentTimeMillis() + timeout;
-    while (!condition && System.currentTimeMillis() < end) {
-        long remaining = end - System.currentTimeMillis();
-        if (remaining > 0) lock.wait(remaining);
+void awaitUntil(BooleanSupplier condition, long timeoutMillis) throws InterruptedException {
+    final long deadline = System.nanoTime() + timeoutMillis * 1_000_000L;
+    synchronized (lock) {
+        long remainingNanos;
+        while (!condition.getAsBoolean() &&
+               (remainingNanos = deadline - System.nanoTime()) > 0) {
+            long ms = remainingNanos / 1_000_000L;
+            int ns = (int)(remainingNanos % 1_000_000L);
+            lock.wait(ms, ns); // 남은 시간만큼 대기
+        }
+        // 여기서 condition 재검사 결과로 성공/타임아웃 판단
     }
 }
 ```
 
 ---
 
-## 8. InterruptedException 처리 관례
-- `wait()`가 `InterruptedException`을 던지면 스레드의 인터럽트 상태는 **클리어**됩니다.
-- 일반 관례:
-  - 리소스 정리 후 `return` 하거나,
-  - 호출자에게 던지거나,
-  - 인터럽트 상태를 보존하려면 `Thread.currentThread().interrupt()`로 재설정.
+## 5. 안전 패턴 ③ — 인터럽트 처리
+
+`wait()`가 던진 `InterruptedException`은 **인터럽트 상태를 지움**. 보존하려면 복원:
 
 ```java
 try {
-    lock.wait();
+    synchronized (lock) {
+        while (!ready) lock.wait();
+    }
 } catch (InterruptedException e) {
     Thread.currentThread().interrupt(); // 상태 복원
-    // 필요한 정리 후 종료 또는 rethrow
+    // 정리/로그/전파 중 하나 선택
 }
 ```
 
 ---
 
-## 9. notify() vs notifyAll() — 언제 어떤 걸 쓸까?
-- `notify()` : wait set의 임의 스레드 하나만 깨움 — 빠르고 비용 적음. 하지만 **조건이 복잡하거나 여러 종류의 대기자가 섞여 있는 경우** 잘못된 스레드가 깨워져 다시 대기할 수 있어 deadlock/효율 저하 위험.
-- `notifyAll()` : 모든 대기자 전부 깨움 — 각 스레드는 조건을 재검사하고, 조건 성립인 스레드만 진행. 안전하지만 깨우고 다시 경쟁하는 비용이 듦.
+## 6. 흔한 실수와 교정
 
-**실무 권장**: 단순한 경우(한 종류의 대기자, 단일-생산자-단일-소비자)라면 `notify()` 가능. 그러나 일반적으로는 `notifyAll()`을 사용해 안전성을 확보하라.
+### 6.1 `synchronized` 없이 `wait()` 호출
+```java
+lock.wait(); // IllegalMonitorStateException
+```
+**교정**: 반드시 `synchronized (lock) { lock.wait(); }`
+
+### 6.2 `if` 가드 사용
+```java
+synchronized (lock) {
+    if (queue.isEmpty()) lock.wait();  // ❌
+    item = queue.remove();             // 경쟁/스퍼리어스 시 null 가능
+}
+```
+**교정**: `while (queue.isEmpty()) lock.wait();`
+
+### 6.3 `notify()` 오남용
+- 생산자/소비자 **여러 종류의 대기자**가 섞인 경우 `notify()`는 **틀린 스레드를 깨울 수 있음** → 다시 대기 → **교착/활성정지** 위험.  
+**권장**: 기본은 `notifyAll()`을 쓰고, 정확히 한 종류의 대기자·단일 버퍼 등 **증명 가능한** 단순 조건에서만 `notify()` 최적화를 고려.
 
 ---
 
-## 10. 스레드가 깨어난 뒤(재진입) 동작과 happens-before
-- `notify()`/`notifyAll()`가 일어난 시점에서 notify를 호출한 스레드가 synchronized 블록을 벗어나 **모니터를 해제**할 때, 깨어난 스레드들이 모니터를 획득할 수 있음.
-- 락 해제(모니터를 빠져나가는 시점)는 **happens-before** 관계를 제공하여 락을 건 스레드가 수행한 변경이 깨어난 스레드에서 보이게 됨(메모리 가시성 보장).
+## 7. `notify()` vs `notifyAll()` — 선택 기준
+
+| 상황 | 권장 |
+|---|---|
+| 대기자 **종류가 하나**, 조건 **단순**(예: 단일 생산자-단일 소비자, 단일 슬롯 버퍼) | 성능상 `notify()` 고려 가능 |
+| 대기자 **종류가 여러 개**(예: notFull vs notEmpty), 조건 **복잡**, 다수 스레드 | **`notifyAll()`** 권장(안전성) |
+| **틀린 스레드를 깨워도** `while` 재검사로 안전·진행 보장 | 둘 다 가능하나 기본은 `notifyAll()` |
+
+> `notifyAll()`은 **“가용성 우선”**. 비용이 염려되면 구조를 `java.util.concurrent`로 올리는 것이 일반적으로 더 낫습니다.
 
 ---
 
-## 11. 위험/주의사항 정리
-- `wait()`/`notify()`는 **저수준** API. 잘못 쓰기 쉬우며 버그 찾기 어려움.
-- `notify()`로 잘못된 스레드를 깨우면 **livelock 혹은 deadlock** 발생 가능.
-- **절대** `String` 상수, 공개된 객체(예: `this`를 외부에 공개) 같은 공유 가능한 락을 사용하면 안 됨(외부 코드가 같은 락을 사용해 교착을 유발할 수 있음). 대신 `private final Object lock = new Object();` 권장.
-- `wait()`의 반환은 항상 조건 재검사가 필요함(while).
-- `notify()` 호출 시점에 대기자가 없으면 신호가 사라짐 — 설계 상 이 점을 고려.
+## 8. 메모리 모델 · 가시성 (happens-before)
+
+- 같은 객체 모니터에 대해  
+  - **`synchronized` 블록 종료(모니터 해제)** 는 그 이전 쓰기들을 **배출(release)**  
+  - **다음에 그 모니터를 획득**하는 스레드는 그 쓰기들을 **관측(acquire)**  
+- 올바른 패턴: **상태 변경**과 **대기/신호**가 **같은 락**에서 이뤄져야 함.  
+  - 그래야 `notify/notifyAll` 이후 **깨운 스레드가 락을 재획득**했을 때, **상태 변경이 보임**.
 
 ---
 
-## 12. 고수준 대안(권장)
-Java의 `java.util.concurrent` 패키지는 `wait/notify`보다 사용하기 쉬운 동기화 도구를 제공:
-- `BlockingQueue` (예: `ArrayBlockingQueue`, `LinkedBlockingQueue`) — 생산자/소비자에 최적화. `put()`/`take()`가 내부적으로 적절히 블록.
-- `Lock` + `Condition` (java.util.concurrent.locks) — `Condition.await()` / `signal()` / `signalAll()`은 `wait/notify`보다 명확한 조건 변수 사용 가능.
-- `Semaphore`, `CountDownLatch`, `CyclicBarrier` 등.
-
-**예: BlockingQueue 대체(더 간단, 안전)**
+## 9. 실전 예제 — 유한 버퍼(배열 기반) 생산자/소비자
 
 ```java
-BlockingQueue<String> q = new ArrayBlockingQueue<>(1);
+import java.util.Arrays;
 
-// 생산자
-q.put("data"); // 블록/대기 자동 처리
+public final class BoundedQueue<T> {
+    private final Object lock = new Object();
+    private final Object[] buf;
+    private int head = 0, tail = 0, size = 0;
 
-// 소비자
-String s = q.take(); // 블록/대기 자동 처리
+    public BoundedQueue(int capacity) {
+        if (capacity <= 0) throw new IllegalArgumentException();
+        this.buf = new Object[capacity];
+    }
+
+    public void put(T x) throws InterruptedException {
+        synchronized (lock) {
+            while (size == buf.length) {
+                lock.wait();
+            }
+            buf[tail] = x;
+            tail = (tail + 1) % buf.length;
+            size++;
+            lock.notifyAll(); // notEmpty 신호
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public T take() throws InterruptedException {
+        synchronized (lock) {
+            while (size == 0) {
+                lock.wait();
+            }
+            T x = (T) buf[head];
+            buf[head] = null;
+            head = (head + 1) % buf.length;
+            size--;
+            lock.notifyAll(); // notFull 신호
+            return x;
+        }
+    }
+
+    @Override public String toString() {
+        synchronized (lock) { return "BQ" + Arrays.toString(buf); }
+    }
+}
+```
+
+- 두 개의 **조건(notEmpty / notFull)** 을 **하나의 wait set**으로 처리 → **`notifyAll()`이 안전**.  
+- `notify()` 최적화는 **엄격한 증명** 없이는 지양.
+
+---
+
+## 10. Sleep vs Wait (자주 혼동)
+
+| 항목 | `Thread.sleep` | `Object.wait` |
+|---|---|---|
+| 락 해제 여부 | **해제하지 않음** | **해제함(해당 모니터만)** |
+| 선언 위치 | `Thread` 정적 메서드 | `Object` 인스턴스 메서드 |
+| 깨우는 법 | 시간 경과 또는 인터럽트 | `notify/notifyAll`, 타임아웃, 인터럽트 |
+| 사용 목적 | 단순 지연 | **조건 대기(협력)** |
+
+---
+
+## 11. 락 선택, 재진입, 중첩락 주의
+
+- 락 객체는 **`private final Object lock = new Object();`** 처럼 **비공개 전용**으로.  
+  - `this`, 상수 `String`(intern 공유) 등은 외부 코드와 **락 간섭** 위험.
+- `synchronized`는 **재진입 가능**(같은 스레드가 같은 모니터를 여러 번 진입 가능).  
+  - 그러나 `wait()`는 **호출한 모니터만 해제**. **다른 락**은 계속 보유 → **교착 위험**(또 다른 스레드가 그 락을 필요로 하면서 이 스레드를 깨우지 못하는 상황).
+
+**안티패턴(중첩락 보유 후 wait)**
+```java
+synchronized (lockA) {
+  synchronized (lockB) {
+    while (!cond) lockA.wait(); // lockB는 붙잡은 채로 대기 → 잠재적 교착
+  }
+}
+```
+**지침**: `wait()`는 **가능하면 단일 락만 보유**한 위치에서 호출.
+
+---
+
+## 12. 고수준 대안 (권장)
+
+### 12.1 `java.util.concurrent.locks.Condition`
+- `await()` / `signal()` / `signalAll()` — **복수 조건을 명시적 분리** 가능.
+```java
+import java.util.concurrent.locks.*;
+
+final class BQ2<T> {
+    private final Lock lock = new ReentrantLock();
+    private final Condition notEmpty = lock.newCondition();
+    private final Condition notFull  = lock.newCondition();
+    private final Object[] buf; int head, tail, size;
+
+    BQ2(int cap) { this.buf = new Object[cap]; }
+
+    void put(T x) throws InterruptedException {
+        lock.lock();
+        try {
+            while (size == buf.length) notFull.await();
+            buf[tail] = x; tail = (tail+1)%buf.length; size++;
+            notEmpty.signal(); // 필요한 쪽만 깨움
+        } finally { lock.unlock(); }
+    }
+
+    @SuppressWarnings("unchecked")
+    T take() throws InterruptedException {
+        lock.lock();
+        try {
+            while (size == 0) notEmpty.await();
+            T x = (T) buf[head]; buf[head]=null; head=(head+1)%buf.length; size--;
+            notFull.signal(); // 필요한 쪽만 깨움
+            return x;
+        } finally { lock.unlock(); }
+    }
+}
+```
+
+### 12.2 `BlockingQueue`
+- 생산자/소비자에 최적. 내부에서 모든 대기/신호/경쟁을 처리.
+```java
+BlockingQueue<String> q = new java.util.concurrent.ArrayBlockingQueue<>(1024);
+q.put("data");          // 가득 차면 자동 대기
+String s = q.take();    // 비면 자동 대기
+```
+
+> **실무 권장**: 저수준 `wait/notify` 대신 **`BlockingQueue` 또는 `Condition`** 사용.
+
+---
+
+## 13. 데모: 잘못된 코드 → 교정
+
+### 13.1 Lost Notification 재현
+```java
+// ❌ 잘못된 순서: notify가 먼저, 그 후에 wait
+final Object lock = new Object();
+volatile boolean ready = false;
+
+// T1
+new Thread(() -> {
+  synchronized (lock) {
+    lock.notify();            // 대기자가 아직 없음 → 신호 소실
+    ready = true;             // 상태 변경이 나중
+  }
+}).start();
+
+// T2
+new Thread(() -> {
+  synchronized (lock) {
+    while (!ready) {          // 여기서 영원히 대기 가능
+      try { lock.wait(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+    }
+  }
+}).start();
+```
+
+**교정(상태→신호)**
+```java
+synchronized (lock) {
+  ready = true;               // 상태 먼저
+  lock.notifyAll();           // 그 다음 신호
+}
 ```
 
 ---
 
-## 13. 예시 비교: wait/notify 구현 vs BlockingQueue
+## 14. 테스트 하네스(간단)
 
-### wait/notify (직접)
 ```java
-// 위 BoundedBuffer 클래스 예제 (put/take) 사용
+public class WaitNotifyHarness {
+    public static void main(String[] args) throws Exception {
+        var q = new BoundedQueue<Integer>(2);
+        var prod = new Thread(() -> {
+            try { for (int i=0;i<10;i++){ q.put(i); System.out.println("put " + i);} }
+            catch (InterruptedException e){ Thread.currentThread().interrupt(); }
+        }, "producer");
+
+        var cons = new Thread(() -> {
+            try { for (int i=0;i<10;i++){ int x=q.take(); System.out.println("take "+x);} }
+            catch (InterruptedException e){ Thread.currentThread().interrupt(); }
+        }, "consumer");
+
+        prod.start(); cons.start();
+        prod.join(); cons.join();
+        System.out.println("done");
+    }
+}
 ```
-
-### BlockingQueue (권장)
-```java
-BlockingQueue<String> buffer = new ArrayBlockingQueue<>(1);
-
-Thread producer = new Thread(() -> {
-    try { buffer.put("hello"); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-});
-
-Thread consumer = new Thread(() -> {
-    try { System.out.println(buffer.take()); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
-});
-
-producer.start(); consumer.start();
-```
-
-`BlockingQueue`는 내부적으로 락/조건/시그널을 잘 처리하므로 애플리케이션 코드가 단순해지고 안전성이 높아집니다.
 
 ---
 
-## 14. 요약 체크리스트 (실전 팁)
-- `wait()`/`notify()` 사용 규칙:
-  - 항상 `synchronized` 블록/메서드 안에서 호출.
-  - 조건은 `while`로 검사.
-  - `wait()`는 락을 해제하고 대기, 깨어나면 락 재획득 후 실행.
-  - `notifyAll()`을 우선 사용. 성능 검증 후 `notify()` 선택.
-  - `wait(long)` 사용 시에도 `while`로 재검사.
-  - `InterruptedException` 처리 시 인터럽트 상태 보존 고려.
-  - 공유 락 객체는 `private final Object lock = ...`로 만들 것.
-- 가능하면 **고수준 동시성 유틸(BlockingQueue, Condition 등)** 사용.
+## 15. FAQ
+
+- **Q. `wait()`는 어떤 락을 풀나요?** → **해당 객체의 모니터**만 풉니다. 다른 락은 유지.  
+- **Q. `wait()`는 반드시 `while`과?** → 예. **항상** `while`입니다.  
+- **Q. `notify()`가 누구를 깨우는지 제어할 수 있나요?** → 없음(임의). **여러 조건이면 `notifyAll()`** 또는 `Condition`으로 분리.  
+- **Q. `sleep()`과 차이?** → `sleep()`은 **락을 해제하지 않음**, 협력 신호에도 반응하지 않음.
 
 ---
 
-## 참고(짧게)
-- `IllegalMonitorStateException` : `wait/notify`를 synchronized 없이 호출할 때 발생.
-- `spurious wakeup` : 이유 없이 깨어나는 현상(while 필요).
-- `lost notification` : notify를 기다리기 전 호출하면 신호가 사라져 대기자가 영원히 기다릴 수 있음(조건 기반 설계로 회피).
+## 16. 실전 체크리스트
+
+- [ ] **상태 변수**(e.g., `size`, `ready`)로 조건을 표현하고 **동일 락**에서만 읽고 쓴다.  
+- [ ] **`while` 가드 + `wait()`** 를 사용한다.  
+- [ ] **상태 변경 후** `notifyAll()`(또는 적합한 `notify()`/`signal()`).  
+- [ ] 인터럽트는 **복원**(`Thread.currentThread().interrupt()`) 또는 **전파**.  
+- [ ] `wait(timeout)`은 **남은 시간 재계산**(nanoTime)으로 구현.  
+- [ ] 락 객체는 **private final** 로 감춘다(외부 간섭 차단).  
+- [ ] `wait()` 호출 시 **다른 락을 들고 있지 않도록** 설계.  
+- [ ] 가능하면 **`BlockingQueue` / `Condition`** 등 고수준 도구 채택.
+
+---
+
+## 17. 요약
+
+- `wait/notify/notifyAll`은 강력하지만 **취약한 저수준 도구**.  
+- **같은 락**에서 **상태(조건)** 를 갱신·검사하고, **`while` 가드**로 재검사하며, **상태→신호 순서**를 지키면 올바르게 동작.  
+- 복잡해질수록 **`Condition`** 혹은 **`BlockingQueue`** 로 추상화 계층을 올리는 것이 **안전·성능·가독성** 모두에서 유리하다.

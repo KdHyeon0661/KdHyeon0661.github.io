@@ -6,7 +6,7 @@ category: HTML
 ---
 # Server-Sent Events (SSE)
 
-## 0) SSE 한눈에 보기
+## 0. SSE 한눈에 보기
 
 - **정의**: 브라우저에서 `EventSource`로 서버에 **하나의 HTTP 연결**을 열고, 서버가 `text/event-stream`으로 **지속적 이벤트를 푸시**하는 **단방향** 실시간 통신.
 - **특징**
@@ -17,7 +17,7 @@ category: HTML
 
 ---
 
-## 1) 기본 동작 구조
+## 1. 기본 동작 구조
 
 ```
 Client --------> Server   : GET /events  (Accept: text/event-stream)
@@ -34,7 +34,7 @@ Client <======== Server   : HTTP 200, Content-Type: text/event-stream
 
 ---
 
-## 2) 클라이언트: EventSource 기본
+## 2. 클라이언트: EventSource 기본
 
 ```html
 <button id="stop">연결 해제</button>
@@ -69,7 +69,7 @@ Client <======== Server   : HTTP 200, Content-Type: text/event-stream
 
 ---
 
-## 3) 서버: 최소 Express 예제(기본기 + 즉시 flush)
+## 3. 서버: 최소 Express 예제(기본기 + 즉시 flush)
 
 ```js
 // server.js
@@ -114,7 +114,7 @@ app.listen(3000, () => console.log('SSE on :3000'));
 
 ---
 
-## 4) 전송 포맷 상세
+## 4. 전송 포맷 상세
 
 메시지는 **여러 필드**로 구성 가능하며, 각 필드는 `key: value` 형식이다.
 
@@ -144,7 +144,7 @@ data: {"json":"ok"}
 
 ---
 
-## 5) 재연결/복구 설계 — Last-Event-ID
+## 5. 재연결/복구 설계 — Last-Event-ID
 
 SSE의 진짜 힘은 **자동 재연결 + 마지막 ID 복구**다.
 
@@ -200,7 +200,7 @@ app.get('/events', (req, res) => {
 
 ---
 
-## 6) 커스텀 이벤트 수신
+## 6. 커스텀 이벤트 수신
 
 서버:
 
@@ -222,7 +222,7 @@ es.addEventListener('price', (e) => {
 
 ---
 
-## 7) CORS/인증/보안
+## 7. CORS/인증/보안
 
 ### 7.1 CORS
 
@@ -255,7 +255,7 @@ app.get('/events', (req, res) => {
 
 ---
 
-## 8) 프록시/배포/성능
+## 8. 프록시/배포/성능
 
 ### 8.1 프록시 버퍼링
 
@@ -292,7 +292,7 @@ app.get('/events', (req, res) => {
 
 ---
 
-## 9) 실전 패턴
+## 9. 실전 패턴
 
 ### 9.1 대시보드(여러 위젯 동시 업데이트)
 
@@ -315,7 +315,7 @@ es.addEventListener('jobs', (e) => updateJobs(JSON.parse(e.data)));
 
 ---
 
-## 10) 다양한 서버 구현
+## 10. 다양한 서버 구현
 
 ### 10.1 Node.js (Express) — CORS/Heartbeat/Retry
 
@@ -458,7 +458,7 @@ func main() {
 
 ---
 
-## 11) React 클라이언트 미니 패턴(자동 정리 포함)
+## 11. React 클라이언트 미니 패턴(자동 정리 포함)
 
 ```jsx
 import { useEffect, useRef, useState } from 'react';
@@ -487,14 +487,14 @@ export default function UseSSE() {
 
 ---
 
-## 12) 파일 업로드/명령 전송 등 “역방향”이 필요할 때
+## 12. 파일 업로드/명령 전송 등 “역방향”이 필요할 때
 
 - SSE는 **단방향**. 클라이언트→서버 요청은 **기존 HTTP(Fetch/XHR)** 를 병행한다.
 - 예) “실행 버튼 클릭 → POST /run → 진행률은 SSE로 수신” 같은 **CQRS 패턴**이 깔끔하다.
 
 ---
 
-## 13) 문제 해결 체크리스트
+## 13. 문제 해결 체크리스트
 
 | 증상 | 점검 항목 |
 |---|---|
@@ -508,7 +508,7 @@ export default function UseSSE() {
 
 ---
 
-## 14) WebSocket vs SSE — 선택 가이드
+## 14. WebSocket vs SSE — 선택 가이드
 
 - **SSE**: 서버→클라이언트 푸시만 필요, 구현 단순/저비용, HTTP 친화, 자동 재연결/복구 쉬움
 - **WebSocket**: 채팅/게임/협업 편집처럼 **양방향/저지연** 필요할 때
@@ -516,7 +516,7 @@ export default function UseSSE() {
 
 ---
 
-## 15) 미니 실전: “배치 작업 진행률 + 로그 스트림”
+## 15. 미니 실전: “배치 작업 진행률 + 로그 스트림”
 
 ### 흐름
 1) 사용자가 “배치 실행” 클릭 → `POST /jobs` → jobId 반환  
@@ -547,7 +547,7 @@ es.addEventListener('log', e => appendLog(e.data));
 
 ---
 
-## 16) 정리
+## 16. 정리
 
 | 항목 | 내용 |
 |---|---|
@@ -558,7 +558,7 @@ es.addEventListener('log', e => appendLog(e.data));
 
 ---
 
-## 17) 추가 참고
+## 17. 추가 참고
 
 - MDN: Server-sent events  
 - HTML Living Standard: EventSource  

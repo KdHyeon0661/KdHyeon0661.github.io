@@ -19,7 +19,7 @@ category: Avalonia
 
 ---
 
-## 0) 디렉터리 구조(확장판)
+## 0. 디렉터리 구조(확장판)
 
 ```
 MyApp/
@@ -49,7 +49,7 @@ MyApp/
 
 ---
 
-## 1) 런타임 인증 상태 — AppAuthState
+## 1. 런타임 인증 상태 — AppAuthState
 
 - ViewModel/UI와 서비스가 공유하는 **현재 인증 맥락**.
 - **엑세스 토큰/리프레시 토큰/만료시각/스코프/사용자 식별자** 등.
@@ -122,7 +122,7 @@ public sealed class AppAuthState : ReactiveUI.ReactiveObject
 
 ---
 
-## 2) 토큰 저장소 추상화 — ITokenStore
+## 2. 토큰 저장소 추상화 — ITokenStore
 
 - **보안 수준**에 따라 저장소를 교체할 수 있게 추상화.
 - 앱 메모리(기본), Windows DPAPI, Linux SecretService, macOS Keychain 등을 선택적으로 구현.
@@ -221,7 +221,7 @@ public sealed class DpapiTokenStore : ITokenStore
 
 ---
 
-## 3) Auth DTO와 계약 — Models/AuthModels.cs, IAuthService.cs
+## 3. Auth DTO와 계약 — Models/AuthModels.cs, IAuthService.cs
 
 ```csharp
 // Models/AuthModels.cs
@@ -251,7 +251,7 @@ public interface IAuthService
 
 ---
 
-## 4) AuthService — 로그인/갱신/로그아웃, 상태 반영, 토큰 저장
+## 4. AuthService — 로그인/갱신/로그아웃, 상태 반영, 토큰 저장
 
 - 로그인 성공 시: `AppAuthState`와 `ITokenStore` 모두 업데이트
 - Refresh 성공 시: **Refresh Token Rotation**(서버가 새 refresh 제공하면 교체)
@@ -384,7 +384,7 @@ public sealed class AuthService : IAuthService
 
 ---
 
-## 5) RefreshGate — 동시 갱신 단 1회 보장
+## 5. RefreshGate — 동시 갱신 단 1회 보장
 
 - 다수의 API 요청이 동시에 만료를 감지해서 **여러 번** Refresh를 호출하는 **폭주를 방지**.
 - 단 한 요청만 Refresh를 수행하고 나머지는 그 결과를 기다린다.
@@ -426,7 +426,7 @@ public sealed class RefreshGate
 
 ---
 
-## 6) AuthenticatedHttpHandler — Authorization 주입 + 만료/401 처리 + 재시도/백오프
+## 6. AuthenticatedHttpHandler — Authorization 주입 + 만료/401 처리 + 재시도/백오프
 
 - 요청 전: `IsAccessTokenNearExpiry(Δ)`면 RefreshGate를 통해 선제 갱신
 - 헤더 주입: `Authorization: Bearer <access>`
@@ -534,7 +534,7 @@ public sealed class AuthenticatedHttpHandler : DelegatingHandler
 
 ---
 
-## 7) BackoffPolicy — 429/5xx 재시도 지수백오프
+## 7. BackoffPolicy — 429/5xx 재시도 지수백오프
 
 ```csharp
 // Services/BackoffPolicy.cs
@@ -574,7 +574,7 @@ public static class BackoffPolicy
 
 ---
 
-## 8) DI 구성(App.xaml.cs)
+## 8. DI 구성(App.xaml.cs)
 
 - 앱 시작 시 `ITokenStore.LoadAsync()`로 저장된 토큰을 복원 → `AppAuthState` 반영.
 - `HttpClient`에 `AuthenticatedHttpHandler` 체인 연결.
@@ -644,7 +644,7 @@ public override async void OnFrameworkInitializationCompleted()
 
 ---
 
-## 9) ViewModel — 로그인(상태 반영)·셸 전환
+## 9. ViewModel — 로그인(상태 반영)·셸 전환
 
 ```csharp
 // ViewModels/LoginViewModel.cs
@@ -721,7 +721,7 @@ public sealed class ShellViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 10) XAML — Login/Shell (요점만)
+## 10. XAML — Login/Shell (요점만)
 
 ```xml
 <!-- Views/LoginView.axaml -->
@@ -748,7 +748,7 @@ public sealed class ShellViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 11) 권한 기반(UI) 제어 — ClaimsAwareViewModel
+## 11. 권한 기반(UI) 제어 — ClaimsAwareViewModel
 
 - 서버가 발급한 토큰의 `scope`·`roles`를 UI 힌트로 활용.
 - 중요한 접근 제어는 **반드시 서버**가 한다(403).
@@ -775,7 +775,7 @@ XAML에서:
 
 ---
 
-## 12) OAuth2 플로우 선택 가이드
+## 12. OAuth2 플로우 선택 가이드
 
 | 플로우 | 설명 | 데스크톱 네이티브 앱 권장 |
 |---|---|---|
@@ -788,7 +788,7 @@ XAML에서:
 
 ---
 
-## 13) 401/403/429/5xx 처리 요약
+## 13. 401/403/429/5xx 처리 요약
 
 - 401/403: 한 번만 Refresh 후 **원 요청 재시도**, 그래도 실패면 **세션 만료 처리(로그아웃/로그인 화면)**
 - 429/5xx: `BackoffPolicy`로 **지수 백오프 재시도**, 그래도 실패면 사용자에게 명확히 피드백
@@ -796,7 +796,7 @@ XAML에서:
 
 ---
 
-## 14) 안전한 로깅/디버깅
+## 14. 안전한 로깅/디버깅
 
 - 절대 **토큰 전체를 로그 출력**하지 말 것. 마스킹 처리:
   - `Bearer abcdef...` 앞 8자만
@@ -805,7 +805,7 @@ XAML에서:
 
 ---
 
-## 15) 테스트 전략
+## 15. 테스트 전략
 
 ### 15.1 HttpMessageHandler 목킹으로 만료/401/Refresh 성공/실패 검증
 
@@ -862,7 +862,7 @@ public async Task Should_Refresh_And_Retry_On_401()
 
 ---
 
-## 16) 로그아웃/토큰 폐기/Refresh Rotation
+## 16. 로그아웃/토큰 폐기/Refresh Rotation
 
 - 서버가 **Refresh Token Rotation**을 사용한다면, Refresh 성공 시 항상 **새 refresh**가 온다 → 클라이언트는 **항상 교체**.
 - 오래된 refresh로 재사용을 시도하면 서버는 거부 → 클라이언트는 로그아웃 처리.
@@ -870,7 +870,7 @@ public async Task Should_Refresh_And_Retry_On_401()
 
 ---
 
-## 17) UI/UX 팁
+## 17. UI/UX 팁
 
 - 로그인 중/갱신 중 **스피너** 표시(`IsBusy`, `IsRefreshing`)
 - 세션 만료 시 **친절한 안내** + 로그인 버튼
@@ -878,7 +878,7 @@ public async Task Should_Refresh_And_Retry_On_401()
 
 ---
 
-## 18) 수학적 모델(토큰 잔여시간/선제갱신) — 간단 식
+## 18. 수학적 모델(토큰 잔여시간/선제갱신) — 간단 식
 
 만료시각을 \( T_{\text{exp}} \), 현재시각을 \( t \), 선제갱신 여유를 \( \Delta \)라 하자.  
 선제 갱신 조건은 다음과 같다.
@@ -891,7 +891,7 @@ $$
 
 ---
 
-## 19) 확장 주제
+## 19. 확장 주제
 
 - **OIDC Discovery**: `/.well-known/openid-configuration`에서 토큰/인증 엔드포인트 자동 탐색
 - **JWKs 키 회전**: 리소스 서버를 직접 호출하기 전에 클라이언트가 ID Token의 서명을 검증해야 하는 사용례(고급)라면 `jwks_uri`에서 키를 갱신
@@ -900,7 +900,7 @@ $$
 
 ---
 
-## 20) 요약 표
+## 20. 요약 표
 
 | 항목 | 구현 포인트 |
 |---|---|
@@ -916,7 +916,7 @@ $$
 
 ---
 
-## 21) 마무리
+## 21. 마무리
 
 이 설계는 Avalonia MVVM 환경에서 **안전하고 견고한 인증 파이프라인**을 제공한다.  
 핵심은 **책임 분리**(상태/저장소/서비스/핸들러), **선제적 갱신/동시성 제어**, **실패 시 재시도와 명확한 UX**, **보안 수칙 준수**다.  

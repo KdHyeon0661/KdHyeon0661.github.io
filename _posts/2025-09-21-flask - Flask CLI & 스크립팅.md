@@ -64,14 +64,14 @@ def create_app(config_name="production"):
 ### A.3.1 실행 방법
 
 ```bash
-# 1) 환경변수 이용
+# 1. 환경변수 이용
 export FLASK_APP="app:create_app('production')"
 flask --help
 
-# 2) --app 인자
+# 2. --app 인자
 flask --app "app:create_app('production')" --debug shell
 
-# 3) Docker 컨테이너 내부
+# 3. Docker 컨테이너 내부
 docker exec -it myapp-web flask --app app:create_app
 ```
 

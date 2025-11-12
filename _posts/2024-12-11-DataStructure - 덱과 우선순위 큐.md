@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 덱(Deque)과 우선순위 큐(Priority Queue)
 
-## 1) Deque — 양끝 입출력의 왕
+## 1. Deque — 양끝 입출력의 왕
 
 > **Deque (Double-Ended Queue)**: 앞·뒤 **둘 다** `push/pop` 가능한 큐.
 
@@ -47,7 +47,7 @@ std::cout << dq.front(); // 20
 
 ---
 
-## 2) 연결 리스트 기반 덱(센티넬, 이중 링크)
+## 2. 연결 리스트 기반 덱(센티넬, 이중 링크)
 
 경계(빈/단일 노드) 분기 제거를 위해 **센티넬 원형**을 권장.
 
@@ -107,7 +107,7 @@ public:
 
 ---
 
-## 3) 동적 원형 배열 기반 Deque(템플릿) — 실전형
+## 3. 동적 원형 배열 기반 Deque(템플릿) — 실전형
 
 **front, back 인덱스**를 원형으로 굴리고, 가득 차면 **2배 확장** + **front부터 연속 복사**.
 
@@ -192,7 +192,7 @@ public:
 
 ---
 
-## 4) 모노토닉 덱 — 슬라이딩 윈도우 최댓값/최솟값
+## 4. 모노토닉 덱 — 슬라이딩 윈도우 최댓값/최솟값
 
 값(또는 인덱스)을 **단조** 상태로 유지: **뒤에서 더 나쁜 값 제거** → 각 원소가 **한 번** 들어오고 **한 번** 나가므로 O(n).
 
@@ -218,7 +218,7 @@ std::vector<int> slidingMax(const std::vector<int>& a, int k){
 
 ---
 
-## 5) 0–1 BFS — 덱의 대표 알고리즘
+## 5. 0–1 BFS — 덱의 대표 알고리즘
 
 간선 가중치가 0 또는 1일 때, **덱**에 0-간선은 `push_front`, 1-간선은 `push_back`.  
 다익스트라 없이 O(V+E)로 최단 거리.
@@ -255,7 +255,7 @@ std::vector<int> zero_one_bfs(int n, const std::vector<std::vector<Edge>>& g, in
 > 일반 큐는 FIFO, **우선순위 큐**는 비교 기준에 따라 **가장 높은 우선순위**가 먼저 나온다.  
 > 실전은 대부분 **힙(Heap)** 기반.
 
-## 6) 이진 힙(Binary Heap) — 핵심만 단단하게
+## 6. 이진 힙(Binary Heap) — 핵심만 단단하게
 
 - **완전 이진 트리**를 **배열**로 저장 (루트 index 0)
 - `push`: 말단 삽입 → **상향 힙화**(heapify-up)
@@ -337,7 +337,7 @@ $$
 
 ---
 
-## 7) `std::priority_queue` 정확 사용
+## 7. `std::priority_queue` 정확 사용
 
 ```cpp
 #include <queue>
@@ -356,7 +356,7 @@ std::priority_queue<Job, std::vector<Job>, Cmp> jobs;
 
 ---
 
-## 8) d-ary 힙 — 팬아웃으로 상수 개선
+## 8. d-ary 힙 — 팬아웃으로 상수 개선
 
 이진 힙의 자식 2개 대신 **d개**로 확장.  
 - **장점**: `sift_down` 단계 수 감소(높이 ↓)  
@@ -370,7 +370,7 @@ std::priority_queue<Job, std::vector<Job>, Cmp> jobs;
 
 ---
 
-## 9) Indexed Priority Queue — decrease-key가 필요할 때
+## 9. Indexed Priority Queue — decrease-key가 필요할 때
 
 다익스트라, A* 등에서 **키 감소**가 핵심. 항목에 **고유 id**를 두고, `pos[id]`로 **힙 내 위치 추적**.
 
@@ -449,7 +449,7 @@ public:
 
 ---
 
-## 10) 응용 레시피
+## 10. 응용 레시피
 
 ### 10.1 Top-K(스트리밍) — 최소 힙 K 유지
 
@@ -524,7 +524,7 @@ long long simulate(std::vector<Task> tasks){
 
 ---
 
-## 11) 복잡도 총정리 & 선택 가이드
+## 11. 복잡도 총정리 & 선택 가이드
 
 ### Deque
 
@@ -544,7 +544,7 @@ long long simulate(std::vector<Task> tasks){
 
 ---
 
-## 12) 수학 코너
+## 12. 수학 코너
 
 ### 12.1 모노토닉 덱의 O(n)
 각 인덱스는 덱에 **최대 한 번 push**, **최대 한 번 pop**:
@@ -560,7 +560,7 @@ $$
 
 ---
 
-## 13) 테스트/디버깅 체크리스트
+## 13. 테스트/디버깅 체크리스트
 
 - **Deque**: 원형 인덱스 오버플로(모듈로)/front-back 일관성/리사이즈 후 순서 보존
 - **Heap**: `higher()` 비교자 논리(부호 반전 버그 잦음), build 후 힙 성질 유지
@@ -588,7 +588,7 @@ int main(){
 
 ---
 
-## 14) 정리
+## 14. 정리
 
 - **Deque**: 양끝 O(1) 입출력. **원형 배열/블록/이중 리스트** 중 요구에 맞게 선택. **모노토닉 덱/0–1 BFS** 등 강력한 알고리즘적 무기.
 - **Priority Queue**: **이진 힙**이 표준. **heapify O(n)**, **d-ary/Indexed**로 확장 가능. 응용은 **Top-K, 병합, 스케줄링, 최단경로**까지 폭넓다.

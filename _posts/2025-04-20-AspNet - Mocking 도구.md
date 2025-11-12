@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Mocking 도구 완전 정리
 
-## 0) 테스트 더블 용어 정리(빠른 리마인드)
+## 0. 테스트 더블 용어 정리(빠른 리마인드)
 
 | 용어 | 핵심 | Moq에서 보통 |
 |---|---|---|
@@ -20,7 +20,7 @@ category: AspNet
 
 ---
 
-## 1) 프로젝트 준비
+## 1. 프로젝트 준비
 
 ```bash
 dotnet new xunit -n Demo.Tests
@@ -66,7 +66,7 @@ public sealed class UserController
 
 ---
 
-## 2) Moq 기본 — `Setup`, `Returns`, `Verify`
+## 2. Moq 기본 — `Setup`, `Returns`, `Verify`
 
 ```csharp
 public class UserControllerTests
@@ -97,7 +97,7 @@ public class UserControllerTests
 
 ---
 
-## 3) Strict vs Loose, DefaultValue
+## 3. Strict vs Loose, DefaultValue
 
 ```csharp
 // 기본: Loose(정의되지 않은 호출은 default 반환)
@@ -120,7 +120,7 @@ var deep = new Mock<IDepA> { DefaultValue = DefaultValue.Mock };
 
 ---
 
-## 4) 파라미터 매칭 — `It.Is`, `It.IsIn`, `It.IsRegex`
+## 4. 파라미터 매칭 — `It.Is`, `It.IsIn`, `It.IsRegex`
 
 ```csharp
 mock.Setup(s => s.CreateAsync(
@@ -143,7 +143,7 @@ mock.Setup(s => s.CreateAsync(
 
 ---
 
-## 5) 예외/콜백/상태 캡처 — `Throws`, `Callback`, `Returns`
+## 5. 예외/콜백/상태 캡처 — `Throws`, `Callback`, `Returns`
 
 ```csharp
 [Fact]
@@ -190,7 +190,7 @@ mock.SetupSequence(s => s.GetAsync(10, It.IsAny<CancellationToken>()))
 
 ---
 
-## 6) 속성/인덱서/이벤트/`ref/out`/비가상 멤버
+## 6. 속성/인덱서/이벤트/`ref/out`/비가상 멤버
 
 - 속성:
 
@@ -227,7 +227,7 @@ delegate void TryParseCallback(string s, out int value);
 
 ---
 
-## 7) 비동기 & 스트리밍 — `Task`, `IAsyncEnumerable<T>`
+## 7. 비동기 & 스트리밍 — `Task`, `IAsyncEnumerable<T>`
 
 ```csharp
 [Fact]
@@ -260,7 +260,7 @@ public async Task Stream_Should_Yield_Items()
 
 ---
 
-## 8) 상호작용 검증 — `Verify`, `Times`, `InSequence`, 호출 순서
+## 8. 상호작용 검증 — `Verify`, `Times`, `InSequence`, 호출 순서
 
 ```csharp
 [Fact]
@@ -295,7 +295,7 @@ order.Should().ContainInOrder("Get", "Create");
 
 ---
 
-## 9) DI/조합 — `As<T>`, 다중 인터페이스, AutoFixture
+## 9. DI/조합 — `As<T>`, 다중 인터페이스, AutoFixture
 
 여러 인터페이스를 한 Mock로:
 
@@ -326,7 +326,7 @@ res.Should().BeOfType<Ok<User>>();
 
 ---
 
-## 10) 시간/랜덤/환경 추상화 — 테스트 안정성
+## 10. 시간/랜덤/환경 추상화 — 테스트 안정성
 
 **안정적 테스트**를 위해 `DateTime.UtcNow`, `Guid.NewGuid`, `Random` 등을 직접 호출하지 않고 **추상화**:
 
@@ -353,7 +353,7 @@ token.Should().StartWith("20250101000000-");
 
 ---
 
-## 11) 웹 계층 실전 — 컨트롤러/미들웨어/필터
+## 11. 웹 계층 실전 — 컨트롤러/미들웨어/필터
 
 컨트롤러에서 서비스 Mock 주입은 위 예시 참고.  
 미들웨어 단위 테스트는 **`DefaultHttpContext`**와 파이프라인 델리게이트를 조립:
@@ -376,7 +376,7 @@ public async Task Middleware_Should_Append_Header()
 
 ---
 
-## 12) EF Core, HttpClient, 외부 API
+## 12. EF Core, HttpClient, 외부 API
 
 - EF Core는 **Mock보다 InMemory/Sqlite**가 더 적합(쿼리 변환 차이 최소화 위해 **Sqlite InMemory** 권장).
 - `HttpClient`는 `HttpMessageHandler`를 Mock:
@@ -403,7 +403,7 @@ public async Task Client_Should_Parse_Json()
 
 ---
 
-## 13) 레거시/난이도 높은 영역
+## 13. 레거시/난이도 높은 영역
 
 - **정적 메서드/비가상/Sealed**: Moq 한계. 리팩터(래퍼 인터페이스) 또는 **JustMock(상용)/TypeMock** 검토.
 - **Thread/Timer/Background**: `IHostedService`/`PeriodicTimer`를 추상화하고 CT 활용.
@@ -411,7 +411,7 @@ public async Task Client_Should_Parse_Json()
 
 ---
 
-## 14) 안티패턴 & 베스트 프랙티스
+## 14. 안티패턴 & 베스트 프랙티스
 
 안티패턴
 - `It.IsAny<T>()` 범람 → 테스트 약화.
@@ -426,7 +426,7 @@ public async Task Client_Should_Parse_Json()
 
 ---
 
-## 15) NSubstitute/FakeItEasy 비교(요약)
+## 15. NSubstitute/FakeItEasy 비교(요약)
 
 | 항목 | **Moq** | **NSubstitute** | **FakeItEasy** |
 |---|---|---|---|
@@ -460,7 +460,7 @@ A.CallTo(() => f.GetAsync(1, A<CancellationToken>._))
 
 ---
 
-## 16) 종합 실전 예제 — 실패 재시도·로그·순서·예외
+## 16. 종합 실전 예제 — 실패 재시도·로그·순서·예외
 
 ```csharp
 public interface IRetryingService
@@ -525,7 +525,7 @@ public class RetryingServiceTests
 
 ---
 
-## 17) 체크리스트
+## 17. 체크리스트
 
 - [ ] 인터페이스/virtual로 **테스트 가능 설계** 만들기
 - [ ] 입력 매칭은 구체적(값/조건), `It.IsAny` 최소화
@@ -539,7 +539,7 @@ public class RetryingServiceTests
 
 ---
 
-## 18) 요약
+## 18. 요약
 
 | 주제 | 핵심 |
 |---|---|

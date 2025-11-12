@@ -6,7 +6,7 @@ category: CSS
 ---
 # display 속성: block, inline, inline-block
 
-## 0) 한눈 개요
+## 0. 한눈 개요
 
 - **`display`는 요소가 생성하는 “박스 트리”와 그 박스들이 **어떤 문맥에서** 배치되는지**를 정의**합니다.
 - 핵심 축:
@@ -20,7 +20,7 @@ category: CSS
 
 ---
 
-## 1) `display: block` — 블록 포맷팅 컨텍스트의 기본
+## 1. `display: block` — 블록 포맷팅 컨텍스트의 기본
 
 ### 1.1 요약
 - **새 줄에서 시작**, 가능한 가로 공간을 **가득 차지**(width가 auto면 컨테이너의 content box만큼).
@@ -54,7 +54,7 @@ category: CSS
 
 ---
 
-## 2) `display: inline` — 인라인 포맷팅 컨텍스트(IFC)
+## 2. `display: inline` — 인라인 포맷팅 컨텍스트(IFC)
 
 ### 2.1 요약
 - **줄 안(line box)** 에서 다른 인라인들과 **흐름대로 배치**.
@@ -96,7 +96,7 @@ category: CSS
 
 ---
 
-## 3) `display: inline-block` — 줄에 놓이는 **미니 독립 박스**
+## 3. `display: inline-block` — 줄에 놓이는 **미니 독립 박스**
 
 ### 3.1 요약
 - 줄 안에 놓이되(**Outside=inline**), 내부는 작은 블록처럼 **width/height/margin/padding** 모두 적용.
@@ -130,7 +130,7 @@ category: CSS
 
 ---
 
-## 4) 세 값 비교 — 개념/속성/문맥
+## 4. 세 값 비교 — 개념/속성/문맥
 
 | 속성 | 줄바꿈 | 가로 점유 | width/height | margin/padding | 포맷팅 컨텍스트 | 베이스라인 정렬 |
 |---|---|---|---|---|---|---|
@@ -140,7 +140,7 @@ category: CSS
 
 ---
 
-## 5) 두-값 디스플레이 구문(현대 문법)
+## 5. 두-값 디스플레이 구문(현대 문법)
 
 - 문법: `display: <outside> <inside>;`
   - `<outside>`: `block` | `inline`
@@ -160,7 +160,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 6) 실무에서 자주 묻는 질문(FAQ) — 핵심 이슈
+## 6. 실무에서 자주 묻는 질문(FAQ) — 핵심 이슈
 
 ### 6.1 왜 인라인에 `width/height`가 안 먹나요?
 - IFC에서는 **컨텐츠의 글꼴 메트릭**이 줄 높이를 결정. 크기 지정은 무시됨(패딩/보더는 시각적 영역만 확장).  
@@ -180,7 +180,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 7) `display: contents`/`flow-root`/`list-item` — 유용한 보너스
+## 7. `display: contents`/`flow-root`/`list-item` — 유용한 보너스
 
 ### 7.1 `display: contents`
 - **자기 박스를 없애고** 자식만 **부모의 레이아웃**에 참여시킴(“래퍼를 없애는” 효과).
@@ -215,7 +215,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 8) 실전 패턴 모음
+## 8. 실전 패턴 모음
 
 ### 8.1 버튼/배지: 인라인 → inline-block으로 히트영역 확보
 ```html
@@ -280,7 +280,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 9) 데모: 핵심 차이 한눈에
+## 9. 데모: 핵심 차이 한눈에
 
 ```html
 <!doctype html>
@@ -322,7 +322,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 10) “display만 바꿔” 해결하려다 겪는 함정과 해법
+## 10. “display만 바꿔” 해결하려다 겪는 함정과 해법
 
 | 증상 | 원인 | 빠른 해법 |
 |---|---|---|
@@ -334,7 +334,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 11) 수학(요약) — 라인 박스/베이스라인 개념
+## 11. 수학(요약) — 라인 박스/베이스라인 개념
 
 - **라인 박스 높이**는 해당 줄에 들어있는 인라인 박스들의 **`line-height`의 최대치**와 글꼴 메트릭으로 결정.
 - 동일 줄의 인라인 박스 i에 대한 **정렬 오프셋**:
@@ -346,7 +346,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 12) 마이그레이션 체크리스트
+## 12. 마이그레이션 체크리스트
 
 - **줄에서 자연스럽게** 놓이되 **크기 제어**가 필요 → `inline-block` 또는 `inline-flex`.
 - 박스 간 **분배/정렬**이 핵심 → `flex`/`grid`.
@@ -356,7 +356,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 13) 보너스: 기타 display 값 간단 메모
+## 13. 보너스: 기타 display 값 간단 메모
 
 - `none`: **박스 생성 안 함**(렌더·탭순서에서 제외). 애니메이션/전환 시나리오는 `visibility`/`opacity`가 더 매끄럽기도.
 - `flex`: 1차원 레이아웃(축 정렬/분배).
@@ -367,7 +367,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 14) 예제: “초안 + 확장” 통합 실습 페이지
+## 14. 예제: “초안 + 확장” 통합 실습 페이지
 
 ```html
 <!doctype html>
@@ -451,7 +451,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 15) 최종 체크리스트
+## 15. 최종 체크리스트
 
 - 줄 안에서 **히트 영역/크기 제어**가 필요 → `inline-block`/`inline-flex`.
 - 간격과 분배가 핵심 → `flex`/`grid`(+ `gap`).
@@ -462,7 +462,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 16) 결론
+## 16. 결론
 
 - **block/inline/inline-block**은 레이아웃의 **기초 문맥**을 고르는 스위치입니다.  
 - **무엇이 줄을 만들고**, **무엇이 라인 박스를 만들며**, **마진이 어떻게 상호작용하는지**를 이해하면  

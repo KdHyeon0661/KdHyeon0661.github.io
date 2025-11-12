@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker 네트워크 비교: Host Network vs Bridge Network
 
-## 1) Docker 네트워크 드라이버 개관(정교화)
+## 1. Docker 네트워크 드라이버 개관(정교화)
 
 - **bridge**: 기본값. 호스트 내 가상 브리지(일반적으로 `docker0`)를 중심으로, 컨테이너들이 **프라이빗 IP**(예: `172.17.0.0/16`)를 받아 통신. 외부 접근은 **포트 매핑** 또는 라우팅/프록시로 노출.
 - **host**: 컨테이너가 호스트와 **동일 네트워크 네임스페이스**를 공유. 컨테이너의 IP 공간이 따로 없고 호스트의 IP/포트 테이블을 그대로 사용.
@@ -18,7 +18,7 @@ category: Docker
 
 ---
 
-## 2) Bridge Network: 내부 동작 원리와 실전
+## 2. Bridge Network: 내부 동작 원리와 실전
 
 ### 2.1 구조와 흐름
 
@@ -41,17 +41,17 @@ category: Docker
 ### 2.3 빠른 예제
 
 ```bash
-# 1) 기본 브리지 모드로 웹 노출
+# 1. 기본 브리지 모드로 웹 노출
 docker run -d --name web1 -p 8080:80 nginx
 
-# 2) 사용자 정의 브리지 생성(권장 패턴)
+# 2. 사용자 정의 브리지 생성(권장 패턴)
 docker network create --driver bridge appnet
 
-# 3) 같은 네트워크로 2개 서비스 배치
+# 3. 같은 네트워크로 2개 서비스 배치
 docker run -d --name api --network appnet nginx
 docker run -d --name fe  --network appnet nginx
 
-# 4) 컨테이너 간 이름으로 접근(내부 DNS)
+# 4. 컨테이너 간 이름으로 접근(내부 DNS)
 docker exec -it fe sh -lc "apk add --no-cache curl; curl -s http://api"
 ```
 
@@ -87,7 +87,7 @@ sudo tcpdump -i docker0 -n 'tcp port 80'
 
 ---
 
-## 3) Host Network: 내부 동작 원리와 실전
+## 3. Host Network: 내부 동작 원리와 실전
 
 ### 3.1 구조와 흐름
 
@@ -124,7 +124,7 @@ curl -s http://127.0.0.1:80 | head
 
 ---
 
-## 4) Host vs Bridge — 차이와 선택 기준(현업 관점)
+## 4. Host vs Bridge — 차이와 선택 기준(현업 관점)
 
 | 항목 | **Bridge** | **Host** |
 |---|---|---|
@@ -142,7 +142,7 @@ curl -s http://127.0.0.1:80 | head
 
 ---
 
-## 5) Compose로 비교(운영 패턴)
+## 5. Compose로 비교(운영 패턴)
 
 ```yaml
 version: "3.9"
@@ -166,7 +166,7 @@ networks:
 
 ---
 
-## 6) 성능·튜닝
+## 6. 성능·튜닝
 
 ### 6.1 간단 부하 예시(비교 절차)
 ```bash
@@ -192,7 +192,7 @@ sudo sysctl -w net.core.somaxconn=1024
 
 ---
 
-## 7) 보안·격리·권한
+## 7. 보안·격리·권한
 
 ### 7.1 Bridge 모드 권장 수칙
 - 외부 노출은 **필요 포트만 -p**로 최소화.
@@ -212,7 +212,7 @@ docker run -d \
 
 ---
 
-## 8) 실전 테스트·디버깅 레시피
+## 8. 실전 테스트·디버깅 레시피
 
 ### 8.1 포트 충돌 재현(Host)
 ```bash
@@ -238,7 +238,7 @@ docker exec -it bweb sh -lc "ip route; ip neigh"
 
 ---
 
-## 9) DNS·서비스 디스커버리·헤어핀 NAT
+## 9. DNS·서비스 디스커버리·헤어핀 NAT
 
 - **사용자 정의 브리지**에서 **컨테이너 이름으로 DNS 조회** 가능 (`/etc/resolv.conf`의 127.0.0.11).
 - **기본 bridge**는 이름 해석 제약이 있으므로, 서비스간 통신은 **사용자 정의 브리지**를 권장.
@@ -246,7 +246,7 @@ docker exec -it bweb sh -lc "ip route; ip neigh"
 
 ---
 
-## 10) Docker Desktop / WSL2 / IPv6 특성
+## 10. Docker Desktop / WSL2 / IPv6 특성
 
 - **Docker Desktop(macOS/Windows)**: 내부적으로 **VM**. 바인드/포트가 하이퍼바이저 경로를 지나 **I/O 지연**이 커질 수 있음 → 대량 개발 작업은 **볼륨/캐시** 전략 병행.
 - **WSL2**: `host.docker.internal`이 동작하며, WSL 네트워크 ↔ Windows 호스트 간 NAT/포트포워딩 규칙 체크.
@@ -262,7 +262,7 @@ docker exec -it bweb sh -lc "ip route; ip neigh"
 
 ---
 
-## 11) 트러블슈팅 표
+## 11. 트러블슈팅 표
 
 | 증상 | 가능 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -275,7 +275,7 @@ docker exec -it bweb sh -lc "ip route; ip neigh"
 
 ---
 
-## 12) 체크리스트(선택 가이드)
+## 12. 체크리스트(선택 가이드)
 
 - [ ] 기본은 **bridge**. 공개는 필요한 포트만 `-p`.
 - [ ] 컨테이너 간 통신 필요 → **사용자 정의 브리지** + 이름 기반.
@@ -286,7 +286,7 @@ docker exec -it bweb sh -lc "ip route; ip neigh"
 
 ---
 
-## 13) 추가 실습: Nginx + 앱 2단 구성(Bridge vs Host)
+## 13. 추가 실습: Nginx + 앱 2단 구성(Bridge vs Host)
 
 ### 13.1 Bridge(권장)
 ```bash
@@ -318,7 +318,7 @@ curl -s http://127.0.0.1/
 
 ---
 
-## 14) 수식으로 보는 의사결정(직관)
+## 14. 수식으로 보는 의사결정(직관)
 
 네트워크 모드 선택 효용 \(U\)를 **성능 \(P\)**, **보안/격리 \(S\)**, **운영성 \(O\)**의 가중합으로 단순화:
 $$
@@ -329,7 +329,7 @@ $$
 
 ---
 
-## 15) 요약
+## 15. 요약
 
 - **Bridge**: 격리·명시적 공개·내장 DNS·운영 친화. 대부분 워크로드의 기본값.  
 - **Host**: NAT/브리지 우회로 저지연. 포트 충돌/보안 경계/관찰성에 주의.  

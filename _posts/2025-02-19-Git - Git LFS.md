@@ -6,7 +6,7 @@ category: Git
 ---
 # Git LFS (Large File Storage) 완전 정리
 
-## 1) Git LFS란?
+## 1. Git LFS란?
 
 **Git LFS**는 대용량/이진 파일을 Git 리포지토리 밖(LFS 서버)에 저장하고, Git에는 작은 **포인터(pointer)** 파일만 저장하는 확장이다.  
 이미지/동영상/3D/AI 모델/압축 아카이브 등 **diff가 사실상 무의미**하고 **이력 복제 비용이 큰 파일**을 다룰 때 필수적이다.
@@ -25,7 +25,7 @@ $$
 
 ---
 
-## 2) 설치 및 초기화
+## 2. 설치 및 초기화
 
 ### macOS / Linux
 
@@ -51,7 +51,7 @@ git lfs install --local
 
 ---
 
-## 3) 핵심 동작: track → add/commit → push
+## 3. 핵심 동작: track → add/commit → push
 
 ### 3.1 추적 패턴 등록
 
@@ -90,7 +90,7 @@ size 48293021
 
 ---
 
-## 4) LFS 포인터/필터(클린·스머지) 메커니즘 심화
+## 4. LFS 포인터/필터(클린·스머지) 메커니즘 심화
 
 - **clean 필터**: `git add` 시 원본 바이너리를 포인터 파일로 바꾸어 저장소에 기록, 실제 바이너리는 LFS 스토리지로 업로드.
 - **smudge 필터**: `git checkout/clone/pull` 시 포인터를 감지하면 **원본 바이너리**를 LFS 서버에서 내려받아 작업 디렉터리에 복원.
@@ -111,7 +111,7 @@ git lfs checkout assets/*.png     # 포인터 → 실제 파일로 복원
 
 ---
 
-## 5) 기존 커밋된 대형 파일을 LFS로 **마이그레이션**
+## 5. 기존 커밋된 대형 파일을 LFS로 **마이그레이션**
 
 이미 Git 이력에 박혀 있는 대용량 파일을 LFS로 옮기려면 **히스토리 재작성**이 필요하다.
 
@@ -138,7 +138,7 @@ git branch backup/pre-lfs-migrate
 
 ---
 
-## 6) 클론/페치 전략 — 부분 다운로드 & 대역폭 최적화
+## 6. 클론/페치 전략 — 부분 다운로드 & 대역폭 최적화
 
 ### 6.1 스머지 스킵 & 지연 다운로드
 
@@ -164,7 +164,7 @@ git config lfs.fetchexclude "*.mp4,*.mov"
 
 ---
 
-## 7) GitHub/GitLab/Bitbucket & 요금/쿼터 고려
+## 7. GitHub/GitLab/Bitbucket & 요금/쿼터 고려
 
 | 항목 | GitHub LFS(예시) |
 |---|---|
@@ -181,7 +181,7 @@ git config lfs.fetchexclude "*.mp4,*.mov"
 
 ---
 
-## 8) CI/CD에서의 LFS
+## 8. CI/CD에서의 LFS
 
 ### 8.1 GitHub Actions 예제
 
@@ -224,7 +224,7 @@ jobs:
 
 ---
 
-## 9) 자가 호스팅 LFS — S3/MinIO/회사 내부
+## 9. 자가 호스팅 LFS — S3/MinIO/회사 내부
 
 - **GitLab CE/EE**는 LFS 서버 내장(자체 호스팅 용이).
 - **GitHub Enterprise Server**도 LFS 지원(버전/플랜 확인).
@@ -246,7 +246,7 @@ git commit -m "Configure custom LFS endpoint"
 
 ---
 
-## 10) 모노레포/서브모듈과 LFS
+## 10. 모노레포/서브모듈과 LFS
 
 - **모노레포**: 패키지별로 LFS 패턴을 세분화(예: `apps/web/assets/**`, `ml/weights/**`).  
   CI에서 **변경 감지** 후 필요한 LFS만 fetch/checkout.
@@ -254,7 +254,7 @@ git commit -m "Configure custom LFS endpoint"
 
 ---
 
-## 11) 보안/권한/가드레일
+## 11. 보안/권한/가드레일
 
 - **모든 협업자**가 LFS를 설치해야 한다. 미설치 시 포인터 텍스트만 내려받아 “파일이 깨진 것처럼” 보인다.
 - **브랜치 보호 규칙**:  
@@ -282,7 +282,7 @@ done
 
 ---
 
-## 12) 운영 팁 — 팀 컨벤션
+## 12. 운영 팁 — 팀 컨벤션
 
 - `.gitattributes`에서 **포맷을 가능한 좁게** 지정(불필요한 확장자 포함 금지).
 - 자주 교체되는 거대 파일은 “버전 관리”보다 **아티팩트 스토리지**·**릴리스 페이지**·**패키지 레지스트리**로 이관 고려.
@@ -290,7 +290,7 @@ done
 
 ---
 
-## 13) 자주 만나는 오류 & 해결
+## 13. 자주 만나는 오류 & 해결
 
 ### 13.1 “Encountered N file(s) that should have been pointers, but were not”
 
@@ -327,7 +327,7 @@ done
 
 ---
 
-## 14) Git LFS vs git-annex 간단 비교
+## 14. Git LFS vs git-annex 간단 비교
 
 | 항목 | Git LFS | git-annex |
 |---|---|---|
@@ -339,7 +339,7 @@ done
 
 ---
 
-## 15) 실전 시나리오
+## 15. 실전 시나리오
 
 ### 15.1 3D/게임 에셋 프로젝트
 
@@ -373,7 +373,7 @@ CI에서 필요한 가중치만:
 
 ---
 
-## 16) 명령어 치트시트
+## 16. 명령어 치트시트
 
 ```bash
 # 설치/초기화
@@ -403,7 +403,7 @@ git lfs uninstall
 
 ---
 
-## 17) “처음부터 잘 쓰는” 체크리스트
+## 17. “처음부터 잘 쓰는” 체크리스트
 
 - 프로젝트 첫 커밋 전에 **`.gitattributes`에 LFS 패턴 작성** → 초기부터 안전
 - 팀 온보딩 문서에 **LFS 설치**를 포함

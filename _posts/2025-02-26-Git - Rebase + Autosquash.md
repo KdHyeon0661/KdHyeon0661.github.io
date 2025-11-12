@@ -6,7 +6,7 @@ category: Git
 ---
 # Git Rebase + Autosquash로 커밋 정리하는 법
 
-## 0) 핵심 요약
+## 0. 핵심 요약
 
 - `fixup!`/`squash!` 접두어가 붙은 커밋은 `git rebase -i --autosquash` 실행 시 **자동으로 원 커밋 바로 아래로 이동**되고, `fixup`/`squash` 동작이 **자동 지정**된다.
 - `git commit --fixup=<커밋>` / `git commit --squash=<커밋>`으로 **정확한 대상**을 지정할 수 있다(해시, `HEAD~n`, `:<path>` 등).
@@ -16,7 +16,7 @@ category: Git
 
 ---
 
-## 1) 왜 “커밋 정리”가 필요한가
+## 1. 왜 “커밋 정리”가 필요한가
 
 하나의 기능 동안 잦은 수정으로 **자잘한 커밋**(오타 수정, 콘솔 로그 제거, 네이밍 변경…)이 쌓인다.  
 PR 리뷰어, 미래의 나 모두에게 **핵심/맥락이 보이는 이력**이 중요하다.
@@ -28,7 +28,7 @@ PR 리뷰어, 미래의 나 모두에게 **핵심/맥락이 보이는 이력**�
 
 ---
 
-## 2) `--autosquash` 동작 원리 이해
+## 2. `--autosquash` 동작 원리 이해
 
 ### 2.1 매칭 규칙
 - 커밋 메시지가 **`fixup! <원커밋제목>`** 혹은 **`squash! <원커밋제목>`** 형태면, 인터랙티브 리베이스 시 해당 원 커밋을 찾아 **자동 재배치** 및 **동작 지정**:
@@ -43,7 +43,7 @@ PR 리뷰어, 미래의 나 모두에게 **핵심/맥락이 보이는 이력**�
 
 ---
 
-## 3) 실전 흐름 — 가장 많이 쓰는 3가지 패턴
+## 3. 실전 흐름 — 가장 많이 쓰는 3가지 패턴
 
 ### 패턴 A: 단일 기능 정리(소규모)
 
@@ -89,7 +89,7 @@ git rebase -i --autosquash origin/main
 
 ---
 
-## 4) `git commit --fixup/--squash` 정확히 알기
+## 4. `git commit --fixup/--squash` 정확히 알기
 
 ```bash
 # 가장 안전한 형태: 커밋 해시로 타깃 지정
@@ -107,7 +107,7 @@ git commit --fixup="feat: 게시글 작성 기능"
 
 ---
 
-## 5) 인터랙티브 리베이스 범위 잡기 전략
+## 5. 인터랙티브 리베이스 범위 잡기 전략
 
 - **작을수록 안전**: `HEAD~3`, `HEAD~5` 처럼 최근만.  
 - **중간 규모**: 기능 브랜치 전체를 정리할 땐 `git merge-base`를 활용.
@@ -122,17 +122,17 @@ git rebase -i --autosquash $BASE
 
 ---
 
-## 6) 충돌이 날 때 — 표준 수습 루틴
+## 6. 충돌이 날 때 — 표준 수습 루틴
 
 ```bash
 git rebase -i --autosquash HEAD~20
 # ... 충돌!
 
-# 1) 충돌 파일 수정
-# 2) 스테이징
+# 1. 충돌 파일 수정
+# 2. 스테이징
 git add <수정한 파일들>
 
-# 3) 계속
+# 3. 계속
 git rebase --continue
 
 # 포기(전부 되돌리기)
@@ -144,7 +144,7 @@ git rebase --abort
 
 ---
 
-## 7) 리베이스 이후 푸시 — 안전 수칙
+## 7. 리베이스 이후 푸시 — 안전 수칙
 
 - 리베이스는 커밋 해시를 **재작성**하므로 원격 대비 이력이 달라진다.
 - 푸시는 **`--force-with-lease`**를 사용:
@@ -158,7 +158,7 @@ git push --force-with-lease origin feature/my-feature
 
 ---
 
-## 8) 설정으로 반복 작업 줄이기
+## 8. 설정으로 반복 작업 줄이기
 
 ```bash
 # 8.1 리베이스 때 autosquash 기본 활성화
@@ -178,7 +178,7 @@ git config --global push.default simple
 
 ---
 
-## 9) 대규모 PR 정리 “레시피”
+## 9. 대규모 PR 정리 “레시피”
 
 ### 9.1 Conventional Commits와 함께 쓰기
 - `feat:`, `fix:`, `refactor:` 단위로 **의도별 커밋 묶기**.
@@ -201,7 +201,7 @@ git rebase -i --autosquash HEAD~20
 
 ---
 
-## 10) 팀/CI와의 연계
+## 10. 팀/CI와의 연계
 
 - **Commitlint**로 메시지 규칙 강제(Conventional Commits).  
 - **PR 체크**에 `Require linear history`를 켜서 merge commit 제한.  
@@ -210,7 +210,7 @@ git rebase -i --autosquash HEAD~20
 
 ---
 
-## 11) 보안/감사 관점에서의 주의
+## 11. 보안/감사 관점에서의 주의
 
 - 리베이스는 **역사 재작성**이므로, 이미 배포/공개된 이력에 남용 금지.  
 - 릴리스 태그 이후에는 커밋 정리가 아닌 **새 커밋 추가**가 원칙.  
@@ -218,7 +218,7 @@ git rebase -i --autosquash HEAD~20
 
 ---
 
-## 12) 실패 복구(꼭 알아두기)
+## 12. 실패 복구(꼭 알아두기)
 
 ```bash
 # 리베이스로 이력이 꼬였다면…
@@ -234,7 +234,7 @@ git checkout -b rescue HEAD@{3}
 
 ---
 
-## 13) 예제 컬렉션
+## 13. 예제 컬렉션
 
 ### 13.1 “메시지”로 fixup 대상 지정(동명이인 위험 있음)
 
@@ -281,7 +281,7 @@ git rebase -i --autosquash HEAD~10
 
 ---
 
-## 14) 자주 하는 실수와 방지 요령
+## 14. 자주 하는 실수와 방지 요령
 
 | 실수 | 결과 | 방지 |
 |---|---|---|
@@ -293,7 +293,7 @@ git rebase -i --autosquash HEAD~10
 
 ---
 
-## 15) 팀 규칙(권장 템플릿)
+## 15. 팀 규칙(권장 템플릿)
 
 - 개인 브랜치에서만 `rebase -i --autosquash` 사용.  
 - PR 전 “정리 스크립트” 실행:
@@ -311,7 +311,7 @@ git rebase -i --autosquash HEAD~10
 
 ---
 
-## 16) 참고 명령 치트시트
+## 16. 참고 명령 치트시트
 
 ```bash
 # fixup/squash 생성
@@ -342,7 +342,7 @@ git reset --hard HEAD@{n}
 
 ---
 
-## 17) 마무리
+## 17. 마무리
 
 - `fixup!`/`squash!` + `--autosquash`는 **정리의 표준 루틴**이다.  
 - 작은 단위로, 안전한 범위에서, 팀 규칙과 CI를 곁들여 **항상 같은 방식으로 반복**하라.  

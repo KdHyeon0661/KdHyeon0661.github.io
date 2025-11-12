@@ -14,7 +14,7 @@ category: CSS
 
 ---
 
-## 1) 순수 CSS로 만드는 아이콘
+## 1. 순수 CSS로 만드는 아이콘
 
 ### 1.1 햄버거 메뉴 — `::before`/`::after` 3줄 레이어링
 ```html
@@ -109,7 +109,7 @@ button.primary { color: #2563eb; } /* icon도 함께 파란색으로 */
 
 ---
 
-## 2) 아이콘 전략 — CSS vs SVG vs 폰트(FA) 비교
+## 2. 아이콘 전략 — CSS vs SVG vs 폰트(FA) 비교
 
 | 방식 | 장점 | 단점 | 추천 용도 |
 |---|---|---|---|
@@ -122,7 +122,7 @@ button.primary { color: #2563eb; } /* icon도 함께 파란색으로 */
 
 ---
 
-## 3) Font Awesome 빠른 시작
+## 3. Font Awesome 빠른 시작
 
 ### 3.1 CDN (간단/프로토타입)
 ```html
@@ -146,7 +146,7 @@ npm i @fortawesome/fontawesome-free
 
 ---
 
-## 4) Font Awesome 사용법
+## 4. Font Awesome 사용법
 
 ### 4.1 기본 HTML
 ```html
@@ -207,7 +207,7 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ---
 
-## 5) Font Awesome 접근성(A11y)
+## 5. Font Awesome 접근성(A11y)
 
 - **장식용** 아이콘 → `aria-hidden="true"`  
 - **의미 전달** 아이콘 → 텍스트 제공(`sr-only`) 또는 `aria-label`
@@ -229,7 +229,7 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ---
 
-## 6) Font Awesome 정렬/줄바꿈/간격 디테일
+## 6. Font Awesome 정렬/줄바꿈/간격 디테일
 
 ### 6.1 텍스트 정렬
 ```css
@@ -248,7 +248,7 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ---
 
-## 7) Font Awesome 레이어링/뱃지(스택)
+## 7. Font Awesome 레이어링/뱃지(스택)
 
 **둘러싼 레이어**를 만들어 뱃지/원형 배경을 겹치기
 
@@ -270,7 +270,7 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ---
 
-## 8) 성능 최적화 (필수 체크리스트)
+## 8. 성능 최적화 (필수 체크리스트)
 
 1) **최소 자산만 로드**: `all.min.css`는 편하지만 큼.  
    - 가능하면 **서브셋**(필요 아이콘만)으로 번들(빌드 단계에서 PostCSS/수동 선택).
@@ -288,7 +288,7 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ---
 
-## 9) 다크 모드/상태 색상 전략
+## 9. 다크 모드/상태 색상 전략
 
 - **폰트 아이콘**: 단일 `color`면 끝. 테마 스위치 시 부모 색만 바꾸면 됨.
 - **CSS 마스크**: `background-color: currentColor;` + `prefers-color-scheme`로 전환.
@@ -303,7 +303,7 @@ html { color: #111; background:#fff; }
 
 ---
 
-## 10) 실전: “설정” 토글(태양/달) 아이콘 — Font Awesome + 상태 싱크
+## 10. 실전: “설정” 토글(태양/달) 아이콘 — Font Awesome + 상태 싱크
 
 ```html
 <button class="theme-toggle" aria-pressed="false" aria-label="다크 모드 전환">
@@ -331,7 +331,7 @@ btn.addEventListener('click', () => {
 
 ---
 
-## 11) React에서 Font Awesome 쓰기(간단 버전)
+## 11. React에서 Font Awesome 쓰기(간단 버전)
 
 > 공식 React 래퍼도 있지만, CDN/CSS 클래스로도 충분한 경우가 많다.
 
@@ -351,7 +351,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 12) 대체 라이브러리 빠른 비교
+## 12. 대체 라이브러리 빠른 비교
 
 | 라이브러리 | 장점 | 비고 |
 |---|---|---|
@@ -365,7 +365,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 13) 실전 컴포넌트 예제 — 알림 벨 + 뱃지 + 접근성
+## 13. 실전 컴포넌트 예제 — 알림 벨 + 뱃지 + 접근성
 
 ```html
 <button class="notif" aria-label="알림 5개">
@@ -390,7 +390,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 14) 점 3개(케밥/엘립시스) 메뉴 — CSS 아이콘
+## 14. 점 3개(케밥/엘립시스) 메뉴 — CSS 아이콘
 
 ```html
 <button class="dots" aria-label="메뉴 열기"></button>
@@ -414,7 +414,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 15) 이미지 위 오버레이 아이콘(FA + 그라디언트)
+## 15. 이미지 위 오버레이 아이콘(FA + 그라디언트)
 
 ```html
 <figure class="card">
@@ -438,7 +438,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 16) 흔한 문제와 해결
+## 16. 흔한 문제와 해결
 
 1) **아이콘이 줄 기준에서 들뜬다**  
    → `vertical-align` 미세 조정(예: `-0.125em`), `line-height:1` 확인.
@@ -457,7 +457,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 17) 체크리스트 요약
+## 17. 체크리스트 요약
 
 - [ ] **용도 선택**: CSS(단순) / SVG(다색·정밀) / FA(대카탈로그)
 - [ ] **접근성**: 장식 `aria-hidden="true"`, 의미 `aria-label`/텍스트
@@ -469,7 +469,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 18) 전체 샘플 — CSS 아이콘 + Font Awesome 혼합 UI
+## 18. 전체 샘플 — CSS 아이콘 + Font Awesome 혼합 UI
 
 ```html
 <!doctype html>

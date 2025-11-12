@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Secondary Index, 인덱스 클러스터 테이블, 해시 클러스터 테이블, IOT+클러스터 복합 튜닝 사례
 
-## 0) 공통 준비
+## 0. 공통 준비
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -15,7 +15,7 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST 보기
 
 ---
 
-# 1) Secondary Index(보조 인덱스) — Heap vs IOT의 의미 차이
+# 1. Secondary Index(보조 인덱스) — Heap vs IOT의 의미 차이
 
 ## 1.1 Secondary Index란?
 - **테이블을 식별하는 기본 키(Primary Key) 인덱스 외**에 추가로 만드는 모든 인덱스.
@@ -34,7 +34,7 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST 보기
 
 ---
 
-## 2) Secondary Index 실습
+## 2. Secondary Index 실습
 
 ### 2.1 샘플 스키마
 ```sql
@@ -127,7 +127,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 3) 인덱스 클러스터 테이블(Index Cluster Table)
+# 3. 인덱스 클러스터 테이블(Index Cluster Table)
 
 ## 3.1 개념
 - **클러스터 키**를 기준으로 **여러 테이블의 행을 물리적으로 같은 블록 근처**에 배치.
@@ -205,7 +205,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 4) 해시 클러스터 테이블(Hash Cluster Table)
+# 4. 해시 클러스터 테이블(Hash Cluster Table)
 
 ## 4.1 개념
 - **해시 함수**로 **키 → 블록** 위치를 **직접 계산**하여 접속(인덱스 불필요).  
@@ -256,7 +256,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 5) IOT + 클러스터 **복합 튜닝 사례**
+# 5. IOT + 클러스터 **복합 튜닝 사례**
 
 > 시나리오:  
 > - **Account(계정) 테이블**: **PK 기반 단건/범위 조회**가 대부분(최근 로그인/정렬/Top-N). → **IOT**가 적합.  
@@ -443,7 +443,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 6) 실패/주의 사례와 대응
+# 6. 실패/주의 사례와 대응
 
 - **IOT를 남용**: 비PK 질의가 다수 → 보조 인덱스 경유 + PK 재탐색이 쌓여 기대만큼 이득이 없음.  
   → **핫 경로**만 IOT, 나머지는 Heap 유지/혼용.
@@ -456,7 +456,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 7) 검증 템플릿 모음
+# 7. 검증 템플릿 모음
 
 ```sql
 -- 최근 실행 SQL 실제 수행 통계
@@ -481,7 +481,7 @@ FROM   user_clusters;
 
 ---
 
-## 8) 핵심 요약
+## 8. 핵심 요약
 
 - **Secondary Index**는 **조건/정렬/커버링**을 위해 필수이되, DML·공간 비용을 감안해 **핵심 질의 중심 최소화**.  
 - **인덱스 클러스터**는 **동일 키 조인/같은 키의 소수 다건 조회**에서 **랜덤 I/O**를 구조적으로 줄인다.  

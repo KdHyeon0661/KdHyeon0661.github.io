@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM에서 서비스 계층 분리 구조 (Service / Repository / Unit of Work / Mapper / Caching)
 
-## 0) 설계 원칙 요약
+## 0. 설계 원칙 요약
 
 - **SRP / SoC**: UI(상태/이벤트), 도메인 유즈케이스, 데이터 접근을 분리한다.
 - **DI**: 모든 경계(서비스/리포지토리/매퍼)를 인터페이스화 → 테스트/교체 용이.
@@ -20,7 +20,7 @@ category: Avalonia
 
 ---
 
-## 1) 참조 프로젝트 구조(확장형)
+## 1. 참조 프로젝트 구조(확장형)
 
 ```
 MyApp/
@@ -59,7 +59,7 @@ MyApp/
 
 ---
 
-## 2) 모델·DTO·매퍼
+## 2. 모델·DTO·매퍼
 
 ### 2.1 도메인 모델
 
@@ -140,7 +140,7 @@ public sealed class UserMapper : IUserMapper
 
 ---
 
-## 3) 저장소 계층(Repository / Unit of Work)
+## 3. 저장소 계층(Repository / Unit of Work)
 
 ### 3.1 인터페이스
 
@@ -342,7 +342,7 @@ public sealed class UserSqliteRepository : IUserRepository
 
 ---
 
-## 4) 서비스 계층(유즈케이스/정책/캐시)
+## 4. 서비스 계층(유즈케이스/정책/캐시)
 
 ### 4.1 기본 인터페이스
 
@@ -549,7 +549,7 @@ public sealed class UserService : IUserService
 
 ---
 
-## 5) ViewModel과의 결합
+## 5. ViewModel과의 결합
 
 ```csharp
 // ViewModels/UserViewModel.cs
@@ -660,7 +660,7 @@ public sealed class UserViewModel : ReactiveObject
 
 ---
 
-## 6) DI 구성(App.axaml.cs)
+## 6. DI 구성(App.axaml.cs)
 
 ```csharp
 // App.axaml.cs (중요 부분)
@@ -711,7 +711,7 @@ public class App : Application
 
 ---
 
-## 7) 고급 설계 포인트
+## 7. 고급 설계 포인트
 
 ### 7.1 정렬/필터/페이지네이션 기준의 서비스 책임
 - Repository는 **기술적 쿼리 능력**(WHERE/ORDER/LIMIT)을 제공.
@@ -740,7 +740,7 @@ $$
 
 ---
 
-## 8) 테스트 전략
+## 8. 테스트 전략
 
 ### 8.1 ViewModel 테스트: Service 모킹
 
@@ -811,14 +811,14 @@ public class UserServiceTests
 
 ---
 
-## 9) CQRS/유즈케이스 분해(선택)
+## 9. CQRS/유즈케이스 분해(선택)
 
 읽기/쓰기 파이프라인을 분리하여 **읽기 최적화(캐시/인덱스)**와 **쓰기 검증/트랜잭션**을 독립적으로 확장할 수 있다.  
 예) `IUserQueries`, `IUserCommands`로 인터페이스 분리.
 
 ---
 
-## 10) 오류 모델
+## 10. 오류 모델
 
 ```csharp
 // Models/Errors.cs
@@ -838,7 +838,7 @@ Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미�
 
 ---
 
-## 11) 성능·운영 팁
+## 11. 성능·운영 팁
 
 - **HttpClient 재사용**: DI 컨테이너로 관리, 소켓 고갈 방지
 - **Polly**: 429/5xx 재시도, 서킷브레이커로 폭주 방지
@@ -848,7 +848,7 @@ Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미�
 
 ---
 
-## 12) 요약 표
+## 12. 요약 표
 
 | 계층 | 책임 | 구현 포인트 | 테스트 포인트 |
 |------|------|------------|---------------|
@@ -859,7 +859,7 @@ Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미�
 
 ---
 
-## 13) 부록: 간단 수학(캐시 히트율 근사)
+## 13. 부록: 간단 수학(캐시 히트율 근사)
 
 요청 빈도를 \( \lambda \), 캐시 TTL을 \( \tau \), 원천 적중 확률을 \( p \)라 할 때, 단순 포아송 근사에서 캐시 적중 확률 \( H \)는
 
@@ -872,7 +872,7 @@ $$
 
 ---
 
-## 14) 결론
+## 14. 결론
 
 - **ViewModel–Service–Repository** 분리는 UI/도메인/인프라의 콘크리트 결합을 끊고, 테스트성·유지보수성·확장성을 극대화한다.
 - **Service**는 캐시·오프라인·동기화·검증·트랜잭션·정책의 주체이며, **Repository**는 데이터 접근 구현에만 집중한다.

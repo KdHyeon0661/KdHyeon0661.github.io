@@ -13,7 +13,7 @@ category: WPF
 
 ---
 
-## 0) 데모 시나리오
+## 0. 데모 시나리오
 
 - 리소스: `Products` (목록/단건/검색/페이지네이션/정렬)
 - API 엔드포인트(예시):
@@ -29,7 +29,7 @@ category: WPF
 
 ---
 
-## 1) 솔루션 구조
+## 1. 솔루션 구조
 
 ```
 Shop/
@@ -42,7 +42,7 @@ Shop/
 
 ---
 
-## 2) 패키지
+## 2. 패키지
 
 ```bash
 # App
@@ -62,7 +62,7 @@ dotnet add Shop.Tests package NSubstitute
 
 ---
 
-## 3) Domain: DTO & Result & Validation
+## 3. Domain: DTO & Result & Validation
 
 ```csharp
 // Shop.Domain/Products/ProductDto.cs
@@ -89,7 +89,7 @@ public readonly struct Result<T>
 
 ---
 
-## 4) API 클라이언트 설계
+## 4. API 클라이언트 설계
 
 ### 4.1 인터페이스
 
@@ -280,7 +280,7 @@ public sealed class ProductsApi : IProductsApi
 
 ---
 
-## 5) App 부트스트랩 (Generic Host in WPF)
+## 5. App 부트스트랩 (Generic Host in WPF)
 
 ```csharp
 // Shop.App/App.xaml.cs
@@ -322,7 +322,7 @@ public sealed class MemoryTokenProvider : ITokenProvider
 
 ---
 
-## 6) MVVM: 메인 ViewModel (목록/검색/페이징/정렬/상태/에러/취소)
+## 6. MVVM: 메인 ViewModel (목록/검색/페이징/정렬/상태/에러/취소)
 
 ```csharp
 // Shop.App/ViewModels/MainViewModel.cs
@@ -407,7 +407,7 @@ public partial class MainViewModel : ObservableObject
 
 ---
 
-## 7) View: 상태/진행/에러/검색/페이징 바인딩
+## 7. View: 상태/진행/에러/검색/페이징 바인딩
 
 ```xml
 <!-- Shop.App/MainWindow.xaml -->
@@ -493,7 +493,7 @@ public class TotalToPages : IValueConverter
 
 ---
 
-## 8) 상세/등록/수정/삭제 with Optimistic Update
+## 8. 상세/등록/수정/삭제 with Optimistic Update
 
 ### 8.1 커맨드 (등록/수정/삭제, 처리 중 상태, 낙관적 갱신)
 
@@ -577,7 +577,7 @@ public partial class MainViewModel : ObservableObject
 
 ---
 
-## 9) 고급 UX: 디바운스 검색 / 무한 스크롤 / 진행률
+## 9. 고급 UX: 디바운스 검색 / 무한 스크롤 / 진행률
 
 ### 9.1 디바운스 검색
 - TextBox의 `TextChanged`에서 **연속 입력 300ms** 후 검색 실행:
@@ -617,7 +617,7 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ---
 
-## 10) 에러 처리/표시 패턴
+## 10. 에러 처리/표시 패턴
 
 - **서버 오류(4xx/5xx)** → `Result.Fail(status, message)` 로 VM에 전달  
 - **네트워크 오류** → Polly 재시도 후 실패 시 **친절한 메시지**  
@@ -628,7 +628,7 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ---
 
-## 11) 인증(Access/Refresh) 흐름
+## 11. 인증(Access/Refresh) 흐름
 
 - `AuthHeaderHandler` 에서 `401` 감지 → **Refresh 흐름** 트리거
 - Refresh 성공 → 원 요청 재시도
@@ -640,7 +640,7 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ---
 
-## 12) 오프라인/큐잉(선택)
+## 12. 오프라인/큐잉(선택)
 
 - 요청을 **명령 큐**에 적재(예: `Create/Update/Delete` DTO)  
 - 온라인 상태 확인(네트워크 체크) → 온라인 전환 시 **큐 플러시**  
@@ -657,7 +657,7 @@ public interface IOutbox
 
 ---
 
-## 13) 로그/추적
+## 13. 로그/추적
 
 - `HttpClientFactory` 로깅(Handler에서 `ILogger` 주입)  
 - ViewModel에서 핵심 상태 변화 로그  
@@ -665,7 +665,7 @@ public interface IOutbox
 
 ---
 
-## 14) 테스트 (핵심: HttpMessageHandler 스텁)
+## 14. 테스트 (핵심: HttpMessageHandler 스텁)
 
 ### 14.1 핸들러 목킹
 ```csharp
@@ -729,7 +729,7 @@ public async Task Load_Sets_Items_And_Total()
 
 ---
 
-## 15) 성능/안정성 체크리스트
+## 15. 성능/안정성 체크리스트
 
 - **비동기 규율**: 모든 I/O `async/await` + UI 업데이트는 **Dispatcher**  
 - **취소 전파**: 긴 호출마다 `CancellationToken` 지원  
@@ -741,7 +741,7 @@ public async Task Load_Sets_Items_And_Total()
 
 ---
 
-## 16) 보너스: 다크모드/접근성/국제화
+## 16. 보너스: 다크모드/접근성/국제화
 
 - 다크모드: 리소스 토큰화 + `DynamicResource` (팔레트 교체)  
 - 접근성: 키보드 탐색/스크린리더 Friendly Text/AutomationProperties  
@@ -749,7 +749,7 @@ public async Task Load_Sets_Items_And_Total()
 
 ---
 
-## 17) 마무리
+## 17. 마무리
 
 - **MVVM**으로 뷰-로직 분리 → 테스트 용이  
 - **HttpClientFactory + Polly**로 회복력 있는 통신  

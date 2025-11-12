@@ -6,7 +6,7 @@ category: Git
 ---
 # Git Hooks 완전 정리 (feat. Husky)
 
-## 0) Git Hooks란?
+## 0. Git Hooks란?
 
 Git은 커밋, 병합, 푸시, 체크아웃 등 **지정 이벤트 시 자동 실행되는 스크립트**(Hook)를 제공한다. 각 로컬 저장소의 `.git/hooks/` 디렉터리에 위치하며, 파일에 **실행 권한**이 있고 **파일명이 훅 이름과 정확히 일치**하면 동작한다.
 
@@ -20,7 +20,7 @@ $$
 
 ---
 
-## 1) 내장 Git Hook 종류 — 무엇을 언제 실행하나
+## 1. 내장 Git Hook 종류 — 무엇을 언제 실행하나
 
 `.git/hooks/`에는 샘플 파일(`*.sample`)이 있다. 확장자를 지우고 실행 권한을 주면 즉시 동작한다.
 
@@ -41,7 +41,7 @@ $$
 
 ---
 
-## 2) 순정 Git Hook — 바로 써먹는 최소 예제
+## 2. 순정 Git Hook — 바로 써먹는 최소 예제
 
 ### 2.1 `pre-commit`에서 ESLint/Prettier 검사
 
@@ -85,7 +85,7 @@ fi
 
 ---
 
-## 3) 팀과 공유하려면? — 세 가지 전략
+## 3. 팀과 공유하려면? — 세 가지 전략
 
 1) **Husky 사용**  
 2) **`core.hooksPath`로 버전 관리 디렉터리 지정**  
@@ -104,7 +104,7 @@ git config core.hooksPath .githooks
 
 ---
 
-## 4) Husky — JavaScript 생태계 표준 도구
+## 4. Husky — JavaScript 생태계 표준 도구
 
 Husky는 Git Hook을 **프로젝트 내부 디렉터리(`.husky/`)**로 관리하게 해주고, 설치 자동화(`prepare` 스크립트)로 팀 온보딩을 단순화한다.
 
@@ -211,7 +211,7 @@ npx commitizen init cz-conventional-changelog --save-dev --save-exact
 
 ---
 
-## 5) 모노레포/여러 패키지에서의 Hook
+## 5. 모노레포/여러 패키지에서의 Hook
 
 - 루트 `.husky/`에서 훅을 만들고, 하위 패키지에 맞게 스크립트를 라우팅한다.
 - 예: pnpm 워크스페이스에서 변경된 패키지에만 테스트 실행
@@ -229,7 +229,7 @@ pnpm -r --filter ...[origin/main] test
 
 ---
 
-## 6) 다양한 언어별 조합 예시
+## 6. 다양한 언어별 조합 예시
 
 ### 6.1 Python 프로젝트
 
@@ -298,7 +298,7 @@ go test ./...
 
 ---
 
-## 7) Windows/WSL/CI 환경 주의점
+## 7. Windows/WSL/CI 환경 주의점
 
 - **Shebang**: `#!/bin/sh` 권장(크로스 플랫폼). Windows Git Bash/WSL에서 정상 동작.
 - **권한**: `chmod +x .husky/*` 가 필요. CI에서는 체크아웃 옵션으로 권한이 깨질 수 있으니, CI 스크립트에서 한 번 더 `chmod` 하거나 Git 속성으로 관리.
@@ -306,7 +306,7 @@ go test ./...
 
 ---
 
-## 8) 성능 최적화 체크리스트
+## 8. 성능 최적화 체크리스트
 
 - **`lint-staged`** 로 스테이징 파일만 검사
 - **작은 훅**: `pre-commit`은 빠르게 끝내고, 무거운 작업(통합 테스트)은 `pre-push`나 CI로 미룬다
@@ -329,7 +329,7 @@ npx concurrently \
 
 ---
 
-## 9) 보안/정책 및 우회 방지
+## 9. 보안/정책 및 우회 방지
 
 - 로컬 훅은 `--no-verify` 로 우회 가능:
   ```bash
@@ -349,7 +349,7 @@ npx gitleaks detect --no-banner --verbose
 
 ---
 
-## 10) CI와의 역할 분담
+## 10. CI와의 역할 분담
 
 - 훅은 **개발자 머신에서 빠른 피드백** 제공
 - CI는 **권위(authoritative) 검사**로, 반드시 통과해야 병합되도록 보호 규칙과 연결
@@ -378,7 +378,7 @@ jobs:
 
 ---
 
-## 11) 트러블슈팅 모음
+## 11. 트러블슈팅 모음
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -391,7 +391,7 @@ jobs:
 
 ---
 
-## 12) 실전 레시피 — “웹 프론트 단일 리포” 표준 세트
+## 12. 실전 레시피 — “웹 프론트 단일 리포” 표준 세트
 
 1) 의존성
 ```bash
@@ -429,7 +429,7 @@ npx husky add .husky/pre-push "npm test"
 
 ---
 
-## 13) 대안/변형: Node 의존 없이 공유하려면
+## 13. 대안/변형: Node 의존 없이 공유하려면
 
 - `core.hooksPath` + 순정 쉘 스크립트로 버전관리
 - 다국어 팀이면 언어별 프레임워크를 존중: Python(`pre-commit`), Go(`lefthook`), Ruby(`overcommit`)
@@ -452,7 +452,7 @@ eslint . --max-warnings=0
 
 ---
 
-## 14) 수학적 요약 — 커밋 파이프라인에서의 훅 실행 모델
+## 14. 수학적 요약 — 커밋 파이프라인에서의 훅 실행 모델
 
 커밋 과정에서 훅의 실패가 파이프라인을 중단하는 것을 다음처럼 쓸 수 있다:
 
@@ -477,7 +477,7 @@ $$
 
 ---
 
-## 15) 요약 표 — 내장 Hook vs Husky vs core.hooksPath
+## 15. 요약 표 — 내장 Hook vs Husky vs core.hooksPath
 
 | 항목 | 내장 Hook(.git/hooks) | Husky(.husky) | core.hooksPath(예: .githooks) |
 |---|---|---|---|
@@ -490,7 +490,7 @@ $$
 
 ---
 
-## 16) 명령 치트시트
+## 16. 명령 치트시트
 
 ```bash
 # 훅 활성화(순정)

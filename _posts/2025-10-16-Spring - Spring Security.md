@@ -4,7 +4,7 @@ title: Spring - Spring Security
 date: 2025-10-16 15:25:23 +0900
 category: Spring
 ---
-# 7) 보안 — Spring Security 기초
+# 7. 보안 — Spring Security 기초
 > 목표: **요구사항 모델링(인증/인가)**부터 시작해 **필터 체인/AuthenticationProvider**의 흐름을 이해하고, **폼 로그인·세션/쿠키·Remember-me**를 손에 익히며, **패스워드 저장·CSRF/XSS/CORS**의 필수 보안 기초를 실전 예제로 정리한다.  
 > 환경 가정: Spring Boot 3.3+, Spring Security 6.x, Java 21, MVC(서블릿).
 

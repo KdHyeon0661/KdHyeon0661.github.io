@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker 컨테이너란? 상태와 수명주기
 
-## 1) 컨테이너란?
+## 1. 컨테이너란?
 
 Docker 컨테이너는 **이미지로부터 생성된 실행 인스턴스**입니다.  
 이미지의 읽기 전용 레이어 위에, 컨테이너별 **쓰기 가능한 레이어**가 얹혀 실행됩니다(OverlayFS, COW).
@@ -19,7 +19,7 @@ Docker 컨테이너는 **이미지로부터 생성된 실행 인스턴스**입�
 
 ---
 
-## 2) 구조(파일시스템 레이어)
+## 2. 구조(파일시스템 레이어)
 
 ```
 +-----------------------------------+
@@ -36,7 +36,7 @@ Docker 컨테이너는 **이미지로부터 생성된 실행 인스턴스**입�
 
 ---
 
-## 3) 컨테이너 상태(State)와 전이
+## 3. 컨테이너 상태(State)와 전이
 
 | 상태 | 설명 | 주요 명령 |
 |---|---|---|
@@ -66,30 +66,30 @@ pause → [paused] → unpause → [running]
 
 ---
 
-## 4) 수명주기(Lifecycle) 명령 실습
+## 4. 수명주기(Lifecycle) 명령 실습
 
 ```bash
-# 1) 실행 없이 생성만
+# 1. 실행 없이 생성만
 docker create --name demo ubuntu sleep 600     # [created]
 
-# 2) 시작
+# 2. 시작
 docker start demo                               # [running]
 
-# 3) 상태/로그/세부 정보
+# 3. 상태/로그/세부 정보
 docker ps -a
 docker logs demo                                # ENTRYPOINT/CMD가 stdout을 낼 때 유효
 docker inspect demo | jq '.[0].State, .[0].Mounts'
 
-# 4) 일시 중지/재개
+# 4. 일시 중지/재개
 docker pause demo
 docker unpause demo
 
-# 5) 정상 정지(TERM → grace 후 KILL)
+# 5. 정상 정지(TERM → grace 후 KILL)
 docker stop demo     # 기본 10초 타임아웃
 # 5-1) 즉시 강제 종료
 docker kill demo
 
-# 6) 삭제(정지 상태여야 함)
+# 6. 삭제(정지 상태여야 함)
 docker rm demo
 ```
 
@@ -97,7 +97,7 @@ docker rm demo
 
 ---
 
-## 5) 신호와 종료: stop vs kill, 종료 코드
+## 5. 신호와 종료: stop vs kill, 종료 코드
 
 - `docker stop`: **SIGTERM** 전송 → **grace period**(기본 10s) → 미종료 시 **SIGKILL**
 - `docker kill`: 즉시 **SIGKILL**
@@ -117,7 +117,7 @@ docker kill --signal=HUP web
 
 ---
 
-## 6) `run` 옵션과 실행 습관(보안/운영)
+## 6. `run` 옵션과 실행 습관(보안/운영)
 
 ```bash
 # 대화형/디버깅
@@ -146,7 +146,7 @@ docker run --rm \
 
 ---
 
-## 7) 재시작 정책(Availability 향상)
+## 7. 재시작 정책(Availability 향상)
 
 애플리케이션 장애나 도커 데몬 재시작 시 **자동 재기동** 설정:
 
@@ -169,7 +169,7 @@ $$
 
 ---
 
-## 8) 컨테이너 내부 진입/디버깅
+## 8. 컨테이너 내부 진입/디버깅
 
 ```bash
 # 실행 중 컨테이너에 셸
@@ -184,7 +184,7 @@ docker attach web             # PID 1 표준입출력에 연결(주의)
 
 ---
 
-## 9) 로그·이벤트·상세 정보
+## 9. 로그·이벤트·상세 정보
 
 ```bash
 # 로그(최근 100줄, 팔로우)
@@ -205,7 +205,7 @@ docker top web           # 컨테이너 내부 프로세스 목록
 
 ---
 
-## 10) 네트워킹(요약 실습)
+## 10. 네트워킹(요약 실습)
 
 컨테이너 간 통신을 위해 사용자 정의 브릿지를 활용하면 **이름 기반 DNS**가 가능합니다.
 
@@ -221,7 +221,7 @@ docker network rm appnet     # 사용 중이면 삭제 불가
 
 ---
 
-## 11) 데이터 영속화(컨테이너 레이어 vs 볼륨)
+## 11. 데이터 영속화(컨테이너 레이어 vs 볼륨)
 
 컨테이너 레이어는 **휘발**. 데이터는 볼륨/바인드 마운트 사용:
 
@@ -244,7 +244,7 @@ docker run -d --name web -p 8080:80 \
 
 ---
 
-## 12) 컨테이너 수명주기 “확장” 시나리오
+## 12. 컨테이너 수명주기 “확장” 시나리오
 
 ### 12.1 롤링 업데이트(수동)
 ```bash
@@ -272,7 +272,7 @@ docker inspect api | jq '.[0].State.Health'
 
 ---
 
-## 13) 자원 제한과 QoS(cgroups)
+## 13. 자원 제한과 QoS(cgroups)
 
 ```bash
 docker run -d --name svc \
@@ -287,7 +287,7 @@ docker run -d --name svc \
 
 ---
 
-## 14) 컨테이너와 PID 1(Init) 이슈
+## 14. 컨테이너와 PID 1(Init) 이슈
 
 컨테이너의 첫 프로세스(PID 1)는 **신호 처리/좀비 reaping** 책임이 있습니다.  
 일부 런타임/언어는 PID 1에서 **신호 전파가 누락**될 수 있으므로, **init 래퍼** 사용을 권장:
@@ -305,7 +305,7 @@ CMD ["-w","2","-b","0.0.0.0:8080","app:app"]
 
 ---
 
-## 15) 컨테이너 복구·정리 루틴
+## 15. 컨테이너 복구·정리 루틴
 
 ```bash
 # 일괄 상태 보기
@@ -325,7 +325,7 @@ docker volume prune -f
 
 ---
 
-## 16) 트러블슈팅 표(원인→진단→해결)
+## 16. 트러블슈팅 표(원인→진단→해결)
 
 | 증상/오류 | 가능 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -339,35 +339,35 @@ docker volume prune -f
 
 ---
 
-## 17) 실습: 상태·수명주기 종합 예제
+## 17. 실습: 상태·수명주기 종합 예제
 
 ```bash
-# 1) 네트워크 준비
+# 1. 네트워크 준비
 docker network create appnet
 
-# 2) API 컨테이너 실행(백그라운드)
+# 2. API 컨테이너 실행(백그라운드)
 docker run -d --name api --restart=unless-stopped \
   --network appnet -p 8080:8080 ghcr.io/acme/api:1.0
 
-# 3) 상태/로그/리소스
+# 3. 상태/로그/리소스
 docker ps
 docker logs -f --tail=50 api
 docker stats --no-stream
 
-# 4) 내부 확인
+# 4. 내부 확인
 docker exec -it api sh -lc 'uname -a; ps -ef | wc -l; ss -ltn'
 
-# 5) 정상 정지 vs 강제 종료
+# 5. 정상 정지 vs 강제 종료
 docker stop -t 20 api      # SIGTERM → 20s 유예
 docker rm api              # 정지 후 삭제
 
-# 6) 청소(선택)
+# 6. 청소(선택)
 docker network rm appnet
 ```
 
 ---
 
-## 18) 컨테이너 vs 이미지(요약 복습 표)
+## 18. 컨테이너 vs 이미지(요약 복습 표)
 
 | 항목 | 이미지(Image) | 컨테이너(Container) |
 |---|---|---|
@@ -379,7 +379,7 @@ docker network rm appnet
 
 ---
 
-## 19) 관련 명령어 요약(보강)
+## 19. 관련 명령어 요약(보강)
 
 | 명령 | 설명/팁 |
 |---|---|
@@ -397,7 +397,7 @@ docker network rm appnet
 
 ---
 
-## 20) 결론
+## 20. 결론
 
 - 컨테이너는 이미지 기반의 **실행 인스턴스**로, 상태를 가지며 파일시스템은 **COW** 방식으로 동작합니다.  
 - 수명주기는 `create → start → (pause/unpause) → stop/kill → rm` 로 간결하지만, **신호 처리/재시작 정책/자원 제한/데이터 영속화**를 더하면 운영 탄탄도가 크게 올라갑니다.  

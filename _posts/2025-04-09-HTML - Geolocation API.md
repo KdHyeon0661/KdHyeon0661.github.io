@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML5 Geolocation API 완벽 가이드
 
-## 1) 빠른 시작 — 현재 위치 한 번 가져오기
+## 1. 빠른 시작 — 현재 위치 한 번 가져오기
 
 ```html
 <button id="btn">내 위치 가져오기</button>
@@ -42,7 +42,7 @@ document.getElementById('btn').addEventListener('click', () => {
 
 ---
 
-## 2) 반환 객체 구조 (좌표·정확도·속도)
+## 2. 반환 객체 구조 (좌표·정확도·속도)
 
 ```js
 // success 콜백의 position
@@ -64,7 +64,7 @@ document.getElementById('btn').addEventListener('click', () => {
 
 ---
 
-## 3) 연속 추적 — 이동 시마다 콜백 받기
+## 3. 연속 추적 — 이동 시마다 콜백 받기
 
 ```html
 <button id="start">트래킹 시작</button>
@@ -105,7 +105,7 @@ document.getElementById('stop').addEventListener('click', () => {
 
 ---
 
-## 4) 에러 처리 패턴
+## 4. 에러 처리 패턴
 
 ```js
 function handleGeoError(err) {
@@ -131,7 +131,7 @@ function handleGeoError(err) {
 
 ---
 
-## 5) Promise/`async` 스타일로 깔끔하게
+## 5. Promise/`async` 스타일로 깔끔하게
 
 ```js
 function getCurrentPositionAsync(options) {
@@ -164,7 +164,7 @@ async function getCurrentPositionWithHardTimeout(ms, options) {
 
 ---
 
-## 6) 정확도·지연·배터리 — 트레이드오프 설계
+## 6. 정확도·지연·배터리 — 트레이드오프 설계
 
 - **enableHighAccuracy=true**  
   - 장점: 더 정확(특히 실외 GPS)  
@@ -179,7 +179,7 @@ async function getCurrentPositionWithHardTimeout(ms, options) {
 
 ---
 
-## 7) 거리 계산(두 좌표 간) — Haversine
+## 7. 거리 계산(두 좌표 간) — Haversine
 
 두 위경도 \((\varphi_1,\lambda_1),(\varphi_2,\lambda_2)\) 사이의 대권거리 \(d\) (반지름 \(R\)):
 
@@ -205,7 +205,7 @@ function haversineDistance(lat1, lon1, lat2, lon2, radius = 6371000) {
 
 ---
 
-## 8) 지도 라이브러리 연동 — Leaflet(오픈소스) 예
+## 8. 지도 라이브러리 연동 — Leaflet(오픈소스) 예
 
 ```html
 <link
@@ -250,7 +250,7 @@ initLeaflet().catch(console.error);
 
 ---
 
-## 9) 고급: `watchPosition` + 쓰로틀 + 이탈 감지
+## 9. 고급: `watchPosition` + 쓰로틀 + 이탈 감지
 
 ```js
 // N초마다 한 번만 서버에 업로드(쓰로틀)
@@ -303,7 +303,7 @@ const id = navigator.geolocation.watchPosition(onMove, console.error, {
 
 ---
 
-## 10) 권한·보안·정책 (반드시 숙지)
+## 10. 권한·보안·정책 (반드시 숙지)
 
 - **HTTPS 필수(또는 localhost)**: 보안 문맥(Secure Context)에서만 동작.  
 - **권한 프롬프트**: 사용자의 **명시적 허용**이 필요. UX 상 **행동 유도 버튼** 뒤에 요청하세요.
@@ -328,7 +328,7 @@ if ('permissions' in navigator) {
 
 ---
 
-## 11) 브라우저/플랫폼 주의점
+## 11. 브라우저/플랫폼 주의점
 
 - **iOS Safari**:  
   - iOS 13+에서 HTTPS 요구 엄격.  
@@ -339,7 +339,7 @@ if ('permissions' in navigator) {
 
 ---
 
-## 12) 테스트·모킹
+## 12. 테스트·모킹
 
 - **DevTools** > Sensors(Chrome) → Location을 **Custom**으로 설정해 경로 시뮬레이션.  
 - **권한 상태**: 브라우저 주소창 자물쇠 아이콘에서 사이트 권한 초기화/변경.  
@@ -347,7 +347,7 @@ if ('permissions' in navigator) {
 
 ---
 
-## 13) 실전 사례 패턴
+## 13. 실전 사례 패턴
 
 ### 13.1 위치 → 날씨 API
 
@@ -372,7 +372,7 @@ function withinRadius(poi, center, r) {
 
 ---
 
-## 14) 반응형 지도 + 위치 버튼 UI 예시(접근성 포함)
+## 14. 반응형 지도 + 위치 버튼 UI 예시(접근성 포함)
 
 ```html
 <button id="locate" aria-label="현재 위치로 이동">현재 위치</button>
@@ -397,7 +397,7 @@ document.getElementById('locate').addEventListener('click', onLocateClick);
 
 ---
 
-## 15) TypeScript 타입 안전 예시
+## 15. TypeScript 타입 안전 예시
 
 ```ts
 type Coords = { lat: number; lon: number; accuracy?: number };
@@ -416,7 +416,7 @@ export async function currentCoords(): Promise<Coords> {
 
 ---
 
-## 16) UX 체크리스트
+## 16. UX 체크리스트
 
 - [ ] 권한 요청은 **사용자 동작 직후**(버튼) 트리거.  
 - [ ] 실패 시 **대체 경로**(수동 주소 입력, IP 기반 대략 위치).  
@@ -428,7 +428,7 @@ export async function currentCoords(): Promise<Coords> {
 
 ---
 
-## 17) 한눈에 보는 API 표
+## 17. 한눈에 보는 API 표
 
 | 함수 | 용도 | 비고 |
 |---|---|---|
@@ -452,7 +452,7 @@ export async function currentCoords(): Promise<Coords> {
 
 ---
 
-## 18) 예제 모음 — 상황별 스니펫
+## 18. 예제 모음 — 상황별 스니펫
 
 ### 18.1 정확도 원(Accuracy Circle) + 마지막 업데이트 UI
 
@@ -487,7 +487,7 @@ document.getElementById('use-address').onclick = async () => {
 
 ---
 
-## 19) 흔한 질문(FAQ)
+## 19. 흔한 질문(FAQ)
 
 - **Q. 왜 HTTP에서 안 되나요?**  
   A. 위치는 민감정보라 **Secure Context(HTTPS/localhost)**에서만 허용됩니다.
@@ -500,7 +500,7 @@ document.getElementById('use-address').onclick = async () => {
 
 ---
 
-## 20) 결론
+## 20. 결론
 
 - **보안(HTTPS)·권한(UX)·정확도(배터리)**의 균형이 핵심입니다.  
 - **`getCurrentPosition` → 캐시 응답 즉시 표시**, 이후 **정밀 재측정/연속 추적**으로 보완.  

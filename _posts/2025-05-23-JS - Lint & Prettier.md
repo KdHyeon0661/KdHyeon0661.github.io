@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # Lint / Prettier 사용법 정리
 
-## 1) 개념 정리 — Lint vs Prettier 역할 구분
+## 1. 개념 정리 — Lint vs Prettier 역할 구분
 
 - **ESLint(Lint)**: 정적 분석으로 **문법 오류, 잠재 버그, 안티패턴** 탐지 + 일부 자동 수정(`--fix`)
 - **Prettier(Formatter)**: **코드 모양(줄바꿈, 들여쓰기, 세미콜론, 따옴표, 줄폭)**을 **일관 규칙으로 자동 정렬**
@@ -18,7 +18,7 @@ category: JavaScript
 
 ---
 
-## 2) 프로젝트 세팅 빠른 시작
+## 2. 프로젝트 세팅 빠른 시작
 
 ### 2.1 의존성 설치(기본)
 ```bash
@@ -101,7 +101,7 @@ export default [
 
 ---
 
-## 3) 실행 스크립트 & 기본 사용
+## 3. 실행 스크립트 & 기본 사용
 
 `package.json`
 ```json
@@ -125,7 +125,7 @@ npm run fmt:write
 
 ---
 
-## 4) VS Code 연동(저장 시 자동)
+## 4. VS Code 연동(저장 시 자동)
 
 `.vscode/settings.json`
 ```json
@@ -142,7 +142,7 @@ npm run fmt:write
 
 ---
 
-## 5) TypeScript 통합
+## 5. TypeScript 통합
 
 ### 5.1 패키지
 ```bash
@@ -184,7 +184,7 @@ export default [
 
 ---
 
-## 6) React/Next.js 통합
+## 6. React/Next.js 통합
 
 ### 6.1 패키지
 ```bash
@@ -227,7 +227,7 @@ export default [
 
 ---
 
-## 7) Node 라이브러리(ESM/CJS) 및 테스트
+## 7. Node 라이브러리(ESM/CJS) 및 테스트
 
 ### 7.1 Node 전용 규칙
 ```js
@@ -262,7 +262,7 @@ export default [
 
 ---
 
-## 8) 파일 제외/오버라이드
+## 8. 파일 제외/오버라이드
 
 - **Prettier 제외**: `.prettierignore`
 ```
@@ -283,7 +283,7 @@ node_modules
 
 ---
 
-## 9) Husky + lint-staged로 커밋 전 자동 검사
+## 9. Husky + lint-staged로 커밋 전 자동 검사
 
 ### 9.1 설치
 ```bash
@@ -311,7 +311,7 @@ npx husky add .husky/pre-commit "npx lint-staged"
 
 ---
 
-## 10) CI 통합(GitHub Actions 예시)
+## 10. CI 통합(GitHub Actions 예시)
 
 `.github/workflows/lint.yml`
 ```yaml
@@ -338,7 +338,7 @@ jobs:
 
 ---
 
-## 11) 성능 최적화·대규모 적용 노하우
+## 11. 성능 최적화·대규모 적용 노하우
 
 - **ESLint 캐시**: `eslint . --cache --cache-location .eslintcache`
 - **TS 타입 규칙 부담 줄이기**: 빌드/CI에만 `parserOptions.project`를 켜고, 로컬은 기본 규칙만으로 빠르게
@@ -351,7 +351,7 @@ jobs:
 
 ---
 
-## 12) 흔한 오류와 해결
+## 12. 흔한 오류와 해결
 
 | 상황 | 원인 | 해결 |
 |------|------|------|
@@ -363,7 +363,7 @@ jobs:
 
 ---
 
-## 13) 실전 템플릿 모음
+## 13. 실전 템플릿 모음
 
 ### 13.1 JS + React + Prettier(Flat Config)
 ```js
@@ -449,7 +449,7 @@ export default [
 
 ---
 
-## 14) 마이그레이션 가이드(요약)
+## 14. 마이그레이션 가이드(요약)
 
 - 기존 `.eslintrc` → 점진적 이전:
   1) Flat Config 파일 `eslint.config.js` 생성
@@ -462,7 +462,7 @@ export default [
 
 ---
 
-## 15) 마무리
+## 15. 마무리
 
 - **ESLint**는 버그/품질, **Prettier**는 포맷. **역할을 분리**하면 충돌 없이 깔끔합니다.
 - 신형 **Flat Config**는 구성 파일을 **표준 JS로 명시**하고, **오버라이드와 모듈화**가 간결합니다.

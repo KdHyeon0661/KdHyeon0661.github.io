@@ -7,7 +7,7 @@ category: 딥러닝
 # 모델 내보내기(ONNX), 런타임(TensorRT 개론), TorchScript 개념  
 **PyTorch 모델을 배포-가속하기 위한 3가지 경로: ONNX → (ONNXRuntime/TensorRT), TorchScript(Libtorch/모바일)**
 
-## 0) 큰 그림과 선택 가이드
+## 0. 큰 그림과 선택 가이드
 
 | 경로 | 장점 | 단점/유의 | 언제 쓰나 |
 |---|---|---|---|
@@ -21,7 +21,7 @@ category: 딥러닝
 
 ---
 
-## 1) ONNX 내보내기 (PyTorch → ONNX)
+## 1. ONNX 내보내기 (PyTorch → ONNX)
 
 ### 1.1 베이스라인 예제 모델
 ```python
@@ -113,7 +113,7 @@ onnx.save(m, "smallcnn_dynamic_shaped.onnx")
 
 ---
 
-## 2) TensorRT 개론: 빌더–엔진–컨텍스트
+## 2. TensorRT 개론: 빌더–엔진–컨텍스트
 
 ### 2.1 핵심 객체
 - **Network**: 연산 그래프(ONNX를 파싱하여 구성)
@@ -255,7 +255,7 @@ print(y.shape)  # (8, 10)
 
 ---
 
-## 3) TorchScript 개념: `script` vs `trace`
+## 3. TorchScript 개념: `script` vs `trace`
 
 ### 3.1 TorchScript 란?
 - **PyTorch 모델을 Python 런타임 없이 실행**하기 위해, **연산 그래프**와 **런타임**(Libtorch)을 담은 중간 표현.  
@@ -336,31 +336,31 @@ int main() {
 
 ---
 
-## 4) 엔드-투-엔드 미니 프로젝트
+## 4. 엔드-투-엔드 미니 프로젝트
 
 ### 4.1 분류 모델: PyTorch → ONNX → ONNXRuntime → TensorRT
 ```python
-# 0) 학습된 모델 로드 & eval
+# 0. 학습된 모델 로드 & eval
 model = SmallCNN(); model.load_state_dict(torch.load("smallcnn_fp32.pth")); model.eval()
 
-# 1) ONNX export (동적 axes)
+# 1. ONNX export (동적 axes)
 dummy = torch.randn(1,3,224,224)
 torch.onnx.export(model, dummy, "smallcnn.onnx",
     input_names=["input"], output_names=["logits"],
     dynamic_axes={"input":{0:"batch",2:"h",3:"w"}, "logits":{0:"batch"}},
     opset_version=17, do_constant_folding=True)
 
-# 2) ORT 검증
+# 2. ORT 검증
 import onnxruntime as ort, numpy as np
 sess = ort.InferenceSession("smallcnn.onnx", providers=["CPUExecutionProvider"])
 x = np.random.randn(4,3,224,224).astype(np.float32)
 pred = sess.run(["logits"], {"input": x})[0]
 
-# 3) TRT 엔진 빌드 (trtexec or Python API)
+# 3. TRT 엔진 빌드 (trtexec or Python API)
 #    trtexec --onnx=smallcnn.onnx --saveEngine=smallcnn_fp16.plan --fp16 \
 #            --minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:16x3x384x384
 
-# 4) TRT 추론 (2.6 코드 재사용)
+# 4. TRT 추론 (2.6 코드 재사용)
 y = infer_trt("smallcnn_fp16.plan", batch=8, h=224, w=224)
 ```
 
@@ -377,7 +377,7 @@ m_jit.save("smallcnn_script.pt")
 
 ---
 
-## 5) 운영 체크리스트
+## 5. 운영 체크리스트
 
 ### 5.1 ONNX Export 체크
 - [ ] `model.eval()`(BN/Dropout 고정)  
@@ -401,7 +401,7 @@ m_jit.save("smallcnn_script.pt")
 
 ---
 
-## 6) 자주 묻는 질문 (FAQ)
+## 6. 자주 묻는 질문 (FAQ)
 
 **Q1. ONNX로 안 나가는 연산이 있어요.**  
 A. 같은 기능의 **대체 연산 조합**으로 바꾸거나, **TorchScript 경로**를 고려하세요. ONNX opset을 한두 버전 조정해도 풀릴 때가 있습니다.
@@ -420,7 +420,7 @@ A. **QAT**(학습 시 FakeQuant) 경로가 가장 안전합니다. PTQ면 **대�
 
 ---
 
-## 7) 덤: 실전 성능 측정 스니펫
+## 7. 덤: 실전 성능 측정 스니펫
 
 ### 7.1 ONNXRuntime(배치별) 시간
 ```python

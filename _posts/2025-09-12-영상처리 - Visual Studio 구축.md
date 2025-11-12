@@ -12,12 +12,12 @@ category: 영상처리
 
 ### A. Windows 프로그래밍과 Visual C++
 
-#### 1) 왜 Visual C++인가?
+#### 1. 왜 Visual C++인가?
 - **Win32 API / GDI / Direct2D / Direct3D / WIC / Media Foundation / MFC** 등 **네이티브 Windows** 스택을 **가장 잘 지원**합니다.
 - **디버거/프로파일러/리소스 편집기**(아이콘·비트맵·다이얼로그·문자열·가속기 등)와 **MSBuild/Clang-CL/CMake** 등 **도구 통합**이 탁월합니다.
 - 영상처리 실습에서 필요한 **DIB/StretchDIBits**, **BITMAPINFO**, **메모리 정렬/stride**, **고해상도 타이머(QueryPerformanceCounter)** 등을 빠르게 검증하기 좋습니다.
 
-#### 2) 프로젝트 유형 비교(요약)
+#### 2. 프로젝트 유형 비교(요약)
 - **Win32 API (순수 C/C++)**: 가장 가벼움. 소스가 적고, 창/메시지 루프/그리기를 직접 제어.
 - **MFC (C++)**: 문서/뷰, 프레임워크 이벤트 모델, 리소스 UI 디자이너. **대규모 Win 데스크톱**에 적합.
 - **CMake 프로젝트**: 크로스 플랫폼 지향. VS가 CMakeLists.txt를 인식해 빌드/디버깅 지원.
@@ -29,12 +29,12 @@ category: 영상처리
 
 > **권장 대상**: Visual Studio 2022 Community (무료, 개인/교육/소규모 팀). 이후 **Enterprise**와 기능 차이는 있지만, 본 장 실습에는 충분합니다.
 
-#### 1) 설치 준비
+#### 1. 설치 준비
 - **권장 OS**: Windows 10/11 (x64).  
 - **디스크 공간**: MFC/ATL, SDK, C++ 툴체인 포함 시 **10~20GB+** 여유 권장.
 - **관리자 권한**: 설치/업데이트 시 필요할 수 있음.
 
-#### 2) 설치 절차(요약)
+#### 2. 설치 절차(요약)
 1. **Visual Studio Installer** 실행 → *Install* 선택.  
 2. **Workloads(작업 부하)** 탭에서 다음 체크:
    - **Desktop development with C++** ✅  
@@ -53,7 +53,7 @@ category: 영상처리
 > 🔎 **MFC 마법사가 보이지 않으면?**  
 > “**C++ MFC for latest v14x build tools**”가 **체크**되어 있는지 확인 → 설치 후 VS 재시작.
 
-#### 3) 설치 팁
+#### 3. 설치 팁
 - **vsconfig 내보내기**: 설치 구성을 `파일 → 계정 설정 → 설치 구성 내보내기`로 저장(팀 공유/재설치 편의).
 - **오프라인 설치**: 네트워크 제한 환경에서는 layout 옵션으로 오프라인 캐시 생성 가능.
 - **성능 팁**: SSD 설치, 백신 실시간 검사 예외 폴더(신중), RAM 16GB+ 권장.
@@ -62,7 +62,7 @@ category: 영상처리
 
 ### C. Visual Studio 첫 실행 — 필수 설정
 
-#### 1) 도구 → 옵션(Options)
+#### 1. 도구 → 옵션(Options)
 - **환경 → 문서**: 자동 다시 로드, 파일 변경 감지 옵션 활성화.  
 - **텍스트 편집기 → C/C++ → 서식**: **clang-format** 사용 시 *Use .clang-format* 체크.  
 - **프로젝트 및 솔루션 → VC++ 디렉터리**: 3rd-party 라이브러리 경로(예: `C:\dev\include`, `C:\dev\lib`) 사전 준비.  
@@ -72,7 +72,7 @@ category: 영상처리
   - *Symbol* 캐시 경로 지정(빠른 PDB 로드)
 - **IntelliSense**: 최대 동시 프로세스, 인덱싱 설정 점검.
 
-#### 2) 개발자 명령 프롬프트
+#### 2. 개발자 명령 프롬프트
 - 시작 메뉴 → **x64 Native Tools Command Prompt for VS**  
   - `cl`, `link`, `dumpbin`, `editbin`, `mt`, `rc`, `msbuild` 등 사용 가능.
 - **MSBuild**:  
@@ -80,7 +80,7 @@ category: 영상처리
   msbuild MyApp.sln /m /p:Configuration=Release;Platform=x64
   ```
 
-#### 3) Git & 코드 규칙
+#### 3. Git & 코드 규칙
 - **Git 통합**: VS 상단 *Git* 메뉴 → Clone/Create → `.gitignore(VisualStudio)`  
 - **.editorconfig / .clang-format**: 팀 규칙 고정(탭/스페이스, 줄바꿈, 랩핑, include 순서 등)
 
@@ -96,7 +96,7 @@ category: 영상처리
 
 ### A. 새 프로젝트 만들기
 
-#### 1) Win32 API 빈 프로젝트(“Windows 데스크톱 애플리케이션”) 생성
+#### 1. Win32 API 빈 프로젝트(“Windows 데스크톱 애플리케이션”) 생성
 1. **파일 → 새로 만들기 → 프로젝트**  
 2. 템플릿 검색: “*Windows Desktop Application*” 또는 “*Win32 Project*”  
    - 최신 VS에서는 **“Windows Desktop Application (C++)”** 템플릿 사용  
@@ -104,7 +104,7 @@ category: 영상처리
 4. **솔루션**: 새 솔루션(체크박스) → 위치 지정  
 5. **Create** 클릭 → 옵션에서 **Empty project** 선택(불필요 파일 없는 상태)
 
-#### 2) MFC 프로젝트 생성
+#### 2. MFC 프로젝트 생성
 1. **파일 → 새로 만들기 → 프로젝트**  
 2. 템플릿: **MFC App** 또는 **MFC Application** (보이지 않으면 MFC 컴포넌트 설치 필수)  
 3. **프로젝트 이름**: `FirstMFCApp`  
@@ -116,29 +116,29 @@ category: 영상처리
 
 > 마법사는 다이얼로그 **여러 페이지**로 구성됩니다. 주요 체크 포인트를 정리합니다.
 
-#### 1) 애플리케이션 유형(Application Type)
+#### 1. 애플리케이션 유형(Application Type)
 - **장치 프레임워크**:  
   - **SDI**(Single Document Interface): 하나의 문서/뷰. 영상뷰 실습에 적합.  
   - **MDI**(Multiple Document Interface): 탭/다중 문서.  
   - **Dialog-based**: 대화상자 중심 UI(간단 툴/설정 위주 앱에 적합).
 - **문서/뷰 아키텍처**: **문서(데이터)** ↔ **뷰(렌더링/인터랙션)** ↔ **프레임(메뉴/툴바/상태바)**
 
-#### 2) Use of MFC
+#### 2. Use of MFC
 - **Use MFC in a Shared DLL**(권장): exe 크기 작고 시스템 공유 DLL 사용  
 - **Use MFC in a Static Library**: 배포 단순(외부 DLL 의존↓), exe가 커짐
 
-#### 3) 프로젝트 스타일 & 기능
+#### 3. 프로젝트 스타일 & 기능
 - **Visual Style and Colors**: Windows 10/11 UX와 조화되는 테마  
 - **Command Bar/Menu**: 리본/전통 메뉴/툴바 선택  
 - **Docking/Tabbed**: 도킹 패널, 탭 문서  
 - **Advanced Features**: OLE/Automation, ActiveX, Context Help, Restart Manager 등
 
-#### 4) 데이터/문서 기능
+#### 4. 데이터/문서 기능
 - **Document/View architecture support**: 체크 유지  
 - **File extension/Document string**: 나중에 파일 연동(더블클릭) 시 활용  
 - **Serialization**: 문서 저장/불러오기(CArchive) 필요 시 체크
 
-#### 5) 보안/네트워킹
+#### 5. 보안/네트워킹
 - **Security**: DEP/ASLR 기본 활성  
 - **Windows Sockets**: 네트워크 기능 필요 시 체크(실습에서는 불필요)
 
@@ -148,14 +148,14 @@ category: 영상처리
 
 ### C. Visual Studio 구조 — 솔루션/프로젝트/필터
 
-#### 1) 솔루션(.sln) & 프로젝트(.vcxproj)
+#### 1. 솔루션(.sln) & 프로젝트(.vcxproj)
 - **솔루션**: 여러 프로젝트 묶음(예: 앱 + 라이브러리 + 테스트)  
 - **프로젝트**: 빌드 단위(소스/헤더/리소스/설정 포함)
 
-#### 2) 필터(.vcxproj.filters)
+#### 2. 필터(.vcxproj.filters)
 - *가상 폴더* 개념(디스크 구조와 별개). `Source Files`, `Header Files`, `Resource Files` 등 정리용.
 
-#### 3) 리소스(.rc)와 res 폴더
+#### 3. 리소스(.rc)와 res 폴더
 - **리소스 편집기**로 아이콘, 비트맵, 커서, 대화상자, 문자열, 가속기 등을 시각 편집.  
 - 헤더(`resource.h`)에 심볼 ID가 정의됨(예: `IDR_MAINFRAME`).
 
@@ -166,28 +166,28 @@ category: 영상처리
 > **솔루션 탐색기 → 프로젝트 → 속성**에서 구성/플랫폼 별로 설정합니다.  
 > (상단 드롭다운: `Debug/Release`, `Win32/x64/ARM64/ARM64EC`)
 
-#### 1) 일반(General)
+#### 1. 일반(General)
 - **플랫폼 도구 집합**: 최신(v14x)  
 - **Windows SDK 버전**: 설치된 최신(예: 10.0.22621.x)
 
-#### 2) C/C++ → 언어/전처리기/최적화
+#### 2. C/C++ → 언어/전처리기/최적화
 - **C++ 표준**: `/std:c++17` 이상  
 - **경고 수준**: `/W4` 권장, 가능하면 **경고를 오류로** `/WX`  
 - **전처리기**: `_UNICODE`, `UNICODE` 사용(문자 집합은 “Use Unicode Character Set”)  
 - **SDL 체크**: `/sdl`(안전성)  
 - **전처컴파일 헤더(PCH)**: *사용* 권장(빌드 속도 개선)
 
-#### 3) 링커 → 시스템
+#### 3. 링커 → 시스템
 - **서브시스템**: `Windows (/SUBSYSTEM:WINDOWS)` (콘솔은 `CONSOLE`)  
 - **최적화**: LTO(/GL) + LTCG(/LTCG) 조합은 대규모 프로젝트에서 고려
 
-#### 4) 코드 생성
+#### 4. 코드 생성
 - **런타임 라이브러리**:  
   - Debug: `/MDd`(멀티스레드 DLL, 디버그)  
   - Release: `/MD`  
 - **Spectre 완화 라이브러리**: 보안 요구 시 선택
 
-#### 5) 고급
+#### 5. 고급
 - **/permissive-**: 표준 준수 엄격 모드  
 - **멀티프로세서 컴파일**: `/MP`
 
@@ -198,7 +198,7 @@ category: 영상처리
 > 목적: **영상 버퍼(2D 배열)**를 만들어 창에 **StretchDIBits**로 출력합니다.  
 > 포인트: **stride(패딩)**, **BITMAPINFO**, **WM_PAINT** 처리.
 
-#### 1) 소스 추가
+#### 1. 소스 추가
 - `FirstWin32DIB.cpp` 파일 생성 후 아래 코드 삽입:
 
 ```cpp
@@ -365,7 +365,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow) {
 > 마법사로 **SDI** 프로젝트를 생성한 뒤, **뷰 클래스**(`CYourProjectView`)의 `OnDraw` 또는 `OnPaint`에서 DIB 출력 패턴을 적용합니다.  
 > 여기서는 **뷰의 OnDraw**에서 24-bit BGR 버퍼를 그리는 간단 예를 보입니다.
 
-#### 1) 마법사로 프로젝트 생성
+#### 1. 마법사로 프로젝트 생성
 - `FirstMFCApp` → **SDI**, **Use MFC in a Shared DLL**, 기본 메뉴/툴바/상태바 유지 → Finish.
 
 생성 후 주요 파일:
@@ -375,7 +375,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow) {
 - `FirstMFCAppView.cpp / .h` — 뷰 클래스(그리기 구현 위치)  
 - `resource.h`, `FirstMFCApp.rc`, `res\*` — 리소스
 
-#### 2) 뷰에 렌더링 코드 추가
+#### 2. 뷰에 렌더링 코드 추가
 - `FirstMFCAppView.h`에 **이미지 버퍼** 멤버 추가:
 
 ```cpp
@@ -517,25 +517,25 @@ void CFirstMFCAppView::OnDraw(CDC* pDC)
 
 ### H. 프로그램 빌드 및 실행 — 체크리스트
 
-#### 1) 구성/플랫폼
+#### 1. 구성/플랫폼
 - `Debug/Release`, `x86/x64/ARM64/ARM64EC`를 **명확히 인지**  
 - 영상처리 실습은 보통 **x64**를 권장(큰 버퍼/성능)
 
-#### 2) 전처컴파일 헤더(PCH)
+#### 2. 전처컴파일 헤더(PCH)
 - **헤더 포함 순서**가 꼬이면 컴파일 오류가 나기 쉬움.  
 - MFC 템플릿의 `pch.h`/`pch.cpp` 관례 준수.
 
-#### 3) 링크 오류 대처
+#### 3. 링크 오류 대처
 - **unresolved external symbol**: 라이브러리 누락/정의 불일치  
 - **mfcXXXu.lib**: MFC 정적/공유 설정(**Use of MFC**)이 현재 구성과 맞는지 확인  
 - **/MD vs /MT** 혼합 주의
 
-#### 4) 디버깅
+#### 4. 디버깅
 - **중단점(F9)**, **단계 실행(F10/F11)**  
 - **Watch/Memory**로 버퍼 확인(예: `m_bgr[0]`, `m_bgr[1]` …)  
 - **natvis**로 사용자 정의 타입 시각화 가능
 
-#### 5) MSBuild/CI
+#### 5. MSBuild/CI
 - 명령줄 빌드:
   ```bat
   msbuild FirstWin32DIB.sln /m /p:Configuration=Release;Platform=x64

@@ -6,7 +6,7 @@ category: AWS
 ---
 # Amazon EventBridge
 
-## 0) 큰 그림 — 왜 EventBridge인가?
+## 0. 큰 그림 — 왜 EventBridge인가?
 
 - **디커플링**: 프로듀서와 컨슈머를 시간·공간·규모 면에서 분리  
 - **서버리스 확장성**: 운영 부담 없이 대량 이벤트 라우팅  
@@ -16,7 +16,7 @@ category: AWS
 
 ---
 
-## 1) 핵심 개념 정리(확장)
+## 1. 핵심 개념 정리(확장)
 
 ### 1.1 이벤트(Event)
 
@@ -73,7 +73,7 @@ category: AWS
 
 ---
 
-## 2) 아키텍처 패턴
+## 2. 아키텍처 패턴
 
 ### 2.1 도메인 내 라우팅(Internal Pub/Sub)
 
@@ -104,7 +104,7 @@ category: AWS
 
 ---
 
-## 3) 리트라이·DLQ·백오프·샘플링
+## 3. 리트라이·DLQ·백오프·샘플링
 
 ### 3.1 기본 리트라이
 
@@ -128,7 +128,7 @@ category: AWS
 
 ---
 
-## 4) 스키마 레지스트리와 코드 생성
+## 4. 스키마 레지스트리와 코드 생성
 
 - 스키마는 **문서/검증/코드생성**의 근거. 이벤트 버전업 시 **하위호환성** 유지 원칙  
 - **Schema Discovery** ON → 자동 학습(트래픽 기반) → `aws schemas` CLI 조회  
@@ -146,7 +146,7 @@ aws schemas export-schema \
 
 ---
 
-## 5) 보안: 버스 정책·IAM·대상 권한
+## 5. 보안: 버스 정책·IAM·대상 권한
 
 ### 5.1 버스 정책(Resource Policy)
 
@@ -173,7 +173,7 @@ aws schemas export-schema \
 
 ---
 
-## 6) 운영: 관측/아카이브/리플레이/추적
+## 6. 운영: 관측/아카이브/리플레이/추적
 
 ### 6.1 메트릭 & 로그
 
@@ -189,7 +189,7 @@ aws schemas export-schema \
 
 ---
 
-## 7) 비용 모델 이해와 절감 팁
+## 7. 비용 모델 이해와 절감 팁
 
 - **이벤트 수신(퍼블리시)** 기준 과금(프리 티어 월 100,000건)  
 - **아카이브/리플레이**: 저장 용량·재생량 과금  
@@ -200,7 +200,7 @@ aws schemas export-schema \
 
 ---
 
-## 8) 실전 시나리오
+## 8. 실전 시나리오
 
 ### 8.1 “주문 생성 → 결제/포인트/이메일” 파이프라인
 
@@ -212,10 +212,10 @@ aws schemas export-schema \
 #### 8.1.1 CLI: 버스/규칙/타겟
 
 ```bash
-# 1) 커스텀 이벤트 버스 생성
+# 1. 커스텀 이벤트 버스 생성
 aws events create-event-bus --name orders
 
-# 2) 규칙(고가 주문 → 결제)
+# 2. 규칙(고가 주문 → 결제)
 aws events put-rule \
   --name OrderHighValue \
   --event-bus-name orders \
@@ -225,7 +225,7 @@ aws events put-rule \
     "detail": { "amount": [{ "numeric": [">=", 100000] }] }
   }'
 
-# 3) 대상(결제 Lambda)
+# 3. 대상(결제 Lambda)
 aws events put-targets \
   --event-bus-name orders \
   --rule OrderHighValue \
@@ -323,7 +323,7 @@ aws pipes create-pipe \
 
 ---
 
-## 9) Input Transformer/Path/Template
+## 9. Input Transformer/Path/Template
 
 - **InputPath**: JSONPath로 일부만 전달  
 - **InputTransformer**: 명시적 맵핑 + 템플릿(문자열)로 **형상 고정**
@@ -337,7 +337,7 @@ aws pipes create-pipe \
 
 ---
 
-## 10) Terraform/SAM으로 표준 스택 템플릿화
+## 10. Terraform/SAM으로 표준 스택 템플릿화
 
 ### 10.1 Terraform
 
@@ -418,7 +418,7 @@ Resources:
 
 ---
 
-## 11) 트러블슈팅 체크리스트
+## 11. 트러블슈팅 체크리스트
 
 - [ ] **이벤트가 규칙에 매칭되지 않음** → Event Pattern(JSONPath/타입/대소문자) 확인  
 - [ ] **대상 호출 권한 실패** → 대상 실행 역할 신뢰주체 `events.amazonaws.com` 확인  
@@ -429,7 +429,7 @@ Resources:
 
 ---
 
-## 12) 관측/분석(CloudWatch Logs Insights 예)
+## 12. 관측/분석(CloudWatch Logs Insights 예)
 
 **대상 실패 로그 상위 에러메시지 Top-N**
 
@@ -452,7 +452,7 @@ fields @timestamp, latencyMs, target
 
 ---
 
-## 13) 도메인 버스 분할과 버전 전략
+## 13. 도메인 버스 분할과 버전 전략
 
 - **버스 분할**: `orders`, `payments`, `users` … 바운디드 컨텍스트별  
 - **이벤트 버전**: `detail-type: OrderCreated.v2` 또는 `detail.schemaVersion = "2"`  
@@ -460,7 +460,7 @@ fields @timestamp, latencyMs, target
 
 ---
 
-## 14) 보안·거버넌스 베스트 프랙티스
+## 14. 보안·거버넌스 베스트 프랙티스
 
 - **Least Privilege**: PutEvents/PutTargets 최소 권한  
 - **버스 정책에 조직 단위 허용**(AWS Organizations) → 계정 확장 편의  
@@ -470,7 +470,7 @@ fields @timestamp, latencyMs, target
 
 ---
 
-## 15) 성능·지연·정확성 고려
+## 15. 성능·지연·정확성 고려
 
 - EventBridge는 **최소-1회 전달(at-least-once)** → **아이템포턴시 키**로 **중복 처리**  
 - 순서 보장은 기본적으로 없음(필요 시 **FIFO SQS** → Pipes → 대상)  
@@ -479,7 +479,7 @@ fields @timestamp, latencyMs, target
 
 ---
 
-## 16) 엔드투엔드 예제 — 주문 시스템(요약 코드)
+## 16. 엔드투엔드 예제 — 주문 시스템(요약 코드)
 
 ### 16.1 프로듀서(Node.js)
 
@@ -528,7 +528,7 @@ aws events start-replay \
 
 ---
 
-## 17) 요약 체크리스트
+## 17. 요약 체크리스트
 
 - [ ] **커스텀 버스**로 도메인 분리, 규칙은 **도메인 용어**로  
 - [ ] **Event Pattern**으로 **필터링·분기**를 먼저, 변환은 최소화  

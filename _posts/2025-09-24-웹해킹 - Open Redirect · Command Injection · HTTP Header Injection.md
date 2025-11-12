@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # Open Redirect · Command Injection · HTTP Header Injection
 
-## 0) 큰 그림 요약
+## 0. 큰 그림 요약
 
 - **Open Redirect**: 공격자가 사용자를 **신뢰 도메인 → 악성 도메인**으로 자동 이동시키도록 만드는 취약점. 피싱·세션 탈취 유도·OAuth 토큰 탈취·SSRF 체인 등에 쓰임.  
 - **Command Injection**: 애플리케이션이 **OS 명령**을 구성할 때 사용자 입력이 명령의 일부가 되어 **임의 명령 실행**으로 이어지는 취약점. 파일 처리기/이미지 변환기/백업 스크립트 등에서 빈번.  
@@ -16,7 +16,7 @@ category: 웹해킹
 
 ---
 
-# 1) Open Redirect
+# 1. Open Redirect
 
 ### 1.1 개념과 위협
 - **정의**: 서버가 `?next=...` 같은 **사용자 제공 URL**을 검증 없이 `302 Location` 등으로 리디렉트.  
@@ -143,7 +143,7 @@ public String go(@RequestParam(required=false) String next){
 
 ---
 
-# 2) Command Injection
+# 2. Command Injection
 
 ### 2.1 개념과 위협
 - **정의**: 애플리케이션이 `tar`, `convert`, `ffmpeg`, `grep` 같은 **시스템 명령**을 **문자열로 조립**할 때 사용자 입력이 **옵션/연산자/쉘 메타문자**로 해석되어 **임의 명령 실행**으로 이어짐.  
@@ -270,7 +270,7 @@ Process p = pb.start(); // 쉘 미사용
 
 ---
 
-# 3) HTTP Header Injection (CRLF / Response Splitting / Host Header)
+# 3. HTTP Header Injection (CRLF / Response Splitting / Host Header)
 
 ### 3.1 개념과 위협
 - **정의**: HTTP 응답 헤더에 사용자 입력이 들어가 `\r\n`(CRLF) 삽입 → **새 헤더** 또는 **두 번째 응답** 주입(**응답 스플리팅**).  
@@ -378,7 +378,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 4) 공통 “안전 설계” 패턴
+# 4. 공통 “안전 설계” 패턴
 
 ### 4.1 입력 처리 3원칙
 1) **화이트리스트**: 예상되는 값만 통과(도메인/경로/파일명/숫자 범위 등).  
@@ -393,7 +393,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 5) 프레임워크별 힌트(요약)
+# 5. 프레임워크별 힌트(요약)
 
 - **Express/Node**:  
   - `res.redirect()` 목적지는 반드시 **상대 경로 또는 화이트리스트 도메인**만 허용.  
@@ -417,7 +417,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 6) “스모크 테스트” 예시(개발/QA 전용)
+# 6. “스모크 테스트” 예시(개발/QA 전용)
 
 ### 6.1 Open Redirect
 - 입력:  
@@ -438,7 +438,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 7) “실전 시나리오” — 세 공격이 이어지는 체인
+# 7. “실전 시나리오” — 세 공격이 이어지는 체인
 
 1) 공격자는 **오픈 리다이렉트**를 이용해 합법 도메인 링크를 클릭한 사용자들을 **피싱 페이지**로 유도.  
 2) 피싱 페이지에서 쿠키/OTP를 가로채거나, 브라우저를 대상 앱의 **취약 업로드/변환 엔드포인트**로 몰아 **Command Injection**을 트리거.  
@@ -447,7 +447,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 8) 보안 점검 체크리스트(요약)
+# 8. 보안 점검 체크리스트(요약)
 
 - **Open Redirect**  
   - [ ] 리디렉트 목적지 입력 **금지** 또는 **화이트리스트**  
@@ -472,7 +472,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 9) 부록 — 미니 유틸/스니펫 모음
+# 9. 부록 — 미니 유틸/스니펫 모음
 
 ### 9.1 “상대 경로만” 허용 유틸 (Node)
 ```javascript

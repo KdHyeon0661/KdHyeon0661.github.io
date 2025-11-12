@@ -340,7 +340,7 @@ def build_decoder_mask(input_ids, pad_id=None):
 import torch, torch.nn as nn, torch.nn.functional as F
 torch.manual_seed(0)
 
-# 1) Toy vocab & 데이터
+# 1. Toy vocab & 데이터
 chars = list("0123456789+-= ")
 stoi = {ch:i for i,ch in enumerate(chars)}
 itos = {i:ch for ch,i in stoi.items()}
@@ -363,11 +363,11 @@ def make_batch(B=64, T=32):
         X[b] = encode(s)
     return X
 
-# 2) 모델
+# 2. 모델
 model = GPTMini(vocab_size=V, d_model=192, nlayer=4, nhead=6, d_ff=768, max_len=128, p_drop=0.1, learned_pos=True)
 opt = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.05)
 
-# 3) 학습 루프 (LM: shift target)
+# 3. 학습 루프 (LM: shift target)
 for step in range(200):
     xb = make_batch(B=64, T=64)
     # LM target: 다음 토큰

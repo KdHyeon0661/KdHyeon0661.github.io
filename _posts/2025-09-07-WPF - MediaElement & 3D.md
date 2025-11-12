@@ -22,7 +22,7 @@ category: WPF
 
 ---
 
-## 0) 한눈에 보는 미디어/3D 구성요소
+## 0. 한눈에 보는 미디어/3D 구성요소
 
 | 영역 | 클래스 | 용도 | 특징 |
 |---|---|---|---|
@@ -37,7 +37,7 @@ category: WPF
 
 ---
 
-# 1) MediaElement 완전 정복
+# 1. MediaElement 완전 정복
 
 ## 1.1 가장 단순한 재생
 ```xml
@@ -247,7 +247,7 @@ public MainWindow()
 
 ---
 
-# 2) WPF 3D(Viewport3D) 완전 정복
+# 2. WPF 3D(Viewport3D) 완전 정복
 
 ## 2.1 최소 구성 예: 카메라 + 조명 + 메시
 ```xml
@@ -561,7 +561,7 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 
 ---
 
-# 3) Media & 3D **통합 사례** — “3D TV 벽 + 컨트롤 오버레이”
+# 3. Media & 3D **통합 사례** — “3D TV 벽 + 컨트롤 오버레이”
 
 **요구**  
 - 뒤쪽 3D 벽에는 **여러 TV 패널**에 서로 다른 동영상 재생  
@@ -652,7 +652,7 @@ private void ResetHighlight(GeometryModel3D m)
 
 ---
 
-# 4) 자주 묻는 질문(FAQ)
+# 4. 자주 묻는 질문(FAQ)
 
 ### Q1. MediaElement로 **H.265/HEVC**가 재생이 안 돼요.  
 A. OS/코덱 지원 범위를 따릅니다. Windows에 해당 코덱이 없으면 실패합니다. 일반적으로 **H.264(AAC)** 컨테이너(MP4)가 호환성이 높습니다.
@@ -668,7 +668,7 @@ A. (1) 애니메이션/모델 수 줄이기 (2) 텍스처/브러시 Freeze/공�
 
 ---
 
-# 5) 체크리스트(현업용 요약)
+# 5. 체크리스트(현업용 요약)
 
 - **MediaElement**
   - [ ] `LoadedBehavior="Manual"` + Play/Pause/Stop 제어
@@ -687,7 +687,7 @@ A. (1) 애니메이션/모델 수 줄이기 (2) 텍스처/브러시 Freeze/공�
 
 ---
 
-## 6) 마무리
+## 6. 마무리
 
 이 문서는 WPF에서 **미디어 재생**과 **3D 렌더링**을 안정적으로 구축하는 **실전 가이드**입니다.  
 여기 있는 스니펫만 조합해도 **비디오 플레이어**, **3D 대시보드/갤러리**, **미디어 파사드** 등 다양한 UI를 빠르게 만들 수 있습니다.

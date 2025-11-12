@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core Web API 특성(Attribute)
 
-## 1) [ApiController] — 자동 바인딩/검증/오류 응답
+## 1. [ApiController] — 자동 바인딩/검증/오류 응답
 
 ### 1.1 핵심 효과
 
@@ -50,7 +50,7 @@ builder.Services.AddControllers()
 
 ---
 
-## 2) HTTP 메서드 특성 — 액션 선택
+## 2. HTTP 메서드 특성 — 액션 선택
 
 ```csharp
 [HttpGet]                     // GET /api/products
@@ -68,7 +68,7 @@ builder.Services.AddControllers()
 
 ---
 
-## 3) [Route] / [Http…("template")] — 특성 라우팅
+## 3. [Route] / [Http…("template")] — 특성 라우팅
 
 ### 3.1 컨트롤러·액션 템플릿
 
@@ -121,7 +121,7 @@ public IActionResult Create(OrderCreateDto dto)
 
 ---
 
-## 4) 바인딩 소스 특성 — 데이터가 ‘어디서 오는가’
+## 4. 바인딩 소스 특성 — 데이터가 ‘어디서 오는가’
 
 ### 4.1 기본 규칙([ApiController] 활성 시)
 
@@ -197,7 +197,7 @@ public IActionResult Update(
 
 ---
 
-## 5) 모델 검증 — 자동/수동 제어
+## 5. 모델 검증 — 자동/수동 제어
 
 ### 5.1 Data Annotations
 
@@ -240,7 +240,7 @@ public IActionResult Create(ProductCreateDto dto)
 
 ---
 
-## 6) 컨텐츠 협상/미디어 타입 — [Produces]/[Consumes]/[ProducesResponseType]
+## 6. 컨텐츠 협상/미디어 타입 — [Produces]/[Consumes]/[ProducesResponseType]
 
 ### 6.1 응답 포맷 명시
 
@@ -280,7 +280,7 @@ public IActionResult Get(int id) => Ok(...);
 
 ---
 
-## 7) 결과 형식·상태코드 — CreatedAt*, ProblemDetails
+## 7. 결과 형식·상태코드 — CreatedAt*, ProblemDetails
 
 ### 7.1 리소스 생성 패턴
 
@@ -309,7 +309,7 @@ if (conflict)
 
 ---
 
-## 8) 파일 업로드·요청 한도
+## 8. 파일 업로드·요청 한도
 
 ### 8.1 단일/다중 파일 업로드
 
@@ -351,7 +351,7 @@ public IActionResult UploadLarge([FromForm] IFormFile file) => Ok();
 
 ---
 
-## 9) 보안·권한·캐싱
+## 9. 보안·권한·캐싱
 
 ### 9.1 인증/인가
 
@@ -380,7 +380,7 @@ public IActionResult List() => Ok(_svc.List());
 
 ---
 
-## 10) API 탐색/Swagger — [ApiExplorerSettings]
+## 10. API 탐색/Swagger — [ApiExplorerSettings]
 
 ```csharp
 [ApiExplorerSettings(IgnoreApi = true)] // Swagger/ApiExplorer에서 숨김
@@ -396,7 +396,7 @@ public class V1ProductsController : ControllerBase { ... }
 
 ---
 
-## 11) 버전 관리 — [ApiVersion]/[MapToApiVersion]
+## 11. 버전 관리 — [ApiVersion]/[MapToApiVersion]
 
 > `Microsoft.AspNetCore.Mvc.Versioning` 패키지 필요.
 
@@ -434,7 +434,7 @@ public class ProductsController : ControllerBase
 
 ---
 
-## 12) 액션/컨트롤러 제어 — [NonAction], [ActionName]
+## 12. 액션/컨트롤러 제어 — [NonAction], [ActionName]
 
 ```csharp
 [NonAction]
@@ -447,7 +447,7 @@ public IActionResult CreateAlias([FromBody] OrderCreateDto dto) => ...
 
 ---
 
-## 13) 고급 라우팅 — 링크 생성/영역/네임드 경로
+## 13. 고급 라우팅 — 링크 생성/영역/네임드 경로
 
 ### 13.1 링크 생성
 
@@ -465,7 +465,7 @@ public class UsersController : ControllerBase { ... }
 
 ---
 
-## 14) 커스텀 모델 바인더/필터
+## 14. 커스텀 모델 바인더/필터
 
 ### 14.1 모델 바인더
 
@@ -518,7 +518,7 @@ builder.Services.AddControllers(o => o.Filters.Add<CorrelationIdFilter>());
 
 ---
 
-## 15) 자주 겪는 함정과 체크리스트
+## 15. 자주 겪는 함정과 체크리스트
 
 | 증상 | 원인 | 해결 |
 |---|---|---|

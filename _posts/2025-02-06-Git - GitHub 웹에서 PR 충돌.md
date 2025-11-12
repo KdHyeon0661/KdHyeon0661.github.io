@@ -6,7 +6,7 @@ category: Git
 ---
 # GitHub 웹에서 **PR( Pull Request ) 충돌 해결**
 
-## 0) 기본 개념 정리(복습)
+## 0. 기본 개념 정리(복습)
 
 - **PR 충돌(merge conflict)**: PR의 **base(기준)** 브랜치와 **compare(비교)** 브랜치가 **같은 파일의 같은/겹치는 영역**을 서로 다르게 수정한 경우 자동 병합이 불가능한 상태.
 - GitHub는 PR 상단에 다음과 같은 경고를 표시합니다:
@@ -19,7 +19,7 @@ This branch has conflicts that must be resolved
 
 ---
 
-## 1) 권한과 정책(중요)
+## 1. 권한과 정책(중요)
 
 웹에서 충돌을 해결하려면 다음 중 하나가 필요합니다.
 
@@ -38,7 +38,7 @@ This branch has conflicts that must be resolved
 
 ---
 
-## 2) GitHub 웹에서 충돌 해결 — 단계별 절차(확장)
+## 2. GitHub 웹에서 충돌 해결 — 단계별 절차(확장)
 
 ### Step 1. PR 페이지 접속
 - 저장소 → **Pull requests** 탭 → 충돌 표시된 PR 클릭.
@@ -96,7 +96,7 @@ HTML 예시:
 
 ---
 
-## 3) 웹 편집기의 **한계**와 대안
+## 3. 웹 편집기의 **한계**와 대안
 
 웹으로 바로 해결하기 곤란한 상황:
 
@@ -110,26 +110,26 @@ HTML 예시:
 
 ---
 
-## 4) 로컬에서 충돌 해결 후 푸시(대안 절차 강화)
+## 4. 로컬에서 충돌 해결 후 푸시(대안 절차 강화)
 
 ### 4.1 merge-기반 업데이트(가장 단순)
 
 ```bash
-# 1) 기준 브랜치 업데이트
+# 1. 기준 브랜치 업데이트
 git checkout main
 git pull origin main
 
-# 2) PR 브랜치로 전환
+# 2. PR 브랜치로 전환
 git checkout feature/header-update
 
-# 3) 기준 브랜치를 merge하여 충돌 확인
+# 3. 기준 브랜치를 merge하여 충돌 확인
 git merge main
 
-# 4) 충돌 파일 수정 → 마커 삭제
+# 4. 충돌 파일 수정 → 마커 삭제
 git add <수정파일들>
 git commit
 
-# 5) PR 브랜치로 푸시
+# 5. PR 브랜치로 푸시
 git push
 ```
 
@@ -173,7 +173,7 @@ git config --global rerere.enabled true
 
 ---
 
-## 5) 다양한 충돌 유형 예시와 해결 전략
+## 5. 다양한 충돌 유형 예시와 해결 전략
 
 ### 5.1 내용(content) 충돌
 - 동일 파일 동일/겹치는 줄 충돌
@@ -202,7 +202,7 @@ git config --global rerere.enabled true
 
 ---
 
-## 6) 조직/팀 설정과 “Update branch”
+## 6. 조직/팀 설정과 “Update branch”
 
 - **Update branch** 버튼은 GitHub가 **자동으로 base를 compare에 merge**하여 업데이트하는 기능입니다(merge commit 생성).  
 - 저장소/조직 정책(Linear history, Required status checks)에 따라:
@@ -212,35 +212,35 @@ git config --global rerere.enabled true
 
 ---
 
-## 7) 완전 재현 가능한 **로컬 시뮬레이션**(학습용)
+## 7. 완전 재현 가능한 **로컬 시뮬레이션**(학습용)
 
 아래 스크립트는 로컬에서 “PR 충돌” 상황을 **모사**하고, 웹/로컬 해결 과정을 **연습**하기 위한 것입니다(실제 GitHub PR은 gh나 웹으로 생성).
 
 ```bash
-# 0) 깨끗한 디렉터리
+# 0. 깨끗한 디렉터리
 rm -rf pr-conflict-lab && mkdir pr-conflict-lab && cd pr-conflict-lab
 git init
 git config user.name  "lab"
 git config user.email "lab@example.com"
 git branch -M main
 
-# 1) 초기 파일
+# 1. 초기 파일
 mkdir src
 echo '<h1>Welcome to Home Page</h1>' > src/header.html
 echo '<p>© 2025 MyCompany</p>'        > src/footer.html
 git add . && git commit -m "init: header/home, footer/company"
 
-# 2) feature 브랜치 생성 및 변경
+# 2. feature 브랜치 생성 및 변경
 git checkout -b feature/header-update
 echo '<h1>Welcome to Our Service</h1>' > src/header.html
 git commit -am "feat: service heading"
 
-# 3) main에서도 같은 라인을 바꿔 충돌 유발
+# 3. main에서도 같은 라인을 바꿔 충돌 유발
 git checkout main
 echo '<h1>Welcome to Home Page v2</h1>' > src/header.html
 git commit -am "feat: home v2"
 
-# 4) PR을 올렸다고 가정하고(웹에서), 이제 충돌을 해결해야 하는 상황
+# 4. PR을 올렸다고 가정하고(웹에서), 이제 충돌을 해결해야 하는 상황
 #    웹에서 Resolve conflicts(라인 통합)를 할 수도 있고,
 #    로컬에서 아래처럼 해결할 수도 있음.
 
@@ -270,7 +270,7 @@ git push --force-with-lease
 
 ---
 
-## 8) 트러블슈팅
+## 8. 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -283,7 +283,7 @@ git push --force-with-lease
 
 ---
 
-## 9) 체크리스트
+## 9. 체크리스트
 
 - [ ] 라인 충돌 해결 후 **마커**(`<<<<<<<`, `=======`, `>>>>>>>`)는 반드시 제거
 - [ ] **보호 브랜치 정책** 확인(필수 리뷰/체크/선형 이력/force-push 금지)
@@ -295,7 +295,7 @@ git push --force-with-lease
 
 ---
 
-## 10) 로컬 절차 요약(명령어 모음)
+## 10. 로컬 절차 요약(명령어 모음)
 
 ```bash
 # 기준 업데이트
@@ -331,7 +331,7 @@ git config --global rerere.enabled true
 
 ---
 
-## 11) 결론
+## 11. 결론
 
 - GitHub **웹 편집기**만으로도 단순 라인 충돌은 빠르게 해결할 수 있지만,  
   **리네임·바이너리·대량 충돌·보호 브랜치 정책**이 얽히면 **로컬에서 해결 후 푸시**가 안정적입니다.  

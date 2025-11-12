@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 데이터 준비
+## 0. 실습 데이터 준비
 
 ```sql
 -- 대용량 샘플 테이블
@@ -48,7 +48,7 @@ END;
 
 ---
 
-## 1) Fetch Call과 실행 단계의 관계(짧은 복습)
+## 1. Fetch Call과 실행 단계의 관계(짧은 복습)
 
 - **Parse**: 파싱/최적화/권한 → 보통 1회  
 - **Execute**: 실행계획 실행 시작 → 보통 1회  
@@ -69,7 +69,7 @@ $$
 
 ---
 
-## 2) 부분범위처리(PRP; Stopkey) 원리
+## 2. 부분범위처리(PRP; Stopkey) 원리
 
 ### 2.1 개념
 - “전체를 끝까지 읽고 **그중 일부만** 쓰는” 대신, **필요한 앞부분만** 읽고 **즉시 멈춘다**.  
@@ -120,7 +120,7 @@ FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 3) OLTP 환경에서 PRP가 성능을 끌어올리는 원리
+## 3. OLTP 환경에서 PRP가 성능을 끌어올리는 원리
 
 OLTP는 **짧은 쿼리**가 **매우 자주** 발생한다. PRP는 아래 효과를 합산해 **p95/최대 응답시간**을 낮춘다.
 
@@ -135,7 +135,7 @@ OLTP는 **짧은 쿼리**가 **매우 자주** 발생한다. PRP는 아래 효�
 
 ---
 
-## 4) ArraySize 조정에 의한 Fetch call 감소 및 (간접) I/O 효과
+## 4. ArraySize 조정에 의한 Fetch call 감소 및 (간접) I/O 효과
 
 ### 4.1 Fetch call 수 감소 공식
 $$
@@ -156,7 +156,7 @@ $$
 
 ---
 
-## 5) 언어별 Array Fetch 세팅과 예제
+## 5. 언어별 Array Fetch 세팅과 예제
 
 > **중요**: ArraySize는 “행 갯수”인 경우(JDBC, Python 등), “바이트”인 경우(ODP.NET `FetchSize`)가 있다.  
 > LOB/폭넓은 컬럼이 많으면 **메모리와 네트워크 프레임**을 고려하여 **중간값**을 찾자.
@@ -239,7 +239,7 @@ const result = await connection.execute(
 
 ---
 
-## 6) PRP를 위한 **SQL 패턴**과 인덱스 설계
+## 6. PRP를 위한 **SQL 패턴**과 인덱스 설계
 
 ### 6.1 TOP-N(최신 N) 리스트
 ```sql
@@ -282,7 +282,7 @@ FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 7) TKPROF/Trace로 **전/후** 확인하는 절차
+## 7. TKPROF/Trace로 **전/후** 확인하는 절차
 
 1) 세션에서 Trace ON
 ```sql
@@ -308,7 +308,7 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 
 ---
 
-## 8) (중요) 안티 패턴과 교정
+## 8. (중요) 안티 패턴과 교정
 
 | 안티 패턴 | 문제 | 교정 |
 |---|---|---|
@@ -321,7 +321,7 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 
 ---
 
-## 9) OLTP 튜닝 시나리오 3선
+## 9. OLTP 튜닝 시나리오 3선
 
 ### 9.1 주문 목록 첫 페이지 API
 - **Before**: `OFFSET 0 FETCH 50` + 정렬 인덱스 없음 → 평균 400ms  
@@ -340,7 +340,7 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 
 ---
 
-## 10) 프로그램 언어별 “Array 단위 Fetch” 활용 모음
+## 10. 프로그램 언어별 “Array 단위 Fetch” 활용 모음
 
 ### 10.1 JDBC
 ```java
@@ -374,7 +374,7 @@ const result = await connection.execute(SQL, binds, {
 
 ---
 
-## 11) 정량 지표(간이)
+## 11. 정량 지표(간이)
 
 - **Fetch 효율**
   $$
@@ -394,7 +394,7 @@ const result = await connection.execute(SQL, binds, {
 
 ---
 
-## 12) 종합 실습: “느린 목록”을 10배 빠르게
+## 12. 종합 실습: “느린 목록”을 10배 빠르게
 
 **문제**: 고객 포털에서 “주문 목록” 첫 페이지가 p95 1.1s  
 **원인**: `OFFSET/FETCH`, 정렬 인덱스 없음, fetchSize=50
@@ -412,7 +412,7 @@ const result = await connection.execute(SQL, binds, {
 
 ---
 
-## 13) 체크리스트
+## 13. 체크리스트
 
 - [ ] **PRP 가능**한가? (TOP-N/Keyset)  
 - [ ] **정렬/필터**가 **복합 인덱스**로 해결되는가? (DESC 포함)  

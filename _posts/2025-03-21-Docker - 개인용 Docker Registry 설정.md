@@ -183,16 +183,16 @@ environment:
 - Registry는 **참조되지 않는 blob**을 정리해야 용량 회수.
 - 안전한 절차:
 ```bash
-# 1) 푸시/삭제 중단(정지 권장)
+# 1. 푸시/삭제 중단(정지 권장)
 docker stop registry
 
-# 2) 오프라인 GC 실행
+# 2. 오프라인 GC 실행
 docker run --rm \
   -v $(pwd)/data:/var/lib/registry \
   -v $(pwd)/config.yml:/etc/docker/registry/config.yml \
   registry:2 garbage-collect /etc/docker/registry/config.yml --delete-untagged=true
 
-# 3) 재기동
+# 3. 재기동
 docker start registry
 ```
 - `config.yml`은 실제 실행과 동일해야 함(스토리지 설정 포함).

@@ -13,7 +13,7 @@ category: Docker
 
 ---
 
-## 0) 경량화의 목적과 한계
+## 0. 경량화의 목적과 한계
 
 ### 왜 줄여야 하나
 | 목적 | 이유 |
@@ -30,7 +30,7 @@ category: Docker
 
 ---
 
-## 1) 베이스 이미지 선택 전략 (비교)
+## 1. 베이스 이미지 선택 전략 (비교)
 
 | 분류 | 예시 | 장점 | 주의점 |
 |---|---|---|---|
@@ -47,11 +47,11 @@ category: Docker
 
 ---
 
-## 2) 멀티스테이지 빌드 기본 패턴
+## 2. 멀티스테이지 빌드 기본 패턴
 
 ### Python (alpine → alpine) — 컴파일러만 분리
 ```dockerfile
-# 1) 빌더: 네이티브 확장 빌드
+# 1. 빌더: 네이티브 확장 빌드
 FROM python:3.11-alpine AS builder
 RUN apk add --no-cache gcc musl-dev libffi-dev openssl-dev
 WORKDIR /w
@@ -59,7 +59,7 @@ COPY requirements.txt .
 # 빌드 산출물을 /install에 설치
 RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
 
-# 2) 런타임: 가벼운 환경
+# 2. 런타임: 가벼운 환경
 FROM python:3.11-alpine
 WORKDIR /app
 # 런타임에 필요한 파일만 복사
@@ -70,7 +70,7 @@ CMD ["python", "app.py"]
 
 ### Python (slim → distroless) — 호환성 + 초경량 런타임
 ```dockerfile
-# 1) 빌더 (glibc, 호환성↑)
+# 1. 빌더 (glibc, 호환성↑)
 FROM python:3.11-slim AS builder
 WORKDIR /w
 COPY requirements.txt .
@@ -78,7 +78,7 @@ RUN pip install --upgrade pip \
  && pip install --prefix=/install --no-cache-dir -r requirements.txt
 COPY . .
 
-# 2) 런타임 (distroless)
+# 2. 런타임 (distroless)
 FROM gcr.io/distroless/python3-debian12:nonroot
 WORKDIR /app
 COPY --from=builder /install /usr/local
@@ -94,7 +94,7 @@ CMD ["app.py"]
 
 ---
 
-## 3) 언어별 경량화 레시피
+## 3. 언어별 경량화 레시피
 
 ### 3.1 Python — musl 전용 wheel, 과학 패키지 주의
 - Alpine에서 **`musllinux` wheel**이 제공되는지 확인. 없는 경우 **컴파일** 필요.  
@@ -134,7 +134,7 @@ COPY --from=build /w/dist /usr/share/nginx/html
 
 ### 3.3 Go — `CGO_ENABLED=0` + `scratch`/`distroless`
 ```dockerfile
-# 1) 빌드
+# 1. 빌드
 FROM golang:1.23-alpine AS builder
 WORKDIR /src
 COPY . .
@@ -142,7 +142,7 @@ ENV CGO_ENABLED=0 GOOS=linux
 RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-s -w" -o app .
 
-# 2) 런타임(scratch) — 주의: CA, tzdata 직접 포함 필요
+# 2. 런타임(scratch) — 주의: CA, tzdata 직접 포함 필요
 FROM scratch
 WORKDIR /
 # CA 인증서만 최소 복사(알파인에서 꺼내오기)
@@ -157,7 +157,7 @@ ENTRYPOINT ["/app"]
 
 ### 3.4 Java — `jlink`로 사용자 정의 JRE
 ```dockerfile
-# 1) 빌더: jlink로 최소 JRE 생성 + 애플리케이션 빌드
+# 1. 빌더: jlink로 최소 JRE 생성 + 애플리케이션 빌드
 FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /w
 COPY . .
@@ -167,7 +167,7 @@ RUN $JAVA_HOME/bin/jlink \
     --strip-debug --no-man-pages --no-header-files \
     --compress=2 --output /opt/jre-min
 
-# 2) 런타임: 경량 JRE + fat-jar
+# 2. 런타임: 경량 JRE + fat-jar
 FROM debian:12-slim
 WORKDIR /app
 COPY --from=builder /opt/jre-min /opt/jre
@@ -180,14 +180,14 @@ ENTRYPOINT ["java","-jar","/app/app.jar"]
 
 ### 3.5 .NET — Publish Trim + Alpine/Distroless
 ```dockerfile
-# 1) 빌더
+# 1. 빌더
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /w
 COPY . .
 RUN dotnet publish -c Release -o /out \
     /p:PublishTrimmed=true /p:PublishSingleFile=true /p:TieredPGO=true
 
-# 2) 런타임(알파인 또는 distroless/dotnet)
+# 2. 런타임(알파인 또는 distroless/dotnet)
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine
 WORKDIR /app
 COPY --from=build /out .
@@ -198,7 +198,7 @@ ENTRYPOINT ["./MyApp"]
 
 ---
 
-## 4) 캐시·재현성·빌드비밀 — BuildKit 고급 기능
+## 4. 캐시·재현성·빌드비밀 — BuildKit 고급 기능
 
 ### 4.1 캐시 마운트로 속도↑
 ```dockerfile
@@ -226,7 +226,7 @@ RUN --mount=type=secret,id=pip_token \
 
 ---
 
-## 5) 이미지 내부 정리 — 레이어·파일 최소화
+## 5. 이미지 내부 정리 — 레이어·파일 최소화
 
 ### .dockerignore
 ```
@@ -261,7 +261,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 
 ---
 
-## 6) 검증·측정 — 실제로 얼마나 줄었나
+## 6. 검증·측정 — 실제로 얼마나 줄었나
 
 ### 이미지·히스토리 확인
 {% raw %}
@@ -295,7 +295,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 
 ---
 
-## 7) 보안: 취약점 스캔·SBOM·서명
+## 7. 보안: 취약점 스캔·SBOM·서명
 
 ### 취약점 스캔
 - CI 단계에서 Trivy/Grype로 **CRITICAL/HIGH** 차단.
@@ -314,7 +314,7 @@ cosign sign --yes your/app:latest
 
 ---
 
-## 8) 디버깅 전술 — 경량 이미지의 현실 해법
+## 8. 디버깅 전술 — 경량 이미지의 현실 해법
 
 - Distroless/Alpine 런타임은 **디버깅 도구가 없다**.  
 - 전술:
@@ -325,7 +325,7 @@ cosign sign --yes your/app:latest
 
 ---
 
-## 9) 실전 시나리오 — 동일 앱, 3가지 베이스 비교
+## 9. 실전 시나리오 — 동일 앱, 3가지 베이스 비교
 
 ### 9.1 Python API — slim 기반(호환성 최우선)
 ```dockerfile
@@ -382,7 +382,7 @@ CMD ["app.py"]
 
 ---
 
-## 10) 성능/크기 최적화를 위한 체크리스트
+## 10. 성능/크기 최적화를 위한 체크리스트
 
 1. **멀티스테이지**로 빌드 도구 격리.  
 2. **베이스 선택**: slim → alpine → distroless 순으로 단계적 검증.  
@@ -397,29 +397,29 @@ CMD ["app.py"]
 
 ---
 
-## 11) 크기 비교·시간 단축 실험 절차(예시)
+## 11. 크기 비교·시간 단축 실험 절차(예시)
 
 ```bash
-# 1) 여러 Dockerfile로 빌드
+# 1. 여러 Dockerfile로 빌드
 docker build -t myapp:full   -f Dockerfile.full .
 docker build -t myapp:slim   -f Dockerfile.slim .
 docker build -t myapp:alpine -f Dockerfile.alpine .
 docker build -t myapp:dist   -f Dockerfile.distroless .
 
-# 2) 크기 비교
+# 2. 크기 비교
 docker images | grep myapp
 
-# 3) 히스토리 및 레이어 분석
+# 3. 히스토리 및 레이어 분석
 docker history myapp:alpine
 
-# 4) 컨테이너 가동 및 스모크 테스트
+# 4. 컨테이너 가동 및 스모크 테스트
 docker run --rm -p 8080:8080 myapp:alpine &
 curl -fsS http://127.0.0.1:8080/healthz
 ```
 
 ---
 
-## 12) 자주 겪는 문제와 해결
+## 12. 자주 겪는 문제와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -431,7 +431,7 @@ curl -fsS http://127.0.0.1:8080/healthz
 
 ---
 
-## 13) 수학적 관점(간단한 모델)
+## 13. 수학적 관점(간단한 모델)
 경량화 의사결정 시, 이미지 전송 시간 \(T\)를 **네트워크 대역폭 \(B\)** 와 **이미지 크기 \(S\)** 로 근사하면  
 $$
 T \approx \frac{S}{B}
@@ -444,7 +444,7 @@ $$
 
 ---
 
-## 14) 결론
+## 14. 결론
 
 - **경량화의 핵심은 “필요한 것만 담는 것”** 이며, 기술적 레버는 `멀티스테이지`, **올바른 베이스 선택**(slim/alpine/distroless), **캐시·재현성·보안**의 삼박자다.  
 - Alpine은 강력하지만 **musl 호환성**을 반드시 검증해야 하며, 문제 시 **slim**으로 전환한다.  

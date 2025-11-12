@@ -4,7 +4,7 @@ title: Spring - DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외
 date: 2025-10-11 21:25:23 +0900
 category: Spring
 ---
-# 3) 웹 MVC 기본기 — DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외 처리, 국제화(i18n)·포맷터
+# 3. 웹 MVC 기본기 — DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외 처리, 국제화(i18n)·포맷터
 
 > 목표: **“요청 → 컨트롤러 → 응답”** 흐름을 정확히 이해하고, **검증·예외·국제화**를 표준화하여 **예측 가능**한 API를 만든다.  
 > 환경 가정: Spring Boot 3.3+, Java 21, Gradle, JSON API.

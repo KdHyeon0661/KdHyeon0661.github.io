@@ -6,7 +6,7 @@ category: Git
 ---
 # Git **cherry-pick vs rebase**
 
-## 0) 한눈에 요약
+## 0. 한눈에 요약
 
 - **cherry-pick**: “저 브랜치의 **특정 커밋 몇 개만** 지금 브랜치에 **복사**(새 커밋으로 재생성)해서 붙이자.”  
 - **rebase**: “내 브랜치의 **전체(또는 연속 구간) 커밋**을 **다른 베이스 위로 재배치**해 선형 이력을 만들자.”
@@ -17,7 +17,7 @@ category: Git
 
 ---
 
-## 1) `git cherry-pick`이란?
+## 1. `git cherry-pick`이란?
 
 **특정 커밋만 선택**해서 현재 브랜치에 **새 커밋**으로 적용합니다.  
 - 장점: 필요한 것만 골라서 반영(불필요한 변경 유입 방지)  
@@ -39,7 +39,7 @@ git cherry-pick <start>^..<end>   # 연속 범위(주의: 아래 설명)
 
 ---
 
-## 2) cherry-pick 실전 옵션(필수)
+## 2. cherry-pick 실전 옵션(필수)
 
 ```bash
 # 메시지에 원본 커밋 해시 흔적을 남김: (cherry picked from commit <sha>)
@@ -69,7 +69,7 @@ git cherry-pick -m 1 <merge-commit-sha>   # 첫 부모를 기준으로
 
 ---
 
-## 3) cherry-pick 충돌 처리(강화)
+## 3. cherry-pick 충돌 처리(강화)
 
 ```bash
 git cherry-pick <commit>
@@ -98,7 +98,7 @@ git config --global rerere.enabled true
 
 ---
 
-## 4) cherry-pick 예제(추가 시나리오)
+## 4. cherry-pick 예제(추가 시나리오)
 
 ### 4.1 `hotfix` 의 특정 수정만 `main`에 반영
 ```bash
@@ -124,7 +124,7 @@ git cherry-pick -m 1 <merge-commit-sha>
 
 ---
 
-## 5) cherry-pick 되돌리기/복구
+## 5. cherry-pick 되돌리기/복구
 
 - pick 직후 전체 취소: `git cherry-pick --abort` (진행 중인 시퀀스)  
 - 이미 커밋됨 → **되돌리는 커밋** 생성:
@@ -137,7 +137,7 @@ git cherry-pick -m 1 <merge-commit-sha>
 
 ---
 
-## 6) `git rebase`란? (비교의 기준 마련)
+## 6. `git rebase`란? (비교의 기준 마련)
 
 **브랜치의 커밋들을 다른 베이스 위로 옮겨 붙이며 새 커밋으로 재작성**하여 **선형 이력**을 만듭니다.
 
@@ -181,7 +181,7 @@ git rebase --rebase-merges origin/main
 
 ---
 
-## 7) cherry-pick vs rebase — 확장 비교
+## 7. cherry-pick vs rebase — 확장 비교
 
 | 항목 | cherry-pick | rebase |
 |---|---|---|
@@ -195,7 +195,7 @@ git rebase --rebase-merges origin/main
 
 ---
 
-## 8) 선택 기준(확장)
+## 8. 선택 기준(확장)
 
 - **이 커밋 몇 개만 가져오면 끝** → **cherry-pick**  
 - **이 브랜치를 최신 main 위에서 깔끔히 만들고 합치자** → **rebase**  
@@ -204,7 +204,7 @@ git rebase --rebase-merges origin/main
 
 ---
 
-## 9) 실무 시나리오 모음
+## 9. 실무 시나리오 모음
 
 ### 9.1 릴리스 브랜치에 버그 픽스 백포트
 ```bash
@@ -244,7 +244,7 @@ git rebase -i --autosquash origin/main
 
 ---
 
-## 10) 복구·되돌리기 안전 가이드
+## 10. 복구·되돌리기 안전 가이드
 
 ### cherry-pick 시퀀스 중
 ```bash
@@ -277,7 +277,7 @@ git switch -c rescue <reflog-entry>
 
 ---
 
-## 11) 협업 안전 수칙
+## 11. 협업 안전 수칙
 
 - **공유 브랜치(release/main/hotfix)** 에는 rebase 금지(정책화)  
 - rebase 후 푸시는 `git push --force-with-lease`(동료 작업 보호)  
@@ -286,7 +286,7 @@ git switch -c rescue <reflog-entry>
 
 ---
 
-## 12) 명령어 치트시트(확장)
+## 12. 명령어 치트시트(확장)
 
 ```bash
 # cherry-pick
@@ -313,7 +313,7 @@ git switch -c rescue <sha_or_HEAD@{n}>
 
 ---
 
-## 13) 최소 실습 세트(로컬에서 재현)
+## 13. 최소 실습 세트(로컬에서 재현)
 
 ```bash
 # 준비
@@ -345,7 +345,7 @@ git reflog
 
 ---
 
-## 14) 결론
+## 14. 결론
 
 - **cherry-pick**은 **정밀 선택**이 장점: 필요한 커밋만 빠르게 백포트/반영. `-x`로 추적성 보강.  
 - **rebase**는 **이력 선형화**가 장점: 리뷰와 bisect가 쉬워짐. 다만 공유 브랜치에는 신중.  

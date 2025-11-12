@@ -4,7 +4,7 @@ title: Spring - Starter·AutoConfiguration, @ConfigurationProperties, 앱 구조
 date: 2025-10-11 20:25:23 +0900
 category: Spring
 ---
-# 2) 스프링 부트 빠른 시작 — Starter·AutoConfiguration, `@ConfigurationProperties`, 앱 구조(패키지/계층/멀티모듈)
+# 2. 스프링 부트 빠른 시작 — Starter·AutoConfiguration, `@ConfigurationProperties`, 앱 구조(패키지/계층/멀티모듈)
 
 > 부트는 “**의존성 + 기본 설정 = 바로 실행 가능한 앱**”을 목표로 한다.  
 > 핵심은 ① Starter(의존성 세트) ② AutoConfiguration(조건부 자동 설정) ③ 타입-세이프 설정 바인딩(`@ConfigurationProperties`) ④ 일관성 있는 패키지/계층/멀티모듈 설계다.

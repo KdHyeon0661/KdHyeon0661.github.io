@@ -11,7 +11,7 @@ category: MFC
 
 ---
 
-## 0) 큰 그림 요약
+## 0. 큰 그림 요약
 
 - **Owner-Draw**  
   - 컨트롤이 **그리기 책임을 ‘소유자(부모)’에게 전가**.  
@@ -28,7 +28,7 @@ category: MFC
 
 ---
 
-## 1) Owner-Draw (ListBox/Combo) — 기본과 고급
+## 1. Owner-Draw (ListBox/Combo) — 기본과 고급
 
 ### 1-1. 스타일/흐름
 - **리소스 스타일**  
@@ -125,7 +125,7 @@ public:
 
 ---
 
-## 2) Custom-Draw (ListView=`CListCtrl`) — 단계/기법 총정리
+## 2. Custom-Draw (ListView=`CListCtrl`) — 단계/기법 총정리
 
 ### 2-1. 단계(DWORD `dwDrawStage`)
 - `CDDS_PREPAINT` → **아이템 단위 알림 허용 요청**: `*pResult = CDRF_NOTIFYITEMDRAW`
@@ -290,7 +290,7 @@ void CMyDlg::OnGetDispInfo(NMHDR* n, LRESULT* r) {
 
 ---
 
-## 3) Custom-Draw (TreeView=`CTreeCtrl`) — 전체 행/노드 스타일링
+## 3. Custom-Draw (TreeView=`CTreeCtrl`) — 전체 행/노드 스타일링
 
 ### 3-1. 필수 스타일/확장 스타일
 - `TVS_HASBUTTONS`, `TVS_HASLINES`, `TVS_LINESATROOT`, `TVS_FULLROWSELECT`, `TVS_TRACKSELECT`
@@ -356,7 +356,7 @@ case CDDS_ITEMPOSTPAINT:
 
 ---
 
-## 4) 공통 고급 패턴
+## 4. 공통 고급 패턴
 
 ### 4-1. 더블 버퍼링 공통 헬퍼
 
@@ -411,7 +411,7 @@ m_list.SetItemState(row, StateImageMask(2), LVIS_STATEIMAGEMASK);
 
 ---
 
-## 5) 통합 예제 ①: `CListCtrlEx` — 지브라/호버/체크/진행률/가상 모드
+## 5. 통합 예제 ①: `CListCtrlEx` — 지브라/호버/체크/진행률/가상 모드
 
 ```cpp
 class CListCtrlEx : public CListCtrl {
@@ -482,7 +482,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 6) 통합 예제 ②: `CTreeCtrlEx` — 풀로우 선택/호버/배지
+## 6. 통합 예제 ②: `CTreeCtrlEx` — 풀로우 선택/호버/배지
 
 ```cpp
 class CTreeCtrlEx : public CTreeCtrl {
@@ -519,7 +519,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 7) 성능 & 안정성 & UX 체크리스트
+## 7. 성능 & 안정성 & UX 체크리스트
 
 1. **깜빡임**: `LVS_EX_DOUBLEBUFFER`, `TVS_EX_DOUBLEBUFFER`(가능 시), 필요 시 수동 더블버퍼  
 2. **GDI 리소스 누수**: `CPen/ CBrush/ CFont` 생성/선택/해제 철저  
@@ -534,7 +534,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 8) 문제 해결 가이드
+## 8. 문제 해결 가이드
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -546,7 +546,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 9) 빠른 스타터(요약 스니펫)
+## 9. 빠른 스타터(요약 스니펫)
 
 ```cpp
 // 메시지 맵
@@ -560,7 +560,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 10) 결론
+## 10. 결론
 
 - **Owner-Draw**(ListBox/Combo)는 **완전 커스텀**이 필요한 단순 목록/선택 UI에 적합.  
 - **Custom-Draw**(ListView/TreeView)는 **서브아이템/상태/가상/성능**까지 잡는 **현실적 솔루션**.  

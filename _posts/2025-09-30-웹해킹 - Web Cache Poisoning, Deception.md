@@ -12,7 +12,7 @@ category: 웹해킹
 
 ---
 
-## 0) 요약(Executive Summary)
+## 0. 요약(Executive Summary)
 
 - **문제**  
   - **Unkeyed header**(캐시 키에 포함되지 않는 헤더, 예: `X-Forwarded-Host`, `X-Original-URL`, `X-Forwarded-Proto`)가 **응답 내용에 영향을 주는데 캐시 키에는 반영되지 않으면** 공격자가 **악성 변형 응답을 캐시에 주입**할 수 있습니다.  
@@ -30,7 +30,7 @@ category: 웹해킹
 
 ---
 
-# 1) 동작 원리(왜 당하는가)
+# 1. 동작 원리(왜 당하는가)
 
 ## 1.1 Unkeyed Header Poisoning
 
@@ -49,7 +49,7 @@ category: 웹해킹
 
 ---
 
-# 2) 안전한 재현·탐지(자신의 스테이징에서만)
+# 2. 안전한 재현·탐지(자신의 스테이징에서만)
 
 > 목적: **우리가 캐시 키를 잘 구성했는지**, **민감 응답이 캐시되지 않는지** 확인.
 
@@ -111,7 +111,7 @@ curl -sI https://cdn.staging.example.com/account/.css
 
 ---
 
-# 3) 프록시/Nginx — “키 명시 + 변칙 헤더 정규화 + 민감 BYPASS”
+# 3. 프록시/Nginx — “키 명시 + 변칙 헤더 정규화 + 민감 BYPASS”
 
 ## 3.1 Nginx(리버스 프록시 + 내부 캐시) 기본 템플릿
 
@@ -188,7 +188,7 @@ server {
 
 ---
 
-# 4) Varnish(VCL) — 캐시 키·정규화
+# 4. Varnish(VCL) — 캐시 키·정규화
 
 ```vcl
 vcl 4.1;
@@ -240,7 +240,7 @@ sub vcl_deliver {
 
 ---
 
-# 5) CDN(CloudFront/Cloudflare/Fastly) 설계 포인트
+# 5. CDN(CloudFront/Cloudflare/Fastly) 설계 포인트
 
 - **Cache Policy**:  
   - **QueryString**: “모두 전달/모두 키 포함”은 위험. **화이트리스트**(필요한 키만) 권장.  
@@ -253,7 +253,7 @@ sub vcl_deliver {
 
 ---
 
-# 6) 애플리케이션 방어(보조 안전망)
+# 6. 애플리케이션 방어(보조 안전망)
 
 ## 6.1 “절대 URL/리다이렉트”는 **고정 원본**을 사용
 
@@ -315,7 +315,7 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.status(404).send("No
 
 ---
 
-# 7) 헤더·표준의 올바른 사용
+# 7. 헤더·표준의 올바른 사용
 
 - **Cache-Control**  
   - **민감/개인화**: `no-store`  
@@ -329,7 +329,7 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.status(404).send("No
 
 ---
 
-# 8) 모니터링·탐지
+# 8. 모니터링·탐지
 
 - **지표**: 경로별 `X-Cache: HIT` 비율, `Age` 분포, `Set-Cookie` 동반 응답의 HIT=0 확인.  
 - **로그 규칙 예시 (Loki / Splunk)**  
@@ -351,7 +351,7 @@ index=edge sourcetype=nginx "text/html" "X-Cache:HIT" (uri="*.css" OR uri="*.js"
 
 ---
 
-# 9) 사고 대응(런북 요약)
+# 9. 사고 대응(런북 요약)
 
 1. **식별**: 특정 URL에서 **의심스런 HIT 증가/콘텐츠 불일치** 확인.  
 2. **격리**:  
@@ -364,7 +364,7 @@ index=edge sourcetype=nginx "text/html" "X-Cache:HIT" (uri="*.css" OR uri="*.js"
 
 ---
 
-# 10) “끝에서 끝까지” 작은 실습(스테이징용)
+# 10. “끝에서 끝까지” 작은 실습(스테이징용)
 
 ## 10.1 Express 앱(간단)
 
@@ -410,7 +410,7 @@ app.listen(8080, () => console.log("app on 8080"));
 
 ---
 
-# 11) 체크리스트(현장용)
+# 11. 체크리스트(현장용)
 
 - [ ] **캐시 키 명시**(Scheme+Host+Path+Query). 헤더 기반 키 지양.  
 - [ ] **전달용 헤더 무시/삭제**: XFH, XOP, XP 등.  

@@ -12,7 +12,7 @@ category: MFC
 
 ---
 
-## 0) 큰 그림: 왜 DirectWrite인가?
+## 0. 큰 그림: 왜 DirectWrite인가?
 
 - **일관된 텍스트 엔진**: GDI의 `TextOut`/`ExtTextOut` 대비, **서브픽셀 클리어타입 렌더링**, **정확한 글립·커닝**, **스크립트 shaping**, **OpenType 전체 기능**을 **OS 표준 엔진**으로 제공합니다.
 - **컬러 폰트/이모지**: DWrite 1.3+ (Win 8.1+)부터 COLR/CPAL, CBDT/CBLC, SVG-in-OpenType 등 **색상 글립** 표시를 지원합니다.
@@ -21,7 +21,7 @@ category: MFC
 
 ---
 
-## 1) 아키텍처 개요
+## 1. 아키텍처 개요
 
 ```
 [App] ──▶ [D2D1Factory] ─┬─▶ [ID2D1Device] ─▶ [ID2D1DeviceContext] ─▶ DrawText/Layout
@@ -36,7 +36,7 @@ category: MFC
 
 ---
 
-## 2) 기본 초기화: D2D/DWrite 팩토리, 디바이스 컨텍스트
+## 2. 기본 초기화: D2D/DWrite 팩토리, 디바이스 컨텍스트
 
 ### 2-1. 최소 초기화 (HWND Render Target, 쉬운 길)
 가장 간단한 레거시 경로입니다. 새로운 앱이라면 *Device/DeviceContext* 경로를 권장하지만, 전환기에 부담이 적습니다.
@@ -99,7 +99,7 @@ void InitDeviceContextFromDXGI(IDXGIDevice* dxgiDevice) {
 
 ---
 
-## 3) 텍스트 포맷과 레이아웃
+## 3. 텍스트 포맷과 레이아웃
 
 ### 3-1. `IDWriteTextFormat` – 글꼴/크기/정렬/줄 간격
 ```cpp
@@ -134,7 +134,7 @@ dwFactory->CreateTextLayout(text, (UINT32)wcslen(text), fmt.Get(),
 
 ---
 
-## 4) 렌더링: 클리어타입/안티앨리어싱/픽셀 스냅
+## 4. 렌더링: 클리어타입/안티앨리어싱/픽셀 스냅
 
 ### 4-1. 텍스트 안티앨리어싱 모드
 ```cpp
@@ -173,7 +173,7 @@ d2dCtx->SetDrawingStateBlock(ds.Get());
 
 ---
 
-## 5) 그리기 예제: DrawText vs DrawTextLayout
+## 5. 그리기 예제: DrawText vs DrawTextLayout
 
 ```cpp
 void RenderHello() {
@@ -214,7 +214,7 @@ void RenderWithLayout() {
 
 ---
 
-## 6) 컬러 폰트(이모지) & 폰트 폴백
+## 6. 컬러 폰트(이모지) & 폰트 폴백
 
 ### 6-1. 컬러 폰트 활성화 포인트
 - Windows 8.1+ / DWrite 1.3+  
@@ -246,7 +246,7 @@ layout3->SetFontFallback(fallback.Get());
 
 ---
 
-## 7) OpenType 기능(합자, 대체 글립, 스타일셋, OldStyle 숫자 등)
+## 7. OpenType 기능(합자, 대체 글립, 스타일셋, OldStyle 숫자 등)
 
 ### 7-1. `IDWriteTypography` 로 기능 주입
 ```cpp
@@ -274,7 +274,7 @@ layout2->SetTypography(typo.Get(), rng);
 
 ---
 
-## 8) 복합 스크립트(Complex Script) & BiDi
+## 8. 복합 스크립트(Complex Script) & BiDi
 
 ### 8-1. 언어/로케일 설정
 - `CreateTextFormat` 의 **locale** (예: `ar-SA`, `he-IL`, `hi-IN`, `th-TH`) 를 정확히 지정하면 **숫자 대체/단어 단위 줄바꿈**이 향상됩니다.
@@ -300,7 +300,7 @@ layout->SetNumberSubstitution(numSubst.Get(), DWRITE_TEXT_RANGE{0, len});
 
 ---
 
-## 9) 히트 테스트, 캐럿, 선택(에디터 구현 핵심)
+## 9. 히트 테스트, 캐럿, 선택(에디터 구현 핵심)
 
 ```cpp
 DWRITE_HIT_TEST_METRICS m{};
@@ -321,7 +321,7 @@ layout->HitTestTextRange(selStart, selLength, xOffset, yOffset, rects.data(), co
 
 ---
 
-## 10) 성능 전략: 캐싱/배치/Invalidation
+## 10. 성능 전략: 캐싱/배치/Invalidation
 
 - **TextFormat/Typo/FontFallback**: **재사용** (매 프레임 생성 금지).
 - **TextLayout**: 문자열 변경이 없으면 **캐시**. 뷰포트 스크롤 시 **오프셋만 변경**.
@@ -330,7 +330,7 @@ layout->HitTestTextRange(selStart, selLength, xOffset, yOffset, rects.data(), co
 
 ---
 
-## 11) DPI/픽셀 정렬/스냅
+## 11. DPI/픽셀 정렬/스냅
 
 - D2D/DWrite는 `DIP(1/96inch)` 기준. Per-Monitor DPI에서 **자동 스케일**.
 - **픽셀 스냅 팁**  
@@ -339,7 +339,7 @@ layout->HitTestTextRange(selStart, selLength, xOffset, yOffset, rects.data(), co
 
 ---
 
-## 12) GDI → DirectWrite 매핑 참고표
+## 12. GDI → DirectWrite 매핑 참고표
 
 | GDI | DirectWrite/Direct2D |
 |---|---|
@@ -353,14 +353,14 @@ layout->HitTestTextRange(selStart, selLength, xOffset, yOffset, rects.data(), co
 
 ---
 
-## 13) GDI+ → Direct2D 전환 메모
+## 13. GDI+ → Direct2D 전환 메모
 
 - 이미지/WIC 파이프라인은 그대로 사용 가능: `IWICBitmapDecoder` → `ID2D1Bitmap1`.
 - 텍스트는 **DWrite가 정답**. GDI+의 `DrawString` 는 품질·기능 모두 열세.
 
 ---
 
-## 14) 샘플: 색 혼합 텍스트 + 범위별 스타일 + 컬러 이모지
+## 14. 샘플: 색 혼합 텍스트 + 범위별 스타일 + 컬러 이모지
 
 ```cpp
 struct BrushPack {
@@ -420,7 +420,7 @@ void DrawStyled() {
 
 ---
 
-## 15) 국제화 체크리스트
+## 15. 국제화 체크리스트
 
 1. **Locale**: 포맷 생성 시 정확히 지정 (`ko-KR`, `en-US`, `ar-SA` …)  
 2. **Number substitution**: 로케일 문맥 기반 대체  
@@ -431,7 +431,7 @@ void DrawStyled() {
 
 ---
 
-## 16) 트러블슈팅
+## 16. 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -444,7 +444,7 @@ void DrawStyled() {
 
 ---
 
-## 17) 단계별 전환 전략(레거시 앱)
+## 17. 단계별 전환 전략(레거시 앱)
 
 1. **텍스트 렌더 경로만 대체**: GDI 배경/도형은 유지, **텍스트만 DrawTextLayout** 로 먼저 교체.  
 2. **포맷/레이아웃 캐시**: 컨트롤/뷰 단위로 `TextFormat`/`Typography`/`Layout` 객체 **수명 관리**.  
@@ -455,7 +455,7 @@ void DrawStyled() {
 
 ---
 
-## 18) 작은 레퍼런스(태그/상수)
+## 18. 작은 레퍼런스(태그/상수)
 
 - **AA 모드**: `D2D1_TEXT_ANTIALIAS_MODE_{DEFAULT, CLEARTYPE, GRAYSCALE, ALIASED}`  
 - **DWrite 렌더링 모드**: `DWRITE_RENDERING_MODE_{DEFAULT, NATURAL, NATURAL_SYMMETRIC, GDI_CLASSIC, OUTLINE}`  
@@ -469,14 +469,14 @@ void DrawStyled() {
 
 ---
 
-## 19) 보너스: GDI 텍스트와 시각 비교 샘플 (A/B 토글)
+## 19. 보너스: GDI 텍스트와 시각 비교 샘플 (A/B 토글)
 
 - 동일 UI에 **GDI(TextOut)** vs **DWrite(DrawTextLayout)** 를 **체크박스**로 교차 표시하여  
   - 스템 두께, 커닝, 합자, 이모지, 아랍어 shaping, 고 DPI 선명도 차이를 **눈으로 확인** → 전환 설득 자료로 유용.
 
 ---
 
-## 20) 결론
+## 20. 결론
 
 - **DirectWrite** 는 **현대 윈도우 텍스트 렌더링의 표준 엔진**입니다.  
 - **클리어타입/그레이스케일 AA**, **컬러 폰트(이모지)**, **완전한 OpenType**, **복합 스크립트 shaping**, **정확한 히트테스트**까지 **GDI의 한계를 해소**합니다.  

@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Kinesis Data Analytics
 
-## 0) 한눈에 보는 전체 아키텍처
+## 0. 한눈에 보는 전체 아키텍처
 
 ```text
 ┌────────────┐    PutRecord      ┌────────────────────┐
@@ -31,7 +31,7 @@ category: AWS
 
 ---
 
-## 1) 입력 소스와 레코드 스키마
+## 1. 입력 소스와 레코드 스키마
 
 ### 1.1 지원 소스
 - **Kinesis Data Streams (KDS)**, **Amazon MSK (Kafka)**, **Kinesis Data Firehose**(일부 경로)
@@ -55,7 +55,7 @@ category: AWS
 
 ---
 
-## 2) KDA for SQL — 실무 문법 총정리
+## 2. KDA for SQL — 실무 문법 총정리
 
 ### 2.1 입력 매핑 (Application Schema)
 KDA 콘솔/CLI에서 입력 스키마를 정의:
@@ -172,7 +172,7 @@ SELECT * FROM "s_agg_action_country";
 
 ---
 
-## 3) KDA for Apache Flink — 프로덕션 패턴
+## 3. KDA for Apache Flink — 프로덕션 패턴
 
 ### 3.1 필수 개념
 - **Event Time + Watermark**  
@@ -274,7 +274,7 @@ Pattern<Event, ?> pattern = Pattern.<Event>begin("click")
 
 ---
 
-## 4) 출력(싱크) 전략
+## 4. 출력(싱크) 전략
 
 ### 4.1 S3 (Parquet)로 적재 — 배치/마이크로배치
 - Flink: **FileSystem sink** + **Bucket assigner**로 파티션(날짜/시간) 저장  
@@ -287,7 +287,7 @@ Pattern<Event, ?> pattern = Pattern.<Event>begin("click")
 
 ---
 
-## 5) 성능·비용 최적화
+## 5. 성능·비용 최적화
 
 ### 5.1 처리량과 레이턴시 모델
 $$
@@ -318,7 +318,7 @@ $$
 
 ---
 
-## 6) 보안·네트워킹·권한
+## 6. 보안·네트워킹·권한
 
 ### 6.1 VPC 연동
 - KDA 애플리케이션을 **VPC에 연결**해 프라이빗 리소스(RDS/ElastiCache) 접근  
@@ -343,7 +343,7 @@ $$
 
 ---
 
-## 7) 모니터링·가시성·운영
+## 7. 모니터링·가시성·운영
 
 ### 7.1 CloudWatch 지표
 - **KDA SQL**: Input/Output 레코드, MillisBehindLatest, BackpressuredTime  
@@ -362,7 +362,7 @@ $$
 
 ---
 
-## 8) 운영급 실전 예제
+## 8. 운영급 실전 예제
 
 ### 8.1 시나리오
 - 목표: **1분 단위 국가·액션별 카운트**, 5분 이동 윈도우 트렌드, S3 파이프라인  
@@ -400,7 +400,7 @@ GROUP BY country, action;
 
 ---
 
-## 9) 고급 Flink 예제 (CEP + 상태)
+## 9. 고급 Flink 예제 (CEP + 상태)
 
 ### 9.1 “의심 행동” 탐지: 10분 내 5회 이상 ‘login_failed’ → 알림
 ```java
@@ -426,7 +426,7 @@ events
 
 ---
 
-## 10) 테스트·검증·데이터 품질
+## 10. 테스트·검증·데이터 품질
 
 - **로컬/샘플 스트림**으로 SQL/Flink 로직 단위 테스트  
 - 데이터 품질 규칙: **Null/타입/범위/카디널리티** 쿼리로 자동 점검
@@ -442,7 +442,7 @@ GROUP BY country;
 
 ---
 
-## 11) 트러블슈팅 모음
+## 11. 트러블슈팅 모음
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -455,7 +455,7 @@ GROUP BY country;
 
 ---
 
-## 12) 거버넌스/보안 체크리스트
+## 12. 거버넌스/보안 체크리스트
 
 - [ ] **IAM 최소 권한**: Kinesis, Logs, S3, KMS, OpenSearch  
 - [ ] **전송·저장 암호화**: TLS, SSE-KMS  
@@ -465,7 +465,7 @@ GROUP BY country;
 
 ---
 
-## 13) 비용 통제 레시피
+## 13. 비용 통제 레시피
 
 - SQL: **vCPU 축소 + 윈도우/집계 최소화**, 필요 스트림만 출력  
 - Flink: 병렬도/체크포인트 간격/상태 크기 관리, **compact sink**  
@@ -473,7 +473,7 @@ GROUP BY country;
 
 ---
 
-## 14) 산출물·IaC 예시 스니펫
+## 14. 산출물·IaC 예시 스니펫
 
 ### 14.1 Kinesis Stream (CloudFormation)
 ```yaml
@@ -508,7 +508,7 @@ Resources:
 
 ---
 
-## 15) 요약
+## 15. 요약
 
 - **KDA SQL**: 가장 빠르게 **실시간 집계/필터/윈도우**를 제품화. 운영 단순.  
 - **KDA Flink**: **Event Time·State·CEP·Exactly-once**가 필요한 **엔터프라이즈 스트리밍**의 정석.  

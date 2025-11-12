@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Volume, PersistentVolume, PersistentVolumeClaim(PVC)
 
-## 0) 큰 그림: 저장소 계층도
+## 0. 큰 그림: 저장소 계층도
 
 ```
 [Pod]
@@ -20,7 +20,7 @@ category: Kubernetes
 
 ---
 
-## 1) Volume 기초와 유형
+## 1. Volume 기초와 유형
 
 ### 1.1 주요 볼륨 타입(요약)
 
@@ -37,7 +37,7 @@ category: Kubernetes
 
 ---
 
-## 2) PersistentVolume(PV)와 PersistentVolumeClaim(PVC)
+## 2. PersistentVolume(PV)와 PersistentVolumeClaim(PVC)
 
 ### 2.1 개념
 - **PV**: 클러스터 관점의 **실제 스토리지 단위**(관리자/프로비저너가 생성)
@@ -97,7 +97,7 @@ spec:
 
 ---
 
-## 3) AccessMode, VolumeMode, ReclaimPolicy
+## 3. AccessMode, VolumeMode, ReclaimPolicy
 
 ### 3.1 AccessMode
 | 모드 | 의미 | 예 |
@@ -128,7 +128,7 @@ spec:
 
 ---
 
-## 4) StorageClass와 동적 프로비저닝(Dynamic Provisioning)
+## 4. StorageClass와 동적 프로비저닝(Dynamic Provisioning)
 
 ### 4.1 StorageClass 정의
 ```yaml
@@ -168,7 +168,7 @@ spec:
 
 ---
 
-## 5) StatefulSet + volumeClaimTemplates 패턴
+## 5. StatefulSet + volumeClaimTemplates 패턴
 
 **Pod N개 각각** 고유 디스크를 가지려면 StatefulSet을 사용한다.
 
@@ -206,7 +206,7 @@ spec:
 
 ---
 
-## 6) 데이터 초기화/마이그레이션: initContainer + subPath
+## 6. 데이터 초기화/마이그레이션: initContainer + subPath
 
 ### 6.1 초기 데이터 투입
 ```yaml
@@ -245,7 +245,7 @@ volumeMounts:
 
 ---
 
-## 7) 보안·권한: fsGroup, SELinux, readOnlyRootFilesystem
+## 7. 보안·권한: fsGroup, SELinux, readOnlyRootFilesystem
 
 ### 7.1 Pod 보안 컨텍스트
 ```yaml
@@ -278,7 +278,7 @@ securityContext:
 
 ---
 
-## 8) 성능 튜닝: mountOptions, fsType, atime, 블록 모드
+## 8. 성능 튜닝: mountOptions, fsType, atime, 블록 모드
 
 ### 8.1 StorageClass 또는 PV에 마운트 옵션
 ```yaml
@@ -312,7 +312,7 @@ spec:
 
 ---
 
-## 9) 스냅샷 & 복구(CSI VolumeSnapshot)
+## 9. 스냅샷 & 복구(CSI VolumeSnapshot)
 
 ### 9.1 CRD 설치(클러스터당 1회, 배포별 번들 사용 권장)
 - `VolumeSnapshotClass`, `VolumeSnapshot`, `VolumeSnapshotContent`
@@ -357,7 +357,7 @@ spec:
 
 ---
 
-## 10) 토폴로지/스케줄링: `WaitForFirstConsumer`와 가용영역
+## 10. 토폴로지/스케줄링: `WaitForFirstConsumer`와 가용영역
 
 - 블록 디스크는 **특정 AZ/Zone에 귀속**된다.
 - `volumeBindingMode: WaitForFirstConsumer`를 사용하면 **Pod가 스케줄될 노드의 AZ**를 보고 그곳에 볼륨을 생성 → **스케줄 실패** 줄임.
@@ -372,7 +372,7 @@ allowedTopologies:
 
 ---
 
-## 11) RWX(공유 쓰기) 패턴 옵션
+## 11. RWX(공유 쓰기) 패턴 옵션
 
 | 선택지 | 특성 | 주의 |
 |---|---|---|
@@ -384,7 +384,7 @@ allowedTopologies:
 
 ---
 
-## 12) 용량 계획(간단)
+## 12. 용량 계획(간단)
 
 초기 용량 $$C_0$$, 연평균 증가율 $$g$$, 기간 $$t$$(년)일 때 최소 용량:
 $$
@@ -394,7 +394,7 @@ $$
 
 ---
 
-## 13) 운영 명령 치트시트
+## 13. 운영 명령 치트시트
 
 ```bash
 # PV/PVC 현황
@@ -418,7 +418,7 @@ mount | grep kubelet
 
 ---
 
-## 14) 장애·트러블슈팅 가이드
+## 14. 장애·트러블슈팅 가이드
 
 | 증상 | 원인 | 조치 |
 |---|---|---|
@@ -435,7 +435,7 @@ mount | grep kubelet
 
 ---
 
-## 15) 예제 모음
+## 15. 예제 모음
 
 ### 15.1 Nginx + PV/PVC(수동)
 ```yaml
@@ -538,7 +538,7 @@ spec:
 
 ---
 
-## 16) 멀티테넌시/거버넌스
+## 16. 멀티테넌시/거버넌스
 
 - **네임스페이스별 ResourceQuota**로 **스토리지 총량 제한**:
 ```yaml
@@ -557,7 +557,7 @@ spec:
 
 ---
 
-## 17) 베스트 프랙티스 요약
+## 17. 베스트 프랙티스 요약
 
 1. **데이터 특성→스토리지 매핑**(RWO vs RWX, 블록 vs 파일, IOPS/지연)
 2. **WaitForFirstConsumer**로 AZ 스케줄 실패 방지
@@ -572,7 +572,7 @@ spec:
 
 ---
 
-## 18) 현업 체크리스트
+## 18. 현업 체크리스트
 
 - [ ] 워크로드 I/O 패턴(랜덤/순차, R/W 비율, 파일 크기) 파악
 - [ ] AccessMode 요구사항 정리(RWO/RWX/ROX)
@@ -584,7 +584,7 @@ spec:
 
 ---
 
-## 19) 결론
+## 19. 결론
 
 - **PV/PVC/StorageClass/CSI**는 Kubernetes 저장소의 **표준 추상화**이며, 올바른 설계로 **데이터 일관성과 민첩성**을 모두 얻을 수 있다.
 - **AccessMode/VolumeMode/ReclaimPolicy/BindingMode/Topology**를 이해하면 **스케줄 실패·권한·성능** 문제를 사전에 방지할 수 있다.

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 핵심 개념 확장 요약: DI, Middleware, Routing
 
-## 0) 큰 그림: 요청이 앱을 통과하는 방법
+## 0. 큰 그림: 요청이 앱을 통과하는 방법
 
 1. 앱 시작 시 **DI 컨테이너**에 서비스 등록(싱글턴/스코프/트랜지언트, 옵션, HttpClient 등)
 2. **미들웨어 파이프라인** 구성(정적 파일 → 라우팅 → 인증/권한 → 엔드포인트)
@@ -16,7 +16,7 @@ category: AspNet
 
 ---
 
-## 1) DI(Dependency Injection) — 기본에서 고급까지
+## 1. DI(Dependency Injection) — 기본에서 고급까지
 
 ### 1.1 기본 등록 & 수명(Lifetime) 복습
 
@@ -158,7 +158,7 @@ public class Worker(IServiceScopeFactory scopes) : BackgroundService
 
 ---
 
-## 2) 미들웨어 — 파이프라인, 순서, 분기, 단위테스트
+## 2. 미들웨어 — 파이프라인, 순서, 분기, 단위테스트
 
 ### 2.1 파이프라인 핵심
 
@@ -271,7 +271,7 @@ public class PipelineTests(CustomFactory factory)
 
 ---
 
-## 3) 라우팅 — 속성 라우팅, 제약, 링크 생성, 그룹, 버저닝
+## 3. 라우팅 — 속성 라우팅, 제약, 링크 생성, 그룹, 버저닝
 
 ### 3.1 Razor Pages
 
@@ -371,7 +371,7 @@ api.MapGet("/users/{id:int}", (int id) => Results.Ok(new { id }));
 
 ---
 
-## 4) 엔드투엔드 예제(Program.cs + 컨트롤러 + 테스트)
+## 4. 엔드투엔드 예제(Program.cs + 컨트롤러 + 테스트)
 
 ### 4.1 Program.cs
 
@@ -465,7 +465,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 5) 성능·안정성 체크리스트
+## 5. 성능·안정성 체크리스트
 
 ### 5.1 DI/옵션/HttpClient
 - **HttpClientFactory** 사용(소켓 고갈 방지)
@@ -488,7 +488,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 6) 보안·유지보수·운영 팁
+## 6. 보안·유지보수·운영 팁
 
 - **헤더 표준화**: `X-Correlation-ID`, `X-Request-Time`
 - **예외 처리**: 글로벌 핸들러 + ProblemDetails(표준 오류 응답)
@@ -499,7 +499,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 7) 흔한 오류 패턴과 해법
+## 7. 흔한 오류 패턴과 해법
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -511,7 +511,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 8) 요약 표 — DI / Middleware / Routing
+## 8. 요약 표 — DI / Middleware / Routing
 
 | 영역 | 핵심 | 고급 포인트 |
 |---|---|---|
@@ -521,7 +521,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 9) 실무용 스니펫 모음
+## 9. 실무용 스니펫 모음
 
 ### 9.1 ProblemDetails(표준 오류 응답)
 ```csharp

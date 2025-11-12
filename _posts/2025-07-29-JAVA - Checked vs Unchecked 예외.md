@@ -4,192 +4,442 @@ title: Java - Checked vs Unchecked 예외
 date: 2025-07-29 15:20:23 +0900
 category: Java
 ---
-# Checked vs Unchecked 예외(예외 타입) — Java에서의 차이와 활용법 (자세 정리)
+# Checked vs Unchecked 예외
 
-Java에서 예외는 `Throwable`을 루트로 하는 계층 구조를 갖습니다. 그 중 실무에서 중요한 구분은 **Checked Exception**(체크 예외)과 **Unchecked Exception**(언체크 예외)입니다. 이 문서는 두 종류의 차이, 동작 방식, 코드 예시, 설계 권장사항과 실무 패턴(예외 전환, 예외 체이닝 등)을 모두 다룹니다.
+## 1. 큰 그림 — 개념 요약
 
----
+| 분류 | 상속 루트 | 컴파일러 강제 | 의도/의미 | 대표 예 |
+|---|---|---|---|---|
+| **Checked** | `Exception` (단, `RuntimeException` 제외) | **처리**(`try-catch`) **또는 선언**(`throws`) **강제** | 호출자가 **복구 가능**한 상황(I/O, 네트워크, 파일, 외부시스템) | `IOException`, `SQLException`, `ClassNotFoundException` |
+| **Unchecked** | `RuntimeException` | 강제 **없음** | **프로그래밍 오류/계약 위반**(잘못된 인수, 상태 위반, NPE) | `NullPointerException`, `IllegalArgumentException`, `IllegalStateException`, `IndexOutOfBoundsException` |
+| **Error** | `Error` | 다루지 않음 | JVM/시스템 치명 오류 | `OutOfMemoryError`, `StackOverflowError` |
 
-## 1. 개념 정리 (요약)
-
-- **Checked Exception**  
-  - `Exception`을 상속하지만 `RuntimeException`을 상속하지 않는 예외들.  
-  - 컴파일러가 **처리(try-catch)** 하거나 **선언(throws)** 하도록 강제함.  
-  - 주로 **복구 가능한(혹은 호출자에게 처리 책임이 있는)** 조건을 표현.
-
-- **Unchecked Exception**  
-  - `RuntimeException`과 그 하위 클래스.  
-  - 컴파일러가 처리나 선언을 요구하지 않음.  
-  - 주로 **프로그래밍 오류(논리 버그, 잘못된 API 사용)** 를 나타냄.
-
-- **Error** (`java.lang.Error`)  
-  - JVM 수준의 치명적 오류(OutOfMemoryError 등). 일반적으로 잡지 않음.
-
----
-
-## 2. 예외 계층(간단)
+예외 계층(요약):
 
 ```
 Throwable
- ├─ Error (X: 거의 잡지 않음)
+ ├─ Error                  // 시스템 치명 오류, 일반적으로 catch 대상 아님
  └─ Exception
-     ├─ RuntimeException (Unchecked)
-     │   ├─ NullPointerException, IllegalArgumentException, ...
-     └─ (Checked 예외)
-         ├─ IOException, SQLException, ClassNotFoundException, ...
+     ├─ RuntimeException   // 언체크
+     └─ (Checked)          // 체크드
 ```
 
 ---
 
-## 3. 코드 예시
+## 2. 기본 문법과 동작
 
-### 3.1 Checked 예외 (파일 읽기 — `IOException`)
+### 2.1 처리 vs 선언
+
 ```java
-import java.io.*;
-
-public class CheckedExample {
-    public static void readFile(String path) throws IOException {
-        BufferedReader br = new BufferedReader(new FileReader(path));
-        try {
-            System.out.println(br.readLine());
-        } finally {
-            br.close(); // 또는 try-with-resources 권장
-        }
+// Checked 예외: 반드시 처리하거나(try-catch) 선언해야 함
+void read() throws IOException {
+    try (var br = new java.io.BufferedReader(new java.io.FileReader("in.txt"))) {
+        System.out.println(br.readLine());
     }
+}
 
-    public static void main(String[] args) {
-        try {
-            readFile("not_exists.txt");
-        } catch (IOException e) {
-            System.err.println("파일 읽기 실패: " + e.getMessage());
-            // 복구 로직 또는 사용자 안내
+// Unchecked 예외: 선언/처리 강제 없음
+int divide(int a, int b) {            // throws 선언 없어도 됨
+    return a / b;                     // b==0 → ArithmeticException
+}
+```
+
+### 2.2 다중 catch & 멀티-catch
+
+```java
+try {
+    mightThrow();
+} catch (java.io.IOException | java.sql.SQLException e) {
+    // 공통 처리
+}
+```
+
+### 2.3 finally와 자원 해제
+
+```java
+// 전통 패턴
+java.io.BufferedReader br = null;
+try {
+    br = new java.io.BufferedReader(new java.io.FileReader("in.txt"));
+    System.out.println(br.readLine());
+} catch (java.io.IOException e) {
+    // 처리
+} finally {
+    if (br != null) try { br.close(); } catch (java.io.IOException ignore) {}
+}
+
+// 권장: try-with-resources (Java 7+)
+try (var br = new java.io.BufferedReader(new java.io.FileReader("in.txt"))) {
+    System.out.println(br.readLine());
+}
+```
+
+---
+
+## 3. 억제(Suppressed) 예외 — try-with-resources의 숨은 핵심
+
+자원 닫기(`close`) 중 발생한 예외는 **억제(suppressed)** 되어 **주 예외**에 연결됩니다.
+
+```java
+class Closer implements AutoCloseable {
+    @Override public void close() { throw new RuntimeException("close failed"); }
+}
+
+static void mainLogic() {
+    try (var c = new Closer()) {
+        throw new IllegalStateException("main failed");
+    } catch (Exception e) {
+        System.out.println(e); // IllegalStateException: main failed (주 예외)
+        for (Throwable s : e.getSuppressed()) {
+            System.out.println("suppressed: " + s); // close failed
         }
     }
 }
 ```
 
-### 3.2 Unchecked 예외 (프로그래밍 오류)
-```java
-public class UncheckedExample {
-    public static int divide(int a, int b) {
-        return a / b; // b==0 이면 ArithmeticException (unchecked) 발생
-    }
+> finally에서 직접 `close()`를 호출하며 새 예외를 던지면 **원래 예외가 유실**될 수 있습니다. 억제 예외를 자동으로 관리하는 **try-with-resources**를 사용하세요.
 
-    public static void main(String[] args) {
-        System.out.println(divide(10, 0)); // 예외를 잡지 않으면 런타임에 터짐
-    }
+---
+
+## 4. 오버라이딩과 `throws` 제약
+
+- 하위 클래스는 **상위 메서드가 선언한 checked 예외보다 더 넓은**(상위 타입의) **checked 예외**를 **던질 수 없음**  
+- 더 **좁히거나(하위 타입)**, **unchecked만 던지는 것**은 허용
+
+```java
+class Base {
+    void work() throws java.io.IOException {}
+}
+class Child extends Base {
+    @Override void work() /* throws Exception */ { /* 컴파일 오류: 더 넓어짐 */ }
+    @Override void work() /* OK: throws 없음 */ { }
 }
 ```
 
-### 3.3 사용자 정의 예외 예시
+---
+
+## 5. 사용자 정의 예외 — Checked vs Unchecked
+
 ```java
-// Checked
+// Checked: 호출자가 복구/대응해야 하는 시나리오
 public class InsufficientFundsException extends Exception {
     public InsufficientFundsException(String msg) { super(msg); }
 }
 
-// Unchecked
-public class InvalidStateException extends RuntimeException {
-    public InvalidStateException(String msg) { super(msg); }
+// Unchecked: 잘못된 사용/상태 위반
+public class DomainInvariantViolationException extends RuntimeException {
+    public DomainInvariantViolationException(String msg) { super(msg); }
 }
 ```
 
----
-
-## 4. 처리(try-catch) vs 선언(throws)
-
-- **Checked** 예외는 메서드가 해당 예외를 처리하지 않으면 `throws`로 선언해야 함:
-  ```java
-  void foo() throws IOException { ... }
-  ```
-- **Unchecked** 예외는 `throws` 없이도 메서드 내부에서 `throw` 가능하며, 호출자에서 잡을 필요 없음.
+> 규칙: **복구 가능성**이 있다면 Checked. **코드 버그/계약 위반**이면 Unchecked.
 
 ---
 
-## 5. 언제 어떤 타입을 선택할까? (설계 지침)
+## 6. 예외 전환(번역)과 체이닝 — 원인 보존이 생명
 
-> **전통적 권장사항(많은 문헌에 나오는 관례)**  
-> - **Checked**: *호출자가 합리적으로 복구하거나 조치를 취할 수 있는 상황* (예: I/O 실패, 네트워크 장애, 파일 없음).  
-> - **Unchecked**: *프로그래밍 실수로 간주되는 상황* (null 인자, 잘못된 인덱스, 불변 규약 위반 등) — 호출자가 예외를 "항상" 처리해야 할 필요는 없음.
+### 6.1 Checked → Unchecked (API 부담 줄이기)
 
-**그러나 현실적 고려사항**
-- Checked 예외를 남발하면 API 사용이 번거로워지고, 호출자들이 예외를 무의미하게 캡처해서 무시하는 코드(`catch(Exception e) {}`)가 늘어날 수 있음.
-- 그래서 일부 라이브러리/프레임워크(특히 최근 추세)는 **주로 Unchecked** 예외를 사용하고, 필요시 문서화로 안내하는 접근을 택합니다.
+```java
+String readSilently(java.nio.file.Path path) {
+    try {
+        return java.nio.file.Files.readString(path);
+    } catch (java.io.IOException e) {
+        throw new RuntimeException("읽기 실패: " + path, e); // cause로 포장
+    }
+}
+```
 
-**권장 실무 원칙**
-1. API 설계 시 **복구 가능성**을 기준으로 결정한다. 호출자가 실질적인 복구(재시도, 다른 자원 사용 등)를 할 수 있으면 Checked.
-2. 내부적/프레임워크 수준에서는 Unchecked를 선호하는 경우가 많음(개발 편의성).
-3. 예외 타입을 명확하고 구체적으로 만든다(일반 `Exception` 금지).
-
----
-
-## 6. 예외 전환(Checked → Unchecked) 패턴
-
-라이브러리에서 Checked 예외를 내부적으로 처리하고 호출자에게 Unchecked로 던지고 싶을 때 사용:
+### 6.2 Unchecked → 도메인 예외(명시적 의미화)
 
 ```java
 try {
-    someIoOperation();
-} catch (IOException e) {
-    throw new RuntimeException("IO 실패: " + e.getMessage(), e); // 예외 래핑
+    repo.save(order);
+} catch (RuntimeException e) {
+    throw new OrderPersistenceException("주문 저장 실패", e); // 도메인 의미 부여
 }
 ```
 
-**장점**: 호출자에게 `throws` 부담을 주지 않음.  
-**주의**: 예외 원인을 보존하려면 항상 `cause`로 전달(예: `new RuntimeException(msg, e)`).
+> **체이닝 필수**: 항상 `new XxxException(message, cause)`로 **원인 예외를 보존**하세요.
 
 ---
 
-## 7. 예외 체이닝 (Chaining) — 좋은 관행
-- 예외를 래핑할 때 원래 예외를 `cause`로 전달하면 디버깅이 쉬움:
+## 7. 람다/스트림에서 Checked 예외 다루기
+
+스트림 연산의 함수형 인터페이스는 **checked 예외를 선언하지 않음**. 처리 방법:
+
+### 7.1 래핑 유틸리티로 변환
+
 ```java
-catch (SQLException e) {
-    throw new DataAccessException("DB 오류", e); // DataAccessException은 Unchecked 또는 Checked
+@FunctionalInterface interface ThrowingFunction<T, R, E extends Exception> {
+    R apply(T t) throws E;
+}
+
+static <T, R> java.util.function.Function<T, R>
+wrap(ThrowingFunction<T, R, ?> f) {
+    return t -> {
+        try { return f.apply(t); }
+        catch (Exception e) { throw new RuntimeException(e); } // 전환
+    };
+}
+
+// 사용
+var lines = java.util.stream.Stream.of("a.txt", "b.txt")
+    .map(wrap(java.nio.file.Files::readString))
+    .toList();
+```
+
+### 7.2 개별 try-catch로 매핑
+
+```java
+var list = files.stream().map(p -> {
+    try {
+        return java.nio.file.Files.readString(p);
+    } catch (java.io.IOException e) {
+        return "ERROR:" + p; // 대체값 매핑
+    }
+}).toList();
+```
+
+> 팀 규약에 따라 7.1(전환) 또는 7.2(대체값) 전략을 정해 일관성 유지.
+
+---
+
+## 8. `CompletableFuture`와 예외
+
+- 비동기 작업의 예외는 **CompletionException**(Unchecked)으로 래핑되어 전파
+- `join()`은 언체크 예외로, `get()`은 체크드(`ExecutionException`)로 노출
+
+```java
+var f = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+    if (true) throw new IllegalArgumentException("boom");
+    return 1;
+});
+try {
+    f.join(); // CompletionException(IllegalArgumentException) throw
+} catch (java.util.concurrent.CompletionException e) {
+    System.out.println("cause: " + e.getCause()); // 원인 접근
 }
 ```
-- 스택트레이스에 원래 원인이 남음.
+
+핸들링 메서드:
+
+```java
+f.exceptionally(ex -> { log(ex); return -1; });
+f.handle((val, ex) -> ex == null ? val : fallback());
+```
 
 ---
 
-## 8. 예외 처리의 모범 사례
+## 9. 레이어드 아키텍처 — 예외 매핑 가이드
 
-- **무분별한 catch 금지**: `catch(Exception e)`로 무조건 잡고 무시하면 디버깅이 불가능.
-- **로그와 재처리**: 예외를 잡으면 적절히 로깅하고, 필요하면 재시도/대체 경로를 제공.
-- **try-with-resources 사용**: 자원 해제는 `try-with-resources`(Java 7+)로 안전하게.
-- **API 문서화**: Checked 예외를 사용하는 경우 `@throws`로 문서화하고, 호출자가 어떻게 처리해야 할지 안내.
-- **구체적 예외 사용**: `IllegalArgumentException` 같은 범용 예외 대신 더 구체적인 예외를 만드는 것이 유지보수에 유리.
-- **예외를 흐름 제어로 사용하지 않음**: 예외는 예외 상황용이지 정상 로직의 흐름 제어용이 아님.
+| 레이어 | 권장 예외 | 비고 |
+|---|---|---|
+| **Infra**(DB, 파일, 외부 API) | **Checked**(I/O/SQL) 내부 처리 후 **도메인/Unchecked로 전환** | 인프라 상세를 상위에 누출하지 않기 |
+| **Repository/DAO** | 도메인 특정 `DataAccess`(Unchecked) | 상위 서비스는 인프라 종속 제거 |
+| **Service** | 도메인 `BusinessException`(Unchecked/Checked) | 정책상 복구 가능 여부 판단 |
+| **Controller/API** | 상위로 전파 → 글로벌 핸들러에서 **HTTP 상태 매핑** | 예: 400/404/409/500 |
 
----
+Spring 예시(컨트롤러 어드바이스):
 
-## 9. 예시: 라이브러리 설계 시의 결단 예
-
-- 퍼블릭 API에서 파일 읽기 실패에 대해 호출자가 반드시 처리해야 한다고 판단하면 `IOException`(Checked)을 노출.
-- 반면 프레임워크 내부에서 I/O 실패는 치명적이므로 `Unchecked`로 래핑하여 던질 수 있음.
-
----
-
-## 10. 기타 팁 / 주의사항
-
-- **Unchecked 예외에도 문서화가 필요**: throws 선언을 하지 않더라도 API 문서에 어떤 unchecked 예외가 던져질 수 있는지 명시하면 사용자가 안전하게 호출 가능.
-- **성능**: 예외는 예외 상황 처리용이고, 빈번한 정상 흐름의 제어로 사용하면 성능·가독성에 악영향.
-- **테스트**: 단위 테스트에서 예외 발생 및 전파 경로를 확인하는 테스트를 작성하라.
+```java
+@org.springframework.web.bind.annotation.ControllerAdvice
+class GlobalHandler {
+    @org.springframework.web.bind.annotation.ExceptionHandler(NotFoundException.class)
+    org.springframework.http.ResponseEntity<?> handle(NotFoundException e) {
+        return org.springframework.http.ResponseEntity.status(404).body(e.getMessage());
+    }
+}
+```
 
 ---
 
-## 11. 비교표 요약
+## 10. 베스트 프랙티스 체크리스트
 
-| 항목 | Checked | Unchecked (RuntimeException) |
-|------|---------|-------------------------------|
-| 상속 | `Exception` (단, `RuntimeException` 제외) | `RuntimeException` |
-| 컴파일 검사 | 예 (처리 또는 선언 필요) | 아니오 |
-| 사용 의도 | 호출자가 복구 가능(예정) | 프로그래밍 오류/비복구 상황 |
-| 선언(throws) 필요 | 예 | 선택적 |
-| 예시 | `IOException`, `SQLException` | `NullPointerException`, `IllegalArgumentException` |
+- [ ] **무의미한 `catch (Exception e) {}` 금지** — 로그/대응/전달 중 하나는 반드시  
+- [ ] **도메인 의미가 드러나는 예외 타입** 설계(메시지에 원인/키값 포함)  
+- [ ] **예외로 흐름 제어 금지**(빈번한 정상 로직에 예외 사용 X)  
+- [ ] **try-with-resources**로 자원 누수 방지 + 억제 예외 보존  
+- [ ] **체이닝 필수**: 예외 전환 시 `cause` 연결  
+- [ ] **문서화**: Checked는 `@throws`, Unchecked도 Javadoc에 기재  
+- [ ] **오버라이딩 throws 확대 금지**(컴파일 규칙 숙지)  
+- [ ] **`Throwable`/`Error` 잡지 않기** (필요시 매우 제한적)
 
 ---
 
-## 12. 결론 (권장 요약)
-- **Checked**: 호출자가 합리적으로 복구할 가능성이 있을 때 사용. (I/O, 네트워크, DB 등)  
-- **Unchecked**: API 사용자의 실수나 프로그래밍 오류일 때 사용. (잘못된 인수, 내부 논리 오류)  
-- 실무에서는 **균형**이 중요 — Checked 남발은 API 사용자 부담을 늘리므로, 라이브러리 설계 시 신중히 선택하고, 예외 전환과 체이닝을 통해 명확한 에러 흐름을 제공하라.
+## 11. 실전 예제 모음
+
+### 11.1 체크드 처리 + 복구/대체 플로우
+
+```java
+String readWithFallback(java.nio.file.Path p, String fallback) {
+    try {
+        return java.nio.file.Files.readString(p);
+    } catch (java.io.IOException e) {
+        // 복구/대체 경로
+        return fallback;
+    }
+}
+```
+
+### 11.2 체크드 → 도메인 언체크 전환(체이닝)
+
+```java
+class DataAccessException extends RuntimeException {
+    public DataAccessException(String message, Throwable cause) { super(message, cause); }
+}
+String loadUser(long id) {
+    try {
+        return db.fetchUser(id); // throws SQLException
+    } catch (java.sql.SQLException e) {
+        throw new DataAccessException("사용자 로드 실패 id=" + id, e);
+    }
+}
+```
+
+### 11.3 억제 예외 관찰
+
+```java
+try (var in = java.nio.file.Files.newInputStream(java.nio.file.Path.of("x"))) {
+    throw new IllegalStateException("main");
+} catch (Exception e) {
+    for (Throwable s : e.getSuppressed()) System.out.println(s);
+}
+```
+
+### 11.4 정확한 재-throw(precise rethrow, Java 7+)
+
+```java
+static void rethrow() throws java.io.IOException, java.sql.SQLException {
+    try {
+        mayThrow();
+    } catch (Exception e) {
+        throw e; // 컴파일러가 정적 분석으로 실제 선언된 예외만 허용
+    }
+}
+```
+
+---
+
+## 12. 안티패턴 예시와 개선
+
+### 12.1 예외 삼키기
+
+```java
+try { risky(); } catch (Exception e) { /* 침묵 */ } // ❌
+```
+
+**개선**: 최소한 로깅/전달/대체
+
+```java
+try { risky(); } catch (SpecificException e) {
+    log.warn("실패: {}", e.getMessage(), e); // 혹은 전환
+    throw new DomainException("작업 실패", e);
+}
+```
+
+### 12.2 finally에서 주 예외 유실
+
+```java
+try {
+    throw new IllegalStateException();
+} finally {
+    throw new RuntimeException(); // ❌ 주 예외가 덮여버림
+}
+```
+
+**개선**: try-with-resources 사용 또는 finally에서 새 예외 던지지 않기.
+
+---
+
+## 13. 성능과 테스트 관점
+
+- 예외 생성/스택트레이스 채우기는 **비용이 큼** → 빈번한 정상 흐름에 사용 금지  
+- 단위 테스트에서 **예외 발생 조건/메시지/원인 체이닝/억제 예외**까지 검증
+
+```java
+org.junit.jupiter.api.Test
+void testCause() {
+    var ex = org.junit.jupiter.api.Assertions.assertThrows(
+        DataAccessException.class, () -> loadUser(1)
+    );
+    org.assertj.core.api.Assertions.assertThat(ex).hasCauseInstanceOf(java.sql.SQLException.class);
+}
+```
+
+---
+
+## 14. 최종 정리(선택 가이드)
+
+1) **복구 가능성**이 있고 호출자가 결정/대응해야 한다 → **Checked**  
+2) **계약 위반/버그/잘못된 사용** → **Unchecked**  
+3) 내부(인프라) 예외는 **의미 있는 도메인 예외로 전환**하고 **체이닝**  
+4) 자원은 **try-with-resources**로 관리, 억제 예외를 보존  
+5) API 문서에 **던질 수 있는 예외**(특히 Unchecked도) 명확히 기술
+
+---
+
+## 부록: 미니 예제 프로젝트(메인 포함)
+
+```java
+import java.io.*;
+import java.nio.file.*;
+import java.util.concurrent.*;
+
+class App {
+
+    // Checked 처리 + 전환
+    static String readFileOrThrow(Path p) {
+        try { return Files.readString(p); }
+        catch (IOException e) { throw new RuntimeException("IO 실패: " + p, e); }
+    }
+
+    // 스트림 래핑
+    @FunctionalInterface interface TF<T,R,E extends Exception> { R apply(T t) throws E; }
+    static <T,R> java.util.function.Function<T,R> wrap(TF<T,R,?> f) {
+        return t -> { try { return f.apply(t); } catch (Exception e) { throw new RuntimeException(e); } };
+    }
+
+    static void suppressedDemo() {
+        class C implements AutoCloseable {
+            @Override public void close() { throw new RuntimeException("close"); }
+        }
+        try (var c = new C()) {
+            throw new IllegalStateException("main");
+        } catch (Exception e) {
+            System.out.println("main: " + e);
+            for (var s : e.getSuppressed()) System.out.println("suppressed: " + s);
+        }
+    }
+
+    static void completableDemo() {
+        var f = CompletableFuture.supplyAsync(() -> { throw new IllegalArgumentException("boom"); });
+        try { f.join(); }
+        catch (CompletionException e) { System.out.println("cause: " + e.getCause()); }
+    }
+
+    public static void main(String[] args) {
+        // 1) Checked → Unchecked 전환
+        try { System.out.println(readFileOrThrow(Path.of("nope"))); }
+        catch (RuntimeException e) { System.out.println("wrapped: " + e.getCause()); }
+
+        // 2) 람다에서 checked 다루기
+        var out = java.util.stream.Stream.of("a", "b")
+            .map(wrap(Files::createTempFile)) // IOException → RuntimeException
+            .toList();
+        System.out.println(out);
+
+        // 3) 억제 예외 관찰
+        suppressedDemo();
+
+        // 4) CompletableFuture 예외
+        completableDemo();
+    }
+}
+```
+
+---
+
+### 마무리
+
+Checked/Unchecked의 선택은 **컴파일러 강제를 통한 사용성**과 **실제 복구 가능성**의 균형입니다. **체이닝으로 원인을 보존**하고, **try-with-resources로 억제 예외까지 안전하게 관리**하며, **레벨별 예외 매핑**을 통해 의미 있는 에러 경로를 유지하세요. 이 가이드를 팀 규약으로 삼으면, 예외는 더 이상 골칫거리가 아니라 **정확한 실패 소통 도구**가 됩니다.

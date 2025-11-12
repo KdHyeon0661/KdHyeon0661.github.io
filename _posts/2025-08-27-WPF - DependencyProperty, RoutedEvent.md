@@ -11,7 +11,7 @@ category: WPF
 
 ---
 
-## 0) 한 장 요약 (TL;DR)
+## 0. 한 장 요약 (TL;DR)
 
 - **DependencyProperty(DP)**:  
   - `DependencyObject`에 붙는 **고성능 속성 시스템**. **값 우선순위(애니메이션 > 로컬 값 > 스타일 …)**, **변경 트래킹**, **상속(Inheritance)**, **애니메이션/바인딩/테마** 연동, **레이아웃/렌더 무효화(AffectsMeasure/Arrange/Render)** 등 WPF의 핵심 메커니즘을 제공.  
@@ -27,7 +27,7 @@ category: WPF
 
 ---
 
-## 1) 왜 DependencyProperty인가?
+## 1. 왜 DependencyProperty인가?
 
 ### 1.1 .NET 일반 속성의 한계
 - 단순 C# 속성은 **우선순위/애니메이션/바인딩/상속/변경 알림/테마** 개념 없음.
@@ -41,7 +41,7 @@ category: WPF
 
 ---
 
-## 2) DependencyProperty의 **기본 사용 패턴**
+## 2. DependencyProperty의 **기본 사용 패턴**
 
 아래는 `MeterBar`라는 `FrameworkElement`에 DP `Value`를 정의하는 최소 예제입니다.
 
@@ -109,7 +109,7 @@ public class MeterBar : FrameworkElement
 
 ---
 
-## 3) **값 우선순위(Precedence)** 완전 정리
+## 3. **값 우선순위(Precedence)** 완전 정리
 
 WPF는 한 속성에 대해 여러 출처가 값을 제시할 수 있으므로 **우선순위 체계**로 최종 유효값을 결정합니다(간략화):
 
@@ -140,7 +140,7 @@ myBar.BeginAnimation(MeterBar.ValueProperty, null);
 
 ---
 
-## 4) 메타데이터(FrameworkPropertyMetadata)의 **옵션 플래그**
+## 4. 메타데이터(FrameworkPropertyMetadata)의 **옵션 플래그**
 
 - **AffectsMeasure / AffectsArrange / AffectsRender**: 값 변경 시 레이아웃/렌더 자동 무효화.  
 - **Inherits**: **속성값 상속** 허용(예: `FontFamily`, `FlowDirection`).  
@@ -158,7 +158,7 @@ new FrameworkPropertyMetadata(
 
 ---
 
-## 5) **Attached Property(부착 속성)**
+## 5. **Attached Property(부착 속성)**
 
 다른 타입의 객체에 값을 “붙일” 수 있는 DP. 레이아웃 패널의 `Grid.Row`, `Canvas.Left`가 대표적.
 
@@ -183,7 +183,7 @@ public static class DockExtensions
 
 ---
 
-## 6) **ReadOnly DP**와 **DependencyPropertyKey**
+## 6. **ReadOnly DP**와 **DependencyPropertyKey**
 
 컨트롤 내부 상태는 외부에서 `SetValue` 못하게 막고 싶을 때 **읽기 전용 DP**를 쓴다.
 
@@ -218,7 +218,7 @@ public class RangeMeter : FrameworkElement
 
 ---
 
-## 7) **PropertyChangedCallback / Coerce / Validate** 패턴 심화
+## 7. **PropertyChangedCallback / Coerce / Validate** 패턴 심화
 
 - **Validate**: 값 자체의 기본 제약(스레드 안전, 빠르게).  
 - **Coerce**: **객체 상태 기반** 보정. 다른 DP 변화 시 **재강제(CoerceValue)** 호출권장.  
@@ -252,7 +252,7 @@ private static object CoerceValue(DependencyObject d, object baseValue)
 
 ---
 
-## 8) DP와 **INotifyPropertyChanged**의 관계
+## 8. DP와 **INotifyPropertyChanged**의 관계
 
 - DP는 자체적으로 변경 트래킹/전파를 제공 → **일반적으로 DP에 INPC 불필요**.  
 - **ViewModel** 계층에서 POCO 속성 바인딩 시에는 INPC가 **필수**.  
@@ -260,7 +260,7 @@ private static object CoerceValue(DependencyObject d, object baseValue)
 
 ---
 
-## 9) DP **도구·디버깅**
+## 9. DP **도구·디버깅**
 
 - **Output 창 바인딩 오류** 확인: 경로/타입 불일치  
 - `DependencyPropertyDescriptor.FromProperty(...).AddValueChanged(...)`로 변화 훅  
@@ -278,7 +278,7 @@ while (enumerator.MoveNext())
 
 ---
 
-## 10) **RoutedEvent** 개요
+## 10. **RoutedEvent** 개요
 
 ### 10.1 왜 Routed?
 - 복잡한 트리(논리/비주얼)에서 **개별 요소마다 핸들러**를 다는 건 비효율.  
@@ -292,7 +292,7 @@ while (enumerator.MoveNext())
 
 ---
 
-## 11) RoutedEvent 정의·등록·발생(raise)
+## 11. RoutedEvent 정의·등록·발생(raise)
 
 ### 11.1 사용자 정의 RoutedEvent 등록
 
@@ -339,7 +339,7 @@ private void OnBadgeClicked(object sender, RoutedEventArgs e)
 
 ---
 
-## 12) RoutedEvent **핵심 속성**: `Source` vs `OriginalSource`, `Handled`
+## 12. RoutedEvent **핵심 속성**: `Source` vs `OriginalSource`, `Handled`
 
 - **OriginalSource**: **최초** 이벤트가 발생한 요소(보통 가장 깊은 하위).  
 - **Source**: 전파 중 **현재 컨텍스트에서 보정된 소스**(템플릿 경계에서 바뀔 수 있음).  
@@ -356,7 +356,7 @@ myListBox.AddHandler(UIElement.MouseDownEvent,
 
 ---
 
-## 13) **클래스 핸들러(Class Handler)**
+## 13. **클래스 핸들러(Class Handler)**
 
 컨트롤 소유 타입에 **정적 등록**하여, 인스턴스에 별도 코드 없이 공통 동작을 주입.
 
@@ -383,7 +383,7 @@ public class MeterBar : FrameworkElement
 
 ---
 
-## 14) **터널링(Preview) vs 버블링** 실전 이해
+## 14. **터널링(Preview) vs 버블링** 실전 이해
 
 예: `PreviewMouseDown`(터널링)에서 상위 컨테이너가 **해당 입력을 차단**하면, 하위 버튼의 `Click`까지 **막을 수 있음**.
 
@@ -398,7 +398,7 @@ this.PreviewMouseDown += (s, e) =>
 
 ---
 
-## 15) RoutedEvent와 **명령(ICommand) 라우팅**
+## 15. RoutedEvent와 **명령(ICommand) 라우팅**
 
 - `Button.Command` 등 **Command 바인딩**은 내부적으로 **라우팅**과 결합.  
 - `CommandBinding`을 **상위 컨테이너**에 걸어두면 하위 컨트롤에서 발생한 명령도 처리 가능.
@@ -420,7 +420,7 @@ private void OnCopyExecuted(object sender, ExecutedRoutedEventArgs e) { /* 도�
 
 ---
 
-## 16) 스타일/트리거에서 RoutedEvent 활용
+## 16. 스타일/트리거에서 RoutedEvent 활용
 
 XAML 스타일에서 라우티드 이벤트를 **선언적으로** 연결 가능.
 
@@ -454,7 +454,7 @@ XAML 스타일에서 라우티드 이벤트를 **선언적으로** 연결 가능
 
 ---
 
-## 17) **RoutedEvent 등록 시그니처** 심화
+## 17. **RoutedEvent 등록 시그니처** 심화
 
 ```csharp
 public static readonly RoutedEvent MyEvent =
@@ -470,7 +470,7 @@ public static readonly RoutedEvent MyEvent =
 
 ---
 
-## 18) **RoutedEventArgs** 파생과 커스텀 데이터
+## 18. **RoutedEventArgs** 파생과 커스텀 데이터
 
 ```csharp
 public delegate void BadgeChangedEventHandler(object sender, BadgeChangedEventArgs e);
@@ -497,7 +497,7 @@ RaiseEvent(new BadgeChangedEventArgs(BadgeChangedEvent, this, oldCount, newCount
 
 ---
 
-## 19) **RoutedEvent와 성능·안정성 체크리스트**
+## 19. **RoutedEvent와 성능·안정성 체크리스트**
 
 1. **불필요한 전파 방지**: 적절히 `e.Handled = true` 또는 Direct 이벤트 사용.  
 2. **handledEventsToo** 남용주의: 이미 처리된 이벤트까지 수신하면 빈번/중복 호출 증가.  
@@ -506,7 +506,7 @@ RaiseEvent(new BadgeChangedEventArgs(BadgeChangedEvent, this, oldCount, newCount
 
 ---
 
-## 20) **DP·RE를 함께 쓰는 패턴** (입력→상태→렌더)
+## 20. **DP·RE를 함께 쓰는 패턴** (입력→상태→렌더)
 
 예: 마우스 드래그로 `Value`를 업데이트하는 게이지 컨트롤.
 
@@ -575,7 +575,7 @@ public class DragMeter : FrameworkElement
 
 ---
 
-## 21) DP **상속(Inherits)**
+## 21. DP **상속(Inherits)**
 
 부모에서 설정한 값이 자식으로 **흘러 내려감**. 대표적으로 `FontFamily`, `FlowDirection`.
 
@@ -601,7 +601,7 @@ public Brush AccentBrush
 
 ---
 
-## 22) DP **애니메이션**과의 상호작용
+## 22. DP **애니메이션**과의 상호작용
 
 애니메이션은 **DP에 덮어씌우는 레이어**. Local/Style 값보다 **우선**.
 
@@ -620,7 +620,7 @@ myShape.Fill = animBrush; // DP 값으로 설정
 
 ---
 
-## 23) 고급: **DependencyPropertyDescriptor**와 디자인 타임
+## 23. 고급: **DependencyPropertyDescriptor**와 디자인 타임
 
 디자이너/도구·복잡 시나리오에서 DP 변화를 **관찰**.
 
@@ -633,7 +633,7 @@ dpd.AddValueChanged(myBar, (_, __) => Debug.WriteLine($"Value changed: {myBar.Va
 
 ---
 
-## 24) **메모리/성능** 관점에서의 DP
+## 24. **메모리/성능** 관점에서의 DP
 
 - **희소 저장**: 기본값은 메타테이블 참조, **로컬 값만** 엔트리 보유 → 많은 객체에도 메모리 절감.  
 - **Freeze 가능한 Freezable** 사용: 변경 불가로 만들어 **스냅샷·공유** 성능 향상.  
@@ -641,7 +641,7 @@ dpd.AddValueChanged(myBar, (_, __) => Debug.WriteLine($"Value changed: {myBar.Va
 
 ---
 
-## 25) RoutedEvent **디버깅**과 흔한 함정
+## 25. RoutedEvent **디버깅**과 흔한 함정
 
 - **핸들러가 안 불린다**: 중간에서 `e.Handled = true`로 차단됐을 수 있음. `handledEventsToo:true`로 검사.  
 - **OriginalSource 캐스팅 예외**: 템플릿 내부 요소로 들어갈 수 있음. 시각 트리를 따라 조심스럽게 탐색.  
@@ -649,7 +649,7 @@ dpd.AddValueChanged(myBar, (_, __) => Debug.WriteLine($"Value changed: {myBar.Va
 
 ---
 
-## 26) 예제: **템플릿 내부 요소 이벤트를 상위에서 처리**
+## 26. 예제: **템플릿 내부 요소 이벤트를 상위에서 처리**
 
 `ListBoxItem` 템플릿 안의 `Button` 클릭을 **상위 ListBox**에서 모두 처리하고 싶다.
 
@@ -685,7 +685,7 @@ Files.AddHandler(Button.ClickEvent, new RoutedEventHandler((s, e) =>
 
 ---
 
-## 27) 예제: **Preview 키 입력 차단·필터**
+## 27. 예제: **Preview 키 입력 차단·필터**
 
 숫자만 입력 가능한 TextBox를 **상위 Grid**에서 한 번에 통제.
 
@@ -701,7 +701,7 @@ this.PreviewTextInput += (s, e) =>
 
 ---
 
-## 28) **이벤트 트리거** vs **스타일 트리거** vs **코드** 선택 기준
+## 28. **이벤트 트리거** vs **스타일 트리거** vs **코드** 선택 기준
 
 - **순수 시각 변화**(색/Opacity/Transform 등) → **EventTrigger/Storyboard** 권장.  
 - **도메인 로직**(모델 변경/IO/명령) → **CommandBinding/코드 비하인드**.  
@@ -709,7 +709,7 @@ this.PreviewTextInput += (s, e) =>
 
 ---
 
-## 29) **접근성(A11y)** 관점의 RE/DP
+## 29. **접근성(A11y)** 관점의 RE/DP
 
 - RE: **터널링** 단계에서 키보드 포커스 이동/차단, 스크린리더 이벤트 디스패치에 영향.  
 - DP: `AutomationProperties.Name/HelpText` 등 **Attached DP**로 UIA 속성 주입.
@@ -722,7 +722,7 @@ this.PreviewTextInput += (s, e) =>
 
 ---
 
-## 30) **테스트/진단** 팁
+## 30. **테스트/진단** 팁
 
 - **UIAutomation**으로 라우트/포커스 흐름 점검.  
 - **PresentationTraceSources.TraceLevel=High**로 바인딩/DP 트레이스.  
@@ -731,7 +731,7 @@ this.PreviewTextInput += (s, e) =>
 
 ---
 
-## 31) 미니 종합 데모: **Badge List** (RE로 입력, DP로 상태, 자동 렌더)
+## 31. 미니 종합 데모: **Badge List** (RE로 입력, DP로 상태, 자동 렌더)
 
 ### 31.1 Badge 모델·VM
 
@@ -824,7 +824,7 @@ root.AddHandler(BadgeButton.BadgeClickedEvent, new RoutedEventHandler((s, e) =>
 
 ---
 
-## 32) FAQ
+## 32. FAQ
 
 **Q1. 일반 C# 속성 vs DP를 언제 고를까?**  
 - 템플릿/스타일/바인딩/애니메이션/상속이 필요 없고, 내부 로직용이면 **일반 속성**.  
@@ -842,7 +842,7 @@ root.AddHandler(BadgeButton.BadgeClickedEvent, new RoutedEventHandler((s, e) =>
 
 ---
 
-## 33) 체크리스트 (실전 적용 전)
+## 33. 체크리스트 (실전 적용 전)
 
 - [ ] 컨트롤 공개 속성은 **DP**로 만들었는가? (바인딩/스타일/애니메이션 필요 여부)  
 - [ ] **AffectsMeasure/Arrange/Render** 플래그가 올바른가?  
@@ -854,7 +854,7 @@ root.AddHandler(BadgeButton.BadgeClickedEvent, new RoutedEventHandler((s, e) =>
 
 ---
 
-## 34) 마무리
+## 34. 마무리
 
 - **DependencyProperty**는 “속성의 생애주기 전체(값 계산 → 무효화 → 전파)”를 시스템 차원에서 다룹니다.  
 - **RoutedEvent**는 “이벤트의 생애주기 전체(발생 → 전파 → 핸들링 우선순위)”를 트리 차원에서 다룹니다.  

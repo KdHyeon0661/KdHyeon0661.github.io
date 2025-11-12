@@ -6,7 +6,7 @@ category: Csharp
 ---
 # 생성자, this/base 키워드, 메서드 오버로딩, 메서드 오버라이딩
 
-## 0) 빠른 개요 (TL;DR)
+## 0. 빠른 개요 (TL;DR)
 
 - **생성자**: 유효 상태 보장(검증/불변조건), **체이닝**은 `this(...)`·**상속 호출**은 `base(...)`로, 둘 다 **첫 줄**에서만 호출.  
 - **this**: 현재 인스턴스 참조, 멤버 숨김 해소, **생성자 체이닝**. 확장 메서드의 `this T`는 **수신자 매개변수**.  
@@ -17,7 +17,7 @@ category: Csharp
 
 ---
 
-## 1) 생성자(Constructor)
+## 1. 생성자(Constructor)
 
 ### 1.1 기본 생성자와 초기화
 
@@ -126,7 +126,7 @@ public class Point(int x, int y) // C# 12: 클래스 프라이머리 생성자
 
 ---
 
-## 2) `this` 키워드
+## 2. `this` 키워드
 
 ### 2.1 현재 인스턴스 참조/숨김 해소
 
@@ -158,7 +158,7 @@ Console.WriteLine("  ".IsNullOrWhite()); // true
 
 ---
 
-## 3) `base` 키워드
+## 3. `base` 키워드
 
 ### 3.1 부모 생성자 호출
 
@@ -189,7 +189,7 @@ class Dog : Animal
 
 ---
 
-## 4) 생성자 오버로딩(Overloading)과 패턴
+## 4. 생성자 오버로딩(Overloading)과 패턴
 
 ```csharp
 class Rectangle
@@ -218,7 +218,7 @@ public static Rectangle Square(int size) => new(size, size);
 
 ---
 
-## 5) 메서드 오버로딩 (Method Overloading)
+## 5. 메서드 오버로딩 (Method Overloading)
 
 ### 5.1 기본 규칙
 
@@ -269,7 +269,7 @@ int Sum(in ReadOnlySpan<int> s) { /*...*/ return 0; }
 
 ---
 
-## 6) 메서드 오버라이딩 (Method Overriding)
+## 6. 메서드 오버라이딩 (Method Overriding)
 
 ### 6.1 기본
 
@@ -344,7 +344,7 @@ class UserRepo : Repo
 
 ---
 
-## 7) `base`와 오버라이딩 활용 패턴
+## 7. `base`와 오버라이딩 활용 패턴
 
 ```csharp
 class Logger
@@ -365,7 +365,7 @@ class TimeLogger : Logger
 
 ---
 
-## 8) 실전 종합 예제 — 생성자 체이닝·검증·오버로딩·오버라이딩
+## 8. 실전 종합 예제 — 생성자 체이닝·검증·오버로딩·오버라이딩
 
 ```csharp
 using System;
@@ -434,7 +434,7 @@ class Program
 
 ---
 
-## 9) 오버로드 해석(Overload Resolution) 미세 규칙 요약
+## 9. 오버로드 해석(Overload Resolution) 미세 규칙 요약
 
 1. **정확 일치**가 최우선.  
 2. **암시적 수치 변환**(int→long, float→double 등)은 가능하나, 모호하면 오류.  
@@ -451,7 +451,7 @@ void F(long x) {}
 
 ---
 
-## 10) 설계 팁과 체크리스트
+## 10. 설계 팁과 체크리스트
 
 - **생성자**
   - 유효성 검증을 **항상** 포함.  
@@ -473,7 +473,7 @@ void F(long x) {}
 
 ---
 
-## 11) 수학적 직관 — 오버로드/오버라이드 선택
+## 11. 수학적 직관 — 오버로드/오버라이드 선택
 
 오버로드 해석은 **정적(컴파일 타임)** 최적 일치 문제이며, 타입 변환 비용 함수 \(c\)가 있을 때
 
@@ -485,7 +485,7 @@ $$
 
 ---
 
-## 12) 연습 문제
+## 12. 연습 문제
 
 1) `Order`  
    - 생성자 오버로딩: `(id)`, `(id, items)`, `(id, items, coupon)` → 모든 검증은 **하나의 생성자**에 집중 후 `this(...)`.  
@@ -500,7 +500,7 @@ $$
 
 ---
 
-## 13) 요약
+## 13. 요약
 
 - **생성자**: 유효 상태 보장, `this(...)`/`base(...)` 규칙 숙지.  
 - **this/base**: 현재/부모 맥락 명시, 체이닝·부모호출에 필수.  

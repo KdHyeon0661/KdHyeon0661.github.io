@@ -11,7 +11,7 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 
 ---
 
-## 1) 핵심 차이 한눈에
+## 1. 핵심 차이 한눈에
 
 | 항목 | DataTemplate | ControlTemplate |
 |---|---|---|
@@ -23,7 +23,7 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 
 ---
 
-## 2) DataTemplate: 데이터 → 뷰
+## 2. DataTemplate: 데이터 → 뷰
 
 ### 2.1 기본 사용 (Implicit by DataType)
 `DataType`만 지정하면 **해당 타입의 데이터가 표시될 때 자동 적용**됩니다.
@@ -151,7 +151,7 @@ public class OrderTemplateSelector : DataTemplateSelector
 
 ---
 
-## 3) ControlTemplate: 컨트롤의 스킨
+## 3. ControlTemplate: 컨트롤의 스킨
 
 ### 3.1 기본 구조
 - **컨트롤의 시각 트리**를 재정의합니다.
@@ -292,7 +292,7 @@ public class SearchBox : Control
 
 ---
 
-## 4) ItemsTemplate vs ItemContainerStyle vs ItemsPanel
+## 4. ItemsTemplate vs ItemContainerStyle vs ItemsPanel
 
 - **ItemTemplate / ItemTemplateSelector**: **각 데이터 항목의 모양**  
 - **ItemContainerStyle**: **컨테이너(ListBoxItem, TreeViewItem)의 속성/상태**  
@@ -326,7 +326,7 @@ public class SearchBox : Control
 
 ---
 
-## 5) 성능 & 구조 팁
+## 5. 성능 & 구조 팁
 
 - **가상화**: 대량 목록은 `VirtualizingStackPanel.IsVirtualizing="True"`(기본) 유지, `ScrollUnit="Pixel"` 검토  
 - **Reusable 리소스**: 브러시/그라디언트/Geometry는 리소스로 올려 **공유** (가능하면 Freezable Freeze)  
@@ -336,7 +336,7 @@ public class SearchBox : Control
 
 ---
 
-## 6) 언제 어떤 템플릿을 쓸까?
+## 6. 언제 어떤 템플릿을 쓸까?
 
 - **데이터가 다르면 모양도 달라야** → **DataTemplate / Selector**  
 - **같은 컨트롤인데 스킨을 바꾸고 싶다** → **ControlTemplate**  
@@ -345,7 +345,7 @@ public class SearchBox : Control
 
 ---
 
-## 7) 흔한 실수 체크리스트
+## 7. 흔한 실수 체크리스트
 
 - **ItemsPresenter 누락**(ItemsControl 템플릿) → 아이템이 안 보임  
 - ControlTemplate 안에서 **일반 `{Binding}`으로 부모 속성 접근** → **`TemplatedParent`**로 바인딩  
@@ -355,7 +355,7 @@ public class SearchBox : Control
 
 ---
 
-## 8) 종합 예: 타입별 DataTemplate + 스킨 교체 Button
+## 8. 종합 예: 타입별 DataTemplate + 스킨 교체 Button
 
 ```xml
 <Window.Resources>

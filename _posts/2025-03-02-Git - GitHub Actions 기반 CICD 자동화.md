@@ -6,7 +6,7 @@ category: Git
 ---
 # GitHub Actions 기반 CI/CD 자동화
 
-## 0) Actions 용어·디렉터리 구조 상기
+## 0. Actions 용어·디렉터리 구조 상기
 
 - 워크플로(Workflow): `.github/workflows/*.yml`
 - 잡(Job): 워크플로 내부의 병렬/순차 실행 단위
@@ -26,7 +26,7 @@ category: Git
 
 ---
 
-## 1) 최소 CI — Node.js 테스트 (초안 확장)
+## 1. 최소 CI — Node.js 테스트 (초안 확장)
 
 기본 예제에 캐시와 타 버전 테스트를 더하면 다음과 같다.
 
@@ -87,7 +87,7 @@ jobs:
 
 ---
 
-## 2) Python·Java 예제(멀티 언어 저장소/모노레포 대비)
+## 2. Python·Java 예제(멀티 언어 저장소/모노레포 대비)
 
 ### 2.1 Python(pytest + 캐시)
 
@@ -165,7 +165,7 @@ jobs:
 
 ---
 
-## 3) 캐시 전략 심화 — actions/cache, Docker Layer Cache
+## 3. 캐시 전략 심화 — actions/cache, Docker Layer Cache
 
 ### 3.1 Node/PNPM/Yarn 등 수동 캐시 키 제어
 
@@ -229,7 +229,7 @@ jobs:
 
 ---
 
-## 4) 아티팩트·커버리지·주석(Annotations)
+## 4. 아티팩트·커버리지·주석(Annotations)
 
 ### 4.1 커버리지 업로드(예: Codecov)
 
@@ -265,7 +265,7 @@ jobs:
 
 ---
 
-## 5) 브랜치 보호 + Status Checks + 환경(Environments) 보호
+## 5. 브랜치 보호 + Status Checks + 환경(Environments) 보호
 
 ### 5.1 브랜치 보호(요지)
 - Settings → Branches → Add rule
@@ -288,7 +288,7 @@ environment:
 
 ---
 
-## 6) GitHub Secrets/Variables/Permissions — 보안 기본기
+## 6. GitHub Secrets/Variables/Permissions — 보안 기본기
 
 ### 6.1 최소 권한(Principle of Least Privilege)
 
@@ -327,7 +327,7 @@ env:
 
 ---
 
-## 7) OIDC로 클라우드에 보안 접속(AWS 예시) — 키 없는 배포
+## 7. OIDC로 클라우드에 보안 접속(AWS 예시) — 키 없는 배포
 
 ### 7.1 AWS IAM 역할 구성(개요)
 - GitHub OIDC Provider 등록(Organization/Repository level)
@@ -382,7 +382,7 @@ jobs:
 
 ---
 
-## 8) Netlify/Firebase 배포(초안 확장)
+## 8. Netlify/Firebase 배포(초안 확장)
 
 ### 8.1 Netlify
 
@@ -419,7 +419,7 @@ jobs:
 
 ---
 
-## 9) Kubernetes 배포(kubectl), Helm
+## 9. Kubernetes 배포(kubectl), Helm
 
 {% raw %}
 ```yaml
@@ -476,7 +476,7 @@ Helm 이용시:
 
 ---
 
-## 10) 모노레포 최적화 — paths-filter로 변경 영역만 실행
+## 10. 모노레포 최적화 — paths-filter로 변경 영역만 실행
 
 {% raw %}
 ```yaml
@@ -524,7 +524,7 @@ jobs:
 
 ---
 
-## 11) 동시성·취소·타임아웃 — 불필요한 실행 줄이기
+## 11. 동시성·취소·타임아웃 — 불필요한 실행 줄이기
 
 {% raw %}
 ```yaml
@@ -544,7 +544,7 @@ jobs:
 
 ---
 
-## 12) 재사용 워크플로(organization-wide 표준화)
+## 12. 재사용 워크플로(organization-wide 표준화)
 
 ### 12.1 호출 당하는 워크플로
 
@@ -590,7 +590,7 @@ jobs:
 
 ---
 
-## 13) 수동 실행(workflow_dispatch) + 입력 파라미터·승인
+## 13. 수동 실행(workflow_dispatch) + 입력 파라미터·승인
 
 {% raw %}
 ```yaml
@@ -618,7 +618,7 @@ jobs:
 
 ---
 
-## 14) 스케줄 작업(schedule) — 야간 빌드·보건 점검
+## 14. 스케줄 작업(schedule) — 야간 빌드·보건 점검
 
 ```yaml
 on:
@@ -635,7 +635,7 @@ jobs:
 
 ---
 
-## 15) 실패 알림 — Slack/Discord/Webhook
+## 15. 실패 알림 — Slack/Discord/Webhook
 
 Slack 예:
 
@@ -656,7 +656,7 @@ Slack 예:
 
 ---
 
-## 16) PR 크기·라벨·자동 병합
+## 16. PR 크기·라벨·자동 병합
 
 ### 16.1 PR 라벨링(크기별)
 
@@ -706,7 +706,7 @@ jobs:
 
 ---
 
-## 17) Self-hosted Runner — GPU/사내망/프라이빗 네트워크
+## 17. Self-hosted Runner — GPU/사내망/프라이빗 네트워크
 
 - 대규모 빌드·특수 하드웨어(GPU)·내부망 접근이 필요한 경우 Self-hosted Runner 사용
 - 보안 수칙
@@ -719,7 +719,7 @@ jobs:
 
 ---
 
-## 18) 워크플로 간 데이터 전달 — Artifacts·Outputs
+## 18. 워크플로 간 데이터 전달 — Artifacts·Outputs
 
 ### 18.1 스텝/잡 Output
 
@@ -756,7 +756,7 @@ jobs:
 
 ---
 
-## 19) 릴리스·태깅·체인지로그 자동화
+## 19. 릴리스·태깅·체인지로그 자동화
 
 ```yaml
 # .github/workflows/release.yml
@@ -783,7 +783,7 @@ jobs:
 
 ---
 
-## 20) 품질·보안 내재화: CodeQL, Secret Scanning, 권한
+## 20. 품질·보안 내재화: CodeQL, Secret Scanning, 권한
 
 ### 20.1 CodeQL
 
@@ -822,7 +822,7 @@ jobs:
 
 ---
 
-## 21) 운영 팁 모음 — 현업에서 가장 자주 겪는 이슈
+## 21. 운영 팁 모음 — 현업에서 가장 자주 겪는 이슈
 
 1) **러너 시간 절약**: paths-filter로 변경 없는 영역 CI 생략, `concurrency`로 중복 취소  
 2) **긴 잡 분해**: “빌드 → 테스트 → 린트”를 병렬 잡으로 쪼개 전체 시간을 단축  
@@ -837,7 +837,7 @@ jobs:
 
 ---
 
-## 22) 끝에서 정리 — 실무형 체크리스트
+## 22. 끝에서 정리 — 실무형 체크리스트
 
 - 트리거: `pull_request`, `push(main)`, `workflow_dispatch`, `schedule`, `release`
 - 품질: Lint, Test(JUnit/coverage), CodeQL, Secret Scanning

@@ -4,7 +4,7 @@ title: JavaScript - Promise와 then(), catch()
 date: 2025-04-22 20:20:23 +0900
 category: JavaScript
 ---
-# 1) Promise란? — “미래에 결정될 값(또는 실패 이유)을 담는 상자”
+# 1. Promise란? — “미래에 결정될 값(또는 실패 이유)을 담는 상자”
 
 ```js
 const p = new Promise((resolve, reject) => {
@@ -26,7 +26,7 @@ const p = new Promise((resolve, reject) => {
 
 ---
 
-# 2) `.then()` — 성공/실패 핸들러와 “평탄화(flattening)”
+# 2. `.then()` — 성공/실패 핸들러와 “평탄화(flattening)”
 
 ```js
 p.then(
@@ -44,7 +44,7 @@ p.then(
 
 ---
 
-# 3) `.catch()` — 실패 전용 핸들러(전파/복구/재throw)
+# 3. `.catch()` — 실패 전용 핸들러(전파/복구/재throw)
 
 ```js
 p
@@ -63,7 +63,7 @@ p
 
 ---
 
-# 4) `.finally()` — 성공/실패 무관 “청소 영역”
+# 4. `.finally()` — 성공/실패 무관 “청소 영역”
 
 ```js
 doSomething()
@@ -77,7 +77,7 @@ doSomething()
 
 ---
 
-# 5) 체이닝 & 에러 전파 규칙 — “항상 Promise를 반환한다”
+# 5. 체이닝 & 에러 전파 규칙 — “항상 Promise를 반환한다”
 
 ```js
 login()
@@ -100,7 +100,7 @@ login()
 
 ---
 
-# 6) 실전 예제 — 모의 비동기 API
+# 6. 실전 예제 — 모의 비동기 API
 
 ```js
 function asyncJob() {
@@ -121,7 +121,7 @@ asyncJob()
 
 ---
 
-# 7) 중첩 then ❌ vs 체이닝 ✅
+# 7. 중첩 then ❌ vs 체이닝 ✅
 
 ```js
 // ❌ 중첩(콜백 지옥과 유사)
@@ -140,7 +140,7 @@ login()
 
 ---
 
-# 8) Promise 조합기(Combinators) — 병렬/경쟁/종료 대기
+# 8. Promise 조합기(Combinators) — 병렬/경쟁/종료 대기
 
 ## 8.1 `Promise.all(iterable)`
 - 모든 Promise가 **성공**해야 전체가 성공. 하나라도 실패 → 즉시 reject.
@@ -187,7 +187,7 @@ Promise.any([tryPrimary(), trySecondary()])
 
 ---
 
-# 9) 직렬/병렬/동시성 제어 패턴
+# 9. 직렬/병렬/동시성 제어 패턴
 
 ## 9.1 직렬(순차) 실행
 ```js
@@ -222,7 +222,7 @@ function withLimit(limit, tasks) {
 
 ---
 
-# 10) 타임아웃/취소/리트라이 — 견고한 네트워킹
+# 10. 타임아웃/취소/리트라이 — 견고한 네트워킹
 
 ## 10.1 타임아웃 래퍼
 ```js
@@ -269,7 +269,7 @@ async function retry(fn, { attempts = 3, baseMs = 300 } = {}) {
 
 ---
 
-# 11) 콜백 API를 Promise로 — promisify
+# 11. 콜백 API를 Promise로 — promisify
 
 ```js
 const fs = require("fs");
@@ -284,7 +284,7 @@ readFileP("a.txt")
 
 ---
 
-# 12) 마이크로태스크 큐와 이벤트 루프 — 실행 타이밍 이해
+# 12. 마이크로태스크 큐와 이벤트 루프 — 실행 타이밍 이해
 
 - `then/catch/finally` 콜백은 **마이크로태스크 큐**에 들어가며,  
   현재 **콜스택**이 비고 **매크로태스크**(timer, I/O 등)보다 **우선** 처리된다.
@@ -298,7 +298,7 @@ console.log("sync");
 
 ---
 
-# 13) `unhandledrejection` — 놓친 에러 잡기
+# 13. `unhandledrejection` — 놓친 에러 잡기
 
 브라우저:
 ```js
@@ -318,7 +318,7 @@ process.on("unhandledRejection", (reason, promise) => {
 
 ---
 
-# 14) 안티패턴 & 베스트 프랙티스
+# 14. 안티패턴 & 베스트 프랙티스
 
 ## 14.1 “Promise 생성자 오남용(new Promise 안에서 또 Promise)”
 ```js
@@ -354,7 +354,7 @@ get().then(v => process(v));
 
 ---
 
-# 15) then ↔ async/await 대응 관계(응용)
+# 15. then ↔ async/await 대응 관계(응용)
 
 ```js
 // then/catch
@@ -389,7 +389,7 @@ async function flow() {
 
 ---
 
-# 16) 실전 시나리오 — 사용자/게시글 가져오기
+# 16. 실전 시나리오 — 사용자/게시글 가져오기
 
 ```js
 function getUser() {
@@ -421,7 +421,7 @@ getUser()
 
 ---
 
-# 17) 패턴 모음 — 실무에서 바로 쓰는 스니펫
+# 17. 패턴 모음 — 실무에서 바로 쓰는 스니펫
 
 ## 17.1 조건부 체이닝(가드)
 ```js
@@ -455,7 +455,7 @@ getA()
 
 ---
 
-# 18) 디버깅 팁
+# 18. 디버깅 팁
 
 - 체인의 각 단계에 **이름 있는 함수**를 사용하면 스택과 로깅이 명확해진다.
 - `.catch()`를 **가까운 곳**과 **끝**에 각각 두어,  
@@ -464,7 +464,7 @@ getA()
 
 ---
 
-# 19) 체크리스트 요약
+# 19. 체크리스트 요약
 
 - [ ] 핸들러는 **값/Promise 반환**, 실패는 **throw**.
 - [ ] 에러는 아래 **첫 `.catch()`** 가 받는다(복구/재throw 선택).
@@ -476,7 +476,7 @@ getA()
 
 ---
 
-# 20) 미니 퀴즈
+# 20. 미니 퀴즈
 
 ```js
 // Q1: 아래의 출력 순서는?

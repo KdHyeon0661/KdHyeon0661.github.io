@@ -4,7 +4,7 @@ title: Spring - CI/CD 파이프라인
 date: 2025-10-21 17:25:23 +0900
 category: Spring
 ---
-# 21) CI/CD 파이프라인 — GitHub Actions·Argo CD, 품질 게이트, 버전/릴리스/체인지로그 자동화
+# 21. CI/CD 파이프라인 — GitHub Actions·Argo CD, 품질 게이트, 버전/릴리스/체인지로그 자동화
 
 > 목표: **“푸시 → 테스트 → 이미지빌드/보안스캔 → 매니페스트 업데이트 → 자동 배포/승인 → 프로덕션 릴리스”**까지의 풀파이프라인을 예제와 함께 뼈대부터 완성한다.  
 > 기준: Spring Boot 3.x(Gradle), Docker/BuildKit, Kubernetes(+Helm), **GitHub Actions**로 CI, **Argo CD**로 CD, 품질은 **테스트·커버리지·Lint**를 **게이트**로 삼는다. 버전/릴리스/체인지로그는 **Conventional Commits**를 기반으로 자동화한다.

@@ -141,12 +141,12 @@ foreach($k in $keys){
 ### A) 경로를 항상 이중 따옴표로
 ```powershell
 # 예: ImagePath가 C:\Program Files\Vendor App\bin\app.exe -k start 인 서비스
-# 1) 현재 값 확인
+# 1. 현재 값 확인
 $svcKey = "HKLM:\SYSTEM\CurrentControlSet\Services\VendorApp"
 (Get-ItemProperty $svcKey).ImagePath
-# 2) 따옴표 포함 절대경로로 재설정
+# 2. 따옴표 포함 절대경로로 재설정
 Set-ItemProperty $svcKey -Name ImagePath -Value '"C:\Program Files\Vendor App\bin\app.exe" -k start'
-# 3) 서비스 재시작(가능하면 유지보수 시간에)
+# 3. 서비스 재시작(가능하면 유지보수 시간에)
 Restart-Service -Name "VendorApp" -Force
 ```
 
@@ -155,13 +155,13 @@ Restart-Service -Name "VendorApp" -Force
 $exe = "C:\Program Files\Vendor App\bin\app.exe"
 $dir = Split-Path $exe -Parent
 
-# 1) 소유자: BUILTIN\Administrators (또는 TrustedInstaller, 벤더 지침 준수)
+# 1. 소유자: BUILTIN\Administrators (또는 TrustedInstaller, 벤더 지침 준수)
 icacls $dir /setowner "Administrators" /T
-# 2) 일반 사용자 쓰기 제거(필요 권한만 남김)
+# 2. 일반 사용자 쓰기 제거(필요 권한만 남김)
 icacls $dir /inheritance:r
 icacls $dir /grant:r "SYSTEM:(OI)(CI)(F)" "Administrators:(OI)(CI)(M)"
 icacls $dir /remove:g "Users" "Authenticated Users" "Everyone"
-# 3) 실행 파일도 동일 기준 적용
+# 3. 실행 파일도 동일 기준 적용
 icacls $exe /inheritance:r
 icacls $exe /grant:r "SYSTEM:(F)" "Administrators:(M)"
 icacls $exe /remove:g "Users" "Authenticated Users" "Everyone"

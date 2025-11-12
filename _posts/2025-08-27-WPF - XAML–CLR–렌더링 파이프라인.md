@@ -12,7 +12,7 @@ category: WPF
 
 ---
 
-## 0) 한 장 요약 (TL;DR)
+## 0. 한 장 요약 (TL;DR)
 
 1. **빌드 타임(Compile)**  
    - `*.xaml` → **BAML**(이진 XAML) + `*.g.cs`(부분 클래스) 생성  
@@ -30,7 +30,7 @@ category: WPF
 
 ---
 
-## 1) 큰 그림: 데이터·제어·렌더 플로우
+## 1. 큰 그림: 데이터·제어·렌더 플로우
 
 ```
 [ XAML 파일 ]
@@ -58,7 +58,7 @@ category: WPF
 
 ---
 
-## 2) 빌드 타임: XAML → BAML, 그리고 .g.cs
+## 2. 빌드 타임: XAML → BAML, 그리고 .g.cs
 
 WPF SDK/MSBuild는 XAML을 **BAML**로 컴파일합니다. BAML은 **이진 토큰화된 XAML**로, 런타임 파싱 비용을 낮추고 타입/멤버 조회를 빠르게 합니다. 동시에 `*.g.cs`가 생성되어 `InitializeComponent()`가 BAML을 로드하게 됩니다.
 
@@ -93,7 +93,7 @@ public partial class MainWindow : System.Windows.Window, System.Windows.Markup.I
 
 ---
 
-## 3) 런타임 1: `InitializeComponent()`가 하는 일
+## 3. 런타임 1: `InitializeComponent()`가 하는 일
 
 `InitializeComponent()` 호출 시(대개 생성자에서), 다음이 일어납니다.
 
@@ -142,7 +142,7 @@ public partial class MainWindow : System.Windows.Window, System.Windows.Markup.I
 
 ---
 
-## 4) 런타임 2: 데이터 바인딩/트리거/애니메이션 초기화
+## 4. 런타임 2: 데이터 바인딩/트리거/애니메이션 초기화
 
 ### 4.1 바인딩 초기화
 
@@ -197,7 +197,7 @@ public partial class MainWindow : Window
 
 ---
 
-## 5) 레이아웃 파이프라인: **Measure → Arrange → Render**
+## 5. 레이아웃 파이프라인: **Measure → Arrange → Render**
 
 ### 5.1 트리거: 무엇이 레이아웃을 다시 돌릴까?
 
@@ -241,7 +241,7 @@ public class FixedGrid : Panel
 
 ---
 
-## 6) 비주얼 트리와 렌더 레코딩(Recording)
+## 6. 비주얼 트리와 렌더 레코딩(Recording)
 
 ### 6.1 Visual/DrawingContext
 
@@ -276,7 +276,7 @@ public class MeterBar : FrameworkElement
 
 ---
 
-## 7) UI 스레드 → 컴포지터(milcore) 스레드: DUCE 채널
+## 7. UI 스레드 → 컴포지터(milcore) 스레드: DUCE 채널
 
 ### 7.1 왜 채널이 필요한가
 
@@ -293,7 +293,7 @@ public class MeterBar : FrameworkElement
 
 ---
 
-## 8) 텍스트 파이프라인: TextFormatter → GlyphRun → 합성
+## 8. 텍스트 파이프라인: TextFormatter → GlyphRun → 합성
 
 - **TextFormatter**가 줄바꿈/스크립트/폰트 폴백/힌팅을 처리해 **GlyphRun**을 생성  
 - `DrawText`/`DrawGlyphRun` 호출로 비주얼에 텍스트가 기록  
@@ -313,7 +313,7 @@ protected override void OnRender(DrawingContext dc)
 
 ---
 
-## 9) 애니메이션: 타임라인/클록 → DP 오버레이 → 합성
+## 9. 애니메이션: 타임라인/클록 → DP 오버레이 → 합성
 
 애니메이션은 DP에 **시간 함수**를 겹쳐 씌웁니다(값 우선순위 스택에서 애니메이션 레벨이 존재). 프레임마다 **클록**이 진행되어 DP의 유효 값이 바뀌고, **렌더 무효화**를 유발합니다.
 
@@ -328,7 +328,7 @@ myMeterBar.BeginAnimation(MeterBar.ValueProperty, da);
 
 ---
 
-## 10) DP 값 우선순위와 무효화
+## 10. DP 값 우선순위와 무효화
 
 **DependencyProperty**의 유효 값은 다음의 우선순위 스택에서 결정됩니다(요약):
 
@@ -343,7 +343,7 @@ myMeterBar.BeginAnimation(MeterBar.ValueProperty, da);
 
 ---
 
-## 11) 입력/라우티드 이벤트 → 비주얼 HitTest → 상태 갱신
+## 11. 입력/라우티드 이벤트 → 비주얼 HitTest → 상태 갱신
 
 입력은 **프리뷰(터널링)** → **버블링** 경로로 라우팅되며, **Visual Tree HitTest** 결과를 이용합니다. 이벤트 핸들러에서 DP를 바꾸면 **레이아웃/렌더**가 이어집니다.
 
@@ -356,7 +356,7 @@ protected override void OnMouseEnter(MouseEventArgs e)
 
 ---
 
-## 12) Dispatcher & 프레임 타이밍
+## 12. Dispatcher & 프레임 타이밍
 
 - WPF UI는 **STA Dispatcher 루프** 위에서 동작  
 - **DispatcherPriority**로 작업 순서를 제어(입력/렌더 우선)  
@@ -371,7 +371,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ---
 
-## 13) Per-Monitor DPI, DIP 좌표, 픽셀 스냅
+## 13. Per-Monitor DPI, DIP 좌표, 픽셀 스냅
 
 - 좌표계는 **DIP(1/96")** 기준. 모니터 DPI에 따라 실제 픽셀 수가 다름  
 - 텍스트/선명도를 위해 `UseLayoutRounding="True"`, `SnapsToDevicePixels="True"` 권장
@@ -384,7 +384,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ---
 
-## 14) 사례 연구 A: “XAML 한 줄 → 픽셀 한 줄”을 끝까지 따라가기
+## 14. 사례 연구 A: “XAML 한 줄 → 픽셀 한 줄”을 끝까지 따라가기
 
 ### 14.1 XAML
 
@@ -415,7 +415,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ---
 
-## 15) 사례 연구 B: 바인딩이 렌더에 미치는 연쇄
+## 15. 사례 연구 B: 바인딩이 렌더에 미치는 연쇄
 
 1. 사용자가 `TextBox`에 입력 → `Text` DP 변경  
 2. 바인딩이 ViewModel의 `SearchText` 변경 → INPC 발생  
@@ -427,7 +427,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ---
 
-## 16) 스레드 규칙: UI 스레드 · 컴포지터 스레드 · Freezable
+## 16. 스레드 규칙: UI 스레드 · 컴포지터 스레드 · Freezable
 
 - **UI 스레드**: DO/FE 소유, 대부분의 DP 접근은 **UI 스레드 한정**  
 - **컴포지터 스레드**: milcore/D3D 합성 담당  
@@ -440,7 +440,7 @@ if (brush.CanFreeze) brush.Freeze(); // 렌더/스레드에 유리
 
 ---
 
-## 17) 이미지/미디어: BitmapSource/MediaElement의 파이프라인
+## 17. 이미지/미디어: BitmapSource/MediaElement의 파이프라인
 
 - `BitmapImage`/`WriteableBitmap` → 디코딩/픽셀 버퍼 → 텍스처 업로드  
 - `MediaElement`/`MediaPlayer` → 프레임 디코딩 → 텍스처 형태로 합성
@@ -454,7 +454,7 @@ if (brush.CanFreeze) brush.Freeze(); // 렌더/스레드에 유리
 
 ---
 
-## 18) 고급: VisualLayer(컨트롤 패스 우회)로 초경량 렌더
+## 18. 고급: VisualLayer(컨트롤 패스 우회)로 초경량 렌더
 
 컨트롤/바인딩/템플릿 오버헤드 없이 **DrawingVisual**만으로 장면을 구성하면 **대규모 데이터 시각화**가 가능.
 
@@ -482,7 +482,7 @@ public sealed class VisualLayerCanvas : FrameworkElement
 
 ---
 
-## 19) 진단과 최적화 체크리스트
+## 19. 진단과 최적화 체크리스트
 
 1. **바인딩 에러 로그**(출력 창) 제거: 오버헤드/Null 경로  
 2. **Freeze 가능한 리소스 Freeze**: 공유/불변  
@@ -501,7 +501,7 @@ Debug.WriteLine($"Render Tier: {tier}");
 
 ---
 
-## 20) 미세 타이밍: 한 프레임에서 실제로 벌어지는 일
+## 20. 미세 타이밍: 한 프레임에서 실제로 벌어지는 일
 
 **프레임 n**에서, 대략 다음 순서(단순화):
 
@@ -517,7 +517,7 @@ Debug.WriteLine($"Render Tier: {tier}");
 
 ---
 
-## 21) FAQ (자주 받는 질문)
+## 21. FAQ (자주 받는 질문)
 
 **Q1. XAML을 런타임에 직접 파싱할 수도 있나요?**  
 A1. 네, `XamlReader.Load`로 문자열 XAML을 동적 로드 가능. 하지만 **BAML(컴파일)** 경로가 훨씬 빠릅니다.
@@ -533,7 +533,7 @@ A4. DIP/픽셀 경계 정렬(정수 좌표), `UseLayoutRounding`, `SnapsToDevice
 
 ---
 
-## 22) 실전 종합 예제 — “End-to-End 미니 앱”
+## 22. 실전 종합 예제 — “End-to-End 미니 앱”
 
 ### 22.1 ViewModel
 
@@ -623,7 +623,7 @@ public partial class MainWindow : Window
 
 ---
 
-## 23) “끊김 없이” 만들려면? (성능 전략 요약)
+## 23. “끊김 없이” 만들려면? (성능 전략 요약)
 
 - **Freeze** 가능한 건 Freeze(브러시/지오메트리/트랜스폼)  
 - **가상화**: `VirtualizingStackPanel`, 지연 로딩  
@@ -635,7 +635,7 @@ public partial class MainWindow : Window
 
 ---
 
-## 24) 마무리: XAML–CLR–렌더링은 “계약”이다
+## 24. 마무리: XAML–CLR–렌더링은 “계약”이다
 
 - **XAML**은 **선언**(무엇을 보여줄지)  
 - **CLR**은 **행동/상태**(어떻게 변할지)  

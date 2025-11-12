@@ -26,7 +26,7 @@ Calico는 **Application Layer Policy**(HTTP 인식)로 이를 제공한다.
 
 ---
 
-## 1) 사전 준비와 판단 가이드
+## 1. 사전 준비와 판단 가이드
 
 ### 1.1 요구사항-기능 매트릭스
 
@@ -48,7 +48,7 @@ Calico는 **Application Layer Policy**(HTTP 인식)로 이를 제공한다.
 
 ---
 
-## 2) 데모 워크로드 배포
+## 2. 데모 워크로드 배포
 
 ```bash
 kubectl create ns demo
@@ -70,7 +70,7 @@ wget -qO- http://backend.demo.svc.cluster.local/get
 
 ---
 
-## 3) Calico Enterprise: 정석 L7(HTTP) 정책
+## 3. Calico Enterprise: 정석 L7(HTTP) 정책
 
 Calico Enterprise에서는 **HTTP 인식 정책**을 `GlobalNetworkPolicy`의 `http:` 섹션 혹은 **전용** `HTTPPolicy`(정책 객체 형태)로 선언한다. 아래는 **두 방식 중 하나**를 택해도 된다. 대부분은 `GlobalNetworkPolicy` 한 파일에 L3/L4/L7을 함께 선언하는 패턴이 운영에 편하다.
 
@@ -120,16 +120,16 @@ kubectl apply -f gnp-l7-allow-get-path.yaml
 
 ```sh
 # frontend 셸에서
-# 1) 허용: GET /get
+# 1. 허용: GET /get
 wget -S -qO- --header="X-Env: test" http://backend.demo.svc.cluster.local/get
 
-# 2) 허용: GET /api/v1/users (prefix 규칙)
+# 2. 허용: GET /api/v1/users (prefix 규칙)
 wget -S -qO- --header="X-Env: test" http://backend.demo.svc.cluster.local/api/v1/users
 
-# 3) 차단: POST /post
+# 3. 차단: POST /post
 wget -S -qO- --post-data="x=1" http://backend.demo.svc.cluster.local/post
 
-# 4) 차단: 헤더 미지정
+# 4. 차단: 헤더 미지정
 wget -S -qO- http://backend.demo.svc.cluster.local/get
 ```
 
@@ -194,7 +194,7 @@ spec:
 
 ---
 
-## 4) 정책 검증 시나리오
+## 4. 정책 검증 시나리오
 
 1. **통과 케이스**  
    - `frontend` → `backend` : `GET /get` + `X-Env: test` 헤더 → **Allow**
@@ -208,7 +208,7 @@ spec:
 
 ---
 
-## 5) 우선순위와 기본 거부(Deny) 전략
+## 5. 우선순위와 기본 거부(Deny) 전략
 
 Calico는 정책 평가에 **order**(숫자가 **낮을수록 우선**)가 관여한다.  
 운영 권장 패턴:
@@ -236,7 +236,7 @@ spec:
 
 ---
 
-## 6) 성능·설계 고려사항
+## 6. 성능·설계 고려사항
 
 - **프록시/앱 계층 인식**이 개입되면 L3/L4 순수 패킷 필터보다 **오버헤드가 증가**한다.  
   - 고 QPS 경로에는 경로 캐싱·CDN·게이트웨이 레이어에서 coarse-grained 제어 후 Calico L7로 정밀 제어를 덧입히는 **계층형 방어**를 고려.
@@ -247,7 +247,7 @@ spec:
 
 ---
 
-## 7) Calico OSS만 사용할 때의 우회/대체 패턴
+## 7. Calico OSS만 사용할 때의 우회/대체 패턴
 
 Calico OSS는 사실상 L7 풍부한 매칭이 어렵다. 대안은 다음 **L7 계층**에서 해결하는 것이다.
 
@@ -320,7 +320,7 @@ spec:
 
 ---
 
-## 8) 운영 체크리스트
+## 8. 운영 체크리스트
 
 - 정책 파일에 **`order`**를 반드시 명시하고, 기본 Deny를 맨 아래 깔아라.  
 - L7 매칭은 **TLS 종단 위치**에 좌우된다(종단 전 구간은 L4로만 보인다).  
@@ -332,16 +332,16 @@ spec:
 
 ---
 
-## 9) 전체 예제(엔터프라이즈 경로) — 한 번에 적용하는 묶음
+## 9. 전체 예제(엔터프라이즈 경로) — 한 번에 적용하는 묶음
 
 ```yaml
-# 1) 데모 네임스페이스(이미 생성했다면 생략)
+# 1. 데모 네임스페이스(이미 생성했다면 생략)
 apiVersion: v1
 kind: Namespace
 metadata:
   name: demo
 ---
-# 2) backend 서비스(앞서 만든 Pod를 쓴다면 생략 가능)
+# 2. backend 서비스(앞서 만든 Pod를 쓴다면 생략 가능)
 apiVersion: v1
 kind: Service
 metadata:
@@ -354,7 +354,7 @@ spec:
   - port: 80
     targetPort: 80
 ---
-# 3) L7 허용(프런트엔드→백엔드 GET /get, /api/v1/* + 헤더)
+# 3. L7 허용(프런트엔드→백엔드 GET /get, /api/v1/* + 헤더)
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -381,7 +381,7 @@ spec:
           exact: "test"
   - action: Deny
 ---
-# 4) 기본 차단(안전망)
+# 4. 기본 차단(안전망)
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -408,7 +408,7 @@ wget -S -qO- http://backend.demo.svc.cluster.local/get
 
 ---
 
-## 10) 트러블슈팅
+## 10. 트러블슈팅
 
 | 증상 | 원인 후보 | 점검/해결 |
 |---|---|---|

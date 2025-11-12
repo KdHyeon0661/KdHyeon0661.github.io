@@ -6,7 +6,7 @@ category: CSS
 ---
 # CSS Reset vs Normalize.css
 
-## 1) 공통 목표와 철학
+## 1. 공통 목표와 철학
 
 | 항목        | 설명 |
 |-------------|------|
@@ -19,7 +19,7 @@ category: CSS
 
 ---
 
-## 2) CSS Reset — “백지 상태로 초기화”
+## 2. CSS Reset — “백지 상태로 초기화”
 
 Reset은 브라우저 기본 스타일을 **전방위로 제거**합니다.  
 예: 기본 margin/padding, 리스트 마커, 링크 밑줄, 폼 컨트롤의 네이티브 스타일 등.
@@ -86,7 +86,7 @@ input, button, textarea, select {
 
 ---
 
-## 3) Normalize.css — “표준/유용 기본값은 보존 + 차이만 보정”
+## 3. Normalize.css — “표준/유용 기본값은 보존 + 차이만 보정”
 
 [Normalize.css](https://github.com/necolas/normalize.css)는 브라우저가 제공하는 **합리적인 기본 스타일은 유지**하면서,  
 브라우저마다 다른 **미묘한 차이**를 **보정**해 **일관된 기본 상태**를 만듭니다.
@@ -111,7 +111,7 @@ input, button, textarea, select {
 
 ---
 
-## 4) Reset vs Normalize.css — 한눈에 비교
+## 4. Reset vs Normalize.css — 한눈에 비교
 
 | 항목            | CSS Reset                                  | Normalize.css                            |
 |-----------------|---------------------------------------------|-------------------------------------------|
@@ -123,7 +123,7 @@ input, button, textarea, select {
 
 ---
 
-## 5) 실무에서 자주 쓰는 “혼합 전략” (Reset + Normalize)
+## 5. 실무에서 자주 쓰는 “혼합 전략” (Reset + Normalize)
 
 Tailwind(Preflight), Bootstrap(Reboot)처럼 **둘을 적절히 혼합**하는 접근이 가장 널리 쓰입니다.  
 핵심은 **파괴적 리셋을 피하면서** (예: outline 없애지 않기)  
@@ -209,7 +209,7 @@ input[type=number]::-webkit-inner-spin-button { /* iOS/Chrome 스피너 */
 
 ---
 
-## 6) 타이포그래피/기본 간격 설정(리듬)
+## 6. 타이포그래피/기본 간격 설정(리듬)
 
 Reset 후에는 본문/헤딩의 **기본 간격**을 프로젝트 문체에 맞게 부여합니다.
 
@@ -238,7 +238,7 @@ ul, ol { margin: var(--space-4) 0 var(--space-4) var(--space-6); list-style: dis
 
 ---
 
-## 7) 폼 컨트롤 — “과도한 리셋”을 경계
+## 7. 폼 컨트롤 — “과도한 리셋”을 경계
 
 폼 컨트롤은 플랫폼/브라우저 네이티브 상호작용(키보드/보조기기 포함)이 **접근성의 핵심**입니다.
 
@@ -280,7 +280,7 @@ ul, ol { margin: var(--space-4) 0 var(--space-4) var(--space-6); list-style: dis
 
 ---
 
-## 8) 링크/버튼/포커스 — “보이되 과하지 않게”
+## 8. 링크/버튼/포커스 — “보이되 과하지 않게”
 
 Reset로 **밑줄/색상 제거**만 해놓고 포커스 링도 지우면 **키보드 사용자가 길을 잃습니다.**
 
@@ -312,7 +312,7 @@ a[href]:hover { color: #1d4ed8; }
 
 ---
 
-## 9) 프레임워크가 하는 일
+## 9. 프레임워크가 하는 일
 
 | 프레임워크   | 초기화 방식(요지) |
 |--------------|-------------------|
@@ -324,7 +324,7 @@ a[href]:hover { color: #1d4ed8; }
 
 ---
 
-## 10) “Reset만 쓸 때”와 “Normalize만 쓸 때”의 보완 가이드
+## 10. “Reset만 쓸 때”와 “Normalize만 쓸 때”의 보완 가이드
 
 ### 10-1. Reset만 쓰는 경우(백지 → 전부 구축)
 - **필수**: 포커스 링, 스킵 링크, 헤딩/본문 리듬, 리스트 스타일, 링크 기본 정책
@@ -338,7 +338,7 @@ a[href]:hover { color: #1d4ed8; }
 
 ---
 
-## 11) 프로덕션 체크리스트
+## 11. 프로덕션 체크리스트
 
 - [ ] **포커스 표시**가 모든 인터랙티브 요소에서 명확한가? (`:focus-visible`)
 - [ ] **키보드 탭 순서**가 논리적/예측 가능한가? (CSS 시각 재배치 vs DOM 순서)
@@ -352,7 +352,7 @@ a[href]:hover { color: #1d4ed8; }
 
 ---
 
-## 12) 실전: “커스텀 Reboot” 템플릿 (Reset+Normalize 하이브리드)
+## 12. 실전: “커스텀 Reboot” 템플릿 (Reset+Normalize 하이브리드)
 
 > 프레임워크 미사용 프로젝트에서 권장할 만한 베이스.  
 > 접근성 친화 + 현대 CSS + 오버라이드 여지 충분.
@@ -438,7 +438,7 @@ label { display: inline-block; margin-bottom: .25rem; font-weight: 600; }
 
 ---
 
-## 13) 현업에서 자주 겪는 함정과 해법
+## 13. 현업에서 자주 겪는 함정과 해법
 
 1. **outline 전역 제거**  
    - 해법: 절대로 지우지 말고 **보기에 좋은 포커스 스타일**로 **대체**.
@@ -453,7 +453,7 @@ label { display: inline-block; margin-bottom: .25rem; font-weight: 600; }
 
 ---
 
-## 14) 선택 가이드 — 어떤 프로젝트에 무엇을?
+## 14. 선택 가이드 — 어떤 프로젝트에 무엇을?
 
 | 상황/요구 | 권장 |
 |---|---|
@@ -463,7 +463,7 @@ label { display: inline-block; margin-bottom: .25rem; font-weight: 600; }
 
 ---
 
-## 15) 예제: Reset vs Normalize의 체감 비교
+## 15. 예제: Reset vs Normalize의 체감 비교
 
 ### 15-1. Reset 기반(포커스/타이포/폼 재구축 필요)
 
@@ -496,7 +496,7 @@ a:hover { color: #1d4ed8; }
 
 ---
 
-## 16) 결론
+## 16. 결론
 
 - **Reset**은 **백지**에서 **모든 걸 직접 구축**하고 싶은 팀에 적합(접근성/폼/포커스 재설계 필수).
 - **Normalize**는 **합리적 기본값을 보존**하며 **브라우저 차이를 줄이는** 실용적 대안.

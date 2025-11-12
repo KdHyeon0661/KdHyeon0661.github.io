@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes에서 TLS 인증서 및 Secret 관리
 
-## 0) 배경 지식: X.509, SAN, 체인, SNI
+## 0. 배경 지식: X.509, SAN, 체인, SNI
 
 - TLS 서버 인증서는 **X.509** 형식의 공개키 인증서입니다.
 - **SAN(Subject Alternative Name)** 에 호스트명이 포함되어야 브라우저/클라이언트가 신뢰합니다.
@@ -15,7 +15,7 @@ category: Kubernetes
 
 ---
 
-## 1) Secret의 핵심: `type: kubernetes.io/tls`
+## 1. Secret의 핵심: `type: kubernetes.io/tls`
 
 ### 1.1 TLS Secret 스펙
 
@@ -38,7 +38,7 @@ data:
 ### 1.2 OpenSSL로 self-signed(테스트용) 발급 → Secret 생성
 
 ```bash
-# 1) 키/인증서 생성 (SAN 포함, 1년)
+# 1. 키/인증서 생성 (SAN 포함, 1년)
 cat > san.cnf <<'EOF'
 [req]
 distinguished_name=req
@@ -58,7 +58,7 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 ```
 
 ```bash
-# 2) Secret 생성
+# 2. Secret 생성
 kubectl create secret tls my-tls-secret \
   --cert=tls.crt --key=tls.key -n default
 ```
@@ -67,7 +67,7 @@ kubectl create secret tls my-tls-secret \
 
 ---
 
-## 2) Ingress와 TLS 연동 (NGINX/Traefik/ALB, Gateway API까지)
+## 2. Ingress와 TLS 연동 (NGINX/Traefik/ALB, Gateway API까지)
 
 ### 2.1 NGINX Ingress Controller 예제
 
@@ -149,7 +149,7 @@ spec:
 
 ---
 
-## 3) Secret 운용 — 확인/복호화/교체/회전
+## 3. Secret 운용 — 확인/복호화/교체/회전
 
 ### 3.1 확인/복호화
 
@@ -166,7 +166,7 @@ kubectl get secret my-tls-secret -n default -o jsonpath='{.data.tls\.key}' | bas
 
 ---
 
-## 4) cert-manager로 **자동 발급/갱신** (ACME / 내부 CA)
+## 4. cert-manager로 **자동 발급/갱신** (ACME / 내부 CA)
 
 `cert-manager`는 `Issuer/ClusterIssuer/Certificate` CRD를 이용해 인증서 라이프사이클을 관리합니다.
 
@@ -303,7 +303,7 @@ spec:
 
 ---
 
-## 5) mTLS(서버/클라이언트 양방향 인증) — Ingress NGINX 예제
+## 5. mTLS(서버/클라이언트 양방향 인증) — Ingress NGINX 예제
 
 ### 5.1 클라이언트 인증서 요구(서버 입장)
 
@@ -346,7 +346,7 @@ spec:
 
 ---
 
-## 6) 운영 보안: RBAC, etcd 암호화, 외부 비밀관리, GitOps
+## 6. 운영 보안: RBAC, etcd 암호화, 외부 비밀관리, GitOps
 
 ### 6.1 RBAC — Secret 접근 최소화
 
@@ -432,7 +432,7 @@ spec:
 
 ---
 
-## 7) 운영 베스트 프랙티스
+## 7. 운영 베스트 프랙티스
 
 1. **도메인 별로 SAN 확실히**: `example.com`, `www.example.com` 등 실제 사용 호스트 모두 나열.  
 2. **체인 완전성**: `tls.crt`에 **intermediate 포함**.  
@@ -446,7 +446,7 @@ spec:
 
 ---
 
-## 8) 트러블슈팅 시나리오 모음
+## 8. 트러블슈팅 시나리오 모음
 
 ### 8.1 브라우저 “인증서 신뢰 안 됨”
 
@@ -484,7 +484,7 @@ kubectl logs -n cert-manager deploy/cert-manager
 
 ---
 
-## 9) 예제 모음: “운영에서 바로 쓰는” 템플릿
+## 9. 예제 모음: “운영에서 바로 쓰는” 템플릿
 
 ### 9.1 Let’s Encrypt 스테이징 + 자동 TLS Ingress
 
@@ -579,7 +579,7 @@ spec:
 
 ---
 
-## 10) 간단한 검증 명령 레퍼런스
+## 10. 간단한 검증 명령 레퍼런스
 
 ```bash
 # 인증서 정보
@@ -598,7 +598,7 @@ kubectl describe certificate <name> -n <ns>
 
 ---
 
-## 11) 체크리스트 요약
+## 11. 체크리스트 요약
 
 - [ ] Ingress/Gateway에 **올바른 Secret 참조**(체인 포함).  
 - [ ] cert-manager: Issuer/ClusterIssuer/Certificate **상태 녹색**.  

@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Argo CD를 통한 GitOps 방식 Kubernetes 배포
 
-## 1) GitOps 재정의 — 선언형·감시·동기화·드리프트 복구
+## 1. GitOps 재정의 — 선언형·감시·동기화·드리프트 복구
 
 - **선언형**: “실행 방법”이 아니라 **목표 상태(YAML/Helm/Kustomize)** 만 Git에 저장
 - **감시/동기화**: Argo CD가 Git을 폴링/웹훅으로 감지 → 클러스터로 **Sync**
@@ -17,7 +17,7 @@ category: Kubernetes
 
 ---
 
-## 2) 설치(요약) & 초기 로그인
+## 2. 설치(요약) & 초기 로그인
 
 ```bash
 kubectl create ns argocd
@@ -37,7 +37,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 
 ---
 
-## 3) 리포지토리 전략 — 모노레포 vs 다중 레포, 환경 분리
+## 3. 리포지토리 전략 — 모노레포 vs 다중 레포, 환경 분리
 
 ### 3.1 폴더 레이아웃 예시(모노레포)
 
@@ -87,7 +87,7 @@ spec:
 
 ---
 
-## 4) Application 선언 — Helm/Kustomize/Plain YAML
+## 4. Application 선언 — Helm/Kustomize/Plain YAML
 
 ### 4.1 Kustomize 예
 
@@ -136,7 +136,7 @@ spec:
 
 ---
 
-## 5) ApplicationSet — 다중 환경·클러스터 자동 생성
+## 5. ApplicationSet — 다중 환경·클러스터 자동 생성
 
 **템플릿 + 제너레이터**로 Application 다발 생성 (환경/리전 확장에 탁월)
 
@@ -178,7 +178,7 @@ spec:
 
 ---
 
-## 6) Sync 정책·웨이브·훅 — 배포 순서·후크 제어
+## 6. Sync 정책·웨이브·훅 — 배포 순서·후크 제어
 
 ### 6.1 Sync 옵션
 
@@ -218,7 +218,7 @@ metadata:
 
 ---
 
-## 7) Progressive Delivery — Argo Rollouts 연동
+## 7. Progressive Delivery — Argo Rollouts 연동
 
 **점진 배포(캔어리/블루그린)** 로 리스크를 낮춤.
 
@@ -257,7 +257,7 @@ spec:
 
 ---
 
-## 8) Secret 전략 — SOPS·SealedSecrets·Vault
+## 8. Secret 전략 — SOPS·SealedSecrets·Vault
 
 ### 8.1 Mozilla SOPS(+age/GPG) 예
 
@@ -297,7 +297,7 @@ spec:
 
 ---
 
-## 9) 프로젝트(Project)·RBAC·SSO — 멀티테넌시
+## 9. 프로젝트(Project)·RBAC·SSO — 멀티테넌시
 
 ### 9.1 프로젝트로 경계 설정
 
@@ -329,7 +329,7 @@ spec:
 
 ---
 
-## 10) 알림/관측 — Notifications·Metrics·Dashboards
+## 10. 알림/관측 — Notifications·Metrics·Dashboards
 
 ### 10.1 argocd-notifications
 
@@ -357,7 +357,7 @@ SLO(예: 99%)를 유지하도록 롤백/게이트 조정.
 
 ---
 
-## 11) 배포 시나리오(엔드투엔드)
+## 11. 배포 시나리오(엔드투엔드)
 
 ### 11.1 신규 서비스 온보딩(Helm)
 
@@ -376,7 +376,7 @@ SLO(예: 99%)를 유지하도록 롤백/게이트 조정.
 
 ---
 
-## 12) 트러블슈팅 — 드리프트·헬스·동기화 실패
+## 12. 트러블슈팅 — 드리프트·헬스·동기화 실패
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -396,7 +396,7 @@ argocd app rollback web-prod
 
 ---
 
-## 13) 보안·거버넌스 모범사례
+## 13. 보안·거버넌스 모범사례
 
 - **Git 보호**: 변경은 PR만 → 필수 리뷰·승인·CI 검증
 - **Argo CD 읽기 전용 원칙**: 운영자는 **Git만 변경**
@@ -407,7 +407,7 @@ argocd app rollback web-prod
 
 ---
 
-## 14) 백업/DR — Git + 상태 스냅샷
+## 14. 백업/DR — Git + 상태 스냅샷
 
 - **Git = 선언의 백업**. 여기에 더해:
   - Argo CD **ConfigMap/Secret**(프로젝트/클러스터 크레덴셜) 백업
@@ -417,7 +417,7 @@ argocd app rollback web-prod
 
 ---
 
-## 15) 예제 모음
+## 15. 예제 모음
 
 ### 15.1 간단 Application (자동 생성/정리/자체 치유)
 
@@ -506,7 +506,7 @@ spec:
 
 ---
 
-## 16) 운영 체크리스트(한 장 요약)
+## 16. 운영 체크리스트(한 장 요약)
 
 - [ ] Git 브랜치 전략/PR 필수/CI 검증  
 - [ ] AppProject로 소스/대상/권한 제약  

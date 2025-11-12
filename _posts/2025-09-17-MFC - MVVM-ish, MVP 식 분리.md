@@ -13,7 +13,7 @@ category: MFC
 
 ---
 
-## 0) 왜 MVVM-ish/MVP인가? (문제 → 목표)
+## 0. 왜 MVVM-ish/MVP인가? (문제 → 목표)
 
 ### 기존 문제
 - `CDialog::OnBnClickedOk` 안에 **검증/계산/파일 I/O**가 뒤섞여 테스트가 어렵고 유지보수도 고통.
@@ -29,7 +29,7 @@ category: MFC
 
 ---
 
-## 1) 용어/역할 요약
+## 1. 용어/역할 요약
 
 | 레이어 | 책임 | 의존 |
 |---|---|---|
@@ -44,7 +44,7 @@ category: MFC
 
 ---
 
-## 2) 최소 골격: 인터페이스 → 바인딩 → 테스트
+## 2. 최소 골격: 인터페이스 → 바인딩 → 테스트
 
 ### 2-1. ViewModel 인터페이스(상태 + 명령)
 ```cpp
@@ -274,7 +274,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 3) 얇은 바인더로 “양방향” 베이스 마련 (확장 가능)
+## 3. 얇은 바인더로 “양방향” 베이스 마련 (확장 가능)
 
 실무에서 **컨트롤마다 수동 핸들러**를 쓰면 보일러플레이트가 늘어납니다.  
 아주 **얇은 바인더** 유틸로 반복을 줄일 수 있습니다.
@@ -319,7 +319,7 @@ m_vm->subscribe([this](std::wstring p){ m_binder.onVmChanged(p); });
 
 ---
 
-## 4) MVP 변형: Presenter가 View 인터페이스를 호출
+## 4. MVP 변형: Presenter가 View 인터페이스를 호출
 
 MVVM은 ViewModel이 **View에 대해 아무것도 몰라야** 합니다.  
 MVP는 Presenter가 **IView 인터페이스**를 통해 **명시적으로 View를 제어**합니다.  
@@ -420,7 +420,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 5) 리스트/그리드: **Table Model**로 데이터-뷰 분리
+## 5. 리스트/그리드: **Table Model**로 데이터-뷰 분리
 
 ### 5-1. 모델 인터페이스
 ```cpp
@@ -490,7 +490,7 @@ private:
 
 ---
 
-## 6) 명령 패턴/ON_UPDATE_COMMAND_UI와 궁합
+## 6. 명령 패턴/ON_UPDATE_COMMAND_UI와 궁합
 
 **명령(Command) ↔ ViewModel 상태**를 매칭하면 **테스트 가능한 버튼/메뉴**를 만들 수 있습니다.  
 (이 섹션은 이전 “명령 패턴 + ON_UPDATE_COMMAND_UI” 글과 자연스럽게 맞물립니다.)
@@ -507,7 +507,7 @@ void CMainFrame::OnSave(){ m_vm->save(); }
 
 ---
 
-## 7) 비동기/취소/타임아웃: ViewModel에서 제어, View는 표시만
+## 7. 비동기/취소/타임아웃: ViewModel에서 제어, View는 표시만
 
 ### 7-1. 작업 스케줄러 추상화
 ```cpp
@@ -554,7 +554,7 @@ ON_COMMAND(ID_CANCEL, &CMainFrame::OnCancelExport){ m_exportVm->cancel(); }
 
 ---
 
-## 8) 테스트(googletest 예시): View 없이 ViewModel만 검증
+## 8. 테스트(googletest 예시): View 없이 ViewModel만 검증
 
 ```cpp
 #include <gtest/gtest.h>
@@ -590,7 +590,7 @@ TEST(SettingsVM, CancelReloadsData) {
 
 ---
 
-## 9) DI(의존성 주입)와 컴포지션 루트
+## 9. DI(의존성 주입)와 컴포지션 루트
 
 **앱 초기화 시** 실제 구현을 조립합니다.
 
@@ -617,7 +617,7 @@ BOOL CMyApp::InitInstance() {
 
 ---
 
-## 10) 기존 코드(레거시) **단계적 치환** 전략
+## 10. 기존 코드(레거시) **단계적 치환** 전략
 
 1. **가장 자주 쓰는 대화상자 한 개**를 선택해 VM/P 모델로 변환.  
 2. 컨트롤 1~2개에만 **바인딩**을 적용해 ROI를 확인.  
@@ -630,7 +630,7 @@ BOOL CMyApp::InitInstance() {
 
 ---
 
-## 11) 고급 토픽(필요 시 도입)
+## 11. 고급 토픽(필요 시 도입)
 
 - **Validation Layer**: VM 속성을 업데이트할 때 규칙을 순차 적용, 에러 사유 수집.  
 - **Undo/Redo**: VM에 **Command 스택**(Insert/Delete/PropertyChange)으로 도입.  
@@ -641,7 +641,7 @@ BOOL CMyApp::InitInstance() {
 
 ---
 
-## 12) 체크리스트 (요약)
+## 12. 체크리스트 (요약)
 
 - [ ] **View**는 바인딩과 이벤트 포워딩만; **로직 금지**  
 - [ ] **ViewModel/Presenter**는 UI 프레임워크 **독립**  
@@ -656,7 +656,7 @@ BOOL CMyApp::InitInstance() {
 
 ---
 
-## 13) 마무리
+## 13. 마무리
 
 **MVVM-ish/MVP** 전환의 핵심은 **역할 분리**와 **테스트 가능성**입니다.  
 MFC에서조차 View를 **얇은 바인더**로 만들고, 핵심 로직은 **ViewModel/Presenter**로 옮기면:

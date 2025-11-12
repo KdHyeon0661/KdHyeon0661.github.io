@@ -11,7 +11,7 @@ Kubernetes에서도 오픈소스 기반으로 **서버리스를 구현**할 수 
 
 ---
 
-## 0) 한눈 비교 (의사결정 표)
+## 0. 한눈 비교 (의사결정 표)
 
 | 구분 | **Knative** | **OpenFaaS** |
 |---|---|---|
@@ -27,7 +27,7 @@ Kubernetes에서도 오픈소스 기반으로 **서버리스를 구현**할 수 
 
 ---
 
-## 1) Serverless on K8s가 주는 가치
+## 1. Serverless on K8s가 주는 가치
 
 - **벤더 종속 회피**: FaaS 클라우드 대신 **이식성 높은 K8s** 위에서 동일 패턴
 - **마이크로서비스 + GitOps**: 선언적 배포, Canary/Blue-Green, 자동 롤백
@@ -42,7 +42,7 @@ $$
 
 ---
 
-## 2) Knative — Serving & Eventing로 보는 구조
+## 2. Knative — Serving & Eventing로 보는 구조
 
 ### 2.1 아키텍처 핵심
 - **Serving**: `Service` → `Configuration` → **`Revision`** 생성 → `Route`로 트래픽 분배  
@@ -159,7 +159,7 @@ curl -v "http://broker-ingress.events.svc.cluster.local/events/default" \
 
 ---
 
-## 3) OpenFaaS — 경량 Function 프레임워크
+## 3. OpenFaaS — 경량 Function 프레임워크
 
 ### 3.1 구성요소
 - **Gateway**(UI+API), **faas-netes**(K8s backend), **Prometheus**(기본), **queue-worker**(비동기)
@@ -207,7 +207,7 @@ functions:
 
 ---
 
-## 4) 스케일링·콜드 스타트·지연 튜닝
+## 4. 스케일링·콜드 스타트·지연 튜닝
 
 ### 4.1 Knative Autoscaling(요지)
 - **KPA**: 요청 동시성 기반, `autoscaling.knative.dev/target`, `window` 등
@@ -233,7 +233,7 @@ spec:
 
 ---
 
-## 5) 관측(Observability)
+## 5. 관측(Observability)
 
 ### 5.1 Knative
 - **Req/Resp/Concurrency**: queue-proxy, Activator 메트릭(는 Prometheus로 수집)
@@ -250,7 +250,7 @@ sum(rate(queue_requests_total{namespace="default", service="hello-knative"}[1m])
 
 ---
 
-## 6) 보안·네트워크·비용 관점
+## 6. 보안·네트워크·비용 관점
 
 ### 6.1 공통
 - **PSA restricted** 네임스페이스 라벨, 이미지 서명(Cosign), 취약점 스캔(Trivy)
@@ -283,7 +283,7 @@ spec:
 
 ---
 
-## 7) CI/CD & GitOps
+## 7. CI/CD & GitOps
 
 ### 7.1 Knative + ArgoCD
 - `ksvc`/Eventing 리소스를 **Git에 선언**→ ArgoCD 자동 동기화
@@ -308,7 +308,7 @@ jobs:
 
 ---
 
-## 8) 실전 레퍼런스 아키텍처
+## 8. 실전 레퍼런스 아키텍처
 
 ### 8.1 HTTP API + Canary (Knative)
 - Kourier(LB) + Knative Serving
@@ -324,7 +324,7 @@ jobs:
 
 ---
 
-## 9) 트러블슈팅 체크리스트
+## 9. 트러블슈팅 체크리스트
 
 ### 9.1 Knative
 - **대상 도메인/Ingress**: DNS/CNAME, LB health  
@@ -339,7 +339,7 @@ jobs:
 
 ---
 
-## 10) 고급 튜닝 팁
+## 10. 고급 튜닝 팁
 
 ### Knative
 - `containerConcurrency` 낮추면 지연 안정↑, 과도하게 낮추면 Pod 폭증  
@@ -353,7 +353,7 @@ jobs:
 
 ---
 
-## 11) 실전 코드 예시 묶음
+## 11. 실전 코드 예시 묶음
 
 ### 11.1 Knative — Go 핸들러 (간단 API)
 ```go
@@ -439,7 +439,7 @@ curl -X POST http://gateway:8080/async-function/hello-ofn -d "Alice"
 
 ---
 
-## 12) 선택 가이드 (실무 시나리오별)
+## 12. 선택 가이드 (실무 시나리오별)
 
 | 시나리오 | 권장 |
 |---|---|
@@ -451,7 +451,7 @@ curl -X POST http://gateway:8080/async-function/hello-ofn -d "Alice"
 
 ---
 
-## 13) 마무리
+## 13. 마무리
 
 - **Knative**: K8s 원칙에 충실한 **Serving/Eventing 표준 플랫폼**, 트래픽 분할/리비전/CloudEvents에 강함.  
 - **OpenFaaS**: **경량성과 단순함**, 빠른 개발과 다양한 트리거·관측을 기본 제공.  

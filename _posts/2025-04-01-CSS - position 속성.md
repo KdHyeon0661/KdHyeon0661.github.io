@@ -6,7 +6,7 @@ category: CSS
 ---
 # position 속성 (static, relative, absolute, fixed, sticky)
 
-## 0) 큰 그림 요약
+## 0. 큰 그림 요약
 
 - `position`은 **박스를 문서 흐름에 어떻게 참여시킬지**와 **오프셋(top/left/…)을 어떻게 해석할지**를 정의.
 - 다섯 값:
@@ -18,7 +18,7 @@ category: CSS
 
 ---
 
-## 1) 용어 정리 — Containing Block(컨테이닝 블록)과 Offset
+## 1. 용어 정리 — Containing Block(컨테이닝 블록)과 Offset
 
 오프셋(`top/right/bottom/left`)은 **컨테이닝 블록**의 패딩 박스 기준으로 계산됩니다.
 
@@ -49,7 +49,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 2) `static` — 기본 흐름
+## 2. `static` — 기본 흐름
 
 ```html
 <div class="box static">static</div>
@@ -71,7 +71,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 3) `relative` — 자리 유지 + 시각 이동
+## 3. `relative` — 자리 유지 + 시각 이동
 
 ```html
 <div class="card">
@@ -100,7 +100,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 4) `absolute` — 흐름에서 분리, 기준 조상 기준
+## 4. `absolute` — 흐름에서 분리, 기준 조상 기준
 
 ```html
 <div class="wrap">
@@ -131,7 +131,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 5) `fixed` — 뷰포트(또는 특수 조상) 기준 고정
+## 5. `fixed` — 뷰포트(또는 특수 조상) 기준 고정
 
 ```html
 <div class="toast">Saved</div>
@@ -160,7 +160,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 6) `sticky` — 스크롤 임계점에서 고정
+## 6. `sticky` — 스크롤 임계점에서 고정
 
 ```html
 <div class="scroll">
@@ -193,7 +193,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 7) stacking context(페인팅·레이어 순서)와 z-index
+## 7. stacking context(페인팅·레이어 순서)와 z-index
 
 **다음 중 하나에 해당하면 stacking context를 생성**합니다(발췌):
 - `position`이 `relative/absolute/fixed/sticky` 이고 `z-index`가 `auto`가 아닌 경우
@@ -207,7 +207,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 8) 논리 오프셋과 4방 오프셋 우선 순서
+## 8. 논리 오프셋과 4방 오프셋 우선 순서
 
 - `inset`(축약)은 `top/right/bottom/left` 또는 논리 쌍(`inset-block`, `inset-inline`)보다 **낮은 우선순위**.
 - 예:
@@ -217,7 +217,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 9) 퍼센트 오프셋/크기와 컨테이닝 블록
+## 9. 퍼센트 오프셋/크기와 컨테이닝 블록
 
 - `absolute/fixed`의 `%` 오프셋은 **컨테이닝 블록의 해당 축 크기** 기준.
 - `width/height:auto` + 오프셋 조합:
@@ -233,14 +233,14 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## 10) 테이블/리플레이스드 요소와 position
+## 10. 테이블/리플레이스드 요소와 position
 
 - `img`, `video`, `canvas`(replaced)는 **intrinsic size**를 가지므로 인라인이라도 크기 제어가 직접 가능.
 - `absolute`가 테이블 셀 내부에서 기준을 잃을 수 있으므로, **셀/행/랩퍼에 `position: relative`**를 명시해 기준을 고정.
 
 ---
 
-## 11) 실전 패턴 레시피
+## 11. 실전 패턴 레시피
 
 ### 11.1 툴팁/드롭다운(스크롤·클리핑 안전형)
 ```html
@@ -322,7 +322,7 @@ h2[id] { scroll-margin-top: 64px; }        /* 개별 보정 */
 
 ---
 
-## 12) 디버깅 체크리스트
+## 12. 디버깅 체크리스트
 
 - **sticky**가 안 된다 → 스크롤 컨테이너/`top` 지정/조상 `overflow` 확인.
 - **fixed**가 스크롤 따라 움직인다 → 조상 `transform/filter/contain` 여부 확인.
@@ -332,7 +332,7 @@ h2[id] { scroll-margin-top: 64px; }        /* 개별 보정 */
 
 ---
 
-## 13) 비교 요약표(확장판)
+## 13. 비교 요약표(확장판)
 
 | 값 | 흐름 참여 | 기준(Containing Block) | 스크롤 영향 | z-index로 SC 생성 | 대표 용도 |
 |---|---|---|---|---|---|
@@ -344,7 +344,7 @@ h2[id] { scroll-margin-top: 64px; }        /* 개별 보정 */
 
 ---
 
-## 14) 수식 메모 — 오프셋이 치수에 미치는 영향
+## 14. 수식 메모 — 오프셋이 치수에 미치는 영향
 
 상하 오프셋을 모두 지정하면 **높이가 결정**됩니다:
 $$
@@ -358,7 +358,7 @@ $$
 
 ---
 
-## 15) 통합 예제(학습용 페이지)
+## 15. 통합 예제(학습용 페이지)
 
 ```html
 <!doctype html>
@@ -444,7 +444,7 @@ $$
 
 ---
 
-## 16) 자주 묻는 질문(FAQ)
+## 16. 자주 묻는 질문(FAQ)
 
 **Q1. sticky가 동작하지 않아요.**  
 A. 스크롤 컨테이너가 어디인지 확인하세요. `top`(또는 `inset-*`)을 지정했는지, 조상 `overflow`가 sticky를 **클리핑**하지 않는지 점검하세요. 필요 시 `z-index` 보정.
@@ -460,7 +460,7 @@ A. stacking context가 갈라져 있을 확률이 높습니다. 어떤 요소가
 
 ---
 
-## 17) 실무 체크리스트
+## 17. 실무 체크리스트
 
 - 기준점을 만들 부모에는 `position: relative`.
 - 툴팁/드롭다운은 **클리핑**(overflow)과 **포털** 전략을 함께 고려.

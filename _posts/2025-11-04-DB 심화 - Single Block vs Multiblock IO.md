@@ -13,7 +13,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 환경 공통: 샘플 스키마 & 통계 수집
+## 0. 실습 환경 공통: 샘플 스키마 & 통계 수집
 ```sql
 -- 블록 사이즈 기본 8KB 가정
 -- 큰 테이블과 인덱스를 만들어 실험
@@ -60,7 +60,7 @@ END;
 
 ---
 
-## 1) 개념 정리: Single vs Multiblock I/O
+## 1. 개념 정리: Single vs Multiblock I/O
 
 ### 1.1 Single Block I/O
 - **정의**: 한 I/O 호출에 **딱 1개의 데이터 블록**을 읽는다(보통 8KB).
@@ -95,7 +95,7 @@ $$
 
 ---
 
-## 2) 언제 Single, 언제 Multiblock인가? — 실행계획 관점
+## 2. 언제 Single, 언제 Multiblock인가? — 실행계획 관점
 
 ### 2.1 Single Block 지향(OLTP)
 - **패턴**: `INDEX RANGE/UNIQUE SCAN` → `TABLE ACCESS BY ROWID`
@@ -129,7 +129,7 @@ WHERE  order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'Q'), -3);
 
 ---
 
-## 3) 대기 이벤트로 구분/관찰하기
+## 3. 대기 이벤트로 구분/관찰하기
 
 ### 3.1 시스템/세션 레벨 카운터
 ```sql
@@ -180,7 +180,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-## 4) 실전 시나리오: 같은 질의, 서로 다른 I/O 전략
+## 4. 실전 시나리오: 같은 질의, 서로 다른 I/O 전략
 
 ### 4.1 “최근 3개월, 고객별 주문 합계 Top-50”
 **A안 (잘못된 설계: Single 폭증)**
@@ -220,7 +220,7 @@ FETCH FIRST 50 ROWS ONLY;  -- STOPKEY
 
 ---
 
-## 5) Single Block I/O **줄이는** 패턴 (OLTP 개선)
+## 5. Single Block I/O **줄이는** 패턴 (OLTP 개선)
 
 ### 5.1 커버링 인덱스(테이블 BY ROWID 제거)
 ```sql
@@ -271,7 +271,7 @@ WHERE  EXISTS (
 
 ---
 
-## 6) Multiblock I/O **효율을 키우는** 패턴 (DW/리포트 개선)
+## 6. Multiblock I/O **효율을 키우는** 패턴 (DW/리포트 개선)
 
 ### 6.1 파티션 프루닝 + 해시 조인 + 병렬
 ```sql
@@ -309,7 +309,7 @@ GROUP  BY status;
 
 ---
 
-## 7) MBRC(멀티블록 리드)와 I/O 크기
+## 7. MBRC(멀티블록 리드)와 I/O 크기
 
 ### 7.1 MBRC의 현실
 - 과거엔 `db_file_multiblock_read_count` 로 직관적 제어를 기대했지만, **현대 버전**에선 스토리지/OS/옵티마이저가 I/O 크기를 **자동** 조정하는 경향.
@@ -323,7 +323,7 @@ GROUP  BY status;
 
 ---
 
-## 8) Single ↔ Multi 전략 선택 가이드
+## 8. Single ↔ Multi 전략 선택 가이드
 
 | 상황 | 권장 경로 | 근거 |
 |---|---|---|
@@ -335,7 +335,7 @@ GROUP  BY status;
 
 ---
 
-## 9) 관찰/검증 절차(필수)
+## 9. 관찰/검증 절차(필수)
 
 ### 9.1 트레이스 & 플랜
 ```sql
@@ -375,7 +375,7 @@ ORDER  BY value DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 10) 안티패턴과 교정
+## 10. 안티패턴과 교정
 
 | 안티패턴 | 증상 | 교정 |
 |---|---|---|
@@ -387,7 +387,7 @@ ORDER  BY value DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 11) 추가 고급 주제
+## 11. 추가 고급 주제
 
 ### 11.1 Direct Path Read vs Buffered Read
 - **Buffered**: 버퍼 캐시에 적재 → **재사용** 가능(OLTP에 유리)  
@@ -404,7 +404,7 @@ ORDER  BY value DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 12) 요약 레시피
+## 12. 요약 레시피
 
 1) **쿼리 목적**을 보고 **Single vs Multiblock** 전략을 먼저 선택한다.  
 2) **Single를 줄여야** 하는 OLTP라면: **커버링 인덱스**, **클러스터링 팩터**, **세미조인/필터 선행**, **부분범위처리**.  

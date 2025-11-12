@@ -6,7 +6,7 @@ category: HTML
 ---
 # 문자셋(Character Set)이란?
 
-## 1) 개념 정리 — 문자셋·인코딩·유니코드·코드포인트
+## 1. 개념 정리 — 문자셋·인코딩·유니코드·코드포인트
 
 - **문자셋(Character Set)**: 표현 가능한 **문자의 집합**. 예: 유니코드(전 세계 문자), ASCII(128자), EUC-KR(한글 중심).
 - **인코딩(Encoding)**: 문자(코드포인트)를 **바이트 시퀀스**로 변환하는 규칙. 예: UTF-8, UTF-16, EUC-KR.
@@ -17,7 +17,7 @@ category: HTML
 
 ---
 
-## 2) 역사와 현재 — 왜 UTF-8인가?
+## 2. 역사와 현재 — 왜 UTF-8인가?
 
 - **ASCII(1960s)**: 7비트, 128자(영문/숫자/기호). 국제화 불가.
 - **ISO-8859-1(Latin-1)**: 서유럽 문자 확장. 한글/한자 미지원.
@@ -28,7 +28,7 @@ category: HTML
 
 ---
 
-## 3) HTML에서의 지정 — 메타/순서/낚시줄(혼합 인코딩) 주의
+## 3. HTML에서의 지정 — 메타/순서/낚시줄(혼합 인코딩) 주의
 
 ### 3.1 권장 메타 태그
 ```html
@@ -52,7 +52,7 @@ category: HTML
 
 ---
 
-## 4) HTTP·서버 사이드 — 헤더/프레임워크별 설정
+## 4. HTTP·서버 사이드 — 헤더/프레임워크별 설정
 
 ### 4.1 HTTP 응답 헤더
 ```http
@@ -150,7 +150,7 @@ AddType 'application/json; charset=UTF-8' .json
 
 ---
 
-## 5) DB 설정 — MySQL·PostgreSQL·ORM, 그리고 이모지
+## 5. DB 설정 — MySQL·PostgreSQL·ORM, 그리고 이모지
 
 ### 5.1 MySQL/MariaDB — `utf8mb4`가 정답
 - MySQL의 `utf8`은 **최대 3바이트**로, 일부 이모지(4바이트) 저장 실패.
@@ -194,7 +194,7 @@ CREATE DATABASE appdb WITH ENCODING 'UTF8' LC_COLLATE='ko_KR.utf8' LC_CTYPE='ko_
 
 ---
 
-## 6) 이모지/조합문자/정규화 — 보이는 것과 길이가 다르다
+## 6. 이모지/조합문자/정규화 — 보이는 것과 길이가 다르다
 
 ### 6.1 가시 문자 ≠ 코드포인트 수 ≠ 바이트 수
 - “👩‍💻”(여성 기술자 이모지)은 **여러 코드포인트의 조합(ZWJ, 변형 선택자 등)** 일 수 있습니다.
@@ -237,7 +237,7 @@ nfc = unicodedata.normalize('NFC', s)
 
 ---
 
-## 7) BOM(Byte Order Mark) — UTF-8 with BOM의 함정
+## 7. BOM(Byte Order Mark) — UTF-8 with BOM의 함정
 
 - UTF-8은 바이트 순서가 고정이라 **BOM이 불필요**.
 - 일부 편집기는 `UTF-8 with BOM`으로 저장 → **서버 사이드 파서/CLI 스크립트/JSON 파서**가 **선행 바이트를 내용으로 오인**.
@@ -245,7 +245,7 @@ nfc = unicodedata.normalize('NFC', s)
 
 ---
 
-## 8) 폼/API/CSV/이메일 — 입출력 경로별 주의점
+## 8. 폼/API/CSV/이메일 — 입출력 경로별 주의점
 
 ### 8.1 HTML 폼/서버
 - HTML 기본은 UTF-8. 서버 측 **요청 바디 파서의 문자셋** 확인.
@@ -279,7 +279,7 @@ Subject: =?UTF-8?B?7JWI64WV7ZWY?=
 
 ---
 
-## 9) 브라우저/도구에서의 확인
+## 9. 브라우저/도구에서의 확인
 
 - **개발자도구 → Network**: `Content-Type` 헤더의 `charset` 확인.
 - **View Source**: `<meta charset="...">` 위치/값 확인.
@@ -295,7 +295,7 @@ iconv -f EUC-KR -t UTF-8 old.html > new.html
 
 ---
 
-## 10) 트러블슈팅 — 흔한 증상과 원인·해결
+## 10. 트러블슈팅 — 흔한 증상과 원인·해결
 
 ### 10.1 "���" 또는 물음표/깨짐
 - 원인: **서버 헤더/HTML 메타/파일 저장 인코딩 불일치**
@@ -319,7 +319,7 @@ iconv -f EUC-KR -t UTF-8 old.html > new.html
 
 ---
 
-## 11) 마이그레이션 가이드 — EUC-KR/CP949 → UTF-8
+## 11. 마이그레이션 가이드 — EUC-KR/CP949 → UTF-8
 
 1. **소스/템플릿/정적 파일**: 에디터 일괄 변환(백업 필수).  
    `iconv -f CP949 -t UTF-8 old.html > new.html`
@@ -332,7 +332,7 @@ iconv -f EUC-KR -t UTF-8 old.html > new.html
 
 ---
 
-## 12) 실전 예제 모음
+## 12. 실전 예제 모음
 
 ### 12.1 HTML 스켈레톤(권장)
 ```html
@@ -390,7 +390,7 @@ Subject: =?UTF-8?B?7JWI64WV7ZWYIOyImO2DgA==?=
 
 ---
 
-## 13) 품질 체크리스트(배포 전)
+## 13. 품질 체크리스트(배포 전)
 
 - [ ] HTML `<meta charset="UTF-8">`가 `<head>` 초반에 있는가?
 - [ ] 모든 HTTP 응답에 올바른 `Content-Type; charset=UTF-8`가 설정되는가?
@@ -403,7 +403,7 @@ Subject: =?UTF-8?B?7JWI64WV7ZWYIOyImO2DgA==?=
 
 ---
 
-## 14) FAQ — 실무에서 자주 묻는 것
+## 14. FAQ — 실무에서 자주 묻는 것
 
 **Q1. MySQL `utf8`인데 가끔 이모지가 깨져요.**  
 A. `utf8`은 3바이트까지만. **utf8mb4**로 전환하세요.
@@ -422,7 +422,7 @@ A. 표준적으로 브라우저는 **HTTP 헤더의 charset**을 우선합니다
 
 ---
 
-## 15) 결론
+## 15. 결론
 
 - 문자셋은 **단순 설정**이 아니라, **시스템 전체의 합의**입니다.  
 - **UTF-8(무BOM)** 을 기본으로, DB는 **utf8mb4**, 헤더/메타/파일/툴 전부를 일치시킵니다.  

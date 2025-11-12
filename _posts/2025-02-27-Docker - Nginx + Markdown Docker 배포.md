@@ -6,7 +6,7 @@ category: Docker
 ---
 # 정적 블로그(Nginx + Markdown) Docker 배포 가이드
 
-## 0) 목표와 아키텍처
+## 0. 목표와 아키텍처
 
 - Markdown 문서를 정적으로 HTML/CSS/JS로 변환
 - Nginx가 정적 결과물만 제공 (무상태)
@@ -19,7 +19,7 @@ category: Docker
 
 ---
 
-## 1) 폴더 레이아웃(확장형 Hugo 기준)
+## 1. 폴더 레이아웃(확장형 Hugo 기준)
 
 ```plaintext
 my-blog/
@@ -45,7 +45,7 @@ my-blog/
 
 ---
 
-## 2) Hugo 설정 파일 예시(`config.toml`)
+## 2. Hugo 설정 파일 예시(`config.toml`)
 
 ```toml
 baseURL = "https://example.com/"
@@ -85,7 +85,7 @@ enableRobotsTXT = true
 
 ---
 
-## 3) Dockerfile — Hugo 빌더(멀티스테이지 가능)
+## 3. Dockerfile — Hugo 빌더(멀티스테이지 가능)
 
 ### 3.1 단일 스테이지(단순/빠른 시작)
 
@@ -105,13 +105,13 @@ RUN hugo --minify
 ### 3.2 멀티스테이지(빌드 → 산출물만 복사하여 Nginx에 내장)
 
 ```Dockerfile
-# 1) Builder
+# 1. Builder
 FROM klakegg/hugo:0.126.1-ext-alpine AS builder
 WORKDIR /src
 COPY . .
 RUN hugo --minify
 
-# 2) Runtime(Nginx에 결과물 bake-in)
+# 2. Runtime(Nginx에 결과물 bake-in)
 FROM nginx:1.27-alpine AS runtime
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /src/public /usr/share/nginx/html
@@ -124,7 +124,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 CMD wget -qO- http://127.0.0
 
 ---
 
-## 4) Nginx 설정(캐시·압축·보안 헤더 포함 예시)
+## 4. Nginx 설정(캐시·압축·보안 헤더 포함 예시)
 
 `nginx/default.conf`:
 
@@ -177,7 +177,7 @@ server {
 
 ---
 
-## 5) Compose — 개발용(빌드 분리 + Live server 선택지)
+## 5. Compose — 개발용(빌드 분리 + Live server 선택지)
 
 ### 5.1 개발용 `docker-compose.yml`
 
@@ -231,7 +231,7 @@ services:
 
 ---
 
-## 6) Compose — 운영용 오버레이(`docker-compose.prod.yml`)
+## 6. Compose — 운영용 오버레이(`docker-compose.prod.yml`)
 
 - 빌더/서버를 분리한 2컨테이너 방식(산출물은 볼륨/바인드로 전달).
 - 혹은 멀티스테이지 runtime 이미지만 띄우는 단일컨테이너 배포.
@@ -274,7 +274,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 ---
 
-## 7) .dockerignore
+## 7. .dockerignore
 
 빌드 컨텍스트 축소와 캐시 효율을 위해 반드시 포함:
 
@@ -289,7 +289,7 @@ node_modules
 
 ---
 
-## 8) 수식(MathJax)과 다이어그램(Mermaid) 포함
+## 8. 수식(MathJax)과 다이어그램(Mermaid) 포함
 
 ### 8.1 MathJax
 
@@ -330,7 +330,7 @@ graph TD
 
 ---
 
-## 9) 이미지·자산 최적화
+## 9. 이미지·자산 최적화
 
 - 이미지 포맷: **WebP** 우선, 필요 시 PNG/JPEG 폴백
 - 파일명에 해시를 붙이는 빌드 파이프라인(테마/파이프) 사용 → **Immutable 캐시** 가능
@@ -338,7 +338,7 @@ graph TD
 
 ---
 
-## 10) SEO/메타/리다이렉트
+## 10. SEO/메타/리다이렉트
 
 - `robots.txt`/`sitemap.xml` 자동 생성(Hugo 기본 또는 테마 지원)
 - OpenGraph/Twitter Card 메타 추가(테마 또는 `layouts/partials`)
@@ -353,7 +353,7 @@ location = /old-path {
 
 ---
 
-## 11) HTTPS(선택) — Nginx + Certbot 컨테이너
+## 11. HTTPS(선택) — Nginx + Certbot 컨테이너
 
 간단히 dockerized certbot을 붙이는 패턴(운영 서버에서 DNS/방화벽 개방 필요).  
 프로덕션에서는 Nginx-proxy/Traefik 또는 Cloudflare의 TLS 종단도 고려.
@@ -384,7 +384,7 @@ Nginx conf에 `.well-known/acme-challenge` 경로 프록시/루트 지정 필요
 
 ---
 
-## 12) CI/CD(예: GitHub Actions)
+## 12. CI/CD(예: GitHub Actions)
 
 새로 푸시 시 자동으로 빌드 후 서버에 배포(SSH/Registry 방식).
 
@@ -418,7 +418,7 @@ jobs:
 
 ---
 
-## 13) MkDocs/Jekyll/Zola/Pandoc 대체
+## 13. MkDocs/Jekyll/Zola/Pandoc 대체
 
 ### 13.1 MkDocs(Material 테마 예)
 
@@ -456,7 +456,7 @@ docker run --rm -v "$PWD":/work pandoc/core:latest \
 
 ---
 
-## 14) Makefile(반복작업 단축)
+## 14. Makefile(반복작업 단축)
 
 ```makefile
 build:
@@ -477,7 +477,7 @@ clean:
 
 ---
 
-## 15) 트러블슈팅 체크리스트
+## 15. 트러블슈팅 체크리스트
 
 | 증상 | 점검 항목 | 빠른 확인 |
 |---|---|---|
@@ -493,7 +493,7 @@ SELinux 환경 예:
 
 ---
 
-## 16) 성능 팁 요약
+## 16. 성능 팁 요약
 
 - Generator 단계: **이미지/폰트 최적화**, 불필요 자산 제외
 - Nginx 단계: **gzip**, (가능하면) **Brotli 모듈** 추가
@@ -503,7 +503,7 @@ SELinux 환경 예:
 
 ---
 
-## 17) 실행 순서 요약
+## 17. 실행 순서 요약
 
 개발:
 
@@ -527,7 +527,7 @@ docker compose logs -f web
 
 ---
 
-## 18) 결론
+## 18. 결론
 
 - 정적 사이트는 **무상태·경량**이며 컨테이너와 궁합이 좋다.
 - **빌드(Generator)와 서빙(Nginx)**을 분리하면, 로컬/CI/운영 어디서나 재현 가능.

@@ -6,7 +6,7 @@ category: Docker
 ---
 # Flask/Django 기반 커뮤니티 사이트의 Docker 컨테이너화
 
-## 0) 최종 목표와 아키텍처 개요
+## 0. 최종 목표와 아키텍처 개요
 
 - 웹 프레임워크: **Flask** 또는 **Django** (둘 다 예시 제공)
 - 데이터베이스: **PostgreSQL 15** (필요 시 MySQL 전환 예시 포함)
@@ -20,7 +20,7 @@ category: Docker
 
 ---
 
-## 1) 디렉터리 구조(Flask 기준) — 최소 구성
+## 1. 디렉터리 구조(Flask 기준) — 최소 구성
 
 ```plaintext
 community-app/
@@ -48,7 +48,7 @@ community-app/
 
 ---
 
-## 2) Python 요구사항 파일
+## 2. Python 요구사항 파일
 
 ### 2.1 Flask용 `requirements.txt`
 
@@ -74,7 +74,7 @@ python-dotenv==1.0.1
 
 ---
 
-## 3) Dockerfile — 멀티스테이지 + 런타임 최적화
+## 3. Dockerfile — 멀티스테이지 + 런타임 최적화
 
 두 프레임워크 공용으로 쓸 수 있는 기본 이미지(엔트리 명령만 다르게 지정).
 
@@ -114,7 +114,7 @@ CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
 
 ---
 
-## 4) Flask 애플리케이션 샘플
+## 4. Flask 애플리케이션 샘플
 
 ### 4.1 `app/models.py`
 
@@ -196,7 +196,7 @@ app.register_blueprint(bp)
 
 ---
 
-## 5) Django 애플리케이션 포인트(간략 예시)
+## 5. Django 애플리케이션 포인트(간략 예시)
 
 ### 5.1 `community/settings.py` (핵심 DB/정적 설정만)
 
@@ -255,7 +255,7 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 ---
 
-## 6) DB 준비 대기 스크립트 `docker/wait-for-db.sh`
+## 6. DB 준비 대기 스크립트 `docker/wait-for-db.sh`
 
 DB가 뜨기 전에 앱이 연결을 시도하면 실패하므로, 간단한 대기 스크립트를 사용한다.
 
@@ -276,7 +276,7 @@ exec "$@"
 
 ---
 
-## 7) Compose — 개발용 `docker-compose.yml`
+## 7. Compose — 개발용 `docker-compose.yml`
 
 - 실시간 코드 반영을 위해 **바인드 마운트**
 - **env_file** 주입
@@ -338,7 +338,7 @@ networks:
 
 ---
 
-## 8) Compose — 운영용 `docker-compose.prod.yml`
+## 8. Compose — 운영용 `docker-compose.prod.yml`
 
 - **Gunicorn**으로 WSGI 서비스
 - **Nginx 리버스 프록시**(정적 캐싱 및 SSL 종단 선택)
@@ -412,7 +412,7 @@ networks:
 
 ---
 
-## 9) Gunicorn & Nginx 설정
+## 9. Gunicorn & Nginx 설정
 
 ### 9.1 `docker/gunicorn.conf.py`
 
@@ -470,7 +470,7 @@ http {
 
 ---
 
-## 10) .env 샘플(개발/운영 분리)
+## 10. .env 샘플(개발/운영 분리)
 
 ### 10.1 `.env` (dev)
 
@@ -498,7 +498,7 @@ DJANGO_ALLOWED_HOSTS=yourdomain.com,localhost
 
 ---
 
-## 11) 마이그레이션·초기화 절차
+## 11. 마이그레이션·초기화 절차
 
 ### 11.1 Flask(SQLAlchemy) — 간단 초기화
 
@@ -527,7 +527,7 @@ docker compose run --rm web bash -lc "python manage.py createsuperuser"
 
 ---
 
-## 12) MySQL로 전환하기(선택)
+## 12. MySQL로 전환하기(선택)
 
 ### 12.1 Compose 변경
 
@@ -557,7 +557,7 @@ db:
 
 ---
 
-## 13) 헬스체크/레디니스 전략
+## 13. 헬스체크/레디니스 전략
 
 - DB 컨테이너: `pg_isready` 또는 `mysqladmin ping`
 - 웹 컨테이너: 어플리케이션 자체 헬스 엔드포인트(예: `/healthz`) 추가 후 Nginx/Gateway에서 사용
@@ -573,7 +573,7 @@ Nginx에서 /healthz는 `app_upstream` 프록시 그대로 통과시켜 상태 �
 
 ---
 
-## 14) 백업/복구 전략(핵심만)
+## 14. 백업/복구 전략(핵심만)
 
 ### 14.1 PostgreSQL
 ```bash
@@ -597,7 +597,7 @@ cat backup.sql | docker compose exec -T db sh -lc 'mysql -u"$MYSQL_USER" -p"$MYS
 
 ---
 
-## 15) 로깅/모니터링·리소스 제한
+## 15. 로깅/모니터링·리소스 제한
 
 - **로깅**: 기본 json-file 드라이버 로테이션
 - **리소스 제한**: 컨테이너별 `deploy.resources.limits`(Swarm) 또는 `mem_limit`, `cpus`(Compose 확장)
@@ -622,7 +622,7 @@ services:
 
 ---
 
-## 16) CI/CD 파이프라인(요점)
+## 16. CI/CD 파이프라인(요점)
 
 - `.env.prod`는 **CI Secret/Protected Var**로 관리
 - 배포 전 `docker compose --env-file .env.prod config`로 **치환 검증**
@@ -646,7 +646,7 @@ GitHub Actions 예시 스텝(요약):
 
 ---
 
-## 17) 트러블슈팅 체크리스트
+## 17. 트러블슈팅 체크리스트
 
 | 증상 | 점검 포인트 | 빠른 확인 |
 |---|---|---|
@@ -658,7 +658,7 @@ GitHub Actions 예시 스텝(요약):
 
 ---
 
-## 18) 실행 순서(개발/운영)
+## 18. 실행 순서(개발/운영)
 
 ### 18.1 개발(Flask)
 ```bash
@@ -680,7 +680,7 @@ docker compose exec web bash -lc "python manage.py migrate && python manage.py c
 
 ---
 
-## 19) 보안·권한·베스트 프랙티스
+## 19. 보안·권한·베스트 프랙티스
 
 - 컨테이너 실행 사용자: 필요 시 `USER` 추가로 루트 회피
 - 비밀 관리: 환경변수 대신 **Compose secrets** 또는 외부 Vault 권장
@@ -704,7 +704,7 @@ down:
 
 ---
 
-## 20) 결론
+## 20. 결론
 
 - **하나의 이미지**로 개발/운영을 공통화하고, **Compose의 .env/프로파일/헬스체크**를 조합하면 **안정적이고 재현 가능한 스택**을 구성할 수 있다.
 - 운영 시에는 **Gunicorn + Nginx + 헬스체크 + 백업/모니터링/리소스 제한**까지 포함해 **실서비스 요건**을 충족하라.

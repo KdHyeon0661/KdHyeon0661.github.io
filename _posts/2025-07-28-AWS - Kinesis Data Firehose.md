@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Kinesis Data Firehose 기반 ETL 파이프라인 설계
 
-## 0) 전체 흐름(확장판)
+## 0. 전체 흐름(확장판)
 
 ```text
 [Producers: App/Batch/IoT/Fluent Bit/CloudFront/ALB Logs]
@@ -27,7 +27,7 @@ Destinations:
 
 ---
 
-## 1) Firehose 핵심 개념 정리
+## 1. Firehose 핵심 개념 정리
 
 ### 1.1 소스(Source) 유형
 - **Direct PUT**: 애플리케이션에서 Firehose API로 직접 전송
@@ -52,7 +52,7 @@ Destinations:
 
 ---
 
-## 2) IAM 최소 권한 설계(샘플)
+## 2. IAM 최소 권한 설계(샘플)
 
 ```json
 {
@@ -70,7 +70,7 @@ Destinations:
 
 ---
 
-## 3) Lambda 변환: 실전 패턴(PII 마스킹, 스키마 진화, 에러 분기)
+## 3. Lambda 변환: 실전 패턴(PII 마스킹, 스키마 진화, 에러 분기)
 
 ### 3.1 입력/출력 컨트랙트
 - `event.records[]` 각 항목: `{ recordId, data, approximateArrivalTimestamp }`
@@ -131,7 +131,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 4) S3 목적지: 포맷 변환/파티셔닝/Glue/Athena
+## 4. S3 목적지: 포맷 변환/파티셔닝/Glue/Athena
 
 ### 4.1 S3 구성 전략
 - Prefix 설계: `s3://datalake/events/year=YYYY/month=MM/day=DD/country=KR/`  
@@ -193,7 +193,7 @@ LIMIT 20;
 
 ---
 
-## 5) Redshift 목적지: COPY 자동화
+## 5. Redshift 목적지: COPY 자동화
 
 ### 5.1 설계 포인트
 - Firehose가 **S3 staging → Redshift COPY**를 자동 실행  
@@ -206,7 +206,7 @@ LIMIT 20;
 
 ---
 
-## 6) OpenSearch 목적지
+## 6. OpenSearch 목적지
 
 ### 6.1 색인 설계
 - Index: `events-YYYY.MM.DD` 롤오버 정책  
@@ -215,7 +215,7 @@ LIMIT 20;
 
 ---
 
-## 7) 오류 처리·백업·재처리
+## 7. 오류 처리·백업·재처리
 
 - **Retry**: 네트워크/스로틀링에 대해 내부 재시도  
 - **Backup Bucket**: 변환 실패/전송 실패를 `etl-errors/`로 백업  
@@ -227,7 +227,7 @@ LIMIT 20;
 
 ---
 
-## 8) 관측성(Observability)
+## 8. 관측성(Observability)
 
 ### 8.1 CloudWatch 메트릭 핵심
 - `DeliveryToS3.Records`, `DeliveryToS3.Success`  
@@ -248,7 +248,7 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 9) 성능·비용 최적화
+## 9. 성능·비용 최적화
 
 ### 9.1 버퍼·압축·포맷
 - S3: **Size 32–64 MiB / Interval 60–180 s** → 적절한 파일 크기(Parquet 128–256MiB)  
@@ -273,7 +273,7 @@ $$
 
 ---
 
-## 10) 보안 설계
+## 10. 보안 설계
 
 - **SSE-KMS**: S3 객체 암호화, Firehose 전송 시 KMS 사용  
 - **VPC 엔드포인트(Interface/Gateway)**: 사설 경로로 S3/Kinesis/KMS/Logs 접근  
@@ -282,7 +282,7 @@ $$
 
 ---
 
-## 11) IaC: Terraform 스니펫
+## 11. IaC: Terraform 스니펫
 
 ```hcl
 resource "aws_kinesis_firehose_delivery_stream" "etl" {
@@ -323,7 +323,7 @@ resource "aws_kinesis_firehose_delivery_stream" "etl" {
 
 ---
 
-## 12) 테스트 & 프로듀서 예시
+## 12. 테스트 & 프로듀서 예시
 
 ### 12.1 Python(Direct PUT)
 ```python
@@ -350,7 +350,7 @@ def put_batch(records):
 
 ---
 
-## 13) 운영 체크리스트
+## 13. 운영 체크리스트
 
 - [ ] S3 Prefix/파티션 키 설계 확정(쿼리 패턴 역설계)  
 - [ ] Lambda 변환: 타임아웃/동시성/메모리 적정치 튜닝  
@@ -362,7 +362,7 @@ def put_batch(records):
 
 ---
 
-## 14) 자주 묻는 질문(FAQ)
+## 14. 자주 묻는 질문(FAQ)
 
 **Q1. 레코드 순서는 보장되나?**  
 - Firehose는 **전송 순서 보장하지 않음**. 순서 의존 시 Kinesis Data Streams + 소비자 애플리케이션(Flink/KDA) 고려.
@@ -378,7 +378,7 @@ def put_batch(records):
 
 ---
 
-## 15) 미니 실습 시나리오(엔드투엔드)
+## 15. 미니 실습 시나리오(엔드투엔드)
 
 1) **S3 버킷** 생성, KMS 키 준비  
 2) **Lambda 변환** 배포(PII 마스킹/partitionKeys 세팅)  
@@ -390,7 +390,7 @@ def put_batch(records):
 
 ---
 
-## 16) 결론
+## 16. 결론
 
 - Firehose는 **운영 난이도를 낮춘 실시간 ETL**의 표준 경로다.  
 - 핵심은 **(1) 변환 품질(Lambda), (2) 포맷 전환(Parquet), (3) 파티션 설계, (4) 에러 백업/리플레이, (5) 보안·관측성**이다.  

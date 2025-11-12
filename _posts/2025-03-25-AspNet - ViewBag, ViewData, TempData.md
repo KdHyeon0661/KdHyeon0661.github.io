@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core — ViewBag · ViewData · TempData
 
-## 0) 한눈 비교(복습)
+## 0. 한눈 비교(복습)
 
 | 이름 | 타입/형태 | 수명 | 주 사용처 | 리다이렉트 유지 | 타입 안정성 |
 |---|---|---|---|---|---|
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 1) ViewData — 딕셔너리로 전달(캐스팅 필요)
+## 1. ViewData — 딕셔너리로 전달(캐스팅 필요)
 
 ### 1.1 Controller → View
 
@@ -74,7 +74,7 @@ public IActionResult Index()
 
 ---
 
-## 2) ViewBag — ViewData의 dynamic 래퍼(가독성↑, 컴파일 타임 체크×)
+## 2. ViewBag — ViewData의 dynamic 래퍼(가독성↑, 컴파일 타임 체크×)
 
 ```csharp
 public IActionResult Index()
@@ -95,7 +95,7 @@ public IActionResult Index()
 
 ---
 
-## 3) TempData — 다음 요청까지 1회성 유지(PRG·Flash)
+## 3. TempData — 다음 요청까지 1회성 유지(PRG·Flash)
 
 ### 3.1 핵심 개념(정확한 동작 원리)
 
@@ -182,7 +182,7 @@ public IActionResult Index()
 
 ---
 
-## 4) TempData Provider/Session 구성
+## 4. TempData Provider/Session 구성
 
 ### 4.1 기본(CookieTempDataProvider) — 별도 구성 없음
 
@@ -218,7 +218,7 @@ app.Run();
 
 ---
 
-## 5) Layout/Partial/ViewComponent와 데이터 전달
+## 5. Layout/Partial/ViewComponent와 데이터 전달
 
 ### 5.1 레이아웃에서 ViewData/TempData 사용
 
@@ -271,7 +271,7 @@ public class BannerViewComponent : ViewComponent
 
 ---
 
-## 6) Razor Pages에서의 ViewData/ViewBag/TempData
+## 6. Razor Pages에서의 ViewData/ViewBag/TempData
 
 ### 6.1 ViewData/ViewBag
 
@@ -331,7 +331,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 7) 플래시 메시지 시스템(토스트/Alert) 통합 — 실전 템플릿
+## 7. 플래시 메시지 시스템(토스트/Alert) 통합 — 실전 템플릿
 
 ### 7.1 필터로 TempData → ViewData 브리지(선택 패턴)
 
@@ -379,7 +379,7 @@ builder.Services.AddControllersWithViews(o =>
 
 ---
 
-## 8) 테스트/디버깅 팁
+## 8. 테스트/디버깅 팁
 
 ### 8.1 단위 테스트에서 ViewData/TempData 검증
 
@@ -421,7 +421,7 @@ Assert.Equal("success", controller.TempData["Flash.Type"]);
 
 ---
 
-## 9) 자주 겪는 함정과 해결
+## 9. 자주 겪는 함정과 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -434,7 +434,7 @@ Assert.Equal("success", controller.TempData["Flash.Type"]);
 
 ---
 
-## 10) 권장 사용 시나리오 정리
+## 10. 권장 사용 시나리오 정리
 
 - **ViewModel 우선**: 페이지 핵심 데이터는 항상 명시적 ViewModel
 - **ViewData/ViewBag**: 레이아웃·헤더 타이틀, 작은 옵션 플래그, UI 전용 소량 데이터
@@ -443,7 +443,7 @@ Assert.Equal("success", controller.TempData["Flash.Type"]);
 
 ---
 
-## 11) 실전 종합 예제
+## 11. 실전 종합 예제
 
 ### 11.1 Controller
 
@@ -565,7 +565,7 @@ public class ProductsController : Controller
 
 ---
 
-## 12) FAQ
+## 12. FAQ
 
 **Q1. ViewData vs ViewBag 중 무엇을 써야 하나요?**  
 A. 기능상 동일. 팀 코드 스타일에 맞춰 **일관성** 있게 선택. 컴파일 타임 체크를 원하면 ViewData(캐스팅)보다 **ViewModel**을 권장.
@@ -581,7 +581,7 @@ A. 이미 읽혀서 제거되었을 가능성. **`Peek()`/`Keep()`** 사용 또�
 
 ---
 
-## 13) 체크리스트
+## 13. 체크리스트
 
 - [ ] 페이지 핵심 데이터는 **ViewModel**로 전달했는가?  
 - [ ] 일회성 메시지는 **TempData + PRG**로 처리했는가?  
@@ -592,7 +592,7 @@ A. 이미 읽혀서 제거되었을 가능성. **`Peek()`/`Keep()`** 사용 또�
 
 ---
 
-## 14) 결론
+## 14. 결론
 
 - **ViewModel 우선** 원칙을 지키되, **ViewData/ViewBag/TempData**는 **UI 보조 정보/플래시 메시지** 등에서 생산성을 크게 높여준다.  
 - TempData는 **PRG**와 찰떡궁합이며, **Cookie/Session Provider** 특성과 제약을 이해하고 사용하면 안정적이다.  

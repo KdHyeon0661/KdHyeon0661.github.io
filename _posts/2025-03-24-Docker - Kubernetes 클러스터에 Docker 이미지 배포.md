@@ -28,16 +28,16 @@ category: Docker
 ## 1. Docker 이미지 빌드 & Push
 
 ```bash
-# 1) 이미지 빌드
+# 1. 이미지 빌드
 docker build -t yourname/myapp:1.0.0 .
 
-# 2) 로그인(Docker Hub 예시)
+# 2. 로그인(Docker Hub 예시)
 docker login
 
-# 3) 태그 추가(가독 태그 + 불변 태그)
+# 3. 태그 추가(가독 태그 + 불변 태그)
 docker tag yourname/myapp:1.0.0 yourname/myapp:latest
 
-# 4) 푸시
+# 4. 푸시
 docker push yourname/myapp:1.0.0
 docker push yourname/myapp:latest
 ```

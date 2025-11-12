@@ -6,159 +6,262 @@ category: Java
 ---
 # Java에서 Spring으로 넘어가기 / POJO·DI 개념 / 애너테이션 기반 개발
 
-Spring은 “**평범한 자바 객체(POJO)** 중심 설계”와 “**의존성 주입(DI)**, **제어의 역전(IoC)**”을 통해 애플리케이션 구조를 단순·유연하게 만듭니다.  
-여기서는 (1) **코어 Java에서 Spring으로 전환하는 흐름**, (2) **POJO·DI 핵심 개념**, (3) **애너테이션 기반 개발 방법**을 실전 관점으로 정리합니다.
-
----
-
-## 1) Java에서 Spring으로 넘어가기
+## 1. 전환 개요 — 왜 Spring인가, 무엇이 달라지는가
 
 ### 1.1 왜 Spring인가
-- **객체 생명주기/의존성 관리**를 프레임워크(IoC 컨테이너)가 담당 → 결합도↓, 테스트 용이성↑
-- **관심사 분리**: 트랜잭션, 보안, 로깅, 캐시 등 횡단 관심사를 AOP로 통합
-- **생태계**: Spring MVC/WebFlux, Data JPA, Security, Batch… 광범위한 통합
+- **IoC/DI 컨테이너**가 객체 생명주기·의존성 조립을 맡는다 → **결합도↓, 테스트 용이성↑**  
+- **횡단 관심사**(트랜잭션, 보안, 로깅, 캐시)를 **AOP**로 선언·정책화  
+- **생태계**: MVC/WebFlux, Data(JPA/Redis), Security, Batch, Integration, Actuator 등
 
-### 1.2 전환 전략(실무형)
-1. **순수 Java/POJO로 도메인 로직 정리**  
-   - 비즈니스 규칙을 프레임워크 독립적으로 캡슐화 (의존 최소화)
-2. **생성자 `new` 제거 → DI로 전환**  
-   - 의존 객체 생성/조립을 컨테이너에 위임
-3. **설정 분리**  
-   - Bean 정의(`@Configuration`, `@Bean`)와 애플리케이션 로직 분리
-4. **레이어 정리**  
-   - `controller`(웹) / `service`(도메인) / `repository`(영속화) 계층화
-5. **Spring Boot 도입**  
-   - 의존성 관리·자동설정으로 생산성↑, 외부 설정(properties/yaml)로 환경 분리
-
-### 1.3 최소 구동(순수 Spring → Spring Boot)
-- (A) **순수 Spring 컨테이너**
-```java
-import org.springframework.context.annotation.*;
-
-@Configuration
-@ComponentScan(basePackages = "com.example")
-class AppConfig {}
-
-public class App {
-    public static void main(String[] args) {
-        try (var ctx = new AnnotationConfigApplicationContext(AppConfig.class)) {
-            var svc = ctx.getBean(GreetingService.class);
-            System.out.println(svc.greet("Spring"));
-        }
-    }
-}
-```
-
-- (B) **Spring Boot**
-```java
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-
-@SpringBootApplication // @Configuration + @ComponentScan + @EnableAutoConfiguration
-public class DemoApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(DemoApplication.class, args);
-    }
-}
-```
-> `@SpringBootApplication`을 기준 패키지의 **루트**에 두면 하위 패키지가 컴포넌트 스캔 대상이 됩니다.
+### 1.2 전환 후 달라지는 점
+| 항목 | 전(코어 Java) | 후(Spring) |
+|---|---|---|
+| 객체 생성/조립 | `new`/팩토리 직접 호출 | **컨테이너가 주입(DI)** |
+| 설정 | 하드코딩/상수 | **YAML/Env** 외부화 + 프로파일 |
+| 모듈 경계 | 라이브러리 호출 | **포트/어댑터** + 인터페이스 주입 |
+| 에러 처리 | 예외 전파/로깅 제각각 | **@ControllerAdvice**, AOP 로깅 표준화 |
+| 트랜잭션 | 수동 관리 | **@Transactional** 선언적 관리 |
+| 테스트 | 통합 중심/느림 | **슬라이스 테스트**로 빠르고 독립적 |
 
 ---
 
-## 2) POJO와 DI의 개념
+## 2. POJO와 DI — 용어, 이점, 주입 방식 비교
 
-### 2.1 POJO (Plain Old Java Object)
-- **특정 프레임워크에 종속되지 않은** 순수 자바 객체
-- 장점: **테스트 용이**, 재사용성↑, 유지보수성↑  
-- 예: 인터페이스 + 구현체, 도메인 엔티티, 서비스 로직 등
+### 2.1 POJO(Plain Old Java Object)
+특정 프레임워크에 의존하지 않는 **순수 자바 객체**. 테스트·재사용·리팩터링이 수월하다.
 
 ```java
-public interface GreetingService {
-    String greet(String name);
+public interface PricingPolicy {
+    long price(long base, int qty);
 }
 
-public class SimpleGreetingService implements GreetingService {
-    @Override public String greet(String name) {
-        return "Hello, " + name;
-    }
+public class FlatPricingPolicy implements PricingPolicy {
+    @Override public long price(long base, int qty) { return base * qty; }
 }
 ```
 
-### 2.2 IoC(제어의 역전) & DI(의존성 주입)
-- **IoC**: 객체 생성/조립/생명주기를 **컨테이너가 제어**
-- **DI**: 객체가 필요한 의존성을 **외부에서 주입**
-  - **생성자 주입(권장)**, 세터 주입, 필드 주입(지양)
-- DI 이점
-  - **결합도↓**: 구현 교체 쉬움 (`@Primary`, `@Qualifier`)
-  - **테스트 용이**: Mock/Fake 주입으로 단위 테스트 쉬움
+### 2.2 IoC/DI 개념
+- **IoC**: 객체 생명주기와 조립의 **제어권을 컨테이너가 가짐**  
+- **DI**: 필요한 의존을 **외부에서 주입** (생성자/세터/필드)
+
+#### 주입 방식 비교
+| 방식 | 장점 | 단점 | 권장 |
+|---|---|---|---|
+| **생성자 주입** | 불변성, 테스트 용이, 순환 의존 조기 검출 | 생성자 파라미터 증가 | **기본 선택** |
+| 세터 주입 | 선택적 의존, 가독성 | 불변성 약함, NPE 리스크 | 일부 옵셔널 의존성 |
+| 필드 주입 | 코드 짧음 | 테스트 어려움, 프록시/리플렉션 의존 | **지양** |
+
+---
+
+## 3. 애너테이션 기반 개발 — 컴포넌트 스캔, 설정, 주입, 스코프
+
+### 3.1 컴포넌트와 스캔
+- **빈 등록**: `@Component`(범용), `@Service`, `@Repository`, `@Controller`/`@RestController`  
+- **스캔 루트**: `@SpringBootApplication`이 위치한 **루트 패키지 하위**가 기본 스캔 대상
 
 ```java
 import org.springframework.stereotype.Service;
 
 @Service
-public class GreetingFacade {
-    private final GreetingService delegate;
-    public GreetingFacade(GreetingService delegate) { // 생성자 주입
-        this.delegate = delegate;
-    }
-    public String greetUser(String user) { return delegate.greet(user); }
+public class OrderService {
+    private final PricingPolicy policy;
+    public OrderService(PricingPolicy policy) { this.policy = policy; } // 생성자 주입
+    public long order(long unit, int qty) { return policy.price(unit, qty); }
+}
+```
+
+### 3.2 자바 설정과 팩토리 메서드
+```java
+import org.springframework.context.annotation.*;
+
+@Configuration
+class PricingConfig {
+    @Bean
+    PricingPolicy pricingPolicy() { return new FlatPricingPolicy(); }
+}
+```
+
+### 3.3 구현 다형성과 선호도 지정
+```java
+public class TieredPricingPolicy implements PricingPolicy { /* ... */ }
+
+@Configuration
+class PricingConfig2 {
+    @Bean @Primary
+    PricingPolicy primaryPolicy() { return new FlatPricingPolicy(); }
+
+    @Bean
+    PricingPolicy tieredPolicy() { return new TieredPricingPolicy(); }
+}
+
+// 혹은 @Qualifier 사용
+@Service
+class AnotherService {
+    private final PricingPolicy policy;
+    public AnotherService(@Qualifier("tieredPolicy") PricingPolicy policy) { this.policy = policy; }
+}
+```
+
+### 3.4 스코프와 지연 로딩
+```java
+import org.springframework.context.annotation.Scope;
+import org.springframework.web.context.WebApplicationContext;
+
+@Scope(WebApplicationContext.SCOPE_REQUEST)
+@Component
+class RequestScopedContext { /* 요청 단위 상태 */ }
+
+// 싱글톤 빈이 요청 스코프 빈을 주입받을 때
+@Component
+class UsesRequest {
+    private final ObjectProvider<RequestScopedContext> provider; // Provider/Proxy 사용
+    UsesRequest(ObjectProvider<RequestScopedContext> provider) { this.provider = provider; }
+    void handle() { RequestScopedContext ctx = provider.getObject(); /* ... */ }
 }
 ```
 
 ---
 
-## 3) 애너테이션 기반 개발
+## 4. 계층 구조와 샘플 애플리케이션 — MVC + Service + Repository
 
-### 3.1 구성 요소 애너테이션
-- **빈 등록(컴포넌트 스캔 대상)**
-  - `@Component`(범용), `@Service`(서비스), `@Repository`(예외 변환), `@Controller`/`@RestController`(웹)
-- **설정/팩토리 메서드**
-  - `@Configuration` + `@Bean`
-- **주입**
-  - `@Autowired`(생성자/세터/필드), **생성자 주입 시 생략 가능**(스프링 4.3+), `@Qualifier`, `@Primary`
-- **스코프**
-  - `@Scope("singleton"|"prototype"|"request"|"session")`, `@Lazy`
-- **설정 바인딩**
-  - `@Value("${key}")`, `@ConfigurationProperties(prefix = "app")`
-
+### 4.1 도메인/DTO/Repository
 ```java
-import org.springframework.context.annotation.*;
+// 도메인
+public record Product(Long id, String name, long unitPrice) {}
 
-@Configuration
-class BeanConfig {
-    @Bean
-    GreetingService greetingService() {
-        return new SimpleGreetingService();
+// Repository 포트(인터페이스)
+public interface ProductRepository {
+    Optional<Product> findById(Long id);
+    Product save(Product p);
+}
+
+// 인메모리 구현(Fake) — JDBC/JPA로 교체 가능
+@Component
+class InMemoryProductRepository implements ProductRepository {
+    private final Map<Long, Product> db = new ConcurrentHashMap<>();
+    @Override public Optional<Product> findById(Long id) { return Optional.ofNullable(db.get(id)); }
+    @Override public Product save(Product p) { db.put(p.id(), p); return p; }
+}
+```
+
+### 4.2 서비스 + 트랜잭션 경계(읽기/쓰기 분리)
+```java
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+class ProductService {
+    private final ProductRepository repo;
+    private final PricingPolicy pricing;
+    ProductService(ProductRepository repo, PricingPolicy pricing) {
+        this.repo = repo; this.pricing = pricing;
+    }
+
+    @Transactional(readOnly = true)
+    public long quote(Long id, int qty) {
+        Product p = repo.findById(id).orElseThrow();
+        return pricing.price(p.unitPrice(), qty);
+    }
+
+    @Transactional
+    public Product register(String name, long unitPrice) {
+        return repo.save(new Product(ThreadLocalRandom.current().nextLong(), name, unitPrice));
     }
 }
 ```
 
-### 3.2 웹 계층(예: REST 컨트롤러)
+### 4.3 컨트롤러 + 검증
 ```java
+import jakarta.validation.constraints.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping("/api/greet")
-class GreetingController {
-    private final GreetingService service;
-    public GreetingController(GreetingService service) { this.service = service; }
+record RegisterReq(@NotBlank String name, @Positive long unitPrice) {}
+record QuoteRes(long total) {}
 
-    @GetMapping
-    public String greet(@RequestParam String name) {
-        return service.greet(name);
+@RestController
+@RequestMapping("/api/products")
+@Validated
+class ProductController {
+    private final ProductService service;
+    public ProductController(ProductService service) { this.service = service; }
+
+    @PostMapping
+    public Product register(@RequestBody @Validated RegisterReq req) {
+        return service.register(req.name(), req.unitPrice());
+    }
+
+    @GetMapping("{id}/quote")
+    public QuoteRes quote(@PathVariable Long id, @RequestParam @Positive int qty) {
+        return new QuoteRes(service.quote(id, qty));
     }
 }
 ```
 
-### 3.3 프로퍼티/프로파일에 의한 외부화 설정
-- `application.yml`로 환경별 값을 외부화, `@Profile`로 빈 활성화 제어
+---
+
+## 5. 트랜잭션, AOP, 검증, 예외 처리 — 실전 패턴
+
+### 5.1 트랜잭션 규칙
+- **읽기 전용**은 `@Transactional(readOnly = true)`로 플러시 최소화  
+- **체크 예외**는 기본 롤백 대상 아님 → `rollbackFor = Exception.class` 지정 가능  
+- **메서드 내부 `this` 호출**은 프록시를 거치지 않음 → **자기호출 주의**
+
+```java
+@Transactional(rollbackFor = Exception.class)
+public void placeOrder(...) { /* ... */ }
+```
+
+### 5.2 AOP로 횡단 관심사(실행 시간 로깅)
+```java
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.*;
+import org.springframework.stereotype.Component;
+
+@Aspect
+@Component
+class ProfilingAspect {
+    @Around("within(com.example..service..*)")
+    public Object profile(ProceedingJoinPoint pjp) throws Throwable {
+        long t0 = System.nanoTime();
+        try { return pjp.proceed(); }
+        finally { System.out.println(pjp.getSignature()+" took "+(System.nanoTime()-t0)/1_000_000+" ms"); }
+    }
+}
+```
+
+### 5.3 컨트롤러 예외 처리
+```java
+import org.springframework.http.*;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.*;
+
+record ErrorRes(String code, String message) {}
+
+@RestControllerAdvice
+class GlobalExceptionHandler {
+    @ExceptionHandler(NoSuchElementException.class)
+    ResponseEntity<ErrorRes> notFound(NoSuchElementException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorRes("NOT_FOUND", e.getMessage()));
+    }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ResponseEntity<ErrorRes> badReq(MethodArgumentNotValidException e) {
+        return ResponseEntity.badRequest().body(new ErrorRes("VALIDATION", e.getMessage()));
+    }
+}
+```
+
+---
+
+## 6. 설정 외부화와 프로파일 — 타입 안전 바인딩
+
+### 6.1 `@ConfigurationProperties` 바인딩
 ```yaml
 # application.yml
 app:
-  greeting-prefix: "Hello"
-spring:
-  profiles:
-    active: local
+  name: demo
+  pricing:
+    default-policy: FLAT
 ```
 
 ```java
@@ -166,142 +269,301 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties(prefix = "app")
-class AppProps {
-    private String greetingPrefix;
-    public String getGreetingPrefix() { return greetingPrefix; }
-    public void setGreetingPrefix(String s) { this.greetingPrefix = s; }
+@ConfigurationProperties(prefix = "app.pricing")
+class PricingProps {
+    private String defaultPolicy = "FLAT";
+    public String getDefaultPolicy() { return defaultPolicy; }
+    public void setDefaultPolicy(String v) { this.defaultPolicy = v; }
 }
+```
+
+### 6.2 프로파일 분기
+```yaml
+# application-dev.yml
+logging:
+  level:
+    com.example: debug
+
+# application-prod.yml
+server:
+  tomcat:
+    threads:
+      max: 200
 ```
 
 ```java
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-@Profile("local")
+@Profile("dev")
 @Component
-class LocalOnlyBean { /* ... */ }
+class DevOnlyBean { /* 개발 환경에서만 활성 */ }
 ```
 
-### 3.4 트랜잭션/AOP(횡단 관심사)
-- **`@Transactional`**: 트랜잭션 경계 선언
-- **AOP**: `@Aspect` + 포인트컷으로 로깅/검증/권한 등 공통 로직 주입
+---
 
+## 7. 테스트 전략 — 단위/슬라이스/통합
+
+### 7.1 단위 테스트(순수 자바)
 ```java
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-@Service
-class OrderService {
-    @Transactional
-    public void placeOrder(Long userId) {
-        // 여러 저장소 작업 → 실패 시 롤백
+class OrderServiceUnitTest {
+    @Test
+    void quote_usesPolicy() {
+        ProductRepository repo = id -> Optional.of(new Product(1L, "A", 100));
+        PricingPolicy policy = (base, qty) -> base * qty + 10; // Fake
+        ProductService svc = new ProductService(repo, policy);
+        assertEquals(310, svc.quote(1L, 3));
     }
 }
 ```
 
+### 7.2 슬라이스 테스트 — MVC
 ```java
-import org.aspectj.lang.annotation.*;
-import org.springframework.stereotype.Component;
-
-@Aspect
-@Component
-class LoggingAspect {
-    @Before("execution(* com.example..*Service.*(..))")
-    public void beforeService() {
-        System.out.println("[AOP] service call");
-    }
-}
-```
-
-### 3.5 빈 생명주기 콜백
-- **초기화/소멸**: `@PostConstruct`, `@PreDestroy`
-- 또는 `InitializingBean`, `DisposableBean`, `@Bean(initMethod, destroyMethod)`
-
-```java
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import org.springframework.stereotype.Component;
-
-@Component
-class Startup {
-    @PostConstruct void init() { System.out.println("init"); }
-    @PreDestroy  void bye() { System.out.println("bye"); }
-}
-```
-
-### 3.6 유용한 메타-애너테이션
-- `@Retention`, `@Target` 등을 이용해 **커스텀 합성 애너테이션** 정의 가능  
-  (예: 다수의 애너테이션을 하나로 묶어 표준화)
-
----
-
-## 4) 스프링 부트 자동 구성 개념(요약)
-- `@EnableAutoConfiguration`이 클래스패스와 환경설정을 보고 **필요한 빈 자동 등록**
-- 예: `spring-boot-starter-web`을 추가하면 **Tomcat + MVC 구성**, JSON 직렬화(Jackson) 자동 설정
-- 필요 시 **조건부 빈**(`@ConditionalOnMissingBean`)으로 오버라이드 가능
-
----
-
-## 5) 테스트와 DI
-- **슬라이스 테스트**: `@WebMvcTest`(컨트롤러), `@DataJpaTest`(JPA) 등
-- **통합 테스트**: `@SpringBootTest`
-- **Mock 주입**: `@MockBean`으로 컨테이너 레벨에 테스트 더블 삽입
-
-```java
-import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-@WebMvcTest(GreetingController.class)
-class GreetingControllerTest {
-
-    @MockBean GreetingService service;
+@WebMvcTest(ProductController.class)
+class ProductControllerTest {
+    @MockBean ProductService service;
     private final MockMvc mvc;
-
-    GreetingControllerTest(MockMvc mvc) { this.mvc = mvc; }
+    ProductControllerTest(MockMvc mvc) { this.mvc = mvc; }
 
     @Test
-    void greet_ok() throws Exception {
-        when(service.greet("Kim")).thenReturn("Hello, Kim");
-        mvc.perform(get("/api/greet").param("name", "Kim"))
+    void quote_ok() throws Exception {
+        when(service.quote(1L, 2)).thenReturn(200);
+        mvc.perform(get("/api/products/1/quote").param("qty","2"))
            .andExpect(status().isOk())
-           .andExpect(content().string("Hello, Kim"));
+           .andExpect(jsonPath("$.total").value(200));
+    }
+}
+```
+
+### 7.3 통합 테스트 — `@SpringBootTest`
+- H2/PostgreSQL(Testcontainers)로 실제 영속 계층 검증  
+- `@AutoConfigureMockMvc`로 MockMvc 주입
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class IntegrationTest {
+    @Autowired MockMvc mvc;
+    @Test void register_and_quote() throws Exception {
+        mvc.perform(post("/api/products")
+             .contentType("application/json")
+             .content("""{"name":"X","unitPrice":150}"""))
+           .andExpect(status().isOk());
+
+        mvc.perform(get("/api/products/1/quote").param("qty","3"))
+           .andExpect(status().isOk());
     }
 }
 ```
 
 ---
 
-## 6) 베스트 프랙티스(핵심 요약)
-- **생성자 주입** 기본, **필드 주입 지양**
-- 컴포넌트 스캔은 **의미 있는 패키지 경계**로 제한(루트 너무 넓게 잡지 않기)
-- 설정 값은 **`@ConfigurationProperties`**로 묶어 타입 안전하게 주입
-- 빈의 **단일 책임** 유지, 레이어 간 **인터페이스**로 의존(테스트/교체 용이)
-- **순환 의존** 피하기(설계 개선), 필요 시 `@Lazy`로 임시 회피
-- 횡단 관심사는 **AOP**로 처리, 비즈니스 로직을 오염시키지 않기
-- Boot 자동설정은 **필요할 때만 오버라이드** (불필요한 수동 설정 최소화)
+## 8. 마이그레이션 가이드 — “new → DI → Boot” 단계별 변환
+
+### 8.1 0단계: 코어 Java (직접 조립)
+```java
+public class App0 {
+    public static void main(String[] args) {
+        PricingPolicy policy = new FlatPricingPolicy();
+        ProductRepository repo = new InMemoryProductRepository();
+        ProductService service = new ProductService(repo, policy);
+        System.out.println(service.quote(1L, 2));
+    }
+}
+```
+
+### 8.2 1단계: Spring 컨테이너 도입(애너테이션 설정)
+```java
+@Configuration
+@ComponentScan(basePackages = "com.example")
+class AppConfig {}
+
+public class App1 {
+    public static void main(String[] args) {
+        try (var ctx = new AnnotationConfigApplicationContext(AppConfig.class)) {
+            var service = ctx.getBean(ProductService.class);
+            System.out.println(service.quote(1L, 2));
+        }
+    }
+}
+```
+
+### 8.3 2단계: Spring Boot로 전환
+```java
+@SpringBootApplication
+public class DemoApplication {
+    public static void main(String[] args) { SpringApplication.run(DemoApplication.class, args); }
+}
+```
+
+> 점진 전환 팁: **도메인/규칙은 POJO 유지**, 경계 어댑터만 Spring으로 감싸며 점진적으로 의존 제거.
 
 ---
 
-## 7) 한눈에 보는 “전환 체크리스트”
-- [ ] 도메인 로직을 POJO로 추출 (프레임워크 의존 제거)  
-- [ ] `new` 제거 → 생성자 DI로 대체  
-- [ ] `@SpringBootApplication` 루트·패키지 구조 정리  
-- [ ] `@Service/@Repository/@Controller`로 역할 주석화  
-- [ ] 설정은 `@Configuration`/`@Bean` 또는 Boot 자동설정 활용  
-- [ ] 환경 값은 `application.yml` + `@ConfigurationProperties`  
-- [ ] 트랜잭션 경계 `@Transactional` 명확화  
-- [ ] 슬라이스/통합 테스트 체계화 (`@WebMvcTest`, `@SpringBootTest`)  
+## 9. 확장 토픽 — 캐시, 스케줄링, 이벤트, 모듈 경계
+
+### 9.1 캐싱
+```java
+@EnableCaching
+@SpringBootApplication
+class App { }
+
+@Service
+class PricingCacheService {
+    @Cacheable(cacheNames = "quote", key = "#id + '-' + #qty")
+    public long quote(Long id, int qty) { /* 비싼 계산 */ return 0; }
+}
+```
+
+### 9.2 스케줄링
+```java
+@EnableScheduling
+@SpringBootApplication
+class App2 { }
+
+@Component
+class HousekeepingJob {
+    @Scheduled(cron = "0 0 * * * *")
+    void cleanup() { /* ... */ }
+}
+```
+
+### 9.3 이벤트
+```java
+@Component
+class Publisher {
+    private final ApplicationEventPublisher pub;
+    Publisher(ApplicationEventPublisher pub) { this.pub = pub; }
+    void notifyProductCreated(Product p) { pub.publishEvent(p); }
+}
+
+@Component
+class Listener {
+    @EventListener
+    void onProduct(Product p) { /* 알림/지표 */ }
+}
+```
+
+### 9.4 모듈 경계(헥사고날/포트-어댑터)
+- **도메인**: 규칙/값/서비스(포트 인터페이스) — **Spring 비의존**  
+- **어댑터**: Web/JPA/외부 API(스프링 컴포넌트) — 구현 교체 용이  
+- **구성**: `domain`, `application`, `adapter-web`, `adapter-persistence` 멀티모듈 추천
+
+---
+
+## 10. 안티패턴과 베스트 프랙티스
+
+### 10.1 안티패턴
+- **필드 주입**: 테스트와 불변성에 취약  
+- **무분별한 컴포넌트 스캔**: 광범위 스캔으로 **의도치 않은 빈 등록**  
+- **순환 의존**: 설계 개선 없이 `@Lazy` 남발  
+- **서비스에 비즈니스/인프라 로직 뒤섞음**: SRP 위반  
+- **자기호출 트랜잭션**: 프록시 미적용  
+- **설정 하드코딩**: `@Value` 남발 → `@ConfigurationProperties`로 타입 안전 전환
+
+### 10.2 베스트 프랙티스
+- **생성자 주입 + 불변 필드**  
+- **인터페이스(포트) → 구현(어댑터)** 분리  
+- **설정 외부화 + 프로파일**  
+- **AOP로 횡단 관심사 분리**  
+- **슬라이스/통합 테스트 분리, 빠른 단위 테스트 우선**  
+- **패키지 경계 명시**: `api` vs `internal`  
+- **DTO/엔티티/도메인 모델 분리**(웹/영속/도메인 혼재 금지)
+
+---
+
+## 11. 체크리스트 — 전환 전/후 최종 점검
+
+- [ ] 도메인 규칙이 **POJO**로 분리되어 있는가  
+- [ ] `new`를 **생성자 DI**로 대체했는가  
+- [ ] **컴포넌트 스캔 범위**가 의도대로 설정되었는가  
+- [ ] 설정 값이 **YAML + @ConfigurationProperties**로 바인딩되는가  
+- [ ] **트랜잭션 경계**와 격리가 명확한가 (`readOnly`, 전파)  
+- [ ] **예외 처리**가 `@ControllerAdvice`로 통일되어 있는가  
+- [ ] **AOP/로깅/메트릭**이 표준화되어 있는가(Actuator 권장)  
+- [ ] **테스트**: 단위/슬라이스/통합이 분리되어 있고 빠르게 실행되는가  
+- [ ] **모듈 경계**(포트-어댑터)가 명확하며 교체 가능하게 설계되었는가  
+
+---
+
+## 부록 A) JPA로 Repository 교체 예 (선택)
+
+```java
+import jakarta.persistence.*;
+@Entity
+@Table(name = "product")
+public class ProductEntity {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    Long id;
+    String name;
+    long unitPrice;
+    // getters/setters
+}
+
+public interface JpaProductRepository extends org.springframework.data.jpa.repository.JpaRepository<ProductEntity, Long> { }
+
+@Component
+class JpaProductAdapter implements ProductRepository {
+    private final JpaProductRepository jpa;
+    JpaProductAdapter(JpaProductRepository jpa){ this.jpa = jpa; }
+
+    @Override public Optional<Product> findById(Long id) {
+        return jpa.findById(id).map(e -> new Product(e.getId(), e.getName(), e.getUnitPrice()));
+    }
+    @Override public Product save(Product p) {
+        ProductEntity e = new ProductEntity();
+        e.setName(p.name()); e.setUnitPrice(p.unitPrice());
+        ProductEntity saved = jpa.save(e);
+        return new Product(saved.getId(), saved.getName(), saved.getUnitPrice());
+    }
+}
+```
+
+---
+
+## 부록 B) 커스텀 합성 애너테이션(메타 애너테이션)
+
+```java
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Service
+@Transactional(readOnly = true)
+public @interface ReadonlyService {}
+
+// 사용
+@ReadonlyService
+class ReportService { /* 모든 public 메서드는 기본 readOnly */ }
+```
+
+---
+
+## 부록 C) Boot 애플리케이션 최소 뼈대
+
+```java
+@SpringBootApplication
+public class App {
+    public static void main(String[] args) { SpringApplication.run(App.class, args); }
+}
+
+// 실행 시점 로직
+@Component
+class AppRunner implements org.springframework.boot.ApplicationRunner {
+    private final ProductService service;
+    AppRunner(ProductService service) { this.service = service; }
+    @Override public void run(org.springframework.boot.ApplicationArguments args) {
+        service.register("Item", 120);
+    }
+}
+```
 
 ---
 
 ### 마무리
-Spring으로의 전환은 **POJO 중심 설계**와 **DI**를 통해 **결합도↓·테스트 용이성↑**를 달성하는 과정입니다.  
-애너테이션 기반 개발로 **구성은 간결하게**, **비즈니스 로직은 프레임워크로부터 독립**적으로 유지하세요.  
-그 위에 Spring Boot의 자동설정과 생태계를 더하면, **빠르게도 견고하게** 애플리케이션을 확장할 수 있습니다.
+
+**POJO 중심 설계**와 **DI**는 프레임워크에서 도메인을 분리하여 **변경에 강한 구조**를 만든다.  
+**애너테이션 기반 구성**은 개발 경험을 단순화하되, **컴포넌트 경계/설정/트랜잭션/테스트 규율**을 갖출 때 비로소 팀 생산성과 안정성이 극대화된다.  
+본 가이드의 예제와 체크리스트를 그대로 적용해 **“코어 Java → Spring”** 전환을 단계적으로 완성하라.

@@ -6,7 +6,7 @@ category: Git
 ---
 # Git GUI & 시각화 도구 총정리 — CLI 그래프부터 tig, LazyGit, GitLens, SourceTree, GitKraken, GitHub Desktop까지
 
-## 0) 큰그림: 언제 무엇을 쓰나
+## 0. 큰그림: 언제 무엇을 쓰나
 
 - **CLI**: 기록이 남는 스크립트·자동화·서버 환경·SSH 원격 환경에 필수.  
   → `git log --graph` + 커스텀 pretty format, 필터, `reflog`/`bisect`까지 숙달.
@@ -19,7 +19,7 @@ category: Git
 
 ---
 
-## 1) Git 내장 시각화 — `git log`를 “눈”처럼 쓰는 법
+## 1. Git 내장 시각화 — `git log`를 “눈”처럼 쓰는 법
 
 ### 1.1 필수 그래프 옵션
 
@@ -99,7 +99,7 @@ git lg
 
 ---
 
-## 2) `tig` — 터미널 기반 인터랙티브 Git 탐색기
+## 2. `tig` — 터미널 기반 인터랙티브 Git 탐색기
 
 ### 2.1 설치
 
@@ -149,7 +149,7 @@ bind main K move-first-line
 
 ---
 
-## 3) `lazygit` — 빠른 조작을 위한 터미널 UI
+## 3. `lazygit` — 빠른 조작을 위한 터미널 UI
 
 ### 3.1 설치
 
@@ -164,7 +164,7 @@ bind main K move-first-line
 
 ---
 
-## 4) VSCode GitLens — 코드-히스토리 융합 시각화
+## 4. VSCode GitLens — 코드-히스토리 융합 시각화
 
 ### 4.1 설치
 
@@ -190,7 +190,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 5) 독립 GUI 툴 비교
+## 5. 독립 GUI 툴 비교
 
 ### 5.1 SourceTree (Atlassian)
 
@@ -239,7 +239,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 6) JetBrains IDE(예: IntelliJ/Rider/WebStorm)의 Git Log
+## 6. JetBrains IDE(예: IntelliJ/Rider/WebStorm)의 Git Log
 
 - **Version Control** 탭 → **Log**: 브랜치 그래프·검색·필터
 - **Rebase/Cherry-pick/Merge**를 IDE UI로 실행
@@ -247,7 +247,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 7) 시각화로 해결하는 실무 케이스
+## 7. 시각화로 해결하는 실무 케이스
 
 ### 7.1 “PR이 왜 커졌는지”를 1분 내 파악
 - CLI:
@@ -270,7 +270,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 8) 대규모 저장소 성능 최적화(시각화/탐색을 빠르게)
+## 8. 대규모 저장소 성능 최적화(시각화/탐색을 빠르게)
 
 - **부분 클론/희소 체크아웃**:
   ```bash
@@ -290,7 +290,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 9) 서브모듈/서브트리/LFS를 시각화에서 다루는 팁
+## 9. 서브모듈/서브트리/LFS를 시각화에서 다루는 팁
 
 - 서브모듈 그래프는 **서브모듈 디렉토리 내부에서** 별도로 log/tig/GUI 열기  
 - LFS 포인터(diff 불가)에 주의 → GUI에서 바이너리 비교 도구 설정  
@@ -298,7 +298,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 10) 팀 정책·교육 플로(현실적 가이드)
+## 10. 팀 정책·교육 플로(현실적 가이드)
 
 1) **CLI 기초 교육**(30분): `commit/add/reset/log/branch/merge/rebase/cherry-pick`  
 2) **시각화 툴 온보딩**(20분): GitLens 또는 GitKraken 중 팀 표준 하나  
@@ -311,7 +311,7 @@ code --install-extension eamodio.gitlens
 
 ---
 
-## 11) 치트시트
+## 11. 치트시트
 
 ### 11.1 CLI 그래프
 
@@ -357,7 +357,7 @@ tig blame file      # blame
 
 ---
 
-## 12) 실습 시나리오(끝까지 따라 해보기)
+## 12. 실습 시나리오(끝까지 따라 해보기)
 
 ### 시나리오 A: CLI + tig로 브랜치 탐색
 
@@ -393,7 +393,7 @@ tig
 
 ---
 
-## 13) 도구별 요약 비교
+## 13. 도구별 요약 비교
 
 | 도구/명령 | 종류 | 강점 | 약점 | 추천 대상 |
 |-----------|------|------|------|-----------|
@@ -408,7 +408,7 @@ tig
 
 ---
 
-## 14) 결론
+## 14. 결론
 
 - **CLI 시각화는 필수 근력**: `git log --graph --decorate --all`을 몸에 익혀라.  
 - **터미널 UI(tig/lazygit)**로 탐색 속도를 끌어올려라.  

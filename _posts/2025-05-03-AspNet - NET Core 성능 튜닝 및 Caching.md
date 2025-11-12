@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 성능 튜닝 & Caching 전략
 
-## 0) 성능 최적화의 전체 지도
+## 0. 성능 최적화의 전체 지도
 
 - **우선순위**: I/O(데이터베이스/네트워크) → 직렬화 → 렌더링 → 메모리/GC → 동시성/락
 - **원칙**: *측정 없는 튜닝은 위험하다.* 항상 **가설 → 측정 → 변경 → 재측정**.
@@ -14,7 +14,7 @@ category: AspNet
 
 ---
 
-## 1) 성능 측정/관찰 — “보이는 만큼 빠르게”
+## 1. 성능 측정/관찰 — “보이는 만큼 빠르게”
 
 ### 1.1 프로파일/진단 툴 셋
 | 목적 | 도구 | 핵심 지표 |
@@ -33,7 +33,7 @@ dotnet-counters monitor --process-id <PID> System.Runtime Microsoft.AspNetCore.H
 
 ---
 
-## 2) 데이터베이스 레이어 튜닝(가장 큰 지렛대)
+## 2. 데이터베이스 레이어 튜닝(가장 큰 지렛대)
 
 ### 2.1 EF Core 실전 규칙
 - **쿼리 투명화**: `AsNoTracking()` 기본(읽기성), 필요한 곳만 Tracking.
@@ -69,7 +69,7 @@ var dto = await Compiled.ProductById(db, id);
 
 ---
 
-## 3) 비동기와 동시성 — I/O 지연을 숨긴다
+## 3. 비동기와 동시성 — I/O 지연을 숨긴다
 
 - **모든 I/O에 `async/await` 철저**: DB, 파일, HTTP, Redis.
 - **스레드풀 고갈 방지**: 동기 블로킹 금지(`.Result`, `.Wait()` 절대 금지).
@@ -85,7 +85,7 @@ var data = await httpClient.GetStringAsync(url);
 
 ---
 
-## 4) 전송량 최적화 — 직렬화·압축·프로토콜
+## 4. 전송량 최적화 — 직렬화·압축·프로토콜
 
 ### 4.1 System.Text.Json 최적화
 - **Source Generator**로 리플렉션 비용 절감
@@ -116,7 +116,7 @@ app.UseResponseCompression();
 
 ---
 
-## 5) 메모리/GC — “할당을 줄이고, 재사용한다”
+## 5. 메모리/GC — “할당을 줄이고, 재사용한다”
 
 ### 5.1 풀링(객체/버퍼)
 ```csharp
@@ -142,14 +142,14 @@ finally { pool.Return(sb); }
 
 ---
 
-## 6) Razor/View 렌더링
+## 6. Razor/View 렌더링
 - **Tag Helper**/Partial의 반복 사용 시 **ViewComponent + 캐시** 고려.
 - ViewData/TempData 남용 금지(박싱/박탈).
 - **프리컴파일**(Razor SDK 기본) + 단순화된 모델.
 
 ---
 
-## 7) 캐싱 총론 — 전략/유효시간/무효화
+## 7. 캐싱 총론 — 전략/유효시간/무효화
 
 ### 7.1 캐시 적합성 점검
 - **Deterministic?** 입력 동일→출력 동일
@@ -165,7 +165,7 @@ $$
 
 ---
 
-## 8) In-Memory Cache — 빠르고, 인스턴스 한정
+## 8. In-Memory Cache — 빠르고, 인스턴스 한정
 
 ### 8.1 기본 패턴
 ```csharp
@@ -236,7 +236,7 @@ entry.AddExpirationToken(_featureFlags.Token);
 
 ---
 
-## 9) Distributed Cache — Redis/SQL, 다중 인스턴스용
+## 9. Distributed Cache — Redis/SQL, 다중 인스턴스용
 
 ### 9.1 Redis 구성 & 사용
 ```csharp
@@ -296,7 +296,7 @@ public async Task UpdateProfileAsync(UserProfileDto dto, CancellationToken ct)
 
 ---
 
-## 10) Response Caching — 헤더 기반(프록시/CDN 포함)
+## 10. Response Caching — 헤더 기반(프록시/CDN 포함)
 
 ```csharp
 builder.Services.AddResponseCaching();
@@ -315,7 +315,7 @@ public IActionResult GetArticle([FromQuery]string lang = "ko")
 
 ---
 
-## 11) Output Caching(.NET 8+) — 라우트/정책 기반 서버 캐시
+## 11. Output Caching(.NET 8+) — 라우트/정책 기반 서버 캐시
 
 ### 11.1 기본 사용
 ```csharp
@@ -342,7 +342,7 @@ options.AddPolicy("by-user", p => p
 
 ---
 
-## 12) Static Files/ETag/브라우저 캐시
+## 12. Static Files/ETag/브라우저 캐시
 
 ```csharp
 app.UseStaticFiles(new StaticFileOptions
@@ -363,7 +363,7 @@ app.UseStaticFiles(new StaticFileOptions
 
 ---
 
-## 13) 캐시 키/버전/세분화 설계
+## 13. 캐시 키/버전/세분화 설계
 
 ```csharp
 string Key(string prefix, params (string name,string value)[] dims)
@@ -385,7 +385,7 @@ string Key(string prefix, params (string name,string value)[] dims)
 
 ---
 
-## 14) “따끈한 캐시” 유지(백그라운드 리프레시)
+## 14. “따끈한 캐시” 유지(백그라운드 리프레시)
 
 - 만료 직전 **백그라운드에서 미리 갱신**해 첫 요청 지연 제거(soft TTL + hard TTL).
 - `IHostedService`/Quartz로 주기 리프레시, 실패 시 기존 값 유지(Fallback).
@@ -410,7 +410,7 @@ public class WarmUpService : BackgroundService
 
 ---
 
-## 15) API 게이트/조건부 요청: ETag/If-None-Match
+## 15. API 게이트/조건부 요청: ETag/If-None-Match
 
 ```csharp
 app.MapGet("/api/products/{id:int}", async (int id, HttpContext ctx, AppDbContext db) =>
@@ -436,7 +436,7 @@ app.MapGet("/api/products/{id:int}", async (int id, HttpContext ctx, AppDbContex
 
 ---
 
-## 16) Rate Limiting(.NET 8) — 남용 방지로 안정성 향상
+## 16. Rate Limiting(.NET 8) — 남용 방지로 안정성 향상
 
 ```csharp
 builder.Services.AddRateLimiter(_ => _.AddFixedWindowLimiter("api", opt =>
@@ -456,7 +456,7 @@ app.MapGet("/api/hot", GetHotData)
 
 ---
 
-## 17) JSON/HTML 응답 캐시 + “부분 캐시”(뷰 조각)
+## 17. JSON/HTML 응답 캐시 + “부분 캐시”(뷰 조각)
 
 ### 17.1 Razor Cache Tag Helper
 ```razor
@@ -468,7 +468,7 @@ app.MapGet("/api/hot", GetHotData)
 
 ---
 
-## 18) HTTP 클라이언트 성능 — HttpClientFactory 권장
+## 18. HTTP 클라이언트 성능 — HttpClientFactory 권장
 
 ```csharp
 builder.Services.AddHttpClient("remote", c =>
@@ -487,7 +487,7 @@ builder.Services.AddHttpClient("remote", c =>
 
 ---
 
-## 19) Kestrel/프록시/배포 튜닝
+## 19. Kestrel/프록시/배포 튜닝
 
 - **Nginx/Apache** 앞단: 압축/캐시/HTTP2/3/Keep-Alive 최적화, WebSocket 업그레이드.
 - Kestrel: `MaxRequestBodySize`, `Limits.MaxConcurrentConnections` 등 조정(실측 기반).
@@ -495,7 +495,7 @@ builder.Services.AddHttpClient("remote", c =>
 
 ---
 
-## 20) 안전 장치 — 예외/타임아웃/재시도/서킷브레이커
+## 20. 안전 장치 — 예외/타임아웃/재시도/서킷브레이커
 
 - 캐시 원본 호출은 **타임아웃** 필수.
 - 폴리(Polly)로 **재시도/백오프/서킷브레이커** → 실패 격리로 시스템 보호.
@@ -511,7 +511,7 @@ var data = await policy.ExecuteAsync(() => LoadFromOriginAsync());
 
 ---
 
-## 21) 종합 시나리오: 제품 상세 페이지 성능 설계
+## 21. 종합 시나리오: 제품 상세 페이지 성능 설계
 
 1) **키 설계**: `product:v3:id={id}:lang={lang}`  
 2) **Cache-Aside**: 미스 → DB 조회(Projection/Compiled Query) → 캐시 10분  
@@ -524,7 +524,7 @@ var data = await policy.ExecuteAsync(() => LoadFromOriginAsync());
 
 ---
 
-## 22) 체크리스트(요약)
+## 22. 체크리스트(요약)
 
 - **DB**: AsNoTracking / Projection / Compiled Query / 인덱스 검토 / N+1 제거  
 - **Async**: I/O 전부 async, 블로킹 금지  

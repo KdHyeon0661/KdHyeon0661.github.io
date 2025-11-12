@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 환경별 설정 적용 완전 정리 (`Development`, `Staging`, `Production`)
 
-## 1) 환경(Environment) 개념과 표준 이름
+## 1. 환경(Environment) 개념과 표준 이름
 
 ASP.NET Core는 실행 환경을 문자열로 구분한다. 대표 값은 다음과 같다.
 
@@ -20,7 +20,7 @@ ASP.NET Core는 실행 환경을 문자열로 구분한다. 대표 값은 다음
 
 ---
 
-## 2) 환경 설정 방법
+## 2. 환경 설정 방법
 
 ### 2.1 OS 환경 변수로 지정
 
@@ -60,7 +60,7 @@ dotnet run --environment "Staging"
 
 ---
 
-## 3) 환경별 설정 파일 구성과 병합 규칙
+## 3. 환경별 설정 파일 구성과 병합 규칙
 
 ASP.NET Core는 **여러 구성 소스**를 순서대로 병합한다. 일반 템플릿의 대표 순서는 다음과 같다(나중에 로드되는 값이 앞의 값을 덮어쓴다).
 
@@ -94,7 +94,7 @@ builder.Configuration
 
 ---
 
-## 4) 코드에서 환경 판별하기
+## 4. 코드에서 환경 판별하기
 
 ### 4.1 `app`/`builder`/`IWebHostEnvironment`
 
@@ -134,7 +134,7 @@ public sealed class HomeController : Controller
 
 ---
 
-## 5) 환경별 미들웨어 파이프라인 분기(보안/성능)
+## 5. 환경별 미들웨어 파이프라인 분기(보안/성능)
 
 ```csharp
 if (app.Environment.IsDevelopment())
@@ -164,7 +164,7 @@ app.MapRazorPages();
 
 ---
 
-## 6) 환경별 DI(의존성 주입) — 서비스 구현 바꾸기
+## 6. 환경별 DI(의존성 주입) — 서비스 구현 바꾸기
 
 ```csharp
 if (builder.Environment.IsDevelopment())
@@ -191,7 +191,7 @@ builder.Services.AddSingleton<IMailSender>(sp =>
 
 ---
 
-## 7) 환경별 Options 패턴 — 설정 바인딩/검증
+## 7. 환경별 Options 패턴 — 설정 바인딩/검증
 
 ### 7.1 강타입 바인딩과 검증
 
@@ -222,7 +222,7 @@ app.MapGet("/smtp", (IOptionsSnapshot<SmtpOptions> opt) => Results.Json(opt.Valu
 
 ---
 
-## 8) 환경별 로깅 레벨/프로바이더
+## 8. 환경별 로깅 레벨/프로바이더
 
 `appsettings.{ENV}.json`로 레벨을 조정한다.
 
@@ -254,7 +254,7 @@ Serilog 등 외부 로거도 동일하게 환경별 분리 가능하다(싱크/�
 
 ---
 
-## 9) 환경별 CORS/보안 헤더/Static 파일 캐시
+## 9. 환경별 CORS/보안 헤더/Static 파일 캐시
 
 ### 9.1 CORS
 
@@ -291,7 +291,7 @@ app.UseStaticFiles(new StaticFileOptions
 
 ---
 
-## 10) 환경별 DB 연결/마이그레이션 안전장치
+## 10. 환경별 DB 연결/마이그레이션 안전장치
 
 ### 10.1 연결 문자열
 
@@ -321,7 +321,7 @@ else
 
 ---
 
-## 11) 환경별 Swagger/UI
+## 11. 환경별 Swagger/UI
 
 ```csharp
 builder.Services.AddEndpointsApiExplorer();
@@ -344,7 +344,7 @@ if (app.Environment.IsDevelopment() || app.Environment.EnvironmentName == "Stagi
 
 ---
 
-## 12) Secret Manager/환경 변수와의 협업
+## 12. Secret Manager/환경 변수와의 협업
 
 - Development: **Secret Manager**로 민감 값 분리
 - Staging/Production: **환경 변수** 또는 **클라우드 비밀 저장소**(예: Azure Key Vault) 사용
@@ -358,7 +358,7 @@ export JwtSettings__SecretKey="prod-ultra-secret"
 
 ---
 
-## 13) Docker/Kubernetes/CI-CD에서의 환경 지정
+## 13. Docker/Kubernetes/CI-CD에서의 환경 지정
 
 ### 13.1 Dockerfile/Compose
 
@@ -383,7 +383,7 @@ services:
 
 ---
 
-## 14) 통합/단위 테스트에서의 환경 제어
+## 14. 통합/단위 테스트에서의 환경 제어
 
 ### 14.1 `WebApplicationFactory`로 환경 지정
 
@@ -406,7 +406,7 @@ public class TestFactory : WebApplicationFactory<Program>
 
 ---
 
-## 15) 고급: 환경별 라우트/엔드포인트 노출
+## 15. 고급: 환경별 라우트/엔드포인트 노출
 
 ```csharp
 if (app.Environment.IsDevelopment())
@@ -424,7 +424,7 @@ if (app.Environment.IsDevelopment())
 
 ---
 
-## 16) 실전 템플릿 — 환경별 파일과 코드 스켈레톤
+## 16. 실전 템플릿 — 환경별 파일과 코드 스켈레톤
 
 ```
 MyApp/
@@ -534,7 +534,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 17) 환경별 설정 체크리스트
+## 17. 환경별 설정 체크리스트
 
 - [ ] 배포 플랫폼에서 `ASPNETCORE_ENVIRONMENT`가 올바른가?
 - [ ] `appsettings.{ENV}.json` 파일명이 정확한가(대소문자/맞춤법)?
@@ -546,7 +546,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 18) 자주 하는 실수와 진단 팁
+## 18. 자주 하는 실수와 진단 팁
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -558,7 +558,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 19) 요약
+## 19. 요약
 
 | 항목 | 내용 |
 |---|---|

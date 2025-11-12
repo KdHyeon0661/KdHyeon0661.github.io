@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core에서 파일 업로드 및 이미지 처리
 
-## 0) 요구사항 정리와 아키텍처 선택
+## 0. 요구사항 정리와 아키텍처 선택
 
 | 상황 | 권장 아키텍처 |
 |---|---|
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 1) 기본: Razor Pages 단일 파일 업로드(보안 강화 버전)
+## 1. 기본: Razor Pages 단일 파일 업로드(보안 강화 버전)
 
 ### 1.1 폴더 구조
 ```
@@ -191,7 +191,7 @@ public class FileValidator
 
 ---
 
-## 2) 다중 파일 업로드(대용량 안전 처리)
+## 2. 다중 파일 업로드(대용량 안전 처리)
 
 ```razor
 @page
@@ -244,7 +244,7 @@ public class MultiUploadModel : PageModel
 
 ---
 
-## 3) 업로드 제한 및 서버 보호
+## 3. 업로드 제한 및 서버 보호
 
 ### 3.1 글로벌 제한(Program.cs)
 ```csharp
@@ -278,7 +278,7 @@ app.MapPost("/upload", async context => { /* ... */ }).RequireRateLimiting("uplo
 
 ---
 
-## 4) 이미지 처리 파이프라인(ImageSharp)
+## 4. 이미지 처리 파이프라인(ImageSharp)
 
 ### 4.1 리사이즈/포맷/품질/EXIF 제거
 ```csharp
@@ -337,7 +337,7 @@ image.Mutate(x => x
 
 ---
 
-## 5) AJAX 업로드(Minimal API)와 진척도 표시
+## 5. AJAX 업로드(Minimal API)와 진척도 표시
 
 ### 5.1 클라이언트
 ```html
@@ -390,7 +390,7 @@ app.MapPost("/api/upload", async (HttpRequest req, IWebHostEnvironment env, File
 
 ---
 
-## 6) 대용량 스트리밍(BodyReader)으로 메모리 사용 줄이기
+## 6. 대용량 스트리밍(BodyReader)으로 메모리 사용 줄이기
 
 ```csharp
 app.MapPost("/api/upload/stream", async (HttpContext ctx, IWebHostEnvironment env) =>
@@ -424,7 +424,7 @@ app.MapPost("/api/upload/stream", async (HttpContext ctx, IWebHostEnvironment en
 
 ---
 
-## 7) 조각(Resumable) 업로드(간단 버전)
+## 7. 조각(Resumable) 업로드(간단 버전)
 
 1) 클라이언트가 업로드 세션 생성 요청 → 서버가 `uploadId` 반환  
 2) 각 조각(chunkIndex, totalChunks)로 전송 → 서버는 임시 디렉터리에 저장  
@@ -475,7 +475,7 @@ app.MapPost("/api/chunk/{uploadId}/{index:int}/{total:int}", async (string uploa
 
 ---
 
-## 8) 다운로드 보호 및 직접 접근 차단
+## 8. 다운로드 보호 및 직접 접근 차단
 
 ### 8.1 공개 디렉터리 대신 컨트롤러를 통한 제공
 ```csharp
@@ -513,7 +513,7 @@ public static string Sign(string input, string secret)
 
 ---
 
-## 9) 클라우드 스토리지(Blob/S3) 연동
+## 9. 클라우드 스토리지(Blob/S3) 연동
 
 ### 9.1 Azure Blob 기본 업로드
 ```csharp
@@ -554,7 +554,7 @@ var url = s3Client.GetPreSignedURL(request);
 
 ---
 
-## 10) 백그라운드 작업으로 썸네일/워터마크 처리
+## 10. 백그라운드 작업으로 썸네일/워터마크 처리
 
 ```csharp
 public class ImageJobQueue
@@ -601,7 +601,7 @@ await _queue.EnqueueAsync(filePath);
 
 ---
 
-## 11) CORS, CSRF, 헤더 보안
+## 11. CORS, CSRF, 헤더 보안
 
 - 폼 업로드는 CSRF 보호(기본 `@Html.AntiForgeryToken()` / Razor Pages는 자동)
 - AJAX 업로드는 `RequestVerificationToken` 헤더로 CSRF 토큰 전달
@@ -611,7 +611,7 @@ await _queue.EnqueueAsync(filePath);
 
 ---
 
-## 12) 로깅/감사/관찰
+## 12. 로깅/감사/관찰
 
 - 업로드 결과: 파일명, 원본명, 크기, 해시, 사용자ID, IP, User-Agent
 - 처리 파이프라인: 단계별 소요시간(MiniProfiler), 실패 사유
@@ -626,7 +626,7 @@ _logger.LogInformation("Upload ok {UserId} {File} {Size} {Sha256}",
 
 ---
 
-## 13) 테스트(xUnit + Integration)
+## 13. 테스트(xUnit + Integration)
 
 ### 13.1 단위: 검증기
 ```csharp
@@ -668,7 +668,7 @@ public class UploadIntegrationTests : IClassFixture<WebApplicationFactory<Progra
 
 ---
 
-## 14) 운영 체크리스트
+## 14. 운영 체크리스트
 
 - 확장자/MIME/시그니처 **3중 검증**
 - 파일명 랜덤화, 경로 탐색 방지, 전용 디렉터리(권한 최소)
@@ -681,7 +681,7 @@ public class UploadIntegrationTests : IClassFixture<WebApplicationFactory<Progra
 
 ---
 
-## 15) 구성 스니펫 모음
+## 15. 구성 스니펫 모음
 
 ### 15.1 업로드 제한 응답을 ProblemDetails로
 ```csharp

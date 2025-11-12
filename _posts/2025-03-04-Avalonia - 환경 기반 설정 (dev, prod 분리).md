@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # 6. 환경 기반 설정(dev/prod 분리): Avalonia에서 `appsettings.*.json` 로딩·DI·옵션 패턴·재로딩까지
 
-## 1) 디렉터리·파일 구성
+## 1. 디렉터리·파일 구성
 
 ```
 📁 Project Root
@@ -36,7 +36,7 @@ category: Avalonia
 
 ---
 
-## 2) 환경 변수와 우선순위
+## 2. 환경 변수와 우선순위
 
 `ConfigurationBuilder`는 **등록 순서가 중요**하다. 뒤에 오는 소스가 앞선 값을 **덮어쓴다**.
 
@@ -53,7 +53,7 @@ category: Avalonia
 
 ---
 
-## 3) Program.cs — 구성 로딩의 표준 패턴
+## 3. Program.cs — 구성 로딩의 표준 패턴
 
 ```csharp
 using Microsoft.Extensions.Configuration;
@@ -108,7 +108,7 @@ var provider = services.BuildServiceProvider();
 
 ---
 
-## 4) Options 클래스(강타입)와 스키마
+## 4. Options 클래스(강타입)와 스키마
 
 ### 4.1 API 옵션
 
@@ -215,7 +215,7 @@ public sealed class UiOptions
 
 ---
 
-## 5) HttpClient + Options 연동
+## 5. HttpClient + Options 연동
 
 ```csharp
 public interface IApiClient
@@ -260,7 +260,7 @@ public sealed class ApiClient : IApiClient
 
 ---
 
-## 6) ViewModel에서 `IOptionsMonitor`로 실시간 반영
+## 6. ViewModel에서 `IOptionsMonitor`로 실시간 반영
 
 ```csharp
 public sealed class HomeViewModel : ReactiveUI.ReactiveObject
@@ -297,7 +297,7 @@ public sealed class HomeViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 7) 설정 유효성 검증(스타트업 Fail Fast)
+## 7. 설정 유효성 검증(스타트업 Fail Fast)
 
 실전에서는 잘못된 설정(예: 빈 URL, 음수 타임아웃)을 **초기 구동에서 차단**해야 한다.
 
@@ -330,7 +330,7 @@ services.AddOptions<ApiOptions>()
 
 ---
 
-## 8) 비밀/민감정보 처리(토큰·키)
+## 8. 비밀/민감정보 처리(토큰·키)
 
 **금지**: `appsettings*.json`에 평문 비밀 저장.  
 권장 대안:
@@ -369,7 +369,7 @@ public static class SecretStore
 
 ---
 
-## 9) 배포 시 설정 파일 포함/변형
+## 9. 배포 시 설정 파일 포함/변형
 
 ### 9.1 .csproj에서 출력에 포함
 
@@ -402,7 +402,7 @@ GitHub Actions 예:
 
 ---
 
-## 10) 플랫폼별 설정 경로(사용자 오버라이드 파일)
+## 10. 플랫폼별 설정 경로(사용자 오버라이드 파일)
 
 사용자별 오버라이드 파일을 OS 표준 경로에 저장/로딩하면, 배포 파일은 불변으로 유지하고 **러런타임 사용자 설정만 덮어쓰기** 가능.
 
@@ -436,7 +436,7 @@ var configuration = cfgBuilder.Build();
 
 ---
 
-## 11) 기능 플래그(Feature Flags)로 UX 제어(A/B 실험)
+## 11. 기능 플래그(Feature Flags)로 UX 제어(A/B 실험)
 
 ```csharp
 public sealed class FeatureGate
@@ -462,7 +462,7 @@ View XAML:
 
 ---
 
-## 12) 로깅 체계: 환경별 레벨·싱크
+## 12. 로깅 체계: 환경별 레벨·싱크
 
 ```json
 // dev
@@ -504,7 +504,7 @@ services.AddLogging(lb => lb.ClearProviders().AddSerilog());
 
 ---
 
-## 13) 커맨드라인/환경변수 오버라이드 실전
+## 13. 커맨드라인/환경변수 오버라이드 실전
 
 - 환경변수: `Api__BaseUrl=https://stg.example.com`  
 - CLI: `--Api:TimeoutSeconds=5 --Features:UseMockData=true`
@@ -513,7 +513,7 @@ services.AddLogging(lb => lb.ClearProviders().AddSerilog());
 
 ---
 
-## 14) 설정 스키마 버전 관리·마이그레이션
+## 14. 설정 스키마 버전 관리·마이그레이션
 
 배포 후 시간이 지나면 설정 키가 바뀐다. 앱 시작 시 버전을 점검해 **자동 마이그레이션**을 수행하면 사용자가 손대지 않아도 안정적으로 전환된다.
 
@@ -534,7 +534,7 @@ public sealed class SettingsMigrator
 
 ---
 
-## 15) 테스트 전략
+## 15. 테스트 전략
 
 - **Options 바인딩 단위 테스트**: `ConfigurationBuilder().AddInMemoryCollection()`으로 가짜 설정 주입 → `services.Configure<T>()` 바인딩 검증  
 - **IOptionsMonitor 변경 이벤트**: `reloadOnChange` 대신, 테스트에선 `IOptionsMonitorCache<T>`를 써서 `TryAdd/Reset`으로 변경 시뮬레이션  
@@ -565,7 +565,7 @@ public void ApiOptions_Binds_From_Config()
 
 ---
 
-## 16) 예시: dev/prod 분기에 따른 UI·API 자동 전환
+## 16. 예시: dev/prod 분기에 따른 UI·API 자동 전환
 
 - dev:  
   - API = `https://api-dev.example.com`  
@@ -580,7 +580,7 @@ public void ApiOptions_Binds_From_Config()
 
 ---
 
-## 17) 빌드/배포 파이프라인에서 환경 주입
+## 17. 빌드/배포 파이프라인에서 환경 주입
 
 ### GitHub Actions 매트릭스 예시(발췌)
 
@@ -596,7 +596,7 @@ public void ApiOptions_Binds_From_Config()
 
 ---
 
-## 18) 성능·안정성 고려사항
+## 18. 성능·안정성 고려사항
 
 - `reloadOnChange`는 파일 시스템 감시를 사용. 빈번한 저장(에디터 자동 저장) 시 변경 이벤트가 잦을 수 있으므로, **구독처에서 속도 완충(Throttle)** 또는 **핵심만 반영**.  
 - XAML Theme/리소스 스왑은 **UI 스레드**에서 수행.  
@@ -604,7 +604,7 @@ public void ApiOptions_Binds_From_Config()
 
 ---
 
-## 19) 요약 표
+## 19. 요약 표
 
 | 주제 | 핵심 요점 |
 |---|---|
@@ -620,7 +620,7 @@ public void ApiOptions_Binds_From_Config()
 
 ---
 
-## 20) 부록: 전체 미니 샘플
+## 20. 부록: 전체 미니 샘플
 
 ### `appsettings.dev.json`
 

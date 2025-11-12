@@ -13,7 +13,7 @@ category: 웹해킹
 
 ---
 
-## 0) 한눈에 보기(Executive Summary)
+## 0. 한눈에 보기(Executive Summary)
 
 - **Idempotency-Key**: 클라이언트가 **의도 단위**로 생성하는 **난수 토큰**(예: `Idempotency-Key: 6b3e-...`).  
 - **유니크 제약**: 서버/DB가 `(tenant|user, endpoint, key)`에 **유일성**을 강제.  
@@ -25,7 +25,7 @@ category: 웹해킹
 
 ---
 
-## 1) 문제 모델(왜 필요한가?)
+## 1. 문제 모델(왜 필요한가?)
 
 - 사용자는 결제 버튼을 **두 번 클릭**한다.  
 - 모바일에서 네트워크가 **재전송**한다(HTTP 클라이언트의 **자동 재시도**).  
@@ -37,7 +37,7 @@ category: 웹해킹
 
 ---
 
-## 2) 설계 원칙
+## 2. 설계 원칙
 
 1. **의도 스코프 정의**: 키의 유효범위를 **엔드포인트+주체**에 한정  
    - 예: `(merchant_id, POST /v1/orders, idempotency_key)` 유니크.  
@@ -50,7 +50,7 @@ category: 웹해킹
 
 ---
 
-## 3) API 계약(권장)
+## 3. API 계약(권장)
 
 - **요청 헤더**
   - `Idempotency-Key: <base64url-128bit+>` (필수)
@@ -68,7 +68,7 @@ category: 웹해킹
 
 ---
 
-## 4) 데이터 모델 & 인덱스(예: PostgreSQL)
+## 4. 데이터 모델 & 인덱스(예: PostgreSQL)
 
 ### 4.1 테이블
 
@@ -115,7 +115,7 @@ CLAIM(INSERT .. ON CONFLICT)
 
 ---
 
-## 5) 트랜잭션/잠금 패턴
+## 5. 트랜잭션/잠금 패턴
 
 ### 5.1 “선점 + 같은 트랜잭션에서 생성” (Postgres)
 
@@ -127,7 +127,7 @@ CLAIM(INSERT .. ON CONFLICT)
 
 ---
 
-## 6) 구현 예시 A — **Node/Express + PostgreSQL**
+## 6. 구현 예시 A — **Node/Express + PostgreSQL**
 
 ### 6.1 헬퍼: 요청 바디 해시
 
@@ -276,7 +276,7 @@ export default router;
 
 ---
 
-## 7) 구현 예시 B — **Django/DRF + PostgreSQL**
+## 7. 구현 예시 B — **Django/DRF + PostgreSQL**
 
 ### 7.1 모델
 
@@ -367,7 +367,7 @@ def create_order(request):
 
 ---
 
-## 8) 구현 예시 C — **Spring Boot + JPA**
+## 8. 구현 예시 C — **Spring Boot + JPA**
 
 > 포인트: **`@Transactional`** 내에서 키 선점 → 비즈니스 → 스냅샷 저장.
 
@@ -436,7 +436,7 @@ public class OrderService {
 
 ---
 
-## 9) Redis + Lua(원자 선점) 패턴
+## 9. Redis + Lua(원자 선점) 패턴
 
 > DB 대신 분산 KV를 쓸 때, **Lua 스크립트**로 “키 선점/검증/TTL 설정”을 **원자**로 처리.
 
@@ -472,7 +472,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 10) 결제 게이트웨이 연동
+## 10. 결제 게이트웨이 연동
 
 - Stripe 등 일부 PG는 자체 **Idempotency-Key**를 지원.  
 - **서버 내부 키**와 **PG 키**를 **둘 다** 사용하라.  
@@ -482,7 +482,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 11) 실패·타임아웃·충돌 처리
+## 11. 실패·타임아웃·충돌 처리
 
 - **서버 타임아웃** 후 내부에서 성공했을 수 있다 → **재시도는 동일 키**로 오게 하라(클라이언트 SDK 가이드).  
 - **PROCESSING 장기화**: `locked_at` + **워치독**(예: 2분) 초과 시 **FAILED**로 전이 or **해제** 후 재시도 허용.  
@@ -492,7 +492,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 12) 테스트 시나리오(자동화 권장)
+## 12. 테스트 시나리오(자동화 권장)
 
 1) **더블 클릭**: 10ms 간격으로 동일 키 2회 → **주문 1개**만 생성, 1회는 **재생**.  
 2) **서버 지연**: 첫 요청 2초 슬립 중, 동일 키 재호출 → **202** 또는 대기 후 동일 결과.  
@@ -503,7 +503,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 13) 운영 & 모니터링
+## 13. 운영 & 모니터링
 
 - **지표**:  
   - `idem.claimed.count`, `idem.replayed.count`, `idem.mismatch.count`, `idem.processing.timeout.count`  
@@ -514,7 +514,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 14) 클라이언트 가이드(UX)
+## 14. 클라이언트 가이드(UX)
 
 - **액션당 1개 키** 생성(버튼 클릭 시 즉시 생성).  
 - 실패/시간초과가 나더라도 **같은 키로 재시도**.  
@@ -523,7 +523,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 15) 수학적 관점(직관)
+## 15. 수학적 관점(직관)
 
 > **멱등성(idempotence)**: 연산 \( f \) 에 대해  
 > $$ f(f(x)) = f(x) $$
@@ -532,7 +532,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 16) “복붙” 최소 구현 템플릿(Express + Postgres)
+## 16. “복붙” 최소 구현 템플릿(Express + Postgres)
 
 ```sql
 -- migration
@@ -563,7 +563,7 @@ app.listen(3000);
 
 ---
 
-## 17) 체크리스트
+## 17. 체크리스트
 
 - [ ] `Idempotency-Key` 필수 + **난수성**(128bit+)  
 - [ ] `(tenant, endpoint, key)` **유니크 인덱스**  

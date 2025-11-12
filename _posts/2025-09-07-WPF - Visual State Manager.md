@@ -13,7 +13,7 @@ category: WPF
 
 ---
 
-## 0) 한눈에 보는 핵심
+## 0. 한눈에 보는 핵심
 
 - **VisualState** = “상태 이름 + Storyboard(선택)”.  
 - **VisualStateGroup** = 관련 상태 묶음(예: `CommonStates`: `Normal` / `MouseOver` / `Pressed` / `Disabled`).  
@@ -25,7 +25,7 @@ category: WPF
 
 ---
 
-## 1) 기본 문법: 상태/그룹/전환
+## 1. 기본 문법: 상태/그룹/전환
 
 ### 1.1 Button 템플릿에서 `CommonStates` 정의
 ```xml
@@ -92,7 +92,7 @@ category: WPF
 
 ---
 
-## 2) 상태 전환(VisualTransition) 세밀 제어
+## 2. 상태 전환(VisualTransition) 세밀 제어
 
 ### 2.1 `VisualTransition`로 상태 간 공통 전환 지정
 ```xml
@@ -139,7 +139,7 @@ category: WPF
 
 ---
 
-## 3) 코드에서 상태 전환: `GoToState`
+## 3. 코드에서 상태 전환: `GoToState`
 
 ### 3.1 `OnApplyTemplate`에서 초기 상태 진입
 ```csharp
@@ -175,7 +175,7 @@ private async void LoadDataAsync()
 
 ---
 
-## 4) MVVM 친화: XAML에서 상태를 바인딩처럼 쓰는 법
+## 4. MVVM 친화: XAML에서 상태를 바인딩처럼 쓰는 법
 
 WPF 기본만으로는 **상태 이름 직접 바인딩**은 지원하지 않습니다. 흔한 해법은 두 가지:
 
@@ -238,7 +238,7 @@ public static class VisualStateHelper
 
 ---
 
-## 5) 템플릿 정석: **Generic.xaml** + 커스텀 컨트롤
+## 5. 템플릿 정석: **Generic.xaml** + 커스텀 컨트롤
 
 ### 5.1 커스텀 토글 스위치 예제 (상태: `On`/`Off`/`Disabled`)
 **Controls/ToggleSwitch.cs**
@@ -352,7 +352,7 @@ public class ToggleSwitch : Control
 
 ---
 
-## 6) 폼/검증/선택 등 **여러 그룹** 동시 사용
+## 6. 폼/검증/선택 등 **여러 그룹** 동시 사용
 
 한 컨트롤 템플릿에 **여러 그룹**을 넣어 각각 독립 상태를 운용할 수 있습니다.
 
@@ -396,7 +396,7 @@ public class ToggleSwitch : Control
 
 ---
 
-## 7) VSM vs Triggers: 언제 무엇을?
+## 7. VSM vs Triggers: 언제 무엇을?
 
 | 항목 | **VSM** | **(Style/Template) Trigger** |
 |---|---|---|
@@ -410,7 +410,7 @@ public class ToggleSwitch : Control
 
 ---
 
-## 8) 고급: **CustomVisualStateManager** 로 전환 로직 커스터마이즈
+## 8. 고급: **CustomVisualStateManager** 로 전환 로직 커스터마이즈
 
 특정 상태 전환을 **특수 규칙**으로 처리하고 싶을 때 VSM을 상속해 사용합니다.
 
@@ -444,7 +444,7 @@ public class InstantPressStateManager : VisualStateManager
 
 ---
 
-## 9) 페이지 전환/레이아웃 상태에도 VSM 적용
+## 9. 페이지 전환/레이아웃 상태에도 VSM 적용
 
 > 단일 컨트롤이 아니라 **페이지/뷰 자체**에 상태를 정의하고 전환에 활용할 수 있습니다.
 
@@ -484,7 +484,7 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ---
 
-## 10) 상태 이름 컨벤션(권장)
+## 10. 상태 이름 컨벤션(권장)
 
 - **CommonStates**: `Normal`, `MouseOver`, `Pressed`, `Disabled`
 - **FocusStates**: `Focused`, `Unfocused`
@@ -500,7 +500,7 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ---
 
-## 11) 성능/안정성 체크리스트
+## 11. 성능/안정성 체크리스트
 
 - [ ] **Storyboard 최소화**: 상태별 Storyboard는 짧고 단순하게, **RenderTransform 우선**(LayoutTransform 지양)  
 - [ ] **공유 Brush 애니메이션 금지**: 리소스 Brush는 Freeze/공유됨 → **로컬 Brush** 또는 `x:Shared="False"`  
@@ -511,7 +511,7 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ---
 
-## 12) 트러블슈팅
+## 12. 트러블슈팅
 
 **Q1. `GoToState` 가 항상 `false` 를 반환합니다.**  
 - 템플릿 안에 해당 **상태 이름이 존재**하는지, 그룹/이름 오타 여부 확인.  
@@ -530,7 +530,7 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ---
 
-## 13) “붙여 넣어 바로 쓰는” 스니펫
+## 13. “붙여 넣어 바로 쓰는” 스니펫
 
 ### 13.1 공용 버튼 템플릿 (라이트/다크 팔레트와 조합 가정)
 ```xml
@@ -623,7 +623,7 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ---
 
-## 14) 요약
+## 14. 요약
 
 - **VSM는 “상태-중심 설계”**: 상태 이름과 전환만 정리하면, 복잡한 트리거 덩어리 대신 **읽기 쉬운 템플릿**이 됩니다.  
 - **`VisualTransition`** 으로 공통 전환 시간을 지정해 **부드럽고 일관된** 모션을 확보하세요.  

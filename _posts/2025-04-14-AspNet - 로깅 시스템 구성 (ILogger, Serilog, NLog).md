@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 로깅 시스템 완전 가이드
 
-## 1) ASP.NET Core 로깅 추상화 개요
+## 1. ASP.NET Core 로깅 추상화 개요
 
 - 모든 로그는 `Microsoft.Extensions.Logging`의 **`ILogger<T>` 추상화**를 통해 기록.
 - 실제 출력(콘솔/파일/DB/Elastic/Seq/Cloud)은 **프로바이더**가 담당(플러그 가능).
@@ -37,7 +37,7 @@ public sealed class HomeController : Controller
 
 ---
 
-## 2) 로그 레벨, 카테고리, 필터링
+## 2. 로그 레벨, 카테고리, 필터링
 
 ### 2.1 로그 레벨
 
@@ -70,7 +70,7 @@ public sealed class HomeController : Controller
 
 ---
 
-## 3) `ILogger` 핵심 패턴 — 구조화, 스코프, 이벤트 ID
+## 3. `ILogger` 핵심 패턴 — 구조화, 스코프, 이벤트 ID
 
 ### 3.1 구조화 메시지(파라미터를 필드로)
 
@@ -111,7 +111,7 @@ _logger.LogInformation(LogEvents.OrderFetched, "주문 {OrderId} 조회", orderI
 
 ---
 
-## 4) 콘솔/디버그/이벤트소스 기본 프로바이더
+## 4. 콘솔/디버그/이벤트소스 기본 프로바이더
 
 Program.cs(또는 `builder.Logging`)에서 활성화/제거 가능:
 
@@ -128,7 +128,7 @@ builder.Logging
 
 ---
 
-## 5) Serilog — 구조화 로깅의 표준
+## 5. Serilog — 구조화 로깅의 표준
 
 ### 5.1 패키지
 
@@ -253,7 +253,7 @@ Log.Logger = new LoggerConfiguration()
 
 ---
 
-## 6) NLog — 고성능·XML 구성 선호 환경
+## 6. NLog — 고성능·XML 구성 선호 환경
 
 ### 6.1 패키지 & 기본 설정
 
@@ -295,7 +295,7 @@ app.Run();
 
 ---
 
-## 7) 보안/프라이버시 — PII 마스킹·GDPR
+## 7. 보안/프라이버시 — PII 마스킹·GDPR
 
 - 로그에 **암호/토큰/주민번호/카드번호** 등 **PII** 저장 금지.
 - 수집 최소화(원칙), 보존 주기(예: 7~30일)와 파기 정책 명시.
@@ -317,7 +317,7 @@ _logger.LogInformation("가입: {Email}", PiiMask.MaskEmail(email));
 
 ---
 
-## 8) 상관관계/분산 추적 — `Activity`/OpenTelemetry 연동
+## 8. 상관관계/분산 추적 — `Activity`/OpenTelemetry 연동
 
 ### 8.1 `Activity`로 Trace/Span 추적
 
@@ -359,7 +359,7 @@ builder.Services.AddOpenTelemetry()
 
 ---
 
-## 9) 전역 예외 처리와 로깅 통합
+## 9. 전역 예외 처리와 로깅 통합
 
 - 글로벌 예외 미들웨어(혹은 `UseExceptionHandler`)에서 **`LogError(ex, ...)`** + **`ProblemDetails`** 반환.
 
@@ -393,7 +393,7 @@ app.UseExceptionHandler(err =>
 
 ---
 
-## 10) 성능: 비동기·배칭·롤링·필터
+## 10. 성능: 비동기·배칭·롤링·필터
 
 - **비동기/배칭**: 파일/네트워크 싱크에서 I/O 병목 최소화(Serilog/NLog 기본 제공).
 - **롤링 파일**: 일별/용량별 분할 + 보존 개수 제한.
@@ -413,7 +413,7 @@ Serilog File Sink 예:
 
 ---
 
-## 11) 환경별 구성/핫 리로드
+## 11. 환경별 구성/핫 리로드
 
 `appsettings.Development.json`과 `Production.json`에서 로그 레벨/싱크 분리:
 
@@ -435,7 +435,7 @@ Serilog File Sink 예:
 
 ---
 
-## 12) 각 계층에서의 로깅 패턴
+## 12. 각 계층에서의 로깅 패턴
 
 ### 12.1 미들웨어(요청 전후/지표)
 
@@ -504,7 +504,7 @@ public sealed class Worker : BackgroundService
 
 ---
 
-## 13) 클라우드/집중 수집: Elastic/Seq/CloudWatch/Application Insights
+## 13. 클라우드/집중 수집: Elastic/Seq/CloudWatch/Application Insights
 
 - **Serilog**: `Serilog.Sinks.Elasticsearch`, `Serilog.Sinks.Seq`, `Serilog.Sinks.ApplicationInsights`.
 - **NLog**: Elastic/DB 타깃 등 다양한 타깃.
@@ -512,7 +512,7 @@ public sealed class Worker : BackgroundService
 
 ---
 
-## 14) 운영 가이드 — 알람/보존/용량/비용
+## 14. 운영 가이드 — 알람/보존/용량/비용
 
 - **알람**: `Error/Critical` 폭증, 5xx 비율 증가, 특정 이벤트 ID 임계값 초과.
 - **보존**: 규정/보안 기준에 따라 7~90일. 일일 롤링 + 자동 삭제.
@@ -521,7 +521,7 @@ public sealed class Worker : BackgroundService
 
 ---
 
-## 15) 종합 예시 — Serilog + 글로벌 예외 + 요청 로깅 + EF/HTTP 튜닝
+## 15. 종합 예시 — Serilog + 글로벌 예외 + 요청 로깅 + EF/HTTP 튜닝
 
 ```csharp
 using Serilog;
@@ -582,7 +582,7 @@ app.Run();
 
 ---
 
-## 16) 체크리스트 — 실제 프로젝트에 적용하기
+## 16. 체크리스트 — 실제 프로젝트에 적용하기
 
 - [ ] 카테고리별 로그 레벨 정의(개발/운영 분리)
 - [ ] 구조화 로깅(메시지 템플릿 파라미터 적극 사용)
@@ -597,7 +597,7 @@ app.Run();
 
 ---
 
-## 17) 요약
+## 17. 요약
 
 | 항목 | 핵심 |
 |---|---|

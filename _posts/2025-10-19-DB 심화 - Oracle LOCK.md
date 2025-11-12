@@ -15,7 +15,7 @@ category: DB 심화
 
 ---
 
-## 0) 큰 그림 — Oracle 락 레이어 맵
+## 0. 큰 그림 — Oracle 락 레이어 맵
 
 - **Row-Level Lock**: 개별 행에 대한 잠금(비가시적 구조) — *세션은 실제론 **TX enqueue**를 통해 보유*.  
 - **TX Enqueue**: 트랜잭션(세그먼트 헤더/UNDO)에 대한 락. **행 변경의 소유권**을 표현, **행 충돌 시 대기 이벤트**는 보통 `enq: TX - row lock contention`.  
@@ -25,7 +25,7 @@ category: DB 심화
 
 ---
 
-## 1) Enqueue(엔큐) Lock 핵심
+## 1. Enqueue(엔큐) Lock 핵심
 
 ### 1.1 구조·이름·모드
 - `V$LOCK.TYPE` 예: **TX, TM, UL, HW, SQ, ST, CF…**  
@@ -56,7 +56,7 @@ FROM   v$transaction t JOIN v$session s ON s.taddr = t.addr;
 
 ---
 
-## 2) **TX Lock** — 행 변경의 주연 배우
+## 2. **TX Lock** — 행 변경의 주연 배우
 
 > **핵심**: 모든 DML(UPDATE/DELETE/INSERT)은 **행 레벨 락**을 잡고, 그 소유권이 **TX Enqueue**로 표현된다.  
 > 다른 세션이 **같은 행**을 바꾸려 하면 **TX 락 충돌**로 대기(`enq: TX - row lock contention`).
@@ -81,7 +81,7 @@ UPDATE t_tx SET v = v+10 WHERE id=1;
 
 ---
 
-## 3) TX Lock이 “예상 밖”으로 길어지는 4가지 대표 원인
+## 3. TX Lock이 “예상 밖”으로 길어지는 4가지 대표 원인
 
 ### 3.1 **무결성 제약 위배 가능성**(FK 미인덱스 등)
 - **외래키(FK)** 가 **인덱스 없음** 상태에서 **부모 삭제/수정** 시:  
@@ -123,7 +123,7 @@ ALTER INDEX pk_t_tx REBUILD INITRANS 8;
 
 ---
 
-## 4) 기타 트랜잭션 Lock & **TM(Table) Lock** — DML/DDL 충돌의 교차점
+## 4. 기타 트랜잭션 Lock & **TM(Table) Lock** — DML/DDL 충돌의 교차점
 
 ### 4.1 DML이 잡는 Table Lock(TM)
 - DML(INSERT/UPDATE/DELETE)은 대상 테이블에 보통 **TM=RX(Row-Exclusive)** 를 건다.  
@@ -157,7 +157,7 @@ SELECT * FROM dba_blockers;
 
 ---
 
-## 5) **DML Row Lock** — 실제 충돌은 여기서 발생
+## 5. **DML Row Lock** — 실제 충돌은 여기서 발생
 
 - **행 락 자체**는 데이터 블록의 **ITL/Lock Byte** 등 **로우 헤더**로 표현(물리적)되지만,  
   애플리케이션/진단 레벨에선 **TX 락**으로 관측·대기 관리.
@@ -178,7 +178,7 @@ FETCH FIRST 100 ROWS ONLY;
 
 ---
 
-## 6) 데드락(ORA-00060)과 “무한 대기” 구분
+## 6. 데드락(ORA-00060)과 “무한 대기” 구분
 
 ### 6.1 교착 상황 예
 ```sql
@@ -202,7 +202,7 @@ UPDATE t_tx SET v=v+1 WHERE id=2;  -- B holds row 2
 
 ---
 
-## 7) **락을 푸는 열쇠 = COMMIT** (+ ROLLBACK)
+## 7. **락을 푸는 열쇠 = COMMIT** (+ ROLLBACK)
 
 - **TX 락/행 락**은 **해당 트랜잭션의 COMMIT/ROLLBACK 순간**에 해제.  
 - **TM 락**은 DML/DDL 구간 종료 시 해제(트랜잭션 경계와 일치하는 경우가 많음).  
@@ -222,7 +222,7 @@ COMMIT;  -- 이 순간 잠금 해제 → 대기 중인 세션이 진행
 
 ---
 
-## 8) “특수” TX 상황 — 사례별 자세한 해설
+## 8. “특수” TX 상황 — 사례별 자세한 해설
 
 ### 8.1 **무결성 제약 위배 가능성**  
 - **상황**: 부모/자식 관계에서 **부모 변경**(DELETE/UPDATE PK), 자식 FK에 **인덱스 없음**.  
@@ -247,7 +247,7 @@ COMMIT;  -- 이 순간 잠금 해제 → 대기 중인 세션이 진행
 
 ---
 
-## 9) 실습 세트 — 락 관측·차단·해소
+## 9. 실습 세트 — 락 관측·차단·해소
 
 ### 9.1 블로킹 체인 보기
 ```sql
@@ -283,7 +283,7 @@ ALTER SYSTEM KILL SESSION '<sid,serial#>' IMMEDIATE;
 
 ---
 
-## 10) 설계·튜닝 체크리스트
+## 10. 설계·튜닝 체크리스트
 
 1) **트랜잭션 짧게**: UI 대기/외부 콜동안 트랜잭션 열지 말 것(“출력-커밋-입력-커밋”).  
 2) **커밋 정책**: 너무 잦은 커밋은 `log file sync`↑, 너무 드문 커밋은 **락 보유시간↑** — 업무별 최적화.  
@@ -298,7 +298,7 @@ ALTER SYSTEM KILL SESSION '<sid,serial#>' IMMEDIATE;
 
 ---
 
-## 11) 예제 모음 — 실전 패턴
+## 11. 예제 모음 — 실전 패턴
 
 ### 11.1 FK 미인덱스로 인한 TM/TX 대기
 ```sql
@@ -355,7 +355,7 @@ CREATE INDEX pk_t_ins_rev ON t_ins(id) REVERSE;
 
 ---
 
-## 12) 요약
+## 12. 요약
 
 - **TX Lock** 은 **행 변경 충돌**의 실질 주체이며, **커밋/롤백**으로만 해제된다.  
 - **TM Lock** 은 **테이블 레벨**의 DML/DDL 충돌을 조정한다.  

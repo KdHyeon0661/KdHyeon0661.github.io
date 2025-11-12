@@ -432,30 +432,30 @@ dotnet publish -c Release -p:PublishTrimmed=true -p:TrimmerDefaultAction=link
 ## 16. 실전 흐름 정리(확장판)
 
 ```bash
-# 1) 솔루션/프로젝트 생성
+# 1. 솔루션/프로젝트 생성
 dotnet new sln -n MySolution
 dotnet new webapp -n MySite
 dotnet new classlib -n MySite.Domain
 dotnet new xunit -n MySite.Tests
 
-# 2) 솔루션/참조 구성
+# 2. 솔루션/참조 구성
 dotnet sln MySolution.sln add MySite/MySite.csproj MySite.Domain/MySite.Domain.csproj MySite.Tests/MySite.Tests.csproj
 dotnet add MySite/MySite.csproj reference MySite.Domain/MySite.Domain.csproj
 dotnet add MySite.Tests/MySite.Tests.csproj reference MySite.Domain/MySite.Domain.csproj
 
-# 3) 의존성 추가
+# 3. 의존성 추가
 dotnet add MySite/MySite.csproj package Microsoft.EntityFrameworkCore.Sqlite
 dotnet add MySite/MySite.csproj package Swashbuckle.AspNetCore
 
-# 4) 개발 실행/테스트
+# 4. 개발 실행/테스트
 dotnet watch run --project MySite/MySite.csproj
 dotnet test
 
-# 5) 릴리스 빌드/배포
+# 5. 릴리스 빌드/배포
 dotnet build -c Release
 dotnet publish MySite/MySite.csproj -c Release -o ./publish
 
-# 6) 운영 타입별 빌드(예: Linux x64)
+# 6. 운영 타입별 빌드(예: Linux x64)
 dotnet publish MySite/MySite.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux
 ```
 

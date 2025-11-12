@@ -4,7 +4,7 @@ title: Spring - JPA 기본
 date: 2025-10-11 22:25:23 +0900
 category: Spring
 ---
-# 4) 데이터 접근 I — JPA 기본
+# 4. 데이터 접근 I — JPA 기본
 > 영속성 컨텍스트/엔티티·값 타입/연관관계, 지연·즉시 로딩과 N+1/캐시, 트랜잭션 전파·격리·롤백을 **실행 가능한 예제**와 함께 정리한다.  
 > 환경 가정: Spring Boot 3.3+, Hibernate ORM 6.x, Java 21, Gradle, PostgreSQL 16 (RDB 특성은 DB마다 조금씩 다를 수 있음).
 

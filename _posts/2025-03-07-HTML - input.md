@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML `<input>` 태그
 
-## 1) `<input>`이란?
+## 1. `<input>`이란?
 
 - 문서의 **단일 self-contained 입력 컨트롤**.
 - 표시/동작은 `type`으로 결정(기본값: `text`).
@@ -18,7 +18,7 @@ category: HTML
 
 ---
 
-## 2) `type`별 총정리(실전 메모 포함)
+## 2. `type`별 총정리(실전 메모 포함)
 
 ### 2.1 텍스트 계열
 
@@ -94,7 +94,7 @@ category: HTML
 
 ---
 
-## 3) 필수·중요 속성 — 작게 보이지만 큰 차이를 만든다
+## 3. 필수·중요 속성 — 작게 보이지만 큰 차이를 만든다
 
 ### 3.1 값/이름/상태
 
@@ -173,7 +173,7 @@ category: HTML
 
 ---
 
-## 4) HTML5 Constraint Validation — 브라우저 내장 검증 + JS API
+## 4. HTML5 Constraint Validation — 브라우저 내장 검증 + JS API
 
 ### 4.1 상태 의사클래스와 CSS
 
@@ -216,7 +216,7 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 5) 파일 업로드 — UX와 보안 체크리스트
+## 5. 파일 업로드 — UX와 보안 체크리스트
 
 ### 5.1 클라이언트 UX
 ```html
@@ -238,7 +238,7 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 6) 접근성(a11y) — 라벨·오류·그룹·포커스
+## 6. 접근성(a11y) — 라벨·오류·그룹·포커스
 
 ### 6.1 라벨 연결
 ```html
@@ -269,7 +269,7 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 7) 보안 — XSS/CSRF/자동완성·민감정보
+## 7. 보안 — XSS/CSRF/자동완성·민감정보
 
 | 이슈 | 설명 | 대응 |
 |---|---|---|
@@ -285,7 +285,7 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 8) 모바일/국제화 UX
+## 8. 모바일/국제화 UX
 
 - `inputmode="numeric|decimal|tel|email|url"`로 키패드 최적화.
 - `enterkeyhint="next|done|search|go|send"`로 행동 힌트.
@@ -303,7 +303,7 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 9) 고급 패턴 — `datalist`, `output`, 실시간 계산
+## 9. 고급 패턴 — `datalist`, `output`, 실시간 계산
 
 ```html
 <label>상품 <input name="product" list="products"></label>
@@ -329,7 +329,7 @@ calc();
 
 ---
 
-## 10) 종합 예제 — 회원가입(검증·접근성·모바일/보안 동시 반영)
+## 10. 종합 예제 — 회원가입(검증·접근성·모바일/보안 동시 반영)
 
 ```html
 <!doctype html>
@@ -426,7 +426,7 @@ form.addEventListener('submit', async (e) => {
 
 ---
 
-## 11) 흔한 문제와 해결책
+## 11. 흔한 문제와 해결책
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -439,7 +439,7 @@ form.addEventListener('submit', async (e) => {
 
 ---
 
-## 12) 요약
+## 12. 요약
 
 - `<input>`은 폼의 **핵심 단위**: 타입/속성 조합으로 대부분의 사용자 입력 처리 가능.  
 - **유효성**: HTML5 속성 + CSS 상태 + JS API(`setCustomValidity`)의 삼박자.  

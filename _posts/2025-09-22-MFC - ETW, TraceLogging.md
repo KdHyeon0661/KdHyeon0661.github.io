@@ -12,7 +12,7 @@ category: MFC
 
 ---
 
-## 0) 설계 개요 (파이프라인)
+## 0. 설계 개요 (파이프라인)
 
 1. **앱 계측**: TraceLogging(경량)으로 **시나리오 경계(START/STOP)**, **세부 태스크(활동)**, **핵심 파라미터**를 로깅  
 2. **수집**: **WPR**로 **Kernel + User** 트레이스 프로필( CPU 샘플링, 스택, File I/O, Disk, Networking, GPU/Present, Heap )을 한 번에 켠다  
@@ -29,7 +29,7 @@ category: MFC
 
 ---
 
-## 1) TraceLogging 계측(시나리오 마커)
+## 1. TraceLogging 계측(시나리오 마커)
 
 ### 1.1 최소 계측(시나리오 시작/끝)
 ```cpp
@@ -85,17 +85,17 @@ void DecodeThumbs(const GUID& parent) {
 
 ---
 
-## 2) 수집: WPR 프로필 (& WPRP 예시)
+## 2. 수집: WPR 프로필 (& WPRP 예시)
 
 ### 2.1 빠른 명령형(권장)
 ```powershell
 # Admin PowerShell
-# 1) 시작: CPU 샘플+스택, 디스크/파일 I/O, 네트워크, GPU, 힙(할당), CLR off
+# 1. 시작: CPU 샘플+스택, 디스크/파일 I/O, 네트워크, GPU, 힙(할당), CLR off
 wpr -start CPU -start FileIO -start DiskIO -start Networking -start GPU -heap -stackwalk profile
 
 # 추가로 NT Kernel + DxgKrnl Present, DWM 등은 기본 프로필 포함
-# 2) 재현(앱에서 시나리오 실행)
-# 3) 중지/저장
+# 2. 재현(앱에서 시나리오 실행)
+# 3. 중지/저장
 wpr -stop trace.etl
 ```
 
@@ -151,7 +151,7 @@ wpr -stop trace.etl
 
 ---
 
-## 3) WPA(Windows Performance Analyzer) 분석 루틴
+## 3. WPA(Windows Performance Analyzer) 분석 루틴
 
 ### 3.1 타임라인 슬라이싱(시나리오 마커로 범위 고정)
 - **Generic Events** → `ProviderName = MyApp` → `EventName = Scenario`  
@@ -200,7 +200,7 @@ wpr -stop trace.etl
 
 ---
 
-## 4) 프레임타임/히스토그램 정밀 팁
+## 4. 프레임타임/히스토그램 정밀 팁
 
 - **PresentMode**: `Hardware: Independent Flip` vs `Composed: Flip` 등 각 모드의 **플립 경로**  
 - **App Miss**: 앱이 제시간에 프레임을 못 만든 것(보통 CPU/GPU 과부하)  
@@ -209,7 +209,7 @@ wpr -stop trace.etl
 
 ---
 
-## 5) “힙/할당 히트맵” 읽는 법(실전)
+## 5. “힙/할당 히트맵” 읽는 법(실전)
 
 - **가로축**: 시간, **세로축**: 할당 이벤트 스트림(스택 그룹)  
 - **점**: 할당(진한색) vs 해제(연한색)  
@@ -220,7 +220,7 @@ wpr -stop trace.etl
 
 ---
 
-## 6) I/O 큐 길이 진단(디스크 병목 레시피)
+## 6. I/O 큐 길이 진단(디스크 병목 레시피)
 
 1) **Disk Usage** 그래프에서 **Queue Length**를 **Time**에 그려 **피크** 확인  
 2) **File I/O** 표로 내려가 **Top files** / **Top call stacks** 도출  
@@ -230,7 +230,7 @@ wpr -stop trace.etl
 
 ---
 
-## 7) 스택/심볼 준비
+## 7. 스택/심볼 준비
 
 - PDB가 없으면 **cpu sample stack**이 함수명 미표시 → `_NT_SYMBOL_PATH` 설정  
 - 사내 빌드라면 **Source Link** / **SRV*cache*MSDL** 병행  
@@ -238,7 +238,7 @@ wpr -stop trace.etl
 
 ---
 
-## 8) 사례별 “레시피”
+## 8. 사례별 “레시피”
 
 ### 8.1 스크롤 스터터링(프레임 스파이크)
 - 증상: 200ms 스파이크가 간헐  
@@ -256,7 +256,7 @@ wpr -stop trace.etl
 
 ---
 
-## 9) xperf 대체(레거시/스택워크 세부)
+## 9. xperf 대체(레거시/스택워크 세부)
 
 ```powershell
 # 커널 + 디스크/파일 + 프로파일 샘플 + 스택워크
@@ -269,7 +269,7 @@ xperf -d trace.etl
 
 ---
 
-## 10) 체크리스트(수집 품질)
+## 10. 체크리스트(수집 품질)
 
 - [ ] **시나리오 마커**(Start/Stop/ActivityId) 있음  
 - [ ] **Stack** 켰는가(핫링크 찾기 필수)  
@@ -279,14 +279,14 @@ xperf -d trace.etl
 
 ---
 
-## 11) 고급: 활동 상관(ETW ActivityId)
+## 11. 고급: 활동 상관(ETW ActivityId)
 
 - `TraceLoggingWriteActivity`의 **ActivityId/RelatedActivityId**로 **부모-자식** 연결  
 - WPA: **Generic Events** 테이블에 **ActivityId** 컬럼 표시 → **CPU/Thread** 뷰와 조인(“Selection -> Filter To Selection”)
 
 ---
 
-## 12) 최소 예제: TraceLogging + WPR + WPA
+## 12. 최소 예제: TraceLogging + WPR + WPA
 
 1) 위 **ScenarioGuard**로 앱에 시나리오 마커  
 2) `wpr -start CPU -start DiskIO -start FileIO -heap -stackwalk profile`  
@@ -296,7 +296,7 @@ xperf -d trace.etl
 
 ---
 
-## 13) 최적화 가이드(관찰→행동)
+## 13. 최적화 가이드(관찰→행동)
 
 - **CPU**: 상위 5 스택의 **Exclusive** 줄이기(알고리즘/자료구조/브랜치/메모리 접근)  
 - **프레임**: **메인 스레드**에서 장기 작업 금지, **프레임 예산(16.7ms/8.3ms)** 엄수  
@@ -306,7 +306,7 @@ xperf -d trace.etl
 
 ---
 
-## 14) 자주 묻는 오해 교정
+## 14. 자주 묻는 오해 교정
 
 - **“C++는 GC가 없으니 메모리 문제는 없다”** → **할당 히트맵** 보면 논리적 “GC-유사” 이슈(짧은 수명 객체 폭주)가 성능을 갉아먹음  
 - **“FPS만 보면 된다”** → **프레임 변동(파형)과 스파이크**가 UX를 좌우. 히스토그램/퍼센타일로 보라  
@@ -314,7 +314,7 @@ xperf -d trace.etl
 
 ---
 
-## 15) 마무리
+## 15. 마무리
 
 - 한 번의 ETL로 **전체 병목 지형**(CPU/프레임/할당/I/O/락)을 본다  
 - **TraceLogging 시나리오 마커**로 분석 범위를 짧고 정확하게  

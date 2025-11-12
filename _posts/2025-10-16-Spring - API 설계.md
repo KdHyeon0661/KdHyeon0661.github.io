@@ -4,7 +4,7 @@ title: Spring - API 설계
 date: 2025-10-16 14:25:23 +0900
 category: Spring
 ---
-# 6) API 설계 실전 — REST 설계 가이드, HATEOAS/문서화, 파일 업·다운로드/대용량 스트리밍
+# 6. API 설계 실전 — REST 설계 가이드, HATEOAS/문서화, 파일 업·다운로드/대용량 스트리밍
 
 > 목표: 실무에서 **예측 가능하고 확장 가능한 HTTP API**를 설계/구현/문서화하고, **대용량 파일 전송**까지 안전하게 다루는 방법을 예제로 정리한다.  
 > 환경 가정: Spring Boot 3.3+, Java 21, Spring Web MVC, springdoc-openapi 또는 Spring REST Docs, JPA(Optional), S3/로컬 스토리지.

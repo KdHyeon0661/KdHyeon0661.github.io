@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Step Functions: 서버리스 워크플로우 오케스트레이션
 
-## 0) 한눈에 보는 Step Functions
+## 0. 한눈에 보는 Step Functions
 
 - **무상태 코드를 상태로 감싼다**: 비즈니스 로직을 **상태 기계(State Machine)** 로 선언(ASL: Amazon States Language).
 - **서버리스 오케스트레이션**: Lambda, ECS, Batch, Glue, SageMaker, DynamoDB, SQS/SNS, EventBridge, EMR 등과 **코드 없이 연결**.
@@ -16,7 +16,7 @@ category: AWS
 
 ---
 
-## 1) Amazon States Language(ASL) 핵심 문법
+## 1. Amazon States Language(ASL) 핵심 문법
 
 ### 1.1 최소 예제
 
@@ -85,7 +85,7 @@ category: AWS
 
 ---
 
-## 2) 오류 처리: Retry/Catch, 지수 백오프, 조건부 재시도
+## 2. 오류 처리: Retry/Catch, 지수 백오프, 조건부 재시도
 
 ### 2.1 Retry with Backoff
 
@@ -144,7 +144,7 @@ category: AWS
 
 ---
 
-## 3) 동적 반복: Map, **Distributed Map**, 병렬/팬아웃
+## 3. 동적 반복: Map, **Distributed Map**, 병렬/팬아웃
 
 ### 3.1 Map(일반)
 
@@ -199,7 +199,7 @@ category: AWS
 
 ---
 
-## 4) 서비스 통합 패턴: `.sync`, 콜백(토큰), Activity, ECS/Batch/Glue
+## 4. 서비스 통합 패턴: `.sync`, 콜백(토큰), Activity, ECS/Batch/Glue
 
 ### 4.1 **Request-Response** (Lambda, DynamoDB 등)
 
@@ -253,7 +253,7 @@ category: AWS
 
 ---
 
-## 5) 실전 시나리오 1: **주문 처리 SAGA(보상 트랜잭션)**
+## 5. 실전 시나리오 1: **주문 처리 SAGA(보상 트랜잭션)**
 
 ### 5.1 요구사항
 - 결제 승인 → 재고 예약 → 출고 요청  
@@ -313,7 +313,7 @@ category: AWS
 
 ---
 
-## 6) 실전 시나리오 2: **사람 승인(휴먼 인 더 루프)**
+## 6. 실전 시나리오 2: **사람 승인(휴먼 인 더 루프)**
 
 - Step Functions → 승인 요청 Lambda → **SNS/이메일/Slack** 전송  
 - 승인자가 클릭/응답 → API → `SendTaskSuccess` 로 **콜백**
@@ -343,7 +343,7 @@ category: AWS
 
 ---
 
-## 7) 실전 시나리오 3: **ETL/데이터 파이프라인**
+## 7. 실전 시나리오 3: **ETL/데이터 파이프라인**
 
 - EventBridge(스케줄) → Glue `.sync` → Athena Partition 추가 → 결과 Slack 알림
 
@@ -379,7 +379,7 @@ category: AWS
 
 ---
 
-## 8) 표준 vs 익스프레스, 비용 모델, 대략 계산
+## 8. 표준 vs 익스프레스, 비용 모델, 대략 계산
 
 ### 8.1 비교 요약
 
@@ -412,7 +412,7 @@ $$
 
 ---
 
-## 9) 관측성: 로깅, 메트릭, X-Ray, 입력/출력 샘플링
+## 9. 관측성: 로깅, 메트릭, X-Ray, 입력/출력 샘플링
 
 - **CloudWatch Logs**: 실행별 입력/출력 로깅 레벨(ALL/ERROR) 및 샘플링 비율 설정
 - **메트릭**: `ExecutionsStarted/Failed/Succeeded/Throttled/TimedOut`, `ExecutionTime`, 서비스 통합별 지표
@@ -421,7 +421,7 @@ $$
 
 ---
 
-## 10) 테스트 전략: Unit/Local/Simulate
+## 10. 테스트 전략: Unit/Local/Simulate
 
 - **Local**: ASL JSON을 **sam local/ASF Local**(시뮬레이터)로 구동(단, 제한적)
 - **단위테스트**: **Lambda/Glue 쪽 로직**을 별도 테스트 → 상태 기계는 **통합테스트** 위주
@@ -430,7 +430,7 @@ $$
 
 ---
 
-## 11) IaC: CDK / SAM / CloudFormation
+## 11. IaC: CDK / SAM / CloudFormation
 
 ### 11.1 AWS CDK (TypeScript) 예시
 
@@ -502,7 +502,7 @@ Resources:
 
 ---
 
-## 12) 보안/거버넌스
+## 12. 보안/거버넌스
 
 - **IAM 최소 권한**: 상태 기계가 호출하는 리소스만 허용 (정확한 ARN 스코프)
 - **입출력 민감정보 마스킹**: CloudWatch Logs 로깅 레벨/필드 마스킹
@@ -511,7 +511,7 @@ Resources:
 
 ---
 
-## 13) 모범 패턴 카탈로그
+## 13. 모범 패턴 카탈로그
 
 1. **Job-run `.sync`**: Batch/Glue/ECS/SageMaker 학습/변환 완료까지 기다림  
 2. **콜백 토큰**: 외부/사람 승인까지 대기(Wait for Callback)  
@@ -523,7 +523,7 @@ Resources:
 
 ---
 
-## 14) 확장 예제: **Kinesis → Step Functions(익스프레스) → Lambda → Firehose/S3**
+## 14. 확장 예제: **Kinesis → Step Functions(익스프레스) → Lambda → Firehose/S3**
 
 - Kinesis 레코드 배치 → Express State Machine(Map with concurrency) → 변환 → Firehose PutRecordBatch
 - 수식상 **GB-초**가 저렴, 대량 이벤트 오케스트레이션에 적합
@@ -555,7 +555,7 @@ Resources:
 
 ---
 
-## 15) 실무 체크리스트(요약)
+## 15. 실무 체크리스트(요약)
 
 - 입력/출력 경로: `InputPath/Parameters/ResultPath/OutputPath` **정확히** 설계해 **불필요 페이로드 축소**
 - Retry/Catch: 외부 의존성 에러만 선택적으로 재시도(5xx/429), **영구 실패**는 빠른 Catch

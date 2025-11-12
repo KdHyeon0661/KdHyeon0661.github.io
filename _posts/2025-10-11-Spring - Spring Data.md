@@ -4,7 +4,7 @@ title: Spring - Spring Data
 date: 2025-10-11 23:25:23 +0900
 category: Spring
 ---
-# 5) 데이터 접근 II — Spring Data
+# 5. 데이터 접근 II — Spring Data
 > Spring Data JPA의 리포지토리 패턴에서 시작해 **Query Method / `@Query` / QueryDSL 개요**, 그리고 **페이징·정렬·동적 검색·Specification**까지 한 번에 정리합니다.  
 > 환경 가정: Spring Boot 3.3+, Spring Data JPA, Hibernate 6.x, Java 21, PostgreSQL 16.
 

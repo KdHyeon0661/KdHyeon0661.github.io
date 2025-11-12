@@ -6,7 +6,7 @@ category: AspNet
 ---
 # 자주 쓰는 Tag Helper 완전 정리 (ASP.NET Core)
 
-## 0) 준비: Tag Helper가 “안 먹힐” 때 체크리스트
+## 0. 준비: Tag Helper가 “안 먹힐” 때 체크리스트
 
 `_ViewImports.cshtml`(또는 Razor Pages의 `_ViewImports.cshtml`, MVC의 `/Views/_ViewImports.cshtml`)에 다음 등록이 있어야 한다.
 
@@ -22,7 +22,7 @@ category: AspNet
 
 ---
 
-## 1) `asp-for` 계열 — **모델 바인딩 + 클라이언트 검증**의 핵심
+## 1. `asp-for` 계열 — **모델 바인딩 + 클라이언트 검증**의 핵심
 
 ### 1.1 기본 예제
 
@@ -62,7 +62,7 @@ category: AspNet
 
 ---
 
-## 2) 링크/폼 경로: `asp-action`, `asp-controller`, `asp-page`, `asp-page-handler`
+## 2. 링크/폼 경로: `asp-action`, `asp-controller`, `asp-page`, `asp-page-handler`
 
 ### 2.1 MVC 라우팅(Controller/Action)
 
@@ -94,7 +94,7 @@ category: AspNet
 
 ---
 
-## 3) 라우트 데이터: `asp-route` 및 `asp-route-{param}` — **우선순위/충돌 규칙**
+## 3. 라우트 데이터: `asp-route` 및 `asp-route-{param}` — **우선순위/충돌 규칙**
 
 ### 3.1 쿼리스트링/경로 파라미터 전달
 
@@ -139,7 +139,7 @@ category: AspNet
 
 ---
 
-## 4) `asp-items` — `<select>` 목록 바인딩
+## 4. `asp-items` — `<select>` 목록 바인딩
 
 ```razor
 <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
@@ -159,7 +159,7 @@ Model.Categories = new List<SelectListItem> {
 
 ---
 
-## 5) 유효성 검증 Tag Helpers — `asp-validation-for`, `asp-validation-summary`
+## 5. 유효성 검증 Tag Helpers — `asp-validation-for`, `asp-validation-summary`
 
 ```razor
 <span asp-validation-for="Email" class="text-danger"></span>
@@ -171,7 +171,7 @@ Model.Categories = new List<SelectListItem> {
 
 ---
 
-## 6) 폼 + CSRF: `asp-antiforgery` & Method Spoofing
+## 6. 폼 + CSRF: `asp-antiforgery` & Method Spoofing
 
 ```razor
 <form asp-action="Delete" asp-route-id="@Model.Id" method="post" asp-antiforgery="true">
@@ -184,7 +184,7 @@ Model.Categories = new List<SelectListItem> {
 
 ---
 
-## 7) 파일 업로드: `<input type="file" asp-for="...">`
+## 7. 파일 업로드: `<input type="file" asp-for="...">`
 
 ```razor
 <form asp-action="Upload" method="post" enctype="multipart/form-data">
@@ -205,7 +205,7 @@ public class UploadModel
 
 ---
 
-## 8) 정적 리소스: `asp-append-version`(이미지/스크립트/스타일 **캐시 무효화**)
+## 8. 정적 리소스: `asp-append-version`(이미지/스크립트/스타일 **캐시 무효화**)
 
 > 정적 파일이 바뀌면 **쿼리 파라미터에 파일 해시**를 붙여 브라우저 캐시를 무효화.
 
@@ -227,7 +227,7 @@ public class UploadModel
 
 ---
 
-## 9) 환경 분기: `<environment>` — 빌드/배포 모드에 맞추기
+## 9. 환경 분기: `<environment>` — 빌드/배포 모드에 맞추기
 
 ```razor
 <environment include="Development">
@@ -242,7 +242,7 @@ public class UploadModel
 
 ---
 
-## 10) 부분 캐싱: `<cache>` Tag Helper — **UI 단위 성능 개선**
+## 10. 부분 캐싱: `<cache>` Tag Helper — **UI 단위 성능 개선**
 
 ```razor
 <cache expires-after="00:01:00"
@@ -269,7 +269,7 @@ public class UploadModel
 
 ---
 
-## 11) Partial & ViewComponent & VC Tag Helper
+## 11. Partial & ViewComponent & VC Tag Helper
 
 ### 11.1 Partial
 
@@ -293,7 +293,7 @@ public class UploadModel
 
 ---
 
-## 12) 앵커 고급: **라우팅 + 프래그먼트 + 프로토콜/호스트** 종합
+## 12. 앵커 고급: **라우팅 + 프래그먼트 + 프로토콜/호스트** 종합
 
 ```razor
 <a asp-controller="Docs" asp-action="Read"
@@ -307,7 +307,7 @@ public class UploadModel
 
 ---
 
-## 13) 접근성(A11y) & SEO에 유용한 태그 상호작용
+## 13. 접근성(A11y) & SEO에 유용한 태그 상호작용
 
 - `<label asp-for="...">`는 해당 `input`의 `id`와 자동 연결 → 스크린리더 친화.
 - `Validation` Tag Helpers는 오류 요약을 마크업으로 출력 → 보조공학 접근성 향상.
@@ -315,7 +315,7 @@ public class UploadModel
 
 ---
 
-## 14) **실전 폼 예제** — 파일 업로드 + 검증 + 리다이렉트 보존
+## 14. **실전 폼 예제** — 파일 업로드 + 검증 + 리다이렉트 보존
 
 ```razor
 @model RegisterViewModel
@@ -352,7 +352,7 @@ public class UploadModel
 
 ---
 
-## 15) **보안 모범 사례**
+## 15. **보안 모범 사례**
 
 - **Anti-forgery 토큰**(기본 on) 유지, Ajax 시 헤더에 토큰 전달.
 - **업로드 파일 검증**: 확장자·MIME·크기·저장 경로 화이트리스트.
@@ -361,7 +361,7 @@ public class UploadModel
 
 ---
 
-## 16) **트러블슈팅**
+## 16. **트러블슈팅**
 
 ### 16.1 Tag Helper가 동작하지 않음
 - `_ViewImports.cshtml`에 `@addTagHelper`가 누락되었는지 확인.
@@ -379,7 +379,7 @@ public class UploadModel
 
 ---
 
-## 17) **확장: 커스텀 Tag Helper 미니 패턴**
+## 17. **확장: 커스텀 Tag Helper 미니 패턴**
 
 ### 17.1 조건 클래스 머지
 
@@ -428,7 +428,7 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 18) **요약 테이블** — 실무에서 가장 자주 쓰는 Tag Helpers
+## 18. **요약 테이블** — 실무에서 가장 자주 쓰는 Tag Helpers
 
 | Tag Helper | 핵심 역할 | 포인트 |
 |---|---|---|
@@ -447,7 +447,7 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 19) 실전 스니펫: “검색 폼 + 결과 페이징” 한 방에
+## 19. 실전 스니펫: “검색 폼 + 결과 페이징” 한 방에
 
 ```razor
 @model ProductSearchVM
@@ -496,7 +496,7 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 20) 마무리
+## 20. 마무리
 
 - “HTML처럼 보이지만 C#과 라우팅/검증/보안을 **컴파일 안전**하게” 연결하는 것이 Tag Helper의 본질이다.
 - **폼/검증/라우팅/정적 리소스/캐시**를 Tag Helper로 일관 구성하면, 유지보수성과 접근성이 동시 개선된다.

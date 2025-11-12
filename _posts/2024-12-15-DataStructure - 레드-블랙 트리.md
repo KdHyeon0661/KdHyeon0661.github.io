@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 레드-블랙 트리 (Red-Black Tree)
 
-## 0) 핵심 불변식과 용어
+## 0. 핵심 불변식과 용어
 
 ### 레드-블랙 5규칙
 | 규칙 | 내용 |
@@ -24,7 +24,7 @@ category: Data Structure
 
 ---
 
-## 1) 노드 구조와 NIL 센티넬
+## 1. 노드 구조와 NIL 센티넬
 
 NIL(리프)까지도 하나의 **공유된 BLACK 노드** 포인터로 다루면, 회전/삭제 Fix-up에서 **널 분기**가 크게 줄어든다.
 
@@ -61,7 +61,7 @@ struct RBTree {
 
 ---
 
-## 2) 좌/우 회전(rotateLeft/rotateRight)
+## 2. 좌/우 회전(rotateLeft/rotateRight)
 
 회전은 **부모/자식 포인터**를 빠짐없이 재연결해야 한다.
 
@@ -107,7 +107,7 @@ x                y
 
 ---
 
-## 3) 삽입(Insert) — BST 삽입 → Fix-up
+## 3. 삽입(Insert) — BST 삽입 → Fix-up
 
 1) **BST 규칙**으로 RED 노드 삽입  
 2) **부모가 RED**면 R4 위반 → **삼촌 색**에 따라 **재색칠/회전**
@@ -196,7 +196,7 @@ C3: rotateRight(gp); 색 재조정 (새 root 후보 black)
 
 ---
 
-## 4) 삭제(Delete) — BST 삭제 → Double-Black Fix-up
+## 4. 삭제(Delete) — BST 삭제 → Double-Black Fix-up
 
 ### 개요
 1) **BST 삭제**: (0/1/2자식) — 2자식은 **후속자(successor)**로 치환  
@@ -341,7 +341,7 @@ C4: sB, s의 "먼" 자식(오른쪽)이 R → rotateLeft(p) + 재색칠로 종�
 
 ---
 
-## 5) 순회/검색/유틸(검증 포함)
+## 5. 순회/검색/유틸(검증 포함)
 
 ```cpp
     RBNode* find(int key) const {
@@ -388,7 +388,7 @@ C4: sB, s의 "먼" 자식(오른쪽)이 R → rotateLeft(p) + 재색칠로 종�
 
 ---
 
-## 6) 검증: 레드-블랙 불변식 검사
+## 6. 검증: 레드-블랙 불변식 검사
 
 - R4: 어떤 RED도 RED 자식을 가지면 안 됨  
 - R5: 모든 경로의 black-height 동일
@@ -434,7 +434,7 @@ struct RBChecker {
 
 ---
 
-## 7) 전체 사용 예시
+## 7. 전체 사용 예시
 
 ```cpp
 // ===== main.cpp =====
@@ -480,7 +480,7 @@ RB valid? true
 
 ---
 
-## 8) 삽입/삭제 케이스 상세 ASCII
+## 8. 삽입/삭제 케이스 상세 ASCII
 
 ### 삽입 — Case 1 (삼촌 RED)
 ```
@@ -551,7 +551,7 @@ C4:
 
 ---
 
-## 9) 수학 스냅샷 — 높이 상계 \(h \le 2\log_2(n+1)\)
+## 9. 수학 스냅샷 — 높이 상계 \(h \le 2\log_2(n+1)\)
 
 - 임의 노드의 left/right 중 최소 한 쪽에는 **적어도** half의 black-height가 존재한다.
 - R4로 인해 RED는 **연속될 수 없으므로**, 루트→리프 경로에서 **RED는 최대 BLACK 수만큼** 낄 수 있다.
@@ -566,7 +566,7 @@ C4:
 
 ---
 
-## 10) 직렬화/역직렬화 (전위 + NIL 토큰)
+## 10. 직렬화/역직렬화 (전위 + NIL 토큰)
 
 디버깅/테스트에 유용하다. (색상까지 포함)
 
@@ -596,7 +596,7 @@ RBNode* deserializeRB_core(RBTree& T, istringstream& iss) {
 
 ---
 
-## 11) 실전 팁/버그 포인트
+## 11. 실전 팁/버그 포인트
 
 1. **NIL 센티넬**을 **BLACK**으로 유지, 모든 leaf/child가 NIL을 가리키게 하라.
 2. **회전 시 부모 포인터** 업데이트 누락 금지. `root`/`parent->left/right` 재연결 주의.
@@ -608,7 +608,7 @@ RBNode* deserializeRB_core(RBTree& T, istringstream& iss) {
 
 ---
 
-## 12) 범위/순서 쿼리
+## 12. 범위/순서 쿼리
 
 RB-Tree는 기본적으로 **순서 통계**가 없다. `size`를 보강하면 가능(AVL과 동일 아이디어).
 
@@ -618,7 +618,7 @@ RB-Tree는 기본적으로 **순서 통계**가 없다. `size`를 보강하면 �
 
 ---
 
-## 13) 퍼징 테스트 스케치
+## 13. 퍼징 테스트 스케치
 
 ```cpp
 // 의사코드
@@ -640,7 +640,7 @@ for (int step=0; step<100000; ++step) {
 
 ---
 
-## 14) AVL vs Red-Black — 선택 기준
+## 14. AVL vs Red-Black — 선택 기준
 
 | 항목 | Red-Black Tree | AVL Tree |
 |---|---|---|
@@ -658,7 +658,7 @@ for (int step=0; step<100000; ++step) {
 
 ---
 
-## 15) 요약
+## 15. 요약
 
 - 레드-블랙 트리는 **색 규칙(5규칙)**과 회전으로 **로그 높이**를 보장한다.  
 - **삽입**: `부모 RED`일 때 삼촌 색에 따라 **재색칠/회전**(Case 1-3).  

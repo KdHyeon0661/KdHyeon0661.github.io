@@ -17,7 +17,7 @@ category: CSS
 
 ---
 
-## 0) 빠른 요약 — 상황별 최적 선택
+## 0. 빠른 요약 — 상황별 최적 선택
 
 | 상황 | 추천 방식 | 이유 |
 |---|---|---|
@@ -27,7 +27,7 @@ category: CSS
 
 ---
 
-## 1) 시스템 다크 모드 자동 감지 — `prefers-color-scheme`
+## 1. 시스템 다크 모드 자동 감지 — `prefers-color-scheme`
 
 ### 1.1 기본 사용
 ```css
@@ -56,7 +56,7 @@ body { background:#ffffff; color:#000000; }
 
 ---
 
-## 2) 클래스 기반 토글 — 구현은 단순, 확장은 제한
+## 2. 클래스 기반 토글 — 구현은 단순, 확장은 제한
 
 ### 2.1 최소 구현 (학습/프로토타입에 적합)
 ```html
@@ -90,7 +90,7 @@ document.body.classList.add(localStorage.getItem('theme') || 'light');
 
 ---
 
-## 3) CSS 변수 + JS — 추천 아키텍처 (확장성/성능/유지보수 우수)
+## 3. CSS 변수 + JS — 추천 아키텍처 (확장성/성능/유지보수 우수)
 
 ### 3.1 디자인 토큰(변수) 정의
 ```css
@@ -188,7 +188,7 @@ mq.addEventListener?.('change', e=>{
 
 ---
 
-## 4) 접근성(A11y)·명도 대비·모션·강제 색상
+## 4. 접근성(A11y)·명도 대비·모션·강제 색상
 
 ### 4.1 명도 대비(AA/AAA) 체크
 웹 콘텐츠 접근성 가이드라인(WS 2.1) 대비비는 다음과 같습니다:
@@ -234,7 +234,7 @@ a:focus-visible, button:focus-visible {
 
 ---
 
-## 5) 이미지/SVG/아이콘 — 다크 모드 최적 처리
+## 5. 이미지/SVG/아이콘 — 다크 모드 최적 처리
 
 ### 5.1 사진·썸네일은 **색 반전 지양**, 별도 자산 권장
 ```html
@@ -269,7 +269,7 @@ a:focus-visible, button:focus-visible {
 
 ---
 
-## 6) 네이티브 컨트롤·스크롤바·양식
+## 6. 네이티브 컨트롤·스크롤바·양식
 
 ### 6.1 `color-scheme`로 네이티브 동기화
 ```css
@@ -289,7 +289,7 @@ a:focus-visible, button:focus-visible {
 
 ---
 
-## 7) 트랜지션(부드러운 전환)과 성능
+## 7. 트랜지션(부드러운 전환)과 성능
 
 ```css
 html, body, .card, .button {
@@ -303,7 +303,7 @@ html, body, .card, .button {
 
 ---
 
-## 8) FOUC(테마 깜빡임) 완전 방지 전략
+## 8. FOUC(테마 깜빡임) 완전 방지 전략
 
 1) **head 최상단 인라인 스니펫**으로 `data-theme` 즉시 설정(§3.3).  
 2) CSS 번들 상단에 토큰 정의.  
@@ -319,7 +319,7 @@ html, body, .card, .button {
 
 ---
 
-## 9) 컴포넌트/페이지 스케일 — BEM/레이어와 결합
+## 9. 컴포넌트/페이지 스케일 — BEM/레이어와 결합
 
 ```css
 @layer tokens, base, components, utilities;
@@ -341,7 +341,7 @@ html, body, .card, .button {
 
 ---
 
-## 10) 실제 페이지 뼈대 예제 — 토글 + 시스템 추적 + 이미지 전환
+## 10. 실제 페이지 뼈대 예제 — 토글 + 시스템 추적 + 이미지 전환
 
 ```html
 <meta name="color-scheme" content="light dark">
@@ -418,7 +418,7 @@ html,body{ background:var(--bg); color:var(--text); margin:0; }
 
 ---
 
-## 11) QA 체크리스트 (릴리즈 전 점검)
+## 11. QA 체크리스트 (릴리즈 전 점검)
 
 - [ ] 초기 로딩에서 **FOUC**가 없는가? (라이트→다크 깜빡임)  
 - [ ] `color-scheme`로 폼/스크롤바가 테마에 맞는가?  
@@ -432,7 +432,7 @@ html,body{ background:var(--bg); color:var(--text); margin:0; }
 
 ---
 
-## 12) 문제 해결 모음
+## 12. 문제 해결 모음
 
 - **라이트 색이 잠깐 보임** → 인라인 스니펫로 `data-theme` 선반영(§3.3).  
 - **네이티브 컨트롤 라이트로 고정** → `:root{ color-scheme: light dark; }`.  
@@ -442,7 +442,7 @@ html,body{ background:var(--bg); color:var(--text); margin:0; }
 
 ---
 
-## 13) 확장: 멀티 테마(브랜드/하이콘트라스트)
+## 13. 확장: 멀티 테마(브랜드/하이콘트라스트)
 
 ```css
 /* 브랜드 B 테마 */
@@ -457,7 +457,7 @@ html,body{ background:var(--bg); color:var(--text); margin:0; }
 
 ---
 
-## 14) 결론 — 추천 기본 템플릿
+## 14. 결론 — 추천 기본 템플릿
 
 1) **CSS 변수 토큰**으로 색·보더·표면·포커스 정의  
 2) `<html data-theme="...">` + **인라인 초기화 스니펫**으로 FOUC 제거  

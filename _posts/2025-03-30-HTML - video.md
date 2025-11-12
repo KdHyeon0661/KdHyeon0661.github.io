@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML5 `<video>` 태그
 
-## 1) 기본 사용
+## 1. 기본 사용
 
 ```html
 <video src="sample.mp4" controls></video>
@@ -24,7 +24,7 @@ category: HTML
 
 ---
 
-## 2) 주요 속성 총정리
+## 2. 주요 속성 총정리
 
 | 속성 | 설명 | 사용 팁 |
 |---|---|---|
@@ -58,7 +58,7 @@ category: HTML
 
 ---
 
-## 3) `<source>`와 포맷/코덱 선택
+## 3. `<source>`와 포맷/코덱 선택
 
 ### 3.1 컨테이너 vs 코덱
 
@@ -89,7 +89,7 @@ category: HTML
 
 ---
 
-## 4) 모바일 자동재생 정책 요약
+## 4. 모바일 자동재생 정책 요약
 
 - **자동재생**은 기본적으로 제한. **무음(`muted`)** 상태에서만 허용되는 경우가 많음.
 - iOS 인라인 재생: `playsinline` 필요.  
@@ -103,7 +103,7 @@ category: HTML
 
 ---
 
-## 5) 자막/설명/챕터 — `<track>` 고급 활용
+## 5. 자막/설명/챕터 — `<track>` 고급 활용
 
 `WebVTT(.vtt)` 기반 텍스트 트랙을 추가:
 
@@ -176,7 +176,7 @@ WEBVTT
 
 ---
 
-## 6) 자바스크립트로 제어 — 속성/메서드/이벤트
+## 6. 자바스크립트로 제어 — 속성/메서드/이벤트
 
 ### 6.1 빠른 스타터
 
@@ -238,7 +238,7 @@ v.addEventListener('error', () => {
 
 ---
 
-## 7) 전체화면, Picture-in-Picture, Media Session
+## 7. 전체화면, Picture-in-Picture, Media Session
 
 ### 7.1 전체화면 API
 
@@ -287,7 +287,7 @@ if ('mediaSession' in navigator) {
 
 ---
 
-## 8) 반응형 비디오 — 레이아웃/비율 유지
+## 8. 반응형 비디오 — 레이아웃/비율 유지
 
 ### 8.1 CSS `aspect-ratio` 권장
 
@@ -322,7 +322,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 9) 시나리오별 레시피
+## 9. 시나리오별 레시피
 
 ### 9.1 히어로 헤더 자동재생(무음/루프/인라인)
 
@@ -378,7 +378,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 10) 스트리밍(HLS/DASH)과 MSE/DRM 개요
+## 10. 스트리밍(HLS/DASH)과 MSE/DRM 개요
 
 ### 10.1 HLS(HTTP Live Streaming), DASH
 - **어댑티브 비트레이트**로 네트워크 환경에 맞게 품질 조정.
@@ -411,7 +411,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 11) CORS/보안/정책
+## 11. CORS/보안/정책
 
 | 주제 | 요약 | 실무 팁 |
 |---|---|---|
@@ -424,7 +424,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 12) 성능 최적화 체크리스트
+## 12. 성능 최적화 체크리스트
 
 - [ ] `preload="metadata"` 기본, 히어로/Above-the-fold가 아니면 **지연 로딩**(IO)  
 - [ ] 포맷/코덱을 **화질 대비 용량 균형**으로 선택(MP4+WebM/AV1)  
@@ -437,7 +437,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 13) 자주 하는 실수와 해결
+## 13. 자주 하는 실수와 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -449,7 +449,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 14) 완성형 예제: 반응형, 다국어 자막, PiP/전체화면, Media Session
+## 14. 완성형 예제: 반응형, 다국어 자막, PiP/전체화면, Media Session
 
 ```html
 <!doctype html>
@@ -542,7 +542,7 @@ if ('mediaSession' in navigator) {
 
 ---
 
-## 15) 요약
+## 15. 요약
 
 - **필수 포맷**: MP4(H.264) + 보조로 WebM(VP9/AV1) 병행 제공.
 - **모바일 자동재생**: `autoplay muted playsinline`.

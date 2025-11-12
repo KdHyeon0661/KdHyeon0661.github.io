@@ -12,7 +12,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 스키마 준비
+## 0. 실습 스키마 준비
 
 ```sql
 -- 깨끗이
@@ -61,7 +61,7 @@ ALTER SESSION SET statistics_level = ALL; -- 수행통계 확인용
 
 ---
 
-# 1) 개념: “**랜덤** vs **순차** I/O”
+# 1. 개념: “**랜덤** vs **순차** I/O”
 
 - **Table Random Access** = 인덱스 Leaf에서 얻은 **ROWID**로 테이블 **임의 블록**을 “툭툭” 찍는 것.  
   - 실행계획 오퍼레이터: `TABLE ACCESS BY INDEX ROWID [BATCHED]`  
@@ -76,7 +76,7 @@ ALTER SESSION SET statistics_level = ALL; -- 수행통계 확인용
 
 ---
 
-# 2) 증상과 지표: 무엇을 보면 랜덤 부하라고 확신할 수 있나?
+# 2. 증상과 지표: 무엇을 보면 랜덤 부하라고 확신할 수 있나?
 
 - AWR/ASH/Statspack에서 **Top Events**가 `db file sequential read` 우세.  
 - SQL 실행계획에 **`TABLE ACCESS BY INDEX ROWID`** 반복, `Buffers/Reads`가 높음.  
@@ -100,7 +100,7 @@ ORDER BY name;
 
 ---
 
-# 3) 데모 ①: 범위는 작지만 **테이블 랜덤**이 누적되는 케이스
+# 3. 데모 ①: 범위는 작지만 **테이블 랜덤**이 누적되는 케이스
 
 ```sql
 -- 고객 12345의 최근 90일 주문 목록
@@ -122,7 +122,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 4) 데모 ②: **Nested Loops**로 **랜덤 폭탄**
+# 4. 데모 ②: **Nested Loops**로 **랜덤 폭탄**
 
 ```sql
 -- 고객 Master와 주문을 NL 조인 (많은 고객을 선택하는 상황 가정)
@@ -149,7 +149,7 @@ AND    d.order_dt >= DATE '2024-09-01';
 
 ---
 
-# 5) 원인 별 해법 총정리
+# 5. 원인 별 해법 총정리
 
 ## 5.1 **테이블 방문 자체를 없애기** — 커버링/Index-Only/INDEX JOIN
 - **커버링 인덱스**: SELECT-LIST 컬럼을 인덱스에 포함 → 테이블 미방문.  
@@ -323,7 +323,7 @@ rows = cur.fetchall()
 
 ---
 
-# 6) 데모 ③: CTAS로 **CF 개선** 전/후 비교
+# 6. 데모 ③: CTAS로 **CF 개선** 전/후 비교
 
 ```sql
 -- BEFORE
@@ -341,7 +341,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 7) 데모 ④: 조인 전략 전환 효과
+# 7. 데모 ④: 조인 전략 전환 효과
 
 ```sql
 -- NL (랜덤 폭탄 가능)
@@ -365,7 +365,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 8) 운영 현장에서의 **원인→해법** 매핑
+# 8. 운영 현장에서의 **원인→해법** 매핑
 
 | 증상/원인 | 설명 | 해법(우선순) |
 |---|---|---|
@@ -380,7 +380,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 9) RAC/스토리지/버퍼캐시 관점 한 줄 요약
+# 9. RAC/스토리지/버퍼캐시 관점 한 줄 요약
 
 - **RAC**: 같은 블록을 여러 인스턴스가 번갈아 랜덤으로 잡으면 **캐시 퓨전** 교통량 증가. 파티셔닝/서비스 로컬리티로 **데이터/워크로드 분리**.  
 - **스토리지**: NVMe/Flash에서도 **랜덤은 여전히 비싸다**(큐잉/락/왕복). IOPS/큐뎁스를 고려.  
@@ -388,7 +388,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 10) 최종 체크리스트
+# 10. 최종 체크리스트
 
 - [ ] 실행계획에 `TABLE ACCESS BY INDEX ROWID`가 과도한가? `Buffers/Reads` 수치 확인  
 - [ ] 커버링 인덱스/INDEX JOIN으로 **테이블 미방문**화 가능한가?  

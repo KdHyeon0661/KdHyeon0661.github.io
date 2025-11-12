@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 13. DOM Clobbering
 
-## 0) 핵심 요약 (Executive Summary)
+## 0. 핵심 요약 (Executive Summary)
 
 - **문제(정의)**  
   HTML 문서에서 `id`/`name`을 가진 요소들이 **글로벌 네임스페이스**(특히 `window`/`document`/`form`)에 **프로퍼티처럼 노출**됩니다.  
@@ -28,7 +28,7 @@ category: 웹해킹
 
 ---
 
-# 1) DOM Clobbering이 왜 생기나 — 브라우저의 “이름 → 프로퍼티” 노출 규칙
+# 1. DOM Clobbering이 왜 생기나 — 브라우저의 “이름 → 프로퍼티” 노출 규칙
 
 브라우저는 호환성 때문에 다음을 제공합니다.
 
@@ -41,7 +41,7 @@ category: 웹해킹
 
 ---
 
-# 2) 위험 시나리오 & 안전한 재현
+# 2. 위험 시나리오 & 안전한 재현
 
 ## 2.1 폼 메서드 덮기: `form.submit` 우회/교란
 
@@ -170,7 +170,7 @@ category: 웹해킹
 
 ---
 
-# 3) 방어 전략 — 코드/템플릿/도구 레벨
+# 3. 방어 전략 — 코드/템플릿/도구 레벨
 
 ## 3.1 요소 참조 원칙 (필수)
 - **반드시** `document.getElementById`, `querySelector`(또는 프레임워크 `ref`)로 **로컬 변수**에 참조를 저장하고 사용.
@@ -273,7 +273,7 @@ module.exports = {
 
 ---
 
-# 4) 프레임워크별 팁
+# 4. 프레임워크별 팁
 
 ## 4.1 React/Vue/Svelte 등
 - 요소는 **ref**로 접근하고, **전역 네임드 접근 금지**.
@@ -302,7 +302,7 @@ function PayForm() {
 
 ---
 
-# 5) 보안 헤더/정책(보조 완화)
+# 5. 보안 헤더/정책(보조 완화)
 
 - **CSP**: 인젝션 경로 축소(`script-src 'self'` …). DOM Clobbering 자체를 직접 막지는 못하지만 **HTML 인젝션**을 어렵게 합니다.  
 - **X-Frame-Options / frame-ancestors**: 클릭재킹 경감(클로버링과 함께 쓰이는 체인 공격 방지).  
@@ -310,7 +310,7 @@ function PayForm() {
 
 ---
 
-# 6) 자동 테스트/관측
+# 6. 자동 테스트/관측
 
 ## 6.1 런타임 자가 점검 스니펫(디버그/스테이징)
 ```js
@@ -358,7 +358,7 @@ await page.click('#btn');
 
 ---
 
-# 7) 안티패턴 요약 (피해야 할 것)
+# 7. 안티패턴 요약 (피해야 할 것)
 
 - `document.foo` / `window.bar` 로 **요소/데이터 접근**  
 - **암묵 전역**(선언 없이 식별자 사용) 및 전역 프로퍼티 의존  
@@ -368,7 +368,7 @@ await page.click('#btn');
 
 ---
 
-# 8) 체크리스트 (현장용)
+# 8. 체크리스트 (현장용)
 
 - [ ] 요소 접근은 **항상 `getElementById`/`querySelector` + 로컬 변수**  
 - [ ] **ES Modules**로 모듈 스코프 `const` 사용(전역 의존 X)  

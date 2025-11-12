@@ -18,7 +18,7 @@ category: DB 심화
 
 ---
 
-## 1) 정의: user call vs recursive call
+## 1. 정의: user call vs recursive call
 
 ### 1.1 user call (사용자 호출)
 - **무엇?** 클라이언트가 서버로 보내는 **OCI/드라이버 레벨 호출** 수.  
@@ -46,7 +46,7 @@ category: DB 심화
 
 ---
 
-## 2) 실습을 위한 준비 스키마
+## 2. 실습을 위한 준비 스키마
 
 ```sql
 -- 실험 테이블
@@ -92,7 +92,7 @@ END;
 
 ---
 
-## 3) 빠른 관측 도구: 세션 통계 스냅샷 함수
+## 3. 빠른 관측 도구: 세션 통계 스냅샷 함수
 
 ```sql
 -- 간단 스냅샷: 특정 통계만 추출
@@ -114,7 +114,7 @@ SELECT * FROM s;
 
 ---
 
-## 4) TKPROF/SQL Trace에서 보이는 “User vs Recursive”
+## 4. TKPROF/SQL Trace에서 보이는 “User vs Recursive”
 
 ### 4.1 트레이스 켜기/끄기
 ```sql
@@ -153,7 +153,7 @@ user  calls: 23
 
 ---
 
-## 5) 케이스 스터디 — 원인별 재현과 해석
+## 5. 케이스 스터디 — 원인별 재현과 해석
 
 ### 5.1 케이스 A: **단순 SELECT** (user call 중심)
 
@@ -244,7 +244,7 @@ SELECT COUNT(*) FROM v_demo WHERE c_region='APAC';
 
 ---
 
-## 6) AWR/ASH에서 어떻게 보이나?
+## 6. AWR/ASH에서 어떻게 보이나?
 
 ### 6.1 AWR Report (DB Time/AAS 하위)
 - **“Load Profile”**: `User calls per sec`  
@@ -266,7 +266,7 @@ ORDER  BY samples DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 7) 원인→해법 맵 (Checklist)
+## 7. 원인→해법 맵 (Checklist)
 
 | 증상/지표 | 추정 원인 | 처방 |
 |---|---|---|
@@ -280,7 +280,7 @@ ORDER  BY samples DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 8) 드라이버 관점 튜닝(사용자 호출 줄이기)
+## 8. 드라이버 관점 튜닝(사용자 호출 줄이기)
 
 ### 8.1 JDBC
 ```java
@@ -308,7 +308,7 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 
 ---
 
-## 9) “숫자로 보는” 판단 기준
+## 9. “숫자로 보는” 판단 기준
 
 간단한 비율/휴리스틱으로도 상황을 가늠할 수 있습니다.
 
@@ -328,7 +328,7 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 
 ---
 
-## 10) End-to-End 실습: 전/후 비교
+## 10. End-to-End 실습: 전/후 비교
 
 ### 10.1 Before: 나쁜 패턴
 - SELECT를 **작은 fetchSize(=10)** 로 수천 번 호출  
@@ -347,7 +347,7 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 
 ---
 
-## 11) 자주 묻는 질문(FAQ)
+## 11. 자주 묻는 질문(FAQ)
 
 **Q1. recursive call은 나쁜 건가요?**  
 A. **필수**입니다. 오라클이 일을 하려면 내부 질의가 필요합니다. “높다”가 문제라기보다, **평시 기준 대비 비정상적 증가**가 문제입니다.
@@ -366,7 +366,7 @@ A. 사용 패턴에 따라: **시퀀스 CACHE 증가**, **DDL 런타임 금지**
 
 ---
 
-## 12) 최종 체크리스트
+## 12. 최종 체크리스트
 
 - [ ] **user call** 모니터링: 왕복/배열/배치/커밋 빈도  
 - [ ] **recursive call** 모니터링: 시퀀스/DDL/공간/사전/트리거  
@@ -378,7 +378,7 @@ A. 사용 패턴에 따라: **시퀀스 CACHE 증가**, **DDL 런타임 금지**
 
 ---
 
-## 13) 결론
+## 13. 결론
 
 - **user call**은 “클라이언트↔서버 왕복 양”, **recursive call**은 “서버 내부 처리 양”입니다.  
 - 느린 시스템은 대개 **둘 중 하나**가 비정상:  

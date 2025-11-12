@@ -18,7 +18,7 @@ category: DataCommunication
 ## 4.1.1 Line Coding (회선 부호화)
 디지털 **데이터 요소**(bit)를 디지털 **신호 요소**(펄스/레벨)로 변환.
 
-### 1) 기본 용어·수식
+### 1. 기본 용어·수식
 - **data element**: 전달하고 싶은 **비트(0/1)**  
 - **signal element**: 전송 파형의 최소 단위(한 심볼/펄스)  
 - **비트당 심볼 수(혹은 심볼당 비트 수)**  
@@ -49,7 +49,7 @@ category: DataCommunication
   r = \log_2 L
   $$
 
-### 2) 라인코딩이 해결해야 할 문제들
+### 2. 라인코딩이 해결해야 할 문제들
 - **Baseline Wandering(기준선 변동)**  
   연속 0/1 등 불균형 패턴 → 수신단 기준(DC 오프셋)이 흔들려 임계치 판단 오류.
 - **DC(직류) 성분**  
@@ -196,7 +196,7 @@ def ami(bits, V=1):
 ## 4.1.3 Scrambling (스크램블링)
 > **긴 0/1 런**을 해소하고 **스펙트럼 평탄화(DC/저주파 억제)**, **전이 밀도 확보**를 위해 **의사난수 LFSR**이나 **패턴 치환**을 적용.
 
-### 1) LFSR 기반 스크램블러(디지털 회선/고속 인터커넥트)
+### 1. LFSR 기반 스크램블러(디지털 회선/고속 인터커넥트)
 - 랜덤같은 전이분포를 만들어 CDR/EMI/스펙트럼 측면 개선
 - **송수신 양단**이 동일 LFSR로 **서로 상쇄**(descramble)
 
@@ -215,7 +215,7 @@ def lfsr_scramble(bits, poly=(7,4), seed=0b1111111):
     return out
 ```
 
-### 2) 패턴 치환형: B8ZS, HDB3 (T-carrier/E-carrier)
+### 2. 패턴 치환형: B8ZS, HDB3 (T-carrier/E-carrier)
 - **목적**: AMI와 결합하여 **긴 0 런**을 **의도된 바이폴라 위반** 패턴으로 치환 → **전이 삽입**  
 - **B8ZS**(미국 T1): 연속 **0이 8개** 나오면 **특정 위반 패턴**으로 대체  
 - **HDB3**(유럽 E1): 연속 **0이 4개**마다 **위반 패턴** 삽입(부호의 누적 균형 고려)
@@ -227,7 +227,7 @@ def lfsr_scramble(bits, poly=(7,4), seed=0b1111111):
 
 ## 4.1.4 성능·스펙트럼·CDR 관점의 정량 감각
 
-### 1) 신호율/대역폭 근사
+### 1. 신호율/대역폭 근사
 - **목표 bit rate** \(N\)과 **코드 선택** → \(S_{\text{ave}}\) 산정 → 필요 **대역폭** 근사
   $$
   S_{\text{ave}} \approx c \cdot \frac{N}{r}, \quad B \sim \kappa\, S_{\text{ave}}
@@ -235,11 +235,11 @@ def lfsr_scramble(bits, poly=(7,4), seed=0b1111111):
   - 예) **Manchester**: \(c\approx 1\Rightarrow S\approx \tfrac{N}{r}\). 2레벨이므로 \(r=1\) → \(S\approx N\).  
   - 예) **NRZ**: \(c\approx \tfrac{1}{2}\Rightarrow S\approx \tfrac{N}{2}\) (평균 전이)
 
-### 2) DC 성분/스펙트럼
+### 2. DC 성분/스펙트럼
 - 평균 레벨 0이면 DC 억제. (Manchester/AMI/8b10b 등)  
 - **고주파 스펙트럼**이 적을수록 EMI 낮음(MLT-3, 신호 스무딩)
 
-### 3) CDR/런 길이 제한
+### 3. CDR/런 길이 제한
 - **중간 전이 보장**(Manchester) 또는 **RLL 제약**(4B5B/8b10b) 또는 **스크램블**로 전이 밀도 확보
 - **최대 런 길이**가 짧을수록 **PLL/PI**가 추적 용이
 
