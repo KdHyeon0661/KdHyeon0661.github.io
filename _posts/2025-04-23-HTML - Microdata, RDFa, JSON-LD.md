@@ -358,6 +358,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 ## 5. SPA/SSR 환경: 삽입·동기화 전략
 
 ### 5.1 Next.js에서 JSON-LD 주입
+
+{% raw %}
 ```jsx
 import Head from "next/head";
 
@@ -385,6 +387,8 @@ export default function ProductSEO({ product }) {
   );
 }
 ```
+{% endraw %}
+
 - **SSR 시점**에 JSON-LD가 HTML에 포함되도록 하세요(크롤러 호환성 향상).
 - 클라이언트 전용 렌더 시, **초기 페인트 직후 삽입**하되 DOMContentLoaded 이전 가시성이 좋음.
 
