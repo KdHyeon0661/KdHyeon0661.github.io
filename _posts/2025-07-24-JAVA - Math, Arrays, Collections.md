@@ -85,6 +85,7 @@ System.out.println(vat.setScale(2, RoundingMode.HALF_UP)); // 2.00
 | 생성 | `setAll`, `parallelSetAll` | 인덱스 기반 생성 |
 | 스트림 | `Arrays.stream(...)` | 원시 스트림/박싱 변환 |
 
+{% raw %}
 ```java
 import java.util.*;
 public class ArraysBasics {
@@ -109,6 +110,7 @@ public class ArraysBasics {
   }
 }
 ```
+{% endraw %}
 
 ### 2.2 성능/함정 체크리스트
 1) **`Arrays.asList(arr)` 함정**  
