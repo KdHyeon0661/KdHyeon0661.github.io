@@ -8,8 +8,8 @@ category: Git
 
 ## 0. 빠른 개요
 
-- **`git pull --rebase`**: 원격의 최신 커밋을 가져온 뒤, **내 로컬 커밋들을 ‘꺼냈다가’ 최신 위로 다시 재생성**해 **선형 이력**을 만든다.  
-- **GitHub `Squash and merge`**: PR 내 **여러 커밋을 하나의 커밋**으로 압축(squash)하여 병합한다.  
+- **`git pull --rebase`**: 원격의 최신 커밋을 가져온 뒤, **내 로컬 커밋들을 ‘꺼냈다가’ 최신 위로 다시 재생성**해 **선형 이력**을 만든다.
+- **GitHub `Squash and merge`**: PR 내 **여러 커밋을 하나의 커밋**으로 압축(squash)하여 병합한다.
 - 공통 목표: **히스토리 단순화**. 단, **디버깅/리그레션 추적의 단서가 줄어드는 대가**가 있다.
 
 ---
@@ -150,7 +150,7 @@ git config --global branch.autosetuprebase always
 
 ## 1.6 CI·보호 브랜치·협업 규칙과의 상호작용
 
-- **보호 브랜치(Protected Branch)**: Required status checks(테스트/린트/빌드), Required reviews, Linear history 등이 설정되어 있으면 **rebase 후 강제 푸시가 제한**될 수 있음.  
+- **보호 브랜치(Protected Branch)**: Required status checks(테스트/린트/빌드), Required reviews, Linear history 등이 설정되어 있으면 **rebase 후 강제 푸시가 제한**될 수 있음.
 - PR 워크플로우:
   - 선형 이력을 강제하는 팀: 로컬에서 `git pull --rebase` → 충돌 해결 → push
   - rebase 후 원격에 올릴 때는 **`git push --force-with-lease`** 사용(동료 커밋 보호).
@@ -180,16 +180,16 @@ git switch -c rescue HEAD@{2}
 
 ## 2.1 개념 복습
 - PR의 **모든 커밋을 단 하나의 커밋으로 압축**해 base 브랜치에 병합.
-- 결과: **히스토리 단순화**(기능 단위 1커밋).  
+- 결과: **히스토리 단순화**(기능 단위 1커밋).
 - 대가: **세부 커밋의 추적성**은 줄어듦(디버깅 시 granularity 감소).
 
 ---
 
 ## 2.2 실전 흐름
 
-1) PR에서 **Squash and merge** 선택  
-2) GitHub가 **커밋 메시지 편집 창**을 제공  
-3) 메시지를 기능 단위로 정리  
+1) PR에서 **Squash and merge** 선택
+2) GitHub가 **커밋 메시지 편집 창**을 제공
+3) 메시지를 기능 단위로 정리
 4) **Confirm squash and merge** 클릭 → base에 **단일 커밋** 생성
 
 예시(정리 전):
@@ -260,8 +260,8 @@ Signed-off-by: You <you@example.com>
 
 ## 2.5 충돌과 보호 브랜치 정책
 
-- Squash and merge 전에 **PR 충돌이 없어야** 병합 버튼이 활성화된다.  
-- 보호 브랜치의 **Required status checks**, **Required reviews**, **Linear history** 등에 따라 병합이 **보류/거부**될 수 있다.  
+- Squash and merge 전에 **PR 충돌이 없어야** 병합 버튼이 활성화된다.
+- 보호 브랜치의 **Required status checks**, **Required reviews**, **Linear history** 등에 따라 병합이 **보류/거부**될 수 있다.
 - 충돌이 있으면 웹 Resolve conflicts 또는 **로컬에서 해결 후 푸시**(PR 업데이트) → 체크 통과 후 squash.
 
 ---
@@ -275,7 +275,7 @@ gh pr merge <PR_NUMBER> --squash --admin
 # 메시지를 자동 생성/편집하려면 --body 옵션 병행
 ```
 
-- 병합 전략 제어는 저장소 설정에서 허용/차단 가능  
+- 병합 전략 제어는 저장소 설정에서 허용/차단 가능
   (Create a merge commit / Squash and merge / Rebase and merge).
 
 ---
@@ -363,15 +363,15 @@ git switch -c rescue HEAD@{N}
 
 ## 5. 결론
 
-- **`git pull --rebase`** 는 로컬 협업의 마찰을 줄이고 **선형 이력**을 만든다.  
-- **`Squash and merge`** 는 PR을 **기능 단위 1커밋**으로 정리해 읽기 쉬운 히스토리를 만든다.  
-- 두 전략 모두 “깔끔한 히스토리”라는 공통 목표를 가지지만, **세부 추적성 감소**라는 대가가 있다.  
+- **`git pull --rebase`** 는 로컬 협업의 마찰을 줄이고 **선형 이력**을 만든다.
+- **`Squash and merge`** 는 PR을 **기능 단위 1커밋**으로 정리해 읽기 쉬운 히스토리를 만든다.
+- 두 전략 모두 “깔끔한 히스토리”라는 공통 목표를 가지지만, **세부 추적성 감소**라는 대가가 있다.
 - 팀의 **보호 브랜치 정책/CI/리뷰 문화**와 맞춰, 언제 **rebase**를 쓰고 언제 **squash**를 쓰는지 **명확한 기준**을 문서화하면 가장 강력하다.
 
 ---
 
 ## 참고
-- Git Docs — `git pull` (`--rebase`)  
-  https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---rebase  
-- GitHub Docs — Merge a PR (Squash and merge)  
+- Git Docs — `git pull` (`--rebase`)
+  https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---rebase
+- GitHub Docs — Merge a PR (Squash and merge)
   https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/merging-a-pull-request#squash-and-merge

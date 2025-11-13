@@ -6,7 +6,7 @@ category: Java
 ---
 # JUnit 4 vs JUnit 5 — 자세 비교 가이드 (2025-11 업데이트 포함)
 
-JUnit은 자바 생태계의 사실상 표준 테스트 프레임워크다. 이 글은 **JUnit 4와 JUnit 5(Jupiter)** 를 **개념/애너테이션 매핑/확장 모델/파라미터화/병렬·조건 실행/의존성/마이그레이션** 관점에서 세세히 비교한다.  
+JUnit은 자바 생태계의 사실상 표준 테스트 프레임워크다. 이 글은 **JUnit 4와 JUnit 5(Jupiter)** 를 **개념/애너테이션 매핑/확장 모델/파라미터화/병렬·조건 실행/의존성/마이그레이션** 관점에서 세세히 비교한다.
 또한 **2025-11 현재 JUnit 6.0.1 GA**가 공개되어, *JUnit 5의 아키텍처(Platform/Jupiter/Vintage)를 계승*하면서 **기본 JDK 요구치(17)** 상향, 일부 기능 추가/정리되었음을 먼저 알린다. 실무에서는 본문에서 “JUnit 5”로 설명하는 **Jupiter API**를 **JUnit 6에서도 동일하게** 사용한다. (의존성 버전만 6.x로 조정)
 
 ---
@@ -306,7 +306,7 @@ class UserServiceTest {
 
 ## 6. 파라미터화 테스트 — Jupiter Params 모듈
 
-- **소스**: `@ValueSource`, `@CsvSource`, `@CsvFileSource`, `@EnumSource`, `@MethodSource`, `@ArgumentsSource`  
+- **소스**: `@ValueSource`, `@CsvSource`, `@CsvFileSource`, `@EnumSource`, `@MethodSource`, `@ArgumentsSource`
 - **널/빈 처리**: `@NullSource`, `@EmptySource`, `@NullAndEmptySource` (원시형은 변환 필요)
 
 실무 팁
@@ -328,12 +328,12 @@ class UserServiceTest {
 
 1. **플랫폼 전환**: 빌드 도구에서 **JUnit Platform** 활성화(Maven Surefire/Gradle `useJUnitPlatform()`).
 2. **점진 전환**: 기존 JUnit 4 테스트는 **Vintage 엔진**으로 계속 실행하고, 신규는 **Jupiter**로 작성. (엔진 공존 가능)
-3. **애너테이션 치환**  
-   - `@Before/@After` → `@BeforeEach/@AfterEach`  
-   - `@BeforeClass/@AfterClass` → `@BeforeAll/@AfterAll` (+ `@TestInstance(PER_CLASS)` 고려)  
-   - `@Ignore` → `@Disabled`  
-   - `ExpectedException`/`@Test(expected=...)` → **`assertThrows`**  
-   - `@Category` → **`@Tag`**  
+3. **애너테이션 치환**
+   - `@Before/@After` → `@BeforeEach/@AfterEach`
+   - `@BeforeClass/@AfterClass` → `@BeforeAll/@AfterAll` (+ `@TestInstance(PER_CLASS)` 고려)
+   - `@Ignore` → `@Disabled`
+   - `ExpectedException`/`@Test(expected=...)` → **`assertThrows`**
+   - `@Category` → **`@Tag`**
    - `TemporaryFolder` Rule → **`@TempDir`**
 4. **확장 모델로 통합**: `Runner/Rule`를 Jupiter **Extension**로 대체. Mockito/AssertJ/Spring 등은 JUnit 5/6 지원 익스텐션 제공.
 5. **병렬/조건/태그**: Platform 설정/애너테이션으로 이관.
@@ -398,6 +398,6 @@ junit.vintage.execution.parallel.enabled=false
 
 ## 12. 결론
 
-- **새 프로젝트**: **JUnit 6(Jupiter)** 채택을 권장 — 5의 API와 동일한 개발 경험이며, 최신 Platform 기능/성능/설정을 그대로 활용한다. (JDK 17+)  
-- **기존 JUnit 4**: **Vintage**로 공존 실행 → 점진적으로 Jupiter로 이전. `Runner/Rule` → **Extension/@TempDir/assertThrows** 로 치환.  
+- **새 프로젝트**: **JUnit 6(Jupiter)** 채택을 권장 — 5의 API와 동일한 개발 경험이며, 최신 Platform 기능/성능/설정을 그대로 활용한다. (JDK 17+)
+- **기존 JUnit 4**: **Vintage**로 공존 실행 → 점진적으로 Jupiter로 이전. `Runner/Rule` → **Extension/@TempDir/assertThrows** 로 치환.
 - **핵심 이득**: 확장 모델/파라미터화/동적·중첩/조건/병렬/태그/런처 통합 — **표현력·속도·유연성** 모두 개선.

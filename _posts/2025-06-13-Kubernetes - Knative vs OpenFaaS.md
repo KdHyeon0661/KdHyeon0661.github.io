@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # K8s 기반 서버리스: Knative vs OpenFaaS
 
-**Serverless = 코드에만 집중**하고, 인프라 관리는 플랫폼이 담당.  
+**Serverless = 코드에만 집중**하고, 인프라 관리는 플랫폼이 담당.
 Kubernetes에서도 오픈소스 기반으로 **서버리스를 구현**할 수 있습니다. 그 대표 주자가 **Knative**와 **OpenFaaS**.
 
 ---
@@ -37,7 +37,7 @@ Kubernetes에서도 오픈소스 기반으로 **서버리스를 구현**할 수 
 $$
 \text{DesiredReplicas} \approx \left\lceil \frac{\text{Incoming QPS} \times \text{AvgLatency}}{\text{Concurrency per Pod}} \right\rceil
 $$
-- **Knative**: concurrency/RT 기반 **KPA**(Knative Pod Autoscaler) 또는 HPA로 결정  
+- **Knative**: concurrency/RT 기반 **KPA**(Knative Pod Autoscaler) 또는 HPA로 결정
 - **OpenFaaS**: Prometheus/KEDA 메트릭 기반 증감
 
 ---
@@ -45,7 +45,7 @@ $$
 ## 2. Knative — Serving & Eventing로 보는 구조
 
 ### 2.1 아키텍처 핵심
-- **Serving**: `Service` → `Configuration` → **`Revision`** 생성 → `Route`로 트래픽 분배  
+- **Serving**: `Service` → `Configuration` → **`Revision`** 생성 → `Route`로 트래픽 분배
   Ingress(예: **Kourier**, Istio)를 통해 **HTTP** 유입 → **Activator**가 scale-to-zero에서 깨움 → **queue-proxy**가 per-Pod 트래픽 제어
 - **Eventing**: **Broker/Trigger** + **CloudEvents** 규격, Kafka 등 다수 소스
 
@@ -201,8 +201,8 @@ functions:
 ```
 
 ### 3.4 이벤트 트리거(크론/카프카/비동기)
-- **Cron**: `faas-netes` 커넥터(체크아웃: cron-connector)  
-- **Kafka/NATS/MQTT**: 커넥터 배포 후 topic→function 연결  
+- **Cron**: `faas-netes` 커넥터(체크아웃: cron-connector)
+- **Kafka/NATS/MQTT**: 커넥터 배포 후 topic→function 연결
 - **Async**: `POST /async-function/<fn>` → queue-worker 소비
 
 ---
@@ -278,7 +278,7 @@ spec:
 ```
 
 ### 6.2 비용 직감(Scale-to-zero의 힘)
-- 장시간 유휴 트래픽이면 **scale-to-zero**가 노드 자원 절감에 직결  
+- 장시간 유휴 트래픽이면 **scale-to-zero**가 노드 자원 절감에 직결
 - 반대로 **cold start 비용**이 큰 서비스는 minScale로 절충
 
 ---
@@ -327,14 +327,14 @@ jobs:
 ## 9. 트러블슈팅 체크리스트
 
 ### 9.1 Knative
-- **대상 도메인/Ingress**: DNS/CNAME, LB health  
-- **콜드스타트가 길다**: `minScale`, 이미지 slim, 초기화 지연 제거  
-- **4xx/5xx**: queue-proxy/activator/ingress 로그 → `kubectl -n knative-serving logs ...`  
+- **대상 도메인/Ingress**: DNS/CNAME, LB health
+- **콜드스타트가 길다**: `minScale`, 이미지 slim, 초기화 지연 제거
+- **4xx/5xx**: queue-proxy/activator/ingress 로그 → `kubectl -n knative-serving logs ...`
 - **Eventing**: Broker/Trigger 상태, delivery(재시도) 파라미터
 
 ### 9.2 OpenFaaS
-- **권한/게이트웨이 인증**: `faas-cli login` 확인  
-- **비동기 지연**: queue-worker 로그, NATS/Kafka 커넥터 상태  
+- **권한/게이트웨이 인증**: `faas-cli login` 확인
+- **비동기 지연**: queue-worker 로그, NATS/Kafka 커넥터 상태
 - **스케일 안됨**: Prometheus targets, KEDA 스케일러 설정
 
 ---
@@ -342,13 +342,13 @@ jobs:
 ## 10. 고급 튜닝 팁
 
 ### Knative
-- `containerConcurrency` 낮추면 지연 안정↑, 과도하게 낮추면 Pod 폭증  
-- `autoscaling.knative.dev/targetUtilizationPercentage`로 여유율 제어  
+- `containerConcurrency` 낮추면 지연 안정↑, 과도하게 낮추면 Pod 폭증
+- `autoscaling.knative.dev/targetUtilizationPercentage`로 여유율 제어
 - `readinessProbe` 정확화로 rollout 중 5xx 억제
 
 ### OpenFaaS
-- watchdog `read_timeout`/`write_timeout`/`exec_timeout` 조정  
-- 이미지 빌드 시 **템플릿 커스터마이즈**(uvicorn-gunicorn 파이썬, tini, distroless)  
+- watchdog `read_timeout`/`write_timeout`/`exec_timeout` 조정
+- 이미지 빌드 시 **템플릿 커스터마이즈**(uvicorn-gunicorn 파이썬, tini, distroless)
 - `basic_auth` 외 OIDC 게이트웨이 연동(기업 SSO)
 
 ---
@@ -453,19 +453,19 @@ curl -X POST http://gateway:8080/async-function/hello-ofn -d "Alice"
 
 ## 13. 마무리
 
-- **Knative**: K8s 원칙에 충실한 **Serving/Eventing 표준 플랫폼**, 트래픽 분할/리비전/CloudEvents에 강함.  
-- **OpenFaaS**: **경량성과 단순함**, 빠른 개발과 다양한 트리거·관측을 기본 제공.  
+- **Knative**: K8s 원칙에 충실한 **Serving/Eventing 표준 플랫폼**, 트래픽 분할/리비전/CloudEvents에 강함.
+- **OpenFaaS**: **경량성과 단순함**, 빠른 개발과 다양한 트리거·관측을 기본 제공.
 - 공통의 성공 키: **슬림 컨테이너**, 적정 **concurrency/timeout**, **모니터링**, **보안(PSA/NetworkPolicy/TLS)**, **GitOps**.
 
-**정답은 “둘 중 우리 팀의 운영 역량과 요구에 맞는 것”**입니다.  
+**정답은 “둘 중 우리 팀의 운영 역량과 요구에 맞는 것”**입니다.
 핵심 경로는 Knative, 주변 자동화는 OpenFaaS처럼 **혼합 전략**도 충분히 실용적입니다.
 
 ---
 
 ## 참고 링크
 
-- Knative: <https://knative.dev/>  
-- OpenFaaS: <https://www.openfaas.com/>  
-- CloudEvents: <https://cloudevents.io/>  
-- KEDA: <https://keda.sh/>  
+- Knative: <https://knative.dev/>
+- OpenFaaS: <https://www.openfaas.com/>
+- CloudEvents: <https://cloudevents.io/>
+- KEDA: <https://keda.sh/>
 - Knative Eventing Kafka: <https://knative.dev/docs/eventing/>

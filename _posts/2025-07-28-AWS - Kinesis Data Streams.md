@@ -311,12 +311,12 @@ $$
 
 ## 11. 운영 체크리스트
 
-- [ ] **용량 모드**(Provisioned/On-demand)와 초기 샤드 수 결정  
-- [ ] **파티션 키** 분산성 테스트(샘플 해시 분포)  
-- [ ] **Retention** 기간/재처리 전략 문서화  
-- [ ] Lambda/KCL **배치/동시성/오류** 정책 설정  
-- [ ] **IteratorAge** 알람 + 자동 대응 런북  
-- [ ] **SSE-KMS**/VPC 엔드포인트/정밀 IAM  
+- [ ] **용량 모드**(Provisioned/On-demand)와 초기 샤드 수 결정
+- [ ] **파티션 키** 분산성 테스트(샘플 해시 분포)
+- [ ] **Retention** 기간/재처리 전략 문서화
+- [ ] Lambda/KCL **배치/동시성/오류** 정책 설정
+- [ ] **IteratorAge** 알람 + 자동 대응 런북
+- [ ] **SSE-KMS**/VPC 엔드포인트/정밀 IAM
 - [ ] IaC(Terraform/CFn)로 **선형 재현** 가능하게 관리
 
 ---
@@ -328,7 +328,7 @@ $$
 - 소비자 수가 많고 지연이 중요한 경우 고려(비용 증가)
 
 ### 12.2 KDA for Apache Flink
-- 상태/윈도우/CEP/Exactly-once(시맨틱)  
+- 상태/윈도우/CEP/Exactly-once(시맨틱)
 - 예: 5분 슬라이딩 윈도우 사용자별 집계 후 S3/Redshift 전송
 ```java
 events
@@ -349,12 +349,12 @@ fetch('/ingest', { method:'POST', body: JSON.stringify({ user, action, ts: Date.
 ```
 
 ### 13.2 소비자(옵션 3가지)
-1) Lambda: 간단 로직/후속 이벤트(SNS/SQS/Firehose)  
-2) KCL: 정확한 체크포인팅·대량 처리·복잡 로직  
+1) Lambda: 간단 로직/후속 이벤트(SNS/SQS/Firehose)
+2) KCL: 정확한 체크포인팅·대량 처리·복잡 로직
 3) KDA(Flink): 준실시간 분석·상태 머신·세션/윈도우
 
 ### 13.3 실패/재처리
-- Lambda DLQ(SQS) 연결 → 재처리 워커  
+- Lambda DLQ(SQS) 연결 → 재처리 워커
 - Retention 내 재검토: `AT_TIMESTAMP`로 복원 처리
 
 ---
@@ -410,16 +410,16 @@ if __name__ == "__main__":
 
 ## 16. 자주 묻는 질문(FAQ)
 
-**Q. Record 최대 크기?**  
+**Q. Record 최대 크기?**
 A. 1MB/레코드(압축은 앱 레벨). 요청(배치) 최대 5MB, 500레코드.
 
-**Q. 순서 보장이 필요한데 Throughput도 높아야 한다면?**  
+**Q. 순서 보장이 필요한데 Throughput도 높아야 한다면?**
 A. 파티션 키 설계로 **유사 순서 그룹**을 분할(예: userId의 해시 prefix+원래 키)하고 소비 측에서 **partial ordering** 허용.
 
-**Q. KPL을 쓰면 좋은가?**  
+**Q. KPL을 쓰면 좋은가?**
 A. 고TPS·저비용에 유리. 단, Deaggregation 필요·라이브러리 운영 부담 고려.
 
-**Q. On-demand vs Provisioned 선택?**  
+**Q. On-demand vs Provisioned 선택?**
 A. 트래픽 가변/초기 예측 어려움 → **On-demand**. 안정적·예측 가능·비용 통제 → **Provisioned**.
 
 ---

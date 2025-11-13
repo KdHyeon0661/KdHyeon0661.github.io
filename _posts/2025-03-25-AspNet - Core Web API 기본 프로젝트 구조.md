@@ -595,7 +595,7 @@ app.UseRateLimiter();
 
 ## 13. 설정/환경 — appsettings.*와 연결 문자열
 
-`appsettings.json` / `appsettings.Development.json` / `Environment Variables`의 **우선순위 병합**.  
+`appsettings.json` / `appsettings.Development.json` / `Environment Variables`의 **우선순위 병합**.
 EF Core의 연결 문자열:
 
 ```json
@@ -642,7 +642,7 @@ public class ProductsApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ## 15. 보안 — 인증/인가 준비
 
-- **인증(Authentication)**: JWT Bearer(OpenIddict/IdentityServer/Azure AD B2C 등)  
+- **인증(Authentication)**: JWT Bearer(OpenIddict/IdentityServer/Azure AD B2C 등)
 - **인가(Authorization)**: `[Authorize]`, 정책 기반
 - Swagger 보안 스키마 추가 후 **Try it out**에서도 토큰 입력 가능
 
@@ -750,7 +750,7 @@ public async Task<ActionResult<PagedResponse<ProductResponse>>> GetPaged([FromQu
 ## 18. Minimal APIs와 비교(선택)
 
 - **Minimal APIs**: `app.MapGet("/api/products", ...);` 같은 라우팅 중심, 경량
-- **Controller 기반 Web API**: 필터/모델 바인딩/특성 라우팅/테스트/도구 호환성 우수  
+- **Controller 기반 Web API**: 필터/모델 바인딩/특성 라우팅/테스트/도구 호환성 우수
 대규모 프로젝트나 팀 협업에서는 컨트롤러 기반이 여전히 주류.
 
 ---
@@ -804,5 +804,5 @@ ENTRYPOINT ["dotnet", "MyApiApp.dll"]
 
 ## 결론
 
-기본 프로젝트 골격에서 시작해 **레이어드 설계, DTO·검증, 표준 오류 응답, Swagger, CORS, 버전 관리, 테스트, 배포**까지 이어지면, 규모가 커져도 유지보수성이 높고 안정적인 Web API를 제공할 수 있다.  
+기본 프로젝트 골격에서 시작해 **레이어드 설계, DTO·검증, 표준 오류 응답, Swagger, CORS, 버전 관리, 테스트, 배포**까지 이어지면, 규모가 커져도 유지보수성이 높고 안정적인 Web API를 제공할 수 있다.
 본 가이드를 스캐폴딩 삼아 팀 표준 템플릿으로 구체화하면 실무 생산성이 크게 향상된다.

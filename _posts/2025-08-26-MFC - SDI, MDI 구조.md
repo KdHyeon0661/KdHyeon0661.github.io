@@ -5,8 +5,8 @@ date: 2025-08-26 17:25:23 +0900
 category: MFC
 ---
 # SDI/MDI 구조 이해: `CDocument` / `CView` / `CFrameWnd`, DocTemplate, 명령 라우팅 완전 정리
-이 글은 MFC의 **문서/뷰 구조(도큐먼트-뷰-프레임)** 를 **SDI/MDI** 관점에서 끝까지 파고듭니다.  
-핵심 클래스의 역할, 생성·수명 주기, **DocTemplate 연결**, **명령/업데이트 라우팅**, **멀티 뷰 구성**, **프린팅 파이프라인**, **MDI 전용 이슈**를 **개념→코드→체크리스트** 순으로 정리합니다.  
+이 글은 MFC의 **문서/뷰 구조(도큐먼트-뷰-프레임)** 를 **SDI/MDI** 관점에서 끝까지 파고듭니다.
+핵심 클래스의 역할, 생성·수명 주기, **DocTemplate 연결**, **명령/업데이트 라우팅**, **멀티 뷰 구성**, **프린팅 파이프라인**, **MDI 전용 이슈**를 **개념→코드→체크리스트** 순으로 정리합니다.
 (본문은 ~~~markdown, 코드는 ```로 감싸 제공합니다.)
 
 ---
@@ -103,7 +103,7 @@ END_MESSAGE_MAP()
 ### 1-3. `CFrameWnd` / `CMDIFrameWnd` / `CMDIChildWnd`
 - 메뉴/툴바/상태바/도킹·리본 관리
 - 활성 뷰 포커스/전환
-- **SDI**: `CFrameWnd(Ex)` 1개가 문서/뷰를 담음  
+- **SDI**: `CFrameWnd(Ex)` 1개가 문서/뷰를 담음
 - **MDI**: 메인 `CMDIFrameWnd(Ex)` + 문서마다 `CMDIChildWnd(Ex)`로 분리
 
 ```cpp
@@ -179,21 +179,21 @@ m_pMainWnd = pMainFrame;
 ## 3. 수명 주기: 생성·열기·저장·닫기
 
 ### 3-1. 새 문서(SDI 기본 흐름)
-1) `InitInstance` → DocTemplate 등록  
-2) `ProcessShellCommand` → `ID_FILE_NEW` → `OpenDocumentFile(nullptr)`  
-3) **문서 생성** → **프레임 생성** → **뷰 생성/부착** → `OnInitialUpdate`  
+1) `InitInstance` → DocTemplate 등록
+2) `ProcessShellCommand` → `ID_FILE_NEW` → `OpenDocumentFile(nullptr)`
+3) **문서 생성** → **프레임 생성** → **뷰 생성/부착** → `OnInitialUpdate`
 4) 프레임 표시/활성화
 
 ### 3-2. 파일 열기
 - `OpenDocumentFile(L"path")` → 문서 생성 → `CDocument::OnOpenDocument` 로드 → 프레임/뷰 결합
 
 ### 3-3. 저장/다른 이름으로 저장
-- `CDocument::DoFileSave()` / `OnSaveDocument(L"path")`  
+- `CDocument::DoFileSave()` / `OnSaveDocument(L"path")`
 - 저장 성공 후 `SetModifiedFlag(FALSE)`
 
 ### 3-4. 닫기/종료
-- 문서가 수정됨 → `SaveModified()`로 저장 여부 확인  
-- **SDI**: 창 닫기 = 문서 종료  
+- 문서가 수정됨 → `SaveModified()`로 저장 여부 확인
+- **SDI**: 창 닫기 = 문서 종료
 - **MDI**: 활성 Child 닫기 = 해당 문서 종료
 
 ---
@@ -203,16 +203,16 @@ m_pMainWnd = pMainFrame;
 ### 4-1. 검색 순서
 
 **SDI**
-1) 활성 **`CView`**  
-2) **`CFrameWnd`**  
-3) **`CDocument`**  
+1) 활성 **`CView`**
+2) **`CFrameWnd`**
+3) **`CDocument`**
 4) **`CWinApp`**
 
 **MDI**
-1) 활성 Child의 **`CView`**  
-2) 그 Child의 **`CMDIChildWnd`**  
-3) 그 Child의 **`CDocument`**  
-4) **`CMDIFrameWnd`**  
+1) 활성 Child의 **`CView`**
+2) 그 Child의 **`CMDIChildWnd`**
+3) 그 Child의 **`CDocument`**
+4) **`CMDIFrameWnd`**
 5) **`CWinApp`**
 
 > 데이터 조작은 **문서**, 표시/도구는 **뷰**, 전역/창은 **프레임/앱**에 핸들러를 배치하면 자연스럽게 작동합니다.
@@ -307,10 +307,10 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT, CCreateContext* pCC)
 
 ## 6. 프린팅 파이프라인 (요약 & 연결)
 
-1) `CView::OnPreparePrinting` → 페이지 수 계산  
-2) `OnBeginPrinting` → 폰트/펜/브러시  
-3) `OnPrepareDC` → 맵핑 모드/오리진  
-4) `OnPrint` → **문서 데이터**를 **뷰 방식으로** 렌더  
+1) `CView::OnPreparePrinting` → 페이지 수 계산
+2) `OnBeginPrinting` → 폰트/펜/브러시
+3) `OnPrepareDC` → 맵핑 모드/오리진
+4) `OnPrint` → **문서 데이터**를 **뷰 방식으로** 렌더
 5) `OnEndPrinting` → 정리
 
 > 프린트 프리뷰는 동일 경로에서 **`CPreviewDC`** 를 사용할 뿐입니다.
@@ -319,9 +319,9 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT, CCreateContext* pCC)
 
 ## 7. MDI 전용 이슈(SDI와 다른 지점)
 
-- **Child Frame**: 문서마다 독립 창 (`CMDIChildWndEx`)  
-- **명령/업데이트 기준**: **활성 Child**의 뷰/문서가 우선  
-- **메뉴 병합**: 활성 Child 메뉴가 메인 메뉴와 **동적 병합**  
+- **Child Frame**: 문서마다 독립 창 (`CMDIChildWndEx`)
+- **명령/업데이트 기준**: **활성 Child**의 뷰/문서가 우선
+- **메뉴 병합**: 활성 Child 메뉴가 메인 메뉴와 **동적 병합**
 - **창 관리**: Window 메뉴에 Child 목록/전환, 타일/캐스케이드
 
 ```cpp
@@ -439,18 +439,18 @@ END_MESSAGE_MAP()
 
 ## 13. 체크리스트 (요약)
 
-- [ ] Doc/View/Frame **역할 분리**가 명확한가  
-- [ ] **DocTemplate** 등록/DocString 구성 적절한가  
-- [ ] **명령/업데이트 라우팅**을 기준으로 핸들러 위치를 설계했는가  
-- [ ] **Hint 기반** 부분 갱신을 사용하여 성능을 확보했는가  
-- [ ] 멀티 뷰/스플리터/동적 교체에서 **프레임 소유권 규칙**을 지켰는가  
-- [ ] 프린팅 파이프라인(Prepare/Begin/PrepareDC/Print/End)을 재사용 가능한 **레이아웃-렌더** 구조로 설계했는가  
+- [ ] Doc/View/Frame **역할 분리**가 명확한가
+- [ ] **DocTemplate** 등록/DocString 구성 적절한가
+- [ ] **명령/업데이트 라우팅**을 기준으로 핸들러 위치를 설계했는가
+- [ ] **Hint 기반** 부분 갱신을 사용하여 성능을 확보했는가
+- [ ] 멀티 뷰/스플리터/동적 교체에서 **프레임 소유권 규칙**을 지켰는가
+- [ ] 프린팅 파이프라인(Prepare/Begin/PrepareDC/Print/End)을 재사용 가능한 **레이아웃-렌더** 구조로 설계했는가
 - [ ] MDI라면 **활성 Child** 개념을 UI/단축키/업데이트에 반영했는가
 
 ---
 
 ### 마무리
 
-- **Doc/View/Frame**은 여전히 강력한 **데스크톱 아키텍처**입니다.  
-- **DocTemplate**는 **결합도를 낮춘 생성 허브**, **명령/업데이트 라우팅**은 **핸들러 배치의 규율**입니다.  
+- **Doc/View/Frame**은 여전히 강력한 **데스크톱 아키텍처**입니다.
+- **DocTemplate**는 **결합도를 낮춘 생성 허브**, **명령/업데이트 라우팅**은 **핸들러 배치의 규율**입니다.
 - 본문의 스니펫을 바탕으로 SDI/MDI, 멀티 뷰, 프린팅까지 한 흐름으로 통일하면 **확장성과 유지보수성**을 동시에 얻을 수 있습니다.

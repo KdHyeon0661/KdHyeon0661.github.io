@@ -386,17 +386,17 @@ dotnet restore --locked-mode            # 잠금 파일 기반 복원(버전 고
 
 ## 12. 유지보수·운영 체크리스트
 
-1. SDK/워크로드 일관성  
+1. SDK/워크로드 일관성
    - `global.json`, `dotnet sdk check`, `dotnet workload list/restore`
-2. 패키지/보안  
+2. 패키지/보안
    - `dotnet list package --outdated/--vulnerable`, 주기적 업데이트
-3. 캐시/빌드 서버  
+3. 캐시/빌드 서버
    - `dotnet build-server shutdown`, `dotnet nuget locals all --clear`
-4. 서명/라이선스/메타데이터  
+4. 서명/라이선스/메타데이터
    - `dotnet pack` 메타데이터 정합, 사내 규정 준수
-5. 컨테이너/서버 운영 시 진단  
+5. 컨테이너/서버 운영 시 진단
    - `dotnet-counters`, `dotnet-trace`, `dotnet-dump`, `dotnet-monitor`
-6. 트리밍/AOT 영향  
+6. 트리밍/AOT 영향
    - 리플렉션 대상에 `DynamicDependency`/`DynamicallyAccessedMembers` 주석 적용
 
 ---
@@ -463,6 +463,6 @@ dotnet nuget locals all --clear
 
 # 결론
 
-- 본 가이드는 기존 정리의 핵심을 유지하면서 **템플릿 제작/관리**, **사설 NuGet/잠금 복원**, **전역/로컬 도구 운용**, **워크로드 관리**, **진단 도구 활용**, **배포 최적화**까지 **현업 실무 관점**으로 확장했습니다.  
-- 팀/CI 안정성을 위해 **SDK/워크로드/패키지 버전 고정**, **로컬 도구 매니페스트**, **잠금 기반 복원**을 적극 사용하십시오.  
+- 본 가이드는 기존 정리의 핵심을 유지하면서 **템플릿 제작/관리**, **사설 NuGet/잠금 복원**, **전역/로컬 도구 운용**, **워크로드 관리**, **진단 도구 활용**, **배포 최적화**까지 **현업 실무 관점**으로 확장했습니다.
+- 팀/CI 안정성을 위해 **SDK/워크로드/패키지 버전 고정**, **로컬 도구 매니페스트**, **잠금 기반 복원**을 적극 사용하십시오.
 - 성능·용량·시작 시간 요구가 있을 때는 `PublishSingleFile`, `PublishTrimmed`, `ReadyToRun`, `AOT`를 요구사항에 맞춰 조합하고, 진단 도구로 병목을 계측해 근거 기반으로 최적화하십시오.

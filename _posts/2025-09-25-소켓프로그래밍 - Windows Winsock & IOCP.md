@@ -6,10 +6,10 @@ category: 소켓프로그래밍
 ---
 ## 19. Windows Winsock & IOCP
 
-> 목표: 리눅스에서 배운 저수준 소켓 감각을 **Windows Winsock + IOCP**에 이식한다.  
-> (1) **WSAStartup/WSACleanup, closesocket, 에러 체계**를 정확히 이해하고,  
-> (2) **Overlapped I/O + IOCP**를 개념/수명/스레딩 관점에서 정리(리눅스 `epoll`과 비교),  
-> (3) **실전 예제: IOCP 에코 서버**를 끝까지 구현,  
+> 목표: 리눅스에서 배운 저수준 소켓 감각을 **Windows Winsock + IOCP**에 이식한다.
+> (1) **WSAStartup/WSACleanup, closesocket, 에러 체계**를 정확히 이해하고,
+> (2) **Overlapped I/O + IOCP**를 개념/수명/스레딩 관점에서 정리(리눅스 `epoll`과 비교),
+> (3) **실전 예제: IOCP 에코 서버**를 끝까지 구현,
 > (4) **포팅 체크리스트**로 실무 이전의 함정을 피한다.
 
 ---
@@ -29,7 +29,7 @@ category: 소켓프로그래밍
 #pragma comment(lib, "Ws2_32.lib")
 
 int main() {
-    WSADATA w{}; 
+    WSADATA w{};
     int rc = WSAStartup(MAKEWORD(2,2), &w);
     if (rc != 0) { std::print(stderr, "WSAStartup: {}\n", rc); return 1; }
     // ... 소켓 사용 ...
@@ -48,7 +48,7 @@ int main() {
 - 대부분의 Winsock API는 실패 시 `SOCKET_ERROR`(-1) 또는 `FALSE` 반환, 에러는 **스레드 지역**으로 `WSAGetLastError()`에서 읽는다.
 - 비동기(Overlapped) 경로에서 **즉시 완료가 아니면** `WSA_IO_PENDING`(= `ERROR_IO_PENDING`)이 정상이다.
 - 비차단 리턴 값 비교표(대표):
-  - 리눅스: `EINPROGRESS`, `EWOULDBLOCK`  
+  - 리눅스: `EINPROGRESS`, `EWOULDBLOCK`
   - 윈도우: `WSAEINPROGRESS`, `WSAEWOULDBLOCK`, (Overlapped는) `WSA_IO_PENDING`
 
 > 참고: **성공**이어도 **즉시 완료가 아니면** *바로 I/O가 끝난 게 아니다*. **완료 통지(IOCP)**를 기다려야 한다.
@@ -58,9 +58,9 @@ int main() {
 - 링크: `Ws2_32.lib`, 헤더: `<ws2tcpip.h>`.
 
 #### 19.1.5 옵션 차이(핵심 몇 가지)
-- `SO_REUSEADDR` 의미가 리눅스와 다르다(Windows는 TIME_WAIT와 공유 의미가 약함).  
+- `SO_REUSEADDR` 의미가 리눅스와 다르다(Windows는 TIME_WAIT와 공유 의미가 약함).
   **권장**: 서버 바인드에는 `SO_EXCLUSIVEADDRUSE`(또는 `SIO_EXCLUSIVEADDRUSE`)로 **독점**을 명시.
-- Keepalive 세부값: 리눅스는 `TCP_KEEPIDLE/INTVL/KEEPCNT`,  
+- Keepalive 세부값: 리눅스는 `TCP_KEEPIDLE/INTVL/KEEPCNT`,
   윈도우는 `WSAIoctl(SIO_KEEPALIVE_VALS, ...)` 사용(아래 19.6 참조).
 
 ---
@@ -75,7 +75,7 @@ int main() {
   - IOCP는 “**이(연산)가 끝났다**”를 알려준다. 그래서 **`WSARecv/WSASend`를 먼저 걸어놓고**(Overlapped), **완료**를 받는다.
 
 #### 19.2.2 스레딩/동시성 직관
-- IOCP는 큐 하나에 대해 **스레드 풀**을 매달아 소비한다.  
+- IOCP는 큐 하나에 대해 **스레드 풀**을 매달아 소비한다.
   `CreateIoCompletionPort(h, NULL, key, concurrency)`의 `concurrency`는 **실행 중인 워커 상한 힌트**(보통 CPU 코어 수).
 - 워커는 **블로킹**으로 `GetQueuedCompletionStatus`를 기다리다, 완료 패킷을 꺼내 **후속 I/O**를 즉시 재무장(post)한다.
 
@@ -88,11 +88,11 @@ int main() {
 
 ### 19.3 IOCP 에코 서버 — 단일 파일 실전 예제 (C++23, Win10+)
 
-> 기능:  
-> - IPv4/IPv6(듀얼) 리스닝  
-> - `AcceptEx`로 비동기 accept N개 선공급  
-> - 연결별 **수신→송신→다시 수신** 순환  
-> - 워커 스레드 풀을 IOCP에 연결  
+> 기능:
+> - IPv4/IPv6(듀얼) 리스닝
+> - `AcceptEx`로 비동기 accept N개 선공급
+> - 연결별 **수신→송신→다시 수신** 순환
+> - 워커 스레드 풀을 IOCP에 연결
 > - 안전한 종료(PostQueuedCompletionStatus로 종료 신호)
 
 #### 19.3.1 빌드 & 실행
@@ -454,8 +454,8 @@ int main(int argc, char** argv) {
 #### 19.5.2 소켓 옵션 대응
 - `TCP_NODELAY` 동일.
 - **주소 재사용**: 리눅스의 `SO_REUSEADDR`=TIME_WAIT 공유와 의미 다름 → Windows는 **`SO_EXCLUSIVEADDRUSE` 권장**.
-- Keepalive:  
-  - `setsockopt(SO_KEEPALIVE, ...)`로 on/off  
+- Keepalive:
+  - `setsockopt(SO_KEEPALIVE, ...)`로 on/off
   - **간격/카운트는** `WSAIoctl(SIO_KEEPALIVE_VALS, ...)`:
     ```cpp
     struct tcp_keepalive { u_long onoff, keepalivetime, keepaliveinterval; };
@@ -472,7 +472,7 @@ int main(int argc, char** argv) {
   ```
 
 #### 19.5.3 IPv6/듀얼스택
-- Windows는 기본적으로 **듀얼스택 허용**(v4-mapped).  
+- Windows는 기본적으로 **듀얼스택 허용**(v4-mapped).
   필요 시 `IPV6_V6ONLY=1`로 IPv6 전용으로 고정.
 - 링크-로컬 통신 시 `scope id`(인터페이스 인덱스)는 리눅스와 동일하게 `sin6_scope_id`에 지정.
 
@@ -513,7 +513,7 @@ int main(int argc, char** argv) {
 
 ### 19.9 마무리
 
-- Windows의 네트워킹은 **Overlapped + IOCP**가 정석이다.  
-- 핵심 전환은 **“준비(readiness) 루프” → “완료(completion) 소비”**로의 사고 변경.  
-- 이 장의 **IOCP 에코 서버**를 뼈대로, 10~11장의 **프레이밍/상태기계**를 얹고, 14장의 **TLS**를 연결하면  
+- Windows의 네트워킹은 **Overlapped + IOCP**가 정석이다.
+- 핵심 전환은 **“준비(readiness) 루프” → “완료(completion) 소비”**로의 사고 변경.
+- 이 장의 **IOCP 에코 서버**를 뼈대로, 10~11장의 **프레이밍/상태기계**를 얹고, 14장의 **TLS**를 연결하면
   리눅스에서 구축한 구조를 **Windows 네이티브 성능**으로 그대로 가져올 수 있다.

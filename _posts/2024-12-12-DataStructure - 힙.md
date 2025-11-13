@@ -31,7 +31,7 @@ category: Data Structure
       50
      /  \
    30    20
-  / \   / 
+  / \   /
 10 15  5
 ```
 
@@ -95,7 +95,7 @@ class BinaryHeap {
     Comp cmp;         // cmp(x,y)==true → x<y (기본: less)
 
     // "higher"는 힙의 루트에 가까울수록 '우선'이라는 뜻.
-    bool higher(int i, int j) const { 
+    bool higher(int i, int j) const {
         // max-heap: a[i]가 a[j]보다 '더 큰'가? → cmp(a[j],a[i])
         return cmp(a[j], a[i]);
     }
@@ -434,7 +434,7 @@ std::vector<int> dijkstra_indexedPQ(int n, const std::vector<std::vector<Edge>>&
     const int INF = std::numeric_limits<int>::max()/4;
     std::vector<int> dist(n, INF);
     // min-heap: Comp=greater<int> → smaller key is 'higher'
-    IndexedPQ<int, std::greater<int>> pq(n); 
+    IndexedPQ<int, std::greater<int>> pq(n);
     dist[s] = 0; pq.push(s, 0);
 
     while(!pq.empty()){
@@ -545,7 +545,7 @@ int main(){
 ## 14. 확장: 페어링 힙/피보나치 힙(개요)
 
 - **페어링 힙(Pairing Heap)**: 단순 링크 기반, 실제 성능 우수, decrease-key가 **상대적으로 빠름**(분석은 복잡).
-- **피보나치 힙(Fibonacci Heap)**: 이론상 `decrease-key`가 \(O(1)\) amortized, `pop`이 \(O(\log n)\).  
+- **피보나치 힙(Fibonacci Heap)**: 이론상 `decrease-key`가 \(O(1)\) amortized, `pop`이 \(O(\log n)\).
   상수항이 커 실전에서는 **Indexed 이진 힙**이 더 빠른 경우 많음.
 
 실무에서 **데이터 크기/업데이트 패턴/상수 비용**을 프로파일링해 선택한다.
@@ -555,7 +555,7 @@ int main(){
 ## 15. 요약
 
 - **힙**은 완전 이진 트리 기반으로 `push/pop/top`에 강하며, `build-heap`이 \(O(n)\)이라 초기화도 빠르다.
-- **템플릿 이진 힙**으로 최대/최소/커스텀 우선순위를 일관되게 지원하고,  
+- **템플릿 이진 힙**으로 최대/최소/커스텀 우선순위를 일관되게 지원하고,
   **Indexed Priority Queue**로 **decrease-key**가 필요한 그래프/스케줄링 문제를 견고하게 해결한다.
 - **힙정렬**은 in-place \(O(n\log n)\)지만 **불안정**.
 - 응용은 **Top-K**, **중간값**, **다익스트라**, **이벤트 스케줄링** 등 폭넓다.

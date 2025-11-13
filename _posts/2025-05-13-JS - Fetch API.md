@@ -61,7 +61,7 @@ const text = await res.text();
 // const copy = res.clone(); await copy.json();
 ```
 
-- `res.ok`: 200–299  
+- `res.ok`: 200–299
 - **본문 1회 규칙**: `res.text()`, `res.json()`, `res.blob()` 등 중 **한 번만** 호출 가능 → **로그 + 파싱** 필요 시 `clone()`.
 
 ---
@@ -140,8 +140,8 @@ await fetch("/profile", { method: "POST", body: fd }); // 헤더 자동
 ## 7. 파일 업로드/다운로드
 
 ### 7.1 업로드 진행률(대안)
-- 표준 Fetch는 **업로드 진행률 이벤트 미지원**.  
-  옵션: `XMLHttpRequest`로 전환 또는 **Service Worker + Streams** 커스텀(고급).  
+- 표준 Fetch는 **업로드 진행률 이벤트 미지원**.
+  옵션: `XMLHttpRequest`로 전환 또는 **Service Worker + Streams** 커스텀(고급).
 
 ### 7.2 다운로드 → Blob 저장
 ```js
@@ -298,7 +298,7 @@ await fetch("/me", { credentials: "include" });
 
 ## 13. CORS 심화
 
-- 사전 요청(Preflight): `OPTIONS` + `Access-Control-Request-*`  
+- 사전 요청(Preflight): `OPTIONS` + `Access-Control-Request-*`
   서버는 `Access-Control-Allow-Origin`, `-Methods`, `-Headers` 적절 응답 필요.
 - `mode: "no-cors"`: 응답이 **opaque**(읽을 수 없음), 대부분의 커스텀 헤더/메소드 차단 → **해결책 아님**.
 - **정답은 서버 CORS 설정**: 필요한 오리진/헤더/메서드만 허용.
@@ -308,9 +308,9 @@ await fetch("/me", { credentials: "include" });
 ## 14. 캐싱 전략
 
 ### 14.1 HTTP 캐시 + `cache` 옵션
-- `cache: "no-cache"`: **검증 후** 사용(If-None-Match/If-Modified-Since)  
-- `cache: "reload"`: 네트워크 강제  
-- `cache: "force-cache"`: 캐시 우선  
+- `cache: "no-cache"`: **검증 후** 사용(If-None-Match/If-Modified-Since)
+- `cache: "reload"`: 네트워크 강제
+- `cache: "force-cache"`: 캐시 우선
 - ETag/Last-Modified를 서버가 제공하면 효율↑.
 
 ### 14.2 Cache Storage API(프로그래매틱 캐시)
@@ -327,14 +327,14 @@ const cached = await cache.match("/data");
 
 ## 15. 서비스 워커 연계(요약)
 
-- `fetch` 이벤트 가로채서 캐싱/프록시/폴백.  
+- `fetch` 이벤트 가로채서 캐싱/프록시/폴백.
 - 전략: **Cache First**, **Network First**, **Stale-While-Revalidate** 등.
 
 ---
 
 ## 16. 리다이렉트
 
-- 기본 `redirect: "follow"`(최대 횟수 제한).  
+- 기본 `redirect: "follow"`(최대 횟수 제한).
 - `redirect: "manual"`은 브라우저에서 `opaqueredirect`로 제한적(헤더 확인 어려움) — 보통 서버/라우터에서 처리.
 
 ---
@@ -350,10 +350,10 @@ const cached = await cache.match("/data");
 
 ## 18. 브라우저 vs Node.js
 
-- Node.js **18+**: `globalThis.fetch` 기본 제공(undici 기반).  
+- Node.js **18+**: `globalThis.fetch` 기본 제공(undici 기반).
 - 차이:
   - 일부 브라우저 전용 옵션/기능(예: `keepalive` 제한) vs Node 환경 차이.
-  - 파일 업로드 시 `FormData`/`Blob` 지원(최근 Node 가능).  
+  - 파일 업로드 시 `FormData`/`Blob` 지원(최근 Node 가능).
   - 쿠키/세션은 브라우저가 자동 관리하지만, Node는 **쿠키 헤더 수동 처리** 필요(또는 라이브러리).
 
 ---
@@ -445,11 +445,11 @@ fetch("/me", { /* ? */ });
 // "reload" | "no-cache" | "force-cache"
 ```
 
-**정답 힌트**  
-- Q1: 본문은 한 번만 소비 가능 → `clone()` 필요  
-- Q2: `AbortController` + `setTimeout`  
-- Q3: X(서버 CORS 설정이 정답)  
-- Q4: `credentials: "include"`(CORS 시), `same-origin`(동일 출처)  
+**정답 힌트**
+- Q1: 본문은 한 번만 소비 가능 → `clone()` 필요
+- Q2: `AbortController` + `setTimeout`
+- Q3: X(서버 CORS 설정이 정답)
+- Q4: `credentials: "include"`(CORS 시), `same-origin`(동일 출처)
 - Q5: `no-cache`(재검증), `reload`는 강제 네트워크, `force-cache`는 캐시 우선
 
 ---

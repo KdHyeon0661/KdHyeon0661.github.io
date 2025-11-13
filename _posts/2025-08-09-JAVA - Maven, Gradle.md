@@ -432,7 +432,7 @@ tasks.withType<JavaCompile>().configureEach {
 ```
 
 **jlink** 파이프라인(공통 아이디어):
-1) `jdeps --print-module-deps`로 필요한 모듈 파악  
+1) `jdeps --print-module-deps`로 필요한 모듈 파악
 2) `jlink --module-path "$JAVA_HOME/jmods:mods" --add-modules com.example.app ...`
 
 ---
@@ -629,6 +629,6 @@ dependencies { implementation(project(":core")) }
 
 ## 결론
 
-- **Maven**은 **표준화·안정성·학습 비용 절감**에, **Gradle**은 **유연성·성능·대규모 확장성**에 강점이 있습니다.  
-- 팀의 맥락(규정/경험/규모/성능 요구)에 맞추어 선택하되, 공통적으로 **Wrapper 고정, 의존성 버전 중앙 관리(BOM/카탈로그), 캐시/병렬 활용, CI 재현성**을 확보하는 것이 핵심입니다.  
+- **Maven**은 **표준화·안정성·학습 비용 절감**에, **Gradle**은 **유연성·성능·대규모 확장성**에 강점이 있습니다.
+- 팀의 맥락(규정/경험/규모/성능 요구)에 맞추어 선택하되, 공통적으로 **Wrapper 고정, 의존성 버전 중앙 관리(BOM/카탈로그), 캐시/병렬 활용, CI 재현성**을 확보하는 것이 핵심입니다.
 - 모듈 시스템(JPMS)·jlink·jdeps·컨테이너 최적화까지 고려하면 **장기 유지보수성/보안/배포 효율**을 크게 높일 수 있습니다.

@@ -9,20 +9,20 @@ category: Docker
 ## 0. 공통 아키텍처와 용어 정리
 
 ### 0.1 파이프라인 표준 단계
-1) **소스 체크아웃**  
-2) **정적 검사/테스트**(단위·통합, 린트)  
-3) **보안**(SCA/SAST/Container Scan/SBOM)  
-4) **컨테이너 빌드**(멀티스테이지, buildx 캐시, 멀티아키)  
-5) **태깅/푸시**(Docker Hub/Harbor/ECR/GHCR)  
-6) **배포**(SSH/Compose/K8s/ArgoCD)  
-7) **검증/헬스체크**(자동 롤백 조건 포함)  
+1) **소스 체크아웃**
+2) **정적 검사/테스트**(단위·통합, 린트)
+3) **보안**(SCA/SAST/Container Scan/SBOM)
+4) **컨테이너 빌드**(멀티스테이지, buildx 캐시, 멀티아키)
+5) **태깅/푸시**(Docker Hub/Harbor/ECR/GHCR)
+6) **배포**(SSH/Compose/K8s/ArgoCD)
+7) **검증/헬스체크**(자동 롤백 조건 포함)
 8) **아티팩트 보관/리포팅**(JUnit, SARIF, SBOM, 커버리지)
 
 ### 0.2 레지스트리/태그 설계
 - 레지스트리 네임: `<REG>/<ORG>/<APP>:<TAG>`
-- 권장 태그 세트:  
-  - **불변**: `:git-<shortSHA>`, `:build-<num>`  
-  - **가독**: `:vX.Y.Z`(SemVer)  
+- 권장 태그 세트:
+  - **불변**: `:git-<shortSHA>`, `:build-<num>`
+  - **가독**: `:vX.Y.Z`(SemVer)
   - **채널**: `:prod`, `:staging`, `:dev`(움직이는 태그 → 자동 프로모션)
 - 배포 시 실제 이미지는 **다이제스트 고정** 사용을 권장: `image@sha256:<digest>`
 
@@ -452,9 +452,9 @@ spec:
 - 커버리지 기준 미달 시 실패 게이트.
 
 ### 6.2 린트/포맷/정적분석
-- Python: ruff/flake8/black  
-- JS/TS: eslint/prettier  
-- IaC: `tflint`, `checkov`, `kics`  
+- Python: ruff/flake8/black
+- JS/TS: eslint/prettier
+- IaC: `tflint`, `checkov`, `kics`
 - Dockerfile: `hadolint`, `dockle`
 
 ### 6.3 컨테이너 스캔/서명/정책
@@ -483,7 +483,7 @@ spec:
 
 ### 8.2 테스팅 가속
 - **서비스 컨테이너**로 DB/브로커 붙여 통합테스트(깃허브액션/깃랩 지원)
-- **매트릭스 전략**(OS/파이썬 버전/플랫폼) 병렬화  
+- **매트릭스 전략**(OS/파이썬 버전/플랫폼) 병렬화
   예) `strategy.matrix.python: [3.10, 3.11]`
 
 ### 8.3 단순 모델로 통신량 절감의 대략 계산
@@ -583,35 +583,35 @@ strategy:
 
 ## 15. 종합 예: “PR → 스캔/테스트 → 이미지 빌드/푸시 → 스테이징 자동배포 → 승인 후 프로덕션”
 
-1) PR 시: Lint/Unit/Trivy(SBOM)/컨테이너 빌드(푸시 X)  
-2) main 머지: 빌드 → 서명 → `:gitSHA` 푸시  
-3) 스테이징: Helm로 다이제스트 배포 + 스모크 테스트  
-4) 수동 승인: 프로덕션로 동일 다이제스트 롤아웃  
+1) PR 시: Lint/Unit/Trivy(SBOM)/컨테이너 빌드(푸시 X)
+2) main 머지: 빌드 → 서명 → `:gitSHA` 푸시
+3) 스테이징: Helm로 다이제스트 배포 + 스모크 테스트
+4) 수동 승인: 프로덕션로 동일 다이제스트 롤아웃
 5) 실패 시 자동 롤백 + 알림 + 이슈 트래킹(릴리스 태그)
 
 ---
 
 ## 16. 체크리스트
 
-- [ ] Dockerfile 멀티스테이지/캐시/최소화(슬림/알파인/디스트로리스)  
-- [ ] buildx 멀티아키 + 레지스트리 캐시  
-- [ ] SBOM/Trivy/서명(Cosign) + 정책 게이트  
-- [ ] 다이제스트 고정 배포, 태그는 가독/프로모션  
-- [ ] 비밀은 Secrets/Variables/Credentials, OIDC 적극 사용  
-- [ ] 스테이징 자동/프로덕션 승인, 롤백 자동화  
-- [ ] 관측성(로그/지표/트레이싱)과 알림 연결  
+- [ ] Dockerfile 멀티스테이지/캐시/최소화(슬림/알파인/디스트로리스)
+- [ ] buildx 멀티아키 + 레지스트리 캐시
+- [ ] SBOM/Trivy/서명(Cosign) + 정책 게이트
+- [ ] 다이제스트 고정 배포, 태그는 가독/프로모션
+- [ ] 비밀은 Secrets/Variables/Credentials, OIDC 적극 사용
+- [ ] 스테이징 자동/프로덕션 승인, 롤백 자동화
+- [ ] 관측성(로그/지표/트레이싱)과 알림 연결
 - [ ] 문서화(README/Runbook)와 백업/DR 시나리오
 
 ---
 
 ## 참고 문서
-- GitHub Actions: https://docs.github.com/actions  
-- GitLab CI/CD: https://docs.gitlab.com/ee/ci/  
-- Jenkins Pipeline: https://www.jenkins.io/doc/book/pipeline/  
-- Docker Buildx: https://docs.docker.com/build/buildx/  
-- Trivy: https://aquasecurity.github.io/trivy/  
-- Cosign: https://docs.sigstore.dev/cosign/  
-- ArgoCD: https://argo-cd.readthedocs.io/  
+- GitHub Actions: https://docs.github.com/actions
+- GitLab CI/CD: https://docs.gitlab.com/ee/ci/
+- Jenkins Pipeline: https://www.jenkins.io/doc/book/pipeline/
+- Docker Buildx: https://docs.docker.com/build/buildx/
+- Trivy: https://aquasecurity.github.io/trivy/
+- Cosign: https://docs.sigstore.dev/cosign/
+- ArgoCD: https://argo-cd.readthedocs.io/
 - Harbor: https://goharbor.io/
 
 ---
@@ -693,8 +693,8 @@ pipeline {
 ---
 
 ### 결론
-- **GitHub Actions**: 간결·강력한 마켓플레이스, OIDC·buildx 친화적  
-- **GitLab CI**: 레지스트리·권한·프로젝트와 **완전 통합**  
-- **Jenkins**: 온프레미스·커스터마이즈·에코시스템 극대화  
+- **GitHub Actions**: 간결·강력한 마켓플레이스, OIDC·buildx 친화적
+- **GitLab CI**: 레지스트리·권한·프로젝트와 **완전 통합**
+- **Jenkins**: 온프레미스·커스터마이즈·에코시스템 극대화
 
 세 플랫폼 어디서든 **동일한 원칙**(최소 이미지·캐시·보안게이트·다이제스트 배포·관측성·자동 롤백)을 적용하면, Docker 중심 CI/CD는 **신뢰·속도·보안**을 동시에 달성한다.

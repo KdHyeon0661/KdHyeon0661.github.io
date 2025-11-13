@@ -16,7 +16,7 @@ category: Docker
 
 ## 1. 왜 Kubernetes에서도 Volume이 필요한가
 
-Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구가 발생하면 컨테이너 파일시스템의 내용은 사라진다.  
+Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구가 발생하면 컨테이너 파일시스템의 내용은 사라진다.
 데이터베이스, 업로드 파일, 캐시 중 일부, 로그 보관 등은 **Pod 수명과 무관하게 보존**되어야 한다.
 
 해결을 위해 Kubernetes는 다음을 제공한다.
@@ -63,8 +63,8 @@ Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구
 | 선언 위치 | Pod spec 내부 | PV/PVC 별도 객체 |
 | 예시 | 임시 캐시, 빌드 아티팩트, 설정 주입 | DB 데이터, 업로드, 장기 로그 |
 
-추가 팁  
-- `emptyDir`는 노드 로컬 디스크나 메모리(`medium: Memory`)를 사용한다. 장애 시 데이터 손실 가능.  
+추가 팁
+- `emptyDir`는 노드 로컬 디스크나 메모리(`medium: Memory`)를 사용한다. 장애 시 데이터 손실 가능.
 - `hostPath`는 개발용으로만 권장. 노드 결합과 보안 위험이 크다.
 
 ---
@@ -78,7 +78,7 @@ Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구
 - `ReadWriteMany` (RWX): 여러 노드에서 읽기/쓰기 공유
 - `ReadWriteOncePod` (RWO-Pod): 단 하나의 Pod만 R/W 마운트 (드라이버 지원 필요)
 
-클라우드 블록 스토리지(예: AWS EBS, GCE PD, Azure Disk)는 일반적으로 RWO.  
+클라우드 블록 스토리지(예: AWS EBS, GCE PD, Azure Disk)는 일반적으로 RWO.
 RWX가 필요하면 NFS, CephFS, EFS(AWS), Filestore(GCP), Azure Files 등 **파일 스토리지**를 고려한다.
 
 ### 4.2 리클레임 정책(persistentVolumeReclaimPolicy)
@@ -87,15 +87,15 @@ RWX가 필요하면 NFS, CephFS, EFS(AWS), Filestore(GCP), Azure Files 등 **파
 - `Delete`: PVC 삭제 시 PV와 스토리지(클라우드 디스크)도 삭제.
 - `Recycle`: 구식. 사용하지 않는다.
 
-운영 관점  
-- 데이터 보존이 필요한 워크로드는 `Retain`을 검토.  
+운영 관점
+- 데이터 보존이 필요한 워크로드는 `Retain`을 검토.
 - 테스트 환경이나 임시 워크로드는 `Delete`로 자동 정리.
 
 ### 4.3 노드 어피니티와 바인딩 시점
 
 - `nodeAffinity` (PV): 특정 노드/존에 귀속된 로컬/블록 볼륨 매핑에 사용.
-- StorageClass의 `volumeBindingMode`  
-  - `Immediate`: PVC 생성 즉시 바인딩 시도  
+- StorageClass의 `volumeBindingMode`
+  - `Immediate`: PVC 생성 즉시 바인딩 시도
   - `WaitForFirstConsumer`: **Pod가 스케줄될 노드 정보**를 보고 해당 토폴로지에 맞는 볼륨을 프로비저닝. 멀티존에서 권장.
 
 ---
@@ -122,8 +122,8 @@ spec:
     path: "/exports/data"
 ```
 
-포인트  
-- NFS는 RWX를 지원하므로 여러 Pod에서 공유가 가능하다.  
+포인트
+- NFS는 RWX를 지원하므로 여러 Pod에서 공유가 가능하다.
 - `mountOptions`로 프로토콜/성능 옵션을 제어할 수 있다.
 
 ### 5.2 PersistentVolumeClaim (PVC)
@@ -220,8 +220,8 @@ spec:
       claimName: pvc-dynamic
 ```
 
-운영 팁  
-- `WaitForFirstConsumer`를 사용하면 멀티존에서 잘못된 존의 디스크가 먼저 생성되는 문제를 피할 수 있다.  
+운영 팁
+- `WaitForFirstConsumer`를 사용하면 멀티존에서 잘못된 존의 디스크가 먼저 생성되는 문제를 피할 수 있다.
 - `allowVolumeExpansion: true`로 PVC 크기 증가를 허용한다.
 
 ---
@@ -286,7 +286,7 @@ volumeMounts:
   readOnly: true
 ```
 
-주의  
+주의
 - `subPath`는 실시간 변경 전파가 제한될 수 있다. 자주 바뀌는 설정은 디렉터리 전체 마운트와 핫리로드 전략을 고려한다.
 
 ---
@@ -432,19 +432,19 @@ kubectl describe pod <name> | sed -n '/Events/,$p'
 
 ## 14. 체크리스트
 
-- 스토리지 특성 파악  
+- 스토리지 특성 파악
   - 지연/처리량/IOPS, 가용성 영역(존), 스냅샷/암호화 지원
-- 접근 모드 선택  
+- 접근 모드 선택
   - RWO vs RWX, 필요 시 파일 스토리지로 설계
-- 바인딩 전략  
+- 바인딩 전략
   - `WaitForFirstConsumer`로 토폴로지와 일치시키기
-- 리클레임 정책  
+- 리클레임 정책
   - 데이터 보존 필요 시 `Retain`, 그렇지 않으면 `Delete`
-- 확장/스냅샷  
+- 확장/스냅샷
   - `allowVolumeExpansion`, VolumeSnapshotClass 준비
-- 권한/보안  
+- 권한/보안
   - `runAsUser`/`fsGroup`/SELinux, Secret로 자격증명 관리
-- 운영 자동화  
+- 운영 자동화
   - 백업/복구 절차 문서화, 관측/알람(Attach/Mount 실패, PVC Pending)
 
 ---
@@ -537,7 +537,7 @@ spec:
 
 ## 결론
 
-Kubernetes 스토리지는 **애플리케이션의 일시성**과 **데이터의 영속성** 사이의 간극을 메운다.  
+Kubernetes 스토리지는 **애플리케이션의 일시성**과 **데이터의 영속성** 사이의 간극을 메운다.
 핵심은 다음과 같다.
 
 - 워크로드의 **접근 모드**와 **성능 특성**을 먼저 정하고, 그에 맞는 드라이버/StorageClass를 선택한다.

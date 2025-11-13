@@ -21,13 +21,13 @@ category: 논리회로설계
 ### 1.1 동시문(Concurrent Statements) 3형식 요약
 동시문은 **회로의 지속적 구동**을 의미합니다(=배선/게이트에 항상 걸려 있는 드라이버).
 
-1) **조건부 신호 할당(when–else)** — 2:1 선택, 간단한 보호 로직  
+1) **조건부 신호 할당(when–else)** — 2:1 선택, 간단한 보호 로직
 ```vhdl
 y <= a when sel = '0' else b;                         -- 2:1
 z <= (a and b) when en = '1' else (others => '0');    -- EN 보호
 ```
 
-2) **선택적 신호 할당(with–select)** — case 스타일, one-hot/코드 선택  
+2) **선택적 신호 할당(with–select)** — case 스타일, one-hot/코드 선택
 ```vhdl
 with sel select
   y <= d0 when "00",
@@ -38,14 +38,14 @@ with sel select
 
 3) **동시문 ↔ 프로세스(조합) 등가** — 도구는 동시문을 내부적으로 **조합 프로세스**로 변환하여 해석합니다.
 
-> 팁  
-> - 간단한 2:1/4:1 MUX→ `when-else`/`with-select`.  
+> 팁
+> - 간단한 2:1/4:1 MUX→ `when-else`/`with-select`.
 > - 복수 출력/디폴트/예외처리 많음→ `process(all) + case`가 명확.
 
 ---
 
 ### 1.2 조합 프로세스(Combinational Process) 정석 패턴
-- **민감도 목록**: VHDL-2008의 `process(all)` 권장(누락 방지).  
+- **민감도 목록**: VHDL-2008의 `process(all)` 권장(누락 방지).
 - **완전할당**: 모든 출력에 기본값 또는 모든 분기에서 값 할당 → **래치 방지**.
 
 ```vhdl
@@ -67,7 +67,7 @@ end architecture;
 ---
 
 ### 1.3 시뮬레이션 지연 모델(테스트벤치 전용)
-- **관성(inertial)**: 짧은 펄스를 소거(게이트 모델, 기본)  
+- **관성(inertial)**: 짧은 펄스를 소거(게이트 모델, 기본)
 - **수송(transport)**: 펄스를 그대로 전달(배선 모델)
 ```vhdl
 y <= reject 0 ns inertial a after 2 ns;  -- 관성(기본)
@@ -199,7 +199,7 @@ end process;
 
 ---
 
-### 2.5 3-State와 외부 버스 (Top-level에만)  
+### 2.5 3-State와 외부 버스 (Top-level에만)
 대부분의 FPGA 내부는 **진짜 3상태**를 지원하지 않으므로 내부는 **MUX로 합성**됩니다. 외부 핀만 tri-state를 사용하세요.
 ```vhdl
 -- top 레벨 예: I/O 핀에만 'Z' 허용
@@ -390,9 +390,9 @@ end architecture;
 ```
 
 ### 6.2 흔한 실수 → 예방책
-- **민감도 누락**(VHDL-93): `process(a,b)`에서 `c` 빠짐 → 래치 유도 → **`process(all)` 사용**  
-- **불완전 할당**: 어떤 분기에서 출력 미할당 → 래치 생성 → **기본값/others** 추가  
-- **형 변환 누락**: `std_logic_vector`끼리 덧셈 → **반드시 `unsigned()`/`signed()` 캐스팅**  
+- **민감도 누락**(VHDL-93): `process(a,b)`에서 `c` 빠짐 → 래치 유도 → **`process(all)` 사용**
+- **불완전 할당**: 어떤 분기에서 출력 미할당 → 래치 생성 → **기본값/others** 추가
+- **형 변환 누락**: `std_logic_vector`끼리 덧셈 → **반드시 `unsigned()`/`signed()` 캐스팅**
 - **지연/대기**를 RTL에 사용: 합성 불가 → **테스트벤치에서만** 사용
 
 ---
@@ -438,8 +438,8 @@ end package body;
 
 ## 9. 종합 예제 — **조합 논리 + MUX + 배열(평탄화)**
 
-요구: 4채널 입력 중 선택한 채널에 후처리 연산을 적용해 출력.  
-- `sel`: 4:1 MUX 선택  
+요구: 4채널 입력 중 선택한 채널에 후처리 연산을 적용해 출력.
+- `sel`: 4:1 MUX 선택
 - `op`: 후처리(00 pass / 01 invert / 10 or ch0 / 11 xor ch1)
 
 ```vhdl
@@ -533,16 +533,16 @@ end;
 ---
 
 ## 10. 포켓 요약
-- **조합 표현**: `when-else`, `with-select`, `process(all)+case` — 공통 핵심은 **완전할당**으로 래치 방지.  
-- **MUX**: 2:1~N:1까지 스타일별 구현. VHDL-2008 **비제약 배열**로 파라메트릭화 깔끔.  
-- **모듈 구조**: Entity(인터페이스) + Architecture(구현) + Package(Context로 묶기).  
-- **신호·상수**: signal(델타 후 갱신) vs variable(즉시); constant/generic로 재사용/파라메터화.  
-- **배열**: `std_logic_vector` 조합, 사용자 정의 배열, ROM/LUT, generate로 반복 패턴 처리.  
+- **조합 표현**: `when-else`, `with-select`, `process(all)+case` — 공통 핵심은 **완전할당**으로 래치 방지.
+- **MUX**: 2:1~N:1까지 스타일별 구현. VHDL-2008 **비제약 배열**로 파라메트릭화 깔끔.
+- **모듈 구조**: Entity(인터페이스) + Architecture(구현) + Package(Context로 묶기).
+- **신호·상수**: signal(델타 후 갱신) vs variable(즉시); constant/generic로 재사용/파라메터화.
+- **배열**: `std_logic_vector` 조합, 사용자 정의 배열, ROM/LUT, generate로 반복 패턴 처리.
 - **합성/시뮬 규율**: RTL에 시간 제어 금지, 내부 3-state 지양, `numeric_std`만 사용.
 
 ---
 
 ### 부록 A: 수식 메모(우선순위/델타 개념)
-- 연산자 **우선순위** \(높음→낮음\):  
+- 연산자 **우선순위** \(높음→낮음\):
   $$ \*,/,\mathrm{mod},\mathrm{rem}\ >\ +,-,\&\ >\ \text{shift/rotate}\ >\ \text{relational}\ >\ \text{and}\ >\ \text{or,xor}\ >\ \text{nand,nor,xnor} $$
 - **델타 사이클**: 물리 시간 \(t\)에서 이벤트 정착을 위해 \((t,\delta)\) 단계를 반복하여 안정점에 도달 후 \(t+\Delta t\)로 진행.

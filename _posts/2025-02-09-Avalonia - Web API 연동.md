@@ -171,8 +171,8 @@ public static class Policies
 }
 ```
 
-> 지터 백오프의 직관적 근사: 평균 지연이 \( d \)일 때, \( n \)번째 재시도 지연의 기대값은 대략  
-> $$ E[T_n] \approx d \cdot n $$  
+> 지터 백오프의 직관적 근사: 평균 지연이 \( d \)일 때, \( n \)번째 재시도 지연의 기대값은 대략
+> $$ E[T_n] \approx d \cdot n $$
 > 단, jitter 사용 시 분산이 커져서 “떼쓰기(동시 재시도 충돌)”를 완화한다.
 
 ---
@@ -401,7 +401,7 @@ public class App : Application
 }
 ```
 
-> 초기 초안의 “new HttpClient(...)” 생성 대신 **HttpClientFactory**를 사용하면  
+> 초기 초안의 “new HttpClient(...)” 생성 대신 **HttpClientFactory**를 사용하면
 > 소켓 핸들 누수 방지, 핸들러 체인/Polly 정책 조립, 네임드 클라이언트 관리가 쉬워진다.
 
 ---
@@ -552,8 +552,8 @@ await _repo.UpdateAsync(item! with { Price = 19900m }, ifMatch: etag);
 
 ## 10. 429(레이트 리밋)/백오프 처리
 
-Polly로 재시도하되, 서버가 `Retry-After` 헤더를 줄 경우 해당 시간을 우선한다.  
-지터 백오프의 직관적 기대 지연 합은 \( \sum_{k=1}^n E[T_k] \)이며, 단순 선형 증가 근사로  
+Polly로 재시도하되, 서버가 `Retry-After` 헤더를 줄 경우 해당 시간을 우선한다.
+지터 백오프의 직관적 기대 지연 합은 \( \sum_{k=1}^n E[T_k] \)이며, 단순 선형 증가 근사로
 $$
 \sum_{k=1}^n d \cdot k = d \cdot \frac{n(n+1)}{2}
 $$
@@ -658,11 +658,11 @@ public sealed class ProductApiRepositoryTests
 
 ## 13. 전체 흐름 도식
 
-1) View → ViewModel: 사용자 액션(검색/정렬/페이지)  
-2) ViewModel → Repository: 쿼리 파라미터와 함께 API 요청  
-3) HttpClientFactory 파이프라인: 인증/로깅/Polly 정책 적용  
-4) Repository: 응답 파싱 → 도메인 모델 반환  
-5) ViewModel: 상태 업데이트(Items/IsBusy/Error)  
+1) View → ViewModel: 사용자 액션(검색/정렬/페이지)
+2) ViewModel → Repository: 쿼리 파라미터와 함께 API 요청
+3) HttpClientFactory 파이프라인: 인증/로깅/Polly 정책 적용
+4) Repository: 응답 파싱 → 도메인 모델 반환
+5) ViewModel: 상태 업데이트(Items/IsBusy/Error)
 6) View: DataGrid/ProgressBar/오류 TextBlock 반영
 
 ---
@@ -683,5 +683,5 @@ public sealed class ProductApiRepositoryTests
 
 - 초안의 기본 CRUD 예시를 **HttpClientFactory/Polly/DelegatingHandler**로 **운영 내구성**있게 확장했다.
 - **Repository 캡슐화** 덕분에 ViewModel 테스트는 간단하며, API 변화에도 UI는 안정적이다.
-- **ETag/If-Match**, **취소 토큰**, **지터 백오프** 등은 실서비스의 “체력”을 좌우한다.  
+- **ETag/If-Match**, **취소 토큰**, **지터 백오프** 등은 실서비스의 “체력”을 좌우한다.
   본 템플릿을 바탕으로 도메인별 DTO/Mapper, 캐시·오프라인 전략, 오류 UX(ProblemDetails 매핑)를 더해 **현업 품질의 Avalonia MVVM + Web API** 스택을 구축하자.

@@ -23,9 +23,9 @@ category: HTML
 Client --------> Server   : GET /events  (Accept: text/event-stream)
 Client <======== Server   : HTTP 200, Content-Type: text/event-stream
                               data: ...
-                              
+
                               data: ...
-                              
+
                               : heartbeat
 ```
 
@@ -154,8 +154,8 @@ SSE의 진짜 힘은 **자동 재연결 + 마지막 ID 복구**다.
 
 서버 처리 흐름:
 
-1) 각 연결의 마지막 ID를 파악: `req.headers['last-event-id']`  
-2) **메시지 큐(메모리/Redis/DB)** 에서 ID 이후 항목을 찾아 재전송  
+1) 각 연결의 마지막 ID를 파악: `req.headers['last-event-id']`
+2) **메시지 큐(메모리/Redis/DB)** 에서 ID 이후 항목을 찾아 재전송
 3) 실시간으로 이어서 스트리밍
 
 Node(개념):
@@ -259,7 +259,7 @@ app.get('/events', (req, res) => {
 
 ### 8.1 프록시 버퍼링
 
-- Nginx 등은 기본적으로 응답을 버퍼링 → **SSE가 묶일 수 있음**.  
+- Nginx 등은 기본적으로 응답을 버퍼링 → **SSE가 묶일 수 있음**.
   Nginx 설정:
   ```
   location /events {
@@ -287,7 +287,7 @@ app.get('/events', (req, res) => {
 
 ### 8.4 압축
 
-- `text/event-stream` 은 **Content-Length 없이 스트리밍**.  
+- `text/event-stream` 은 **Content-Length 없이 스트리밍**.
   일부 프록시는 압축을 비권장/비활성화. 압축이 필요하면 **서버와 프록시 양쪽에서 안전성**을 검증.
 
 ---
@@ -519,9 +519,9 @@ export default function UseSSE() {
 ## 15. 미니 실전: “배치 작업 진행률 + 로그 스트림”
 
 ### 흐름
-1) 사용자가 “배치 실행” 클릭 → `POST /jobs` → jobId 반환  
-2) 클라가 `EventSource(/jobs/:id/stream)` 연결  
-3) 서버는 상태/로그를 `event: progress`, `event: log` 로 전송  
+1) 사용자가 “배치 실행” 클릭 → `POST /jobs` → jobId 반환
+2) 클라가 `EventSource(/jobs/:id/stream)` 연결
+3) 서버는 상태/로그를 `event: progress`, `event: log` 로 전송
 4) 끊겼다가 재연결 시 `Last-Event-ID` 로 **로그 유실 없이 복구**
 
 서버 전송 예:
@@ -560,9 +560,9 @@ es.addEventListener('log', e => appendLog(e.data));
 
 ## 17. 추가 참고
 
-- MDN: Server-sent events  
-- HTML Living Standard: EventSource  
-- Can I use: EventSource  
+- MDN: Server-sent events
+- HTML Living Standard: EventSource
+- Can I use: EventSource
 - Nginx proxy buffering docs, Cloudflare streaming guidance
 
 이상으로, **SSE의 기초→실전 배포**까지 한 번에 정리했습니다. 실무에선 **하나의 연결, 명명 이벤트, ID/큐 복구, 프록시 설정** 네 가지를 먼저 체크하면 대부분의 문제를 예방할 수 있습니다.

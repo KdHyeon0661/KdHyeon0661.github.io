@@ -6,7 +6,7 @@ category: WPF
 ---
 # ICommand, RelayCommand 구현 완전 가이드
 
-WPF에서 **ICommand**는 버튼/메뉴/단축키 등의 **사용자 입력을 뷰모델의 동작**으로 연결하는 표준 인터페이스입니다.  
+WPF에서 **ICommand**는 버튼/메뉴/단축키 등의 **사용자 입력을 뷰모델의 동작**으로 연결하는 표준 인터페이스입니다.
 그 구현체로 가장 널리 쓰이는 것이 **RelayCommand**(DelegateCommand)이며, 동기/비동기/제네릭 버전을 상황에 맞게 사용합니다.
 
 ---
@@ -24,8 +24,8 @@ public interface ICommand
 
 - **CanExecute**가 `false`면, 바인딩된 컨트롤(Button 등)은 **자동으로 비활성화**됩니다.
 - **CanExecuteChanged**가 발생하면 WPF는 UI를 갱신하여 (비)활성 상태를 재평가합니다.
-- WPF는 키/마우스 포커스 변화 시 자체적으로 **CommandManager.RequerySuggested**를 발생시켜 재평가합니다.  
-  하지만 **뷰모델 속성 변경** 등 사용자 정의 조건 변화는 자동 인지되지 않을 수 있으므로,  
+- WPF는 키/마우스 포커스 변화 시 자체적으로 **CommandManager.RequerySuggested**를 발생시켜 재평가합니다.
+  하지만 **뷰모델 속성 변경** 등 사용자 정의 조건 변화는 자동 인지되지 않을 수 있으므로,
   **직접 CanExecuteChanged를 올리거나 `CommandManager.InvalidateRequerySuggested()`**를 호출해야 합니다.
 
 ---
@@ -134,7 +134,7 @@ public sealed class RelayCommand<T> : ICommand
 
 ## 3. 비동기 명령 (AsyncRelayCommand)
 
-비동기는 `async void`가 되기 쉬워 **예외/동시 실행/취소** 관리가 어렵습니다.  
+비동기는 `async void`가 되기 쉬워 **예외/동시 실행/취소** 관리가 어렵습니다.
 아래 구현은 **재진입 방지**, **취소 토큰**, **예외 안전성**을 고려했습니다.
 
 ```csharp
@@ -210,8 +210,8 @@ public sealed class AsyncRelayCommand : ICommand
 }
 ```
 
-> 팁  
-> - 긴 작업 중 버튼을 눌러도 **재실행이 막히도록** `_isExecuting`으로 CanExecute를 제어합니다.  
+> 팁
+> - 긴 작업 중 버튼을 눌러도 **재실행이 막히도록** `_isExecuting`으로 CanExecute를 제어합니다.
 > - 작업 취소가 필요하면 **`Cancel()`**을 노출하고, 내부 실행에서 **`ct.ThrowIfCancellationRequested()`**를 적절히 호출하세요.
 
 ---
@@ -330,8 +330,8 @@ public class MainViewModel : INotifyPropertyChanged
 </Grid>
 ```
 
-> **CommandParameter**  
-> - `RelayCommand<T>`를 쓰면 **강타입**으로 파라미터를 받을 수 있습니다.  
+> **CommandParameter**
+> - `RelayCommand<T>`를 쓰면 **강타입**으로 파라미터를 받을 수 있습니다.
 > - 리스트 항목 컨텍스트에서 상위 뷰모델 커맨드를 호출하려면:
 >   ```xml
 >   <Button Content="삭제"
@@ -343,25 +343,25 @@ public class MainViewModel : INotifyPropertyChanged
 
 ## 6. RoutedCommand / ApplicationCommands와의 차이
 
-- **RoutedCommand / RoutedUICommand**: **요소 트리**를 타고 올라가며 `CommandBinding`이 있는 곳에서 처리(뷰 코드비하인드 중심).  
-- **ICommand(RelayCommand)**: **뷰모델**에 두고 바인딩으로 직접 호출(MVVM 친화).  
-- 시스템 공용 명령(복사/붙여넣기 등)은 **ApplicationCommands.Copy**처럼 RoutedCommand를 그대로 써도 됩니다.  
+- **RoutedCommand / RoutedUICommand**: **요소 트리**를 타고 올라가며 `CommandBinding`이 있는 곳에서 처리(뷰 코드비하인드 중심).
+- **ICommand(RelayCommand)**: **뷰모델**에 두고 바인딩으로 직접 호출(MVVM 친화).
+- 시스템 공용 명령(복사/붙여넣기 등)은 **ApplicationCommands.Copy**처럼 RoutedCommand를 그대로 써도 됩니다.
   MVVM에서는 보통 **뷰모델 커맨드(ICommand)**를 기본으로, 필요 시 RoutedCommand를 혼용합니다.
 
 ---
 
 ## 7. 흔한 실수 & 베스트 프랙티스
 
-1. **`async void` 남발 금지**  
+1. **`async void` 남발 금지**
    - 비동기 커맨드는 `AsyncRelayCommand` 같은 **Task 기반**으로 구현하여 예외/취소/재진입을 관리하세요.
-2. **CanExecute 갱신 누락**  
-   - 관련 속성 setter에서 `command.RaiseCanExecuteChanged()`를 호출하세요.  
+2. **CanExecute 갱신 누락**
+   - 관련 속성 setter에서 `command.RaiseCanExecuteChanged()`를 호출하세요.
    - 또는 전역으로 `CommandManager.InvalidateRequerySuggested()`를 호출(남용은 성능 저하).
-3. **메모리 누수**  
+3. **메모리 누수**
    - `CommandManager.RequerySuggested`는 **정적 이벤트**입니다. `WeakEventManager`를 통해 약한 구독을 권장.
-4. **UI 타입의 뷰모델 침투**  
+4. **UI 타입의 뷰모델 침투**
    - `Visibility/Brush` 등은 **Converter**나 **DataTrigger**로 처리하고, 뷰모델은 **순수 상태**만 노출하세요.
-5. **멀티 파라미터 전달**  
+5. **멀티 파라미터 전달**
    - `RelayCommand<(int id, string name)>`처럼 **튜플**을 쓰거나, `MultiBinding + IValueConverter`로 포장하세요.
 
 ---
@@ -391,15 +391,15 @@ public partial class OrdersViewModel : ObservableObject
 }
 ```
 
-- `RelayCommand`, `AsyncRelayCommand`가 **속성 변경을 자동 감지**하도록 특성으로 연결되며,  
+- `RelayCommand`, `AsyncRelayCommand`가 **속성 변경을 자동 감지**하도록 특성으로 연결되며,
   `NotifyCanExecuteChangedFor` 등 고급 기능도 지원합니다.
 
 ---
 
 ## 9. 단위 테스트 포인트
 
-- **CanExecute**: 상태에 따라 `true/false`가 올바르게 변하는지  
-- **Execute**: 동작이 기대대로 호출되는지  
+- **CanExecute**: 상태에 따라 `true/false`가 올바르게 변하는지
+- **Execute**: 동작이 기대대로 호출되는지
 - **Async**: 재진입이 막히는지, 취소가 작동하는지, 예외가 안전하게 처리되는지
 
 ```csharp
@@ -418,8 +418,8 @@ public void SaveCommand_Disabled_When_Name_Is_Empty()
 
 ## 결론
 
-- **ICommand**는 WPF 입력을 MVVM으로 연결하는 표준 인터페이스입니다.  
-- **RelayCommand(동기/제네릭)**로 대부분의 동작을,  
-  **AsyncRelayCommand(취소/재진입 방지)**로 비동기 시나리오를 안정적으로 처리하세요.  
-- **CanExecute 갱신**, **WeakEventManager 구독**, **UI 타입 분리**를 습관화하면  
+- **ICommand**는 WPF 입력을 MVVM으로 연결하는 표준 인터페이스입니다.
+- **RelayCommand(동기/제네릭)**로 대부분의 동작을,
+  **AsyncRelayCommand(취소/재진입 방지)**로 비동기 시나리오를 안정적으로 처리하세요.
+- **CanExecute 갱신**, **WeakEventManager 구독**, **UI 타입 분리**를 습관화하면
   **테스트 가능한 견고한 MVVM 코드베이스**를 유지할 수 있습니다.

@@ -8,18 +8,18 @@ category: AWS
 
 ## 0. 한 장 요약
 
-- **HTTP API**: 가볍고 저렴/고성능. JWT Authorizer, 통합 단순화. 대부분의 **새로운 REST형 API**에 추천.  
-- **REST API(클래식)**: 세밀한 **매핑 템플릿, 모델/밸리데이션, 캐시, Usage Plan** 등 **풍부한 기능**. 복잡 변환/레거시 호환 시 적합.  
-- **WebSocket API**: 양방향 실시간(채팅/IoT/알림).  
-- **보안**: IAM/Cognito/Lambda Authorizer, WAF, 프라이빗/리소스 정책.  
-- **백엔드**: Lambda/HTTP(외부)/AWS 서비스/프라이빗(ENI, VPC Link).  
+- **HTTP API**: 가볍고 저렴/고성능. JWT Authorizer, 통합 단순화. 대부분의 **새로운 REST형 API**에 추천.
+- **REST API(클래식)**: 세밀한 **매핑 템플릿, 모델/밸리데이션, 캐시, Usage Plan** 등 **풍부한 기능**. 복잡 변환/레거시 호환 시 적합.
+- **WebSocket API**: 양방향 실시간(채팅/IoT/알림).
+- **보안**: IAM/Cognito/Lambda Authorizer, WAF, 프라이빗/리소스 정책.
+- **백엔드**: Lambda/HTTP(외부)/AWS 서비스/프라이빗(ENI, VPC Link).
 - **운영**: 스테이지/배포, Canary, 캐시, 스로틀, Usage Plan+API 키, 로깅/메트릭, 경보, 비용.
 
 ---
 
 ## 1. API Gateway란? (초안 보강)
 
-**역할**: 클라이언트 요청을 받아 **인증/인가** → **요청 가공** → **백엔드 통합(Integration)** → **응답 가공** → 반환.  
+**역할**: 클라이언트 요청을 받아 **인증/인가** → **요청 가공** → **백엔드 통합(Integration)** → **응답 가공** → 반환.
 **그림**: Client → API Gateway(리소스/메서드/라우트, Authorizer, Mapping, Throttle, Cache) → Lambda/HTTP/AWS 서비스 → 응답.
 
 ---
@@ -53,12 +53,12 @@ category: AWS
 
 ## 4. 작동 흐름 (요청 → 검증/인가 → 통합 → 응답)
 
-1) **라우팅**: 경로/메서드 매칭  
-2) **보안**: Authorizer/JWT/IAM/WAF/리소스 정책  
-3) **검증/변환**: (REST) 매핑 템플릿/모델 검증  
-4) **백엔드 통합 호출**: Lambda/HTTP/서비스/프라이빗  
-5) **응답 변환 & 헤더**  
-6) **캐시/스로틀/로깅**  
+1) **라우팅**: 경로/메서드 매칭
+2) **보안**: Authorizer/JWT/IAM/WAF/리소스 정책
+3) **검증/변환**: (REST) 매핑 템플릿/모델 검증
+4) **백엔드 통합 호출**: Lambda/HTTP/서비스/프라이빗
+5) **응답 변환 & 헤더**
+6) **캐시/스로틀/로깅**
 7) **클라이언트 반환**
 
 ---
@@ -85,7 +85,7 @@ def lambda_handler(event, context):
 필요 권한: `AWSLambdaBasicExecutionRole`.
 
 ### 5.2 HTTP API 생성(간단 콘솔 절차)
-- API Gateway → **HTTP API** → 라우트 `GET /hello` → 통합: Lambda(`app.lambda_handler`) → 배포 `$default`  
+- API Gateway → **HTTP API** → 라우트 `GET /hello` → 통합: Lambda(`app.lambda_handler`) → 배포 `$default`
 - 실행:
 ```bash
 curl "https://<api-id>.execute-api.<region>.amazonaws.com/hello?name=Kim"
@@ -134,7 +134,7 @@ exports.handler = async (event) => {
 ```
 
 ### 6.4 캐시(REST API 스테이지)
-- 스테이지 → **Cache Enabled** → TTL 설정  
+- 스테이지 → **Cache Enabled** → TTL 설정
 - 캐시 키 파라미터: `Integration Request`에서 **쿼리/헤더**를 캐시 키에 포함.
 
 ---
@@ -142,7 +142,7 @@ exports.handler = async (event) => {
 ## 7. 인증/인가
 
 ### 7.1 IAM 인증(서명 요청)
-- 서버-서버/사내 콜에서 주로 사용.  
+- 서버-서버/사내 콜에서 주로 사용.
 - 클라이언트가 **SigV4 서명**으로 호출.
 
 ### 7.2 Cognito(JWT)
@@ -175,7 +175,7 @@ def lambda_handler(event, context):
 
 ## 8. 요청/응답 매핑 & 유효성(REST API 중심)
 
-- **매핑 템플릿(VTL)**: 바디/헤더/쿼리/경로 → 백엔드 계약형으로 변환.  
+- **매핑 템플릿(VTL)**: 바디/헤더/쿼리/경로 → 백엔드 계약형으로 변환.
 - **모델/Validator**: OpenAPI/스키마 기반 검증(에러를 게이트웨이에서 반환해 백엔드 부담 완화).
 
 **요청 모델 예 (JSON Schema)**
@@ -194,7 +194,7 @@ def lambda_handler(event, context):
 
 ## 9. CORS
 
-- **HTTP API**: CORS 탭에서 Origin/Headers/Methods 설정.  
+- **HTTP API**: CORS 탭에서 Origin/Headers/Methods 설정.
 - **REST API**: `OPTIONS` 메서드 + 응답 헤더 추가 또는 콘솔의 CORS 활성화.
 
 필수 헤더 예:
@@ -208,9 +208,9 @@ Access-Control-Allow-Headers: Content-Type,Authorization
 
 ## 10. 스테이지/버전/도메인/배포
 
-- **Stage**: `dev`, `test`, `prod` 분리.  
-- **Stage Variables(REST)**: 백엔드 엔드포인트/Lambda 버전 바인딩.  
-- **Custom Domain**: ACM 인증서 + API 매핑(HTTP/REST) → 사용자 도메인 공개.  
+- **Stage**: `dev`, `test`, `prod` 분리.
+- **Stage Variables(REST)**: 백엔드 엔드포인트/Lambda 버전 바인딩.
+- **Custom Domain**: ACM 인증서 + API 매핑(HTTP/REST) → 사용자 도메인 공개.
 - **Canary Deployment(REST)**: 트래픽 일부를 새 배포에 라우팅.
 
 ---
@@ -218,34 +218,34 @@ Access-Control-Allow-Headers: Content-Type,Authorization
 ## 11. 관측성 & 제어
 
 ### 11.1 로깅/메트릭
-- **Access Logs**: 요청/응답 요약(HTTP API/REST 모두).  
-- **Execution Logs(REST)**: 통합/매핑 디버깅.  
+- **Access Logs**: 요청/응답 요약(HTTP API/REST 모두).
+- **Execution Logs(REST)**: 통합/매핑 디버깅.
 - **CloudWatch Metrics**: `4XXError`, `5XXError`, `Latency`, `Count`, `IntegrationLatency`.
 
 ### 11.2 스로틀/쿼터
-- **Account/Region 기본 한도** + **Usage Plan(REST)** + **Route별 제한(HTTP/REST)**  
+- **Account/Region 기본 한도** + **Usage Plan(REST)** + **Route별 제한(HTTP/REST)**
 - **WAF** 연계로 L7 보호(봇/SQLi/XSS 룰셋).
 
 ---
 
 ## 12. 캐싱(REST API)
 
-- **스테이지 캐시**: 응답 TTL, 캐시 키 셀렉터(쿼리/헤더/경로).  
+- **스테이지 캐시**: 응답 TTL, 캐시 키 셀렉터(쿼리/헤더/경로).
 - DB 조회/가격표/정적 변환 결과 캐시 → 비용/지연 절감.
 
 ---
 
 ## 13. 프라이빗/하이브리드 통합
 
-- **Private Integration**: VPC 내부 **NLB** 뒤의 서비스로 연결(**VPC Link**).  
-- **Private API(REST)**: 엔드포인트 타입 Private + 리소스 정책(한정된 VPC/엔드포인트에서만 접근).  
+- **Private Integration**: VPC 내부 **NLB** 뒤의 서비스로 연결(**VPC Link**).
+- **Private API(REST)**: 엔드포인트 타입 Private + 리소스 정책(한정된 VPC/엔드포인트에서만 접근).
 - **Lambda VPC**: 람다를 VPC에 붙여 내부 자원 접근.
 
 ---
 
 ## 14. 파일 업로드(대용량) 패턴
 
-- **API Gateway 직접 업로드**는 비효율.  
+- **API Gateway 직접 업로드**는 비효율.
 - **S3 Pre-signed URL** 발급 API → 클라이언트가 **S3로 직접 업/다운로드**.
 
 예: Pre-signed URL 발급 람다
@@ -269,10 +269,10 @@ def lambda_handler(event, context):
 $$
 \text{월 비용} \approx \sum_a (R_a \cdot p_a) + C_{\text{cache}} + B_{\text{egress}}
 $$
-- \(R_a\): API 유형/스테이지별 **요청 수**, \(p_a\): **요청 단가**  
-- \(C_{\text{cache}}\): 캐시 메모리(REST)  
-- \(B_{\text{egress}}\): 외부 전송  
-- **HTTP API**가 일반적으로 **REST API보다 저렴/지연 낮음**.  
+- \(R_a\): API 유형/스테이지별 **요청 수**, \(p_a\): **요청 단가**
+- \(C_{\text{cache}}\): 캐시 메모리(REST)
+- \(B_{\text{egress}}\): 외부 전송
+- **HTTP API**가 일반적으로 **REST API보다 저렴/지연 낮음**.
 - **Lambda/백엔드 비용**도 함께 최적화(콜 수/지연/메모리).
 
 ---
@@ -384,8 +384,8 @@ resource "aws_lambda_permission" "apigw" {
 
 ## 19. WebSocket API(간단 개념 & 예시)
 
-- **경로**: `$connect`, `$disconnect`, `$default`  
-- **상태**: 연결ID(ConnectionId)를 **DynamoDB/ElastiCache** 등에 저장해 타깃 브로드캐스트.  
+- **경로**: `$connect`, `$disconnect`, `$default`
+- **상태**: 연결ID(ConnectionId)를 **DynamoDB/ElastiCache** 등에 저장해 타깃 브로드캐스트.
 - **응답**: `@connections` API로 특정 연결에 푸시.
 
 예: Python으로 특정 연결에 메시지
@@ -401,13 +401,13 @@ def push_message(api_id, region, connection_id, body):
 
 ## 20. 베스트 프랙티스
 
-- **HTTP API 우선**, 레거시/정밀 변환/캐시 필요 시 REST API.  
-- 인증은 **Cognito JWT** 또는 **Lambda Authorizer**(필요 시) 사용.  
-- **S3 업로드는 Pre-signed URL**로, API는 **URL 발급**만.  
-- **Idempotency-Key**(헤더)로 **POST 멱등성** 보장.  
-- **Cold Start** 줄이기: 람다 메모리/언어/프리프로비전 컨커런시.  
-- **WAF**/리소스 정책으로 공격면 최소화.  
-- **Observability**: Access Logs, 메트릭 경보, 트레이싱(X-Ray).  
+- **HTTP API 우선**, 레거시/정밀 변환/캐시 필요 시 REST API.
+- 인증은 **Cognito JWT** 또는 **Lambda Authorizer**(필요 시) 사용.
+- **S3 업로드는 Pre-signed URL**로, API는 **URL 발급**만.
+- **Idempotency-Key**(헤더)로 **POST 멱등성** 보장.
+- **Cold Start** 줄이기: 람다 메모리/언어/프리프로비전 컨커런시.
+- **WAF**/리소스 정책으로 공격면 최소화.
+- **Observability**: Access Logs, 메트릭 경보, 트레이싱(X-Ray).
 - **Canary**로 점진 배포, 에러 상승 시 즉시 롤백.
 
 ---
@@ -453,19 +453,19 @@ jobs:
 
 ## 23. 보안/규정/거버넌스
 
-- **Least Privilege**: 배포 역할/람다 역할 최소화.  
-- **키/비밀**: Secrets Manager/SSM Parameter Store.  
-- **데이터 보호**: TLS(엔드투엔드), WAF, 스키마 검증.  
+- **Least Privilege**: 배포 역할/람다 역할 최소화.
+- **키/비밀**: Secrets Manager/SSM Parameter Store.
+- **데이터 보호**: TLS(엔드투엔드), WAF, 스키마 검증.
 - **감사**: CloudTrail(구성 변경/호출 추적), Access Logs 보관(S3 Object Lock 옵션).
 
 ---
 
 ## 24. 마무리 요약(초안 정리 + 보강)
 
-- **HTTP API**로 **간단/저렴/고성능** 경로를 우선 채택,  
-- 필요 시 **REST API**의 **세밀 매핑/캐시/Usage Plan**을 사용,  
-- 인증/인가(**Cognito/JWT/Lambda Authorizer/IAM**)를 요구에 맞춰 결합,  
-- **프라이빗 통합(VPC Link/Private API)**와 **WAF/스로틀**로 보안/안정성을 강화,  
+- **HTTP API**로 **간단/저렴/고성능** 경로를 우선 채택,
+- 필요 시 **REST API**의 **세밀 매핑/캐시/Usage Plan**을 사용,
+- 인증/인가(**Cognito/JWT/Lambda Authorizer/IAM**)를 요구에 맞춰 결합,
+- **프라이빗 통합(VPC Link/Private API)**와 **WAF/스로틀**로 보안/안정성을 강화,
 - **관측성/경보/CI/CD/IaC**로 **운영 자동화**를 정착하라.
 
 이 문서의 예제들을 **당신의 리전/계정/도메인/정책/역할**로 치환하면 즉시 프로덕션에 적용 가능한 **API Gateway 표준 패턴**을 구축할 수 있다.

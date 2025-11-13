@@ -172,7 +172,7 @@ document.getElementById('toggle-theme').addEventListener('click', ()=>{
 </script>
 ```
 
-**왜 인라인 스니펫이 head 상단에 필요한가?**  
+**왜 인라인 스니펫이 head 상단에 필요한가?**
 - CSS가 로드되기 전에 `data-theme`를 설정하면 **라이트→다크 순간 깜빡임(FOUC)**을 제거.
 
 ### 3.4 시스템 변경 실시간 반영(옵션)
@@ -297,16 +297,16 @@ html, body, .card, .button {
 }
 ```
 
-**주의**  
-- 테마 토글 시 **layout-affecting 속성**(예: `box-shadow` 과도 변경, 이미지 필터)은 프레임 드랍 유발 가능.  
+**주의**
+- 테마 토글 시 **layout-affecting 속성**(예: `box-shadow` 과도 변경, 이미지 필터)은 프레임 드랍 유발 가능.
 - **GPU 친화 속성**(color/background/border-color/opacity/transform) 위주로 전환.
 
 ---
 
 ## 8. FOUC(테마 깜빡임) 완전 방지 전략
 
-1) **head 최상단 인라인 스니펫**으로 `data-theme` 즉시 설정(§3.3).  
-2) CSS 번들 상단에 토큰 정의.  
+1) **head 최상단 인라인 스니펫**으로 `data-theme` 즉시 설정(§3.3).
+2) CSS 번들 상단에 토큰 정의.
 3) SSR 환경에선 서버에서 쿠키/설정으로 초깃값 렌더.
 
 **SSR 예시(개념):**
@@ -420,24 +420,24 @@ html,body{ background:var(--bg); color:var(--text); margin:0; }
 
 ## 11. QA 체크리스트 (릴리즈 전 점검)
 
-- [ ] 초기 로딩에서 **FOUC**가 없는가? (라이트→다크 깜빡임)  
-- [ ] `color-scheme`로 폼/스크롤바가 테마에 맞는가?  
-- [ ] 본문/링크/보더/아이콘 **모두** 테마 토큰을 사용했는가?  
-- [ ] 이미지/일러스트에 **다크 전용** 자산(또는 적절한 처리)이 있는가?  
-- [ ] 대비비(본문 4.5:1 이상) 충족? 포커스 표시 명확?  
-- [ ] `prefers-reduced-motion`, `forced-colors` 대응?  
-- [ ] `meta theme-color`가 테마별로 설정되었는가?  
-- [ ] 토글 후 선택이 **localStorage**에 저장/복원되는가?  
-- [ ] 시스템 테마 변경 시(저장값 없을 때) 실시간 동기화되는가?  
+- [ ] 초기 로딩에서 **FOUC**가 없는가? (라이트→다크 깜빡임)
+- [ ] `color-scheme`로 폼/스크롤바가 테마에 맞는가?
+- [ ] 본문/링크/보더/아이콘 **모두** 테마 토큰을 사용했는가?
+- [ ] 이미지/일러스트에 **다크 전용** 자산(또는 적절한 처리)이 있는가?
+- [ ] 대비비(본문 4.5:1 이상) 충족? 포커스 표시 명확?
+- [ ] `prefers-reduced-motion`, `forced-colors` 대응?
+- [ ] `meta theme-color`가 테마별로 설정되었는가?
+- [ ] 토글 후 선택이 **localStorage**에 저장/복원되는가?
+- [ ] 시스템 테마 변경 시(저장값 없을 때) 실시간 동기화되는가?
 
 ---
 
 ## 12. 문제 해결 모음
 
-- **라이트 색이 잠깐 보임** → 인라인 스니펫로 `data-theme` 선반영(§3.3).  
-- **네이티브 컨트롤 라이트로 고정** → `:root{ color-scheme: light dark; }`.  
-- **사진/썸네일이 뜨는 느낌** → 다크 전용 자산 준비, 반전 필터는 피로감↑.  
-- **SVG 색 통일 안 됨** → `fill="currentColor"`로 통일, CSS `color`로 제어.  
+- **라이트 색이 잠깐 보임** → 인라인 스니펫로 `data-theme` 선반영(§3.3).
+- **네이티브 컨트롤 라이트로 고정** → `:root{ color-scheme: light dark; }`.
+- **사진/썸네일이 뜨는 느낌** → 다크 전용 자산 준비, 반전 필터는 피로감↑.
+- **SVG 색 통일 안 됨** → `fill="currentColor"`로 통일, CSS `color`로 제어.
 - **전환 시 버벅임** → 전환 속성 축소, 이미지 필터/박스섀도우 남용 금지.
 
 ---
@@ -459,16 +459,16 @@ html,body{ background:var(--bg); color:var(--text); margin:0; }
 
 ## 14. 결론 — 추천 기본 템플릿
 
-1) **CSS 변수 토큰**으로 색·보더·표면·포커스 정의  
-2) `<html data-theme="...">` + **인라인 초기화 스니펫**으로 FOUC 제거  
-3) `color-scheme: light dark`로 네이티브 제어  
-4) 이미지/SVG는 **다크 자산** 또는 `currentColor` 활용  
-5) 대비/모션/강제색 등 접근성 미디어쿼리 대응  
+1) **CSS 변수 토큰**으로 색·보더·표면·포커스 정의
+2) `<html data-theme="...">` + **인라인 초기화 스니펫**으로 FOUC 제거
+3) `color-scheme: light dark`로 네이티브 제어
+4) 이미지/SVG는 **다크 자산** 또는 `currentColor` 활용
+5) 대비/모션/강제색 등 접근성 미디어쿼리 대응
 6) 컴포넌트는 **오직 변수만** 참조 → 테마 확장/브랜딩 시 유지보수 최소화
 
 ---
 
 ## 참고 링크
-- MDN — `@media (prefers-color-scheme)`: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme  
-- CSS-Tricks — Dark Mode: https://css-tricks.com/dark-modes-with-css/  
-- web.dev — Dark Theme: https://web.dev/prefers-color-scheme/  
+- MDN — `@media (prefers-color-scheme)`: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme
+- CSS-Tricks — Dark Mode: https://css-tricks.com/dark-modes-with-css/
+- web.dev — Dark Theme: https://web.dev/prefers-color-scheme/

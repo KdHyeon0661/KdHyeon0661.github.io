@@ -66,9 +66,9 @@ public final class Email {
 }
 ```
 
-> **getClass vs instanceof**:  
-> - **`instanceof` 방식**: 하위 타입도 **같은 값 의미**를 공유할 때 적합.  
-> - **`getClass()` 비교**: **정확히 같은 런타임 타입**만 동등하게 취급할 때 적합.  
+> **getClass vs instanceof**:
+> - **`instanceof` 방식**: 하위 타입도 **같은 값 의미**를 공유할 때 적합.
+> - **`getClass()` 비교**: **정확히 같은 런타임 타입**만 동등하게 취급할 때 적합.
 > 값 의미가 **상속으로 확장될 여지**가 있다면 `instanceof`가 보통 더 안전합니다.
 
 ### 1.4 컬렉션과의 일관성
@@ -123,7 +123,7 @@ System.out.println(o.getClass().getName()); // java.util.ArrayList
 ## 5. `clone()` — 얕은 복제, 주의 깊게만 쓰기
 
 ### 5.1 전제
-- `Object.clone()`은 **`protected`** + **얕은 복제**.  
+- `Object.clone()`은 **`protected`** + **얕은 복제**.
 - 사용하려면 **`Cloneable` 인터페이스**를 구현하고, 보통 **가시성을 `public`으로 올려 재정의**.
 
 ### 5.2 기본 패턴
@@ -146,8 +146,8 @@ public class Person implements Cloneable {
 ```
 
 ### 5.3 대안(권장 순)
-1) **복사 생성자**: `new Person(other)`  
-2) **정적 팩토리**: `Person.from(other)`  
+1) **복사 생성자**: `new Person(other)`
+2) **정적 팩토리**: `Person.from(other)`
 3) (복잡한 그래프) 전용 매퍼/직렬화
 
 > `clone/Cloneable`은 설계가 난해하고 함정이 많습니다. **복사 생성자/팩토리**가 일반적으로 더 안전합니다.
@@ -198,12 +198,12 @@ class BoundedQueue<T> {
 }
 ```
 
-> 실무에서는 **`java.util.concurrent`**(예: `BlockingQueue`, `ReentrantLock/Condition`) 사용을 우선 고려하세요.  
+> 실무에서는 **`java.util.concurrent`**(예: `BlockingQueue`, `ReentrantLock/Condition`) 사용을 우선 고려하세요.
 > `wait/notify`는 **저수준 원시**로서 정확한 사용이 까다롭습니다.
 
 ### 7.3 타임아웃 오버로드
 - `wait(long timeout)`/`wait(long timeout, int nanos)` 제공.
-- `notify()`는 임의의 하나, `notifyAll()`은 **모든 대기 스레드** 깨움.  
+- `notify()`는 임의의 하나, `notifyAll()`은 **모든 대기 스레드** 깨움.
   **여러 조건이 섞이면 `notifyAll()`이 안전한 경우가 많음**(또는 Condition으로 분리).
 
 ---

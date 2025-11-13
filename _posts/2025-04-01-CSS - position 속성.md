@@ -148,7 +148,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 - 스크롤에도 **항상 같은 곳**.
 - **원칙**: 뷰포트 기준이지만, 조상 중 `transform: translateZ(0)` 등 **containing block 생성자**가 있으면 **그 조상 기준**이 될 수 있음.
   - 고정 헤더/모달이 특정 섹션에 “붙어” 버릴 때, 상위의 `transform`/`filter`/`perspective` 여부 확인.
-- 모바일 브라우저에서 주소창/툴바의 등장·퇴장에 따라 상대적 **보이는 영역**이 달라짐 → 배치가 출렁일 수 있음.  
+- 모바일 브라우저에서 주소창/툴바의 등장·퇴장에 따라 상대적 **보이는 영역**이 달라짐 → 배치가 출렁일 수 있음.
   `env(safe-area-inset-*)`와 함께 여백 보정 가능.
 
 ```css
@@ -296,7 +296,7 @@ h2[id] { scroll-margin-top: 64px; }        /* 개별 보정 */
 ```
 ```css
 .modal {
-  position: fixed; inset: 0; 
+  position: fixed; inset: 0;
   display: grid; place-items: center;
   background: rgba(0,0,0,.5);
   z-index: 1000;         /* 상위로 올리기 */
@@ -446,16 +446,16 @@ $$
 
 ## 16. 자주 묻는 질문(FAQ)
 
-**Q1. sticky가 동작하지 않아요.**  
+**Q1. sticky가 동작하지 않아요.**
 A. 스크롤 컨테이너가 어디인지 확인하세요. `top`(또는 `inset-*`)을 지정했는지, 조상 `overflow`가 sticky를 **클리핑**하지 않는지 점검하세요. 필요 시 `z-index` 보정.
 
-**Q2. fixed가 스크롤에 따라 움직입니다.**  
+**Q2. fixed가 스크롤에 따라 움직입니다.**
 A. 조상에 `transform/filter/contain` 등이 있으면 **그 조상 기준**으로 동작할 수 있습니다. 해당 속성을 제거하거나 모달/토스트를 루트로 이동(포털)하세요.
 
-**Q3. absolute가 이상한 곳을 기준으로 잡습니다.**  
+**Q3. absolute가 이상한 곳을 기준으로 잡습니다.**
 A. 기대한 조상에 `position: relative`를 **명시**하세요. 테이블/셀 내부라면 래퍼를 만드는 것이 안전합니다.
 
-**Q4. z-index가 안 먹습니다.**  
+**Q4. z-index가 안 먹습니다.**
 A. stacking context가 갈라져 있을 확률이 높습니다. 어떤 요소가 컨텍스트를 만드는지(불투명도, transform 등) 확인 후, 같은 컨텍스트로 묶거나 z-index를 부여할 요소를 재배치하세요.
 
 ---

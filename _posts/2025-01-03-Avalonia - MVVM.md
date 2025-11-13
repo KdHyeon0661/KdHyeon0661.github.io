@@ -8,7 +8,7 @@ category: Avalonia
 
 ## 1. MVVM의 정의
 
-**MVVM(Model–View–ViewModel)**은 XAML 계열 UI 프레임워크(WPF, Avalonia, Xamarin, MAUI 등)에서 광범위하게 쓰이는 **관심사 분리(Separation of Concerns)** 아키텍처 패턴이다.  
+**MVVM(Model–View–ViewModel)**은 XAML 계열 UI 프레임워크(WPF, Avalonia, Xamarin, MAUI 등)에서 광범위하게 쓰이는 **관심사 분리(Separation of Concerns)** 아키텍처 패턴이다.
 핵심 목표는 **UI(View)**와 **비즈니스 로직(Model)** 사이의 결합을 **ViewModel**을 통해 느슨하게 만드는 것이다. ViewModel은 **상태(state)**와 **명령(command)**를 노출하고, View는 **바인딩(binding)**으로 이를 소비한다. View와 ViewModel은 서로 **직접 참조하지 않거나(권장)**, 최소한으로만 참조하도록 설계한다.
 
 ---
@@ -80,7 +80,7 @@ MyApp/
 
 ### 5.2 패키지 선택
 
-- **ReactiveUI 기반**: `ReactiveObject`, `ReactiveCommand`로 간결한 INPC/커맨드 구현  
+- **ReactiveUI 기반**: `ReactiveObject`, `ReactiveCommand`로 간결한 INPC/커맨드 구현
 - **CommunityToolkit.Mvvm 기반**: `[ObservableProperty]`, `[RelayCommand]` 소스 생성기로 보일러플레이트 제거
 
 본 가이드는 두 방식을 모두 소개한다. 둘 중 조직 표준/선호에 맞춰 선택하자.
@@ -943,5 +943,5 @@ dotnet publish -c Release -r osx-x64 --self-contained true
 
 ## 결론
 
-초안의 핵심(정의, 구성 요소, 흐름, 장점, 간단 예제)에 **명령/바인딩/검증/네비게이션/다이얼로그/DI/비동기/테스트/성능/운영**을 총망라해 **Avalonia 실전 MVVM**을 완성했다.  
+초안의 핵심(정의, 구성 요소, 흐름, 장점, 간단 예제)에 **명령/바인딩/검증/네비게이션/다이얼로그/DI/비동기/테스트/성능/운영**을 총망라해 **Avalonia 실전 MVVM**을 완성했다.
 이 패턴을 습관화하면 UI 변경과 로직 확장이 독립적으로 가능해지고, 테스트·배포·운영에서의 비용이 크게 줄어든다. 다음 단계로는 **모듈화된 기능(예: 검색/필터/페이지네이션)**을 같은 패턴으로 확장해보자.

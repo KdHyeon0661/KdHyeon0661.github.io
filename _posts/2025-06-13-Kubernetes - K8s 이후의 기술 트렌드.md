@@ -67,7 +67,7 @@ curl -sfL https://get.k3s.io | K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN sh -
 ```
 
 ### 2.4 외부 etcd(HA) 구성 요약
-- 외부 etcd 3노드 구성 → `--datastore-endpoint="https://etcd1:2379,..."`  
+- 외부 etcd 3노드 구성 → `--datastore-endpoint="https://etcd1:2379,..."`
 - 인증서 지정: `--datastore-cafile/--datastore-certfile/--datastore-keyfile`
 
 ### 2.5 K3s 프로덕션 하드닝 체크리스트
@@ -143,13 +143,13 @@ flowchart LR
   C --> E
   C --> D
 ```
-- **CloudCore**: K8s와 엣지 메시지 허브  
-- **EdgeCore**: 엣지에서 Pod 관리·장치 제어(오프라인 상태에서도 지속)  
+- **CloudCore**: K8s와 엣지 메시지 허브
+- **EdgeCore**: 엣지에서 Pod 관리·장치 제어(오프라인 상태에서도 지속)
 - **DeviceTwin**: 장치 상태 디지털 트윈화
 
 ### 4.4 간단 설치 단서(요약)
-- 클라우드: K8s에 **CloudCore** 설치(Helm 차트 제공)  
-- 엣지: 바이너리/컨테이너로 **EdgeCore** 설치 후 CloudCore에 등록  
+- 클라우드: K8s에 **CloudCore** 설치(Helm 차트 제공)
+- 엣지: 바이너리/컨테이너로 **EdgeCore** 설치 후 CloudCore에 등록
 - **mTLS** 인증서, 터널링 포트(웹소켓)·방화벽 규칙 확인
 
 ---
@@ -157,15 +157,15 @@ flowchart LR
 ## 5. 네트워킹·스토리지·보안·관측 — 경량/엣지 특화 설계
 
 ### 5.1 네트워킹(CNI)
-- K3s 기본 **Flannel** → 간단/경량  
+- K3s 기본 **Flannel** → 간단/경량
 - 성능·정책 필요 시 **Cilium(eBPF)**, **Calico** 교체
 - 엣지 환경: NAT/방화벽·이중 NIC·Cellular 대역 고려, **L4 LB**(MetalLB) 채택 빈번
 
-**K3s에 Cilium 적용 예(개요)**  
+**K3s에 Cilium 적용 예(개요)**
 `INSTALL_K3S_EXEC="--flannel-backend=none --disable-network-policy"`로 설치 후 Cilium Helm 설치.
 
 ### 5.2 스토리지(CSI)
-- 로컬·단일 노드: **hostPath**, **OpenEBS LocalPV**  
+- 로컬·단일 노드: **hostPath**, **OpenEBS LocalPV**
 - 엣지 디스크 분산: **Longhorn** (경량, UI, 복구 용이)
 - 오브젝트 스토리지: **MinIO** 로 컬렉션/버퍼링 후 업링크
 
@@ -179,12 +179,12 @@ kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/master/depl
 ```bash
 kubectl label ns prod pod-security.kubernetes.io/enforce=restricted
 ```
-- Ingress→서비스까지 **mTLS**(서비스 메시 or cert-manager),  
+- Ingress→서비스까지 **mTLS**(서비스 메시 or cert-manager),
 - 엣지 인증·신원: **SPIFFE/SPIRE**로 워크로드 ID 공급
 - **Falco** 런타임 보안, **Trivy** 이미지 스캔
 
 ### 5.4 관측(Observability)
-- MicroK8s: `microk8s enable prometheus`  
+- MicroK8s: `microk8s enable prometheus`
 - K3s: kube-prometheus-stack Helm, **Loki+Promtail** 로그, **Tempo/Jaeger** 트레이싱
 - 엣지: **로컬 저장→요약 업링크**(데이터 요금/불안정 링크 대비)
 
@@ -368,9 +368,9 @@ spec:
 
 ## 10. 성능·용량 감각 잡기(실무 휴리스틱)
 
-- **싱글 보드(4GB RAM)**: K3s + 1~3개 경량 워크로드  
-- **로컬 데스크톱(16GB)**: MicroK8s + Ingress + Prom/Grafana + 소규모 ML  
-- **엣지 게이트웨이(8~32GB)**: K3s + Longhorn + Loki + inference 1~3개  
+- **싱글 보드(4GB RAM)**: K3s + 1~3개 경량 워크로드
+- **로컬 데스크톱(16GB)**: MicroK8s + Ingress + Prom/Grafana + 소규모 ML
+- **엣지 게이트웨이(8~32GB)**: K3s + Longhorn + Loki + inference 1~3개
 - Pod 리소스 산정(개념):
 $$
 \text{NodeRAM}_{usable} \approx \text{Total} - (\text{OS}+ \text{K8sOverhead} + \text{Buffer})
@@ -400,8 +400,8 @@ sudo journalctl -u containerd -f
 sudo crictl ps -a
 ```
 - 업그레이드 전:
-  - `Helm release` 백업, `etcd/SQLite` 스냅샷  
-  - `PodDisruptionBudget` 완화  
+  - `Helm release` 백업, `etcd/SQLite` 스냅샷
+  - `PodDisruptionBudget` 완화
   - 순차/블루그린 전략
 
 ---

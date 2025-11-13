@@ -85,7 +85,7 @@ END;
   - 예: MBRC≈16이면 **16 × 8KB = 128KB/IO** 근사.
 - 실제 MBRC는 **버전/플랫폼/스토리지/옵티마이저 판단**에 따라 달라지며, **자동**으로 결정되는 경향(과거 파라미터 `db_file_multiblock_read_count`는 현대엔 힌트적 의미).
 
-**간단 수식**  
+**간단 수식**
 $$
 \text{Single Block IO Calls} \approx \text{방문해야 할 ROWID 수}
 $$
@@ -175,7 +175,7 @@ ORDER  BY samples DESC;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 ```
 - `TABLE ACCESS BY ROWID` + `INDEX RANGE SCAN` → **Single Block** 패턴
-- `TABLE ACCESS FULL` / `PARTITION RANGE` + `STOPKEY` → **Multiblock** 가능  
+- `TABLE ACCESS FULL` / `PARTITION RANGE` + `STOPKEY` → **Multiblock** 가능
 - `PX`(병렬) + `FULL` + `HASH JOIN` → 대량 멀티블록/Direct Path 가능성 큼
 
 ---
@@ -281,7 +281,7 @@ FROM   big_orders b
 WHERE  order_dt >= DATE '2025-10-01'
 GROUP  BY status;
 ```
-- **최근 파티션만** 읽음(프루닝) → **작은 전체**.  
+- **최근 파티션만** 읽음(프루닝) → **작은 전체**.
 - 병렬로 **대역폭** 활용, 멀티블록 크기 활용.
 
 ### 6.2 Direct Path Read 유도(대량 스캔)
@@ -294,7 +294,7 @@ SELECT /*+ full(b) */
 FROM   big_orders b
 WHERE  order_dt >= DATE '2025-10-01';
 ```
-- Direct Path Read는 **버퍼 캐시 우회** → 캐시 오염 방지, 대량 스캔에 이점.  
+- Direct Path Read는 **버퍼 캐시 우회** → 캐시 오염 방지, 대량 스캔에 이점.
 - 주의: OLTP 혼합 환경에서는 무조건적 강제는 지양(실측으로 판단).
 
 ### 6.3 인덱스 Fast Full Scan(순차 인덱스 스캔)
@@ -304,7 +304,7 @@ SELECT /*+ index_ffs(b ix_bo_status) */
 FROM   big_orders b
 GROUP  BY status;
 ```
-- 인덱스 전체를 멀티블록으로 빠르게 훑음.  
+- 인덱스 전체를 멀티블록으로 빠르게 훑음.
 - 필요한 컬럼이 인덱스에 있다면 **테이블 방문 없이** 집계 가능.
 
 ---
@@ -316,8 +316,8 @@ GROUP  BY status;
 - Exadata/ASM/스토리지에 따라 **Smart Scan**/**Cell** 레벨 최적화가 개입.
 
 ### 7.2 I/O 크기와 처리량 직관
-- 블록 8KB, MBRC=16 ⇒ 호출당 128KB.  
-- 스캔해야 할 블록 수가 1,280,000개라면,  
+- 블록 8KB, MBRC=16 ⇒ 호출당 128KB.
+- 스캔해야 할 블록 수가 1,280,000개라면,
   $$\text{Multiblock IO Calls} \approx \frac{1,280,000}{16} = 80,000$$
 - **호출 수**가 줄어들수록 컨텍스트 전환·락/래치·OS 호출 비용이 함께 줄어든다.
 
@@ -390,25 +390,25 @@ ORDER  BY value DESC FETCH FIRST 20 ROWS ONLY;
 ## 11. 추가 고급 주제
 
 ### 11.1 Direct Path Read vs Buffered Read
-- **Buffered**: 버퍼 캐시에 적재 → **재사용** 가능(OLTP에 유리)  
-- **Direct Path**: 캐시 우회 → **대량 작업**에서 효율(캐시 오염 방지)  
+- **Buffered**: 버퍼 캐시에 적재 → **재사용** 가능(OLTP에 유리)
+- **Direct Path**: 캐시 우회 → **대량 작업**에서 효율(캐시 오염 방지)
 - 옵티마이저는 **세그먼트 크기·통계·작업 특성**을 보고 자동 선택(버전·파라미터 영향)
 
 ### 11.2 병렬 실행(PX)과 I/O
-- PX는 스캔 범위를 슬라이스해 **여러 서버 프로세스**가 동시에 멀티블록 읽기를 수행  
+- PX는 스캔 범위를 슬라이스해 **여러 서버 프로세스**가 동시에 멀티블록 읽기를 수행
 - **주의**: 스토리지/네트워크가 받쳐줘야 효과. 지나친 PX는 스토리지 큐 포화로 역효과.
 
 ### 11.3 저장소/파일시스템의 영향
-- ASM 스트라이핑·세그먼트 레이아웃은 멀티블록의 **연속성**과 **대역폭**에 영향  
+- ASM 스트라이핑·세그먼트 레이아웃은 멀티블록의 **연속성**과 **대역폭**에 영향
 - NFS/dNFS/ZFS(ARC) 등은 **대역폭·RTT·캐시 정책**이 Multiblock 효율에 결정적
 
 ---
 
 ## 12. 요약 레시피
 
-1) **쿼리 목적**을 보고 **Single vs Multiblock** 전략을 먼저 선택한다.  
-2) **Single를 줄여야** 하는 OLTP라면: **커버링 인덱스**, **클러스터링 팩터**, **세미조인/필터 선행**, **부분범위처리**.  
-3) **Multiblock을 키워야** 하는 DW라면: **파티션 프루닝**, **해시 조인**, **병렬/Direct Path**, **INDEX FFS**, **정렬 포함 인덱스 + STOPKEY**.  
+1) **쿼리 목적**을 보고 **Single vs Multiblock** 전략을 먼저 선택한다.
+2) **Single를 줄여야** 하는 OLTP라면: **커버링 인덱스**, **클러스터링 팩터**, **세미조인/필터 선행**, **부분범위처리**.
+3) **Multiblock을 키워야** 하는 DW라면: **파티션 프루닝**, **해시 조인**, **병렬/Direct Path**, **INDEX FFS**, **정렬 포함 인덱스 + STOPKEY**.
 4) 모든 변경은 **AWR/ASH/SQL Monitor/Trace** 로 **단위 시간당 I/O·대기·RT**가 실제 줄었는지 확인한다.
 
 ---
@@ -462,7 +462,7 @@ WHERE  event LIKE 'direct path read%';
 ---
 
 ## 결론
-- **Single Block I/O** 는 **정밀한 소량 조회**에 강하고, **Multiblock I/O** 는 **대량 순차 읽기**에 강하다.  
-- 고성능 시스템은 둘 중 하나만 밀어붙이지 않는다. **OLTP 경로**에서는 Single Block I/O를 **최소화**하고, **DW/리포트 경로**에서는 Multiblock I/O의 **효율**을 극대화한다.  
-- **프루닝/커버링/클러스터링/조인 전략/병렬/Direct Path** 를 조합해 **읽을 양 자체를 줄이고**, **읽을 때는 잘 읽는** 설계를 하라.  
+- **Single Block I/O** 는 **정밀한 소량 조회**에 강하고, **Multiblock I/O** 는 **대량 순차 읽기**에 강하다.
+- 고성능 시스템은 둘 중 하나만 밀어붙이지 않는다. **OLTP 경로**에서는 Single Block I/O를 **최소화**하고, **DW/리포트 경로**에서는 Multiblock I/O의 **효율**을 극대화한다.
+- **프루닝/커버링/클러스터링/조인 전략/병렬/Direct Path** 를 조합해 **읽을 양 자체를 줄이고**, **읽을 때는 잘 읽는** 설계를 하라.
 - 최종 판단은 **실측 데이터**(AWR/ASH/Trace/SQL Monitor)로 한다 — **히트율**이 아니라 **응답시간과 처리량**이 목표다.

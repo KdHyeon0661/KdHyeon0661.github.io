@@ -6,8 +6,8 @@ category: WPF
 ---
 # WPF 데이터 변경 알림: `INotifyPropertyChanged`와 `ObservableCollection`
 
-WPF의 데이터 바인딩은 **데이터 소스(ViewModel)**의 값이 변경될 때 자동으로 UI에 반영되도록 설계되어 있습니다.  
-이를 가능하게 해주는 핵심 인터페이스가 바로 **`INotifyPropertyChanged`**와 **`ObservableCollection<T>`**입니다.  
+WPF의 데이터 바인딩은 **데이터 소스(ViewModel)**의 값이 변경될 때 자동으로 UI에 반영되도록 설계되어 있습니다.
+이를 가능하게 해주는 핵심 인터페이스가 바로 **`INotifyPropertyChanged`**와 **`ObservableCollection<T>`**입니다.
 
 ---
 

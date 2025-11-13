@@ -7,17 +7,17 @@ category: WPF
 # 🧩 WPF에서 **Entity Framework Core + SQLite + REST API 연동** 완전 정복
 *(예제 중심 · 누락 없이 자세하게 · MVVM/DI/동기화/오프라인/성능/테스트까지 한 번에)*
 
-> 목표: **로컬 SQLite**를 **EF Core**로 다루고, **원격 REST API**와 동기화되는 **WPF(MVVM)** 앱을 만든다.  
+> 목표: **로컬 SQLite**를 **EF Core**로 다루고, **원격 REST API**와 동기화되는 **WPF(MVVM)** 앱을 만든다.
 > .NET 7/8 WPF 기준이며 .NET 6/Framework 4.8도 큰 틀은 동일합니다.
 
 ---
 
 ## 0. 데모 시나리오 (끝까지 이어질 예시)
 
-- **도메인**: Todo(할 일)  
-- **로컬 저장소**: `SQLite` (파일: `%LOCALAPPDATA%\TodoDemo\todo.db`)  
-- **ORM**: `EF Core` (변경 추적/마이그레이션/동시성/관계/쿼리)  
-- **API**: `https://api.example.com/todos` (CRUD + 페이지네이션 + 변경 감지(ETag))  
+- **도메인**: Todo(할 일)
+- **로컬 저장소**: `SQLite` (파일: `%LOCALAPPDATA%\TodoDemo\todo.db`)
+- **ORM**: `EF Core` (변경 추적/마이그레이션/동시성/관계/쿼리)
+- **API**: `https://api.example.com/todos` (CRUD + 페이지네이션 + 변경 감지(ETag))
 - **앱 특성**: 오프라인에서도 편집 → 온라인 복구 시 **양방향 동기화**, 충돌 해결
 
 ---
@@ -460,11 +460,11 @@ services.AddTodoApi("https://api.example.com");  // 앱 구성에서 BaseAddress
 ## 9. 오프라인·동기화 서비스
 
 ### 9.1 Sync 전략(핵심 아이디어)
-1) **푸시**: 로컬 `IsDirty==true` 항목 → 서버 Upsert/Delete (If-Match: ETag)  
-2) **풀**: 서버 변경분 페이지 조회 (If-None-Match: ETag) → 로컬 병합  
-3) **충돌**: 서버 ETag 불일치(412 Precondition Failed) → **정책**:  
-   - *서버 우선*: 서버 버전을 받아 로컬에 덮어쓰기  
-   - *클라이언트 우선*: 로컬 버전 재시도(Force) 또는 별도 충돌 컬렉션으로 사용자에게 선택 유도  
+1) **푸시**: 로컬 `IsDirty==true` 항목 → 서버 Upsert/Delete (If-Match: ETag)
+2) **풀**: 서버 변경분 페이지 조회 (If-None-Match: ETag) → 로컬 병합
+3) **충돌**: 서버 ETag 불일치(412 Precondition Failed) → **정책**:
+   - *서버 우선*: 서버 버전을 받아 로컬에 덮어쓰기
+   - *클라이언트 우선*: 로컬 버전 재시도(Force) 또는 별도 충돌 컬렉션으로 사용자에게 선택 유도
 4) **삭제**: 소프트 삭제를 우선(복구 용이), 최종 정리 배치에서 하드 삭제
 
 ### 9.2 구현
@@ -569,7 +569,7 @@ services.AddScoped<SyncService>();
 
 ## 10. 동시성/트랜잭션
 
-- **EF Core**: `DbContext`는 **단일 스레드/스코프 단위** 사용.  
+- **EF Core**: `DbContext`는 **단일 스레드/스코프 단위** 사용.
 - 여러 저장 작업을 **하나의 트랜잭션**에 묶기:
 ```csharp
 using var tx = await _db.Database.BeginTransactionAsync(ct);
@@ -585,38 +585,38 @@ await tx.CommitAsync(ct);
 
 ## 11. 성능 최적화 체크리스트
 
-- **쿼리**: 필요한 컬럼만(ProjectTo DTO) / `AsNoTracking` 활용  
-- **배치**: 대량 삽입/업데이트 시 `SaveChanges` 호출 횟수 최소화  
-- **인덱스**: 자주 필터링되는 칼럼(`IsDirty`, `LastModifiedUtc`) 인덱스  
+- **쿼리**: 필요한 컬럼만(ProjectTo DTO) / `AsNoTracking` 활용
+- **배치**: 대량 삽입/업데이트 시 `SaveChanges` 호출 횟수 최소화
+- **인덱스**: 자주 필터링되는 칼럼(`IsDirty`, `LastModifiedUtc`) 인덱스
 - **WAL 모드**: 쓰기 병행성 향상
 ```csharp
 await _db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
 ```
-- **가상화**: `ListView`/`DataGrid` 가상화 켜기  
+- **가상화**: `ListView`/`DataGrid` 가상화 켜기
 - **UI 스레드**: 디스크/네트워크 IO는 `await` + `ConfigureAwait(false)`(라이브러리) / UI 업데이트는 `Dispatcher`를 통해 최소화
 
 ---
 
 ## 12. 오류/네트워크 회복력
 
-- **Polly** 재시도(지수 백오프), 429/5xx 처리  
-- **타임아웃**: HttpClient.Timeout / 개별 요청 `CancellationToken`  
-- **오프라인 판별**: 네트워크 체크(핑/소켓/Connect), 실패 시 로컬만 사용하고 **IsDirty** 플래그 유지  
+- **Polly** 재시도(지수 백오프), 429/5xx 처리
+- **타임아웃**: HttpClient.Timeout / 개별 요청 `CancellationToken`
+- **오프라인 판별**: 네트워크 체크(핑/소켓/Connect), 실패 시 로컬만 사용하고 **IsDirty** 플래그 유지
 - **사용자 피드백**: 상태 바(온라인/오프라인/동기화 중), 충돌 알림 UI
 
 ---
 
 ## 13. 보안/토큰 관리
 
-- **Auth**: Bearer Token(Access/Refresh), HttpClientFactory에서 메시지 핸들러로 자동 주입  
-- **보존**: Windows DPAPI/ProtectedData, MSAL(기업 환경), 또는 OS 보안 저장소  
+- **Auth**: Bearer Token(Access/Refresh), HttpClientFactory에서 메시지 핸들러로 자동 주입
+- **보존**: Windows DPAPI/ProtectedData, MSAL(기업 환경), 또는 OS 보안 저장소
 - **전송**: HTTPS 필수, 인증 실패 시 `401` → 재인증 UI
 
 ---
 
 ## 14. 테스트 전략
 
-- **도메인**: 순수 단위 테스트(로직/밸리데이션)  
+- **도메인**: 순수 단위 테스트(로직/밸리데이션)
 - **데이터**: **SQLite In-Memory**(주의: 관계/제약 반영)로 통합 테스트
 ```csharp
 var conn = new SqliteConnection("DataSource=:memory:");
@@ -626,31 +626,31 @@ using var db = new AppDbContext(options);
 db.Database.EnsureCreated();
 // 테스트 진행
 ```
-- EFCore.InMemory는 실제 SQLite와 동작 차이가 있으므로 **스키마/제약 검증에는 SQLite In-Memory 추천**  
-- **API 클라이언트**: `HttpMessageHandler` 스텁으로 응답 시뮬레이션  
+- EFCore.InMemory는 실제 SQLite와 동작 차이가 있으므로 **스키마/제약 검증에는 SQLite In-Memory 추천**
+- **API 클라이언트**: `HttpMessageHandler` 스텁으로 응답 시뮬레이션
 - **동기화**: 푸시/풀/충돌 케이스별 시나리오 테스트
 
 ---
 
 ## 15. 실제 운영 팁
 
-- **마이그레이션 버전 관리**: 앱 시작 시 자동 적용하되, 실패 시 백업/롤백 전략  
-- **DB 백업**: 앱 종료 시/주기적으로 `.db` 백업(파일 잠금 주의)  
-- **로깅**: EF `LogTo`, HttpClient `LoggingHandler`, Sync 이벤트 로그  
-- **데이터 정리**: tombstone(삭제표시) 주기 정리/아카이빙  
+- **마이그레이션 버전 관리**: 앱 시작 시 자동 적용하되, 실패 시 백업/롤백 전략
+- **DB 백업**: 앱 종료 시/주기적으로 `.db` 백업(파일 잠금 주의)
+- **로깅**: EF `LogTo`, HttpClient `LoggingHandler`, Sync 이벤트 로그
+- **데이터 정리**: tombstone(삭제표시) 주기 정리/아카이빙
 - **국제화**: 서버/로컬 모두 **UTC** 저장, 표시 시 로컬 타임존 변환
 
 ---
 
 ## 16. 끝까지 이어지는 **전체 흐름 요약**
 
-1. **App 시작** → Db 폴더 생성 → **Migrate**  
-2. **MainViewModel.Load** → 로컬 DB에서 목록 로드  
-3. **사용자 조작**(추가/수정/삭제) → 엔티티에 `IsDirty=true` & 저장  
-4. **SyncService** 트리거(주기/버튼/온라인 전환)  
-   - **Push**(Dirty/Tombstone → API) → 성공 시 `IsDirty=false`, `ETag` 갱신  
-   - **Pull**(ETag 기반 변경분 페치) → 로컬 병합(정책 적용)  
-5. **UI**는 `ObservableCollection<Todo>` 바인딩 → 자동 업데이트  
+1. **App 시작** → Db 폴더 생성 → **Migrate**
+2. **MainViewModel.Load** → 로컬 DB에서 목록 로드
+3. **사용자 조작**(추가/수정/삭제) → 엔티티에 `IsDirty=true` & 저장
+4. **SyncService** 트리거(주기/버튼/온라인 전환)
+   - **Push**(Dirty/Tombstone → API) → 성공 시 `IsDirty=false`, `ETag` 갱신
+   - **Pull**(ETag 기반 변경분 페치) → 로컬 병합(정책 적용)
+5. **UI**는 `ObservableCollection<Todo>` 바인딩 → 자동 업데이트
 6. **오프라인** 시에도 로컬 작업 계속 → 온라인 시 **자동 동기화**
 
 ---
@@ -682,23 +682,23 @@ _db.ChangeTracker.AutoDetectChangesEnabled = false;
 
 ## 18. 자주 묻는 질문(FAQ)
 
-**Q. EF Core 추적 엔티티를 그대로 바인딩해도 되나요?**  
+**Q. EF Core 추적 엔티티를 그대로 바인딩해도 되나요?**
 A. 소규모는 OK. 대규모 목록에서는 `AsNoTracking`으로 DTO를 뷰에 바인딩 → 편집 시 선택 항목만 Attach/Update를 권장.
 
-**Q. SQLite에서 동시 쓰기 충돌은?**  
+**Q. SQLite에서 동시 쓰기 충돌은?**
 A. WAL 모드/짧은 트랜잭션/재시도 전략. UI에서 대량 쓰기를 분할.
 
-**Q. 마이그레이션이 잦을 때 운영 배포는?**  
+**Q. 마이그레이션이 잦을 때 운영 배포는?**
 A. 앱 시작 시 자동 마이그레이션 + 실패 시 백업 복구. 스키마 변경은 호환성 고려(새 컬럼 추가 → 데이터 이전 → 구 컬럼 제거).
 
-**Q. API 충돌 정책을 다르게 하고 싶습니다.**  
+**Q. API 충돌 정책을 다르게 하고 싶습니다.**
 A. SyncService에서 412/409 응답을 분기하여 “서버 우선/클라 우선/사용자 선택”을 구현하고, 충돌 레코드를 별도 테이블로 보존하여 UI에 표기하세요.
 
 ---
 
 ## 19. 결론
 
-- **EF Core + SQLite**로 **오프라인 친화적인 로컬 저장소**를 만들고,  
-- **HttpClientFactory + Polly**로 **회복력 있는 API 연동**을 구성하며,  
-- **ETag/IsDirty/LastModifiedUtc**를 이용한 **안전한 동기화**로 실전 품질을 확보할 수 있습니다.  
+- **EF Core + SQLite**로 **오프라인 친화적인 로컬 저장소**를 만들고,
+- **HttpClientFactory + Polly**로 **회복력 있는 API 연동**을 구성하며,
+- **ETag/IsDirty/LastModifiedUtc**를 이용한 **안전한 동기화**로 실전 품질을 확보할 수 있습니다.
 - MVVM + DI + Generic Host를 활용하면 **테스트 가능한 구조**와 **장기 유지보수성**이 크게 향상됩니다.

@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Loki로 로그 수집하기 (Kubernetes + Grafana 연동)
 
-**Grafana Loki**는 Prometheus의 설계 철학을 로그에 적용한 **라벨 기반 로그 수집 및 조회 시스템**이다.  
+**Grafana Loki**는 Prometheus의 설계 철학을 로그에 적용한 **라벨 기반 로그 수집 및 조회 시스템**이다.
 Prometheus가 시계열 메트릭을 스크레이프하여 라벨로 집계하듯, Loki는 로그 스트림을 **라벨(메타데이터)**로 분류하고 **인덱스를 최소화**해 비용 효율적이다. Kubernetes와의 결합성, Grafana에서의 쿼리/대시보드/알림 연계가 강력하다.
 
 ---
@@ -76,8 +76,8 @@ kubectl get secret --namespace loki-stack loki-grafana \
   -o jsonpath="{.data.admin-password}" | base64 -d; echo
 ```
 
-Grafana 데이터소스 확인:  
-Settings → Data Sources → Loki (자동 생성)  
+Grafana 데이터소스 확인:
+Settings → Data Sources → Loki (자동 생성)
 미생성 시 **URL**: `http://loki.loki-stack.svc.cluster.local:3100`
 
 ---
@@ -312,7 +312,7 @@ count_over_time({app="api"} |= "ERROR" [5m])
 에러 비율(간이):
 
 ```logql
-sum(rate(({app="api"} |= "ERROR")[5m])) 
+sum(rate(({app="api"} |= "ERROR")[5m]))
 /
 sum(rate(({app="api"}))[5m])
 ```
@@ -342,7 +342,7 @@ sum by (method) (count_over_time({app="web"}[1m]))
 
 ### 7.2 Logs Panel
 
-패널 생성 → Query 입력 → Format: Logs  
+패널 생성 → Query 입력 → Format: Logs
 예:
 - `{app="nginx"} |= "GET"`
 - `{app="api", level="ERROR"}`
@@ -372,7 +372,7 @@ Grafana Alert로 **LogQL 표현식의 임계치**를 감시한다.
 count_over_time({app="myapp"} |= "error" [5m])
 ```
 
-알림 조건: `IS ABOVE 10`  
+알림 조건: `IS ABOVE 10`
 Contact points: Slack/Email/Webhook
 
 주의:

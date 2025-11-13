@@ -10,10 +10,10 @@ category: AspNet
 
 **EF Core**는 .NET 애플리케이션에서 **객체-관계 매핑(ORM)**을 제공하여 C# 객체로 데이터베이스를 다룰 수 있게 한다.
 
-- **ORM**: 엔티티 클래스 ↔ 테이블, 속성 ↔ 컬럼 매핑  
-- **LINQ**: 타입 안전한 질의(컴파일 타임 검증)  
-- **변경 추적(Change Tracking)**: 엔티티 상태 자동 관리  
-- **마이그레이션(Migration)**: 스키마 버전 관리  
+- **ORM**: 엔티티 클래스 ↔ 테이블, 속성 ↔ 컬럼 매핑
+- **LINQ**: 타입 안전한 질의(컴파일 타임 검증)
+- **변경 추적(Change Tracking)**: 엔티티 상태 자동 관리
+- **마이그레이션(Migration)**: 스키마 버전 관리
 - **다중 공급자**: SQL Server/SQLite/PostgreSQL/MySQL/Oracle(비공식)/Cosmos DB 등
 
 ---
@@ -35,15 +35,15 @@ category: AspNet
 
 ## 3. 지원 데이터베이스와 선택 기준
 
-- **SQL Server**: 기본 선택, 기능·도구 지원이 가장 풍부  
-- **SQLite**: 로컬/임베디드/테스트에 적합  
-- **PostgreSQL(Npgsql)**: 오픈소스, JSONB/Full Text 등 풍부한 기능  
-- **MySQL/MariaDB(Pomelo)**: LAMP/LNMP 환경 연동  
+- **SQL Server**: 기본 선택, 기능·도구 지원이 가장 풍부
+- **SQLite**: 로컬/임베디드/테스트에 적합
+- **PostgreSQL(Npgsql)**: 오픈소스, JSONB/Full Text 등 풍부한 기능
+- **MySQL/MariaDB(Pomelo)**: LAMP/LNMP 환경 연동
 - **Cosmos DB**: NoSQL(문서형) 필요 시
 
-**선택 팁**  
-- 클라우드/엔터프라이즈: SQL Server, PostgreSQL  
-- 데스크톱/로컬 개발: SQLite  
+**선택 팁**
+- 클라우드/엔터프라이즈: SQL Server, PostgreSQL
+- 데스크톱/로컬 개발: SQLite
 - NoSQL 문서 저장/글로벌 배포: Cosmos DB
 
 ---
@@ -453,8 +453,8 @@ public static class DbInit
 
 ## 13. 성능 최적화 체크리스트
 
-- **AsNoTracking**: 읽기 전용 쿼리  
-- **Include 최소화** + 필요한 속성만 `Select`  
+- **AsNoTracking**: 읽기 전용 쿼리
+- **Include 최소화** + 필요한 속성만 `Select`
 - **SplitQuery** vs SingleQuery 튜닝
 ```csharp
 _db.Blogs.Include(b => b.Posts).AsSplitQuery();
@@ -464,15 +464,15 @@ _db.Blogs.Include(b => b.Posts).AsSplitQuery();
 private static readonly Func<AppDbContext,int,Task<Post?>> GetPostById =
     EF.CompileAsyncQuery((AppDbContext db, int id) => db.Posts.FirstOrDefault(p => p.Id == id));
 ```
-- **Context Pooling**: `AddDbContextPool`  
+- **Context Pooling**: `AddDbContextPool`
 - 적절한 **인덱스 설계**, 배치 쓰기(수백~수천 단위로 SaveChanges)
 
 ---
 
 ## 14. DbContext 수명과 DI
 
-- DbContext는 **Scoped**가 표준(요청당 1개)  
-- Singleton에서 DbContext 직접 주입 금지(스코프 불일치). 필요 시 `IServiceScopeFactory`로 스코프 생성  
+- DbContext는 **Scoped**가 표준(요청당 1개)
+- Singleton에서 DbContext 직접 주입 금지(스코프 불일치). 필요 시 `IServiceScopeFactory`로 스코프 생성
 - 백그라운드 작업(HostedService)에서도 스코프 분리 후 사용
 
 ```csharp
@@ -513,10 +513,10 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite(keep));
 
 ## 16. 트러블슈팅 FAQ
 
-- **마이그레이션이 안 생김**: `DbContext`가 DI에 등록됐는지, 생성자/Provider 확인  
-- **스냅샷 충돌**: 수동 편집 주의. 필요 시 마지막 마이그레이션 제거 후 재생성  
-- **N+1 성능저하**: `Include`/프로젝션/로딩 전략 재점검  
-- **잠금/타임아웃**: 인덱스 튜닝, 트랜잭션 범위 축소, `.CommandTimeout()` 조정  
+- **마이그레이션이 안 생김**: `DbContext`가 DI에 등록됐는지, 생성자/Provider 확인
+- **스냅샷 충돌**: 수동 편집 주의. 필요 시 마지막 마이그레이션 제거 후 재생성
+- **N+1 성능저하**: `Include`/프로젝션/로딩 전략 재점검
+- **잠금/타임아웃**: 인덱스 튜닝, 트랜잭션 범위 축소, `.CommandTimeout()` 조정
 - **민감데이터 로깅**: 운영 환경에서 `EnableSensitiveDataLogging(false)`
 
 ---
@@ -567,9 +567,9 @@ app.Run();
 
 ## 부록: 간단한 수학적 직관 — 변경 추적(Delta)
 
-엔티티의 변경은 **현재 스냅샷**과 **원본 스냅샷**의 차이(델타)로 판단할 수 있다.  
-속성 벡터를 $$ \mathbf{x} = (x_1,\dots,x_n) $$, 원본을 $$ \mathbf{x}_0 $$이라 하면  
-변경량은 $$ \Delta \mathbf{x} = \mathbf{x} - \mathbf{x}_0 $$.  
+엔티티의 변경은 **현재 스냅샷**과 **원본 스냅샷**의 차이(델타)로 판단할 수 있다.
+속성 벡터를 $$ \mathbf{x} = (x_1,\dots,x_n) $$, 원본을 $$ \mathbf{x}_0 $$이라 하면
+변경량은 $$ \Delta \mathbf{x} = \mathbf{x} - \mathbf{x}_0 $$.
 EF Core는 내부적으로 이 $$ \Delta \mathbf{x} $$가 0인지 여부로 수정/삽입/삭제를 결정한다(개념적 직관).
 
 ---

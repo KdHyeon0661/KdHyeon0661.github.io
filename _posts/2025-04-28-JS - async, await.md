@@ -358,8 +358,8 @@ test("fetches user", async () => {
 ## 12. 미니 프로젝트: 목록→상세 동시성 최적화
 
 ### 12.1 요구
-1) `/posts`로 ID 목록 로드  
-2) 각 ID 상세 `/posts/:id` 병렬 로드  
+1) `/posts`로 ID 목록 로드
+2) 각 ID 상세 `/posts/:id` 병렬 로드
 3) 일부 실패해도 전체 결과 목록을 보여주되, 실패 항목은 표시
 
 ```js
@@ -380,7 +380,7 @@ async function loadPosts() {
 - [ ] **직렬 vs 병렬**: 독립 작업은 `Promise.all`
 - [ ] **에러 범위**: `try/catch` 위치를 최소·명확하게
 - [ ] **타임아웃/취소**: `AbortController`/`race`/withTimeout
-- [ ] **리트라이**: 지수 백오프 + 지터  
+- [ ] **리트라이**: 지수 백오프 + 지터
   $$ t_k = U(0,1)\cdot t_0 \cdot 2^{k} $$
 - [ ] **루프**: `forEach` 대신 `for...of` 또는 `map→Promise.all`
 - [ ] **전역 핸들러**: `unhandledrejection` 배선
@@ -390,7 +390,7 @@ async function loadPosts() {
 
 ## 14. 요약
 
-- `async`는 **Promise를 반환**, `await`는 **Promise 완료까지 비동기 대기**합니다.  
-- `try/catch/finally`로 **동기 수준의 예외·정리**를 표현할 수 있습니다.  
-- **동시성 최적화**(All/AllSettled/Any/Race), **타임아웃·취소**, **재시도**를 유틸로 표준화하면 실무 품질이 급상승합니다.  
+- `async`는 **Promise를 반환**, `await`는 **Promise 완료까지 비동기 대기**합니다.
+- `try/catch/finally`로 **동기 수준의 예외·정리**를 표현할 수 있습니다.
+- **동시성 최적화**(All/AllSettled/Any/Race), **타임아웃·취소**, **재시도**를 유틸로 표준화하면 실무 품질이 급상승합니다.
 - **루프·가독성·성능**의 밸런스를 유지하면서, 흔한 함정(누락된 `await`, forEach, 전역 미처리)만 피하면 `async/await`은 가장 강력한 비동기 도구가 됩니다.

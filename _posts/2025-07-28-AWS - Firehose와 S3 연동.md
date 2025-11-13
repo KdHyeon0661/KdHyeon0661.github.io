@@ -21,10 +21,10 @@ category: AWS
 ```
 
 **핵심 포인트**
-- **버퍼링**: `Buffer size`(MiB) 또는 `Buffer interval`(초) 충족 시 S3로 플러시  
-- **변환**: **Lambda**(자유로운 ETL) 또는 **원클릭 Parquet/ORC 변환 + Glue 스키마**  
-- **동적 파티셔닝**: 레코드의 키 값으로 S3 폴더(파티션) 분배 → Athena/Spark 쿼리 최적화  
-- **백업**: 실패 레코드는 별도 S3 prefix로 **보존/재처리**  
+- **버퍼링**: `Buffer size`(MiB) 또는 `Buffer interval`(초) 충족 시 S3로 플러시
+- **변환**: **Lambda**(자유로운 ETL) 또는 **원클릭 Parquet/ORC 변환 + Glue 스키마**
+- **동적 파티셔닝**: 레코드의 키 값으로 S3 폴더(파티션) 분배 → Athena/Spark 쿼리 최적화
+- **백업**: 실패 레코드는 별도 S3 prefix로 **보존/재처리**
 - **보안**: S3 SSE-KMS, 전달 스트림 IAM Role 최소권한, VPC 엔드포인트(PrivateLink)
 
 ---
@@ -124,14 +124,14 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 
 ## 4. 버퍼링·전달 파라미터(튜닝 전략)
 
-- **Buffer Size**: 1~128MiB (기본 5MiB)  
+- **Buffer Size**: 1~128MiB (기본 5MiB)
 - **Buffer Interval**: 60~900초 (기본 300초)
 
-**튜닝 원칙**  
-- 실시간성↑ → **Interval↓**(파일 많아짐, S3 PUT 비용↑)  
-- 비용/쿼리 효율↑ → **Size↑**(파일 크기↑, 쿼리 파일 수↓)  
+**튜닝 원칙**
+- 실시간성↑ → **Interval↓**(파일 많아짐, S3 PUT 비용↑)
+- 비용/쿼리 효율↑ → **Size↑**(파일 크기↑, 쿼리 파일 수↓)
 
-**시간당 파일 수 근사**  
+**시간당 파일 수 근사**
 $$
 \text{files/hour} \approx \frac{3600}{\text{BufferInterval}} \times \text{Shards(or parallelism)}
 $$
@@ -181,15 +181,15 @@ def lambda_handler(event, context):
 ```
 
 **운영 팁**
-- `Dropped` 비율 상승 시 **에러 prefix** 확인·스키마 점검  
+- `Dropped` 비율 상승 시 **에러 prefix** 확인·스키마 점검
 - `ProcessingFailed` → Firehose가 **백업 S3**로 원본 저장 (재처리 파이프라인 연결)
 
 ---
 
 ## 6. Parquet 변환 + Glue 스키마 레지스트리
 
-- 콘솔/CLI에서 **Record format conversion** 활성화 → 출력 포맷 Parquet/ORC 지정  
-- **Glue Schemas**에서 **JSON→Avro→Parquet** 변환 파이프라인을 자동화  
+- 콘솔/CLI에서 **Record format conversion** 활성화 → 출력 포맷 Parquet/ORC 지정
+- **Glue Schemas**에서 **JSON→Avro→Parquet** 변환 파이프라인을 자동화
 - 스키마 진화: **필드 추가**는 하위호환(기본값), **삭제/타입 변경**은 새 버전
 
 **선언형 스키마(예시, Avro)**
@@ -212,12 +212,12 @@ def lambda_handler(event, context):
 
 ## 7. 동적 파티셔닝(Dynamic Partitioning)
 
-- 레코드 내 키(예: `app`, `region`)를 파티션 키로 사용하여 S3 프리픽스 분배  
-- **장점**: 파티션 프루닝으로 Athena·Spark 비용/속도 개선  
+- 레코드 내 키(예: `app`, `region`)를 파티션 키로 사용하여 S3 프리픽스 분배
+- **장점**: 파티션 프루닝으로 Athena·Spark 비용/속도 개선
 - **주의**: 키 **카디널리티** 과도할 경우 **소파일 폭증** → 상위 수준에서 **버킷팅**·**롤업** 병행
 
 **설정 아이디어**
-- 파티션 키 추출(Lambda 변환 시 `__partitionKeys`)  
+- 파티션 키 추출(Lambda 변환 시 `__partitionKeys`)
 - 프리픽스 템플릿: `app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd=!{timestamp:yyyy-MM-dd}/`
 
 ---
@@ -458,31 +458,31 @@ Resources:
 
 ## 13. 백업·에러 경로·재처리
 
-- **ErrorOutputPrefix** 하위에 Firehose가 실패 유형별 폴더 생성(예: 변환 실패/대상 실패)  
+- **ErrorOutputPrefix** 하위에 Firehose가 실패 유형별 폴더 생성(예: 변환 실패/대상 실패)
 - 재처리 파이프라인:
-  1) `_error/` 경로를 **S3 Event** → **SQS** → **Lambda 보정**  
+  1) `_error/` 경로를 **S3 Event** → **SQS** → **Lambda 보정**
   2) 보정 완료 데이터를 **새 Delivery Stream**(정제 경로)로 재주입
 
 ---
 
 ## 14. 보안·네트워킹
 
-- **SSE-KMS**: S3·Firehose 모두 KMS 키 사용, **키 정책**에 Firehose Role 허용  
-- **VPC 엔드포인트(Interface/Gateway)**: S3·Firehose PrivateLink → 인터넷 없이 전송  
-- **S3 Block Public Access**: 데이터 레이크 버킷 기본 ON  
+- **SSE-KMS**: S3·Firehose 모두 KMS 키 사용, **키 정책**에 Firehose Role 허용
+- **VPC 엔드포인트(Interface/Gateway)**: S3·Firehose PrivateLink → 인터넷 없이 전송
+- **S3 Block Public Access**: 데이터 레이크 버킷 기본 ON
 - **액세스 로그**: S3 서버 액세스 로그 또는 CloudTrail + Lake Formation 로깅
 
 ---
 
 ## 15. 비용 모델 & 계산 감각
 
-- Firehose **수집/전송 요금**: GB당  
-- **변환 비용**: Parquet/ORC 변환 사용 시 추가 과금  
-- **Lambda 변환**: GB-초·호출 수  
-- **S3 저장**: 스토리지·요청·전송  
+- Firehose **수집/전송 요금**: GB당
+- **변환 비용**: Parquet/ORC 변환 사용 시 추가 과금
+- **Lambda 변환**: GB-초·호출 수
+- **S3 저장**: 스토리지·요청·전송
 - **Athena 쿼리**: 스캔 데이터량(압축/열지향 포맷으로 최소화)
 
-**간단 계산 예**  
+**간단 계산 예**
 $$
 \text{월 Firehose 비용} \approx \text{수집 GB} \times \text{단가} + \text{포맷 변환료}
 $$
@@ -491,20 +491,20 @@ $$
 
 ## 16. 성능·운영 베스트 프랙티스
 
-- **소파일 문제**: 버퍼 사이즈↑, Interval↑, 다운스트림 **Compact Job(CTAS)** 주기화  
-- **스키마 진화**: 필드 추가 중심, 중대한 변경은 **새 경로/테이블**  
-- **동적 파티션 카디널리티 관리**: 상위 파티션(날짜/시간) → 하위(도메인 키)  
-- **에러율 모니터링**: `ProcessingFailed/Dropped` 비율 알람  
+- **소파일 문제**: 버퍼 사이즈↑, Interval↑, 다운스트림 **Compact Job(CTAS)** 주기화
+- **스키마 진화**: 필드 추가 중심, 중대한 변경은 **새 경로/테이블**
+- **동적 파티션 카디널리티 관리**: 상위 파티션(날짜/시간) → 하위(도메인 키)
+- **에러율 모니터링**: `ProcessingFailed/Dropped` 비율 알람
 - **IaC 표준화**: 스테이지(dev/test/prod) 간 prefix·KMS 키·파티션 정책 일관성
 
 ---
 
 ## 17. 트러블슈팅 체크리스트
 
-- [ ] S3 권한 오류: 버킷/오브젝트 ARN, 역할 Principal, KMS 키 정책 점검  
-- [ ] 변환 실패 급증: Lambda 타임아웃/메모리/로그, 레코드 크기·인코딩 확인  
-- [ ] 지연 상승: `DataFreshness`, 버퍼 튜닝, 대상 S3 리전 일치 여부  
-- [ ] 소파일 과다: Buffer/Interval 상향, 파티션 키 축소·롤업 파이프라인  
+- [ ] S3 권한 오류: 버킷/오브젝트 ARN, 역할 Principal, KMS 키 정책 점검
+- [ ] 변환 실패 급증: Lambda 타임아웃/메모리/로그, 레코드 크기·인코딩 확인
+- [ ] 지연 상승: `DataFreshness`, 버퍼 튜닝, 대상 S3 리전 일치 여부
+- [ ] 소파일 과다: Buffer/Interval 상향, 파티션 키 축소·롤업 파이프라인
 - [ ] KMS 권한: `kms:GenerateDataKey` 누락 여부
 
 ---
@@ -513,16 +513,16 @@ $$
 
 **목표**: 웹 액세스 로그 → Firehose → S3(Parquet, 파티션) → Athena 분석
 
-1) S3 `data-lake` 버킷 생성, SSE-KMS·Block Public Access ON  
-2) Firehose 전달 스트림(`web-logs`) 생성:  
-   - Buffer 32MiB/120s, Compression GZIP  
-   - Data format conversion → Parquet(SNAPPY) + Glue 스키마  
-   - Prefix: `landing/app=web/yyyymmdd=!{timestamp:yyyy-MM-dd}/hh=!{timestamp:HH}/`  
-   - ErrorOutputPrefix: `_error/...`  
-3) Fluent Bit 또는 CLI로 레코드 전송  
-4) Athena DDL 작성 → `MSCK REPAIR TABLE`  
-5) 대시보드(SQL): 시간대별 요청수, 상위 IP/URI, 에러율  
-6) CloudWatch 알람: Freshness>5분, Failures>0  
+1) S3 `data-lake` 버킷 생성, SSE-KMS·Block Public Access ON
+2) Firehose 전달 스트림(`web-logs`) 생성:
+   - Buffer 32MiB/120s, Compression GZIP
+   - Data format conversion → Parquet(SNAPPY) + Glue 스키마
+   - Prefix: `landing/app=web/yyyymmdd=!{timestamp:yyyy-MM-dd}/hh=!{timestamp:HH}/`
+   - ErrorOutputPrefix: `_error/...`
+3) Fluent Bit 또는 CLI로 레코드 전송
+4) Athena DDL 작성 → `MSCK REPAIR TABLE`
+5) 대시보드(SQL): 시간대별 요청수, 상위 IP/URI, 에러율
+6) CloudWatch 알람: Freshness>5분, Failures>0
 7) 비용 점검: 스캔량 관찰 → 추가 파티션/압축·Parquet 검토
 
 ---

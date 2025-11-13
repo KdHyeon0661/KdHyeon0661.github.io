@@ -439,6 +439,6 @@ kubectl delete -f k8s/
 ---
 
 ## 결론
-`kubectl`은 K8s 운영의 **핵심 인터페이스**다.  
-설치 후 **컨텍스트/네임스페이스 안전장치**를 갖추고, **선언형 관리(apply/diff/rollout)** 를 습관화하면 장애 확률이 크게 줄어든다.  
+`kubectl`은 K8s 운영의 **핵심 인터페이스**다.
+설치 후 **컨텍스트/네임스페이스 안전장치**를 갖추고, **선언형 관리(apply/diff/rollout)** 를 습관화하면 장애 확률이 크게 줄어든다.
 **logs/describe/events/top/port-forward**를 조합한 **디버깅 루틴**과 **krew/자동완성**으로 생산성을 끌어올리자.

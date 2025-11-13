@@ -192,7 +192,7 @@ Content-Type: application/merge-patch+json
 { "name": "Alice Kim" }
 ```
 서버:
-- 기존 리소스를 불러온 후 변경 필드만 병합 → 저장  
+- 기존 리소스를 불러온 후 변경 필드만 병합 → 저장
 - 유효성 검사·권한 체크 필요
 
 ---
@@ -543,6 +543,6 @@ public bool TryApplyMergePatch(int id, JsonElement patch, string? ifMatch, out s
 
 ## 마무리
 
-RESTful은 **리소스 중심 설계**와 **HTTP 의미의 정확한 사용**이 핵심이다.  
-본 문서의 원칙(URI·상태코드·오류·부분 업데이트·멱등성·캐싱·보안·버전·문서화)을 **일관되게 적용**하면,  
+RESTful은 **리소스 중심 설계**와 **HTTP 의미의 정확한 사용**이 핵심이다.
+본 문서의 원칙(URI·상태코드·오류·부분 업데이트·멱등성·캐싱·보안·버전·문서화)을 **일관되게 적용**하면,
 **확장성·호환성·운영성**을 모두 갖춘 API를 구축할 수 있다.

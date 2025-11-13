@@ -36,7 +36,7 @@ void addChild(NodeV* parent, NodeV* child) {
 ```
 ```
 
-- 장점: **직관적**, STL과 잘 맞음, 순회/조작이 간단  
+- 장점: **직관적**, STL과 잘 맞음, 순회/조작이 간단
 - 단점: 각 노드가 **가변 길이 컨테이너**(vector)를 가져서 **할당 단편화**·캐시 비우호 가능
 
 ### 1.2 출력/순회(전위 DFS)
@@ -258,8 +258,8 @@ NodeV* buildFromEdges(int n, const vector<pair<int,int>>& edges){
 
 ### 5.1 전위/후위/레벨(개념)
 
-- **전위(Preorder)**: `node → children`  
-- **후위(Postorder)**: `children → node`  
+- **전위(Preorder)**: `node → children`
+- **후위(Postorder)**: `children → node`
 - **레벨(Level-order)**: BFS
 
 ### 5.2 후위(삭제/집계에 유용)
@@ -297,7 +297,7 @@ struct PreorderIter {
 
 ### 6.1 트리 지름(Diameter) — 임의 루트 DFS 2회
 
-> 지름: 두 노드 사이의 **최장 경로** 길이(간선 수).  
+> 지름: 두 노드 사이의 **최장 경로** 길이(간선 수).
 > 1) 임의 루트에서 가장 먼 A, 2) A에서 가장 먼 B, 3) dist(A,B)가 지름.
 
 ```cpp
@@ -312,7 +312,7 @@ pair<int,int> farthest(const NodeV* u){
 ```
 ```
 
-일반 트리(NodeV)만으로 지름을 정확하게 하려면 **부모 포인터**가 없으므로  
+일반 트리(NodeV)만으로 지름을 정확하게 하려면 **부모 포인터**가 없으므로
 **양방향 인접 리스트**를 만드는 편이 안전/보편적이다.
 
 ```cpp
@@ -372,7 +372,7 @@ void eulerTour(const NodeV* u, vector<int>& in, vector<int>& out, int& t){
 
 ### 7.1 괄호 표기(전위): `value(children...)` 형식
 
-예:  
+예:
 `1(2() 3(4(5())))` ← 공백은 가독용
 
 간단 직렬화(전위):
@@ -418,9 +418,9 @@ void addChild(unique_ptr<NodeU>& parent, unique_ptr<NodeU> child){
 
 ## 9. 성능 관점: 캐시/할당/순회 비용
 
-- `vector<Node*>`는 자식 벡터가 **분산 할당** → 캐시 미스 증가 가능  
+- `vector<Node*>`는 자식 벡터가 **분산 할당** → 캐시 미스 증가 가능
   → **풀 할당**/**arena**(메모리 풀)로 **연속 할당**시 유리
-- child–sibling은 각 노드 2포인터 고정 → **메모리 예측성** 높음,  
+- child–sibling은 각 노드 2포인터 고정 → **메모리 예측성** 높음,
   하지만 **형제 순회**가 리스트형이라 **무작위 인덱싱**은 비효율
 - 재귀 DFS는 깊이 \(h\)가 큰 입력에서 스택 한계 → **반복(스택)**으로 대체
 

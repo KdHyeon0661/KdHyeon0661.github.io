@@ -8,11 +8,11 @@ category: HTML
 
 ## 0. 제출(submit)과 전송(payload)의 기본 원리 한 장 요약
 
-- 폼 전송 시 **서버로 전송되는 키**는 `name` 속성이다. `id`는 **전송되지 않는다**(라벨 연결/JS 선택용).  
+- 폼 전송 시 **서버로 전송되는 키**는 `name` 속성이다. `id`는 **전송되지 않는다**(라벨 연결/JS 선택용).
 - 전송 포함 조건:
   - 포함: `name`이 있고, `disabled`가 **아닌** 필드
-  - 제외: `disabled`(항상 제외), `type="submit"/"button"/"reset"`(컨트롤), 체크되지 않은 `checkbox/radio`  
-- `readonly`는 **전송된다**(값 수정 불가일 뿐).  
+  - 제외: `disabled`(항상 제외), `type="submit"/"button"/"reset"`(컨트롤), 체크되지 않은 `checkbox/radio`
+- `readonly`는 **전송된다**(값 수정 불가일 뿐).
 - `disabled`는 **완전히 무시**(전송 제외 + 포커스 불가 + CSS 접근성 고려 필요).
 
 ---
@@ -117,8 +117,8 @@ category: HTML
 <input type="password" name="password" autocomplete="current-password">
 <input type="text"   name="otp"      autocomplete="one-time-code">
 ```
-- 토큰 예: `name`, `email`, `username`, `new-password`, `current-password`,  
-  주소 계열 `address-line1`, `address-level1`(도/광역), `postal-code`, `country`.  
+- 토큰 예: `name`, `email`, `username`, `new-password`, `current-password`,
+  주소 계열 `address-line1`, `address-level1`(도/광역), `postal-code`, `country`.
 - **암호관리자/브라우저와의 협업을 위해 정확한 토큰을 적극 사용**.
 
 ### 2.8 `autofocus` (자동 포커스)
@@ -131,14 +131,14 @@ category: HTML
 ```html
 <input type="text" name="amount" inputmode="numeric" pattern="\d*">
 ```
-- 값: `text`, `numeric`, `decimal`, `tel`, `email`, `url`, `search`.  
+- 값: `text`, `numeric`, `decimal`, `tel`, `email`, `url`, `search`.
 - 타입과 별개로 **가상 키보드 레이아웃** 힌트를 주어 UX 개선.
 
 ### 2.10 `enterkeyhint` (모바일 Enter 라벨)
 ```html
 <input type="search" enterkeyhint="search" placeholder="검색어">
 ```
-- 값: `enter`, `done`, `go`, `next`, `previous`, `search`, `send`.  
+- 값: `enter`, `done`, `go`, `next`, `previous`, `search`, `send`.
 - 모바일 키보드의 리턴/전송 버튼 라벨을 UX적으로 맞춤.
 
 ### 2.11 `spellcheck` / `autocapitalize` (텍스트 교정)
@@ -206,7 +206,7 @@ category: HTML
 <input type="password" name="current" autocomplete="current-password" required>
 <input type="password" name="new" autocomplete="new-password" minlength="8">
 ```
-- 암호관리자/브라우저와 **협력**하려면 토큰을 정확히.  
+- 암호관리자/브라우저와 **협력**하려면 토큰을 정확히.
 - 민감 정보라도 `autocomplete="off"`를 강제 무시하는 브라우저가 있음(보안은 **서버에서**).
 
 ### 4.3 이미지 버튼: `type="image"` — 좌표 제출
@@ -345,14 +345,14 @@ input:required:valid   { border-color: #43a047; }
 
 ## 10. 대형 폼 최적화 체크리스트
 
-- [ ] **라벨**은 모든 컨트롤과 연결되어 있는가?  
-- [ ] `name`은 서버 모델과 1:1 매핑되는가?  
-- [ ] `autocomplete` **토큰**을 올바르게 지정했는가?  
-- [ ] `required/pattern/min/max/step/minlength/maxlength` 조합으로 **HTML만으로 가능한 검증**을 충분히 활용했는가?  
-- [ ] `checkValidity()/reportValidity()`로 **제출 전 클라이언트 피드백**을 제공하는가?  
-- [ ] `disabled` 남용 없이, 필요 시 `readonly`로 **전송 유지** 설계를 했는가?  
-- [ ] 파일 업로드는 `accept` 힌트 + 서버 측 **철저 검증**을 적용했는가?  
-- [ ] 모바일 입력 환경(`inputmode`, `enterkeyhint`)을 고려했는가?  
+- [ ] **라벨**은 모든 컨트롤과 연결되어 있는가?
+- [ ] `name`은 서버 모델과 1:1 매핑되는가?
+- [ ] `autocomplete` **토큰**을 올바르게 지정했는가?
+- [ ] `required/pattern/min/max/step/minlength/maxlength` 조합으로 **HTML만으로 가능한 검증**을 충분히 활용했는가?
+- [ ] `checkValidity()/reportValidity()`로 **제출 전 클라이언트 피드백**을 제공하는가?
+- [ ] `disabled` 남용 없이, 필요 시 `readonly`로 **전송 유지** 설계를 했는가?
+- [ ] 파일 업로드는 `accept` 힌트 + 서버 측 **철저 검증**을 적용했는가?
+- [ ] 모바일 입력 환경(`inputmode`, `enterkeyhint`)을 고려했는가?
 - [ ] 국제화(`dir`, `dirname`, `lang`)와 접근성(`aria-*`, 설명 연결)을 챙겼는가?
 
 ---
@@ -483,29 +483,29 @@ input:required:valid   { border-color: #43a047; }
 
 ## 13. 흔한 질문(FAQ)
 
-**Q1. `disabled`와 `readonly` 차이?**  
-- `disabled`: 전송 제외, 포커스 불가, 보조기술 탐색 어려움.  
-- `readonly`: 전송 포함, 포커스 가능(브라우저별), 값 수정만 금지.  
+**Q1. `disabled`와 `readonly` 차이?**
+- `disabled`: 전송 제외, 포커스 불가, 보조기술 탐색 어려움.
+- `readonly`: 전송 포함, 포커스 가능(브라우저별), 값 수정만 금지.
 → **전송해야 하는 값**이라면 가급적 `readonly`.
 
-**Q2. 민감 정보에 자동완성을 끄면 안전한가?**  
-- 브라우저/암호관리자가 **무시**할 수 있다. 보안은 **HTTPS + 서버 재검증**이 본질.  
+**Q2. 민감 정보에 자동완성을 끄면 안전한가?**
+- 브라우저/암호관리자가 **무시**할 수 있다. 보안은 **HTTPS + 서버 재검증**이 본질.
 - 자동완성은 **정확한 토큰**으로 유도(예: `current-password`, `new-password`, `one-time-code`).
 
-**Q3. `pattern`은 어떤 시점에 동작?**  
+**Q3. `pattern`은 어떤 시점에 동작?**
 - 제출 시(또는 `reportValidity()`). 입력 중 즉시 피드백이 필요하면 **JS로 `setCustomValidity`**.
 
-**Q4. 숫자 필드에서 소수점/쉼표가 섞일 때?**  
+**Q4. 숫자 필드에서 소수점/쉼표가 섞일 때?**
 - 로케일에 따라 `,` → **유효성 실패** 가능. 서버는 **정규화**(`,` → `.`) 후 파싱 권장.
 
 ---
 
 ## 14. 마무리
 
-- `<input>`은 **속성의 조합**으로 UX/검증/보안을 크게 끌어올릴 수 있다.  
-- **폼 전송의 핵심은 `name`**이며, `disabled`/`readonly`의 차이, 버튼별 `form*` 속성으로 제출 흐름을 분기하라.  
-- **Constraint Validation + CSS 의사클래스 + JS API**로 일관된 검증 UX를 만들고,  
-- 모바일/국제화까지 고려해 `inputmode`/`enterkeyhint`/`dirname`/`autocomplete` 토큰을 적극 활용하라.  
+- `<input>`은 **속성의 조합**으로 UX/검증/보안을 크게 끌어올릴 수 있다.
+- **폼 전송의 핵심은 `name`**이며, `disabled`/`readonly`의 차이, 버튼별 `form*` 속성으로 제출 흐름을 분기하라.
+- **Constraint Validation + CSS 의사클래스 + JS API**로 일관된 검증 UX를 만들고,
+- 모바일/국제화까지 고려해 `inputmode`/`enterkeyhint`/`dirname`/`autocomplete` 토큰을 적극 활용하라.
 - 그리고 무엇보다, **최종 신뢰는 서버 검증**에 있다.
 
 > 구조(HTML) + 검증(HTML/JS) + 보안(HTTPS/서버) + 접근성(라벨/aria) = **견고한 폼**.

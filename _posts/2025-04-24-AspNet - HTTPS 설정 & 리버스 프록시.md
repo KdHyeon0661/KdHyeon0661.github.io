@@ -9,8 +9,8 @@ category: AspNet
 ## 0. 큰 그림: 왜 리버스 프록시인가?
 
 - `Kestrel`은 고성능이지만 **엣지(Edge) 보안/암호화/로깅/로드밸런싱**은 프록시(Nginx/Apache)가 더 유리
-- 공통 패턴  
-  브라우저 ⇄ **Nginx/Apache(443/TLS)** ⇄ **Kestrel(HTTP/5000)**  
+- 공통 패턴
+  브라우저 ⇄ **Nginx/Apache(443/TLS)** ⇄ **Kestrel(HTTP/5000)**
   인증서/HTTPS, 압축, 캐시, Rate limit, Web Application Firewall 등을 **프록시에서 담당**
 
 ---
@@ -286,8 +286,8 @@ app.MapControllers();
 app.Run();
 ```
 
-> 왜 필요한가?  
-> - `Request.Scheme`가 https인지 정확히 인지 → URL 생성/리다이렉트/쿠키 Secure 등에 영향  
+> 왜 필요한가?
+> - `Request.Scheme`가 https인지 정확히 인지 → URL 생성/리다이렉트/쿠키 Secure 등에 영향
 > - 클라이언트 원격 IP를 로깅·제한에 정확히 활용
 
 ---
@@ -296,8 +296,8 @@ app.Run();
 
 ### 7.1 WebSocket
 
-- Nginx: `proxy_set_header Upgrade` & `Connection $connection_upgrade`  
-- Apache: `mod_proxy_wstunnel` 사용  
+- Nginx: `proxy_set_header Upgrade` & `Connection $connection_upgrade`
+- Apache: `mod_proxy_wstunnel` 사용
 - ASP.NET Core: `app.UseWebSockets()` 또는 SignalR 사용 시 자동 지원
 
 ### 7.2 gRPC
@@ -323,19 +323,19 @@ server {
 
 ### 7.3 HTTP/3(QUIC, 선택)
 
-- 최신 Nginx/Cloud 프록시가 지원  
+- 최신 Nginx/Cloud 프록시가 지원
 - 운영 환경 제약/방화벽 고려. 우선 HTTP/2 안정화 → HTTP/3 점진 도입
 
 ---
 
 ## 8. 보안 헤더/강화 체크리스트
 
-- HSTS: `Strict-Transport-Security`  
-- CSP(Content-Security-Policy): XSS 방어  
-- Referrer-Policy, X-Content-Type-Options, X-Frame-Options, Permissions-Policy  
-- TLS 최소버전: TLS1.2 이상  
-- SSL Labs로 등급 확인  
-- 서버 서명/버전 숨김, 디렉터리 인덱싱 금지  
+- HSTS: `Strict-Transport-Security`
+- CSP(Content-Security-Policy): XSS 방어
+- Referrer-Policy, X-Content-Type-Options, X-Frame-Options, Permissions-Policy
+- TLS 최소버전: TLS1.2 이상
+- SSL Labs로 등급 확인
+- 서버 서명/버전 숨김, 디렉터리 인덱싱 금지
 - Nginx `client_max_body_size`, Apache `LimitRequestBody` 등 **업로드 제한** 명시
 
 ---
@@ -378,7 +378,7 @@ sudo systemctl status myapp
 
 ## 10. 방화벽/포트
 
-- 프록시는 80/443, 앱은 5000/5001(내부)  
+- 프록시는 80/443, 앱은 5000/5001(내부)
 - UFW 예시:
 
 ```bash
@@ -499,7 +499,7 @@ app.Run();
 
 ### 13.2 Nginx 업스트림 헬스체크(간단)
 
-- Nginx OSS에는 **능동적 헬스체크**가 제한적. 대신 시스템 레벨 헬스/로드밸런서 사용을 권장  
+- Nginx OSS에는 **능동적 헬스체크**가 제한적. 대신 시스템 레벨 헬스/로드밸런서 사용을 권장
 - 최소한 `/health` 엔드포인트로 LB 수준에서 체크하도록 구성
 
 ---
@@ -519,11 +519,11 @@ app.Run();
 
 ## 15. 마무리 요약
 
-- 개발: `dotnet dev-certs https --trust`, 로컬 HTTPS  
-- 운영: **리버스 프록시에서 TLS 종료**, Kestrel은 HTTP로 단순화  
-- 필수: `UseForwardedHeaders`로 원 IP/프로토콜 복원  
-- 보안: HSTS, TLS1.2+, 보안 헤더, 업로드/타임아웃 제한  
-- 자동화: certbot 갱신, systemd, Docker/Compose  
+- 개발: `dotnet dev-certs https --trust`, 로컬 HTTPS
+- 운영: **리버스 프록시에서 TLS 종료**, Kestrel은 HTTP로 단순화
+- 필수: `UseForwardedHeaders`로 원 IP/프로토콜 복원
+- 보안: HSTS, TLS1.2+, 보안 헤더, 업로드/타임아웃 제한
+- 자동화: certbot 갱신, systemd, Docker/Compose
 - 고급: WebSocket/SignalR, gRPC(HTTP/2), HTTP/3 점진 도입
 
 ---
@@ -574,5 +574,5 @@ app.Use(async (ctx, next) =>
 
 ---
 
-HTTPS 및 리버스 프록시는 “보안+확장성+운영성”의 기본 골격이다.  
+HTTPS 및 리버스 프록시는 “보안+확장성+운영성”의 기본 골격이다.
 위 가이드를 바탕으로 **프록시에서 엣지를 단단하게** 만들고, **Kestrel은 앱 로직에 집중**시키는 구조로 운영 품질을 올리자.

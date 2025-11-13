@@ -5,7 +5,7 @@ date: 2025-10-11 23:25:23 +0900
 category: Spring
 ---
 # 5. 데이터 접근 II — Spring Data
-> Spring Data JPA의 리포지토리 패턴에서 시작해 **Query Method / `@Query` / QueryDSL 개요**, 그리고 **페이징·정렬·동적 검색·Specification**까지 한 번에 정리합니다.  
+> Spring Data JPA의 리포지토리 패턴에서 시작해 **Query Method / `@Query` / QueryDSL 개요**, 그리고 **페이징·정렬·동적 검색·Specification**까지 한 번에 정리합니다.
 > 환경 가정: Spring Boot 3.3+, Spring Data JPA, Hibernate 6.x, Java 21, PostgreSQL 16.
 
 ---
@@ -62,7 +62,7 @@ boolean existsByEmail(String email);
 long countByActiveFalse();
 ```
 
-**장점**: 선언만으로 실행.  
+**장점**: 선언만으로 실행.
 **한계**: 복잡한 조인/동적 필터/집계는 **가독성이 급격히 떨어짐** → `@Query`/QueryDSL로 승격.
 
 ### B-2. 파라미터 바인딩
@@ -117,7 +117,7 @@ List<MemberView> findViewsByTeam(@Param("teamId") Long teamId);
 """, nativeQuery = true)
 List<Object[]> rawByTeamName(@Param("name") String name);
 ```
-- DB 특화 함수/윈도우/CTE/힌트 사용 가능.  
+- DB 특화 함수/윈도우/CTE/힌트 사용 가능.
 - **단점**: 이식성↓, 엔티티 상태/변경감지와 동기화 주의. DTO 매핑은 `SqlResultSetMapping` 또는 스프링 `JdbcTemplate`/`RecordClassMapper` 고려.
 
 ### C-4. 수정 쿼리(벌크 업데이트)
@@ -165,8 +165,8 @@ repo.findByTeamId(1L, MemberView.class);
 ## E. 페이징(Page) / 슬라이싱(Slice) / 정렬(Sort)
 
 ### E-1. API 개요
-- `Page<T>`: **총 건수** 포함. 리스트+페이지 메타.  
-- `Slice<T>`: 다음 페이지 여부만, **count 쿼리 생략**으로 성능↑.  
+- `Page<T>`: **총 건수** 포함. 리스트+페이지 메타.
+- `Slice<T>`: 다음 페이지 여부만, **count 쿼리 생략**으로 성능↑.
 - `List<T>`: 페이징 없이 전부.
 
 ```java
@@ -179,7 +179,7 @@ Slice<Member> findByTeamId(Long teamId, Pageable pageable);
 Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.asc("id")));
 Page<Member> page = repo.findByActiveTrue(pageable);
 ```
-- 정렬 속성은 **인덱스** 고려.  
+- 정렬 속성은 **인덱스** 고려.
 - **Nested 정렬** 가능: `Sort.by("team.name").ascending()`(JPA가 조인 필요 → 주의)
 
 ### E-3. 커스텀 countQuery 최적화
@@ -193,7 +193,7 @@ Page<Member> pageByTeam(@Param("teamId") Long teamId, Pageable pageable);
 - 복잡한 fetch join을 **카운트에서는 제거**(불필요 조인 제거로 속도↑).
 
 ### E-4. `Slice` 사용 시점
-- 모바일 **무한 스크롤** 등 “다음 페이지 존재 여부”만 필요할 때 적합.  
+- 모바일 **무한 스크롤** 등 “다음 페이지 존재 여부”만 필요할 때 적합.
 - **대용량 테이블**에서 전체 카운트가 고가일 때.
 
 ---
@@ -213,7 +213,7 @@ ExampleMatcher matcher = ExampleMatcher.matching()
 Example<Member> example = Example.of(probe, matcher);
 List<Member> result = repo.findAll(example);
 ```
-- **장점**: 간단한 동적 필터에 빠르게 적용.  
+- **장점**: 간단한 동적 필터에 빠르게 적용.
 - **한계**: 조인/복잡한 조건/OR 조합은 제한적.
 
 ---
@@ -253,11 +253,11 @@ Specification<Member> spec = Specification
 Page<Member> page = repo.findAll(spec, PageRequest.of(0, 20));
 ```
 
-- **장점**: 조인/AND/OR/중첩 조건을 타입 세이프하게 조립.  
+- **장점**: 조인/AND/OR/중첩 조건을 타입 세이프하게 조립.
 - **단점**: 코드가 장황, 복잡한 케이스는 **QueryDSL**로 넘어가면 가독성↑.
 
 ### G-2. 정렬/페이징과 함께
-- `JpaSpecificationExecutor`의 `findAll(Specification, Pageable)` 사용.  
+- `JpaSpecificationExecutor`의 `findAll(Specification, Pageable)` 사용.
 - **카운트 쿼리** 자동 생성(복잡하면 `@Query`처럼 countQuery 최적화가 어려움).
 
 ---
@@ -405,8 +405,8 @@ Sort sort = Sort.by(Sort.Order.by("username").ignoreCase().ascending());
 
 ### K-1. 컬렉션 fetch join + 페이징 금지
 - 하이버네이트는 내부에서 메모리 페이징 → 결과 왜곡/성능 악화.
-- **해결**:  
-  1) **두 번 조회**: id 목록만 페이징 → IN 쿼리로 연관 로딩  
+- **해결**:
+  1) **두 번 조회**: id 목록만 페이징 → IN 쿼리로 연관 로딩
   2) 컬렉션은 배치 페치(`hibernate.default_batch_fetch_size`)로 초기화
 
 ```java
@@ -468,35 +468,35 @@ class MemberSearchSpecTest {
 
 ## N. 성능·운영 체크리스트
 
-- [ ] **조회 API**는 **DTO/프로젝션**으로 필요한 컬럼만.  
-- [ ] **모든 연관은 LAZY**에서 시작 → 케이스별 `fetch join`/EntityGraph/배치 페치.  
-- [ ] **카운트 쿼리 최적화**(Page): 불필요 조인 제거, 마지막 페이지면 생략.  
-- [ ] **정렬 컬럼 인덱스** 확보, 화이트리스트 검증.  
-- [ ] **벌크 업데이트 후 1차 캐시 초기화**.  
-- [ ] **두 번 조회** 패턴으로 컬렉션 + 페이징 처리.  
-- [ ] **OSIV 비활성** 시 서비스에서 DTO 변환까지 끝내기.  
+- [ ] **조회 API**는 **DTO/프로젝션**으로 필요한 컬럼만.
+- [ ] **모든 연관은 LAZY**에서 시작 → 케이스별 `fetch join`/EntityGraph/배치 페치.
+- [ ] **카운트 쿼리 최적화**(Page): 불필요 조인 제거, 마지막 페이지면 생략.
+- [ ] **정렬 컬럼 인덱스** 확보, 화이트리스트 검증.
+- [ ] **벌크 업데이트 후 1차 캐시 초기화**.
+- [ ] **두 번 조회** 패턴으로 컬렉션 + 페이징 처리.
+- [ ] **OSIV 비활성** 시 서비스에서 DTO 변환까지 끝내기.
 - [ ] 복잡한 동적 쿼리는 **Specification → QueryDSL 승격**.
 
 ---
 
 ## O. 흔한 함정과 트러블슈팅
 
-1) **`InvalidDataAccessApiUsageException: Parameter with that name [x] did not exist`**  
+1) **`InvalidDataAccessApiUsageException: Parameter with that name [x] did not exist`**
    - `@Param` 이름/플레이스홀더 불일치. 메서드/쿼리 동기화.
 
-2) **`QuerySyntaxException`**  
+2) **`QuerySyntaxException`**
    - JPQL에서 엔티티/필드 이름 사용(테이블/컬럼 X). DTO 경로 정확히.
 
-3) **`LazyInitializationException`**  
+3) **`LazyInitializationException`**
    - 컨트롤러에서 LAZY 접근. 서비스에서 **fetch join**하거나 DTO 변환 후 반환.
 
-4) **느린 count 쿼리**  
+4) **느린 count 쿼리**
    - 조인 제거한 `countQuery` 제공 또는 Slice 사용.
 
-5) **정렬 인젝션 위험**  
+5) **정렬 인젝션 위험**
    - 허용 컬럼 화이트리스트로 필터링.
 
-6) **ManyToMany + 페이징 이상 동작**  
+6) **ManyToMany + 페이징 이상 동작**
    - 조인 엔티티로 리팩터링.
 
 ---
@@ -504,8 +504,8 @@ class MemberSearchSpecTest {
 ## P. 미니 레퍼런스(치트시트)
 
 ### P-1. 리포지토리 리턴 타입
-- 단건: `Optional<T>`/`T`/`@Nullable T`  
-- 다건: `List<T>`/`Page<T>`/`Slice<T>`/`Stream<T>`  
+- 단건: `Optional<T>`/`T`/`@Nullable T`
+- 다건: `List<T>`/`Page<T>`/`Slice<T>`/`Stream<T>`
 - 프로젝션: 인터페이스/레코드/DTO
 
 ### P-2. 키워드 스니펫
@@ -526,8 +526,8 @@ Top1, First10
 
 ## Q. 한 페이지 요약
 
-- **Query Method**로 단순 조건은 끝내고, 복잡해지면 **`@Query`** 또는 **QueryDSL**로 승격.  
-- **페이징/정렬**은 인덱스·count 최적화·화이트리스트 검증이 관건.  
-- **동적 검색**은 간단하면 **Example/Matcher**, 복잡하면 **Specification** → 더 복잡하면 **QueryDSL**.  
-- **N+1**은 LAZY + fetch join/배치 페치/DTO 프로젝션으로 차단.  
+- **Query Method**로 단순 조건은 끝내고, 복잡해지면 **`@Query`** 또는 **QueryDSL**로 승격.
+- **페이징/정렬**은 인덱스·count 최적화·화이트리스트 검증이 관건.
+- **동적 검색**은 간단하면 **Example/Matcher**, 복잡하면 **Specification** → 더 복잡하면 **QueryDSL**.
+- **N+1**은 LAZY + fetch join/배치 페치/DTO 프로젝션으로 차단.
 - **운영**에서는 카운트 비용·정렬 안정성·벌크 작업 이후 컨텍스트 초기화가 핵심.

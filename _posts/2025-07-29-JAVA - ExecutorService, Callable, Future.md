@@ -46,7 +46,7 @@ ExecutorService single   = Executors.newSingleThreadExecutor();
 ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
 ```
 
-> 주의: 일부 팩토리는 **무제한 큐/스레드**로 설정되어 운영 환경에서 메모리 폭증 위험.  
+> 주의: 일부 팩토리는 **무제한 큐/스레드**로 설정되어 운영 환경에서 메모리 폭증 위험.
 > 실무에서는 가급적 **`ThreadPoolExecutor`를 직접 구성**해 **bounded queue** + **거부 정책**을 명시하세요.
 
 ### 2.2 안전한 표준 풀 (권장 템플릿)
@@ -72,7 +72,7 @@ public final class Pools {
 }
 ```
 
-- **유한 큐**: 메모리 상한.  
+- **유한 큐**: 메모리 상한.
 - **CallerRunsPolicy**: 과부하 시 **제출자 스레드가 직접 실행** → 자동 속도 제한.
 
 ---
@@ -161,7 +161,7 @@ List<Future<Integer>> fs = executor.invokeAll(tasks); // 개별 get()
 Integer first = executor.invokeAny(tasks); // 나머지는 취소 시도
 ```
 
-- `invokeAll`은 **전체 완료**(실패 포함).  
+- `invokeAll`은 **전체 완료**(실패 포함).
 - `invokeAny`는 **최초 성공** 결과를 반환(실패만 있다면 예외).
 
 ---
@@ -350,8 +350,8 @@ ExecutorService pool = Executors.newFixedThreadPool(8, tf);
 
 ## 15. 풀 크기 가이드 (근사)
 
-- **CPU 바운드**: `≈ CPU 코어 수`  
-- **I/O 바운드**: 대기 비율에 따라 더 크게  
+- **CPU 바운드**: `≈ CPU 코어 수`
+- **I/O 바운드**: 대기 비율에 따라 더 크게
   $$ N_{\text{threads}} \approx N_{\text{cores}} \times \left(1 + \frac{T_{\text{wait}}}{T_{\text{compute}}}\right) $$
 - 정답은 **부하/성능 테스트**.
 
@@ -479,6 +479,6 @@ toCompletable(Future<T> f, Executor e) {
 
 ## 21. 결론
 
-- **ExecutorService + Callable + Future**는 자바 비동기의 **표준 뼈대**입니다.  
-- 올바른 풀 구성(유한 큐, 거부 정책), **타임아웃/취소**, **예외/로깅**, **안전한 종료**만 지켜도 안정성은 급상승합니다.  
+- **ExecutorService + Callable + Future**는 자바 비동기의 **표준 뼈대**입니다.
+- 올바른 풀 구성(유한 큐, 거부 정책), **타임아웃/취소**, **예외/로깅**, **안전한 종료**만 지켜도 안정성은 급상승합니다.
 - 복잡한 파이프라인은 **CompletableFuture**로 자연스럽게 확장하세요.

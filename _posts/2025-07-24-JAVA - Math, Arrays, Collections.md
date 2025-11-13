@@ -40,12 +40,12 @@ public class MathBasics {
 ```
 
 #### 수학적 정의(반올림 비교)
-- $$\text{round}(x)\ \text{≈ 가장 가까운 정수, .5는 0에서 멀리}$$  
-- $$\text{rint}(x)\ \text{≈ 가장 가까운 정수, .5는 짝수쪽}$$  
+- $$\text{round}(x)\ \text{≈ 가장 가까운 정수, .5는 0에서 멀리}$$
+- $$\text{rint}(x)\ \text{≈ 가장 가까운 정수, .5는 짝수쪽}$$
 - $$\text{floor}(x)=\max\{n\in\mathbb{Z}\mid n\le x\},\quad \text{ceil}(x)=\min\{n\in\mathbb{Z}\mid n\ge x\}$$
 
 ### 1.3 `StrictMath` vs `Math`
-- **`StrictMath`**: 플랫폼 독립적 결정적 결과(fdlibm 기반)  
+- **`StrictMath`**: 플랫폼 독립적 결정적 결과(fdlibm 기반)
 - **`Math`**: JIT/하드웨어 가속 허용(보통 더 빠름). **정확성 vs 일관성** 요구에 따라 선택.
 
 ### 1.4 난수: 무엇을 쓸까?
@@ -113,9 +113,9 @@ public class ArraysBasics {
 {% endraw %}
 
 ### 2.2 성능/함정 체크리스트
-1) **`Arrays.asList(arr)` 함정**  
-   - **고정 크기 리스트 뷰**: `add/remove` 불가, `set`만 가능  
-   - **원시 배열**: `int[]`를 넘기면 **단일 요소 리스트**가 됨  
+1) **`Arrays.asList(arr)` 함정**
+   - **고정 크기 리스트 뷰**: `add/remove` 불가, `set`만 가능
+   - **원시 배열**: `int[]`를 넘기면 **단일 요소 리스트**가 됨
    → 해결: `Arrays.stream(intArr).boxed().toList()` 또는 `IntStream.of(...)`
 ```java
 int[] p = {1,2,3};
@@ -123,16 +123,16 @@ System.out.println(Arrays.asList(p)); // [[I@xxxx] 단일 요소!
 List<Integer> l = Arrays.stream(p).boxed().toList();
 ```
 
-2) **`System.arraycopy` vs `Arrays.copyOf`**  
+2) **`System.arraycopy` vs `Arrays.copyOf`**
    - `System.arraycopy`가 미세하게 빠를 수 있으나, **가독성/안전성**은 `copyOf` 선호.
 
-3) **`parallelSort`**  
+3) **`parallelSort`**
    - 수만~수십만 이상 배열에서 효과. 작은 배열은 오히려 오버헤드.
 
-4) **`mismatch(a,b)`**  
+4) **`mismatch(a,b)`**
    - 달라지는 **최초 인덱스** 반환(없으면 -1). 빠른 비교에 유용.
 
-5) **`compareUnsigned(byte[] ...)`** 없음.  
+5) **`compareUnsigned(byte[] ...)`** 없음.
    - 바이트/정수 **부호 없는 비교**는 `Integer.compareUnsigned`, `Byte.toUnsignedInt` 조합.
 
 ---
@@ -279,15 +279,15 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 
 ## 5. 성능·정확성 체크리스트
 
-1) **반올림 규칙**을 명확히: 재무는 `BigDecimal + RoundingMode`.  
-2) **멀티스레드 난수**: `ThreadLocalRandom`/`SplittableRandom`.  
-3) **큰 배열 정렬**: `parallelSort` 고려(프로파일로 확인).  
-4) **다차원 배열 비교/출력**: `deepEquals`/`deepToString`.  
-5) **asList 함정**(고정 크기/원시 배열 단일 요소) 피하기.  
-6) **불변 vs 수정불가 뷰** 구분: 외부에 **진짜 불변**을 노출.  
-7) **검사 뷰(checked*)**로 런타임 타입 오류 조기 발견.  
-8) **정렬 대비 동등성**: `Comparator` 기준과 `equals` 일관 유지(특히 Tree 기반 컬렉션 사용 시).  
-9) **정확 산술** 필요 시 `*Exact` 군 사용해 **오버플로 감지**.  
+1) **반올림 규칙**을 명확히: 재무는 `BigDecimal + RoundingMode`.
+2) **멀티스레드 난수**: `ThreadLocalRandom`/`SplittableRandom`.
+3) **큰 배열 정렬**: `parallelSort` 고려(프로파일로 확인).
+4) **다차원 배열 비교/출력**: `deepEquals`/`deepToString`.
+5) **asList 함정**(고정 크기/원시 배열 단일 요소) 피하기.
+6) **불변 vs 수정불가 뷰** 구분: 외부에 **진짜 불변**을 노출.
+7) **검사 뷰(checked*)**로 런타임 타입 오류 조기 발견.
+8) **정렬 대비 동등성**: `Comparator` 기준과 `equals` 일관 유지(특히 Tree 기반 컬렉션 사용 시).
+9) **정확 산술** 필요 시 `*Exact` 군 사용해 **오버플로 감지**.
 10) **binarySearch** 전 **정렬 필수**(동일 비교 기준 유지).
 
 ---
@@ -304,8 +304,8 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 
 ## 부록) 실습 문제(간단)
 
-1) 실수 배열에서 평균과 표준편차를 `Math`/`Arrays.stream`으로 계산하라.  
-2) 문자열 배열에서 **대소문자 무시** 정렬 후 **이진 탐색**으로 `"korea"` 위치를 찾되, **동일 Comparator**를 사용하라.  
+1) 실수 배열에서 평균과 표준편차를 `Math`/`Arrays.stream`으로 계산하라.
+2) 문자열 배열에서 **대소문자 무시** 정렬 후 **이진 탐색**으로 `"korea"` 위치를 찾되, **동일 Comparator**를 사용하라.
 3) 주어진 리스트에서 **상위 K 빈도** 단어를 `Collections.frequency` 대신 **맵 + 정렬**로 구하라.
 
 > 해답 팁: 2)는 `Comparator<String> ci = String.CASE_INSENSITIVE_ORDER; Arrays.sort(a, ci); Arrays.binarySearch(a, "korea", ci)`.
@@ -319,6 +319,6 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 ---
 
 ## 마무리
-- `Math`는 **정확성**(반올림/정밀), `Arrays`는 **배열 조작/병렬**, `Collections`는 **컬렉션 조립/뷰/레시피**의 기반입니다.  
-- 이 세 축을 정확히 이해하면, **성능·안정성·가독성**이 모두 올라갑니다.  
+- `Math`는 **정확성**(반올림/정밀), `Arrays`는 **배열 조작/병렬**, `Collections`는 **컬렉션 조립/뷰/레시피**의 기반입니다.
+- 이 세 축을 정확히 이해하면, **성능·안정성·가독성**이 모두 올라갑니다.
 - 실무에서는 **불변 노출 + 내부 가변 캡슐화**, **정확 산술/반올림 규칙 명시**, **프로파일 기반의 병렬화**가 베스트 프랙티스입니다.

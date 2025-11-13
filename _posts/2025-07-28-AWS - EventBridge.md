@@ -8,10 +8,10 @@ category: AWS
 
 ## 0. 큰 그림 — 왜 EventBridge인가?
 
-- **디커플링**: 프로듀서와 컨슈머를 시간·공간·규모 면에서 분리  
-- **서버리스 확장성**: 운영 부담 없이 대량 이벤트 라우팅  
-- **정교한 필터링**: Event Pattern, Input Transformer, Content-based Routing  
-- **리플레이/아카이브**: 과거 이벤트로 재처리·재시험 가능  
+- **디커플링**: 프로듀서와 컨슈머를 시간·공간·규모 면에서 분리
+- **서버리스 확장성**: 운영 부담 없이 대량 이벤트 라우팅
+- **정교한 필터링**: Event Pattern, Input Transformer, Content-based Routing
+- **리플레이/아카이브**: 과거 이벤트로 재처리·재시험 가능
 - **크로스-어카운트·SaaS**: 버스 정책·파트너 버스로 도메인 경계 넘는 통합
 
 ---
@@ -20,8 +20,8 @@ category: AWS
 
 ### 1.1 이벤트(Event)
 
-- **사실을 담은 불변 JSON**. 스키마(필드·타입)가 명확할수록 다운스트림 안정성↑  
-- 필수 키(일반적): `version`, `id`, `time`, `source`, `detail-type`, `detail`  
+- **사실을 담은 불변 JSON**. 스키마(필드·타입)가 명확할수록 다운스트림 안정성↑
+- 필수 키(일반적): `version`, `id`, `time`, `source`, `detail-type`, `detail`
 - 권장: **코릴레이션 ID(`correlationId`)** / **트레이스(`traceparent`)**
 
 ```json
@@ -44,13 +44,13 @@ category: AWS
 
 ### 1.2 이벤트 버스(Event Bus)
 
-- `default`: 대부분의 AWS 서비스 이벤트 유입  
-- `custom`: 애플리케이션·도메인별 생성(권장: **바운디드 컨텍스트 단위**)  
+- `default`: 대부분의 AWS 서비스 이벤트 유입
+- `custom`: 애플리케이션·도메인별 생성(권장: **바운디드 컨텍스트 단위**)
 - `partner`: SaaS(예: Zendesk, Datadog) 연결
 
 ### 1.3 규칙(Rule)과 패턴(Event Pattern)
 
-- **패턴 필터**로 이벤트 매칭 → 0..N **대상(Target)** 으로 라우팅  
+- **패턴 필터**로 이벤트 매칭 → 0..N **대상(Target)** 으로 라우팅
 - OR/AND/Prefix/Anything-but/Exists/数値範囲 등 **고급 매칭** 지원
 
 ```json
@@ -67,8 +67,8 @@ category: AWS
 
 ### 1.4 대상(Target)
 
-- Lambda / Step Functions / SQS / SNS / API Destinations(HTTP) / Kinesis / ECS RunTask 등  
-- **Input Transformer**로 대상별 페이로드 모양 변환  
+- Lambda / Step Functions / SQS / SNS / API Destinations(HTTP) / Kinesis / ECS RunTask 등
+- **Input Transformer**로 대상별 페이로드 모양 변환
 - **Dead-Letter Queue(DLQ)**, **리트라이**, **최대 동시 호출 제한** 설정 가능
 
 ---
@@ -77,29 +77,29 @@ category: AWS
 
 ### 2.1 도메인 내 라우팅(Internal Pub/Sub)
 
-- `orders` 커스텀 버스 ← `OrderCreated` 발행 → 결제/포인트/알림 각각 규칙으로 분기  
+- `orders` 커스텀 버스 ← `OrderCreated` 발행 → 결제/포인트/알림 각각 규칙으로 분기
 - **장점**: 팀 간 느슨한 결합, 신규 컨슈머 온보딩 시 프로듀서 무변경
 
 ### 2.2 도메인 경계/계정 경계 라우팅(Cross-Account)
 
-- **버스 정책(Resource Policy)** 으로 **다른 AWS 계정**에서 PutEvents 허용  
+- **버스 정책(Resource Policy)** 으로 **다른 AWS 계정**에서 PutEvents 허용
 - 중앙 관제 계정에 **아카이브/리플레이** 집중 → 컴플라이언스/감사 용이
 
 ### 2.3 EventBridge Pipes
 
-- **소스(예: SQS/Kinesis/DynamoDB Streams)** → **필터/변환(Lambda/StepFn)** → **대상**  
-- **규칙(Rule)** 은 *버스에 들어온 이벤트*를 필터링,  
-  **파이프(Pipe)** 는 *소스 스트림*을 **폴링·전달**(백프레셔, 재시도 포함).  
+- **소스(예: SQS/Kinesis/DynamoDB Streams)** → **필터/변환(Lambda/StepFn)** → **대상**
+- **규칙(Rule)** 은 *버스에 들어온 이벤트*를 필터링,
+  **파이프(Pipe)** 는 *소스 스트림*을 **폴링·전달**(백프레셔, 재시도 포함).
 - 배치·수율 제어가 필요하면 **Pipes** 고려.
 
 ### 2.4 API Destinations + Connections
 
-- 외부 HTTP(S) 엔드포인트로 이벤트 푸시.  
+- 외부 HTTP(S) 엔드포인트로 이벤트 푸시.
 - OAuth2/Basic/ApiKey **Connections** 관리(자격의 중앙화, 로테이션).
 
 ### 2.5 스케줄러(EventBridge Scheduler)
 
-- **크론/율 표현식**으로 정기 이벤트 발생(전용 서비스).  
+- **크론/율 표현식**으로 정기 이벤트 발생(전용 서비스).
 - 한 번성·반복성 예약을 **원클릭**으로 설정(지연·재시도 정책 포함).
 
 ---
@@ -108,8 +108,8 @@ category: AWS
 
 ### 3.1 기본 리트라이
 
-- 대부분 대상은 **지수 백오프**로 재시도. 실패 누적 시 **DLQ(SQS)** 로 투하(옵션).  
-- 백오프 예(개념):  
+- 대부분 대상은 **지수 백오프**로 재시도. 실패 누적 시 **DLQ(SQS)** 로 투하(옵션).
+- 백오프 예(개념):
   $$
   t_k = t_0 \cdot \alpha^k + \mathrm{Jitter}, \quad \alpha>1
   $$
@@ -117,21 +117,21 @@ category: AWS
 
 ### 3.2 DLQ 설계 팁
 
-- DLQ는 **대상(예: Lambda)별**로 분리 → 재처리 파이프라인 분담  
+- DLQ는 **대상(예: Lambda)별**로 분리 → 재처리 파이프라인 분담
 - DLQ → EventBridge Pipe → 보정 Lambda → 원 대상을 향한 **보정 재주입**
 
 ### 3.3 샘플링/쓰로틀
 
-- Rule 타겟의 **MaximumEventAge/MaximumRetryAttempts** 조정  
-- Lambda 컨슈머는 **Reserved Concurrency**로 폭주 방지  
+- Rule 타겟의 **MaximumEventAge/MaximumRetryAttempts** 조정
+- Lambda 컨슈머는 **Reserved Concurrency**로 폭주 방지
 - Pipes는 **Batch size / Parallelization**으로 수율 제어
 
 ---
 
 ## 4. 스키마 레지스트리와 코드 생성
 
-- 스키마는 **문서/검증/코드생성**의 근거. 이벤트 버전업 시 **하위호환성** 유지 원칙  
-- **Schema Discovery** ON → 자동 학습(트래픽 기반) → `aws schemas` CLI 조회  
+- 스키마는 **문서/검증/코드생성**의 근거. 이벤트 버전업 시 **하위호환성** 유지 원칙
+- **Schema Discovery** ON → 자동 학습(트래픽 기반) → `aws schemas` CLI 조회
 - 코드 생성(예: TypeScript)로 **타이핑된 이벤트 DTO**를 배포 파이프라인에 포함
 
 ```bash
@@ -150,7 +150,7 @@ aws schemas export-schema \
 
 ### 5.1 버스 정책(Resource Policy)
 
-- 누가 **PutEvents**(발행)·**PutRule/PutTargets**(관리) 가능한지 정의  
+- 누가 **PutEvents**(발행)·**PutRule/PutTargets**(관리) 가능한지 정의
 - 크로스 계정/조직(Organizations) **신뢰 경계** 설정
 
 ```json
@@ -168,7 +168,7 @@ aws schemas export-schema \
 
 ### 5.2 대상 실행 역할(Target Role)
 
-- EventBridge가 **대상 리소스 호출** 시 사용할 **IAM Role**(신뢰 주체: `events.amazonaws.com`)  
+- EventBridge가 **대상 리소스 호출** 시 사용할 **IAM Role**(신뢰 주체: `events.amazonaws.com`)
 - 최소권한 원칙: 대상 서비스 API에 필요한 작업만 허용
 
 ---
@@ -177,25 +177,25 @@ aws schemas export-schema \
 
 ### 6.1 메트릭 & 로그
 
-- Bus/Rule/Target 수준 **매칭·전달 실패·지연** 메트릭 감시  
-- CloudWatch Alarm → SNS/슬랙/온콜  
+- Bus/Rule/Target 수준 **매칭·전달 실패·지연** 메트릭 감시
+- CloudWatch Alarm → SNS/슬랙/온콜
 - **X-Ray**: Lambda 타겟에서 Trace 연동, **correlationId**로 상관분석
 
 ### 6.2 아카이브/리플레이
 
-- 규칙 또는 버스 단위로 **아카이브 필터** 설정 → 저장  
-- 장애/버그 시 특정 **시간 범위·패턴**으로 **리플레이**  
+- 규칙 또는 버스 단위로 **아카이브 필터** 설정 → 저장
+- 장애/버그 시 특정 **시간 범위·패턴**으로 **리플레이**
 - 데이터 거버넌스: 아카이브 보관주기·암호화(KMS)
 
 ---
 
 ## 7. 비용 모델 이해와 절감 팁
 
-- **이벤트 수신(퍼블리시)** 기준 과금(프리 티어 월 100,000건)  
-- **아카이브/리플레이**: 저장 용량·재생량 과금  
+- **이벤트 수신(퍼블리시)** 기준 과금(프리 티어 월 100,000건)
+- **아카이브/리플레이**: 저장 용량·재생량 과금
 - 절감:
-  - **규칙 통합/정교한 패턴 필터**로 **불필요 이벤트 차단**  
-  - **버스 분리**(핫/콜드)로 고빈도 경로 최적화  
+  - **규칙 통합/정교한 패턴 필터**로 **불필요 이벤트 차단**
+  - **버스 분리**(핫/콜드)로 고빈도 경로 최적화
   - S3·DDB 등은 **게이트웨이 엔드포인트** 통해 네트워크 비용 최소화(다운스트림 접근 시)
 
 ---
@@ -204,9 +204,9 @@ aws schemas export-schema \
 
 ### 8.1 “주문 생성 → 결제/포인트/이메일” 파이프라인
 
-- `orders` 커스텀 버스  
-- 규칙 1: 금액 ≥ 100000 → 결제 서비스 Lambda  
-- 규칙 2: 모든 주문 → 포인트 적립 SQS  
+- `orders` 커스텀 버스
+- 규칙 1: 금액 ≥ 100000 → 결제 서비스 Lambda
+- 규칙 2: 모든 주문 → 포인트 적립 SQS
 - 규칙 3: 채널=web → 이메일 SNS 토픽
 
 #### 8.1.1 CLI: 버스/규칙/타겟
@@ -325,7 +325,7 @@ aws pipes create-pipe \
 
 ## 9. Input Transformer/Path/Template
 
-- **InputPath**: JSONPath로 일부만 전달  
+- **InputPath**: JSONPath로 일부만 전달
 - **InputTransformer**: 명시적 맵핑 + 템플릿(문자열)로 **형상 고정**
 
 ```json
@@ -420,11 +420,11 @@ Resources:
 
 ## 11. 트러블슈팅 체크리스트
 
-- [ ] **이벤트가 규칙에 매칭되지 않음** → Event Pattern(JSONPath/타입/대소문자) 확인  
-- [ ] **대상 호출 권한 실패** → 대상 실행 역할 신뢰주체 `events.amazonaws.com` 확인  
-- [ ] **크로스 계정 발행 불가** → **버스 정책**의 Principal/Action/Resource 재확인  
-- [ ] **리트라이 고갈** → DLQ 메시지 확인, **보정 파이프라인** 설계  
-- [ ] **외부 API 실패** → API Destinations Connection 만료/스루풋 제한 확인  
+- [ ] **이벤트가 규칙에 매칭되지 않음** → Event Pattern(JSONPath/타입/대소문자) 확인
+- [ ] **대상 호출 권한 실패** → 대상 실행 역할 신뢰주체 `events.amazonaws.com` 확인
+- [ ] **크로스 계정 발행 불가** → **버스 정책**의 Principal/Action/Resource 재확인
+- [ ] **리트라이 고갈** → DLQ 메시지 확인, **보정 파이프라인** 설계
+- [ ] **외부 API 실패** → API Destinations Connection 만료/스루풋 제한 확인
 - [ ] **폭주** → Rule 타겟 동시성 제한, Pipes 배치/동시성, Lambda 예약 동시성
 
 ---
@@ -454,27 +454,27 @@ fields @timestamp, latencyMs, target
 
 ## 13. 도메인 버스 분할과 버전 전략
 
-- **버스 분할**: `orders`, `payments`, `users` … 바운디드 컨텍스트별  
-- **이벤트 버전**: `detail-type: OrderCreated.v2` 또는 `detail.schemaVersion = "2"`  
+- **버스 분할**: `orders`, `payments`, `users` … 바운디드 컨텍스트별
+- **이벤트 버전**: `detail-type: OrderCreated.v2` 또는 `detail.schemaVersion = "2"`
 - **하위호환**: 필드 추가는 허용, **의미 변경/삭제는 새 버전**
 
 ---
 
 ## 14. 보안·거버넌스 베스트 프랙티스
 
-- **Least Privilege**: PutEvents/PutTargets 최소 권한  
-- **버스 정책에 조직 단위 허용**(AWS Organizations) → 계정 확장 편의  
-- **스키마 검증**: 사전 검증(프록시 Lambda) 또는 컨슈머 측 강타입 DTO  
-- **아카이브 암호화(KMS)**, 보존주기 정의, PII 필드 최소화/마스킹  
+- **Least Privilege**: PutEvents/PutTargets 최소 권한
+- **버스 정책에 조직 단위 허용**(AWS Organizations) → 계정 확장 편의
+- **스키마 검증**: 사전 검증(프록시 Lambda) 또는 컨슈머 측 강타입 DTO
+- **아카이브 암호화(KMS)**, 보존주기 정의, PII 필드 최소화/마스킹
 - **태깅**(비용/데이터계보): `eventbus=orders`, `pii=no`, `env=prod`
 
 ---
 
 ## 15. 성능·지연·정확성 고려
 
-- EventBridge는 **최소-1회 전달(at-least-once)** → **아이템포턴시 키**로 **중복 처리**  
-- 순서 보장은 기본적으로 없음(필요 시 **FIFO SQS** → Pipes → 대상)  
-- 대량 이벤트: **배치형 Pipes** / 대상의 **버퍼링** / 다운스트림 **수평 확장**  
+- EventBridge는 **최소-1회 전달(at-least-once)** → **아이템포턴시 키**로 **중복 처리**
+- 순서 보장은 기본적으로 없음(필요 시 **FIFO SQS** → Pipes → 대상)
+- 대량 이벤트: **배치형 Pipes** / 대상의 **버퍼링** / 다운스트림 **수평 확장**
 - 대기시간 민감 경로: Rule 체인을 최소화, 지역 일치, 네트워크 경로 단축(API Destinations 근접)
 
 ---
@@ -530,12 +530,12 @@ aws events start-replay \
 
 ## 17. 요약 체크리스트
 
-- [ ] **커스텀 버스**로 도메인 분리, 규칙은 **도메인 용어**로  
-- [ ] **Event Pattern**으로 **필터링·분기**를 먼저, 변환은 최소화  
-- [ ] **아이템포턴시/중복처리** 내재화, 순서 필요 시 **FIFO+Pipes**  
-- [ ] **리트라이+DLQ** 표준화, **아카이브/리플레이**로 회복력 확보  
-- [ ] **버스 정책/IAM/연결 권한** 최소화, **스키마 관리** 자동화  
-- [ ] **관측(메트릭/로그/X-Ray)** 상시, 비용·지연 모니터링  
+- [ ] **커스텀 버스**로 도메인 분리, 규칙은 **도메인 용어**로
+- [ ] **Event Pattern**으로 **필터링·분기**를 먼저, 변환은 최소화
+- [ ] **아이템포턴시/중복처리** 내재화, 순서 필요 시 **FIFO+Pipes**
+- [ ] **리트라이+DLQ** 표준화, **아카이브/리플레이**로 회복력 확보
+- [ ] **버스 정책/IAM/연결 권한** 최소화, **스키마 관리** 자동화
+- [ ] **관측(메트릭/로그/X-Ray)** 상시, 비용·지연 모니터링
 - [ ] **IaC(SAM/Terraform)** 로 재현 가능한 배포
 
 ---
@@ -583,5 +583,5 @@ Resources:
 
 ## 결론
 
-EventBridge는 **서버리스 이벤트 허브**로, 마이크로서비스·워크플로우·SaaS/외부 시스템을 **정교한 필터·정책·리트라이/리플레이**로 견고하게 묶는다.  
+EventBridge는 **서버리스 이벤트 허브**로, 마이크로서비스·워크플로우·SaaS/외부 시스템을 **정교한 필터·정책·리트라이/리플레이**로 견고하게 묶는다.
 본 가이드의 **도메인 버스 분할, 패턴 설계, Pipes/스케줄러 선택, 보안·거버넌스, DLQ/아카이브 운영, IaC 표준**을 적용하면 **대규모·복원력 높은 이벤트 아키텍처**를 일관되게 구축·운영할 수 있다.

@@ -205,7 +205,7 @@ Class-Path: lib/guava.jar lib/logging.jar
 jar --create --file app.jar --manifest MANIFEST.MF -C bin .
 ```
 
-> 참고: **일반 `jar`는 여러 JAR을 하나로 합쳐주지 않습니다.**  
+> 참고: **일반 `jar`는 여러 JAR을 하나로 합쳐주지 않습니다.**
 > 의존 JAR까지 한 덩어리로 만들려면 **Maven Shade** / **Gradle Shadow** 같은 **쉐이더**를 사용하세요.
 
 ### 4.4 멀티릴리스 JAR(MRJAR) 예 (JDK9+)
@@ -370,13 +370,13 @@ java --enable-preview -cp bin com.example.app.Main
 
 ## 8. 베스트 프랙티스 체크리스트
 
-1. **호환 빌드**: JDK 9+에서는 `--release N`로 **API/바이트코드 동시 보장**.  
-2. **경고를 친구로**: `-Xlint:all -Werror -parameters`로 품질 유지.  
-3. **경로 휴대성**: OS 구분자 `:`(Unix)/`;`(Windows) 주의, 와일드카드 `lib/*` 적극 활용.  
-4. **모듈 캡슐화**: 외부 공개는 `exports` 최소화, 리플렉션은 필요한 패키지만 `opens`.  
-5. **서비스 구조**: 플러그인/확장은 `uses/provides` + `ServiceLoader`.  
-6. **패키징 전략**: 실행가능 JAR + 쉐이딩(필요 시) 또는 런처 스크립트. 큰 배포는 **jlink**로 경량 런타임 고려.  
-7. **CI 표준화**: `@argfile`로 긴 인자 관리, 재현성 있는 빌드(고정 JDK/의존 버전).  
+1. **호환 빌드**: JDK 9+에서는 `--release N`로 **API/바이트코드 동시 보장**.
+2. **경고를 친구로**: `-Xlint:all -Werror -parameters`로 품질 유지.
+3. **경로 휴대성**: OS 구분자 `:`(Unix)/`;`(Windows) 주의, 와일드카드 `lib/*` 적극 활용.
+4. **모듈 캡슐화**: 외부 공개는 `exports` 최소화, 리플렉션은 필요한 패키지만 `opens`.
+5. **서비스 구조**: 플러그인/확장은 `uses/provides` + `ServiceLoader`.
+6. **패키징 전략**: 실행가능 JAR + 쉐이딩(필요 시) 또는 런처 스크립트. 큰 배포는 **jlink**로 경량 런타임 고려.
+7. **CI 표준화**: `@argfile`로 긴 인자 관리, 재현성 있는 빌드(고정 JDK/의존 버전).
 8. **문제 발생 시 즉시 기록**: `-verbose:class`(로드 추적), `-Xlog:class+load=info`(JDK 9+) 등으로 원인 좁히기.
 
 ---
@@ -478,6 +478,6 @@ java -jar echo.jar hello world
 
 ## 마무리
 
-- `javac`는 **타겟 플랫폼**과 **품질 옵션**을 정확히, `java`는 **경로/모듈/리플렉션 플래그**를 명확히, `jar`는 **실행 가능·멀티릴리스·모듈 친화**를 의도대로 다뤄야 합니다.  
-- 모듈 시스템(JPMS)을 도입하면 **캡슐화 강화·조기 검증** 이점을 얻는 대신, 리플렉션/테스트 경계에 `opens`/`--add-opens` 설계를 병행해야 합니다.  
+- `javac`는 **타겟 플랫폼**과 **품질 옵션**을 정확히, `java`는 **경로/모듈/리플렉션 플래그**를 명확히, `jar`는 **실행 가능·멀티릴리스·모듈 친화**를 의도대로 다뤄야 합니다.
+- 모듈 시스템(JPMS)을 도입하면 **캡슐화 강화·조기 검증** 이점을 얻는 대신, 리플렉션/테스트 경계에 `opens`/`--add-opens` 설계를 병행해야 합니다.
 - 본 문서의 표·예제·치트시트를 그대로 베이스라인으로 삼아, **클래식 → 모듈**로 점진 전환해도 무리가 없습니다.

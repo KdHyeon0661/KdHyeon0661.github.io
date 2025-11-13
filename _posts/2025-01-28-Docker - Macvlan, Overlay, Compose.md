@@ -8,12 +8,12 @@ category: Docker
 
 ## 목차
 
-1. 개요 — Docker 네트워크 드라이버 지도  
-2. **Macvlan**: 물리망처럼 보이게 — 모드, 설계, 호스트↔컨테이너 통신 해결, Compose 예제  
-3. **Overlay**: 다중 호스트 가상망 — Swarm, 암호화, 서비스/컨테이너 붙이기, 포트 공개, Compose/Stack 예제  
-4. **Compose에서 네트워크 직접 설정** — 다중 네트워크, 외부 네트워크, 드라이버 옵션, 헬스체크 연계  
-5. 보안/성능/운영 베스트 프랙티스 — 권한/분리, MTU, 관측/로깅, 네임해결  
-6. 트러블슈팅 체크리스트 — ARP/DNS/라우팅/포트 충돌, 재현 가능한 진단 명령  
+1. 개요 — Docker 네트워크 드라이버 지도
+2. **Macvlan**: 물리망처럼 보이게 — 모드, 설계, 호스트↔컨테이너 통신 해결, Compose 예제
+3. **Overlay**: 다중 호스트 가상망 — Swarm, 암호화, 서비스/컨테이너 붙이기, 포트 공개, Compose/Stack 예제
+4. **Compose에서 네트워크 직접 설정** — 다중 네트워크, 외부 네트워크, 드라이버 옵션, 헬스체크 연계
+5. 보안/성능/운영 베스트 프랙티스 — 권한/분리, MTU, 관측/로깅, 네임해결
+6. 트러블슈팅 체크리스트 — ARP/DNS/라우팅/포트 충돌, 재현 가능한 진단 명령
 7. 부록 — 네트워크 토폴로지 예시, 용어 정리, 치트시트
 
 ---
@@ -34,7 +34,7 @@ category: Docker
 
 ## 2. Macvlan — 컨테이너가 진짜 장비처럼 보이게
 
-> 컨테이너마다 **고유 MAC** 을 부여하고, 물리 네트워크(L2)에 직접 붙이는 방식.  
+> 컨테이너마다 **고유 MAC** 을 부여하고, 물리 네트워크(L2)에 직접 붙이는 방식.
 > 프린터/IoT/NAS처럼 **LAN 상의 실체 IP** 로 보여야 할 때 매우 적합.
 
 ### 2.1 동작 모드 개요
@@ -49,7 +49,7 @@ Linux macvlan은 대표적으로 다음 모드를 가집니다.
 ### 2.2 필수 전제/설계 항목
 
 - **parent NIC**: 예) `eth0` (VLAN 태깅 환경이면 `eth0.10` 같은 **VLAN 서브인터페이스**를 parent로 지정 권장)
-- **L2/L3 설계**: Subnet, Gateway, IP 할당 방식(DHCP/Static).  
+- **L2/L3 설계**: Subnet, Gateway, IP 할당 방식(DHCP/Static).
   일반적으로 **정적 IP** 를 권장(가정/사내 DHCP 충돌 최소화).
 - **호스트 ↔ 컨테이너 통신 제한**: 동일 NIC에서 **호스트와 macvlan 간 L2 통신이 기본 불가** (커널 정책). 아래 해결책 참고.
 
@@ -74,10 +74,10 @@ docker run -d --name printer \
 
 ### 2.4 호스트 ↔ 컨테이너 직통 불가 문제 해결 (권장 루트)
 
-**문제**: 같은 NIC(예: `eth0`) 위의 macvlan과 호스트는 **서로 보지 못함**.  
+**문제**: 같은 NIC(예: `eth0`) 위의 macvlan과 호스트는 **서로 보지 못함**.
 **해결책(일반적인 두 가지)**:
 
-**A) 호스트 측에 별도 macvlan 인터페이스 생성(bridge 모드) 후 static route**  
+**A) 호스트 측에 별도 macvlan 인터페이스 생성(bridge 모드) 후 static route**
 ```bash
 # host OS에서 실행 (root 필요)
 # 호스트에 macvlan 인터페이스 생성 (ip link)
@@ -90,8 +90,8 @@ ping -c1 192.168.1.50
 ```
 - 라우터/스위치 입장에선 전부 L2 상 동등 장비.
 
-**B) parent를 VLAN 서브인터페이스로 분리**  
-- 예: `eth0.30` 을 parent로 macvlan, `eth0` 은 호스트 기본.  
+**B) parent를 VLAN 서브인터페이스로 분리**
+- 예: `eth0.30` 을 parent로 macvlan, `eth0` 은 호스트 기본.
 - 호스트와 컨테이너 간 통신은 **라우터 경유**(VLAN간 라우팅)로 이루어지게 설계.
 
 현실적으로 **A**가 간편하며, VLAN 분리가 필요하면 **B**로 아키텍처를 개정합니다.
@@ -134,14 +134,14 @@ docker network create -d macvlan \
 
 ## 3. Overlay — 여러 호스트에 걸친 가상 네트워크
 
-> **Swarm 모드**에서 활성화되는 L2.5 가상망(VXLAN).  
+> **Swarm 모드**에서 활성화되는 L2.5 가상망(VXLAN).
 > 노드 여러 대에 걸친 컨테이너들이 **동일 네트워크** 처럼 통신.
 
 ### 3.1 빠른 개념
 
-- **Swarm 활성화 필수**: `docker swarm init`  
-- **VXLAN 터널링**: 데이터센터/클라우드 노드 간 패킷을 터널로 운송.  
-- **암호화 옵션**: `--opt encrypted` 로 **네트워크 레벨 암호화** 가능(성능 비용 고려).  
+- **Swarm 활성화 필수**: `docker swarm init`
+- **VXLAN 터널링**: 데이터센터/클라우드 노드 간 패킷을 터널로 운송.
+- **암호화 옵션**: `--opt encrypted` 로 **네트워크 레벨 암호화** 가능(성능 비용 고려).
 - **attachable**: 서비스 뿐 아니라 **일반 컨테이너**도 네트워크에 붙을 수 있게.
 
 ### 3.2 기본 흐름
@@ -172,7 +172,7 @@ docker service create \
   nginx:alpine
 ```
 
-- **ingress**: **라우팅 메시**를 통해 모든 노드의 8080에서 API로 분산.  
+- **ingress**: **라우팅 메시**를 통해 모든 노드의 8080에서 API로 분산.
 - `mode=host` 로 하면 **해당 태스크가 뜬 노드의 포트만** 바인딩(고성능/고정 매핑 선호 시).
 
 ### 3.4 암호화(옵션)
@@ -232,13 +232,13 @@ docker stack ps appstack
 
 ### 3.6 MTU/오버헤드(간단 수식)
 
-VXLAN 캡슐화 오버헤드는 대략 **50바이트 전후**입니다.  
+VXLAN 캡슐화 오버헤드는 대략 **50바이트 전후**입니다.
 유효 MTU는:
 $$
 MTU_{\text{effective}} \approx MTU_{\text{underlay}} - 50
 $$
 
-예: 물리망 1500이면 overlay 상 컨테이너 MTU는 약 1450.  
+예: 물리망 1500이면 overlay 상 컨테이너 MTU는 약 1450.
 대용량 UDP/ICMP 시 단편화 가능성 → **애플리케이션/OS MTU 조정** 고려.
 
 ---
@@ -270,7 +270,7 @@ networks:
   backnet: {}
 ```
 
-- **외부 노출**은 `fe`만.  
+- **외부 노출**은 `fe`만.
 - `api`/`db`는 backnet에서만 통신 → **경계가 명확**.
 
 ### 4.2 외부 네트워크 붙이기(bridge/macvlan/overlay 등)
@@ -303,7 +303,7 @@ networks:
 
 ### 4.4 이름 기반 통신과 헬스체크 연계
 
-- 같은 네트워크에서 `api`는 `db:5432`로 접근.  
+- 같은 네트워크에서 `api`는 `db:5432`로 접근.
 - Compose v2에서는 `depends_on.condition=service_healthy` 로 **준비 완료 뒤 기동** 조절.
 
 ```yaml
@@ -328,14 +328,14 @@ services:
 
 ### 5.2 성능
 
-- **host** > macvlan/bridge > overlay 순(대체로).  
-- overlay는 MTU/캡슐화 오버헤드로 지연 증가 가능.  
+- **host** > macvlan/bridge > overlay 순(대체로).
+- overlay는 MTU/캡슐화 오버헤드로 지연 증가 가능.
 - 패킷이 큰 워크로드는 **MTU 조정** 또는 **route-mode publishing** 검토.
 
 ### 5.3 운영/관측
 
-- **DNS**: 도커 내장 레졸버(127.0.0.11) 동작 확인.  
-- **로깅/메트릭**: `docker events`, `docker logs`, 노드/네트워크 지표 수집(ebpf/pcap).  
+- **DNS**: 도커 내장 레졸버(127.0.0.11) 동작 확인.
+- **로깅/메트릭**: `docker events`, `docker logs`, 노드/네트워크 지표 수집(ebpf/pcap).
 - **네임스페이스 가시화**: `nsenter`, `ip netns` (root 필요), `nicolaka/netshoot` 컨테이너 적극 활용.
 
 ---
@@ -518,8 +518,8 @@ networks:
 
 ## 결론
 
-- **macvlan**: 컨테이너를 **LAN 상 실체 장비**처럼 노출해야 할 때 정답. 호스트↔컨테이너 통신은 **별도 macvlan0** 또는 **VLAN 분리**로 해결.  
-- **overlay**: **여러 호스트**에 걸친 서비스 연결의 표준. Swarm, attachable, ingress/host publish 모드, 암호화 등 **아키텍처 선택지** 풍부.  
+- **macvlan**: 컨테이너를 **LAN 상 실체 장비**처럼 노출해야 할 때 정답. 호스트↔컨테이너 통신은 **별도 macvlan0** 또는 **VLAN 분리**로 해결.
+- **overlay**: **여러 호스트**에 걸친 서비스 연결의 표준. Swarm, attachable, ingress/host publish 모드, 암호화 등 **아키텍처 선택지** 풍부.
 - **Compose/Stack**: **네트워크 경계**를 선언으로 고정하고, 이름 기반 통신과 헬스체크로 **기동 안정성**을 확보.
 
 두 기술은 상호 배타적이 아니라 **환경 목적**에 맞춰 **혼용**됩니다. 단일 호스트에서는 macvlan/bridge를, 클러스터/멀티노드에서는 overlay를 채택하는 식으로 **설계 의도**를 명확히 하십시오.

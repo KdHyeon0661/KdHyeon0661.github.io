@@ -30,11 +30,11 @@ category: Linux
 > 새 설계·운영은 **v2 권장**. 레거시(특히 구버전 커널/도구)는 v1 문법 병행 지식 필요.
 
 ### 1.2 대표 컨트롤러 및 핵심 파일 (v2 명칭 기준)
-- **CPU**: `cpu.max`(쿼터/주기), `cpu.weight`(비율 가중치), `cpu.stat`  
-- **Memory**: `memory.max`(경질 상한), `memory.high`(압박), `memory.swap.max`, `memory.min/low`, `memory.current`, `memory.events`  
-- **IO(blk)**: `io.max`(bps/iops 상한), `io.weight`, `io.stat`  
-- **PIDs**: `pids.max`, `pids.current`  
-- **cpuset**: NUMA/CPU 핀닝 (`cpuset.cpus`, `cpuset.mems`)  
+- **CPU**: `cpu.max`(쿼터/주기), `cpu.weight`(비율 가중치), `cpu.stat`
+- **Memory**: `memory.max`(경질 상한), `memory.high`(압박), `memory.swap.max`, `memory.min/low`, `memory.current`, `memory.events`
+- **IO(blk)**: `io.max`(bps/iops 상한), `io.weight`, `io.stat`
+- **PIDs**: `pids.max`, `pids.current`
+- **cpuset**: NUMA/CPU 핀닝 (`cpuset.cpus`, `cpuset.mems`)
 - **misc/rdma**: 특수 자원 쿼터
 
 > v1에서 자주 보던 `memory.limit_in_bytes`, `blkio.throttle.*`, `cpu.shares` 등은 v2에서 **의미 대응**이 바뀌거나 합쳐짐.
@@ -72,7 +72,7 @@ echo 100        | sudo tee /sys/fs/cgroup/work/pids.max          # 최대 PID �
 echo $$ | sudo tee /sys/fs/cgroup/work/cgroup.procs
 ```
 
-> `cpu.max` 형식: `"<quota> <period>"`. 위 예시는 **주기 100ms 중 50ms만 실행 → 50%**.  
+> `cpu.max` 형식: `"<quota> <period>"`. 위 예시는 **주기 100ms 중 50ms만 실행 → 50%**.
 > 가중치 공정 배분은 `cpu.weight`(1~10000, 기본 100) 사용.
 
 ### 2.3 관측 포인트
@@ -207,7 +207,7 @@ mount --make-rshared /
 ## 6. seccomp: 시스템콜 필터로 공격면 축소
 
 ### 6.1 개념
-- BPF(또는 eBPF) 기반 **시스템콜 허용/거부** 정책.  
+- BPF(또는 eBPF) 기반 **시스템콜 허용/거부** 정책.
 - 컨테이너 런타임(Docker/K8s)은 기본 프로파일로 광범위 차단.
 
 ### 6.2 아주 간단한 실행 예(Docker를 예로)
@@ -216,7 +216,7 @@ mount --make-rshared /
 docker run --security-opt seccomp=/path/seccomp-min.json alpine:3.20
 ```
 
-> 네이티브로는 `seccomp()`(C) 또는 `libseccomp`로 규칙 설치.  
+> 네이티브로는 `seccomp()`(C) 또는 `libseccomp`로 규칙 설치.
 > 실무에서는 런타임이 제공하는 **프로파일** 튜닝이 일반적.
 
 ---
@@ -260,11 +260,11 @@ docker run --cpus=1.5 --memory=512m --pids-limit=128 --memory-swap=512m \
   --cpuset-cpus=0-3 --device-read-bps /dev/sda:10mb \
   -it ubuntu:24.04 bash
 ```
-- 옵션이 내부적으로 cgroup v2 파일에 매핑된다.  
+- 옵션이 내부적으로 cgroup v2 파일에 매핑된다.
 - `--security-opt seccomp=…`, `--cap-drop=…`로 커널 표면 축소.
 
 ### 8.2 Kubernetes(참고)
-- `resources.requests/limits` → 노드의 cgroup 정책으로 투영.  
+- `resources.requests/limits` → 노드의 cgroup 정책으로 투영.
 - Burstable/Guaranteed QoS 클래스가 cgroup weight/limit에 영향.
 
 ---
@@ -286,15 +286,15 @@ cat /sys/fs/cgroup/<grp>/cgroup.events      # frozen, populated 등
 ```
 
 ### 9.3 OOM의 이해
-- **cgroup OOM**: 그룹 내부에서만 프로세스 종료.  
-- **시스템 OOM**: 전역 메모리 부족.  
+- **cgroup OOM**: 그룹 내부에서만 프로세스 종료.
+- **시스템 OOM**: 전역 메모리 부족.
 - `memory.oom.group=1`(v2)로 **그룹 단위 종료**를 유도해 **부분적 누수** 방지.
 
 ### 9.4 흔한 함정·해결
-- **권한**: `/sys/fs/cgroup` 쓰기는 root 필요. delegation 시 `cgroup.procs`/`cgroup.subtree_control` 권한 설계.  
-- **혼합 계층**: v1과 v2 혼용 피하기.  
-- **cpuset**: 부모가 먼저 `cpuset.cpus/mems` 설정해야 자식에 반영 가능.  
-- **IO 제한**: 디바이스 메이저:마이너 번호 정확히 지정.  
+- **권한**: `/sys/fs/cgroup` 쓰기는 root 필요. delegation 시 `cgroup.procs`/`cgroup.subtree_control` 권한 설계.
+- **혼합 계층**: v1과 v2 혼용 피하기.
+- **cpuset**: 부모가 먼저 `cpuset.cpus/mems` 설정해야 자식에 반영 가능.
+- **IO 제한**: 디바이스 메이저:마이너 번호 정확히 지정.
 - **스왑**: v2의 `memory.swap.max`로 별도 상한을 명시, 예측성 확보.
 
 ---
@@ -380,7 +380,7 @@ $$
 
 ## 마무리
 
-- **cgroups v2 + systemd** 조합은 현대 리눅스의 **표준 리소스 정책 프레임워크**다.  
-- **namespaces**로 “보이는 세계”를 나누고, **cgroups**로 “쓸 수 있는 양”을 규정하며, **seccomp**로 “할 수 있는 행위”를 줄여 **컨테이너급 격리와 예측성**을 만든다.  
-- 운영 핵심은 **수치 기반(PSI/cgroup.events/cpu.stat) 관측 → 정책(High/Max/Quota/Weight) 순환 튜닝**.  
+- **cgroups v2 + systemd** 조합은 현대 리눅스의 **표준 리소스 정책 프레임워크**다.
+- **namespaces**로 “보이는 세계”를 나누고, **cgroups**로 “쓸 수 있는 양”을 규정하며, **seccomp**로 “할 수 있는 행위”를 줄여 **컨테이너급 격리와 예측성**을 만든다.
+- 운영 핵심은 **수치 기반(PSI/cgroup.events/cpu.stat) 관측 → 정책(High/Max/Quota/Weight) 순환 튜닝**.
 - 새로운 워크로드를 들일 때는 **기본 상한(최소한의 Max/Quota/Tasks/PIDs)부터** 걸고, 서비스 SLO에 맞춰 **하향식으로 완화**하라.

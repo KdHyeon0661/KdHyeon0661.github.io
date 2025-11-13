@@ -11,7 +11,7 @@ category: 정보보안기사
 - **사용자/커널 공간**, **프로세스·신호·파일 디스크립터**, **권한(UGO/SGID/SUID/Sticky)·ACL·Capabilities**, **패키지/서비스(systemd)**, **로깅(journald·syslog)·감사(auditd)**, **네트워킹(ip/ss/iptables/nftables)**, **스토리지(LVM/RAID/mount)**를 이해하고 실습한다.
 - 보안 기본수칙: **최소권한**, **변경 이력/로그 가시성**, **구성의 코드화(IaC)**.
 
-권장 환경: 최신 **Ubuntu Server 22.04+** 또는 **RHEL 8/9, Rocky/Alma**, **Debian 12**, 각자에 맞는 패키지 매니저(apt/dnf).  
+권장 환경: 최신 **Ubuntu Server 22.04+** 또는 **RHEL 8/9, Rocky/Alma**, **Debian 12**, 각자에 맞는 패키지 매니저(apt/dnf).
 루트 권한: `sudo -i` 또는 명령 앞에 `sudo`.
 
 ---
@@ -52,8 +52,8 @@ $$
 $$
 
 ### 특수 비트: SUID·SGID·Sticky
-- **SUID(4xxx)**: 실행 시 파일 소유자 권한으로 실행(예: `/usr/bin/passwd`).  
-- **SGID(2xxx)**: 실행 시 파일 **그룹** 권한 적용, 디렉터리에 설정하면 **하위 파일의 그룹 상속**.  
+- **SUID(4xxx)**: 실행 시 파일 소유자 권한으로 실행(예: `/usr/bin/passwd`).
+- **SGID(2xxx)**: 실행 시 파일 **그룹** 권한 적용, 디렉터리에 설정하면 **하위 파일의 그룹 상속**.
 - **Sticky(1xxx)**: 디렉터리에서 **소유자만 삭제 가능**(`/tmp`).
 
 핸즈온(공유 디렉터리 설계: SGID+Sticky)
@@ -76,7 +76,7 @@ echo 'umask 027' | sudo tee -a /etc/profile.d/hardening.sh
 ```
 
 ### POSIX ACL과 Capabilities
-- ACL: `setfacl/getfacl`로 사용자/그룹별 세밀 제어(UGO를 보완).  
+- ACL: `setfacl/getfacl`로 사용자/그룹별 세밀 제어(UGO를 보완).
 - Capabilities: 루트 전체 권한 대신 특정 권능만 부여(`cap_net_bind_service` 등).
 
 핸즈온(ACL/Capabilities):
@@ -90,9 +90,9 @@ getcap /usr/local/bin/myservice
 ```
 
 체크리스트
-- [ ] 민감 디렉터리는 **상속·SGID**로 그룹 일관성 유지.  
-- [ ] `/tmp`와 같은 공유 디렉터리는 **sticky bit** 필수.  
-- [ ] 기본 umask는 027/077 검토.  
+- [ ] 민감 디렉터리는 **상속·SGID**로 그룹 일관성 유지.
+- [ ] `/tmp`와 같은 공유 디렉터리는 **sticky bit** 필수.
+- [ ] 기본 umask는 027/077 검토.
 - [ ] 루트 권한 대신 **capabilities** 사용 가능 여부 확인.
 
 ---
@@ -125,8 +125,8 @@ logrotate -d /etc/logrotate.conf
 ```
 
 체크리스트
-- [ ] 데이터/임시/컨테이너 경로는 `noexec,nodev,nosuid` 검토.  
-- [ ] logrotate 주기/보존/압축/권한 점검.  
+- [ ] 데이터/임시/컨테이너 경로는 `noexec,nodev,nosuid` 검토.
+- [ ] logrotate 주기/보존/압축/권한 점검.
 - [ ] journald 영속(`/var/log/journal`) 및 크기 상한 설정.
 
 ---
@@ -142,8 +142,8 @@ chage -l alice      # 암호 만료 정보
 ```
 
 ### PAM과 로그인 정책
-- **PAM**(Pluggable Authentication Modules): `/etc/pam.d/` 설정.  
-- **암호/락아웃**: `pam_pwquality`, `pam_faillock` 등으로 정책 적용.  
+- **PAM**(Pluggable Authentication Modules): `/etc/pam.d/` 설정.
+- **암호/락아웃**: `pam_pwquality`, `pam_faillock` 등으로 정책 적용.
 - 로그인 기본 정책: `/etc/login.defs`.
 
 핸즈온(로그인 실패 잠금 예: RHEL8+/Rocky/Alma)
@@ -155,8 +155,8 @@ faillock --user alice
 ```
 
 체크리스트
-- [ ] 기본 계정(예: `root` 원격 로그인) 제한.  
-- [ ] 실패 잠금/백오프, 비밀번호 복잡성, 만료 정책 적용.  
+- [ ] 기본 계정(예: `root` 원격 로그인) 제한.
+- [ ] 실패 잠금/백오프, 비밀번호 복잡성, 만료 정책 적용.
 - [ ] `sudo` 최소권한 부여, TTY 제한/로깅.
 
 ---
@@ -164,7 +164,7 @@ faillock --user alice
 ## 셸·도구 체인과 텍스트 처리
 
 ### 셸과 환경
-- Bash/Zsh, 프로파일: `/etc/profile`, `~/.profile`, `~/.bashrc`.  
+- Bash/Zsh, 프로파일: `/etc/profile`, `~/.profile`, `~/.bashrc`.
 - 경로/변수: `$PATH`, `export VAR=value`.
 
 핸즈온(환경 변수/영구화):
@@ -189,7 +189,7 @@ find /var/www -type f -mtime -7 -print0 | xargs -0 ls -l | awk '{print $1,$3,$4,
 ```
 
 체크리스트
-- [ ] 기본 텍스트 파이프라인(grep/sed/awk)으로 **로그를 요약**할 수 있다.  
+- [ ] 기본 텍스트 파이프라인(grep/sed/awk)으로 **로그를 요약**할 수 있다.
 - [ ] `find -print0 | xargs -0`로 **공백/특수문자 안전 처리**.
 
 ---
@@ -241,8 +241,8 @@ systemctl list-timers --all | grep app-health
 ```
 
 체크리스트
-- [ ] 불필요 서비스 비활성화/제거.  
-- [ ] 중요한 서비스는 `Restart=on-failure` 등 복구 전략 설정.  
+- [ ] 불필요 서비스 비활성화/제거.
+- [ ] 중요한 서비스는 `Restart=on-failure` 등 복구 전략 설정.
 - [ ] 타이머로 **정기 점검/백업/로테이션** 자동화.
 
 ---
@@ -263,7 +263,7 @@ lsof -i -nP | head -n 20
 ```
 
 ### 방화벽: nftables/iptables, ufw/firewalld
-- **RHEL/Alma/Rocky** 기본: `firewalld`(nftables backend).  
+- **RHEL/Alma/Rocky** 기본: `firewalld`(nftables backend).
 - **Ubuntu**: `ufw` 또는 `nftables` 직접 사용 권장.
 
 핸즈온(firewalld 예)
@@ -303,8 +303,8 @@ systemctl enable --now nftables
 ```
 
 체크리스트
-- [ ] 인바운드 **기본 차단**, 필요한 서비스만 허용.  
-- [ ] 관리 포트(SSH)는 **원천지 제한/MFA/키 인증**.  
+- [ ] 인바운드 **기본 차단**, 필요한 서비스만 허용.
+- [ ] 관리 포트(SSH)는 **원천지 제한/MFA/키 인증**.
 - [ ] 불필요한 리스닝 포트 제거.
 
 ---
@@ -329,8 +329,8 @@ systemctl reload sshd
 ```
 
 체크리스트
-- [ ] 루트 SSH 금지, 패스워드 인증 비활성.  
-- [ ] 사용자 화이트리스트/개별 계정 키 관리.  
+- [ ] 루트 SSH 금지, 패스워드 인증 비활성.
+- [ ] 사용자 화이트리스트/개별 계정 키 관리.
 - [ ] 포트 포워딩/에이전트 포워딩 제한 필요 시 설정.
 
 ---
@@ -365,7 +365,7 @@ mount -a
 ```
 
 체크리스트
-- [ ] 데이터/로그 용량 모니터링, **LVM 스냅샷**으로 안전한 변경 테스트.  
+- [ ] 데이터/로그 용량 모니터링, **LVM 스냅샷**으로 안전한 변경 테스트.
 - [ ] fstab 보안 옵션과 **정기 파일시스템 체크**.
 
 ---
@@ -397,8 +397,8 @@ dmesg | tail -n 50
 ```
 
 체크리스트
-- [ ] 서비스 단위 로그(`journalctl -u`)로 원인 근접.  
-- [ ] audit 룰은 **명확한 키(-k)**로 검색용 태깅.  
+- [ ] 서비스 단위 로그(`journalctl -u`)로 원인 근접.
+- [ ] audit 룰은 **명확한 키(-k)**로 검색용 태깅.
 - [ ] 디스크/메모리/IO 지표를 주기적으로 확인.
 
 ---
@@ -492,36 +492,36 @@ systemctl list-timers | grep backup-etc
 
 ## 흔한 실수와 방지
 
-- **775/777 남발**: 기본 umask가 느슨해 내부 유출/변조 발생 → 027/077로 조정.  
-- **/tmp 악용**: sticky 미설정 시 타인 파일 삭제 가능 → sticky 확인.  
-- **SSH 패스워드 허용**: 무차별 대입 위험 → 키 인증·원천지 제한·Fail2ban.  
-- **서비스 과다**: 불필요 데몬 상시 리스닝 → disable/remove, 포트 감시(ss/lsof).  
-- **무로그/과로깅**: 사고 재현 불가 또는 디스크 포화 → logrotate/journald 한도 설정.  
+- **775/777 남발**: 기본 umask가 느슨해 내부 유출/변조 발생 → 027/077로 조정.
+- **/tmp 악용**: sticky 미설정 시 타인 파일 삭제 가능 → sticky 확인.
+- **SSH 패스워드 허용**: 무차별 대입 위험 → 키 인증·원천지 제한·Fail2ban.
+- **서비스 과다**: 불필요 데몬 상시 리스닝 → disable/remove, 포트 감시(ss/lsof).
+- **무로그/과로깅**: 사고 재현 불가 또는 디스크 포화 → logrotate/journald 한도 설정.
 - **루트 남용**: 루트 쉘 상시 사용 → `sudo` 최소권한·capabilities 사용.
 
 ---
 
 ## 최종 체크리스트
 
-- [ ] **권한 모델**(UGO/SUID/SGID/Sticky/ACL/Capabilities)을 설명·구성할 수 있다.  
-- [ ] **umask 027/077** 등 보안 기본권한을 적용했다.  
-- [ ] **FHS**와 주요 경로(`/etc`, `/var/log`, `/usr`, `/opt`)의 역할을 구분한다.  
-- [ ] **systemd**로 서비스/타이머/로그를 관리할 수 있다.  
-- [ ] **SSH 하드닝**(키 인증, 루트 금지, 원천지 제한)을 수행했다.  
-- [ ] **nftables/ufw/firewalld**로 인바운드 기본 차단 정책을 만든다.  
-- [ ] **journalctl/auditd**로 근거 로그를 추출·보존할 수 있다.  
-- [ ] **LVM 스냅샷**으로 변경 전후 롤백을 시연할 수 있다.  
+- [ ] **권한 모델**(UGO/SUID/SGID/Sticky/ACL/Capabilities)을 설명·구성할 수 있다.
+- [ ] **umask 027/077** 등 보안 기본권한을 적용했다.
+- [ ] **FHS**와 주요 경로(`/etc`, `/var/log`, `/usr`, `/opt`)의 역할을 구분한다.
+- [ ] **systemd**로 서비스/타이머/로그를 관리할 수 있다.
+- [ ] **SSH 하드닝**(키 인증, 루트 금지, 원천지 제한)을 수행했다.
+- [ ] **nftables/ufw/firewalld**로 인바운드 기본 차단 정책을 만든다.
+- [ ] **journalctl/auditd**로 근거 로그를 추출·보존할 수 있다.
+- [ ] **LVM 스냅샷**으로 변경 전후 롤백을 시연할 수 있다.
 - [ ] 텍스트 도구 체인으로 **로그 요약·필터**를 자동화했다.
 
 ---
 
 ## 예상문제(필기+실기형)
 
-1) **SGID와 Sticky의 차이**와 적합한 사용 시나리오를 설명하라.  
-2) `/srv/shared`에 대해 팀 그룹 `eng`에게만 rwx, 타인 접근 불가, 하위 그룹 자동 상속, 소유자만 삭제 가능하도록 **명령 4줄**을 작성하라.  
-3) **SSH**에서 패스워드 인증을 금지하고 키만 허용하며, 루트 로그인을 막는 `sshd_config` 지시문 3개를 제시하라.  
-4) `/data`를 `noexec,nodev,nosuid`로 마운트하려면 `/etc/fstab`에 어떤 행을 추가해야 하는가(파일시스템은 ext4, 장치는 `/dev/vdb1`)?  
-5) 최근 2시간의 **sshd** 경고 이상 로그만 `journalctl`로 출력하는 명령을 작성하라.  
+1) **SGID와 Sticky의 차이**와 적합한 사용 시나리오를 설명하라.
+2) `/srv/shared`에 대해 팀 그룹 `eng`에게만 rwx, 타인 접근 불가, 하위 그룹 자동 상속, 소유자만 삭제 가능하도록 **명령 4줄**을 작성하라.
+3) **SSH**에서 패스워드 인증을 금지하고 키만 허용하며, 루트 로그인을 막는 `sshd_config` 지시문 3개를 제시하라.
+4) `/data`를 `noexec,nodev,nosuid`로 마운트하려면 `/etc/fstab`에 어떤 행을 추가해야 하는가(파일시스템은 ext4, 장치는 `/dev/vdb1`)?
+5) 최근 2시간의 **sshd** 경고 이상 로그만 `journalctl`로 출력하는 명령을 작성하라.
 6) `/usr/local/bin/httpd-lite`가 80/TCP 바인딩이 필요하다. 루트 없이 이를 허용할 **capability 설정**과 검증 명령을 쓰라.
 
 예시 답안 스니펫:
@@ -559,6 +559,6 @@ getcap /usr/local/bin/httpd-lite
 ## 요약
 
 본 장을 통해 다음을 달성했다.
-- 리눅스의 **권한·파일시스템·서비스·로깅·네트워킹** 핵심을 **보안 우선** 관점으로 익혔다.  
-- 실습으로 **SGID/Sticky/ACL/capabilities**, **systemd 타이머**, **SSH/방화벽 하드닝**을 구성했다.  
+- 리눅스의 **권한·파일시스템·서비스·로깅·네트워킹** 핵심을 **보안 우선** 관점으로 익혔다.
+- 실습으로 **SGID/Sticky/ACL/capabilities**, **systemd 타이머**, **SSH/방화벽 하드닝**을 구성했다.
 - 이 토대를 기반으로 다음 장(시스템 관리·서버 보안·취약점 점검)에서 **정책화·자동화**를 확장한다.

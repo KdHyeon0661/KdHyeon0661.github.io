@@ -6,26 +6,26 @@ category: 웹해킹
 ---
 # 🧳 Web Cache Poisoning / Deception — 원리, 실전 징후, 안전한 재현·탐지, 프록시·앱·CDN 방어 전략(예제 포함)
 
-> ⚠️ **법·윤리 고지**  
-> 아래 내용은 **본인/조직의 자산**에서 **방어·검증** 목적으로만 사용하세요.  
+> ⚠️ **법·윤리 고지**
+> 아래 내용은 **본인/조직의 자산**에서 **방어·검증** 목적으로만 사용하세요.
 > 무단 테스트는 불법이며, 본 문서는 “**취약 구성을 인지하고 고치는 법**”에 초점을 둡니다.
 
 ---
 
 ## 0. 요약(Executive Summary)
 
-- **문제**  
-  - **Unkeyed header**(캐시 키에 포함되지 않는 헤더, 예: `X-Forwarded-Host`, `X-Original-URL`, `X-Forwarded-Proto`)가 **응답 내용에 영향을 주는데 캐시 키에는 반영되지 않으면** 공격자가 **악성 변형 응답을 캐시에 주입**할 수 있습니다.  
+- **문제**
+  - **Unkeyed header**(캐시 키에 포함되지 않는 헤더, 예: `X-Forwarded-Host`, `X-Original-URL`, `X-Forwarded-Proto`)가 **응답 내용에 영향을 주는데 캐시 키에는 반영되지 않으면** 공격자가 **악성 변형 응답을 캐시에 주입**할 수 있습니다.
   - **Cache Deception(캐시 기만)**: 동적/민감 응답을 **정적처럼 보이게**(`.css`, `.js`, `.png` 등) 만들어 **캐시되게** 하고, 이후 **다른 사용자에게 노출**시키는 패턴.
-- **징후**  
-  - 동일 URL에 대해 **가끔 전혀 다른 HTML/JS**가 내려옴.  
-  - 캐시 통계에서 특정 경로의 **HIT률 급등**, `Age` 헤더가 큰 값으로 응답.  
+- **징후**
+  - 동일 URL에 대해 **가끔 전혀 다른 HTML/JS**가 내려옴.
+  - 캐시 통계에서 특정 경로의 **HIT률 급등**, `Age` 헤더가 큰 값으로 응답.
   - 프록시 앞단(=CDN)과 **원본 직결** 응답이 다름.
-- **핵심 방어**  
-  1) **캐시 키를 명시적으로 구성**: **Host + Path + (정규화된) Query** *만* 사용.  
-  2) **변칙 헤더를 정규화/삭제**: `X-Forwarded-Host/Proto`, 중복/공백/대소문자 변형 모두 **무시**.  
-  3) **권한/개인화 응답은 절대 캐시 금지**: `Cache-Control: no-store, private`. `Set-Cookie`가 있으면 **무조건 BYPASS**.  
-  4) **확장자 기반 휴리스틱 금지**: “.css면 캐시” 같은 규칙 **사용하지 않음**.  
+- **핵심 방어**
+  1) **캐시 키를 명시적으로 구성**: **Host + Path + (정규화된) Query** *만* 사용.
+  2) **변칙 헤더를 정규화/삭제**: `X-Forwarded-Host/Proto`, 중복/공백/대소문자 변형 모두 **무시**.
+  3) **권한/개인화 응답은 절대 캐시 금지**: `Cache-Control: no-store, private`. `Set-Cookie`가 있으면 **무조건 BYPASS**.
+  4) **확장자 기반 휴리스틱 금지**: “.css면 캐시” 같은 규칙 **사용하지 않음**.
   5) **민감 경로/메서드 기본 BYPASS**: `/account`, `/checkout`, `/api/*(상태변경)` 등.
 
 ---
@@ -34,17 +34,17 @@ category: 웹해킹
 
 ## 1.1 Unkeyed Header Poisoning
 
-- 캐시는 보통 **키**(Host, Path, Query, 일부 헤더 `Vary`)로 응답을 저장합니다.  
-- 애플리케이션이 `X-Forwarded-Host` 같은 **프록시 전달용 헤더**를 믿고 **HTML 내 절대 URL**이나 **메타 태그/리다이렉트 위치**를 구성한다면,  
-  - 공격자: `X-Forwarded-Host: evil.tld`로 요청 → 응답 HTML에 `https://evil.tld/...`가 반영  
-  - 캐시: 이 헤더를 **키에 넣지 않으면** “정상” 키로 **오염된 응답을 저장**  
+- 캐시는 보통 **키**(Host, Path, Query, 일부 헤더 `Vary`)로 응답을 저장합니다.
+- 애플리케이션이 `X-Forwarded-Host` 같은 **프록시 전달용 헤더**를 믿고 **HTML 내 절대 URL**이나 **메타 태그/리다이렉트 위치**를 구성한다면,
+  - 공격자: `X-Forwarded-Host: evil.tld`로 요청 → 응답 HTML에 `https://evil.tld/...`가 반영
+  - 캐시: 이 헤더를 **키에 넣지 않으면** “정상” 키로 **오염된 응답을 저장**
   - 다른 사용자: 같은 URL 요청 → **오염된 응답**(피싱/스크립트 포함)을 받음
 
 ## 1.2 Cache Deception
 
-- CDN/프록시가 **확장자 기반** 또는 **Content-Type 기반** 휴리스틱으로 캐시할 때,  
-  - 공격자: `/profile/.css` 또는 `/profile?cb=.css`처럼 **동적 경로를 정적으로 보이게** 요청  
-  - 잘못된 규칙: “`.css`면 캐시(장시간 TTL)” → **HTML(민감 데이터)**이 캐시  
+- CDN/프록시가 **확장자 기반** 또는 **Content-Type 기반** 휴리스틱으로 캐시할 때,
+  - 공격자: `/profile/.css` 또는 `/profile?cb=.css`처럼 **동적 경로를 정적으로 보이게** 요청
+  - 잘못된 규칙: “`.css`면 캐시(장시간 TTL)” → **HTML(민감 데이터)**이 캐시
   - 이후 다수 사용자에게 **민감 정보/개인화 콘텐츠**가 노출될 위험
 
 ---
@@ -178,10 +178,10 @@ server {
 ```
 
 **포인트**
-- **키는 명시**(Scheme/Host/Path/Query). **헤더를 키에 넣지 않음**.  
-- **전달용 헤더 무시/초기화**: `X-Forwarded-Host`, `X-Original-URL` 등 **백엔드에 영향 못 주게**.  
-- **민감 경로/쿠키/Authorization 시 BYPASS**.  
-- **원본이 `Set-Cookie`면 절대 캐시 금지**.  
+- **키는 명시**(Scheme/Host/Path/Query). **헤더를 키에 넣지 않음**.
+- **전달용 헤더 무시/초기화**: `X-Forwarded-Host`, `X-Original-URL` 등 **백엔드에 영향 못 주게**.
+- **민감 경로/쿠키/Authorization 시 BYPASS**.
+- **원본이 `Set-Cookie`면 절대 캐시 금지**.
 - “확장자 = 캐시” 같은 **휴리스틱 제거**.
 
 > 운영에서는 `add_header Cache-Control "no-store"`는 **민감 location**에서만 사용하고, 공용 정적 리소스 location은 `Cache-Control: public, max-age=31536000, immutable`처럼 **명확히** 다르게 설정하세요.
@@ -242,13 +242,13 @@ sub vcl_deliver {
 
 # 5. CDN(CloudFront/Cloudflare/Fastly) 설계 포인트
 
-- **Cache Policy**:  
-  - **QueryString**: “모두 전달/모두 키 포함”은 위험. **화이트리스트**(필요한 키만) 권장.  
-  - **Headers**: 키에 포함할 헤더는 **정말 필요한 것만**(예: `Accept-Language` 등) — 기본은 “없음”.  
+- **Cache Policy**:
+  - **QueryString**: “모두 전달/모두 키 포함”은 위험. **화이트리스트**(필요한 키만) 권장.
+  - **Headers**: 키에 포함할 헤더는 **정말 필요한 것만**(예: `Accept-Language` 등) — 기본은 “없음”.
   - **Cookies**: 웬만하면 **쿠키가 있으면 BYPASS**. 특정 쿠키만 키에 포함해야 한다면 **화이트리스트**.
-- **Origin Request Policy**: `X-Forwarded-Host/Proto`는 전달해도 **앱이 신뢰하지 않게**(앱에서 허용목록 검사).  
-- **Rules**: `/account`, `/user/*`, `/checkout` 등은 **Cache BYPASS**.  
-- **Deception 방지**: 확장자 기반 TTL/캐싱 금지. **Content-Type**도 신뢰하지 말고 **원본 Cache-Control** 우선.  
+- **Origin Request Policy**: `X-Forwarded-Host/Proto`는 전달해도 **앱이 신뢰하지 않게**(앱에서 허용목록 검사).
+- **Rules**: `/account`, `/user/*`, `/checkout` 등은 **Cache BYPASS**.
+- **Deception 방지**: 확장자 기반 TTL/캐싱 금지. **Content-Type**도 신뢰하지 말고 **원본 Cache-Control** 우선.
 - **캐시 태그/서로게이트 키**(Fastly/Cloudflare): 공개 정적만 태깅, 개인화는 금지.
 
 ---
@@ -306,7 +306,7 @@ app.use((req,res,next) => {
 
 ## 6.4 “확장자 덫” 무력화
 
-- 라우터에서 **경로 정규화**: `/account/.css` → **404**  
+- 라우터에서 **경로 정규화**: `/account/.css` → **404**
 - 콘텐츠 협상: “`.css` 요청이면 무조건 `text/css`만” — **HTML 반환 금지**
 
 ```js
@@ -317,24 +317,24 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.status(404).send("No
 
 # 7. 헤더·표준의 올바른 사용
 
-- **Cache-Control**  
-  - **민감/개인화**: `no-store`  
-  - **인증 필요하지만 공용 캐시 금지**: `private, no-store`(혹은 최소 `private, no-cache`)  
+- **Cache-Control**
+  - **민감/개인화**: `no-store`
+  - **인증 필요하지만 공용 캐시 금지**: `private, no-store`(혹은 최소 `private, no-cache`)
   - **공용 정적**: `public, max-age=31536000, immutable`
-- **Vary**  
-  - 최소화: `Accept-Encoding`, 필요한 경우 `Accept-Language` 정도.  
+- **Vary**
+  - 최소화: `Accept-Encoding`, 필요한 경우 `Accept-Language` 정도.
   - 앱이 `Vary`를 남발하면 **캐시 조각화/오염 위험** 증가 → 보수적으로.
-- **ETag/Last-Modified**  
+- **ETag/Last-Modified**
   - 정적에만. 동적/개인화에선 **지양**(또는 사용자별 ETag → 사실상 BYPASS).
 
 ---
 
 # 8. 모니터링·탐지
 
-- **지표**: 경로별 `X-Cache: HIT` 비율, `Age` 분포, `Set-Cookie` 동반 응답의 HIT=0 확인.  
-- **로그 규칙 예시 (Loki / Splunk)**  
-  - `X-Forwarded-Host`가 클라이언트 요청에서 **빈도가 비정상적** → 경보.  
-  - `Content-Type: text/html` + URL이 `\.(css|js|png)$` → 경보.  
+- **지표**: 경로별 `X-Cache: HIT` 비율, `Age` 분포, `Set-Cookie` 동반 응답의 HIT=0 확인.
+- **로그 규칙 예시 (Loki / Splunk)**
+  - `X-Forwarded-Host`가 클라이언트 요청에서 **빈도가 비정상적** → 경보.
+  - `Content-Type: text/html` + URL이 `\.(css|js|png)$` → 경보.
   - 민감 경로에서 `Cache-Control`이 `no-store`가 아닌 경우 → 경보.
 
 **Loki(LogQL)**
@@ -353,13 +353,13 @@ index=edge sourcetype=nginx "text/html" "X-Cache:HIT" (uri="*.css" OR uri="*.js"
 
 # 9. 사고 대응(런북 요약)
 
-1. **식별**: 특정 URL에서 **의심스런 HIT 증가/콘텐츠 불일치** 확인.  
-2. **격리**:  
-   - CDN/프록시에서 **문제 URL BYPASS** 또는 **캐시 무효화(PURGE)**  
-   - `X-Forwarded-*` 등 **전달 헤더 제거** 강제  
-3. **조사**: 공격 요청 패턴(IP/UA/리퍼러), 응답 샘플, 앱의 Host/URL 생성 로직 점검  
-4. **근절**: 키 명시화, 민감 경로 `no-store`, 확장자 휴리스틱 제거, 앱의 **고정 ORIGIN** 적용  
-5. **복구**: 캐시 전면 재가온(warm-up), 모니터링 알림 상향  
+1. **식별**: 특정 URL에서 **의심스런 HIT 증가/콘텐츠 불일치** 확인.
+2. **격리**:
+   - CDN/프록시에서 **문제 URL BYPASS** 또는 **캐시 무효화(PURGE)**
+   - `X-Forwarded-*` 등 **전달 헤더 제거** 강제
+3. **조사**: 공격 요청 패턴(IP/UA/리퍼러), 응답 샘플, 앱의 Host/URL 생성 로직 점검
+4. **근절**: 키 명시화, 민감 경로 `no-store`, 확장자 휴리스틱 제거, 앱의 **고정 ORIGIN** 적용
+5. **복구**: 캐시 전면 재가온(warm-up), 모니터링 알림 상향
 6. **교훈화**: CI에 **캐시 스모크 테스트** 추가(§2 스크립트), 보안 리뷰 체크리스트 업데이트
 
 ---
@@ -398,34 +398,34 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.sendStatus(404));
 app.listen(8080, () => console.log("app on 8080"));
 ```
 
-## 10.2 Nginx 프록시(요약) — §3 템플릿 적용  
-- `proxy_cache_key` = `$scheme$host$request_uri`  
-- `X-Forwarded-Host`/`X-Original-URL` 제거  
-- 쿠키/Authorization/민감 경로 BYPASS  
+## 10.2 Nginx 프록시(요약) — §3 템플릿 적용
+- `proxy_cache_key` = `$scheme$host$request_uri`
+- `X-Forwarded-Host`/`X-Original-URL` 제거
+- 쿠키/Authorization/민감 경로 BYPASS
 - 정적 휴리스틱 제거
 
 ## 10.3 스모크 테스트
-- §2 Node 스크립트로 **X-Forwarded-Host 변조**가 캐시에 남는지 확인 → **항상 안전**  
+- §2 Node 스크립트로 **X-Forwarded-Host 변조**가 캐시에 남는지 확인 → **항상 안전**
 - `/account/.css` 두 번 `curl -I` → **항상 MISS/Age 없음** + 404/또는 no-store
 
 ---
 
 # 11. 체크리스트(현장용)
 
-- [ ] **캐시 키 명시**(Scheme+Host+Path+Query). 헤더 기반 키 지양.  
-- [ ] **전달용 헤더 무시/삭제**: XFH, XOP, XP 등.  
-- [ ] **민감 경로/쿠키/Authorization** → **BYPASS**.  
-- [ ] **Set-Cookie 응답 절대 캐시 금지**.  
-- [ ] **확장자 휴리스틱 제거**(정적=캐시라는 가정 금지).  
-- [ ] **Cache-Control**: 민감 `no-store`, 정적 `public, max-age, immutable`.  
-- [ ] **Vary 최소화**.  
-- [ ] **모니터링**: X-Cache/ Age/ HIT률, HTML이 정적 확장자로 캐시되는 패턴 탐지.  
-- [ ] **런북/무효화 플로우**: 즉시 BYPASS/PURGE 가능해야 함.  
+- [ ] **캐시 키 명시**(Scheme+Host+Path+Query). 헤더 기반 키 지양.
+- [ ] **전달용 헤더 무시/삭제**: XFH, XOP, XP 등.
+- [ ] **민감 경로/쿠키/Authorization** → **BYPASS**.
+- [ ] **Set-Cookie 응답 절대 캐시 금지**.
+- [ ] **확장자 휴리스틱 제거**(정적=캐시라는 가정 금지).
+- [ ] **Cache-Control**: 민감 `no-store`, 정적 `public, max-age, immutable`.
+- [ ] **Vary 최소화**.
+- [ ] **모니터링**: X-Cache/ Age/ HIT률, HTML이 정적 확장자로 캐시되는 패턴 탐지.
+- [ ] **런북/무효화 플로우**: 즉시 BYPASS/PURGE 가능해야 함.
 - [ ] **CI 스모크**: 모순 헤더/변조 헤더/확장자 덫 테스트 자동화.
 
 ---
 
 ## 맺음말
 
-Web Cache Poisoning/Deception은 **작은 설정 실수**에서 시작해 **대규모 사용자에게 오염 응답을 전파**할 수 있는 고위험 취약 구성입니다.  
+Web Cache Poisoning/Deception은 **작은 설정 실수**에서 시작해 **대규모 사용자에게 오염 응답을 전파**할 수 있는 고위험 취약 구성입니다.
 **키 명시화**, **전달 헤더 정규화**, **민감 BYPASS**, **휴리스틱 제거**라는 4대 원칙을 적용하고, 간단한 **스모크 테스트**를 CI에 포함시켜 **재발 가능성을 구조적으로 줄이세요**.

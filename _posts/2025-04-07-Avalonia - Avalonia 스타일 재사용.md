@@ -6,9 +6,9 @@ category: Avalonia
 ---
 # Avalonia 스타일 재사용(Themes, Styles)
 
-1) **디자인 토큰화**(색/타이포/간격/컴포넌트 변수화)  
-2) **리소스 사전 분리와 병합 전략**(ResourceDictionary, MergedDictionaries, StyleInclude)  
-3) **ThemeVariant 기반 다크/라이트/고대비 전환**(런타임 스위칭 포함)  
+1) **디자인 토큰화**(색/타이포/간격/컴포넌트 변수화)
+2) **리소스 사전 분리와 병합 전략**(ResourceDictionary, MergedDictionaries, StyleInclude)
+3) **ThemeVariant 기반 다크/라이트/고대비 전환**(런타임 스위칭 포함)
 4) **TemplatedControl로 완전 재정의 + 모듈 단위 배포**(NuGet/Module)
 
 ---
@@ -202,10 +202,10 @@ Styles/
 
 ## 5. 다크/라이트/고대비 — ThemeVariant 및 런타임 전환
 
-Avalonia 11부터는 `ThemeVariant`를 통해 테마 변형을 자연스럽게 관리할 수 있다.  
+Avalonia 11부터는 `ThemeVariant`를 통해 테마 변형을 자연스럽게 관리할 수 있다.
 대표 전략 두 가지:
 
-1) **전역 교체형**: `Application.Styles[i]`에 들어있는 Theme 사전을 통째로 교체  
+1) **전역 교체형**: `Application.Styles[i]`에 들어있는 Theme 사전을 통째로 교체
 2) **범위 지정형**: `ThemeVariantScope`로 **영역별** 테마 지정
 
 ### 5.1 Theme 리소스 예시(Light.xaml / Dark.xaml)
@@ -445,10 +445,10 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ## 11. 성능·우선순위·모듈화 팁
 
-- **우선순위**: 로컬 값 > 트리거 > 스타일 > 테마/리소스.  
+- **우선순위**: 로컬 값 > 트리거 > 스타일 > 테마/리소스.
   의도치 않은 덮어쓰기를 피하려면 변형마다 **명확한 Selector**를 사용.
 - **DynamicResource vs StaticResource**: 테마 전환/실행 중 변경이 필요하면 **Dynamic**을 사용.
-- **리소스 탐색 범위**: Control.Resources → 상위 → Application.Resources.  
+- **리소스 탐색 범위**: Control.Resources → 상위 → Application.Resources.
   **스코프 리소스**를 활용하면 특정 화면/모듈만 별도 테마 적용 가능.
 - **대규모 앱 최적화**: Styles 파일을 **여러 개로 분할**하고 App.axaml에서 **필요한 것만** Include.
 - **모듈(NuGet)화**: Controls/Styles/Themes를 **모듈 패키지**로 묶고, 호스트에서 Include만 하도록 설계.
@@ -492,7 +492,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ## 14. 테스트 전략
 
-- **시각 회귀 테스트**: 샷 비교(Playwright/스크린샷)로 테마 변경 시 파손 여부 확인.  
+- **시각 회귀 테스트**: 샷 비교(Playwright/스크린샷)로 테마 변경 시 파손 여부 확인.
 - **리소스 참조 검증**: 주요 컨트롤 템플릿의 리소스 키 사용 여부 단위 테스트(정적 분석 수준).
 - **다크/라이트 스위치 테스트**: 전환 후 컬러/브러시 실 값이 바뀌었는지 간단한 UI 테스트.
 
@@ -559,7 +559,7 @@ public partial class App : Application
 
 ## 결론
 
-- **토큰화**로 디자인 일관성을 유지하고,  
-- **리소스/스타일을 모듈화**하여 팀·앱 간 **재사용**을 극대화하며,  
-- **ThemeVariant + DynamicResource**로 **런타임 테마 전환**을 안전하게 지원하고,  
+- **토큰화**로 디자인 일관성을 유지하고,
+- **리소스/스타일을 모듈화**하여 팀·앱 간 **재사용**을 극대화하며,
+- **ThemeVariant + DynamicResource**로 **런타임 테마 전환**을 안전하게 지원하고,
 - 고급 커스터마이징이 필요하면 **TemplatedControl**로 완전 재정의하자.

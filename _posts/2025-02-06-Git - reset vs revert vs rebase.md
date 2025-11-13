@@ -8,8 +8,8 @@ category: Git
 
 ## 0. 기초 복습 — Git의 3가지 “상태”
 
-- **HEAD**: 현재 체크아웃한 커밋(정확히는 브랜치 참조 또는 detached HEAD의 커밋)을 가리키는 포인터  
-- **Index(= Staging area)**: 다음 커밋을 만들기 위해 모아둔 스냅샷  
+- **HEAD**: 현재 체크아웃한 커밋(정확히는 브랜치 참조 또는 detached HEAD의 커밋)을 가리키는 포인터
+- **Index(= Staging area)**: 다음 커밋을 만들기 위해 모아둔 스냅샷
 - **Working tree**: 실제 파일이 있는 작업 디렉터리
 
 명령어들은 주로 이 세 영역을 어떻게 “옮기고/맞추는지”로 구분할 수 있습니다.
@@ -21,8 +21,8 @@ category: Git
 ## 1.1 개념(복습 강화)
 `reset`은 **브랜치 포인터(HEAD)** 를 과거의 커밋로 이동시키고, 옵션에 따라 **Index / Working tree**를 그 상태로 **맞춥니다**.
 
-- **--soft**: HEAD(브랜치)만 이동. Index와 Working tree 는 **그대로** 유지  
-- **--mixed**(기본): HEAD + Index 초기화(해당 범위 변경이 unstaged 로). Working tree 는 유지  
+- **--soft**: HEAD(브랜치)만 이동. Index와 Working tree 는 **그대로** 유지
+- **--mixed**(기본): HEAD + Index 초기화(해당 범위 변경이 unstaged 로). Working tree 는 유지
 - **--hard**: HEAD + Index + Working tree 를 **모두** 지정 커밋 상태로 **초기화**(변경 삭제)
 
 ## 1.2 시각적 이해
@@ -58,7 +58,7 @@ git reset --hard HEAD~1
 ```
 
 ## 1.4 위험도와 협업상의 금기
-- 공개/공유 브랜치(동료가 pull 해 가는 브랜치)에서 **reset으로 히스토리를 바꾸면** 동료의 이력이 꼬입니다.  
+- 공개/공유 브랜치(동료가 pull 해 가는 브랜치)에서 **reset으로 히스토리를 바꾸면** 동료의 이력이 꼬입니다.
 - 특히 `--hard`는 Working tree 변경까지 삭제하므로 **돌이키기 매우 어려운 실수**가 될 수 있습니다.
 
 ## 1.5 실수 복구(필수)
@@ -81,7 +81,7 @@ git switch -c rescue HEAD@{2}
 # 2. `git revert` — 기존 커밋은 보존하고 “반대 동작 커밋”을 쌓는 방법
 
 ## 2.1 개념(복습 강화)
-`revert`는 지정 커밋의 변경을 **반대로 적용하는 새 커밋**을 생성합니다.  
+`revert`는 지정 커밋의 변경을 **반대로 적용하는 새 커밋**을 생성합니다.
 즉, **히스토리는 보존**하면서도 “취소했다”는 기록이 남습니다. 협업·감사 추적에 **가장 안전**합니다.
 
 ## 2.2 기본 예제
@@ -124,8 +124,8 @@ git revert <revert-commit-id>
 # 3. `git rebase` — 커밋을 다른 기반 위로 “재생성”하여 히스토리를 정렬
 
 ## 3.1 개념(복습 강화)
-`rebase`는 **현재 브랜치의 커밋들을 다른 브랜치의 끝으로 재배치**합니다.  
-장점: 병합 커밋 없이 **선형 이력**을 만들 수 있음  
+`rebase`는 **현재 브랜치의 커밋들을 다른 브랜치의 끝으로 재배치**합니다.
+장점: 병합 커밋 없이 **선형 이력**을 만들 수 있음
 단점: 커밋이 **재작성**되므로 해시가 바뀌고, 공유 브랜치에서는 혼란의 원인이 됨
 
 ## 3.2 기본 예제
@@ -236,16 +236,16 @@ git switch -c rescue HEAD@{2}  # 안전 브랜치 확보
 # 6. 협업 정책/보호 브랜치/서명과의 상호작용
 
 ## 6.1 보호 브랜치(Branch protection rules)
-- Require pull request reviews  
-- Require status checks to pass  
-- Require linear history(merge commit 금지 → rebase/squash만 허용)  
-- Require signed commits(GPG 서명 필수)  
+- Require pull request reviews
+- Require status checks to pass
+- Require linear history(merge commit 금지 → rebase/squash만 허용)
+- Require signed commits(GPG 서명 필수)
 - Force-push 제한 등
 
 이 규칙은 `reset`/`rebase` 기반 강제푸시와 **충돌**할 수 있습니다. 공개 브랜치에서는 **revert** 기반으로 처리하는 것이 안전합니다.
 
 ## 6.2 서명/GPG/DCO
-- rebase(재작성) 시 커밋 해시가 바뀌며, **서명이 파손**될 수 있습니다.  
+- rebase(재작성) 시 커밋 해시가 바뀌며, **서명이 파손**될 수 있습니다.
 - 조직이 **Require signed commits** 나 **DCO**를 쓰는 경우, PR 커밋들이 정책을 준수하도록 미리 세팅하세요.
 ```bash
 git config --global user.signingkey <KEYID>
@@ -256,8 +256,8 @@ git config --global commit.gpgsign true
 
 # 7. 대규모 히스토리 정리 실전 팁
 
-- **rebase -i + autosquash** 로 잔 커밋을 `fixup!/squash!` 패턴으로 자동 압축  
-- **rebase --rebase-merges** 로 서브토픽 구조를 보존하며 정리  
+- **rebase -i + autosquash** 로 잔 커밋을 `fixup!/squash!` 패턴으로 자동 압축
+- **rebase --rebase-merges** 로 서브토픽 구조를 보존하며 정리
 - 정리 전에 **백업 태그/브랜치** 생성 권장:
 ```bash
 git tag before-rewrite
@@ -396,20 +396,20 @@ git push --force-with-lease
 
 # 10. FAQ — 실무에서 자주 받는 질문
 
-**Q1. 이미 push한 커밋을 reset으로 지워도 되나?**  
+**Q1. 이미 push한 커밋을 reset으로 지워도 되나?**
 A. 공개 브랜치에서는 지양. 동료 이력에 충돌을 유발. revert가 안전.
 
-**Q2. revert로 되돌렸는데, 나중에 다시 적용하고 싶다?**  
+**Q2. revert로 되돌렸는데, 나중에 다시 적용하고 싶다?**
 A. “revert 커밋”을 다시 revert 하거나, 해당 변경을 포함한 새 커밋을 만들면 된다.
 
-**Q3. rebase 중 꼬였을 때 가장 먼저 뭘 보나?**  
+**Q3. rebase 중 꼬였을 때 가장 먼저 뭘 보나?**
 A. `git status`, `git rebase --abort`, `git reflog` 순서로 상황 파악/복구.
 
-**Q4. rebase와 merge 중 무엇이 더 좋은가?**  
-A. 절대적 답은 없음. 팀 정책/리뷰 문화/CI 파이프라인에 맞춰 선택.  
+**Q4. rebase와 merge 중 무엇이 더 좋은가?**
+A. 절대적 답은 없음. 팀 정책/리뷰 문화/CI 파이프라인에 맞춰 선택.
    선형 이력을 원하면 rebase, 토폴로지 보존/기록을 원하면 merge.
 
-**Q5. revert와 squash의 관계?**  
+**Q5. revert와 squash의 관계?**
 A. Squash는 여러 커밋을 1개로 압축하는 병합 방식이고, revert는 특정 커밋의 반대 동작을 “새 커밋으로” 추가한다. 목적이 다르다.
 
 ---
@@ -452,14 +452,14 @@ git config --global rerere.enabled true
 
 # 12. 결론
 
-- **reset**: 강력하지만 위험. 로컬 정리/최근 실수 바로잡기에만 사용. 공개 브랜치에는 부적절.  
-- **revert**: 협업 친화. 히스토리를 보존하며 “취소” 사실을 기록. 운영 중 “빠른 복구”에 최적.  
-- **rebase**: 선형 이력과 깔끔한 커밋을 위한 도구. 공유 브랜치에서의 무분별한 사용은 금물.  
+- **reset**: 강력하지만 위험. 로컬 정리/최근 실수 바로잡기에만 사용. 공개 브랜치에는 부적절.
+- **revert**: 협업 친화. 히스토리를 보존하며 “취소” 사실을 기록. 운영 중 “빠른 복구”에 최적.
+- **rebase**: 선형 이력과 깔끔한 커밋을 위한 도구. 공유 브랜치에서의 무분별한 사용은 금물.
 - 팀 정책(보호 브랜치/서명/CI)과 맞물려 올바른 도구를 고르면, **추적 가능한 기록 + 생산적인 협업**을 동시에 달성할 수 있다.
 
 ---
 
 ## 참고
-- git reset: https://git-scm.com/docs/git-reset  
-- git revert: https://git-scm.com/docs/git-revert  
+- git reset: https://git-scm.com/docs/git-reset
+- git revert: https://git-scm.com/docs/git-revert
 - git rebase: https://git-scm.com/docs/git-rebase

@@ -284,7 +284,7 @@ Outputs:
   PrivateSubnets: { Value: !Join [',', [!Ref PrivateA, !Ref PrivateB]] }
 ```
 
-- **dev/stg**: NAT 제거로 비용 절감, **prod**: NAT 활성화  
+- **dev/stg**: NAT 제거로 비용 절감, **prod**: NAT 활성화
 - **Export**로 VPC ID 공유(다른 스택에서 `!ImportValue`)
 
 ---
@@ -328,8 +328,8 @@ Resources:
       LaunchTemplate: { LaunchTemplateId: !Ref Lt, Version: !GetAtt Lt.LatestVersionNumber }
 ```
 
-> 포인트  
-> - 인스턴스 **부팅 완료 후** `cfn-signal`을 보내야 스택이 성공 처리  
+> 포인트
+> - 인스턴스 **부팅 완료 후** `cfn-signal`을 보내야 스택이 성공 처리
 > - 롤링 업데이트 시에도 `WaitOnResourceSignals`로 안정성 확보
 
 ---
@@ -413,7 +413,7 @@ cfn-lint main.yml
 
 ## 12. 서버리스/매크로/확장
 
-- **AWS SAM(Transform: AWS::Serverless-2016-10-31)**: 간결한 서버리스 템플릿로 컴파일 → CFN  
+- **AWS SAM(Transform: AWS::Serverless-2016-10-31)**: 간결한 서버리스 템플릿로 컴파일 → CFN
 - **매크로(Macros)**: 템플릿을 배포 전 **커스텀 변환**(예: 공통 태그/보안 자동 주입)
 - **Language Extensions**: 반복/조건 간소화 기능(선택적)
 
@@ -441,7 +441,7 @@ Resources:
 ## 13. 비용 근사와 최적화 감각
 
 - NAT 게이트웨이, ALB, 데이터 전송, EBS/RDS 스토리지, Lambda GB-초, KMS API 등 **누적 비용**에 주의
-- 예) NAT GW 월 비용 근사:  
+- 예) NAT GW 월 비용 근사:
   $$ \text{NAT 비용} \approx h \cdot c_h + GB_{\text{out}} \cdot c_{gb} $$
   - \(h\): 월 가동 시간, \(c_h\): 시간당 비용, \(GB_{\text{out}}\): 전송량, \(c_{gb}\): GB당 전송 단가
 - dev/stg에선 **NAT 삭제 + VPC 엔드포인트** 고려, ALB 공유/스팟 혼합, S3 Infrequent Access 수명주기
@@ -450,13 +450,13 @@ Resources:
 
 ## 14. 운영 전 점검 체크리스트
 
-- [ ] `cfn-lint`/`Guard` 통과  
-- [ ] 변경은 **Change Set**로 검토, **스택 정책** 설정  
-- [ ] **RollbackTrigger**로 배포 품질 가드  
-- [ ] **DeletionPolicy/UpdateReplacePolicy**로 데이터 보호  
-- [ ] **Drift Detection** 주기 실행  
-- [ ] **Exports/Imports** 의존도 최소화(버전 계획)  
-- [ ] 민감정보 **동적 참조** 사용, 파라미터는 `NoEcho`  
+- [ ] `cfn-lint`/`Guard` 통과
+- [ ] 변경은 **Change Set**로 검토, **스택 정책** 설정
+- [ ] **RollbackTrigger**로 배포 품질 가드
+- [ ] **DeletionPolicy/UpdateReplacePolicy**로 데이터 보호
+- [ ] **Drift Detection** 주기 실행
+- [ ] **Exports/Imports** 의존도 최소화(버전 계획)
+- [ ] 민감정보 **동적 참조** 사용, 파라미터는 `NoEcho`
 - [ ] 로그/모니터링/알람/LifeCycle 모두 코드화
 
 ---
@@ -663,13 +663,13 @@ Outputs:
 
 ## 18. 마무리 — 운영형 CloudFormation의 핵심 10계명
 
-1) **Change Set**으로 배포 전 변경 검토  
-2) **Stack Policy**로 핵심 리소스 보호  
-3) **Rollback Triggers**로 품질 보장  
-4) **Deletion/UpdateReplacePolicy**로 데이터 보호  
-5) **Drift Detection** 정기 수행  
-6) **Dynamic References**로 비밀 관리  
-7) **Guard/cfn-lint**를 PR 게이트에  
-8) **Nested/StackSets**로 대규모 구조화  
-9) **CreationPolicy+cfn-signal**로 실구동 확인  
+1) **Change Set**으로 배포 전 변경 검토
+2) **Stack Policy**로 핵심 리소스 보호
+3) **Rollback Triggers**로 품질 보장
+4) **Deletion/UpdateReplacePolicy**로 데이터 보호
+5) **Drift Detection** 정기 수행
+6) **Dynamic References**로 비밀 관리
+7) **Guard/cfn-lint**를 PR 게이트에
+8) **Nested/StackSets**로 대규모 구조화
+9) **CreationPolicy+cfn-signal**로 실구동 확인
 10) **비용 민감 리소스(NAT/ALB/RDS)**는 **조건/환경 분기**로 제어

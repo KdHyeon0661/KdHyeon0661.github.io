@@ -162,8 +162,8 @@ Stream.of("a", null, "b")
 ## 8. 컬렉션/도메인 설계 시 주의점
 
 ### 8.1 “Optional을 필드로” — 피해야 함
-- Optional은 **반환 타입**이 주용도입니다.  
-- 필드에 두면 **직렬화/프레임워크 바인딩/ORM 매핑**에서 잡음이 큽니다.  
+- Optional은 **반환 타입**이 주용도입니다.
+- 필드에 두면 **직렬화/프레임워크 바인딩/ORM 매핑**에서 잡음이 큽니다.
 - 대안: **필드 자체는 nullable**로 두고, **getter는 Optional**로 감쌉니다.
 ```java
 class Person {
@@ -193,7 +193,7 @@ void send(Header h);      // 헤더 제공 버전
 ## 9. 성능/스타일 가이드
 
 ### 9.1 비용 감각
-- `Optional`은 **작은 객체**이나 객체는 객체입니다.  
+- `Optional`은 **작은 객체**이나 객체는 객체입니다.
   **핫루프/대량 구조**에서는 박싱/할당 비용이 누적될 수 있습니다.
 - “안전성 vs 비용”에서 **핫패스만** 원시형 Optional/직접 분기로 최적화.
 
@@ -290,12 +290,12 @@ assertThat(Optional.empty()).isEmpty();
 ```
 
 ### 12.2 체크리스트
-- [ ] 반환 타입에서만 Optional 우선 적용  
-- [ ] heavy 기본값은 `orElseGet`  
-- [ ] 변환은 `map/flatMap/filter`로 구성  
-- [ ] 예외 전환은 `orElseThrow`로 명시  
-- [ ] 스트림 평탄화는 `Optional.stream()`  
-- [ ] 핫패스 수치엔 `OptionalInt/Long/Double` 고려  
+- [ ] 반환 타입에서만 Optional 우선 적용
+- [ ] heavy 기본값은 `orElseGet`
+- [ ] 변환은 `map/flatMap/filter`로 구성
+- [ ] 예외 전환은 `orElseThrow`로 명시
+- [ ] 스트림 평탄화는 `Optional.stream()`
+- [ ] 핫패스 수치엔 `OptionalInt/Long/Double` 고려
 - [ ] 컬렉션/필드/파라미터에 Optional 남용 금지
 
 ---
@@ -317,6 +317,6 @@ assertThat(Optional.empty()).isEmpty();
 
 ## 결론
 
-- `Optional`은 “없을 수 있음”을 **타입**으로 드러내 **API의 의도를 강제**하고 NPE를 구조적으로 줄입니다.  
-- 반환 타입에서 적극 사용하되, **필드/파라미터/컬렉션에의 남용은 피하고**, 변환/폴백/예외 전환은 `map/flatMap/orElse*`로 명료하게 표현하세요.  
+- `Optional`은 “없을 수 있음”을 **타입**으로 드러내 **API의 의도를 강제**하고 NPE를 구조적으로 줄입니다.
+- 반환 타입에서 적극 사용하되, **필드/파라미터/컬렉션에의 남용은 피하고**, 변환/폴백/예외 전환은 `map/flatMap/orElse*`로 명료하게 표현하세요.
 - 스트림과 결합한 **평탄화 패턴**(`Optional.stream`)과 **원시형 Optional**을 적재적소에 활용하면 안전성과 성능을 함께 잡을 수 있습니다.

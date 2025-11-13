@@ -28,7 +28,7 @@ docker login
 - **권장**: 비밀번호 대신 **Personal Access Token(PAT)** 을 생성해 사용.
 
 ### 1.3 PAT(개인 액세스 토큰) 사용
-1) Hub 웹 → Settings → Security → New Access Token  
+1) Hub 웹 → Settings → Security → New Access Token
 2) CI/CD나 서버에서는 다음처럼 사용:
 ```bash
 # 비대화식 로그인(예: CI)
@@ -271,7 +271,7 @@ docker scout quickview johndoe/myapp:1.0.0
 
 ## 13. Pull Rate Limit/가용성 주의
 
-- Hub는 **풀 레이트 제한**을 적용한다(익명 < 로그인 < 유료 플랜).  
+- Hub는 **풀 레이트 제한**을 적용한다(익명 < 로그인 < 유료 플랜).
 - CI/CD·대규모 배포 환경은 **로그인 상태**로 풀을 수행하고, 캐시/프록시/미러(사설 레지스트리)를 고려한다.
 
 ---
@@ -413,7 +413,7 @@ docker inspect --format='{{index .RepoDigests 0}}' johndoe/myapp:1.0.0
 
 ## 부록 B. 수학적 관점의 태그 안정성 메모(선택 읽기)
 
-운영환경에서 재현성 \(R\)을 높인다는 것은, 동일 태그가 **다른 시점**에 다른 이미지를 가리킬 확률 \(p\)를 낮추는 문제와 같다.  
+운영환경에서 재현성 \(R\)을 높인다는 것은, 동일 태그가 **다른 시점**에 다른 이미지를 가리킬 확률 \(p\)를 낮추는 문제와 같다.
 다이제스트 핀을 쓰면 \(p \approx 0\)로 수렴한다. 이를 간단히 쓰면:
 
 $$

@@ -21,7 +21,7 @@ Kubernetes에서 마이크로서비스를 운영하다 보면 다음 요구가 �
 
 ### Data Plane vs Control Plane
 
-- **Data Plane**: 각 Pod 옆에 붙는 **사이드카 프록시**가 실데이터 트래픽을 처리  
+- **Data Plane**: 각 Pod 옆에 붙는 **사이드카 프록시**가 실데이터 트래픽을 처리
   - 대표: Envoy(Istio), linkerd-proxy(Linkerd, Rust 기반)
 - **Control Plane**: 선언된 정책/구성(메쉬 리소스)을 수집·검증하고, Data Plane으로 **전파/동기화**
 
@@ -289,8 +289,8 @@ LoadBalancer IP 또는 NodePort로 접근하여 `/api` 경로 요청 라우팅�
 
 ### 4.6 관측: Kiali/Jaeger/Grafana
 
-- `profile=demo` 설치 시 일부 컴포넌트 포함.  
-- Kiali 대시보드에서 서비스 그래프, 지연/성공률 확인.  
+- `profile=demo` 설치 시 일부 컴포넌트 포함.
+- Kiali 대시보드에서 서비스 그래프, 지연/성공률 확인.
 - Jaeger/Zipkin 연동으로 트레이싱 헤더(B3/W3C) 전파·시각화.
 
 ```bash
@@ -394,24 +394,24 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ### 6.1 Canary → 점진 승격
 
-1) 초기 `90/10`  
-2) 적절한 메트릭(지연, 5xx, SLO 위반) 모니터링  
-3) `weight`를 50/50 → 100/0으로 늘리며 점진 배포  
+1) 초기 `90/10`
+2) 적절한 메트릭(지연, 5xx, SLO 위반) 모니터링
+3) `weight`를 50/50 → 100/0으로 늘리며 점진 배포
 4) 에러율 급증 시 즉시 `rollback`(Istio: VirtualService 수정, Linkerd: TrafficSplit 수정)
 
 ### 6.2 헤더 기반 라우팅(A/B)
 
-- Istio: `match`의 `headers` 조건으로 사용자 그룹 실험  
+- Istio: `match`의 `headers` 조건으로 사용자 그룹 실험
 - Linkerd: 기본은 TrafficSplit 위주. 헤더 기반 라우팅은 Ingress/애플리케이션 계층과 조합하거나, 별도 통합 컴포넌트 사용
 
 ### 6.3 트래픽 미러링(Shadow)
 
-- Istio: `mirror`/`mirrorPercentage`로 실제 트래픽을 v2에 **복제**(응답은 v1으로)  
+- Istio: `mirror`/`mirrorPercentage`로 실제 트래픽을 v2에 **복제**(응답은 v1으로)
 - Linkerd: 기본 기능으로는 제한적. Ingress 레벨/프록시 확장/옵저버블 라우팅으로 보완
 
 ### 6.4 Rate Limit
 
-- Istio: EnvoyFilter/외부 Rate Limiter와 통합(예: envoy rate limit service)  
+- Istio: EnvoyFilter/외부 Rate Limiter와 통합(예: envoy rate limit service)
 - Linkerd: 외부 정책 엔진/Ingress/게이트웨이와 조합
 
 ---
@@ -420,12 +420,12 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ### 7.1 자동 mTLS
 
-- **Istio**: 인증서 발급/회전/배포 자동화. `PeerAuthentication`으로 모드 설정(STRICT, PERMISSIVE, DISABLE)  
+- **Istio**: 인증서 발급/회전/배포 자동화. `PeerAuthentication`으로 모드 설정(STRICT, PERMISSIVE, DISABLE)
 - **Linkerd**: Control Plane가 루트/중간 인증서를 관리, 워크로드 간 자동 mTLS
 
 ### 7.2 인가(Authorization)
 
-- **Istio**: `AuthorizationPolicy`로 주체(사이드카가 주입한 ID), 경로, 메서드, 헤더 조합으로 세밀 제어  
+- **Istio**: `AuthorizationPolicy`로 주체(사이드카가 주입한 ID), 경로, 메서드, 헤더 조합으로 세밀 제어
 - **Linkerd**: 기본 인가는 제한적. 네임스페이스/NetworkPolicy/Ingress 정책과 병행 설계
 
 ---
@@ -433,7 +433,7 @@ linkerd -n mesh-demo routes deploy/api-v1
 ## 8. 관측/모니터링
 
 - 공통: Prometheus로 지표 수집, Grafana 대시보드
-- **Istio**: Kiali(서비스 그래프), Envoy 가시화, Jaeger/Zipkin 분산 트레이싱  
+- **Istio**: Kiali(서비스 그래프), Envoy 가시화, Jaeger/Zipkin 분산 트레이싱
 - **Linkerd**: `linkerd viz`(Tap/Routes/Top), 기본 지표가 경량·직관적
 
 유용한 CLI:
@@ -473,8 +473,8 @@ linkerd diagnostics endpoints api
 
 ## 10. 배포 자동화와 GitOps
 
-- 헬름 차트/istioctl 프로필/Linkerd Helm을 **환경별 values**로 관리  
-- Argo CD/Flux로 **VirtualService/DestinationRule/TrafficSplit**을 선언적으로 운영  
+- 헬름 차트/istioctl 프로필/Linkerd Helm을 **환경별 values**로 관리
+- Argo CD/Flux로 **VirtualService/DestinationRule/TrafficSplit**을 선언적으로 운영
 - 카나리 프로모션 파이프라인: 메트릭 게이팅(에러율/지연/SLO) → 가중치 단계 상승 → 롤백 조건
 
 ---
@@ -582,9 +582,9 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ## 12. 결론
 
-- **Service Mesh**는 **코드 수정 없이** 마이크로서비스 네트워킹을 표준화한다.  
-- **Istio**는 기능이 가장 풍부하고 세밀한 제어가 가능하며, **Linkerd**는 경량/간결성/안정성에 강점이 있다.  
-- 실제 도입은 **요구 기능(보안/트래픽 제어/관측/조직 운영 모델)**, **성능/비용**, **팀의 역량/학습 곡선**을 종합 고려해 결정한다.  
+- **Service Mesh**는 **코드 수정 없이** 마이크로서비스 네트워킹을 표준화한다.
+- **Istio**는 기능이 가장 풍부하고 세밀한 제어가 가능하며, **Linkerd**는 경량/간결성/안정성에 강점이 있다.
+- 실제 도입은 **요구 기능(보안/트래픽 제어/관측/조직 운영 모델)**, **성능/비용**, **팀의 역량/학습 곡선**을 종합 고려해 결정한다.
 - 본 문서의 **YAML/명령 레시피**를 토대로 **카나리→승격**, **mTLS/RBAC**, **Retry/Timeout/Outlier**, **대시보드 관측**까지 한 흐름으로 실습해보면, 운영 환경에 필요한 설계 포인트가 선명해진다.
 
 ---

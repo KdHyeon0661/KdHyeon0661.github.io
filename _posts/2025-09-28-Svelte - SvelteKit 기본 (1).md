@@ -7,9 +7,9 @@ category: Svelte
 # 7. SvelteKit 기본 (1)
 **폴더 구조: `+layout`, `+page`, `+server`, `+layout.server` · 라우팅(파일 기반) · 동적 파라미터/중첩 레이아웃 · 렌더링 모드(SSR/SPA/SSG), 프리렌더링/하이브리드**
 
-> 이 장은 SvelteKit의 **파일 기반 라우팅과 렌더링 모델**을 이해하는 데 필요한 핵심을, **작동 예제**와 함께 한 번에 훑는다.  
-> - “**어떤 파일을 어디에 두면 무슨 역할을 하나?**”를 먼저 잡고  
-> - **동적 파라미터/중첩 레이아웃**의 흐름을 익힌 뒤  
+> 이 장은 SvelteKit의 **파일 기반 라우팅과 렌더링 모델**을 이해하는 데 필요한 핵심을, **작동 예제**와 함께 한 번에 훑는다.
+> - “**어떤 파일을 어디에 두면 무슨 역할을 하나?**”를 먼저 잡고
+> - **동적 파라미터/중첩 레이아웃**의 흐름을 익힌 뒤
 > - **SSR/SPA/SSG**와 **프리렌더링**을 조합해 배포 전략을 세운다.
 
 ---
@@ -45,19 +45,19 @@ my-app/
 
 ### 7.1.1 각 파일의 책임 요약
 
-- **`+layout.svelte`**: 공통 UI(헤더/푸터/토스트 등), **데이터는 상위에서 하위로 캐스케이딩**  
-- **`+layout.ts`**: 클라이언트/서버 **모두에서 실행되는(load) 함수**와 **페이지 옵션**(예: `export const ssr = false`)  
+- **`+layout.svelte`**: 공통 UI(헤더/푸터/토스트 등), **데이터는 상위에서 하위로 캐스케이딩**
+- **`+layout.ts`**: 클라이언트/서버 **모두에서 실행되는(load) 함수**와 **페이지 옵션**(예: `export const ssr = false`)
 - **`+layout.server.ts`**: **서버에서만** 실행되는 load (쿠키/세션/DB 조회 등)
 
-- **`+page.svelte`**: 해당 경로의 **페이지 컴포넌트**  
-- **`+page.ts`**: 페이지용 **universal load** (CSR 전환에도 실행)  
+- **`+page.svelte`**: 해당 경로의 **페이지 컴포넌트**
+- **`+page.ts`**: 페이지용 **universal load** (CSR 전환에도 실행)
 - **`+page.server.ts`**: 페이지용 **server load** (SSR만, CSR 전환 시에는 호출되지 않음)
 
 - **`+server.ts`**: **API 라우트**. `GET/POST/PUT/DELETE` 핸들러를 export하여 **HTTP 엔드포인트**를 만든다.
 
-> 기억법  
-> - `.server.ts`가 붙으면 “**서버 전용**”  
-> - `.ts`만 있으면 “**유니버설(universal)** = 서버SSR + 클라이언트 라우팅 전환 모두”  
+> 기억법
+> - `.server.ts`가 붙으면 “**서버 전용**”
+> - `.ts`만 있으면 “**유니버설(universal)** = 서버SSR + 클라이언트 라우팅 전환 모두”
 > - `.svelte`는 “**뷰**”
 
 ---
@@ -133,15 +133,15 @@ export const load: PageLoad = async ({ params, fetch }) => {
 
 ### 7.3.1 기본 규칙
 
-- 폴더: 경로 세그먼트(`/blog` → `routes/blog/`)  
-- `+page.svelte`: **그 경로의 페이지 뷰**  
-- `+server.ts`: **그 경로의 API 엔드포인트**(`GET/POST` 등)  
+- 폴더: 경로 세그먼트(`/blog` → `routes/blog/`)
+- `+page.svelte`: **그 경로의 페이지 뷰**
+- `+server.ts`: **그 경로의 API 엔드포인트**(`GET/POST` 등)
 - **인덱스**: 폴더에 `+page.svelte`가 있으면 해당 세그먼트 루트(예: `routes/blog/+page.svelte` → `/blog`)
 
 ### 7.3.2 동적 파라미터
 
-- **`[slug]`**: `/blog/[slug]/+page.svelte` → `/blog/hello`에서 `params.slug === 'hello'`  
-- **캣치올(`[...]`)**: `/docs/[...path]/+page.svelte` → `/docs/guide/getting-started`에서 `params.path === 'guide/getting-started'`  
+- **`[slug]`**: `/blog/[slug]/+page.svelte` → `/blog/hello`에서 `params.slug === 'hello'`
+- **캣치올(`[...]`)**: `/docs/[...path]/+page.svelte` → `/docs/guide/getting-started`에서 `params.path === 'guide/getting-started'`
 - **옵셔널(`[[lang]]`)**: `/[[lang]]/about/+page.svelte` → `/about` 또는 `/en/about`
 
 ```ts
@@ -217,7 +217,7 @@ export const POST: RequestHandler = async ({ request }) => {
 };
 ```
 
-- 클라이언트에서 `fetch('/api/posts')`로 호출하면 된다.  
+- 클라이언트에서 `fetch('/api/posts')`로 호출하면 된다.
 - **CORS/세션/쿠키** 등 서버 관심사는 이 파일에서 처리.
 
 ---
@@ -226,11 +226,11 @@ export const POST: RequestHandler = async ({ request }) => {
 
 ### 7.5.1 세 가지 `load`
 
-- **`+layout.ts / +page.ts`의 `load`**: **유니버설**.  
-  - SSR(첫 요청)에서는 **서버**에서 실행되어 HTML에 주입  
-  - 클라이언트 라우팅 전환 시에는 **브라우저**에서 실행  
-- **`+layout.server.ts / +page.server.ts`의 `load`**: **서버 전용**.  
-  - 쿠키/세션/DB 접근, **비밀키** 사용 가능  
+- **`+layout.ts / +page.ts`의 `load`**: **유니버설**.
+  - SSR(첫 요청)에서는 **서버**에서 실행되어 HTML에 주입
+  - 클라이언트 라우팅 전환 시에는 **브라우저**에서 실행
+- **`+layout.server.ts / +page.server.ts`의 `load`**: **서버 전용**.
+  - 쿠키/세션/DB 접근, **비밀키** 사용 가능
   - CSR 전환 시에는 다시 호출되지 않음(서버 요청 없으면)
 - **둘 다 있으면**: `server` → `universal` 순서로 실행되고 결과가 병합된다.
 
@@ -268,8 +268,8 @@ SvelteKit은 **페이지/레이아웃 단위**로 렌더링 모드를 설정할 
 
 ### 7.6.1 SSR (Server-Side Rendering)
 
-- 기본값. 첫 요청에서 서버가 HTML을 만들어 응답.  
-- SEO/초기 응답/보안(비밀키) 측면에서 유리.  
+- 기본값. 첫 요청에서 서버가 HTML을 만들어 응답.
+- SEO/초기 응답/보안(비밀키) 측면에서 유리.
 - CSR로 전환하면 이후 페이지 이동은 클라이언트에서.
 
 ```ts
@@ -280,7 +280,7 @@ export const csr = true;    // CSR 전환 허용(기본값 true)
 
 ### 7.6.2 SPA/CSR Only (서버 렌더링 비활성화)
 
-- 문서가 **클라이언트에서만** 렌더됨(SEO 취약, CDN 캐싱 쉬움).  
+- 문서가 **클라이언트에서만** 렌더됨(SEO 취약, CDN 캐싱 쉬움).
 - 빠른 대시보드/내부 도구에서 사용.
 
 ```ts
@@ -290,7 +290,7 @@ export const ssr = false;   // 이 구간 이하 SSR 끄기
 
 ### 7.6.3 SSG (정적 사이트 생성) / 프리렌더링
 
-- 빌드 시 HTML을 **파일로 생성**해 CDN에서 서빙.  
+- 빌드 시 HTML을 **파일로 생성**해 CDN에서 서빙.
 - **변하지 않거나, revalidate로 느슨하게 변하는** 페이지에 적합.
 
 ```ts
@@ -298,7 +298,7 @@ export const ssr = false;   // 이 구간 이하 SSR 끄기
 export const prerender = true;
 ```
 
-- `prerender = true`인 경로는 **링크로 도달 가능한 모든 하위 페이지를 크롤**해 정적 생성한다.  
+- `prerender = true`인 경로는 **링크로 도달 가능한 모든 하위 페이지를 크롤**해 정적 생성한다.
 - **동적 파라미터**가 많거나 무한이면, **entries** 옵션이나 별도의 **endpoint**로 **프리렌더 목록**을 제공해야 한다(후술).
 
 ---
@@ -327,7 +327,7 @@ export default config;
 
 ### 7.7.2 동적 리스트를 SSG하고 상세는 SSR (하이브리드)
 
-- 블로그: `/blog`와 일부 인기 글은 SSG, 나머지는 SSR로 실시간 제공.  
+- 블로그: `/blog`와 일부 인기 글은 SSG, 나머지는 SSR로 실시간 제공.
 - 구현: 상위 `+layout.ts` 에서 **`prerender = true`**를 두되, **특정 하위 페이지**에서 **`export const prerender = false`**로 예외 처리.
 
 ```ts
@@ -547,38 +547,38 @@ export const prerender = true | false;  // 정적 생성 on/off
 export const trailingSlash = 'never' | 'always' | 'ignore';
 ```
 
-- `ssr=false`면 해당 구간은 **CSR 전용 SPA**  
-- `csr=false`면 **클라이언트 전환 비활성화**(항상 **완전한 페이지 새로고침**으로 이동)  
+- `ssr=false`면 해당 구간은 **CSR 전용 SPA**
+- `csr=false`면 **클라이언트 전환 비활성화**(항상 **완전한 페이지 새로고침**으로 이동)
 - `prerender=true`면 **정적 생성**(가능한 경로에 한해)
 
 ---
 
 ## 7.11 흔한 함정 & 체크리스트
 
-1) **`.server.ts`에서만 가능한 일**과 **유니버설에서 가능한 일**을 혼동  
-   - 비밀키/DB/쿠키 민감 로직은 **`.server.ts`**에서.  
+1) **`.server.ts`에서만 가능한 일**과 **유니버설에서 가능한 일**을 혼동
+   - 비밀키/DB/쿠키 민감 로직은 **`.server.ts`**에서.
    - 브라우저 API는 **유니버설 load**나 컴포넌트의 **onMount**에서.
 
-2) **캐스케이딩 데이터 덮어쓰기**  
-   - 상위/하위 `load`의 반환이 **병합**된다는 점 기억(키 충돌 주의).  
+2) **캐스케이딩 데이터 덮어쓰기**
+   - 상위/하위 `load`의 반환이 **병합**된다는 점 기억(키 충돌 주의).
    - 이름을 네임스페이스처럼 나눠(`layoutUser`, `pageData`) 혼동을 줄이자.
 
-3) **동적 파라미터 프리렌더링**  
-   - 무한/대규모 slug를 `prerender=true`로 그대로 두면 **크롤 불가**.  
+3) **동적 파라미터 프리렌더링**
+   - 무한/대규모 slug를 `prerender=true`로 그대로 두면 **크롤 불가**.
    - `entries`로 **부분만**, 나머지는 **SSR** 또는 **CSR**.
 
-4) **CSR만으로는 SEO 어려움**  
+4) **CSR만으로는 SEO 어려움**
    - 마케팅/문서 페이지는 **SSG/SSR**을 고려.
 
-5) **라우팅 파일 위치 오타**  
+5) **라우팅 파일 위치 오타**
    - 반드시 `src/routes` 아래에 파일을 두고, 파일명은 `+page.svelte` 등 **정확하게**.
 
 ---
 
 ## 7.12 요약
 
-- **파일명으로 역할 고정**: `+layout(.server).ts`/`+page(.server).ts`/`+server.ts`  
-- **캐스케이딩 데이터**로 상위 레이아웃 → 하위 페이지로 상태 전파  
-- **파일 기반 라우팅**: `[slug]`, `[...path]`, `[[lang]]` 등으로 유연한 경로  
-- **렌더링 모드**를 **페이지 단위**로 조합: SSR/SPA/SSG + 프리렌더 하이브리드  
+- **파일명으로 역할 고정**: `+layout(.server).ts`/`+page(.server).ts`/`+server.ts`
+- **캐스케이딩 데이터**로 상위 레이아웃 → 하위 페이지로 상태 전파
+- **파일 기반 라우팅**: `[slug]`, `[...path]`, `[[lang]]` 등으로 유연한 경로
+- **렌더링 모드**를 **페이지 단위**로 조합: SSR/SPA/SSG + 프리렌더 하이브리드
 - 배포/SEO/보안 요구에 맞춰 **전략적으로 섞어** 쓰는 것이 핵심

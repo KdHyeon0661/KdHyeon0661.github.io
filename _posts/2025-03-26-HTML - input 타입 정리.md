@@ -8,17 +8,17 @@ category: HTML
 
 ## HTML5로 추가된 12가지 타입 한눈에 보기
 
-1) `number` — 숫자  
-2) `range` — 슬라이더  
-3) `color` — 색상 선택  
-4) `date` — 날짜  
-5) `time` — 시간  
-6) `datetime-local` — 날짜+시간(로컬)  
-7) `month` — 연-월  
-8) `week` — 연-주(ISO)  
-9) `email` — 이메일  
-10) `url` — 웹 주소  
-11) `tel` — 전화번호  
+1) `number` — 숫자
+2) `range` — 슬라이더
+3) `color` — 색상 선택
+4) `date` — 날짜
+5) `time` — 시간
+6) `datetime-local` — 날짜+시간(로컬)
+7) `month` — 연-월
+8) `week` — 연-주(ISO)
+9) `email` — 이메일
+10) `url` — 웹 주소
+11) `tel` — 전화번호
 12) `search` — 검색
 
 > **원칙:** 클라이언트 검증은 **편의**일 뿐, **최종 검증은 반드시 서버**에서 수행한다.
@@ -190,7 +190,7 @@ category: HTML
 ```
 
 **주의(반패턴)**
-- 국제 서비스에서 `datetime-local`을 그대로 저장/비교하면 **타임존 혼선**.  
+- 국제 서비스에서 `datetime-local`을 그대로 저장/비교하면 **타임존 혼선**.
 - **대안:** 날짜/시간을 별 필드(+타임존)로 분리해 전송하거나, 클라이언트에서 **ISO-8601(UTC)** 로 전송.
 
 ---
@@ -315,10 +315,10 @@ category: HTML
 ```
 
 ### B) 자동완성(autocomplete) 토큰(발췌)
-- `name`, `email`, `username`, `new-password`, `current-password`,  
-  `tel`, `tel-national`, `one-time-code`,  
-  `street-address`, `address-line1`, `postal-code`,  
-  `bday`, `bday-day`, `bday-month`, `bday-year`,  
+- `name`, `email`, `username`, `new-password`, `current-password`,
+  `tel`, `tel-national`, `one-time-code`,
+  `street-address`, `address-line1`, `postal-code`,
+  `bday`, `bday-day`, `bday-month`, `bday-year`,
   `url`, `organization`, `cc-number`, `cc-exp`, `cc-csc`, …
 ```html
 <input type="email" name="email" autocomplete="email" />
@@ -476,27 +476,27 @@ if (!isTypeSupported('date')) {
 
 ## 보안/반패턴/주의사항
 
-1) **서버 검증 필수**  
+1) **서버 검증 필수**
    - `number`, `email`, `url` 등은 **형식을 돕는 도구**. 금액/재고/권한 등 **비즈니스 로직은 서버에서**.
 
-2) **`datetime-local`와 타임존**  
+2) **`datetime-local`와 타임존**
    - 저장/비교는 **UTC**. 사용자 표시만 로컬로 포맷.
 
-3) **마우스 휠 오작동**  
+3) **마우스 휠 오작동**
    - `number` 포커스 아웃 시 휠 값 변경 방지(위 예제 참고).
 
-4) **`tel` 형식 강제 금지**  
-   - 국가별 규칙과 기업 번호 형식이 다르므로, **지나치게 엄격한 정규식은 UX 저해**.  
+4) **`tel` 형식 강제 금지**
+   - 국가별 규칙과 기업 번호 형식이 다르므로, **지나치게 엄격한 정규식은 UX 저해**.
    - 서버에서 E.164 표준으로 정규화/검사 추천.
 
-5) **`url`의 리다이렉트 취약점**  
+5) **`url`의 리다이렉트 취약점**
    - 리다이렉트/프록시/콜백 URL은 **화이트리스트**로 제한.
 
-6) **자동완성/비번 필드**  
-   - `autocomplete="new-password"`/`current-password` 정확히 표기.  
+6) **자동완성/비번 필드**
+   - `autocomplete="new-password"`/`current-password` 정확히 표기.
    - 임의 차단(`autocomplete="off"`)은 브라우저 정책에 따라 무시될 수 있음.
 
-7) **마스킹 vs 검증**  
+7) **마스킹 vs 검증**
    - 입력 마스킹(예: 010-xxxx-xxxx)은 **검증이 아니라 포맷 보조**. 서버에서 숫자만 추출하여 검증/정규화.
 
 ---
@@ -518,7 +518,7 @@ if (!isTypeSupported('date')) {
 
 ## 브라우저 지원 요약(2025)
 
-- `number`, `range`, `color`, `date`, `time`, `datetime-local`, `month`, `week`, `email`, `url`, `tel`, `search`  
+- `number`, `range`, `color`, `date`, `time`, `datetime-local`, `month`, `week`, `email`, `url`, `tel`, `search`
   → **현대 브라우저 전반 지원**, 구형 IE 등은 일부 미지원 → **PE로 안전하게 폴백**.
 
 ---
@@ -589,10 +589,10 @@ if (!isTypeSupported('date')) {
 
 ## 마무리
 
-- HTML5 `<input>` 타입은 **UX·모바일·기본 검증**을 크게 향상시킨다.  
-- 그러나 **최종 검증/권한/정합성은 서버 책임** — 금액/시간대/주차/URL 리다이렉트 등은 반드시 서버 검증.  
-- 국제 서비스에서는 **시간/날짜의 타임존 처리**를 특히 주의(저장은 UTC, 표시는 로컬).  
-- 모바일 최적화는 `inputmode`/`enterkeyhint`/`autocomplete`로 완성도를 끌어올린다.  
+- HTML5 `<input>` 타입은 **UX·모바일·기본 검증**을 크게 향상시킨다.
+- 그러나 **최종 검증/권한/정합성은 서버 책임** — 금액/시간대/주차/URL 리다이렉트 등은 반드시 서버 검증.
+- 국제 서비스에서는 **시간/날짜의 타임존 처리**를 특히 주의(저장은 UTC, 표시는 로컬).
+- 모바일 최적화는 `inputmode`/`enterkeyhint`/`autocomplete`로 완성도를 끌어올린다.
 - 폴백/프로그레시브 인행스먼트 관점에서 설계하면 **구형 환경에서도 우아한 저하**가 가능하다.
 
 > 익숙한 `text` 하나로 모두 처리하기보다, **목적에 맞는 타입**을 고르는 것이 **사용성·정확성·유지보수성**을 동시에 높이는 지름길이다.

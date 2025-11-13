@@ -430,8 +430,8 @@ RUN printf "events {}\nhttp { server { listen 80; location /health { return 200 
 
 ## 15. 베이스 선택 의사결정 간단 가이드
 
-1) 네이티브 확장/빌드 필요한가? → 그렇다면 `slim` 우선.  
-2) 순수 정적 산출물? → `alpine`/`distroless`/`scratch` 고려.  
+1) 네이티브 확장/빌드 필요한가? → 그렇다면 `slim` 우선.
+2) 순수 정적 산출물? → `alpine`/`distroless`/`scratch` 고려.
 3) 런타임 디버깅 필요? → 셸/툴 유무 확인(`alpine`은 busybox, distroless엔 없음).
 
 ---

@@ -384,7 +384,7 @@ new Toast(document.getElementById('t')).show();
 
 - 컴포넌트는 기본적으로 **ARIA 속성**과 키보드 탐색을 지원
 - **스크린 리더 텍스트**: `.visually-hidden`
-- **모션 감소**: `@media (prefers-reduced-motion: reduce)` 대응  
+- **모션 감소**: `@media (prefers-reduced-motion: reduce)` 대응
 - **컬러 대비**: `text-bg-*` / 변수 조정으로 명암비 확보
 - **포커스 링**: `.focus-visible` 전략 고려
 
@@ -406,18 +406,18 @@ import Collapse from 'bootstrap/js/dist/collapse';
 import Dropdown from 'bootstrap/js/dist/dropdown';
 ```
 
-- 사용하지 않는 컴포넌트는 제외 → 번들 크기↓  
+- 사용하지 않는 컴포넌트는 제외 → 번들 크기↓
 - Vite/webpack/Rollup으로 트리셰이킹
 
 ### 8.2 CSS 최적화
 
-- **Sass 빌드**(아래 커스터마이징과 함께) 후 **Purge/Content-aware 제거**(예: `@fullhuman/postcss-purgecss`, Tailwind JIT 유사 도구 등)  
-- 정적 사이트는 빌드시 사용 클래스만 남기는 전략으로 크기↓  
+- **Sass 빌드**(아래 커스터마이징과 함께) 후 **Purge/Content-aware 제거**(예: `@fullhuman/postcss-purgecss`, Tailwind JIT 유사 도구 등)
+- 정적 사이트는 빌드시 사용 클래스만 남기는 전략으로 크기↓
   단, **동적 클래스명**은 safelist에 추가 필요
 
 ### 8.3 HTTP/캐싱
 
-- CDN 사용 + SRI + 긴 `max-age`/`immutable`  
+- CDN 사용 + SRI + 긴 `max-age`/`immutable`
 - 앱 CSS/JS는 해시 기반 파일명으로 캐싱 전략 수립
 
 ---
@@ -482,7 +482,7 @@ $enable-rounded: true;
 
 ### 9.4 CSS Custom Properties 활용
 
-- 일부 색상/스페이싱은 런타임에도 CSS 변수로 조정 가능  
+- 일부 색상/스페이싱은 런타임에도 CSS 변수로 조정 가능
 - 다크모드 전환 시 루트 변수만 교체하는 테크닉 활용
 
 ---
@@ -567,9 +567,9 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ## 12. 프레임워크와 결합
 
-- **React**: React-Bootstrap, Reactstrap 또는 기본 Bootstrap + data-bs-* / 직접 JS  
-- **Vue**: BootstrapVueNext(Community), 기본 적용  
-- **Svelte/Angular**: 래퍼 컴포넌트 또는 기본 CSS + data 속성  
+- **React**: React-Bootstrap, Reactstrap 또는 기본 Bootstrap + data-bs-* / 직접 JS
+- **Vue**: BootstrapVueNext(Community), 기본 적용
+- **Svelte/Angular**: 래퍼 컴포넌트 또는 기본 CSS + data 속성
 - SPA에선 **라우트 전환시 포커스 관리**, 컴포넌트 언마운트 시 이벤트 정리 필요
 
 ---
@@ -616,11 +616,11 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ## 17. 체크리스트: 실전 프로젝트 시작 전
 
-- 디자인 토큰(색/타이포/간격/둥글기) → Sass 변수 정의  
-- **Utilities API**로 팀 표준 헬퍼 세트 정의  
-- 컴포넌트 사용 범위 합의(“카드만 쓰자/모달 금지” 등)  
-- 접근성 기준(WCAG 레벨)과 검수 루틴 명시  
-- 번들 전략(개별 import/트리셰이킹)과 Purge 구성  
+- 디자인 토큰(색/타이포/간격/둥글기) → Sass 변수 정의
+- **Utilities API**로 팀 표준 헬퍼 세트 정의
+- 컴포넌트 사용 범위 합의(“카드만 쓰자/모달 금지” 등)
+- 접근성 기준(WCAG 레벨)과 검수 루틴 명시
+- 번들 전략(개별 import/트리셰이킹)과 Purge 구성
 - 브라우저 지원(IE 미지원) 범위 합의
 
 ---
@@ -715,6 +715,6 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ## 19. 결론
 
-- **빠른 프로토타이핑**과 **안정적인 디자인 시스템** 구축에 탁월  
-- v5의 **jQuery 제거/유틸리티 API/Sass 변수/다크모드/RTL**로 **현대적 요구** 충족  
+- **빠른 프로토타이핑**과 **안정적인 디자인 시스템** 구축에 탁월
+- v5의 **jQuery 제거/유틸리티 API/Sass 변수/다크모드/RTL**로 **현대적 요구** 충족
 - 실무에서는 **접근성/성능/빌드/커스터마이징 전략**을 함께 설계해야 진가 발휘

@@ -15,9 +15,9 @@ category: AspNet
 @using Microsoft.AspNetCore.Mvc.TagHelpers             <!-- (선택) 네임스페이스 노출 -->
 ```
 
-- 특정 커스텀 Tag Helper 어셈블리 사용 시:  
+- 특정 커스텀 Tag Helper 어셈블리 사용 시:
   `@addTagHelper *, YourAppAssemblyName`
-- 반대로 특정 Tag Helper를 제외하고 싶다면:  
+- 반대로 특정 Tag Helper를 제외하고 싶다면:
   `@removeTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers`
 
 ---
@@ -123,8 +123,8 @@ category: AspNet
 ### 3.3 우선순위
 
 - **강한 바인딩 > 약한 바인딩**
-  1) `asp-route-{name}`  
-  2) `asp-all-route-data`  
+  1) `asp-route-{name}`
+  2) `asp-all-route-data`
   3) 기존 라우트 데이터
 - **명시적 값**이 있으면 라우트 템플릿 디폴트를 덮는다.
 
@@ -179,7 +179,7 @@ Model.Categories = new List<SelectListItem> {
 </form>
 ```
 
-- 기본값이 `true`이므로 생략 가능.  
+- 기본값이 `true`이므로 생략 가능.
 - **HTTP PUT/DELETE**가 필요하면 **메서드 스푸핑**(폼 안에 숨겨진 `X-HTTP-Method-Override` 필드나 라우팅으로 처리)을 사용하거나 Ajax에 맞게 API 설계.
 
 ---

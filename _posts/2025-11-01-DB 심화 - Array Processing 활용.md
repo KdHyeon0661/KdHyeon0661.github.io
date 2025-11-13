@@ -6,10 +6,10 @@ category: DB 심화
 ---
 # Array Processing 활용
 
-> **핵심 요약**  
-> Array Processing(배열 처리)은 **“여러 행을 한 번에”** 보내거나 받는 기법이다.  
-> - **DML**: `FORALL`, 드라이버 **배열 바인드/배치 실행**으로 **Execute 호출 수**를 급감 → `user calls` 감소, `log file sync`·네트워크 오버헤드↓  
-> - **SELECT**: `BULK COLLECT`/드라이버 **배열 페치**로 **Fetch 호출 수**를 감소 → 왕복/CPU↓, 응답시간↓  
+> **핵심 요약**
+> Array Processing(배열 처리)은 **“여러 행을 한 번에”** 보내거나 받는 기법이다.
+> - **DML**: `FORALL`, 드라이버 **배열 바인드/배치 실행**으로 **Execute 호출 수**를 급감 → `user calls` 감소, `log file sync`·네트워크 오버헤드↓
+> - **SELECT**: `BULK COLLECT`/드라이버 **배열 페치**로 **Fetch 호출 수**를 감소 → 왕복/CPU↓, 응답시간↓
 > - **부가 기능**: `RETURNING BULK COLLECT`, `SAVE EXCEPTIONS`, 배열 바인드 **IN-list**, 파티셔닝/인덱스 설계와 결합 시 최대 효과.
 
 ---
@@ -52,14 +52,14 @@ END;
 
 ## 1. 왜 Array Processing인가? — **성능 모델**
 
-**왕복 기반 응답시간 근사**  
+**왕복 기반 응답시간 근사**
 $$
 \text{RT} \approx \underbrace{\text{RTT} \times N_{\text{calls}}}_{\text{네트워크 왕복}}
 + \underbrace{\text{CPU} + \text{Waits}}_{\text{서버 내부 작업}}
 $$
 
-- **Row-by-Row**: `N_calls`가 **행 수**에 비례.  
-- **Array Processing**: `N_calls \approx \frac{\text{행 수}}{\text{배열 크기}}` → **선형 감소**.  
+- **Row-by-Row**: `N_calls`가 **행 수**에 비례.
+- **Array Processing**: `N_calls \approx \frac{\text{행 수}}{\text{배열 크기}}` → **선형 감소**.
 - 동일 작업량이라도 **왕복 감소**만으로 **RT**가 크게 줄어든다.
 
 ---
@@ -104,7 +104,7 @@ END;
 ```
 
 - **포인트**
-  - `LIMIT` 미지정은 대량 데이터에서 **PGA 폭증** 위험.  
+  - `LIMIT` 미지정은 대량 데이터에서 **PGA 폭증** 위험.
   - 일반적으로 **1k~20k** 사이에서 실측으로 최적점 찾기.
 
 ### 2.2 Array DML: `FORALL` (+ `SAVE EXCEPTIONS`)
@@ -143,8 +143,8 @@ END;
 ```
 
 - **포인트**
-  - `FORALL`은 **SQL 1번 파싱, 바인드만 배열** → Execute 왕복 수 **급감**.  
-  - `SAVE EXCEPTIONS`로 **문제 행만 분리**(대부분 성공 → 성능 유지).  
+  - `FORALL`은 **SQL 1번 파싱, 바인드만 배열** → Execute 왕복 수 **급감**.
+  - `SAVE EXCEPTIONS`로 **문제 행만 분리**(대부분 성공 → 성능 유지).
   - 대량 DML은 **주기적 COMMIT**(예: 5k~20k 묶음)로 `log file sync` 부하를 균형화.
 
 ### 2.3 `RETURNING BULK COLLECT` — 생성 키 일괄 회수
@@ -217,8 +217,8 @@ try (PreparedStatement ps = conn.prepareStatement(ins)) {
 ```
 
 - **튜닝 팁**
-  - Statement Cache(Implicit/Explicit) 활성 → Parse 감소  
-  - Auto-commit OFF → per-row COMMIT 금지  
+  - Statement Cache(Implicit/Explicit) 활성 → Parse 감소
+  - Auto-commit OFF → per-row COMMIT 금지
   - 네트워크 RTT 큰 환경일수록 Batch/Fetch 효과 큼
 
 ### 3.2 ODP.NET (C#)
@@ -286,8 +286,8 @@ WHERE  cust_id IN (SELECT COLUMN_VALUE FROM TABLE(:cust_ids))
 AND    order_dt BETWEEN :d1 AND :d2;
 ```
 
-- **드라이버 바인딩**: `:cust_ids`에 숫자 배열을 바인드  
-- **장점**: 대량 IN도 동적 문자열 없이 처리, Parse 폭증 방지  
+- **드라이버 바인딩**: `:cust_ids`에 숫자 배열을 바인드
+- **장점**: 대량 IN도 동적 문자열 없이 처리, Parse 폭증 방지
 - **주의**: 실행 계획은 **HASH JOIN** 경향 → 통계/인덱스/카디널리티 점검
 
 ### 4.2 GTT 조인(초대량 키)
@@ -326,16 +326,16 @@ try {
 
 ## 6. Array 크기 결정 — **메모리 vs 왕복의 균형**
 
-- **SELECT**: `fetchSize/arraysize`를 **행당 평균 크기 × N** 이 **수 MB~수십 MB** 정도가 되도록.  
-  - 예) 행당 200B × 1000행 ≈ 200KB (작다) → 5000~10000으로 키우기.  
+- **SELECT**: `fetchSize/arraysize`를 **행당 평균 크기 × N** 이 **수 MB~수십 MB** 정도가 되도록.
+  - 예) 행당 200B × 1000행 ≈ 200KB (작다) → 5000~10000으로 키우기.
   - 너무 크면 **PGA/클라이언트 메모리** 부담 + GC/직렬화 비용 증가.
 
-- **DML**: Batch/ArrayBind 크기를 **1k~10k** 범위에서 실측.  
+- **DML**: Batch/ArrayBind 크기를 **1k~10k** 범위에서 실측.
   - 너무 작으면 왕복 많음, 너무 크면 `log file sync`·락 경쟁·Undo/Redo 압박.
 
-- **경험 법칙**:  
-  1) RTT 큰 환경(지리적 분산) → **큰 배열**이 유리.  
-  2) 로우당 LOB/큰 컬럼多 → **중간 크기**로 타협.  
+- **경험 법칙**:
+  1) RTT 큰 환경(지리적 분산) → **큰 배열**이 유리.
+  2) 로우당 LOB/큰 컬럼多 → **중간 크기**로 타협.
   3) 트리거/제약 검증多 → **중간 크기 + SAVE EXCEPTIONS**.
 
 ---
@@ -352,8 +352,8 @@ ALTER SESSION SET events '10046 trace name context off';
 ```
 
 ### 7.2 TKPROF 지표 포인트
-- `call` 표에서 **Fetch count**(SELECT), **Execute count**(DML) 급감 확인  
-- `bytes sent/received via SQL*Net` 단위당 행수 증가(효율↑)  
+- `call` 표에서 **Fetch count**(SELECT), **Execute count**(DML) 급감 확인
+- `bytes sent/received via SQL*Net` 단위당 행수 증가(효율↑)
 - 동일 rows 대비 **elapsed** 감소
 
 ---
@@ -361,34 +361,34 @@ ALTER SESSION SET events '10046 trace name context off';
 ## 8. 시나리오 별 **설계 레시피**
 
 ### 8.1 대량 마이그레이션/적재
-- `INSERT /*+ APPEND */` + **배치 커밋** + **인덱스/트리거 최소화**  
-- 대상 인덱스는 적재 후 생성(병렬 빌드) or **무효화→재빌드**  
-- `FORALL`/JDBC Batch로 1만~10만 행 단위 처리  
+- `INSERT /*+ APPEND */` + **배치 커밋** + **인덱스/트리거 최소화**
+- 대상 인덱스는 적재 후 생성(병렬 빌드) or **무효화→재빌드**
+- `FORALL`/JDBC Batch로 1만~10만 행 단위 처리
 - AWR 상위 이벤트: `direct path write temp` / `DB CPU` → 정상
 
 ### 8.2 실시간 API 다량 읽기
-- **Keyset Pagination** + **배열 페치**(큰 fetchSize)  
-- 열 최소화(필요 컬럼만), SARG 가능한 WHERE  
+- **Keyset Pagination** + **배열 페치**(큰 fetchSize)
+- 열 최소화(필요 컬럼만), SARG 가능한 WHERE
 - 네트워크 RTT 크면 **배열 크기↑**로 왕복 최소화
 
 ### 8.3 이벤트 로그/트래킹 수집
-- **배열 바인드 INSERT** + `COMMIT` 주기화(예: 5k)  
-- 시퀀스 `CACHE` 크게(1000 이상) → 재귀 호출 감소  
+- **배열 바인드 INSERT** + `COMMIT` 주기화(예: 5k)
+- 시퀀스 `CACHE` 크게(1000 이상) → 재귀 호출 감소
 - 파티션 테이블(일/시간)로 **세그먼트 경합 분산**
 
 ### 8.4 리포트/집계 배치
-- **집계는 가급적 SQL 한 방**(윈도우 함수/집계) → 불필요 페치 제거  
-- 불가피하면 `BULK COLLECT LIMIT` + 외부 시스템 전송  
+- **집계는 가급적 SQL 한 방**(윈도우 함수/집계) → 불필요 페치 제거
+- 불가피하면 `BULK COLLECT LIMIT` + 외부 시스템 전송
 - 임시 결과는 **GTT/임시 테이블**로 합리화
 
 ---
 
 ## 9. 자주 하는 실수 & 교정
 
-1) **Auto-commit ON**으로 배치 무력화 → **OFF**로 전환, 주기 커밋  
-2) IN-list 문자열 조립(동적 SQL 폭증) → **스키마 타입 배열 바인드**/GTT  
-3) `BULK COLLECT` 무제한 → PGA 폭증 → **LIMIT** 필수  
-4) 대량 DML에 row-by-row 트리거/복잡한 FK → **배치 크기 축소**·**로직 슬림화**  
+1) **Auto-commit ON**으로 배치 무력화 → **OFF**로 전환, 주기 커밋
+2) IN-list 문자열 조립(동적 SQL 폭증) → **스키마 타입 배열 바인드**/GTT
+3) `BULK COLLECT` 무제한 → PGA 폭증 → **LIMIT** 필수
+4) 대량 DML에 row-by-row 트리거/복잡한 FK → **배치 크기 축소**·**로직 슬림화**
 5) fetchSize만 키우고 **네트워크/ORM 변환** 병목 방치 → DTO/직렬화 최적화 병행
 
 ---
@@ -432,34 +432,34 @@ END;
 
 ## 11. 보안·무결성·락 관점 주의
 
-- 대량 DML은 **락 유지 시간**이 길어질 수 있음 → **배치 크기 조절**  
-- FK/Unique 제약 위반은 **SAVE EXCEPTIONS**로 분기 처리  
+- 대량 DML은 **락 유지 시간**이 길어질 수 있음 → **배치 크기 조절**
+- FK/Unique 제약 위반은 **SAVE EXCEPTIONS**로 분기 처리
 - 트리거·감사 로직이 **행당 실행**되면 Array 이득이 줄어듦 → 로직 슬림화/비동기화
 
 ---
 
 ## 12. 체크리스트 (운영 투입 전)
 
-- [ ] SELECT: **배열 페치 크기** 실측 튜닝(네트워크/메모리 밸런스)  
-- [ ] DML: **Batch/Array 크기**·**커밋 주기** 설정, `SAVE EXCEPTIONS` 적용  
-- [ ] 시퀀스 `CACHE` 확대, Auto-commit OFF  
-- [ ] IN-list는 **배열 바인드/GTT**, 동적 문자열 금지  
-- [ ] TKPROF/AWR로 **전/후 CALL 통계** 비교: Fetch/Execute **count↓**, elapsed↓  
+- [ ] SELECT: **배열 페치 크기** 실측 튜닝(네트워크/메모리 밸런스)
+- [ ] DML: **Batch/Array 크기**·**커밋 주기** 설정, `SAVE EXCEPTIONS` 적용
+- [ ] 시퀀스 `CACHE` 확대, Auto-commit OFF
+- [ ] IN-list는 **배열 바인드/GTT**, 동적 문자열 금지
+- [ ] TKPROF/AWR로 **전/후 CALL 통계** 비교: Fetch/Execute **count↓**, elapsed↓
 - [ ] 에러 수집/재처리 파이프라인 준비 (BatchUpdateException, SQL%BULK_EXCEPTIONS 등)
 
 ---
 
 ## 13. 결론
 
-Array Processing은 **“적게, 크게, 한 번에”**의 구현 기술이다.  
-- **적게**: 호출 수(user calls)를 줄이고,  
-- **크게**: 한 번에 다량의 행을 처리하며,  
+Array Processing은 **“적게, 크게, 한 번에”**의 구현 기술이다.
+- **적게**: 호출 수(user calls)를 줄이고,
+- **크게**: 한 번에 다량의 행을 처리하며,
 - **한 번에**: 커서 재사용·배치 커밋으로 서버/네트워크 모두 효율화한다.
 
-PL/SQL의 `BULK COLLECT/FORALL`, 드라이버의 **배열 페치/배열 바인드/배치 실행**을 표준으로 삼으면  
-**응답시간·처리량·DB 부하**가 동시에 좋아진다. 항상 **SQL Trace/TKPROF**로 수치 검증하며,  
+PL/SQL의 `BULK COLLECT/FORALL`, 드라이버의 **배열 페치/배열 바인드/배치 실행**을 표준으로 삼으면
+**응답시간·처리량·DB 부하**가 동시에 좋아진다. 항상 **SQL Trace/TKPROF**로 수치 검증하며,
 배열/배치 크기는 **실측**으로 최적화하라 — 그러면 “느린 시스템”은 눈에 띄게 빨라진다.
 
-> **한 줄 요약**  
-> **왕복을 줄이고(배열 페치/배치 DML), 실패는 예외 저장으로 분리, IN-list는 배열 바인드.**  
+> **한 줄 요약**
+> **왕복을 줄이고(배열 페치/배치 DML), 실패는 예외 저장으로 분리, IN-list는 배열 바인드.**
 > 이것이 Oracle에서 Array Processing을 제대로 쓰는 방법이다.

@@ -8,13 +8,13 @@ category: Docker
 
 ## 0. 빠른 개념 지도
 
-- **볼륨(Volumes)**: 컨테이너 수명과 분리된 **데이터 영속화/공유 레이어**  
-  - 종류: **Named Volume**, **Bind Mount**, (tmpfs 포함)  
+- **볼륨(Volumes)**: 컨테이너 수명과 분리된 **데이터 영속화/공유 레이어**
+  - 종류: **Named Volume**, **Bind Mount**, (tmpfs 포함)
   - 목적: DB/업로드/캐시 보존, 코드 핫리로드(개발), 로그 수집 등
 
-- **네트워크(Networks)**: 컨테이너 간 통신을 제어하는 **가상 L2/L3**  
-  - 기본: `bridge` (단일 호스트)  
-  - 고급: `overlay`(다중 호스트), `macvlan`(실 IP 부여), `host`, `none`  
+- **네트워크(Networks)**: 컨테이너 간 통신을 제어하는 **가상 L2/L3**
+  - 기본: `bridge` (단일 호스트)
+  - 고급: `overlay`(다중 호스트), `macvlan`(실 IP 부여), `host`, `none`
   - Compose가 **내부 DNS**를 제공 → 같은 네트워크 내 **서비스명으로 통신**
 
 ---
@@ -96,9 +96,9 @@ services:
 | macOS | `./data:/app/data` | Docker Desktop 파일 I/O 성능 고려, `delegated` 권장(케이스별) |
 | Windows | `C:\path\to\data:/app/data` 또는 `./data:/app/data` | 줄바꿈(CRLF)·권한 이슈 유의 |
 
-**SELinux**:  
-- `:z` → 여러 컨테이너가 공유 가능한 레이블  
-- `:Z` → 단일 컨테이너 전용 레이블  
+**SELinux**:
+- `:z` → 여러 컨테이너가 공유 가능한 레이블
+- `:Z` → 단일 컨테이너 전용 레이블
 예) `- ./data:/var/lib/mysql:Z`
 
 ---
@@ -165,7 +165,7 @@ services:
           size: 268435456   # 256MiB
 ```
 
-- 민감 정보/고성능 임시 캐시 용도에 유용  
+- 민감 정보/고성능 임시 캐시 용도에 유용
 - **컨테이너 종료 시 내용 소멸**
 
 ---
@@ -182,16 +182,16 @@ volumes:
       device: ":/exports/share"
 ```
 
-- NFS/GlusterFS/ceph 등과 연계 가능  
+- NFS/GlusterFS/ceph 등과 연계 가능
 - Docker Desktop/호스트 네트워크/방화벽 설정과 함께 테스트 필수
 
 ---
 
 ### 1.10 운영 팁
 
-- **이름 있는 볼륨**을 선호(백업/이식성)  
-- 개발/운영 **오버라이드**: `docker-compose.override.yml`에서 bind mount만 추가  
-- **권한/소유자** 문제는 컨테이너의 `UID/GID`와 볼륨 파일의 소유권 매칭으로 해소  
+- **이름 있는 볼륨**을 선호(백업/이식성)
+- 개발/운영 **오버라이드**: `docker-compose.override.yml`에서 bind mount만 추가
+- **권한/소유자** 문제는 컨테이너의 `UID/GID`와 볼륨 파일의 소유권 매칭으로 해소
 - 불필요 볼륨 정리: `docker volume prune` (신중히)
 
 ---
@@ -304,15 +304,15 @@ services:
     network_mode: host   # 호스트 네트워크(포트매핑 무시, 성능 우선)
 ```
 
-- `host`: NAT/포워딩 오버헤드 없음(리눅스 한정)  
-- `service:<name>`/`container:<id>`: 동일 네트 스택 공유(디버깅/사이드카 패턴)  
+- `host`: NAT/포워딩 오버헤드 없음(리눅스 한정)
+- `service:<name>`/`container:<id>`: 동일 네트 스택 공유(디버깅/사이드카 패턴)
 - `none`: 네트워크 격리 최대화
 
 ---
 
 ### 2.6 Overlay/macvlan 요약(Compose 관점)
 
-- `overlay`: 다중 호스트 간 네트워크(Swarm/Orchestrator), Compose 단독으로는 **제약**  
+- `overlay`: 다중 호스트 간 네트워크(Swarm/Orchestrator), Compose 단독으로는 **제약**
 - `macvlan`: 컨테이너에 **실 IP** 부여(스위치/라우터에서 호스트처럼 보임). 호스트↔컨테이너 통신 제약/보안정책 고려.
 
 ---
@@ -407,11 +407,11 @@ services:
 
 ## 5. 보안·운영 체크리스트
 
-- **불필요한 포트 노출 금지**: DB 컨테이너의 `ports:` 제거(내부 네트워크만)  
-- **비밀값 관리**: `.env` 최소화, CI/CD 비밀관리(Secrets Manager/Vault/Parameter Store)  
-- **권한/사용자**: 컨테이너를 **비루트 사용자**로 실행 (`USER`), 볼륨 소유권 정합 유지  
-- **네트워크 분리**: 프런트/백엔드/DB 네트워크 분리로 blast radius 축소  
-- **로그 회전/수집**: json-file 옵션(`max-size`, `max-file`) 또는 로깅 드라이버  
+- **불필요한 포트 노출 금지**: DB 컨테이너의 `ports:` 제거(내부 네트워크만)
+- **비밀값 관리**: `.env` 최소화, CI/CD 비밀관리(Secrets Manager/Vault/Parameter Store)
+- **권한/사용자**: 컨테이너를 **비루트 사용자**로 실행 (`USER`), 볼륨 소유권 정합 유지
+- **네트워크 분리**: 프런트/백엔드/DB 네트워크 분리로 blast radius 축소
+- **로그 회전/수집**: json-file 옵션(`max-size`, `max-file`) 또는 로깅 드라이버
 - **백업/복구**: Named Volume 백업 파이프라인 + 주기적 리스토어 리허설
 
 로그 예시:
@@ -567,6 +567,6 @@ volumes:
 
 ## 10. 마무리
 
-- **Compose는 선언형**입니다. 재현 가능·문서화 가능한 방식으로 **볼륨/네트워크**를 정의하세요.  
-- **개발/운영 분리**(Bind Mount ↔ Named Volume, 포트/로그/비밀)로 수명주기 전환을 쉽게.  
+- **Compose는 선언형**입니다. 재현 가능·문서화 가능한 방식으로 **볼륨/네트워크**를 정의하세요.
+- **개발/운영 분리**(Bind Mount ↔ Named Volume, 포트/로그/비밀)로 수명주기 전환을 쉽게.
 - **네트워크 분리**와 **권한 최소화**로 기본 보안을 잡으면, 이후 확장은 훨씬 수월합니다.

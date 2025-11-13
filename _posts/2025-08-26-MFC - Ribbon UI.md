@@ -6,26 +6,26 @@ category: MFC
 ---
 # Ribbon UI / 현대 UI 요소: 리본, 갤러리, 퀵액세스, 다크 모드 접근법 (MFC Feature Pack 실전 총정리 · 예제 대량)
 
-이 글은 **MFC Feature Pack**(리본·갤러리·QAT·백스테이지 등)을 **프로젝트에 처음 붙이는 단계부터**  
-**핵심 위젯 구축·명령 라우팅·커스터마이징·영구 저장·DPI/다크 모드 대응**까지 **생략 없이** 정리합니다.  
+이 글은 **MFC Feature Pack**(리본·갤러리·QAT·백스테이지 등)을 **프로젝트에 처음 붙이는 단계부터**
+**핵심 위젯 구축·명령 라우팅·커스터마이징·영구 저장·DPI/다크 모드 대응**까지 **생략 없이** 정리합니다.
 코드는 **복붙**이 가능하도록 독립 스니펫 위주로 제공합니다.
 
-> 적용 대상  
-> - Visual Studio의 **MFC Feature Pack** 기반 프로젝트(SDI/MDI/대화상자 + 프레임)  
+> 적용 대상
+> - Visual Studio의 **MFC Feature Pack** 기반 프로젝트(SDI/MDI/대화상자 + 프레임)
 > - `CMFCRibbonBar`, `CMFCRibbonCategory`, `CMFCRibbonPanel`, `CMFCRibbonButton`, `CMFCRibbonGallery` 등 사용
 
 ---
 
 ## 0. 로드맵: 무엇을 구현할 건가?
 
-1. **리본 바** 골격 만들기 (앱 버튼/탭/패널/버튼/스플릿/체크/콤보)  
-2. **갤러리**(아이콘/색/스타일 미리보기) + **라이브 프리뷰** 패턴  
-3. **Quick Access Toolbar(QAT)** 기본/사용자 커스터마이징/영구 저장  
-4. **백스테이지/애플리케이션 메뉴**(파일·최근 문서·옵션)  
-5. **키팁/액세스키/키보드 커스터마이징**  
-6. **아이콘/HiDPI**(32비트 PNG, 스케일)  
-7. **다크 모드/테마**(비주얼 매니저, 시스템/앱 전환)  
-8. **상태 저장/복원**(레지스트리)  
+1. **리본 바** 골격 만들기 (앱 버튼/탭/패널/버튼/스플릿/체크/콤보)
+2. **갤러리**(아이콘/색/스타일 미리보기) + **라이브 프리뷰** 패턴
+3. **Quick Access Toolbar(QAT)** 기본/사용자 커스터마이징/영구 저장
+4. **백스테이지/애플리케이션 메뉴**(파일·최근 문서·옵션)
+5. **키팁/액세스키/키보드 커스터마이징**
+6. **아이콘/HiDPI**(32비트 PNG, 스케일)
+7. **다크 모드/테마**(비주얼 매니저, 시스템/앱 전환)
+8. **상태 저장/복원**(레지스트리)
 9. **성능/UX/접근성** 체크리스트
 
 ---
@@ -200,9 +200,9 @@ pPanelTheme->Add(pGallery);
 
 ### 2-3. 라이브 프리뷰(마우스 hover 시 임시 적용)
 
-- **핵심**: 갤러리가 **Hover** 이벤트를 보낼 때 현재 선택 후보 스타일을 **미리 적용**, 마우스가 떠나면 **되돌리기**.  
-- 구현 포인트:  
-  - `ON_REGISTERED_MESSAGE(AFX_WM_ON_HIGHLIGHT_RIBBON_LIST_ITEM, OnHighlightRibbonItem)`  
+- **핵심**: 갤러리가 **Hover** 이벤트를 보낼 때 현재 선택 후보 스타일을 **미리 적용**, 마우스가 떠나면 **되돌리기**.
+- 구현 포인트:
+  - `ON_REGISTERED_MESSAGE(AFX_WM_ON_HIGHLIGHT_RIBBON_LIST_ITEM, OnHighlightRibbonItem)`
   - `lParam`으로 **리스트 컨트롤 포인터**, `wParam`에 **인덱스** 전달 (MFC 내부 패턴)
 
 ```cpp
@@ -323,8 +323,8 @@ pMainPanel->AddRecentFilesList(L"최근 문서"); // MRU 자동 연결
 
 ### 4-2. Backstage 스타일
 
-MFC 버전에 따라 **Backstage** API 지원이 다릅니다.  
-공통적인 방법은 **앱 버튼**에 **메인 패널**을 구성하고, “옵션/정보/계정” 등 **자체 대화상자/뷰**를 **호출**하는 형태로 유사 UX를 구현합니다.  
+MFC 버전에 따라 **Backstage** API 지원이 다릅니다.
+공통적인 방법은 **앱 버튼**에 **메인 패널**을 구성하고, “옵션/정보/계정” 등 **자체 대화상자/뷰**를 **호출**하는 형태로 유사 UX를 구현합니다.
 (최신 MFC에서 `CMFCRibbonBackstage*` 클래스가 있다면 해당 패턴을 사용하세요. 없다면 메인 패널 + 커스텀 시트를 권장)
 
 ---
@@ -438,7 +438,7 @@ imgs.SetScaleRatio(afxGlobalData.GetRibbonImageScale());
 imgs.Load(IDB_MY_ICONS_32, TRUE);
 ```
 
-> 복수 크기(16/24/32/48) 리소스를 상황에 맞춰 **선택**하거나, **SVG**를 벡터로 그려 넣는 커스텀도 고려.  
+> 복수 크기(16/24/32/48) 리소스를 상황에 맞춰 **선택**하거나, **SVG**를 벡터로 그려 넣는 커스텀도 고려.
 > (MFC 기본은 PNG 비트맵 기반이 표준적입니다)
 
 ---
@@ -462,10 +462,10 @@ CMFCVisualManager::GetInstance()->OnUpdateSystemColors();
 AfxGetMainWnd()->RedrawWindow(nullptr, nullptr, RDW_INVALIDATE|RDW_ALLCHILDREN);
 ```
 
-> **주의**: 실제 “완전한” 시스템 다크 모드 동기화를 하려면  
-> - OS 설정(Windows 10/11) **AppsUseLightTheme** 값 모니터링  
-> - `WM_SETTINGCHANGE` 처리  
-> - 리본/상태바/문서 배경/컨텐츠(문서·캔버스) **직접 색**을 다크 팔레트로 스위치  
+> **주의**: 실제 “완전한” 시스템 다크 모드 동기화를 하려면
+> - OS 설정(Windows 10/11) **AppsUseLightTheme** 값 모니터링
+> - `WM_SETTINGCHANGE` 처리
+> - 리본/상태바/문서 배경/컨텐츠(문서·캔버스) **직접 색**을 다크 팔레트로 스위치
 > 가 필요합니다.
 
 ### 8-2. 시스템 다크 모드 감지/토글(간단 패턴)
@@ -524,7 +524,7 @@ static AppPalette g_Pal = g_PalLight;
 void UpdateDarkPalette(bool dark) { g_Pal = dark ? g_PalDark : g_PalLight; }
 ```
 
-- **문서/뷰**의 배경/텍스트/그리드/하이라이트 색은 이 팔레트로 일원화합니다.  
+- **문서/뷰**의 배경/텍스트/그리드/하이라이트 색은 이 팔레트로 일원화합니다.
 - 리본 자체는 비주얼 매니저가 담당하지만, **갤러리/커스텀 드로우 요소**는 팔레트로 직접 채색.
 
 ---
@@ -533,9 +533,9 @@ void UpdateDarkPalette(bool dark) { g_Pal = dark ? g_PalDark : g_PalLight; }
 
 `CWinAppEx`는 다음 상태를 자동 저장/복원합니다.
 
-- **리본 커스터마이즈(QAT/탭/명령)**  
-- **키보드/가속기 매핑**  
-- **최근 파일(MRU)**  
+- **리본 커스터마이즈(QAT/탭/명령)**
+- **키보드/가속기 매핑**
+- **최근 파일(MRU)**
 - **도킹/창 레이아웃**(CFrameWndEx 기반)
 
 ```cpp
@@ -551,20 +551,20 @@ void CMyApp::LoadCustomState()
 }
 ```
 
-> 커스텀 상태(예: 테마 번호/문서 뷰 옵션)는 **별도 레지스트리/JSON**에 저장.  
+> 커스텀 상태(예: 테마 번호/문서 뷰 옵션)는 **별도 레지스트리/JSON**에 저장.
 > (문서 저장과 동일하게 **원자적 저장(임시 파일 → 교체)** 권장)
 
 ---
 
 ## 10. 성능/UX/접근성 체크리스트
 
-1. **명령 응답 속도**: 리본 버튼 클릭 → 핸들러 O(1), 무거운 작업은 백그라운드 + 진행 표시  
-2. **툴팁/키팁**: 툴팁 텍스트/키보드 키팁(Alt 키) 확인, 현지화  
-3. **키보드 사용자**: 탭 전환/포커스 이동/검색 에딧/갤러리 화살표 탐색  
-4. **HiDPI**: 125/150/200%에서 아이콘 선명(32bpp PNG) 여부  
-5. **다크 모드**: 시스템 전환, 사용자 토글, 팔레트 적용 영역 누락 없는지  
-6. **저장/복원**: QAT/커스터마이즈가 재실행 시 그대로 복원?  
-7. **접근성**: UIA/스크린리더 기본 역할 유지(리본은 기본 지원. 커스텀 드로우 영역은 대체 텍스트 고려)  
+1. **명령 응답 속도**: 리본 버튼 클릭 → 핸들러 O(1), 무거운 작업은 백그라운드 + 진행 표시
+2. **툴팁/키팁**: 툴팁 텍스트/키보드 키팁(Alt 키) 확인, 현지화
+3. **키보드 사용자**: 탭 전환/포커스 이동/검색 에딧/갤러리 화살표 탐색
+4. **HiDPI**: 125/150/200%에서 아이콘 선명(32bpp PNG) 여부
+5. **다크 모드**: 시스템 전환, 사용자 토글, 팔레트 적용 영역 누락 없는지
+6. **저장/복원**: QAT/커스터마이즈가 재실행 시 그대로 복원?
+7. **접근성**: UIA/스크린리더 기본 역할 유지(리본은 기본 지원. 커스텀 드로우 영역은 대체 텍스트 고려)
 8. **국제화**: 긴 문자열/좁은 패널 제목 말줄임/팝업 너비 재조정
 
 ---
@@ -673,20 +673,20 @@ void CMainFrame::OnToggleDark() {
 
 ## 13. 확장 아이디어
 
-- **명령 팔레트(Ctrl+P)**: 커맨드 검색 UI → `CMFCRibbonButton` 목록에서 텍스트 매칭  
-- **Ribbon-Document 인사이트**: 문서 상태에 따라 패널 Enabled/Disabled 동적 제어  
-- **라이브 프리뷰 취소/적용 패턴**: Hover→Preview, MouseLeave→Cancel, Click→Apply  
-- **사용자 스킨**: `CMFCVisualManager` 파생으로 색/윤곽/선/그라디언트 일괄 커스터마이즈  
+- **명령 팔레트(Ctrl+P)**: 커맨드 검색 UI → `CMFCRibbonButton` 목록에서 텍스트 매칭
+- **Ribbon-Document 인사이트**: 문서 상태에 따라 패널 Enabled/Disabled 동적 제어
+- **라이브 프리뷰 취소/적용 패턴**: Hover→Preview, MouseLeave→Cancel, Click→Apply
+- **사용자 스킨**: `CMFCVisualManager` 파생으로 색/윤곽/선/그라디언트 일괄 커스터마이즈
 - **SVG 아이콘 파이프라인**: 빌드시 PNG로 래스터라이즈(여러 크기) → 리소스 포함
 
 ---
 
 ## 14. 요약
 
-- **리본**: `CMFCRibbonBar` → **카테고리/패널/버튼/갤러리**를 계층적으로 구성  
-- **갤러리**: 이미지 스트립 + `AFX_WM_ON_HIGHLIGHT_RIBBON_LIST_ITEM`으로 **라이브 프리뷰**  
-- **QAT**: 기본 항목 + 사용자 커스터마이징 + `CWinAppEx` 상태 저장으로 **영구화**  
-- **다크 모드**: **Visual Manager** + **사용자 팔레트**로 **전역/컨텐츠** 모두 전환  
+- **리본**: `CMFCRibbonBar` → **카테고리/패널/버튼/갤러리**를 계층적으로 구성
+- **갤러리**: 이미지 스트립 + `AFX_WM_ON_HIGHLIGHT_RIBBON_LIST_ITEM`으로 **라이브 프리뷰**
+- **QAT**: 기본 항목 + 사용자 커스터마이징 + `CWinAppEx` 상태 저장으로 **영구화**
+- **다크 모드**: **Visual Manager** + **사용자 팔레트**로 **전역/컨텐츠** 모두 전환
 - **HiDPI**: 32bpp PNG/여러 크기/스케일 API로 선명도 유지
 
 필요하시면 위 코드를 **프로젝트 스캐폴딩**으로 묶은 “리본 스타터” 템플릿(갤러리/프리뷰/다크 토글 포함)을 만들어 드릴게요. 🙂
@@ -695,10 +695,10 @@ void CMainFrame::OnToggleDark() {
 
 ## 부록 A) 리소스 제안
 
-- `IDB_APPBTN_32`: 32×32 PNG  
-- `IDB_HOME_16`, `IDB_HOME_32`: 16/32 아이콘 스트립  
-- `IDB_VIEW_16`, `IDB_VIEW_32`  
-- `IDB_GALLERY_16`, `IDB_GALLERY_32` (가로 스트립)  
+- `IDB_APPBTN_32`: 32×32 PNG
+- `IDB_HOME_16`, `IDB_HOME_32`: 16/32 아이콘 스트립
+- `IDB_VIEW_16`, `IDB_VIEW_32`
+- `IDB_GALLERY_16`, `IDB_GALLERY_32` (가로 스트립)
 - 각 스트립은 동일 크기 타일로 구성(배경 투명)
 
 ## 부록 B) 커맨드 ID 예시

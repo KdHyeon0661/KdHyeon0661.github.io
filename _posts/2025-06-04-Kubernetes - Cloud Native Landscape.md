@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Cloud Native Landscape 이해하기
 
-클라우드 네이티브는 **컨테이너 + 선언형 구성 + 자동화 + 관측성 + 회복력**으로 대표되는 운영 패러다임입니다.  
+클라우드 네이티브는 **컨테이너 + 선언형 구성 + 자동화 + 관측성 + 회복력**으로 대표되는 운영 패러다임입니다.
 CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**로 체계화했고, 우리는 이 지도를 통해 **문제→영역→도구**를 신속히 대응할 수 있습니다.
 
 ---
@@ -22,8 +22,8 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 - **관측성**: 메트릭/로그/트레이스로 가시성 확보
 - **보안 내재화**: 시프트레프트(코드·이미지·런타임 전 과정)
 
-> **가용성 추정(연간 가용성)**  
-> 서비스 서브시스템 가용성 \(A_i\)가 독립이라고 가정하면 전체 가용성 \(A\)는  
+> **가용성 추정(연간 가용성)**
+> 서비스 서브시스템 가용성 \(A_i\)가 독립이라고 가정하면 전체 가용성 \(A\)는
 > $$ A = \prod_{i=1}^{n} A_i $$
 > 예) 3구성 요소가 각각 99.95%라면 전체 가용성은 \(0.9995^3 \approx 99.85\%\). 병목을 찾고 상위 SLO를 역산하는 데 유용합니다.
 
@@ -69,7 +69,7 @@ module "eks" {
   }
 }
 ```
-- **원칙**: 모든 인프라(클러스터/노드/보안그룹/Route53)를 코드화.  
+- **원칙**: 모든 인프라(클러스터/노드/보안그룹/Route53)를 코드화.
 - **Pulumi**(TS/Python/Go)도 동일 기능, 언어 친화적인 IaC 선호 시 고려.
 
 ### 3.2 Kubeadm/Kubespray
@@ -146,7 +146,7 @@ spec:
 - Ingress의 한계를 보완한 **표준화된 확장 모델**.
 
 ### 6.3 Service Mesh(실전 기본)
-- **Linkerd**(Graduated): 경량/단순 mTLS/헬스.  
+- **Linkerd**(Graduated): 경량/단순 mTLS/헬스.
 - **Istio**: 트래픽 관리/정책/멀티클러스터까지 포괄.
 
 **Istio AuthorizationPolicy 예시**
@@ -183,7 +183,7 @@ volumeBindingMode: WaitForFirstConsumer
 - **WaitForFirstConsumer**: Pod 스케줄 후 **Zone 일치**로 올바른 볼륨 프로비저닝.
 
 ### 7.2 분산 스토리지: Rook/Ceph, Longhorn
-- **Ceph**: 대규모/다양한 프로토콜.  
+- **Ceph**: 대규모/다양한 프로토콜.
 - **Longhorn**: 경량·K8s 네이티브, 온프렘/엣지 친화.
 
 ### 7.3 백업/DR: Velero
@@ -506,9 +506,9 @@ spec:
 
 ## 결론
 
-- **Cloud Native**는 도구 나열이 아니라 **운영 철학**입니다.  
-- CNCF Landscape의 각 퍼즐(네트워킹/스토리지/관측/보안/배포)을 **문제 지향**으로 조립하세요.  
-- 본문 예제(Helm/Kustomize/ArgoCD/OPA/PromQL/Velocity)로 **즉시 적용 가능한 기준선**을 잡고,  
+- **Cloud Native**는 도구 나열이 아니라 **운영 철학**입니다.
+- CNCF Landscape의 각 퍼즐(네트워킹/스토리지/관측/보안/배포)을 **문제 지향**으로 조립하세요.
+- 본문 예제(Helm/Kustomize/ArgoCD/OPA/PromQL/Velocity)로 **즉시 적용 가능한 기준선**을 잡고,
   조직 상황(규모/규제/비용/경험)에 맞춰 **단계적 심화**(Mesh/OTel/Policy/DR)를 진행하면 됩니다.
 
 ---

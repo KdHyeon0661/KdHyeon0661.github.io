@@ -8,7 +8,7 @@ category: Avalonia
 
 ## 0. 왜 Dispatcher인가?
 
-Avalonia의 모든 `Visual` 은 **UI 스레드 소유**입니다. 다른 스레드에서 접근하면 예외/경합/크래시가 납니다.  
+Avalonia의 모든 `Visual` 은 **UI 스레드 소유**입니다. 다른 스레드에서 접근하면 예외/경합/크래시가 납니다.
 따라서 **백그라운드**에서 무거운 일을 처리하고, **UI 갱신만 UI 스레드**로 안전하게 큐잉해야 합니다.
 
 | 시나리오 | 문제 | 권장 해결책 |
@@ -66,7 +66,7 @@ public async Task LoadAsync(CancellationToken ct)
 }
 ```
 
-> 팁: `ConfigureAwait(false)`는 라이브러리/서비스 계층에선 유용하지만 **ViewModel → UI 경로**에서는  
+> 팁: `ConfigureAwait(false)`는 라이브러리/서비스 계층에선 유용하지만 **ViewModel → UI 경로**에서는
 > UI 스레드 복귀가 필요하므로, 복귀 직전 `Dispatcher`를 써서 의도를 명확히 합니다.
 
 ---
@@ -199,7 +199,7 @@ public async Task StartAsync()
 }
 ```
 
-> `IProgress<T>`는 UI 스레드 마샬링을 보장하지 않습니다.  
+> `IProgress<T>`는 UI 스레드 마샬링을 보장하지 않습니다.
 > Progress 생성 위치가 UI 컨텍스트라면 UI로 보내주지만, 안전하게 하려면 `Dispatcher.InvokeAsync` 랩핑을 고려하세요.
 
 ---
@@ -302,14 +302,14 @@ public MyVm()
 
 ## 11. 수학적 관점(프레임 예산)
 
-UI가 **초당 \( f \) FPS**로 부드럽게 보이려면,  
+UI가 **초당 \( f \) FPS**로 부드럽게 보이려면,
 프레임당 처리 시간 예산은:
 
 $$
 \text{budget\_ms} = \frac{1000}{f}
 $$
 
-예를 들어 \( f = 60 \)FPS이면, 렌더 + 입력 + 레이아웃 + 바인딩 + 사용자 코드 **합**이 **16.67ms** 이하여야 합니다.  
+예를 들어 \( f = 60 \)FPS이면, 렌더 + 입력 + 레이아웃 + 바인딩 + 사용자 코드 **합**이 **16.67ms** 이하여야 합니다.
 무거운 계산을 UI 스레드에 올리면 이 예산을 쉽게 초과합니다. → **백그라운드로 이동**하고 **UI 갱신 최소화**가 필수입니다.
 
 ---
@@ -327,7 +327,7 @@ $$
 
 ## 13. 테스트 전략
 
-- **Dispatcher 있는 코드**는 가능한 한 **ViewModel에선 최소화**.  
+- **Dispatcher 있는 코드**는 가능한 한 **ViewModel에선 최소화**.
   UI 접근은 메소드 경계에서만 → **단위 테스트** 시 대부분 로직은 순수 비동기로 검증 가능.
 - 스트림·타이머·채널은 **가짜 타이머/페이크 생산자**로 재현.
 - 프로그레스/취소 플로우는 **시간 고정**과 **토큰 주입**으로 재현.
@@ -440,11 +440,11 @@ public sealed class SearchViewModel : ReactiveObject
 
 ## 16. 요약·결론
 
-- **원칙**: **연산은 백그라운드**, **UI 갱신만 Dispatcher**  
-- **Reactive 패턴**: `Throttle/Distinct/Switch/ObserveOn(MainThread)`로 깔끔한 흐름  
-- **대량 UI**: 스냅샷/배치/가상화로 렌더 폭탄 방지  
-- **타이머**: `DispatcherTimer`(UI), `PeriodicTimer`(BG) 역할 구분  
-- **프로그레스/취소**: 사용자 피드백과 반응성 유지  
+- **원칙**: **연산은 백그라운드**, **UI 갱신만 Dispatcher**
+- **Reactive 패턴**: `Throttle/Distinct/Switch/ObserveOn(MainThread)`로 깔끔한 흐름
+- **대량 UI**: 스냅샷/배치/가상화로 렌더 폭탄 방지
+- **타이머**: `DispatcherTimer`(UI), `PeriodicTimer`(BG) 역할 구분
+- **프로그레스/취소**: 사용자 피드백과 반응성 유지
 - **테스트성**: 인터페이스/채널/가짜 타이머로 단위 테스트 수월
 
 이 패턴만 지키면, **끊김 없는 UI**와 **안정적인 동시성**을 동시에 얻을 수 있습니다.

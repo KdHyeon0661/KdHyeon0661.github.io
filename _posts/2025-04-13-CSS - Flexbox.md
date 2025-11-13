@@ -110,7 +110,7 @@ category: CSS
 .flex-b200 { flex: 0 1 200px; }
 ```
 
-> **주의**: `flex-basis`가 `auto`일 땐 **content size 또는 `width/height`**가 초기 크기에 관여.  
+> **주의**: `flex-basis`가 `auto`일 땐 **content size 또는 `width/height`**가 초기 크기에 관여.
 > `flex-basis: 0`은 “기본 폭을 0으로 보고 **남는 공간만** 비율로 분배”하겠다는 뜻.
 
 ---
@@ -161,11 +161,11 @@ category: CSS
 
 ## 5. 수학으로 보는 공간 분배(직관)
 
-여유 공간이 \(F\), 각 아이템의 `flex-grow`가 \(g_i\)일 때  
+여유 공간이 \(F\), 각 아이템의 `flex-grow`가 \(g_i\)일 때
 **증가분** \(\Delta w_i\)는
 
 $$
-\Delta w_i = 
+\Delta w_i =
 \begin{cases}
 \frac{g_i}{\sum_j g_j}\cdot F & \text{(공간이 남을 때)} \\
 0 & \text{(공간이 없을 때)}
@@ -292,14 +292,14 @@ $$
 .item-b { order: 1; }
 ```
 
-- **폼/네비게이션** 등 포커스 순서가 중요한 영역에서 무분별한 `order` 사용은 지양.  
+- **폼/네비게이션** 등 포커스 순서가 중요한 영역에서 무분별한 `order` 사용은 지양.
   시맨틱/DOM 순서와 시각 순서를 **가능한 일치**시키는 것이 접근성에 유리.
 
 ---
 
 ## 10. 스크롤·넘침과의 상호작용
 
-- Flex 아이템이 넘칠 때: `min-width: 0`(수평) or `min-height: 0`(수직) 지정 필요할 때가 많음.  
+- Flex 아이템이 넘칠 때: `min-width: 0`(수평) or `min-height: 0`(수직) 지정 필요할 때가 많음.
   일부 브라우저는 기본 min-size가 auto여서 **스크롤이 안 생기는** 오해를 유발.
 
 ```css
@@ -317,13 +317,13 @@ $$
 
 ## 11. 디버깅 체크리스트
 
-1. **축 방향 확인**: `flex-direction`이 의도와 일치하는가?  
-2. **여유/부족 공간**: `flex-grow`/`flex-shrink` 기본값(1) 때문에 의도치 않게 늘/줄고 있지 않은가?  
-3. **기본 크기 출처**: `flex-basis:auto` → content/width/height가 영향.  
-4. **줄바꿈**: `flex-wrap`이 필요한가? 여러 줄 정렬은 `align-content`.  
-5. **간격**: 마진 대신 `gap` 사용으로 예외/첫마진 문제 제거.  
-6. **접근성**: `order`로 포커스 순서 꼬이지 않는가?  
-7. **넘침**: `min-width:0`/`min-height:0`으로 스크롤 정상 동작?  
+1. **축 방향 확인**: `flex-direction`이 의도와 일치하는가?
+2. **여유/부족 공간**: `flex-grow`/`flex-shrink` 기본값(1) 때문에 의도치 않게 늘/줄고 있지 않은가?
+3. **기본 크기 출처**: `flex-basis:auto` → content/width/height가 영향.
+4. **줄바꿈**: `flex-wrap`이 필요한가? 여러 줄 정렬은 `align-content`.
+5. **간격**: 마진 대신 `gap` 사용으로 예외/첫마진 문제 제거.
+6. **접근성**: `order`로 포커스 순서 꼬이지 않는가?
+7. **넘침**: `min-width:0`/`min-height:0`으로 스크롤 정상 동작?
 8. **기본 정렬**: `align-items: stretch`가 원치 않는 높이 확장을 만들고 있지 않은가?
 
 ---
@@ -464,9 +464,9 @@ button.ghost { background:#fff; color:#0ea5e9; }
 ## 14. 성능·유지보수·팀 규칙 제안
 
 - **간격은 `gap`** 우선 → 마진 규칙을 최소화(일관성↑, 예외↓).
-- **유틸리티 클래스화**: `.flex`, `.items-center`, `.justify-between`, `.flex-1`, `.flex-none` 등.  
+- **유틸리티 클래스화**: `.flex`, `.items-center`, `.justify-between`, `.flex-1`, `.flex-none` 등.
 - **레이아웃 의도 명시**: 고정폭은 `flex:0 0 Xpx`로 표현(폭 고정과 확장 불가를 동시에 명시).
-- **접근성**: `order` 남용 금지, 시각/DOM 순서 일치 유지.  
+- **접근성**: `order` 남용 금지, 시각/DOM 순서 일치 유지.
 - **디버그 테두리**: 레이아웃 깨질 때 `outline:1px solid`로 박스 시각화.
 
 ---
@@ -484,6 +484,6 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ## 16. 마무리
 
-- Flexbox는 **1차원 정렬·간격·크기 분배**의 최강 도구입니다.  
-- `flex-basis` vs `width`, `gap` vs margin, `grow/shrink` 기본값 등 **작은 디테일**이 결과를 좌우합니다.  
+- Flexbox는 **1차원 정렬·간격·크기 분배**의 최강 도구입니다.
+- `flex-basis` vs `width`, `gap` vs margin, `grow/shrink` 기본값 등 **작은 디테일**이 결과를 좌우합니다.
 - 본 가이드의 **패턴 레시피**를 팀 공통 유틸로 정리하면 **개발 속도와 일관성**이 크게 향상됩니다.

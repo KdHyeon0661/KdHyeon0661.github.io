@@ -29,9 +29,9 @@ category: Java
                      +---------------------------+
 ```
 
-- **Java Heap**: GC 대상(Young/Old 또는 Regions).  
-- **Metaspace**: 클래스 메타데이터(힙 외).  
-- **Direct/Native Memory**: NIO DirectBuffer, JNI 등(힙 외).  
+- **Java Heap**: GC 대상(Young/Old 또는 Regions).
+- **Metaspace**: 클래스 메타데이터(힙 외).
+- **Direct/Native Memory**: NIO DirectBuffer, JNI 등(힙 외).
 - **Code Cache**: JIT 컴파일 코드.
 
 ### 2.2 GC Roots
@@ -39,8 +39,8 @@ category: Java
 - **Reachability(도달성)**: GC Root에서 **추적 가능한 객체만** “살아있다”고 정의.
 
 ### 2.3 Mark–Sweep–Compact와 트라이컬러 모델
-- **Mark**: 도달 객체에 “검은색(visited)” 표시  
-- **Sweep**: 표시 안 된(흰색) 객체 회수  
+- **Mark**: 도달 객체에 “검은색(visited)” 표시
+- **Sweep**: 표시 안 된(흰색) 객체 회수
 - **Compact**: 조각난 메모리 **연속화** (단편화 완화)
 
 > G1/ZGC/Shenandoah 등 동시 수집기는 **tri-color invariant**(White/Gray/Black)와 **Barrier**(write 또는 load)로 동시성 중 일관성을 유지합니다.
@@ -49,8 +49,8 @@ category: Java
 
 ## 3. 할당 경로와 승격(Promotion)
 
-- **TLAB(Thread-Local Allocation Buffer)**: 대부분의 소객체는 **스레드 지역 버퍼**에서 초고속 할당(포인터 bump).  
-- **Young → Old 승격**: 서바이버(S0/S1)에서 **나이(tenuring age)**를 채우거나 Eden 압박 시 Old로 이동.  
+- **TLAB(Thread-Local Allocation Buffer)**: 대부분의 소객체는 **스레드 지역 버퍼**에서 초고속 할당(포인터 bump).
+- **Young → Old 승격**: 서바이버(S0/S1)에서 **나이(tenuring age)**를 채우거나 Eden 압박 시 Old로 이동.
 - **대형 객체(huge/humongous)**: 수집기별로 **특별 처리**(예: G1의 humongous region).
 
 ---
@@ -68,14 +68,14 @@ category: Java
 | **Epsilon** | **No-Op GC** | 마이크로벤치, 테스트 | 회수 없음 → OOM | `-XX:+UseEpsilonGC` |
 
 ### 4.1 G1 GC 한 장 요약
-- 힙을 **고정 크기 Region**으로 분할(1~32MB).  
-- **Young GC**(Eden→Survivor/Old 복사) + 주기적 **Mixed GC**(Old 일부 포함)로 힙 관리.  
-- **RSet(Remembered Set)** + **Card Table** + **SATB(Snapshot-At-The-Beginning) Write Barrier**로 동시/병렬 마킹.  
+- 힙을 **고정 크기 Region**으로 분할(1~32MB).
+- **Young GC**(Eden→Survivor/Old 복사) + 주기적 **Mixed GC**(Old 일부 포함)로 힙 관리.
+- **RSet(Remembered Set)** + **Card Table** + **SATB(Snapshot-At-The-Beginning) Write Barrier**로 동시/병렬 마킹.
 - 목표 지연시간: `-XX:MaxGCPauseMillis=200` (기본) 등으로 예측 가능한 pause.
 
 ### 4.2 ZGC / Shenandoah 초저지연 개요
-- **ZGC**: 컬러드 포인터/Load Barrier 기반 **동시 Relocation**. STW는 루트 스캔 짧게.  
-- **Shenandoah**: 로드 배리어나 브룩스 포인터로 **동시 Compaction** 구현.  
+- **ZGC**: 컬러드 포인터/Load Barrier 기반 **동시 Relocation**. STW는 루트 스캔 짧게.
+- **Shenandoah**: 로드 배리어나 브룩스 포인터로 **동시 Compaction** 구현.
 - 최신 JDK에서는 **Generational ZGC** 모드(세대 구분)도 제공 → Young 집중 회수로 효율↑.
 
 ---
@@ -83,14 +83,14 @@ category: Java
 ## 5. GC 트리거, 실패, 병목 패턴
 
 ### 5.1 일반 트리거
-- **Young 부족** → Minor/Young GC  
-- **Old 부족** → Mixed/Full GC  
+- **Young 부족** → Minor/Young GC
+- **Old 부족** → Mixed/Full GC
 - **System.gc()** → (명시 요청; 대부분 비권장)
 
 ### 5.2 실패/경고 지표
-- **Promotion Failure**: Young에서 Old로 승격할 공간 부족 → 긴 STW/FullGC 유발.  
-- **To-space Exhausted**: 복사 대상 공간 부족(복사형 수집기).  
-- **Humongous Allocation 실패(G1)**: 연속 Region 필요 → Mixed/Full로 이어질 수 있음.  
+- **Promotion Failure**: Young에서 Old로 승격할 공간 부족 → 긴 STW/FullGC 유발.
+- **To-space Exhausted**: 복사 대상 공간 부족(복사형 수집기).
+- **Humongous Allocation 실패(G1)**: 연속 Region 필요 → Mixed/Full로 이어질 수 있음.
 - **Concurrent Mode Failure(CMS/G1 일부 단계)**: 동시 단계 지연으로 STW 강제.
 
 ---
@@ -98,11 +98,11 @@ category: Java
 ## 6. 튜닝 기본기(Collector 공통)
 
 ### 6.1 힙 크기/비율
-- 고정 힙(프리터치 포함):  
+- 고정 힙(프리터치 포함):
   ```
   -Xms8g -Xmx8g -XX:+AlwaysPreTouch
   ```
-- Young/Old 비율(G1은 별도):  
+- Young/Old 비율(G1은 별도):
   ```
   -XX:NewRatio=2        # Old:Young ≈ 2:1
   -XX:SurvivorRatio=8   # Eden:Survivor ≈ 8:1
@@ -152,11 +152,11 @@ category: Java
 [3.457s][info][gc,phases] GC(12)   Pre Evacuate Collection Set: 0.1ms
 [3.462s][info][gc]       GC(12) Pause Young ... 6.2ms
 ```
-- **Eden 40→0**: 복사 완료, **Survivor 유지**, Old 증가(승격).  
+- **Eden 40→0**: 복사 완료, **Survivor 유지**, Old 증가(승격).
 - **Pause 6.2ms**: 지연시간 목표와 비교.
 
 ### 7.3 흔한 신호
-- **경고**: “to-space exhausted”, “humongous regions”, “promotion failed” → **Old/Reserve/Region/Young 비율** 재조정 필요.  
+- **경고**: “to-space exhausted”, “humongous regions”, “promotion failed” → **Old/Reserve/Region/Young 비율** 재조정 필요.
 - **STW 길어짐**: `MaxGCPauseMillis` 상향/하향, Region 크기, Mixed 비율, RSet 비용 점검.
 
 ---
@@ -183,7 +183,7 @@ public class GCPressure {
 }
 ```
 
-**실행 팁**  
+**실행 팁**
 ```
 java -Xms2g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 \
      -Xlog:gc*:file=gc.log:time,uptime GCPressure
@@ -252,10 +252,10 @@ public class PhantomDemo {
 
 ## 11. 메모리 누수·OOM의 흔한 원인과 대처
 
-- **캐시/맵에 쌓이는 객체(강한 참조)** → 만료/용량 정책·`Weak/SoftReference`/Caffeine 등 사용.  
-- **ThreadLocal 누수** → 스레드 풀 재사용 시 **반드시 remove()**.  
-- **ClassLoader 누수** → 핫 리로드/플러그인 시스템.  
-- **DirectBuffer/Native** → `-XX:MaxDirectMemorySize`·명시 해제·JFR/Native Memory Tracking.  
+- **캐시/맵에 쌓이는 객체(강한 참조)** → 만료/용량 정책·`Weak/SoftReference`/Caffeine 등 사용.
+- **ThreadLocal 누수** → 스레드 풀 재사용 시 **반드시 remove()**.
+- **ClassLoader 누수** → 핫 리로드/플러그인 시스템.
+- **DirectBuffer/Native** → `-XX:MaxDirectMemorySize`·명시 해제·JFR/Native Memory Tracking.
 - **Metaspace** → 클래스 언로딩 활성화(기본), 리플렉션/프록시 폭주 점검.
 
 ---
@@ -266,7 +266,7 @@ public class PhantomDemo {
 $$
 B_{\text{gc}} \le L_{\text{target}} - L_{\text{app\_nonGC}}
 $$
-- 예: p99=150ms, 애플리케이션 비GC 지연 p99=120ms → GC에 허용 가능한 예산은 **≤30ms**.  
+- 예: p99=150ms, 애플리케이션 비GC 지연 p99=120ms → GC에 허용 가능한 예산은 **≤30ms**.
 - 이때 **G1의 `MaxGCPauseMillis`를 20~30ms**로 맞추고, Region/Young 비율을 조정해 관측치가 들어오는지 **실측**으로 확증해야 합니다.
 
 ---
@@ -278,30 +278,30 @@ $$
 - Pause 민감하면 부적합.
 
 ### 13.2 G1 (균형형/기본)
-- `MaxGCPauseMillis`: 목표 지연.  
-- `G1NewSizePercent/G1MaxNewSizePercent`: Young 크기.  
-- `InitiatingHeapOccupancyPercent`: 동시 마킹 시작점.  
-- `G1ReservePercent`: 승격/복사 여유.  
+- `MaxGCPauseMillis`: 목표 지연.
+- `G1NewSizePercent/G1MaxNewSizePercent`: Young 크기.
+- `InitiatingHeapOccupancyPercent`: 동시 마킹 시작점.
+- `G1ReservePercent`: 승격/복사 여유.
 - 문자열 중복 제거: `-XX:+UseStringDeduplication`.
 
 ### 13.3 ZGC/Shenandoah (초저지연)
-- 힙 크게, OS/NUMA 고려.  
-- `SoftMaxHeapSize`(ZGC), `ShenandoahGCHeuristics` 등.  
+- 힙 크게, OS/NUMA 고려.
+- `SoftMaxHeapSize`(ZGC), `ShenandoahGCHeuristics` 등.
 - **JFR**로 실측 후 Young/Old(Generational 지원 시) 비중 점검.
 
 ---
 
 ## 14. 실전 체크리스트
 
-- [ ] **SLO 정의**: p95/p99 지연 목표, 스루풋 목표.  
-- [ ] **Collector 선택**: Latency ↔ Throughput 균형.  
-- [ ] **힙 고정/프리터치**: 컨테이너/NUMA 환경에 맞춤.  
-- [ ] **로그/프로파일링**: Unified `-Xlog:gc*`, JFR, JMX.  
-- [ ] **레이턴시 예산 맞추기**: `MaxGCPauseMillis`(G1)·ZGC baseline.  
-- [ ] **Promotion/To-space 실패 0화**: Reserve/Young 비율 조절.  
-- [ ] **레퍼런스/클리너 설계**: Finalizer 금지, 명시 해제 우선.  
-- [ ] **Direct/Native 추적**: NMT/JFR, `MaxDirectMemorySize`.  
-- [ ] **캐시 전략**: 만료/최대용량/히트율 측정.  
+- [ ] **SLO 정의**: p95/p99 지연 목표, 스루풋 목표.
+- [ ] **Collector 선택**: Latency ↔ Throughput 균형.
+- [ ] **힙 고정/프리터치**: 컨테이너/NUMA 환경에 맞춤.
+- [ ] **로그/프로파일링**: Unified `-Xlog:gc*`, JFR, JMX.
+- [ ] **레이턴시 예산 맞추기**: `MaxGCPauseMillis`(G1)·ZGC baseline.
+- [ ] **Promotion/To-space 실패 0화**: Reserve/Young 비율 조절.
+- [ ] **레퍼런스/클리너 설계**: Finalizer 금지, 명시 해제 우선.
+- [ ] **Direct/Native 추적**: NMT/JFR, `MaxDirectMemorySize`.
+- [ ] **캐시 전략**: 만료/최대용량/히트율 측정.
 - [ ] **릴리즈 전 부하테스트**: 데이터 실제 분포/생존률 재현.
 
 ---
@@ -341,27 +341,27 @@ $$
 
 ## 16. 자주 묻는 질문(FAQ)
 
-**Q. `System.gc()`를 호출해야 하나요?**  
+**Q. `System.gc()`를 호출해야 하나요?**
 A. 일반적으로 **아니오**. 테스트/디버그용 외 권장하지 않습니다. `-XX:+DisableExplicitGC` 고려.
 
-**Q. Full GC가 왜 터졌나요?**  
+**Q. Full GC가 왜 터졌나요?**
 A. Old 부족/Promotion 실패/Humongous 실패/동시 단계 지연 등. **로그로 원인 태그** 확인 → Young/Old/Reserve/Region 재조정.
 
-**Q. 작은 객체 수백만 개 vs 큰 배열 몇 개?**  
+**Q. 작은 객체 수백만 개 vs 큰 배열 몇 개?**
 A. 작은 객체 다량은 **메타/카드/RSet 비용↑**. 종종 **배열·구조체화**가 유리.
 
-**Q. Escape Analysis가 GC에 주는 영향?**  
+**Q. Escape Analysis가 GC에 주는 영향?**
 A. **스칼라 대체/스택 할당**으로 힙 할당↓ → GC 압력↓. (JIT 최적화에 의존)
 
 ---
 
 ## 17. 부록: G1 마이그레이션 가이드(Parallel→G1)
 
-1) 동일 힙 크기로 시작: `-Xms/-Xmx` 고정  
-2) `-XX:+UseG1GC -XX:MaxGCPauseMillis=200`  
-3) 로그 수집 → **Young 비율/생존률/승격 실패** 점검  
-4) `G1NewSizePercent/G1MaxNewSizePercent` 조절로 Young 크기 튜닝  
-5) `InitiatingHeapOccupancyPercent`로 마킹 타이밍 조절  
+1) 동일 힙 크기로 시작: `-Xms/-Xmx` 고정
+2) `-XX:+UseG1GC -XX:MaxGCPauseMillis=200`
+3) 로그 수집 → **Young 비율/생존률/승격 실패** 점검
+4) `G1NewSizePercent/G1MaxNewSizePercent` 조절로 Young 크기 튜닝
+5) `InitiatingHeapOccupancyPercent`로 마킹 타이밍 조절
 6) 진동(oscillation) 시 Region 크기/Reserve 재평가
 
 ---
@@ -372,15 +372,15 @@ $$
 \text{Pause} \approx \frac{\text{Live Bytes to Evacuate}}{\text{Copy Throughput}} + \text{Overheads}
 $$
 
-- 라이브 바이트(생존률 ↑)가 크면 **복사형 수집기**의 Pause↑.  
+- 라이브 바이트(생존률 ↑)가 크면 **복사형 수집기**의 Pause↑.
 - 해결: **Young 축소**(생존률 낮추기) 또는 **Old 대상 Mixed 조절**, **스레드 수** 증가로 Throughput↑.
 
 ---
 
 ## 19. 마무리
 
-- GC는 **원리 이해 + 측정 기반 튜닝**이 전부입니다.  
-- **지표/JFR/로그**로 실제 워크로드의 **생존률/할당률/승격/장애**를 숫자로 파악하고,  
+- GC는 **원리 이해 + 측정 기반 튜닝**이 전부입니다.
+- **지표/JFR/로그**로 실제 워크로드의 **생존률/할당률/승격/장애**를 숫자로 파악하고,
   Collector 특성(G1/ZGC/Parallel)에 맞게 **목표 지연/처리량**을 만족하도록 **작게 한 번씩** 조정하세요.
 
 ---

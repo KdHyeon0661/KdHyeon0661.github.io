@@ -23,7 +23,7 @@ category: AspNet
 ### 1.1 `@functions`로 간단 헬퍼
 ```razor
 @functions {
-    public string FormatCurrency(decimal amount) 
+    public string FormatCurrency(decimal amount)
         => string.Format("{0:N0}원", amount);
 
     public IHtmlContent Badge(string text, string type = "secondary")
@@ -479,7 +479,7 @@ public class ProductCardVM
 ### 부록) 수식 표기(블로그용)
 ```
 $$
-\text{ScoreBadge}(x) = 
+\text{ScoreBadge}(x) =
 \begin{cases}
 \text{"badge-danger"} & x \ge 90 \\
 \text{"badge-warning"} & 70 \le x < 90 \\
@@ -491,6 +491,6 @@ $$
 
 ---
 
-이제 **Razor 고급 도구 상자**를 갖췄다.  
-작은 것은 `@functions`, 전역은 `HtmlHelper`, 조각은 **Partial**, 로직/DI는 **ViewComponent**, 선언적 규칙은 **Custom Tag Helper**로 설계하면,  
+이제 **Razor 고급 도구 상자**를 갖췄다.
+작은 것은 `@functions`, 전역은 `HtmlHelper`, 조각은 **Partial**, 로직/DI는 **ViewComponent**, 선언적 규칙은 **Custom Tag Helper**로 설계하면,
 뷰는 **간결**, 팀 규칙은 **일관**, 성능과 테스트는 **현실적**이 된다.

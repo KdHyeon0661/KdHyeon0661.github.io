@@ -6,8 +6,8 @@ category: Django
 ---
 # REST 백엔드 — **DRF + JWT**, 문서화(Swagger/Redoc), 배포까지 (Django 5.x 기준)
 
-> 이 문서는 **Django REST Framework(DRF)** 와 **JWT 인증(simplejwt)** 으로 **프로덕션급 REST API** 를 구축하고,  
-> **OpenAPI 기반 문서화(스웨거/레닥)** 및 **배포(도커/NGINX/Gunicorn/Uvicorn, CI/CD)** 까지 **끝까지** 다룹니다.  
+> 이 문서는 **Django REST Framework(DRF)** 와 **JWT 인증(simplejwt)** 으로 **프로덕션급 REST API** 를 구축하고,
+> **OpenAPI 기반 문서화(스웨거/레닥)** 및 **배포(도커/NGINX/Gunicorn/Uvicorn, CI/CD)** 까지 **끝까지** 다룹니다.
 > 모든 소스 코드는 ``` 로 감싸고, 수학 표기는 없습니다.
 
 ---
@@ -15,7 +15,7 @@ category: Django
 ## 0. 개요 & 목표
 
 - **도메인**: 간단한 “프로젝트 & 작업(ToDo)” API
-  - `Project` (소유자/이름/설명)  
+  - `Project` (소유자/이름/설명)
   - `Task` (프로젝트/제목/설명/완료여부/마감일)
 - **인증/권한**: JWT(Access/Refresh, 회전/블랙리스트), `IsAuthenticated`, `IsOwnerOrReadOnly`
 - **기능**: CRUD, 필터/검색/정렬, 페이지네이션, 버저닝, 쓰로틀링, 업로드 예시
@@ -530,18 +530,18 @@ router_v1.register(r"attachments", AttachmentViewSet, basename="attachment")
 
 ## 11. 버전 전략
 
-- `NamespaceVersioning` 으로 `api/v1/` 경로 네임스페이스 제공  
-- 새로운 호환성 깨짐이 생기면 `router_v2` 로 분리, `path("api/v2/", include(...))` 추가  
+- `NamespaceVersioning` 으로 `api/v1/` 경로 네임스페이스 제공
+- 새로운 호환성 깨짐이 생기면 `router_v2` 로 분리, `path("api/v2/", include(...))` 추가
 - Spectacular는 버전별 스키마 분리도 가능(스키마 뷰를 버전 라우터마다 추가)
 
 ---
 
 ## 12. CORS/보안 헤더
 
-- `django-cors-headers` 로 SPA/모바일 도메인 허용  
+- `django-cors-headers` 로 SPA/모바일 도메인 허용
 - 배포시:
   - `CORS_ALLOWED_ORIGINS=["https://app.example.com"]`
-  - `SECURE_*` 쿠키/헤더, `X-Content-Type-Options: nosniff`, `Content-Security-Policy` (정적/문서 경로에 맞게)  
+  - `SECURE_*` 쿠키/헤더, `X-Content-Type-Options: nosniff`, `Content-Security-Policy` (정적/문서 경로에 맞게)
 - JWT는 **기본적으로 Authorization 헤더** 사용. 브라우저 쿠키에 저장 시 `HttpOnly/SameSite=strict` 고려(권장: **메모리/secure storage**에 보관하고 헤더로 전송).
 
 ---
@@ -708,7 +708,7 @@ RUN python manage.py collectstatic --noinput
 CMD ["gunicorn","config.wsgi:application","-w","3","-b","0.0.0.0:8000","--access-logfile","-","--error-logfile","-"]
 ```
 
-> **대안**: ASGI 성능 필요 시  
+> **대안**: ASGI 성능 필요 시
 > `CMD ["uvicorn","config.asgi:application","--host","0.0.0.0","--port","8000","--workers","3"]`
 
 ### 17.2 docker-compose (Postgres + Nginx)
@@ -760,7 +760,7 @@ server {
 }
 ```
 
-> HTTPS는 **로드밸런서/프록시**(예: Nginx + certbot, Cloud LB)에서 종단.  
+> HTTPS는 **로드밸런서/프록시**(예: Nginx + certbot, Cloud LB)에서 종단.
 > HSTS/보안 헤더 설정 포함 권장.
 
 ---
@@ -835,8 +835,8 @@ jobs:
 
 ## 22. 마무리
 
-- 본 가이드는 **DRF + SimpleJWT** 로 **표준 REST 백엔드**를 구축하고  
-  **OpenAPI(스웨거/레닥)**, **도커 배포** 까지 **프로덕션 관점**에서 다뤘습니다.  
+- 본 가이드는 **DRF + SimpleJWT** 로 **표준 REST 백엔드**를 구축하고
+  **OpenAPI(스웨거/레닥)**, **도커 배포** 까지 **프로덕션 관점**에서 다뤘습니다.
 - 핵심 체크:
   - [ ] JWT/권한/쓰로틀/페이지/필터
   - [ ] OpenAPI 문서 & Try-Out

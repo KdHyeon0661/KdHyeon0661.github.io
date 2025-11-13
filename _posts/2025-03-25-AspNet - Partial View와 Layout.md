@@ -15,10 +15,10 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
     └ ViewComponent    ← “로직+뷰” 캡슐화(부분 데이터 조회+렌더링)
 ```
 
-> 핵심 구분  
-> - **Layout**: “한 페이지의 뼈대”  
-> - **Partial**: “뷰 조각(템플릿화된 HTML)”  
-> - **ViewComponent**: “부분 컨트롤러+뷰” (부분 데이터 로딩/로직 포함)  
+> 핵심 구분
+> - **Layout**: “한 페이지의 뼈대”
+> - **Partial**: “뷰 조각(템플릿화된 HTML)”
+> - **ViewComponent**: “부분 컨트롤러+뷰” (부분 데이터 로딩/로직 포함)
 
 ---
 
@@ -267,7 +267,7 @@ public class CartSummaryViewComponent : ViewComponent
 ## 7. Partial로 폼 조립하기 — 중첩 폼 주의 & 검증 스크립트
 
 ### 7.1 중첩 폼 금지
-HTML 표준상 **폼 안에 폼**은 허용되지 않는다.  
+HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 “부품 폼”을 Partial로 분리할 수는 있지만, **최상위 폼은 하나**여야 한다.
 
 ```cshtml
@@ -315,7 +315,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 ```cshtml
 <partial name="_ProductCard"
          model="p"
-         for="Model.Products" 
+         for="Model.Products"
          view-data="ViewData" />
 ```
 

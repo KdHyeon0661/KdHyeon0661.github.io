@@ -6,7 +6,7 @@ category: 시스템보안
 ---
 # 5.5 실습: misconfigured service → SYSTEM, UAC bypass 패턴 따라잡기 (방어 중심)
 
-> 이 섹션은 **공격 재현(Exploit Steps)**이 아니라, **어떻게 발견·설명·수정**할지에 초점을 둡니다.  
+> 이 섹션은 **공격 재현(Exploit Steps)**이 아니라, **어떻게 발견·설명·수정**할지에 초점을 둡니다.
 > 실제 악용을 유도할 수 있는 **정확한 명령 시퀀스·페이로드·주소**는 제공하지 않습니다. 모두 **본인 소유 랩 VM**에서, 오직 **감사/개선** 목적의 스크립트만 사용하세요.
 
 ---
@@ -14,11 +14,11 @@ category: 시스템보안
 ## 5.5.1 “SYSTEM이 되는” 서비스 오구성, 어디서 생기나?
 
 ### A) 경로 문제(공백 + 따옴표 없음, Unquoted Service Path)
-- **징후**: `ImagePath`가 `"C:\Program Files\Vendor App\bin\app.exe"`가 아니라  
+- **징후**: `ImagePath`가 `"C:\Program Files\Vendor App\bin\app.exe"`가 아니라
   `C:\Program Files\Vendor App\bin\app.exe -k arg`처럼 **따옴표 없이 공백 포함**.
 - **위험**: 서비스가 `LocalSystem`으로 시작되고, 상위 경로에 사용자 쓰기가 가능하다면 **의도치 않은 실행 파일**이 먼저 로드될 수 있음.
-- **방어 요약**:  
-  1) **항상** 이중 따옴표로 감싸기  
+- **방어 요약**:
+  1) **항상** 이중 따옴표로 감싸기
   2) 실행 파일/상위 디렉터리 **일반 사용자 쓰기 금지**
 
 ### B) 쓰기 가능한 경로(Executable/Directory writable)
@@ -128,8 +128,8 @@ foreach($k in $keys){
 ```
 
 **읽는 법**
-- `UnquotedPath = True` → 반드시 **따옴표 추가** 및 **경로 쓰기 제한**  
-- `WritableExe/WritableDir = True` → 소유자/권한 재설정(일반 사용자 쓰기 제거)  
+- `UnquotedPath = True` → 반드시 **따옴표 추가** 및 **경로 쓰기 제한**
+- `WritableExe/WritableDir = True` → 소유자/권한 재설정(일반 사용자 쓰기 제거)
 - “Weak Service DACL” 출력 → `sc sdshow`/`sdset`로 **표준 템플릿** 재적용
 
 ---
@@ -168,7 +168,7 @@ icacls $exe /remove:g "Users" "Authenticated Users" "Everyone"
 ```
 
 ### C) 서비스 DACL 표준화 (SDDL)
-- **목표**: 일반 사용자의 `SERVICE_CHANGE_CONFIG/WRITE_DAC/START/STOP` 등 **과도 권한 제거**.  
+- **목표**: 일반 사용자의 `SERVICE_CHANGE_CONFIG/WRITE_DAC/START/STOP` 등 **과도 권한 제거**.
 - **방법**: `sc sdshow <svc>`로 현재 DACL 확인 → 벤더/조직 표준 SDDL로 `sc sdset <svc>` 적용.
 
 ```powershell
@@ -213,18 +213,18 @@ foreach($k in $keys){
 ## 5.5.4 UAC bypass 패턴 “이해하고 막기”(재현 대신 방어 설명)
 
 ### 패턴 1) **자동 상승 경로(autoElevate) + 경로/구성 취약**
-- 일부 시스템 컴포넌트는 **서명/정책** 하에 자동 상승.  
+- 일부 시스템 컴포넌트는 **서명/정책** 하에 자동 상승.
 - 만약 이들이 참조하는 실행 파일/스크립트/COM 서버 경로가 **사용자 쓰기 가능**이면 **우회 여지**.
-- **방어**:  
-  - **서명 강제( WDAC/AppLocker )**로 비서명 바이너리/스크립트 차단  
-  - autoElevate 체인에 등장하는 경로를 **Program Files, System32** 등 보호 디렉터리로 고정  
+- **방어**:
+  - **서명 강제( WDAC/AppLocker )**로 비서명 바이너리/스크립트 차단
+  - autoElevate 체인에 등장하는 경로를 **Program Files, System32** 등 보호 디렉터리로 고정
   - **LoadLibrary/COM 등록 경로**는 **절대경로 + 서명** 전제
 
 ### 패턴 2) **COM/MMC/WMI 초기화 타이밍 악용**
 - 레거시 등록/바인딩 과정에서 **검색 순서**나 **권한 위임**이 빈틈을 보일 수 있음.
-- **방어**:  
-  - **SetDefaultDllDirectories + LoadLibraryEx 플래그**(개발팀)  
-  - **COM 서버 경로 보호 + WDAC 규칙**  
+- **방어**:
+  - **SetDefaultDllDirectories + LoadLibraryEx 플래그**(개발팀)
+  - **COM 서버 경로 보호 + WDAC 규칙**
   - **WMI 영구 구독** 정기 점검(root\subscription)
 
 ### 패턴 3) **설치 정책/작업 스케줄러 조합**
@@ -260,7 +260,7 @@ tasklist /FI "IMAGENAME eq lsass.exe" /V
 ```
 
 **운영 팁**
-- 백업/메모리 진단 도구 등 **합법적 접근**은 **서명·드라이버 기반** 절차로 전환  
+- 백업/메모리 진단 도구 등 **합법적 접근**은 **서명·드라이버 기반** 절차로 전환
 - PPL 활성 상태에서 **서드파티 보안도구 호환성** 점검
 
 ---
@@ -290,7 +290,7 @@ systeminfo | findstr /i "Virtualization Guard Credential"
 ```
 
 **운영 팁**
-- 도메인 환경: **패스더해시/티켓 재사용** 난이도 상승  
+- 도메인 환경: **패스더해시/티켓 재사용** 난이도 상승
 - 호환성 이슈(구형 드라이버/보안툴) 사전 검증 필수
 
 ---
@@ -325,21 +325,21 @@ Set-RuleOption -FilePath $Out -Option 3  # 3: Audit Mode
 ```
 
 - **팁**
-  - **서명 우선**, 임시 예외는 **해시**  
-  - 운영 전 **광범위 감사 수집** → 정상 애플리케이션 화이트리스트 충분화  
+  - **서명 우선**, 임시 예외는 **해시**
+  - 운영 전 **광범위 감사 수집** → 정상 애플리케이션 화이트리스트 충분화
   - 드라이버/보호 소프트웨어와 **호환성 테스트**
 
 ---
 
 ## 5.6.4 Attack Surface Reduction(ASR) — 즉효 수비
 
-> Microsoft Defender의 **ASR 규칙**은 자주 악용되는 **Living-off-the-Land** 경로를 차단합니다.  
+> Microsoft Defender의 **ASR 규칙**은 자주 악용되는 **Living-off-the-Land** 경로를 차단합니다.
 > (Defender가 아니라면 유사 기능을 가진 EDR의 정책 사용)
 
 ### 대표 규칙(예: 일부 GUID)
-- **Office에서 자식 프로세스 생성 차단**: `{D4F940AB-401B-4EFC-AADC-AD5F3C50688A}`  
-- **WMI/PsExec 등 프로세스 생성 차단**: `{D3E037E1-3EB8-44C8-A917-57927947596D}`  
-- **스크립트 기반 공격 차단**: `{5BEB7EFE-FD9A-4556-801D-275E5FFC04CC}`  
+- **Office에서 자식 프로세스 생성 차단**: `{D4F940AB-401B-4EFC-AADC-AD5F3C50688A}`
+- **WMI/PsExec 등 프로세스 생성 차단**: `{D3E037E1-3EB8-44C8-A917-57927947596D}`
+- **스크립트 기반 공격 차단**: `{5BEB7EFE-FD9A-4556-801D-275E5FFC04CC}`
 - **LSASS 인증자격 유출 차단(자격 훔치기)**: `{9E6C4E1F-7D60-4721-A4B2-BC0D3F6D9D3E}` (환경/버전에 따라 가용성 상이)
 
 ### 배포(감사 → 차단)
@@ -357,7 +357,7 @@ Add-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5F
 ```
 
 **운영 팁**
-- **감사 로그**를 일정 기간 수집 → **업무 오탐** 제외 목록(Exclusions) 최소화 등록  
+- **감사 로그**를 일정 기간 수집 → **업무 오탐** 제외 목록(Exclusions) 최소화 등록
 - ASR은 **사용자 불만**이 나올 수 있음 → 변경관리/커뮤니케이션 필수
 
 ---
@@ -365,62 +365,62 @@ Add-MpPreference -AttackSurfaceReductionRules_Ids 5BEB7EFE-FD9A-4556-801D-275E5F
 ## 5.6.5 모니터링 & 포렌식 신호 (Sysmon/이벤트 채널)
 
 - **Sysmon 권장 이벤트**
-  - **1**(Process Create): 서비스/작업에서 비정상 경로 실행, `cmd.exe`/`rundll32.exe` 자식  
-  - **7**(Image Load): 비서명 DLL 로딩  
-  - **10**(Process Access): `lsass.exe` 접근(핸들 요청)  
-  - **12/13/14**(Registry): 서비스/Run 키 변경  
+  - **1**(Process Create): 서비스/작업에서 비정상 경로 실행, `cmd.exe`/`rundll32.exe` 자식
+  - **7**(Image Load): 비서명 DLL 로딩
+  - **10**(Process Access): `lsass.exe` 접근(핸들 요청)
+  - **12/13/14**(Registry): 서비스/Run 키 변경
   - **19/20/21**(WMI): Filter/Consumer/Binding 생성(영구 구독)
 - **Windows 로그**
-  - 서비스 설치/변경: **4697**, **7045**  
-  - 권한 사용(특권): **4672**  
+  - 서비스 설치/변경: **4697**, **7045**
+  - 권한 사용(특권): **4672**
   - 작업 스케줄러 Operational 채널: 작업 등록/실행/실패
 
 ---
 
 ## 5.6.6 “운영에 녹이는” 체크리스트
 
-- **서비스**  
-  - [ ] ImagePath **이중 따옴표 + 절대경로**  
-  - [ ] 실행 파일/디렉터리 **Users/Everyone 쓰기 금지**  
-  - [ ] Service DACL: **SY/BA 중심**, 일반 사용자 WRITE 금지  
-- **스케줄러**  
-  - [ ] SYSTEM/관리자 작업의 실행 경로 디렉터리 **쓰기 금지**  
-  - [ ] 상대경로·환경 변수 의존 제거  
-- **UAC/정책**  
-  - [ ] `AlwaysInstallElevated` **비활성(HKLM/HKCU)**  
-  - [ ] 승격 경로는 **서명/WDAC/AppLocker**로 통제  
-- **코드 로딩**  
-  - [ ] 앱에서 `SetDefaultDllDirectories` 호출  
-  - [ ] `LoadLibraryEx(..., LOAD_LIBRARY_SEARCH_SYSTEM32|...)`  
-- **자격 보호**  
-  - [ ] LSA **RunAsPPL**  
-  - [ ] **Credential Guard**(가능 환경)  
-  - [ ] EDR/Sysmon으로 `lsass.exe` 접근 탐지  
-- **정책**  
-  - [ ] **AppLocker/WDAC** 감사 → 거부 전환  
-  - [ ] **ASR** 감사 → 활성 전환  
-- **거버넌스**  
-  - [ ] 변경관리(위험 서비스/작업/레지스트리 수정 시 CAB/티켓)  
+- **서비스**
+  - [ ] ImagePath **이중 따옴표 + 절대경로**
+  - [ ] 실행 파일/디렉터리 **Users/Everyone 쓰기 금지**
+  - [ ] Service DACL: **SY/BA 중심**, 일반 사용자 WRITE 금지
+- **스케줄러**
+  - [ ] SYSTEM/관리자 작업의 실행 경로 디렉터리 **쓰기 금지**
+  - [ ] 상대경로·환경 변수 의존 제거
+- **UAC/정책**
+  - [ ] `AlwaysInstallElevated` **비활성(HKLM/HKCU)**
+  - [ ] 승격 경로는 **서명/WDAC/AppLocker**로 통제
+- **코드 로딩**
+  - [ ] 앱에서 `SetDefaultDllDirectories` 호출
+  - [ ] `LoadLibraryEx(..., LOAD_LIBRARY_SEARCH_SYSTEM32|...)`
+- **자격 보호**
+  - [ ] LSA **RunAsPPL**
+  - [ ] **Credential Guard**(가능 환경)
+  - [ ] EDR/Sysmon으로 `lsass.exe` 접근 탐지
+- **정책**
+  - [ ] **AppLocker/WDAC** 감사 → 거부 전환
+  - [ ] **ASR** 감사 → 활성 전환
+- **거버넌스**
+  - [ ] 변경관리(위험 서비스/작업/레지스트리 수정 시 CAB/티켓)
   - [ ] 주간 리포트(신규 SUID? X / 신규 서비스/작업/COM 등록 변화 O)
 
 ---
 
 ## 5.6.7 트러블슈팅(현장에서 자주 묻는 문제)
 
-- **서비스가 시작되지 않아요 (권한 바꾼 뒤)**  
+- **서비스가 시작되지 않아요 (권한 바꾼 뒤)**
   - 이벤트 로그에서 “Access is denied” 확인 → 벤더 문서의 **필수 권한** 재적용(특정 서비스 계정에 `READ & EXECUTE` 필요)
-- **AppLocker/WDAC로 정상 앱이 막혀요**  
-  - 감사 로그 기반 **서명 발행자 규칙** 추가(해시보다 유지보수 용이)  
+- **AppLocker/WDAC로 정상 앱이 막혀요**
+  - 감사 로그 기반 **서명 발행자 규칙** 추가(해시보다 유지보수 용이)
   - 업데이트 채널/경로를 **고정된 디렉터리**로 집약
-- **ASR 켰더니 매크로/자동화가 멈춰요**  
-  - **감사 기간** 충분히 두고 업무 플로우 식별 → 최소한의 **Exclusion** 등록  
+- **ASR 켰더니 매크로/자동화가 멈춰요**
+  - **감사 기간** 충분히 두고 업무 플로우 식별 → 최소한의 **Exclusion** 등록
   - возможно “Office 자식 프로세스 차단”은 가장 효과/부작용 모두 큰 규칙 → 우선순위 평가
 
 ---
 
 # 마무리
 
-- “misconfigured service → SYSTEM”은 **경로·권한·정책**의 합성 문제입니다.  
-- UAC bypass도 **자동 상승 트리거**와 **경로/서명/권한**의 결합 실패에서 나옵니다.  
-- **LSA 보호/자격 격리/허용 목록(앱 제어)/ASR**을 **겹겹이** 적용하면, 실무에서의 로컬 LPE/자격 탈취 리스크가 **현저히 감소**합니다.  
+- “misconfigured service → SYSTEM”은 **경로·권한·정책**의 합성 문제입니다.
+- UAC bypass도 **자동 상승 트리거**와 **경로/서명/권한**의 결합 실패에서 나옵니다.
+- **LSA 보호/자격 격리/허용 목록(앱 제어)/ASR**을 **겹겹이** 적용하면, 실무에서의 로컬 LPE/자격 탈취 리스크가 **현저히 감소**합니다.
 - 위 스크립트·설정 템플릿을 **사내 표준 Runbook/GPO/CI**에 녹이면, 지속적으로 안전한 상태를 유지할 수 있습니다.

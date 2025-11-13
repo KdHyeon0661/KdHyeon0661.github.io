@@ -311,22 +311,22 @@ kubectl get pods -l 'team'
 
 ## ✅ 7. 베스트 프랙티스
 
-1) **표준 라벨 체계 고정**  
+1) **표준 라벨 체계 고정**
    프로젝트 시작 시 `app.kubernetes.io/*` + `env`/`tier`/`team` 등 **조합을 문서화**하고, 모든 리소스에 적용.
 
-2) **selector ↔ template.labels 정합성 테스트 자동화**  
+2) **selector ↔ template.labels 정합성 테스트 자동화**
    CI에서 `Service.selector`가 **실제 Pod 템플릿 라벨**과 일치하는지 lint(Schema/OPA/Conftest 등).
 
-3) **Service Endpoints 검증을 배포 파이프라인에 포함**  
+3) **Service Endpoints 검증을 배포 파이프라인에 포함**
    `kubectl get ep`가 **비어 있지 않음**을 조건으로 실패 처리.
 
-4) **네임스페이스별 가드레일**  
+4) **네임스페이스별 가드레일**
    `ResourceQuota` + `LimitRange`로 폭주 방지. 이미지 풀 정책/PSA(보안레벨)도 NS 단위로.
 
-5) **라벨 변경의 파급효과 인지**  
+5) **라벨 변경의 파급효과 인지**
    운영 중 라벨 변경은 **선택 집합**을 바꾼다. 변경 전/후 영향(서비스 연결/RS 관리)을 체크.
 
-6) **토폴로지 라벨 통일**  
+6) **토폴로지 라벨 통일**
    클러스터/노드 라벨(`topology.kubernetes.io/zone`, `kubernetes.io/hostname`)을 기준으로 분산 전략 일관성 유지.
 
 ---
@@ -382,5 +382,5 @@ kubectl label namespace dev  env=dev
 | **Label** | 리소스에 부착하는 **의미 태그** | 표준 라벨 체계, 운영 메타정보, 라벨 변경의 영향 |
 | **Selector** | 라벨을 기준으로 하는 **집합 선택** | Equality/Set 기반, 컨트롤러 불변성/가변성 이해 |
 
-**운영 핵심**: “**표준 라벨 체계**”를 정하고, “**selector ↔ template.labels 정합성**”을 배포 파이프라인에서 **자동 검증**하라.  
+**운영 핵심**: “**표준 라벨 체계**”를 정하고, “**selector ↔ template.labels 정합성**”을 배포 파이프라인에서 **자동 검증**하라.
 네임스페이스엔 **가드레일**을, 트래픽/배치/분산엔 **라벨 기반 정책**을 입히면, 클러스터는 **예측 가능하고 안전**해진다.

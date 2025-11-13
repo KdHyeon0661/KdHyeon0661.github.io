@@ -37,8 +37,8 @@ category: DataCommunication
 - **양방향성(Bidirectional)**: 각 계층은 **송·수신** 모두를 처리.
 - **일관된 계층 구조(Homogeneous Stacking)**: 통신 양단은 **동일한 계층 스택**을 공유(해당 계층의 의미·PDU 형식의 합의).
 - **최소 책임(Minimal Responsibility)**: 계층 간 **책임 중복 최소화**—예: 재전송은 전송계층에서, 링크의 단기 오류는 링크계층에서.
-- **서비스·프로토콜 분리**:  
-  - **서비스(Service)**: 상위에 제공하는 기능(추상 인터페이스).  
+- **서비스·프로토콜 분리**:
+  - **서비스(Service)**: 상위에 제공하는 기능(추상 인터페이스).
   - **프로토콜(Protocol)**: **같은 계층**의 동등체(peer) 간 규칙/형식.
 
 ---
@@ -153,13 +153,13 @@ $$
 
 ## 2.2.5 Addressing (주소 계층)
 
-- **Link(MAC)**: 동일 **링크/브로드캐스트 도메인**에서 장치 식별.  
+- **Link(MAC)**: 동일 **링크/브로드캐스트 도메인**에서 장치 식별.
   예: `00:1A:2B:...`
-- **Network(IP)**: 전 지구적 **라우팅 가능한 논리 주소**.  
+- **Network(IP)**: 전 지구적 **라우팅 가능한 논리 주소**.
   예: `203.0.113.7`, `2001:db8::7`
-- **Transport(Port)**: 동일 호스트 내 **프로세스/소켓 식별**.  
+- **Transport(Port)**: 동일 호스트 내 **프로세스/소켓 식별**.
   예: `(IP, Port)` 쌍 → `(203.0.113.7, 443)`
-- **Application(Name/URL)**: 사람 친화적 이름.  
+- **Application(Name/URL)**: 사람 친화적 이름.
   예: `www.example.com`, `https://...`
 
 **소켓 5-튜플**으로 흐름 식별:
@@ -233,7 +233,7 @@ for p in (9001, 9002):
 차이 핵심:
 
 - **TCP/IP의 상위(응용) 계층은 OSI의 표현·세션 기능을 상당 부분 흡수**. 예컨대 TLS(암호화)는 “표현 계층” 개념에 해당하나 TCP/IP에서는 응용/전송 사이에 배치.
-- 전송 계층의 **프로토콜 다양성**(TCP/UDP/SCTP/QUIC*)은 OSI 관점에선 전송/세션/표현의 경계를 흐리기도 함.  
+- 전송 계층의 **프로토콜 다양성**(TCP/UDP/SCTP/QUIC*)은 OSI 관점에선 전송/세션/표현의 경계를 흐리기도 함.
   (*QUIC은 전송 성격을 갖지만 사용자 공간·UDP 상에서 동작)
 
 ---
@@ -251,8 +251,8 @@ for p in (9001, 9002):
 
 ## A. PDU 명칭과 디버깅 포인트
 
-- L4: **Segment**(TCP)/**Datagram**(UDP)  
-- L3: **Packet**(IP)  
+- L4: **Segment**(TCP)/**Datagram**(UDP)
+- L3: **Packet**(IP)
 - L2: **Frame**(Ethernet/802.11)
 
 디버깅은 **아래에서 위로**(신호→링크→IP→TCP/UDP→App) 혹은 **위에서 아래로**(앱 오류→패킷 흐름) 접근.
@@ -333,14 +333,14 @@ traceroute 1.1.1.1
 
 # 체크 문제
 
-1) 아래 중 **종단 간** 의미가 성립되는 계층을 모두 고르시오.  
-   `Application / Transport / Network / Data Link / Physical`  
-   **정답**: Application, Transport, Network(의미 관점에서).  
-2) TCP MSS=1200, IPv4+TCP 헤더 40바이트. **오버헤드 비율**은?  
+1) 아래 중 **종단 간** 의미가 성립되는 계층을 모두 고르시오.
+   `Application / Transport / Network / Data Link / Physical`
+   **정답**: Application, Transport, Network(의미 관점에서).
+2) TCP MSS=1200, IPv4+TCP 헤더 40바이트. **오버헤드 비율**은?
    $$ \text{Overhead} = \frac{40}{1200+40} \approx 3.23\% $$
-3) 스위치가 목적지 MAC을 모를 때 수행하는 동작은?  
+3) 스위치가 목적지 MAC을 모를 때 수행하는 동작은?
    **플러딩**(수신 포트 제외 모든 포트로 전송).
-4) 소켓 5-튜플의 역할은?  
+4) 소켓 5-튜플의 역할은?
    **흐름의 고유 식별자**(다중 연결의 구분자).
 
 ---

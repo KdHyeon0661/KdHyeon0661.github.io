@@ -107,8 +107,8 @@ class PostSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 ```
 
-> 팁  
-> - **읽기/쓰기 분리**가 필요한 복잡 모델은 **ReadSerializer / WriteSerializer** 를 나눠서 사용하거나, View 수준에서 `get_serializer_class()` 로 동적으로 스위칭합니다.  
+> 팁
+> - **읽기/쓰기 분리**가 필요한 복잡 모델은 **ReadSerializer / WriteSerializer** 를 나눠서 사용하거나, View 수준에서 `get_serializer_class()` 로 동적으로 스위칭합니다.
 > - 대량 관계 입력은 **PrimaryKeyRelatedField(many=True)** 나 **SlugRelatedField** 로 처리(중첩 쓰기는 명시적 구현 필요).
 
 ### A-3. ViewSet & Router — CRUD/권한/쿼리최적화
@@ -189,9 +189,9 @@ urlpatterns = [
 ]
 ```
 
-> 운영 팁  
-> - **JWT TTL/리프레시 주기**를 비즈니스/보안 레벨에 맞게 조정.  
-> - 모바일/SPA는 **Refresh Token Rotation** & **로그아웃/블랙리스트** 전략 포함.  
+> 운영 팁
+> - **JWT TTL/리프레시 주기**를 비즈니스/보안 레벨에 맞게 조정.
+> - 모바일/SPA는 **Refresh Token Rotation** & **로그아웃/블랙리스트** 전략 포함.
 > - 서버 사이드 렌더링/HTMX는 세션 인증 + CSRF가 자연스럽습니다.
 
 ### A-5. 스로틀링 — 전역/뷰별/사용자·익명 분리
@@ -273,11 +273,11 @@ class PostViewSet(...):
 
 ### A-8. 성능/보안 체크리스트
 
-- [ ] **select_related / prefetch_related** 로 N+1 방지  
-- [ ] **페이지네이션** 기본값 설정(무제한 금지)  
-- [ ] **Throttle**/RateLimit, **CORS** 설정(외부 접근 범위 제한)  
-- [ ] **에러 응답 스펙** 통일(코드/메시지/필드 오류 포맷)  
-- [ ] **Schema 문서** 자동 생성/배포 파이프라인 포함  
+- [ ] **select_related / prefetch_related** 로 N+1 방지
+- [ ] **페이지네이션** 기본값 설정(무제한 금지)
+- [ ] **Throttle**/RateLimit, **CORS** 설정(외부 접근 범위 제한)
+- [ ] **에러 응답 스펙** 통일(코드/메시지/필드 오류 포맷)
+- [ ] **Schema 문서** 자동 생성/배포 파이프라인 포함
 - [ ] 민감 데이터 마스킹/감사 로그/리퀘스트 ID 로깅
 
 ---
@@ -286,8 +286,8 @@ class PostViewSet(...):
 
 ### B-0. 언제 GraphQL?
 
-- **프론트엔드가 데이터 shape를 주도**(모바일/SPA/다수 화면)  
-- **여러 리소스 조합**을 한 번에 질의, Over/Under-fetch 감소  
+- **프론트엔드가 데이터 shape를 주도**(모바일/SPA/다수 화면)
+- **여러 리소스 조합**을 한 번에 질의, Over/Under-fetch 감소
 - 강력한 **스키마 타입**과 **툴링(GraphiQL, codegen)**
 
 ### B-1. 라이브러리 선택 — Strawberry vs Graphene
@@ -486,13 +486,13 @@ async def post(self, info: Info, id: int) -> PostType | None:
 
 ### B-6. 파일 업로드, 서브스크립션
 
-- 파일 업로드: **GraphQL multipart** 프로토콜 지원(뷰/클라이언트 설정 필요)  
+- 파일 업로드: **GraphQL multipart** 프로토콜 지원(뷰/클라이언트 설정 필요)
 - 실시간 구독: WebSocket 기반. `strawberry` 는 ASGI로 **subscription** 지원(별도 서버/라우팅 고려)
 
 ### B-7. 스키마/버저닝/모니터링
 
-- GraphQL은 **단일 엔드포인트** → 스키마 변경은 **deprecation** 정책과 릴리스 노트로 관리  
-- 스키마 문서/플레이그라운드(GraphiQL)를 **보안 경계 안**으로(운영 공개 금지 권장)  
+- GraphQL은 **단일 엔드포인트** → 스키마 변경은 **deprecation** 정책과 릴리스 노트로 관리
+- 스키마 문서/플레이그라운드(GraphiQL)를 **보안 경계 안**으로(운영 공개 금지 권장)
 - **쿼리 복잡도 제한**(depth/complexity)과 **쿼리 화이트리스트** 도입 검토
 
 ---
@@ -501,10 +501,10 @@ async def post(self, info: Info, id: int) -> PostType | None:
 
 ### C-0. 공통 원칙
 
-- **서명(signature) 검증** 혹은 **허용 IP** 확인  
-- **Idempotency(멱등성)**: 같은 이벤트 재시도에 안전하게  
-- **감사 로그**: 원문 payload 저장(민감 정보 마스킹)  
-- **타임아웃/재시도** 대비  
+- **서명(signature) 검증** 혹은 **허용 IP** 확인
+- **Idempotency(멱등성)**: 같은 이벤트 재시도에 안전하게
+- **감사 로그**: 원문 payload 저장(민감 정보 마스킹)
+- **타임아웃/재시도** 대비
 - **테스트 모드 분리**(Sandbox 키/엔드포인트)
 
 ---
@@ -562,7 +562,7 @@ def stripe_webhook(request):
 > Stripe는 **서명 헤더 검증**을 제공; 반드시 사용하세요. 또한, **idempotency-key** (요청 측)와 별개로 **웹훅 이벤트 id**를 사용한 **멱등 처리**가 필요합니다.
 
 #### 아임포트(IMP) 개념 흐름
-- 결제 완료 콜백에서 **imp_uid** 수신 → **REST API로 영수증 검증**(금액/상태 일치 확인) → 주문 확정  
+- 결제 완료 콜백에서 **imp_uid** 수신 → **REST API로 영수증 검증**(금액/상태 일치 확인) → 주문 확정
 - **서버 사이드 검증** 필수, 프런트만 믿지 마세요
 
 ```python
@@ -617,7 +617,7 @@ urlpatterns += [
 ]
 ```
 
-- 각 공급자 콘솔에서 **Redirect URL** 등록: 예) `https://example.com/accounts/google/login/callback/`  
+- 각 공급자 콘솔에서 **Redirect URL** 등록: 예) `https://example.com/accounts/google/login/callback/`
 - OIDC(기업 SSO) 환경에서는 **scopes/claim 매핑**, **이메일 도메인 제한**, **가입 승인 플로우**를 구현
 
 > DRF/SPA 환경에서 소셜 로그인 → **백엔드에서 OAuth code 교환** 후 **백엔드가 발급한 토큰(JWT)** 을 프론트가 저장하는 패턴이 일반적입니다.
@@ -648,7 +648,7 @@ def send_welcome(to, name):
 ```
 
 #### 트랜잭셔널 서비스(예: SendGrid, Mailgun, Amazon SES)
-- 장점: **발송 로그/반송/스팸/템플릿 관리**, **웹훅** 으로 **오픈/클릭/반송 이벤트** 처리 가능  
+- 장점: **발송 로그/반송/스팸/템플릿 관리**, **웹훅** 으로 **오픈/클릭/반송 이벤트** 처리 가능
 - 단점: 서비스 의존 + 비용
 
 ```python
@@ -687,11 +687,11 @@ def send_order_receipt(to, order):
 
 ### C-4. 웹훅 보안/운영 체크리스트
 
-- [ ] **서명 검증 / IP allowlist / mTLS 중 하나 이상**  
-- [ ] **Idempotency**: 이벤트 id 저장 후 **중복 수신 무시**  
-- [ ] **타임아웃/재시도**: 외부가 재시도할 수 있으니 **빠른 2xx** + 백그라운드 처리  
-- [ ] **감사 로그**: 원문 payload (민감정보 마스킹) + 처리 결과  
-- [ ] **장애 대응**: DLQ(실패 큐), 재처리 커맨드 관리  
+- [ ] **서명 검증 / IP allowlist / mTLS 중 하나 이상**
+- [ ] **Idempotency**: 이벤트 id 저장 후 **중복 수신 무시**
+- [ ] **타임아웃/재시도**: 외부가 재시도할 수 있으니 **빠른 2xx** + 백그라운드 처리
+- [ ] **감사 로그**: 원문 payload (민감정보 마스킹) + 처리 결과
+- [ ] **장애 대응**: DLQ(실패 큐), 재처리 커맨드 관리
 - [ ] **테스트 모드 분리**: 키/URL/DB 레코드 명시 구분
 
 ---
@@ -816,26 +816,26 @@ urlpatterns += [
 ## E. 운영·보안·품질 체크리스트 (요약)
 
 **DRF**
-- [ ] 인증 체계 선택(JWT/세션) & 토큰 만료/폐기 전략  
-- [ ] 스로틀링, 페이징, 필터/검색/정렬 가드  
-- [ ] N+1 제거, 직렬화 비용 프로파일링  
+- [ ] 인증 체계 선택(JWT/세션) & 토큰 만료/폐기 전략
+- [ ] 스로틀링, 페이징, 필터/검색/정렬 가드
+- [ ] N+1 제거, 직렬화 비용 프로파일링
 - [ ] OpenAPI 자동 문서 + 예제 payload
 
 **GraphQL**
-- [ ] DataLoader/프리페치로 N+1 방지  
-- [ ] 쿼리 복잡도/깊이 제한, 페이징/커서 표준화  
-- [ ] 스키마 변경 시 Deprecation/릴리스 노트  
+- [ ] DataLoader/프리페치로 N+1 방지
+- [ ] 쿼리 복잡도/깊이 제한, 페이징/커서 표준화
+- [ ] 스키마 변경 시 Deprecation/릴리스 노트
 - [ ] 파일 업로드/구독 보안 검토
 
 **웹훅 & 외부**
-- [ ] 서명/허용 IP, TLS, 멱등성  
-- [ ] 콜백은 **빠른 2xx**, 실처리는 비동기  
-- [ ] 감사 로그 + 재처리 도구  
+- [ ] 서명/허용 IP, TLS, 멱등성
+- [ ] 콜백은 **빠른 2xx**, 실처리는 비동기
+- [ ] 감사 로그 + 재처리 도구
 - [ ] 결제는 항상 **서버측 검증**(금액/상태)
 
 **이메일**
-- [ ] SPF/DKIM/DMARC 정합  
-- [ ] 반송/스팸 이벤트 수신 → 구독 관리/평판 유지  
+- [ ] SPF/DKIM/DMARC 정합
+- [ ] 반송/스팸 이벤트 수신 → 구독 관리/평판 유지
 - [ ] 템플릿/다국어/접근성 점검
 
 ---
@@ -909,6 +909,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 ## 마무리
 
-- **DRF** 로 RESTful API를 빠르고 안전하게 구축하고, **문서/스로틀/권한/N+1** 을 시스템 차원에서 관리하세요.  
-- **GraphQL** 은 DataLoader·프리페치로 N+1을 제압하고, 스키마/복잡도/버저닝을 운영 정책으로 다루세요.  
+- **DRF** 로 RESTful API를 빠르고 안전하게 구축하고, **문서/스로틀/권한/N+1** 을 시스템 차원에서 관리하세요.
+- **GraphQL** 은 DataLoader·프리페치로 N+1을 제압하고, 스키마/복잡도/버저닝을 운영 정책으로 다루세요.
 - **외부 연동(결제·소셜·이메일)** 은 **서명/멱등성/검증/감사 로그** 를 기준선으로 삼고, **콜백은 빠르게 2xx** + 비동기 처리를 습관화하세요.

@@ -18,15 +18,15 @@ category: 정보보안기사
 
 ## 보안 베이스라인 설계(운영→보안 통제 상향)
 
-1) **계정/인증**: 개인계정+역할 그룹, `sudoers` 최소 허용, 잠금/만료, 실패 잠금.  
-2) **SSH**: 키 인증·루트 로그인 금지·원천지 제한·강한 암호군·Fail2ban.  
-3) **서비스 최소화**: 리스닝 포트 제거, systemd 샌드박스로 격리.  
-4) **파일시스템/권한**: `noexec,nodev,nosuid`, SUID 감축, 세계 쓰기 경로/Sticky, ACL/Capabilities.  
-5) **네트워크**: 인바운드 기본 차단, 필요 포트만 허용, IPv6 정책 동등 적용.  
-6) **커널/시스템**: sysctl 하드닝, 모듈 블랙리스트, 코어덤프 제한.  
-7) **로깅/감사**: journald 영속/상한, rsyslog TLS 원격 전송, auditd 규칙.  
-8) **무결성/취약점 진단**: AIDE/Tripwire, Lynis/SCAP, 패치 자동화.  
-9) **탐지/차단**: Fail2ban, Suricata/Zeek(선택), EDR 연계.  
+1) **계정/인증**: 개인계정+역할 그룹, `sudoers` 최소 허용, 잠금/만료, 실패 잠금.
+2) **SSH**: 키 인증·루트 로그인 금지·원천지 제한·강한 암호군·Fail2ban.
+3) **서비스 최소화**: 리스닝 포트 제거, systemd 샌드박스로 격리.
+4) **파일시스템/권한**: `noexec,nodev,nosuid`, SUID 감축, 세계 쓰기 경로/Sticky, ACL/Capabilities.
+5) **네트워크**: 인바운드 기본 차단, 필요 포트만 허용, IPv6 정책 동등 적용.
+6) **커널/시스템**: sysctl 하드닝, 모듈 블랙리스트, 코어덤프 제한.
+7) **로깅/감사**: journald 영속/상한, rsyslog TLS 원격 전송, auditd 규칙.
+8) **무결성/취약점 진단**: AIDE/Tripwire, Lynis/SCAP, 패치 자동화.
+9) **탐지/차단**: Fail2ban, Suricata/Zeek(선택), EDR 연계.
 10) **백업/복구/암호화**: LUKS/키 관리, 오프사이트·불변 저장소.
 
 ---
@@ -34,9 +34,9 @@ category: 정보보안기사
 ## 계정/인증 하드닝
 
 ### 정책 적용(요약)
-- **비밀번호**: 길이/복잡도/재사용 금지, 만료/경고/유예.  
-- **잠금**: 실패 N회 시 잠금/백오프.  
-- **sudo**: 명령 단위 허용, 로깅·시간 제한.  
+- **비밀번호**: 길이/복잡도/재사용 금지, 만료/경고/유예.
+- **잠금**: 실패 N회 시 잠금/백오프.
+- **sudo**: 명령 단위 허용, 로깅·시간 제한.
 - **MFA(SSH)**: 가능 시 TOTP(U2F/FIDO) 채택.
 
 예제(암호 품질·잠금: Debian/Ubuntu)
@@ -66,8 +66,8 @@ last -n 20
 ```
 
 체크리스트
-- [ ] 공용계정 금지, 개인계정+그룹+sudo 위임만 사용.  
-- [ ] 실패 잠금/백오프 동작 검증(Screen/Docs).  
+- [ ] 공용계정 금지, 개인계정+그룹+sudo 위임만 사용.
+- [ ] 실패 잠금/백오프 동작 검증(Screen/Docs).
 - [ ] `sudo -l` 결과 캡처(증적), `last/lastb`로 로그인 이력 점검.
 
 ---
@@ -121,8 +121,8 @@ fail2ban-client status sshd
 ```
 
 체크리스트
-- [ ] 패스워드 로그온 금지, 키 인증만.  
-- [ ] 강한 KEX/Cipher/MAC 적용(배포판 기본 이상).  
+- [ ] 패스워드 로그온 금지, 키 인증만.
+- [ ] 강한 KEX/Cipher/MAC 적용(배포판 기본 이상).
 - [ ] Fail2ban 동작 검증(의도적 실패 로그인 후 차단 확인).
 
 ---
@@ -163,8 +163,8 @@ systemd-analyze security web.service
 ```
 
 체크리스트
-- [ ] 불필요 데몬/소켓 비활성·제거.  
-- [ ] 샌드박스 지시자 최소 5개 이상 적용, `systemd-analyze security`로 점수 확인.  
+- [ ] 불필요 데몬/소켓 비활성·제거.
+- [ ] 샌드박스 지시자 최소 5개 이상 적용, `systemd-analyze security`로 점수 확인.
 - [ ] 루트 필요 없는 기능은 **Capabilities**만 부여.
 
 ---
@@ -203,8 +203,8 @@ getcap /usr/local/bin/web-lite
 ```
 
 체크리스트
-- [ ] `/tmp`, `/var/tmp`에 Sticky 설정.  
-- [ ] 데이터/임시 경로 `noexec,nodev,nosuid`.  
+- [ ] `/tmp`, `/var/tmp`에 Sticky 설정.
+- [ ] 데이터/임시 경로 `noexec,nodev,nosuid`.
 - [ ] SUID 바이너리 목록 보관·리뷰, 불필요 SUID 제거(업그레이드 시 재검토).
 
 ---
@@ -239,8 +239,8 @@ firewall-cmd --reload
 ```
 
 체크리스트
-- [ ] 인바운드 기본 차단, 서비스 단위 허용.  
-- [ ] IPv6도 동일 통제 적용(불사용 시 명시 비활성).  
+- [ ] 인바운드 기본 차단, 서비스 단위 허용.
+- [ ] IPv6도 동일 통제 적용(불사용 시 명시 비활성).
 - [ ] 관리자 망/프록시 망 **분리** 검토.
 
 ---
@@ -285,8 +285,8 @@ EOF
 ```
 
 체크리스트
-- [ ] 리다이렉트/소스 라우팅 차단, rp_filter=1.  
-- [ ] 코어덤프·주소공간 무작위화(ASLR) 활성.  
+- [ ] 리다이렉트/소스 라우팅 차단, rp_filter=1.
+- [ ] 코어덤프·주소공간 무작위화(ASLR) 활성.
 - [ ] 불필요 모듈 블랙리스트.
 
 ---
@@ -318,8 +318,8 @@ grep -E 'segfault|denied|permission' /var/log/syslog 2>/dev/null | tail
 ```
 
 체크리스트
-- [ ] 로그 영속·상한·보존 기간 지정.  
-- [ ] 원격 전송 TLS 설정(중앙 수집/검색).  
+- [ ] 로그 영속·상한·보존 기간 지정.
+- [ ] 원격 전송 TLS 설정(중앙 수집/검색).
 - [ ] 핵심 서비스 단위 쿼리 템플릿 준비.
 
 ---
@@ -351,8 +351,8 @@ augenrules --load
 ```
 
 체크리스트
-- [ ] 계정/권한/서비스/SSH/패키지 DB에 감사 규칙.  
-- [ ] 키(`-k`)로 태깅해 조회 용이.  
+- [ ] 계정/권한/서비스/SSH/패키지 DB에 감사 규칙.
+- [ ] 키(`-k`)로 태깅해 조회 용이.
 - [ ] 룰·로그 보존과 중앙집중 분석 연계.
 
 ---
@@ -367,11 +367,11 @@ mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
 # 정기 검증(타이머/크론)
 aide --check | tee /var/log/aide/latest.txt
 ```
-정책 파일(`/etc/aide/aide.conf`)에서 감시 경로/속성 지정.  
+정책 파일(`/etc/aide/aide.conf`)에서 감시 경로/속성 지정.
 변경 감지 → **변경 승인/거부 절차** 문서화.
 
 체크리스트
-- [ ] 초기 DB는 **정상 상태에서** 생성(골든 스냅샷).  
+- [ ] 초기 DB는 **정상 상태에서** 생성(골든 스냅샷).
 - [ ] 결과는 중앙 저장·알림, 거짓 양성 튜닝.
 
 ---
@@ -413,8 +413,8 @@ aa-genprof /usr/sbin/nginx
 ```
 
 체크리스트
-- [ ] Enforcing 모드(허용→경고가 아닌 **차단**).  
-- [ ] 서비스별 정책/부울로 **필요 최소 권한**만.  
+- [ ] Enforcing 모드(허용→경고가 아닌 **차단**).
+- [ ] 서비스별 정책/부울로 **필요 최소 권한**만.
 - [ ] 레이블/프로파일 오류 시 `restorecon`/`aa-status`로 진단.
 
 ---
@@ -437,7 +437,7 @@ oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_standard \
 결과에서 **패스/실패/권고**를 운영 표준에 반영(자동화 가능).
 
 체크리스트
-- [ ] 주기적 점검/추세 비교, 미조치 항목 티켓화.  
+- [ ] 주기적 점검/추세 비교, 미조치 항목 티켓화.
 - [ ] 자동 수정(Ansible/SCAP Fix) 적용 전 **스테이징**에서 검증.
 
 ---
@@ -464,69 +464,69 @@ restic backup /etc /var/www /secure
 ```
 
 체크리스트
-- [ ] 민감 데이터 암호화(LUKS/애플리케이션 레벨).  
-- [ ] 키/패스프레이즈 별도 보관, 회수/교체 절차.  
+- [ ] 민감 데이터 암호화(LUKS/애플리케이션 레벨).
+- [ ] 키/패스프레이즈 별도 보관, 회수/교체 절차.
 - [ ] 정기 **복구 리허설**(단순 백업은 무의미).
 
 ---
 
 ## 미니 랩 A — “SSH+Fail2ban+auditd” 통합 검증
 
-1) `sshd_config` 강화(키, 루트 금지, AllowUsers, KEX/Cipher).  
-2) ufw/firewalld로 원천지 제한.  
-3) Fail2ban `sshd` 활성화, 의도적 실패 → `banned` 확인.  
-4) `auditd`: `/etc/ssh/sshd_config` 변경 감사, `ausearch -k sshcfg`.  
+1) `sshd_config` 강화(키, 루트 금지, AllowUsers, KEX/Cipher).
+2) ufw/firewalld로 원천지 제한.
+3) Fail2ban `sshd` 활성화, 의도적 실패 → `banned` 확인.
+4) `auditd`: `/etc/ssh/sshd_config` 변경 감사, `ausearch -k sshcfg`.
 5) 중앙 로그 전송이 켜져 있는지 원격 수신 측에서 검색.
 
 ---
 
 ## 미니 랩 B — “systemd 샌드박스 + Capabilities”로 웹 경량화
 
-1) `web-lite` 바이너리(비루트) + `cap_net_bind_service` 부여.  
-2) `web.service`에 Protect*/Restrict*/CapabilityBoundingSet/MemoryDenyWriteExecute/ SystemCallFilter 적용.  
-3) `systemd-analyze security web.service` 점수 확인.  
+1) `web-lite` 바이너리(비루트) + `cap_net_bind_service` 부여.
+2) `web.service`에 Protect*/Restrict*/CapabilityBoundingSet/MemoryDenyWriteExecute/ SystemCallFilter 적용.
+3) `systemd-analyze security web.service` 점수 확인.
 4) AIDE DB 생성 후 유닛 파일 변경 감지 실험.
 
 ---
 
 ## 미니 랩 C — “AIDE + SCAP + Lynis” 정기 점검 배치
 
-1) AIDE DB 초기화, 타이머로 `aide --check` 결과 메일/Slack 전송.  
-2) 주간 SCAP 표준 프로파일 평가, 결과 XML → HTML 변환.  
+1) AIDE DB 초기화, 타이머로 `aide --check` 결과 메일/Slack 전송.
+2) 주간 SCAP 표준 프로파일 평가, 결과 XML → HTML 변환.
 3) Lynis 점수 추세 그래프화(간단 스크립트).
 
 ---
 
 ## 흔한 구성 실수와 방지
 
-- **SSH 패스워드 허용**: 무차별 대입/크리덴셜 스터핑 → 키 인증, Fail2ban, 원천지 제한.  
-- **세계 쓰기 디렉터리(Sticky 없음)**: 타인 파일 삭제/교체 → Sticky 추가/권한 조정.  
-- **SUID 남발**: 권한 상승 표면 → 목록 주기 점검/제거/Capabilities 대체.  
-- **로깅 미흡**: 사고 재현 불가 → journald 영속+상한, 원격 전송, auditd 핵심 규칙.  
-- **방화벽 허술**: 불필요 포트 노출 → 기본 차단, 서비스 단위 허용, IPv6 동등.  
-- **Enforcing 비활성**: SELinux/AppArmor Permissive 방치 → 프로파일/부울 튜닝 후 Enforcing 전환.  
+- **SSH 패스워드 허용**: 무차별 대입/크리덴셜 스터핑 → 키 인증, Fail2ban, 원천지 제한.
+- **세계 쓰기 디렉터리(Sticky 없음)**: 타인 파일 삭제/교체 → Sticky 추가/권한 조정.
+- **SUID 남발**: 권한 상승 표면 → 목록 주기 점검/제거/Capabilities 대체.
+- **로깅 미흡**: 사고 재현 불가 → journald 영속+상한, 원격 전송, auditd 핵심 규칙.
+- **방화벽 허술**: 불필요 포트 노출 → 기본 차단, 서비스 단위 허용, IPv6 동등.
+- **Enforcing 비활성**: SELinux/AppArmor Permissive 방치 → 프로파일/부울 튜닝 후 Enforcing 전환.
 - **무패치 장기 운영**: 익스플로잇 가능성 누적 → 자동 보안 업데이트+창구 롤링.
 
 ---
 
 ## 점검 체크리스트(운영 증적 기준)
 
-- [ ] SSH: `PermitRootLogin no`, `PasswordAuthentication no`, AllowUsers, 강한 KEX/Cipher/MAC, Fail2ban 동작 스크린샷.  
-- [ ] 방화벽: 인바운드 기본 차단, 정책 스크립트/스냅샷.  
-- [ ] 파일시스템: `/etc/fstab`에 `noexec,nodev,nosuid`, `/tmp` Sticky.  
-- [ ] 권한: SUID/세계 쓰기 디렉터리 목록 리포트.  
-- [ ] sysctl: 99-security.conf 값과 `sysctl -a` 캡처.  
-- [ ] journald: 영속/상한/보존 설정, rsyslog TLS 전송 캡처.  
-- [ ] auditd: 룰 파일과 `ausearch` 결과 캡처.  
-- [ ] AIDE: 초기 DB와 최근 검사 리포트.  
-- [ ] LSM: SELinux/AppArmor Enforcing, 정책/부울/프로파일 증적.  
+- [ ] SSH: `PermitRootLogin no`, `PasswordAuthentication no`, AllowUsers, 강한 KEX/Cipher/MAC, Fail2ban 동작 스크린샷.
+- [ ] 방화벽: 인바운드 기본 차단, 정책 스크립트/스냅샷.
+- [ ] 파일시스템: `/etc/fstab`에 `noexec,nodev,nosuid`, `/tmp` Sticky.
+- [ ] 권한: SUID/세계 쓰기 디렉터리 목록 리포트.
+- [ ] sysctl: 99-security.conf 값과 `sysctl -a` 캡처.
+- [ ] journald: 영속/상한/보존 설정, rsyslog TLS 전송 캡처.
+- [ ] auditd: 룰 파일과 `ausearch` 결과 캡처.
+- [ ] AIDE: 초기 DB와 최근 검사 리포트.
+- [ ] LSM: SELinux/AppArmor Enforcing, 정책/부울/프로파일 증적.
 - [ ] 진단: Lynis/SCAP 결과와 보완 조치 티켓.
 
 ---
 
 ## 실전 문제(필답형·실습형 혼합)
 
-1) **문제**: `/data`를 실행 금지·장치파일 무효·SUID 무효로 영구 마운트하라.  
+1) **문제**: `/data`를 실행 금지·장치파일 무효·SUID 무효로 영구 마운트하라.
    **답**:
    ```text
    /dev/vdb1 /data ext4 defaults,noexec,nodev,nosuid 0 2
@@ -535,34 +535,34 @@ restic backup /etc /var/www /secure
    mount -a
    ```
 
-2) **문제**: SSH에서 루트 로그인을 금지, 비밀번호 인증 금지, 허용 사용자 `alice webops`만 남기고 KEX/Cipher/MAC을 강화하라.  
+2) **문제**: SSH에서 루트 로그인을 금지, 비밀번호 인증 금지, 허용 사용자 `alice webops`만 남기고 KEX/Cipher/MAC을 강화하라.
    **답**: (본문 `sshd_config` 예시 + `systemctl reload sshd`)
 
-3) **문제**: 2시간 내 `sshd_config` 변경을 auditd로 찾는 명령은?  
+3) **문제**: 2시간 내 `sshd_config` 변경을 auditd로 찾는 명령은?
    **답**:
    ```bash
    ausearch -k sshcfg -ts -2h
    ```
 
-4) **문제**: setuid/setgid 파일을 모두 나열하는 원라인 명령?  
+4) **문제**: setuid/setgid 파일을 모두 나열하는 원라인 명령?
    **답**:
    ```bash
    find / -xdev -perm -4000 -o -perm -2000 -type f -print 2>/dev/null
    ```
 
-5) **문제**: systemd 유닛에 최소 5개 샌드박스 지시자를 넣고 80/tcp 바인딩만 허용하라.  
+5) **문제**: systemd 유닛에 최소 5개 샌드박스 지시자를 넣고 80/tcp 바인딩만 허용하라.
    **답**: (본문 `web.service` 샌드박스 예시 + `CapabilityBoundingSet=CAP_NET_BIND_SERVICE`)
 
-6) **문제**: journald를 영속 저장으로 바꾸고 1GB 상한/2주 보존 설정, 재시작 명령?  
+6) **문제**: journald를 영속 저장으로 바꾸고 1GB 상한/2주 보존 설정, 재시작 명령?
    **답**: (본문 설정 + `systemctl restart systemd-journald`)
 
-7) **문제**: Fail2ban에서 `sshd` jail을 10분 내 5회 실패 시 2시간 차단하도록 설정하는 파일과 키 파라미터는?  
+7) **문제**: Fail2ban에서 `sshd` jail을 10분 내 5회 실패 시 2시간 차단하도록 설정하는 파일과 키 파라미터는?
    **답**: `/etc/fail2ban/jail.d/sshd.local`의 `maxretry/findtime/bantime`.
 
 ---
 
 ## 결론
 
-- 보안은 **구성의 습관화**다. 운영(03편)의 절차를 토대로, 본 편의 통제를 **코드화(IaC)** 하고 **정기 진단(AIDE/Lynis/SCAP)** 과 **감사(auditd)** 로 닫아라.  
-- 격리(systemd 샌드박스·SELinux/AppArmor), 최소 권한(Capabilities/sudo), 최소 노출(방화벽/서비스 제거), 가시성(로그/감사/중앙수집)이 함께 굴러갈 때 **침해 억제력**이 나온다.  
+- 보안은 **구성의 습관화**다. 운영(03편)의 절차를 토대로, 본 편의 통제를 **코드화(IaC)** 하고 **정기 진단(AIDE/Lynis/SCAP)** 과 **감사(auditd)** 로 닫아라.
+- 격리(systemd 샌드박스·SELinux/AppArmor), 최소 권한(Capabilities/sudo), 최소 노출(방화벽/서비스 제거), 가시성(로그/감사/중앙수집)이 함께 굴러갈 때 **침해 억제력**이 나온다.
 - 다음 단계는 **취약점 진단·모의해킹 운영 흐름(스캐닝→분석→보고)** 으로 연결하여, 서버 보안을 **지속 가능한 프로세스**로 완성한다.

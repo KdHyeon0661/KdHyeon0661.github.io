@@ -4,20 +4,20 @@ title: WPF - Styles & ControlTemplate
 date: 2025-09-02 23:25:23 +0900
 category: WPF
 ---
-# WPF **Styles & ControlTemplate** 
+# WPF **Styles & ControlTemplate**
 
 ## 0. 큰 그림 요약
 
-- **Style**  
+- **Style**
   - 특정 타입(예: `Button`) 또는 키가 있는 요소에 **속성 값(Setter)·트리거(Trigger)·이벤트(EventSetter)** 를 일괄 적용.
   - **암시적 스타일(Implicit Style)**: `x:Key`를 생략하고 `TargetType`만 지정하면 **해당 범위의 그 타입 전부**에 적용.
   - **BasedOn**으로 스타일 상속, **ResourceDictionary**로 재사용.
-- **ControlTemplate**  
+- **ControlTemplate**
   - 컨트롤의 **시각 트리(Visual Tree)** 를 **완전히 교체**. 외형을 바꿔도 **동작(로직)** 은 그대로.
   - 템플릿 내부에서 **`TemplateBinding`** 또는 **`{Binding RelativeSource={RelativeSource TemplatedParent}}`** 로 컨트롤 속성을 반영.
   - **Trigger / VisualStateManager** 로 상태에 따른 시각 효과 제어.
   - **PART_* 이름 관례** 로 템플릿 필수 요소 연결(주로 커스텀 컨트롤에서 사용).
-  
+
 > 기억: **Style = 속성/행동 묶음**, **ControlTemplate = 스킨 교체(시각 트리)**
 
 ---
@@ -75,9 +75,9 @@ category: WPF
 </Window.Resources>
 ```
 
-> **주의**  
-> - **Setter는 반드시 DependencyProperty**여야 함(일반 CLR 속성은 Setter로 못 씀).  
-> - **BasedOn 순환** 금지(런타임 예외).  
+> **주의**
+> - **Setter는 반드시 DependencyProperty**여야 함(일반 CLR 속성은 Setter로 못 씀).
+> - **BasedOn 순환** 금지(런타임 예외).
 > - Derived 타입에도 암시적 스타일이 적용되지만, **더 구체적인 TargetType**이 우선.
 
 ---
@@ -127,8 +127,8 @@ category: WPF
 </Style>
 ```
 
-> **우선순위 팁**  
-> - **로컬 값(Local value)** > **(템플릿/스타일) 트리거** > **스타일 Setter**.  
+> **우선순위 팁**
+> - **로컬 값(Local value)** > **(템플릿/스타일) 트리거** > **스타일 Setter**.
 > - 즉, 어떤 속성에 **로컬 값을 직접 지정**하면 **트리거 Setter가 덮어쓰지 못합니다**. (필요하면 로컬 값 사용을 피하거나, 템플릿 내 **Visual 상태**로 제어)
 
 ---
@@ -146,7 +146,7 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
     Debug.WriteLine($"Clicked: {((Button)sender).Content}");
 }
 ```
-- **주의**: `EventSetter`는 **Code-behind 핸들러**가 필요합니다.  
+- **주의**: `EventSetter`는 **Code-behind 핸들러**가 필요합니다.
   MVVM에선 **Behaviors / AttachedProperty / ICommand(Interaction)** 등으로 대체 권장.
 
 ---
@@ -225,8 +225,8 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
   </Setter>
 </Style>
 ```
-- **`TemplateBinding`**: **경량 OneWay 바인딩** (성능상 유리).  
-- **`ContentPresenter`**: 버튼 내용(텍스트/아이콘 등)을 출력.  
+- **`TemplateBinding`**: **경량 OneWay 바인딩** (성능상 유리).
+- **`ContentPresenter`**: 버튼 내용(텍스트/아이콘 등)을 출력.
 - **템플릿 트리거**: 템플릿 내부 요소(`TargetName`) 속성 변경.
 
 ### 5.2 TemplateBinding vs TemplatedParent Binding
@@ -242,7 +242,7 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
 
 ## 6. VisualStateManager(VSM) — 상태 기반 템플릿
 
-WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.  
+WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.
 대표 그룹: **CommonStates**(Normal/MouseOver/Pressed/Disabled), **FocusStates**(Focused/Unfocused)
 
 ```xml
@@ -360,10 +360,10 @@ WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.
 
 ## 8. **UserControl** vs **CustomControl** (템플릿 관점)
 
-- **UserControl**  
+- **UserControl**
   - 내부 XAML이 고정. 스킨을 **템플릿으로 교체**하긴 어려움(재정의 지점 제한).
-- **CustomControl**  
-  - **`Themes/Generic.xaml`** 에 **기본 스타일 + ControlTemplate** 제공.  
+- **CustomControl**
+  - **`Themes/Generic.xaml`** 에 **기본 스타일 + ControlTemplate** 제공.
   - 외부에서 언제든 스타일/템플릿을 **교체** 가능 → “컨트롤 라이브러리” 제작에 적합.
 
 ### 8.1 Generic.xaml에 기본 템플릿 제공
@@ -487,7 +487,7 @@ public class TagChip : Control
   </Button.Triggers>
 </Button>
 ```
-- **WPF의 `EventTrigger`는 Storyboard 전용**입니다(코드 실행을 직접 호출하는 트리거가 아님).  
+- **WPF의 `EventTrigger`는 Storyboard 전용**입니다(코드 실행을 직접 호출하는 트리거가 아님).
   동작/명령은 **InputBindings/Behaviors**를 사용하세요.
 
 ---
@@ -516,7 +516,7 @@ public class TagChip : Control
   </Setter>
 </Style>
 ```
-- `ItemsPresenter`는 반드시 템플릿 내부에 존재해야 **아이템이 그려집니다**.  
+- `ItemsPresenter`는 반드시 템플릿 내부에 존재해야 **아이템이 그려집니다**.
 - 가상화 유지하려면 **외부 `ScrollViewer` 추가**나 **`WrapPanel`로 교체**를 신중히 하세요(가상화 꺼질 수 있음).
 
 ---
@@ -525,7 +525,7 @@ public class TagChip : Control
 
 - **StaticResource**: 로드 시 **한 번만 해석**. 빠르고 안전.
 - **DynamicResource**: 런타임에 리소스 **변경 감지**. 테마 전환/사용자 커스터마이즈에 유용.
-- 템플릿/스타일에서 **테마 색** 같이 바뀔 가능성이 있는 것은 **DynamicResource**로,  
+- 템플릿/스타일에서 **테마 색** 같이 바뀔 가능성이 있는 것은 **DynamicResource**로,
   그렇지 않으면 **StaticResource**로 성능 최적화.
 
 ```xml
@@ -596,7 +596,7 @@ public class TagChip : Control
 <!-- 사용 -->
 <CheckBox Style="{StaticResource ToggleSwitch}" Content="알림"/>
 ```
-- **기능(체크/언체크)** 은 그대로, **시각만 전환**.  
+- **기능(체크/언체크)** 은 그대로, **시각만 전환**.
 - 고급: Thumb 이동을 **DoubleAnimation**으로 부드럽게 만들 수 있음.
 
 ---
@@ -660,7 +660,7 @@ public class TagChip : Control
 ```
 
 ### 15.4 TemplateBinding으로 **성능 최적화**
-- 템플릿 내 **단순 전달**은 **TemplateBinding**을 최우선 사용.  
+- 템플릿 내 **단순 전달**은 **TemplateBinding**을 최우선 사용.
 - 복잡 바인딩(Converter, Fallback 등)이 필요할 때만 `TemplatedParent` 바인딩.
 
 ### 15.5 Trigger보다 **VSM 우선**(복잡 상태)
@@ -670,17 +670,17 @@ public class TagChip : Control
 
 ## 16. “왜 적용이 안 되지?” 트러블슈팅
 
-1. **암시적 스타일 범위**가 다름?  
+1. **암시적 스타일 범위**가 다름?
    - 그 컨트롤이 다른 Resource 스코프에 있지 않은지(예: DataTemplate 내부 ItemsControl 등).
-2. **로컬 값이 우선**?  
+2. **로컬 값이 우선**?
    - XAML에 직접 속성 값을 박아두면 스타일 Setter/Trigger가 못 덮음.
-3. **키/리소스 해석 시점**  
+3. **키/리소스 해석 시점**
    - `StaticResource` 는 선언 순서 영향. 필요하면 `DynamicResource`.
-4. **템플릿 내부 이름/TargetName 오타**  
+4. **템플릿 내부 이름/TargetName 오타**
    - `TargetName` 못 찾으면 트리거가 적용 안 됨.
-5. **ItemsControl 가상화**  
+5. **ItemsControl 가상화**
    - 외부 ScrollViewer로 감싸서 **가상화가 꺼지면** 성능/스타일 동작이 달라질 수 있음.
-6. **BasedOn 순환**  
+6. **BasedOn 순환**
    - 예외 발생. 스타일 상속 트리를 단순화.
 
 ---
@@ -747,26 +747,26 @@ public class TagChip : Control
 
 ## 18. 스타일/템플릿의 테스트 전략
 
-- **시각 스냅샷 테스트**: 동일 렌더링 보장(픽셀 비교).  
-- **시각 트리 규칙 검사**: `Template.FindName` / UI 자동화 트리로 필수 요소(PART) 존재 검증.  
-- **상태 전환 테스트**: VSM 상태 호출(`VisualStateManager.GoToState`) 후 속성 값 확인.  
+- **시각 스냅샷 테스트**: 동일 렌더링 보장(픽셀 비교).
+- **시각 트리 규칙 검사**: `Template.FindName` / UI 자동화 트리로 필수 요소(PART) 존재 검증.
+- **상태 전환 테스트**: VSM 상태 호출(`VisualStateManager.GoToState`) 후 속성 값 확인.
 - **성능**: 스크롤/리스트 가상화 유지, 템플릿 바인딩 수 최소화.
 
 ---
 
 ## 19. 마무리 요약
 
-- **Style**  
-  - 속성/트리거/이벤트를 범위 단위로 묶어 **일관성**과 **재사용성**을 확보.  
-  - **암시적 스타일**로 기본값을 정의하고, **BasedOn**으로 역할별 커스터마이즈.  
-  - 데이터/상태 변화는 **(Multi)DataTrigger/Trigger**.  
-- **ControlTemplate**  
-  - 컨트롤 시각 트리를 교체; **동작은 그대로**.  
-  - **TemplateBinding**으로 경량 연결, **VSM**으로 상태 전환을 깔끔히.  
+- **Style**
+  - 속성/트리거/이벤트를 범위 단위로 묶어 **일관성**과 **재사용성**을 확보.
+  - **암시적 스타일**로 기본값을 정의하고, **BasedOn**으로 역할별 커스터마이즈.
+  - 데이터/상태 변화는 **(Multi)DataTrigger/Trigger**.
+- **ControlTemplate**
+  - 컨트롤 시각 트리를 교체; **동작은 그대로**.
+  - **TemplateBinding**으로 경량 연결, **VSM**으로 상태 전환을 깔끔히.
   - 커스텀 컨트롤은 **Generic.xaml**에 기본 템플릿 제공 + **PART** 관례.
 
-이제 여기까지의 설계를 **리소스 딕셔너리**로 모듈화하고,  
-라이트/다크 테마로 교체 가능한 **DynamicResource** 기반 팔레트를 더하면,  
+이제 여기까지의 설계를 **리소스 딕셔너리**로 모듈화하고,
+라이트/다크 테마로 교체 가능한 **DynamicResource** 기반 팔레트를 더하면,
 **유지보수 쉬운 디자인 시스템**을 완성할 수 있습니다. 🎯
 
 ---
@@ -846,7 +846,7 @@ public class TagChip : Control
 <Button Content="삭제" Style="{StaticResource Btn.Primary}" />
 ```
 
-**다크 테마 전환**은 `Colors.xaml`을 `Colors.Dark.xaml`로 교체(동일 키 유지)만 하면 끝.  
+**다크 테마 전환**은 `Colors.xaml`을 `Colors.Dark.xaml`로 교체(동일 키 유지)만 하면 끝.
 **DynamicResource** 덕분에 **재시작 없이 즉시 반영**됩니다.
 
 ---
@@ -872,11 +872,11 @@ ApplyTheme(new Uri("Themes/Colors.Dark.xaml", UriKind.Relative));
 
 ## 부록 C) 스타일/템플릿 체크리스트 (현업용)
 
-- [ ] **암시적 기본 스타일** 정의(타입별 디자인 토대)  
-- [ ] 역할/상태 별 **서브 스타일**(Primary/Danger/Outline/Link…)  
-- [ ] **ControlTemplate로 스킨 통일**, 상태는 **VSM**로  
-- [ ] **DynamicResource 팔레트**(라이트/다크/브랜드 색)  
-- [ ] ItemsControl 템플릿은 **ItemsPresenter + 가상화 유지**  
-- [ ] **로컬 값 최소화** / 스타일로 통제  
-- [ ] **PART 요소**/OnApplyTemplate 계약(커스텀 컨트롤)  
+- [ ] **암시적 기본 스타일** 정의(타입별 디자인 토대)
+- [ ] 역할/상태 별 **서브 스타일**(Primary/Danger/Outline/Link…)
+- [ ] **ControlTemplate로 스킨 통일**, 상태는 **VSM**로
+- [ ] **DynamicResource 팔레트**(라이트/다크/브랜드 색)
+- [ ] ItemsControl 템플릿은 **ItemsPresenter + 가상화 유지**
+- [ ] **로컬 값 최소화** / 스타일로 통제
+- [ ] **PART 요소**/OnApplyTemplate 계약(커스텀 컨트롤)
 - [ ] 성능: **TemplateBinding 우선**, 트리거/바인딩 최소화

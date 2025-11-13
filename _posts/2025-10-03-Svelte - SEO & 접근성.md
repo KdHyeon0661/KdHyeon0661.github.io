@@ -7,9 +7,9 @@ category: Svelte
 # 11. SEO & 접근성
 **메타/오픈그래프/구조화 데이터 · i18n 다국어 라우팅 · A11y 체크리스트(포커스/키보드/ARIA)**
 
-> 이 장은 SvelteKit로 **검색 친화적(SEO)**이고 **접근 가능한(A11y)** 웹을 만드는 데 필요한 실무 지식을 한곳에 모은다.  
-> - **메타/OG/Twitter/구조화 데이터(JSON-LD)**를 라우트별로 정확히 출력  
-> - **다국어(i18n) 라우팅**과 `hreflang`/정규화(canonical)  
+> 이 장은 SvelteKit로 **검색 친화적(SEO)**이고 **접근 가능한(A11y)** 웹을 만드는 데 필요한 실무 지식을 한곳에 모은다.
+> - **메타/OG/Twitter/구조화 데이터(JSON-LD)**를 라우트별로 정확히 출력
+> - **다국어(i18n) 라우팅**과 `hreflang`/정규화(canonical)
 > - **접근성 체크리스트**: 포커스 흐름, 키보드 내비, ARIA, 라이브 영역, 색 대비 등
 
 ---
@@ -230,7 +230,7 @@ src/routes/
       +page.svelte
 ```
 
-- `/about` (기본 언어)  
+- `/about` (기본 언어)
 - `/en/about`, `/ja/about` (명시 언어)
 
 ### 11.4.2 언어 결정 로직(서버)
@@ -325,7 +325,7 @@ export function t(lang: Lang, key: keyof (typeof dict)['ko']) { return dict[lang
 ```
 
 ### 11.4.5 리다이렉트/언어 협상(최초 방문)
-- 첫 방문 시 `Accept-Language`를 참고해 추천 언어로 **302** 리다이렉트  
+- 첫 방문 시 `Accept-Language`를 참고해 추천 언어로 **302** 리다이렉트
 - 이미 쿠키에 `lang` 있으면 존중
 
 ```ts
@@ -387,13 +387,13 @@ export const GET: RequestHandler = ({ url }) => {
 
 ## 11.6 A11y(접근성) **기본 원칙**
 
-1) **의미론적 HTML**: 가능한 `<button>`, `<a>`, `<label>`, `<fieldset>`, `<legend>`, `<nav>` 등 사용  
-2) **포커스 가능/순서**: 키보드(Tab/Shift+Tab)로 모든 인터랙션 가능  
-3) **명확한 포커스 표시**: 커스텀 스타일 시 기본 outline 제거하면 **대체 포커스** 제공  
-4) **대체 텍스트**: 의미 있는 이미지 `alt` 제공, 장식은 `alt=""`  
-5) **색 대비**: 최소 4.5:1(본문), 3:1(굵은 큰 텍스트)  
-6) **ARIA는 마지막 수단**: 의미론이 부족할 때만 `role`/`aria-*` 보강  
-7) **애니메이션 배려**: `prefers-reduced-motion` 준수  
+1) **의미론적 HTML**: 가능한 `<button>`, `<a>`, `<label>`, `<fieldset>`, `<legend>`, `<nav>` 등 사용
+2) **포커스 가능/순서**: 키보드(Tab/Shift+Tab)로 모든 인터랙션 가능
+3) **명확한 포커스 표시**: 커스텀 스타일 시 기본 outline 제거하면 **대체 포커스** 제공
+4) **대체 텍스트**: 의미 있는 이미지 `alt` 제공, 장식은 `alt=""`
+5) **색 대비**: 최소 4.5:1(본문), 3:1(굵은 큰 텍스트)
+6) **ARIA는 마지막 수단**: 의미론이 부족할 때만 `role`/`aria-*` 보강
+7) **애니메이션 배려**: `prefers-reduced-motion` 준수
 8) **오류/상태 전달**: `aria-live`/`role="alert"`로 즉시 전달
 
 ---
@@ -540,7 +540,7 @@ button:focus-visible { box-shadow: 0 0 0 3px rgba(14,165,233,.5); }
 ## 11.10 색 대비/모션/가독성
 
 ### 11.10.1 대비 확인 기준
-- 본문/보통 텍스트: **4.5:1 이상**  
+- 본문/보통 텍스트: **4.5:1 이상**
 - 큰 텍스트(≥24px or 19px bold): **3:1 이상**
 
 ```css
@@ -565,10 +565,10 @@ a { color: var(--primary); }
 
 ## 11.11 성능 & 인덱싱 실무 팁
 
-- **SSR/SSG**: 마케팅/블로그는 SSR/SSG로 **초기 HTML** 제공  
-- **LCP 자원 최적화**: Hero 이미지 **preload** + 적절한 크기  
-- **CLS 방지**: 이미지에 `width/height` 또는 `aspect-ratio` 지정  
-- **번들 분할**: 라우트 레벨 코드 스플리팅, 큰 라이브러리 지연 로딩  
+- **SSR/SSG**: 마케팅/블로그는 SSR/SSG로 **초기 HTML** 제공
+- **LCP 자원 최적화**: Hero 이미지 **preload** + 적절한 크기
+- **CLS 방지**: 이미지에 `width/height` 또는 `aspect-ratio` 지정
+- **번들 분할**: 라우트 레벨 코드 스플리팅, 큰 라이브러리 지연 로딩
 - **Noindex** 필요한 페이지(내부/개발):
 ```svelte
 <svelte:head><meta name="robots" content="noindex, nofollow" /></svelte:head>
@@ -579,32 +579,32 @@ a { color: var(--primary); }
 ## 11.12 체크리스트(요약)
 
 ### SEO
-- [ ] 라우트별 **`<title>`/`description`/OG/Twitter** 정확  
-- [ ] **canonical**(쿼리 정규화), **hreflang**(다국어)  
-- [ ] **JSON-LD**(Article/Org/Breadcrumbs 등) 컨텐츠와 일치  
-- [ ] **robots.txt**/**sitemap.xml** 제공  
+- [ ] 라우트별 **`<title>`/`description`/OG/Twitter** 정확
+- [ ] **canonical**(쿼리 정규화), **hreflang**(다국어)
+- [ ] **JSON-LD**(Article/Org/Breadcrumbs 등) 컨텐츠와 일치
+- [ ] **robots.txt**/**sitemap.xml** 제공
 - [ ] SSR/SSG로 **초기 HTML** 제공, 성능 최적화(LCP/CLS)
 
 ### i18n
-- [ ] `[[lang]]` 라우팅 + 쿠키/헤더 협상  
-- [ ] `hreflang`/`x-default`/`canonical` 일관  
+- [ ] `[[lang]]` 라우팅 + 쿠키/헤더 협상
+- [ ] `hreflang`/`x-default`/`canonical` 일관
 - [ ] 번역 키 관리/빌드 검증(누락 키 탐지)
 
 ### A11y
-- [ ] 의미론적 태그/랜드마크(`<header><nav><main><footer>`)  
-- [ ] **스킵 링크** 제공  
-- [ ] 키보드 내비게이션 완전 지원(Tab/Shift+Tab/ESC)  
-- [ ] 포커스 표시 가시성(커스텀 시 대체 제공)  
-- [ ] 이미지 `alt`/장식 `alt=""`  
-- [ ] 폼 라벨/오류 연결(`aria-invalid`/`aria-describedby`)  
-- [ ] 모달: `role="dialog"`, `aria-modal`, 포커스 트랩, ESC 닫기  
-- [ ] 라이브 상태: `aria-live`/`role="alert"`  
+- [ ] 의미론적 태그/랜드마크(`<header><nav><main><footer>`)
+- [ ] **스킵 링크** 제공
+- [ ] 키보드 내비게이션 완전 지원(Tab/Shift+Tab/ESC)
+- [ ] 포커스 표시 가시성(커스텀 시 대체 제공)
+- [ ] 이미지 `alt`/장식 `alt=""`
+- [ ] 폼 라벨/오류 연결(`aria-invalid`/`aria-describedby`)
+- [ ] 모달: `role="dialog"`, `aria-modal`, 포커스 트랩, ESC 닫기
+- [ ] 라이브 상태: `aria-live`/`role="alert"`
 - [ ] 색 대비 기준 충족(4.5:1), 모션 최소화 지원
 
 ---
 
 ## 11.13 마무리
-- SvelteKit는 **SSR/파일 기반 라우팅**으로 라우트별 **메타/OG/JSON-LD** 관리가 용이하다.  
-- 다국어는 `[[lang]]` 패턴과 `hreflang`/canonical을 묶어서 설계하고, **언어 협상**(헤더/쿠키/경로)을 일관되게 운영.  
-- 접근성은 **설계 초반**부터: 의미론, 포커스, 키보드, ARIA, 라이브 영역, 대비/모션을 기본값으로.  
+- SvelteKit는 **SSR/파일 기반 라우팅**으로 라우트별 **메타/OG/JSON-LD** 관리가 용이하다.
+- 다국어는 `[[lang]]` 패턴과 `hreflang`/canonical을 묶어서 설계하고, **언어 협상**(헤더/쿠키/경로)을 일관되게 운영.
+- 접근성은 **설계 초반**부터: 의미론, 포커스, 키보드, ARIA, 라이브 영역, 대비/모션을 기본값으로.
 - SEO와 A11y는 “**사용자에게 좋은 것 = 검색/도구에도 좋은 것**”이라는 동일 목표를 갖는다.

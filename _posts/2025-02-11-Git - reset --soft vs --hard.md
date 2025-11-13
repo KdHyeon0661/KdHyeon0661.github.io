@@ -328,14 +328,14 @@ git reset --hard HEAD@{N}
 
 ## 15. 결론
 
-- `--soft` 는 **커밋만 되돌리는 안전한 정리 도구**, `--mixed` 는 **스테이징 상태 초기화**, `--hard` 는 **WD까지 강제 동기화하는 날카로운 칼**이다.  
-- 공유 이력에는 `revert` 가 우선이며, reset/rebase 후 푸시는 보호 규칙과 `--force-with-lease` 로만 제한하라.  
+- `--soft` 는 **커밋만 되돌리는 안전한 정리 도구**, `--mixed` 는 **스테이징 상태 초기화**, `--hard` 는 **WD까지 강제 동기화하는 날카로운 칼**이다.
+- 공유 이력에는 `revert` 가 우선이며, reset/rebase 후 푸시는 보호 규칙과 `--force-with-lease` 로만 제한하라.
 - 리셋 전 **백업 브랜치**와 **reflog 인지**는 생존 스킬이다.
 
 ---
 
 ## 참고 링크
 
-- Git reset: https://git-scm.com/docs/git-reset  
-- Pro Git — Reset: https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified  
+- Git reset: https://git-scm.com/docs/git-reset
+- Pro Git — Reset: https://git-scm.com/book/en/v2/Git-Tools-Reset-Demystified
 - Git restore: https://git-scm.com/docs/git-restore

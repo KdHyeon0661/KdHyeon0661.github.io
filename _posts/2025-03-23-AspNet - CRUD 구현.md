@@ -74,8 +74,8 @@ public class AppDbContext : DbContext
 }
 ```
 
-> 마이그레이션 추가:  
-> `dotnet ef migrations add AddBlogValidationsAndRowVersion`  
+> 마이그레이션 추가:
+> `dotnet ef migrations add AddBlogValidationsAndRowVersion`
 > `dotnet ef database update`
 
 ---
@@ -265,9 +265,9 @@ public class IndexModel : PageModel
 }
 ```
 
-> **포인트**  
-> - 투영(`Select`)으로 필요한 필드만 가져와 **성능 최적화**  
-> - `AsNoTracking()`으로 목록 조회 성능 향상  
+> **포인트**
+> - 투영(`Select`)으로 필요한 필드만 가져와 **성능 최적화**
+> - `AsNoTracking()`으로 목록 조회 성능 향상
 > - 쿼리스트링 유지로 UX 향상
 
 ---
@@ -747,7 +747,7 @@ public class BlogTests
 }
 ```
 
-> 주의: InMemory는 **관계/트랜잭션** 동작이 실제 RDB와 달라질 수 있다.  
+> 주의: InMemory는 **관계/트랜잭션** 동작이 실제 RDB와 달라질 수 있다.
 > 통합 테스트는 SQLite In-Memory 모드 사용을 고려.
 
 ---
@@ -793,8 +793,8 @@ public class BlogTests
 
 # 결론
 
-초안의 CRUD를 **실무 수준**으로 확장했다.  
-- 안정성: 유효성/오버포스팅 방지/동시성/소프트 삭제  
-- UX: PRG + TempData, 검색/정렬/페이징과 쿼리 유지  
-- 성능: NoTracking/투영/인덱스  
+초안의 CRUD를 **실무 수준**으로 확장했다.
+- 안정성: 유효성/오버포스팅 방지/동시성/소프트 삭제
+- UX: PRG + TempData, 검색/정렬/페이징과 쿼리 유지
+- 성능: NoTracking/투영/인덱스
 - 확장: DTO/ViewModel/트랜잭션/시드/테스트

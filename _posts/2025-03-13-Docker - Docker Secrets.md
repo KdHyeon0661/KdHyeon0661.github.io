@@ -187,7 +187,7 @@ String password = Files.readString(Path.of(path), StandardCharsets.UTF_8).trim()
   - 교체 단계에서 두 Secret을 모두 마운트하고 앱이 **새 경로 우선**, 구 경로 fallback 후 재기동 시 구 Secret 제거
 
 ### 5.2 무중단 교체 패턴(Blue/Green-like)
-1) 새 Secret 생성:  
+1) 새 Secret 생성:
 ```bash
 echo "newpass" | docker secret create db_password_v2 -
 ```
@@ -197,7 +197,7 @@ docker service update \
   --secret-add db_password_v2 \
   mystack_api
 ```
-3) 애플리케이션이 `db_password_v2` 우선 사용하도록 구성(환경변수 `DB_PASSWORD_FILE=/run/secrets/db_password_v2` 등).  
+3) 애플리케이션이 `db_password_v2` 우선 사용하도록 구성(환경변수 `DB_PASSWORD_FILE=/run/secrets/db_password_v2` 등).
 4) 안정화 확인 후 구 Secret 제거:
 ```bash
 docker service update \
@@ -257,8 +257,8 @@ ssl_certificate_key /run/secrets/tls_key;
 
 Swarm 없이 로컬 개발만 할 때는 Docker Secrets의 **보안 이점이 완벽히 동일하지 않다.** 대안:
 
-1) **BuildKit 빌드-타임 시크릿**(아래 8장)으로 레지스트리 자격증명/프라이빗 종속성 설치 시 안전사용.  
-2) 개발은 바인드 마운트로 대체하되, **프로덕션 동일 경로**(`/run/secrets/...`)를 지켜서 코드 변경 없이 배포할 수 있도록 심볼릭 링크/환경변수로 치환.  
+1) **BuildKit 빌드-타임 시크릿**(아래 8장)으로 레지스트리 자격증명/프라이빗 종속성 설치 시 안전사용.
+2) 개발은 바인드 마운트로 대체하되, **프로덕션 동일 경로**(`/run/secrets/...`)를 지켜서 코드 변경 없이 배포할 수 있도록 심볼릭 링크/환경변수로 치환.
 3) 통합 테스트 파이프라인은 반드시 Swarm/스테이징 클러스터 상에서 수행.
 
 ---
@@ -302,11 +302,11 @@ Vault를 쓰더라도, **컨테이너 내부 경로/권한/로그 노출 금지*
 
 ## 10. 보안/감사 관점 체크리스트
 
-1) **권한 최소화**: Secret은 해당 서비스에만 연결. 재사용 금지.  
-2) **로그 금지**: Secret 내용을 로깅하지 않도록 프레임워크 설정(ORM/에러 리포터).  
-3) **코어 덤프 방지**: 비밀번호를 문자열 상수/전역에 오래 보관하지 말고, 가능한 한 **짧은 수명**으로 다룬다.  
-4) **백업 범위 점검**: Secret 원본이 저장된 경로(예: `./secrets/*.txt`)가 백업/스토리지에 들어가면 무력화. 운영/개발 분리.  
-5) **감사 추적**: Secret 버전/생성자/배포 릴리즈/회전 이력을 문서화.  
+1) **권한 최소화**: Secret은 해당 서비스에만 연결. 재사용 금지.
+2) **로그 금지**: Secret 내용을 로깅하지 않도록 프레임워크 설정(ORM/에러 리포터).
+3) **코어 덤프 방지**: 비밀번호를 문자열 상수/전역에 오래 보관하지 말고, 가능한 한 **짧은 수명**으로 다룬다.
+4) **백업 범위 점검**: Secret 원본이 저장된 경로(예: `./secrets/*.txt`)가 백업/스토리지에 들어가면 무력화. 운영/개발 분리.
+5) **감사 추적**: Secret 버전/생성자/배포 릴리즈/회전 이력을 문서화.
 6) **E2E 암호화**: Swarm TLS를 기본 유지, 매니저 노드 보호.
 
 ---

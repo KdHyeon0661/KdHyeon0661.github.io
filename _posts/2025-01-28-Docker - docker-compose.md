@@ -483,7 +483,7 @@ services:
     cap_drop: [ "ALL" ]
 ```
 
-- dev는 **bind mount로 즉시 반영**,  
+- dev는 **bind mount로 즉시 반영**,
 - prod는 **이미지 고정·비루트·read_only**로 안전.
 
 ---
@@ -499,15 +499,15 @@ $$
 
 ## 14. 베스트 프랙티스(요약)
 
-1. **사용자 정의 브리지 네트워크**로 서비스 분리(프런트/백).  
-2. **secrets/configs**로 민감정보/설정 분리, 환경변수 과다 노출 금지.  
-3. **멀티 스테이지** + `target`으로 런타임 경량화.  
-4. **비루트 + read_only + tmpfs + cap_drop**로 실행 표준화.  
-5. `depends_on.condition = service_healthy`로 **현실적인 의존**.  
-6. `docker compose config`로 **최종 구성 검증** 후 배포.  
-7. dev는 **bind mount**, prod는 **named volume**.  
-8. **profiles/오버레이 파일**로 환경별 구성 관리.  
-9. 컨테이너 간 통신은 **이름 기반**으로, 외부는 **필요 포트만** 공개.  
+1. **사용자 정의 브리지 네트워크**로 서비스 분리(프런트/백).
+2. **secrets/configs**로 민감정보/설정 분리, 환경변수 과다 노출 금지.
+3. **멀티 스테이지** + `target`으로 런타임 경량화.
+4. **비루트 + read_only + tmpfs + cap_drop**로 실행 표준화.
+5. `depends_on.condition = service_healthy`로 **현실적인 의존**.
+6. `docker compose config`로 **최종 구성 검증** 후 배포.
+7. dev는 **bind mount**, prod는 **named volume**.
+8. **profiles/오버레이 파일**로 환경별 구성 관리.
+9. 컨테이너 간 통신은 **이름 기반**으로, 외부는 **필요 포트만** 공개.
 10. 문제 시 **관찰 순서**: ps → logs → config → network inspect → 컨테이너 내 DNS/라우팅 확인.
 
 ---

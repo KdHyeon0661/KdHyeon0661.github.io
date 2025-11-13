@@ -89,7 +89,7 @@ END;
 
 ### 1.1 개념
 - **목표**: 인덱스 리프를 **키 순서대로 쭉 훑을 때** 매번 “다음 리프 블록”을 기다리느라 생기는 **왕복 지연**을 줄이기.
-- **방법**: 엔진이 **인접 리프 블록** 또는 **연속 리프 범위**를 **멀티블록/병렬로 미리 발주**(read-ahead)하여,  
+- **방법**: 엔진이 **인접 리프 블록** 또는 **연속 리프 범위**를 **멀티블록/병렬로 미리 발주**(read-ahead)하여,
   커서가 다음 키로 진행할 때 이미 **버퍼 캐시** 또는 **세션 IO 큐**에 블록이 존재하도록 만든다.
 - **관찰 포인트**
   - 인덱스가 **Fast Full Scan**으로 선택되면 **멀티블록**(`db file scattered read` / `direct path read`) 기반.
@@ -112,9 +112,9 @@ FETCH FIRST 100 ROWS ONLY;
 - **왜 프리페치가 잘 먹히나?**
   - 인덱스 정의가 **(cust_id, sale_dt DESC, sale_id DESC)** 이고, 정렬도 동일 → **리프 체인 순회가 연속적**.
   - 엔진은 다음 리프 블록을 **미리 발주**해서 커서 전진 시 대기 최소화.
-- **관찰**:  
-  - `DBMS_XPLAN.DISPLAY_CURSOR` 에서 `INDEX RANGE SCAN` + `STOPKEY` 확인.  
-  - 세션 이벤트에 `db file sequential read`(단일) 비중이 여전히 보이지만, **호출 간 평균 대기**가 작아지고,  
+- **관찰**:
+  - `DBMS_XPLAN.DISPLAY_CURSOR` 에서 `INDEX RANGE SCAN` + `STOPKEY` 확인.
+  - 세션 이벤트에 `db file sequential read`(단일) 비중이 여전히 보이지만, **호출 간 평균 대기**가 작아지고,
     상황에 따라 `db file parallel read` 로 **여러 블록 발주** 흔적이 함께 나타날 수 있다.
 
 ### 1.3 실습 2 — 인덱스 Fast Full Scan(FFS)로 읽기량 자체 줄이기
@@ -142,10 +142,10 @@ GROUP  BY s.status;
 ## 2. 테이블 프리페치(Table Prefetch) — Batched Table Access
 
 ### 2.1 개념
-- **문제 배경**: 인덱스 범위 스캔 후 **ROWID마다** 테이블 블록을 **한 블록씩** 랜덤 접근하면  
+- **문제 배경**: 인덱스 범위 스캔 후 **ROWID마다** 테이블 블록을 **한 블록씩** 랜덤 접근하면
   **`db file sequential read` 호출**이 폭증하고 지연이 누적된다.
-- **해법**: 인덱스에서 ROWID를 **일단 모아서**(버퍼링), **중복 제거/정렬** 후,  
-  **해당 테이블 블록들을 한 번에(또는 몇 묶음으로) 미리 읽어두는** 전략.  
+- **해법**: 인덱스에서 ROWID를 **일단 모아서**(버퍼링), **중복 제거/정렬** 후,
+  **해당 테이블 블록들을 한 번에(또는 몇 묶음으로) 미리 읽어두는** 전략.
   Oracle 실행계획은 이를 **`TABLE ACCESS BY INDEX ROWID BATCHED`** 로 표시한다.
 - **관찰 포인트**
   - 대기 이벤트에 **`db file parallel read`**(여러 블록 동시 발주 후 기다림)가 **눈에 띄게 증가**할 수 있다.
@@ -168,23 +168,23 @@ ORDER  BY s.sale_dt DESC, s.sale_id DESC;
 
 - **계획 확인**
 ```sql
-SELECT * 
+SELECT *
 FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS'));
 ```
 - 좋은 경우:
-  - `INDEX RANGE SCAN` (sales 인덱스)  
-  - `TABLE ACCESS BY INDEX ROWID **BATCHED**` (sales)  
-- **이때** `V$SESSION_EVENT` / `V$SYSTEM_EVENT` 에서 `db file parallel read` 가 보이면,  
+  - `INDEX RANGE SCAN` (sales 인덱스)
+  - `TABLE ACCESS BY INDEX ROWID **BATCHED**` (sales)
+- **이때** `V$SESSION_EVENT` / `V$SYSTEM_EVENT` 에서 `db file parallel read` 가 보이면,
   **테이블 프리페치가 동작**하며 **배치로 블록을 읽는 중**일 가능성이 크다.
 
 ### 2.3 Batched가 **안** 잡힐 때의 원인과 대안
-- **히스토그램/통계 오판**으로 옵티마이저가 **NL + 단건 접근**이 싸다고 믿는 경우  
+- **히스토그램/통계 오판**으로 옵티마이저가 **NL + 단건 접근**이 싸다고 믿는 경우
   → 통계를 정확히, 힌트(`LEADING`/`USE_HASH`/`FULL`/`INDEX`), 또는 SQL 재작성으로 후보 축소.
-- **클러스터링 팩터가 나쁨**: ROWID가 너무 흩어져 있어 **배치 이득↓**  
+- **클러스터링 팩터가 나쁨**: ROWID가 너무 흩어져 있어 **배치 이득↓**
   → **CTAS 재적재**로 물리 순서 개선 또는 **IOT/클러스터 테이블** 검토.
-- **부분범위처리/Stopkey 누락**: 너무 많은 로우를 가져오면 배치해도 총 IO↑  
+- **부분범위처리/Stopkey 누락**: 너무 많은 로우를 가져오면 배치해도 총 IO↑
   → 정렬 포함 인덱스 + `FETCH FIRST N` 적용.
-- **SELECT-LIST 과다**: 많은 열 때문에 **테이블 방문** 비중 자체가 높음  
+- **SELECT-LIST 과다**: 많은 열 때문에 **테이블 방문** 비중 자체가 높음
   → **커버링 인덱스**로 일부 질의를 “테이블 무방문”화.
 
 ---
@@ -205,7 +205,7 @@ ORDER  BY s.sale_dt DESC, s.sale_id DESC
 FETCH FIRST 50 ROWS ONLY;   -- STOPKEY
 ```
 
-- 인덱스에서 필요한 앞부분만 **연속 스캔**.  
+- 인덱스에서 필요한 앞부분만 **연속 스캔**.
 - **인덱스 프리페치**로 **대기 최소화**, 테이블은 **커버링 인덱스 컬럼이면 무방문**.
 
 **상세(선택된 50건) — 테이블 프리페치가 핵심**
@@ -218,7 +218,7 @@ FROM   sales s
 WHERE  s.sale_id IN (:id1, :id2, ... :id50);
 ```
 
-- 옵티마이저가 **IN LIST** 를 정렬된 ROWID로 묶어 **BATCHED** 테이블 접근을 시도.  
+- 옵티마이저가 **IN LIST** 를 정렬된 ROWID로 묶어 **BATCHED** 테이블 접근을 시도.
 - **`TABLE ACCESS BY INDEX ROWID BATCHED`** 확인 → **`db file parallel read`** 증가 경향.
 
 ### 3.2 조건이 넓은 범위(배치 이득 vs 해시 조인 비교)
@@ -235,8 +235,8 @@ ORDER  BY s.sale_dt DESC, s.sale_id DESC
 FETCH FIRST 1000 ROWS ONLY;
 ```
 
-- **옵션 A**: 인덱스 범위 스캔 + **BATCHED ROWID** → **테이블 프리페치**로 랜덤 IO 감소  
-- **옵션 B**: **해시 조인 + Partition/Full Scan** → **멀티블록 순차 IO** 중심  
+- **옵션 A**: 인덱스 범위 스캔 + **BATCHED ROWID** → **테이블 프리페치**로 랜덤 IO 감소
+- **옵션 B**: **해시 조인 + Partition/Full Scan** → **멀티블록 순차 IO** 중심
 - **실측**으로 **어느 쪽이 더 빠른지** 판단(데이터 분포/스토리지 특성 영향 큼).
 
 ---
@@ -252,7 +252,7 @@ FETCH FIRST 1000 ROWS ONLY;
 - 커버링이 어려우면, 적어도 **테이블 방문을 작은 세트**에만 하도록 **뷰 머지 방지 + Stopkey**.
 
 ### 4.3 클러스터링 팩터 개선
-- 같은 키(또는 인접 키)의 로우가 **근접 블록**에 모여 있으면,  
+- 같은 키(또는 인접 키)의 로우가 **근접 블록**에 모여 있으면,
   **BATCHED ROWID** 가 **적은 IO로 많은 로우**를 끌어온다.
 ```sql
 -- 재적재(CTAS)로 물리 순서 개선
@@ -284,7 +284,7 @@ END;
 
 ### 5.1 실행계획
 ```sql
-SELECT * 
+SELECT *
 FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS +ALIAS'));
 ```
 - **중요 노드**
@@ -325,17 +325,17 @@ ORDER  BY samples DESC;
 ## 6. 프리페치 관련 **자주 하는 질문(FAQ)**
 
 ### Q1. 프리페치를 강제하는 힌트가 있나요?
-- **직접적인 “프리페치 힌트”**는 거의 없다.  
-- 대신 프리페치가 **잘 일어나는 경로**(정렬 일치 인덱스 범위 스캔 + Stopkey, 인덱스 FFS, Batched Table Access)가  
+- **직접적인 “프리페치 힌트”**는 거의 없다.
+- 대신 프리페치가 **잘 일어나는 경로**(정렬 일치 인덱스 범위 스캔 + Stopkey, 인덱스 FFS, Batched Table Access)가
   **자연스럽게 선택되도록** 힌트/통계/SQL 구조를 설계한다.
 
 ### Q2. 왜 `db file parallel read` 가 늘었는데 체감은 빨라지죠?
-- 여러 단일블록 IO를 **한 묶음으로 발주** → **왕복 횟수·락/래치·컨텍스트 스위칭**이 줄어서 **총 지연이 감소**.  
+- 여러 단일블록 IO를 **한 묶음으로 발주** → **왕복 횟수·락/래치·컨텍스트 스위칭**이 줄어서 **총 지연이 감소**.
 - **호출 수**와 **평균 대기**를 함께 보자. **총 시간**이 줄었으면 **성공**이다.
 
 ### Q3. 항상 BATCHED가 좋은가요?
-- 대부분의 “많은 로우를 읽는 인덱스 경로”에서 유리.  
-- 하지만 **해시 조인 + Full Scan(멀티블록)** 이 더 나은 경우도 많다(특히 **넓은 범위**).  
+- 대부분의 “많은 로우를 읽는 인덱스 경로”에서 유리.
+- 하지만 **해시 조인 + Full Scan(멀티블록)** 이 더 나은 경우도 많다(특히 **넓은 범위**).
 - **실측**으로 비교하자.
 
 ---
@@ -388,11 +388,11 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ## 9. 요약 체크리스트
 
-- [ ] **ORDER BY** 와 **인덱스 순서** 일치 → **STOPKEY** 로 앞부분만?  
-- [ ] **커버링 인덱스** 로 테이블 방문을 없앨 수 있는가? (불가하면 소수 행만 테이블 방문)  
-- [ ] 실행계획에 **`BATCHED`** 가 잡혔는가? (없다면 플랜/통계를 점검)  
-- [ ] **클러스터링 팩터** 를 개선했는가? (Range Scan·BATCHED 품질↑)  
-- [ ] **해시 조인 + Full/Partition Scan** 과 **BATCHED 경로** 를 **실측 비교**했는가?  
+- [ ] **ORDER BY** 와 **인덱스 순서** 일치 → **STOPKEY** 로 앞부분만?
+- [ ] **커버링 인덱스** 로 테이블 방문을 없앨 수 있는가? (불가하면 소수 행만 테이블 방문)
+- [ ] 실행계획에 **`BATCHED`** 가 잡혔는가? (없다면 플랜/통계를 점검)
+- [ ] **클러스터링 팩터** 를 개선했는가? (Range Scan·BATCHED 품질↑)
+- [ ] **해시 조인 + Full/Partition Scan** 과 **BATCHED 경로** 를 **실측 비교**했는가?
 - [ ] 대기 이벤트에서 **`sequential read`↓**, **`parallel read`↗** + **총 시간↓** 인가?
 
 ---

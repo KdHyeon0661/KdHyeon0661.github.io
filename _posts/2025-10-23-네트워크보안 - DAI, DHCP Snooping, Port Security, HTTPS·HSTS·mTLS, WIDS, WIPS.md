@@ -6,7 +6,7 @@ category: 네트워크보안
 ---
 # 4.5 방어: DAI/DHCP Snooping/Port Security, HTTPS·HSTS·mTLS, WIDS/WIPS
 
-> 목표: 스위치 L2 보호(DAI, DHCP Snooping, Port Security)와 L7 암호화(HTTPS/HSTS/mTLS),  
+> 목표: 스위치 L2 보호(DAI, DHCP Snooping, Port Security)와 L7 암호화(HTTPS/HSTS/mTLS),
 > 무선 영역 WIDS/WIPS 정책으로 **스니핑/가로채기 시도 자체를 어렵게** 만든다.
 
 ---
@@ -14,10 +14,10 @@ category: 네트워크보안
 ## 4.5.1 L2 보호: DHCP Snooping → DAI(ARP Inspection) → Port Security
 
 ### (1) DHCP Snooping — “누가 DHCP 서버인지 정한다”
-- **효과**: 신뢰 포트(Trusted)에서 온 DHCP Offer/ACK만 허용, 나머지는 차단.  
+- **효과**: 신뢰 포트(Trusted)에서 온 DHCP Offer/ACK만 허용, 나머지는 차단.
 - **부가효과**: 클라이언트 **IP–MAC–VLAN–Port 바인딩 테이블**을 유지 → **DAI가 이 테이블을 신뢰**.
 
-**개념 구성(벤더 공통 개념, CLI는 예시)**  
+**개념 구성(벤더 공통 개념, CLI는 예시)**
 ```text
 # 전역 활성화
 ip dhcp snooping
@@ -37,16 +37,16 @@ interface Gi1/0/1
   ip dhcp snooping limit rate 15
 ```
 
-> 포인트: **서버가 있는 방향만 trusted**, 나머지는 기본 untrusted.  
+> 포인트: **서버가 있는 방향만 trusted**, 나머지는 기본 untrusted.
 > “가짜 DHCP”는 Offer/ACK가 **차단**되어 고립된다.
 
 ---
 
 ### (2) DAI (Dynamic ARP Inspection) — “게이트웨이 ARP 위조 차단”
-- **효과**: ARP 요청/응답을 **DHCP Snooping 바인딩**과 대조, 불일치 ARP를 드롭.  
+- **효과**: ARP 요청/응답을 **DHCP Snooping 바인딩**과 대조, 불일치 ARP를 드롭.
 - **추가**: ARP rate limit, 로그.
 
-**개념 구성 예시**  
+**개념 구성 예시**
 ```text
 ip arp inspection vlan 10
 
@@ -64,10 +64,10 @@ interface Gi1/0/1
 ---
 
 ### (3) Port Security — “한 포트에 붙을 수 있는 MAC을 제한”
-- **효과**: 포트당 MAC 수 제한, 특정 MAC만 허용, 위반 시 shutdown/restrict.  
+- **효과**: 포트당 MAC 수 제한, 특정 MAC만 허용, 위반 시 shutdown/restrict.
 - **활용**: **MAC 플러딩/스니핑 시도**의 부작용(다중 MAC 유입)을 **초기에 차단**.
 
-**개념 구성 예시**  
+**개념 구성 예시**
 ```text
 interface Gi1/0/1
   switchport mode access
@@ -85,10 +85,10 @@ interface Gi1/0/1
 ## 4.5.2 L7 암호화: HTTPS·HSTS·mTLS
 
 ### (1) HTTPS + HSTS — 평문 제거의 기본
-- **HSTS**: 브라우저가 **항상 HTTPS만** 사용하도록 강제(HTTP→HTTPS 리다이렉트도 HSTS 없이는 첫 요청은 평문일 수 있음).  
+- **HSTS**: 브라우저가 **항상 HTTPS만** 사용하도록 강제(HTTP→HTTPS 리다이렉트도 HSTS 없이는 첫 요청은 평문일 수 있음).
 - **프리로드**: hstspreload.org 등록(요건 충족 시) → 브라우저 내장 목록으로 초회도 안전.
 
-**Nginx 예시 스니펫(학습용)**  
+**Nginx 예시 스니펫(학습용)**
 ```nginx
 server {
   listen 443 ssl http2;
@@ -124,10 +124,10 @@ server {
 ---
 
 ### (2) 내부/서버간 mTLS — “서버/클라이언트 모두 인증”
-- **효과**: 내부 API/관리자 콘솔에 **클라이언트 인증서** 없이는 접근 불가.  
+- **효과**: 내부 API/관리자 콘솔에 **클라이언트 인증서** 없이는 접근 불가.
 - **장점**: 쿠키·토큰 탈취만으로는 접근 어려움(스니핑 난이도 급상승).
 
-**Nginx Reverse Proxy에서 클라이언트 인증 강제(요약)**  
+**Nginx Reverse Proxy에서 클라이언트 인증 강제(요약)**
 ```nginx
 server {
   listen 443 ssl http2;
@@ -150,7 +150,7 @@ server {
 }
 ```
 
-**테스트용 CA/클라이언트 인증서(학습용 OpenSSL)**  
+**테스트용 CA/클라이언트 인증서(학습용 OpenSSL)**
 ```bash
 # 1. 루트 CA(테스트용)
 openssl req -x509 -newkey rsa:4096 -days 365 -nodes \
@@ -173,26 +173,26 @@ openssl pkcs12 -export -inkey cli.key -in cli.crt -certfile ca.crt -out cli.p12 
 ---
 
 ## 4.5.3 무선 WIDS/WIPS(탐지·차단)
-- **WIDS**: 무선 이상(Deauth 급증, Rogue/Evil Twin, 불법 AP, WEP/오픈 SSID 등) **탐지**.  
+- **WIDS**: 무선 이상(Deauth 급증, Rogue/Evil Twin, 불법 AP, WEP/오픈 SSID 등) **탐지**.
 - **WIPS**: 특정 기준 충족 시 **자동 차단**(우선은 탐지→운영 검증→선별 차단 권장).
 - **정책 제언**
-  - **WPA3-Enterprise + 802.1X(EAP-TLS)** 우선, 최소 **WPA2-Enterprise**  
-  - **802.11w(PMF)** 활성화 → 관리 프레임 위변조(Deauth 등) 내성 강화  
-  - SSID 프로파일 화이트리스트, **오픈/PSK 자동 연결 금지**  
+  - **WPA3-Enterprise + 802.1X(EAP-TLS)** 우선, 최소 **WPA2-Enterprise**
+  - **802.11w(PMF)** 활성화 → 관리 프레임 위변조(Deauth 등) 내성 강화
+  - SSID 프로파일 화이트리스트, **오픈/PSK 자동 연결 금지**
   - 동일 SSID에 대한 **BSSID 화이트리스트**(허용 AP만), 채널/출력 기준치
 
 ---
 
 # 4.6 탐지: ARP Reply 폭증, 게이트웨이 MAC 변화, Suricata/Zeek 룰
 
-> 목표: L2~L7에서 **가시적 신호**를 포착해 경보/대응한다.  
+> 목표: L2~L7에서 **가시적 신호**를 포착해 경보/대응한다.
 > 아래 룰·스크립트는 **개념 템플릿**이며, 배포 전 **테스트망에서 오탐·성능 평가** 필수.
 
 ---
 
 ## 4.6.1 Suricata 예시 룰(EVE JSON 기반 운영)
 
-### (1) ARP Reply 비정상 빈도(폭증)  
+### (1) ARP Reply 비정상 빈도(폭증)
 ```conf
 # 간단 예시: 짧은 시간 한 소스에서 과도한 ARP Reply
 alert ether any any -> any any (msg:"L2 ARP Reply storm suspected";
@@ -202,8 +202,8 @@ alert ether any any -> any any (msg:"L2 ARP Reply storm suspected";
   sid:4202001; rev:1;)
 ```
 
-### (2) 게이트웨이 MAC 변동 감지(개념)  
-> Suricata 룰만으로 “MAC 변경” 상태를 기억하기 어렵다 → **로그 후단(파이프라인)**에서 **스테이트풀 비교** 추천.  
+### (2) 게이트웨이 MAC 변동 감지(개념)
+> Suricata 룰만으로 “MAC 변경” 상태를 기억하기 어렵다 → **로그 후단(파이프라인)**에서 **스테이트풀 비교** 추천.
 아래는 “게이트웨이 IP에서 오는 ARP Reply”를 태깅 → 후단에서 MAC change diff.
 
 ```conf
@@ -214,9 +214,9 @@ alert ether any any -> any any (msg:"ARP Reply from gateway IP";
   sid:4202002; rev:1;)
 ```
 
-**후단(예: Logstash/Fluentd/SIEM)에서 Diff 로직**  
-- 키: `gateway_ip`  
-- 값: `gateway_mac`  
+**후단(예: Logstash/Fluentd/SIEM)에서 Diff 로직**
+- 키: `gateway_ip`
+- 값: `gateway_mac`
 - 이전 값 ≠ 현재 값 → **High 경보** (변경 시간, 포트, 스위치 인터페이스 추가 메타 필요)
 
 ---
@@ -267,7 +267,7 @@ Zeek는 기본적으로 TLS 이벤트를 레코드화. SIEM에서 **도메인 �
 
 ## 4.6.3 SIEM 룰(의사코드·Sigma 스타일)
 
-**[Rule] 게이트웨이 MAC 변경**  
+**[Rule] 게이트웨이 MAC 변경**
 ```
 title: Gateway MAC Address Change
 logsource: arp/nd logs (Suricata EVE, Zeek, Switch syslog)
@@ -279,7 +279,7 @@ detection:
 level: high
 ```
 
-**[Rule] ARP Reply 폭증**  
+**[Rule] ARP Reply 폭증**
 ```
 title: ARP Reply Storm by Source
 detection:
@@ -289,7 +289,7 @@ detection:
 level: medium
 ```
 
-**[Rule] DHCP Multi-Server**  
+**[Rule] DHCP Multi-Server**
 ```
 title: Multiple DHCP Servers in VLAN
 detection:
@@ -303,7 +303,7 @@ level: high
 
 # 4.7 랩: L2 ARP 기반 가로채기, 무선 오픈망 캡처, 탐지 룰 제작
 
-> **취지**: 실제 공격 행위를 하지 않고도, **탐지/방어가 제대로 동작하는지** 확인한다.  
+> **취지**: 실제 공격 행위를 하지 않고도, **탐지/방어가 제대로 동작하는지** 확인한다.
 > (PCAP 재생, 합성 이벤트, 샌드박스 캡처, **무해한 ARP 변동** 등)
 
 ---
@@ -321,10 +321,10 @@ level: high
 - `ns-client`: 트래픽 발생
 
 ### (B) Docker Compose 랩(요약)
-- `client` / `server` / `observer(tcpdump|zeek|suricata)`  
+- `client` / `server` / `observer(tcpdump|zeek|suricata)`
 - `observer`는 `pcap` 볼륨에 저장, 후단 도구가 읽어 분석
 
-**Compose 예시(발췌)**  
+**Compose 예시(발췌)**
 ```yaml
 version: "3.9"
 services:
@@ -343,48 +343,48 @@ networks: { labnet: { driver: bridge } }
 
 ## 4.7.2 시나리오 1 — “L2 ARP 기반 가로채기” **탐지만** 검증
 
-> 실제 ARP 포이즈닝은 하지 않는다. 대신 **무해한 GARP 반복**으로 “ARP 변동” 시그널만 발생시켜  
+> 실제 ARP 포이즈닝은 하지 않는다. 대신 **무해한 GARP 반복**으로 “ARP 변동” 시그널만 발생시켜
 > **DAI/Zeek/Suricata/SIEM 룰이 울리는지** 확인한다.
 
-**합성 스크립트(앞 4.2.1에서 제시, 재사용)**  
+**합성 스크립트(앞 4.2.1에서 제시, 재사용)**
 ```python
 # safe_arp_churn_generator.py (요약)
 # 목적: 자신의 IP/MAC로 GARP 반복 → ARP 변동 신호를 탐지 체인으로 밀어넣기
 ```
 
 **절차**
-1) `observer`에서 캡처 시작: `tcpdump -i any -nn -e -w /pcap/arp_test.pcap 'arp'`  
-2) `client` 네임스페이스/컨테이너에서 GARP 합성 스크립트 실행(10~20회)  
-3) Zeek/Suricata에서 이벤트 수집 → SIEM 룰 트리거 확인  
+1) `observer`에서 캡처 시작: `tcpdump -i any -nn -e -w /pcap/arp_test.pcap 'arp'`
+2) `client` 네임스페이스/컨테이너에서 GARP 합성 스크립트 실행(10~20회)
+3) Zeek/Suricata에서 이벤트 수집 → SIEM 룰 트리거 확인
 4) 스위치가 있다면(물리 랩): DAI 로그/카운터 변화 확인
 
 **성공 기준**
-- Zeek: `[ALERT] Gateway MAC changed!` 또는 ARP churn 관련 경보  
-- Suricata: `L2 ARP Reply storm suspected` 카운트 증가(튜닝값 내)  
+- Zeek: `[ALERT] Gateway MAC changed!` 또는 ARP churn 관련 경보
+- Suricata: `L2 ARP Reply storm suspected` 카운트 증가(튜닝값 내)
 - SIEM: “Gateway MAC change” 룰 발화
 
 ---
 
 ## 4.7.3 시나리오 2 — “무선 오픈망 캡처(패시브)”
 
-> **공격 불가**. 자신이 소유/관리하는 **테스트 AP**만 사용. 오픈 SSID에서 **패시브 캡처**로  
+> **공격 불가**. 자신이 소유/관리하는 **테스트 AP**만 사용. 오픈 SSID에서 **패시브 캡처**로
 > 관리 프레임(Beacon/Probe)와 데이터 프레임 메타만 관찰 → **WIDS 룰 테스트**.
 
-**절차(개요)**  
-1) 모니터 모드 인터페이스 준비(드라이버 지원 카드)  
-2) 오픈 SSID로 테스트 AP 구성(격리)  
-3) `tshark`/`Wireshark`로 관리 프레임 캡처  
+**절차(개요)**
+1) 모니터 모드 인터페이스 준비(드라이버 지원 카드)
+2) 오픈 SSID로 테스트 AP 구성(격리)
+3) `tshark`/`Wireshark`로 관리 프레임 캡처
 4) **합성 WIDS 이벤트**(Deauth 카운트 NDJSON) 생성 → WIDS/SIEM에 주입(아래 코드)
 
-**합성 Deauth 이벤트(4.3.3 재사용)**  
+**합성 Deauth 이벤트(4.3.3 재사용)**
 ```python
 # synth_deauth_events.py (요약)
 # "DEAUTH_OBSERVED_SYNTH" 이벤트를 NDJSON으로 생성해 테스트 인제션
 ```
 
 **성공 기준**
-- WIDS/SIEM에서 **Deauth 이벤트 룰**이 동작(“합성”임을 태깅)  
-- Beacon RSN IE 분석: WEP/오픈/취약 설정 감지 룰 정상 동작  
+- WIDS/SIEM에서 **Deauth 이벤트 룰**이 동작(“합성”임을 태깅)
+- Beacon RSN IE 분석: WEP/오픈/취약 설정 감지 룰 정상 동작
 - 운영 정책: 오픈 SSID 금지/PSK 자동 연결 금지 확인
 
 ---
@@ -394,12 +394,12 @@ networks: { labnet: { driver: bridge } }
 > 탐지 체인을 **CI 처럼** 돌려서, 룰 업데이트가 **기존 탐지 품질**을 깨지 않는지 확인.
 
 **테스트 데이터 셋**
-- `pcap/arp_churn_ok.pcap` : GARP 10회  
-- `pcap/dhcp_dual_offer.pcap` : 두 서버 Offer(합성)  
-- `pcap/tls_normal.pcap` : 정상 브라우저 트래픽  
+- `pcap/arp_churn_ok.pcap` : GARP 10회
+- `pcap/dhcp_dual_offer.pcap` : 두 서버 Offer(합성)
+- `pcap/tls_normal.pcap` : 정상 브라우저 트래픽
 - `pcap/tls_ja3_suspicious.pcap` : 알려진 의심 지문(합성)
 
-**TShark 자동 채점 예시**  
+**TShark 자동 채점 예시**
 ```bash
 # 1. ARP Reply 카운트(윈도 내) 기준
 tshark -r pcap/arp_churn_ok.pcap -Y "arp.opcode == 2" | wc -l
@@ -417,7 +417,7 @@ jq -r 'select(.alert and .alert.signature_id==4202001) | .timestamp' eve.json | 
 jq -r 'select(.event_type=="tls") | .tls.ja3_hash' eve.json | sort | uniq -c | sort -nr | head
 ```
 
-**회귀 테스트 스크립트(개념)**  
+**회귀 테스트 스크립트(개념)**
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -435,28 +435,28 @@ echo "[PASS] ARP storm minimal hit: $hits"
 
 ## 4.7.5 운영 반영 체크리스트
 
-- [ ] **DHCP Snooping**: trusted 포트 정의, rate limit, 바인딩 테이블 점검 자동화  
-- [ ] **DAI**: VLAN별 활성화, 정적 IP 단말 바인딩 수동 등록 플로우  
-- [ ] **Port Security**: max MAC, sticky 운영 기준, 위반 처리(Restrict→Shutdown) 단계적 적용  
-- [ ] **HTTPS+HSTS+mTLS**: 프리로드 체크, 내부 mTLS 발급/폐기 자동화, 보안 헤더 표준  
-- [ ] **WIDS/WIPS**: Deauth/Disassoc 임계치, Rogue/Evil Twin 탐지 기준, PMF 활성화  
-- [ ] **SIEM/NDR**: ARP/DHCP/TLS(JA3/JA4)/DNS 룰과 대시보드, 보존/마스킹/암호화 정책  
+- [ ] **DHCP Snooping**: trusted 포트 정의, rate limit, 바인딩 테이블 점검 자동화
+- [ ] **DAI**: VLAN별 활성화, 정적 IP 단말 바인딩 수동 등록 플로우
+- [ ] **Port Security**: max MAC, sticky 운영 기준, 위반 처리(Restrict→Shutdown) 단계적 적용
+- [ ] **HTTPS+HSTS+mTLS**: 프리로드 체크, 내부 mTLS 발급/폐기 자동화, 보안 헤더 표준
+- [ ] **WIDS/WIPS**: Deauth/Disassoc 임계치, Rogue/Evil Twin 탐지 기준, PMF 활성화
+- [ ] **SIEM/NDR**: ARP/DHCP/TLS(JA3/JA4)/DNS 룰과 대시보드, 보존/마스킹/암호화 정책
 - [ ] **회귀 테스트**: pcap·합성 이벤트 세트로 룰 업데이트 시 자동 채점
 
 ---
 
 ## 4.7.6 성공/실패를 가르는 운영 팁
 
-- **탐지만 울리고 끝나지 말 것**: 룰 → 알림 → **운영 대응(격리/차단/원복)** 절차가 체인으로 묶여야 한다.  
-- **오탐 관리**: ARP/DHCP는 변동이 잦은 환경(VDI/무선 로밍)에서 오탐 유발 → **베이스라인/예외 목록/시간 창 튜닝**이 핵심.  
-- **가시성 우선**: 복호화가 어려운 시대, **메타데이터(SNI/JA3/JA4), NetFlow, DNS 텔레메트리**를 적극 활용.  
+- **탐지만 울리고 끝나지 말 것**: 룰 → 알림 → **운영 대응(격리/차단/원복)** 절차가 체인으로 묶여야 한다.
+- **오탐 관리**: ARP/DHCP는 변동이 잦은 환경(VDI/무선 로밍)에서 오탐 유발 → **베이스라인/예외 목록/시간 창 튜닝**이 핵심.
+- **가시성 우선**: 복호화가 어려운 시대, **메타데이터(SNI/JA3/JA4), NetFlow, DNS 텔레메트리**를 적극 활용.
 - **암호화 기본값**: 평문은 즉시 제거, 내부는 mTLS·접근제어·비밀관리(주기 로테이션)까지 포함.
 
 ---
 # 요약
 
-- **L2 방어 삼총사**: DHCP Snooping(바인딩) → DAI(ARP 검증) → Port Security(MAC 제한).  
-- **L7 방어**: HTTPS+HSTS로 평문 제거, 내부는 **mTLS**로 신뢰 경계 축소.  
-- **무선**: WIDS/WIPS + WPA3/PMF로 관리 프레임 위변조·사칭 내성.  
-- **탐지**: ARP Reply 폭증·GW MAC 변경·DHCP 다중 서버·TLS 메타 지문을 **Suricata/Zeek/SIEM**으로 상관 분석.  
+- **L2 방어 삼총사**: DHCP Snooping(바인딩) → DAI(ARP 검증) → Port Security(MAC 제한).
+- **L7 방어**: HTTPS+HSTS로 평문 제거, 내부는 **mTLS**로 신뢰 경계 축소.
+- **무선**: WIDS/WIPS + WPA3/PMF로 관리 프레임 위변조·사칭 내성.
+- **탐지**: ARP Reply 폭증·GW MAC 변경·DHCP 다중 서버·TLS 메타 지문을 **Suricata/Zeek/SIEM**으로 상관 분석.
 - **랩**: 공격 재현 없이 **무해한 합성 이벤트·pcap 회귀 세트**로 **탐지/대응 파이프라인**을 검증·자동화한다.

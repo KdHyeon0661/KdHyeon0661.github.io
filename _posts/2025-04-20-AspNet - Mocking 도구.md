@@ -222,7 +222,7 @@ mp.Setup(p => p.TryParse("42", out It.Ref<int>.IsAny))
 delegate void TryParseCallback(string s, out int value);
 ```
 
-- 주의: **Moq는 비가상/정적/비인터페이스 멤버**를 직접 Mock 못한다.  
+- 주의: **Moq는 비가상/정적/비인터페이스 멤버**를 직접 Mock 못한다.
   → 설계 개선(인터페이스/virtual), 혹은 JustMock/TypeMock/Mocklis/Proxy 기반 대안 고려.
 
 ---
@@ -355,7 +355,7 @@ token.Should().StartWith("20250101000000-");
 
 ## 11. 웹 계층 실전 — 컨트롤러/미들웨어/필터
 
-컨트롤러에서 서비스 Mock 주입은 위 예시 참고.  
+컨트롤러에서 서비스 Mock 주입은 위 예시 참고.
 미들웨어 단위 테스트는 **`DefaultHttpContext`**와 파이프라인 델리게이트를 조립:
 
 ```csharp

@@ -6,24 +6,24 @@ category: Kubernetes
 ---
 # Pending 상태의 Pod 원인 찾기 및 해결 방법
 
-`kubectl get pods` 결과의 `STATUS=Pending`은 **스케줄러가 Pod을 아직 어떤 노드에도 배치하지 못했거나**(스케줄링 단계),  
+`kubectl get pods` 결과의 `STATUS=Pending`은 **스케줄러가 Pod을 아직 어떤 노드에도 배치하지 못했거나**(스케줄링 단계),
 **Pod 실행에 필수 자원이 준비되지 않아**(예: PVC 바인딩) **노드에 올라가지 못한 상태**를 뜻합니다.
 
 ---
 
 ## 0. Pending의 정확한 의미: 흐름 상의 위치
 
-> **Pending = 스케줄링 또는 준비 단계에서 멈춘 상태**  
+> **Pending = 스케줄링 또는 준비 단계에서 멈춘 상태**
 > (이미 Node에 할당된 뒤 컨테이너 이미지를 풀거나, 볼륨을 attach/마운트하는 과정에서도 Pending으로 보일 수 있음)
 
 ### 생성→스케줄링→실행 간단 흐름
 
-1. `kubectl apply` / `Deployment` 생성  
-2. **스케줄러가 후보 노드를 평가** (요구 리소스, 라벨, 토폴로지, taint, 정책 등)  
-3. 조건 만족 노드가 있으면 **바인딩** → Kubelet이 **이미지 pull / 볼륨 attach / mount**  
+1. `kubectl apply` / `Deployment` 생성
+2. **스케줄러가 후보 노드를 평가** (요구 리소스, 라벨, 토폴로지, taint, 정책 등)
+3. 조건 만족 노드가 있으면 **바인딩** → Kubelet이 **이미지 pull / 볼륨 attach / mount**
 4. 컨테이너 시작(이후 `ContainerCreating` → `Running`)
 
-> 2~3 단계를 통과하지 못하면 계속 **Pending**입니다.  
+> 2~3 단계를 통과하지 못하면 계속 **Pending**입니다.
 > 3~4 단계에서 멈춰도 사용자 눈엔 Pending/ContainerCreating으로 보일 수 있습니다.
 
 ---
@@ -49,7 +49,7 @@ category: Kubernetes
 
 ### 2.1 리소스 부족(Insufficient CPU/Memory/EphemeralStorage)
 
-**증상(Event 예시)**  
+**증상(Event 예시)**
 ```
 0/3 nodes are available: 2 Insufficient memory, 1 Insufficient cpu.
 ```
@@ -81,8 +81,8 @@ spec:
 ```
 
 **해결 방안**
-- 현실적 `requests`로 **다운사이징** (스케줄 기준은 `requests`)  
-- **불필요 Pod 축소** / **노드 증설** / **Cluster Autoscaler** 활성화  
+- 현실적 `requests`로 **다운사이징** (스케줄 기준은 `requests`)
+- **불필요 Pod 축소** / **노드 증설** / **Cluster Autoscaler** 활성화
 - 미사용 노드 리소스 회수, 리밸런싱
 
 > #### 스케줄 가능성 간단 판별(개념)
@@ -92,15 +92,15 @@ spec:
 > $$
 > 를 만족해도 **배치 제약(라벨/존/taint)** 때문에 실제로는 실패할 수 있습니다. 총합이 된다고 끝이 아님!
 
-**Ephemeral Storage 부족**  
-Event: `Insufficient ephemeral-storage`  
+**Ephemeral Storage 부족**
+Event: `Insufficient ephemeral-storage`
 → 컨테이너 로그/캐시가 ephemeral-storage를 잠식. `resources.requests/limits.ephemeral-storage` 지정, 로그 로테이션/사이드카 정책 정비.
 
 ---
 
 ### 2.2 PVC 미바인딩(볼륨 대기)
 
-**증상(Event 예시)**  
+**증상(Event 예시)**
 ```
 pod has unbound immediate PersistentVolumeClaims
 no persistent volumes available for this claim
@@ -138,16 +138,16 @@ spec:
 ```
 
 **해결 방안**
-- `kubectl get storageclass`로 **SC 존재 여부** 확인/수정  
-- 동적 프로비저닝 미지원 환경이면 **PV를 수동 생성**  
-- ReadWriteMany 필요 시 NFS/CSI RWX 가능 스토리지로 전환  
+- `kubectl get storageclass`로 **SC 존재 여부** 확인/수정
+- 동적 프로비저닝 미지원 환경이면 **PV를 수동 생성**
+- ReadWriteMany 필요 시 NFS/CSI RWX 가능 스토리지로 전환
 - **Topology(Zone) 불일치** 시: PVC/Pod/노드 **존 일치** 확인(특히 클라우드 블록스토리지)
 
 ---
 
 ### 2.3 Node Taint → Toleration 누락
 
-**증상(Event 예시)**  
+**증상(Event 예시)**
 ```
 node(s) had taint {key: dedicated, value: gpu, effect: NoSchedule}, that the pod didn't tolerate
 ```
@@ -176,7 +176,7 @@ kubectl taint node <node> dedicated=gpu:NoSchedule-
 
 ### 2.4 NodeSelector/NodeAffinity 조건 불만족
 
-**증상(Event 예시)**  
+**증상(Event 예시)**
 ```
 0/5 nodes are available: 5 node(s) didn't match node selector.
 ```
@@ -199,7 +199,7 @@ spec:
 
 ### 2.5 Pod(안티)어피니티/Topology Spread 제약
 
-**증상(Event 예시)**  
+**증상(Event 예시)**
 ```
 0/6 nodes are available: 6 node(s) didn't satisfy existing pod anti-affinity rules.
 ```
@@ -224,7 +224,7 @@ spec:
 
 ### 2.6 ResourceQuota/LimitRange 초과
 
-**증상(Event 예시)**  
+**증상(Event 예시)**
 ```
 exceeded quota: compute-resources, requested: requests.cpu=1, used: requests.cpu=4, limited: 4
 ```
@@ -236,7 +236,7 @@ kubectl get limitrange -n <ns>
 ```
 
 **해결**
-- 불필요 리소스 제거 또는 Quota 상향  
+- 불필요 리소스 제거 또는 Quota 상향
 - LimitRange에 의해 **자동 기본값**이 과도해지는 경우 조정
 
 **LimitRange 예시(기본값 주입)**
@@ -271,7 +271,7 @@ kubectl describe pod <pod> | sed -n '/Events/,$p'
 ```
 
 **해결**
-- **이미지 경로/태그** 확인  
+- **이미지 경로/태그** 확인
 - 프라이빗 레지스트리면 **imagePullSecrets** 설정
 ```yaml
 spec:
@@ -296,8 +296,8 @@ resources:
 ```
 
 **해결**
-- GPU 노드에 **NVIDIA Device Plugin** 배포 확인  
-- GPU 수량/파티셔닝(MIG) 정책 부합 확인  
+- GPU 노드에 **NVIDIA Device Plugin** 배포 확인
+- GPU 수량/파티셔닝(MIG) 정책 부합 확인
 - **RuntimeClass** 필요한 경우 지정:
 ```yaml
 spec:
@@ -309,11 +309,11 @@ spec:
 ### 2.9 PSA/OPA/Gatekeeper/Kyverno 등 정책 위반
 
 **증상**
-- `Forbidden` 또는 Admission webhook 거부  
+- `Forbidden` 또는 Admission webhook 거부
 - `describe pod` 이벤트에 정책 명시됨
 
 **해결**
-- 네임스페이스 라벨(PSA `baseline/restricted`)과 Pod의 `securityContext` 합치  
+- 네임스페이스 라벨(PSA `baseline/restricted`)과 Pod의 `securityContext` 합치
 - Gatekeeper Constraint/Template 로그 확인, 룰 예외 조건 설정(만료일 포함 권장)
 
 ---
@@ -321,7 +321,7 @@ spec:
 ### 2.10 Cluster Autoscaler와의 상호작용
 
 **특징**
-- 스케줄 불가 상태가 지속되면 **CA가 새 노드 증설**  
+- 스케줄 불가 상태가 지속되면 **CA가 새 노드 증설**
 - 단, **노드 풀 한도**/태인트/존/인스턴스 타입 제약으로 못 늘릴 수도
 
 **점검**
@@ -511,7 +511,7 @@ spec:
 
 ## 6. 운영 자동화: “Pending 알람 → 원인 요약 → 제안”
 
-프로메테우스 + 알러팅(예: Alertmanager)으로 **`kube_pod_status_phase{phase="Pending"}`** 비율 임계 초과 시 알림 →  
+프로메테우스 + 알러팅(예: Alertmanager)으로 **`kube_pod_status_phase{phase="Pending"}`** 비율 임계 초과 시 알림 →
 아래 스크립트로 **이벤트 요약** 후 Slack에 첨부.
 
 ```bash
@@ -531,16 +531,16 @@ cat "$OUT"
 
 ## 7. 체크리스트(현장용)
 
-- [ ] `describe pod` Events에서 **문장형 원인** 확인  
-- [ ] PVC/PV/SC/CSI 상태 점검 (Zone/AccessModes 일치)  
-- [ ] 노드 `Taints`와 Pod `Tolerations` 대응  
-- [ ] `nodeSelector/affinity`와 실제 노드 라벨 일치  
-- [ ] `topologySpreadConstraints` / Pod(안티)어피니티 충돌 여부  
-- [ ] `ResourceQuota`/`LimitRange` 한도 확인  
-- [ ] CPU/Memory/**ephemeral-storage** requests 합리적 설정  
-- [ ] 이미지 풀 권한/경로/태그 확인 (`imagePullSecrets`)  
-- [ ] GPU/RuntimeClass/Device Plugin 배포 상태  
-- [ ] Cluster Autoscaler 증설 불가 사유(한도, 템플릿) 확인  
+- [ ] `describe pod` Events에서 **문장형 원인** 확인
+- [ ] PVC/PV/SC/CSI 상태 점검 (Zone/AccessModes 일치)
+- [ ] 노드 `Taints`와 Pod `Tolerations` 대응
+- [ ] `nodeSelector/affinity`와 실제 노드 라벨 일치
+- [ ] `topologySpreadConstraints` / Pod(안티)어피니티 충돌 여부
+- [ ] `ResourceQuota`/`LimitRange` 한도 확인
+- [ ] CPU/Memory/**ephemeral-storage** requests 합리적 설정
+- [ ] 이미지 풀 권한/경로/태그 확인 (`imagePullSecrets`)
+- [ ] GPU/RuntimeClass/Device Plugin 배포 상태
+- [ ] Cluster Autoscaler 증설 불가 사유(한도, 템플릿) 확인
 - [ ] PSA/OPA/Gatekeeper/Kyverno 등 정책 거부 로그 확인
 
 ---
@@ -624,18 +624,18 @@ spec:
 
 ## 결론
 
-- **Pending은 “스케줄 불가 또는 준비 미완료”의 신호**입니다.  
-- **`describe pod`의 이벤트**로 **정확한 문장형 원인을 먼저 확인**하세요.  
-- 리소스/볼륨/태인트/라벨/정책/토폴로지/Quota/이미지/GPU/Autoscaler 등 **각 계층별 체크포인트**를 체계적으로 점검하면 **대부분 수분 내 해결**이 가능합니다.  
+- **Pending은 “스케줄 불가 또는 준비 미완료”의 신호**입니다.
+- **`describe pod`의 이벤트**로 **정확한 문장형 원인을 먼저 확인**하세요.
+- 리소스/볼륨/태인트/라벨/정책/토폴로지/Quota/이미지/GPU/Autoscaler 등 **각 계층별 체크포인트**를 체계적으로 점검하면 **대부분 수분 내 해결**이 가능합니다.
 - 재발 방지를 위해 **리소스 프로파일링, 기본값 정책(LimitRange), 분산/토폴로지 설계, 볼륨/스토리지 클래스 표준화, 정책 관측(OPA/PSA), Autoscaler 설정**을 지속적으로 개선하세요.
 
 ---
 
 ## 참고 링크
 
-- Kubernetes Pod 스케줄링 개요  
-- PersistentVolume / StorageClass  
-- Taint & Toleration  
-- Pod(안티)어피니티 & Topology Spread  
-- ResourceQuota / LimitRange  
+- Kubernetes Pod 스케줄링 개요
+- PersistentVolume / StorageClass
+- Taint & Toleration
+- Pod(안티)어피니티 & Topology Spread
+- ResourceQuota / LimitRange
 - Cluster Autoscaler / Device Plugin / PSA / OPA(Gatekeeper)

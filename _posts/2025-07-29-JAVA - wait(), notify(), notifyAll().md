@@ -14,7 +14,7 @@ category: Java
 | `notify()` | 같은 모니터의 **대기(wait set) 중 임의의 1개** 스레드를 깨움 | **`synchronized(obj)` 내부** | 깨워진 스레드는 **호출자가 락을 풀고 나서** 락 경쟁 후 진행 |
 | `notifyAll()` | 같은 모니터의 **모든 대기 스레드**를 깨움 | **`synchronized(obj)` 내부** | 모두 락 경쟁 → **조건 재검사** 필요(`while`) |
 
-**규칙**: 조건은 항상 `while`로 감싸 재검사  
+**규칙**: 조건은 항상 `while`로 감싸 재검사
 ```java
 synchronized (lock) {
     while (!condition()) {
@@ -28,30 +28,30 @@ synchronized (lock) {
 
 ## 1. 동작 원리 (정밀)
 
-1. `wait()`  
-   - 호출 스레드는 **해당 객체의 모니터를 반드시 보유**해야 함(= `synchronized(obj)` 안).  
-   - 호출 즉시 **모니터를 반납**하고 **wait set**으로 이동하여 대기.  
-   - 다음 중 하나로 깨어남:  
-     - 다른 스레드의 `notify()/notifyAll()`  
-     - `wait(long[, int])` 타임아웃 만료  
-     - `interrupt()` → `InterruptedException` 발생  
+1. `wait()`
+   - 호출 스레드는 **해당 객체의 모니터를 반드시 보유**해야 함(= `synchronized(obj)` 안).
+   - 호출 즉시 **모니터를 반납**하고 **wait set**으로 이동하여 대기.
+   - 다음 중 하나로 깨어남:
+     - 다른 스레드의 `notify()/notifyAll()`
+     - `wait(long[, int])` 타임아웃 만료
+     - `interrupt()` → `InterruptedException` 발생
    - 깨어난 직후 곧바로 실행되는 것이 아니라, **다시 같은 모니터 락을 획득해야** `wait()` 다음 줄부터 이어감.
 
-2. `notify()` / `notifyAll()`  
-   - 역시 **모니터 보유 중** 호출해야 하며, 호출 시점에는 **단지 신호만 설정**.  
+2. `notify()` / `notifyAll()`
+   - 역시 **모니터 보유 중** 호출해야 하며, 호출 시점에는 **단지 신호만 설정**.
    - 실제로 깨워진 스레드가 실행 재개하려면 **호출 스레드가 모니터를 해제**해야 함(블록/메서드 종료).
 
-3. **Lost notification**  
-   - 대기자가 없을 때 `notify()`가 호출되면 신호는 **사라짐**(버퍼링되지 않음).  
+3. **Lost notification**
+   - 대기자가 없을 때 `notify()`가 호출되면 신호는 **사라짐**(버퍼링되지 않음).
    - 그러므로 **항상 상태(조건)를 먼저 기록 → 그 다음 신호**가 안전한 패턴.
 
 ---
 
 ## 2. 필수 규칙 · 예외
 
-- `wait/notify/notifyAll`은 **반드시** 해당 객체의 모니터를 가진 상태에서 호출(아니면 `IllegalMonitorStateException`).  
-- `wait()`는 `InterruptedException`을 던짐 → **catch 후 인터럽트 상태 복원** 또는 **상위로 전파**.  
-- 타임아웃 버전: `wait(long millis)`, `wait(long millis, int nanos)`  
+- `wait/notify/notifyAll`은 **반드시** 해당 객체의 모니터를 가진 상태에서 호출(아니면 `IllegalMonitorStateException`).
+- `wait()`는 `InterruptedException`을 던짐 → **catch 후 인터럽트 상태 복원** 또는 **상위로 전파**.
+- 타임아웃 버전: `wait(long millis)`, `wait(long millis, int nanos)`
 - `while` 가드 필수: **spurious wakeup**(이유 없는 깨움)과 **경쟁 조건** 방지.
 
 ---
@@ -87,9 +87,9 @@ final class Mailbox<T> {
 }
 ```
 
-**포인트**  
-- **상태 변경 → notifyAll()** 순서로 신호를 보냄(가시성/순서 보장).  
-- **조건은 while**(스퍼리어스·경쟁 모두 방어).  
+**포인트**
+- **상태 변경 → notifyAll()** 순서로 신호를 보냄(가시성/순서 보장).
+- **조건은 while**(스퍼리어스·경쟁 모두 방어).
 - 신호는 **버퍼링되지 않는다** → 반드시 **상태 변수**로 의도를 기록.
 
 ---
@@ -151,7 +151,7 @@ synchronized (lock) {
 **교정**: `while (queue.isEmpty()) lock.wait();`
 
 ### 6.3 `notify()` 오남용
-- 생산자/소비자 **여러 종류의 대기자**가 섞인 경우 `notify()`는 **틀린 스레드를 깨울 수 있음** → 다시 대기 → **교착/활성정지** 위험.  
+- 생산자/소비자 **여러 종류의 대기자**가 섞인 경우 `notify()`는 **틀린 스레드를 깨울 수 있음** → 다시 대기 → **교착/활성정지** 위험.
 **권장**: 기본은 `notifyAll()`을 쓰고, 정확히 한 종류의 대기자·단일 버퍼 등 **증명 가능한** 단순 조건에서만 `notify()` 최적화를 고려.
 
 ---
@@ -170,10 +170,10 @@ synchronized (lock) {
 
 ## 8. 메모리 모델 · 가시성 (happens-before)
 
-- 같은 객체 모니터에 대해  
-  - **`synchronized` 블록 종료(모니터 해제)** 는 그 이전 쓰기들을 **배출(release)**  
-  - **다음에 그 모니터를 획득**하는 스레드는 그 쓰기들을 **관측(acquire)**  
-- 올바른 패턴: **상태 변경**과 **대기/신호**가 **같은 락**에서 이뤄져야 함.  
+- 같은 객체 모니터에 대해
+  - **`synchronized` 블록 종료(모니터 해제)** 는 그 이전 쓰기들을 **배출(release)**
+  - **다음에 그 모니터를 획득**하는 스레드는 그 쓰기들을 **관측(acquire)**
+- 올바른 패턴: **상태 변경**과 **대기/신호**가 **같은 락**에서 이뤄져야 함.
   - 그래야 `notify/notifyAll` 이후 **깨운 스레드가 락을 재획득**했을 때, **상태 변경이 보임**.
 
 ---
@@ -226,7 +226,7 @@ public final class BoundedQueue<T> {
 }
 ```
 
-- 두 개의 **조건(notEmpty / notFull)** 을 **하나의 wait set**으로 처리 → **`notifyAll()`이 안전**.  
+- 두 개의 **조건(notEmpty / notFull)** 을 **하나의 wait set**으로 처리 → **`notifyAll()`이 안전**.
 - `notify()` 최적화는 **엄격한 증명** 없이는 지양.
 
 ---
@@ -244,9 +244,9 @@ public final class BoundedQueue<T> {
 
 ## 11. 락 선택, 재진입, 중첩락 주의
 
-- 락 객체는 **`private final Object lock = new Object();`** 처럼 **비공개 전용**으로.  
+- 락 객체는 **`private final Object lock = new Object();`** 처럼 **비공개 전용**으로.
   - `this`, 상수 `String`(intern 공유) 등은 외부 코드와 **락 간섭** 위험.
-- `synchronized`는 **재진입 가능**(같은 스레드가 같은 모니터를 여러 번 진입 가능).  
+- `synchronized`는 **재진입 가능**(같은 스레드가 같은 모니터를 여러 번 진입 가능).
   - 그러나 `wait()`는 **호출한 모니터만 해제**. **다른 락**은 계속 보유 → **교착 위험**(또 다른 스레드가 그 락을 필요로 하면서 이 스레드를 깨우지 못하는 상황).
 
 **안티패턴(중첩락 보유 후 wait)**
@@ -373,28 +373,28 @@ public class WaitNotifyHarness {
 
 ## 15. FAQ
 
-- **Q. `wait()`는 어떤 락을 풀나요?** → **해당 객체의 모니터**만 풉니다. 다른 락은 유지.  
-- **Q. `wait()`는 반드시 `while`과?** → 예. **항상** `while`입니다.  
-- **Q. `notify()`가 누구를 깨우는지 제어할 수 있나요?** → 없음(임의). **여러 조건이면 `notifyAll()`** 또는 `Condition`으로 분리.  
+- **Q. `wait()`는 어떤 락을 풀나요?** → **해당 객체의 모니터**만 풉니다. 다른 락은 유지.
+- **Q. `wait()`는 반드시 `while`과?** → 예. **항상** `while`입니다.
+- **Q. `notify()`가 누구를 깨우는지 제어할 수 있나요?** → 없음(임의). **여러 조건이면 `notifyAll()`** 또는 `Condition`으로 분리.
 - **Q. `sleep()`과 차이?** → `sleep()`은 **락을 해제하지 않음**, 협력 신호에도 반응하지 않음.
 
 ---
 
 ## 16. 실전 체크리스트
 
-- [ ] **상태 변수**(e.g., `size`, `ready`)로 조건을 표현하고 **동일 락**에서만 읽고 쓴다.  
-- [ ] **`while` 가드 + `wait()`** 를 사용한다.  
-- [ ] **상태 변경 후** `notifyAll()`(또는 적합한 `notify()`/`signal()`).  
-- [ ] 인터럽트는 **복원**(`Thread.currentThread().interrupt()`) 또는 **전파**.  
-- [ ] `wait(timeout)`은 **남은 시간 재계산**(nanoTime)으로 구현.  
-- [ ] 락 객체는 **private final** 로 감춘다(외부 간섭 차단).  
-- [ ] `wait()` 호출 시 **다른 락을 들고 있지 않도록** 설계.  
+- [ ] **상태 변수**(e.g., `size`, `ready`)로 조건을 표현하고 **동일 락**에서만 읽고 쓴다.
+- [ ] **`while` 가드 + `wait()`** 를 사용한다.
+- [ ] **상태 변경 후** `notifyAll()`(또는 적합한 `notify()`/`signal()`).
+- [ ] 인터럽트는 **복원**(`Thread.currentThread().interrupt()`) 또는 **전파**.
+- [ ] `wait(timeout)`은 **남은 시간 재계산**(nanoTime)으로 구현.
+- [ ] 락 객체는 **private final** 로 감춘다(외부 간섭 차단).
+- [ ] `wait()` 호출 시 **다른 락을 들고 있지 않도록** 설계.
 - [ ] 가능하면 **`BlockingQueue` / `Condition`** 등 고수준 도구 채택.
 
 ---
 
 ## 17. 요약
 
-- `wait/notify/notifyAll`은 강력하지만 **취약한 저수준 도구**.  
-- **같은 락**에서 **상태(조건)** 를 갱신·검사하고, **`while` 가드**로 재검사하며, **상태→신호 순서**를 지키면 올바르게 동작.  
+- `wait/notify/notifyAll`은 강력하지만 **취약한 저수준 도구**.
+- **같은 락**에서 **상태(조건)** 를 갱신·검사하고, **`while` 가드**로 재검사하며, **상태→신호 순서**를 지키면 올바르게 동작.
 - 복잡해질수록 **`Condition`** 혹은 **`BlockingQueue`** 로 추상화 계층을 올리는 것이 **안전·성능·가독성** 모두에서 유리하다.

@@ -26,7 +26,7 @@ category: AWS
 ```
 
 **핵심 판단 기준**
-- **SQL 애플리케이션**: 빠른 구축, 운영 단순, 집계/필터/윈도우/간단 조인.  
+- **SQL 애플리케이션**: 빠른 구축, 운영 단순, 집계/필터/윈도우/간단 조인.
 - **Flink 애플리케이션**: 이벤트타임·상태 기반·CEP·세밀한 backpressure 제어·Exactly-once.
 
 ---
@@ -105,8 +105,8 @@ GROUP BY country, action;
 ```
 
 ### 2.3 시간 윈도우
-- **TUMBLING(M)**: 고정크기, 겹침 없음  
-- **SLIDING(M, step)**: 겹치는 창(슬라이드)  
+- **TUMBLING(M)**: 고정크기, 겹침 없음
+- **SLIDING(M, step)**: 겹치는 창(슬라이드)
 - **SESSION(gap)**: 활동-휴지간격으로 묶음
 
 ```sql
@@ -167,7 +167,7 @@ SELECT * FROM "s_agg_action_country";
 > 콘솔에서 **Output**을 생성하며 대상과 포맷/배치 옵션을 지정한다.
 
 ### 2.6 지연 이벤트와 Out-of-Order
-- SQL 런타임은 **Event Time** 및 **Out-of-Order 허용**(윈도우 폐쇄 시점 설정) 지원.  
+- SQL 런타임은 **Event Time** 및 **Out-of-Order 허용**(윈도우 폐쇄 시점 설정) 지원.
 - **RUNTIME 설정**에서 늦게 도착 허용(Time to Live) 파라미터를 보정.
 
 ---
@@ -175,9 +175,9 @@ SELECT * FROM "s_agg_action_country";
 ## 3. KDA for Apache Flink — 프로덕션 패턴
 
 ### 3.1 필수 개념
-- **Event Time + Watermark**  
-- 상태(State): **Keyed State**, RocksDB 백엔드  
-- **Exactly-once**: Kinesis/Checkpointing 설정 필요  
+- **Event Time + Watermark**
+- 상태(State): **Keyed State**, RocksDB 백엔드
+- **Exactly-once**: Kinesis/Checkpointing 설정 필요
 - **Window/CEP**: Session·Sliding·Pattern
 
 ### 3.2 Maven 의존성(개요)
@@ -260,7 +260,7 @@ public class KdaFlinkApp {
 ```
 
 ### 3.4 Checkpoint/Savepoint/Parallelism
-- KDA 콘솔에서 **병렬도**, **Autoscaling**, **Checkpoint interval**, **State backend**를 설정  
+- KDA 콘솔에서 **병렬도**, **Autoscaling**, **Checkpoint interval**, **State backend**를 설정
 - 롤링 배포: **Savepoint** 생성 → 새 버전으로 **Restore** (무중단/데이터 무손실)
 
 ### 3.5 CEP(Complex Event Processing) 예
@@ -277,12 +277,12 @@ Pattern<Event, ?> pattern = Pattern.<Event>begin("click")
 ## 4. 출력(싱크) 전략
 
 ### 4.1 S3 (Parquet)로 적재 — 배치/마이크로배치
-- Flink: **FileSystem sink** + **Bucket assigner**로 파티션(날짜/시간) 저장  
+- Flink: **FileSystem sink** + **Bucket assigner**로 파티션(날짜/시간) 저장
 - SQL: **Output→Firehose→S3** 경로가 운영 단순
 
 ### 4.2 OpenSearch/Redshift/Lambda
-- 집계/지표는 OpenSearch 대시보드  
-- 사실 테이블은 S3→Glue→Athena/Redshift Spectrum  
+- 집계/지표는 OpenSearch 대시보드
+- 사실 테이블은 S3→Glue→Athena/Redshift Spectrum
 - 실시간 액션은 Lambda 구독(알림/차단 등)
 
 ---
@@ -294,18 +294,18 @@ $$
 \text{Throughput} \approx \text{Parallelism} \times \text{Per-Task Rate} \times \text{Scale Factor}
 $$
 
-- Kinesis 샤드 수(읽기 2MB/s·초당 5회 읽기), Flink 병렬도, 다운스트림 쓰기 한계 고려  
+- Kinesis 샤드 수(읽기 2MB/s·초당 5회 읽기), Flink 병렬도, 다운스트림 쓰기 한계 고려
 - **Backpressure** 지표 모니터링, Operator 별 busy-time 확인
 
 ### 5.2 SQL 최적화
-- **SELECT * 금지**: 필요한 컬럼만  
-- 윈도우 크기 최소화(지연 허용·정확도 균형)  
+- **SELECT * 금지**: 필요한 컬럼만
+- 윈도우 크기 최소화(지연 허용·정확도 균형)
 - 레퍼런스 테이블 **키 인덱스** 구성, 갱신 주기 관리
 
 ### 5.3 Flink 최적화
-- **RocksDB State** 사용 + 블룸필터/압축 튜닝  
-- **Watermark** 허용 지연 최소화  
-- **Rescale**: 병렬도 상향, Operator Chain 활용  
+- **RocksDB State** 사용 + 블룸필터/압축 튜닝
+- **Watermark** 허용 지연 최소화
+- **Rescale**: 병렬도 상향, Operator Chain 활용
 - S3 sink: 파일 **소형화 방지**(Rolling policy), Parquet 128~256MB 타깃
 
 ### 5.4 코스트 모델(개략)
@@ -313,7 +313,7 @@ $$
 \text{Total Cost} \approx \text{KDS Shards} + \text{KDA (vCPU·Mem·Hours)} + \text{Downstream (e.g., S3 GB, OpenSearch ingests)}
 $$
 
-- SQL: vCPU 시간 기반  
+- SQL: vCPU 시간 기반
 - Flink: JobManager/TaskManager 리소스·병렬도·운영시간
 
 ---
@@ -321,7 +321,7 @@ $$
 ## 6. 보안·네트워킹·권한
 
 ### 6.1 VPC 연동
-- KDA 애플리케이션을 **VPC에 연결**해 프라이빗 리소스(RDS/ElastiCache) 접근  
+- KDA 애플리케이션을 **VPC에 연결**해 프라이빗 리소스(RDS/ElastiCache) 접근
 - **서브넷/보안그룹** 최소 권한, NAT/엔드포인트 구성
 
 ### 6.2 IAM 역할 (필수 권한 예시)
@@ -338,7 +338,7 @@ $$
 ```
 
 ### 6.3 암호화
-- Kinesis/KDA/S3/OpenSearch 전 구간 **KMS** 암호화  
+- Kinesis/KDA/S3/OpenSearch 전 구간 **KMS** 암호화
 - MSK는 TLS/SASL, VPC 보안그룹 세분화
 
 ---
@@ -346,18 +346,18 @@ $$
 ## 7. 모니터링·가시성·운영
 
 ### 7.1 CloudWatch 지표
-- **KDA SQL**: Input/Output 레코드, MillisBehindLatest, BackpressuredTime  
-- **KDA Flink**: Checkpoint Duration/Alignment, Busy Time, Watermark Lag  
+- **KDA SQL**: Input/Output 레코드, MillisBehindLatest, BackpressuredTime
+- **KDA Flink**: Checkpoint Duration/Alignment, Busy Time, Watermark Lag
 - 경보(Alarm) → SNS/Lambda 조치
 
 ### 7.2 로그
-- **애플리케이션 로그**(stderr/stdout)  
-- Flink **TaskManager/JobManager** 로그  
+- **애플리케이션 로그**(stderr/stdout)
+- Flink **TaskManager/JobManager** 로그
 - 실패 레코드 Dead-letter 경로(Firehose Backup/S3) 설계
 
 ### 7.3 배포·버전 관리
-- SQL: 애플리케이션 버전 저장, **롤백 버튼**  
-- Flink: **Savepoint** 기반 blue/green 롤아웃  
+- SQL: 애플리케이션 버전 저장, **롤백 버튼**
+- Flink: **Savepoint** 기반 blue/green 롤아웃
 - IaC: CloudFormation/SAM/Terraform으로 KDS/KDA/Outputs 일괄 프로비저닝
 
 ---
@@ -365,8 +365,8 @@ $$
 ## 8. 운영급 실전 예제
 
 ### 8.1 시나리오
-- 목표: **1분 단위 국가·액션별 카운트**, 5분 이동 윈도우 트렌드, S3 파이프라인  
-- 입력: `app-events` (JSON)  
+- 목표: **1분 단위 국가·액션별 카운트**, 5분 이동 윈도우 트렌드, S3 파이프라인
+- 입력: `app-events` (JSON)
 - 출력: `analytics-agg` (Kinesis) + Firehose→S3 (Parquet)
 
 #### (A) SQL 애플리케이션 정의
@@ -395,7 +395,7 @@ GROUP BY country, action;
 > 콘솔에서 `s_cnt_1m`, `s_trend_5m`를 **Output**으로 등록(하나는 Kinesis, 하나는 Firehose→S3).
 
 #### (B) Firehose → S3 (Parquet) 설정 포인트
-- **Buffer Size/Interval**: 64–128MiB / 60–300s  
+- **Buffer Size/Interval**: 64–128MiB / 60–300s
 - **Parquet + Snappy**, Glue Schema Registry(선택)
 
 ---
@@ -421,14 +421,14 @@ events
 ```
 
 ### 9.2 Exactly-once 싱크(OpenSearch 예)
-- Flink OpenSearch Sink v2는 **two-phase commit** 유사 시맨틱 지원(버전에 따름)  
+- Flink OpenSearch Sink v2는 **two-phase commit** 유사 시맨틱 지원(버전에 따름)
 - 실패 시 재시도 + backoff, **index template** 선등록
 
 ---
 
 ## 10. 테스트·검증·데이터 품질
 
-- **로컬/샘플 스트림**으로 SQL/Flink 로직 단위 테스트  
+- **로컬/샘플 스트림**으로 SQL/Flink 로직 단위 테스트
 - 데이터 품질 규칙: **Null/타입/범위/카디널리티** 쿼리로 자동 점검
 ```sql
 -- 품질 검증 예: 허용되지 않은 국가
@@ -457,18 +457,18 @@ GROUP BY country;
 
 ## 12. 거버넌스/보안 체크리스트
 
-- [ ] **IAM 최소 권한**: Kinesis, Logs, S3, KMS, OpenSearch  
-- [ ] **전송·저장 암호화**: TLS, SSE-KMS  
-- [ ] **VPC 엔드포인트**: S3/Kinesis/Logs 엔드포인트로 사설 경로  
-- [ ] **비밀 관리**: Secrets Manager/Parameter Store  
+- [ ] **IAM 최소 권한**: Kinesis, Logs, S3, KMS, OpenSearch
+- [ ] **전송·저장 암호화**: TLS, SSE-KMS
+- [ ] **VPC 엔드포인트**: S3/Kinesis/Logs 엔드포인트로 사설 경로
+- [ ] **비밀 관리**: Secrets Manager/Parameter Store
 - [ ] **데이터 마스킹/PII 제거**: SQL/Lambda/Flink 단계에서 필수
 
 ---
 
 ## 13. 비용 통제 레시피
 
-- SQL: **vCPU 축소 + 윈도우/집계 최소화**, 필요 스트림만 출력  
-- Flink: 병렬도/체크포인트 간격/상태 크기 관리, **compact sink**  
+- SQL: **vCPU 축소 + 윈도우/집계 최소화**, 필요 스트림만 출력
+- Flink: 병렬도/체크포인트 간격/상태 크기 관리, **compact sink**
 - 다운스트림: S3 **Parquet + 파티션**, OpenSearch 인덱스 정책(ILM/수명)
 
 ---
@@ -510,8 +510,8 @@ Resources:
 
 ## 15. 요약
 
-- **KDA SQL**: 가장 빠르게 **실시간 집계/필터/윈도우**를 제품화. 운영 단순.  
-- **KDA Flink**: **Event Time·State·CEP·Exactly-once**가 필요한 **엔터프라이즈 스트리밍**의 정석.  
+- **KDA SQL**: 가장 빠르게 **실시간 집계/필터/윈도우**를 제품화. 운영 단순.
+- **KDA Flink**: **Event Time·State·CEP·Exactly-once**가 필요한 **엔터프라이즈 스트리밍**의 정석.
 - 핵심 성공 요인: **정확한 이벤트타임/워터마크 설계**, **상태와 체크포인트**, **적절한 싱크 패턴**, **모니터링·알람·자동복구**, **보안·VPC·KMS**.
 
 ---
@@ -552,5 +552,5 @@ $$
 ---
 
 ### 마무리
-Kinesis Data Analytics는 **“즉시 쓸 수 있는 SQL”**과 **“무한히 정교해지는 Flink”** 두 축으로 실시간 파이프라인을 완성한다.  
+Kinesis Data Analytics는 **“즉시 쓸 수 있는 SQL”**과 **“무한히 정교해지는 Flink”** 두 축으로 실시간 파이프라인을 완성한다.
 본 가이드의 설계/코드/운영 체크리스트를 템플릿 삼아, **작게 시작해 확장 가능하게** 만들자. 그러면 대시보드·알림·머신러닝 피쳐링까지 **한 흐름**으로 자연스럽게 이어진다.

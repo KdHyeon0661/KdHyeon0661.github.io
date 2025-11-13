@@ -43,7 +43,7 @@ main:    A---B---C---D'---E'
 - 이 과정에서 **충돌**이 없고, **보호 규칙**(CI, 리뷰, 서명, 선형 이력 등)이 충족되면 fast-forward로 base에 반영한다.
 - 충돌 발생 시:
   - PR 화면에 “Rebase conflicts” 류의 메시지가 나타날 수 있다.
-  - **웹 에디터로 곧바로 해결 불가**한 케이스가 잦다(서버 측 rebase 성격).  
+  - **웹 에디터로 곧바로 해결 불가**한 케이스가 잦다(서버 측 rebase 성격).
   - 일반적으로 **로컬에서 rebase** → PR 브랜치 업데이트 → 다시 시도.
 
 ---
@@ -104,7 +104,7 @@ git commit -am "feat(main): x"
 ## 3.1 왜 웹에서 바로 안 되나?
 - Rebase and merge는 GitHub가 서버 측 rebase를 수행한 뒤 fast-forward 병합을 시도한다.
 - **충돌이 나면 서버 측 rebase를 중단**하고 사용자에게 해결을 요구.
-- **웹 에디터는 merge 충돌용 UI는 제공하지만**, rebase 충돌은 구조상 제한이 있다.  
+- **웹 에디터는 merge 충돌용 UI는 제공하지만**, rebase 충돌은 구조상 제한이 있다.
   → 보통 **로컬에서 rebase** 후 PR을 업데이트해야 한다.
 
 ## 3.2 로컬에서 충돌 해결 절차
@@ -176,10 +176,10 @@ git add path/to/file
 | Dismiss stale reviews | 새 커밋 푸시 시 기존 승인 무효화 |
 
 ## 5.3 Rebase and merge만 허용하고 싶을 때
-1) **Require linear history** 활성화  
-2) 저장소 Settings → Merge button 설정에서  
-   - Allow merge commits **비활성화**  
-   - **Allow rebase merges 활성화**  
+1) **Require linear history** 활성화
+2) 저장소 Settings → Merge button 설정에서
+   - Allow merge commits **비활성화**
+   - **Allow rebase merges 활성화**
    - Allow squash merges는 팀 정책에 따라 선택
 
 > Require linear history를 켜면 merge commit이 막히므로, **Rebase and merge** 혹은 **Squash and merge** 만 사용 가능하다.
@@ -299,15 +299,15 @@ git range-diff origin/main...HEAD
 
 # 11. 결론
 
-- **Rebase and merge** 는 PR 병합 시 **병합 커밋 없이 선형 이력**을 유지하는 강력한 방식이다.  
-- 다만 **커밋 재작성**으로 인한 서명·정책 상호작용과 **충돌 처리** 부담을 이해해야 한다.  
-- 저장소 설정에서 **Require linear history**, **Allow rebase merges** 를 함께 쓰고, **CI/리뷰 정책**을 명확히 하면 **안정적으로 깔끔한 이력**을 유지할 수 있다.  
+- **Rebase and merge** 는 PR 병합 시 **병합 커밋 없이 선형 이력**을 유지하는 강력한 방식이다.
+- 다만 **커밋 재작성**으로 인한 서명·정책 상호작용과 **충돌 처리** 부담을 이해해야 한다.
+- 저장소 설정에서 **Require linear history**, **Allow rebase merges** 를 함께 쓰고, **CI/리뷰 정책**을 명확히 하면 **안정적으로 깔끔한 이력**을 유지할 수 있다.
 - 충돌 시에는 로컬 rebase → `--force-with-lease` 로 PR을 갱신하고, 필요하면 **Auto-merge / Merge queue** 로 운영 자동화를 더해 생산성을 높인다.
 
 ---
 
 ## 참고
-- GitHub Docs — Rebase and merge  
+- GitHub Docs — Rebase and merge
   https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/merging-a-pull-request#rebase-and-merge
-- GitHub Docs — Branch protection rules  
+- GitHub Docs — Branch protection rules
   https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-a-branch-protection-rule

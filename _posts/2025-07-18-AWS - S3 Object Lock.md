@@ -301,7 +301,7 @@ aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 5. **수명주기(Lifecycle)와의 상호작용**: Retention/Legal Hold가 유효하면 **Transition/Expiration이 지연**될 수 있음.
 6. **복제(Replication)**: **S3 Replication**은 Object Lock 메타를 대상 버킷으로 **전파** 가능. 대상도 **Object Lock 활성화+버전 관리**여야 함.
 7. **스토리지 클래스**: Standard/IA/Glacier 계열 모두 **삭제 제한**은 동일 원칙. 다만 Glacier 계열은 **조기 삭제 수수료** 고려.
-8. **비용 모델**: 보존기간 동안 **영구 저장 비용** 발생.  
+8. **비용 모델**: 보존기간 동안 **영구 저장 비용** 발생.
    총 비용 근사:
    $$
    \text{Cost} \approx \sum_{m=1}^{M} (G_m \cdot c_m) + \text{Requests} + \text{Retrieval}
@@ -342,19 +342,19 @@ aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 
 ## 13. FAQ (실무 질문 기반)
 
-**Q1. 기존 버킷에 Object Lock을 켤 수 있나?**  
+**Q1. 기존 버킷에 Object Lock을 켤 수 있나?**
 A. **아니오.** **새 버킷**을 만들 때만 활성화 가능.
 
-**Q2. Compliance 모드에서 잘못된 날짜를 짧게 고칠 수 있나?**  
+**Q2. Compliance 모드에서 잘못된 날짜를 짧게 고칠 수 있나?**
 A. **불가.** **연장만** 가능. 테스트는 **반드시 Governance**로.
 
-**Q3. Legal Hold와 Retention 중 어느 쪽이 더 강한가?**  
+**Q3. Legal Hold와 Retention 중 어느 쪽이 더 강한가?**
 A. 성격이 다름. **Legal Hold ON**이면 기간과 무관하게 **삭제 금지**. 둘 다 걸리면 **둘 다** 해제/만료되어야 삭제 가능.
 
-**Q4. Glacier Deep Archive로 전환해도 잠금은 유지되나?**  
+**Q4. Glacier Deep Archive로 전환해도 잠금은 유지되나?**
 A. **유지.** 단, 복구 지연/수수료 감안.
 
-**Q5. 복제 대상에서도 동일 보존 정책으로 잠기나?**  
+**Q5. 복제 대상에서도 동일 보존 정책으로 잠기나?**
 A. **가능.** 대상 버킷이 **Object Lock 활성화+버전 관리** 상태여야 하며, **레플리케이션 규칙**에서 메타 전파가 이뤄진다.
 
 ---
@@ -385,24 +385,24 @@ aws s3api put-object \
 
 ## 15. 문제 해결(트러블슈팅)
 
-- **`AccessDenied`로 Retention 수정 실패**  
+- **`AccessDenied`로 Retention 수정 실패**
   → 권한(`s3:PutObjectRetention`) 확인, Compliance는 **연장만 가능**. 거버넌스의 경우 우회 권한·헤더 확인.
-- **`InvalidRequest` 시간 형식 오류**  
+- **`InvalidRequest` 시간 형식 오류**
   → ISO8601 + UTC(`Z`) 사용.
-- **삭제 커맨드가 무시됨**  
+- **삭제 커맨드가 무시됨**
   → Retention/Legal Hold 상태 확인. Governance 우회는 `--bypass-governance-retention` 필요.
-- **레플리케이션 미동작**  
+- **레플리케이션 미동작**
   → 대상 버킷 Object Lock/Versioning 활성화 여부, KMS 권한, 필수 버킷 정책 확인.
-- **수명주기 정책이 안 먹힘**  
+- **수명주기 정책이 안 먹힘**
   → Retention/Legal Hold가 유효하면 Transition/Expiration이 지연. 기간 만료 후 적용.
 
 ---
 
 ## 16. 보안 아키텍처 샘플 — “우회는 승인 시에만”
 
-1. **일반 운영 역할**: 읽기/쓰기 가능, **삭제/우회 불가**  
-2. **보안 관리자 역할**: `s3:BypassGovernanceRetention` 포함, **MFA 필수 조건부**  
-3. **SCP**: 평상시 **Deny**로 우회 기능 봉인 → **변경창구 승인** 시 일시 해제  
+1. **일반 운영 역할**: 읽기/쓰기 가능, **삭제/우회 불가**
+2. **보안 관리자 역할**: `s3:BypassGovernanceRetention` 포함, **MFA 필수 조건부**
+3. **SCP**: 평상시 **Deny**로 우회 기능 봉인 → **변경창구 승인** 시 일시 해제
 4. **감사 로깅**: Retention/Legal Hold 변경/삭제 이벤트 **실시간 알림**(EventBridge→SNS)
 
 ---

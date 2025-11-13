@@ -18,7 +18,7 @@ category: Git
 
 ## 1. 왜 “커밋 정리”가 필요한가
 
-하나의 기능 동안 잦은 수정으로 **자잘한 커밋**(오타 수정, 콘솔 로그 제거, 네이밍 변경…)이 쌓인다.  
+하나의 기능 동안 잦은 수정으로 **자잘한 커밋**(오타 수정, 콘솔 로그 제거, 네이밍 변경…)이 쌓인다.
 PR 리뷰어, 미래의 나 모두에게 **핵심/맥락이 보이는 이력**이 중요하다.
 
 정리 목표:
@@ -34,7 +34,7 @@ PR 리뷰어, 미래의 나 모두에게 **핵심/맥락이 보이는 이력**�
 - 커밋 메시지가 **`fixup! <원커밋제목>`** 혹은 **`squash! <원커밋제목>`** 형태면, 인터랙티브 리베이스 시 해당 원 커밋을 찾아 **자동 재배치** 및 **동작 지정**:
   - `fixup!` → `fixup`
   - `squash!` → `squash`
-- 동일 제목의 커밋이 여러 개면 **가장 가까운 조상(보통 최신)**에 매칭되는 경향이 있다.  
+- 동일 제목의 커밋이 여러 개면 **가장 가까운 조상(보통 최신)**에 매칭되는 경향이 있다.
   → 안전을 위해 **해시 기반**의 `--fixup=<해시>` 사용 권장.
 
 ### 2.2 자동 정렬 시점
@@ -109,7 +109,7 @@ git commit --fixup="feat: 게시글 작성 기능"
 
 ## 5. 인터랙티브 리베이스 범위 잡기 전략
 
-- **작을수록 안전**: `HEAD~3`, `HEAD~5` 처럼 최근만.  
+- **작을수록 안전**: `HEAD~3`, `HEAD~5` 처럼 최근만.
 - **중간 규모**: 기능 브랜치 전체를 정리할 땐 `git merge-base`를 활용.
 
 ```bash
@@ -139,7 +139,7 @@ git rebase --continue
 git rebase --abort
 ```
 
-- 충돌이 **여러 커밋에서 연속**으로 터질 수 있다(리베이스는 커밋 단위 재적용).  
+- 충돌이 **여러 커밋에서 연속**으로 터질 수 있다(리베이스는 커밋 단위 재적용).
 - 커다란 충돌이 계속 발생한다면 범위를 줄이거나 **단위별로 분할**해 처리한다.
 
 ---
@@ -153,7 +153,7 @@ git rebase --abort
 git push --force-with-lease origin feature/my-feature
 ```
 
-- 단순 `--force`는 팀원의 새로운 작업을 덮어쓸 위험이 크다.  
+- 단순 `--force`는 팀원의 새로운 작업을 덮어쓸 위험이 크다.
 - CI/브랜치 보호 규칙(Require linear history)와 병행하여 **혼선 최소화**.
 
 ---
@@ -196,24 +196,24 @@ git rebase -i --autosquash HEAD~20
 ```
 
 ### 9.3 스텝 바이 스텝
-- “한 번에 50개 커밋 정리”는 리스크가 크다.  
+- “한 번에 50개 커밋 정리”는 리스크가 크다.
 - 기능별/폴더별로 나누어 **여러 번에 걸쳐** 정리하고 푸시.
 
 ---
 
 ## 10. 팀/CI와의 연계
 
-- **Commitlint**로 메시지 규칙 강제(Conventional Commits).  
-- **PR 체크**에 `Require linear history`를 켜서 merge commit 제한.  
-- **`Squash and merge` vs `Rebase and merge`**: 조직 문화에 맞게 선택.  
+- **Commitlint**로 메시지 규칙 강제(Conventional Commits).
+- **PR 체크**에 `Require linear history`를 켜서 merge commit 제한.
+- **`Squash and merge` vs `Rebase and merge`**: 조직 문화에 맞게 선택.
 - 리베이스/스쿼시 후 **자동 changelog 생성**(conventional-changelog/Release Drafter)과 잘 맞는다.
 
 ---
 
 ## 11. 보안/감사 관점에서의 주의
 
-- 리베이스는 **역사 재작성**이므로, 이미 배포/공개된 이력에 남용 금지.  
-- 릴리스 태그 이후에는 커밋 정리가 아닌 **새 커밋 추가**가 원칙.  
+- 리베이스는 **역사 재작성**이므로, 이미 배포/공개된 이력에 남용 금지.
+- 릴리스 태그 이후에는 커밋 정리가 아닌 **새 커밋 추가**가 원칙.
 - 감사 추적이 필요한 저장소에서는 **개인 브랜치에서만 정리**하고, 메인 이력은 가능한 **불변**으로 유지.
 
 ---
@@ -229,7 +229,7 @@ git reset --hard HEAD@{3}  # 되돌리기
 git checkout -b rescue HEAD@{3}
 ```
 
-- `reflog`는 **브랜치/HEAD 이동의 히스토리**를 기억한다.  
+- `reflog`는 **브랜치/HEAD 이동의 히스토리**를 기억한다.
 - 과감한 정리 전에 **임시 브랜치**를 하나 만들어 두면 심리적 안정도↑.
 
 ---
@@ -243,7 +243,7 @@ git commit --fixup="feat: 게시글 작성 기능"
 git rebase -i --autosquash HEAD~5
 ```
 
-- 같은 제목이 여럿이면 매칭이 원하는 결과가 아닐 수 있다.  
+- 같은 제목이 여럿이면 매칭이 원하는 결과가 아닐 수 있다.
   → 안전을 위해 **해시 사용** 권장.
 
 ### 13.2 여러 베이스 커밋을 각자 정리
@@ -295,7 +295,7 @@ git rebase -i --autosquash HEAD~10
 
 ## 15. 팀 규칙(권장 템플릿)
 
-- 개인 브랜치에서만 `rebase -i --autosquash` 사용.  
+- 개인 브랜치에서만 `rebase -i --autosquash` 사용.
 - PR 전 “정리 스크립트” 실행:
   ```bash
   # scripts/prepare-pr.sh (예시)
@@ -344,14 +344,14 @@ git reset --hard HEAD@{n}
 
 ## 17. 마무리
 
-- `fixup!`/`squash!` + `--autosquash`는 **정리의 표준 루틴**이다.  
-- 작은 단위로, 안전한 범위에서, 팀 규칙과 CI를 곁들여 **항상 같은 방식으로 반복**하라.  
+- `fixup!`/`squash!` + `--autosquash`는 **정리의 표준 루틴**이다.
+- 작은 단위로, 안전한 범위에서, 팀 규칙과 CI를 곁들여 **항상 같은 방식으로 반복**하라.
 - 깔끔한 히스토리는 **리뷰 품질**을 높이고, **버그 분석**을 빠르게 하고, **온보딩 비용**을 줄인다.
 
 ---
 
 ## 참고 자료
 
-- Git 공식 문서: Rebase — https://git-scm.com/docs/git-rebase  
-- Pro Git Book: Interactive Rebase — https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History  
+- Git 공식 문서: Rebase — https://git-scm.com/docs/git-rebase
+- Pro Git Book: Interactive Rebase — https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History
 - `--autosquash` 설명 — https://git-scm.com/docs/git-rebase#Documentation/git-rebase.txt---autosquash

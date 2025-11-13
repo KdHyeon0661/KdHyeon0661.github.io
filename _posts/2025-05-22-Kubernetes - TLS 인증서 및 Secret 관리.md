@@ -161,7 +161,7 @@ kubectl get secret my-tls-secret -n default -o jsonpath='{.data.tls\.key}' | bas
 
 ### 3.2 무중단 교체(rollover)
 
-1) 새 인증서/키로 **동일 이름** Secret 업데이트 → Ingress 컨트롤러가 **자동 리로드**(컨트롤러마다 반영 타이밍 상이).  
+1) 새 인증서/키로 **동일 이름** Secret 업데이트 → Ingress 컨트롤러가 **자동 리로드**(컨트롤러마다 반영 타이밍 상이).
 2) 안전하게 하려면 **새 Secret 이름**으로 만들고 Ingress의 `secretName`을 **원자적 변경** 후 롤백 가능하도록 관리.
 
 ---
@@ -236,7 +236,7 @@ spec:
             key: secret-access-key
 ```
 
-> DNS-01은 DNS 제공자(CloudDNS/Route53/Cloudflare 등) 자격증명이 필요.  
+> DNS-01은 DNS 제공자(CloudDNS/Route53/Cloudflare 등) 자격증명이 필요.
 > **와일드카드** 인증서가 반드시 필요할 때 선택.
 
 #### (C) Certificate 리소스로 실제 발급
@@ -396,7 +396,7 @@ resources:
   - identity: {}
 ```
 
-`kube-apiserver` 인자에 `--encryption-provider-config=/etc/kubernetes/encryption-config.yaml`.  
+`kube-apiserver` 인자에 `--encryption-provider-config=/etc/kubernetes/encryption-config.yaml`.
 **키 회전**(새 key 추가 → 리인코드 → 구 key 제거) 전략 수립 필수.
 
 ### 6.3 외부 비밀관리 / GitOps
@@ -434,14 +434,14 @@ spec:
 
 ## 7. 운영 베스트 프랙티스
 
-1. **도메인 별로 SAN 확실히**: `example.com`, `www.example.com` 등 실제 사용 호스트 모두 나열.  
-2. **체인 완전성**: `tls.crt`에 **intermediate 포함**.  
-3. **자동갱신 모니터링**: cert-manager의 `Certificate` 상태, 만료 임계(기본 30일 전) 알람.  
-4. **스테이징 ACME로 검증**: Let’s Encrypt **스테이징**으로 레이트리밋 회피 후 프로덕션 전환.  
-5. **DNS 전파/캐시 고려**: DNS-01은 TTL/전파시간이 관건.  
-6. **Secret 스코프 최소화**: 네임스페이스 분리, RBAC 최소권한.  
-7. **GitOps + 암호화**: Sealed Secrets/SOPS로 **리포 유출 위험** 낮추기.  
-8. **키 회전**: 정기적으로 새 키로 교체(Secret 교체 후 롤링).  
+1. **도메인 별로 SAN 확실히**: `example.com`, `www.example.com` 등 실제 사용 호스트 모두 나열.
+2. **체인 완전성**: `tls.crt`에 **intermediate 포함**.
+3. **자동갱신 모니터링**: cert-manager의 `Certificate` 상태, 만료 임계(기본 30일 전) 알람.
+4. **스테이징 ACME로 검증**: Let’s Encrypt **스테이징**으로 레이트리밋 회피 후 프로덕션 전환.
+5. **DNS 전파/캐시 고려**: DNS-01은 TTL/전파시간이 관건.
+6. **Secret 스코프 최소화**: 네임스페이스 분리, RBAC 최소권한.
+7. **GitOps + 암호화**: Sealed Secrets/SOPS로 **리포 유출 위험** 낮추기.
+8. **키 회전**: 정기적으로 새 키로 교체(Secret 교체 후 롤링).
 9. **관측성**: `curl -vkI`, `openssl s_client`, Ingress 컨트롤러 로그, cert-manager events로 **원인 가시화**.
 
 ---
@@ -450,12 +450,12 @@ spec:
 
 ### 8.1 브라우저 “인증서 신뢰 안 됨”
 
-- 체인 누락 가능성↑. `tls.crt`에 **leaf + intermediate** 붙였는지 확인.  
+- 체인 누락 가능성↑. `tls.crt`에 **leaf + intermediate** 붙였는지 확인.
 - 사설 CA 사용 시, **루트/중간 CA** 를 클라이언트 신뢰 저장소에 배포.
 
 ### 8.2 `404 Not Found` 혹은 HTTP로만 응답
 
-- Ingress가 올바른 **host** 룰을 가졌는지, `ingressClassName`/annotations 확인.  
+- Ingress가 올바른 **host** 룰을 가졌는지, `ingressClassName`/annotations 확인.
 - DNS가 올바른 LB 주소를 가리키는지 `dig example.com` 확인.
 
 ### 8.3 cert-manager 발급 실패
@@ -468,18 +468,18 @@ kubectl describe challenge -n default
 kubectl logs -n cert-manager deploy/cert-manager
 ```
 
-- HTTP-01: `/.well-known/acme-challenge/*`가 외부에서 접근 가능한지 `curl -vkL http://example.com/.well-known/acme-challenge/TEST`  
+- HTTP-01: `/.well-known/acme-challenge/*`가 외부에서 접근 가능한지 `curl -vkL http://example.com/.well-known/acme-challenge/TEST`
 - DNS-01: TXT 레코드가 정확히 생성/전파됐는지 확인.
 
 ### 8.4 만료 임박인데 갱신 안 됨
 
-- `Certificate`의 `renewBefore` 확인(기본 720h).  
-- cert-manager 컨트롤러 로그에 에러가 없는지 확인.  
+- `Certificate`의 `renewBefore` 확인(기본 720h).
+- cert-manager 컨트롤러 로그에 에러가 없는지 확인.
 - 퍼미션/솔버 설정(Route53 권한 등) 재점검.
 
 ### 8.5 mTLS 연결 거부
 
-- 클라이언트가 **올바른 cert/key** 로 접속하는지.  
+- 클라이언트가 **올바른 cert/key** 로 접속하는지.
 - Ingress annotation의 `auth-tls-secret` CA 번들 정확성, verify-depth 조정.
 
 ---
@@ -525,7 +525,7 @@ spec:
 
 ### 9.2 내부 CA + mTLS(서버/클라이언트) 혼합
 
-- 서버 인증서는 `corp-ca` Issuer로 발급.  
+- 서버 인증서는 `corp-ca` Issuer로 발급.
 - 클라이언트 CA 번들은 별도 Secret.
 
 ```yaml
@@ -600,14 +600,14 @@ kubectl describe certificate <name> -n <ns>
 
 ## 11. 체크리스트 요약
 
-- [ ] Ingress/Gateway에 **올바른 Secret 참조**(체인 포함).  
-- [ ] cert-manager: Issuer/ClusterIssuer/Certificate **상태 녹색**.  
-- [ ] ACME 스테이징 → 프로덕션 **단계적 전환**.  
-- [ ] 만료 알람/`renewBefore`/대시보드 구성.  
-- [ ] RBAC 최소권한, Secret **네임스페이스 경계** 준수.  
-- [ ] **etcd 암호화** 활성화 + **키 회전** 절차.  
-- [ ] GitOps 시 **Sealed Secrets/SOPS/ESO/CSI** 고려.  
-- [ ] mTLS 필요 시 CA 번들 관리 및 깊이(verify-depth) 조정.  
+- [ ] Ingress/Gateway에 **올바른 Secret 참조**(체인 포함).
+- [ ] cert-manager: Issuer/ClusterIssuer/Certificate **상태 녹색**.
+- [ ] ACME 스테이징 → 프로덕션 **단계적 전환**.
+- [ ] 만료 알람/`renewBefore`/대시보드 구성.
+- [ ] RBAC 최소권한, Secret **네임스페이스 경계** 준수.
+- [ ] **etcd 암호화** 활성화 + **키 회전** 절차.
+- [ ] GitOps 시 **Sealed Secrets/SOPS/ESO/CSI** 고려.
+- [ ] mTLS 필요 시 CA 번들 관리 및 깊이(verify-depth) 조정.
 - [ ] 정기 보안점검: 누가 어떤 Secret에 접근하는지 **감사**.
 
 ---
@@ -623,16 +623,16 @@ kubectl describe certificate <name> -n <ns>
 | 보안 운영 | RBAC 최소권한, etcd 암호화, 외부 비밀관리(ESO/Vault/SOPS/Sealed) |
 | 가시성/대응 | `describe`/`logs`/`openssl`/`curl`로 **빠른 원인 파악** |
 
-Kubernetes에서 TLS를 제대로 다루는 것은 **신뢰·보안·운영 효율**의 교차점입니다.  
+Kubernetes에서 TLS를 제대로 다루는 것은 **신뢰·보안·운영 효율**의 교차점입니다.
 수동 발급부터 cert-manager 자동화, mTLS, 비밀관리 보안까지 본문 레시피를 참고해 **안전하고 자동화된 HTTPS 스택**을 구축하세요.
 
 ---
 
 ## 참고
-- Kubernetes TLS Secret: <https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets>  
-- cert-manager: <https://cert-manager.io/>  
-- Let’s Encrypt ACME: <https://letsencrypt.org/docs/acme-protocol/>  
-- External Secrets Operator: <https://external-secrets.io/>  
-- Sealed Secrets: <https://github.com/bitnami-labs/sealed-secrets>  
-- SOPS: <https://github.com/getsops/sops>  
+- Kubernetes TLS Secret: <https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets>
+- cert-manager: <https://cert-manager.io/>
+- Let’s Encrypt ACME: <https://letsencrypt.org/docs/acme-protocol/>
+- External Secrets Operator: <https://external-secrets.io/>
+- Sealed Secrets: <https://github.com/bitnami-labs/sealed-secrets>
+- SOPS: <https://github.com/getsops/sops>
 - CSI Secrets Store: <https://secrets-store-csi-driver.sigs.k8s.io/>

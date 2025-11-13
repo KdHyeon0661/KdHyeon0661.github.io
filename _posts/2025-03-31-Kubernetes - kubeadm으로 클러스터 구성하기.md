@@ -347,10 +347,10 @@ kubectl describe pod <pod> -n <ns>
 
 Pod 수용량 추정의 단순식:
 $$
-\text{필요 파드 수} \approx 
+\text{필요 파드 수} \approx
 \left\lceil \frac{\text{QPS}\cdot t}{\text{파드당 처리량}} \right\rceil \cdot \text{버퍼}
 $$
-여기서 \(t\)는 평균 처리시간(초), 버퍼는 스파이크 흡수(예: 1.2~1.5).  
+여기서 \(t\)는 평균 처리시간(초), 버퍼는 스파이크 흡수(예: 1.2~1.5).
 노드 패킹은 CPU/메모리 `requests` 합이 노드 용량의 목표 활용률 \(U\)(예: 0.6~0.7)를 넘지 않도록 한다.
 
 ---
@@ -413,5 +413,5 @@ curl http://echo.local/
 - **관측/운영**: metrics-server/Prometheus/Grafana, 로깅 스택, 경보 기준선
 - **수명주기**: 계획된 업그레이드 절차/리허설, 토큰/인증서 로테이션
 
-> kubeadm은 “클러스터를 **어떻게 올라가는지**”를 몸으로 익히는 가장 좋은 경로다.  
+> kubeadm은 “클러스터를 **어떻게 올라가는지**”를 몸으로 익히는 가장 좋은 경로다.
 > 이 경험은 매니지드 K8s(EKS/GKE/AKS) 운영 시에도 장애 대응과 비용/성능 최적화에 큰 차이를 만든다.

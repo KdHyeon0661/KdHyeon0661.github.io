@@ -80,7 +80,7 @@ public class ForeachExample {
 | 대상 | 모든 `Collection` | **배열 + Iterable** |
 | 내부 동작 | 명시적 Iterator | 배열은 인덱스, 컬렉션은 Iterator |
 
-> **읽기 전용 순회** → foreach 권장.  
+> **읽기 전용 순회** → foreach 권장.
 > **순회하며 안전하게 삭제/치환/삽입** → Iterator 또는 `ListIterator`.
 
 ---
@@ -352,16 +352,16 @@ map.entrySet().stream()
 
 ## 14. 자주 묻는 함정(FAQ)
 
-1) **`remove()`를 언제 부를 수 있나?**  
+1) **`remove()`를 언제 부를 수 있나?**
 → **`next()` 직후의 요소**에만, 한 번만. 그 외엔 `IllegalStateException`.
 
-2) **foreach에서 요소 바꾸려면?**  
+2) **foreach에서 요소 바꾸려면?**
 → 루프 변수 재할당은 무의미. `ListIterator#set`을 쓰거나 새 컨테이너로 수집.
 
-3) **CME는 항상 발생하나?**  
+3) **CME는 항상 발생하나?**
 → 아니요. **best-effort** 감지. 발생하지 않았더라도 동작이 안전하단 뜻은 아닙니다.
 
-4) **동시성 하에서 안전 순회는?**  
+4) **동시성 하에서 안전 순회는?**
 → `Concurrent*` 컬렉션 사용(약한 일관성) 또는 스냅샷(`new ArrayList<>(list)`) 후 순회.
 
 ---

@@ -8,11 +8,11 @@ category: Java
 
 ## 0. 컬렉션 프레임워크 한눈에 보기
 
-- **List**: 순서 유지, **중복 허용**, 인덱스 접근  
+- **List**: 순서 유지, **중복 허용**, 인덱스 접근
   구현체: `ArrayList`, `LinkedList`, (`Vector`, `Stack` 레거시)
-- **Set**: **중복 불가**, 수학적 집합  
+- **Set**: **중복 불가**, 수학적 집합
   구현체: `HashSet`, `LinkedHashSet`(입력 순서), `TreeSet`(정렬)
-- **Map**: 키-값 쌍, **키 중복 불가**  
+- **Map**: 키-값 쌍, **키 중복 불가**
   구현체: `HashMap`, `LinkedHashMap`(입력·접근 순서), `TreeMap`(키 정렬), (`Hashtable` 레거시)
 
 > 공통: **제네릭(Generics)**, **반복자(Iterator)**, **fail-fast** 탐지, **알고리즘/메모리 튜닝 파라미터**(초기 용량, 로드 팩터 등)를 이해하면 품질과 성능이 눈에 띄게 좋아집니다.
@@ -77,7 +77,7 @@ public class ListExample {
 ### 2.2 해시 기반 Set의 핵심 — 동치 규약
 사용자 타입을 Set에 넣을 때는 반드시 **동치 규약**을 지켜야 합니다.
 
-- **규약**: `a.equals(b) == true` → 반드시 `a.hashCode() == b.hashCode()`  
+- **규약**: `a.equals(b) == true` → 반드시 `a.hashCode() == b.hashCode()`
 - `equals`/`hashCode` 둘 다 재정의해야 충돌/누락 없고 성능 유지
 
 ```java
@@ -96,7 +96,7 @@ final class User {
 
 ### 2.3 정렬 기반 Set의 핵심 — 비교 일관성
 - `TreeSet`은 `compareTo`/`Comparator`로 **정렬 기준**을 잡습니다.
-- **주의**: `compareTo(a,b)==0`인 두 객체는 **같은 원소로 간주**되어 **하나만** 저장됩니다.  
+- **주의**: `compareTo(a,b)==0`인 두 객체는 **같은 원소로 간주**되어 **하나만** 저장됩니다.
   `equals`와의 **일관성**이 깨지지 않도록 설계하세요.
 
 ```java
@@ -318,10 +318,10 @@ System.out.println(sorted); // {a=1, b=2, c=3}
 
 ## 12. 흔한 함정과 베스트 프랙티스
 
-1) **사용자 타입을 Set/Map 키로 사용** → `equals`/`hashCode`(해시) 또는 `compareTo`/`Comparator`(정렬) **반드시 재정의/제공**.  
-2) **foreach 중 삭제** → `Iterator.remove`/`removeIf` 사용(§4).  
-3) **정렬 기준과 equals 불일치** → `TreeSet/TreeMap`에서 **중복 소거** 발생.  
-4) **`Hashtable`/`Vector` 사용** → 레거시. `ConcurrentHashMap`/`ArrayList` 사용.  
+1) **사용자 타입을 Set/Map 키로 사용** → `equals`/`hashCode`(해시) 또는 `compareTo`/`Comparator`(정렬) **반드시 재정의/제공**.
+2) **foreach 중 삭제** → `Iterator.remove`/`removeIf` 사용(§4).
+3) **정렬 기준과 equals 불일치** → `TreeSet/TreeMap`에서 **중복 소거** 발생.
+4) **`Hashtable`/`Vector` 사용** → 레거시. `ConcurrentHashMap`/`ArrayList` 사용.
 5) **불변과 수정불가 뷰 혼동** → 기저 변경이 보일 수 있음(§6.2).
 
 ---

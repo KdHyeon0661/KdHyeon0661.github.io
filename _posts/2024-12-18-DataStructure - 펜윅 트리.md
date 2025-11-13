@@ -8,7 +8,7 @@ category: Data Structure
 
 ## 1. 개요와 동기
 
-**펜윅 트리(Fenwick Tree)** 또는 **BIT(Binary Indexed Tree)**는  
+**펜윅 트리(Fenwick Tree)** 또는 **BIT(Binary Indexed Tree)**는
 **누적 합(prefix sum)**·**구간 합(range sum)**·**빈도 누적** 등을 **\(O(\log n)\)** 으로 처리하는 **배열 기반 트리**다.
 
 - 단순 **누적 합 배열**은 질의 \(O(1)\)이지만 **갱신이 \(O(n)\)**.
@@ -28,16 +28,16 @@ category: Data Structure
 
 - BIT는 **인덱스 i의 최하위 1비트(LSB)** 길이만큼을 **하나의 덩어리**로 관리한다.
 - 비트 연산 **`i & -i`** 는 정수 \(i\)의 **LSB(2-adic 분해)** 를 반환:
-  
+
   $$
   \operatorname{LSB}(i) = i \,\&\, (-i).
   $$
-  
+
   예) \( i=12_{(2)}=1100_2 \Rightarrow i\&-i = 0100_2=4 \).
 
-- **prefix sum** \([1..i]\)를 계산할 때, \(i\)에서 시작해  
+- **prefix sum** \([1..i]\)를 계산할 때, \(i\)에서 시작해
   \(i -= \operatorname{LSB}(i)\)로 **상위 블록으로 점프**하면서 덩어리 합을 더한다.
-- **update**는 반대로 \(i\)에서 시작해  
+- **update**는 반대로 \(i\)에서 시작해
   \(i += \operatorname{LSB}(i)\)로 **상위 덩어리들에 변화 전파**.
 
 이 설계로 질의·갱신이 모두 \(O(\log n)\)에 끝난다.
@@ -49,7 +49,7 @@ category: Data Structure
 - 전통 구현은 **1-based 인덱스**를 쓴다. (가장 간단)
 - 0-based가 꼭 필요하면 **내부는 1-based로, 외부에서 ±1 시프트** 래핑을 권장.
 
-**수 자료형**  
+**수 자료형**
 - 합/누적은 쉽게 **int를 넘친다**. 실전은 **`long long`** 또는 **모듈러**를 사용.
 
 ---
@@ -139,10 +139,10 @@ int main() {
 \[
 i = \sum_{k} 2^{b_k} \quad(b_k\text{는 켜진 비트 위치}).
 \]
-BIT는 각 \(i\)에 대해 길이 \(\operatorname{LSB}(i)\)의 구간 **\([i-\operatorname{LSB}(i)+1,\, i]\)** 합을 저장한다.  
+BIT는 각 \(i\)에 대해 길이 \(\operatorname{LSB}(i)\)의 구간 **\([i-\operatorname{LSB}(i)+1,\, i]\)** 합을 저장한다.
 따라서 prefix 합은 다음 블록들의 합으로 분해된다:
 \[
-\sum_{x=1}^{i} a_x \;=\; 
+\sum_{x=1}^{i} a_x \;=\;
 \sum_{\text{경로 }i\to 0} \text{block}(i).
 \]
 업데이트는 반대로 **해당 원소를 포함하는 모든 상위 블록**에 동일 델타를 더한다.
@@ -224,7 +224,7 @@ struct FenwickRURQ {
 
 ## 8. 2D Fenwick — 행렬 구간 합
 
-- 2D 배열 \(A[r][c]\)에 대해 **점 업데이트 + 직사각형 합** 또는  
+- 2D 배열 \(A[r][c]\)에 대해 **점 업데이트 + 직사각형 합** 또는
   **직사각형 업데이트 + 점/직사각형 질의**를 2D BIT로 확장 가능.
 - 핵심은 인덱스 두 축에 대해 **LSB 이동을 중첩**:
 
@@ -261,7 +261,7 @@ struct Fenwick2D {
 
 ## 9. 순서 통계 — **k번째(이하 누적) 찾기**
 
-BIT를 **빈도 배열**로 쓰면,  
+BIT를 **빈도 배열**로 쓰면,
 `find_kth(k)` (누적 합이 처음으로 \( \ge k \)가 되는 최소 인덱스)를 **이진 리프 보행**으로 \(O(\log n)\)에 찾는다.
 
 ```cpp
@@ -415,7 +415,7 @@ int main(){
     Fenwick<long long> freq(10);
     // {1:2회, 3:1회, 5:3회, 9:1회} 라고 하자.
     freq.add(1,2); freq.add(3,1); freq.add(5,3); freq.add(9,1);
-    auto kth = [&](long long k){ 
+    auto kth = [&](long long k){
         // find_kth에서 bit 벡터 접근 필요 → 같은 번들에 넣어 사용 가정
         // 여기선 간략하게 내부 접근 허용 또는 find_kth를 friend로 선언했다고 치자.
         int pos = 0;
@@ -492,5 +492,5 @@ int main(){
 | 고급 | 2D 확장, `find_kth`, 좌표 압축, 인버전 수, 온라인 순위 |
 | 주의 | 1-based, 자료형, 범위 포함, 빌드·갱신 혼합 금지 |
 
-위의 템플릿과 변형들을 익히면 **세그먼트 트리보다 가벼운 많은 누적형 문제**를 효율적으로 풀 수 있다.  
+위의 템플릿과 변형들을 익히면 **세그먼트 트리보다 가벼운 많은 누적형 문제**를 효율적으로 풀 수 있다.
 현업/대회 모두에서 여전히 강력한 **실전 도구**다.

@@ -62,12 +62,12 @@ docker run -d \
 ## 4. OS/플랫폼별 경로 주의점
 
 - **Linux**: 일반적으로 경로 일관성 높음. SELinux/AppArmor 정책 고려 필요.
-- **Windows**: PowerShell/`cmd`별 경로 문법 차이.  
-  - `$(pwd)` 대신 `%cd%`(cmd) 또는 `${PWD}`(PowerShell) 사용.  
+- **Windows**: PowerShell/`cmd`별 경로 문법 차이.
+  - `$(pwd)` 대신 `%cd%`(cmd) 또는 `${PWD}`(PowerShell) 사용.
   - 드라이브 공유(Docker Desktop) 설정 필요할 수 있음.
 - **macOS**: Docker Desktop 가상화 계층을 거쳐 I/O. 바인드 마운트 성능이 떨어질 수 있음.
-- **WSL2**:  
-  - `/mnt/c/...`(Windows 파일) ↔ WSL2 Linux 파일시스템 성능 차이 존재.  
+- **WSL2**:
+  - `/mnt/c/...`(Windows 파일) ↔ WSL2 Linux 파일시스템 성능 차이 존재.
   - 개발 중 바인드 마운트는 **WSL2 내부 경로**를 추천(성능·안정성↑).
 
 예시(Windows PowerShell):
@@ -113,7 +113,7 @@ docker run -d \
 ## 6. 성능 관점: 언제 무엇이 더 빠른가?
 
 - **Linux 네이티브**: Volume이 일반적으로 **일관성 있고 빠름**(엔진 최적화).
-- **Docker Desktop(macOS/Windows)**: 바인드 마운트는 **가상화 계층 동기화**로 느려질 수 있음.  
+- **Docker Desktop(macOS/Windows)**: 바인드 마운트는 **가상화 계층 동기화**로 느려질 수 있음.
   - 코드 핫리로드가 필요하면 바인드 마운트는 불가피하지만, 빌드/런타임 열악해질 수 있음.
   - 대규모 파일 트리(수십만 파일)는 **Volume + `docker cp`** 또는 빌드 단계에 포함하는 방안 고려.
 
@@ -145,7 +145,7 @@ docker run --rm \
 ```
 
 ### 8.2 Bind Mount 백업
-- 호스트에서 디렉터리를 그대로 압축/스냅샷.  
+- 호스트에서 디렉터리를 그대로 압축/스냅샷.
 - 자체 버전관리/스냅샷 정책 필요.
 
 ---
@@ -394,7 +394,7 @@ docker run --mount type=tmpfs,target=/run/tmp myimg
 
 ## 21. 수학적 직관(성능·이식성·운영성 간의 균형)
 
-성능 지표를 \(P\), 이식성을 \(I\), 운영성(관리/보안/관찰)을 \(O\)라 하자.  
+성능 지표를 \(P\), 이식성을 \(I\), 운영성(관리/보안/관찰)을 \(O\)라 하자.
 개발(핫리로드)에서의 종합 효용 \(U_{\text{dev}}\), 운영에서의 종합 효용 \(U_{\text{prod}}\)의 직관은 다음과 같이 생각할 수 있다.
 $$
 U_{\text{dev}} \approx \alpha P_{\text{bind}} + \beta I_{\text{bind}} + \gamma O_{\text{bind}}, \quad
@@ -408,22 +408,22 @@ $$
 
 ## 22. 결론 요약
 
-- **운영/장기 데이터**: Volume(이름 기반·경로 독립·드라이버·백업 수월·보안 유리).  
-- **개발/핫리로드**: Bind Mount(코드 변경 즉시 반영·IDE 친화).  
-- **보안/권한**: 읽기 전용, 비루트, SELinux 라벨, read-only 루트FS + tmpfs.  
-- **성능**: 데스크톱 환경의 바인드 마운트는 느릴 수 있음. 대규모 파일·빌드는 Volume/컨테이너 내부 작업 고려.  
+- **운영/장기 데이터**: Volume(이름 기반·경로 독립·드라이버·백업 수월·보안 유리).
+- **개발/핫리로드**: Bind Mount(코드 변경 즉시 반영·IDE 친화).
+- **보안/권한**: 읽기 전용, 비루트, SELinux 라벨, read-only 루트FS + tmpfs.
+- **성능**: 데스크톱 환경의 바인드 마운트는 느릴 수 있음. 대규모 파일·빌드는 Volume/컨테이너 내부 작업 고려.
 - **운영성**: Compose/볼륨 드라이버/백업 절차로 **가시성·재해복구** 확보.
 
 ---
 
 ## 23. 체크리스트
 
-- [ ] 운영 DB/영구 데이터는 **Volume** 사용  
-- [ ] 개발 핫리로드 디렉토리는 **Bind Mount**  
-- [ ] `--mount` 구문 사용(명시적)  
-- [ ] 읽기 전용(`readonly`/`:ro`) + 비루트(`--user`/`USER`)  
-- [ ] SELinux 환경에서 `:Z/:z` 또는 `--mount ...,z`  
-- [ ] mac/Windows 바인드 성능 고려(WSL2 내부 경로/Volume 전환)  
-- [ ] Volume **이름**으로 공유/백업/이전 용이하게 설계  
-- [ ] 데이터 백업/복구 스크립트 준비(Volume tar/압축)  
+- [ ] 운영 DB/영구 데이터는 **Volume** 사용
+- [ ] 개발 핫리로드 디렉토리는 **Bind Mount**
+- [ ] `--mount` 구문 사용(명시적)
+- [ ] 읽기 전용(`readonly`/`:ro`) + 비루트(`--user`/`USER`)
+- [ ] SELinux 환경에서 `:Z/:z` 또는 `--mount ...,z`
+- [ ] mac/Windows 바인드 성능 고려(WSL2 내부 경로/Volume 전환)
+- [ ] Volume **이름**으로 공유/백업/이전 용이하게 설계
+- [ ] 데이터 백업/복구 스크립트 준비(Volume tar/압축)
 - [ ] Compose로 서비스·스토리지 정의 버전관리

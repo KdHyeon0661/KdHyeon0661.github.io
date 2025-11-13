@@ -343,7 +343,7 @@ export function createStore(ns='app:v1:') {
 
 ### 11.1 “로그인 유지(비민감) + 사용자 설정 + 장바구니”
 
-- **로그인 토큰**: 민감 → **HttpOnly 쿠키/서버 세션** 권장.  
+- **로그인 토큰**: 민감 → **HttpOnly 쿠키/서버 세션** 권장.
   단, 공개 토큰(예: 비민감 읽기 전용 API Key)은 TTL과 함께 보관 가능.
 - **사용자 설정(테마/언어/최근탭)**: `localStorage` 적합.
 - **장바구니**: 비로그인 사용자의 임시 상태 → TTL 7일 등.
@@ -392,9 +392,9 @@ window.addEventListener('storage', (e) => {
 | 민감 정보 | 비권장 | 상대적으로 나음(여전히 XSS 주의) | HttpOnly로 보호 가능 | ❌ |
 | 사용 예 | 설정/작은 캐시 | 대형 캐시/오프라인 DB | 인증 세션/서버통신 | 정적자산/응답 캐시 |
 
-> **민감한 인증**: **HttpOnly 쿠키**로!  
-> **대용량/구조화 데이터**: **IndexedDB**.  
-> **정적/응답 캐시**: **Service Worker + Cache API**.  
+> **민감한 인증**: **HttpOnly 쿠키**로!
+> **대용량/구조화 데이터**: **IndexedDB**.
+> **정적/응답 캐시**: **Service Worker + Cache API**.
 > **가벼운 상태/설정**: **Web Storage**.
 
 ---
@@ -423,7 +423,7 @@ function approximateStorageSize() {
 
 ## 14. 브라우저 호환/주의
 
-- 지원: Chrome/Firefox/Safari/Edge(모바일 포함).  
+- 지원: Chrome/Firefox/Safari/Edge(모바일 포함).
 - IE8+ 일부 지원(레거시 환경에선 폴리필 고려).
 - **사파리 Private 모드**: 저장 실패 또는 세션성 동작 → **가용성 체크 + 폴백**.
 
@@ -468,18 +468,18 @@ export const AppConfig = {
 
 ## 17. 체크리스트
 
-- [ ] **민감정보 저장 금지**(토큰/PII)  
-- [ ] XSS 방어(CSP/템플릿 인코딩/라이브러리 검증)  
-- [ ] **가용성/쿼터 예외 처리**, 프라이빗/사파리 대응  
-- [ ] 네임스페이스/버전/마이그레이션 계획  
-- [ ] TTL/캐시 청소 정책  
-- [ ] 교차 탭 동기화(storage 이벤트) 활용  
+- [ ] **민감정보 저장 금지**(토큰/PII)
+- [ ] XSS 방어(CSP/템플릿 인코딩/라이브러리 검증)
+- [ ] **가용성/쿼터 예외 처리**, 프라이빗/사파리 대응
+- [ ] 네임스페이스/버전/마이그레이션 계획
+- [ ] TTL/캐시 청소 정책
+- [ ] 교차 탭 동기화(storage 이벤트) 활용
 - [ ] 필요한 경우 IndexedDB/Service Worker로 역할 분리
 
 ---
 
 ## 참고 자료
 
-- MDN Web Docs — Web Storage API  
-- Can I Use — localStorage / sessionStorage  
+- MDN Web Docs — Web Storage API
+- Can I Use — localStorage / sessionStorage
 - OWASP Cheat Sheet — DOM 기반 XSS 방어

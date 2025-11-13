@@ -32,7 +32,7 @@ category: Kubernetes
 | **RoleBinding** | Namespace | 한 NS에서 Role(또는 ClusterRole)을 **주체**(user/group/SA)에 바인딩 | ClusterRole을 **NS 한정**으로 바인딩할 때도 **RoleBinding** 사용 |
 | **ClusterRoleBinding** | Cluster-wide | ClusterRole을 **전역 범위**로 바인딩 | 모든 NS/비NS에 영향 |
 
-> **핵심 규칙**: **ClusterRole**은 전역 역할의 **정의**이고, 그걸 **어디에 적용하느냐**는 Binding이 결정합니다.  
+> **핵심 규칙**: **ClusterRole**은 전역 역할의 **정의**이고, 그걸 **어디에 적용하느냐**는 Binding이 결정합니다.
 > 전역으로 적용하고 싶으면 **ClusterRoleBinding**, 특정 NS로 제한하고 싶으면 **RoleBinding**을 쓰세요.
 
 ---
@@ -280,7 +280,7 @@ rules:
 ## 10. 권한 에스컬레이션 방지 가이드
 
 - `*`(와일드카드) **지양**: 특히 `verbs: ["*"]`, `resources: ["*"]`.
-- `secrets` 읽기(특히 전역) 남발 금지.  
+- `secrets` 읽기(특히 전역) 남발 금지.
 - `roles`/`rolebindings`/`clusterroles`/`clusterrolebindings` **수정 권한**은 곧 **권한 에스컬레이션** 가능성.
 - `pods/exec`/`pods/portforward` 접근은 사실상 **노드/네트워크 경유 권한**. 운영계정에서 엄격 관리.
 - 상위 시스템(SCM/CI)의 토큰/SA 키 로테이션과 짧은 TTL(투명 JWT/Bound SA Token) 적용.

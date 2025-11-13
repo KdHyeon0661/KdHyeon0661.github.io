@@ -17,10 +17,10 @@ category: Docker
 
 ## 0. 핵심 흐름 복습
 
-1) Docker 이미지 빌드  
-2) 레지스트리에 Push(Docker Hub/Harbor/ECR/GHCR 등)  
-3) Kubernetes 리소스 정의(Deployment/Service/Ingress/ConfigMap/Secret/SA 등)  
-4) `kubectl`로 적용 또는 Helm/Kustomize로 배포  
+1) Docker 이미지 빌드
+2) 레지스트리에 Push(Docker Hub/Harbor/ECR/GHCR 등)
+3) Kubernetes 리소스 정의(Deployment/Service/Ingress/ConfigMap/Secret/SA 등)
+4) `kubectl`로 적용 또는 Helm/Kustomize로 배포
 5) 노출/스케일/보안/관측/롤백 운영
 
 ---
@@ -607,30 +607,30 @@ $$
 
 ## 20. 배포 자동화(선택) — GitOps/Helm/Kustomize
 
-- **GitOps(Argo CD/Flux)**: 매니페스트/차트를 Git에 선언 → 클러스터가 Pull로 동기화  
-- **Helm**: 값 파일 프로모션(dev→staging→prod), 릴리스 이력/롤백 쉬움  
+- **GitOps(Argo CD/Flux)**: 매니페스트/차트를 Git에 선언 → 클러스터가 Pull로 동기화
+- **Helm**: 값 파일 프로모션(dev→staging→prod), 릴리스 이력/롤백 쉬움
 - **Kustomize**: 오버레이로 환경 차이 최소 diff
 
 ---
 
 ## 21. 최종 체크리스트
 
-- [ ] 이미지: 보안 스캔/서명, 다이제스트 고정  
-- [ ] 리소스: requests/limits 정의, HPA/PDB 설정  
-- [ ] 안정성: readiness/liveness/startup probe 설정  
-- [ ] 보안: 비루트/RO FS/Capabilities drop/NetworkPolicy/RBAC  
-- [ ] 노출: Ingress + TLS, 올바른 Service selector  
-- [ ] 운영: 로그/지표/트레이싱, 경보, 롤아웃 이력/롤백  
+- [ ] 이미지: 보안 스캔/서명, 다이제스트 고정
+- [ ] 리소스: requests/limits 정의, HPA/PDB 설정
+- [ ] 안정성: readiness/liveness/startup probe 설정
+- [ ] 보안: 비루트/RO FS/Capabilities drop/NetworkPolicy/RBAC
+- [ ] 노출: Ingress + TLS, 올바른 Service selector
+- [ ] 운영: 로그/지표/트레이싱, 경보, 롤아웃 이력/롤백
 - [ ] 문서화: 런북/장애 시나리오/백업·복구 절차
 
 ---
 
 ## 참고 자료
-- Kubernetes Concepts & API Reference: https://kubernetes.io/docs/home/  
-- kubectl 명령어: https://kubernetes.io/docs/reference/kubectl/  
-- Ingress-NGINX: https://kubernetes.github.io/ingress-nginx/  
-- Cert-Manager: https://cert-manager.io/  
-- HPA: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/  
-- NetworkPolicy: https://kubernetes.io/docs/concepts/services-networking/network-policies/  
-- Helm: https://helm.sh/docs/  
+- Kubernetes Concepts & API Reference: https://kubernetes.io/docs/home/
+- kubectl 명령어: https://kubernetes.io/docs/reference/kubectl/
+- Ingress-NGINX: https://kubernetes.github.io/ingress-nginx/
+- Cert-Manager: https://cert-manager.io/
+- HPA: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+- NetworkPolicy: https://kubernetes.io/docs/concepts/services-networking/network-policies/
+- Helm: https://helm.sh/docs/
 - Kustomize: https://kubectl.docs.kubernetes.io/installation/kustomize/

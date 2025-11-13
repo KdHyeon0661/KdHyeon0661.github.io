@@ -166,15 +166,15 @@ async function getCurrentPositionWithHardTimeout(ms, options) {
 
 ## 6. 정확도·지연·배터리 — 트레이드오프 설계
 
-- **enableHighAccuracy=true**  
-  - 장점: 더 정확(특히 실외 GPS)  
+- **enableHighAccuracy=true**
+  - 장점: 더 정확(특히 실외 GPS)
   - 단점: **배터리 소모↑**, **획득 지연↑**
-- **maximumAge**  
-  - 캐시 허용. **재측정 없이** 빠르게 응답 가능(배터리 절약).  
+- **maximumAge**
+  - 캐시 허용. **재측정 없이** 빠르게 응답 가능(배터리 절약).
   - 단, **너무 오래된 위치**는 UX 저하.
 
-**권장 전략**  
-1) 첫 화면: `maximumAge: 60_000` 정도로 **빠른 캐시 위치** 우선 제공  
+**권장 전략**
+1) 첫 화면: `maximumAge: 60_000` 정도로 **빠른 캐시 위치** 우선 제공
 2) 백그라운드로 **정밀 재측정**(enableHighAccuracy=true)하여 지도/거리 재계산
 
 ---
@@ -305,7 +305,7 @@ const id = navigator.geolocation.watchPosition(onMove, console.error, {
 
 ## 10. 권한·보안·정책 (반드시 숙지)
 
-- **HTTPS 필수(또는 localhost)**: 보안 문맥(Secure Context)에서만 동작.  
+- **HTTPS 필수(또는 localhost)**: 보안 문맥(Secure Context)에서만 동작.
 - **권한 프롬프트**: 사용자의 **명시적 허용**이 필요. UX 상 **행동 유도 버튼** 뒤에 요청하세요.
 - **권한 사전 점검 (Permissions API)**
 
@@ -316,33 +316,33 @@ if ('permissions' in navigator) {
 }
 ```
 
-- **iframe** 내에서: 상위 문서가 **Permissions-Policy**로 `geolocation`을 허용해야 함.  
+- **iframe** 내에서: 상위 문서가 **Permissions-Policy**로 `geolocation`을 허용해야 함.
   예) `<iframe src="..." allow="geolocation">`
 - **Service Worker**에서는 Geolocation 사용 불가(문서 컨텍스트에서만).
-- **개인정보 보호**:  
-  - 최소 수집(필요한 시점·필드만),  
-  - 저장 시 **익명화/가명화**,  
-  - 전송 시 **TLS**,  
-  - 보관 기간·파기 정책 명시.  
+- **개인정보 보호**:
+  - 최소 수집(필요한 시점·필드만),
+  - 저장 시 **익명화/가명화**,
+  - 전송 시 **TLS**,
+  - 보관 기간·파기 정책 명시.
   - 국내 **개인정보보호법(PIPA)**, EU **GDPR** 등 **법적 근거**와 **동의 고지** 준수.
 
 ---
 
 ## 11. 브라우저/플랫폼 주의점
 
-- **iOS Safari**:  
-  - iOS 13+에서 HTTPS 요구 엄격.  
-  - PWA 백그라운드 지속 추적은 **큰 제약**(OS 정책).  
-- **Android WebView**: 앱 단 권한(위치) 허용 필요.  
-- **데스크톱**: Wi-Fi/네트워크 기반 위치 — 실외 GPS보다 오차 큼.  
+- **iOS Safari**:
+  - iOS 13+에서 HTTPS 요구 엄격.
+  - PWA 백그라운드 지속 추적은 **큰 제약**(OS 정책).
+- **Android WebView**: 앱 단 권한(위치) 허용 필요.
+- **데스크톱**: Wi-Fi/네트워크 기반 위치 — 실외 GPS보다 오차 큼.
 - **실내 환경**: 위치 흔들림(Drift) 빈번 → **정확도/드리프트 필터** 필수.
 
 ---
 
 ## 12. 테스트·모킹
 
-- **DevTools** > Sensors(Chrome) → Location을 **Custom**으로 설정해 경로 시뮬레이션.  
-- **권한 상태**: 브라우저 주소창 자물쇠 아이콘에서 사이트 권한 초기화/변경.  
+- **DevTools** > Sensors(Chrome) → Location을 **Custom**으로 설정해 경로 시뮬레이션.
+- **권한 상태**: 브라우저 주소창 자물쇠 아이콘에서 사이트 권한 초기화/변경.
 - **오프라인 시나리오**: 네트워크 탭에서 Offline 전환 후 폴백 UX 확인.
 
 ---
@@ -418,13 +418,13 @@ export async function currentCoords(): Promise<Coords> {
 
 ## 16. UX 체크리스트
 
-- [ ] 권한 요청은 **사용자 동작 직후**(버튼) 트리거.  
-- [ ] 실패 시 **대체 경로**(수동 주소 입력, IP 기반 대략 위치).  
-- [ ] **정확도/배터리/지연** 균형: 초기 캐시 → 정밀 재측정.  
-- [ ] **오차 시각화**(정확도 원), **마지막 업데이트 시간** 표기.  
-- [ ] **프라이버시 고지**(수집 목적·범위·보관·제3자 공유 여부).  
-- [ ] **CLS 방지**: 지도/카드 영역 높이 예약.  
-- [ ] **네트워크 오류/타임아웃** 재시도 UI(백오프).  
+- [ ] 권한 요청은 **사용자 동작 직후**(버튼) 트리거.
+- [ ] 실패 시 **대체 경로**(수동 주소 입력, IP 기반 대략 위치).
+- [ ] **정확도/배터리/지연** 균형: 초기 캐시 → 정밀 재측정.
+- [ ] **오차 시각화**(정확도 원), **마지막 업데이트 시간** 표기.
+- [ ] **프라이버시 고지**(수집 목적·범위·보관·제3자 공유 여부).
+- [ ] **CLS 방지**: 지도/카드 영역 높이 예약.
+- [ ] **네트워크 오류/타임아웃** 재시도 UI(백오프).
 
 ---
 
@@ -489,28 +489,28 @@ document.getElementById('use-address').onclick = async () => {
 
 ## 19. 흔한 질문(FAQ)
 
-- **Q. 왜 HTTP에서 안 되나요?**  
+- **Q. 왜 HTTP에서 안 되나요?**
   A. 위치는 민감정보라 **Secure Context(HTTPS/localhost)**에서만 허용됩니다.
 
-- **Q. 실내에서 정확도가 왜 낮죠?**  
+- **Q. 실내에서 정확도가 왜 낮죠?**
   A. GPS 신호 감쇠/반사, Wi-Fi 측위 품질 차이. **정밀 옵션+재시도** 또는 **수동 입력**을 보완 제공하세요.
 
-- **Q. 백그라운드로 계속 추적 가능한가요?**  
+- **Q. 백그라운드로 계속 추적 가능한가요?**
   A. 브라우저/PWA는 **OS 정책으로 강하게 제한**합니다. 네이티브 앱 수준의 백그라운드 추적은 어렵습니다.
 
 ---
 
 ## 20. 결론
 
-- **보안(HTTPS)·권한(UX)·정확도(배터리)**의 균형이 핵심입니다.  
-- **`getCurrentPosition` → 캐시 응답 즉시 표시**, 이후 **정밀 재측정/연속 추적**으로 보완.  
+- **보안(HTTPS)·권한(UX)·정확도(배터리)**의 균형이 핵심입니다.
+- **`getCurrentPosition` → 캐시 응답 즉시 표시**, 이후 **정밀 재측정/연속 추적**으로 보완.
 - **오류·폴백·프라이버시 고지**를 갖춘 제품 수준 UX를 구현하면, 지도·근처검색·배달·헬스·물류 등 다양한 도메인에서 **신뢰도 높은 위치 경험**을 제공할 수 있습니다.
 
 ---
 
 ## 참고 링크
 
-- MDN: Geolocation API  
-- W3C Geolocation API (최신 스펙)  
-- Can I use: geolocation  
+- MDN: Geolocation API
+- W3C Geolocation API (최신 스펙)
+- Can I use: geolocation
 - 각 지도/지오코딩 제공자 문서(Google Maps, Mapbox, OpenStreetMap/Leaflet 등)

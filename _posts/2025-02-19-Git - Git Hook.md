@@ -87,8 +87,8 @@ fi
 
 ## 3. 팀과 공유하려면? — 세 가지 전략
 
-1) **Husky 사용**  
-2) **`core.hooksPath`로 버전 관리 디렉터리 지정**  
+1) **Husky 사용**
+2) **`core.hooksPath`로 버전 관리 디렉터리 지정**
 3) **언어별 Hook 프레임워크(예: Python `pre-commit`, Ruby `overcommit`, Go `lefthook`)**
 
 ### 3.1 `core.hooksPath` (순정 Git만으로 공유)
@@ -521,7 +521,7 @@ git config core.hooksPath .githooks
 
 ## 참고 링크
 
-- Git 공식 훅 설명: https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks  
-- Husky: https://typicode.github.io/husky/  
-- lint-staged: https://github.com/okonet/lint-staged  
+- Git 공식 훅 설명: https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks
+- Husky: https://typicode.github.io/husky/
+- lint-staged: https://github.com/okonet/lint-staged
 - commitlint: https://commitlint.js.org/

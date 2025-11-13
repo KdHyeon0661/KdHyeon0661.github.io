@@ -8,7 +8,7 @@ category: Git
 
 ## 1. Git LFS란?
 
-**Git LFS**는 대용량/이진 파일을 Git 리포지토리 밖(LFS 서버)에 저장하고, Git에는 작은 **포인터(pointer)** 파일만 저장하는 확장이다.  
+**Git LFS**는 대용량/이진 파일을 Git 리포지토리 밖(LFS 서버)에 저장하고, Git에는 작은 **포인터(pointer)** 파일만 저장하는 확장이다.
 이미지/동영상/3D/AI 모델/압축 아카이브 등 **diff가 사실상 무의미**하고 **이력 복제 비용이 큰 파일**을 다룰 때 필수적이다.
 
 ### 왜 필요한가?
@@ -133,7 +133,7 @@ git branch backup/pre-lfs-migrate
 
 ### 5.2 BFG Repo-Cleaner 대안
 
-- 오래된 대형 파일 삭제/치환에 특화. LFS 전환도 가능.  
+- 오래된 대형 파일 삭제/치환에 특화. LFS 전환도 가능.
 - 단, 프로젝트 상황에 따라 `git lfs migrate`가 더 직관적일 수 있다.
 
 ---
@@ -159,7 +159,7 @@ git config lfs.fetchexclude "*.mp4,*.mov"
 
 ### 6.3 shallow clone과의 조합
 
-일반 Git의 얕은 클론(`--depth`)은 **Git 이력**을 줄여주지만, LFS 객체는 별도의 정책으로 내려받는다.  
+일반 Git의 얕은 클론(`--depth`)은 **Git 이력**을 줄여주지만, LFS 객체는 별도의 정책으로 내려받는다.
 대형 프로젝트에서는 **멀티 레이어 최적화**(얕은 Git + LFS include/exclude)를 병용하라.
 
 ---
@@ -232,8 +232,8 @@ jobs:
 
 ### 9.1 예시: MinIO를 LFS 백엔드로
 
-1) MinIO 서버(버킷: `lfs-bucket`) 준비  
-2) 커스텀 LFS 서버에서 MinIO에 put/get 프록시  
+1) MinIO 서버(버킷: `lfs-bucket`) 준비
+2) 커스텀 LFS 서버에서 MinIO에 put/get 프록시
 3) 클라이언트 측 설정:
 
 ```bash
@@ -248,7 +248,7 @@ git commit -m "Configure custom LFS endpoint"
 
 ## 10. 모노레포/서브모듈과 LFS
 
-- **모노레포**: 패키지별로 LFS 패턴을 세분화(예: `apps/web/assets/**`, `ml/weights/**`).  
+- **모노레포**: 패키지별로 LFS 패턴을 세분화(예: `apps/web/assets/**`, `ml/weights/**`).
   CI에서 **변경 감지** 후 필요한 LFS만 fetch/checkout.
 - **서브모듈**: 서브모듈에서도 LFS 사용 가능. 상위 CI에서 `submodules: true`, `lfs: true` 조합으로 체크아웃 설정.
 
@@ -257,7 +257,7 @@ git commit -m "Configure custom LFS endpoint"
 ## 11. 보안/권한/가드레일
 
 - **모든 협업자**가 LFS를 설치해야 한다. 미설치 시 포인터 텍스트만 내려받아 “파일이 깨진 것처럼” 보인다.
-- **브랜치 보호 규칙**:  
+- **브랜치 보호 규칙**:
   - LFS 포인터가 아닌 대형 바이너리가 실수로 Git에 들어오는 걸 막기 위해 **프리리시브 서버 훅** 또는 **CI 검사**(예: “100MB 이상 바이너리는 LFS 사용 여부 검사”)를 두자.
 - **시크릿/민감 데이터**는 애초에 커밋 금지(포인터도 메타데이터를 노출할 수 있다).
 

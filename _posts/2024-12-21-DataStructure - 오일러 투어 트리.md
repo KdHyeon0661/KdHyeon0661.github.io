@@ -8,7 +8,7 @@ category: Data Structure
 
 ## 1. 무엇을 다루는가 (개요 & 목표)
 
-**Euler Tour Tree (ETT)** 는 트리(또는 포레스트)를 **오일러 순회(Euler Tour) 결과**로 “1차원 배열”에 펴서, 세그먼트 트리·펜윅 트리·Splay/트립(implicit treap) 같은 자료구조로 **서브트리/경로 질의와 갱신을 \(O(\log n)\)** 에 처리하려는 기법이다.  
+**Euler Tour Tree (ETT)** 는 트리(또는 포레스트)를 **오일러 순회(Euler Tour) 결과**로 “1차원 배열”에 펴서, 세그먼트 트리·펜윅 트리·Splay/트립(implicit treap) 같은 자료구조로 **서브트리/경로 질의와 갱신을 \(O(\log n)\)** 에 처리하려는 기법이다.
 이 글은 다음을 한 번에 정리한다.
 
 - 정적 트리: **입·출시각(in/out) 기반 ETT**로 서브트리 질의/갱신
@@ -33,7 +33,7 @@ category: Data Structure
 | **정적 ETT** | DFS로 `tin/tout`를 잡고 1회 배열화 | 구현 간단, 서브트리 질의·갱신 강력 | 간선 구조가 바뀌면 재빌드 필요 |
 | **동적 ETT** | 오일러 순회 **시퀀스 자체**를 Splay/treap으로 유지 | **link/cut/connected**를 \(O(\log n)\) 근처로 처리 | 구현 난이도↑, “루트 고정/표시” 등 설계 필요 |
 
-> 경로 질의(두 노드 u–v)는 **정적**이면 LCA로 쉽게 풀리나, **완전 동적**이면 보통 **Link-Cut Tree** 또는 **Top Tree**가 더 흔하다.  
+> 경로 질의(두 노드 u–v)는 **정적**이면 LCA로 쉽게 풀리나, **완전 동적**이면 보통 **Link-Cut Tree** 또는 **Top Tree**가 더 흔하다.
 > 동적 ETT는 **연결성/서브트리 질의(루트 선택)** 중심으로 쓰기 좋다.
 
 ---
@@ -42,17 +42,17 @@ category: Data Structure
 
 루트를 \(r\) 로 정하고 DFS 전위 순회를 하자. `tin[u]`를 **u에 최초 진입 시각**, `tout[u]`를 **u의 서브트리 처리가 끝나고 나갈 때**의 시각으로 두면:
 
-- **서브트리 포함성**  
+- **서브트리 포함성**
   \[
   v \in \mathrm{subtree}(u) \iff \mathrm{tin}[u] \le \mathrm{tin}[v] \le \mathrm{tout}[u].
   \]
-- **서브트리 합(엔트리만 기록)**  
+- **서브트리 합(엔트리만 기록)**
   오일러 배열 \(E\) 를 “**첫 방문만** 기록”하는 길이 \(n\) 배열로 두면,
   \[
   \mathrm{subtree\_sum}(u)=\sum_{i=\mathrm{tin}[u]}^{\mathrm{tout}[u]} W[E[i]].
   \]
   (여기서 \(W[x]\) 는 노드 \(x\) 의 현재 가중치)
-- **경로 합** (정적 + LCA 전처리)  
+- **경로 합** (정적 + LCA 전처리)
   \[
   \mathrm{path\_sum}(u,v) \;=\; \mathrm{dist\_sum}(r,u)+\mathrm{dist\_sum}(r,v)-2\cdot \mathrm{dist\_sum}(r,\mathrm{lca}(u,v)) + W[\mathrm{lca}(u,v)].
   \]
@@ -229,9 +229,9 @@ int lca(int a,int b){
 
 ### 6.1 설계 원칙(본 글 구현의 목표)
 
-- **연산**: `connected(u,v)`, `link(u,v)`(서로 다른 트리 연결), `cut(u,v)`(간선 제거), `reroot(r)`(원형 시퀀스 회전),  
+- **연산**: `connected(u,v)`, `link(u,v)`(서로 다른 트리 연결), `cut(u,v)`(간선 제거), `reroot(r)`(원형 시퀀스 회전),
   그리고 **루트 r 기준** `subtreeAdd(u,Δ)` / `subtreeSum(u)` (노드 값 합)
-- **표현**: 각 정점 u에 대해 **ENTER(u)**, **EXIT(u)** 두 토큰을 시퀀스에 둔다.  
+- **표현**: 각 정점 u에 대해 **ENTER(u)**, **EXIT(u)** 두 토큰을 시퀀스에 둔다.
   **r을 루트로 잡으면** `[pos(ENTER(u)) .. pos(EXIT(u))]` 가 **u의 서브트리 구간**이 된다.
 - **핵심**: 동적으로 트리를 바꿔도, `reroot` 로 원하는 루트로 회전하면 **서브트리(u)는 항상 연속**.
 
@@ -282,7 +282,7 @@ static void push(TNode* x){
 }
 ```
 
-- **split(root, k)**: 왼쪽 서브트리 크기가 k가 되게 분리  
+- **split(root, k)**: 왼쪽 서브트리 크기가 k가 되게 분리
 - **merge(a,b)**: a의 모든 인덱스가 b보다 앞인 상태로 결합
 
 ```cpp
@@ -372,10 +372,10 @@ long long rangeSum(TNode*& root,int l,int r){
 - **connected(u,v)**: 각 시퀀스의 **대표(root 포인터)** 가 같은지로 판정.
   - (여기선 간단히 “루트 TNode *” 같은 대표를 추적하거나, `findRootPtr` 로 최상위 부모를 거슬러 올라가 비교)
 - **reroot(r)**: `pos = indexOf(ENTER(r))`; `split(root,pos)` → 오른쪽 + 왼쪽을 `merge(right,left)`.
-- **link(u,v)** (u,v가 서로 다른 트리):  
-  `reroot(u)`; `reroot(v)`; 두 시퀀스를 **중간에 간선 삽입 없이** 단순히 **concat** 하면 Euler 순회가 연결 트리에 대응한다.  
+- **link(u,v)** (u,v가 서로 다른 트리):
+  `reroot(u)`; `reroot(v)`; 두 시퀀스를 **중간에 간선 삽입 없이** 단순히 **concat** 하면 Euler 순회가 연결 트리에 대응한다.
   (간선을 명시 토큰으로 둘 필요 없이, ENTER/EXIT의 interleave가 자연히 형성됨)
-- **cut(u,v)**: 끊을 간선(u,v)은 ETT 상에서 두 구간 사이의 **경계** 두 곳을 찾는 split 2회로 구현.  
+- **cut(u,v)**: 끊을 간선(u,v)은 ETT 상에서 두 구간 사이의 **경계** 두 곳을 찾는 split 2회로 구현.
   (실전에서는 “간선 토큰”을 명시하면 cut 가 쉬워지지만, 본 예제는 u를 루트로 회전 후 u–v 쪽을 잘라내는 간단 패턴을 시연)
 
 > 주의: ETT 변형은 많다. 여기 구현은 **교육용**으로, `link/cut` 의 핵심 감각(회전→split/merge)과 **(루트 기준) 서브트리 질의/가산**을 보여준다. 완전한 일반성(모든 케이스 cut의 엄밀성, 경로 질의 등)은 LCT가 편하다.
@@ -487,7 +487,7 @@ struct ETT {
 
 **주의/한계**:
 
-- 위 `link/cut_as_child` 는 **교육용** 으로 핵심 감각(회전→split/merge)을 보여준다.  
+- 위 `link/cut_as_child` 는 **교육용** 으로 핵심 감각(회전→split/merge)을 보여준다.
   실전에서는 **간선 토큰(두 방향)** 을 시퀀스에 **명시적으로 삽입**해두면 `cut(u,v)` 가 더 명확하고 안전하다.
 - 경로 질의는 동적 ETT 단독으론 불편. 경로 문제가 주력이면 **Link-Cut Tree** 가 구현·이론 모두 더 잘 맞는다.
 
@@ -546,7 +546,7 @@ int main(){
 
 ## 8. 실전 팁 & 함정
 
-- 정적 ETT: **첫 방문만** 기록하는 방식이 서브트리 구간화를 가장 깔끔하게 만든다.  
+- 정적 ETT: **첫 방문만** 기록하는 방식이 서브트리 구간화를 가장 깔끔하게 만든다.
   “들어갈 때/나올 때” 2회 기록법은 **LCA**(RMQ) 같은 곳에 좋다.
 - lazy 전파: **push/pull** 순서가 틀리면 한 번에 망가진다. (특히 동적 ETT)
 - 동적 ETT: 케이스를 모두 커버하려면 **간선 토큰(양방향)** 을 쓰고, link는 **4-way concat**, cut은 **2개 위치 split** 패턴으로 구현하는 것이 정석.
@@ -561,8 +561,8 @@ int main(){
 - **동적 ETT**: 오일러 시퀀스를 **implicit treap/splay** 로 보관 → `reroot`+`split/merge` 로 **link/cut/connected** 및 **(루트 기준) 서브트리 질의/가산** 실현.
 - **선택 가이드**: 완전 동적 경로 문제는 **Link-Cut Tree** 가 실용적이고 구현 리스크가 낮다.
 
-위 코드들은 **핵심 아이디어를 교육용으로 담은 최소 구현**이다. 실제 프로젝트에서는  
-- 간선 토큰을 명시하여 cut의 모든 케이스를 안전하게 처리,  
-- 예외/경계/대표 추적을 정교화,  
-- 테스트(랜덤·대량)로 불변식 보장  
+위 코드들은 **핵심 아이디어를 교육용으로 담은 최소 구현**이다. 실제 프로젝트에서는
+- 간선 토큰을 명시하여 cut의 모든 케이스를 안전하게 처리,
+- 예외/경계/대표 추적을 정교화,
+- 테스트(랜덤·대량)로 불변식 보장
 을 반드시 수행하자.

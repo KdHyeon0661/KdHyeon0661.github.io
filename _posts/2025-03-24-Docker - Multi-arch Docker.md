@@ -135,7 +135,7 @@ COPY --from=builder /app/node_modules ./node_modules
 CMD ["node", "dist/index.js"]
 ```
 
-> `node-gyp`·`sharp` 등 **네이티브 의존성**은 각 아키텍처별 바이너리 재빌드가 필요할 수 있다.  
+> `node-gyp`·`sharp` 등 **네이티브 의존성**은 각 아키텍처별 바이너리 재빌드가 필요할 수 있다.
 > 필요 패키지(예: `python3`, `make`, `g++`)를 build 단계에서만 설치하는 **multi-stage**가 핵심.
 
 ---
@@ -191,7 +191,7 @@ CMD ["java","-jar","/app/app.jar"]
 
 ## 5. Manifest/Tag 전략 (latest + 버전 + 다이제스트)
 
-**권장**:  
+**권장**:
 - 가독용(`1.0.0`, `latest`) + **불변 참조용 다이제스트**를 함께 운영
 - 릴리스 파이프라인(예: `:1.0.0`, `:stable`, `@sha256:...` 동시 발행)
 
@@ -226,7 +226,7 @@ docker buildx build \
 ```
 
 ### 6.2 CI에서 캐시 복원
-- GitHub Actions: `docker/build-push-action@v5` + `cache-from/to`  
+- GitHub Actions: `docker/build-push-action@v5` + `cache-from/to`
 - GitLab: 레지스트리 캐시 태그 유지
 
 ---
@@ -501,15 +501,15 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 
 ## 16. 종합 “레시피” (체크리스트)
 
-1. 빌더/QEMU 준비: `buildx create --use` + `binfmt --install all`  
-2. Dockerfile: 멀티스테이지 + 언어별 네이티브 의존성 해결  
-3. `.dockerignore`: 컨텍스트 슬림화  
-4. 캐시: `cache-from/to`를 레지스트리에 저장 → CI 간 재사용  
-5. buildx: `--platform amd64,arm64 --push` 로 manifest list 생성  
-6. 태그: 버전 + latest + (옵션) 다이제스트 고정 운용  
-7. 보안: 서명(Cosign), SBOM, 취약점 스캔, 정책 게이트  
-8. CI: GitHub/GitLab/Jenkins 템플릿으로 자동화  
-9. 테스트: `docker run --platform ... uname -m` 로 아키 확인  
+1. 빌더/QEMU 준비: `buildx create --use` + `binfmt --install all`
+2. Dockerfile: 멀티스테이지 + 언어별 네이티브 의존성 해결
+3. `.dockerignore`: 컨텍스트 슬림화
+4. 캐시: `cache-from/to`를 레지스트리에 저장 → CI 간 재사용
+5. buildx: `--platform amd64,arm64 --push` 로 manifest list 생성
+6. 태그: 버전 + latest + (옵션) 다이제스트 고정 운용
+7. 보안: 서명(Cosign), SBOM, 취약점 스캔, 정책 게이트
+8. CI: GitHub/GitLab/Jenkins 템플릿으로 자동화
+9. 테스트: `docker run --platform ... uname -m` 로 아키 확인
 10. 문서화: 트러블슈팅(네이티브 모듈/헤더/링커), 릴리스 노트
 
 ---
@@ -550,6 +550,6 @@ docker buildx build --cache-from type=registry,ref=repo/app:buildcache \
 
 ## 마무리
 
-- **핵심**: *멀티스테이지 + buildx + 캐시 + 보안(서명/SBOM/스캔)*  
-- **언어별 포인트**: Go(크로스 쉬움), Node/Python(네이티브 확장 주의), Java(JNI 주의)  
+- **핵심**: *멀티스테이지 + buildx + 캐시 + 보안(서명/SBOM/스캔)*
+- **언어별 포인트**: Go(크로스 쉬움), Node/Python(네이티브 확장 주의), Java(JNI 주의)
 - **운영**: 다이제스트 고정, CI 자동화, 정책 게이트로 **재현성과 신뢰성** 확보

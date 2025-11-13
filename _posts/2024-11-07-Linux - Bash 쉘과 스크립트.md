@@ -16,9 +16,9 @@ category: Linux
 - **인터랙티브 셸**: 프롬프트와 상호작용. alias, 프롬프트(PS1) 등 적용.
 - **논인터랙티브 셸**: 스크립트 실행(`bash script.sh`)이나 cron 등.
 
-**시작 파일 로딩(전형적 순서, 배포판에 따라 차이 가능)**  
-- **로그인 셸**: `/etc/profile` → `~/.bash_profile` (또는 `~/.bash_login`, `~/.profile`)  
-- **인터랙티브 비로그인 셸**: `~/.bashrc`  
+**시작 파일 로딩(전형적 순서, 배포판에 따라 차이 가능)**
+- **로그인 셸**: `/etc/profile` → `~/.bash_profile` (또는 `~/.bash_login`, `~/.profile`)
+- **인터랙티브 비로그인 셸**: `~/.bashrc`
 - **논인터랙티브 셸**: `BASH_ENV`가 설정되어 있으면 그 파일을 읽음
 
 ---
@@ -433,7 +433,7 @@ log "시작"; ok "성공"; warn "주의"; err "실패"
 ---
 
 ## 크론/시스템드와 환경 차이
-- **cron/systemd**는 로그인 셸의 설정을 자동으로 읽지 않는다.  
+- **cron/systemd**는 로그인 셸의 설정을 자동으로 읽지 않는다.
 - 필요한 환경은 스크립트에서 **명시적으로 export** 하거나 systemd 유닛의 `Environment=`를 사용.
 
 ```bash
@@ -584,7 +584,7 @@ echo "생성: $out"
 ---
 
 ## 수학 예시(산술 확장 개념)
-Bash 산술은 **정수** 연산이다.  
+Bash 산술은 **정수** 연산이다.
 $$
 \text{result} = a \times b + c \quad (\text{정수 범위})
 $$

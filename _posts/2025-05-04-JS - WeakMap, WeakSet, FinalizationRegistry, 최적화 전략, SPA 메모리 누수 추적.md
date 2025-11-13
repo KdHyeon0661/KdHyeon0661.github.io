@@ -90,7 +90,7 @@ function visit(node) {
 
 ### 3.1 개념
 - 특정 객체가 **GC로 수거된 이후**(정확한 시점 보장 없음) **콜백을 “언젠가” 실행**해 주는 메커니즘.
-- 주 용도: **진단/로깅/추적/약한 리소스 정리 힌트**.  
+- 주 용도: **진단/로깅/추적/약한 리소스 정리 힌트**.
   DB 커넥션/파일 핸들 등 **즉시성·결정성이 필요한 정리**에는 **부적합**.
 
 ### 3.2 기본 사용과 토큰 관리
@@ -319,17 +319,17 @@ function heavy(key) {
 ## 7. 메모리 추적(Chrome DevTools/Node)
 
 ### 7.1 크롬 DevTools — Heap Snapshot
-1) **Memory 탭 → Heap snapshot** 촬영  
-2) 유저 플로우 수행(탭 전환/리스트 스크롤 등)  
-3) 다시 스냅샷 후 **Comparison** 보기  
-4) **Dominators**로 “누수 뿌리” 찾기, **Retainers**로 보유 체인 분석  
+1) **Memory 탭 → Heap snapshot** 촬영
+2) 유저 플로우 수행(탭 전환/리스트 스크롤 등)
+3) 다시 스냅샷 후 **Comparison** 보기
+4) **Dominators**로 “누수 뿌리” 찾기, **Retainers**로 보유 체인 분석
 5) **Class filter**로 `Detached HTMLDivElement`/리스트 항목 누적 확인
 
 ### 7.2 Allocation instrumentation on timeline
 - **Allocation sampling/recording**을 켜고 시나리오를 재현 → **누가 언제 할당했는지** 스택과 함께 확인.
 
 ### 7.3 Performance 탭 메모리 라인
-- 장시간 **Record** 후 그래프가 **계단식 상승 후 떨어지지 않으면** 의심.  
+- 장시간 **Record** 후 그래프가 **계단식 상승 후 떨어지지 않으면** 의심.
 - 강제 GC(설정 필요: Expose GC) 뒤에도 내려가지 않으면 실제 누수 가능성↑.
 
 ### 7.4 강제 GC (실험용)
@@ -343,7 +343,7 @@ window.gc(); // 테스트 환경에서만
 - `heapdump` 패키지로 스냅샷 덤프 → 오프라인 분석.
 
 ### 7.6 자동 회귀 테스트(간단)
-- Puppeteer 등으로 **특정 시나리오 수행 후 성능 측정**.  
+- Puppeteer 등으로 **특정 시나리오 수행 후 성능 측정**.
 - 사용자 액션 N회 후 **JS heap used** 값이 기준선보다 지속 상승하면 경고.
 
 ---
@@ -422,22 +422,22 @@ export function getOrCreate(id, factory) {
 
 ## 10. FAQ/오해 바로잡기
 
-**Q1. WeakMap이면 누수가 “절대” 없나요?**  
+**Q1. WeakMap이면 누수가 “절대” 없나요?**
 A. **WeakMap 내부 항목은** 대상 객체의 생존과 함께 하므로 “WeakMap 자체”가 원인이 되는 누수는 줄지만, **키를 밖에서 강하게 잡고 있으면** GC되지 않습니다.
 
-**Q2. FinalizationRegistry로 파일/소켓을 닫아도 되나요?**  
+**Q2. FinalizationRegistry로 파일/소켓을 닫아도 되나요?**
 A. **권장하지 않습니다.** 실행 시점이 비결정적이어서 리소스 고갈/경쟁 상태를 야기할 수 있습니다. 명시적 `close()`/`dispose()`를 우선.
 
-**Q3. WeakRef는 캐시에 만능인가요?**  
+**Q3. WeakRef는 캐시에 만능인가요?**
 A. 약참조는 **언제든 사라질 수 있어** 히트율이 낮아질 수 있습니다. LRU/TTL 등과 **혼합 설계**가 현실적입니다.
 
-**Q4. DevTools에서 “Detached DOM”이 뜨는데 꼭 버그인가요?**  
+**Q4. DevTools에서 “Detached DOM”이 뜨는데 꼭 버그인가요?**
 A. 대부분 버그지만, 특정 툴/프레임워크가 내부적으로 가진 참조일 수도 있습니다. **Retainers** 체인을 따라 **진짜 뿌리**를 확인하세요.
 
 ---
 
 ## 11. 결론
 
-- **WeakMap/WeakSet/WeakRef**는 **대상 수명에 종속된 부가 상태/캐시**를 다룰 때 강력합니다.  
-- **FinalizationRegistry**는 **디버깅/로깅 수준의 힌트**에 한정하세요. 즉시성 정리는 **명시적 클린업**이 원칙입니다.  
+- **WeakMap/WeakSet/WeakRef**는 **대상 수명에 종속된 부가 상태/캐시**를 다룰 때 강력합니다.
+- **FinalizationRegistry**는 **디버깅/로깅 수준의 힌트**에 한정하세요. 즉시성 정리는 **명시적 클린업**이 원칙입니다.
 - SPA 환경에서는 **이벤트/타이머/옵저버/리소스**의 생명주기 관리를 표준화하고, **DevTools 스냅샷 비교/타임라인**으로 **누수 회귀 테스트**를 자동화하는 것이 가장 확실한 방어입니다.

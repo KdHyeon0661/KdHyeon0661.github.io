@@ -427,9 +427,9 @@ sudo sysctl vm.max_map_count=262144
 ---
 
 ## 14. 검증 플랜(권장 체크리스트)
-1. **기준선 확보**: 튜닝 전후 `docker system df -v`, `fio`, `hey/wrk`로 수치 확보  
-2. **한 번에 한 가지** 변경 → 유의미한 차이인지 확인  
-3. **부하·장기 테스트**: 24~72시간 soak (로그 회전/메모리 누수/디스크 사용 추세)  
+1. **기준선 확보**: 튜닝 전후 `docker system df -v`, `fio`, `hey/wrk`로 수치 확보
+2. **한 번에 한 가지** 변경 → 유의미한 차이인지 확인
+3. **부하·장기 테스트**: 24~72시간 soak (로그 회전/메모리 누수/디스크 사용 추세)
 4. **알람**: 디스크 사용률/ inode/ 로그 파일 수/ 컨테이너 재시작 횟수/ OOM 이벤트
 
 ---
@@ -469,14 +469,14 @@ sudo sysctl vm.max_map_count=262144
 ---
 
 ## 17. 참고
-- Docker Daemon: `man dockerd`, https://docs.docker.com/engine/reference/commandline/dockerd/  
-- 리소스 제약: https://docs.docker.com/config/containers/resource_constraints/  
-- Rootless: https://docs.docker.com/engine/security/rootless/  
-- BuildKit: https://docs.docker.com/build/buildkit/  
+- Docker Daemon: `man dockerd`, https://docs.docker.com/engine/reference/commandline/dockerd/
+- 리소스 제약: https://docs.docker.com/config/containers/resource_constraints/
+- Rootless: https://docs.docker.com/engine/security/rootless/
+- BuildKit: https://docs.docker.com/build/buildkit/
 
 ---
 
 ## 결론
-- **스토리지(overlay2)**, **로그 회전**, **자원 상한(nofile/shm)**, **데이터 루트 분리**, **cgroupdriver 일치**, **live-restore**가 **가치/위험 대비 효율이 가장 높은** 기본 튜닝 세트다.  
-- 그 다음 단계로 **네트워크 주소풀/미러**, **BuildKit 캐시**, **userns-remap/rootless**, **TLS 보호**를 도입하면 **성능·안정·보안**이 고르게 향상된다.  
+- **스토리지(overlay2)**, **로그 회전**, **자원 상한(nofile/shm)**, **데이터 루트 분리**, **cgroupdriver 일치**, **live-restore**가 **가치/위험 대비 효율이 가장 높은** 기본 튜닝 세트다.
+- 그 다음 단계로 **네트워크 주소풀/미러**, **BuildKit 캐시**, **userns-remap/rootless**, **TLS 보호**를 도입하면 **성능·안정·보안**이 고르게 향상된다.
 - 모든 튜닝은 **측정→적용→검증** 루프 안에서, **장기 동작(로그/디스크 누적)**까지 관측해야 비로소 실효를 갖는다.

@@ -14,8 +14,8 @@ category: 디자인패턴
 | DI (Dependency Injection) | 객체가 자신의 의존을 **외부에서 주입**받는 설계 원리 |
 | DI 컨테이너 | 의존성 그래프와 수명주기를 **설정 기반**으로 관리·해결하는 런타임 도구(예: Spring, .NET) |
 
-핵심 차이:  
-- **Singleton**은 “**하나만** 만들겠다”는 **객체 내부의 제약**.  
+핵심 차이:
+- **Singleton**은 “**하나만** 만들겠다”는 **객체 내부의 제약**.
 - **DI 컨테이너**는 “**언제·얼마나** 만들고 **어떻게 주입**할지”를 **외부 구성(Composition Root)** 으로 이관.
 
 ---
@@ -82,9 +82,9 @@ value = "prod"  # import한 모듈은 프로세스 내에서 1회 로딩
 - 비용: 전역 상태, **테스트 곤란(모킹·격리 어려움)**, **수명 역전(captive dependency)**, 동시성/초기화 순서 문제.
 
 ### 2.3 전형적 함정
-- **가변 전역 상태**: 테스트 간 교차 오염.  
-- **숨은 의존**: import 또는 `getInstance()` 호출이 실제 의존을 감춘다.  
-- **초기화 순서**: 정적 초기화 순환 의존.  
+- **가변 전역 상태**: 테스트 간 교차 오염.
+- **숨은 의존**: import 또는 `getInstance()` 호출이 실제 의존을 감춘다.
+- **초기화 순서**: 정적 초기화 순환 의존.
 - **멀티테넌시 곤란**: 요청·세션별 구성이 불가.
 
 ---
@@ -146,11 +146,11 @@ class Container(containers.DeclarativeContainer):
 
 ## 4. 수명주기 제약을 수식으로 표현하기
 
-의존 그래프를 유향 그래프로 두자.  
-- 정점: 컴포넌트 집합 \( V \).  
-- 간선: 의존 \( E \subseteq V \times V \) (u→v는 u가 v에 의존).  
-- 수명주기 함수 \( L: V \to \{\text{Singleton}, \text{Scoped}, \text{Transient}\} \).  
-- 부분순서 \( \preceq \) 를 다음과 같이 정의:  
+의존 그래프를 유향 그래프로 두자.
+- 정점: 컴포넌트 집합 \( V \).
+- 간선: 의존 \( E \subseteq V \times V \) (u→v는 u가 v에 의존).
+- 수명주기 함수 \( L: V \to \{\text{Singleton}, \text{Scoped}, \text{Transient}\} \).
+- 부분순서 \( \preceq \) 를 다음과 같이 정의:
   \[
   \text{Transient} \preceq \text{Scoped} \preceq \text{Singleton}
   \]
@@ -158,7 +158,7 @@ class Container(containers.DeclarativeContainer):
 \[
 (u \to v) \in E \;\Rightarrow\; L(u) \preceq L(v)
 \]
-즉 **더 오래 사는 객체가 더 짧게 사는 객체에 의존하면 위험**(captured dependency).  
+즉 **더 오래 사는 객체가 더 짧게 사는 객체에 의존하면 위험**(captured dependency).
 Singleton이 Transient에 직접 의존하면, Transient가 사실상 Singleton처럼 살아버려 리소스/상태가 갇힌다.
 
 ---
@@ -180,8 +180,8 @@ Singleton이 Transient에 직접 의존하면, Transient가 사실상 Singleton�
 
 ## 6. 성능과 동시성 관점
 
-- **해결(Resolve) 비용**: 현대 컨테이너는 1~수십 마이크로초 수준(구성·범위·Open Generic·Decorator 사용에 따라 달라짐).  
-- **싱글턴의 잠금 경합**: 전역 가변 상태·공유 락을 두면 부하 시 병목. **불변/락-프리** 구조 또는 샤딩을 고려.  
+- **해결(Resolve) 비용**: 현대 컨테이너는 1~수십 마이크로초 수준(구성·범위·Open Generic·Decorator 사용에 따라 달라짐).
+- **싱글턴의 잠금 경합**: 전역 가변 상태·공유 락을 두면 부하 시 병목. **불변/락-프리** 구조 또는 샤딩을 고려.
 - **스코프 관리**: 연결·파일 핸들 같은 리소스는 Scoped/Transient로 생성하고 **명확한 종료**를 보장.
 
 간단 마이크로벤치(개념 예시, C#):
@@ -210,7 +210,7 @@ public class Bad {
   }
 }
 ```
-- 문제: 의존이 코드에 **명시되지 않음**, 테스트·검토 어려움.  
+- 문제: 의존이 코드에 **명시되지 않음**, 테스트·검토 어려움.
 - 해결: **생성자 주입**으로 명시하거나, 정말 동적 필요 시 **Abstract Factory**를 명시 의존으로 주입.
 
 ### 7.2 Singleton이 Transient 잡아두기(captive)
@@ -252,16 +252,16 @@ public class ReportService {
 ## 9. 실무 시나리오 베스트 프랙티스
 
 ### 9.1 로깅
-- .NET: `ILogger<T>`는 컨테이너 Singleton 팩토리가 제공, 각 T별 카테고리 부여.  
-- Spring: `@Slf4j` 또는 `LoggerFactory` 주입.  
+- .NET: `ILogger<T>`는 컨테이너 Singleton 팩토리가 제공, 각 T별 카테고리 부여.
+- Spring: `@Slf4j` 또는 `LoggerFactory` 주입.
 - 전역 로거 싱글턴보다 **DI 주입 로거**가 교체·테스트 용이.
 
 ### 9.2 구성(Configuration)
-- .NET: `IOptions<T>`(Singleton 소스) + Scoped/Transient 소비자.  
+- .NET: `IOptions<T>`(Singleton 소스) + Scoped/Transient 소비자.
 - 변경 감지 필요 시 `IOptionsMonitor<T>`.
 
 ### 9.3 DB 컨텍스트
-- EF DbContext는 **Scoped**가 권장(요청·트랜잭션 경계).  
+- EF DbContext는 **Scoped**가 권장(요청·트랜잭션 경계).
 - 싱글턴으로 두면 동시성·캐시 오염.
 
 ### 9.4 HttpClient
@@ -286,7 +286,7 @@ class Logger:
 
 ### 10.2 DI로 치환(파이썬 예)
 ```python
-class Logger: 
+class Logger:
     def __init__(self, level="INFO"): self.level = level
 
 class Service:
@@ -310,11 +310,11 @@ var sut = provider.GetRequiredService<ReportService>();
 
 ## 11. 마이그레이션: Singleton → DI
 
-1) **의존 노출**: `getInstance()` 호출부를 생성자 인자로 치환.  
-2) **인터페이스 추출**: 구현에 인터페이스 도입(IClock 등).  
-3) **Composition Root 신설**: 등록 코드로 전역 의존을 외부로 이동.  
-4) **테스트 정비**: Fake/Mock 주입으로 격리 테스트.  
-5) **수명 재설계**: 그래프 상 수명 제약 \( L(u) \preceq L(v) \) 검증.  
+1) **의존 노출**: `getInstance()` 호출부를 생성자 인자로 치환.
+2) **인터페이스 추출**: 구현에 인터페이스 도입(IClock 등).
+3) **Composition Root 신설**: 등록 코드로 전역 의존을 외부로 이동.
+4) **테스트 정비**: Fake/Mock 주입으로 격리 테스트.
+5) **수명 재설계**: 그래프 상 수명 제약 \( L(u) \preceq L(v) \) 검증.
 6) **점진 전환**: 경계 어댑터를 두고 모듈별로 대체.
 
 예시(전환 전)
@@ -339,9 +339,9 @@ public class ReportService {
 
 ## 12. 보안·운영 관점
 
-- **비밀/토큰**: 컨테이너 등록 시 지연 조회(Secret Manager, Vault). 싱글턴에 평문 보관 금지.  
-- **순환 의존**: 컨테이너 경고를 해결(포트/어댑터로 분리).  
-- **관찰 가능성**: Interceptor/Decorator로 로깅·메트릭 주입(핸들러 파이프라인).  
+- **비밀/토큰**: 컨테이너 등록 시 지연 조회(Secret Manager, Vault). 싱글턴에 평문 보관 금지.
+- **순환 의존**: 컨테이너 경고를 해결(포트/어댑터로 분리).
+- **관찰 가능성**: Interceptor/Decorator로 로깅·메트릭 주입(핸들러 파이프라인).
 - **Warmup**: 고비용 싱글턴은 스타트업 시 프리워밍하거나 Lazy<T>로 지연.
 
 ---
@@ -405,13 +405,13 @@ class ReportService {
 
 ## 15. 결론
 
-- **Singleton**: 간단·저비용이지만 전역 상태·테스트·수명 역전의 구조적 리스크가 크다.  
-- **DI 컨테이너**: 수명주기·의존을 **외부 구성으로 명시**하고, 테스트·교체·확장을 체계화한다.  
+- **Singleton**: 간단·저비용이지만 전역 상태·테스트·수명 역전의 구조적 리스크가 크다.
+- **DI 컨테이너**: 수명주기·의존을 **외부 구성으로 명시**하고, 테스트·교체·확장을 체계화한다.
 - 규모가 커질수록 다음 원칙을 따르는 것이 장기적으로 유리하다.
-  1) **생성은 밖에서(Composition Root)**, **사용은 안에서(의존 주입)**.  
-  2) 수명 제약 \( L(u) \preceq L(v) \) 준수, 전역 가변 상태 금지.  
-  3) 안티패턴(Service Locator, Captive Dependency) 차단.  
+  1) **생성은 밖에서(Composition Root)**, **사용은 안에서(의존 주입)**.
+  2) 수명 제약 \( L(u) \preceq L(v) \) 준수, 전역 가변 상태 금지.
+  3) 안티패턴(Service Locator, Captive Dependency) 차단.
   4) 교차 관심사는 Decorator/Interceptor로 횡단 주입.
 
-단순 도구성 컴포넌트에는 Singleton도 실용적일 수 있다.  
+단순 도구성 컴포넌트에는 Singleton도 실용적일 수 있다.
 그러나 **변화·테스트·멀티테넌시·운영성**이 중요한 일반적 애플리케이션에서는 **DI 컨테이너 기반 수명주기 관리**가 훨씬 일관되고 미래지향적이다.

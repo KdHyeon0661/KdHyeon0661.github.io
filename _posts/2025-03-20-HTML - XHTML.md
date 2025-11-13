@@ -10,7 +10,7 @@ category: HTML
 
 - **XHTML (eXtensible HyperText Markup Language)**: **HTML을 XML 문법으로 재정의**한 마크업 언어.
 - **W3C 표준**(XHTML 1.0/1.1). HTML의 표현력 + XML의 **엄격/일관/도구친화성**.
-- 요약  
+- 요약
   ```
   HTML 4.01 + XML 문법 = XHTML 1.0
   ```
@@ -51,9 +51,9 @@ category: HTML
 
 **구성 포인트**
 
-- `<?xml version="1.0" encoding="UTF-8"?>`: XML 선언(선택이지만 권장).  
-- `<!DOCTYPE ...>`: DTD(Strict/Transitional/Frameset).  
-- `<html xmlns="http://www.w3.org/1999/xhtml">`: **XML 네임스페이스** 필수.  
+- `<?xml version="1.0" encoding="UTF-8"?>`: XML 선언(선택이지만 권장).
+- `<!DOCTYPE ...>`: DTD(Strict/Transitional/Frameset).
+- `<html xmlns="http://www.w3.org/1999/xhtml">`: **XML 네임스페이스** 필수.
 - `xml:lang` + `lang` 병행(레거시 UA 호환).
 
 > **MIME/인코딩 규칙 중요:** XML로 서비스(`application/xhtml+xml`)할 경우 **HTTP 헤더의 Content-Type/charset 또는 XML 선언의 encoding**이 권위(source of truth). `meta http-equiv`는 **무시**된다.
@@ -77,8 +77,8 @@ category: HTML
 > **주의:** `script`/`style`은 **빈 요소가 아니다**. `<script />`처럼 self-closing 하면 **내용이 없는 스크립트**가 된다.
 
 ### 3.2 엔티티(Entities) 주의
-- 순수 XML에는 **사전정의 5종**만 존재: `&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`.  
-- XHTML 1.x에서는 DTD로 HTML 엔티티 집합을 가져오지만, **네트워크에서 DTD를 못 가져오면 이름 엔티티가 실패**할 수 있다.  
+- 순수 XML에는 **사전정의 5종**만 존재: `&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`.
+- XHTML 1.x에서는 DTD로 HTML 엔티티 집합을 가져오지만, **네트워크에서 DTD를 못 가져오면 이름 엔티티가 실패**할 수 있다.
   → **가급적 숫자 엔티티(예: `&#169;`/`&#xA9;`) 사용**을 권장.
 
 ---
@@ -94,8 +94,8 @@ category: HTML
 | 인코딩 결정 | meta/http-equiv 가능 | **HTTP 헤더/ XML 선언**만 유효 |
 | 엔티티 | 풍부한 이름 엔티티(HTML 파서 보유) | **DTD 의존/숫자 엔티티 권장** |
 
-**실무 영향**  
-- HTML은 **오류 관대** → 살아남지만 의도와 다를 수 있음.  
+**실무 영향**
+- HTML은 **오류 관대** → 살아남지만 의도와 다를 수 있음.
 - XHTML은 **fail-fast** → 품질 보증에 유리하나, **사소한 오류도 전체 파기**.
 
 ---
@@ -161,7 +161,7 @@ XHTML의 강점: **다중 XML 네임스페이스 통합**.
 ## 7. MIME 타입과 서버 설정
 
 ### 7.1 권장 MIME
-- **진짜 XHTML로서 파싱**: `application/xhtml+xml`  
+- **진짜 XHTML로서 파싱**: `application/xhtml+xml`
 - **호환을 위해 HTML 파서로 처리**: `text/html` (XHTML 문법을 쓰더라도 HTML로 파싱됨)
 
 **주의(레거시 IE):** `application/xhtml+xml` **미지원**. B2B/레거시 환경이면 **콘텐츠 협상** 또는 `text/html` 서비스가 현실적.
@@ -217,12 +217,12 @@ location ~ \.xhtml$ {
 
 ## 9. 오류 모델 — 디버깅/검증
 
-- HTML: 에러를 **가능한 복구**. 표시되지만 의도와 다를 수 있다.  
-- XHTML(XML): **치명적인 오류 시 렌더 중단**(노출되지 않음).  
+- HTML: 에러를 **가능한 복구**. 표시되지만 의도와 다를 수 있다.
+- XHTML(XML): **치명적인 오류 시 렌더 중단**(노출되지 않음).
 
 **검증 팁**
-- XML 파서/유효성 검사기로 **well-formedness** 확인(태그 닫힘, 엔티티, 중첩).  
-- DTD 유효성 검사(옵션)로 엔티티/속성/콘텐츠 모델 확인.  
+- XML 파서/유효성 검사기로 **well-formedness** 확인(태그 닫힘, 엔티티, 중첩).
+- DTD 유효성 검사(옵션)로 엔티티/속성/콘텐츠 모델 확인.
 - CI에 **lint + 검증** 투입 → 품질 담보.
 
 ---
@@ -230,12 +230,12 @@ location ~ \.xhtml$ {
 ## 10. Polyglot & XHTML5 — 현대적 전략
 
 ### 10.1 Polyglot Markup(양쪽 파서 호환)
-- 문법을 **HTML 파서·XML 파서 모두에서 합법**이 되도록 제약.  
+- 문법을 **HTML 파서·XML 파서 모두에서 합법**이 되도록 제약.
 - 규칙 예: **소문자 태그/속성**, **속성값 모두 인용**, **빈 요소에 `/>`**, **엔티티는 숫자 권장**, **불린 속성에 값 지정**, `id` 유일성 등.
 
 ### 10.2 XHTML5(HTML5 어휘의 XML 직렬화)
-- HTML Living Standard의 **요소/속성 어휘** + **XML 직렬화 규칙**.  
-- Doctype은 단순화 가능(일부는 omit), **네임스페이스는 동일**.  
+- HTML Living Standard의 **요소/속성 어휘** + **XML 직렬화 규칙**.
+- Doctype은 단순화 가능(일부는 omit), **네임스페이스는 동일**.
 - 서비스는 `application/xhtml+xml`. (레거시 대응 필요 시 **콘텐츠 협상**)
 
 **간단 예 (XHTML5 풍)**
@@ -259,8 +259,8 @@ location ~ \.xhtml$ {
 
 ## 11. 접근성·SEO·국제화
 
-- `lang` + `xml:lang`: 언어 인식 향상(스크린 리더, 검색엔진).  
-- 제목 구조 `<h1>`~`<h6>` 엄격 중첩, 리스트/테이블 시맨틱 태그 준수.  
+- `lang` + `xml:lang`: 언어 인식 향상(스크린 리더, 검색엔진).
+- 제목 구조 `<h1>`~`<h6>` 엄격 중첩, 리스트/테이블 시맨틱 태그 준수.
 - 문자셋은 **UTF-8** 권장. **XML 선언/HTTP 헤더**에서 일치.
 
 ---
@@ -329,37 +329,37 @@ location ~ \.xhtml$ {
 
 ## 13. 체크리스트(요약)
 
-- [ ] 태그/속성 **소문자**  
-- [ ] **모든 속성값 인용**  
-- [ ] **모든 요소 닫기**, 빈 요소는 **`/>`**  
-- [ ] **불린 속성 값 명시**(`disabled="disabled"`)  
-- [ ] **정확한 중첩**  
-- [ ] **네임스페이스** 명시(`xmlns="..."`)  
-- [ ] **엔티티**는 가급적 **숫자 엔티티** 사용  
-- [ ] `script`/`style`의 `<`/`&`는 **CDATA**로 보호  
-- [ ] **MIME/인코딩**: XML은 **HTTP 헤더/선언**로 결정  
+- [ ] 태그/속성 **소문자**
+- [ ] **모든 속성값 인용**
+- [ ] **모든 요소 닫기**, 빈 요소는 **`/>`**
+- [ ] **불린 속성 값 명시**(`disabled="disabled"`)
+- [ ] **정확한 중첩**
+- [ ] **네임스페이스** 명시(`xmlns="..."`)
+- [ ] **엔티티**는 가급적 **숫자 엔티티** 사용
+- [ ] `script`/`style`의 `<`/`&`는 **CDATA**로 보호
+- [ ] **MIME/인코딩**: XML은 **HTTP 헤더/선언**로 결정
 - [ ] 레거시 브라우저 필요 시 **text/html** 또는 **Polyglot** 전략
 
 ---
 
 ## 14. 자주 묻는 질문(FAQ)
 
-**Q. .xhtml로 저장만 하면 XHTML인가요?**  
+**Q. .xhtml로 저장만 하면 XHTML인가요?**
 A. **아니오.** **문법(Well-formed) + 올바른 MIME/인코딩**이 만족되어야 XML로서 XHTML이다.
 
-**Q. `meta charset`이면 충분한가요?**  
+**Q. `meta charset`이면 충분한가요?**
 A. **XML 컨텍스트에서는 불충분.** `application/xhtml+xml`로 서비스 시 **HTTP 헤더/ XML 선언**으로 인코딩을 지정해야 한다.
 
-**Q. self-closing을 모든 태그에 써도 되나요?**  
+**Q. self-closing을 모든 태그에 써도 되나요?**
 A. **콘텐츠가 없는 경우에만.** `<script />`처럼 쓰면 **내용이 없는 스크립트**가 되어 코드가 사라진다.
 
-**Q. HTML5 기능을 쓰면서 XHTML처럼 엄격하게?**  
+**Q. HTML5 기능을 쓰면서 XHTML처럼 엄격하게?**
 A. **XHTML5(HTML 어휘의 XML 직렬화)** 또는 **Polyglot**을 고려. 레거시 호환은 콘텐츠 협상.
 
 ---
 
 ## 15. 결론
 
-- XHTML은 **엄격한 문법 + XML 생태계 통합**이 강점.  
-- 현대 웹앱은 대부분 **HTML5**로 충분하지만, **전자문서/출판/정적 변환 파이프라인**에서는 XHTML이 여전히 가치가 크다.  
+- XHTML은 **엄격한 문법 + XML 생태계 통합**이 강점.
+- 현대 웹앱은 대부분 **HTML5**로 충분하지만, **전자문서/출판/정적 변환 파이프라인**에서는 XHTML이 여전히 가치가 크다.
 - 실무에서는 **문법·MIME·인코딩·엔티티·스크립트 직렬화**가 핵심 함정. 본 가이드의 체크리스트와 예제를 그대로 적용하면 **깨지지 않는 XHTML**을 안정적으로 운용할 수 있다.

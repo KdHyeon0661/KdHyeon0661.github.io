@@ -6,7 +6,7 @@ category: Spring
 ---
 # 2. 스프링 부트 빠른 시작 — Starter·AutoConfiguration, `@ConfigurationProperties`, 앱 구조(패키지/계층/멀티모듈)
 
-> 부트는 “**의존성 + 기본 설정 = 바로 실행 가능한 앱**”을 목표로 한다.  
+> 부트는 “**의존성 + 기본 설정 = 바로 실행 가능한 앱**”을 목표로 한다.
 > 핵심은 ① Starter(의존성 세트) ② AutoConfiguration(조건부 자동 설정) ③ 타입-세이프 설정 바인딩(`@ConfigurationProperties`) ④ 일관성 있는 패키지/계층/멀티모듈 설계다.
 
 ---
@@ -246,8 +246,8 @@ class InfoController {
 }
 ```
 
-> 팁  
-> - **IDE 힌트**: `spring-boot-configuration-processor`를 의존성에 추가하면 YML 자동완성/검증 힌트가 좋아진다.  
+> 팁
+> - **IDE 힌트**: `spring-boot-configuration-processor`를 의존성에 추가하면 YML 자동완성/검증 힌트가 좋아진다.
 > - `constructor binding`은 **레코드** 사용 시 자연스럽다(불변 + null-safety).
 
 **Gradle 의존성**
@@ -478,14 +478,14 @@ dependencies {
 }
 ```
 
-> **핵심**: `boot-api`만 스프링 부트 스타터에 의존.  
+> **핵심**: `boot-api`만 스프링 부트 스타터에 의존.
 > `domain/application`은 **프레임워크 독립**을 유지해 순수 테스트/재사용 용이.
 
 ---
 
 ### C-4. DTO/엔티티 매핑과 계층 간 변환
-- Controller는 **Request/Response DTO**만 다룬다.  
-- Application 계층은 **Command/Query 모델**을 사용.  
+- Controller는 **Request/Response DTO**만 다룬다.
+- Application 계층은 **Command/Query 모델**을 사용.
 - Infrastructure는 **JPA 엔티티 ↔ 도메인 모델 매핑** 책임.
 
 **간단 예**
@@ -654,7 +654,7 @@ class JacksonConfig {
 
 ## F. 마무리 요약
 
-- **Starter**는 의존성 세트, **AutoConfiguration**은 “상황에 맞춰” 빈을 깔아준다.  
-- **`@ConfigurationProperties`**로 설정을 타입-세이프하게 묶어 **검증/리팩토링**이 쉬워진다.  
-- **앱 구조**는 부트 의존을 가장자리에 두고, **도메인/애플리케이션을 순수화**해 테스트성과 유지보수를 높인다.  
+- **Starter**는 의존성 세트, **AutoConfiguration**은 “상황에 맞춰” 빈을 깔아준다.
+- **`@ConfigurationProperties`**로 설정을 타입-세이프하게 묶어 **검증/리팩토링**이 쉬워진다.
+- **앱 구조**는 부트 의존을 가장자리에 두고, **도메인/애플리케이션을 순수화**해 테스트성과 유지보수를 높인다.
 - **멀티모듈**은 재사용/경계 명확화/빌드 시간 최적화에 유리하며, 팀 Starter로 **조직 표준**을 캡슐화하자.

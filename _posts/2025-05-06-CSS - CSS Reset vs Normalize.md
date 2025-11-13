@@ -14,14 +14,14 @@ category: CSS
 | 적용 시점   | **프로젝트 최상단 CSS**(모든 컴포넌트보다 먼저) |
 | 접근법      | Reset은 **기본값을 제거**해 “백지 상태”에서 시작, Normalize는 **표준/가치 있는 기본값은 보존**하고 “일관화” |
 
-**핵심 질문**: “나는 브라우저 기본값까지 모두 제거하고 처음부터 쌓고 싶은가?  
+**핵심 질문**: “나는 브라우저 기본값까지 모두 제거하고 처음부터 쌓고 싶은가?
 아니면 브라우저 기본값 중 ‘괜찮은’ 것들은 살리면서 균일하게 맞추고 싶은가?”
 
 ---
 
 ## 2. CSS Reset — “백지 상태로 초기화”
 
-Reset은 브라우저 기본 스타일을 **전방위로 제거**합니다.  
+Reset은 브라우저 기본 스타일을 **전방위로 제거**합니다.
 예: 기본 margin/padding, 리스트 마커, 링크 밑줄, 폼 컨트롤의 네이티브 스타일 등.
 
 ### 2-1. 간단한 Reset 예시 (학습/개념용)
@@ -88,7 +88,7 @@ input, button, textarea, select {
 
 ## 3. Normalize.css — “표준/유용 기본값은 보존 + 차이만 보정”
 
-[Normalize.css](https://github.com/necolas/normalize.css)는 브라우저가 제공하는 **합리적인 기본 스타일은 유지**하면서,  
+[Normalize.css](https://github.com/necolas/normalize.css)는 브라우저가 제공하는 **합리적인 기본 스타일은 유지**하면서,
 브라우저마다 다른 **미묘한 차이**를 **보정**해 **일관된 기본 상태**를 만듭니다.
 
 ### 3-1. 사용 방법
@@ -125,8 +125,8 @@ input, button, textarea, select {
 
 ## 5. 실무에서 자주 쓰는 “혼합 전략” (Reset + Normalize)
 
-Tailwind(Preflight), Bootstrap(Reboot)처럼 **둘을 적절히 혼합**하는 접근이 가장 널리 쓰입니다.  
-핵심은 **파괴적 리셋을 피하면서** (예: outline 없애지 않기)  
+Tailwind(Preflight), Bootstrap(Reboot)처럼 **둘을 적절히 혼합**하는 접근이 가장 널리 쓰입니다.
+핵심은 **파괴적 리셋을 피하면서** (예: outline 없애지 않기)
 **타이포/폼/포커스/레거시 보정** 등을 **선택적으로 정리**하는 것입니다.
 
 ### 5-1. 실전용 “모던 베이스 스타일” (복붙 템플릿)
@@ -204,7 +204,7 @@ input[type=number]::-webkit-inner-spin-button { /* iOS/Chrome 스피너 */
 ```
 
 - 포커스 스타일을 **살리는 대신 보기 좋게 재정의**(outline 유지)
-- `appearance: none`을 전역으로 깔아 폼 네이티브 UI를 모두 지우면  
+- `appearance: none`을 전역으로 깔아 폼 네이티브 UI를 모두 지우면
   **플랫폼 일관성/접근성 손실** → 꼭 필요한 컴포넌트 내부에서만 사용
 
 ---
@@ -242,7 +242,7 @@ ul, ol { margin: var(--space-4) 0 var(--space-4) var(--space-6); list-style: dis
 
 폼 컨트롤은 플랫폼/브라우저 네이티브 상호작용(키보드/보조기기 포함)이 **접근성의 핵심**입니다.
 
-- `appearance: none`을 전역으로 적용하면 **유용한 네이티브 affordance**를 잃음  
+- `appearance: none`을 전역으로 적용하면 **유용한 네이티브 affordance**를 잃음
   → **컴포넌트 내부에서만 타겟팅**해 최소한으로.
 - 플레이스홀더/라벨/에러 메시지/헬프 텍스트/포커스 레이블 이동 등은 **디자인 시스템화**.
 - 포커스 상태(`:focus-visible`)를 반드시 **명확히**.
@@ -354,7 +354,7 @@ a[href]:hover { color: #1d4ed8; }
 
 ## 12. 실전: “커스텀 Reboot” 템플릿 (Reset+Normalize 하이브리드)
 
-> 프레임워크 미사용 프로젝트에서 권장할 만한 베이스.  
+> 프레임워크 미사용 프로젝트에서 권장할 만한 베이스.
 > 접근성 친화 + 현대 CSS + 오버라이드 여지 충분.
 
 ```css
@@ -440,15 +440,15 @@ label { display: inline-block; margin-bottom: .25rem; font-weight: 600; }
 
 ## 13. 현업에서 자주 겪는 함정과 해법
 
-1. **outline 전역 제거**  
+1. **outline 전역 제거**
    - 해법: 절대로 지우지 말고 **보기에 좋은 포커스 스타일**로 **대체**.
-2. **폼 appearance 전역 제거**  
+2. **폼 appearance 전역 제거**
    - 해법: **특정 컴포넌트 범위에서만** 최소한으로. 키보드/스크린리더 흐름 깨지지 않게.
-3. **Reset → 모든 margin 0** 후 타이포 리듬 없음  
+3. **Reset → 모든 margin 0** 후 타이포 리듬 없음
    - 해법: 프로젝트 문체에 맞는 **전역 리듬 스케일**(헤딩/문단 간격)을 재정의.
-4. **프레임워크 + 추가 Reset 중복**  
+4. **프레임워크 + 추가 Reset 중복**
    - 해법: 프레임워크 **Preflight/Reboot**를 존중. 중복 초기화는 제거.
-5. **링크 정책 불명확**  
+5. **링크 정책 불명확**
    - 해법: 본문 링크는 밑줄 유지, 내비/버튼형 링크는 **버튼 룩**으로 구분.
 
 ---
@@ -500,15 +500,15 @@ a:hover { color: #1d4ed8; }
 
 - **Reset**은 **백지**에서 **모든 걸 직접 구축**하고 싶은 팀에 적합(접근성/폼/포커스 재설계 필수).
 - **Normalize**는 **합리적 기본값을 보존**하며 **브라우저 차이를 줄이는** 실용적 대안.
-- 실무에선 두 접근을 **혼합**한 “Reboot/Preflight” 스타일이 가장 흔하고 **안전**합니다.  
+- 실무에선 두 접근을 **혼합**한 “Reboot/Preflight” 스타일이 가장 흔하고 **안전**합니다.
   이 문서의 **커스텀 Reboot 템플릿**을 복붙해 **팀 규칙**으로 확장하세요.
 
 ---
 
 ## 참고 자료
 
-- Normalize.css: https://necolas.github.io/normalize.css/  
-- Eric Meyer’s Reset: https://meyerweb.com/eric/tools/css/reset/  
-- MDN — 기본 스타일/크로스 브라우저: https://developer.mozilla.org/ko/  
-- Tailwind Preflight 소스(참고): https://github.com/tailwindlabs/tailwindcss  
+- Normalize.css: https://necolas.github.io/normalize.css/
+- Eric Meyer’s Reset: https://meyerweb.com/eric/tools/css/reset/
+- MDN — 기본 스타일/크로스 브라우저: https://developer.mozilla.org/ko/
+- Tailwind Preflight 소스(참고): https://github.com/tailwindlabs/tailwindcss
 - Bootstrap Reboot 소스(참고): https://github.com/twbs/bootstrap

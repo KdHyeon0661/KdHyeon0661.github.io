@@ -13,9 +13,9 @@ category: JavaScript
 
 ## 0. 한눈에 보는 규칙
 
-- **배열/함수 Spread**는 **이터러블만** 가능(배열, 문자열, Set, Map, 제너레이터…).  
+- **배열/함수 Spread**는 **이터러블만** 가능(배열, 문자열, Set, Map, 제너레이터…).
   `Math.max(...nums)`, `fn(...args)`
-- **객체 Spread**는 **own + enumerable(열거 가능) 프로퍼티**만 복사(문자열/심볼 모두).  
+- **객체 Spread**는 **own + enumerable(열거 가능) 프로퍼티**만 복사(문자열/심볼 모두).
   접근자(getter)는 **값으로 평가되어** 복사(접근자 자체는 사라짐).
 - Spread/Rest는 **얕은(shallow)** 동작(중첩 객체/배열은 참조 공유).
 - **Rest**는 **마지막 위치**에서만(함수 인자/구조 분해 모두).
@@ -60,7 +60,7 @@ function* g(){ yield 10; yield 20; }
 const a = [, 2, , 4];   // length=4, 홀(비어있는 슬롯) 포함
 [...a];                 // [undefined, 2, undefined, 4]
 ```
-> 배열 spread는 **이터레이터를 통해 값 시퀀스를 생성**하며 **holes를 `undefined`로 채운** **밀집 배열**을 만든다.  
+> 배열 spread는 **이터레이터를 통해 값 시퀀스를 생성**하며 **holes를 `undefined`로 채운** **밀집 배열**을 만든다.
 > 반면 `map`/`forEach` 등은 holes를 **건너뛴다**.
 
 ---
@@ -225,10 +225,10 @@ connect({ port: 5432, ssl: true });
 
 ## 7. 성능·가독성 팁
 
-- **큰 배열 복사/병합**을 빈번히 하면 비용↑.  
+- **큰 배열 복사/병합**을 빈번히 하면 비용↑.
   성능이 중요하면 **원본 재사용** 또는 **단일 루프**를 고려.
 - `filter(...).map(...).reduce(...)` 체이닝 vs **단일 패스** `reduce`는 **측정 후 결정**.
-- 객체 spread는 **접근자 평가**와 **기술자 재설정**이 일어나므로,  
+- 객체 spread는 **접근자 평가**와 **기술자 재설정**이 일어나므로,
   원본의 고급 기술자를 보존하려면 `Object.defineProperties`/`Reflect` 기반 복사가 필요.
 
 ---
@@ -245,7 +245,7 @@ console.log(o1.nested.v); // 9
 > 깊은 복사가 필요하면 `structuredClone(o1)`(지원 환경) 또는 커스텀/라이브러리 사용.
 
 ### 8.2 객체 spread는 접근자/프로토타입 미보존
-- getter/setter → **값**으로 복사, 접근자 사라짐  
+- getter/setter → **값**으로 복사, 접근자 사라짐
 - `Object.getPrototypeOf(copy) === Object.prototype`
 
 ### 8.3 `null`/`undefined`는 펼칠 수 없음
@@ -262,7 +262,7 @@ function f(a, ...rest) { /* ok */ }
 ```
 
 ### 8.5 희소 배열 기대와 달리
-- `[...Array(3)]` → `[undefined, undefined, undefined]` (밀집)  
+- `[...Array(3)]` → `[undefined, undefined, undefined]` (밀집)
 - `Array(3).map(()=>1)`은 콜백이 **호출되지 않음**(holes 건너뜀)
 
 ### 8.6 객체 키 충돌 순서
@@ -333,18 +333,18 @@ console.log(Object.getOwnPropertyDescriptor(c,'x').get, c.x);
 // 얕은 spread 결과와 깊은 병합 결과의 차이를 서술.
 ```
 
-**힌트**  
-- Q1: `[undefined, 2, undefined, 4]`.  
-- Q2: Rest는 마지막에만. `function g(tail, ...args){}` 또는 `function g(...args){ const tail=args.at(-1) }`.  
-- Q3: getter는 값으로 복사 → `get`는 `undefined`, `c.x===1`.  
-- Q4: A,B는 TypeError, C는 정상.  
+**힌트**
+- Q1: `[undefined, 2, undefined, 4]`.
+- Q2: Rest는 마지막에만. `function g(tail, ...args){}` 또는 `function g(...args){ const tail=args.at(-1) }`.
+- Q3: getter는 값으로 복사 → `get`는 `undefined`, `c.x===1`.
+- Q4: A,B는 TypeError, C는 정상.
 - Q5: 얕은: `{ a:{ y:9, z:3 } }`(통째 교체). 깊은: `{ a:{ x:1, y:9, z:3 } }`.
 
 ---
 
 ## 12. 결론
 
-- `...`은 **펼침(Spread)**과 **수집(Rest)**이라는 상반된 역할을 한다.  
-- Spread는 **전달/복사/병합**, Rest는 **가변 수집/나머지 캡처**를 간결하게 만든다.  
-- 다만 둘 다 **얕은 동작**이며, **객체 spread는 접근자/프로토타입을 보존하지 않는다**.  
+- `...`은 **펼침(Spread)**과 **수집(Rest)**이라는 상반된 역할을 한다.
+- Spread는 **전달/복사/병합**, Rest는 **가변 수집/나머지 캡처**를 간결하게 만든다.
+- 다만 둘 다 **얕은 동작**이며, **객체 spread는 접근자/프로토타입을 보존하지 않는다**.
 - **희소 배열**, **순서 규칙**, **타입 제약**만 정확히 기억하면 실무에서 안전하고 빠르게 쓸 수 있다.

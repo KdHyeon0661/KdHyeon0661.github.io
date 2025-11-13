@@ -332,8 +332,8 @@ networks:
   app-net:
 ```
 
-> Django 개발로 바꾸려면 `web.command`를  
-> `bash -lc "docker/wait-for-db.sh && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"`  
+> Django 개발로 바꾸려면 `web.command`를
+> `bash -lc "docker/wait-for-db.sh && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"`
 > 로 교체하고, `ports`도 `"${WEB_PORT:-8000}:8000"`로 바꾼다.
 
 ---
@@ -407,7 +407,7 @@ networks:
   app-net:
 ```
 
-> Flask 운영 시 `command`의 `gunicorn app.wsgi:app` 경로 유지.  
+> Flask 운영 시 `command`의 `gunicorn app.wsgi:app` 경로 유지.
 > Django 운영 시 `command`를 `gunicorn community.wsgi:application -c docker/gunicorn.conf.py`로 교체하고 Nginx에서 정적/미디어 경로를 매핑.
 
 ---

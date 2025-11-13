@@ -429,8 +429,8 @@ mount | grep kubelet
 | 확장 실패 | `allowVolumeExpansion=false` | SC 옵션 변경, 드라이버 resize 지원 확인 |
 | 데이터 소실 | `Delete` 정책, 테스트 클러스터 | 민감 볼륨은 `Retain`, 백업/스냅샷 정책 수립 |
 
-**로그/이벤트 확인 포인트**  
-- CSI 컨트롤러/노드 플러그인 Pod 로그  
+**로그/이벤트 확인 포인트**
+- CSI 컨트롤러/노드 플러그인 Pod 로그
 - `kubectl describe pvc/pv/pod`의 Events 섹션
 
 ---
@@ -600,9 +600,9 @@ kubectl apply -f your-pv-pvc-and-pod.yaml
 kubectl get events --sort-by=.lastTimestamp | tail -n 50
 ```
 
-**참고**  
-- Kubernetes Volumes: https://kubernetes.io/docs/concepts/storage/volumes/  
-- PersistentVolumes: https://kubernetes.io/docs/concepts/storage/persistent-volumes/  
-- StorageClass: https://kubernetes.io/docs/concepts/storage/storage-classes/  
+**참고**
+- Kubernetes Volumes: https://kubernetes.io/docs/concepts/storage/volumes/
+- PersistentVolumes: https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+- StorageClass: https://kubernetes.io/docs/concepts/storage/storage-classes/
 - CSI 스냅샷: https://kubernetes.io/docs/concepts/storage/volume-snapshots/
 ```

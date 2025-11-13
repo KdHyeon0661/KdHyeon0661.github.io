@@ -6,23 +6,23 @@ category: WPF
 ---
 # WPF 핵심: **DependencyProperty**와 **RoutedEvent** 완전 이해
 
-> 이 글은 WPF의 두 축인 **의존 속성(DependencyProperty)**과 **라우티드 이벤트(RoutedEvent)**를 “왜 존재하는지→어떻게 동작하는지→어떻게 직접 정의하고 쓰는지→성능·디버깅·모범 사례” 순서로, 실용 예제와 함께 **끝까지** 파고듭니다.  
+> 이 글은 WPF의 두 축인 **의존 속성(DependencyProperty)**과 **라우티드 이벤트(RoutedEvent)**를 “왜 존재하는지→어떻게 동작하는지→어떻게 직접 정의하고 쓰는지→성능·디버깅·모범 사례” 순서로, 실용 예제와 함께 **끝까지** 파고듭니다.
 > 코드 블록은 모두 \`\`\` 로 감싸고, 전체 본문은 블로그 포맷에 맞춰 \~~~markdown 으로 감쌌습니다.
 
 ---
 
 ## 0. 한 장 요약 (TL;DR)
 
-- **DependencyProperty(DP)**:  
-  - `DependencyObject`에 붙는 **고성능 속성 시스템**. **값 우선순위(애니메이션 > 로컬 값 > 스타일 …)**, **변경 트래킹**, **상속(Inheritance)**, **애니메이션/바인딩/테마** 연동, **레이아웃/렌더 무효화(AffectsMeasure/Arrange/Render)** 등 WPF의 핵심 메커니즘을 제공.  
+- **DependencyProperty(DP)**:
+  - `DependencyObject`에 붙는 **고성능 속성 시스템**. **값 우선순위(애니메이션 > 로컬 값 > 스타일 …)**, **변경 트래킹**, **상속(Inheritance)**, **애니메이션/바인딩/테마** 연동, **레이아웃/렌더 무효화(AffectsMeasure/Arrange/Render)** 등 WPF의 핵심 메커니즘을 제공.
   - 커스텀 컨트롤/프레임워크 요소를 만들 때 **필수**.
 
-- **RoutedEvent(RE)**:  
-  - **트리 기반 이벤트 전파**(터널링 Preview → 버블링)로 복잡한 UI에서 **중앙집중 처리**와 **관심사의 분리**를 가능케 함.  
+- **RoutedEvent(RE)**:
+  - **트리 기반 이벤트 전파**(터널링 Preview → 버블링)로 복잡한 UI에서 **중앙집중 처리**와 **관심사의 분리**를 가능케 함.
   - 입력 이벤트(Mouse/Keyboard)와 명령, 스타일/트리거, 클래스 핸들러까지 **광범위하게 결합**.
 
-- **함께 쓰면**:  
-  - RE로 상태 변화를 “상위에서” 잡고, DP로 상태를 “아래까지” 반영/재렌더링.  
+- **함께 쓰면**:
+  - RE로 상태 변화를 “상위에서” 잡고, DP로 상태를 “아래까지” 반영/재렌더링.
   - “입력 → 상태(DP) 변경 → 레이아웃/렌더 → 합성”의 WPF 파이프라인이 완성됨.
 
 ---
@@ -34,9 +34,9 @@ category: WPF
 - WPF는 **수만 개 객체/속성**이 동시에 얽히며 바뀜 → **더 강력하고 결정적인 시스템 필요**.
 
 ### 1.2 DP가 제공하는 것
-- **값 우선순위 스택**: 애니메이션, 로컬 값, 스타일 Setter, 트리거, 상속값, 기본값.  
-- **변경 트래킹**: 값 변경시 **콜백**과 **무효화(Affects…)** 자동.  
-- **리소스/스타일/테마/바인딩/애니메이션**과 자연 통합.  
+- **값 우선순위 스택**: 애니메이션, 로컬 값, 스타일 Setter, 트리거, 상속값, 기본값.
+- **변경 트래킹**: 값 변경시 **콜백**과 **무효화(Affects…)** 자동.
+- **리소스/스타일/테마/바인딩/애니메이션**과 자연 통합.
 - **메모리 효율**: 기본값은 테이블 참조, 로컬 값만 박아넣는 **희소 저장**.
 
 ---
@@ -113,12 +113,12 @@ public class MeterBar : FrameworkElement
 
 WPF는 한 속성에 대해 여러 출처가 값을 제시할 수 있으므로 **우선순위 체계**로 최종 유효값을 결정합니다(간략화):
 
-1. **애니메이션(Active Animation/Storyboard)**  
-2. **로컬 값(Local Value)**: 코드의 `SetValue`, XAML의 직접 할당  
-3. **템플릿/스타일 트리거 값**  
-4. **스타일 Setter**  
-5. **테마 스타일(Theme Style)**  
-6. **상속된 값(Property Value Inheritance)**  
+1. **애니메이션(Active Animation/Storyboard)**
+2. **로컬 값(Local Value)**: 코드의 `SetValue`, XAML의 직접 할당
+3. **템플릿/스타일 트리거 값**
+4. **스타일 Setter**
+5. **테마 스타일(Theme Style)**
+6. **상속된 값(Property Value Inheritance)**
 7. **기본값(Default Value)**
 
 > **Tip.** 우선순위가 높은 쪽이 값을 “덮어쓴다”. 예: 로컬 값을 줘도 **애니메이션이 뛰고 있으면** 보이는 값은 애니메이션 결과.
@@ -142,10 +142,10 @@ myBar.BeginAnimation(MeterBar.ValueProperty, null);
 
 ## 4. 메타데이터(FrameworkPropertyMetadata)의 **옵션 플래그**
 
-- **AffectsMeasure / AffectsArrange / AffectsRender**: 값 변경 시 레이아웃/렌더 자동 무효화.  
-- **Inherits**: **속성값 상속** 허용(예: `FontFamily`, `FlowDirection`).  
-- **BindsTwoWayByDefault**: 바인딩 기본 모드 TwoWay.  
-- **Journal**: Navigation journal에 참여.  
+- **AffectsMeasure / AffectsArrange / AffectsRender**: 값 변경 시 레이아웃/렌더 자동 무효화.
+- **Inherits**: **속성값 상속** 허용(예: `FontFamily`, `FlowDirection`).
+- **BindsTwoWayByDefault**: 바인딩 기본 모드 TwoWay.
+- **Journal**: Navigation journal에 참여.
 - **SubPropertiesDoNotAffectRender**: 하위 속성 변경이 렌더에 영향 없음을 힌트.
 
 ```csharp
@@ -220,8 +220,8 @@ public class RangeMeter : FrameworkElement
 
 ## 7. **PropertyChangedCallback / Coerce / Validate** 패턴 심화
 
-- **Validate**: 값 자체의 기본 제약(스레드 안전, 빠르게).  
-- **Coerce**: **객체 상태 기반** 보정. 다른 DP 변화 시 **재강제(CoerceValue)** 호출권장.  
+- **Validate**: 값 자체의 기본 제약(스레드 안전, 빠르게).
+- **Coerce**: **객체 상태 기반** 보정. 다른 DP 변화 시 **재강제(CoerceValue)** 호출권장.
 - **PropertyChanged**: 확정된 값에 대한 후처리(다른 DP 영향, 이벤트 발생, 캐시 무효화).
 
 ### 7.1 서로 의존하는 DP 간 Coerce 예시
@@ -254,17 +254,17 @@ private static object CoerceValue(DependencyObject d, object baseValue)
 
 ## 8. DP와 **INotifyPropertyChanged**의 관계
 
-- DP는 자체적으로 변경 트래킹/전파를 제공 → **일반적으로 DP에 INPC 불필요**.  
-- **ViewModel** 계층에서 POCO 속성 바인딩 시에는 INPC가 **필수**.  
+- DP는 자체적으로 변경 트래킹/전파를 제공 → **일반적으로 DP에 INPC 불필요**.
+- **ViewModel** 계층에서 POCO 속성 바인딩 시에는 INPC가 **필수**.
 - **Control 내부**: 공개 DP + 내부 캐시 필드는 **DP Change에서 UI 반영**, VM 값은 INPC로 UI 반영.
 
 ---
 
 ## 9. DP **도구·디버깅**
 
-- **Output 창 바인딩 오류** 확인: 경로/타입 불일치  
-- `DependencyPropertyDescriptor.FromProperty(...).AddValueChanged(...)`로 변화 훅  
-- `GetLocalValueEnumerator()`로 로컬 값 나열  
+- **Output 창 바인딩 오류** 확인: 경로/타입 불일치
+- `DependencyPropertyDescriptor.FromProperty(...).AddValueChanged(...)`로 변화 훅
+- `GetLocalValueEnumerator()`로 로컬 값 나열
 - `ClearValue(DP)`로 로컬 값 해제(우선순위 하향)
 
 ```csharp
@@ -281,13 +281,13 @@ while (enumerator.MoveNext())
 ## 10. **RoutedEvent** 개요
 
 ### 10.1 왜 Routed?
-- 복잡한 트리(논리/비주얼)에서 **개별 요소마다 핸들러**를 다는 건 비효율.  
-- **터널링(Preview…)**으로 상위에서 **사전 제어**, **버블링**으로 상위에서 **사후 처리**.  
+- 복잡한 트리(논리/비주얼)에서 **개별 요소마다 핸들러**를 다는 건 비효율.
+- **터널링(Preview…)**으로 상위에서 **사전 제어**, **버블링**으로 상위에서 **사후 처리**.
 - 상위 컨테이너가 **하위의 세부 구현을 몰라도** 공통 로직을 수신/차단 가능(`e.Handled = true`).
 
 ### 10.2 전파 방식
-- **Direct**: 전파 없음(일반 .NET 이벤트와 유사).  
-- **Tunneling**: 루트→소스까지 내려가며 전달. 이름 규칙상 **Preview***.  
+- **Direct**: 전파 없음(일반 .NET 이벤트와 유사).
+- **Tunneling**: 루트→소스까지 내려가며 전달. 이름 규칙상 **Preview***.
 - **Bubbling**: 소스→루트로 올라오며 전달(기본 MouseDown 등).
 
 ---
@@ -341,9 +341,9 @@ private void OnBadgeClicked(object sender, RoutedEventArgs e)
 
 ## 12. RoutedEvent **핵심 속성**: `Source` vs `OriginalSource`, `Handled`
 
-- **OriginalSource**: **최초** 이벤트가 발생한 요소(보통 가장 깊은 하위).  
-- **Source**: 전파 중 **현재 컨텍스트에서 보정된 소스**(템플릿 경계에서 바뀔 수 있음).  
-- **Handled**: `true`로 설정되면 이후 “기본” 핸들러(스타일 첨부 핸들러 포함)가 **건너뛰어짐**.  
+- **OriginalSource**: **최초** 이벤트가 발생한 요소(보통 가장 깊은 하위).
+- **Source**: 전파 중 **현재 컨텍스트에서 보정된 소스**(템플릿 경계에서 바뀔 수 있음).
+- **Handled**: `true`로 설정되면 이후 “기본” 핸들러(스타일 첨부 핸들러 포함)가 **건너뛰어짐**.
   - 단, **AddHandler(routedEvent, handler, handledEventsToo:true)**로 **이미 Handled된 이벤트도 수신** 가능.
 
 ```csharp
@@ -400,7 +400,7 @@ this.PreviewMouseDown += (s, e) =>
 
 ## 15. RoutedEvent와 **명령(ICommand) 라우팅**
 
-- `Button.Command` 등 **Command 바인딩**은 내부적으로 **라우팅**과 결합.  
+- `Button.Command` 등 **Command 바인딩**은 내부적으로 **라우팅**과 결합.
 - `CommandBinding`을 **상위 컨테이너**에 걸어두면 하위 컨트롤에서 발생한 명령도 처리 가능.
 
 ```xml
@@ -465,7 +465,7 @@ public static readonly RoutedEvent MyEvent =
         ownerType: typeof(MyControl));
 ```
 
-- `handlerType`: 반드시 **델리게이트 타입**(예: `RoutedEventHandler`, `MouseButtonEventHandler`, 커스텀 델리게이트).  
+- `handlerType`: 반드시 **델리게이트 타입**(예: `RoutedEventHandler`, `MouseButtonEventHandler`, 커스텀 델리게이트).
 - **Direct** 이벤트는 전파 안하지만 **라우티드 이벤트 인프라** 장점(스타일에서 EventSetter 사용 등)을 활용 가능.
 
 ---
@@ -499,9 +499,9 @@ RaiseEvent(new BadgeChangedEventArgs(BadgeChangedEvent, this, oldCount, newCount
 
 ## 19. **RoutedEvent와 성능·안정성 체크리스트**
 
-1. **불필요한 전파 방지**: 적절히 `e.Handled = true` 또는 Direct 이벤트 사용.  
-2. **handledEventsToo** 남용주의: 이미 처리된 이벤트까지 수신하면 빈번/중복 호출 증가.  
-3. **OriginalSource 캐스팅** 주의: 템플릿 변형 시 타입 가정 금지. `FindAncestor`(VisualTreeHelper)로 탐색.  
+1. **불필요한 전파 방지**: 적절히 `e.Handled = true` 또는 Direct 이벤트 사용.
+2. **handledEventsToo** 남용주의: 이미 처리된 이벤트까지 수신하면 빈번/중복 호출 증가.
+3. **OriginalSource 캐스팅** 주의: 템플릿 변형 시 타입 가정 금지. `FindAncestor`(VisualTreeHelper)로 탐색.
 4. **클래스 핸들러**는 강력하지만 전역 영향 → 명확한 문서화/테스트 필수.
 
 ---
@@ -568,9 +568,9 @@ public class DragMeter : FrameworkElement
 }
 ```
 
-**설명**  
-- 입력은 **RoutedEvent(PreviewMouseDown/Move/Up)**로 잡음.  
-- 상태는 **DP(Value)**로 보관 → 메타데이터 `AffectsRender`로 **자동 렌더 무효화**.  
+**설명**
+- 입력은 **RoutedEvent(PreviewMouseDown/Move/Up)**로 잡음.
+- 상태는 **DP(Value)**로 보관 → 메타데이터 `AffectsRender`로 **자동 렌더 무효화**.
 - 결과: **UI 스레드는 코드 최소**, 파이프라인과 자연스럽게 결합.
 
 ---
@@ -635,16 +635,16 @@ dpd.AddValueChanged(myBar, (_, __) => Debug.WriteLine($"Value changed: {myBar.Va
 
 ## 24. **메모리/성능** 관점에서의 DP
 
-- **희소 저장**: 기본값은 메타테이블 참조, **로컬 값만** 엔트리 보유 → 많은 객체에도 메모리 절감.  
-- **Freeze 가능한 Freezable** 사용: 변경 불가로 만들어 **스냅샷·공유** 성능 향상.  
+- **희소 저장**: 기본값은 메타테이블 참조, **로컬 값만** 엔트리 보유 → 많은 객체에도 메모리 절감.
+- **Freeze 가능한 Freezable** 사용: 변경 불가로 만들어 **스냅샷·공유** 성능 향상.
 - **빈번한 Coerce/PropertyChanged 비용**을 의식: 짧고 빠르게, 필요한 경우에만.
 
 ---
 
 ## 25. RoutedEvent **디버깅**과 흔한 함정
 
-- **핸들러가 안 불린다**: 중간에서 `e.Handled = true`로 차단됐을 수 있음. `handledEventsToo:true`로 검사.  
-- **OriginalSource 캐스팅 예외**: 템플릿 내부 요소로 들어갈 수 있음. 시각 트리를 따라 조심스럽게 탐색.  
+- **핸들러가 안 불린다**: 중간에서 `e.Handled = true`로 차단됐을 수 있음. `handledEventsToo:true`로 검사.
+- **OriginalSource 캐스팅 예외**: 템플릿 내부 요소로 들어갈 수 있음. 시각 트리를 따라 조심스럽게 탐색.
 - **중복 핸들링**: 같은 라우트에 여러 위치에서 로직 중복. **핸들링 책임**을 명확히.
 
 ---
@@ -679,8 +679,8 @@ Files.AddHandler(Button.ClickEvent, new RoutedEventHandler((s, e) =>
 }));
 ```
 
-**포인트**  
-- **버블링**으로 상위에서 한 번에 처리.  
+**포인트**
+- **버블링**으로 상위에서 한 번에 처리.
 - 템플릿 구조 변경에도 상위 로직은 변경 최소화.
 
 ---
@@ -703,15 +703,15 @@ this.PreviewTextInput += (s, e) =>
 
 ## 28. **이벤트 트리거** vs **스타일 트리거** vs **코드** 선택 기준
 
-- **순수 시각 변화**(색/Opacity/Transform 등) → **EventTrigger/Storyboard** 권장.  
-- **도메인 로직**(모델 변경/IO/명령) → **CommandBinding/코드 비하인드**.  
+- **순수 시각 변화**(색/Opacity/Transform 등) → **EventTrigger/Storyboard** 권장.
+- **도메인 로직**(모델 변경/IO/명령) → **CommandBinding/코드 비하인드**.
 - **구성 가능성**(테마/제어 확장) → **Style EventSetter / Class Handler**.
 
 ---
 
 ## 29. **접근성(A11y)** 관점의 RE/DP
 
-- RE: **터널링** 단계에서 키보드 포커스 이동/차단, 스크린리더 이벤트 디스패치에 영향.  
+- RE: **터널링** 단계에서 키보드 포커스 이동/차단, 스크린리더 이벤트 디스패치에 영향.
 - DP: `AutomationProperties.Name/HelpText` 등 **Attached DP**로 UIA 속성 주입.
 
 ```xml
@@ -724,9 +724,9 @@ this.PreviewTextInput += (s, e) =>
 
 ## 30. **테스트/진단** 팁
 
-- **UIAutomation**으로 라우트/포커스 흐름 점검.  
-- **PresentationTraceSources.TraceLevel=High**로 바인딩/DP 트레이스.  
-- **Snoop/Live Visual Tree** 등 도구로 **OriginalSource/Source** 확인.  
+- **UIAutomation**으로 라우트/포커스 흐름 점검.
+- **PresentationTraceSources.TraceLevel=High**로 바인딩/DP 트레이스.
+- **Snoop/Live Visual Tree** 등 도구로 **OriginalSource/Source** 확인.
 - 프레임 드랍 시 **핵심 의심**: 과도한 DP 변경(특히 AffectsMeasure), 과도한 RE 수신.
 
 ---
@@ -819,51 +819,51 @@ root.AddHandler(BadgeButton.BadgeClickedEvent, new RoutedEventHandler((s, e) =>
 </ItemsControl>
 ```
 
-**동작 흐름**  
+**동작 흐름**
 - 사용자가 BadgeButton 클릭(RE 발생) → 상위에서 한 곳에서 처리 → VM Count 감소 → 바인딩으로 DP 갱신 → `AffectsRender` → 뱃지 재그림.
 
 ---
 
 ## 32. FAQ
 
-**Q1. 일반 C# 속성 vs DP를 언제 고를까?**  
-- 템플릿/스타일/바인딩/애니메이션/상속이 필요 없고, 내부 로직용이면 **일반 속성**.  
+**Q1. 일반 C# 속성 vs DP를 언제 고를까?**
+- 템플릿/스타일/바인딩/애니메이션/상속이 필요 없고, 내부 로직용이면 **일반 속성**.
 - 외부에 공개되어 **WPF 시스템과 상호작용**해야 하면 **DP**.
 
-**Q2. RE와 일반 .NET 이벤트 차이는?**  
-- RE는 **트리 전파**와 스타일/클래스 핸들러/명령 라우팅 통합.  
+**Q2. RE와 일반 .NET 이벤트 차이는?**
+- RE는 **트리 전파**와 스타일/클래스 핸들러/명령 라우팅 통합.
 - 일반 이벤트는 **발생한 곳에서만** 수신.
 
-**Q3. `e.Handled = true`를 남발해도 되나요?**  
+**Q3. `e.Handled = true`를 남발해도 되나요?**
 - 아니요. 너무 일찍/광범위하게 차단하면 **재사용성·디버깅성** 저하. 꼭 필요한 지점에서만.
 
-**Q4. DP 기본값으로 참조 타입(예: Brush)을 넣어도 되나요?**  
+**Q4. DP 기본값으로 참조 타입(예: Brush)을 넣어도 되나요?**
 - 가능하지만 **공유 인스턴스**가 됨. 변경 위험 → **Freezable은 Freeze**, 변형 필요한 경우 **콜백에서 새로 생성**.
 
 ---
 
 ## 33. 체크리스트 (실전 적용 전)
 
-- [ ] 컨트롤 공개 속성은 **DP**로 만들었는가? (바인딩/스타일/애니메이션 필요 여부)  
-- [ ] **AffectsMeasure/Arrange/Render** 플래그가 올바른가?  
-- [ ] **Validate/Coerce/Changed**에서 **무거운 작업** 하지 않는가?  
-- [ ] **Freeze** 가능한 리소스는 Freeze 했는가?  
-- [ ] RoutedEvent 핸들러가 **올바른 전파 단계**(Preview vs Bubble)에 위치했는가?  
-- [ ] `handledEventsToo`를 꼭 필요한 곳에서만 썼는가?  
+- [ ] 컨트롤 공개 속성은 **DP**로 만들었는가? (바인딩/스타일/애니메이션 필요 여부)
+- [ ] **AffectsMeasure/Arrange/Render** 플래그가 올바른가?
+- [ ] **Validate/Coerce/Changed**에서 **무거운 작업** 하지 않는가?
+- [ ] **Freeze** 가능한 리소스는 Freeze 했는가?
+- [ ] RoutedEvent 핸들러가 **올바른 전파 단계**(Preview vs Bubble)에 위치했는가?
+- [ ] `handledEventsToo`를 꼭 필요한 곳에서만 썼는가?
 - [ ] `OriginalSource` 의존 코드는 템플릿 변경에 안전한가?
 
 ---
 
 ## 34. 마무리
 
-- **DependencyProperty**는 “속성의 생애주기 전체(값 계산 → 무효화 → 전파)”를 시스템 차원에서 다룹니다.  
-- **RoutedEvent**는 “이벤트의 생애주기 전체(발생 → 전파 → 핸들링 우선순위)”를 트리 차원에서 다룹니다.  
+- **DependencyProperty**는 “속성의 생애주기 전체(값 계산 → 무효화 → 전파)”를 시스템 차원에서 다룹니다.
+- **RoutedEvent**는 “이벤트의 생애주기 전체(발생 → 전파 → 핸들링 우선순위)”를 트리 차원에서 다룹니다.
 - 둘을 올바르게 설계하면, **입력 → 상태 → 렌더**의 파이프라인이 최소 비용으로 깔끔하게 돌아갑니다.
 
-> 오늘 당장 할 일:  
-> 1) 컨트롤의 공개 속성 중 DP로 바꿔야 할 것 체크.  
-> 2) 자주 바뀌는 속성에 **Affects…** 플래그 재검토.  
-> 3) 전역 입력 로직을 **Preview** 단계에서 통제할지, **Bubble**에서 수집할지 결정.  
+> 오늘 당장 할 일:
+> 1) 컨트롤의 공개 속성 중 DP로 바꿔야 할 것 체크.
+> 2) 자주 바뀌는 속성에 **Affects…** 플래그 재검토.
+> 3) 전역 입력 로직을 **Preview** 단계에서 통제할지, **Bubble**에서 수집할지 결정.
 > 4) 바인딩 에러 로그를 반드시 **0**으로.
 
 ---
@@ -936,5 +936,5 @@ private void OnAnyMouseDown(object sender, MouseButtonEventArgs e)
 ---
 
 ## 끝
-이제 **DependencyProperty**와 **RoutedEvent**를 “API”가 아닌 “파이프라인의 계약”으로 보세요.  
+이제 **DependencyProperty**와 **RoutedEvent**를 “API”가 아닌 “파이프라인의 계약”으로 보세요.
 그 계약을 지키면, 복잡한 UI도 **적은 코드**로 **빠르고 부드럽게** 유지할 수 있습니다.

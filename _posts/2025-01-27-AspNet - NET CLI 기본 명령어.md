@@ -387,20 +387,20 @@ dotnet publish -c Release -p:PublishTrimmed=true -p:TrimmerDefaultAction=link
 
 ## 14. 흔한 함정과 체크리스트
 
-1. SDK 불일치  
-   - CI/로컬 간 SDK 버전 차이로 빌드 실패  
+1. SDK 불일치
+   - CI/로컬 간 SDK 버전 차이로 빌드 실패
    - 해결: `global.json`으로 SDK 고정
-2. Self-contained/Single-file로 배포 시 파일 접근  
-   - 임베디드 리소스/리플렉션 문제  
+2. Self-contained/Single-file로 배포 시 파일 접근
+   - 임베디드 리소스/리플렉션 문제
    - 해결: 필요 파일은 외부 출력, 리플렉션 대상은 트리밍 예외 처리
-3. 다중 프로젝트 참조 누락  
-   - 슬루션에만 추가하고 프로젝트 참조를 빼먹는 실수  
+3. 다중 프로젝트 참조 누락
+   - 슬루션에만 추가하고 프로젝트 참조를 빼먹는 실수
    - 해결: `dotnet add <A>.csproj reference <B>.csproj`
-4. 테스트 필터  
-   - CI에서 특정 범주만 실행하려다 테스트 누락  
+4. 테스트 필터
+   - CI에서 특정 범주만 실행하려다 테스트 누락
    - 해결: `--filter` 사용 시 문서화/리뷰 프로세스
-5. 환경 변수/시크릿 관리  
-   - 로컬 비밀키를 코드/레포에 커밋  
+5. 환경 변수/시크릿 관리
+   - 로컬 비밀키를 코드/레포에 커밋
    - 해결: User Secrets, CI 시크릿, Key Vault 등 사용
 
 ---
@@ -463,7 +463,7 @@ dotnet publish MySite/MySite.csproj -c Release -r linux-x64 --self-contained tru
 
 ## 17. 결론
 
-- `.NET CLI`는 **편집기 독립**적으로 프로젝트 생성부터 빌드/테스트/배포까지를 **크로스 플랫폼**으로 일관되게 수행할 수 있게 합니다.  
-- 본 글은 기존 요약에 **옵션·시나리오·자동화·배포 전략**을 더해 **현업에서 바로 쓰는 레벨**로 확장했습니다.  
-- 팀/CI 환경에서는 **SDK 버전 고정(global.json)**, **NuGet 복원 일관성**, **Self-contained/Single-file/Trimming 옵션 영향**을 특히 주의하십시오.  
+- `.NET CLI`는 **편집기 독립**적으로 프로젝트 생성부터 빌드/테스트/배포까지를 **크로스 플랫폼**으로 일관되게 수행할 수 있게 합니다.
+- 본 글은 기존 요약에 **옵션·시나리오·자동화·배포 전략**을 더해 **현업에서 바로 쓰는 레벨**로 확장했습니다.
+- 팀/CI 환경에서는 **SDK 버전 고정(global.json)**, **NuGet 복원 일관성**, **Self-contained/Single-file/Trimming 옵션 영향**을 특히 주의하십시오.
 - 작은 흐름은 `dotnet new → run/watch → test → publish`로, 복합 솔루션은 `sln/add/reference → build/test → publish`로 정형화하면 운영이 쉬워집니다.

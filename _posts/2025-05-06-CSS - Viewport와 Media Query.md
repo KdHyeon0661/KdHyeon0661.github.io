@@ -116,7 +116,7 @@ category: CSS
 @media (aspect-ratio: 16/9) { ... }   /* 화면 비율 정합 */
 ```
 
-> **비율 공식(참고)**  
+> **비율 공식(참고)**
 > $$ \text{aspectRatio} = \frac{\text{width}}{\text{height}} $$
 > `aspect-ratio: 16/9`는 위 비를 만족하는 뷰포트에만 적용됩니다.
 
@@ -331,15 +331,15 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ## 8. 흔한 함정과 대처
 
-1. **`100vh` 점프** (모바일 주소창 표시/숨김)  
+1. **`100vh` 점프** (모바일 주소창 표시/숨김)
    → `100dvh/svh/lvh` 활용 + 레이아웃에 `min-height` 사용.
-2. **줌 비활성화**(접근성 저하)  
+2. **줌 비활성화**(접근성 저하)
    → `user-scalable=no` 지양. 포커스/탭 이동이 가능한 UI 설계.
-3. **DOM 순서와 시각 순서 불일치**  
+3. **DOM 순서와 시각 순서 불일치**
    → 미디어쿼리로 시각 재배치해도 **DOM 탐색 순서**는 접근성에 영향. 논리적 순서를 유지.
-4. **호버 의존 UX**  
+4. **호버 의존 UX**
    → `(hover:none)` 환경에서 **동등한 피드백**(active/focus/aria-expanded) 제공.
-5. **색만으로 차이 전달**  
+5. **색만으로 차이 전달**
    → 대비, 밑줄, 아이콘, 텍스트 등 **다중 신호** 제공. `(prefers-contrast)` 대응.
 
 ---
@@ -388,7 +388,7 @@ $bp-lg: 1200px;
 
 ## 참고 링크
 
-- MDN — Using media queries: https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries  
-- MDN — Viewport meta tag: https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag  
-- CSS-Tricks — Media Queries Guide: https://css-tricks.com/a-complete-guide-to-css-media-queries/  
+- MDN — Using media queries: https://developer.mozilla.org/en-US/docs/Web/CSS/Media_Queries/Using_media_queries
+- MDN — Viewport meta tag: https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag
+- CSS-Tricks — Media Queries Guide: https://css-tricks.com/a-complete-guide-to-css-media-queries/
 - Viewport units `dvh/svh/lvh`: 각 브라우저 릴리스 노트/MDN 참고

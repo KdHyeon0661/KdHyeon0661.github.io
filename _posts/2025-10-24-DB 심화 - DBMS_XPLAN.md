@@ -8,17 +8,17 @@ category: DB 심화
 
 ## 0. 핵심 한 장
 
-- **예상 계획**:  
+- **예상 계획**:
   ```sql
   EXPLAIN PLAN FOR <SQL>;
   SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +NOTE'));
   ```
-- **실제 계획**(캐시된 커서):  
+- **실제 계획**(캐시된 커서):
   ```sql
   -- 방금 실행한 SQL의 마지막 실행(Child 자동 선택)
   SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL'));
   ```
-- **Row Source별 수행 통계**(라인 단위 **A-Rows/Starts/Time/Buffers/TempSpc**):  
+- **Row Source별 수행 통계**(라인 단위 **A-Rows/Starts/Time/Buffers/TempSpc**):
   ```sql
   SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
       'ALLSTATS LAST +PEEKED_BINDS +PREDICATE +PROJECTION +OUTLINE +NOTE'));
@@ -100,16 +100,16 @@ AND    o.order_date BETWEEN :d1 AND :d2;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, NULL, 'ALL +PREDICATE +ALIAS +PROJECTION +NOTE'));
 ```
 
-- **DISPLAY** 서명: `DISPLAY(table_name, statement_id, format)`  
-  - `table_name` = NULL → `PLAN_TABLE`에서 **최근**  
+- **DISPLAY** 서명: `DISPLAY(table_name, statement_id, format)`
+  - `table_name` = NULL → `PLAN_TABLE`에서 **최근**
   - `format` → `BASIC/TYPICAL/ALL` + `+PREDICATE/+NOTE/...`
 
 ### 2.2 출력 해석 포인트
-- **Operation**: `INDEX RANGE SCAN`, `TABLE ACCESS BY ROWID`, `HASH JOIN`, `NESTED LOOPS`, `SORT GROUP BY` 등  
-- **Rows/Bytes/Cost/Time**: **추정치**(실제 아님)  
-- **Predicate Information**:  
-  - `access()` = **인덱스 접근 조건**  
-  - `filter()` = 접근 후 **필터링** 조건  
+- **Operation**: `INDEX RANGE SCAN`, `TABLE ACCESS BY ROWID`, `HASH JOIN`, `NESTED LOOPS`, `SORT GROUP BY` 등
+- **Rows/Bytes/Cost/Time**: **추정치**(실제 아님)
+- **Predicate Information**:
+  - `access()` = **인덱스 접근 조건**
+  - `filter()` = 접근 후 **필터링** 조건
 - **Note**: 동적 샘플링, 적응 기능, 스칼라 서브쿼리 변환 등 *옵티마이저 메시지*
 
 > 주의: **예상**은 런타임의 바인드 값/통계 수집 시점/적응 행태 때문에 **실행과 달라질 수 있음**.
@@ -136,9 +136,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 ```
 
 **포인트**
-- `DISPLAY_CURSOR(sql_id, child_number, format)`  
-  - `NULL,NULL` → **현재 세션의 마지막 실행 SQL**  
-  - `+PEEKED_BINDS` : **바인드 피킹 값** 확인(값 스큐/ACS 분석에 중요)  
+- `DISPLAY_CURSOR(sql_id, child_number, format)`
+  - `NULL,NULL` → **현재 세션의 마지막 실행 SQL**
+  - `+PEEKED_BINDS` : **바인드 피킹 값** 확인(값 스큐/ACS 분석에 중요)
   - 이 시점엔 라인별 통계(A-Rows)는 없음 → 다음 장의 `ALLSTATS` 사용
 
 ### 3.2 특정 SQL_ID/Child 지정
@@ -159,7 +159,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', 0,
 
 ## 4. **Row Source별 수행 통계** — `ALLSTATS`
 
-> 라인 기준 **A-Rows(실행 행수)**, **Starts**, **E-Rows(추정)**, **Buffers**, **Reads**, **Time**, **TempSpc** 등 **실행 통계**를 표로 제공.  
+> 라인 기준 **A-Rows(실행 행수)**, **Starts**, **E-Rows(추정)**, **Buffers**, **Reads**, **Time**, **TempSpc** 등 **실행 통계**를 표로 제공.
 > **성능 분석의 결론**은 거의 항상 여기서 난다.
 
 ### 4.1 `ALLSTATS LAST` — 마지막 실행의 실측
@@ -176,10 +176,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 ```
 
 **해석 체크리스트**
-- **A-Rows vs E-Rows**: **추정 오류**(카디널리티 오판) 여부  
-- **Buffers/Read**: I/O 비용, 캐시 적중/미스 경향  
-- **Time(라인별)**: 어디서 시간이 많이 소모되는지  
-- **TempSpc**: 정렬/해시 *스필* 존재 여부  
+- **A-Rows vs E-Rows**: **추정 오류**(카디널리티 오판) 여부
+- **Buffers/Read**: I/O 비용, 캐시 적중/미스 경향
+- **Time(라인별)**: 어디서 시간이 많이 소모되는지
+- **TempSpc**: 정렬/해시 *스필* 존재 여부
 - **Outline/Note**: 옵티마이저가 선택한 힌트 세트, 적응/변환 메시지
 
 ### 4.2 `ALLSTATS FIRST` — 첫 실행 통계
@@ -228,8 +228,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
   'ALLSTATS LAST +PREDICATE +PEEKED_BINDS +NOTE'));
 ```
 
-**읽는 법**  
-- HASH가 선택되었을 때 `TempSpc` 크고 **Time 대부분이 해시 빌드/프로브**에 몰리면 → **NL이 유리**  
+**읽는 법**
+- HASH가 선택되었을 때 `TempSpc` 크고 **Time 대부분이 해시 빌드/프로브**에 몰리면 → **NL이 유리**
 - NL에서 `A-Rows`가 **E-Rows 대비 과대**이면 → 인덱스 선택성/히스토그램/필터 선행 필요
 
 ### 5.2 **정렬·스필 감지** (ORDER BY / GROUP BY)
@@ -259,17 +259,17 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 
 ## 6. 출력 옵션 모음(실전 단골)
 
-- `ALL` : 가능한 많은 열  
-- `+PREDICATE` : access/filter 조건  
-- `+ALIAS` : 테이블/컬럼 **별칭**  
-- `+PROJECTION` : 각 라인 **투영 컬럼**(연산/함수 포함)  
-- `+NOTE` : 옵티마이저 메시지(동적 샘플링/뷰 머지/적응 등)  
-- `+OUTLINE` : **Outline(힌트 세트)** — 플랜 고정/재현에 유용  
-- `+PEEKED_BINDS` : 바인드 피킹 값  
-- `+PARALLEL` : PX 흐름/Distribution 표시  
-- `ALLSTATS FIRST/LAST` : **라인별 실행 통계**(필수)  
+- `ALL` : 가능한 많은 열
+- `+PREDICATE` : access/filter 조건
+- `+ALIAS` : 테이블/컬럼 **별칭**
+- `+PROJECTION` : 각 라인 **투영 컬럼**(연산/함수 포함)
+- `+NOTE` : 옵티마이저 메시지(동적 샘플링/뷰 머지/적응 등)
+- `+OUTLINE` : **Outline(힌트 세트)** — 플랜 고정/재현에 유용
+- `+PEEKED_BINDS` : 바인드 피킹 값
+- `+PARALLEL` : PX 흐름/Distribution 표시
+- `ALLSTATS FIRST/LAST` : **라인별 실행 통계**(필수)
 
-**추천 프리셋**  
+**추천 프리셋**
 ```sql
 -- 예상(간단)
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'TYPICAL +PREDICATE +NOTE'));
@@ -283,9 +283,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 
 ## 7. DISPLAY_CURSOR와 주변 도구의 조합
 
-- **SQL Monitor**: *라인별 경과 시간/대기/Temp*의 실시간 시각화(특히 장수행/병렬)  
-- **ASH/AWR**: *상위 이벤트/SQL/Plan Line 샘플*로 시스템 시야  
-- **10046 Trace + TKPROF**: *Parse/Exec/Fetch* 호출 단위 **대기/시간** 근거  
+- **SQL Monitor**: *라인별 경과 시간/대기/Temp*의 실시간 시각화(특히 장수행/병렬)
+- **ASH/AWR**: *상위 이벤트/SQL/Plan Line 샘플*로 시스템 시야
+- **10046 Trace + TKPROF**: *Parse/Exec/Fetch* 호출 단위 **대기/시간** 근거
 - **DBMS_XPLAN.DISPLAY_AWR**: AWR에 저장된 **옛 플랜** 비교(과거 회귀 분석)
 
 ```sql
@@ -298,47 +298,47 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_AWR('&&SQL_ID', NULL, NULL,
 
 ## 8. 자주 부딪히는 함정 & 대처
 
-1) **`EXPLAIN`과 실제 상이**: 바인드 값/적응 기능/통계 시점 → **반드시 ALLSTATS로 검증**  
-2) **Child 폭증**: `v$sql_shared_cursor`로 원인(바인드 타입/길이/NLS/환경) 확인, **SQL 표준화/바인드 고정**  
-3) **TempSpc=0인데 느림**: CPU 바운드/락/네트워크 가능 → SQL Monitor/ASH/락 진단 병행  
-4) **PX 스큐**: 특정 라인 `A-Rows` 편중 + 한쪽 라인 Time 급증 → **분배 키/파티셔닝/재해시** 검토  
+1) **`EXPLAIN`과 실제 상이**: 바인드 값/적응 기능/통계 시점 → **반드시 ALLSTATS로 검증**
+2) **Child 폭증**: `v$sql_shared_cursor`로 원인(바인드 타입/길이/NLS/환경) 확인, **SQL 표준화/바인드 고정**
+3) **TempSpc=0인데 느림**: CPU 바운드/락/네트워크 가능 → SQL Monitor/ASH/락 진단 병행
+4) **PX 스큐**: 특정 라인 `A-Rows` 편중 + 한쪽 라인 Time 급증 → **분배 키/파티셔닝/재해시** 검토
 5) **Outline만 믿고 고정**: 데이터 변동 시 취약 → **통계/히스토그램/조인순서** 원인 교정 먼저
 
 ---
 
 ## 9. 튜닝 루틴(현장 템플릿)
 
-1) **문제 SQL 실행**(가능하면 실제 바인드)  
-2) `DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS +PREDICATE +NOTE')`  
-3) **라인별** `A-Rows` vs `E-Rows`, **Time/Temp/Buffers** 최대 라인 찾기  
-4) **원인 가설**: 카디널리티/접근경로/조인전략/정렬/스필/병렬스큐  
-5) **작은 변경**: 인덱스/통계(히스토그램)/조인순서/뷰 머지/필터 푸시/함수제거/바인드 정규화  
-6) **다시 실행** → 같은 포맷으로 전/후 비교(표를 나란히 저장)  
+1) **문제 SQL 실행**(가능하면 실제 바인드)
+2) `DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS +PREDICATE +NOTE')`
+3) **라인별** `A-Rows` vs `E-Rows`, **Time/Temp/Buffers** 최대 라인 찾기
+4) **원인 가설**: 카디널리티/접근경로/조인전략/정렬/스필/병렬스큐
+5) **작은 변경**: 인덱스/통계(히스토그램)/조인순서/뷰 머지/필터 푸시/함수제거/바인드 정규화
+6) **다시 실행** → 같은 포맷으로 전/후 비교(표를 나란히 저장)
 7) **재발방지**: Baseline/Profile(필요시), 배포 전 회귀 테스트 케이스화
 
 ---
 
 ## 10. 미니 FAQ
 
-- **Q. `ALLSTATS`가 비어 있어요.**  
+- **Q. `ALLSTATS`가 비어 있어요.**
   A. 해당 커서를 **실행**한 뒤에 보세요. `EXPLAIN`만 하고 `DISPLAY_CURSOR` 하면 통계가 없습니다.
 
-- **Q. 어떤 옵션을 늘 붙일까요?**  
+- **Q. 어떤 옵션을 늘 붙일까요?**
   A. `ALLSTATS LAST +PEEKED_BINDS +PREDICATE +OUTLINE +NOTE` 를 기본으로, 필요 시 `+PROJECTION/+PARALLEL`.
 
-- **Q. 실행 중 적응 계획 전환은 보이나요?**  
+- **Q. 실행 중 적응 계획 전환은 보이나요?**
   A. `NOTE`/`OUTLINE`에 흔적이 남고, `ALLSTATS`에서 라인 Time 분포가 달라집니다. SQL Monitor가 더 선명합니다.
 
 ---
 
 ## 11. 결론
 
-- `DBMS_XPLAN`은 **세 가지 모드의 하모니**다.  
-  1) **DISPLAY**: *예상 지도*  
-  2) **DISPLAY_CURSOR**: *실제 경로*  
-  3) **ALLSTATS**: *어디에서 시간이 들었는지*  
+- `DBMS_XPLAN`은 **세 가지 모드의 하모니**다.
+  1) **DISPLAY**: *예상 지도*
+  2) **DISPLAY_CURSOR**: *실제 경로*
+  3) **ALLSTATS**: *어디에서 시간이 들었는지*
 - 튜닝은 **라인별 사실**에서 출발한다. **A-Rows vs E-Rows**, **Time/Temp/Buffers**를 통해 **원인**을 짚고, **작고 정확한 수정**으로 **Before/After**를 증명하라.
 
-> 한 줄 정리  
-> **DISPLAY**로 “갈 길”을 보고, **DISPLAY_CURSOR(ALLSTATS)**로 “걸은 길”과 “넘어진 지점”을 확인하라.  
+> 한 줄 정리
+> **DISPLAY**로 “갈 길”을 보고, **DISPLAY_CURSOR(ALLSTATS)**로 “걸은 길”과 “넘어진 지점”을 확인하라.
 > 답은 **Row Source 표**에 있다.

@@ -11,16 +11,16 @@ category: Git
 - **Rebase** = “내 브랜치 커밋들을 **다른 베이스** 위로 **재배치**해 **선형 이력**으로 만든다.”
 - **언제?** 개인 브랜치 정리·리뷰 전 히스토리 단순화·FF 병합을 위해.
 - **주의!** 공유(원격) 브랜치 rebase 금지. 필요 시 팀 합의 + `--force-with-lease`.
-- **필수 옵션**:  
-  - `--onto`(선택 구간만 이동), `-i`(인터랙티브), `--rebase-merges`(병합 토폴로지 보존),  
+- **필수 옵션**:
+  - `--onto`(선택 구간만 이동), `-i`(인터랙티브), `--rebase-merges`(병합 토폴로지 보존),
   - `--autostash`/`rebase.autoStash`(작업 보관), `--autosquash`(fixup!/squash! 자동 정렬).
 
 ---
 
 ## 1. Rebase란? (개념 재정의)
 
-**rebase**는 현재 브랜치의 커밋들을 **새로운 기준 커밋** 뒤로 옮겨 붙이면서 **새 커밋 해시**로 다시 쓰는 과정입니다.  
-- 결과: **병합 커밋 없이** 선형 이력이 만들어짐(그래프가 단순해짐).  
+**rebase**는 현재 브랜치의 커밋들을 **새로운 기준 커밋** 뒤로 옮겨 붙이면서 **새 커밋 해시**로 다시 쓰는 과정입니다.
+- 결과: **병합 커밋 없이** 선형 이력이 만들어짐(그래프가 단순해짐).
 - 대가: 해시 재작성 → 원격과 공유된 브랜치에서는 충돌/협업 리스크.
 
 ### 최소 예시(기본)
@@ -263,10 +263,10 @@ git switch -c rescue HEAD@{3}
 
 ## 13. 팀 운영 규칙(정책화 권장)
 
-- **공유 브랜치(예: main/release/hotfix)는 rebase 금지**.  
-- 개인 브랜치에서는 rebase 자유, 단 **푸시 전**에만.  
-- rebase 후 푸시는 **`--force-with-lease`** 필수.  
-- PR에서 병합 정책 정의: “rebase and merge” 허용 여부, “squash and merge” 기준, 선형 이력 요구 여부.  
+- **공유 브랜치(예: main/release/hotfix)는 rebase 금지**.
+- 개인 브랜치에서는 rebase 자유, 단 **푸시 전**에만.
+- rebase 후 푸시는 **`--force-with-lease`** 필수.
+- PR에서 병합 정책 정의: “rebase and merge” 허용 여부, “squash and merge” 기준, 선형 이력 요구 여부.
 - 린트/테스트 자동화와 인터랙티브 rebase의 `exec` 단계 연계(실수 방지).
 
 ---
@@ -368,13 +368,13 @@ git switch -c rescue HEAD@{2}
 
 ## 17. 안전한 워크플로우 체크리스트
 
-- [ ] **개인 브랜치**에서만 rebase  
-- [ ] 시작 전 `git fetch`로 최신 업스트림 동기화  
-- [ ] 비커밋 변경은 `--autostash` 또는 수동 `stash`  
-- [ ] 대형 작업 전 **백업 브랜치/태그** 생성  
-- [ ] 충돌 반복 시 `rerere` 켬  
-- [ ] 푸시는 `--force-with-lease`  
-- [ ] 전/후 비교는 `git range-diff`  
+- [ ] **개인 브랜치**에서만 rebase
+- [ ] 시작 전 `git fetch`로 최신 업스트림 동기화
+- [ ] 비커밋 변경은 `--autostash` 또는 수동 `stash`
+- [ ] 대형 작업 전 **백업 브랜치/태그** 생성
+- [ ] 충돌 반복 시 `rerere` 켬
+- [ ] 푸시는 `--force-with-lease`
+- [ ] 전/후 비교는 `git range-diff`
 - [ ] 서브모듈/LFS 있는 리포는 별도 체크
 
 ---
@@ -418,13 +418,13 @@ git reset --hard ORIG_HEAD
 
 ## 19. 결론
 
-- **Rebase**는 “선형 이력”과 “리뷰/분석 편의”를 주지만, **협업 안전성**을 대가로 합니다.  
-- 개인 브랜치에서 **정리·스쿼시·재배치**에 적극 활용하고, 공유 브랜치에서는 **merge 중심**으로 운용하세요.  
+- **Rebase**는 “선형 이력”과 “리뷰/분석 편의”를 주지만, **협업 안전성**을 대가로 합니다.
+- 개인 브랜치에서 **정리·스쿼시·재배치**에 적극 활용하고, 공유 브랜치에서는 **merge 중심**으로 운용하세요.
 - `--onto`, `-i`, `--rebase-merges`, `--autostash`, `--autosquash`, `range-diff`, `rerere`, `--force-with-lease`를 함께 익히면 **안전하고 강력한 rebase 워크플로우**를 구축할 수 있습니다.
 
 ---
 
 ## 참고
 
-- Git Rebase 공식 문서: https://git-scm.com/docs/git-rebase  
+- Git Rebase 공식 문서: https://git-scm.com/docs/git-rebase
 - GitHub 가이드(포크 동기화 및 rebase): https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/keeping-your-fork-synced-with-the-original-repository#rebase-your-fork

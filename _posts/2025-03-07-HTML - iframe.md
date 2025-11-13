@@ -49,7 +49,7 @@ category: HTML
 ></iframe>
 ```
 
-- `srcdoc`은 파일 없이 빠른 데모/문서 템플릿을 넣을 때 유용.  
+- `srcdoc`은 파일 없이 빠른 데모/문서 템플릿을 넣을 때 유용.
 - `sandbox`와 결합 시 권한을 세밀히 제어.
 
 ---
@@ -87,7 +87,7 @@ category: HTML
 
 ### 2.3 문서/대시보드 임베드 팁
 
-- PDF, 대시보드 서비스(예: Looker Studio, Tableau) 등은 **서비스 제공자가 허용**해야 표시됩니다.  
+- PDF, 대시보드 서비스(예: Looker Studio, Tableau) 등은 **서비스 제공자가 허용**해야 표시됩니다.
 - 상대 사이트가 `X-Frame-Options: DENY/SAMEORIGIN` 또는 `Content-Security-Policy: frame-ancestors`로 **차단**하면 임베드 불가.
 
 ---
@@ -157,9 +157,9 @@ window.addEventListener('load', sendHeight);
 
 ### 4.1 대표 리스크
 
-- **Clickjacking**: 로그인/결제 등 중요한 버튼 위에 투명 iframe을 겹쳐 클릭 유도.  
-- **XSS/CSRF 전파**: 취약한 페이지를 프레임으로 임베드할 때 악성 스크립트 실행/요청 유도.  
-- **피싱/세션 탈취**: 프레임 내부에서 입력값 탈취/토큰 재사용.  
+- **Clickjacking**: 로그인/결제 등 중요한 버튼 위에 투명 iframe을 겹쳐 클릭 유도.
+- **XSS/CSRF 전파**: 취약한 페이지를 프레임으로 임베드할 때 악성 스크립트 실행/요청 유도.
+- **피싱/세션 탈취**: 프레임 내부에서 입력값 탈취/토큰 재사용.
 - **Same-Origin Policy 혼동**: 동일 출처가 아니면 DOM 접근 불가. `allow-same-origin` 샌드박스는 신중히.
 
 ### 4.2 `sandbox` — 최소 권한 원칙
@@ -206,12 +206,12 @@ window.addEventListener('load', sendHeight);
 ></iframe>
 ```
 
-- 페이지 전역 정책은 **HTTP 응답 헤더 `Permissions-Policy`**로도 설정 가능.  
+- 페이지 전역 정책은 **HTTP 응답 헤더 `Permissions-Policy`**로도 설정 가능.
 - `allowfullscreen` 대신 `allow="fullscreen"` 사용을 권장.
 
 ### 4.4 CSP(콘텐츠 보안 정책)
 
-- **`frame-src`**: 이 페이지가 **어떤 출처**에서 프레임을 로드할 수 있는지.  
+- **`frame-src`**: 이 페이지가 **어떤 출처**에서 프레임을 로드할 수 있는지.
 - **`frame-ancestors`**: **이 페이지를 누가** 프레임으로 **임베드할 수 있는지**(Clickjacking 방지, 임베드 당하는 쪽).
 
 ```http
@@ -253,9 +253,9 @@ window.addEventListener('message', (event) => {
 
 ## 5. 접근성(a11y)·SEO·포커스
 
-- **`title`**은 **반드시** 의미 있게 작성(“동영상 플레이어”, “회사 위치 지도” 등).  
-- 프레임 내부 포커스 이동은 별도 문맥이므로, **키보드 트랩**이 생기지 않도록 설계.  
-- SEO 측면에서 iframe 콘텐츠는 **부모 페이지의 직접 컨텐츠로 간주되지 않음**(검색 가시성에 영향 미미). 대체 요약/링크 제공 고려.  
+- **`title`**은 **반드시** 의미 있게 작성(“동영상 플레이어”, “회사 위치 지도” 등).
+- 프레임 내부 포커스 이동은 별도 문맥이므로, **키보드 트랩**이 생기지 않도록 설계.
+- SEO 측면에서 iframe 콘텐츠는 **부모 페이지의 직접 컨텐츠로 간주되지 않음**(검색 가시성에 영향 미미). 대체 요약/링크 제공 고려.
 - 시각적 숨김 텍스트로 **설명 보강**:
 
 ```html
@@ -271,9 +271,9 @@ window.addEventListener('message', (event) => {
 
 ## 6. 성능 최적화
 
-- **`loading="lazy"`**로 폴드 밖 프레임의 초기 네트워크 비용 감소.  
-- 가능한 한 **가벼운 임베드 URL** 사용(광고/추적 스크립트 과다 페이지 지양).  
-- **일시 표시 상자**(스켈레톤/플레이스홀더)로 사용자 체감 개선.  
+- **`loading="lazy"`**로 폴드 밖 프레임의 초기 네트워크 비용 감소.
+- 가능한 한 **가벼운 임베드 URL** 사용(광고/추적 스크립트 과다 페이지 지양).
+- **일시 표시 상자**(스켈레톤/플레이스홀더)로 사용자 체감 개선.
 - 많은 프레임은 **탭/아코디언**로 분할하여 **동적 로딩**(필요 시 `src` 세팅).
 
 ```html
@@ -305,18 +305,18 @@ try {
 </script>
 ```
 
-- **동일 출처**(스킴·호스트·포트가 동일) + sandbox가 DOM 접근을 막지 않아야 가능합니다.  
+- **동일 출처**(스킴·호스트·포트가 동일) + sandbox가 DOM 접근을 막지 않아야 가능합니다.
 - 교차 출처라면 **postMessage** 기반 통신만 신뢰.
 
 ---
 
 ## 8. 고급 시나리오: 결제/인증/크로스 오리진 격리
 
-- **민감 작업(결제·인증)**: 제공 사업자의 **보안 가이드**(필수 헤더, sandbox/allow 조합)를 따르세요.  
-- **COOP/COEP(교차 출처 격리)**: SharedArrayBuffer 등의 고급 API가 필요하거나, 강한 프로세스 격리를 요구할 때 서버측에서 설정.  
-  - `Cross-Origin-Opener-Policy: same-origin`  
-  - `Cross-Origin-Embedder-Policy: require-corp`  
-  - 상호 임베드시 각 리소스의 **CORS/CORP** 처리 필요.  
+- **민감 작업(결제·인증)**: 제공 사업자의 **보안 가이드**(필수 헤더, sandbox/allow 조합)를 따르세요.
+- **COOP/COEP(교차 출처 격리)**: SharedArrayBuffer 등의 고급 API가 필요하거나, 강한 프로세스 격리를 요구할 때 서버측에서 설정.
+  - `Cross-Origin-Opener-Policy: same-origin`
+  - `Cross-Origin-Embedder-Policy: require-corp`
+  - 상호 임베드시 각 리소스의 **CORS/CORP** 처리 필요.
 - **익명 프레임(credentialless)**: 일부 브라우저에서 쿠키 없이 임베드(실험/한정 지원). **브라우저 지원 확인** 후 사용.
 
 > 이 영역은 정책/헤더 상호작용이 복잡하므로, 서비스/브라우저 공식 문서를 반드시 확인하세요.
@@ -439,21 +439,21 @@ window.addEventListener('message', (e) => {
 
 ## 11. 체크리스트
 
-- [ ] 임베드 대상이 **법적/보안적으로 신뢰 가능한가?**  
-- [ ] `sandbox`는 기본 적용, **필요 권한만 토큰으로 허용**했는가?  
-- [ ] `allow`로 **Permissions Policy**를 보수적으로 제한했는가?  
-- [ ] 임베드 당하는 페이지는 `CSP: frame-ancestors`/`X-Frame-Options`로 정책을 명확히 했는가?  
-- [ ] 교차 출처 통신은 **postMessage + origin 화이트리스트**로 안전한가?  
-- [ ] `title`/`aria-describedby` 등 **접근성** 메타가 충분한가?  
-- [ ] `loading="lazy"`/동적 로딩으로 **성능**을 최적화했는가?  
+- [ ] 임베드 대상이 **법적/보안적으로 신뢰 가능한가?**
+- [ ] `sandbox`는 기본 적용, **필요 권한만 토큰으로 허용**했는가?
+- [ ] `allow`로 **Permissions Policy**를 보수적으로 제한했는가?
+- [ ] 임베드 당하는 페이지는 `CSP: frame-ancestors`/`X-Frame-Options`로 정책을 명확히 했는가?
+- [ ] 교차 출처 통신은 **postMessage + origin 화이트리스트**로 안전한가?
+- [ ] `title`/`aria-describedby` 등 **접근성** 메타가 충분한가?
+- [ ] `loading="lazy"`/동적 로딩으로 **성능**을 최적화했는가?
 - [ ] 반응형(비율 상자)과 **대체 링크/폴백**을 제공했는가?
 
 ---
 
 ## 12. 요약
 
-- `<iframe>`은 **외부 문서를 안전하게 포함**하는 표준 수단이지만, 보안/성능/접근성을 반드시 함께 고려해야 합니다.  
-- **보안 핵심**: `sandbox` 기본 + 최소 권한, `allow`(Permissions Policy), `CSP frame-ancestors`, 출처 검증된 `postMessage`.  
-- **UX/성능**: 반응형 비율 상자, 지연 로딩, 동적 삽입, 자동 리사이징.  
-- **접근성/SEO**: 의미 있는 `title`, 설명 연결, 폴백 링크.  
+- `<iframe>`은 **외부 문서를 안전하게 포함**하는 표준 수단이지만, 보안/성능/접근성을 반드시 함께 고려해야 합니다.
+- **보안 핵심**: `sandbox` 기본 + 최소 권한, `allow`(Permissions Policy), `CSP frame-ancestors`, 출처 검증된 `postMessage`.
+- **UX/성능**: 반응형 비율 상자, 지연 로딩, 동적 삽입, 자동 리사이징.
+- **접근성/SEO**: 의미 있는 `title`, 설명 연결, 폴백 링크.
 - 임베드 실패 가능성을 항상 염두에 두고 **대체 경로**를 준비하세요.

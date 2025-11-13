@@ -41,7 +41,7 @@ kubectl uncordon NODE
 **직관 수식**(최소 가용 파드 수):
 
 $$
-\text{minAvailable} = 
+\text{minAvailable} =
 \begin{cases}
 \lceil p \times r \rceil & \text{(백분율 규정)} \\
 k & \text{(정수 규정)}
@@ -231,8 +231,8 @@ sudo logrotate -f /etc/logrotate.d/container-logs
 - **PDB**: 유지보수 중 동시에 비울 수 있는 파드 수를 보장
 - **CA**: Drain으로 비는 노드 → 자동 감축 / Surge 필요 시 임시 증설
 
-**권장 패턴**:  
-- 중요 API: `PDB minAvailable: 80%`, `HPA minReplicas` 확보  
+**권장 패턴**:
+- 중요 API: `PDB minAvailable: 80%`, `HPA minReplicas` 확보
 - 배치성: 느슨한 PDB 또는 미적용, 유지보수 창에서 일괄 처리
 
 ---
@@ -358,29 +358,29 @@ groups:
 ## 13. 사고 수습 런북(시나리오 기반)
 
 ### 13.1 Drain 중 PDB로 멈춤
-1. `kubectl describe pdb`로 대상 파드·요구치 확인  
-2. 배포 **replicas↑** 또는 canary 축소·트래픽 전환  
+1. `kubectl describe pdb`로 대상 파드·요구치 확인
+2. 배포 **replicas↑** 또는 canary 축소·트래픽 전환
 3. 운영 승인 하 **임시 PDB 완화** → 종료 후 원복
 
 ### 13.2 DiskPressure로 Eviction 급증
-1. 노드 디스크 사용률, 이미지 캐시, 컨테이너 로그 확인  
-2. **이미지 GC 임계** 낮춤, 로그 로테이션 적용  
+1. 노드 디스크 사용률, 이미지 캐시, 컨테이너 로그 확인
+2. **이미지 GC 임계** 낮춤, 로그 로테이션 적용
 3. 과도한 `emptyDir`/`hostPath` 점검 → 설계 개선
 
 ### 13.3 재부팅 후 NotReady 지속
-1. `journalctl -u kubelet` / `containerd` 로그  
-2. CNI/모듈/네트워크 링크 상태 점검  
+1. `journalctl -u kubelet` / `containerd` 로그
+2. CNI/모듈/네트워크 링크 상태 점검
 3. 클라우드 메타데이터/라우팅 테이블 확인 → 필요 시 노드 교체
 
 ---
 
 ## 14. 무중단 업그레이드 플랜(예시)
 
-- **윈도우**: 주 2회 02:00–04:00 (현지 시간)  
-- **동시성**: AZ별 **Max 1 노드** (PDB 기반 계산)  
-- **순서**: Ingress → Stateless API → Stateful(리더 선출 지원) → 배치  
-- **검증 단계**: 각 단계마다 10분 관찰(에러율/p95/p99, Ready 전환 p95)  
-- **롤백 기준**: 에러율 +1%p 또는 p99 > 800ms 5분 지속 시 중단·원복  
+- **윈도우**: 주 2회 02:00–04:00 (현지 시간)
+- **동시성**: AZ별 **Max 1 노드** (PDB 기반 계산)
+- **순서**: Ingress → Stateless API → Stateful(리더 선출 지원) → 배치
+- **검증 단계**: 각 단계마다 10분 관찰(에러율/p95/p99, Ready 전환 p95)
+- **롤백 기준**: 에러율 +1%p 또는 p99 > 800ms 5분 지속 시 중단·원복
 - **보고**: 변경 이력 PR + Grafana 스냅샷 첨부
 
 ---

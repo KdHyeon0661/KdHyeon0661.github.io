@@ -6,14 +6,14 @@ category: WPF
 ---
 # Command 패턴과 바인딩
 
-WPF의 **Command**는 GoF의 **Command 패턴**을 UI에 최적화해 구현한 것입니다.  
+WPF의 **Command**는 GoF의 **Command 패턴**을 UI에 최적화해 구현한 것입니다.
 이 글에서는 **개념→WPF 커맨딩 모델→MVVM 바인딩(실전)→다양한 시나리오→베스트 프랙티스** 순서로 정리합니다.
 
 ---
 
 ## 1. Command 패턴 한눈에 (GoF 관점)
 
-- **목표**: “사용자 액션(요청)”을 **객체(커맨드)**로 캡슐화 → 호출자(버튼/단축키)와 수신자(실행 로직) **분리**  
+- **목표**: “사용자 액션(요청)”을 **객체(커맨드)**로 캡슐화 → 호출자(버튼/단축키)와 수신자(실행 로직) **분리**
 - **효과**: 실행 취소/재실행(undo/redo), 큐잉, 로깅, 권한 제어, 단축키 바인딩 등 **유연성** 확보
 - **WPF**: `ICommand` 인터페이스로 표준화, `RoutedCommand`로 **요소 트리 전파**까지 지원
 
@@ -245,13 +245,13 @@ LoadCommand = new AsyncRelayCommand(async ct => await LoadAsync(ct), () => !IsBu
 
 ## 8. 베스트 프랙티스 & 체크리스트
 
-1. **Click 핸들러 대신 Command**: 테스트/재사용/단축키 연계가 쉬움  
-2. **CanExecute 즉시 갱신**: 관련 속성 Setter에서 `RaiseCanExecuteChanged()` 호출  
-3. **메모리 누수 방지**: `CommandManager.RequerySuggested` 구독은 `WeakEventManager`로  
-4. **UI 타입 분리**: ViewModel 커맨드 파라미터로 **UI 요소**를 넘기지 말 것(필요 정보만 DTO/Id로)  
-5. **다중 파라미터**: 튜플/DTO/`MultiBinding`+Converter 활용  
-6. **ContextMenu/Popup**: `PlacementTarget` 패턴 숙지  
-7. **Undo/Redo**: Command 패턴의 장점 활용(스택으로 기록)  
+1. **Click 핸들러 대신 Command**: 테스트/재사용/단축키 연계가 쉬움
+2. **CanExecute 즉시 갱신**: 관련 속성 Setter에서 `RaiseCanExecuteChanged()` 호출
+3. **메모리 누수 방지**: `CommandManager.RequerySuggested` 구독은 `WeakEventManager`로
+4. **UI 타입 분리**: ViewModel 커맨드 파라미터로 **UI 요소**를 넘기지 말 것(필요 정보만 DTO/Id로)
+5. **다중 파라미터**: 튜플/DTO/`MultiBinding`+Converter 활용
+6. **ContextMenu/Popup**: `PlacementTarget` 패턴 숙지
+7. **Undo/Redo**: Command 패턴의 장점 활용(스택으로 기록)
 8. **툴킷 고려**: *CommunityToolkit.Mvvm*의 `[RelayCommand]`, `AsyncRelayCommand`로 보일러플레이트 최소화
 
 ---
@@ -291,7 +291,7 @@ public class TinyVm : INotifyPropertyChanged {
 
 ### 결론
 
-- **Command 패턴**은 UI 트리거와 실행 로직을 느슨하게 결합해 **테스트 가능**하고 **유연한** 구조를 제공합니다.  
-- WPF에서는 **ICommand 바인딩**(MVVM)과 **RoutedCommand**(전통/전역 명령)를 상황에 맞게 조합하세요.  
-- `CommandParameter`, `InputBindings`, `ContextMenu`, `DataTemplate` 등 **다양한 바인딩 패턴**을 익히면  
+- **Command 패턴**은 UI 트리거와 실행 로직을 느슨하게 결합해 **테스트 가능**하고 **유연한** 구조를 제공합니다.
+- WPF에서는 **ICommand 바인딩**(MVVM)과 **RoutedCommand**(전통/전역 명령)를 상황에 맞게 조합하세요.
+- `CommandParameter`, `InputBindings`, `ContextMenu`, `DataTemplate` 등 **다양한 바인딩 패턴**을 익히면
   클릭·키보드·마우스 제스처가 **하나의 일관된 커맨드 흐름**으로 통합되어 유지보수가 쉬워집니다.

@@ -61,8 +61,8 @@ category: Java
 
 ## 4. 인코딩(Encoding) — 문제의 8할은 여기서
 
-- 항상 **`StandardCharsets.UTF_8`**을 **명시**하세요.  
-- `FileReader`/`FileWriter`는 **OS 기본 문자셋**을 사용 → 이식성/재현성 낮음.  
+- 항상 **`StandardCharsets.UTF_8`**을 **명시**하세요.
+- `FileReader`/`FileWriter`는 **OS 기본 문자셋**을 사용 → 이식성/재현성 낮음.
 - BOM(UTF-8 BOM)은 표준상 불필요하며, 존재 시 파일 첫 글자로 `\uFEFF`가 들어올 수 있음(직접 제거 필요).
 
 ### 4.1 안전한 Reader 생성(UTF-8)
@@ -440,13 +440,13 @@ try (BufferedReader br = Files.newBufferedReader(p, UTF_8)) {
 
 ## 15. 체크리스트 요약
 
-- [ ] 텍스트 → **Reader/Writer**, 바이너리 → Stream/Channel  
-- [ ] **UTF-8 명시**(`StandardCharsets.UTF_8`)  
-- [ ] **Buffered** 사용, 대용량은 스트리밍  
-- [ ] 라인 끝은 `newLine()` / `System.lineSeparator()`  
-- [ ] 임시 파일 + `Files.move(..., ATOMIC_MOVE)`로 안전 덮어쓰기  
-- [ ] 필요 시 파일 잠금(FileLock)  
-- [ ] BOM/디코딩 오류 대응 정책 정의  
+- [ ] 텍스트 → **Reader/Writer**, 바이너리 → Stream/Channel
+- [ ] **UTF-8 명시**(`StandardCharsets.UTF_8`)
+- [ ] **Buffered** 사용, 대용량은 스트리밍
+- [ ] 라인 끝은 `newLine()` / `System.lineSeparator()`
+- [ ] 임시 파일 + `Files.move(..., ATOMIC_MOVE)`로 안전 덮어쓰기
+- [ ] 필요 시 파일 잠금(FileLock)
+- [ ] BOM/디코딩 오류 대응 정책 정의
 - [ ] `try-with-resources`로 누수 방지
 
 ---
@@ -516,6 +516,6 @@ static void filterRecent(Path in, Path out) throws IOException {
 
 ## 18. 결론
 
-- **Reader/Writer는 “텍스트 처리의 정석”**입니다. 문제의 대부분은 **인코딩 미명시**에서 시작하므로 **UTF-8을 항상 명시**하세요.  
-- NIO `Files.*` API를 사용하면 **간결·안전·성능**을 모두 잡을 수 있습니다.  
+- **Reader/Writer는 “텍스트 처리의 정석”**입니다. 문제의 대부분은 **인코딩 미명시**에서 시작하므로 **UTF-8을 항상 명시**하세요.
+- NIO `Files.*` API를 사용하면 **간결·안전·성능**을 모두 잡을 수 있습니다.
 - 대용량/운영 환경에서는 **버퍼링/스트리밍/원자적 교체/파일 잠금** 등 **실전 패턴**을 적용해 **데이터 무결성과 성능**을 동시에 확보하세요.

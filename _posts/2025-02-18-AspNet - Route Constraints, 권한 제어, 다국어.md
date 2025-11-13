@@ -13,9 +13,9 @@ category: AspNet
 - **Localization**을 라우트 단계에 녹이면 **언어/문화권**에 따라 **동일한 리소스의 다양한 표현**을 제공하고, **SEO·북마크**에 유리합니다.
 
 핵심 원칙:
-1) **식별자(Route)**는 “무엇”을 가리키고,  
-2) **상태(Query)**는 “어떻게” 볼지를 결정,  
-3) **권한**은 “누가” 접근 가능한지,  
+1) **식별자(Route)**는 “무엇”을 가리키고,
+2) **상태(Query)**는 “어떻게” 볼지를 결정,
+3) **권한**은 “누가” 접근 가능한지,
 4) **Localization**은 “어떤 언어/문화권”으로 보일지를 결정.
 
 ---
@@ -50,7 +50,7 @@ public IActionResult Details(int id) => View();
 | 선택·캐치올 | `?` 선택, `*` 캐치올 | `@page "{id?}"`, `{*path}` | `[HttpGet("{*path}")]` |
 
 실무 팁:
-- **조합 가능**: `{id:int:min(1)}`  
+- **조합 가능**: `{id:int:min(1)}`
 - **엄격한 제약**은 곧 **보안**(불필요한 컨트롤러/DB 접근 차단)과 **성능**(미스매치 조기 종료)입니다.
 
 ### 1.3 고급: 커스텀 제약 구현(IRouteConstraint)
@@ -59,7 +59,7 @@ public IActionResult Details(int id) => View();
 ```csharp
 public sealed class CodeWhitelistConstraint : IRouteConstraint
 {
-    private static readonly HashSet<string> Allowed = 
+    private static readonly HashSet<string> Allowed =
         new(StringComparer.OrdinalIgnoreCase) { "A1", "B2", "C3" };
 
     public bool Match(HttpContext? httpContext, IRouter? route, string routeKey,
@@ -439,10 +439,10 @@ app.Use(async (ctx, next) =>
 
 ## 8. 에지 케이스와 함정
 
-1) **제약 충돌**: 같은 경로 패턴에 서로 다른 제약이 섞여 등록되면 **예기치 못한 미스매치**.  
-2) **문화권 코드 느슨함**: `en`, `en-US`, `EN-us` 혼용 → 제약으로 **형식 고정**.  
-3) **긴 쿼리**: 필터가 많은 목록 화면은 URL 길이 제한에 부딪힐 수 있음 → POST/서버 상태 토큰.  
-4) **다중 문화권 리다이렉트 루프**: 쿠키/브라우저 선호 언어/경로 문화권이 **충돌**하지 않도록 우선순위 명확히.  
+1) **제약 충돌**: 같은 경로 패턴에 서로 다른 제약이 섞여 등록되면 **예기치 못한 미스매치**.
+2) **문화권 코드 느슨함**: `en`, `en-US`, `EN-us` 혼용 → 제약으로 **형식 고정**.
+3) **긴 쿼리**: 필터가 많은 목록 화면은 URL 길이 제한에 부딪힐 수 있음 → POST/서버 상태 토큰.
+4) **다중 문화권 리다이렉트 루프**: 쿠키/브라우저 선호 언어/경로 문화권이 **충돌**하지 않도록 우선순위 명확히.
 5) **권한 예외 누락**: 로그인/헬스체크/에러 페이지 등은 반드시 **AllowAnonymous** 또는 특정 정책에서 제외.
 
 ---
@@ -557,7 +557,7 @@ Resources/Pages/IndexModel.ko-KR.resx
 
 # 결론
 
-- **Route Constraints**는 첫 관문에서 형식/범위를 강제하여 **보안과 성능**을 동시에 잡습니다.  
-- **권한 제어**는 라우트 구조와 정책을 결합하여 **명확한 경계**를 제공합니다(폴더/페이지/엔드포인트 수준).  
-- **Localization**을 라우팅에 녹이면 **언어별 URL**, **리소스 로딩**, **SEO**가 자연스럽게 결합됩니다.  
+- **Route Constraints**는 첫 관문에서 형식/범위를 강제하여 **보안과 성능**을 동시에 잡습니다.
+- **권한 제어**는 라우트 구조와 정책을 결합하여 **명확한 경계**를 제공합니다(폴더/페이지/엔드포인트 수준).
+- **Localization**을 라우팅에 녹이면 **언어별 URL**, **리소스 로딩**, **SEO**가 자연스럽게 결합됩니다.
 - 본문 패턴(제약·정책·문화권·링크·PRG·테스트)을 템플릿화하면, 팀 전체의 **URL 일관성**, **유지보수성**, **국제화 품질**을 크게 끌어올릴 수 있습니다.

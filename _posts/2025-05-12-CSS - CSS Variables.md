@@ -8,11 +8,11 @@ category: CSS
 
 ## 1. 핵심 요약 (한 장)
 
-- **선언**: `--token-name: value;` (접두사 `--` 필수)  
-- **사용**: `var(--token-name, fallback)` (두 번째 인자는 **폴백**)  
-- **상속**: 커스텀 속성은 **기본적으로 상속**됨(일반 속성과 다르게 대부분 상속).  
-- **스코프**: `:root`(전역) + **로컬 스코프**(컴포넌트/컨테이너 내부 재정의).  
-- **장점**: **런타임** 제어(JS), **반응형/미디어쿼리**와 결합, **테마(라이트/다크/브랜드)**, **설계 토큰화**.  
+- **선언**: `--token-name: value;` (접두사 `--` 필수)
+- **사용**: `var(--token-name, fallback)` (두 번째 인자는 **폴백**)
+- **상속**: 커스텀 속성은 **기본적으로 상속**됨(일반 속성과 다르게 대부분 상속).
+- **스코프**: `:root`(전역) + **로컬 스코프**(컴포넌트/컨테이너 내부 재정의).
+- **장점**: **런타임** 제어(JS), **반응형/미디어쿼리**와 결합, **테마(라이트/다크/브랜드)**, **설계 토큰화**.
 - **주의**: 해석 실패 시 **computed 단계에서 무효**(폴백 권장), IE 미지원.
 
 ---
@@ -37,8 +37,8 @@ category: CSS
 }
 ```
 
-- **로컬 변수가 전역보다 우선**(카스케이딩 규칙).  
-- **상속**: 하위 요소는 상위에서 정의된 `--*`를 **상속**받음.  
+- **로컬 변수가 전역보다 우선**(카스케이딩 규칙).
+- **상속**: 하위 요소는 상위에서 정의된 `--*`를 **상속**받음.
 - **폴백**은 “**변수가 전혀 없을 때만**” 사용. 값은 있는데 **빈 문자열**이면 그 값이 그대로 적용됨(주의).
 
 ---
@@ -299,7 +299,7 @@ if (saved) root.dataset.theme = saved;
 }
 ```
 
-> 지원: Chrome/Edge/Safari 등 모던 브라우저. (Firefox는 플래그/진행상황 확인)  
+> 지원: Chrome/Edge/Safari 등 모던 브라우저. (Firefox는 플래그/진행상황 확인)
 > 타입 등록을 안 하면 변수는 **타이핑 불명** → 직접 전환 불가(참조 속성 전환으로 우회).
 
 ---
@@ -357,20 +357,20 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ## 11. 성능/안정성/팀 협업 규칙
 
-- **네이밍**: `--scope-role-state`(예: `--btn-bg-hover`) / **프리픽스**로 도메인 구분(`--app-*`).  
-- **중첩 계산**을 줄이고, **토큰 분해**(원천/의미/컴포넌트 단위).  
-- **DevTools**에서 **Computed** 패널로 실제 값 추적(유효성 문제는 *invalid at computed value time* 여부 체크).  
+- **네이밍**: `--scope-role-state`(예: `--btn-bg-hover`) / **프리픽스**로 도메인 구분(`--app-*`).
+- **중첩 계산**을 줄이고, **토큰 분해**(원천/의미/컴포넌트 단위).
+- **DevTools**에서 **Computed** 패널로 실제 값 추적(유효성 문제는 *invalid at computed value time* 여부 체크).
 - **빌드 체인**: `postcss-custom-properties`(단, 런타임 동적 변경 기능은 사라짐 → 목적 따라 병행 전략).
 
 ---
 
 ## 12. 디버깅 체크리스트
 
-- [ ] `var(--x, fallback)`의 **폴백**이 실제로 유효한 타입/단위인가?  
-- [ ] shorthand 속성에서 `var()` 실패 시 **선언 전체 무효** → longhand로 분리?  
-- [ ] 상속/스코프: 예상치 못한 **부모의 변수값**이 오버라이드?  
-- [ ] DevTools에서 **Computed**/“Force state”/“Emulate CSS prefers-*”로 시뮬레이션 테스트.  
-- [ ] `@property` 미등록 상태에서 **커스텀 속성 직접 transition** 기대하지 않았는가?  
+- [ ] `var(--x, fallback)`의 **폴백**이 실제로 유효한 타입/단위인가?
+- [ ] shorthand 속성에서 `var()` 실패 시 **선언 전체 무효** → longhand로 분리?
+- [ ] 상속/스코프: 예상치 못한 **부모의 변수값**이 오버라이드?
+- [ ] DevTools에서 **Computed**/“Force state”/“Emulate CSS prefers-*”로 시뮬레이션 테스트.
+- [ ] `@property` 미등록 상태에서 **커스텀 속성 직접 transition** 기대하지 않았는가?
 - [ ] 브라우저 지원: **IE 미지원**(필요 시 전처리기 변수/폴백 CSS 병행).
 
 ---
@@ -492,23 +492,23 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 | `@property` (CSS Typed OM)    | ✅          | △(진행) | ✅     | ❌   |
 | `color-mix()`                 | ✅          | ✅      | ✅     | ❌   |
 
-- IE 대상이면 **SCSS 변수/전처리** + **빌드 타임 변환** 병행, 또는 **단색/고정값 폴백** 제공.  
+- IE 대상이면 **SCSS 변수/전처리** + **빌드 타임 변환** 병행, 또는 **단색/고정값 폴백** 제공.
 - 런타임 테마가 필수라면 **지원 브라우저 범위를 명시**(Browserslist)하고 폴백 UX를 설계.
 
 ---
 
 ## 15. 참고/도구
 
-- MDN: *Using CSS Custom Properties*, *@property*, *color-mix()*  
-- CSS-Tricks: *A Complete Guide to Custom Properties*  
-- DevTools: **Computed** 패널에서 `var(--*)` 해석 값 추적, **Emulate CSS media feature**(다크모드, 모션)  
+- MDN: *Using CSS Custom Properties*, *@property*, *color-mix()*
+- CSS-Tricks: *A Complete Guide to Custom Properties*
+- DevTools: **Computed** 패널에서 `var(--*)` 해석 값 추적, **Emulate CSS media feature**(다크모드, 모션)
 - PostCSS: `postcss-custom-properties`(정적 치환) — 런타임 변경 필요 시 **병행 전략** 고려.
 
 ---
 
 ## 마무리
 
-CSS 커스텀 속성은 **설계 토큰 → 컴포넌트 스타일**의 연결고리입니다.  
-- **반응형/프리퍼런스/테마**를 “변수만 바꾸는” 방식으로 단순화하고,  
-- **@property**로 타입을 부여하면 **변수 자체 전환**도 가능해집니다.  
+CSS 커스텀 속성은 **설계 토큰 → 컴포넌트 스타일**의 연결고리입니다.
+- **반응형/프리퍼런스/테마**를 “변수만 바꾸는” 방식으로 단순화하고,
+- **@property**로 타입을 부여하면 **변수 자체 전환**도 가능해집니다.
 팀에서는 **토큰 계층(원천/의미/컴포넌트) + 레이어 + 네이밍 규칙**을 정해 두면 **대규모 코드베이스**에서도 일관성과 변경 용이성을 동시에 확보할 수 있습니다.

@@ -8,11 +8,11 @@ category: Kubernetes
 
 ## 목표
 
-- Nginx를 **Deployment**로 배포하여 **Pod를 관리**  
-- Nginx를 **Service(NodePort)**로 외부에 노출  
-- `kubectl` 명령어로 상태 확인 및 테스트  
-- (+) **프로브/리소스 한도/보안 컨텍스트/롤링 업데이트** 반영  
-- (+) **ConfigMap**으로 정적 파일 주입, **Ingress**로 도메인 노출  
+- Nginx를 **Deployment**로 배포하여 **Pod를 관리**
+- Nginx를 **Service(NodePort)**로 외부에 노출
+- `kubectl` 명령어로 상태 확인 및 테스트
+- (+) **프로브/리소스 한도/보안 컨텍스트/롤링 업데이트** 반영
+- (+) **ConfigMap**으로 정적 파일 주입, **Ingress**로 도메인 노출
 - (+) **HPA**로 오토스케일, **문제 해결 루틴**까지 학습
 
 ---
@@ -93,7 +93,7 @@ spec:
 | `targetPort: 80` | 컨테이너 실제 포트 |
 | `nodePort: 30080` | 외부 접근 포트(30000~32767) |
 
-> Minikube 기준 `minikube service nginx-service`가 가장 간단.  
+> Minikube 기준 `minikube service nginx-service`가 가장 간단.
 > 클라우드/온프렘이면 **노드 IP** + `nodePort`로 접근.
 
 ---
@@ -300,14 +300,14 @@ kubectl get pods -o wide
 curl http://<노드 IP>:30080 | head -n 5
 ```
 
-> **subPath**는 파일 단건 마운트에 편리하지만, 변경 감지가 제한될 수 있다.  
+> **subPath**는 파일 단건 마운트에 편리하지만, 변경 감지가 제한될 수 있다.
 > 빈번 변경/핫리로드는 **디렉터리 마운트** + Nginx `-s reload`(사이드카) 패턴 고려.
 
 ---
 
 ## 7. Ingress로 도메인 노출(선택)
 
-NodePort 대신 **Ingress Controller**(예: NGINX Ingress, Traefik)를 쓰면, 도메인/경로 라우팅·TLS 등 **L7 기능**을 쉽게 적용할 수 있다.  
+NodePort 대신 **Ingress Controller**(예: NGINX Ingress, Traefik)를 쓰면, 도메인/경로 라우팅·TLS 등 **L7 기능**을 쉽게 적용할 수 있다.
 Minikube:
 ```bash
 minikube addons enable ingress
@@ -482,5 +482,5 @@ kubectl delete configmap nginx-static || true
 
 ## 결론
 
-이 글에서 **기본 배포(Deployment+NodePort)** 를 시작으로 **운영형 보강(프로브/리소스/보안/롤링)**, **컨텐츠 주입(ConfigMap)**, **도메인 노출(Ingress)**, **오토스케일(HPA)** 까지 실제 운영 흐름을 따라가며 완성했다.  
+이 글에서 **기본 배포(Deployment+NodePort)** 를 시작으로 **운영형 보강(프로브/리소스/보안/롤링)**, **컨텐츠 주입(ConfigMap)**, **도메인 노출(Ingress)**, **오토스케일(HPA)** 까지 실제 운영 흐름을 따라가며 완성했다.
 이 구조를 템플릿으로 삼아, 애플리케이션 특성에 맞는 **프로브/리소스/스케일/보안 정책**을 얹으면 곧바로 **신뢰 가능한 서비스 배포**가 가능하다.

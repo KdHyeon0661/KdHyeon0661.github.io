@@ -201,11 +201,11 @@ spec:
 
 대략적 가이드(HTTP 기준):
 
-- **Readiness 안정 판정 시간**  
+- **Readiness 안정 판정 시간**
   ≈ `successThreshold × periodSeconds` (성공 연속 필요)
-- **Readiness 실패 판정 시간**  
+- **Readiness 실패 판정 시간**
   ≈ `failureThreshold × periodSeconds`
-- **Liveness 재시작까지의 시간**  
+- **Liveness 재시작까지의 시간**
   ≈ `initialDelaySeconds + failureThreshold × periodSeconds`
 
 권장 시작점(웹/백엔드 일반):
@@ -299,11 +299,11 @@ startupProbe:
 ## 11. 데이터베이스·외부 의존성과의 연계
 
 - Readiness는 **외부 의존성(예: DB, 캐시, 메시지 브로커, API)** 이 준비되었을 때만 200을 반환하라.
-- Liveness는 외부 의존성 실패로 **즉시 죽이지 말 것**(잠시 장애일 수 있음).  
+- Liveness는 외부 의존성 실패로 **즉시 죽이지 말 것**(잠시 장애일 수 있음).
   외부 실패를 Liveness 실패로 삼으면 **재시작 폭풍**을 부르는 안티패턴.
 
-권장:  
-- Readiness: DB ping 성공 시 200, 실패 시 503  
+권장:
+- Readiness: DB ping 성공 시 200, 실패 시 503
 - Liveness: 내부 처리 루프/스레드/큐 상태 위주
 
 ---

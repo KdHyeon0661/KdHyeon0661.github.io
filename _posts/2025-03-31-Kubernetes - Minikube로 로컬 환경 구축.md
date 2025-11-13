@@ -28,8 +28,8 @@ category: Kubernetes
 ## 1. 사전 준비(요구 사항·드라이버 선택)
 
 ### OS & 가상화
-- **Windows**: Hyper-V 또는 **WSL2 + Docker Desktop** 권장  
-- **macOS(Intel/Apple Silicon)**: HyperKit(구), **Docker Desktop** 권장  
+- **Windows**: Hyper-V 또는 **WSL2 + Docker Desktop** 권장
+- **macOS(Intel/Apple Silicon)**: HyperKit(구), **Docker Desktop** 권장
 - **Linux**: KVM/VirtualBox/**Docker** 중 택1 (개발자 경험은 Docker가 단순)
 
 ### 드라이버 선택 가이드
@@ -388,7 +388,7 @@ kubectl get endpointslices -A
 
 ## 14. 간단 성능/용량 개념식(학습용)
 
-요청률(QPS)과 평균 처리 시간 \(t\)일 때 동시 처리량은  
+요청률(QPS)과 평균 처리 시간 \(t\)일 때 동시 처리량은
 $$
 \text{동시 처리량} \approx \text{QPS} \cdot t
 $$
@@ -504,9 +504,9 @@ echo "$(minikube ip) web.local api.local" | sudo tee -a /etc/hosts
 ## 16. 정리 및 다음 단계
 - Minikube는 **로컬 학습/개발 환경의 표준**. 드라이버/애드온/이미지 루프/Ingress/HPA/스토리지를 익히면 실전 감각을 빠르게 얻는다.
 - 다음 단계 제안:
-  1) **Helm/Kustomize**로 매니페스트 템플릿화  
-  2) **GitOps(Argo CD/Flux)**로 선언형 배포 습관화  
-  3) **OpenTelemetry + Prom/Grafana**로 관측 기초 정착  
+  1) **Helm/Kustomize**로 매니페스트 템플릿화
+  2) **GitOps(Argo CD/Flux)**로 선언형 배포 습관화
+  3) **OpenTelemetry + Prom/Grafana**로 관측 기초 정착
   4) **Kind**와 비교 학습(빠른 CI용), **로컬 레지스트리 미러링** 실습
 
 부록: 자주 쓰는 명령 모음

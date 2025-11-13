@@ -75,7 +75,7 @@ spec:
         done
     volumeMounts: [{ name: conf, mountPath: /etc/nginx/conf.d }]
 ```
-- **패턴**: 
+- **패턴**:
   - *Sidecar*: 보조 기능(로그/프록시/리로드)
   - *Adapter*: 메트릭/로그 포맷 변환
   - *Ambassador*: 외부 시스템 프록시
@@ -163,7 +163,7 @@ spec:
 - 템플릿이 바뀔 경우, RS를 새로 만들거나(수동) → 보통은 **Deployment에 맡김**.
 
 ### 2.3 언제 직접 사용할까?
-- 교육/실험 목적, 또는 **커스텀 컨트롤러**와의 결합에서 드물게.  
+- 교육/실험 목적, 또는 **커스텀 컨트롤러**와의 결합에서 드물게.
 - 실무에선 거의 항상 **Deployment** 사용.
 
 ---
@@ -205,7 +205,7 @@ spec:
   revisionHistoryLimit: 10
   progressDeadlineSeconds: 600
 ```
-- **maxSurge**↑, **maxUnavailable**↓: 가용성 최우선.  
+- **maxSurge**↑, **maxUnavailable**↓: 가용성 최우선.
 - **progressDeadlineSeconds**: 지연/교착 시 실패 처리.
 
 ### 3.4 Recreate 전략(다운타임 허용)
@@ -250,11 +250,11 @@ spec:
   selector: { app: web }            # track은 선택하지 않아 두 트랙 모두 뒤에 둠
   ports: [{ port: 80, targetPort: 8080 }]
 ```
-- **레플리카 수**로 카나리 비율 조정(예: stable 9, canary 1 → 10%).  
+- **레플리카 수**로 카나리 비율 조정(예: stable 9, canary 1 → 10%).
 - 정교한 가중치는 **Ingress/Gateway/LB**에서 수행.
 
 **블루그린(서비스 라벨 전환):**
-- `web-blue`와 `web-green` 두 개를 준비하고, **Service의 selector만** 전환하여 트래픽 스위치.  
+- `web-blue`와 `web-green` 두 개를 준비하고, **Service의 selector만** 전환하여 트래픽 스위치.
 - 되돌리기(rollback)가 빠르다.
 
 ### 3.6 롤아웃 명령 습관
@@ -363,10 +363,10 @@ curl -I http://<SVC_NAME>.<NS>.svc.cluster.local
 ## 9. 간단 용량·레플리카 산정(학습용)
 요청률(QPS)과 평균 처리시간 \(t\) 초, 파드당 안정 처리량 \(\text{cap}_{pod}\) (동시 처리 가능 요청 수)가 있을 때 필요한 **최소 레플리카**는
 $$
-\text{replicas}_{\min} \approx 
+\text{replicas}_{\min} \approx
 \left\lceil \frac{\text{QPS}\cdot t}{\text{cap}_{pod}} \right\rceil \cdot \text{버퍼}
 $$
-- **버퍼**: 배포 중 이격, 장애/스파이크 대비(예: 1.3~2.0).  
+- **버퍼**: 배포 중 이격, 장애/스파이크 대비(예: 1.3~2.0).
 - HPA로 실제 트래픽에 따라 자동 조정하되, 초기 값은 위 산식으로 추정.
 
 ---
@@ -378,5 +378,5 @@ $$
 | 동일 Pod 수 보장 | **ReplicaSet** | 개수 유지만 담당(업데이트는 수동) |
 | 배포/업데이트/롤백 표준 | **Deployment** | 실무 기본. 롤링/블루그린/카나리 |
 
-**핵심**: 운영에서는 **Deployment**를 중심으로 생각하고, RS는 내부 구현 디테일로, Pod는 실행 단위로 바라보자.  
+**핵심**: 운영에서는 **Deployment**를 중심으로 생각하고, RS는 내부 구현 디테일로, Pod는 실행 단위로 바라보자.
 프로브/리소스/스케줄링/보안을 함께 설계하면 **안정적 롤아웃과 빠른 복구**가 가능하다.

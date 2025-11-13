@@ -8,9 +8,9 @@ category: AWS
 
 ## 0. 한 장 요약
 
-- **Aurora**는 **컴퓨트(인스턴스)**와 **분산 스토리지(6-way, 3AZ)**를 분리한 **관리형 RDB**로, **고성능/고가용/확장성**을 제공한다.  
-- **Auto Scaling**은 **Serverless v2(세밀한 ACU 스케일)**, **리드 리플리카 자동 증감**, **글로벌 읽기** 등으로 달성한다.  
-- **장애 복구**는 **Multi-AZ + 자동 Failover**가 기본. **게임데이**로 **시나리오형 복구 테스트**를 정례화한다.  
+- **Aurora**는 **컴퓨트(인스턴스)**와 **분산 스토리지(6-way, 3AZ)**를 분리한 **관리형 RDB**로, **고성능/고가용/확장성**을 제공한다.
+- **Auto Scaling**은 **Serverless v2(세밀한 ACU 스케일)**, **리드 리플리카 자동 증감**, **글로벌 읽기** 등으로 달성한다.
+- **장애 복구**는 **Multi-AZ + 자동 Failover**가 기본. **게임데이**로 **시나리오형 복구 테스트**를 정례화한다.
 - **비용 최적화**는 **인스턴스/스토리지/백업/데이터 전송** 축으로 수립하고, **RI/Serverless/Lifecycle/관측성 기반 다운사이징**으로 체질화한다.
 
 ---
@@ -46,11 +46,11 @@ category: AWS
 
 ### 2.1 Aurora Serverless v2 (세밀 탄력)
 
-- **초 단위**로 **ACU(Aurora Capacity Unit)**를 조정하여 vCPU/메모리를 **부하에 맞추어 축소/확장**.  
+- **초 단위**로 **ACU(Aurora Capacity Unit)**를 조정하여 vCPU/메모리를 **부하에 맞추어 축소/확장**.
 - **프로비저닝 없는** 운영(최소/최대 ACU 범위 지정) → 유휴시 비용 절감.
 
-**핵심 설정 (콘솔/CLI 개념)**  
-- 최소 ACU / 최대 ACU 범위 지정  
+**핵심 설정 (콘솔/CLI 개념)**
+- 최소 ACU / 최대 ACU 범위 지정
 - 트래픽 급증 시 연속/점진 확장, 감소 시 일정 지연 후 축소
 
 ```bash
@@ -67,7 +67,7 @@ aws rds create-db-cluster \
 
 ### 2.2 Reader Auto Scaling
 
-- **리드 리플리카 개수**를 CloudWatch ALB/탐색 요청 지표 기반으로 **자동 증감**.  
+- **리드 리플리카 개수**를 CloudWatch ALB/탐색 요청 지표 기반으로 **자동 증감**.
 - 엔드포인트 `reader-endpoint`로 **읽기 부하 분산**.
 
 **Terraform 스니펫(개념)**
@@ -96,7 +96,7 @@ resource "aws_appautoscaling_policy" "aurora_scale_out" {
 
 ### 2.3 Aurora Global Database (전세계 읽기/재해 리전)
 
-- **Primary Region**의 로그 블록을 **비동기**로 서브 리전 **Secondary**에 전파 → **cross-region 읽기 지연 최소화**.  
+- **Primary Region**의 로그 블록을 **비동기**로 서브 리전 **Secondary**에 전파 → **cross-region 읽기 지연 최소화**.
 - **리전 장애 시** Secondary를 **승격(Promote)**하여 쓰기 가능한 독립 클러스터로 전환(수동/자동 전환 시나리오 수립).
 
 ---
@@ -105,7 +105,7 @@ resource "aws_appautoscaling_policy" "aurora_scale_out" {
 
 ### 3.1 RDS Proxy
 
-- Lambda/서버리스/대규모 연결 수 **스파이크** 대응  
+- Lambda/서버리스/대규모 연결 수 **스파이크** 대응
 - **커넥션 풀/재활용**로 Aurora 보호, 콜드스타트/오버헤드 감소
 
 ```bash
@@ -120,14 +120,14 @@ aws rds create-db-proxy \
 
 ### 3.2 세션/풀 전략
 
-- **짧은 트랜잭션** 유지(긴 트랜잭션은 Failover 지연/락 확장 리스크)  
-- ORM 커넥션 풀 크기를 **작게 시작 → 관측성으로 점증**  
+- **짧은 트랜잭션** 유지(긴 트랜잭션은 Failover 지연/락 확장 리스크)
+- ORM 커넥션 풀 크기를 **작게 시작 → 관측성으로 점증**
 - **읽기/쓰기 분리**: 읽기는 `reader-endpoint`로 라우팅
 
 ### 3.3 파라미터 튜닝
 
-- **innodb_buffer_pool_size(유사)**, **work_mem(포스트그레)** 등 **워크로드 프로파일**에 맞게 조정  
-- Autovacuum(포스트그레) 설정/모니터링  
+- **innodb_buffer_pool_size(유사)**, **work_mem(포스트그레)** 등 **워크로드 프로파일**에 맞게 조정
+- Autovacuum(포스트그레) 설정/모니터링
 - 쿼리 플랜 고정/힌트는 최소화, **지표 기반 인덱스 최적화**
 
 ---
@@ -152,24 +152,24 @@ aws rds reboot-db-instance \
 ```
 
 **검증 포인트**
-- 애플리케이션 에러율/대기시간 스파이크  
-- 커넥션 풀 **자동 재연결** 여부  
+- 애플리케이션 에러율/대기시간 스파이크
+- 커넥션 풀 **자동 재연결** 여부
 - 트랜잭션 재시도/멱등성(Idempotency) 구현 확인
 
 ### 4.3 게임데이 Runbook (샘플)
 
-1) **사전 조건**  
-   - IaC 상태 최신화, 최근 스냅샷, 알림 채널(Slack/PagerDuty) 점검  
-2) **시나리오**  
-   - S1: Writer 인스턴스 장애 → Reader 승격  
-   - S2: AZ 장애 모의 → 서브넷/라우팅 격리(비가역 작업은 금지)  
-   - S3: 리전 격리 → Global DB Secondary 승격(Promote)  
-3) **관측/지표**  
-   - DB 연결 실패율, 평균/95p 레이턴시, Error Budget 소비량  
-   - CloudWatch: `DatabaseConnections`, `Deadlocks`, `FreeLocalStorage`  
-4) **Roll-back**  
-   - 원복(Writer 재배치/Global 역할 복귀), 파라미터/커넥션 풀 정상화  
-5) **포스트모템**  
+1) **사전 조건**
+   - IaC 상태 최신화, 최근 스냅샷, 알림 채널(Slack/PagerDuty) 점검
+2) **시나리오**
+   - S1: Writer 인스턴스 장애 → Reader 승격
+   - S2: AZ 장애 모의 → 서브넷/라우팅 격리(비가역 작업은 금지)
+   - S3: 리전 격리 → Global DB Secondary 승격(Promote)
+3) **관측/지표**
+   - DB 연결 실패율, 평균/95p 레이턴시, Error Budget 소비량
+   - CloudWatch: `DatabaseConnections`, `Deadlocks`, `FreeLocalStorage`
+4) **Roll-back**
+   - 원복(Writer 재배치/Global 역할 복귀), 파라미터/커넥션 풀 정상화
+5) **포스트모템**
    - 타임라인/감지~복구 시간, 인프라/애플리케이션 조치 항목 백로그화
 
 ---
@@ -178,7 +178,7 @@ aws rds reboot-db-instance \
 
 ### 5.1 백업/스냅샷
 
-- **지속 백업**: 보존기간 내 **PITR**  
+- **지속 백업**: 보존기간 내 **PITR**
 - **스냅샷**: 수동/공유/카탈로그화
 
 ```bash
@@ -198,7 +198,7 @@ aws rds restore-db-cluster-from-snapshot \
 
 ### 5.3 Fast Cloning / Backtrack(엔진/버전 의존)
 
-- **Fast Database Cloning**: 스토리지 레벨 **Copy-on-Write**로 **대용량 즉시 클론**(테스트/리포팅)  
+- **Fast Database Cloning**: 스토리지 레벨 **Copy-on-Write**로 **대용량 즉시 클론**(테스트/리포팅)
 - **Backtrack(일부 MySQL 호환)**: **시점 되감기**(DDL/엔진 제약 확인)
 
 ---
@@ -207,18 +207,18 @@ aws rds restore-db-cluster-from-snapshot \
 
 ### 6.1 암호화/네트워크
 
-- **KMS 암호화**(at-rest), **TLS(in-transit)**  
-- 전용 **서브넷 그룹**, 보안그룹 최소 허용  
+- **KMS 암호화**(at-rest), **TLS(in-transit)**
+- 전용 **서브넷 그룹**, 보안그룹 최소 허용
 - **프라이빗 엔드포인트** 우선
 
 ### 6.2 인증/권한
 
-- **IAM 데이터베이스 인증**(토큰 기반, 유효기간 짧음)  
+- **IAM 데이터베이스 인증**(토큰 기반, 유효기간 짧음)
 - 최소 권한 원칙, **비밀은 Secrets Manager**에 저장/로테이션
 
 ### 6.3 감사/감사로그
 
-- **CloudTrail**(제어면), DB Audit 로그(데이터면)  
+- **CloudTrail**(제어면), DB Audit 로그(데이터면)
 - 장기 보관 시 **S3 + Object Lock(Compliance/Governance)** 조합
 
 ---
@@ -268,9 +268,9 @@ $$
 \sum_x (E_x \cdot d_x)
 $$
 
-- \(H_i\): 인스턴스 \(i\)의 사용 시간(시간), \(r_i\): 시간당 요금  
-- \(G_s\): 일반 스토리지(GB·월), \(p_s\): 단가  
-- \(G_b\): 백업 스토리지(GB·월), \(p_b\): 단가  
+- \(H_i\): 인스턴스 \(i\)의 사용 시간(시간), \(r_i\): 시간당 요금
+- \(G_s\): 일반 스토리지(GB·월), \(p_s\): 단가
+- \(G_b\): 백업 스토리지(GB·월), \(p_b\): 단가
 - \(E_x\): egress(GB), \(d_x\): GB당 전송 단가
 
 ### 8.2 절감 전략(초안 정리 + 보강)
@@ -362,8 +362,8 @@ jobs:
 
 ## 10. 마이그레이션/호환/개발자 경험
 
-- **호환성**: 기존 **MySQL/PostgreSQL 드라이버/ORM** 그대로 사용 가능(버전 제약 확인).  
-- **스키마 관리**: Flyway/Liquibase/Alembic으로 **버전형 마이그레이션** 표준화.  
+- **호환성**: 기존 **MySQL/PostgreSQL 드라이버/ORM** 그대로 사용 가능(버전 제약 확인).
+- **스키마 관리**: Flyway/Liquibase/Alembic으로 **버전형 마이그레이션** 표준화.
 - **Zero-Downtime**: 읽기 복제본 **스위치 오버** + Blue/Green 배포 조합.
 
 ---
@@ -382,13 +382,13 @@ jobs:
 
 ### 11.2 운용 체크리스트
 
-- [x] Multi-AZ(Aurora는 기본 다중AZ 스토리지) + 리플리카 구성  
-- [x] 장애 복구 **게임데이 분기별 1회**  
-- [x] RDS Proxy + 커넥션 풀 설정  
-- [x] 백업 보존/스냅샷 수명주기 정책  
-- [x] KMS 암호화 + TLS 강제  
-- [x] 관측성 대시보드(지표/로그/쿼리)  
-- [x] 비용 대시보드(스토리지/스냅샷/전송/인스턴스)  
+- [x] Multi-AZ(Aurora는 기본 다중AZ 스토리지) + 리플리카 구성
+- [x] 장애 복구 **게임데이 분기별 1회**
+- [x] RDS Proxy + 커넥션 풀 설정
+- [x] 백업 보존/스냅샷 수명주기 정책
+- [x] KMS 암호화 + TLS 강제
+- [x] 관측성 대시보드(지표/로그/쿼리)
+- [x] 비용 대시보드(스토리지/스냅샷/전송/인스턴스)
 - [x] IaC 일원화 + 리뷰/승인 파이프라인
 
 ---

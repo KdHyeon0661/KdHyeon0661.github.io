@@ -46,8 +46,8 @@ ExecStopPost=/usr/bin/docker rm -f nginx
 WantedBy=multi-user.target
 ```
 
-> 팁  
-> - `--rm`는 **재시작 시 컨테이너가 없어** 실패할 수 있으므로 대신 `ExecStopPost=rm`로 정리.  
+> 팁
+> - `--rm`는 **재시작 시 컨테이너가 없어** 실패할 수 있으므로 대신 `ExecStopPost=rm`로 정리.
 > - HealthCheck를 넣어 **컨테이너 내부 상태**를 운영 로그에서 추적 가능.
 
 활성화/시작:
@@ -101,9 +101,9 @@ TasksMax=4096
 WantedBy=multi-user.target
 ```
 
-> 포인트  
-> - **이미지 태그 고정**으로 재현성 확보. 롤백은 태그만 바꿔 재로드.  
-> - Docker 로깅 회전 옵션을 명시해 **디스크 폭주 방지**.  
+> 포인트
+> - **이미지 태그 고정**으로 재현성 확보. 롤백은 태그만 바꿔 재로드.
+> - Docker 로깅 회전 옵션을 명시해 **디스크 폭주 방지**.
 > - **리소스 제한(CPU/메모리/pids)** 을 유닛 단계에서 명시하면 운영 기준이 명확해진다.
 
 ---
@@ -141,7 +141,7 @@ DB_USER=apiuser
 DB_PASS=change_me
 ```
 
-> 보안: 민감정보는 **파일 권한 0640(root:root)** 로, 선호는 외부 비밀 저장소/Vault.  
+> 보안: 민감정보는 **파일 권한 0640(root:root)** 로, 선호는 외부 비밀 저장소/Vault.
 > Swarm/K8s 사용 시 **Secrets 리소스** 권장.
 
 ---
@@ -176,9 +176,9 @@ RestartSec=3s
 WantedBy=multi-user.target
 ```
 
-> 주의  
-> - `WorkingDirectory`를 **반드시** 설정(상대경로 문제 방지).  
-> - 로그는 `journalctl -u myproject.service` 로 확인(각 컨테이너 로그는 `docker logs` 병행).  
+> 주의
+> - `WorkingDirectory`를 **반드시** 설정(상대경로 문제 방지).
+> - 로그는 `journalctl -u myproject.service` 로 확인(각 컨테이너 로그는 `docker logs` 병행).
 > - HealthCheck는 compose 파일 내 각 서비스에 정의하고, 의존관계는 `depends_on` + **healthcheck 조건**을 활용.
 
 ---
@@ -192,7 +192,7 @@ Description=App container
 After=postgres.service
 Requires=postgres.service
 ```
-- `After=`: **실행 순서** 제어  
+- `After=`: **실행 순서** 제어
 - `Requires=`: **존재/가용성** 요구(없으면 실패)
 
 ### 5.2 DB 준비 대기(Health 기반)
@@ -275,7 +275,7 @@ SystemCallFilter=@system-service
 ## 9. 롤링 업그레이드/롤백 절차 (단일 호스트)
 
 ### 9.1 버전 올리기
-1) 유닛 파일의 이미지 태그 변경(`version=1.2.3 → 1.2.4`)  
+1) 유닛 파일의 이미지 태그 변경(`version=1.2.3 → 1.2.4`)
 2) `daemon-reload` + 재시작
 ```bash
 sudo systemctl daemon-reload
@@ -288,7 +288,7 @@ sudo journalctl -u web.service -n 200 --no-pager
 ```
 
 ### 9.2 롤백
-- 이전 태그로 되돌려 같은 절차 반복  
+- 이전 태그로 되돌려 같은 절차 반복
 - 또는 레지스트리에서 `:stable` 태그를 **원자적 전환** 후 `restart`(Pull 전제)
 
 ---
@@ -317,8 +317,8 @@ sudo systemctl restart systemd-journald
 
 ## 11. Docker 데몬과의 올바른 의존성
 
-- **항상** `After=docker.service` + `Requires=docker.service` 지정  
-- 네트워크 준비 필요 시 `network-online.target` 사용 (`systemd-networkd-wait-online.service` 확보)  
+- **항상** `After=docker.service` + `Requires=docker.service` 지정
+- 네트워크 준비 필요 시 `network-online.target` 사용 (`systemd-networkd-wait-online.service` 확보)
 - Docker 데몬 자체 튜닝은 `/etc/docker/daemon.json`과 `docker.service` 드롭인으로 조정
 
 ---
@@ -333,8 +333,8 @@ systemctl --user enable --now myproject.service
 systemctl --user status myproject.service
 journalctl --user -u myproject.service -f
 ```
-- 소켓: `$XDG_RUNTIME_DIR/docker.sock`  
-- `User=` 불필요(이미 사용자 세션)  
+- 소켓: `$XDG_RUNTIME_DIR/docker.sock`
+- `User=` 불필요(이미 사용자 세션)
 - 부팅 시 자동 실행: `loginctl enable-linger <username>`
 
 ---
@@ -432,12 +432,12 @@ ExecStartPost=/usr/bin/env SERVICE_NAME=web /usr/local/bin/watch-health.sh web 1
 컨테이너 하드닝은 **유닛 내부의 docker run 라인**에서 통합한다.
 
 체크리스트:
-- `--user`(비루트), `--read-only`, `--tmpfs /tmp`, **쓰기 경로 명시 볼륨**  
-- `--cap-drop ALL` + 필요 최소 `--cap-add`  
-- `--security-opt no-new-privileges:true`  
-- **seccomp/AppArmor/SELinux**(배포판별로)  
-- **리소스 제한**: `--cpus`, `--memory`, `--pids-limit`, ulimit  
-- **로그 회전**: `--log-driver=json-file --log-opt max-size=10m --log-opt max-file=5`  
+- `--user`(비루트), `--read-only`, `--tmpfs /tmp`, **쓰기 경로 명시 볼륨**
+- `--cap-drop ALL` + 필요 최소 `--cap-add`
+- `--security-opt no-new-privileges:true`
+- **seccomp/AppArmor/SELinux**(배포판별로)
+- **리소스 제한**: `--cpus`, `--memory`, `--pids-limit`, ulimit
+- **로그 회전**: `--log-driver=json-file --log-opt max-size=10m --log-opt max-file=5`
 - **민감정보**: env 대신 파일/외부 시크릿, `EnvironmentFile` 권한 제한
 
 샘플:
@@ -571,8 +571,8 @@ sudo systemctl enable --now db.service api.service proxy.service
 ---
 
 ## 참고
-- systemd service: https://www.freedesktop.org/software/systemd/man/systemd.service.html  
-- journalctl: https://www.freedesktop.org/software/systemd/man/journalctl.html  
+- systemd service: https://www.freedesktop.org/software/systemd/man/systemd.service.html
+- journalctl: https://www.freedesktop.org/software/systemd/man/journalctl.html
 - Docker 자동 시작: https://docs.docker.com/config/containers/start-containers-automatically/
 
 ---

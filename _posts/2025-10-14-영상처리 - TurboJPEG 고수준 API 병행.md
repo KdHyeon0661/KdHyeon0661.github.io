@@ -4,18 +4,18 @@ title: 영상처리 - TurboJPEG 고수준 API 병행
 date: 2025-10-14 17:25:23 +0900
 category: 영상처리
 ---
-# 9. **TurboJPEG 고수준 API 병행 (성능·단순화)**  
+# 9. **TurboJPEG 고수준 API 병행 (성능·단순화)**
 > jpeglib의 유연함은 그대로 두고, **썸네일·미리보기·일반 디코드/인코드** 경로는 **TurboJPEG**로 단순화/가속!
 
-- **왜**: `tjDecompress2()`/`tjCompress2()`는 **BGRA 버퍼를 그대로** 넣고 빼기 쉽고, SIMD(AVX2/NEON)로 **매우 빠릅니다**.  
+- **왜**: `tjDecompress2()`/`tjCompress2()`는 **BGRA 버퍼를 그대로** 넣고 빼기 쉽고, SIMD(AVX2/NEON)로 **매우 빠릅니다**.
 - **무엇**: `TJPF_BGRA` 픽셀 포맷, `TJSAMP_420/444` 서브샘플링, `TJFLAG_FASTUPSAMPLE`/`TJFLAG_FASTDCT`(속도)·`TJFLAG_ACCURATEDCT`(정확), **스케일 디코드**(tjGetScalingFactors), **무손실 변환**(`tjTransform`)까지.
 
 ---
 
 ## 0. 빠른 개념 맵
-- **디코드(파일→BGRA)**: `tjInitDecompress` → `tjDecompressHeader3`(원본 W/H/서브샘플링 파악) → (옵션) 스케일 팩터 선택 → `tjDecompress2`.  
-- **인코드(BGRA→JPEG)**: `tjInitCompress` → `tjCompress2` (포맷=BGRA, 샘플링=420/444, quality, progressive).  
-- **무손실 변환(JPEG→JPEG)**: `tjInitTransform` → `tjTransform` (회전/반전/트림/크롭: MCU 경계 기반).  
+- **디코드(파일→BGRA)**: `tjInitDecompress` → `tjDecompressHeader3`(원본 W/H/서브샘플링 파악) → (옵션) 스케일 팩터 선택 → `tjDecompress2`.
+- **인코드(BGRA→JPEG)**: `tjInitCompress` → `tjCompress2` (포맷=BGRA, 샘플링=420/444, quality, progressive).
+- **무손실 변환(JPEG→JPEG)**: `tjInitTransform` → `tjTransform` (회전/반전/트림/크롭: MCU 경계 기반).
 - **ROI 디코드**: TurboJPEG 자체는 **부분 디코드(read ROI)** API가 제한적. **썸네일·타일**은 **스케일 디코드**로 충분히 빠르며, **무손실 크롭**은 `tjTransform`으로 해결.
 
 ---
@@ -35,8 +35,8 @@ category: 영상처리
   #include <turbojpeg.h>
   ```
 
-> **주의**  
-> - TurboJPEG 버퍼는 **`tjFree()`로 해제**해야 합니다(표준 `free()` 금지).  
+> **주의**
+> - TurboJPEG 버퍼는 **`tjFree()`로 해제**해야 합니다(표준 `free()` 금지).
 > - 예외 대신 **리턴값**과 `tjGetErrorStr2(handle)`로 오류 문자열 확인.
 
 ---
@@ -131,8 +131,8 @@ bool TJ_DecodeToBGRA(const std::wstring& path, const TJDecodeOpts& opts, IppDib&
 ```
 
 **포인트**
-- `TJPF_BGRA`로 **바로 BGRA** 복원 → 수동 채널 스왑 불필요.  
-- `tjGetScalingFactors()`로 **스케일 디코드**(썸네일/프리뷰) 간단.  
+- `TJPF_BGRA`로 **바로 BGRA** 복원 → 수동 채널 스왑 불필요.
+- `tjGetScalingFactors()`로 **스케일 디코드**(썸네일/프리뷰) 간단.
 - `TJFLAG_LIMITSCANS`(권장): 진행형 JPEG의 **악성 스캔 폭탄** 방어.
 
 ---
@@ -180,8 +180,8 @@ bool TJ_EncodeFromBGRA(const IppDib& img, const TJEncodeOpts& o,
 ```
 
 **포인트**
-- **서브샘플링**: 텍스트·GUI 캡처는 `TJSAMP_444`, 일반 사진은 `TJSAMP_420`.  
-- **progressive**는 용량↓ 경향, **optimize**(허프만 최적화)는 대부분 이득.  
+- **서브샘플링**: 텍스트·GUI 캡처는 `TJSAMP_444`, 일반 사진은 `TJSAMP_420`.
+- **progressive**는 용량↓ 경향, **optimize**(허프만 최적화)는 대부분 이득.
 - 고품질/색정확도가 중요하면 `TJFLAG_ACCURATEDCT` 사용.
 
 ---
@@ -251,8 +251,8 @@ bool TJ_LosslessTransform(const std::vector<unsigned char>& inJpeg,
 ```
 
 **포인트**
-- `TJXOPT_CROP`는 **MCU 정렬**로 실제 사각형이 약간 조정될 수 있습니다(진정한 무손실 조건).  
-- EXIF Orientation을 “픽셀 반영 + Orientation=1 패치”하려면  
+- `TJXOPT_CROP`는 **MCU 정렬**로 실제 사각형이 약간 조정될 수 있습니다(진정한 무손실 조건).
+- EXIF Orientation을 “픽셀 반영 + Orientation=1 패치”하려면
   - **무손실 회전/반전** 후 **메타데이터 재주입**(jpeglib 경로) 추천.
 
 ---
@@ -260,42 +260,42 @@ bool TJ_LosslessTransform(const std::vector<unsigned char>& inJpeg,
 ## 6. **시나리오 통합** (ImageTool에 넣기)
 
 ### 6.1 썸네일 경로
-- 목록/그리드: `TJ_DecodeToBGRA(maxThumb=256, FASTUPSAMPLE, FASTDCT, LIMITSCANS)`.  
-- 결과 `IppDib`를 `StretchDIBits()`로 즉시 그리기.  
+- 목록/그리드: `TJ_DecodeToBGRA(maxThumb=256, FASTUPSAMPLE, FASTDCT, LIMITSCANS)`.
+- 결과 `IppDib`를 `StretchDIBits()`로 즉시 그리기.
 - 클릭/확대 시 원본(또는 1/2) 재디코드.
 
 ### 6.2 일괄 리사이즈·저장
-- 디코드(`TJ_DecodeToBGRA`) → (선택) 리사이즈 → 인코드(`TJ_EncodeFromBGRA`).  
+- 디코드(`TJ_DecodeToBGRA`) → (선택) 리사이즈 → 인코드(`TJ_EncodeFromBGRA`).
 - 옵션: 사진=420/90Q/optimize/progressive, UI 캡처=444/85Q/accurate DCT.
 
 ### 6.3 EXIF 회전 반영 + 무손실
-- 원본 JPEG(바이트) + Orientation 읽기 → `TJ_LosslessTransform`으로 회전/반전 →  
+- 원본 JPEG(바이트) + Orientation 읽기 → `TJ_LosslessTransform`으로 회전/반전 →
   메타 재주입(앞에서 만든 jpeglib 메타 모듈) → **Orientation=1**로 정정 후 저장.
 
 ---
 
 ## 7. 성능/안전 플래그 가이드
-- **FASTUPSAMPLE + FASTDCT**: 가장 빠름(썸네일/프리뷰).  
-- **ACCURATEDCT**: 고품질(모던 CPU에서도 충분히 빠름).  
-- **LIMITSCANS**: 진행형 JPEG **스캔 폭탄** 완화(권장).  
+- **FASTUPSAMPLE + FASTDCT**: 가장 빠름(썸네일/프리뷰).
+- **ACCURATEDCT**: 고품질(모던 CPU에서도 충분히 빠름).
+- **LIMITSCANS**: 진행형 JPEG **스캔 폭탄** 완화(권장).
 - **BOTTOMUP**: BMP 같은 **하단→상단 메모리**를 직접 채우고 싶을 때 사용(일반적으로 비권장).
 
 ---
 
 ## 8. 주의 사항 & 팁
-- TurboJPEG는 **APP 마커 편집/보존 제어가 제한**됩니다. 메타데이터(EXIF/XMP/ICC) 정밀 제어가 필요하면  
-  **jpeglib 경로**(이전 섹션)로 **추출/재주입**하세요.  
-- CMYK/YCCK JPEG 디코드는 TurboJPEG로도 가능하지만 **표시 경로**는 **RGB/BGRA**로 통일하세요(ICC 변환은 lcms2).  
-- 스케일 디코드는 **해상도 기반 속도 이득**이 큽니다. 썸네일/미리보기는 **반드시 스케일**로.  
+- TurboJPEG는 **APP 마커 편집/보존 제어가 제한**됩니다. 메타데이터(EXIF/XMP/ICC) 정밀 제어가 필요하면
+  **jpeglib 경로**(이전 섹션)로 **추출/재주입**하세요.
+- CMYK/YCCK JPEG 디코드는 TurboJPEG로도 가능하지만 **표시 경로**는 **RGB/BGRA**로 통일하세요(ICC 변환은 lcms2).
+- 스케일 디코드는 **해상도 기반 속도 이득**이 큽니다. 썸네일/미리보기는 **반드시 스케일**로.
 - `tjDecompressHeader3`로 원본 **subsamp**를 확인하고, 인코드 시 **444/420**을 **의도적으로** 선택하세요(텍스트/선화=444 권장).
 
 ---
 
 ## 9. 테스트 체크리스트
-- [ ] 동일 이미지에 대해 **tjDecompress2** vs **libjpeg 디코드** 품질/속도 비교.  
-- [ ] **스케일 팩터**(1/2,1/4,1/8)에서 크기 정확성, 썸네일 FPS 측정.  
-- [ ] **LIMITSCANS** 켠/끈 성능/안전 차이(악성 프로그레시브 샘플).  
-- [ ] **무손실 회전/크롭** 결과가 `jpegtran`과 **동일**한지 확인.  
+- [ ] 동일 이미지에 대해 **tjDecompress2** vs **libjpeg 디코드** 품질/속도 비교.
+- [ ] **스케일 팩터**(1/2,1/4,1/8)에서 크기 정확성, 썸네일 FPS 측정.
+- [ ] **LIMITSCANS** 켠/끈 성능/안전 차이(악성 프로그레시브 샘플).
+- [ ] **무손실 회전/크롭** 결과가 `jpegtran`과 **동일**한지 확인.
 - [ ] 인코드에서 **420/444**, **progressive/optimize**, **FASTDCT/ACCURATEDCT** 조합별 용량·품질 비교.
 
 ---
@@ -326,11 +326,11 @@ int wmain(int argc, wchar_t** argv){
 ---
 
 ## 11. 결론
-- **TurboJPEG**는 “**BGRA 직결·스케일 디코드·간단 인코드**”가 강력해서  
-  **미리보기/썸네일/일반 파이프라인**의 복잡도를 크게 줄여줍니다.  
-- **무손실 변환**도 `tjTransform` 한 방.  
-- **메타데이터/색관리** 등 정밀 제어는 기존 **jpeglib 경로**와 **병행**하세요.  
-- 결과적으로, ImageTool은  
-  - **읽기/프리뷰**: TurboJPEG,  
-  - **메타/무손실+메타/특수색공간**: jpeglib,  
+- **TurboJPEG**는 “**BGRA 직결·스케일 디코드·간단 인코드**”가 강력해서
+  **미리보기/썸네일/일반 파이프라인**의 복잡도를 크게 줄여줍니다.
+- **무손실 변환**도 `tjTransform` 한 방.
+- **메타데이터/색관리** 등 정밀 제어는 기존 **jpeglib 경로**와 **병행**하세요.
+- 결과적으로, ImageTool은
+  - **읽기/프리뷰**: TurboJPEG,
+  - **메타/무손실+메타/특수색공간**: jpeglib,
   - 을 **하이브리드**로 써서 **간단·빠름·정확**을 동시에 달성할 수 있습니다.

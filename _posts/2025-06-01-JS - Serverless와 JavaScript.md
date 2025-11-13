@@ -8,12 +8,12 @@ category: JavaScript
 
 ## 1. Serverless 한 줄 정의와 오해 풀기
 
-> **Serverless** = “서버 없음”이 아니라 “**서버 관리 부담 없음**”.  
+> **Serverless** = “서버 없음”이 아니라 “**서버 관리 부담 없음**”.
 > 코드를 **함수 단위**로 배포하면, 실행 시점에만 **자동으로 인프라가 뜨고** 끝나면 내려갑니다(종량 과금).
 
 ### 동작 순서(이벤트 구동)
-1. 이벤트 발생(HTTP 호출, Cron, 큐/스토리지/DB 트리거 등)  
-2. 플랫폼이 함수를 **컨테이너/아이솔레이트**에서 **자동 실행**  
+1. 이벤트 발생(HTTP 호출, Cron, 큐/스토리지/DB 트리거 등)
+2. 플랫폼이 함수를 **컨테이너/아이솔레이트**에서 **자동 실행**
 3. 실행 종료 → **자원 회수** → 사용량만 과금
 
 ---
@@ -127,7 +127,7 @@ export default {
 };
 ```
 
-- **로컬**: `wrangler dev`  
+- **로컬**: `wrangler dev`
 - **KV/R2/D1**와의 통합으로 세션리스 데이터 작업 최적
 
 ---
@@ -151,7 +151,7 @@ export function parseJsonSafe(body) {
 
 // Lambda/Vercel 공용 핸들러 패턴
 export async function handle(eventOrReq) {
-  const payload = isLambda(eventOrReq) 
+  const payload = isLambda(eventOrReq)
     ? parseJsonSafe(eventOrReq.body)
     : eventOrReq.body;
   const result = schema.safeParse(payload);
@@ -168,7 +168,7 @@ const fail = (e) => ({ statusCode: 500, body: JSON.stringify({ ok: false, error:
 ```
 
 ### 6.3 인증(JWT/세션) — 에지 선필터 → 리저널 백엔드
-- **Edge**에서 쿠키/헤더 검사, 빠른 401/302 처리  
+- **Edge**에서 쿠키/헤더 검사, 빠른 401/302 처리
 - 통과 시 **백엔드 함수**로 전달하여 DB 등 무거운 연산 수행
 
 ### 6.4 파일 업로드 — **Presigned URL**
@@ -204,8 +204,8 @@ export function getDb() {
 ```
 
 ### 6.7 관측성(Observability)
-- **로그**: CloudWatch/Workers Logs/Vercel Logs  
-- **추적/분산 트레이싱**: AWS X-Ray, OpenTelemetry(OTel)  
+- **로그**: CloudWatch/Workers Logs/Vercel Logs
+- **추적/분산 트레이싱**: AWS X-Ray, OpenTelemetry(OTel)
 - **지표**: 함수 호출/오류/지연 시간, 큐 길이, 재시도 횟수
 
 ---
@@ -224,23 +224,23 @@ export function getDb() {
 
 ## 8. 비용 구조 이해(간단 모델)
 
-- 서버리스 비용은 주로 **요청 수**, **실행 시간(ms)**, **메모리(MB)**에 의해 결정.  
+- 서버리스 비용은 주로 **요청 수**, **실행 시간(ms)**, **메모리(MB)**에 의해 결정.
 - 개략식(설명용):
 $$
 \text{Cost} \approx \sum_i \left( \text{Requests}_i \cdot c_r + \text{Duration}_i \cdot \text{Memory}_i \cdot c_{rm} \right)
 $$
-- 즉, **짧고 가벼운 함수**를 많이 쓰는 워크로드에 유리.  
+- 즉, **짧고 가벼운 함수**를 많이 쓰는 워크로드에 유리.
 - 장시간 지속/고정 트래픽이면 컨테이너/서버가 유리할 수 있음.
 
 ---
 
 ## 9. 보안 체크리스트
 
-- **원천 비밀관리**: AWS SSM/Secrets Manager, Vercel/Workers Secrets  
-- **최소 권한 IAM**: S3 접근시 **특정 버킷/프리픽스**만 허용  
-- **입력 검증/Zod**: 요청 파라미터/바디 검사  
-- **CORS**: `Access-Control-Allow-Origin` 등 정확 설정  
-- **Idempotency**: 결제/주문 등은 **Idempotency-Key**로 중복 처리 방지  
+- **원천 비밀관리**: AWS SSM/Secrets Manager, Vercel/Workers Secrets
+- **최소 권한 IAM**: S3 접근시 **특정 버킷/프리픽스**만 허용
+- **입력 검증/Zod**: 요청 파라미터/바디 검사
+- **CORS**: `Access-Control-Allow-Origin` 등 정확 설정
+- **Idempotency**: 결제/주문 등은 **Idempotency-Key**로 중복 처리 방지
 - **감사 로그**: 민감 이벤트(권한 변경, 주문 상태) 구조화 로그 남기기
 
 ---
@@ -316,7 +316,7 @@ export const handler = async (event) => {
 };
 ```
 
-> S3 `ObjectCreated` 트리거로 리사이즈 Lambda → 썸네일 버킷에 저장.  
+> S3 `ObjectCreated` 트리거로 리사이즈 Lambda → 썸네일 버킷에 저장.
 > 에지(CloudFront Functions/Workers)에서 이미지 URL 라우팅/캐시.
 
 ### 11.3 크론 잡(스케줄) 예 — Cloudflare Workers
@@ -361,17 +361,17 @@ export default {
 
 ## 12. 테스트/품질 — TDD/계약/부하
 
-- **단위 테스트**: Zod 스키마/핸들러 로직 순수 함수화 → Jest/Vitest로 검증  
-- **계약 테스트**: 클라이언트와 API 응답 스키마 고정 → Pact/Schema snapshot  
+- **단위 테스트**: Zod 스키마/핸들러 로직 순수 함수화 → Jest/Vitest로 검증
+- **계약 테스트**: 클라이언트와 API 응답 스키마 고정 → Pact/Schema snapshot
 - **부하 테스트**: k6/Artillery로 버스트/콜드스타트/스로틀 동작 확인
 
 ---
 
 ## 13. 번들/빌드 — 작은 것이 빠르다
 
-- **ESM 우선** + **Tree-shaking** 가능한 빌드(Vite/Rollup/esbuild)  
-- **서버 전용 코드 분리**: 프론트 공유 코드와 섞이지 않게 경로/에일리어스 구분  
-- **거대 패키지 분해**: 날짜/로다시 등 **부분 import**  
+- **ESM 우선** + **Tree-shaking** 가능한 빌드(Vite/Rollup/esbuild)
+- **서버 전용 코드 분리**: 프론트 공유 코드와 섞이지 않게 경로/에일리어스 구분
+- **거대 패키지 분해**: 날짜/로다시 등 **부분 import**
 - **AWS SDK v3**: 필요한 클라이언트만 가져오기
 
 ```js
@@ -384,16 +384,16 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 ## 14. 운영 자동화(CI/CD)
 
-- **Git Push → 미리보기/프로덕션**: Vercel/Netlify는 기본 탑재  
-- **AWS**: GitHub Actions → CDK/SAM 배포, 환경별 스택(Dev/Prod) 분리  
+- **Git Push → 미리보기/프로덕션**: Vercel/Netlify는 기본 탑재
+- **AWS**: GitHub Actions → CDK/SAM 배포, 환경별 스택(Dev/Prod) 분리
 - **비밀 주입**: OpenID Connect(OIDC)로 클라우드 자격증명 단기 발급(키 저장 X)
 
 ---
 
 ## 15. 언제 Serverless가 정답이 아닐까?
 
-- **항시 연결/저지연**: 초저지연 WebSocket 대규모 상시 연결(게임/트레이딩)  
-- **대용량 스트리밍/배치**: 길고 무거운 작업(영상 인코딩) — **Batch/ECS/배포형 서버** 고려  
+- **항시 연결/저지연**: 초저지연 WebSocket 대규모 상시 연결(게임/트레이딩)
+- **대용량 스트리밍/배치**: 길고 무거운 작업(영상 인코딩) — **Batch/ECS/배포형 서버** 고려
 - **대규모 24/7 API**: 요청이 상시 폭주해 함수 단가가 누적되면 컨테이너/쿠버네티스가 유리
 
 ---
@@ -469,9 +469,9 @@ export default {
 
 ## 참고 링크(정리)
 
-- AWS Lambda: https://aws.amazon.com/lambda/  
-- Vercel Functions: https://vercel.com/docs/functions  
-- Cloudflare Workers: https://developers.cloudflare.com/workers/  
-- Firebase Functions: https://firebase.google.com/docs/functions  
-- Netlify Functions: https://docs.netlify.com/functions/overview/  
+- AWS Lambda: https://aws.amazon.com/lambda/
+- Vercel Functions: https://vercel.com/docs/functions
+- Cloudflare Workers: https://developers.cloudflare.com/workers/
+- Firebase Functions: https://firebase.google.com/docs/functions
+- Netlify Functions: https://docs.netlify.com/functions/overview/
 - Serverless Patterns: https://serverlessland.com/patterns

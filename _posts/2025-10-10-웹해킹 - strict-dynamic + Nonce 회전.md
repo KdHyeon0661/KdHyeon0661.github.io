@@ -9,12 +9,12 @@ category: 웹해킹
 
 ## 0. 한눈에 보기 (Executive Summary)
 
-- **효과**  
-  - `script-src 'nonce-…' 'strict-dynamic'`을 쓰면, **Nonce가 붙은 부트스트랩 스크립트**(초기 신뢰 스크립트)가 **동적으로 추가하는 `<script>` 요소**도 **자동으로 신뢰**됩니다(추가 `<script>`에 Nonce를 또 붙이지 않아도 됨).  
+- **효과**
+  - `script-src 'nonce-…' 'strict-dynamic'`을 쓰면, **Nonce가 붙은 부트스트랩 스크립트**(초기 신뢰 스크립트)가 **동적으로 추가하는 `<script>` 요소**도 **자동으로 신뢰**됩니다(추가 `<script>`에 Nonce를 또 붙이지 않아도 됨).
   - 반대로 **페이지에 주입된 임의 `<script>`**(Nonce 없음)와 **인라인 이벤트 핸들러**(예: `onclick="..."`)는 차단됩니다.
-- **주의**  
-  - **Nonce 재사용 금지(요청/문서마다 고유)**.  
-  - **인라인 이벤트 핸들러 지양**(필요하면 `'unsafe-hashes'`/`'unsafe-hashed-attributes'`를 쓰는 특수 예외만, 권장 X).  
+- **주의**
+  - **Nonce 재사용 금지(요청/문서마다 고유)**.
+  - **인라인 이벤트 핸들러 지양**(필요하면 `'unsafe-hashes'`/`'unsafe-hashed-attributes'`를 쓰는 특수 예외만, 권장 X).
   - **구형 브라우저 호환 전략**(필요 시 **해시 기반** 병행 또는 외부 파일로 분리).
 
 ---
@@ -22,13 +22,13 @@ category: 웹해킹
 ## 1. 위협 모델 & 동작 원리 (왜 `strict-dynamic`인가?)
 
 ### 1.1 기본 CSP의 한계
-- 호스트 화이트리스트(예: `script-src 'self' https://cdn.example.com`)만으로는  
-  1) **서드파티 호스트 감시 어려움**(그 호스트가 변조되면? 경로가 늘어나면?),  
+- 호스트 화이트리스트(예: `script-src 'self' https://cdn.example.com`)만으로는
+  1) **서드파티 호스트 감시 어려움**(그 호스트가 변조되면? 경로가 늘어나면?),
   2) **동적 로드** 시 매번 **URL/호스트를 정책에 추가**해야 하는 **운영 부담**이 큽니다.
 
 ### 1.2 `strict-dynamic`의 핵심 의미
-- **아이디어**: “**신뢰한 스크립트가 로드한 것**은 **그 자체로 신뢰**하자.”  
-- 결과: Nonce/해시로 **초기(부트스트랩) 스크립트**만 신뢰하면, 그 스크립트가 `document.createElement('script')` 등으로 불러오는 체인까지 자동 허용됩니다.  
+- **아이디어**: “**신뢰한 스크립트가 로드한 것**은 **그 자체로 신뢰**하자.”
+- 결과: Nonce/해시로 **초기(부트스트랩) 스크립트**만 신뢰하면, 그 스크립트가 `document.createElement('script')` 등으로 불러오는 체인까지 자동 허용됩니다.
 - 이때 **호스트 화이트리스트는 2차적**(구형 브라우저 대비)이며, **동적 체인이 우선**합니다.
 
 > 정리: **정말로 필요한 건 “처음에 무엇을 신뢰할 것인가”**입니다 → **그 답이 Nonce(또는 해시)**.
@@ -38,17 +38,17 @@ category: 웹해킹
 ## 2. Nonce(난수) 설계 & 회전(재사용 금지)
 
 ### 2.1 생성 규칙
-- **CSPRNG**(cryptographically secure)로 **128비트 이상**을 생성, **Base64** 등으로 인코딩.  
-- **요청/문서마다 고유**(페이지 요청 시마다 새로운 Nonce).  
+- **CSPRNG**(cryptographically secure)로 **128비트 이상**을 생성, **Base64** 등으로 인코딩.
+- **요청/문서마다 고유**(페이지 요청 시마다 새로운 Nonce).
 - 템플릿 렌더링에서 **모든 `<script>`**(부트스트랩/초기 인라인)에 **동일 Nonce**를 꽂아줌(해당 문서 안에서는 동일 값 사용 가능).
 
 ### 2.2 보관 & 캐싱 주의
-- Nonce는 **서버가 응답마다 만든 비밀**입니다.  
-- **공유 캐시**(CDN) 레이어에서 **HTML을 캐싱**하면 **Nonce가 재사용**될 수 있으므로 위험:  
+- Nonce는 **서버가 응답마다 만든 비밀**입니다.
+- **공유 캐시**(CDN) 레이어에서 **HTML을 캐싱**하면 **Nonce가 재사용**될 수 있으므로 위험:
   - 해결책: **엣지에서 주입**(Edge Function/Workers), **HTML을 private 캐싱**, 또는 **ESI/동적 조립**으로 Nonce만 런타임 삽입.
 
 ### 2.3 헤더에 Nonce 반영
-- `Content-Security-Policy: script-src 'nonce-<Base64>' 'strict-dynamic' ...`  
+- `Content-Security-Policy: script-src 'nonce-<Base64>' 'strict-dynamic' ...`
 - HTML 내 `<script nonce="<Base64>"> ... </script>` 또는 `<script nonce="<Base64>" src="/app.js"></script>`
 
 ---
@@ -79,9 +79,9 @@ Content-Security-Policy:
   report-to csp-endpoint;
 ```
 
-> **메모**  
-> - `script-src-attr 'none'`로 **인라인 이벤트**를 원천 차단 → `addEventListener`로 전환.  
-> - `style-src`는 초기에 `'unsafe-inline'`일 수 있으나, 점차 **`'nonce-…'` 또는 해시**로 옮기는 것을 권장.  
+> **메모**
+> - `script-src-attr 'none'`로 **인라인 이벤트**를 원천 차단 → `addEventListener`로 전환.
+> - `style-src`는 초기에 `'unsafe-inline'`일 수 있으나, 점차 **`'nonce-…'` 또는 해시**로 옮기는 것을 권장.
 > - `report-to`(또는 `report-uri`)로 위반 리포트를 수집(아래 §9).
 
 ---
@@ -147,8 +147,8 @@ app.use('/static', express.static('public', { immutable: true, maxAge: '1y' }));
 app.listen(8080, () => console.log('http://localhost:8080'));
 ```
 
-> **포인트**  
-> - 위 `/static/sub.js`는 **Nonce 없이**도 실행됩니다(부트스트랩이 신뢰되었고 `strict-dynamic` 적용).  
+> **포인트**
+> - 위 `/static/sub.js`는 **Nonce 없이**도 실행됩니다(부트스트랩이 신뢰되었고 `strict-dynamic` 적용).
 > - 주입된 `<script>`(예: 공격자가 DOM에 삽입)에는 Nonce가 없으므로 **차단**됩니다.
 
 ---
@@ -356,8 +356,8 @@ def index():
 
 ## 7. 구형 브라우저/레거시 호환 전략
 
-- **원칙**: Nonce를 인식하지 못하는 환경을 위해  
-  1) **부트스트랩을 외부 파일**로 분리(호스트 화이트리스트와 병행), 또는  
+- **원칙**: Nonce를 인식하지 못하는 환경을 위해
+  1) **부트스트랩을 외부 파일**로 분리(호스트 화이트리스트와 병행), 또는
   2) **해시 기반(`'sha256-...'`)**을 병행해 **핵심 인라인 부트스트랩**만 허용.
 - 예(해시 병행):
 ```http
@@ -370,7 +370,7 @@ Content-Security-Policy:
 
 ## 8. CDN/캐싱/엣지 고려
 
-- **HTML 캐싱 주의**: Nonce가 **응답별로 달라야** 하므로, **캐시 키**에 세션/쿠키/변수 반영 또는 **엣지에서 Nonce 주입**.  
+- **HTML 캐싱 주의**: Nonce가 **응답별로 달라야** 하므로, **캐시 키**에 세션/쿠키/변수 반영 또는 **엣지에서 Nonce 주입**.
 - **정적 자산**(JS/CSS)은 **캐시 가능**. Nonce는 **HTML에만**(부트스트랩 또는 외부 로더에 필요 시).
 
 ---
@@ -378,8 +378,8 @@ Content-Security-Policy:
 ## 9. 롤아웃(Report-Only → Enforce) & 리포팅
 
 ### 9.1 단계적 적용
-1) **Report-Only**로 시작:  
-   `Content-Security-Policy-Report-Only: script-src 'nonce-…' 'strict-dynamic'; report-to csp-endpoint`  
+1) **Report-Only**로 시작:
+   `Content-Security-Policy-Report-Only: script-src 'nonce-…' 'strict-dynamic'; report-to csp-endpoint`
    → 실제 차단 대신 **위반 리포트**만 수집.
 2) 위반 패턴을 정리/수정 후 **Enforce**로 전환.
 
@@ -401,57 +401,57 @@ app.post('/csp-report', express.json({ type: ['json', 'application/csp-report'] 
 
 ## 10. 흔한 실수(안티패턴)
 
-- **Nonce 재사용**(캐시/템플릿 버그) → **주입 재이용** 가능성↑  
-- **`'unsafe-inline'` 추가** → Nonce의 의미 퇴색  
-- **인라인 이벤트(… onClick=)** 지속 사용 → `script-src-attr 'none'`에서 깨짐  
-- **정적 HTML로 Nonce 하드코딩** → 의미 없음  
-- **Nginx만으로 Nonce 만들기** 시도 → 각 `<script>`에 같은 Nonce를 일관 주입하기 어려움(앱 레이어 권장)  
+- **Nonce 재사용**(캐시/템플릿 버그) → **주입 재이용** 가능성↑
+- **`'unsafe-inline'` 추가** → Nonce의 의미 퇴색
+- **인라인 이벤트(… onClick=)** 지속 사용 → `script-src-attr 'none'`에서 깨짐
+- **정적 HTML로 Nonce 하드코딩** → 의미 없음
+- **Nginx만으로 Nonce 만들기** 시도 → 각 `<script>`에 같은 Nonce를 일관 주입하기 어려움(앱 레이어 권장)
 - **동적 로드 남발**(광고/3rd-party 위젯 삽입) → **정말 필요한 로드만** 허용되도록 **부트스트랩 로직**을 엄격히 관리
 
 ---
 
 ## 11. 테스트 시나리오(“막혀야 정상”)
 
-1) **Nonce 없는 인라인 `<script>`**  
+1) **Nonce 없는 인라인 `<script>`**
    - 기대: 차단, 콘솔에 CSP 위반 기록.
-2) **인라인 이벤트 핸들러**  
+2) **인라인 이벤트 핸들러**
    - 기대: 차단(`script-src-attr 'none'`).
-3) **부트스트랩 → 동적 로드 체인**  
+3) **부트스트랩 → 동적 로드 체인**
    - 기대: 허용(부트스트랩 Nonce + `'strict-dynamic'`).
-4) **Report-Only에서 위반 리포트 수집**  
+4) **Report-Only에서 위반 리포트 수집**
    - 기대: `/csp-report`에 위반 JSON 도착.
 
 ---
 
 ## 12. 보조 강화 옵션
 
-- **`require-trusted-types-for 'script'` + Trusted Types**: DOM XSS 표면 감소(크롬 계열).  
-- **`object-src 'none'` / `base-uri 'self'` / `frame-ancestors 'self'`**: 레거시 플러그인/프레이밍 차단.  
+- **`require-trusted-types-for 'script'` + Trusted Types**: DOM XSS 표면 감소(크롬 계열).
+- **`object-src 'none'` / `base-uri 'self'` / `frame-ancestors 'self'`**: 레거시 플러그인/프레이밍 차단.
 - **SRI**(Subresource Integrity)와 병행: 외부 리소스 무결성 보강(단, `'strict-dynamic'` 체인에서는 Nonce 신뢰가 우선).
 
 ---
 
 ## 13. 미니 체크리스트
 
-- [ ] **요청마다 Nonce** 생성(128비트+, CSPRNG, Base64)  
-- [ ] `script-src 'nonce-…' 'strict-dynamic'` + `script-src-attr 'none'`  
-- [ ] **인라인 이벤트 → addEventListener** 마이그레이션  
-- [ ] **Report-Only**로 린치핀 파악 → Enforce 전환  
-- [ ] **HTML 캐싱에서 Nonce 재사용 방지**(엣지 주입/프라이빗 캐시)  
-- [ ] 3rd-party 스크립트는 **부트스트랩 로더**가 명시적으로 삽입  
+- [ ] **요청마다 Nonce** 생성(128비트+, CSPRNG, Base64)
+- [ ] `script-src 'nonce-…' 'strict-dynamic'` + `script-src-attr 'none'`
+- [ ] **인라인 이벤트 → addEventListener** 마이그레이션
+- [ ] **Report-Only**로 린치핀 파악 → Enforce 전환
+- [ ] **HTML 캐싱에서 Nonce 재사용 방지**(엣지 주입/프라이빗 캐시)
+- [ ] 3rd-party 스크립트는 **부트스트랩 로더**가 명시적으로 삽입
 - [ ] 위반 리포트 수집/대시보드화
 
 ---
 
 ## 14. FAQ
 
-- **Q. 모든 동적 로드가 자동 허용되나요?**  
+- **Q. 모든 동적 로드가 자동 허용되나요?**
   A. **“신뢰된(Nonce/해시로 허용된) 스크립트가 추가한 것”**만 허용됩니다. 임의로 DOM에 삽입된 `<script>`는 Nonce가 없으므로 차단됩니다.
 
-- **Q. 호스트 화이트리스트가 필요 없나요?**  
+- **Q. 호스트 화이트리스트가 필요 없나요?**
   A. `strict-dynamic`가 있으면 **동적 체인에 대해** 호스트 화이트리스트보다 **Nonce 신뢰가 우선**합니다. 다만 **구형 브라우저** 대응/심리적 안전망으로 `https:`/특정 호스트를 병행 명시하는 경우가 있습니다.
 
-- **Q. 인라인 스크립트를 계속 쓰고 싶다면?**  
+- **Q. 인라인 스크립트를 계속 쓰고 싶다면?**
   A. **Nonce 또는 해시**가 필요합니다. 인라인 이벤트 핸들러는 지양하고, 불가피하면 `'unsafe-hashes'`로 **특정 해시만** 허용할 수 있으나 권장하지 않습니다.
 
 ---

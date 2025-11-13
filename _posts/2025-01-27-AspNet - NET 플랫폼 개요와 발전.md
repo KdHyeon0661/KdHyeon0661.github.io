@@ -33,12 +33,12 @@ category: AspNet
 
 현실적으로 다음 네 단계를 권장합니다.
 
-1) **분리**: UI/호스팅 의존(예: System.Web)을 비즈니스 로직에서 분리 → **클래스 라이브러리(.NET Standard/.NET)**로 핵심 로직 이동  
-2) **등가치 대체**:  
-   - `Global.asax`/HTTP 핸들러/모듈 → **미들웨어 파이프라인**  
-   - `Web.config` → **appsettings.json + Program.cs** 구성  
-   - 인증/권한 OWIN → **ASP.NET Core 인증/정책 인가**  
-3) **라이브러리 치환**: 오래된 패키지(이미지 처리, 캐시, ORM 등)를 **현대 .NET 호환** 대안으로 교체  
+1) **분리**: UI/호스팅 의존(예: System.Web)을 비즈니스 로직에서 분리 → **클래스 라이브러리(.NET Standard/.NET)**로 핵심 로직 이동
+2) **등가치 대체**:
+   - `Global.asax`/HTTP 핸들러/모듈 → **미들웨어 파이프라인**
+   - `Web.config` → **appsettings.json + Program.cs** 구성
+   - 인증/권한 OWIN → **ASP.NET Core 인증/정책 인가**
+3) **라이브러리 치환**: 오래된 패키지(이미지 처리, 캐시, ORM 등)를 **현대 .NET 호환** 대안으로 교체
 4) **운영 자동화**: 컨테이너(Docker), CI/CD, Health Check, 관측성(OpenTelemetry) 도입
 
 간단 체크리스트:
@@ -52,12 +52,12 @@ category: AspNet
 
 ## 2. ASP.NET Core의 특징(확장)
 
-1) **크로스 플랫폼**: Windows/IIS, Linux/Nginx, macOS 개발 환경  
-2) **고성능/현대화**: Kestrel, HTTP/2·3, 압축/캐싱, AOT/ReadyToRun, 스레드 풀 최적화  
-3) **통합 프레임워크**: Razor Pages/MVC, Web API/Minimal API, SignalR, gRPC, Blazor  
-4) **DI 기본 탑재**: `AddTransient`/`AddScoped`/`AddSingleton` 수명 주기  
-5) **모듈형 미들웨어**: 파이프라인 구성으로 보안/성능/로깅 일원화  
-6) **클라우드 친화**: 구성 계층(AppSettings/ENV/KeyVault), Health Checks, 컨테이너  
+1) **크로스 플랫폼**: Windows/IIS, Linux/Nginx, macOS 개발 환경
+2) **고성능/현대화**: Kestrel, HTTP/2·3, 압축/캐싱, AOT/ReadyToRun, 스레드 풀 최적화
+3) **통합 프레임워크**: Razor Pages/MVC, Web API/Minimal API, SignalR, gRPC, Blazor
+4) **DI 기본 탑재**: `AddTransient`/`AddScoped`/`AddSingleton` 수명 주기
+5) **모듈형 미들웨어**: 파이프라인 구성으로 보안/성능/로깅 일원화
+6) **클라우드 친화**: 구성 계층(AppSettings/ENV/KeyVault), Health Checks, 컨테이너
 7) **오픈소스**: 투명한 로드맵/이슈 관리, 예측 가능한 릴리스
 
 ---
@@ -204,7 +204,7 @@ public class ProductsController : Controller
 }
 ```
 
-**언제 MVC를 선택하나?**  
+**언제 MVC를 선택하나?**
 - 대규모 사이트, 복잡한 필터/모델 바인딩, 정교한 SEO 제어, 기존 MVC 자산 재사용
 
 ---
@@ -247,8 +247,8 @@ group.MapGet("/", async (AppDb db) => Results.Ok(await db.Products.ToListAsync()
 group.MapPost("/", async (AppDb db, Product p) => { db.Add(p); await db.SaveChangesAsync(); return Results.Created($"/api/v2/products/{p.Id}", p); });
 ```
 
-**컨트롤러 vs Minimal API 선택**  
-- **컨트롤러**: 필터/모델 검증/버전/표준화가 필요한 **공용 API**  
+**컨트롤러 vs Minimal API 선택**
+- **컨트롤러**: 필터/모델 검증/버전/표준화가 필요한 **공용 API**
 - **Minimal**: 내부 API/게이트웨이/경량 라우팅/빠른 프로토타이핑
 
 ---
@@ -410,10 +410,10 @@ app.MapHealthChecks("/health");
 
 ## 13. 실전 미니 샘플 통합(한 프로젝트에 동시 탑재)
 
-- `/`           → Razor Pages 홈  
-- `/products`   → MVC 뷰  
-- `/api/v1/...` → Web API  
-- `/hubs/chat`  → SignalR 허브  
+- `/`           → Razor Pages 홈
+- `/products`   → MVC 뷰
+- `/api/v1/...` → Web API
+- `/hubs/chat`  → SignalR 허브
 - `/health`     → 헬스 체크
 
 위에서 제시한 **Program.cs**를 베이스로, **페이지/컨트롤러/허브** 각각의 예제 파일을 추가하면 **단일 호스트에서 혼합 구동**이 가능합니다. 파일/폴더 구조는 다음처럼 정리합니다.
@@ -433,17 +433,17 @@ MyApp/
 
 ## 14. 흔한 함정과 해결책
 
-1) `UseAuthentication`/`UseAuthorization` 순서 혼동 → **Authentication이 먼저**  
-2) CORS에서 `AllowAnyOrigin` + `AllowCredentials` 동시 사용 금지  
-3) EF Core N+1 → Projection/Include 조합·캐시로 완화  
-4) Swagger에서 민감 엔드포인트 노출 → 환경별 제한/보안 스키마 설정  
+1) `UseAuthentication`/`UseAuthorization` 순서 혼동 → **Authentication이 먼저**
+2) CORS에서 `AllowAnyOrigin` + `AllowCredentials` 동시 사용 금지
+3) EF Core N+1 → Projection/Include 조합·캐시로 완화
+4) Swagger에서 민감 엔드포인트 노출 → 환경별 제한/보안 스키마 설정
 5) Trimming/AOT로 리플렉션 대상 제거 → `DynamicallyAccessedMembers` 주석/소스 제너레이터 고려
 
 ---
 
 ## 15. 요약
 
-- **.NET Framework → .NET Core → .NET(5~8)**로 오며 **크로스 플랫폼·고성능·오픈소스**로 수렴했습니다.  
-- 현재 실무 표준은 **.NET 8 LTS**. 신규 프로젝트는 이를 기본값으로 삼는 것이 안전합니다.  
-- **ASP.NET Core**는 **Razor Pages/MVC/Web API/Blazor/SignalR**을 하나의 호스트에서 유연하게 결합할 수 있어, **모놀리식에서 마이크로서비스까지** 폭넓은 구조를 커버합니다.  
+- **.NET Framework → .NET Core → .NET(5~8)**로 오며 **크로스 플랫폼·고성능·오픈소스**로 수렴했습니다.
+- 현재 실무 표준은 **.NET 8 LTS**. 신규 프로젝트는 이를 기본값으로 삼는 것이 안전합니다.
+- **ASP.NET Core**는 **Razor Pages/MVC/Web API/Blazor/SignalR**을 하나의 호스트에서 유연하게 결합할 수 있어, **모놀리식에서 마이크로서비스까지** 폭넓은 구조를 커버합니다.
 - 본 문서의 **샘플 코드**를 바탕으로, **필요 최소 스택부터** 시작한 뒤 요구사항에 따라 **SignalR(실시간)·Blazor(UI)·gRPC(RPC)·관측성**을 점진적으로 도입하십시오.

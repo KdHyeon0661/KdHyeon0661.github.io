@@ -8,8 +8,8 @@ category: AspNet
 
 ## 1. `IConfiguration` 개요와 키 원리
 
-- **계층형 키**: `:`(JSON/명령줄) 또는 `__`(환경 변수) 구분자 사용  
-- **소스 병합**: 여러 소스에서 읽은 값을 **우선순위**에 따라 병합(뒤에서 추가된 공급자가 우선)  
+- **계층형 키**: `:`(JSON/명령줄) 또는 `__`(환경 변수) 구분자 사용
+- **소스 병합**: 여러 소스에서 읽은 값을 **우선순위**에 따라 병합(뒤에서 추가된 공급자가 우선)
 - **DI 주입**: 어디서든 생성자에 `IConfiguration`을 주입하여 읽기
 
 ```csharp
@@ -29,8 +29,8 @@ public class IndexModel : PageModel
 }
 ```
 
-**팁**  
-- 기본형은 `GetValue<T>(key, default?)`로 안전하게 파싱  
+**팁**
+- 기본형은 `GetValue<T>(key, default?)`로 안전하게 파싱
 - 배열/리스트 바인딩 시 `Section.Get<T>()`를 선호
 
 ---
@@ -126,9 +126,9 @@ public class HomeController : Controller
 }
 ```
 
-**장점**  
-- 컴파일타임 검증  
-- 중첩/배열 구조를 정확히 매핑  
+**장점**
+- 컴파일타임 검증
+- 중첩/배열 구조를 정확히 매핑
 - Options 생태계(IOptionsSnapshot/Monitor/Validation) 활용
 
 ---
@@ -253,8 +253,8 @@ dotnet user-secrets set "ApiKeys:Stripe" "sk_test_..."
 var stripe = config["ApiKeys:Stripe"];
 ```
 
-**우선순위(일반적)**  
-명령줄 > 환경 변수 > `appsettings.{Environment}.json` > `appsettings.json`  
+**우선순위(일반적)**
+명령줄 > 환경 변수 > `appsettings.{Environment}.json` > `appsettings.json`
 (나중에 추가된 공급자가 앞선 값을 덮어쓴다)
 
 ---
@@ -285,8 +285,8 @@ public class AppSettings
 public class Endpoint { public string Name { get; set; } = ""; public string Url { get; set; } = ""; }
 ```
 
-등록/사용은 기존과 동일(`Configure<AppSettings>`).  
-**주의**: 환경 변수로 배열을 덮을 때는 인덱스로 지정  
+등록/사용은 기존과 동일(`Configure<AppSettings>`).
+**주의**: 환경 변수로 배열을 덮을 때는 인덱스로 지정
 `AppSettings__Admins__0=kim`, `AppSettings__Admins__1=lee`
 
 ---
@@ -324,10 +324,10 @@ builder.Configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true, reloadOnChange: true);
 ```
 
-- `IOptionsSnapshot<T>`: 요청 시점에 최신 스냅샷  
+- `IOptionsSnapshot<T>`: 요청 시점에 최신 스냅샷
 - `IOptionsMonitor<T>`: 변경 이벤트 콜백 등록
 
-**주의**  
+**주의**
 - 컨테이너/클라우드에서 **실제 파일 변경 감지가 어려울 수 있음**(ConfigMap 마운트 방식 따라 상이) → `IOptionsMonitor`에 적합한 공급자 활용(예: Azure App Configuration)
 
 ---
@@ -352,7 +352,7 @@ var logger = app.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("SiteName={Site}", builder.Configuration["AppSettings:SiteName"]);
 ```
 
-- **환경별 JSON**으로 개발/운영 로그 레벨 분리  
+- **환경별 JSON**으로 개발/운영 로그 레벨 분리
 - 런타임에 파일 수정 + `reloadOnChange` → 레벨 실시간 반영
 
 ---
@@ -411,8 +411,8 @@ builder.Configuration.AddSimpleText("custom.config", optional: true);
 ```
 
 ### 10.2 클라우드 예시
-- **Azure App Configuration** / **Azure Key Vault**  
-- AWS AppConfig / Parameter Store, GCP Secret Manager 등  
+- **Azure App Configuration** / **Azure Key Vault**
+- AWS AppConfig / Parameter Store, GCP Secret Manager 등
 → 공식/커뮤니티 제공 패키지로 `IConfiguration`에 통합
 
 ---
@@ -425,11 +425,11 @@ ENV AppSettings__SiteName="ContainerApp"
 ```
 
 ### 11.2 Kubernetes ConfigMap/Secret
-- ConfigMap을 파일 또는 환경 변수로 마운트  
+- ConfigMap을 파일 또는 환경 변수로 마운트
 - Secret은 민감값(연결 문자열, API 키)에 사용
 
-**주의**  
-- 파일 마운트 방식일 때 `reloadOnChange` 지원은 볼륨 드라이버/마운트 방식에 좌우  
+**주의**
+- 파일 마운트 방식일 때 `reloadOnChange` 지원은 볼륨 드라이버/마운트 방식에 좌우
 - 재로딩이 필수면 App Configuration/Consul 등 동적 공급자 고려
 
 ---
@@ -455,8 +455,8 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(cs));
 
 ## 13. 국제화/문화권과 바인딩 주의
 
-- 숫자/날짜 파싱은 현재 문화권의 포맷 영향을 받는다.  
-- 배포 환경에서 문화권이 달라질 수 있으므로 숫자에는 `GetValue<int>`처럼 타입 지정 바인딩을 권장.  
+- 숫자/날짜 파싱은 현재 문화권의 포맷 영향을 받는다.
+- 배포 환경에서 문화권이 달라질 수 있으므로 숫자에는 `GetValue<int>`처럼 타입 지정 바인딩을 권장.
 - 사용자 정의 타입 변환은 `TypeConverter` 또는 바인딩 확장을 고려.
 
 ---
@@ -512,9 +512,9 @@ public class MyFactory : WebApplicationFactory<Program>
 
 ## 16. 보안 모범 사례
 
-- 비밀은 `user-secrets`(개발) 또는 **보안 비밀 관리 서비스**(운영)에 저장  
-- 로그에 구성 값(특히 비밀/토큰) 출력 금지  
-- `EnableSensitiveDataLogging`은 개발에만  
+- 비밀은 `user-secrets`(개발) 또는 **보안 비밀 관리 서비스**(운영)에 저장
+- 로그에 구성 값(특히 비밀/토큰) 출력 금지
+- `EnableSensitiveDataLogging`은 개발에만
 - 구성으로부터 가져온 **허용 목록/정책**은 유효성 검증으로 방어
 
 ---
@@ -666,26 +666,26 @@ foreach (var kv in builder.Configuration.AsEnumerable(makePathsRelative: false))
 
 ## 20. 수학적 관점의 우선순위 모델(직관)
 
-각 공급자(provider)를 $$ P_1, P_2, \dots, P_n $$라 하고,  
-이들이 같은 키 $$ k $$에 대해 값을 제공하면 **뒤에서 추가된** 공급자 $$ P_n $$의 값이 최종값이다.  
+각 공급자(provider)를 $$ P_1, P_2, \dots, P_n $$라 하고,
+이들이 같은 키 $$ k $$에 대해 값을 제공하면 **뒤에서 추가된** 공급자 $$ P_n $$의 값이 최종값이다.
 즉, 병합 결과 $$ V(k) $$는
 $$
 V(k) = \mathrm{last}\big(\{\, P_i(k) \neq \varnothing \mid i = 1,\dots,n \,\}\big)
 $$
-와 같은 “후첨자 우선” 규칙으로 결정된다.  
+와 같은 “후첨자 우선” 규칙으로 결정된다.
 이 직관은 **구성 빌더에 공급자를 추가하는 순서**가 중요하다는 점을 강조한다.
 
 ---
 
 ## 21. 체크리스트와 모범 사례
 
-- [ ] 비밀은 절대 `appsettings.json`에 하드코딩하지 말 것(Secrets/Key Vault 등)  
-- [ ] `reloadOnChange` + `IOptionsMonitor`로 동적 구성을 설계  
-- [ ] 구성 유효성 검증(`ValidateDataAnnotations`, `ValidateOnStart`) 적용  
-- [ ] 구성 키는 일관된 네이밍(파스칼/케밥/스네이크 중 팀 규칙)  
-- [ ] 로깅 레벨/특정 기능 토글은 구성에서 제어  
-- [ ] 테스트에서 `InMemory` 구성으로 빠르게 주입/격리  
-- [ ] 컨테이너/쿠버네티스에서 환경 변수·ConfigMap/Secret로 외부화  
+- [ ] 비밀은 절대 `appsettings.json`에 하드코딩하지 말 것(Secrets/Key Vault 등)
+- [ ] `reloadOnChange` + `IOptionsMonitor`로 동적 구성을 설계
+- [ ] 구성 유효성 검증(`ValidateDataAnnotations`, `ValidateOnStart`) 적용
+- [ ] 구성 키는 일관된 네이밍(파스칼/케밥/스네이크 중 팀 규칙)
+- [ ] 로깅 레벨/특정 기능 토글은 구성에서 제어
+- [ ] 테스트에서 `InMemory` 구성으로 빠르게 주입/격리
+- [ ] 컨테이너/쿠버네티스에서 환경 변수·ConfigMap/Secret로 외부화
 - [ ] 사용자 지정 공급자로 레거시/외부 시스템과 안전하게 통합
 
 ---
@@ -772,7 +772,7 @@ public class HttpClientOptions
 ---
 
 # 다음 추천 주제
-- `IOptionsMonitor`로 다중 소스 핫리로드 패턴(Azure App Configuration/Consul)  
-- 사용자 지정 `IConfigurationProvider` 고급(폴더 감시, 암호화 값 자동 해독)  
-- 다국어/테넌트별 설정 분리(폴더/프리픽스/Named Options 전략)  
+- `IOptionsMonitor`로 다중 소스 핫리로드 패턴(Azure App Configuration/Consul)
+- 사용자 지정 `IConfigurationProvider` 고급(폴더 감시, 암호화 값 자동 해독)
+- 다국어/테넌트별 설정 분리(폴더/프리픽스/Named Options 전략)
 - 연결 문자열 회전(Key Vault + Managed Identity)과 장애 대응

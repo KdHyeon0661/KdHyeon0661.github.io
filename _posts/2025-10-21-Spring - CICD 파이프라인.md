@@ -6,7 +6,7 @@ category: Spring
 ---
 # 21. CI/CD 파이프라인 — GitHub Actions·Argo CD, 품질 게이트, 버전/릴리스/체인지로그 자동화
 
-> 목표: **“푸시 → 테스트 → 이미지빌드/보안스캔 → 매니페스트 업데이트 → 자동 배포/승인 → 프로덕션 릴리스”**까지의 풀파이프라인을 예제와 함께 뼈대부터 완성한다.  
+> 목표: **“푸시 → 테스트 → 이미지빌드/보안스캔 → 매니페스트 업데이트 → 자동 배포/승인 → 프로덕션 릴리스”**까지의 풀파이프라인을 예제와 함께 뼈대부터 완성한다.
 > 기준: Spring Boot 3.x(Gradle), Docker/BuildKit, Kubernetes(+Helm), **GitHub Actions**로 CI, **Argo CD**로 CD, 품질은 **테스트·커버리지·Lint**를 **게이트**로 삼는다. 버전/릴리스/체인지로그는 **Conventional Commits**를 기반으로 자동화한다.
 
 ---
@@ -326,8 +326,8 @@ spec:
         maxDuration: 2m
 ```
 
-> 운영 팁  
-> - ApplicationSet를 쓰면 **dev/stage/prod** 3개 앱을 패턴으로 자동 생성 가능.  
+> 운영 팁
+> - ApplicationSet를 쓰면 **dev/stage/prod** 3개 앱을 패턴으로 자동 생성 가능.
 > - **automated**(자동 동기화)를 dev/stage에만 두고, prod는 수동 승인(“Sync Wave/Sync Windows”)로 제어.
 
 ### D-2. GitOps 업데이트(이미지 태그 갱신 → PR)
@@ -443,9 +443,9 @@ CI에선 `./gradlew enforceCoverage`를 호출하거나, 위의 **gate job**과 
 ## G. 버전·릴리스·체인지로그 자동화
 
 ### G-1. Conventional Commits(권장 규약)
-- 형식: `type(scope)!: subject`  
-  예) `feat(api)!: add pagination to /orders`  
-- 주요 타입: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`, `ci`.  
+- 형식: `type(scope)!: subject`
+  예) `feat(api)!: add pagination to /orders`
+- 주요 타입: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`, `ci`.
 - **BREAKING CHANGE**는 `!` 또는 바디에 `BREAKING CHANGE:`로 표시 → **메이저** 승격.
 
 ### G-2. semantic-release (Node 기반, 언어 독립)
@@ -504,20 +504,20 @@ Actions에서:
 ```
 
 ### G-4. release-please(대안, Google)
-- 언어 독립, PR 기반 릴리스 관리.  
+- 언어 독립, PR 기반 릴리스 관리.
 - GitHub App/Action로 **릴리스 PR**을 자동 생성 → 리뷰 후 머지하면 태그/릴리스/체인지로그 생성.
 
 ### G-5. 체인지로그 템플릿 커스터마이즈
-- 팀에서 중요 섹션만: **Features**, **Fixes**, **Breaking**, **Chores/Docs** 숨김.  
+- 팀에서 중요 섹션만: **Features**, **Fixes**, **Breaking**, **Chores/Docs** 숨김.
 - 이슈/PR 번호 자동 링크(semantic-release 기본 제공).
 
 ---
 
 ## H. 프로모션 플로우(Dev → Stage → Prod)
 
-1) **main 병합** → CI 통과 → **이미지 빌드/서명** → **stage values.yaml** **자동 PR**  
-2) 승인 후 머지 → Argo CD가 stage 배포 → **검증**(헬스/메트릭/트래픽)  
-3) “Promote to prod” 워크플로(수동/ChatOps) → **prod values.yaml** PR → 승인 머지 → prod 동기화  
+1) **main 병합** → CI 통과 → **이미지 빌드/서명** → **stage values.yaml** **자동 PR**
+2) 승인 후 머지 → Argo CD가 stage 배포 → **검증**(헬스/메트릭/트래픽)
+3) “Promote to prod” 워크플로(수동/ChatOps) → **prod values.yaml** PR → 승인 머지 → prod 동기화
 4) semantic-release가 **버전/릴리스/체인지로그** 생성 → 게시
 
 **프로모션 워크플로 예**
@@ -559,9 +559,9 @@ jobs:
 ## I. 보안/컴플라이언스 내장
 
 - **서명/검증**: cosign sign/verify, policy-controller(입력 시 서명 검증).
-- **비밀**: Actions에서 클라우드에 **OIDC**로 접속(장기 키 제거).  
-- **SBOM 저장**: 릴리스 자산/아티팩트로 **CycloneDX** 보관.  
-- **정책**: **Branch Protection**(필수 리뷰/체크), **환경 승인**, **Require signed commits**.  
+- **비밀**: Actions에서 클라우드에 **OIDC**로 접속(장기 키 제거).
+- **SBOM 저장**: 릴리스 자산/아티팩트로 **CycloneDX** 보관.
+- **정책**: **Branch Protection**(필수 리뷰/체크), **환경 승인**, **Require signed commits**.
 - **감사**: 배포마다 commit/이미지 digest/ArgoCD Sync Result 링크를 릴리스 노트에 남김.
 
 ---
@@ -596,12 +596,12 @@ echo "- Coverage: ${RATE}%" >> $GITHUB_STEP_SUMMARY
 
 ## L. 한 장 요약(런북)
 
-1) **CI**: `checkout → JDK → lint → test+coverage → sonar → sbom+trivy → gate`.  
-2) **이미지**: Buildx multi-arch + cache + **Trivy** + **cosign**.  
-3) **CD(GitOps)**: Helm `values.yaml` 이미지만 바꿔 **PR→머지→Argo 동기화**.  
-4) **승격**: stage 검증 후 **Promote to prod** 워크플로로 PR/승인/배포.  
-5) **버전/릴리스/체인지로그**: Conventional Commits → **semantic-release** 자동화.  
-6) **보안**: OIDC 키리스, SBOM 보관, 정책/서명 검증, Branch Protection.  
+1) **CI**: `checkout → JDK → lint → test+coverage → sonar → sbom+trivy → gate`.
+2) **이미지**: Buildx multi-arch + cache + **Trivy** + **cosign**.
+3) **CD(GitOps)**: Helm `values.yaml` 이미지만 바꿔 **PR→머지→Argo 동기화**.
+4) **승격**: stage 검증 후 **Promote to prod** 워크플로로 PR/승인/배포.
+5) **버전/릴리스/체인지로그**: Conventional Commits → **semantic-release** 자동화.
+6) **보안**: OIDC 키리스, SBOM 보관, 정책/서명 검증, Branch Protection.
 7) **가시성**: Job Summary/Slack, Argo 이벤트, 에러율·p95 대시보드로 **즉시 피드백**.
 
 ---
@@ -646,7 +646,7 @@ repos:
 ---
 
 ## N. 결론
-- Actions로 **빠르고 표준화된 CI**, Argo CD로 **안전하고 가시적인 CD**를 만든다.  
-- 품질 게이트는 “블로킹 규칙”으로, 릴리스는 “규약 기반 자동화”로 **사람의 실수를 시스템이 보완**한다.  
-- 모든 산출물(이미지·SBOM·서명·차트·릴리스노트)을 **Git & 레지스트리**에 남겨 추적 가능성을 극대화하라.  
+- Actions로 **빠르고 표준화된 CI**, Argo CD로 **안전하고 가시적인 CD**를 만든다.
+- 품질 게이트는 “블로킹 규칙”으로, 릴리스는 “규약 기반 자동화”로 **사람의 실수를 시스템이 보완**한다.
+- 모든 산출물(이미지·SBOM·서명·차트·릴리스노트)을 **Git & 레지스트리**에 남겨 추적 가능성을 극대화하라.
 - 이렇게 구성하면 팀은 “코드 작성과 가설 검증”에 집중하고, **배포는 평온한 일상**이 된다.

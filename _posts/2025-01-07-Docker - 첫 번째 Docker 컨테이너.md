@@ -54,11 +54,11 @@ docker run hello-world
 ```
 
 ### 2.2 내부에서 일어나는 일(요약 흐름)
-1. **이미지 조회**: 로컬에 `hello-world:latest` 존재 확인  
-2. **이미지 pull**: 없으면 Docker Hub에서 다운로드  
-3. **컨테이너 create**: 이미지 기반으로 컨테이너 생성  
-4. **컨테이너 start**: 실행 후 표준 출력으로 메시지 출력  
-5. **종료**: 메시지 출력 후 프로세스가 종료(Exit 0), 컨테이너는 `Exited` 상태로 남음  
+1. **이미지 조회**: 로컬에 `hello-world:latest` 존재 확인
+2. **이미지 pull**: 없으면 Docker Hub에서 다운로드
+3. **컨테이너 create**: 이미지 기반으로 컨테이너 생성
+4. **컨테이너 start**: 실행 후 표준 출력으로 메시지 출력
+5. **종료**: 메시지 출력 후 프로세스가 종료(Exit 0), 컨테이너는 `Exited` 상태로 남음
 
 실행 과정을 식으로 간단히 적으면,
 ```text
@@ -107,7 +107,7 @@ hello-world   latest    d1165f2...     2 weeks ago    13.3kB
 docker logs e98dbd4c5cc5
 docker inspect e98dbd4c5cc5 | jq '.[0].State, .[0].Config.Image'
 ```
-- `logs` 로 표준 출력 확인  
+- `logs` 로 표준 출력 확인
 - `inspect` 로 상태/네트워크/마운트/환경변수 등 **모든 메타데이터** 확인
 
 ---
@@ -196,8 +196,8 @@ docker run --rm \
   --memory 64m \
   hello-world
 ```
-- `--read-only`: 루트 파일 시스템을 읽기 전용  
-- `--pids-limit`: 생성 가능한 프로세스 수 제한  
+- `--read-only`: 루트 파일 시스템을 읽기 전용
+- `--pids-limit`: 생성 가능한 프로세스 수 제한
 - `--cpus`, `--memory`: cgroups 기반 자원 제한
 
 ---

@@ -6,7 +6,7 @@ category: WPF
 ---
 # DataBinding과 ViewModel 연결 완전 가이드
 
-WPF에서 **DataBinding**은 View(XAML)와 ViewModel(C#)을 **느슨하게 결합**시켜 UI를 자동 갱신합니다.  
+WPF에서 **DataBinding**은 View(XAML)와 ViewModel(C#)을 **느슨하게 결합**시켜 UI를 자동 갱신합니다.
 핵심은 **DataContext**(바인딩의 기본 원본)와 **INotifyPropertyChanged / ObservableCollection / ICommand**입니다.
 
 ---
@@ -165,8 +165,8 @@ public partial class App : Application
 <TextBox Text="{Binding UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 <TextBlock Text="{Binding Total, StringFormat='총액 {0:C}'}" />
 ```
-- **Mode**: OneWay / TwoWay / OneTime / OneWayToSource  
-- **UpdateSourceTrigger**: PropertyChanged / LostFocus / Explicit  
+- **Mode**: OneWay / TwoWay / OneTime / OneWayToSource
+- **UpdateSourceTrigger**: PropertyChanged / LostFocus / Explicit
 - **StringFormat**: 표시 형식 지정
 
 ### 4.2 Fallback/Null 처리 & 지연 업데이트
@@ -174,8 +174,8 @@ public partial class App : Application
 <TextBlock Text="{Binding Title, TargetNullValue='(제목 없음)', FallbackValue='(로딩 중)'}"/>
 <TextBox Text="{Binding Query, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
 ```
-- **FallbackValue**: 경로 불일치(바인딩 실패) 시 표시  
-- **TargetNullValue**: 결과가 null일 때만 대체  
+- **FallbackValue**: 경로 불일치(바인딩 실패) 시 표시
+- **TargetNullValue**: 결과가 null일 때만 대체
 - **Delay**: 값 전파를 ms 단위로 지연(타이핑 필터 UX 개선)
 
 ### 4.3 다른 요소/조상 참조
@@ -299,13 +299,13 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ## 9. 흔한 문제 & 체크리스트
 
-- (문제) 컨트롤 안에서 바인딩이 동작하지 않음  
+- (문제) 컨트롤 안에서 바인딩이 동작하지 않음
   → (확인) 그 위치의 **DataContext가 무엇인지** Live Visual Tree로 확인
-- (문제) 버튼 활성화 갱신이 늦음  
+- (문제) 버튼 활성화 갱신이 늦음
   → (해결) 관련 속성 setter에서 `RelayCommand.RaiseCanExecuteChanged()` 호출
-- (문제) 리스트가 그려지지 않음  
+- (문제) 리스트가 그려지지 않음
   → (해결) `ObservableCollection`인지 확인(단순 `List<T>`는 변경 알림 없음)
-- (문제) 상위 VM 속성을 템플릿 내부에서 못 참조  
+- (문제) 상위 VM 속성을 템플릿 내부에서 못 참조
   → (해결) `RelativeSource AncestorType` 또는 `x:Reference` 사용
 
 ---
@@ -372,9 +372,9 @@ public class Order { public string Id { get; set; }=""; public decimal Total { g
 ---
 
 ### 정리
-- **DataContext**로 뷰와 뷰모델을 연결하고,  
-- **INPC / ObservableCollection / ICommand**로 변경·컬렉션·동작을 노출하며,  
-- **Binding 옵션/Converter/RelativeSource**로 복잡한 UI 요구사항을 선언형으로 해결하세요.  
+- **DataContext**로 뷰와 뷰모델을 연결하고,
+- **INPC / ObservableCollection / ICommand**로 변경·컬렉션·동작을 노출하며,
+- **Binding 옵션/Converter/RelativeSource**로 복잡한 UI 요구사항을 선언형으로 해결하세요.
 
-이 구조를 지키면 **테스트 가능한 설계**와 **유지보수 쉬운 UI**를 얻을 수 있습니다.  
+이 구조를 지키면 **테스트 가능한 설계**와 **유지보수 쉬운 UI**를 얻을 수 있습니다.
 원하시면 위 코드를 기반으로 하는 **MVVM 스타터 템플릿**도 만들어 드릴게요.

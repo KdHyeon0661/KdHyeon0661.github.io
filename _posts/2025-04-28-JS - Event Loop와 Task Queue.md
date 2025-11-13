@@ -74,10 +74,10 @@ requestAnimationFrame(() => {
 ## 3. 브라우저 이벤트 루프(개략 알고리즘)
 
 ### 3.1 한 턴의 흐름
-1) **콜 스택**이 비면  
-2) **Microtask Queue**가 빌 때까지 계속 실행 (무한 생성 주의)  
-3) 필요 시 **렌더 단계** 진입 (스타일/레이아웃/페인트)  
-4) 그 다음 **Macro task**를 1개 꺼내 실행  
+1) **콜 스택**이 비면
+2) **Microtask Queue**가 빌 때까지 계속 실행 (무한 생성 주의)
+3) 필요 시 **렌더 단계** 진입 (스타일/레이아웃/페인트)
+4) 그 다음 **Macro task**를 1개 꺼내 실행
 5) 반복
 
 ```mermaid
@@ -106,11 +106,11 @@ console.log("4");
 ## 4. Node.js 이벤트 루프(libuv) 개요
 
 ### 4.1 phases 순서(간단화)
-1) **timers**: `setTimeout`/`setInterval` 만기 콜백  
-2) **pending callbacks**: 일부 I/O 콜백  
-3) **idle/prepare**  
-4) **poll**: I/O 이벤트 수집/실행(대기/즉시 실행)  
-5) **check**: `setImmediate` 콜백  
+1) **timers**: `setTimeout`/`setInterval` 만기 콜백
+2) **pending callbacks**: 일부 I/O 콜백
+3) **idle/prepare**
+4) **poll**: I/O 이벤트 수집/실행(대기/즉시 실행)
+5) **check**: `setImmediate` 콜백
 6) **close callbacks**
 
 - 각 phase 사이사이마다 **microtasks**가 비워짐.
@@ -292,18 +292,18 @@ arr.forEach(async v => {
 **해결**: 직렬 `for...of` 또는 병렬 `Promise.all(map)`.
 
 ### 10.2 Microtask 폭주로 렌더 기회 소실
-- `Promise.resolve().then(재귀 등록)` 패턴은 프레임 드랍 유발 가능.  
+- `Promise.resolve().then(재귀 등록)` 패턴은 프레임 드랍 유발 가능.
   **해결**: 일정 단계마다 매크로태스크로 양보(`setTimeout 0`).
 
 ### 10.3 Node의 `process.nextTick` 남용
-- `nextTick`은 지나치게 우선. 과도하면 I/O 굶주림.  
+- `nextTick`은 지나치게 우선. 과도하면 I/O 굶주림.
   **해결**: 일반 마이크로태스크(`Promise`)나 적절한 phase(`setImmediate`)로 이동.
 
 ### 10.4 `setTimeout(fn, 0)`의 “즉시 실행” 오해
 - 0은 **최소 지연 보장 X**, 환경별 **최소 지연 시간(clamp)** 가 있음.
 
 ### 10.5 rAF에서 비싼 동기 작업
-- rAF 콜백에서 무거운 연산 → 다음 프레임 미스.  
+- rAF 콜백에서 무거운 연산 → 다음 프레임 미스.
   **해결**: 작업 분할/워커/타임슬라이스.
 
 ---
@@ -317,7 +317,7 @@ setTimeout(() => console.log("timeout"), 0);
 Promise.resolve().then(() => console.log("promise"));
 console.log("end");
 ```
-**출력**: `start → end → promise → timeout`  
+**출력**: `start → end → promise → timeout`
 **이유**: 동기 → 마이크로태스크 → 매크로태스크.
 
 ### 11.2 rAF과 Micro/Macro
@@ -418,16 +418,16 @@ fs.readFile(__filename, () => {
 });
 ```
 
-**정답(일반적)**  
-- Q1: `S → E → M1 → M2 → T1`  
-- Q2: `X → Pm → R → Pt`  
+**정답(일반적)**
+- Q1: `S → E → M1 → M2 → T1`
+- Q2: `X → Pm → R → Pt`
 - Q3: `I → T` (일반적 경향; 실행 맥락/플랫폼에 따라 달라질 수 있음)
 
 ---
 
 ## 15. 요약
 
-- **스택이 비면** 이벤트 루프는 **Microtask 전부 → Macro task 1개** 순서로 소비합니다.  
-- 브라우저는 이 사이사이에 **렌더링**이 개입하며, rAF는 **렌더 직전** 실행됩니다.  
-- Node는 **libuv phases** + `process.nextTick`/Promise 마이크로태스크의 **우선순위**를 이해해야 합니다.  
+- **스택이 비면** 이벤트 루프는 **Microtask 전부 → Macro task 1개** 순서로 소비합니다.
+- 브라우저는 이 사이사이에 **렌더링**이 개입하며, rAF는 **렌더 직전** 실행됩니다.
+- Node는 **libuv phases** + `process.nextTick`/Promise 마이크로태스크의 **우선순위**를 이해해야 합니다.
 - **응답성(UX) 유지**를 위해 작업 분할·타임슬라이스·워커·적절한 큐 선택을 활용하세요.

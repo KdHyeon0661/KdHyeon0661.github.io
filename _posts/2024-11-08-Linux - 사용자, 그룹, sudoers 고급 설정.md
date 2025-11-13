@@ -22,14 +22,14 @@ name:passwd:UID:GID:gecos:home:shell
 - `shell`은 `/bin/bash`, `/usr/sbin/nologin` 등.
 
 ### UID/GID 범위 상식
-- 0: root  
-- 1–999(배포판마다 다름): **시스템 사용자**(로그인 불가/데몬용)  
+- 0: root
+- 1–999(배포판마다 다름): **시스템 사용자**(로그인 불가/데몬용)
 - 1000+: 일반 사용자(데스크톱/서버 사용자 계정 기본 시작점)
 
 ---
 
 ## 계정 생성·수정·삭제: adduser vs useradd
-- **Debian/Ubuntu**: `adduser`(대화형 래퍼) 권장, `useradd`(저수준)도 가능  
+- **Debian/Ubuntu**: `adduser`(대화형 래퍼) 권장, `useradd`(저수준)도 가능
 - **RHEL/Fedora**: `useradd`가 일반적, `adduser`는 링크 또는 별도 패키지
 
 ### 신규 사용자 생성(안전 템플릿)
@@ -44,10 +44,10 @@ sudo useradd -m -c "Dev Kim" -s /bin/bash devkim && sudo passwd devkim
 ```
 
 옵션 요약:
-- `-m`/`--create-home`: 홈 생성  
-- `-s`: 로그인 셸 지정  
-- `-c`/`--gecos`: 설명  
-- `-u`: UID 고정  
+- `-m`/`--create-home`: 홈 생성
+- `-s`: 로그인 셸 지정
+- `-c`/`--gecos`: 설명
+- `-u`: UID 고정
 - `-g`/`-G`: 주/보조 그룹 지정
 
 ### 스켈레톤(`/etc/skel`)과 기본값(`/etc/default/useradd`, `/etc/login.defs`)
@@ -201,7 +201,7 @@ sudo visudo              # 기본 /etc/sudoers
 sudo visudo -f /etc/sudoers.d/deploy
 sudo visudo -c           # 구문 검사
 ```
-- **직접 편집 금지**: `visudo`가 **경합/구문 오류**를 보호한다.  
+- **직접 편집 금지**: `visudo`가 **경합/구문 오류**를 보호한다.
 - **드롭인 권장**: `/etc/sudoers.d/*` 파일로 역할별 분리.
 
 ### sudoers 기본 항목 복습
@@ -227,10 +227,10 @@ Defaults        env_reset,timestamp_timeout=10
 Defaults:ADMINS secure_path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 Defaults:www    !authenticate
 ```
-- `timestamp_timeout=0`: 매번 패스워드  
-- `lecture=always`: 최초 사용 시 경고 메시지  
-- `requiretty`(RHEL 전통): 터미널 필요(자동화와 충돌 가능)  
-- `env_keep+=HTTP_PROXY` 등 환경 변수 보존 제어  
+- `timestamp_timeout=0`: 매번 패스워드
+- `lecture=always`: 최초 사용 시 경고 메시지
+- `requiretty`(RHEL 전통): 터미널 필요(자동화와 충돌 가능)
+- `env_keep+=HTTP_PROXY` 등 환경 변수 보존 제어
 - `secure_path`: PATH 고정(하이재킹 방지)
 
 ### 최소권한 부여(절대경로, 와일드카드/쉘 허용 금지)
@@ -244,8 +244,8 @@ Defaults:www    !authenticate
 > **위험 주의**: `tail -n *` 같은 와일드카드에서 `;`·`&`·백틱 등 **쉘 확장**으로 권한 상승 여지 없는지 검증. **더 안전한 방법은 스크립트 래퍼를 고정 경로로 제공**하고 인자를 제한하는 것.
 
 ### 환경/셸 탈출 방지 옵션
-- `NOEXEC`: 동적 로더를 이용한 하위 실행 차단(완전하지 않음)  
-- `SETENV`/`!SETENV`: 환경 변경 허용/금지  
+- `NOEXEC`: 동적 로더를 이용한 하위 실행 차단(완전하지 않음)
+- `SETENV`/`!SETENV`: 환경 변경 허용/금지
 - `sudoedit`: 안전한 편집(임시파일 + 소유권 유지), 에디터를 통한 권한 상승 트릭 줄이기
 
 ### 예시 모음
@@ -340,13 +340,13 @@ sudo chown root:root /etc/{passwd,shadow,group,gshadow}
 ---
 
 ## 보안 체크리스트(요지)
-- **최소 권한 원칙**: sudoers는 **역할별 드롭인 + 절대경로 + 인자 제한**  
-- **관리자 그룹 분리**: `wheel`/`sudo`/`devops` 등 **업무별 구분**  
-- **비밀번호 정책**: `pwquality`/`chage`로 **길이/이력/주기** 강제  
-- **로그인 실패 잠금**: `faillock` 등으로 공격 감속  
-- **SSH**: 키 기반, 홈/`.ssh` 권한 엄수, 필요 시 `AllowUsers`/`Match` 정책  
-- **시스템 사용자**: `/usr/sbin/nologin` 사용, `sudoedit`/`NOEXEC`로 셸 탈출 리스크 완화  
-- **협업 디렉터리**: **setgid+default ACL**로 일관 권한 유지  
+- **최소 권한 원칙**: sudoers는 **역할별 드롭인 + 절대경로 + 인자 제한**
+- **관리자 그룹 분리**: `wheel`/`sudo`/`devops` 등 **업무별 구분**
+- **비밀번호 정책**: `pwquality`/`chage`로 **길이/이력/주기** 강제
+- **로그인 실패 잠금**: `faillock` 등으로 공격 감속
+- **SSH**: 키 기반, 홈/`.ssh` 권한 엄수, 필요 시 `AllowUsers`/`Match` 정책
+- **시스템 사용자**: `/usr/sbin/nologin` 사용, `sudoedit`/`NOEXEC`로 셸 탈출 리스크 완화
+- **협업 디렉터리**: **setgid+default ACL**로 일관 권한 유지
 - **감사**: `sudo -l`, `journalctl -t sudo`, `last/lastlog`, 정기 점검 자동화
 
 ---

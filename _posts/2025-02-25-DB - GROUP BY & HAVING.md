@@ -8,34 +8,34 @@ category: DB
 
 ## 0. 빠른 로드맵
 
-1. 개념·실행 순서(논리적 단계)  
-2. GROUP BY 핵심 규칙(함정 포함)  
-3. HAVING 핵심 규칙(행 vs 그룹, 재필터링)  
-4. NULL·DISTINCT·조건부 집계 패턴  
-5. 다중 컬럼·표현식 그룹핑과 날짜 버킷팅(분/시/일/월/주)  
-6. 고급 집계: ROLLUP, CUBE, GROUPING SETS, GROUPING_ID  
-7. 집계 + 윈도 함수 경계(언제 무엇을 쓰는가)  
-8. 성능 최적화: 인덱스/프리카드·카디널리티/Pushdown/Partial Aggregation  
-9. 실전 시나리오 10선(코드 완비)  
-10. 다이얼렉트(MySQL/SQL Server/PostgreSQL/Oracle) 차이 요약  
+1. 개념·실행 순서(논리적 단계)
+2. GROUP BY 핵심 규칙(함정 포함)
+3. HAVING 핵심 규칙(행 vs 그룹, 재필터링)
+4. NULL·DISTINCT·조건부 집계 패턴
+5. 다중 컬럼·표현식 그룹핑과 날짜 버킷팅(분/시/일/월/주)
+6. 고급 집계: ROLLUP, CUBE, GROUPING SETS, GROUPING_ID
+7. 집계 + 윈도 함수 경계(언제 무엇을 쓰는가)
+8. 성능 최적화: 인덱스/프리카드·카디널리티/Pushdown/Partial Aggregation
+9. 실전 시나리오 10선(코드 완비)
+10. 다이얼렉트(MySQL/SQL Server/PostgreSQL/Oracle) 차이 요약
 11. 체크리스트
 
 ---
 
 ## 1. 개념과 실행 순서(논리적 파이프라인)
 
-**GROUP BY**는 동일 키를 가진 행을 묶어 **집계 함수**(`SUM/AVG/COUNT/MIN/MAX/STDDEV/VARIANCE …`)를 계산한다.  
+**GROUP BY**는 동일 키를 가진 행을 묶어 **집계 함수**(`SUM/AVG/COUNT/MIN/MAX/STDDEV/VARIANCE …`)를 계산한다.
 **HAVING**은 **그룹** 단위로 **집계 결과**를 필터링한다.
 
 SQL의 **논리적 실행 순서(개념적)**
 
-1. `FROM` … `JOIN`  
-2. `WHERE` (행 필터)  
-3. `GROUP BY` (그룹 생성)  
-4. 집계 함수 계산  
-5. `HAVING` (그룹 필터)  
-6. `SELECT` (표현식 산출, 별칭 생성)  
-7. `ORDER BY` (정렬)  
+1. `FROM` … `JOIN`
+2. `WHERE` (행 필터)
+3. `GROUP BY` (그룹 생성)
+4. 집계 함수 계산
+5. `HAVING` (그룹 필터)
+6. `SELECT` (표현식 산출, 별칭 생성)
+7. `ORDER BY` (정렬)
 8. `LIMIT/OFFSET` (페이지)
 
 > **핵심**: `WHERE`은 그룹 이전에 **행을 줄이는 필터**, `HAVING`은 그룹 이후에 **집계 결과로 필터**.
@@ -54,7 +54,7 @@ FROM Employee
 GROUP BY dept_id;
 ```
 
-- 일부 DB(옛 MySQL의 ONLY_FULL_GROUP_BY 비활성)는 비집계 컬럼이 GROUP BY에 없어도 **임의 값**을 반환할 수 있어 **위험**.  
+- 일부 DB(옛 MySQL의 ONLY_FULL_GROUP_BY 비활성)는 비집계 컬럼이 GROUP BY에 없어도 **임의 값**을 반환할 수 있어 **위험**.
   → **항상** `ONLY_FULL_GROUP_BY` 활성(또는 표준 준수).
 
 ```sql
@@ -63,7 +63,7 @@ SET sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ENGINE_SU
 ```
 
 ### 2.2 집계 없는 GROUP BY는 불가
-- **집계 함수 없이** `GROUP BY`만 쓰면 보통 의미가 없거나 오류.  
+- **집계 함수 없이** `GROUP BY`만 쓰면 보통 의미가 없거나 오류.
   (PostgreSQL은 `GROUP BY`만으로도 “중복 제거 + 정렬된 유사 효과”가 나지만 **집계가 목적**이 아니라면 `DISTINCT`가 더 명확.)
 
 ```sql
@@ -81,7 +81,7 @@ GROUP BY DATE(order_dt)
 ORDER BY d;
 ```
 
-> **성능 주의**: 인덱스 컬럼을 함수로 감싸면 인덱스를 못 타는 경우가 많다.  
+> **성능 주의**: 인덱스 컬럼을 함수로 감싸면 인덱스를 못 타는 경우가 많다.
 > 날짜 버킷팅은 **반열림 구간**이나 **계산 열/함수 기반 인덱스**로 인덱스 친화적으로 바꾸는 게 정석(8장 참조).
 
 ---
@@ -99,7 +99,7 @@ GROUP BY dept_id
 HAVING AVG(salary) >= 300;
 ```
 
-**재필터링 패턴**  
+**재필터링 패턴**
 - 우선 `WHERE`로 **행 수를 줄이고**, 이후 `HAVING`으로 그룹을 **다시 줄이는** 것이 일반적 성능 패턴.
 
 ---
@@ -107,7 +107,7 @@ HAVING AVG(salary) >= 300;
 ## 4. NULL, DISTINCT, 조건부 집계
 
 ### 4.1 NULL과 COUNT의 차이
-- `COUNT(*)` : NULL 포함 **전체 행수**  
+- `COUNT(*)` : NULL 포함 **전체 행수**
 - `COUNT(col)` : **NULL 제외** 카운트
 
 ```sql
@@ -118,7 +118,7 @@ FROM Customer;
 
 ### 4.2 DISTINCT와 집계
 - `COUNT(DISTINCT col)` : 고유 값 개수
-- 다중 컬럼 고유 개수: `COUNT(DISTINCT col1, col2)`(MySQL),  
+- 다중 컬럼 고유 개수: `COUNT(DISTINCT col1, col2)`(MySQL),
   SQL Server/PostgreSQL은 `COUNT(DISTINCT CONCAT(...))` 또는 구조에 따라 `COUNT(*)` + `DISTINCT` 서브쿼리.
 
 ```sql
@@ -272,7 +272,7 @@ GROUP BY customer_id;
 ```
 
 ### 8.2 인덱스와 집계
-- **그룹 키(=GROUP BY 컬럼)**에 **인덱스**가 있으면 **정렬/해시 작업 감소** 가능.  
+- **그룹 키(=GROUP BY 컬럼)**에 **인덱스**가 있으면 **정렬/해시 작업 감소** 가능.
 - MySQL InnoDB는 **인덱스 순회 + 조기 집계**가 이득인 경우가 많다(핵심: **선택도/카디널리티**).
 
 ```sql
@@ -281,11 +281,11 @@ CREATE INDEX ix_orders_customer_dt ON Orders (customer_id, order_dt);
 ```
 
 ### 8.3 DISTINCT vs GROUP BY 비용
-- “고유 목록”만 필요하면 `SELECT DISTINCT`가 명시적.  
+- “고유 목록”만 필요하면 `SELECT DISTINCT`가 명시적.
 - 다만 인덱스 유무/옵티마이저 계획에 따라 비용 차이가 있으므로 **실행계획 확인**.
 
 ### 8.4 계산 열/함수 기반 인덱스
-- 날짜 버킷팅 키(월/주/일)와 같이 **표현식 그룹핑**이 잦다면,  
+- 날짜 버킷팅 키(월/주/일)와 같이 **표현식 그룹핑**이 잦다면,
   **계산 열(또는 생성 열) + 인덱스**로 **SARGable**하게.
 
 ```sql
@@ -436,22 +436,22 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 | ROLLUP/CUBE/GROUPING SETS | 지원(8.0+) | 전부 지원 | 전부 지원 | 전부 지원 |
 | GROUPING_ID | 일부제공(버전 주의) | 지원 | 지원 | 지원 |
 
-> **PostgreSQL**의 `date_trunc`, **Oracle**의 `TRUNC(date, 'MM')`는 날짜 버킷팅이 간결하고 빠르다.  
+> **PostgreSQL**의 `date_trunc`, **Oracle**의 `TRUNC(date, 'MM')`는 날짜 버킷팅이 간결하고 빠르다.
 > **MySQL/SQL Server**는 **계산(생성) 열 + 인덱스** 패턴을 적극 활용.
 
 ---
 
 ## 11. 체크리스트
 
-- [ ] **비집계 컬럼 = 전부 GROUP BY** (표준 준수)  
-- [ ] 행 필터는 **WHERE**, 그룹 필터는 **HAVING**  
-- [ ] **조건부 집계**: `SUM(CASE WHEN ...)` 패턴 숙지  
-- [ ] **NULL 의미** 숙지: `COUNT(*)` vs `COUNT(col)`  
-- [ ] 날짜 집계는 **반열림 구간** + **계산 열/함수 인덱스**  
-- [ ] 다차원 소계는 **ROLLUP/CUBE/GROUPING SETS**  
-- [ ] **윈도 함수**는 “행별 누계/순위/이동합”, GROUP BY는 “그룹당 1행”  
-- [ ] **WHERE로 먼저 줄이고** HAVING으로 재필터  
-- [ ] **인덱스**: 그룹 키/프리카드 고려, 필요 시 함수 기반/계산 열  
+- [ ] **비집계 컬럼 = 전부 GROUP BY** (표준 준수)
+- [ ] 행 필터는 **WHERE**, 그룹 필터는 **HAVING**
+- [ ] **조건부 집계**: `SUM(CASE WHEN ...)` 패턴 숙지
+- [ ] **NULL 의미** 숙지: `COUNT(*)` vs `COUNT(col)`
+- [ ] 날짜 집계는 **반열림 구간** + **계산 열/함수 인덱스**
+- [ ] 다차원 소계는 **ROLLUP/CUBE/GROUPING SETS**
+- [ ] **윈도 함수**는 “행별 누계/순위/이동합”, GROUP BY는 “그룹당 1행”
+- [ ] **WHERE로 먼저 줄이고** HAVING으로 재필터
+- [ ] **인덱스**: 그룹 키/프리카드 고려, 필요 시 함수 기반/계산 열
 - [ ] 실행계획으로 **정렬/해시/스트림 집계** 비용 확인
 
 ---
@@ -491,16 +491,16 @@ LIMIT 5;
 ```
 
 ### D. 근사 고유 수(빅데이터)
-- **MySQL**: HyperLogLog 내장 없음 → 앱/ETL에서 계산 또는 ClickHouse/Redis HLL 활용  
-- **PostgreSQL/BigQuery/ClickHouse**: `approx_count_distinct`류 제공  
+- **MySQL**: HyperLogLog 내장 없음 → 앱/ETL에서 계산 또는 ClickHouse/Redis HLL 활용
+- **PostgreSQL/BigQuery/ClickHouse**: `approx_count_distinct`류 제공
 - 대용량 N:M 고유 집계는 **近似**를 고려(대시보드·랭킹 등).
 
 ---
 
 # 결론
 
-- `GROUP BY`/`HAVING`은 **정확한 통계·대시보드·요약 리포트**의 중심이다.  
-- **WHERE로 행을 줄이고 → GROUP BY로 요약 → HAVING으로 재필터**가 성능 골든루트.  
-- 날짜 버킷팅·조건부 집계·다중 축 소계(ROLLUP/CUBE/GROUPING SETS)·윈도 함수와의 경계까지 익히면 **대부분의 분석성 쿼리**를 고성능으로 구현할 수 있다.  
-- 마지막으로, **인덱스/계산 열/함수 기반 인덱스**와 **실행계획 확인**을 습관화하라.  
+- `GROUP BY`/`HAVING`은 **정확한 통계·대시보드·요약 리포트**의 중심이다.
+- **WHERE로 행을 줄이고 → GROUP BY로 요약 → HAVING으로 재필터**가 성능 골든루트.
+- 날짜 버킷팅·조건부 집계·다중 축 소계(ROLLUP/CUBE/GROUPING SETS)·윈도 함수와의 경계까지 익히면 **대부분의 분석성 쿼리**를 고성능으로 구현할 수 있다.
+- 마지막으로, **인덱스/계산 열/함수 기반 인덱스**와 **실행계획 확인**을 습관화하라.
   그 한 줄이 **수십 배 성능 차이**를 만든다.

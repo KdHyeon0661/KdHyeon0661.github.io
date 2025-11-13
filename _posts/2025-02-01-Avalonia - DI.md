@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM에서의 Dependency Injection 구조, 베스트 프랙티스 총정리
 
-초안의 핵심(서비스/뷰모델 DI, 수명 주기, 생성자 주입)을 그대로 유지하면서, **조금 더 실전적이고 확장 가능한 DI 설계**로 넓힌다.  
+초안의 핵심(서비스/뷰모델 DI, 수명 주기, 생성자 주입)을 그대로 유지하면서, **조금 더 실전적이고 확장 가능한 DI 설계**로 넓힌다.
 본 문서는 다음을 모두 다룬다.
 
 - DI 구성(두 가지 방식)
@@ -530,7 +530,7 @@ public partial class App : Application
 }
 ```
 
-**장점**: 단순/직관.  
+**장점**: 단순/직관.
 **단점**: 구성/로깅/환경변수/설정(AppSettings) 같은 “호스트 기능”은 직접 마련해야 한다.
 
 ---
@@ -700,7 +700,7 @@ public sealed class ViewLocator : IDataTemplate
 }
 ```
 
-> DI를 통해 **View까지** 만들고 싶다면 `Build` 내부에서 `App.Host.Services.GetRequiredService<SomeView>()`로 해결할 수 있다.  
+> DI를 통해 **View까지** 만들고 싶다면 `Build` 내부에서 `App.Host.Services.GetRequiredService<SomeView>()`로 해결할 수 있다.
 > 단, Avalonia의 XAML 로더와의 균형을 맞추기 위해 View는 보통 XAML 인스턴스화를 그대로 두고, **DataContext만 DI**로 공급하는 패턴이 흔하다.
 
 ### 4.2 App.axaml — DataTemplates 등록
@@ -853,7 +853,7 @@ public sealed class AppOptions
 }
 ```
 
-DI 바인딩은 위의 Host 구성에서 이미 보였다(`services.Configure<AppOptions>(...)`).  
+DI 바인딩은 위의 Host 구성에서 이미 보였다(`services.Configure<AppOptions>(...)`).
 VM에서 읽으려면 `IOptionsMonitor<AppOptions>` 주입:
 
 ```csharp
@@ -945,7 +945,7 @@ public sealed class ApiClient
 }
 ```
 
-등록은 Generic Host 예시에서 `AddHttpClient<ApiClient>`로 수행했다.  
+등록은 Generic Host 예시에서 `AddHttpClient<ApiClient>`로 수행했다.
 VM에서 주입받아 사용:
 
 ```csharp
@@ -1136,7 +1136,7 @@ public sealed class BackgroundRefresher
 public sealed record RefreshTick();
 ```
 
-**DI로 싱글턴** 등록 후 `App.OnFrameworkInitializationCompleted`에서 시작.  
+**DI로 싱글턴** 등록 후 `App.OnFrameworkInitializationCompleted`에서 시작.
 종료 시 `Stop`. 메시지는 `DashboardViewModel` 등에서 구독하여 UI 갱신.
 
 ---
@@ -1156,10 +1156,10 @@ public sealed record RefreshTick();
 
 ## 부록 A. 전체 실행 흐름(Host 버전)
 
-1) `App.OnFrameworkInitializationCompleted()` → `Host = Bootstrapper.BuildHost()`  
-2) `MainViewModel`을 `Host.Services.GetRequiredService<MainViewModel>()`로 호출 → DI가 내부적으로 `LoginViewModel` 등 생성  
-3) `MainWindow`의 `DataContext = MainViewModel`  
-4) `MainView`에는 `<ContentControl Content="{Binding Current}" />` + `ViewLocator`  
+1) `App.OnFrameworkInitializationCompleted()` → `Host = Bootstrapper.BuildHost()`
+2) `MainViewModel`을 `Host.Services.GetRequiredService<MainViewModel>()`로 호출 → DI가 내부적으로 `LoginViewModel` 등 생성
+3) `MainWindow`의 `DataContext = MainViewModel`
+4) `MainView`에는 `<ContentControl Content="{Binding Current}" />` + `ViewLocator`
 5) 페이지 전환은 `INavigationService.NavigateTo(vm)` 호출로 UI 반영
 
 ---
@@ -1205,9 +1205,9 @@ public sealed record RefreshTick();
 
 ## 결론
 
-- 본 문서는 초안의 DI 구성을 **확장/일반화**했다.  
-- 작은 프로젝트는 **App에서 간단 DI**로 시작해도 충분하다.  
-- 규모가 커질수록 **Generic Host**로 전환해 구성/로깅/옵션/HTTP/백그라운드까지 **표준화**하라.  
+- 본 문서는 초안의 DI 구성을 **확장/일반화**했다.
+- 작은 프로젝트는 **App에서 간단 DI**로 시작해도 충분하다.
+- 규모가 커질수록 **Generic Host**로 전환해 구성/로깅/옵션/HTTP/백그라운드까지 **표준화**하라.
 - ViewModel/Service는 항상 **생성자 주입**, View는 **XAML + DataContext만 DI**를 유지하면 MVVM과 DI가 자연스럽게 결합된다.
 
 필요 시 다음 단계로:

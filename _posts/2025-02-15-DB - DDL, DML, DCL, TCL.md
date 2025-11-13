@@ -12,7 +12,7 @@ category: DB
 - **DCL**: 권한 부여/회수(GRANT/REVOKE…); 사용자·롤 기반 접근 제어.
 - **TCL**: COMMIT/ROLLBACK/SAVEPOINT…; DML 수행 결과를 확정/철회.
 
-> 안전한 실무 플로우:  
+> 안전한 실무 플로우:
 > **DDL로 구조 준비 → DCL로 권한 설계 → DML로 데이터 작업 → TCL로 변경 확정**.
 
 ---
@@ -33,7 +33,7 @@ RENAME TABLE ...;   -- 또는 ALTER ... RENAME TO ...
 ```
 
 #### 실무 포인트
-- **DDL은 암묵적 커밋**: 동일 트랜잭션 내 다른 DML과 **원자적으로 롤백**되지 않을 수 있다(DBMS 차이 큼).  
+- **DDL은 암묵적 커밋**: 동일 트랜잭션 내 다른 DML과 **원자적으로 롤백**되지 않을 수 있다(DBMS 차이 큼).
 - **온라인 DDL 지원 범위**: 무중단 변경 가능 여부/락 레벨/백그라운드 빌드 비용이 DB마다 다르다.
 - **TRUNCATE**: 빠르지만 **회복 불가**(Oracle은 `FLASHBACK` 옵션/리사이클빈 등 예외적 경로 존재), 트리거 미발화가 보통.
 
@@ -149,7 +149,7 @@ ON (u.id = s.id)
 WHEN MATCHED THEN UPDATE SET u.email=s.email, u.name=s.name
 WHEN NOT MATCHED THEN INSERT (id,email,name) VALUES (s.id,s.email,s.name);
 ```
-- **충돌 키**와 **멱등성** 확보(동일 입력 반복 시 동일 결과).  
+- **충돌 키**와 **멱등성** 확보(동일 입력 반복 시 동일 결과).
 - 고부하 UPSERT는 **배치/버퍼**로 묶고, **락 경합**·**보조 인덱스 갱신 비용**을 감안.
 
 ### 2.3 벌크 로딩/삭제 전략
@@ -227,7 +227,7 @@ WITH (STATE = ON);
 GRANT SELECT ON employee TO analyst WITH GRANT OPTION;
 REVOKE GRANT OPTION FOR SELECT ON employee FROM analyst; -- 위임능력 회수
 ```
-- 소유권(OWNER)·스키마 USAGE/CREATE 권한 혼동 주의.  
+- 소유권(OWNER)·스키마 USAGE/CREATE 권한 혼동 주의.
 - 회수 시 **의존 객체**(뷰/프로시저) **실행 실패** 가능성 분석 필요.
 
 ---
@@ -253,10 +253,10 @@ ALTER TABLE payments ADD CONSTRAINT uq_req UNIQUE (request_id);
 ```
 
 ### 4.2 배포 시퀀스(Blue/Green)
-1) **DDL 사전 배포**: 새 칼럼 추가(널 허용/디폴트), 인덱스 백그라운드 빌드  
-2) **앱 이중 쓰기**: 구/신 칼럼 동시 기록(멱등)  
-3) **백필(Backfill)**: 배치로 과거 데이터 이전  
-4) **스위치 오버**: 앱 읽기 경로를 신 칼럼으로  
+1) **DDL 사전 배포**: 새 칼럼 추가(널 허용/디폴트), 인덱스 백그라운드 빌드
+2) **앱 이중 쓰기**: 구/신 칼럼 동시 기록(멱등)
+3) **백필(Backfill)**: 배치로 과거 데이터 이전
+4) **스위치 오버**: 앱 읽기 경로를 신 칼럼으로
 5) **구 칼럼 정리**(DDL Drop) — 충분한 관찰 기간 후
 
 ---
@@ -377,10 +377,10 @@ COMMIT;
 ## 7. 이식성 체크리스트(DDL/DML/DCL/TCL)
 
 - **자동 증가 키**: Postgres `SERIAL/IDENTITY`, MySQL `AUTO_INCREMENT`, SQL Server `IDENTITY`, Oracle `IDENTITY/SEQUENCE` — **표준화는 `GENERATED ... AS IDENTITY`**.
-- **UPSERT**: `ON CONFLICT`(PG) / `ON DUPLICATE KEY`(MySQL) / `MERGE`(MSSQL/Oracle).  
+- **UPSERT**: `ON CONFLICT`(PG) / `ON DUPLICATE KEY`(MySQL) / `MERGE`(MSSQL/Oracle).
   프로젝트 표준 API로 추상화.
 - **시간/타임존**: `TIMESTAMPTZ` vs `DATETIME`(TZ 없음). **UTC 저장** + 표시 시 변환.
-- **텍스트/Collation**: 대소문자/정렬·비교 규칙 차이가 유니크 제약에 영향.  
+- **텍스트/Collation**: 대소문자/정렬·비교 규칙 차이가 유니크 제약에 영향.
   Postgres `CITEXT`/정규화 인덱스, MySQL `utf8mb4` + collation 통일.
 - **권한·스키마 모델**: 스키마/데이터베이스/사용자/롤 개념 차이. **롤 기반 표준**을 정해 DB별 매핑.
 
@@ -388,9 +388,9 @@ COMMIT;
 
 ## 8. 감사(Compliance)·운영 거버넌스
 
-- **DDL 변경 기록**: 마이그레이션 도구(Flyway/Liquibase)로 **버전드 DDL**.  
-- **DML 중요 테이블**: CDC(Change Data Capture)/감사 트리거/로그 테이블.  
-- **DCL 변경**: 권한 변경은 **티켓·리뷰** 필수, 정기 스캔(권한 드리프트 방지).  
+- **DDL 변경 기록**: 마이그레이션 도구(Flyway/Liquibase)로 **버전드 DDL**.
+- **DML 중요 테이블**: CDC(Change Data Capture)/감사 트리거/로그 테이블.
+- **DCL 변경**: 권한 변경은 **티켓·리뷰** 필수, 정기 스캔(권한 드리프트 방지).
 - **백업/복구 리허설**: PITR(Point-in-time Recovery) 정기 점검.
 
 ---
@@ -446,15 +446,15 @@ GRANT report_reader TO dev_analyst;
 
 ## 10. 정리 — 실무에서의 작동 순서·원칙
 
-1. **DDL**: 스키마/인덱스/제약 설계 → 온라인 DDL 여부 확인 → 배포 창/백업 계획.  
-2. **DCL**: 롤 기반 최소권한 → 컬럼/행 단위 제어 필요 시 RLS·마스킹.  
-3. **DML**: 키셋 페이징·커버링 인덱스·UPSERT 멱등키 → 대량 작업은 벌크/파티션.  
-4. **TCL**: 격리 수준 합의 → SAVEPOINT/리트라이 패턴 → 배포 단계별 이중쓰기·백필.  
+1. **DDL**: 스키마/인덱스/제약 설계 → 온라인 DDL 여부 확인 → 배포 창/백업 계획.
+2. **DCL**: 롤 기반 최소권한 → 컬럼/행 단위 제어 필요 시 RLS·마스킹.
+3. **DML**: 키셋 페이징·커버링 인덱스·UPSERT 멱등키 → 대량 작업은 벌크/파티션.
+4. **TCL**: 격리 수준 합의 → SAVEPOINT/리트라이 패턴 → 배포 단계별 이중쓰기·백필.
 5. **운영**: 마이그레이션 버저닝·CDC/감사·권한 리뷰 → 백업/복구 연습.
 
-> **핵심 요지**:  
-> - DDL은 **가용성/락/암묵 커밋**을 동반하니, **온라인 전략**과 **배포 계획**이 필요하다.  
-> - DML은 **인덱스/격리/멱등성**으로 안전·빠르게.  
-> - DCL은 **롤 중심 최소권한**으로 감사를 견딘다.  
-> - TCL은 **리트라이·세이브포인트**로 부분 실패를 흡수한다.  
+> **핵심 요지**:
+> - DDL은 **가용성/락/암묵 커밋**을 동반하니, **온라인 전략**과 **배포 계획**이 필요하다.
+> - DML은 **인덱스/격리/멱등성**으로 안전·빠르게.
+> - DCL은 **롤 중심 최소권한**으로 감사를 견딘다.
+> - TCL은 **리트라이·세이브포인트**로 부분 실패를 흡수한다.
 > - 네 요소를 한 세트로 운영할 때, 스키마는 **안정적**이고 쿼리는 **빠르며**, 보안은 **감사 가능**해진다.

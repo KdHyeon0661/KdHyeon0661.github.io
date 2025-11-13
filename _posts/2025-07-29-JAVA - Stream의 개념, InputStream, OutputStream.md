@@ -25,7 +25,7 @@ category: Java
 
 ### 1.3 바이트 vs 문자
 - 본 문서: **바이트 스트림**(`InputStream`/`OutputStream`).
-- 사람이 읽는 텍스트는 **문자 스트림**(`Reader`/`Writer`) + **인코딩 지정** 권장(UTF-8).  
+- 사람이 읽는 텍스트는 **문자 스트림**(`Reader`/`Writer`) + **인코딩 지정** 권장(UTF-8).
   바이트↔문자 다리는 `InputStreamReader`/`OutputStreamWriter`.
 
 ---
@@ -43,7 +43,7 @@ category: Java
 | `void close()` | 자원 반납 |
 | `mark/reset/markSupported` | 일부 구현(예: `BufferedInputStream`)만 지원 |
 
-> **반복문 패턴(정석)**  
+> **반복문 패턴(정석)**
 > `read(...)`는 요청한 만큼 **항상** 채워주지 않습니다. 반환값을 **반드시** 확인하고 누적하세요.
 
 ```java
@@ -87,7 +87,7 @@ static int readFully(InputStream in, byte[] b, int off, int len) throws IOExcept
 | `void flush()` | 내부 버퍼 강제 배출(네트워크/버퍼에 중요) |
 | `void close()` | 닫으며 flush |
 
-> **쓰기 루프 패턴**  
+> **쓰기 루프 패턴**
 > 보통 한 번의 `write`로 모두 전송되지만, 상위 레이어에서 부분 쓰기가 발생할 수 있음을 염두에 두고 **API 보장**을 확인하세요(채널 계층에서는 부분 쓰기 흔함).
 
 ### 3.2 구현 클래스
@@ -400,9 +400,9 @@ try (InputStream in = MyApp.class.getResourceAsStream("/templates/welcome.txt"))
 - **에러 문맥 로깅**(경로, 바이트 오프셋, 엔트리명 등).
 
 ### 15.2 피해야 할 것
-- `available()`를 **파일 크기**로 사용(오개념).  
+- `available()`를 **파일 크기**로 사용(오개념).
   → 파일 크기는 `Files.size(path)` 또는 채널 `size()` 사용.
-- 바이트를 **곧바로 `char` 캐스팅**(텍스트 인코딩 무시).  
+- 바이트를 **곧바로 `char` 캐스팅**(텍스트 인코딩 무시).
   → 반드시 `InputStreamReader(UTF-8)` 사용.
 - 동일 파일을 여러 스트림으로 **동시 쓰기**(데이터 손상).
 - `ObjectInputStream`을 **불신 입력**에 사용(취약).
@@ -494,9 +494,9 @@ static void slice(Path src, Path dst, long offset, long length) throws IOExcepti
 
 ## 19. 결론
 
-- `InputStream`/`OutputStream`은 **바이트 I/O의 표준 축**입니다.  
-- **버퍼링 + 올바른 읽기/쓰기 루프 + `try-with-resources` + 상황별 필터 스트림**을 조합하면, 파일/네트워크/압축/체크섬/직렬화 등 대부분의 I/O 니즈를 **안전하고 빠르게** 충족할 수 있습니다.  
-- 임의 접근·고성능이 필요하면 **NIO 채널/버퍼/제로카피**를 검토하세요.  
+- `InputStream`/`OutputStream`은 **바이트 I/O의 표준 축**입니다.
+- **버퍼링 + 올바른 읽기/쓰기 루프 + `try-with-resources` + 상황별 필터 스트림**을 조합하면, 파일/네트워크/압축/체크섬/직렬화 등 대부분의 I/O 니즈를 **안전하고 빠르게** 충족할 수 있습니다.
+- 임의 접근·고성능이 필요하면 **NIO 채널/버퍼/제로카피**를 검토하세요.
 - 텍스트라면 **반드시 문자 스트림과 인코딩**을 사용해 데이터 무결성을 지키십시오.
 
 ```java

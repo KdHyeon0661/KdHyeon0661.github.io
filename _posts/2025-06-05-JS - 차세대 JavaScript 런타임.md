@@ -24,13 +24,13 @@ category: JavaScript
 ## 1. 런타임 기본 철학과 아키텍처
 
 ### Deno
-- **보안 기본값**: 파일/네트워크/환경변수 접근은 `--allow-*` 플래그가 있어야 한다.  
-- **표준 Web API 우선**: `fetch`, `Request/Response`, `URLPattern`, `WebCrypto`, `Streams` 등 브라우저와 닮은 표면을 유지.  
+- **보안 기본값**: 파일/네트워크/환경변수 접근은 `--allow-*` 플래그가 있어야 한다.
+- **표준 Web API 우선**: `fetch`, `Request/Response`, `URLPattern`, `WebCrypto`, `Streams` 등 브라우저와 닮은 표면을 유지.
 - **TS·포맷터·테스트·번들** 내장: 도구 종속성을 줄여 일관된 DX 제공.
 
 ### Bun
-- **속도 지상주의**: JS 런타임 + 번들러 + 테스트 러너 + 패키지 매니저를 **하나**로 묶어 극단적 성능과 단순화를 추구.  
-- **npm 1급 지원**: 기존 Node 프로젝트를 거의 그대로 실행.  
+- **속도 지상주의**: JS 런타임 + 번들러 + 테스트 러너 + 패키지 매니저를 **하나**로 묶어 극단적 성능과 단순화를 추구.
+- **npm 1급 지원**: 기존 Node 프로젝트를 거의 그대로 실행.
 - **JSX/TS/JSON 내장 파싱**: 별도 전처리 없이 구동.
 
 ---
@@ -65,8 +65,8 @@ export default {
 bun run bun-hello.ts
 ```
 
-> 관찰 포인트  
-> - Deno는 “명시적 권한”이 없으면 네트워크 바인딩 자체가 거부된다.  
+> 관찰 포인트
+> - Deno는 “명시적 권한”이 없으면 네트워크 바인딩 자체가 거부된다.
 > - Bun은 `fetch` 핸들러를 바로 노출하는 **서버 매니페스트 스타일**이 DX를 단순화한다.
 
 ---
@@ -139,7 +139,7 @@ console.log(sum(1, 2));
 ```bash
 bun run index.ts
 ```
-- 별도 설정 없이 TS/JSX 작동.  
+- 별도 설정 없이 TS/JSX 작동.
 - 타입체크는 `tsc --noEmit`로 별도 돌리는 것을 권장(속도와 역할 분리).
 
 ---
@@ -155,7 +155,7 @@ import { join } from "https://deno.land/std@0.224.0/path/join.ts";
 import _ from "npm:lodash@4.17.21";
 console.log(_.chunk([1,2,3,4], 2));
 ```
-- `npm:` 프리픽스로 npm 생태계를 활용 가능.  
+- `npm:` 프리픽스로 npm 생태계를 활용 가능.
 - `import_map.json`으로 별칭/잠금 관리 가능.
 
 `import_map.json`:
@@ -181,7 +181,7 @@ import axios from "axios";
 const { data } = await axios.get("https://httpbin.org/get");
 console.log(data);
 ```
-- **설치 속도**와 **실행 속도** 모두 빠름.  
+- **설치 속도**와 **실행 속도** 모두 빠름.
 - `node_modules`를 표준적으로 사용하므로 Node와 호환성 높음.
 
 ---
@@ -372,11 +372,11 @@ CMD ["bun", "run", "src/main.ts"]
 
 ## 10. 성능 최적화 체크리스트
 
-- **I/O를 스트림화**: 파일/네트워크 응답을 한 번에 메모리에 올리지 말 것.  
-- **JSON 파싱/직렬화 비용** 줄이기: 필요한 필드만, 가능하면 **NDJSON**/chunk 사용.  
-- **로깅 수준 조절**: 동기 파일 로깅 대신 비동기/버퍼.  
-- **Bun**: 라우팅/미들웨어 겹겹이 쌓기보다 **순수 fetch 핸들러**와 가까운 구조 유지.  
-- **Deno**: 권한/모듈 캐시 전략 확정, `deno.json`에 `tasks`로 반복 작업 단축.  
+- **I/O를 스트림화**: 파일/네트워크 응답을 한 번에 메모리에 올리지 말 것.
+- **JSON 파싱/직렬화 비용** 줄이기: 필요한 필드만, 가능하면 **NDJSON**/chunk 사용.
+- **로깅 수준 조절**: 동기 파일 로깅 대신 비동기/버퍼.
+- **Bun**: 라우팅/미들웨어 겹겹이 쌓기보다 **순수 fetch 핸들러**와 가까운 구조 유지.
+- **Deno**: 권한/모듈 캐시 전략 확정, `deno.json`에 `tasks`로 반복 작업 단축.
 - **프로파일링**: Deno `--inspect`/Bun `--inspect` 계열 디버깅 플래그로 CPU/Heap 분석.
 
 ---
@@ -384,10 +384,10 @@ CMD ["bun", "run", "src/main.ts"]
 ## 11. 마이그레이션 가이드
 
 ### 11.1 Node → Deno (점진)
-1) **표준 Web API** 사용 비율 높이기(특히 `fetch`, `URL`, `TextEncoder/Decoder`).  
-2) 모듈 경로를 상대/절대 URL로 정리.  
-3) npm 패키지는 `npm:` 접두로 옮기고 동작 확인.  
-4) 파일/네트워크 접근은 권한 스위치를 명시.  
+1) **표준 Web API** 사용 비율 높이기(특히 `fetch`, `URL`, `TextEncoder/Decoder`).
+2) 모듈 경로를 상대/절대 URL로 정리.
+3) npm 패키지는 `npm:` 접두로 옮기고 동작 확인.
+4) 파일/네트워크 접근은 권한 스위치를 명시.
 5) 스크립트화:
 ```json
 // deno.json
@@ -400,9 +400,9 @@ CMD ["bun", "run", "src/main.ts"]
 ```
 
 ### 11.2 Node → Bun (빠른 이식)
-1) `bun install`로 의존성 설치(속도 향상 체감).  
-2) `bun run index.ts`로 TS/JSX 즉시 실행.  
-3) 테스트는 `bun test`로 교체(가능하면).  
+1) `bun install`로 의존성 설치(속도 향상 체감).
+2) `bun run index.ts`로 TS/JSX 즉시 실행.
+3) 테스트는 `bun test`로 교체(가능하면).
 4) 성능 민감 구간에서 **즉시 개선** 체감(서버 스타트업, 번들링, 설치 속도).
 
 ---
@@ -554,9 +554,9 @@ export default {
 
 ## 15. 선택 가이드 (의사결정 트리)
 
-- **기존 Node 기반, npm 패키지 의존 강함** → **Bun**으로 속도 개선, 유지비 최소.  
-- **보안 정책 강함/서버리스·에지·표준 API 선호** → **Deno**.  
-- **성능 한계 타파·CI 시간 단축·빠른 부트스트랩** → **Bun** 우선 검토.  
+- **기존 Node 기반, npm 패키지 의존 강함** → **Bun**으로 속도 개선, 유지비 최소.
+- **보안 정책 강함/서버리스·에지·표준 API 선호** → **Deno**.
+- **성능 한계 타파·CI 시간 단축·빠른 부트스트랩** → **Bun** 우선 검토.
 - **장기 유지/팀 합의 필요** → PoC 두 개(동일 기능), **로드 테스트 + 운영성 평가**로 선택.
 
 ---
@@ -598,18 +598,18 @@ jobs:
 
 ## 17. 성능 미세 팁 모음
 
-- 응답 헤더 `content-type` 정확히 지정(파이프라인 최적화).  
-- 대용량 응답은 `ReadableStream`으로 **청크 전송**.  
-- JSON은 **`Response.json()`** (Deno/Bun 지원 시) 사용해 직렬화 비용 절약.  
-- CPU 바운드 작업은 **Worker/Thread/WASM** 고려.  
+- 응답 헤더 `content-type` 정확히 지정(파이프라인 최적화).
+- 대용량 응답은 `ReadableStream`으로 **청크 전송**.
+- JSON은 **`Response.json()`** (Deno/Bun 지원 시) 사용해 직렬화 비용 절약.
+- CPU 바운드 작업은 **Worker/Thread/WASM** 고려.
 - 캐시 전략: 인메모리 Map + TTL → Redis(원격) → KV/SQLite 순으로 승격.
 
 ---
 
 ## 18. 결론
 
-- **Bun**: “빠른 실행/설치/번들/테스트”가 **하나의 도구**로 응집된 런타임. **기존 Node 생태계를 거의 그대로** 품고 **속도 이점**을 준다.  
-- **Deno**: **보안 기본값**과 **표준 Web API**로 **현대적이고 안전한 서버/스크립트**를 만든다. **TS·도구 내장**이 운영 복잡도를 낮춘다.  
+- **Bun**: “빠른 실행/설치/번들/테스트”가 **하나의 도구**로 응집된 런타임. **기존 Node 생태계를 거의 그대로** 품고 **속도 이점**을 준다.
+- **Deno**: **보안 기본값**과 **표준 Web API**로 **현대적이고 안전한 서버/스크립트**를 만든다. **TS·도구 내장**이 운영 복잡도를 낮춘다.
 - **선택은 목적에 따라**: 보안·표준·서버리스 지향이면 Deno, 속도·DX·npm 호환이 중요하면 Bun. 대규모 운영은 **PoC→벤치→관측**으로 검증하자.
 
 ---
@@ -633,21 +633,21 @@ kill %1
 
 ## 부록 B) 문제 해결 Q&A
 
-- **Q. Deno에서 npm 패키지가 동작 안 해요.**  
+- **Q. Deno에서 npm 패키지가 동작 안 해요.**
   A. 우선 `npm:` 접두로 가져오는지 확인. Node 전용 API(`fs-extra`의 CJS-only 등)는 호환이 제한될 수 있다. 대안 모듈 또는 URL std 모듈 사용 고려.
 
-- **Q. Bun에서 일부 네이티브 애드온이 깨져요.**  
+- **Q. Bun에서 일부 네이티브 애드온이 깨져요.**
   A. 최신 Bun에서 점차 개선 중. 임시로 Node로 해당 부분만 분리하거나, WASM 대체/원격 서비스로 분리.
 
-- **Q. 타입체크와 실행을 분리하고 싶어요.**  
+- **Q. 타입체크와 실행을 분리하고 싶어요.**
   A. Bun: `tsc --noEmit` 별도 스텝. Deno: `deno check` 또는 `deno test`로 타입 오류 탐지.
 
 ---
 
 ## 참고 링크
 
-- Deno: https://deno.land  
-- Bun: https://bun.sh  
-- Deno 표준 라이브러리: https://deno.land/std  
-- Bun SQLite: https://bun.sh/docs/api/sqlite  
+- Deno: https://deno.land
+- Bun: https://bun.sh
+- Deno 표준 라이브러리: https://deno.land/std
+- Bun SQLite: https://bun.sh/docs/api/sqlite
 - WHATWG Streams/Fetch: https://developer.mozilla.org/en-US/docs/Web/API

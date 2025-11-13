@@ -23,9 +23,9 @@ category: AWS
 
 ### 1.1 구성 요소
 - **Stream**: 레코드의 논리적 파이프.
-- **Shard(샤드)**: 처리량 단위.  
-  - **Write 한도**: 1 MB/s 또는 1,000 records/s  
-  - **Read 한도**: 2 MB/s  
+- **Shard(샤드)**: 처리량 단위.
+  - **Write 한도**: 1 MB/s 또는 1,000 records/s
+  - **Read 한도**: 2 MB/s
 - **Partition Key**: 해시로 샤드에 매핑. **샤드 내 순서 보장** 단위.
 - **Retention**: 기본 24시간, 최대 **365일**(장기 보관 옵션). 재처리/리플레이 설계의 핵심.
 - **Enhanced Fan-Out(EFO)**: 소비자별 2 MB/s 전용 채널(푸시 기반). 다수 소비자·저지연에 유리.
@@ -54,8 +54,8 @@ $$
 > 팁: 초기에 여유있게 시작하기보다 **모니터링 기반 Resharding**(Split/Merge) 또는 **On-Demand 모드**로 진입 장벽을 낮춘다.
 
 ### 1.3 Partition Key 설계 핵심
-- **분산성** 확보: hot partition(특정 키 집중) 방지.  
-- 키 후보: `userId`, `sessionId`, `deviceId`(충분히 다양), 필요시 **해시 prefix** 부여.  
+- **분산성** 확보: hot partition(특정 키 집중) 방지.
+- 키 후보: `userId`, `sessionId`, `deviceId`(충분히 다양), 필요시 **해시 prefix** 부여.
 - 순서 보장 요구 시: **동일 키 → 동일 샤드 → 순서 보장**. 단, 처리량 상한 고려.
 
 ---
@@ -113,7 +113,7 @@ put_batch(500)  # 최대 500/요청, 5MB/요청
 
 ### 3.3 KPL(Kinesis Producer Library) – 고TPS 팁
 - 장점: 자동 **집계/압축/재시도**, 네트워크 효율 최적화 → **PUT 요금 절감**.
-- 고려: 소비 측 **Deaggregation** 필요(KCL/SDK 지원).  
+- 고려: 소비 측 **Deaggregation** 필요(KCL/SDK 지원).
 - JVM/네이티브 의존성 운영 고려(컨테이너 이미지에 포함).
 
 ---
@@ -164,8 +164,8 @@ def lambda_handler(event, context):
 - 샤드당 동시성/배치 설정으로 처리량·지연 균형 맞추기.
 
 ### 4.4 KCL(Kinesis Client Library) – 프로덕션 등뼈
-- 기능: **샤드 할당/리밸런싱/체크포인팅/리샤딩 대응** 자동화.  
-- 체크포인트 저장: DynamoDB(자동 생성 테이블).  
+- 기능: **샤드 할당/리밸런싱/체크포인팅/리샤딩 대응** 자동화.
+- 체크포인트 저장: DynamoDB(자동 생성 테이블).
 - 언어: Java(정석), Python/Node 래퍼 존재.
 
 ---
@@ -240,7 +240,7 @@ def lambda_handler(event, context):
 
 ### 7.2 암호화/네트워크
 - **SSE-KMS**(서버측 암호화) 활성화.
-- 전송구간 TLS 1.2+.  
+- 전송구간 TLS 1.2+.
 - 사설 통신: **VPC 인터페이스 엔드포인트**로 프라이빗 경로 확보.
 
 ---
@@ -289,7 +289,7 @@ On-Demand는 **GB 처리량**과 **스트림 시간**을 가중.
 ## 10. 패턴별 아키텍처 예시
 
 ### 10.1 KDS → Lambda → (SQS DLQ) → DynamoDB
-- 단순 이벤트 처리/Enrichment/알림.  
+- 단순 이벤트 처리/Enrichment/알림.
 - DLQ로 **데이터 손실 0** 설계.
 
 ### 10.2 KDS → KDA(Flink/SQL) → Firehose → S3/Redshift
@@ -326,32 +326,32 @@ resource "aws_lambda_event_source_mapping" "kinesis" {
 
 ## 12. 종단간 실습 시나리오 (End-to-End)
 
-1) **Stream 생성**: `my-stream`, PROVISIONED shard=1  
-2) **Producer 배치 주입**(위 Python `put_batch` 500/초)  
-3) **Consumer: Lambda** 배치=500, 윈도=1s, DLQ=SQS 연결  
-4) **알람**: IteratorAge>60s 시 SNS 통보  
-5) **부하 상승** → `IncomingBytes`/`IteratorAge` 확인  
-6) **Split-shard** 실행 또는 On-Demand 전환  
-7) **Hot key** 발견 시 producer 파티션 키 설계 변경 롤아웃  
+1) **Stream 생성**: `my-stream`, PROVISIONED shard=1
+2) **Producer 배치 주입**(위 Python `put_batch` 500/초)
+3) **Consumer: Lambda** 배치=500, 윈도=1s, DLQ=SQS 연결
+4) **알람**: IteratorAge>60s 시 SNS 통보
+5) **부하 상승** → `IncomingBytes`/`IteratorAge` 확인
+6) **Split-shard** 실행 또는 On-Demand 전환
+7) **Hot key** 발견 시 producer 파티션 키 설계 변경 롤아웃
 8) **비용 검토**: KPL 적용 → PutRequests 감소, 다운스트림 Parquet 변환
 
 ---
 
 ## 13. 자주 묻는 질문(FAQ)
 
-**Q1. 레코드 최대 크기/요청 제한은?**  
-A. 레코드 **최대 1MB**. `PutRecords`는 **500개/5MB** 제한.  
+**Q1. 레코드 최대 크기/요청 제한은?**
+A. 레코드 **최대 1MB**. `PutRecords`는 **500개/5MB** 제한.
 
-**Q2. 순서 보장과 처리량을 동시에 높이려면?**  
+**Q2. 순서 보장과 처리량을 동시에 높이려면?**
 A. “완전 전역 순서”는 비용↑병목↑. **순서가 필요한 단위로 파티셔닝**(키 샤딩)하고, 소비자에서 **부분 순서** 허용/보상 로직 설계.
 
-**Q3. 중복 방지는 어떻게?**  
+**Q3. 중복 방지는 어떻게?**
 A. 멱등 처리: 고유키 기반 upsert/조건식, 해시키, **Exactly-once**는 Flink 상태/싱크에서 달성.
 
-**Q4. Lambda vs KCL 선택 기준?**  
+**Q4. Lambda vs KCL 선택 기준?**
 A. **간단·관리형**(운영 단순성/자동 스케일) → Lambda. **정교한 체크포인트·세밀 제어** → KCL.
 
-**Q5. Firehose와 차이는?**  
+**Q5. Firehose와 차이는?**
 A. Firehose는 **목적지 전송 중심(ETL/버퍼/압축/포맷)**, KDS는 **고성능 스트림 버스**. 필요 시 **KDS→Firehose** 연동.
 
 ---
@@ -417,6 +417,6 @@ $$
 
 ## 결론
 
-Kinesis는 **수집(Streams)**, **전송(Firehose)**, **분석(Analytics)**을 관통하는 **실시간 데이터 백본**이다.  
-핵심은 **파티션 키 설계/샤드 산정/멱등 소비/관측·알람/리샤딩 운영**이다.  
+Kinesis는 **수집(Streams)**, **전송(Firehose)**, **분석(Analytics)**을 관통하는 **실시간 데이터 백본**이다.
+핵심은 **파티션 키 설계/샤드 산정/멱등 소비/관측·알람/리샤딩 운영**이다.
 본 가이드를 **템플릿** 삼아, 작은 트래픽부터 **관측→튜닝→확장** 루프를 돌리면 **안정적이고 비용 효율적인** 스트리밍 플랫폼을 구축할 수 있다.

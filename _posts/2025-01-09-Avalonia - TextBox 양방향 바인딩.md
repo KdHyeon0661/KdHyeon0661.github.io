@@ -420,7 +420,7 @@ public sealed class ThrottledSearchViewModel : ReactiveObject
             {
                 if (string.IsNullOrWhiteSpace(q)) return "대기";
                 // 실제 비동기 검색 호출로 대체
-                await Task.Delay(200); 
+                await Task.Delay(200);
                 return $"결과: '{q}' 관련 3건";
             })
             .ObserveOn(RxApp.MainThreadScheduler)
@@ -489,15 +489,15 @@ public class BindingTests
 
 ## 10. 자주 겪는 문제와 해결책
 
-- **바인딩이 안 먹는다**  
+- **바인딩이 안 먹는다**
   네임스페이스(`using:`), 프로퍼티 이름 오타, `ReactiveObject` 상속/`RaiseAndSetIfChanged` 누락 여부 확인. 출력 창의 바인딩 오류 로그를 확인하자.
-- **성능**  
+- **성능**
   실시간 처리 비용이 크면 `UpdateSourceTrigger=LostFocus`나 `Throttle`을 고려한다.
-- **숫자/포맷**  
+- **숫자/포맷**
   단순 표시만이면 `StringFormat`으로 충분. ViewModel 타입 변환까지 하려면 `IValueConverter` 사용.
-- **검증 UX**  
+- **검증 UX**
   입력 차단보다는 “허용 + 오류 표시”가 UX상 자연스러울 때가 많다. 저장/전송 버튼의 `CanExecute`와 결합하라.
-- **WPF에서 넘어올 때**  
+- **WPF에서 넘어올 때**
   Avalonia의 바인딩 구문/개념은 유사하지만, `ListView+GridViewColumn` 같은 일부 패턴은 다르다. TextBox/Validation은 개념적으로 거의 동일하게 쓸 수 있다.
 
 ---
@@ -518,5 +518,5 @@ public class BindingTests
 
 ## 12. 결론
 
-본 글은 기본적인 **TextBox ⇄ ViewModel 양방향 바인딩**을 넘어, 실무에서 요구되는 **검증, 변환, 포맷, 디바운스, 입력 제어**까지 통합하는 방법을 다뤘다.  
+본 글은 기본적인 **TextBox ⇄ ViewModel 양방향 바인딩**을 넘어, 실무에서 요구되는 **검증, 변환, 포맷, 디바운스, 입력 제어**까지 통합하는 방법을 다뤘다.
 초안의 간결한 예제를 그대로 시작점으로 삼고, 여기서 소개한 확장 포인트를 상황에 맞게 조합하면 **견고하고 유연한 폼 입력 경험**을 만들 수 있다.

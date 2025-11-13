@@ -8,7 +8,7 @@ category: Avalonia
 
 ## 1. View란 무엇인가
 
-**View**는 사용자가 직접 보는 UI를 의미하며 Avalonia에서는 **`.axaml` 파일(XAML)** 로 정의된다.  
+**View**는 사용자가 직접 보는 UI를 의미하며 Avalonia에서는 **`.axaml` 파일(XAML)** 로 정의된다.
 MVVM 구조에서 View는 **표현과 레이아웃, 스타일**에 집중하고, **상태·동작은 ViewModel**이 담당한다. View는 일반적으로 **DataContext**로 ViewModel을 참조하며, 바인딩(속성/명령)으로 상호작용한다.
 
 ---
@@ -62,8 +62,8 @@ public partial class MainWindow : Window
 
 ## 3. 새 View 만들기
 
-1) `Views` 폴더에 **`.axaml` + `.axaml.cs`** 쌍 생성  
-2) `ViewModels` 폴더에 대응되는 ViewModel 생성  
+1) `Views` 폴더에 **`.axaml` + `.axaml.cs`** 쌍 생성
+2) `ViewModels` 폴더에 대응되는 ViewModel 생성
 3) View의 **DataContext**를 ViewModel로 연결
 
 ### 3.1 예: SettingsView.axaml
@@ -102,7 +102,7 @@ public partial class SettingsView : UserControl
 ```
 
 설계 팁
-- View 내부에서 DataContext를 직접 생성하지 말고, **App 초기화 시 DI로 주입**하거나 **DataTemplate 매핑**을 사용하는 방식으로 점진적 확장성을 확보하는 것이 바람직하다.  
+- View 내부에서 DataContext를 직접 생성하지 말고, **App 초기화 시 DI로 주입**하거나 **DataTemplate 매핑**을 사용하는 방식으로 점진적 확장성을 확보하는 것이 바람직하다.
   단, 간단 예제나 디자인 타임 힌트에서는 XAML 내부에서 생성해도 된다.
 
 ---
@@ -125,17 +125,17 @@ public partial class SettingsView : UserControl
 </StackPanel>
 ```
 
-주의: 네임스페이스 선언 필요  
+주의: 네임스페이스 선언 필요
 `xmlns:local="clr-namespace:MyApp.Views"`
 
 ---
 
 ## 5. 레이아웃 패널과 배치 전략
 
-대표 패널  
-- `StackPanel`: 수직/수평 스택. 간단 폼/툴바에 적합  
-- `Grid`: 정교한 행/열 배치. 대다수 화면의 기본  
-- `DockPanel`: 상하좌우 고정 + 중앙 채우기  
+대표 패널
+- `StackPanel`: 수직/수평 스택. 간단 폼/툴바에 적합
+- `Grid`: 정교한 행/열 배치. 대다수 화면의 기본
+- `DockPanel`: 상하좌우 고정 + 중앙 채우기
 - `UniformGrid`: 균일한 격자 배치
 
 ### 5.1 Grid 예시(대화면 기본 레이아웃)
@@ -418,7 +418,7 @@ View는 **상태 바인딩**과 **명령 바인딩**을 통해 ViewModel을 소�
 
 ## 11. 다이얼로그와 모달 View
 
-- 간단 팝업: `Window`를 생성하여 `ShowDialog<T>()`  
+- 간단 팝업: `Window`를 생성하여 `ShowDialog<T>()`
 - 권장: View에서 직접 창을 만들기보다 **IDialogService** 인터페이스로 추상화하고, DI로 구현체를 주입해 ViewModel에서 호출
 
 간단 예(서비스 인터페이스)
@@ -698,5 +698,5 @@ public class MainWindowViewModel : ViewModelBase
 
 ## 16. 결론
 
-초안의 핵심을 유지하면서, 실전 애플리케이션에서 View를 **조립 가능한 단위**로 설계하고, **DataTemplate/Locator**로 뷰 전환을 자동화하며, **스타일/리소스/템플릿**으로 테마를 체계화하는 방법을 확장했다.  
+초안의 핵심을 유지하면서, 실전 애플리케이션에서 View를 **조립 가능한 단위**로 설계하고, **DataTemplate/Locator**로 뷰 전환을 자동화하며, **스타일/리소스/템플릿**으로 테마를 체계화하는 방법을 확장했다.
 이 원칙을 따르면 View는 **가볍고 재사용 가능**해지고, ViewModel/서비스는 **테스트 가능한 구조**를 유지한다. 애플리케이션이 커져도 유지보수가 쉬운 **견고한 MVVM 기반 UI**를 지속적으로 확장할 수 있다.

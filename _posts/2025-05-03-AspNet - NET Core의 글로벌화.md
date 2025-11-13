@@ -8,12 +8,12 @@ category: AspNet
 
 ## 0. 로드맵
 
-1) **리소스 준비**: `.resx` or DB/JSON  
-2) **미들웨어**: `AddLocalization` + `UseRequestLocalization`  
-3) **문화권 발견(Providers)**: Query → Cookie → Header → (옵션) Route/Subdomain  
-4) **사용**: `IStringLocalizer<T>`, `IViewLocalizer`, `IHtmlLocalizer`  
-5) **데이터주석/유효성**: `AddDataAnnotationsLocalization()`  
-6) **형식화**: `CultureInfo.CurrentCulture`로 날짜/숫자/통화  
+1) **리소스 준비**: `.resx` or DB/JSON
+2) **미들웨어**: `AddLocalization` + `UseRequestLocalization`
+3) **문화권 발견(Providers)**: Query → Cookie → Header → (옵션) Route/Subdomain
+4) **사용**: `IStringLocalizer<T>`, `IViewLocalizer`, `IHtmlLocalizer`
+5) **데이터주석/유효성**: `AddDataAnnotationsLocalization()`
+6) **형식화**: `CultureInfo.CurrentCulture`로 날짜/숫자/통화
 7) **고급**: 라우트/링크, 플러럴/성별, 동적 번역, 캐싱/성능, 테스트/도구
 
 ---
@@ -171,7 +171,7 @@ public IActionResult OnPostSetLanguage(string culture, string? returnUrl = null)
 ```
 
 ### 4.3 쿼리스트링 방식 (간편 테스트)
-- `https://site.com/?culture=ko-KR`  
+- `https://site.com/?culture=ko-KR`
 - Provider 우선순위를 “Query → Cookie → Header”로 구성했으므로 즉시 반영
 
 ---
@@ -260,8 +260,8 @@ NameLength = 이름은 2자 이상 30자 이하여야 합니다.
 
 ## 7. 날짜/숫자/통화/모델바인딩
 
-- **출력**: `ToString("C", CultureInfo.CurrentCulture)` → 통화  
-- **입력/모델바인딩**: 폼의 숫자/날짜 패턴은 **현재 Culture**를 따른다  
+- **출력**: `ToString("C", CultureInfo.CurrentCulture)` → 통화
+- **입력/모델바인딩**: 폼의 숫자/날짜 패턴은 **현재 Culture**를 따른다
   (예: `fr-FR` 는 쉼표가 소수점, `MM/dd/yyyy` vs `dd/MM/yyyy` 이슈)
 
 ### 7.1 Razor 사용 예
@@ -314,8 +314,8 @@ app.MapGet("/hello", (IStringLocalizer<SharedResource> L) => new { message = L["
 
 `.resx`는 기본적으로 **단순 키-값**이다. 다음 패턴 중 하나를 고려:
 
-1) **키 분리**: `ItemsCount_Zero`, `ItemsCount_One`, `ItemsCount_Other`  
-2) **SmartFormat/Humanizer** 라이브러리 활용 (ICU 메시지 형식 유사)  
+1) **키 분리**: `ItemsCount_Zero`, `ItemsCount_One`, `ItemsCount_Other`
+2) **SmartFormat/Humanizer** 라이브러리 활용 (ICU 메시지 형식 유사)
 3) **PO 파일(OrchardCore.Localization)** 사용(고급 언어 규칙/플러럴 규칙 포함)
 
 ### 9.1 키 분리 예
@@ -406,7 +406,7 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ## 12. 국제화와 데이터 계층/정렬
 
-- **DB 정렬/Collation**(예: SQL Server `Korean_100_CI_AI` vs `Latin1_General_*`)은 **검색/정렬**에 큰 영향  
+- **DB 정렬/Collation**(예: SQL Server `Korean_100_CI_AI` vs `Latin1_General_*`)은 **검색/정렬**에 큰 영향
 - UI 문화권과 DB Collation이 다르면 정렬 결과가 사용자 기대와 다를 수 있음 → **문서화/정책화**
 - EF Core 쿼리 시 **서버측 정렬**이 DB Collation을 따른다(문화권별 정렬이 필요하면 별도 컬럼/별도 인덱스 고려)
 
@@ -544,21 +544,21 @@ EmailInvalid=올바른 이메일 형식이 아닙니다.
 
 ## 16. 운영 체크리스트 (요약)
 
-- [ ] `UseRequestLocalization`을 Routing 전에 구성  
-- [ ] Provider 순서: Route/Query/Cookie/Header 중 정책화  
-- [ ] `.resx` 네이밍/경로 표준(Shared/Validation/Feature별)  
-- [ ] DataAnnotationsLocalization 활성 + 공용 Validation 리소스  
-- [ ] 날짜/숫자/통화 포맷은 `CultureInfo.CurrentCulture`로 출력  
-- [ ] 플러럴/성별: 키 분리 또는 SmartFormat/Humanizer  
-- [ ] 동적 번역(DB/JSON) 시 캐시/무효화 설계  
-- [ ] 누락 키 로깅/테스트, Accept-Language 품질 필터  
+- [ ] `UseRequestLocalization`을 Routing 전에 구성
+- [ ] Provider 순서: Route/Query/Cookie/Header 중 정책화
+- [ ] `.resx` 네이밍/경로 표준(Shared/Validation/Feature별)
+- [ ] DataAnnotationsLocalization 활성 + 공용 Validation 리소스
+- [ ] 날짜/숫자/통화 포맷은 `CultureInfo.CurrentCulture`로 출력
+- [ ] 플러럴/성별: 키 분리 또는 SmartFormat/Humanizer
+- [ ] 동적 번역(DB/JSON) 시 캐시/무효화 설계
+- [ ] 누락 키 로깅/테스트, Accept-Language 품질 필터
 - [ ] SEO/UX: 라우트 문화권, 언어 스위처, RTL 레이아웃
 
 ---
 
 ## 결론
 
-ASP.NET Core의 Localization은 **리소스 기반의 단순 문자열 치환**을 넘어,  
-**라우팅/검증/모델바인딩/형식화/SEO/성능/운영**까지 **전 시스템적인 문화권 인지 설계**가 핵심이다.  
-작게 시작(Shared/Validation 리소스 + Provider 3종)해서,  
+ASP.NET Core의 Localization은 **리소스 기반의 단순 문자열 치환**을 넘어,
+**라우팅/검증/모델바인딩/형식화/SEO/성능/운영**까지 **전 시스템적인 문화권 인지 설계**가 핵심이다.
+작게 시작(Shared/Validation 리소스 + Provider 3종)해서,
 요구에 맞춰 **라우트 기반, 플러럴 처리, 동적 번역, 캐시/테스트 자동화**로 확장하라.

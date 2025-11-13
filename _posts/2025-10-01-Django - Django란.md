@@ -6,8 +6,8 @@ category: Django
 ---
 # 0. 시작하기 — Django란? 환경 설정, 첫 프로젝트/앱 생성 (Django 5.x 기준)
 
-> 이 글은 **Django 초심자~중급자**가 **실전 프로젝트**를 바로 시작할 수 있도록,  
-> “무엇을 왜 그렇게 하는지”까지 **맥락 + 예제 + 체크리스트**로 빠짐없이 정리한다.  
+> 이 글은 **Django 초심자~중급자**가 **실전 프로젝트**를 바로 시작할 수 있도록,
+> “무엇을 왜 그렇게 하는지”까지 **맥락 + 예제 + 체크리스트**로 빠짐없이 정리한다.
 > 모든 코드는 **```**로 감싼다. 수학식이 나오면 **$$**로 감싼다(본 글은 수학식이 없다).
 
 ---
@@ -15,37 +15,37 @@ category: Django
 ## 0-1. Django란? — 역사·철학(MTV)·Django 5.x 관점 핵심
 
 ### (1) Django의 탄생 배경과 철학
-- **신문사 콘텐츠 CMS**에서 출발(빠른 개발 속도에 초점)  
-- **“배터리 포함(batteries-included)”**: 인증, 관리자, ORM, 국제화, 보안 프레임워크 등 **웹 서비스 필수 기능**을 광범위하게 기본 제공  
-- **일관된 설계 철학**: 단순함, 명시성, DRY(Don’t Repeat Yourself), 보안 우선, 확장성  
-- **장점**  
-  - 공통 과제를 해결하는 **표준 부품**과 **Best Practice** 내장  
-  - 강력한 **ORM**으로 RDB 연동·마이그레이션 수월  
-  - **Admin**으로 초기 운영 도구 즉시 확보  
-  - **보안 기본값**(CSRF, XSS, Clickjacking 방어 옵션 등)  
+- **신문사 콘텐츠 CMS**에서 출발(빠른 개발 속도에 초점)
+- **“배터리 포함(batteries-included)”**: 인증, 관리자, ORM, 국제화, 보안 프레임워크 등 **웹 서비스 필수 기능**을 광범위하게 기본 제공
+- **일관된 설계 철학**: 단순함, 명시성, DRY(Don’t Repeat Yourself), 보안 우선, 확장성
+- **장점**
+  - 공통 과제를 해결하는 **표준 부품**과 **Best Practice** 내장
+  - 강력한 **ORM**으로 RDB 연동·마이그레이션 수월
+  - **Admin**으로 초기 운영 도구 즉시 확보
+  - **보안 기본값**(CSRF, XSS, Clickjacking 방어 옵션 등)
   - **테스트/국제화/배포**까지 **엔드투엔드 관점** 지원
-- **유스케이스**  
-  - 기업 정보시스템(내부·B2B)  
-  - 커뮤니티/커머스/콘텐츠 플랫폼  
-  - 백오피스/관리도구·데이터 포털  
+- **유스케이스**
+  - 기업 정보시스템(내부·B2B)
+  - 커뮤니티/커머스/콘텐츠 플랫폼
+  - 백오피스/관리도구·데이터 포털
   - API 백엔드(DRF 추가 시)
 
 ### (2) MTV 아키텍처(= Django의 MVC 해석)
-- **M(Model)**: 데이터/도메인 규칙 → Django ORM의 `models.Model`  
-- **T(Template)**: 프론트 표현 → DTL(Django Template Language)  
-- **V(View)**: 요청 처리·비즈니스 규칙 → 함수형 뷰/클래스형 뷰(CBV)  
+- **M(Model)**: 데이터/도메인 규칙 → Django ORM의 `models.Model`
+- **T(Template)**: 프론트 표현 → DTL(Django Template Language)
+- **V(View)**: 요청 처리·비즈니스 규칙 → 함수형 뷰/클래스형 뷰(CBV)
 - **URLconf**가 **컨트롤러 역할** 일부를 담당(라우팅을 통해 View 호출)
 
-**요청 흐름(고수준)**  
-1. 브라우저 → **URLconf** 매칭  
-2. **View** 진입(권한·폼 검증·서비스 로직·ORM 호출)  
-3. **Template** 렌더링(HTML) 또는 **JSON 응답** 반환  
+**요청 흐름(고수준)**
+1. 브라우저 → **URLconf** 매칭
+2. **View** 진입(권한·폼 검증·서비스 로직·ORM 호출)
+3. **Template** 렌더링(HTML) 또는 **JSON 응답** 반환
 4. **Middleware**는 요청/응답의 전후 훅에서 횡단 관심사 처리(보안 헤더, 로깅 등)
 
 ### (3) Django 5.x 관점(핵심 포인트 위주)
-- **ASGI(비동기) 서포트 성숙**: `async def` 뷰, 일부 ORM I/O 최적화 지향(단, ORM은 전면 async 완성 전환이 아닌, 제한적/선택적 활용이 일반적이었음)  
-- **Form/템플릿/유틸리티** 등 점진 개선, 오래된 API 정리·폐기 가속(장기 지원 정책에 따라 주기적 디프리케이션)  
-- **보안 디폴트 강화** 추세(보안 헤더/쿠키 속성/CSRF 개선 등)  
+- **ASGI(비동기) 서포트 성숙**: `async def` 뷰, 일부 ORM I/O 최적화 지향(단, ORM은 전면 async 완성 전환이 아닌, 제한적/선택적 활용이 일반적이었음)
+- **Form/템플릿/유틸리티** 등 점진 개선, 오래된 API 정리·폐기 가속(장기 지원 정책에 따라 주기적 디프리케이션)
+- **보안 디폴트 강화** 추세(보안 헤더/쿠키 속성/CSRF 개선 등)
 > 주: 5.x의 **세부 변경점 버전별 리스트**는 공식 문서 릴리스 노트를 확인. 실무 관점에서는 **비동기 대응, 보안 기본값, 테스트/타이핑/정적분석 친화성**을 체크리스트에 반영하면 된다.
 
 ---
@@ -53,7 +53,7 @@ category: Django
 ## 0-2. 개발 환경 설정 — Python/venv/Poetry, VS Code, 프로젝트 구조
 
 ### (1) 파이썬 설치 & 가상 환경(venv)
-- **권장 버전**: Django 5.x 라인과 호환되는 최신 안정 파이썬(3.10+ 권장)  
+- **권장 버전**: Django 5.x 라인과 호환되는 최신 안정 파이썬(3.10+ 권장)
 - **venv 생성/활성화**
 ```bash
 # Windows (PowerShell)
@@ -127,8 +127,8 @@ select = ["E", "F", "I"]
 ```
 
 ### (3) VS Code 설정 포인트
-- **익스텐션**: Python, Pylance, Django Template, GitLens, dotenv  
-- **Interpreter 선택**: `Ctrl/Cmd + Shift + P` → *Python: Select Interpreter* → `.venv`  
+- **익스텐션**: Python, Pylance, Django Template, GitLens, dotenv
+- **Interpreter 선택**: `Ctrl/Cmd + Shift + P` → *Python: Select Interpreter* → `.venv`
 - **디버그 설정**: `.vscode/launch.json` 예시
 ```json
 {
@@ -199,8 +199,8 @@ myproject/
 ## 0-3. 첫 프로젝트/앱 생성 — `django-admin` vs `manage.py`, 설정 분리(dev/prod)
 
 ### (1) django-admin과 manage.py의 차이
-- `django-admin`: **글로벌 진입점**(가상환경 PATH에 노출). 어떤 프로젝트 맥락 없이도 명령 실행 가능  
-- `manage.py`: **프로젝트 로컬 진입점**. 내부에서 `DJANGO_SETTINGS_MODULE`을 지정해 **해당 프로젝트 설정**을 자동 로드  
+- `django-admin`: **글로벌 진입점**(가상환경 PATH에 노출). 어떤 프로젝트 맥락 없이도 명령 실행 가능
+- `manage.py`: **프로젝트 로컬 진입점**. 내부에서 `DJANGO_SETTINGS_MODULE`을 지정해 **해당 프로젝트 설정**을 자동 로드
 - 실무에서는 **프로젝트 하위에서 `python manage.py <cmd>`** 사용이 안전하고 명확하다.
 
 간단 실험:
@@ -355,7 +355,7 @@ STATICFILES_DIRS = [
 개발 중에는 `runserver`가 자동 서빙. 운영에서는 Nginx 등 별도 서빙 권장.
 
 ### (6) 데이터베이스 & 마이그레이션 기본
-- 기본 SQLite 사용(시작에 충분)  
+- 기본 SQLite 사용(시작에 충분)
 - 모델 작성 → `makemigrations` → `migrate`
 
 `apps/core/models.py`:
@@ -402,8 +402,8 @@ python manage.py createsuperuser
 ## 0-4. 설정 분리(dev/prod) — django-environ + 다중 설정 모듈
 
 ### (1) 왜 분리하나?
-- **12-Factor** 원칙: 코드와 설정 분리, 환경변수로 비밀/환경값 관리  
-- 개발/운영 **동일 코드**로 **환경만 바꿔** 배포  
+- **12-Factor** 원칙: 코드와 설정 분리, 환경변수로 비밀/환경값 관리
+- 개발/운영 **동일 코드**로 **환경만 바꿔** 배포
 - 실수 방지: 디버그, 로깅 레벨, DB/캐시/도메인 등 **환경별 차이**를 명시적으로 분기
 
 ### (2) django-environ으로 .env 읽기
@@ -560,8 +560,8 @@ LOGGING = {
 }
 ```
 
-**실행 시 설정 모듈 지정**  
-- `manage.py`는 기본 `DJANGO_SETTINGS_MODULE="config.settings"`를 가정(단일 파일일 때)  
+**실행 시 설정 모듈 지정**
+- `manage.py`는 기본 `DJANGO_SETTINGS_MODULE="config.settings"`를 가정(단일 파일일 때)
 - 다중 파일로 바꿨다면 **명시**:
 ```bash
 # 개발
@@ -651,27 +651,27 @@ def test_home(client):
 
 ## 0-6. 실무 체크리스트(시작 단계)
 
-**프로젝트 기동 전**  
-- [ ] Python 3.10+ / venv(or Poetry)  
-- [ ] `pip install django django-environ`  
-- [ ] `django-admin startproject config .`  
-- [ ] `python manage.py startapp core`  
-- [ ] `apps.core`를 `INSTALLED_APPS`에 등록  
-- [ ] `core.urls`를 `config.urls`에 include  
+**프로젝트 기동 전**
+- [ ] Python 3.10+ / venv(or Poetry)
+- [ ] `pip install django django-environ`
+- [ ] `django-admin startproject config .`
+- [ ] `python manage.py startapp core`
+- [ ] `apps.core`를 `INSTALLED_APPS`에 등록
+- [ ] `core.urls`를 `config.urls`에 include
 - [ ] 기본 `home` 뷰 + 템플릿 연결
 
-**설정 분리/보안**  
-- [ ] `config/settings/base|dev|prod.py` 구성  
-- [ ] `.env`로 `SECRET_KEY`, DB URL, ALLOWED_HOSTS 관리  
-- [ ] `DEBUG=False`(운영), HSTS/SSL 리다이렉트/보안 쿠키 설정  
+**설정 분리/보안**
+- [ ] `config/settings/base|dev|prod.py` 구성
+- [ ] `.env`로 `SECRET_KEY`, DB URL, ALLOWED_HOSTS 관리
+- [ ] `DEBUG=False`(운영), HSTS/SSL 리다이렉트/보안 쿠키 설정
 - [ ] `collectstatic` 경로·Nginx 정적 서빙 설계
 
-**운영 진입 전**  
-- [ ] Admin 계정/권한/감사 로그 전략  
-- [ ] 기본 로깅(JSON/구조화) 또는 APM/Sentry 연동 설계  
-- [ ] DB 마이그레이션/백업 절차  
-- [ ] 헬스체크 엔드포인트(예: `/healthz`)  
-- [ ] 간단한 e2e 테스트(CI에서 `manage.py test`)  
+**운영 진입 전**
+- [ ] Admin 계정/권한/감사 로그 전략
+- [ ] 기본 로깅(JSON/구조화) 또는 APM/Sentry 연동 설계
+- [ ] DB 마이그레이션/백업 절차
+- [ ] 헬스체크 엔드포인트(예: `/healthz`)
+- [ ] 간단한 e2e 테스트(CI에서 `manage.py test`)
 
 ---
 
@@ -809,26 +809,26 @@ class ArticleForm(forms.ModelForm):
 
 ## 0-8. 운영을 미리 생각하는 습관(아주 기초)
 
-- **비밀 관리**: `.env`는 절대 커밋하지 말 것. 배포 환경은 **환경변수**로 주입.  
-- **ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS** 정확히 지정.  
-- **정적/미디어 파일**: `collectstatic` → Nginx/CloudFront로 서빙 설계.  
-- **DB 마이그레이션**: 배포 파이프라인에서 자동화(`python manage.py migrate`).  
-- **건강 체크/장애 대응**: 로깅 레벨, 타임아웃, 리버스 프록시 타임아웃, 5xx 가시성.  
+- **비밀 관리**: `.env`는 절대 커밋하지 말 것. 배포 환경은 **환경변수**로 주입.
+- **ALLOWED_HOSTS/CSRF_TRUSTED_ORIGINS** 정확히 지정.
+- **정적/미디어 파일**: `collectstatic` → Nginx/CloudFront로 서빙 설계.
+- **DB 마이그레이션**: 배포 파이프라인에서 자동화(`python manage.py migrate`).
+- **건강 체크/장애 대응**: 로깅 레벨, 타임아웃, 리버스 프록시 타임아웃, 5xx 가시성.
 - **테스트 최소한**: 뷰/모델/URL 역방향/폼 검증 1~2개만 있어도 실수 크게 줄어든다.
 
 ---
 
 ## 부록 A. 자주 만나는 에러/함정 Top 10
 
-1. `ALLOWED_HOSTS` 미설정 → 운영에서 400.  
-2. `DEBUG=True`로 배포 → 내부 정보 노출 위험.  
-3. 시크릿/DB 자격증명 커밋 → **레포 이력 영구 오염**. 즉시 폐기·재발급.  
-4. `TIME_ZONE`/`USE_TZ` 혼동 → 날짜가 어긋남. `Asia/Seoul` + `USE_TZ=True` 권장.  
-5. 마이그레이션 충돌 → 브랜치 간 모델 변경 병합 시 `--merge`와 주석 확인.  
-6. 정적/미디어 혼동 → 개발에서 보이는데 운영에서 404. `collectstatic`·Nginx 설정 점검.  
-7. 템플릿 경로/네임스페이스 충돌 → 앱별 폴더 네임스페이스로 분리.  
-8. 폼 검증 누락 → 빈 값·비정상 입력 저장. `form.is_valid()` 확인 및 에러 메시지 렌더링.  
-9. 권한 체크 누락 → Admin/Login 보호 필요.  
+1. `ALLOWED_HOSTS` 미설정 → 운영에서 400.
+2. `DEBUG=True`로 배포 → 내부 정보 노출 위험.
+3. 시크릿/DB 자격증명 커밋 → **레포 이력 영구 오염**. 즉시 폐기·재발급.
+4. `TIME_ZONE`/`USE_TZ` 혼동 → 날짜가 어긋남. `Asia/Seoul` + `USE_TZ=True` 권장.
+5. 마이그레이션 충돌 → 브랜치 간 모델 변경 병합 시 `--merge`와 주석 확인.
+6. 정적/미디어 혼동 → 개발에서 보이는데 운영에서 404. `collectstatic`·Nginx 설정 점검.
+7. 템플릿 경로/네임스페이스 충돌 → 앱별 폴더 네임스페이스로 분리.
+8. 폼 검증 누락 → 빈 값·비정상 입력 저장. `form.is_valid()` 확인 및 에러 메시지 렌더링.
+9. 권한 체크 누락 → Admin/Login 보호 필요.
 10. 메모리 캐시 오용 → 프로세스 재기동 시 휘발. Redis 등 외부 캐시 사용 고려.
 
 ---

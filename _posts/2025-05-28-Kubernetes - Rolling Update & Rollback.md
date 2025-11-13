@@ -41,7 +41,7 @@ spec:
 ```
 
 - `maxSurge`: **임시로 늘려도 되는** Pod 수
-- `maxUnavailable`: 배포 중 **잠시 비워도 되는** Pod 수  
+- `maxUnavailable`: 배포 중 **잠시 비워도 되는** Pod 수
 - 정수/퍼센트 혼용 가능(반올림 규칙에 유의)
 
 ### 1.3 가용성 계산 (직관)
@@ -327,7 +327,7 @@ kubectl rollout status deploy shop-api
 
 ## 12. 데이터베이스/스키마와 롤백
 
-**스키마 변경**이 수반되면 단순 롤백이 파괴적일 수 있습니다.  
+**스키마 변경**이 수반되면 단순 롤백이 파괴적일 수 있습니다.
 권장 패턴: **Expand → Code Switch → Contract**
 1. **Expand**: 새 컬럼/인덱스 추가(구 코드와 호환)
 2. **Code Switch**: 앱이 새 스키마 사용 시작
@@ -372,8 +372,8 @@ strategy:
 - **Readiness 전환 시간**(새 Pod이 Ready까지 걸린 시간 분포)
 
 임계치(예):
-- 에러율 상승률 \(\Delta \text{error\_rate} > 1\%\)  
-- p99 지연 \(> 800\text{ ms}\)  
+- 에러율 상승률 \(\Delta \text{error\_rate} > 1\%\)
+- p99 지연 \(> 800\text{ ms}\)
 - 새 Pod Ready 시간 p95 \(> 60\text{ s}\) → **자동 중단/롤백**
 
 ---

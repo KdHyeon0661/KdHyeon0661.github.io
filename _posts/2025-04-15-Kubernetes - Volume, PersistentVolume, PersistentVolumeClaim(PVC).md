@@ -65,9 +65,9 @@ Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ─�
 | RWX (ReadWriteMany) | 여러 노드에서 R/W | 파일(NFS, EFS, Azure Files, Filestore) | 다중 Pod 공유 쓰기 |
 | RWO-Pod (ReadWriteOncePod) | 한 Pod만 R/W | 드라이버 지원 필요 | 격리 강화 |
 
-실무 기준  
-- 단일 인스턴스 DB: RWO  
-- 여러 Pod가 공유하는 정적 콘텐츠: RWX  
+실무 기준
+- 단일 인스턴스 DB: RWO
+- 여러 Pod가 공유하는 정적 콘텐츠: RWX
 - 멀티존 환경: 토폴로지와 `volumeBindingMode` 고려
 
 ---
@@ -419,19 +419,19 @@ kubectl get events --sort-by=.lastTimestamp | tail -n 20
 
 ## 17. 설계 체크리스트
 
-- 접근 모드와 워크로드 패턴 정의  
+- 접근 모드와 워크로드 패턴 정의
   - 단일 Pod R/W(RWO)인지, 다중 Pod 공유(RWX)인지
-- 토폴로지/바인딩 전략  
+- 토폴로지/바인딩 전략
   - 멀티존/가용성 요구 시 `WaitForFirstConsumer`
-- 리클레임 정책  
+- 리클레임 정책
   - 보호 필요 시 `Retain`, 임시/테스트는 `Delete`
-- 확장/백업  
+- 확장/백업
   - `allowVolumeExpansion`, VolumeSnapshotClass 사전 준비
-- 권한/보안  
+- 권한/보안
   - `runAsUser`/`fsGroup`/SELinux, Secret로 자격증명 분리
-- 모니터링/알람  
+- 모니터링/알람
   - Attach/Mount 실패, PVC Pending 지속, IOPS/지연 관측
-- 비용/성능  
+- 비용/성능
   - IOPS/처리량/지연 요구를 스토리지 타입과 매칭
 
 ---

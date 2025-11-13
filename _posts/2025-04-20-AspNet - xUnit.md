@@ -8,9 +8,9 @@ category: AspNet
 
 ## 0. 왜 xUnit인가? (요약 복습)
 
-- .NET Core/ASP.NET Core 팀이 실무에서 사용하는 **경량·확장성·비동기 친화** 프레임워크  
-- MSTest/NUnit 대비 장점:  
-  - 생성자 기반 **Setup**, `IDisposable`/Fixture 기반 **Teardown**  
+- .NET Core/ASP.NET Core 팀이 실무에서 사용하는 **경량·확장성·비동기 친화** 프레임워크
+- MSTest/NUnit 대비 장점:
+  - 생성자 기반 **Setup**, `IDisposable`/Fixture 기반 **Teardown**
   - **async Task** 직접 지원, 어댑터 없이 **VS/CLI** 통합
 
 ---
@@ -399,7 +399,7 @@ public class MinimalApiTests : IClassFixture<ApiFactory>
 
 ## 8. EF Core 테스트 — InMemory vs SQLite(InMemory)
 
-- **InMemory Provider**: LINQ 동작이 실제 DB와 다를 수 있음(관계/제약 X)  
+- **InMemory Provider**: LINQ 동작이 실제 DB와 다를 수 있음(관계/제약 X)
 - **SQLite InMemory**: 실제 SQL 실행(제약/쿼리 변환 유사), **권장**
 
 ```csharp
@@ -608,13 +608,13 @@ jobs:
 
 ## 14. 실전 팁 (정확성·유지보수·속도)
 
-- **AAA 패턴**(Arrange-Act-Assert)을 지켜 가독성 확보  
-- 테스트 이름: `메서드_상태_기대결과` (예: `Get_Returns404_WhenNotFound`)  
-- **한 테스트는 하나의 결과**에 집중(단, 복합 결과는 합리적 그룹화)  
-- 외부 I/O(파일/HTTP/DB)는 **격리**하고 **속도** 유지(초 단위 내)  
-- **Flaky 방지**: 시간/랜덤/환경 추상화, 네트워크 의존성 제거  
-- **`VerifyNoOtherCalls`**로 의도치 않은 상호작용 제어  
-- **ProblemDetails/Validation**도 명시 검증  
+- **AAA 패턴**(Arrange-Act-Assert)을 지켜 가독성 확보
+- 테스트 이름: `메서드_상태_기대결과` (예: `Get_Returns404_WhenNotFound`)
+- **한 테스트는 하나의 결과**에 집중(단, 복합 결과는 합리적 그룹화)
+- 외부 I/O(파일/HTTP/DB)는 **격리**하고 **속도** 유지(초 단위 내)
+- **Flaky 방지**: 시간/랜덤/환경 추상화, 네트워크 의존성 제거
+- **`VerifyNoOtherCalls`**로 의도치 않은 상호작용 제어
+- **ProblemDetails/Validation**도 명시 검증
 - 통합 테스트에서도 **테스트용 DI 재정의**(페이크/스텁)로 안정화
 
 ---

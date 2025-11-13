@@ -10,7 +10,7 @@ category: Kubernetes
 
 스케줄러는 크게 **필터링(노드 후보군)** → **점수화(우선순위)** → **바인딩(선정)** 순서로 동작합니다.
 - **Node Affinity**/**(Anti-)Pod Affinity**는 *필터*와 *점수화*에 모두 관여합니다.
-- `requiredDuringSchedulingIgnoredDuringExecution` = **필수 조건(필터)**  
+- `requiredDuringSchedulingIgnoredDuringExecution` = **필수 조건(필터)**
 - `preferredDuringSchedulingIgnoredDuringExecution` = **선호 조건(스코어링)**
 
 > 실행 중엔 대부분 **IgnoredDuringExecution**(실행 중 조건 변화는 강제 재스케줄 안 함).
@@ -438,13 +438,13 @@ spec:
 | **Topology Spread** | 균등 분산(스케일 친화) | 대규모, 확정적 분산 |
 | **Taints/Tolerations** | 노드의 **거부** | 전용 노드 보호 |
 
-**원칙**: “**필요 최소한만 강제(required), 나머지는 선호(preferred)로 점진적 최적화**”.  
+**원칙**: “**필요 최소한만 강제(required), 나머지는 선호(preferred)로 점진적 최적화**”.
 라벨 표준화와 이벤트 기반 진단이 성공의 90%입니다.
 
 ---
 
 ## 참고
-- Node Affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity  
-- Pod (Anti-)Affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity  
-- Topology Spread: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/  
+- Node Affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+- Pod (Anti-)Affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+- Topology Spread: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/
 - Taints/Tolerations: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/

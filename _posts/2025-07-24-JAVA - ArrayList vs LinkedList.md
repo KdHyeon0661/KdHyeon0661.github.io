@@ -40,7 +40,7 @@ list.trimToSize();            // 여유 capacity를 size에 맞춰 줄이기
 - 각 요소는 `Node { E item; Node prev; Node next; }`로 **개별 객체**.
 - **앞/뒤 노드 참조**를 통한 연결.
 - **장점**: **현재 위치(ListIterator)가 있다면** 그 지점에서의 삽입/삭제가 **O(1)**.
-- **비용**: 임의 인덱스로 접근하려면 앞 또는 뒤에서부터 **선형 탐색** → O(n).  
+- **비용**: 임의 인덱스로 접근하려면 앞 또는 뒤에서부터 **선형 탐색** → O(n).
   Node 객체/포인터로 인한 **메모리·GC 오버헤드**도 큼.
 
 핵심 API(Deque 인터페이스도 구현):
@@ -52,7 +52,7 @@ list.peekFirst(); list.peekLast();
 list.push(x); list.pop(); // 스택처럼
 ```
 
-> **중요 정정**: “LinkedList의 중간 삽입/삭제가 O(1)”은 **정확히 말하면 ‘해당 노드 참조를 이미 보유한 경우’**입니다.  
+> **중요 정정**: “LinkedList의 중간 삽입/삭제가 O(1)”은 **정확히 말하면 ‘해당 노드 참조를 이미 보유한 경우’**입니다.
 > 보통은 **해당 지점까지 O(n) 탐색** 후 O(1) 링크 갱신이 일어나므로 총 O(n)이 됩니다.
 
 ---
@@ -141,7 +141,7 @@ public class UseArrayDeque {
 - 두 구현 모두 **modCount** 기반 **fail-fast iterator**: 반복 중 구조가 바뀌면 `ConcurrentModificationException`.
 - 해결:
   - 반복 중 구조 변경 대신 **Iterator의 `remove()`** 사용
-  - 병렬 환경이면 **동시성 컬렉션** 사용  
+  - 병렬 환경이면 **동시성 컬렉션** 사용
     (`CopyOnWriteArrayList`, `ConcurrentLinkedDeque` 등)
   - 또는 `Collections.synchronizedList(list)`로 감싸되, **반복 전체를 동기화 블록**으로 감싸기.
 
@@ -225,7 +225,7 @@ System.out.println(a);
 | 오버헤드 | 낮음 | 높음(객체 헤더 + prev/next 참조) |
 | GC 압력 | 상대적으로 낮음 | 상대적으로 높음 |
 
-> 정확한 바이트 수는 JVM/압축 OOPS 등 환경에 의존. **경향**만 기억:  
+> 정확한 바이트 수는 JVM/압축 OOPS 등 환경에 의존. **경향**만 기억:
 > LinkedList는 **요소 수만큼 추가 객체**가 생성되어 **메모리/GC 비용이 증가**.
 
 ---
@@ -245,7 +245,7 @@ System.out.println(a);
 - 이미 `List` API가 꼭 필요하다면 `LinkedList`의 `Deque` 메서드 사용
 
 ### 8.4 정렬/검색 중심(대량)
-- **ArrayList** + `sort` + `binarySearch`  
+- **ArrayList** + `sort` + `binarySearch`
 - 필요 시 `Collections.unmodifiableList`로 불변 뷰 제공
 
 ---
@@ -302,7 +302,7 @@ public class Micro {
 }
 ```
 
-- 대개 **중간 삽입**은 `LinkedList`도 **인덱스 기반**이면 매우 느립니다.  
+- 대개 **중간 삽입**은 `LinkedList`도 **인덱스 기반**이면 매우 느립니다.
   **반드시** `ListIterator`로 위치 고정 후 O(1) 삽입을 이용하세요.
 
 ---
@@ -354,25 +354,25 @@ for (int i = 0; i < n; i++) a.add(i);
 
 ## 13. 결론
 
-- **ArrayList**는 “연속 배열” 기반으로 **대부분의 일반적 시나리오에서 더 빠르고 간단**합니다.  
-- **LinkedList**는 **Iterator로 위치를 붙잡아 두고 주변을 국소적으로 조작**하는 특수 상황에서 의미가 있습니다.  
-- 큐/덱/스택은 **ArrayDeque**가 실전 표준입니다.  
+- **ArrayList**는 “연속 배열” 기반으로 **대부분의 일반적 시나리오에서 더 빠르고 간단**합니다.
+- **LinkedList**는 **Iterator로 위치를 붙잡아 두고 주변을 국소적으로 조작**하는 특수 상황에서 의미가 있습니다.
+- 큐/덱/스택은 **ArrayDeque**가 실전 표준입니다.
 - 성능은 **이론 복잡도 + JVM/하드웨어 특성**의 합. **측정(JMH)**으로 검증하세요.
 
 ---
 
 ## 부록 A) 흔한 인터뷰 질문 정리
 
-1. **LinkedList 중간 삽입 O(1)인가요?**  
+1. **LinkedList 중간 삽입 O(1)인가요?**
    → **그 지점의 노드 참조를 이미 갖고 있으면** O(1). 보통은 **탐색 O(n)+O(1)**로 **O(n)**.
 
-2. **왜 ArrayList가 실무에서 더 빠르다고 하나요?**  
+2. **왜 ArrayList가 실무에서 더 빠르다고 하나요?**
    → **캐시 지역성**과 **분기/포인터 추적 비용** 차이. 현대 CPU에서 연속 메모리 접근이 압도적으로 유리.
 
-3. **정렬/검색은 어떤 게 유리?**  
+3. **정렬/검색은 어떤 게 유리?**
    → **ArrayList**. LinkedList는 배열로 복사 후 정렬 등이 필요해 비용↑.
 
-4. **동시성?**  
+4. **동시성?**
    → 둘 다 비동기 안전 아님. 필요 시 **동시성 컬렉션/동기화 래퍼** 사용.
 
 ---

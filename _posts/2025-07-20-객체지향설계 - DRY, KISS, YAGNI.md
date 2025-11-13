@@ -8,9 +8,9 @@ category: 객체지향설계
 
 ## 0. 왜 DRY·KISS·YAGNI인가?
 
-- **SOLID**가 클래스/모듈 설계의 **원리**라면,  
+- **SOLID**가 클래스/모듈 설계의 **원리**라면,
   **DRY·KISS·YAGNI**는 팀이 **과설계/과최적화/중복**을 피하게 돕는 **실천 규범**이다.
-- 세 원칙은 **상호 보완**하지만 **긴장**도 있다(예: DRY 추상화 vs KISS 단순성).  
+- 세 원칙은 **상호 보완**하지만 **긴장**도 있다(예: DRY 추상화 vs KISS 단순성).
   → **적용 순서/시점**과 **증거 기반(테스트·측정)**이 중요하다.
 
 ---
@@ -43,9 +43,9 @@ category: 객체지향설계
 
 ### 1.3 리팩토링 레시피
 
-- **Extract Function/Method, Extract Class/Module**  
-- **Introduce Parameter / Template Method / Strategy / Policy**  
-- **Pull Up Method**(상속), **Composition**(구성)으로 공통화  
+- **Extract Function/Method, Extract Class/Module**
+- **Introduce Parameter / Template Method / Strategy / Policy**
+- **Pull Up Method**(상속), **Composition**(구성)으로 공통화
 - 공통 상수 → **Config/Enum/Value Object**로 이동
 
 #### 예: 문자적 중복 → 함수 추출 (Java)
@@ -84,7 +84,7 @@ $$
 - 도구: SonarQube/SonarCloud, PMD CPD, IntelliJ Duplicates.
 
 ### 1.5 주의: DRY vs AHA
-- **두 번 반복은 우연**, **세 번째에서 추상화**(*Rule of Three*).  
+- **두 번 반복은 우연**, **세 번째에서 추상화**(*Rule of Three*).
 - 과한 DRY는 **KISS** 위반 및 **변경 경로 결합**을 만든다(Shotgun Surgery 역설).
 
 ---
@@ -102,7 +102,7 @@ $$
 - **패턴 남용 금지**: 필요할 때만 도입(“작동하게 → 단순하게 → 빠르게”).
 
 ### 2.2 복잡도 직관
-- **Cyclomatic Complexity(CC)**는 분기 수에 비례.  
+- **Cyclomatic Complexity(CC)**는 분기 수에 비례.
   CC가 높을수록 테스트 케이스가 급증 → KISS 위반 신호.
 
 ### 2.3 예: 복잡 조건 → 의도 노출
@@ -119,7 +119,7 @@ private boolean canEnter(int age, boolean isMember, boolean hasInvitation){
 ```
 
 ### 2.4 패턴보다 합성
-- 상속 계층보다 **합성+역할(인터페이스)** 로 단순화.  
+- 상속 계층보다 **합성+역할(인터페이스)** 로 단순화.
 - 예: 데코레이터/체인으로 **조건에 따른 분기**를 **구성**으로 대체.
 
 ---
@@ -155,7 +155,7 @@ public void exportToXML(){ /* speculative */ }
 | DRY vs YAGNI(미래 확장 추상화) | **YAGNI 우선**(3회 반복 전엔 추상화 보류) |
 | 단순화를 위해 지식 중복 허용? | **일시적 허용** → 패턴/테스트로 **정제 시점** 명시 |
 
-**권장 흐름**  
+**권장 흐름**
 1) **작동하게**(Green) → 2) **단순하게**(KISS) → 3) **공통화**(DRY) → 4) **확장 시점에만**(YAGNI).
 
 ---
@@ -212,14 +212,14 @@ final class DiscountEngine {
 ```
 
 ### 5.4 YAGNI 체크
-- 아직 **조합 우선순위/스택/쿠폰중복** 요구가 없다면 **규칙 조합 엔진**(DSL)은 보류.  
+- 아직 **조합 우선순위/스택/쿠폰중복** 요구가 없다면 **규칙 조합 엔진**(DSL)은 보류.
 - 필요해지면 그때 **정렬/우선순위/단일/다중 적용 전략**을 추가.
 
 ---
 
 ## 6. 테스트 전략 — 세 원칙을 뒷받침
 
-- **KISS**: 짧은 함수 → **단위 테스트** 수월.  
+- **KISS**: 짧은 함수 → **단위 테스트** 수월.
 - **DRY**: 공통 규칙은 **계약 테스트**로 여러 구현에 동일 적용.
 - **YAGNI**: “필요할 때 구현”의 **증거**는 **실패하는 테스트**.
 
@@ -239,13 +239,13 @@ abstract class DiscountRuleContract {
 
 ## 7. 도구/실천 목록
 
-- **정적 분석/중복 탐지**: SonarQube, PMD CPD, Detekt(Kotlin), ESLint/TS(sonarjs)  
-- **복잡도 지표**: CC, Cognitive Complexity, Duplication %, Maintainability Index  
-- **리뷰 체크리스트**  
-  - [ ] 함수/클래스가 **하나의 책임**만 수행  
-  - [ ] **같은 지식**이 복수 위치에 있지 않음  
-  - [ ] 미래 대비 코드/추상화가 **테스트 없이** 추가되지 않음  
-  - [ ] **가드절/초기 리턴**으로 분기 평탄화  
+- **정적 분석/중복 탐지**: SonarQube, PMD CPD, Detekt(Kotlin), ESLint/TS(sonarjs)
+- **복잡도 지표**: CC, Cognitive Complexity, Duplication %, Maintainability Index
+- **리뷰 체크리스트**
+  - [ ] 함수/클래스가 **하나의 책임**만 수행
+  - [ ] **같은 지식**이 복수 위치에 있지 않음
+  - [ ] 미래 대비 코드/추상화가 **테스트 없이** 추가되지 않음
+  - [ ] **가드절/초기 리턴**으로 분기 평탄화
   - [ ] 상수/정책이 **중앙 정의**되어 있음
 
 ---
@@ -283,8 +283,8 @@ $$
 \text{Risk} \approx (\text{PublicSurface}) \times (\text{DuplicationRate}) \times (\text{CognitiveComplexity})
 $$
 
-- **PublicSurface**: 공개 메서드·DTO 필드 수  
-- **DuplicationRate**: 코드/지식 중복 비율  
+- **PublicSurface**: 공개 메서드·DTO 필드 수
+- **DuplicationRate**: 코드/지식 중복 비율
 - **CognitiveComplexity**: 이해 난이도 지표
 
 → KISS는 **복잡도 감소**, DRY는 **중복 감소**, YAGNI는 **공개면 축소**로 **Risk↓**.
@@ -332,7 +332,7 @@ public interface IXmlExportable { string ToXml(); } // 당장 필요 없음
 
 ## 13. 결론
 
-- **DRY**로 **지식**을 한 곳에 모으고, **KISS**로 **형태**를 단순하게 유지하며, **YAGNI**로 **시점**을 통제하라.  
-- 적용 순서는 **작동 → 단순화 → 공통화 → 필요 시 확장**.  
-- 테스트와 측정(중복·복잡도·공개면)이 **증거**를 제공한다.  
+- **DRY**로 **지식**을 한 곳에 모으고, **KISS**로 **형태**를 단순하게 유지하며, **YAGNI**로 **시점**을 통제하라.
+- 적용 순서는 **작동 → 단순화 → 공통화 → 필요 시 확장**.
+- 테스트와 측정(중복·복잡도·공개면)이 **증거**를 제공한다.
 - 결국 팀이 매일 내리는 **수많은 작은 결정**이 코드베이스의 운명을 가른다. 이 세 원칙은 그 결정을 **일관되게** 만들어준다.

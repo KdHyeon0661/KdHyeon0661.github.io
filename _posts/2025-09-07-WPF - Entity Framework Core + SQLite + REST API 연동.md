@@ -7,8 +7,8 @@ category: WPF
 # 🔗 WPF + MVVM + REST API 클라이언트 구현 완전 정복
 *(예제 중심 · 누락 없이 자세하게 · DI/HttpClientFactory/Polly/에러 처리/페이징/검색/토큰/테스트/오프라인 큐까지)*
 
-> 목표: **WPF(MVVM)** 앱에서 **REST API**를 안전하고 확장성 있게 호출하고,  
-> **응답 바인딩 · 오류/토큰/취소/재시도/페이징/검색/상태 표시**를 완비한 “실전 구조”를 만든다.  
+> 목표: **WPF(MVVM)** 앱에서 **REST API**를 안전하고 확장성 있게 호출하고,
+> **응답 바인딩 · 오류/토큰/취소/재시도/페이징/검색/상태 표시**를 완비한 “실전 구조”를 만든다.
 > .NET 7/8 WPF 기준이며 .NET 6/Framework 4.8도 큰 틀은 동일합니다.
 
 ---
@@ -24,7 +24,7 @@ category: WPF
   - `DELETE /products/{id}`
 - 인증: Bearer Token (Access/Refresh)
 - UI: 목록/검색/페이징/정렬/상세/생성/수정/삭제 + 에러/진행/오프라인 표시
-- 패턴: **MVVM + DI(Generic Host) + HttpClientFactory + Polly**  
+- 패턴: **MVVM + DI(Generic Host) + HttpClientFactory + Polly**
   + **Cancellation** + **Progress** + **Optimistic Update** + **테스트 가능한 설계**
 
 ---
@@ -488,7 +488,7 @@ public class TotalToPages : IValueConverter
 }
 ```
 
-> 팁: **가상화 활성화**  
+> 팁: **가상화 활성화**
 > `<DataGrid VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />`
 
 ---
@@ -619,9 +619,9 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ## 10. 에러 처리/표시 패턴
 
-- **서버 오류(4xx/5xx)** → `Result.Fail(status, message)` 로 VM에 전달  
-- **네트워크 오류** → Polly 재시도 후 실패 시 **친절한 메시지**  
-- **취소** → `OperationCanceledException` 무시  
+- **서버 오류(4xx/5xx)** → `Result.Fail(status, message)` 로 VM에 전달
+- **네트워크 오류** → Polly 재시도 후 실패 시 **친절한 메시지**
+- **취소** → `OperationCanceledException` 무시
 - UI: 상단/하단 **Alert Bar** 또는 Toast
 
 > 공통 에러 메시지 포맷터/로거를 도입해 일관성 유지.
@@ -642,8 +642,8 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ## 12. 오프라인/큐잉(선택)
 
-- 요청을 **명령 큐**에 적재(예: `Create/Update/Delete` DTO)  
-- 온라인 상태 확인(네트워크 체크) → 온라인 전환 시 **큐 플러시**  
+- 요청을 **명령 큐**에 적재(예: `Create/Update/Delete` DTO)
+- 온라인 상태 확인(네트워크 체크) → 온라인 전환 시 **큐 플러시**
 - 실패/충돌 → 사용자 알림 및 수동 해결
 
 간단한 큐 인터페이스:
@@ -659,8 +659,8 @@ public interface IOutbox
 
 ## 13. 로그/추적
 
-- `HttpClientFactory` 로깅(Handler에서 `ILogger` 주입)  
-- ViewModel에서 핵심 상태 변화 로그  
+- `HttpClientFactory` 로깅(Handler에서 `ILogger` 주입)
+- ViewModel에서 핵심 상태 변화 로그
 - 에러/성능 이벤트 수집(진단/분석)
 
 ---
@@ -731,28 +731,28 @@ public async Task Load_Sets_Items_And_Total()
 
 ## 15. 성능/안정성 체크리스트
 
-- **비동기 규율**: 모든 I/O `async/await` + UI 업데이트는 **Dispatcher**  
-- **취소 전파**: 긴 호출마다 `CancellationToken` 지원  
-- **가상화**: 리스트/그리드는 Virtualization 켜기  
-- **페이지 크기**: 20~50 적정, 서버 정렬/필터 적극 활용  
-- **Polly**: 과도한 재시도 금지(백오프), 429 처리  
-- **메모리**: 이미지/대형 페이로드 스트리밍 처리 고려  
+- **비동기 규율**: 모든 I/O `async/await` + UI 업데이트는 **Dispatcher**
+- **취소 전파**: 긴 호출마다 `CancellationToken` 지원
+- **가상화**: 리스트/그리드는 Virtualization 켜기
+- **페이지 크기**: 20~50 적정, 서버 정렬/필터 적극 활용
+- **Polly**: 과도한 재시도 금지(백오프), 429 처리
+- **메모리**: 이미지/대형 페이로드 스트리밍 처리 고려
 - **예외**: 삼켜지지 않게 로깅 + 사용자 친화 메시지
 
 ---
 
 ## 16. 보너스: 다크모드/접근성/국제화
 
-- 다크모드: 리소스 토큰화 + `DynamicResource` (팔레트 교체)  
-- 접근성: 키보드 탐색/스크린리더 Friendly Text/AutomationProperties  
+- 다크모드: 리소스 토큰화 + `DynamicResource` (팔레트 교체)
+- 접근성: 키보드 탐색/스크린리더 Friendly Text/AutomationProperties
 - 국제화: 서버/클라 모두 UTC 저장, 표시 시 지역화/문자열 리소스
 
 ---
 
 ## 17. 마무리
 
-- **MVVM**으로 뷰-로직 분리 → 테스트 용이  
-- **HttpClientFactory + Polly**로 회복력 있는 통신  
-- **상태/로딩/에러/취소/검색/페이징/정렬**을 표준화  
-- **Optimistic Update + ETag 동시성**으로 UX와 무결성 균형  
+- **MVVM**으로 뷰-로직 분리 → 테스트 용이
+- **HttpClientFactory + Polly**로 회복력 있는 통신
+- **상태/로딩/에러/취소/검색/페이징/정렬**을 표준화
+- **Optimistic Update + ETag 동시성**으로 UX와 무결성 균형
 - **테스트**는 Handler 스텁/대체 가능한 API 인터페이스로 가볍게

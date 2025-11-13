@@ -13,7 +13,7 @@ category: JavaScript
 
 역할 분담 원칙:
 - **ESLint = 품질/버그 규칙** (ex. `no-unused-vars`, `no-undef`, `eqeqeq`, `no-await-in-loop`)
-- **Prettier = 포맷 규칙** (ex. `semi`, `quotes`, `max-len`, `indent`)  
+- **Prettier = 포맷 규칙** (ex. `semi`, `quotes`, `max-len`, `indent`)
   → 포맷 관련 ESLint 룰은 **비활성화**하고 Prettier에 맡기는 구성이 일반적입니다.
 
 ---
@@ -178,8 +178,8 @@ export default [
 ```
 
 ### 5.3 자주 쓰는 TS 규칙 팁
-- `@typescript-eslint/no-floating-promises`: 미처리 `Promise` 잡기  
-- `@typescript-eslint/explicit-function-return-type`: API 경계에서 명시적 반환형  
+- `@typescript-eslint/no-floating-promises`: 미처리 `Promise` 잡기
+- `@typescript-eslint/explicit-function-return-type`: API 경계에서 명시적 반환형
 - `no-restricted-imports`: 모놀리포지토리 경로 제한
 
 ---
@@ -222,7 +222,7 @@ export default [
 ```
 
 ### 6.3 Next.js
-- Next는 자체 ESLint 설정을 제공(명령: `next lint`).  
+- Next는 자체 ESLint 설정을 제공(명령: `next lint`).
 - 커스텀 시에도 **Prettier 충돌 제거**와 **react-hooks**, **a11y** 규칙 유지 권장.
 
 ---
@@ -278,7 +278,7 @@ coverage
 node_modules
 ```
 
-- **오버라이드**(Flat Config는 `files` 블록으로 세분화):  
+- **오버라이드**(Flat Config는 `files` 블록으로 세분화):
   테스트 파일만 규칙 완화, 스크립트 디렉터리만 Node 환경 등.
 
 ---
@@ -343,10 +343,10 @@ jobs:
 - **ESLint 캐시**: `eslint . --cache --cache-location .eslintcache`
 - **TS 타입 규칙 부담 줄이기**: 빌드/CI에만 `parserOptions.project`를 켜고, 로컬은 기본 규칙만으로 빠르게
 - **모노레포**: 루트에 공통 Flat Config를 두고 패키지별 `files`로 범위를 분리
-- **Prettier 플러그인**:  
-  - `prettier-plugin-tailwindcss`로 Tailwind 클래스 정렬 자동화  
+- **Prettier 플러그인**:
+  - `prettier-plugin-tailwindcss`로 Tailwind 클래스 정렬 자동화
   - 마크다운/JSON/YAML도 포맷 일관성 유지
-- **포맷 충돌 제거**: `eslint-config-prettier`가 **포맷성 ESLint 룰을 끕니다**  
+- **포맷 충돌 제거**: `eslint-config-prettier`가 **포맷성 ESLint 룰을 끕니다**
   (예: `indent`, `quotes`, `semi`, `max-len` 등은 Prettier에서만 관리)
 
 ---
@@ -455,9 +455,9 @@ export default [
   1) Flat Config 파일 `eslint.config.js` 생성
   2) `extends` 기반 구성을 **배열 병합** 방식으로 재현
   3) 파일 글로브별 `files` 블록으로 세분화
-- 팀 합의:  
-  - **포맷 전부 Prettier 관리**, ESLint는 **품질 규칙**에 집중  
-  - 커밋 훅(Lint-Staged)과 CI에서 **일관 검증**  
+- 팀 합의:
+  - **포맷 전부 Prettier 관리**, ESLint는 **품질 규칙**에 집중
+  - 커밋 훅(Lint-Staged)과 CI에서 **일관 검증**
   - VS Code 설정을 레포에 포함해 **개발자별 환경 차이 최소화**
 
 ---

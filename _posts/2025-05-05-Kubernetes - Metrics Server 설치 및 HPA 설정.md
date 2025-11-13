@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Metrics Server 설치 및 HPA(Horizontal Pod Autoscaler) 설정하기
 
-Kubernetes에서 **수요에 따라 Pod 수를 자동 조절**하려면 **실시간 리소스 사용량**이 필요하다.  
+Kubernetes에서 **수요에 따라 Pod 수를 자동 조절**하려면 **실시간 리소스 사용량**이 필요하다.
 이를 담당하는 구성 요소가 다음 두 가지다.
 
 - **Metrics Server**: Pod/Node의 리소스 사용량(CPU/메모리)을 경량으로 수집·집계하여 `metrics.k8s.io` API로 제공
@@ -26,7 +26,7 @@ Kubernetes에서 **수요에 따라 Pod 수를 자동 조절**하려면 **실시
 
 ## 1. Metrics Server란?
 
-- kubelet Summary API를 스크레이프 → **Node/Pod** 단위로 CPU/메모리 사용량을 집계  
+- kubelet Summary API를 스크레이프 → **Node/Pod** 단위로 CPU/메모리 사용량을 집계
 - API 리소스(Group: `metrics.k8s.io`)를 제공하여 `kubectl top`과 HPA가 사용
 - 기본적으로 **몇 분 내 단기 샘플**만 유지(장기 저장 아님)
 
@@ -79,8 +79,8 @@ kubectl top pods -A
 ## 3. HPA란? (autoscaling/v1 vs v2)
 
 - **대상**: Deployment / StatefulSet / ReplicaSet 등
-- **기준 메트릭**  
-  - v1: CPU/메모리 **Utilization**(퍼센트) 중심(제한적)  
+- **기준 메트릭**
+  - v1: CPU/메모리 **Utilization**(퍼센트) 중심(제한적)
   - v2: **여러 타입의 메트릭 동시** 지원 (Resource, Pods, Object, External) + **behavior**(스케일 속도/완충) 정책
 
 ### Utilization 계산식(CPU/메모리)
@@ -298,15 +298,15 @@ spec:
 
 ## 9. 다중 컨테이너 Pod의 HPA
 
-HPA는 **Pod 전체**의 CPU(또는 메모리) 사용률을 계산한다.  
-Pod 내 컨테이너의 `requests` 합과 `usage` 합으로 계산되므로 **필수 컨테이너**에 `requests`를 명확히 설정하자.  
+HPA는 **Pod 전체**의 CPU(또는 메모리) 사용률을 계산한다.
+Pod 내 컨테이너의 `requests` 합과 `usage` 합으로 계산되므로 **필수 컨테이너**에 `requests`를 명확히 설정하자.
 Sidecar(예: Envoy, Istio-proxy)가 큰 사용량을 갖는다면 **별도 request**와 **리밸런싱**이 필요하다.
 
 ---
 
 ## 10. HPA + Cluster Autoscaler 연동
 
-HPA는 **Pod 개수**를 조절할 뿐, **Node 수**는 늘리지 않는다.  
+HPA는 **Pod 개수**를 조절할 뿐, **Node 수**는 늘리지 않는다.
 Pod가 늘며 스케줄링 불가가 발생하면 **Cluster Autoscaler**가 노드를 증설해야 스케일이 완성된다.
 
 - HPA: Pods
@@ -507,8 +507,8 @@ kubectl apply -f demo-all.yaml
 
 ## 결론
 
-- **Metrics Server**는 HPA/`kubectl top`을 위한 **경량 실시간 메트릭 공급원**이다.  
-- **autoscaling/v2 HPA**를 사용하면 CPU/메모리 외에도 다양한 메트릭과 **behavior 정책**으로 **안정적이며 예측 가능한 오토스케일링**을 구현할 수 있다.  
+- **Metrics Server**는 HPA/`kubectl top`을 위한 **경량 실시간 메트릭 공급원**이다.
+- **autoscaling/v2 HPA**를 사용하면 CPU/메모리 외에도 다양한 메트릭과 **behavior 정책**으로 **안정적이며 예측 가능한 오토스케일링**을 구현할 수 있다.
 - 실서비스에서는 **requests 정합성**, **스파이크 완충**, **Cluster Autoscaler 연동**, **운영 모니터링**을 포함한 전반적 튜닝이 필수다.
 
 이 가이드의 YAML과 명령을 순서대로 적용하면, **설치 → 검증 → 부하 → 스케일 관찰 → 정책 튜닝**까지 일관된 플로우로 HPA를 손에 익힐 수 있다.

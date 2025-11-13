@@ -519,10 +519,10 @@ public void Throttle_Search_Emits_After_350ms()
 
 ## 결론
 
-ReactiveUI와 Avalonia를 결합하면, **입력 → 검증 → 비동기 호출 → 결과 반영**의 전 과정을 **명시적·선언적 스트림**으로 구성할 수 있다.  
+ReactiveUI와 Avalonia를 결합하면, **입력 → 검증 → 비동기 호출 → 결과 반영**의 전 과정을 **명시적·선언적 스트림**으로 구성할 수 있다.
 핵심은 다음 네 가지다.
 
-1) **Throttle + Switch**로 과도 호출과 오래된 요청을 차단한다.  
-2) **WhenAnyValue + ToProperty**로 계산/상태를 OAPH로 일급화한다.  
-3) **ReactiveCommand**로 UI 이벤트와 비동기 흐름을 안전하게 캡슐화한다.  
+1) **Throttle + Switch**로 과도 호출과 오래된 요청을 차단한다.
+2) **WhenAnyValue + ToProperty**로 계산/상태를 OAPH로 일급화한다.
+3) **ReactiveCommand**로 UI 이벤트와 비동기 흐름을 안전하게 캡슐화한다.
 4) **Scheduler/Dispose/Activation** 규칙을 일관되게 적용해 성능과 안정성을 확보한다.

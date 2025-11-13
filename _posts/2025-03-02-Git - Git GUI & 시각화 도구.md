@@ -8,13 +8,13 @@ category: Git
 
 ## 0. 큰그림: 언제 무엇을 쓰나
 
-- **CLI**: 기록이 남는 스크립트·자동화·서버 환경·SSH 원격 환경에 필수.  
+- **CLI**: 기록이 남는 스크립트·자동화·서버 환경·SSH 원격 환경에 필수.
   → `git log --graph` + 커스텀 pretty format, 필터, `reflog`/`bisect`까지 숙달.
-- **터미널 UI**: “커밋·diff·스테이징·blame”을 **한 화면**에서 빠르게 탐색.  
+- **터미널 UI**: “커밋·diff·스테이징·blame”을 **한 화면**에서 빠르게 탐색.
   → `tig`, `lazygit`.
-- **에디터/IDE 확장**: 코드와 히스토리를 **한 눈**에 결합.  
+- **에디터/IDE 확장**: 코드와 히스토리를 **한 눈**에 결합.
   → VSCode의 `GitLens`, JetBrains IDE 내장 Git log.
-- **독립 GUI**: 시각적 브랜치 그래프/리베이스/체리픽/충돌 해결.  
+- **독립 GUI**: 시각적 브랜치 그래프/리베이스/체리픽/충돌 해결.
   → SourceTree, GitKraken, GitHub Desktop, Fork, Tower 등.
 
 ---
@@ -103,8 +103,8 @@ git lg
 
 ### 2.1 설치
 
-- macOS: `brew install tig`  
-- Ubuntu/Debian: `sudo apt install tig`  
+- macOS: `brew install tig`
+- Ubuntu/Debian: `sudo apt install tig`
 - Windows: WSL 또는 패키지 매니저(예: scoop)로 설치
 
 ### 2.2 핵심 명령
@@ -131,9 +131,9 @@ tig refs           # 참조(브랜치/태그) 보기
 
 ### 2.4 워크플로 예시: “파일→커밋→diff→원인 추적”
 
-1) `tig blame src/app.js`  
-2) 문제 라인 선택 후 `Enter` → 해당 커밋으로 이동  
-3) `Enter`로 diff 확인 → 관련 변경 주변 커밋을 상하로 스캔  
+1) `tig blame src/app.js`
+2) 문제 라인 선택 후 `Enter` → 해당 커밋으로 이동
+3) `Enter`로 diff 확인 → 관련 변경 주변 커밋을 상하로 스캔
 4) `u`로 상위로 돌아가 다른 파일도 연쇄 탐색
 
 ### 2.5 tig 설정(선택)
@@ -183,9 +183,9 @@ code --install-extension eamodio.gitlens
 
 ### 4.3 워크플로 예시: “리팩터링 영향 범위 확인”
 
-1) 파일을 열고, 상단/사이드바의 **File History** 열기  
-2) 특정 커밋 클릭 → diff/주석으로 영향 라인 확인  
-3) Commit Graph에서 브랜치 분기점 맥락 파악  
+1) 파일을 열고, 상단/사이드바의 **File History** 열기
+2) 특정 커밋 클릭 → diff/주석으로 영향 라인 확인
+3) Commit Graph에서 브랜치 분기점 맥락 파악
 4) 라인 히스토리로 **“이 라인을 왜, 누가, 언제 바꿨는지”** 즉시 확인
 
 ---
@@ -202,8 +202,8 @@ code --install-extension eamodio.gitlens
 | 적합 | 입문~중급. GUI로 Git 개념 습득에 유리 |
 
 #### 자주 쓰는 흐름
-- 좌측 브랜치/태그·우측 그래프에서 커밋 선택 → 마우스 우클릭 **체리픽/리버트/리셋**  
-- 충돌 시 **Resolve Conflicts** 패널에서 파일별 병합 도구 호출  
+- 좌측 브랜치/태그·우측 그래프에서 커밋 선택 → 마우스 우클릭 **체리픽/리버트/리셋**
+- 충돌 시 **Resolve Conflicts** 패널에서 파일별 병합 도구 호출
 - **Interactive Rebase** 대화상자에서 순서 변경·스쿼시
 
 ### 5.2 GitKraken
@@ -254,18 +254,18 @@ code --install-extension eamodio.gitlens
   ```bash
   git log --graph --oneline --decorate origin/main..HEAD
   ```
-- GitLens Commit Graph 또는 GitKraken 그래프에서 **분기점**·**병합 지점** 확인  
+- GitLens Commit Graph 또는 GitKraken 그래프에서 **분기점**·**병합 지점** 확인
 - 파일/폴더 필터로 변경 범위를 좁히고, 커밋 단위로 **스쿼시 후보**를 표기
 
 ### 7.2 충돌 해결 전략(시각화 중심)
 
-1) 그래프에서 **공통 조상** 커밋과 양 브랜치 방향을 식별  
-2) GUI의 3-way 병합 도구로 **의도(ours/theirs)**를 코드 맥락과 함께 선택  
+1) 그래프에서 **공통 조상** 커밋과 양 브랜치 방향을 식별
+2) GUI의 3-way 병합 도구로 **의도(ours/theirs)**를 코드 맥락과 함께 선택
 3) 큰 충돌이면 **폴더 단위**로 나누어 여러 번 커밋 → PR 리뷰의 심리적 부하 감소
 
 ### 7.3 리베이스로 선형 이력 유지
 
-- VSCode GitLens 또는 GitKraken의 rebase UI로 **순서 조정·스쿼시**  
+- VSCode GitLens 또는 GitKraken의 rebase UI로 **순서 조정·스쿼시**
 - CLI 대비 시각적 확인이 쉬워 **실수(대상 범위 과대)**를 줄임
 
 ---
@@ -292,21 +292,21 @@ code --install-extension eamodio.gitlens
 
 ## 9. 서브모듈/서브트리/LFS를 시각화에서 다루는 팁
 
-- 서브모듈 그래프는 **서브모듈 디렉토리 내부에서** 별도로 log/tig/GUI 열기  
-- LFS 포인터(diff 불가)에 주의 → GUI에서 바이너리 비교 도구 설정  
+- 서브모듈 그래프는 **서브모듈 디렉토리 내부에서** 별도로 log/tig/GUI 열기
+- LFS 포인터(diff 불가)에 주의 → GUI에서 바이너리 비교 도구 설정
 - 서브트리는 메인 그래프에 섞이므로 **폴더 기준**으로 로그 필터링
 
 ---
 
 ## 10. 팀 정책·교육 플로(현실적 가이드)
 
-1) **CLI 기초 교육**(30분): `commit/add/reset/log/branch/merge/rebase/cherry-pick`  
-2) **시각화 툴 온보딩**(20분): GitLens 또는 GitKraken 중 팀 표준 하나  
-3) **PR 체크리스트**(10분):  
-   - 그래프에서 분기/병합 경로 검사  
-   - 파일별 diff 스크롤(대형 diff는 폴더 단위로 나눔)  
-   - 커밋 메시지 규칙(Conventional Commits)·스쿼시 여부  
-4) **브랜치 보호 규칙**: Require linear history, Require reviews, CI 필수  
+1) **CLI 기초 교육**(30분): `commit/add/reset/log/branch/merge/rebase/cherry-pick`
+2) **시각화 툴 온보딩**(20분): GitLens 또는 GitKraken 중 팀 표준 하나
+3) **PR 체크리스트**(10분):
+   - 그래프에서 분기/병합 경로 검사
+   - 파일별 diff 스크롤(대형 diff는 폴더 단위로 나눔)
+   - 커밋 메시지 규칙(Conventional Commits)·스쿼시 여부
+4) **브랜치 보호 규칙**: Require linear history, Require reviews, CI 필수
 5) **문제 복구 교육**: `reflog`, GUI의 “reset to…”, “restore” 데모
 
 ---
@@ -351,8 +351,8 @@ tig blame file      # blame
 
 ### 11.4 GUI 공통 조작
 
-- 그래프에서 커밋 우클릭: **Cherry-pick / Revert / Reset / Create Branch**  
-- 드래그&드롭 리베이스(GitKraken/Fork/Tower 등 지원)  
+- 그래프에서 커밋 우클릭: **Cherry-pick / Revert / Reset / Create Branch**
+- 드래그&드롭 리베이스(GitKraken/Fork/Tower 등 지원)
 - Conflict Resolver(3-way 머지): ours/theirs 선택 + 수동 편집
 
 ---
@@ -379,16 +379,16 @@ tig
 
 ### 시나리오 B: GitLens로 “이 라인”의 역사 보기
 
-1) VSCode로 프로젝트 열기 → GitLens 설치  
-2) 파일에서 커서 위치 → 사이드바 **Line History**  
-3) 변경 커밋 리스트에서 클릭 → diff 탭 확인  
+1) VSCode로 프로젝트 열기 → GitLens 설치
+2) 파일에서 커서 위치 → 사이드바 **Line History**
+3) 변경 커밋 리스트에서 클릭 → diff 탭 확인
 4) Commit Graph(사용 가능 시)로 브랜치 분기 확인
 
 ### 시나리오 C: GUI로 충돌 해결
 
-1) 기능 브랜치에서 `git pull --rebase origin main`(CLI)  
-2) 충돌 발생 → GUI(예: SourceTree/GitKraken)로 열기  
-3) Conflict 패널에서 파일 선택 → 내장 3-way 머지  
+1) 기능 브랜치에서 `git pull --rebase origin main`(CLI)
+2) 충돌 발생 → GUI(예: SourceTree/GitKraken)로 열기
+3) Conflict 패널에서 파일 선택 → 내장 3-way 머지
 4) 완료 후 **Continue rebase** / **Commit** → 푸시
 
 ---
@@ -410,19 +410,19 @@ tig
 
 ## 14. 결론
 
-- **CLI 시각화는 필수 근력**: `git log --graph --decorate --all`을 몸에 익혀라.  
-- **터미널 UI(tig/lazygit)**로 탐색 속도를 끌어올려라.  
-- **에디터 통합(GitLens)**로 “코드-히스토리”를 한 화면에서 판단하라.  
-- **독립 GUI**로 리베이스/체리픽/충돌 해결을 시각적으로 안전하게 관리하라.  
-- 대형 리포에선 **희소 체크아웃/부분 클론** 등 성능 전략을 병행하라.  
+- **CLI 시각화는 필수 근력**: `git log --graph --decorate --all`을 몸에 익혀라.
+- **터미널 UI(tig/lazygit)**로 탐색 속도를 끌어올려라.
+- **에디터 통합(GitLens)**로 “코드-히스토리”를 한 화면에서 판단하라.
+- **독립 GUI**로 리베이스/체리픽/충돌 해결을 시각적으로 안전하게 관리하라.
+- 대형 리포에선 **희소 체크아웃/부분 클론** 등 성능 전략을 병행하라.
 - 팀 레벨에선 **브랜치 보호/리뷰/CI**와 결합해 **일관된 워크플로**를 구축하라.
 
 ---
 
 ## 참고 링크
 
-- Tig: https://jonas.github.io/tig/  
-- SourceTree: https://www.sourcetreeapp.com/  
-- GitKraken: https://www.gitkraken.com/  
-- GitLens: https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens  
+- Tig: https://jonas.github.io/tig/
+- SourceTree: https://www.sourcetreeapp.com/
+- GitKraken: https://www.gitkraken.com/
+- GitLens: https://marketplace.visualstudio.com/items?itemName=eamodio.gitlens
 - Git log 문서: https://git-scm.com/docs/git-log

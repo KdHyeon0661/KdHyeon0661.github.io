@@ -824,15 +824,15 @@ jobs:
 
 ## 21. 운영 팁 모음 — 현업에서 가장 자주 겪는 이슈
 
-1) **러너 시간 절약**: paths-filter로 변경 없는 영역 CI 생략, `concurrency`로 중복 취소  
-2) **긴 잡 분해**: “빌드 → 테스트 → 린트”를 병렬 잡으로 쪼개 전체 시간을 단축  
-3) **PR 드리프트 방지**: `pull_request` + `merge_group`(대규모 저장소) 사용  
-4) **환경별 동행**: `staging`은 자동, `production`은 환경 보호(승인자)  
-5) **속도 병목**: Docker 캐시, 언어별 캐시, shallow fetch (`fetch-depth: 0` 필요한 경우만)  
-6) **로그 가독성**: step 이름을 의미 있게, 실패시 아티팩트로 리포트/스크린샷 첨부  
-7) **권한 최소화**: 워크플로 루트 `permissions: contents: read`, 필요한 잡에서만 확장  
-8) **태그/릴리스 표준**: SemVer + 릴리스 노트 자동 생성, 배포 아티팩트 첨부  
-9) **러너 안정성**: Self-hosted라면 자동 패치·이미지 롤링·격리 네트워크·비밀 주입 표준화  
+1) **러너 시간 절약**: paths-filter로 변경 없는 영역 CI 생략, `concurrency`로 중복 취소
+2) **긴 잡 분해**: “빌드 → 테스트 → 린트”를 병렬 잡으로 쪼개 전체 시간을 단축
+3) **PR 드리프트 방지**: `pull_request` + `merge_group`(대규모 저장소) 사용
+4) **환경별 동행**: `staging`은 자동, `production`은 환경 보호(승인자)
+5) **속도 병목**: Docker 캐시, 언어별 캐시, shallow fetch (`fetch-depth: 0` 필요한 경우만)
+6) **로그 가독성**: step 이름을 의미 있게, 실패시 아티팩트로 리포트/스크린샷 첨부
+7) **권한 최소화**: 워크플로 루트 `permissions: contents: read`, 필요한 잡에서만 확장
+8) **태그/릴리스 표준**: SemVer + 릴리스 노트 자동 생성, 배포 아티팩트 첨부
+9) **러너 안정성**: Self-hosted라면 자동 패치·이미지 롤링·격리 네트워크·비밀 주입 표준화
 10) **문제 재현**: 실패 잡의 아티팩트/캐시 키/환경 변수를 기록해 로컬 재현 스크립트 제공
 
 ---
@@ -969,11 +969,11 @@ jobs:
 
 ## 참고 링크
 
-- GitHub Actions 공식 문서: https://docs.github.com/en/actions  
-- actions/checkout: https://github.com/actions/checkout  
-- actions/setup-node: https://github.com/actions/setup-node  
-- actions/cache: https://github.com/actions/cache  
-- docker/build-push-action: https://github.com/docker/build-push-action  
-- Netlify Action: https://github.com/nwtgck/actions-netlify  
-- Codecov Action: https://github.com/codecov/codecov-action  
+- GitHub Actions 공식 문서: https://docs.github.com/en/actions
+- actions/checkout: https://github.com/actions/checkout
+- actions/setup-node: https://github.com/actions/setup-node
+- actions/cache: https://github.com/actions/cache
+- docker/build-push-action: https://github.com/docker/build-push-action
+- Netlify Action: https://github.com/nwtgck/actions-netlify
+- Codecov Action: https://github.com/codecov/codecov-action
 - Branch protection rules: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches

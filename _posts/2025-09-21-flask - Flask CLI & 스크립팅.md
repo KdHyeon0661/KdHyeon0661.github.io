@@ -159,9 +159,9 @@ def deactivate_inactive_users(days, dry_run):
     click.echo(f"Deactivated {updated} users")
 ```
 
-> 실무 포인트  
-> - **`--dry-run` 기본**으로 안전장치.  
-> - 대량 업데이트는 **청크 커밋**(`yield_per`)로 트랜잭션·락 부담 완화.  
+> 실무 포인트
+> - **`--dry-run` 기본**으로 안전장치.
+> - 대량 업데이트는 **청크 커밋**(`yield_per`)로 트랜잭션·락 부담 완화.
 > - 출력은 **표준 출력** → 로그 수집기에서 집계 가능.
 
 ### A.4.3 프로그레스 바/확인 프롬프트
@@ -312,8 +312,8 @@ def seed_users(file, batch):
     click.echo(f"Seeded {n} users")
 ```
 
-> **주의**  
-> - `bulk_save_objects` 는 이벤트 훅/하이브리드 속성을 건너뛸 수 있다. 필요한 경우 일반 `session.add_all` 사용.  
+> **주의**
+> - `bulk_save_objects` 는 이벤트 훅/하이브리드 속성을 건너뛸 수 있다. 필요한 경우 일반 `session.add_all` 사용.
 > - 중복 키 충돌 방지: **UPSERT**(PG `ON CONFLICT`) 를 Raw SQL 로 사용하거나, **존재 체크** + 업데이트.
 
 ---
@@ -650,7 +650,7 @@ jobs:
 
 ### A.12.2 배포 훅에 마이그레이션/시드
 
-- **K8s 배포 전**: `flask db upgrade` (Job)  
+- **K8s 배포 전**: `flask db upgrade` (Job)
 - **K8s 배포 후**: 필요 시 `flask dbx seed --env=prod --no-force` (idempotent)
 
 ---
@@ -748,6 +748,6 @@ def run():
 
 이 부록에서는 **Flask CLI를 실전 운영 도구**로 다루는 방법을 정리했다.
 
-- **Click 기반 커스텀 커맨드**로 운영/유지보수 절차를 코드화하고,  
-- **Flask-Migrate**를 통해 **안전한 스키마 변경**과 **멱등 시드**를 수행하며,  
+- **Click 기반 커스텀 커맨드**로 운영/유지보수 절차를 코드화하고,
+- **Flask-Migrate**를 통해 **안전한 스키마 변경**과 **멱등 시드**를 수행하며,
 - 스케줄링은 **Kubernetes CronJob(권장)**, **Celery Beat**, **APScheduler** 등으로 **크론 대체**를 구현했다.

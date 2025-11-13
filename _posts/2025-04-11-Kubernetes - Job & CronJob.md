@@ -9,7 +9,7 @@ category: Kubernetes
 ## 1. Job — 일회성 작업을 “성공 개수”로 보장
 
 ### 1.1 기본 개념(정확히 이해하기)
-- **Job = “성공한 Pod 수를 목표치까지 만들면 종료”**  
+- **Job = “성공한 Pod 수를 목표치까지 만들면 종료”**
   실패한 Pod는 `backoffLimit` 한도 내에서 **새 Pod로 재시도**한다.
 - 완료된 Job은 **상태(완료/실패)와 Pod 이력**이 남는다(자동 정리 옵션: `ttlSecondsAfterFinished`).
 
@@ -172,9 +172,9 @@ spec:
             args: ["--target=s3://bucket/daily/"]
 ```
 
-- `concurrencyPolicy`  
-  - **Allow**: 겹쳐서 실행 가능(기본).  
-  - **Forbid**: 이전 실행이 남아 있으면 **새 실행 취소**.  
+- `concurrencyPolicy`
+  - **Allow**: 겹쳐서 실행 가능(기본).
+  - **Forbid**: 이전 실행이 남아 있으면 **새 실행 취소**.
   - **Replace**: 이전 실행 **중지** 후 새 실행.
 - `startingDeadlineSeconds`: 컨트롤러 중단/지연 시 **“놓친 실행”을 얼마나까지 보상할지**.
 
@@ -337,7 +337,7 @@ spec:
 $$
 P \approx \lceil R \cdot t \rceil \cdot \text{버퍼}
 $$
-- **버퍼**(1.2~2.0)를 곱해 스파이크/락경합/노드 여유를 고려.  
+- **버퍼**(1.2~2.0)를 곱해 스파이크/락경합/노드 여유를 고려.
 - Job: `parallelism ≈ P` (completions은 총량에 맞춰), CronJob: Job 템플릿에 동일 적용.
 
 ---
@@ -393,5 +393,5 @@ kubectl patch job/<name> -p '{"spec":{"ttlSecondsAfterFinished":300}}'
 | **한 번만** 또는 유한 횟수로 끝내야 하는 배치 | **Job** |
 | **주기적**으로 실행해야 하는 배치 | **CronJob** |
 
-핵심은 **성공 개수/시간 제한/재시도/동시 실행**을 명확히 정의하는 것.  
+핵심은 **성공 개수/시간 제한/재시도/동시 실행**을 명확히 정의하는 것.
 Job/CronJob에 **리소스 요청·스케줄링 제약·보안 정책·정리 전략(TTL/이력)** 을 함께 설계하면 **예측 가능한 배치 운영**이 가능해진다.

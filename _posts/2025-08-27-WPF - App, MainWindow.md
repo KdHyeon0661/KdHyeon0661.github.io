@@ -6,7 +6,7 @@ category: WPF
 ---
 # App.xaml / MainWindow.xaml
 
-WPF 애플리케이션의 **진입점(App.xaml)**과 **첫 화면(MainWindow.xaml)**은 프로젝트의 뼈대를 이룹니다.  
+WPF 애플리케이션의 **진입점(App.xaml)**과 **첫 화면(MainWindow.xaml)**은 프로젝트의 뼈대를 이룹니다.
 이 글에서는 두 파일의 **역할**, **구성 포인트**, **권장 패턴(MVVM/리소스/스타트업)**을 실제 코드와 함께 상세히 설명합니다.
 
 ---
@@ -47,8 +47,8 @@ WPF 애플리케이션의 **진입점(App.xaml)**과 **첫 화면(MainWindow.xam
 </Application>
 ```
 
-> **Pack URI**  
-> 같은 어셈블리: `pack://application:,,,/경로/파일.xaml`  
+> **Pack URI**
+> 같은 어셈블리: `pack://application:,,,/경로/파일.xaml`
 > 다른 어셈블리 `MyLib`: `pack://application:,,,/MyLib;component/경로/파일.xaml`
 
 ### 1.3 App.xaml.cs에서 커스텀 시작 흐름
@@ -207,9 +207,9 @@ public static class ThemeManager
 </Window>
 ```
 
-> **컨텐츠 바인딩 패턴**  
-> `ContentControl.Content`에 `CurrentView`(뷰모델 또는 뷰)를 바인딩하고  
-> **DataTemplate**로 형식→뷰를 매핑하면 **페이지 전환**을 깔끔하게 구현할 수 있습니다.  
+> **컨텐츠 바인딩 패턴**
+> `ContentControl.Content`에 `CurrentView`(뷰모델 또는 뷰)를 바인딩하고
+> **DataTemplate**로 형식→뷰를 매핑하면 **페이지 전환**을 깔끔하게 구현할 수 있습니다.
 > (이 매핑은 보통 `Themes/DataTemplates.xaml`에 배치)
 
 ### 2.3 MainWindow.xaml.cs (필요 최소한)
@@ -242,7 +242,7 @@ public partial class MainWindow : Window
 }
 ```
 
-> **권장**: 실제 프로젝트에서는 **의존성 주입**으로 `MainWindow(MainViewModel vm)` 생성자 주입을 선호합니다.  
+> **권장**: 실제 프로젝트에서는 **의존성 주입**으로 `MainWindow(MainViewModel vm)` 생성자 주입을 선호합니다.
 > (App.xaml.cs에서 Host/ServiceProvider로 생성하여 `DataContext` 자동 세팅)
 
 ### 2.4 디자인 타임 데이터 주입(편리)
@@ -275,7 +275,7 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 - **창/뷰 전용(Window.Resources)**: 특정 화면에만 필요한 것(충돌 최소화, 빌드/로드 성능 개선)
 
 ### 3.2 StaticResource vs DynamicResource
-- **StaticResource**: 로드 시점 고정(성능 우수). **변경 감지 없음**  
+- **StaticResource**: 로드 시점 고정(성능 우수). **변경 감지 없음**
 - **DynamicResource**: 런타임 변경 반영(테마 전환 등). **성능 비용 有**
 
 ```xml

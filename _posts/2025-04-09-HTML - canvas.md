@@ -133,7 +133,7 @@ ctx.fillRect(200, 220, 160, 80);
 
 ```js
 ctx.globalAlpha = 0.8;
-ctx.globalCompositeOperation = 'source-over'; 
+ctx.globalCompositeOperation = 'source-over';
 // destination-over, multiply, screen, overlay, darken, lighten 등 지원
 ```
 
@@ -344,7 +344,7 @@ new ResizeObserver(()=>resizeCanvas(c)).observe(c);
 
 - 교차 출처 이미지/비디오를 인증 없이 그리면 캔버스가 **tainted** 상태가 되어 `toDataURL`/`getImageData`가 차단.
 - 해결:
-  1) 이미지 측 **CORS 헤더**: `Access-Control-Allow-Origin: https://your-origin`  
+  1) 이미지 측 **CORS 헤더**: `Access-Control-Allow-Origin: https://your-origin`
   2) JS 측 이미지에 `crossOrigin='anonymous'` 설정.
 - 민감 데이터 렌더링 시 스크린샷 유출에 유의. 렌더 결과의 **다운로드 링크** 제공은 정책적으로 검토.
 

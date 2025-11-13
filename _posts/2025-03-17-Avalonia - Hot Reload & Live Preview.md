@@ -98,7 +98,7 @@ internal static class Program
 }
 ```
 
-> Avalonia 11 기준으로 Hot Reload는 **`dotnet watch`**와 **Compiled XAML** 조합이 핵심이며, DevTools는 `Avalonia.Diagnostics` 설치로 활성화된다.  
+> Avalonia 11 기준으로 Hot Reload는 **`dotnet watch`**와 **Compiled XAML** 조합이 핵심이며, DevTools는 `Avalonia.Diagnostics` 설치로 활성화된다.
 > 일부 템플릿에서는 `AttachDevTools()` 호출이 보일 수 있다. 11.x에서는 DevTools 패키지 참조만으로도 동작한다(IDE/런타임 조합에 따라 다를 수 있으니 프로젝트 템플릿에 맞춰 유지).
 
 ---
@@ -258,14 +258,14 @@ View:
 
 ## 8. 대형 화면/복잡 템플릿에서의 팁
 
-1) **Partial Reload**를 유도  
+1) **Partial Reload**를 유도
 - 스타일/템플릿/리소스 파일을 **모듈화**하여 변경 범위를 최소화
 - 거대한 파일 하나 대신 여러 `.axaml`로 분할
 
-2) **디자인 데이터 정교화**  
+2) **디자인 데이터 정교화**
 - 디자인 모델에 **경우의 수**(빈 목록, 긴 텍스트, 에러 메시지)를 포함해 시각적 회귀를 줄인다.
 
-3) **가상화/지연 측정 on/off**  
+3) **가상화/지연 측정 on/off**
 - Previewer에서는 `VirtualizingStackPanel`이나 무거운 애니메이션을 일시적으로 완화하여 그림자 성능 이슈를 분리한다.
 
 ---
@@ -472,19 +472,19 @@ re:
 
 ## 17. 체크리스트(핵심 요약)
 
-- `.csproj`에 `AvaloniaUseCompiledXaml=true`  
-- `Avalonia.Diagnostics` 설치 + 디버그에서 DevTools 사용  
-- `dotnet watch`로 Hot Reload 루프 가동  
-- **디자인타임 ViewModel**(`d:DataContext`)로 Previewer 품질 확보  
-- 리소스/스타일/템플릿 **모듈화**로 Partial Reload 효율 ↑  
-- C# 변경은 “작게”/“빈번히 저장”하고, 타입 서명 변경 시 재시작  
+- `.csproj`에 `AvaloniaUseCompiledXaml=true`
+- `Avalonia.Diagnostics` 설치 + 디버그에서 DevTools 사용
+- `dotnet watch`로 Hot Reload 루프 가동
+- **디자인타임 ViewModel**(`d:DataContext`)로 Previewer 품질 확보
+- 리소스/스타일/템플릿 **모듈화**로 Partial Reload 효율 ↑
+- C# 변경은 “작게”/“빈번히 저장”하고, 타입 서명 변경 시 재시작
 - Previewer/DevTools/Hot Reload 3종을 **동시에** 활용
 
 ---
 
 ## 결론
 
-Hot Reload/Live Preview는 Avalonia에서 **UI 회전율**을 극대화하는 핵심 도구다.  
-- XAML·리소스·템플릿 중심의 설계를 채택하면, 저장 즉시 반영되는 “짧은 피드백 루프”를 만들 수 있다.  
-- 디자인타임 데이터와 DevTools를 결합하면 **시각적 버그/바인딩 오류**를 개발 초기에 제거할 수 있다.  
+Hot Reload/Live Preview는 Avalonia에서 **UI 회전율**을 극대화하는 핵심 도구다.
+- XAML·리소스·템플릿 중심의 설계를 채택하면, 저장 즉시 반영되는 “짧은 피드백 루프”를 만들 수 있다.
+- 디자인타임 데이터와 DevTools를 결합하면 **시각적 버그/바인딩 오류**를 개발 초기에 제거할 수 있다.
 - 대형 화면/복잡 템플릿/테마 실험도 모듈화와 Partial Reload로 충분히 쾌적하게 작업 가능하다.

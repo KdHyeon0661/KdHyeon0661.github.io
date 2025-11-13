@@ -10,15 +10,15 @@ category: HTML
 
 HTML5 DnD는 크게 세 축으로 이해합니다.
 
-1) **드래그 소스(Drag Source)**  
+1) **드래그 소스(Drag Source)**
 - `draggable="true"` 또는 기본 드래그 가능한 요소(이미지, 링크, 선택된 텍스트 등)
 - `dragstart`에서 `event.dataTransfer`에 데이터를 싣는다.
 
-2) **드롭 타깃(Drop Target)**  
+2) **드롭 타깃(Drop Target)**
 - `dragover`에서 **반드시** `event.preventDefault()` 호출(기본 거부 → 허용 전환)
 - `drop`에서 데이터를 꺼내 처리한다.
 
-3) **데이터 전송(DataTransfer)**  
+3) **데이터 전송(DataTransfer)**
 - MIME 타입 기반(`text/plain`, `text/html`, 커스텀 타입 등)으로 여러 페이로드를 담고, `dropEffect/effectAllowed`로 동작 힌트를 제공.
 
 ---
@@ -183,8 +183,8 @@ area.addEventListener('drop', async (e) => {
 </script>
 ```
 
-포인트  
-- 파일 내용은 사용자가 드롭한 **실제 파일들만 접근 가능**(보안상 임의 경로 접근 불가).  
+포인트
+- 파일 내용은 사용자가 드롭한 **실제 파일들만 접근 가능**(보안상 임의 경로 접근 불가).
 - 폴더 드롭을 정교하게 지원하려면 크롬의 `webkitGetAsEntry()` 또는 File System Access API(권한 기반)를 활용합니다.
 
 ---
@@ -261,8 +261,8 @@ function getDragAfterElement(container, y, x) {
 </script>
 ```
 
-포인트  
-- 순수 DnD로도 간단 정렬 구현 가능.  
+포인트
+- 순수 DnD로도 간단 정렬 구현 가능.
 - 고급 기능(다중 선택, 가상 스크롤, 모바일 터치)은 **SortableJS**, **interact.js**, **React DnD** 등 라이브러리 사용이 효율적입니다.
 
 ---
@@ -279,8 +279,8 @@ dragstart -> e.dataTransfer.effectAllowed = 'copyMove';
 dragover  -> e.dataTransfer.dropEffect = 'move'; // move, copy, link 중 effectAllowed와 교집합이어야 UI가 일치
 ```
 
-주의:  
-- 브라우저마다 키 조합(Alt/Option=copy, Cmd/Ctrl=link 등) 처리 차이가 있습니다.  
+주의:
+- 브라우저마다 키 조합(Alt/Option=copy, Cmd/Ctrl=link 등) 처리 차이가 있습니다.
 - `dropEffect`는 **타깃 힌트**일 뿐, 최종 동작은 **애플리케이션 로직**으로 결정하세요.
 
 ### 6.2 사용자 지정 드래그 이미지
@@ -296,13 +296,13 @@ e.dataTransfer.setDragImage(ghost, 10, 10);
 
 ### 6.3 콘텐츠 선택/링크 충돌 회피
 
-- 링크/이미지 기본 드래그 방지: `draggable="false"`, `event.preventDefault()`  
+- 링크/이미지 기본 드래그 방지: `draggable="false"`, `event.preventDefault()`
 - 텍스트가 드래그 중 선택되지 않게 `user-select: none` 지정.
 
 ### 6.4 성능 최적화
 
-- `dragover`는 매우 자주 발생. 내부 연산은 **가볍게**(레이아웃 계산 최소, 스로틀).  
-- `getBoundingClientRect()` 호출을 줄이고, 필요 시 캐시/버치 처리.  
+- `dragover`는 매우 자주 발생. 내부 연산은 **가볍게**(레이아웃 계산 최소, 스로틀).
+- `getBoundingClientRect()` 호출을 줄이고, 필요 시 캐시/버치 처리.
 - 고스트/플레이스홀더는 재사용하여 GC 줄이기.
 
 ---
@@ -362,35 +362,35 @@ el.addEventListener('pointerup', () => {
 });
 ```
 
-권장 라이브러리  
+권장 라이브러리
 - `interact.js`, `draggable`(GSAP), `SortableJS`(모바일 지원), 프레임워크별 DnD(React DnD, Vue Draggable 등)
 
 ---
 
 ## 9. 보안·프라이버시 고려사항
 
-- 파일 드롭: 사용자가 실제로 드롭한 파일 핸들에만 접근 가능. 임의 경로/다른 파일 접근 불가.  
-- 교차 출처 데이터: 브라우저는 임의의 민감 데이터가 드래그 중 유출되지 않도록 차단.  
+- 파일 드롭: 사용자가 실제로 드롭한 파일 핸들에만 접근 가능. 임의 경로/다른 파일 접근 불가.
+- 교차 출처 데이터: 브라우저는 임의의 민감 데이터가 드래그 중 유출되지 않도록 차단.
 - 텍스트/HTML 전송 시, **신뢰 경계**를 분명히: 외부에서 온 HTML을 그대로 삽입하지 말고 반드시 **sanitize**.
 
 ---
 
 ## 10. 브라우저별 팁과 함정
 
-- Firefox: `dragstart`에 `setData`가 없으면 일반 요소 드래그 불가한 경우가 있음(관용적으로 `text/plain` 설정 권장).  
-- Safari: `dropEffect` 반영이 다르게 보일 수 있음. 고스트 이미지가 다소 흐릿하게 보일 수 있음.  
-- 링크/이미지의 기본 드래그가 원치 않을 경우 `draggable="false"` 명시.  
+- Firefox: `dragstart`에 `setData`가 없으면 일반 요소 드래그 불가한 경우가 있음(관용적으로 `text/plain` 설정 권장).
+- Safari: `dropEffect` 반영이 다르게 보일 수 있음. 고스트 이미지가 다소 흐릿하게 보일 수 있음.
+- 링크/이미지의 기본 드래그가 원치 않을 경우 `draggable="false"` 명시.
 - 복잡한 레이아웃에서 `dragleave`는 버블 경로상 자주 발생하므로 **하이라이트 토글** 로직을 신중히(컨테이너 안에서의 자식 간 이동 시 클래스가 깜빡이는 현상 방지).
 
 ---
 
 ## 11. 테스트 시나리오 체크리스트
 
-- 마우스만으로 드래그/드롭 가능한가?  
-- 키보드/스크린리더 사용자 대체 수단이 있는가?  
-- 드래그 중 시각 피드백(고스트, 타깃 하이라이트)이 일관적인가?  
-- `dragover` 스로틀로 스크롤/리플로우가 부드러운가?  
-- 파일 드롭 시 타입/용량 제한, 에러 메시지 제공하는가?  
+- 마우스만으로 드래그/드롭 가능한가?
+- 키보드/스크린리더 사용자 대체 수단이 있는가?
+- 드래그 중 시각 피드백(고스트, 타깃 하이라이트)이 일관적인가?
+- `dragover` 스로틀로 스크롤/리플로우가 부드러운가?
+- 파일 드롭 시 타입/용량 제한, 에러 메시지 제공하는가?
 - 모바일 터치에서 합리적인 폴백(포인터 기반 DnD 또는 버튼 기반 재배치)이 있는가?
 
 ---
@@ -471,54 +471,54 @@ board.querySelectorAll('.col').forEach(col => {
 ```
 
 설명
-- 같은 보드 안에서 카드 이동(드래그)과 파일 드롭(카드 생성)이 공존.  
-- `dataTransfer`를 카드/파일 분기 처리.  
+- 같은 보드 안에서 카드 이동(드래그)과 파일 드롭(카드 생성)이 공존.
+- `dataTransfer`를 카드/파일 분기 처리.
 - 단일 이벤트 바인딩으로 컬럼마다 동일 동작을 재사용.
 
 ---
 
 ## 13. 요약
 
-- 핵심 3요소: **소스(draggable)**, **타깃(dragover에서 preventDefault)**, **DataTransfer 모델**.  
-- 파일 드롭은 `files/items`로 접근, 폴더는 별도 API 필요.  
-- 시각 피드백: 고스트 이미지, 타깃 하이라이트, 플레이스홀더.  
-- 정렬은 순수 DnD로 가능하나, 복잡해지면 라이브러리 사용.  
-- 접근성: 키보드 대체, ARIA 상태, 라이브 리전 제공.  
-- 모바일: HTML5 DnD 대신 포인터/터치 기반 커스텀 DnD 권장.  
-- 성능: `dragover` 최소화, 레이아웃/리플로우 억제, GC 줄이기.  
+- 핵심 3요소: **소스(draggable)**, **타깃(dragover에서 preventDefault)**, **DataTransfer 모델**.
+- 파일 드롭은 `files/items`로 접근, 폴더는 별도 API 필요.
+- 시각 피드백: 고스트 이미지, 타깃 하이라이트, 플레이스홀더.
+- 정렬은 순수 DnD로 가능하나, 복잡해지면 라이브러리 사용.
+- 접근성: 키보드 대체, ARIA 상태, 라이브 리전 제공.
+- 모바일: HTML5 DnD 대신 포인터/터치 기반 커스텀 DnD 권장.
+- 성능: `dragover` 최소화, 레이아웃/리플로우 억제, GC 줄이기.
 - 보안: 외부 입력은 검증/정화, 파일은 사용자 드롭 범위 내에서만 접근.
 
 ---
 
 ## 14. 참고 구현 체크포인트
 
-- [ ] `dragover`에서 `preventDefault()` 호출  
-- [ ] `dragstart`에서 `setData('text/plain', ...)` 호출(호환성)  
-- [ ] `effectAllowed`/`dropEffect` 일관성  
-- [ ] 사용자 지정 고스트 이미지(`setDragImage`)  
-- [ ] 파일 타입/용량 검증, 오류 피드백  
-- [ ] 키보드 재배치 대안 제공  
-- [ ] 모바일 폴백(포인터/터치 DnD 또는 버튼 기반 이동)  
-- [ ] 텍스트 선택 방지(`user-select: none`)  
+- [ ] `dragover`에서 `preventDefault()` 호출
+- [ ] `dragstart`에서 `setData('text/plain', ...)` 호출(호환성)
+- [ ] `effectAllowed`/`dropEffect` 일관성
+- [ ] 사용자 지정 고스트 이미지(`setDragImage`)
+- [ ] 파일 타입/용량 검증, 오류 피드백
+- [ ] 키보드 재배치 대안 제공
+- [ ] 모바일 폴백(포인터/터치 DnD 또는 버튼 기반 이동)
+- [ ] 텍스트 선택 방지(`user-select: none`)
 - [ ] 성능(스로틀, 최소 계산, 오브젝트 재사용)
 
 ---
 
 ## 15. 자주 묻는 질문
 
-1) 왜 `drop`이 발생하지 않나요?  
+1) 왜 `drop`이 발생하지 않나요?
 → `dragover`에서 `event.preventDefault()`를 호출하지 않으면 기본 거부 상태라 `drop`이 발생하지 않습니다.
 
-2) Firefox에서 드래그가 시작되지 않아요.  
+2) Firefox에서 드래그가 시작되지 않아요.
 → `dragstart`에서 `dataTransfer.setData`를 호출하세요.
 
-3) 모바일에서는 작동이 불안정합니다.  
+3) 모바일에서는 작동이 불안정합니다.
 → 표준 DnD 대신 포인터/터치 이벤트로 커스텀 DnD를 구현하거나 전용 라이브러리를 사용하세요.
 
-4) 드래그 중 텍스트가 선택돼 UI가 어색합니다.  
+4) 드래그 중 텍스트가 선택돼 UI가 어색합니다.
 → 드래그 가능한 카드/영역에 `user-select: none`을 적용하세요.
 
-5) 외부에서 드롭된 HTML을 그대로 넣어도 되나요?  
+5) 외부에서 드롭된 HTML을 그대로 넣어도 되나요?
 → XSS 위험이 있으니 반드시 sanitize 후 사용하세요.
 
 ---

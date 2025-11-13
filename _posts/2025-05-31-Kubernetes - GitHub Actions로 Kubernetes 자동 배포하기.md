@@ -159,8 +159,8 @@ cat ~/.kube/config | base64 -w0
 ```
 {% endraw %}
 
-### 4.2 권장(클라우드): **ServiceAccount + RBAC + OIDC**  
-- GitHub Actions의 **OIDC 토큰**으로 클러스터에서 **짧은 수명의 자격** 발급  
+### 4.2 권장(클라우드): **ServiceAccount + RBAC + OIDC**
+- GitHub Actions의 **OIDC 토큰**으로 클러스터에서 **짧은 수명의 자격** 발급
 - 구체 설정(EKS/IAM Role for Service Accounts, GKE Workload Identity, AKS federated credential)은 각 클라우드 가이드에 따릅니다.
 
 > 핵심: **장기 kubeconfig 없이** 안전하게 배포 권한을 위임
@@ -535,8 +535,8 @@ steps:
 - **CD는 Argo CD**가 **Git 상태를 기준으로** 자동 동기화
 
 실무 패턴:
-1) CI에서 `values-prod.yaml`(이미지 태그만) PR 생성  
-2) 머지 → Argo CD가 감지하여 동기화  
+1) CI에서 `values-prod.yaml`(이미지 태그만) PR 생성
+2) 머지 → Argo CD가 감지하여 동기화
 3) 롤아웃·드리프트 복구·승인 게이트는 Argo 생태계(Argo Rollouts/Notifications)로
 
 > 장점: **상태의 진실 = Git**, 수동 변경은 드리프트로 감지/복구
@@ -620,7 +620,7 @@ $$
 U = f_d \cdot (1 - p_f) - \alpha \cdot T_r \cdot p_f
 $$
 
-- \(f_d\) ↑, \(p_f\) ↓, \(T_r\) ↓가 목표  
+- \(f_d\) ↑, \(p_f\) ↓, \(T_r\) ↓가 목표
 - 자동 롤백/검증/알림이 \(p_f\), \(T_r\)를 낮춥니다.
 
 ---
@@ -704,10 +704,10 @@ spec:
 
 ## 참고 링크
 
-- GitHub Actions 공식 문서  
-- kubectl tool installer Action  
-- Trivy / Cosign / Conftest  
-- Sealed Secrets / SOPS  
+- GitHub Actions 공식 문서
+- kubectl tool installer Action
+- Trivy / Cosign / Conftest
+- Sealed Secrets / SOPS
 - Argo CD / Argo Rollouts / Notifications
 
 > 단계적으로 도입하세요. **최소 파이프라인** → **스캔/서명/정책/알림** → **GitOps 전환** 순으로 확장하면 **안정성과 속도**를 동시에 얻을 수 있습니다.

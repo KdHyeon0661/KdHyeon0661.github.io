@@ -271,15 +271,15 @@ cilium hubble ui &
 ## 11. 성능 최적화 워크플로우(현업 레시피)
 
 1) **증상 정의**: 지연/타임아웃/CPU 고사용/패킷 드롭 지표 확인(기존 APM/노드 Exporter)
-2) **저오버헤드 스캔**:  
-   - CPU: `profile`(bpftrace) → 핫스택  
-   - I/O: `biolatency`, `fileslower`  
+2) **저오버헤드 스캔**:
+   - CPU: `profile`(bpftrace) → 핫스택
+   - I/O: `biolatency`, `fileslower`
    - 네트워크: `tcptop`, `softirqs`, XDP-drop 카운트
 3) **가설 수립**: 커널/네트워크/애플리케이션 층 어디서 병목?
 4) **미세 관측**: kprobe/tracepoint로 함수/경로별 분포 수집
-5) **개선 시도**:  
-   - 네트워크: XDP/tc에서 **얼리 드롭/리다이렉트**, Cilium LB 경로  
-   - 스케줄: 배치/IRQ CPU affinity, `sysctl` 튜닝  
+5) **개선 시도**:
+   - 네트워크: XDP/tc에서 **얼리 드롭/리다이렉트**, Cilium LB 경로
+   - 스케줄: 배치/IRQ CPU affinity, `sysctl` 튜닝
    - 앱: syscalls/lock 경합 완화, 비효율 I/O 배치
 6) **회귀 테스트**: before/after **동일 부하** 재현, 분포 비교
 7) **상시 관측**: libbpf-tool 측정기를 데몬화, 슬랙/알람 연동
@@ -439,10 +439,10 @@ sudo ./fork_count
 $$
 T_{99} \approx T_{net} + T_{sched} + T_{io} + T_{app}
 $$
-각 항의 분해 관측을 eBPF로 수행하고, **최대 항**을 우선 줄인다.  
-- `T_net`: XDP/tc 드롭·리다이렉트, IRQ 분배  
-- `T_sched`: run-queue, CPU 핫스팟 제거  
-- `T_io`: I/O path 지연, readahead/queue 깊이  
+각 항의 분해 관측을 eBPF로 수행하고, **최대 항**을 우선 줄인다.
+- `T_net`: XDP/tc 드롭·리다이렉트, IRQ 분배
+- `T_sched`: run-queue, CPU 핫스팟 제거
+- `T_io`: I/O path 지연, readahead/queue 깊이
 - `T_app`: syscalls/lock 경합, 블로킹 외부 호출
 
 ---
@@ -460,10 +460,10 @@ $$
 
 ## 18. Kubernetes와의 결합: Cilium Playbook
 
-1) Cilium + Hubble로 **흐름/정책** 가시화  
-2) eBPF LB 경로 활성화(기본) → **iptables 경합 제거**  
-3) **L7 정책**(HTTP/gRPC)로 외부 호출 제어  
-4) Hubble 지표로 **실제 서비스 경로** 기준 최적화(핫스팟 네임스페이스/서비스 식별)  
+1) Cilium + Hubble로 **흐름/정책** 가시화
+2) eBPF LB 경로 활성화(기본) → **iptables 경합 제거**
+3) **L7 정책**(HTTP/gRPC)로 외부 호출 제어
+4) Hubble 지표로 **실제 서비스 경로** 기준 최적화(핫스팟 네임스페이스/서비스 식별)
 5) Node/Pod별 **softirq, runqlat** 관측으로 핀포인트 튜닝
 
 ---
@@ -520,10 +520,10 @@ hubble observe --from-pod ns/app
 
 ## 참고 링크
 
-- eBPF: https://ebpf.io  
-- bpftrace: https://bpftrace.org  
-- BCC: https://github.com/iovisor/bcc  
-- libbpf-bootstrap: https://github.com/libbpf/libbpf-bootstrap  
-- bpftool: https://www.kernel.org/doc/html/latest/bpf/bpftool.html  
-- Cilium: https://cilium.io  
+- eBPF: https://ebpf.io
+- bpftrace: https://bpftrace.org
+- BCC: https://github.com/iovisor/bcc
+- libbpf-bootstrap: https://github.com/libbpf/libbpf-bootstrap
+- bpftool: https://www.kernel.org/doc/html/latest/bpf/bpftool.html
+- Cilium: https://cilium.io
 - Hubble: https://docs.cilium.io/en/stable/gettingstarted/hubble/

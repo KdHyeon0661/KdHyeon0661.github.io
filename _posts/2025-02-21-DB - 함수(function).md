@@ -22,8 +22,8 @@ category: DB
 ### 1.2 SQL의 3값 논리(Three-Valued Logic)
 
 - 비교 결과는 `TRUE / FALSE / UNKNOWN(NULL)` 중 하나.
-- `NULL = NULL`은 `TRUE`가 아니라 **UNKNOWN**.  
-- WHERE 절에서 `UNKNOWN`은 필터링되어 **제외**된다.  
+- `NULL = NULL`은 `TRUE`가 아니라 **UNKNOWN**.
+- WHERE 절에서 `UNKNOWN`은 필터링되어 **제외**된다.
 - NULL 비교는 **`IS NULL`/`IS NOT NULL`**을 사용.
 
 ---
@@ -78,7 +78,7 @@ SELECT value FROM STRING_SPLIT('a,b,c', ',');
 
 ### 2.4 패턴/정규식
 
-- MySQL: `LIKE`(전방 고정 인덱스 가능), `REGEXP_LIKE/REGEXP_REPLACE`(8.0+).  
+- MySQL: `LIKE`(전방 고정 인덱스 가능), `REGEXP_LIKE/REGEXP_REPLACE`(8.0+).
 - SQL Server: 정규식 내장 X → CLR/외부/LIKE 조합, 또는 `TRANSLATE`, `REPLACE` 조합.
 
 > **성능**: `%abc`(전방 와일드)는 인덱스 사용 곤란. **전방 고정** `abc%`는 유리.
@@ -282,9 +282,9 @@ SELECT TRY_CONVERT(INT, '123'), TRY_CONVERT(INT, '12A');  -- 123, NULL
 
 ### 8.1 MySQL
 
-- 추출: `JSON_EXTRACT(doc, '$.a.b')` 또는 `doc->'$.a.b'`  
-- 스칼라화: `JSON_UNQUOTE(JSON_EXTRACT(...))`  
-- 수정: `JSON_SET`, `JSON_REPLACE`, `JSON_REMOVE`  
+- 추출: `JSON_EXTRACT(doc, '$.a.b')` 또는 `doc->'$.a.b'`
+- 스칼라화: `JSON_UNQUOTE(JSON_EXTRACT(...))`
+- 수정: `JSON_SET`, `JSON_REPLACE`, `JSON_REMOVE`
 - 검색: **가급적 “가상 컬럼 + 인덱스”**(8.0+)로 SARGable
 
 ```sql
@@ -298,8 +298,8 @@ SELECT * FROM events WHERE item_id = 'A001';
 
 ### 8.2 SQL Server
 
-- 추출: `JSON_VALUE(doc, '$.a')`(스칼라) / `JSON_QUERY(doc, '$.arr')`(JSON)  
-- 펼치기: `OPENJSON(doc)` (CROSS APPLY)  
+- 추출: `JSON_VALUE(doc, '$.a')`(스칼라) / `JSON_QUERY(doc, '$.arr')`(JSON)
+- 펼치기: `OPENJSON(doc)` (CROSS APPLY)
 - 인덱스: **계산 열(PERSISTED) + 인덱스** 권장
 
 ```sql
@@ -316,8 +316,8 @@ SELECT * FROM dbo.events WHERE item_id = 'A001';
 
 ## 9. 보안·암호화·마스킹(간단 정리)
 
-- MySQL: `AES_ENCRYPT/AES_DECRYPT`(주의: 키 관리), `SHA2`, `MD5`(비권장).  
-- SQL Server: `HASHBYTES`, `ENCRYPTBYKEY/DECRYPTBYKEY`, 동적 데이터 마스킹(Dynamic Data Masking), Always Encrypted.  
+- MySQL: `AES_ENCRYPT/AES_DECRYPT`(주의: 키 관리), `SHA2`, `MD5`(비권장).
+- SQL Server: `HASHBYTES`, `ENCRYPTBYKEY/DECRYPTBYKEY`, 동적 데이터 마스킹(Dynamic Data Masking), Always Encrypted.
 - **권한/키 관리/컴플라이언스**는 DB 함수보다 **플랫폼 설계** 이슈임을 명시.
 
 ---
@@ -341,7 +341,7 @@ WHERE order_dt >= CAST(GETDATE() AS DATE) AND order_dt < DATEADD(DAY, 1, CAST(GE
 ### 10.2 함수 기반 인덱스 / 계산 열
 
 - **MySQL 8.0**: 함수 기반 인덱스 지원.
-  
+
 ```sql
 CREATE INDEX ix_user_lower_email ON users ((LOWER(email)));
 SELECT * FROM users WHERE LOWER(email) = 'alpha@example.com';
@@ -369,19 +369,19 @@ CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
 
 ### 11.2 성능
 
-- SQL Server **스칼라 UDF**는 **행 단위 호출**로 느릴 수 있음.  
-  2019+의 **UDF 인라이닝**(제약 조건하에)으로 대폭 개선 가능.  
+- SQL Server **스칼라 UDF**는 **행 단위 호출**로 느릴 수 있음.
+  2019+의 **UDF 인라이닝**(제약 조건하에)으로 대폭 개선 가능.
 - **Inline TVF**는 옵티마이저가 조인/필터링 최적화에 유리 → **선호**.
 - MySQL Stored Function은 트랜잭션/결정성/보안 고려 필요.
 
 ### 11.3 결정성/인덱스
 
-- 계산 열 인덱스(PERSISTED)에는 **결정적(Deterministic)** 함수만 허용(SQL Server).  
+- 계산 열 인덱스(PERSISTED)에는 **결정적(Deterministic)** 함수만 허용(SQL Server).
 - MySQL 함수 기반 인덱스는 표현식이 인덱싱 가능해야 한다.
 
 ### 11.4 보안/권한
 
-- 권한 에스컬레이션, 임의 파일/네트워크 접근 금지(서버 설정).  
+- 권한 에스컬레이션, 임의 파일/네트워크 접근 금지(서버 설정).
 - SQL Server는 `SCHEMABINDING`/권한 최소화 원칙.
 
 ---
@@ -532,16 +532,16 @@ ORDER BY dt DESC, id DESC;
 
 ## 13. 체크리스트(요약·실무 가드)
 
-- **NULL**: `= NULL` 금지 → `IS NULL`. `NOT IN` + NULL 함정 피하고 `NOT EXISTS` 사용.  
-- **SARGability**: 컬럼을 함수/연산으로 감싸지 말고, **함수는 인덱스로 끌어내리기**(계산 열/함수 인덱스).  
-- **날짜 경계**: **반열림 구간** `>= start AND < next` 습관화.  
-- **문자 길이**: SQL Server `LEN`은 후행 공백 미포함, `DATALENGTH`는 바이트.  
-- **안전 나눗셈**: `NULLIF(den,0)`로 0 나눗셈 방지.  
-- **조건부 집계**: `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` 패턴 정석.  
-- **윈도 함수**: 이동합/누계/Top-N per group 문제를 GROUP BY 없이 해결.  
-- **JSON**: 추출 후 스칼라화·가상/계산 열 + 인덱스.  
-- **UDF**: SQL Server는 **Inline TVF 우선**, 스칼라 UDF는 2019+ 인라이닝 활용.  
-- **성능 모니터링**: 실행계획/통계 최신화, 리라이트(OR → UNION ALL, NOT → 긍정 범위).  
+- **NULL**: `= NULL` 금지 → `IS NULL`. `NOT IN` + NULL 함정 피하고 `NOT EXISTS` 사용.
+- **SARGability**: 컬럼을 함수/연산으로 감싸지 말고, **함수는 인덱스로 끌어내리기**(계산 열/함수 인덱스).
+- **날짜 경계**: **반열림 구간** `>= start AND < next` 습관화.
+- **문자 길이**: SQL Server `LEN`은 후행 공백 미포함, `DATALENGTH`는 바이트.
+- **안전 나눗셈**: `NULLIF(den,0)`로 0 나눗셈 방지.
+- **조건부 집계**: `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` 패턴 정석.
+- **윈도 함수**: 이동합/누계/Top-N per group 문제를 GROUP BY 없이 해결.
+- **JSON**: 추출 후 스칼라화·가상/계산 열 + 인덱스.
+- **UDF**: SQL Server는 **Inline TVF 우선**, 스칼라 UDF는 2019+ 인라이닝 활용.
+- **성능 모니터링**: 실행계획/통계 최신화, 리라이트(OR → UNION ALL, NOT → 긍정 범위).
 
 ---
 
@@ -620,6 +620,6 @@ CREATE TABLE dbo.order_items (
 
 # 마무리
 
-- **함수는 강력하지만 성능을 해칠 수도 있다**: 인덱스와 잘 결합되도록 **SARGable 쿼리**를 우선하며, 필요한 경우 **계산 열/함수 기반 인덱스**로 인덱스 측으로 “끌어내려라”.  
-- **윈도 함수**로 리포트/대시보드 요구사항을 간결·고성능으로 해결하고, **조건부 집계**로 다차원 지표를 한 번에 만든다.  
-- **JSON/형변환/보안**은 “작동”보다 “운영 가능성(성능·가시성·컴플라이언스)”이 중요하다. 
+- **함수는 강력하지만 성능을 해칠 수도 있다**: 인덱스와 잘 결합되도록 **SARGable 쿼리**를 우선하며, 필요한 경우 **계산 열/함수 기반 인덱스**로 인덱스 측으로 “끌어내려라”.
+- **윈도 함수**로 리포트/대시보드 요구사항을 간결·고성능으로 해결하고, **조건부 집계**로 다차원 지표를 한 번에 만든다.
+- **JSON/형변환/보안**은 “작동”보다 “운영 가능성(성능·가시성·컴플라이언스)”이 중요하다.

@@ -510,7 +510,7 @@ spec:
 
 ## 결론
 
-- **Ingress = 라우팅 규칙**, **Ingress Controller = 실제 트래픽 처리기**  
-- NodePort/LoadBalancer 대비 **도메인·경로 단일 진입점**으로 다수 서비스를 **일관된 보안/정책** 아래 운영 가능  
-- 실무 핵심: **올바른 클래스 지정, TLS 자동화(cert-manager), 적절한 애노테이션(리라이트/헤더/타임아웃/CORS/Sticky/RateLimit), Canary/Blue-Green, 관측**  
+- **Ingress = 라우팅 규칙**, **Ingress Controller = 실제 트래픽 처리기**
+- NodePort/LoadBalancer 대비 **도메인·경로 단일 진입점**으로 다수 서비스를 **일관된 보안/정책** 아래 운영 가능
+- 실무 핵심: **올바른 클래스 지정, TLS 자동화(cert-manager), 적절한 애노테이션(리라이트/헤더/타임아웃/CORS/Sticky/RateLimit), Canary/Blue-Green, 관측**
 - 대규모·고난도 요구가 늘면 **Gateway API/Service Mesh**로 확장하는 것이 자연스러운 다음 단계다.

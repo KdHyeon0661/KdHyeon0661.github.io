@@ -37,7 +37,7 @@ category: Docker
 ```
 [호스트 터미널] --attach--> [container: PID 1 (애플리케이션)]
 ```
-- **PID 1**의 **STDIN/STDOUT/STDERR**에 직결.  
+- **PID 1**의 **STDIN/STDOUT/STDERR**에 직결.
 - PID 1이 `bash` 같은 셸이면, `exit`가 곧 컨테이너 종료가 됨.
 
 ---
@@ -84,7 +84,7 @@ docker exec -i web sh -lc 'cat -v' # stdin만 필요, tty 불필요
 ```
 
 ### 3.2 attach 시 입력이 안 들어간다면
-- 해당 컨테이너가 **처음 run/start 때 `-i` 없이** 올라왔을 수 있음.  
+- 해당 컨테이너가 **처음 run/start 때 `-i` 없이** 올라왔을 수 있음.
   `attach`는 **컨테이너 생성 시 열어둔 STDIN**을 그대로 씁니다. 처음부터 `-i`로 시작해야 입력이 가능.
 
 ---
@@ -97,7 +97,7 @@ docker stop web         # SIGTERM → grace 기간 → SIGKILL
 docker kill web         # 즉시 SIGKILL
 docker kill --signal=HUP web   # HUP 전달(로그 롤테이트 등)
 ```
-- `attach` 중 **Ctrl+C**(SIGINT)가 PID 1에 전달될 수 있음(신호 proxy).  
+- `attach` 중 **Ctrl+C**(SIGINT)가 PID 1에 전달될 수 있음(신호 proxy).
 - 애플리케이션은 **SIGTERM 처리**(정상 종료 루틴) 코드를 반드시 가져야 안전.
 
 ### 4.2 PID 1의 특수성
@@ -133,7 +133,7 @@ CMD ["-w","2","-b","0.0.0.0:8080","app:app"]
 
 ## 6. 다중 attach와 출력 섞임
 
-- **여러 터미널에서 동시에 attach 가능**합니다.  
+- **여러 터미널에서 동시에 attach 가능**합니다.
 - 단, **모두가 같은 STDIN/STDOUT**을 공유하므로 입력이 충돌하고 출력이 섞입니다.
 - 운영 환경에서는 **attach 지양** + 관찰은 `logs -f`, 제어는 **API/관리 명령** 사용 권장.
 
@@ -227,7 +227,7 @@ docker attach lab
 
 ## 11. 고급: nsenter와의 비교(참고)
 
-- `nsenter`는 **호스트에서 컨테이너 네임스페이스**에 진입(별도 런타임 경유 X).  
+- `nsenter`는 **호스트에서 컨테이너 네임스페이스**에 진입(별도 런타임 경유 X).
 - Docker 표준 사용성/이식성은 `docker exec`이 우수. `nsenter`는 낮은 레벨의 리눅스 운영/디버깅에 적합.
 
 ---
@@ -260,6 +260,6 @@ docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
 
 ## 13. 결론 요약
 
-- **운영/디버깅 표준**은 `docker exec` 입니다. 안전하고, 컨테이너 수명에 **영향 최소**.  
-- `docker attach`는 **PID 1 IO에 직결**되어 위험(종료·입력 충돌·로그 오염). 꼭 필요할 때만, **detach 키** 숙지.  
+- **운영/디버깅 표준**은 `docker exec` 입니다. 안전하고, 컨테이너 수명에 **영향 최소**.
+- `docker attach`는 **PID 1 IO에 직결**되어 위험(종료·입력 충돌·로그 오염). 꼭 필요할 때만, **detach 키** 숙지.
 - **로그는 `docker logs`**, **제어는 `exec`**, **종료는 stop/kill**, **가시성은 stats/inspect**—역할을 분리하면 사고가 줄어듭니다.

@@ -8,19 +8,19 @@ category: Avalonia
 
 여기서는 세 가지 축으로 정리한다.
 
-1) **검증 소스**  
-- `ReactiveUI.Validation` (권장: 선언적, 테스트 용이)  
-- `INotifyDataErrorInfo` 직접 구현 (프레임워크 의존↓, 세밀 제어)  
-- `DataAnnotations` (간단 명료, 모델 재사용)  
+1) **검증 소스**
+- `ReactiveUI.Validation` (권장: 선언적, 테스트 용이)
+- `INotifyDataErrorInfo` 직접 구현 (프레임워크 의존↓, 세밀 제어)
+- `DataAnnotations` (간단 명료, 모델 재사용)
 
-2) **오류 시각화**  
-- `:invalid` 의사 클래스 기반 스타일(테두리/배경/아이콘)  
-- `DataValidationErrors`(첨부 속성)로 **필드 단위 메시지 바인딩**  
+2) **오류 시각화**
+- `:invalid` 의사 클래스 기반 스타일(테두리/배경/아이콘)
+- `DataValidationErrors`(첨부 속성)로 **필드 단위 메시지 바인딩**
 - 폼 헤더/푸터에 **ValidationSummary** 패턴
 
-3) **고급 기능**  
-- 교차 필드/복합 규칙, 비동기(서버) 검증, 디바운스  
-- 커맨드 활성화(CanExecute)와 검증 연동  
+3) **고급 기능**
+- 교차 필드/복합 규칙, 비동기(서버) 검증, 디바운스
+- 커맨드 활성화(CanExecute)와 검증 연동
 - JSON 저장/복구, 단위 테스트
 
 ---
@@ -180,7 +180,7 @@ public sealed class FakeUserService : IFakeUserService
 
 ## 2. INotifyDataErrorInfo 수동 구현 — 프레임워크 의존↓/세밀 제어
 
-ReactiveUI.Validation 없이도 가능하다.  
+ReactiveUI.Validation 없이도 가능하다.
 장점: 의존성↓, 런타임 제어↑. 단점: 코드량↑.
 
 ```csharp
@@ -384,7 +384,7 @@ public sealed class FirstErrorConverter : IValueConverter
 
 > 핵심: Avalonia는 `:invalid` 의사 클래스와 `DataValidationErrors`(첨부 속성)를 제공한다.
 
-- `:invalid` → 컨트롤이 오류일 때 스타일 적용  
+- `:invalid` → 컨트롤이 오류일 때 스타일 적용
 - `ac:DataValidationErrors.Errors` → 필드의 에러 컬렉션
 
 ```xml
@@ -488,9 +488,9 @@ public sealed class FirstErrorConverter : IValueConverter
 </UserControl>
 ```
 
-> **포인트**  
-> - `TextBox:invalid` selector로 오류 테두리/배경을 통일 스타일로 적용  
-> - `ac:DataValidationErrors.Errors`에 바인딩해 **첫 번째 에러**를 인라인 표기  
+> **포인트**
+> - `TextBox:invalid` selector로 오류 테두리/배경을 통일 스타일로 적용
+> - `ac:DataValidationErrors.Errors`에 바인딩해 **첫 번째 에러**를 인라인 표기
 > - 버튼 활성화는 `SubmitCommand`의 CanExecute 또는 `HasErrors`와 `InverseBooleanConverter`로 처리
 
 ---
@@ -529,15 +529,15 @@ this.ValidationRule(vm => vm.To,
 
 ### 5.3 서버 사이드 검증(비동기) + 디바운스
 
-앞서 `UserName`에서 구현한 패턴처럼,  
-`WhenAnyValue(...).Throttle(...).SelectMany(async ...)` 형태로 비동기 호출을 연결한다.  
+앞서 `UserName`에서 구현한 패턴처럼,
+`WhenAnyValue(...).Throttle(...).SelectMany(async ...)` 형태로 비동기 호출을 연결한다.
 오래 걸리는 호출에는 타임아웃/취소 토큰을 더한다.
 
 ---
 
 ## 6. 검증과 Command 활성화 연동
 
-- **ReactiveUI.Validation**: `this.IsValid()`가 `IObservable<bool>`을 내어주므로 Command 생성 시 그대로 적용  
+- **ReactiveUI.Validation**: `this.IsValid()`가 `IObservable<bool>`을 내어주므로 Command 생성 시 그대로 적용
 - **수동(INotifyDataErrorInfo)**: `HasErrors` 변화에 대응해 `RaiseCanExecuteChanged()`(표준 ICommand) 또는 ReactiveCommand의 `canExecute`를 구성
 
 ```csharp
@@ -556,7 +556,7 @@ SubmitCommand = ReactiveCommand.Create(OnSubmit, canSubmit);
 
 ## 7. ValidationSummary 패턴 (폼 상단/하단에 전역 메시지)
 
-`INotifyDataErrorInfo`의 모든 에러를 한데 모아 사용자에게 요약을 보여준다.  
+`INotifyDataErrorInfo`의 모든 에러를 한데 모아 사용자에게 요약을 보여준다.
 간단한 구현은 VM에서 `AllErrors` 파생 속성을 제공하면 된다.
 
 ```csharp
@@ -620,7 +620,7 @@ public async Task UserName_Duplicate_Fails()
 ## 10. 성능/설계 팁
 
 - **규칙은 VM**에, **스타일은 XAML**에: 관심사 분리
-- **데이터 흐름은 단방향**으로(입력 → 검증 → 요약/상태)  
+- **데이터 흐름은 단방향**으로(입력 → 검증 → 요약/상태)
 - **비동기 검증은 디바운스**로 과도한 호출 억제
 - **ErrorTemplate-like UI**는 `:invalid` + `DataValidationErrors.Errors`로 일관되게
 - 다국어/로캘: **리소스 키** 기반 메시지로 국제화 준비
@@ -632,10 +632,10 @@ public async Task UserName_Duplicate_Fails()
 
 - Avalonia는 `INotifyDataErrorInfo` + `:invalid` + `DataValidationErrors`로 **검증/시각화 경로**를 명확히 제공한다.
 - **ReactiveUI.Validation**을 쓰면 규칙 선언, 교차/비동기, Command 연동이 대폭 간단해진다.
-- 팀/프로젝트 성격에 따라  
-  - 빠른 생산성: **ReactiveUI.Validation**,  
-  - 의존성 최소화: **INotifyDataErrorInfo 수동**,  
-  - 모델 재사용: **DataAnnotations**  
+- 팀/프로젝트 성격에 따라
+  - 빠른 생산성: **ReactiveUI.Validation**,
+  - 의존성 최소화: **INotifyDataErrorInfo 수동**,
+  - 모델 재사용: **DataAnnotations**
   를 선택하되, **시각화 스타일과 바인딩 패턴은 동일**하게 유지하면 된다.
 
 위 설계를 토대로 기존 문서의 핵심(필드 검증/오류 시각화/폼 유효성)을 그대로 살리면서, **교차/비동기/요약/테스트**까지 한 번에 끌어올릴 수 있다.

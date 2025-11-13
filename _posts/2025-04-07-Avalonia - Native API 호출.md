@@ -211,7 +211,7 @@ public sealed class CrossPlatformBleService : IBluetoothService
 
 ### 4.2 Windows 네이티브 직접 접근(개요)
 
-- 전통 Win32 BTH API(P/Invoke) or Windows.Devices.Bluetooth(BLE) 사용  
+- 전통 Win32 BTH API(P/Invoke) or Windows.Devices.Bluetooth(BLE) 사용
   데스크톱에서 UWP/WinRT API 호출은 **권한/매니페스트 구성**이 필요.
 - 실무에선 InTheHand 같은 래퍼가 초기 생산성을 크게 올립니다.
 
@@ -590,11 +590,11 @@ public sealed class FakeSerialService : ISerialService
 
 ## 15. 문제해결 체크리스트
 
-1. **`DllNotFoundException`**: RID/native 경로/파일 권한 확인  
-2. **`EntryPointNotFoundException`**: 함수 이름/콜링 컨벤션/문자셋 점검  
-3. **포인터 크래시**: 구조체 레이아웃/Pack/ByRef/ByVal 문자열 확인  
-4. **UI 프리징**: 백그라운드에서 I/O, UI는 Dispatcher로  
-5. **권한 거부(ENOENT/AccessDenied)**: udev, 그룹, Plist, 매니페스트 점검  
+1. **`DllNotFoundException`**: RID/native 경로/파일 권한 확인
+2. **`EntryPointNotFoundException`**: 함수 이름/콜링 컨벤션/문자셋 점검
+3. **포인터 크래시**: 구조체 레이아웃/Pack/ByRef/ByVal 문자열 확인
+4. **UI 프리징**: 백그라운드에서 I/O, UI는 Dispatcher로
+5. **권한 거부(ENOENT/AccessDenied)**: udev, 그룹, Plist, 매니페스트 점검
 6. **BLE 연결 불가**: 어댑터 전원, 페어링/보안 수준, 서비스/특성 권한 확인
 
 ---

@@ -6,23 +6,23 @@ category: WPF
 ---
 # WPF 내부 구조 큰 그림: **PresentationFramework / PresentationCore / milcore**
 
-> 이 글은 WPF의 상·하위 계층 구조를 **`PresentationFramework` → `PresentationCore` → `milcore`(Media Integration Layer Core)** 축으로 정리합니다.  
+> 이 글은 WPF의 상·하위 계층 구조를 **`PresentationFramework` → `PresentationCore` → `milcore`(Media Integration Layer Core)** 축으로 정리합니다.
 > “어떤 네임스페이스/어셈블리에서 무엇을 하고, 어떤 스레드와 채널을 통해 어디까지 내려가며, 최종적으로 화면 픽셀은 어떻게 찍히는가?”를 **예제 중심**으로 설명합니다. 코드 블록은 ` ``` `로 감싸고, 텍스트 전체를 블로그 포맷에 맞춰 정리했습니다.
 
 ---
 
 ## 0. TL;DR — 한 장 요약
 
-- **PresentationFramework.dll**  
-  - XAML, 컨트롤, 스타일/템플릿, 데이터 바인딩, 리소스 시스템, 명령/입력 라우팅 등 **UI 프레임워크 레이어**.  
+- **PresentationFramework.dll**
+  - XAML, 컨트롤, 스타일/템플릿, 데이터 바인딩, 리소스 시스템, 명령/입력 라우팅 등 **UI 프레임워크 레이어**.
   - 개발자가 가장 자주 만나는 영역: `Window`, `Control`, `ItemsControl`, `DataTemplate`, `{Binding}` 등.
 
-- **PresentationCore.dll**  
-  - **시각적 객체 모델**(Visual, Drawing, Geometry), **미디어/텍스트**(ImageSource, VideoDrawing, TextFormatter), **필수 렌더링 추상화**.  
+- **PresentationCore.dll**
+  - **시각적 객체 모델**(Visual, Drawing, Geometry), **미디어/텍스트**(ImageSource, VideoDrawing, TextFormatter), **필수 렌더링 추상화**.
   - WPF의 **장면 그래프(Visual Tree)**를 유지하고, **의존 속성(DependencyProperty)**, **애니메이션**, **Freezable** 등 성능/변경 트래킹의 핵심이 모여 있음.
 
-- **milcore.dll (Media Integration Layer Core)**  
-  - **네이티브** 구성요소. **Direct3D**와 통신해 실제 **합성(Composition)**과 **그리기**를 수행.  
+- **milcore.dll (Media Integration Layer Core)**
+  - **네이티브** 구성요소. **Direct3D**와 통신해 실제 **합성(Composition)**과 **그리기**를 수행.
   - **컴포지터 스레드**와 **DUCE 채널**(Dispatcher-UI-Channel-to-Engine)을 통해 **UI 스레드**에서 생성한 장면 그래프를 **렌더 스레드**로 넘겨 GPU/CPU로 합성.
 
 ---
@@ -211,7 +211,7 @@ dc.DrawGeometry(Brushes.CornflowerBlue, null, geo);
 
 ### 4.4 애니메이션 클록 & 타임라인
 
-- `AnimationClock`가 **Property 변경을 시간에 따라 적용**  
+- `AnimationClock`가 **Property 변경을 시간에 따라 적용**
 - 프레임마다 값 강제 설정이 아니라, **애니메이션 시스템**이 DP 수준에서 **변경 레이어**로 합산
 
 ```csharp
@@ -221,7 +221,7 @@ this.BeginAnimation(MeterBar.ValueProperty, da);
 
 ### 4.5 텍스트 파이프라인
 
-- `TextFormatter`가 **줄나눔, 폰트/스크립트, 힌팅**을 처리하여 **GlyphRun**을 생성  
+- `TextFormatter`가 **줄나눔, 폰트/스크립트, 힌팅**을 처리하여 **GlyphRun**을 생성
 - 고급 시나리오엔 `FormattedText`/`GlyphRunDrawing`으로 저수준 렌더링
 
 ```csharp
@@ -263,12 +263,12 @@ dc.DrawText(ft, new Point(8, 8));
 
 ### 5.3 Direct3D & 렌더링 계층
 
-- 전통적으로 D3D9 기반(운영체제/프레임워크 버전에 따라 상이), **Tier 0/1/2** 하드웨어 가속  
+- 전통적으로 D3D9 기반(운영체제/프레임워크 버전에 따라 상이), **Tier 0/1/2** 하드웨어 가속
 - GPU 불가 시 **소프트웨어 패스(렌더 테셀레이션/라스터라이즈)**로 폴백
 
 ### 5.4 HwndTarget & 합성 경계
 
-- `HwndSource/HwndHost`를 통해 **Win32 HWND**와 브리지  
+- `HwndSource/HwndHost`를 통해 **Win32 HWND**와 브리지
 - 최종 출력은 윈도우의 **타깃 서피스**로 합성
 
 ---
@@ -298,9 +298,9 @@ public static void Main()
 
 ## 7. 레이아웃 파이프라인(Measure/Arrange)와 렌더 파이프라인의 연결
 
-- **Measure → Arrange → Render**  
-  - 레이아웃 단계에서 **사이즈/배치** 결정  
-  - Render 단계에서 **DrawingContext**로 그리기 명령 기록  
+- **Measure → Arrange → Render**
+  - 레이아웃 단계에서 **사이즈/배치** 결정
+  - Render 단계에서 **DrawingContext**로 그리기 명령 기록
   - 이 기록이 **milcore**에 전달되어 **합성**
 
 ```csharp
@@ -336,7 +336,7 @@ public class FixedCellPanel : Panel
 
 ## 8. 입력, 명령, 라우팅 이벤트 → 시각화/합성과의 상호작용
 
-- 입력 라우팅(프리뷰→버블)이 **HitTest(Visual Tree)**와 결합  
+- 입력 라우팅(프리뷰→버블)이 **HitTest(Visual Tree)**와 결합
 - 시각적 상태/트리거 변경은 DP 변경으로 이어져 **렌더 배치**가 발생
 
 ```csharp
@@ -382,14 +382,14 @@ public class MillionPoints : FrameworkElement
 
 ## 10. 미디어/비디오/애니메이션과 컴포지션
 
-- `MediaElement`/`MediaPlayer` 등은 **프레임 스트림**을 텍스처로 올려 **합성**  
+- `MediaElement`/`MediaPlayer` 등은 **프레임 스트림**을 텍스처로 올려 **합성**
 - 애니메이션 클록은 DP 레벨에서 값 변화를 추적 → 렌더 배치로 반영
 
 ---
 
 ## 11. D3D 상호운용 (D3DImage, HwndHost)
 
-- **D3DImage**로 Direct3D 텍스처를 WPF 비주얼에 투영  
+- **D3DImage**로 Direct3D 텍스처를 WPF 비주얼에 투영
 - **HwndHost**로 외부 HWND 콘텐츠(예: Win32/DX 윈도우)를 WPF 트리 안에 포함
 
 ```csharp
@@ -409,7 +409,7 @@ public class DxHost : HwndHost
 
 ## 12. 텍스트 렌더 품질: DPI, 픽셀 스냅, 힌팅
 
-- DIP 기반 좌표계라 폰트가 **1px 경계**에 어긋나면 흐릿함  
+- DIP 기반 좌표계라 폰트가 **1px 경계**에 어긋나면 흐릿함
 - `UseLayoutRounding="True"`/`SnapsToDevicePixels="True"` 등으로 **픽셀 경계 정렬**
 
 ```xml
@@ -422,9 +422,9 @@ public class DxHost : HwndHost
 
 ## 13. 하드웨어 가속 Tiers & 폴백
 
-- **Tier 2**: 고급 하드웨어 가속  
-- **Tier 1**: 제한적 가속  
-- **Tier 0**: 소프트웨어 렌더  
+- **Tier 2**: 고급 하드웨어 가속
+- **Tier 1**: 제한적 가속
+- **Tier 0**: 소프트웨어 렌더
 - 상황에 따라 **효과(Blur/DropShadow)**, **비트맵 스케일링** 품질/성능 차이
 
 ```csharp
@@ -436,9 +436,9 @@ Debug.WriteLine($"Render Tier: {tier}"); // 0, 1, 2
 
 ## 14. 리소스 경합과 배치: 장면 그래프 최적화 관점
 
-- **시각적 계층 평탄화**(불필요한 Panel/Border 제거)  
-- **공유 브러시/Geometry** + Freeze  
-- **대형 비트맵** 스트리밍 vs 미리 디코딩  
+- **시각적 계층 평탄화**(불필요한 Panel/Border 제거)
+- **공유 브러시/Geometry** + Freeze
+- **대형 비트맵** 스트리밍 vs 미리 디코딩
 - **RenderOptions.BitmapScalingMode** 조절
 
 ```xml
@@ -449,22 +449,22 @@ Debug.WriteLine($"Render Tier: {tier}"); // 0, 1, 2
 
 ## 15. 측정 단위, DPI 인식, Per-Monitor DPI
 
-- **DIP**로 선언했더라도 **실제 픽셀**은 모니터 DPI마다 다름  
+- **DIP**로 선언했더라도 **실제 픽셀**은 모니터 DPI마다 다름
 - 최신 Windows에선 **Per-Monitor DPI 인식**이 중요 (WPF .NET 4.6+에서 개선)
 
 ---
 
 ## 16. 프레임 타이밍과 합성: “왜 초당 60프레임이 안 나올까?”
 
-- UI 스레드가 바쁘면 **배치 밀림** → 합성 스레드는 이전 프레임 반복 출력  
-- **애니메이션/미디어는** 합성 스레드가 독립적으로 유지하지만, **새 장면** 없이 오래가면 시각 업데이트 한계  
+- UI 스레드가 바쁘면 **배치 밀림** → 합성 스레드는 이전 프레임 반복 출력
+- **애니메이션/미디어는** 합성 스레드가 독립적으로 유지하지만, **새 장면** 없이 오래가면 시각 업데이트 한계
 - **DispatcherPriority** 관리, 백그라운드 작업 오프로딩(Tasks/BackgroundWorker) 필수
 
 ---
 
 ## 17. Visual Layer API로 “템플릿 없는” 화면 만들기
 
-- 컨트롤 프레임워크를 거치지 않고 **Visual + DrawingContext**로 장면 구성  
+- 컨트롤 프레임워크를 거치지 않고 **Visual + DrawingContext**로 장면 구성
 - 대규모 데이터 렌더(차트, 맵, 타일러) 시 오버헤드 대폭 절감
 
 ```csharp
@@ -489,7 +489,7 @@ public sealed class VisualLayerCanvas : FrameworkElement
 
 ## 18. 애니메이션 vs Composition Target
 
-- **Storyboard/Timeline** 기반 애니메이션은 DP와 통합  
+- **Storyboard/Timeline** 기반 애니메이션은 DP와 통합
 - `CompositionTarget.Rendering` 이벤트로 **프레임 동기** 루프를 구현 가능 (게임/시뮬레이션)
 
 ```csharp
@@ -503,8 +503,8 @@ CompositionTarget.Rendering += (s, e) =>
 
 ## 19. 이미지 처리 & `WriteableBitmap`(CPU) / ShaderEffect(GPU)
 
-- CPU로 픽셀 조작: `WriteableBitmap`  
-- GPU로 픽셀 이펙트: `ShaderEffect`(픽셀 셰이더 HLSL)  
+- CPU로 픽셀 조작: `WriteableBitmap`
+- GPU로 픽셀 이펙트: `ShaderEffect`(픽셀 셰이더 HLSL)
 - 상황에 따라 **대역폭/지연** 트레이드오프
 
 ```csharp
@@ -519,14 +519,14 @@ wb.Unlock();
 
 ## 20. 문서/인쇄 파이프라인
 
-- `FixedDocument`/`FlowDocument`에서 **Paginator**로 페이지 생산  
+- `FixedDocument`/`FlowDocument`에서 **Paginator**로 페이지 생산
 - `PrintDialog` / `XpsDocumentWriter`로 출력 → 화면과 유사한 **벡터 품질**
 
 ---
 
 ## 21. 리소스 로딩과 이미지 캐시
 
-- Image/BitmapCacheOption, DecodePixelWidth/Height 등으로 **메모리/시간 최적화**  
+- Image/BitmapCacheOption, DecodePixelWidth/Height 등으로 **메모리/시간 최적화**
 - 같은 URI의 BitmapSource는 **디코더 캐시 공유**(조건부)로 메모리 절감
 
 ```xml
@@ -537,22 +537,22 @@ wb.Unlock();
 
 ## 22. 성능 문제 체크리스트
 
-1) **Layout thrash**: 빈번한 `Measure/Arrange` 유발  
-2) **대형 Visual 트리**: 불필요한 Panel/Decorator 제거  
-3) **Binding 폭주**: `INotifyPropertyChanged` 과다, 바인딩 에러 로그  
-4) **Bitmap 스케일링**: 고품질 스케일은 비용 큼  
-5) **프리징 미사용**: 공유 리소스는 Freeze  
-6) **너무 많은 Effects/Opacity**: 합성 경로 비싸짐  
-7) **DPI/픽셀 스냅** 미적용으로 흐릿하거나 불필요한 반픽셀 렌더  
+1) **Layout thrash**: 빈번한 `Measure/Arrange` 유발
+2) **대형 Visual 트리**: 불필요한 Panel/Decorator 제거
+3) **Binding 폭주**: `INotifyPropertyChanged` 과다, 바인딩 에러 로그
+4) **Bitmap 스케일링**: 고품질 스케일은 비용 큼
+5) **프리징 미사용**: 공유 리소스는 Freeze
+6) **너무 많은 Effects/Opacity**: 합성 경로 비싸짐
+7) **DPI/픽셀 스냅** 미적용으로 흐릿하거나 불필요한 반픽셀 렌더
 8) **UI 스레드 블로킹**: 파일 IO/CPU 작업은 비동기로
 
 ---
 
 ## 23. milcore와 “그 아래”를 굳이 더 알면 좋은 포인트
 
-- **Dirty Region/Clip/Transform**을 활용한 합성 비용 절감  
-- **Z-Order/Overdraw** 최소화  
-- **RenderTarget 공유/재사용** 전략  
+- **Dirty Region/Clip/Transform**을 활용한 합성 비용 절감
+- **Z-Order/Overdraw** 최소화
+- **RenderTarget 공유/재사용** 전략
 - **Text/Glyph Cache** 재사용
 
 > WPF 개발자는 milcore를 직접 호출할 수 없지만, **상위 계층의 설계 방식**이 **컴포지션 비용**에 큰 영향을 준다는 점을 이해하면 튜닝 포인트가 보입니다.
@@ -561,11 +561,11 @@ wb.Unlock();
 
 ## 24. 종단 간 흐름을 하나의 예로
 
-1. 개발자: XAML로 `ListBox` + `DataTemplate` 구성  
-2. PresentationFramework: ItemsControl이 컨테이너/패널/가상화 설정  
-3. PresentationCore: Visual로 드로잉 명령(텍스트/도형/이미지)을 기록  
-4. milcore: 명령 배치를 수신해 컴포지션 트리 갱신  
-5. D3D: 텍스처/지오메트리/셰이더를 통해 화면 합성  
+1. 개발자: XAML로 `ListBox` + `DataTemplate` 구성
+2. PresentationFramework: ItemsControl이 컨테이너/패널/가상화 설정
+3. PresentationCore: Visual로 드로잉 명령(텍스트/도형/이미지)을 기록
+4. milcore: 명령 배치를 수신해 컴포지션 트리 갱신
+5. D3D: 텍스처/지오메트리/셰이더를 통해 화면 합성
 6. 모니터: VSync에 맞춰 스왑 → 픽셀 출력
 
 ---
@@ -624,9 +624,9 @@ public sealed class Bars : FrameworkElement
 </Window>
 ```
 
-**핵심 포인트**  
-- `DrawingVisual` 하나에 매 프레임 재그림 → **노드 수 최소화**  
-- 컨트롤/바인딩/템플릿 오버헤드 제거 → milcore까지 **명령 배치가 간결**  
+**핵심 포인트**
+- `DrawingVisual` 하나에 매 프레임 재그림 → **노드 수 최소화**
+- 컨트롤/바인딩/템플릿 오버헤드 제거 → milcore까지 **명령 배치가 간결**
 - 수천 개 사각형도 빠르게 합성
 
 ---
@@ -674,52 +674,52 @@ public class D3DImageHost : Image
 
 ## 27. 흔한 난관과 처방
 
-- **텍스트 흐릿함**: LayoutRounding/PixelSnap + 정수 좌표  
-- **스케일 변환(Zoom) 시 성능 저하**: 전체 트리 ScaleTransform 남용 주의, 레이어링/타일링  
-- **대량 알파 블렌딩**: Overdraw 줄이기, 반투명 레이어 최소화  
-- **애니메이션 끊김**: UI 스레드 블로킹 제거, 애니메이션 DP로 위임  
+- **텍스트 흐릿함**: LayoutRounding/PixelSnap + 정수 좌표
+- **스케일 변환(Zoom) 시 성능 저하**: 전체 트리 ScaleTransform 남용 주의, 레이어링/타일링
+- **대량 알파 블렌딩**: Overdraw 줄이기, 반투명 레이어 최소화
+- **애니메이션 끊김**: UI 스레드 블로킹 제거, 애니메이션 DP로 위임
 - **메모리 급증**: 비트맵 복사/디코딩 전략 점검(DecodePixelWidth/Height), 캐시 공유
 
 ---
 
 ## 28. 체크리스트: PresentationFramework → PresentationCore → milcore **정렬 맞추기**
 
-1. **프레임워크 오버헤드 최소화**  
-   - 불필요한 컨트롤/패널/데코레이터 제거  
-   - 바인딩 에러/빈번한 Notify 폭주를 로그로 잡기  
-2. **시각화 경량화**  
-   - VisualLayer(DrawingVisual)로 대량 렌더  
-   - Freezable Freeze, 공유 리소스 재사용  
-3. **합성 비용 최적화**  
-   - 픽셀 스냅/클리핑/오버드로 최소  
-   - 비트맵 스케일/이펙트 최소화, 필요한 곳에만  
-4. **스레드/디스패처**  
-   - 백그라운드 작업 분리, UI 스레드 유휴 확보  
+1. **프레임워크 오버헤드 최소화**
+   - 불필요한 컨트롤/패널/데코레이터 제거
+   - 바인딩 에러/빈번한 Notify 폭주를 로그로 잡기
+2. **시각화 경량화**
+   - VisualLayer(DrawingVisual)로 대량 렌더
+   - Freezable Freeze, 공유 리소스 재사용
+3. **합성 비용 최적화**
+   - 픽셀 스냅/클리핑/오버드로 최소
+   - 비트맵 스케일/이펙트 최소화, 필요한 곳에만
+4. **스레드/디스패처**
+   - 백그라운드 작업 분리, UI 스레드 유휴 확보
    - CompositionTarget/애니메이션을 올바르게 사용
 
 ---
 
 ## 29. FAQ
 
-- **Q. milcore를 직접 건드릴 수 있나요?**  
+- **Q. milcore를 직접 건드릴 수 있나요?**
   - A. 아니요. 공개 API가 아닙니다. 하지만 **상위 계층에서 올바른 설계**로 milcore의 작업 부담을 크게 줄일 수 있습니다.
 
-- **Q. Freezable은 꼭 써야 하나요?**  
+- **Q. Freezable은 꼭 써야 하나요?**
   - A. 브러시/지오메트리/변환처럼 **공유·정적 리소스**는 Freeze가 성능상 매우 유리합니다.
 
-- **Q. 120Hz 모니터에서 120FPS가 가능한가요?**  
+- **Q. 120Hz 모니터에서 120FPS가 가능한가요?**
   - A. 합성/디스패처 타이밍과 GPU/CPU 여건에 달렸습니다. **작업량이 충분히 가벼울 때** 가능합니다. 병목은 주로 **UI 스레드**와 **대량 오버드로**입니다.
 
 ---
 
 ## 30. 마무리
 
-이 글의 핵심은 **“프레임워크(편의)와 렌더링(성능) 사이의 계약”**을 정확히 이해하는 것입니다.  
-- **PresentationFramework**에선 **바인딩/템플릿/스타일**을 사용하되, 과유불급을 경계합니다.  
-- **PresentationCore**에선 **Visual/Drawing/Freezable**을 이해해 **장면 그래프**를 깔끔하게 유지합니다.  
+이 글의 핵심은 **“프레임워크(편의)와 렌더링(성능) 사이의 계약”**을 정확히 이해하는 것입니다.
+- **PresentationFramework**에선 **바인딩/템플릿/스타일**을 사용하되, 과유불급을 경계합니다.
+- **PresentationCore**에선 **Visual/Drawing/Freezable**을 이해해 **장면 그래프**를 깔끔하게 유지합니다.
 - **milcore**는 보이지 않지만, **합성 비용**은 언제나 여기서 청구됩니다.
 
-WPF가 “느린가?”라는 질문은 종종 **계약 위반**에서 시작합니다.  
+WPF가 “느린가?”라는 질문은 종종 **계약 위반**에서 시작합니다.
 계약을 지키면, WPF는 여전히 **강력하고 부드러운 데스크톱 UI 엔진**입니다.
 
 ---

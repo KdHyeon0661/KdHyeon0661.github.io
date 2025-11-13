@@ -19,8 +19,8 @@ category: Docker
 ## 1. `.env` 파일 — 구조, 위치, 로딩
 
 ### 1.1 기본 규칙
-- 위치: **`docker-compose.yml`와 같은 디렉터리** (기본값).  
-- 자동 로드: `docker compose up` 시 자동 읽음.  
+- 위치: **`docker-compose.yml`와 같은 디렉터리** (기본값).
+- 자동 로드: `docker compose up` 시 자동 읽음.
 - 형식: **dotenv 포맷**(줄별 `KEY=VALUE`, `#` 주석).
 
 ```env
@@ -32,7 +32,7 @@ MYSQL_PASSWORD=mypass
 WEB_PORT=8080
 ```
 
-> 공백이 포함되면 `"값"` 같이 **따옴표를 사용**하세요.  
+> 공백이 포함되면 `"값"` 같이 **따옴표를 사용**하세요.
 > CRLF(Windows)·BOM은 문제를 유발할 수 있으니 **UTF-8 / LF** 권장.
 
 ### 1.2 CLI로 다른 파일 지정
@@ -136,7 +136,7 @@ ENV APP_VERSION=${APP_VERSION}
 RUN echo "runtime=$RUNTIME, version=$APP_VERSION"
 ```
 
-- `ARG`는 **빌드 시에만** 존재.  
+- `ARG`는 **빌드 시에만** 존재.
 - `ENV`는 **이미지/컨테이너 런타임에도** 남음.
 - `build.args`는 Compose 치환 규칙을 그대로 적용(즉, `.env` 영향 받음).
 
@@ -145,13 +145,13 @@ RUN echo "runtime=$RUNTIME, version=$APP_VERSION"
 ## 5. 우선순위와 전파(Precedence)
 
 ### 5.1 Compose YAML 치환 우선순위(파일을 해석할 때)
-1) **쉘 환경변수**(실행한 터미널/CI에서 `export VAR=value`)  
-2) `--env-file`  
-3) `.env`  
+1) **쉘 환경변수**(실행한 터미널/CI에서 `export VAR=value`)
+2) `--env-file`
+3) `.env`
 4) 없으면 기본값(`:-`) 또는 에러(`?msg`)
 
 ### 5.2 컨테이너 런타임 환경변수 우선순위
-- `environment:` **>** `env_file:` **>** Dockerfile의 `ENV`  
+- `environment:` **>** `env_file:` **>** Dockerfile의 `ENV`
 - `env_file`의 동일 키는 `environment`가 **덮어씀**.
 
 ---
@@ -324,7 +324,7 @@ curl -I http://localhost:${WEB_PORT}
 
 ### Q4. Windows에서 값이 이상하게 들어간다?
 - 줄 끝 CRLF, 인코딩, PowerShell 변수 확장 규칙 차이 확인.
-- `.env`는 **UTF-8/LF** 권장.  
+- `.env`는 **UTF-8/LF** 권장.
 - PowerShell에서 `${VAR}`는 일반 문자열로 남겨두고 Compose가 치환합니다.
 
 ### Q5. 민감값이 `docker inspect`에서 보인다?
@@ -524,7 +524,7 @@ docker compose exec <service> sh -lc 'echo "$APP_VERSION"'
 
 ## 15. 마무리
 
-- `.env`는 **치환**, `env_file`은 **주입**이라는 역할 분담을 항상 기억하세요.  
-- **빌드/런**의 생명주기 차이를 명확히 나눠 변수 사용을 설계하세요.  
-- 보안은 **노출면(ports/env/log/inspect)**을 줄이고, 비밀은 파일/외부 비밀관리로 이관하세요.  
+- `.env`는 **치환**, `env_file`은 **주입**이라는 역할 분담을 항상 기억하세요.
+- **빌드/런**의 생명주기 차이를 명확히 나눠 변수 사용을 설계하세요.
+- 보안은 **노출면(ports/env/log/inspect)**을 줄이고, 비밀은 파일/외부 비밀관리로 이관하세요.
 - `docker compose config`로 **치환 결과**를 늘 점검하면 배포 사고를 크게 줄일 수 있습니다.

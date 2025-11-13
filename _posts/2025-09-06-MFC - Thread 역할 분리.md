@@ -6,12 +6,12 @@ category: MFC
 ---
 # CWinThread와 UI/Worker Thread 역할 분리 (MFC 멀티스레딩 완전 가이드 + 예제 다수)
 
-이 글은 **MFC 응용프로그램**에서 스레드를 올바르게 설계·구현하는 방법을  
-**`CWinThread`**, **UI 스레드 vs Worker 스레드**, **메시지 교환**, **동기화**, **취소/타임아웃**, **COM 초기화**, **진행률/취소 UI**, **작업 큐/스레드 풀**까지 **생략 없이** 정리합니다.  
+이 글은 **MFC 응용프로그램**에서 스레드를 올바르게 설계·구현하는 방법을
+**`CWinThread`**, **UI 스레드 vs Worker 스레드**, **메시지 교환**, **동기화**, **취소/타임아웃**, **COM 초기화**, **진행률/취소 UI**, **작업 큐/스레드 풀**까지 **생략 없이** 정리합니다.
 모든 코드는 ``` 로 감싸며, 그대로 붙여서 실험할 수 있는 **작은 단위 예제**로 구성되어 있습니다.
 
-> 환경: Visual C++(x64/유니코드), Windows 10/11, MFC(Feature Pack 포함)  
-> 표기: `UI 스레드` = 메시지 펌프(윈도우/대화상자/리본)를 가진 스레드, `Worker 스레드` = 메시지 펌프 없음(기본)  
+> 환경: Visual C++(x64/유니코드), Windows 10/11, MFC(Feature Pack 포함)
+> 표기: `UI 스레드` = 메시지 펌프(윈도우/대화상자/리본)를 가진 스레드, `Worker 스레드` = 메시지 펌프 없음(기본)
 > 핵심 원칙: **UI는 UI 스레드에서만**, **비용 큰 일은 Worker에서**, **스레드 간 통신은 메시지/동기화로 안전하게**
 
 ---
@@ -46,7 +46,7 @@ UINT AFX_CDECL Work_HeavyJob(LPVOID pParam) {
 }
 
 // 2) 시작 (UI 스레드에서)
-CWinThread* p = AfxBeginThread(Work_HeavyJob, pParam, THREAD_PRIORITY_NORMAL, 0, 0); 
+CWinThread* p = AfxBeginThread(Work_HeavyJob, pParam, THREAD_PRIORITY_NORMAL, 0, 0);
 // 반환된 CWinThread*는 Worker를 나타내지만, 이 스레드는 메시지펌프를 돌리지 않음
 ```
 
@@ -108,12 +108,12 @@ BEGIN_MESSAGE_MAP(CMyDlg, CDialogEx)
 END_MESSAGE_MAP()
 ```
 
-- **PostMessage** = 비동기, **SendMessage** = 동기(교착 위험).  
+- **PostMessage** = 비동기, **SendMessage** = 동기(교착 위험).
 - **SendMessageTimeout** 으로 Hang 방어 가능.
 
 ### 2-2. `PostThreadMessage` 로 스레드 큐 사용
 
-- **Worker 스레드**도 **스레드 메시지 큐**는 있다(최초 `PostThreadMessage` 전에 `PeekMessage` 호출 권장 X — MFC는 자동 생성됨).  
+- **Worker 스레드**도 **스레드 메시지 큐**는 있다(최초 `PostThreadMessage` 전에 `PeekMessage` 호출 권장 X — MFC는 자동 생성됨).
 - Worker가 자체 명령을 받고 싶으면 **간단한 메시지 펌프**를 돌린다.
 
 ```cpp
@@ -145,7 +145,7 @@ UINT AFX_CDECL Work_Looping(LPVOID p) {
 
 ## 3. 스레드 안전한 UI 갱신
 
-**절대 금지**: Worker에서 직접 `SetWindowText`, `ListCtrl.InsertItem` 등 UI 호출.  
+**절대 금지**: Worker에서 직접 `SetWindowText`, `ListCtrl.InsertItem` 등 UI 호출.
 **올바른 방법**: `PostMessage`/`SendMessageTimeout`/`CWnd::PostMessage`로 **UI 스레드에 위임**.
 
 ```cpp
@@ -163,7 +163,7 @@ afx_msg LRESULT OnAddRow(WPARAM, LPARAM lp) {
 }
 ```
 
-- 포인터 전달 시 **소유권**을 명확히(예: UI에서 `delete`).  
+- 포인터 전달 시 **소유권**을 명확히(예: UI에서 `delete`).
 - 크고 빈번한 데이터는 **고정 큐**로 배치 전송(섬세한 배압/드롭 정책).
 
 ---
@@ -172,10 +172,10 @@ afx_msg LRESULT OnAddRow(WPARAM, LPARAM lp) {
 
 MFC 래퍼와 Win32 원본을 혼용 가능. **RAII가 중요**.
 
-- **뮤텍스**: 다중 프로세스까지 락 → `CMutex`, `std::mutex`(동일 프로세스 한정)  
-- **크리티컬 섹션**: 프로세스 내부, 빠름 → `CCriticalSection`  
-- **이벤트**: 시그널/대기 → `CEvent`  
-- **세마포어**: 자원 카운트 → `CSemaphore`  
+- **뮤텍스**: 다중 프로세스까지 락 → `CMutex`, `std::mutex`(동일 프로세스 한정)
+- **크리티컬 섹션**: 프로세스 내부, 빠름 → `CCriticalSection`
+- **이벤트**: 시그널/대기 → `CEvent`
+- **세마포어**: 자원 카운트 → `CSemaphore`
 - **다중 대기**: `CMultiLock` (여러 동기화 객체에 Wait)
 
 ```cpp
@@ -242,7 +242,7 @@ UINT AFX_CDECL Work_EventCancelable(LPVOID lp) {
 
 ### 5-3. 타임아웃
 
-- 작업 단위마다 `GetTickCount64()` 체크, 혹은 `WaitForSingleObject(hJob, timeout)` 내부 설계.  
+- 작업 단위마다 `GetTickCount64()` 체크, 혹은 `WaitForSingleObject(hJob, timeout)` 내부 설계.
 - UI에서 **취소 버튼** → `SetEvent(hCancel)` → Worker 즉시 탈출.
 
 ---
@@ -250,8 +250,8 @@ UINT AFX_CDECL Work_EventCancelable(LPVOID lp) {
 ## 6. COM 초기화와 스레딩 모델
 
 - 스레드에서 COM 사용 시 **반드시** `CoInitializeEx` 호출 후 `CoUninitialize`.
-- UI 스레드는 **STA**가 일반적: `CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)`  
-- CPU 바운드/네트워크 Worker는 **MTA**가 유리: `COINIT_MULTITHREADED`  
+- UI 스레드는 **STA**가 일반적: `CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED)`
+- CPU 바운드/네트워크 Worker는 **MTA**가 유리: `COINIT_MULTITHREADED`
 - COM 객체의 스레드 선호/마샬링 규칙 숙지.
 
 ```cpp
@@ -432,25 +432,25 @@ for(;;) {
 
 ## 11. 네트워크/IO + 스레드 (아주 짧게)
 
-- `CAsyncSocket`은 UI 스레드 메시지 기반이므로 **UI 또는 전용 UI thread**와 궁합.  
-- 블로킹 소켓/파일 IO는 Worker에 배치. UI와는 **메시지**로 교신.  
+- `CAsyncSocket`은 UI 스레드 메시지 기반이므로 **UI 또는 전용 UI thread**와 궁합.
+- 블로킹 소켓/파일 IO는 Worker에 배치. UI와는 **메시지**로 교신.
 - 고성능 서버/프록시는 IOCP(별도 아키텍처).
 
 ---
 
 ## 12. 데드락/재진입/수명관리 체크리스트
 
-1. **SendMessage** 교차 호출 금지: UI ↔ Worker 간에는 가급적 **PostMessage**.  
-2. **락 순서** 통일: 다중 락 취득 시 순서 정의.  
-3. **객체 수명**: Worker가 UI 포인터 잡고 있을 때 UI가 먼저 파괴되면 위험 → **약한 참조/핸들 유효성 검사**.  
-4. **종료 동기화**: `WaitForSingleObject(pThread->m_hThread, INFINITE)` 로 종료 보장.  
+1. **SendMessage** 교차 호출 금지: UI ↔ Worker 간에는 가급적 **PostMessage**.
+2. **락 순서** 통일: 다중 락 취득 시 순서 정의.
+3. **객체 수명**: Worker가 UI 포인터 잡고 있을 때 UI가 먼저 파괴되면 위험 → **약한 참조/핸들 유효성 검사**.
+4. **종료 동기화**: `WaitForSingleObject(pThread->m_hThread, INFINITE)` 로 종료 보장.
 5. **예외/종료 경로**: 모든 핸들/이벤트/COM 해제.
 
 ---
 
 ## 13. 고급: UI Thread 안에 모델리스 폼 & 작업자 결합
 
-- **UI Thread**(CWinThread 파생)가 **도구창/프리뷰**를 표시하고, 그 내부에서 **Worker**를 구동.  
+- **UI Thread**(CWinThread 파생)가 **도구창/프리뷰**를 표시하고, 그 내부에서 **Worker**를 구동.
 - 큰 도면/이미지 처리 중에도 프리뷰 스레드 UI는 부드럽게 반응.
 
 ```cpp
@@ -478,7 +478,7 @@ public:
 
 ### 14-2. DB/네트워크 파이프라인
 
-- Worker A: Fetch → Queue → Worker B: Parse/Transform → Queue → Worker C: Save  
+- Worker A: Fetch → Queue → Worker B: Parse/Transform → Queue → Worker C: Save
 - 각 큐는 **유한 버퍼**(배압), 종료 시 **Poison Pill**(특수 메시지)로 깔끔히 정리.
 
 ### 14-3. 스레드별 로그 버퍼
@@ -489,12 +489,12 @@ public:
 
 ## 15. 실수·버그 예방 리스트
 
-- [ ] UI 스레드 외부에서 UI API 호출 X  
-- [ ] 취소 가능 지점 충분히 배치(루프 중 break)  
-- [ ] SendMessageTimeout 사용으로 Hang 방어  
-- [ ] 동기화 남용 금지(락 범위 최소화, 조건변수/이벤트 혼합)  
-- [ ] COM 초기화/해제 누락 X  
-- [ ] 스레드 종료 대기 및 리소스 해제 보장  
+- [ ] UI 스레드 외부에서 UI API 호출 X
+- [ ] 취소 가능 지점 충분히 배치(루프 중 break)
+- [ ] SendMessageTimeout 사용으로 Hang 방어
+- [ ] 동기화 남용 금지(락 범위 최소화, 조건변수/이벤트 혼합)
+- [ ] COM 초기화/해제 누락 X
+- [ ] 스레드 종료 대기 및 리소스 해제 보장
 - [ ] 크래시 덤프/로그로 사후 분석 가능하게
 
 ---
@@ -547,17 +547,17 @@ LRESULT CMainDlg::OnWorkDone(WPARAM, LPARAM)   { /*버튼/상태 복구*/ return
 
 ## 17. 디버깅·프로파일링 팁
 
-- **스레드 이름** 설정: `SetThreadDescription(pThread->m_hThread, L"Worker-FileScan");`  
-- **디버거**: Threads 창에서 스택 확인, **Deadlock** 시 **Wait Chain Traversal**(WCT) 도구.  
-- **ETW**/Xperf/WPA로 CPU 바운드/컨텍스트 스위치/디스크 IO 확인.  
+- **스레드 이름** 설정: `SetThreadDescription(pThread->m_hThread, L"Worker-FileScan");`
+- **디버거**: Threads 창에서 스택 확인, **Deadlock** 시 **Wait Chain Traversal**(WCT) 도구.
+- **ETW**/Xperf/WPA로 CPU 바운드/컨텍스트 스위치/디스크 IO 확인.
 - 로그에 **ThreadId** 출력.
 
 ---
 
 ## 18. 요약
 
-- **역할 분리**: **UI는 빠르고 반응성 유지**, **Worker가 무거운 일**.  
-- **통신은 메시지/큐**로, **SendMessage 교착** 금지.  
-- **취소/타임아웃/에러 경로**를 처음부터 포함.  
-- 필요시 **UI Thread**(CWinThread 파생)로 보조 UI를 붙이고, 내부에서 Worker를 안전하게 구동.  
+- **역할 분리**: **UI는 빠르고 반응성 유지**, **Worker가 무거운 일**.
+- **통신은 메시지/큐**로, **SendMessage 교착** 금지.
+- **취소/타임아웃/에러 경로**를 처음부터 포함.
+- 필요시 **UI Thread**(CWinThread 파생)로 보조 UI를 붙이고, 내부에서 Worker를 안전하게 구동.
 - **COM/동기화/수명관리**의 기초를 지키면, 복잡한 앱도 안정적이고 테스트 가능한 구조를 유지할 수 있습니다.

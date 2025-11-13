@@ -260,7 +260,7 @@ rules:
 
 ## 12. `kubectl logs` 동작 이해(요점)
 
-- 컨테이너 런타임(containerd 등)은 **컨테이너 stdout/stderr**을 파일로 기록한다.  
+- 컨테이너 런타임(containerd 등)은 **컨테이너 stdout/stderr**을 파일로 기록한다.
   일반 경로: `/var/log/containers/*.log` → `/var/log/pods/` → 런타임 내부 경로.
 - kubelet은 해당 파일을 **스트림**으로 제공하고, `kubectl logs`는 이를 읽는다.
 - 따라서 **장기 보관/검색/집계**는 `kubectl logs`의 역할이 아니며, EFK/PLG/Cloud Logging 등 **수집 파이프라인**이 필요하다.
@@ -314,11 +314,11 @@ kubectl logs -l app=checkout --since=10m --timestamps --all-containers \
 
 ## 15. 모범 사례
 
-- **stdout/stderr**에 로그를 남긴다. 파일만 쓰면 `kubectl logs`와 수집기가 못 본다.  
-- **구조화(JSON) 로깅**을 권장한다. 필터링/집계가 쉬워진다.  
-- 멀티라인(스택 트레이스)은 수집기에서 멀티라인 파서를 설정한다.  
-- 대량 조회 시 `--tail`, `--since`, `--max-log-requests`로 **클러스터/로컬 보호**.  
-- 컨트롤러(Deployment/StatefulSet/Job)를 대상으로 **집합 조회**를 습관화한다.  
+- **stdout/stderr**에 로그를 남긴다. 파일만 쓰면 `kubectl logs`와 수집기가 못 본다.
+- **구조화(JSON) 로깅**을 권장한다. 필터링/집계가 쉬워진다.
+- 멀티라인(스택 트레이스)은 수집기에서 멀티라인 파서를 설정한다.
+- 대량 조회 시 `--tail`, `--since`, `--max-log-requests`로 **클러스터/로컬 보호**.
+- 컨트롤러(Deployment/StatefulSet/Job)를 대상으로 **집합 조회**를 습관화한다.
 - 장기 보관/검색/알림은 **Promtail/Loki**, **Fluent Bit/Elasticsearch/Kibana**, **Vector/OpenSearch**, **Cloud Logging** 등 스택을 사용한다.
 
 ---
@@ -363,7 +363,7 @@ kubectl logs <pod> > pod.log
 
 ## 17. 결론
 
-`kubectl logs`는 **가장 빠르고 가벼운 1차 진단 도구**다.  
-레이블/컨트롤러 기반 조회, 시간/줄 제한, 이전 인스턴스 조회, 실시간 스트리밍을 조합하면  
-대부분의 애플리케이션 이슈를 **분 단위로 가설 → 검증**할 수 있다.  
+`kubectl logs`는 **가장 빠르고 가벼운 1차 진단 도구**다.
+레이블/컨트롤러 기반 조회, 시간/줄 제한, 이전 인스턴스 조회, 실시간 스트리밍을 조합하면
+대부분의 애플리케이션 이슈를 **분 단위로 가설 → 검증**할 수 있다.
 장기 보관/탐색은 별도의 로깅 스택으로 보완하고, 애플리케이션은 stdout/stderr에 **구조화 로그**를 남기는 습관을 들이자.

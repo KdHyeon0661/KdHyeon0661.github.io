@@ -90,7 +90,7 @@ public IActionResult Index()
 <p>총 개수: @ViewBag.Count</p>
 ```
 
-**장점**: 짧고 읽기 쉬움  
+**장점**: 짧고 읽기 쉬움
 **단점**: 오타·형 변환은 **런타임 오류**로 터짐 → 린트/리뷰로 통제, **복잡 데이터엔 ViewModel 우선**
 
 ---
@@ -99,10 +99,10 @@ public IActionResult Index()
 
 ### 3.1 핵심 개념(정확한 동작 원리)
 
-- ASP.NET Core의 기본 TempData Provider는 **CookieTempDataProvider**(쿠키 기반 직렬화)다.  
+- ASP.NET Core의 기본 TempData Provider는 **CookieTempDataProvider**(쿠키 기반 직렬화)다.
   - 별도 설치 시 **`SessionStateTempDataProvider`** 로 전환 가능(세션 기반).
-- **한 번 읽으면 소멸**(읽자마자 제거).  
-  - **`Peek()`**: 읽고 **유지**  
+- **한 번 읽으면 소멸**(읽자마자 제거).
+  - **`Peek()`**: 읽고 **유지**
   - **`Keep()`**: 특정 키(혹은 전체)를 **다음 요청까지 연장**
 
 ### 3.2 PRG(Post-Redirect-Get) 패턴 예제
@@ -567,33 +567,33 @@ public class ProductsController : Controller
 
 ## 12. FAQ
 
-**Q1. ViewData vs ViewBag 중 무엇을 써야 하나요?**  
+**Q1. ViewData vs ViewBag 중 무엇을 써야 하나요?**
 A. 기능상 동일. 팀 코드 스타일에 맞춰 **일관성** 있게 선택. 컴파일 타임 체크를 원하면 ViewData(캐스팅)보다 **ViewModel**을 권장.
 
-**Q2. TempData는 어디에 저장되나요?**  
+**Q2. TempData는 어디에 저장되나요?**
 A. 기본은 **쿠키 기반(CookieTempDataProvider)**. 세션 기반으로 바꾸려면 `SessionStateTempDataProvider` 구성 및 `UseSession()` 필요.
 
-**Q3. TempData에 큰 객체를 넣어도 되나요?**  
+**Q3. TempData에 큰 객체를 넣어도 되나요?**
 A. 지양. 쿠키 크기 제한/네트워크 오버헤드. 필요 시 세션 또는 DB/캐시(예: Redis)에 보관 후 키만 TempData로 전달.
 
-**Q4. TempData가 갑자기 비어 있어요.**  
+**Q4. TempData가 갑자기 비어 있어요.**
 A. 이미 읽혀서 제거되었을 가능성. **`Peek()`/`Keep()`** 사용 또는 레이아웃/필터 설계로 “읽기 위치”를 일관화.
 
 ---
 
 ## 13. 체크리스트
 
-- [ ] 페이지 핵심 데이터는 **ViewModel**로 전달했는가?  
-- [ ] 일회성 메시지는 **TempData + PRG**로 처리했는가?  
-- [ ] Partial에 옵션 전달 시 **`view-data`** 로 범위를 분리했는가?  
-- [ ] 레이아웃/뷰에서 TempData “중복 읽기”가 없는가? 필요 시 `Peek()`/`Keep()`  
-- [ ] 쿠키 크기/보안(민감 데이터 금지) 고려했는가? 필요 시 세션/서버 저장소 사용  
+- [ ] 페이지 핵심 데이터는 **ViewModel**로 전달했는가?
+- [ ] 일회성 메시지는 **TempData + PRG**로 처리했는가?
+- [ ] Partial에 옵션 전달 시 **`view-data`** 로 범위를 분리했는가?
+- [ ] 레이아웃/뷰에서 TempData “중복 읽기”가 없는가? 필요 시 `Peek()`/`Keep()`
+- [ ] 쿠키 크기/보안(민감 데이터 금지) 고려했는가? 필요 시 세션/서버 저장소 사용
 - [ ] 테스트에서 ViewData/TempData 검증 케이스를 포함했는가?
 
 ---
 
 ## 14. 결론
 
-- **ViewModel 우선** 원칙을 지키되, **ViewData/ViewBag/TempData**는 **UI 보조 정보/플래시 메시지** 등에서 생산성을 크게 높여준다.  
-- TempData는 **PRG**와 찰떡궁합이며, **Cookie/Session Provider** 특성과 제약을 이해하고 사용하면 안정적이다.  
+- **ViewModel 우선** 원칙을 지키되, **ViewData/ViewBag/TempData**는 **UI 보조 정보/플래시 메시지** 등에서 생산성을 크게 높여준다.
+- TempData는 **PRG**와 찰떡궁합이며, **Cookie/Session Provider** 특성과 제약을 이해하고 사용하면 안정적이다.
 - 레이아웃, Partial, ViewComponent, Razor Pages까지 **데이터 흐름의 위치와 시점**을 명확히 하면 유지보수성과 예측 가능성이 높아진다.

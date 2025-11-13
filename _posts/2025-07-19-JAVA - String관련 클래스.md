@@ -29,7 +29,7 @@ category: Java
 - **보안/캐싱**: 파라미터 검증/로그/메시지에 적합.
 
 ### 1.2 내부 표현(요약)
-- **JDK 9+**: Compact Strings — 문자열이 **Latin-1**로 표현 가능하면 1바이트 배열 + coder(플래그), 아니면 UTF-16(2바이트).  
+- **JDK 9+**: Compact Strings — 문자열이 **Latin-1**로 표현 가능하면 1바이트 배열 + coder(플래그), 아니면 UTF-16(2바이트).
   (이 최적화는 개발자가 직접 제어하지 않지만, 평균 메모리 효율을 개선합니다.)
 
 ### 1.3 `==` vs `equals()`
@@ -117,7 +117,7 @@ String s2 = sb.toString();
 ### 3.1 언제 쓰나?
 - 다수의 스레드가 **하나의 동일 인스턴스**를 공유·수정하는 경우.
 - 메서드 수준 동기화(`synchronized`) 제공 → **원자적 복합 연산은 아님**에 유의.
-  - 예: `if (buf.length() > 0) buf.delete(0,1);`는 **두 호출 사이에 끼어들기 가능**.  
+  - 예: `if (buf.length() > 0) buf.delete(0,1);`는 **두 호출 사이에 끼어들기 가능**.
     복합 작업은 **외부에서 추가 동기화** 필요.
 
 ### 3.2 대안: 스레드 지역 빌더
@@ -132,7 +132,7 @@ String s2 = sb.toString();
 ```java
 String m = String.format("name=%s, score=%.2f", "kim", 98.123);
 ```
-- 가독성↑, 다국어·포맷 제어 유리.  
+- 가독성↑, 다국어·포맷 제어 유리.
 - 빈번한 루프에서는 **포맷터 비용으로 느릴 수 있음**.
 
 ### 4.2 `StringJoiner` / `Collectors.joining`
@@ -206,7 +206,7 @@ public class StringPerf {
 }
 ```
 
-일반적으로: **Builder가 가장 빠름** > Buffer(동기화 비용) >> String(루프 연결 시 매우 느림).  
+일반적으로: **Builder가 가장 빠름** > Buffer(동기화 비용) >> String(루프 연결 시 매우 느림).
 단, **컴파일타임 상수 결합**은 String도 비용이 거의 없습니다:
 ```java
 String s = "abc" + "def"; // 컴파일 시 "abcdef" 로 상수 폴딩

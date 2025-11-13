@@ -10,9 +10,9 @@ category: AspNet
 
 - ASP.NET Core는 **자체 웹서버(Kestrel)** 를 포함한다. 엣지(Edge) 역활은 IIS/Nginx/Apache(리버스 프록시)가 담당.
 - 배포 4대 축
-  1) Windows 서버의 **IIS**  
-  2) Linux 서버의 **Kestrel + Nginx**  
-  3) **Docker** 컨테이너(→ Kubernetes 확장 가능)  
+  1) Windows 서버의 **IIS**
+  2) Linux 서버의 **Kestrel + Nginx**
+  3) **Docker** 컨테이너(→ Kubernetes 확장 가능)
   4) **Azure App Service** (PaaS, 슬롯/모니터링/스케일 빵빵)
 - 공통 운영 필수 요소: **환경 변수/비밀키**, **HTTPS/HSTS**, **헬스체크**(`/health`), **구조화 로깅**, **역프록시 헤더 처리**, **무중단 배포**.
 
@@ -52,7 +52,7 @@ export ConnectionStrings__Default="Server=db;Database=app;User Id=app;Password=*
 
 ### 2.1 준비물
 
-- **.NET Hosting Bundle** (ASP.NET Core Module 포함) 설치  
+- **.NET Hosting Bundle** (ASP.NET Core Module 포함) 설치
   → dotnet 공식 다운로드의 Hosting Bundle
 - Windows Server + IIS 역할(Role)
 - 방화벽/포트(80/443) 개방
@@ -63,8 +63,8 @@ export ConnectionStrings__Default="Server=db;Database=app;User Id=app;Password=*
 dotnet publish -c Release -o C:\Sites\MyApp
 ```
 
-IIS 관리자 → **사이트 추가**  
-- 물리 경로: `C:\Sites\MyApp`  
+IIS 관리자 → **사이트 추가**
+- 물리 경로: `C:\Sites\MyApp`
 - 호스트 이름/포트: 실제 운영 도메인/포트
 
 ### 2.3 web.config (in-process 권장)
@@ -94,12 +94,12 @@ IIS 관리자 → **사이트 추가**
 </configuration>
 ```
 
-> `hostingModel="inprocess"`: IIS 워커 프로세스 내 호스팅으로 성능/일체감 우수.  
+> `hostingModel="inprocess"`: IIS 워커 프로세스 내 호스팅으로 성능/일체감 우수.
 > `stdoutLogEnabled` 는 **문제 발생 시에만** 잠깐 켜고, 정상화 후 꺼둘 것.
 
 ### 2.4 HTTPS 바인딩
 
-- IIS → 사이트 → 바인딩 → **https 추가**  
+- IIS → 사이트 → 바인딩 → **https 추가**
 - 인증서(서버 인증) 선택, SNI 사용(다중도메인 시)
 
 ### 2.5 응용 프로그램 풀(App Pool) 설정 팁
@@ -400,8 +400,8 @@ jobs:
 
 ### 5.5 App Service 구성
 
-- **구성 → 애플리케이션 설정**: 환경 변수 주입  
-- **TLS/SSL 설정**: 인증서 바인딩  
+- **구성 → 애플리케이션 설정**: 환경 변수 주입
+- **TLS/SSL 설정**: 인증서 바인딩
 - **모니터링**: Application Insights, 로그 스트림
 
 ---
@@ -574,7 +574,7 @@ server {
 
 # 맺음말
 
-- ASP.NET Core는 **어떤 플랫폼에도 잘 배포**된다.  
-- 핵심은 **엣지 보안/HTTPS/프록시 헤더/로그/헬스/무중단** 같은 **운영 습관**이다.  
-- 본 가이드의 레시피로 **IIS, Linux+Nginx, Docker, Azure** 어디서든 **실전 배포**하라.  
+- ASP.NET Core는 **어떤 플랫폼에도 잘 배포**된다.
+- 핵심은 **엣지 보안/HTTPS/프록시 헤더/로그/헬스/무중단** 같은 **운영 습관**이다.
+- 본 가이드의 레시피로 **IIS, Linux+Nginx, Docker, Azure** 어디서든 **실전 배포**하라.
 - 이후 단계: **Key Vault/Parameter Store**, **CDN/캐시**, **WAF/Rate Limit**, **Kubernetes 자동 복구/오토스케일**로 성숙도를 끌어올리자.

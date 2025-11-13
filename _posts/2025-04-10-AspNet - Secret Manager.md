@@ -9,9 +9,9 @@ category: AspNet
 ## 1. Secret Manager란? — “개발 시 로컬에서 비밀을 소스코드 밖에 두는 도구”
 
 - **목적**: 개발 환경에서 **민감 정보(API 키, DB 비밀번호 등)**를 `appsettings.json`에 넣지 않고, **개발자 로컬 프로필**에 따로 저장해 **버전관리(Git)에서 격리**.
-- **저장 방식**: 사용자 프로필 경로의 **JSON 파일**에 저장된다.  
+- **저장 방식**: 사용자 프로필 경로의 **JSON 파일**에 저장된다.
   **중요**: 이 파일은 **암호화되어 저장되지 않는다**(로컬 사용자 프로필 권한에 의존). “보안 금고”가 아니라 **개발 시 편의/격리** 도구다.
-- **로드 조건**: 일반 템플릿은 **Development 환경**일 때 자동 포함.  
+- **로드 조건**: 일반 템플릿은 **Development 환경**일 때 자동 포함.
   운영(Production)에서는 **환경 변수/Key Vault** 등으로 전환 권장.
 
 ### 실제 저장 경로
@@ -46,7 +46,7 @@ dotnet user-secrets init
 </PropertyGroup>
 ```
 
-> 여러 프로젝트가 있을 때는 **각 프로젝트별로** `UserSecretsId`가 다르게 생긴다.  
+> 여러 프로젝트가 있을 때는 **각 프로젝트별로** `UserSecretsId`가 다르게 생긴다.
 > 특정 프로젝트를 명시하려면 `--project <csproj 경로>` 옵션 사용 가능.
 
 ---
@@ -130,7 +130,7 @@ app.MapGet("/jwt-check", (IOptions<JwtSettings> opt) => Results.Json(opt.Value))
 app.Run();
 ```
 
-> 시크릿 값과 `appsettings.*.json` 값이 **병합**되며, **나중에 추가된 소스가 덮어쓴다**.  
+> 시크릿 값과 `appsettings.*.json` 값이 **병합**되며, **나중에 추가된 소스가 덮어쓴다**.
 > 보통 템플릿 순서는: 기본 파일 → 환경별 파일 → **User Secrets(개발)** → 환경 변수 → 명령줄.
 
 ---
@@ -216,7 +216,7 @@ builder.Services.AddSwaggerGen(c =>
 4. 환경 변수
 5. 명령줄 인자
 
-> 즉, **환경 변수/명령줄**이 **Secret보다 더 강하게 덮어쓴다**.  
+> 즉, **환경 변수/명령줄**이 **Secret보다 더 강하게 덮어쓴다**.
 > 팀원별 로컬 개발 값(Secret)을 기본으로, 필요 시 **명령줄로 임시 오버라이드**가 가능하다.
 
 ---
@@ -226,7 +226,7 @@ builder.Services.AddSwaggerGen(c =>
 ### 9.1 여러 프로젝트가 같은 비밀을 공유해야 한다면?
 
 - 가장 단순한 방법: **각 프로젝트에 동일 키를 각각 설정**(개발자 편의 스크립트 마련).
-- 혹은 **한 프로젝트의 `UserSecretsId`를 다른 프로젝트로 복사**(의도적으로 동일 ID).  
+- 혹은 **한 프로젝트의 `UserSecretsId`를 다른 프로젝트로 복사**(의도적으로 동일 ID).
   다만 프로젝트 분리 간 **의존/누수**를 초래할 수 있어 설계 상 신중히.
 
 ### 9.2 통합 테스트 프로젝트
@@ -354,9 +354,9 @@ builder.Services.AddHttpClient("openai", (sp, http) =>
 
 ## 15. 실무 운영 전환(Production) 권장 패턴
 
-- **개발**: Secret Manager  
-- **스테이징/운영**:  
-  - **환경 변수**(Docker/K8s/PAAS)  
+- **개발**: Secret Manager
+- **스테이징/운영**:
+  - **환경 변수**(Docker/K8s/PAAS)
   - **클라우드 시크릿 서비스**(Azure Key Vault, AWS Secrets Manager, GCP Secret Manager)
 - **키 회전**: 플랫폼 기능 사용(버전/만료/자동 교체), 앱은 **`IOptionsMonitor`**로 즉시 반영.
 

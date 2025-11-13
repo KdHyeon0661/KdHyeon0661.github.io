@@ -14,7 +14,7 @@ category: Git
 git clone <원격 저장소 주소>
 ```
 
-- 결과물: `.git`(이력) + 워킹 트리(체크아웃된 파일)  
+- 결과물: `.git`(이력) + 워킹 트리(체크아웃된 파일)
 - 보통 `origin` 이라는 이름으로 원격이 등록됩니다(`git remote -v` 확인 가능).
 - 대상은 GitHub/GitLab/Bitbucket/사내 Git 서버 등 어떤 Git 호스트든 동일합니다.
 
@@ -32,7 +32,7 @@ git clone https://github.com/username/repo-name.git
 git clone git@github.com:username/repo-name.git
 ```
 
-- 현재 디렉터리에 `repo-name/` 폴더가 생성됩니다.  
+- 현재 디렉터리에 `repo-name/` 폴더가 생성됩니다.
 - 다른 디렉터리명으로 받고 싶다면:
 
 ```bash
@@ -47,15 +47,15 @@ git clone https://github.com/username/repo-name.git my-folder
 ```bash
 git clone -b develop --single-branch https://github.com/username/repo-name.git
 ```
-- `-b` 또는 `--branch`: 체크아웃할 브랜치를 지정  
+- `-b` 또는 `--branch`: 체크아웃할 브랜치를 지정
 - `--single-branch`: 해당 브랜치 이력만 복제(공간·시간 절약)
 
 ### 3.2 얕은 클론(Shallow Clone)
 ```bash
 git clone --depth 1 https://github.com/username/repo-name.git
 ```
-- 최근 커밋 N개만 가져옵니다(전체 이력 제외).  
-- 장점: 빠르고 용량 작음  
+- 최근 커밋 N개만 가져옵니다(전체 이력 제외).
+- 장점: 빠르고 용량 작음
 - 단점: 과거 이력·탐색·bisect 등 제한
 
 얕은 클론의 파생 옵션:
@@ -86,7 +86,7 @@ git sparse-checkout set src/ include/   # 필요한 경로만 워킹트리에 �
 git checkout main
 ```
 
-- `--filter=blob:none` : 커밋·트리 정보는 받되 파일 내용은 lazy fetch  
+- `--filter=blob:none` : 커밋·트리 정보는 받되 파일 내용은 lazy fetch
 - `--no-checkout` : 초기 체크아웃 생략(스파스 설정 후 체크아웃)
 
 다른 필터 예시:
@@ -102,7 +102,7 @@ cd repo
 git sparse-checkout init --cone
 git sparse-checkout set app/ docs/
 ```
-- 저장소 전체 이력은 있지만 워킹트리에는 특정 경로만 배치  
+- 저장소 전체 이력은 있지만 워킹트리에는 특정 경로만 배치
 - 모노레포에서 특정 패키지만 개발할 때 유용
 
 ---
@@ -139,8 +139,8 @@ git submodule update --init --recursive --depth 1
 | 장점 | 방화벽/프록시 친화, 간단 | 초기 설정 후 비대화형 푸시가 편함 |
 | 단점 | 자격입력/토큰 관리 필요 | 키 배포/등록 필요, 기업 SSO·보안정책 영향 |
 
-- **HTTPS+PAT**: GitHub는 ID/비밀번호 대신 **Personal Access Token** 사용 권장  
-- **SSH 키**: `ssh-keygen -t ed25519 -C "you@example.com"` 후 공개키를 Git 호스트에 등록  
+- **HTTPS+PAT**: GitHub는 ID/비밀번호 대신 **Personal Access Token** 사용 권장
+- **SSH 키**: `ssh-keygen -t ed25519 -C "you@example.com"` 후 공개키를 Git 호스트에 등록
 - **크리덴셜 매니저**(Windows: Git Credential Manager, macOS: osxkeychain, Linux: libsecret 등)로 자격 캐시 권장
 
 ---
@@ -228,7 +228,7 @@ git clone --reference ../big-repo-cache --dissociate <url> my-repo
 ```
 
 ### 8.8 `--mirror` vs `--bare` (관리·이전용)
-- `--bare`: 워킹트리 없이 **관리 전용 저장소**(서버 측)  
+- `--bare`: 워킹트리 없이 **관리 전용 저장소**(서버 측)
 - `--mirror`: 모든 참조(브랜치·태그·원격 참조)까지 포함 **완전 미러**
 
 ```bash
@@ -247,7 +247,7 @@ git clone <url>
 # 또는 필터와 함께
 git clone --filter=blob:none <url>   # LFS 포인터/프리훅에 따라 자동 패치
 ```
-- LFS 포인터만 받고 실제 바이너리는 체크아웃 시 받습니다.  
+- LFS 포인터만 받고 실제 바이너리는 체크아웃 시 받습니다.
 - CI/빌드 환경에 LFS 설정 누락 시 파일이 “포인터 텍스트”로 남는 문제가 발생 → `git lfs install` 필수.
 
 ---
@@ -311,10 +311,10 @@ git clone https://git.company.com/team/repo.git
 
 ## 12. 보안과 정책(실무 팁)
 
-- **2FA 활성화**: 토큰 탈취 리스크 감소  
-- **최소 권한 원칙**: 읽기만 필요하면 읽기로, 쓰기 권한은 필요시 부여  
-- **PAT 스코프 최소화/만료 설정**  
-- **사내 규정 준수**: 포크/프라이빗 클론 정책, IP 허용 목록, SSO/SAML  
+- **2FA 활성화**: 토큰 탈취 리스크 감소
+- **최소 권한 원칙**: 읽기만 필요하면 읽기로, 쓰기 권한은 필요시 부여
+- **PAT 스코프 최소화/만료 설정**
+- **사내 규정 준수**: 포크/프라이빗 클론 정책, IP 허용 목록, SSO/SAML
 - **배포 시크릿 분리**: 클론하는 저장소와 배포 자격 증명 분리 관리
 
 ---
@@ -331,7 +331,7 @@ git push -u origin feature/login
 # PR 생성(웹/CLI)
 ```
 
-- 머지 정책은 팀 표준(Merge commit / Squash / Rebase merge)에 따릅니다.  
+- 머지 정책은 팀 표준(Merge commit / Squash / Rebase merge)에 따릅니다.
 - 얕은/필터 클론을 사용했다면, PR 전 테스트에서 이력·파일 요구사항을 충족하는지 확인하세요.
 
 ---
@@ -407,17 +407,17 @@ git push -u origin fix/spelling
 
 ## 16. 결론
 
-- `git clone`은 **로컬 개발의 출발점**이자, 저장소 규모/구조에 맞게 **옵션 선택**으로 속도·용량·안정성을 크게 개선할 수 있습니다.  
-- **얕은/부분/스파스/필터** 클론은 대형 저장소의 실무 필수 스킬입니다.  
+- `git clone`은 **로컬 개발의 출발점**이자, 저장소 규모/구조에 맞게 **옵션 선택**으로 속도·용량·안정성을 크게 개선할 수 있습니다.
+- **얕은/부분/스파스/필터** 클론은 대형 저장소의 실무 필수 스킬입니다.
 - **서브모듈/LFS/인증/프록시/브랜치 정책**을 미리 이해하면 클론 이후의 운영이 훨씬 수월해집니다.
 
 ---
 
 ## 참고 링크
 
-- Git 공식: git-clone  
+- Git 공식: git-clone
   https://git-scm.com/docs/git-clone
-- GitHub Docs: Cloning a repository  
+- GitHub Docs: Cloning a repository
   https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository
-- Git LFS  
+- Git LFS
   https://git-lfs.com/

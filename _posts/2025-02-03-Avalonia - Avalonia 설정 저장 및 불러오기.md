@@ -886,7 +886,7 @@ private void ConfigureServices(IServiceCollection services)
 스키마 버전의 업데이트를 **그래프**로 생각하면, 각 노드는 버전, 간선은 마이그레이션 함수이다:
 
 $$
-\mathcal{V} = \{1,2,\ldots\},\quad 
+\mathcal{V} = \{1,2,\ldots\},\quad
 \mathcal{M}_{i\to j} : S_i \to S_j,\quad i<j
 $$
 

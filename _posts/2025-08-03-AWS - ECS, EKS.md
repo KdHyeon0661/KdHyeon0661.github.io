@@ -31,7 +31,7 @@ category: AWS
 - **로깅**: VPC Flow Logs, CloudTrail, Config, GuardDuty
 
 ### 1.2 컨테이너 레지스트리
-- **ECR** 사용: 이미지 스캔, **수명주기(Lifecycle)** 규칙로 이미지 정리  
+- **ECR** 사용: 이미지 스캔, **수명주기(Lifecycle)** 규칙로 이미지 정리
 ```json
 {
   "rules": [
@@ -289,7 +289,7 @@ spec:
 - GitOps: **ArgoCD**로 선언형 배포 파이프라인
 
 ### 3.9 비용·용량 계산 감각
-- 파드 요청/리밋 합이 노드 용량을 초과하지 않도록 **Packing** 최적화  
+- 파드 요청/리밋 합이 노드 용량을 초과하지 않도록 **Packing** 최적화
   $$ \text{Node 수} \approx \left\lceil \max\left( \frac{\sum \text{CPU requests}}{\text{Node CPU}}, \frac{\sum \text{Mem requests}}{\text{Node Mem}} \right) \right\rceil $$
 - IP 소진: VPC CNI 파드당 IP → **서브넷 여유**/PrefixMode 확인
 - Fargate 파드 단가 vs EC2(Spot 혼합) 비교
@@ -325,7 +325,7 @@ aws ec2 authorize-security-group-ingress --group-id sg-app --protocol tcp --port
 ```
 
 ### 5.3 ECS 리소스
-- 위 2.3 TaskDef JSON + 2.4 create-service로 배포  
+- 위 2.3 TaskDef JSON + 2.4 create-service로 배포
 - 헬스체크 패스 → ALB 경유 정상 응답
 
 ### 5.4 오토스케일/배포회로차단/로그 보존 기간 설정
@@ -378,11 +378,11 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ## 8. 트러블슈팅 체크리스트
 
-- **접속 실패**: ALB 헬스체크 경로/보안그룹/서브넷 라우팅 확인  
-- **DNS 불가**: VPC DNS Hostnames/Support 켜기, CoreDNS/조건부포워딩(eks)  
-- **이미지 Pull 실패**: ECR 권한(Task Execution Role/IRSA), VPC 엔드포인트  
-- **IP 소진**(EKS): 서브넷 사용률/Prefix Mode 설정  
-- **스케일 안됨**: HPA 대상 메트릭 노출 확인(리소스/EMF/PromAdapter), Autoscaler 로그  
+- **접속 실패**: ALB 헬스체크 경로/보안그룹/서브넷 라우팅 확인
+- **DNS 불가**: VPC DNS Hostnames/Support 켜기, CoreDNS/조건부포워딩(eks)
+- **이미지 Pull 실패**: ECR 권한(Task Execution Role/IRSA), VPC 엔드포인트
+- **IP 소진**(EKS): 서브넷 사용률/Prefix Mode 설정
+- **스케일 안됨**: HPA 대상 메트릭 노출 확인(리소스/EMF/PromAdapter), Autoscaler 로그
 - **CPU 100%**: 리밋/요청/GC 튜닝, 사이드카 고려, pprof/otel로 병목 추적
 
 ---
@@ -466,8 +466,8 @@ export class EksStack extends cdk.Stack {
 
 ## 12. 결론
 
-- **ECS**는 **빠른 가치실현과 운영 단순성**이 강점 — Fargate와 결합하면 서버 관리 부담이 사실상 0에 수렴.  
+- **ECS**는 **빠른 가치실현과 운영 단순성**이 강점 — Fargate와 결합하면 서버 관리 부담이 사실상 0에 수렴.
 - **EKS**는 **표준 쿠버네티스 생태계와 유연성**을 최대화 — 대규모/복잡한 조직에 적합.
 
-운영의 핵심은 **보안/관측/스케일/비용**을 모두 코드화해 **일관성** 있게 유지하는 것.  
+운영의 핵심은 **보안/관측/스케일/비용**을 모두 코드화해 **일관성** 있게 유지하는 것.
 위 패턴(네트워킹·권한·배포전략·오토스케일·관측·IaC)을 조합하면 **프로덕션급 컨테이너 플랫폼**을 안정적으로 구축·운영할 수 있습니다.

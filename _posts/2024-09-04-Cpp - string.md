@@ -13,9 +13,9 @@ category: Cpp
 - 유니코드: `char8_t`(UTF-8), `char16_t`(UTF-16), `char32_t`(UTF-32), `wchar_t`(플랫폼 가변)
 - 포맷팅/파싱: `<format>`, `<charconv>`(to/from_chars), `<regex>` 등
 
-**핵심 철학**:  
-- **소유는 `std::string`**, **비소유는 `std::string_view`**  
-- **인코딩은 기본 UTF-8**(프로젝트 정책으로 명확히)  
+**핵심 철학**:
+- **소유는 `std::string`**, **비소유는 `std::string_view`**
+- **인코딩은 기본 UTF-8**(프로젝트 정책으로 명확히)
 - **성능은 알고리즘 & 수명 관리**로 얻는다
 
 ---
@@ -93,7 +93,7 @@ std::string a = "abc", b = "abd";
 bool eq = (a == b);   // 사전식 비교 지원(==, !=, <, >, <=, >=)
 ```
 
-- 기본 비교는 **바이트 시퀀스 사전식**.  
+- 기본 비교는 **바이트 시퀀스 사전식**.
 - **현지화/대소문자 무시 비교**가 필요하면 `std::locale`/`std::toupper`(주의: 코드포인트/언어 규칙의 복잡성) 또는 ICU 같은 라이브러리 고려.
 
 ---
@@ -234,7 +234,7 @@ std::string s = "hi";
 c_api(s.c_str()); // NUL-terminated 보장
 ```
 
-- `data()`는 C++17부터 NUL 종단 포함(문자열에 따라 다르지만 일반적으로 `data()==c_str()`와 동일한 메모리 시작 주소).  
+- `data()`는 C++17부터 NUL 종단 포함(문자열에 따라 다르지만 일반적으로 `data()==c_str()`와 동일한 메모리 시작 주소).
 - **주의**: `string_view::data()`는 NUL 보장 없음.
 
 ---
@@ -295,7 +295,7 @@ int main() {
 }
 ```
 
-- 타입 안전, `printf`보다 가독성 우수.  
+- 타입 안전, `printf`보다 가독성 우수.
 - 지역화/유니코드 폭 처리 등은 구현에 따라 다름.
 
 ### 11.2 정규식
@@ -315,7 +315,7 @@ int main() {
 }
 ```
 
-- `<regex>`는 **간편**하지만 **성능·메모리 비용**이 큰 편.  
+- `<regex>`는 **간편**하지만 **성능·메모리 비용**이 큰 편.
 - 고성능이 절대적이면 RE2/PCRE2 등 대안 고려.
 
 ---
@@ -336,17 +336,17 @@ int main(){
 }
 ```
 
-- **경로 인코딩**은 OS별 차이(Windows: UTF-16 와이드 API, POSIX: 바이트 시퀀스).  
+- **경로 인코딩**은 OS별 차이(Windows: UTF-16 와이드 API, POSIX: 바이트 시퀀스).
 - 응용은 **파일시스템 API** 우선 사용, 문자열로 무리한 직접 조작 최소화.
 
 ---
 
 ## 13. 성능·메모리 — SSO/연결/빌더 패턴
 
-- **SSO(Small String Optimization)**: 짧은 문자열을 **동적 할당 없이** 내부 버퍼에 저장(크기와 정책은 **구현 의존적**).  
+- **SSO(Small String Optimization)**: 짧은 문자열을 **동적 할당 없이** 내부 버퍼에 저장(크기와 정책은 **구현 의존적**).
 - **여러 조각을 반복해서 연결**할 땐:
-  - 1) `reserve` 로 용량 확보  
-  - 2) `std::string` + `append`/`push_back`  
+  - 1) `reserve` 로 용량 확보
+  - 2) `std::string` + `append`/`push_back`
   - 3) 또는 한 번에 `std::format`/`fmt::format`로 구성
 
 ```cpp
@@ -361,10 +361,10 @@ for (const auto& piece : pieces) out += piece;
 
 ## 14. 안전(수명) 체크리스트 — 댕글링/무효화/참조
 
-- [ ] **string_view 보관 금지**(원본 재할당·소멸 시 치명적)  
-- [ ] `std::string`에 `push_back`/`append`로 재할당되면 **이전의 `char*`/참조/이터레이터 무효화**  
-- [ ] C API에 건네준 `c_str()` 포인터 **오래 보관하지 않기**  
-- [ ] `operator[]`는 **검사 없음** → 안전이 중요하면 `at()`  
+- [ ] **string_view 보관 금지**(원본 재할당·소멸 시 치명적)
+- [ ] `std::string`에 `push_back`/`append`로 재할당되면 **이전의 `char*`/참조/이터레이터 무효화**
+- [ ] C API에 건네준 `c_str()` 포인터 **오래 보관하지 않기**
+- [ ] `operator[]`는 **검사 없음** → 안전이 중요하면 `at()`
 - [ ] 멀티스레딩 접근 시 **동기화**(공유 변경 금지)
 
 ---
@@ -462,7 +462,7 @@ std::vector<std::string_view> split_csv(std::string_view s){
 
 ## 16. 해시/키 조회 — `unordered_map`과 이종 조회
 
-- `unordered_map<std::string, V>`에서 **키 조회 시 임시 `std::string` 생성** 비용 회피를 위해  
+- `unordered_map<std::string, V>`에서 **키 조회 시 임시 `std::string` 생성** 비용 회피를 위해
   “투명(transparent) 비교/해시”를 구성하면 `std::string_view`로 바로 조회 가능.
 
 ```cpp
@@ -503,7 +503,7 @@ int main(){
 
 ## 18. 작은 종합 예제 — 로그 라인 파서(UTF-8 가정)
 
-> 요구: `"LEVEL ts=... msg=... user=..."` 형식에서 `level/msg/user`를 추출.  
+> 요구: `"LEVEL ts=... msg=... user=..."` 형식에서 `level/msg/user`를 추출.
 > 제약: **복사 최소화**(string_view), **안전한 실패**(optional), **트림**.
 
 ```cpp
@@ -560,19 +560,19 @@ int main(){
 
 ## 19. 요약 체크리스트
 
-- [ ] **소유**: `std::string` / **비소유**: `std::string_view`  
-- [ ] **성능**: 반복 연결은 `reserve` + `append`; 파싱은 `<charconv>` 우선  
-- [ ] **안전**: view 보관 금지, 재할당 후 포인터/참조/이터레이터 무효화 주의  
-- [ ] **인코딩**: UTF-8 정책, 리터럴 접두/접미사 이해(`u8`, `"..."s`, `"..."sv`)  
-- [ ] **포맷팅**: `<format>` 사용, 레거시는 점진 교체  
-- [ ] **경계 사례**: 빈 문자열, 긴 입력, NUL/비ASCII, 잘못된 숫자 문자열  
+- [ ] **소유**: `std::string` / **비소유**: `std::string_view`
+- [ ] **성능**: 반복 연결은 `reserve` + `append`; 파싱은 `<charconv>` 우선
+- [ ] **안전**: view 보관 금지, 재할당 후 포인터/참조/이터레이터 무효화 주의
+- [ ] **인코딩**: UTF-8 정책, 리터럴 접두/접미사 이해(`u8`, `"..."s`, `"..."sv`)
+- [ ] **포맷팅**: `<format>` 사용, 레거시는 점진 교체
+- [ ] **경계 사례**: 빈 문자열, 긴 입력, NUL/비ASCII, 잘못된 숫자 문자열
 - [ ] **테스트/툴링**: Sanitizer/정적 분석/벤치마크
 
 ---
 
 ## 부록 A) 자주 하는 실수와 교정
 
-1) `string_view`로 반환하고 원본을 바로 파괴  
+1) `string_view`로 반환하고 원본을 바로 파괴
 ```cpp
 std::string_view f(){
     std::string s = "x";
@@ -580,37 +580,37 @@ std::string_view f(){
 }
 ```
 
-2) `operator+` 체인 과다  
+2) `operator+` 체인 과다
 ```cpp
 auto r = a + b + c + d; // ❌ 임시 다수
 // ✅ reserve + append 또는 format 사용
 ```
 
-3) `stoi` 예외 미처리  
+3) `stoi` 예외 미처리
 ```cpp
 try { int x = std::stoi(s); } catch(...) { /* 처리 */ }
 ```
 또는 `<charconv>`로 전환해 실패를 코드로 처리.
 
-4) 경로를 문자열로 무리하게 조작  
+4) 경로를 문자열로 무리하게 조작
 - **`std::filesystem::path`**로 합성/변환 후 `.string()`/`.u8string()` 사용.
 
 ---
 
 ## 부록 B) 빠른 레퍼런스
 
-- 생성/대입: 기본/복사/이동/리터럴(suffix `s`)  
-- 접근: `size()`, `empty()`, `operator[]`, `at()`, `front()`, `back()`, `c_str()`, `data()`  
-- 변경: `clear()`, `push_back()`, `append()`, `insert()`, `erase()`, `replace()`, `resize()`, `reserve()`, `shrink_to_fit()`  
-- 탐색: `find`, `rfind`, `find_first_of/not_of`, `starts_with`, `ends_with`(C++20)  
-- 비교: 연산자/`compare`/`<=>`(C++20 3-way)  
-- 뷰: `std::string_view`(비소유, 수명 주의)  
+- 생성/대입: 기본/복사/이동/리터럴(suffix `s`)
+- 접근: `size()`, `empty()`, `operator[]`, `at()`, `front()`, `back()`, `c_str()`, `data()`
+- 변경: `clear()`, `push_back()`, `append()`, `insert()`, `erase()`, `replace()`, `resize()`, `reserve()`, `shrink_to_fit()`
+- 탐색: `find`, `rfind`, `find_first_of/not_of`, `starts_with`, `ends_with`(C++20)
+- 비교: 연산자/`compare`/`<=>`(C++20 3-way)
+- 뷰: `std::string_view`(비소유, 수명 주의)
 - 변환: `stoi/stol/stof/stod`(예외) / `from_chars/to_chars`(비예외)
 
 ---
 
 # 결론
 
-- `std::string`은 **안전한 소유 문자열**의 기본 단위, `std::string_view`는 **고성능 읽기 뷰**.  
-- **인코딩/수명/성능**을 명확히 하면 문자열 처리는 **예측 가능하고 빠르게** 된다.  
+- `std::string`은 **안전한 소유 문자열**의 기본 단위, `std::string_view`는 **고성능 읽기 뷰**.
+- **인코딩/수명/성능**을 명확히 하면 문자열 처리는 **예측 가능하고 빠르게** 된다.
 - 이 글의 유틸/패턴을 기반으로 프로젝트 규약(인코딩·API 시그니처·포맷팅·파싱)을 문서화해 일관성을 유지하자.

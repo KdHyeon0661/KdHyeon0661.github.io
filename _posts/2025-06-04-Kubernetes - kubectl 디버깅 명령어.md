@@ -127,8 +127,8 @@ kubectl exec <pod> -- ss -lntp
 kubectl exec <pod> -- curl -sS http://localhost:8080/healthz
 ```
 
-> **이미지에 curl이 없다면?**  
-> `kubectl run debugbox --rm -it --image=busybox -- /bin/sh` 로 옆에서 검사.  
+> **이미지에 curl이 없다면?**
+> `kubectl run debugbox --rm -it --image=busybox -- /bin/sh` 로 옆에서 검사.
 > 또는 **ephemeral containers** 활용(아래 10장).
 
 ---
@@ -418,34 +418,34 @@ kubectl neat -f obj.yaml              # 매니페스트 정리
 
 ## 20. 실전 플레이북 — 10분 내 10가지 사고 대응
 
-1. **느려짐(레이트 상승)**  
+1. **느려짐(레이트 상승)**
    `kubectl top pods` → 과도한 CPU? → `kubectl describe hpa`(있다면) → 임시 scale ↑ → 원인 탐색
 
-2. **간헐 500**  
+2. **간헐 500**
    `kubectl logs -l app=api --since=10m` → 프로브 실패? DB 타임아웃? → `port-forward`로 헬스 직접 확인
 
-3. **배포 후 장애**  
+3. **배포 후 장애**
    `kubectl rollout status` → `kubectl app diff`(GitOps) or `kubectl diff` → 즉시 `rollout undo`
 
-4. **이미지 풀 실패**  
+4. **이미지 풀 실패**
    `describe pod` 이벤트 → 레지스트리 인증/이미지 경로/태그 확인 → imagePullSecret 연결
 
-5. **Pending 지속**  
+5. **Pending 지속**
    `describe pod`의 `FailedScheduling` → 노드 capacity/taint/affinity/pvc 확인 → requests 조정 or 노드 증설
 
-6. **OOMKilled 연쇄**  
+6. **OOMKilled 연쇄**
    `describe pod` → limit↑ + 앱 메모리 분석 → 캐시/버퍼 줄이기, VPA 추천 활용
 
-7. **DNS 실패**  
+7. **DNS 실패**
    resolv.conf/dnsPolicy 파악 → CoreDNS 파드/ConfigMap 확인 → `nslookup`으로 FQDN 테스트
 
-8. **서비스 라우팅 오동작**  
+8. **서비스 라우팅 오동작**
    `get svc/endpoints` → 엔드포인트 0? 셀렉터 라벨 틀림 → Deployment 라벨/셀렉터 재검증
 
-9. **PVC 바인딩 실패**  
+9. **PVC 바인딩 실패**
    `describe pvc` → SC/용량/존/AccessMode 확인 → PV 준비 또는 SC 파라미터 수정
 
-10. **권한 거부**  
+10. **권한 거부**
     `kubectl auth can-i ...` → Role/Binding 확인 → 최소권한 SA 바인딩
 
 ---
@@ -479,10 +479,10 @@ kubectl neat -f obj.yaml              # 매니페스트 정리
 
 ## 23. 마무리
 
-- **describe + events + logs**의 삼단 콤보로 가설을 세우고,  
-- **exec/port-forward**로 재현·검증,  
-- **rollout/scale/patch**로 1차 복구,  
+- **describe + events + logs**의 삼단 콤보로 가설을 세우고,
+- **exec/port-forward**로 재현·검증,
+- **rollout/scale/patch**로 1차 복구,
 - **정책/리소스/스토리지**로 근본 원인을 닫습니다.
 
-잦은 명령은 **alias/함수화**하고, 조직 표준 **런북**으로 공유하세요.  
+잦은 명령은 **alias/함수화**하고, 조직 표준 **런북**으로 공유하세요.
 “kubectl만 잘 써도” 진단/복구 속도는 놀랄 만큼 빨라집니다.

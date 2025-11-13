@@ -5,7 +5,7 @@ date: 2025-10-11 22:25:23 +0900
 category: Spring
 ---
 # 4. 데이터 접근 I — JPA 기본
-> 영속성 컨텍스트/엔티티·값 타입/연관관계, 지연·즉시 로딩과 N+1/캐시, 트랜잭션 전파·격리·롤백을 **실행 가능한 예제**와 함께 정리한다.  
+> 영속성 컨텍스트/엔티티·값 타입/연관관계, 지연·즉시 로딩과 N+1/캐시, 트랜잭션 전파·격리·롤백을 **실행 가능한 예제**와 함께 정리한다.
 > 환경 가정: Spring Boot 3.3+, Hibernate ORM 6.x, Java 21, Gradle, PostgreSQL 16 (RDB 특성은 DB마다 조금씩 다를 수 있음).
 
 ---
@@ -17,9 +17,9 @@ category: Spring
 - 단일 트랜잭션 동안 같은 `@Id`(PK)를 가진 엔티티는 **동일한 자바 객체**(동일성 `==`)를 반환한다.
 
 ### A-2. 상태 전이(State Transition)
-1) **비영속(new/transient)**: 컨텍스트와 무관한 새 객체  
-2) **영속(managed)**: 컨텍스트가 관리(1차 캐시에 등록)  
-3) **준영속(detached)**: 컨텍스트에서 떨어진 상태(더 이상 변경 감지 X)  
+1) **비영속(new/transient)**: 컨텍스트와 무관한 새 객체
+2) **영속(managed)**: 컨텍스트가 관리(1차 캐시에 등록)
+3) **준영속(detached)**: 컨텍스트에서 떨어진 상태(더 이상 변경 감지 X)
 4) **삭제(removed)**: 삭제 예약 상태
 
 ```java
@@ -33,9 +33,9 @@ em.remove(m2);               // 삭제 예약 (flush 시 DELETE)
 ### A-3. 1차 캐시, 동일성 보장, 쓰기 지연(Transactional Write-Behind)
 - **1차 캐시**: 동일 트랜잭션에서 같은 엔티티를 조회할 때 **조회 쿼리 최소화** + **동일 객체 보장**.
 - **쓰기 지연**: `persist()` 시점에는 즉시 INSERT를 날리지 않고, **flush**에서 SQL 배치로 한 번에 보냄(성능 ↑).
-- **Flush 트리거**:  
-  - 트랜잭션 커밋 직전(`commit → flush → SQL → commit`)  
-  - JPQL/Criteria 실행 직전  
+- **Flush 트리거**:
+  - 트랜잭션 커밋 직전(`commit → flush → SQL → commit`)
+  - JPQL/Criteria 실행 직전
   - 명시적 `em.flush()` 호출
 
 ```java
@@ -117,8 +117,8 @@ private OrderStatus status;
 ## C. 연관관계 매핑
 
 ### C-1. 방향과 소유
-- **단방향** vs **양방향**: JPA는 **객체 그래프**와 **테이블 관계**를 매핑해야 한다.  
-- **연관관계의 주인(owning side)**: 외래키를 가진 쪽(일반적으로 `@ManyToOne`)이 주인.  
+- **단방향** vs **양방향**: JPA는 **객체 그래프**와 **테이블 관계**를 매핑해야 한다.
+- **연관관계의 주인(owning side)**: 외래키를 가진 쪽(일반적으로 `@ManyToOne`)이 주인.
 - 양방향에서는 **주인만이 외래키를 관리**한다(`mappedBy`는 읽기 전용).
 
 ### C-2. 다대일(N:1) — 가장 흔함
@@ -146,7 +146,7 @@ class Member {
 }
 ```
 
-- **주인**: `Order.member` (`@ManyToOne`)  
+- **주인**: `Order.member` (`@ManyToOne`)
 - `Member.orders`는 **거울(비주인)** — `mappedBy="member"`
 
 > **양방향 연관관계 편의 메서드**
@@ -201,7 +201,7 @@ class OrderItem {
 
 ### C-6. 고아 객체 제거 & Cascade
 - `orphanRemoval = true`: 컬렉션에서 제거되면 DB에서 **DELETE**.
-- `cascade = CascadeType.ALL`: 부모 영속/삭제에 자식도 전이.  
+- `cascade = CascadeType.ALL`: 부모 영속/삭제에 자식도 전이.
   - **주의**: 생명주기 동일한 **Aggregate 내부**에서만 사용(DDD 관점).
 
 ---
@@ -209,7 +209,7 @@ class OrderItem {
 ## D. 지연 로딩(LAZY) / 즉시 로딩(EAGER), N+1, 페치 전략
 
 ### D-1. LAZY vs EAGER
-- **LAZY**: 연관 엔티티를 **프록시**로 두고 실제 접근 시 쿼리 실행(권장 기본값).  
+- **LAZY**: 연관 엔티티를 **프록시**로 두고 실제 접근 시 쿼리 실행(권장 기본값).
 - **EAGER**: 엔티티 조회 시 연관 엔티티도 즉시 로딩(예상치 못한 쿼리 폭발/N+1).
 
 ```java
@@ -280,7 +280,7 @@ List<OrderView> list = em.createQuery(
 
 ### E-2. 2차 캐시(세션팩토리 레벨, 선택)
 - **엔티티 캐시**: 읽기 빈도 높고 변경 적은 엔티티에 적합(코드표/권역 데이터 등).
-- **캐시 전략**(Hibernate): `READ_ONLY`, `NONSTRICT_READ_WRITE`, `READ_WRITE`, `TRANSACTIONAL`  
+- **캐시 전략**(Hibernate): `READ_ONLY`, `NONSTRICT_READ_WRITE`, `READ_WRITE`, `TRANSACTIONAL`
 - 활성화(예: Ehcache, Caffeine, Infinispan 연동)
 
 ```yaml
@@ -300,7 +300,7 @@ class Region { @Id Long id; String name; }
 ```
 
 ### E-3. 쿼리 캐시(주의)
-- **입력 파라미터 + 쿼리 문자열** 기반 캐시.  
+- **입력 파라미터 + 쿼리 문자열** 기반 캐시.
 - 트랜잭션 격리/동기화가 어렵고, 실무에서는 **2차 캐시 + 애플리케이션 캐시(Redis 등)**를 선호.
 
 ```java
@@ -316,7 +316,7 @@ List<Region> r = em.createQuery("select r from Region r", Region.class)
 ## F. 트랜잭션: 전파(Propagation), 격리(Isolation), 롤백
 
 ### F-1. ACID와 스프링 트랜잭션 추상화
-- **ACID**: Atomicity, Consistency, Isolation, Durability  
+- **ACID**: Atomicity, Consistency, Isolation, Durability
 - 스프링은 `@Transactional`로 **플랫폼 트랜잭션 매니저**를 감싸 RDB/JPA/메시징 등 일관된 프로그래밍 모델 제공.
 
 ```java
@@ -347,10 +347,10 @@ public void audit(AuditLog log) { auditRepo.save(log); }
 > **패턴**: 본거래 실패 시에도 **감사 로그는 남겨야** 하면 `REQUIRES_NEW`로 분리.
 
 ### F-3. 격리 수준(Isolation)
-- **DEFAULT**: 드라이버/DB 기본(보통 READ COMMITTED)  
-- **READ_UNCOMMITTED**: Dirty Read 허용(권장X)  
-- **READ_COMMITTED**: **커밋된 데이터만** 읽음(가장 많이 사용, PostgreSQL 기본)  
-- **REPEATABLE_READ**: 반복 조회 **같은 값 보장**(InnoDB는 GAP Lock/Phantom 처리 다름)  
+- **DEFAULT**: 드라이버/DB 기본(보통 READ COMMITTED)
+- **READ_UNCOMMITTED**: Dirty Read 허용(권장X)
+- **READ_COMMITTED**: **커밋된 데이터만** 읽음(가장 많이 사용, PostgreSQL 기본)
+- **REPEATABLE_READ**: 반복 조회 **같은 값 보장**(InnoDB는 GAP Lock/Phantom 처리 다름)
 - **SERIALIZABLE**: 완전 직렬화(성능 비용 큼)
 
 ```java
@@ -372,8 +372,8 @@ public void process() throws IOException { /* ... */ }
 - **읽기 전용 최적화**: `@Transactional(readOnly = true)` → 플러시 최적화/힌트(드라이버 의존)
 
 ### F-5. 트랜잭션 경계와 LAZY
-- **서비스 계층**에서 트랜잭션 시작/종료.  
-- 컨트롤러에서 **LAZY 필드 접근** 시 이미 트랜잭션이 끝나면 `LazyInitializationException`.  
+- **서비스 계층**에서 트랜잭션 시작/종료.
+- 컨트롤러에서 **LAZY 필드 접근** 시 이미 트랜잭션이 끝나면 `LazyInitializationException`.
 - 해결: 서비스 계층에서 DTO로 변환 후 반환(또는 OSIV 정책 고려하되 **권장X**).
 
 ### F-6. 예시: 전파/격리/롤백 시나리오
@@ -419,9 +419,9 @@ class AuditService {
 ## G. 실전 예제 — “주문 도메인”으로 종합
 
 ### G-1. 모델
-- `Member(1) - (N) Order`  
-- `Order(1) - (N) OrderItem`  
-- `OrderItem(N) - (1) Product`  
+- `Member(1) - (N) Order`
+- `Order(1) - (N) OrderItem`
+- `OrderItem(N) - (1) Product`
 - `Member`는 내장 값 `Address` 보유
 
 ```java
@@ -526,7 +526,7 @@ class OrderQuery {
 public record OrderView(Long id, String memberName, long total){}
 ```
 
-> **로그로 확인**: `listBasic()`은 `select * from orders` + 각 row마다 `select * from member where id=?` → **N+1**.  
+> **로그로 확인**: `listBasic()`은 `select * from orders` + 각 row마다 `select * from member where id=?` → **N+1**.
 > `listOptimized()`는 한 번의 **join fetch**로 `member`까지 로딩.
 
 ### G-3. 배치 페치 사이즈로 컬렉션 최적화
@@ -590,48 +590,48 @@ class TxIsolationTest {
 ## I. 운영 체크리스트 & 베스트 프랙티스
 
 ### I-1. 매핑/모델링
-- [ ] **모든 연관 LAZY** 기본.  
-- [ ] **다대다 금지** → 조인 엔티티로 모델링.  
-- [ ] 값 타입(`@Embeddable`)은 **불변**으로.  
+- [ ] **모든 연관 LAZY** 기본.
+- [ ] **다대다 금지** → 조인 엔티티로 모델링.
+- [ ] 값 타입(`@Embeddable`)은 **불변**으로.
 - [ ] `equals/hashCode`는 **식별자 불변성** 고려(영속 전/후 주의).
 
 ### I-2. 쿼리/성능
-- [ ] 조회 API는 **fetch join/EntityGraph/DTO**로 N+1 차단.  
-- [ ] **배치 페치 사이즈** 활용.  
+- [ ] 조회 API는 **fetch join/EntityGraph/DTO**로 N+1 차단.
+- [ ] **배치 페치 사이즈** 활용.
 - [ ] 페이징 + 컬렉션 fetch join은 지양(필요 시 **두 번 조회** 또는 서브쿼리 패턴).
 
 ### I-3. 트랜잭션
-- [ ] 서비스 계층에서 **경계를 명확히** (`@Transactional`).  
-- [ ] 복잡한 시나리오는 **REQUIRES_NEW**로 분리(감사/알림).  
-- [ ] 읽기는 `readOnly=true`.  
+- [ ] 서비스 계층에서 **경계를 명확히** (`@Transactional`).
+- [ ] 복잡한 시나리오는 **REQUIRES_NEW**로 분리(감사/알림).
+- [ ] 읽기는 `readOnly=true`.
 - [ ] **OSIV 비활성** 시(권장) 컨트롤러에서 LAZY 접근 금지 → DTO 변환을 서비스에서.
 
 ### I-4. 캐시
-- [ ] 2차 캐시는 **정적 데이터**에 한정.  
-- [ ] 일반 데이터 캐시는 **Spring Cache + Redis**로.  
+- [ ] 2차 캐시는 **정적 데이터**에 한정.
+- [ ] 일반 데이터 캐시는 **Spring Cache + Redis**로.
 - [ ] 캐시 무효화 시나리오(동시성/일관성) 문서화.
 
 ### I-5. 장애/데드락
-- [ ] **락 타임아웃/재시도** 설계(낙관적 락 버전 필드, 비관적 락 시 대기 제한).  
+- [ ] **락 타임아웃/재시도** 설계(낙관적 락 버전 필드, 비관적 락 시 대기 제한).
 - [ ] 트랜잭션 시간 최소화(외부 호출 포함 금지).
 
 ---
 
 ## J. 자주 보는 오류 & 트러블슈팅
 
-1) **`LazyInitializationException`**  
+1) **`LazyInitializationException`**
    - 트랜잭션 밖에서 LAZY 접근 → 서비스에서 **DTO 변환** 후 반환 / 필요 시 페치 전략 명시.
 
-2) **`MultipleBagFetchException`**(Hibernate)  
+2) **`MultipleBagFetchException`**(Hibernate)
    - 한 쿼리에 **여러 Bag(중복 허용 컬렉션)** fetch join → 컬렉션을 `Set`으로 바꾸거나 **한 번에 하나**만 fetch join.
 
-3) **`TransientObjectException`**  
+3) **`TransientObjectException`**
    - 연관된 엔티티가 영속화되지 않은 상태에서 참조 → **cascade persist** 또는 **명시적 persist** 필요.
 
-4) **`NonUniqueResultException`**  
+4) **`NonUniqueResultException`**
    - 단건 조회 쿼리에서 복수 결과 → 제약조건/where 확인, `getSingleResult()` 대신 `getResultList().stream().findFirst()`.
 
-5) **식별자 생성 전략 미스매치**  
+5) **식별자 생성 전략 미스매치**
    - PostgreSQL은 `IDENTITY` 대신 `SEQUENCE`가 일반적. `GenerationType.IDENTITY`는 배치 삽입에 불리.
 
 ```java
@@ -646,18 +646,18 @@ Long id;
 
 ## K. 확장 토픽(예고)
 
-- **고급 매핑**: 상속 전략(JOINED/SINGLE_TABLE/TABLE_PER_CLASS), 복합키(`@EmbeddedId`, `@IdClass`)  
-- **잠금**: 낙관적/비관적 락, 버전 필드  
-- **쿼리 언어**: JPQL/Criteria/QueryDSL 실전 패턴  
+- **고급 매핑**: 상속 전략(JOINED/SINGLE_TABLE/TABLE_PER_CLASS), 복합키(`@EmbeddedId`, `@IdClass`)
+- **잠금**: 낙관적/비관적 락, 버전 필드
+- **쿼리 언어**: JPQL/Criteria/QueryDSL 실전 패턴
 - **배치 처리**: 수십만 건 대량 INSERT/UPDATE의 전략(하이버네이트 배치/StatelessSession/파티셔닝)
 
 ---
 
 ## L. 한 페이지 요약
 
-- **영속성 컨텍스트**는 1차 캐시/변경 감지/쓰기 지연으로 개발 생산성과 성능을 제공한다.  
-- **엔티티/값 타입**을 구분하고, 값 타입은 **불변**으로 설계한다.  
-- **연관관계**는 **다대일 양방향**이 기본, 컬렉션은 주인 쪽에서만 관리. 다대다는 **조인 엔티티**로.  
-- **로딩 전략**은 **LAZY**가 기본, 조회 케이스별 **fetch join/EntityGraph/DTO**로 최적화한다.  
-- **캐시**는 1차 캐시가 기본, 2차/쿼리 캐시는 신중히.  
+- **영속성 컨텍스트**는 1차 캐시/변경 감지/쓰기 지연으로 개발 생산성과 성능을 제공한다.
+- **엔티티/값 타입**을 구분하고, 값 타입은 **불변**으로 설계한다.
+- **연관관계**는 **다대일 양방향**이 기본, 컬렉션은 주인 쪽에서만 관리. 다대다는 **조인 엔티티**로.
+- **로딩 전략**은 **LAZY**가 기본, 조회 케이스별 **fetch join/EntityGraph/DTO**로 최적화한다.
+- **캐시**는 1차 캐시가 기본, 2차/쿼리 캐시는 신중히.
 - **트랜잭션**은 서비스 계층에서 전파/격리/롤백을 명확히 설계하고, OSIV에 의존하지 않는다.

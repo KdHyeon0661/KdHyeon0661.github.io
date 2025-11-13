@@ -32,8 +32,8 @@ category: Docker
 | 배포 | 단일 컨테이너/Compose | Compose 또는 **Helm(K8s)** |
 | 용도 | 경량 프라이빗 저장소 | 팀/조직용 풀스택 레지스트리 |
 
-**선택 가이드**  
-- 개인/소규모, 간단·저비용 → **registry:2**  
+**선택 가이드**
+- 개인/소규모, 간단·저비용 → **registry:2**
 - 팀·조직, 정책·감사·스캔·서명·복제 → **Harbor**
 
 ---
@@ -252,7 +252,7 @@ vi harbor.yml
 
 sudo ./install.sh
 ```
-- 접속: `https://registry.example.com`  
+- 접속: `https://registry.example.com`
 - 기본 관리자: `admin / Harbor12345`(설치 직후 **즉시 변경**)
 
 ### 9.3 Helm(Kubernetes) 배포 개요
@@ -337,12 +337,12 @@ jobs:
 ## 12. 백업·복구
 
 ### 12.1 registry:2 (FS/S3)
-- **FS**: `/var/lib/registry` 디렉터리 스냅샷(정지 후).  
+- **FS**: `/var/lib/registry` 디렉터리 스냅샷(정지 후).
 - **S3**: 스토리지 백업 정책에 따름(버킷 버저닝/라이프사이클).
 
 ### 12.2 Harbor
-- 구성요소: **DB(PostgreSQL)**, **Registry Storage**, **Redis**(메타 캐시).  
-- **필수 백업**: DB dump + Registry 스토리지 스냅샷 + 설정 파일.  
+- 구성요소: **DB(PostgreSQL)**, **Registry Storage**, **Redis**(메타 캐시).
+- **필수 백업**: DB dump + Registry 스토리지 스냅샷 + 설정 파일.
 - 예시:
 ```bash
 # PostgreSQL
@@ -383,7 +383,7 @@ rsync -a /data/harbor/ /backup/harbor-$(date +%F)/
 
 ## 15. 네임 해석·포트·인프라 팁
 
-- Docker는 `certs.d/<호스트:포트>/ca.crt` 규칙으로 CA를 찾는다.  
+- Docker는 `certs.d/<호스트:포트>/ca.crt` 규칙으로 CA를 찾는다.
   예) `registry.example.com:443` 디렉터리명에 **포트까지 포함**.
 - 가능한 443 사용(SSL/TLS 표준). 5000/8443 등 비표준 포트는 방화벽/프록시 고려.
 - 내부 DNS에 `A/CNAME` 등록, 클라이언트는 **FQDN으로 pull/push**.
@@ -486,9 +486,9 @@ jobservice:
 
 ## 요약
 
-- **간단/개인**: `registry:2` + TLS + Basic Auth + 프록시 캐시 + 주기적 **GC**.  
-- **팀/조직**: **Harbor** + RBAC + 스캔 + 서명 + 복제 + 리텐션/쿼터 + Webhook.  
-- 공통: **TLS/CA 배포**, **digest 고정**, **CI 로봇 계정/토큰**, **백업/복구 시나리오**.  
+- **간단/개인**: `registry:2` + TLS + Basic Auth + 프록시 캐시 + 주기적 **GC**.
+- **팀/조직**: **Harbor** + RBAC + 스캔 + 서명 + 복제 + 리텐션/쿼터 + Webhook.
+- 공통: **TLS/CA 배포**, **digest 고정**, **CI 로봇 계정/토큰**, **백업/복구 시나리오**.
 - 성장 경로: 단일 컨테이너 → Compose 운영 → K8s/Helm(Harbor) + 오브젝트 스토리지.
 
 > 이 가이드를 따라가면 “설치 → 보안(HTTPS/인증) → 프록시 캐시/S3 → 스캔/서명 → 리텐션/GC → CI/CD → 백업/복구”까지 **온전한 개인/팀 레지스트리**가 완성된다.

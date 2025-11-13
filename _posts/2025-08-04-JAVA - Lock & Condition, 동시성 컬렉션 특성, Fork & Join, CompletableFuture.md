@@ -60,10 +60,10 @@ $$
 ### 1.3 Condition의 두 큐: Condition Queue → Sync Queue
 - 하나의 `Lock`에 **여러 Condition** 가능(서로 다른 wait-set).
 - `await()` 흐름:
-  1) 락 소유 검사(아니면 `IllegalMonitorStateException`)  
-  2) 현재 스레드를 **Condition Queue**에 넣고 **락 해제**  
-  3) `park()`로 대기  
-  4) `signal()`로 깨우면, Condition 노드를 **Sync Queue**로 옮김  
+  1) 락 소유 검사(아니면 `IllegalMonitorStateException`)
+  2) 현재 스레드를 **Condition Queue**에 넣고 **락 해제**
+  3) `park()`로 대기
+  4) `signal()`로 깨우면, Condition 노드를 **Sync Queue**로 옮김
   5) Sync Queue에서 **락을 다시 획득**한 뒤 `await()` 다음 줄부터 재개
 
 ASCII 흐름도:
@@ -186,8 +186,8 @@ class Point {
 ## 2. 동시성 컬렉션 내부 전략과 선택 가이드
 
 ### 2.1 ConcurrentHashMap (JDK 8+)
-- **버킷 단위 CAS + 필요시 bin-level 동기화**  
-- 빈이 길어지면 **트리화(Red-Black Tree)**  
+- **버킷 단위 CAS + 필요시 bin-level 동기화**
+- 빈이 길어지면 **트리화(Red-Black Tree)**
 - Resize는 **점진적**으로 이루어져 STW 방지
 - **atomic 연산**: `compute`, `computeIfAbsent`, `merge`, `putIfAbsent` 등은 키 단위로 원자적
 ```java
@@ -198,7 +198,7 @@ map.compute("k", (k, v) -> v == null ? 1 : v+1); // 원자적 누적
 > **LongAdder**와 궁합: 다중 스레드 카운팅은 `map.computeIfAbsent(k, kk -> new LongAdder()).increment()` 권장.
 
 ### 2.2 CopyOnWriteArrayList/Set
-- 쓰기 때 **전체 배열 복사 → 불변 스냅샷**  
+- 쓰기 때 **전체 배열 복사 → 불변 스냅샷**
 - **읽기 많고 쓰기 드문** 구성/설정/리스너 테이블에 적합
 ```java
 var listeners = new java.util.concurrent.CopyOnWriteArrayList<Runnable>();
@@ -216,14 +216,14 @@ for (var l : listeners) l.run();    // 읽기: 락 없이 안전
 | DelayQueue | 타임+우선순위 | 스케줄링/재시도 큐 |
 
 ### 2.4 SkipList/CLQ
-- `ConcurrentSkipListMap/Set`: 정렬 + 동시성(락-프리 성질)  
+- `ConcurrentSkipListMap/Set`: 정렬 + 동시성(락-프리 성질)
 - `ConcurrentLinkedQueue/Deque`: **락-프리 CAS 큐**, 대기 없는 빠른 인큐/디큐
 
 ### 2.5 선택 요약
-- **캐시/카운팅**: CHM(+LongAdder)  
-- **생산자-소비자**: Linked/Array/SynchronousQueue  
-- **읽기≫쓰기**: COW 계열  
-- **정렬 필요**: SkipList  
+- **캐시/카운팅**: CHM(+LongAdder)
+- **생산자-소비자**: Linked/Array/SynchronousQueue
+- **읽기≫쓰기**: COW 계열
+- **정렬 필요**: SkipList
 - **지연 최소**: CLQ
 
 ---
@@ -231,8 +231,8 @@ for (var l : listeners) l.run();    // 읽기: 락 없이 안전
 ## 3. Fork/Join 프레임워크 심화
 
 ### 3.1 Work-Stealing 핵심
-- 워커는 자신의 **데크**에 푸시한 작업을 LIFO로 처리(지역성↑)  
-- 놀고 있는 워커는 타 워커의 **앞쪽(FIFO)** 에서 **steal**  
+- 워커는 자신의 **데크**에 푸시한 작업을 LIFO로 처리(지역성↑)
+- 놀고 있는 워커는 타 워커의 **앞쪽(FIFO)** 에서 **steal**
 - **과분할**은 steal/스케줄링 오버헤드↑, **과소분할**은 병렬성↓ → **임계값(THRESHOLD)** 튜닝 관건
 
 ### 3.2 예제: 병렬 머지소트
@@ -288,8 +288,8 @@ ForkJoinPool.managedBlock(new IOBoundBlocker(channel));
 ```
 
 ### 3.4 실무 팁
-- [ ] **THRESHOLD**를 작업/머신에 맞게 실험  
-- [ ] **공용 풀(commonPool)** 공유 주의(병렬 스트림/다른 컴포넌트와 경합) → **전용 풀** 고려  
+- [ ] **THRESHOLD**를 작업/머신에 맞게 실험
+- [ ] **공용 풀(commonPool)** 공유 주의(병렬 스트림/다른 컴포넌트와 경합) → **전용 풀** 고려
 - [ ] I/O/블로킹은 **ManagedBlocker** 또는 별도 Executor
 
 ---
@@ -297,11 +297,11 @@ ForkJoinPool.managedBlock(new IOBoundBlocker(channel));
 ## 4. `CompletableFuture` 심화 — 조합/예외/타임아웃/취소
 
 ### 4.1 기본기
-- 시작: `supplyAsync`, `runAsync` (+executor)  
-- 변환: `thenApply(Async)`, `thenAccept(Async)`, `thenRun(Async)`  
-- 연속(FlatMap): `thenCompose`  
-- 결합: `thenCombine`, `allOf`, `anyOf`, `applyToEither`, `acceptEither`  
-- 예외: `exceptionally`, `handle`, `whenComplete`  
+- 시작: `supplyAsync`, `runAsync` (+executor)
+- 변환: `thenApply(Async)`, `thenAccept(Async)`, `thenRun(Async)`
+- 연속(FlatMap): `thenCompose`
+- 결합: `thenCombine`, `allOf`, `anyOf`, `applyToEither`, `acceptEither`
+- 예외: `exceptionally`, `handle`, `whenComplete`
 - 제어: `orTimeout`, `completeOnTimeout`, `cancel`, `obtrudeValue/Exception`
 
 ### 4.2 조합 예시: 팬아웃/팬인 + 타임아웃 + 폴백
@@ -396,8 +396,8 @@ static <T> CompletableFuture<T> retry(
 ```
 
 ### 4.9 디버깅 팁
-- 스테이지 이름 붙이기(로깅 람다)  
-- `whenComplete`로 타임라인 로깅  
+- 스테이지 이름 붙이기(로깅 람다)
+- `whenComplete`로 타임라인 로깅
 - `JFR` 이벤트(스레드/락/정지/할당/네트워크)와 함께 분석
 
 ---
@@ -414,7 +414,7 @@ $$
 $$
 T \approx \frac{W}{B\cdot N} + O_{\text{split}} + O_{\text{steal}}
 $$
-- `W`: 총 작업량, `B`: 단일 스레드 처리량, `N`: 워커 수  
+- `W`: 총 작업량, `B`: 단일 스레드 처리량, `N`: 워커 수
 - **`THRESHOLD`는 `O_split`와 `O_steal`을 최소화**하도록 조정
 
 ### 5.3 체크리스트(현장)
@@ -430,12 +430,12 @@ $$
 
 ## 6. 안티패턴 모음
 
-- `if (cond) await()` — ❌ → **`while` 사용**  
-- `unlock()` 누락 — ❌ → **try/finally**  
-- `CompletableFuture.get()`를 비동기 체인 중간에서 호출 — ❌ (데드락/병렬 상실)  
-- 공용 `ForkJoinPool.commonPool()`에 **블로킹 작업** 제출 — ❌  
-- `CopyOnWriteArrayList`에 잦은 쓰기 — ❌ (복사 폭증)  
-- `ConcurrentHashMap` 값 객체에 **비원자 복합 연산** — ❌ → `compute/merge` or `LongAdder`  
+- `if (cond) await()` — ❌ → **`while` 사용**
+- `unlock()` 누락 — ❌ → **try/finally**
+- `CompletableFuture.get()`를 비동기 체인 중간에서 호출 — ❌ (데드락/병렬 상실)
+- 공용 `ForkJoinPool.commonPool()`에 **블로킹 작업** 제출 — ❌
+- `CopyOnWriteArrayList`에 잦은 쓰기 — ❌ (복사 폭증)
+- `ConcurrentHashMap` 값 객체에 **비원자 복합 연산** — ❌ → `compute/merge` or `LongAdder`
 - `StampedLock` 무분별 사용 — ❌ (인터럽트/재진입/디버깅 난이도)
 
 ---
@@ -495,10 +495,10 @@ class RateLimiter {
 
 ## 8. 마무리 요약
 
-- **Lock/Condition**: AQS 큐/상태/park-unpark를 이해하면 공정성/타임아웃/다중 조건을 정확히 설계할 수 있습니다.  
-- **동시성 컬렉션**: 내부 전략(CAS/트리화/이중 락/스냅샷)을 이해하면 **올바른 선택과 원자적 API 사용**으로 락 직접 사용을 줄일 수 있습니다.  
-- **Fork/Join**: 워크-스틸링의 **임계값**이 성능을 좌우. 공용 풀 오염/블로킹에 특히 유의하세요.  
+- **Lock/Condition**: AQS 큐/상태/park-unpark를 이해하면 공정성/타임아웃/다중 조건을 정확히 설계할 수 있습니다.
+- **동시성 컬렉션**: 내부 전략(CAS/트리화/이중 락/스냅샷)을 이해하면 **올바른 선택과 원자적 API 사용**으로 락 직접 사용을 줄일 수 있습니다.
+- **Fork/Join**: 워크-스틸링의 **임계값**이 성능을 좌우. 공용 풀 오염/블로킹에 특히 유의하세요.
 - **CompletableFuture**: `thenCompose`로 비동기 플로우를 평탄화, **타임아웃/취소/예외**를 체계적으로 설계하고, **커스텀 Executor**로 풀 경합을 피하세요.
 
-> 실무에서는 **불변 데이터/함수형 조합**과 **고수준 동시성 도구**를 우선 채택하고, 필요한 최소한만 Lock 레벨로 내려가십시오.  
+> 실무에서는 **불변 데이터/함수형 조합**과 **고수준 동시성 도구**를 우선 채택하고, 필요한 최소한만 Lock 레벨로 내려가십시오.
 > 모든 변경은 **부하 테스트 + JFR/메트릭**으로 검증하는 습관이 최선의 성능/안정성을 보장합니다.

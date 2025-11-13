@@ -38,7 +38,7 @@ category: Kubernetes
 
 ## 3. Helm으로 Kafka + ZooKeeper 배포 (내부접속용)
 
-> 로컬/내부 접근만 필요한 **기본 PLAINTEXT**.  
+> 로컬/내부 접근만 필요한 **기본 PLAINTEXT**.
 > 시작은 단순하게, 이후 외부접속·보안으로 확장합니다.
 
 ### 3.1 Helm 리포지토리 & 설치
@@ -82,7 +82,7 @@ advertisedListeners:
     value: PLAINTEXT://my-kafka-0.my-kafka-headless.default.svc.cluster.local:9093
 ```
 
-> Bitnami 차트의 `advertisedListeners`는 브로커 수/헤드리스 서비스에 맞춰 **자동 생성**되지만,  
+> Bitnami 차트의 `advertisedListeners`는 브로커 수/헤드리스 서비스에 맞춰 **자동 생성**되지만,
 > 내부 DNS 기반 고정이 필요하면 명시적으로 제공할 수 있습니다.
 
 ### 3.3 설치
@@ -358,7 +358,7 @@ tls:
   existingSecret: "kafka-tls-secret"  # 미리 TLS 비밀키/인증서 저장
 ```
 
-> SASL/TLS 구성 후에는 **클라이언트 옵션도 일치**해야 합니다.  
+> SASL/TLS 구성 후에는 **클라이언트 옵션도 일치**해야 합니다.
 > (kcat의 `-X security.protocol=SASL_SSL` 등)
 
 ---
@@ -461,7 +461,7 @@ serviceMonitor:
   namespace: monitoring
 ```
 
-> Prometheus Operator가 있으면 `ServiceMonitor`로 자동 스크레이프.  
+> Prometheus Operator가 있으면 `ServiceMonitor`로 자동 스크레이프.
 > Grafana에서는 Kafka JMX 대시보드(예: 7589 등)를 사용.
 
 ---
@@ -522,7 +522,7 @@ spec:
 ## 13. ZooKeeper vs KRaft(무ZK)
 
 - **ZooKeeper 모드**: 안정적이며 풍부한 레퍼런스. Bitnami 기본값.
-- **KRaft 모드**: 최근 Kafka의 **내장 메타데이터 관리**. 구성 단순화, ZK 제거.  
+- **KRaft 모드**: 최근 Kafka의 **내장 메타데이터 관리**. 구성 단순화, ZK 제거.
   Operator/차트에서 `kraft.enabled: true` 플래그로 전환 가능(차트 버전에 따라 옵션명 상이).
 
 **선택 가이드**
@@ -584,8 +584,8 @@ kubectl delete -f kafka-demo.yaml
 
 ## 참고
 
-- Bitnami Kafka Helm: https://artifacthub.io/packages/helm/bitnami/kafka  
-- Kafka 공식 문서: https://kafka.apache.org/documentation/  
-- kcat(카프카 캐틀): https://github.com/edenhill/kcat  
-- Provectus Kafka UI: https://github.com/provectus/kafka-ui  
+- Bitnami Kafka Helm: https://artifacthub.io/packages/helm/bitnami/kafka
+- Kafka 공식 문서: https://kafka.apache.org/documentation/
+- kcat(카프카 캐틀): https://github.com/edenhill/kcat
+- Provectus Kafka UI: https://github.com/provectus/kafka-ui
 - Prometheus JMX Exporter: https://github.com/prometheus/jmx_exporter

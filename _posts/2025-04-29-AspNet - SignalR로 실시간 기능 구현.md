@@ -89,8 +89,8 @@ public class ChatHub : Hub<IChatClient>
 }
 ```
 
-> 포인트  
-> - **Strongly-Typed Hub**(`IChatClient`)로 런타임/리팩터링 안정성 ↑  
+> 포인트
+> - **Strongly-Typed Hub**(`IChatClient`)로 런타임/리팩터링 안정성 ↑
 > - 인증을 붙이면 `Context.User`로 사용자 식별 가능
 
 ### 2.2 Program.cs (맵핑/프로토콜)
@@ -299,7 +299,7 @@ using System.Collections.Concurrent;
 
 public class PresenceTracker
 {
-    private readonly ConcurrentDictionary<string, HashSet<string>> _online 
+    private readonly ConcurrentDictionary<string, HashSet<string>> _online
         = new(StringComparer.OrdinalIgnoreCase);
 
     public Task UserConnected(string userId, string connectionId)
@@ -531,8 +531,8 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ## 9. 재연결/네트워크 회복 전략
 
-- `withAutomaticReconnect()` + **백오프**  
-- **상태 표시**: `onreconnecting/onreconnected/onclose`에서 UI 갱신  
+- `withAutomaticReconnect()` + **백오프**
+- **상태 표시**: `onreconnecting/onreconnected/onclose`에서 UI 갱신
 - 서버에서 `KeepAliveInterval`, `HandshakeTimeout` 조정(특수 네트워크 환경)
 
 ---
@@ -702,7 +702,7 @@ public class ChatHubTests
 
 ### 15.2 통합 테스트(WebApplicationFactory)
 
-- `Microsoft.AspNetCore.Mvc.Testing`으로 앱을 띄우고, `HubConnection`(클라이언트)로 실제 연결  
+- `Microsoft.AspNetCore.Mvc.Testing`으로 앱을 띄우고, `HubConnection`(클라이언트)로 실제 연결
 - CI에서 **WebSocket 지원 러너** 필요(일반 ubuntu-latest OK)
 
 ---

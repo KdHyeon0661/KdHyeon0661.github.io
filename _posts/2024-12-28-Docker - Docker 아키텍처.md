@@ -451,7 +451,7 @@ time docker build -t app:2 .
 ```
 
 ## 미션 2) digest 고정 배포
-1. `docker inspect` 로 RepoDigest 추출  
+1. `docker inspect` 로 RepoDigest 추출
 2. Compose/K8s 매니페스트에 digest로 이미지 지정 → 재현성 확보
 
 ## 미션 3) 보안 옵션 적용

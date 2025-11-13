@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # 쿠버네티스와 WASM, eBPF 흐름 이해하기
 
-Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만, **콜드스타트**, **관측 사각지대**, **L7 정책 한계**, **플랫폼 이식성** 같은 과제가 남아 있습니다.  
+Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만, **콜드스타트**, **관측 사각지대**, **L7 정책 한계**, **플랫폼 이식성** 같은 과제가 남아 있습니다.
 여기에 **WASM(WebAssembly)** 과 **eBPF(Extended BPF)** 가 더해지면, **실행(Execution)** 과 **관측/제어(Observability/Control)** 를 각각 업그레이드할 수 있습니다.
 
 ---
@@ -30,9 +30,9 @@ Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만,
 - 서버리스·플러그인·엣지 런타임에 적합
 
 ### 2.2 K8s 연동 방식(대표 패턴)
-1) **containerd WASM shim**: OCI/Pod는 그대로, 컨테이너 자리에 WASM 실행  
-2) **Krustlet**: WASM 전용 kubelet(학습·PoC에 유용)  
-3) **서버리스 프레임워크**: Knative/OpenFaaS/Spin 등과 결합  
+1) **containerd WASM shim**: OCI/Pod는 그대로, 컨테이너 자리에 WASM 실행
+2) **Krustlet**: WASM 전용 kubelet(학습·PoC에 유용)
+3) **서버리스 프레임워크**: Knative/OpenFaaS/Spin 등과 결합
 4) **프록시/필터 WASM**: Envoy WASM Filter(네트워크 플러그인), 사이드카 축소
 
 ### 2.3 Rust + WASI “Hello” (기초)
@@ -203,7 +203,7 @@ $$
 ERT \approx p_{cold}\cdot T_{cold} + (1-p_{cold})\cdot T_{warm}
 $$
 
-- WASM은 일반 컨테이너 대비 **\(T_{cold}\)** 가 매우 작고, **\(p_{cold}\)**(콜드 비율)도 minScale, pre-warm 등으로 제어 가능.  
+- WASM은 일반 컨테이너 대비 **\(T_{cold}\)** 가 매우 작고, **\(p_{cold}\)**(콜드 비율)도 minScale, pre-warm 등으로 제어 가능.
 - 요청률 \(\lambda\), Pod당 동시성 \(c\), 평균 처리시간 \(S\) 일 때 필요한 Pod 수:
 $$
 N \approx \left\lceil \frac{\lambda \cdot S}{c} \right\rceil
@@ -314,32 +314,32 @@ px live          # 라이브 뷰/대시보드
 
 ## 11. 자주 만나는 이슈와 해법
 
-- **WASM 네이밍/디스트로**: `.wasm` OCI 푸시 시 레지스트리 호환성 확인(oras, ghcr 권장)  
-- **RuntimeClass 미설정**: Pod가 일반 컨테이너 런타임으로 스케줄 → `RuntimeClass` 필수  
-- **Cilium 정책 미스매치**: L7 정책은 Service/Pod 포트·Host 헤더·SNI 매칭 확인  
-- **Hubble 데이터 빈약**: relay/ui enable, 허용 포트/네임스페이스 라벨링 점검  
+- **WASM 네이밍/디스트로**: `.wasm` OCI 푸시 시 레지스트리 호환성 확인(oras, ghcr 권장)
+- **RuntimeClass 미설정**: Pod가 일반 컨테이너 런타임으로 스케줄 → `RuntimeClass` 필수
+- **Cilium 정책 미스매치**: L7 정책은 Service/Pod 포트·Host 헤더·SNI 매칭 확인
+- **Hubble 데이터 빈약**: relay/ui enable, 허용 포트/네임스페이스 라벨링 점검
 - **Falco 오탐**: 베이스라인 잡고 룰의 `condition` 을 환경에 맞게 줄이기
 
 ---
 
 ## 12. 마무리
 
-- **WASM** 은 컨테이너의 자리를 **보완/대체**하는 **경량 실행 단위**로, 서버리스·엣지·멀티아키를 강하게 밀어줍니다.  
-- **eBPF** 는 커널 레벨 **관측/보안/네트워크 제어**를 제공해 사이드카 부담을 줄이고 고성능 정책을 가능케 합니다.  
+- **WASM** 은 컨테이너의 자리를 **보완/대체**하는 **경량 실행 단위**로, 서버리스·엣지·멀티아키를 강하게 밀어줍니다.
+- **eBPF** 는 커널 레벨 **관측/보안/네트워크 제어**를 제공해 사이드카 부담을 줄이고 고성능 정책을 가능케 합니다.
 - K8s 위에서 두 기술을 **상호보완적으로 결합**하면, **더 가볍고(실행)**, **더 잘 보이고(관측)**, **더 안전한(보안)** 플랫폼을 구축할 수 있습니다.
 
-핵심은 **점진적 도입**입니다.  
-작은 서비스부터 WASM으로 전환, 네트워크부터 Cilium으로 관측·정책을 시작하세요.  
+핵심은 **점진적 도입**입니다.
+작은 서비스부터 WASM으로 전환, 네트워크부터 Cilium으로 관측·정책을 시작하세요.
 관측이 충분해지면, 스케일·보안 정책을 데이터로 설계하고, 사이드카를 걷어내며 단순성을 향해 나아갈 수 있습니다.
 
 ---
 
 ## 참고 리소스
-- WasmEdge: https://github.com/WasmEdge/WasmEdge  
-- Wasmtime: https://wasmtime.dev/  
-- Spin: https://www.fermyon.com/spin  
-- Cilium/Hubble: https://cilium.io/  
-- Pixie: https://px.dev/  
-- Falco: https://falco.org/  
-- Krustlet: https://github.com/krustlet/krustlet  
+- WasmEdge: https://github.com/WasmEdge/WasmEdge
+- Wasmtime: https://wasmtime.dev/
+- Spin: https://www.fermyon.com/spin
+- Cilium/Hubble: https://cilium.io/
+- Pixie: https://px.dev/
+- Falco: https://falco.org/
+- Krustlet: https://github.com/krustlet/krustlet
 - ORAS(OCI Artifacts): https://oras.land/

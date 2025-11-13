@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # NetworkPolicy로 네트워크 제어하기
 
-Kubernetes 클러스터는 **정책이 없으면 Pod 간 통신이 모두 허용(allow all)** 된다.  
+Kubernetes 클러스터는 **정책이 없으면 Pod 간 통신이 모두 허용(allow all)** 된다.
 보안이 필요한 환경에서는 서비스 간 최소 권한 원칙(least privilege)에 따라 **명시적으로 허용한 연결만** 지나가도록 **NetworkPolicy**를 적용해야 한다.
 
 - CNI 요구사항과 **기본 동작**(정책이 있으면 차단이 기본)
@@ -121,7 +121,7 @@ spec:
 kubectl apply -f deny-all-ingress.yaml
 ```
 
-이제 **아무도 team-a의 Pod에 들어올 수 없다.**  
+이제 **아무도 team-a의 Pod에 들어올 수 없다.**
 확인:
 
 ```bash
@@ -179,7 +179,7 @@ spec:
           port: 80
 ```
 
-> ✅ **Named port** 사용 시: `port: http` 처럼 Deployment의 컨테이너 포트 이름과 매칭 가능  
+> ✅ **Named port** 사용 시: `port: http` 처럼 Deployment의 컨테이너 포트 이름과 매칭 가능
 > ✅ **포트 범위**는 `endPort`로 지정할 수 있다(동일 프로토콜/연속 범위).
 
 ---

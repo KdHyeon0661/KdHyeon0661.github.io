@@ -401,10 +401,10 @@ class BulkJobListView(ListView):
 ```
 {% endraw %}
 
-> **핵심**:  
-> - Admin 액션은 **큐 등록**만.  
-> - 작업은 **CHUNK + 트랜잭션**으로 나누어 처리.  
-> - 진행률은 **상태 테이블** 업데이트.  
+> **핵심**:
+> - Admin 액션은 **큐 등록**만.
+> - 작업은 **CHUNK + 트랜잭션**으로 나누어 처리.
+> - 진행률은 **상태 테이블** 업데이트.
 > - 실패 시 **재시도/로그**.
 
 ---
@@ -444,8 +444,8 @@ class ProductAdmin(admin.ModelAdmin):
 ---
 
 ### 2-3. 기타 성능 최적화 체크
-- `list_select_related`/`prefetch_related` 적극 사용.  
-- `search_fields` 에서 **대용량 텍스트**는 피하고, 필요한 경우 **Trigram/GIN 인덱스**.  
+- `list_select_related`/`prefetch_related` 적극 사용.
+- `search_fields` 에서 **대용량 텍스트**는 피하고, 필요한 경우 **Trigram/GIN 인덱스**.
 - 대량 Export는 **비동기 파일 생성(스토리지 저장) + 서명 URL 다운로드**.
 
 ---
@@ -453,8 +453,8 @@ class ProductAdmin(admin.ModelAdmin):
 ## 3. 멀티테넌트 Admin 분리
 
 목표:
-- 테넌트(고객사/조직)별로 **데이터 경계**.  
-- 테넌트 관리자(Partner Admin)는 **자기 테넌트 데이터만** 보게.  
+- 테넌트(고객사/조직)별로 **데이터 경계**.
+- 테넌트 관리자(Partner Admin)는 **자기 테넌트 데이터만** 보게.
 - 내부 운영 Admin은 **전체** 접근.
 
 ### 3-1. 테넌트 모델/스코프
@@ -617,8 +617,8 @@ class PartnerAdminSite(AdminSite):
 
 ### 3-4. 테넌트 스코프 보장 — ModelAdmin 가드 + 폼
 
-- `get_queryset()` 에서 **항상** `tenant=...` 필터.  
-- `save_model()` 신규 생성 시 `obj.tenant = request.tenant`.  
+- `get_queryset()` 에서 **항상** `tenant=...` 필터.
+- `save_model()` 신규 생성 시 `obj.tenant = request.tenant`.
 - 인라인/외래키 필드에도 `formfield_for_foreignkey()` 로 테넌트 필터.
 
 ```python
@@ -661,7 +661,7 @@ def process_response(self, request, response):
 
 ## 4. 운영 대시보드 + Admin 통합 UX
 
-- 내부 Admin의 메뉴에 **운영 대시보드 링크** 추가.  
+- 내부 Admin의 메뉴에 **운영 대시보드 링크** 추가.
 - 파트너 Admin에도 **자기 테넌트 대시보드** 제공(쿼리 자동 필터).
 
 {% raw %}
@@ -691,7 +691,7 @@ class PartnerDashboardView(TemplateView):
 
 ## 5. 모니터링/알림과의 연결
 
-- **BulkJob 상태 변화** 시 `transaction.on_commit` 으로 **WebSocket/Email** 알림.  
+- **BulkJob 상태 변화** 시 `transaction.on_commit` 으로 **WebSocket/Email** 알림.
 - **AuditLog 중요 이벤트(action prefix)** 에 **Sentry breadcrumb** 또는 Slack 웹훅.
 
 ```python
@@ -717,19 +717,19 @@ def notify_bulkjob(sender, instance, created, **kwargs):
 ## 6. 보안/품질 체크리스트
 
 **대시보드**
-- [ ] KPI는 **배치 집계 + 인덱스**  
-- [ ] 감사 로그는 **행 수 폭증** 대비 파티션/보관정책(예: 90일)  
+- [ ] KPI는 **배치 집계 + 인덱스**
+- [ ] 감사 로그는 **행 수 폭증** 대비 파티션/보관정책(예: 90일)
 - [ ] 접근 제어: **RBAC + 오브젝트 레벨** (테넌트)
 
 **Admin 비동기**
-- [ ] 액션은 큐에 **태스크 등록만**  
-- [ ] 상태 테이블로 진행률/오류 추적  
+- [ ] 액션은 큐에 **태스크 등록만**
+- [ ] 상태 테이블로 진행률/오류 추적
 - [ ] 실패 로그, 재시도, 멱등성(F-Expression/where 조건) 보장
 
 **멀티테넌트**
-- [ ] 모든 도메인 모델에 `tenant` FK (예외 최소화)  
-- [ ] `get_queryset`/`formfield_for_foreignkey` 에 **스코프 필터**  
-- [ ] AdminSite 분리 + `has_permission` 가드  
+- [ ] 모든 도메인 모델에 `tenant` FK (예외 최소화)
+- [ ] `get_queryset`/`formfield_for_foreignkey` 에 **스코프 필터**
+- [ ] AdminSite 분리 + `has_permission` 가드
 - [ ] 감사 로그에 `tenant` 포함
 
 ---
@@ -791,6 +791,6 @@ def export_products_async(modeladmin, request, queryset):
 
 ## 마무리
 
-- **운영 대시보드**는 **사전 집계된 KPI**와 **감사 로그**를 바탕으로 **운영 판단**과 **감사 추적**을 빠르게 합니다.  
-- **Admin 비동기화**로 **대량 작업의 타임아웃/잠김**을 제거하고, **상태/알림**으로 가시성을 확보하세요.  
+- **운영 대시보드**는 **사전 집계된 KPI**와 **감사 로그**를 바탕으로 **운영 판단**과 **감사 추적**을 빠르게 합니다.
+- **Admin 비동기화**로 **대량 작업의 타임아웃/잠김**을 제거하고, **상태/알림**으로 가시성을 확보하세요.
 - **멀티테넌트 분리**는 **데이터 경계**의 기본입니다. AdminSite/쿼리 가드/미들웨어로 **테넌트 스코프**를 시스템적으로 보장하여 보안·운영 리스크를 줄이세요.

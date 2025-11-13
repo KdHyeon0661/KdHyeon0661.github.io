@@ -29,9 +29,9 @@ category: CSS
 - **Grid/Flex 시각화**: Layout 도우미로 영역/그리드 라인 표시
 
 ### 1.2 레시피: “클릭 안 되는 버튼” CSS 원인 추적
-1) **요소 선택기**로 버튼 선택  
-2) **Styles**에서 `pointer-events: none;` 또는 `z-index`/`position` 상위 오버레이 확인  
-3) **Computed**에서 `pointer-events` 최종 계산값 확인  
+1) **요소 선택기**로 버튼 선택
+2) **Styles**에서 `pointer-events: none;` 또는 `z-index`/`position` 상위 오버레이 확인
+3) **Computed**에서 `pointer-events` 최종 계산값 확인
 4) 문제 속성 토글/수정 후 원인 규명
 
 ### 1.3 예제: z-index·포지셔닝 충돌
@@ -61,7 +61,7 @@ category: CSS
 - **Layout(Chrome)**: Flex/Grid 오버레이, gap/정렬/축 정보 시각화
 
 ### 레시피: “정렬이 틀어진 Flex 박스” 즉시 진단
-- **Layout**에서 Flex 오버레이 활성화 → 메인/교차축 정렬 상태 파악  
+- **Layout**에서 Flex 오버레이 활성화 → 메인/교차축 정렬 상태 파악
 - `min-width: 0`/`min-height: 0` 누락 시 콘텐츠 넘침 → **Flex 자식**에 보정
 
 ```css
@@ -133,9 +133,9 @@ function total(items) {
 - **Waterfall**: DNS→TCP→TLS→TTFB→Content Download 구간별 병목 파악
 
 ### 5.2 예제: 실패하는 파일 업로드 디버그
-1) `Network`에서 `fetch`/`XHR` 필터  
-2) Request Payload(FormData) 구조/헤더(특히 `Content-Type`) 확인  
-3) 응답 본문/에러 메시지/상태코드로 서버측 원인 파악  
+1) `Network`에서 `fetch`/`XHR` 필터
+2) Request Payload(FormData) 구조/헤더(특히 `Content-Type`) 확인
+3) 응답 본문/에러 메시지/상태코드로 서버측 원인 파악
 4) CORS라면 **Response 헤더**의 `Access-Control-Allow-*` 검증
 
 ---
@@ -269,9 +269,9 @@ input, button {
 
 ## 11. 팀 생산성을 높이는 DevTools 루틴
 
-1) **Issue 템플릿**: “어떤 URL/해상도/브라우저/재현 절차/기대/실제/스크린샷/Har/프로파일”  
-2) **Command Palette**로 기능 검색 → `:screenshots`, `:show rulers`, `:coverage` 등 즉시 실행  
-3) **Workspace** 연결: 로컬 프로젝트와 DevTools 동기화 → 저장 시 핫 리로드  
+1) **Issue 템플릿**: “어떤 URL/해상도/브라우저/재현 절차/기대/실제/스크린샷/Har/프로파일”
+2) **Command Palette**로 기능 검색 → `:screenshots`, `:show rulers`, `:coverage` 등 즉시 실행
+3) **Workspace** 연결: 로컬 프로젝트와 DevTools 동기화 → 저장 시 핫 리로드
 4) **CI에 Lighthouse**: 최소 점수/최대 CSS 바이트 게이트 설정
 
 ---
@@ -279,8 +279,8 @@ input, button {
 ## 12. 실전 시나리오 3종 — 처음부터 끝까지
 
 ### 12.1 “검색창 입력 시 렉이 걸린다”
-- **Performance** 녹화 → `Recalculate Style` & `Layout` 급증 확인  
-- **Elements→Styles**: 입력마다 바뀌는 속성이 `width/left` 등 레이아웃 트리거  
+- **Performance** 녹화 → `Recalculate Style` & `Layout` 급증 확인
+- **Elements→Styles**: 입력마다 바뀌는 속성이 `width/left` 등 레이아웃 트리거
 - **해결**: CSS 변경을 `transform`/`opacity` 기반으로, 또는 스타일 변경 빈도 축소(디바운스)
 
 ```js
@@ -289,8 +289,8 @@ input.addEventListener('input', debounce(onInput, 120));
 ```
 
 ### 12.2 “이미지 로딩이 매우 느리다”
-- **Network**: TTFB/O(size) 확인, 큰 JPEG/PNG 탐지  
-- **해결**: `srcset/sizes`/AVIF/WebP 도입, **Cache-Control** 향상, `preload` 남용 지양  
+- **Network**: TTFB/O(size) 확인, 큰 JPEG/PNG 탐지
+- **해결**: `srcset/sizes`/AVIF/WebP 도입, **Cache-Control** 향상, `preload` 남용 지양
 - **Coverage**로 CSS 미사용 바이트 제거 → 초기 페인트 앞당김
 
 ```html
@@ -303,8 +303,8 @@ input.addEventListener('input', debounce(onInput, 120));
 ```
 
 ### 12.3 “로그인 후 옛 UI가 계속 보인다”
-- **Application**: Service Worker **Unregister/Update on reload**, Cache Storage 비우기  
-- **Network**: `Cache-Control`/ETag/`Vary` 설정 검토  
+- **Application**: Service Worker **Unregister/Update on reload**, Cache Storage 비우기
+- **Network**: `Cache-Control`/ETag/`Vary` 설정 검토
 - **해결**: SW 버전 전략/정적 자산 해시(`app.a1b2.css`) 도입
 
 ---
@@ -356,20 +356,20 @@ async function retry(fn, n=3){
 
 ## 15. 체크리스트 요약
 
-- DOM/CSS: **Elements + Styles/Computed/Layout**로 충돌/우선순위/겹침 해소  
-- JS: **Console/Sources**로 로그·중단점·흐름 제어  
-- 네트워크: **Network**로 실패/캐시/워터폴 분석  
-- 성능: **Performance/Lighthouse**로 LCP/CLS 병목 제거  
-- 스토리지/PWA: **Application**로 토큰/쿠키/SW/캐시 관리  
+- DOM/CSS: **Elements + Styles/Computed/Layout**로 충돌/우선순위/겹침 해소
+- JS: **Console/Sources**로 로그·중단점·흐름 제어
+- 네트워크: **Network**로 실패/캐시/워터폴 분석
+- 성능: **Performance/Lighthouse**로 LCP/CLS 병목 제거
+- 스토리지/PWA: **Application**로 토큰/쿠키/SW/캐시 관리
 - 보조 패널: **Rendering/Sensors/Layers/Coverage**로 페인트·장치·레이어·사용률 점검
 
 ---
 
 ## 참고 링크
 
-- Chrome DevTools 문서  
-- Google Web Fundamentals — Performance/Debugging  
+- Chrome DevTools 문서
+- Google Web Fundamentals — Performance/Debugging
 - Firefox DevTools 가이드
 
-> DevTools는 **측정 → 가설 → 수정 → 재측정**의 반복이 핵심이다.  
+> DevTools는 **측정 → 가설 → 수정 → 재측정**의 반복이 핵심이다.
 > 이 글의 레시피들을 팀의 **디버깅 플레이북**으로 재사용해, 이슈를 “재현 가능한 형태”로 남기고 **같은 문제를 두 번 고치지 말자.**

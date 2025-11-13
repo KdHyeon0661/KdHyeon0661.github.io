@@ -420,8 +420,8 @@ jpackage --name DemoApp \
 
 ## 9. 성능·메모리·스레딩 체크리스트
 
-1. **EDT/JFX thread 규칙**: 모든 UI 변경은 전용 스레드에서.  
-   - Swing: `SwingUtilities.invokeLater`  
+1. **EDT/JFX thread 규칙**: 모든 UI 변경은 전용 스레드에서.
+   - Swing: `SwingUtilities.invokeLater`
    - JavaFX: `Platform.runLater`
 2. **백그라운드 작업 분리**: I/O·CPU 바운드는 `SwingWorker` / `Task` 사용.
 3. **바인딩/리스너 누수 방지**: 제거/해제(`removeListener`, `unbind`)와 생명주기 관리.
@@ -493,16 +493,16 @@ scene.setFill(Color.BLACK);
 
 ## 12. 자주 묻는 질문(FAQ)
 
-**Q1. Swing은 deprecated 인가?**  
+**Q1. Swing은 deprecated 인가?**
 A. **아니다.** 여전히 지원되며 대규모 레거시 현장에 많다. 다만 **신규**는 JavaFX 권장.
 
-**Q2. JavaFX는 JDK에 없나?**  
+**Q2. JavaFX는 JDK에 없나?**
 A. **JDK 11부터 분리(OpenJFX)**. Maven/Gradle 의존성 추가가 필요하다.
 
-**Q3. 고해상도(HiDPI) 문제?**  
+**Q3. 고해상도(HiDPI) 문제?**
 A. 최신 LTS에서 자동 스케일링이 개선됨. 커스텀 드로잉 시 벡터/비율 기준으로 연산하라.
 
-**Q4. 네이티브 설치본 만들기?**  
+**Q4. 네이티브 설치본 만들기?**
 A. **jpackage** 사용. 플랫폼별 실행 파일/인스톨러 생성.
 
 ---
@@ -562,13 +562,13 @@ module demo.app {
 
 ## 15. 참고 체크리스트
 
-- [ ] UI 스레드(EDT/FX) 이외에서 UI 변경 금지  
-- [ ] 백그라운드 작업(네트워크/IO/CPU)은 SwingWorker/Task로  
-- [ ] 레이아웃/페인팅/바인딩 성능 점검(프로파일링)  
-- [ ] 리스너/바인딩 해제와 메모리 누수 점검  
+- [ ] UI 스레드(EDT/FX) 이외에서 UI 변경 금지
+- [ ] 백그라운드 작업(네트워크/IO/CPU)은 SwingWorker/Task로
+- [ ] 레이아웃/페인팅/바인딩 성능 점검(프로파일링)
+- [ ] 리스너/바인딩 해제와 메모리 누수 점검
 - [ ] jlink/jpackage 기반 배포 파이프라인 자동화
 
 ---
 
-### 끝.  
+### 끝.
 본 문서는 구식 정보를 제거하고, **JDK 11 이후 OpenJFX 분리**, **jlink/jpackage** 등 최신 배포 스택을 반영했다. 필요 시 이 글의 코드 조각을 바로 복사해 실습할 수 있다.

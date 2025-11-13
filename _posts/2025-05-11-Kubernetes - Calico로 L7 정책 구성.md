@@ -6,22 +6,22 @@ category: Kubernetes
 ---
 # Calico로 L7 정책 구성하기
 
-Kubernetes 기본 `NetworkPolicy`는 **L3/L4**(ipBlock/Pod/Namespace + TCP/UDP:port)만 다룬다.  
+Kubernetes 기본 `NetworkPolicy`는 **L3/L4**(ipBlock/Pod/Namespace + TCP/UDP:port)만 다룬다.
 운영에서는 다음 같은 **L7(애플리케이션 계층) 제어**가 필요해진다.
 
-- HTTP **메서드** 허용/차단 (GET/POST/PUT/DELETE…)  
-- HTTP **경로**(접두/정규식) 기반 제어 (`/api/v1/*`만 허용 등)  
-- **호스트명**(Host 헤더, FQDN) 기반 구분  
+- HTTP **메서드** 허용/차단 (GET/POST/PUT/DELETE…)
+- HTTP **경로**(접두/정규식) 기반 제어 (`/api/v1/*`만 허용 등)
+- **호스트명**(Host 헤더, FQDN) 기반 구분
 - 특정 **헤더**(예: `X-Auth-Token`) 조건 충족 시 허용
 
-Calico는 **Application Layer Policy**(HTTP 인식)로 이를 제공한다.  
+Calico는 **Application Layer Policy**(HTTP 인식)로 이를 제공한다.
 다만 **중요한 라이선스 차이**가 있다:
 
-> - **Calico OSS(오픈소스)**: L3/L4 중심이다. L7(HTTP) 세부 정책은 **기능 제한**이 있으며, 대부분의 **HTTP/L7 풍부한 매칭은 Calico Enterprise**에서 제공된다.  
+> - **Calico OSS(오픈소스)**: L3/L4 중심이다. L7(HTTP) 세부 정책은 **기능 제한**이 있으며, 대부분의 **HTTP/L7 풍부한 매칭은 Calico Enterprise**에서 제공된다.
 > - **Calico Enterprise**: `HTTPPolicy`/`GlobalNetworkPolicy`의 `http:` 섹션으로 **method/path/host/header** 매칭, 관측(Flow logs), 정책 시뮬레이션 등 **고급 L7 기능**을 지원한다.
 
 이 글은
-1) **Calico Enterprise** 환경에서의 정석 L7 정책,  
+1) **Calico Enterprise** 환경에서의 정석 L7 정책,
 2) **Calico OSS**에서 사용할 수 있는 **우회/대체 패턴**(Ingress/Service Mesh/WAF/애플리케이션 게이트웨이 연계)을 **둘 다** 제시한다.
 
 ---
@@ -196,21 +196,21 @@ spec:
 
 ## 4. 정책 검증 시나리오
 
-1. **통과 케이스**  
+1. **통과 케이스**
    - `frontend` → `backend` : `GET /get` + `X-Env: test` 헤더 → **Allow**
-2. **거부 케이스**  
-   - `frontend` → `backend` : `POST /post` → **Deny**  
-   - `frontend` → `backend` : `GET /get` (헤더 누락) → **Deny**  
-   - `demo` 외 네임스페이스 → `backend` : 어떤 요청이든 → **Deny**  
-3. **옵저버빌리티**  
-   - Calico 엔터프라이즈의 플로우 로그/정책 히트 카운터/시뮬레이터로 룰 매치 확인  
+2. **거부 케이스**
+   - `frontend` → `backend` : `POST /post` → **Deny**
+   - `frontend` → `backend` : `GET /get` (헤더 누락) → **Deny**
+   - `demo` 외 네임스페이스 → `backend` : 어떤 요청이든 → **Deny**
+3. **옵저버빌리티**
+   - Calico 엔터프라이즈의 플로우 로그/정책 히트 카운터/시뮬레이터로 룰 매치 확인
    - OSS라면 kube-proxy/앱 로그로 간접 확인
 
 ---
 
 ## 5. 우선순위와 기본 거부(Deny) 전략
 
-Calico는 정책 평가에 **order**(숫자가 **낮을수록 우선**)가 관여한다.  
+Calico는 정책 평가에 **order**(숫자가 **낮을수록 우선**)가 관여한다.
 운영 권장 패턴:
 
 1. **기본 차단** 정책(큰 `order` 값, 예: 1000)으로 바닥 깔기
@@ -238,10 +238,10 @@ spec:
 
 ## 6. 성능·설계 고려사항
 
-- **프록시/앱 계층 인식**이 개입되면 L3/L4 순수 패킷 필터보다 **오버헤드가 증가**한다.  
+- **프록시/앱 계층 인식**이 개입되면 L3/L4 순수 패킷 필터보다 **오버헤드가 증가**한다.
   - 고 QPS 경로에는 경로 캐싱·CDN·게이트웨이 레이어에서 coarse-grained 제어 후 Calico L7로 정밀 제어를 덧입히는 **계층형 방어**를 고려.
 - **eBPF dataplane** 사용 시 L3/L4 성능 이점이 있으나, L7 인식은 별도 경로/프록시가 관여할 수 있다. 실제 스택에서 측정 필수.
-- **TLS 종단**: L7 매칭은 평문 HTTP 헤더·경로에 의존한다.  
+- **TLS 종단**: L7 매칭은 평문 HTTP 헤더·경로에 의존한다.
   - End-to-end TLS(파드 내부까지 암호화)라면, L7 인식을 위해 **중간(인그레스/사이드카)에서 TLS 종료/재암호화**가 필요하다.
 - **정규식/헤더 다중 매칭**은 룰 비용 증가. 가능하면 `prefix/exact` 중심으로 설계.
 
@@ -251,19 +251,19 @@ spec:
 
 Calico OSS는 사실상 L7 풍부한 매칭이 어렵다. 대안은 다음 **L7 계층**에서 해결하는 것이다.
 
-1. **Ingress Controller(NGINX/HAProxy/Contour)**  
-   - Ingress `path`/`host`/`method` 제어  
-   - 인증/헤더 검사/RateLimit/미들웨어 연동  
+1. **Ingress Controller(NGINX/HAProxy/Contour)**
+   - Ingress `path`/`host`/`method` 제어
+   - 인증/헤더 검사/RateLimit/미들웨어 연동
    - 장점: 운영 친화, 선언적, 널리 사용
-2. **Service Mesh(Istio/Linkerd)**  
-   - `AuthorizationPolicy`로 **method/path/host/헤더** 제어  
-   - mTLS/정책/관측 일체 제공  
+2. **Service Mesh(Istio/Linkerd)**
+   - `AuthorizationPolicy`로 **method/path/host/헤더** 제어
+   - mTLS/정책/관측 일체 제공
    - 대규모 마이크로서비스에 적합
-3. **API Gateway(Kong/Traefik/NGINX Plus)**  
-   - 라우팅/인증/쿼터/키 관리/서킷브레이커 등  
+3. **API Gateway(Kong/Traefik/NGINX Plus)**
+   - 라우팅/인증/쿼터/키 관리/서킷브레이커 등
    - 북-남(North-South)·동-서(East-West) 트래픽 모두 다룸
-4. **애플리케이션 레벨 미들웨어**  
-   - 앱 프레임워크 필터/미들웨어로 `method/path/header` 제한  
+4. **애플리케이션 레벨 미들웨어**
+   - 앱 프레임워크 필터/미들웨어로 `method/path/header` 제한
    - 단점: 분산된 정책, 일관성 관리 부담
 
 > OSS Calico는 이들 L7 계층 앞뒤에서 **L3/L4 최소 권한**을 강제(예: 인그레스/메시 엔드포인트만 열어두기)하는 용도로 탁월하다.
@@ -322,12 +322,12 @@ spec:
 
 ## 8. 운영 체크리스트
 
-- 정책 파일에 **`order`**를 반드시 명시하고, 기본 Deny를 맨 아래 깔아라.  
-- L7 매칭은 **TLS 종단 위치**에 좌우된다(종단 전 구간은 L4로만 보인다).  
-- **네임스페이스 격리** + **서비스 아이덴티티(라벨/SA)**로 **소스 범위**를 좁혀라.  
-- 변경 전 **스테이징**에서 시나리오 테스트(허용/차단 케이스).  
-- 고 QPS 경로는 규칙을 단순화하고, 가능한 **prefix/exact**를 쓰고 **정규식 최소화**.  
-- **관측**: 플로우 로그/엔드포인트 카운터/인그레스 접근 로그로 룰 히트 확인.  
+- 정책 파일에 **`order`**를 반드시 명시하고, 기본 Deny를 맨 아래 깔아라.
+- L7 매칭은 **TLS 종단 위치**에 좌우된다(종단 전 구간은 L4로만 보인다).
+- **네임스페이스 격리** + **서비스 아이덴티티(라벨/SA)**로 **소스 범위**를 좁혀라.
+- 변경 전 **스테이징**에서 시나리오 테스트(허용/차단 케이스).
+- 고 QPS 경로는 규칙을 단순화하고, 가능한 **prefix/exact**를 쓰고 **정규식 최소화**.
+- **관측**: 플로우 로그/엔드포인트 카운터/인그레스 접근 로그로 룰 히트 확인.
 - 대체 불가 L7 요구나 감사·레포팅이 중요하면 **Calico Enterprise 도입**을 검토하라.
 
 ---
@@ -422,8 +422,8 @@ wget -S -qO- http://backend.demo.svc.cluster.local/get
 
 ## 결론
 
-- **Calico Enterprise**는 `GlobalNetworkPolicy`/`HTTPPolicy`의 `http:` 섹션으로 **HTTP method/path/host/header**까지 정밀 제어가 가능하다. **제로 트러스트** 네트워킹을 **네트워크 계층에서** 끌어올릴 때 유효하다.  
-- **Calico OSS**만 쓸 때는 **L7 기능이 제한**되므로, **Ingress/Service Mesh/API Gateway**에서 L7 정책을 구현하고, Calico(OSS)는 **L3/L4 최소 권한**을 강제하는 **이중 레이어** 전략이 현실적이다.  
+- **Calico Enterprise**는 `GlobalNetworkPolicy`/`HTTPPolicy`의 `http:` 섹션으로 **HTTP method/path/host/header**까지 정밀 제어가 가능하다. **제로 트러스트** 네트워킹을 **네트워크 계층에서** 끌어올릴 때 유효하다.
+- **Calico OSS**만 쓸 때는 **L7 기능이 제한**되므로, **Ingress/Service Mesh/API Gateway**에서 L7 정책을 구현하고, Calico(OSS)는 **L3/L4 최소 권한**을 강제하는 **이중 레이어** 전략이 현실적이다.
 - 운영에서는 **정확한 우선순위(order)**, **기본 Deny**, **TLS 종단 고려**, **성능 측정/관측**을 포함한 **정책 수명주기 관리**가 필수다.
 
 이 문서의 매니페스트들을 그대로 적용·수정하면, **엔터프라이즈 경로(L7 네이티브)**와 **OSS 우회 경로(L7은 프록시, L3/L4는 Calico)**를 모두 검증할 수 있다.

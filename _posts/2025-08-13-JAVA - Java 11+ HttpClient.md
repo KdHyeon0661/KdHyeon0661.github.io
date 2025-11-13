@@ -179,7 +179,7 @@ futs.forEach(f -> System.out.println(f.join().statusCode()));
 
 ## 5. 멀티파트 파일 업로드 — **메모리 복사 없이 스트리밍**
 
-표준 API에는 멀티파트 퍼블리셔가 없으므로 **경계(boundary)**/파트를 직접 구성한다.  
+표준 API에는 멀티파트 퍼블리셔가 없으므로 **경계(boundary)**/파트를 직접 구성한다.
 아래 유틸은 **파일을 스트리밍**하여 대용량 업로드 시 메모리 사용을 최소화한다.
 
 ```java
@@ -245,7 +245,7 @@ HttpClient c2 = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORM
 HttpClient c3 = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();  // 모두 허용
 ```
 
-- `NORMAL`: **POST→GET 전환** 등 표준 관행을 따른다(멱등/안전성 고려).  
+- `NORMAL`: **POST→GET 전환** 등 표준 관행을 따른다(멱등/안전성 고려).
 - 민감 메서드(POST/DELETE 등)의 자동 리다이렉트는 **의도적**이어야 한다.
 
 ---
@@ -334,7 +334,7 @@ for (int i=1; i<=max; i++) {
 if (res == null || res.statusCode()/100 != 2) throw new IllegalStateException("HTTP 실패");
 ```
 
-- **멱등 메서드(GET/PUT/DELETE/HEAD)** 위주로 재시도.  
+- **멱등 메서드(GET/PUT/DELETE/HEAD)** 위주로 재시도.
 - **POST**는 멱등 키(Idempotency-Key) 또는 서버 보장 없으면 신중.
 
 ---
@@ -430,7 +430,7 @@ var exec = java.util.concurrent.Executors.newFixedThreadPool(
 HttpClient tuned = HttpClient.newBuilder().executor(exec).build();
 ```
 
-- **전용 스레드풀**로 지연관측/메트릭 수집/제한을 명시적으로 제어.  
+- **전용 스레드풀**로 지연관측/메트릭 수집/제한을 명시적으로 제어.
 - 개발 모드: `-Djdk.httpclient.HttpClient.log=all` 로 내부 로그 확인(운영 비권장).
 
 ---
@@ -472,8 +472,8 @@ public final class SimpleHttp {
 
 ## 16. 테스트 전략 — Mock 서버로 결정성 확보
 
-- **단위 테스트**: HTTP 호출부를 인터페이스로 감싸 Mock/Fake 주입  
-- **통합 테스트**: **OkHttp MockWebServer** 또는 **WireMock** 사용  
+- **단위 테스트**: HTTP 호출부를 인터페이스로 감싸 Mock/Fake 주입
+- **통합 테스트**: **OkHttp MockWebServer** 또는 **WireMock** 사용
 - 타임아웃/리다이렉트/에러(4xx/5xx)/재시도/압축 등 **경계 상황**을 케이스화
 
 ```java
@@ -515,29 +515,29 @@ conn.disconnect();
 
 ## 18. 체크리스트 — 운영 품질을 높이기 위한 최소 기준
 
-1. **HttpClient 싱글턴** 재사용(연결·세션 재활용)  
-2. **타임아웃**: `connectTimeout` + 요청별 `.timeout()` **반드시** 지정  
-3. **에러 처리**: 2xx 외 상태, 본문/코릴레이션ID 로깅(민감정보 제외)  
-4. **인코딩**: 쿼리=URLEncoder, 경로=세그먼트 인코딩, 바디=명시적 charset  
-5. **대용량**: `ofInputStream`/`ofFile`, 멀티파트 스트리밍(복사 최소화)  
-6. **재시도**: 429/5xx만, **백오프** + `Retry-After` 존중, 멱등성 원칙  
-7. **보안**: TLS 저장소·버전, mTLS 필요 시 `SSLContext`, 비밀 관리(환경/키체인/볼트)  
-8. **관측성**: 요청/응답 요약 로그(개발), 성공률·지연·재시도·타임아웃 메트릭  
-9. **프록시/쿠키**: 기업망 정책 반영, 도메인 스코프/보안 쿠키 옵션 점검  
+1. **HttpClient 싱글턴** 재사용(연결·세션 재활용)
+2. **타임아웃**: `connectTimeout` + 요청별 `.timeout()` **반드시** 지정
+3. **에러 처리**: 2xx 외 상태, 본문/코릴레이션ID 로깅(민감정보 제외)
+4. **인코딩**: 쿼리=URLEncoder, 경로=세그먼트 인코딩, 바디=명시적 charset
+5. **대용량**: `ofInputStream`/`ofFile`, 멀티파트 스트리밍(복사 최소화)
+6. **재시도**: 429/5xx만, **백오프** + `Retry-After` 존중, 멱등성 원칙
+7. **보안**: TLS 저장소·버전, mTLS 필요 시 `SSLContext`, 비밀 관리(환경/키체인/볼트)
+8. **관측성**: 요청/응답 요약 로그(개발), 성공률·지연·재시도·타임아웃 메트릭
+9. **프록시/쿠키**: 기업망 정책 반영, 도메인 스코프/보안 쿠키 옵션 점검
 10. **테스트**: Mock 서버로 결정성, 카나리아/서킷브레이커(필요 시) 검토
 
 ---
 
 ## 19. 고급 주제 메모
 
-- **HTTP/2 서버 푸시**: 일부 서버/브라우저에서 비권장·중단 추세. JDK API는 핸들러가 있으나 실제 활용은 드묾.  
-- **인터셉터**: 표준 HttpClient는 전용 인터셉터 API 없음. 공통 래퍼/팩토리/데코레이터로 해결(로깅/서명/재시도).  
+- **HTTP/2 서버 푸시**: 일부 서버/브라우저에서 비권장·중단 추세. JDK API는 핸들러가 있으나 실제 활용은 드묾.
+- **인터셉터**: 표준 HttpClient는 전용 인터셉터 API 없음. 공통 래퍼/팩토리/데코레이터로 해결(로깅/서명/재시도).
 - **HTTP/3**: 현재 표준 HttpClient는 HTTP/3(QUIC) 미지원. 필요 시 게이트웨이/역프록시 활용.
 
 ---
 
 ### 결론
 
-**Java 11+ `HttpClient`**는 현대적 HTTP 클라이언트를 표준으로 제공한다.  
-이 문서의 예제와 체크리스트를 적용하면 **HTTP/2·비동기·타임아웃·보안·스트리밍** 요구사항을 무의존으로 충족할 수 있다.  
+**Java 11+ `HttpClient`**는 현대적 HTTP 클라이언트를 표준으로 제공한다.
+이 문서의 예제와 체크리스트를 적용하면 **HTTP/2·비동기·타임아웃·보안·스트리밍** 요구사항을 무의존으로 충족할 수 있다.
 멀티파트/관측/재시도 정책을 래퍼로 정리하고, 테스트는 **Mock 서버**로 결정성을 확보하라. 그러면 레거시를 넘어 **간결하면서도 견고한 네트워크 계층**을 즉시 구축할 수 있다.

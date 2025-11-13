@@ -8,10 +8,10 @@ category: Kubernetes
 
 애플리케이션을 배포했는데 다음과 같은 문제가 생길 때가 많다.
 
-- Pod가 **Pending** 상태에서 멈춤  
-- **CrashLoopBackOff**로 반복 재시작  
-- **ImagePullBackOff** / **ErrImagePull**  
-- PVC 바인딩/마운트 실패  
+- Pod가 **Pending** 상태에서 멈춤
+- **CrashLoopBackOff**로 반복 재시작
+- **ImagePullBackOff** / **ErrImagePull**
+- PVC 바인딩/마운트 실패
 - Service로 연결이 안 됨
 
 단순 로그(`kubectl logs`)만으로는 부족하다. 이때 가장 먼저 쓰는 도구가 **`kubectl describe`**다. 특정 리소스(특히 Pod)의 **현재 스냅샷 상태와 이벤트 타임라인**을 한눈에 보여 주기 때문이다.
@@ -77,7 +77,7 @@ Volumes:
     ClaimName: my-data
     ReadOnly: false
   kube-api-access-xxxxx: ...
-  
+
 Events:
   Type     Reason              Age   From               Message
   ----     ------              ----  ----               -------
@@ -114,11 +114,11 @@ kubectl describe pod myapp
 
 **확인 항목**
 
-- Events의 `FailedScheduling`:  
-  - `0/3 nodes are available: 3 Insufficient cpu.` → **리소스 부족**  
-  - `node(s) had taints ...` → **Taint/Toleration 미매칭**  
-  - `node(s) didn't match node selector` → **NodeSelector/NodeAffinity 불일치**  
-  - `persistentvolumeclaim "my-pvc" not found` → **PVC 부재**  
+- Events의 `FailedScheduling`:
+  - `0/3 nodes are available: 3 Insufficient cpu.` → **리소스 부족**
+  - `node(s) had taints ...` → **Taint/Toleration 미매칭**
+  - `node(s) didn't match node selector` → **NodeSelector/NodeAffinity 불일치**
+  - `persistentvolumeclaim "my-pvc" not found` → **PVC 부재**
   - `persistentvolumeclaim "my-pvc" is not bound` → **PVC 미바인딩**
 
 **보조 명령**
@@ -153,8 +153,8 @@ kubectl describe pod <pod>
 
 **확인 항목**
 
-- `Containers[].State: Waiting (Reason: CrashLoopBackOff)`  
-- `Last State: Terminated (ExitCode: <code>, Reason: OOMKilled | Error | Signal)`  
+- `Containers[].State: Waiting (Reason: CrashLoopBackOff)`
+- `Last State: Terminated (ExitCode: <code>, Reason: OOMKilled | Error | Signal)`
 - Events: `Back-off restarting failed container`
 
 **보조 명령**
@@ -172,7 +172,7 @@ kubectl logs <pod> -c <container>
 - **OOMKilled**: 메모리 제한 상향, GC 튜닝, 캐시 축소, 리퀘스트/리밋 균형 조정.
 - **Signal (e.g., SIGSEGV/SIGKILL)**: 네이티브 크래시/커널 OOM 시그널, cgroup 제한.
 
-**참고: 백오프 계산(개념)**  
+**참고: 백오프 계산(개념)**
 Backoff 지수 증가를 단순화하면,
 
 $$
@@ -197,7 +197,7 @@ kubectl describe pod <pod>
 
 **해결 가이드**
 
-- 이미지 주소/태그 정확도 재확인.  
+- 이미지 주소/태그 정확도 재확인.
 - Secret 생성 및 ServiceAccount 연결:
 
 ```bash
@@ -234,9 +234,9 @@ curl -i http://localhost:8080/health
 
 **해결 가이드**
 
-- `initialDelaySeconds`, `timeoutSeconds`, `periodSeconds`, `failureThreshold` 재조정.  
-- 서버 기동 시간 길면 **Startup Probe** 추가로 Liveness 지연.  
-- 프로브 경로가 인증/리디렉트/캐시 없이 200 OK를 반환하도록 구현.  
+- `initialDelaySeconds`, `timeoutSeconds`, `periodSeconds`, `failureThreshold` 재조정.
+- 서버 기동 시간 길면 **Startup Probe** 추가로 Liveness 지연.
+- 프로브 경로가 인증/리디렉트/캐시 없이 200 OK를 반환하도록 구현.
 - TCP/exec 프로브 선택을 상황에 맞게 적용.
 
 ---
@@ -258,8 +258,8 @@ kubectl describe pv  <pv>   # 바인딩된 PV가 있다면
 
 **체크리스트**
 
-- PVC의 `storageClassName` / `accessModes` / `requests.storage` 가 StorageClass/PV와 매칭되는가.  
-- ReadWriteOnce(RWO) 볼륨을 여러 Pod가 서로 다른 노드에서 쓰지 않는가.  
+- PVC의 `storageClassName` / `accessModes` / `requests.storage` 가 StorageClass/PV와 매칭되는가.
+- ReadWriteOnce(RWO) 볼륨을 여러 Pod가 서로 다른 노드에서 쓰지 않는가.
 - CSI 드라이버 로그(node-plugin/controller-plugin) 확인.
 
 ---
@@ -273,8 +273,8 @@ kubectl describe svc <backend-svc>
 
 **확인 항목**
 
-- Service `selector` 라벨이 Pod 라벨과 일치하는가.  
-- `kubectl get endpoints <svc>` 에 엔드포인트가 채워지는가.  
+- Service `selector` 라벨이 Pod 라벨과 일치하는가.
+- `kubectl get endpoints <svc>` 에 엔드포인트가 채워지는가.
 - Pod `readiness`가 false면 엔드포인트에서 제외된다.
 
 **보조 명령**
@@ -513,12 +513,12 @@ kubectl logs "$pod" -n "$ns" --all-containers --tail=200
 
 ## 9. 요약 결론
 
-- `kubectl describe`는 **현재 상태와 이벤트 타임라인을 한 화면**에 제공한다.  
-- **Pending**은 스케줄링/리소스/PVC/어피니티/테인트를 먼저 의심한다.  
-- **CrashLoopBackOff**는 `ExitCode/Signal`과 `--previous` 로그로 원인을 특정한다.  
-- **ImagePullBackOff**는 이미지 주소/인증/CA/프록시를 확인한다.  
-- **Readiness/Liveness/Startup** 실패는 프로브 파라미터/엔드포인트/기동 시간을 조정한다.  
-- **PVC/PV** 이슈는 StorageClass/AccessMode/용량/CSI 드라이버를 점검한다.  
+- `kubectl describe`는 **현재 상태와 이벤트 타임라인을 한 화면**에 제공한다.
+- **Pending**은 스케줄링/리소스/PVC/어피니티/테인트를 먼저 의심한다.
+- **CrashLoopBackOff**는 `ExitCode/Signal`과 `--previous` 로그로 원인을 특정한다.
+- **ImagePullBackOff**는 이미지 주소/인증/CA/프록시를 확인한다.
+- **Readiness/Liveness/Startup** 실패는 프로브 파라미터/엔드포인트/기동 시간을 조정한다.
+- **PVC/PV** 이슈는 StorageClass/AccessMode/용량/CSI 드라이버를 점검한다.
 - describe와 함께 `get events / get endpoints / describe node / logs`를 병행하여 **빠르게 가설을 세우고 검증**하라.
 
 이 문서의 절차/스니펫을 그대로 적용하면, 대부분의 초기 장애는 **분 단위로 원인**을 좁힐 수 있다.

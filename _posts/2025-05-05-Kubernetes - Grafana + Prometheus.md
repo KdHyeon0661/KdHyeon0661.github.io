@@ -75,7 +75,7 @@ kubectl get secret prometheus-grafana -n monitoring \
   -o jsonpath="{.data.admin-password}" | base64 -d; echo
 ```
 
-ID: `admin`  
+ID: `admin`
 PW: 위 명령어 결과
 
 ### 3.2 Prometheus UI

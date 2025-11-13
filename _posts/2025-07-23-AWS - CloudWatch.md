@@ -8,11 +8,11 @@ category: AWS
 
 ## 0. 한 장 요약
 
-- **CloudWatch Metrics**: 표준/상세 메트릭, **고해상도(1초)**, 커스텀 메트릭, **메트릭 수학**과 **이상탐지(Anomaly Detection)**, **합성 알람(Composite Alarms)**.  
-- **CloudWatch Logs**: 로그 그룹/스트림, **Logs Insights** 분석, **메트릭 필터**(로그→메트릭), **서브스크립션 필터**(Lambda/Firehose/SIEM 연동), 보존 정책.  
-- **알람 & 자동화**: **SNS/Lambda/Systems Manager**와 연동, **Auto Scaling/EC2 복구** 액션, **EventBridge**로 규칙 기반 자동화.  
-- **대시보드**: JSON 정의/IaC로 버전관리, 크로스-어카운트/리전 뷰.  
-- **에이전트/컨테이너/서버리스**: CloudWatch Agent/OTel, Container Insights, Lambda 기본 로그/메트릭, Synthetics/RUM(프런트엔드)까지 End-to-End 가시성.  
+- **CloudWatch Metrics**: 표준/상세 메트릭, **고해상도(1초)**, 커스텀 메트릭, **메트릭 수학**과 **이상탐지(Anomaly Detection)**, **합성 알람(Composite Alarms)**.
+- **CloudWatch Logs**: 로그 그룹/스트림, **Logs Insights** 분석, **메트릭 필터**(로그→메트릭), **서브스크립션 필터**(Lambda/Firehose/SIEM 연동), 보존 정책.
+- **알람 & 자동화**: **SNS/Lambda/Systems Manager**와 연동, **Auto Scaling/EC2 복구** 액션, **EventBridge**로 규칙 기반 자동화.
+- **대시보드**: JSON 정의/IaC로 버전관리, 크로스-어카운트/리전 뷰.
+- **에이전트/컨테이너/서버리스**: CloudWatch Agent/OTel, Container Insights, Lambda 기본 로그/메트릭, Synthetics/RUM(프런트엔드)까지 End-to-End 가시성.
 - **비용/보안**: 필요한 것만 수집, 압축/보존기간/샘플링, KMS 암호화, 접근제어, 런북.
 
 ---
@@ -268,7 +268,7 @@ aws events put-rule \
 ## 7. 서버리스/컨테이너/프런트엔드
 
 ### 7.1 Lambda
-- 기본 메트릭: `Invocations/Duration/Errors/Throttles/IteratorAge`.  
+- 기본 메트릭: `Invocations/Duration/Errors/Throttles/IteratorAge`.
 - 구조화 로그(EMF) → **메트릭 자동 파생**(고급).
 
 ```python
@@ -285,11 +285,11 @@ def lambda_handler(event, context):
 ```
 
 ### 7.2 ECS/EKS (Container Insights)
-- 노드/파드/서비스 레벨 메트릭/로그 자동 수집(에이전트/OTel).  
+- 노드/파드/서비스 레벨 메트릭/로그 자동 수집(에이전트/OTel).
 - **애드온**: Fluent Bit로 로그 라우팅.
 
 ### 7.3 Synthetics & RUM(선택)
-- **Synthetics Canaries**: 브라우저/HTTP 시나리오 헬스체크, TLS/만료/상태/스크립트 검증 → 알람 연계.  
+- **Synthetics Canaries**: 브라우저/HTTP 시나리오 헬스체크, TLS/만료/상태/스크립트 검증 → 알람 연계.
 - **RUM**: 실제 유저 브라우저 지표(LCP/CLS/TBT 등) 수집.
 
 ---
@@ -301,25 +301,25 @@ $$
 \text{Monthly Cost} \approx
 C_\text{metrics}+C_\text{logs}+C_\text{alarms}+C_\text{insights}
 $$
-- **Metrics**: 표준은 서비스 포함, **커스텀/고해상도** 유료.  
-- **Logs**: 수집 요청 + 저장 GB·월 + 조회/Insights 스캔 데이터.  
-- **Alarms**: 개수×평가주기, 컴포지트 상대적으로 저렴한 노이즈 감축.  
+- **Metrics**: 표준은 서비스 포함, **커스텀/고해상도** 유료.
+- **Logs**: 수집 요청 + 저장 GB·월 + 조회/Insights 스캔 데이터.
+- **Alarms**: 개수×평가주기, 컴포지트 상대적으로 저렴한 노이즈 감축.
 - **Insights**: 스캔 바이트당.
 
 ### 8.2 절감 체크리스트
-- [x] **로그 보존일** 설정(예: 30~90일), 장기보관은 **Firehose→S3→Athena**  
-- [x] **필요한 필드만** 수집(구조화/샘플링/압축)  
-- [x] **커스텀 메트릭 최소화**(집계 후 전송, 1초 해상도는 정말 필요한 곳에만)  
-- [x] Logs Insights 쿼리 범위/시간/필드 제한으로 스캔 비용 절감  
+- [x] **로그 보존일** 설정(예: 30~90일), 장기보관은 **Firehose→S3→Athena**
+- [x] **필요한 필드만** 수집(구조화/샘플링/압축)
+- [x] **커스텀 메트릭 최소화**(집계 후 전송, 1초 해상도는 정말 필요한 곳에만)
+- [x] Logs Insights 쿼리 범위/시간/필드 제한으로 스캔 비용 절감
 - [x] 대시보드/알람 **IaC 관리**로 중복/유휴 자원 정리
 
 ---
 
 ## 9. 보안/거버넌스
 
-- **KMS 암호화**(로그 그룹, 대시보드 데이터는 메타 수준), **전송구간 TLS**.  
-- **IAM 최소권한**: `logs:PutLogEvents`, `cloudwatch:PutMetricData` 최소 스코프.  
-- **리소스 정책**: 서브스크립션 대상 제한(교차 계정 송신 시).  
+- **KMS 암호화**(로그 그룹, 대시보드 데이터는 메타 수준), **전송구간 TLS**.
+- **IAM 최소권한**: `logs:PutLogEvents`, `cloudwatch:PutMetricData` 최소 스코프.
+- **리소스 정책**: 서브스크립션 대상 제한(교차 계정 송신 시).
 - **PII/비밀**: Lambda 서브스크립션으로 **마스킹** 후 저장.
 
 ---
@@ -327,15 +327,15 @@ $$
 ## 10. 런북(운영 절차) 예시
 
 ### 10.1 알람: API 5xx 급증
-1. 대시보드에서 **Req/5xx/ErrorRate/p95 Latency** 동시 확인  
-2. Logs Insights: 최근 5~15분, **경로/고객/버전** 차원으로 분해  
-3. 배포 타임라인 매칭(릴리스/플래그 on/off)  
-4. 롤백/플래그 오프 → 알람 해소 확인  
+1. 대시보드에서 **Req/5xx/ErrorRate/p95 Latency** 동시 확인
+2. Logs Insights: 최근 5~15분, **경로/고객/버전** 차원으로 분해
+3. 배포 타임라인 매칭(릴리스/플래그 on/off)
+4. 롤백/플래그 오프 → 알람 해소 확인
 5. 포스트모템: 근본원인/테스트갭/경보 튜닝
 
 ### 10.2 인프라: EC2 CPU 90% 지속
-1. 프로세스/스레드/GC/IO Wait 확인(에이전트 메트릭)  
-2. 오토스케일 조건 및 ALB 타겟 상태 점검  
+1. 프로세스/스레드/GC/IO Wait 확인(에이전트 메트릭)
+2. 오토스케일 조건 및 ALB 타겟 상태 점검
 3. **임시 Scale-out** + 근본 쿼리/캐시/락 분석
 
 ---
@@ -354,20 +354,20 @@ $$
 ## 12. 실전 시나리오 모음
 
 ### 12.1 백엔드 API SLO(99% 가용, p95<300ms)
-- **메트릭**: `Req`, `5xx`, `Latency(p95)`  
+- **메트릭**: `Req`, `5xx`, `Latency(p95)`
 - **수식**:
 $$
 \text{SLO\_Availability} = 1 - \frac{\text{5xx}}{\text{Req}}
 $$
-- **알람**: 5분 평균 ErrorRate>1% AND p95>300ms → **합성 알람**  
+- **알람**: 5분 평균 ErrorRate>1% AND p95>300ms → **합성 알람**
 - **대시보드**: 시간대별 트래픽/에러/지연, 배포 마커(주석 위젯)
 
 ### 12.2 배치 장애 탐지
-- **커스텀 메트릭**: `BatchSuccess/Failure` 이벤트 기반 Sum  
+- **커스텀 메트릭**: `BatchSuccess/Failure` 이벤트 기반 Sum
 - **알람**: 스케줄 창 내 Success==0 이면 경보, EventBridge 재시도.
 
 ### 12.3 데이터 파이프라인 품질
-- **메트릭 필터**: “record_parsed”·“record_dropped” 카운트  
+- **메트릭 필터**: “record_parsed”·“record_dropped” 카운트
 - **알람**: `dropped/parsed > 0.05` over 10m
 
 ---

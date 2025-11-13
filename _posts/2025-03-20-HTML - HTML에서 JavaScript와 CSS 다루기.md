@@ -52,7 +52,7 @@ h1 { color: var(--brand); }
 
 ## 2. CSS를 “어디에” 둘 것인가 — 위치와 성능
 
-- `<link rel="stylesheet">`는 **반드시 `<head>`**에.  
+- `<link rel="stylesheet">`는 **반드시 `<head>`**에.
   브라우저는 CSS를 **렌더 차단** 리소스로 다루므로, head 초반에 로드해야 **FOUC(깜빡임)** 최소화.
 - `@import`는 **비권장**: 추가 네트워크 홉으로 느려질 수 있음.
 
@@ -66,7 +66,7 @@ h1 { color: var(--brand); }
 <link rel="stylesheet" href="/assets/app.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="/assets/app.css"></noscript>
 ```
-- 작은 핵심 스타일만 인라인 → 초기 렌더 가속.  
+- 작은 핵심 스타일만 인라인 → 초기 렌더 가속.
 - 대용량 CSS는 **preload** 후 **비차단 로드**(onload) → 사용자 체감 속도 개선.
 
 ---

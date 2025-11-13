@@ -56,7 +56,7 @@ std::cout << dq.front(); // 20
 
 template <class T>
 class DequeList {
-    struct Node { T v; Node* prev; Node* next; 
+    struct Node { T v; Node* prev; Node* next;
         template<class U> explicit Node(U&& x): v(std::forward<U>(x)), prev(nullptr), next(nullptr) {}
         DequeList::Node(): v(), prev(this), next(this) {} // sentinel
     };
@@ -220,7 +220,7 @@ std::vector<int> slidingMax(const std::vector<int>& a, int k){
 
 ## 5. 0–1 BFS — 덱의 대표 알고리즘
 
-간선 가중치가 0 또는 1일 때, **덱**에 0-간선은 `push_front`, 1-간선은 `push_back`.  
+간선 가중치가 0 또는 1일 때, **덱**에 0-간선은 `push_front`, 1-간선은 `push_back`.
 다익스트라 없이 O(V+E)로 최단 거리.
 
 ```cpp
@@ -252,7 +252,7 @@ std::vector<int> zero_one_bfs(int n, const std::vector<std::vector<Edge>>& g, in
 
 # Priority Queue — 우선순위가 먼저다
 
-> 일반 큐는 FIFO, **우선순위 큐**는 비교 기준에 따라 **가장 높은 우선순위**가 먼저 나온다.  
+> 일반 큐는 FIFO, **우선순위 큐**는 비교 기준에 따라 **가장 높은 우선순위**가 먼저 나온다.
 > 실전은 대부분 **힙(Heap)** 기반.
 
 ## 6. 이진 힙(Binary Heap) — 핵심만 단단하게
@@ -321,8 +321,8 @@ public:
 };
 ```
 
-- **최대 힙**: `Comp = std::less<T>`  
-- **최소 힙**: `Comp = std::greater<T>`  
+- **최대 힙**: `Comp = std::less<T>`
+- **최소 힙**: `Comp = std::greater<T>`
 - STL `std::priority_queue<T, vector<T>, Comp>`와 동일한 인터페이스 감각
 
 ---
@@ -358,12 +358,12 @@ std::priority_queue<Job, std::vector<Job>, Cmp> jobs;
 
 ## 8. d-ary 힙 — 팬아웃으로 상수 개선
 
-이진 힙의 자식 2개 대신 **d개**로 확장.  
-- **장점**: `sift_down` 단계 수 감소(높이 ↓)  
+이진 힙의 자식 2개 대신 **d개**로 확장.
+- **장점**: `sift_down` 단계 수 감소(높이 ↓)
 - **단점**: `sift_up` 시 부모 계산/비교 증가
 
-인덱스 규칙(0-based):  
-- 부모: \(\text{par}(i) = \lfloor (i-1)/d \rfloor\)  
+인덱스 규칙(0-based):
+- 부모: \(\text{par}(i) = \lfloor (i-1)/d \rfloor\)
 - 자식: \(\text{child}(i,k) = d\cdot i + 1 + k,\ 0 \le k < d\)
 
 `d`는 **분기因子**. 캐시/분기 예측과 타협해 **4-ary**가 실전에서 자주 쓰인다.

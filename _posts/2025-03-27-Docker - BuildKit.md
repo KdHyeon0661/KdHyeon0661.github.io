@@ -19,8 +19,8 @@ category: Docker
 | 분산/원격 캐시 | - | **type=registry, type=gha, type=local** 등 |
 
 **용어 미리보기**
-- **LLB**(Low-Level Build): BuildKit 내부 빌드 그래프 형식  
-- **Inline cache**: 이미지 안에 캐시 메타데이터를 함께 푸는 방식  
+- **LLB**(Low-Level Build): BuildKit 내부 빌드 그래프 형식
+- **Inline cache**: 이미지 안에 캐시 메타데이터를 함께 푸는 방식
 - **Cache exporter/importer**: `--cache-to/--cache-from`로 캐시 위치를 외부화
 
 ---
@@ -134,7 +134,7 @@ docker build \
   .
 ```
 
-- **첫 빌드**: 캐시 없음 → 느림.  
+- **첫 빌드**: 캐시 없음 → 느림.
 - **두 번째부터**: `--cache-from`에 `:latest`를 지정하면, **직전 이미지 레이어**를 캐시 소스로 활용.
 
 > **주의**: 이미지를 **push**해야 다른 머신(CI runner)에서도 캐시 활용 가능.
@@ -150,7 +150,7 @@ docker buildx build \
   --push .
 ```
 
-- **장점**: CI 러너가 매번 새로 뜨더라도 **레지스트리 캐시**를 가져와 **즉시 가속**  
+- **장점**: CI 러너가 매번 새로 뜨더라도 **레지스트리 캐시**를 가져와 **즉시 가속**
 - `mode=max`로 더 많은 메타데이터 보존 → 히트 확률 상승
 
 **GitHub Actions 캐시 백엔드(type=gha)**
@@ -236,7 +236,7 @@ docker buildx build \
 ```
 
 - **멀티 플랫폼**은 보통 `--push`로 **매니페스트 리스트**를 만들며 배포
-- 로컬 적재(`--load`)는 **단일 플랫폼**에서만 가능  
+- 로컬 적재(`--load`)는 **단일 플랫폼**에서만 가능
 - 성능을 원하면 **아키텍처별 네이티브 러너**(예: ARM64 러너) 도입 검토
 
 ---
@@ -401,16 +401,16 @@ $$
 T \approx (1-\gamma)\,T_0 + \gamma\,\epsilon
 $$
 
-여기서 \(\epsilon\)은 캐시 검증/메타데이터 다운로드 오버헤드(보통 매우 작음).  
+여기서 \(\epsilon\)은 캐시 검증/메타데이터 다운로드 오버헤드(보통 매우 작음).
 **캐시 적중률 \(\gamma\)를 높이는 설계(정적 의존 먼저, `.dockerignore`, 원격 캐시)는 곧 \(T\)를 선형적으로 줄인다.**
 
 ---
 
 ## 10. 재현성/결정성(Determinism) 팁
 
-- **버전 고정**: `package-lock.json`/`poetry.lock`/`go.mod` 등 lock 파일 사용  
-- **시간 영향 최소화**: 빌드 타임스탬프 삽입 시 `LABEL` 등 별도 레이어 또는 빌드 아규먼트로 제어  
-- **베이스 이미지 digest 사용**: `FROM node@sha256:...`  
+- **버전 고정**: `package-lock.json`/`poetry.lock`/`go.mod` 등 lock 파일 사용
+- **시간 영향 최소화**: 빌드 타임스탬프 삽입 시 `LABEL` 등 별도 레이어 또는 빌드 아규먼트로 제어
+- **베이스 이미지 digest 사용**: `FROM node@sha256:...`
 - **아카이브/압축 도구 옵션 고정**: 순서/mtime 고정 옵션(가능한 경우)으로 결과물 해시 일관성 유지
 
 ---
@@ -455,9 +455,9 @@ docker buildx bake --push
 
 ## 13. 보안/거버넌스와 BuildKit
 
-- **비밀 주입은 mount만**: `--mount=type=secret/ssh` (ENV로 넣지 않기)  
-- **정책 게이트**: PR 단계에서 Dockerfile 린트(Dockle), 취약점 스캔(Trivy/Scout), OPA/Gatekeeper  
-- **서명/SBOM**: cosign 서명, `docker sbom`/`syft`로 SBOM 생성 → 아티팩트 업로드  
+- **비밀 주입은 mount만**: `--mount=type=secret/ssh` (ENV로 넣지 않기)
+- **정책 게이트**: PR 단계에서 Dockerfile 린트(Dockle), 취약점 스캔(Trivy/Scout), OPA/Gatekeeper
+- **서명/SBOM**: cosign 서명, `docker sbom`/`syft`로 SBOM 생성 → 아티팩트 업로드
 - **기반 이미지 규정**: 조직 표준 베이스 + 정기 갱신
 
 ---

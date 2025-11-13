@@ -8,19 +8,19 @@ category: WPF
 *(개념 → 문법 → 컨트롤 템플릿 → 코드 제어 → MVVM 패턴 → 사용자 지정 VSM → 성능/트러블슈팅까지, 예제 중심으로 “빠짐없이” 정리)*
 
 > VSM은 컨트롤의 **상태(State)** 를 선언적으로 정의하고, **상태 전환(Transition)** 을 애니메이션으로 기술해
-> **복잡한 Trigger 난립 없이** 일관된 UI를 만들게 해 줍니다.  
+> **복잡한 Trigger 난립 없이** 일관된 UI를 만들게 해 줍니다.
 > WPF 4.0+에서 본격 지원되며, `ControlTemplate` 안에서 가장 빛을 발합니다.
 
 ---
 
 ## 0. 한눈에 보는 핵심
 
-- **VisualState** = “상태 이름 + Storyboard(선택)”.  
-- **VisualStateGroup** = 관련 상태 묶음(예: `CommonStates`: `Normal` / `MouseOver` / `Pressed` / `Disabled`).  
-- **한 그룹 내에 동시에 하나의 상태만 활성**. 그룹이 여러 개면 각 그룹에서 하나씩 활성.  
-- **전환**: `VisualTransition` 로 상태 간 애니메이션/시간/완화(Easing) 지정.  
-- **코드 전환**: `VisualStateManager.GoToState(control, "StateName", useTransitions)`  
-- **MVVM**: Behavior/AttachedProperty로 상태를 바인딩하거나, ViewModel 이벤트→상태 전환 연결.  
+- **VisualState** = “상태 이름 + Storyboard(선택)”.
+- **VisualStateGroup** = 관련 상태 묶음(예: `CommonStates`: `Normal` / `MouseOver` / `Pressed` / `Disabled`).
+- **한 그룹 내에 동시에 하나의 상태만 활성**. 그룹이 여러 개면 각 그룹에서 하나씩 활성.
+- **전환**: `VisualTransition` 로 상태 간 애니메이션/시간/완화(Easing) 지정.
+- **코드 전환**: `VisualStateManager.GoToState(control, "StateName", useTransitions)`
+- **MVVM**: Behavior/AttachedProperty로 상태를 바인딩하거나, ViewModel 이벤트→상태 전환 연결.
 - **CustomVisualStateManager**: 전환 로직을 커스터마이즈 가능(고급).
 
 ---
@@ -86,8 +86,8 @@ category: WPF
 </Style>
 ```
 
-> **포인트**  
-> - VSM은 템플릿 내부의 **이름 있는 요소(TargetName)** 에 애니메이션을 적용합니다.  
+> **포인트**
+> - VSM은 템플릿 내부의 **이름 있는 요소(TargetName)** 에 애니메이션을 적용합니다.
 > - 상태 이름은 관례적으로 `CommonStates`, `FocusStates`, `ValidationStates`, `SelectionStates` 등 그룹으로 나뉩니다.
 
 ---
@@ -134,7 +134,7 @@ category: WPF
 </VisualStateManager.VisualStateGroups>
 ```
 
-> **GeneratedDuration**: 상태 Storyboard에 지정된 Duration이 없어도 **그룹 전환 기본 시간**으로 부드럽게 전환.  
+> **GeneratedDuration**: 상태 Storyboard에 지정된 Duration이 없어도 **그룹 전환 기본 시간**으로 부드럽게 전환.
 > **From/To** 로 특정 쌍 전환만 별도 시간/이징을 지정.
 
 ---
@@ -502,30 +502,30 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ## 11. 성능/안정성 체크리스트
 
-- [ ] **Storyboard 최소화**: 상태별 Storyboard는 짧고 단순하게, **RenderTransform 우선**(LayoutTransform 지양)  
-- [ ] **공유 Brush 애니메이션 금지**: 리소스 Brush는 Freeze/공유됨 → **로컬 Brush** 또는 `x:Shared="False"`  
-- [ ] **GeneratedDuration** 로 공통 전환시간 정의 → 개별 Storyboard Duration 생략 가능  
-- [ ] **상태 충돌 방지**: 같은 속성을 여러 그룹에서 동시에 애니메이션하지 않도록 설계  
-- [ ] **초기 상태 확정**: `OnApplyTemplate` 후 `GoToState(..., false)`로 초기 상태 강제  
+- [ ] **Storyboard 최소화**: 상태별 Storyboard는 짧고 단순하게, **RenderTransform 우선**(LayoutTransform 지양)
+- [ ] **공유 Brush 애니메이션 금지**: 리소스 Brush는 Freeze/공유됨 → **로컬 Brush** 또는 `x:Shared="False"`
+- [ ] **GeneratedDuration** 로 공통 전환시간 정의 → 개별 Storyboard Duration 생략 가능
+- [ ] **상태 충돌 방지**: 같은 속성을 여러 그룹에서 동시에 애니메이션하지 않도록 설계
+- [ ] **초기 상태 확정**: `OnApplyTemplate` 후 `GoToState(..., false)`로 초기 상태 강제
 - [ ] **대규모 리스트**: 각 항목 템플릿의 상태 애니메이션을 **짧게**(가상화 영향 최소화)
 
 ---
 
 ## 12. 트러블슈팅
 
-**Q1. `GoToState` 가 항상 `false` 를 반환합니다.**  
-- 템플릿 안에 해당 **상태 이름이 존재**하는지, 그룹/이름 오타 여부 확인.  
+**Q1. `GoToState` 가 항상 `false` 를 반환합니다.**
+- 템플릿 안에 해당 **상태 이름이 존재**하는지, 그룹/이름 오타 여부 확인.
 - `OnApplyTemplate` 이전 호출인지 확인(템플릿 미적용이면 실패).
 
-**Q2. 전환 애니메이션이 일부만 적용됩니다.**  
-- 다른 그룹/Trigger가 **같은 속성**을 동시에 조작하고 있는지 점검.  
+**Q2. 전환 애니메이션이 일부만 적용됩니다.**
+- 다른 그룹/Trigger가 **같은 속성**을 동시에 조작하고 있는지 점검.
 - **FillBehavior**/`HoldEnd` vs 다른 애니메이션이 값을 덮어쓰는지 확인.
 
-**Q3. 마우스 상태 전환이 느리거나 튑니다.**  
-- `GeneratedDuration` 을 더 짧게, **Pressed→Normal** 등 빠른 복귀 전환 별도 지정.  
+**Q3. 마우스 상태 전환이 느리거나 튑니다.**
+- `GeneratedDuration` 을 더 짧게, **Pressed→Normal** 등 빠른 복귀 전환 별도 지정.
 - RenderTransform 사용으로 레이아웃 재계산 최소화.
 
-**Q4. MVVM에서 상태 관리가 번거롭습니다.**  
+**Q4. MVVM에서 상태 관리가 번거롭습니다.**
 - Behavior(`GoToStateAction`) 또는 AttachedProperty를 사용해 바인딩처럼 추상화.
 
 ---
@@ -625,8 +625,8 @@ VisualStateManager.GoToState(this, "Detail", true);
 
 ## 14. 요약
 
-- **VSM는 “상태-중심 설계”**: 상태 이름과 전환만 정리하면, 복잡한 트리거 덩어리 대신 **읽기 쉬운 템플릿**이 됩니다.  
-- **`VisualTransition`** 으로 공통 전환 시간을 지정해 **부드럽고 일관된** 모션을 확보하세요.  
-- **코드/MVVM와의 연결**은 `GoToState`, Behavior, AttachedProperty 등으로 유연합니다.  
-- **성능**은 RenderTransform·간단한 Storyboard·충돌 없는 속성 지배로 확보하시고,  
+- **VSM는 “상태-중심 설계”**: 상태 이름과 전환만 정리하면, 복잡한 트리거 덩어리 대신 **읽기 쉬운 템플릿**이 됩니다.
+- **`VisualTransition`** 으로 공통 전환 시간을 지정해 **부드럽고 일관된** 모션을 확보하세요.
+- **코드/MVVM와의 연결**은 `GoToState`, Behavior, AttachedProperty 등으로 유연합니다.
+- **성능**은 RenderTransform·간단한 Storyboard·충돌 없는 속성 지배로 확보하시고,
 - 필요 시 **CustomVisualStateManager**로 전환 규칙을 커스터마이즈하세요.

@@ -6,26 +6,26 @@ category: WPF
 ---
 # XAML–CLR–렌더링 파이프라인 관계 완전 해부
 
-> 이 글은 **XAML → CLR 객체 그래프 → 렌더링(컴포지션)**으로 이어지는 **WPF 파이프라인**을 *빌드 타임*부터 *런타임*, *합성/출력*까지 **끝까지 추적**합니다.  
-> “XAML이 어떻게 BAML로 바뀌고, `InitializeComponent()`가 무엇을 하고, 바인딩/레이아웃/비주얼 기록이 어떤 스레드를 지나 GPU로 내려가 픽셀로 찍히는가?”를 **코드·도표·체크리스트**로 정리합니다.  
+> 이 글은 **XAML → CLR 객체 그래프 → 렌더링(컴포지션)**으로 이어지는 **WPF 파이프라인**을 *빌드 타임*부터 *런타임*, *합성/출력*까지 **끝까지 추적**합니다.
+> “XAML이 어떻게 BAML로 바뀌고, `InitializeComponent()`가 무엇을 하고, 바인딩/레이아웃/비주얼 기록이 어떤 스레드를 지나 GPU로 내려가 픽셀로 찍히는가?”를 **코드·도표·체크리스트**로 정리합니다.
 > 코드 블록은 모두 \`\`\`로 감쌌고, 전체 글은 블로그 포맷에 맞춰 \~~~markdown 으로 감쌌습니다.
 
 ---
 
 ## 0. 한 장 요약 (TL;DR)
 
-1. **빌드 타임(Compile)**  
-   - `*.xaml` → **BAML**(이진 XAML) + `*.g.cs`(부분 클래스) 생성  
+1. **빌드 타임(Compile)**
+   - `*.xaml` → **BAML**(이진 XAML) + `*.g.cs`(부분 클래스) 생성
    - `InitializeComponent()`가 리소스 어셈블리에서 BAML을 읽어 **CLR 객체 그래프**를 만든다.
 
-2. **런타임-UI 스레드**  
-   - BAML 로더가 **DependencyObject/FrameworkElement**들을 **객체화**(Object Graph Materialization)  
-   - **리소스/스타일/템플릿** 적용 → **바인딩/트리거/애니메이션** 구동 → **Measure/Arrange** 레이아웃  
+2. **런타임-UI 스레드**
+   - BAML 로더가 **DependencyObject/FrameworkElement**들을 **객체화**(Object Graph Materialization)
+   - **리소스/스타일/템플릿** 적용 → **바인딩/트리거/애니메이션** 구동 → **Measure/Arrange** 레이아웃
    - `OnRender(DrawingContext)` 등에서 **비주얼 명령** 기록(장면 그래프).
 
-3. **렌더/컴포지션 스레드(milcore)**  
-   - UI 스레드가 기록한 장면을 **DUCE 채널**로 배치 전송  
-   - **컴포지터 스레드**가 이를 읽어 **Direct3D**로 합성(테ク스처/지오메트리/알파 블렌딩)  
+3. **렌더/컴포지션 스레드(milcore)**
+   - UI 스레드가 기록한 장면을 **DUCE 채널**로 배치 전송
+   - **컴포지터 스레드**가 이를 읽어 **Direct3D**로 합성(테ク스처/지오메트리/알파 블렌딩)
    - **스왑 체인**이 VSync에 맞춰 화면에 픽셀을 출력.
 
 ---
@@ -97,11 +97,11 @@ public partial class MainWindow : System.Windows.Window, System.Windows.Markup.I
 
 `InitializeComponent()` 호출 시(대개 생성자에서), 다음이 일어납니다.
 
-1. **BAML 스트림 로드** → 파서가 토큰을 순회하며 **객체 생성**  
-2. 생성된 객체에 **속성 주입**(의존 속성 포함), **이벤트 연결**, **x:Name → NameScope 등록**  
-3. **ResourceDictionary 병합**, **StaticResource/DynamicResource** 해석  
-4. **스타일/템플릿**을 요소에 적용(Style Hierarchy)  
-5. **마크업 확장**(예: `{Binding}`, `{StaticResource}`)을 해석 → **실제 객체/식**으로 치환  
+1. **BAML 스트림 로드** → 파서가 토큰을 순회하며 **객체 생성**
+2. 생성된 객체에 **속성 주입**(의존 속성 포함), **이벤트 연결**, **x:Name → NameScope 등록**
+3. **ResourceDictionary 병합**, **StaticResource/DynamicResource** 해석
+4. **스타일/템플릿**을 요소에 적용(Style Hierarchy)
+5. **마크업 확장**(예: `{Binding}`, `{StaticResource}`)을 해석 → **실제 객체/식**으로 치환
 6. `Loaded` 이전에 바인딩/트리거 등 **초기 평가** 수행 → 초기 레이아웃 트리 준비
 
 ### 3.1 간단 XAML 예시
@@ -135,9 +135,9 @@ public partial class MainWindow : System.Windows.Window, System.Windows.Markup.I
 
 ### 3.2 BAML 파서가 만드는 것(개념적)
 
-- `Window` → `Grid` → `TextBox`, `ListBox` → `DataTemplate` 등 **CLR 객체**가 생성  
-- 의존 속성 세팅 (`TextBox.Text`, `FrameworkElement.Margin`, `Control.Template` 등)  
-- `{Binding ...}` → **Binding 객체**/BindingExpression 생성 대기  
+- `Window` → `Grid` → `TextBox`, `ListBox` → `DataTemplate` 등 **CLR 객체**가 생성
+- 의존 속성 세팅 (`TextBox.Text`, `FrameworkElement.Margin`, `Control.Template` 등)
+- `{Binding ...}` → **Binding 객체**/BindingExpression 생성 대기
 - `x:Name="SearchBox"` → **NameScope**에 등록 → `.g.cs`의 `IComponentConnector`로 필드 연결
 
 ---
@@ -172,8 +172,8 @@ public partial class MainWindow : Window
 }
 ```
 
-**포인트**  
-- `{Binding SearchText}`는 `DataContext`가 설정되는 순간 **소스 경로를 확인**하고 `TextBox.TextProperty`로 값 반영.  
+**포인트**
+- `{Binding SearchText}`는 `DataContext`가 설정되는 순간 **소스 경로를 확인**하고 `TextBox.TextProperty`로 값 반영.
 - 값 변경 시 **INPC** → 바인딩 엔진 → DP 값 갱신 → **Measure/Arrange/Render 무효화**까지 이어질 수 있음.
 
 ### 4.2 트리거/애니메이션
@@ -201,14 +201,14 @@ public partial class MainWindow : Window
 
 ### 5.1 트리거: 무엇이 레이아웃을 다시 돌릴까?
 
-- **사이즈/마진/폰트** 등 레이아웃 관련 DP 변경  
-- **바인딩 값 변경**으로 콘텐츠 크기가 달라짐  
+- **사이즈/마진/폰트** 등 레이아웃 관련 DP 변경
+- **바인딩 값 변경**으로 콘텐츠 크기가 달라짐
 - **템플릿/스타일** 변화
 
 ### 5.2 Measure/Arrange 개요
 
-- **Measure**: 자식이 필요한 **크기 요청** 계산(Available Size 입력 → Desired Size 출력)  
-- **Arrange**: 자식의 **최종 배치** 확정(Rect)  
+- **Measure**: 자식이 필요한 **크기 요청** 계산(Available Size 입력 → Desired Size 출력)
+- **Arrange**: 자식의 **최종 배치** 확정(Rect)
 - 두 단계 후에 렌더 무효화 영역이 파생되어 **렌더 파이프라인**에 반영된다.
 
 ```csharp
@@ -271,7 +271,7 @@ public class MeterBar : FrameworkElement
 
 ### 6.2 Retained vs Immediate
 
-- **Retained Mode**(WPF): 개체 그래프/드로잉 명령을 유지하여 **부분 갱신**, **시스템 주도 합성**  
+- **Retained Mode**(WPF): 개체 그래프/드로잉 명령을 유지하여 **부분 갱신**, **시스템 주도 합성**
 - **Immediate Mode**(GDI+/Direct2D 단독): 호출자가 매 프레임 직접 모든 픽셀을 갱신
 
 ---
@@ -280,23 +280,23 @@ public class MeterBar : FrameworkElement
 
 ### 7.1 왜 채널이 필요한가
 
-- UI 스레드는 **객체 그래프/DP/레이아웃**을 관리  
-- **렌더링/합성**은 **네이티브 milcore + D3D**에서 **별도 스레드**로 수행  
+- UI 스레드는 **객체 그래프/DP/레이아웃**을 관리
+- **렌더링/합성**은 **네이티브 milcore + D3D**에서 **별도 스레드**로 수행
 - 두 세계를 **저비용 배치 스트림(DUCE)**으로 연결
 
 ### 7.2 흐름
 
-1. UI 스레드에서 **장면 그래프 변경**(비주얼, 지오메트리, 브러시, 텍스처 등)  
-2. 변경점이 **명령 버퍼**로 효율적으로 직렬화(DUCE)  
-3. 컴포지터 스레드가 버퍼를 읽어 **D3D 리소스/상태**를 업데이트  
+1. UI 스레드에서 **장면 그래프 변경**(비주얼, 지오메트리, 브러시, 텍스처 등)
+2. 변경점이 **명령 버퍼**로 효율적으로 직렬화(DUCE)
+3. 컴포지터 스레드가 버퍼를 읽어 **D3D 리소스/상태**를 업데이트
 4. 다음 **합성 틱**에서 화면에 반영
 
 ---
 
 ## 8. 텍스트 파이프라인: TextFormatter → GlyphRun → 합성
 
-- **TextFormatter**가 줄바꿈/스크립트/폰트 폴백/힌팅을 처리해 **GlyphRun**을 생성  
-- `DrawText`/`DrawGlyphRun` 호출로 비주얼에 텍스트가 기록  
+- **TextFormatter**가 줄바꿈/스크립트/폰트 폴백/힌팅을 처리해 **GlyphRun**을 생성
+- `DrawText`/`DrawGlyphRun` 호출로 비주얼에 텍스트가 기록
 - 컴포지터는 글리프 비트맵/서브픽셀 포지셔닝을 고려해 합성
 
 ```csharp
@@ -332,11 +332,11 @@ myMeterBar.BeginAnimation(MeterBar.ValueProperty, da);
 
 **DependencyProperty**의 유효 값은 다음의 우선순위 스택에서 결정됩니다(요약):
 
-1. **Animation**  
-2. **Local Value** (코드로 SetValue, XAML 속성 할당)  
-3. **Style/Template Setter**  
-4. **Theme Style**  
-5. **Inherited** (예: `FontFamily` 상속)  
+1. **Animation**
+2. **Local Value** (코드로 SetValue, XAML 속성 할당)
+3. **Style/Template Setter**
+4. **Theme Style**
+5. **Inherited** (예: `FontFamily` 상속)
 6. **Default Value**
 
 값이 바뀌면 **PropertyMetadata**의 플래그에 따라 **AffectsMeasure/AffectsArrange/AffectsRender** 가동 → 알맞은 파이프라인 무효화가 발생.
@@ -358,8 +358,8 @@ protected override void OnMouseEnter(MouseEventArgs e)
 
 ## 12. Dispatcher & 프레임 타이밍
 
-- WPF UI는 **STA Dispatcher 루프** 위에서 동작  
-- **DispatcherPriority**로 작업 순서를 제어(입력/렌더 우선)  
+- WPF UI는 **STA Dispatcher 루프** 위에서 동작
+- **DispatcherPriority**로 작업 순서를 제어(입력/렌더 우선)
 - **CompositionTarget.Rendering** 이벤트는 **합성과 동기**된 콜백(프레임별 업데이트에 유용)
 
 ```csharp
@@ -373,7 +373,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ## 13. Per-Monitor DPI, DIP 좌표, 픽셀 스냅
 
-- 좌표계는 **DIP(1/96")** 기준. 모니터 DPI에 따라 실제 픽셀 수가 다름  
+- 좌표계는 **DIP(1/96")** 기준. 모니터 DPI에 따라 실제 픽셀 수가 다름
 - 텍스트/선명도를 위해 `UseLayoutRounding="True"`, `SnapsToDevicePixels="True"` 권장
 
 ```xml
@@ -398,7 +398,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ### 14.3 레이아웃
 
-- 부모 `Panel`이 Measure 호출 → `TextBlock`이 `TextFormatter`를 통해 `DesiredSize` 계산  
+- 부모 `Panel`이 Measure 호출 → `TextBlock`이 `TextFormatter`를 통해 `DesiredSize` 계산
 - Arrange에서 최종 배치 확정(Rect)
 
 ### 14.4 렌더 기록
@@ -417,10 +417,10 @@ CompositionTarget.Rendering += (_, __) =>
 
 ## 15. 사례 연구 B: 바인딩이 렌더에 미치는 연쇄
 
-1. 사용자가 `TextBox`에 입력 → `Text` DP 변경  
-2. 바인딩이 ViewModel의 `SearchText` 변경 → INPC 발생  
-3. `People` 필터/정렬로 `ItemsSource` 변화 → 항목 가시성/수량 변경  
-4. `ItemsControl` 레이아웃 무효화(Measure/Arrange) → 비주얼 변경  
+1. 사용자가 `TextBox`에 입력 → `Text` DP 변경
+2. 바인딩이 ViewModel의 `SearchText` 변경 → INPC 발생
+3. `People` 필터/정렬로 `ItemsSource` 변화 → 항목 가시성/수량 변경
+4. `ItemsControl` 레이아웃 무효화(Measure/Arrange) → 비주얼 변경
 5. 렌더 레코딩 업데이트 → DUCE → 합성 → 화면
 
 **핵심:** 바인딩은 **데이터 변화**를 **시각 변화**로 연결하는 **촉매**이며, 그 결과 **레이아웃/렌더 파이프라인**이 다시 돈다.
@@ -429,8 +429,8 @@ CompositionTarget.Rendering += (_, __) =>
 
 ## 16. 스레드 규칙: UI 스레드 · 컴포지터 스레드 · Freezable
 
-- **UI 스레드**: DO/FE 소유, 대부분의 DP 접근은 **UI 스레드 한정**  
-- **컴포지터 스레드**: milcore/D3D 합성 담당  
+- **UI 스레드**: DO/FE 소유, 대부분의 DP 접근은 **UI 스레드 한정**
+- **컴포지터 스레드**: milcore/D3D 합성 담당
 - **Freezable**: `Freeze()`하면 **읽기 전용 + 스레드 간 공유 가능** (브러시/지오메트리/트랜스폼 등)
 
 ```csharp
@@ -442,7 +442,7 @@ if (brush.CanFreeze) brush.Freeze(); // 렌더/스레드에 유리
 
 ## 17. 이미지/미디어: BitmapSource/MediaElement의 파이프라인
 
-- `BitmapImage`/`WriteableBitmap` → 디코딩/픽셀 버퍼 → 텍스처 업로드  
+- `BitmapImage`/`WriteableBitmap` → 디코딩/픽셀 버퍼 → 텍스처 업로드
 - `MediaElement`/`MediaPlayer` → 프레임 디코딩 → 텍스처 형태로 합성
 
 ```xml
@@ -484,14 +484,14 @@ public sealed class VisualLayerCanvas : FrameworkElement
 
 ## 19. 진단과 최적화 체크리스트
 
-1. **바인딩 에러 로그**(출력 창) 제거: 오버헤드/Null 경로  
-2. **Freeze 가능한 리소스 Freeze**: 공유/불변  
-3. **Layout Thrash 방지**: 빈번한 Measure/Arrange 루프 회피  
-4. **효과/Opacity 남용 금지**: 합성 경로 비용 큼(특히 중첩 반투명)  
-5. **대형 비트맵 스케일** 줄이기: `DecodePixelWidth/Height`  
-6. **VirtualizingPanel** 활성화: 항목 가상화  
-7. **Pixel Snap/LayoutRounding**로 텍스트 선명도 확보  
-8. **CompositionTarget.Rendering** 오용 주의: 프레임당 과도한 작업 금지  
+1. **바인딩 에러 로그**(출력 창) 제거: 오버헤드/Null 경로
+2. **Freeze 가능한 리소스 Freeze**: 공유/불변
+3. **Layout Thrash 방지**: 빈번한 Measure/Arrange 루프 회피
+4. **효과/Opacity 남용 금지**: 합성 경로 비용 큼(특히 중첩 반투명)
+5. **대형 비트맵 스케일** 줄이기: `DecodePixelWidth/Height`
+6. **VirtualizingPanel** 활성화: 항목 가상화
+7. **Pixel Snap/LayoutRounding**로 텍스트 선명도 확보
+8. **CompositionTarget.Rendering** 오용 주의: 프레임당 과도한 작업 금지
 9. **RenderCapability.Tier** 확인 후 전략 분기
 
 ```csharp
@@ -505,12 +505,12 @@ Debug.WriteLine($"Render Tier: {tier}");
 
 **프레임 n**에서, 대략 다음 순서(단순화):
 
-1. **입력 처리**(Dispatcher Input) → 라우티드 이벤트  
-2. **App 코드 실행**(INPC/바인딩 리액션 포함)  
-3. **레이아웃**(Measure/Arrange, Dirty 영역 계산)  
-4. **렌더 업데이트**(OnRender/드로잉 명령 기록)  
-5. **DUCE 배치 플러시**(장면 변경점 전송)  
-6. **컴포지터 틱**(milcore, D3D 상태/리소스 업데이트)  
+1. **입력 처리**(Dispatcher Input) → 라우티드 이벤트
+2. **App 코드 실행**(INPC/바인딩 리액션 포함)
+3. **레이아웃**(Measure/Arrange, Dirty 영역 계산)
+4. **렌더 업데이트**(OnRender/드로잉 명령 기록)
+5. **DUCE 배치 플러시**(장면 변경점 전송)
+6. **컴포지터 틱**(milcore, D3D 상태/리소스 업데이트)
 7. **Present**(VSync/스왑)
 
 프레임 예산(예: 16.6ms @60Hz) 내에 1~5가 끝나야 6에서 부드럽게 합성됩니다.
@@ -519,16 +519,16 @@ Debug.WriteLine($"Render Tier: {tier}");
 
 ## 21. FAQ (자주 받는 질문)
 
-**Q1. XAML을 런타임에 직접 파싱할 수도 있나요?**  
+**Q1. XAML을 런타임에 직접 파싱할 수도 있나요?**
 A1. 네, `XamlReader.Load`로 문자열 XAML을 동적 로드 가능. 하지만 **BAML(컴파일)** 경로가 훨씬 빠릅니다.
 
-**Q2. `OnRender` vs `ControlTemplate` 중 무엇이 좋나요?**  
+**Q2. `OnRender` vs `ControlTemplate` 중 무엇이 좋나요?**
 A2. **스킨/Lookless**가 목적이면 Template, **대량·경량 렌더**가 목적이면 OnRender/VisualLayer. 용도에 따라 병행.
 
-**Q3. 애니메이션이 끊기는 이유는?**  
+**Q3. 애니메이션이 끊기는 이유는?**
 A3. 대개 **UI 스레드 과부하**(레이아웃 스톰/비트맵 디코딩/동기 IO). 클록은 따라가지만 **새 장면 기록**이 늦으면 끊깁니다.
 
-**Q4. 텍스트가 흐릿해요.**  
+**Q4. 텍스트가 흐릿해요.**
 A4. DIP/픽셀 경계 정렬(정수 좌표), `UseLayoutRounding`, `SnapsToDevicePixels`. 확대 변환(ScaleTransform) 최소화.
 
 ---
@@ -602,7 +602,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 </Window>
 ```
 
-> 여기서 `MeterBar`는 **OnRender 기반 커스텀**으로, 바인딩 값 변화가 DP→렌더 무효화→DUCE→합성으로 이어짐.  
+> 여기서 `MeterBar`는 **OnRender 기반 커스텀**으로, 바인딩 값 변화가 DP→렌더 무효화→DUCE→합성으로 이어짐.
 > `SearchText` 변경은 `View` 갱신 → `ItemsControl` 레이아웃/렌더 재평가.
 
 ### 22.3 코드비하인드 시작
@@ -618,39 +618,39 @@ public partial class MainWindow : Window
 }
 ```
 
-**이 한 앱 속에서 발생하는 파이프라인**  
+**이 한 앱 속에서 발생하는 파이프라인**
 - XAML(BAML) → 객체화 → 바인딩 연결 → INPC로 데이터/뷰 갱신 → 레이아웃 → 렌더 기록 → 채널 전송 → 합성 → 픽셀.
 
 ---
 
 ## 23. “끊김 없이” 만들려면? (성능 전략 요약)
 
-- **Freeze** 가능한 건 Freeze(브러시/지오메트리/트랜스폼)  
-- **가상화**: `VirtualizingStackPanel`, 지연 로딩  
-- **디코딩 크기** 지정: `DecodePixelWidth/Height`  
-- **바인딩/INPC 폭주** 제어: 배치 업데이트, 스로틀/디바운스  
-- **UI 스레드 작업 최소화**: 파일 IO/CPU는 `Task.Run`/`async`로  
-- **투명/이펙트 최소화**: 오버드로/블렌딩 비용 큼  
+- **Freeze** 가능한 건 Freeze(브러시/지오메트리/트랜스폼)
+- **가상화**: `VirtualizingStackPanel`, 지연 로딩
+- **디코딩 크기** 지정: `DecodePixelWidth/Height`
+- **바인딩/INPC 폭주** 제어: 배치 업데이트, 스로틀/디바운스
+- **UI 스레드 작업 최소화**: 파일 IO/CPU는 `Task.Run`/`async`로
+- **투명/이펙트 최소화**: 오버드로/블렌딩 비용 큼
 - **픽셀 스냅**: 텍스트 선명도/과도한 재컴포지션 방지
 
 ---
 
 ## 24. 마무리: XAML–CLR–렌더링은 “계약”이다
 
-- **XAML**은 **선언**(무엇을 보여줄지)  
-- **CLR**은 **행동/상태**(어떻게 변할지)  
+- **XAML**은 **선언**(무엇을 보여줄지)
+- **CLR**은 **행동/상태**(어떻게 변할지)
 - **렌더링**은 **효율적 합성**(얼마나 부드럽게 그릴지)
 
-이 셋의 **계약을 지키는 설계**(Freeze, 가상화, 적절한 바인딩, 알맞은 레이아웃)는 곧 **프레임 안정성**과 **선명한 출력**으로 이어집니다.  
+이 셋의 **계약을 지키는 설계**(Freeze, 가상화, 적절한 바인딩, 알맞은 레이아웃)는 곧 **프레임 안정성**과 **선명한 출력**으로 이어집니다.
 “XAML 한 줄 → 픽셀 한 줄”의 연결고리를 이해하면, WPF는 여전히 **가장 강력한 데스크톱 UI 파이프라인** 중 하나입니다.
 
 ---
 
 ### 부록 A) `InitializeComponent()` 디버깅 팁
 
-- **출력 창**의 바인딩 에러 확인  
-- `PresentationTraceSources.TraceLevel=High`로 바인딩 추적  
-- `Loaded` 시점에 `VisualTreeHelper`로 트리 검사  
+- **출력 창**의 바인딩 에러 확인
+- `PresentationTraceSources.TraceLevel=High`로 바인딩 추적
+- `Loaded` 시점에 `VisualTreeHelper`로 트리 검사
 - `RenderOptions.ProcessRenderMode`로 강제 소프트웨어 경로(비교 진단)
 
 ```xml

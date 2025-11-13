@@ -87,7 +87,7 @@ category: CSS
 
 ### 2.3 replaced 요소 예외
 - `img`, `video`, `canvas` 등 **replaced elements**는 기본 `display:inline`이지만,
-  **width/height 지정이 유효**(컨텐츠 자체가 치수 가짐).  
+  **width/height 지정이 유효**(컨텐츠 자체가 치수 가짐).
   즉, 인라인이라도 사이즈를 직접 제어 가능.
 
 ```html
@@ -108,7 +108,7 @@ category: CSS
 ```
 
 ### 3.2 베이스라인/문자 간 간극
-- `inline-block`은 기본적으로 **박스의 베이스라인**을 라인 박스 정렬 기준으로 삼음.  
+- `inline-block`은 기본적으로 **박스의 베이스라인**을 라인 박스 정렬 기준으로 삼음.
   다른 인라인들과 높이 차이가 나면 **baseline이 어긋난 듯** 보일 수 있음 → `vertical-align: middle|top|bottom` 등으로 조정.
 - **인접 inline-block 사이 공백 문자**(HTML 소스의 줄바꿈/스페이스)가 **시각적 간격**을 만듦.
 
@@ -163,19 +163,19 @@ display: block grid;      /* == display:grid */
 ## 6. 실무에서 자주 묻는 질문(FAQ) — 핵심 이슈
 
 ### 6.1 왜 인라인에 `width/height`가 안 먹나요?
-- IFC에서는 **컨텐츠의 글꼴 메트릭**이 줄 높이를 결정. 크기 지정은 무시됨(패딩/보더는 시각적 영역만 확장).  
+- IFC에서는 **컨텐츠의 글꼴 메트릭**이 줄 높이를 결정. 크기 지정은 무시됨(패딩/보더는 시각적 영역만 확장).
   **해결**: `display:inline-block`/`inline-flex`로 바꿔 박스화.
 
 ### 6.2 인라인의 상하 마진이 안 먹는 것처럼 보여요
-- 수직 마진은 라인 박스 배치에 큰 영향이 없음.  
+- 수직 마진은 라인 박스 배치에 큰 영향이 없음.
   **해결**: 상하 간격은 `line-height`, `padding`, 또는 래퍼를 블록으로 분리.
 
 ### 6.3 inline-block 사이의 간격(화이트스페이스)이 싫어요
-- 소스의 공백이 **텍스트 노드**로 간주되어 간격이 생김.  
+- 소스의 공백이 **텍스트 노드**로 간주되어 간격이 생김.
   **해결**: 주석/붙여쓰기/`font-size:0` 트릭, 또는 Grid/Flex 사용.
 
 ### 6.4 블록 자식의 상단 마진이 부모 밖으로 튀어나옵니다
-- BFC의 **마진 겹침** 때문.  
+- BFC의 **마진 겹침** 때문.
   **해결**: 부모에 `overflow:auto|hidden` 또는 `display: flow-root;` 로 BFC 경계 생성.
 
 ---
@@ -205,7 +205,7 @@ display: block grid;      /* == display:grid */
 ```
 
 ### 7.3 `display: list-item`
-- 블록처럼 배치 + **리스트 마커**(`::marker`)를 가짐.  
+- 블록처럼 배치 + **리스트 마커**(`::marker`)를 가짐.
   커스텀 컴포넌트에 목록 스타일을 입힐 때 유용.
 
 ```css
@@ -341,7 +341,7 @@ display: block grid;      /* == display:grid */
   $$
   \Delta y_i = f(\text{vertical-align}_i, \text{font metrics}, \text{line-height})
   $$
-- `inline-block`의 기본 베이스라인은 내부 마지막 라인의 베이스라인(많은 경우 **박스 하단 padding 상단** 부근).  
+- `inline-block`의 기본 베이스라인은 내부 마지막 라인의 베이스라인(많은 경우 **박스 하단 padding 상단** 부근).
   일치가 필요하면 `vertical-align:top|middle|bottom`으로 **명시 정렬**.
 
 ---
@@ -464,8 +464,8 @@ display: block grid;      /* == display:grid */
 
 ## 16. 결론
 
-- **block/inline/inline-block**은 레이아웃의 **기초 문맥**을 고르는 스위치입니다.  
-- **무엇이 줄을 만들고**, **무엇이 라인 박스를 만들며**, **마진이 어떻게 상호작용하는지**를 이해하면  
-  Flex/Grid 같은 상위 레이아웃도 **안정적으로** 설계할 수 있습니다.  
-- 새 프로젝트라면: **콘텐츠(typography)는 block/inline 규칙**, **컴포넌트는 inline-block/flow-root**,  
+- **block/inline/inline-block**은 레이아웃의 **기초 문맥**을 고르는 스위치입니다.
+- **무엇이 줄을 만들고**, **무엇이 라인 박스를 만들며**, **마진이 어떻게 상호작용하는지**를 이해하면
+  Flex/Grid 같은 상위 레이아웃도 **안정적으로** 설계할 수 있습니다.
+- 새 프로젝트라면: **콘텐츠(typography)는 block/inline 규칙**, **컴포넌트는 inline-block/flow-root**,
   **배치와 분배는 Flex/Grid**라는 층위를 의식해 구조를 설계하세요.

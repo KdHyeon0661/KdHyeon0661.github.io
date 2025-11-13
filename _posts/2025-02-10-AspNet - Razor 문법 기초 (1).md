@@ -8,8 +8,8 @@ category: AspNet
 
 ## 0. Razor란 무엇인가 — HTML + C# 혼합 템플릿
 
-- **Razor**는 **C# 기반**의 서버 사이드 템플릿 엔진입니다.  
-- `.cshtml` 파일에서 **HTML**과 **C#**을 자연스럽게 혼합하며, 기본적으로 **HTML 인코딩이 자동 적용**되어 XSS를 예방합니다.  
+- **Razor**는 **C# 기반**의 서버 사이드 템플릿 엔진입니다.
+- `.cshtml` 파일에서 **HTML**과 **C#**을 자연스럽게 혼합하며, 기본적으로 **HTML 인코딩이 자동 적용**되어 XSS를 예방합니다.
 - **Razor Pages**(페이지 지향)와 **MVC View**(컨트롤러-뷰 구조) 모두에서 동일 문법을 사용합니다.
 
 ---
@@ -373,19 +373,19 @@ public async Task<IActionResult> OnGetAsync()
 
 ## 14. 성능/유지보수 팁
 
-1) **Partial/Component의 과다 중첩**은 렌더링 비용 증가 → 캐시/조합 최적화  
-2) **ViewModel** 사용으로 뷰 전용 데이터를 한 번에 전달 → 데이터 접근 명확화  
-3) **AsNoTracking**으로 읽기 전용 쿼리 가벼움 확보  
-4) **섹션/레이아웃 체계화**로 페이지 간 일관성 유지  
+1) **Partial/Component의 과다 중첩**은 렌더링 비용 증가 → 캐시/조합 최적화
+2) **ViewModel** 사용으로 뷰 전용 데이터를 한 번에 전달 → 데이터 접근 명확화
+3) **AsNoTracking**으로 읽기 전용 쿼리 가벼움 확보
+4) **섹션/레이아웃 체계화**로 페이지 간 일관성 유지
 5) **Tag Helper**로 라우트/네임 안전성 확보, 하드코딩 링크 지양
 
 ---
 
 ## 15. 2편과의 연결: 폼/바인딩/검증으로 이어지는 문법 포인트
 
-- `@model`과 `@Model`로 **폼의 강한 형식 연결**  
-- `asp-for`, `asp-validation-for`, `asp-page-handler`로 **검증/핸들러 라우팅**  
-- `[BindProperty]`, `ModelState.IsValid`, `_ValidationScriptsPartial`은 **2편에서 심화**  
+- `@model`과 `@Model`로 **폼의 강한 형식 연결**
+- `asp-for`, `asp-validation-for`, `asp-page-handler`로 **검증/핸들러 라우팅**
+- `[BindProperty]`, `ModelState.IsValid`, `_ValidationScriptsPartial`은 **2편에서 심화**
 - **안전한 출력**과 **검증 메시지**는 **인코딩/로컬라이제이션**과 맞물림
 
 ---
@@ -478,5 +478,5 @@ public class SummaryViewComponent : ViewComponent
 
 ## 18. 마무리
 
-- Razor는 **C# 표현식 → 코드 블록 → 디렉티브 → 재사용(Partial/Component) → 레이아웃/섹션**으로 계층적 사고가 가능합니다.  
+- Razor는 **C# 표현식 → 코드 블록 → 디렉티브 → 재사용(Partial/Component) → 레이아웃/섹션**으로 계층적 사고가 가능합니다.
 - **기본 인코딩, 모호성 방지 `@( … )`, 주석/디렉티브, 비동기 렌더링, 로컬라이제이션**을 숙지하면 **안전하고 유지보수성 높은 서버 렌더링**을 구현할 수 있습니다.

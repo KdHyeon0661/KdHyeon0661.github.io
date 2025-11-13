@@ -4,7 +4,7 @@ title: 딥러닝 - Attention & Transformer
 date: 2025-09-27 21:25:23 +0900
 category: 딥러닝
 ---
-# 1.10 Attention & Transformer 핵심  
+# 1.10 Attention & Transformer 핵심
 **쿼리/키/값 · 멀티헤드 · 포지셔널 인코딩 · 마스킹(causal/패딩) · 디코딩 전략(그리디/빔/샘플링)**
 
 ## A. Scaled Dot-Product Attention
@@ -14,7 +14,7 @@ category: 딥러닝
 - 한 쿼리 벡터 $$\mathbf{q}\in\mathbb{R}^{d_k}$$ 와 모든 키 $$\mathbf{K}\in\mathbb{R}^{T\times d_k}$$ 의 유사도(점곱)를 소프트맥스로 정규화하여 가중합으로 값을 모읍니다.
 
 ### A-2. 수식
-쿼리/키/값: $$\mathbf{Q}=\mathbf{X}\mathbf{W}^Q,\quad \mathbf{K}=\mathbf{X}\mathbf{W}^K,\quad \mathbf{V}=\mathbf{X}\mathbf{W}^V$$  
+쿼리/키/값: $$\mathbf{Q}=\mathbf{X}\mathbf{W}^Q,\quad \mathbf{K}=\mathbf{X}\mathbf{W}^K,\quad \mathbf{V}=\mathbf{X}\mathbf{W}^V$$
 스코어/어텐션/출력:
 $$
 \mathbf{S}=\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}},\quad
@@ -81,14 +81,14 @@ $$
 $$
 
 ### D-3. 결합
-- **self-attn**: `mask = causal_mask OR padding_mask(키 쪽)`  
+- **self-attn**: `mask = causal_mask OR padding_mask(키 쪽)`
 - **cross-attn(디코더→인코더)**: 디코더 쿼리는 과거만 보되, **인코더 key/value에서 PAD만** 막기.
 
 ---
 
 ## E. 파이토치로 MHA를 “처음부터” 구현
 
-아래 구현은 **Pre-LN** Transformer 블록에 바로 쓸 수 있게 작성합니다.  
+아래 구현은 **Pre-LN** Transformer 블록에 바로 쓸 수 있게 작성합니다.
 (실전에서는 PyTorch `nn.MultiheadAttention`/FlashAttention 사용 권장)
 
 ```python
@@ -325,7 +325,7 @@ def build_decoder_mask(input_ids, pad_id=None):
 
 ## H. 엔코더/디코더 개요(번역 등)
 
-- **Encoder**: 패딩 마스크만 사용, 자기 자신을 전부 볼 수 있음.  
+- **Encoder**: 패딩 마스크만 사용, 자기 자신을 전부 볼 수 있음.
 - **Decoder**: **마스킹된 self-attn**(미래 금지) + **cross-attn**(인코더 출력과 상호작용) + 패딩 마스크(인코더쪽 PAD 금지).
 
 > 본 장에서는 GPT류(디코더 전용)에 초점을 맞추지만, cross-attn은 **`Q=디코더, K/V=인코더 출력`** 으로 바로 연결됩니다.
@@ -440,7 +440,7 @@ def beam_search(model, prompt_ids, beam_size=4, max_new_tokens=50, pad_id=None, 
 
 ### J-3. 샘플링(Temperature · Top-k · Nucleus Top-p)
 - **Temperature** $$\tau$$: $$\mathrm{softmax}(z/\tau)$$, $$\tau>1$$ → 평탄화(**창의**↑), $$\tau<1$$ → 날카로움(**정확**↑)
-- **Top-k**: 상위 k 토큰만 남기고 재정규화.  
+- **Top-k**: 상위 k 토큰만 남기고 재정규화.
 - **Top-p(Nucleus)**: 누적 확률이 p가 될 때까지 토큰 집합 선택 → 적응적 k.
 
 ```python
@@ -497,12 +497,12 @@ def apply_repetition_penalty(logits, generated, penalty=1.2):
 
 ## K. 캐싱(Incremental Decoding)
 
-디코딩 시 매 스텝 **다시 T×T**를 계산하면 비효율.  
+디코딩 시 매 스텝 **다시 T×T**를 계산하면 비효율.
 → 과거의 $$\mathbf{K},\mathbf{V}$$ 를 **캐시**해 새 쿼리 부분만 계산.
 
 아이디어:
-1) 첫 스텝: 전체 K,V 계산 후 저장  
-2) 다음 스텝: 새 토큰의 q/k/v만 계산, K/V를 **concat**하여 길이 1씩 확장  
+1) 첫 스텝: 전체 K,V 계산 후 저장
+2) 다음 스텝: 새 토큰의 q/k/v만 계산, K/V를 **concat**하여 길이 1씩 확장
 3) 스코어는 **최근 q** vs **누적 K** 로만 계산
 
 > 본 장의 수기 MHA에 캐시를 넣으려면 `forward(q,k,v, cache_kv=None)` 시그니처로 확장하고, 내부에서 `K = torch.cat([cache.K, K_new], dim=2)` 처리를 합니다(메모리 관리 필수).
@@ -511,22 +511,22 @@ def apply_repetition_penalty(logits, generated, penalty=1.2):
 
 ## L. 수치 안정/성능 팁
 
-1) **마스크 dtype**: 반드시 **bool**로 만들고, scores에 `masked_fill(True, min)` 적용(amp 안전).  
-2) **LayerNorm 위치**: **Pre-LN**가 안정(ln→subblock→residual).  
-3) **Dropout**: attn probs / out proj / FFN 사이에 적절히(0.0~0.3).  
-4) **Weight Decay**: AdamW + no_decay(=bias, norm) 그룹 필수.  
-5) **AMP + Grad Clip**: 대형 모델 수렴/안정에 중요.  
+1) **마스크 dtype**: 반드시 **bool**로 만들고, scores에 `masked_fill(True, min)` 적용(amp 안전).
+2) **LayerNorm 위치**: **Pre-LN**가 안정(ln→subblock→residual).
+3) **Dropout**: attn probs / out proj / FFN 사이에 적절히(0.0~0.3).
+4) **Weight Decay**: AdamW + no_decay(=bias, norm) 그룹 필수.
+5) **AMP + Grad Clip**: 대형 모델 수렴/안정에 중요.
 6) **시퀀스 길이**: 메모리 $$\propto T^2$$; 필요시 **FlashAttention**(커스텀 커널)·**압축** 기법 고려.
 
 ---
 
 ## M. 체크리스트(실전)
 
-- [ ] **로짓에 softmax 이중 적용 금지**(CE는 로짓 입력).  
-- [ ] **마스크 합성**: causal ∨ padding.  
-- [ ] **포지션**: Sinusoidal(간편/외삽) vs Learned(간단/고정 길이) vs RoPE(상대성).  
-- [ ] **디코딩**: Greedy(결정) / Beam(정확) / Sampling(다양) — **temperature/top-k/p** 조절.  
-- [ ] **캐싱**: KV 캐시로 O(T^2)→O(T) per step.  
+- [ ] **로짓에 softmax 이중 적용 금지**(CE는 로짓 입력).
+- [ ] **마스크 합성**: causal ∨ padding.
+- [ ] **포지션**: Sinusoidal(간편/외삽) vs Learned(간단/고정 길이) vs RoPE(상대성).
+- [ ] **디코딩**: Greedy(결정) / Beam(정확) / Sampling(다양) — **temperature/top-k/p** 조절.
+- [ ] **캐싱**: KV 캐시로 O(T^2)→O(T) per step.
 - [ ] **Pre-LN + AdamW + Cosine/Warmup + Clip** 기본 레시피.
 
 ---
@@ -565,14 +565,14 @@ $$
 
 ## O. 연습 과제
 
-1) 위 `GPTMini`로 **N-그램 반복 금지**를 추가해 문장 반복성을 줄여보세요.  
-2) RoPE를 **헤드별로** 정확히 적용하는 버전을 작성하고, 길이 외삽 성능을 비교하세요.  
-3) Cross-Attn을 추가해 **Encoder-Decoder** 번역 미니 모델을 완성하세요(패딩 마스크·카우절/크로스 마스크 결합).  
-4) **Temperature/Top-k/Top-p**를 조합해 생성 스타일 변화를 관찰하세요(샘플 텍스트 로그).  
+1) 위 `GPTMini`로 **N-그램 반복 금지**를 추가해 문장 반복성을 줄여보세요.
+2) RoPE를 **헤드별로** 정확히 적용하는 버전을 작성하고, 길이 외삽 성능을 비교하세요.
+3) Cross-Attn을 추가해 **Encoder-Decoder** 번역 미니 모델을 완성하세요(패딩 마스크·카우절/크로스 마스크 결합).
+4) **Temperature/Top-k/Top-p**를 조합해 생성 스타일 변화를 관찰하세요(샘플 텍스트 로그).
 5) KV 캐시를 구현하고, 같은 프롬프트에서 디코딩 속도 비교(토큰/초).
 
 ---
 
 ### 마무리
-**어텐션**은 “**가중 합으로 문맥을 모으는 연산**”, **Transformer**는 이를 **정규화/FFN/잔차**와 결합한 **범용 시퀀스 블록**입니다.  
+**어텐션**은 “**가중 합으로 문맥을 모으는 연산**”, **Transformer**는 이를 **정규화/FFN/잔차**와 결합한 **범용 시퀀스 블록**입니다.
 포지션·마스크·디코딩·캐시까지 이해하면 **사전학습 LM/RAG/번역/비전 트랜스포머** 등 대부분의 현대 딥러닝 모델을 **읽고, 수정하고, 직접 구현**할 수 있습니다.

@@ -329,8 +329,8 @@ public class LoginViewModelTests
 }
 ```
 
-> 포인트  
-> - `RxTestContext`로 메인/백그라운드 스케줄러 **완전 통제** → UI 없는 환경에서도 동작이 결정적.  
+> 포인트
+> - `RxTestContext`로 메인/백그라운드 스케줄러 **완전 통제** → UI 없는 환경에서도 동작이 결정적.
 > - `IClock`을 TestClock으로 대체하여 **시간 의존성 제거**.
 
 ---
@@ -869,5 +869,5 @@ public class SnapshotTests
 
 ---
 
-이로써 초안의 내용을 **테스트 설계/보일러플레이트/스케줄러와 시간 제어/DI·Mocking/Validation/예외·중복 실행/스냅샷**까지 확장했다.  
+이로써 초안의 내용을 **테스트 설계/보일러플레이트/스케줄러와 시간 제어/DI·Mocking/Validation/예외·중복 실행/스냅샷**까지 확장했다.
 이 뼈대만 갖추면, **Avalonia 유무와 상관없이** ViewModel 로직은 빠르고 안정적으로 CI에서 검증된다.

@@ -6,24 +6,24 @@ category: MFC
 ---
 # Custom/Owner-Draw & Custom-Draw: 리스트/트리 커스터마이징 (MFC 완전 정리 · 실전 예제 다수)
 
-이 글은 MFC에서 **리스트/트리(및 고전 리스트박스/콤보)**를 “내 스타일대로” 그리기 위해 필요한 **Owner-Draw**와 **Custom-Draw**를 **개념 → 설계 → 코드 → 성능/UX → 체크리스트** 순서로, 생략 없이 정리합니다.  
+이 글은 MFC에서 **리스트/트리(및 고전 리스트박스/콤보)**를 “내 스타일대로” 그리기 위해 필요한 **Owner-Draw**와 **Custom-Draw**를 **개념 → 설계 → 코드 → 성능/UX → 체크리스트** 순서로, 생략 없이 정리합니다.
 모든 코드는 바로 붙여쓸 수 있도록 **독립 스니펫**을 제공합니다.
 
 ---
 
 ## 0. 큰 그림 요약
 
-- **Owner-Draw**  
-  - 컨트롤이 **그리기 책임을 ‘소유자(부모)’에게 전가**.  
-  - 대화상자/뷰(혹은 컨트롤 파생 클래스)의 **`DrawItem`/`MeasureItem`** 오버라이드로 **완전한 커스텀**.  
+- **Owner-Draw**
+  - 컨트롤이 **그리기 책임을 ‘소유자(부모)’에게 전가**.
+  - 대화상자/뷰(혹은 컨트롤 파생 클래스)의 **`DrawItem`/`MeasureItem`** 오버라이드로 **완전한 커스텀**.
   - 대상: **ListBox/ComboBox**(고전 컨트롤), **Button** 등. (ListView/TreeView는 Owner-Draw가 아닌 **Custom-Draw** 사용이 일반적)
-- **Custom-Draw**  
-  - 공용 컨트롤(예: **ListView=`CListCtrl`**, **TreeView=`CTreeCtrl`**)이 **그리기 단계별 훅**을 노출  
-  - **`NM_CUSTOMDRAW`** 통지로 **전처리/항목/서브아이템/후처리**를 단계적으로 커스터마이징  
+- **Custom-Draw**
+  - 공용 컨트롤(예: **ListView=`CListCtrl`**, **TreeView=`CTreeCtrl`**)이 **그리기 단계별 훅**을 노출
+  - **`NM_CUSTOMDRAW`** 통지로 **전처리/항목/서브아이템/후처리**를 단계적으로 커스터마이징
   - 장점: **가상 모드(LVS_OWNERDATA)**, **체크박스/그룹/서브아이템** 등과 **궁합 최고**
 
-> 선택 기준  
-> - **ListBox/Combo** = Owner-Draw  
+> 선택 기준
+> - **ListBox/Combo** = Owner-Draw
 > - **ListView/TreeView** = Custom-Draw (필요 시 Owner-Data=가상 모드와 병행)
 
 ---
@@ -31,12 +31,12 @@ category: MFC
 ## 1. Owner-Draw (ListBox/Combo) — 기본과 고급
 
 ### 1-1. 스타일/흐름
-- **리소스 스타일**  
-  - ListBox: `LBS_OWNERDRAWFIXED` / `LBS_OWNERDRAWVARIABLE`(+ `LBS_HASSTRINGS`)  
+- **리소스 스타일**
+  - ListBox: `LBS_OWNERDRAWFIXED` / `LBS_OWNERDRAWVARIABLE`(+ `LBS_HASSTRINGS`)
   - ComboBox: `CBS_OWNERDRAWFIXED` / `CBS_OWNERDRAWVARIABLE`(+ `CBS_HASSTRINGS`)
-- **핵심 가상 함수**  
-  - `void DrawItem(LPDRAWITEMSTRUCT)` — **실제 그리기**  
-  - `void MeasureItem(LPMEASUREITEMSTRUCT)` — **항목 높이 측정**(VARIABLE일 때 필수)  
+- **핵심 가상 함수**
+  - `void DrawItem(LPDRAWITEMSTRUCT)` — **실제 그리기**
+  - `void MeasureItem(LPMEASUREITEMSTRUCT)` — **항목 높이 측정**(VARIABLE일 때 필수)
   - `void DeleteItem(LPDELETEITEMSTRUCT)` — (선택) 항목 삭제 후 정리
 - **상태 플래그**: `ODS_SELECTED`, `ODS_FOCUS`, `ODS_DISABLED`, `ODS_COMBOBOXEDIT` …
 
@@ -120,7 +120,7 @@ public:
 };
 ```
 
-> 콤보의 “에디트 부분”은 `ODS_COMBOBOXEDIT`로 구분 가능.  
+> 콤보의 “에디트 부분”은 `ODS_COMBOBOXEDIT`로 구분 가능.
 > 드롭다운 리스트 영역과 에디트 영역을 다르게 그리려면 조건 분기.
 
 ---
@@ -129,9 +129,9 @@ public:
 
 ### 2-1. 단계(DWORD `dwDrawStage`)
 - `CDDS_PREPAINT` → **아이템 단위 알림 허용 요청**: `*pResult = CDRF_NOTIFYITEMDRAW`
-- `CDDS_ITEMPREPAINT` → 행 단위 커스터마이즈  
+- `CDDS_ITEMPREPAINT` → 행 단위 커스터마이즈
   - 여기서 `*pResult = CDRF_NOTIFYSUBITEMDRAW` 반환 시 `CDDS_SUBITEM|CDDS_ITEMPREPAINT` 단계가 옴
-- `CDDS_SUBITEM|CDDS_ITEMPREPAINT` → **서브아이템(열)** 단위 커스터마이즈  
+- `CDDS_SUBITEM|CDDS_ITEMPREPAINT` → **서브아이템(열)** 단위 커스터마이즈
 - `CDDS_POSTPAINT`/`CDDS_ITEMPOSTPAINT` → 후처리(오버레이/선 그리기 등)
 
 ### 2-2. 메시지 맵
@@ -269,7 +269,7 @@ void CMyDlg::OnListClick(NMHDR* pNMHDR, LRESULT* pResult) {
 
 ### 2-5. 가상 리스트(`LVS_OWNERDATA`)와 Custom-Draw
 
-- **항목 갯수만** 지정하고, 표시 시점에 **텍스트/이미지 공급** (`LVN_GETDISPINFO`)  
+- **항목 갯수만** 지정하고, 표시 시점에 **텍스트/이미지 공급** (`LVN_GETDISPINFO`)
 - Custom-Draw는 **셀 단위 색/배경/수동 그림**에 그대로 적용 가능
 - 주의: **항목 인덱스 → 모델 인덱스** 매핑을 확실히(정렬/필터 시)
 
@@ -301,8 +301,8 @@ m_tree.ModifyStyle(0, TVS_FULLROWSELECT | TVS_TRACKSELECT);
 ```
 
 ### 3-2. 커스텀드로우 단계 (`NMTVCUSTOMDRAW`)
-- `CDDS_PREPAINT` → `CDRF_NOTIFYITEMDRAW`  
-- `CDDS_ITEMPREPAINT` → 노드별 색/배경 지정  
+- `CDDS_PREPAINT` → `CDRF_NOTIFYITEMDRAW`
+- `CDDS_ITEMPREPAINT` → 노드별 색/배경 지정
 - (`CDDS_ITEMPOSTPAINT` → 후처리 가능)
 
 ```cpp
@@ -332,9 +332,9 @@ void CMyDlg::OnTreeCustomDraw(NMHDR* n, LRESULT* r){
 ```
 
 ### 3-3. “진짜 그리기”로 아이콘/배지/진행률/라인 커스터마이즈
-- Tree는 기본적으로 **텍스트/아이콘**을 OS가 그림  
-- 더 복잡한 배지를 붙이거나, **전체 행 배경**을 칠하려면 **클라이언트 영역 직도**가 필요  
-  - 방법 1) `CDDS_ITEMPOSTPAINT`에서 `GetItemRect(..., TRUE)`로 행 영역 구한 뒤 **오버레이**  
+- Tree는 기본적으로 **텍스트/아이콘**을 OS가 그림
+- 더 복잡한 배지를 붙이거나, **전체 행 배경**을 칠하려면 **클라이언트 영역 직도**가 필요
+  - 방법 1) `CDDS_ITEMPOSTPAINT`에서 `GetItemRect(..., TRUE)`로 행 영역 구한 뒤 **오버레이**
   - 방법 2) `NM_CUSTOMDRAW`에서 `CDRF_SKIPDEFAULT`로 **완전 수동 그림** (다만 접근성/테마 호환 주의)
 
 ```cpp
@@ -351,7 +351,7 @@ case CDDS_ITEMPOSTPAINT:
 ```
 
 ### 3-4. 테마 API(UXTheme)와의 조합
-- `OpenThemeData(hWnd, L"TreeView")` + `DrawThemeBackground`로 **현대 테마**에 맞춰 드로잉  
+- `OpenThemeData(hWnd, L"TreeView")` + `DrawThemeBackground`로 **현대 테마**에 맞춰 드로잉
 - 필요시 `SetWindowTheme(m_hWnd, L"Explorer", nullptr)`로 익스플로러 스타일 라인/확장 단추 사용
 
 ---
@@ -382,8 +382,8 @@ public:
 > 일반적으로 ListView/TreeView는 **자체 더블버퍼**가 있어 필요 없지만, **Owner-Draw 컨트롤**을 윈도우 전체 레벨로 복잡하게 그릴 때 유용.
 
 ### 4-2. 히트 테스트 & 인플레이스 편집
-- ListView: `SubItemRect`로 셀 영역 얻고, 클릭 좌표로 **어느 열인지** 판별  
-- Tree: `TVHITTESTINFO`로 아이콘/텍스트/버튼 영역 구분  
+- ListView: `SubItemRect`로 셀 영역 얻고, 클릭 좌표로 **어느 열인지** 판별
+- Tree: `TVHITTESTINFO`로 아이콘/텍스트/버튼 영역 구분
 - 인플레이스 편집은 **동적 `CEdit`/`CComboBox` 생성** → 완료 시 내용 반영 + 삭제
 
 ```cpp
@@ -406,7 +406,7 @@ m_list.SetItemState(row, StateImageMask(2), LVIS_STATEIMAGEMASK);
 ```
 
 ### 4-4. 다크 테마/하이 콘트라스트 대응
-- **색 하드코딩 최소화**, 시스템 색/테마 질의 → `GetSysColor`, UxTheme 색상  
+- **색 하드코딩 최소화**, 시스템 색/테마 질의 → `GetSysColor`, UxTheme 색상
 - 하이 콘트라스트 모드(`SystemParametersInfo(SPI_GETHIGHCONTRAST, ...)`) 감지 후 **기본 그리기 우선**
 
 ---
@@ -477,7 +477,7 @@ BEGIN_MESSAGE_MAP(CListCtrlEx, CListCtrl)
 END_MESSAGE_MAP()
 ```
 
-> **사용**: 대화상자에서 `m_listEx.SubclassDlgItem(IDC_LIST, this); m_listEx.Init();`  
+> **사용**: 대화상자에서 `m_listEx.SubclassDlgItem(IDC_LIST, this); m_listEx.Init();`
 > 가상 모드가 필요하면 `ModifyStyle(0, LVS_OWNERDATA)` + `SetItemCountEx` + `LVN_GETDISPINFO` 구현.
 
 ---
@@ -521,15 +521,15 @@ END_MESSAGE_MAP()
 
 ## 7. 성능 & 안정성 & UX 체크리스트
 
-1. **깜빡임**: `LVS_EX_DOUBLEBUFFER`, `TVS_EX_DOUBLEBUFFER`(가능 시), 필요 시 수동 더블버퍼  
-2. **GDI 리소스 누수**: `CPen/ CBrush/ CFont` 생성/선택/해제 철저  
-3. **가상 리스트**: 텍스트/색상 계산은 **O(1)**, I/O 금지(캐시)  
-4. **히트 테스트**: 셀/노드 별 경계 정확하게, 패딩은 DPI 기준 계산  
-5. **정렬/필터**: 모델 인덱스 ↔ 뷰 인덱스 매핑 일관성 유지  
-6. **접근성**: 선택 색/포커스 표시 유지, 하이 콘트라스트 모드 고려  
-7. **키보드 내비게이션**: ↑↓/Space/Enter 등 기본 동작 훼손 금지  
-8. **DPI/테마**: `WM_DPICHANGED` 대응 시 열 폭/아이콘/패딩 재계산, 테마 API 사용 시 핸들 수명 관리  
-9. **마우스 캡처/드래그**: 인플레이스 편집/드래그 수행 시 메시지 라우팅(포커스) 주의  
+1. **깜빡임**: `LVS_EX_DOUBLEBUFFER`, `TVS_EX_DOUBLEBUFFER`(가능 시), 필요 시 수동 더블버퍼
+2. **GDI 리소스 누수**: `CPen/ CBrush/ CFont` 생성/선택/해제 철저
+3. **가상 리스트**: 텍스트/색상 계산은 **O(1)**, I/O 금지(캐시)
+4. **히트 테스트**: 셀/노드 별 경계 정확하게, 패딩은 DPI 기준 계산
+5. **정렬/필터**: 모델 인덱스 ↔ 뷰 인덱스 매핑 일관성 유지
+6. **접근성**: 선택 색/포커스 표시 유지, 하이 콘트라스트 모드 고려
+7. **키보드 내비게이션**: ↑↓/Space/Enter 등 기본 동작 훼손 금지
+8. **DPI/테마**: `WM_DPICHANGED` 대응 시 열 폭/아이콘/패딩 재계산, 테마 API 사용 시 핸들 수명 관리
+9. **마우스 캡처/드래그**: 인플레이스 편집/드래그 수행 시 메시지 라우팅(포커스) 주의
 10. **테스트**: 1e5 행 가상 리스트 스크롤, 빠른 정렬/필터 변경, 다중 선택 후 배치 갱신
 
 ---
@@ -562,7 +562,7 @@ END_MESSAGE_MAP()
 
 ## 10. 결론
 
-- **Owner-Draw**(ListBox/Combo)는 **완전 커스텀**이 필요한 단순 목록/선택 UI에 적합.  
-- **Custom-Draw**(ListView/TreeView)는 **서브아이템/상태/가상/성능**까지 잡는 **현실적 솔루션**.  
-- 핵심은 **단계별 훅의 의미**와 **기본 드로잉과의 경계**를 정확히 이해하는 것.  
+- **Owner-Draw**(ListBox/Combo)는 **완전 커스텀**이 필요한 단순 목록/선택 UI에 적합.
+- **Custom-Draw**(ListView/TreeView)는 **서브아이템/상태/가상/성능**까지 잡는 **현실적 솔루션**.
+- 핵심은 **단계별 훅의 의미**와 **기본 드로잉과의 경계**를 정확히 이해하는 것.
 - 본문 스니펫(지브라/호버/체크/진행/배지/인플레이스)을 취사 선택해 붙이면, **현대적이고 빠른** 리스트/트리를 만들 수 있습니다.

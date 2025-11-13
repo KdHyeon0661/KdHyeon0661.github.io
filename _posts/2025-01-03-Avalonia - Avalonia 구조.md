@@ -27,7 +27,7 @@ cd MyAvaloniaApp
 ```
 
 - `avalonia.app` 템플릿은 **데스크톱(Windows/Linux/macOS)** 대상의 최소 앱 골격을 만든다.
-- 템플릿에는 옵션이 존재할 수 있다. 예: `--mvvm`(CommunityToolkit 기반) 또는 `--reactive`(ReactiveUI 기반) 등.  
+- 템플릿에는 옵션이 존재할 수 있다. 예: `--mvvm`(CommunityToolkit 기반) 또는 `--reactive`(ReactiveUI 기반) 등.
   설치된 템플릿 버전에 따라 스캐폴딩 결과가 다를 수 있으므로 `dotnet new --list`로 확인한다.
 
 ---
@@ -80,10 +80,10 @@ public static class Program
 
 **확장 포인트**:
 
-- `UsePlatformDetect()`  
+- `UsePlatformDetect()`
   OS/디스플레이/입력 백엔드를 자동 세팅한다. 데스크톱 타깃에서 일반적으로 사용.
-- `StartWithClassicDesktopLifetime(args)`  
-  창을 닫으면 프로세스를 종료하는 **클래식 데스크톱** 수명 모델.  
+- `StartWithClassicDesktopLifetime(args)`
+  창을 닫으면 프로세스를 종료하는 **클래식 데스크톱** 수명 모델.
   모바일/싱글뷰 앱일 때는 `SingleViewApplicationLifetime`을 사용한다.
 - 환경별 분기(예: 개발/운영 빌드에 따른 로깅 레벨, 다크 테마 기본값 등):
 
@@ -228,10 +228,10 @@ public partial class App : Application
 
 템플릿에 따라 `ViewModelBase`는 다음 중 하나일 수 있다:
 
-- **ReactiveUI 기반**: `ViewModelBase : ReactiveObject`  
-  - `RaiseAndSetIfChanged(ref field, value)` 제공  
+- **ReactiveUI 기반**: `ViewModelBase : ReactiveObject`
+  - `RaiseAndSetIfChanged(ref field, value)` 제공
   - `ReactiveCommand.Create(...)`
-- **CommunityToolkit.Mvvm 기반**: `ViewModelBase : ObservableObject`  
+- **CommunityToolkit.Mvvm 기반**: `ViewModelBase : ObservableObject`
   - `[ObservableProperty]` 소스생성기, `RelayCommand` 제공
 
 초안에 등장한 `RaiseAndSetIfChanged`는 **ReactiveUI** 문법이다. 이하 기본 예제는 ReactiveUI를 기준으로 하고, 바로 뒤에 Toolkit 대안을 함께 제시한다.
@@ -895,17 +895,17 @@ public class MainWindowViewModel : ViewModelBase
 
 ## 17. 자주 겪는 오류와 해결
 
-- **DataTemplate가 적용되지 않음**  
-  - `App.axaml`에서 `xmlns:vm="using:...ViewModels"` / `xmlns:views="using:...Views"` 정확히 지정  
+- **DataTemplate가 적용되지 않음**
+  - `App.axaml`에서 `xmlns:vm="using:...ViewModels"` / `xmlns:views="using:...Views"` 정확히 지정
   - `DataType="{x:Type vm:FooViewModel}"`에서 타입명, 네임스페이스 확인
-- **바인딩 실패**  
-  - 출력 로그에서 바인딩 에러 확인  
-  - 프로퍼티 이름 오타, `INotifyPropertyChanged` 구현 여부 점검  
+- **바인딩 실패**
+  - 출력 로그에서 바인딩 에러 확인
+  - 프로퍼티 이름 오타, `INotifyPropertyChanged` 구현 여부 점검
   - DataContext가 의도한 ViewModel인지 확인(디자인 타임/런타임)
-- **명령이 비활성**  
+- **명령이 비활성**
   - ReactiveCommand/RelayCommand 생성 위치, `CanExecute` 조건 확인
-- **네임스페이스 충돌/불일치**  
-  - 프로젝트 루트 네임스페이스와 폴더 구조 간섭에 주의  
+- **네임스페이스 충돌/불일치**
+  - 프로젝트 루트 네임스페이스와 폴더 구조 간섭에 주의
   - `x:Class`의 풀네임이 실제 cs 파일 네임스페이스와 일치해야 함
 
 ---
@@ -937,5 +937,5 @@ public class MainWindowViewModel : ViewModelBase
 
 ## 결론
 
-초안의 흐름(템플릿 생성→구조→각 파일 설명→확장)을 유지하면서, **DataTemplate 기반 화면 전환을 중심으로 한 셸 구조**, **ReactiveUI/Toolkit 양방향 ViewModel 패턴**, **DI/서비스화**, **리소스/스타일 분리**, **테스트/배포/운영 팁**까지 실전에 필요한 내용을 확장했다.  
+초안의 흐름(템플릿 생성→구조→각 파일 설명→확장)을 유지하면서, **DataTemplate 기반 화면 전환을 중심으로 한 셸 구조**, **ReactiveUI/Toolkit 양방향 ViewModel 패턴**, **DI/서비스화**, **리소스/스타일 분리**, **테스트/배포/운영 팁**까지 실전에 필요한 내용을 확장했다.
 이 구조를 기반으로 모듈을 추가하고 서비스를 주입해 나가면, 중형 이상 규모의 Avalonia 앱도 **체계적이고 장기적으로 유지보수 가능한 형태**로 성장시킬 수 있다.

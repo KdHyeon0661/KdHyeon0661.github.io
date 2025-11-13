@@ -8,22 +8,22 @@ category: 웹해킹
 
 ## 0. 한눈에 보기 (Executive Summary)
 
-- **문제(요약)**  
-  - 악성 SW가 등록되면 **해당 스코프의 모든 요청**을 가로채서 **변조/유출/캐시 포이즈닝**을 할 수 있음.  
+- **문제(요약)**
+  - 악성 SW가 등록되면 **해당 스코프의 모든 요청**을 가로채서 **변조/유출/캐시 포이즈닝**을 할 수 있음.
   - 취약한 **등록 경로**(XSS, 반사형 JS, MIME 스니핑, 오리진 혼합)·너무 넓은 **스코프**(`/`)·무방비 **캐시 로직**이 주요 원인.
-- **핵심 방어**  
-  1) **스코프 최소화**: `/app/sw.js` → `scope: '/app/'` (기본: 스크립트 경로 하위만)  
-  2) **등록 경로 보호**: SW 파일은 **정적 빌드 산출물**만 서빙, `Content-Type: application/javascript` + **`X-Content-Type-Options: nosniff`**, **HTTPS 전용**  
-  3) **CSP/worker-src**로 SW **출처 화이트리스트**, **`Service-Worker-Allowed`** 남발 금지  
-  4) **캐시 무결성**: **화이트리스트 경로/타입만 캐시**, **해시 검증**, **opaque 응답 미캐시**, **키 정규화**  
+- **핵심 방어**
+  1) **스코프 최소화**: `/app/sw.js` → `scope: '/app/'` (기본: 스크립트 경로 하위만)
+  2) **등록 경로 보호**: SW 파일은 **정적 빌드 산출물**만 서빙, `Content-Type: application/javascript` + **`X-Content-Type-Options: nosniff`**, **HTTPS 전용**
+  3) **CSP/worker-src**로 SW **출처 화이트리스트**, **`Service-Worker-Allowed`** 남발 금지
+  4) **캐시 무결성**: **화이트리스트 경로/타입만 캐시**, **해시 검증**, **opaque 응답 미캐시**, **키 정규화**
   5) **킬스위치/청소**: `Clear-Site-Data`, 버전 롤링, `registration.unregister()` 경로
 
 ---
 
 # 1. 배경 — SW가 “오프라인 프록시”인 이유
 
-- **핵심 API**: `self.addEventListener('fetch', ...)` 에서 **모든 네트워크 요청**을 가로채 **임의 응답** 가능.  
-- **지속성**: 등록되면 브라우저 저장소(서비스워커·CacheStorage)에 남음 → **로그아웃/쿠키 삭제와 무관**.  
+- **핵심 API**: `self.addEventListener('fetch', ...)` 에서 **모든 네트워크 요청**을 가로채 **임의 응답** 가능.
+- **지속성**: 등록되면 브라우저 저장소(서비스워커·CacheStorage)에 남음 → **로그아웃/쿠키 삭제와 무관**.
 - **스코프**: 기본적으로 **SW 스크립트가 위치한 디렉터리 이하**만 제어. `Service-Worker-Allowed` 헤더로 확장 가능(❌ 남발 금지).
 
 ---
@@ -38,38 +38,38 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' });
 - 원치 않는 경로(로그인/결제/관리자 페이지)까지 **전면 중간자**가 됨.
 
 ## 2.2 등록 경로가 오염 가능
-- **XSS** 지점이 `/sw.js`와 **같은 오리진·경로 하위**에 존재하고,  
-- 반사 응답이 `Content-Type: application/javascript`로 스니핑되면,  
+- **XSS** 지점이 `/sw.js`와 **같은 오리진·경로 하위**에 존재하고,
+- 반사 응답이 `Content-Type: application/javascript`로 스니핑되면,
 - 공격자가 **임의 JS**를 `/sw.js`로 주입해 등록 → **지속 감염**.
 
 ## 2.3 캐시 포이즈닝(Worker 내부)
-- SW가 `fetch`로 받은 응답을 **검증 없이 put**하거나,  
+- SW가 `fetch`로 받은 응답을 **검증 없이 put**하거나,
 - **opaque** 응답(교차 오리진, no-cors)을 **그대로 캐시**하면 **임의 페이로드**가 **오프라인 시 제공**됨.
 
 ## 2.4 메시지/업데이트 경로 오용
-- `postMessage`로 **캐시 갱신 명령**을 받아 **임의 URL**을 캐시하는 로직 → 외부 조작에 취약.  
+- `postMessage`로 **캐시 갱신 명령**을 받아 **임의 URL**을 캐시하는 로직 → 외부 조작에 취약.
 - SW 스크립트 자체가 **강하게 캐시**되어 업데이트가 지연 → 악성 상태 지속.
 
 ---
 
 # 3. “안전 재현” 점검(스테이징) — **막혀야 정상 ✅**
 
-1) **루트 스코프 등록 거절**  
+1) **루트 스코프 등록 거절**
    ```js
    navigator.serviceWorker.register('/sw.js', { scope: '/' })
    // 기대: 서버에서 sw.js 응답 헤더/정책으로 루트 제어가 불가하거나, 앱 코드에서 자체적으로 scope 제한
    ```
 
-2) **MIME 스니핑 불가**  
-   - `/echo?q=...` 같은 엔드포인트로 `</script>...` 등 주입 →  
-   - `Content-Type: text/plain` + **`nosniff`**로 **JS로 인식/실행되지 않아야** 함.  
+2) **MIME 스니핑 불가**
+   - `/echo?q=...` 같은 엔드포인트로 `</script>...` 등 주입 →
+   - `Content-Type: text/plain` + **`nosniff`**로 **JS로 인식/실행되지 않아야** 함.
    - `/sw.js` 경로는 **빌드 산출물**만 매핑되고 **동적 라우트·리다이렉트 금지**.
 
-3) **캐시 화이트리스트 적용 확인**  
-   - 교차 오리진 리소스(opaque) 요청 → **캐시되지 않아야** 함.  
+3) **캐시 화이트리스트 적용 확인**
+   - 교차 오리진 리소스(opaque) 요청 → **캐시되지 않아야** 함.
    - 허용되지 않은 경로/타입 → **캐시 miss**.
 
-4) **킬스위치 동작**  
+4) **킬스위치 동작**
    - 운영 플래그로 **즉시 언레지스터/캐시 삭제**가 되는지 확인.
 
 ---
@@ -159,7 +159,7 @@ app.get('/app/sw.js', (req,res)=>{
 });
 ```
 
-> **반드시**: `/app/sw.js` 경로에 **동적 라우트/리다이렉트/반사형 응답**을 두지 마세요.  
+> **반드시**: `/app/sw.js` 경로에 **동적 라우트/리다이렉트/반사형 응답**을 두지 마세요.
 > SW 스크립트는 **단일, 서명된 정적 파일**로만 제공해야 합니다.
 
 ---
@@ -247,9 +247,9 @@ async function verifyDigest(req, res) {
   return hex === expected;
 }
 ```
-> **포인트**  
-> - **화이트리스트 경로/타입만 캐시**.  
-> - **opaque 응답 미캐시**(교차 오리진/모호).  
+> **포인트**
+> - **화이트리스트 경로/타입만 캐시**.
+> - **opaque 응답 미캐시**(교차 오리진/모호).
 > - **해시 매니페스트**로 **변조 감지**(SRI와 상보).
 
 ## 6.3 메시지 핸들링(안전)
@@ -269,7 +269,7 @@ self.addEventListener('message', (event) => {
 
 # 7. SRI와의 결합 — **강한 무결성**
 
-- **SRI(Subresource Integrity)**는 `<script src="...">`, `<link rel="stylesheet">`에 대해 **해시 검증**을 수행합니다.  
+- **SRI(Subresource Integrity)**는 `<script src="...">`, `<link rel="stylesheet">`에 대해 **해시 검증**을 수행합니다.
 - SW가 제공하는 정적 자산에도 SRI를 걸어두면, **SW가 변조된 파일을 서빙해도 브라우저 로드가 실패** → **알림/롤백**.
 
 ```html
@@ -279,15 +279,15 @@ self.addEventListener('message', (event) => {
         integrity="sha256-ab12cd34..." crossorigin="anonymous"></script>
 ```
 
-> **중요**: SRI는 **리소스**에 적용됩니다. **SW 스크립트 자체**에는 SRI 속성을 붙일 수 없으므로,  
+> **중요**: SRI는 **리소스**에 적용됩니다. **SW 스크립트 자체**에는 SRI 속성을 붙일 수 없으므로,
 > **SW는 정적 빌드 산출물로만** 배포하고 **등록 경로 보호**(§5)를 철저히 하세요.
 
 ---
 
 # 8. “스코프 제한”과 `Service-Worker-Allowed` 주의
 
-- 기본적으로 **`/app/sw.js` → `/app/` 이하만** 제어.  
-- `Service-Worker-Allowed: /`를 설정하면 **루트까지 확장**됩니다(❌ 가급적 금지).  
+- 기본적으로 **`/app/sw.js` → `/app/` 이하만** 제어.
+- `Service-Worker-Allowed: /`를 설정하면 **루트까지 확장**됩니다(❌ 가급적 금지).
 - **정말 필요할 때만**, **최소 경로**로 설정하세요.
 
 ```nginx
@@ -299,8 +299,8 @@ add_header Service-Worker-Allowed "/app/" always;
 
 # 9. 구역 분리 — 사용자 콘텐츠/관리자/정적
 
-- **사용자 생성 콘텐츠(UGC)**는 **별도 서브도메인**(예: `cdn-user.example.com`)에 격리하고,  
-  그 도메인에는 **SW 등록 자체 금지**(페이지 CSP: `worker-src 'none'`).  
+- **사용자 생성 콘텐츠(UGC)**는 **별도 서브도메인**(예: `cdn-user.example.com`)에 격리하고,
+  그 도메인에는 **SW 등록 자체 금지**(페이지 CSP: `worker-src 'none'`).
 - **관리자/결제** 구역은 **SW 미사용**(페이지 CSP로 차단) 또는 별도 오리진.
 
 ```html
@@ -318,23 +318,23 @@ HTTP/1.1 200 OK
 Clear-Site-Data: "cache", "cookies", "storage"
 ```
 
-> `"storage"`에는 **IndexedDB/LocalStorage/ServiceWorker 등록** 등이 포함됩니다(브라우저별 차이는 문서 확인).  
+> `"storage"`에는 **IndexedDB/LocalStorage/ServiceWorker 등록** 등이 포함됩니다(브라우저별 차이는 문서 확인).
 > 사용자는 **로그아웃** 또는 **보안 이벤트** 시 이 헤더가 적용된 페이지로 유도하세요.
 
 ---
 
 # 11. 운영 체크리스트
 
-- [ ] SW는 **루트가 아닌** `/app/` 등 한정 스코프에만  
-- [ ] `/app/sw.js`는 **정적 빌드 산출물**로 제공(동적 라우트/반사 금지)  
-- [ ] **`Content-Type: application/javascript` + `X-Content-Type-Options: nosniff`**  
-- [ ] **CSP**: `worker-src 'self'`(등록 허용 페이지), 그 외 페이지는 `worker-src 'none'`  
-- [ ] **`Service-Worker-Allowed`**는 **최소 경로** 또는 **미설정**  
-- [ ] SW 코드는 **동일 오리진·GET·화이트리스트 경로/타입**만 캐시  
-- [ ] **opaque 응답 미캐시**, **해시 매니페스트 검증**  
-- [ ] **버전 롤링 + 오래된 캐시 삭제**(activate 단계)  
-- [ ] **SRI**로 정적 자산 무결성 강화  
-- [ ] **Clear-Site-Data**로 킬스위치 경로 마련  
+- [ ] SW는 **루트가 아닌** `/app/` 등 한정 스코프에만
+- [ ] `/app/sw.js`는 **정적 빌드 산출물**로 제공(동적 라우트/반사 금지)
+- [ ] **`Content-Type: application/javascript` + `X-Content-Type-Options: nosniff`**
+- [ ] **CSP**: `worker-src 'self'`(등록 허용 페이지), 그 외 페이지는 `worker-src 'none'`
+- [ ] **`Service-Worker-Allowed`**는 **최소 경로** 또는 **미설정**
+- [ ] SW 코드는 **동일 오리진·GET·화이트리스트 경로/타입**만 캐시
+- [ ] **opaque 응답 미캐시**, **해시 매니페스트 검증**
+- [ ] **버전 롤링 + 오래된 캐시 삭제**(activate 단계)
+- [ ] **SRI**로 정적 자산 무결성 강화
+- [ ] **Clear-Site-Data**로 킬스위치 경로 마련
 - [ ] E2E/스테이징에서 **루트 스코프 등록 시도·캐시 포이즈닝 시도**가 **항상 실패**하는지 자동화
 
 ---
@@ -369,6 +369,6 @@ test('opaque 응답 캐시 금지', async ({ page }) => {
 
 ## 맺음말
 
-Service Worker는 **성능·오프라인의 핵**이지만, 동시에 **오리진 전역 프록시**가 될 수 있는 **양날의 검**입니다.  
-**스코프 최소화 · 등록 경로 보호 · 강한 무결성(CSP/SRI) · 신중한 캐시 정책 · 킬스위치**를 표준으로 삼으면,  
+Service Worker는 **성능·오프라인의 핵**이지만, 동시에 **오리진 전역 프록시**가 될 수 있는 **양날의 검**입니다.
+**스코프 최소화 · 등록 경로 보호 · 강한 무결성(CSP/SRI) · 신중한 캐시 정책 · 킬스위치**를 표준으로 삼으면,
 SW 남용/캐시 포이즈닝 리스크를 **구조적으로 줄일 수** 있습니다.

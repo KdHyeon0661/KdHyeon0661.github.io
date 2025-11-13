@@ -6,10 +6,10 @@ category: 네트워크보안
 ---
 # 15. SDN/NFV·데이터센터·BGP
 
-> 목표: **SDN/NFV** 환경에서의 위협과 보호 포인트를 정리하고,  
-> **BGP 하이재킹·루트 리크**를 막는 **RPKI/ROA·필터링·세션 하드닝**을 체화한다.  
-> DC 패브릭(EVPN/VXLAN)의 보안 지점(ARP 억제, Type-2/5 경계, MAC Move 절연 등)을 짚고,  
-> 마지막으로 **라우트 필터/Max-Prefix/RTBH**를 **동작하는 예제**로 실습한다.  
+> 목표: **SDN/NFV** 환경에서의 위협과 보호 포인트를 정리하고,
+> **BGP 하이재킹·루트 리크**를 막는 **RPKI/ROA·필터링·세션 하드닝**을 체화한다.
+> DC 패브릭(EVPN/VXLAN)의 보안 지점(ARP 억제, Type-2/5 경계, MAC Move 절연 등)을 짚고,
+> 마지막으로 **라우트 필터/Max-Prefix/RTBH**를 **동작하는 예제**로 실습한다.
 > (벤더/버전 차이는 존재. 아래 예제는 **FRRouting**, **BIRD/GoBGP**, **JunOS/IOS-XR** 풍의 구성 스니펫을 혼합해 설명.)
 
 ---
@@ -17,15 +17,15 @@ category: 네트워크보안
 ## 15.1 SDN 위협/보호 포인트
 
 ### 15.1.1 위협 표면
-- **컨트롤 플레인 집중화(Controller)**  
+- **컨트롤 플레인 집중화(Controller)**
   - DoS/리소스 고갈, 권한 탈취(남용), 앱(북향 API) 취약점 → **Tenant 전체 영향**.
-- **Southbound 채널(OpenFlow/OVSDB/NETCONF/gNMI)**  
+- **Southbound 채널(OpenFlow/OVSDB/NETCONF/gNMI)**
   - 평문/TLS 미사용, 약한 인증 → **컨트롤 채널 탈취/주입** 위험.
-- **멀티테넌시/오버레이(VXLAN/Geneve)**  
+- **멀티테넌시/오버레이(VXLAN/Geneve)**
   - VNI/VRF 오배치, 라우트 타겟 오염 → **다른 테넌트로 우회**.
-- **가상 네트워크 함수(NFV)**  
+- **가상 네트워크 함수(NFV)**
   - 공용 호스트 상의 성능·격리 문제, 패킷 사본/미러링의 **데이터 유출**.
-- **정책/오케스트레이션**  
+- **정책/오케스트레이션**
   - IaC/컨트롤러 정책의 “잘못된 기본값/광역 허용”, 승인 없는 변경.
 
 ### 15.1.2 보호 포인트(체크리스트)
@@ -39,10 +39,10 @@ category: 네트워크보안
   - 기본 **Deny** + 최소 허용, **테넌트/네임스페이스 분리**, 라우트 타겟/VRF **화이트리스트**.
   - **변경 사전 검증**: 시뮬레이터(What-if), **정책 유닛 테스트**.
 - **텔레메트리/감사**
-  - **gNMI/GNOI** 체크섬/버전, **BMP/NetFlow/IPFIX**로 외부 수집,  
+  - **gNMI/GNOI** 체크섬/버전, **BMP/NetFlow/IPFIX**로 외부 수집,
     컨트롤러의 북향 API 호출은 **서명/승인 워크플로우**.
 - **NFV 호스트 격리**
-  - **SR-IOV/DPDK** 시 NIC/IOMMU 격리, 가상 스위치(OVS/eBPF) 룰 서명,  
+  - **SR-IOV/DPDK** 시 NIC/IOMMU 격리, 가상 스위치(OVS/eBPF) 룰 서명,
   - **CPU pinning/NUMA**와 **거친 테넌트 간 co-location 제한**(성능·측면채널 완화).
 
 **Open vSwitch(OVSDB + TLS) 예시**
@@ -71,16 +71,16 @@ ovs-vsctl set-controller connection-mode=out-of-band
 - **모범 사례 미적용**: 기본 Accept-all, 마티안(Bogon) 수용, **Max-Prefix 없이 수천 경로 유입**.
 
 ### 15.2.2 방어의 큰 축
-1) **세션 하드닝**:  
-   - **MD5/TCP-AO** 비밀키, **GTSM**(TTL Security, TTL=255), **Graceful Restart/LLGR** 튜닝.  
-2) **유입 필터(Import)**:  
-   - **Prefix-List/AS-PATH** 필터, **Bogon(Reserved/RFC1918/0/8/127/8/…)** 차단,  
-   - **Max-Prefix** 제한(임계 초과 시 drop 또는 shutdown).  
-3) **유출 필터(Export)**:  
-   - **Your ASN만 ORIGIN**, **NO_EXPORT/COMMUNITY 가드**, **remove-private-as**.  
-4) **RPKI/ROA 검증**:  
-   - **Valid/Invalid/NotFound** 정책, **Invalid = Drop**(점진 전환), **RTR 캐시** 이중화.  
-5) **모니터링/BMP**:  
+1) **세션 하드닝**:
+   - **MD5/TCP-AO** 비밀키, **GTSM**(TTL Security, TTL=255), **Graceful Restart/LLGR** 튜닝.
+2) **유입 필터(Import)**:
+   - **Prefix-List/AS-PATH** 필터, **Bogon(Reserved/RFC1918/0/8/127/8/…)** 차단,
+   - **Max-Prefix** 제한(임계 초과 시 drop 또는 shutdown).
+3) **유출 필터(Export)**:
+   - **Your ASN만 ORIGIN**, **NO_EXPORT/COMMUNITY 가드**, **remove-private-as**.
+4) **RPKI/ROA 검증**:
+   - **Valid/Invalid/NotFound** 정책, **Invalid = Drop**(점진 전환), **RTR 캐시** 이중화.
+5) **모니터링/BMP**:
    - BMP/Streaming Telemetry로 피어별 이상(경로 급증, ORIGIN 변화) 경보.
 
 ### 15.2.3 FRRouting: 세션 하드닝
@@ -256,7 +256,7 @@ protocols {
 
 ## 15.4 실습: 라우트 필터/Max-Prefix/RTBH
 
-> 랩 목표: FRRouting 두 대(R1=자사, R2=업스트림)로 **필터/Max-Prefix/RTBH**를 구성하고,  
+> 랩 목표: FRRouting 두 대(R1=자사, R2=업스트림)로 **필터/Max-Prefix/RTBH**를 구성하고,
 > 추가로 **RPKI** 캐시를 붙여 **Invalid Drop**을 시험한다. (Docker/컨테이너 기반 권장)
 
 ### 15.4.1 토폴로지
@@ -335,16 +335,16 @@ neighbor 10.0.0.2 route-map RTBH-MATCH out
 ```
 
 **운영 절차(모의)**
-1) 공격 타깃 식별: `203.0.113.123/32`  
-2) R1에서 **BLACKHOLE 프리픽스** 광고(상기 구성은 항상 out 매칭 방식. 운영에선 스크립트/전용 VRF 권장).  
-3) R2/업스트림이 커뮤니티/넥스트홉 규칙으로 **Null0** 처리를 적용.  
+1) 공격 타깃 식별: `203.0.113.123/32`
+2) R1에서 **BLACKHOLE 프리픽스** 광고(상기 구성은 항상 out 매칭 방식. 운영에선 스크립트/전용 VRF 권장).
+3) R2/업스트림이 커뮤니티/넥스트홉 규칙으로 **Null0** 처리를 적용.
 4) 공격 종료 후 철회.
 
 > 주의: RTBH는 **마지막 수단**. 스크러빙 센터/리다이렉션(FlowSpec/미러)와 병행 검토.
 
 ### 15.4.4 하이재킹 모의(실험)와 차단
-- **상황**: R1이 실수로 `198.51.100.0/24`를 광고.  
-- **R2 정책**: `CUST-IN` 화이트리스트에 없으므로 **거부**.  
+- **상황**: R1이 실수로 `198.51.100.0/24`를 광고.
+- **R2 정책**: `CUST-IN` 화이트리스트에 없으므로 **거부**.
 - **관찰**: `show bgp ipv4 unicast neighbors 10.0.0.1 routes`에 **수용 안 됨**.
 
 **검증 명령(FRR)**
@@ -398,9 +398,9 @@ protocol bgp up1 {
 ## 보너스: BMP/텔레메트리 & 탐지 룰 아이디어
 
 **BMP 수집기(예: OpenBMP/PMACCT)로 탐지**
-- 피어별 **광고 경로 수 급증**(>X%)  
-- **ORIGIN-AS 변경**(우리 프리픽스의 원발AS가 타인)  
-- **더 특정(/25~)** 경로 출현(허용 범위 밖)  
+- 피어별 **광고 경로 수 급증**(>X%)
+- **ORIGIN-AS 변경**(우리 프리픽스의 원발AS가 타인)
+- **더 특정(/25~)** 경로 출현(허용 범위 밖)
 - **Invalid(ROA) 비율 증가**
 
 **PromQL(개념)**
@@ -422,20 +422,20 @@ increase(bgp_announcements_total{peer="10.0.0.2"}[5m]) > 100
 ---
 
 ## 운영 체크리스트(요점)
-- [ ] **MD5/TCP-AO, GTSM**로 BGP 세션 하드닝  
-- [ ] **Import/Export 기본 거부 + 화이트리스트**(**RFC 8212 정신**)  
-- [ ] **Max-Prefix** 임계 & 경보, **Bogon 필터** 상시  
-- [ ] **RPKI ROV**(Invalid Drop) 단계적 도입, **RTR 캐시 이중화**  
-- [ ] **remove-private-as**, 커뮤니티 가드, **NO_EXPORT** 규율  
-- [ ] **BMP/Flow/IPFIX**로 가시성, **ORIGIN 변화/경로 급증** 탐지 룰  
-- [ ] EVPN/VXLAN: **RT Filter, ARP/ND Proxy, MAC Move Dampening, CoPP**  
+- [ ] **MD5/TCP-AO, GTSM**로 BGP 세션 하드닝
+- [ ] **Import/Export 기본 거부 + 화이트리스트**(**RFC 8212 정신**)
+- [ ] **Max-Prefix** 임계 & 경보, **Bogon 필터** 상시
+- [ ] **RPKI ROV**(Invalid Drop) 단계적 도입, **RTR 캐시 이중화**
+- [ ] **remove-private-as**, 커뮤니티 가드, **NO_EXPORT** 규율
+- [ ] **BMP/Flow/IPFIX**로 가시성, **ORIGIN 변화/경로 급증** 탐지 룰
+- [ ] EVPN/VXLAN: **RT Filter, ARP/ND Proxy, MAC Move Dampening, CoPP**
 - [ ] SDN/NFV: **mTLS Southbound, RBAC+감사, 정책 가드레일, 호스트 격리**
 
 ---
 
 ## 마무리
-- **SDN/NFV**는 **컨트롤 채널 보안**과 **정책 기본 거부**가 심장이다.  
-- **BGP 보안**은 **세션 하드닝 + 필터 + RPKI + 관측**의 합으로 이뤄진다.  
-- **EVPN/VXLAN**은 **RT/정책 경계**와 **L2 소음 억제**로 테넌트 안전을 유지한다.  
-- 실습의 **필터/Max-Prefix/RTBH**는 “**사고를 퍼지게 하지 않는 최저선**”이다.  
+- **SDN/NFV**는 **컨트롤 채널 보안**과 **정책 기본 거부**가 심장이다.
+- **BGP 보안**은 **세션 하드닝 + 필터 + RPKI + 관측**의 합으로 이뤄진다.
+- **EVPN/VXLAN**은 **RT/정책 경계**와 **L2 소음 억제**로 테넌트 안전을 유지한다.
+- 실습의 **필터/Max-Prefix/RTBH**는 “**사고를 퍼지게 하지 않는 최저선**”이다.
   여기에 **RPKI/ROA**와 **BMP 기반 탐지**를 더해 **방어·가시성·회복력**을 동시에 올려라.

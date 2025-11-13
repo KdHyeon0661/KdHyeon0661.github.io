@@ -6,9 +6,9 @@ category: Docker
 ---
 # Docker 경량화 이미지 만들기 (alpine 포함)
 
-본 문서는 사용자가 제시한 초안(Alpine·Slim 비교, 멀티스테이지, distroless)을 **확장**하여,  
-1) 왜/언제 경량화를 선택해야 하는지, 2) Alpine·Slim·Distroless의 **호환성 트레이드오프**,  
-3) **언어별(파이썬/Node/Go/Java/.NET)** 최적화 레시피, 4) **캐시·빌드비밀·재현성** 전략,  
+본 문서는 사용자가 제시한 초안(Alpine·Slim 비교, 멀티스테이지, distroless)을 **확장**하여,
+1) 왜/언제 경량화를 선택해야 하는지, 2) Alpine·Slim·Distroless의 **호환성 트레이드오프**,
+3) **언어별(파이썬/Node/Go/Java/.NET)** 최적화 레시피, 4) **캐시·빌드비밀·재현성** 전략,
 5) **검증·보안**(취약점 스캔, SBOM, 서명), 6) **디버깅 전술**을 예제와 함께 **빠짐없이** 정리한다.
 
 ---
@@ -24,8 +24,8 @@ category: Docker
 | 운영 단순화 | “필요한 것만” 들어있는 이미지는 디버깅 범위를 축소한다. |
 
 ### 무조건 Alpine이 해답이 아니다
-- **musl vs glibc**: Alpine은 `musl libc` 기반. 일부 네이티브 확장/바이너리(wheel, .so)가 `glibc` 가정일 때 **빌드 실패/런타임 이슈**가 난다.  
-- 디버깅 난이도: Alpine은 도구가 적다. Distroless는 쉘조차 없다.  
+- **musl vs glibc**: Alpine은 `musl libc` 기반. 일부 네이티브 확장/바이너리(wheel, .so)가 `glibc` 가정일 때 **빌드 실패/런타임 이슈**가 난다.
+- 디버깅 난이도: Alpine은 도구가 적다. Distroless는 쉘조차 없다.
 - 원칙: **호환성 > 크기**인 경우 `slim`(Debian/Ubuntu) 또는 **언어 전용 경량 런타임**(distroless/java, distroless/python 등)을 우선 검토.
 
 ---
@@ -40,9 +40,9 @@ category: Docker
 | Distroless | `gcr.io/distroless/python3` | 극소 용량, 공격면 최소 | 쉘 無, 디버깅·확장 난이도↑ |
 | Scratch | `scratch` | 완전 빈 베이스(Go 정적링크) | CA 인증서/타임존 등 직접 포함 필요 |
 
-**가이드**  
-- **네이티브 확장(예: `psycopg2`, `lxml`, `numpy`, `Pillow`)**가 있으면 먼저 `slim`으로 시도.  
-- 정말 **작은** 런타임이 필요하고 호환성 검증이 끝났다면 Alpine.  
+**가이드**
+- **네이티브 확장(예: `psycopg2`, `lxml`, `numpy`, `Pillow`)**가 있으면 먼저 `slim`으로 시도.
+- 정말 **작은** 런타임이 필요하고 호환성 검증이 끝났다면 Alpine.
 - 보안·경량 최우선이면서 런타임만 필요한 경우 Distroless.
 
 ---
@@ -89,7 +89,7 @@ CMD ["app.py"]
 ```
 
 **핵심 포인트**
-- **컴파일러·헤더는 빌더 단계에만** 있고, 최종 런타임에는 포함하지 않는다.  
+- **컴파일러·헤더는 빌더 단계에만** 있고, 최종 런타임에는 포함하지 않는다.
 - `--prefix=/install` → 빌더에서 설치 경로를 분리, 런타임에 **필요한 파일만 COPY**.
 
 ---
@@ -97,8 +97,8 @@ CMD ["app.py"]
 ## 3. 언어별 경량화 레시피
 
 ### 3.1 Python — musl 전용 wheel, 과학 패키지 주의
-- Alpine에서 **`musllinux` wheel**이 제공되는지 확인. 없는 경우 **컴파일** 필요.  
-- **자주 필요한 apk**  
+- Alpine에서 **`musllinux` wheel**이 제공되는지 확인. 없는 경우 **컴파일** 필요.
+- **자주 필요한 apk**
   | 목적 | 패키지 |
   |---|---|
   | 빌드 도구 | `build-base`(= gcc g++ make), `musl-dev` |
@@ -129,7 +129,7 @@ RUN npm run build      # 예: React/Vite/Next SSG 산출물
 FROM nginx:alpine
 COPY --from=build /w/dist /usr/share/nginx/html
 ```
-- 서버 사이드 런타임(Node)인 경우, 런타임 이미지는 `node:alpine`로 최소화하고 devDeps는 빌더에서만 설치.  
+- 서버 사이드 런타임(Node)인 경우, 런타임 이미지는 `node:alpine`로 최소화하고 devDeps는 빌더에서만 설치.
 - 네이티브 의존성(node-gyp 등)은 빌더에서 해결 후 **프리빌트 산출물만 복사**.
 
 ### 3.3 Go — `CGO_ENABLED=0` + `scratch`/`distroless`
@@ -151,8 +151,8 @@ COPY --from=builder /src/app /app
 USER 65532:65532
 ENTRYPOINT ["/app"]
 ```
-- `-ldflags="-s -w"`로 심볼 제거(용량↓).  
-- DNS/HTTPS 문제 방지를 위해 **CA 인증서** 복사 필수.  
+- `-ldflags="-s -w"`로 심볼 제거(용량↓).
+- DNS/HTTPS 문제 방지를 위해 **CA 인증서** 복사 필수.
 - 문제가 있으면 `distroless/static` 또는 `distroless/base` 고려.
 
 ### 3.4 Java — `jlink`로 사용자 정의 JRE
@@ -175,7 +175,7 @@ COPY --from=builder /w/target/app.jar /app/app.jar
 ENV PATH="/opt/jre/bin:${PATH}"
 ENTRYPOINT ["java","-jar","/app/app.jar"]
 ```
-- `jdeps`로 필요한 모듈 파악 → `jlink`에 반영.  
+- `jdeps`로 필요한 모듈 파악 → `jlink`에 반영.
 - 또는 `gcr.io/distroless/java17-debian12` 등 **distroless/java** 런타임 사용.
 
 ### 3.5 .NET — Publish Trim + Alpine/Distroless
@@ -193,7 +193,7 @@ WORKDIR /app
 COPY --from=build /out .
 ENTRYPOINT ["./MyApp"]
 ```
-- 트리밍(Trim)으로 **미사용 IL 제거**.  
+- 트리밍(Trim)으로 **미사용 IL 제거**.
 - 네이티브/글리브c 이슈가 있으면 `-slim` 계열 또는 `runtime-deps` Debian 기반으로 전환.
 
 ---
@@ -216,12 +216,12 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 RUN --mount=type=secret,id=pip_token \
     pip install --no-cache-dir -r requirements.txt
 ```
-- 빌드 시: `docker build --secret id=pip_token,src=./.pip_token …`  
+- 빌드 시: `docker build --secret id=pip_token,src=./.pip_token …`
 - 소스·레이어에 **비밀 흔적을 남기지 않음**.
 
 ### 4.3 재현성
-- 버전 **고정**(pip-compile, npm `package-lock.json`, Maven/Gradle lock).  
-- `ARG TARGETOS TARGETARCH` 활용해 멀티아치 reproducible 빌드.  
+- 버전 **고정**(pip-compile, npm `package-lock.json`, Maven/Gradle lock).
+- `ARG TARGETOS TARGETARCH` 활용해 멀티아치 reproducible 빌드.
 - 다운로드 아카이브에 **SHA256 검증**을 습관화.
 
 ---
@@ -254,9 +254,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 ```
 
 ### 불필요한 바이트 제거
-- Python: `PYTHONDONTWRITEBYTECODE=1`, `__pycache__` 생성 방지.  
-- Go: `-ldflags="-s -w"`.  
-- Java: `jlink --strip-debug`.  
+- Python: `PYTHONDONTWRITEBYTECODE=1`, `__pycache__` 생성 방지.
+- Go: `-ldflags="-s -w"`.
+- Java: `jlink --strip-debug`.
 - `strip`/`upx` 사용은 기능/라이선스/디버깅 이슈를 **사전에 검증**.
 
 ---
@@ -316,11 +316,11 @@ cosign sign --yes your/app:latest
 
 ## 8. 디버깅 전술 — 경량 이미지의 현실 해법
 
-- Distroless/Alpine 런타임은 **디버깅 도구가 없다**.  
+- Distroless/Alpine 런타임은 **디버깅 도구가 없다**.
 - 전술:
-  1) 동일 코드·동일 환경변수로 **디버그용 이미지(슬림/풀)** 병행 운영.  
-  2) 런타임에 **임시 BusyBox**를 Sidecar로 붙이거나, 에페메럴 컨테이너(K8s) 이용.  
-  3) 애플리케이션 **/debug 엔드포인트**, 구조화 로그, pprof(Go), `faulthandler`(Python) 활성화.  
+  1) 동일 코드·동일 환경변수로 **디버그용 이미지(슬림/풀)** 병행 운영.
+  2) 런타임에 **임시 BusyBox**를 Sidecar로 붙이거나, 에페메럴 컨테이너(K8s) 이용.
+  3) 애플리케이션 **/debug 엔드포인트**, 구조화 로그, pprof(Go), `faulthandler`(Python) 활성화.
   4) Alpine에서 런타임 세그폴트가 나면 **glibc 기준 바이너리 가정** 여부를 먼저 의심. 필요하면 **slim**으로 전환.
 
 ---
@@ -384,15 +384,15 @@ CMD ["app.py"]
 
 ## 10. 성능/크기 최적화를 위한 체크리스트
 
-1. **멀티스테이지**로 빌드 도구 격리.  
-2. **베이스 선택**: slim → alpine → distroless 순으로 단계적 검증.  
-3. **.dockerignore**로 불필요 파일 제외.  
-4. **의존성 캐시**(BuildKit `--mount=type=cache`) 적극 활용.  
-5. 네이티브 확장 패키지의 **시스템 헤더/라이브러리**를 파악하고, 빌더에만 설치.  
-6. `pip install --no-cache-dir`, `apt --no-install-recommends`, `apk --no-cache`.  
-7. **CA 인증서/타임존**이 필요한 언어(Go/scratch 등)는 명시적으로 포함.  
-8. **헬스체크**로 부팅 실패를 조기에 감지, 롤백 비용↓.  
-9. **취약점 스캔 + SBOM + 서명**을 CI에 상시 통합.  
+1. **멀티스테이지**로 빌드 도구 격리.
+2. **베이스 선택**: slim → alpine → distroless 순으로 단계적 검증.
+3. **.dockerignore**로 불필요 파일 제외.
+4. **의존성 캐시**(BuildKit `--mount=type=cache`) 적극 활용.
+5. 네이티브 확장 패키지의 **시스템 헤더/라이브러리**를 파악하고, 빌더에만 설치.
+6. `pip install --no-cache-dir`, `apt --no-install-recommends`, `apk --no-cache`.
+7. **CA 인증서/타임존**이 필요한 언어(Go/scratch 등)는 명시적으로 포함.
+8. **헬스체크**로 부팅 실패를 조기에 감지, 롤백 비용↓.
+9. **취약점 스캔 + SBOM + 서명**을 CI에 상시 통합.
 10. 장애 대응을 위해 **디버그용 풀/슬림 이미지**를 병행 유지.
 
 ---
@@ -432,7 +432,7 @@ curl -fsS http://127.0.0.1:8080/healthz
 ---
 
 ## 13. 수학적 관점(간단한 모델)
-경량화 의사결정 시, 이미지 전송 시간 \(T\)를 **네트워크 대역폭 \(B\)** 와 **이미지 크기 \(S\)** 로 근사하면  
+경량화 의사결정 시, 이미지 전송 시간 \(T\)를 **네트워크 대역폭 \(B\)** 와 **이미지 크기 \(S\)** 로 근사하면
 $$
 T \approx \frac{S}{B}
 $$
@@ -446,9 +446,9 @@ $$
 
 ## 14. 결론
 
-- **경량화의 핵심은 “필요한 것만 담는 것”** 이며, 기술적 레버는 `멀티스테이지`, **올바른 베이스 선택**(slim/alpine/distroless), **캐시·재현성·보안**의 삼박자다.  
-- Alpine은 강력하지만 **musl 호환성**을 반드시 검증해야 하며, 문제 시 **slim**으로 전환한다.  
-- 운영 관점에서는 **스캔·SBOM·서명·헬스체크**가 크기만큼 중요하다.  
+- **경량화의 핵심은 “필요한 것만 담는 것”** 이며, 기술적 레버는 `멀티스테이지`, **올바른 베이스 선택**(slim/alpine/distroless), **캐시·재현성·보안**의 삼박자다.
+- Alpine은 강력하지만 **musl 호환성**을 반드시 검증해야 하며, 문제 시 **slim**으로 전환한다.
+- 운영 관점에서는 **스캔·SBOM·서명·헬스체크**가 크기만큼 중요하다.
 - 위 레시피(언어별 예시 및 체크리스트)를 템플릿으로 삼아, 프로젝트마다 “호환성 → 최적화 → 하드닝” 순으로 점진적으로 적용하라.
 
 ---
@@ -480,8 +480,8 @@ $$
 ---
 
 ## 참고
-- Dockerfile Best Practices  
-- Distroless Images  
+- Dockerfile Best Practices
+- Distroless Images
 - Alpine Linux 문서
 
 (공식 URL은 프로젝트/정책에 맞게 내부 위키나 북마크에 정리해 두길 권장)

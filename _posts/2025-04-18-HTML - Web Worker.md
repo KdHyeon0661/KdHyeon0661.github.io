@@ -8,10 +8,10 @@ category: HTML
 
 ## 0. 한눈에 개요
 
-- **정의**: 메인(UI) 스레드와 분리된 **백그라운드 스레드**에서 JS를 실행.  
-- **목표**: **무거운 연산/블로킹 I/O**를 워커로 넘겨 **UI 멈춤 방지**.  
-- **핵심 API**: `new Worker()`, `postMessage()`, `onmessage`, `terminate()`  
-- **불가능**: DOM 접근, `alert/confirm`, 동기 XHR 등 UI-스레드 전용 기능.  
+- **정의**: 메인(UI) 스레드와 분리된 **백그라운드 스레드**에서 JS를 실행.
+- **목표**: **무거운 연산/블로킹 I/O**를 워커로 넘겨 **UI 멈춤 방지**.
+- **핵심 API**: `new Worker()`, `postMessage()`, `onmessage`, `terminate()`
+- **불가능**: DOM 접근, `alert/confirm`, 동기 XHR 등 UI-스레드 전용 기능.
 - **가능**: `fetch`, `async/await`, `IndexedDB`, `OffscreenCanvas`, `WebAssembly` 등.
 
 ---
@@ -295,7 +295,7 @@ function draw(t = 0) {
 
 ## 7. Atomics + SharedArrayBuffer 로 락·신호·프로그레스
 
-고급 패턴: **복사/이전 없이** 워커·메인 간 **동일 버퍼 공유**.  
+고급 패턴: **복사/이전 없이** 워커·메인 간 **동일 버퍼 공유**.
 단, **Cross-Origin Isolation** 필요(헤더: COOP/COEP). 배포 시 서버 설정 필수.
 
 ```js
@@ -552,7 +552,7 @@ onmessage = (e) => {
 };
 ```
 
-메인에서는 파일/응답 본문을 문자열로 읽어서 워커에 전달.  
+메인에서는 파일/응답 본문을 문자열로 읽어서 워커에 전달.
 초대형이면 **스트리밍 파서**(NDJSON) 또는 IndexedDB와 조합 권장.
 
 ---
@@ -578,7 +578,7 @@ onmessage = (e) => {
 ---
 
 ## 참고 링크(개념 확인용)
-- MDN: Web Workers API  
-- HTML Living Standard: Workers  
-- OffscreenCanvas, Atomics/SharedArrayBuffer 관련 MDN 문서  
+- MDN: Web Workers API
+- HTML Living Standard: Workers
+- OffscreenCanvas, Atomics/SharedArrayBuffer 관련 MDN 문서
 - 번들러별 Module Worker 가이드

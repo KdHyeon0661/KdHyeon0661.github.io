@@ -6,10 +6,10 @@ category: 영상처리
 ---
 # JPEG XL / AVIF / WebP **변환 파이프라인** (비교 · 마이그레이션 대비)
 
-> 목표  
-> - 기존 JPEG/PNG/RAW 자산을 **AVIF / JPEG XL(JXL) / WebP**로 변환·전송하는 **엔드투엔드 파이프라인**을 설계하고,  
-> - **품질/용량/속도**를 데이터로 비교하며,  
-> - **브라우저/앱 호환**을 고려한 **점진적 마이그레이션 전략**과 **실전 코드**(CLI & C/C++)를 제시합니다.  
+> 목표
+> - 기존 JPEG/PNG/RAW 자산을 **AVIF / JPEG XL(JXL) / WebP**로 변환·전송하는 **엔드투엔드 파이프라인**을 설계하고,
+> - **품질/용량/속도**를 데이터로 비교하며,
+> - **브라우저/앱 호환**을 고려한 **점진적 마이그레이션 전략**과 **실전 코드**(CLI & C/C++)를 제시합니다.
 > - 코드는 한 번만 ``` 로 감싸고, 수학식은 MathJax를 씁니다.
 
 ---
@@ -25,9 +25,9 @@ category: 영상처리
 | 강점(요약) | **용량↓**/고화질, 10bit/HDR | **손실없는 JPEG 래핑**·고속 디코드, 16bpc | **광범위한 실전 호환성**, 인코딩 빠름 |
 | 라이브러리 | libavif(+aom/rv1e/SVT-AV1) | libjxl | libwebp |
 
-> **요약 운영 철학**  
-> - **사진/캡처 장문서**: AVIF 또는 JXL(특히 **JPEG→JXL 무손실 래핑**)  
-> - **UI/일러스트/스티커**: WebP(444/손실/손실없는), AVIF 444  
+> **요약 운영 철학**
+> - **사진/캡처 장문서**: AVIF 또는 JXL(특히 **JPEG→JXL 무손실 래핑**)
+> - **UI/일러스트/스티커**: WebP(444/손실/손실없는), AVIF 444
 > - **애니메 이미지**: WebP/AVIF/JXL 모두 가능(파이프라인/플레이어 호환성에 맞춤)
 
 ---
@@ -54,8 +54,8 @@ category: 영상처리
 
 ## 3. 설치/의존(요약)
 
-- **Windows(vcpkg)**: `vcpkg install libavif libjxl libwebp aom svt-av1 lcms`  
-- **macOS(brew)**: `brew install libavif libjxl webp aom svt-av1`  
+- **Windows(vcpkg)**: `vcpkg install libavif libjxl libwebp aom svt-av1 lcms`
+- **macOS(brew)**: `brew install libavif libjxl webp aom svt-av1`
 - **Linux(예)**: `apt install libavif-bin libjxl-tools webp`
 
 ---
@@ -76,10 +76,10 @@ avifenc input.png out_ui.avif \
   --speed 6 --cq-level 20 --yuv 444 --depth 10 --jobs 8
 ```
 
-- 핵심 파라미터  
-  - `--cq-level`: 낮을수록 고화질(대략 18~32 튜닝)  
-  - `--speed`: 낮을수록 느리지만 고화질(0~10/코덱별)  
-  - `--yuv`: 420/422/444(텍스트·UI는 444 선호)  
+- 핵심 파라미터
+  - `--cq-level`: 낮을수록 고화질(대략 18~32 튜닝)
+  - `--speed`: 낮을수록 느리지만 고화질(0~10/코덱별)
+  - `--yuv`: 420/422/444(텍스트·UI는 444 선호)
   - 메타: `--icc --exif --xmp` 로 **명시적 부착** 권장
 
 ### 4.2 JPEG XL (cjxl)
@@ -92,9 +92,9 @@ cjxl input.png out.jxl -d 1.2 --effort=7 --num_threads=8
 cjxl input.jpg out_lossless_wrap.jxl --lossless_jpeg=1
 ```
 
-- 품질 파라미터  
-  - `-d <distance>` 또는 `-q <quality>`; `d≈1~1.5`면 시각상 무손실 근접  
-  - `--lossless`(픽셀 무손실) / `--lossless_jpeg=1`(**바이트단위 복원**)  
+- 품질 파라미터
+  - `-d <distance>` 또는 `-q <quality>`; `d≈1~1.5`면 시각상 무손실 근접
+  - `--lossless`(픽셀 무손실) / `--lossless_jpeg=1`(**바이트단위 복원**)
 
 ### 4.3 WebP (cwebp)
 
@@ -110,10 +110,10 @@ cwebp -q 88 -m 4 -mt -alpha_q 100 -metadata all -af -sns 0 -sharpness 3 \
 cwebp -lossless -m 6 -mt -metadata all input.png -o out_ll.webp
 ```
 
-- 품질 파라미터  
-  - `-q`: 0~100  
-  - `-m`: 0~6(속도↔품질)  
-  - `-metadata all`: ICC/EXIF/XMP 보존(가능한 경우)  
+- 품질 파라미터
+  - `-q`: 0~100
+  - `-m`: 0~6(속도↔품질)
+  - `-metadata all`: ICC/EXIF/XMP 보존(가능한 경우)
 
 ---
 
@@ -286,17 +286,17 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 }
 ```
 
-> 운영 팁  
-> - **MS-SSIM** 같이 시각적 지표를 함께 로깅.  
+> 운영 팁
+> - **MS-SSIM** 같이 시각적 지표를 함께 로깅.
 > - **인코드 시간/디코드 시간/바이트**를 함께 로그 파일/DB에 저장하여 **코호트별 비교**.
 
 ---
 
 ## 7. **메타데이터/색관리**(ICC/EXIF/XMP) 보존
 
-- **AVIF**: `--icc/--exif/--xmp` 로 명시 부착 권장(소스에서 추출 후 주입).  
-- **JXL**: 기본 보존 경향이나, 파이프라인 일관성을 위해 **명시 정책**(보존/익명화) 도입, 필요 시 `--strip`(툴 기준) 옵션.  
-- **WebP**: `-metadata all|icc|exif|xmp` 로 선택 보존.  
+- **AVIF**: `--icc/--exif/--xmp` 로 명시 부착 권장(소스에서 추출 후 주입).
+- **JXL**: 기본 보존 경향이나, 파이프라인 일관성을 위해 **명시 정책**(보존/익명화) 도입, 필요 시 `--strip`(툴 기준) 옵션.
+- **WebP**: `-metadata all|icc|exif|xmp` 로 선택 보존.
 - sRGB 확정: 파일에 **ICC(sRGB)** 또는 PNG의 `sRGB`/`gAMA`를 명시해 **Color Shift 방지**.
 
 ---
@@ -326,7 +326,7 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 </picture>
 ```
 
-> 서버/클라이언트 지원 상황에 맞게 **우선순위**를 정합니다.  
+> 서버/클라이언트 지원 상황에 맞게 **우선순위**를 정합니다.
 > 서버는 **Accept 헤더**(`image/avif`, `image/webp`)를 참조해 리라이트/변형 응답 가능.
 
 ### 9.2 Nginx(예) — Accept 기반 제공
@@ -351,27 +351,27 @@ location ~* ^/images/(.*)\.(jpg|jpeg|png)$ {
 
 ## 10. **온디맨드 변환 캐시 서비스**(간단 설계)
 
-- 키: `hash(path + resize + format + quality + color_profile)`  
-- 1차 요청: 원본 Fetch → 변환 → `ETag`/`Cache-Control`과 함께 저장  
-- 2차 요청: Hit → 바로 서빙  
-- 실패 내성: 타임아웃/메모리 상한/폭탄 파일 방지(입력 바이트·픽셀 상한)  
+- 키: `hash(path + resize + format + quality + color_profile)`
+- 1차 요청: 원본 Fetch → 변환 → `ETag`/`Cache-Control`과 함께 저장
+- 2차 요청: Hit → 바로 서빙
+- 실패 내성: 타임아웃/메모리 상한/폭탄 파일 방지(입력 바이트·픽셀 상한)
 - 모니터링: 히트율/평균 인코드 시간/오류율 메트릭
 
 ---
 
 ## 11. **마이그레이션 로드맵**
 
-1. **자산 인벤토리**: 유형(사진/UI/애니메), 해상도, 평균 바이트, 메타 정책  
-2. **표본 코호트** 1~5% 샘플링 → **AVIF/JXL/WebP 동시 변환** → PSNR/SSIM/주관검수 + 바이트/시간 로깅  
-3. **포맷별 승자 선정**:  
-   - 사진: AVIF/JXL 간 바이트/품질/디코드 속도 평가  
-   - UI: WebP 444 vs AVIF 444  
-   - JPEG은 가능한 **JXL 무손실 래핑**으로 “원본 보존 + 용량↓” 라인 병행  
-4. **점진 배포**: `<picture>` + Nginx Accept 폴백 → 점유율 추적  
-5. **역호환 저장**: 원본 유지, 신포맷 병행(청크스토리지/버전)  
-6. **운영 규칙**:  
-   - 바이트 목표 초과 시 **quality↓ 재시도**(이진 탐색)  
-   - 아티팩트 감지 룰(엣지 대비/밴딩 지표) → 포맷 전환  
+1. **자산 인벤토리**: 유형(사진/UI/애니메), 해상도, 평균 바이트, 메타 정책
+2. **표본 코호트** 1~5% 샘플링 → **AVIF/JXL/WebP 동시 변환** → PSNR/SSIM/주관검수 + 바이트/시간 로깅
+3. **포맷별 승자 선정**:
+   - 사진: AVIF/JXL 간 바이트/품질/디코드 속도 평가
+   - UI: WebP 444 vs AVIF 444
+   - JPEG은 가능한 **JXL 무손실 래핑**으로 “원본 보존 + 용량↓” 라인 병행
+4. **점진 배포**: `<picture>` + Nginx Accept 폴백 → 점유율 추적
+5. **역호환 저장**: 원본 유지, 신포맷 병행(청크스토리지/버전)
+6. **운영 규칙**:
+   - 바이트 목표 초과 시 **quality↓ 재시도**(이진 탐색)
+   - 아티팩트 감지 룰(엣지 대비/밴딩 지표) → 포맷 전환
 7. **리그레션 보호**: 주기적 샘플 재인코드/지표 비교
 
 ---
@@ -415,11 +415,11 @@ done
 
 ## 13. **실전 튜닝 포인트**
 
-- **색/감마 정합**: 전처리 연산은 **선형광**에서 수행 후, 최종 인코드는 **sRGB 코드**로.  
-- **샘플링**: 사진은 420가 일반적, UI/폰트는 444 권장.  
-- **비트심도**: 포토/HDR 워크플로우는 10bpc 이상.  
-- **스피드 vs 품질**: CI에서는 빠른 프리셋, 야간 배치에서 고품질 프리셋.  
-- **애니메**: 포맷마다 플레이어/프레임제어 차이 → 사내 뷰어/앱 테스트 필수.  
+- **색/감마 정합**: 전처리 연산은 **선형광**에서 수행 후, 최종 인코드는 **sRGB 코드**로.
+- **샘플링**: 사진은 420가 일반적, UI/폰트는 444 권장.
+- **비트심도**: 포토/HDR 워크플로우는 10bpc 이상.
+- **스피드 vs 품질**: CI에서는 빠른 프리셋, 야간 배치에서 고품질 프리셋.
+- **애니메**: 포맷마다 플레이어/프레임제어 차이 → 사내 뷰어/앱 테스트 필수.
 - **보안/안정성**: 입력 픽셀 수/마커 길이 상한, 디코드 타임아웃, setjmp 예외복구(라이브러리별).
 
 ---
@@ -475,17 +475,17 @@ double MeasureAVIF(const uint8_t* rgba, int w,int h,int stride, std::vector<uint
 
 ## 17. 라이선스/배포 노트(요지)
 
-- **libavif/libaom/rav1e/SVT-AV1**, **libjxl**, **libwebp**는 일반적으로 **관대한 오픈소스 라이선스**입니다.  
-- 제품 배포 시 **라이선스 고지 파일** 포함(OSS NOTICE).  
+- **libavif/libaom/rav1e/SVT-AV1**, **libjxl**, **libwebp**는 일반적으로 **관대한 오픈소스 라이선스**입니다.
+- 제품 배포 시 **라이선스 고지 파일** 포함(OSS NOTICE).
 - 하드웨어/플랫폼별 **특허/규정**은 사내 법무/정책 기준을 따를 것.
 
 ---
 
 ## 18. 최종 정리
 
-- **AVIF/JXL/WebP** 는 “**한 가지가 만능**”이 아닙니다. **콘텐츠 특성·운영 목표**에 따라 **혼용**이 현실적 최선.  
-- **AVIF**: 사진·캡처, 10bit/HDR, 고효율.  
-- **JXL**: **JPEG 무손실 래핑**·고화질·유연한 심도.  
-- **WebP**: 넓은 실전 호환성·빠른 인코딩, UI/일러스트 강점.  
-- **파이프라인**은 전처리(선형), 메타 보존, 포맷별 프리셋, 자동 계측/재시도, 배포 폴백/Accept 네고까지 **엔드투엔드**로 설계하세요.  
+- **AVIF/JXL/WebP** 는 “**한 가지가 만능**”이 아닙니다. **콘텐츠 특성·운영 목표**에 따라 **혼용**이 현실적 최선.
+- **AVIF**: 사진·캡처, 10bit/HDR, 고효율.
+- **JXL**: **JPEG 무손실 래핑**·고화질·유연한 심도.
+- **WebP**: 넓은 실전 호환성·빠른 인코딩, UI/일러스트 강점.
+- **파이프라인**은 전처리(선형), 메타 보존, 포맷별 프리셋, 자동 계측/재시도, 배포 폴백/Accept 네고까지 **엔드투엔드**로 설계하세요.
 - 본문 CLI와 C++ 스니펫을 **ImageTool**에 붙이면, 하루 만에 **실전 운영**까지 갈 수 있습니다.

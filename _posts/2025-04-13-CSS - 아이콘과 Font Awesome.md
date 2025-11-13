@@ -117,7 +117,7 @@ button.primary { color: #2563eb; } /* icon도 함께 파란색으로 */
 | **SVG(Inline)** | 정확한 벡터, 다색/그라디언트/ARIA 우수 | DOM 부하·인라인 길어짐 | 브랜딩/다색/복잡한 상징 |
 | **폰트 아이콘(FA)** | 사용·일관성 쉬움, 클래스 한 줄 | 폰트 로딩 의존, 세밀한 정렬 이슈 | 광범위한 일반 아이콘 세트 |
 
-> 다크 모드, 상태 색상, 접근성 커스텀을 많이 한다면 **SVG/`currentColor`** 조합이 유리.  
+> 다크 모드, 상태 색상, 접근성 커스텀을 많이 한다면 **SVG/`currentColor`** 조합이 유리.
 > 빠르게 **방대한 카탈로그**가 필요하면 **Font Awesome**이 생산적.
 
 ---
@@ -138,10 +138,10 @@ npm i @fortawesome/fontawesome-free
 @import "~@fortawesome/fontawesome-free/css/all.min.css";
 ```
 
-> **프리픽스**(v6):  
-> - 실선: `fa-solid`  
-> - 레귤러: `fa-regular`  
-> - 브랜드: `fa-brands`  
+> **프리픽스**(v6):
+> - 실선: `fa-solid`
+> - 레귤러: `fa-regular`
+> - 브랜드: `fa-brands`
 > (Pro에는 `fa-light`, `fa-thin`, `fa-duotone` 등 추가)
 
 ---
@@ -167,7 +167,7 @@ i[class^="fa-"],
 i[class*=" fa-"] { vertical-align: -0.125em; }
 ```
 
-- 사이즈: `fa-sm`, `fa-lg`, `fa-2x`~`fa-10x`  
+- 사이즈: `fa-sm`, `fa-lg`, `fa-2x`~`fa-10x`
 - 색상: CSS `color`로 제어(폰트이므로)
 
 ### 4.3 회전/플립/애니메이션
@@ -209,7 +209,7 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ## 5. Font Awesome 접근성(A11y)
 
-- **장식용** 아이콘 → `aria-hidden="true"`  
+- **장식용** 아이콘 → `aria-hidden="true"`
 - **의미 전달** 아이콘 → 텍스트 제공(`sr-only`) 또는 `aria-label`
 
 ```html
@@ -272,10 +272,10 @@ i[class*=" fa-"] { vertical-align: -0.125em; }
 
 ## 8. 성능 최적화 (필수 체크리스트)
 
-1) **최소 자산만 로드**: `all.min.css`는 편하지만 큼.  
+1) **최소 자산만 로드**: `all.min.css`는 편하지만 큼.
    - 가능하면 **서브셋**(필요 아이콘만)으로 번들(빌드 단계에서 PostCSS/수동 선택).
 2) **HTTP/2/3 + 캐싱**: CDN 사용 시 캐시 길게, 해시 버전 사용.
-3) **FOIT/FOUT 방지**:  
+3) **FOIT/FOUT 방지**:
    - `<link rel="preload" as="font" crossorigin>`로 폰트 미리 불러오기.
    - 초기 로딩에서 아이콘 자리 비는 현상을 줄임.
 4) **지연 로딩**: 접히는 섹션/모달에서 **필요할 때만** 로드.
@@ -360,7 +360,7 @@ export function Icon({ name, style="solid", className="", label }) {
 | **Heroicons** | Tailwind 톤, 깔끔한 선형 | SVG로 쓰기 좋음 |
 | **Remix Icon** | 미니멀, 풍부한 카테고리 | 무료/가벼움 |
 
-- **SVG 기반** 세트는 색/두께/접근성 제어가 세밀.  
+- **SVG 기반** 세트는 색/두께/접근성 제어가 세밀.
 - **폰트 기반**은 심플하고 빠른 생산성이 강점.
 
 ---
@@ -440,19 +440,19 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ## 16. 흔한 문제와 해결
 
-1) **아이콘이 줄 기준에서 들뜬다**  
+1) **아이콘이 줄 기준에서 들뜬다**
    → `vertical-align` 미세 조정(예: `-0.125em`), `line-height:1` 확인.
 
-2) **폰트 로딩 지연 시 아이콘 사라짐(FOUT/FOIT)**  
+2) **폰트 로딩 지연 시 아이콘 사라짐(FOUT/FOIT)**
    → 프리로드/캐싱, 중요한 곳은 **SVG 인라인**으로 대체.
 
-3) **색상/상태별 변형이 많다**  
+3) **색상/상태별 변형이 많다**
    → `currentColor` 기반 설계(부모에 색만 바꾸기), 또는 **CSS 변수**로 테마.
 
-4) **애니메이션 민감 사용자 불편**  
+4) **애니메이션 민감 사용자 불편**
    → `prefers-reduced-motion` 미디어 쿼리로 속도/회전 제한.
 
-5) **의미 전달 실패**  
+5) **의미 전달 실패**
    → `aria-label`/`sr-only` 텍스트 제공, 시각만 의존 금지.
 
 ---

@@ -8,10 +8,10 @@ category: AspNet
 
 ## 0. 큰 그림: EF Core로 보는 애플리케이션-DB 상호작용
 
-1. **엔티티**(모델 클래스) 작성  
-2. **DbContext**에 `DbSet<TEntity>` 노출 + `OnModelCreating`에서 구성  
-3. **DI 컨테이너**에 `DbContext` 등록 (연결 문자열, 공급자 선택)  
-4. **마이그레이션**으로 스키마 버전 관리 (`add` → `update`)  
+1. **엔티티**(모델 클래스) 작성
+2. **DbContext**에 `DbSet<TEntity>` 노출 + `OnModelCreating`에서 구성
+3. **DI 컨테이너**에 `DbContext` 등록 (연결 문자열, 공급자 선택)
+4. **마이그레이션**으로 스키마 버전 관리 (`add` → `update`)
 5. 서비스/핸들러에서 `DbContext` 사용 → LINQ 쿼리/추가/수정/삭제 → `SaveChanges()` 반영
 
 ---
@@ -357,8 +357,8 @@ public class BlogService
 ```
 
 ### 7.2 로딩 전략
-- **즉시 로딩(Eager)**: `Include`  
-- **명시적 로딩(Explicit)**: `Entry(...).Collection(...).LoadAsync()`  
+- **즉시 로딩(Eager)**: `Include`
+- **명시적 로딩(Explicit)**: `Entry(...).Collection(...).LoadAsync()`
 - **지연 로딩(Lazy)**: 프록시 사용(성능/예상치 못한 N+1 주의)
 
 ```csharp
@@ -516,8 +516,8 @@ var rows = await _db.Database
 
 ## 11. 성능 체크리스트
 
-- **컨텍스트 풀링**(`AddDbContextPool`)로 할당/GC 감축  
-- **읽기 쿼리 `AsNoTracking()`**  
+- **컨텍스트 풀링**(`AddDbContextPool`)로 할당/GC 감축
+- **읽기 쿼리 `AsNoTracking()`**
 - 필요한 경우 **SplitQuery** vs **SingleQuery** 밸런스 조정
 ```csharp
 _db.Blogs.Include(b => b.Posts).AsSplitQuery();
@@ -631,11 +631,11 @@ app.Run();
 
 ## 16. 트러블슈팅 FAQ
 
-- **마이그레이션 생성 안 됨**: 올바른 `Startup/Program` 구성/`DbContext` 생성자/Provider 체크  
-- **스냅샷 충돌**: 수동 편집 시 주의. 필요 시 `remove` 후 재생성  
-- **인덱스/외래키 이름 충돌**: Fluent API에서 명시적 이름 지정  
-- **N+1 느림**: `Include`/프로젝션/쿼리 재구성  
-- **잠금 경합**: 인덱스 튜닝/트랜잭션 범위 최소화/쓰기 배치화  
+- **마이그레이션 생성 안 됨**: 올바른 `Startup/Program` 구성/`DbContext` 생성자/Provider 체크
+- **스냅샷 충돌**: 수동 편집 시 주의. 필요 시 `remove` 후 재생성
+- **인덱스/외래키 이름 충돌**: Fluent API에서 명시적 이름 지정
+- **N+1 느림**: `Include`/프로젝션/쿼리 재구성
+- **잠금 경합**: 인덱스 튜닝/트랜잭션 범위 최소화/쓰기 배치화
 - **타임아웃**: `.CommandTimeout()`/쿼리 계획 점검
 
 ---
@@ -668,5 +668,5 @@ app.Run();
 
 # 마무리
 
-- 초안의 **핵심(모델 → DbContext → Program.cs → 마이그레이션 명령)**을 기반으로, 관계/인덱스/시드/동시성/성능/운영 배포까지 실무에 필요한 부분을 총망라했다.  
+- 초안의 **핵심(모델 → DbContext → Program.cs → 마이그레이션 명령)**을 기반으로, 관계/인덱스/시드/동시성/성능/운영 배포까지 실무에 필요한 부분을 총망라했다.
 - 여기의 패턴을 토대로 **테스트 가능한 구조**와 **안전한 마이그레이션 파이프라인**을 갖추면, 개발-운영 전 과정이 수월해진다.

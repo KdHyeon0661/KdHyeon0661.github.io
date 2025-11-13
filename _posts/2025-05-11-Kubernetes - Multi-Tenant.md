@@ -249,8 +249,8 @@ rules:
 
 ## 5. 스토리지 격리: StorageClass/Quota/백업 경계
 
-- PVC는 네임스페이스 경계를 벗어나지 않는다.  
-- 필요한 경우 팀 전용 StorageClass를 제공하고 ResourceQuota로 `requests.storage`를 제한한다.  
+- PVC는 네임스페이스 경계를 벗어나지 않는다.
+- 필요한 경우 팀 전용 StorageClass를 제공하고 ResourceQuota로 `requests.storage`를 제한한다.
 - 백업/복구 도구(예: Velero)는 네임스페이스 단위 스냅샷·복구 전략을 적용한다.
 
 예: 팀 전용 StorageClass 이름만 허용하도록 Kyverno로 강제(7장 참조).
@@ -457,7 +457,7 @@ Kyverno `mutate`로 자동 주입하는 것도 좋다.
 
 ### 9.3 과금/쇼백(Showback/Chargeback)
 
-- 자원 사용량 쿼리: `container_cpu_usage_seconds_total`, `container_memory_working_set_bytes`  
+- 자원 사용량 쿼리: `container_cpu_usage_seconds_total`, `container_memory_working_set_bytes`
 - 스토리지 사용: PVC capacity 및 CSI metrics
 - 네임스페이스 라벨 단위로 **코스트 대시보드** 구축
 
@@ -640,9 +640,9 @@ kubectl apply -f 01-namespace.yaml \
 
 ## 결론
 
-1) **네임스페이스**는 멀티 테넌시의 기초다.  
-2) **PSA/Quota/LimitRange/NetworkPolicy/RBAC**를 “세트”로 묶어 **기본 안전 장치**를 만든다.  
-3) 필요 시 **노드 풀 격리**(테인트/어피니티), **스토리지 클래스 분리**, **정책 엔진(Kyverno/OPA)** 로 거버넌스를 강화한다.  
+1) **네임스페이스**는 멀티 테넌시의 기초다.
+2) **PSA/Quota/LimitRange/NetworkPolicy/RBAC**를 “세트”로 묶어 **기본 안전 장치**를 만든다.
+3) 필요 시 **노드 풀 격리**(테인트/어피니티), **스토리지 클래스 분리**, **정책 엔진(Kyverno/OPA)** 로 거버넌스를 강화한다.
 4) **Helm/Kustomize**로 테넌트 온보딩을 자동화하고, **라벨 표준화 + 관측/감사/코스트**를 통해 운영 가시성을 확보한다.
 
 이 글의 매니페스트/정책 템플릿을 조합하면, 한 클러스터에서 **안전하고 예측 가능한 멀티 테넌시**를 즉시 구축·검증할 수 있다.

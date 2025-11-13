@@ -11,7 +11,7 @@ category: WPF
 - **Routed Event** = “이벤트가 **트리를 따라 이동**하는” WPF 이벤트. 세 가지 라우팅 전략:
   1) **Direct**: 발생한 요소에서만 처리 (WinForms 스타일)
   2) **Bubbling**: **자식 → 부모**(컨트롤에서 Window까지)로 **위로** 올라감
-  3) **Tunneling**: **루트 → 자식**(Window에서 컨트롤까지)로 **아래로** 내려감  
+  3) **Tunneling**: **루트 → 자식**(Window에서 컨트롤까지)로 **아래로** 내려감
      - WPF 관례: 터널링 이름은 **`Preview` 접두사** (예: `PreviewMouseDown`)
 - 이동 경로: **Visual Tree**(대부분) + 특정 시나리오에서 **ContentElement**/**3D** 등 포함
 
@@ -88,7 +88,7 @@ private void Button_Click(object s, RoutedEventArgs e) => Log("Button.Click", e)
 
 ## 3. `e.Handled`의 의미와 “이벤트가 안 온다” 문제
 
-- **`e.Handled = true`**: “이 이벤트는 처리됨” → **동일 이벤트의 라우트 이후 단계에서 더 이상 호출되지 않음**  
+- **`e.Handled = true`**: “이 이벤트는 처리됨” → **동일 이벤트의 라우트 이후 단계에서 더 이상 호출되지 않음**
   (단, **강제 구독**하는 방법 있음: `AddHandler(RoutedEvent, Handler, handledEventsToo: true)`)
 
 ### 3.1 Handled에 막히는 예시
@@ -122,7 +122,7 @@ private void CatchAll_MouseDown(object s, MouseButtonEventArgs e) =>
 
 ## 4. Routed Event의 “라우트(Route)”는 어떻게 구성될까?
 
-- 이벤트 발생 시 프레임워크가 **히트된 시각 요소**(`OriginalSource`)에서 시작해 **Visual Tree**를 따라 “경로”를 만들고,  
+- 이벤트 발생 시 프레임워크가 **히트된 시각 요소**(`OriginalSource`)에서 시작해 **Visual Tree**를 따라 “경로”를 만들고,
   전략에 따라 **내려가거나(터널)** **올라오면서(버블)** 각 노드의 클래스 핸들러/인스턴스 핸들러를 호출합니다.
 - **ContentElement**나 **3D** 요소도 참여할 수 있으며, **`EventRoute`** 내부적으로 클래스 핸들러 → 인스턴스 핸들러 순서 등 호출 규칙을 가집니다.
 
@@ -196,7 +196,7 @@ public class Card : Control
 }
 ```
 
-> **포인트**: `RegisterClassHandler`는 **특정 형식(Type)**에 대해 **전역적으로** “해당 형식 인스턴스의 라우트에 올라오는 이벤트”를 가로챕니다.  
+> **포인트**: `RegisterClassHandler`는 **특정 형식(Type)**에 대해 **전역적으로** “해당 형식 인스턴스의 라우트에 올라오는 이벤트”를 가로챕니다.
 > 템플릿 구조가 바뀌어도 Control은 안정적으로 내부 이벤트를 수신할 수 있어 **캡슐화**가 좋아집니다.
 
 ---
@@ -251,7 +251,7 @@ private void Stepper_StepChanged(object s, RoutedPropertyChangedEventArgs<int> e
 }
 ```
 
-> **`RoutedPropertyChangedEventArgs<T>`**를 이용하면 **이전/새 값**을 자연스럽게 전달.  
+> **`RoutedPropertyChangedEventArgs<T>`**를 이용하면 **이전/새 값**을 자연스럽게 전달.
 > `RoutingStrategy`를 `Tunnel`로 두면 **`PreviewStepChanged`**처럼 이름을 짓는 관례를 따르는 게 좋습니다.
 
 ---
@@ -288,7 +288,7 @@ public class HyperLabel : Label
 ## 9. 명령(Command) 라우팅과의 관계
 
 - `ICommand`/`RoutedCommand`는 내부적으로 **Input(키/마우스) RoutedEvent**와 결합됩니다.
-- 예: `Button` 클릭 → `Click`(RoutedEvent) → `Command` 실행  
+- 예: `Button` 클릭 → `Click`(RoutedEvent) → `Command` 실행
   또는 키 제스처 → `CommandBinding` 탐색(버블 라우팅) → `CanExecute/Executed` 호출
 
 ### 9.1 예제
@@ -306,7 +306,7 @@ private void Copy_CanExecute(object s, CanExecuteRoutedEventArgs e) => e.CanExec
 private void Copy_Executed(object s, ExecutedRoutedEventArgs e) { /* 수행 */ }
 ```
 
-> **핵심**: 명령 바인딩 탐색도 **라우트(버블)**의 일종.  
+> **핵심**: 명령 바인딩 탐색도 **라우트(버블)**의 일종.
 > “왜 내 `Executed`가 안 불리지?” → **상위에 `CommandBinding`이 있는지**, `Handled`로 막힌 이벤트는 아닌지 점검.
 
 ---
@@ -329,9 +329,9 @@ private void Any_MouseDown(object s, MouseButtonEventArgs e)
 
 ## 11. 템플릿/컨트롤 경계에서의 라우팅 팁
 
-- **ControlTemplate 내부**의 요소가 일으킨 버블 이벤트는 **컨트롤 인스턴스**까지 쭉 올라옵니다.  
+- **ControlTemplate 내부**의 요소가 일으킨 버블 이벤트는 **컨트롤 인스턴스**까지 쭉 올라옵니다.
   → 외부에서는 “Control이 낸 것처럼” 다룰 수 있어 **구현 은닉**이 됩니다.
-- 반대로 **Preview 이벤트(터널링)**는 **Window → … → Control → Template Child** 순으로 내려오므로,  
+- 반대로 **Preview 이벤트(터널링)**는 **Window → … → Control → Template Child** 순으로 내려오므로,
   **상위에서 선제 차단**하거나 **컨트롤에서 필터**가 가능합니다.
 
 ---
@@ -352,7 +352,7 @@ private void Any_MouseDown(object s, MouseButtonEventArgs e)
 
 컨트롤 파생 시 보통 다음 순서로 호출됩니다.
 
-1. **터널링 클래스 핸들러** → **인스턴스 `OnPreview…` 오버라이드** → 인스턴스 XAML 핸들러  
+1. **터널링 클래스 핸들러** → **인스턴스 `OnPreview…` 오버라이드** → 인스턴스 XAML 핸들러
 2. (핸들링/차단이 없으면) **버블링 인스턴스 `On…`** → XAML 핸들러 → 상위로 버블 계속
 
 ```csharp
@@ -431,7 +431,7 @@ AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler((s, e) =>
 
 ## 16. 성능과 안정성 체크리스트
 
-- **핸들러 최소화**: 최상위(Window)에 광범위한 핸들러를 많이 달면 불필요한 호출 증가  
+- **핸들러 최소화**: 최상위(Window)에 광범위한 핸들러를 많이 달면 불필요한 호출 증가
   → **정말 필요한 이벤트만** 구독, 내부에서 **조기 필터** (예: 타입/Name)
 - **`Handled` 남용 금지**: 명령/단축키 등 다른 기능이 막힐 수 있음
 - **템플릿 변경 영향**: `OriginalSource`가 바뀌어도 견고한 탐색 로직(`FindAncestor<T>`) 사용
@@ -441,13 +441,13 @@ AddHandler(UIElement.MouseDownEvent, new MouseButtonEventHandler((s, e) =>
 
 ## 17. “왜 내 이벤트가 안 오지?” 체크리스트
 
-1. **다른 곳에서 `Handled = true` 했나?**  
+1. **다른 곳에서 `Handled = true` 했나?**
    → `AddHandler(ev, handler, handledEventsToo:true)`로 확인/우회
-2. **템플릿 자식이 포커스를 먹는가?**  
+2. **템플릿 자식이 포커스를 먹는가?**
    → 포커스 이동 정책 조정, `Focusable="False"` 고려
-3. **Route가 해당 컨테이너로 안 올라오나?**  
+3. **Route가 해당 컨테이너로 안 올라오나?**
    → Visual Tree 상의 부모가 맞는지(팝업/Adorner 등은 별 트리), `StaysOpen`/Popup Placement 영향 확인
-4. **Drag&Drop/ContextMenu**는 다른 루프?  
+4. **Drag&Drop/ContextMenu**는 다른 루프?
    → 별도 Mouse capture/Popup Window로 인해 루트가 다를 수 있음
 
 ---
@@ -511,8 +511,8 @@ public class Spy : Decorator
 
 ## 19. RoutedEvent와 “가상화 컨테이너” (ItemsControl)
 
-- `ListBox`/`ListView`의 **가상화**가 켜져 있으면(기본) **화면에 보이는 아이템만** 컨테이너가 생성됩니다.  
-  → 스크롤로 “새로운 컨테이너”가 만들어지면 **클래스 핸들러**가 자동 적용되(도록 설계),  
+- `ListBox`/`ListView`의 **가상화**가 켜져 있으면(기본) **화면에 보이는 아이템만** 컨테이너가 생성됩니다.
+  → 스크롤로 “새로운 컨테이너”가 만들어지면 **클래스 핸들러**가 자동 적용되(도록 설계),
   라우팅도 정상 작동합니다.
 - 단, `ItemContainerStyle`에서 **무거운 트리거/이벤트 작업**은 컨테이너 재사용(Recycling) 시 **상태 꼬임**을 유발할 수 있습니다.
 
@@ -520,18 +520,18 @@ public class Spy : Decorator
 
 ## 20. 실전 Q&A (면접/코드 리뷰에서 자주 나오는 포인트)
 
-**Q1. 터널링과 버블링을 각각 언제 쓰나요?**  
-- **터널링**: **사전 필터**(예: 특정 영역 클릭 금지, 글로벌 단축키 선점, 모달 오버레이)  
+**Q1. 터널링과 버블링을 각각 언제 쓰나요?**
+- **터널링**: **사전 필터**(예: 특정 영역 클릭 금지, 글로벌 단축키 선점, 모달 오버레이)
 - **버블링**: **상위 정책/명령 집행**(예: 리스트 안의 모든 “삭제” 버튼을 상위에서 하나의 커맨드로 처리)
 
-**Q2. `Handled=true`의 부작용은?**  
+**Q2. `Handled=true`의 부작용은?**
 - 이후 라우트가 차단 → **명령 실행/바인딩/다른 핸들러**가 동작하지 않을 수 있음
 
-**Q3. 템플릿 변경에 안전한 코드는?**  
+**Q3. 템플릿 변경에 안전한 코드는?**
 - `OriginalSource`에서 **조상 탐색**(유틸 메서드) → `Name`/`Tag`/`TemplatedParent`로 판별
 
-**Q4. 클래스 핸들러와 인스턴스 핸들러 우선순위?**  
-- **클래스 핸들러**가 먼저 개입할 수 있습니다(등록 시점/라우트 단계에 따라).  
+**Q4. 클래스 핸들러와 인스턴스 핸들러 우선순위?**
+- **클래스 핸들러**가 먼저 개입할 수 있습니다(등록 시점/라우트 단계에 따라).
   공통 행동/차단은 클래스 핸들러, 개별 행동은 인스턴스 핸들러로 나누세요.
 
 ---
@@ -557,16 +557,16 @@ public static class VisualTreeHelpers
 
 ## 22. Drag&Drop와 RoutedEvent
 
-- Drag 시작은 보통 `MouseMove`+`LeftButtonDown` 조합 → `DoDragDrop` 호출  
-- Drop 대상은 **`AllowDrop=true`** 필요 + `DragEnter/Over/Leave/Drop`(Routed)  
+- Drag 시작은 보통 `MouseMove`+`LeftButtonDown` 조합 → `DoDragDrop` 호출
+- Drop 대상은 **`AllowDrop=true`** 필요 + `DragEnter/Over/Leave/Drop`(Routed)
 - Preview 단계에서 **파일 확장자/데이터 포맷 필터** 후 `Handled=true`로 조기 차단 가능
 
 ---
 
 ## 23. Popup/Adorner/Topmost 경계
 
-- `Popup`은 **별도 윈도우**로 떠서 **Visual Tree가 분리**됩니다.  
-  → 라우팅이 **부모 창으로 버블되지 않음**. 필요하면 **`PlacementTarget`**로 상호작용 설계.  
+- `Popup`은 **별도 윈도우**로 떠서 **Visual Tree가 분리**됩니다.
+  → 라우팅이 **부모 창으로 버블되지 않음**. 필요하면 **`PlacementTarget`**로 상호작용 설계.
 - **AdornerLayer**는 시각 트리 레이어이지만 라우팅은 기본적으로 **원본 트리**를 따릅니다.
 
 ---
@@ -587,7 +587,7 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 
 ## 25. 테스트 전략
 
-- **단위 테스트**: ViewModel/Command 로직은 테스트 쉽지만, 이벤트 라우팅은 **UI 런타임 필요**  
+- **단위 테스트**: ViewModel/Command 로직은 테스트 쉽지만, 이벤트 라우팅은 **UI 런타임 필요**
   → **UI 테스트 프레임워크**(Playwright-WPF 브릿지, TestStack.White 등) 또는 **시뮬레이터** 사용
 - **시각 검사**: Spy/로거로 사건 순서/Handled 여부 규칙 검증
 
@@ -628,42 +628,42 @@ private void Overlay_PreviewKeyDown(object s, KeyEventArgs e)
 }
 ```
 
-> **터널링** 덕분에 부모 레이어에서 **아래 자식들에게 내려가기 전에** 이벤트를 **흡수**하여  
+> **터널링** 덕분에 부모 레이어에서 **아래 자식들에게 내려가기 전에** 이벤트를 **흡수**하여
 > 뒤쪽 컨트롤이 실수로 클릭되는 것을 막을 수 있습니다.
 
 ---
 
 ## 27. 요약 체크리스트
 
-- [ ] 터널링 = **Preview** 하향식, 버블링 = 상향식  
-- [ ] `Handled`는 라우트 **차단** / `AddHandler(…, true)`로 **무시** 가능  
-- [ ] 템플릿 내부 이벤트는 **클래스 핸들러**로 캡슐화  
-- [ ] `OriginalSource` 기준으로 **정확한 발신자 판별**  
-- [ ] 명령 라우팅과 이벤트 라우팅의 **협업** 이해  
-- [ ] Popup/Adorner/가상화 등 **특수 트리**에서 라우팅 경계 인지  
+- [ ] 터널링 = **Preview** 하향식, 버블링 = 상향식
+- [ ] `Handled`는 라우트 **차단** / `AddHandler(…, true)`로 **무시** 가능
+- [ ] 템플릿 내부 이벤트는 **클래스 핸들러**로 캡슐화
+- [ ] `OriginalSource` 기준으로 **정확한 발신자 판별**
+- [ ] 명령 라우팅과 이벤트 라우팅의 **협업** 이해
+- [ ] Popup/Adorner/가상화 등 **특수 트리**에서 라우팅 경계 인지
 - [ ] 성능: 상위에 **광범위 핸들러 남발 금지**, 조기 필터 적용
 
 ---
 
 ## 28. 마무리
 
-Routed Event는 단순 “이벤트가 위아래로 움직인다”가 아니라,  
-**입력 정책의 중앙집중, 템플릿 캡슐화, 상위 명령 승격, 모달/오버레이, 고급 단축키 처리**까지  
+Routed Event는 단순 “이벤트가 위아래로 움직인다”가 아니라,
+**입력 정책의 중앙집중, 템플릿 캡슐화, 상위 명령 승격, 모달/오버레이, 고급 단축키 처리**까지
 WPF의 **표현력 있는 상호작용**을 가능케 하는 핵심입니다.
 
 현업에서는 아래 세 가지를 특히 기억하세요.
 
-1) **Preview에서 필터, 일반에서 행위** (필요 시 `Handled=true`)  
-2) **타인의 Handled를 뚫어야 하면 `handledEventsToo:true`**  
+1) **Preview에서 필터, 일반에서 행위** (필요 시 `Handled=true`)
+2) **타인의 Handled를 뚫어야 하면 `handledEventsToo:true`**
 3) **템플릿 내부를 외부 계약으로 끌어올릴 땐 `RegisterClassHandler` + 커스텀 RoutedEvent**
 
-이 가이드를 토대로 팀 코드에서 “왜 이 이벤트가 여기서 잡히고/안 잡히는지”를 명쾌하게 설명하고,  
+이 가이드를 토대로 팀 코드에서 “왜 이 이벤트가 여기서 잡히고/안 잡히는지”를 명쾌하게 설명하고,
 안정적이고 예측 가능한 입력/명령 시스템을 설계해 보세요. 🚀
 
 ---
 ### 부록 A) 전체 예제 코드(요약)
 
-> 본문 예제를 하나의 프로젝트에 모은 버전(핵심 부분만).  
+> 본문 예제를 하나의 프로젝트에 모은 버전(핵심 부분만).
 > 필요하시면 **완전 실행 가능한 솔루션** 형태로도 정리해 드릴게요.
 
 ```csharp

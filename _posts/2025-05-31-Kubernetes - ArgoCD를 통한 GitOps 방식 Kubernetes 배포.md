@@ -361,17 +361,17 @@ SLO(예: 99%)를 유지하도록 롤백/게이트 조정.
 
 ### 11.1 신규 서비스 온보딩(Helm)
 
-1. `charts/newsvc/` 추가, `values-{env}.yaml` 작성  
-2. `apps/newsvc/overlays/{env}` → Ingress/리소스 설정  
-3. `ApplicationSet`에 env/cluster 요소 추가  
-4. PR → 리뷰/머지 → Argo CD가 앱 생성·Sync  
+1. `charts/newsvc/` 추가, `values-{env}.yaml` 작성
+2. `apps/newsvc/overlays/{env}` → Ingress/리소스 설정
+3. `ApplicationSet`에 env/cluster 요소 추가
+4. PR → 리뷰/머지 → Argo CD가 앱 생성·Sync
 5. 알림으로 확인, 드리프트/헬스 모니터링
 
 ### 11.2 마이그레이션 훅 포함 배포
 
-- `PreSync` Job로 DB 마이그 실행  
-- 캔어리로 10% → 50% → 100%  
-- `PostSync`로 캐시 예열/서킷 검증  
+- `PreSync` Job로 DB 마이그 실행
+- 캔어리로 10% → 50% → 100%
+- `PostSync`로 캐시 예열/서킷 검증
 - 이상 시 자동 중단, `argocd app rollback`(또는 Rollouts 자동 롤백)
 
 ---
@@ -508,14 +508,14 @@ spec:
 
 ## 16. 운영 체크리스트(한 장 요약)
 
-- [ ] Git 브랜치 전략/PR 필수/CI 검증  
-- [ ] AppProject로 소스/대상/권한 제약  
-- [ ] ApplicationSet으로 환경/클러스터 확장 자동화  
-- [ ] Sync 옵션(Prune/SelfHeal/OutOfSyncOnly)·웨이브·훅 설계  
-- [ ] Rollouts로 점진 배포 + SLO/게이트  
-- [ ] Secret: SOPS/SealedSecrets/Vault 중 택1  
-- [ ] Notifications·대시보드·SLO/알림  
-- [ ] DR: root app·컨피그 백업·복구 리허설  
+- [ ] Git 브랜치 전략/PR 필수/CI 검증
+- [ ] AppProject로 소스/대상/권한 제약
+- [ ] ApplicationSet으로 환경/클러스터 확장 자동화
+- [ ] Sync 옵션(Prune/SelfHeal/OutOfSyncOnly)·웨이브·훅 설계
+- [ ] Rollouts로 점진 배포 + SLO/게이트
+- [ ] Secret: SOPS/SealedSecrets/Vault 중 택1
+- [ ] Notifications·대시보드·SLO/알림
+- [ ] DR: root app·컨피그 백업·복구 리허설
 - [ ] **클러스터 내 수동 변경 금지**(드리프트 근절)
 
 ---
@@ -530,9 +530,9 @@ spec:
 
 ## 참고 링크
 
-- Argo CD 문서: <https://argo-cd.readthedocs.io/>  
-- Argo Rollouts: <https://argoproj.github.io/argo-rollouts/>  
-- ApplicationSet: <https://argocd-applicationset.readthedocs.io/>  
-- GitOps 소개: <https://www.weave.works/technologies/gitops/>  
-- SOPS: <https://github.com/mozilla/sops> / SealedSecrets: <https://github.com/bitnami-labs/sealed-secrets>  
+- Argo CD 문서: <https://argo-cd.readthedocs.io/>
+- Argo Rollouts: <https://argoproj.github.io/argo-rollouts/>
+- ApplicationSet: <https://argocd-applicationset.readthedocs.io/>
+- GitOps 소개: <https://www.weave.works/technologies/gitops/>
+- SOPS: <https://github.com/mozilla/sops> / SealedSecrets: <https://github.com/bitnami-labs/sealed-secrets>
 - External Secrets Operator: <https://external-secrets.io/>

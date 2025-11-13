@@ -465,7 +465,7 @@ ReadOnlySpan<byte> written = writer.WrittenSpan;
 ## 부록 B) 안전성 주의
 
 - `Span<T>`는 **ref struct** → **필드/박싱/비동기** 금지
-- `MemoryMarshal`/`Unsafe`는 **전제(레이아웃/정렬/엔디언)**가 틀리면 **UB**  
+- `MemoryMarshal`/`Unsafe`는 **전제(레이아웃/정렬/엔디언)**가 틀리면 **UB**
 - `stackalloc`은 **크기 제한**을 지키고, 루프 내부 대형 할당 금지
 - Pool은 **Return 보장** 및 외부로 **장기 노출 금지**
 
@@ -473,8 +473,8 @@ ReadOnlySpan<byte> written = writer.WrittenSpan;
 
 ## 결론
 
-- 문자열/바이너리/네트워크/파일 등 **모든 I/O 경계**에서 `Span<T>`/`Memory<T>`를 잘 활용하면 **할당/복사/핀 고정**을 대폭 줄일 수 있다.  
-- 스트리밍은 `IBufferWriter` + `SequenceReader`/`Pipelines`가 정석.  
+- 문자열/바이너리/네트워크/파일 등 **모든 I/O 경계**에서 `Span<T>`/`Memory<T>`를 잘 활용하면 **할당/복사/핀 고정**을 대폭 줄일 수 있다.
+- 스트리밍은 `IBufferWriter` + `SequenceReader`/`Pipelines`가 정석.
 - 고급 변환은 `MemoryMarshal`/`BinaryPrimitives`로 **정확·안전**하게.
 
 이 글의 예제들을 바로 적용해, **GC 압력과 지연시간을 눈에 띄게 낮추는** 코드를 만들어 보자.

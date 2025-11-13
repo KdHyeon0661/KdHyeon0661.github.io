@@ -8,8 +8,8 @@ category: CSS
 
 ## 0. 한눈에 보는 결론
 
-- **CSS**: 런타임(브라우저)에서 동작. 표준/호환성/간결함. 최신 사양(`:has()`, `@layer`, 컨테이너쿼리, 부분적 네스팅 등)도 빠르게 채택 중.  
-- **Sass(SCSS)**: 컴파일 타임에 **구조화/재사용/자동화**를 돕는 도구. 큰 코드베이스/디자인시스템에서 **토큰·유틸 자동생성**, **모듈화**, **반복 제거**에 탁월.  
+- **CSS**: 런타임(브라우저)에서 동작. 표준/호환성/간결함. 최신 사양(`:has()`, `@layer`, 컨테이너쿼리, 부분적 네스팅 등)도 빠르게 채택 중.
+- **Sass(SCSS)**: 컴파일 타임에 **구조화/재사용/자동화**를 돕는 도구. 큰 코드베이스/디자인시스템에서 **토큰·유틸 자동생성**, **모듈화**, **반복 제거**에 탁월.
 - **정답은 “둘 다”**: **설계 토큰·유틸리티·반복 생성**은 Sass, **런타임 테마/환경 선호도**는 CSS 변수와 현대 CSS로 처리하는 **하이브리드 전략**이 실무 최적.
 
 ---
@@ -139,7 +139,7 @@ $bp: ("md": 768px, "lg": 1024px);
 
 ## 5. CSS 변수와 Sass의 **하이브리드 전략**
 
-- **Sass**로 **설계 토큰·유틸리티/컴포넌트 CSS 생성**,  
+- **Sass**로 **설계 토큰·유틸리티/컴포넌트 CSS 생성**,
 - **CSS 변수**로 **런타임 테마/환경 선호도** 대응.
 
 **하이브리드 예시**
@@ -200,7 +200,7 @@ $bp: ("sm": 640px, "md": 768px, "lg": 1024px);
 h1 { font-size: fluid(1.5rem, 3rem); } /* 화면폭에 비례해 부드럽게 */
 ```
 
-> 수식 개념:  
+> 수식 개념:
 > $$ f(w)=\mathrm{clamp}\big(f_{\min}, a\cdot w + b, f_{\max}\big),\quad a=\frac{f_{\max}-f_{\min}}{vw_{\max}-vw_{\min}} $$
 
 ### 6.3 컨테이너 쿼리와 SCSS
@@ -312,16 +312,16 @@ module.exports = { plugins: { autoprefixer: {} } };
 ```
 
 ### 8.3 Vite/Webpack/Gulp
-- **Vite**: `preprocessorOptions.scss.additionalData`로 전역 토큰 주입 가능.  
-- **Webpack**: `sass-loader` + `postcss-loader` + `css-loader` + `MiniCssExtractPlugin`.  
+- **Vite**: `preprocessorOptions.scss.additionalData`로 전역 토큰 주입 가능.
+- **Webpack**: `sass-loader` + `postcss-loader` + `css-loader` + `MiniCssExtractPlugin`.
 - **Gulp**: `gulp-sass` + `autoprefixer` + `clean-css` + sourcemaps.
 
 ---
 
 ## 9. 품질: Stylelint/Prettier/레이어링
 
-- **Stylelint(standard-scss)**로 규칙/일관성 확보, **Prettier**로 포맷.  
-- CSS의 **`@layer`**로 우선순위 층 나누기(초기화/base → 컴포넌트 → 유틸 → 페이지 오버라이드).  
+- **Stylelint(standard-scss)**로 규칙/일관성 확보, **Prettier**로 포맷.
+- CSS의 **`@layer`**로 우선순위 층 나누기(초기화/base → 컴포넌트 → 유틸 → 페이지 오버라이드).
 - **소스맵**은 개발만, **압축/해시**로 배포 최적화.
 
 ---
@@ -340,9 +340,9 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ## 11. 언제 무엇을 쓰나? (의사결정 가이드)
 
-- **소규모/순수 마크업**: 최신 CSS만으로도 충분(`:has()`, `@layer`, 컨테이너쿼리, 제한적 네스팅).  
-- **디자인 시스템/대규모**: **Sass + CSS 변수 하이브리드** 권장.  
-  - Sass: 토큰·유틸·반복 생성, 모듈, 품질 파이프라인  
+- **소규모/순수 마크업**: 최신 CSS만으로도 충분(`:has()`, `@layer`, 컨테이너쿼리, 제한적 네스팅).
+- **디자인 시스템/대규모**: **Sass + CSS 변수 하이브리드** 권장.
+  - Sass: 토큰·유틸·반복 생성, 모듈, 품질 파이프라인
   - CSS: 런타임 테마/환경 선호도(다크모드, `prefers-reduced-motion`, 컨테이너 기반 조정)
 - **SSR/프레임워크**: CSS Modules/Scoped CSS와 함께 쓰되, 전역 토큰/유틸은 Sass로 관리.
 
@@ -371,11 +371,11 @@ module.exports = { plugins: { autoprefixer: {} } };
 
 ## 13. 트러블슈팅/주의점
 
-- **슬래시 나눗셈 경고**: `10px/2` → `@use "sass:math"; math.div(10px, 2)` 사용.  
-- **과도한 중첩**: 특이도 폭발/유지보수 악화 → 3~4단계 이내.  
-- **`@extend` 남용 금지**: 선택자 병합 부작용 → 믹스인 우선.  
-- **경로 문제**: includePaths/별칭 정리.  
-- **CSS 변수 폴백**: 런타임 변수 사용 시 합리적 기본값 준비.  
+- **슬래시 나눗셈 경고**: `10px/2` → `@use "sass:math"; math.div(10px, 2)` 사용.
+- **과도한 중첩**: 특이도 폭발/유지보수 악화 → 3~4단계 이내.
+- **`@extend` 남용 금지**: 선택자 병합 부작용 → 믹스인 우선.
+- **경로 문제**: includePaths/별칭 정리.
+- **CSS 변수 폴백**: 런타임 변수 사용 시 합리적 기본값 준비.
 - **브라우저 지원**: 최신 CSS 기능(네스팅/컨테이너쿼리)은 대상 브라우저 범위 확인 후 단계적 적용.
 
 ---
@@ -441,16 +441,16 @@ $bp: ("md": 768px, "lg": 1024px);
 
 ## 15. 참고 링크
 
-- Sass 공식 문서: https://sass-lang.com/documentation  
-- Sass 설치: https://sass-lang.com/install  
-- Autoprefixer: https://github.com/postcss/autoprefixer  
-- Stylelint SCSS: https://github.com/stylelint-scss/stylelint-scss  
+- Sass 공식 문서: https://sass-lang.com/documentation
+- Sass 설치: https://sass-lang.com/install
+- Autoprefixer: https://github.com/postcss/autoprefixer
+- Stylelint SCSS: https://github.com/stylelint-scss/stylelint-scss
 - CSS Custom Properties 가이드: https://css-tricks.com/a-complete-guide-to-custom-properties/
 
 ---
 
 ## 마무리
 
-- **Sass**는 “대규모 스타일의 설계·유지보수·자동화”에 강하고, **CSS**는 “런타임 적응성과 표준성”이 강점입니다.  
-- **하이브리드**로 설계하면(토큰/유틸은 Sass, 테마/환경은 CSS 변수) **개발 효율 + UX 적응성**을 동시에 얻을 수 있습니다.  
+- **Sass**는 “대규모 스타일의 설계·유지보수·자동화”에 강하고, **CSS**는 “런타임 적응성과 표준성”이 강점입니다.
+- **하이브리드**로 설계하면(토큰/유틸은 Sass, 테마/환경은 CSS 변수) **개발 효율 + UX 적응성**을 동시에 얻을 수 있습니다.
 - 새로운 프로젝트라면 `@use/@forward` 기반 모듈화, 맵·믹스인·함수로 **반복 제거**, CSS 변수로 **테마/접근성**을 완성하세요.

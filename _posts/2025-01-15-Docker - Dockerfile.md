@@ -25,7 +25,7 @@ my-app/
 ## 2. 빌드 컨텍스트와 .dockerignore
 
 ### 2.1 빌드 컨텍스트
-`docker build` 시 지정한 디렉터리(예: `.`)의 파일들이 **컨텍스트**로 데몬에 전송됩니다.  
+`docker build` 시 지정한 디렉터리(예: `.`)의 파일들이 **컨텍스트**로 데몬에 전송됩니다.
 컨텍스트가 크면 느려지고 캐시가 자주 무효화됩니다. 반드시 `.dockerignore`로 다이어트하세요.
 
 ### 2.2 .dockerignore 예시
@@ -86,7 +86,7 @@ FROM python:3.11-slim
 # FROM python@sha256:<digest>
 ```
 
-- `*-slim`, `alpine`, `distroless`, `scratch` 등을 요구에 따라 선택.  
+- `*-slim`, `alpine`, `distroless`, `scratch` 등을 요구에 따라 선택.
 - **재현성**을 위해 태그 대신 **다이제스트 고정**을 고려.
 
 ---
@@ -122,9 +122,9 @@ ADD https://example.com/app.tar.gz /opt/   # 특별한 경우
 ## 7. CMD vs ENTRYPOINT — exec form을 기본으로
 
 ### 7.1 exec form vs shell form
-- exec form(권장): `["nginx","-g","daemon off;"]`  
+- exec form(권장): `["nginx","-g","daemon off;"]`
   신호 전달/프로세스 종료가 안정적(PID 1 문제 감소)
-- shell form: `nginx -g "daemon off;"`  
+- shell form: `nginx -g "daemon off;"`
   셸을 거쳐 신호 전달이 왜곡될 수 있음
 
 ### 7.2 조합 패턴

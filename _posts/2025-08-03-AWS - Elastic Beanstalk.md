@@ -8,7 +8,7 @@ category: AWS
 
 ## 0. 왜 Elastic Beanstalk(EB)인가?
 
-Elastic Beanstalk(이하 EB)은 **PaaS 성향의 관리형 배포 프레임워크**입니다.  
+Elastic Beanstalk(이하 EB)은 **PaaS 성향의 관리형 배포 프레임워크**입니다.
 코드를 업로드하면 EB가 **EC2 / ALB / Auto Scaling / CloudWatch / IAM** 등을 **템플릿+오케스트레이션**으로 묶어 자동 구성·운영합니다.
 
 - **핵심 가치**
@@ -181,7 +181,7 @@ option_settings:
 > 참고: EB 플랫폼/브랜치마다 사용 가능한 Namespaces와 옵션 키가 다릅니다. 콘솔에서 내보내기/가져오기 기능을 활용해 키를 역추적하면 안전합니다.
 
 ### 4.2 .platform hooks (플랫폼 훅)
-- 경로: `.platform/hooks/{prebuild,predeploy,postdeploy,...}`  
+- 경로: `.platform/hooks/{prebuild,predeploy,postdeploy,...}`
 - 쉘 스크립트로 배포 전후 동작 정의(캐시 클리어, 마이그레이션 등)
 
 `predeploy/00_db_migrate.sh`:
@@ -231,9 +231,9 @@ add_header Content-Security-Policy "default-src 'self'";
 | Blue/Green | 별도 환경 준비 → CNAME 스왑 | 없음 | 높음 | 가장 안전, 롤백 용이 |
 
 ### 5.2 Blue/Green 절차(요약)
-1) 기존(Blue) 환경과 동일 설정으로 새(Green) 환경 생성  
-2) Green 환경에서 검증(헬스체크/연기 테스트)  
-3) 콘솔/CLI로 **CNAME Swap**  
+1) 기존(Blue) 환경과 동일 설정으로 새(Green) 환경 생성
+2) Green 환경에서 검증(헬스체크/연기 테스트)
+3) 콘솔/CLI로 **CNAME Swap**
 ```bash
 aws elasticbeanstalk swap-environment-cnames \
   --source-environment-name blue-env \
@@ -305,7 +305,7 @@ option_settings:
 - 로그 보존 기간 설정(예: 7~30일), 지표 필터로 오류율 알람
 
 ### 8.2 메트릭/알람
-- EC2/ELB/ASG/CPU/메모리(CloudWatch Agent)  
+- EC2/ELB/ASG/CPU/메모리(CloudWatch Agent)
 - ALB 5xx 증가/응답지연 증가 알람 → SNS/ChatOps
 
 ### 8.3 트레이싱
@@ -534,9 +534,9 @@ export class EbStack extends cdk.Stack {
 
 ## 17. 요약
 
-- **Elastic Beanstalk = “코드에 집중”**을 가능케 하는 AWS의 PaaS 스타일 배포 자동화.  
-- 인프라 생성/운영(EC2/ALB/ASG/CloudWatch/IAM)을 추상화하고, **배포 전략/스케일링/모니터링**까지 일괄 제공.  
-- 복잡도가 낮은 **웹/백오피스/API/워커** 워크로드에 특히 유용.  
+- **Elastic Beanstalk = “코드에 집중”**을 가능케 하는 AWS의 PaaS 스타일 배포 자동화.
+- 인프라 생성/운영(EC2/ALB/ASG/CloudWatch/IAM)을 추상화하고, **배포 전략/스케일링/모니터링**까지 일괄 제공.
+- 복잡도가 낮은 **웹/백오피스/API/워커** 워크로드에 특히 유용.
 - **보안/관측/스케일/데이터 분리** 원칙을 적용하면, EB만으로도 **프로덕션 품질**의 운영이 충분히 가능.
 
 ---

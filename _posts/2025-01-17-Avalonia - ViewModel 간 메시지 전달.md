@@ -139,7 +139,7 @@ MessageBus.Current.Listen<UserNameChangedMessage>(BusContracts.Profile)
     .Subscribe(...);
 ```
 
-> 장점: 타입 충돌 없이 **모듈 단위 채널화** 가능.  
+> 장점: 타입 충돌 없이 **모듈 단위 채널화** 가능.
 > 규칙을 문서화해 팀 내 일관성 유지.
 
 ---
@@ -171,7 +171,7 @@ MessageBus.Current.Listen<QueryUserDetail>()
     .Subscribe();
 ```
 
-장점: 간단, 스트림 조합 용이.  
+장점: 간단, 스트림 조합 용이.
 주의: `ReplyTo`를 반드시 `OnCompleted`로 닫아 수명 누수 방지.
 
 ### 4.2 CorrelationId(상관관계 ID) + 단일 응답 버스
@@ -206,7 +206,7 @@ MessageBus.Current.Listen<Request<UserDetail>>()
 
 ## 5. 스레딩·디스패처 정석
 
-- **Listen**은 기본적으로 구독 스레드에서 콜백 실행  
+- **Listen**은 기본적으로 구독 스레드에서 콜백 실행
 - UI 업데이트는 반드시 `ObserveOn(RxApp.MainThreadScheduler)`
 - 비동기 IO/CPU 바운드 작업 시작은 `SubscribeOn(TaskPoolScheduler.Default)` 권장
 
@@ -530,5 +530,5 @@ IDisposable SubscribeSettings(Action<SettingsApplied> onNext) =>
 
 ## 결론
 
-초안의 **MessageBus 개요**를 넘어, 본 글은 **계약 설계, 스레딩, 수명 관리, 스코프 분리, 요청/응답, 품질 연산자 적용, 테스트·DI**까지 포함한 **실전 운용 전략**을 제시했다.  
+초안의 **MessageBus 개요**를 넘어, 본 글은 **계약 설계, 스레딩, 수명 관리, 스코프 분리, 요청/응답, 품질 연산자 적용, 테스트·DI**까지 포함한 **실전 운용 전략**을 제시했다.
 이 가이드를 토대로 프로젝트 초기에 **메시지 타입/계약·스코프 규칙**을 명확히 합의하면, 화면이 늘어나도 결합도를 낮게 유지하면서 기능을 안정적으로 확장할 수 있다.

@@ -8,7 +8,7 @@ category: Git
 
 ## 0. 한눈에 요약
 
-- **cherry-pick**: “저 브랜치의 **특정 커밋 몇 개만** 지금 브랜치에 **복사**(새 커밋으로 재생성)해서 붙이자.”  
+- **cherry-pick**: “저 브랜치의 **특정 커밋 몇 개만** 지금 브랜치에 **복사**(새 커밋으로 재생성)해서 붙이자.”
 - **rebase**: “내 브랜치의 **전체(또는 연속 구간) 커밋**을 **다른 베이스 위로 재배치**해 선형 이력을 만들자.”
 
 **선택 가이드**
@@ -19,8 +19,8 @@ category: Git
 
 ## 1. `git cherry-pick`이란?
 
-**특정 커밋만 선택**해서 현재 브랜치에 **새 커밋**으로 적용합니다.  
-- 장점: 필요한 것만 골라서 반영(불필요한 변경 유입 방지)  
+**특정 커밋만 선택**해서 현재 브랜치에 **새 커밋**으로 적용합니다.
+- 장점: 필요한 것만 골라서 반영(불필요한 변경 유입 방지)
 - 단점: 커밋이 “복사”되므로 **해시가 달라짐**(중복 관리 필요), 많이 사용하면 “포크된 이력”이 산개
 
 ### 기본 명령
@@ -33,8 +33,8 @@ git cherry-pick <start>^..<end>   # 연속 범위(주의: 아래 설명)
 ```
 
 #### 범위 표기 주의(A..B vs A^..B)
-- `A..B` 는 “B에서 A를 뺀 차집합”의 의미(보통 **그래프 차이**에서 쓰임)  
-- `A^..B` 는 “A의 **바로 이전**부터 B까지 **연속 커밋**”이라는 관용적 표기  
+- `A..B` 는 “B에서 A를 뺀 차집합”의 의미(보통 **그래프 차이**에서 쓰임)
+- `A^..B` 는 “A의 **바로 이전**부터 B까지 **연속 커밋**”이라는 관용적 표기
   - 실수 방지를 위해, **연속 범위**는 보통 `^` 를 붙여 명시하거나 **`git log A..B --oneline`** 으로 먼저 **검증 후** pick 하세요.
 
 ---
@@ -63,8 +63,8 @@ git cherry-pick -m 1 <merge-commit-sha>   # 첫 부모를 기준으로
 ```
 
 **추천 실무 습관**
-- 조직에서 “추적성” 중요 → `-x` 기본 사용  
-- 정책상 Signed-off-by 필요 → `-s`  
+- 조직에서 “추적성” 중요 → `-x` 기본 사용
+- 정책상 Signed-off-by 필요 → `-s`
 - 서명 강제 → `-S`(사전 `git config`로 서명키 설정)
 
 ---
@@ -92,8 +92,8 @@ git config --global rerere.enabled true
 - 같은 유형 충돌이 반복될 때 자동 적용(검토 후 커밋)
 
 ### 빈 커밋/중복 처리
-- 이미 동일 변경이 적용된 경우 **“The previous cherry-pick is now empty”** 경고  
-  - 유지할 필요 없으면 `git cherry-pick --skip`  
+- 이미 동일 변경이 적용된 경우 **“The previous cherry-pick is now empty”** 경고
+  - 유지할 필요 없으면 `git cherry-pick --skip`
   - 메시지만 남기고 싶다면 `--allow-empty` 로 명시적 생성
 
 ---
@@ -126,13 +126,13 @@ git cherry-pick -m 1 <merge-commit-sha>
 
 ## 5. cherry-pick 되돌리기/복구
 
-- pick 직후 전체 취소: `git cherry-pick --abort` (진행 중인 시퀀스)  
+- pick 직후 전체 취소: `git cherry-pick --abort` (진행 중인 시퀀스)
 - 이미 커밋됨 → **되돌리는 커밋** 생성:
   ```bash
   git revert <picked-commit-sha>
   ```
-- 복구(큰 수술 전 보험):  
-  - pick 전후의 안전 지점 확인: `git reflog`  
+- 복구(큰 수술 전 보험):
+  - pick 전후의 안전 지점 확인: `git reflog`
   - 위험 작업 전 `git tag temp/pre-pick` 또는 `git branch backup/pick-<ts>`로 스냅샷
 
 ---
@@ -151,7 +151,7 @@ git rebase origin/main
 
 - 이력 “재작성”이므로 **해시가 모두 바뀜**
 - 충돌 발생 시 각 커밋 지점마다 해결 → `git rebase --continue`
-- 포기: `git rebase --abort`  
+- 포기: `git rebase --abort`
 - 특정 커밋 건너뛰기: `git rebase --skip`
 - 되돌리기 비상키: 작업 직전 **ORIG_HEAD**, 그리고 `git reflog`
 
@@ -160,7 +160,7 @@ git rebase origin/main
 # topic 브랜치에서 A..B 구간을 "newbase" 위로 옮긴다
 git rebase --onto newbase A B
 ```
-- “A 이후부터 B까지”를 통째로 새 베이스로 이동  
+- “A 이후부터 B까지”를 통째로 새 베이스로 이동
 - 브랜치 재배치/분기 재정렬/히스토리 다이어트에 매우 유용
 
 ### Interactive rebase(-i) — 정리/스쿼시/메시지 편집
@@ -197,9 +197,9 @@ git rebase --rebase-merges origin/main
 
 ## 8. 선택 기준(확장)
 
-- **이 커밋 몇 개만 가져오면 끝** → **cherry-pick**  
-- **이 브랜치를 최신 main 위에서 깔끔히 만들고 합치자** → **rebase**  
-- 공용 원격에 올린 브랜치 → **rebase 지양**(필요 시 팀 합의 및 `--force-with-lease`)  
+- **이 커밋 몇 개만 가져오면 끝** → **cherry-pick**
+- **이 브랜치를 최신 main 위에서 깔끔히 만들고 합치자** → **rebase**
+- 공용 원격에 올린 브랜치 → **rebase 지양**(필요 시 팀 합의 및 `--force-with-lease`)
 - 백포트/긴급 패치/릴리스 브랜치 유지보수 → **cherry-pick** 선호
 
 ---
@@ -279,9 +279,9 @@ git switch -c rescue <reflog-entry>
 
 ## 11. 협업 안전 수칙
 
-- **공유 브랜치(release/main/hotfix)** 에는 rebase 금지(정책화)  
-- rebase 후 푸시는 `git push --force-with-lease`(동료 작업 보호)  
-- cherry-pick은 추적성 확보를 위해 **`-x` 강력 권장**  
+- **공유 브랜치(release/main/hotfix)** 에는 rebase 금지(정책화)
+- rebase 후 푸시는 `git push --force-with-lease`(동료 작업 보호)
+- cherry-pick은 추적성 확보를 위해 **`-x` 강력 권장**
 - PR 기준으로 squash/rebase/merge 정책을 팀 문서화(리뷰/CI 체크와 연계)
 
 ---
@@ -347,13 +347,13 @@ git reflog
 
 ## 14. 결론
 
-- **cherry-pick**은 **정밀 선택**이 장점: 필요한 커밋만 빠르게 백포트/반영. `-x`로 추적성 보강.  
-- **rebase**는 **이력 선형화**가 장점: 리뷰와 bisect가 쉬워짐. 다만 공유 브랜치에는 신중.  
+- **cherry-pick**은 **정밀 선택**이 장점: 필요한 커밋만 빠르게 백포트/반영. `-x`로 추적성 보강.
+- **rebase**는 **이력 선형화**가 장점: 리뷰와 bisect가 쉬워짐. 다만 공유 브랜치에는 신중.
 - 두 도구를 **목적에 맞게** 쓰되, 항상 **복구 전략(reflog/ORIG_HEAD/백업 브랜치)** 를 염두에 두면 실전 안정성이 크게 올라갑니다.
 
 ---
 
 ## 참고
 
-- Git cherry-pick: https://git-scm.com/docs/git-cherry-pick  
+- Git cherry-pick: https://git-scm.com/docs/git-cherry-pick
 - Git rebase: https://git-scm.com/docs/git-rebase

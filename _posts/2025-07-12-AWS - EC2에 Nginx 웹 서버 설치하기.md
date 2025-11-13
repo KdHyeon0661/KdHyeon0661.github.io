@@ -8,8 +8,8 @@ category: AWS
 
 ## 목표
 
-- 이미 퍼블릭 접속 가능한 EC2(AL2) 인스턴스가 있다고 가정  
-- Nginx 설치 → 부팅 자동 시작 → 보안 그룹 확인 → 브라우저 검증  
+- 이미 퍼블릭 접속 가능한 EC2(AL2) 인스턴스가 있다고 가정
+- Nginx 설치 → 부팅 자동 시작 → 보안 그룹 확인 → 브라우저 검증
 - 선택: User Data로 자동 설치, 리버스 프록시 구성, 로그/모니터링/HTTPS 개요
 
 ---
@@ -96,9 +96,9 @@ active (running)이면 실행 중이다.
 ## 5. 보안 그룹(인바운드) 확인
 
 콘솔:
-1) EC2 → 인스턴스 선택 → 보안 탭 → 보안 그룹  
-2) 인바운드 규칙 예시  
-   - HTTP(80/TCP): 0.0.0.0/0  
+1) EC2 → 인스턴스 선택 → 보안 탭 → 보안 그룹
+2) 인바운드 규칙 예시
+   - HTTP(80/TCP): 0.0.0.0/0
    - SSH(22/TCP): 내 IP만 허용
 
 CLI 예시:
@@ -247,14 +247,14 @@ node server.js &
 
 ## 13. HTTPS 개요(두 가지 경로)
 
-1) ALB에서 TLS 종료  
-   - ACM(AWS Certificate Manager)로 인증서 발급  
-   - ALB 443 리스너 → 대상 그룹(EC2) 80  
+1) ALB에서 TLS 종료
+   - ACM(AWS Certificate Manager)로 인증서 발급
+   - ALB 443 리스너 → 대상 그룹(EC2) 80
    - 장점: 자동 갱신, 관리 간편
 
-2) Nginx에 직접 인증서 배포  
-   - 도메인을 EC2(EIP 권장)에 연결  
-   - Let’s Encrypt 또는 상용 인증서 설치  
+2) Nginx에 직접 인증서 배포
+   - 도메인을 EC2(EIP 권장)에 연결
+   - Let’s Encrypt 또는 상용 인증서 설치
    - 배포 자동화와 갱신 스케줄 관리 필요
 
 실무 권장: ALB + ACM으로 TLS 종료하고 EC2는 내부 HTTP로 단순화.
@@ -263,7 +263,7 @@ node server.js &
 
 ## 14. 로그/모니터링(CloudWatch)
 
-- CloudWatch Logs 에이전트 또는 CloudWatch Agent로 /var/log/nginx/*.log 적재  
+- CloudWatch Logs 에이전트 또는 CloudWatch Agent로 /var/log/nginx/*.log 적재
 - 주요 지표: 4xx/5xx 비율, 응답 지연, CPU/메모리/네트워크
 
 간단 지표 알람(CPU 예):
@@ -288,8 +288,8 @@ $$
 T_{\text{resp}} \approx T_{\text{net}} + T_{\text{accept}} + T_{\text{read}} + T_{\text{send}}
 $$
 
-- CDN(CloudFront)을 쓰면 \(T_{\text{net}}\) 감소  
-- 압축/캐시로 \(T_{\text{send}}\) 감소  
+- CDN(CloudFront)을 쓰면 \(T_{\text{net}}\) 감소
+- 압축/캐시로 \(T_{\text{send}}\) 감소
 - Keep-Alive로 \(T_{\text{accept}}\) 감소
 
 ---
@@ -297,19 +297,19 @@ $$
 ## 16. 정리·보안·운영 체크리스트
 
 보안
-- SSH는 내 IP만, 가능하면 SSM 사용  
-- 보안 그룹: 80/443만 공개, 백엔드는 프라이빗  
-- IMDSv2 필수화  
+- SSH는 내 IP만, 가능하면 SSM 사용
+- 보안 그룹: 80/443만 공개, 백엔드는 프라이빗
+- IMDSv2 필수화
 - EBS 암호화, 스냅샷 접근 제어
 
 운영
-- nginx -t 후 systemctl reload nginx  
-- 로그 로테이션/보존 기간 관리  
+- nginx -t 후 systemctl reload nginx
+- 로그 로테이션/보존 기간 관리
 - ALB 헬스체크 엔드포인트 /healthz 상시 200
 
 비용
-- 소규모는 t3.micro/t4g.micro 고려  
-- 유휴 인스턴스, 미사용 EIP, 스냅샷 정리  
+- 소규모는 t3.micro/t4g.micro 고려
+- 유휴 인스턴스, 미사용 EIP, 스냅샷 정리
 - 야간 자동 정지(EventBridge + Lambda)
 
 ---
@@ -328,8 +328,8 @@ $$
 
 ## 18. 확장: ALB + Auto Scaling 개요
 
-- ALB 앞단, Target Group으로 EC2 묶기  
-- ASG로 2개 AZ에 최소 2대 이상 유지, 헬스체크 실패 시 자동 교체  
+- ALB 앞단, Target Group으로 EC2 묶기
+- ASG로 2개 AZ에 최소 2대 이상 유지, 헬스체크 실패 시 자동 교체
 - 정적 자산은 S3 + CloudFront로 분리해 EC2 부하/비용 절감
 
 ---
@@ -353,13 +353,13 @@ sudo docker run --name nginx -p 80:80 -v ~/site:/usr/share/nginx/html:ro -d ngin
 
 ## 20. 실습 요약 플로우
 
-1) SSH 접속 → yum update -y  
-2) amazon-linux-extras enable nginx1 && yum install -y nginx  
-3) systemctl enable --now nginx  
-4) SG 80/TCP 확인  
-5) 브라우저 검증  
-6) index.html 교체  
-7) 필요 시 프록시 conf, /healthz 구현  
+1) SSH 접속 → yum update -y
+2) amazon-linux-extras enable nginx1 && yum install -y nginx
+3) systemctl enable --now nginx
+4) SG 80/TCP 확인
+5) 브라우저 검증
+6) index.html 교체
+7) 필요 시 프록시 conf, /healthz 구현
 8) CloudWatch Logs/지표/알람 구성
 
 ---
@@ -425,6 +425,6 @@ $$
 \text{월 비용} \approx c_{\text{EC2}} \cdot H + C_{\text{EBS}} + C_{\text{데이터전송}}
 $$
 
-- \(c_{\text{EC2}}\): 인스턴스 시간당 단가(USD/h)  
-- \(H\): 월 사용 시간(시간)  
+- \(c_{\text{EC2}}\): 인스턴스 시간당 단가(USD/h)
+- \(H\): 월 사용 시간(시간)
 - 테스트 종료 후 인스턴스, 볼륨, EIP, 스냅샷 잔존 여부를 점검한다.

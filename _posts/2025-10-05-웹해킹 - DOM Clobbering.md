@@ -8,22 +8,22 @@ category: 웹해킹
 
 ## 0. 핵심 요약 (Executive Summary)
 
-- **문제(정의)**  
-  HTML 문서에서 `id`/`name`을 가진 요소들이 **글로벌 네임스페이스**(특히 `window`/`document`/`form`)에 **프로퍼티처럼 노출**됩니다.  
-  개발자가 이를 몰라서 **전역 참조(예: `window.foo`, `document.bar`), 폼 속성/메서드(예: `form.submit`)**에 의존하면,  
+- **문제(정의)**
+  HTML 문서에서 `id`/`name`을 가진 요소들이 **글로벌 네임스페이스**(특히 `window`/`document`/`form`)에 **프로퍼티처럼 노출**됩니다.
+  개발자가 이를 몰라서 **전역 참조(예: `window.foo`, `document.bar`), 폼 속성/메서드(예: `form.submit`)**에 의존하면,
   공격자는 **같은 이름의 요소**를 주입해 *참조를 “덮어써”* 보안 체크를 우회/교란할 수 있습니다.
 
-- **대표 증상**  
-  - `form.submit`이 **함수가 아니라 요소**로 바뀌어 정상 흐름이 깨짐  
-  - `if (isAdmin) …` 같은 **암묵 전역/글로벌 프로퍼티**가 **요소로 평가**되어 truthy/객체가 됨  
+- **대표 증상**
+  - `form.submit`이 **함수가 아니라 요소**로 바뀌어 정상 흐름이 깨짐
+  - `if (isAdmin) …` 같은 **암묵 전역/글로벌 프로퍼티**가 **요소로 평가**되어 truthy/객체가 됨
   - `document.foo`/`window.bar` 식 접근이 **예상과 다른 타입**(HTML 요소/컬렉션)으로 변함
 
-- **핵심 방어**  
-  1) **요소 접근은 항상 `document.getElementById` / `querySelector`**로 **명시적** 참조  
-  2) **모듈 범위 `const`(ES modules)** 로 **참조를 캡처**하여 전역 룩업 회피  
-  3) **폼/전역 예약어와 `id`/`name` 충돌 금지**(빌드/테스트에 포함)  
-  4) **템플릿/리치 텍스트 삽입 시 `id`/`name` 제거**(Sanitize/정규화)  
-  5) **`'use strict'`/ESLint**로 **암묵 전역**(implicit global) 생성 금지  
+- **핵심 방어**
+  1) **요소 접근은 항상 `document.getElementById` / `querySelector`**로 **명시적** 참조
+  2) **모듈 범위 `const`(ES modules)** 로 **참조를 캡처**하여 전역 룩업 회피
+  3) **폼/전역 예약어와 `id`/`name` 충돌 금지**(빌드/테스트에 포함)
+  4) **템플릿/리치 텍스트 삽입 시 `id`/`name` 제거**(Sanitize/정규화)
+  5) **`'use strict'`/ESLint**로 **암묵 전역**(implicit global) 생성 금지
   6) **타입 검증**: 사용 전 **타입/메서드 존재** 확인(가드)
 
 ---
@@ -34,7 +34,7 @@ category: 웹해킹
 
 - **Window Named Properties**: 문서 내 `id`/`name`을 가진 요소들이 `window.<name>`로 **노출**될 수 있음.
 - **Document Collections**: `document.forms.foo`, `document.images.logo` 등 **컬렉션에 이름 접근**.
-- **Form Named Access**: `<form>` 내부 컨트롤의 `name`으로 `form.<name>` 접근.  
+- **Form Named Access**: `<form>` 내부 컨트롤의 `name`으로 `form.<name>` 접근.
   → 특히 **`form.submit` 메서드가 `<input name="submit">`에 덮이기** 쉬움.
 
 > 표준/브라우저별 세부 차이는 있지만, **“이름이 전역/폼의 프로퍼티 자리에 나타난다”**는 공통 행동이 본 취약점의 뿌리입니다.
@@ -60,7 +60,7 @@ category: 웹해킹
 ```
 
 **영향**
-- CSRF 방지 등 **검증 흐름이 깨져** 전송이 되지 않거나,  
+- CSRF 방지 등 **검증 흐름이 깨져** 전송이 되지 않거나,
   보안 로직이 “submit 호출”을 신뢰하는 경우 **우회를 유발**.
 
 **수정(방어)**
@@ -95,7 +95,7 @@ category: 웹해킹
 <div id="isAdmin"></div> <!-- truthy 객체로 전역 프로퍼티 생성/섀도잉 -->
 ```
 
-**결과**  
+**결과**
 `window.isAdmin`이 **HTMLElement**로 평가 → truthy → **보안 체크 우회**.
 
 **수정(방어)**
@@ -199,8 +199,8 @@ HTMLFormElement.prototype.submit.call(loginForm);
 ## 3.3 폼/전역 **예약어 블랙리스트**
 실제 프로젝트에서 **아래 이름은 `id`/`name`으로 금지**하세요(일부만 예시).
 
-- **폼 메서드/속성**: `submit`, `reset`, `action`, `target`, `method`, `length`, `elements`  
-- **Window/Document 흔한 전역**: `name`, `status`, `event`, `history`, `open`, `close`, `location`, `frames`, `length`  
+- **폼 메서드/속성**: `submit`, `reset`, `action`, `target`, `method`, `length`, `elements`
+- **Window/Document 흔한 전역**: `name`, `status`, `event`, `history`, `open`, `close`, `location`, `frames`, `length`
 - **프레임워크에서 쓰는 전역 키**: 앱마다 정리(예: `__BOOTSTRAP__`, `__DATA__` 등)
 
 **검사 스크립트(빌드 단계)**
@@ -247,11 +247,11 @@ submit.call(form);
 ```
 
 ## 3.6 린트/컴파일러 설정
-- **ESLint**:  
-  - `no-undef`, `no-implicit-globals`, `no-restricted-globals`(예: `event`, `name`)  
-  - `no-restricted-properties`로 `document.foo`/`window.bar` 사용 금지  
-- **TypeScript**:  
-  - `noImplicitAny`, `noImplicitThis`, `strictNullChecks`, `dom` 라이브러리 활성  
+- **ESLint**:
+  - `no-undef`, `no-implicit-globals`, `no-restricted-globals`(예: `event`, `name`)
+  - `no-restricted-properties`로 `document.foo`/`window.bar` 사용 금지
+- **TypeScript**:
+  - `noImplicitAny`, `noImplicitThis`, `strictNullChecks`, `dom` 라이브러리 활성
   - 전역 타입에 의존하지 않도록 **모듈/ESNext 타깃** 사용
 
 **ESLint 샘플**
@@ -296,16 +296,16 @@ function PayForm() {
 ```
 
 ## 4.2 서버 템플릿(Thymeleaf, EJS, Pug 등)
-- **예약어 리스트**를 템플릿 빌드 파이프라인에 포함.  
-- 동적 블록에 사용자 HTML 삽입 금지(필요 시 Sanitize).  
+- **예약어 리스트**를 템플릿 빌드 파이프라인에 포함.
+- 동적 블록에 사용자 HTML 삽입 금지(필요 시 Sanitize).
 - **`id` 생성기**로 **충돌 방지 프리픽스** 도입(예: `app-<slug>-<hash>`).
 
 ---
 
 # 5. 보안 헤더/정책(보조 완화)
 
-- **CSP**: 인젝션 경로 축소(`script-src 'self'` …). DOM Clobbering 자체를 직접 막지는 못하지만 **HTML 인젝션**을 어렵게 합니다.  
-- **X-Frame-Options / frame-ancestors**: 클릭재킹 경감(클로버링과 함께 쓰이는 체인 공격 방지).  
+- **CSP**: 인젝션 경로 축소(`script-src 'self'` …). DOM Clobbering 자체를 직접 막지는 못하지만 **HTML 인젝션**을 어렵게 합니다.
+- **X-Frame-Options / frame-ancestors**: 클릭재킹 경감(클로버링과 함께 쓰이는 체인 공격 방지).
 - **Trusted Types**: 위험 sink(`innerHTML` 등)에 **팩토리 강제** → 임의 HTML 삽입 억제.
 
 ---
@@ -335,7 +335,7 @@ function PayForm() {
 ```
 
 ## 6.2 E2E(Playwright/Cypress) — “막혀야 정상”
-- **시나리오**: 사용자 콘텐츠 영역에 `<input name="submit">` 삽입 후 결제 버튼 클릭 →  
+- **시나리오**: 사용자 콘텐츠 영역에 `<input name="submit">` 삽입 후 결제 버튼 클릭 →
   **네이티브 submit 경로**가 여전히 성공해야 테스트 통과.
 
 **Playwright 예시**
@@ -360,30 +360,30 @@ await page.click('#btn');
 
 # 7. 안티패턴 요약 (피해야 할 것)
 
-- `document.foo` / `window.bar` 로 **요소/데이터 접근**  
-- **암묵 전역**(선언 없이 식별자 사용) 및 전역 프로퍼티 의존  
-- 폼 요소에 `name="submit"`, `name="action"` 등 **예약어 사용**  
-- 사용자/서드파티 HTML을 **Sanitize 없이** 삽입  
+- `document.foo` / `window.bar` 로 **요소/데이터 접근**
+- **암묵 전역**(선언 없이 식별자 사용) 및 전역 프로퍼티 의존
+- 폼 요소에 `name="submit"`, `name="action"` 등 **예약어 사용**
+- 사용자/서드파티 HTML을 **Sanitize 없이** 삽입
 - 전역 부트스트랩 데이터(예: `window.user`)를 **HTML과 같은 이름**으로 둠
 
 ---
 
 # 8. 체크리스트 (현장용)
 
-- [ ] 요소 접근은 **항상 `getElementById`/`querySelector` + 로컬 변수**  
-- [ ] **ES Modules**로 모듈 스코프 `const` 사용(전역 의존 X)  
-- [ ] 폼/전역 **예약어 리스트**를 린트·빌드에서 **금지**  
-- [ ] 리치 텍스트/외부 HTML **Sanitize**(`id`/`name` 제거)  
-- [ ] **네이티브 메서드 스냅샷** 후 호출(예: `HTMLFormElement.prototype.submit.call(form)`)  
-- [ ] ESLint/TS의 **암묵 전역 금지** 규칙 적용  
-- [ ] 스테이징에서 **클로버링 스캔 스크립트** 실행  
+- [ ] 요소 접근은 **항상 `getElementById`/`querySelector` + 로컬 변수**
+- [ ] **ES Modules**로 모듈 스코프 `const` 사용(전역 의존 X)
+- [ ] 폼/전역 **예약어 리스트**를 린트·빌드에서 **금지**
+- [ ] 리치 텍스트/외부 HTML **Sanitize**(`id`/`name` 제거)
+- [ ] **네이티브 메서드 스냅샷** 후 호출(예: `HTMLFormElement.prototype.submit.call(form)`)
+- [ ] ESLint/TS의 **암묵 전역 금지** 규칙 적용
+- [ ] 스테이징에서 **클로버링 스캔 스크립트** 실행
 - [ ] 보안 리뷰에서 **폼/전역 이름 충돌** 항목 포함
 
 ---
 
 ## 맺음말
 
-DOM Clobbering은 **브라우저의 유서 깊은 “이름→프로퍼티” 편의 기능**이  
-현대 애플리케이션의 **전역/폼 의존 패턴**과 만나 생기는 문제입니다.  
-**명시적 요소 조회 → 모듈 스코프 상수 캡처 → 예약어 충돌 차단 → Sanitization**의  
+DOM Clobbering은 **브라우저의 유서 깊은 “이름→프로퍼티” 편의 기능**이
+현대 애플리케이션의 **전역/폼 의존 패턴**과 만나 생기는 문제입니다.
+**명시적 요소 조회 → 모듈 스코프 상수 캡처 → 예약어 충돌 차단 → Sanitization**의
 4단계만 지켜도 대부분의 클로버링 리스크를 **구조적으로 제거**할 수 있습니다.

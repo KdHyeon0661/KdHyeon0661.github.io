@@ -356,7 +356,7 @@ body.modal-open { overflow: hidden; }
 
 ## 9. IE/레거시 폴백(정책적으로 필요한 경우)
 
-- `calc()` : IE9+ 지원(가능)  
+- `calc()` : IE9+ 지원(가능)
 - `clamp()/min()/max()` : **IE 미지원**(폴리필 불가) → **미디어쿼리**/고정 값 **대체**.
 
 예) `clamp(1rem, 2vw, 2rem)` 폴백:

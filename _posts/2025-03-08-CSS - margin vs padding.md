@@ -91,9 +91,9 @@ category: CSS
 
 **상하 방향 블록 마진**끼리는 종종 **겹쳐서 하나로** 계산됩니다. 대표 규칙:
 
-1) **형제 블록 간 상하 마진**: `20px` + `20px` → **최댓값 20px**  
-2) **부모와 첫/마지막 자식의 상하 마진**: 부모의 상/하 마진과 자식의 상/하 마진이 **겹칠 수 있음**  
-3) **빈 블록 요소의 상하 마진**: 안에 `border/padding/inline 콘텐츠`가 없으면 상·하 마진이 겹침  
+1) **형제 블록 간 상하 마진**: `20px` + `20px` → **최댓값 20px**
+2) **부모와 첫/마지막 자식의 상하 마진**: 부모의 상/하 마진과 자식의 상/하 마진이 **겹칠 수 있음**
+3) **빈 블록 요소의 상하 마진**: 안에 `border/padding/inline 콘텐츠`가 없으면 상·하 마진이 겹침
 4) **Flex/Grid 아이템, absolutely positioned, floating**에서는 **겹치지 않음**
 
 예시
@@ -113,7 +113,7 @@ p { margin: 20px 0; }
 - 상하 간격을 **gap(Flex/Grid)**으로 대체
 
 ```css
-.article { 
+.article {
   /* 겹침 방지 */
   padding-top: 1px; /* 시각 영향 없게 0→1px 미세 패딩 */
   padding-top: 0;   /* 실제론 0이지만 개념 예시 */
@@ -161,7 +161,7 @@ p { margin: 20px 0; }
 
 ## 7. Flex/Grid에서의 간격 — margin vs gap
 
-**권장:** 아이템 간 간격은 **`gap`** 사용.  
+**권장:** 아이템 간 간격은 **`gap`** 사용.
 장점: 마진 겹침 없음, 부모/첫·마지막 아이템 보정 불필요, 읽기 쉬움.
 
 ```css
@@ -235,7 +235,7 @@ Flex에서 남는 공간 밀어내기:
 
 ### 12.1 버튼 내부 여백은 padding
 ```css
-.btn { 
+.btn {
   padding: .5rem 1rem;
   border-radius: .5rem;
 }
@@ -303,7 +303,7 @@ Flex에서 남는 공간 밀어내기:
 
 해결 패턴
 ```css
-.article { 
+.article {
   /* 겹침 방지: 택1 */
   padding-top: 1px; padding-top: 0; /* 개념 예시 */
   border-top: 1px solid transparent;
@@ -380,7 +380,7 @@ Flex에서 남는 공간 밀어내기:
 
 ### 18.3 기사 본문
 ```css
-.prose { 
+.prose {
   max-inline-size: 70ch; margin-inline: auto;
   padding-inline: 1rem; padding-block: 2rem;
 }
@@ -407,8 +407,8 @@ Flex에서 남는 공간 밀어내기:
 
 ## 20. 최종 결론
 
-- **의도**가 “요소 **밖**과의 거리”면 **margin**, “요소 **안**의 여유”면 **padding**.  
-- **리스트/그리드/행 간격**은 **gap**이 안전·간결.  
-- 마진 겹침이 의심되면 **BFC(flow-root/overflow)**, 부모 padding/border로 **즉시 차단**.  
-- 다국어/세로쓰기/RTL을 고려해 **논리 속성**을 습관화.  
+- **의도**가 “요소 **밖**과의 거리”면 **margin**, “요소 **안**의 여유”면 **padding**.
+- **리스트/그리드/행 간격**은 **gap**이 안전·간결.
+- 마진 겹침이 의심되면 **BFC(flow-root/overflow)**, 부모 padding/border로 **즉시 차단**.
+- 다국어/세로쓰기/RTL을 고려해 **논리 속성**을 습관화.
 - 반응형에선 `clamp()`·컨테이너 쿼리로 **스케일하는 여백**을 설계.

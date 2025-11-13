@@ -30,8 +30,8 @@ category: Avalonia
 └── MyApp.csproj
 ```
 
-> 팁  
-> - `appsettings.local.json`은 개인 개발자별 override 용. **소스관리 제외**(.gitignore).  
+> 팁
+> - `appsettings.local.json`은 개인 개발자별 override 용. **소스관리 제외**(.gitignore).
 > - 실제 배포 아티팩트에 설정 파일을 포함하려면 `.csproj`의 `CopyToOutputDirectory`를 활용(아래 9장 참조).
 
 ---
@@ -308,7 +308,7 @@ public sealed class ApiOptionsValidator : IValidateOptions<ApiOptions>
 {
     public ValidateOptionsResult Validate(string name, ApiOptions options)
     {
-        if (string.IsNullOrWhiteSpace(options.BaseUrl)) 
+        if (string.IsNullOrWhiteSpace(options.BaseUrl))
             return ValidateOptionsResult.Fail("Api:BaseUrl is required.");
 
         if (!Uri.IsWellFormedUriString(options.BaseUrl, UriKind.Absolute))
@@ -332,7 +332,7 @@ services.AddOptions<ApiOptions>()
 
 ## 8. 비밀/민감정보 처리(토큰·키)
 
-**금지**: `appsettings*.json`에 평문 비밀 저장.  
+**금지**: `appsettings*.json`에 평문 비밀 저장.
 권장 대안:
 
 | OS | 권장 저장소 |
@@ -506,7 +506,7 @@ services.AddLogging(lb => lb.ClearProviders().AddSerilog());
 
 ## 13. 커맨드라인/환경변수 오버라이드 실전
 
-- 환경변수: `Api__BaseUrl=https://stg.example.com`  
+- 환경변수: `Api__BaseUrl=https://stg.example.com`
 - CLI: `--Api:TimeoutSeconds=5 --Features:UseMockData=true`
 
 > 네임스페이스 구분은 `:`이며, 환경변수에서는 `__`(더블 언더스코어) 사용.
@@ -536,8 +536,8 @@ public sealed class SettingsMigrator
 
 ## 15. 테스트 전략
 
-- **Options 바인딩 단위 테스트**: `ConfigurationBuilder().AddInMemoryCollection()`으로 가짜 설정 주입 → `services.Configure<T>()` 바인딩 검증  
-- **IOptionsMonitor 변경 이벤트**: `reloadOnChange` 대신, 테스트에선 `IOptionsMonitorCache<T>`를 써서 `TryAdd/Reset`으로 변경 시뮬레이션  
+- **Options 바인딩 단위 테스트**: `ConfigurationBuilder().AddInMemoryCollection()`으로 가짜 설정 주입 → `services.Configure<T>()` 바인딩 검증
+- **IOptionsMonitor 변경 이벤트**: `reloadOnChange` 대신, 테스트에선 `IOptionsMonitorCache<T>`를 써서 `TryAdd/Reset`으로 변경 시뮬레이션
 - **ApiClient**: `HttpMessageHandler`를 mock으로 대체 → `HttpClient` 주입 테스트
 
 ```csharp
@@ -567,13 +567,13 @@ public void ApiOptions_Binds_From_Config()
 
 ## 16. 예시: dev/prod 분기에 따른 UI·API 자동 전환
 
-- dev:  
-  - API = `https://api-dev.example.com`  
-  - 로깅 = Debug  
-  - FeatureFlags.UseMockData = true → 샘플 카드 표시  
-- prod:  
-  - API = `https://api.example.com`  
-  - 로깅 = Warning  
+- dev:
+  - API = `https://api-dev.example.com`
+  - 로깅 = Debug
+  - FeatureFlags.UseMockData = true → 샘플 카드 표시
+- prod:
+  - API = `https://api.example.com`
+  - 로깅 = Warning
   - FeatureFlags.UseMockData = false → 실제 API만 사용
 
 결과: 빌드/실행 환경만 바꿔도 앱은 **자연스럽게 다른 동작**을 한다.
@@ -598,8 +598,8 @@ public void ApiOptions_Binds_From_Config()
 
 ## 18. 성능·안정성 고려사항
 
-- `reloadOnChange`는 파일 시스템 감시를 사용. 빈번한 저장(에디터 자동 저장) 시 변경 이벤트가 잦을 수 있으므로, **구독처에서 속도 완충(Throttle)** 또는 **핵심만 반영**.  
-- XAML Theme/리소스 스왑은 **UI 스레드**에서 수행.  
+- `reloadOnChange`는 파일 시스템 감시를 사용. 빈번한 저장(에디터 자동 저장) 시 변경 이벤트가 잦을 수 있으므로, **구독처에서 속도 완충(Throttle)** 또는 **핵심만 반영**.
+- XAML Theme/리소스 스왑은 **UI 스레드**에서 수행.
 - `PublishTrimmed=true` 사용 시 리플렉션/리소스 키가 트리밍 대상인지 확인(링커 지시파일 사용).
 
 ---
@@ -720,6 +720,6 @@ public sealed class HomeViewModel : ReactiveUI.ReactiveObject
 
 ## 결론
 
-- Avalonia에서도 .NET의 **구성 시스템**을 그대로 활용하면 **환경(dev/prod)별 설정 분리**가 쉽고 강력하다.  
-- `Options 패턴 + IOptionsMonitor + reloadOnChange` 조합으로 **런타임 재로딩**까지 매끄럽게 지원한다.  
+- Avalonia에서도 .NET의 **구성 시스템**을 그대로 활용하면 **환경(dev/prod)별 설정 분리**가 쉽고 강력하다.
+- `Options 패턴 + IOptionsMonitor + reloadOnChange` 조합으로 **런타임 재로딩**까지 매끄럽게 지원한다.
 - 운영상 필수인 **유효성 검증, 비밀 관리, 경로 설계, CI/CD 주입, 테스트 가능성**을 함께 설계하면 **유지보수성과 배포 안정성, UX**를 모두 확보할 수 있다.

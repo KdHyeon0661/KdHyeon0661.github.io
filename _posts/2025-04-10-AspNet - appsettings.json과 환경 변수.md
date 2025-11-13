@@ -22,7 +22,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 **중요 포인트**
 
 - **키 구분자**: 코드/JSON에서는 `:`. 환경 변수에서는 `__`(언더스코어 2개).
-- **병합(override)**: 동일 키면 **나중에 추가된 소스**가 **앞의 값을 덮어씀**.  
+- **병합(override)**: 동일 키면 **나중에 추가된 소스**가 **앞의 값을 덮어씀**.
 - **대/소문자**: 키 비교는 기본적으로 **대/소문자 구분 안 함**.
 
 ---
@@ -73,7 +73,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 }
 ```
 
-- **병합 예시**: Development 환경이면 `MySettings.FeatureEnabled=false`, `MaxItems=10`, `Nested.Endpoint=https://dev.api.local`, `TimeoutSeconds=5(기본)`가 적용된다.  
+- **병합 예시**: Development 환경이면 `MySettings.FeatureEnabled=false`, `MaxItems=10`, `Nested.Endpoint=https://dev.api.local`, `TimeoutSeconds=5(기본)`가 적용된다.
 - Production에서는 `TimeoutSeconds=2`로 덮어쓴다.
 
 ### 2.2 환경 선택
@@ -95,7 +95,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 
 ## 3. `Program.cs` — 설정 파이프라인/서비스 구성
 
-템플릿은 이미 환경별 파일/유저 시크릿/환경변수/명령줄까지 자동 추가한다.  
+템플릿은 이미 환경별 파일/유저 시크릿/환경변수/명령줄까지 자동 추가한다.
 필요 시 **명시적 구성**으로 제어할 수 있다.
 
 ```csharp
@@ -149,7 +149,7 @@ public sealed class NestedSettings
 }
 ```
 
-> `reloadOnChange:true` → JSON 파일 변경 시 **자동 재로딩**(IOptionsSnapshot/IOptionsMonitor에서 반영).  
+> `reloadOnChange:true` → JSON 파일 변경 시 **자동 재로딩**(IOptionsSnapshot/IOptionsMonitor에서 반영).
 > 환경 변수/명령줄은 기본적으로 **런타임 중 변경 감지 없음**.
 
 ---
@@ -267,7 +267,7 @@ dotnet user-secrets set "MySettings:Nested:Endpoint" "https://dev.secret"
 dotnet user-secrets set "ApiKeys:Stripe" "sk_test_123"
 ```
 
-`Program.cs`에서 별도 호출 없이 **템플릿이 자동 추가**(Development일 때).  
+`Program.cs`에서 별도 호출 없이 **템플릿이 자동 추가**(Development일 때).
 직접 추가하려면:
 
 ```csharp
@@ -573,7 +573,7 @@ builder.Services.Configure<FeatureOptions>(builder.Configuration.GetSection("Fea
 
 ### 19.2 API 키 안전 보관 (개발/운영 이원화)
 
-- 개발: `dotnet user-secrets set "ApiKeys:Stripe" "sk_test_..."`  
+- 개발: `dotnet user-secrets set "ApiKeys:Stripe" "sk_test_..."`
 - 운영: Key Vault/ENV `ApiKeys__Stripe="sk_live_..."`
 
 ### 19.3 요청 단위 동적 반영(IOptionsSnapshot)

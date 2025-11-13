@@ -8,7 +8,7 @@ category: Git
 
 ## 0. 전제: “충돌”이란?
 
-두 브랜치가 **같은 파일의 같은(혹은 겹치는) 영역**을 서로 다르게 수정하면 Git이 자동 병합하지 못하고 **충돌(conflict)** 으로 분류합니다.  
+두 브랜치가 **같은 파일의 같은(혹은 겹치는) 영역**을 서로 다르게 수정하면 Git이 자동 병합하지 못하고 **충돌(conflict)** 으로 분류합니다.
 충돌은 rebase/merge/cherry-pick 등 “패치 적용”이 일어나는 모든 상황에서 발생할 수 있습니다.
 
 ---
@@ -458,15 +458,15 @@ git switch -c rescue <reflog-entry>
 
 ## 13. 결론
 
-- **Rebase** 충돌은 “여러 커밋”을 순차 적용하므로 반복될 수 있어 **rerere** 효과가 크고,  
-- **Cherry-pick** 충돌은 “선택한 커밋” 단위로 발생해 단발성인 경우가 많습니다.  
-- 유형별(내용/리네임/삭제-수정/디렉터리-파일/바이너리/서브모듈) 해결 전술을 숙지하고, **mergetool**과 **rerere**를 병행하면 생산성이 크게 향상됩니다.  
+- **Rebase** 충돌은 “여러 커밋”을 순차 적용하므로 반복될 수 있어 **rerere** 효과가 크고,
+- **Cherry-pick** 충돌은 “선택한 커밋” 단위로 발생해 단발성인 경우가 많습니다.
+- 유형별(내용/리네임/삭제-수정/디렉터리-파일/바이너리/서브모듈) 해결 전술을 숙지하고, **mergetool**과 **rerere**를 병행하면 생산성이 크게 향상됩니다.
 - 언제든 실수/후퇴가 필요할 수 있으므로 **`--abort`/`reflog`/백업 브랜치**를 생활화하세요.
 
 ---
 
 ## 참고
 
-- Git Conflict resolution: https://git-scm.com/docs/git-merge#_how_conflicts_are_presented  
-- Git cherry-pick: https://git-scm.com/docs/git-cherry-pick  
+- Git Conflict resolution: https://git-scm.com/docs/git-merge#_how_conflicts_are_presented
+- Git cherry-pick: https://git-scm.com/docs/git-cherry-pick
 - Git rebase: https://git-scm.com/docs/git-rebase

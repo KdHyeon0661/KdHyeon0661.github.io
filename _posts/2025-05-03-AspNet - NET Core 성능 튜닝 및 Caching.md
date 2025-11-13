@@ -160,7 +160,7 @@ finally { pool.Return(sb); }
 $$
 \text{평균 지연} \approx H \cdot L_c + (1-H) \cdot L_o
 $$
-- \(H\): 캐시 히트율, \(L_c\): 캐시 비용, \(L_o\): 원본 비용  
+- \(H\): 캐시 히트율, \(L_c\): 캐시 비용, \(L_o\): 원본 비용
 - 목표: **H↑**, **L_c↓**, **Invalidation(일관성)** 관리
 
 ---
@@ -354,7 +354,7 @@ app.UseStaticFiles(new StaticFileOptions
         {
             Public = true, MaxAge = TimeSpan.FromDays(30)
         };
-        // ETag/Last-Modified는 ASP.NET Core가 자동 처리(파일 해시 기반) 
+        // ETag/Last-Modified는 ASP.NET Core가 자동 처리(파일 해시 기반)
     }
 });
 ```
@@ -513,27 +513,27 @@ var data = await policy.ExecuteAsync(() => LoadFromOriginAsync());
 
 ## 21. 종합 시나리오: 제품 상세 페이지 성능 설계
 
-1) **키 설계**: `product:v3:id={id}:lang={lang}`  
-2) **Cache-Aside**: 미스 → DB 조회(Projection/Compiled Query) → 캐시 10분  
-3) **OutputCache**: 로그인 안 한 사용자에 한해 60초  
-4) **부분 캐시**: 리뷰 요약 블록 2분, 가격 블록 30초  
-5) **ETag**: 상세 API에 조건부 요청(전송량 절감)  
-6) **백그라운드 리프레시**: Top-N 상품 warm-up  
-7) **무효화**: 상품 업데이트 이벤트 → 해당 키 삭제  
+1) **키 설계**: `product:v3:id={id}:lang={lang}`
+2) **Cache-Aside**: 미스 → DB 조회(Projection/Compiled Query) → 캐시 10분
+3) **OutputCache**: 로그인 안 한 사용자에 한해 60초
+4) **부분 캐시**: 리뷰 요약 블록 2분, 가격 블록 30초
+5) **ETag**: 상세 API에 조건부 요청(전송량 절감)
+6) **백그라운드 리프레시**: Top-N 상품 warm-up
+7) **무효화**: 상품 업데이트 이벤트 → 해당 키 삭제
 8) **관찰**: P95 응답·캐시 히트율·Redis 대기·직렬화 시간 모니터
 
 ---
 
 ## 22. 체크리스트(요약)
 
-- **DB**: AsNoTracking / Projection / Compiled Query / 인덱스 검토 / N+1 제거  
-- **Async**: I/O 전부 async, 블로킹 금지  
-- **직렬화**: STJ Source-Gen / 필요한 필드만 / 압축(Brotli)  
-- **GC/메모리**: 풀링(ArrayPool/ObjectPool), 큰 할당 회피  
-- **캐싱**: In-memory(싱글) / Redis(다중) / OutputCache / ResponseCache / TagHelper  
-- **무효화**: Cache-Aside 원칙, ChangeToken, 버전 키  
-- **보호**: RateLimit, 타임아웃/재시도/서킷, 실패 시 Stale 허용  
-- **배포**: 프록시/HTTP2/3/압축/정적 파일 캐시 헤더  
+- **DB**: AsNoTracking / Projection / Compiled Query / 인덱스 검토 / N+1 제거
+- **Async**: I/O 전부 async, 블로킹 금지
+- **직렬화**: STJ Source-Gen / 필요한 필드만 / 압축(Brotli)
+- **GC/메모리**: 풀링(ArrayPool/ObjectPool), 큰 할당 회피
+- **캐싱**: In-memory(싱글) / Redis(다중) / OutputCache / ResponseCache / TagHelper
+- **무효화**: Cache-Aside 원칙, ChangeToken, 버전 키
+- **보호**: RateLimit, 타임아웃/재시도/서킷, 실패 시 Stale 허용
+- **배포**: 프록시/HTTP2/3/압축/정적 파일 캐시 헤더
 - **측정**: P95/P99, 할당, GC, Hot Path, 히트율
 
 ---
@@ -563,8 +563,8 @@ dotnet run -c Release
 
 ## 부록 B) 미세 팁
 
-- `IOptionsSnapshot`는 요청마다 바인딩 → **고빈도 경로**에선 **IOptionsMonitor** 사용.  
-- 로그는 **Information 이하**를 프로덕션에서 줄이고, **구조화 로깅**만 남기기.  
+- `IOptionsSnapshot`는 요청마다 바인딩 → **고빈도 경로**에선 **IOptionsMonitor** 사용.
+- 로그는 **Information 이하**를 프로덕션에서 줄이고, **구조화 로깅**만 남기기.
 - 예외 던지기 비용 큼 → **핫패스에서 예외 대신 코드 경로 분기**.
 
 ---

@@ -47,7 +47,7 @@ category: Kubernetes
 - 안정화(안티 플랩): _scaleUp/Down_ 시 **안정화 창**, **정책**(rate-limit) 적용.
 
 #### HPA 목표값 계산(리소스 메트릭, averageUtilization)
-메트릭 정의가 `averageUtilization = U_target(%)`일 때,  
+메트릭 정의가 `averageUtilization = U_target(%)`일 때,
 현재 평균 사용률 \(U_{\text{current}}\) 과 현재 레플리카 \(R_{\text{current}}\) 에 대해:
 
 $$
@@ -310,8 +310,8 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 | 비용 최적화 | HPA + CA + 스케일다운 적극화 | 안정화 창/쿨다운 튜닝 |
 | 고가용성 | HPA + PDB + 분산 토폴로지 | CA 축소 시에도 가용성 확보 |
 
-**HPA & VPA 충돌 주의**  
-- HPA: replicas 조절, VPA: requests 조절 → 둘 다 동시에 **Active 변경** 시 **목표 분모가 변해 불안정**.  
+**HPA & VPA 충돌 주의**
+- HPA: replicas 조절, VPA: requests 조절 → 둘 다 동시에 **Active 변경** 시 **목표 분모가 변해 불안정**.
 - 보편 해법: **VPA=Off/Initial**, HPA=Active.
 
 ---
@@ -473,13 +473,13 @@ $$
 
 ## 12. 운영 예시 플레이북(요약)
 
-1) 메트릭 소스 준비(Metrics Server/Prometheus).  
-2) 워크로드에 **requests/limits** 정의.  
-3) **HPA(v2)** 배치 + **behavior** 설정.  
-4) 큐/외부 메트릭이면 **Prometheus Adapter**(또는 **KEDA**)로 노출.  
-5) **PDB**/**RollingUpdate** 전략 조율.  
-6) **Cluster Autoscaler** 정책/노드풀 용량 확인.  
-7) Grafana/Alerting으로 **p95/레플리카/큐 길이** 경보.  
+1) 메트릭 소스 준비(Metrics Server/Prometheus).
+2) 워크로드에 **requests/limits** 정의.
+3) **HPA(v2)** 배치 + **behavior** 설정.
+4) 큐/외부 메트릭이면 **Prometheus Adapter**(또는 **KEDA**)로 노출.
+5) **PDB**/**RollingUpdate** 전략 조율.
+6) **Cluster Autoscaler** 정책/노드풀 용량 확인.
+7) Grafana/Alerting으로 **p95/레플리카/큐 길이** 경보.
 8) 부하 테스트 → 정책 미세조정.
 
 ---

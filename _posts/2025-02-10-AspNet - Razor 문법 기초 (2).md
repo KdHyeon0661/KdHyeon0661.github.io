@@ -527,11 +527,11 @@ public class AdminOnly
 
 ## 14. 안전/보안 체크리스트
 
-1) **CSRF**: Razor Pages 폼은 기본 **안티포저리 토큰** 자동 삽입. API는 **JWT/Origin/CSRF 전략** 별도  
-2) **XSS**: Razor는 기본 인코딩. `Html.Raw`는 신뢰 콘텐츠만  
-3) **과바인딩**: DTO/화이트리스트 바인딩/`[BindNever]`  
-4) **파일 업로드**: 허용 확장자/크기 제한/랜덤 이름/외부 저장/스캔  
-5) **PRG 패턴**: 중복 제출 방지, 플래시 메시지는 `TempData` 활용  
+1) **CSRF**: Razor Pages 폼은 기본 **안티포저리 토큰** 자동 삽입. API는 **JWT/Origin/CSRF 전략** 별도
+2) **XSS**: Razor는 기본 인코딩. `Html.Raw`는 신뢰 콘텐츠만
+3) **과바인딩**: DTO/화이트리스트 바인딩/`[BindNever]`
+4) **파일 업로드**: 허용 확장자/크기 제한/랜덤 이름/외부 저장/스캔
+5) **PRG 패턴**: 중복 제출 방지, 플래시 메시지는 `TempData` 활용
 6) **로깅/감사**: 실패한 검증 사유, 클라이언트 정보, Culture 로깅
 
 ---
@@ -730,12 +730,12 @@ public IActionResult Create([FromForm] TicketForm form)
 
 ## 20. 체크리스트(요약)
 
-1) `_ViewImports.cshtml`에 Tag Helper 활성  
-2) `_ValidationScriptsPartial` 포함으로 클라이언트 검증  
-3) DTO 분리/화이트리스트(`TryUpdateModelAsync`)로 과바인딩 방지  
-4) PRG 패턴 + `TempData`로 중복 제출 방지  
-5) 파일 업로드 보안(확장자/크기/경로/권한)  
-6) 날짜/숫자 문화권 일관화  
+1) `_ViewImports.cshtml`에 Tag Helper 활성
+2) `_ValidationScriptsPartial` 포함으로 클라이언트 검증
+3) DTO 분리/화이트리스트(`TryUpdateModelAsync`)로 과바인딩 방지
+4) PRG 패턴 + `TempData`로 중복 제출 방지
+5) 파일 업로드 보안(확장자/크기/경로/권한)
+6) 날짜/숫자 문화권 일관화
 7) 필요 시 `IValidatableObject`/커스텀 Attribute/Remote 검증
 
 ---

@@ -8,7 +8,7 @@ category: 디자인패턴
 
 ## 1. 정의 요약
 
-**책임 연쇄 패턴(Chain of Responsibility, CoR)**은 요청을 처리할 수 있는 여러 **핸들러(Handler)**를 **연쇄(Chain)**로 연결하고, 각 핸들러가 요청을 **처리하거나 다음으로 넘기는** 행위 패턴이다.  
+**책임 연쇄 패턴(Chain of Responsibility, CoR)**은 요청을 처리할 수 있는 여러 **핸들러(Handler)**를 **연쇄(Chain)**로 연결하고, 각 핸들러가 요청을 **처리하거나 다음으로 넘기는** 행위 패턴이다.
 요청자(클라이언트)와 처리자의 결합을 끊고, 처리 주체를 **런타임에 유연하게 교체/확장**할 수 있게 해 준다.
 
 ---
@@ -356,7 +356,7 @@ print(pipe({"sleep": 0.05, "deadline": time.time() + 0.02}))  # 504
 
 ## 10. 멀티캐스트/집계 — 로깅·메트릭 등 부수효과 결합
 
-CoR의 “첫 처리자만 처리”와 달리, **필터형 연쇄**에서는 여러 핸들러가 **부수효과(로그/메트릭/태깅)** 를 남길 수 있다.  
+CoR의 “첫 처리자만 처리”와 달리, **필터형 연쇄**에서는 여러 핸들러가 **부수효과(로그/메트릭/태깅)** 를 남길 수 있다.
 필요하면 **집계 핸들러**에서 이전 단계가 쌓아둔 데이터(`ctx["events"]`)를 모아 최종 결론을 도출한다.
 
 ```python
@@ -391,7 +391,7 @@ print(pipe({}))
 import threading
 class ChainHolder:
     def __init__(self, pipeline): self._p = pipeline; self._lk = threading.RLock()
-    def swap(self, pipeline): 
+    def swap(self, pipeline):
         with self._lk: self._p = pipeline
     def handle(self, ctx):
         with self._lk: p = self._p
@@ -402,8 +402,8 @@ class ChainHolder:
 
 ## 12. 성능·확률 모델(간단 수식)
 
-핸들러가 순서대로 `H_1, H_2, ..., H_n` 이고,  
-- 각 핸들러의 평균 처리 시간을 \( t_i \),  
+핸들러가 순서대로 `H_1, H_2, ..., H_n` 이고,
+- 각 핸들러의 평균 처리 시간을 \( t_i \),
 - 요청이 \( i \)번째에서 처리될 확률을 \( p_i \) (단, \( \sum_i p_i \le 1 \), 나머지는 미처리)라고 하자.
 
 **기대 지연시간 \( \mathbb{E}[T] \)** 의 근사:
@@ -412,7 +412,7 @@ $$
 \mathbb{E}[T] \approx \sum_{i=1}^n \left( \prod_{k=1}^{i-1} (1 - p_k) \right) \cdot t_i
 $$
 
-설명: \( i \)번째까지 도달할 확률이 앞선 미처리 확률의 곱이고, 그 때 \( t_i \)가 더해진다.  
+설명: \( i \)번째까지 도달할 확률이 앞선 미처리 확률의 곱이고, 그 때 \( t_i \)가 더해진다.
 필터형 연쇄(모두 실행)라면 단순 합 \( \sum_i t_i \) 가 된다(동기 직렬 기준).
 
 튜닝 팁
@@ -505,7 +505,7 @@ print(pipeline({"path":"/hello"}))               # 401
 ## 15. 실제 시나리오 2 — 이벤트 처리(첫 처리자만 처리)
 
 ```python
-class Event: 
+class Event:
     def __init__(self, kind, payload): self.kind = kind; self.payload = payload
 
 class KindA(Handler):

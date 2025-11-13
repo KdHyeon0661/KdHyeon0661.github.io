@@ -183,7 +183,7 @@ if __name__ == "__main__":
 ## 5. Mongo 초기 스크립트(mongo-init)
 
 - `/docker-entrypoint-initdb.d` 경로에 배치하면 **초기 기동 시 자동 실행**됩니다.
-- 01: 사용자/DB/권한 생성  
+- 01: 사용자/DB/권한 생성
 - 02: 샘플 데이터 시드
 
 ```javascript
@@ -292,7 +292,7 @@ FLASK_DEBUG=true
 ```
 
 ### `docker-compose.override.yml` (개발 시 자동 병합)
-- 개발에서는 소스코드를 **바인드 마운트**해 핫리로드(옵션)  
+- 개발에서는 소스코드를 **바인드 마운트**해 핫리로드(옵션)
 - 운영에서는 볼륨/이미지만 사용
 
 ```yaml
@@ -378,7 +378,7 @@ curl -s http://localhost:5000/items
 ## 12. 보강 포인트(현업형)
 
 ### 12.1 접속 재시도/타임아웃
-- 이미 코드에 **서버 선택 타임아웃**과 **재시도**를 넣었습니다.  
+- 이미 코드에 **서버 선택 타임아웃**과 **재시도**를 넣었습니다.
 - 대규모 트래픽 환경에서는 **커넥션 풀 크기**(e.g. `maxPoolSize`)를 조절하세요.
 
 ```python
@@ -386,16 +386,16 @@ MongoClient(MONGO_URI, maxPoolSize=50, minPoolSize=5, serverSelectionTimeoutMS=5
 ```
 
 ### 12.2 인덱스/스키마 전략
-- 자주 조회하는 필드에 **복합 인덱스** 설계 (예: `name + price`)  
+- 자주 조회하는 필드에 **복합 인덱스** 설계 (예: `name + price`)
 - 컬렉션 validation은 **강한 스키마 보증**이 필요할 때만(성능·유연성 트레이드오프)
 
 ### 12.3 운영 보안
-- 운영에서는 DB 포트 외부 공개(`27017:27017`)를 제거하고, **내부 네트워크에서만** 접근.  
-- 비밀값은 `.env` 대신 **Docker secrets**(Swarm) 또는 **외부 비밀관리**(Vault/Parameter Store)를 고려.  
+- 운영에서는 DB 포트 외부 공개(`27017:27017`)를 제거하고, **내부 네트워크에서만** 접근.
+- 비밀값은 `.env` 대신 **Docker secrets**(Swarm) 또는 **외부 비밀관리**(Vault/Parameter Store)를 고려.
 - Flask 컨테이너는 `USER appuser`로 실행했고, 루트 권한을 피함.
 
 ### 12.4 백업/복구
-- `mongo-data` 볼륨 스냅샷 또는 `mongodump/mongorestore` 파이프라인을 주기화.  
+- `mongo-data` 볼륨 스냅샷 또는 `mongodump/mongorestore` 파이프라인을 주기화.
 - 운영 장애 대비: 데이터 파일 손상 시 복구 가이드라인과 RPO/RTO 정의.
 
 ### 12.5 트랜잭션(선택)
@@ -417,7 +417,7 @@ MongoClient(MONGO_URI, maxPoolSize=50, minPoolSize=5, serverSelectionTimeoutMS=5
 
 ## 14. 대체/확장 아이디어
 
-- **FastAPI 변환**: Uvicorn+Gunicorn 다중 워커로 처리량 향상  
+- **FastAPI 변환**: Uvicorn+Gunicorn 다중 워커로 처리량 향상
 - **Mongo Express UI**:
   ```yaml
   mongo-express:
@@ -432,17 +432,17 @@ MongoClient(MONGO_URI, maxPoolSize=50, minPoolSize=5, serverSelectionTimeoutMS=5
         condition: service_healthy
     networks: [backend]
   ```
-- **테스트 자동화**: `pytest`로 컨테이너 기동 후 e2e 검증  
+- **테스트 자동화**: `pytest`로 컨테이너 기동 후 e2e 검증
 - **프로파일링**: `Flask` → `Gunicorn` + 프런트 리버스 프록시(`nginx`) 구조
 
 ---
 
 ## 15. 원문 대비 핵심 확장 요약
 
-- **헬스체크/depends_on 조건**으로 **안정적 기동 순서** 확보  
-- **초기 스크립트**(사용자/시드) 자동화로 재현성 보장  
-- **비루트 사용자**로 컨테이너 실행(보안)  
-- `.env`+`override` 로 **개발/운영 분리**  
+- **헬스체크/depends_on 조건**으로 **안정적 기동 순서** 확보
+- **초기 스크립트**(사용자/시드) 자동화로 재현성 보장
+- **비루트 사용자**로 컨테이너 실행(보안)
+- `.env`+`override` 로 **개발/운영 분리**
 - 커넥션 풀/타임아웃/인덱스/밸리데이션 등 **운영형 튜닝 포인트** 제시
 
 ---
@@ -483,7 +483,7 @@ networks:
 
 ## 참고
 
-- MongoDB Docker Hub: https://hub.docker.com/_/mongo  
-- Flask: https://flask.palletsprojects.com/  
-- PyMongo: https://pymongo.readthedocs.io/  
-- Docker Compose: https://docs.docker.com/compose/  
+- MongoDB Docker Hub: https://hub.docker.com/_/mongo
+- Flask: https://flask.palletsprojects.com/
+- PyMongo: https://pymongo.readthedocs.io/
+- Docker Compose: https://docs.docker.com/compose/

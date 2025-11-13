@@ -118,13 +118,13 @@ kubectl get nodes
 ---
 
 ## 4. 네트워킹·LB·Ingress — 실무 논점
-- **CNI IP 할당**  
-  - GKE: Secondary Range(노드/Pod CIDR 분리) → 대규모 IP 관리 용이  
-  - EKS: ENI 할당 모델 → 서브넷/ENI/Pod 밀도/비용 고려  
+- **CNI IP 할당**
+  - GKE: Secondary Range(노드/Pod CIDR 분리) → 대규모 IP 관리 용이
+  - EKS: ENI 할당 모델 → 서브넷/ENI/Pod 밀도/비용 고려
   - AKS: Azure CNI(Overlay/기본) 옵션 → 오버레이로 IP 절감 가능
-- **LB/Ingress**  
-  - GKE: GCE Ingress(HTTP LB) 또는 Gateway API/Envoy 기반  
-  - EKS: **ALB Ingress Controller**(다양한 라우팅/인증), 외부 NLB  
+- **LB/Ingress**
+  - GKE: GCE Ingress(HTTP LB) 또는 Gateway API/Envoy 기반
+  - EKS: **ALB Ingress Controller**(다양한 라우팅/인증), 외부 NLB
   - AKS: **AGIC**(L7 WAF/엔터프라이즈), Nginx Ingress도 일반적
 - **소스 IP 보존**: `spec.externalTrafficPolicy: Local` + 백엔드 분포 전략
 
@@ -191,10 +191,10 @@ spec:
 ---
 
 ## 7. 보안 — IAM/OIDC/PSA/비밀/정책
-- **ID 연동**  
-  - GKE: Workload Identity(GSA↔KSA)  
-  - EKS: **IRSA(OIDC)**  
-  - AKS: **Workload Identity(AAD)**  
+- **ID 연동**
+  - GKE: Workload Identity(GSA↔KSA)
+  - EKS: **IRSA(OIDC)**
+  - AKS: **Workload Identity(AAD)**
 - **Secret 암호화**: KMS/Key Vault/CMEK로 etcd 암호화
 - **Pod Security Admission(PSA)** 라벨로 Baseline/Restricted 적용
 - **정책 엔진**: Gatekeeper/OPA, Kyverno
@@ -268,12 +268,12 @@ resource "google_container_cluster" "gke" {
 요청률(QPS), 평균 처리시간 \(t\), 파드당 안정 동시 처리량 \(\text{cap}_{pod}\), 노드당 파드 수 \(\text{pods/node}\), 리소스 단가를 둔다면:
 
 $$
-\text{필요 파드 수} \approx 
+\text{필요 파드 수} \approx
 \left\lceil \frac{\text{QPS}\cdot t}{\text{cap}_{pod}} \right\rceil \cdot \text{버퍼}
 $$
 
 $$
-\text{필요 노드 수} \approx 
+\text{필요 노드 수} \approx
 \left\lceil \frac{\text{필요 파드 수}}{\text{pods/node}} \right\rceil
 $$
 
@@ -295,16 +295,16 @@ $$
 
 ## 12. 어떤 서비스를 선택할까? — 의사결정 트리
 
-1) **클라우드 주력**이 명확?  
+1) **클라우드 주력**이 명확?
    - GCP 중심 → **GKE**, AWS 중심 → **EKS**, Azure 중심 → **AKS**
-2) **서버리스 운영** 선호?  
-   - 완전 서버리스에 가깝게 → **GKE Autopilot**  
+2) **서버리스 운영** 선호?
+   - 완전 서버리스에 가깝게 → **GKE Autopilot**
    - Pod 서버리스가 필요 → **EKS Fargate**
-3) **보안/네트워크** 커스텀 강도?  
+3) **보안/네트워크** 커스텀 강도?
    - VPC/NLB/ALB/PrivateLink/SG for Pods 등 정교함 → **EKS**
-4) **초기 진입/학습 곡선** 완만함?  
+4) **초기 진입/학습 곡선** 완만함?
    - **AKS**(UI/문서/DevOps 연계 용이)
-5) **데이터패스/성능/자동화**  
+5) **데이터패스/성능/자동화**
    - GKE Dataplane V2, 자동화 생태계 → **GKE**
 
 ---
@@ -370,7 +370,7 @@ spec:
 - **EKS**: **IRSA+ALB** 조합, VPC/ENI 설계, 스팟/온디맨드 혼합 노드풀
 - **AKS**: AAD/Workload Identity, AGIC/DevOps 친화, Cilium/Overlay로 IP 효율
 
-> 결론: **주 인프라·보안정책·네트워크 설계·운영 문화**에 맞춰 선택하라.  
+> 결론: **주 인프라·보안정책·네트워크 설계·운영 문화**에 맞춰 선택하라.
 > PoC는 가볍게 시작(Autopilot/Fargate/기본 AKS) → 관측/보안/스케일을 더하며 **운영 기준선**을 만든다.
 
 부록: 필수 명령 모음

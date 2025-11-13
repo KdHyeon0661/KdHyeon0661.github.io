@@ -493,17 +493,17 @@ spec:
 
 ## 12. FAQ
 
-**Q1. `ImagePullBackOff`와 다른가요?**  
+**Q1. `ImagePullBackOff`와 다른가요?**
 A. 예. 이는 **이미지 풀 실패** 상태이며, 애초에 컨테이너가 시작되지 않습니다. CrashLoopBackOff는 **시작 후 크래시**.
 
-**Q2. Job도 CrashLoopBackOff가 뜨나요?**  
+**Q2. Job도 CrashLoopBackOff가 뜨나요?**
 A. Job은 `backoffLimit`로 재시도 제어합니다. 파드 단에서는 CrashLoopBackOff처럼 보일 수 있으나 **Job 컨트롤러**가 실패 처리합니다.
 ```yaml
 spec:
   backoffLimit: 3
 ```
 
-**Q3. 멀티 컨테이너 파드에서 한 컨테이너만 크래시합니다.**  
+**Q3. 멀티 컨테이너 파드에서 한 컨테이너만 크래시합니다.**
 A. `containerStatuses`에서 문제 컨테이너만 골라 로그/상태 확인, Sidecar 종속성/공유 볼륨 경합 점검.
 
 ---
@@ -551,6 +551,6 @@ kubectl debug pod/<POD> -c debug --image=busybox:1.36 --target=<CONTAINER> -it -
 
 ## 참고 링크
 
-- Kubernetes Pod Lifecycle  
-- Probe 설정 가이드  
+- Kubernetes Pod Lifecycle
+- Probe 설정 가이드
 - `kubectl logs`/`kubectl debug`/`rollout` 명령 사용법

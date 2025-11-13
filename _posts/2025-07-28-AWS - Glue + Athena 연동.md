@@ -21,13 +21,13 @@ category: AWS
 ```
 
 **필수 체크리스트**
-- [ ] S3 **레이아웃/파티션 키** 설계 (`dt=YYYY-MM-DD/…` 또는 다중 키)  
-- [ ] **파일 포맷**: Parquet(+Snappy) 기본, 텍스트는 임시/원천 보관  
-- [ ] Glue **데이터베이스/테이블 네이밍** 표준화, 컬럼 타입 고정  
-- [ ] 크롤러 스코프 최소화(원천/정제 경로 분리), 커스텀 Classifier 필요 시 정의  
-- [ ] Athena **WorkGroup** 분리, 결과 버킷/암호화 지정, 쿼리 가드레일 설정  
-- [ ] 파티션 프로젝션/메타 자동화, ETL 시 **MSCK** or `ALTER TABLE ADD PARTITION` 처리  
-- [ ] 보안: S3 BPA(공개차단), SSE-KMS, Lake Formation 권한 모델, 세분화된 IAM  
+- [ ] S3 **레이아웃/파티션 키** 설계 (`dt=YYYY-MM-DD/…` 또는 다중 키)
+- [ ] **파일 포맷**: Parquet(+Snappy) 기본, 텍스트는 임시/원천 보관
+- [ ] Glue **데이터베이스/테이블 네이밍** 표준화, 컬럼 타입 고정
+- [ ] 크롤러 스코프 최소화(원천/정제 경로 분리), 커스텀 Classifier 필요 시 정의
+- [ ] Athena **WorkGroup** 분리, 결과 버킷/암호화 지정, 쿼리 가드레일 설정
+- [ ] 파티션 프로젝션/메타 자동화, ETL 시 **MSCK** or `ALTER TABLE ADD PARTITION` 처리
+- [ ] 보안: S3 BPA(공개차단), SSE-KMS, Lake Formation 권한 모델, 세분화된 IAM
 - [ ] 코스트: Parquet, 파티션 프루닝, 압축, `SELECT *` 금지, Explain 분석
 
 ---
@@ -43,9 +43,9 @@ s3://datalake/refined/access_logs/dt=2025-11-10/hour=02/...
 ```
 
 권장 규칙
-- **소스/영역 분리**: `raw/`, `staged/`, `refined/`, `curated/`  
-- **키-값 디렉토리**: `key=value` 형식이 Athena/Glue 친화적  
-- 파티션 키는 **카디널리티**와 **쿼리 필터** 기준으로 선정  
+- **소스/영역 분리**: `raw/`, `staged/`, `refined/`, `curated/`
+- **키-값 디렉토리**: `key=value` 형식이 Athena/Glue 친화적
+- 파티션 키는 **카디널리티**와 **쿼리 필터** 기준으로 선정
 - 파일 크기: 128–512MB 권장(Parquet), 너무 작으면 스캔 과다/쿼리 느림
 
 ### 1.2 포맷 선택
@@ -61,7 +61,7 @@ s3://datalake/refined/access_logs/dt=2025-11-10/hour=02/...
 ## 2. Glue 데이터 카탈로그 모델링
 
 ### 2.1 데이터베이스/테이블 설계
-- `db_raw`, `db_refined`, `db_curated` 등 **영역별 DB**  
+- `db_raw`, `db_refined`, `db_curated` 등 **영역별 DB**
 - 테이블 이름: `<도메인>_<엔티티>_<레벨>` 예) `access_logs_raw`
 
 ```sql
@@ -95,7 +95,7 @@ TBLPROPERTIES (
 ## 3. Glue Crawler: 스키마 수집·자동화
 
 ### 3.1 크롤러 스코프 최소화
-- `raw` 쪽에만 적용하거나, `refined`도 필요 시 별도 크롤러  
+- `raw` 쪽에만 적용하거나, `refined`도 필요 시 별도 크롤러
 - **Include path**를 좁게, **Exclusions**로 불필요 파일 제외(`*.tmp`, `_SUCCESS`)
 
 ### 3.2 커스텀 분류기(Classifier)
@@ -163,7 +163,7 @@ job.commit()
 ```
 
 **포인트**
-- ETL에서 **파티션 디렉토리**를 **명시적으로** 생성  
+- ETL에서 **파티션 디렉토리**를 **명시적으로** 생성
 - 스키마/타입을 **엄격히** 변환하고 저장
 
 ### 4.2 파티션 메타 반영
@@ -171,8 +171,8 @@ ETL 완료 후:
 ```sql
 MSCK REPAIR TABLE db_refined.access_logs; -- 디렉토리 스캔 후 파티션 반영
 -- 또는
-ALTER TABLE db_refined.access_logs ADD IF NOT EXISTS 
-  PARTITION (dt='2025-11-10', hour='02') 
+ALTER TABLE db_refined.access_logs ADD IF NOT EXISTS
+  PARTITION (dt='2025-11-10', hour='02')
   LOCATION 's3://datalake/refined/access_logs/dt=2025-11-10/hour=02/';
 ```
 
@@ -183,7 +183,7 @@ ALTER TABLE db_refined.access_logs ADD IF NOT EXISTS
 ## 5. Athena: 쿼리, 비용·성능 최적화, 관리
 
 ### 5.1 결과 저장 버킷/암호화
-- WorkGroup별 결과 경로 지정, SSE-KMS 권장  
+- WorkGroup별 결과 경로 지정, SSE-KMS 권장
 - Settings에서 `enforce` 옵션으로 강제
 
 ```text
@@ -294,7 +294,7 @@ ALTER TABLE db_refined.events_iceberg ADD COLUMN new_col string;
 ## 7. 권한/보안: IAM, KMS, Lake Formation
 
 ### 7.1 IAM 최소권한
-- Glue Crawler/Job Role: S3 경로 제한, Glue Catalog 특정 DB/테이블 권한  
+- Glue Crawler/Job Role: S3 경로 제한, Glue Catalog 특정 DB/테이블 권한
 - Athena WorkGroup 실행 권한 분리
 
 예시(요지):
@@ -310,12 +310,12 @@ ALTER TABLE db_refined.events_iceberg ADD COLUMN new_col string;
 ```
 
 ### 7.2 암호화
-- S3: **SSE-KMS**(버킷 기본 암호화)  
-- Glue/Athena: 결과/임시 파일 KMS 키 지정  
+- S3: **SSE-KMS**(버킷 기본 암호화)
+- Glue/Athena: 결과/임시 파일 KMS 키 지정
 - KMS 키 정책에 ETL/Lake Formation/Athena Role 허용
 
 ### 7.3 Lake Formation
-- 테이블·컬럼 단위 권한 부여, 데이터 마스킹/행 필터  
+- 테이블·컬럼 단위 권한 부여, 데이터 마스킹/행 필터
 - Glue Catalog 권한 관리를 Lake Formation 단일 진입점으로 일원화
 
 ---
@@ -323,7 +323,7 @@ ALTER TABLE db_refined.events_iceberg ADD COLUMN new_col string;
 ## 8. 운영 자동화: 워크플로, 스케줄, 파이프라인
 
 ### 8.1 Glue Workflow/Trigger
-- **크롤러 → ETL → 파티션 메타 반영** 순의 DAG 구성  
+- **크롤러 → ETL → 파티션 메타 반영** 순의 DAG 구성
 - 실패/성공 분기, 재시도 정책
 
 ### 8.2 IaC 예(CloudFormation 스니펫)
@@ -354,8 +354,8 @@ Resources:
 
 ## 9. 모니터링/품질/카탈로그 거버넌스
 
-- Glue Job Metrics: Spark UI/CloudWatch 지표(입출력, task 실패)  
-- Athena WorkGroup: 쿼리/스캔 바이트 대시보드, 가드레일(쿼리 제한)  
+- Glue Job Metrics: Spark UI/CloudWatch 지표(입출력, task 실패)
+- Athena WorkGroup: 쿼리/스캔 바이트 대시보드, 가드레일(쿼리 제한)
 - **Data Quality**: Glue Data Quality 룰, 또는 쿼리 기반 검증 테이블 운영
 
 예: 단순 카드inality 체크
@@ -380,10 +380,10 @@ SELECT count(DISTINCT client_ip) FROM db_refined.access_logs WHERE dt='2025-11-1
 
 ## 11. 비용 최적화 레시피
 
-- Parquet(+Snappy), **컬럼·파티션 프루닝**  
-- 파티션 프로젝션으로 메타 관리 비용↓  
-- WorkGroup별 **쿼리 제한/알림**, 가드레일  
-- ETL 시 **소파일 컴팩션**, 스냅샷/아카이브 주기 설정  
+- Parquet(+Snappy), **컬럼·파티션 프루닝**
+- 파티션 프로젝션으로 메타 관리 비용↓
+- WorkGroup별 **쿼리 제한/알림**, 가드레일
+- ETL 시 **소파일 컴팩션**, 스냅샷/아카이브 주기 설정
 - **데이터 레이아웃**: 쿼리 패턴과 파티션 키 정렬
 
 ---
@@ -430,8 +430,8 @@ ORDER BY dt, hour;
 
 ## 13. 검증/리그레션 테스트(개발자 관점)
 
-- **샘플 파티션**에 대해 ETL 실행 → 기대 결과와 **골든 결과** 비교  
-- 스키마 변경 시 **DDL/뷰/쿼리 호환성** 회귀 테스트  
+- **샘플 파티션**에 대해 ETL 실행 → 기대 결과와 **골든 결과** 비교
+- 스키마 변경 시 **DDL/뷰/쿼리 호환성** 회귀 테스트
 - 커스텀 UDF/정규화 로직은 **유닛/통합 테스트**로 고정
 
 ---
@@ -442,20 +442,20 @@ $$
 \text{Bytes Scanned} \approx \sum_{f \in \text{Files Read}} \text{FileSize}(f) \times \text{Selectivity}(columns)
 $$
 
-- Parquet에서 **Selectivity(columns)** 는 필요한 컬럼만 로드할 때 크게 감소.  
+- Parquet에서 **Selectivity(columns)** 는 필요한 컬럼만 로드할 때 크게 감소.
 - 파티션 프루닝으로 **Files Read** 자체를 급감.
 
 ---
 
 ## 15. 요약 체크리스트 (현장 적용)
 
-- [ ] **S3 파티션/포맷**: Parquet, 128–512MB, 키=값 디렉토리  
-- [ ] **Glue Crawler**: 범위 최소화, Classifier, 스키마 안정화  
-- [ ] **ETL**: 명시적 캐스팅, 파티션 생성, 소파일 방지  
-- [ ] **Catalog/DDL**: 파티션 정의, 프로젝션, CTAS/UNLOAD 활용  
-- [ ] **Athena**: WorkGroup, 결과 버킷/KMS, Explain, 프루닝  
-- [ ] **보안**: S3 BPA, SSE-KMS, 최소권한 IAM, Lake Formation  
-- [ ] **운영**: Workflow/Trigger/Step Functions, 모니터링/가드레일  
+- [ ] **S3 파티션/포맷**: Parquet, 128–512MB, 키=값 디렉토리
+- [ ] **Glue Crawler**: 범위 최소화, Classifier, 스키마 안정화
+- [ ] **ETL**: 명시적 캐스팅, 파티션 생성, 소파일 방지
+- [ ] **Catalog/DDL**: 파티션 정의, 프로젝션, CTAS/UNLOAD 활용
+- [ ] **Athena**: WorkGroup, 결과 버킷/KMS, Explain, 프루닝
+- [ ] **보안**: S3 BPA, SSE-KMS, 최소권한 IAM, Lake Formation
+- [ ] **운영**: Workflow/Trigger/Step Functions, 모니터링/가드레일
 - [ ] **코스트**: 스캔 바이트 절감(포맷/파티션/컬럼 제한)
 
 ---

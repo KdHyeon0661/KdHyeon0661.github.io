@@ -42,15 +42,15 @@ table[1] -> TreeBin(...)
 
 ### 2.2 시간복잡도 & 로드 팩터
 - 평균 **O(1)** 삽입/탐색/삭제, 최악 **O(n)** (해시 품질/충돌에 좌우).
-- 임계값(리사이즈 트리거):  
+- 임계값(리사이즈 트리거):
   $$ \text{threshold} = \text{capacity} \times \text{loadFactor} $$
   기본 용량 16, 로드 팩터 0.75.
 
-> **초기 용량 산정**: 예상 엔트리 수 \(N\)라면  
+> **초기 용량 산정**: 예상 엔트리 수 \(N\)라면
 > `initialCapacity = ceil(N / loadFactor)` 로 생성 → 리사이즈 최소화.
 
 ### 2.3 `equals`/`hashCode` 계약 (중요)
-- **키(요소)의 동등성은 `equals`로, 버킷 선택은 `hashCode`로**.  
+- **키(요소)의 동등성은 `equals`로, 버킷 선택은 `hashCode`로**.
 - **집합에 넣은 뒤 요소 상태가 바뀌어 hashCode/equal 결과가 변하면 탐색 실패** → **불변(immutable) 요소** 권장.
 
 ```java
@@ -112,7 +112,7 @@ public class StableDedup {
 - 기본은 **자연 순서(Comparable)**, 또는 **생성자에 Comparator** 전달.
 - 시간복잡도: 삽입/탐색/삭제 **O(log n)**.
 
-> **null 요소**: 자연 순서 사용 시 **불가**.  
+> **null 요소**: 자연 순서 사용 시 **불가**.
 > 다만 **명시적 Comparator가 `null`을 처리하면 허용 가능**(예: `Comparator.nullsFirst(...)`).
 
 ### 4.2 NavigableSet API (핵심)
@@ -144,7 +144,7 @@ System.out.println(ap); // [app, apple, apricot]
 
 ### 4.4 Comparator 일관성 주의
 - `Comparator`가 **전이적/반사적/대칭적** 토털 오더여야 함.
-- **`equals`와의 일관성**: TreeSet은 `compare(a,b)==0`이면 같은 원소로 취급(하나만 저장).  
+- **`equals`와의 일관성**: TreeSet은 `compare(a,b)==0`이면 같은 원소로 취급(하나만 저장).
   `equals`와 다르면 **예상치 못한 중복 제거**가 발생할 수 있음.
 
 ---
@@ -271,7 +271,7 @@ public class NullFriendlyTreeSet {
 | 메모리 오버헤드 | 낮음(버킷/노드) | 높음(RBTree 노드·색상·링크) |
 | 재해싱 비용 | 리사이즈 시 큼 | 없음(하지만 삽입/삭제마다 회전/재색칠) |
 
-> **대용량**·**멤버십 테스트 빈번** → HashSet 우선.  
+> **대용량**·**멤버십 테스트 빈번** → HashSet 우선.
 > **정렬/범위 질의**가 핵심 → TreeSet 우선.
 
 ---
@@ -418,6 +418,6 @@ public class SetLandscape {
 ---
 
 ### 마무리
-- **HashSet**: “기본값” — 최적의 평균 성능으로 대다수 멤버십/집합 연산을 해결합니다.  
-- **TreeSet**: “정렬·범위 탐색기” — 사전식 탐색/이웃/구간 처리가 핵심일 때 선택하세요.  
+- **HashSet**: “기본값” — 최적의 평균 성능으로 대다수 멤버십/집합 연산을 해결합니다.
+- **TreeSet**: “정렬·범위 탐색기” — 사전식 탐색/이웃/구간 처리가 핵심일 때 선택하세요.
 - **LinkedHashSet/ConcurrentSkipListSet/EnumSet**까지 상황에 맞게 조합하면, **성능·표현력·안정성**을 모두 잡을 수 있습니다.

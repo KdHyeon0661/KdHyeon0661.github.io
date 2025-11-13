@@ -28,13 +28,13 @@ $$
 +\underbrace{\mathbb{Var}[\hat f(x)]}_{\text{Variance}}
 +\underbrace{\sigma^2}_{\text{Irreducible Noise}}.
 $$
-- **용량↑** → **분산↑·바이어스↓**(과적합 위험)  
+- **용량↑** → **분산↑·바이어스↓**(과적합 위험)
 - **정규화↑** → **바이어스↑·분산↓**(과소적합 위험)
 
 ### 1.4 원인↔처방 매핑
-- 과적합: **모델 복잡**·데이터 적음·노이즈 큼·정규화 약함  
+- 과적합: **모델 복잡**·데이터 적음·노이즈 큼·정규화 약함
   → **정규화 강화, 데이터 증가/증강, 드롭아웃, 조기 종료, 모델 단순화**
-- 과소적합: **모델 용량↓**·학습 불충분·표현력 부족  
+- 과소적합: **모델 용량↓**·학습 불충분·표현력 부족
   → **모델 확대, 더 오래/더 잘 학습, 특성 공학, 정규화 완화**
 
 ---
@@ -49,17 +49,17 @@ $$
 
 ### 2.2 L2 (Ridge, Weight Decay)
 $$
-\Omega(\theta)=\tfrac{1}{2}\|\theta\|_2^2,\quad 
+\Omega(\theta)=\tfrac{1}{2}\|\theta\|_2^2,\quad
 w \leftarrow (1-\alpha\lambda)\,w\ -\ \alpha\nabla_w L.
 $$
-- 큰 가중치 억제 → **매끄러운 함수** 선호, 과적합 완화  
+- 큰 가중치 억제 → **매끄러운 함수** 선호, 과적합 완화
 - **베이지안 해석**: \(w\sim \mathcal N(0,\tau^2 I)\) 사전과 동치
 
 ### 2.3 L1 (Lasso) — 희소성
 $$
 \Omega(\theta)=\|w\|_1=\sum_j |w_j|
 $$
-- **가중치 0 유도**(특성 선택 효과)  
+- **가중치 0 유도**(특성 선택 효과)
 - 좌표 강하/서브그래디언트 최적화 필요
 
 ### 2.4 Elastic Net
@@ -77,9 +77,9 @@ $$
 - **Adversarial/Sharpness-Aware**: 경계 근방 강건화(고급)
 
 ### 2.6 Optimizer와 Weight Decay
-- **Adam의 L2**는 실제로 적응 스케일과 섞여 **진짜 Weight Decay와 다름**  
-  → **AdamW**(decoupled weight decay) 사용 권장  
-- 튜닝 초깃값: `weight_decay ≈ 1e-4 ~ 5e-2` (모델·데이터에 의존)  
+- **Adam의 L2**는 실제로 적응 스케일과 섞여 **진짜 Weight Decay와 다름**
+  → **AdamW**(decoupled weight decay) 사용 권장
+- 튜닝 초깃값: `weight_decay ≈ 1e-4 ~ 5e-2` (모델·데이터에 의존)
 - 학습률 스케줄과 함께 **cosine/step**로 조합
 
 ---
@@ -91,7 +91,7 @@ $$
 $$
 \tilde h=\frac{m\odot h}{1-p}.
 $$
-- 분모 \(1-p\)로 **기대값 보정**(Inverted Dropout)  
+- 분모 \(1-p\)로 **기대값 보정**(Inverted Dropout)
 - 서로 다른 서브모델의 **암묵적 앙상블** 효과
 
 ### 3.2 왜 잘 작동하나?
@@ -99,20 +99,20 @@ $$
 - 모델 평균화와 유사한 일반화 이점 (테스트는 풀 네트워크 사용)
 
 ### 3.3 어디·얼마나?
-- **MLP/FC**: 0.3–0.5 자주  
-- **Conv**: **SpatialDropout/DropBlock** 0.1–0.3 (채널/블록 단위)  
+- **MLP/FC**: 0.3–0.5 자주
+- **Conv**: **SpatialDropout/DropBlock** 0.1–0.3 (채널/블록 단위)
 - **Transformer**: `dropout, attention_dropout ≈ 0.1`, **Stochastic Depth(DropPath)** 적용(깊은 네트)
 
 > 과도한 비율은 **학습 불안정/과소적합**. 작은 값에서 점진 튜닝.
 
 ### 3.4 변형/활용
-- **DropConnect**: 가중치 자체를 드롭  
-- **SpatialDropout/DropBlock**: Conv에 적합  
-- **Variational Dropout**: RNN 시퀀스 고정 마스크  
+- **DropConnect**: 가중치 자체를 드롭
+- **SpatialDropout/DropBlock**: Conv에 적합
+- **Variational Dropout**: RNN 시퀀스 고정 마스크
 - **MC Dropout**: 추론 시에도 드롭아웃 활성 → **불확실성 추정**(평균·분산)
 
 ### 3.5 BN과의 순서
-일반적 권장: **Conv/Linear → Norm → 활성화 → Dropout**  
+일반적 권장: **Conv/Linear → Norm → 활성화 → Dropout**
 (특정 프레임워크/구현에 따라 예외 가능)
 
 ---
@@ -120,13 +120,13 @@ $$
 ## 4. 데이터 증강(Data Augmentation) 레시피
 
 ### 4.1 Computer Vision
-- 기본: Random Crop/Flip/ColorJitter, Resize, Cutout  
-- 강력: **MixUp**  
-  \( \tilde x=\lambda x_i+(1-\lambda)x_j,\ \tilde y=\lambda y_i+(1-\lambda)y_j,\ \lambda\sim\mathrm{Beta}(\alpha,\alpha) \)  
+- 기본: Random Crop/Flip/ColorJitter, Resize, Cutout
+- 강력: **MixUp**
+  \( \tilde x=\lambda x_i+(1-\lambda)x_j,\ \tilde y=\lambda y_i+(1-\lambda)y_j,\ \lambda\sim\mathrm{Beta}(\alpha,\alpha) \)
 - **CutMix**: 패치 섞기 → 라벨도 면적 비율로 혼합
 
 ### 4.2 NLP
-- 동의어 치환, 랜덤 삭제/스와프, 백트랜슬레이션, **EDA**  
+- 동의어 치환, 랜덤 삭제/스와프, 백트랜슬레이션, **EDA**
 - 사전학습 임베딩/언어모델 기반 마스킹
 
 ### 4.3 오디오/음성
@@ -140,23 +140,23 @@ $$
 ## 5. Regularization 튜닝 절차(실무형 Checklists)
 
 ### 5.1 과적합(훈련↑·검증↓)일 때
-1) **Weight Decay↑** (AdamW)  
-2) **Dropout 도입/상향** (소량→점진)  
-3) **Augment 강화**(CV: RandAugment/MixUp/CutMix)  
-4) **Early Stopping** + **LR 스케줄**(Cosine/ReduceLROnPlateau)  
-5) **모델 단순화**(깊이/너비↓, 파라 공유, Distillation)  
+1) **Weight Decay↑** (AdamW)
+2) **Dropout 도입/상향** (소량→점진)
+3) **Augment 강화**(CV: RandAugment/MixUp/CutMix)
+4) **Early Stopping** + **LR 스케줄**(Cosine/ReduceLROnPlateau)
+5) **모델 단순화**(깊이/너비↓, 파라 공유, Distillation)
 6) **데이터 증가**(수집/합성)
 
 ### 5.2 과소적합(훈련도 낮음)일 때
-1) **모델 용량↑**(층/너비)·학습 더 오래  
-2) **정규화/Dropout 약화**  
-3) **특징 공학/전이학습**  
+1) **모델 용량↑**(층/너비)·학습 더 오래
+2) **정규화/Dropout 약화**
+3) **특징 공학/전이학습**
 4) **학습률/옵티마** 재설계(warmup, momentum, batch size)
 
 ### 5.3 선택 지침(작업별)
-- **Tabular(불균형/잡음多)**: L2 + 소량 Dropout/Label Smoothing, 트리계열 고려  
-- **CV**: Weight Decay + 강한 Aug + (필요 시)Dropout/DropBlock + EMA  
-- **NLP**: Label Smoothing(0.1±), LayerDrop/DropPath, 작은 WD, 강한 스케줄링  
+- **Tabular(불균형/잡음多)**: L2 + 소량 Dropout/Label Smoothing, 트리계열 고려
+- **CV**: Weight Decay + 강한 Aug + (필요 시)Dropout/DropBlock + EMA
+- **NLP**: Label Smoothing(0.1±), LayerDrop/DropPath, 작은 WD, 강한 스케줄링
 - **시계열**: 입력 잡음/윈도우 증강, 과도한 Dropout 금지
 
 ---
@@ -330,15 +330,15 @@ cb = [
 ## 7. 추가: 정규화와 일반화에 관한 심화 개념
 
 ### 7.1 마진과 일반화(선형 분류)
-로지스틱/힌지 손실에서 **큰 마진**을 선호하는 해는 일반화 경향이 강함.  
+로지스틱/힌지 손실에서 **큰 마진**을 선호하는 해는 일반화 경향이 강함.
 뉴럴넷에서도 **대규모 배치/스케줄**이 **implicit margin**에 영향.
 
 ### 7.2 라벨 스무딩과 칼리브레이션
-- **Label Smoothing**은 예측 확률의 **과도 확신**을 완화 → **ECE 감소** 경향  
+- **Label Smoothing**은 예측 확률의 **과도 확신**을 완화 → **ECE 감소** 경향
 - 다만 지나치면 **분류 경계** 약화(미세 구분 저하)
 
 ### 7.3 Double Descent(현대 통계)
-용량을 늘릴수록 오류가 다시 증가 후 감소하는 **이중 하강** 현상 가능 →  
+용량을 늘릴수록 오류가 다시 증가 후 감소하는 **이중 하강** 현상 가능 →
 **강한 정규화·증강·스케줄링**이 필요
 
 ### 7.4 일반화 관점의 잡음 주입
@@ -361,7 +361,7 @@ def plot_curves(history):
 ```
 
 ### 8.2 정규화 경로(λ에 따른 계수 크기) — 개념 스케치
-- L1: \(\lambda\uparrow\) → **계수 0**로 수축(희소)  
+- L1: \(\lambda\uparrow\) → **계수 0**로 수축(희소)
 - L2: \(\lambda\uparrow\) → **연속적 수축**, 0은 드뭄
 
 ---
@@ -379,19 +379,19 @@ def plot_curves(history):
 
 ## 10. 종합 체크리스트
 
-- [ ] 학습/검증 곡선 모니터링(과적합/과소적합 판별)  
-- [ ] Weight Decay/Dropout/증강/스케줄 조합 설정  
-- [ ] Label Smoothing/칼리브레이션(ECE) 확인  
-- [ ] Early Stopping 기준/버퍼(plateau 마진) 정의  
-- [ ] 정규화 강도/드롭아웃 비율/증강 강도 **교차검증**  
-- [ ] 재현성(시드/버전/데이터 스냅샷)·로깅  
+- [ ] 학습/검증 곡선 모니터링(과적합/과소적합 판별)
+- [ ] Weight Decay/Dropout/증강/스케줄 조합 설정
+- [ ] Label Smoothing/칼리브레이션(ECE) 확인
+- [ ] Early Stopping 기준/버퍼(plateau 마진) 정의
+- [ ] 정규화 강도/드롭아웃 비율/증강 강도 **교차검증**
+- [ ] 재현성(시드/버전/데이터 스냅샷)·로깅
 - [ ] 배포 전 **견고성(Shift/Noise/Adversarial) 스팟 테스트**
 
 ---
 
 ## 11. 요약
 
-- **과적합 vs 과소적합**은 **바이어스–분산** 균형 문제.  
-- **Regularization**은 손실에 **패널티**(L1/L2/ElasticNet)와 **암묵적 기법**(Early Stop, Aug, Label Smoothing, Noise)을 통해 **복잡도 제어**.  
-- **Dropout**은 뉴런을 확률적으로 끊어 **공적응 방지·앙상블 효과**로 일반화 향상(훈련 시만 적용, inverted scaling).  
+- **과적합 vs 과소적합**은 **바이어스–분산** 균형 문제.
+- **Regularization**은 손실에 **패널티**(L1/L2/ElasticNet)와 **암묵적 기법**(Early Stop, Aug, Label Smoothing, Noise)을 통해 **복잡도 제어**.
+- **Dropout**은 뉴런을 확률적으로 끊어 **공적응 방지·앙상블 효과**로 일반화 향상(훈련 시만 적용, inverted scaling).
 - 실무에서는 **AdamW + 적절한 증강 + Early Stopping + (필요 시) Dropout/Label Smoothing**을 기본 세트로, 데이터/모델 특성에 따라 강도를 튜닝하는 전략이 가장 효율적입니다.

@@ -61,7 +61,7 @@ String s = Integer.toString(123);   // "123"
 
 ### 2.1 개념
 - **박싱(Boxing)**: 기본형 → Wrapper 객체
-- **언박싱(Unboxing)**: Wrapper → 기본형  
+- **언박싱(Unboxing)**: Wrapper → 기본형
   Java는 문맥상 필요한 경우 **자동으로 변환**합니다.
 
 ```java
@@ -109,7 +109,7 @@ System.out.println(c == d);      // false (서로 다른 객체)
 System.out.println(c.equals(d)); // true  (값 비교)
 ```
 
-**규칙**: Wrapper 동등성은 항상 `equals()`를 사용하라.  
+**규칙**: Wrapper 동등성은 항상 `equals()`를 사용하라.
 예외적으로 `Boolean`은 싱글턴이지만 **일관성을 위해 equals 권장**.
 
 ---
@@ -159,8 +159,8 @@ System.out.println(Double.compare(p, Double.NaN));    // 0 (동등)
 System.out.println(+0.0 == -0.0);                  // true
 System.out.println(Double.compare(+0.0, -0.0));    // 1 (부호 구분)
 ```
-- **`MIN_VALUE` 오해 주의**:  
-  `Double.MIN_VALUE`/`Float.MIN_VALUE`는 **가장 작은 양의(>0) 서브노멀 값**.  
+- **`MIN_VALUE` 오해 주의**:
+  `Double.MIN_VALUE`/`Float.MIN_VALUE`는 **가장 작은 양의(>0) 서브노멀 값**.
   가장 작은(가장 음수) 값은 `-Double.MAX_VALUE`.
 - 유용 메서드: `toHexString`, `sum`, `max`, `min`, `Math.nextUp/nextDown`.
 
@@ -193,7 +193,7 @@ int  codePoint  = Character.codePointAt("A😊", 1); // 이모지 코드포인�
 
 ## 5. `Number` 추상 클래스와 다형성
 
-`Integer`, `Long`, `Float`, `Double`, `Byte`, `Short`는 `Number`를 상속.  
+`Integer`, `Long`, `Float`, `Double`, `Byte`, `Short`는 `Number`를 상속.
 공통 변환 메서드 제공:
 
 ```java
@@ -360,7 +360,7 @@ System.out.println(Integer.bitCount(0b101010));   // 3
 
 - **Wrapper는 기본형을 객체로 감싸** 제네릭/컬렉션/리플렉션 등에서 사용 가능하게 한다.
 - **오토박싱/언박싱** 은 편리하지만 **null·성능 위험**이 있다.
-- **캐싱과 `==` 함정**: 값 비교는 **항상 `equals`** 로.  
+- **캐싱과 `==` 함정**: 값 비교는 **항상 `equals`** 로.
 - **스트림/Optional의 원시 특화 타입**으로 박싱 오버헤드를 줄여라.
 - **부동소수 특수값/부호**(+0.0/-0.0, NaN, Infinity) 처리 규칙을 이해하라.
 

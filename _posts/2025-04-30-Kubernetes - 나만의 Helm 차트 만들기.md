@@ -549,7 +549,7 @@ readinessProbe:
 
 ## 15. 고급: Library Chart(공통 템플릿) 분리
 
-여러 서비스에서 동일한 템플릿을 재사용하려면 **type=library** 차트를 별도로 만들고, 앱 차트에서 `include`로 호출한다.  
+여러 서비스에서 동일한 템플릿을 재사용하려면 **type=library** 차트를 별도로 만들고, 앱 차트에서 `include`로 호출한다.
 대규모 조직에서 네이밍/라벨/리소스/Sidecar 패턴을 통일할 때 유용.
 
 `Chart.yaml`:
@@ -684,6 +684,6 @@ helm upgrade --install myapp ./mychart -f values-prod.yaml    # 운영
 - 스키마 검증/Hook/Test/이력·롤백/OCI/GitOps·CI로 **운영 안전성** 대폭 향상
 - 조직 표준(라벨/네이밍/리소스/보안)과 패턴(HPA/PDB/Ingress/Secrets)을 **헬퍼·라이브러리 차트**로 일원화
 
-처음에는 `helm create`의 기본 골격에서 시작하되,  
-**values 스키마, 헬퍼 표준, Hook/Test, 보안(비밀 관리), 검증 파이프라인**을 더해  
+처음에는 `helm create`의 기본 골격에서 시작하되,
+**values 스키마, 헬퍼 표준, Hook/Test, 보안(비밀 관리), 검증 파이프라인**을 더해
 프로덕션에서도 견고하게 돌아가는 **팀의 표준 차트**로 발전시켜라.

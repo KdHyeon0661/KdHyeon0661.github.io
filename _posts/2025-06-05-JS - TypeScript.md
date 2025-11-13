@@ -21,7 +21,7 @@ category: JavaScript
 
 ## 1. TypeScript란? 왜 지금 도입해야 하는가
 
-> TypeScript는 JavaScript의 **상위 집합**(Superset)으로, 정적 타입 시스템을 제공하여  
+> TypeScript는 JavaScript의 **상위 집합**(Superset)으로, 정적 타입 시스템을 제공하여
 > **런타임 이전**에 오류를 포착하고, 에디터 지능(Autocomplete/Refactor/Go-to-Definition)을 강화한다.
 
 ### 기대 효과 (현실적으로)
@@ -467,9 +467,9 @@ export function createUser(body: unknown) {
 ## 14. 팀 규약과 지표로 굳히기
 
 - **규약**: `strict` 유지, `any` 허용 정책, 외부 경계에서만 `unknown→narrowing`
-- **지표**:  
-  - any 개수, `@ts-expect-error` 개수  
-  - 타입 커버리지(예: `ts-prune`/ESLint 규칙 조합)  
+- **지표**:
+  - any 개수, `@ts-expect-error` 개수
+  - 타입 커버리지(예: `ts-prune`/ESLint 규칙 조합)
   - CI 막대기: **typecheck 실패 → 배포 차단**
 - **리뷰 가이드**: 타입 제거/간결화(PR 크기 제한), 도메인 타입은 별도 파일(`types/`)로 공유
 
@@ -570,7 +570,7 @@ type CreatePost = z.infer<typeof CreatePost>;
 
 ## 18. 결론
 
-TypeScript 도입은 “한 번에”가 아니라 **지속 가능한 속도로 부채를 상환**하며 **DX와 안정성을 동반 상승**시키는 장기 전략이다.  
+TypeScript 도입은 “한 번에”가 아니라 **지속 가능한 속도로 부채를 상환**하며 **DX와 안정성을 동반 상승**시키는 장기 전략이다.
 **작게 시작**하되, CI 게이트/팀 규약/지표로 **일관성**을 확보하면, 전환 비용보다 **리팩토링·협업·품질 향상 이득**이 더 크다.
 
 ---

@@ -515,7 +515,7 @@ function make() {
 const c = make();
 ```
 
-정답 힌트:  
+정답 힌트:
 Q1) `ReferenceError`(TDZ), Q2) `2 2`, Q3) 직접 변경 불가(인터페이스로만).
 
 ---

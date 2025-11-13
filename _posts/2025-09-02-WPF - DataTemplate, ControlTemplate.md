@@ -6,7 +6,7 @@ category: WPF
 ---
 # DataTemplate, ControlTemplate 활용 완전 가이드
 
-WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTemplate**는 “컨트롤의 시각적 트리(스킨)”를 정의합니다.  
+WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTemplate**는 “컨트롤의 시각적 트리(스킨)”를 정의합니다.
 두 템플릿을 올바르게 쓰면 **MVVM 친화**, **테마 교체 가능**, **재사용성 높은 UI**를 만들 수 있습니다.
 
 ---
@@ -42,7 +42,7 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 <ListBox ItemsSource="{Binding Orders}"/>
 ```
 
-> `x:Key`를 함께 지정하면 **암시적 적용이 꺼지고** 키로만 사용할 수 있습니다.  
+> `x:Key`를 함께 지정하면 **암시적 적용이 꺼지고** 키로만 사용할 수 있습니다.
 > **암시적 적용을 원하면 `x:Key`를 생략**하세요.
 
 ### 2.2 ItemsControl / ContentControl 연계
@@ -155,7 +155,7 @@ public class OrderTemplateSelector : DataTemplateSelector
 
 ### 3.1 기본 구조
 - **컨트롤의 시각 트리**를 재정의합니다.
-- 내부에서 컨트롤의 속성은 **`{TemplateBinding ...}`** 또는  
+- 내부에서 컨트롤의 속성은 **`{TemplateBinding ...}`** 또는
   **`{Binding RelativeSource={RelativeSource TemplatedParent}, Path=...}`**로 참조합니다.
 - **ItemsControl**의 ControlTemplate에는 **반드시 `ItemsPresenter`**가 있어야 아이템이 표시됩니다.
 
@@ -251,7 +251,7 @@ Background="{TemplateBinding Background}"
 ```
 
 ### 3.5 커스텀 컨트롤 & PART 규약
-일부 컨트롤은 템플릿에 **필수 파트**가 필요합니다(예: `PART_Editor`).  
+일부 컨트롤은 템플릿에 **필수 파트**가 필요합니다(예: `PART_Editor`).
 커스텀 컨트롤을 만들 때 `[TemplatePart]`로 계약을 표시하고, `OnApplyTemplate`에서 찾아 사용합니다.
 
 ```csharp
@@ -294,8 +294,8 @@ public class SearchBox : Control
 
 ## 4. ItemsTemplate vs ItemContainerStyle vs ItemsPanel
 
-- **ItemTemplate / ItemTemplateSelector**: **각 데이터 항목의 모양**  
-- **ItemContainerStyle**: **컨테이너(ListBoxItem, TreeViewItem)의 속성/상태**  
+- **ItemTemplate / ItemTemplateSelector**: **각 데이터 항목의 모양**
+- **ItemContainerStyle**: **컨테이너(ListBoxItem, TreeViewItem)의 속성/상태**
 - **ItemsPanel**: 아이템을 배치하는 **패널(Grid/WrapPanel/VirtualizingStackPanel 등)**
 
 ```xml
@@ -328,29 +328,29 @@ public class SearchBox : Control
 
 ## 5. 성능 & 구조 팁
 
-- **가상화**: 대량 목록은 `VirtualizingStackPanel.IsVirtualizing="True"`(기본) 유지, `ScrollUnit="Pixel"` 검토  
-- **Reusable 리소스**: 브러시/그라디언트/Geometry는 리소스로 올려 **공유** (가능하면 Freezable Freeze)  
-- **Trigger 남발 지양**: 복잡한 상태는 VSM 또는 간결한 스타일로  
-- **DataTemplate 내부의 무거운 컨트롤**(예: WebBrowser) 최소화  
+- **가상화**: 대량 목록은 `VirtualizingStackPanel.IsVirtualizing="True"`(기본) 유지, `ScrollUnit="Pixel"` 검토
+- **Reusable 리소스**: 브러시/그라디언트/Geometry는 리소스로 올려 **공유** (가능하면 Freezable Freeze)
+- **Trigger 남발 지양**: 복잡한 상태는 VSM 또는 간결한 스타일로
+- **DataTemplate 내부의 무거운 컨트롤**(예: WebBrowser) 최소화
 - **StaticResource 우선**, 런타임 테마 전환만 **DynamicResource**
 
 ---
 
 ## 6. 언제 어떤 템플릿을 쓸까?
 
-- **데이터가 다르면 모양도 달라야** → **DataTemplate / Selector**  
-- **같은 컨트롤인데 스킨을 바꾸고 싶다** → **ControlTemplate**  
-- **리스트 항목의 외형 vs 선택/포커스 스타일** → **ItemTemplate vs ItemContainerStyle**  
+- **데이터가 다르면 모양도 달라야** → **DataTemplate / Selector**
+- **같은 컨트롤인데 스킨을 바꾸고 싶다** → **ControlTemplate**
+- **리스트 항목의 외형 vs 선택/포커스 스타일** → **ItemTemplate vs ItemContainerStyle**
 - **배치 방식 변경(그리드/타일/워터폴)** → **ItemsPanel(…Template)**
 
 ---
 
 ## 7. 흔한 실수 체크리스트
 
-- **ItemsPresenter 누락**(ItemsControl 템플릿) → 아이템이 안 보임  
-- ControlTemplate 안에서 **일반 `{Binding}`으로 부모 속성 접근** → **`TemplatedParent`**로 바인딩  
-- DataTemplate 내부에서 **상위 ViewModel 속성 접근 실패** → `RelativeSource AncestorType` 사용  
-- DataType 템플릿에 **`x:Key` 함께 지정** → 암시적 적용이 안 됨  
+- **ItemsPresenter 누락**(ItemsControl 템플릿) → 아이템이 안 보임
+- ControlTemplate 안에서 **일반 `{Binding}`으로 부모 속성 접근** → **`TemplatedParent`**로 바인딩
+- DataTemplate 내부에서 **상위 ViewModel 속성 접근 실패** → `RelativeSource AncestorType` 사용
+- DataType 템플릿에 **`x:Key` 함께 지정** → 암시적 적용이 안 됨
 - `TemplateBinding`으로 **Converter/MultiBinding** 쓰려다 실패 → TemplatedParent 바인딩 사용
 
 ---
@@ -423,7 +423,7 @@ public class SearchBox : Control
 ---
 
 ### 결론
-- **DataTemplate**: 데이터의 “표현”을 선언하고, **ControlTemplate**: 컨트롤의 “스킨/구조”를 교체합니다.  
-- 템플릿, 스타일, ItemsPanel을 **역할별로 분리**하면 **테마 교체**, **확장성**, **성능**까지 챙길 수 있습니다.  
-- 위 원칙과 예제를 베이스로 프로젝트 템플릿(Styles/ControlTemplates/DataTemplates/Selectors)을 구성하면  
+- **DataTemplate**: 데이터의 “표현”을 선언하고, **ControlTemplate**: 컨트롤의 “스킨/구조”를 교체합니다.
+- 템플릿, 스타일, ItemsPanel을 **역할별로 분리**하면 **테마 교체**, **확장성**, **성능**까지 챙길 수 있습니다.
+- 위 원칙과 예제를 베이스로 프로젝트 템플릿(Styles/ControlTemplates/DataTemplates/Selectors)을 구성하면
   **MVVM 친화적인 프로 UI**를 안정적으로 구축할 수 있습니다.

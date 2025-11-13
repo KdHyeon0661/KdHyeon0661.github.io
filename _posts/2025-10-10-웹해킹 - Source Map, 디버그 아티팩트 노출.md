@@ -7,18 +7,18 @@ category: 웹해킹
 # 24. Source Map / 디버그 아티팩트 노출
 **— 개념 · 실제 노출 시 피해 · 안전한 빌드/배포 전략 · 프레임워크별 설정(Next/Vite/Webpack/Angular/CRA/SvelteKit/Nuxt/Rollup) · 서버/엣지 차단(Nginx/Apache/CloudFront/Worker) · CI 검사 파이프라인 · “막혀야 정상” 테스트 · 사고 시 대응**
 
-> ⚠️ 목적  
-> 프로덕션에서 **소스맵(.map)**·**디버그 산출물**이 노출되면 소스 코드·주석·내부 경로·빌드 환경이 외부에 드러나고, 취약 로직 리버스가 **매우 쉬워**집니다.  
+> ⚠️ 목적
+> 프로덕션에서 **소스맵(.map)**·**디버그 산출물**이 노출되면 소스 코드·주석·내부 경로·빌드 환경이 외부에 드러나고, 취약 로직 리버스가 **매우 쉬워**집니다.
 > 이 문서는 “**노출을 원천 차단**”하고 “**사내 오류 추적 도구와만 안전하게 연동**”하는 실무 지침을 제공합니다.
 
 ---
 
 ## 0. 한눈에 보기 (Executive Summary)
 
-- **문제**  
-  - `.map`(JS/CSS source map)·디버그 파일(예: webpack stats, stacktrace 심볼, 자바스크립트 인라인 소스맵, 모바일 dSYM/mapping.txt)이 **공개 경로**에 있으면,  
-    - 난독화 우회(원본 함수/변수명 복원),  
-    - 주석/비공개 경로/토큰처럼 **코드에 박힌 민감 정보** 노출,  
+- **문제**
+  - `.map`(JS/CSS source map)·디버그 파일(예: webpack stats, stacktrace 심볼, 자바스크립트 인라인 소스맵, 모바일 dSYM/mapping.txt)이 **공개 경로**에 있으면,
+    - 난독화 우회(원본 함수/변수명 복원),
+    - 주석/비공개 경로/토큰처럼 **코드에 박힌 민감 정보** 노출,
     - 내부 API 경로/권한 우회 아이디어 파악 → 악용까지 이어질 수 있습니다.
 - **핵심 방어 원칙**
   1) **프로덕션 소스맵은 공개하지 않는다.** (필요 시 **hidden-source-map**/**nosources-source-map** + **비공개 업로드**)
@@ -31,11 +31,11 @@ category: 웹해킹
 
 ## 1. 소스맵이 뭐고 왜 위험한가?
 
-- **Source Map**: 번들·난독화된 코드 ↔ 원본 파일/라인으로 **매핑**하는 JSON.  
-  브라우저 디버거는 이 파일을 가지고 **개발자 경험**을 좋게 합니다.  
+- **Source Map**: 번들·난독화된 코드 ↔ 원본 파일/라인으로 **매핑**하는 JSON.
+  브라우저 디버거는 이 파일을 가지고 **개발자 경험**을 좋게 합니다.
 - **프로덕션 위험**
-  - `.map`에는 **원본 경로/파일명/변수명/주석**이 포함됩니다.  
-  - 번들 옆에 `.map`이 **공개**되어 있고, 또는 JS/CSS 끝에  
+  - `.map`에는 **원본 경로/파일명/변수명/주석**이 포함됩니다.
+  - 번들 옆에 `.map`이 **공개**되어 있고, 또는 JS/CSS 끝에
     ```js
     //# sourceMappingURL=app.abc123.js.map
     ```
@@ -50,7 +50,7 @@ category: 웹해킹
 
 ### A) 사용자 브라우저에는 **소스맵을 제공하지 않기**
 - JS/CSS 산출물 끝에서 **`sourceMappingURL` 주석 제거**.
-- `.map` 파일은 **생성하되**(오류 추적에 필요), **배포(origin/CDN)에 올리지 않음**.  
+- `.map` 파일은 **생성하되**(오류 추적에 필요), **배포(origin/CDN)에 올리지 않음**.
   또는 **별도 사설 버킷/도메인**에 보관하여 **일반 웹에서 비공개**.
 
 ### B) 오류 추적 도구에는 **사설 업로드**
@@ -62,7 +62,7 @@ category: 웹해킹
 - 가급적 **산출물에서 제거** + **원천적으로 미업로드**가 더 안전.
 
 ### D) CI에서 **정적 검사로 “실패해야 정상”**
-- 빌드 후 산출 디렉토리에서 **`.map` 파일 0개**여야 하거나(공개 배포 기준),  
+- 빌드 후 산출 디렉토리에서 **`.map` 파일 0개**여야 하거나(공개 배포 기준),
   최소 **`sourceMappingURL` 문자열이 JS/CSS에 존재하면 실패**.
 
 ---
@@ -71,9 +71,9 @@ category: 웹해킹
 
 ### 3.1 Webpack
 - 프로덕션 추천: `devtool: 'hidden-source-map'` 또는 `false`
-  - `hidden-source-map`: 소스맵 생성 O, **번들에 주석 미삽입**(URL 힌트 없음).  
+  - `hidden-source-map`: 소스맵 생성 O, **번들에 주석 미삽입**(URL 힌트 없음).
     → `.map`을 **공개 업로드 하지 말고**, **오류 추적 도구로만 업로드**.
-  - `nosources-source-map`: 매핑은 있으나 **소스 콘텐츠 미포함**.  
+  - `nosources-source-map`: 매핑은 있으나 **소스 콘텐츠 미포함**.
     → 그래도 공개 업로드는 지양. 내부 업로드 용도로만.
   - `false`: 소스맵 생성 안 함(가장 안전하지만, 에러 역추적 불편 → APM/Sentry 업로드 안 쓰는 경우).
 
@@ -86,7 +86,7 @@ module.exports = {
 };
 ```
 
-**Sentry 업로드 예 (sentry-webpack-plugin)**  
+**Sentry 업로드 예 (sentry-webpack-plugin)**
 > 공개 오리진에 `.map`을 두지 않고, 빌드시 Sentry에 업로드.
 ```js
 const SentryWebpackPlugin = require("@sentry/webpack-plugin");
@@ -109,8 +109,8 @@ module.exports = {
 ```
 
 ### 3.2 Vite / SvelteKit / Vue / React(비-CRA)
-- `build.sourcemap`: `false` 또는 `'hidden'` 권장  
-  - `false`: 생성 안 함.  
+- `build.sourcemap`: `false` 또는 `'hidden'` 권장
+  - `false`: 생성 안 함.
   - `'hidden'`: 생성하되 **배포 번들에 주석 미삽입**.
 ```ts
 // vite.config.ts
@@ -140,8 +140,8 @@ export default {
 - **후처리**로 `sourceMappingURL` 주석 제거(아래 §4.2 코드).
 
 ### 3.4 Next.js
-- `next.config.js`  
-  - `productionBrowserSourceMaps: false` (기본 false) 유지.  
+- `next.config.js`
+  - `productionBrowserSourceMaps: false` (기본 false) 유지.
   - 소스맵이 필요하면 **@sentry/nextjs**로 **서버 측 업로드**만 수행.
 ```js
 // next.config.js
@@ -274,7 +274,7 @@ location ~* /\.(git|env|htaccess|bash|log) { deny all; }
 ```
 
 ### 5.3 CloudFront(권장: **아예 업로드하지 않기**)
-- **Behavior**: `Path pattern: *.map` → **Origin Request Policy**로 **Signed URL만 허용** 혹은 **오리진 미연결(403)**.  
+- **Behavior**: `Path pattern: *.map` → **Origin Request Policy**로 **Signed URL만 허용** 혹은 **오리진 미연결(403)**.
 - **대안**: 소스맵은 **별도 사설 버킷**에 저장(공용 오리진에 없음).
 
 ### 5.4 Cloudflare Workers (간단 차단)
@@ -374,31 +374,31 @@ grep -R "sourceMappingURL=data:application/json" dist && { echo "❌ inline map 
 
 ## 10. 운영 체크리스트
 
-- [ ] 프로덕션 **소스맵 비공개**(기본) / 필요 시 **hidden + 내부 업로드**  
-- [ ] 번들에 **`sourceMappingURL` 주석 없음**  
-- [ ] 오리진/CDN에 **`.map` 미업로드**(또는 엣지 차단)  
-- [ ] **CI 검사**: `.map`/`sourceMappingURL`/디버그 산출물 발견 시 실패  
-- [ ] 오류 추적 도구에는 **사설 업로드**만(릴리즈 태그 일치)  
-- [ ] 서버/엣지 차단(Nginx/Apache/CloudFront/Workers) 설정  
-- [ ] 모바일(dSYM/mapping.txt)/백엔드(PDB/심볼) **공개 금지**  
+- [ ] 프로덕션 **소스맵 비공개**(기본) / 필요 시 **hidden + 내부 업로드**
+- [ ] 번들에 **`sourceMappingURL` 주석 없음**
+- [ ] 오리진/CDN에 **`.map` 미업로드**(또는 엣지 차단)
+- [ ] **CI 검사**: `.map`/`sourceMappingURL`/디버그 산출물 발견 시 실패
+- [ ] 오류 추적 도구에는 **사설 업로드**만(릴리즈 태그 일치)
+- [ ] 서버/엣지 차단(Nginx/Apache/CloudFront/Workers) 설정
+- [ ] 모바일(dSYM/mapping.txt)/백엔드(PDB/심볼) **공개 금지**
 - [ ] 사고 대응 플레이북(키 회수/캐시 퍼지/로그 조사) 준비
 
 ---
 
 ## 11. 작게 시작하는 베이스라인(복붙 레시피)
 
-1) **번들러**  
-   - Webpack: `devtool: 'hidden-source-map'`  
-   - Vite: `build.sourcemap = 'hidden'`  
+1) **번들러**
+   - Webpack: `devtool: 'hidden-source-map'`
+   - Vite: `build.sourcemap = 'hidden'`
    - Next: `productionBrowserSourceMaps = false`
-2) **CI**  
-   - 빌드 후 `strip-sourcemap-comment.js` 실행  
+2) **CI**
+   - 빌드 후 `strip-sourcemap-comment.js` 실행
    - `find dist -name "*.map"` → 발견 시 실패
-3) **서버**  
-   - Nginx/Apache에서 `*.map` 403  
+3) **서버**
+   - Nginx/Apache에서 `*.map` 403
    - CloudFront/Worker로 403 보조
-4) **오류 추적**  
-   - Sentry/등에 **내부 업로드**  
+4) **오류 추적**
+   - Sentry/등에 **내부 업로드**
    - 릴리즈 태그 일치(번들 ↔ 소스맵)
 
 ---
@@ -426,15 +426,15 @@ app.listen(8080, () => console.log('listening on :8080'));
 
 ## 13. 부록: 팀 내 가이드라인(1페이지 버전)
 
-- 프로덕션 배포물에는 **.map/디버그 아티팩트 금지**  
-- 예외(내부 역매핑 필요) 시: **hidden-source-map + 내부 업로드**, 공개 오리진 업로드 금지  
-- 번들 끝 **`sourceMappingURL` 제거** 정책(빌드 후 스크립트)  
-- 서버/엣지 **`.map` 차단**(Nginx/Apache/CloudFront/Worker)  
-- CI에서 **정적 검사**(발견 시 실패)  
+- 프로덕션 배포물에는 **.map/디버그 아티팩트 금지**
+- 예외(내부 역매핑 필요) 시: **hidden-source-map + 내부 업로드**, 공개 오리진 업로드 금지
+- 번들 끝 **`sourceMappingURL` 제거** 정책(빌드 후 스크립트)
+- 서버/엣지 **`.map` 차단**(Nginx/Apache/CloudFront/Worker)
+- CI에서 **정적 검사**(발견 시 실패)
 - 사고 시 **퍼지 → 키 로테이션 → 재배포 → 로그 조사**
 
 ---
 
 ### 마무리
-소스맵/디버그 아티팩트는 개발 편의에 유용하지만, **프로덕션에서는 공격자 편의**가 되기 쉽습니다.  
+소스맵/디버그 아티팩트는 개발 편의에 유용하지만, **프로덕션에서는 공격자 편의**가 되기 쉽습니다.
 **공개 비활성 + 내부 업로드 + 서버/엣지 차단 + CI 검사** 4단으로 방어하면 재발을 구조적으로 막을 수 있습니다.

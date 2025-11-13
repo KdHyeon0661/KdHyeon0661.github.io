@@ -127,7 +127,7 @@ public class WebShellViewModel : ReactiveUI.ReactiveObject
 
 ## 4. JS ↔ .NET 브리지(양방향 메시징)
 
-WebView 기반 하이브리드는 **로그인/결제/지도** 등 “웹으로 구현한 화면”과 “Avalonia 네이티브 화면”을 연결해야 한다.  
+WebView 기반 하이브리드는 **로그인/결제/지도** 등 “웹으로 구현한 화면”과 “Avalonia 네이티브 화면”을 연결해야 한다.
 대표적인 패턴은 **postMessage/MessageReceived** 이벤트 기반 브리지다.
 
 ### 4.1 JS 측(웹 번들)

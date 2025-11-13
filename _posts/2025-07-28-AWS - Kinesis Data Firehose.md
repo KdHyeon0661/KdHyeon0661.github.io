@@ -35,7 +35,7 @@ Destinations:
 - **CloudWatch Logs/Events, VPC Flow Logs, CloudFront/ALB Access Logs**: 서비스 통합 경로(리전별 지원)
 
 ### 1.2 버퍼링·배치
-- **Size**: 1–128 MiB (S3/OpenSearch 기준), 보통 16–64 MiB 권장  
+- **Size**: 1–128 MiB (S3/OpenSearch 기준), 보통 16–64 MiB 권장
 - **Interval**: 60–900 s(기본 300s). 저지연 vs 비용(요청/오브젝트 수) 트레이드오프
 
 ### 1.3 포맷 변환 & 스키마
@@ -124,9 +124,9 @@ def lambda_handler(event, context):
     return { 'records': out }
 ```
 
-> 포인트  
-> - **Deterministic Hash**로 PII 비가역화  
-> - **metadata.partitionKeys** 사용 시 Firehose 동적 파티셔닝 Prefix에 매핑 가능  
+> 포인트
+> - **Deterministic Hash**로 PII 비가역화
+> - **metadata.partitionKeys** 사용 시 Firehose 동적 파티셔닝 Prefix에 매핑 가능
 > - 실패는 자동 백업 버킷(or CloudWatch Logs)로 분리
 
 ---
@@ -134,8 +134,8 @@ def lambda_handler(event, context):
 ## 4. S3 목적지: 포맷 변환/파티셔닝/Glue/Athena
 
 ### 4.1 S3 구성 전략
-- Prefix 설계: `s3://datalake/events/year=YYYY/month=MM/day=DD/country=KR/`  
-- 압축: **GZIP**(JSON) 또는 **Snappy**(Parquet)  
+- Prefix 설계: `s3://datalake/events/year=YYYY/month=MM/day=DD/country=KR/`
+- 압축: **GZIP**(JSON) 또는 **Snappy**(Parquet)
 - 포맷 변환: **Parquet**로 저장 → Athena/Redshift Spectrum 비용·성능 극대화
 
 ### 4.2 Firehose S3 구성(JSON)
@@ -196,12 +196,12 @@ LIMIT 20;
 ## 5. Redshift 목적지: COPY 자동화
 
 ### 5.1 설계 포인트
-- Firehose가 **S3 staging → Redshift COPY**를 자동 실행  
-- Target 테이블 스키마와 S3 포맷 일치, IAM Role의 `redshift:CopyFromS3` 권한 필요  
+- Firehose가 **S3 staging → Redshift COPY**를 자동 실행
+- Target 테이블 스키마와 S3 포맷 일치, IAM Role의 `redshift:CopyFromS3` 권한 필요
 - **원자성**: COPY 실패 시 staging 보존/알람
 
 ### 5.2 적재 컬럼 타입과 DIST/SORT KEY
-- 사실 테이블: `DISTKEY(user_id)` or AUTO, `SORTKEY(ts)`  
+- 사실 테이블: `DISTKEY(user_id)` or AUTO, `SORTKEY(ts)`
 - WLM/Auto WLM과 COPY 동시성 고려
 
 ---
@@ -209,16 +209,16 @@ LIMIT 20;
 ## 6. OpenSearch 목적지
 
 ### 6.1 색인 설계
-- Index: `events-YYYY.MM.DD` 롤오버 정책  
-- Mapping 동적 필드 제한, 키 필드에 `keyword` 타입 적용  
+- Index: `events-YYYY.MM.DD` 롤오버 정책
+- Mapping 동적 필드 제한, 키 필드에 `keyword` 타입 적용
 - Bulk size/Flush interval은 Firehose가 관리
 
 ---
 
 ## 7. 오류 처리·백업·재처리
 
-- **Retry**: 네트워크/스로틀링에 대해 내부 재시도  
-- **Backup Bucket**: 변환 실패/전송 실패를 `etl-errors/`로 백업  
+- **Retry**: 네트워크/스로틀링에 대해 내부 재시도
+- **Backup Bucket**: 변환 실패/전송 실패를 `etl-errors/`로 백업
 - **리플레이**: 백업 버킷→새 Firehose/Batch(Glue/Spark)로 재처리 파이프라인 구축
 
 ```text
@@ -230,8 +230,8 @@ LIMIT 20;
 ## 8. 관측성(Observability)
 
 ### 8.1 CloudWatch 메트릭 핵심
-- `DeliveryToS3.Records`, `DeliveryToS3.Success`  
-- `ThrottledRecords`, `KMSKeyAccessDenied`, `DataFreshness`  
+- `DeliveryToS3.Records`, `DeliveryToS3.Success`
+- `ThrottledRecords`, `KMSKeyAccessDenied`, `DataFreshness`
 - `FailedConversionRecords`, `BackupToS3.Success`
 
 ### 8.2 알람 예시(CLI)
@@ -251,15 +251,15 @@ aws cloudwatch put-metric-alarm \
 ## 9. 성능·비용 최적화
 
 ### 9.1 버퍼·압축·포맷
-- S3: **Size 32–64 MiB / Interval 60–180 s** → 적절한 파일 크기(Parquet 128–256MiB)  
+- S3: **Size 32–64 MiB / Interval 60–180 s** → 적절한 파일 크기(Parquet 128–256MiB)
 - Parquet+Snappy → S3 저장·Athena 스캔 비용 절감(10~100배)
 
 ### 9.2 동적 파티셔닝 비용 밸런스
-- 파티션이 과도하면 **파일 수 증가 → List 비용/작은 파일 문제**  
+- 파티션이 과도하면 **파일 수 증가 → List 비용/작은 파일 문제**
 - 시간 파티션(시간/일)+소수 키(country 등) 조합으로 상한 관리
 
 ### 9.3 Lambda 변환 한계
-- 타임아웃(최대 15분), 동시성, **payload 크기(6MB/레코드)**, 배치 크기  
+- 타임아웃(최대 15분), 동시성, **payload 크기(6MB/레코드)**, 배치 크기
 - 변환 로직은 **O(n)** 선형, 외부 호출 최소화. PII 해시는 CPU 바운드 → 메모리 상향
 
 ### 9.4 간이 비용 모델
@@ -275,9 +275,9 @@ $$
 
 ## 10. 보안 설계
 
-- **SSE-KMS**: S3 객체 암호화, Firehose 전송 시 KMS 사용  
-- **VPC 엔드포인트(Interface/Gateway)**: 사설 경로로 S3/Kinesis/KMS/Logs 접근  
-- **IAM SCP/Permission Boundary**: Data Lake 버킷 접근 범위 제한  
+- **SSE-KMS**: S3 객체 암호화, Firehose 전송 시 KMS 사용
+- **VPC 엔드포인트(Interface/Gateway)**: 사설 경로로 S3/Kinesis/KMS/Logs 접근
+- **IAM SCP/Permission Boundary**: Data Lake 버킷 접근 범위 제한
 - **데이터 마스킹/토큰화**: Lambda에서 비가역 처리, 원문 저장 금지
 
 ---
@@ -352,46 +352,46 @@ def put_batch(records):
 
 ## 13. 운영 체크리스트
 
-- [ ] S3 Prefix/파티션 키 설계 확정(쿼리 패턴 역설계)  
-- [ ] Lambda 변환: 타임아웃/동시성/메모리 적정치 튜닝  
-- [ ] Backup Prefix 모니터링 및 재처리 잡(Glue/Spark) 준비  
-- [ ] CloudWatch 경보(Success/Failure/DataFreshness/KMS 오류)  
-- [ ] Glue Crawler 주기 & 스키마 드리프트 대응(새 필드 Nullable)  
-- [ ] Athena/Redshift 압축·파티션 통계 최신화  
+- [ ] S3 Prefix/파티션 키 설계 확정(쿼리 패턴 역설계)
+- [ ] Lambda 변환: 타임아웃/동시성/메모리 적정치 튜닝
+- [ ] Backup Prefix 모니터링 및 재처리 잡(Glue/Spark) 준비
+- [ ] CloudWatch 경보(Success/Failure/DataFreshness/KMS 오류)
+- [ ] Glue Crawler 주기 & 스키마 드리프트 대응(새 필드 Nullable)
+- [ ] Athena/Redshift 압축·파티션 통계 최신화
 - [ ] KMS Key 정책: Firehose/Lambda/Crawler/Athena 모두 허용
 
 ---
 
 ## 14. 자주 묻는 질문(FAQ)
 
-**Q1. 레코드 순서는 보장되나?**  
+**Q1. 레코드 순서는 보장되나?**
 - Firehose는 **전송 순서 보장하지 않음**. 순서 의존 시 Kinesis Data Streams + 소비자 애플리케이션(Flink/KDA) 고려.
 
-**Q2. 중복 방지는?**  
+**Q2. 중복 방지는?**
 - Firehose 자체 중복제거 없음. **idempotent sink** 설계(예: S3 ObjectKey에 해시 포함/머지 작업) 또는 다운스트림에서 **Dedup**.
 
-**Q3. 작은 파일 문제?**  
+**Q3. 작은 파일 문제?**
 - Buffer Size/Interval 상향, 다운스트림에서 **Compaction**(Athena CTAS/Glue Job) 수행.
 
-**Q4. PII 보호는 어디서?**  
+**Q4. PII 보호는 어디서?**
 - 입력단(Lambda 변환)에서 **비가역 마스킹**. 원문 저장 금지, 접근 경로 최소화.
 
 ---
 
 ## 15. 미니 실습 시나리오(엔드투엔드)
 
-1) **S3 버킷** 생성, KMS 키 준비  
-2) **Lambda 변환** 배포(PII 마스킹/partitionKeys 세팅)  
-3) **Firehose Delivery Stream** 생성(동적 파티셔닝+GZIP)  
-4) **샘플 데이터** PutRecord/PutRecordBatch로 주입  
-5) S3 `etl-output/`에 파일 생성 확인, **Glue Crawler**로 카탈로그 반영  
-6) **Athena**에서 파티션 프루닝 쿼리로 검증  
+1) **S3 버킷** 생성, KMS 키 준비
+2) **Lambda 변환** 배포(PII 마스킹/partitionKeys 세팅)
+3) **Firehose Delivery Stream** 생성(동적 파티셔닝+GZIP)
+4) **샘플 데이터** PutRecord/PutRecordBatch로 주입
+5) S3 `etl-output/`에 파일 생성 확인, **Glue Crawler**로 카탈로그 반영
+6) **Athena**에서 파티션 프루닝 쿼리로 검증
 7) 실패 레코드 `etl-errors/` 모니터링 및 Glue Job 재처리
 
 ---
 
 ## 16. 결론
 
-- Firehose는 **운영 난이도를 낮춘 실시간 ETL**의 표준 경로다.  
-- 핵심은 **(1) 변환 품질(Lambda), (2) 포맷 전환(Parquet), (3) 파티션 설계, (4) 에러 백업/리플레이, (5) 보안·관측성**이다.  
+- Firehose는 **운영 난이도를 낮춘 실시간 ETL**의 표준 경로다.
+- 핵심은 **(1) 변환 품질(Lambda), (2) 포맷 전환(Parquet), (3) 파티션 설계, (4) 에러 백업/리플레이, (5) 보안·관측성**이다.
 - 이 가이드를 템플릿으로 삼아 **작게 시작→지속적 튜닝(버퍼/압축/파티션/알람/IaC)**을 반복하면, 로그·이벤트·IoT까지 공통 파이프라인으로 안정화할 수 있다.

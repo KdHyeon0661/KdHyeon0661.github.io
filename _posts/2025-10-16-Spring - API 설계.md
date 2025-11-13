@@ -6,7 +6,7 @@ category: Spring
 ---
 # 6. API 설계 실전 — REST 설계 가이드, HATEOAS/문서화, 파일 업·다운로드/대용량 스트리밍
 
-> 목표: 실무에서 **예측 가능하고 확장 가능한 HTTP API**를 설계/구현/문서화하고, **대용량 파일 전송**까지 안전하게 다루는 방법을 예제로 정리한다.  
+> 목표: 실무에서 **예측 가능하고 확장 가능한 HTTP API**를 설계/구현/문서화하고, **대용량 파일 전송**까지 안전하게 다루는 방법을 예제로 정리한다.
 > 환경 가정: Spring Boot 3.3+, Java 21, Spring Web MVC, springdoc-openapi 또는 Spring REST Docs, JPA(Optional), S3/로컬 스토리지.
 
 ---
@@ -15,18 +15,18 @@ category: Spring
 
 ### A-1. 리소스와 경로 규칙
 
-- **명사형 복수 리소스**: `/users`, `/orders`, `/files`  
-- **리소스 식별자**: `/users/{userId}`  
-- **하위 리소스**: `/orders/{id}/items`, `/users/{id}/addresses`  
-- **검색/필터**: `/orders?status=PAID&from=2025-01-01&to=2025-01-31`  
-- **컬렉션 조작**: `POST /orders`, `GET /orders`, `DELETE /orders/{id}`  
-- **액션성 동사**는 **하위 리소스**나 **상태 전이**로 모델링  
-  - 결제: `POST /orders/{id}/payment`  
+- **명사형 복수 리소스**: `/users`, `/orders`, `/files`
+- **리소스 식별자**: `/users/{userId}`
+- **하위 리소스**: `/orders/{id}/items`, `/users/{id}/addresses`
+- **검색/필터**: `/orders?status=PAID&from=2025-01-01&to=2025-01-31`
+- **컬렉션 조작**: `POST /orders`, `GET /orders`, `DELETE /orders/{id}`
+- **액션성 동사**는 **하위 리소스**나 **상태 전이**로 모델링
+  - 결제: `POST /orders/{id}/payment`
   - 상태변경: `PATCH /orders/{id}` with body `{ "status": "CANCELED" }`
 
-**버전 전략(선택)**  
-- 경로 버전: `/v1/orders` (가장 단순)  
-- 미디어 타입 버전: `Accept: application/vnd.example.v1+json` (HATEOAS 친화)  
+**버전 전략(선택)**
+- 경로 버전: `/v1/orders` (가장 단순)
+- 미디어 타입 버전: `Accept: application/vnd.example.v1+json` (HATEOAS 친화)
 - 헤더 버전: `X-API-Version: 1` (권장도 낮음)
 
 > **일관성**이 최우선. 팀 룰을 문서화하고 자동화(스캐폴드/검사)하자.
@@ -142,8 +142,8 @@ GET /orders?page=0&size=20&sort=createdAt,desc&status=PAID&from=2025-01-01&to=20
 
 ### A-5. 캐시/동시성: ETag, Last-Modified, If-* 헤더
 
-- **조건부 GET**: `ETag`/`Last-Modified` 제공 → `If-None-Match`/`If-Modified-Since` 수용 → **304 Not Modified**  
-- **낙관적 락**: `If-Match` + ETag(혹은 엔티티 버전)로 **중복 수정 방지**  
+- **조건부 GET**: `ETag`/`Last-Modified` 제공 → `If-None-Match`/`If-Modified-Since` 수용 → **304 Not Modified**
+- **낙관적 락**: `If-Match` + ETag(혹은 엔티티 버전)로 **중복 수정 방지**
 - **캐시 지시**: `Cache-Control`, `Vary`, `Expires` 헤더로 CDN/브라우저 캐시 제어
 
 **예: 조건부 GET**
@@ -163,8 +163,8 @@ public ResponseEntity<ProductView> get(@PathVariable long id) {
 
 ### A-6. 멱등성/안전성
 
-- **GET/HEAD**: 안전(idempotent + 부작용 없음)  
-- **PUT/DELETE**: 멱등(idempotent)  
+- **GET/HEAD**: 안전(idempotent + 부작용 없음)
+- **PUT/DELETE**: 멱등(idempotent)
 - **POST**: 보통 비멱등 → **Idempotency-Key 헤더**로 재시도 안전 설계(결제 등)
 
 ---
@@ -431,8 +431,8 @@ public List<Map<String,Object>> bulk(@RequestPart("files") List<MultipartFile> f
 ```
 
 **보안/안티바이러스**
-- 파일명 정규화(경로 탈출 방지), 금지 확장자 차단  
-- MIME 탐지(Tika 등)로 **컨텐츠 기반 판별**  
+- 파일명 정규화(경로 탈출 방지), 금지 확장자 차단
+- MIME 탐지(Tika 등)로 **컨텐츠 기반 판별**
 - 바이러스 스캔(ClamAV/외부 DLP) 후 저장
 
 ---
@@ -458,9 +458,9 @@ public ResponseEntity<Resource> download(@PathVariable String id) {
 
 ### E-3. 범위 요청(Resume) — HTTP Range
 
-**구현 개요**  
-- 요청 헤더: `Range: bytes=START-END`  
-- 응답: **206 Partial Content**, 헤더 `Content-Range`, `Accept-Ranges: bytes`  
+**구현 개요**
+- 요청 헤더: `Range: bytes=START-END`
+- 응답: **206 Partial Content**, 헤더 `Content-Range`, `Accept-Ranges: bytes`
 - Spring MVC: `ResourceRegion` + `HttpRange` 지원
 
 **예시**
@@ -494,8 +494,8 @@ public ResponseEntity<?> stream(@PathVariable String id, @RequestHeader HttpHead
 
 ### E-4. 대용량 스트리밍 — 메모리 압박 피하기
 
-- **InputStreamResource** 또는 **FileSystemResource** 사용(메모리 로드 금지)  
-- **`ResponseBodyEmitter`/`SseEmitter`**로 서버 푸시/실시간 스트림  
+- **InputStreamResource** 또는 **FileSystemResource** 사용(메모리 로드 금지)
+- **`ResponseBodyEmitter`/`SseEmitter`**로 서버 푸시/실시간 스트림
 - **Zero-copy**(톰캣/네티 등 전송 최적화)는 컨테이너/서버 설정에 따름
 
 **주기적 청크 쓰기 예**
@@ -520,16 +520,16 @@ public SseEmitter live() {
 
 ### E-5. 무결성/재개/병렬 다운로드
 
-- 업로드 재개: **chunked upload API**(offset + chunkSize + checksum) 설계  
-- 다운로드 병렬: 클라이언트가 **여러 Range**로 병렬 GET → 빠른 합치기  
+- 업로드 재개: **chunked upload API**(offset + chunkSize + checksum) 설계
+- 다운로드 병렬: 클라이언트가 **여러 Range**로 병렬 GET → 빠른 합치기
 - 체크섬 헤더: `ETag`에 MD5(혹은 더 안전한 해시) 제공하면 검증/캐시 효율↑
 
 ---
 
 ### E-6. S3 연동 팁(요약)
 
-- presigned URL을 발급해 **클라이언트 → S3 직접 업/다운** (서버는 인증/권한만)  
-- 서버 스트리밍은 비용↑, 네트워크 병목 고려  
+- presigned URL을 발급해 **클라이언트 → S3 직접 업/다운** (서버는 인증/권한만)
+- 서버 스트리밍은 비용↑, 네트워크 병목 고려
 - CDN 앞단(CloudFront) + `Cache-Control`/`ETag`로 효율
 
 ---
@@ -537,23 +537,23 @@ public SseEmitter live() {
 ## F. 보안/성능/운영 실무 체크리스트
 
 ### F-1. 보안
-- 인증/인가: Spring Security + JWT/OAuth2  
-- 입력 검증: Bean Validation + JSON strict 모드(`FAIL_ON_UNKNOWN_PROPERTIES=true`)  
-- CORS: Origin 화이트리스트 + 자격증명 쿠키 전략  
-- HTTPS/TLS 강제, HSTS, Content Security Policy(프런트 API 통합 시)  
-- 헤더 강화: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` 등  
+- 인증/인가: Spring Security + JWT/OAuth2
+- 입력 검증: Bean Validation + JSON strict 모드(`FAIL_ON_UNKNOWN_PROPERTIES=true`)
+- CORS: Origin 화이트리스트 + 자격증명 쿠키 전략
+- HTTPS/TLS 강제, HSTS, Content Security Policy(프런트 API 통합 시)
+- 헤더 강화: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` 등
 - 민감 데이터 마스킹(로그/에러)
 
 ### F-2. 성능
-- 압축: `server.compression.enabled=true` (큰 JSON/CSV)  
-- 페이징 상한: `maxSize` 정책(예: 100)  
-- DTO 프로젝션: 필요한 필드만  
-- 캐싱: ETag/Cache-Control, 레디스 캐시  
+- 압축: `server.compression.enabled=true` (큰 JSON/CSV)
+- 페이징 상한: `maxSize` 정책(예: 100)
+- DTO 프로젝션: 필요한 필드만
+- 캐싱: ETag/Cache-Control, 레디스 캐시
 - DB N+1 차단: fetch join/배치 페치
 
 ### F-3. 관측성
-- **요청 ID(MDC)** 주입 + 로깅 포맷 JSON  
-- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/httptrace`(대체는 Micrometer)  
+- **요청 ID(MDC)** 주입 + 로깅 포맷 JSON
+- Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/httptrace`(대체는 Micrometer)
 - 분산 트레이싱: OpenTelemetry → traceId를 응답 헤더로 노출(예: `X-Trace-Id`)
 
 ---
@@ -600,16 +600,16 @@ public ResponseEntity<ProductView> replace(@PathVariable long id,
 
 ## H. 테스트(계약/문서/부하)
 
-- **단위/슬라이스**: `@WebMvcTest`로 컨트롤러/에러 처리 검증  
-- **통합**: `@SpringBootTest` + Testcontainers(DB/MinIO)  
-- **계약 테스트**: OpenAPI 스키마 검증(예: swagger-request-validator)  
+- **단위/슬라이스**: `@WebMvcTest`로 컨트롤러/에러 처리 검증
+- **통합**: `@SpringBootTest` + Testcontainers(DB/MinIO)
+- **계약 테스트**: OpenAPI 스키마 검증(예: swagger-request-validator)
 - **부하/대용량**: Gatling/k6/JMeter — Range/Chunk/대용량 파일 시나리오 포함
 
 ---
 
 ## I. 요약(한 페이지)
 
-- **REST 규칙**: 명사형 경로, 일관된 상태코드, 표준 에러(Problem+JSON), 페이징/정렬 규약.  
-- **HATEOAS/문서화**: 링크로 상태 전이 힌트, OpenAPI/REST Docs로 문서 자동화.  
-- **파일 처리**: 멀티파트 업로드, 안전한 다운로드, **Range 206** 재개, **스트리밍**으로 메모리 절약.  
+- **REST 규칙**: 명사형 경로, 일관된 상태코드, 표준 에러(Problem+JSON), 페이징/정렬 규약.
+- **HATEOAS/문서화**: 링크로 상태 전이 힌트, OpenAPI/REST Docs로 문서 자동화.
+- **파일 처리**: 멀티파트 업로드, 안전한 다운로드, **Range 206** 재개, **스트리밍**으로 메모리 절약.
 - **운영**: 캐시/ETag, 멱등성 키, 보안 헤더, 관측성을 갖춘 **예측 가능**한 API.

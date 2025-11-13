@@ -113,7 +113,7 @@ git push -u origin feature/login
 ## 3.1 버전(semver)과 태깅
 - 태그는 **빌드·아티팩트·릴리스 노트**의 기준점.
 - 규칙 예: **semver** `MAJOR.MINOR.PATCH`.
-  
+
 간단한 버전 증가 규칙(개념 표현):
 $$
 \text{next\_patch}(x.y.z) = x.y.(z+1)
@@ -196,8 +196,8 @@ jobs:
 - 충돌 시 `cherry-pick` 또는 **백포트용 PR**로 명시적 기록.
 
 ## 5.2 GitHub Flow(지속 배포)
-- `main`에서 긴급 수정 직행이 가능하지만, **PR 리뷰/CI 필수**.  
-- 프로덕션 문제라면 **릴리스 브랜치 단기 생성**(예: `release/2025-11-06.1`) 후 그 위에 핫픽스→배포→곧바로 `main` 병합.  
+- `main`에서 긴급 수정 직행이 가능하지만, **PR 리뷰/CI 필수**.
+- 프로덕션 문제라면 **릴리스 브랜치 단기 생성**(예: `release/2025-11-06.1`) 후 그 위에 핫픽스→배포→곧바로 `main` 병합.
 - 장기적으로는 **feature flag** 로 노출 제어를 습관화.
 
 ---
@@ -221,12 +221,12 @@ jobs:
 # 7. 하이브리드 모델 — “간소화된 Git Flow”와 “릴리스 브랜치만 추가한 GitHub Flow”
 
 ## 7.1 간소화된 Git Flow
-- `develop` 제거 → **`main`이 통합 브랜치**.  
-- 필요 시에만 `release/*` 생성, 대부분은 GitHub Flow처럼 운영.  
+- `develop` 제거 → **`main`이 통합 브랜치**.
+- 필요 시에만 `release/*` 생성, 대부분은 GitHub Flow처럼 운영.
 - 긴 QA가 필요한 분기에서만 `release/*` 를 개설해 안정화.
 
 ## 7.2 GitHub Flow + 릴리스 브랜치
-- 상시 GitHub Flow. 다만 **규모 큰 배포/이벤트** 앞에서는 `release/*` 를 잠깐 사용.  
+- 상시 GitHub Flow. 다만 **규모 큰 배포/이벤트** 앞에서는 `release/*` 를 잠깐 사용.
 - 배포 후 즉시 `release/*` → `main` 병합, 브랜치 삭제.
 
 ---
@@ -248,8 +248,8 @@ jobs:
 ```
 
 ## 8.2 독립 버전/릴리스
-- Git Flow에서는 서비스별 `release/*` 운용이 과도해질 수 있음.  
-- 태그 네이밍에 **서비스 접두사** 사용: `a/v1.2.3`, `b/v3.4.5`.  
+- Git Flow에서는 서비스별 `release/*` 운용이 과도해질 수 있음.
+- 태그 네이밍에 **서비스 접두사** 사용: `a/v1.2.3`, `b/v3.4.5`.
 - 또는 **워크스페이스/배포 파이프라인 분리**.
 
 ---
@@ -257,21 +257,21 @@ jobs:
 # 9. 전환 가이드 — Git Flow → GitHub Flow(또는 역방향)
 
 ## 9.1 Git Flow → GitHub Flow
-1) `develop` 잔여 PR·커밋을 `main` 으로 정리(충돌 해결).  
-2) 보호 브랜치 활성화 + CI 강제 + 배포 자동화.  
-3) 병합 방식 `Squash` 또는 `Rebase` 표준화.  
-4) **릴리스 브랜치 최소화**(필요할 때만).  
+1) `develop` 잔여 PR·커밋을 `main` 으로 정리(충돌 해결).
+2) 보호 브랜치 활성화 + CI 강제 + 배포 자동화.
+3) 병합 방식 `Squash` 또는 `Rebase` 표준화.
+4) **릴리스 브랜치 최소화**(필요할 때만).
 5) 문서/번역/QA는 **플래그·스테이징 환경·릴리스 컷**으로 제어.
 
 ## 9.2 GitHub Flow → Git Flow
-- 릴리스 동결·규제 검증 필요 시: `develop` 복원, `release/*` 도입.  
+- 릴리스 동결·규제 검증 필요 시: `develop` 복원, `release/*` 도입.
 - 배포 승인·릴리스 노트·태깅을 강화.
 
 ---
 
 # 10. 품질·보안·규정 준수(두 모델 공통의 필수 가드레일)
 
-- PR 체크: 유닛/통합/정적분석(SAST)/의존성 스캔(SCA)/라이선스/시크릿 스캔.  
+- PR 체크: 유닛/통합/정적분석(SAST)/의존성 스캔(SCA)/라이선스/시크릿 스캔.
 - 환경별 승인 게이트: staging → prod 승인을 GitHub Environments로 관리.
 ```yaml
 # .github/workflows/deploy-prod.yml
@@ -309,17 +309,17 @@ jobs:
 # 12. 실제 시나리오 제안
 
 ## 12.1 스타트업 웹 서비스
-- GitHub Flow.  
-- 작은 PR(200 라인 내외) 기준, **Squash merge**.  
+- GitHub Flow.
+- 작은 PR(200 라인 내외) 기준, **Squash merge**.
 - 배포: main push 시 자동. feature flag 로 점진 노출.
 
 ## 12.2 모바일 앱(심사/런칭 캠페인)
-- Git Flow 또는 하이브리드.  
-- `release/*` 에서 번들버전 고정/QA/로컬라이제이션.  
+- Git Flow 또는 하이브리드.
+- `release/*` 에서 번들버전 고정/QA/로컬라이제이션.
 - 태그→스토어 제출, 긴급한 경우 `hotfix/*`.
 
 ## 12.3 규제 산업(검증·추적)
-- Git Flow 또는 GitHub Flow + 릴리스 브랜치/태깅 강화.  
+- Git Flow 또는 GitHub Flow + 릴리스 브랜치/태깅 강화.
 - 서명 커밋, 릴리스 아티팩트 보존, 변경 승인 워크플로우.
 
 ---
@@ -346,10 +346,10 @@ chore(deps): bump axios to 1.7.0
 ## 13.3 PR 템플릿(.github/pull_request_template.md)
 ```markdown
 ## 목적
-- 
+-
 
 ## 변경 사항
-- 
+-
 
 ## 테스트
 - [ ] 단위 테스트
@@ -391,8 +391,8 @@ git push origin v1.2.3
 
 # 15. 결정 가이드 — 무엇을 선택할까?
 
-- **릴리스 단위 검증/번역/캠페인**이 크다 → **Git Flow** 혹은 **하이브리드**  
-- **지속 배포·작게/자주**가 목표 → **GitHub Flow**  
+- **릴리스 단위 검증/번역/캠페인**이 크다 → **Git Flow** 혹은 **하이브리드**
+- **지속 배포·작게/자주**가 목표 → **GitHub Flow**
 - 둘 사이의 회색지대 → GitHub Flow에 **단기 `release/*`** 를 보완
 
 의사결정 트리(텍스트):
@@ -405,13 +405,13 @@ git push origin v1.2.3
 
 # 16. 마무리
 
-- Git Flow는 **격리와 릴리스 통제**, GitHub Flow는 **단순성과 속도**를 제공한다.  
-- 어느 쪽이든 **보호 브랜치/CI/병합 정책/태깅/체인지로그**가 품질을 좌우한다.  
+- Git Flow는 **격리와 릴리스 통제**, GitHub Flow는 **단순성과 속도**를 제공한다.
+- 어느 쪽이든 **보호 브랜치/CI/병합 정책/태깅/체인지로그**가 품질을 좌우한다.
 - 조직의 **배포 문화·리스크 허용도·규제**에 맞춰 선택하고, 필요 시 **하이브리드**로 균형을 맞추라.
 
 ---
 
 ## 참고
-- Git Flow 원본 글(nvie): https://nvie.com/posts/a-successful-git-branching-model/  
-- GitHub Flow: https://docs.github.com/en/get-started/quickstart/github-flow  
+- Git Flow 원본 글(nvie): https://nvie.com/posts/a-successful-git-branching-model/
+- GitHub Flow: https://docs.github.com/en/get-started/quickstart/github-flow
 - Atlassian 비교: https://www.atlassian.com/git/tutorials/comparing-workflows

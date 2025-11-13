@@ -7,9 +7,9 @@ category: DB 심화
 # Fetch Call 최소화 — **부분범위처리(Stopkey) × Array Fetch**로 왕복·I/O·대기를 줄이는 방법
 
 > **핵심 요약**
-> - **Fetch call**은 SELECT 결과를 클라이언트로 가져오는 **왕복(round-trip)** 이다.  
-> - **부분범위처리(PRP, Partial Range Processing; STOPKEY)** 로 **필요한 상위 N행만** 읽으면 **I/O 자체가 작아진다**.  
-> - **ArraySize(배열 페치 크기)** 를 키우면 **Fetch 왕복 횟수**가 $$\left\lceil \frac{\text{rows}}{\text{ArraySize}} \right\rceil$$ 로 감소 → 네트워크/컨텍스트 스위칭/호출 오버헤드가 크게 줄어든다.  
+> - **Fetch call**은 SELECT 결과를 클라이언트로 가져오는 **왕복(round-trip)** 이다.
+> - **부분범위처리(PRP, Partial Range Processing; STOPKEY)** 로 **필요한 상위 N행만** 읽으면 **I/O 자체가 작아진다**.
+> - **ArraySize(배열 페치 크기)** 를 키우면 **Fetch 왕복 횟수**가 $$\left\lceil \frac{\text{rows}}{\text{ArraySize}} \right\rceil$$ 로 감소 → 네트워크/컨텍스트 스위칭/호출 오버헤드가 크게 줄어든다.
 > - OLTP에서는 “**짧고 자주**” 모델이므로, **PRP + Array Fetch** 만으로도 p95 지연이 폭발적으로 개선되는 경우가 많다.
 
 ---
@@ -50,8 +50,8 @@ END;
 
 ## 1. Fetch Call과 실행 단계의 관계(짧은 복습)
 
-- **Parse**: 파싱/최적화/권한 → 보통 1회  
-- **Execute**: 실행계획 실행 시작 → 보통 1회  
+- **Parse**: 파싱/최적화/권한 → 보통 1회
+- **Execute**: 실행계획 실행 시작 → 보통 1회
 - **Fetch**: 결과를 **배열 단위**로 전송 → **여러 회**(ArraySize에 의해 결정)
 
 ### Fetch 왕복 수 근사
@@ -59,12 +59,12 @@ $$
 N_{\text{fetch calls}} \approx \left\lceil \frac{\text{전송할 행 수}}{\text{ArraySize}} \right\rceil
 $$
 
-- **ArraySize↑** → Fetch call↓ → **네트워크 RTT 누적 감소**  
+- **ArraySize↑** → Fetch call↓ → **네트워크 RTT 누적 감소**
 - 같은 행 수를 가져오더라도 왕복 수가 줄어 **경과시간(Elapsed)** 이 줄어든다.
 
-> ※ **중요 구분**:  
-> - **PRP(Stopkey)** 는 **가져올 행 수 자체**를 줄여 I/O를 줄인다.  
-> - **ArraySize** 는 **왕복 횟수**를 줄여 네트워크/호출 오버헤드를 줄인다.  
+> ※ **중요 구분**:
+> - **PRP(Stopkey)** 는 **가져올 행 수 자체**를 줄여 I/O를 줄인다.
+> - **ArraySize** 는 **왕복 횟수**를 줄여 네트워크/호출 오버헤드를 줄인다.
 > → **둘을 함께 적용**하면 효과가 곱해진다.
 
 ---
@@ -72,17 +72,17 @@ $$
 ## 2. 부분범위처리(PRP; Stopkey) 원리
 
 ### 2.1 개념
-- “전체를 끝까지 읽고 **그중 일부만** 쓰는” 대신, **필요한 앞부분만** 읽고 **즉시 멈춘다**.  
+- “전체를 끝까지 읽고 **그중 일부만** 쓰는” 대신, **필요한 앞부분만** 읽고 **즉시 멈춘다**.
 - Oracle 실행계획에는 **`STOPKEY`** 연산자로 표현되며, 보통 다음과 결합한다.
-  - `FETCH FIRST N ROWS ONLY` (또는 `ROWNUM <= :N`)  
-  - 인덱스가 **필터/정렬 순서**를 만족 → **Index Range Scan + STOPKEY**  
+  - `FETCH FIRST N ROWS ONLY` (또는 `ROWNUM <= :N`)
+  - 인덱스가 **필터/정렬 순서**를 만족 → **Index Range Scan + STOPKEY**
   - 가능하면 **커버링 인덱스**(필요 컬럼이 인덱스에 모두 포함)로 **Table Access BY ROWID** 조차 회피
 
 ### 2.2 PRP가 잘 되는 조건
-1) **WHERE + ORDER BY** 가 **같은 복합 인덱스**로 **SARG** 가능  
-2) 정렬이 인덱스 순서와 일치 (예: `order_dt DESC` 인덱스, `ORDER BY order_dt DESC`)  
-3) 필요한 컬럼이 인덱스에 **다 있으면** 최고 (커버링)  
-4) TOP-N, 페이지네이션(**Keyset** 방식: `WHERE (order_dt, order_id) < (:last_dt, :last_id)`)  
+1) **WHERE + ORDER BY** 가 **같은 복합 인덱스**로 **SARG** 가능
+2) 정렬이 인덱스 순서와 일치 (예: `order_dt DESC` 인덱스, `ORDER BY order_dt DESC`)
+3) 필요한 컬럼이 인덱스에 **다 있으면** 최고 (커버링)
+4) TOP-N, 페이지네이션(**Keyset** 방식: `WHERE (order_dt, order_id) < (:last_dt, :last_id)`)
 
 ### 2.3 PRP 예제: 고객의 최신 주문 상위 20건만
 ```sql
@@ -96,13 +96,13 @@ FETCH FIRST 20 ROWS ONLY;  -- STOPKEY
 ```
 
 **좋은 점**
-- `customer_id = :cust` 로 **선택도 쿼리**  
-- `order by order_dt desc` 를 복합 인덱스의 **정렬 순서**로 해결  
+- `customer_id = :cust` 로 **선택도 쿼리**
+- `order by order_dt desc` 를 복합 인덱스의 **정렬 순서**로 해결
 - **상위 20건**만 읽으면 나머지 범위는 **탐색하지 않음** → **I/O 급감**
 
 > **실행계획(요지)**
-> - `INDEX RANGE SCAN ix_orders_cust_dt` (Predicate: `customer_id=:cust`)  
-> - `STOPKEY` (Fetch First 20)  
+> - `INDEX RANGE SCAN ix_orders_cust_dt` (Predicate: `customer_id=:cust`)
+> - `STOPKEY` (Fetch First 20)
 > - 필요 컬럼이 인덱스에 있지 않으면 `TABLE ACCESS BY ROWID` 로 보강
 
 ### 2.4 (반례) PRP가 깨지는 경우
@@ -114,8 +114,8 @@ WHERE  customer_id = :cust
 ORDER  BY amount DESC
 FETCH FIRST 20 ROWS ONLY;
 ```
-- 인덱스가 `(customer_id, order_dt)` 뿐이라면 `amount DESC` 정렬을 위해 **SORT** 필요  
-- 보통 **대부분을 읽고** 정렬해야 하므로 **STOPKEY 이점 상실**  
+- 인덱스가 `(customer_id, order_dt)` 뿐이라면 `amount DESC` 정렬을 위해 **SORT** 필요
+- 보통 **대부분을 읽고** 정렬해야 하므로 **STOPKEY 이점 상실**
 - **해결**: `(customer_id, amount DESC)` 인덱스(업무상 정렬 의미가 있을 때만) 또는 요구사항을 **시간순**으로 변경
 
 ---
@@ -124,13 +124,13 @@ FETCH FIRST 20 ROWS ONLY;
 
 OLTP는 **짧은 쿼리**가 **매우 자주** 발생한다. PRP는 아래 효과를 합산해 **p95/최대 응답시간**을 낮춘다.
 
-1) **I/O 감소**: 상위 N만 읽으므로 **읽을 블록 자체가 적다**  
-2) **락 경합/래치/뮤텍스 감소**: 적은 읽기는 적은 경합  
-3) **CPU/메모리 압력 완화**: 정렬·해시·필터가 작아짐  
-4) **캐시 친화성**: 인덱스 스캔의 **짧은 범위**만 탐색 → 버퍼 캐시 히트율에 유리  
+1) **I/O 감소**: 상위 N만 읽으므로 **읽을 블록 자체가 적다**
+2) **락 경합/래치/뮤텍스 감소**: 적은 읽기는 적은 경합
+3) **CPU/메모리 압력 완화**: 정렬·해시·필터가 작아짐
+4) **캐시 친화성**: 인덱스 스캔의 **짧은 범위**만 탐색 → 버퍼 캐시 히트율에 유리
 5) **사용자 체감 개선**: 필요한 정보(예: 목록 첫 페이지)만 빠르게 반환
 
-> 정리하면, PRP는 **근본적인 작업량 자체**를 줄이는 기법이다. ArraySize는 **왕복 오버헤드**를 줄이고,  
+> 정리하면, PRP는 **근본적인 작업량 자체**를 줄이는 기법이다. ArraySize는 **왕복 오버헤드**를 줄이고,
 > PRP는 **읽을 데이터 자체**를 줄인다. **OLTP**에서 둘의 결합은 **최강 조합**이다.
 
 ---
@@ -143,14 +143,14 @@ N_{\text{fetch}} = \left\lceil \frac{R}{A} \right\rceil,
 $$
 여기서 \(R\)은 가져올 행 수, \(A\)는 ArraySize.
 
-- 예) 10,000행을 ArraySize=50 → **200회** 왕복  
-- ArraySize=1000 → **10회** 왕복  
+- 예) 10,000행을 ArraySize=50 → **200회** 왕복
+- ArraySize=1000 → **10회** 왕복
 - RTT(왕복 지연)가 3ms만 되어도, **200회 ↦ 10회**는 왕복 지연만 **570ms 절감** 가능
 
 ### 4.2 ArraySize가 **블록 I/O 자체를 줄이진 않는다**, 다만…
-- **같은 행 수**를 읽는다면, 논리/물리 블록 I/O는 **대체로 동일**하다.  
-- 다만 **왕복 경계**가 줄어 **스캔 모멘텀**이 유지되고, 서버/네트워크 컨텍스트 스위칭이 적어져  
-  **경합/대기**(예: `SQL*Net message to/from client`)가 줄고, 일부 환경에선 **락/래치 재진입**이 줄면서  
+- **같은 행 수**를 읽는다면, 논리/물리 블록 I/O는 **대체로 동일**하다.
+- 다만 **왕복 경계**가 줄어 **스캔 모멘텀**이 유지되고, 서버/네트워크 컨텍스트 스위칭이 적어져
+  **경합/대기**(예: `SQL*Net message to/from client`)가 줄고, 일부 환경에선 **락/래치 재진입**이 줄면서
   **부수적으로** I/O 대기가 낮아 보이는 경우가 있다.
 - **명확한 I/O 감소**는 **PRP**(읽는 양 자체 축소), **커버링 인덱스**, **필터/정렬 인덱스화**에서 온다.
 
@@ -158,7 +158,7 @@ $$
 
 ## 5. 언어별 Array Fetch 세팅과 예제
 
-> **중요**: ArraySize는 “행 갯수”인 경우(JDBC, Python 등), “바이트”인 경우(ODP.NET `FetchSize`)가 있다.  
+> **중요**: ArraySize는 “행 갯수”인 경우(JDBC, Python 등), “바이트”인 경우(ODP.NET `FetchSize`)가 있다.
 > LOB/폭넓은 컬럼이 많으면 **메모리와 네트워크 프레임**을 고려하여 **중간값**을 찾자.
 
 ### 5.1 JDBC (Oracle JDBC Thin)
@@ -184,8 +184,8 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 }
 ```
 
-> **팁**  
-> - 대용량 스트리밍 조회라면 `setFetchSize(1000~5000)`로 시작해 실측.  
+> **팁**
+> - 대용량 스트리밍 조회라면 `setFetchSize(1000~5000)`로 시작해 실측.
 > - Statement Cache 활성(Implicit/Explicit)로 Parse 경감.
 
 ### 5.2 ODP.NET (C#)
@@ -250,7 +250,7 @@ WHERE  o.customer_id = :cust
 ORDER  BY o.order_dt DESC
 FETCH FIRST :N ROWS ONLY;
 ```
-- 인덱스 `(customer_id, order_dt DESC)` → `INDEX RANGE SCAN + STOPKEY`  
+- 인덱스 `(customer_id, order_dt DESC)` → `INDEX RANGE SCAN + STOPKEY`
 - 필요한 열이 인덱스에 다 있다면 **커버링**으로 테이블 액세스 제거
 
 ### 6.2 Keyset Pagination(다음 페이지)
@@ -263,7 +263,7 @@ WHERE  customer_id = :cust
 ORDER  BY order_dt DESC, order_id DESC
 FETCH FIRST 20 ROWS ONLY;
 ```
-- `(customer_id, order_dt DESC, order_id DESC)` 인덱스 추천  
+- `(customer_id, order_dt DESC, order_id DESC)` 인덱스 추천
 - **OFFSET … FETCH** 대비 **PRP가 확실**히 작동 (OFFSET은 앞부분을 버리느라 비효율)
 
 ### 6.3 주문 목록 + 상태 필터
@@ -276,8 +276,8 @@ WHERE  o.customer_id = :cust
 ORDER  BY o.order_dt DESC
 FETCH FIRST 20 ROWS ONLY;
 ```
-- 인덱스 선택: `(customer_id, status, order_dt DESC)` vs `(customer_id, order_dt DESC, status)`  
-- **선택도 높은 컬럼** → 앞쪽에 배치, **정렬 컬럼**은 끝에 **DESC** 로 배치가 일반적  
+- 인덱스 선택: `(customer_id, status, order_dt DESC)` vs `(customer_id, order_dt DESC, status)`
+- **선택도 높은 컬럼** → 앞쪽에 배치, **정렬 컬럼**은 끝에 **DESC** 로 배치가 일반적
 - 실제 데이터 분포로 확인(AWR, XPLAN)
 
 ---
@@ -291,7 +291,7 @@ ALTER SESSION SET events '10046 trace name context forever, level 8';
 ```
 
 2) **비교 시나리오**
-   - **A**: TOP-N 없이 전체 조회 + ArraySize=50  
+   - **A**: TOP-N 없이 전체 조회 + ArraySize=50
    - **B**: PRP(`FETCH FIRST 20`) + ArraySize=1000
 
 3) Trace OFF → TKPROF
@@ -301,9 +301,9 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 ```
 
 4) **비교 포인트**
-   - `call` 표의 **Fetch count**(B가 현저히 작음)  
-   - **Elapsed**(Fetch/Execute) 감소  
-   - `bytes sent/received via SQL*Net` 당 rows 증가(효율↑)  
+   - `call` 표의 **Fetch count**(B가 현저히 작음)
+   - **Elapsed**(Fetch/Execute) 감소
+   - `bytes sent/received via SQL*Net` 당 rows 증가(효율↑)
    - PRP가 있다면 **논리/물리 I/O**도 함께 감소
 
 ---
@@ -324,18 +324,18 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 ## 9. OLTP 튜닝 시나리오 3선
 
 ### 9.1 주문 목록 첫 페이지 API
-- **Before**: `OFFSET 0 FETCH 50` + 정렬 인덱스 없음 → 평균 400ms  
-- **After**: `(customer_id, order_dt DESC)` 인덱스 + `FETCH FIRST 50` + fetchSize=1000  
+- **Before**: `OFFSET 0 FETCH 50` + 정렬 인덱스 없음 → 평균 400ms
+- **After**: `(customer_id, order_dt DESC)` 인덱스 + `FETCH FIRST 50` + fetchSize=1000
 - **결과**: **Index Range Scan + STOPKEY**, Fetch 왕복 1~2회 → 평균 40ms
 
 ### 9.2 알람 피드(무한스크롤)
-- **Keyset**: `(tenant_id, created_at DESC, id DESC)`  
-- API는 `(last_ts, last_id)` 전달  
+- **Keyset**: `(tenant_id, created_at DESC, id DESC)`
+- API는 `(last_ts, last_id)` 전달
 - PRP로 **연속 페이지**도 매번 상위 50만 읽고 종료 → 안정적인 지연
 
 ### 9.3 백오피스 그리드 조회
-- 컬럼 최소화(보여줄 것만), 정렬·필터 컬럼 **복합 인덱스화**  
-- 사용자 스크롤 시 **Lazy Fetch**(다음 페이지 요청 시만)  
+- 컬럼 최소화(보여줄 것만), 정렬·필터 컬럼 **복합 인덱스화**
+- 사용자 스크롤 시 **Lazy Fetch**(다음 페이지 요청 시만)
 - fetchSize=2000, 네트워크 RTT 큰 사내망은 5000도 시도
 
 ---
@@ -380,12 +380,12 @@ const result = await connection.execute(SQL, binds, {
   $$
   \text{Rows per Fetch Call} = \frac{\text{총 결과 행 수}}{\text{Fetch calls}}
   $$
-  값이 **클수록** 좋다(대개 ArraySize와 유사).  
+  값이 **클수록** 좋다(대개 ArraySize와 유사).
 - **왕복 오버헤드 추정**
   $$
   \text{RTT Cost} \approx \text{RTT} \times N_{\text{fetch calls}}
   $$
-  RTT가 2~5ms만 되어도 **수백 회 왕복**이면 수백 ms가 날아간다.  
+  RTT가 2~5ms만 되어도 **수백 회 왕복**이면 수백 ms가 날아간다.
 - **PRP 효율**
   $$
   \text{I/O 절감률} \approx 1 - \frac{\text{PRP 읽은 블록}}{\text{전체 읽기 블록}}
@@ -396,38 +396,38 @@ const result = await connection.execute(SQL, binds, {
 
 ## 12. 종합 실습: “느린 목록”을 10배 빠르게
 
-**문제**: 고객 포털에서 “주문 목록” 첫 페이지가 p95 1.1s  
+**문제**: 고객 포털에서 “주문 목록” 첫 페이지가 p95 1.1s
 **원인**: `OFFSET/FETCH`, 정렬 인덱스 없음, fetchSize=50
 
 **개선**
-1) 인덱스 `(customer_id, order_dt DESC)`  
-2) SQL을 `FETCH FIRST 50 ROWS ONLY` 로 변경  
-3) JDBC `setFetchSize(1000)`  
+1) 인덱스 `(customer_id, order_dt DESC)`
+2) SQL을 `FETCH FIRST 50 ROWS ONLY` 로 변경
+3) JDBC `setFetchSize(1000)`
 4) 보여주는 컬럼 최소화(커버링 고려)
 
 **결과(TKPROF 요지)**
-- Fetch calls: **22 → 1~2**  
-- Execute Elapsed: **대폭 감소**(STOPKEY)  
+- Fetch calls: **22 → 1~2**
+- Execute Elapsed: **대폭 감소**(STOPKEY)
 - 전체 Elapsed: **~1.1s → ~90ms**
 
 ---
 
 ## 13. 체크리스트
 
-- [ ] **PRP 가능**한가? (TOP-N/Keyset)  
-- [ ] **정렬/필터**가 **복합 인덱스**로 해결되는가? (DESC 포함)  
-- [ ] **커버링 인덱스**로 테이블 접근을 줄일 수 있는가?  
-- [ ] **ArraySize/prefetchRows/FetchSize** 를 현실적으로 키웠는가?  
-- [ ] **OFFSET** 대신 **Keyset** 을 쓰는가?  
-- [ ] TKPROF에서 **Fetch count/Elapsed** 가 줄었는가?  
+- [ ] **PRP 가능**한가? (TOP-N/Keyset)
+- [ ] **정렬/필터**가 **복합 인덱스**로 해결되는가? (DESC 포함)
+- [ ] **커버링 인덱스**로 테이블 접근을 줄일 수 있는가?
+- [ ] **ArraySize/prefetchRows/FetchSize** 를 현실적으로 키웠는가?
+- [ ] **OFFSET** 대신 **Keyset** 을 쓰는가?
+- [ ] TKPROF에서 **Fetch count/Elapsed** 가 줄었는가?
 - [ ] **행 수 자체**(PRP)와 **왕복 수**(Array)는 별개임을 이해하고 둘 다 줄였는가?
 
 ---
 
 ## 결론
 
-- **부분범위처리(PRP)** 는 **읽을 양 자체**를 줄여 **I/O·CPU·대기**를 감소시킨다.  
-- **Array Fetch** 는 **왕복 수**를 줄여 **네트워크/컨텍스트 스위칭** 비용을 제거한다.  
-- OLTP의 “짧고 잦은” 쿼리에서 두 기법을 결합하면, 종종 **10배** 이상의 체감 성능 개선이 가능하다.  
-- 인덱스(필터·정렬·커버링)와 SQL 패턴(TOP-N, Keyset), 드라이버의 Array 옵션을 **세트**로 설계하라.  
+- **부분범위처리(PRP)** 는 **읽을 양 자체**를 줄여 **I/O·CPU·대기**를 감소시킨다.
+- **Array Fetch** 는 **왕복 수**를 줄여 **네트워크/컨텍스트 스위칭** 비용을 제거한다.
+- OLTP의 “짧고 잦은” 쿼리에서 두 기법을 결합하면, 종종 **10배** 이상의 체감 성능 개선이 가능하다.
+- 인덱스(필터·정렬·커버링)와 SQL 패턴(TOP-N, Keyset), 드라이버의 Array 옵션을 **세트**로 설계하라.
 - 마지막으로, **TKPROF/Trace** 로 전후를 **수치로 증명**하라 — **Fetch call**과 **Elapsed** 는 거짓말을 하지 않는다.

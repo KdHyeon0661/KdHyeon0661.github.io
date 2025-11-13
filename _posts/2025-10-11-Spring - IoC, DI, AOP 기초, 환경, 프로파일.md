@@ -15,14 +15,14 @@ category: Spring
 
 - **IoC (Inversion of Control)**: 객체 생성·연결·수명 관리를 개발자가 아니라 **컨테이너(ApplicationContext)**가 담당.
 - **DI (Dependency Injection)**: 필요한 의존성을 **외부에서 주입**. (생성자/세터/필드)
-- **Bean**: 컨테이너가 관리하는 객체.  
+- **Bean**: 컨테이너가 관리하는 객체.
 - **Container**: `BeanFactory`(최소 기능) ⊂ `ApplicationContext`(국제화/이벤트/리소스/환경 등 포함).
 - **Scope**: 빈의 **수명 범위**. `singleton`(기본), `prototype`, `request`, `session`, `application`, `websocket`.
 - **Lifecycle**: **정의 → 생성 → 의존성 주입 → 초기화 → 사용 → 소멸**.
 
-> 핵심 규칙  
-> - **생성자 주입**을 기본으로. (불변성/테스트 용이성/순환 참조 조기 탐지)  
-> - 필요한 경우에만 `@Lazy`, `ObjectProvider`, `Provider<T>`로 지연 주입.  
+> 핵심 규칙
+> - **생성자 주입**을 기본으로. (불변성/테스트 용이성/순환 참조 조기 탐지)
+> - 필요한 경우에만 `@Lazy`, `ObjectProvider`, `Provider<T>`로 지연 주입.
 > - **빈의 “목적(역할)”**별로 인터페이스/구현을 분리하고 @Qualifier/@Primary로 선택성을 부여.
 
 ---
@@ -69,8 +69,8 @@ class AlertService {
 }
 ```
 
-**장점**  
-- 의존성 누락/순환 참조를 **컴파일/실행 초기**에 바로 드러냄.  
+**장점**
+- 의존성 누락/순환 참조를 **컴파일/실행 초기**에 바로 드러냄.
 - 테스트에서 **대체 구현**(스텁/목)을 생성자로 간단히 주입.
 
 ---
@@ -104,16 +104,16 @@ class DemoController {
 }
 ```
 
-> 주의: **싱글톤 빈**이 **프로토타입 빈**을 주입받으면 **주입 시점에 1번만 생성**된다.  
+> 주의: **싱글톤 빈**이 **프로토타입 빈**을 주입받으면 **주입 시점에 1번만 생성**된다.
 > → 매 호출마다 새 인스턴스가 필요하면 `ObjectProvider`/`Provider<T>`/`ApplicationContext.getBean()` 사용.
 
 ---
 
 ### A-4. 라이프사이클: 초기화·소멸 훅
 
-- **초기화**: `@PostConstruct`, `InitializingBean#afterPropertiesSet()`, `@Bean(initMethod=...)`  
-- **소멸**: `@PreDestroy`, `DisposableBean#destroy()`, `@Bean(destroyMethod=...)`  
-- **실행 시점**: `CommandLineRunner`, `ApplicationRunner`  
+- **초기화**: `@PostConstruct`, `InitializingBean#afterPropertiesSet()`, `@Bean(initMethod=...)`
+- **소멸**: `@PreDestroy`, `DisposableBean#destroy()`, `@Bean(destroyMethod=...)`
+- **실행 시점**: `CommandLineRunner`, `ApplicationRunner`
 - **자동 시작/중지**: `SmartLifecycle`
 
 ```java
@@ -196,7 +196,7 @@ class TimingBeanPostProcessor implements BeanPostProcessor {
 }
 ```
 
-- **BeanFactoryPostProcessor**: 빈 정의(메타데이터) 단계 수정.  
+- **BeanFactoryPostProcessor**: 빈 정의(메타데이터) 단계 수정.
 - **BeanPostProcessor**: 실제 빈 인스턴스 가로채어 래핑/프록시.
 
 ---
@@ -205,8 +205,8 @@ class TimingBeanPostProcessor implements BeanPostProcessor {
 
 ### B-1. 왜 AOP인가?
 
-- **횡단 관심사**(트랜잭션, 로깅, 보안, 측정, 리트라이 등)를 **핵심 로직과 분리**.  
-- 스프링은 **프록시 기반 AOP**(JDK Dynamic Proxy/CGLIB).  
+- **횡단 관심사**(트랜잭션, 로깅, 보안, 측정, 리트라이 등)를 **핵심 로직과 분리**.
+- 스프링은 **프록시 기반 AOP**(JDK Dynamic Proxy/CGLIB).
 - 실제 메서드 호출 전후에 **어드바이스(Advice)**가 삽입.
 
 > 주의: **자기 자신(this)**의 내부 메서드 호출(**self-invocation**)은 프록시를 통과하지 않아 어드바이스가 적용되지 않는다.
@@ -273,9 +273,9 @@ class LoggingAspect {
 
 ### B-4. 프록시 타입과 제약
 
-- **JDK 동적 프록시**: 인터페이스 기반.  
-- **CGLIB**: 클래스 상속 기반(최종 클래스/메서드 `final`이면 불가).  
-- 스프링 부트는 기본적으로 **두 방식 자동 선택**(인터페이스 있으면 JDK, 아니면 CGLIB).  
+- **JDK 동적 프록시**: 인터페이스 기반.
+- **CGLIB**: 클래스 상속 기반(최종 클래스/메서드 `final`이면 불가).
+- 스프링 부트는 기본적으로 **두 방식 자동 선택**(인터페이스 있으면 JDK, 아니면 CGLIB).
 - 설정: `@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)`
 
 ```java
@@ -284,7 +284,7 @@ class LoggingAspect {
 class AopConfig { }
 ```
 
-**Self-invocation 해결**  
+**Self-invocation 해결**
 ```java
 @Service
 class ReportService {
@@ -323,9 +323,9 @@ class OrderService {
 }
 ```
 
-> **Pitfall**  
-> - `private` 메서드/`final` 클래스는 프록시에서 어드바이스 불가.  
-> - 트랜잭션은 **런타임 예외(언체크)** 기본 롤백. 체크 예외는 지정 필요.  
+> **Pitfall**
+> - `private` 메서드/`final` 클래스는 프록시에서 어드바이스 불가.
+> - 트랜잭션은 **런타임 예외(언체크)** 기본 롤백. 체크 예외는 지정 필요.
 > - `@Transactional(readOnly = true)`는 읽기 최적화(드라이버/프레임워크 의존) 및 쓰기 금지 관례.
 
 ---
@@ -354,8 +354,8 @@ class AnnotationLoggingAspect {
 
 ### C-1. Config Data & 파일 구조(스프링 부트 2.4+)
 
-- 기본 파일: `application.yml`  
-- 프로파일별: `application-dev.yml`, `application-prod.yml`  
+- 기본 파일: `application.yml`
+- 프로파일별: `application-dev.yml`, `application-prod.yml`
 - 하나의 파일 내 다중 문서: `---` 구분 + `spring.config.activate.on-profile`
 
 ```yaml
@@ -402,11 +402,11 @@ java -jar app.jar --spring.profiles.active=prod
 
 > **우선순위 높음 → 낮음** (일반적인 부트 기본값 기준)
 
-1. **커맨드라인 인자**: `--server.port=9090`  
-2. **OS 환경변수**: `SERVER_PORT=9090` (Relaxed Binding)  
-3. **`application-<profile>.yml`** (활성 프로파일)  
-4. **`application.yml`**  
-5. **스프링 코드 내 `@PropertySource`/기타**  
+1. **커맨드라인 인자**: `--server.port=9090`
+2. **OS 환경변수**: `SERVER_PORT=9090` (Relaxed Binding)
+3. **`application-<profile>.yml`** (활성 프로파일)
+4. **`application.yml`**
+5. **스프링 코드 내 `@PropertySource`/기타**
 6. **자동 구성/기본값**
 
 > “나중에 로드된(더 특화된) 설정”이 “먼저 로드된(덜 특화된) 설정”을 덮는다.
@@ -472,7 +472,7 @@ class RealGateway implements PaymentGateway {
 }
 ```
 
-- 다형성 + 프로파일로 운영/개발 분리를 명확히.  
+- 다형성 + 프로파일로 운영/개발 분리를 명확히.
 - 더 섬세한 조건은 `@ConditionalOnProperty`, `@ConditionalOnClass`, `@Conditional(...)` 사용.
 
 ```java
@@ -488,10 +488,10 @@ class MetricsConfig {
 
 ### C-5. 외부 설정 위치/시크릿, 덮어쓰기 전략
 
-- **외부 디렉토리/URL에서 추가 로드**  
-  `--spring.config.additional-location=./ext/`  
-- **환경 변수로 시크릿 전달**  
-  `DB_PASSWORD=...` → `${DB_PASSWORD}`로 참조  
+- **외부 디렉토리/URL에서 추가 로드**
+  `--spring.config.additional-location=./ext/`
+- **환경 변수로 시크릿 전달**
+  `DB_PASSWORD=...` → `${DB_PASSWORD}`로 참조
 - **Kubernetes**: ConfigMap/Secret을 **환경변수 또는 마운트 파일**로 주입.
 
 ```yaml
@@ -657,48 +657,48 @@ logging:
 
 ## E. 트러블슈팅 & 베스트 프랙티스
 
-1) **어드바이스가 안 먹는다?**  
-   - 내부 호출(self-invocation)인지 확인 → `AopContext.currentProxy()` 또는 구조 분리.  
-   - 메서드/클래스 `final`인지 확인. 인터페이스 유무/프록시 타입.  
+1) **어드바이스가 안 먹는다?**
+   - 내부 호출(self-invocation)인지 확인 → `AopContext.currentProxy()` 또는 구조 분리.
+   - 메서드/클래스 `final`인지 확인. 인터페이스 유무/프록시 타입.
 
-2) **순환 참조 예외**  
-   - 설계를 끊어라(이벤트 발행/포트-어댑터/도메인 서비스 분해).  
+2) **순환 참조 예외**
+   - 설계를 끊어라(이벤트 발행/포트-어댑터/도메인 서비스 분해).
    - 임시로 `@Lazy`는 가능하지만, 원인 제거가 정답.
 
-3) **프로파일 적용이 이상**  
-   - 활성 프로파일 확인: `/actuator/env`(dev에서만 노출) 또는 로그.  
+3) **프로파일 적용이 이상**
+   - 활성 프로파일 확인: `/actuator/env`(dev에서만 노출) 또는 로그.
    - `spring.config.activate.on-profile` vs `spring.profiles.active` 구분.
 
-4) **설정 우선순위 충돌**  
-   - 커맨드라인/환경변수가 최상위.  
+4) **설정 우선순위 충돌**
+   - 커맨드라인/환경변수가 최상위.
    - 로깅 레벨/데이터소스가 엎어쓰였는지 확인.
 
-5) **@Transactional 롤백 안 됨**  
-   - 체크 예외/커스텀 예외의 롤백 규칙 확인(`rollbackFor`).  
+5) **@Transactional 롤백 안 됨**
+   - 체크 예외/커스텀 예외의 롤백 규칙 확인(`rollbackFor`).
    - 메서드 `public`인지, 프록시 경유 호출인지 확인.
 
-6) **성능/부팅**  
-   - AOP는 최소한의 포인트컷 범위로.  
+6) **성능/부팅**
+   - AOP는 최소한의 포인트컷 범위로.
    - JPA N+1은 페치 전략/쿼리 튜닝/캐시로 해결.
 
 ---
 
 ## F. 과제 & 체크리스트 (이 장 완료 기준)
 
-- [ ] 생성자 주입으로 서비스 2~3개 구성, `@Primary/@Qualifier` 사용  
-- [ ] `prototype` 빈을 `ObjectProvider`로 런타임 의존 획득  
-- [ ] `@PostConstruct` 초기화와 `@PreDestroy` 정리 로직 구현  
-- [ ] `@Aspect`로 **시간 측정** `Around` 어드바이스 적용, 범위는 `*Service`로 제한  
-- [ ] `@Transactional`을 단 서비스 메서드에서 **self-invocation** 재현 & 해결  
-- [ ] `application.yml` + `application-prod.yml`로 DB/로깅 차등 구성  
-- [ ] `@ConfigurationProperties`로 타입 세이프 설정 바인딩  
-- [ ] `@Profile("dev"/"prod")`로 결제 게이트웨이 구현 분기  
+- [ ] 생성자 주입으로 서비스 2~3개 구성, `@Primary/@Qualifier` 사용
+- [ ] `prototype` 빈을 `ObjectProvider`로 런타임 의존 획득
+- [ ] `@PostConstruct` 초기화와 `@PreDestroy` 정리 로직 구현
+- [ ] `@Aspect`로 **시간 측정** `Around` 어드바이스 적용, 범위는 `*Service`로 제한
+- [ ] `@Transactional`을 단 서비스 메서드에서 **self-invocation** 재현 & 해결
+- [ ] `application.yml` + `application-prod.yml`로 DB/로깅 차등 구성
+- [ ] `@ConfigurationProperties`로 타입 세이프 설정 바인딩
+- [ ] `@Profile("dev"/"prod")`로 결제 게이트웨이 구현 분기
 - [ ] 테스트에서 `@ActiveProfiles("test")` + `@TestPropertySource` 사용
 
 ---
 
 ## G. 한 페이지 요약
 
-- **IoC/DI**: “**컨테이너가 객체를 만들고 연결**한다.” → 생성자 주입 기본, 스코프·라이프사이클 이해.  
-- **AOP**: “**프록시가 공통 관심사(트랜잭션/로깅)를 주입**한다.” → 포인트컷/어드바이스, self-invocation 주의.  
+- **IoC/DI**: “**컨테이너가 객체를 만들고 연결**한다.” → 생성자 주입 기본, 스코프·라이프사이클 이해.
+- **AOP**: “**프록시가 공통 관심사(트랜잭션/로깅)를 주입**한다.” → 포인트컷/어드바이스, self-invocation 주의.
 - **환경/프로파일**: “**설정은 외부화·계층화**하고 프로파일로 분기한다.” → 우선순위·타입 세이프 바인딩.

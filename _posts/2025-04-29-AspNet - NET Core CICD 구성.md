@@ -42,7 +42,7 @@ MyApp/
 │       └── cd-prod.yml       # 운영 수동 승인 배포(릴리스 태그)
 ```
 
-- 브랜치: `feature/*` → PR → `develop` → `main`  
+- 브랜치: `feature/*` → PR → `develop` → `main`
 - 배포: `main` merge 시 **Staging**, 태그 `v*` 푸시 시 **Production**
 
 ---
@@ -53,7 +53,7 @@ MyApp/
 - 위치: GitHub → Repository → Settings → Secrets and variables → Actions
 - 예: `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_PUBLISH_PROFILE`, `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
 
-장점: 간편.  
+장점: 간편.
 단점: 장기 비밀 보관, **회전 주기/노출 위험** 관리 필요.
 
 ### 4.2 OIDC (Federated Credentials)
@@ -71,7 +71,7 @@ MyApp/
 ```
 {% endraw %}
 
-장점: 키 없는 보안, 중앙 관리.  
+장점: 키 없는 보안, 중앙 관리.
 권장: 운영 계정은 **가능하면 OIDC**를 기본으로.
 
 ---
@@ -95,7 +95,7 @@ MyApp/
 ```
 {% endraw %}
 
-- `hashFiles('**/*.csproj')`로 의존성 변경 시 자동 무효화  
+- `hashFiles('**/*.csproj')`로 의존성 변경 시 자동 무효화
 - **checkout 깊이**: `actions/checkout@v3` with `fetch-depth: 0`은 버전/체인지로그 계산에 유용
 
 ---

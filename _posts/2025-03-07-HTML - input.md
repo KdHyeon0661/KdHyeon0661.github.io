@@ -191,7 +191,7 @@ category: HTML
 
 ### 4.2 JS API
 
-- `checkValidity()` / `reportValidity()`  
+- `checkValidity()` / `reportValidity()`
 - `setCustomValidity(message)` + `validity` 상태(예: `patternMismatch`, `tooShort`)
 
 ```html
@@ -441,8 +441,8 @@ form.addEventListener('submit', async (e) => {
 
 ## 12. 요약
 
-- `<input>`은 폼의 **핵심 단위**: 타입/속성 조합으로 대부분의 사용자 입력 처리 가능.  
-- **유효성**: HTML5 속성 + CSS 상태 + JS API(`setCustomValidity`)의 삼박자.  
-- **접근성**: 라벨·오류 연결, 그룹화, 포커스 가시성.  
-- **보안**: 서버 재검증·CSRF 토큰·XSS 방지·파일 업로드 방어.  
+- `<input>`은 폼의 **핵심 단위**: 타입/속성 조합으로 대부분의 사용자 입력 처리 가능.
+- **유효성**: HTML5 속성 + CSS 상태 + JS API(`setCustomValidity`)의 삼박자.
+- **접근성**: 라벨·오류 연결, 그룹화, 포커스 가시성.
+- **보안**: 서버 재검증·CSRF 토큰·XSS 방지·파일 업로드 방어.
 - **모바일/국제화**: `inputmode`/`enterkeyhint`/자동완성 토큰으로 UX 개선.

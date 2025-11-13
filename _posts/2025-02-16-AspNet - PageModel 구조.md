@@ -15,7 +15,7 @@ Pages/
 ```
 
 - `.cshtml`은 화면/마크업과 **경량 표기**를 담당
-- `.cshtml.cs`의 **PageModel**은 입력 바인딩, 검증, 핸들러(액션), 결과 반환을 담당  
+- `.cshtml.cs`의 **PageModel**은 입력 바인딩, 검증, 핸들러(액션), 결과 반환을 담당
 - MVC의 `Controller` + `Action`에 해당하는 부분이 **PageModel의 핸들러(OnGet/OnPost/OnPostX 등)**
 
 ---
@@ -47,11 +47,11 @@ public class IndexModel : PageModel
 
 핸들러 표준 시그니처:
 - **반환형**: `void`, `IActionResult`, `Task`, `Task<IActionResult>`
-- **이름 규칙**: `On{HttpVerb}` 또는 `On{HttpVerb}{Handler}`  
+- **이름 규칙**: `On{HttpVerb}` 또는 `On{HttpVerb}{Handler}`
   예) `OnGet`, `OnGetAsync`, `OnPostSave`, `OnPostDeleteAsync`
 
 핸들러 실행 흐름(요약):
-1. **모델 바인딩** → 2. **검증(ModelState)** → 3. **핸들러 실행** → 4. **결과 반환**  
+1. **모델 바인딩** → 2. **검증(ModelState)** → 3. **핸들러 실행** → 4. **결과 반환**
 필터가 존재하면 1~4 사이에 **필터 인터셉트**가 발생
 
 ---
@@ -220,7 +220,7 @@ public class DetailsModel : PageModel
 PageModel에서 자주 쓰는 멤버:
 - `HttpContext`, `Request`, `Response`
 - `RouteData`, `PageContext`, `ModelState`
-- `Url`, `LinkGenerator`  
+- `Url`, `LinkGenerator`
 - `TempData`(Provider: Cookie/Session)
 - `User`(인증/권한)
 
@@ -280,7 +280,7 @@ public async Task<IActionResult> OnPostAsync(int id)
     if (entity is null) return NotFound();
 
     // "Form" 접두사의 필드 중에서 지정한 속성만 바인딩
-    var ok = await TryUpdateModelAsync(entity, "Form", 
+    var ok = await TryUpdateModelAsync(entity, "Form",
         e => e.Name, e => e.Price);
     if (!ok) return Page();
 
@@ -338,9 +338,9 @@ public sealed class NotDisposableEmailAttribute : ValidationAttribute
 
 ## 10. 보안: CSRF, XSS, 인증/인가, Anti-forgery, 파일 업로드
 
-- **CSRF**: Razor Pages의 `<form method="post">`는 기본적으로 **안티포저리 토큰** 포함  
-- **XSS**: Razor는 **기본 HTML 인코딩**. `Html.Raw`는 신뢰 콘텐츠만  
-- **인증/인가**: PageModel에 `[Authorize]` 또는 페이지 폴더별 정책(Startup/Program에서 규칙)  
+- **CSRF**: Razor Pages의 `<form method="post">`는 기본적으로 **안티포저리 토큰** 포함
+- **XSS**: Razor는 **기본 HTML 인코딩**. `Html.Raw`는 신뢰 콘텐츠만
+- **인증/인가**: PageModel에 `[Authorize]` 또는 페이지 폴더별 정책(Startup/Program에서 규칙)
 - **파일 업로드**: 확장자 화이트리스트, 크기 제한, 랜덤 파일명, 외부 스토리지 권장
 
 페이지별 권한 부여:
@@ -541,8 +541,8 @@ public class ListModel : PageModel
 
 ## 18. 테스트 전략: PageModel 단위 테스트의 요령
 
-- **PageModel**은 단순 C# 클래스이므로 **컨트롤러 테스트와 유사**  
-- DI로 주입되는 서비스·리포지토리를 **Mock**  
+- **PageModel**은 단순 C# 클래스이므로 **컨트롤러 테스트와 유사**
+- DI로 주입되는 서비스·리포지토리를 **Mock**
 - 반환형/ModelState/리다이렉트 대상/TempData를 검증
 
 간단 예:
@@ -572,15 +572,15 @@ public async Task Post_WhenInvalid_ReturnsPage()
 
 ## 20. 체크리스트 요약
 
-1) 핸들러 명명 규칙(HTTP + 선택적 Handler) 준수: `OnGet`, `OnPostSave`  
-2) `[BindProperty]`와 `SupportsGet` 사용 구분  
-3) DTO/화이트리스트 바인딩으로 **과바인딩 방지**  
-4) PRG 패턴으로 **새로고침 중복 제출 방지**  
-5) **안티포저리 토큰**(기본)과 검증 메시지 UI  
-6) 폴더/페이지 단위 **Authorize/AllowAnonymous** 및 정책  
-7) 공통 관심사는 **필터(IAsyncPageFilter)**로 추상화  
-8) 읽기 쿼리는 **AsNoTracking**, 링크는 **asp-page/LinkGenerator**  
-9) TempData는 **1회성 메시지**에만 사용  
+1) 핸들러 명명 규칙(HTTP + 선택적 Handler) 준수: `OnGet`, `OnPostSave`
+2) `[BindProperty]`와 `SupportsGet` 사용 구분
+3) DTO/화이트리스트 바인딩으로 **과바인딩 방지**
+4) PRG 패턴으로 **새로고침 중복 제출 방지**
+5) **안티포저리 토큰**(기본)과 검증 메시지 UI
+6) 폴더/페이지 단위 **Authorize/AllowAnonymous** 및 정책
+7) 공통 관심사는 **필터(IAsyncPageFilter)**로 추상화
+8) 읽기 쿼리는 **AsNoTracking**, 링크는 **asp-page/LinkGenerator**
+9) TempData는 **1회성 메시지**에만 사용
 10) PageModel은 **웹 경계** 로직으로 한정, **도메인/인프라 로직은 서비스로 분리**
 
 ---

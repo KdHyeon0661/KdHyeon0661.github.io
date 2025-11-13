@@ -6,8 +6,8 @@ category: Docker
 ---
 # Docker 설치 방법 (Windows / Linux)
 
-본 문서는 기존에 제시된 **Windows / Linux에서 Docker 설치** 가이드를 **핵심을 보강하고 세부 시나리오까지 확장**한 블로그 글입니다.  
-**설치 전 준비 → 설치 경로별 절차 → 검증 방법 → 기업/학교 환경(프록시·오프라인) 대응 → 성능·보안·트러블슈팅**을 순서대로 다룹니다.  
+본 문서는 기존에 제시된 **Windows / Linux에서 Docker 설치** 가이드를 **핵심을 보강하고 세부 시나리오까지 확장**한 블로그 글입니다.
+**설치 전 준비 → 설치 경로별 절차 → 검증 방법 → 기업/학교 환경(프록시·오프라인) 대응 → 성능·보안·트러블슈팅**을 순서대로 다룹니다.
 
 ---
 
@@ -35,9 +35,9 @@ category: Docker
 | 권한/정책 | 회사 PC는 그룹정책/Defender Application Control 영향 가능 | IT 정책 문서, gpedit.msc, 보안 소프트웨어 정책 확인 |
 | 디스크/메모리 | 최소 2 vCPU, 4~8 GB RAM 권장. 이미지 캐시 공간(수십 GB) | `wsl --status`, Docker Desktop Settings의 Resources 확인 |
 
-> 핵심 포인트  
-> - **Windows Home = WSL2 엔진**을 사용.  
-> - **Windows Pro = Hyper-V 또는 WSL2** 중 선택 가능(최근엔 WSL2 권장).  
+> 핵심 포인트
+> - **Windows Home = WSL2 엔진**을 사용.
+> - **Windows Pro = Hyper-V 또는 WSL2** 중 선택 가능(최근엔 WSL2 권장).
 > - Hyper-V 사용 시 Windows Sandbox/Device Guard/VM 플랫폼 등과의 충돌을 점검.
 
 ---
@@ -46,8 +46,8 @@ category: Docker
 
 ### 1.2.1 Docker Desktop 설치
 
-1. Docker Desktop 설치 파일 다운로드  
-2. 설치 중 엔진 선택: **Hyper-V** 또는 **WSL2**  
+1. Docker Desktop 설치 파일 다운로드
+2. 설치 중 엔진 선택: **Hyper-V** 또는 **WSL2**
 3. 필요 Windows 기능 자동 활성화(재부팅 필요)
 4. 설치 완료 후 Docker Desktop 실행
 
@@ -232,7 +232,7 @@ tasklist /FI "PID eq <PID>"
 
 # 2. Linux에서 Docker 설치(확장)
 
-여기서는 **Ubuntu**를 기준으로 하되, 다른 배포판 변형 포인트도 설명합니다.  
+여기서는 **Ubuntu**를 기준으로 하되, 다른 배포판 변형 포인트도 설명합니다.
 
 ## 2.1 기존 패키지 제거(필요 시)
 
@@ -741,28 +741,28 @@ docker compose down -v
 
 # 9. 자주 묻는 질문(FAQ)
 
-**Q1. Windows Home인데 Hyper-V가 없어도 되나요?**  
+**Q1. Windows Home인데 Hyper-V가 없어도 되나요?**
 A. 네. **WSL2 기반 엔진**으로 충분합니다. Docker Desktop 설치 시 WSL2를 선택하세요.
 
-**Q2. 회사 PC에서 이미지 pull이 안 됩니다.**  
+**Q2. 회사 PC에서 이미지 pull이 안 됩니다.**
 A. 프록시/사설 CA 환경일 수 있습니다. **Docker 프록시 설정**과 **CA 신뢰**를 구성하세요.
 
-**Q3. Windows에서 파일 변경이 컨테이너 내에 늦게 반영됩니다.**  
+**Q3. Windows에서 파일 변경이 컨테이너 내에 늦게 반영됩니다.**
 A. Windows 파일시스템을 바인드하면 I/O가 느릴 수 있습니다. **WSL2 내부 FS**로 프로젝트를 옮기세요.
 
-**Q4. 오프라인 서버에 설치하려면?**  
+**Q4. 오프라인 서버에 설치하려면?**
 A. 외부망에서 **이미지 tar**로 저장해 가져오거나, **사설 레지스트리**를 구축하세요.
 
-**Q5. GPU를 쓰고 싶습니다.**  
+**Q5. GPU를 쓰고 싶습니다.**
 A. 리눅스는 `nvidia-container-toolkit`를 설치, Windows/WSL2는 NVIDIA CUDA on WSL 가이드를 따르세요.
 
 ---
 
 # 10. 결론
 
-- **Windows**: Home은 WSL2, Pro는 Hyper-V와 WSL2 중 **WSL2 권장**  
-- **Linux(Ubuntu)**: 공식 리포지토리에서 설치, `docker` 그룹 권한, systemd 관리  
-- **기업·프록시·오프라인** 환경까지 고려한 **프록시/CA/레지스트리/미러** 설정 제공  
+- **Windows**: Home은 WSL2, Pro는 Hyper-V와 WSL2 중 **WSL2 권장**
+- **Linux(Ubuntu)**: 공식 리포지토리에서 설치, `docker` 그룹 권한, systemd 관리
+- **기업·프록시·오프라인** 환경까지 고려한 **프록시/CA/레지스트리/미러** 설정 제공
 - **성능·보안·트러블슈팅** 체크리스트로 실무 대응력 강화
 
 ---
@@ -808,10 +808,10 @@ docker compose down -v
 
 # 부록 B. 리눅스 배포판별 설치 힌트(요약)
 
-- **Debian**: Ubuntu와 유사. codename(`bookworm`, `bullseye`) 주의  
-- **Fedora**: `dnf config-manager`로 리포 등록 후 `dnf install docker-ce ...`  
-- **RHEL/Alma/Rocky**: SELinux 라벨, 방화벽, FIPS 모드 호환성 고려  
-- **Amazon Linux**: `amazon-linux-extras` 또는 공식 리포지토리 선택  
+- **Debian**: Ubuntu와 유사. codename(`bookworm`, `bullseye`) 주의
+- **Fedora**: `dnf config-manager`로 리포 등록 후 `dnf install docker-ce ...`
+- **RHEL/Alma/Rocky**: SELinux 라벨, 방화벽, FIPS 모드 호환성 고려
+- **Amazon Linux**: `amazon-linux-extras` 또는 공식 리포지토리 선택
 - **Arch**: `pacman -S docker docker-compose` (Rolling, 문서 확인)
 
 ---
@@ -832,6 +832,6 @@ trivy image nginx:alpine
 
 # 참고 링크
 
-- 공식 설치 가이드: https://docs.docker.com/get-docker/  
-- Docker Desktop (Windows): https://www.docker.com/products/docker-desktop/  
+- 공식 설치 가이드: https://docs.docker.com/get-docker/
+- Docker Desktop (Windows): https://www.docker.com/products/docker-desktop/
 - NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/

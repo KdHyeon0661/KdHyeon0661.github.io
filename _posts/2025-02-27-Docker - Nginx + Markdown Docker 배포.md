@@ -355,7 +355,7 @@ location = /old-path {
 
 ## 11. HTTPS(선택) — Nginx + Certbot 컨테이너
 
-간단히 dockerized certbot을 붙이는 패턴(운영 서버에서 DNS/방화벽 개방 필요).  
+간단히 dockerized certbot을 붙이는 패턴(운영 서버에서 DNS/방화벽 개방 필요).
 프로덕션에서는 Nginx-proxy/Traefik 또는 Cloudflare의 TLS 종단도 고려.
 
 ```yaml
@@ -488,7 +488,7 @@ clean:
 | 403/SELinux | 바인드 마운트 컨텍스트 | `:Z` 옵션(RHEL/CentOS/SELinux) |
 | 80 포트 충돌 | 이미 점유 중인 서비스(Nginx/Apache) | `sudo lsof -i :80` |
 
-SELinux 환경 예:  
+SELinux 환경 예:
 `- ./public:/usr/share/nginx/html:ro,Z`
 
 ---

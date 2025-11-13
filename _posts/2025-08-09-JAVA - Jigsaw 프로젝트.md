@@ -172,18 +172,18 @@ jmod describe mods/com.example.core.jmod
 ## 6. 마이그레이션 전략 — Classpath → Modulepath
 
 ### 6.1 단계적 접근(권장)
-1. **현행 유지 + 준비**  
-   - 모든 라이브러리에 `Automatic-Module-Name`(매니페스트) 지정 → **안정 모듈명** 확보.  
+1. **현행 유지 + 준비**
+   - 모든 라이브러리에 `Automatic-Module-Name`(매니페스트) 지정 → **안정 모듈명** 확보.
    - 예: `Automatic-Module-Name: com.fasterxml.jackson.databind`.
-2. **앱에 `module-info.java` 도입**  
-   - 가장 바깥(애플리케이션)부터 명시적 `requires/exports` 설계.  
+2. **앱에 `module-info.java` 도입**
+   - 가장 바깥(애플리케이션)부터 명시적 `requires/exports` 설계.
    - **split package**(하나의 패키지를 둘 모듈에 분산) 제거/통합.
-3. **리플렉션 프레임워크 정리**  
-   - Jackson/Hibernate 등: `opens` 또는 런처 `--add-opens`로 조치.  
+3. **리플렉션 프레임워크 정리**
+   - Jackson/Hibernate 등: `opens` 또는 런처 `--add-opens`로 조치.
    - 테스트: `opens ... to org.junit.platform.commons`.
-4. **서비스 구조로 느슨화**  
+4. **서비스 구조로 느슨화**
    - 플러그인/확장은 `uses/provides`로 모듈 경계 유지.
-5. **배포 최적화**  
+5. **배포 최적화**
    - `jlink`로 경량 런타임 생성, 컨테이너 이미지 축소.
 
 ### 6.2 빈출 이슈와 해결
@@ -332,7 +332,7 @@ Maven Surefire 예(선택):
   </configuration>
 </plugin>
 ```
-- 멀티모듈은 **모듈 간 의존**을 POM으로 관리.  
+- 멀티모듈은 **모듈 간 의존**을 POM으로 관리.
 - 테스트/리플렉션은 Surefire/FailSafe의 `argLine`로 `--add-opens` 조정.
 
 ### 9.2 Gradle (핵심만)
@@ -375,8 +375,8 @@ image/app/bin/java -m com.example.app/com.example.app.Main
 
 ## 11. 아키텍처와 성능·보안의 영향
 
-- **보안**: 내부 API 접근 차단(`sun.*` 등), `opens`로 **정상 선언된** 리플렉션만 허용.  
-- **성능**: 클래스 경로 스캔 감소, 런타임 크기 축소(`jlink`)로 **기동/메모리 개선**.  
+- **보안**: 내부 API 접근 차단(`sun.*` 등), `opens`로 **정상 선언된** 리플렉션만 허용.
+- **성능**: 클래스 경로 스캔 감소, 런타임 크기 축소(`jlink`)로 **기동/메모리 개선**.
 - **유지보수**: 모듈 그래프를 통해 **의존성 사이클**/누수 조기 발견.
 
 ---
@@ -421,30 +421,30 @@ Object plugin = c.getDeclaredConstructor().newInstance();
 
 ## 14. FAQ — 자주 묻는 차이·오해 정리
 
-- **`exports` vs `opens`**  
-  - `exports`: **컴파일/런타임 API 접근** 허용(타입 사용).  
+- **`exports` vs `opens`**
+  - `exports`: **컴파일/런타임 API 접근** 허용(타입 사용).
   - `opens`: **리플렉션 접근** 허용(런타임 전용). 보통 직렬화/ORM/바인딩 프레임워크용.
 
-- **`requires transitive` 언제?**  
+- **`requires transitive` 언제?**
   - 상위 모듈의 **공개 API에서 하위 모듈 타입**을 노출할 때(사용자에게도 하위 모듈 읽기 권한 부여).
 
-- **자동/이름 없는 모듈은 안 써도 되나?**  
+- **자동/이름 없는 모듈은 안 써도 되나?**
   - **마이그레이션 완충**으로 매우 유용. 최종적으로는 **Named Module**로 수렴 권장.
 
-- **OSGi와 차이점**  
+- **OSGi와 차이점**
   - JPMS는 JDK 표준 모듈 시스템(정적 해석 중심), OSGi는 런타임 동적 모듈화·라이프사이클 관리 등 풍부한 기능. 목적·스코프가 다름.
 
 ---
 
 ## 15. 베스트 프랙티스(체크리스트)
 
-1. **모듈=API 경계**: 내부는 감추고(`exports` 최소화), 필요한 패키지만 `opens`.  
-2. **전이 의존 최소화**: `requires transitive`는 **API 노출 의도**가 있을 때만.  
-3. **split-package 금지**: 패키지=모듈 경계 원칙 유지.  
-4. **서비스로 느슨화**: 플러그인/확장은 `uses/provides`.  
-5. **자동 모듈 이름 고정**: 라이브러리는 `Automatic-Module-Name` 제공.  
-6. **리플렉션 정책 명시**: 프레임워크·테스트 대상에만 구체적 `opens`.  
-7. **배포 최적화**: `jlink`로 경량 런타임, 컨테이너 이미지 축소.  
+1. **모듈=API 경계**: 내부는 감추고(`exports` 최소화), 필요한 패키지만 `opens`.
+2. **전이 의존 최소화**: `requires transitive`는 **API 노출 의도**가 있을 때만.
+3. **split-package 금지**: 패키지=모듈 경계 원칙 유지.
+4. **서비스로 느슨화**: 플러그인/확장은 `uses/provides`.
+5. **자동 모듈 이름 고정**: 라이브러리는 `Automatic-Module-Name` 제공.
+6. **리플렉션 정책 명시**: 프레임워크·테스트 대상에만 구체적 `opens`.
+7. **배포 최적화**: `jlink`로 경량 런타임, 컨테이너 이미지 축소.
 8. **의존 분석 습관화**: `jdeps`로 의존 그래프 점검, 불필요 의존 제거.
 
 ---
@@ -475,11 +475,11 @@ image/app/bin/java -m com.example.app/com.example.app.Main
 
 ## 17. 결론
 
-Project Jigsaw는 **플랫폼과 애플리케이션을 모듈 단위로 재구성**해 **안정성(명시적 의존성)**, **보안(강한 캡슐화)**, **배포 효율(경량 런타임)** 을 동시에 끌어올렸습니다.  
-**마이그레이션의 핵심**은:  
-- **경계 정의(exports/opens)**,  
-- **서비스 기반 느슨화(uses/provides)**,  
-- **테스트·프레임워크 호환 설계**,  
-- **`jdeps`/`jlink` 도구 내재화**입니다.  
+Project Jigsaw는 **플랫폼과 애플리케이션을 모듈 단위로 재구성**해 **안정성(명시적 의존성)**, **보안(강한 캡슐화)**, **배포 효율(경량 런타임)** 을 동시에 끌어올렸습니다.
+**마이그레이션의 핵심**은:
+- **경계 정의(exports/opens)**,
+- **서비스 기반 느슨화(uses/provides)**,
+- **테스트·프레임워크 호환 설계**,
+- **`jdeps`/`jlink` 도구 내재화**입니다.
 
 이 원칙을 따르면 **대규모 코드베이스의 구조적 복잡도**를 줄이고, **운영·배포**에서 실질적 이득(크기·기동·보안)을 체감할 수 있습니다.

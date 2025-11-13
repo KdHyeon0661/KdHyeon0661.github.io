@@ -473,14 +473,14 @@ use (
 
 ## 10. 마이그레이션 로드맵(Polyrepo → Monorepo)
 
-1) **목록 정리**: 서비스/라이브러리/공통 구성요소 인벤토리  
-2) **합치는 순서**: 공통 라이브러리 → 소비 앱 순으로  
-3) **패키지 이름/버전 정책 확정**: scope(`@org/*`), semver  
-4) **워크스페이스 도입**: pnpm/yarn workspace 설정  
-5) **빌드/테스트 통합**: Nx/Turbo/Lerna로 공통 스크립트  
-6) **CI 전환**: paths-filter → affected only, 캐시  
-7) **거버넌스**: CODEOWNERS, 브랜치 보호, 리뷰 규칙  
-8) **릴리스 자동화**: Changesets/semantic-release  
+1) **목록 정리**: 서비스/라이브러리/공통 구성요소 인벤토리
+2) **합치는 순서**: 공통 라이브러리 → 소비 앱 순으로
+3) **패키지 이름/버전 정책 확정**: scope(`@org/*`), semver
+4) **워크스페이스 도입**: pnpm/yarn workspace 설정
+5) **빌드/테스트 통합**: Nx/Turbo/Lerna로 공통 스크립트
+6) **CI 전환**: paths-filter → affected only, 캐시
+7) **거버넌스**: CODEOWNERS, 브랜치 보호, 리뷰 규칙
+8) **릴리스 자동화**: Changesets/semantic-release
 9) **문서화**: 기여 가이드(CONTRIBUTING.md), 린트/포맷 규칙, 브랜치 전략
 
 ---
@@ -675,9 +675,9 @@ jobs:
 
 ## 참고 링크
 
-- Git sparse-checkout: https://git-scm.com/docs/git-sparse-checkout  
-- Lerna: https://lerna.js.org/  
-- Nx: https://nx.dev/  
-- Turborepo: https://turbo.build/repo  
-- pnpm Workspaces: https://pnpm.io/workspaces  
+- Git sparse-checkout: https://git-scm.com/docs/git-sparse-checkout
+- Lerna: https://lerna.js.org/
+- Nx: https://nx.dev/
+- Turborepo: https://turbo.build/repo
+- pnpm Workspaces: https://pnpm.io/workspaces
 - Changesets: https://github.com/changesets/changesets

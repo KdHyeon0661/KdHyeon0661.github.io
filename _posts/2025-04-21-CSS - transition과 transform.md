@@ -8,7 +8,7 @@ category: CSS
 
 ## 0. 개요
 
-- **`transition`**: 어떤 *상태 변화*가 일어날 때, 그 *변화 과정*을 부드럽게 보이게 함.  
+- **`transition`**: 어떤 *상태 변화*가 일어날 때, 그 *변화 과정*을 부드럽게 보이게 함.
 - **`transform`**: 요소의 기하학적 변형(이동/회전/확대/기울임)을 시각적으로 적용. 레이아웃엔 영향 없음(= reflow 유발 X).
 
 둘을 함께 쓰면, 클릭/호버/토글/스크롤 인터랙션을 **짧은 코드로** 유연하게 구현할 수 있습니다.
@@ -35,7 +35,7 @@ category: CSS
 > 권장: `transition: all ...`은 피하고 **필요한 속성만** 지정(성능/예측성↑).
 
 ### 1.2 애니메이션 가능한 속성(요지)
-- **권장**: `opacity`, `transform` 계열(translate/scale/rotate) → 합성(compositing) 단계에서 처리되어 부드럽고 비용 낮음.  
+- **권장**: `opacity`, `transform` 계열(translate/scale/rotate) → 합성(compositing) 단계에서 처리되어 부드럽고 비용 낮음.
 - **주의**: `width/height/left/top/margin` 등 레이아웃에 영향 주는 속성은 **reflow**를 유발, 프레임 드랍 위험.
 
 > 가능한 한 **opacity/transform**로 대체하는 패턴을 우선 검토.
@@ -102,7 +102,7 @@ transform: scale(1.2) rotate(45deg);
 
 ## 3. 타이밍 함수 깊게 보기
 
-타이밍 함수는 시간 \(t \in [0,1]\)에 대한 *진행도* \(p = f(t)\)를 정의합니다.  
+타이밍 함수는 시간 \(t \in [0,1]\)에 대한 *진행도* \(p = f(t)\)를 정의합니다.
 대표적인 **Cubic Bezier**는 네 점 \((0,0), (x_1, y_1), (x_2, y_2), (1,1)\)로 정의:
 
 \[
@@ -225,8 +225,8 @@ panel.addEventListener('transitionend', (e) => {
 
 ## 6. 성능 체크리스트
 
-- **합성 단계**에서 끝나는 속성만 전환: `transform`, `opacity`  
-- `top/left/width/height` 등 레이아웃 변화는 피하기 → 필요하면 `transform`으로 **대체**  
+- **합성 단계**에서 끝나는 속성만 전환: `transform`, `opacity`
+- `top/left/width/height` 등 레이아웃 변화는 피하기 → 필요하면 `transform`으로 **대체**
 - `will-change`는 **짧게** 사용(전환 직전/호버 시): 과다 사용시 메모리/타일 증가
   ```css
   .card:hover { will-change: transform; } /* 지속적 고정 지정은 지양 */
@@ -251,7 +251,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ## 8. 스태킹/레이어링과 트랜스폼
 
-- `transform`을 적용하면 요소는 **새 스태킹 컨텍스트**를 생성(일반적으로).  
+- `transform`을 적용하면 요소는 **새 스태킹 컨텍스트**를 생성(일반적으로).
 - `z-index` 계산이 달라질 수 있으니, 모달/툴팁/드롭다운 계층은 **레이어 토큰**으로 명시 관리:
 ```css
 :root { --z-modal: 1000; --z-popover: 900; --z-overlay: 800; }
@@ -407,7 +407,7 @@ addEventListener('scroll', () => {
 ```css
 .cards { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; padding: 16px; }
 .card {
-  background:#fff; border-radius:14px; padding:16px; 
+  background:#fff; border-radius:14px; padding:16px;
   box-shadow: 0 1px 2px rgba(0,0,0,.06);
   transform: translateY(0) scale(1);
   transition: transform .18s cubic-bezier(.2,.6,.2,1), box-shadow .2s ease;
@@ -438,6 +438,6 @@ addEventListener('scroll', () => {
 ---
 
 ## 참고
-- MDN: transition / transform  
-- CSS Transforms Level 2(개별 변환 속성: `translate/scale/rotate`)  
+- MDN: transition / transform
+- CSS Transforms Level 2(개별 변환 속성: `translate/scale/rotate`)
 - Core Web Vitals를 고려한 합성 중심 애니메이션 전략

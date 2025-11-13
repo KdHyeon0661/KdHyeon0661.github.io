@@ -6,10 +6,10 @@ category: Docker
 ---
 # Docker Volume Plugin: NFS, S3, Cloud Volume
 
-- 왜 플러그인이 필요한가 → **멀티 호스트 공유/클라우드 영구 디스크/오브젝트 스토리지**  
-- NFS/Cloud Volumes(EBS/PD/Azure Disk)/**오브젝트 스토리지(S3/MinIO) FUSE** 방식  
-- `docker volume create --driver ...` / `--mount` / `compose` 정석 패턴  
-- **보안(자격증명/네트워크/SELinux/Kerberos)**, **성능(IOPS/캐시/마운트옵션)**, **HA/잠금**  
+- 왜 플러그인이 필요한가 → **멀티 호스트 공유/클라우드 영구 디스크/오브젝트 스토리지**
+- NFS/Cloud Volumes(EBS/PD/Azure Disk)/**오브젝트 스토리지(S3/MinIO) FUSE** 방식
+- `docker volume create --driver ...` / `--mount` / `compose` 정석 패턴
+- **보안(자격증명/네트워크/SELinux/Kerberos)**, **성능(IOPS/캐시/마운트옵션)**, **HA/잠금**
 - 백업/복구/스냅샷/마이그레이션 + 트러블슈팅 표/체크리스트
 
 > 주의: 오브젝트 스토리지(S3)는 **POSIX 비호환**이며 DB/트랜잭션 파일 저장에는 적합하지 않습니다. 정적 자산/로그/백업 대상에 권장됩니다.
@@ -35,7 +35,7 @@ $$
 
 ## 2. 개념/아키텍처: Docker Volume Driver vs Plugin
 
-- **Volume Driver**: Docker가 특정 스토리지를 **볼륨처럼** 취급하도록 하는 드라이버.  
+- **Volume Driver**: Docker가 특정 스토리지를 **볼륨처럼** 취급하도록 하는 드라이버.
 - **Docker Plugin**: 드라이버/네트워크 등 기능을 **외부 플러그인** 프로세스로 제공(수명/설정/권한을 엔진과 분리).
 
 흐름:
@@ -96,9 +96,9 @@ docker run -d --name web \
 ```
 
 #### 옵션 팁
-- `nfsvers=4.1`(또는 4.2): 최신 프로토콜, 성능/보안 유리  
-- `timeo/retrans`: 네트워크 지연/재전송 튜닝  
-- SELinux 환경은 `context` 라벨 정책(CentOS/RHEL) 고려  
+- `nfsvers=4.1`(또는 4.2): 최신 프로토콜, 성능/보안 유리
+- `timeo/retrans`: 네트워크 지연/재전송 튜닝
+- SELinux 환경은 `context` 라벨 정책(CentOS/RHEL) 고려
 - 보안 민감 시 **NFSv4 + Kerberos(krb5/krb5i/krb5p)** 구성
 
 ### 4.4 Compose 패턴
@@ -151,7 +151,7 @@ docker volume create \
   -o iops=6000 \
   -o throughput=250
 ```
-- **AZ 일치** 필수(EC2 인스턴스와 같은 AZ).  
+- **AZ 일치** 필수(EC2 인스턴스와 같은 AZ).
 - 스냅샷 기반 생성: `-o snapshotid=snap-xxxxxxxx`.
 
 ### 5.2 GCP PD (rexray/gcepd 등)
@@ -162,19 +162,19 @@ docker run -d --mount type=volume,source=gpd-1,target=/data busybox sleep 3600
 ```
 
 ### 5.3 Azure Disk (예: rexray/azureud 등 플러그인)
-- 설치/인증은 서비스 프린시펄 또는 MSI 방식.  
+- 설치/인증은 서비스 프린시펄 또는 MSI 방식.
 - 동일하게 `docker volume create --driver ...` 패턴으로 사용.
 
 #### 실전 팁
-- DB/큐 등 랜덤 IO 워크로드 → **IOPS/스루풋 지표** 기준 선택(gp3/io2, pd-ssd 등)  
-- 스냅샷/백업은 **클라우드 네이티브 방법**(EBS Snapshot, GCP Snapshot) 사용 권장  
+- DB/큐 등 랜덤 IO 워크로드 → **IOPS/스루풋 지표** 기준 선택(gp3/io2, pd-ssd 등)
+- 스냅샷/백업은 **클라우드 네이티브 방법**(EBS Snapshot, GCP Snapshot) 사용 권장
 - **AZ 이동**은 스냅샷 → 재생성 경로로 수행
 
 ---
 
 ## 6. 오브젝트 스토리지(S3/MinIO) — FUSE로 “마운트처럼” 쓰기
 
-> 오브젝트 스토리지는 **디렉터리/원자성/락/퍼미션**이 파일시스템과 다릅니다.  
+> 오브젝트 스토리지는 **디렉터리/원자성/락/퍼미션**이 파일시스템과 다릅니다.
 > DB/트랜잭션/빈번한 작은 쓰기에는 부적합. 정적 파일/백업/로그 적합.
 
 ### 6.1 s3fs (FUSE) 설치/자격증명
@@ -203,22 +203,22 @@ docker run -d --name web \
 ```
 
 #### 대안/고급
-- **goofys**(지연쓰기/메타데이터 빠름)  
-- **MinIO Gateway** 또는 MinIO 자체를 **NFS/포지식 파일시스템 뒤에 올려** 제공  
+- **goofys**(지연쓰기/메타데이터 빠름)
+- **MinIO Gateway** 또는 MinIO 자체를 **NFS/포지식 파일시스템 뒤에 올려** 제공
 - 성능/일관성 요구가 높다면 **파일시스템 계층(NAS/FSx/Filestore/ANF)** 고려
 
 ---
 
 ## 7. 보안 — 자격증명/네트워크/SELinux/Kerberos
 
-- 자격증명:  
-  - 클라우드 플러그인은 **인스턴스 롤/서비스 계정** 활용(키 저장 최소화)  
-  - s3fs는 **IAM 사용자 최소 권한** + **버킷 정책** + **버전닝/암호화**  
-- 네트워크:  
-  - NFS는 **보안 도메인 제한** + 방화벽 + NFSv4 + **Kerberos(krb5p)** 권장  
-  - EBS/PD/Azure Disk는 **해당 클라우드 네트워크/권한 범위**에서만 접근  
-- Linux 보안:  
-  - SELinux/AppArmor 정책, `:Z/:z` 또는 `--mount ...,z`(라벨)  
+- 자격증명:
+  - 클라우드 플러그인은 **인스턴스 롤/서비스 계정** 활용(키 저장 최소화)
+  - s3fs는 **IAM 사용자 최소 권한** + **버킷 정책** + **버전닝/암호화**
+- 네트워크:
+  - NFS는 **보안 도메인 제한** + 방화벽 + NFSv4 + **Kerberos(krb5p)** 권장
+  - EBS/PD/Azure Disk는 **해당 클라우드 네트워크/권한 범위**에서만 접근
+- Linux 보안:
+  - SELinux/AppArmor 정책, `:Z/:z` 또는 `--mount ...,z`(라벨)
   - 컨테이너 **비루트 USER**, `--read-only` 루트FS, 필요 디렉터리는 `tmpfs` 부여
 
 예시(비루트 + 읽기전용 + tmpfs):
@@ -235,8 +235,8 @@ docker run -d \
 
 ## 8. 성능 — 마운트 옵션/캐시/IOPS/스루풋
 
-- **NFS**: `nfsvers=4.1/4.2`, `rsize/wsize`, `timeo`, `retrans`, `noatime` 고려.  
-- **블록**: 스토리지 클래스(gp3/io2, pd-ssd 등)와 **크기→IOPS/Throughput** 관계 숙지.  
+- **NFS**: `nfsvers=4.1/4.2`, `rsize/wsize`, `timeo`, `retrans`, `noatime` 고려.
+- **블록**: 스토리지 클래스(gp3/io2, pd-ssd 등)와 **크기→IOPS/Throughput** 관계 숙지.
 - **오브젝트 FUSE**: 지연/일관성/메타데이터 호출 비용 큼. 대용량 순차 읽기/쓰기 위주로.
 
 성능 예산의 간단 모델:
@@ -267,7 +267,7 @@ docker run --rm \
 ```
 
 ### 9.2 클라우드 스냅샷
-- EBS/PD/Azure Disk는 **스냅샷 → 새 볼륨 생성** 루트로 손쉬운 마이그레이션.  
+- EBS/PD/Azure Disk는 **스냅샷 → 새 볼륨 생성** 루트로 손쉬운 마이그레이션.
 - DB는 **애플리케이션 일관 시점** 확보 후 스냅샷/덤프 권장.
 
 ### 9.3 오브젝트
@@ -375,14 +375,14 @@ docker run -d -p 8081:80 \
 
 ## 13. 운영 체크리스트
 
-- [ ] 데이터 유형별 스토리지 선택(NFS/블록/S3)  
-- [ ] DB/트랜잭션 파일은 **POSIX 파일시스템**(NFS/블록) 사용  
-- [ ] 클라우드 블록은 **AZ/권한/IOPS/Throughput** 설계  
-- [ ] NFS는 **버전/옵션/락/보안(Kerberos)** 확인  
-- [ ] S3는 **정적/백업** 용도 중심, 캐시·일관성 고려  
-- [ ] 컨테이너 **비루트/읽기전용** + SELinux/AppArmor  
-- [ ] 정기 **스냅샷/백업** + 체크섬/암호화  
-- [ ] `docker plugin/volume` 상태 점검 및 로테이션  
+- [ ] 데이터 유형별 스토리지 선택(NFS/블록/S3)
+- [ ] DB/트랜잭션 파일은 **POSIX 파일시스템**(NFS/블록) 사용
+- [ ] 클라우드 블록은 **AZ/권한/IOPS/Throughput** 설계
+- [ ] NFS는 **버전/옵션/락/보안(Kerberos)** 확인
+- [ ] S3는 **정적/백업** 용도 중심, 캐시·일관성 고려
+- [ ] 컨테이너 **비루트/읽기전용** + SELinux/AppArmor
+- [ ] 정기 **스냅샷/백업** + 체크섬/암호화
+- [ ] `docker plugin/volume` 상태 점검 및 로테이션
 - [ ] Compose/인프라 코드(IaC)로 **버전관리**
 
 ---
@@ -410,7 +410,7 @@ docker run --mount type=bind,source=/host/path,target=/path image
 ---
 
 ## 15. 참고(개념적 구분)
-- Docker Volume Plugin/Driver는 **Docker 엔진 생태계**의 확장 메커니즘  
+- Docker Volume Plugin/Driver는 **Docker 엔진 생태계**의 확장 메커니즘
 - Kubernetes 환경에서는 **CSI(컨테이너 스토리지 인터페이스)** 가 표준(개념은 유사, 구현·리소스/정책은 다름)
 
 ---

@@ -9,17 +9,17 @@ category: DataCommunication
 ## 5.1 Digital-to-Analog Conversion (디지털→아날로그 변조)
 
 ### 5.1.0 큰그림
-디지털 비트열 \( \{0,1\} \)을 **반송파(carrier)** \( c(t)=\cos(2\pi f_c t) \)의 **진폭/주파수/위상**(혹은 I/Q 복소평면의 좌표)로 매핑해 **대역통과(passband)** 신호를 만든다.  
+디지털 비트열 \( \{0,1\} \)을 **반송파(carrier)** \( c(t)=\cos(2\pi f_c t) \)의 **진폭/주파수/위상**(혹은 I/Q 복소평면의 좌표)로 매핑해 **대역통과(passband)** 신호를 만든다.
 핵심 변수:
 
-- **레벨 수 \(L\)** (심볼당 표현 가능한 상태 수), **비트/심볼 수 \(r=\log_2 L\)**  
-- **데이터율 \(N\) [bps]**, **신호율/심볼률 \(S\) [baud]**  
+- **레벨 수 \(L\)** (심볼당 표현 가능한 상태 수), **비트/심볼 수 \(r=\log_2 L\)**
+- **데이터율 \(N\) [bps]**, **신호율/심볼률 \(S\) [baud]**
   $$ S=\frac{N}{r} $$
-- **펄스성형/롤오프 \(\alpha\)** (RRC/RC 필터), **점유대역폭 \(B\)**  
-  - PSK/QAM/ASK의 **총 대역폭** 근사:  
+- **펄스성형/롤오프 \(\alpha\)** (RRC/RC 필터), **점유대역폭 \(B\)**
+  - PSK/QAM/ASK의 **총 대역폭** 근사:
     $$ B \approx (1+\alpha)\,S $$
-  - **FSK**의 총 대역폭은 **주파수 편이 \(\Delta f\)** 까지 고려:  
-    - **카슨(Carson) 근사)**:  
+  - **FSK**의 총 대역폭은 **주파수 편이 \(\Delta f\)** 까지 고려:
+    - **카슨(Carson) 근사)**:
       $$ B \approx 2\big(\Delta f + (1+\alpha)\tfrac{S}{2}\big) \;\;\approx\;\; 2\Delta f + (1+\alpha)S $$
 
 > 주의: 일부 교재/노트의 \(B=(1+d)S\) 표기는 **롤오프 \(\alpha\)** 개념을 단순화한 근사다. 여기서는 **RRC 롤오프 \(\alpha\)** 기준의 현대적 표기를 사용한다.
@@ -29,8 +29,8 @@ category: DataCommunication
 ### 5.1.1 변조의 공통 관점
 
 #### 데이터 요소 vs 신호 요소
-- **데이터 요소**: 비트(혹은 비트 묶음)  
-- **신호 요소(심볼)**: 반송파의 **진폭/주파수/위상(I/Q)**로 표현되는 **파형 단위**  
+- **데이터 요소**: 비트(혹은 비트 묶음)
+- **신호 요소(심볼)**: 반송파의 **진폭/주파수/위상(I/Q)**로 표현되는 **파형 단위**
 - **심볼당 비트수** \(r=\log_2 L\), **심볼률** \(S=N/r\)
 
 #### 대역폭
@@ -48,9 +48,9 @@ category: DataCommunication
 #### Binary ASK (BASK / OOK)
 - **아이디어**: 비트에 따라 **진폭**을 바꿈. 대표적으로 **OOK**(On-Off Keying):
   - \(b=1 \Rightarrow A\cos(2\pi f_c t)\), \(b=0 \Rightarrow 0\)
-- **대역폭**:  
+- **대역폭**:
   $$ B \approx (1+\alpha)\,S $$
-- **장점**: 구현 간단.  
+- **장점**: 구현 간단.
 - **단점**: 진폭 잡음에 취약, 전력 효율 낮음.
 
 #### M-ASK (다준위 ASK)
@@ -88,7 +88,7 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
 ### 5.1.3 Frequency Shift Keying (FSK)
 
 #### Binary FSK (BFSK)
-- **아이디어**: 두 주파수로 비트를 표현  
+- **아이디어**: 두 주파수로 비트를 표현
   - \(b=0 \Rightarrow f_1=f_c-\Delta f\), \(b=1 \Rightarrow f_2=f_c+\Delta f\)
 - **정합 주파수 간격**:
   - **직교(orthogonal) BFSK**: \( \Delta f = \tfrac{S}{2} \) (coherent) 또는 \( \Delta f = S \) (noncoherent) 설계가 흔함
@@ -114,12 +114,12 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
   $$ P_b = Q\!\Big(\sqrt{2\,\frac{E_b}{N_0}}\Big) $$
 
 #### QPSK
-- 심볼당 2비트(\(r=2\)), 위상 4상태(45°, 135°, −45°, −135° 등), **대역폭은 BPSK와 동일한 심볼률 기준**.  
+- 심볼당 2비트(\(r=2\)), 위상 4상태(45°, 135°, −45°, −135° 등), **대역폭은 BPSK와 동일한 심볼률 기준**.
 - **BER(그레이 코딩)**: BPSK와 동일식
   $$ P_b = Q\!\Big(\sqrt{2\,\frac{E_b}{N_0}}\Big) $$
 
 #### OQPSK, π/4-DQPSK
-- **OQPSK**: I/Q 반 비트 시프트로 **위상 점프**(180° 등) 제한 → **피크 전력/필터링** 안정  
+- **OQPSK**: I/Q 반 비트 시프트로 **위상 점프**(180° 등) 제한 → **피크 전력/필터링** 안정
 - **π/4-DQPSK**: 위상 변화가 \(\{\pm\pi/4, \pm 3\pi/4\}\)로 제한, **비동기/이동통신** 친화
 
 ---
@@ -127,9 +127,9 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
 ### 5.1.5 Quadrature Amplitude Modulation (QAM)
 
 #### 개념
-- **ASK + PSK**의 결합 = **I/Q 평면 상의 격자(성상도)**에 심볼 배치  
-- \(M\)-QAM: \(L=M\)개의 점 → 심볼당 \(r=\log_2 M\) 비트  
-- **대역폭**:  
+- **ASK + PSK**의 결합 = **I/Q 평면 상의 격자(성상도)**에 심볼 배치
+- \(M\)-QAM: \(L=M\)개의 점 → 심볼당 \(r=\log_2 M\) 비트
+- **대역폭**:
   $$ B \approx (1+\alpha)\,S = (1+\alpha)\,\frac{N}{\log_2 M} $$
   → **같은 데이터율 N**에서 **M 증가** 시 **심볼률 S↓ → 대역폭 절약**
 
@@ -187,8 +187,8 @@ def qam_passband(syms, fc=20e3, fs=400e3, Rs=10e3, alpha=0.25):
 
 ## 5.1.y 펄스 성형, 롤오프, ISI
 
-- **RRC(근근) / RC(근) 필터**: 심볼 간 간섭(**ISI**) 억제, 스펙트럼 제어.  
-- **롤오프 \(\alpha\)**: 0(이상적 Nyquist)~1. \(\alpha↑\Rightarrow\) 대역폭↑, 구현 용이/타이밍 여유↑.  
+- **RRC(근근) / RC(근) 필터**: 심볼 간 간섭(**ISI**) 억제, 스펙트럼 제어.
+- **롤오프 \(\alpha\)**: 0(이상적 Nyquist)~1. \(\alpha↑\Rightarrow\) 대역폭↑, 구현 용이/타이밍 여유↑.
   $$ B \approx (1+\alpha)\,S $$
 
 ---
@@ -217,7 +217,7 @@ def qam_passband(syms, fc=20e3, fs=400e3, Rs=10e3, alpha=0.25):
 - 동일 \(N\)에서 **QPSK**라면 \(r=2\Rightarrow S=10\ \text{MBd}\Rightarrow B\approx 12.5\ \text{MHz}\) → **16-QAM이 대역 절반**!
 
 ### 시나리오 B — **BFSK, 직교, S=200 kBd**
-- 직교 BFSK(코히어런트)라면 \(\Delta f=S/2=100\,\text{kHz}\)  
+- 직교 BFSK(코히어런트)라면 \(\Delta f=S/2=100\,\text{kHz}\)
 - **대역폭(카슨 근사)**:
   $$ B\approx 2\Delta f + (1+\alpha)S \approx 2\cdot 100k + 1.25\cdot 200k = 450\ \text{kHz} $$
 
@@ -295,34 +295,34 @@ for ebn0_db in [4,6,8,10]:
 ## 5.1 정리
 
 - **공식 묶음**
-  - 심볼률:  
+  - 심볼률:
     $$ S=\frac{N}{\log_2 L} $$
-  - PSK/QAM/ASK 대역폭:  
+  - PSK/QAM/ASK 대역폭:
     $$ B\approx (1+\alpha)S $$
-  - BFSK 대역폭(근사):  
+  - BFSK 대역폭(근사):
     $$ B\approx 2\Delta f + (1+\alpha)S $$
-  - BPSK/QPSK BER(coherent, AWGN):  
+  - BPSK/QPSK BER(coherent, AWGN):
     $$ P_b=Q\!\Big(\sqrt{2E_b/N_0}\Big) $$
-  - M-QAM BER(근사):  
+  - M-QAM BER(근사):
     $$ P_b \approx \frac{2(1-1/\sqrt{M})}{\log_2 M}\,Q\!\Big(\sqrt{\tfrac{3\log_2 M}{M-1}\tfrac{E_b}{N_0}}\Big) $$
 
 - **선택 가이드**
-  - **대역폭이 귀하다** → **고차 QAM/PSK**, 좋은 SNR/FEC 필요  
-  - **잡음/페이딩 심함** → **저차 변조(BPSK/QPSK)** + 강한 FEC  
-  - **비동기/저복잡** → **FSK/noncoherent**  
+  - **대역폭이 귀하다** → **고차 QAM/PSK**, 좋은 SNR/FEC 필요
+  - **잡음/페이딩 심함** → **저차 변조(BPSK/QPSK)** + 강한 FEC
+  - **비동기/저복잡** → **FSK/noncoherent**
   - **EMI/스펙트럼 제약** → **펄스성형/RRC, \(\alpha\) 조절, OQPSK/π/4-DQPSK**
 
 ---
 
 ## 5.1 체크 문제
 
-1. **QPSK**로 50 Mbps 전송, \(\alpha=0.35\). 점유 대역폭을 구하라.  
+1. **QPSK**로 50 Mbps 전송, \(\alpha=0.35\). 점유 대역폭을 구하라.
    $$S=\frac{N}{2}=25\,\text{MBd},\quad B\approx(1+0.35)S=33.75\,\text{MHz}$$
-2. **직교 BFSK(coherent)**에서 \(\Delta f=S/2\). \(S=100\) kBd, \(\alpha=0.25\). 대역폭은?  
+2. **직교 BFSK(coherent)**에서 \(\Delta f=S/2\). \(S=100\) kBd, \(\alpha=0.25\). 대역폭은?
    $$B\approx 2\cdot 50k + 1.25\cdot 100k = 250\,\text{kHz}$$
-3. **16-QAM**에서 \(N=24\) Mbps, \(\alpha=0.25\). \(B\)는?  
+3. **16-QAM**에서 \(N=24\) Mbps, \(\alpha=0.25\). \(B\)는?
    $$S=N/4=6\,\text{MBd},\; B\approx 1.25\cdot 6=7.5\,\text{MHz}$$
-4. **BER=10^{-6}**를 원할 때 QPSK의 요구 \(E_b/N_0\) (dB)는 대략 얼마인가?  
+4. **BER=10^{-6}**를 원할 때 QPSK의 요구 \(E_b/N_0\) (dB)는 대략 얼마인가?
    \(Q(\sqrt{2\gamma_b})=10^{-6}\Rightarrow \sqrt{2\gamma_b}\approx 4.753\Rightarrow \gamma_b\approx 11.3\,(10.5\text{ dB})\)
 5. RRC 롤오프 \(\alpha\)를 키우면 \(B\)와 시간영역 파형은 각각 어떻게 변하는가?
 
@@ -330,6 +330,6 @@ for ebn0_db in [4,6,8,10]:
 
 ## 5.1 보너스: 표준과의 연결(감)
 
-- **100BASE-TX**: 4B/5B → NRZ-I → **MLT-3**(베이스밴드)  
-- **LTE/5G/와이파이**: **OFDM**(다중 부반송), 각 부반송에서 **QPSK/16-QAM/64-QAM/256-QAM**  
+- **100BASE-TX**: 4B/5B → NRZ-I → **MLT-3**(베이스밴드)
+- **LTE/5G/와이파이**: **OFDM**(다중 부반송), 각 부반송에서 **QPSK/16-QAM/64-QAM/256-QAM**
 - **광 전송/고속 직렬 링크**: **PAM-4**(레벨 4, 심볼당 2비트) + 강력한 **FEC**

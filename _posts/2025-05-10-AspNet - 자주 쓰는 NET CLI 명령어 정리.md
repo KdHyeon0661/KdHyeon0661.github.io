@@ -180,7 +180,7 @@ dotnet publish -c Release -r win-x64 \
   -p:PublishReadyToRun=true -o ./publish/win
 ```
 
-> **주의**: Trim은 리플렉션/다이내믹 로드 코드에서 누락 위험.  
+> **주의**: Trim은 리플렉션/다이내믹 로드 코드에서 누락 위험.
 > 문제 영역에 `DynamicDependency`/`TrimmerRootDescriptor`/`ILLink` 설정으로 보정.
 
 ### 7.4 AOT(네이티브) 시나리오 스케치
@@ -424,6 +424,6 @@ dotnet dev-certs https --trust
 ## 18. 결론
 
 - **CLI는 표준화된 자동화의 언어**다. 한 번 정립한 스크립트는 로컬·CI·서버 어디서나 동일하게 동작한다.
-- **빌드/배포 최적화(Trim/SingleFile/ReadyToRun/AOT)**는 효과와 리스크를 함께 가진다.  
+- **빌드/배포 최적화(Trim/SingleFile/ReadyToRun/AOT)**는 효과와 리스크를 함께 가진다.
   실측과 단계적 적용으로 **안전한 성능 향상**을 가져가라.
 - 템플릿/도구/워크로드/시크릿/인증서 명령까지 익히면, **IDE 없이도 풀스택 사이클을 닫을 수 있다**.

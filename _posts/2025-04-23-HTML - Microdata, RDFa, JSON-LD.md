@@ -448,7 +448,7 @@ export default function ProductSEO({ product }) {
 
 ## 9. Microdata/RDFa ↔ JSON-LD 전환 요령
 
-- **전략**: 우선 JSON-LD로 핵심 스니펫(Organization/WebSite/Product/Article/FAQ)을 구축 →  
+- **전략**: 우선 JSON-LD로 핵심 스니펫(Organization/WebSite/Product/Article/FAQ)을 구축 →
   Microdata/RDFa 잔존 시 **중복·충돌**을 피하도록 **동일 사실을 두 번 마크업하지 않기**(특히 Product 가격 등).
 - **이관 순서**: Organization → WebSite(SearchAction) → Breadcrumb → Article/Product/Event/FAQ → VideoObject.
 

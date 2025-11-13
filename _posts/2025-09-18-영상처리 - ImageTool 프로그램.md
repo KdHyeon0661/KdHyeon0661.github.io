@@ -8,8 +8,8 @@ category: 영상처리
 
 ## 1. 프로젝트 생성
 
-1. Visual Studio → **Create a new project** → **Windows Desktop Application**(C++/Empty Project) 선택  
-2. 프로젝트 이름: `ImageTool`  
+1. Visual Studio → **Create a new project** → **Windows Desktop Application**(C++/Empty Project) 선택
+2. 프로젝트 이름: `ImageTool`
 3. 솔루션 생성 후, **소스 파일**에 아래 2개 파일 추가:
    - `IppDib.hpp` (영상 클래스)
    - `ImageTool.cpp` (WinMain/윈도우/메뉴/그리기)
@@ -473,33 +473,33 @@ int APIENTRY wWinMain(HINSTANCE hInst, HINSTANCE, LPWSTR, int nCmdShow) {
 
 ## 4. 동작 확인 체크리스트
 
-1. **실행 즉시** 파일 열기 대화상자 표시 → **BMP 선택**  
-   - 취소하면 **종료**(빈 창 없음)  
+1. **실행 즉시** 파일 열기 대화상자 표시 → **BMP 선택**
+   - 취소하면 **종료**(빈 창 없음)
    - 선택 시 **창 표시 + 크기 자동 맞춤**
 2. 창을 **키워 보세요** → 영상 바깥 영역이 **비스듬 해칭(HS_BDIAGONAL)** 으로 칠해집니다.
-3. **파일 → 다른 이름으로 저장** → 저장 파일을 아무 뷰어로 열어 정상 표시되는지 확인  
-4. **8bpp(그레이) / 24bpp(컬러)** BMP 모두 테스트  
-   - 8bpp: 팔레트 256개(R=G=B)  
+3. **파일 → 다른 이름으로 저장** → 저장 파일을 아무 뷰어로 열어 정상 표시되는지 확인
+4. **8bpp(그레이) / 24bpp(컬러)** BMP 모두 테스트
+   - 8bpp: 팔레트 256개(R=G=B)
    - 24bpp: 팔레트 없음(BGR 순서)
 
 ---
 
 ## 5. 구현 포인트(생략 없이 요약)
 
-- **Top→Down 내부표현**: 그리기 시 `biHeight = -height`(음수)로 전달 → `StretchDIBits`가 **뒤집지 않고** 그려줌.  
+- **Top→Down 내부표현**: 그리기 시 `biHeight = -height`(음수)로 전달 → `StretchDIBits`가 **뒤집지 않고** 그려줌.
   저장 시엔 **Bottom→Up**으로 뒤집어 씁니다(전통 BMP 호환).
-- **stride(4바이트 정렬)**: `((w*bpp + 31)/32)*4`  
-- **팔레트**: 8bpp는 `RGBQUAD[256]`(R=G=B=i) 유지  
-- **빈 창 방지**: `CreateWindow`만 먼저, **ShowWindow 전**에 파일 열기→성공 시에만 `ShowWindow`  
-- **창 크기=영상 크기**: `AdjustWindowRectEx`로 **클라이언트 영역**을 정확히 맞춤  
-- **해칭 영역**: 이미지 **바깥 4면**을 계산해 `CreateHatchBrush + PatBlt`로 채움  
+- **stride(4바이트 정렬)**: `((w*bpp + 31)/32)*4`
+- **팔레트**: 8bpp는 `RGBQUAD[256]`(R=G=B=i) 유지
+- **빈 창 방지**: `CreateWindow`만 먼저, **ShowWindow 전**에 파일 열기→성공 시에만 `ShowWindow`
+- **창 크기=영상 크기**: `AdjustWindowRectEx`로 **클라이언트 영역**을 정확히 맞춤
+- **해칭 영역**: 이미지 **바깥 4면**을 계산해 `CreateHatchBrush + PatBlt`로 채움
 - **메뉴/대화상자**: 리소스 없이 **코드에서 동적 생성**(휴대성↑)
 
 ---
 
 ## 6. 다음 확장 아이디어
 
-- **스케일(확대/축소) 보기** 옵션(Nearest/Bilinear)  
-- **드래그&드롭** 파일 열기, MRU(최근 파일)  
-- **8bpp↔24bpp 변환**, **히스토그램 뷰**, **간단 필터**(블러/샤프)  
+- **스케일(확대/축소) 보기** 옵션(Nearest/Bilinear)
+- **드래그&드롭** 파일 열기, MRU(최근 파일)
+- **8bpp↔24bpp 변환**, **히스토그램 뷰**, **간단 필터**(블러/샤프)
 - **IppImage**와의 변환(알고리즘 파트 붙이기)

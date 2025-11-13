@@ -59,13 +59,13 @@ $$
 ## 2. XGBoost — 디테일 & 실전
 
 ### 2.1 핵심 특징
-- **정규화**: \(\lambda\)(L2, `reg_lambda`), \(\alpha\)(L1, `reg_alpha`), \(\gamma\)(분할 최소 이득, `min_split_loss`).  
-- **2차 최적화**: 헤시안 기반 분할 품질 평가(안정적).  
-- **서브샘플링**: `subsample`, `colsample_bytree/by_level/by_node`.  
-- **트리 방법**: `tree_method` = `"hist"`, `"approx"`, `"gpu_hist"`,(대규모/고속), `"exact"`(소규모).  
-- **결측값**: **학습 중 자동 기본방향(default direction)** 추정(명시 처리 불필요).  
-- **카테고리**: 파이썬 1.6+에서 `enable_categorical=True` + pandas `category` dtype 지원(원핫 불필요).  
-- **제약**: `monotone_constraints`, `interaction_constraints`(해석/규정 준수).  
+- **정규화**: \(\lambda\)(L2, `reg_lambda`), \(\alpha\)(L1, `reg_alpha`), \(\gamma\)(분할 최소 이득, `min_split_loss`).
+- **2차 최적화**: 헤시안 기반 분할 품질 평가(안정적).
+- **서브샘플링**: `subsample`, `colsample_bytree/by_level/by_node`.
+- **트리 방법**: `tree_method` = `"hist"`, `"approx"`, `"gpu_hist"`,(대규모/고속), `"exact"`(소규모).
+- **결측값**: **학습 중 자동 기본방향(default direction)** 추정(명시 처리 불필요).
+- **카테고리**: 파이썬 1.6+에서 `enable_categorical=True` + pandas `category` dtype 지원(원핫 불필요).
+- **제약**: `monotone_constraints`, `interaction_constraints`(해석/규정 준수).
 - **부스터 변형**: `"dart"`(dropout boosting; 과적합 억제), `"gbtree"`(기본).
 
 ### 2.2 자주 쓰는 파라미터 가이드
@@ -130,10 +130,10 @@ pred = rk.predict(X_te)  # 평가엔 별도 랭킹 metric 필요
 ## 3. LightGBM — 디테일 & 실전
 
 ### 3.1 핵심 특징
-- **Histogram 기반**: 연속형 값을 bin으로 압축 → 메모리↓ 속도↑, 분할 카운팅 빠름.  
-- **GOSS**(Gradient-based One-Side Sampling): 그래디언트 상위 \(a\%\)는 유지, 하위 중 \(b\%\)만 샘플링하고 **재가중**하여 편향 보정.  
-- **EFB**(Exclusive Feature Bundling): 서로 상호배타적(대부분 0)인 희소 피처를 묶어 차원↓.  
-- **Leaf-wise 성장**: 가장 이득 큰 리프를 계속 분할 → 손실 급감. 단, **과적합 위험↑** → `max_depth`/`min_data_in_leaf`로 제어.  
+- **Histogram 기반**: 연속형 값을 bin으로 압축 → 메모리↓ 속도↑, 분할 카운팅 빠름.
+- **GOSS**(Gradient-based One-Side Sampling): 그래디언트 상위 \(a\%\)는 유지, 하위 중 \(b\%\)만 샘플링하고 **재가중**하여 편향 보정.
+- **EFB**(Exclusive Feature Bundling): 서로 상호배타적(대부분 0)인 희소 피처를 묶어 차원↓.
+- **Leaf-wise 성장**: 가장 이득 큰 리프를 계속 분할 → 손실 급감. 단, **과적합 위험↑** → `max_depth`/`min_data_in_leaf`로 제어.
 - **카테고리 지원**: 카테고리를 int로 인코딩하고 `categorical_feature` 등록 or pandas `category` dtype.
 
 ### 3.2 자주 쓰는 파라미터
@@ -199,10 +199,10 @@ pred = rk.predict(X)
 ## 4. CatBoost — 디테일 & 실전
 
 ### 4.1 핵심 특징
-- **범주형 자동 처리**: 원-핫 없이 **Target Statistics**(스무딩된 타깃 평균) 사용.  
-  - 누수 방지를 위해 **Ordered** 방식: 데이터 순열을 잡고 현재 포인트 **이전** 관측치로만 통계를 계산.  
-- **Ordered Boosting**: 각 단계 잔차도 순서 기반으로 누수 방지.  
-- **대칭 트리(Oblivious, Symmetric)**: 깊이 \(d\)에서 동일한 분기 규칙을 양쪽에 적용 → 예측 빠름/GPU 효율↑/규모화 용이.  
+- **범주형 자동 처리**: 원-핫 없이 **Target Statistics**(스무딩된 타깃 평균) 사용.
+  - 누수 방지를 위해 **Ordered** 방식: 데이터 순열을 잡고 현재 포인트 **이전** 관측치로만 통계를 계산.
+- **Ordered Boosting**: 각 단계 잔차도 순서 기반으로 누수 방지.
+- **대칭 트리(Oblivious, Symmetric)**: 깊이 \(d\)에서 동일한 분기 규칙을 양쪽에 적용 → 예측 빠름/GPU 효율↑/규모화 용이.
 - **텍스트/수치/범주 혼합 지원**, 결측 자동 처리.
 
 ### 4.2 Target Statistics(개략)
@@ -296,30 +296,30 @@ pred = rk.predict(X)
 
 ## 6. 하이퍼파라미터 튜닝 레시피
 
-1) **학습률–트리개수 트레이드오프**  
-- `learning_rate` 낮추면 `n_estimators` ↑, 일반화 개선 경향.  
+1) **학습률–트리개수 트레이드오프**
+- `learning_rate` 낮추면 `n_estimators` ↑, 일반화 개선 경향.
 - 조기중단(`early_stopping`)으로 최적 라운드 탐색.
 
-2) **모델 용량 제어**  
-- XGB: `max_depth`, `min_child_weight`, `gamma`, `subsample`, `colsample_bytree`  
-- LGB: `num_leaves`(핵심), `max_depth`, `min_data_in_leaf`, `feature_fraction`, `bagging_*`  
+2) **모델 용량 제어**
+- XGB: `max_depth`, `min_child_weight`, `gamma`, `subsample`, `colsample_bytree`
+- LGB: `num_leaves`(핵심), `max_depth`, `min_data_in_leaf`, `feature_fraction`, `bagging_*`
 - Cat: `depth`, `l2_leaf_reg`, `iterations`, `learning_rate`
 
-3) **불균형 대응**  
-- 클래스 가중치(XGB: `scale_pos_weight` ≈ 음성/양성 비율, LGB/Cat: `class_weight`)  
+3) **불균형 대응**
+- 클래스 가중치(XGB: `scale_pos_weight` ≈ 음성/양성 비율, LGB/Cat: `class_weight`)
 - PR-AUC, F1, Recall@k 등 **업무 맞춤 지표**로 조기중단.
 
-4) **카테고리 처리 전략**  
+4) **카테고리 처리 전략**
 - CatBoost 우선 고려. LightGBM은 **int 인코딩**+`categorical_feature`. XGBoost는 최신 `enable_categorical=True` 또는 원핫.
 
-5) **모노토닉 제약(규정 준수/해석성)**  
-- XGB: `monotone_constraints="(1,-1,0,...)"`  
-- LGB: `monotone_constraints` 리스트  
+5) **모노토닉 제약(규정 준수/해석성)**
+- XGB: `monotone_constraints="(1,-1,0,...)"`
+- LGB: `monotone_constraints` 리스트
 - Cat: `monotone_constraints` 지원(피처별 +1/0/−1)
 
-6) **GPU**  
-- XGB: `tree_method="gpu_hist"`  
-- LGB: `device="gpu"`, `gpu_platform_id/gpu_device_id`  
+6) **GPU**
+- XGB: `tree_method="gpu_hist"`
+- LGB: `device="gpu"`, `gpu_platform_id/gpu_device_id`
 - Cat: `task_type="GPU"`
 
 ---
@@ -369,49 +369,49 @@ report("CatBoost", y_te, pred_c)
 
 ## 8. 랭킹/다중분류/확률보정 팁
 
-- **랭킹**: 세 라이브러리 모두 LambdaMART/Pairwise/Query* 손실 지원. 쿼리 그룹 길이 지정 필수.  
-- **다중분류**: XGB/Cat/LGB 모두 softmax/multiclass 지원(평가 지표: macro/micro-F1).  
+- **랭킹**: 세 라이브러리 모두 LambdaMART/Pairwise/Query* 손실 지원. 쿼리 그룹 길이 지정 필수.
+- **다중분류**: XGB/Cat/LGB 모두 softmax/multiclass 지원(평가 지표: macro/micro-F1).
 - **확률 보정**: 트리 부스팅은 확률 과신 경향 → `CalibratedClassifierCV`(Platt/Isotonic)로 보정 권장(운영 임계값 민감 시).
 
 ---
 
 ## 9. 해석과 검증
 
-- **중요도/SHAP**:  
-  - XGB/LGB/Cat 모두 **SHAP TreeExplainer** 호환.  
-  - 피처 중요도는 split/gain/cover 방식 차이 → **SHAP**으로 보완.  
-- **데이터 누수 점검**:  
-  - CatBoost 외의 단순 타깃인코딩은 누수 위험.  
-  - 시계열/랭킹은 **시간/쿼리 단위**로 분할.  
-- **조기중단/검증셋**:  
-  - 반드시 **업무 지표**로 early stopping.  
+- **중요도/SHAP**:
+  - XGB/LGB/Cat 모두 **SHAP TreeExplainer** 호환.
+  - 피처 중요도는 split/gain/cover 방식 차이 → **SHAP**으로 보완.
+- **데이터 누수 점검**:
+  - CatBoost 외의 단순 타깃인코딩은 누수 위험.
+  - 시계열/랭킹은 **시간/쿼리 단위**로 분할.
+- **조기중단/검증셋**:
+  - 반드시 **업무 지표**로 early stopping.
   - 데이터 드리프트 여부 모니터링.
 
 ---
 
 ## 10. 자주 겪는 함정과 해결책
 
-1. **LightGBM 과적합**: `num_leaves` ↓, `min_data_in_leaf` ↑, `max_depth` 설정, `feature_fraction/bagging_fraction` < 1.0, `min_gain_to_split` ↑.  
-2. **CatBoost 시간↑**: `depth` ↓, `rsm`(열 서브샘플) 활용, `task_type="GPU"`, `iterations`/`learning_rate` 조절.  
-3. **XGBoost 느림**: `tree_method="hist"`/`"gpu_hist"`, `max_bin`↓(DMatrix), `subsample/colsample` 도입.  
-4. **범주형 폭발**(고유값↑): CatBoost 사용 또는 빈도 cutoff/rare category 묶기.  
-5. **클래스 불균형**: 가중치/샘플링 + **PR-AUC** 최적화.  
+1. **LightGBM 과적합**: `num_leaves` ↓, `min_data_in_leaf` ↑, `max_depth` 설정, `feature_fraction/bagging_fraction` < 1.0, `min_gain_to_split` ↑.
+2. **CatBoost 시간↑**: `depth` ↓, `rsm`(열 서브샘플) 활용, `task_type="GPU"`, `iterations`/`learning_rate` 조절.
+3. **XGBoost 느림**: `tree_method="hist"`/`"gpu_hist"`, `max_bin`↓(DMatrix), `subsample/colsample` 도입.
+4. **범주형 폭발**(고유값↑): CatBoost 사용 또는 빈도 cutoff/rare category 묶기.
+5. **클래스 불균형**: 가중치/샘플링 + **PR-AUC** 최적화.
 6. **모노토닉 위반**: 제약 파라미터 설정 후 **부분의존(ICE)**로 검증.
 
 ---
 
 ## 11. 핵심 수식 모음 (요약)
 
-- **Leaf 값**:  
+- **Leaf 값**:
   $$
   w_j^*=-\frac{G_j}{H_j+\lambda}
   $$
-- **Split Gain**:  
+- **Split Gain**:
   $$
   \text{Gain}=\frac12\Big(\frac{G_L^2}{H_L+\lambda} + \frac{G_R^2}{H_R+\lambda} - \frac{G^2}{H+\lambda}\Big) - \gamma
   $$
-- **GOSS 재가중(개념)**: 큰 \(|g|\) 샘플은 모두 유지, 작은 \(|g|\) 중 일부만 유지하고 잔여의 기여를 스케일로 보정.  
-- **CatBoost TS(Ordered)**:  
+- **GOSS 재가중(개념)**: 큰 \(|g|\) 샘플은 모두 유지, 작은 \(|g|\) 중 일부만 유지하고 잔여의 기여를 스케일로 보정.
+- **CatBoost TS(Ordered)**:
   $$
   \text{TS}_i=\frac{\sum_{j<i:\ x_j=c} y_j + a\cdot p}{\#\{j<i:\ x_j=c\}+a}
   $$
@@ -420,18 +420,18 @@ report("CatBoost", y_te, pred_c)
 
 ## 12. 최종 체크리스트
 
-- [ ] 업무 지표와 **조기중단** 기준을 먼저 정했다  
-- [ ] 교차검증은 **그룹/시간** 단위로 분리했다  
-- [ ] LightGBM은 `num_leaves`와 `min_data_in_leaf`를 함께 튜닝했다  
-- [ ] 범주형은 CatBoost 우선, 그렇지 않다면 누수 없는 인코딩을 썼다  
-- [ ] 확률이 중요하면 **보정**(Platt/Isotonic)을 적용했다  
-- [ ] SHAP으로 중요도/정책 제약(모노토닉)을 검증했다  
+- [ ] 업무 지표와 **조기중단** 기준을 먼저 정했다
+- [ ] 교차검증은 **그룹/시간** 단위로 분리했다
+- [ ] LightGBM은 `num_leaves`와 `min_data_in_leaf`를 함께 튜닝했다
+- [ ] 범주형은 CatBoost 우선, 그렇지 않다면 누수 없는 인코딩을 썼다
+- [ ] 확률이 중요하면 **보정**(Platt/Isotonic)을 적용했다
+- [ ] SHAP으로 중요도/정책 제약(모노토닉)을 검증했다
 - [ ] 배포 전 입력 스케일/카테고리 사전 drift 감시를 설정했다
 
 ---
 
 ## 13. 마무리
 
-- **XGBoost**: 안정적·정교한 표준.  
-- **LightGBM**: 대용량·고속 최적.  
+- **XGBoost**: 안정적·정교한 표준.
+- **LightGBM**: 대용량·고속 최적.
 - **CatBoost**: 범주형 최강 + 누수 방지.

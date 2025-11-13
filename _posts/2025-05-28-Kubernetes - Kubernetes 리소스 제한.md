@@ -19,10 +19,10 @@ resources:
   limits:   { cpu: "1",    memory: "512Mi" }
 ```
 
-- CPU 단위: `1`=1 vCPU, `500m`=0.5 vCPU  
+- CPU 단위: `1`=1 vCPU, `500m`=0.5 vCPU
 - Memory 단위: `Mi/Gi`(2의 거듭제곱; 1Gi=1024Mi)
 
-> CPU는 공유 가능 ⇒ limit 초과 시 **CFS 스로틀링**.  
+> CPU는 공유 가능 ⇒ limit 초과 시 **CFS 스로틀링**.
 > Memory는 비공유 ⇒ limit 초과 시 **OOMKilled**.
 
 ---
@@ -52,7 +52,7 @@ K8s는 **리소스 기술 방식**으로 Pod QoS를 결정합니다.
 kubectl describe node <node> | egrep -i 'capacity|allocatable|cpu|memory'
 ```
 
-스케줄러는 **requests 합**으로만 배치 가능 여부를 판단합니다.  
+스케줄러는 **requests 합**으로만 배치 가능 여부를 판단합니다.
 limits는 배치 결정엔 영향 없음(단, CPUManager static 정책, NUMA/Toplogy Manager 등 고급 기능 예외 존재).
 
 ---
@@ -91,7 +91,7 @@ kubectl exec -it <pod> -- cat /sys/fs/cgroup/memory.current
 ```
 
 **권장**
-- 피크 여유 포함해 `limits`를 잡고, `requests`는 **평균+알파**.  
+- 피크 여유 포함해 `limits`를 잡고, `requests`는 **평균+알파**.
 - 잦은 GC pause/OOM이 난다면 언어 런타임 힙/버퍼/스레드 재조정.
 
 ---
@@ -172,7 +172,7 @@ spec:
             memory: "512Mi"
 ```
 
-- 평균 0.2 vCPU 보장, 최대 1 vCPU까지 burst.  
+- 평균 0.2 vCPU 보장, 최대 1 vCPU까지 burst.
 - 메모리 256Mi 보장, 512Mi 넘으면 OOM.
 
 ---
@@ -191,12 +191,12 @@ spec:
 
 ## 8. HPA/VPA/Cluster Autoscaler와의 상호작용
 
-- **HPA**: 기본 CPU/Memory **Utilization = 실제 사용량 / requests**.  
-  - 너무 큰 `requests` ⇒ 낮은 Utilization ⇒ 스케일아웃 지연  
+- **HPA**: 기본 CPU/Memory **Utilization = 실제 사용량 / requests**.
+  - 너무 큰 `requests` ⇒ 낮은 Utilization ⇒ 스케일아웃 지연
   - 너무 작은 `requests` ⇒ 항상 과다 ⇒ 불필요한 확장
-- **VPA**: 리소스 추천/자동조정(재시작 발생). HPA와 **동시 사용 시 충돌 주의**:  
+- **VPA**: 리소스 추천/자동조정(재시작 발생). HPA와 **동시 사용 시 충돌 주의**:
   - 일반적으로 **HPA(replica)** + **VPA(recommendation-only)** 조합
-- **Cluster Autoscaler**: 스케줄 불가(Pending) → 노드 증설.  
+- **Cluster Autoscaler**: 스케줄 불가(Pending) → 노드 증설.
   - 지나치게 큰 `requests.memory` 하나가 **스케줄 불가**의 주범이 되기도.
 
 ---
@@ -232,27 +232,27 @@ kubectl get events --sort-by=.lastTimestamp -A
 ## 10. 언어/런타임별 메모리/CPU 튜닝
 
 ### Go
-- GOGC(기본 100). 메모리 압박 시 `GOGC=50~100` 조정.  
+- GOGC(기본 100). 메모리 압박 시 `GOGC=50~100` 조정.
 - `-gcflags`로 최적화 확인, 각종 버퍼 pooling.
 
 ### Java/JVM
-- cgroup 인식 JDK(8u191+, 11+) 사용.  
-- `-XX:MaxRAMPercentage`, `-XX:InitialRAMPercentage`로 **limit 기반** 힙 설정.  
+- cgroup 인식 JDK(8u191+, 11+) 사용.
+- `-XX:MaxRAMPercentage`, `-XX:InitialRAMPercentage`로 **limit 기반** 힙 설정.
 - 예) limit 512Mi 시: `-XX:MaxRAMPercentage=60` → ~307Mi 힙.
 
 ### Node.js
-- `--max-old-space-size=<MB>`로 힙 상한 명시(컨테이너 limit 근거).  
+- `--max-old-space-size=<MB>`로 힙 상한 명시(컨테이너 limit 근거).
 - 이벤트 루프 블로킹 방지(워커/클러스터링).
 
 ### Python
-- 멀티프로세스(gunicorn)로 GIL 회피, 워커 수 = vCPU×N 공식을 실측 기반으로.  
+- 멀티프로세스(gunicorn)로 GIL 회피, 워커 수 = vCPU×N 공식을 실측 기반으로.
 - 대형 객체/NumPy/Pandas 캐시 주의(피크 대비 limit 여유 확보).
 
 ---
 
 ## 11. Pod·컨테이너 수명주기별 리소스
 
-- **initContainers**도 `resources` 별도 지정 가능(초기 마이그레이션/다운로드 시 피크에 맞춰).  
+- **initContainers**도 `resources` 별도 지정 가능(초기 마이그레이션/다운로드 시 피크에 맞춰).
 - **사이드카**(예: Envoy, Fluent Bit)는 누적 오버헤드 → 반드시 리소스 명시.
 
 ```yaml
@@ -268,7 +268,7 @@ initContainers:
 
 ## 12. 노드/커널 레벨: Eviction & OOMScore
 
-- 노드 메모리 압박 시 kubelet이 **Soft/Hard Eviction**.  
+- 노드 메모리 압박 시 kubelet이 **Soft/Hard Eviction**.
   - `--eviction-hard=memory.available<500Mi` 등
 - 동일 노드의 여러 Pod 중 **QoS/oom_score_adj**로 희생 순서 결정.
 
@@ -280,7 +280,7 @@ initContainers:
 
 ## 13. Ephemeral Storage(임시 디스크)도 관리
 
-로그/템프 파일로 노드 디스크 고갈 → 전체 장애.  
+로그/템프 파일로 노드 디스크 고갈 → 전체 장애.
 `ephemeral-storage` requests/limits를 반드시 넣습니다.
 
 ```yaml
@@ -304,8 +304,8 @@ resources:
 
 ## 15. 단위·표기 실수 방지
 
-- CPU `m` vs Memory `Mi` 혼동 금지.  
-  - `500m`(CPU) ↔ `512Mi`(Memory).  
+- CPU `m` vs Memory `Mi` 혼동 금지.
+  - `500m`(CPU) ↔ `512Mi`(Memory).
 - Memory `M`(SI) vs `Mi`(IEC) 주의. K8s 문맥에선 `Mi/Gi` 사용 권장.
 
 ---
@@ -400,14 +400,14 @@ cat /sys/fs/cgroup/memory.current
 
 ## 20. 체크리스트 요약
 
-- [ ] **모든 컨테이너에 최소 requests 지정** (BestEffort 금지)  
-- [ ] 메모리는 OOM 방지 위해 **여유 포함 limits**  
-- [ ] CPU는 지연/스루풋 균형… 스로틀링 지표 기반으로 조정  
-- [ ] 네임스페이스별 **LimitRange/ResourceQuota** 강제  
-- [ ] HPA 목표치와 `requests` 스케일 적합성 검증  
-- [ ] 언어 런타임 힙/스레드/버퍼 상한 컨테이너 limit와 정렬  
-- [ ] Ephemeral-storage도 requests/limits 지정  
-- [ ] QoS(Guaranteed/Burstable) 전략적 사용(핵심 서비스는 Guaranteed)  
+- [ ] **모든 컨테이너에 최소 requests 지정** (BestEffort 금지)
+- [ ] 메모리는 OOM 방지 위해 **여유 포함 limits**
+- [ ] CPU는 지연/스루풋 균형… 스로틀링 지표 기반으로 조정
+- [ ] 네임스페이스별 **LimitRange/ResourceQuota** 강제
+- [ ] HPA 목표치와 `requests` 스케일 적합성 검증
+- [ ] 언어 런타임 힙/스레드/버퍼 상한 컨테이너 limit와 정렬
+- [ ] Ephemeral-storage도 requests/limits 지정
+- [ ] QoS(Guaranteed/Burstable) 전략적 사용(핵심 서비스는 Guaranteed)
 - [ ] 정기 리뷰: p95, Throttle, OOM, Pending, 비용
 
 ---
@@ -422,14 +422,14 @@ cat /sys/fs/cgroup/memory.current
 | 확장성 | HPA/VPA/CA와 **데이터 기반**으로 상호 최적화 |
 | 운영 | 언어별 튜닝·피크/캐시 관리·관측 지표로 **지속적 리밸런싱** |
 
-**“명확한 요청, 합리적 상한, 측정 기반 조정”**  
+**“명확한 요청, 합리적 상한, 측정 기반 조정”**
 이 세 가지만 지키면 성능·안정성·비용을 모두 잡을 수 있습니다.
 
 ---
 
 ## 참고
-- Manage Resources (Kubernetes 공식): https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/  
-- Pod Quality of Service: https://kubernetes.io/docs/tasks/configure-pod-container/quality-service-pod/  
-- Troubleshoot OOM: https://kubernetes.io/docs/tasks/debug/debug-application/determine-reason-pod-failure/  
-- LimitRange: https://kubernetes.io/docs/concepts/policy/limit-range/  
+- Manage Resources (Kubernetes 공식): https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+- Pod Quality of Service: https://kubernetes.io/docs/tasks/configure-pod-container/quality-service-pod/
+- Troubleshoot OOM: https://kubernetes.io/docs/tasks/debug/debug-application/determine-reason-pod-failure/
+- LimitRange: https://kubernetes.io/docs/concepts/policy/limit-range/
 - ResourceQuota: https://kubernetes.io/docs/concepts/policy/resource-quotas/

@@ -30,13 +30,13 @@ m.containsKey(k); m.containsValue(v);
 m.keySet(); m.values(); m.entrySet(); // 반복/뷰
 ```
 
-- **키 중복 X**, 값 중복 O.  
+- **키 중복 X**, 값 중복 O.
 - 반복은 **`entrySet()`**가 가장 효율적(키/값 동시접근).
 - **fail-fast** 반복자: 순회 중 구조 변경 시 `ConcurrentModificationException`.
 - **스레드 안전 아님**: 병렬 환경은 외부 동기화 또는 동시성 컬렉션.
 
 ### 해시·동등성 계약(중요)
-- 키 타입은 `equals()`/`hashCode()` 일관 필요.  
+- 키 타입은 `equals()`/`hashCode()` 일관 필요.
 - **키를 Map에 넣은 뒤 필드를 바꿔 hashCode가 변하면 탐색 불가**(버그 원인 1순위).
 
 ```java
@@ -61,8 +61,8 @@ table (배열, 길이=2^k)
  └─ ...
 ```
 
-- **배열 + 체이닝(LinkedList)**, 충돌 심하면 **트리화(TreeNode, Red-Black Tree)**.  
-- **Java 8+**: 버킷 길이 ≥ **8**이면 트리화, ≤ **6**이면 리스트로 되돌림.  
+- **배열 + 체이닝(LinkedList)**, 충돌 심하면 **트리화(TreeNode, Red-Black Tree)**.
+- **Java 8+**: 버킷 길이 ≥ **8**이면 트리화, ≤ **6**이면 리스트로 되돌림.
 - `null` 키 **1개 허용**(해시 0 특별취급).
 
 ### 2.2 핵심 파라미터
@@ -73,14 +73,14 @@ table (배열, 길이=2^k)
 $$
 \lambda = \frac{n}{m}
 $$
-- \(n\): 엔트리 수, \(m\): 버킷 수(=capacity), \(\lambda\): **평균 체인 길이**  
+- \(n\): 엔트리 수, \(m\): 버킷 수(=capacity), \(\lambda\): **평균 체인 길이**
 - **평균 시간복잡도**: 삽입/탐색/삭제 **O(1)** (충돌 적정), **최악 O(n)**
 
-> **권장 크기 산정**: 예상 엔트리 `N`이면  
+> **권장 크기 산정**: 예상 엔트리 `N`이면
 > `initialCapacity = ceil(N / loadFactor)` 로 설정 → **리사이즈 최소화**.
 
 ### 2.3 해시 분산(요지)
-- 인덱스 = `(table.length - 1) & spread(hash)`  
+- 인덱스 = `(table.length - 1) & spread(hash)`
 - 상위/하위 비트를 섞어 버킷 균형화(실제 구현은 JDK 버전별 상이할 수 있으나 개념 동일).
 
 ### 2.4 실전 레시피
@@ -155,8 +155,8 @@ public class LruDemo {
 ## 4. TreeMap — 정렬 & 범위 질의
 
 ### 4.1 개요
-- **Red-Black Tree**(균형 이진탐색트리) 기반, **키 정렬 유지**.  
-- **null 키 불가**, 값 `null`은 가능.  
+- **Red-Black Tree**(균형 이진탐색트리) 기반, **키 정렬 유지**.
+- **null 키 불가**, 값 `null`은 가능.
 - 시간복잡도: 삽입/탐색/삭제 **O(log n)**.
 
 ### 4.2 정렬 기준
@@ -177,11 +177,11 @@ public class TreeMapDemo {
 ```
 
 ### 4.3 Navigable API(강력)
-- `firstKey/lastKey`, `higher/lower`, `ceiling/floor`,  
+- `firstKey/lastKey`, `higher/lower`, `ceiling/floor`,
   `subMap/headMap/tailMap`(경계 포함/제외 선택).
 
 ### 4.4 주의
-- `Comparator`가 `equals`와 **일관되지 않으면** `Map` 규약(키 유일성) 혼란.  
+- `Comparator`가 `equals`와 **일관되지 않으면** `Map` 규약(키 유일성) 혼란.
   (예: 대소문자 무시 비교기는 서로 다른 “a”/“A”를 동일 키로 간주)
 
 ---
@@ -269,7 +269,7 @@ log.forEach((t,ev)->System.out.println(t+" : "+ev));
 
 ## 7. 현대 자바 Map API 꿀팁
 
-- **안전 삽입**: `putIfAbsent(k, v)`  
+- **안전 삽입**: `putIfAbsent(k, v)`
 - **조건부 제거/치환**: `remove(k, v)`, `replace(k, oldV, newV)`
 - **계산형 갱신**: `compute`, `computeIfAbsent`, `computeIfPresent`
 - **누적**: `merge(k, x, (oldV, x) -> ...)`
@@ -297,7 +297,7 @@ m.merge("a", 1, Integer::sum);       // 2
 
 ## 9. 테스트·벤치마크 메모
 
-- 마이크로 벤치마크는 **JMH** 권장(워밍업/포크/GC 제어).  
+- 마이크로 벤치마크는 **JMH** 권장(워밍업/포크/GC 제어).
 - `System.nanoTime()` 단발 측정은 왜곡이 큼(옵티마이저·캐시·분기 예측 등).
 
 ---
@@ -393,7 +393,7 @@ head <-> e1 <-> e2 <-> e3 <-> tail
 
 ## 마무리
 
-- **HashMap**: “기본값” — 대부분의 요구에 충분히 빠르고 간단  
-- **LinkedHashMap**: “순서를 보장해야 할 때”, 특히 **LRU**  
-- **TreeMap**: “정렬·범위 탐색이 핵심일 때”  
+- **HashMap**: “기본값” — 대부분의 요구에 충분히 빠르고 간단
+- **LinkedHashMap**: “순서를 보장해야 할 때”, 특히 **LRU**
+- **TreeMap**: “정렬·범위 탐색이 핵심일 때”
 - 키의 **불변성**, `equals/hashCode`/`Comparator` **일관성**을 지키면 **성능과 정확성**을 동시에 확보할 수 있습니다.

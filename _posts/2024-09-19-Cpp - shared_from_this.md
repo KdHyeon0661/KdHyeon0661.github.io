@@ -17,7 +17,7 @@ struct Bad {
 };
 ```
 
-- `std::shared_ptr<Bad>(this)`는 **새 컨트롤 블록**을 만든다.  
+- `std::shared_ptr<Bad>(this)`는 **새 컨트롤 블록**을 만든다.
 - 동일 객체를 **두 개의 서로 다른 컨트롤 블록**이 관리 → **이중 삭제(double delete)** 위험.
 
 상태를 수식으로 표현하면:
@@ -79,7 +79,7 @@ raw->getSelf();  // ❌ std::bad_weak_ptr 예외 (컨트롤 블록 연결 전)
 
 $$
 \text{shared\_from\_this}() \equiv \text{weak\_ptr.lock()} \\
-\text{lock}() \Rightarrow 
+\text{lock}() \Rightarrow
 \begin{cases}
 \text{shared\_ptr} & \text{if use\_count}>0 \\
 \emptyset & \text{if use\_count}=0
@@ -102,9 +102,9 @@ struct C : std::enable_shared_from_this<C> {
 };
 ```
 
-**규칙**:  
-- 생성자에서는 **절대 호출하지 말고**,  
-- 생성 직후 외부에서 초기화 루틴을 호출하거나(팩토리 패턴),  
+**규칙**:
+- 생성자에서는 **절대 호출하지 말고**,
+- 생성 직후 외부에서 초기화 루틴을 호출하거나(팩토리 패턴),
 - `post_construct()` 같은 별도 멤버에서 사용.
 
 안전 패턴 예:
@@ -168,7 +168,7 @@ struct S : std::enable_shared_from_this<S> {
 };
 ```
 
-- 컨트롤 블록이 없으면 **빈 weak_ptr** 반환(예외 없음).  
+- 컨트롤 블록이 없으면 **빈 weak_ptr** 반환(예외 없음).
 - 콜백 등록 시점에 “살아있으면 연결, 아니면 무시” 패턴에 유용.
 
 ---
@@ -178,7 +178,7 @@ struct S : std::enable_shared_from_this<S> {
 다중 상속 구조에서 **여러 번** `enable_shared_from_this`를 포함하면 **각 경로별로 다른 내부 weak_ptr**을 갖게 될 수 있다.
 
 **규칙**:
-- **최상위 공통 베이스**에서 **단 한 번** 상속하거나,  
+- **최상위 공통 베이스**에서 **단 한 번** 상속하거나,
 - 가상 상속으로 **하나의 베이스 인스턴스만** 두기.
 
 ```cpp
@@ -191,7 +191,7 @@ struct Derived : Left, Right { /*...*/ }; // Base는 가상 상속으로 1개만
 ```
 
 ### 6.2 파생 타입에서 `shared_from_this<Derived>()`를 쓰고 싶다?
-C++20부터 `shared_from_this()`가 **파생 타입 안전 반환**을 지원한다(표준 구현에 따라 다를 수 있다).  
+C++20부터 `shared_from_this()`가 **파생 타입 안전 반환**을 지원한다(표준 구현에 따라 다를 수 있다).
 범용 안전 패턴:
 
 ```cpp
@@ -280,21 +280,21 @@ struct Task : std::enable_shared_from_this<Task> {
 
 ## 10. 흔한 함정 체크리스트
 
-1. [ ] **생성자/소멸자**에서 `shared_from_this()` 호출 ❌  
-2. [ ] `new T; std::shared_ptr<T>(this)`로 **직접 감싸기** ❌  
-3. [ ] **여러 경로**로 `enable_shared_from_this` 상속(다중 상속 충돌) ❌  
-4. [ ] 콜백에서 **강한 캡처**로 순환 참조 형성 → `weak_ptr` 고려  
-5. [ ] `weak_from_this()` 반환값 **즉시 lock 확인** 없이 사용 ❌  
+1. [ ] **생성자/소멸자**에서 `shared_from_this()` 호출 ❌
+2. [ ] `new T; std::shared_ptr<T>(this)`로 **직접 감싸기** ❌
+3. [ ] **여러 경로**로 `enable_shared_from_this` 상속(다중 상속 충돌) ❌
+4. [ ] 콜백에서 **강한 캡처**로 순환 참조 형성 → `weak_ptr` 고려
+5. [ ] `weak_from_this()` 반환값 **즉시 lock 확인** 없이 사용 ❌
 6. [ ] 컨트롤 블록이 서로 다른 `shared_ptr` 두 개로 **중복 소유** 중복 해제 위험 ❌
 
 ---
 
 ## 11. 미세 팁
 
-- **`weak_from_this()` (C++17)**: 예외 없는 관찰자 취득.  
-- **별칭 생성자**: 동일 수명 보장 + 다른 포인터 노출.  
-- **`owner_less<shared_ptr<T>>`**: weak/shared를 키로 하는 정렬 컨테이너 비교자.  
-- **혼합 계층**: 베이스에만 `enable_shared_from_this`를 두고 파생에서는 **사용만** 하라.  
+- **`weak_from_this()` (C++17)**: 예외 없는 관찰자 취득.
+- **별칭 생성자**: 동일 수명 보장 + 다른 포인터 노출.
+- **`owner_less<shared_ptr<T>>`**: weak/shared를 키로 하는 정렬 컨테이너 비교자.
+- **혼합 계층**: 베이스에만 `enable_shared_from_this`를 두고 파생에서는 **사용만** 하라.
 - **도메인 규칙**: “밖으로 내보내는 콜백은 기본 `weak` 캡처, 내부 보장된 짧은 범위는 `shared` 캡처”.
 
 ---
@@ -393,11 +393,11 @@ int main() {
 ---
 
 ## 14. 요약
-- `shared_ptr(this)`는 **중복 컨트롤 블록**을 만들어 **이중 삭제** 위험.  
-- `enable_shared_from_this<T>` + `shared_from_this()`는 **같은 컨트롤 블록**을 재사용하여 **안전한 자기 참조**를 제공.  
-- **생성자/소멸자 호출 금지**, **다중 상속 시 베이스를 하나로**.  
-- 비동기/콜백에서는 **목적에 따라** `shared` 캡처(수명 연장) vs `weak` 캡처(순환 방지)를 선택.  
-- C++17의 `weak_from_this()`로 **예외 없이** 관찰자 취득 가능.  
+- `shared_ptr(this)`는 **중복 컨트롤 블록**을 만들어 **이중 삭제** 위험.
+- `enable_shared_from_this<T>` + `shared_from_this()`는 **같은 컨트롤 블록**을 재사용하여 **안전한 자기 참조**를 제공.
+- **생성자/소멸자 호출 금지**, **다중 상속 시 베이스를 하나로**.
+- 비동기/콜백에서는 **목적에 따라** `shared` 캡처(수명 연장) vs `weak` 캡처(순환 방지)를 선택.
+- C++17의 `weak_from_this()`로 **예외 없이** 관찰자 취득 가능.
 - 별칭 `shared_ptr`로 **부분 뷰**를 안전하게 외부에 제공.
 
 이 원칙만 지키면, “자기 자신을 `shared_ptr`로 다뤄야 하는” 대부분의 상황에서 **누수/이중 삭제/순환 참조**를 깔끔하게 회피할 수 있다.

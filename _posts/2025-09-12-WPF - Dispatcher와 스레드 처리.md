@@ -4,10 +4,10 @@ title: WPF - Dispatcher와 스레드 처리
 date: 2025-09-12 14:25:23 +0900
 category: WPF
 ---
-# 🧵 WPF **Dispatcher와 스레드 처리** 완전 정복  
+# 🧵 WPF **Dispatcher와 스레드 처리** 완전 정복
 *(WPF 스레딩 모델 → Dispatcher/우선순위 → `Invoke/BeginInvoke`/`InvokeAsync` → `async/await` 모범 패턴 → `DispatcherTimer` vs `Timer` → 컬렉션 동기화/`EnableCollectionSynchronization` → 진행률/취소 → 백그라운드 이미지 디코딩/Freezable → 다중 UI 스레드(보조 Dispatcher) → 오류/교착 방지 → 퍼포먼스 체크리스트까지)*
 
-> 이 글은 실무에서 “**UI 멈춤 없이** 빠르고 안전한” WPF 앱을 작성하는 데 필요한 **스레드/Dispatcher 지식**을  
+> 이 글은 실무에서 “**UI 멈춤 없이** 빠르고 안전한” WPF 앱을 작성하는 데 필요한 **스레드/Dispatcher 지식**을
 > 예제와 함께 **누락 없이** 정리했습니다. .NET 6~8 WPF 기준(4.5+도 대부분 동일)입니다.
 
 ---
@@ -16,8 +16,8 @@ category: WPF
 
 - **UI 요소**(`DispatcherObject`/`DependencyObject`)는 **자신이 생성된 스레드**(보통 **메인 UI 스레드**)에서만 접근/변경할 수 있다.
 - 각 UI 스레드는 **하나의 `Dispatcher`**를 갖고, **메시지 루프**(priority 큐)를 돌면서 작업을 처리한다.
-- 다른 스레드에서 UI를 건드리면:  
-  > `InvalidOperationException: The calling thread cannot access this object because a different thread owns it.`  
+- 다른 스레드에서 UI를 건드리면:
+  > `InvalidOperationException: The calling thread cannot access this object because a different thread owns it.`
 - 해결: UI 접근은 항상 `Dispatcher`를 통해 **마샬링(marshalling)** 해야 한다.
 
 ---
@@ -34,7 +34,7 @@ category: WPF
 ### 1.2 우선순위(일부)
 `Inactive < SystemIdle < ApplicationIdle < ContextIdle < Background < Input < Loaded < Render < DataBind < Normal < Send`
 
-> 보통 **`DispatcherPriority.Background/Normal/Send`** 를 주로 사용.  
+> 보통 **`DispatcherPriority.Background/Normal/Send`** 를 주로 사용.
 > - Input/Render보다 낮은 우선순위로 길게 돌면 **UI 렌더/입력 지연**이 발생한다.
 
 ---
@@ -61,15 +61,15 @@ else
 }
 ```
 
-**권장**  
-- UI 갱신이 **즉시** 필요하지 않다면 `BeginInvoke`/`InvokeAsync` 선호.  
+**권장**
+- UI 갱신이 **즉시** 필요하지 않다면 `BeginInvoke`/`InvokeAsync` 선호.
 - 동기 `Invoke` 남용은 **교착**/프레임 스톨을 부른다(아래 11절 참조).
 
 ---
 
 ## 3. `async/await`와 SynchronizationContext
 
-- WPF는 UI 스레드를 위한 **`SynchronizationContext`** 를 설치한다.  
+- WPF는 UI 스레드를 위한 **`SynchronizationContext`** 를 설치한다.
 - **기본**: `await` 후 **캡처된 컨텍스트(UI)** 로 **복귀** → UI 업데이트 쉬움.
 - 라이브러리/백엔드 코드에서 **UI 복귀 불필요**하면 `ConfigureAwait(false)`로 컨텍스트 캡처 방지(성능/교착 방지).
 
@@ -108,18 +108,18 @@ var result = await Task.Run(() => HeavyCpuWork(input), ct);
 MyLabel.Content = result;
 ```
 
-> **IO(네트워크/디스크)** 는 `Task.Run` 불필요(비동기 API 쓰면 자동으로 스레드 점유 없음).  
+> **IO(네트워크/디스크)** 는 `Task.Run` 불필요(비동기 API 쓰면 자동으로 스레드 점유 없음).
 > CPU 바운드는 `Task.Run`/Parallel 사용.
 
 ---
 
 ## 5. `DispatcherTimer` vs `System.Timers.Timer` vs `System.Threading.Timer`
 
-- **`DispatcherTimer`**  
-  - **UI Dispatcher 큐**에서 **지정 우선순위**로 틱 이벤트 발생 → **UI 접근 안전**  
+- **`DispatcherTimer`**
+  - **UI Dispatcher 큐**에서 **지정 우선순위**로 틱 이벤트 발생 → **UI 접근 안전**
   - 렌더/입력이 바쁘면 늦어질 수 있음(프레임 친화)
-- **`System.Timers.Timer` / `Threading.Timer`**  
-  - **스레드풀**에서 콜백 → UI 접근 시 **반드시 Dispatcher로 마샬링** 필요  
+- **`System.Timers.Timer` / `Threading.Timer`**
+  - **스레드풀**에서 콜백 → UI 접근 시 **반드시 Dispatcher로 마샬링** 필요
   - 고정밀/백그라운드 타이밍은 유리
 
 ```csharp
@@ -203,14 +203,14 @@ Task.Run(() =>
 });
 ```
 
-> 이 API는 **컬렉션 수준의 락**을 이용해 **바인딩 엔진**이 안전하게 열람하도록 한다.  
+> 이 API는 **컬렉션 수준의 락**을 이용해 **바인딩 엔진**이 안전하게 열람하도록 한다.
 > 단, **빈번한 요소 변경**은 여전히 UI 負 → **배치 업데이트**(+ 가상화) 권장.
 
 ---
 
 ## 8. DataBinding/PropertyChanged를 **UI 스레드**에서
 
-- `INotifyPropertyChanged.PropertyChanged` 는 **구독 스레드(UI)** 에서 처리되길 기대한다.  
+- `INotifyPropertyChanged.PropertyChanged` 는 **구독 스레드(UI)** 에서 처리되길 기대한다.
 - 백그라운드에서 모델 속성을 바꾸면, **UI로 이벤트 마샬링**해야 안전.
 
 ```csharp
@@ -301,13 +301,13 @@ private void SearchTextChanged(object s, TextChangedEventArgs e)
 
 ## 11. 교착(Deadlock) 회피 패턴
 
-**문제 시나리오**  
-- UI 스레드가 **동기 `Invoke`** 로 백그라운드 작업 결과를 기다림  
+**문제 시나리오**
+- UI 스레드가 **동기 `Invoke`** 로 백그라운드 작업 결과를 기다림
 - 백그라운드 작업이 다시 UI 스레드로 `Invoke` 하려 함 → **서로 대기** → 교착
 
 **해결 규칙**
-- UI → 백그라운드: **항상 비동기 `await`** 로 결과를 받는다.  
-- 백그라운드 → UI: `BeginInvoke`/`InvokeAsync` 로 비동기 큐잉한다.  
+- UI → 백그라운드: **항상 비동기 `await`** 로 결과를 받는다.
+- 백그라운드 → UI: `BeginInvoke`/`InvokeAsync` 로 비동기 큐잉한다.
 - `Result`/`Wait()` 사용 금지(특히 UI 스레드에서).
 
 ```csharp
@@ -344,7 +344,7 @@ TaskScheduler.UnobservedTaskException += (s, e) =>
 
 ## 13. 다중 UI 스레드(보조 Dispatcher) 만들기
 
-- WPF 창은 **여러 UI 스레드**로 분산 가능(고급 시나리오).  
+- WPF 창은 **여러 UI 스레드**로 분산 가능(고급 시나리오).
 - 보조 UI 스레드에서 `Window`를 만들고 `Dispatcher.Run()`으로 메시지 루프 시작.
 
 ```csharp
@@ -380,14 +380,14 @@ void StopSecondaryUi()
 _subDispatcher?.BeginInvoke(() => _someControlOnToolWindow.Text = "Hello");
 ```
 
-> 장점: 무거운 UI(예: 실시간 그래프)를 분리해 메인 UI 지연 감소.  
+> 장점: 무거운 UI(예: 실시간 그래프)를 분리해 메인 UI 지연 감소.
 > 단점: 교차 UI 호출 관리가 복잡 → 대부분은 **한 개 UI 스레드 + 백그라운드 작업**으로 충분.
 
 ---
 
 ## 14. `DispatcherFrame`와 DoEvents 유사 패턴(주의)
 
-- `DispatcherFrame`으로 **임시 메시지 루프**를 돌려 UI를 잠깐 갱신할 수 있다(모달 대기 등).  
+- `DispatcherFrame`으로 **임시 메시지 루프**를 돌려 UI를 잠깐 갱신할 수 있다(모달 대기 등).
 - 남용 시 **reentrancy(재진입)** 문제로 복잡한 버그 유발 → 되도록 **`await`/대기 화면** 사용.
 
 ```csharp
@@ -415,8 +415,8 @@ using (view.DeferRefresh())
 
 ## 16. 실제 종합 예제 ① — “대용량 파일 해시” (CPU 바운드)
 
-**요구**  
-- 파일 여러 개 해시 → UI 진행률/취소/결과 표시  
+**요구**
+- 파일 여러 개 해시 → UI 진행률/취소/결과 표시
 - UI 멈춤 금지
 
 ```csharp
@@ -483,15 +483,15 @@ public async Task SearchAsync()
 
 ## 18. 성능/안정성 체크리스트
 
-- [ ] **UI 스레드**에서 **무거운 작업 금지**(CPU/대량 LINQ/대용량 변환 등)  
-- [ ] IO는 **순수 비동기**(await) + 라이브러리는 `ConfigureAwait(false)`  
-- [ ] UI 갱신은 `BeginInvoke`/`InvokeAsync` 로 **비동기 마샬링**  
-- [ ] `ObservableCollection` 대량 변경은 **배치**(Clear+AddRange) & **가상화**  
-- [ ] 정기 작업은 `DispatcherTimer`, 고정밀/백그라운드는 `Threading.Timer`  
-- [ ] `EnableCollectionSynchronization` 로 다중 스레드 컬렉션 접근 보호  
-- [ ] 이미지/브러시/지오메트리 등 `Freezable`은 **Freeze** 해서 스레드/렌더 최적화  
-- [ ] `DispatcherUnhandledException`/`TaskScheduler.UnobservedTaskException` 로깅  
-- [ ] `Invoke`(동기) 남용 금지 — 교착 주의, 가능하면 `await` 기반  
+- [ ] **UI 스레드**에서 **무거운 작업 금지**(CPU/대량 LINQ/대용량 변환 등)
+- [ ] IO는 **순수 비동기**(await) + 라이브러리는 `ConfigureAwait(false)`
+- [ ] UI 갱신은 `BeginInvoke`/`InvokeAsync` 로 **비동기 마샬링**
+- [ ] `ObservableCollection` 대량 변경은 **배치**(Clear+AddRange) & **가상화**
+- [ ] 정기 작업은 `DispatcherTimer`, 고정밀/백그라운드는 `Threading.Timer`
+- [ ] `EnableCollectionSynchronization` 로 다중 스레드 컬렉션 접근 보호
+- [ ] 이미지/브러시/지오메트리 등 `Freezable`은 **Freeze** 해서 스레드/렌더 최적화
+- [ ] `DispatcherUnhandledException`/`TaskScheduler.UnobservedTaskException` 로깅
+- [ ] `Invoke`(동기) 남용 금지 — 교착 주의, 가능하면 `await` 기반
 - [ ] UI 반응성: `Dispatcher.Yield()` 로 장시간 루프 분절, 또는 **chunking**
 
 ---
@@ -559,7 +559,7 @@ public async Task ProcessBigListAsync(IReadOnlyList<Item> list)
 
 ## 21. 마무리
 
-- **원칙**: “**UI는 가볍게, 무거운 건 밖에서**” + “**UI 접근은 Dispatcher 통해**”  
-- `async/await` + 올바른 컨텍스트 관리가 **교착/프리즈**를 없애고  
-- `DispatcherTimer`/컬렉션 동기화/`Freezable`/다중 UI 스레드 등 도구들을 **정확히** 쓰면  
+- **원칙**: “**UI는 가볍게, 무거운 건 밖에서**” + “**UI 접근은 Dispatcher 통해**”
+- `async/await` + 올바른 컨텍스트 관리가 **교착/프리즈**를 없애고
+- `DispatcherTimer`/컬렉션 동기화/`Freezable`/다중 UI 스레드 등 도구들을 **정확히** 쓰면
   복잡한 앱에서도 **부드러운 UX**를 유지할 수 있습니다.

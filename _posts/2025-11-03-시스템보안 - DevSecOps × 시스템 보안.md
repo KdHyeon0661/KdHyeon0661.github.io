@@ -29,16 +29,16 @@ category: 시스템보안
 ```
 
 **핵심 원칙**
-- **Shift-left**: 가능한 빨리 실패(개발자 로컬·PR 단계).  
-- **정책을 코드화**: Rego/Sigma/semgrep-rules/SLSA policy 등.  
-- **증빙 아카이브**: SBOM, 서명, 빌드 메타데이터, 테스트 리포트(아티팩트).  
+- **Shift-left**: 가능한 빨리 실패(개발자 로컬·PR 단계).
+- **정책을 코드화**: Rego/Sigma/semgrep-rules/SLSA policy 등.
+- **증빙 아카이브**: SBOM, 서명, 빌드 메타데이터, 테스트 리포트(아티팩트).
 - **품질 게이트**: *“Fail the build”* 기준을 수치화(예: High 취약 ≥1 → 실패).
 
 ---
 
 ### 17.1.2 로컬 프리훅(pre-commit) — 첫 방어선
 
-**.pre-commit-config.yaml (발췌)**  
+**.pre-commit-config.yaml (발췌)**
 - 포맷터/린터 + 비밀 스캔 + 기본 Semgrep
 ```yaml
 repos:
@@ -181,9 +181,9 @@ jobs:
              ghcr.io/org/app:${{ github.sha }} --yes
 ```
 
-> 포인트:  
-> - **SAST/Secrets/SCA** → **Fail 기준** 명시.  
-> - 이미지 **SBOM/Provenance**를 **cosign attest**로 첨부, 레지스트리에서 증빙 가능.  
+> 포인트:
+> - **SAST/Secrets/SCA** → **Fail 기준** 명시.
+> - 이미지 **SBOM/Provenance**를 **cosign attest**로 첨부, 레지스트리에서 증빙 가능.
 > - DAST는 **Baseline**(패시브/단기)로 MR 단계에 적합, 풀 액티브는 **스테이징**에서 야간/스케줄.
 
 ---
@@ -242,7 +242,7 @@ rules:
   languages: [python, javascript]
 ```
 
-**CI에서 규칙 번들 사용**  
+**CI에서 규칙 번들 사용**
 ```bash
 semgrep --config semgrep-rules/ --error
 ```
@@ -319,8 +319,8 @@ jq '.components[] | select(.licenses[]?.license.id | IN("MIT","Apache-2.0") | no
 
 ### 17.1.9 공급망: 서명·증명(SLSA, cosign, in-toto)
 
-- **Build provenance**: 빌드 시점, 빌더 ID, 소스 커밋, 파라미터 → **attestation**  
-- **Keyless(OIDC) 서명**: CI 러너 OIDC 토큰으로 cosign sign/attest  
+- **Build provenance**: 빌드 시점, 빌더 ID, 소스 커밋, 파라미터 → **attestation**
+- **Keyless(OIDC) 서명**: CI 러너 OIDC 토큰으로 cosign sign/attest
 - **정책 게이트**: “서명된 이미지만 배포”, “Provenance 없는 이미지는 거부”
 
 **검증(배포 전)**
@@ -335,7 +335,7 @@ cosign verify-attestation --type cyclonedx ghcr.io/org/app:TAG
 
 ### 17.2.1 Dockerfile 하드닝 베스트 프랙티스
 
-**예시**  
+**예시**
 ```dockerfile
 # syntax=docker/dockerfile:1.7
 FROM gcr.io/distroless/python3-debian12@sha256:...
@@ -362,17 +362,17 @@ CMD ["app"]
 ```
 
 **체크리스트**
-- 비루트 `USER`  
-- 불필요한 툴/셸 제거(디스트롤레스/슬림)  
-- **읽기 전용 루트** + **tmpfs**(K8s에서)  
-- healthcheck는 K8s Probe로 대체  
+- 비루트 `USER`
+- 불필요한 툴/셸 제거(디스트롤레스/슬림)
+- **읽기 전용 루트** + **tmpfs**(K8s에서)
+- healthcheck는 K8s Probe로 대체
 - **SBOM/서명** 첨부
 
 ---
 
 ### 17.2.2 이미지 스캔(Trivy/Grype) — CI와 레지스트리 훅
 
-**CI**: 위 17.1.3 참조 (Fail on HIGH/CRITICAL)  
+**CI**: 위 17.1.3 참조 (Fail on HIGH/CRITICAL)
 **레지스트리 훅**: Harbor/ACR/ECR 이미지 취약점 스캔 결과를 **정책 게이트**에 반영(예: Gatekeeper가 어노테이션/라벨 기반으로 허용/거부)
 
 ---
@@ -401,7 +401,7 @@ helm install falco falcosecurity/falco -n falco --create-namespace
 
 ### 17.2.4 OPA/Gatekeeper로 “진입 시” 정책 강제
 
-**(A) 기본 구성**  
+**(A) 기본 구성**
 ```bash
 helm repo add gatekeeper https://open-policy-agent.github.io/gatekeeper/charts
 helm install gatekeeper gatekeeper/gatekeeper -n gatekeeper-system --create-namespace
@@ -563,14 +563,14 @@ spec:
 
 ### 17.2.8 운영 대시보드/게이트 기준(추천)
 
-- **SAST**: ERROR ≥ 1 → Fail, WARNING는 PR 코멘트/TODO  
-- **Secrets**: 발견 시 **무조건 Fail**(허위양성은 allowlist, 만료일)  
-- **SCA**: **High/CRITICAL ≥ 1 Fail**, OS/라이브러리 분리 기준  
-- **Fuzz/Sanitizers**: 크래시 발견 → Fail, 커버리지 수치 추적  
-- **DAST**: High/Confirmed ≥ 1 Fail, Low/Medium은 티켓  
-- **SBOM**: 반드시 첨부, **금지 라이선스 발견** → Fail  
-- **Image Scan**: 배포 태그는 HIGH/CRITICAL 0 조건  
-- **Sign/Provenance**: 미첨부 → 배포 차단  
+- **SAST**: ERROR ≥ 1 → Fail, WARNING는 PR 코멘트/TODO
+- **Secrets**: 발견 시 **무조건 Fail**(허위양성은 allowlist, 만료일)
+- **SCA**: **High/CRITICAL ≥ 1 Fail**, OS/라이브러리 분리 기준
+- **Fuzz/Sanitizers**: 크래시 발견 → Fail, 커버리지 수치 추적
+- **DAST**: High/Confirmed ≥ 1 Fail, Low/Medium은 티켓
+- **SBOM**: 반드시 첨부, **금지 라이선스 발견** → Fail
+- **Image Scan**: 배포 태그는 HIGH/CRITICAL 0 조건
+- **Sign/Provenance**: 미첨부 → 배포 차단
 - **OPA/Gatekeeper**: *“보안 프로필 미설정/루트/권능 미삭제/서명 미검증”* → 거절
 
 ---
@@ -595,37 +595,37 @@ repo/
 
 ## 17.4 트러블슈팅 & FAQ
 
-**Q. 오탐 때문에 빌드가 자주 깨져요.**  
+**Q. 오탐 때문에 빌드가 자주 깨져요.**
 A. “**PR 코멘트(정보)** → **Warning(점수)** → **Fail(치명)** 3단계로 점진. 허용 리스트에는 **만료일**을 부여하세요.
 
-**Q. 취약점 CVSS 점수 기준만으로 Fail 하기 어려워요.**  
+**Q. 취약점 CVSS 점수 기준만으로 Fail 하기 어려워요.**
 A. *실제 경로 노출/공격 표면* (인터넷 노출, 권한, 데이터 민감도)을 가중치로 반영하여 **Risk Score** 기반으로 Fail.
 
-**Q. Gatekeeper 정책이 지나치게 엄격해요.**  
+**Q. Gatekeeper 정책이 지나치게 엄격해요.**
 A. `dryrun: true`로 시범 운용 → 위반 리포트 수집 → 예외/템플릿 조정 후 enforce.
 
-**Q. 서명/증명 검증이 복잡합니다.**  
+**Q. 서명/증명 검증이 복잡합니다.**
 A. Sigstore **policy-controller** 또는 Kyverno **verifyImages** 사용으로 단순화. **OIDC**를 통한 **Keyless**가 비밀 관리 부담을 낮춥니다.
 
 ---
 
 ## 17.5 체크리스트(요약)
 
-- [ ] **pre-commit**(gitleaks+semgrep)  
-- [ ] **CI: SAST/Secrets/SCA** + **Fail 기준**  
-- [ ] **Fuzz + Sanitizers** Smoke  
-- [ ] **DAST Baseline**(PR/스테이징)  
-- [ ] **SBOM(CycloneDX)** 생성 & **라이선스 게이트**  
-- [ ] **이미지 스캔**(High/Cr critical=0)  
-- [ ] **cosign sign/attest**(Provenance/SBOM)  
-- [ ] **OPA/Conftest**로 매니페스트 사전 검증  
-- [ ] **Gatekeeper**: runAsNonRoot/CapDrop/ROFS/verifyImage 정책  
+- [ ] **pre-commit**(gitleaks+semgrep)
+- [ ] **CI: SAST/Secrets/SCA** + **Fail 기준**
+- [ ] **Fuzz + Sanitizers** Smoke
+- [ ] **DAST Baseline**(PR/스테이징)
+- [ ] **SBOM(CycloneDX)** 생성 & **라이선스 게이트**
+- [ ] **이미지 스캔**(High/Cr critical=0)
+- [ ] **cosign sign/attest**(Provenance/SBOM)
+- [ ] **OPA/Conftest**로 매니페스트 사전 검증
+- [ ] **Gatekeeper**: runAsNonRoot/CapDrop/ROFS/verifyImage 정책
 - [ ] **Falco** 런타임 이상 탐지 + **SIEM 연계**
 
 ---
 
 # 결론
 
-- DevSecOps의 핵심은 **보안 활동을 코드/정책/파이프라인**으로 구조화해 **자동으로 가드레일을 넘지 못하게** 만드는 것입니다.  
-- **Shift-left → 게이트 → 런타임 감시**의 3단계 설계를 적용하면, 개발 속도를 유지하면서도 **가시성·재현성·감사 가능성**을 확보할 수 있습니다.  
+- DevSecOps의 핵심은 **보안 활동을 코드/정책/파이프라인**으로 구조화해 **자동으로 가드레일을 넘지 못하게** 만드는 것입니다.
+- **Shift-left → 게이트 → 런타임 감시**의 3단계 설계를 적용하면, 개발 속도를 유지하면서도 **가시성·재현성·감사 가능성**을 확보할 수 있습니다.
 - 본문 예제(YAML/Rego/Dockerfile/코드)를 템플릿으로 삼아, 조직 표준의 **Fail 기준/예외 만료/증빙 아카이브**를 명문화하면 **지속 가능한 보안 품질**을 확보할 수 있습니다.

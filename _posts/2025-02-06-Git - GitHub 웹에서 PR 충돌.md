@@ -23,16 +23,16 @@ This branch has conflicts that must be resolved
 
 웹에서 충돌을 해결하려면 다음 중 하나가 필요합니다.
 
-1. **PR 브랜치에 쓰기 권한**  
-   - 같은 저장소 내 브랜치인 경우: 보통 **Write** 권한이 있으면 웹에서 **Resolve conflicts** 가능.  
+1. **PR 브랜치에 쓰기 권한**
+   - 같은 저장소 내 브랜치인 경우: 보통 **Write** 권한이 있으면 웹에서 **Resolve conflicts** 가능.
    - **fork에서 온 PR**: PR 창 우측 사이드바의 **Allow edits by maintainers** 체크가 활성화되어 있어야, 저장소 유지보수자(Maintainer)가 웹에서 해당 브랜치를 편집 가능.
 
-2. **보호 브랜치 규칙(Protect Branch Rules)**  
-   - base 브랜치가 보호되는 경우(예: `main`):  
-     - Required reviews, Required status checks, Linear history(rules), Force-push 금지 등으로 인해 **웹에서 바로 병합/수정이 제한**될 수 있음.  
+2. **보호 브랜치 규칙(Protect Branch Rules)**
+   - base 브랜치가 보호되는 경우(예: `main`):
+     - Required reviews, Required status checks, Linear history(rules), Force-push 금지 등으로 인해 **웹에서 바로 병합/수정이 제한**될 수 있음.
      - 이때는 **로컬에서 충돌 해결 → 푸시 → 상태체크 통과 → PR 병합** 순서로 진행하거나, 정책에 맞춰 **Update branch**(merge commit) 또는 **rebase and merge** 전략을 택해야 함.
 
-3. **필요 권한이 없다면**  
+3. **필요 권한이 없다면**
    - 본인이 PR 작성자라면 **Allow edits by maintainers** 체크.
    - 아니면 **로컬에서 자신의 fork 브랜치**를 고쳐 다시 푸시(권한 = 자기 fork 에 대한 push).
 
@@ -44,14 +44,14 @@ This branch has conflicts that must be resolved
 - 저장소 → **Pull requests** 탭 → 충돌 표시된 PR 클릭.
 
 ### Step 2. 충돌 메시지 확인
-- 상단 배너: `This branch has conflicts that must be resolved`  
-- 폴더별/파일별 충돌 목록 확인  
+- 상단 배너: `This branch has conflicts that must be resolved`
+- 폴더별/파일별 충돌 목록 확인
 - 버튼:
   - **Resolve conflicts**: 웹 에디터를 열어 라인 충돌 해결.
   - **Update branch**: GitHub가 base를 compare에 **자동 merge commit**으로 가져와 업데이트(설정/권한/정책에 따라 표시·비표시).
 
 ### Step 3. 충돌 파일 웹 편집기로 열기
-- **Resolve conflicts** 클릭 → GitHub 가 충돌난 파일을 “마커” 포함 상태로 엽니다.  
+- **Resolve conflicts** 클릭 → GitHub 가 충돌난 파일을 “마커” 포함 상태로 엽니다.
 - 충돌 마커 구문:
 
 ```text
@@ -74,7 +74,7 @@ HTML 예시:
 
 ### Step 4. 수동 통합(마커 제거 필수)
 
-- 원하는 최종 결과로 **수정**하고, 모든 충돌 마커(`<<<<<<<`, `=======`, `>>>>>>>`)를 **삭제**해야 합니다.  
+- 원하는 최종 결과로 **수정**하고, 모든 충돌 마커(`<<<<<<<`, `=======`, `>>>>>>>`)를 **삭제**해야 합니다.
 - 통합 예시:
 
 ```html
@@ -82,16 +82,16 @@ HTML 예시:
 ```
 
 ### Step 5. 변경 저장·해결 표시
-- 페이지 하단 커밋 창에서 메시지를 확인/수정(기본: `Resolve merge conflict`)  
-- **Mark as resolved** 클릭  
+- 페이지 하단 커밋 창에서 메시지를 확인/수정(기본: `Resolve merge conflict`)
+- **Mark as resolved** 클릭
 - **Commit merge** 버튼 클릭
 
 > **주의**: 보호 브랜치 규칙(Required status checks 등)으로 인해 커밋 후에도 **즉시 병합 불가**일 수 있습니다. CI 통과, 리뷰 승인 등 정책을 충족해야 합니다.
 
 ### Step 6. Merge 가능 상태 확인
-- PR 화면으로 돌아오면 충돌 배너가 사라지고,  
-  - `This branch has no conflicts`  
-  - **Merge pull request** 버튼 활성화  
+- PR 화면으로 돌아오면 충돌 배너가 사라지고,
+  - `This branch has no conflicts`
+  - **Merge pull request** 버튼 활성화
 - 팀 정책에 맞는 병합 전략(merge commit / squash and merge / rebase and merge)을 선택해 병합합니다.
 
 ---
@@ -145,7 +145,7 @@ git rebase origin/main
 git push --force-with-lease
 ```
 
-- **주의**: rebase는 해시 재작성 → 원격에는 **강제 푸시** 필요.  
+- **주의**: rebase는 해시 재작성 → 원격에는 **강제 푸시** 필요.
 - PR이 **fork에서 온 경우**에도 동일. 단, 팀 정책/권한에 따라 rebase가 금지될 수 있음.
 
 ### 4.3 부분 채택(ours / theirs) 단축 키
@@ -181,7 +181,7 @@ git config --global rerere.enabled true
 
 ### 5.2 리네임(rename) + 수정 충돌
 - 한쪽에서 파일명 변경, 다른 쪽에서 같은 파일을 수정
-- 웹에서는 맥락 파악이 힘들 수 있어 **로컬 권장**  
+- 웹에서는 맥락 파악이 힘들 수 있어 **로컬 권장**
 - 전략: 최종 파일명 선택 → 내용 합치기 → **이력 검증**
 
 ### 5.3 삭제-수정(delete/modify) 충돌
@@ -189,8 +189,8 @@ git config --global rerere.enabled true
 - 유지 여부 결정 후 `--ours/--theirs` 또는 수동 복원
 
 ### 5.4 바이너리(binary) 충돌
-- 이미지/모델/디자인 등은 라인 병합 불가  
-- 선택지: ours 혹은 theirs로 **전체 파일 단위** 채택 → 팀 재합의  
+- 이미지/모델/디자인 등은 라인 병합 불가
+- 선택지: ours 혹은 theirs로 **전체 파일 단위** 채택 → 팀 재합의
 - `.gitattributes`로 병합/비교 정책 명시:
   ```
   *.psd -merge -diff
@@ -204,9 +204,9 @@ git config --global rerere.enabled true
 
 ## 6. 조직/팀 설정과 “Update branch”
 
-- **Update branch** 버튼은 GitHub가 **자동으로 base를 compare에 merge**하여 업데이트하는 기능입니다(merge commit 생성).  
+- **Update branch** 버튼은 GitHub가 **자동으로 base를 compare에 merge**하여 업데이트하는 기능입니다(merge commit 생성).
 - 저장소/조직 정책(Linear history, Required status checks)에 따라:
-  - 버튼이 **노출되지 않거나**,  
+  - 버튼이 **노출되지 않거나**,
   - 클릭 시 특정 정책 위반으로 **거부**될 수 있습니다.
 - 선형 이력 강제(Require linear history) 환경에서는 **merge commit 금지** → 로컬에서 **rebase 후 푸시**가 필요.
 
@@ -333,17 +333,17 @@ git config --global rerere.enabled true
 
 ## 11. 결론
 
-- GitHub **웹 편집기**만으로도 단순 라인 충돌은 빠르게 해결할 수 있지만,  
-  **리네임·바이너리·대량 충돌·보호 브랜치 정책**이 얽히면 **로컬에서 해결 후 푸시**가 안정적입니다.  
-- 팀 정책(Required reviews, Status checks, Linear history)을 미리 숙지하고, 필요 시 **Update branch** / **rebase** 전략을 적절히 선택하세요.  
+- GitHub **웹 편집기**만으로도 단순 라인 충돌은 빠르게 해결할 수 있지만,
+  **리네임·바이너리·대량 충돌·보호 브랜치 정책**이 얽히면 **로컬에서 해결 후 푸시**가 안정적입니다.
+- 팀 정책(Required reviews, Status checks, Linear history)을 미리 숙지하고, 필요 시 **Update branch** / **rebase** 전략을 적절히 선택하세요.
 - 실수 방지를 위해 `--force-with-lease`, `mergetool`, `rerere`, 체크리스트를 습관화하면 PR 충돌 처리 속도와 안정성이 크게 향상됩니다.
 
 ---
 
 ## 참고
 
-- GitHub 공식: Addressing merge conflicts in a pull request  
+- GitHub 공식: Addressing merge conflicts in a pull request
   https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/about-merge-conflicts
 
-- Git(merge) — 충돌 표현  
+- Git(merge) — 충돌 표현
   https://git-scm.com/docs/git-merge#_how_conflicts_are_presented

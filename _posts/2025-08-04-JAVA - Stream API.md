@@ -8,9 +8,9 @@ category: Java
 
 ## 1. Stream의 개념/철학
 
-- **선언적 파이프라인**: “무엇을” 변환/필터링/집계할지 선언하고, “어떻게”(루프/인덱스)는 라이브러리에 위임.  
-- **내부 반복(Internal Iteration)**: 런타임이 최적의 순회/병렬화를 결정.  
-- **불변 처리**: 원본을 변경하지 않고 변환 결과를 생산(함수형 스타일).  
+- **선언적 파이프라인**: “무엇을” 변환/필터링/집계할지 선언하고, “어떻게”(루프/인덱스)는 라이브러리에 위임.
+- **내부 반복(Internal Iteration)**: 런타임이 최적의 순회/병렬화를 결정.
+- **불변 처리**: 원본을 변경하지 않고 변환 결과를 생산(함수형 스타일).
 - **지연 평가(Lazy)**: **중간 연산은 실행 계획**이며, **최종 연산**이 호출될 때 실제 연산이 수행.
 
 ---
@@ -159,7 +159,7 @@ List<Integer> tail   = nums.stream().dropWhile(n -> n < 1000).toList();
 
 ## 6. 원시형 스트림과 박싱 회피
 
-- `IntStream`, `LongStream`, `DoubleStream` 제공  
+- `IntStream`, `LongStream`, `DoubleStream` 제공
   (중간: `map`, `filter`, `distinct`, `sorted`, `limit` / 최종: `sum`, `average`, `summaryStatistics`, `toArray`)
 
 ```java
@@ -246,7 +246,7 @@ Stats s = words.stream().collect(Collectors.teeing(
 ```
 
 ### 7.8 병렬 수집과 CONCURRENT
-- `groupingByConcurrent`는 **무주문(unordered)** 스트림과 함께일 때 효과적.  
+- `groupingByConcurrent`는 **무주문(unordered)** 스트림과 함께일 때 효과적.
 - 순서가 중요하면 일반 `groupingBy` 사용.
 
 ---
@@ -254,12 +254,12 @@ Stats s = words.stream().collect(Collectors.teeing(
 ## 8. reduce 심화 — 항등원/결합법칙
 
 ### 8.1 정석 서명
-- `T reduce(T identity, BinaryOperator<T> accumulator)`  
+- `T reduce(T identity, BinaryOperator<T> accumulator)`
 - `<U> U reduce(U identity, BiFunction<U,? super T,U> accumulator, BinaryOperator<U> combiner)`
 
 ### 8.2 병렬 안전 조건
 - 결합자(Combiner)와 누산자(Accumulator)는 **결합법칙(associative)**이어야 병렬에서 정확.
-  
+
 $$
 (a \circ b) \circ c = a \circ (b \circ c)
 $$
@@ -284,14 +284,14 @@ int sum = IntStream.range(1, 10).parallel().reduce(0, Integer::sum);
 - 데이터가 **크고**, 연산이 **CPU 바운드**이며, **무상태/독립**이고, **분할(splitting) 비용**이 낮을 때.
 
 ### 9.2 위험/주의
-- 외부 상태 변경(사이드 이펙트) 금지: `parallelStream().forEach(list::add)` → 경쟁/오류  
+- 외부 상태 변경(사이드 이펙트) 금지: `parallelStream().forEach(list::add)` → 경쟁/오류
 - 순서 필요한 경우 `forEachOrdered`. (병렬성 일부 희생)
 - `findAny`는 병렬 친화, `findFirst`는 순서 제약으로 병렬 이점 감소.
 - 작은 컬렉션/가벼운 연산에는 오히려 느릴 수 있음(스레드 오버헤드).
 
 ### 9.3 실무 팁
-- 병렬 전/후 **측정**(JMH, Micrometer)로 검증.  
-- I/O-블로킹은 병렬 스트림보다 **별도 Executor**(CompletableFuture 등) 고려.  
+- 병렬 전/후 **측정**(JMH, Micrometer)로 검증.
+- I/O-블로킹은 병렬 스트림보다 **별도 Executor**(CompletableFuture 등) 고려.
 - `unordered()` 힌트로 최적화 여지 제공.
 
 ---
@@ -419,18 +419,18 @@ long sum = chunks.parallel().flatMapToInt(li -> li.stream().mapToInt(Integer::in
 
 ## 14. 성능/안티패턴 체크리스트
 
-- [ ] **외부 상태 변경 금지**: `forEach(list::add)` 대신 `collect(toList())`.  
-- [ ] **중간 컬렉션 방지**: `flatMap`/`mapMulti`로 바로 평탄화.  
-- [ ] **박싱 회피**: 수치는 `IntStream/LongStream/DoubleStream`.  
-- [ ] **과한 병렬화 금지**: 소규모 데이터/가벼운 연산은 순차가 낫다.  
-- [ ] **정렬/중복제거 남용 자제**: `sorted/distinct`는 상태 보관·비용 큼.  
-- [ ] **`peek`는 디버깅 전용**: 로직 의존 금지.  
-- [ ] **스트림 재사용 금지**: 최종 연산 후 다시 쓰면 `IllegalStateException`.  
-- [ ] **Collectors 중복 키**: `toMap` 병합 함수 지정.  
-- [ ] **I/O 스트림 닫기**: `try (Stream<?> s = …)`.  
-- [ ] **reduce 결합법칙**: 병렬에 안전한 연산만.  
-- [ ] **`forEachOrdered` 필요성 판단**: 순서 보장이 성능을 깎을 수 있음.  
-- [ ] **`unordered()` 힌트**: 순서 불필요시 최적화 여지 제공.  
+- [ ] **외부 상태 변경 금지**: `forEach(list::add)` 대신 `collect(toList())`.
+- [ ] **중간 컬렉션 방지**: `flatMap`/`mapMulti`로 바로 평탄화.
+- [ ] **박싱 회피**: 수치는 `IntStream/LongStream/DoubleStream`.
+- [ ] **과한 병렬화 금지**: 소규모 데이터/가벼운 연산은 순차가 낫다.
+- [ ] **정렬/중복제거 남용 자제**: `sorted/distinct`는 상태 보관·비용 큼.
+- [ ] **`peek`는 디버깅 전용**: 로직 의존 금지.
+- [ ] **스트림 재사용 금지**: 최종 연산 후 다시 쓰면 `IllegalStateException`.
+- [ ] **Collectors 중복 키**: `toMap` 병합 함수 지정.
+- [ ] **I/O 스트림 닫기**: `try (Stream<?> s = …)`.
+- [ ] **reduce 결합법칙**: 병렬에 안전한 연산만.
+- [ ] **`forEachOrdered` 필요성 판단**: 순서 보장이 성능을 깎을 수 있음.
+- [ ] **`unordered()` 힌트**: 순서 불필요시 최적화 여지 제공.
 
 ---
 
@@ -556,10 +556,10 @@ List<String> flat = lists.stream().mapMulti((List<String> l, Consumer<String> si
 
 ## 결론
 
-- Stream은 **지연·선언적 파이프라인**으로 **가독성/안전성/최적화 여지**를 동시에 제공합니다.  
-- **중간 연산은 계획, 최종 연산이 실행**임을 기억하고, **불변·무상태**를 지키며 **박싱/정렬/중복제거/병렬** 비용을 감안하세요.  
-- 수집은 **Collectors**로, 복잡한 축약은 **downstream/teeing/collectingAndThen**으로 모델링하면 명료합니다.  
-- 병렬은 **측정 기반**으로만 채택하고, 외부 상태 변경을 피하세요.  
+- Stream은 **지연·선언적 파이프라인**으로 **가독성/안전성/최적화 여지**를 동시에 제공합니다.
+- **중간 연산은 계획, 최종 연산이 실행**임을 기억하고, **불변·무상태**를 지키며 **박싱/정렬/중복제거/병렬** 비용을 감안하세요.
+- 수집은 **Collectors**로, 복잡한 축약은 **downstream/teeing/collectingAndThen**으로 모델링하면 명료합니다.
+- 병렬은 **측정 기반**으로만 채택하고, 외부 상태 변경을 피하세요.
 - 필요 시 **커스텀 Collector/Spliterator**로 작업을 데이터에 맞게 특화하세요.
 
 이 가이드를 템플릿 삼아 팀 코드 리뷰 체크리스트와 유닛 테스트(특히 경계/빈 컬렉션/병렬 케이스)를 함께 운영하면, 스트림 활용의 안정성과 성능을 동시에 끌어올릴 수 있습니다.

@@ -15,9 +15,9 @@ category: DB 심화
 
 오라클은 **인스턴스(Instance)** 와 **데이터베이스(Database)** 로 분리된 **논리 모델**을 갖습니다.
 
-- **인스턴스**: SGA(+옵션 In-Memory Column Store), PGA, 그리고 수십 개의 **백그라운드 프로세스**  
+- **인스턴스**: SGA(+옵션 In-Memory Column Store), PGA, 그리고 수십 개의 **백그라운드 프로세스**
   - 인스턴스는 “메모리와 프로세스의 집합”으로, 가동 중일 때만 존재합니다.
-- **데이터베이스**: **데이터 파일**, **컨트롤 파일**, **리두 로그(온라인/아카이브)**, **임시 파일**, **파라미터/패스워드 파일**, **ADR(진단 디렉터리)** 등 **물리 파일 집합**입니다.  
+- **데이터베이스**: **데이터 파일**, **컨트롤 파일**, **리두 로그(온라인/아카이브)**, **임시 파일**, **파라미터/패스워드 파일**, **ADR(진단 디렉터리)** 등 **물리 파일 집합**입니다.
   - 인스턴스가 내려가도 파일은 디스크에 남습니다.
 
 **핵심 상호 작용**:
@@ -35,8 +35,8 @@ category: DB 심화
 
 ### 1.1 프로세스 유형
 
-- **서버 프로세스(Server Process)**  
-  - **전용(Dedicated)**: 클라이언트 세션당 서버 프로세스 1:1. 단순하고 예측 가능.  
+- **서버 프로세스(Server Process)**
+  - **전용(Dedicated)**: 클라이언트 세션당 서버 프로세스 1:1. 단순하고 예측 가능.
   - **공유(Shared Server, MTS)**: 다수 세션이 **디스패처(Dispatcher)** 를 통해 **공유 서버** 프로세스 풀을 공유. 고동시성+짧은 트랜잭션 환경에 유리.
 - **백그라운드(Background) 프로세스** — 필수/옵션
   - **PMON**(Process Monitor): 비정상 종료 세션 정리, 리소스 회수.
@@ -78,7 +78,7 @@ lsnrctl services
 ### 2.1 SGA(System Global Area) 구성
 
 - **Shared Pool**
-  - **Library Cache**: 파싱된 SQL, 실행계획(커서) 캐시.  
+  - **Library Cache**: 파싱된 SQL, 실행계획(커서) 캐시.
   - **Data Dictionary Cache(Row Cache)**: 오브젝트/사용자/권한 메타데이터 캐시.
   - **Server Result Cache**(옵션).
 - **Database Buffer Cache**
@@ -124,7 +124,7 @@ WHERE n.name LIKE 'session pga memory%';
 
 ### 2.3 메모리 파라미터(AMM/A-SGA)
 
-- **MEMORY_TARGET / SGA_TARGET / PGA_AGGREGATE_TARGET**  
+- **MEMORY_TARGET / SGA_TARGET / PGA_AGGREGATE_TARGET**
   - AMM(메모리 타깃 기반) 또는 ASMM(SGA 자동 관리) 구성에 따라 동적 조절.
 - 실무에선 **ASMM(SGA_TARGET + PGA_AGGREGATE_TARGET)** 조합이 보편적.
 
@@ -219,7 +219,7 @@ CREATE SPFILE FROM PFILE='/tmp/initORCL.ora';
 1. 서버 프로세스가 **Buffer Cache** 에서 대상 블록을 핀(pin)·래치 후 변경.
 2. 변경 전(after/before) 정보에 기반해 **Redo**(재현 로그) 생성 → **Redo Log Buffer** 에 기록.
 3. 변경된 버퍼는 **Dirty** 로 표시(아직 데이터 파일엔 미반영).
-4. **COMMIT** → **LGWR** 가 해당 트랜잭션의 Redo를 **온라인 리두 로그**로 **플러시**(fsync).  
+4. **COMMIT** → **LGWR** 가 해당 트랜잭션의 Redo를 **온라인 리두 로그**로 **플러시**(fsync).
    - 커밋의 **지연 시간** ≒ LGWR 플러시 I/O 왕복 + 로그 파일 동기화 비용.
 5. 이후 적당한 시점(체크포인트/버퍼 프레셔 등)에 **DBWn** 이 Dirty Buffer를 **데이터파일**에 기록.
 
@@ -309,7 +309,7 @@ ORDER BY misses DESC FETCH FIRST 20 ROWS ONLY;
 ### 6.2 엔큐(Enqueue) & TM/TX 락
 
 - 엔큐는 **좀 더 오래 지속**될 수 있는 **큐형 락**.
-- **TM**: 오브젝트(테이블) 레벨 락. **DDL/DML 충돌** 조정.  
+- **TM**: 오브젝트(테이블) 레벨 락. **DDL/DML 충돌** 조정.
 - **TX**: 트랜잭션(행) 락. **행 레벨 충돌** 시 대기.
 - **Row-level Lock** 은 **버퍼 헤더(ITL 슬롯)** 에 기록되며, **Wait Event** 로 관찰.
 
@@ -332,9 +332,9 @@ WHERE state <> 'WAITED SHORT TIME';
 ## 7. 옵티마이저/실행계획/버퍼 캐시 동작(아키텍처 관점 요약)
 
 - **코스트 기반 옵티마이저(CBO)**: 통계(카디널리티/히스토그램/NDV)와 시스템 상태를 기반으로 액세스/조인 전략 선택.
-- **버퍼 캐시**: 
-  - **cache hit ratio** 는 **하나의 지표**일 뿐이며, 무조건 높다고 좋은 게 아님.  
-  - 단, 개념상 비율은 $$ \text{Hit Ratio} \approx 1 - \frac{\text{physical reads}}{\text{logical reads}} $$ 로 설명됩니다.  
+- **버퍼 캐시**:
+  - **cache hit ratio** 는 **하나의 지표**일 뿐이며, 무조건 높다고 좋은 게 아님.
+  - 단, 개념상 비율은 $$ \text{Hit Ratio} \approx 1 - \frac{\text{physical reads}}{\text{logical reads}} $$ 로 설명됩니다.
   - 실제 튜닝은 **상위 대기 이벤트/핫 블록 경합/리두/UNDO 사용 패턴**으로 접근해야 정확합니다.
 
 ```sql
@@ -355,11 +355,11 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
 ### 8.1 단계
 
-1. **STARTUP NOMOUNT**  
+1. **STARTUP NOMOUNT**
    - 파라미터 파일 읽고 **SGA/PGA/백그라운드** 초기화. **컨트롤 파일은 아직 미개방**.
-2. **STARTUP MOUNT**  
+2. **STARTUP MOUNT**
    - **컨트롤 파일 오픈**, 데이터파일/리두로그 목록 인식. 복구 필요성 판단.
-3. **ALTER DATABASE OPEN**  
+3. **ALTER DATABASE OPEN**
    - 데이터파일/리두로그 오픈, 정상 서비스 시작.
 
 ```sql
@@ -407,11 +407,11 @@ WHERE username IS NOT NULL;
 
 ## 10. RAC/ASM/메타 아키텍처(개요)
 
-- **RAC**(Real Application Clusters): 여러 인스턴스가 **하나의 데이터베이스**(공유 스토리지)를 **동시에** 오픈.  
-  - **GCS/GES**(Global Cache/Enqueue Service)로 버퍼/락 일관성 유지.  
+- **RAC**(Real Application Clusters): 여러 인스턴스가 **하나의 데이터베이스**(공유 스토리지)를 **동시에** 오픈.
+  - **GCS/GES**(Global Cache/Enqueue Service)로 버퍼/락 일관성 유지.
   - 백그라운드: **LMON/LMD/LMS/LCK** 등.
-- **ASM**(Automatic Storage Management): 오라클 전용 볼륨/파일시스템.  
-  - **디스크 그룹** 으로 묶어 **스트라이핑/미러링** 제공.  
+- **ASM**(Automatic Storage Management): 오라클 전용 볼륨/파일시스템.
+  - **디스크 그룹** 으로 묶어 **스트라이핑/미러링** 제공.
   - 백그라운드: **RBAL/ARBx** (리밸런스).
 - **Data Guard**: **REDO 전송/적용**으로 **물리/논리 스탠바이** 구성. (아키텍처상 LGWR/ARCn와 통합)
 
@@ -441,7 +441,7 @@ SELECT * FROM (
 
 ```sql
 -- 버퍼 캐시 블록 상태
-SELECT status, COUNT(*) 
+SELECT status, COUNT(*)
 FROM v$bh
 GROUP BY status;
 
@@ -560,13 +560,13 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 > **주의**: 아래 수식들은 “감각 형성”을 위한 개념적 지표입니다. 실전 튜닝은 **대기 이벤트/프로파일링/실측** 중심으로 하세요.
 
-- **Redo 생성률**:  
+- **Redo 생성률**:
   $$ \text{redo\_rate (MB/s)} \approx \frac{\text{redo size (MB)}}{\text{interval (s)}} $$
   - LGWR 대기, 로그 파일 I/O 성능, 아카이브 처리량 추산에 활용.
-- **대략적 캐시 히트 감각**:  
+- **대략적 캐시 히트 감각**:
   $$ \text{Hit Ratio} \approx 1 - \frac{\text{Physical Reads}}{\text{DB Block Gets + Consistent Gets}} $$
   - 단, 히트율이 높아도 경합/핫블록/Redo·Undo·Latch 대기가 병목일 수 있음.
-- **PGA/Temp 임계 판단**:  
+- **PGA/Temp 임계 판단**:
   $$ \text{Spill Ratio} \approx \frac{\text{temp read/write blocks}}{\text{total sort/merge operations}} $$
   - Spill 비율이 높으면 `pga_aggregate_target` 증설/워크로드 튜닝/쿼리 리라이트 고려.
 
@@ -575,10 +575,10 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 ## 14. 운영 팁 — 기본 아키텍처를 살리는 설정/관행
 
 1. **ARCHIVELOG + 적절한 FRA**: 무정지 백업/PITR/Data Guard 가능성 확보.
-2. **리두 로그 크기/개수 설계**: 너무 잦은 로그 스위치는 체크포인트 빈발/아카이브 부하.  
+2. **리두 로그 크기/개수 설계**: 너무 잦은 로그 스위치는 체크포인트 빈발/아카이브 부하.
    - 일반적 권장: **20~30분 주기의 로그 스위치**가 흔한 타깃(워크로드에 따라 조정).
 3. **Undo/Temp 용량 계획**: 긴 OLAP 쿼리/배치 시나리오 고려. `undo_retention`/`temp` 디스크 I/O 감안.
-4. **SGA/PGA 목표치 설정**: AMM보다는 **ASMM + PGA 타깃** 조합이 예측 가능.  
+4. **SGA/PGA 목표치 설정**: AMM보다는 **ASMM + PGA 타깃** 조합이 예측 가능.
 5. **통계/히스토그램 관리(DBMS_STATS)**: 옵티마이저의 올바른 카디널리티 추정 보장.
 6. **바인드 변수 사용**: 하드 파싱/라이브러리 캐시 경합 감소.
 7. **AWR/ASH로 관측**: 상위 SQL/이벤트/세션 프로파일로 병목을 과학적으로 추적.

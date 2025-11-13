@@ -53,12 +53,12 @@ docker run hello-world
 ```
 
 ## 2.2 내부에서 실제로 일어나는 일(요약 흐름)
-1. **이미지 조회**: 로컬에 `hello-world:latest` 가 있는지 확인  
-2. **이미지 풀**: 없으면 **Docker Hub**에서 `pull`  
-3. **컨테이너 생성**: 해당 이미지 기반으로 컨테이너 **Create**  
-4. **컨테이너 시작**: `Start` 후 **프로세스 실행**  
-5. **출력 후 종료**: “Hello from Docker!” 메시지 출력 → **Exit(0)**  
-6. **상태 보존**: 컨테이너는 종료 상태로 남음(`Exited`)  
+1. **이미지 조회**: 로컬에 `hello-world:latest` 가 있는지 확인
+2. **이미지 풀**: 없으면 **Docker Hub**에서 `pull`
+3. **컨테이너 생성**: 해당 이미지 기반으로 컨테이너 **Create**
+4. **컨테이너 시작**: `Start` 후 **프로세스 실행**
+5. **출력 후 종료**: “Hello from Docker!” 메시지 출력 → **Exit(0)**
+6. **상태 보존**: 컨테이너는 종료 상태로 남음(`Exited`)
 
 실행 흐름을 한 줄로 요약하면,
 ```text
@@ -103,7 +103,7 @@ hello-world   latest    d1165f2...     2 weeks ago    13.3kB
 # 4. 첫 실습을 다양한 각도에서 반복하기
 
 ## 4.1 재실행: 캐시 확인과 `--rm`
-처음과 달리, 두 번째 실행은 **이미지를 다시 받지 않습니다**(이미 로컬에 존재).  
+처음과 달리, 두 번째 실행은 **이미지를 다시 받지 않습니다**(이미 로컬에 존재).
 ```bash
 # 컨테이너 생명주기 후 흔적 없이 정리
 docker run --rm hello-world
@@ -224,7 +224,7 @@ Error response from daemon: Get "https://registry-1.docker.io/v2/": ...
 ```
 대응:
 - Docker Desktop(Settings) 또는 Linux(systemd drop-in)에서 **HTTP(S)_PROXY** 지정
-- 사설 인증서를 Docker가 신뢰하도록 **CA 등록**  
+- 사설 인증서를 Docker가 신뢰하도록 **CA 등록**
 - 컨테이너 내부에서 프록시를 사용해야 하면 `-e HTTP_PROXY=...` 로 환경변수 전달
 
 예(리눅스 데몬 프록시 설정 스니펫):
@@ -291,7 +291,7 @@ docker compose down
 # 10. 정확성·재현성 강화: 태그 vs 다이제스트
 
 - **태그(tag)** 는 사람이 읽기 좋은 이름(예: `latest`, `1.2`). 새 빌드가 같은 태그로 갱신될 수 있습니다.
-- **다이제스트(digest)** 는 이미지 내용의 해시(sha256).  
+- **다이제스트(digest)** 는 이미지 내용의 해시(sha256).
   동일 digest는 **내용 동일**을 보장합니다.
 
 실습:
@@ -366,23 +366,23 @@ docker run --rm --read-only alpine:3.20 sh -c 'touch /tmp/x || echo "fail"; mkdi
 $$
 \mathbb{E}[T] \approx \sum_{i=1}^{n} (1-p_i)\,c_i
 $$
-입니다.  
+입니다.
 변경 가능성이 낮은 레이어(의존성 설치)를 앞에 배치해 $$p_i$$ 를 크게 만들면, 전체 $$\mathbb{E}[T]$$ 가 줄어드는 효과를 얻습니다.
 
 ---
 
 # 14. 자주 묻는 질문(FAQ)
 
-**Q1. `docker run hello-world` 가 아무 출력 없이 멈춥니다.**  
+**Q1. `docker run hello-world` 가 아무 출력 없이 멈춥니다.**
 A. 레지스트리 접속이 지연되거나 프록시/방화벽 문제일 수 있습니다. `docker pull hello-world` 로 먼저 시도하고, 프록시/CA 설정을 점검합니다.
 
-**Q2. Windows인데 파일 변경이 컨테이너에 천천히 반영됩니다.**  
+**Q2. Windows인데 파일 변경이 컨테이너에 천천히 반영됩니다.**
 A. WSL2 환경에서는 프로젝트를 **WSL2 내부 경로**(예: `/home/<user>/project`)에 두고 바인드 마운트하면 I/O 속도가 훨씬 낫습니다.
 
-**Q3. 컨테이너가 바로 종료됩니다.**  
+**Q3. 컨테이너가 바로 종료됩니다.**
 A. 정상입니다. hello-world는 메시지 출력 후 종료하도록 설계되어 있습니다. 장기 실행 테스트는 `nginx:alpine` 같은 이미지를 사용하세요.
 
-**Q4. 이미지가 너무 많습니다. 용량을 줄이고 싶습니다.**  
+**Q4. 이미지가 너무 많습니다. 용량을 줄이고 싶습니다.**
 A. 미사용 자원 정리에 유의하여 아래처럼 실행하세요:
 ```bash
 docker system df

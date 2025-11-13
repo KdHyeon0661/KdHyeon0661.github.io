@@ -6,7 +6,7 @@ category: Spring
 ---
 # 3. 웹 MVC 기본기 — DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외 처리, 국제화(i18n)·포맷터
 
-> 목표: **“요청 → 컨트롤러 → 응답”** 흐름을 정확히 이해하고, **검증·예외·국제화**를 표준화하여 **예측 가능**한 API를 만든다.  
+> 목표: **“요청 → 컨트롤러 → 응답”** 흐름을 정확히 이해하고, **검증·예외·국제화**를 표준화하여 **예측 가능**한 API를 만든다.
 > 환경 가정: Spring Boot 3.3+, Java 21, Gradle, JSON API.
 
 ---
@@ -16,9 +16,9 @@ category: Spring
 ### A-1. 큰 그림: 필터 → 서블릿 → 핸들러 매핑 → 핸들러 어댑터 → 컨트롤러 → 뷰/메시지컨버터
 1. **톰캣/서블릿 컨테이너**가 요청을 받음 → **Filter** 체인 통과(`OncePerRequestFilter`, `SecurityFilterChain` 등)
 2. **`DispatcherServlet`** 진입
-3. **HandlerMapping**이 요청 경로/메서드로 **핸들러(컨트롤러 메서드)** 탐색  
+3. **HandlerMapping**이 요청 경로/메서드로 **핸들러(컨트롤러 메서드)** 탐색
    - `RequestMappingHandlerMapping`(애노테이션 기반), `SimpleUrlHandlerMapping` 등
-4. **HandlerAdapter**가 해당 핸들러 호출 방법 결정  
+4. **HandlerAdapter**가 해당 핸들러 호출 방법 결정
    - `RequestMappingHandlerAdapter`가 **인자 바인딩**(변환·검증), **리턴값 처리**
 5. **Controller** 호출 → 반환
 6. 반환이 **객체**이면 **HttpMessageConverter**가 JSON/타입 변환, **문자열/뷰**면 ViewResolver 경유
@@ -30,7 +30,7 @@ category: Spring
 
 ### A-2. Content-Negotiation(콘텐츠 협상) 핵심
 - 기본은 `Accept` 헤더로 결정(JSON이 일반적).
-- 확장자 기반 협상은 비권장(`.json`, `.xml` URI).  
+- 확장자 기반 협상은 비권장(`.json`, `.xml` URI).
 - `produces`, `consumes`로 메서드별 명시 가능.
 
 ```java
@@ -276,7 +276,7 @@ ApiError duplicate(DuplicateEmailException ex) {
 ---
 
 ### C-5. 예외 발생 시 트랜잭션
-- `@Transactional` 메서드 안에서 **런타임 예외** 발생 시 **롤백**.  
+- `@Transactional` 메서드 안에서 **런타임 예외** 발생 시 **롤백**.
 - API 레벨에서 적절한 상태코드와 메시지로 변환.
 
 ---
@@ -308,7 +308,7 @@ user.created=사용자 {0}이(가) 생성되었습니다.
 ---
 
 ### D-2. Locale 결정 — `LocaleResolver` + `LocaleChangeInterceptor`
-- 기본은 `Accept-Language` 헤더.  
+- 기본은 `Accept-Language` 헤더.
 - **쿼리 파라미터**로 언어 바꾸기: `?lang=ko`
 
 ```java
@@ -339,13 +339,13 @@ class GreetingController {
 }
 ```
 
-- `GET /greet?name=Kim&lang=ko` → `안녕하세요, Kim님!`  
+- `GET /greet?name=Kim&lang=ko` → `안녕하세요, Kim님!`
 - `GET /greet?name=Kim` with `Accept-Language: en` → `Hello, Kim!`
 
 ---
 
 ### D-3. 포맷터/컨버터 — 도메인 타입 바인딩
-- **ConversionService**가 문자열 ↔ 타입 변환.  
+- **ConversionService**가 문자열 ↔ 타입 변환.
 - 날짜/숫자/자체 타입에 **Formatter/Converter** 등록.
 
 ```java

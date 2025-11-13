@@ -120,7 +120,7 @@ def predict():
     pred = model.predict(inputs).tolist()
     LAT.observe(time.time() - start)
     return jsonify({"prediction": pred})
-    
+
 if __name__ == "__main__":
     # 개발용: gunicorn을 쓰면 멀티프로세스/워커로 이득
     app.run(host="0.0.0.0", port=PORT)
@@ -136,7 +136,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM base AS runtime
 WORKDIR /app
 COPY --from=base /usr/local /usr/local
-COPY app.py model.pkl . 
+COPY app.py model.pkl .
 ENV PORT=5000
 # 프로덕션: Gunicorn + gevent/uvicorn workers (Flask→FastAPI 전환시 uvicorn 워커)
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "app:app"]
@@ -546,7 +546,7 @@ spec:
           value: "8.0+PTX"
 ```
 
-> GPU는 **Pod 수보다 세션 고정/배치 처리**가 중요할 수 있습니다.  
+> GPU는 **Pod 수보다 세션 고정/배치 처리**가 중요할 수 있습니다.
 > Triton Inference Server, TorchServe, TF Serving로 전환 검토.
 
 ---
@@ -677,6 +677,6 @@ kubectl delete secret ml-api-secrets
 
 ## 🔚 마무리
 
-이 가이드는 **학습→서빙→운영**으로 이어지는 실전 플로우를 “**단일 문서**”로 엮었습니다.  
-여기 나온 템플릿을 **복사-수정**만 해도, **작은 모델은 수 시간 내** 안정적으로 프로덕션 느낌의 환경에 올릴 수 있을 것입니다.  
+이 가이드는 **학습→서빙→운영**으로 이어지는 실전 플로우를 “**단일 문서**”로 엮었습니다.
+여기 나온 템플릿을 **복사-수정**만 해도, **작은 모델은 수 시간 내** 안정적으로 프로덕션 느낌의 환경에 올릴 수 있을 것입니다.
 그다음 단계로는 **GitOps·Canary·관측 지표 기반 SLO**를 도입해, 팀 전체가 **일관된 방식**으로 모델을 운영하도록 확장해보세요.

@@ -142,7 +142,7 @@ try {
 }
 ```
 
-**지침**  
+**지침**
 - **원인 보존**: 새로 감쌀 땐 **반드시 cause** 전달(`new X(msg, e)` 또는 `initCause(e)`).
 - **스택 손실 금지**: `throw new ...`로 갈아치우면 원래 스택이 사라짐(원인 체인으로 대체).
 
@@ -151,7 +151,7 @@ try {
 ## 6. 오버라이딩 시 `throws` 규칙 (중요!)
 
 - **하위(오버라이딩) 메서드**는 상위 메서드보다 **넓은 Checked 예외**를 **새로 추가할 수 없음**.
-- 하위는 **더 적거나, 더 좁은(하위 타입)** Checked 예외만 선언 가능.  
+- 하위는 **더 적거나, 더 좁은(하위 타입)** Checked 예외만 선언 가능.
 - Unchecked는 자유롭게 던져도 선언 의무 없음.
 
 ```java
@@ -165,7 +165,7 @@ class B extends A {
 }
 ```
 
-**생성자**  
+**생성자**
 - 상위 생성자가 던지는 Checked 예외는 **하위 생성자에서도 처리(try-catch)하거나 선언(throws)** 해야 함.
 
 ---
@@ -213,7 +213,7 @@ try {
 
 ## 9. 인터럽트/동시성과 예외 (실무 필수)
 
-- 차단 메서드(`sleep`, `wait`, `join`)는 **`InterruptedException`(Checked)** 을 던짐 →  
+- 차단 메서드(`sleep`, `wait`, `join`)는 **`InterruptedException`(Checked)** 을 던짐 →
   **메서드 시그니처에 `throws` 하거나, catch 후 `Thread.currentThread().interrupt()`로 복원**.
 
 ```java
@@ -239,7 +239,7 @@ void loop() {
 
 ## 10. 람다·메서드 참조와 Checked 예외
 
-- `Runnable.run()`은 `throws`가 없으므로 **람다 내부에서 Checked 예외를 직접 던질 수 없음**.  
+- `Runnable.run()`은 `throws`가 없으므로 **람다 내부에서 Checked 예외를 직접 던질 수 없음**.
   → **전환(wrap)** 또는 **사용자 정의 함수형 인터페이스**로 `throws`를 선언.
 
 ```java
@@ -263,7 +263,7 @@ ex.submit(uncheck(() -> doIo()));
 ## 11. 실무 예외 설계 지침
 
 ### 11.1 언제 Checked / Unchecked?
-- **Checked**: 호출자가 **복구/대체경로**가 명확(재시도, 다른 리소스 선택 등).  
+- **Checked**: 호출자가 **복구/대체경로**가 명확(재시도, 다른 리소스 선택 등).
 - **Unchecked**: 호출자 **버그** 또는 **불변식 위반**(잘못된 인수, 부적절한 상태).
 
 ### 11.2 예외 전환 & 도메인 예외
@@ -375,20 +375,20 @@ try {
 
 ## 16. 실전 체크리스트
 
-- [ ] 복구 가능? → **Checked**로 `throws` 또는 `try-catch`.  
-- [ ] 계약 위반/버그? → **Unchecked**로 `throw`.  
-- [ ] 새 예외로 감쌀 때 **cause 체인 유지**.  
-- [ ] `finally`에서 `return/throw`로 **원래 예외 덮지 않기**(필요 시 `addSuppressed`).  
-- [ ] 람다에서 Checked 필요 시 **전환** 또는 **throws 포함 함수형 인터페이스**.  
-- [ ] 인터럽트는 **전파하거나 복원**.  
+- [ ] 복구 가능? → **Checked**로 `throws` 또는 `try-catch`.
+- [ ] 계약 위반/버그? → **Unchecked**로 `throw`.
+- [ ] 새 예외로 감쌀 때 **cause 체인 유지**.
+- [ ] `finally`에서 `return/throw`로 **원래 예외 덮지 않기**(필요 시 `addSuppressed`).
+- [ ] 람다에서 Checked 필요 시 **전환** 또는 **throws 포함 함수형 인터페이스**.
+- [ ] 인터럽트는 **전파하거나 복원**.
 - [ ] 오버라이드 시 Checked `throws`는 **좁히기만** 가능.
 
 ---
 
 ## 부록) 미세 팁
 
-- `initCause`는 **한 번만** 가능(이미 cause가 있으면 `IllegalStateException`).  
-- 예외는 `Serializable` — 분산/원격 호출에서 전송됨(필드 주의).  
+- `initCause`는 **한 번만** 가능(이미 cause가 있으면 `IllegalStateException`).
+- 예외는 `Serializable` — 분산/원격 호출에서 전송됨(필드 주의).
 - `Objects.requireNonNull(x, "msg")`는 **즉시 NPE**를 `throw`하는 유틸.
 
 ---
@@ -425,6 +425,6 @@ class Endgame {
 
 ## 결론
 
-- **`throw`는 발생**, **`throws`는 선언** — 용도도, 위치도, 시점도 다르다.  
-- Checked/Unchecked 구분과 오버라이딩 규칙, try-with-resources의 suppressed, 인터럽트 전파까지 이해하면 **예외 흐름을 설계**할 수 있다.  
+- **`throw`는 발생**, **`throws`는 선언** — 용도도, 위치도, 시점도 다르다.
+- Checked/Unchecked 구분과 오버라이딩 규칙, try-with-resources의 suppressed, 인터럽트 전파까지 이해하면 **예외 흐름을 설계**할 수 있다.
 - “원인 보존(cause) + 의미 있는 타입/메시지 + 적절한 전파(throws)”를 지키면 **진단 가능하고 견고한** 코드를 만들 수 있다.

@@ -6,9 +6,9 @@ category: CSS
 ---
 # 애니메이션 라이브러리 소개: **Animate.css** 완전 가이드
 
-초안에 적어 둔 핵심(설치·기본 사용·옵션 클래스·스크롤 연동·성능 주의)을 살리면서,  
-**v4 기준 클래스 체계**, **CSS 커스텀 변수로 미세 제어**, **재실행 패턴**, **접근성/성능 체크리스트**,  
-**WOW/AOS 없이 IntersectionObserver로 트리거**, **프레임워크 연동 스니펫(React/Vue)**까지 확장했습니다.  
+초안에 적어 둔 핵심(설치·기본 사용·옵션 클래스·스크롤 연동·성능 주의)을 살리면서,
+**v4 기준 클래스 체계**, **CSS 커스텀 변수로 미세 제어**, **재실행 패턴**, **접근성/성능 체크리스트**,
+**WOW/AOS 없이 IntersectionObserver로 트리거**, **프레임워크 연동 스니펫(React/Vue)**까지 확장했습니다.
 필요한 코드는 바로 붙여 넣어 쓸 수 있도록 예제 중심으로 정리합니다.
 
 ---
@@ -225,7 +225,7 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 ### 6.2 AOS (별도 클래스 체계)
 
-AOS는 자체 `data-aos` 속성을 사용합니다. Animate.css와 **함께 쓸 수는 있지만**,  
+AOS는 자체 `data-aos` 속성을 사용합니다. Animate.css와 **함께 쓸 수는 있지만**,
 같은 요소에 **중복 애니메이션**을 얹지 않도록 주의하세요.
 
 ---
@@ -486,7 +486,7 @@ cta.addEventListener('click', ()=>{
 - **트리거**: hover/클릭/스크롤(IntersectionObserver), 혹은 WOW/AOS
 - **품질**: transform/opacity 위주, 스태거로 자연스러움, `prefers-reduced-motion` 고려
 
-**Animate.css**는 “빠르게 생동감”을 주는 데 훌륭합니다.  
+**Animate.css**는 “빠르게 생동감”을 주는 데 훌륭합니다.
 브랜드 고유 모션이나 섬세한 단계가 필요하면 Animate.css로 **프로토타입** → 필요 지점만 `@keyframes` 커스텀으로 확장하세요.
 
 ---

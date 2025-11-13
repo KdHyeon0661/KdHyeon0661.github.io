@@ -4,10 +4,10 @@ title: MFC - Automation
 date: 2025-09-06 21:25:23 +0900
 category: MFC
 ---
-# Automation(Dispatch) 개요와 스크립팅 통합 아이디어  
+# Automation(Dispatch) 개요와 스크립팅 통합 아이디어
 (MFC/Win32/ATL 기준: `IDispatch` 늦은 바인딩, Type Library, 이벤트 싱크, Active Scripting/PowerShell/Python 연동까지)
 
-이 글은 **COM Automation(IDispatch)**의 동작 원리와 **애플리케이션을 스크립팅 가능**하게 만드는 전체적인 설계·구현 패턴을 정리합니다.  
+이 글은 **COM Automation(IDispatch)**의 동작 원리와 **애플리케이션을 스크립팅 가능**하게 만드는 전체적인 설계·구현 패턴을 정리합니다.
 MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하는 방법과, **서버로서 우리 앱을 노출**하는 방법, 그리고 **스크립팅 엔진(VBScript/JScript/PowerShell/Python)**과 **양방향 통합** 아이디어까지 예제와 함께 다룹니다.
 
 > 전제: C++17, Unicode, Win32/COM 기초, x86/x64. 예제 코드는 모두 ``` 로 감싸서 제공합니다.
@@ -16,15 +16,15 @@ MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하�
 
 ## 0. 큰 그림: Automation이 뭐고, 왜 쓰는가?
 
-- **COM Automation** = 인터페이스 `IDispatch` 기반의 **늦은 바인딩** 모델.  
-  - **클라이언트**: `IDispatch::GetIDsOfNames`로 **이름 → DISPID**를 얻고, `Invoke`로 **메서드/프로퍼티 호출**.  
-  - **서버**: **Type Library(typelib)**와 `IDispatch` 구현을 통해 **객체 모델**을 외부에 노출.  
-- 장점  
-  - 언어 중립: VBScript, JScript, VBA, PowerShell, Python(pywin32), C# interop 등에서 호출 가능  
-  - **이름 기반**이라 스크립팅이 쉽고, **개체 모델 문서화**와 **인텔리센스**(typelib) 제공 가능  
-- 핵심 구성요소  
-  - `IDispatch`, `VARIANT`, `BSTR`, `SAFEARRAY`, `ITypeInfo`  
-  - 등록정보: **ProgID**, **CLSID**, **AppID**, **ThreadingModel**  
+- **COM Automation** = 인터페이스 `IDispatch` 기반의 **늦은 바인딩** 모델.
+  - **클라이언트**: `IDispatch::GetIDsOfNames`로 **이름 → DISPID**를 얻고, `Invoke`로 **메서드/프로퍼티 호출**.
+  - **서버**: **Type Library(typelib)**와 `IDispatch` 구현을 통해 **객체 모델**을 외부에 노출.
+- 장점
+  - 언어 중립: VBScript, JScript, VBA, PowerShell, Python(pywin32), C# interop 등에서 호출 가능
+  - **이름 기반**이라 스크립팅이 쉽고, **개체 모델 문서화**와 **인텔리센스**(typelib) 제공 가능
+- 핵심 구성요소
+  - `IDispatch`, `VARIANT`, `BSTR`, `SAFEARRAY`, `ITypeInfo`
+  - 등록정보: **ProgID**, **CLSID**, **AppID**, **ThreadingModel**
   - **Connection Point**(이벤트 소스/싱크), **Active Scripting** 호스팅(선택)
 
 ---
@@ -32,7 +32,7 @@ MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하�
 ## 1. 클라이언트(Consumer)로 쓰기: 외부 앱 자동화
 
 ### 1-1. COM 초기화와 아파트먼트
-- 기본: **STA**(Single-Threaded Apartment) 권장 — 대부분의 Office/스크립팅은 STA 가정  
+- 기본: **STA**(Single-Threaded Apartment) 권장 — 대부분의 Office/스크립팅은 STA 가정
 - `CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);` + 스레드 종료 시 `CoUninitialize();`
 
 ```cpp
@@ -136,14 +136,14 @@ HRESULT AutoExcelLateBinding() {
     cell->Invoke(idValue2, IID_NULL, LOCALE_USER_DEFAULT, DISPATCH_PROPERTYPUT, &dpPut, nullptr, nullptr, nullptr);
 
     // 정리
-    cell->Release(); sheet->Release(); book->Release(); workbooks->Release(); 
+    cell->Release(); sheet->Release(); book->Release(); workbooks->Release();
     return S_OK;
 }
 ```
 
-핵심:  
-- **PROPERTYGET/PUT/PUTREF** 구분, `DISPID_PROPERTYPUT` 네임드 인수 사용  
-- 인수 배열은 **오른쪽→왼쪽** 순서로 배치  
+핵심:
+- **PROPERTYGET/PUT/PUTREF** 구분, `DISPID_PROPERTYPUT` 네임드 인수 사용
+- 인수 배열은 **오른쪽→왼쪽** 순서로 배치
 - 문자열은 **`BSTR`**( `_bstr_t` 사용 권장 ), 수치/논리는 **`VARIANT`**로 포장
 
 ### 1-4. SAFEARRAY(배열) 전달 예
@@ -169,7 +169,7 @@ VARIANT arr; VariantInit(&arr); arr.vt = VT_ARRAY|VT_VARIANT; arr.parray = psa;
 ## 2. 서버(Provider)로 노출: 우리 앱을 자동화 가능하게 만들기
 
 ### 2-1. MFC OLE Automation(레거시) 빠른 길
-- `AfxOleInit()`, `DECLARE_DISPATCH_MAP`, `BEGIN_DISPATCH_MAP` 매크로 기반  
+- `AfxOleInit()`, `DECLARE_DISPATCH_MAP`, `BEGIN_DISPATCH_MAP` 매크로 기반
 - `COleDispatchDriver`/`CCmdTarget` 파생으로 **메서드/프로퍼티**를 스크립트에 노출
 
 ```cpp
@@ -192,7 +192,7 @@ BSTR CMyAuto::GetVersion() { return ::SysAllocString(L"1.2.3"); }
 void CMyAuto::DoWork(LPCTSTR path, long flags) { /* ... */ }
 ```
 
-- **등록/ProgID**: `COleObjectFactory`와 리소스 문자열 기반으로 CLSID/ProgID 등록  
+- **등록/ProgID**: `COleObjectFactory`와 리소스 문자열 기반으로 CLSID/ProgID 등록
 - 장점: 빠르고 간단. 단점: 근대적 툴링/IDL 제약, 대규모 모델엔 한계
 
 ### 2-2. ATL + `IDispatchImpl` (권장)
@@ -251,14 +251,14 @@ public:
 OBJECT_ENTRY_AUTO(__uuidof(App), CApp)
 ```
 
-- **레지스트레이션**: MSI/`regsvr32`/RGS로 CLSID/ProgID/TypeLib 등록  
+- **레지스트레이션**: MSI/`regsvr32`/RGS로 CLSID/ProgID/TypeLib 등록
 - **ThreadingModel=Apartment** 지정(STA)
 
 ### 2-3. 이벤트(Outbound) — Connection Point / `IDispatch` 이벤트 싱크
 서버가 **이벤트**를 내보내면(예: 진행률, 완료), 스크립트가 핸들링 가능.
 
 #### ATL 서버: 이벤트 소스
-- IDL에 `dispinterface _IAppEvents` 정의 → coclass에 `uuid, source`로 연결  
+- IDL에 `dispinterface _IAppEvents` 정의 → coclass에 `uuid, source`로 연결
 - 코드에서 `IDispEventSimpleImpl` 또는 `IConnectionPointContainer`를 통해 **Fire_OnProgress(percent)** 등 호출
 
 ```idl
@@ -335,7 +335,7 @@ print(app.GetStats())
 
 ### 3-2. 우리 앱이 **스크립트 엔진을 호스팅**(Active Scripting)
 
-- COM 인터페이스: `IActiveScript`, `IActiveScriptParse`  
+- COM 인터페이스: `IActiveScript`, `IActiveScriptParse`
 - VBS/JScript 엔진을 로드하여 **호스트 객체**(우리 `IApp`)를 Script에 주입 → 스크립트에서 `App.DoWork` 호출 가능
 
 #### 최소 예(개념 코드)
@@ -356,11 +356,11 @@ parse->ParseScriptText(L"App.DoWork \"C:\\temp\\a.txt\", 0", nullptr, nullptr, n
 engine->SetScriptState(SCRIPTSTATE_CONNECTED);
 ```
 
-- 장점: **내장 매크로 엔진**처럼 사용자 스크립트를 실행  
+- 장점: **내장 매크로 엔진**처럼 사용자 스크립트를 실행
 - 주의: 보안(샌드박스), 장기적으로 **Windows Active Scripting(JScript/VBScript) 폐기 이슈** 고려 → **PowerShell/JS(ChakraCore)/Lua/Python 임베딩** 대안 검토
 
 ### 3-3. PowerShell 호스팅(권장 대안)
-- .NET Hosting or External PowerShell 호출, **COM 객체를 PS에 노출**  
+- .NET Hosting or External PowerShell 호출, **COM 객체를 PS에 노출**
 - 스크립트 실행 시 **App**을 자동 바인딩해주면 친화적인 개발자 경험 제공
 
 ---
@@ -392,7 +392,7 @@ dispinterface IDocuments {
 ```
 
 ### 4-2. 이름있는/옵셔널 인수
-- `DISPID_PROPERTYPUT`, `DISPID_PROPERTYPUTREF`, `DISPATCH_PROPERTYPUT`  
+- `DISPID_PROPERTYPUT`, `DISPID_PROPERTYPUTREF`, `DISPATCH_PROPERTYPUT`
 - IDL에서 `defaultvalue`, `optional` 지정 → VBScript/PowerShell에서 자연스럽게 사용
 
 ```idl
@@ -400,54 +400,54 @@ dispinterface IDocuments {
 ```
 
 ### 4-3. 에러 전달
-- 실패 시 `HRESULT` + `EXCEPINFO` 채움 → 스크립트에서 **런타임 오류**로 인식  
+- 실패 시 `HRESULT` + `EXCEPINFO` 채움 → 스크립트에서 **런타임 오류**로 인식
 - 의미 있는 **에러 코드/메시지/소스** 제공
 
 ---
 
 ## 5. 메모리/형 변환 규칙(실무 필수)
 
-- 문자열: **BSTR** ( `SysAllocString` / `_bstr_t` )  
-- 값: **VARIANT** ( `_variant_t` )  
-- 배열: **SAFEARRAY** / `CComSafeArray`  
-- `VARIANT_BOOL`: `VARIANT_TRUE/VARIANT_FALSE` (C++ `bool`과 다른 타입)  
+- 문자열: **BSTR** ( `SysAllocString` / `_bstr_t` )
+- 값: **VARIANT** ( `_variant_t` )
+- 배열: **SAFEARRAY** / `CComSafeArray`
+- `VARIANT_BOOL`: `VARIANT_TRUE/VARIANT_FALSE` (C++ `bool`과 다른 타입)
 - 스레딩: 대부분 **STA**. 워커에서 호출하려면 **`CoMarshalInterThreadInterfaceInStream`**로 마샬링
 
 ---
 
 ## 6. 배포/레지스트리/64비트
 
-- ProgID → CLSID 매핑: `HKCR\MyApp.App\CLSID`  
-- CLSID → 서버: `HKCR\CLSID\{...}\LocalServer32`(EXE) / `InprocServer32`(DLL)  
-- TypeLib 등록: `HKCR\TypeLib\{...}`  
-- **x86/x64 분리**: 32비트 Office 자동화는 32비트 프로세스 필요. 가능하면 **아키텍처 일치**  
+- ProgID → CLSID 매핑: `HKCR\MyApp.App\CLSID`
+- CLSID → 서버: `HKCR\CLSID\{...}\LocalServer32`(EXE) / `InprocServer32`(DLL)
+- TypeLib 등록: `HKCR\TypeLib\{...}`
+- **x86/x64 분리**: 32비트 Office 자동화는 32비트 프로세스 필요. 가능하면 **아키텍처 일치**
 - 권한: 등록은 관리자 필요(MSI 권장)
 
 ---
 
 ## 7. 이벤트/콜백(스크립트→앱, 앱→스크립트) 활용 아이디어
 
-- **진행률 이벤트**: 긴 작업 중 `OnProgress(pct)` 발행 → 스크립트에서 UI/로그로 반영  
-- **취소 토큰**: 스크립트가 `App.Cancel` 호출 → 앱에서 작업 중단  
+- **진행률 이벤트**: 긴 작업 중 `OnProgress(pct)` 발행 → 스크립트에서 UI/로그로 반영
+- **취소 토큰**: 스크립트가 `App.Cancel` 호출 → 앱에서 작업 중단
 - **데이터 파이프**: 앱이 **IStream을 반환**하여 스크립트에서 바로 읽게 (파일 I/O 피함)
 
 ---
 
 ## 8. 보안/안전 가이드
 
-- 자동화는 사실상 **원격 코드 실행과 유사**: 신뢰할 수 있는 스크립트만 허용  
-- 샌드박스: 제한된 오브젝트만 노출, 파일시스템/레지스트리 접근 최소화  
-- 서명된 스크립트, 정책 기반 허용 목록(경로/해시)  
+- 자동화는 사실상 **원격 코드 실행과 유사**: 신뢰할 수 있는 스크립트만 허용
+- 샌드박스: 제한된 오브젝트만 노출, 파일시스템/레지스트리 접근 최소화
+- 서명된 스크립트, 정책 기반 허용 목록(경로/해시)
 - COM ACL/DCOM 설정(원격 자동화 시)
 
 ---
 
 ## 9. 문제해결/디버깅 팁
 
-- `oleview.exe`(OLE/COM Object Viewer)로 **TypeLib 확인**  
-- 스크립트 오류 → **EXCEPINFO** 내용과 `HRESULT` 로깅  
-- `IDispatch::Invoke`에 들어온 **`DISPID`/인수 VT**를 트레이스  
-- 0x80040154(클래스 미등록), 0x80029C4A(typelib 문제) 흔함  
+- `oleview.exe`(OLE/COM Object Viewer)로 **TypeLib 확인**
+- 스크립트 오류 → **EXCEPINFO** 내용과 `HRESULT` 로깅
+- `IDispatch::Invoke`에 들어온 **`DISPID`/인수 VT**를 트레이스
+- 0x80040154(클래스 미등록), 0x80029C4A(typelib 문제) 흔함
 - 이벤트가 안 옴 → `AtlAdvise/Unadvise` 성공/쿠키/아파트 확인
 
 ---
@@ -526,34 +526,34 @@ $app.DoWork("C:\temp\in.txt", 0)
 
 ## 11. 통합 아이디어(제품화 관점)
 
-1. **스크립트 콘솔** 내장:  
-   - PowerShell 또는 JS/Lua 콘솔 패널, **App** 객체 바인딩, 즉시 실행/히스토리  
-2. **매크로 기록기**:  
-   - 사용자의 UI 조작을 **Automation 호출 시퀀스**로 기록 → 스크립트로 내보내기  
-3. **작업 파이프라인**:  
-   - 스크립트로 **배치 처리/스케줄러** 실행 (타이머/작업 예약 가이드 참고)  
-4. **플러그인 시스템**:  
-   - COM 자동화 + 스크립트 모듈로 기능 확장. TypeLib로 문서화/인텔리센스 제공  
-5. **테스트 자동화**:  
+1. **스크립트 콘솔** 내장:
+   - PowerShell 또는 JS/Lua 콘솔 패널, **App** 객체 바인딩, 즉시 실행/히스토리
+2. **매크로 기록기**:
+   - 사용자의 UI 조작을 **Automation 호출 시퀀스**로 기록 → 스크립트로 내보내기
+3. **작업 파이프라인**:
+   - 스크립트로 **배치 처리/스케줄러** 실행 (타이머/작업 예약 가이드 참고)
+4. **플러그인 시스템**:
+   - COM 자동화 + 스크립트 모듈로 기능 확장. TypeLib로 문서화/인텔리센스 제공
+5. **테스트 자동화**:
    - 기능 검증을 PowerShell 스크립트로 돌려 **회귀 테스트**에 활용
 
 ---
 
 ## 12. 체크리스트 요약
 
-- [ ] `CoInitializeEx(COINIT_APARTMENTTHREADED)` / STA  
-- [ ] 서버: **IDL(TypeLib)**, `IDispatchImpl`, `ConnectionPoint`(이벤트)  
-- [ ] 클라: #import(조기)/`IDispatch::Invoke`(늦은) 모두 이해  
-- [ ] **BSTR/VARIANT/SAFEARRAY** 메모리 규칙  
-- [ ] `HRESULT` + `EXCEPINFO` 오류 보고  
-- [ ] ProgID/CLSID/TypeLib **등록**(x86/x64 구분)  
-- [ ] 보안/샌드박스/허용 목록 정책  
+- [ ] `CoInitializeEx(COINIT_APARTMENTTHREADED)` / STA
+- [ ] 서버: **IDL(TypeLib)**, `IDispatchImpl`, `ConnectionPoint`(이벤트)
+- [ ] 클라: #import(조기)/`IDispatch::Invoke`(늦은) 모두 이해
+- [ ] **BSTR/VARIANT/SAFEARRAY** 메모리 규칙
+- [ ] `HRESULT` + `EXCEPINFO` 오류 보고
+- [ ] ProgID/CLSID/TypeLib **등록**(x86/x64 구분)
+- [ ] 보안/샌드박스/허용 목록 정책
 - [ ] 문서화(개체 모델, 예제, 샘플 스크립트)
 
 ---
 
 ### 마무리
 
-Automation은 **앱을 하나의 플랫폼**으로 바꿉니다.  
-`IDispatch`와 TypeLib를 중심으로 **객체 모델을 설계**하고, **이벤트/스크립팅 호스팅**을 더하면  
+Automation은 **앱을 하나의 플랫폼**으로 바꿉니다.
+`IDispatch`와 TypeLib를 중심으로 **객체 모델을 설계**하고, **이벤트/스크립팅 호스팅**을 더하면
 사용자는 PowerShell/VBScript/Python 등으로 손쉽게 **자동화·배치·통합**을 구현할 수 있습니다.

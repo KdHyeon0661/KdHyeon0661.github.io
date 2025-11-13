@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # 리소스 부족 및 스케줄링 실패 대응 가이드 (Kubernetes)
 
-Kubernetes에서 `Pending`, `FailedScheduling`, `Insufficient CPU/Memory` 메시지는 **스케줄러가 배치할 수 있는 노드가 없을 때** 나타납니다.  
+Kubernetes에서 `Pending`, `FailedScheduling`, `Insufficient CPU/Memory` 메시지는 **스케줄러가 배치할 수 있는 노드가 없을 때** 나타납니다.
 
 ---
 
@@ -28,11 +28,11 @@ kubectl describe pvc <pvc-name>
 ```
 
 출력에서 가장 빈번한 메시지:
-- `0/N nodes are available: N Insufficient cpu/memory.`  
-- `node(s) had taint {dedicated=infra: NoSchedule} that the pod didn't tolerate`  
-- `no persistent volumes available for this claim`  
-- `node(s) didn't match node selector` / `didn't match Pod affinity/anti-affinity rules`  
-- `exceeded quota: ...`  
+- `0/N nodes are available: N Insufficient cpu/memory.`
+- `node(s) had taint {dedicated=infra: NoSchedule} that the pod didn't tolerate`
+- `no persistent volumes available for this claim`
+- `node(s) didn't match node selector` / `didn't match Pod affinity/anti-affinity rules`
+- `exceeded quota: ...`
 
 ---
 
@@ -94,8 +94,8 @@ resources:
 $$ \sum\_{p \in \text{node}} \text{requests\_mem}(p) + \text{requests\_mem}(\text{new}) \le \text{Allocatable\_mem(node)} $$
 
 여러 노드에 대한 배치 가능성(개념):
-$$ \exists n \in \text{Nodes} : 
-\sum\_{p \in n} \text{requests\_cpu}(p) + \text{requests\_cpu}(\text{new}) \le \text{Allocatable\_cpu}(n) \land 
+$$ \exists n \in \text{Nodes} :
+\sum\_{p \in n} \text{requests\_cpu}(p) + \text{requests\_cpu}(\text{new}) \le \text{Allocatable\_cpu}(n) \land
 \sum\_{p \in n} \text{requests\_mem}(p) + \text{requests\_mem}(\text{new}) \le \text{Allocatable\_mem}(n) $$
 
 > 위 식은 직관을 위한 개념 설명이며, 실제 스케줄러는 더 많은 필터·스코어링을 수행합니다.
@@ -156,8 +156,8 @@ spec:
         averageUtilization: 60
 ```
 
-**Cluster Autoscaler(매니지드 예)**  
-- EKS/GKE/AKS에서 노드그룹/노드풀 **자동 확장** 옵션 활성화.  
+**Cluster Autoscaler(매니지드 예)**
+- EKS/GKE/AKS에서 노드그룹/노드풀 **자동 확장** 옵션 활성화.
 - 단, 파드에 **어피니티/톨러레이션/인스턴스 타입 요구**가 있으면 해당 풀로 확장되게 설계.
 
 ---
@@ -348,8 +348,8 @@ spec:
 
 ### 8.2 라이트사이징(권장 휴리스틱)
 
-- **CPU requests**: 최근 1~2주 **P95 사용률** × 안전계수(1.2~1.5)  
-- **Memory requests**: 최근 **P99 피크** × 안전계수(1.1~1.3)  
+- **CPU requests**: 최근 1~2주 **P95 사용률** × 안전계수(1.2~1.5)
+- **Memory requests**: 최근 **P99 피크** × 안전계수(1.1~1.3)
 - HPA가 있는 경우 **낮은 requests + 충분한 maxReplicas** 조합이 유효.
 
 ---
@@ -363,10 +363,10 @@ spec:
 - 이벤트: `0/6 nodes are available: 6 Insufficient memory.`
 
 **조치**
-1) 지난 14일 메모리 사용률 P95 확인 → 180Mi 근처  
-2) 현재 requests: 512Mi → 과대  
-3) Kustomize로 **requests 256Mi / limits 512Mi**로 하향 패치  
-4) HPA min=6, max=18로 확장 탄력 부여  
+1) 지난 14일 메모리 사용률 P95 확인 → 180Mi 근처
+2) 현재 requests: 512Mi → 과대
+3) Kustomize로 **requests 256Mi / limits 512Mi**로 하향 패치
+4) HPA min=6, max=18로 확장 탄력 부여
 5) `kubectl rollout status` 모니터링 → 정상 완료
 
 ### 9.2 Taint된 인프라 노드로만 가능한 워크로드
@@ -393,7 +393,7 @@ tolerations:
 - PVC 이벤트: `no PV available`
 
 **조치**
-- `WaitForFirstConsumer` SC 사용으로 파드가 어느 존으로 갈지 정해진 뒤 디스크 프로비저닝  
+- `WaitForFirstConsumer` SC 사용으로 파드가 어느 존으로 갈지 정해진 뒤 디스크 프로비저닝
 - 또는 Z3 지원 SC로 변경 → 해결
 
 ---

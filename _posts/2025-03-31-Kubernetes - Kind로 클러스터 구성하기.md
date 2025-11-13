@@ -515,10 +515,10 @@ curl http://api.local/
 ## 16. 정리 및 다음 단계
 - Kind는 **가볍고 빠른 개발/테스트/CI용 쿠버네티스**의 표준급 도구다.
 - 핵심 포인트 요약:
-  1) **커스텀 설정**으로 포트/마운트/노드 수를 환경에 맞게 조정  
-  2) **ingress-nginx + extraPortMappings**로 브라우저 접근 간편화  
-  3) **MetalLB**로 LoadBalancer 타입 테스트  
-  4) **로컬 레지스트리/이미지 로딩**으로 개발 루프 단축  
+  1) **커스텀 설정**으로 포트/마운트/노드 수를 환경에 맞게 조정
+  2) **ingress-nginx + extraPortMappings**로 브라우저 접근 간편화
+  3) **MetalLB**로 LoadBalancer 타입 테스트
+  4) **로컬 레지스트리/이미지 로딩**으로 개발 루프 단축
   5) **CI 파이프라인**에 Kind를 넣어 E2E 신뢰성 강화
 - 다음 학습:
   - **Helm/Kustomize** 템플릿화

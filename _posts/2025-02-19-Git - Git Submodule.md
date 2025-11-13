@@ -8,9 +8,9 @@ category: Git
 
 ## 0. 서브모듈 한 줄 요약
 
-- **서브모듈(Submodule)** = 상위 리포 안에서 **별도 Git 리포를 디렉터리로 연결**하는 링크.  
-- 상위 리포는 **서브모듈의 “커밋 해시(정확한 한 점)”만 기록**한다.  
-- 장점: **정밀 재현성(핀고정)**, 코드 재사용, 조직 간 경계 유지.  
+- **서브모듈(Submodule)** = 상위 리포 안에서 **별도 Git 리포를 디렉터리로 연결**하는 링크.
+- 상위 리포는 **서브모듈의 “커밋 해시(정확한 한 점)”만 기록**한다.
+- 장점: **정밀 재현성(핀고정)**, 코드 재사용, 조직 간 경계 유지.
 - 단점: 초기화/업데이트/권한/CI 관리가 **명시적이고 수동적**이다.
 
 ---
@@ -147,7 +147,7 @@ git commit -m "Track common-ui to latest main"
 - 기본은 `checkout`(깨끗한 워크트리를 가정). 로컬 커밋 유지가 필요하면 `rebase`나 `merge` 고려.
 
 ### 5.3 `shallow = true`
-- 서브모듈 클론을 얕게 수행하여 CI 시간/네트워크를 절약.  
+- 서브모듈 클론을 얕게 수행하여 CI 시간/네트워크를 절약.
 - 과거 이력 접근이 필요하면 해제.
 
 ---
@@ -297,9 +297,9 @@ git submodule sync --recursive
 
 ## 11. 중첩 서브모듈(Nested Submodules)과 모노레포
 
-- **중첩 구조**: A(상위) → B(서브모듈) → C(서브모듈).  
+- **중첩 구조**: A(상위) → B(서브모듈) → C(서브모듈).
   `--recursive` 옵션으로 한 번에 초기화/업데이트 가능하나, 권한/토큰/네트워크 비용이 누적된다.
-- **모노레포**에서 서브모듈을 사용할 경우, “사실상 외부 리포”인 서브모듈이 **모노레포의 공용 규약/CI 파이프라인**과 엇갈릴 수 있음.  
+- **모노레포**에서 서브모듈을 사용할 경우, “사실상 외부 리포”인 서브모듈이 **모노레포의 공용 규약/CI 파이프라인**과 엇갈릴 수 있음.
   - 가능하면 **Subtree**나 **패키지 매니저/사내 레지스트리**(npm, Maven, PyPI, NuGet 등)로 대체를 검토.
 
 ---
@@ -307,28 +307,28 @@ git submodule sync --recursive
 ## 12. 서브모듈 트러블슈팅
 
 ### 12.1 “서브모듈 디렉토리가 비어 보임”
-- 초기화/업데이트 안 한 상태.  
+- 초기화/업데이트 안 한 상태.
   → `git submodule update --init --recursive`
 
 ### 12.2 “권한 오류(프라이빗 리포 접근 불가)”
-- CI/로컬의 인증 미구성.  
+- CI/로컬의 인증 미구성.
   → HTTPS(토큰) 또는 SSH 키 설정, `actions/checkout@v4`의 `ssh-key`/`token` 사용.
 
 ### 12.3 “로컬 변경 때문에 업데이트 실패”
-- 서브모듈 내부에서 수정이 남아있어 `checkout` 불가.  
-  → `git -C libs/common-ui stash` 후 `git submodule update`  
+- 서브모듈 내부에서 수정이 남아있어 `checkout` 불가.
+  → `git -C libs/common-ui stash` 후 `git submodule update`
   또는 `.gitmodules`의 `update=rebase`로 정책 조정.
 
 ### 12.4 “상위에서 submodule 포인터만 바뀌었는데 빌드가 예전 코드로”
-- CI가 `submodules: true` 없이 체크아웃.  
+- CI가 `submodules: true` 없이 체크아웃.
   → Actions에서 `submodules: recursive` 사용, 또는 수동 `git submodule update --init`.
 
 ### 12.5 “경로/URL을 바꿨는데 sync가 안 됨”
-- `.gitmodules`만 고치고 `sync`를 누락.  
+- `.gitmodules`만 고치고 `sync`를 누락.
   → `git submodule sync --recursive`
 
 ### 12.6 “의존 캐시가 계속 깨짐”
-- 서브모듈 해시가 자주 바뀌면 캐시 적중률이 떨어짐.  
+- 서브모듈 해시가 자주 바뀌면 캐시 적중률이 떨어짐.
   → 서브모듈 릴리스 주기 재설계, 빌드 아티팩트 캐시로 보완.
 
 ---
@@ -461,13 +461,13 @@ git submodule sync --recursive
 
 ## 17. 자주 묻는 질문(FAQ)
 
-**Q1. 서브모듈이 왜 “브랜치”가 아니라 “커밋”을 가리키나요?**  
+**Q1. 서브모듈이 왜 “브랜치”가 아니라 “커밋”을 가리키나요?**
 A. 상위 리포의 재현성을 보장하려면 “시간에 따라 움직이지 않는 한 점”이 필요하기 때문이다. 브랜치를 추적하고 싶다면 `.gitmodules`의 `branch` + `update --remote`를 활용하되, **결국 상위에서 다시 커밋**해야 고정점이 바뀐다.
 
-**Q2. 로컬에서 서브모듈을 수정했는데 상위 커밋만 푸시했더니 반영이 안 돼요.**  
+**Q2. 로컬에서 서브모듈을 수정했는데 상위 커밋만 푸시했더니 반영이 안 돼요.**
 A. 서브모듈 리포에 **별도 `git push`**가 필요하다. 상위는 “포인터만” 기록한다.
 
-**Q3. 서브모듈 대신 패키지 매니저(예: npm, Maven)를 쓰면 안 되나요?**  
+**Q3. 서브모듈 대신 패키지 매니저(예: npm, Maven)를 쓰면 안 되나요?**
 A. 가능하면 패키지 매니저를 권장한다. 서브모듈은 “소스 수준의 경계 유지/권한 분리/비빌드형 리소스”가 필요한 경우에 선택한다.
 
 ---
@@ -482,6 +482,6 @@ A. 가능하면 패키지 매니저를 권장한다. 서브모듈은 “소스 �
 
 ## 참고
 
-- Git 공식 문서 — Submodules: https://git-scm.com/book/en/v2/Git-Tools-Submodules  
-- Atlassian 튜토리얼 — Submodule: https://www.atlassian.com/git/tutorials/git-submodule  
+- Git 공식 문서 — Submodules: https://git-scm.com/book/en/v2/Git-Tools-Submodules
+- Atlassian 튜토리얼 — Submodule: https://www.atlassian.com/git/tutorials/git-submodule
 - actions/checkout (submodules 옵션): https://github.com/actions/checkout

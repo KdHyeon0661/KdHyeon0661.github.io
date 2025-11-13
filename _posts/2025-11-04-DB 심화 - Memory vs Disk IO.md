@@ -7,25 +7,25 @@ category: DB 심화
 # Memory vs Disk I/O — I/O 효율화 튜닝의 중요성·버퍼 캐시 히트율·네트워크 파일시스템 캐시 영향
 
 > **핵심 요약**
-> - **메모리 I/O(버퍼 캐시 히트)** 는 **나노~마이크로초** 수준, **디스크 I/O** 는 **밀리~수 ms+**. I/O를 **메모리로 승격**시키면 응답시간이 단계적으로 줄어든다.  
-> - 하지만 “**Hit Ratio만 높이면 된다**”는 **오해**다. **직접 경로 읽기(Direct Path Read)**, **순차 스캔**은 **히트율을 낮추더라도** 더 빠를 수 있다.  
+> - **메모리 I/O(버퍼 캐시 히트)** 는 **나노~마이크로초** 수준, **디스크 I/O** 는 **밀리~수 ms+**. I/O를 **메모리로 승격**시키면 응답시간이 단계적으로 줄어든다.
+> - 하지만 “**Hit Ratio만 높이면 된다**”는 **오해**다. **직접 경로 읽기(Direct Path Read)**, **순차 스캔**은 **히트율을 낮추더라도** 더 빠를 수 있다.
 > - **네트워크 파일시스템(NFS/NAS, dNFS, ZFS/ARC 등)** 의 **OS/컨트롤러 캐시**는 “2차 캐시”로 작동한다. **중복 버퍼링**을 피하고(**direct I/O**·**dNFS**) **rsize/wsize**·**attribute cache**·**delegation**·**latency**를 튜닝해야 한다.
 
 ---
 
 ## 0. 기초 개념: 메모리 vs 디스크 I/O의 시간 규모
 
-- 메모리(서버 RAM, SGA 버퍼 캐시): 수십~수백 ns ~ 수 μs  
-- 로컬 SSD/NVMe: 수백 μs ~ 수 ms (Queue·Saturation·GC에 따라 변동)  
-- SAN/NAS(네트워크 hop 포함): 수 ms ~ 수십 ms (Jumbo/MTU·RTT·컨트롤러 큐 영향)  
+- 메모리(서버 RAM, SGA 버퍼 캐시): 수십~수백 ns ~ 수 μs
+- 로컬 SSD/NVMe: 수백 μs ~ 수 ms (Queue·Saturation·GC에 따라 변동)
+- SAN/NAS(네트워크 hop 포함): 수 ms ~ 수십 ms (Jumbo/MTU·RTT·컨트롤러 큐 영향)
 
-**응답시간 근사식**  
+**응답시간 근사식**
 $$
 \text{RT} \approx \text{CPU} + \text{Latch/Mutex Wait} + \text{Buffer Get Time} + \text{Physical I/O Time} + \text{Network}
 $$
 
-- **Buffer Get** 은 **버퍼 캐시 히트**일 때만 발생(매우 짧음).  
-- **Physical I/O** 는 히트 실패(PHYSICAL READ)일 때만 발생(상대적으로 큼).  
+- **Buffer Get** 은 **버퍼 캐시 히트**일 때만 발생(매우 짧음).
+- **Physical I/O** 는 히트 실패(PHYSICAL READ)일 때만 발생(상대적으로 큼).
 - 따라서 **I/O 효율화**는 “**물리 읽기 자체를 줄이거나**(히트율↑/플랜 개선), **물리 읽기의 품질을 높이는 것**(순차/병렬/대역폭↑)” 두 축으로 본다.
 
 ---
@@ -33,17 +33,17 @@ $$
 ## 1. I/O 효율화 튜닝의 중요성
 
 ### 1.1 왜 중요한가?
-- OLTP의 많은 대기 이벤트 상위는 대체로 **`db file sequential read`(단일 블록)**, **`log file sync`**, **`buffer busy`**, **`read by other session`** 등 I/O 관여 항목이 차지.  
+- OLTP의 많은 대기 이벤트 상위는 대체로 **`db file sequential read`(단일 블록)**, **`log file sync`**, **`buffer busy`**, **`read by other session`** 등 I/O 관여 항목이 차지.
 - DW/리포트는 **`direct path read temp`**, **`cell smart table scan`(Exadata)** 등 **대량 순차 I/O**가 좌우.
 
 ### 1.2 잘못된 목표 설정의 위험
-- “**버퍼 캐시 히트율 99%**” 같은 목표는 **틀릴 수 있음**.  
-  - 대량 보고 작업은 **Full Scan + Direct Path** 가 **더 빠를** 수 있다(히트율은 내려가도 전체 RT는 단축).  
+- “**버퍼 캐시 히트율 99%**” 같은 목표는 **틀릴 수 있음**.
+  - 대량 보고 작업은 **Full Scan + Direct Path** 가 **더 빠를** 수 있다(히트율은 내려가도 전체 RT는 단축).
   - 반대로 OLTP 랜덤 읽기는 **히트율 1~2%p**만 올려도 **체감**이 크다.
 
 ### 1.3 성능 접근법(OWI/Response Time)
-- **대기 기반** 분석: 상위 대기 + 카운터(논리/물리 읽기)로 **가장 큰 RT 기여자**부터 제거.  
-- **플랜 기반** 분석: **실행계획**과 **블록 접근 패턴**(Random vs Sequential)을 먼저 본다.  
+- **대기 기반** 분석: 상위 대기 + 카운터(논리/물리 읽기)로 **가장 큰 RT 기여자**부터 제거.
+- **플랜 기반** 분석: **실행계획**과 **블록 접근 패턴**(Random vs Sequential)을 먼저 본다.
 - **데이터 기반**: **핫 세그먼트/핫 블록**과 **캐시 미스**를 숫자로 확인 후 **정책적**으로 조치(인덱스, 파티션, 클러스터링, 배열 페치 등).
 
 ---
@@ -51,12 +51,12 @@ $$
 ## 2. 버퍼 캐시 히트율(Buffer Cache Hit Ratio, BCHR)
 
 ### 2.1 정의와 통상 계산식
-- 용어:  
-  - `db block gets`(CURRENT 모드 읽기)  
-  - `consistent gets`(CONSISTENT 모드 읽기, Undo 기반 CR)  
+- 용어:
+  - `db block gets`(CURRENT 모드 읽기)
+  - `consistent gets`(CONSISTENT 모드 읽기, Undo 기반 CR)
   - `physical reads`(버퍼 캐시에 **없어서 디스크**에서 읽은 횟수)
 
-**단순 BCHR**  
+**단순 BCHR**
 $$
 \text{BCHR} = 1 - \frac{\text{physical reads}}{\text{db block gets} + \text{consistent gets}}
 $$
@@ -95,8 +95,8 @@ ORDER  BY disk_reads DESC FETCH FIRST 30 ROWS ONLY;
 ```
 
 ### 2.3 해석 포인트
-- **히트율↑** 자체보다, **핫 세그먼트·핫 SQL** 을 **줄이는 변화**(인덱스·파티션·플랜)가 핵심.  
-- **Direct Path** 작업은 히트율을 낮추지만, **순차 대량 스캔**에선 전체 RT 단축이 목표.  
+- **히트율↑** 자체보다, **핫 세그먼트·핫 SQL** 을 **줄이는 변화**(인덱스·파티션·플랜)가 핵심.
+- **Direct Path** 작업은 히트율을 낮추지만, **순차 대량 스캔**에선 전체 RT 단축이 목표.
 - **작은 워킹세트(OLTP 핫 블록)** 가 **L2 캐시**처럼 상주하도록 설계(인덱스 정합, 부분범위처리, 커버링 인덱스).
 
 ---
@@ -104,14 +104,14 @@ ORDER  BY disk_reads DESC FETCH FIRST 30 ROWS ONLY;
 ## 3. 튜닝 전략: “메모리 승격” + “물리 I/O 품질 개선”
 
 ### 3.1 메모리 승격(히트율↑) 전략
-1) **워크로드 축소**:  
-   - **부분범위처리(Stopkey)**, **Keyset 페이지**로 **읽을 양 자체를 줄임**  
+1) **워크로드 축소**:
+   - **부분범위처리(Stopkey)**, **Keyset 페이지**로 **읽을 양 자체를 줄임**
    - **SELECT-LIST 최소화**, **중복 조회 제거**(조인/스칼라 서브쿼리 캐싱/RESULT_CACHE)
-2) **플랜 변경**:  
-   - 랜덤 I/O 많은 OLTP는 **인덱스 설계**(필터+정렬 복합/커버링)로 **테이블 BY ROWID 제거**  
+2) **플랜 변경**:
+   - 랜덤 I/O 많은 OLTP는 **인덱스 설계**(필터+정렬 복합/커버링)로 **테이블 BY ROWID 제거**
    - **클러스터링 팩터 개선**(CTAS 재적재)로 Range Scan의 **준-순차화**
-3) **캐시 정책**:  
-   - **KEEP Pool**(자주 쓰는 작은 Lookup/Hot Segment)  
+3) **캐시 정책**:
+   - **KEEP Pool**(자주 쓰는 작은 Lookup/Hot Segment)
    - SGA/PGA(워크로드·메모리 여유·TEMP 사용량 기반) **적절히 증설**
 
 **예: KEEP 풀에 핫 개체 고정**
@@ -122,9 +122,9 @@ ALTER INDEX ix_dim_status STORAGE (BUFFER_POOL KEEP);
 ```
 
 ### 3.2 물리 I/O 품질 개선(순차/대역폭↑)
-1) **해시 조인 + 파티션 프루닝/블룸**으로 **순차 대량 I/O**  
-2) **병렬도** 조정(PX) — 스토리지/네트워크 대역폭과 균형  
-3) **Direct Path Read**(대량 읽기): **버퍼 캐시 오염 방지**, 소트/집계/스캔 성능↑  
+1) **해시 조인 + 파티션 프루닝/블룸**으로 **순차 대량 I/O**
+2) **병렬도** 조정(PX) — 스토리지/네트워크 대역폭과 균형
+3) **Direct Path Read**(대량 읽기): **버퍼 캐시 오염 방지**, 소트/집계/스캔 성능↑
 4) **파일 레이아웃/ASM 스트라이핑**: LUN 분산, IOPS/MB/s 상승
 
 **예: 대량 보고 쿼리 힌트**
@@ -139,14 +139,14 @@ WHERE  order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -3);
 ## 4. 네트워크 파일시스템(NFS/NAS) 캐시가 I/O 효율에 미치는 영향
 
 ### 4.1 레이어별 캐시
-- **Oracle SGA 버퍼 캐시**: 데이터 블록 캐시(1차)  
-- **OS 페이지 캐시**: 파일 시스템 읽기 결과 캐시(2차) — NFS 클라이언트 측  
-- **NAS 컨트롤러 캐시 / ZFS ARC**: 스토리지 어플라이언스 캐시(3차)  
+- **Oracle SGA 버퍼 캐시**: 데이터 블록 캐시(1차)
+- **OS 페이지 캐시**: 파일 시스템 읽기 결과 캐시(2차) — NFS 클라이언트 측
+- **NAS 컨트롤러 캐시 / ZFS ARC**: 스토리지 어플라이언스 캐시(3차)
 - **중복 버퍼링(Double Buffering)** 위험: 동일 블록이 **SGA**와 **OS/NAS**에 **이중 캐시** → 메모리 낭비·일부 워크로드에 비효율
 
 ### 4.2 Oracle Direct NFS(dNFS)
-- Oracle 프로세스가 **유저스페이스에서 직접 NFS I/O** 를 관리(커널 NFS 경유 X)  
-- **장점**: 더 큰 I/O 사이즈, 더 적은 컨텍스트 스위칭, 다중 세션/파이프라인, **캐싱·Lock 처리 최적화**  
+- Oracle 프로세스가 **유저스페이스에서 직접 NFS I/O** 를 관리(커널 NFS 경유 X)
+- **장점**: 더 큰 I/O 사이즈, 더 적은 컨텍스트 스위칭, 다중 세션/파이프라인, **캐싱·Lock 처리 최적화**
 - 구성 파일: `$ORACLE_HOME/dbs/oranfstab`
 
 **샘플 `oranfstab`**
@@ -167,10 +167,10 @@ SELECT * FROM v$dnfs_channels;
 ```
 
 ### 4.3 커널 NFS 사용 시 권장 옵션(예시)
-- **rsize/wsize**: I/O 크기(예: 1M) 확대로 **순차 대역폭↑**  
-- **hard,timeo,retrans**: 안정성  
-- **noatime**: 메타데이터 업데이트 최소화  
-- **actimeo**(attribute cache): 메타데이터 캐시 유지시간 — 너무 길면 변경 감지 지연  
+- **rsize/wsize**: I/O 크기(예: 1M) 확대로 **순차 대역폭↑**
+- **hard,timeo,retrans**: 안정성
+- **noatime**: 메타데이터 업데이트 최소화
+- **actimeo**(attribute cache): 메타데이터 캐시 유지시간 — 너무 길면 변경 감지 지연
 - **proto,port,mtu/jumbo**: 네트워크 튜닝(RTT↓, 재전송↓)
 
 **리눅스 마운트 예**
@@ -182,8 +182,8 @@ mount -t nfs -o vers=3,proto=tcp,rsize=1048576,wsize=1048576,hard,timeo=600,retr
 > **포인트**: 큰 연속 I/O는 **rsize/wsize↑** 로 이득. 작은 랜덤 I/O는 **RTT**가 지배하므로 **네트워크 지연**이 핵심.
 
 ### 4.4 ZFS/ARC, NAS 컨트롤러 캐시와의 상호작용
-- **ZFS ARC**(메모리 캐시) + **L2ARC**(SSD 캐시) → **자주 읽는 블록**의 **네트워크 왕복** 감소  
-- 하지만 **SGA 버퍼 캐시**와 **중복** 될 수 있으니, **DB 버퍼 캐시를 과도 확장**하기보다 **스토리지 캐시**와 **균형**을 잡는다.  
+- **ZFS ARC**(메모리 캐시) + **L2ARC**(SSD 캐시) → **자주 읽는 블록**의 **네트워크 왕복** 감소
+- 하지만 **SGA 버퍼 캐시**와 **중복** 될 수 있으니, **DB 버퍼 캐시를 과도 확장**하기보다 **스토리지 캐시**와 **균형**을 잡는다.
 - **Direct I/O**(파일시스템 캐시 우회) vs **Buffered I/O**(OS 캐시 사용) **실측 비교**가 중요.
 
 ---
@@ -235,11 +235,11 @@ WHERE  name LIKE 'physical reads direct%';  -- direct path read, direct temp
 ## 6. 시나리오별 실전 처방
 
 ### 6.1 OLTP: 랜덤 I/O가 상위(단일 블록)
-**증상**: `db file sequential read` 상위, SQL은 **NL + BY ROWID** 반복, 인덱스 부적합  
-**처방**  
-- **인덱스 재설계**(필터+정렬 복합, 커버링), **클러스터링 팩터 개선**  
-- **부분범위처리**(리스트 화면) + **Keyset 페이지**  
-- **KEEP Pool**: 작은 Lookup 상주  
+**증상**: `db file sequential read` 상위, SQL은 **NL + BY ROWID** 반복, 인덱스 부적합
+**처방**
+- **인덱스 재설계**(필터+정렬 복합, 커버링), **클러스터링 팩터 개선**
+- **부분범위처리**(리스트 화면) + **Keyset 페이지**
+- **KEEP Pool**: 작은 Lookup 상주
 - **배열 페치/배치 처리**로 **왕복↓**
 
 **예**
@@ -256,10 +256,10 @@ FETCH FIRST 50 ROWS ONLY;
 ```
 
 ### 6.2 DW/리포트: 대량 순차 I/O가 상위
-**증상**: `direct path read temp`, `cell smart table scan`(Exadata), 정렬/집계 비중 큼  
-**처방**  
-- **해시 조인 + 파티션 프루닝/블룸**으로 작은 전체만 순차 스캔  
-- **병렬도**와 **I/O 사이즈** 최적화, **Jumbo/MTU**·**rsize/wsize** 확대  
+**증상**: `direct path read temp`, `cell smart table scan`(Exadata), 정렬/집계 비중 큼
+**처방**
+- **해시 조인 + 파티션 프루닝/블룸**으로 작은 전체만 순차 스캔
+- **병렬도**와 **I/O 사이즈** 최적화, **Jumbo/MTU**·**rsize/wsize** 확대
 - **dNFS/ASM** 으로 파이프라인·스트라이핑 최적화
 
 **예**
@@ -271,19 +271,19 @@ GROUP  BY cust_id;
 ```
 
 ### 6.3 NFS/NAS에서 지연이 높은 경우
-**증상**: 평균 RT 대비 tail latency 높음, 재전송, 작은 랜덤 I/O 다발  
-**처방**  
-- **dNFS 활성화** 또는 **rsize/wsize↑**  
-- **Keyset 페이지**로 작은 랜덤 읽기 빈도 자체를 낮춤  
-- **네트워크 튜닝**(RTT↓, Jumbo, 큐 길이), **속도/듀플렉스 고정**  
+**증상**: 평균 RT 대비 tail latency 높음, 재전송, 작은 랜덤 I/O 다발
+**처방**
+- **dNFS 활성화** 또는 **rsize/wsize↑**
+- **Keyset 페이지**로 작은 랜덤 읽기 빈도 자체를 낮춤
+- **네트워크 튜닝**(RTT↓, Jumbo, 큐 길이), **속도/듀플렉스 고정**
 - **스토리지 캐시**(ARC/L2ARC) 사이징·Pin set 검토
 
 ---
 
 ## 7. “히트율 교조주의”에 대한 반례와 균형
 
-- **반례 1**: 1TB 보고 쿼리, 히트율 60% → 해시 조인 + Direct Path로 **히트율 30%**가 되었지만 **RT 40% 단축**.  
-- **반례 2**: OLTP 단건 조회, 히트율 99.5% → 인덱스 커버링으로 **99.3%**가 되었지만 **RT 20% 단축**(BY ROWID 제거).  
+- **반례 1**: 1TB 보고 쿼리, 히트율 60% → 해시 조인 + Direct Path로 **히트율 30%**가 되었지만 **RT 40% 단축**.
+- **반례 2**: OLTP 단건 조회, 히트율 99.5% → 인덱스 커버링으로 **99.3%**가 되었지만 **RT 20% 단축**(BY ROWID 제거).
 - **결론**: 히트율은 **결과 지표**일 뿐 **목표 그 자체가 아니다**. **RT/스루풋** 중심으로 판단.
 
 ---
@@ -307,21 +307,21 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ## 9. 네트워크 파일시스템 구성 체크리스트
 
-- [ ] **dNFS** 사용 가능한가? (`v$dnfs_servers`/`v$dnfs_channels` 확인)  
-- [ ] 커널 NFS라면 **rsize/wsize**, **hard/timeo/retrans**, **noatime**, **actimeo** 적정?  
-- [ ] **Jumbo MTU**(9k)·스위치 큐·ECN/RED 조정  
-- [ ] **스토리지 캐시**(ARC/L2ARC/컨트롤러)와 **SGA 버퍼 캐시** **균형**  
-- [ ] **혼합 워크로드**에서 **Double Buffering** 과다 여부 확인(Direct I/O 고려)  
+- [ ] **dNFS** 사용 가능한가? (`v$dnfs_servers`/`v$dnfs_channels` 확인)
+- [ ] 커널 NFS라면 **rsize/wsize**, **hard/timeo/retrans**, **noatime**, **actimeo** 적정?
+- [ ] **Jumbo MTU**(9k)·스위치 큐·ECN/RED 조정
+- [ ] **스토리지 캐시**(ARC/L2ARC/컨트롤러)와 **SGA 버퍼 캐시** **균형**
+- [ ] **혼합 워크로드**에서 **Double Buffering** 과다 여부 확인(Direct I/O 고려)
 - [ ] PX·HASH·Full Scan 경로에서 **순차 대역폭**이 목표대로 나오는지 `iostat`·`nfsiostat` 확인
 
 ---
 
 ## 10. 요약 처방전
 
-1) **I/O 효율화의 1원칙**: **읽지 않는 것이 최고** — 부분범위처리, 커버링 인덱스, 중복 연산 제거.  
-2) **2원칙**: **읽어야 한다면 잘 읽자** — 해시 조인 + 프루닝/블룸, 순차/병렬, Direct Path.  
-3) **히트율은 수단**: OLTP는 워킹세트 상주(히트율↑), DW는 순차/대역폭 극대화(히트율↓라도 OK).  
-4) **NFS/NAS**: dNFS/마운트 옵션/스토리지 캐시/네트워크 튜닝으로 **RTT·대역폭** 최적화.  
+1) **I/O 효율화의 1원칙**: **읽지 않는 것이 최고** — 부분범위처리, 커버링 인덱스, 중복 연산 제거.
+2) **2원칙**: **읽어야 한다면 잘 읽자** — 해시 조인 + 프루닝/블룸, 순차/병렬, Direct Path.
+3) **히트율은 수단**: OLTP는 워킹세트 상주(히트율↑), DW는 순차/대역폭 극대화(히트율↓라도 OK).
+4) **NFS/NAS**: dNFS/마운트 옵션/스토리지 캐시/네트워크 튜닝으로 **RTT·대역폭** 최적화.
 5) **측정으로 검증**: AWR/ASH/SQL Monitor/TKPROF 로 전·후 수치 비교.
 
 ---
@@ -389,8 +389,8 @@ FETCH FIRST :take ROWS ONLY;
 
 ## 결론
 
-- **Memory vs Disk I/O** 는 “속도 차”가 아닌 “**설계의 방향**” 문제다.  
-- **OLTP** 는 작은 워킹세트를 **메모리에 붙여두고(히트율↑)**, **랜덤 I/O** 를 최소화한다.  
-- **DW/리포트** 는 **순차 대역폭**과 **Direct Path** 를 극대화한다(히트율 집착 금지).  
-- **NFS/NAS** 환경에서는 **dNFS/마운트 옵션/스토리지 캐시/네트워크**의 **캐시·대역폭·지연**을 함께 조율하라.  
+- **Memory vs Disk I/O** 는 “속도 차”가 아닌 “**설계의 방향**” 문제다.
+- **OLTP** 는 작은 워킹세트를 **메모리에 붙여두고(히트율↑)**, **랜덤 I/O** 를 최소화한다.
+- **DW/리포트** 는 **순차 대역폭**과 **Direct Path** 를 극대화한다(히트율 집착 금지).
+- **NFS/NAS** 환경에서는 **dNFS/마운트 옵션/스토리지 캐시/네트워크**의 **캐시·대역폭·지연**을 함께 조율하라.
 - 모든 변화는 **AWR/ASH/SQL Monitor/TKPROF** 로 **숫자**로 확인하고, “히트율”이 아니라 **응답시간·처리량**의 개선을 목표로 삼아라.

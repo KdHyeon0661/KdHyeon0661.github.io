@@ -215,12 +215,12 @@ builder.Services.AddFluxor(o => o.ScanAssemblies(typeof(Program).Assembly)
                                  .UseReduxDevTools());
 ```
 
-- 장점: 예측 가능한 상태/타임트래블 디버깅  
+- 장점: 예측 가능한 상태/타임트래블 디버깅
 - 단점: 러닝 커브, 보일러플레이트
 
 ### 7.4 Blazor Server 특수 고려
-- **회로 복원/끊김 처리**(네트워크 장애)  
-- **유저별 상태**는 **Scoped** 또는 **회로 바인딩** 서비스로 관리  
+- **회로 복원/끊김 처리**(네트워크 장애)
+- **유저별 상태**는 **Scoped** 또는 **회로 바인딩** 서비스로 관리
 - **서버 메모리 사용량**/동접 사용량에 따라 **스케일아웃(백플레인)** 필요
 
 ---
@@ -297,7 +297,7 @@ window.callDotNet = async () => {
 };
 ```
 
-- 복잡 UI(차트/지도/에디터)는 **Interop 래퍼 컴포넌트** 작성 권장  
+- 복잡 UI(차트/지도/에디터)는 **Interop 래퍼 컴포넌트** 작성 권장
 - 성능: JSObjectReference 재사용, 빈번 호출 최소화
 
 ---
@@ -306,7 +306,7 @@ window.callDotNet = async () => {
 
 - **SignalR 백플레인**: Redis/Azure SignalR Service로 다중 서버 확장
 - **상태 보존**: 각 사용자는 서버 메모리에 세션 유사 상태가 존재 → **세션 핀닝** 또는 **스티키 세션** 필요
-- **지연 예산 계산**  
+- **지연 예산 계산**
   네트워크 왕복(RTT) \( r \), 인터랙션당 업데이트 \( n \) 회라면 체감 지연 \( L \)은
   $$
   L \approx n \cdot r + t_{server} + t_{render}
@@ -317,8 +317,8 @@ window.callDotNet = async () => {
 
 ## 11. Blazor WASM 성능/번들 최적화
 
-- **트리밍(Trim), AOT(선택), PWA 캐시**, **Lazy Loading(Assembly)**  
-- **압축/HTTP/2/3**, CDN 활용  
+- **트리밍(Trim), AOT(선택), PWA 캐시**, **Lazy Loading(Assembly)**
+- **압축/HTTP/2/3**, CDN 활용
 - 대형 라이브러리 JS Interop → **동적 import**/지연 로딩
 
 **WASM AOT 예시(.NET 8)**
@@ -334,8 +334,8 @@ window.callDotNet = async () => {
 ## 12. 인증/권한(요약)
 
 - **ASP.NET Core Identity**(Server) 또는 **JWT/OAuth/OIDC**(WASM + API)
-- Server: 쿠키 기반이 자연스러움  
-- WASM: **토큰 기반** 권장(Access/Refresh), 보관소(XSS 위험 대비)  
+- Server: 쿠키 기반이 자연스러움
+- WASM: **토큰 기반** 권장(Access/Refresh), 보관소(XSS 위험 대비)
 - “United”: SSR 경로는 쿠키, 인터랙티브 섹션은 **기존 인증 컨텍스트 재사용**
 
 ---
@@ -354,15 +354,15 @@ window.callDotNet = async () => {
 </ErrorBoundary>
 ```
 
-- 로깅: `ILogger<T>`, Blazor WASM은 **콘솔 전송** 또는 **서버 수집 API** 필요  
+- 로깅: `ILogger<T>`, Blazor WASM은 **콘솔 전송** 또는 **서버 수집 API** 필요
 - 성능 측정: 브라우저 Performance 탭 + 서버 측 **분석/분포 트레이싱**
 
 ---
 
 ## 14. 스타일/컴포넌트 라이브러리
 
-- **Bootstrap** 기본 템플릿, **MudBlazor**, **Radzen**, **Syncfusion** 등  
-- 서버/클라 공통 UI 키트 선택 시 **라이선스/번들 크기** 고려  
+- **Bootstrap** 기본 템플릿, **MudBlazor**, **Radzen**, **Syncfusion** 등
+- 서버/클라 공통 UI 키트 선택 시 **라이선스/번들 크기** 고려
 - **CSS 격리**(`Component.razor.css`)로 컴포넌트 단위 스타일 캡슐화
 
 ---
@@ -478,16 +478,16 @@ public class CounterTests : TestContext
 
 ## 20. 성능 체크리스트
 
-- Server  
-  - 대기 시간 높은 구간 → **인터랙션 최소화**, **서버 CPU/메모리/회로 수 모니터링**  
-  - **Redis/Azure SignalR 백플레인** 구성  
-- WASM  
-  - **트리밍/AOT/Assembly Lazy Load**  
-  - 대형 라이브러리 지연 로드, 이미지/폰트 최적화  
-  - PWA/캐시 전략 튜닝  
-- 공통  
-  - **ErrorBoundary**로 장애 격리  
-  - 프로파일링/로그 표준화(Serilog 등)  
+- Server
+  - 대기 시간 높은 구간 → **인터랙션 최소화**, **서버 CPU/메모리/회로 수 모니터링**
+  - **Redis/Azure SignalR 백플레인** 구성
+- WASM
+  - **트리밍/AOT/Assembly Lazy Load**
+  - 대형 라이브러리 지연 로드, 이미지/폰트 최적화
+  - PWA/캐시 전략 튜닝
+- 공통
+  - **ErrorBoundary**로 장애 격리
+  - 프로파일링/로그 표준화(Serilog 등)
   - **빌드 파이프라인에서 Lighthouse/Playwright**로 품질 게이트
 
 ---
@@ -495,9 +495,9 @@ public class CounterTests : TestContext
 ## 21. 배포 시나리오 요약
 
 - **Blazor Server**: ASP.NET Core 표준 배포(IIS, Nginx+Kestrel, Docker, Azure App Service) + SignalR 스케일 아웃
-- **Blazor WASM**: 정적 자산/CDN + API 서버 분리(or Host in ASP.NET Core)  
+- **Blazor WASM**: 정적 자산/CDN + API 서버 분리(or Host in ASP.NET Core)
   - Azure Static Web Apps, CloudFront/S3, Nginx 정적 호스팅
-- **Hybrid**: .NET MAUI 배포 채널(스토어/엔터프라이즈 서명)  
+- **Hybrid**: .NET MAUI 배포 채널(스토어/엔터프라이즈 서명)
 - **United**: ASP.NET Core 앱 배포 + 인터랙티브 섹션 모드 설정
 
 ---
@@ -518,9 +518,9 @@ public class CounterTests : TestContext
 
 ## 23. 다음 단계 제안
 
-1. Blazor WASM + ASP.NET Core API + JWT 인증 실습  
-2. United(SSR+Interactive) 패턴으로 마케팅 페이지 + 대시보드 통합  
-3. 상태 관리 비교 실험: 상태 컨테이너 vs Fluxor  
+1. Blazor WASM + ASP.NET Core API + JWT 인증 실습
+2. United(SSR+Interactive) 패턴으로 마케팅 페이지 + 대시보드 통합
+3. 상태 관리 비교 실험: 상태 컨테이너 vs Fluxor
 4. 성능 튜닝 과제: WASM AOT/트리밍/지연로딩의 체감 효과 측정
 
 ---
@@ -559,12 +559,12 @@ app.Run();
 
 ## 부록 B) 간단 수식: WASM 다운로드 비용 추정
 
-초기 다운로드 크기 \( S \) (압축 후), 네트워크 대역폭 \( B \), 초기 파싱/로드 시간 \( T_p \)가 있을 때,  
+초기 다운로드 크기 \( S \) (압축 후), 네트워크 대역폭 \( B \), 초기 파싱/로드 시간 \( T_p \)가 있을 때,
 초기 지연 \( T \)는 근사적으로
 
 $$
 T \approx \frac{S}{B} + T_p
 $$
 
-- **Trim/AOT/지연 로딩**은 \( S \)를 줄이고, 브라우저/장치 성능은 \( T_p \)에 영향을 미친다.  
+- **Trim/AOT/지연 로딩**은 \( S \)를 줄이고, 브라우저/장치 성능은 \( T_p \)에 영향을 미친다.
 - 대역폭이 제한적인 모바일 환경에서는 \( S \)의 감소가 사용자 체감에 큰 이득을 준다.

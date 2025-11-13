@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # kubelet, Container Runtime 에러 진단 가이드
 
-`kubectl describe`/`kubectl logs`만으로 원인이 안 보일 때, **노드의 kubelet·런타임 계층**을 확인해야 합니다.  
+`kubectl describe`/`kubectl logs`만으로 원인이 안 보일 때, **노드의 kubelet·런타임 계층**을 확인해야 합니다.
 
 ---
 
@@ -23,7 +23,7 @@ category: Kubernetes
 - **kubelet**: PodSpec 동기화, 프로브, 볼륨 마운트, 이미지 관리 요청을 **런타임에 위임**.
 - **container runtime**: 컨테이너 생성/시작/정지, 이미지 풀/관리, 네임스페이스, cgroup 설정.
 
-> **진단 원칙**: *증상은 Pod*, *원인은 노드*.  
+> **진단 원칙**: *증상은 Pod*, *원인은 노드*.
 > `kubectl`에서 힌트를 잡고, **노드로 내려가 `journalctl`, `crictl`, 파일시스템·cgroup·네트워크**를 확인합니다.
 
 ---
@@ -122,7 +122,7 @@ sudo docker logs <cid>
 ```
 Failed to pull image "...": rpc error: code = Unknown desc = pull access denied
 ```
-**원인**: 이미지 태그 오타, 퍼블릭/프라이빗 레지스트리 권한, 레지스트리 TLS/미러 설정 문제.  
+**원인**: 이미지 태그 오타, 퍼블릭/프라이빗 레지스트리 권한, 레지스트리 TLS/미러 설정 문제.
 **확인**
 ```bash
 kubectl describe pod <pod> | sed -n '/Events:/,$p'
@@ -137,7 +137,7 @@ sudo crictl pull <image>:<tag>  # 노드에서 직접 풀 시도
 ```
 failed to create shim task / failed to create containerd task
 ```
-**원인**: containerd shim 비정상, 파일시스템(overlayfs), cgroup 설정 불일치, 디스크/ inode 고갈.  
+**원인**: containerd shim 비정상, 파일시스템(overlayfs), cgroup 설정 불일치, 디스크/ inode 고갈.
 **확인**
 ```bash
 sudo journalctl -u containerd | egrep -i 'shim|overlay|cgroup|No space'
@@ -152,7 +152,7 @@ df -h; df -hi
 ```
 cgroup: cannot allocate resource / failed to set cgroup
 ```
-**원인**: kubelet `cgroupDriver`와 런타임(systemd/cgroupfs) 불일치, cgroup v1/v2 혼선.  
+**원인**: kubelet `cgroupDriver`와 런타임(systemd/cgroupfs) 불일치, cgroup v1/v2 혼선.
 **확인**
 ```bash
 sudo cat /var/lib/kubelet/config.yaml | grep cgroupDriver
@@ -167,15 +167,15 @@ stat -fc %T /sys/fs/cgroup     # cgroup2fs면 v2
 ```
 PLEG is not healthy: pleg was last seen active...
 ``>
-**원인**: kubelet과 런타임 간 목록 동기화 지연, 런타임 과부하/디스크 병목, 많은 컨테이너 생성/삭제.  
-**확인**: kubelet 로그에서 PLEG 경고와 함께 ImageGC/ContainerGC 실패 여부.  
+**원인**: kubelet과 런타임 간 목록 동기화 지연, 런타임 과부하/디스크 병목, 많은 컨테이너 생성/삭제.
+**확인**: kubelet 로그에서 PLEG 경고와 함께 ImageGC/ContainerGC 실패 여부.
 **해결**: 파드 수 축소, ImageGC 동작 확인, 런타임 재시작, 느린 디스크 개선.
 
 ### 4.5 Volume 마운트 실패(CSI)
 ```
 MountVolume.MountDevice failed... rpc error: code = Internal
 ```
-**원인**: CSI 드라이버 버그/권한, 노드-클라우드 API 실패, 파일시스템 불일치, multipath 충돌.  
+**원인**: CSI 드라이버 버그/권한, 노드-클라우드 API 실패, 파일시스템 불일치, multipath 충돌.
 **확인**
 ```bash
 kubectl -n kube-system get pods | grep csi
@@ -188,7 +188,7 @@ sudo journalctl -u kubelet | grep -i mount
 ```
 Node not registered ... failed to get node info
 ```
-**원인**: kubelet ↔ API서버 TLS/네트워크, `kubelet.conf` 손상, 시간 스큐.  
+**원인**: kubelet ↔ API서버 TLS/네트워크, `kubelet.conf` 손상, 시간 스큐.
 **확인**
 ```bash
 sudo cat /var/lib/kubelet/kubeconfig
@@ -201,7 +201,7 @@ timedatectl status
 ```
 Liveness probe failed: ...; Back-off restarting failed container
 ```
-**원인**: 프로브 과격(짧은 timeout/initialDelay), 경로/포트 불일치.  
+**원인**: 프로브 과격(짧은 timeout/initialDelay), 경로/포트 불일치.
 **해결**: 초기 지연/타임아웃 상향, `startupProbe` 도입, `port-forward`로 직접 검증.
 
 ### 4.8 OOMKilled / CPU Throttling
@@ -220,7 +220,7 @@ sudo cat /sys/fs/cgroup/memory/.../memory.max
 ```
 Failed to create pod sandbox: failed to set up sandbox container "..." network for pod "...": plugin returned error
 ```
-**원인**: CNI 바이너리/설정 누락, IPAM 충돌, 커널 모듈(bridge, br_netfilter) 미로딩.  
+**원인**: CNI 바이너리/설정 누락, IPAM 충돌, 커널 모듈(bridge, br_netfilter) 미로딩.
 **확인**
 ```bash
 ls /opt/cni/bin
@@ -255,7 +255,7 @@ sudo dmesg | grep DENIED        # AppArmor
 **해결**: 올바른 프로파일/컨텍스트 부여, 필요한 capability만 허용, 정책 수정(보안 영향 주의).
 
 ### 4.12 컨테이너 시간/인증서 만료
-- **증상**: API 호출 TLS 오류, 인증 실패, 이미지 레지스트리 TLS 실패.  
+- **증상**: API 호출 TLS 오류, 인증 실패, 이미지 레지스트리 TLS 실패.
 - **해결**: NTP 동기화, 인증서 회전/재발급.
 
 ### 4.13 swap 활성화로 kubelet 기동 실패
@@ -273,14 +273,14 @@ sudo sed -i.bak '/ swap / s/^/#/' /etc/fstab
 ```
 Failed to allocate device / device plugin unhealthy
 ```
-**확인**: 디바이스 드라이버 버전, DP Pod 로그, `/dev` 퍼미션.  
+**확인**: 디바이스 드라이버 버전, DP Pod 로그, `/dev` 퍼미션.
 **해결**: 드라이버/쿠버/런타임 버전 호환, DP 재배포, 노드 커널 업데이트.
 
 ### 4.15 Pod sandbox changed 에러(재스케줄링 연쇄)
 ```
 pod sandbox has changed: it will be killed and re-created
 ```
-**원인**: 샌드박스 파손/네트워크 셋업 실패/런타임 갱신 중.  
+**원인**: 샌드박스 파손/네트워크 셋업 실패/런타임 갱신 중.
 **해결**: 런타임 안정화 후 파드 재생성, 노드 드레인→정상화→언코돈.
 
 ---
@@ -403,16 +403,16 @@ echo | openssl s_client -connect registry.example.com:443 -servername registry.e
 
 ## 9. 자주 묻는 질문(FAQ)
 
-**Q. containerd vs Docker?**  
+**Q. containerd vs Docker?**
 A. Kubernetes는 CRI로 런타임을 표준화. containerd/CRI-O 권장. Docker는 Moby/도커데몬 의존으로 과거엔 Dockershim을 사용했으나 v1.24+에서 제거.
 
-**Q. cgroup v2 환경?**  
+**Q. cgroup v2 환경?**
 A. Modern 배포는 v2 디폴트. kubelet, 런타임 모두 systemd cgroup 옵션으로 정합성 유지.
 
-**Q. XFS에서 overlayfs 오류?**  
+**Q. XFS에서 overlayfs 오류?**
 A. XFS는 `ftype=1` 필수. `xfs_info`로 확인하고, 필요시 재포맷 고려.
 
-**Q. 시간 스큐가 왜 치명적?**  
+**Q. 시간 스큐가 왜 치명적?**
 A. TLS 검증/토큰 만료 로직이 시간 의존. NTP 불일치로 인증·레지스트리 풀이 실패할 수 있음.
 
 ---
@@ -430,21 +430,21 @@ A. TLS 검증/토큰 만료 로직이 시간 의존. NTP 불일치로 인증·�
 ## 11. 실전 시나리오 3종 — 끝까지 해결하기
 
 ### 11.1 `ContainerCreating` 20분 지속
-1) `describe pod` → `Failed to create pod sandbox` + CNI 에러  
-2) 노드: `journalctl -u kubelet -f`에서 `cni` 키워드 검색  
-3) `/etc/cni/net.d` 파일 누락 확인 → CNI 재설치  
-4) `modprobe br_netfilter` + `sysctl -w net.bridge.bridge-nf-call-iptables=1`  
+1) `describe pod` → `Failed to create pod sandbox` + CNI 에러
+2) 노드: `journalctl -u kubelet -f`에서 `cni` 키워드 검색
+3) `/etc/cni/net.d` 파일 누락 확인 → CNI 재설치
+4) `modprobe br_netfilter` + `sysctl -w net.bridge.bridge-nf-call-iptables=1`
 5) 파드 재생성, 이벤트 정상화 확인
 
 ### 11.2 `ImagePullBackOff` (프라이빗 레지스트리)
-1) `crictl pull <image>` → TLS 에러  
-2) 레지스트리 루트/중간 인증서 체인 확인(위 openssl)  
-3) `/etc/containerd/certs.d/<registry>/hosts.toml` 구성 후 containerd 재시작  
+1) `crictl pull <image>` → TLS 에러
+2) 레지스트리 루트/중간 인증서 체인 확인(위 openssl)
+3) `/etc/containerd/certs.d/<registry>/hosts.toml` 구성 후 containerd 재시작
 4) imagePullSecret 네임스페이스/도메인 매칭 재확인 → 성공
 
 ### 11.3 `PLEG is not healthy` + DiskPressure
-1) 노드 `df -h/df -hi` → `/var/lib/containerd` 가득 참  
-2) `crictl images` 오래된 이미지 정리, 로그 정리, logrotate 적용  
+1) 노드 `df -h/df -hi` → `/var/lib/containerd` 가득 참
+2) `crictl images` 오래된 이미지 정리, 로그 정리, logrotate 적용
 3) containerd 재시작 → kubelet 경고 해소, 파드 안정
 
 ---
@@ -482,8 +482,8 @@ getenforce; ausearch -m avc -ts recent; dmesg | grep DENIED
 
 ## 13. 결론
 
-- **증상(Pod)** 은 표면, **원인(노드)** 은 심층.  
-- `kubelet`·`container runtime` 로그와 **CRI 관측 도구**로 경계를 열고,  
+- **증상(Pod)** 은 표면, **원인(노드)** 은 심층.
+- `kubelet`·`container runtime` 로그와 **CRI 관측 도구**로 경계를 열고,
 - **자원·정합성·보안** 3축을 점검하면 대부분의 장애를 **재현→관측→복구**로 닫을 수 있습니다.
 
 ---
