@@ -55,6 +55,7 @@ Value: !Sub 'https://${Bucket}.s3.${AWS::Region}.amazonaws.com/'
 
 ### 1.2 **동적 참조(Dynamic References)** — 민감정보 주입
 
+{% raw %}
 ```yaml
 Parameters:
   DbPassword:
@@ -67,6 +68,7 @@ Resources:
       Type: String
       Value: '{{resolve:ssm-secure:/prod/db/password:1}}' # 예시
 ```
+{% endraw %}
 
 - SSM/Secrets Manager의 값을 **평문 없이 참조**(템플릿/이벤트 로그에 노출 최소화)
 
@@ -141,6 +143,7 @@ Resources:
 
 ## 4. 조건/매핑으로 **환경별 분기**와 **리전별 값 관리**
 
+{% raw %}
 ```yaml
 Parameters:
   EnvType:
@@ -165,7 +168,7 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64
 ```
-
+{% endraw %}
 ---
 
 ## 5. **실전 네트워킹 템플릿** (VPC + 서브넷 + IGW + NAT + RT)
