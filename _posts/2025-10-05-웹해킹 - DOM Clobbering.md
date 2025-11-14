@@ -4,9 +4,9 @@ title: 웹해킹 - DOM Clobbering
 date: 2025-10-05 19:25:23 +0900
 category: 웹해킹
 ---
-# 13. DOM Clobbering
+# DOM Clobbering
 
-## 0. 핵심 요약 (Executive Summary)
+## 핵심 요약 (Executive Summary)
 
 - **문제(정의)**
   HTML 문서에서 `id`/`name`을 가진 요소들이 **글로벌 네임스페이스**(특히 `window`/`document`/`form`)에 **프로퍼티처럼 노출**됩니다.
@@ -28,7 +28,7 @@ category: 웹해킹
 
 ---
 
-# 1. DOM Clobbering이 왜 생기나 — 브라우저의 “이름 → 프로퍼티” 노출 규칙
+# DOM Clobbering이 왜 생기나 — 브라우저의 “이름 → 프로퍼티” 노출 규칙
 
 브라우저는 호환성 때문에 다음을 제공합니다.
 
@@ -41,9 +41,9 @@ category: 웹해킹
 
 ---
 
-# 2. 위험 시나리오 & 안전한 재현
+# 위험 시나리오 & 안전한 재현
 
-## 2.1 폼 메서드 덮기: `form.submit` 우회/교란
+## 폼 메서드 덮기: `form.submit` 우회/교란
 
 **취약 HTML**
 ```html
@@ -78,7 +78,7 @@ category: 웹해킹
 
 ---
 
-## 2.2 전역 변수/플래그 덮기: auth 플래그 우회
+## 전역 변수/플래그 덮기: auth 플래그 우회
 
 **취약 코드**
 ```html
@@ -116,7 +116,7 @@ category: 웹해킹
 
 ---
 
-## 2.3 폼 속성 혼동: `form.action`/`form.target` 조작
+## 폼 속성 혼동: `form.action`/`form.target` 조작
 
 **취약 코드**
 ```html
@@ -148,7 +148,7 @@ category: 웹해킹
 
 ---
 
-## 2.4 `document.foo`/`window.bar`로 요소 접근(레거시 관용) → 조작 취약
+## `document.foo`/`window.bar`로 요소 접근(레거시 관용) → 조작 취약
 
 **취약 코드(레거시)**
 ```html
@@ -170,9 +170,10 @@ category: 웹해킹
 
 ---
 
-# 3. 방어 전략 — 코드/템플릿/도구 레벨
+# 방어 전략 — 코드/템플릿/도구 레벨
 
-## 3.1 요소 참조 원칙 (필수)
+## 요소 참조 원칙 (필수)
+
 - **반드시** `document.getElementById`, `querySelector`(또는 프레임워크 `ref`)로 **로컬 변수**에 참조를 저장하고 사용.
 - 전역/폼의 **이름 기반 프로퍼티**(`window.foo`, `document.bar`, `form.baz`)에 **의존 금지**.
 
@@ -186,7 +187,8 @@ const loginForm = document.getElementById('login-form');
 HTMLFormElement.prototype.submit.call(loginForm);
 ```
 
-## 3.2 모듈 범위 `const`로 **참조 스냅샷**
+## 모듈 범위 `const`로 **참조 스냅샷**
+
 - ES Modules를 사용하면 **전역 오염**/DOM 네임드 충돌에서 **자연스럽게 격리**됩니다.
 ```html
 <script type="module">
@@ -196,7 +198,8 @@ HTMLFormElement.prototype.submit.call(loginForm);
 </script>
 ```
 
-## 3.3 폼/전역 **예약어 블랙리스트**
+## 폼/전역 **예약어 블랙리스트**
+
 실제 프로젝트에서 **아래 이름은 `id`/`name`으로 금지**하세요(일부만 예시).
 
 - **폼 메서드/속성**: `submit`, `reset`, `action`, `target`, `method`, `length`, `elements`
@@ -221,7 +224,8 @@ if (bad.length) {
 console.log('✅ No reserved id/name');
 ```
 
-## 3.4 템플릿/리치 텍스트 **Sanitization**
+## 템플릿/리치 텍스트 **Sanitization**
+
 - **외부/사용자 입력 HTML**에서는 **`id`/`name`/`form`** 같은 **네임스페이스 영향 속성 제거**가 안전합니다.
 - HTML Sanitizer(DOMPurify 등) 설정에서 `FORBID_ATTR: ['id','name','form']` 등.
 
@@ -234,7 +238,8 @@ const clean = DOMPurify.sanitize(userHtml, {
 container.innerHTML = clean;
 ```
 
-## 3.5 타입/존재 **가드**
+## 타입/존재 **가드**
+
 - 사용 전 **타입과 메서드 존재**를 확인하세요.
 
 ```js
@@ -246,7 +251,8 @@ if (typeof submit !== 'function') throw new Error('submit clobbered');
 submit.call(form);
 ```
 
-## 3.6 린트/컴파일러 설정
+## 린트/컴파일러 설정
+
 - **ESLint**:
   - `no-undef`, `no-implicit-globals`, `no-restricted-globals`(예: `event`, `name`)
   - `no-restricted-properties`로 `document.foo`/`window.bar` 사용 금지
@@ -273,9 +279,10 @@ module.exports = {
 
 ---
 
-# 4. 프레임워크별 팁
+# 프레임워크별 팁
 
-## 4.1 React/Vue/Svelte 등
+## React/Vue/Svelte 등
+
 - 요소는 **ref**로 접근하고, **전역 네임드 접근 금지**.
 - 리치 텍스트 렌더링: `dangerouslySetInnerHTML`/`v-html` 사용 시 **Sanitize + id/name 제거**.
 
@@ -295,14 +302,15 @@ function PayForm() {
 }
 ```
 
-## 4.2 서버 템플릿(Thymeleaf, EJS, Pug 등)
+## 서버 템플릿(Thymeleaf, EJS, Pug 등)
+
 - **예약어 리스트**를 템플릿 빌드 파이프라인에 포함.
 - 동적 블록에 사용자 HTML 삽입 금지(필요 시 Sanitize).
 - **`id` 생성기**로 **충돌 방지 프리픽스** 도입(예: `app-<slug>-<hash>`).
 
 ---
 
-# 5. 보안 헤더/정책(보조 완화)
+# 보안 헤더/정책(보조 완화)
 
 - **CSP**: 인젝션 경로 축소(`script-src 'self'` …). DOM Clobbering 자체를 직접 막지는 못하지만 **HTML 인젝션**을 어렵게 합니다.
 - **X-Frame-Options / frame-ancestors**: 클릭재킹 경감(클로버링과 함께 쓰이는 체인 공격 방지).
@@ -310,9 +318,10 @@ function PayForm() {
 
 ---
 
-# 6. 자동 테스트/관측
+# 자동 테스트/관측
 
-## 6.1 런타임 자가 점검 스니펫(디버그/스테이징)
+## 런타임 자가 점검 스니펫(디버그/스테이징)
+
 ```js
 // 페이지 로드 후 한 번: 네임드 충돌 스캔
 (() => {
@@ -334,7 +343,8 @@ function PayForm() {
 })();
 ```
 
-## 6.2 E2E(Playwright/Cypress) — “막혀야 정상”
+## E2E(Playwright/Cypress) — “막혀야 정상”
+
 - **시나리오**: 사용자 콘텐츠 영역에 `<input name="submit">` 삽입 후 결제 버튼 클릭 →
   **네이티브 submit 경로**가 여전히 성공해야 테스트 통과.
 
@@ -358,7 +368,7 @@ await page.click('#btn');
 
 ---
 
-# 7. 안티패턴 요약 (피해야 할 것)
+# 안티패턴 요약 (피해야 할 것)
 
 - `document.foo` / `window.bar` 로 **요소/데이터 접근**
 - **암묵 전역**(선언 없이 식별자 사용) 및 전역 프로퍼티 의존
@@ -368,7 +378,7 @@ await page.click('#btn');
 
 ---
 
-# 8. 체크리스트 (현장용)
+# 체크리스트 (현장용)
 
 - [ ] 요소 접근은 **항상 `getElementById`/`querySelector` + 로컬 변수**
 - [ ] **ES Modules**로 모듈 스코프 `const` 사용(전역 의존 X)

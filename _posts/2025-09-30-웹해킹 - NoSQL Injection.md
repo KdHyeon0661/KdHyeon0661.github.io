@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 🧪 5. NoSQL Injection (MongoDB / Elasticsearch)
 
-## 0. 요약 (Executive Summary)
+## 요약 (Executive Summary)
 
 - **문제(패턴)**
   - **MongoDB**: 애플리케이션이 사용자 JSON을 **그대로** 쿼리에 바인딩하면, 키로 시작하는 **연산자(`$ne`, `$gt`, `$regex`, `$where` 등)** 가 주입되어 **인증 우회 / 대량 조회 / 서버측 JS 평가** 위험이 발생.
@@ -21,16 +21,18 @@ category: 웹해킹
 
 ---
 
-# 1. 위협 모델과 발생 지점
+# 위협 모델과 발생 지점
 
-### 1.1 MongoDB
+### MongoDB
+
 - **안티패턴**:
   - `User.findOne(req.body)` 처럼 **요청 바디 전체**를 조건으로 사용.
   - `collection.find({ name: input })` 에서 `input`이 **객체**로 들어올 수 있게 허용.
   - `$where` / 서버측 JS 사용, **임의 코드/표현식 실행**.
   - `$regex` 의 무제한 사용으로 **전수 스캔/성능 고갈**.
 
-### 1.2 Elasticsearch
+### Elasticsearch
+
 - **안티패턴**:
   - `GET /_search?q=<사용자입력>` (Query String Query)
   - `script_score`, `painless script` 등에 사용자 문자열 직삽입
@@ -40,11 +42,12 @@ category: 웹해킹
 
 ---
 
-# 2. 안전한 재현/탐지 (스테이징 전용, 차단 확인용)
+# 안전한 재현/탐지 (스테이징 전용, 차단 확인용)
 
 > 아래는 “**우리가 차단에 성공하는지**” 확인하기 위한 **안전 테스트**입니다. (운영/타 시스템 금지)
 
-### 2.1 “연산자 키”가 들어오면 **거절** 기대 (Mongo)
+### “연산자 키”가 들어오면 **거절** 기대 (Mongo)
+
 ```js
 // test/opkey-guard.test.js — 차단 스모크
 import assert from "node:assert";
@@ -55,18 +58,22 @@ assert.throws(() => sanitizeDocument({ "profile.pic": "x" }), /dot key/i);
 console.log("✅ operator/dot key blocked");
 ```
 
-### 2.2 ES Query String 차단 확인
+### ES Query String 차단 확인
+
 ```bash
 # 프록시/게이트웨이 앞단에서 q= 차단 기대
+
 curl -si 'https://es.staging.example.com/my-index/_search?q=anything' | head -n1
 # 기대: 400/403 또는 정책 안내
+
 ```
 
 ---
 
-# 3. Node.js(Express) + Mongo(Mongoose/PyMongo 유사) — **차단/정규화 미들웨어**
+# Node.js(Express) + Mongo(Mongoose/PyMongo 유사) — **차단/정규화 미들웨어**
 
-## 3.1 “연산자/점(.) 키” 재귀 필터
+## “연산자/점(.) 키” 재귀 필터
+
 ```js
 // src/security/mongo-sanitize.js
 export function sanitizeDocument(input, { allowOperators = false } = {}) {
@@ -91,7 +98,8 @@ export function sanitizeDocument(input, { allowOperators = false } = {}) {
 > **원칙**: **애플리케이션 입력**에서는 `$`/`.` 키를 **절대 허용하지 않음**.
 > 내부적으로 우리가 만든 **쿼리 빌더가 생성하는 경우**에만 일부 `$` 허용(아래 §3.3).
 
-## 3.2 인증 예제(안전 설계)
+## 인증 예제(안전 설계)
+
 ```js
 // ❌ 나쁜 예: User.findOne(req.body) — 주입 허용
 // ✅ 좋은 예: 허용 필드만 추출 + 평문 비교 금지(해시)
@@ -118,7 +126,8 @@ app.post("/login", async (req, res) => {
 });
 ```
 
-## 3.3 **쿼리 빌더**(화이트리스트 필드/연산자만)
+## **쿼리 빌더**(화이트리스트 필드/연산자만)
+
 ```js
 // src/security/mongo-query-builder.js
 const ALLOWED_FIELDS = {
@@ -177,6 +186,7 @@ function escapeRegex(s){ return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"); }
 ```
 
 ### 라우트에서 사용
+
 ```js
 app.get("/users", async (req,res) => {
   // 클라이언트는 우리가 정의한 필드/OP만 전달
@@ -210,10 +220,11 @@ app.get("/users", async (req,res) => {
 
 ---
 
-# 4. Python(FastAPI/Flask) + PyMongo — 동일 원칙
+# Python(FastAPI/Flask) + PyMongo — 동일 원칙
 
 ```python
 # security/mongo_sanitize.py
+
 def sanitize_document(obj, allow_ops=False):
     if obj is None or not isinstance(obj, (dict, list)): return obj
     if isinstance(obj, list):
@@ -228,6 +239,7 @@ def sanitize_document(obj, allow_ops=False):
 
 ```python
 # query builder (간략)
+
 ALLOWED_FIELDS = {"email":"str","age":"num","status":{"enum":["active","inactive","pending"]}}
 ALLOWED_OPS = {"eq","in","gt","gte","lt","lte","prefix"}
 
@@ -249,7 +261,7 @@ def build_query(filters):
 
 ---
 
-# 5. Mongoose 스키마/옵션으로 **추가 방어**
+# Mongoose 스키마/옵션으로 **추가 방어**
 
 ```js
 const UserSchema = new Schema({
@@ -269,7 +281,7 @@ const UserSchema = new Schema({
 
 ---
 
-# 6. MongoDB Aggregation — **화이트리스트 파이프라인**만 허용
+# MongoDB Aggregation — **화이트리스트 파이프라인**만 허용
 
 ```js
 // 안전한 aggregation 빌더 예시(정렬/집계 몇 가지만 허용)
@@ -303,9 +315,10 @@ function buildAgg(specs=[]){
 
 ---
 
-# 7. Elasticsearch — 안전 설계 가이드 & 코드
+# Elasticsearch — 안전 설계 가이드 & 코드
 
-## 7.1 **Query String** 사용 금지, **Query DSL**만
+## **Query String** 사용 금지, **Query DSL**만
+
 ```js
 // ❌ 나쁜 예
 // client.search({ index, q: req.query.q });
@@ -349,7 +362,8 @@ function buildEsQuery(filters=[]) {
 }
 ```
 
-## 7.2 검색 API
+## 검색 API
+
 ```js
 app.get("/search", async (req, res) => {
   try {
@@ -377,16 +391,19 @@ app.get("/search", async (req, res) => {
 });
 ```
 
-## 7.3 **금지/제한** 권고
+## **금지/제한** 권고
+
 - `query_string`, `simple_query_string` **금지**(또는 내부 전용으로만).
 - `script`, `script_score`, `painless` 등 **사용자 입력 직결 금지**. 필요 시 **서버 저장 템플릿 + 바인딩 파라미터만**.
 - `wildcard`, `regexp` 는 `keyword` 필드에 **길이 제한** + 관리자 전용.
 - `_source` 전체 반환 금지(필드 화이트리스트).
 - 인덱스 수준에서 **필드 타입 통일**(`keyword` vs `text`)로 예측 가능한 쿼리만 허용.
 
-## 7.4 프록시에서 Query String 차단(선택)
+## 프록시에서 Query String 차단(선택)
+
 ```nginx
 # Nginx 앞단에서 q= 를 아예 받지 않게
+
 location ~ ^/.+/_search$ {
   if ($arg_q) { return 400; }
   proxy_pass http://es:9200;
@@ -395,9 +412,10 @@ location ~ ^/.+/_search$ {
 
 ---
 
-# 8. 로깅/탐지/모니터링
+# 로깅/탐지/모니터링
 
-## 8.1 애플리케이션 로그(구조화)
+## 애플리케이션 로그(구조화)
+
 - 필드: `ts`, `route`, `user_id`, `filters_count`, `rejected_reason(opkey|dotkey|badfield)`, `limit`, `source=api|ui`
 - **연산자 키 탐지**: 입력 JSON 스캔 중 `$`/`.` **감지 횟수** 지표화
 
@@ -409,7 +427,7 @@ logger.warn({
 });
 ```
 
-## 8.2 SIEM 룰 예시
+## SIEM 룰 예시
 
 **Loki(LogQL)**
 ```logql
@@ -423,13 +441,14 @@ index=app event=reject_filter reason IN ("operator_key","dot_key","bad_field")
 | timechart span=5m count by reason
 ```
 
-## 8.3 성능/남용 탐지
+## 성능/남용 탐지
+
 - **Mongo**: collection scan 증가, `$regex` 비인덱스 경로 비율 상승
 - **ES**: `search.total` 급증, `query_cache` 미스 폭증, 너무 큰 `size/from` 반복
 
 ---
 
-# 9. 구성/플랫폼 수준 수칙
+# 구성/플랫폼 수준 수칙
 
 - **MongoDB**
   - 앱에서 `$where` **사용 금지**. (서버측 JS 의존 로직 제거)
@@ -449,10 +468,11 @@ index=app event=reject_filter reason IN ("operator_key","dot_key","bad_field")
 
 ---
 
-# 10. OpenAPI + JSON Schema 검증 (언어 무관 패턴)
+# OpenAPI + JSON Schema 검증 (언어 무관 패턴)
 
 ```yaml
 # openapi.yaml (일부) — /users 검색
+
 paths:
   /users:
     get:
@@ -479,7 +499,7 @@ paths:
 
 ---
 
-# 11. CI/SAST 방어선
+# CI/SAST 방어선
 
 - **정규식/grep 룰 예시**
   - Mongo: `findOne\(\s*req\.body` / `find\(\s*req\.query`
@@ -497,7 +517,7 @@ paths:
 
 ---
 
-# 12. 체크리스트 (현장용)
+# 체크리스트 (현장용)
 
 - [ ] **스키마 검증**: 필드/타입/열거값 화이트리스트
 - [ ] **연산자/점 키 차단**: 입력 JSON 재귀 필터, `$`/`.` 거절
@@ -513,6 +533,7 @@ paths:
 ---
 
 ## 맺음말
+
 NoSQL 인젝션의 핵심은 **“입력이 연산자/DSL로 해석되는 경계 붕괴”**입니다.
 **스키마 검증 → 연산자 키 차단 → 전용 빌더로만 쿼리 생성**이라는 3단계 가드를 적용하면,
 MongoDB/Elasticsearch 모두에서 **우회·대량 조회** 리스크를 구조적으로 줄일 수 있습니다.

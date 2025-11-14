@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 트리(Tree)
 
-## 0. 수학적 정의(스냅샷)
+## 수학적 정의(스냅샷)
 
 - **트리** \(T=(V,E)\): **연결**이고 **사이클 없음**. \(|E|=|V|-1\).
 - 임의 루트 \(r\)를 잡으면 **부모/자식**·**깊이/높이**가 정의된다.
@@ -15,13 +15,14 @@ category: Data Structure
 
 ---
 
-## 1. 구현 전략 1: `vector<TreeNode*>` — 직관·STL 친화
+## 구현 전략 1: `vector<TreeNode*>` — 직관·STL 친화
 
-### 1.1 기본 구조
+### 기본 구조
 
 ```cpp
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct NodeV {
@@ -39,7 +40,7 @@ void addChild(NodeV* parent, NodeV* child) {
 - 장점: **직관적**, STL과 잘 맞음, 순회/조작이 간단
 - 단점: 각 노드가 **가변 길이 컨테이너**(vector)를 가져서 **할당 단편화**·캐시 비우호 가능
 
-### 1.2 출력/순회(전위 DFS)
+### 출력/순회(전위 DFS)
 
 ```cpp
 ```cpp
@@ -51,7 +52,7 @@ void printTree(const NodeV* u, int depth=0){
 ```
 ```
 
-### 1.3 반복(스택 기반, 전위)
+### 반복(스택 기반, 전위)
 
 ```cpp
 ```cpp
@@ -70,7 +71,7 @@ void printTreeIter(const NodeV* root){
 ```
 ```
 
-### 1.4 레벨 순회(BFS)
+### 레벨 순회(BFS)
 
 ```cpp
 ```cpp
@@ -90,7 +91,7 @@ void levelOrder(const NodeV* root){
 ```
 ```
 
-### 1.5 유틸: 높이/리프 수/서브트리 크기
+### 유틸: 높이/리프 수/서브트리 크기
 
 ```cpp
 ```cpp
@@ -114,7 +115,7 @@ int subtreeSize(const NodeV* u){
 
 ---
 
-## 2. 구현 전략 2: Child–Sibling 표현 — 이진화 트릭
+## 구현 전략 2: Child–Sibling 표현 — 이진화 트릭
 
 **모든 일반 트리**는 다음의 두 포인터로 **이진 트리**처럼 표현 가능:
 
@@ -142,7 +143,7 @@ void addChild(NodeCS* parent, NodeCS* child){
 - 장점: 각 노드 **두 포인터** → **메모리 예측 가능**, 연결형 연산에 유리
 - 단점: 모든 자식 접근 시 **리스트 순회** 필요(랜덤 접근 비우호)
 
-### 2.1 전위 출력(Child–Sibling)
+### 전위 출력(Child–Sibling)
 
 ```cpp
 ```cpp
@@ -156,7 +157,7 @@ void printTreeCS(const NodeCS* u, int depth=0){
 ```
 ```
 
-### 2.2 레벨 순회(BFS)
+### 레벨 순회(BFS)
 
 ```cpp
 ```cpp
@@ -178,9 +179,9 @@ void levelOrderCS(const NodeCS* root){
 
 ---
 
-## 3. 두 표현의 **상호 변환**
+## 두 표현의 **상호 변환**
 
-### 3.1 Vector → Child–Sibling
+### Vector → Child–Sibling
 
 ```cpp
 ```cpp
@@ -199,7 +200,7 @@ NodeCS* convertVtoCS(const NodeV* u){
 ```
 ```
 
-### 3.2 Child–Sibling → Vector
+### Child–Sibling → Vector
 
 ```cpp
 ```cpp
@@ -217,9 +218,9 @@ NodeV* convertCStoV(const NodeCS* u){
 
 ---
 
-## 4. 빌더: 입력으로부터 트리 만들기
+## 빌더: 입력으로부터 트리 만들기
 
-### 4.1 부모 배열(parent[i] = 부모 인덱스, root의 parent=-1)
+### 부모 배열(parent[i] = 부모 인덱스, root의 parent=-1)
 
 ```cpp
 ```cpp
@@ -238,7 +239,7 @@ vector<NodeV*> buildFromParent(const vector<int>& parent){
 ```
 ```
 
-### 4.2 간선 리스트(부모→자식)에서 루트 추정
+### 간선 리스트(부모→자식)에서 루트 추정
 
 ```cpp
 ```cpp
@@ -254,15 +255,15 @@ NodeV* buildFromEdges(int n, const vector<pair<int,int>>& edges){
 
 ---
 
-## 5. 순회 패턴/Iterator
+## 순회 패턴/Iterator
 
-### 5.1 전위/후위/레벨(개념)
+### 전위/후위/레벨(개념)
 
 - **전위(Preorder)**: `node → children`
 - **후위(Postorder)**: `children → node`
 - **레벨(Level-order)**: BFS
 
-### 5.2 후위(삭제/집계에 유용)
+### 후위(삭제/집계에 유용)
 
 ```cpp
 ```cpp
@@ -274,7 +275,7 @@ void postorder(const NodeV* u){
 ```
 ```
 
-### 5.3 전위 반복자(간단 구현)
+### 전위 반복자(간단 구현)
 
 ```cpp
 ```cpp
@@ -293,9 +294,9 @@ struct PreorderIter {
 
 ---
 
-## 6. 트리 알고리즘: 필수 루틴
+## 트리 알고리즘: 필수 루틴
 
-### 6.1 트리 지름(Diameter) — 임의 루트 DFS 2회
+### 트리 지름(Diameter) — 임의 루트 DFS 2회
 
 > 지름: 두 노드 사이의 **최장 경로** 길이(간선 수).
 > 1) 임의 루트에서 가장 먼 A, 2) A에서 가장 먼 B, 3) dist(A,B)가 지름.
@@ -347,7 +348,7 @@ int treeDiameter(const NodeV* root, int n){
 ```
 ```
 
-### 6.2 Euler Tour(전위/후위 타임스탬프) — 서브트리 질의 기반
+### Euler Tour(전위/후위 타임스탬프) — 서브트리 질의 기반
 
 ```cpp
 ```cpp
@@ -361,16 +362,16 @@ void eulerTour(const NodeV* u, vector<int>& in, vector<int>& out, int& t){
 ```
 ```
 
-### 6.3 LCA(개요)
+### LCA(개요)
 
 - 일반 트리 루트 기준 **LCA**(최소 공통 조상)는 Euler tour + RMQ, 또는 바이너리 리프팅으로 \(O(\log n)\).
 - 여기서는 **개요**만: 실제 구현은 별도 챕터 추천.
 
 ---
 
-## 7. 직렬화/역직렬화
+## 직렬화/역직렬화
 
-### 7.1 괄호 표기(전위): `value(children...)` 형식
+### 괄호 표기(전위): `value(children...)` 형식
 
 예:
 `1(2() 3(4(5())))` ← 공백은 가독용
@@ -392,7 +393,7 @@ void serialize(const NodeV* u, ostream& os){
 
 ---
 
-## 8. 메모리/소유권/예외 안정성
+## 메모리/소유권/예외 안정성
 
 - **Row 포인터 원시 관리**(new/delete)는 **소유권 불명확**·예외에 취약 → **스마트 포인터 권장**.
 - `unique_ptr` 기반(단일 소유) 일반 트리:
@@ -416,7 +417,7 @@ void addChild(unique_ptr<NodeU>& parent, unique_ptr<NodeU> child){
 
 ---
 
-## 9. 성능 관점: 캐시/할당/순회 비용
+## 성능 관점: 캐시/할당/순회 비용
 
 - `vector<Node*>`는 자식 벡터가 **분산 할당** → 캐시 미스 증가 가능
   → **풀 할당**/**arena**(메모리 풀)로 **연속 할당**시 유리
@@ -426,9 +427,9 @@ void addChild(unique_ptr<NodeU>& parent, unique_ptr<NodeU> child){
 
 ---
 
-## 10. 실전 예시: 파일 시스템(간단), 씬 그래프
+## 실전 예시: 파일 시스템(간단), 씬 그래프
 
-### 10.1 파일 시스템(디렉토리=내부 노드, 파일=리프)
+### 파일 시스템(디렉토리=내부 노드, 파일=리프)
 
 ```cpp
 ```cpp
@@ -448,7 +449,7 @@ void printFS(const File* f, int depth=0){
 ```
 ```
 
-### 10.2 씬 그래프(트랜스폼 합성: 전위 순회로 누적)
+### 씬 그래프(트랜스폼 합성: 전위 순회로 누적)
 
 ```cpp
 ```cpp
@@ -469,11 +470,12 @@ void updateWorld(SceneNode* u, const Mat& parentWorld){
 
 ---
 
-## 11. 종합 예제: 두 표현 모두 제공 + 구조 변환 + 기본 알고리즘
+## 종합 예제: 두 표현 모두 제공 + 구조 변환 + 기본 알고리즘
 
 ```cpp
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 // --------- Vector-based ----------
@@ -586,7 +588,7 @@ int main(){
 
 ---
 
-## 12. 복잡도 및 선택 가이드
+## 복잡도 및 선택 가이드
 
 | 항목 | `vector<Node*>` | Child–Sibling |
 |---|---|---|
@@ -599,7 +601,7 @@ int main(){
 
 ---
 
-## 13. 테스트/디버깅 체크리스트
+## 테스트/디버깅 체크리스트
 
 1. **루트 식별**: parent 배열 or indegree로 검증.
 2. **메모리 소유권**: new/delete 누수 방지—**스마트 포인터**를 우선.
@@ -618,15 +620,17 @@ int main(){
 
 ---
 
-## 14. 수학 스냅샷
+## 수학 스냅샷
 
-### 14.1 트리 기본 성질
+### 트리 기본 성질
+
 노드 수 \(n\), 간선 수 \(m\)에 대하여 트리는 **연결+비순환**이므로
 $$
 m = n - 1.
 $$
 
-### 14.2 Euler Tour 서브트리 포함 관계
+### Euler Tour 서브트리 포함 관계
+
 루트 \(r\)에서의 Euler tour 타임스탬프 \(in[v], out[v]\)에 대해
 $$
 v \in \text{subtree}(u) \iff in[u] \le in[v] \le out[u].
@@ -634,7 +638,7 @@ $$
 
 ---
 
-## 15. 마무리 요약
+## 마무리 요약
 
 - **일반 트리**는 자식 수 무제한의 계층을 표현하는 **핵심 구조**.
 - 구현은 **vector 기반**(직관/알고리즘 친화)과 **child–sibling**(이진화/메모리 예측) 두 축.

@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0. 실습 공통 스키마 & 데이터
+## 실습 공통 스키마 & 데이터
 
 ```sql
 -- 대용량 테이블
@@ -50,7 +50,7 @@ END;
 
 ---
 
-## 1. 왜 Array Processing인가? — **성능 모델**
+## 왜 Array Processing인가? — **성능 모델**
 
 **왕복 기반 응답시간 근사**
 $$
@@ -64,9 +64,9 @@ $$
 
 ---
 
-## 2. PL/SQL — **BULK COLLECT / FORALL** 기본 패턴
+## PL/SQL — **BULK COLLECT / FORALL** 기본 패턴
 
-### 2.1 Array SELECT: `BULK COLLECT` (+ LIMIT)
+### Array SELECT: `BULK COLLECT` (+ LIMIT)
 
 ```plsql
 DECLARE
@@ -107,7 +107,7 @@ END;
   - `LIMIT` 미지정은 대량 데이터에서 **PGA 폭증** 위험.
   - 일반적으로 **1k~20k** 사이에서 실측으로 최적점 찾기.
 
-### 2.2 Array DML: `FORALL` (+ `SAVE EXCEPTIONS`)
+### Array DML: `FORALL` (+ `SAVE EXCEPTIONS`)
 
 ```plsql
 DECLARE
@@ -147,7 +147,7 @@ END;
   - `SAVE EXCEPTIONS`로 **문제 행만 분리**(대부분 성공 → 성능 유지).
   - 대량 DML은 **주기적 COMMIT**(예: 5k~20k 묶음)로 `log file sync` 부하를 균형화.
 
-### 2.3 `RETURNING BULK COLLECT` — 생성 키 일괄 회수
+### `RETURNING BULK COLLECT` — 생성 키 일괄 회수
 
 ```plsql
 DECLARE
@@ -171,11 +171,12 @@ END;
 
 ---
 
-## 3. 클라이언트 드라이버 — **배열 바인드/배치 & 배열 페치**
+## 클라이언트 드라이버 — **배열 바인드/배치 & 배열 페치**
 
-### 3.1 JDBC
+### JDBC
 
-#### 3.1.1 대량 SELECT: `setFetchSize`
+#### 대량 SELECT: `setFetchSize`
+
 ```java
 String sql = """
   SELECT /* array-fetch */ sale_id, amount
@@ -193,7 +194,8 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 }
 ```
 
-#### 3.1.2 대량 DML: `addBatch/executeBatch`
+#### 대량 DML: `addBatch/executeBatch`
+
 ```java
 String ins = "INSERT INTO t_sale(sale_id,cust_id,region,order_dt,status,amount) VALUES (?,?,?,?,?,?)";
 try (PreparedStatement ps = conn.prepareStatement(ins)) {
@@ -221,7 +223,7 @@ try (PreparedStatement ps = conn.prepareStatement(ins)) {
   - Auto-commit OFF → per-row COMMIT 금지
   - 네트워크 RTT 큰 환경일수록 Batch/Fetch 효과 큼
 
-### 3.2 ODP.NET (C#)
+### ODP.NET (C#)
 
 ```csharp
 // 배열 바인드 DML
@@ -246,10 +248,11 @@ using var rdr = cmd.ExecuteReader();
 while (rdr.Read()) { /* consume */ }
 ```
 
-### 3.3 Python (oracledb)
+### Python (oracledb)
 
 ```python
 # 배열 페치
+
 cur.arraysize = 1000
 cur.execute("""
   SELECT sale_id, amount FROM t_sale
@@ -261,6 +264,7 @@ for row in cur:
 
 ```python
 # 배열 바인드 DML
+
 rows = [(3000000+i, Decimal('12.34')) for i in range(1, 100000+1)]
 cur.executemany("INSERT INTO t_sale(sale_id, amount) VALUES (:1,:2)", rows)
 conn.commit()
@@ -270,9 +274,9 @@ conn.commit()
 
 ---
 
-## 4. 고급: **배열 바인드로 IN-list** 처리(정적 SQL 유지)
+## 고급: **배열 바인드로 IN-list** 처리(정적 SQL 유지)
 
-### 4.1 스키마 타입 + TABLE 연산자
+### 스키마 타입 + TABLE 연산자
 
 ```sql
 CREATE OR REPLACE TYPE t_num_list AS TABLE OF NUMBER;
@@ -290,7 +294,7 @@ AND    order_dt BETWEEN :d1 AND :d2;
 - **장점**: 대량 IN도 동적 문자열 없이 처리, Parse 폭증 방지
 - **주의**: 실행 계획은 **HASH JOIN** 경향 → 통계/인덱스/카디널리티 점검
 
-### 4.2 GTT 조인(초대량 키)
+### GTT 조인(초대량 키)
 
 ```sql
 CREATE GLOBAL TEMPORARY TABLE t_filter(id NUMBER) ON COMMIT DELETE ROWS;
@@ -303,12 +307,14 @@ WHERE  s.order_dt BETWEEN :d1 AND :d2;
 
 ---
 
-## 5. 오류 처리 — **배치와 부분 실패**
+## 오류 처리 — **배치와 부분 실패**
 
-### 5.1 PL/SQL: `SAVE EXCEPTIONS` + `SQL%BULK_EXCEPTIONS`
+### PL/SQL: `SAVE EXCEPTIONS` + `SQL%BULK_EXCEPTIONS`
+
 - 이미 예제 제시. 문제 행만 로깅/분리 처리 → **대부분 성공 유지**.
 
-### 5.2 JDBC Batch
+### JDBC Batch
+
 ```java
 try {
   ps.executeBatch();
@@ -319,12 +325,13 @@ try {
 }
 ```
 
-### 5.3 Python `executemany` + batcherrors(버전 기능)
+### Python `executemany` + batcherrors(버전 기능)
+
 - 드라이버 옵션으로 **부분 오류 수집** 후 재처리.
 
 ---
 
-## 6. Array 크기 결정 — **메모리 vs 왕복의 균형**
+## Array 크기 결정 — **메모리 vs 왕복의 균형**
 
 - **SELECT**: `fetchSize/arraysize`를 **행당 평균 크기 × N** 이 **수 MB~수십 MB** 정도가 되도록.
   - 예) 행당 200B × 1000행 ≈ 200KB (작다) → 5000~10000으로 키우기.
@@ -340,9 +347,10 @@ try {
 
 ---
 
-## 7. 검증: SQL Trace/TKPROF로 **전/후 비교**
+## 검증: SQL Trace/TKPROF로 **전/후 비교**
 
-### 7.1 트레이스 켜기
+### 트레이스 켜기
+
 ```sql
 ALTER SESSION SET statistics_level=ALL;
 ALTER SESSION SET events '10046 trace name context forever, level 8';
@@ -351,39 +359,44 @@ ALTER SESSION SET events '10046 trace name context forever, level 8';
 ALTER SESSION SET events '10046 trace name context off';
 ```
 
-### 7.2 TKPROF 지표 포인트
+### TKPROF 지표 포인트
+
 - `call` 표에서 **Fetch count**(SELECT), **Execute count**(DML) 급감 확인
 - `bytes sent/received via SQL*Net` 단위당 행수 증가(효율↑)
 - 동일 rows 대비 **elapsed** 감소
 
 ---
 
-## 8. 시나리오 별 **설계 레시피**
+## 시나리오 별 **설계 레시피**
 
-### 8.1 대량 마이그레이션/적재
+### 대량 마이그레이션/적재
+
 - `INSERT /*+ APPEND */` + **배치 커밋** + **인덱스/트리거 최소화**
 - 대상 인덱스는 적재 후 생성(병렬 빌드) or **무효화→재빌드**
 - `FORALL`/JDBC Batch로 1만~10만 행 단위 처리
 - AWR 상위 이벤트: `direct path write temp` / `DB CPU` → 정상
 
-### 8.2 실시간 API 다량 읽기
+### 실시간 API 다량 읽기
+
 - **Keyset Pagination** + **배열 페치**(큰 fetchSize)
 - 열 최소화(필요 컬럼만), SARG 가능한 WHERE
 - 네트워크 RTT 크면 **배열 크기↑**로 왕복 최소화
 
-### 8.3 이벤트 로그/트래킹 수집
+### 이벤트 로그/트래킹 수집
+
 - **배열 바인드 INSERT** + `COMMIT` 주기화(예: 5k)
 - 시퀀스 `CACHE` 크게(1000 이상) → 재귀 호출 감소
 - 파티션 테이블(일/시간)로 **세그먼트 경합 분산**
 
-### 8.4 리포트/집계 배치
+### 리포트/집계 배치
+
 - **집계는 가급적 SQL 한 방**(윈도우 함수/집계) → 불필요 페치 제거
 - 불가피하면 `BULK COLLECT LIMIT` + 외부 시스템 전송
 - 임시 결과는 **GTT/임시 테이블**로 합리화
 
 ---
 
-## 9. 자주 하는 실수 & 교정
+## 자주 하는 실수 & 교정
 
 1) **Auto-commit ON**으로 배치 무력화 → **OFF**로 전환, 주기 커밋
 2) IN-list 문자열 조립(동적 SQL 폭증) → **스키마 타입 배열 바인드**/GTT
@@ -393,7 +406,7 @@ ALTER SESSION SET events '10046 trace name context off';
 
 ---
 
-## 10. 미니 벤치(요약 스크립트): Row-by-Row vs Array
+## 미니 벤치(요약 스크립트): Row-by-Row vs Array
 
 ```plsql
 -- Row-by-Row
@@ -430,7 +443,7 @@ END;
 
 ---
 
-## 11. 보안·무결성·락 관점 주의
+## 보안·무결성·락 관점 주의
 
 - 대량 DML은 **락 유지 시간**이 길어질 수 있음 → **배치 크기 조절**
 - FK/Unique 제약 위반은 **SAVE EXCEPTIONS**로 분기 처리
@@ -438,7 +451,7 @@ END;
 
 ---
 
-## 12. 체크리스트 (운영 투입 전)
+## 체크리스트 (운영 투입 전)
 
 - [ ] SELECT: **배열 페치 크기** 실측 튜닝(네트워크/메모리 밸런스)
 - [ ] DML: **Batch/Array 크기**·**커밋 주기** 설정, `SAVE EXCEPTIONS` 적용
@@ -449,7 +462,7 @@ END;
 
 ---
 
-## 13. 결론
+## 결론
 
 Array Processing은 **“적게, 크게, 한 번에”**의 구현 기술이다.
 - **적게**: 호출 수(user calls)를 줄이고,

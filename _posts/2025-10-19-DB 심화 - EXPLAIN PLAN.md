@@ -5,6 +5,7 @@ date: 2025-10-19 23:25:23 +0900
 category: DB 심화
 ---
 # Oracle `EXPLAIN PLAN` 완전 가이드
+
 — **PLAN_TABLE**부터 `DBMS_XPLAN`, 카디널리티·코스트 해석, 바인드 피킹/적응 계획, 조인전략 비교, DML/병렬/파티션/힌트 분석까지 (19c 기준)
 
 > 목표
@@ -17,7 +18,7 @@ category: DB 심화
 
 ---
 
-## 0. 한눈 핵심
+## 한눈 핵심
 
 - `EXPLAIN PLAN FOR <SQL>` 은 **지금 이 세션의 Optimizer**가 **지금 보이는 통계/바인드**(대개 **리터럴**만 반영)로 **예상** 계획을 **PLAN_TABLE**에 기록한다.
 - 실제로 실행하지 않는다 → **실제 실행 경로/행수/시간**은 다를 수 있다.
@@ -30,15 +31,17 @@ category: DB 심화
 
 ---
 
-## 1. 준비 — PLAN_TABLE과 기본 사용
+## 준비 — PLAN_TABLE과 기본 사용
 
-### 1.1 PLAN_TABLE 확인/생성
+### PLAN_TABLE 확인/생성
+
 ```sql
 -- 12c+ 대부분 스키마에 PLAN_TABLE 존재. 없으면:
 @?/rdbms/admin/utlxplan.sql      -- PLAN_TABLE 생성 스크립트
 ```
 
-### 1.2 기본 문법
+### 기본 문법
+
 ```sql
 EXPLAIN PLAN FOR
 SELECT /* test */ o.order_id, o.amount
@@ -58,7 +61,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY()); -- plan_table에서 최신 캡처
 
 ---
 
-## 2. 예제 데이터 준비
+## 예제 데이터 준비
 
 ```sql
 -- 고객·주문 예제
@@ -103,9 +106,10 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,'ORDERS',cascade=>TRUE);
 
 ---
 
-## 3. `EXPLAIN PLAN` 출력 읽기 — 핵심 칼럼/라인 해석
+## `EXPLAIN PLAN` 출력 읽기 — 핵심 칼럼/라인 해석
 
-### 3.1 샘플 플랜
+### 샘플 플랜
+
 ```sql
 EXPLAIN PLAN FOR
 SELECT /* plan1 */ SUM(o.amount)
@@ -126,7 +130,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS +PROJECT
 
 > **중요**: `Rows`는 **추정**이며 실제와 다를 수 있음. 실제 행수는 `ALLSTATS LAST`에서 **A-Rows**로 확인.
 
-### 3.2 자주 보는 Operation
+### 자주 보는 Operation
+
 - `INDEX RANGE SCAN`, `INDEX UNIQUE SCAN`, `TABLE ACCESS BY ROWID`
 - `HASH JOIN`, `NESTED LOOPS`, `MERGE JOIN`
 - `SORT ORDER BY` / `GROUP BY` / `FILTER`
@@ -135,9 +140,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS +PROJECT
 
 ---
 
-## 4. `EXPLAIN PLAN` vs 실제 — 차이와 함께 보기
+## `EXPLAIN PLAN` vs 실제 — 차이와 함께 보기
 
-### 4.1 실제 실행 계획·통계(권장)
+### 실제 실행 계획·통계(권장)
+
 ```sql
 -- (실행 후) 실제 계획/통계
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
@@ -148,16 +154,18 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 - **`OUTLINE`**: 옵티마이저 Outline(힌트 세트)
 - **실제 대기**는 SQL Monitor나 10046 trace에서 확인
 
-### 4.2 왜 다를 수 있나?
+### 왜 다를 수 있나?
+
 - `EXPLAIN PLAN`은 실제 **바인드 값**이 없거나 **대표 값**으로 추정 → **바인드 피킹/적응 통계** 미반영 가능
 - 실행 중 **적응 조인/부분 수행**(Adaptive)로 경로 변경 가능
 - `EXPLAIN PLAN`은 **실행 안 함**: TEMP 스필, 병렬 그레인, RAC GC 등 **런타임 요소** 반영 불가
 
 ---
 
-## 5. 카디널리티(행수)·코스트 모델 빠르게 이해
+## 카디널리티(행수)·코스트 모델 빠르게 이해
 
-### 5.1 용어 감각
+### 용어 감각
+
 - **Selectivity(선택도)**: 조건이 행을 통과시킬 확률 \(0..1\)
 - **Cardinality(카디널리티)**: 추정 행수 \(= \text{Table Rows} \times \text{Selectivity}\)
 - **Cost**: IO/CPU/네트워크 등 내부 가중 합(단위는 상대치)
@@ -166,7 +174,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 > $$ \text{Cardinality} \approx N \times \prod_k \text{Selectivity}(Predicate_k) $$
 > 히스토그램·조인 카디널리티·상관관계 보정이 들어가면서 실제는 더 복잡.
 
-### 5.2 히스토그램·바인드 영향
+### 히스토그램·바인드 영향
+
 - 스큐(skew) 심한 컬럼은 **히스토그램**이 없으면 선택도 오판.
 - 바인드 변수 사용 시 **바인드 피킹** 상황/ACS(Adaptive Cursor Sharing)에 따라 실행 시점에 **플랜 분기**.
 
@@ -194,9 +203,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +NOTE'));
 
 ---
 
-## 6. 조인 전략 읽기 — NL/Hash/Merge 비교
+## 조인 전략 읽기 — NL/Hash/Merge 비교
 
-### 6.1 NL (Nested Loops)
+### NL (Nested Loops)
+
 - **드라이빙 소량** + **인덱스 탐색** 유리, OLTP 선호.
 - 플랜: 상단에 소량 소스 → 아래쪽 `NESTED LOOPS` → 우측 자식이 **인덱스 + BY ROWID**.
 
@@ -212,7 +222,8 @@ WHERE  c.region='APAC' AND o.order_date BETWEEN :d1 AND :d2;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE'));
 ```
 
-### 6.2 Hash Join
+### Hash Join
+
 - **대량 조인/등가 조인**·인덱스 부재·병렬/배치에 유리.
 - TEMP 스필 → `direct path read temp` 위험 → **PGA 조정/카디널리티 정확화** 필요.
 
@@ -227,14 +238,16 @@ WHERE  c.grade >= 3;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +NOTE'));
 ```
 
-### 6.3 Merge Join
+### Merge Join
+
 - **두 입력이 정렬**되어 있거나 **정렬 비용이 적당**할 때. 범위 조인에 적합.
 
 ---
 
-## 7. 파티션/병렬/서브쿼리/뷰
+## 파티션/병렬/서브쿼리/뷰
 
-### 7.1 파티션 프루닝
+### 파티션 프루닝
+
 ```sql
 -- 날짜 파티션 테이블이라 가정
 EXPLAIN PLAN FOR
@@ -246,7 +259,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +PARTITION'));
 ```
 - Plan에 `PARTITION RANGE SINGLE/ITERATOR` 및 **Pruning 정보** 확인.
 
-### 7.2 병렬
+### 병렬
+
 ```sql
 ALTER SESSION SET parallel_degree_policy=MANUAL;
 
@@ -257,12 +271,13 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PARALLEL +NOTE'));
 ```
 - `PX COORDINATOR`, `PX SEND`, `PX BLOCK` 라인 확인.
 
-### 7.3 서브쿼리 방식
+### 서브쿼리 방식
+
 - **SEMI/ANTI JOIN**(`IN`, `EXISTS`, `NOT EXISTS`) 변환 여부, **SUBQUERY UNNESTING** 확인(플랜 Note/Outline).
 
 ---
 
-## 8. DML의 `EXPLAIN PLAN` (INSERT/UPDATE/DELETE/MERGE)
+## DML의 `EXPLAIN PLAN` (INSERT/UPDATE/DELETE/MERGE)
 
 ```sql
 EXPLAIN PLAN FOR
@@ -278,7 +293,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 9. `DBMS_XPLAN` 옵션 모음 (실무 즐겨 쓰기 세트)
+## `DBMS_XPLAN` 옵션 모음 (실무 즐겨 쓰기 세트)
 
 - `ALL +PREDICATE +ALIAS +PROJECTION +NOTE` : **예상** 계획 상세
 - `DISPLAY_CURSOR(..., 'ALLSTATS LAST +PEEKED_BINDS +OUTLINE +PROJECTION +ALIAS +NOTE')` : **실제**
@@ -286,7 +301,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 10. 힌트/아웃라인/베이스라인과의 관계
+## 힌트/아웃라인/베이스라인과의 관계
 
 - `EXPLAIN PLAN` 결과에 `OUTLINE`을 붙여보면 옵티마이저가 선택한 **힌트 세트**가 보인다.
 - 동일한 결과를 반복 강제하려면 **SQL Plan Baseline**/**SQL Profile**/힌트의 적절한 조합을 고려.
@@ -294,7 +309,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 11. 바인드 피킹/ACS(Adaptive Cursor Sharing)와 `EXPLAIN PLAN`
+## 바인드 피킹/ACS(Adaptive Cursor Sharing)와 `EXPLAIN PLAN`
 
 - `EXPLAIN PLAN`은 종종 **대표 바인드** 가정으로 추정 → **특정 바인드 값에 따른 플랜 차이** 미표시.
 - 실제로는 **`DISPLAY_CURSOR +PEEKED_BINDS`** 로 값별 플랜이 갈리는지 확인.
@@ -302,14 +317,14 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 12. 적응 계획(Adaptive)·통계 피드백
+## 적응 계획(Adaptive)·통계 피드백
 
 - 12c+에서는 실행 중 **부분 통계**를 보고 **조인 전략 전환**(예: NL ↔ Hash) 가능.
 - `EXPLAIN PLAN`엔 **최종 실행 경로**가 반영되지 않을 수 있음 → **SQL Monitor/ALLSTATS LAST** 필수.
 
 ---
 
-## 13. 실행계획 분석 **표준 절차** (템플릿)
+## 실행계획 분석 **표준 절차** (템플릿)
 
 1) **문제 SQL/상황 정의**: 요구/입력 범위/슬로우 지표
 2) **EXPLAIN PLAN**으로 **예상 경로** 파악, `+PREDICATE/+NOTE`로 **프루닝/힌트/동적샘플링** 확인
@@ -321,9 +336,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 
 ---
 
-## 14. 케이스 스터디
+## 케이스 스터디
 
-### 14.1 잘못된 카디널리티로 해시 스필
+### 잘못된 카디널리티로 해시 스필
+
 ```sql
 -- 문제 SQL
 EXPLAIN PLAN FOR
@@ -341,7 +357,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_B
 EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,'CUSTOMERS',method_opt=>'FOR COLUMNS SIZE 75 region');
 ```
 
-### 14.2 파티션 프루닝 누락
+### 파티션 프루닝 누락
+
 ```sql
 -- 조건이 함수로 감싸져 프루닝 실패
 EXPLAIN PLAN FOR
@@ -354,7 +371,8 @@ SELECT SUM(amount) FROM orders
 WHERE order_date >= :d1 AND order_date < :d2 + 1;
 ```
 
-### 14.3 NL vs HASH 선택 교정
+### NL vs HASH 선택 교정
+
 ```sql
 -- 예상: NL이 유리해야 하는데 HASH를 택함(추정 과대)
 EXPLAIN PLAN FOR
@@ -375,7 +393,7 @@ WHERE  c.region='APAC' AND c.grade>=4;
 
 ---
 
-## 15. 자주 쓰는 `DBMS_XPLAN` 레시피
+## 자주 쓰는 `DBMS_XPLAN` 레시피
 
 ```sql
 -- 1) 최신 explain plan
@@ -395,7 +413,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 16. 주의할 함정(요약)
+## 주의할 함정(요약)
 
 - `EXPLAIN PLAN`만 보고 튜닝 결론 내리면 **반쯤 틀릴 수 있다**: 실제는 **ALLSTATS LAST/Monitor**로 검증.
 - 바인드·스큐·적응 계획은 **런타임**에 갈려서 **예상 플랜과 달라진다**.
@@ -404,7 +422,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 17. 수학 한 줄(개념)
+## 수학 한 줄(개념)
 
 - 총 코스트 근사:
   $$ \text{Cost} \approx \sum_i \big( \alpha \cdot \text{IO}_i + \beta \cdot \text{CPU}_i \big) $$
@@ -412,7 +430,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 18. 마무리
+## 마무리
 
 - `EXPLAIN PLAN`은 **예상**이다. **실행**의 진실은 `DISPLAY_CURSOR(ALLSTATS LAST)`와 **SQL Monitor**가 말해 준다.
 - 분석은 **(1) 예상 → (2) 실제 → (3) 차이 원인(통계/히스토그램/바인드/조인순서/프루닝)** 의 3단 고정 루틴으로.

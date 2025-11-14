@@ -6,7 +6,8 @@ category: Cpp
 ---
 # `shared_from_this`와 `enable_shared_from_this`
 
-## 0. 문제의 본질 — “자기 자신을 소유하는 포인터”의 위험
+## 문제의 본질 — “자기 자신을 소유하는 포인터”의 위험
+
 다음 코드는 **절대 금지**다.
 
 ```cpp
@@ -31,7 +32,8 @@ $$
 
 ---
 
-## 1. 해법 — `enable_shared_from_this<T>`
+## 해법 — `enable_shared_from_this<T>`
+
 표준 라이브러리의 믹스인(Mixin) 베이스:
 
 ```cpp
@@ -45,6 +47,7 @@ struct My : std::enable_shared_from_this<My> {
 ```
 
 ### 핵심 아이디어
+
 - `enable_shared_from_this<T>`는 내부에 **약한 참조(weak_ptr)** 를 보관한다.
 - 객체가 **어떤 `shared_ptr`로 관리되기 시작**할 때, 라이브러리가 그 컨트롤 블록과 내부 약참조를 연결한다.
 - 이후 `shared_from_this()`는 그 약참조를 **안전하게 승격(lock)** 하여 **같은 컨트롤 블록**을 참조하는 `shared_ptr`를 반환한다.
@@ -59,7 +62,8 @@ struct My : std::enable_shared_from_this<My> {
 
 ---
 
-## 2. 전제 조건 — “이미 shared_ptr로 관리 중”이어야 한다
+## 전제 조건 — “이미 shared_ptr로 관리 중”이어야 한다
+
 다음은 **정상**:
 
 ```cpp
@@ -75,6 +79,7 @@ raw->getSelf();  // ❌ std::bad_weak_ptr 예외 (컨트롤 블록 연결 전)
 ```
 
 ### 왜? (사실 모델)
+
 `shared_from_this()`는 내부 weak_ptr을 **승격**한다:
 
 $$
@@ -90,7 +95,8 @@ $$
 
 ---
 
-## 3. 생성자에서 `shared_from_this()` 호출 금지
+## 생성자에서 `shared_from_this()` 호출 금지
+
 **생성자/소멸자 내부**에서 `shared_from_this()`를 부르면 **컨트롤 블록이 아직 연결되지 않았을 수 있음**.
 
 ```cpp
@@ -123,10 +129,12 @@ c->start();
 
 ---
 
-## 4. 콜백/비동기에서의 올바른 캡처
+## 콜백/비동기에서의 올바른 캡처
+
 비동기 콜백은 “객체 수명이 이벤트 시점까지 유지돼야” 안전하다.
 
-### 4.1 소유를 연장하려면 `shared_from_this()`
+### 소유를 연장하려면 `shared_from_this()`
+
 ```cpp
 struct Conn : std::enable_shared_from_this<Conn> {
     void start() {
@@ -139,7 +147,8 @@ struct Conn : std::enable_shared_from_this<Conn> {
 
 - 람다가 `self`를 **값으로 캡처** → 콜백 생존 동안 소유 유지.
 
-### 4.2 순환을 피하려면 `weak_ptr` 캡처 후 `lock()`
+### 순환을 피하려면 `weak_ptr` 캡처 후 `lock()`
+
 콜백 리스트가 객체를 오래 붙잡는 구조라면 **순환 참조**가 생길 수 있다.
 
 ```cpp
@@ -157,7 +166,8 @@ struct Conn : std::enable_shared_from_this<Conn> {
 
 ---
 
-## 5. C++17: `weak_from_this()`로 더욱 안전하게
+## C++17: `weak_from_this()`로 더욱 안전하게
+
 C++17부터 `enable_shared_from_this`는 **`weak_from_this()`** 제공:
 
 ```cpp
@@ -173,8 +183,9 @@ struct S : std::enable_shared_from_this<S> {
 
 ---
 
-## 6. 다중 상속/가상 상속 시 주의점
-### 6.1 동일 베이스 `enable_shared_from_this`를 여러 경로로 상속 ❌
+## 다중 상속/가상 상속 시 주의점
+### 동일 베이스 `enable_shared_from_this`를 여러 경로로 상속 ❌
+
 다중 상속 구조에서 **여러 번** `enable_shared_from_this`를 포함하면 **각 경로별로 다른 내부 weak_ptr**을 갖게 될 수 있다.
 
 **규칙**:
@@ -190,7 +201,8 @@ struct Right : virtual Base { /*...*/ };
 struct Derived : Left, Right { /*...*/ }; // Base는 가상 상속으로 1개만 존재
 ```
 
-### 6.2 파생 타입에서 `shared_from_this<Derived>()`를 쓰고 싶다?
+### 파생 타입에서 `shared_from_this<Derived>()`를 쓰고 싶다?
+
 C++20부터 `shared_from_this()`가 **파생 타입 안전 반환**을 지원한다(표준 구현에 따라 다를 수 있다).
 범용 안전 패턴:
 
@@ -205,7 +217,8 @@ struct Base : std::enable_shared_from_this<Base> {
 
 ---
 
-## 7. 별칭(aliased) `shared_ptr`와 결합 — “부분 뷰”를 안전하게
+## 별칭(aliased) `shared_ptr`와 결합 — “부분 뷰”를 안전하게
+
 **같은 컨트롤 블록**을 공유하되, **다른 포인터**를 가리키는 `shared_ptr`를 만들 수 있다.
 
 ```cpp
@@ -224,9 +237,10 @@ std::shared_ptr<int> view(big, slice);
 
 ---
 
-## 8. 실전 패턴 모음
+## 실전 패턴 모음
 
-### 8.1 팩토리 + post-construct 초기화
+### 팩토리 + post-construct 초기화
+
 ```cpp
 struct Service : std::enable_shared_from_this<Service> {
     void start(); // 내부에서 shared_from_this 사용
@@ -238,7 +252,8 @@ struct Service : std::enable_shared_from_this<Service> {
 };
 ```
 
-### 8.2 옵저버(리스너) 관리
+### 옵저버(리스너) 관리
+
 ```cpp
 struct Observer { virtual void on_event() = 0; virtual ~Observer() = default; };
 
@@ -254,7 +269,8 @@ struct Subject {
 };
 ```
 
-### 8.3 비동기 작업 큐
+### 비동기 작업 큐
+
 ```cpp
 struct Task : std::enable_shared_from_this<Task> {
     void schedule(Executor& ex) {
@@ -269,7 +285,7 @@ struct Task : std::enable_shared_from_this<Task> {
 
 ---
 
-## 9. 테스트/디버깅 팁
+## 테스트/디버깅 팁
 
 - **`use_count()`는 진단용**: 멀티스레드 상황에서 즉시 정확 보장을 기대하지 말 것.
 - **ASan/UBSan/Valgrind**: 이중 삭제/댕글링/누수 잡는 데 탁월.
@@ -278,7 +294,7 @@ struct Task : std::enable_shared_from_this<Task> {
 
 ---
 
-## 10. 흔한 함정 체크리스트
+## 흔한 함정 체크리스트
 
 1. [ ] **생성자/소멸자**에서 `shared_from_this()` 호출 ❌
 2. [ ] `new T; std::shared_ptr<T>(this)`로 **직접 감싸기** ❌
@@ -289,7 +305,7 @@ struct Task : std::enable_shared_from_this<Task> {
 
 ---
 
-## 11. 미세 팁
+## 미세 팁
 
 - **`weak_from_this()` (C++17)**: 예외 없는 관찰자 취득.
 - **별칭 생성자**: 동일 수명 보장 + 다른 포인터 노출.
@@ -299,7 +315,8 @@ struct Task : std::enable_shared_from_this<Task> {
 
 ---
 
-## 12. 종합 예제 — 네트워크 연결, 파서, 버퍼 뷰까지
+## 종합 예제 — 네트워크 연결, 파서, 버퍼 뷰까지
+
 요구사항:
 - 연결 수명을 콜백 체인 동안 유지
 - 콜백 리스트는 순환을 만들지 않도록 약캡처
@@ -381,7 +398,7 @@ int main() {
 
 ---
 
-## 13. 결정 트리 (언제 무엇을 쓰나)
+## 결정 트리 (언제 무엇을 쓰나)
 
 | 질문 | 예 | 아니오 |
 |---|---|---|
@@ -392,7 +409,8 @@ int main() {
 
 ---
 
-## 14. 요약
+## 요약
+
 - `shared_ptr(this)`는 **중복 컨트롤 블록**을 만들어 **이중 삭제** 위험.
 - `enable_shared_from_this<T>` + `shared_from_this()`는 **같은 컨트롤 블록**을 재사용하여 **안전한 자기 참조**를 제공.
 - **생성자/소멸자 호출 금지**, **다중 상속 시 베이스를 하나로**.

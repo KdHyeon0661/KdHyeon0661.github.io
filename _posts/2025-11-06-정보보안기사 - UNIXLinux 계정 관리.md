@@ -9,6 +9,7 @@ category: 정보보안기사
 ## 계정 관리 위협 모델과 핵심 원칙
 
 ### 위협 모델
+
 - **무단 접근**: 기본/공용 계정, 약한 암호, SSH 패스워드 로그인.
 - **권한 오남용**: 광범위한 `sudo NOPASSWD`, 위험 명령 허용, PATH 하이재킹.
 - **가시성 부족**: 로그인/권한 변경 로깅 부재, 감사(audit) 미구성.
@@ -16,6 +17,7 @@ category: 정보보안기사
 - **키·토큰 노출**: 잘못된 `~/.ssh` 권한, agent 포워딩 남용, 비밀 회전 미흡.
 
 ### 핵심 원칙
+
 - **최소 권한(least privilege)**, **개인 계정/역할 그룹**만 사용(공용계정 금지).
 - **강한 인증**: 키 기반 SSH + 필요 시 MFA(PAM TOTP/U2F).
 - **정책과 증적**: 정책(PAM/로그인/암호) + 감사(auditd) + 중앙 로그.
@@ -26,11 +28,13 @@ category: 정보보안기사
 ## 시스템 계정 데이터 구조 이해 (/etc/passwd, /etc/shadow, /etc/group)
 
 ### 빠른 리마인드
+
 - `/etc/passwd`: `name:x:UID:GID:gecos:home:shell`
 - `/etc/shadow`: `name:hash:lastchg:min:max:warn:inactive:expire:flag`
 - `/etc/group`: `group_name:x:GID:user1,user2,...`
 
 ### 점검 포인트(취약 신호)
+
 - **UID=0 복수 존재**(루트 복제)
 - **빈 암호**(shadow에서 `::`), 잠금 미설정(`!`/`*` 없음)
 - **홈 디렉터리 없음/권한 과다**
@@ -95,14 +99,17 @@ find /home -maxdepth 2 -type d -name ".ssh" -print0 2>/dev/null \
 ## 암호 정책(PAM, login.defs)과 복잡도·수명 설정
 
 ### Debian/Ubuntu — `pam_pwquality` / `login.defs`
+
 ```
 # /etc/pam.d/common-password (예시)
+
 password requisite pam_pwquality.so retry=3 minlen=12 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1 difok=4 enforce_for_root
 password [success=1 default=ignore] pam_unix.so obscure sha512 remember=5 use_authtok
 ```
 
 ```
 # /etc/login.defs (일부)
+
 PASS_MAX_DAYS   90
 PASS_MIN_DAYS   1
 PASS_WARN_AGE   14
@@ -110,12 +117,15 @@ ENCRYPT_METHOD  yescrypt
 ```
 
 ### RHEL/Rocky/Alma — `faillock`/`system-auth` 프로파일
+
 ```bash
 authselect select sssd with-faillock --force
 # 필요 시 /etc/security/pwquality.conf 조정
+
 ```
 
 ### 암호 엔트로피 간단 개념식
+
 암호 길이 \(L\), 문자집합 크기 \(N\)일 때, 가능한 조합 수는 \(N^L\).
 정보량(엔트로피) 근사:
 $$
@@ -124,6 +134,7 @@ $$
 > 예: 소문자+대문자+숫자+기호(약 90)로 길이 12 → \(H \approx 12\cdot\log_2 90 \approx 12 \cdot 6.49 \approx 78 \) 비트 수준.
 
 ### 실무 체크리스트
+
 - [ ] 최솟길이≥12, 문자 다양성, 최근 N개 재사용 금지(`remember`), 사전/유사 패턴 차단.
 - [ ] `yescrypt`(Debian 12/RHEL9) 또는 `sha512` 이상 사용 여부.
 - [ ] 만료/경고/유예(**`chage -l`**로 검증).
@@ -133,13 +144,16 @@ $$
 ## 인증 실패 잠금(브루트포스 방지)
 
 ### RHEL 계열(권장 경로)
+
 ```bash
 authselect select sssd with-faillock --force
 # 확인
+
 faillock --user alice
 ```
 
 ### Debian/Ubuntu (pam_faillock 지원 버전 or 대체)
+
 - 최신 배포판은 `pam_faillock.so` 지원. 미지원이면 `pam_tally2`(구식) 또는 Fail2ban.
 
 Fail2ban(SSH 예):
@@ -165,14 +179,18 @@ systemctl enable --now fail2ban
 ## 서비스 계정과 인터랙티브 로그인 차단
 
 ### 원칙
+
 - 서비스 계정은 **로그온 금지** 셸(`/usr/sbin/nologin` 또는 `/bin/false`), 홈 디렉터리 권한 최소화.
 - 실행은 **systemd**로 관리(환경 격리/권한 제한/샌드박스).
 
 ### 예시
+
 ```bash
 # 서비스 계정 생성(로그인 불가)
+
 useradd -r -s /usr/sbin/nologin -d /nonexistent websvc
 # 이미 존재하면 셸 변경
+
 usermod -s /usr/sbin/nologin websvc
 ```
 
@@ -185,6 +203,7 @@ usermod -s /usr/sbin/nologin websvc
 ## SSH 계정·키 관리 하드닝
 
 ### 서버 측(`sshd_config`)
+
 ```text
 Protocol 2
 PermitRootLogin no
@@ -195,6 +214,7 @@ MaxAuthTries 3
 LoginGraceTime 30
 AllowGroups ops sshusers
 # 필요 시 MFA (PAM TOTP/U2F)
+
 ```
 적용:
 ```bash
@@ -202,6 +222,7 @@ systemctl reload sshd
 ```
 
 ### 사용자 측 권한
+
 ```bash
 chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
@@ -209,6 +230,7 @@ chmod 600 ~/.ssh/id_ed25519
 ```
 
 ### authorized_keys 제약
+
 ```text
 from="10.0.0.0/24",command="/usr/local/sbin/controlled_cmd.sh",no-pty,no-agent-forwarding,no-port-forwarding ssh-ed25519 AAAA...
 ```
@@ -223,10 +245,12 @@ from="10.0.0.0/24",command="/usr/local/sbin/controlled_cmd.sh",no-pty,no-agent-f
 ## sudoers 안전 설계(가장 많은 사고 지점)
 
 ### 위험 패턴
+
 - `NOPASSWD` + **셸 실행 가능 도구**(vi, vim, less, more, awk, perl, python, find, tar, rsync, tee, cp…).
 - 광범위 와일드카드, 상대 경로, 환경 의존(`PATH`, `LD_*`).
 
 ### 안전 패턴
+
 - **래퍼 스크립트**(절대경로, 고정 인자)로 축소.
 - `Defaults use_pty, log_output, timestamp_timeout=5, passwd_tries=3`
 - `Defaults secure_path="/usr/sbin:/usr/bin:/sbin:/bin"`
@@ -236,11 +260,13 @@ from="10.0.0.0/24",command="/usr/local/sbin/controlled_cmd.sh",no-pty,no-agent-f
 ```bash
 # /usr/local/sbin/restart_web.sh
 #!/usr/bin/env bash
+
 exec /usr/bin/systemctl restart web.service
 ```
 
 ```
 # /etc/sudoers.d/webops
+
 Defaults:%webops use_pty,log_output,secure_path="/usr/sbin:/usr/bin:/sbin:/bin"
 %webops ALL=(root) NOPASSWD: /usr/local/sbin/restart_web.sh
 ```
@@ -262,6 +288,7 @@ sudo -l -U alice
 
 ```bash
 # 허용 목록 방식(화이트리스트)
+
 echo 'alice' > /etc/cron.allow
 touch /etc/cron.deny
 chmod 640 /etc/cron.allow /etc/cron.deny
@@ -286,11 +313,13 @@ ausearch -k cronchg -ts today
 ## 홈 디렉터리·스켈레톤(skel)·기본 umask
 
 ### 홈 디렉터리 권장
+
 - 소유자: 사용자, 그룹: 역할 그룹, 권한: `700` 또는 `750`.
 
 자동 생성 템플릿:
 ```bash
 # /etc/skel 권한 점검 및 기본 .profile, .bashrc 최소화
+
 umask 027
 ```
 
@@ -308,10 +337,12 @@ echo 'umask 027' | tee /etc/profile.d/secure-umask.sh
 ## 계정 수명주기(온보딩 → 휴면 → 폐기)
 
 ### 휴면/퇴사 처리 자동화 예(systemd timer)
+
 ```bash
 # /usr/local/sbin/lock_inactive.sh
 #!/usr/bin/env bash
 # 90일 로그인 없는 계정 잠금(예외: 시스템계정)
+
 THRESHOLD=90
 now_days=$(date +%s)
 awk -F: '$3>=1000 {print $1}' /etc/passwd | while read -r u; do
@@ -338,6 +369,7 @@ auditctl -w /etc/group  -p wa -k group
 auditctl -w /etc/sudoers -p wa -k sudoers
 auditctl -w /etc/ssh/sshd_config -p wa -k sshcfg
 # 영구 규칙은 /etc/audit/rules.d/*.rules 에 저장 후
+
 augenrules --load
 ```
 
@@ -356,17 +388,20 @@ ausearch -k sudoers -ts -1h
 ## 취약 구성 → 개선 “케이스 스터디”
 
 ### 케이스 1: UID 0 복수 계정
+
 - **증상**: `/etc/passwd`에 `root:x:0:0:...`, `toor:x:0:0:...` 등.
 - **위험**: 모든 제어·감사 우회 가능.
 - **조치**: 즉시 삭제/UID 변경, 해당 계정 접근 폐기, 로그 재검토.
 ```bash
 # toor UID 변경(예시)
+
 usermod -u 1001 toor
 groupmod -g 1001 toor
 find / -xdev -uid 0 -user toor -exec chown toor {} +
 ```
 
 ### 케이스 2: 서비스 계정에 /bin/bash
+
 - **조치**:
 ```bash
 usermod -s /usr/sbin/nologin dbsvc
@@ -374,9 +409,11 @@ usermod -s /usr/sbin/nologin dbsvc
 - systemd 유닛으로 서비스 관리(비루트 + 샌드박스).
 
 ### 케이스 3: sudoers에 vi 허용
+
 - **조치**: 래퍼 스크립트로 대체(절대경로·고정 인자), `secure_path`·`use_pty` 강화, 재검증.
 
 ### 케이스 4: SSH 패스워드 로그인 허용
+
 - **조치**: `PasswordAuthentication no`, 키 배포, MFA 필요 시 PAM TOTP.
 
 ---
@@ -477,19 +514,23 @@ grep -R "NOPASSWD" /etc/sudoers /etc/sudoers.d \
 
 예시 스니펫:
 ```bash
-# 1. 잠금/해제(배포판에 따라)
+# 잠금/해제(배포판에 따라)
+
 passwd -l alice    # 잠금(선호)
 passwd -u alice    # 해제
 # 또는 usermod -L/-U
+
 ```
 ```bash
-# 4. sshd_config 예
+# sshd_config 예
+
 PermitRootLogin no
 PasswordAuthentication no
 PubkeyAuthentication yes
 ```
 ```bash
-# 7. auditd
+# auditd
+
 auditctl -w /etc/passwd -p wa -k passwd
 auditctl -w /etc/sudoers -p wa -k sudoers
 ausearch -k passwd -ts today

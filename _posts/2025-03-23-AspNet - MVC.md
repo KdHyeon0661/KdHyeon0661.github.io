@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core MVC의 Controller / Action / View 구조
 
-## 0. MVC 한 장 요약
+## MVC 한 장 요약
 
 | 구성요소 | 핵심 책임 | 입력/출력 |
 |---|---|---|
@@ -22,7 +22,7 @@ category: AspNet
 
 ---
 
-## 1. 프로젝트 토폴로지
+## 프로젝트 토폴로지
 
 ```
 /Controllers
@@ -63,7 +63,7 @@ Program.cs
 
 ---
 
-## 2. 모델, 리포지토리, DbContext (예시)
+## 모델, 리포지토리, DbContext (예시)
 
 ```csharp
 // Models/Product.cs
@@ -158,7 +158,7 @@ app.MapControllerRoute(
 
 ---
 
-## 3. Controller / Action — 표준 CRUD와 반환 형식
+## Controller / Action — 표준 CRUD와 반환 형식
 
 ```csharp
 // Controllers/ProductsController.cs
@@ -258,9 +258,9 @@ public class ProductsController : Controller
 
 ---
 
-## 4. Views — Layout/Partial/Tag Helper
+## Views — Layout/Partial/Tag Helper
 
-### 4.1 레이아웃
+### 레이아웃
 
 ```razor
 @* Views/Shared/_Layout.cshtml *@
@@ -287,7 +287,7 @@ public class ProductsController : Controller
 </html>
 ```
 
-### 4.2 Index/Details
+### Index/Details
 
 ```razor
 @* Views/Products/Index.cshtml *@
@@ -336,7 +336,7 @@ public class ProductsController : Controller
 <a asp-action="Index">Back</a>
 ```
 
-### 4.3 Create/Edit/Delete
+### Create/Edit/Delete
 
 ```razor
 @* Views/Products/Create.cshtml *@
@@ -419,9 +419,9 @@ public class ProductsController : Controller
 
 ---
 
-## 5. 라우팅: 전통/특성(Attribute) 라우팅
+## 라우팅: 전통/특성(Attribute) 라우팅
 
-### 5.1 전통 라우팅(Program.cs)
+### 전통 라우팅(Program.cs)
 
 ```csharp
 app.MapControllerRoute(
@@ -429,7 +429,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 ```
 
-### 5.2 특성 라우팅
+### 특성 라우팅
 
 ```csharp
 [Route("products")]
@@ -452,7 +452,7 @@ public class ProductsController : Controller
 
 ---
 
-## 6. 모델 바인딩과 검증
+## 모델 바인딩과 검증
 
 - **소스**: Route, QueryString, Form, Headers, Files
 - **검증**: `DataAnnotations` + `ModelState.IsValid`
@@ -478,7 +478,7 @@ public IActionResult Search([FromQuery] string keyword, [FromQuery] int page = 1
 
 ---
 
-## 7. 보안과 PRG 패턴
+## 보안과 PRG 패턴
 
 - 폼 POST에는 **반드시** `[ValidateAntiForgeryToken]`
 - 민감 데이터 로깅 금지, 서버 검증이 최종 방어선
@@ -498,9 +498,9 @@ public IActionResult Create(Product model)
 
 ---
 
-## 8. View 구성 고급: Partial View · ViewComponent
+## View 구성 고급: Partial View · ViewComponent
 
-### 8.1 Partial View
+### Partial View
 
 ```razor
 @* Views/Shared/_ProductRow.cshtml *@
@@ -522,7 +522,7 @@ public IActionResult Create(Product model)
 </table>
 ```
 
-### 8.2 View Component (데이터 포함 위젯)
+### View Component (데이터 포함 위젯)
 
 ```csharp
 // Components/TopProductsViewComponent.cs
@@ -557,7 +557,7 @@ public class TopProductsViewComponent : ViewComponent
 
 ---
 
-## 9. Filters — 횡단 관심사
+## Filters — 횡단 관심사
 
 - `IActionFilter`, `IAsyncActionFilter`, `IResultFilter` 등
 - 로깅, 권한 체크, 트랜잭션 경계 설정에 유용
@@ -581,7 +581,7 @@ builder.Services.AddControllersWithViews(opt =>
 
 ---
 
-## 10. Areas — 대규모 모듈 분리
+## Areas — 대규모 모듈 분리
 
 ```
 /Areas/Admin
@@ -616,7 +616,7 @@ public class UsersController : Controller
 
 ---
 
-## 11. 성능·안정성 팁
+## 성능·안정성 팁
 
 - 컨트롤러 액션은 **비동기** 기본 (`Task<IActionResult>`)
 - 읽기 시 `AsNoTracking()`
@@ -626,9 +626,9 @@ public class UsersController : Controller
 
 ---
 
-## 12. 테스트 — Controller 단위/통합
+## 테스트 — Controller 단위/통합
 
-### 12.1 단위 테스트(비즈니스 로직 분리 가정)
+### 단위 테스트(비즈니스 로직 분리 가정)
 
 ```csharp
 // xUnit 예시
@@ -646,14 +646,14 @@ public async Task Details_NotFound_WhenMissing()
 }
 ```
 
-### 12.2 통합 테스트(WebApplicationFactory)
+### 통합 테스트(WebApplicationFactory)
 
 - `Microsoft.AspNetCore.Mvc.Testing` 패키지로 엔드투엔드 검증
 - Razor 렌더링, 라우팅, 필터까지 포함해 테스트
 
 ---
 
-## 13. 에러 처리/로그/사용자 메시지
+## 에러 처리/로그/사용자 메시지
 
 - 사용자 메시지: `TempData` (PRG와 궁합)
 - 서버 로그: `ILogger<T>`
@@ -661,7 +661,7 @@ public async Task Details_NotFound_WhenMissing()
 
 ---
 
-## 14. 자주 겪는 이슈와 해결
+## 자주 겪는 이슈와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -673,7 +673,7 @@ public async Task Details_NotFound_WhenMissing()
 
 ---
 
-## 15. 확장 주제 로드맵
+## 확장 주제 로드맵
 
 - MVC + API 공존 시 라우팅 전략(엔드포인트 라우팅)
 - 국제화(Localization)와 뷰 지역화

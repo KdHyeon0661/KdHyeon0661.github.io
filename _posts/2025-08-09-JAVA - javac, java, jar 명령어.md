@@ -6,9 +6,10 @@ category: Java
 ---
 # `javac`, `java`, `jar` 명령어
 
-## 1. 개요와 큰 그림
+## 개요와 큰 그림
 
-### 1.1 전체 흐름(개발자 워크플로우)
+### 전체 흐름(개발자 워크플로우)
+
 ```
 소스(.java)
    │  └── (선택) 애너테이션 프로세싱
@@ -19,7 +20,8 @@ javac ──▶ .class ──▶ (선택) jar ──▶ (선택) 모듈 JAR
                            java 런처 실행
 ```
 
-### 1.2 클래식 vs 모듈
+### 클래식 vs 모듈
+
 | 구분 | 클래스패스(ClassPath) | 모듈패스(ModulePath, JPMS) |
 |---|---|---|
 | 선언 단위 | JAR/폴더 나열 | **모듈**(`module-info.java`) |
@@ -30,14 +32,16 @@ javac ──▶ .class ──▶ (선택) jar ──▶ (선택) 모듈 JAR
 
 ---
 
-## 2. `javac` — Java 컴파일러
+## `javac` — Java 컴파일러
 
-### 2.1 기본형식
+### 기본형식
+
 ```bash
 javac [옵션] <소스파일...>
 ```
 
-### 2.2 자주 쓰는 옵션(핵심)
+### 자주 쓰는 옵션(핵심)
+
 | 옵션 | 의미 / 사용 시점 | 메모 |
 |---|---|---|
 | `-d <dir>` | 클래스 출력 디렉터리 | 패키지 구조로 폴더 자동 생성 |
@@ -54,35 +58,42 @@ javac [옵션] <소스파일...>
 | `--enable-preview` | 프리뷰 기능 컴파일 | 실행 시에도 필요 |
 | `@argfile` | 옵션/파일 목록 외부파일 | 긴 명령어 정리 |
 
-### 2.3 기본 컴파일 예
+### 기본 컴파일 예
+
 ```bash
 # 현재 폴더에 .class 생성
+
 javac Hello.java
 ```
 
 패키지 구조 반영:
 ```bash
 # src → bin
+
 javac -d bin src/com/example/app/Main.java
 ```
 
 외부 라이브러리 포함(클래스패스):
 ```bash
 # Unix/macOS
+
 javac -cp "lib/*:bin" -d bin src/com/example/app/Main.java
 # Windows
+
 javac -cp "lib/*;bin" -d bin src\com\example\app\Main.java
 ```
 
 모듈 빌드:
 ```bash
 # src/<module>/module-info.java, src/<module>/com/...
+
 javac -d out --module-source-path src $(find src -name "*.java")
 ```
 
 구버전 타겟(권장):
 ```bash
 # JDK 17에서 JDK 8용 산출물 생성
+
 javac --release 8 -d bin $(find src -name "*.java")
 ```
 
@@ -94,21 +105,24 @@ javac -proc:only -processor com.example.ToolsProcessor -cp "lib/*" $(find src -n
 argfile 사용:
 ```bash
 # args.txt에 각 줄마다 인자/경로 기록
+
 javac @args.txt
 ```
 
 ---
 
-## 3. `java` — 애플리케이션 실행기
+## `java` — 애플리케이션 실행기
 
-### 3.1 기본형식
+### 기본형식
+
 ```bash
 java [옵션] <메인클래스> [args...]
 java [옵션] -jar <실행가능-jar> [args...]
 java [옵션] -m <모듈>/<메인클래스> [args...]
 ```
 
-### 3.2 자주 쓰는 옵션
+### 자주 쓰는 옵션
+
 | 옵션 | 의미 |
 |---|---|
 | `-cp` / `--class-path` | 클래스패스 지정 |
@@ -123,11 +137,12 @@ java [옵션] -m <모듈>/<메인클래스> [args...]
 | `--enable-preview` | 프리뷰 기능 실행 |
 | `@argfile` | 인자 목록 외부파일로 전달 |
 
-### 3.3 실행 예
+### 실행 예
 
 클래스패스 기반:
 ```bash
 # bin + lib/* 포함
+
 java -cp "bin:lib/*" com.example.app.Main arg1 arg2
 ```
 
@@ -139,6 +154,7 @@ java -jar build/app.jar --mode=prod
 모듈 실행:
 ```bash
 # mods 디렉터리에 모듈 JAR들 배치
+
 java -p mods -m com.example.app/com.example.app.Main
 ```
 
@@ -155,9 +171,10 @@ java --add-opens com.example.app/com.example.app.model=ALL-UNNAMED -jar app.jar
 
 ---
 
-## 4. `jar` — JAR 아카이브 도구 (ZIP 기반)
+## `jar` — JAR 아카이브 도구 (ZIP 기반)
 
-### 4.1 기본형식(긴 옵션 권장)
+### 기본형식(긴 옵션 권장)
+
 ```bash
 jar --create   --file app.jar -C bin .
 jar --list     --file app.jar
@@ -166,7 +183,8 @@ jar --validate --file app.jar
 ```
 전통 단축 표기: `jar cfe app.jar com.example.app.Main -C bin .`
 
-### 4.2 주요 옵션
+### 주요 옵션
+
 | 옵션(긴형) | 단축 | 의미 |
 |---|---|---|
 | `--create` | `c` | 새 JAR 생성 |
@@ -182,21 +200,26 @@ jar --validate --file app.jar
 | `--describe-module` |  | JAR의 모듈 정보 설명 |
 | `--release <N>` |  | **멀티릴리스 JAR(MRJAR)** 섹션 추가 |
 
-### 4.3 실행 가능한 JAR 만들기
+### 실행 가능한 JAR 만들기
+
 ```bash
-# 1. 컴파일
+# 컴파일
+
 javac -d bin src/com/example/app/*.java
 
-# 2. JAR 생성(메인클래스 지정)
+# JAR 생성(메인클래스 지정)
+
 jar --create --file app.jar --main-class com.example.app.Main -C bin .
 
-# 3. 실행
+# 실행
+
 java -jar app.jar
 ```
 
 사용자 매니페스트 방식:
 ```text
 # MANIFEST.MF
+
 Manifest-Version: 1.0
 Main-Class: com.example.app.Main
 Class-Path: lib/guava.jar lib/logging.jar
@@ -208,16 +231,20 @@ jar --create --file app.jar --manifest MANIFEST.MF -C bin .
 > 참고: **일반 `jar`는 여러 JAR을 하나로 합쳐주지 않습니다.**
 > 의존 JAR까지 한 덩어리로 만들려면 **Maven Shade** / **Gradle Shadow** 같은 **쉐이더**를 사용하세요.
 
-### 4.4 멀티릴리스 JAR(MRJAR) 예 (JDK9+)
+### 멀티릴리스 JAR(MRJAR) 예 (JDK9+)
+
 JDK별 구현을 동봉:
 ```bash
 # 공통 클래스(최소 타겟) 컴파일
+
 javac --release 8 -d out/common $(find src/common -name "*.java")
 
 # JDK 11 전용 구현 컴파일
+
 javac --release 11 -d out/11 $(find src/11 -name "*.java")
 
 # MRJAR 생성
+
 jar --create --file app-mr.jar \
     -C out/common . \
     --release 11 -C out/11 .
@@ -226,9 +253,10 @@ jar --create --file app-mr.jar \
 
 ---
 
-## 5. 클래스패스 vs 모듈패스 (JPMS 상세)
+## 클래스패스 vs 모듈패스 (JPMS 상세)
 
-### 5.1 차이 요약(재정리)
+### 차이 요약(재정리)
+
 | 항목 | 클래스패스 | 모듈패스 |
 |---|---|---|
 | 접근 | `public`=전역 공개 | `exports` 공개만 접근 |
@@ -237,15 +265,17 @@ jar --create --file app-mr.jar \
 | 실행 | `-cp` | `-p` + `-m` |
 | 구조 | 자유 배치 | 모듈 단위 + `module-info.java` |
 
-### 5.2 자동/이름 없는 모듈
+### 자동/이름 없는 모듈
+
 - **자동 모듈**: `module-info.class` 없지만 모듈패스에 올리면 JAR 파일명이 모듈명으로 간주(가능하면 `Automatic-Module-Name` 매니페스트로 **안정적 이름** 지정).
 - **이름 없는 모듈**: 클래스패스의 모든 코드가 합쳐진 가상 모듈. 모든 모듈을 읽을 수 있지만, **모듈 → 이름 없는 모듈** 방향은 불가.
 
 ---
 
-## 6. 실전 시나리오
+## 실전 시나리오
 
-### 6.1 클래식 프로젝트(클래스패스)
+### 클래식 프로젝트(클래스패스)
+
 ```
 project/
  ├─ src/
@@ -255,8 +285,10 @@ project/
 컴파일:
 ```bash
 # Unix
+
 javac -cp "lib/*" -d bin $(find src -name "*.java")
 # Windows
+
 for /R src %f in (*.java) do @echo %f >> sources.txt
 javac -cp "lib/*" -d bin @sources.txt
 ```
@@ -265,10 +297,12 @@ javac -cp "lib/*" -d bin @sources.txt
 jar --create --file app.jar --main-class com.example.app.Main -C bin .
 java -cp "app.jar:lib/*" com.example.app.Main
 # 또는
+
 java -jar app.jar
 ```
 
-### 6.2 모듈 프로젝트(간단)
+### 모듈 프로젝트(간단)
+
 ```
 src/
  └─ com.example.app/
@@ -288,7 +322,8 @@ javac -d mods/com.example.app --module-source-path src $(find src -name "*.java"
 java -p mods -m com.example.app/com.example.app.Main
 ```
 
-### 6.3 멀티 모듈 빌드(서비스 예)
+### 멀티 모듈 빌드(서비스 예)
+
 ```
 src/
  ├─ com.example.core/
@@ -321,18 +356,22 @@ module com.example.app {
 컴파일 → JAR → 실행:
 ```bash
 # 컴파일
+
 javac -d out --module-source-path src $(find src -name "*.java")
 
 # 모듈 JAR
+
 jar --create --file mods/com.example.core.jar        -C out/com.example.core .
 jar --create --file mods/com.example.plugin.add.jar  -C out/com.example.plugin.add .
 jar --create --file mods/com.example.app.jar         -C out/com.example.app .
 
 # 실행
+
 java -p mods -m com.example.app/com.example.app.Main
 ```
 
-### 6.4 애너테이션 프로세싱(예: MapStruct)
+### 애너테이션 프로세싱(예: MapStruct)
+
 컴파일 단계에서 프로세서 실행:
 ```bash
 javac -cp "lib/*" -processor org.mapstruct.ap.MappingProcessor \
@@ -340,7 +379,8 @@ javac -cp "lib/*" -processor org.mapstruct.ap.MappingProcessor \
 ```
 생성 소스 출력 디렉터리 제어(프로세서별 옵션 확인 필요).
 
-### 6.5 프리뷰 기능(예: switch expressions – JDK 미리보기일 때)
+### 프리뷰 기능(예: switch expressions – JDK 미리보기일 때)
+
 컴파일:
 ```bash
 javac --enable-preview --release 21 -d bin $(find src -name "*.java")
@@ -353,7 +393,7 @@ java --enable-preview -cp bin com.example.app.Main
 
 ---
 
-## 7. 트러블슈팅(빈출 에러) — 원인·해결 표
+## 트러블슈팅(빈출 에러) — 원인·해결 표
 
 | 에러/증상 | 전형적 원인 | 해결 가이드 |
 |---|---|---|
@@ -368,7 +408,7 @@ java --enable-preview -cp bin com.example.app.Main
 
 ---
 
-## 8. 베스트 프랙티스 체크리스트
+## 베스트 프랙티스 체크리스트
 
 1. **호환 빌드**: JDK 9+에서는 `--release N`로 **API/바이트코드 동시 보장**.
 2. **경고를 친구로**: `-Xlint:all -Werror -parameters`로 품질 유지.
@@ -381,9 +421,10 @@ java --enable-preview -cp bin com.example.app.Main
 
 ---
 
-## 9. 부록
+## 부록
 
-### 9.1 프로젝트 레이아웃(권장)
+### 프로젝트 레이아웃(권장)
+
 ```
 root/
  ├─ src/                         # (클래스패스) 공통 소스
@@ -400,48 +441,60 @@ root/
  └─ lib/                         # 외부 JAR
 ```
 
-### 9.2 OS별 클래스패스 예
+### OS별 클래스패스 예
+
 | OS | 예 |
 |---|---|
 | Unix/macOS | `-cp "app.jar:lib/*"` |
 | Windows(CMD) | `-cp "app.jar;lib/*"` |
 | Windows(PowerShell) | `-cp "app.jar;lib/*"` (따옴표 주의) |
 
-### 9.3 치트시트
+### 치트시트
 
 **컴파일**
 ```bash
 # 클래식
+
 javac -cp "lib/*" -d bin $(find src -name "*.java")
 # 모듈
+
 javac -d out --module-source-path src $(find src -name "*.java")
 # 구버전 타겟
+
 javac --release 8 -d bin $(find src -name "*.java")
 # 프리뷰
+
 javac --enable-preview --release 21 -d bin $(find src -name "*.java")
 ```
 
 **실행**
 ```bash
 # 클래식
+
 java -cp "bin:lib/*" com.example.app.Main
 # 모듈
+
 java -p mods -m com.example.app/com.example.app.Main
 # 단일 파일
+
 java Hello.java
 # 프리뷰
+
 java --enable-preview -cp bin com.example.app.Main
 ```
 
 **패키징**
 ```bash
 # 실행가능 JAR
+
 jar --create --file app.jar --main-class com.example.app.Main -C bin .
 # 목록/추출/검증
+
 jar --list --file app.jar
 jar --extract --file app.jar -C out
 jar --validate --file app.jar
 # MRJAR
+
 jar --create --file app-mr.jar -C out/common . --release 11 -C out/11 .
 ```
 
@@ -450,6 +503,7 @@ jar --create --file app-mr.jar -C out/common . --release 11 -C out/11 .
 ## 부가: 실습 예제 (간단 Echo)
 
 ### 소스
+
 ```
 src/
  └─ com/example/echo/Echo.java
@@ -465,12 +519,16 @@ public class Echo {
 ```
 
 ### 빌드·패키징·실행
+
 ```bash
 # 컴파일
+
 javac -d bin src/com/example/echo/Echo.java
 # JAR
+
 jar --create --file echo.jar --main-class com.example.echo.Echo -C bin .
 # 실행
+
 java -jar echo.jar hello world
 ```
 

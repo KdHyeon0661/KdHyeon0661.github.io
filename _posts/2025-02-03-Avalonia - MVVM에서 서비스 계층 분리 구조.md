@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM에서 서비스 계층 분리 구조 (Service / Repository / Unit of Work / Mapper / Caching)
 
-## 0. 설계 원칙 요약
+## 설계 원칙 요약
 
 - **SRP / SoC**: UI(상태/이벤트), 도메인 유즈케이스, 데이터 접근을 분리한다.
 - **DI**: 모든 경계(서비스/리포지토리/매퍼)를 인터페이스화 → 테스트/교체 용이.
@@ -20,7 +20,7 @@ category: Avalonia
 
 ---
 
-## 1. 참조 프로젝트 구조(확장형)
+## 참조 프로젝트 구조(확장형)
 
 ```
 MyApp/
@@ -59,9 +59,9 @@ MyApp/
 
 ---
 
-## 2. 모델·DTO·매퍼
+## 모델·DTO·매퍼
 
-### 2.1 도메인 모델
+### 도메인 모델
 
 ```csharp
 // Models/User.cs
@@ -80,7 +80,7 @@ public sealed class User
 }
 ```
 
-### 2.2 DTO
+### DTO
 
 ```csharp
 // Dtos/UserDto.cs
@@ -92,7 +92,7 @@ public sealed class UserDto
 }
 ```
 
-### 2.3 페이지네이션 공통 모델
+### 페이지네이션 공통 모델
 
 ```csharp
 // Models/PagedResult.cs
@@ -105,7 +105,7 @@ public sealed class PagedResult<T>
 }
 ```
 
-### 2.4 매퍼
+### 매퍼
 
 ```csharp
 // Mapping/IUserMapper.cs
@@ -140,9 +140,9 @@ public sealed class UserMapper : IUserMapper
 
 ---
 
-## 3. 저장소 계층(Repository / Unit of Work)
+## 저장소 계층(Repository / Unit of Work)
 
-### 3.1 인터페이스
+### 인터페이스
 
 ```csharp
 // Repositories/IUserRepository.cs
@@ -164,7 +164,7 @@ public interface IUnitOfWork : IAsyncDisposable
 }
 ```
 
-### 3.2 API 저장소 구현(원격 데이터 소스)
+### API 저장소 구현(원격 데이터 소스)
 
 ```csharp
 // Repositories/api/UserApiRepository.cs
@@ -224,7 +224,7 @@ public sealed class UserApiRepository : IUserRepository
 
 > API 저장소는 네트워크 예외/상태코드를 캡슐화한다. 서비스 계층은 “성공/실패” 의미에만 집중하도록 한다.
 
-### 3.3 SQLite + Dapper 저장소(로컬 캐시/오프라인)
+### SQLite + Dapper 저장소(로컬 캐시/오프라인)
 
 ```csharp
 // Repositories/sqlite/SqliteUnitOfWork.cs
@@ -342,9 +342,9 @@ public sealed class UserSqliteRepository : IUserRepository
 
 ---
 
-## 4. 서비스 계층(유즈케이스/정책/캐시)
+## 서비스 계층(유즈케이스/정책/캐시)
 
-### 4.1 기본 인터페이스
+### 기본 인터페이스
 
 ```csharp
 // Services/IUserService.cs
@@ -357,7 +357,7 @@ public interface IUserService
 }
 ```
 
-### 4.2 시간/캐시 추상화
+### 시간/캐시 추상화
 
 ```csharp
 // Services/IClock.cs
@@ -398,7 +398,7 @@ public sealed class MemoryCache : ICache
 
 > TTL 정책은 **서비스 계층**이 소유한다. 예: 목록 30초, 단건 60초 등.
 
-### 4.3 Polly 정책
+### Polly 정책
 
 ```csharp
 // Services/Policies.cs
@@ -421,7 +421,7 @@ public static class Policies
 }
 ```
 
-### 4.4 서비스 구현: API 우선, 실패 시 로컬 폴백 + 캐시
+### 서비스 구현: API 우선, 실패 시 로컬 폴백 + 캐시
 
 ```csharp
 // Services/UserService.cs
@@ -549,7 +549,7 @@ public sealed class UserService : IUserService
 
 ---
 
-## 5. ViewModel과의 결합
+## ViewModel과의 결합
 
 ```csharp
 // ViewModels/UserViewModel.cs
@@ -660,7 +660,7 @@ public sealed class UserViewModel : ReactiveObject
 
 ---
 
-## 6. DI 구성(App.axaml.cs)
+## DI 구성(App.axaml.cs)
 
 ```csharp
 // App.axaml.cs (중요 부분)
@@ -711,18 +711,21 @@ public class App : Application
 
 ---
 
-## 7. 고급 설계 포인트
+## 고급 설계 포인트
 
-### 7.1 정렬/필터/페이지네이션 기준의 서비스 책임
+### 정렬/필터/페이지네이션 기준의 서비스 책임
+
 - Repository는 **기술적 쿼리 능력**(WHERE/ORDER/LIMIT)을 제공.
 - Service는 **도메인 규칙**(권한별 필터, 기본 정렬, 클리닝)과 **페이징 UI 정책**(기본 page=1, pageSize=20)을 소유.
 
-### 7.2 입력/도메인 검증 위치
+### 입력/도메인 검증 위치
+
 - **ViewModel**: 사용자 피드백용 **UI 레벨** 검증(빈 값/포맷).
 - **Service**: 시스템 일관성을 보장하는 **도메인 검증**(User.IsValid 등)을 반드시 재검증.
 - **Repository**: 무결성 제약(UNIQUE 등) 실패 시 **인프라 오류**로 승격 → Service에서 적절히 메시지 변환.
 
-### 7.3 캐시 만료/동기화 수식
+### 캐시 만료/동기화 수식
+
 만료 시각을 \( T_\text{exp} \), 현재 시각을 \( t \), TTL을 \( \tau \)라 하면
 캐시 유효 조건은
 $$
@@ -730,19 +733,21 @@ t - T_\text{set} < \tau
 $$
 이며, API 성공 시 **쓰기 직후 캐시 갱신**으로 일관성을 유지한다.
 
-### 7.4 오프라인 전략
+### 오프라인 전략
+
 - 모든 쓰기(Upsert/Delete)는 로컬에 반영 후, 백그라운드 동기화 큐(Outbox)로 서버 반영 가능.
 - 충돌 정책: “서버 우선”, “최신 타임스탬프 우선”, “필드 병합” 등 결정.
 
-### 7.5 사양 패턴/쿼리 오브젝트(선택)
+### 사양 패턴/쿼리 오브젝트(선택)
+
 - 복잡한 검색/정렬 조건을 `UserQuery` 객체로 캡슐화 → Repository가 Query를 해석.
 - Service는 Query 빌더를 제공하여 UI 요구를 단순화.
 
 ---
 
-## 8. 테스트 전략
+## 테스트 전략
 
-### 8.1 ViewModel 테스트: Service 모킹
+### ViewModel 테스트: Service 모킹
 
 ```csharp
 // Tests/UserViewModelTests.cs
@@ -772,7 +777,7 @@ public class UserViewModelTests
 }
 ```
 
-### 8.2 Service 테스트: Repository 모킹
+### Service 테스트: Repository 모킹
 
 ```csharp
 // Tests/UserServiceTests.cs
@@ -811,14 +816,14 @@ public class UserServiceTests
 
 ---
 
-## 9. CQRS/유즈케이스 분해(선택)
+## CQRS/유즈케이스 분해(선택)
 
 읽기/쓰기 파이프라인을 분리하여 **읽기 최적화(캐시/인덱스)**와 **쓰기 검증/트랜잭션**을 독립적으로 확장할 수 있다.
 예) `IUserQueries`, `IUserCommands`로 인터페이스 분리.
 
 ---
 
-## 10. 오류 모델
+## 오류 모델
 
 ```csharp
 // Models/Errors.cs
@@ -838,7 +843,7 @@ Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미�
 
 ---
 
-## 11. 성능·운영 팁
+## 성능·운영 팁
 
 - **HttpClient 재사용**: DI 컨테이너로 관리, 소켓 고갈 방지
 - **Polly**: 429/5xx 재시도, 서킷브레이커로 폭주 방지
@@ -848,7 +853,7 @@ Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미�
 
 ---
 
-## 12. 요약 표
+## 요약 표
 
 | 계층 | 책임 | 구현 포인트 | 테스트 포인트 |
 |------|------|------------|---------------|
@@ -859,7 +864,7 @@ Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미�
 
 ---
 
-## 13. 부록: 간단 수학(캐시 히트율 근사)
+## 부록: 간단 수학(캐시 히트율 근사)
 
 요청 빈도를 \( \lambda \), 캐시 TTL을 \( \tau \), 원천 적중 확률을 \( p \)라 할 때, 단순 포아송 근사에서 캐시 적중 확률 \( H \)는
 
@@ -872,7 +877,7 @@ $$
 
 ---
 
-## 14. 결론
+## 결론
 
 - **ViewModel–Service–Repository** 분리는 UI/도메인/인프라의 콘크리트 결합을 끊고, 테스트성·유지보수성·확장성을 극대화한다.
 - **Service**는 캐시·오프라인·동기화·검증·트랜잭션·정책의 주체이며, **Repository**는 데이터 접근 구현에만 집중한다.

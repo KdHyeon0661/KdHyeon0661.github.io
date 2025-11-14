@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Razor 폼 처리와 Tag Helper, 유효성 검사 완전 정리
 
-## 0. 무엇을 만들 것인가 — 시나리오
+## 무엇을 만들 것인가 — 시나리오
 
 - `ContactForm` 입력 페이지
 - 필수/형식 검증, 서버/클라이언트 메시지 출력
@@ -17,9 +17,9 @@ category: AspNet
 
 ---
 
-## 1. 폼의 최소 골격과 바인딩 흐름
+## 폼의 최소 골격과 바인딩 흐름
 
-### 1.1 기본 HTML 폼과 OnPost
+### 기본 HTML 폼과 OnPost
 
 ```cshtml
 @page
@@ -55,9 +55,9 @@ public class ContactModel : PageModel
 
 ---
 
-## 2. 강한 형식 바인딩과 DataAnnotations 검증
+## 강한 형식 바인딩과 DataAnnotations 검증
 
-### 2.1 모델 클래스 정의
+### 모델 클래스 정의
 
 ```csharp
 using System.ComponentModel.DataAnnotations;
@@ -83,7 +83,7 @@ public class ContactForm
 }
 ```
 
-### 2.2 PageModel과 바인딩
+### PageModel과 바인딩
 
 ```csharp
 public class ContactModel : PageModel
@@ -112,7 +112,7 @@ public class ContactModel : PageModel
 
 ---
 
-## 3. Tag Helper로 강한 형식 폼 만들기
+## Tag Helper로 강한 형식 폼 만들기
 
 - `_ViewImports.cshtml`에 다음이 필요합니다.
 
@@ -120,7 +120,7 @@ public class ContactModel : PageModel
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 ```
 
-### 3.1 `asp-for`와 검증 메시지 출력
+### `asp-for`와 검증 메시지 출력
 
 ```cshtml
 @page
@@ -162,7 +162,7 @@ public class ContactModel : PageModel
 - `asp-validation-for`는 해당 필드의 **검증 메시지**를 표시
 - `_ValidationScriptsPartial`은 jQuery Validate + unobtrusive 스크립트를 포함
 
-### 3.2 요약 메시지(`asp-validation-summary`)
+### 요약 메시지(`asp-validation-summary`)
 
 ```cshtml
 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -173,7 +173,7 @@ public class ContactModel : PageModel
 
 ---
 
-## 4. 다중 핸들러(버튼별로 다른 OnPost)
+## 다중 핸들러(버튼별로 다른 OnPost)
 
 ```csharp
 public IActionResult OnPostSave()
@@ -207,7 +207,7 @@ public IActionResult OnPostDelete()
 
 ---
 
-## 5. 라우팅/전송 대상 제어: `asp-page`/`asp-route-*`/`asp-antiforgery`
+## 라우팅/전송 대상 제어: `asp-page`/`asp-route-*`/`asp-antiforgery`
 
 ```cshtml
 <form method="post" asp-page="/Contacts/Edit" asp-route-id="@Model.FormId">
@@ -227,9 +227,9 @@ public IActionResult OnPostDelete()
 
 ---
 
-## 6. 선택/체크/라디오/셀렉트 박스
+## 선택/체크/라디오/셀렉트 박스
 
-### 6.1 라디오/체크
+### 라디오/체크
 
 ```csharp
 public class Prefs
@@ -251,7 +251,7 @@ public class Prefs
 <span asp-validation-for="Prefs.ContactMethod" class="text-danger"></span>
 ```
 
-### 6.2 드롭다운(`asp-items`)
+### 드롭다운(`asp-items`)
 
 ```csharp
 public IEnumerable<SelectListItem> Countries => new[]
@@ -272,9 +272,9 @@ public string CountryCode { get; set; } = "KR";
 
 ---
 
-## 7. 파일 업로드(IFormFile, 다중 파일, 크기 제한)
+## 파일 업로드(IFormFile, 다중 파일, 크기 제한)
 
-### 7.1 모델/페이지 모델
+### 모델/페이지 모델
 
 ```csharp
 public class UploadForm
@@ -314,7 +314,7 @@ public class UploadModel : PageModel
 }
 ```
 
-### 7.2 뷰
+### 뷰
 
 ```cshtml
 <form method="post" enctype="multipart/form-data">
@@ -333,7 +333,7 @@ public class UploadModel : PageModel
 </form>
 ```
 
-### 7.3 제한/보안 체크리스트
+### 제한/보안 체크리스트
 
 - `RequestSizeLimit`, `FormOptions.MultipartBodyLengthLimit`으로 **최대 크기 제한**
 - 파일명 검증/허용 확장자 화이트리스트/AV 스캔/랜덤 파일명/별도 스토리지
@@ -341,9 +341,9 @@ public class UploadModel : PageModel
 
 ---
 
-## 8. 컬렉션/중첩 모델 바인딩
+## 컬렉션/중첩 모델 바인딩
 
-### 8.1 중첩 모델
+### 중첩 모델
 
 ```csharp
 public class Address
@@ -360,7 +360,7 @@ public class CustomerForm
 }
 ```
 
-### 8.2 뷰(인덱스 기반 이름)
+### 뷰(인덱스 기반 이름)
 
 ```cshtml
 @for (int i = 0; i < Model.Form.Addresses.Count; i++)
@@ -381,9 +381,9 @@ public class CustomerForm
 
 ---
 
-## 9. 서버 측 검증 고급: 수동 오류, IValidatableObject, 커스텀 Attribute
+## 서버 측 검증 고급: 수동 오류, IValidatableObject, 커스텀 Attribute
 
-### 9.1 ModelState 수동 오류 추가
+### ModelState 수동 오류 추가
 
 ```csharp
 if (Form.Age is < 14)
@@ -393,7 +393,7 @@ if (Form.Age is < 14)
 }
 ```
 
-### 9.2 객체 단위 검증(IValidatableObject)
+### 객체 단위 검증(IValidatableObject)
 
 ```csharp
 public class RegisterForm : IValidatableObject
@@ -409,7 +409,7 @@ public class RegisterForm : IValidatableObject
 }
 ```
 
-### 9.3 커스텀 검증 특성
+### 커스텀 검증 특성
 
 ```csharp
 public class NotDisposableEmailAttribute : ValidationAttribute
@@ -432,9 +432,9 @@ public class SignUpForm
 
 ---
 
-## 10. 원격 검증(Remote)과 클라이언트 검증
+## 원격 검증(Remote)과 클라이언트 검증
 
-### 10.1 Remote(컨트롤러 또는 페이지 핸들러에서 제공)
+### Remote(컨트롤러 또는 페이지 핸들러에서 제공)
 
 컨트롤러 예시:
 
@@ -466,13 +466,13 @@ public class NameForm
 
 ---
 
-## 11. TryUpdateModelAsync와 과바인딩 방지
+## TryUpdateModelAsync와 과바인딩 방지
 
-### 11.1 과바인딩 문제
+### 과바인딩 문제
 
 - 폼에서 **수정하면 안 되는 필드**(예: Role, IsAdmin)가 무단으로 바인딩될 수 있음
 
-### 11.2 화이트리스트 바인딩
+### 화이트리스트 바인딩
 
 ```csharp
 public async Task<IActionResult> OnPostAsync(int id)
@@ -490,7 +490,7 @@ public async Task<IActionResult> OnPostAsync(int id)
 }
 ```
 
-### 11.3 [Bind]/[BindNever]/[ValidateNever]
+### [Bind]/[BindNever]/[ValidateNever]
 
 ```csharp
 public class UserEditDto
@@ -509,7 +509,7 @@ public class AdminOnly
 
 ---
 
-## 12. 날짜/숫자/문화권 이슈
+## 날짜/숫자/문화권 이슈
 
 - `DateTime`, `decimal` 파싱은 **현재 `CultureInfo`**에 의존
 - 서버/클라이언트 문화권이 다르면 형식 불일치 → **일관된 포맷**과 `DisplayFormat`/`DataType` 사용
@@ -517,7 +517,7 @@ public class AdminOnly
 
 ---
 
-## 13. 유효성 스크립트, Unobtrusive, 부분 렌더링 주의
+## 유효성 스크립트, Unobtrusive, 부분 렌더링 주의
 
 - `_ValidationScriptsPartial`에는 jQuery와 unobtrusive가 포함
 - 부분 뷰/동적 DOM 삽입 시 **re-parse** 필요(ajax 폼 새로고침 시)
@@ -525,7 +525,7 @@ public class AdminOnly
 
 ---
 
-## 14. 안전/보안 체크리스트
+## 안전/보안 체크리스트
 
 1) **CSRF**: Razor Pages 폼은 기본 **안티포저리 토큰** 자동 삽입. API는 **JWT/Origin/CSRF 전략** 별도
 2) **XSS**: Razor는 기본 인코딩. `Html.Raw`는 신뢰 콘텐츠만
@@ -536,9 +536,9 @@ public class AdminOnly
 
 ---
 
-## 15. 검증 UI 컴포넌트 패턴
+## 검증 UI 컴포넌트 패턴
 
-### 15.1 필드 컴포넌트화(부분 뷰)
+### 필드 컴포넌트화(부분 뷰)
 
 `Pages/Shared/_FormField.cshtml`:
 ```cshtml
@@ -560,9 +560,9 @@ public class AdminOnly
 
 ---
 
-## 16. 에러/예외 처리와 사용자 경험
+## 에러/예외 처리와 사용자 경험
 
-### 16.1 유효성 실패 시
+### 유효성 실패 시
 
 ```csharp
 if (!ModelState.IsValid)
@@ -577,16 +577,16 @@ if (!ModelState.IsValid)
 <div asp-validation-summary="All" class="text-danger"></div>
 ```
 
-### 16.2 서버 예외
+### 서버 예외
 
 - `try/catch`로 예외 포착 → `ModelState.AddModelError`로 사용자 친화적 메시지
 - 시스템 로그에는 실제 예외 스택 기록(PII 노출 금지)
 
 ---
 
-## 17. End-to-End 실전 조각
+## End-to-End 실전 조각
 
-### 17.1 모델
+### 모델
 
 ```csharp
 public class TicketForm : IValidatableObject
@@ -611,7 +611,7 @@ public class TicketForm : IValidatableObject
 }
 ```
 
-### 17.2 PageModel
+### PageModel
 
 ```csharp
 public class CreateTicketModel : PageModel
@@ -645,7 +645,7 @@ public class CreateTicketModel : PageModel
 }
 ```
 
-### 17.3 뷰
+### 뷰
 
 ```cshtml
 @page
@@ -698,7 +698,7 @@ public class CreateTicketModel : PageModel
 
 ---
 
-## 18. MVC와의 차이(간단 비교)
+## MVC와의 차이(간단 비교)
 
 - Razor Pages: `PageModel` 내부에 `OnPost*` 핸들러 메서드
 - MVC: `Controller`의 `Action` 메서드, 파라미터/모델로 바인딩
@@ -719,7 +719,7 @@ public IActionResult Create([FromForm] TicketForm form)
 
 ---
 
-## 19. 성능/UX 팁
+## 성능/UX 팁
 
 - 읽기 전용 조회는 `AsNoTracking()`
 - 긴 폼은 **탭/스텝 폼**으로 분할, 섹션별 유효성 확인
@@ -728,7 +728,7 @@ public IActionResult Create([FromForm] TicketForm form)
 
 ---
 
-## 20. 체크리스트(요약)
+## 체크리스트(요약)
 
 1) `_ViewImports.cshtml`에 Tag Helper 활성
 2) `_ValidationScriptsPartial` 포함으로 클라이언트 검증

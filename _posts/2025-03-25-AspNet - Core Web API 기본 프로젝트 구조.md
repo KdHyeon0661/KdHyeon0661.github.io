@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core Web API 기본 프로젝트 구조
 
-## 1. Web API 한 장 요약
+## Web API 한 장 요약
 
 | 구분 | 핵심 |
 |---|---|
@@ -19,7 +19,7 @@ category: AspNet
 
 ---
 
-## 2. 기본 프로젝트 생성과 구조
+## 기본 프로젝트 생성과 구조
 
 ```bash
 dotnet new webapi -n MyApiApp
@@ -41,7 +41,7 @@ MyApiApp/
 
 ---
 
-## 3. Program.cs — 서비스 등록과 미들웨어 파이프라인
+## Program.cs — 서비스 등록과 미들웨어 파이프라인
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -99,9 +99,9 @@ app.Run();
 
 ---
 
-## 4. 컨트롤러 — `[ApiController]`와 특성 라우팅
+## 컨트롤러 — `[ApiController]`와 특성 라우팅
 
-### 4.1 기본 패턴
+### 기본 패턴
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -167,7 +167,7 @@ public record Product(int Id, string Name, decimal Price);
 - `ActionResult<T>`를 사용하면 `Ok(T)`/`NotFound()` 혼용이 자연스러움
 - `CreatedAtAction`은 **Location 헤더** 포함(REST 관례)
 
-### 4.2 고급 라우팅: 다중 경로, 제약조건
+### 고급 라우팅: 다중 경로, 제약조건
 
 ```csharp
 [HttpGet("by-code/{code:length(6)}")]
@@ -179,7 +179,7 @@ public ActionResult<IEnumerable<Product>> Search([FromQuery] string keyword, [Fr
 
 ---
 
-## 5. DTO와 검증(Data Annotations / FluentValidation)
+## DTO와 검증(Data Annotations / FluentValidation)
 
 엔터티를 직접 노출하지 않고 **DTO 분리**로 경계를 명확히 한다.
 
@@ -218,7 +218,7 @@ public async Task<ActionResult<ProductResponse>> Create(ProductCreateRequest req
 
 ---
 
-## 6. Service/Repository/EF Core — 레이어드 구조
+## Service/Repository/EF Core — 레이어드 구조
 
 ```
 /Models
@@ -237,7 +237,7 @@ public async Task<ActionResult<ProductResponse>> Create(ProductCreateRequest req
   ProductsController.cs
 ```
 
-### 6.1 EF Core 컨텍스트
+### EF Core 컨텍스트
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -265,7 +265,7 @@ public class Product
 }
 ```
 
-### 6.2 Repository
+### Repository
 
 ```csharp
 public interface IProductRepository
@@ -318,7 +318,7 @@ public class EfProductRepository : IProductRepository
 }
 ```
 
-### 6.3 Service 레이어
+### Service 레이어
 
 ```csharp
 public interface IProductService
@@ -370,7 +370,7 @@ public class ProductService : IProductService
 }
 ```
 
-### 6.4 Program.cs 등록
+### Program.cs 등록
 
 ```csharp
 builder.Services.AddDbContext<AppDbContext>(opt =>
@@ -382,7 +382,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 
 ---
 
-## 7. Controller ↔ Service ↔ DTO 연결 예제
+## Controller ↔ Service ↔ DTO 연결 예제
 
 ```csharp
 [ApiController]
@@ -432,9 +432,9 @@ public class ProductsController : ControllerBase
 
 ---
 
-## 8. 표준 오류 응답 — ProblemDetails + 전역 예외 처리
+## 표준 오류 응답 — ProblemDetails + 전역 예외 처리
 
-### 8.1 전역 예외 미들웨어
+### 전역 예외 미들웨어
 
 ```csharp
 public class ExceptionHandlingMiddleware
@@ -480,13 +480,13 @@ public class ExceptionHandlingMiddleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 ```
 
-### 8.2 검증 실패(400) 자동 응답
+### 검증 실패(400) 자동 응답
 
 `[ApiController]`가 활성화되면 ModelState 실패 시 자동으로 RFC 7807 형식의 `ValidationProblemDetails`가 반환된다.
 
 ---
 
-## 9. Swagger(OpenAPI) — 문서화/테스트
+## Swagger(OpenAPI) — 문서화/테스트
 
 ```csharp
 builder.Services.AddEndpointsApiExplorer();
@@ -513,7 +513,7 @@ if (app.Environment.IsDevelopment())
 
 ---
 
-## 10. CORS — 프론트엔드 연동
+## CORS — 프론트엔드 연동
 
 ```csharp
 builder.Services.AddCors(opt =>
@@ -532,7 +532,7 @@ SPA/모바일/외부 클라이언트에서 API 호출 시 **필수 설정**.
 
 ---
 
-## 11. 버전 관리 — URL/쿼리/헤더 기반
+## 버전 관리 — URL/쿼리/헤더 기반
 
 패키지: `Microsoft.AspNetCore.Mvc.Versioning`
 
@@ -561,7 +561,7 @@ public class ProductsV2Controller : ControllerBase { ... }
 
 ---
 
-## 12. 성능/확장 포인트
+## 성능/확장 포인트
 
 - **페이징/키셋 페이징**: `Skip/Take` vs `WHERE Id > @lastId ORDER BY Id LIMIT k`
 - **AsNoTracking**: 읽기 전용 쿼리
@@ -593,7 +593,7 @@ app.UseRateLimiter();
 
 ---
 
-## 13. 설정/환경 — appsettings.*와 연결 문자열
+## 설정/환경 — appsettings.*와 연결 문자열
 
 `appsettings.json` / `appsettings.Development.json` / `Environment Variables`의 **우선순위 병합**.
 EF Core의 연결 문자열:
@@ -613,7 +613,7 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 
 ---
 
-## 14. 테스트 — 통합 테스트(WebApplicationFactory)
+## 테스트 — 통합 테스트(WebApplicationFactory)
 
 패키지: `Microsoft.AspNetCore.Mvc.Testing`
 
@@ -640,7 +640,7 @@ public class ProductsApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 15. 보안 — 인증/인가 준비
+## 보안 — 인증/인가 준비
 
 - **인증(Authentication)**: JWT Bearer(OpenIddict/IdentityServer/Azure AD B2C 등)
 - **인가(Authorization)**: `[Authorize]`, 정책 기반
@@ -676,7 +676,7 @@ public async Task<ActionResult<IEnumerable<ProductResponse>>> Get() { ... }
 
 ---
 
-## 16. 로깅 — 기본/서드파티(Serilog)
+## 로깅 — 기본/서드파티(Serilog)
 
 간단 구성:
 
@@ -700,9 +700,9 @@ _log.LogInformation("GetPaged called: page={Page}, size={Size}", page, size);
 
 ---
 
-## 17. 실전 예제: 예외→ProblemDetails, DTO 검증, 페이징, Swagger까지
+## 실전 예제: 예외→ProblemDetails, DTO 검증, 페이징, Swagger까지
 
-### 17.1 DTO
+### DTO
 
 ```csharp
 public class PagedRequest
@@ -723,7 +723,7 @@ public class PagedResponse<T>
 }
 ```
 
-### 17.2 컨트롤러 일부
+### 컨트롤러 일부
 
 ```csharp
 [HttpGet("paged")]
@@ -747,7 +747,7 @@ public async Task<ActionResult<PagedResponse<ProductResponse>>> GetPaged([FromQu
 
 ---
 
-## 18. Minimal APIs와 비교(선택)
+## Minimal APIs와 비교(선택)
 
 - **Minimal APIs**: `app.MapGet("/api/products", ...);` 같은 라우팅 중심, 경량
 - **Controller 기반 Web API**: 필터/모델 바인딩/특성 라우팅/테스트/도구 호환성 우수
@@ -755,18 +755,20 @@ public async Task<ActionResult<PagedResponse<ProductResponse>>> GetPaged([FromQu
 
 ---
 
-## 19. 배포/Docker(요약)
+## 배포/Docker(요약)
 
 `Dockerfile` 예시:
 
 ```dockerfile
 # build
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet publish -c Release -o /app
 
 # runtime
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /app .
@@ -777,7 +779,7 @@ ENTRYPOINT ["dotnet", "MyApiApp.dll"]
 
 ---
 
-## 20. 자주 겪는 이슈와 해결
+## 자주 겪는 이슈와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -789,7 +791,7 @@ ENTRYPOINT ["dotnet", "MyApiApp.dll"]
 
 ---
 
-## 21. 체크리스트
+## 체크리스트
 
 - [ ] 컨트롤러에 `[ApiController]` + 특성 라우팅 적용
 - [ ] DTO/엔터티 분리, 검증 어노테이션/FluentValidation

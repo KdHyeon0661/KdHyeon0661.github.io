@@ -5,6 +5,7 @@ date: 2025-09-07 14:25:23 +0900
 category: WPF
 ---
 # 🔁 `DynamicResource` vs `StaticResource` 완전 정복 (WPF)
+
 *(예제 중심 · 누락 없이 최대한 자세하게 · 실무 트러블슈팅 포함)*
 
 > 이 글은 WPF에서 **리소스 해석 시점과 갱신 방식**이 UI에 어떤 영향을 주는지,
@@ -14,7 +15,7 @@ category: WPF
 
 ---
 
-## 0. 한눈에 요약
+## 한눈에 요약
 
 | 항목 | **StaticResource** | **DynamicResource** |
 |---|---|---|
@@ -29,9 +30,10 @@ category: WPF
 
 ---
 
-## 1. 리소스 탐색/해석 **내부 동작**
+## 리소스 탐색/해석 **내부 동작**
 
-### 1.1 리소스 탐색 경로(스코프)
+### 리소스 탐색 경로(스코프)
+
 리소스를 찾을 때 WPF는 **가까운 곳부터 먼 곳으로** 다음 순서로 탐색합니다.
 
 1) **요소 자신의 `Resources`**
@@ -42,12 +44,14 @@ category: WPF
 
 > **포인트**: 같은 키가 여러 범위에 있으면 **가장 가까운 것**이 우선.
 
-### 1.2 StaticResource 동작
+### StaticResource 동작
+
 - XAML 파서가 `StaticResource`를 만나면 **즉시 탐색**해서 **인스턴스를 가져와 값으로 고정**합니다.
 - 이후 **리소스 사전 값이 바뀌어도** UI에 **반영되지 않습니다**.
 - 템플릿/스타일 내부 `StaticResource`는 **템플릿이 적용되는 순간**에 해석되어 고정됩니다.
 
-### 1.3 DynamicResource 동작
+### DynamicResource 동작
+
 - 파서는 **리소스를 곧바로 인스턴스화하지 않고**, **지연 참조 표현식(ResourceReferenceExpression)** 을 저장합니다.
 - 실제로 **UI 요소가 로드되거나 렌더링 시점**에 리소스를 찾습니다.
 - 해당 키의 엔트리가 **다른 객체로 교체**되면(사전에 새 인스턴스를 넣으면) **자동으로 UI가 갱신**됩니다.
@@ -55,9 +59,10 @@ category: WPF
 
 ---
 
-## 2. 기본 예제 — 같은 코드를 `Static`/`Dynamic`으로 비교
+## 기본 예제 — 같은 코드를 `Static`/`Dynamic`으로 비교
 
-### 2.1 팔레트 정의(리소스 파일)
+### 팔레트 정의(리소스 파일)
+
 ```xml
 <!-- Themes/Colors.Light.xaml -->
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
@@ -72,7 +77,8 @@ category: WPF
 </ResourceDictionary>
 ```
 
-### 2.2 App.xaml에서 병합
+### App.xaml에서 병합
+
 ```xml
 <Application.Resources>
   <ResourceDictionary>
@@ -84,7 +90,8 @@ category: WPF
 </Application.Resources>
 ```
 
-### 2.3 버튼 스타일: Static vs Dynamic
+### 버튼 스타일: Static vs Dynamic
+
 ```xml
 <StackPanel Orientation="Horizontal" Spacing="12" Margin="16">
 
@@ -101,7 +108,8 @@ category: WPF
 </StackPanel>
 ```
 
-### 2.4 테마 전환 코드
+### 테마 전환 코드
+
 ```csharp
 void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Relative)
 {
@@ -116,9 +124,10 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 3. “선언 순서”/“해석 시점” 차이
+## “선언 순서”/“해석 시점” 차이
 
-### 3.1 StaticResource는 선언 순서에 민감
+### StaticResource는 선언 순서에 민감
+
 ```xml
 <!-- ❌ 다음은 오류: 아직 정의되지 않은 Key 참조 -->
 <SolidColorBrush x:Key="PrimaryForeground" Color="{StaticResource PrimaryColor}"/>
@@ -127,7 +136,8 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 ```
 - 파서가 `PrimaryForeground`를 읽을 때 `PrimaryColor`가 **아직 없음** → **파서 에러**.
 
-### 3.2 DynamicResource는 선언 순서 유연
+### DynamicResource는 선언 순서 유연
+
 ```xml
 <!-- ✅ DynamicResource는 나중에 병합/정의되어도 OK -->
 <SolidColorBrush x:Key="PrimaryForeground" Color="{DynamicResource PrimaryColor}"/>
@@ -137,7 +147,7 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 4. 시스템/OS 설정과의 연동(High Contrast, SystemColors)
+## 시스템/OS 설정과의 연동(High Contrast, SystemColors)
 
 **OS 테마/고대비 전환**을 **자동 반영**하려면 **DynamicResource**를 사용해야 합니다.
 
@@ -155,9 +165,10 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 
 ---
 
-## 5. 스타일/템플릿에서의 차이와 패턴
+## 스타일/템플릿에서의 차이와 패턴
 
-### 5.1 ControlTemplate 내부: TemplateBinding + (Dynamic/Static)
+### ControlTemplate 내부: TemplateBinding + (Dynamic/Static)
+
 템플릿 내부에서는 **`TemplateBinding`** 로 **경량 전달**이 기본입니다.
 리소스 참조가 필요할 땐 Dynamic/Static을 **섞어서** 사용합니다.
 
@@ -192,22 +203,25 @@ void ApplyTheme(Uri uri) // e.g. new Uri("Themes/Colors.Dark.xaml", UriKind.Rela
 - **테마 색**처럼 **바뀔 가능성**이 있는 값은 **Dynamic**으로,
 - 변하지 않을(또는 바뀌어도 즉시 반영이 굳이 필요 없는) 값은 **Static**으로.
 
-### 5.2 ItemsControl/복잡 트리 — 가상화 영향 없음
+### ItemsControl/복잡 트리 — 가상화 영향 없음
+
 - Dynamic/Static 선택은 **가상화 여부**에 직접 영향은 없습니다.
 - 다만 **리소스 교체 빈번** + **가상화 재사용**이 겹치면 **재측정/재배치** 부담이 늘 수 있습니다.
 
 ---
 
-## 6. 코드 비하인드에서의 사용
+## 코드 비하인드에서의 사용
 
-### 6.1 Static: `FindResource` / `TryFindResource`
+### Static: `FindResource` / `TryFindResource`
+
 ```csharp
 var brush = (Brush)FindResource("Brush.Primary"); // 없으면 예외
 var brush2 = (Brush)TryFindResource("Brush.Primary"); // 없으면 null
 MyButton.Background = brush; // 고정
 ```
 
-### 6.2 Dynamic: `SetResourceReference`
+### Dynamic: `SetResourceReference`
+
 ```csharp
 // MyButton.Background에 “Brush.Primary”의 DynamicResource 참조를 연결
 MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
@@ -216,7 +230,7 @@ MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
 
 ---
 
-## 7. Freezable(Brush/Geometry)과 DynamicResource
+## Freezable(Brush/Geometry)과 DynamicResource
 
 - **Freezable**(예: `SolidColorBrush`)는 `Freeze()` 되면 **속성 변경 불가**.
 - DynamicResource는 **엔트리 교체**를 감지해 업데이트합니다.
@@ -231,7 +245,7 @@ MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
 
 ---
 
-## 8. 성능 고려
+## 성능 고려
 
 - **StaticResource**: 파싱 시 한 번만 해석 → **초기 비용↑**(큰 딕셔너리도 한 번에) but 런타임 오버헤드 없음.
 - **DynamicResource**: 초기 가벼움 → 런타임에 **구독/재해석/무효화**가 일어남.
@@ -244,9 +258,10 @@ MyButton.SetResourceReference(Control.BackgroundProperty, "Brush.Primary");
 
 ---
 
-## 9. MergedDictionaries 교체와 즉시 반영(테마 스위처)
+## MergedDictionaries 교체와 즉시 반영(테마 스위처)
 
-### 9.1 전형적인 스위처 구현
+### 전형적인 스위처 구현
+
 ```csharp
 public static class ThemeService
 {
@@ -267,7 +282,8 @@ public static class ThemeService
 }
 ```
 
-### 9.2 사용
+### 사용
+
 ```csharp
 private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 {
@@ -282,7 +298,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 10. StaticResource가 필요한 순간들
+## StaticResource가 필요한 순간들
 
 - **스타일/템플릿 내 성능 최적화**: 자주 참조되는 고정 리소스(두께, 코너 라운드, 고정 색 등)
 - **리소스 선언 순서가 확실**하고 **변경 의도가 전혀 없는 값**
@@ -290,13 +306,14 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 11. DynamicResource가 필요한 순간들
+## DynamicResource가 필요한 순간들
 
 - **테마 전환**(Light/Dark/Brand Color Switch)
 - **OS 설정 변경 반영**(고대비, 시스템 색/폰트 크기)
 - **사용자 환경 설정**(가령 “기본 폰트 크기” 슬라이더 → 전체 UI 즉시 반영)
 
-### 11.1 폰트 스케일 예제
+### 폰트 스케일 예제
+
 ```xml
 <!-- App.xaml: 전역 폰트 스케일까지 Dynamic -->
 <sys:Double x:Key="FontScale">1.0</sys:Double>
@@ -315,7 +332,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 12. 리소스 키/네임 충돌 & 탐색 우선순위 함정
+## 리소스 키/네임 충돌 & 탐색 우선순위 함정
 
 - 같은 키를 **여러 사전**에서 정의하면 **가까운 스코프**가 우선.
 - 템플릿 내부에 같은 키가 있어 **의도치 않은 값**을 잡을 수 있음 → **접두사** 전략으로 키를 구분하세요.
@@ -323,7 +340,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 13. DataTemplate/ControlTemplate 내부의 해석 타이밍
+## DataTemplate/ControlTemplate 내부의 해석 타이밍
 
 - **StaticResource**: 템플릿이 **적용될 때 1회** 해석되어 **고정**됩니다.
 - **DynamicResource**: 템플릿 적용 후에도 **리소스 교체**를 **추적**하여 **갱신**됩니다.
@@ -331,7 +348,7 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 14. 애니메이션과 리소스(공유주의!)
+## 애니메이션과 리소스(공유주의!)
 
 - **공유 Brush**(리소스 브러시)를 애니메이션하면 **모든 참조자**가 함께 바뀝니다.
   - 개별 컨트롤만 애니메이션하려면 **로컬 브러시**를 생성하거나 **`x:Shared="False"`**.
@@ -339,27 +356,30 @@ private void ToggleTheme_Click(object sender, RoutedEventArgs e)
 
 ---
 
-## 15. 디버깅/트러블슈팅
+## 디버깅/트러블슈팅
 
-### 15.1 “리소스가 안 잡혀요”
+### “리소스가 안 잡혀요”
+
 - **StaticResource + 선언 순서** 문제인지 확인(파서 에러/무시).
 - **스코프** 확인: 해당 요소의 상위에 원하는 키가 있는지, MergedDictionaries 순서.
 - **오탈자**: 키 이름, Source 경로(팩 URI), 빌드 액션(Resource) 체크.
 
-### 15.2 “Dynamic인데 안 바뀌어요”
+### “Dynamic인데 안 바뀌어요”
+
 - **사전 엔트리 교체**를 하지 않고 **브러시의 Color만 변경**했는지? (Freeze 상태면 불가)
   → **새 브러시 인스턴스를 만들어 사전 엔트리를 통째로 교체**하세요.
 - **DynamicResource를 다른 리소스의 StaticResource가 참조** 중인지?
   - 예: A는 Dynamic인데 B를 Static이 붙잡고 있으면 B는 안 바뀜.
   - **동적으로 바뀌는 경로는 끝까지 Dynamic**으로 설계.
 
-### 15.3 “성능 이슈”
+### “성능 이슈”
+
 - DynamicResource 남용 → **무효화 폭증** 가능.
 - 대량 컨트롤 트리에서 자주 바뀌는 리소스는 **상위 레벨에서만** Dynamic로 두고, 하위는 **템플릿/바인딩 최소화**.
 
 ---
 
-## 16. 고급: 코드에서 “전역 팔레트 값” 교체
+## 고급: 코드에서 “전역 팔레트 값” 교체
 
 ```csharp
 public static class Palette
@@ -378,9 +398,10 @@ public static class Palette
 
 ---
 
-## 17. 실전 템플릿: 라이트/다크/하이콘트라스트 3종
+## 실전 템플릿: 라이트/다크/하이콘트라스트 3종
 
-### 17.1 팔레트 키 표준화
+### 팔레트 키 표준화
+
 ```xml
 <!-- 공통 키 이름만 고정하고, 실제 색은 테마별로 다르게 -->
 <SolidColorBrush x:Key="Palette.Background" Color="#FFFFFF"/>
@@ -389,7 +410,8 @@ public static class Palette
 <SolidColorBrush x:Key="Palette.Border"     Color="#E5E7EB"/>
 ```
 
-### 17.2 컨트롤 스타일
+### 컨트롤 스타일
+
 ```xml
 <Style TargetType="Button" x:Key="AccentButton">
   <Setter Property="Foreground" Value="{DynamicResource Palette.Background}"/>
@@ -420,14 +442,15 @@ public static class Palette
 </Style>
 ```
 
-### 17.3 테마 전환(하이콘트라스트 포함)
+### 테마 전환(하이콘트라스트 포함)
+
 - `Themes/Colors.Light.xaml`, `Themes/Colors.Dark.xaml`, `Themes/Colors.HighContrast.xaml` 준비
 - **DynamicResource**만 사용하면 **전환 즉시 반영**
 - OS 고대비 감지 시 자동 전환 트리거(시스템 이벤트 구독)도 가능
 
 ---
 
-## 18. 체크리스트(베스트 프랙티스)
+## 체크리스트(베스트 프랙티스)
 
 - [ ] **변할 수 있는 값**(테마/OS/사용자 설정)은 **DynamicResource**
 - [ ] **절대값/상수**는 **StaticResource** (성능·예측성↑)
@@ -439,7 +462,7 @@ public static class Palette
 
 ---
 
-## 19. 미니 Q&A
+## 미니 Q&A
 
 **Q. DynamicResource는 값 변경 이벤트를 어떻게 감지하나요?**
 A. 리소스 엔트리(딕셔너리의 해당 키)가 **새 인스턴스로 교체되는 것**을 추적합니다. 객체 내부 속성 변경은 보장하지 않습니다(특히 `Freeze`된 `Freezable`).
@@ -452,9 +475,10 @@ A. 가능합니다. 다만 **템플릿 적용 시점**과 **실시간 갱신 범
 
 ---
 
-## 20. 전체 샘플(요약 · 붙여 넣어 실행 가능)
+## 전체 샘플(요약 · 붙여 넣어 실행 가능)
 
-### 20.1 App.xaml
+### App.xaml
+
 ```xml
 <Application x:Class="ResDemo.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -471,7 +495,8 @@ A. 가능합니다. 다만 **템플릿 적용 시점**과 **실시간 갱신 범
 </Application>
 ```
 
-### 20.2 Themes/Controls.xaml
+### Themes/Controls.xaml
+
 ```xml
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
   <Style TargetType="Button" x:Key="DynamicAccent">
@@ -488,7 +513,8 @@ A. 가능합니다. 다만 **템플릿 적용 시점**과 **실시간 갱신 범
 </ResourceDictionary>
 ```
 
-### 20.3 MainWindow.xaml
+### MainWindow.xaml
+
 ```xml
 <Window x:Class="ResDemo.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -511,7 +537,8 @@ A. 가능합니다. 다만 **템플릿 적용 시점**과 **실시간 갱신 범
 </Window>
 ```
 
-### 20.4 MainWindow.xaml.cs
+### MainWindow.xaml.cs
+
 ```csharp
 public partial class MainWindow : Window
 {

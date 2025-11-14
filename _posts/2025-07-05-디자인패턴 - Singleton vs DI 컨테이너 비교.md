@@ -6,7 +6,7 @@ category: 디자인패턴
 ---
 # Singleton vs DI 컨테이너
 
-## 1. 개요와 용어
+## 개요와 용어
 
 | 용어 | 설명 |
 |---|---|
@@ -20,11 +20,12 @@ category: 디자인패턴
 
 ---
 
-## 2. Singleton 심화: 구현과 함정
+## Singleton 심화: 구현과 함정
 
-### 2.1 대표 구현
+### 대표 구현
 
 #### Java — 올바른 DCL(Double-Checked Locking)
+
 ```java
 public final class Config {
   private static volatile Config INSTANCE;
@@ -46,6 +47,7 @@ public final class Config {
 - `volatile` 누락 시 재정렬로 인한 반쯤 초기화된 인스턴스 노출 위험.
 
 #### C# — 정적 초기화(스레드 안전)
+
 ```csharp
 public sealed class AppConfig {
     private AppConfig() {}
@@ -54,6 +56,7 @@ public sealed class AppConfig {
 ```
 
 #### C++ — Meyers Singleton (C++11+)
+
 ```cpp
 class Config {
 public:
@@ -67,21 +70,26 @@ private:
 ```
 
 #### Kotlin — 언어 차원의 싱글턴
+
 ```kotlin
 object Config { var mode: String = "prod" }
 ```
 
 #### Python — 모듈 단위(사실상 싱글턴)
+
 ```python
 # config.py
+
 value = "prod"  # import한 모듈은 프로세스 내에서 1회 로딩
 ```
 
-### 2.2 장점과 비용
+### 장점과 비용
+
 - 장점: 간단·빠름·의존성 구성 없이 즉시 사용.
 - 비용: 전역 상태, **테스트 곤란(모킹·격리 어려움)**, **수명 역전(captive dependency)**, 동시성/초기화 순서 문제.
 
-### 2.3 전형적 함정
+### 전형적 함정
+
 - **가변 전역 상태**: 테스트 간 교차 오염.
 - **숨은 의존**: import 또는 `getInstance()` 호출이 실제 의존을 감춘다.
 - **초기화 순서**: 정적 초기화 순환 의존.
@@ -89,9 +97,10 @@ value = "prod"  # import한 모듈은 프로세스 내에서 1회 로딩
 
 ---
 
-## 3. DI 컨테이너 심화: 수명주기·조립·고급 기능
+## DI 컨테이너 심화: 수명주기·조립·고급 기능
 
-### 3.1 .NET 예제 — 기본 수명주기
+### .NET 예제 — 기본 수명주기
+
 ```csharp
 // Program.cs (Composition Root)
 builder.Services.AddSingleton<IClock, UtcClock>();      // 프로세스 내 1개
@@ -111,7 +120,8 @@ public class ReportService {
 }
 ```
 
-### 3.2 Spring Boot 예제 — 스코프와 주입
+### Spring Boot 예제 — 스코프와 주입
+
 ```java
 @Configuration
 public class AppConfig {
@@ -128,7 +138,8 @@ public class AppConfig {
 }
 ```
 
-### 3.3 Python 예제 — dependency_injector
+### Python 예제 — dependency_injector
+
 ```python
 from dependency_injector import containers, providers
 
@@ -139,12 +150,13 @@ class Container(containers.DeclarativeContainer):
     report_service = providers.Factory(lambda c, h: (c, h), clock, hasher)
 ```
 
-### 3.4 고급 기능
+### 고급 기능
+
 - **Open Generic** 등록, **Decorator**/Interceptor(로깅·벨리데이션), **Typed/Named HttpClient**, **Options 패턴**, **Factory 주입**(지연 생성).
 
 ---
 
-## 4. 수명주기 제약을 수식으로 표현하기
+## 수명주기 제약을 수식으로 표현하기
 
 의존 그래프를 유향 그래프로 두자.
 - 정점: 컴포넌트 집합 \( V \).
@@ -163,7 +175,7 @@ Singleton이 Transient에 직접 의존하면, Transient가 사실상 Singleton�
 
 ---
 
-## 5. 정밀 비교 표
+## 정밀 비교 표
 
 | 항목 | Singleton 패턴 | DI 컨테이너 |
 |---|---|---|
@@ -178,7 +190,7 @@ Singleton이 Transient에 직접 의존하면, Transient가 사실상 Singleton�
 
 ---
 
-## 6. 성능과 동시성 관점
+## 성능과 동시성 관점
 
 - **해결(Resolve) 비용**: 현대 컨테이너는 1~수십 마이크로초 수준(구성·범위·Open Generic·Decorator 사용에 따라 달라짐).
 - **싱글턴의 잠금 경합**: 전역 가변 상태·공유 락을 두면 부하 시 병목. **불변/락-프리** 구조 또는 샤딩을 고려.
@@ -198,9 +210,10 @@ Console.WriteLine(sw.Elapsed);
 
 ---
 
-## 7. 안티패턴과 예방책
+## 안티패턴과 예방책
 
-### 7.1 Service Locator (지양)
+### Service Locator (지양)
+
 ```csharp
 public class Bad {
   private readonly IServiceProvider _sp;
@@ -213,7 +226,8 @@ public class Bad {
 - 문제: 의존이 코드에 **명시되지 않음**, 테스트·검토 어려움.
 - 해결: **생성자 주입**으로 명시하거나, 정말 동적 필요 시 **Abstract Factory**를 명시 의존으로 주입.
 
-### 7.2 Singleton이 Transient 잡아두기(captive)
+### Singleton이 Transient 잡아두기(captive)
+
 ```csharp
 public class BadSingleton {
   public BadSingleton(TransientRepo repo) { /* repo가 사실상 싱글턴처럼 */ }
@@ -232,12 +246,13 @@ public class ReportService {
 }
 ```
 
-### 7.3 전역 가변 상태
+### 전역 가변 상태
+
 - 해결: 불변(Immutable) 데이터, Copy-on-write, 스레드 안전 컬렉션, 명시적 동기화 최소화.
 
 ---
 
-## 8. 사용 기준(의사결정 매트릭스)
+## 사용 기준(의사결정 매트릭스)
 
 | 상황 | 권장 |
 |---|---|
@@ -249,29 +264,34 @@ public class ReportService {
 
 ---
 
-## 9. 실무 시나리오 베스트 프랙티스
+## 실무 시나리오 베스트 프랙티스
 
-### 9.1 로깅
+### 로깅
+
 - .NET: `ILogger<T>`는 컨테이너 Singleton 팩토리가 제공, 각 T별 카테고리 부여.
 - Spring: `@Slf4j` 또는 `LoggerFactory` 주입.
 - 전역 로거 싱글턴보다 **DI 주입 로거**가 교체·테스트 용이.
 
-### 9.2 구성(Configuration)
+### 구성(Configuration)
+
 - .NET: `IOptions<T>`(Singleton 소스) + Scoped/Transient 소비자.
 - 변경 감지 필요 시 `IOptionsMonitor<T>`.
 
-### 9.3 DB 컨텍스트
+### DB 컨텍스트
+
 - EF DbContext는 **Scoped**가 권장(요청·트랜잭션 경계).
 - 싱글턴으로 두면 동시성·캐시 오염.
 
-### 9.4 HttpClient
+### HttpClient
+
 - .NET: `IHttpClientFactory` 사용(소켓 재사용, DNS 회전). Singleton 직접 보관은 누수 위험.
 
 ---
 
-## 10. 테스트 전략
+## 테스트 전략
 
-### 10.1 Singleton의 한계
+### Singleton의 한계
+
 ```python
 class Logger:
     _instance = None
@@ -282,9 +302,11 @@ class Logger:
         return cls._instance
 
 # 테스트간 전역 상태 공유 → 독립성 저하
+
 ```
 
-### 10.2 DI로 치환(파이썬 예)
+### DI로 치환(파이썬 예)
+
 ```python
 class Logger:
     def __init__(self, level="INFO"): self.level = level
@@ -293,11 +315,13 @@ class Service:
     def __init__(self, logger: Logger): self.logger = logger
 
 # 테스트
+
 fake = Logger(level="DEBUG")
 sut = Service(logger=fake)  # 손쉬운 치환
 ```
 
-### 10.3 .NET 테스트 구성
+### .NET 테스트 구성
+
 ```csharp
 var services = new ServiceCollection();
 services.AddSingleton<IClock, FakeClock>();
@@ -308,7 +332,7 @@ var sut = provider.GetRequiredService<ReportService>();
 
 ---
 
-## 11. 마이그레이션: Singleton → DI
+## 마이그레이션: Singleton → DI
 
 1) **의존 노출**: `getInstance()` 호출부를 생성자 인자로 치환.
 2) **인터페이스 추출**: 구현에 인터페이스 도입(IClock 등).
@@ -337,7 +361,7 @@ public class ReportService {
 
 ---
 
-## 12. 보안·운영 관점
+## 보안·운영 관점
 
 - **비밀/토큰**: 컨테이너 등록 시 지연 조회(Secret Manager, Vault). 싱글턴에 평문 보관 금지.
 - **순환 의존**: 컨테이너 경고를 해결(포트/어댑터로 분리).
@@ -346,9 +370,10 @@ public class ReportService {
 
 ---
 
-## 13. 코드 레시피 모음
+## 코드 레시피 모음
 
-### 13.1 .NET: Decorator로 교차 관심사 추가
+### .NET: Decorator로 교차 관심사 추가
+
 ```csharp
 public interface IHasher { string Hash(string s); }
 
@@ -373,7 +398,8 @@ services.AddTransient<IHasher, Sha256Hasher>();
 services.Decorate<IHasher, TimingHasher>(); // Scrutor 등 사용
 ```
 
-### 13.2 Java: Provider/Factory로 지연 생성
+### Java: Provider/Factory로 지연 생성
+
 ```java
 class ReportService {
   private final Provider<Repository> repoProvider; // javax.inject.Provider
@@ -386,9 +412,10 @@ class ReportService {
 
 ---
 
-## 14. 다이어그램(ASCII)
+## 다이어그램(ASCII)
 
-### 14.1 Singleton vs DI 흐름
+### Singleton vs DI 흐름
+
 ```
 [Caller] --> getInstance() ---------> [Singleton Instance]
 [Caller] --ctor(args from container)-> [Object built by DI]
@@ -396,14 +423,15 @@ class ReportService {
                    [Composition Root]
 ```
 
-### 14.2 수명 제약 위반 사례
+### 수명 제약 위반 사례
+
 ```
 [Singleton S] ---> [Transient T]   // T가 사실상 전역으로 붙잡힘(captive)
 ```
 
 ---
 
-## 15. 결론
+## 결론
 
 - **Singleton**: 간단·저비용이지만 전역 상태·테스트·수명 역전의 구조적 리스크가 크다.
 - **DI 컨테이너**: 수명주기·의존을 **외부 구성으로 명시**하고, 테스트·교체·확장을 체계화한다.

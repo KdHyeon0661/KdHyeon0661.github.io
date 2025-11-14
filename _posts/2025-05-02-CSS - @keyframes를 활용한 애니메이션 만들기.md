@@ -6,7 +6,7 @@ category: CSS
 ---
 # `@keyframes`로 만드는 CSS 애니메이션
 
-## 0. 애니메이션의 철학: 언제, 왜 쓰나
+## 애니메이션의 철학: 언제, 왜 쓰나
 
 - **의미 있는 변화**만 애니메이션: 상태 전환, 피드백, 주의 환기, 정보 흐름 유도
 - **레이아웃 영향 최소화**: 가능하면 `transform`, `opacity` 중심(합성 단계)
@@ -15,7 +15,7 @@ category: CSS
 
 ---
 
-## 1. 기본 개념 & 문법
+## 기본 개념 & 문법
 
 ```css
 @keyframes fade-up {
@@ -31,7 +31,7 @@ category: CSS
 }
 ```
 
-### 1.1 애니메이션 속성 요약
+### 애니메이션 속성 요약
 
 | 속성 | 설명 | 팁 |
 |---|---|---|
@@ -53,9 +53,9 @@ category: CSS
 
 ---
 
-## 2. 키프레임 정의 패턴
+## 키프레임 정의 패턴
 
-### 2.1 `%` vs `from`/`to`
+### `%` vs `from`/`to`
 
 ```css
 @keyframes pulse {
@@ -74,7 +74,7 @@ category: CSS
 }
 ```
 
-### 2.2 여러 속성을 동시에
+### 여러 속성을 동시에
 
 ```css
 @keyframes flip-in {
@@ -87,16 +87,16 @@ category: CSS
 
 ---
 
-## 3. 타이밍 함수 깊게 보기
+## 타이밍 함수 깊게 보기
 
-### 3.1 `cubic-bezier` 사용자 곡선
+### `cubic-bezier` 사용자 곡선
 
 ```css
 /* 빠르게 시작-살짝 튕김 느낌 */
 .button { animation-timing-function: cubic-bezier(.17,.67,.3,1.3); }
 ```
 
-### 3.2 `steps(n, jump-*)` — 단계적 애니메이션
+### `steps(n, jump-*)` — 단계적 애니메이션
 
 ```css
 @keyframes tick {
@@ -112,7 +112,7 @@ category: CSS
 
 ---
 
-## 4. 반복/방향/채움/재생 상태
+## 반복/방향/채움/재생 상태
 
 ```css
 .loader {
@@ -146,9 +146,9 @@ el.addEventListener('animationend', () => console.log('done'));
 
 ---
 
-## 5. 여러 애니메이션 결합(병렬·직렬)
+## 여러 애니메이션 결합(병렬·직렬)
 
-### 5.1 병렬(동시에)
+### 병렬(동시에)
 
 ```css
 .badge {
@@ -158,7 +158,7 @@ el.addEventListener('animationend', () => console.log('done'));
 }
 ```
 
-### 5.2 직렬(순차) — `animation-delay` 활용
+### 직렬(순차) — `animation-delay` 활용
 
 ```css
 .item:nth-child(1) { animation-delay: 0ms; }
@@ -183,9 +183,9 @@ el.addEventListener('animationend', () => console.log('done'));
 
 ---
 
-## 6. 실전 패턴 라이브러리
+## 실전 패턴 라이브러리
 
-### 6.1 로딩 스피너(경계선 회전)
+### 로딩 스피너(경계선 회전)
 
 ```html
 <div class="spinner" aria-label="로딩 중" role="status"></div>
@@ -201,7 +201,7 @@ el.addEventListener('animationend', () => console.log('done'));
 @keyframes spin { to { transform: rotate(360deg); } }
 ```
 
-### 6.2 Skeleton Shimmer(콘텐츠 자리 표시자)
+### Skeleton Shimmer(콘텐츠 자리 표시자)
 
 ```html
 <div class="skeleton" style="width:100%;height:16px"></div>
@@ -219,7 +219,7 @@ el.addEventListener('animationend', () => console.log('done'));
 @keyframes shimmer { from { transform: translateX(-40%); } to { transform: translateX(40%); } }
 ```
 
-### 6.3 Toast 등장/퇴장
+### Toast 등장/퇴장
 
 ```html
 <div class="toast show">Saved</div>
@@ -237,7 +237,7 @@ el.addEventListener('animationend', () => console.log('done'));
 @keyframes toast-out { to { opacity:0; transform: translateY(8px); } }
 ```
 
-### 6.4 드로어(사이드 패널)
+### 드로어(사이드 패널)
 
 ```css
 .drawer{
@@ -252,7 +252,7 @@ el.addEventListener('animationend', () => console.log('done'));
 @keyframes drawer-out { to { transform:translateX(-100%); opacity:0; pointer-events:none; } }
 ```
 
-### 6.5 버튼 피드백(프레스/릴리스)
+### 버튼 피드백(프레스/릴리스)
 
 ```css
 .btn {
@@ -264,7 +264,7 @@ el.addEventListener('animationend', () => console.log('done'));
 
 > 빠른 피드백은 `transition`이 낫습니다. 복잡한 단계는 `@keyframes`.
 
-### 6.6 카운트업(단계형)
+### 카운트업(단계형)
 
 ```html
 <div class="counter" aria-live="polite">0</div>
@@ -286,7 +286,7 @@ el.addEventListener('animationend', () => console.log('done'));
 
 > 복잡한 숫자/포맷은 JS로 바꾸고 **애니메이션은 시각 효과만** 맡기는 편이 낫습니다.
 
-### 6.7 카드 등장 스태거(Grid + 변수)
+### 카드 등장 스태거(Grid + 변수)
 
 ```css
 .grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:16px; }
@@ -307,7 +307,7 @@ el.addEventListener('animationend', () => console.log('done'));
 </div>
 ```
 
-### 6.8 마퀴(무한 가로 스크롤)
+### 마퀴(무한 가로 스크롤)
 
 ```html
 <div class="marquee">
@@ -331,7 +331,7 @@ el.addEventListener('animationend', () => console.log('done'));
 
 ---
 
-## 7. 상태 기계처럼 쓰기 — 클래스 전환 & 이벤트 훅
+## 상태 기계처럼 쓰기 — 클래스 전환 & 이벤트 훅
 
 ```html
 <button id="save">저장</button>
@@ -360,16 +360,16 @@ document.getElementById('save').addEventListener('click', () => {
 
 ---
 
-## 8. 성능·접근성·호환성
+## 성능·접근성·호환성
 
-### 8.1 성능
+### 성능
 
 - **합성 단계**: `transform`, `opacity` 위주. `top/left/width/height`는 레이아웃/페인트 비용 ↑
 - `will-change: transform;`은 **짧게** 사용(오픈 직전 ~ 종료 직후). 상시 사용은 메모리 낭비
 - `transition/animation: all` 지양. 필요한 속성만
 - DevTools → Performance → **Layout/paint/composite** 타임라인 확인
 
-### 8.2 접근성
+### 접근성
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -380,16 +380,16 @@ document.getElementById('save').addEventListener('click', () => {
 
 - 의미 전달이 핵심이면 **정적 대체**(아이콘 변화, 색상 변경 등) 제공
 
-### 8.3 z-index/레이어
+### z-index/레이어
 
 - 오버레이/모달/드로어는 **스태킹 컨텍스트** 영향(부모의 `transform`, `opacity`, `filter`)에 주의
 - 애니메이션 도중 클릭 차단이 필요하면 `pointer-events` 제어
 
 ---
 
-## 9. 고급 주제
+## 고급 주제
 
-### 9.1 여러 이름/여러 값 매칭 규칙
+### 여러 이름/여러 값 매칭 규칙
 
 ```css
 .box {
@@ -399,12 +399,12 @@ document.getElementById('save').addEventListener('click', () => {
 }
 ```
 
-### 9.2 `animation-delay`·`iteration` 동작 상식
+### `animation-delay`·`iteration` 동작 상식
 
 - 지연 동안 `backwards` 또는 `both`이면 **첫 프레임**이 적용
 - `alternate` 반복에서는 **짝/홀수 루프**에 따라 진행 방향이 바뀜
 
-### 9.3 `steps()` 파생 — 타이핑 효과
+### `steps()` 파생 — 타이핑 효과
 
 ```css
 .type {
@@ -417,7 +417,7 @@ document.getElementById('save').addEventListener('click', () => {
 @keyframes caret  { 50% { border-color: transparent; } }
 ```
 
-### 9.4 스크롤 진입 시 재생(간단, JS 한 줄)
+### 스크롤 진입 시 재생(간단, JS 한 줄)
 
 ```js
 const io = new IntersectionObserver(ents=>{
@@ -435,9 +435,9 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 ---
 
-## 10. 데모 모음(복습)
+## 데모 모음(복습)
 
-### 10.1 “왼쪽 → 오른쪽” 이동 (초안 확장)
+### “왼쪽 → 오른쪽” 이동 (초안 확장)
 
 ```css
 @keyframes slide-right {
@@ -447,7 +447,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 .box { width:100px; height:100px; background: coral; animation: slide-right 2s ease-in-out both; }
 ```
 
-### 10.2 색상 단계 전환
+### 색상 단계 전환
 
 ```css
 @keyframes rainbow {
@@ -460,7 +460,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 .tag { padding:.5rem 1rem; color:#fff; animation: rainbow 3s ease-in-out infinite alternate; }
 ```
 
-### 10.3 점프 버튼(초안의 bounce 확장: 압축/이완)
+### 점프 버튼(초안의 bounce 확장: 압축/이완)
 
 ```css
 @keyframes jump {
@@ -473,7 +473,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 ---
 
-## 11. 흔한 이슈와 해결
+## 흔한 이슈와 해결
 
 | 이슈 | 설명 | 해결 |
 |---|---|---|
@@ -485,7 +485,7 @@ document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
 ---
 
-## 12. 통합 예제 — 카드 리스트 등장 + Skeleton → 실제 콘텐츠 치환
+## 통합 예제 — 카드 리스트 등장 + Skeleton → 실제 콘텐츠 치환
 
 ```html
 <section class="cards loading">

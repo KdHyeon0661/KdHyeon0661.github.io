@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia에서 Native API 호출 심화 가이드
 
-## 0. 언제 Native API가 필요한가?
+## 언제 Native API가 필요한가?
 
 | 예시 | 사용 계층 | 설명 |
 |------|-----------|------|
@@ -20,9 +20,9 @@ category: Avalonia
 
 ---
 
-## 1. 기본: P/Invoke(Platform Invocation)로 C API 호출
+## 기본: P/Invoke(Platform Invocation)로 C API 호출
 
-### 1.1 Win32 예시: `MessageBoxW`
+### Win32 예시: `MessageBoxW`
 
 ```csharp
 using System;
@@ -46,7 +46,7 @@ public static class Demo
 - `CharSet.Unicode`를 지정해 **W API**(UTF-16)를 호출합니다.
 - Win32에서 오류 진단 시 `Marshal.GetLastWin32Error()`를 사용합니다.
 
-### 1.2 POSIX 예시: `getpid()` (Linux/macOS)
+### POSIX 예시: `getpid()` (Linux/macOS)
 
 ```csharp
 using System;
@@ -64,7 +64,7 @@ Console.WriteLine($"PID: {LibC.GetPid()}");
 - macOS와 Linux 모두 `libc`에서 동작합니다.
 - 많은 API에서 포인터/구조체 마샬링이 필요합니다.
 
-### 1.3 구조체/문자열/버퍼 마샬링 패턴
+### 구조체/문자열/버퍼 마샬링 패턴
 
 ```csharp
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -81,9 +81,9 @@ public struct MyNativeInfo
 
 ---
 
-## 2. 플랫폼 분기와 안전한 자원 해제
+## 플랫폼 분기와 안전한 자원 해제
 
-### 2.1 플랫폼 감지
+### 플랫폼 감지
 
 ```csharp
 if (OperatingSystem.IsWindows()) { /* Win32 경로 */ }
@@ -91,7 +91,7 @@ else if (OperatingSystem.IsLinux()) { /* Linux 경로 */ }
 else if (OperatingSystem.IsMacOS()) { /* macOS 경로 */ }
 ```
 
-### 2.2 `SafeHandle`로 핸들 메모리 안전화
+### `SafeHandle`로 핸들 메모리 안전화
 
 ```csharp
 public sealed class SafeNativeHandle : SafeHandle
@@ -111,9 +111,9 @@ public sealed class SafeNativeHandle : SafeHandle
 
 ---
 
-## 3. 직결 가능한 케이스: .NET `SerialPort` (Windows/Linux/macOS)
+## 직결 가능한 케이스: .NET `SerialPort` (Windows/Linux/macOS)
 
-### 3.1 최소 예제
+### 최소 예제
 
 ```csharp
 using System;
@@ -157,14 +157,14 @@ public sealed class SerialEcho
 - Windows: `COM3`, Linux: `/dev/ttyUSB0` 또는 `/dev/ttyACM0`, macOS: `/dev/tty.*`.
 - Linux/macOS에선 **권한**(`dialout` 그룹, udev 규칙)을 주의합니다.
 
-### 3.2 Avalonia MVVM 연동
+### Avalonia MVVM 연동
 
 - `ISerialService` 인터페이스로 감싸고 ViewModel에서 주입받아 UI와 분리합니다.
 - 읽기 루프는 **취소 토큰**으로 종료 제어합니다.
 
 ---
 
-## 4. Bluetooth — 운영체제별 스택과 전략
+## Bluetooth — 운영체제별 스택과 전략
 
 Bluetooth는 **플랫폼별 스택이 완전히 다르므로** P/Invoke만으로 통일하기 어렵습니다. 대표 3가지:
 
@@ -172,7 +172,7 @@ Bluetooth는 **플랫폼별 스택이 완전히 다르므로** P/Invoke만으로
 - **Linux**: **BlueZ**(DBus); GATT/Adapter/Device는 DBus 인터페이스로 제어
 - **macOS**: **CoreBluetooth**(Objective-C API); P/Invoke만으로는 번거롭고 **바인딩 라이브러리**가 현실적
 
-### 4.1 크로스플랫폼 래퍼 사용(권장)
+### 크로스플랫폼 래퍼 사용(권장)
 
 - **InTheHand.Bluetooth(32feet)**, 일부 시나리오에서 BLE 스캔/연결을 공통 API로 다룰 수 있습니다.
 - 또는 Xamarin/MAUI 바인딩처럼 **플랫폼별 래퍼**를 만든 뒤 **공통 인터페이스**로 감쌉니다.
@@ -209,13 +209,13 @@ public sealed class CrossPlatformBleService : IBluetoothService
 
 > 실제 BLE 특성 읽기/쓰기, 서비스/특성 UUID 브라우징까지 확장 가능합니다.
 
-### 4.2 Windows 네이티브 직접 접근(개요)
+### Windows 네이티브 직접 접근(개요)
 
 - 전통 Win32 BTH API(P/Invoke) or Windows.Devices.Bluetooth(BLE) 사용
   데스크톱에서 UWP/WinRT API 호출은 **권한/매니페스트 구성**이 필요.
 - 실무에선 InTheHand 같은 래퍼가 초기 생산성을 크게 올립니다.
 
-### 4.3 Linux(BlueZ) — DBus 접근
+### Linux(BlueZ) — DBus 접근
 
 - `org.bluez.Adapter1`, `org.bluez.Device1`, `org.bluez.GattCharacteristic1`를 DBus로 호출
 - .NET에선 `Tmds.DBus` 같은 라이브러리 사용
@@ -231,7 +231,7 @@ public interface IBluezAdapter
 // 실제 구현은 DBus 프록시로 생성
 ```
 
-### 4.4 macOS(CoreBluetooth)
+### macOS(CoreBluetooth)
 
 - Objective-C 런타임과 상호 운용 필요(바인딩 라이브러리 생성)
 - P/Invoke로 직접 접근은 복잡(콜백 기반, 런루프, 스레딩)
@@ -239,9 +239,9 @@ public interface IBluezAdapter
 
 ---
 
-## 5. Avalonia와 네이티브 API의 **구조화**: 인터페이스 + DI + OS별 구현
+## Avalonia와 네이티브 API의 **구조화**: 인터페이스 + DI + OS별 구현
 
-### 5.1 공통 계약
+### 공통 계약
 
 ```csharp
 public interface IBluetoothService
@@ -253,7 +253,7 @@ public interface IBluetoothService
 }
 ```
 
-### 5.2 OS별 구현 등록
+### OS별 구현 등록
 
 ```csharp
 // Program.cs or App bootstrap
@@ -269,11 +269,11 @@ else if (OperatingSystem.IsMacOS())
 
 ---
 
-## 6. 네이티브 라이브러리 번들링/배포 (RID별 native assets)
+## 네이티브 라이브러리 번들링/배포 (RID별 native assets)
 
 **Self-contained** 배포에서 네이티브 의존성(DLL/.so/.dylib)을 함께 내보냅니다.
 
-### 6.1 프로젝트 구조
+### 프로젝트 구조
 
 ```
 MyApp/
@@ -283,7 +283,7 @@ MyApp/
     osx-x64/native/libmyapi.dylib
 ```
 
-### 6.2 .csproj 설정
+### .csproj 설정
 
 ```xml
 <ItemGroup>
@@ -295,7 +295,7 @@ MyApp/
 
 - 또는 `None Include` + `CopyToOutputDirectory`로 간단 구성 가능하나, **RID 폴더 규칙**을 따르면 NuGet 배포에도 유리합니다.
 
-### 6.3 로딩 이슈 트러블슈팅
+### 로딩 이슈 트러블슈팅
 
 - `DllNotFoundException` 발생 시 **파일 존재/경로/RID 일치** 확인
 - Linux에서 `ldd`/`ldconfig`로 동적 링크 종속성 체크
@@ -303,7 +303,7 @@ MyApp/
 
 ---
 
-## 7. UI 스레드와 네이티브 콜백 — Dispatcher 사용
+## UI 스레드와 네이티브 콜백 — Dispatcher 사용
 
 네이티브 콜백/백그라운드 스레드에서 UI를 건드리면 크래시합니다.
 
@@ -324,7 +324,7 @@ void OnDeviceLineArrived(string line)
 
 ---
 
-## 8. 권한/보안/샌드박스
+## 권한/보안/샌드박스
 
 | OS | 고려 사항 |
 |----|-----------|
@@ -336,7 +336,7 @@ void OnDeviceLineArrived(string line)
 
 ---
 
-## 9. 파일/폴더 대화 상자 — 네이티브 vs Avalonia
+## 파일/폴더 대화 상자 — 네이티브 vs Avalonia
 
 Avalonia는 `IStorageProvider`로 크로스플랫폼 파일 대화상자를 제공합니다(권장):
 
@@ -354,9 +354,9 @@ var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
 
 ---
 
-## 10. 고급 상호운용: C/C++ 라이브러리 래핑
+## 고급 상호운용: C/C++ 라이브러리 래핑
 
-### 10.1 C API Wrapper를 만들고 P/Invoke
+### C API Wrapper를 만들고 P/Invoke
 
 - 기존 C++ 라이브러리를 **C API로 래핑**(extern "C") → `DllImport`로 안전 호출
 - 예: OpenCV/FFI/전용 드라이버 SDK를 래핑 DLL로 노출
@@ -364,14 +364,18 @@ var files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
 ```c
 // myapi.h
 #ifdef __cplusplus
+
 extern "C" {
 #endif
+
 int myapi_init();
 int myapi_do_work(const char* in, char* out, int outLen);
 void myapi_free(void* p);
 #ifdef __cplusplus
+
 }
 #endif
+
 ```
 
 ```csharp
@@ -389,15 +393,15 @@ internal static class MyApi
 }
 ```
 
-### 10.2 C++/CLI는 Windows 전용
+### C++/CLI는 Windows 전용
 
 - 강력하지만 **Windows 빌드 전용**이며 크로스플랫폼 목표에서는 지양.
 
 ---
 
-## 11. 샘플: 공통 인터페이스 + OS별 구현 + Avalonia UI
+## 샘플: 공통 인터페이스 + OS별 구현 + Avalonia UI
 
-### 11.1 계약
+### 계약
 
 ```csharp
 public interface ISerialService : IAsyncDisposable
@@ -409,7 +413,7 @@ public interface ISerialService : IAsyncDisposable
 }
 ```
 
-### 11.2 Windows/Linux 공통 구현(SerialPort)
+### Windows/Linux 공통 구현(SerialPort)
 
 ```csharp
 using System.IO.Ports;
@@ -472,7 +476,7 @@ public sealed class SerialService : ISerialService
 }
 ```
 
-### 11.3 ViewModel (Avalonia + ReactiveUI)
+### ViewModel (Avalonia + ReactiveUI)
 
 ```csharp
 public sealed class SerialViewModel : ReactiveObject
@@ -517,7 +521,7 @@ public sealed class SerialViewModel : ReactiveObject
 }
 ```
 
-### 11.4 View (XAML 스케치)
+### View (XAML 스케치)
 
 ```xml
 <StackPanel Spacing="8">
@@ -541,7 +545,7 @@ public sealed class SerialViewModel : ReactiveObject
 
 ---
 
-## 12. 단위 테스트/모킹/시뮬레이터
+## 단위 테스트/모킹/시뮬레이터
 
 - **인터페이스 기반**이므로 I/O 없는 **Fake/Mock** 구현으로 ViewModel 테스트가 쉽습니다.
 
@@ -571,7 +575,7 @@ public sealed class FakeSerialService : ISerialService
 
 ---
 
-## 13. 성능/안정성/디버깅 팁
+## 성능/안정성/디버깅 팁
 
 - **장시간 연결**: CancellationToken/타임아웃/재연결 루프를 설계합니다.
 - **리소스 릭**: SafeHandle/IDisposable/DisposeAsync로 확실한 해제.
@@ -581,14 +585,14 @@ public sealed class FakeSerialService : ISerialService
 
 ---
 
-## 14. 보안/개인정보
+## 보안/개인정보
 
 - BLE 주소/장치 이름/시리얼 로그에 **개인정보/식별자**가 포함될 수 있습니다. 업로드 전 **마스킹** 및 **동의** 절차를 거칩니다.
 - macOS 권한 문자열(예: Bluetooth) 누락 시 앱이 조용히 실패할 수 있습니다. 배포 파이프라인에서 **정적 검사**로 방지합니다.
 
 ---
 
-## 15. 문제해결 체크리스트
+## 문제해결 체크리스트
 
 1. **`DllNotFoundException`**: RID/native 경로/파일 권한 확인
 2. **`EntryPointNotFoundException`**: 함수 이름/콜링 컨벤션/문자셋 점검
@@ -599,7 +603,7 @@ public sealed class FakeSerialService : ISerialService
 
 ---
 
-## 16. 미니 프로젝트 템플릿 구조
+## 미니 프로젝트 템플릿 구조
 
 ```
 src/
@@ -616,7 +620,7 @@ src/
 
 ---
 
-## 17. 수식이 필요한 경우(버퍼 스루풋/타이밍 계산 예)
+## 수식이 필요한 경우(버퍼 스루풋/타이밍 계산 예)
 
 예: 직렬 포트에서 버퍼 초과를 막기 위한 추정(보드레이트 \(B\), 바이트/초 \(\approx B/10\)).
 

@@ -19,6 +19,7 @@ category: 정보보안기사
 ## UNIX/Linux 구조 한눈에
 
 ### 사용자 공간 vs 커널 공간
+
 - 사용자 공간: 셸·앱·라이브러리(glibc), 시스템콜로 커널과 통신.
 - 커널 공간: 프로세스 스케줄링, 메모리 관리, 파일시스템, 네트워킹, 보안(LSM: SELinux/AppArmor).
 
@@ -28,6 +29,7 @@ strace -f -e trace=openat,execve -p $(pidof sshd) 2>&1 | head
 ```
 
 ### 프로세스/스레드/신호
+
 - PID, PPID, 상태(R, S, D, Z), 우선순위/NI, cgroup.
 - 신호: `SIGTERM(15)`, `SIGKILL(9)`, `SIGHUP(1)` 등.
 
@@ -43,6 +45,7 @@ kill -KILL <pid>      # 강제 종료
 ## 파일·디렉터리·권한 모델
 
 ### 권한 비트와 소유(UGO)
+
 - **소유자(user) / 그룹(group) / 기타(other)** 각각에 rwx(4,2,1).
 - 숫자표현: `chmod 640 file` → 사용자(rw=6), 그룹(r=4), 기타(0).
 
@@ -52,6 +55,7 @@ $$
 $$
 
 ### 특수 비트: SUID·SGID·Sticky
+
 - **SUID(4xxx)**: 실행 시 파일 소유자 권한으로 실행(예: `/usr/bin/passwd`).
 - **SGID(2xxx)**: 실행 시 파일 **그룹** 권한 적용, 디렉터리에 설정하면 **하위 파일의 그룹 상속**.
 - **Sticky(1xxx)**: 디렉터리에서 **소유자만 삭제 가능**(`/tmp`).
@@ -67,6 +71,7 @@ getfacl /srv/proj
 ```
 
 ### umask와 기본 권한
+
 - `umask`는 **기본 권한에서 뺄 값**. 일반적으로 022(파일 644, 디렉터리 755), 보안환경은 027/077 권장.
 
 핸즈온(강화된 umask 적용):
@@ -76,6 +81,7 @@ echo 'umask 027' | sudo tee -a /etc/profile.d/hardening.sh
 ```
 
 ### POSIX ACL과 Capabilities
+
 - ACL: `setfacl/getfacl`로 사용자/그룹별 세밀 제어(UGO를 보완).
 - Capabilities: 루트 전체 권한 대신 특정 권능만 부여(`cap_net_bind_service` 등).
 
@@ -84,7 +90,8 @@ echo 'umask 027' | sudo tee -a /etc/profile.d/hardening.sh
 setfacl -m u:alice:rwx /srv/proj
 getfacl /srv/proj
 
-# 1024 미만 포트 바인딩 권한만 부여(루트 불필요)
+# 미만 포트 바인딩 권한만 부여(루트 불필요)
+
 setcap 'cap_net_bind_service=+ep' /usr/local/bin/myservice
 getcap /usr/local/bin/myservice
 ```
@@ -100,14 +107,17 @@ getcap /usr/local/bin/myservice
 ## 파일시스템·마운트·로그 구조(FHS)
 
 ### FHS(파일 시스템 계층 구조)
+
 - `/etc`(설정), `/var/log`(로그), `/var/lib`(상태), `/usr`(읽기전용 앱/라이브러리), `/opt`(서드파티), `/home`(사용자 홈).
 
 핸즈온(마운트/영구 설정):
 ```bash
 lsblk -f
 # 임시 마운트
+
 mount /dev/vdb1 /data
 # 영구 설정(fstab)
+
 echo '/dev/vdb1  /data  ext4  defaults,noexec,nodev,nosuid  0  2' | sudo tee -a /etc/fstab
 mount -a
 ```
@@ -117,10 +127,13 @@ mount -a
 핸즈온(로그 확인/회전):
 ```bash
 # journald
+
 journalctl -p warning -S -2h
 # syslog/rsyslog
+
 grep -E 'error|fail|denied' /var/log/syslog 2>/dev/null | tail
 # logrotate 수동 테스트
+
 logrotate -d /etc/logrotate.conf
 ```
 
@@ -134,6 +147,7 @@ logrotate -d /etc/logrotate.conf
 ## 사용자/그룹/PAM/암호 정책
 
 ### 사용자/그룹 관리
+
 ```bash
 id alice
 useradd -m -G proj alice
@@ -142,6 +156,7 @@ chage -l alice      # 암호 만료 정보
 ```
 
 ### PAM과 로그인 정책
+
 - **PAM**(Pluggable Authentication Modules): `/etc/pam.d/` 설정.
 - **암호/락아웃**: `pam_pwquality`, `pam_faillock` 등으로 정책 적용.
 - 로그인 기본 정책: `/etc/login.defs`.
@@ -149,8 +164,10 @@ chage -l alice      # 암호 만료 정보
 핸즈온(로그인 실패 잠금 예: RHEL8+/Rocky/Alma)
 ```bash
 # faillock 구성(예시, 배포판 가이드에 맞춰 적용)
+
 authselect select sssd with-faillock
 # 확인
+
 faillock --user alice
 ```
 
@@ -164,6 +181,7 @@ faillock --user alice
 ## 셸·도구 체인과 텍스트 처리
 
 ### 셸과 환경
+
 - Bash/Zsh, 프로파일: `/etc/profile`, `~/.profile`, `~/.bashrc`.
 - 경로/변수: `$PATH`, `export VAR=value`.
 
@@ -174,17 +192,22 @@ echo 'export EDITOR=vim' >> ~/.bashrc
 ```
 
 ### 텍스트 도구: grep/sed/awk/find/xargs
+
 ```bash
 # 에러 로그 추출
+
 grep -iE 'error|fail' /var/log/syslog | tail -n 50
 
 # sed로 설정 값 바꾸기(백업 생성)
+
 sed -i.bak 's/^#?MaxAuthTries.*/MaxAuthTries 3/' /etc/ssh/sshd_config
 
 # awk로 컬럼 집계
+
 ss -tan | awk '/ESTAB/ {print $4}' | cut -d: -f1 | sort | uniq -c | sort -nr | head
 
 # find + xargs: 최근 7일 수정/권한 점검
+
 find /var/www -type f -mtime -7 -print0 | xargs -0 ls -l | awk '{print $1,$3,$4,$9}' | head
 ```
 
@@ -197,14 +220,18 @@ find /var/www -type f -mtime -7 -print0 | xargs -0 ls -l | awk '{print $1,$3,$4,
 ## 패키지·서비스(systemd)·타이머
 
 ### 패키지 매니저
+
 ```bash
 # Debian/Ubuntu
+
 apt update && apt install -y htop jq
 # RHEL/Rocky/Alma
+
 dnf makecache && dnf install -y htop jq
 ```
 
 ### systemd 서비스 관리
+
 ```bash
 systemctl status sshd
 systemctl enable --now sshd
@@ -214,8 +241,10 @@ journalctl -u sshd -S -2h
 ```
 
 ### 사용자 서비스/타이머 예시(앱 헬스체크)
+
 ```bash
 # /etc/systemd/system/app-health.service
+
 [Unit]
 Description=App health probe
 
@@ -224,6 +253,7 @@ Type=oneshot
 ExecStart=/usr/local/bin/app_health.sh
 
 # /etc/systemd/system/app-health.timer
+
 [Unit]
 Description=Run app health every 1min
 
@@ -250,6 +280,7 @@ systemctl list-timers --all | grep app-health
 ## 네트워킹 기본: 인터페이스·주소·라우팅·세션
 
 ### 인터페이스/주소/라우팅
+
 ```bash
 ip addr show
 ip route
@@ -257,12 +288,14 @@ resolvectl status 2>/dev/null || cat /etc/resolv.conf
 ```
 
 ### 연결/포트 관찰: ss/lsof
+
 ```bash
 ss -tulpn | head -n 20
 lsof -i -nP | head -n 20
 ```
 
 ### 방화벽: nftables/iptables, ufw/firewalld
+
 - **RHEL/Alma/Rocky** 기본: `firewalld`(nftables backend).
 - **Ubuntu**: `ufw` 또는 `nftables` 직접 사용 권장.
 
@@ -312,12 +345,15 @@ systemctl enable --now nftables
 ## SSH 보안과 운영
 
 ### 키 기반 인증/서버 하드닝
+
 ```bash
 # 키 생성(클라이언트)
+
 ssh-keygen -t ed25519 -C "ops@corp"
 ssh-copy-id -i ~/.ssh/id_ed25519.pub alice@server
 
 # 서버 구문(예: /etc/ssh/sshd_config)
+
 PermitRootLogin no
 PasswordAuthentication no
 PubkeyAuthentication yes
@@ -338,6 +374,7 @@ systemctl reload sshd
 ## 스토리지: 디스크·RAID·LVM·스냅샷
 
 ### 파티션/파일시스템
+
 ```bash
 lsblk -f
 parted -l
@@ -345,6 +382,7 @@ mkfs.ext4 /dev/vdb1
 ```
 
 ### LVM (물리→볼륨그룹→논리볼륨)
+
 ```bash
 pvcreate /dev/vdb1
 vgcreate vgdata /dev/vdb1
@@ -356,9 +394,11 @@ mount -a
 ```
 
 ### 스냅샷(빠른 롤백/백업 시)
+
 ```bash
 lvcreate -s -n snap_logs -L 1G /dev/vgdata/lvlogs
 # 롤백 시:
+
 umount /var/log2
 lvconvert --merge /dev/vgdata/snap_logs
 mount -a
@@ -373,20 +413,25 @@ mount -a
 ## 로깅·감사(auditd)·문제 해결
 
 ### journald/syslog
+
 ```bash
 journalctl -p err -S today
 journalctl -u sshd --since "2025-11-11 00:00:00"
 ```
 
 ### auditd(보안 이벤트 추적)
+
 ```bash
 # 특정 파일 접근 감사 룰
+
 auditctl -w /etc/ssh/sshd_config -p wa -k sshcfg
 # 검색
+
 ausearch -k sshcfg --success no
 ```
 
 ### 성능/상태 진단
+
 ```bash
 top -o %MEM
 vmstat 1 5
@@ -431,14 +476,17 @@ ls -l /srv/proj               # 그룹이 proj로 상속되는지 확인
 절차:
 ```bash
 # sshd_config 강화(본문 예시)
+
 systemctl reload sshd
 
 # 방화벽(ufw 예)
+
 ufw default deny incoming
 ufw allow from 10.0.0.0/24 to any port 22 proto tcp
 ufw enable
 
 # 로그인 실패 분석
+
 journalctl -u sshd -S -24h | grep -i "failed" | tail -n 50
 ```
 
@@ -453,6 +501,7 @@ journalctl -u sshd -S -24h | grep -i "failed" | tail -n 50
 install -d -m 750 /opt/backup
 cat >/usr/local/bin/backup_etc.sh <<'EOF'
 #!/usr/bin/env bash
+
 set -euo pipefail
 ts="$(date +%F_%H%M)"
 tar -C / -czf /opt/backup/etc_${ts}.tar.gz etc
@@ -527,6 +576,7 @@ systemctl list-timers | grep backup-etc
 예시 답안 스니펫:
 ```bash
 # Q2
+
 groupadd eng
 mkdir -p /srv/shared
 chgrp eng /srv/shared
@@ -535,21 +585,25 @@ chmod +t /srv/shared
 ```
 ```text
 # Q3 (sshd_config)
+
 PermitRootLogin no
 PasswordAuthentication no
 PubkeyAuthentication yes
 ```
 ```bash
 # Q4
+
 echo '/dev/vdb1 /data ext4 defaults,noexec,nodev,nosuid 0 2' >> /etc/fstab
 mount -a
 ```
 ```bash
 # Q5
+
 journalctl -u sshd -p warning -S -2h
 ```
 ```bash
 # Q6
+
 setcap 'cap_net_bind_service=+ep' /usr/local/bin/httpd-lite
 getcap /usr/local/bin/httpd-lite
 ```

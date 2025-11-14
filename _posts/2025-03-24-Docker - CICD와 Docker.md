@@ -6,9 +6,10 @@ category: Docker
 ---
 # CI/CD와 Docker: GitHub Actions · GitLab CI · Jenkins
 
-## 0. 공통 아키텍처와 용어 정리
+## 공통 아키텍처와 용어 정리
 
-### 0.1 파이프라인 표준 단계
+### 파이프라인 표준 단계
+
 1) **소스 체크아웃**
 2) **정적 검사/테스트**(단위·통합, 린트)
 3) **보안**(SCA/SAST/Container Scan/SBOM)
@@ -18,7 +19,8 @@ category: Docker
 7) **검증/헬스체크**(자동 롤백 조건 포함)
 8) **아티팩트 보관/리포팅**(JUnit, SARIF, SBOM, 커버리지)
 
-### 0.2 레지스트리/태그 설계
+### 레지스트리/태그 설계
+
 - 레지스트리 네임: `<REG>/<ORG>/<APP>:<TAG>`
 - 권장 태그 세트:
   - **불변**: `:git-<shortSHA>`, `:build-<num>`
@@ -28,11 +30,13 @@ category: Docker
 
 ---
 
-## 1. 공통 Dockerfile 최적화(모든 CI에 적용)
+## 공통 Dockerfile 최적화(모든 CI에 적용)
 
-### 1.1 멀티스테이지 + 캐시 전략 예시(파이썬 웹)
+### 멀티스테이지 + 캐시 전략 예시(파이썬 웹)
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7-labs
+
 FROM python:3.11-alpine AS base
 WORKDIR /app
 RUN adduser -D app && chown -R app:app /app
@@ -40,6 +44,7 @@ USER app
 
 FROM base AS deps
 # 의존성만 별도 캐시 (requirements.lock 권장)
+
 COPY --chown=app:app requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r requirements.txt -t /layer
@@ -61,18 +66,21 @@ CMD ["app/main.py"]
 - 최종 런타임은 `distroless`로 **공격 표면 최소화**.
 - CI에서 buildx와 `cache-from/cache-to`로 레이어 재사용.
 
-### 1.2 멀티아키(amd64/arm64) 빌드 매개변수
+### 멀티아키(amd64/arm64) 빌드 매개변수
+
 - buildx: `platform=linux/amd64,linux/arm64`
 - QEMU 에뮬레이션 자동 세팅(액션/에이전트 제공).
 
 ---
 
-## 2. GitHub Actions
+## GitHub Actions
 
-### 2.1 최소 파이프라인(빌드+푸시)
+### 최소 파이프라인(빌드+푸시)
+
 {% raw %}
 ```yaml
 # .github/workflows/docker.yml
+
 name: docker-ci
 
 on:
@@ -117,11 +125,13 @@ jobs:
 {% endraw %}
 
 #### 포인트
+
 - `permissions`에서 **OIDC 사용 가능**(ECR/GAR 무비밀 인증).
 - `cache-from/to`를 **레지스트리 캐시 이미지**로 구성 → 빌드 시간 단축.
 - 태그는 `:latest` + `:gitSHA`를 동시에 푸시(환경 프로모션에 활용).
 
-### 2.2 보안 스캔/품질 게이트 추가(Trivy + SBOM + Cosign)
+### 보안 스캔/품질 게이트 추가(Trivy + SBOM + Cosign)
+
 {% raw %}
 ```yaml
   security:
@@ -157,7 +167,8 @@ jobs:
 ```
 {% endraw %}
 
-### 2.3 OIDC로 AWS ECR에 로그인(무비밀)
+### OIDC로 AWS ECR에 로그인(무비밀)
+
 {% raw %}
 ```yaml
     - name: Configure AWS credentials (OIDC)
@@ -179,7 +190,8 @@ jobs:
 ```
 {% endraw %}
 
-### 2.4 배포(단일 서버/Compose) — SSH 액션
+### 배포(단일 서버/Compose) — SSH 액션
+
 {% raw %}
 ```yaml
   deploy:
@@ -198,7 +210,8 @@ jobs:
 ```
 {% endraw %}
 
-### 2.5 배포(Kubernetes) — kubectl/Helm/ArgoCD
+### 배포(Kubernetes) — kubectl/Helm/ArgoCD
+
 {% raw %}
 ```yaml
     - name: Set image in Helm and deploy
@@ -212,9 +225,10 @@ jobs:
 
 ---
 
-## 3. GitLab CI/CD
+## GitLab CI/CD
 
-### 3.1 기본 `.gitlab-ci.yml`(Docker-in-Docker)
+### 기본 `.gitlab-ci.yml`(Docker-in-Docker)
+
 ```yaml
 stages: [lint, test, build, security, deploy]
 
@@ -266,10 +280,12 @@ deploy:
 ```
 
 #### 포인트
+
 - GitLab은 **컨테이너 레지스트리 내장** → `$CI_REGISTRY_IMAGE` 자동 할당.
 - `dind`는 간편하나, 고성능/보안 관점에선 **Kaniko/Buildah** 대안 고려.
 
-### 3.2 Kaniko로 루트리스/고성능 빌드
+### Kaniko로 루트리스/고성능 빌드
+
 ```yaml
 build_kaniko:
   stage: build
@@ -285,16 +301,18 @@ build_kaniko:
         --cache=true --cache-repo=$CI_REGISTRY_IMAGE/cache
 ```
 
-### 3.3 환경/승인/보호 브랜치
+### 환경/승인/보호 브랜치
+
 - `environments:` 키로 `staging`·`production` 정의.
 - `only/except` 혹은 `rules:`로 **보호 브랜치**에만 deploy stage 허용.
 - `manual`/`when: delayed`/`needs:`로 승인/스케줄링 구현.
 
 ---
 
-## 4. Jenkins
+## Jenkins
 
-### 4.1 Jenkinsfile(Declarative Pipeline)
+### Jenkinsfile(Declarative Pipeline)
+
 ```groovy
 pipeline {
   agent any
@@ -354,11 +372,13 @@ pipeline {
 ```
 
 #### 포인트
+
 - Jenkins Credentials(`reg-creds`)로 비밀 관리.
 - 워크로드가 많다면 **에이전트 풀** 또는 **Kubernetes 플러그인**으로 **동적 Pod 에이전트** 활용:
   - `agent { kubernetes { yaml """ ...pod spec... """ } }`
 
-### 4.2 Jenkins + K8s 에이전트 스니펫
+### Jenkins + K8s 에이전트 스니펫
+
 ```groovy
 pipeline {
   agent {
@@ -395,11 +415,13 @@ spec:
 
 ---
 
-## 5. 배포 전략(서버·Compose·Kubernetes)
+## 배포 전략(서버·Compose·Kubernetes)
 
-### 5.1 단일 서버/Compose 표준 예시
+### 단일 서버/Compose 표준 예시
+
 ```yaml
 # /srv/myapp/docker-compose.yml
+
 version: "3.9"
 services:
   app:
@@ -416,12 +438,14 @@ services:
 - CI에서 `image:`만 **다이제스트**로 바꾸는 방식 권장:
   - `image: registry.example.com/demo/myapp@sha256:...`
 
-### 5.2 Kubernetes 롤링/블루-그린/카나리
+### Kubernetes 롤링/블루-그린/카나리
+
 - **롤링**: `Deployment` 기본; `maxSurge/maxUnavailable` 조정
 - **블루-그린**: `blue`와 `green` 디플로이먼트/서비스 분리 → 라우팅 스위치
 - **카나리**: `weight` 기반 Ingress/ServiceMesh 이관(예: NGINX Ingress, Istio)
 
 #### Deployment 예시(이미지 다이제스트 고정)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -445,19 +469,22 @@ spec:
 
 ---
 
-## 6. 테스트/품질/보안 통합
+## 테스트/품질/보안 통합
 
-### 6.1 테스트/커버리지
+### 테스트/커버리지
+
 - PR에서 `pytest --junitxml=...`/`go test -json`/`jest --ci --reporters` 등으로 **리포트 업로드**.
 - 커버리지 기준 미달 시 실패 게이트.
 
-### 6.2 린트/포맷/정적분석
+### 린트/포맷/정적분석
+
 - Python: ruff/flake8/black
 - JS/TS: eslint/prettier
 - IaC: `tflint`, `checkov`, `kics`
 - Dockerfile: `hadolint`, `dockle`
 
-### 6.3 컨테이너 스캔/서명/정책
+### 컨테이너 스캔/서명/정책
+
 - **Trivy**: `trivy image --exit-code 1 --severity HIGH,CRITICAL`
 - **SBOM**: Anchore Syft/CycloneDX 생성 → 아티팩트 보관
 - **서명**: Cosign keyless(oidc) 또는 KMS 키 → **배포 전 검증**
@@ -465,7 +492,7 @@ spec:
 
 ---
 
-## 7. 비밀관리(Secrets)
+## 비밀관리(Secrets)
 
 - CI: GitHub Actions Secrets/GitLab Variables/Jenkins Credentials
 - 런타임: **Docker Secrets(Swarm)**, **K8s Secrets**, 외부 Vault(예: HashiCorp Vault)/Cloud Secret Manager
@@ -473,20 +500,23 @@ spec:
 
 ---
 
-## 8. 성능/비용 최적화
+## 성능/비용 최적화
 
-### 8.1 빌드 가속
+### 빌드 가속
+
 - buildx + registry 캐시
 - 의존성 레이어 분리(멀티스테이지)
 - `.dockerignore` 정리
 - 사설 **프록시 캐시 레지스트리/Harbor Proxy Cache**로 외부 pull 절감
 
-### 8.2 테스팅 가속
+### 테스팅 가속
+
 - **서비스 컨테이너**로 DB/브로커 붙여 통합테스트(깃허브액션/깃랩 지원)
 - **매트릭스 전략**(OS/파이썬 버전/플랫폼) 병렬화
   예) `strategy.matrix.python: [3.10, 3.11]`
 
-### 8.3 단순 모델로 통신량 절감의 대략 계산
+### 단순 모델로 통신량 절감의 대략 계산
+
 빌드 캐시/프록시 캐시로 절감되는 네트워크 바이트 총량 \(S\)는 간단히
 $$
 S \approx \sum_{l=1}^{L} (B_l \cdot (n_l - 1))
@@ -496,19 +526,21 @@ $$
 
 ---
 
-## 9. 배포 후 검증/롤백
+## 배포 후 검증/롤백
 
-### 9.1 헬스체크/스모크 테스트
+### 헬스체크/스모크 테스트
+
 - 서버/클러스터에서 `/health` 확인, 2xx/준수시간 내 응답
 - E2E 테스트(간단한 기능 동작 검사)를 **배포 직후** 자동화
 
-### 9.2 롤백 방법
+### 롤백 방법
+
 - Compose: 직전 다이제스트로 `image` 변경 → `up -d`
 - K8s: `kubectl rollout undo deploy/myapp` 또는 GitOps에서 이전 리비전
 
 ---
 
-## 10. 관측성(Observability)
+## 관측성(Observability)
 
 - 로그: Loki/ELK/CloudWatch → CI 단계·릴리스태그 메타 포함
 - 지표: Prometheus + Grafana → 배포 전후 **에러율/지연/자원** 비교
@@ -517,7 +549,7 @@ $$
 
 ---
 
-## 11. 레지스트리/배포 환경 통합 팁
+## 레지스트리/배포 환경 통합 팁
 
 - **Harbor**: RBAC, 스캔, 리텐션, 불변 태그, 복제; Robot 계정으로 CI 접근
 - **ECR/GAR/GHCR**: OIDC로 무비밀 로그인 → 보안/회계 간편화
@@ -525,7 +557,7 @@ $$
 
 ---
 
-## 12. 샘플 리포지터리 구조(권장)
+## 샘플 리포지터리 구조(권장)
 
 ```
 repo/
@@ -545,7 +577,7 @@ repo/
 
 ---
 
-## 13. 트러블슈팅
+## 트러블슈팅
 
 | 증상 | 원인/해결 |
 |---|---|
@@ -558,11 +590,13 @@ repo/
 
 ---
 
-## 14. 고급: 모노레포/멀티서비스 매트릭스
+## 고급: 모노레포/멀티서비스 매트릭스
 
-### 14.1 서비스별 디렉터리 감지로 조건부 빌드
+### 서비스별 디렉터리 감지로 조건부 빌드
+
 ```yaml
 # GitHub Actions 예시: path filter
+
 on:
   push:
     branches: [main]
@@ -571,7 +605,8 @@ on:
       - '.github/workflows/**'
 ```
 
-### 14.2 매트릭스(서비스 × 플랫폼)
+### 매트릭스(서비스 × 플랫폼)
+
 ```yaml
 strategy:
   matrix:
@@ -581,7 +616,7 @@ strategy:
 
 ---
 
-## 15. 종합 예: “PR → 스캔/테스트 → 이미지 빌드/푸시 → 스테이징 자동배포 → 승인 후 프로덕션”
+## 종합 예: “PR → 스캔/테스트 → 이미지 빌드/푸시 → 스테이징 자동배포 → 승인 후 프로덕션”
 
 1) PR 시: Lint/Unit/Trivy(SBOM)/컨테이너 빌드(푸시 X)
 2) main 머지: 빌드 → 서명 → `:gitSHA` 푸시
@@ -591,7 +626,7 @@ strategy:
 
 ---
 
-## 16. 체크리스트
+## 체크리스트
 
 - [ ] Dockerfile 멀티스테이지/캐시/최소화(슬림/알파인/디스트로리스)
 - [ ] buildx 멀티아키 + 레지스트리 캐시
@@ -605,6 +640,7 @@ strategy:
 ---
 
 ## 참고 문서
+
 - GitHub Actions: https://docs.github.com/actions
 - GitLab CI/CD: https://docs.gitlab.com/ee/ci/
 - Jenkins Pipeline: https://www.jenkins.io/doc/book/pipeline/
@@ -617,9 +653,11 @@ strategy:
 ---
 
 ## 부록 A. GitHub Actions “재사용 가능한 워크플로”로 표준화
+
 {% raw %}
 ```yaml
 # .github/workflows/reusable-docker-build.yml
+
 name: reusable-docker-build
 on:
   workflow_call:
@@ -649,8 +687,10 @@ jobs:
 ---
 
 ## 부록 B. GitLab CI “템플릿 include”
+
 ```yaml
 # .gitlab-ci-templates/docker-build.yml
+
 .build_docker:
   stage: build
   image: docker:27-dind
@@ -661,6 +701,7 @@ jobs:
 ```
 ```yaml
 # .gitlab-ci.yml
+
 include:
   - local: '.gitlab-ci-templates/docker-build.yml'
 
@@ -671,6 +712,7 @@ build:
 ---
 
 ## 부록 C. Jenkins 공유 라이브러리로 파이프라인 재사용
+
 ```groovy
 // vars/dockerBuild.groovy
 def call(String image) {
@@ -693,6 +735,7 @@ pipeline {
 ---
 
 ### 결론
+
 - **GitHub Actions**: 간결·강력한 마켓플레이스, OIDC·buildx 친화적
 - **GitLab CI**: 레지스트리·권한·프로젝트와 **완전 통합**
 - **Jenkins**: 온프레미스·커스터마이즈·에코시스템 극대화

@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS 메시징 시스템: SQS와 SNS
 
-## 0. 한 장 요약
+## 한 장 요약
 
 - **SQS**: Poll 기반 **큐**(표준/ FIFO). 백엔드 비동기 처리, 버퍼링, 스로틀 보호, **일시적 장애 흡수**에 최적.
 - **SNS**: Push 기반 **토픽**. 이벤트 브로드캐스트, 멀티 구독자(Email/SMS/HTTP/Lambda/SQS), **필터링·팬아웃**에 최적.
@@ -14,9 +14,9 @@ category: AWS
 
 ---
 
-## 1. 개념 모델 — 역할과 데이터 흐름
+## 개념 모델 — 역할과 데이터 흐름
 
-### 1.1 용어 정리
+### 용어 정리
 
 - **Producer(발행자)**: 메시지를 보낸다(SQS로는 SendMessage, SNS로는 Publish).
 - **Queue(큐)**: 메시지 임시 저장소(SQS).
@@ -27,7 +27,7 @@ category: AWS
 - **DLQ(Dead-Letter Queue)**: 재시도에도 실패한 메시지 격리 보관.
 - **Redrive**: DLQ에 쌓인 메시지를 **원 큐/람다로 재주입**.
 
-### 1.2 선택 기준 (요약)
+### 선택 기준 (요약)
 
 | 요구사항 | 권장 |
 |---|---|
@@ -39,9 +39,9 @@ category: AWS
 
 ---
 
-## 2. SQS 심화 — 표준 vs FIFO, 동작·튜닝·패턴
+## SQS 심화 — 표준 vs FIFO, 동작·튜닝·패턴
 
-### 2.1 표준(Standard) vs FIFO
+### 표준(Standard) vs FIFO
 
 | 항목 | Standard | FIFO |
 |---|---|---|
@@ -54,7 +54,7 @@ category: AWS
 - `MessageGroupId`: 이 값이 같은 메시지는 **순서 보장** + **동시에 하나만 처리**.
 - `MessageDeduplicationId`: 5분 내 **중복 방지**. `ContentBasedDeduplication`을 켜면 본문 해시로 자동.
 
-### 2.2 메시지 수명주기
+### 메시지 수명주기
 
 1) **SendMessage** → 큐 저장
 2) **ReceiveMessage**(롱폴링 권장) → 메시지와 **ReceiptHandle** 획득
@@ -62,7 +62,7 @@ category: AWS
 4) **DeleteMessage**(ReceiptHandle 필요) → 최종 삭제
 5) 실패 시 **Visibility Timeout** 만료 후 재노출 → 재시도
 
-### 2.3 핵심 속성·튜닝 포인트
+### 핵심 속성·튜닝 포인트
 
 - **VisibilityTimeout**: 처리시간 + 여유(네트워크/재시도)를 반영.
   - 처리 중 추가 시간이 필요하면 **ChangeMessageVisibility**로 연장.
@@ -72,7 +72,7 @@ category: AWS
 - **ReceiveMessage** `MaxNumberOfMessages`: 배치(최대 10). 처리량↑/요청수↓.
 - **RedrivePolicy**: DLQ 연결 + **maxReceiveCount**.
 
-### 2.4 처리량·동시성 산정 (개념)
+### 처리량·동시성 산정 (개념)
 
 - 초당 처리량 목표를 \(R\), 1건 평균 처리시간을 \(T\)라 하면 **필요 동시성**:
 $$
@@ -83,28 +83,28 @@ $$
 V \ge T + \Delta
 $$
 
-### 2.5 실패/독성 메시지(포이즌 메시지)
+### 실패/독성 메시지(포이즌 메시지)
 
 - 같은 메시지가 **maxReceiveCount**를 초과하면 **DLQ**로 이동.
 - DLQ는 **레드라이브(수동/자동)**로 원 큐나 람다 재처리 파이프라인으로 되돌린다.
 - **멱등성**(DynamoDB 조건식/토큰)으로 **중복 재시도**의 부작용 방지.
 
-### 2.6 대용량 페이로드
+### 대용량 페이로드
 
 - 메시지 본문 한도: **256KB**.
 - 더 크면 **S3 Extended Client 패턴**(본문은 S3, SQS에는 포인터) 사용.
 
 ---
 
-## 3. SNS 심화 — 토픽, 구독, 필터링·재시도
+## SNS 심화 — 토픽, 구독, 필터링·재시도
 
-### 3.1 토픽/구독/전달
+### 토픽/구독/전달
 
 - **Publish → Topic → N개의 구독자**(SQS/Lambda/HTTP/Email/SMS 등).
 - **푸시 모델**: 지연이 매우 낮고 설계가 단순.
 - **구독별 재시도 정책**(HTTP는 지수백오프), 일부 프로토콜은 **DLQ(구독 레벨)** 설정 가능.
 
-### 3.2 메시지 속성·필터 정책
+### 메시지 속성·필터 정책
 
 - 발행 시 **MessageAttributes**를 넣고, 구독 시 **FilterPolicy**로 조건 매칭.
 - **서브셋 라우팅**으로 **불필요한 전송/소비 비용** 절감.
@@ -119,16 +119,16 @@ $$
 }
 ```
 
-### 3.3 팬아웃(팬아웃 + 필터)
+### 팬아웃(팬아웃 + 필터)
 
 - **단일 Publish** → **여러 SQS 큐/람다/HTTP**로 동시 전파.
 - 큐별 **필터 정책**으로 서로 다른 서브셋만 수신.
 
 ---
 
-## 4. 보안 — IAM/KMS/리소스 정책/VPC Endpoint
+## 보안 — IAM/KMS/리소스 정책/VPC Endpoint
 
-### 4.1 최소권한 IAM 예시
+### 최소권한 IAM 예시
 
 **SQS 생산자(쓰기 전용)**
 ```json
@@ -162,7 +162,7 @@ $$
 }
 ```
 
-### 4.2 리소스 정책(큐에 토픽만 Publish 허용)
+### 리소스 정책(큐에 토픽만 Publish 허용)
 
 ```json
 {
@@ -182,19 +182,19 @@ $$
 }
 ```
 
-### 4.3 암호화
+### 암호화
 
 - **SQS SSE(KMS)**, **SNS SSE(KMS)** 지원. 키 정책에 **서비스 역할**/프로듀서 권한 고려.
 
-### 4.4 사설 접근
+### 사설 접근
 
 - **VPC Endpoint (Interface/Gateway)** 로 인터넷 없이 SQS/SNS 호출. 엔드포인트 정책으로 **더 축소** 가능.
 
 ---
 
-## 5. 운영·관측성 — 메트릭·알람·로그
+## 운영·관측성 — 메트릭·알람·로그
 
-### 5.1 주요 메트릭(SQS)
+### 주요 메트릭(SQS)
 
 - `ApproximateNumberOfMessagesVisible`: 대기 중 메시지 수(백로그).
 - `ApproximateNumberOfMessagesNotVisible`: 처리 중(가시성 타임아웃 내) 메시지 수.
@@ -204,31 +204,31 @@ $$
 **백로그 알람 예시**
 - 임계: **백로그 > 목표 처리율 × 허용 지연 시간**.
 
-### 5.2 주요 메트릭(SNS)
+### 주요 메트릭(SNS)
 
 - `NumberOfMessagesPublished` / `Delivered` / `Failed`
 - **구독별** 전달 실패율/재시도 모니터
 
-### 5.3 로그
+### 로그
 
 - SQS/SNS 자체 로그는 적다 → **소비자(Lambda/EC2/ECS) 로그** + **CloudTrail**(API 감시) + **X-Ray**(연쇄 호출 추적)로 보강.
 
 ---
 
-## 6. 비용 모델·계산
+## 비용 모델·계산
 
-### 6.1 SQS
+### SQS
 
 - **요청 수 기준 과금**(Send/Receive/Delete/ChangeVisibility) + **데이터 전송**.
 - 롱폴링으로 **빈 Receive**를 줄여 비용 절감.
 - FIFO는 표준 대비 단가↑ 가능 → **그룹 병렬화 설계**로 처리량 확보.
 
-### 6.2 SNS
+### SNS
 
 - **Publish/Delivery 건수** + 프로토콜별 비용.
 - **필터 정책**으로 불필요한 전송 억제(=비용 절감).
 
-### 6.3 개념 공식
+### 개념 공식
 
 월간 SQS 비용(개략):
 $$
@@ -242,34 +242,40 @@ $$
 
 ---
 
-## 7. SQS — CLI/SDK 빠른 실습
+## SQS — CLI/SDK 빠른 실습
 
-### 7.1 CLI
+### CLI
 
 ```bash
 # 큐 생성 (표준)
+
 aws sqs create-queue --queue-name std-queue
 
 # FIFO 큐 생성
+
 aws sqs create-queue --queue-name orders.fifo \
   --attributes FifoQueue=true,ContentBasedDeduplication=true
 
 # 전송
+
 aws sqs send-message --queue-url $URL --message-body 'hello'
 
 # FIFO 전송(그룹/중복방지)
+
 aws sqs send-message --queue-url $FIFO_URL \
   --message-body '{"orderId":123}' \
   --message-group-id orders-apne2 --message-deduplication-id 123
 
 # 수신(롱폴링 20초)
+
 aws sqs receive-message --queue-url $URL --wait-time-seconds 20 --max-number-of-messages 10
 
 # 삭제
+
 aws sqs delete-message --queue-url $URL --receipt-handle $HANDLE
 ```
 
-### 7.2 Python(boto3) 소비자 — 부분실패 보고(Lambda 통합과 동일 패턴)
+### Python(boto3) 소비자 — 부분실패 보고(Lambda 통합과 동일 패턴)
 
 ```python
 import json, boto3
@@ -291,23 +297,27 @@ def handler(event, _):
 
 ---
 
-## 8. SNS — CLI/필터링/팬아웃
+## SNS — CLI/필터링/팬아웃
 
 ```bash
 # 토픽 생성
+
 aws sns create-topic --name orders-topic
 
 # 구독자: SQS 큐 등록
+
 aws sns subscribe --topic-arn $TOPIC_ARN \
   --protocol sqs --notification-endpoint $QUEUE_ARN
 
 # 구독 필터 정책
+
 aws sns set-subscription-attributes \
   --subscription-arn $SUB_ARN \
   --attribute-name FilterPolicy \
   --attribute-value '{"eventType":["order.created"],"priority":[{"numeric":[">=",5]}]}'
 
 # 발행
+
 aws sns publish --topic-arn $TOPIC_ARN \
   --message '{"orderId":123,"amount":5000}' \
   --message-attributes '{"eventType":{"DataType":"String","StringValue":"order.created"},"priority":{"DataType":"Number","StringValue":"5"}}'
@@ -315,7 +325,7 @@ aws sns publish --topic-arn $TOPIC_ARN \
 
 ---
 
-## 9. SQS + SNS 팬아웃 — 아키텍처와 리소스 정책
+## SQS + SNS 팬아웃 — 아키텍처와 리소스 정책
 
 **시나리오**: `orders-topic` → `orders-processor-queue`, `orders-email-queue`, `orders-analytics-queue`
 - 각 큐에 **서로 다른 FilterPolicy** 적용.
@@ -325,9 +335,9 @@ aws sns publish --topic-arn $TOPIC_ARN \
 
 ---
 
-## 10. Lambda 통합 — SQS Pull / SNS Push
+## Lambda 통합 — SQS Pull / SNS Push
 
-### 10.1 SQS → Lambda (이벤트 소스 매핑)
+### SQS → Lambda (이벤트 소스 매핑)
 
 - **배치 크기**(1~10), **배치 윈도우**, **부분실패 보고** 지원.
 - **가시성 타임아웃 ≥ 함수 타임아웃** + 여유.
@@ -356,16 +366,16 @@ def lambda_handler(event, _):
     return {"batchItemFailures": failures}
 ```
 
-### 10.2 SNS → Lambda
+### SNS → Lambda
 
 - 푸시형. 재시도/백오프는 SNS가 처리.
 - 처리 실패 시 **SNS 구독 DLQ**(일부 프로토콜) 또는 Lambda Destinations 고려.
 
 ---
 
-## 11. IaC — Terraform & SAM 스니펫
+## IaC — Terraform & SAM 스니펫
 
-### 11.1 Terraform (SNS + 두 개의 SQS + 필터)
+### Terraform (SNS + 두 개의 SQS + 필터)
 
 ```hcl
 resource "aws_sns_topic" "orders" {
@@ -394,6 +404,7 @@ resource "aws_sns_topic_subscription" "low_sub" {
 }
 
 # 큐 정책(토픽만 Send 허용)
+
 data "aws_iam_policy_document" "q" {
   statement {
     actions = ["sqs:SendMessage"]
@@ -416,7 +427,7 @@ resource "aws_sqs_queue_policy" "qp2" {
 }
 ```
 
-### 11.2 SAM (S3 → SNS → SQS → Lambda)
+### SAM (S3 → SNS → SQS → Lambda)
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -479,7 +490,7 @@ Resources:
 
 ---
 
-## 12. 고급 패턴
+## 고급 패턴
 
 - **Outbox 패턴**: 트랜잭션 DB에 이벤트 레코드 저장 → 별도 워커가 SNS/SQS로 퍼블리시.
 - **Saga/Orchestration**: 단계별 보상 트랜잭션 → **Step Functions + SNS/SQS** 조합.
@@ -489,14 +500,16 @@ Resources:
 
 ---
 
-## 13. 실전 엔드투엔드 — 주문 이벤트 파이프라인
+## 실전 엔드투엔드 — 주문 이벤트 파이프라인
 
 ### 요구
+
 - 주문 생성/취소 이벤트를 발행 → **HighPriority**(우선처리), **Billing**, **Audit**에 각각 전달.
 - **우선처리**는 **FIFO**로 순서 보장, **멱등성** 필수.
 - 장애 시 DLQ, 운영자는 **레드라이브**로 재처리.
 
 ### 흐름
+
 `Order Service → SNS(orders-topic)`
 → `SQS FIFO (high-priority.fifo)` [필터: priority>=5]
 → `SQS (billing)` [필터: eventType in {created,cancelled}]
@@ -549,7 +562,7 @@ def lambda_handler(event, _):
 
 ---
 
-## 14. 체크리스트
+## 체크리스트
 
 - [ ] **롱폴링** 활성화(ReceiveMessageWaitTimeSeconds).
 - [ ] **가시성 타임아웃 ≥ 처리시간 + 여유**.
@@ -563,29 +576,34 @@ def lambda_handler(event, _):
 
 ---
 
-## 15. 부록 — 자주 쓰는 스니펫
+## 부록 — 자주 쓰는 스니펫
 
-### 15.1 큐 속성 변경(롱폴링/가시성)
+### 큐 속성 변경(롱폴링/가시성)
+
 ```bash
 aws sqs set-queue-attributes --queue-url $URL \
   --attributes ReceiveMessageWaitTimeSeconds=20,VisibilityTimeout=120
 ```
 
-### 15.2 메시지 가시성 연장
+### 메시지 가시성 연장
+
 ```bash
 aws sqs change-message-visibility --queue-url $URL \
   --receipt-handle $HANDLE --visibility-timeout 300
 ```
 
-### 15.3 DLQ 연결
+### DLQ 연결
+
 ```bash
 aws sqs set-queue-attributes --queue-url $URL \
   --attributes RedrivePolicy='{"deadLetterTargetArn":"ARN_OF_DLQ","maxReceiveCount":"5"}'
 ```
 
-### 15.4 SNS 구독 확인(HTTP/Email)
+### SNS 구독 확인(HTTP/Email)
+
 ```bash
 # 이메일은 수신함에서 Confirm 필요
+
 aws sns list-subscriptions-by-topic --topic-arn $TOPIC_ARN
 ```
 

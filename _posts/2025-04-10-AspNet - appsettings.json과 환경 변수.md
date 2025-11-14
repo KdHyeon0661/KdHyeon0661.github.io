@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core: `appsettings.json`과 환경 변수
 
-## 1. 설정 시스템 한눈에 보기 (우선순위와 병합)
+## 설정 시스템 한눈에 보기 (우선순위와 병합)
 
 ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한다. **나중에 추가된 소스가 먼저 것들을 덮어쓴다**.
 
@@ -27,9 +27,9 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 
 ---
 
-## 2. `appsettings.json` + 환경별 파일
+## `appsettings.json` + 환경별 파일
 
-### 2.1 기본/환경별 파일 구조
+### 기본/환경별 파일 구조
 
 ```json
 // appsettings.json
@@ -76,7 +76,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 - **병합 예시**: Development 환경이면 `MySettings.FeatureEnabled=false`, `MaxItems=10`, `Nested.Endpoint=https://dev.api.local`, `TimeoutSeconds=5(기본)`가 적용된다.
 - Production에서는 `TimeoutSeconds=2`로 덮어쓴다.
 
-### 2.2 환경 선택
+### 환경 선택
 
 - Windows CMD
   ```cmd
@@ -93,7 +93,7 @@ ASP.NET Core는 **여러 소스의 키-값**을 **계층 키**(`:`)로 병합한
 
 ---
 
-## 3. `Program.cs` — 설정 파이프라인/서비스 구성
+## `Program.cs` — 설정 파이프라인/서비스 구성
 
 템플릿은 이미 환경별 파일/유저 시크릿/환경변수/명령줄까지 자동 추가한다.
 필요 시 **명시적 구성**으로 제어할 수 있다.
@@ -154,7 +154,7 @@ public sealed class NestedSettings
 
 ---
 
-## 4. `IConfiguration`으로 직접 읽기 + 기본값
+## `IConfiguration`으로 직접 읽기 + 기본값
 
 ```csharp
 public class MyService
@@ -175,7 +175,7 @@ public class MyService
 
 ---
 
-## 5. Options 패턴 심화 — IOptions / IOptionsSnapshot / IOptionsMonitor
+## Options 패턴 심화 — IOptions / IOptionsSnapshot / IOptionsMonitor
 
 | 인터페이스 | 특징 | 용도 |
 |------------|------|------|
@@ -183,7 +183,7 @@ public class MyService
 | `IOptionsSnapshot<T>` | **요청마다** 새 바인딩(Scoped), JSON 변경 반영 | Web 앱에서 요청 단위 최신값 |
 | `IOptionsMonitor<T>` | **구독/콜백** 가능, 변경 즉시 반영(Singleton도 OK) | 백그라운드 서비스/싱글톤 변동 반영 |
 
-### 5.1 Snapshot/Monitor 사용 예
+### Snapshot/Monitor 사용 예
 
 ```csharp
 // Snapshot: 요청 스코프에서 최신값
@@ -199,13 +199,14 @@ monitor.OnChange(newVal =>
 
 ---
 
-## 6. 환경 변수를 통한 덮어쓰기 — 규칙/예제
+## 환경 변수를 통한 덮어쓰기 — 규칙/예제
 
 - **키 구분자 `:` 대신 `__`** 사용.
 - 부울/정수/배열 등 **문자열로 전달**되며 Binder가 적절히 변환함.
 
 ```bash
 # Linux/macOS
+
 export MySettings__FeatureEnabled=true
 export MySettings__MaxItems=500
 export MySettings__Nested__Endpoint="https://prod.api"
@@ -214,6 +215,7 @@ export ConnectionStrings__DefaultConnection="Server=prod-db;Database=App;User Id
 
 ```powershell
 # PowerShell
+
 $env:MySettings__FeatureEnabled = "false"
 $env:MySettings__Nested__TimeoutSeconds = "3"
 ```
@@ -247,7 +249,7 @@ export Map__us="United States"
 
 ---
 
-## 7. 명령줄 인자(가장 강력한 우선순위 중 하나)
+## 명령줄 인자(가장 강력한 우선순위 중 하나)
 
 ```bash
 dotnet run --MySettings:MaxItems=777 --MySettings:Nested:Endpoint=https://override
@@ -257,7 +259,7 @@ dotnet run --MySettings:MaxItems=777 --MySettings:Nested:Endpoint=https://overri
 
 ---
 
-## 8. User Secrets (개발 전용 민감정보)
+## User Secrets (개발 전용 민감정보)
 
 개발 환경에서만 로딩되며, 파일은 사용자 프로필에 저장(프로젝트와 분리).
 
@@ -276,7 +278,7 @@ builder.Configuration.AddUserSecrets<Program>();
 
 ---
 
-## 9. 로깅/레벨을 설정으로 제어
+## 로깅/레벨을 설정으로 제어
 
 ```json
 // appsettings.json
@@ -298,7 +300,7 @@ export Logging__LogLevel__MyApp.Namespace=Trace
 
 ---
 
-## 10. 실시간 변경: `reloadOnChange`와 한계
+## 실시간 변경: `reloadOnChange`와 한계
 
 - `AddJsonFile(..., reloadOnChange:true)` → 파일 변경 시 **파일 SystemWatcher**로 자동 반영.
 - **환경 변수/명령줄**은 **재로딩 불가**(일반적으로 프로세스 재시작 필요).
@@ -308,9 +310,9 @@ export Logging__LogLevel__MyApp.Namespace=Trace
 
 ---
 
-## 11. Azure/클라우드 연계
+## Azure/클라우드 연계
 
-### 11.1 Azure Key Vault (비밀 저장)
+### Azure Key Vault (비밀 저장)
 
 > 비밀번호/키는 **소스/파일에 두지 말고** 전용 비밀 저장소로.
 
@@ -324,7 +326,7 @@ builder.Configuration
 
 - Key Vault의 **Secret 이름**을 설정 키로 매핑해 바인딩 가능.
 
-### 11.2 Azure App Configuration (원격 구성/피처 플래그)
+### Azure App Configuration (원격 구성/피처 플래그)
 
 ```csharp
 builder.Configuration.AddAzureAppConfiguration(options =>
@@ -342,15 +344,16 @@ builder.Configuration.AddAzureAppConfiguration(options =>
 
 ---
 
-## 12. Docker/Kubernetes 배포 전략
+## Docker/Kubernetes 배포 전략
 
-### 12.1 Docker
+### Docker
 
 - `appsettings.json`은 이미지에 포함.
 - **환경 변수**로 **민감 정보/환경별 차이**를 덮어씀.
 
 ```dockerfile
 # Dockerfile 일부
+
 ENV ASPNETCORE_URLS=http://+:8080
 ENV MySettings__MaxItems=200
 ENV ConnectionStrings__DefaultConnection="Server=db;Database=App;User Id=app;Password=***"
@@ -362,7 +365,7 @@ ENV ConnectionStrings__DefaultConnection="Server=db;Database=App;User Id=app;Pas
 docker run -e MySettings__MaxItems=300 -p 8080:8080 myapp:latest
 ```
 
-### 12.2 Kubernetes
+### Kubernetes
 
 - ConfigMap/Secret을 **환경 변수** 또는 **파일 마운트**로 주입.
 
@@ -392,7 +395,7 @@ env:
 
 ---
 
-## 13. 강타입 바인딩 팁/주의
+## 강타입 바인딩 팁/주의
 
 - **Enum/TimeSpan**: Binder가 문자열을 변환하므로 `"Warning"`, `"00:00:05"` 형식 지원.
 - **복합 타입/중첩 클래스/레코드** 지원.
@@ -431,7 +434,7 @@ builder.Services.AddOptions<AdvancedSettings>()
 
 ---
 
-## 14. 컨트롤러/Minimal API에서의 사용
+## 컨트롤러/Minimal API에서의 사용
 
 ```csharp
 app.MapGet("/cfg", (IConfiguration cfg) =>
@@ -445,7 +448,7 @@ app.MapGet("/opt", (IOptionsSnapshot<MySettings> opt) => Results.Json(opt.Value)
 
 ---
 
-## 15. 배포/운영 체크리스트
+## 배포/운영 체크리스트
 
 | 항목 | 포인트 |
 |-----|--------|
@@ -459,7 +462,7 @@ app.MapGet("/opt", (IOptionsSnapshot<MySettings> opt) => Results.Json(opt.Value)
 
 ---
 
-## 16. 커스텀 설정 제공자 — DB에서 읽기 (샘플)
+## 커스텀 설정 제공자 — DB에서 읽기 (샘플)
 
 > 구성 저장소를 DB에 두고, 변경 신호(테이블 타임스탬프 등)로 **수동 리프레시**.
 
@@ -500,7 +503,7 @@ builder.Host.ConfigureAppConfiguration((ctx, config) =>
 
 ---
 
-## 17. 통합 예시 — 한 번에 묶어서 보기
+## 통합 예시 — 한 번에 묶어서 보기
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -542,7 +545,7 @@ app.Run();
 
 ---
 
-## 18. 흔한 오류/함정 모음
+## 흔한 오류/함정 모음
 
 - **환경 변수 구분자**: `:`가 아니라 **`__`**. (`MySettings__Nested__Endpoint`)
 - **JSON 문법 오류**: **끝에 쉼표** 금지, 문자열 큰따옴표 필수.
@@ -552,9 +555,9 @@ app.Run();
 
 ---
 
-## 19. 보너스: 실전 시나리오 3종
+## 보너스: 실전 시나리오 3종
 
-### 19.1 기능 플래그(Feature Toggle)
+### 기능 플래그(Feature Toggle)
 
 ```json
 // appsettings.Production.json
@@ -563,6 +566,7 @@ app.Run();
 
 ```bash
 # 긴급 오픈 (ENV)
+
 export Features__NewCheckout=true
 ```
 
@@ -571,18 +575,18 @@ public sealed class FeatureOptions { public bool NewCheckout { get; set; } }
 builder.Services.Configure<FeatureOptions>(builder.Configuration.GetSection("Features"));
 ```
 
-### 19.2 API 키 안전 보관 (개발/운영 이원화)
+### API 키 안전 보관 (개발/운영 이원화)
 
 - 개발: `dotnet user-secrets set "ApiKeys:Stripe" "sk_test_..."`
 - 운영: Key Vault/ENV `ApiKeys__Stripe="sk_live_..."`
 
-### 19.3 요청 단위 동적 반영(IOptionsSnapshot)
+### 요청 단위 동적 반영(IOptionsSnapshot)
 
 - `appsettings.json` 변경 → `IOptionsSnapshot<T>`가 **다음 요청부터** 최신값 제공.
 
 ---
 
-## 20. 요약
+## 요약
 
 - **구성 우선순위**: 파일 → 환경별 파일 → User Secrets(개발) → **환경 변수** → **명령줄** (나중이 강함)
 - **키 계층**: `:` / 환경 변수는 `__`

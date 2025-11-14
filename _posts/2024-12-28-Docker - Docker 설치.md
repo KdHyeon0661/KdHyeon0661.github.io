@@ -11,7 +11,7 @@ category: Docker
 
 ---
 
-## 0. 빠른 개요(요약표)
+## 빠른 개요(요약표)
 
 | OS | 권장 설치 방식 | 하이퍼바이저 | 특징 |
 |----|----------------|--------------|------|
@@ -23,9 +23,9 @@ category: Docker
 
 ---
 
-# 1. Windows에서 Docker 설치
+# Windows에서 Docker 설치
 
-## 1.1 설치 전 확인 사항(확장)
+## 설치 전 확인 사항(확장)
 
 | 항목 | 설명 | 확인 방법(예시) |
 |------|------|----------------|
@@ -42,31 +42,34 @@ category: Docker
 
 ---
 
-## 1.2 설치 방법 1: Windows Pro 이상 (Hyper-V 또는 WSL2)
+## 설치 방법 1: Windows Pro 이상 (Hyper-V 또는 WSL2)
 
-### 1.2.1 Docker Desktop 설치
+### Docker Desktop 설치
 
 1. Docker Desktop 설치 파일 다운로드
 2. 설치 중 엔진 선택: **Hyper-V** 또는 **WSL2**
 3. 필요 Windows 기능 자동 활성화(재부팅 필요)
 4. 설치 완료 후 Docker Desktop 실행
 
-### 1.2.2 기능 확인(명령 예시)
+### 기능 확인(명령 예시)
 
 ```powershell
 # PowerShell 또는 CMD
+
 docker version
 docker info
 
 # 간단 동작 검증
+
 docker run --rm hello-world
 
 # 이미지/컨테이너 목록
+
 docker images
 docker ps -a
 ```
 
-### 1.2.3 Hyper-V vs WSL2 선택 기준
+### Hyper-V vs WSL2 선택 기준
 
 | 구분 | Hyper-V | WSL2 |
 |-----|---------|------|
@@ -79,9 +82,9 @@ docker ps -a
 
 ---
 
-## 1.3 설치 방법 2: Windows Home (WSL2 기반)
+## 설치 방법 2: Windows Home (WSL2 기반)
 
-### 1.3.1 WSL2 활성화(신형)
+### WSL2 활성화(신형)
 
 ```powershell
 wsl --install
@@ -90,10 +93,11 @@ wsl --install
 - 위 명령으로 WSL, Virtual Machine Platform, Ubuntu 기본 설치까지 자동.
 - 재부팅 후 배포판 사용자 생성.
 
-### 1.3.2 WSL2 수동 활성화(구형/호환)
+### WSL2 수동 활성화(구형/호환)
 
 ```powershell
 # WSL, VM 플랫폼 개별 활성화
+
 dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
 
@@ -101,19 +105,21 @@ dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /nores
 # https://aka.ms/wsl2kernel
 
 # 기본 버전 2로 설정
+
 wsl --set-default-version 2
 ```
 
-### 1.3.3 리눅스 배포판 설치
+### 리눅스 배포판 설치
 
 ```powershell
 # 대표적으로 Ubuntu 설치
+
 wsl --install -d Ubuntu
 ```
 
 또는 Microsoft Store에서 `Ubuntu`, `Debian`, `openSUSE`, `Alpine` 등 선택.
 
-### 1.3.4 Docker Desktop 설치 및 WSL 연동
+### Docker Desktop 설치 및 WSL 연동
 
 - Docker Desktop 설치 시 **Use WSL 2 based engine** 선택
 - `Settings > Resources > WSL Integration`에서 사용 중인 배포판(예: Ubuntu) 체크
@@ -123,18 +129,20 @@ wsl --install -d Ubuntu
 
 ```bash
 # WSL(Ubuntu) 터미널
+
 docker run --rm hello-world
 
 # 볼륨/바인드 마운트 예시
+
 mkdir -p ~/data
 docker run --rm -v ~/data:/data alpine ls -al /data
 ```
 
 ---
 
-## 1.4 Docker Desktop 설치 후 체크리스트
+## Docker Desktop 설치 후 체크리스트
 
-### 1.4.1 일반 확인
+### 일반 확인
 
 ```powershell
 docker version
@@ -144,12 +152,13 @@ docker info
 - `Server` 섹션에서 `Containerd`/`OS/Kernel` 정보 확인
 - `Default Runtime`, `cgroup version` 등 점검
 
-### 1.4.2 Docker Compose v2
+### Docker Compose v2
 
 ```powershell
 docker compose version
 
 # 간단 Compose 테스트
+
 mkdir demo && cd demo
 @"
 services:
@@ -163,12 +172,13 @@ curl http://localhost:8080
 docker compose down
 ```
 
-### 1.4.3 리소스 제한(WSL2 엔진)
+### 리소스 제한(WSL2 엔진)
 
 - `%UserProfile%\.wslconfig` 파일로 메모리/CPU 제한
 
 ```ini
 # %UserProfile%\.wslconfig
+
 [wsl2]
 memory=6GB
 processors=4
@@ -179,26 +189,29 @@ localhostForwarding=true
 ```powershell
 wsl --shutdown
 # 재시작 후 적용
+
 ```
 
-### 1.4.4 파일 시스템 경로 주의(바인드 마운트)
+### 파일 시스템 경로 주의(바인드 마운트)
 
 - **WSL2 내부 경로(예: /home/USER/...)** 를 바인드 마운트하면 성능 우수
 - Windows 경로를 마운트할 때는 `C:\...` → `/mnt/c/...` 형식 변환 필요
 
 ```bash
 # WSL2 쉘에서 Windows 디렉터리 바인드(속도는 WSL 내부 FS보다 느릴 수 있음)
+
 docker run --rm -v /mnt/c/Users/USER/projects:/app alpine ls -al /app
 ```
 
 ---
 
-## 1.5 Windows 문제 해결(대표 시나리오)
+## Windows 문제 해결(대표 시나리오)
 
 ### 시나리오 A: Docker가 시작되지 않음
 
 ```powershell
 # 로그 확인
+
 & "C:\Program Files\Docker\Docker\resources\com.docker.diagnose.exe" gather -upload
 ```
 
@@ -224,17 +237,18 @@ tasklist /FI "PID eq <PID>"
 ```powershell
 # Docker Desktop Settings > Resources > Proxies
 # 시스템 프록시 사용 또는 수동 프록시 설정
+
 ```
 
 - 사설 CA 사용 시 **Docker Desktop 신뢰 저장소** 또는 WSL 리눅스의 `/usr/local/share/ca-certificates`에 CA 추가 후 `update-ca-certificates` 수행
 
 ---
 
-# 2. Linux에서 Docker 설치(확장)
+# Linux에서 Docker 설치(확장)
 
 여기서는 **Ubuntu**를 기준으로 하되, 다른 배포판 변형 포인트도 설명합니다.
 
-## 2.1 기존 패키지 제거(필요 시)
+## 기존 패키지 제거(필요 시)
 
 ```bash
 sudo apt remove -y docker docker-engine docker.io containerd runc
@@ -244,19 +258,21 @@ sudo apt remove -y docker docker-engine docker.io containerd runc
 
 ---
 
-## 2.2 공식 리포지토리 설정(Ubuntu)
+## 공식 리포지토리 설정(Ubuntu)
 
 ```bash
 sudo apt update
 sudo apt install -y ca-certificates curl gnupg lsb-release
 
 # GPG 키
+
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
   | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
 # 저장소 등록
+
 echo \
   "deb [arch=$(dpkg --print-architecture) \
   signed-by=/etc/apt/keyrings/docker.gpg] \
@@ -269,7 +285,7 @@ sudo apt update
 
 ---
 
-## 2.3 Docker 설치
+## Docker 설치
 
 ```bash
 sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -284,11 +300,12 @@ sudo apt install -y docker-ce=<VERSION> docker-ce-cli=<VERSION> containerd.io
 
 ---
 
-## 2.4 권한 설정(비 sudo 실행)
+## 권한 설정(비 sudo 실행)
 
 ```bash
 sudo usermod -aG docker $USER
 # 세션 재로그인 또는 재부팅 필요
+
 ```
 
 검증:
@@ -299,21 +316,23 @@ docker run --rm hello-world
 
 ---
 
-## 2.5 systemd와 서비스 관리
+## systemd와 서비스 관리
 
 ```bash
 # 부팅시 자동 시작
+
 sudo systemctl enable docker
 sudo systemctl start docker
 
 # 상태 확인
+
 systemctl status docker
 journalctl -u docker --no-pager | tail
 ```
 
 ---
 
-## 2.6 cgroup v2 / AppArmor / SELinux 고려
+## cgroup v2 / AppArmor / SELinux 고려
 
 - Ubuntu/Fedora 등 최신 배포판은 기본 **cgroup v2** 사용.
 - 보안 프로파일(AppArmor/SELinux)로 인해 특정 기능이 제한될 수 있음.
@@ -323,14 +342,15 @@ journalctl -u docker --no-pager | tail
 ```bash
 # (RHEL/CentOS/Alma/Rocky/Fedora 등)
 # :z 또는 :Z 옵션으로 컨텍스트 라벨 조정
+
 docker run --rm -v /data:/data:Z alpine ls -al /data
 ```
 
 ---
 
-## 2.7 프록시/미러/사설 레지스트리 설정
+## 프록시/미러/사설 레지스트리 설정
 
-### 2.7.1 Docker 데몬 프록시
+### Docker 데몬 프록시
 
 ```bash
 sudo mkdir -p /etc/systemd/system/docker.service.d
@@ -345,7 +365,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
-### 2.7.2 레지스트리 미러
+### 레지스트리 미러
 
 ```bash
 sudo mkdir -p /etc/docker
@@ -358,10 +378,11 @@ EOF
 sudo systemctl restart docker
 ```
 
-### 2.7.3 사설 레지스트리(인증서)
+### 사설 레지스트리(인증서)
 
 ```bash
 # 예) registry.internal:5000 이 사설 CA를 사용한다면
+
 sudo mkdir -p /etc/docker/certs.d/registry.internal:5000
 sudo cp rootCA.crt /etc/docker/certs.d/registry.internal:5000/ca.crt
 sudo systemctl restart docker
@@ -369,7 +390,7 @@ sudo systemctl restart docker
 
 ---
 
-## 2.8 NVIDIA GPU 사용(선택)
+## NVIDIA GPU 사용(선택)
 
 1. 호스트에 NVIDIA 드라이버 설치
 2. `nvidia-container-toolkit` 설치
@@ -395,26 +416,29 @@ docker run --rm --gpus all nvidia/cuda:12.5.0-base-ubuntu22.04 nvidia-smi
 
 ---
 
-## 2.9 Compose/Buildx/BuildKit 실전 예시
+## Compose/Buildx/BuildKit 실전 예시
 
-### 2.9.1 Buildx로 멀티아키 이미지 빌드
+### Buildx로 멀티아키 이미지 빌드
 
 ```bash
 # QEMU 기반 멀티아키 빌드 세팅
+
 docker buildx create --name multi --use
 docker buildx inspect --bootstrap
 
 # 예시 Dockerfile 빌드 → amd64 + arm64
+
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
   -t registry.internal:5000/demo/web:1.0 \
   --push .
 ```
 
-### 2.9.2 Compose로 로컬 개발 스택
+### Compose로 로컬 개발 스택
 
 ```yaml
 # docker-compose.yaml
+
 services:
   api:
     build: ./api
@@ -449,7 +473,7 @@ docker compose down -v
 
 ---
 
-## 2.10 Linux 문제 해결(대표 시나리오)
+## Linux 문제 해결(대표 시나리오)
 
 ### 시나리오 L1: `permission denied`(소켓/볼륨)
 
@@ -474,9 +498,9 @@ cat /etc/docker/daemon.json
 
 ---
 
-# 3. 이미지·컨테이너 기본 예제(설치 검증용)
+# 이미지·컨테이너 기본 예제(설치 검증용)
 
-## 3.1 Hello-World, BusyBox, Alpine
+## Hello-World, BusyBox, Alpine
 
 ```bash
 docker run --rm hello-world
@@ -484,7 +508,7 @@ docker run --rm busybox echo "ok"
 docker run --rm alpine uname -a
 ```
 
-## 3.2 바인드 마운트/볼륨
+## 바인드 마운트/볼륨
 
 ```bash
 mkdir -p ~/demo-data
@@ -494,7 +518,7 @@ docker volume create d1
 docker run --rm -v d1:/var/log alpine sh -c 'touch /var/log/app.log && ls -al /var/log'
 ```
 
-## 3.3 네트워크/포트
+## 네트워크/포트
 
 ```bash
 docker run -d --name web -p 8080:80 nginx:alpine
@@ -504,9 +528,9 @@ docker rm -f web
 
 ---
 
-# 4. 기업/학교 환경 실전: 프록시, 사설 CA, 오프라인
+# 기업/학교 환경 실전: 프록시, 사설 CA, 오프라인
 
-## 4.1 시스템 프록시와 Docker 통합
+## 시스템 프록시와 Docker 통합
 
 - Windows: Docker Desktop → Settings → Resources → Proxies
 - Linux: systemd drop-in(위 2.7.1)으로 `HTTP_PROXY/HTTPS_PROXY/NO_PROXY` 설정
@@ -519,12 +543,12 @@ docker run -e HTTP_PROXY=http://proxy.local:3128 -e HTTPS_PROXY=http://proxy.loc
   curlimages/curl -I https://example.com
 ```
 
-## 4.2 사설 CA 신뢰
+## 사설 CA 신뢰
 
 - Windows: Docker Desktop 신뢰 저장소 또는 WSL 배포판에 CA 추가
 - Linux: `/usr/local/share/ca-certificates/*.crt` 배치 후 `update-ca-certificates`
 
-## 4.3 오프라인(air-gapped) 설치 시나리오
+## 오프라인(air-gapped) 설치 시나리오
 
 1. 외부망에서 필요한 **패키지/이미지** 미리 다운로드
 2. 오프라인 환경으로 옮겨 설치
@@ -532,10 +556,12 @@ docker run -e HTTP_PROXY=http://proxy.local:3128 -e HTTPS_PROXY=http://proxy.loc
 
 ```bash
 # 온라인에서
+
 docker pull nginx:alpine
 docker save nginx:alpine -o nginx_alpine.tar
 
 # 오프라인으로 tar 전달 후
+
 docker load -i nginx_alpine.tar
 docker run -d -p 8080:80 nginx:alpine
 ```
@@ -550,7 +576,7 @@ docker push localhost:5000/nginx:alpine
 
 ---
 
-# 5. 성능 최적화 팁(Windows/WSL2 포함)
+# 성능 최적화 팁(Windows/WSL2 포함)
 
 | 항목 | 권장 설정/설명 |
 |------|----------------|
@@ -564,7 +590,7 @@ docker push localhost:5000/nginx:alpine
 
 ---
 
-# 6. 보안 기본 설정
+# 보안 기본 설정
 
 - 최신 Docker/컨테이너 런타임 유지
 - 최소 권한 원칙: `--cap-drop ALL` 뒤 필요한 capability만 `--cap-add`
@@ -585,9 +611,9 @@ docker run --rm --read-only --pids-limit=256 --memory=256m --cpus=0.5 \
 
 ---
 
-# 7. 트러블슈팅 종합 레시피
+# 트러블슈팅 종합 레시피
 
-## 7.1 컨테이너가 즉시 종료됨
+## 컨테이너가 즉시 종료됨
 
 {% raw %}
 ```bash
@@ -598,7 +624,7 @@ docker inspect <CONTAINER> --format '{{.State.ExitCode}}'
 
 - Entrypoint/Command 오타, 실행 파일 권한 문제, 환경변수 누락 점검
 
-## 7.2 네트워크 연결 불가
+## 네트워크 연결 불가
 
 ```bash
 docker network ls
@@ -609,12 +635,12 @@ docker exec -it <CONTAINER> sh -c "ip addr; ip route; nslookup example.com"
 - DNS, 프록시, 방화벽 정책 확인
 - Windows의 경우 Hyper-V/WSL2 NAT 포워딩 상태 점검
 
-## 7.3 볼륨 권한/SELinux 오류
+## 볼륨 권한/SELinux 오류
 
 - `:Z`/`:z` 옵션 사용
 - 컨테이너 사용자(`--user`)와 볼륨 디렉터리 UID/GID 맞춤
 
-## 7.4 빌드가 느리거나 실패
+## 빌드가 느리거나 실패
 
 - `.dockerignore` 확인(대용량 파일/디렉터리 제외)
 - BuildKit 활성화
@@ -626,11 +652,11 @@ docker build -t demo .
 
 ---
 
-# 8. 설치 검증을 겸한 실전 예제(미니 프로젝트)
+# 설치 검증을 겸한 실전 예제(미니 프로젝트)
 
 목표: **Nginx 정적 웹 + Python API + PostgreSQL**을 Windows(WSL2) 또는 Linux에서 동일하게 실행.
 
-## 8.1 디렉터리 구조
+## 디렉터리 구조
 
 ```
 stack/
@@ -643,9 +669,9 @@ stack/
   docker-compose.yaml
 ```
 
-## 8.2 파일 내용
+## 파일 내용
 
-### 8.2.1 `web/site/index.html`
+### `web/site/index.html`
 
 ```html
 <!doctype html>
@@ -655,7 +681,7 @@ stack/
 </html>
 ```
 
-### 8.2.2 `api/app.py`
+### `api/app.py`
 
 ```python
 from flask import Flask, jsonify
@@ -674,13 +700,13 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
 ```
 
-### 8.2.3 `api/requirements.txt`
+### `api/requirements.txt`
 
 ```
 flask==3.0.3
 ```
 
-### 8.2.4 `api/Dockerfile`
+### `api/Dockerfile`
 
 ```dockerfile
 FROM python:3.12-alpine
@@ -692,7 +718,7 @@ EXPOSE 8080
 CMD ["python", "app.py"]
 ```
 
-### 8.2.5 `docker-compose.yaml`
+### `docker-compose.yaml`
 
 ```yaml
 services:
@@ -725,7 +751,7 @@ volumes:
   dbdata:
 ```
 
-## 8.3 실행/검증
+## 실행/검증
 
 ```bash
 docker compose up -d --build
@@ -739,7 +765,7 @@ docker compose down -v
 
 ---
 
-# 9. 자주 묻는 질문(FAQ)
+# 자주 묻는 질문(FAQ)
 
 **Q1. Windows Home인데 Hyper-V가 없어도 되나요?**
 A. 네. **WSL2 기반 엔진**으로 충분합니다. Docker Desktop 설치 시 WSL2를 선택하세요.
@@ -758,7 +784,7 @@ A. 리눅스는 `nvidia-container-toolkit`를 설치, Windows/WSL2는 NVIDIA CUD
 
 ---
 
-# 10. 결론
+# 결론
 
 - **Windows**: Home은 WSL2, Pro는 Hyper-V와 WSL2 중 **WSL2 권장**
 - **Linux(Ubuntu)**: 공식 리포지토리에서 설치, `docker` 그룹 권한, systemd 관리
@@ -771,12 +797,14 @@ A. 리눅스는 `nvidia-container-toolkit`를 설치, Windows/WSL2는 NVIDIA CUD
 
 ```bash
 # 시스템
+
 docker version
 docker info
 docker system df
 docker system prune -f
 
 # 이미지
+
 docker images
 docker pull <image>
 docker rmi <image>
@@ -784,6 +812,7 @@ docker save -o img.tar <image>
 docker load -i img.tar
 
 # 컨테이너
+
 docker ps -a
 docker run -d --name c1 -p 8080:80 nginx:alpine
 docker logs -f c1
@@ -792,12 +821,14 @@ docker cp c1:/etc/nginx/nginx.conf .
 docker rm -f c1
 
 # 네트워크/볼륨
+
 docker network ls
 docker volume ls
 docker volume inspect <vol>
 docker network inspect <net>
 
 # Compose
+
 docker compose up -d
 docker compose ps
 docker compose logs -f
@@ -821,10 +852,12 @@ docker compose down -v
 ```bash
 # dive: 이미지 레이어 분석(빌드 최적화)
 # https://github.com/wagoodman/dive
+
 dive <image>
 
 # trivy: 이미지 취약점 스캐너
 # https://github.com/aquasecurity/trivy
+
 trivy image nginx:alpine
 ```
 

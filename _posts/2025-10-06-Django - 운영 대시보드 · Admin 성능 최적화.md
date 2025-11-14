@@ -6,12 +6,13 @@ category: Django
 ---
 # 운영 대시보드 · Admin 성능 최적화(비동기 대량 액션) · 멀티테넌트 Admin 분리
 
-## 1. 운영 대시보드
+## 운영 대시보드
 
 ### 1-1. 데이터 모델(요약) — KPI · 감사 로그
 
 ```python
 # apps/ops/models.py
+
 from django.db import models
 from django.conf import settings
 
@@ -49,6 +50,7 @@ class AuditLog(models.Model):
 
 ```python
 # apps/ops/middleware.py
+
 from .models import AuditLog
 from django.utils.deprecation import MiddlewareMixin
 
@@ -90,6 +92,7 @@ class AuditLogMiddleware(MiddlewareMixin):
 
 ```python
 # 예: 관리자에서 특정 상품을 수정
+
 def admin_update_product(request, pk):
     # ... 업데이트 로직 ...
     request._audit_action = "admin.update_product"
@@ -107,6 +110,7 @@ def admin_update_product(request, pk):
 
 ```python
 # apps/ops/roles.py
+
 from enum import StrEnum
 class Role(StrEnum):
     SUPERADMIN = "superadmin"
@@ -116,6 +120,7 @@ class Role(StrEnum):
 
 ```python
 # apps/accounts/models.py (예시)
+
 class RoleBinding(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     role = models.CharField(max_length=40)  # Role 값
@@ -126,6 +131,7 @@ class RoleBinding(models.Model):
 
 ```python
 # apps/ops/perm.py
+
 from .roles import Role
 
 def has_role(user, role: str, tenant_id: int | None = None) -> bool:
@@ -162,6 +168,7 @@ def role_required(role: str):
 
 ```python
 # apps/ops/views.py
+
 from django.views.generic import TemplateView, ListView
 from django.utils import timezone
 from datetime import timedelta
@@ -259,6 +266,7 @@ class AuditLogListView(ListView):
 
 ```python
 # apps/ops/tasks.py
+
 from celery import shared_task
 from django.utils import timezone
 from datetime import timedelta
@@ -283,9 +291,10 @@ def build_daily_kpi(day=None):
 
 ---
 
-## 2. Admin 성능 최적화 — “대량 액션 비동기화”
+## Admin 성능 최적화 — “대량 액션 비동기화”
 
 ### 2-1. 문제가 되는 패턴
+
 - 수만 개 객체에 대해 **Admin 액션**에서 바로 `.update()`/루프 처리 → **타임아웃/응답 지연**.
 - 해결: **액션은 큐에 태스크 등록**만 하고 **즉시 응답**. 진행 상황은 **상태 모델**로 추적.
 
@@ -293,6 +302,7 @@ def build_daily_kpi(day=None):
 
 ```python
 # apps/ops/models.py (추가)
+
 class BulkJob(models.Model):
     name = models.CharField(max_length=120)           # 예: "discount_10"
     actor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
@@ -310,6 +320,7 @@ Admin 액션 → 큐 등록:
 
 ```python
 # apps/shop/admin_actions.py (비동기 버전)
+
 from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
@@ -335,6 +346,7 @@ Celery 태스크:
 
 ```python
 # apps/shop/tasks.py
+
 from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
@@ -368,6 +380,7 @@ def bulk_discount_10_task(self, job_id, ids: list[int]):
 
 ```python
 # apps/ops/views.py (추가)
+
 from django.views.generic import ListView
 from .models import BulkJob
 
@@ -413,6 +426,7 @@ class BulkJobListView(ListView):
 
 ```python
 # apps/shop/admin.py
+
 from django.urls import reverse
 from django.utils.html import format_html
 from django.contrib import admin
@@ -444,13 +458,14 @@ class ProductAdmin(admin.ModelAdmin):
 ---
 
 ### 2-3. 기타 성능 최적화 체크
+
 - `list_select_related`/`prefetch_related` 적극 사용.
 - `search_fields` 에서 **대용량 텍스트**는 피하고, 필요한 경우 **Trigram/GIN 인덱스**.
 - 대량 Export는 **비동기 파일 생성(스토리지 저장) + 서명 URL 다운로드**.
 
 ---
 
-## 3. 멀티테넌트 Admin 분리
+## 멀티테넌트 Admin 분리
 
 목표:
 - 테넌트(고객사/조직)별로 **데이터 경계**.
@@ -461,6 +476,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 ```python
 # apps/tenancy/models.py
+
 from django.db import models
 from django.conf import settings
 
@@ -479,6 +495,7 @@ class TenantUser(models.Model):
 
 ```python
 # apps/shop/models.py (일부)
+
 class Shop(models.Model):
     tenant = models.ForeignKey("tenancy.Tenant", on_delete=models.PROTECT, related_name="shops")
     name = models.CharField(max_length=120)
@@ -498,6 +515,7 @@ class Product(models.Model):
 
 ```python
 # apps/core/adminsites.py
+
 from django.contrib.admin import AdminSite
 
 class InternalAdminSite(AdminSite):
@@ -516,6 +534,7 @@ partner_admin = PartnerAdminSite(name="partner_admin")
 
 ```python
 # apps/shop/admin_internal.py
+
 from django.contrib import admin
 from apps.core.adminsites import internal_admin
 from .models import Product, Shop
@@ -530,6 +549,7 @@ class ShopAdmin(admin.ModelAdmin):
 
 ```python
 # apps/shop/admin_partner.py
+
 from django.contrib import admin
 from apps.core.adminsites import partner_admin
 from .models import Product, Shop
@@ -565,6 +585,7 @@ URL 라우팅:
 
 ```python
 # config/urls.py
+
 from django.urls import path
 from apps.core.adminsites import internal_admin, partner_admin
 
@@ -580,6 +601,7 @@ urlpatterns = [
 
 ```python
 # apps/tenancy/middleware.py
+
 from .models import Tenant
 from django.http import HttpResponseForbidden
 
@@ -602,6 +624,7 @@ class TenantResolverMiddleware:
 
 ```python
 # apps/core/adminsites.py (파트너 전용 권한)
+
 class PartnerAdminSite(AdminSite):
     site_header = "파트너 Admin"; site_title = "Partner Admin"
     def has_permission(self, request):
@@ -644,6 +667,7 @@ class TenantScopedMixin(admin.ModelAdmin):
 
 ```python
 # apps/ops/middleware.py (추가)
+
 def process_response(self, request, response):
     # ...
     if any(request.path.startswith(p) for p in SAFE_PATH_PREFIXES):
@@ -659,7 +683,7 @@ def process_response(self, request, response):
 
 ---
 
-## 4. 운영 대시보드 + Admin 통합 UX
+## 운영 대시보드 + Admin 통합 UX
 
 - 내부 Admin의 메뉴에 **운영 대시보드 링크** 추가.
 - 파트너 Admin에도 **자기 테넌트 대시보드** 제공(쿼리 자동 필터).
@@ -667,6 +691,7 @@ def process_response(self, request, response):
 {% raw %}
 ```python
 # templates/admin/base.html (또는 change_list 확장)
+
 <li><a href="{% url 'ops:dashboard' %}">운영 대시보드</a></li>
 <li><a href="{% url 'ops:bulk_jobs' %}">대량 작업</a></li>
 ```
@@ -689,13 +714,14 @@ class PartnerDashboardView(TemplateView):
 
 ---
 
-## 5. 모니터링/알림과의 연결
+## 모니터링/알림과의 연결
 
 - **BulkJob 상태 변화** 시 `transaction.on_commit` 으로 **WebSocket/Email** 알림.
 - **AuditLog 중요 이벤트(action prefix)** 에 **Sentry breadcrumb** 또는 Slack 웹훅.
 
 ```python
 # apps/ops/signals.py (예시)
+
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import BulkJob
@@ -714,7 +740,7 @@ def notify_bulkjob(sender, instance, created, **kwargs):
 
 ---
 
-## 6. 보안/품질 체크리스트
+## 보안/품질 체크리스트
 
 **대시보드**
 - [ ] KPI는 **배치 집계 + 인덱스**
@@ -734,10 +760,11 @@ def notify_bulkjob(sender, instance, created, **kwargs):
 
 ---
 
-## 7. 테스트 스니펫
+## 테스트 스니펫
 
 ```python
 # tests/test_partner_admin_scope.py
+
 import pytest
 from django.urls import reverse
 pytestmark = pytest.mark.django_db
@@ -760,11 +787,13 @@ def test_partner_admin_cannot_see_other_tenant(client, django_user_model, tenant
 
 ---
 
-## 8. 추가 스니펫 모음
+## 추가 스니펫 모음
 
 ### 8-1. Admin 목록 캐싱(프래그먼트 수준)
+
 ```python
 # heavy list_display 계산에 캐시 사용(시간 한정)
+
 from django.core.cache import cache
 class ProductAdmin(admin.ModelAdmin):
     def expensive_col(self, obj):
@@ -778,8 +807,10 @@ class ProductAdmin(admin.ModelAdmin):
 ```
 
 ### 8-2. 대량 Export 비동기
+
 ```python
 # 액션 → Celery가 CSV/XLSX 생성 → S3 저장 → 서명 URL 반환
+
 def export_products_async(modeladmin, request, queryset):
     ids = list(queryset.values_list("id", flat=True))
     job = BulkJob.objects.create(name="export_products", actor=request.user, total=len(ids))

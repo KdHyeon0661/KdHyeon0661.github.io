@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia with ReactiveUI 심화 — 고급 Rx 연산자(WhenAny, Throttle 등)
 
-## 0. 전제 및 구성
+## 전제 및 구성
 
 ### 프로젝트 의존성
 
@@ -35,9 +35,9 @@ public abstract class ViewModelBase : ReactiveObject, IActivatableViewModel, IDi
 
 ---
 
-## 1. WhenAny / WhenAnyValue — 프로퍼티 반응의 뼈대
+## WhenAny / WhenAnyValue — 프로퍼티 반응의 뼈대
 
-### 1.1 로그인 폼의 정석 패턴
+### 로그인 폼의 정석 패턴
 
 ```csharp
 public sealed class LoginViewModel : ViewModelBase
@@ -78,16 +78,16 @@ public sealed class LoginViewModel : ViewModelBase
 - `Publish().RefCount()`로 다중 구독 비용을 줄인다.
 - `ToProperty`는 OneWay 바인딩 최적화(OAPH)로 View에 연결.
 
-### 1.2 WhenAny vs WhenAnyValue
+### WhenAny vs WhenAnyValue
 
 - `WhenAnyValue(x => x.Prop)` : **속성의 값 스트림**을 만든다(단순, 95% 케이스).
 - `WhenAny(x => x.Prop, expr => ...)` : **속성의 변경 이벤트**를 보다 유연하게(필요 시).
 
 ---
 
-## 2. Throttle/Debounce — 과도한 호출 억제
+## Throttle/Debounce — 과도한 호출 억제
 
-### 2.1 실시간 검색의 표준 흐름
+### 실시간 검색의 표준 흐름
 
 ```csharp
 public sealed class SearchViewModel : ViewModelBase
@@ -125,13 +125,14 @@ public sealed class SearchViewModel : ViewModelBase
 - **스레드**: Throttle은 `TaskpoolScheduler`로, UI 갱신은 `MainThreadScheduler`.
 - **Switch**: 최신 입력만 반영(오래 걸리는 이전 호출 취소).
 
-### 2.2 Debounce vs Throttle
+### Debounce vs Throttle
+
 - ReactiveUI에서는 보통 `Throttle`을 Debounce처럼 사용(“입력 멈춤 후” 한 번 발화).
 - Polling/주기적 업데이트는 `Sample` 또는 `Interval`과 조합.
 
 ---
 
-## 3. CombineLatest / Zip — 다중 속성 결합
+## CombineLatest / Zip — 다중 속성 결합
 
 ```csharp
 public sealed class StatusBarViewModel : ViewModelBase
@@ -164,9 +165,9 @@ public sealed class StatusBarViewModel : ViewModelBase
 
 ---
 
-## 4. Select / Switch / Where / Merge — 비동기 흐름 제어의 핵심
+## Select / Switch / Where / Merge — 비동기 흐름 제어의 핵심
 
-### 4.1 API 호출 취소 가능한 파이프라인
+### API 호출 취소 가능한 파이프라인
 
 ```csharp
 var resultStream =
@@ -184,7 +185,7 @@ resultStream
     .DisposeWith(Anchors);
 ```
 
-### 4.2 Merge로 여러 트리거 통합하여 검증
+### Merge로 여러 트리거 통합하여 검증
 
 ```csharp
 var userChanged = this.WhenAnyValue(x => x.Username).Select(_ => Unit.Default);
@@ -198,9 +199,9 @@ userChanged.Merge(passChanged)
 
 ---
 
-## 5. ReactiveCommand — CanExecute, 예외, 진행상태
+## ReactiveCommand — CanExecute, 예외, 진행상태
 
-### 5.1 정석 템플릿
+### 정석 템플릿
 
 ```csharp
 public sealed class SaveViewModel : ViewModelBase
@@ -247,7 +248,7 @@ public sealed class SaveViewModel : ViewModelBase
 - `ThrownExceptions`→ 중앙화된 에러 처리.
 - `CanExecute`→ UI 버튼 활성/비활성 자동 연동.
 
-### 5.2 결과 반환/인수 받는 Command
+### 결과 반환/인수 받는 Command
 
 ```csharp
 public ReactiveCommand<string, Result> SubmitCommand { get; }
@@ -260,9 +261,9 @@ SubmitCommand = ReactiveCommand.CreateFromTask<string, Result>(async text =>
 
 ---
 
-## 6. 검증(Validation) — Live Validation, 폼 유효성
+## 검증(Validation) — Live Validation, 폼 유효성
 
-### 6.1 간단한 수제 검증
+### 간단한 수제 검증
 
 ```csharp
 public ObservableAsPropertyHelper<string?> UsernameError { get; }
@@ -273,7 +274,7 @@ UsernameError = this.WhenAnyValue(x => x.Username)
     .DisposeWith(Anchors);
 ```
 
-### 6.2 ReactiveUI.Validation(선택)
+### ReactiveUI.Validation(선택)
 
 ```csharp
 // 설치: ReactiveUI.Validation
@@ -293,9 +294,9 @@ public sealed class ProfileViewModel : ReactiveValidationObject
 
 ---
 
-## 7. AutoSave / 지연 저장 / 오프라인 큐
+## AutoSave / 지연 저장 / 오프라인 큐
 
-### 7.1 AutoSave(수정 2초 후 저장, 중복 요청 취소)
+### AutoSave(수정 2초 후 저장, 중복 요청 취소)
 
 ```csharp
 public sealed class EditorViewModel : ViewModelBase
@@ -316,14 +317,14 @@ public sealed class EditorViewModel : ViewModelBase
 }
 ```
 
-### 7.2 네트워크 불가 시 로컬 큐에 저장 후 재시도
+### 네트워크 불가 시 로컬 큐에 저장 후 재시도
 
 - `Select(… FromAsync()) + Catch()`로 실패 시 로컬 큐에 저장.
 - 별도 `ConnectivityViewModel`의 `IsOnline` 스트림과 `CombineLatest`하여 온라인일 때 Drain.
 
 ---
 
-## 8. 리스트/그리드 Rx — DynamicData 활용(선택)
+## 리스트/그리드 Rx — DynamicData 활용(선택)
 
 ```csharp
 private readonly SourceList<Order> _orders = new();
@@ -348,7 +349,7 @@ public OrdersViewModel()
 
 ---
 
-## 9. Scheduler / 스레드 — 어디서 무엇을?
+## Scheduler / 스레드 — 어디서 무엇을?
 
 | 위치 | 권장 Scheduler |
 |------|----------------|
@@ -360,9 +361,9 @@ public OrdersViewModel()
 
 ---
 
-## 10. 수명/메모리 — Dispose, Activation, View와 엮기
+## 수명/메모리 — Dispose, Activation, View와 엮기
 
-### 10.1 IActivatableViewModel 패턴
+### IActivatableViewModel 패턴
 
 ```csharp
 this.WhenActivated(disposables =>
@@ -378,7 +379,7 @@ this.WhenActivated(disposables =>
 
 ---
 
-## 11. 예시 통합: 검색 + 검증 + 명령 + 상태
+## 예시 통합: 검색 + 검증 + 명령 + 상태
 
 ```csharp
 public sealed class SearchPageViewModel : ViewModelBase
@@ -443,7 +444,7 @@ public sealed class SearchPageViewModel : ViewModelBase
 
 ---
 
-## 12. 단위 테스트 전략(RxTest)
+## 단위 테스트 전략(RxTest)
 
 - **스케줄러 제어**: `TestScheduler`로 가상 시간 전진 → Throttle/Switch 타이밍 검증.
 - **명령 테스트**: `CanExecute` 변화, `ThrownExceptions` 구독.
@@ -471,7 +472,7 @@ public void Throttle_Search_Emits_After_350ms()
 
 ---
 
-## 13. 성능·품질 팁
+## 성능·품질 팁
 
 - **DistinctUntilChanged**를 적극 사용: 불필요한 재계산 방지.
 - 반복 호출이 비싼 API는 **공유 캐시**(e.g., `Replay(1).RefCount()` 또는 결과 캐싱) 고려.
@@ -481,7 +482,7 @@ public void Throttle_Search_Emits_After_350ms()
 
 ---
 
-## 14. XAML 바인딩 예시
+## XAML 바인딩 예시
 
 ```xml
 <StackPanel>
@@ -501,7 +502,7 @@ public void Throttle_Search_Emits_After_350ms()
 
 ---
 
-## 15. 요약표
+## 요약표
 
 | 주제 | 핵심 포인트 | 대표 연산자/기술 |
 |------|-------------|------------------|

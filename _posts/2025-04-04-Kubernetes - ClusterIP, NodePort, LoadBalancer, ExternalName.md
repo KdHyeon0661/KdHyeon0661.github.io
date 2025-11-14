@@ -18,6 +18,7 @@ category: Kubernetes
 ---
 
 ## Service란? (요약 복습)
+
 - **Pod 집합**(라벨 셀렉터)의 **안정된 접근 지점**(Virtual IP/DNS)을 제공하는 L4 추상화.
 - Pod의 수명과 무관하게 **일관된 주소**를 노출하며, kube-proxy(또는 eBPF CNI)가 **부하 분산**한다.
 - 내부 DNS 규칙: `서비스명.네임스페이스.svc.cluster.local`
@@ -38,6 +39,7 @@ spec:
 ---
 
 ## Service 작동 원리 — Selector → EndpointSlice → kube-proxy
+
 1) 사용자가 Service를 생성하면, **label selector** 로 매칭되는 Pod 집합이 **EndpointSlice**로 관리된다.
 2) `kube-proxy`(각 노드 DaemonSet)가 EndpointSlice를 **Watch** 하며 **iptable/ipvs 규칙**(혹은 eBPF CNI)을 갱신한다.
 3) 클라이언트가 Service VIP로 트래픽을 보내면, 데이터패스가 **실제 Pod IP:Port** 로 DNAT/포워딩한다.
@@ -65,6 +67,7 @@ kubectl describe endpointslice <name>
 ## ClusterIP — 내부 통신의 표준
 
 ### 기본 예시
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -79,6 +82,7 @@ spec:
 ```
 
 ### 포인트
+
 - 클러스터 내부에서만 접근 가능.
 - `kubectl port-forward` 로 로컬에서 임시 프록시 가능:
 ```bash
@@ -86,6 +90,7 @@ kubectl port-forward svc/nginx-clusterip 8080:80
 ```
 
 ### 세션 어피니티(쿠키 없이 L4 레벨 고정화)
+
 ```yaml
 spec:
   sessionAffinity: ClientIP
@@ -99,6 +104,7 @@ spec:
 ## NodePort — 노드 포트를 열어 외부에서 접근
 
 ### 예시
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -114,6 +120,7 @@ spec:
 ```
 
 ### 포인트
+
 - 접근: `http://<노드IP>:30080`
 - **source IP 보존**: 기본은 `externalTrafficPolicy: Cluster` → DNAT 경유 시 소스 IP가 변경될 수 있다. 필요하면 아래 참조.
 
@@ -122,6 +129,7 @@ spec:
 ## LoadBalancer — 외부 L4 LB를 통한 공개
 
 ### 클라우드/MetalLB 공통 예시
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -136,6 +144,7 @@ spec:
 ```
 
 ### 실무 옵션
+
 - **소스 IP 보존**(직접 노드로 보내게 강제):
 ```yaml
 spec:
@@ -148,6 +157,7 @@ spec:
 spec:
   externalTrafficPolicy: Local
 # status.loadBalancer.ingress 할당 후, kube-proxy가 healthCheckNodePort 자동 생성(환경 의존).
+
 ```
 
 > **MetalLB**(베어메탈/로컬) 사용 시 IP 풀/ARP 광고 설정이 필요. Minikube/Kind에서는 별도 설치 후 실습 가능.
@@ -157,6 +167,7 @@ spec:
 ## ExternalName — 외부 DNS로 프록시(CNAME)
 
 ### 예시
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -168,6 +179,7 @@ spec:
 ```
 
 ### 포인트
+
 - **포트 지정 불가**, **엔드포인트 생성 없음**.
 - `svc DNS → CNAME → 외부 도메인` 으로 해석. 실제 트래픽은 Pod가 외부로 직접 나간다.
 
@@ -176,6 +188,7 @@ spec:
 ## Headless Service — clusterIP: None (직접 디스커버리)
 
 ### 예시(스테이트풀/직결)
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -189,6 +202,7 @@ spec:
 ```
 
 ### 포인트
+
 - VIP 없이 **Pod별 DNS A 레코드**를 반환 → 클라이언트가 직접 선택/셸빙 가능.
 - StatefulSet과 조합하여 `pod-0.db.default.svc` 처럼 예측 가능한 DNS 사용.
 
@@ -197,13 +211,16 @@ spec:
 ## DNS와 서비스 디스커버리
 
 ### 내부 DNS 패턴
+
 - `svc`: `nginx.default.svc.cluster.local`
 - 같은 네임스페이스에서는 `nginx` 만으로도 접근 가능(리졸버 서치도메인).
 
 ### 테스트
+
 ```bash
 kubectl run -it --rm dns-test --image=nicolaka/netshoot -- /bin/bash
 # 컨테이너 내부
+
 dig nginx.default.svc.cluster.local
 curl -sS http://nginx.default.svc.cluster.local
 ```
@@ -226,6 +243,7 @@ kubectl -n kube-system get ds kube-proxy -o yaml | grep -i mode -n
 ## 실습: 간단 Nginx 배포 + Service + 검증
 
 ### Deployment
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -247,6 +265,7 @@ spec:
 ```
 
 ### NodePort Service
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -262,6 +281,7 @@ spec:
 ```
 
 ### 검증
+
 ```bash
 kubectl apply -f deploy.yaml
 kubectl apply -f svc-nodeport.yaml
@@ -275,6 +295,7 @@ curl -I http://<node-ip>:30080
 ## 실습: LoadBalancer(MetalLB or 클라우드) + 소스 IP 보존
 
 ### Service (source IP 보존)
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -289,6 +310,7 @@ spec:
 ```
 
 ### 서버에서 소스 IP 관찰(예: nginx log에 remote_addr 기록)
+
 - `externalTrafficPolicy: Local` 로 **DNAT 없이** 트래픽이 도착해 **클라이언트 IP** 가 로그에 남는다.
 - 단, **백엔드 Pod가 없는 노드** 로 들어온 트래픽은 실패할 수 있다(노드 그룹/스케줄 전략 고려).
 
@@ -329,6 +351,7 @@ spec:
 DNS 예:
 ```bash
 # 각 Pod가 개별 A레코드로 노출
+
 dig echo-0.echo-hs.default.svc.cluster.local
 dig echo-hs.default.svc.cluster.local  # 여러 A레코드 반환
 ```
@@ -346,6 +369,7 @@ dig echo-hs.default.svc.cluster.local  # 여러 A레코드 반환
 ---
 
 ## Ingress와 Service의 역할 분리
+
 - **Service**: L4 가상 IP(LB/NodePort/ClusterIP)와 Pod 집합 연결.
 - **Ingress**: L7(HTTP/HTTPS) 라우팅 규칙(호스트/경로) → **반드시** 백엔드로 **Service** 필요.
 - 실무에선 **`Ingress + (백엔드) Service`** 가 일반적이며, 외부 L7 게이트웨이(Gateway API)를 쓰는 패턴도 증대.
@@ -356,23 +380,28 @@ dig echo-hs.default.svc.cluster.local  # 여러 A레코드 반환
 
 ```bash
 # 서비스/엔드포인트/엔드포인트슬라이스
+
 kubectl get svc -A -o wide
 kubectl get endpoints -A
 kubectl get endpointslices -A
 
 # 데이터 경로 확인
+
 kubectl get svc nginx -o yaml
 kubectl describe svc nginx
 kubectl get ep nginx -o wide
 kubectl get endpointslices -l kubernetes.io/service-name=nginx -o wide
 
 # 네트워크 툴박스
+
 kubectl run -it --rm netshoot --image=nicolaka/netshoot -- /bin/bash
 # 내부에서:
+
 curl -I http://nginx.default.svc.cluster.local
 dig +short nginx.default.svc.cluster.local
 
 # 노드/프록시 상태
+
 kubectl -n kube-system get ds kube-proxy -o wide
 kubectl -n kube-system logs ds/kube-proxy --tail=200
 ```
@@ -393,6 +422,7 @@ kubectl -n kube-system logs ds/kube-proxy --tail=200
 ---
 
 ## 성능/용량 개념식(학습용, 간단)
+
 서비스에 도달하는 초당 요청 수(QPS)와 평균 응답 시간 \(t\) 가 주어지면, 요구 동시성은 대략:
 $$
 \text{동시성} \approx \text{QPS} \cdot t
@@ -407,14 +437,17 @@ $$
 ---
 
 ## 네임스페이스 간 접근 예시(복습)
+
 ```bash
 # nginx 서비스가 default에 있을 때
+
 curl http://nginx.default.svc.cluster.local
 ```
 
 ---
 
 ## 요약/베스트 프랙티스
+
 - **ClusterIP**: 기본. 내부 통신에 사용.
 - **NodePort**: 빠른 외부 테스트. 운영에는 제한적.
 - **LoadBalancer**: 퍼블릭 노출 표준. 클라우드/MetalLB 필요.
@@ -426,6 +459,7 @@ curl http://nginx.default.svc.cluster.local
 ---
 
 ## 부록: 한 번에 실행하는 전체 예시(4종 Service)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -443,7 +477,8 @@ spec:
         ports: [{ containerPort: 5678 }]
 
 ---
-# 1. ClusterIP
+# ClusterIP
+
 apiVersion: v1
 kind: Service
 metadata: { name: demo-clusterip }
@@ -452,7 +487,8 @@ spec:
   ports: [{ name: http, port: 80, targetPort: 5678 }]
 
 ---
-# 2. NodePort
+# NodePort
+
 apiVersion: v1
 kind: Service
 metadata: { name: demo-nodeport }
@@ -466,7 +502,8 @@ spec:
     nodePort: 30081
 
 ---
-# 3. LoadBalancer (MetalLB/클라우드 필요)
+# LoadBalancer (MetalLB/클라우드 필요)
+
 apiVersion: v1
 kind: Service
 metadata: { name: demo-lb }
@@ -480,7 +517,8 @@ spec:
     targetPort: 5678
 
 ---
-# 4. ExternalName
+# ExternalName
+
 apiVersion: v1
 kind: Service
 metadata: { name: demo-external }
@@ -500,5 +538,6 @@ kubectl run -it --rm t --image=radial/busyboxplus:curl -- curl -sS http://demo-c
 ---
 
 ## 결론
+
 Service는 쿠버네티스 네트워킹의 **관문**이자 **안정화 장치**다. 타입/옵션/데이터패스를 이해하면, “왜 트래픽이 이 Pod로 갔는가?”, “왜 소스 IP가 사라졌는가?” 같은 질문에 즉시 답할 수 있다.
 운영에서는 **Service ↔ Ingress ↔ Pod** 관계를 **관측/테스트/정책**으로 단단히 묶자. 그렇게 하면 확장·리다이렉션·장애 전파를 예측 가능하게 만들 수 있다.

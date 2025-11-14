@@ -6,7 +6,7 @@ category: CSS
 ---
 # Flexbox 완전 가이드 (Flexbox Complete Guide)
 
-## 0. 큰 그림 한 장
+## 큰 그림 한 장
 
 - **Flex Container**: `display: flex | inline-flex` (축 설정, 줄바꿈, 정렬, 간격)
 - **Flex Item**: `flex: grow shrink basis`(크기 정책), `align-self`, `order`
@@ -14,7 +14,7 @@ category: CSS
 
 ---
 
-## 1. 핵심 개념 복습
+## 핵심 개념 복습
 
 ```html
 <div class="flex">
@@ -36,7 +36,7 @@ category: CSS
 
 ---
 
-## 2. 컨테이너 속성 총정리
+## 컨테이너 속성 총정리
 
 | 속성 | 값(대표) | 설명 |
 |---|---|---|
@@ -49,7 +49,7 @@ category: CSS
 | `align-content` | `flex-start` `center` `flex-end` `space-between` `space-around` `space-evenly` `stretch` | **여러 줄 간 정렬** |
 | `gap` | `row-gap`/`column-gap` | 아이템 간 간격(마진 대신 권장) |
 
-### 2.1 자주 쓰는 컨테이너 프리셋
+### 자주 쓰는 컨테이너 프리셋
 
 ```css
 /* 수평 중앙 정렬(가운데-가운데) */
@@ -83,7 +83,7 @@ category: CSS
 
 ---
 
-## 3. 아이템 속성 총정리
+## 아이템 속성 총정리
 
 | 속성 | 설명 |
 |---|---|
@@ -94,7 +94,7 @@ category: CSS
 | `align-self` | 개별 아이템 교차축 정렬(컨테이너의 `align-items` 덮어씀) |
 | `order` | **시각적 순서**(DOM 순서와 별개 → 접근성 유의) |
 
-### 3.1 `flex` 단축 사용 패턴
+### `flex` 단축 사용 패턴
 
 ```css
 /* grow=1, shrink=1, basis=0% → 남은 공간을 균등 분배(그리드 흉내) */
@@ -115,9 +115,10 @@ category: CSS
 
 ---
 
-## 4. 정렬 속성 심화
+## 정렬 속성 심화
 
-### 4.1 주축 정렬 — `justify-content`
+### 주축 정렬 — `justify-content`
+
 ```css
 .toolbar {
   display: flex;
@@ -126,7 +127,8 @@ category: CSS
 }
 ```
 
-### 4.2 교차축 정렬 — `align-items`
+### 교차축 정렬 — `align-items`
+
 ```css
 .row {
   display: flex;
@@ -135,7 +137,8 @@ category: CSS
 }
 ```
 
-### 4.3 여러 줄 정렬 — `align-content` (wrap 필요)
+### 여러 줄 정렬 — `align-content` (wrap 필요)
+
 ```css
 .grid-ish {
   display: flex; flex-wrap: wrap;
@@ -144,12 +147,14 @@ category: CSS
 }
 ```
 
-### 4.4 개별 아이템 정렬 — `align-self`
+### 개별 아이템 정렬 — `align-self`
+
 ```css
 .item-end { align-self: flex-end; }
 ```
 
-### 4.5 자동 마진으로 정렬
+### 자동 마진으로 정렬
+
 ```css
 .header {
   display: flex; gap: 1rem;
@@ -159,7 +164,7 @@ category: CSS
 
 ---
 
-## 5. 수학으로 보는 공간 분배(직관)
+## 수학으로 보는 공간 분배(직관)
 
 여유 공간이 \(F\), 각 아이템의 `flex-grow`가 \(g_i\)일 때
 **증가분** \(\Delta w_i\)는
@@ -176,7 +181,7 @@ $$
 
 ---
 
-## 6. `gap` 적극 활용(마진보다 안전하고 직관적)
+## `gap` 적극 활용(마진보다 안전하고 직관적)
 
 ```css
 .row-gap-1 {
@@ -194,9 +199,10 @@ $$
 
 ---
 
-## 7. 반응형·실전 패턴 모음
+## 반응형·실전 패턴 모음
 
-### 7.1 수직 가운데 정렬(뷰포트 가득)
+### 수직 가운데 정렬(뷰포트 가득)
+
 ```css
 .full-center {
   min-height: 100vh;
@@ -206,7 +212,8 @@ $$
 }
 ```
 
-### 7.2 네비게이션 바(양끝 정렬)
+### 네비게이션 바(양끝 정렬)
+
 ```css
 .navbar {
   display: flex; align-items: center;
@@ -215,7 +222,8 @@ $$
 }
 ```
 
-### 7.3 카드 그리드(감싸기 + 최소 폭)
+### 카드 그리드(감싸기 + 최소 폭)
+
 ```css
 .cards {
   display: flex; flex-wrap: wrap; gap: 1rem;
@@ -226,7 +234,8 @@ $$
 }
 ```
 
-### 7.4 균등 폭 버튼 줄
+### 균등 폭 버튼 줄
+
 ```css
 .btns {
   display: flex; gap: .5rem;
@@ -234,7 +243,8 @@ $$
 .btns > button { flex: 1 1 0; } /* 모두 같은 비율로 채움 */
 ```
 
-### 7.5 Sticky Footer(콘텐츠가 짧아도 푸터 하단)
+### Sticky Footer(콘텐츠가 짧아도 푸터 하단)
+
 ```css
 .page {
   min-height: 100vh;
@@ -244,7 +254,8 @@ $$
 .page footer { margin-top: auto; }
 ```
 
-### 7.6 사이드바 레이아웃(고정폭 + 유동 본문)
+### 사이드바 레이아웃(고정폭 + 유동 본문)
+
 ```css
 .layout {
   display: flex; min-height: 100vh;
@@ -253,7 +264,8 @@ $$
 .content { flex: 1 1 auto; padding: 1.25rem; }
 ```
 
-### 7.7 입력+버튼 결합(한 줄, 남는 공간 입력이 차지)
+### 입력+버튼 결합(한 줄, 남는 공간 입력이 차지)
+
 ```css
 .input-row {
   display: flex; gap: .5rem;
@@ -262,7 +274,8 @@ $$
 .input-row button { flex: 0 0 auto; }
 ```
 
-### 7.8 프로필 행(baseline·center 비교)
+### 프로필 행(baseline·center 비교)
+
 ```css
 .profile {
   display: flex; gap: .75rem; align-items: center;
@@ -272,7 +285,7 @@ $$
 
 ---
 
-## 8. Flex vs width/height — 충돌·우선순위 이해
+## Flex vs width/height — 충돌·우선순위 이해
 
 - `flex-basis`와 `width/height`가 **둘 다** 존재할 때:
   - 기본적으로 **`flex-basis`가 우선**(단, `flex-basis:auto`이면 width/height 또는 content size가 반영)
@@ -284,7 +297,7 @@ $$
 
 ---
 
-## 9. order(시각 순서)와 접근성
+## order(시각 순서)와 접근성
 
 ```css
 /* 시각상 순서만 바뀜, DOM 순서는 그대로 → 키보드/스크린리더 순서 문제 가능 */
@@ -297,7 +310,7 @@ $$
 
 ---
 
-## 10. 스크롤·넘침과의 상호작용
+## 스크롤·넘침과의 상호작용
 
 - Flex 아이템이 넘칠 때: `min-width: 0`(수평) or `min-height: 0`(수직) 지정 필요할 때가 많음.
   일부 브라우저는 기본 min-size가 auto여서 **스크롤이 안 생기는** 오해를 유발.
@@ -315,7 +328,7 @@ $$
 
 ---
 
-## 11. 디버깅 체크리스트
+## 디버깅 체크리스트
 
 1. **축 방향 확인**: `flex-direction`이 의도와 일치하는가?
 2. **여유/부족 공간**: `flex-grow`/`flex-shrink` 기본값(1) 때문에 의도치 않게 늘/줄고 있지 않은가?
@@ -328,9 +341,10 @@ $$
 
 ---
 
-## 12. 실전 샘플 모음(독립 실행)
+## 실전 샘플 모음(독립 실행)
 
-### 12.1 히어로 센터링 + CTA
+### 히어로 센터링 + CTA
+
 ```html
 <section class="hero">
   <div class="hero__inner">
@@ -356,7 +370,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 </style>
 ```
 
-### 12.2 상품 카드 그리드(감싸기 + 최소폭)
+### 상품 카드 그리드(감싸기 + 최소폭)
+
 ```html
 <ul class="products">
   <li class="card">Card A</li>
@@ -370,7 +385,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 </style>
 ```
 
-### 12.3 사이드바 + 본문 + 보조패널
+### 사이드바 + 본문 + 보조패널
+
 ```html
 <div class="shell">
   <aside class="side">Sidebar</aside>
@@ -385,7 +401,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 </style>
 ```
 
-### 12.4 입력 줄(남는 공간 입력이 차지)
+### 입력 줄(남는 공간 입력이 차지)
+
 ```html
 <div class="inputrow">
   <input placeholder="Search..." />
@@ -398,7 +415,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 </style>
 ```
 
-### 12.5 균등 버튼 열
+### 균등 버튼 열
+
 ```html
 <div class="btnline">
   <button>Yes</button><button>No</button><button>Maybe</button>
@@ -409,7 +427,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 </style>
 ```
 
-### 12.6 여러 줄 정렬 + align-content
+### 여러 줄 정렬 + align-content
+
 ```html
 <div class="tags">
   <span>Design</span><span>CSS</span><span>Flexbox</span>
@@ -427,9 +446,10 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 13. 고급 주제
+## 고급 주제
 
-### 13.1 `aspect-ratio`와 Flex
+### `aspect-ratio`와 Flex
+
 이미지/카드를 **비율 고정**하면서 Flex로 정렬:
 
 ```css
@@ -440,7 +460,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 }
 ```
 
-### 13.2 Nested Flex(중첩)
+### Nested Flex(중첩)
+
 자식 행마다 수평 정렬, 부모는 세로 스택:
 
 ```css
@@ -448,7 +469,8 @@ button.ghost { background:#fff; color:#0ea5e9; }
 .list .row { display:flex; align-items:center; justify-content:space-between; }
 ```
 
-### 13.3 Safe Area와 모바일 툴바(고정 헤더/푸터)
+### Safe Area와 모바일 툴바(고정 헤더/푸터)
+
 `position: sticky` + Flex로 안전 여백 고려:
 
 ```css
@@ -461,7 +483,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 14. 성능·유지보수·팀 규칙 제안
+## 성능·유지보수·팀 규칙 제안
 
 - **간격은 `gap`** 우선 → 마진 규칙을 최소화(일관성↑, 예외↓).
 - **유틸리티 클래스화**: `.flex`, `.items-center`, `.justify-between`, `.flex-1`, `.flex-none` 등.
@@ -471,7 +493,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 15. 요약 표(핵심만 재정리)
+## 요약 표(핵심만 재정리)
 
 | 분류 | 키 속성 | 기억 포인트 |
 |---|---|---|
@@ -482,7 +504,7 @@ button.ghost { background:#fff; color:#0ea5e9; }
 
 ---
 
-## 16. 마무리
+## 마무리
 
 - Flexbox는 **1차원 정렬·간격·크기 분배**의 최강 도구입니다.
 - `flex-basis` vs `width`, `gap` vs margin, `grow/shrink` 기본값 등 **작은 디테일**이 결과를 좌우합니다.

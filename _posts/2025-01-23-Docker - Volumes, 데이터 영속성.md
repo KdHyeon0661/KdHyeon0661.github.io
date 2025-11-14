@@ -15,7 +15,7 @@ category: Docker
 
 ---
 
-## 1. 왜 Volume이 필요한가? (요약 보강)
+## 왜 Volume이 필요한가? (요약 보강)
 
 컨테이너의 루트 파일시스템은 **휘발성**입니다. 컨테이너 제거 시 내부 변경사항이 사라집니다.
 DB/업로드/로그/캐시 등 **수명 주기와 용량이 컨테이너와 분리**되어야 하는 데이터는 **Volume**으로 관리합니다.
@@ -28,7 +28,7 @@ $$
 
 ---
 
-## 2. Volume의 개념과 구조 (정교화)
+## Volume의 개념과 구조 (정교화)
 
 - Volume은 Docker 엔진이 관리하는 **호스트 측 디렉터리(일반적으로 `/var/lib/docker/volumes/<name>/_data`)** 입니다.
 - 컨테이너에서는 단순히 **마운트 지점**으로 보이고, 읽기/쓰기 동작은 호스트의 해당 디렉터리에 반영됩니다.
@@ -46,7 +46,7 @@ $$
 
 ---
 
-## 3. Volume/Bind Mount/Anonymous 비교(확장)
+## Volume/Bind Mount/Anonymous 비교(확장)
 
 | 종류 | 생성/관리 | 저장 위치 | 이식성 | 권한/보안 | 주 사용처 |
 |---|---|---|---|---|---|
@@ -61,9 +61,10 @@ $$
 
 ---
 
-## 4. 기본 사용법 (명령/옵션 의미 명확화)
+## 기본 사용법 (명령/옵션 의미 명확화)
 
-### 4.1 볼륨 생성/조회/삭제
+### 볼륨 생성/조회/삭제
+
 ```bash
 docker volume create myvolume
 docker volume ls
@@ -71,7 +72,7 @@ docker volume inspect myvolume
 docker volume rm myvolume
 ```
 
-### 4.2 컨테이너에 볼륨 마운트
+### 컨테이너에 볼륨 마운트
 
 권장 구문: `--mount` (명시적)
 ```bash
@@ -86,9 +87,11 @@ docker run -d \
 docker run -d --name mycontainer -v myvolume:/app/data ubuntu sleep infinity
 ```
 
-### 4.3 Bind Mount와 비교
+### Bind Mount와 비교
+
 ```bash
 # Bind Mount (개발 시 실시간 반영)
+
 docker run -d \
   --name devweb \
   --mount type=bind,source="$(pwd)"/public,target=/usr/share/nginx/html,readonly \
@@ -97,9 +100,10 @@ docker run -d \
 
 ---
 
-## 5. 실전 예제: MySQL/Redis/PostgreSQL (운영 패턴)
+## 실전 예제: MySQL/Redis/PostgreSQL (운영 패턴)
 
-### 5.1 MySQL
+### MySQL
+
 ```bash
 docker volume create mysql-data
 docker run -d --name mysql \
@@ -108,7 +112,8 @@ docker run -d --name mysql \
   -p 3306:3306 mysql:8.0
 ```
 
-### 5.2 PostgreSQL
+### PostgreSQL
+
 ```bash
 docker volume create pgdata
 docker run -d --name pg \
@@ -117,7 +122,8 @@ docker run -d --name pg \
   -p 5432:5432 postgres:16
 ```
 
-### 5.3 Redis (AOF/로그 저장)
+### Redis (AOF/로그 저장)
+
 ```bash
 docker volume create redisdata
 docker run -d --name redis \
@@ -131,9 +137,10 @@ docker run -d --name redis \
 
 ---
 
-## 6. 권한/보안/SELinux/Windows·macOS·WSL2 특성
+## 권한/보안/SELinux/Windows·macOS·WSL2 특성
 
-### 6.1 권한/UID·GID
+### 권한/UID·GID
+
 - 컨테이너 내부에서의 파일 소유자는 컨테이너의 UID/GID에 따릅니다.
 - 이미지에서 `USER` 지시문을 사용하거나, `docker run --user 1000:1000`으로 실행 권장.
 
@@ -144,14 +151,16 @@ docker run -d --name app \
   myimg:latest
 ```
 
-### 6.2 읽기 전용 마운트
+### 읽기 전용 마운트
+
 ```bash
 docker run -d \
   --mount type=volume,source=cfg,target=/app/cfg,readonly \
   myimg
 ```
 
-### 6.3 SELinux (RHEL/CentOS/Fedora 등)
+### SELinux (RHEL/CentOS/Fedora 등)
+
 - 라벨 지정이 필요할 수 있습니다. `-v` 구문에서는 `:Z`(전용), `:z`(공유) 옵션 사용.
 
 ```bash
@@ -167,25 +176,29 @@ docker run -d \
   myimg
 ```
 
-### 6.4 Windows/macOS/WSL2
+### Windows/macOS/WSL2
+
 - **Windows**: PowerShell은 `${PWD}`, `cmd`는 `%cd%`. 드라이브 공유 설정 필요할 수 있음.
 - **macOS**: 바인드 마운트는 가상화 계층으로 느려질 수 있음 → 볼륨 활용/이미지 내 포함 고려.
 - **WSL2**: `/mnt/c/...` 경로보다 **WSL2 내부 경로**(예: `~/proj`)가 I/O 성능과 안정성에서 유리.
 
 ---
 
-## 7. 백업/복구/마이그레이션 스크립트 (안전 절차)
+## 백업/복구/마이그레이션 스크립트 (안전 절차)
 
-### 7.1 Volume → tar 백업
+### Volume → tar 백업
+
 ```bash
 # myvolume의 내용물을 현재 디렉터리에 백업
+
 docker run --rm \
   -v myvolume:/src \
   -v "$(pwd)":/backup \
   alpine sh -c "cd /src && tar czf /backup/myvolume-$(date +%F).tgz ."
 ```
 
-### 7.2 tar → Volume 복구
+### tar → Volume 복구
+
 ```bash
 docker run --rm \
   -v myvolume:/dest \
@@ -193,7 +206,8 @@ docker run --rm \
   alpine sh -c "cd /dest && tar xzf /backup/myvolume-2025-11-06.tgz"
 ```
 
-### 7.3 데이터 검증
+### 데이터 검증
+
 ```bash
 docker run --rm -v myvolume:/data alpine ls -l /data
 ```
@@ -204,9 +218,10 @@ docker run --rm -v myvolume:/data alpine ls -l /data
 
 ---
 
-## 8. Compose에서 Volume 사용 (운영/개발 대비)
+## Compose에서 Volume 사용 (운영/개발 대비)
 
-### 8.1 운영(명명된 볼륨)
+### 운영(명명된 볼륨)
+
 ```yaml
 version: "3.9"
 services:
@@ -223,7 +238,8 @@ volumes:
   dbdata:
 ```
 
-### 8.2 개발(핫리로드 + 로그는 볼륨)
+### 개발(핫리로드 + 로그는 볼륨)
+
 ```yaml
 version: "3.9"
 services:
@@ -250,13 +266,15 @@ docker compose down -v         # 컨테이너 + 볼륨 제거(주의)
 
 ---
 
-## 9. 정리/청소 명령과 주의점
+## 정리/청소 명령과 주의점
 
 ```bash
 # 사용 안하는 데이터 정리(주의: 실제 데이터 삭제됨)
+
 docker system prune --volumes
 
 # 개별 볼륨 삭제 (컨테이너가 사용 중이면 실패)
+
 docker volume rm <name>
 ```
 
@@ -266,7 +284,7 @@ docker volume rm <name>
 
 ---
 
-## 10. 성능/운영/보안 베스트 프랙티스
+## 성능/운영/보안 베스트 프랙티스
 
 | 항목 | 권장 사항 |
 |---|---|
@@ -282,7 +300,7 @@ docker volume rm <name>
 
 ---
 
-## 11. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 가능 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -295,9 +313,10 @@ docker volume rm <name>
 
 ---
 
-## 12. 실습: Volume vs Bind Mount 성격 차이 체감
+## 실습: Volume vs Bind Mount 성격 차이 체감
 
-### 12.1 Volume로 정적 사이트 제공
+### Volume로 정적 사이트 제공
+
 ```bash
 docker volume create webdata
 docker run --rm \
@@ -312,18 +331,20 @@ docker run -d --name webv \
 curl -s localhost:8080 | head
 ```
 
-### 12.2 Bind Mount로 개발 핫리로드
+### Bind Mount로 개발 핫리로드
+
 ```bash
 mkdir -p ./public && echo "<h1>Hello</h1>" > ./public/index.html
 docker run -d --name webb \
   --mount type=bind,source="$(pwd)"/public,target=/usr/share/nginx/html,readonly \
   -p 8081:80 nginx
 # public/index.html 수정 → 즉시 반영 확인
+
 ```
 
 ---
 
-## 13. 수학적 직관(용량/성능 균형)
+## 수학적 직관(용량/성능 균형)
 
 볼륨/바인드 선택에 따른 “체감 효용” \(U\)를 성능 \(P\), 이식성 \(I\), 운영성 \(O\)의 가중 합으로 보면:
 $$
@@ -334,7 +355,7 @@ $$
 
 ---
 
-## 14. 최종 체크리스트
+## 최종 체크리스트
 
 - [ ] 운영 DB/영구 데이터는 **Named Volume**
 - [ ] 개발 핫리로드 디렉터리는 **Bind Mount**
@@ -353,26 +374,32 @@ $$
 
 ```bash
 # 생성/조회/삭제
+
 docker volume create <name>
 docker volume ls
 docker volume inspect <name>
 docker volume rm <name>
 
 # 실행(권장 --mount)
+
 docker run --mount type=volume,source=myvol,target=/data myimg
 docker run --mount type=bind,source="$(pwd)"/data,target=/data myimg
 
 # 읽기 전용
+
 docker run --mount type=volume,source=myvol,target=/data,readonly myimg
 
 # 볼륨 내용 확인(임시 컨테이너)
+
 docker run --rm -v myvol:/data alpine ls -l /data
 
 # 정리(주의)
+
 docker system prune --volumes
 ```
 
 ---
 
 ## 참고
+
 - Docker 공식 문서의 Storage(Volumes/Bind Mounts), Compose 스펙을 함께 확인하면 운영 정책 설계에 유익합니다.

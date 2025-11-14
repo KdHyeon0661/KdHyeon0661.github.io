@@ -13,7 +13,8 @@ category: DB 심화
 
 ---
 
-## 0. 실습 환경 공통: 샘플 스키마 & 통계 수집
+## 실습 환경 공통: 샘플 스키마 & 통계 수집
+
 ```sql
 -- 블록 사이즈 기본 8KB 가정
 -- 큰 테이블과 인덱스를 만들어 실험
@@ -60,9 +61,10 @@ END;
 
 ---
 
-## 1. 개념 정리: Single vs Multiblock I/O
+## 개념 정리: Single vs Multiblock I/O
 
-### 1.1 Single Block I/O
+### Single Block I/O
+
 - **정의**: 한 I/O 호출에 **딱 1개의 데이터 블록**을 읽는다(보통 8KB).
 - **주요 용도**:
   - **인덱스 Range/Unique Scan**이 반환한 **ROWID** 로 테이블 **행 한 건씩** 접근
@@ -70,7 +72,8 @@ END;
 - **대표 대기 이벤트**: `db file sequential read`
   - 이름의 “sequential”은 “I/O 호출을 순차적으로 기다린다”는 의미에 가깝고, **연속 블록**이라는 뜻이 아니다.
 
-### 1.2 Multiblock I/O
+### Multiblock I/O
+
 - **정의**: 한 I/O 호출에 **여러 블록**(멀티블록)을 **한꺼번에** 읽는다.
 - **주요 용도**:
   - **Table Full Scan / Partition Full Scan** (버퍼 캐시 사용) ⇒ `db file scattered read`
@@ -79,7 +82,8 @@ END;
 - **장점**: **처리량(throughput)** 유리. 연속 블록을 묶어서 읽기 때문에 **호출 횟수**가 줄고 대역폭을 잘 활용한다.
 - **주의**: **읽는 양이 많을수록** 빠르다는 뜻은 아니다. 프루닝/필터로 **읽을 범위 자체**를 줄이는 게 우선.
 
-### 1.3 블록/MBRC(멀티블록 리드 카운트) 근사
+### 블록/MBRC(멀티블록 리드 카운트) 근사
+
 - 데이터베이스 블록 크기: 보통 **8KB**.
 - 멀티블록 I/O 크기 = **MBRC × 블록 크기**.
   - 예: MBRC≈16이면 **16 × 8KB = 128KB/IO** 근사.
@@ -95,9 +99,10 @@ $$
 
 ---
 
-## 2. 언제 Single, 언제 Multiblock인가? — 실행계획 관점
+## 언제 Single, 언제 Multiblock인가? — 실행계획 관점
 
-### 2.1 Single Block 지향(OLTP)
+### Single Block 지향(OLTP)
+
 - **패턴**: `INDEX RANGE/UNIQUE SCAN` → `TABLE ACCESS BY ROWID`
 - **장점**: **필요한 소수 행**만 빠르게 읽는다.
 - **단점**: 행이 **너무 많아지면** 랜덤 I/O 폭증 → 비효율.
@@ -113,7 +118,8 @@ AND    ROWNUM <= 1;
 ```
 - 결과가 소수이면 **Single Block**이 최적.
 
-### 2.2 Multiblock 지향(DW/리포트/대량 범위)
+### Multiblock 지향(DW/리포트/대량 범위)
+
 - **패턴**: `TABLE FULL SCAN` / `PARTITION RANGE SCAN` / `INDEX FAST FULL SCAN`
 - **장점**: 대량 범위를 **연속 블록**으로 빠르게 읽음.
 - **단점**: 불필요한 블록까지 많이 읽을 우려 ⇒ **파티션 프루닝**·**프레디케이트 푸시다운**으로 범위를 **작게** 만들 것.
@@ -129,9 +135,10 @@ WHERE  order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'Q'), -3);
 
 ---
 
-## 3. 대기 이벤트로 구분/관찰하기
+## 대기 이벤트로 구분/관찰하기
 
-### 3.1 시스템/세션 레벨 카운터
+### 시스템/세션 레벨 카운터
+
 ```sql
 -- 시스템 이벤트: Single vs Multi 대기량 비교
 SELECT event, total_waits, time_waited_micro/1e6 AS sec
@@ -157,7 +164,8 @@ FROM   v$sql
 ORDER  BY avg_disk DESC FETCH FIRST 20 ROWS ONLY;
 ```
 
-### 3.2 ASH로 실시간/샘플 기반 확인
+### ASH로 실시간/샘플 기반 확인
+
 ```sql
 -- 최근 5분간 IO 이벤트 분포: Single vs Multi
 SELECT event, COUNT(*) samples
@@ -169,7 +177,8 @@ GROUP  BY event
 ORDER  BY samples DESC;
 ```
 
-### 3.3 실행계획에서 경로 확인
+### 실행계획에서 경로 확인
+
 ```sql
 -- 실제 실행계획 + 통계
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
@@ -180,9 +189,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-## 4. 실전 시나리오: 같은 질의, 서로 다른 I/O 전략
+## 실전 시나리오: 같은 질의, 서로 다른 I/O 전략
 
-### 4.1 “최근 3개월, 고객별 주문 합계 Top-50”
+### “최근 3개월, 고객별 주문 합계 Top-50”
+
 **A안 (잘못된 설계: Single 폭증)**
 ```sql
 SELECT /* bad: NL + Random IO 폭증 */
@@ -220,9 +230,10 @@ FETCH FIRST 50 ROWS ONLY;  -- STOPKEY
 
 ---
 
-## 5. Single Block I/O **줄이는** 패턴 (OLTP 개선)
+## Single Block I/O **줄이는** 패턴 (OLTP 개선)
 
-### 5.1 커버링 인덱스(테이블 BY ROWID 제거)
+### 커버링 인덱스(테이블 BY ROWID 제거)
+
 ```sql
 -- 자주 쓰는 조회의 SELECT-LIST/조건/정렬을 인덱스에 포함
 CREATE INDEX ix_bo_cover ON big_orders(cust_id, order_dt DESC, order_id DESC, amount, status);
@@ -236,7 +247,8 @@ ORDER  BY order_dt DESC, order_id DESC
 FETCH FIRST 50 ROWS ONLY;
 ```
 
-### 5.2 클러스터링 팩터 개선(준-순차화)
+### 클러스터링 팩터 개선(준-순차화)
+
 - 테이블 물리 순서를 **인덱스 키 순**에 가깝게 재배치(CTAS) → Range Scan의 `BY ROWID` 방문이 **근접**해져 **Single Block I/O의 랜덤성**이 감소.
 ```sql
 -- 재배치
@@ -257,7 +269,8 @@ END;
 /
 ```
 
-### 5.3 조건/조인 재작성으로 후보 축소(세미조인/IN/EXISTS)
+### 조건/조인 재작성으로 후보 축소(세미조인/IN/EXISTS)
+
 ```sql
 SELECT /*+ SEMIJOIN */ b.*
 FROM   big_orders b
@@ -271,9 +284,10 @@ WHERE  EXISTS (
 
 ---
 
-## 6. Multiblock I/O **효율을 키우는** 패턴 (DW/리포트 개선)
+## Multiblock I/O **효율을 키우는** 패턴 (DW/리포트 개선)
 
-### 6.1 파티션 프루닝 + 해시 조인 + 병렬
+### 파티션 프루닝 + 해시 조인 + 병렬
+
 ```sql
 SELECT /*+ full(b) use_hash(b) parallel(b 8) */
        status, COUNT(*), SUM(amount)
@@ -284,7 +298,8 @@ GROUP  BY status;
 - **최근 파티션만** 읽음(프루닝) → **작은 전체**.
 - 병렬로 **대역폭** 활용, 멀티블록 크기 활용.
 
-### 6.2 Direct Path Read 유도(대량 스캔)
+### Direct Path Read 유도(대량 스캔)
+
 ```sql
 -- 세션 단위 direct path read 유도(대량 작업에서 유리)
 ALTER SESSION SET "_serial_direct_read" = TRUE;
@@ -297,7 +312,8 @@ WHERE  order_dt >= DATE '2025-10-01';
 - Direct Path Read는 **버퍼 캐시 우회** → 캐시 오염 방지, 대량 스캔에 이점.
 - 주의: OLTP 혼합 환경에서는 무조건적 강제는 지양(실측으로 판단).
 
-### 6.3 인덱스 Fast Full Scan(순차 인덱스 스캔)
+### 인덱스 Fast Full Scan(순차 인덱스 스캔)
+
 ```sql
 SELECT /*+ index_ffs(b ix_bo_status) */
        status, COUNT(*)
@@ -309,13 +325,15 @@ GROUP  BY status;
 
 ---
 
-## 7. MBRC(멀티블록 리드)와 I/O 크기
+## MBRC(멀티블록 리드)와 I/O 크기
 
-### 7.1 MBRC의 현실
+### MBRC의 현실
+
 - 과거엔 `db_file_multiblock_read_count` 로 직관적 제어를 기대했지만, **현대 버전**에선 스토리지/OS/옵티마이저가 I/O 크기를 **자동** 조정하는 경향.
 - Exadata/ASM/스토리지에 따라 **Smart Scan**/**Cell** 레벨 최적화가 개입.
 
-### 7.2 I/O 크기와 처리량 직관
+### I/O 크기와 처리량 직관
+
 - 블록 8KB, MBRC=16 ⇒ 호출당 128KB.
 - 스캔해야 할 블록 수가 1,280,000개라면,
   $$\text{Multiblock IO Calls} \approx \frac{1,280,000}{16} = 80,000$$
@@ -323,7 +341,7 @@ GROUP  BY status;
 
 ---
 
-## 8. Single ↔ Multi 전략 선택 가이드
+## Single ↔ Multi 전략 선택 가이드
 
 | 상황 | 권장 경로 | 근거 |
 |---|---|---|
@@ -335,9 +353,10 @@ GROUP  BY status;
 
 ---
 
-## 9. 관찰/검증 절차(필수)
+## 관찰/검증 절차(필수)
 
-### 9.1 트레이스 & 플랜
+### 트레이스 & 플랜
+
 ```sql
 ALTER SESSION SET statistics_level = ALL;
 ALTER SESSION SET events '10046 trace name context forever, level 8';
@@ -350,7 +369,8 @@ ALTER SESSION SET events '10046 trace name context off';
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS'));
 ```
 
-### 9.2 시스템/세션/SQL 지표
+### 시스템/세션/SQL 지표
+
 ```sql
 -- Single vs Multi 이벤트 비중
 SELECT event, total_waits, time_waited_micro/1e6 sec
@@ -365,7 +385,8 @@ FROM   v$sql
 ORDER BY avg_disk DESC FETCH FIRST 20 ROWS ONLY;
 ```
 
-### 9.3 세그먼트 핫스팟
+### 세그먼트 핫스팟
+
 ```sql
 SELECT owner, object_name, statistic_name, value
 FROM   v$segment_statistics
@@ -375,7 +396,7 @@ ORDER  BY value DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 10. 안티패턴과 교정
+## 안티패턴과 교정
 
 | 안티패턴 | 증상 | 교정 |
 |---|---|---|
@@ -387,24 +408,27 @@ ORDER  BY value DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 11. 추가 고급 주제
+## 추가 고급 주제
 
-### 11.1 Direct Path Read vs Buffered Read
+### Direct Path Read vs Buffered Read
+
 - **Buffered**: 버퍼 캐시에 적재 → **재사용** 가능(OLTP에 유리)
 - **Direct Path**: 캐시 우회 → **대량 작업**에서 효율(캐시 오염 방지)
 - 옵티마이저는 **세그먼트 크기·통계·작업 특성**을 보고 자동 선택(버전·파라미터 영향)
 
-### 11.2 병렬 실행(PX)과 I/O
+### 병렬 실행(PX)과 I/O
+
 - PX는 스캔 범위를 슬라이스해 **여러 서버 프로세스**가 동시에 멀티블록 읽기를 수행
 - **주의**: 스토리지/네트워크가 받쳐줘야 효과. 지나친 PX는 스토리지 큐 포화로 역효과.
 
-### 11.3 저장소/파일시스템의 영향
+### 저장소/파일시스템의 영향
+
 - ASM 스트라이핑·세그먼트 레이아웃은 멀티블록의 **연속성**과 **대역폭**에 영향
 - NFS/dNFS/ZFS(ARC) 등은 **대역폭·RTT·캐시 정책**이 Multiblock 효율에 결정적
 
 ---
 
-## 12. 요약 레시피
+## 요약 레시피
 
 1) **쿼리 목적**을 보고 **Single vs Multiblock** 전략을 먼저 선택한다.
 2) **Single를 줄여야** 하는 OLTP라면: **커버링 인덱스**, **클러스터링 팩터**, **세미조인/필터 선행**, **부분범위처리**.
@@ -462,6 +486,7 @@ WHERE  event LIKE 'direct path read%';
 ---
 
 ## 결론
+
 - **Single Block I/O** 는 **정밀한 소량 조회**에 강하고, **Multiblock I/O** 는 **대량 순차 읽기**에 강하다.
 - 고성능 시스템은 둘 중 하나만 밀어붙이지 않는다. **OLTP 경로**에서는 Single Block I/O를 **최소화**하고, **DW/리포트 경로**에서는 Multiblock I/O의 **효율**을 극대화한다.
 - **프루닝/커버링/클러스터링/조인 전략/병렬/Direct Path** 를 조합해 **읽을 양 자체를 줄이고**, **읽을 때는 잘 읽는** 설계를 하라.

@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # Web Components 소개
 
-## 0. 한눈에 보는 핵심 3총사
+## 한눈에 보는 핵심 3총사
 
 | 기술 | 무엇을 해결? | 핵심 포인트 |
 |---|---|---|
@@ -18,7 +18,7 @@ category: JavaScript
 
 ---
 
-## 1. Custom Elements — 사용자 정의 태그의 뼈대
+## Custom Elements — 사용자 정의 태그의 뼈대
 
 ### 1-1. 가장 작은 예제
 
@@ -52,7 +52,7 @@ customElements.define('my-button', MyButton);
 
 ---
 
-## 2. Shadow DOM — 스타일과 DOM을 안전하게 격리
+## Shadow DOM — 스타일과 DOM을 안전하게 격리
 
 ```js
 class MyCard extends HTMLElement {
@@ -89,13 +89,14 @@ customElements.define('my-card', MyCard);
 - **Custom Properties(변수)**: 테마 통일에 최적 — `--color-primary` 등
 
 ### 2-2. open vs closed
+
 - `open`: `el.shadowRoot` 접근 가능(디버깅·테스트 편리)
 - `closed`: 외부 접근 불가(진정한 캡슐화 필요 시)
 > 실무에선 **open 권장**(디버깅/테스트/스토리북∙플레이라이트 연동이 쉬움)
 
 ---
 
-## 3. Template — 값싼 DOM 복제
+## Template — 값싼 DOM 복제
 
 ```html
 <template id="x-tmpl">
@@ -120,7 +121,7 @@ customElements.define('x-hello', XHello);
 
 ---
 
-## 4. 속성(attributes) vs 프로퍼티(properties) 동기화
+## 속성(attributes) vs 프로퍼티(properties) 동기화
 
 - **속성(HTML 문자열)**: `<x-todo done="true">`
 - **프로퍼티(JS 값)**: `el.done = true`
@@ -172,9 +173,10 @@ customElements.define('x-toggle', XToggle);
 
 ---
 
-## 5. 실전 1 — 접근성 갖춘 ⭐️별점 컴포넌트 (폼 연동 포함)
+## 실전 1 — 접근성 갖춘 ⭐️별점 컴포넌트 (폼 연동 포함)
 
 ### 5-1. 요구사항
+
 - 키보드/스크린리더 지원(Arrow/Enter/Space, `role="radiogroup"`).
 - **Form-Associated**: `<form>` submit 시 값 포함.
 - 테마 가능(Shadow Parts / CSS 변수).
@@ -285,7 +287,7 @@ customElements.define('x-rating', XRating);
 
 ---
 
-## 6. 실전 2 — 접근성/포커스 트랩 포함 모달
+## 실전 2 — 접근성/포커스 트랩 포함 모달
 
 ```js
 class XModal extends HTMLElement {
@@ -354,9 +356,10 @@ customElements.define('x-modal', XModal);
 
 ---
 
-## 7. 이벤트 모델 & 프레임워크 연동
+## 이벤트 모델 & 프레임워크 연동
 
 ### 7-1. 이벤트 전파
+
 - Shadow DOM은 기본적으로 **이벤트 리타게팅**을 한다(내부 노드 대신 호스트가 타깃처럼 보임).
 - 프레임워크로 올리는 이벤트는 **`bubbles: true` + `composed: true`** 로 만들어야 상위로 도달.
 
@@ -368,6 +371,7 @@ this.dispatchEvent(new CustomEvent('change', {
 ```
 
 ### 7-2. React 연동 팁
+
 - React는 **커스텀 이벤트를 Synthetic Event로 래핑하지 않는다**.
 - `<x-rating onChange={...}>` 로는 안 잡힐 수 있음 → **ref로 DOM** 잡고 `addEventListener('change', handler)` 사용.
 
@@ -387,6 +391,7 @@ export default function RatingWrapper(){
 ```
 
 ### 7-3. 속성 전달(문자열↔JS 값)
+
 - JSX는 **문자열 속성**만 HTML로 박는다. 복잡한 객체/함수는 **마운트 후 프로퍼티 할당** 필요.
 
 ```jsx
@@ -401,7 +406,7 @@ function Host(){
 
 ---
 
-## 8. 스타일 커스터마이징 전략
+## 스타일 커스터마이징 전략
 
 1) **CSS Custom Properties**(권장)
    - 제공 측: `--color-primary`, `--radius` 노출
@@ -423,13 +428,14 @@ x-rating { --star-active: #ff7a00; }
 
 ---
 
-## 9. 성능·아키텍처 베스트 프랙티스
+## 성능·아키텍처 베스트 프랙티스
 
 - **렌더 배치**: 속성 여러 개 바뀔 때마다 렌더 X → **마이크로태스크 큐**로 모아서 1회 렌더
 
 ```js
 #pending=false;
 #schedule(){
+
   if(this.#pending) return;
   this.#pending = true;
   queueMicrotask(() => { this.#pending = false; this.#render(); });
@@ -451,7 +457,7 @@ this.shadowRoot.adoptedStyleSheets = [sheet];
 
 ---
 
-## 10. 폼-연동(Form-Associated) 심화
+## 폼-연동(Form-Associated) 심화
 
 - `static formAssociated = true` + `const internals = this.attachInternals()`
 - `internals.setFormValue(value, state?)` 로 제출 값 설정
@@ -465,7 +471,7 @@ else this.#internals.setValidity({});
 
 ---
 
-## 11. 접근성(A11y) 체크리스트
+## 접근성(A11y) 체크리스트
 
 - **문서 구조 역할/이름/상태**: `role`, `aria-*`, `aria-live`
 - **키보드 내비게이션**: Tab 순서, Arrow/Space/Enter 대응
@@ -476,7 +482,7 @@ else this.#internals.setValidity({});
 
 ---
 
-## 12. 테스트/스토리/문서화
+## 테스트/스토리/문서화
 
 - **유닛/DOM 테스트**: `vitest` + `@testing-library/dom`
 - **E2E**: `Playwright` (Shadow DOM 셀렉터 지원: `shadow=`/강력한 Locator)
@@ -497,7 +503,7 @@ test('x-toggle toggles', async () => {
 
 ---
 
-## 13. 배포·번들·버전 전략
+## 배포·번들·버전 전략
 
 - **ESM 배포** + 타입 선언(d.ts) 제공(개발자 친화)
 - `package.json`의 `"exports"` 로 ESM 경로 지정
@@ -508,7 +514,7 @@ test('x-toggle toggles', async () => {
 
 ---
 
-## 14. 프레임워크와의 관계 설정
+## 프레임워크와의 관계 설정
 
 - **내부 구현은 Web Components**, 프레임워크 앱에서 **호출/조립**
 - 장점: 멀티 프레임워크/노프레임워크 재사용(디자인 시스템 중심)
@@ -517,7 +523,7 @@ test('x-toggle toggles', async () => {
 
 ---
 
-## 15. 고급 주제 스냅샷
+## 고급 주제 스냅샷
 
 - **ElementInternals의 `aria*`**: 호스트에 접근성 속성 반영
 - **Adopted Stylesheets**: 런타임 스타일 교체/테마 스위치 O(브라우저 지원 확인)
@@ -528,9 +534,10 @@ test('x-toggle toggles', async () => {
 
 ---
 
-## 16. 미니 레시피 모음
+## 미니 레시피 모음
 
 ### 16-1. IntersectionObserver로 지연 로딩 카드
+
 ```js
 class XLazy extends HTMLElement {
   constructor(){ super(); this.attachShadow({mode:'open'}).innerHTML = `<slot></slot>`; }
@@ -546,6 +553,7 @@ customElements.define('x-lazy', XLazy);
 ```
 
 ### 16-2. 토스트(알림) 관리자
+
 ```js
 class XToastHost extends HTMLElement {
   constructor(){ super(); this.attachShadow({mode:'open'}).innerHTML = `
@@ -574,7 +582,7 @@ customElements.define('x-toast-host', XToastHost);
 
 ---
 
-## 17. 체크리스트(요약)
+## 체크리스트(요약)
 
 - [ ] 이름에 `-` 포함, 문서화(속성/프로퍼티/이벤트/파트/슬롯)
 - [ ] Shadow DOM `open`, 파트/변수 기반 테마 제공
@@ -588,7 +596,7 @@ customElements.define('x-toast-host', XToastHost);
 
 ---
 
-## 18. 결론
+## 결론
 
 Web Components는 **브라우저 표준만으로** 캡슐화·재사용·테마 가능성을 제공합니다.
 **UI 원자/분자(Design System)** 층위에 특히 강력하며, 프레임워크와 **보완 관계**를 형성합니다.
@@ -597,6 +605,7 @@ Web Components는 **브라우저 표준만으로** 캡슐화·재사용·테마 
 ---
 
 ## 참고 문서
+
 - MDN Web Components: https://developer.mozilla.org/en-US/docs/Web/Web_Components
 - Custom Elements: https://developer.mozilla.org/en-US/docs/Web/API/CustomElementRegistry/define
 - Shadow DOM: https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM

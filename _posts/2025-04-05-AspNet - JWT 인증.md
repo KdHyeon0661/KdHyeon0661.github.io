@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core JWT 인증
 
-## 1. 핵심 요약(1페이지)
+## 핵심 요약(1페이지)
 
 - **JWT**는 로그인 성공 후 발급되는 **서명된 토큰**(Header.Payload.Signature)으로, 이후 요청의 `Authorization: Bearer` 헤더로 인증.
 - 서버는 무상태(Stateless)로 확장성 우수. 단, **탈취 방지(HTTPS/CORS/보관)**와 **수명 관리(만료/갱신)**가 중요.
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 2. 프로젝트 준비 및 패키지
+## 프로젝트 준비 및 패키지
 
 ```bash
 dotnet new webapi -n JwtPlayground
@@ -46,7 +46,7 @@ dotnet add package Swashbuckle.AspNetCore
 
 ---
 
-## 3. `Program.cs` — JWT 인증/인가 최소 구성
+## `Program.cs` — JWT 인증/인가 최소 구성
 
 ```csharp
 using System.Text;
@@ -142,9 +142,9 @@ app.Run();
 
 ---
 
-## 4. 토큰 발급 API — HS256/RS256, 사용자 클레임
+## 토큰 발급 API — HS256/RS256, 사용자 클레임
 
-### 4.1 DTO & 간단 사용자 스토어(예시)
+### DTO & 간단 사용자 스토어(예시)
 
 ```csharp
 public record LoginRequest(string Username, string Password);
@@ -165,7 +165,7 @@ public static class FakeUserStore
 }
 ```
 
-### 4.2 발급 서비스 — HS256(대칭키)
+### 발급 서비스 — HS256(대칭키)
 
 ```csharp
 using System.IdentityModel.Tokens.Jwt;
@@ -219,7 +219,7 @@ public sealed class TokenService
 
 > **RS256(RSA)로 전환** 시 `RsaSecurityKey`를 사용하고 **공개키(검증)/개인키(서명) 분리**로 보안/배포 유연성↑. JWKS/OIDC로 공개키 배포 가능(13장).
 
-### 4.3 로그인 엔드포인트(Access + Refresh 발급)
+### 로그인 엔드포인트(Access + Refresh 발급)
 
 ```csharp
 // Program.cs 혹은 Controller
@@ -267,7 +267,7 @@ app.MapPost("/api/auth/login", (LoginRequest req, TokenService tokens, IConfigur
 
 ---
 
-## 5. 토큰 검증 파라미터 해설(실무 포인트)
+## 토큰 검증 파라미터 해설(실무 포인트)
 
 - `ValidateIssuer/Audience`: **발급자/대상**을 엄격히 검증해 타 서비스 토큰 거부.
 - `ValidateLifetime`: 만료/`nbf` 검증. `ClockSkew`를 최소화(0~2분)하려면 서버 시간 동기화 필수.
@@ -278,9 +278,9 @@ app.MapPost("/api/auth/login", (LoginRequest req, TokenService tokens, IConfigur
 
 ---
 
-## 6. 권한 — Authorize/Role/Policy/Scope
+## 권한 — Authorize/Role/Policy/Scope
 
-### 6.1 엔드포인트 예시(역할/정책 혼합)
+### 엔드포인트 예시(역할/정책 혼합)
 
 ```csharp
 [Authorize] // 인증 필요
@@ -303,9 +303,9 @@ public class OrdersController : ControllerBase
 
 ---
 
-## 7. Refresh Token 설계(로테이션/재사용 탐지/블랙리스트)
+## Refresh Token 설계(로테이션/재사용 탐지/블랙리스트)
 
-### 7.1 교환(rotate) 엔드포인트
+### 교환(rotate) 엔드포인트
 
 ```csharp
 public record RefreshRequest(string refresh_token);
@@ -331,7 +331,7 @@ app.MapPost("/api/auth/refresh", (RefreshRequest req, TokenService tokens, Refre
 
 > 단순화 예제. 실제 구현은 **한 번의 조회/검증/회전**으로 처리, **재사용 탐지 시 세션 강제 종료** 및 **경보**가 필요.
 
-### 7.2 베스트 프랙티스
+### 베스트 프랙티스
 
 - **로테이션**: Refresh가 사용될 때마다 즉시 폐기 후 새 Refresh 생성.
 - **재사용 탐지**: 이미 사용/폐기된 Refresh가 재사용되면 **계정 탈취 의심**으로 **모든 Refresh 무효화**(세션 전부 종료).
@@ -340,7 +340,7 @@ app.MapPost("/api/auth/refresh", (RefreshRequest req, TokenService tokens, Refre
 
 ---
 
-## 8. Swagger(OpenAPI)와 JWT 연동
+## Swagger(OpenAPI)와 JWT 연동
 
 ```csharp
 builder.Services.AddSwaggerGen(c =>
@@ -377,7 +377,7 @@ Swagger UI에서 **Authorize 버튼** 클릭 → `Bearer <토큰>` 입력 후 AP
 
 ---
 
-## 9. CORS 구성 — SPA/모바일 연동 체크리스트
+## CORS 구성 — SPA/모바일 연동 체크리스트
 
 ```csharp
 builder.Services.AddCors(options =>
@@ -401,7 +401,7 @@ app.UseCors("Spa");
 
 ---
 
-## 10. 실무 보안 체크리스트
+## 실무 보안 체크리스트
 
 - [ ] **HTTPS 강제**, HSTS, 프록시/로드밸런서에서 헤더 보존.
 - [ ] **SigningKey 보호**: 환경 변수/KeyVault, 파일 권한 제한, 주기적 **Key Rollover**.
@@ -414,7 +414,7 @@ app.UseCors("Spa");
 
 ---
 
-## 11. 이벤트 훅(JwtBearerEvents) — 에러/로그/헤더
+## 이벤트 훅(JwtBearerEvents) — 에러/로그/헤더
 
 ```csharp
 .AddJwtBearer("Bearer", options =>
@@ -457,7 +457,7 @@ app.UseCors("Spa");
 
 ---
 
-## 12. 멀티 스킴 — Cookies(웹) + Bearer(API), Minimal API
+## 멀티 스킴 — Cookies(웹) + Bearer(API), Minimal API
 
 ```csharp
 builder.Services
@@ -478,7 +478,7 @@ MVC는 Cookies, API는 Bearer를 적용. 컨트롤러/엔드포인트별로 `Aut
 
 ---
 
-## 13. OIDC/JWKS(공개키), RS256 & Key Rollover
+## OIDC/JWKS(공개키), RS256 & Key Rollover
 
 - **RS256**로 서명하면 공개키로 검증 가능 → 여러 서비스가 **중앙 IdP**의 키를 참조(JWKS URL).
 - ASP.NET Core에서 `Authority`/`MetadataAddress`로 OIDC 메타데이터를 읽고 `AddJwtBearer`가 자동 키 로드.
@@ -501,7 +501,7 @@ MVC는 Cookies, API는 Bearer를 적용. 컨트롤러/엔드포인트별로 `Aut
 
 ---
 
-## 14. 통합 테스트(xUnit)에서 JWT 다루기
+## 통합 테스트(xUnit)에서 JWT 다루기
 
 - 테스트에서 **직접 토큰 생성** 후 `Authorization` 헤더에 부착.
 
@@ -525,9 +525,10 @@ public async Task Protected_Endpoint_Requires_Valid_Token()
 
 ---
 
-## 15. 운영 팁 & 트러블슈팅
+## 운영 팁 & 트러블슈팅
 
 ### 운영 팁
+
 - **게이트웨이/프록시**에서 JWT 검증 오프로딩 시, 내부 마이크로서비스는 `X-User-*` 헤더를 신뢰하기 전에 **서명/원천 검증**을 재확인할 것.
 - **토큰 크기**가 큰 경우(클레임 많음) 헤더 한도 초과 위험. 필요한 최소 클레임만 담고 나머지는 API 조회.
 

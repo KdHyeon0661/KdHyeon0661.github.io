@@ -4,7 +4,8 @@ title: Svelte - SvelteKit 기본 (1)
 date: 2025-09-28 23:25:23 +0900
 category: Svelte
 ---
-# 7. SvelteKit 기본 (1)
+# SvelteKit 기본 (1)
+
 **폴더 구조: `+layout`, `+page`, `+server`, `+layout.server` · 라우팅(파일 기반) · 동적 파라미터/중첩 레이아웃 · 렌더링 모드(SSR/SPA/SSG), 프리렌더링/하이브리드**
 
 > 이 장은 SvelteKit의 **파일 기반 라우팅과 렌더링 모델**을 이해하는 데 필요한 핵심을, **작동 예제**와 함께 한 번에 훑는다.
@@ -14,7 +15,7 @@ category: Svelte
 
 ---
 
-## 7.1 폴더 & 파일 구조 — 어떤 파일이 무엇을 하나?
+## 폴더 & 파일 구조 — 어떤 파일이 무엇을 하나?
 
 SvelteKit는 `src/routes` 폴더로 **라우트(경로)**를 구성한다. 폴더/파일 이름이 **URL**이 된다.
 
@@ -43,7 +44,7 @@ my-app/
           +page.server.ts   # slug 기반 서버 전용 로딩/보호
 ```
 
-### 7.1.1 각 파일의 책임 요약
+### 각 파일의 책임 요약
 
 - **`+layout.svelte`**: 공통 UI(헤더/푸터/토스트 등), **데이터는 상위에서 하위로 캐스케이딩**
 - **`+layout.ts`**: 클라이언트/서버 **모두에서 실행되는(load) 함수**와 **페이지 옵션**(예: `export const ssr = false`)
@@ -62,11 +63,11 @@ my-app/
 
 ---
 
-## 7.2 레이아웃 & 페이지의 데이터 흐름 — **캐스케이딩**
+## 레이아웃 & 페이지의 데이터 흐름 — **캐스케이딩**
 
 상위 레이아웃의 `load`가 리턴한 값은 **하위 레이아웃/페이지**에 **자동으로 병합**된다. 이를 **캐스케이딩**이라 한다.
 
-### 7.2.1 레이아웃에서 사용자 세션 주입하기
+### 레이아웃에서 사용자 세션 주입하기
 
 ```ts
 // src/routes/+layout.server.ts
@@ -101,7 +102,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 
 - 하위의 `+page.svelte`에서는 **`export let data`**로 같이 받는다(병합된 값).
 
-### 7.2.2 페이지 전용 데이터
+### 페이지 전용 데이터
 
 ```ts
 // src/routes/blog/[slug]/+page.ts
@@ -129,16 +130,16 @@ export const load: PageLoad = async ({ params, fetch }) => {
 
 ---
 
-## 7.3 라우팅 — 파일과 폴더가 URL이 된다
+## 라우팅 — 파일과 폴더가 URL이 된다
 
-### 7.3.1 기본 규칙
+### 기본 규칙
 
 - 폴더: 경로 세그먼트(`/blog` → `routes/blog/`)
 - `+page.svelte`: **그 경로의 페이지 뷰**
 - `+server.ts`: **그 경로의 API 엔드포인트**(`GET/POST` 등)
 - **인덱스**: 폴더에 `+page.svelte`가 있으면 해당 세그먼트 루트(예: `routes/blog/+page.svelte` → `/blog`)
 
-### 7.3.2 동적 파라미터
+### 동적 파라미터
 
 - **`[slug]`**: `/blog/[slug]/+page.svelte` → `/blog/hello`에서 `params.slug === 'hello'`
 - **캣치올(`[...]`)**: `/docs/[...path]/+page.svelte` → `/docs/guide/getting-started`에서 `params.path === 'guide/getting-started'`
@@ -168,7 +169,7 @@ export const load: PageLoad = async ({ params }) => {
 </ol>
 ```
 
-### 7.3.3 중첩 레이아웃
+### 중첩 레이아웃
 
 폴더마다 `+layout.svelte`를 두면, **중첩된 레이아웃**이 된다.
 
@@ -195,7 +196,7 @@ routes/
 
 ---
 
-## 7.4 API 라우트 — `+server.ts`로 HTTP 엔드포인트 만들기
+## API 라우트 — `+server.ts`로 HTTP 엔드포인트 만들기
 
 SvelteKit은 라우트 파일에 `+server.ts`를 두면 **백엔드 핸들러**가 된다.
 
@@ -222,9 +223,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
 ---
 
-## 7.5 `load` 함수 — **언제 어디서 실행될까?**
+## `load` 함수 — **언제 어디서 실행될까?**
 
-### 7.5.1 세 가지 `load`
+### 세 가지 `load`
 
 - **`+layout.ts / +page.ts`의 `load`**: **유니버설**.
   - SSR(첫 요청)에서는 **서버**에서 실행되어 HTML에 주입
@@ -234,7 +235,7 @@ export const POST: RequestHandler = async ({ request }) => {
   - CSR 전환 시에는 다시 호출되지 않음(서버 요청 없으면)
 - **둘 다 있으면**: `server` → `universal` 순서로 실행되고 결과가 병합된다.
 
-### 7.5.2 타입과 반환
+### 타입과 반환
 
 ```ts
 // src/routes/products/+page.ts
@@ -262,11 +263,11 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
 
 ---
 
-## 7.6 렌더링 모드 — SSR · SPA(CSR) · SSG
+## 렌더링 모드 — SSR · SPA(CSR) · SSG
 
 SvelteKit은 **페이지/레이아웃 단위**로 렌더링 모드를 설정할 수 있다.
 
-### 7.6.1 SSR (Server-Side Rendering)
+### SSR (Server-Side Rendering)
 
 - 기본값. 첫 요청에서 서버가 HTML을 만들어 응답.
 - SEO/초기 응답/보안(비밀키) 측면에서 유리.
@@ -278,7 +279,7 @@ export const ssr = true;    // 기본값이라 보통 생략
 export const csr = true;    // CSR 전환 허용(기본값 true)
 ```
 
-### 7.6.2 SPA/CSR Only (서버 렌더링 비활성화)
+### SPA/CSR Only (서버 렌더링 비활성화)
 
 - 문서가 **클라이언트에서만** 렌더됨(SEO 취약, CDN 캐싱 쉬움).
 - 빠른 대시보드/내부 도구에서 사용.
@@ -288,7 +289,7 @@ export const csr = true;    // CSR 전환 허용(기본값 true)
 export const ssr = false;   // 이 구간 이하 SSR 끄기
 ```
 
-### 7.6.3 SSG (정적 사이트 생성) / 프리렌더링
+### SSG (정적 사이트 생성) / 프리렌더링
 
 - 빌드 시 HTML을 **파일로 생성**해 CDN에서 서빙.
 - **변하지 않거나, revalidate로 느슨하게 변하는** 페이지에 적합.
@@ -303,9 +304,9 @@ export const prerender = true;
 
 ---
 
-## 7.7 프리렌더링 세부 — 엔트리/하이브리드
+## 프리렌더링 세부 — 엔트리/하이브리드
 
-### 7.7.1 특정 경로만 프리렌더
+### 특정 경로만 프리렌더
 
 ```ts
 // svelte.config.js (예시 개념 설명용)
@@ -325,7 +326,7 @@ export default config;
 
 - `entries: ['*']`는 기본(가능한 모든 페이지). `+layout.ts`에서 `prerender = true`면 해당 구간을 크롤한다.
 
-### 7.7.2 동적 리스트를 SSG하고 상세는 SSR (하이브리드)
+### 동적 리스트를 SSG하고 상세는 SSR (하이브리드)
 
 - 블로그: `/blog`와 일부 인기 글은 SSG, 나머지는 SSR로 실시간 제공.
 - 구현: 상위 `+layout.ts` 에서 **`prerender = true`**를 두되, **특정 하위 페이지**에서 **`export const prerender = false`**로 예외 처리.
@@ -342,7 +343,7 @@ export const prerender = false; // 상세는 SSR
 
 - 또는 반대로, 전체는 SSR이고 특정 페이지만 `prerender = true`로 개별 지정 가능.
 
-### 7.7.3 Revalidation (SSG + 유효기간)
+### Revalidation (SSG + 유효기간)
 
 정적 페이지라도 **주기적으로 갱신**하고 싶을 수 있다.
 
@@ -364,9 +365,9 @@ export const load = async ({ fetch, setHeaders }) => {
 
 ---
 
-## 7.8 예제로 보는 모드 조합
+## 예제로 보는 모드 조합
 
-### 7.8.1 “마케팅(SSG) + 앱(SSR/CSR)”
+### “마케팅(SSG) + 앱(SSR/CSR)”
 
 ```
 routes/
@@ -394,7 +395,7 @@ export const ssr = false; // 앱은 CSR 전용 (로그인 후 대시보드 등)
 
 - `/`와 `/pricing`은 **정적 HTML**로 배포, `/app/*`은 **CSR**.
 
-### 7.8.2 “블로그(SSG) + 검색(SSR)”
+### “블로그(SSG) + 검색(SSR)”
 
 ```ts
 // src/routes/blog/+layout.ts
@@ -409,9 +410,9 @@ export const ssr = true;
 
 ---
 
-## 7.9 실습: **동적 블로그**(리스트 SSG, 상세 SSR) + 공통 사용자 세션
+## 실습: **동적 블로그**(리스트 SSG, 상세 SSR) + 공통 사용자 세션
 
-### 7.9.1 API 라우트(목록/상세)
+### API 라우트(목록/상세)
 
 ```ts
 // src/routes/api/posts/+server.ts
@@ -443,7 +444,7 @@ export const GET: RequestHandler = async ({ params }) => {
 };
 ```
 
-### 7.9.2 레이아웃: 사용자 세션
+### 레이아웃: 사용자 세션
 
 ```ts
 // src/routes/+layout.server.ts
@@ -474,7 +475,7 @@ export const load: LayoutServerLoad = async ({ cookies }) => {
 </style>
 ```
 
-### 7.9.3 블로그: 리스트 SSG / 상세 SSR
+### 블로그: 리스트 SSG / 상세 SSR
 
 ```ts
 // src/routes/blog/+layout.ts
@@ -536,7 +537,7 @@ export const load: PageLoad = async ({ params, fetch }) => {
 
 ---
 
-## 7.10 페이지 옵션 모음 — 파일 단위로 제어
+## 페이지 옵션 모음 — 파일 단위로 제어
 
 아래 상수들을 **`+layout.ts` 또는 `+page.ts`**에 export 하면 해당 구간/페이지에 적용된다.
 
@@ -553,7 +554,7 @@ export const trailingSlash = 'never' | 'always' | 'ignore';
 
 ---
 
-## 7.11 흔한 함정 & 체크리스트
+## 흔한 함정 & 체크리스트
 
 1) **`.server.ts`에서만 가능한 일**과 **유니버설에서 가능한 일**을 혼동
    - 비밀키/DB/쿠키 민감 로직은 **`.server.ts`**에서.
@@ -575,7 +576,7 @@ export const trailingSlash = 'never' | 'always' | 'ignore';
 
 ---
 
-## 7.12 요약
+## 요약
 
 - **파일명으로 역할 고정**: `+layout(.server).ts`/`+page(.server).ts`/`+server.ts`
 - **캐스케이딩 데이터**로 상위 레이아웃 → 하위 페이지로 상태 전파

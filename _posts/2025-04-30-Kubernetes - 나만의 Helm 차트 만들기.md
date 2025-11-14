@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # 나만의 Helm 차트 만들기
 
-## 1. 스캐폴딩: 차트 생성
+## 스캐폴딩: 차트 생성
 
 ```bash
 helm create mychart
@@ -38,7 +38,7 @@ mychart/
 
 ---
 
-## 2. values.yaml 설계 — “환경 독립 이미지 + 환경 종속 설정” 분리
+## values.yaml 설계 — “환경 독립 이미지 + 환경 종속 설정” 분리
 
 ```yaml
 replicaCount: 2
@@ -82,7 +82,7 @@ affinity: {}
 
 ---
 
-## 3. 템플릿 커스터마이징: Deployment
+## 템플릿 커스터마이징: Deployment
 
 `templates/deployment.yaml` (핵심 부분만 발췌)
 
@@ -142,7 +142,7 @@ spec:
 
 ---
 
-## 4. Service 템플릿
+## Service 템플릿
 
 {% raw %}
 ```yaml
@@ -165,7 +165,7 @@ spec:
 
 ---
 
-## 5. Ingress(옵션)
+## Ingress(옵션)
 
 {% raw %}
 ```yaml
@@ -207,7 +207,7 @@ spec:
 
 ---
 
-## 6. _helpers.tpl — 네이밍/라벨 표준화
+## _helpers.tpl — 네이밍/라벨 표준화
 
 {% raw %}
 ```yaml
@@ -243,14 +243,15 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 ---
 
-## 7. 다양한 템플릿 기법 모음
+## 다양한 템플릿 기법 모음
 
-### 7.1 조건/반복/기본값
+### 조건/반복/기본값
 
 {% raw %}
 ```yaml
 {{- if .Values.metrics.enabled }}
 # ServiceMonitor 혹은 PodMonitor 등 CRD 사용 시
+
 {{- end }}
 
 env:
@@ -261,7 +262,7 @@ env:
 ```
 {% endraw %}
 
-### 7.2 `tpl`로 동적 렌더링
+### `tpl`로 동적 렌더링
 
 values에 템플릿 문자열이 들어온 경우 해석:
 
@@ -271,7 +272,7 @@ values에 템플릿 문자열이 들어온 경우 해석:
 ```
 {% endraw %}
 
-### 7.3 파일 삽입
+### 파일 삽입
 
 {% raw %}
 ```yaml
@@ -281,7 +282,7 @@ data:
 ```
 {% endraw %}
 
-### 7.4 `required`, `default`, `quote`, `b64enc`
+### `required`, `default`, `quote`, `b64enc`
 
 {% raw %}
 ```yaml
@@ -294,7 +295,7 @@ data:
 
 ---
 
-## 8. 값 스키마(검증) — `values.schema.json`
+## 값 스키마(검증) — `values.schema.json`
 
 차트 루트에 JSONSchema를 두면 `helm install/upgrade` 시 값 검증이 가능하다.
 
@@ -331,16 +332,19 @@ data:
 
 ---
 
-## 9. 설치 전 검증 루틴
+## 설치 전 검증 루틴
 
 ```bash
 # 렌더 결과 미리보기
+
 helm template myrel ./mychart -f values-dev.yaml | tee rendered.yaml
 
 # 차트 린트
+
 helm lint ./mychart
 
 # (권장) kubeconform 등으로 스키마 검증
+
 helm template myrel ./mychart -f values-dev.yaml | kubeconform -strict -
 ```
 
@@ -353,7 +357,7 @@ helm diff upgrade myrel ./mychart -f values-prod.yaml
 
 ---
 
-## 10. 설치/업그레이드 — 안전 옵션
+## 설치/업그레이드 — 안전 옵션
 
 ```bash
 helm upgrade --install myapp ./mychart \
@@ -375,9 +379,9 @@ helm rollback myapp 2
 
 ---
 
-## 11. Hook & Test — 배포 전후 작업/검증 자동화
+## Hook & Test — 배포 전후 작업/검증 자동화
 
-### 11.1 마이그레이션 Hook(Job)
+### 마이그레이션 Hook(Job)
 
 {% raw %}
 ```yaml
@@ -400,7 +404,7 @@ spec:
 ```
 {% endraw %}
 
-### 11.2 설치 검증 테스트(helm test)
+### 설치 검증 테스트(helm test)
 
 {% raw %}
 ```yaml
@@ -425,7 +429,7 @@ spec:
 helm test myapp
 ```
 
-### 11.3 NOTES.txt — 설치 후 안내
+### NOTES.txt — 설치 후 안내
 
 `templates/NOTES.txt` 예시:
 
@@ -448,7 +452,7 @@ helm test myapp
 
 ---
 
-## 12. 서브차트/의존성 — charts/ & 글로벌 값
+## 서브차트/의존성 — charts/ & 글로벌 값
 
 `Chart.yaml`에 의존성 선언:
 
@@ -473,6 +477,7 @@ helm dependency update ./mychart
 
 ```yaml
 # values.yaml
+
 redis:
   architecture: replication
   auth:
@@ -490,7 +495,7 @@ global:
 
 ---
 
-## 13. 보안/비밀 관리 — 운영 체크리스트
+## 보안/비밀 관리 — 운영 체크리스트
 
 - Secret은 **base64 인코딩일 뿐 암호화 아님** → **etcd 암호화**, RBAC 최소 권한
 - 값 파일에 비밀번호 평문 저장 금지 → 다음 중 택일/혼용
@@ -503,6 +508,7 @@ global:
 ```bash
 helm plugin install https://github.com/jkroepke/helm-secrets
 # secrets-prod.yaml 을 sops 로 암호화
+
 helm secrets enc secrets-prod.yaml
 helm upgrade --install myapp ./mychart \
   -f values-prod.yaml -f secrets-prod.yaml
@@ -510,12 +516,13 @@ helm upgrade --install myapp ./mychart \
 
 ---
 
-## 14. HPA/PDB/보건검진(Probe) 연계
+## HPA/PDB/보건검진(Probe) 연계
 
 ### HPA 활성화(예시)
 
 ```yaml
 # values.yaml
+
 autoscaling:
   enabled: true
   minReplicas: 2
@@ -529,6 +536,7 @@ autoscaling:
 
 ```yaml
 # values.yaml
+
 pdb:
   enabled: true
   minAvailable: "50%"
@@ -547,7 +555,7 @@ readinessProbe:
 
 ---
 
-## 15. 고급: Library Chart(공통 템플릿) 분리
+## 고급: Library Chart(공통 템플릿) 분리
 
 여러 서비스에서 동일한 템플릿을 재사용하려면 **type=library** 차트를 별도로 만들고, 앱 차트에서 `include`로 호출한다.
 대규모 조직에서 네이밍/라벨/리소스/Sidecar 패턴을 통일할 때 유용.
@@ -560,7 +568,7 @@ type: library
 
 ---
 
-## 16. OCI 레지스트리로 차트 배포
+## OCI 레지스트리로 차트 배포
 
 컨테이너 레지스트리에 차트를 저장/배포(감사·권한·캐시 장점)
 
@@ -576,7 +584,7 @@ helm pull oci://ghcr.io/acme/helm/mychart --version 1.2.0
 
 ---
 
-## 17. GitOps/CI 파이프라인 통합
+## GitOps/CI 파이프라인 통합
 
 - **Argo CD/Flux**로 리포지터리 선언적 동기화 (values 파일 레이어링)
 - PR 기반 변경 → 렌더/린트/스키마 검증 → diff → 자동 배포
@@ -592,7 +600,7 @@ helm test myrel
 
 ---
 
-## 18. 운영 트러블슈팅 체크리스트
+## 운영 트러블슈팅 체크리스트
 
 1. 렌더 미리보기: `helm template --debug --dry-run`
 2. 차이 보기: `helm diff upgrade ...`
@@ -607,10 +615,11 @@ helm test myrel
 
 ---
 
-## 19. 환경별 values 예시(개발/운영)
+## 환경별 values 예시(개발/운영)
 
 ```yaml
 # values-dev.yaml
+
 replicaCount: 1
 image:
   tag: "dev-2025-11-01"
@@ -626,6 +635,7 @@ ingress:
 
 ```yaml
 # values-prod.yaml
+
 replicaCount: 4
 image:
   tag: "1.4.0"
@@ -663,7 +673,7 @@ helm upgrade --install myapp ./mychart -f values-prod.yaml    # 운영
 
 ---
 
-## 20. 빠른 점검 명령 모음
+## 빠른 점검 명령 모음
 
 | 목적 | 명령 |
 |---|---|

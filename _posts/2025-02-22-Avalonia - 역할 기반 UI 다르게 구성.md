@@ -19,9 +19,9 @@ category: Avalonia
 
 ---
 
-## 1. 서버 응답/토큰 클레임 설계
+## 서버 응답/토큰 클레임 설계
 
-### 1.1 로그인 응답에 역할 포함
+### 로그인 응답에 역할 포함
 
 ```json
 {
@@ -33,7 +33,7 @@ category: Avalonia
 }
 ```
 
-### 1.2 JWT 클레임에 역할 포함 (대안)
+### JWT 클레임에 역할 포함 (대안)
 
 ```json
 {
@@ -49,9 +49,9 @@ category: Avalonia
 
 ---
 
-## 2. 모델·전역 상태 설계
+## 모델·전역 상태 설계
 
-### 2.1 역할/권한 모델
+### 역할/권한 모델
 
 ```csharp
 public enum AppRole
@@ -74,7 +74,7 @@ public enum AppPermission
 }
 ```
 
-### 2.2 사용자 정보 모델
+### 사용자 정보 모델
 
 ```csharp
 public class AuthUserInfo
@@ -93,7 +93,7 @@ public class AuthUserInfo
 }
 ```
 
-### 2.3 전역 인증 상태
+### 전역 인증 상태
 
 ```csharp
 public class AppAuthState : ReactiveUI.ReactiveObject
@@ -142,9 +142,9 @@ public class AppAuthState : ReactiveUI.ReactiveObject
 
 ---
 
-## 3. AuthService — 로그인/Refresh + 역할 파싱
+## AuthService — 로그인/Refresh + 역할 파싱
 
-### 3.1 로그인 시 역할/권한 설정
+### 로그인 시 역할/권한 설정
 
 ```csharp
 public sealed class AuthService : IAuthService
@@ -275,7 +275,7 @@ public sealed class AuthService : IAuthService
 }
 ```
 
-### 3.2 JWT 파서 (의존성 최소화)
+### JWT 파서 (의존성 최소화)
 
 ```csharp
 public static class JwtReader
@@ -323,7 +323,7 @@ public static class JwtReader
 
 ---
 
-## 4. 정책 계층: Role/Permission을 평가하는 AuthorizationService
+## 정책 계층: Role/Permission을 평가하는 AuthorizationService
 
 UI 단마다 직접 `IsAdmin`을 붙이면 중복·누락이 발생한다. **정책 이름**으로 평가하도록 추상화한다.
 
@@ -371,7 +371,7 @@ services.AddSingleton<IAuthorizationService, AuthorizationService>();
 
 ---
 
-## 5. ViewModel — 역할/정책 쓰기
+## ViewModel — 역할/정책 쓰기
 
 ```csharp
 public sealed class MainViewModel : ReactiveUI.ReactiveObject
@@ -400,9 +400,9 @@ public sealed class MainViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 6. View — 역할 기반 렌더링 패턴 모음
+## View — 역할 기반 렌더링 패턴 모음
 
-### 6.1 단순 바인딩(IsVisible/IsEnabled)
+### 단순 바인딩(IsVisible/IsEnabled)
 
 ```xml
 <Menu>
@@ -414,7 +414,7 @@ public sealed class MainViewModel : ReactiveUI.ReactiveObject
 </Menu>
 ```
 
-### 6.2 DataTrigger/Style로 반복 제거
+### DataTrigger/Style로 반복 제거
 
 ```xml
 <UserControl.Styles>
@@ -432,7 +432,7 @@ public sealed class MainViewModel : ReactiveUI.ReactiveObject
 </StackPanel>
 ```
 
-### 6.3 컨버터 사용 (Policy 이름 → bool)
+### 컨버터 사용 (Policy 이름 → bool)
 
 ```csharp
 public sealed class PolicyToBoolConverter : IValueConverter
@@ -460,7 +460,7 @@ public sealed class PolicyToBoolConverter : IValueConverter
         IsVisible="{Binding ., Converter={StaticResource Policy}, ConverterParameter=ManageUsers}"/>
 ```
 
-### 6.4 Attached Behavior — 선언형 권한 태그
+### Attached Behavior — 선언형 권한 태그
 
 ```csharp
 public static class AuthBehaviors
@@ -502,9 +502,9 @@ XAML:
 
 ---
 
-## 7. 네비게이션 가드(라우팅 제어)
+## 네비게이션 가드(라우팅 제어)
 
-### 7.1 서비스 정의
+### 서비스 정의
 
 ```csharp
 public interface INavigationGuard
@@ -533,7 +533,7 @@ DI:
 services.AddSingleton<INavigationGuard, RoleNavigationGuard>();
 ```
 
-### 7.2 Shell에서 가드 적용
+### Shell에서 가드 적용
 
 ```csharp
 public sealed class ShellViewModel : ReactiveUI.ReactiveObject
@@ -563,7 +563,7 @@ public sealed class ShellViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 8. API 호출 — 인증 핸들러와 403 처리
+## API 호출 — 인증 핸들러와 403 처리
 
 권한 부족 시 서버는 **403 Forbidden**을 반환해야 한다. 클라이언트는 UX로 안내하고, 필요한 경우 **역할 재동기화**를 시도한다.
 
@@ -601,7 +601,7 @@ public sealed class AuthenticatedHttpHandler : DelegatingHandler
 
 ---
 
-## 9. 역할 변경 실시간 반영
+## 역할 변경 실시간 반영
 
 - `Refresh` 또는 별도 `GET /me` 호출로 역할·권한 갱신
 - `_state.NotifyIdentityChanged()` 호출 → **모든 바인딩 재평가**
@@ -609,7 +609,7 @@ public sealed class AuthenticatedHttpHandler : DelegatingHandler
 
 ---
 
-## 10. 예시 화면 구성
+## 예시 화면 구성
 
 ```xml
 <DockPanel>
@@ -627,9 +627,9 @@ public sealed class AuthenticatedHttpHandler : DelegatingHandler
 
 ---
 
-## 11. 테스트 전략
+## 테스트 전략
 
-### 11.1 AuthorizationService 테스트
+### AuthorizationService 테스트
 
 ```csharp
 [Fact]
@@ -645,7 +645,7 @@ public void Policy_AdminOnly_True_For_Admin()
 }
 ```
 
-### 11.2 NavigationGuard 테스트
+### NavigationGuard 테스트
 
 ```csharp
 [Fact]
@@ -659,7 +659,7 @@ public void Guard_Blocks_AdminDashboard_For_User()
 }
 ```
 
-### 11.3 ViewModel 바인딩 테스트
+### ViewModel 바인딩 테스트
 
 ```csharp
 [Fact]
@@ -677,7 +677,7 @@ public void MainVm_Reacts_To_Role_Change()
 
 ---
 
-## 12. 운영 체크리스트
+## 운영 체크리스트
 
 - 로그인/Refresh 시 **역할과 권한을 최신화**, UI 재평가
 - **권한 실패(403)** 처리: 안내·재로그인/역할 재동기화
@@ -687,7 +687,7 @@ public void MainVm_Reacts_To_Role_Change()
 
 ---
 
-## 13. 보안 유의점
+## 보안 유의점
 
 - **UI 숨김은 방어가 아니다**: 공격자는 네트워크 요청을 직접 보낼 수 있다. 서버는 **항상 재검증**
 - 토큰 저장 시 **OS 보호 저장소**(Windows DPAPI 등) 고려
@@ -696,7 +696,7 @@ public void MainVm_Reacts_To_Role_Change()
 
 ---
 
-## 14. 전체 예제 묶음(간단 조립)
+## 전체 예제 묶음(간단 조립)
 
 ```csharp
 // DI

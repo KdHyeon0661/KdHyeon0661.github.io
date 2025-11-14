@@ -4,9 +4,9 @@ title: 데이터 통신 1장 - Introduction (2)
 date: 2024-07-12 19:20:23 +0900
 category: DataCommunication
 ---
-# 1.3 Network Types
+# Network Types
 
-## 1.3.1 Local Area Network (LAN)
+## Local Area Network (LAN)
 
 - **정의**: 한정된 영역(가정·소규모 사무실·캠퍼스·데이터센터) 내 장치들을 연결하는 네트워크.
   스위치, 무선 AP, 라우터 등의 네트워크 장비를 통해 통신한다.
@@ -61,6 +61,7 @@ interface eth48
 
 ```bash
 # ARP 브로드캐스트 관찰(리눅스 머신에서)
+
 sudo tcpdump -i eth0 -n 'arp or broadcast'
 ```
 
@@ -68,22 +69,25 @@ sudo tcpdump -i eth0 -n 'arp or broadcast'
 
 ---
 
-## 1.3.2 Wide Area Network (WAN)
+## Wide Area Network (WAN)
 
 - **정의**: 지리적으로 떨어진 여러 LAN을 광범위하게 연결하는 네트워크.
 - **매체/서비스**: 전용회선(Leased Line), MPLS L3VPN/L2VPN, 브로드밴드(FTTH/케이블/DSL), 위성, 5G/전용 무선.
 
 ### WAN 연결 유형
 
-#### 1. Point-to-Point WAN
+#### Point-to-Point WAN
+
 - **두 지점 간 전용 링크**. 예: 본사–DR 센터 전용회선.
 - 예측 가능한 지연과 대역폭, 보안 우수. **비용↑**.
 
-#### 2. Switched WAN
+#### Switched WAN
+
 - 서비스 사업자(운영자)의 **교환망**을 경유해 다수 지점 연결.
 - **MPLS VPN**이 대표적: 라우팅 격리·QoS·트래픽 엔지니어링 가능.
 
-#### 3. Internetwork (네트워크의 네트워크)
+#### Internetwork (네트워크의 네트워크)
+
 - **다수의 네트워크를 라우터로 상호연결**.
 - 정책 라우팅, 경계 보안, 주소 설계, NAT/CGNAT, IPv6 전개까지 포함.
 
@@ -107,17 +111,18 @@ router bgp 65001
 
 ---
 
-## 1.3.3 Switching
+## Switching
 
 **스위칭**은 입력 인터페이스로 들어온 프레임/패킷을 **어디로 보내야 할지 결정**하고 **전달**하는 기능이다.
 
-### 1. 회선 교환(Circuit Switching)
+### 회선 교환(Circuit Switching)
 
 - **특징**: 통화/전송 동안 **독점 회선·고정 대역폭** 할당. 접속 설정에 시간 소요, 설정 이후 **일정 지연**.
 - **장점**: 일정 품질(지연·지터 예측성), 연속 전송 적합(전통 음성).
 - **단점**: 회선 비활성 시간에도 자원 고정 → **비효율**, 다양한 속도/코드 변환 어려움, 비용↑.
 
 #### 간단 수식 — 회선 용량과 점유율
+
 - 통화 채널 수:
   $$ N = \left\lfloor \frac{C}{B} \right\rfloor $$
   - \(C\): 총 회선 용량, \(B\): 채널당 대역폭
@@ -125,18 +130,20 @@ router bgp 65001
   $$ U = \frac{\sum_i t_i}{T} $$
   - \(t_i\): 세션 i의 점유 시간, \(T\): 관측 시간
 
-### 2. 패킷 교환(Packet Switching)
+### 패킷 교환(Packet Switching)
 
 - **메시지를 패킷**으로 나누어 전송, 각 패킷은 독립 라우팅(데이터그램) 또는 **가상회선(VC)** 을 통할 수 있음.
 - **장점**: 자원 **통계적 다중화**로 효율↑, 속도/프로토콜 변환 가능, 장애 시 **우회 가능**, 오류 제어·재전송 가능.
 - **단점**: 교착점/혼잡 시 **가변 지연·지터**, 큐잉 지연 증가.
 
 #### 스위치 동작 방식
+
 - **Store-and-Forward**: 전체 프레임 수신 후 FCS 확인 → 전달(오류 차단, 지연↑)
 - **Cut-Through**: 목적지 MAC 확인 즉시 포워딩(지연↓, 오류 프레임 통과 가능)
 - **Fragment-Free**: 선두 64바이트 확인 후 포워딩(妥協안)
 
 #### 데이터그램 vs 가상회선(VC)
+
 - **데이터그램**: 패킷별 독립 경로, 인터넷 IP.
 - **VC**: 연결 설정 후 동일 경로 사용, **MPLS LSP**, ATM/Frame Relay 유사 개념.
 
@@ -163,6 +170,7 @@ class Switch:
 sw = Switch()
 ports = [1,2,3,4]
 # A(MAC AA) 가 포트1에서 B(MAC BB) 로 전송한다고 가정
+
 sw.learn("AA:AA:AA:AA:AA:AA", 1)
 print("to unknown BB -> flood:", sw.forward("BB:BB:BB:BB:BB:BB", 1, ports))
 sw.learn("BB:BB:BB:BB:BB:BB", 3)
@@ -171,7 +179,7 @@ print("to known BB -> unicast:", sw.forward("BB:BB:BB:BB:BB:BB", 1, ports))
 
 ---
 
-## 1.3.4 The Internet
+## The Internet
 
 - **internet(소문자)**: 공통 프로토콜로 상호 연결된 **임의의 네트워크 집합**.
 - **Internet(대문자)**: **TCP/IP** 로 상호연결된 전 세계 네트워크들의 집합(“네트워크의 네트워크”).
@@ -191,31 +199,31 @@ print("to known BB -> unicast:", sw.forward("BB:BB:BB:BB:BB:BB", 1, ports))
 
 ---
 
-## 1.3.5 Accessing the Internet
+## Accessing the Internet
 
 > 다양한 **라스트마일**(가정/지사) 접속 기술과 **엔터프라이즈 직결** 유형을 정리한다.
 
-### 1. 전화망 기반
+### 전화망 기반
 
 - **Dial-up**: 모뎀으로 PSTN 회선 사용(레거시, 매우 저속).
 - **DSL(ADSL/VDSL)**: 동축 쌍선 기반 고속 전송. 거리 의존, 업/다운 비대칭(ADSL).
 
-### 2. 케이블/DOCSIS
+### 케이블/DOCSIS
 
 - 케이블 방송 동축망 공유, **DOCSIS** 규격. 다운스트림 대역폭 우수, **세그먼트 혼잡** 변동.
 
-### 3. 광(FTTx)
+### 광(FTTx)
 
 - **FTTH/FTTP(PON: GPON/XG-PON/25G-PON)**: 고속·저지연·대역폭 대칭 가능.
 - **Active Ethernet**: 전용 광포트, 고품질/비용↑.
 
-### 4. 무선
+### 무선
 
 - **Wi-Fi**: 가정/사무실 액세스, 백홀은 유선.
 - **4G/5G**: eMBB/URLLC/mMTC 등 프로필. **5G FWA(고정 무선)** 로 유선 대체도 가능.
 - **위성(Low Earth Orbit)**: 광역 커버리지, 지연/이중화 고려.
 
-### 5. 엔터프라이즈/기관 전용
+### 엔터프라이즈/기관 전용
 
 - **전용회선**(L2/L3), **MPLS VPN**, **SD-WAN(오버레이+멀티회선)**, **클라우드 전용 회선**(Direct Connect/ExpressRoute 등).
 
@@ -249,11 +257,11 @@ print("TCP Throughput≈", tcp_throughput_mbps(1460,40,1e-3), "Mbps")
 
 ---
 
-# 1.4 Internet History
+# Internet History
 
 > **초기 이론 → ARPANET → TCP/IP 전환(Flag Day) → NSFNET/상용화 → 웹/브로드밴드/모바일 → 오늘날** 로 이어지는 큰 흐름.
 
-## 1.4.1 Early History
+## Early History
 
 - **패킷 스위칭 이론(1960s)**:
   - Paul Baran(랜덤 라우팅·내결함성), Donald Davies(“Packet” 용어), Leonard Kleinrock(큐잉 이론 응용).
@@ -263,7 +271,7 @@ print("TCP Throughput≈", tcp_throughput_mbps(1460,40,1e-3), "Mbps")
   - 초창기 4개 노드(UTA, UCLA, SRI, UCSB) → 이후 확장.
   - NCP(초기 전송 프로토콜) 기반, 이후 TCP/IP 로 진화.
 
-## 1.4.2 Birth of the Internet
+## Birth of the Internet
 
 - **TCP/IP**: **IP**(라우팅/베스트에포트) + **TCP**(신뢰전송/흐름·혼잡제어).
 - **1983-01-01**: “**Flag Day**” — ARPANET의 **TCP/IP 전환**.
@@ -273,7 +281,7 @@ print("TCP Throughput≈", tcp_throughput_mbps(1460,40,1e-3), "Mbps")
 - **NSFNET(1985~1995)**: 연구·교육 네트워크 백본(T1→T3), 상호연결의 기반.
 - **상용화(1990s)**: 백본의 민영화/상업 ISP 성장, **웹(WWW, 1989 제안/1991 공개)** 대중화.
 
-## 1.4.3 Internet Today
+## Internet Today
 
 - **WWW/브라우저**: Mosaic(1993), Netscape/IE → 크롬/사파리/파폭.
 - **멀티미디어 스트리밍**: HLS/DASH, RTP/RTCP, CDN·엣지 컴퓨팅.
@@ -283,11 +291,11 @@ print("TCP Throughput≈", tcp_throughput_mbps(1460,40,1e-3), "Mbps")
 
 ---
 
-# 1.5 Standards and Administration
+# Standards and Administration
 
 > **표준화·번호 자원·거버넌스**의 흐름을 이해하면, **인터넷이 왜 호환성과 개방성을 유지**하는지 보인다.
 
-## 1.5.1 Internet Standards (IETF·RFC·STD·BCP)
+## Internet Standards (IETF·RFC·STD·BCP)
 
 ### RFC와 표준 트랙 개요
 
@@ -308,6 +316,7 @@ print("TCP Throughput≈", tcp_throughput_mbps(1460,40,1e-3), "Mbps")
 
 ```text
 # 표준 트랙 예
+
 - RFC 791  : Internet Protocol (역사적)
 - RFC 8200 : IPv6 Specification (Internet Standard)
 - RFC 793  : TCP (역사적), 최신은 RFC 9293 (TCP Specifications)
@@ -327,7 +336,7 @@ print(re.findall(r"\b(MUST|SHOULD|MAY)\b", text))
 
 - 표준 문서 해석 시 MUST/SHOULD 의 차이가 구현 의무를 좌우.
 
-## 1.5.2 Internet Administration (조직/역할)
+## Internet Administration (조직/역할)
 
 - **ISOC(Internet Society)**: 인터넷 발전·정책·교육 지원, **IETF/IAB** 후원.
 - **IAB(Internet Architecture Board)**: 아키텍처 감독·자문, RFC 시리즈 전반 정책.
@@ -346,10 +355,11 @@ print(re.findall(r"\b(MUST|SHOULD|MAY)\b", text))
 
 ## 부록: 손에 잡히는 네트워킹 실습 스니펫
 
-### 1. 소켓 에코 서버/클라이언트(로컬 테스트)
+### 소켓 에코 서버/클라이언트(로컬 테스트)
 
 ```python
 # server.py
+
 import socket, threading
 def handle(c, addr):
     with c:
@@ -367,13 +377,14 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
 ```python
 # client.py
+
 import socket
 with socket.create_connection(("127.0.0.1", 9000)) as s:
     s.sendall(b"hello lan/wan")
     print(s.recv(4096))
 ```
 
-### 2. 경로/지연 가시화(traceroute + 간이 파서)
+### 경로/지연 가시화(traceroute + 간이 파서)
 
 ```bash
 traceroute example.com
@@ -390,14 +401,17 @@ for ln in lines:
 print("Hops:", len(hops), "Last Hop:", hops[-1] if hops else None)
 ```
 
-### 3. iperf3 로 접속 품질 보기
+### iperf3 로 접속 품질 보기
 
 ```bash
 # 서버
+
 iperf3 -s
 # 클라이언트 TCP
+
 iperf3 -c <server-ip> -t 20
 # 클라이언트 UDP (손실/지터 관찰)
+
 iperf3 -c <server-ip> -u -b 50M -t 20 --get-server-output
 ```
 

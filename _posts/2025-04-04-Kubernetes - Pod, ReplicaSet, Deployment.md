@@ -16,14 +16,16 @@ category: Kubernetes
 
 ---
 
-## 1. Pod — 쿠버네티스의 최소 실행 단위
+## Pod — 쿠버네티스의 최소 실행 단위
 
-### 1.1 개념 확장
+### 개념 확장
+
 - **Pod = 하나 이상의 컨테이너 + 공유 네임스페이스**(네트워크/IPC) + **공유 볼륨**.
 - 일반적으로 **1 Pod = 1 컨테이너**가 기본이나, **사이드카 패턴**(로그 수집, 프록시, 설정 리로드 등)으로 다중 컨테이너를 사용.
 - **동일 Pod 내 컨테이너는 localhost(127.0.0.1)로 통신** 가능, 스토리지는 동일 볼륨 마운트로 공유.
 
-### 1.2 단일 컨테이너 Pod (기본)
+### 단일 컨테이너 Pod (기본)
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -48,7 +50,8 @@ spec:
       periodSeconds: 10
 ```
 
-### 1.3 다중 컨테이너 Pod(사이드카)
+### 다중 컨테이너 Pod(사이드카)
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -80,7 +83,8 @@ spec:
   - *Adapter*: 메트릭/로그 포맷 변환
   - *Ambassador*: 외부 시스템 프록시
 
-### 1.4 Init/Ephemeral 컨테이너
+### Init/Ephemeral 컨테이너
+
 - **InitContainers**: 본 컨테이너 시작 전 1회성 준비(마이그레이션/권한 세팅).
 - **Ephemeral Containers**: 실행 중인 Pod에 디버깅 컨테이너를 일시 주입.
 
@@ -101,7 +105,8 @@ spec:
 kubectl debug pod/<POD> -it --image=busybox:1.36 --target=app
 ```
 
-### 1.5 스케줄링·보안·환경설정 핵심
+### 스케줄링·보안·환경설정 핵심
+
 ```yaml
 spec:
   nodeSelector: { "kubernetes.io/os": linux }
@@ -132,13 +137,15 @@ spec:
 
 ---
 
-## 2. ReplicaSet — Pod “개수”를 보장하는 컨트롤러
+## ReplicaSet — Pod “개수”를 보장하는 컨트롤러
 
-### 2.1 개념 확장
+### 개념 확장
+
 - **Replica 개수 유지**가 역할의 전부. 템플릿에 따라 Pod를 생성/추가/복구한다.
 - **업데이트 전략은 제공하지 않음** → 사양 변경(이미지/환경) 시 새 RS를 만들어 교체해야 함(수동은 비권장).
 
-### 2.2 예시와 핵심 속성
+### 예시와 핵심 속성
+
 ```yaml
 apiVersion: apps/v1
 kind: ReplicaSet
@@ -162,19 +169,22 @@ spec:
 - **selector는 불변**: 생성 후 바꿀 수 없음. 라벨-셀렉터 정합성은 필수.
 - 템플릿이 바뀔 경우, RS를 새로 만들거나(수동) → 보통은 **Deployment에 맡김**.
 
-### 2.3 언제 직접 사용할까?
+### 언제 직접 사용할까?
+
 - 교육/실험 목적, 또는 **커스텀 컨트롤러**와의 결합에서 드물게.
 - 실무에선 거의 항상 **Deployment** 사용.
 
 ---
 
-## 3. Deployment — 선언적 업데이트의 표준
+## Deployment — 선언적 업데이트의 표준
 
-### 3.1 개념 확장
+### 개념 확장
+
 - **ReplicaSet의 상위 컨트롤러**. RS를 생성·교체하여 **롤링 업데이트/롤백**을 자동화.
 - 배포 전략(rolling vs recreate), 진행 상태 감시, 히스토리 관리 등을 제공.
 
-### 3.2 기본 예시
+### 기본 예시
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -194,7 +204,8 @@ spec:
         ports: [{ containerPort: 80 }]
 ```
 
-### 3.3 롤링 업데이트 파라미터
+### 롤링 업데이트 파라미터
+
 ```yaml
 spec:
   strategy:
@@ -208,7 +219,8 @@ spec:
 - **maxSurge**↑, **maxUnavailable**↓: 가용성 최우선.
 - **progressDeadlineSeconds**: 지연/교착 시 실패 처리.
 
-### 3.4 Recreate 전략(다운타임 허용)
+### Recreate 전략(다운타임 허용)
+
 ```yaml
 spec:
   strategy:
@@ -216,11 +228,12 @@ spec:
 ```
 - 특정 워크로드(단일 리더·상호 배타 리소스)에 유용.
 
-### 3.5 카나리/블루그린(서비스 분리 패턴)
+### 카나리/블루그린(서비스 분리 패턴)
 
 **카나리(두 Deployment, 라벨로 트래픽 분배):**
 ```yaml
 # svc는 app=web 라벨을 선택한다고 가정
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -257,7 +270,8 @@ spec:
 - `web-blue`와 `web-green` 두 개를 준비하고, **Service의 selector만** 전환하여 트래픽 스위치.
 - 되돌리기(rollback)가 빠르다.
 
-### 3.6 롤아웃 명령 습관
+### 롤아웃 명령 습관
+
 ```bash
 kubectl set image deploy/nginx-deploy nginx=nginx:1.27.1
 kubectl rollout status deploy/nginx-deploy
@@ -267,7 +281,8 @@ kubectl rollout undo deploy/nginx-deploy --to-revision=3
 
 ---
 
-## 4. 세 오브젝트의 관계(복습 도식)
+## 세 오브젝트의 관계(복습 도식)
+
 ```
 [ Deployment ]   --(관리/교체)-->   [ ReplicaSet ]   --(생성/보장)-->   [ Pod ] -> 컨테이너
 ```
@@ -277,18 +292,21 @@ kubectl rollout undo deploy/nginx-deploy --to-revision=3
 
 ---
 
-## 5. 실습 — Nginx 배포·노출·업데이트 루틴
+## 실습 — Nginx 배포·노출·업데이트 루틴
 
-### 5.1 배포 + 서비스(NodePort)
+### 배포 + 서비스(NodePort)
+
 ```bash
 kubectl create deployment nginx --image=nginx:1.27-alpine --replicas=3
 kubectl expose deployment nginx --type=NodePort --port=80
 kubectl get deploy,rs,pods,svc -o wide
 ```
 
-### 5.2 Readiness/Liveness 추가(선언형 패치)
+### Readiness/Liveness 추가(선언형 패치)
+
 ```yaml
 # patch-nginx-probes.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: nginx }
@@ -310,7 +328,8 @@ kubectl apply -f patch-nginx-probes.yaml
 kubectl rollout status deploy/nginx
 ```
 
-### 5.3 이미지 업데이트/되돌리기
+### 이미지 업데이트/되돌리기
+
 ```bash
 kubectl set image deploy/nginx nginx=nginx:1.27.2
 kubectl rollout status deploy/nginx
@@ -320,7 +339,7 @@ kubectl rollout undo deploy/nginx
 
 ---
 
-## 6. 운영 팁 — 라벨·셀렉터·리소스·스케줄링 체크리스트
+## 운영 팁 — 라벨·셀렉터·리소스·스케줄링 체크리스트
 
 - **라벨/셀렉터 정합성**: `kubectl get ep <svc>`로 Service↔Pod 연결 검증.
 - **리소스 request/limit**: HPA/VPA와 연동, 과대요청은 비용 상승·밀도 저하.
@@ -330,7 +349,8 @@ kubectl rollout undo deploy/nginx
 
 ---
 
-## 7. 디버깅 루틴(명령 스니펫)
+## 디버깅 루틴(명령 스니펫)
+
 ```bash
 kubectl get pods -o wide
 kubectl describe pod <POD>
@@ -339,15 +359,17 @@ kubectl get events --sort-by=.lastTimestamp
 kubectl exec -it pod/<POD> -- /bin/sh
 kubectl top pods -A
 # 서비스 연결 검증
+
 kubectl get ep <SVC>
 kubectl run -it --rm netshoot --image=nicolaka/netshoot -- /bin/bash
 # 내부에서:
+
 curl -I http://<SVC_NAME>.<NS>.svc.cluster.local
 ```
 
 ---
 
-## 8. 흔한 문제와 해결
+## 흔한 문제와 해결
 
 | 증상 | 1차 확인 | 원인 후보 | 해결 |
 |---|---|---|---|
@@ -360,7 +382,8 @@ curl -I http://<SVC_NAME>.<NS>.svc.cluster.local
 
 ---
 
-## 9. 간단 용량·레플리카 산정(학습용)
+## 간단 용량·레플리카 산정(학습용)
+
 요청률(QPS)과 평균 처리시간 \(t\) 초, 파드당 안정 처리량 \(\text{cap}_{pod}\) (동시 처리 가능 요청 수)가 있을 때 필요한 **최소 레플리카**는
 $$
 \text{replicas}_{\min} \approx
@@ -371,7 +394,8 @@ $$
 
 ---
 
-## 10. 요약 — 언제 무엇을 쓸까?
+## 요약 — 언제 무엇을 쓸까?
+
 | 목적 | 오브젝트 | 설명/메모 |
 |---|---|---|
 | 임시 실습·단발 테스트 | **Pod** | 직접 생성 가능하나 운영 비권장 |

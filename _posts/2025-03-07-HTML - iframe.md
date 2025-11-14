@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML `<iframe>`
 
-## 1. `<iframe>` 기본 구조와 핵심 속성
+## `<iframe>` 기본 구조와 핵심 속성
 
 ```html
 <iframe
@@ -33,7 +33,7 @@ category: HTML
 | `name` | 타깃 네비게이션(`target="name"`)과 메시징에서 식별자 역할 |
 | `srcdoc` | 외부 URL 없이 **인라인 HTML**을 직접 삽입 |
 
-### 1.1 `srcdoc`로 인라인 문서 임베드
+### `srcdoc`로 인라인 문서 임베드
 
 ```html
 <iframe
@@ -54,9 +54,9 @@ category: HTML
 
 ---
 
-## 2. 활용 예시
+## 활용 예시
 
-### 2.1 YouTube 영상 임베드
+### YouTube 영상 임베드
 
 ```html
 <iframe
@@ -72,7 +72,7 @@ category: HTML
 
 - 최신 권장: `allow="...; fullscreen"`로 전체 화면 권한 포함.
 
-### 2.2 Google 지도 임베드
+### Google 지도 임베드
 
 ```html
 <iframe
@@ -85,16 +85,16 @@ category: HTML
 ></iframe>
 ```
 
-### 2.3 문서/대시보드 임베드 팁
+### 문서/대시보드 임베드 팁
 
 - PDF, 대시보드 서비스(예: Looker Studio, Tableau) 등은 **서비스 제공자가 허용**해야 표시됩니다.
 - 상대 사이트가 `X-Frame-Options: DENY/SAMEORIGIN` 또는 `Content-Security-Policy: frame-ancestors`로 **차단**하면 임베드 불가.
 
 ---
 
-## 3. 레이아웃/반응형/리사이징
+## 레이아웃/반응형/리사이징
 
-### 3.1 반응형 비율 상자(16:9 예)
+### 반응형 비율 상자(16:9 예)
 
 ```html
 <style>
@@ -116,7 +116,7 @@ category: HTML
 
 - 구형 브라우저는 `padding-top` 트릭(56.25%)로 대체 가능.
 
-### 3.2 콘텐츠 높이에 맞춰 자동 리사이즈(postMessage)
+### 콘텐츠 높이에 맞춰 자동 리사이즈(postMessage)
 
 자식 프레임(동일 출처 또는 메시지 합의)에서 **높이**를 부모에게 보내고, 부모가 iframe 높이를 조정.
 
@@ -153,16 +153,16 @@ window.addEventListener('load', sendHeight);
 
 ---
 
-## 4. 보안 리스크와 대응
+## 보안 리스크와 대응
 
-### 4.1 대표 리스크
+### 대표 리스크
 
 - **Clickjacking**: 로그인/결제 등 중요한 버튼 위에 투명 iframe을 겹쳐 클릭 유도.
 - **XSS/CSRF 전파**: 취약한 페이지를 프레임으로 임베드할 때 악성 스크립트 실행/요청 유도.
 - **피싱/세션 탈취**: 프레임 내부에서 입력값 탈취/토큰 재사용.
 - **Same-Origin Policy 혼동**: 동일 출처가 아니면 DOM 접근 불가. `allow-same-origin` 샌드박스는 신중히.
 
-### 4.2 `sandbox` — 최소 권한 원칙
+### `sandbox` — 최소 권한 원칙
 
 ```html
 <!-- 가장 안전: 전부 차단한 뒤 필요한 것만 허용 -->
@@ -193,7 +193,7 @@ window.addEventListener('load', sendHeight);
 
 > 원칙: **`sandbox` 기본** + 필요한 권한만 열기. `allow-same-origin`과 `allow-scripts`를 동시에 주면 **강력 권한**이므로 꼭 필요한 경우에 한정.
 
-### 4.3 Permissions Policy(`allow` 속성)
+### Permissions Policy(`allow` 속성)
 
 프레임 내부에서 사용할 수 있는 기능을 **출처/조건**과 함께 제한.
 
@@ -209,7 +209,7 @@ window.addEventListener('load', sendHeight);
 - 페이지 전역 정책은 **HTTP 응답 헤더 `Permissions-Policy`**로도 설정 가능.
 - `allowfullscreen` 대신 `allow="fullscreen"` 사용을 권장.
 
-### 4.4 CSP(콘텐츠 보안 정책)
+### CSP(콘텐츠 보안 정책)
 
 - **`frame-src`**: 이 페이지가 **어떤 출처**에서 프레임을 로드할 수 있는지.
 - **`frame-ancestors`**: **이 페이지를 누가** 프레임으로 **임베드할 수 있는지**(Clickjacking 방지, 임베드 당하는 쪽).
@@ -220,7 +220,7 @@ Content-Security-Policy: frame-src https://trusted.cdn.com https://player.youtub
 
 > `frame-ancestors`는 **임베드 당하는 페이지**가 설정해야 효과가 있습니다.
 
-### 4.5 X-Frame-Options(레거시)
+### X-Frame-Options(레거시)
 
 ```http
 X-Frame-Options: DENY              # 임베드 금지
@@ -229,7 +229,7 @@ X-Frame-Options: SAMEORIGIN        # 동일 출처만 허용
 
 - 최신 환경은 CSP `frame-ancestors` 권장. 구형 브라우저 대비로 **겹쳐서** 쓰기도 합니다.
 
-### 4.6 postMessage 보안 패턴
+### postMessage 보안 패턴
 
 ```html
 <script>
@@ -251,7 +251,7 @@ window.addEventListener('message', (event) => {
 
 ---
 
-## 5. 접근성(a11y)·SEO·포커스
+## 접근성(a11y)·SEO·포커스
 
 - **`title`**은 **반드시** 의미 있게 작성(“동영상 플레이어”, “회사 위치 지도” 등).
 - 프레임 내부 포커스 이동은 별도 문맥이므로, **키보드 트랩**이 생기지 않도록 설계.
@@ -269,7 +269,7 @@ window.addEventListener('message', (event) => {
 
 ---
 
-## 6. 성능 최적화
+## 성능 최적화
 
 - **`loading="lazy"`**로 폴드 밖 프레임의 초기 네트워크 비용 감소.
 - 가능한 한 **가벼운 임베드 URL** 사용(광고/추적 스크립트 과다 페이지 지양).
@@ -290,7 +290,7 @@ document.getElementById('load').addEventListener('click', () => {
 
 ---
 
-## 7. 동일 출처 판단과 스크립트 접근
+## 동일 출처 판단과 스크립트 접근
 
 ```html
 <!-- 부모 JS -->
@@ -310,7 +310,7 @@ try {
 
 ---
 
-## 8. 고급 시나리오: 결제/인증/크로스 오리진 격리
+## 고급 시나리오: 결제/인증/크로스 오리진 격리
 
 - **민감 작업(결제·인증)**: 제공 사업자의 **보안 가이드**(필수 헤더, sandbox/allow 조합)를 따르세요.
 - **COOP/COEP(교차 출처 격리)**: SharedArrayBuffer 등의 고급 API가 필요하거나, 강한 프로세스 격리를 요구할 때 서버측에서 설정.
@@ -323,7 +323,7 @@ try {
 
 ---
 
-## 9. 폴백/대체 링크 제공
+## 폴백/대체 링크 제공
 
 임베드가 차단되거나 장애가 있을 때를 대비해 **대체 링크/요약**을 제공하세요.
 
@@ -340,7 +340,7 @@ try {
 
 ---
 
-## 10. 종합 예제 — 안전한 임베드 + 통신 + 반응형
+## 종합 예제 — 안전한 임베드 + 통신 + 반응형
 
 ```html
 <!doctype html>
@@ -437,7 +437,7 @@ window.addEventListener('message', (e) => {
 
 ---
 
-## 11. 체크리스트
+## 체크리스트
 
 - [ ] 임베드 대상이 **법적/보안적으로 신뢰 가능한가?**
 - [ ] `sandbox`는 기본 적용, **필요 권한만 토큰으로 허용**했는가?
@@ -450,7 +450,7 @@ window.addEventListener('message', (e) => {
 
 ---
 
-## 12. 요약
+## 요약
 
 - `<iframe>`은 **외부 문서를 안전하게 포함**하는 표준 수단이지만, 보안/성능/접근성을 반드시 함께 고려해야 합니다.
 - **보안 핵심**: `sandbox` 기본 + 최소 권한, `allow`(Permissions Policy), `CSP frame-ancestors`, 출처 검증된 `postMessage`.

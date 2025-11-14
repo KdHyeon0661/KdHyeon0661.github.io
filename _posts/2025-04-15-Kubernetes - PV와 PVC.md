@@ -14,7 +14,7 @@ category: Docker
 
 ---
 
-## 1. 왜 Kubernetes에서도 Volume이 필요한가
+## 왜 Kubernetes에서도 Volume이 필요한가
 
 Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구가 발생하면 컨테이너 파일시스템의 내용은 사라진다.
 데이터베이스, 업로드 파일, 캐시 중 일부, 로그 보관 등은 **Pod 수명과 무관하게 보존**되어야 한다.
@@ -26,7 +26,7 @@ Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구
 
 ---
 
-## 2. 용어와 큰 그림
+## 용어와 큰 그림
 
 ```
 +--------------------------+     +--------------------------+
@@ -54,7 +54,7 @@ Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구
 
 ---
 
-## 3. Ephemeral vs Persistent
+## Ephemeral vs Persistent
 
 | 항목 | Ephemeral (예: emptyDir, configMap, secret) | Persistent (PV/PVC) |
 |---|---|---|
@@ -69,9 +69,9 @@ Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구
 
 ---
 
-## 4. PV 스펙의 핵심: 용량, 접근 모드, 리클레임 정책, 소유권
+## PV 스펙의 핵심: 용량, 접근 모드, 리클레임 정책, 소유권
 
-### 4.1 접근 모드(accessModes)
+### 접근 모드(accessModes)
 
 - `ReadWriteOnce` (RWO): 한 노드에서 하나의 Pod가 읽기/쓰기 마운트
 - `ReadOnlyMany` (ROX): 여러 노드에서 읽기 전용
@@ -81,7 +81,7 @@ Pod는 일시적이다. 재스케줄링이나 롤링 업데이트, 장애 복구
 클라우드 블록 스토리지(예: AWS EBS, GCE PD, Azure Disk)는 일반적으로 RWO.
 RWX가 필요하면 NFS, CephFS, EFS(AWS), Filestore(GCP), Azure Files 등 **파일 스토리지**를 고려한다.
 
-### 4.2 리클레임 정책(persistentVolumeReclaimPolicy)
+### 리클레임 정책(persistentVolumeReclaimPolicy)
 
 - `Retain`: PVC 삭제 후에도 PV와 실제 데이터 유지. 수동 정리 필요.
 - `Delete`: PVC 삭제 시 PV와 스토리지(클라우드 디스크)도 삭제.
@@ -91,7 +91,7 @@ RWX가 필요하면 NFS, CephFS, EFS(AWS), Filestore(GCP), Azure Files 등 **파
 - 데이터 보존이 필요한 워크로드는 `Retain`을 검토.
 - 테스트 환경이나 임시 워크로드는 `Delete`로 자동 정리.
 
-### 4.3 노드 어피니티와 바인딩 시점
+### 노드 어피니티와 바인딩 시점
 
 - `nodeAffinity` (PV): 특정 노드/존에 귀속된 로컬/블록 볼륨 매핑에 사용.
 - StorageClass의 `volumeBindingMode`
@@ -100,9 +100,9 @@ RWX가 필요하면 NFS, CephFS, EFS(AWS), Filestore(GCP), Azure Files 등 **파
 
 ---
 
-## 5. 예제: 수동 PV + PVC + Pod (NFS)
+## 예제: 수동 PV + PVC + Pod (NFS)
 
-### 5.1 PersistentVolume (PV)
+### PersistentVolume (PV)
 
 ```yaml
 apiVersion: v1
@@ -126,7 +126,7 @@ spec:
 - NFS는 RWX를 지원하므로 여러 Pod에서 공유가 가능하다.
 - `mountOptions`로 프로토콜/성능 옵션을 제어할 수 있다.
 
-### 5.2 PersistentVolumeClaim (PVC)
+### PersistentVolumeClaim (PVC)
 
 ```yaml
 apiVersion: v1
@@ -143,7 +143,7 @@ spec:
 
 PV와 PVC의 `accessModes`/`storage`가 매칭되어야 바인딩된다.
 
-### 5.3 Pod에서 PVC 마운트
+### Pod에서 PVC 마운트
 
 ```yaml
 apiVersion: v1
@@ -165,11 +165,11 @@ spec:
 
 ---
 
-## 6. 동적 프로비저닝(StorageClass)
+## 동적 프로비저닝(StorageClass)
 
 PVC가 생성될 때 자동으로 PV를 만들어 붙여 준다. 클라우드/CSI 드라이버 환경에서 가장 일반적이다.
 
-### 6.1 StorageClass 예시 (블록, RWO)
+### StorageClass 예시 (블록, RWO)
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -184,7 +184,7 @@ allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 ```
 
-### 6.2 PVC (동적)
+### PVC (동적)
 
 ```yaml
 apiVersion: v1
@@ -199,7 +199,7 @@ spec:
       storage: 5Gi
 ```
 
-### 6.3 Pod
+### Pod
 
 ```yaml
 apiVersion: v1
@@ -226,7 +226,7 @@ spec:
 
 ---
 
-## 7. 볼륨 확장(Resize)과 파일시스템
+## 볼륨 확장(Resize)과 파일시스템
 
 - PVC 스펙의 `resources.requests.storage`를 늘리면 확장이 시도된다.
 - 드라이버/파일시스템에 따라 온라인 확장 지원 여부가 다르다.
@@ -241,7 +241,7 @@ kubectl get pvc pvc-dynamic
 
 ---
 
-## 8. 권한과 보안: 퍼미션, fsGroup, 보안 컨텍스트
+## 권한과 보안: 퍼미션, fsGroup, 보안 컨텍스트
 
 컨테이너 실행 사용자가 루트가 아니라면, 마운트된 볼륨에 쓰기 권한이 없을 수 있다. 대표적으로 다음을 조정한다.
 
@@ -274,7 +274,7 @@ spec:
 
 ---
 
-## 9. subPath와 읽기 전용 마운트
+## subPath와 읽기 전용 마운트
 
 특정 파일 또는 하위 디렉터리만 마운트하려면 `subPath`를 사용한다.
 
@@ -291,7 +291,7 @@ volumeMounts:
 
 ---
 
-## 10. StatefulSet과 volumeClaimTemplates
+## StatefulSet과 volumeClaimTemplates
 
 StatefulSet은 각 Pod에 고유한 PVC를 자동 생성한다. 상태를 가진 워크로드(DB, 큐 등)에 적합하다.
 
@@ -334,11 +334,11 @@ spec:
 
 ---
 
-## 11. VolumeSnapshot으로 백업/복구
+## VolumeSnapshot으로 백업/복구
 
 CSI 스냅샷 CRD가 설치된 환경에서 스냅샷을 만들어 시점 복구를 구현할 수 있다.
 
-### 11.1 VolumeSnapshotClass
+### VolumeSnapshotClass
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -349,7 +349,7 @@ driver: ebs.csi.aws.com           # 드라이버에 맞게 수정
 deletionPolicy: Delete
 ```
 
-### 11.2 스냅샷 생성
+### 스냅샷 생성
 
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
@@ -362,7 +362,7 @@ spec:
     persistentVolumeClaimName: pvc-dynamic
 ```
 
-### 11.3 스냅샷으로 PVC 복원
+### 스냅샷으로 PVC 복원
 
 ```yaml
 apiVersion: v1
@@ -383,10 +383,11 @@ spec:
 
 ---
 
-## 12. 운영 명령어
+## 운영 명령어
 
 ```bash
 # 리소스 나열
+
 kubectl get pv
 kubectl get pvc
 kubectl get sc
@@ -394,23 +395,26 @@ kubectl get volumesnapshotclass
 kubectl get volumesnapshot
 
 # 상세 확인
+
 kubectl describe pv <pv>
 kubectl describe pvc <pvc>
 kubectl describe sc <sc>
 kubectl describe volumesnapshot <snap>
 
 # 스토리지 사용 확인(컨테이너 내부에서)
+
 kubectl exec -it <pod> -- df -h
 kubectl exec -it <pod> -- ls -l /mountpoint
 
 # 삭제
+
 kubectl delete pvc <pvc>
 kubectl delete pv <pv>
 ```
 
 ---
 
-## 13. 트러블슈팅 가이드
+## 트러블슈팅 가이드
 
 | 증상 | 주요 확인 포인트 | 흔한 원인 | 해결책 |
 |---|---|---|---|
@@ -430,7 +434,7 @@ kubectl describe pod <name> | sed -n '/Events/,$p'
 
 ---
 
-## 14. 체크리스트
+## 체크리스트
 
 - 스토리지 특성 파악
   - 지연/처리량/IOPS, 가용성 영역(존), 스냅샷/암호화 지원
@@ -449,7 +453,7 @@ kubectl describe pod <name> | sed -n '/Events/,$p'
 
 ---
 
-## 15. 부록: 빈번히 쓰는 에피hemeral 볼륨들 개요
+## 부록: 빈번히 쓰는 에피hemeral 볼륨들 개요
 
 | 타입 | 요약 | 주의점 |
 |---|---|---|
@@ -460,9 +464,9 @@ kubectl describe pod <name> | sed -n '/Events/,$p'
 
 ---
 
-## 16. 참고 예제 묶음
+## 참고 예제 묶음
 
-### 16.1 NFS PV/PVC/Pod 일괄
+### NFS PV/PVC/Pod 일괄
 
 ```yaml
 ---
@@ -506,7 +510,7 @@ spec:
       claimName: nfs-pvc
 ```
 
-### 16.2 StorageClass 기반 동적 PVC
+### StorageClass 기반 동적 PVC
 
 ```yaml
 ---

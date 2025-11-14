@@ -6,13 +6,13 @@ category: HTML
 ---
 # HTML5 `<canvas>` 태그
 
-## 1. `<canvas>`란 무엇인가
+## `<canvas>`란 무엇인가
 
 - **픽셀 기반 비트맵 렌더 타깃**. 벡터 DOM이 아닌, **JS가 매 프레임 그려 넣는 화면 버퍼**.
 - 자체로는 “빈 사각형”; 실제 그리기는 **CanvasRenderingContext2D** 혹은 **WebGL/WebGPU** 컨텍스트가 수행.
 - 상태 기반(Stateful) API: 펜 색, 선 굵기, 변환 행렬 등이 컨텍스트에 저장되어 그 이후 호출에 영향을 준다.
 
-### 1.1 최소 문법
+### 최소 문법
 
 ```html
 <canvas id="c" width="400" height="300">이 브라우저는 Canvas를 지원하지 않습니다.</canvas>
@@ -28,13 +28,15 @@ category: HTML
 
 ---
 
-## 2. 좌표계·경로·상태 — 2D 컨텍스트 핵심 모델
+## 좌표계·경로·상태 — 2D 컨텍스트 핵심 모델
 
-### 2.1 좌표계
+### 좌표계
+
 - 기본 좌표 원점 `(0,0)`은 좌상단, x는 오른쪽, y는 아래로 증가.
 - 모든 그리기는 현재 **변환 행렬(CTM)**에 의해 변환된다. `scale/rotate/translate/transform`로 변경.
 
-### 2.2 경로(Path)와 상태(State)
+### 경로(Path)와 상태(State)
+
 - **경로 기반**: `beginPath → moveTo/lineTo/arc/rect/bezierCurveTo/... → fill()/stroke()` 흐름.
 - **상태 스택**: `save()`로 푸시, `restore()`로 팝. 스타일/변환/클리핑 등 묶음 관리.
 
@@ -49,7 +51,7 @@ ctx.restore();
 
 ---
 
-## 3. 기본 도형 그리기
+## 기본 도형 그리기
 
 ```js
 const ctx = c.getContext('2d');
@@ -73,7 +75,7 @@ ctx.fillStyle = '#2f855a';
 ctx.fill();
 ```
 
-### 3.1 선 스타일
+### 선 스타일
 
 ```js
 ctx.lineWidth = 8;
@@ -84,7 +86,8 @@ ctx.setLineDash([12, 6]);     // 대시
 ctx.lineDashOffset = 0;
 ```
 
-### 3.2 곡선 API
+### 곡선 API
+
 - `quadraticCurveTo(cpx,cpy,x,y)` — 2차 베지에
 - `bezierCurveTo(cp1x,cp1y,cp2x,cp2y,x,y)` — 3차 베지에
 - `arc(x,y,r,start,end,ccw?)`, `ellipse(x,y,rx,ry,rot,start,end,ccw?)`
@@ -92,9 +95,9 @@ ctx.lineDashOffset = 0;
 
 ---
 
-## 4. 채우기·윤곽·그라디언트·패턴·그림자
+## 채우기·윤곽·그라디언트·패턴·그림자
 
-### 4.1 그라디언트
+### 그라디언트
 
 ```js
 const g = ctx.createLinearGradient(0,0,0,200);
@@ -106,7 +109,7 @@ ctx.fillRect(240, 20, 120, 160);
 
 `createRadialGradient(x0,y0,r0,x1,y1,r1)`로 원형 그라디언트도 가능.
 
-### 4.2 패턴
+### 패턴
 
 ```js
 const img = new Image();
@@ -118,7 +121,7 @@ img.onload = () => {
 };
 ```
 
-### 4.3 그림자
+### 그림자
 
 ```js
 ctx.shadowColor = 'rgba(0,0,0,0.35)';
@@ -129,7 +132,7 @@ ctx.fillStyle = '#fff';
 ctx.fillRect(200, 220, 160, 80);
 ```
 
-### 4.4 합성(Compositing)
+### 합성(Compositing)
 
 ```js
 ctx.globalAlpha = 0.8;
@@ -139,7 +142,7 @@ ctx.globalCompositeOperation = 'source-over';
 
 ---
 
-## 5. 텍스트 렌더링과 측정
+## 텍스트 렌더링과 측정
 
 ```js
 ctx.font = '600 24px system-ui, sans-serif'; // weight size family
@@ -166,9 +169,9 @@ ctx.strokeText('Outlined', 30, 370);
 
 ---
 
-## 6. 이미지·비디오 그리기와 고급 옵션
+## 이미지·비디오 그리기와 고급 옵션
 
-### 6.1 이미지 그리기
+### 이미지 그리기
 
 ```js
 const img = new Image();
@@ -181,7 +184,7 @@ img.onload = () => {
 };
 ```
 
-### 6.2 비디오 프레임 그리기
+### 비디오 프레임 그리기
 
 ```js
 const v = document.createElement('video');
@@ -196,7 +199,7 @@ function drawFrame() {
 }
 ```
 
-### 6.3 이미지 스무딩·필터
+### 이미지 스무딩·필터
 
 ```js
 ctx.imageSmoothingEnabled = true;
@@ -210,9 +213,9 @@ ctx.filter = 'none';
 
 ---
 
-## 7. 클리핑과 Path2D
+## 클리핑과 Path2D
 
-### 7.1 클리핑
+### 클리핑
 
 ```js
 ctx.save();
@@ -223,7 +226,7 @@ ctx.drawImage(img, 440, 160, 120, 120);
 ctx.restore();
 ```
 
-### 7.2 Path2D 재사용
+### Path2D 재사용
 
 ```js
 const p = new Path2D();
@@ -237,9 +240,9 @@ ctx.restore();
 
 ---
 
-## 8. 픽셀 조작과 이펙트
+## 픽셀 조작과 이펙트
 
-### 8.1 픽셀 읽기/쓰기
+### 픽셀 읽기/쓰기
 
 ```js
 const { width, height } = c;
@@ -261,9 +264,9 @@ ctx.putImageData(imgData, 0, 0);
 
 ---
 
-## 9. 애니메이션 루프와 물리 기초
+## 애니메이션 루프와 물리 기초
 
-### 9.1 기본 루프
+### 기본 루프
 
 ```js
 let t0 = performance.now();
@@ -283,7 +286,7 @@ function draw() {
 }
 ```
 
-### 9.2 간단한 탄성 공 예제
+### 간단한 탄성 공 예제
 
 ```js
 const W = c.width, H = c.height;
@@ -303,9 +306,10 @@ function draw(){
 
 ---
 
-## 10. 반응형·HiDPI(레티나) 스케일링
+## 반응형·HiDPI(레티나) 스케일링
 
-### 10.1 기본 원리
+### 기본 원리
+
 - CSS 크기와 실제 픽셀 버퍼 크기를 **디바이스 픽셀 비율(dpr)**에 맞춰 동기화.
 - `devicePixelRatio`를 곱해 캔버스 버퍼를 크게 잡고 컨텍스트를 스케일링.
 
@@ -327,7 +331,7 @@ new ResizeObserver(()=>resizeCanvas(c)).observe(c);
 
 ---
 
-## 11. 성능 최적화 체크리스트
+## 성능 최적화 체크리스트
 
 - **리드백 최소화**: `getImageData`/`measureText` 등 CPU↔GPU 왕복 줄이기.
 - **드로우 콜 묶기**: 동일 스타일은 연속 호출, `beginPath`/`fill` 최소화.
@@ -340,7 +344,7 @@ new ResizeObserver(()=>resizeCanvas(c)).observe(c);
 
 ---
 
-## 12. 보안·CORS·Tainted Canvas
+## 보안·CORS·Tainted Canvas
 
 - 교차 출처 이미지/비디오를 인증 없이 그리면 캔버스가 **tainted** 상태가 되어 `toDataURL`/`getImageData`가 차단.
 - 해결:
@@ -356,7 +360,7 @@ img.src = 'https://cdn.example.com/a.png';
 
 ---
 
-## 13. 내보내기와 파일 다운로드
+## 내보내기와 파일 다운로드
 
 ```js
 // DataURL
@@ -373,7 +377,7 @@ c.toBlob(blob => {
 
 ---
 
-## 14. 접근성 전략
+## 접근성 전략
 
 - 캔버스 내용은 스크린리더에 **직접 노출되지 않는다**.
 - 접근성 보조층:
@@ -389,14 +393,15 @@ c.toBlob(blob => {
 
 ---
 
-## 15. 실전 미니 프로젝트
+## 실전 미니 프로젝트
 
-### 15.1 반응형 막대 차트(데이터 변화 애니메이션 포함)
+### 반응형 막대 차트(데이터 변화 애니메이션 포함)
 
 ```html
 <style>
 #wrap { width: 100%; max-width: 720px; margin: 24px auto; }
 #wrap canvas { width: 100%; height: 360px; display: block; border: 1px solid #ddd; }
+
 </style>
 <div id="wrap">
   <canvas id="bar"></canvas>
@@ -472,7 +477,7 @@ setInterval(randomize, 2000);
 
 ---
 
-## 16. OffscreenCanvas·Web Worker로 병렬 처리
+## OffscreenCanvas·Web Worker로 병렬 처리
 
 메인 스레드 UI 가로막힘 없이 렌더:
 
@@ -502,7 +507,7 @@ self.onmessage = e => {
 
 ---
 
-## 17. WebGL과의 연계
+## WebGL과의 연계
 
 - `<canvas>`는 **2D** 뿐 아니라 **WebGL/WebGL2** 컨텍스트를 제공한다.
 - 3D 장면, 대규모 파티클, GPGPU 등 고성능 요구 작업 가능.
@@ -510,7 +515,7 @@ self.onmessage = e => {
 
 ---
 
-## 18. 흔한 문제와 해결
+## 흔한 문제와 해결
 
 | 문제 | 원인 | 대처 |
 |---|---|---|
@@ -522,7 +527,7 @@ self.onmessage = e => {
 
 ---
 
-## 19. 라이브러리·엔진
+## 라이브러리·엔진
 
 - 2D 엔진: **Pixi.js**, **Konva.js**, **Fabric.js**, **Paper.js**
 - 차트: **Chart.js**, **uPlot**, **ECharts**
@@ -532,7 +537,7 @@ self.onmessage = e => {
 
 ---
 
-## 20. 체크리스트 요약
+## 체크리스트 요약
 
 - [ ] HiDPI 스케일링과 리사이즈 처리
 - [ ] 상태 스택(`save/restore`)으로 지역 스타일 관리

@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Oracle **DBMS_XPLAN**
 
-## 0. 핵심 한 장
+## 핵심 한 장
 
 - **예상 계획**:
   ```sql
@@ -28,7 +28,7 @@ category: DB 심화
 
 ---
 
-## 1. 실습 스키마(샘플 데이터)
+## 실습 스키마(샘플 데이터)
 
 ```sql
 -- 깨끗이
@@ -86,9 +86,10 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,'ORDERS',cascade=>TRUE);
 
 ---
 
-## 2. **예상 실행계획 출력** — `EXPLAIN PLAN FOR` + `DBMS_XPLAN.DISPLAY`
+## **예상 실행계획 출력** — `EXPLAIN PLAN FOR` + `DBMS_XPLAN.DISPLAY`
 
-### 2.1 기본 사용
+### 기본 사용
+
 ```sql
 EXPLAIN PLAN FOR
 SELECT /* plan_test */ SUM(o.amount)
@@ -104,7 +105,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, NULL, 'ALL +PREDICATE +ALIAS +PROJE
   - `table_name` = NULL → `PLAN_TABLE`에서 **최근**
   - `format` → `BASIC/TYPICAL/ALL` + `+PREDICATE/+NOTE/...`
 
-### 2.2 출력 해석 포인트
+### 출력 해석 포인트
+
 - **Operation**: `INDEX RANGE SCAN`, `TABLE ACCESS BY ROWID`, `HASH JOIN`, `NESTED LOOPS`, `SORT GROUP BY` 등
 - **Rows/Bytes/Cost/Time**: **추정치**(실제 아님)
 - **Predicate Information**:
@@ -116,9 +118,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, NULL, 'ALL +PREDICATE +ALIAS +PROJE
 
 ---
 
-## 3. **캐싱된 커서의 실제 실행계획 출력** — `DBMS_XPLAN.DISPLAY_CURSOR`
+## **캐싱된 커서의 실제 실행계획 출력** — `DBMS_XPLAN.DISPLAY_CURSOR`
 
-### 3.1 방금 실행한 SQL의 실제 계획
+### 방금 실행한 SQL의 실제 계획
+
 ```sql
 -- 쿼리 실행(바인드)
 VAR cid NUMBER; EXEC :cid := 12345;
@@ -141,7 +144,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
   - `+PEEKED_BINDS` : **바인드 피킹 값** 확인(값 스큐/ACS 분석에 중요)
   - 이 시점엔 라인별 통계(A-Rows)는 없음 → 다음 장의 `ALLSTATS` 사용
 
-### 3.2 특정 SQL_ID/Child 지정
+### 특정 SQL_ID/Child 지정
+
 ```sql
 -- 세션에서 SQL_ID/CHILD_NUMBER 확인
 SELECT sql_id, child_number
@@ -157,12 +161,13 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', 0,
 
 ---
 
-## 4. **Row Source별 수행 통계** — `ALLSTATS`
+## **Row Source별 수행 통계** — `ALLSTATS`
 
 > 라인 기준 **A-Rows(실행 행수)**, **Starts**, **E-Rows(추정)**, **Buffers**, **Reads**, **Time**, **TempSpc** 등 **실행 통계**를 표로 제공.
 > **성능 분석의 결론**은 거의 항상 여기서 난다.
 
-### 4.1 `ALLSTATS LAST` — 마지막 실행의 실측
+### `ALLSTATS LAST` — 마지막 실행의 실측
+
 ```sql
 -- 대상 SQL 한 번 더 실행(동일 바인드로 재현)
 SELECT /* exec1 */ SUM(o.amount)
@@ -182,14 +187,16 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 - **TempSpc**: 정렬/해시 *스필* 존재 여부
 - **Outline/Note**: 옵티마이저가 선택한 힌트 세트, 적응/변환 메시지
 
-### 4.2 `ALLSTATS FIRST` — 첫 실행 통계
+### `ALLSTATS FIRST` — 첫 실행 통계
+
 ```sql
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
   'ALLSTATS FIRST +NOTE'));
 ```
 - 캐시 워밍/바인드 재사용에 따라 **첫 실행과 이후**가 다른 경우 비교에 유용
 
-### 4.3 병렬(PX)과 메모리
+### 병렬(PX)과 메모리
+
 ```sql
 -- 병렬 힌트 예
 SELECT /*+ parallel(o 8) monitor */ COUNT(*)
@@ -204,9 +211,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 
 ---
 
-## 5. 시나리오 실습
+## 시나리오 실습
 
-### 5.1 **NL vs HASH** 실제 비교 (행수 적중/오판)
+### **NL vs HASH** 실제 비교 (행수 적중/오판)
+
 ```sql
 -- 후보 1: NL 유도(드라이빙을 소량으로)
 EXPLAIN PLAN FOR
@@ -232,7 +240,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 - HASH가 선택되었을 때 `TempSpc` 크고 **Time 대부분이 해시 빌드/프로브**에 몰리면 → **NL이 유리**
 - NL에서 `A-Rows`가 **E-Rows 대비 과대**이면 → 인덱스 선택성/히스토그램/필터 선행 필요
 
-### 5.2 **정렬·스필 감지** (ORDER BY / GROUP BY)
+### **정렬·스필 감지** (ORDER BY / GROUP BY)
+
 ```sql
 SELECT /* sort test */ c.region, SUM(o.amount) amt
 FROM   orders o JOIN customers c ON c.id=o.customer_id
@@ -245,7 +254,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 ```
 - `SORT GROUP BY` / `SORT ORDER BY` 라인 **TempSpc** 확인 → **PGA↑/카디널리티↓/인덱스 정렬 회피** 검토
 
-### 5.3 **바인드 피킹/스큐** — `+PEEKED_BINDS` 활용
+### **바인드 피킹/스큐** — `+PEEKED_BINDS` 활용
+
 ```sql
 VAR r VARCHAR2(10); EXEC :r := 'APAC';
 SELECT /* region test */ COUNT(*) FROM customers WHERE region=:r;
@@ -257,7 +267,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 
 ---
 
-## 6. 출력 옵션 모음(실전 단골)
+## 출력 옵션 모음(실전 단골)
 
 - `ALL` : 가능한 많은 열
 - `+PREDICATE` : access/filter 조건
@@ -281,7 +291,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 
 ---
 
-## 7. DISPLAY_CURSOR와 주변 도구의 조합
+## DISPLAY_CURSOR와 주변 도구의 조합
 
 - **SQL Monitor**: *라인별 경과 시간/대기/Temp*의 실시간 시각화(특히 장수행/병렬)
 - **ASH/AWR**: *상위 이벤트/SQL/Plan Line 샘플*로 시스템 시야
@@ -296,7 +306,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_AWR('&&SQL_ID', NULL, NULL,
 
 ---
 
-## 8. 자주 부딪히는 함정 & 대처
+## 자주 부딪히는 함정 & 대처
 
 1) **`EXPLAIN`과 실제 상이**: 바인드 값/적응 기능/통계 시점 → **반드시 ALLSTATS로 검증**
 2) **Child 폭증**: `v$sql_shared_cursor`로 원인(바인드 타입/길이/NLS/환경) 확인, **SQL 표준화/바인드 고정**
@@ -306,7 +316,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_AWR('&&SQL_ID', NULL, NULL,
 
 ---
 
-## 9. 튜닝 루틴(현장 템플릿)
+## 튜닝 루틴(현장 템플릿)
 
 1) **문제 SQL 실행**(가능하면 실제 바인드)
 2) `DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS +PREDICATE +NOTE')`
@@ -318,7 +328,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_AWR('&&SQL_ID', NULL, NULL,
 
 ---
 
-## 10. 미니 FAQ
+## 미니 FAQ
 
 - **Q. `ALLSTATS`가 비어 있어요.**
   A. 해당 커서를 **실행**한 뒤에 보세요. `EXPLAIN`만 하고 `DISPLAY_CURSOR` 하면 통계가 없습니다.
@@ -331,7 +341,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_AWR('&&SQL_ID', NULL, NULL,
 
 ---
 
-## 11. 결론
+## 결론
 
 - `DBMS_XPLAN`은 **세 가지 모드의 하모니**다.
   1) **DISPLAY**: *예상 지도*

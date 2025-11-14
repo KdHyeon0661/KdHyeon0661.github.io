@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # CrashLoopBackOff 원인 분석 및 해결 방법
 
-## 1. CrashLoopBackOff란?
+## CrashLoopBackOff란?
 
 - **Crash**: 컨테이너 프로세스(파드의 각 컨테이너 엔트리포인트)가 **비정상 종료(0이 아닌 코드)**.
 - **Loop**: kubelet이 재시작 정책에 따라 **반복 재기동**.
@@ -28,11 +28,12 @@ $$
 kubectl get pod myapp-abc123
 # NAME           READY   STATUS             RESTARTS   AGE
 # myapp-abc123   0/1     CrashLoopBackOff   7          3m42s
+
 ```
 
 ---
 
-## 2. 첫 60초 진단 루틴(현장에서 바로 쓰는 순서)
+## 첫 60초 진단 루틴(현장에서 바로 쓰는 순서)
 
 1. **상태 요약**
    ```bash
@@ -63,7 +64,7 @@ kubectl get pod myapp-abc123
 
 ---
 
-## 3. 원인 카테고리 맵(20가지)
+## 원인 카테고리 맵(20가지)
 
 | 카테고리 | 대표 로그/증상 | 핵심 조치 |
 |---|---|---|
@@ -90,9 +91,9 @@ kubectl get pod myapp-abc123
 
 ---
 
-## 4. 케이스별 **로그→원인→수정 YAML** 레시피
+## 케이스별 **로그→원인→수정 YAML** 레시피
 
-### 4.1 잘못된 엔트리포인트
+### 잘못된 엔트리포인트
 
 **로그**
 ```
@@ -119,7 +120,7 @@ containers:
 
 ---
 
-### 4.2 Secret 키 오타
+### Secret 키 오타
 
 **증상**: 부팅 즉시 `KeyError: PASSWORD`
 
@@ -150,7 +151,7 @@ kubectl get secret db-secret -o jsonpath='{.data.password}' | base64 -d
 
 ---
 
-### 4.3 ConfigMap 마운트 경로 상이
+### ConfigMap 마운트 경로 상이
 
 **로그**
 ```
@@ -178,7 +179,7 @@ volumeMounts:
 
 ---
 
-### 4.4 LivenessProbe가 너무 공격적
+### LivenessProbe가 너무 공격적
 
 **증상**: 부팅이 10초 걸리는데 `initialDelaySeconds: 5`로 kill 반복
 
@@ -207,12 +208,13 @@ livenessProbe:
 
 ---
 
-### 4.5 OOMKilled
+### OOMKilled
 
 **확인**
 ```bash
 kubectl describe pod <POD> | grep -A2 "State:"
 # State: Terminated (Reason: OOMKilled)
+
 ```
 
 **수정 전**
@@ -237,7 +239,7 @@ resources:
 
 ---
 
-### 4.6 Read-only 루트 FS + 쓰기 경로 혼동
+### Read-only 루트 FS + 쓰기 경로 혼동
 
 **로그**
 ```
@@ -258,7 +260,7 @@ volumes:
 
 ---
 
-### 4.7 InitContainer 실패
+### InitContainer 실패
 
 **확인**
 ```bash
@@ -278,7 +280,7 @@ initContainers:
 
 ---
 
-### 4.8 사이드카 의존(예: Envoy/Jaeger) 준비 전 시작
+### 사이드카 의존(예: Envoy/Jaeger) 준비 전 시작
 
 **해결**: 앱 **StartupProbe**로 의존 채널 연결성까지 검증
 
@@ -292,7 +294,7 @@ startupProbe:
 
 ---
 
-### 4.9 권한(보안 컨텍스트) 문제
+### 권한(보안 컨텍스트) 문제
 
 **로그**
 ```
@@ -312,7 +314,7 @@ securityContext:
 
 ---
 
-### 4.10 포트 충돌
+### 포트 충돌
 
 **로그**
 ```
@@ -323,7 +325,7 @@ bind: address already in use
 
 ---
 
-## 5. 관찰 아키텍처(무엇을 봐야 하나?)
+## 관찰 아키텍처(무엇을 봐야 하나?)
 
 - **컨테이너 로그**: `--previous` 포함
 - **Probe 결과**: `describe`의 `Liveness/Readiness` 실패 카운트
@@ -334,18 +336,19 @@ bind: address already in use
 
 ---
 
-## 6. 디버그 기법 모음
+## 디버그 기법 모음
 
-### 6.1 빠르게 “살려서” 들여다보기
+### 빠르게 “살려서” 들여다보기
 
 ```yaml
 # 일시적 디버그 오버레이
+
 command: ["sh","-c","sleep 3600"]
 ```
 
 배포 후 `kubectl exec`로 내부 파일·경로·권한 확인 → 원인 파악 후 본래 명령 복구.
 
-### 6.2 Ephemeral Container
+### Ephemeral Container
 
 ```bash
 kubectl debug pod/<POD> -c debug --image=busybox:1.36 -it --target=<CONTAINER>
@@ -353,7 +356,7 @@ kubectl debug pod/<POD> -c debug --image=busybox:1.36 -it --target=<CONTAINER>
 
 > 크래시하는 컨테이너 네임스페이스에 들어가 **파일/프로세스/퍼미션** 점검.
 
-### 6.3 터미네이션 메시지 활용
+### 터미네이션 메시지 활용
 
 ```yaml
 terminationMessagePolicy: FallbackToLogsOnError
@@ -363,7 +366,7 @@ terminationMessagePolicy: FallbackToLogsOnError
 
 ---
 
-## 7. 프로브 설계 모범사례
+## 프로브 설계 모범사례
 
 - **`startupProbe` 먼저**: 부팅이 긴 앱(언어 런타임/캐시 예열/마이그) → liveness 발동 지연
 - **`livenessProbe`는 “자체 복구 불가능” 상태만**: 단순 의존성 장애는 **프로세스 kill보다 재시도**가 낫다.
@@ -393,7 +396,7 @@ readinessProbe:
 
 ---
 
-## 8. 리소스 튜닝(Throttle·OOM을 Crash로 오인하지 않기)
+## 리소스 튜닝(Throttle·OOM을 Crash로 오인하지 않기)
 
 - **CPU**: 과도한 throttling은 **느린 시작 → liveness 실패**를 유발
   - 해결: `requests.cpu`를 **현실적**으로 상향, `limits.cpu`를 너무 낮추지 않기
@@ -408,7 +411,7 @@ resources:
 
 ---
 
-## 9. 배포/롤백 연계(무한 Crash 차단)
+## 배포/롤백 연계(무한 Crash 차단)
 
 - **Deployment 진행 중 Crash**는 **롤링**이 멈추거나 느려짐 → `kubectl rollout status`로 감시
 - **빠른 철회**
@@ -419,7 +422,7 @@ resources:
 
 ---
 
-## 10. 운영 체크리스트 (변경 전/후)
+## 운영 체크리스트 (변경 전/후)
 
 **변경 전**
 - [ ] 프로브 경로를 **로컬에서 검증** (`port-forward` → `curl`)
@@ -436,9 +439,9 @@ resources:
 
 ---
 
-## 11. 재현 가능한 **미니 워크로드** (연습 용)
+## 재현 가능한 **미니 워크로드** (연습 용)
 
-### 11.1 의도적 Crash(명령 오류)
+### 의도적 Crash(명령 오류)
 
 ```yaml
 apiVersion: apps/v1
@@ -464,7 +467,7 @@ spec:
 
 ---
 
-### 11.2 Liveness 오탐 시나리오
+### Liveness 오탐 시나리오
 
 ```yaml
 apiVersion: apps/v1
@@ -491,7 +494,7 @@ spec:
 
 ---
 
-## 12. FAQ
+## FAQ
 
 **Q1. `ImagePullBackOff`와 다른가요?**
 A. 예. 이는 **이미지 풀 실패** 상태이며, 애초에 컨테이너가 시작되지 않습니다. CrashLoopBackOff는 **시작 후 크래시**.
@@ -508,7 +511,7 @@ A. `containerStatuses`에서 문제 컨테이너만 골라 로그/상태 확인,
 
 ---
 
-## 13. 요약(한 장)
+## 요약(한 장)
 
 - CrashLoopBackOff는 **“시작은 했으나 곧 죽고, 지수 백오프로 재시작”** 상태.
 - 60초 루틴: `describe` → `logs --previous` → `events` → 필요 시 `debug`/`startupProbe`.
@@ -522,28 +525,35 @@ A. `containerStatuses`에서 문제 컨테이너만 골라 로그/상태 확인,
 
 ```bash
 # 상태 요약
+
 kubectl get pod <POD> -o wide
 kubectl describe pod <POD>
 
 # 현재/이전 로그
+
 kubectl logs <POD> -c <CONTAINER>
 kubectl logs <POD> -c <CONTAINER> --previous
 
 # 상태 필드 추출
+
 kubectl get pod <POD> -o jsonpath='{.status.containerStatuses[*].lastState.terminated.reason}{"\n"}'
 kubectl get pod <POD> -o jsonpath='{.status.containerStatuses[*].restartCount}{"\n"}'
 
 # 이벤트
+
 kubectl get events --sort-by=.lastTimestamp -A | tail -n 50
 
 # 리소스
+
 kubectl top pod <POD>
 
 # 롤아웃/롤백
+
 kubectl rollout status deploy/<NAME>
 kubectl rollout undo deploy/<NAME>
 
 # 디버그 진입
+
 kubectl debug pod/<POD> -c debug --image=busybox:1.36 --target=<CONTAINER> -it -- sh
 ```
 

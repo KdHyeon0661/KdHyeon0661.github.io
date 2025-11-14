@@ -14,7 +14,8 @@ category: DB 심화
 
 ---
 
-## 0. 용어와 범위
+## 용어와 범위
+
 - **정적 SQL(Static)**: 텍스트가 코드에 고정. 컴파일 시 검증 가능.
 - **동적 SQL(Dynamic)**: 텍스트를 런타임에 구성(`EXECUTE IMMEDIATE`, 애플리케이션 문자열 템플릿).
 - **선택적 검색 조건(Optional Predicate)**: 파라미터가 **NULL이면 필터 미적용**, 값이 있으면 **필터 적용**하는 형태. 예) `region, date_from, date_to, status` 등.
@@ -23,33 +24,39 @@ category: DB 심화
 
 ---
 
-## 1. Dynamic SQL **사용에 관한 기본 원칙** (Rule of Thumb)
+## Dynamic SQL **사용에 관한 기본 원칙** (Rule of Thumb)
 
 ### 원칙 1 — “값 때문에 동적화하지 않는다”
+
 - 값은 **바인드 변수**로.
 - 문자열 결합으로 값을 텍스트에 끼워 넣지 않는다(성능·보안 모두 악화).
 
 ### 원칙 2 — “구조가 바뀌면 동적화한다”
+
 - 테이블/컬럼/조인/정렬 컬럼/힌트/파티션 명 등 **오브젝트·구조**가 런타임에 바뀔 때만 **동적 SQL** 고려.
 - 이때도 오브젝트명은 **화이트리스트**를 반드시 통과시킨다.
 
 ### 원칙 3 — “SARGability(인덱스 사용 가능성)를 지킨다”
+
 - **컬럼 변형 함수**(예: `TRUNC(col)`, `NVL(col, ...)`), **비상수 비교**는 인덱스를 막는다.
 - 가능하면 **`col >= :d1 AND col < :d2`** 같은 **범위식**으로 전개.
 
 ### 원칙 4 — “플랜 안정성 우선”
+
 - 스큐 컬럼은 **히스토그램+ACS**로 카드 추정 정확화.
 - 자주 쓰는 핵심 SQL은 **SPM(SQL Plan Baseline)** 로 좋은 플랜을 봉인.
 
 ### 원칙 5 — “가독성과 테스트 가능성”
+
 - 조건이 많을수록 **분기(UNION ALL / 동적 WHERE)** 로 **명시적** 설계를 고려.
 - **단위 테스트·바인드 값 케이스**를 쉽게 만들 수 있어야 한다.
 
 ---
 
-## 2. 원칙이 잘 지켜지지 않는 **대표 이유**: **선택적 검색 조건**
+## 원칙이 잘 지켜지지 않는 **대표 이유**: **선택적 검색 조건**
 
-### 2.1 상황 묘사
+### 상황 묘사
+
 - 사용자 입력 파라미터가 **있을 수도, 없을 수도** 있다.
 - “없으면 전체 조회, 있으면 필터”를 **한 개 SQL**로 처리하고 싶어진다.
 - 그래서 다음 패턴이 흔해진다:
@@ -62,7 +69,8 @@ WHERE (region = :r OR :r IS NULL)
   AND (status = :s OR :s IS NULL)
 ```
 
-### 2.2 왜 문제가 될 수 있나?
+### 왜 문제가 될 수 있나?
+
 - **OR**이 많아지면 옵티마이저가 **카디널리티**를 보수적으로 추정 →
   **여러 조건에서 인덱스가 무력화**되거나, **잘못된 조인 순서/방법**을 택할 수 있다.
 - 특히 `:p IS NULL` 분기와 결합되면 **액세스 조건을 필터 조건**으로 바꿔버리는 일이 잦고,
@@ -70,11 +78,12 @@ WHERE (region = :r OR :r IS NULL)
 
 ---
 
-## 3. 선택적 검색 조건에 대한 **현실적 대안** (설계 패턴)
+## 선택적 검색 조건에 대한 **현실적 대안** (설계 패턴)
 
 아래 패턴은 **서로 대체** 관계가 아니다. **데이터 분포·쿼리 특성**에 맞게 고른다.
 
 ### 패턴 A — **OR + IS NULL** (간단하지만 SARGability 이슈)
+
 ```sql
 WHERE (region = :r OR :r IS NULL)
   AND (order_dt >= :d1 OR :d1 IS NULL)
@@ -85,6 +94,7 @@ WHERE (region = :r OR :r IS NULL)
 - **추천 용도**: **소량 테이블**, **인덱스 없어도 감당 가능한 규모**, 빠른 PoC
 
 ### 패턴 B — **`UNION ALL` 분기** (명시적 플랜 분리)
+
 ```sql
 -- region 유무, 기간 유무 등 “경우의 수”가 적을 때 효과적
 SELECT /* base */ ... FROM t
@@ -105,6 +115,7 @@ WHERE :r IS NOT NULL AND region = :r
 - **추천 용도**: **핵심 조회**, **선택도 차가 큰 조건** 존재 시
 
 ### 패턴 C — **동적 WHERE 조립 + 바인드(권장)**
+
 (구조는 고정, WHERE만 동적)
 ```plsql
 DECLARE
@@ -147,6 +158,7 @@ END;
 > **주의**: 동적화하더라도 **값은 무조건 바인드**. 오브젝트명/ORDER BY는 화이트리스트.
 
 ### 패턴 D — **배열 바인드(IN-list)**
+
 (멀티 선택 옵션: 다중 지역·상태)
 ```plsql
 DECLARE
@@ -166,6 +178,7 @@ END;
 - **추천 용도**: UI 멀티 선택, 권한 기반 영역필터
 
 ### 패턴 E — **GTT/임시 테이블 조인**
+
 (필터 값이 **아주 많을 때**)
 ```sql
 -- (1) 세션 전용 임시 테이블에 필터 키 적재
@@ -183,6 +196,7 @@ WHERE  /* 다른 조건은 동적 WHERE or 정적 분기 */
 - **추천**: 대규모 IN-list, 보고/배치
 
 ### 패턴 F — **JSON 파라미터 + JSON_EXISTS**
+
 (필수·선택적 파라미터가 많은 API)
 ```sql
 -- 입력 JSON 예: {"region":"APAC","date_from":"2025-10-01","date_to":null}
@@ -199,9 +213,10 @@ WHERE  (NOT JSON_EXISTS(:j, '$.region') OR region = JSON_VALUE(:j, '$.region'))
 
 ---
 
-## 4. **언어별 안전한 동적 WHERE 조립** 예제
+## **언어별 안전한 동적 WHERE 조립** 예제
 
-### 4.1 Java (JDBC)
+### Java (JDBC)
+
 ```java
 StringBuilder sql = new StringBuilder(
   "SELECT /* dyn-where */ empno, ename, sal, deptno, hiredate FROM emp WHERE 1=1");
@@ -219,7 +234,8 @@ try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 ```
 - **값은 전부 바인드**, 동적으로 **WHERE 문자열만** 조립.
 
-### 4.2 Python (oracledb)
+### Python (oracledb)
+
 ```python
 sql = ["SELECT /* dyn-where */ empno, ename, sal FROM emp WHERE 1=1"]
 params = {}
@@ -233,9 +249,10 @@ for row in cur: ...
 
 ---
 
-## 5. **성능 비교 실험**: 데이터·인덱스·케이스 설계
+## **성능 비교 실험**: 데이터·인덱스·케이스 설계
 
-### 5.1 테스트 데이터
+### 테스트 데이터
+
 ```sql
 DROP TABLE t_demo PURGE;
 CREATE TABLE t_demo AS
@@ -256,13 +273,15 @@ BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER,'T_DEMO',cascade=>TRUE,
 /
 ```
 
-### 5.2 비교할 기법
+### 비교할 기법
+
 1) **A패턴**: `(col=:p OR :p IS NULL)`
 2) **B패턴**: **`UNION ALL` 분기**
 3) **C패턴**: **동적 WHERE 조립 + 바인드**
 4) **D패턴**: **배열 바인드(IN-list)**
 
-### 5.3 측정 방법(권장)
+### 측정 방법(권장)
+
 - **`SET autotrace traceonly statistics`** 또는 **`DBMS_XPLAN.DISPLAY_CURSOR('sql_id',NULL,'ALLSTATS LAST +PEEKED_BINDS')`**
 - 다음 지표를 비교:
   - **Consistent Gets(논리 읽기)**, **Physical Reads(물리 읽기)**
@@ -279,9 +298,10 @@ BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER,'T_DEMO',cascade=>TRUE,
 
 ---
 
-## 6. 각 기법의 **구체 예제**와 **장단점 요약**
+## 각 기법의 **구체 예제**와 **장단점 요약**
 
-### 6.1 A — OR + IS NULL (정적, 가장 단순)
+### A — OR + IS NULL (정적, 가장 단순)
+
 ```sql
 SELECT /* A */ SUM(amt)
 FROM   t_demo
@@ -294,7 +314,8 @@ WHERE  (region = :r OR :r IS NULL)
 - **단점**: **SARGability 불안**(인덱스 활용 저하), 카디널리티 추정 난해
 - **Tip**: 소량 테이블/보조 조회에만
 
-### 6.2 B — UNION ALL 분기 (정적, 명시적 플랜)
+### B — UNION ALL 분기 (정적, 명시적 플랜)
+
 ```sql
 -- region + 기간이 모두 있을 때
 SELECT /* B1 */ SUM(amt) FROM t_demo
@@ -312,7 +333,8 @@ WHERE :r IS NULL AND :d1 IS NULL AND :d2 IS NULL;
 - **단점**: 경우의 수 많으면 SQL 길어짐
 - **Tip**: **핵심 API**·실시간 OLTP 핵심 질의
 
-### 6.3 C — 동적 WHERE 조립 + 바인드 (동적, 권장)
+### C — 동적 WHERE 조립 + 바인드 (동적, 권장)
+
 ```plsql
 DECLARE
   v_sql CLOB := 'SELECT /* C */ SUM(amt) FROM t_demo WHERE 1=1';
@@ -342,7 +364,8 @@ END;
 - **단점**: 동적 SQL 관리 필요, 단위테스트 케이스 증가
 - **Tip**: **대형 테이블**·**선택도 큰 컬럼** 포함 시 최우선 고려
 
-### 6.4 D — 배열 바인드(IN-list)
+### D — 배열 바인드(IN-list)
+
 ```plsql
 DECLARE
   TYPE t_vc IS TABLE OF VARCHAR2(10);
@@ -363,7 +386,7 @@ END;
 
 ---
 
-## 7. **기법별 성능 비교 요약표**
+## **기법별 성능 비교 요약표**
 
 | 기법 | 인덱스 사용성 | 플랜 안정성 | 코드 복잡도 | 장점 | 주의 |
 |---|---|---|---|---|---|
@@ -379,14 +402,16 @@ END;
 
 ---
 
-## 8. 실전 팁 — 히스토그램·ACS·SPM로 **플랜 흔들림 방지**
+## 실전 팁 — 히스토그램·ACS·SPM로 **플랜 흔들림 방지**
+
 - 스큐 컬럼(`region`, `status`)에 **히스토그램** → 카드 정확화.
 - **ACS(Adaptive Cursor Sharing)** 로 값 구간별 Child 플랜 분기.
 - 핵심 SQL은 **SPM**으로 좋은 플랜 고정(릴리즈·통계 변화에 안전).
 
 ---
 
-## 9. 보안·운영 체크리스트
+## 보안·운영 체크리스트
+
 - [ ] 동적 SQL이라도 **값은 100% 바인드** (`EXECUTE IMMEDIATE ... USING`)
 - [ ] 오브젝트/컬럼/ORDER BY는 **화이트리스트**에서만 문자열 삽입
 - [ ] NLS/세션 파라미터 표준화(Child 폭증 방지)
@@ -396,9 +421,10 @@ END;
 
 ---
 
-## 10. 미니 벤치 워크북 (재현 스크립트)
+## 미니 벤치 워크북 (재현 스크립트)
 
-### 10.1 비교 실행 + XPLAN
+### 비교 실행 + XPLAN
+
 ```sql
 -- 케이스 1: region='APAC', 최근 7일
 VAR r VARCHAR2(10); VAR d1 DATE; VAR d2 DATE;
@@ -429,7 +455,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_B
 
 ---
 
-## 11. 결론 — **Dynamic SQL 사용 기준 요약**
+## 결론 — **Dynamic SQL 사용 기준 요약**
+
 1) **값 때문에 동적화 금지**, 값은 **항상 바인드**.
 2) **구조(오브젝트/정렬/조인)** 가 바뀌면 **동적 SQL** + 화이트리스트.
 3) 선택적 조건은 **동적 WHERE**(C) 또는 **UNION ALL 분기**(B)로 **SARGability** 확보.

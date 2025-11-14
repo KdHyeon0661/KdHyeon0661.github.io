@@ -5,6 +5,7 @@ date: 2025-09-07 21:25:23 +0900
 category: WPF
 ---
 # 🔗 WPF + MVVM + REST API 클라이언트 구현 완전 정복
+
 *(예제 중심 · 누락 없이 자세하게 · DI/HttpClientFactory/Polly/에러 처리/페이징/검색/토큰/테스트/오프라인 큐까지)*
 
 > 목표: **WPF(MVVM)** 앱에서 **REST API**를 안전하고 확장성 있게 호출하고,
@@ -13,7 +14,7 @@ category: WPF
 
 ---
 
-## 0. 데모 시나리오
+## 데모 시나리오
 
 - 리소스: `Products` (목록/단건/검색/페이지네이션/정렬)
 - API 엔드포인트(예시):
@@ -29,7 +30,7 @@ category: WPF
 
 ---
 
-## 1. 솔루션 구조
+## 솔루션 구조
 
 ```
 Shop/
@@ -42,27 +43,30 @@ Shop/
 
 ---
 
-## 2. 패키지
+## 패키지
 
 ```bash
 # App
+
 dotnet add Shop.App package Microsoft.Extensions.Hosting
 dotnet add Shop.App package Microsoft.Extensions.DependencyInjection
 dotnet add Shop.App package CommunityToolkit.Mvvm
 
 # API Client
+
 dotnet add Shop.ApiClient package Microsoft.Extensions.Http
 dotnet add Shop.ApiClient package Polly.Extensions.Http
 dotnet add Shop.ApiClient package System.Text.Json
 
 # Tests
+
 dotnet add Shop.Tests package FluentAssertions
 dotnet add Shop.Tests package NSubstitute
 ```
 
 ---
 
-## 3. Domain: DTO & Result & Validation
+## Domain: DTO & Result & Validation
 
 ```csharp
 // Shop.Domain/Products/ProductDto.cs
@@ -89,9 +93,9 @@ public readonly struct Result<T>
 
 ---
 
-## 4. API 클라이언트 설계
+## API 클라이언트 설계
 
-### 4.1 인터페이스
+### 인터페이스
 
 ```csharp
 // Shop.ApiClient/IProductsApi.cs
@@ -107,7 +111,7 @@ public interface IProductsApi
 }
 ```
 
-### 4.2 DI + HttpClientFactory + Polly
+### DI + HttpClientFactory + Polly
 
 ```csharp
 // Shop.ApiClient/ServiceCollectionExtensions.cs
@@ -146,7 +150,7 @@ public static class ServiceCollectionExtensions
 }
 ```
 
-### 4.3 인증 메시지 핸들러(토큰 자동 주입 + 401 처리 훅)
+### 인증 메시지 핸들러(토큰 자동 주입 + 401 처리 훅)
 
 ```csharp
 // Shop.ApiClient/AuthHeaderHandler.cs
@@ -181,7 +185,7 @@ public sealed class AuthHeaderHandler : DelegatingHandler
 }
 ```
 
-### 4.4 구현(직렬화 옵션 + ETag/If-Match 지원)
+### 구현(직렬화 옵션 + ETag/If-Match 지원)
 
 ```csharp
 // Shop.ApiClient/ProductsApi.cs
@@ -280,7 +284,7 @@ public sealed class ProductsApi : IProductsApi
 
 ---
 
-## 5. App 부트스트랩 (Generic Host in WPF)
+## App 부트스트랩 (Generic Host in WPF)
 
 ```csharp
 // Shop.App/App.xaml.cs
@@ -322,7 +326,7 @@ public sealed class MemoryTokenProvider : ITokenProvider
 
 ---
 
-## 6. MVVM: 메인 ViewModel (목록/검색/페이징/정렬/상태/에러/취소)
+## MVVM: 메인 ViewModel (목록/검색/페이징/정렬/상태/에러/취소)
 
 ```csharp
 // Shop.App/ViewModels/MainViewModel.cs
@@ -407,7 +411,7 @@ public partial class MainViewModel : ObservableObject
 
 ---
 
-## 7. View: 상태/진행/에러/검색/페이징 바인딩
+## View: 상태/진행/에러/검색/페이징 바인딩
 
 ```xml
 <!-- Shop.App/MainWindow.xaml -->
@@ -493,9 +497,9 @@ public class TotalToPages : IValueConverter
 
 ---
 
-## 8. 상세/등록/수정/삭제 with Optimistic Update
+## 상세/등록/수정/삭제 with Optimistic Update
 
-### 8.1 커맨드 (등록/수정/삭제, 처리 중 상태, 낙관적 갱신)
+### 커맨드 (등록/수정/삭제, 처리 중 상태, 낙관적 갱신)
 
 ```csharp
 public partial class MainViewModel : ObservableObject
@@ -577,9 +581,10 @@ public partial class MainViewModel : ObservableObject
 
 ---
 
-## 9. 고급 UX: 디바운스 검색 / 무한 스크롤 / 진행률
+## 고급 UX: 디바운스 검색 / 무한 스크롤 / 진행률
 
-### 9.1 디바운스 검색
+### 디바운스 검색
+
 - TextBox의 `TextChanged`에서 **연속 입력 300ms** 후 검색 실행:
 ```csharp
 private CancellationTokenSource? _searchCts;
@@ -601,7 +606,8 @@ partial void OnQueryChanged(string? value)
 }
 ```
 
-### 9.2 무한 스크롤
+### 무한 스크롤
+
 - `ScrollViewer.ScrollChanged`에서 **끝 근처**이면 `NextPageCommand`:
 ```csharp
 // XAML: ScrollViewer.CanContentScroll="True" ScrollChanged="OnScroll"
@@ -612,12 +618,13 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 }
 ```
 
-### 9.3 다운로드/업로드 진행률
+### 다운로드/업로드 진행률
+
 - `HttpClient` 전송에 `ProgressMessageHandler` 또는 스트림 복사 래퍼 사용(생략 가능).
 
 ---
 
-## 10. 에러 처리/표시 패턴
+## 에러 처리/표시 패턴
 
 - **서버 오류(4xx/5xx)** → `Result.Fail(status, message)` 로 VM에 전달
 - **네트워크 오류** → Polly 재시도 후 실패 시 **친절한 메시지**
@@ -628,7 +635,7 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ---
 
-## 11. 인증(Access/Refresh) 흐름
+## 인증(Access/Refresh) 흐름
 
 - `AuthHeaderHandler` 에서 `401` 감지 → **Refresh 흐름** 트리거
 - Refresh 성공 → 원 요청 재시도
@@ -640,7 +647,7 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ---
 
-## 12. 오프라인/큐잉(선택)
+## 오프라인/큐잉(선택)
 
 - 요청을 **명령 큐**에 적재(예: `Create/Update/Delete` DTO)
 - 온라인 상태 확인(네트워크 체크) → 온라인 전환 시 **큐 플러시**
@@ -657,7 +664,7 @@ public interface IOutbox
 
 ---
 
-## 13. 로그/추적
+## 로그/추적
 
 - `HttpClientFactory` 로깅(Handler에서 `ILogger` 주입)
 - ViewModel에서 핵심 상태 변화 로그
@@ -665,9 +672,10 @@ public interface IOutbox
 
 ---
 
-## 14. 테스트 (핵심: HttpMessageHandler 스텁)
+## 테스트 (핵심: HttpMessageHandler 스텁)
 
-### 14.1 핸들러 목킹
+### 핸들러 목킹
+
 ```csharp
 // Shop.Tests/HttpTestHandler.cs
 public sealed class HttpTestHandler : HttpMessageHandler
@@ -679,7 +687,8 @@ public sealed class HttpTestHandler : HttpMessageHandler
 }
 ```
 
-### 14.2 API 테스트
+### API 테스트
+
 ```csharp
 [Fact]
 public async Task GetAsync_Returns_List_And_Total()
@@ -708,7 +717,8 @@ public async Task GetAsync_Returns_List_And_Total()
 }
 ```
 
-### 14.3 ViewModel 테스트(간단)
+### ViewModel 테스트(간단)
+
 ```csharp
 [Fact]
 public async Task Load_Sets_Items_And_Total()
@@ -729,7 +739,7 @@ public async Task Load_Sets_Items_And_Total()
 
 ---
 
-## 15. 성능/안정성 체크리스트
+## 성능/안정성 체크리스트
 
 - **비동기 규율**: 모든 I/O `async/await` + UI 업데이트는 **Dispatcher**
 - **취소 전파**: 긴 호출마다 `CancellationToken` 지원
@@ -741,7 +751,7 @@ public async Task Load_Sets_Items_And_Total()
 
 ---
 
-## 16. 보너스: 다크모드/접근성/국제화
+## 보너스: 다크모드/접근성/국제화
 
 - 다크모드: 리소스 토큰화 + `DynamicResource` (팔레트 교체)
 - 접근성: 키보드 탐색/스크린리더 Friendly Text/AutomationProperties
@@ -749,7 +759,7 @@ public async Task Load_Sets_Items_And_Total()
 
 ---
 
-## 17. 마무리
+## 마무리
 
 - **MVVM**으로 뷰-로직 분리 → 테스트 용이
 - **HttpClientFactory + Polly**로 회복력 있는 통신

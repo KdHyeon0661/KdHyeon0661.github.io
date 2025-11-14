@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core — ViewBag · ViewData · TempData
 
-## 0. 한눈 비교(복습)
+## 한눈 비교(복습)
 
 | 이름 | 타입/형태 | 수명 | 주 사용처 | 리다이렉트 유지 | 타입 안정성 |
 |---|---|---|---|---|---|
@@ -18,9 +18,9 @@ category: AspNet
 
 ---
 
-## 1. ViewData — 딕셔너리로 전달(캐스팅 필요)
+## ViewData — 딕셔너리로 전달(캐스팅 필요)
 
-### 1.1 Controller → View
+### Controller → View
 
 ```csharp
 public IActionResult Index()
@@ -51,7 +51,7 @@ public IActionResult Index()
 }
 ```
 
-### 1.2 Partial로 전달(전달 명시)
+### Partial로 전달(전달 명시)
 
 ```cshtml
 @* View에서 Partial 호출 시 ViewData 확장 *@
@@ -74,7 +74,7 @@ public IActionResult Index()
 
 ---
 
-## 2. ViewBag — ViewData의 dynamic 래퍼(가독성↑, 컴파일 타임 체크×)
+## ViewBag — ViewData의 dynamic 래퍼(가독성↑, 컴파일 타임 체크×)
 
 ```csharp
 public IActionResult Index()
@@ -95,9 +95,9 @@ public IActionResult Index()
 
 ---
 
-## 3. TempData — 다음 요청까지 1회성 유지(PRG·Flash)
+## TempData — 다음 요청까지 1회성 유지(PRG·Flash)
 
-### 3.1 핵심 개념(정확한 동작 원리)
+### 핵심 개념(정확한 동작 원리)
 
 - ASP.NET Core의 기본 TempData Provider는 **CookieTempDataProvider**(쿠키 기반 직렬화)다.
   - 별도 설치 시 **`SessionStateTempDataProvider`** 로 전환 가능(세션 기반).
@@ -105,7 +105,7 @@ public IActionResult Index()
   - **`Peek()`**: 읽고 **유지**
   - **`Keep()`**: 특정 키(혹은 전체)를 **다음 요청까지 연장**
 
-### 3.2 PRG(Post-Redirect-Get) 패턴 예제
+### PRG(Post-Redirect-Get) 패턴 예제
 
 ```csharp
 [HttpPost]
@@ -148,7 +148,7 @@ public IActionResult Index()
 <partial name="_Flash" model="Model" />
 ```
 
-### 3.3 Keep/Peek 활용
+### Keep/Peek 활용
 
 ```csharp
 // 1) 한 번 더 보여주고 싶다면
@@ -159,7 +159,7 @@ TempData.Keep("Flash.Message");    // 해당 키 유지
 var type = TempData.Peek("Flash.Type") as string; // 제거되지 않음
 ```
 
-### 3.4 복합 객체 저장(직렬화)
+### 복합 객체 저장(직렬화)
 
 ```csharp
 var notice = new NoticeVm { Title = "공지", Lines = new[] { "A", "B" } };
@@ -182,9 +182,9 @@ public IActionResult Index()
 
 ---
 
-## 4. TempData Provider/Session 구성
+## TempData Provider/Session 구성
 
-### 4.1 기본(CookieTempDataProvider) — 별도 구성 없음
+### 기본(CookieTempDataProvider) — 별도 구성 없음
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -196,7 +196,7 @@ app.Run();
 
 - 기본은 **쿠키 기반**이며, 암호화된 쿠키에 JSON 직렬화 결과를 보관한다.
 
-### 4.2 세션 기반 TempData로 전환(선택)
+### 세션 기반 TempData로 전환(선택)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -218,9 +218,9 @@ app.Run();
 
 ---
 
-## 5. Layout/Partial/ViewComponent와 데이터 전달
+## Layout/Partial/ViewComponent와 데이터 전달
 
-### 5.1 레이아웃에서 ViewData/TempData 사용
+### 레이아웃에서 ViewData/TempData 사용
 
 ```cshtml
 @* _Layout.cshtml *@
@@ -240,9 +240,9 @@ public IActionResult Privacy()
 }
 ```
 
-### 5.2 Partial로 옵션 전달(앞서 본 `view-data` 패턴)
+### Partial로 옵션 전달(앞서 본 `view-data` 패턴)
 
-### 5.3 ViewComponent에서 ViewData 사용
+### ViewComponent에서 ViewData 사용
 
 ```csharp
 public class BannerViewComponent : ViewComponent
@@ -271,9 +271,9 @@ public class BannerViewComponent : ViewComponent
 
 ---
 
-## 6. Razor Pages에서의 ViewData/ViewBag/TempData
+## Razor Pages에서의 ViewData/ViewBag/TempData
 
-### 6.1 ViewData/ViewBag
+### ViewData/ViewBag
 
 ```csharp
 public class IndexModel : PageModel
@@ -293,7 +293,7 @@ public class IndexModel : PageModel
 <p>@ViewBag.Count</p>
 ```
 
-### 6.2 TempData — 속성 바인딩으로 간결하게
+### TempData — 속성 바인딩으로 간결하게
 
 ```csharp
 public class CreateModel : PageModel
@@ -331,9 +331,9 @@ public class IndexModel : PageModel
 
 ---
 
-## 7. 플래시 메시지 시스템(토스트/Alert) 통합 — 실전 템플릿
+## 플래시 메시지 시스템(토스트/Alert) 통합 — 실전 템플릿
 
-### 7.1 필터로 TempData → ViewData 브리지(선택 패턴)
+### 필터로 TempData → ViewData 브리지(선택 패턴)
 
 ```csharp
 public sealed class FlashToViewDataFilter : IResultFilter
@@ -379,9 +379,9 @@ builder.Services.AddControllersWithViews(o =>
 
 ---
 
-## 8. 테스트/디버깅 팁
+## 테스트/디버깅 팁
 
-### 8.1 단위 테스트에서 ViewData/TempData 검증
+### 단위 테스트에서 ViewData/TempData 검증
 
 ```csharp
 [Fact]
@@ -399,7 +399,7 @@ public void Index_sets_title_and_count()
 }
 ```
 
-### 8.2 TempData 테스트
+### TempData 테스트
 
 ```csharp
 var controller = new ProductsController(...);
@@ -415,13 +415,14 @@ var result = controller.Create(...);
 Assert.Equal("success", controller.TempData["Flash.Type"]);
 ```
 
-### 8.3 디버깅
+### 디버깅
+
 - **브라우저 쿠키**(CookieTempDataProvider): 이름 `TempData` 유사 키 존재 여부 확인
 - TempData가 “사라진” 이슈 → **이미 읽혔는지**(다른 필터/뷰에서 접근) 확인
 
 ---
 
-## 9. 자주 겪는 함정과 해결
+## 자주 겪는 함정과 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -434,7 +435,7 @@ Assert.Equal("success", controller.TempData["Flash.Type"]);
 
 ---
 
-## 10. 권장 사용 시나리오 정리
+## 권장 사용 시나리오 정리
 
 - **ViewModel 우선**: 페이지 핵심 데이터는 항상 명시적 ViewModel
 - **ViewData/ViewBag**: 레이아웃·헤더 타이틀, 작은 옵션 플래그, UI 전용 소량 데이터
@@ -443,9 +444,9 @@ Assert.Equal("success", controller.TempData["Flash.Type"]);
 
 ---
 
-## 11. 실전 종합 예제
+## 실전 종합 예제
 
-### 11.1 Controller
+### Controller
 
 ```csharp
 public class ProductsController : Controller
@@ -493,7 +494,7 @@ public class ProductsController : Controller
 }
 ```
 
-### 11.2 Views
+### Views
 
 ```cshtml
 @* Views/Products/Index.cshtml *@
@@ -565,7 +566,7 @@ public class ProductsController : Controller
 
 ---
 
-## 12. FAQ
+## FAQ
 
 **Q1. ViewData vs ViewBag 중 무엇을 써야 하나요?**
 A. 기능상 동일. 팀 코드 스타일에 맞춰 **일관성** 있게 선택. 컴파일 타임 체크를 원하면 ViewData(캐스팅)보다 **ViewModel**을 권장.
@@ -581,7 +582,7 @@ A. 이미 읽혀서 제거되었을 가능성. **`Peek()`/`Keep()`** 사용 또�
 
 ---
 
-## 13. 체크리스트
+## 체크리스트
 
 - [ ] 페이지 핵심 데이터는 **ViewModel**로 전달했는가?
 - [ ] 일회성 메시지는 **TempData + PRG**로 처리했는가?
@@ -592,7 +593,7 @@ A. 이미 읽혀서 제거되었을 가능성. **`Peek()`/`Keep()`** 사용 또�
 
 ---
 
-## 14. 결론
+## 결론
 
 - **ViewModel 우선** 원칙을 지키되, **ViewData/ViewBag/TempData**는 **UI 보조 정보/플래시 메시지** 등에서 생산성을 크게 높여준다.
 - TempData는 **PRG**와 찰떡궁합이며, **Cookie/Session Provider** 특성과 제약을 이해하고 사용하면 안정적이다.

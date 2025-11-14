@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Volume vs Bind Mount: 완벽 비교
 
-## 1. 공통점(요약 재정리)
+## 공통점(요약 재정리)
 
 - 컨테이너 외부에 데이터 저장(컨테이너 재생성/재시작 후에도 유지).
 - 여러 컨테이너가 동일 데이터를 공유 가능.
@@ -15,7 +15,7 @@ category: Docker
 
 ---
 
-## 2. 정의 및 차이점(확장 요약)
+## 정의 및 차이점(확장 요약)
 
 | 항목 | Volume | Bind Mount |
 |---|---|---|
@@ -30,26 +30,32 @@ category: Docker
 
 ---
 
-## 3. 명령 구문 비교: `-v` vs `--mount` (권장: `--mount`)
+## 명령 구문 비교: `-v` vs `--mount` (권장: `--mount`)
 
-### 3.1 `-v` (단축형)
+### `-v` (단축형)
+
 ```bash
 # Volume
+
 docker run -d -v myvol:/app/data nginx
 
 # Bind Mount
+
 docker run -d -v "$(pwd)"/data:/app/data nginx
 ```
 - 축약되어 빠르지만, **의미가 응축**되어 가독성/오탈자 확인이 어려울 수 있음.
 
-### 3.2 `--mount` (명시형, 추천)
+### `--mount` (명시형, 추천)
+
 ```bash
 # Volume
+
 docker run -d \
   --mount type=volume,source=myvol,target=/app/data \
   nginx
 
 # Bind Mount
+
 docker run -d \
   --mount type=bind,source="$(pwd)"/data,target=/app/data \
   nginx
@@ -59,7 +65,7 @@ docker run -d \
 
 ---
 
-## 4. OS/플랫폼별 경로 주의점
+## OS/플랫폼별 경로 주의점
 
 - **Linux**: 일반적으로 경로 일관성 높음. SELinux/AppArmor 정책 고려 필요.
 - **Windows**: PowerShell/`cmd`별 경로 문법 차이.
@@ -77,16 +83,18 @@ docker run -d -v ${PWD}/data:/app/data nginx
 
 ---
 
-## 5. 권한/보안/SELinux 옵션
+## 권한/보안/SELinux 옵션
 
-### 5.1 읽기 전용(Read-Only)
+### 읽기 전용(Read-Only)
+
 ```bash
 docker run -d \
   --mount type=bind,source="$(pwd)"/public,target=/usr/share/nginx/html,readonly \
   nginx
 ```
 
-### 5.2 사용자 매핑
+### 사용자 매핑
+
 - 컨테이너 내부 파일 소유자/권한은 **컨테이너의 UID/GID**와 연계.
 - 실행 시 `--user` 옵션 혹은 이미지 내 `USER` 지시문으로 비루트 실행 권장.
 
@@ -96,7 +104,8 @@ docker run -d --user 1000:1000 \
   myimg
 ```
 
-### 5.3 SELinux(Linux with SELinux)
+### SELinux(Linux with SELinux)
+
 - 컨텍스트 라벨 필요 시 `:Z`(전용 라벨) 또는 `:z`(공유 라벨) 사용(단축형 `-v` 구문).
 ```bash
 docker run -d -v /host/data:/app/data:Z myimg
@@ -110,7 +119,7 @@ docker run -d \
 
 ---
 
-## 6. 성능 관점: 언제 무엇이 더 빠른가?
+## 성능 관점: 언제 무엇이 더 빠른가?
 
 - **Linux 네이티브**: Volume이 일반적으로 **일관성 있고 빠름**(엔진 최적화).
 - **Docker Desktop(macOS/Windows)**: 바인드 마운트는 **가상화 계층 동기화**로 느려질 수 있음.
@@ -119,7 +128,7 @@ docker run -d \
 
 ---
 
-## 7. 데이터 일관성과 동시성
+## 데이터 일관성과 동시성
 
 - 다중 컨테이너가 같은 디렉터리를 공유하면 **파일 잠금/일관성**에 주의.
 - DB 엔진은 **하나의 데이터 디렉터리를 여러 컨테이너가 동시에 쓰기**는 권장하지 않음.
@@ -127,32 +136,37 @@ docker run -d \
 
 ---
 
-## 8. 백업/복구/마이그레이션
+## 백업/복구/마이그레이션
 
-### 8.1 Volume 백업(컨테이너 이용)
+### Volume 백업(컨테이너 이용)
+
 ```bash
 # 백업: myvol → tar
+
 docker run --rm \
   -v myvol:/src \
   -v "$(pwd)":/backup \
   alpine sh -c "cd /src && tar czf /backup/myvol-backup.tgz ."
 
 # 복구: tar → myvol
+
 docker run --rm \
   -v myvol:/dest \
   -v "$(pwd)":/backup \
   alpine sh -c "cd /dest && tar xzf /backup/myvol-backup.tgz"
 ```
 
-### 8.2 Bind Mount 백업
+### Bind Mount 백업
+
 - 호스트에서 디렉터리를 그대로 압축/스냅샷.
 - 자체 버전관리/스냅샷 정책 필요.
 
 ---
 
-## 9. 운영 예: DB 스토리지
+## 운영 예: DB 스토리지
 
-### 9.1 Volume(권장)
+### Volume(권장)
+
 ```bash
 docker volume create pgdata
 docker run -d --name pg \
@@ -162,7 +176,8 @@ docker run -d --name pg \
 ```
 - **운영/스테이징**: Volume이 기본 선택(권한/속도/격리/관리성).
 
-### 9.2 Bind Mount(개발·디버깅)
+### Bind Mount(개발·디버깅)
+
 ```bash
 mkdir -p ./pgdata
 docker run -d --name pg \
@@ -174,9 +189,10 @@ docker run -d --name pg \
 
 ---
 
-## 10. 운영 예: 앱 코드/정적 자산
+## 운영 예: 앱 코드/정적 자산
 
-### 10.1 개발(핫리로드)
+### 개발(핫리로드)
+
 ```bash
 docker run -d \
   -v "$(pwd)"/src:/usr/src/app \
@@ -185,7 +201,8 @@ docker run -d \
 ```
 - 코드 변경 즉시 반영(프레임워크의 watch 기능 전제).
 
-### 10.2 운영(정적 파일)
+### 운영(정적 파일)
+
 - 빌드 산출물을 이미지에 포함하거나, Volume으로 사전 배포 후 `readonly`로 마운트.
 ```bash
 docker run -d \
@@ -195,7 +212,7 @@ docker run -d \
 
 ---
 
-## 11. `docker-compose.yml` 예시(운영/개발 대비)
+## `docker-compose.yml` 예시(운영/개발 대비)
 
 ```yaml
 version: "3.9"
@@ -235,7 +252,7 @@ services:
 
 ---
 
-## 12. 접근 제어와 무결성
+## 접근 제어와 무결성
 
 - **읽기 전용**(`:ro`/`readonly`)으로 공격 면 최소화.
 - 컨테이너를 **비루트**로 실행(`USER`, `--user`) + 루트FS 읽기 전용(`--read-only`) + `tmpfs`로 임시 경로 제공:
@@ -250,7 +267,7 @@ docker run -d --read-only \
 
 ---
 
-## 13. 고급: Volume Driver로 외부 스토리지 연계
+## 고급: Volume Driver로 외부 스토리지 연계
 
 - NFS/GlusterFS/클라우드(예: EBS, Azure Disk, GCE PD) 등과 연계하는 **볼륨 드라이버**.
 - 팀/다수 호스트 간 공유, 스냅샷/백업 자동화 가능.
@@ -258,7 +275,7 @@ docker run -d --read-only \
 
 ---
 
-## 14. tmpfs(메모리 기반) 마운트
+## tmpfs(메모리 기반) 마운트
 
 - 민감 데이터/캐시/임시파일을 디스크에 남기지 않도록 메모리에 마운트:
 ```bash
@@ -270,7 +287,7 @@ docker run -d \
 
 ---
 
-## 15. 파일 동기화/변경 감지(특히 데스크톱)
+## 파일 동기화/변경 감지(특히 데스크톱)
 
 - macOS/Windows에서 바인드 마운트 시 변경 감지가 **느리거나 누락**될 수 있음.
   - 프레임워크 옵션(폴링 기반 watcher) 활성화
@@ -279,7 +296,7 @@ docker run -d \
 
 ---
 
-## 16. 실전 시나리오별 추천
+## 실전 시나리오별 추천
 
 | 시나리오 | 추천 | 설명 |
 |---|---|---|
@@ -292,7 +309,7 @@ docker run -d \
 
 ---
 
-## 17. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -306,11 +323,12 @@ docker run -d \
 
 ---
 
-## 18. 실습: 같은 구조를 Volume/Bind Mount로 번갈아 실행
+## 실습: 같은 구조를 Volume/Bind Mount로 번갈아 실행
 
-### 18.1 앱(예: Nginx) + 데이터 폴더
+### 앱(예: Nginx) + 데이터 폴더
 
 #### Volume
+
 ```bash
 docker volume create webdata
 docker run -d --name webv \
@@ -318,16 +336,19 @@ docker run -d --name webv \
   -p 8080:80 nginx
 
 # 컨텐츠 주입(임시 컨테이너로 복사)
+
 docker run --rm \
   --mount type=volume,source=webdata,target=/dst \
   -v "$(pwd)"/public:/src:ro \
   alpine sh -c "cp -r /src/* /dst/"
 
 # 확인
+
 curl -s localhost:8080 | head
 ```
 
 #### Bind Mount
+
 ```bash
 mkdir -p ./public
 echo "<h1>Hello</h1>" > ./public/index.html
@@ -345,7 +366,7 @@ curl -s localhost:8081 | head
 
 ---
 
-## 19. Compose로 관리 명령 간소화
+## Compose로 관리 명령 간소화
 
 ```yaml
 version: "3.9"
@@ -370,29 +391,33 @@ volumes:
 
 ---
 
-## 20. 명령 요약
+## 명령 요약
 
 ```bash
 # 볼륨
+
 docker volume ls
 docker volume inspect <name>
 docker volume create <name>
 docker volume rm <name>
 
 # 실행(권장: --mount)
+
 docker run --mount type=volume,source=myvol,target=/data myimg
 docker run --mount type=bind,source="$(pwd)"/data,target=/data myimg
 
 # 읽기 전용
+
 docker run --mount type=volume,source=myvol,target=/data,readonly myimg
 
 # tmpfs
+
 docker run --mount type=tmpfs,target=/run/tmp myimg
 ```
 
 ---
 
-## 21. 수학적 직관(성능·이식성·운영성 간의 균형)
+## 수학적 직관(성능·이식성·운영성 간의 균형)
 
 성능 지표를 \(P\), 이식성을 \(I\), 운영성(관리/보안/관찰)을 \(O\)라 하자.
 개발(핫리로드)에서의 종합 효용 \(U_{\text{dev}}\), 운영에서의 종합 효용 \(U_{\text{prod}}\)의 직관은 다음과 같이 생각할 수 있다.
@@ -406,7 +431,7 @@ $$
 
 ---
 
-## 22. 결론 요약
+## 결론 요약
 
 - **운영/장기 데이터**: Volume(이름 기반·경로 독립·드라이버·백업 수월·보안 유리).
 - **개발/핫리로드**: Bind Mount(코드 변경 즉시 반영·IDE 친화).
@@ -416,7 +441,7 @@ $$
 
 ---
 
-## 23. 체크리스트
+## 체크리스트
 
 - [ ] 운영 DB/영구 데이터는 **Volume** 사용
 - [ ] 개발 핫리로드 디렉토리는 **Bind Mount**

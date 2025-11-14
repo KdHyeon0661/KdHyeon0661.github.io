@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS S3 Object Lock 완벽 가이드: 데이터 삭제 방지와 규정 준수
 
-## 0. 왜 Object Lock인가? — 랜섬웨어·감사·규제 대응의 기준선
+## 왜 Object Lock인가? — 랜섬웨어·감사·규제 대응의 기준선
 
 - **불변성(immutability)** 확립: **WORM(Write Once Read Many)** 모델로 **삭제/수정 불가** 보장
 - **감사·규정 준수**: 금융/의료/공공 기록의 **법정 보존** 충족
@@ -24,7 +24,7 @@ category: AWS
 
 ---
 
-## 1. Object Lock 구성 요소 (정확 동작 모델)
+## Object Lock 구성 요소 (정확 동작 모델)
 
 | 구성 요소 | 설명 | 비고 |
 |---|---|---|
@@ -36,7 +36,7 @@ category: AWS
 
 ---
 
-## 2. Governance vs Compliance (차이를 명확히)
+## Governance vs Compliance (차이를 명확히)
 
 | 항목 | Governance | Compliance |
 |---|---|---|
@@ -47,7 +47,7 @@ category: AWS
 
 ---
 
-## 3. 사전 조건과 제약
+## 사전 조건과 제약
 
 - **반드시 새 버킷에서** **Object Lock 활성화** 체크
 - **Versioning 자동 활성화**(필수)
@@ -56,15 +56,16 @@ category: AWS
 
 ---
 
-## 4. 버킷 생성과 기본 설정 (콘솔·CLI·IaC)
+## 버킷 생성과 기본 설정 (콘솔·CLI·IaC)
 
-### 4.1 콘솔 경로(요약)
+### 콘솔 경로(요약)
+
 1. **S3 → 버킷 만들기**
 2. 고급 설정 → **Object Lock 활성화** 체크
 3. (선택) **기본 보존**(Mode/기간) 설정
 4. 생성
 
-### 4.2 CLI — 버킷 생성 시 Object Lock 활성화
+### CLI — 버킷 생성 시 Object Lock 활성화
 
 ```bash
 aws s3api create-bucket \
@@ -75,7 +76,7 @@ aws s3api create-bucket \
 
 > 핵심 플래그: `--object-lock-enabled-for-bucket`
 
-### 4.3 버킷 기본 보존 구성(선택)
+### 버킷 기본 보존 구성(선택)
 
 ```bash
 aws s3api put-object-lock-configuration \
@@ -93,7 +94,7 @@ aws s3api put-object-lock-configuration \
 
 > `Days` 또는 `Years` 지정 가능. DefaultRetention은 **새 객체**에 자동 적용.
 
-### 4.4 CloudFormation (스니펫)
+### CloudFormation (스니펫)
 
 ```yaml
 Resources:
@@ -112,7 +113,7 @@ Resources:
             Days: 30
 ```
 
-### 4.5 Terraform (스니펫)
+### Terraform (스니펫)
 
 ```hcl
 resource "aws_s3_bucket" "locked" {
@@ -136,9 +137,9 @@ resource "aws_s3_bucket_object_lock_configuration" "locked_cfg" {
 
 ---
 
-## 5. 객체 업로드와 보존 지정 (정교한 예제)
+## 객체 업로드와 보존 지정 (정교한 예제)
 
-### 5.1 업로드 시 개별 Retention 지정
+### 업로드 시 개별 Retention 지정
 
 ```bash
 aws s3api put-object \
@@ -149,23 +150,25 @@ aws s3api put-object \
   --object-lock-retain-until-date 2026-01-01T00:00:00Z
 ```
 
-### 5.2 기존 객체에 Retention/Legal Hold 적용
+### 기존 객체에 Retention/Legal Hold 적용
 
 ```bash
 # Retention 설정/변경(Compliance는 연장만 가능)
+
 aws s3api put-object-retention \
   --bucket locked-bucket \
   --key important.db \
   --retention Mode=GOVERNANCE,RetainUntilDate=2026-08-07T00:00:00Z
 
 # Legal Hold ON
+
 aws s3api put-object-legal-hold \
   --bucket locked-bucket \
   --key important.db \
   --legal-hold Status=ON
 ```
 
-### 5.3 Governance 우회 삭제(권한 + 헤더 필요)
+### Governance 우회 삭제(권한 + 헤더 필요)
 
 ```bash
 aws s3api delete-object \
@@ -180,9 +183,9 @@ aws s3api delete-object \
 
 ---
 
-## 6. 권한 설계 (최소 권한 + 우회 권한 분리)
+## 권한 설계 (최소 권한 + 우회 권한 분리)
 
-### 6.1 Governance 우회 권한 부여 샘플(초안 보강)
+### Governance 우회 권한 부여 샘플(초안 보강)
 
 ```json
 {
@@ -216,41 +219,48 @@ aws s3api delete-object \
 
 ---
 
-## 7. 검증·점검 커맨드 (운영 체크리스트)
+## 검증·점검 커맨드 (운영 체크리스트)
 
 ```bash
 # 버킷의 Object Lock 활성화 확인
+
 aws s3api get-object-lock-configuration --bucket locked-bucket
 
 # 객체 Retention 확인
+
 aws s3api get-object-retention --bucket locked-bucket --key backup.tar.gz
 
 # 객체 Legal Hold 확인
+
 aws s3api get-object-legal-hold --bucket locked-bucket --key backup.tar.gz
 
 # 객체 메타데이터(VersionId 포함)
+
 aws s3api head-object --bucket locked-bucket --key backup.tar.gz
 ```
 
 ---
 
-## 8. 실전 랩 ① — “1년 불변 백업 버킷”
+## 실전 랩 ① — “1년 불변 백업 버킷”
 
 ### 시나리오
+
 - 요구사항: 1년간 **삭제/수정 절대 금지** 백업
 - 해법: **Compliance** 모드 + RetainUntil 1년
 
 ```bash
-# 1. 버킷 생성(Object Lock)
+# 버킷 생성(Object Lock)
+
 aws s3api create-bucket \
   --bucket backups-secure \
   --create-bucket-configuration LocationConstraint=ap-northeast-2 \
   --object-lock-enabled-for-bucket
 
-# 2. 기본 보존(권장: Governance X, 명시적 Compliance 사용)
+# 기본 보존(권장: Governance X, 명시적 Compliance 사용)
 #   Compliance는 실수 위험이 크므로 DefaultRetention 대신 개별 객체에서 지정 권장
 
-# 3. 백업 업로드(Compliance + 1년)
+# 백업 업로드(Compliance + 1년)
+
 aws s3api put-object \
   --bucket backups-secure \
   --key backup-2025-08.tar.gz \
@@ -258,7 +268,8 @@ aws s3api put-object \
   --object-lock-mode COMPLIANCE \
   --object-lock-retain-until-date 2026-08-07T00:00:00Z
 
-# 4. 확인
+# 확인
+
 aws s3api get-object-retention \
   --bucket backups-secure \
   --key backup-2025-08.tar.gz
@@ -268,14 +279,16 @@ aws s3api get-object-retention \
 
 ---
 
-## 9. 실전 랩 ② — “랜섬웨어 대비 백업” (Governance + 우회 통제)
+## 실전 랩 ② — “랜섬웨어 대비 백업” (Governance + 우회 통제)
 
 ### 정책
+
 - 기본은 **Governance 30일**(삭제 금지)
 - **보안 담당자 역할**만 **우회 권한** 보유(+MFA)
 
 ```bash
 # 기본 보존 30일
+
 aws s3api put-object-lock-configuration \
   --bucket org-backups \
   --object-lock-configuration '{
@@ -284,6 +297,7 @@ aws s3api put-object-lock-configuration \
   }'
 
 # 일일 백업 업로드(기본 30일 적용)
+
 aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 ```
 
@@ -292,7 +306,7 @@ aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 
 ---
 
-## 10. 운영·거버넌스 팁 (실무에서 놓치기 쉬운 부분)
+## 운영·거버넌스 팁 (실무에서 놓치기 쉬운 부분)
 
 1. **단축 금지 규칙**: Compliance는 **연장만 가능**. 거버넌스 문서/Runbook에 **굵게** 명시.
 2. **Retention vs Legal Hold**: Legal Hold는 **기간 없음** + **즉시 효력**. 해제 전까지 어떤 RetainUntil보다 **강력**.
@@ -312,7 +326,7 @@ aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 
 ---
 
-## 11. 감시·경보 (CloudWatch + EventBridge)
+## 감시·경보 (CloudWatch + EventBridge)
 
 ### 이벤트 패턴(예: Retention 변경 탐지)
 
@@ -330,7 +344,7 @@ aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 
 ---
 
-## 12. 대조: Object Lock vs. 단순 Versioning
+## 대조: Object Lock vs. 단순 Versioning
 
 | 항목 | Versioning | Object Lock |
 |---|---|---|
@@ -340,7 +354,7 @@ aws s3 cp backup-$(date +%F).tar.gz s3://org-backups/
 
 ---
 
-## 13. FAQ (실무 질문 기반)
+## FAQ (실무 질문 기반)
 
 **Q1. 기존 버킷에 Object Lock을 켤 수 있나?**
 A. **아니오.** **새 버킷**을 만들 때만 활성화 가능.
@@ -359,7 +373,7 @@ A. **가능.** 대상 버킷이 **Object Lock 활성화+버전 관리** 상태�
 
 ---
 
-## 14. 미니 실습 — “증분 백업 체인 + 월간 장기 보존”
+## 미니 실습 — “증분 백업 체인 + 월간 장기 보존”
 
 - **일일 증분**: Governance 30일
 - **월간 풀백업**: Compliance 7년
@@ -368,9 +382,11 @@ A. **가능.** 대상 버킷이 **Object Lock 활성화+버전 관리** 상태�
 BUCKET=datalake-backups
 
 # 일일 증분(기본 Governance 30일 가정: DefaultRetention)
+
 aws s3 cp incr-2025-11-10.tar.zst s3://$BUCKET/incr/2025/11/10/
 
 # 월간 풀(명시적 Compliance 7년)
+
 aws s3api put-object \
   --bucket $BUCKET \
   --key full/2025-11.tar.zst \
@@ -383,7 +399,7 @@ aws s3api put-object \
 
 ---
 
-## 15. 문제 해결(트러블슈팅)
+## 문제 해결(트러블슈팅)
 
 - **`AccessDenied`로 Retention 수정 실패**
   → 권한(`s3:PutObjectRetention`) 확인, Compliance는 **연장만 가능**. 거버넌스의 경우 우회 권한·헤더 확인.
@@ -398,7 +414,7 @@ aws s3api put-object \
 
 ---
 
-## 16. 보안 아키텍처 샘플 — “우회는 승인 시에만”
+## 보안 아키텍처 샘플 — “우회는 승인 시에만”
 
 1. **일반 운영 역할**: 읽기/쓰기 가능, **삭제/우회 불가**
 2. **보안 관리자 역할**: `s3:BypassGovernanceRetention` 포함, **MFA 필수 조건부**
@@ -407,7 +423,7 @@ aws s3api put-object \
 
 ---
 
-## 17. 수식으로 보는 리스크 저감(개념적)
+## 수식으로 보는 리스크 저감(개념적)
 
 랜섬웨어 공격 시 삭제 성공확률 \(p\) 를 가정할 때, Object Lock 도입 후 성공확률 \(p'\) 는
 
@@ -419,7 +435,7 @@ Governance/Compliance/Legal Hold 중 하나라도 참이면 \(p' \to 0\)에 수�
 
 ---
 
-## 18. 마무리 요약(초안 정리 + 보강 포인트)
+## 마무리 요약(초안 정리 + 보강 포인트)
 
 | 항목 | 핵심 |
 |---|---|
@@ -433,27 +449,32 @@ Governance/Compliance/Legal Hold 중 하나라도 참이면 \(p' \to 0\)에 수�
 
 ---
 
-## 19. 명령 모음(치트시트)
+## 명령 모음(치트시트)
 
 ```bash
 # 버킷 생성(OL Enabled)
+
 aws s3api create-bucket --bucket <name> \
   --create-bucket-configuration LocationConstraint=ap-northeast-2 \
   --object-lock-enabled-for-bucket
 
 # 기본 보존(예: Governance 30일)
+
 aws s3api put-object-lock-configuration --bucket <name> \
   --object-lock-configuration '{"ObjectLockEnabled":"Enabled","Rule":{"DefaultRetention":{"Mode":"GOVERNANCE","Days":30}}}'
 
 # 업로드 시 명시적 보존
+
 aws s3api put-object --bucket <name> --key a.tar \
   --body a.tar --object-lock-mode COMPLIANCE \
   --object-lock-retain-until-date 2026-01-01T00:00:00Z
 
 # Retention/Legal Hold 조회
+
 aws s3api get-object-retention --bucket <name> --key a.tar
 aws s3api get-object-legal-hold --bucket <name> --key a.tar
 
 # Governance 우회 삭제
+
 aws s3api delete-object --bucket <name> --key a.tar --bypass-governance-retention
 ```

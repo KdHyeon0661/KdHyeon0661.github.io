@@ -6,7 +6,7 @@ category: Java
 ---
 # Reader/Writer & 파일 읽기/쓰기
 
-## 1. 개념 정리 — 언제 Reader/Writer인가?
+## 개념 정리 — 언제 Reader/Writer인가?
 
 | 구분 | 바이트 스트림 | 문자 스트림 |
 |---|---|---|
@@ -20,9 +20,10 @@ category: Java
 
 ---
 
-## 2. Reader / Writer 주요 API
+## Reader / Writer 주요 API
 
-### 2.1 Reader 핵심 메서드
+### Reader 핵심 메서드
+
 | 메서드 | 설명 |
 |---|---|
 | `int read()` | 한 글자를 `int`로(EOF=-1). `char`가 아닌 **코드 유닛** 기반에 유의 |
@@ -32,7 +33,8 @@ category: Java
 | `void mark(int readAheadLimit)` / `reset()` | 일부 구현만 지원(`BufferedReader` 등) |
 | `void close()` | 자원 해제 |
 
-### 2.2 Writer 핵심 메서드
+### Writer 핵심 메서드
+
 | 메서드 | 설명 |
 |---|---|
 | `void write(int c)` | 문자 1개 쓰기 |
@@ -45,7 +47,7 @@ category: Java
 
 ---
 
-## 3. 필수 클래스와 올바른 조합
+## 필수 클래스와 올바른 조합
 
 | 클래스 | 용도/특징 | 인코딩 |
 |---|---|---|
@@ -59,13 +61,14 @@ category: Java
 
 ---
 
-## 4. 인코딩(Encoding) — 문제의 8할은 여기서
+## 인코딩(Encoding) — 문제의 8할은 여기서
 
 - 항상 **`StandardCharsets.UTF_8`**을 **명시**하세요.
 - `FileReader`/`FileWriter`는 **OS 기본 문자셋**을 사용 → 이식성/재현성 낮음.
 - BOM(UTF-8 BOM)은 표준상 불필요하며, 존재 시 파일 첫 글자로 `\uFEFF`가 들어올 수 있음(직접 제거 필요).
 
-### 4.1 안전한 Reader 생성(UTF-8)
+### 안전한 Reader 생성(UTF-8)
+
 ```java
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -75,7 +78,8 @@ Reader r = new BufferedReader(
                 new FileInputStream("data.txt"), StandardCharsets.UTF_8));
 ```
 
-### 4.2 NIO 스타일(간결 권장)
+### NIO 스타일(간결 권장)
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -86,9 +90,10 @@ BufferedWriter bw = Files.newBufferedWriter(Path.of("out.txt"), StandardCharsets
 
 ---
 
-## 5. 기본 예제 — 실전 패턴
+## 기본 예제 — 실전 패턴
 
-### 5.1 라인 단위 읽기(UTF-8, try-with-resources)
+### 라인 단위 읽기(UTF-8, try-with-resources)
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -111,7 +116,8 @@ public class ReadLines {
 }
 ```
 
-### 5.2 라인 쓰기(추가/덧붙이기)
+### 라인 쓰기(추가/덧붙이기)
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -131,7 +137,8 @@ public class AppendLines {
 }
 ```
 
-### 5.3 전체 문자열 읽기/쓰기 (작은 파일, Java 11+)
+### 전체 문자열 읽기/쓰기 (작은 파일, Java 11+)
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -146,7 +153,8 @@ public class ReadWriteString {
 }
 ```
 
-### 5.4 스트림으로 필터링 처리
+### 스트림으로 필터링 처리
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -163,7 +171,8 @@ public class FilterErrors {
 }
 ```
 
-### 5.5 mark/reset (lookahead)
+### mark/reset (lookahead)
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -186,9 +195,10 @@ public class MarkReset {
 
 ---
 
-## 6. 실무 자주 쓰는 고급 기법
+## 실무 자주 쓰는 고급 기법
 
-### 6.1 PushbackReader — 토큰 되밀어 넣기
+### PushbackReader — 토큰 되밀어 넣기
+
 ```java
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -205,7 +215,8 @@ try (PushbackReader pr = new PushbackReader(
 }
 ```
 
-### 6.2 LineNumberReader — 라인 번호 관리
+### LineNumberReader — 라인 번호 관리
+
 ```java
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -219,7 +230,8 @@ try (LineNumberReader lr = new LineNumberReader(
 }
 ```
 
-### 6.3 PrintWriter — 포매팅 출력
+### PrintWriter — 포매팅 출력
+
 ```java
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -234,9 +246,10 @@ try (PrintWriter pw = new PrintWriter(
 
 ---
 
-## 7. 인코딩·BOM·에러 정책
+## 인코딩·BOM·에러 정책
 
-### 7.1 BOM 제거(UTF-8)
+### BOM 제거(UTF-8)
+
 Java의 `InputStreamReader`는 BOM을 자동 제거하지 않을 수 있습니다. 간단 제거 예:
 
 ```java
@@ -256,7 +269,8 @@ static Reader utf8ReaderStrippingBOM(InputStream in) throws IOException {
 }
 ```
 
-### 7.2 손상된 바이트 처리(Decoder 에러 정책)
+### 손상된 바이트 처리(Decoder 에러 정책)
+
 `CharsetDecoder`로 변환 에러 정책 제어(보고/무시/치환):
 
 ```java
@@ -275,7 +289,7 @@ String s = chars.toString();
 
 ---
 
-## 8. 성능·메모리·대용량 파일 전략
+## 성능·메모리·대용량 파일 전략
 
 - **버퍼링 필수**: `BufferedReader/Writer` 기본 버퍼(8KB)로 충분한 경우가 많지만, 대용량이면 버퍼를 키워볼 수 있음.
 - **스트리밍 처리**: `Files.lines()` 또는 `readLine()`로 **순차 처리**. `readString()/readAllLines()`는 작은 파일에만.
@@ -284,7 +298,8 @@ String s = chars.toString();
 - **동시 쓰기 금지**: 복수 스레드가 **같은 파일**에 동시에 Writer를 열지 않기(파편화/경합). 필요 시 **파일 잠금(FileChannel.lock)**.
 - **안전한 덮어쓰기**: 임시 파일에 기록 → `Files.move(temp, target, ATOMIC_MOVE, REPLACE_EXISTING)`로 **원자적 교체**.
 
-### 8.1 빠른 텍스트 복사(스트리밍)
+### 빠른 텍스트 복사(스트리밍)
+
 ```java
 static void copyText(Path src, Path dst) throws IOException {
   try (BufferedReader br = Files.newBufferedReader(src, StandardCharsets.UTF_8);
@@ -298,7 +313,8 @@ static void copyText(Path src, Path dst) throws IOException {
 }
 ```
 
-### 8.2 마지막 N라인 tail 구현(메모리 제한)
+### 마지막 N라인 tail 구현(메모리 제한)
+
 ```java
 import java.util.ArrayDeque;
 
@@ -317,7 +333,7 @@ static void tail(Path p, int n) throws IOException {
 
 ---
 
-## 9. 스캐너 vs 버퍼드리더
+## 스캐너 vs 버퍼드리더
 
 | 항목 | `Scanner` | `BufferedReader` |
 |---|---|---|
@@ -329,9 +345,10 @@ static void tail(Path p, int n) throws IOException {
 
 ---
 
-## 10. 텍스트 ↔ 바이너리 브리지 패턴
+## 텍스트 ↔ 바이너리 브리지 패턴
 
-### 10.1 GZIP 텍스트 읽기
+### GZIP 텍스트 읽기
+
 ```java
 import java.util.zip.GZIPInputStream;
 import java.nio.charset.StandardCharsets;
@@ -347,7 +364,8 @@ try (BufferedReader br = new BufferedReader(
 }
 ```
 
-### 10.2 CSV 간단 변환(탭→CSV)
+### CSV 간단 변환(탭→CSV)
+
 ```java
 import java.nio.file.*;
 import java.nio.charset.StandardCharsets;
@@ -366,7 +384,7 @@ static void tsvToCsv(Path in, Path out) throws IOException {
 
 ---
 
-## 11. 안전한 쓰기 — 임시 파일, 원자적 교체
+## 안전한 쓰기 — 임시 파일, 원자적 교체
 
 ```java
 import java.nio.file.*;
@@ -387,7 +405,7 @@ static void rewriteSafe(Path target, Iterable<String> lines) throws IOException 
 
 ---
 
-## 12. 파일 잠금(File Lock)으로 단독 쓰기 보장
+## 파일 잠금(File Lock)으로 단독 쓰기 보장
 
 ```java
 import java.nio.channels.FileChannel;
@@ -406,7 +424,7 @@ try (FileChannel ch = FileChannel.open(Path.of("shared.txt"), StandardOpenOption
 
 ---
 
-## 13. 코드 포인트(이모지 등) 주의
+## 코드 포인트(이모지 등) 주의
 
 - `char`는 16비트(UTF-16 코드 유닛). 이모지 등 **보조 평면 문자**는 **2개 `char`**가 필요.
 - 코드포인트 안전 순회:
@@ -417,7 +435,7 @@ s.codePoints().forEach(cp -> System.out.println(Integer.toHexString(cp)));
 
 ---
 
-## 14. 예외 처리·리소스 관리 패턴
+## 예외 처리·리소스 관리 패턴
 
 - **try-with-resources**로 항상 닫기.
 - 예외는 **로깅 + 문맥 정보** 제공(파일 경로, 라인 번호 등).
@@ -438,7 +456,7 @@ try (BufferedReader br = Files.newBufferedReader(p, UTF_8)) {
 
 ---
 
-## 15. 체크리스트 요약
+## 체크리스트 요약
 
 - [ ] 텍스트 → **Reader/Writer**, 바이너리 → Stream/Channel
 - [ ] **UTF-8 명시**(`StandardCharsets.UTF_8`)
@@ -451,9 +469,10 @@ try (BufferedReader br = Files.newBufferedReader(p, UTF_8)) {
 
 ---
 
-## 16. 미니 레시피 모음
+## 미니 레시피 모음
 
-### 16.1 파일 내용 일부 치환(대용량 안전)
+### 파일 내용 일부 치환(대용량 안전)
+
 ```java
 static void replaceInFile(Path src, String needle, String repl) throws IOException {
   Path tmp = Files.createTempFile(src.getParent(), "swap-", ".txt");
@@ -468,7 +487,8 @@ static void replaceInFile(Path src, String needle, String repl) throws IOExcepti
 }
 ```
 
-### 16.2 라인 수 세기(빠름)
+### 라인 수 세기(빠름)
+
 ```java
 static long countLines(Path p) throws IOException {
   try (var s = Files.lines(p, StandardCharsets.UTF_8)) {
@@ -477,7 +497,8 @@ static long countLines(Path p) throws IOException {
 }
 ```
 
-### 16.3 로그에서 최근 1시간만 추출(간단 필터)
+### 로그에서 최근 1시간만 추출(간단 필터)
+
 ```java
 import java.time.*;
 import java.time.format.*;
@@ -499,7 +520,7 @@ static void filterRecent(Path in, Path out) throws IOException {
 
 ---
 
-## 17. 선택 가이드 표
+## 선택 가이드 표
 
 | 요구 | 권장 API |
 |---|---|
@@ -514,7 +535,7 @@ static void filterRecent(Path in, Path out) throws IOException {
 
 ---
 
-## 18. 결론
+## 결론
 
 - **Reader/Writer는 “텍스트 처리의 정석”**입니다. 문제의 대부분은 **인코딩 미명시**에서 시작하므로 **UTF-8을 항상 명시**하세요.
 - NIO `Files.*` API를 사용하면 **간결·안전·성능**을 모두 잡을 수 있습니다.

@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # 차세대 JavaScript 런타임: Bun과 Deno
 
-## 0. 빠른 비교 요약
+## 빠른 비교 요약
 
 | 항목 | Node.js | Deno | Bun |
 |---|---|---|---|
@@ -21,23 +21,26 @@ category: JavaScript
 
 ---
 
-## 1. 런타임 기본 철학과 아키텍처
+## 런타임 기본 철학과 아키텍처
 
 ### Deno
+
 - **보안 기본값**: 파일/네트워크/환경변수 접근은 `--allow-*` 플래그가 있어야 한다.
 - **표준 Web API 우선**: `fetch`, `Request/Response`, `URLPattern`, `WebCrypto`, `Streams` 등 브라우저와 닮은 표면을 유지.
 - **TS·포맷터·테스트·번들** 내장: 도구 종속성을 줄여 일관된 DX 제공.
 
 ### Bun
+
 - **속도 지상주의**: JS 런타임 + 번들러 + 테스트 러너 + 패키지 매니저를 **하나**로 묶어 극단적 성능과 단순화를 추구.
 - **npm 1급 지원**: 기존 Node 프로젝트를 거의 그대로 실행.
 - **JSX/TS/JSON 내장 파싱**: 별도 전처리 없이 구동.
 
 ---
 
-## 2. “Hello, Runtime” — 가장 작은 서버
+## “Hello, Runtime” — 가장 작은 서버
 
-### 2.1 Deno (권한 명시 + 표준 API)
+### Deno (권한 명시 + 표준 API)
+
 ```ts
 // deno-hello.ts
 Deno.serve(
@@ -50,7 +53,8 @@ Deno.serve(
 deno run --allow-net=0.0.0.0:8080 deno-hello.ts
 ```
 
-### 2.2 Bun (초간단 + 초고속)
+### Bun (초간단 + 초고속)
+
 ```ts
 // bun-hello.ts
 export default {
@@ -71,9 +75,10 @@ bun run bun-hello.ts
 
 ---
 
-## 3. 파일/네트워크/환경변수 — 보안 모델과 권한
+## 파일/네트워크/환경변수 — 보안 모델과 권한
 
-### 3.1 Deno: 권한 플래그
+### Deno: 권한 플래그
+
 ```ts
 // fs.ts
 const data = await Deno.readTextFile("./secrets.txt");
@@ -81,8 +86,10 @@ console.log(data);
 ```
 ```bash
 # 실패(권한 없음)
+
 deno run fs.ts
 # 성공(파일 읽기 허용)
+
 deno run --allow-read=./secrets.txt fs.ts
 ```
 
@@ -91,7 +98,8 @@ deno run --allow-read=./secrets.txt fs.ts
 
 **권장**: 개발 중에도 최소 권한 원칙을 유지(실서버 잊지 않도록 습관화).
 
-### 3.2 Bun/Node: 기본 개방형
+### Bun/Node: 기본 개방형
+
 ```ts
 import fs from "node:fs/promises";
 const t = await fs.readFile("./secrets.txt", "utf-8");
@@ -101,9 +109,10 @@ console.log(t);
 
 ---
 
-## 4. TypeScript — “설정 없이” 바로 쓰기
+## TypeScript — “설정 없이” 바로 쓰기
 
-### 4.1 Deno
+### Deno
+
 ```ts
 // types.ts
 export function greet(name: string) {
@@ -130,7 +139,8 @@ deno run types.ts
 }
 ```
 
-### 4.2 Bun
+### Bun
+
 ```ts
 // index.ts
 const sum = (a: number, b: number) => a + b;
@@ -144,9 +154,10 @@ bun run index.ts
 
 ---
 
-## 5. 패키지·의존성 — URL import vs npm
+## 패키지·의존성 — URL import vs npm
 
-### 5.1 Deno의 URL import + npm
+### Deno의 URL import + npm
+
 ```ts
 // std 모듈(버전 고정)
 import { join } from "https://deno.land/std@0.224.0/path/join.ts";
@@ -171,7 +182,8 @@ console.log(_.chunk([1,2,3,4], 2));
 deno run --allow-net --import-map=import_map.json app.ts
 ```
 
-### 5.2 Bun의 npm 완전 호환
+### Bun의 npm 완전 호환
+
 ```bash
 bun init
 bun install axios
@@ -186,9 +198,10 @@ console.log(data);
 
 ---
 
-## 6. HTTP 서버 — 라우팅/미들웨어/스트림
+## HTTP 서버 — 라우팅/미들웨어/스트림
 
-### 6.1 Deno — 표준 `serve`와 스트림
+### Deno — 표준 `serve`와 스트림
+
 ```ts
 // deno-server.ts
 import { serveFile } from "https://deno.land/std@0.224.0/http/file_server.ts";
@@ -218,7 +231,8 @@ Deno.serve(async (req) => {
 deno run --allow-net --allow-read deno-server.ts
 ```
 
-### 6.2 Bun — 라우터 없이도 간결
+### Bun — 라우터 없이도 간결
+
 ```ts
 // bun-server.ts
 import { file } from "bun";
@@ -249,9 +263,10 @@ bun run bun-server.ts
 
 ---
 
-## 7. 데이터·스토리지 — Deno KV / Bun SQLite
+## 데이터·스토리지 — Deno KV / Bun SQLite
 
-### 7.1 Deno KV (서버 없는 키-값 저장)
+### Deno KV (서버 없는 키-값 저장)
+
 ```ts
 // deno-kv.ts
 const kv = await Deno.openKv(); // 로컬: ./kv.sqlite 생성
@@ -268,7 +283,8 @@ deno run --allow-read --allow-write deno-kv.ts
 ```
 - 트랜잭션/Watch API/TTL 등 지원(간단한 서버리스 상태 보관에 유용).
 
-### 7.2 Bun + SQLite
+### Bun + SQLite
+
 ```ts
 // bun-sqlite.ts
 import { Database } from "bun:sqlite";
@@ -289,9 +305,10 @@ bun run bun-sqlite.ts
 
 ---
 
-## 8. 테스팅·벤치마크·리니터
+## 테스팅·벤치마크·리니터
 
-### 8.1 Deno test/bench/lint/fmt
+### Deno test/bench/lint/fmt
+
 ```ts
 // calc.ts
 export const add = (a: number, b: number) => a + b;
@@ -312,7 +329,8 @@ deno fmt
 deno lint
 ```
 
-### 8.2 Bun test
+### Bun test
+
 ```ts
 // math.test.ts
 import { expect, test } from "bun:test";
@@ -329,9 +347,10 @@ bun test
 
 ---
 
-## 9. 번들/배포 — 단일 바이너리, Edge, Docker
+## 번들/배포 — 단일 바이너리, Edge, Docker
 
-### 9.1 Deno compile — 단일 실행 파일
+### Deno compile — 단일 실행 파일
+
 ```ts
 // cli.ts
 console.log("CLI runs!");
@@ -342,14 +361,16 @@ deno compile --allow-read --output=cli cli.ts
 ```
 - 운영 환경에 런타임 설치 없이 배포 가능.
 
-### 9.2 Edge 친화: 표준 Fetch 핸들러
+### Edge 친화: 표준 Fetch 핸들러
+
 - Deno/Bun 모두 `Request -> Response` 인터페이스를 사용 → **Cloudflare Workers**, **Vercel Edge** 등에 이식 쉬움(약간의 어댑터만).
 
-### 9.3 Docker 최소 이미지 예시
+### Docker 최소 이미지 예시
 
 **Deno**
 ```Dockerfile
 # deno.Dockerfile
+
 FROM denoland/deno:alpine-1.45.5
 WORKDIR /app
 COPY . .
@@ -360,6 +381,7 @@ CMD ["run", "--allow-net", "src/main.ts"]
 **Bun**
 ```Dockerfile
 # bun.Dockerfile
+
 FROM oven/bun:1.1.20-alpine
 WORKDIR /app
 COPY package.json bun.lockb ./
@@ -370,7 +392,7 @@ CMD ["bun", "run", "src/main.ts"]
 
 ---
 
-## 10. 성능 최적화 체크리스트
+## 성능 최적화 체크리스트
 
 - **I/O를 스트림화**: 파일/네트워크 응답을 한 번에 메모리에 올리지 말 것.
 - **JSON 파싱/직렬화 비용** 줄이기: 필요한 필드만, 가능하면 **NDJSON**/chunk 사용.
@@ -381,9 +403,10 @@ CMD ["bun", "run", "src/main.ts"]
 
 ---
 
-## 11. 마이그레이션 가이드
+## 마이그레이션 가이드
 
-### 11.1 Node → Deno (점진)
+### Node → Deno (점진)
+
 1) **표준 Web API** 사용 비율 높이기(특히 `fetch`, `URL`, `TextEncoder/Decoder`).
 2) 모듈 경로를 상대/절대 URL로 정리.
 3) npm 패키지는 `npm:` 접두로 옮기고 동작 확인.
@@ -399,7 +422,8 @@ CMD ["bun", "run", "src/main.ts"]
 }
 ```
 
-### 11.2 Node → Bun (빠른 이식)
+### Node → Bun (빠른 이식)
+
 1) `bun install`로 의존성 설치(속도 향상 체감).
 2) `bun run index.ts`로 TS/JSX 즉시 실행.
 3) 테스트는 `bun test`로 교체(가능하면).
@@ -407,9 +431,10 @@ CMD ["bun", "run", "src/main.ts"]
 
 ---
 
-## 12. 실전 예제 프로젝트 — 간단 API + 캐시 + 테스트
+## 실전 예제 프로젝트 — 간단 API + 캐시 + 테스트
 
-### 12.1 Deno 버전
+### Deno 버전
+
 ```ts
 // src/app.ts
 const cache = new Map<string, string>();
@@ -455,7 +480,8 @@ Deno.test("echo", async () => {
 deno test --allow-net
 ```
 
-### 12.2 Bun 버전
+### Bun 버전
+
 ```ts
 // src/app.ts
 const cache = new Map<string, string>();
@@ -502,9 +528,10 @@ bun test
 
 ---
 
-## 13. 운영·관측: 로깅/헬스체크/그레이스풀 셧다운
+## 운영·관측: 로깅/헬스체크/그레이스풀 셧다운
 
 ### 공통 패턴 (Fetch 핸들러 기반)
+
 ```ts
 // health.ts
 export function healthHandler() {
@@ -516,6 +543,7 @@ export function healthHandler() {
 ```
 
 ### Deno의 종료 시그널 처리
+
 ```ts
 // graceful.ts
 const abort = new AbortController();
@@ -524,6 +552,7 @@ Deno.serve({ signal: abort.signal }, (_req) => new Response("OK"));
 ```
 
 ### Bun의 종료 훅(간단)
+
 ```ts
 // bun-graceful.ts
 let shuttingDown = false;
@@ -540,7 +569,7 @@ export default {
 
 ---
 
-## 14. 자주 맞닥뜨리는 함정과 대처
+## 자주 맞닥뜨리는 함정과 대처
 
 | 이슈 | Deno | Bun | 대처 |
 |---|---|---|---|
@@ -552,7 +581,7 @@ export default {
 
 ---
 
-## 15. 선택 가이드 (의사결정 트리)
+## 선택 가이드 (의사결정 트리)
 
 - **기존 Node 기반, npm 패키지 의존 강함** → **Bun**으로 속도 개선, 유지비 최소.
 - **보안 정책 강함/서버리스·에지·표준 API 선호** → **Deno**.
@@ -561,7 +590,7 @@ export default {
 
 ---
 
-## 16. CI/CD 스니펫
+## CI/CD 스니펫
 
 **Deno (GitHub Actions)**
 ```yml
@@ -596,7 +625,7 @@ jobs:
 
 ---
 
-## 17. 성능 미세 팁 모음
+## 성능 미세 팁 모음
 
 - 응답 헤더 `content-type` 정확히 지정(파이프라인 최적화).
 - 대용량 응답은 `ReadableStream`으로 **청크 전송**.
@@ -606,7 +635,7 @@ jobs:
 
 ---
 
-## 18. 결론
+## 결론
 
 - **Bun**: “빠른 실행/설치/번들/테스트”가 **하나의 도구**로 응집된 런타임. **기존 Node 생태계를 거의 그대로** 품고 **속도 이점**을 준다.
 - **Deno**: **보안 기본값**과 **표준 Web API**로 **현대적이고 안전한 서버/스크립트**를 만든다. **TS·도구 내장**이 운영 복잡도를 낮춘다.
@@ -618,11 +647,13 @@ jobs:
 
 ```bash
 # Deno
+
 deno run --allow-net deno-hello.ts &
 wrk -t4 -c200 -d15s http://127.0.0.1:8080
 kill %1
 
 # Bun
+
 bun run bun-hello.ts &
 wrk -t4 -c200 -d15s http://127.0.0.1:8080
 kill %1

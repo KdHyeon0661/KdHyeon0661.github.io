@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Argo CD를 통한 GitOps 방식 Kubernetes 배포
 
-## 1. GitOps 재정의 — 선언형·감시·동기화·드리프트 복구
+## GitOps 재정의 — 선언형·감시·동기화·드리프트 복구
 
 - **선언형**: “실행 방법”이 아니라 **목표 상태(YAML/Helm/Kustomize)** 만 Git에 저장
 - **감시/동기화**: Argo CD가 Git을 폴링/웹훅으로 감지 → 클러스터로 **Sync**
@@ -17,16 +17,18 @@ category: Kubernetes
 
 ---
 
-## 2. 설치(요약) & 초기 로그인
+## 설치(요약) & 초기 로그인
 
 ```bash
 kubectl create ns argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 # 포트포워딩(UI)
+
 kubectl -n argocd port-forward svc/argocd-server 8080:443
 
 # 기본 비밀번호
+
 kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath="{.data.password}" | base64 -d; echo
 ```
@@ -37,9 +39,9 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 
 ---
 
-## 3. 리포지토리 전략 — 모노레포 vs 다중 레포, 환경 분리
+## 리포지토리 전략 — 모노레포 vs 다중 레포, 환경 분리
 
-### 3.1 폴더 레이아웃 예시(모노레포)
+### 폴더 레이아웃 예시(모노레포)
 
 ```
 repo/
@@ -62,10 +64,11 @@ repo/
 - **base/overlays**(Kustomize) 혹은 **Helm 차트 + values-(env).yaml**
 - 환경(dev/staging/prod)별 파라미터 차등
 
-### 3.2 App-of-Apps 패턴(루트 하나로 트리 구성)
+### App-of-Apps 패턴(루트 하나로 트리 구성)
 
 ```yaml
 # root-app.yaml
+
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -87,9 +90,9 @@ spec:
 
 ---
 
-## 4. Application 선언 — Helm/Kustomize/Plain YAML
+## Application 선언 — Helm/Kustomize/Plain YAML
 
-### 4.1 Kustomize 예
+### Kustomize 예
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -118,7 +121,7 @@ spec:
       - PrunePropagationPolicy=foreground
 ```
 
-### 4.2 Helm 예
+### Helm 예
 
 ```yaml
 spec:
@@ -136,7 +139,7 @@ spec:
 
 ---
 
-## 5. ApplicationSet — 다중 환경·클러스터 자동 생성
+## ApplicationSet — 다중 환경·클러스터 자동 생성
 
 **템플릿 + 제너레이터**로 Application 다발 생성 (환경/리전 확장에 탁월)
 
@@ -178,9 +181,9 @@ spec:
 
 ---
 
-## 6. Sync 정책·웨이브·훅 — 배포 순서·후크 제어
+## Sync 정책·웨이브·훅 — 배포 순서·후크 제어
 
-### 6.1 Sync 옵션
+### Sync 옵션
 
 ```yaml
 syncPolicy:
@@ -195,7 +198,7 @@ syncPolicy:
 - **PruneLast**: 삭제는 마지막에
 - **ApplyOutOfSyncOnly**: 변경된 리소스만 적용
 
-### 6.2 웨이브(우선순위) — 리소스 주석
+### 웨이브(우선순위) — 리소스 주석
 
 ```yaml
 metadata:
@@ -205,7 +208,7 @@ metadata:
 
 예: CRD(−1) → 네임스페이스(0) → Config(1) → Deployment(2) → Ingress(3)
 
-### 6.3 훅(Hook) — Job/Workflow를 Sync 시점에 삽입
+### 훅(Hook) — Job/Workflow를 Sync 시점에 삽입
 
 ```yaml
 metadata:
@@ -218,11 +221,11 @@ metadata:
 
 ---
 
-## 7. Progressive Delivery — Argo Rollouts 연동
+## Progressive Delivery — Argo Rollouts 연동
 
 **점진 배포(캔어리/블루그린)** 로 리스크를 낮춤.
 
-### 7.1 Rollout 리소스(캔어리 예)
+### Rollout 리소스(캔어리 예)
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -250,16 +253,16 @@ spec:
           ports: [{ name: http, containerPort: 8080 }]
 ```
 
-### 7.2 Argo CD와 함께 쓰기
+### Argo CD와 함께 쓰기
 
 - Rollout CRDs/컨트롤러를 **플랫폼 계층**으로 배포
 - Service/Ingress와 연계(가중 라우팅), **메트릭 게이트**(Prometheus)로 자동 중단/롤백
 
 ---
 
-## 8. Secret 전략 — SOPS·SealedSecrets·Vault
+## Secret 전략 — SOPS·SealedSecrets·Vault
 
-### 8.1 Mozilla SOPS(+age/GPG) 예
+### Mozilla SOPS(+age/GPG) 예
 
 Git에는 **암호화된 YAML**만 저장, 컨트롤러/플러그인으로 복호화 적용.
 
@@ -277,7 +280,7 @@ stringData:
 - Argo CD **SOPS 플러그인** 또는 **Kustomize SOPS**로 자동 복호화
 - age 키는 **클러스터 외부**에 보관(키 관리 원칙)
 
-### 8.2 SealedSecrets(리포지토리에는 암호문만)
+### SealedSecrets(리포지토리에는 암호문만)
 
 ```yaml
 apiVersion: bitnami.com/v1alpha1
@@ -288,7 +291,7 @@ spec:
     .dockerconfigjson: AgAhg...  # 컨트롤러 키로 암호화
 ```
 
-### 8.3 Vault(External Secrets)
+### Vault(External Secrets)
 
 - **External Secrets Operator**로 Vault/AWS SM/GCP SM 값을 Secret로 동기화
 - Argo CD는 **Secret 껍데기**/연결만 선언 → 런타임 시 주입
@@ -297,9 +300,9 @@ spec:
 
 ---
 
-## 9. 프로젝트(Project)·RBAC·SSO — 멀티테넌시
+## 프로젝트(Project)·RBAC·SSO — 멀티테넌시
 
-### 9.1 프로젝트로 경계 설정
+### 프로젝트로 경계 설정
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -322,16 +325,16 @@ spec:
         - p, proj:team-web:dev, applications, sync, team-web/*, allow
 ```
 
-### 9.2 SSO(OIDC/SAML)과 매핑
+### SSO(OIDC/SAML)과 매핑
 
 - 그룹별 **프로젝트 롤** 매핑 → 팀 경계와 권한 최소화
 - **Namespace-scoped Argo CD** 로 강한 격리도 가능
 
 ---
 
-## 10. 알림/관측 — Notifications·Metrics·Dashboards
+## 알림/관측 — Notifications·Metrics·Dashboards
 
-### 10.1 argocd-notifications
+### argocd-notifications
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -343,12 +346,13 @@ metadata:
     notifications.argoproj.io/subscribe.on-health-degraded.slack: '#alerts'
 ```
 
-### 10.2 메트릭
+### 메트릭
 
 - `argocd_application_sync_status`, `..._health_status`, `..._sync_total`
 - 대시보드: **Sync 성공률**, **드리프트 빈도**, **평균 Sync 시간**
 
 #### 간단 KPI(배포 성공률)
+
 배포 \(N\)회 중 성공 \(S\)회일 때
 $$
 \text{SuccessRate} = \frac{S}{N} \times 100(\%)
@@ -357,9 +361,9 @@ SLO(예: 99%)를 유지하도록 롤백/게이트 조정.
 
 ---
 
-## 11. 배포 시나리오(엔드투엔드)
+## 배포 시나리오(엔드투엔드)
 
-### 11.1 신규 서비스 온보딩(Helm)
+### 신규 서비스 온보딩(Helm)
 
 1. `charts/newsvc/` 추가, `values-{env}.yaml` 작성
 2. `apps/newsvc/overlays/{env}` → Ingress/리소스 설정
@@ -367,7 +371,7 @@ SLO(예: 99%)를 유지하도록 롤백/게이트 조정.
 4. PR → 리뷰/머지 → Argo CD가 앱 생성·Sync
 5. 알림으로 확인, 드리프트/헬스 모니터링
 
-### 11.2 마이그레이션 훅 포함 배포
+### 마이그레이션 훅 포함 배포
 
 - `PreSync` Job로 DB 마이그 실행
 - 캔어리로 10% → 50% → 100%
@@ -376,7 +380,7 @@ SLO(예: 99%)를 유지하도록 롤백/게이트 조정.
 
 ---
 
-## 12. 트러블슈팅 — 드리프트·헬스·동기화 실패
+## 트러블슈팅 — 드리프트·헬스·동기화 실패
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -396,7 +400,7 @@ argocd app rollback web-prod
 
 ---
 
-## 13. 보안·거버넌스 모범사례
+## 보안·거버넌스 모범사례
 
 - **Git 보호**: 변경은 PR만 → 필수 리뷰·승인·CI 검증
 - **Argo CD 읽기 전용 원칙**: 운영자는 **Git만 변경**
@@ -407,7 +411,7 @@ argocd app rollback web-prod
 
 ---
 
-## 14. 백업/DR — Git + 상태 스냅샷
+## 백업/DR — Git + 상태 스냅샷
 
 - **Git = 선언의 백업**. 여기에 더해:
   - Argo CD **ConfigMap/Secret**(프로젝트/클러스터 크레덴셜) 백업
@@ -417,9 +421,9 @@ argocd app rollback web-prod
 
 ---
 
-## 15. 예제 모음
+## 예제 모음
 
-### 15.1 간단 Application (자동 생성/정리/자체 치유)
+### 간단 Application (자동 생성/정리/자체 치유)
 
 ```yaml
 apiVersion: argoproj.io/v1alpha1
@@ -442,7 +446,7 @@ spec:
       - CreateNamespace=true
 ```
 
-### 15.2 Helm + 환경 값
+### Helm + 환경 값
 
 ```yaml
 spec:
@@ -458,7 +462,7 @@ spec:
           value: "200m"
 ```
 
-### 15.3 Sync 웨이브/훅
+### Sync 웨이브/훅
 
 ```yaml
 apiVersion: batch/v1
@@ -472,7 +476,7 @@ metadata:
 spec: { template: { spec: { containers: [{name: m, image: alpine, args: ["sh","-c","echo migrate"]}], restartPolicy: Never } } }
 ```
 
-### 15.4 ApplicationSet — 폴더 스캔으로 자동 생성(Git generator)
+### ApplicationSet — 폴더 스캔으로 자동 생성(Git generator)
 
 {% raw %}
 ```yaml
@@ -506,7 +510,7 @@ spec:
 
 ---
 
-## 16. 운영 체크리스트(한 장 요약)
+## 운영 체크리스트(한 장 요약)
 
 - [ ] Git 브랜치 전략/PR 필수/CI 검증
 - [ ] AppProject로 소스/대상/권한 제약

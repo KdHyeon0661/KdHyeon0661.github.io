@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # 테이블 **Random Access 최소화 튜닝**
 
-## 0. 실습 스키마 준비
+## 실습 스키마 준비
 
 ```sql
 -- 깨끗이
@@ -55,7 +55,7 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST를 위해
 
 ---
 
-# 1. 랜덤 I/O(테이블 랜덤 액세스) 최소화의 **핵심 논리**
+# 랜덤 I/O(테이블 랜덤 액세스) 최소화의 **핵심 논리**
 
 - 인덱스 스캔 후 **ROWID로 힙 테이블을 찌르는** 오퍼레이터:
   `TABLE ACCESS BY INDEX ROWID [BATCHED]` → **db file sequential read**(싱글블록, 랜덤).
@@ -76,9 +76,9 @@ $$
 
 ---
 
-# 2. **인덱스 컬럼 추가**로 테이블 방문 제거(=Index-Only/커버링)
+# **인덱스 컬럼 추가**로 테이블 방문 제거(=Index-Only/커버링)
 
-## 2.1 베이스라인: 테이블 랜덤 방문이 발생하는 예
+## 베이스라인: 테이블 랜덤 방문이 발생하는 예
 
 ```sql
 -- 고객 12345의 최근 30일 주문 목록(금액, 상태까지 필요)
@@ -96,7 +96,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - `TABLE ACCESS BY INDEX ROWID RA_ORDERS`  ← **여기서 랜덤 I/O 발생**
 - Buffers/Reads가 생각보다 큼(행 수↑일수록 체감↑).
 
-## 2.2 커버링 인덱스로 개선
+## 커버링 인덱스로 개선
 
 > **목표**: SELECT-LIST(`order_id, order_dt, status, amount`)와 정렬 키를 **인덱스로 충족** → 테이블 미방문.
 
@@ -134,7 +134,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 3. 정렬까지 인덱스로 해결(Stopkey/Keyset와 궁합)
+# 정렬까지 인덱스로 해결(Stopkey/Keyset와 궁합)
 
 ```sql
 -- 최신 50건(특정 고객)
@@ -165,9 +165,10 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-# 4. **PK 인덱스에 컬럼 추가** — 무엇이 가능하고, 어떻게 해야 안전한가
+# **PK 인덱스에 컬럼 추가** — 무엇이 가능하고, 어떻게 해야 안전한가
 
-## 4.1 중요한 전제
+## 중요한 전제
+
 - **PK 인덱스는 PK 제약의 컬럼 집합**과 **동일**해야 합니다.
   “**기존 PK 컬럼은 그대로 두고 인덱스에만 컬럼을 더하는**” 행위는 **불가**합니다.
 - 즉, **PK 인덱스에 컬럼을 더하려면 PK 제약(컬럼 집합) 자체를 변경**해야 합니다.
@@ -175,10 +176,12 @@ FETCH FIRST 50 ROWS ONLY;
 > 대부분의 경우, **PK는 그대로** 두고 **별도 커버링 인덱스**를 추가하는 것이 **정답**입니다.
 > (논리 키 변경은 파급이 매우 큼)
 
-## 4.2 그러나, **PK 기반 조회가 압도적**이고 **IOT/PK 조인**로직이 많아
+## 그러나, **PK 기반 조회가 압도적**이고 **IOT/PK 조인**로직이 많아
+
 **PK 인덱스 자체를 커버링**하고 싶다면? (드문 케이스, DW/Read-heavy에서만 고려)
 
 ### 선택지 A) **PK 재정의(복합 PK)** — 실제로 PK 컬럼 집합을 확장
+
 - 장점: **PK 기반 대부분 쿼리 커버링** 가능, 테이블 미방문화↑
 - 단점: **업무 스키마 전반 영향(외래키, 조인, 중복 허용성 등)**
 
@@ -207,6 +210,7 @@ END;
 > **강조**: 이 방식은 **진짜 PK**가 바뀝니다. 대부분 시스템에서는 **권장하지 않습니다**.
 
 ### 선택지 B) **PK는 유지**, **PK + 추가 컬럼**의 **유니크 인덱스**를 별도 생성
+
 - PK 제약은 안 건드림.
 - PK 조인에 **추가 컬럼**이 자주 필요할 때, 옵티마이저가 **유니크 인덱스**를 더 선호하기도.
 
@@ -218,6 +222,7 @@ CREATE UNIQUE INDEX ux_orders_pk_cover
 ```
 
 ### 선택지 C) **별도 비유니크 커버링 인덱스**(가장 현실적)
+
 ```sql
 -- PK는 그대로. 커버링만 달성
 CREATE INDEX ix_orders_pk_cover
@@ -230,9 +235,10 @@ CREATE INDEX ix_orders_pk_cover
 
 ---
 
-# 5. **클러스터링 팩터(CF)**와 “컬럼 추가”의 상호작용
+# **클러스터링 팩터(CF)**와 “컬럼 추가”의 상호작용
 
-## 5.1 CF란?
+## CF란?
+
 - 인덱스 **키 순서대로** 테이블을 읽을 때, **테이블 블록 재사용 정도**를 나타내는 척도.
 - `USER_INDEXES.CLUSTERING_FACTOR` 로 조회(작을수록 좋음, 테이블 블록 수에 근접할수록 이상적).
 - **나쁜 CF**: 인덱스 순서로 걷는 동안 **테이블 블록 점프**가 빈번 → 랜덤 I/O↑
@@ -243,7 +249,8 @@ FROM   user_indexes
 WHERE  table_name = 'RA_ORDERS';
 ```
 
-## 5.2 컬럼 추가가 CF에 미치는 영향
+## 컬럼 추가가 CF에 미치는 영향
+
 - **선행 컬럼이 CF를 사실상 지배**합니다.
   - 인덱스 키 순서 = `(선행1, 선행2, …, 후행…)`
   - **선행 컬럼**에 의해 Leaf 체인 순서가 결정 → **CF의 핵심**은 **선행 컬럼과 물리 순서의 상관**.
@@ -252,7 +259,7 @@ WHERE  table_name = 'RA_ORDERS';
   - 후행 컬럼이 **물리 저장 순서와 상관↑**이면 **CF가 개선**될 수 있고,
     상관이 낮으면 **오히려 악화**될 수도.
 
-## 5.3 실험: 같은 선행, 후행만 다르게
+## 실험: 같은 선행, 후행만 다르게
 
 ```sql
 -- 기준 인덱스: (cust_id, order_dt)
@@ -273,7 +280,7 @@ WHERE  table_name='RA_ORDERS'
 - `IX_CDT_ST`는 오히려 **커질 수도**(상관 낮을 때)
 - **정답은 실측**: 업무 데이터 분포, 로딩 방식, 파티셔닝 유무에 따라 달라짐.
 
-## 5.4 CF “근본 개선”: 물리 재배치(CTAS) + 인덱스 재생성
+## CF “근본 개선”: 물리 재배치(CTAS) + 인덱스 재생성
 
 ```sql
 CREATE TABLE ra_orders_sorted NOLOGGING AS
@@ -302,7 +309,7 @@ WHERE  table_name='RA_ORDERS';
 
 ---
 
-# 6. 운영 반영 시 **안전 절차**: Invisible/Online/검증
+# 운영 반영 시 **안전 절차**: Invisible/Online/검증
 
 1) **Invisible Index**로 새 설계를 **그림자 배치**
 ```sql
@@ -329,7 +336,7 @@ ALTER INDEX ix_orders_cdt_cov_inv VISIBLE;
 
 ---
 
-# 7. 조인/페이지 시나리오와의 결합
+# 조인/페이지 시나리오와의 결합
 
 - **Nested Loops** 내부 테이블이 `TABLE BY ROWID` 폭탄이면
   → **커버링 인덱스**로 내부 테이블을 **미방문화**하거나, **Hash Join**으로 전략 전환.
@@ -338,7 +345,7 @@ ALTER INDEX ix_orders_cdt_cov_inv VISIBLE;
 
 ---
 
-# 8. 종합 실험 템플릿
+# 종합 실험 템플릿
 
 ```sql
 ALTER SESSION SET statistics_level = ALL;
@@ -380,7 +387,7 @@ WHERE  table_name='RA_ORDERS';
 
 ---
 
-# 9. 자주 묻는 질문(FAQ)
+# 자주 묻는 질문(FAQ)
 
 **Q1. “PK 인덱스에 컬럼만 ‘추가’하면 되나요?”**
 A. **아니요.** PK 인덱스는 **PK 제약 컬럼과 동일**해야 합니다. 컬럼을 더하려면 **PK 자체를 재정의**해야 하며,
@@ -400,7 +407,7 @@ A. 옵티마이저가 조건/통계에 따라 선택합니다. 우리는 **커�
 
 ---
 
-# 10. 체크리스트
+# 체크리스트
 
 - [ ] **핫 경로** 쿼리의 SELECT-LIST가 **인덱스만으로 충족**되게 설계(커버링).
 - [ ] **정렬 일치**(+DESC)와 **Stopkey/Keyset**으로 **앞부분만** 읽기.

@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML5 `<video>` 태그
 
-## 1. 기본 사용
+## 기본 사용
 
 ```html
 <video src="sample.mp4" controls></video>
@@ -24,7 +24,7 @@ category: HTML
 
 ---
 
-## 2. 주요 속성 총정리
+## 주요 속성 총정리
 
 | 속성 | 설명 | 사용 팁 |
 |---|---|---|
@@ -58,9 +58,9 @@ category: HTML
 
 ---
 
-## 3. `<source>`와 포맷/코덱 선택
+## `<source>`와 포맷/코덱 선택
 
-### 3.1 컨테이너 vs 코덱
+### 컨테이너 vs 코덱
 
 - **컨테이너**: MP4, WebM, Ogg 등 (파일 확장자)
 - **비디오 코덱**: H.264/AVC, VP8/VP9, AV1 등
@@ -76,7 +76,7 @@ category: HTML
 
 **권장**: MP4(H.264) + WebM(VP9 또는 AV1)을 동시 제공 → 품질/용량/호환 균형.
 
-### 3.2 `canPlayType()`로 런타임 판단
+### `canPlayType()`로 런타임 판단
 
 ```html
 <script>
@@ -89,7 +89,7 @@ category: HTML
 
 ---
 
-## 4. 모바일 자동재생 정책 요약
+## 모바일 자동재생 정책 요약
 
 - **자동재생**은 기본적으로 제한. **무음(`muted`)** 상태에서만 허용되는 경우가 많음.
 - iOS 인라인 재생: `playsinline` 필요.
@@ -103,7 +103,7 @@ category: HTML
 
 ---
 
-## 5. 자막/설명/챕터 — `<track>` 고급 활용
+## 자막/설명/챕터 — `<track>` 고급 활용
 
 `WebVTT(.vtt)` 기반 텍스트 트랙을 추가:
 
@@ -123,7 +123,7 @@ category: HTML
 </video>
 ```
 
-### 5.1 WebVTT 예시
+### WebVTT 예시
 
 `subs_ko.vtt`:
 
@@ -152,7 +152,7 @@ WEBVTT
 고급 제어
 ```
 
-### 5.2 TextTrack API로 챕터/큐 제어
+### TextTrack API로 챕터/큐 제어
 
 ```html
 <video id="v" controls>
@@ -176,9 +176,9 @@ WEBVTT
 
 ---
 
-## 6. 자바스크립트로 제어 — 속성/메서드/이벤트
+## 자바스크립트로 제어 — 속성/메서드/이벤트
 
-### 6.1 빠른 스타터
+### 빠른 스타터
 
 ```html
 <video id="vid" src="movie.mp4" controls preload="metadata"></video>
@@ -204,7 +204,7 @@ WEBVTT
 </script>
 ```
 
-### 6.2 핵심 속성/메서드
+### 핵심 속성/메서드
 
 | 항목 | 설명 |
 |---|---|
@@ -216,7 +216,7 @@ WEBVTT
 | `playbackRate` | 재생 속도(예: 0.5, 1.0, 2.0) |
 | `loop`, `autoplay`, `controls` | 표준 속성 |
 
-### 6.3 자주 쓰는 이벤트
+### 자주 쓰는 이벤트
 
 | 이벤트 | 타이밍 |
 |---|---|
@@ -238,9 +238,9 @@ v.addEventListener('error', () => {
 
 ---
 
-## 7. 전체화면, Picture-in-Picture, Media Session
+## 전체화면, Picture-in-Picture, Media Session
 
-### 7.1 전체화면 API
+### 전체화면 API
 
 ```js
 const wrap = document.querySelector('.player');
@@ -254,7 +254,7 @@ document.getElementById('fs').onclick = () => {
 <button id="fs">전체화면</button>
 ```
 
-### 7.2 Picture-in-Picture
+### Picture-in-Picture
 
 ```js
 const v = document.getElementById('vid');
@@ -271,7 +271,7 @@ document.getElementById('pip').onclick = async () => {
 <button id="pip">PiP</button>
 ```
 
-### 7.3 Media Session (잠금화면/OS 미디어 컨트롤 연동)
+### Media Session (잠금화면/OS 미디어 컨트롤 연동)
 
 ```js
 if ('mediaSession' in navigator) {
@@ -287,9 +287,9 @@ if ('mediaSession' in navigator) {
 
 ---
 
-## 8. 반응형 비디오 — 레이아웃/비율 유지
+## 반응형 비디오 — 레이아웃/비율 유지
 
-### 8.1 CSS `aspect-ratio` 권장
+### CSS `aspect-ratio` 권장
 
 ```html
 <style>
@@ -313,7 +313,7 @@ if ('mediaSession' in navigator) {
 </div>
 ```
 
-### 8.2 `object-fit`으로 크롭 모드
+### `object-fit`으로 크롭 모드
 
 ```css
 video.cover { width:100%; height:60vh; object-fit:cover; }
@@ -322,9 +322,9 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 9. 시나리오별 레시피
+## 시나리오별 레시피
 
-### 9.1 히어로 헤더 자동재생(무음/루프/인라인)
+### 히어로 헤더 자동재생(무음/루프/인라인)
 
 ```html
 <video class="cover" autoplay muted loop playsinline
@@ -333,7 +333,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 </video>
 ```
 
-### 9.2 교육 영상: 다국어 자막 + 챕터 + 키보드 접근
+### 교육 영상: 다국어 자막 + 챕터 + 키보드 접근
 
 ```html
 <video id="course" controls width="100%" preload="metadata">
@@ -352,7 +352,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 </script>
 ```
 
-### 9.3 지연 로딩(IntersectionObserver로 의사 lazy-load)
+### 지연 로딩(IntersectionObserver로 의사 lazy-load)
 
 ```html
 <video id="promo" controls preload="none" poster="promo.jpg" width="100%"></video>
@@ -378,13 +378,14 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 10. 스트리밍(HLS/DASH)과 MSE/DRM 개요
+## 스트리밍(HLS/DASH)과 MSE/DRM 개요
 
-### 10.1 HLS(HTTP Live Streaming), DASH
+### HLS(HTTP Live Streaming), DASH
+
 - **어댑티브 비트레이트**로 네트워크 환경에 맞게 품질 조정.
 - Safari는 **HLS를 네이티브** 지원. 그 외 브라우저는 MSE(Media Source Extensions) 기반 라이브러리 사용.
 
-### 10.2 hls.js를 이용한 HLS 로드(비-Safari)
+### hls.js를 이용한 HLS 로드(비-Safari)
 
 ```html
 <video id="live" controls playsinline></video>
@@ -405,13 +406,14 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 </script>
 ```
 
-### 10.3 DRM(Encrypted Media Extensions, EME)
+### DRM(Encrypted Media Extensions, EME)
+
 - **EME** API를 통해 Widevine/PlayReady/FairPlay 등과 통신.
 - `<video>` 자체는 동일, 라이선스 서버와 키 교환 로직이 추가됨(플레이어 라이브러리 사용 권장).
 
 ---
 
-## 11. CORS/보안/정책
+## CORS/보안/정책
 
 | 주제 | 요약 | 실무 팁 |
 |---|---|---|
@@ -424,7 +426,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 12. 성능 최적화 체크리스트
+## 성능 최적화 체크리스트
 
 - [ ] `preload="metadata"` 기본, 히어로/Above-the-fold가 아니면 **지연 로딩**(IO)
 - [ ] 포맷/코덱을 **화질 대비 용량 균형**으로 선택(MP4+WebM/AV1)
@@ -437,7 +439,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 13. 자주 하는 실수와 해결
+## 자주 하는 실수와 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -449,7 +451,7 @@ video.contain { width:100%; height:auto; object-fit:contain; }
 
 ---
 
-## 14. 완성형 예제: 반응형, 다국어 자막, PiP/전체화면, Media Session
+## 완성형 예제: 반응형, 다국어 자막, PiP/전체화면, Media Session
 
 ```html
 <!doctype html>
@@ -542,7 +544,7 @@ if ('mediaSession' in navigator) {
 
 ---
 
-## 15. 요약
+## 요약
 
 - **필수 포맷**: MP4(H.264) + 보조로 WebM(VP9/AV1) 병행 제공.
 - **모바일 자동재생**: `autoplay muted playsinline`.

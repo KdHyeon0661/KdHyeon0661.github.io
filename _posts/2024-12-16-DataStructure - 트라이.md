@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # Trie(트라이) 자료구조
 
-## 0. 빠른 리마인드 — Trie란?
+## 빠른 리마인드 — Trie란?
 
 - **Trie(트라이)**는 문자열(보통 알파벳)의 **공통 접두사(prefix)**를 공유하는 **트리 기반 자료구조**다.
 - 노드: “해당 접두사까지 도달”을 의미, 간선: “다음 문자”.
@@ -14,9 +14,10 @@ category: Data Structure
 
 ---
 
-## 1. 노드 설계와 문자 집합
+## 노드 설계와 문자 집합
 
-### 1.1 알파벳 소문자 26개(‘a’~‘z’) 전용 — 고정 배열 방식
+### 알파벳 소문자 26개(‘a’~‘z’) 전용 — 고정 배열 방식
+
 ```cpp
 struct TrieNode {
     std::array<TrieNode*, 26> next{};
@@ -28,7 +29,8 @@ struct TrieNode {
 - `pass`는 “접두사 개수(count of words with this prefix)”, `end`는 “정확히 이 단어 개수”.
 - **장점**: 매우 빠른 인덱싱(상수 시간). **단점**: 희소한 경우 포인터 낭비.
 
-### 1.2 임의 문자(ASCII/유니코드) — 해시/맵 방식
+### 임의 문자(ASCII/유니코드) — 해시/맵 방식
+
 ```cpp
 struct TrieNodeX {
     std::unordered_map<char32_t, TrieNodeX*> next; // 유니코드 코드포인트
@@ -42,10 +44,11 @@ struct TrieNodeX {
 
 ---
 
-## 2. 기본 연산 — 삽입/검색/접두사 검사/삭제(중복·가지치기)
+## 기본 연산 — 삽입/검색/접두사 검사/삭제(중복·가지치기)
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct TrieNode {
@@ -150,7 +153,7 @@ struct Trie {
 
 ---
 
-## 3. 자동완성(Autocomplete) — 접두사 기반 제안
+## 자동완성(Autocomplete) — 접두사 기반 제안
 
 - 절차: **(1) 접두사 노드까지 이동 → (2) DFS/BFS로 후보 수집 → (3) 필요 시 k개 제한/정렬**.
 
@@ -196,7 +199,7 @@ vector<Suggest> autocomplete(Trie& T, const string& prefix, int k = 10){
 
 ---
 
-## 4. 와일드카드 검색 — `?`(1글자)과 `*`(0+글자)
+## 와일드카드 검색 — `?`(1글자)과 `*`(0+글자)
 
 ```cpp
 bool matchWildcard(TrieNode* u, const string& pat, int pos){
@@ -229,7 +232,7 @@ bool matchWildcard(TrieNode* u, const string& pat, int pos){
 
 ---
 
-## 5. 사전순 K번째 단어 (k-th in lexicographic order)
+## 사전순 K번째 단어 (k-th in lexicographic order)
 
 - 아이디어: 각 노드에서 **서브트리 단어 수 = pass** (해당 접두사를 가지는 단어 수).
 - 사전순으로 내려가며 “왼쪽 가지 크기”를 누적해 k를 소모.
@@ -268,9 +271,10 @@ string kthWord(Trie& T, long long k){
 
 ---
 
-## 6. 직렬화·역직렬화 — 저장/전송/테스트 픽스처
+## 직렬화·역직렬화 — 저장/전송/테스트 픽스처
 
-### 6.1 간단 텍스트 직렬화(전위 순회)
+### 간단 텍스트 직렬화(전위 순회)
+
 - 형식: `(<end> <child_count> <char child> ... [child_subtree] ...)`
 - 실제 환경에선 바이너리/압축 권장.
 
@@ -316,7 +320,7 @@ TrieNode* deserialize(istream& is){
 
 ---
 
-## 7. 종합 예제 — 사용 시나리오
+## 종합 예제 — 사용 시나리오
 
 ```cpp
 int main(){
@@ -367,7 +371,7 @@ int main(){
 
 ---
 
-## 8. 복잡도 분석
+## 복잡도 분석
 
 문자열 집합 \(S=\{s_1,\dots,s_n\}\)의 총 길이를 \(N=\sum_i |s_i|\)라 할 때,
 
@@ -381,7 +385,7 @@ int main(){
 
 ---
 
-## 9. 실전 팁 — 정확성·성능·메모리
+## 실전 팁 — 정확성·성능·메모리
 
 1. **전처리**: 입력을 **소문자화**·공백 제거·정규화(NFC/NFD) 일관성 유지.
 2. **중복 단어**: `end`를 **카운터**로 관리(빈도 기반 자동완성에 바로 활용).
@@ -397,7 +401,7 @@ int main(){
 
 ---
 
-## 10. 수학 스냅샷 — 접두사 공유의 이점
+## 수학 스냅샷 — 접두사 공유의 이점
 
 문자열 집합 \(S\)의 모든 접두사를 **공유**하므로, 트라이 노드 수는 “**서로 다른 접두사 수**”와 같다.
 따라서 순수 배열 보관 대비, 공통 접두사 비율이 높을수록 공간 이점이 커진다.
@@ -407,7 +411,7 @@ int main(){
 
 ---
 
-## 11. 확장: 압축 Trie(Radix)·비트 트라이(Bitwise)
+## 확장: 압축 Trie(Radix)·비트 트라이(Bitwise)
 
 - **Radix(압축)**: 단일 경로를 **라벨 문자열**로 압축 → **깊이 감소/메모리 절감**.
   (문자열 사전에 효율적. 분할(split)/병합 구현 필요)
@@ -417,10 +421,11 @@ int main(){
 
 ---
 
-## 12. 단일 파일 예시(요지) — 삽입/검색/삭제/자동완성/K번째
+## 단일 파일 예시(요지) — 삽입/검색/삭제/자동완성/K번째
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct Node{ array<Node*,26> nx{}; int pass=0, end=0; Node(){ nx.fill(nullptr);} };
@@ -480,7 +485,7 @@ int main(){
 
 ---
 
-## 13. 마무리 요약
+## 마무리 요약
 
 - **삭제는 `pass`/`end`의 불변식을 지키는가?**(경로 카운트와 중복 수)
 - **자동완성/와일드카드/K번째** 등 **실전 기능**은 기본 트라이 위에 간단한 로직을 얹으면 된다.

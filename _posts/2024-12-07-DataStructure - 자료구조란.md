@@ -6,14 +6,14 @@ category: Data Structure
 ---
 # 자료구조란 무엇인가?
 
-## 1. 자료구조의 정의
+## 자료구조의 정의
 
 **자료구조(Data Structure)**란 데이터를 효율적으로 저장하고 관리하며, 필요한 작업(검색, 삽입, 삭제 등)을 빠르게 수행할 수 있도록 구성한 **데이터의 조직 방식**이다.
 즉, **데이터를 저장하는 그릇**이며, 이 그릇의 형태에 따라 가능한 연산과 성능 특성이 달라진다.
 
 ---
 
-## 2. 왜 중요한가? (근거 중심)
+## 왜 중요한가? (근거 중심)
 
 - **시간 복잡도**: 같은 문제도 자료구조 선택에 따라 $$O(n) \to O(\log n)$$, $$O(n^2) \to O(n \log n)$$로 급감한다.
 - **공간 복잡도**: 메모리 레이아웃(연속/불연속)에 따라 캐시 히트율이 달라지고 실제 런타임이 크게 변한다.
@@ -22,9 +22,10 @@ category: Data Structure
 
 ---
 
-## 3. 분류 (기존 초안 확장)
+## 분류 (기존 초안 확장)
 
-### 3.1 선형 자료구조 (Linear)
+### 선형 자료구조 (Linear)
+
 - **배열(Array)**: 연속 메모리. 인덱스 조회 $$O(1)$$, 중간 삽입/삭제 $$O(n)$$.
 - **문자열(String)**: 불변/가변 구현에 따른 비용 차이(파이썬 불변, C# `String` 불변 / `StringBuilder` 가변).
 - **연결 리스트(Linked List)**: 임의 접근은 느리나, **포인터 조작으로 국소 삽입/삭제 $$O(1)$$**.
@@ -33,7 +34,8 @@ category: Data Structure
 - **덱(Deque)**: 양측 삽입/삭제 $$O(1)$$(구현에 따라 상수항 다름).
 - **우선순위 큐(Priority Queue)**: 보통 바이너리 힙으로 구현. `push/pop` $$O(\log n)$$.
 
-### 3.2 비선형 자료구조 (Non-Linear)
+### 비선형 자료구조 (Non-Linear)
+
 - **트리(Tree)**: 계층 구조.
   - **BST**: 정렬 상태 유지, 탐색/삽입/삭제 기대 $$O(\log n)$$(균형 시).
   - **균형 트리(AVL, Red-Black)**: 최악 $$O(\log n)$$ 보장.
@@ -43,10 +45,12 @@ category: Data Structure
   - **Trie(프리픽스 트리)**: 문자열 공통 접두사 공유.
 - **그래프(Graph)**: 정점/간선. 인접 리스트/행렬 표현. 탐색(BFS/DFS), 최단경로, MST 등.
 
-### 3.3 해시 기반
+### 해시 기반
+
 - **해시 테이블(Hash Table)**: 평균 $$O(1)$$ 탐색/삽입/삭제. 충돌 해결(체이닝/오픈 어드레싱).
 
-### 3.4 특수/확장
+### 특수/확장
+
 - **Disjoint Set(Union-Find)**: 집합 합치기/대표 찾기(경로 압축 + 랭크).
 - **Skip List**: 다층 연결 리스트로 평균 $$O(\log n)$$.
 - **Bloom Filter/Counting Bloom**: 확률적 멤버십 테스트.
@@ -54,7 +58,7 @@ category: Data Structure
 
 ---
 
-## 4. 선택 기준 (의사결정 체크리스트)
+## 선택 기준 (의사결정 체크리스트)
 
 - **접근 패턴**: 랜덤 인덱스가 많으면 배열/벤치 친화 구조, 순차/스트림이면 큐/덱.
 - **연산 빈도**: 삽입/삭제가 빈번하고 위치가 임의면 리스트/균형트리, 끝 삽입이면 동적 배열.
@@ -66,7 +70,7 @@ category: Data Structure
 
 ---
 
-## 5. 자료구조 × 알고리즘 (그릇과 요리)
+## 자료구조 × 알고리즘 (그릇과 요리)
 
 - 정렬: 배열/벡터에서 in-place 최적화.
 - 그래프 탐색: 인접 리스트 + 큐/스택 조합.
@@ -76,7 +80,7 @@ category: Data Structure
 
 ---
 
-## 6. 복잡도 모델과 표기
+## 복잡도 모델과 표기
 
 - **점근 표기**: $$O(\cdot), \Omega(\cdot), \Theta(\cdot)$$
 - **평균 vs 최악**: 해시는 평균 $$O(1)$$, 최악 $$O(n)$$ 가능.
@@ -84,26 +88,30 @@ category: Data Structure
 
 ---
 
-## 7. 자료구조 카탈로그 & 실전 예제
+## 자료구조 카탈로그 & 실전 예제
 
 아래는 각 구조별 **개념 → 핵심 불변식 → 주요 연산 → 복잡도 → 실수 포인트 → 테스트 전략 → 코드 예제(파이썬/CPP/C#)** 순서로 제시한다.
 
 ---
 
-### 7.1 배열 & 문자열
+### 배열 & 문자열
 
 #### 개념/불변식
+
 - 배열: 고정 크기 또는 동적(벡터) 확장.
 - 문자열: 불변/가변 여부가 성능을 좌우.
 
 #### 주요 연산 & 복잡도
+
 - 인덱스 접근: $$O(1)$$
 - 중간 삽입/삭제: $$O(n)$$ (시프트)
 - 동적 배열 확장: 상환분석 $$O(1)$$ amortized
 
 #### 파이썬 예제
+
 ```python
 # 슬라이싱, 확장, 상환 분석 감각
+
 arr = [1,2,3]
 arr.append(4)      # amortized O(1)
 arr.insert(1, 99)  # O(n)
@@ -112,8 +120,10 @@ t = s + " world"   # 새 문자열 할당 (불변)
 ```
 
 #### C++ 예제
+
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 int main() {
     vector<int> v;
@@ -127,6 +137,7 @@ int main() {
 ```
 
 #### C# 예제
+
 ```csharp
 using System;
 using System.Text;
@@ -148,17 +159,20 @@ class Program {
 
 ---
 
-### 7.2 연결 리스트 (단일/이중/원형)
+### 연결 리스트 (단일/이중/원형)
 
 #### 핵심 아이디어
+
 - 포인터로 노드를 연결하여 **국소 삽입/삭제 $$O(1)$$**.
 - 임의 접근은 $$O(n)$$.
 
 #### 불변식
+
 - 포인터 연결 무결성(끊김/사이클) 유지.
 - 이중 리스트: `prev.next == node && next.prev == node`.
 
 #### 파이썬 (단일 리스트 직접 구현)
+
 ```python
 class Node:
     def __init__(self, val, nxt=None):
@@ -176,6 +190,7 @@ class SinglyList:
 ```
 
 #### C++ (이중 연결 리스트)
+
 ```cpp
 struct Node {
     int val; Node *prev,*next;
@@ -201,9 +216,10 @@ struct DList {
 
 ---
 
-### 7.3 스택/큐/덱
+### 스택/큐/덱
 
 #### 스택 (LIFO)
+
 - 용도: 괄호검사, DFS 비재귀, 되돌리기.
 
 ```python
@@ -213,6 +229,7 @@ x=stack.pop()    # pop
 ```
 
 #### 큐 (FIFO)
+
 - BFS, 생산자-소비자.
 
 ```python
@@ -223,6 +240,7 @@ x=q.popleft()
 ```
 
 #### 덱
+
 - 양끝 삽입/삭제 $$O(1)$$.
 - 슬라이딩 윈도우 최대값(모노토닉 덱) 활용.
 
@@ -240,17 +258,20 @@ def sliding_max(a, k):
 
 ---
 
-### 7.4 해시 테이블
+### 해시 테이블
 
 #### 개념
+
 - 해시함수 $$h(k)$$로 버킷 인덱스 계산.
 - **충돌 해결**: 체이닝(리스트/벡터), 오픈 어드레싱(선형/이차/더블해싱).
 
 #### 불변식
+
 - **부하율** $$\alpha = n / m$$ 관리(재해시 기준).
 - 오픈 어드레싱: 삭제 마커/탐사 불변 유지.
 
 #### 파이썬 (dict 기본 예)
+
 ```python
 d={}
 d["tom"]=90
@@ -260,8 +281,10 @@ del d["jane"]
 ```
 
 #### C++ (unordered_map)
+
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 int main(){
     unordered_map<string,int> mp;
@@ -276,17 +299,20 @@ int main(){
 
 ---
 
-### 7.5 트리와 균형 트리 (BST, AVL)
+### 트리와 균형 트리 (BST, AVL)
 
 #### BST 기본
+
 - 불변식: 왼쪽 < 루트 < 오른쪽 (정렬).
 - 탐색/삽입/삭제: 평균 $$O(\log n)$$, 최악 $$O(n)$$.
 
 #### AVL(균형)
+
 - 각 노드 **높이 차이(|bf| ≤ 1)** 유지 → 항상 $$O(\log n)$$.
 - 회전(LL/LR/RL/RR).
 
 ##### C++ 간단 AVL (핵심 아이디어만)
+
 ```cpp
 struct Node{
     int key,h; Node* l; Node* r;
@@ -324,12 +350,13 @@ Node* insert(Node* n,int key){
 
 ---
 
-### 7.6 힙(Heap) & 우선순위 큐
+### 힙(Heap) & 우선순위 큐
 
 - **배열 기반 완전 이진 트리**.
 - Heapify: $$O(n)$$, push/pop: $$O(\log n)$$.
 
 #### 파이썬
+
 ```python
 import heapq
 pq=[]
@@ -338,8 +365,10 @@ p,it = heapq.heappop(pq)
 ```
 
 #### C++
+
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 int main(){
     priority_queue<int> maxh;
@@ -352,7 +381,7 @@ int main(){
 
 ---
 
-### 7.7 B-Tree / B+Tree (DB 인덱스)
+### B-Tree / B+Tree (DB 인덱스)
 
 - **페이지 단위** 노드, 높은 branching factor → 트리 높이 작음.
 - 디스크 I/O 최소화.
@@ -364,14 +393,16 @@ int main(){
 
 ---
 
-### 7.8 세그먼트 트리 & Fenwick(BIT)
+### 세그먼트 트리 & Fenwick(BIT)
 
 #### 기능
+
 - **구간 질의/갱신**: 합/최소/최대/곱/최대 연속합 등.
 - Segment Tree: $$O(\log n)$$ 질의/갱신, 구현 쉬움, 메모리 약 4n.
 - Fenwick: 합/차량형 연산에 특화, 구현 간단, 메모리 n.
 
 #### Fenwick 파이썬
+
 ```python
 class BIT:
     def __init__(self, n):
@@ -391,6 +422,7 @@ class BIT:
 ```
 
 #### 세그먼트 트리 C++
+
 ```cpp
 struct Seg {
     int n; vector<long long> t;
@@ -428,13 +460,15 @@ struct Seg {
 
 ---
 
-### 7.9 Trie (Prefix Tree)
+### Trie (Prefix Tree)
 
 #### 용도
+
 - 사전/자동완성/접두사 카운트.
 - 문자열 길이를 m이라 할 때 삽입/탐색 $$O(m)$$.
 
 #### 파이썬
+
 ```python
 class Trie:
     def __init__(self): self.trie={}
@@ -461,13 +495,15 @@ class Trie:
 
 ---
 
-### 7.10 그래프 (표현·탐색·경로)
+### 그래프 (표현·탐색·경로)
 
 #### 표현
+
 - **인접 리스트**: 희소 그래프 권장.
 - **인접 행렬**: 밀집 그래프/상수 시간 간선 존재 확인.
 
 #### BFS/DFS 파이썬
+
 ```python
 from collections import deque, defaultdict
 def bfs(n, edges, s):
@@ -489,6 +525,7 @@ def dfs_rec(g,u,vis):
 ```
 
 #### 다익스트라 (비음수 가중치)
+
 ```python
 import heapq
 def dijkstra(n, adj, s):
@@ -506,6 +543,7 @@ def dijkstra(n, adj, s):
 ```
 
 #### MST (크루스칼 + Union-Find)
+
 ```python
 def find(p,x):
     if p[x]!=x: p[x]=find(p,p[x])
@@ -528,7 +566,7 @@ def kruskal(n, edges): # edges: (w,u,v)
 
 ---
 
-### 7.11 Union-Find (Disjoint Set)
+### Union-Find (Disjoint Set)
 
 - 경로 압축 + 랭크/사이즈 → 거의 상수 시간(아커만 역함수).
 - 연결성 질의, 사이클 검사, 크루스칼.
@@ -537,7 +575,7 @@ def kruskal(n, edges): # edges: (w,u,v)
 
 ---
 
-### 7.12 Skip List (개념 + 파이썬 스케치)
+### Skip List (개념 + 파이썬 스케치)
 
 - 레벨 당 절반 확률로 승격 → 기대 높이 $$O(\log n)$$.
 - 정렬 맵 대안(평균 성능), 구현 간단.
@@ -576,7 +614,7 @@ class SkipList:
 
 ---
 
-### 7.13 Bloom Filter
+### Bloom Filter
 
 - **거짓 양성** 허용, 거짓 음성 없음.
 - $$m$$ 비트 배열, $$k$$ 해시, $$n$$ 원소일 때 거짓 양성률:
@@ -587,7 +625,7 @@ class SkipList:
 
 ---
 
-## 8. 문자열/배열 고급 주제
+## 문자열/배열 고급 주제
 
 - **Two-pointer/Sliding Window**: 부분 문자열/서브어레이 최적화.
 - **Prefix Function/KMP**: 패턴 매칭 $$O(n+m)$$.
@@ -596,7 +634,7 @@ class SkipList:
 
 ---
 
-## 9. 동시성·멀티스레드 고려 (개요)
+## 동시성·멀티스레드 고려 (개요)
 
 - 락 기반 큐/스택 vs 무잠금(atomic, CAS, ABA).
 - 생산자-소비자: 고정 길이 **원형 버퍼**(ring buffer) + 세마포어.
@@ -606,7 +644,7 @@ class SkipList:
 
 ---
 
-## 10. 테스트 & 검증 습관
+## 테스트 & 검증 습관
 
 - **브루트포스 크로스체크**: 작은 N에서 느린 구현과 결과 비교.
 - **퍼징**: 랜덤 연산 시퀀스 → 불변식 검증.
@@ -615,7 +653,7 @@ class SkipList:
 
 ---
 
-## 11. 면접/코테 실전 팁
+## 면접/코테 실전 팁
 
 - **필수 암기**: 복잡도 표, 불변식(힙/AVL/Union-Find), 표준 라이브러리 API.
 - **선택 기준 설명력**: “왜 이 구조를 썼는가?”를 상황과 데이터 패턴으로 설명.
@@ -623,9 +661,10 @@ class SkipList:
 
 ---
 
-## 12. 종합 예제: 로그 스트림 Top-K, 구간 질의, 최단경로
+## 종합 예제: 로그 스트림 Top-K, 구간 질의, 최단경로
 
-### 12.1 스트림에서 최근 N 중 상위 K (우선순위 큐)
+### 스트림에서 최근 N 중 상위 K (우선순위 큐)
+
 ```python
 import heapq
 def topk_stream(stream, k):
@@ -638,9 +677,11 @@ def topk_stream(stream, k):
     return sorted(pq, reverse=True)
 ```
 
-### 12.2 구간 합 온라인 업데이트 (Fenwick)
+### 구간 합 온라인 업데이트 (Fenwick)
+
 ```python
 # 위 BIT 클래스 참고
+
 bit=BIT(10)
 for i,val in enumerate([3,1,4,1,5,9,2,6,5,3], start=1):
     bit.add(i,val)
@@ -648,9 +689,11 @@ print(bit.range_sum(3,7))  # 4+1+5+9+2
 bit.add(5, +10)            # a[5]+=10
 ```
 
-### 12.3 도로망 최단경로 (다익스트라 + 힙)
+### 도로망 최단경로 (다익스트라 + 힙)
+
 ```python
 # 위 dijkstra 참고
+
 n=5
 adj=[[] for _ in range(n)]
 def add(u,v,w): adj[u].append((v,w)); adj[v].append((u,w))
@@ -660,7 +703,7 @@ print(dijkstra(n, adj, 0))
 
 ---
 
-## 13. 복잡도 요약표 (자주 쓰는 연산)
+## 복잡도 요약표 (자주 쓰는 연산)
 
 | 구조 | 접근 | 검색 | 삽입 | 삭제 | 비고 |
 |---|---:|---:|---:|---:|---|
@@ -677,7 +720,7 @@ print(dijkstra(n, adj, 0))
 
 ---
 
-## 14. 학습/실전 로드맵 (확장版)
+## 학습/실전 로드맵 (확장版)
 
 1. **배열/문자열/슬라이딩 윈도우**
 2. **스택/큐/덱 + 모노토닉 구조**
@@ -691,7 +734,7 @@ print(dijkstra(n, adj, 0))
 
 ---
 
-## 15. 부록: 수학/상환분석 스냅샷
+## 부록: 수학/상환분석 스냅샷
 
 - **동적 배열 상환분석**: 용량 2배씩 확장 시, n번 `push_back`의 총 복사 횟수는
   $$

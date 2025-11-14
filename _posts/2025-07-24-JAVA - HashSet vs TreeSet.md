@@ -6,7 +6,7 @@ category: Java
 ---
 # Java Set 구현 클래스 총정리 — HashSet · TreeSet
 
-## 0. 한눈 요약 (Cheat Sheet)
+## 한눈 요약 (Cheat Sheet)
 
 | 선택 기준 | 권장 Set | 이유/메모 |
 |---|---|---|
@@ -19,7 +19,7 @@ category: Java
 
 ---
 
-## 1. Set 인터페이스 핵심
+## Set 인터페이스 핵심
 
 - **중복 불가**, `null` 허용 여부는 구현체마다 다름.
 - 대표 메서드: `add`, `remove`, `contains`, `size`, `isEmpty`, `iterator`, `forEach`.
@@ -27,9 +27,10 @@ category: Java
 
 ---
 
-## 2. HashSet — 해시 기반 집합
+## HashSet — 해시 기반 집합
 
-### 2.1 내부 구조 & 동작 원리
+### 내부 구조 & 동작 원리
+
 - 실질적으로 **`HashMap<E, Object>`** 를 래핑: 요소는 **키**에 저장, 값은 고정 더미(`PRESENT`) 객체.
 - **배열 + 체이닝(LinkedList/TreeNode)** 구조(충돌 심하면 **트리화**, JDK 8+).
 - `null` **요소 1개 허용**.
@@ -40,7 +41,8 @@ table[1] -> TreeBin(...)
 ...
 ```
 
-### 2.2 시간복잡도 & 로드 팩터
+### 시간복잡도 & 로드 팩터
+
 - 평균 **O(1)** 삽입/탐색/삭제, 최악 **O(n)** (해시 품질/충돌에 좌우).
 - 임계값(리사이즈 트리거):
   $$ \text{threshold} = \text{capacity} \times \text{loadFactor} $$
@@ -49,7 +51,8 @@ table[1] -> TreeBin(...)
 > **초기 용량 산정**: 예상 엔트리 수 \(N\)라면
 > `initialCapacity = ceil(N / loadFactor)` 로 생성 → 리사이즈 최소화.
 
-### 2.3 `equals`/`hashCode` 계약 (중요)
+### `equals`/`hashCode` 계약 (중요)
+
 - **키(요소)의 동등성은 `equals`로, 버킷 선택은 `hashCode`로**.
 - **집합에 넣은 뒤 요소 상태가 바뀌어 hashCode/equal 결과가 변하면 탐색 실패** → **불변(immutable) 요소** 권장.
 
@@ -65,7 +68,8 @@ final class Point {
 }
 ```
 
-### 2.4 실전 예제
+### 실전 예제
+
 ```java
 import java.util.*;
 
@@ -79,14 +83,15 @@ public class HashSetExample {
 }
 ```
 
-### 2.5 흔한 함정
+### 흔한 함정
+
 - **가변 객체를 요소로 사용** 후 필드 변경 → `contains`/`remove` 실패.
 - `contains`는 `equals` 기준, **값의 대소 관계는 무의미**.
 - **값 기준 정렬 출력**은 `HashSet` 자체로 불가 → 스트림 정렬 후 목록화.
 
 ---
 
-## 3. LinkedHashSet — 순서가 있는 HashSet (보너스)
+## LinkedHashSet — 순서가 있는 HashSet (보너스)
 
 - 내부적으로 **HashMap + 이중연결리스트**, **삽입 순서**(또는 접근 순서) 유지.
 - 빠른 중복 제거 + **원본 순서 보전**에 최적.
@@ -105,9 +110,10 @@ public class StableDedup {
 
 ---
 
-## 4. TreeSet — 정렬·범위 질의가 강점
+## TreeSet — 정렬·범위 질의가 강점
 
-### 4.1 내부 구조 & 정렬
+### 내부 구조 & 정렬
+
 - **Red-Black Tree(균형 BST)** 기반, 요소는 **항상 정렬 상태**.
 - 기본은 **자연 순서(Comparable)**, 또는 **생성자에 Comparator** 전달.
 - 시간복잡도: 삽입/탐색/삭제 **O(log n)**.
@@ -115,7 +121,8 @@ public class StableDedup {
 > **null 요소**: 자연 순서 사용 시 **불가**.
 > 다만 **명시적 Comparator가 `null`을 처리하면 허용 가능**(예: `Comparator.nullsFirst(...)`).
 
-### 4.2 NavigableSet API (핵심)
+### NavigableSet API (핵심)
+
 - **경계/이웃 탐색**: `lower`, `floor`, `ceiling`, `higher`
 - **범위 뷰**: `subSet(from, to)`, `subSet(fromIncl, from, to, toIncl)`, `headSet`, `tailSet`
 - **추출/역순**: `pollFirst/Last`, `descendingSet`
@@ -135,21 +142,23 @@ public class TreeSetExample {
 }
 ```
 
-### 4.3 접두사 범위 질의(사전식)
+### 접두사 범위 질의(사전식)
+
 ```java
 TreeSet<String> dict = new TreeSet<>(List.of("app","apple","apricot","banana"));
 SortedSet<String> ap = dict.subSet("ap", "aq"); // "ap"로 시작하는 범위
 System.out.println(ap); // [app, apple, apricot]
 ```
 
-### 4.4 Comparator 일관성 주의
+### Comparator 일관성 주의
+
 - `Comparator`가 **전이적/반사적/대칭적** 토털 오더여야 함.
 - **`equals`와의 일관성**: TreeSet은 `compare(a,b)==0`이면 같은 원소로 취급(하나만 저장).
   `equals`와 다르면 **예상치 못한 중복 제거**가 발생할 수 있음.
 
 ---
 
-## 5. HashSet vs TreeSet — 종합 비교
+## HashSet vs TreeSet — 종합 비교
 
 | 항목 | HashSet | TreeSet |
 |---|---|---|
@@ -162,7 +171,7 @@ System.out.println(ap); // [app, apple, apricot]
 
 ---
 
-## 6. 값 동등성 vs 정렬 동치성 — BigDecimal 사례
+## 값 동등성 vs 정렬 동치성 — BigDecimal 사례
 
 - `HashSet`은 **`equals`**로 동등성 결정.
 - `TreeSet`은 **`compareTo/Comparator`** 결과 0을 **동일 원소**로 간주.
@@ -190,23 +199,26 @@ public class BigDecimalTrap {
 
 ---
 
-## 7. 실전 레시피 모음
+## 실전 레시피 모음
 
-### 7.1 문자열 중복 제거 + 원본 순서 유지
+### 문자열 중복 제거 + 원본 순서 유지
+
 ```java
 List<String> in = List.of("a","b","a","c","b");
 List<String> out = new ArrayList<>(new LinkedHashSet<>(in));
 System.out.println(out); // [a, b, c]
 ```
 
-### 7.2 대소문자 무시 중복 제거(주의: 자연 `equals`와 불일치)
+### 대소문자 무시 중복 제거(주의: 자연 `equals`와 불일치)
+
 ```java
 Set<String> caseInsensitive = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 caseInsensitive.addAll(List.of("a","A","b"));
 System.out.println(caseInsensitive); // [a, b] ← "a"와 "A"를 동일시
 ```
 
-### 7.3 길이 기준 상위 K개(동률은 사전식 보조정렬, 일관성 유지)
+### 길이 기준 상위 K개(동률은 사전식 보조정렬, 일관성 유지)
+
 ```java
 import java.util.*;
 
@@ -227,7 +239,8 @@ public class TopKByLength {
 }
 ```
 
-### 7.4 집합 연산(합집합/교집합/차집합)
+### 집합 연산(합집합/교집합/차집합)
+
 ```java
 import java.util.*;
 
@@ -247,7 +260,8 @@ public class SetOps {
 }
 ```
 
-### 7.5 TreeSet에서 `null` 허용 (명시 Comparator)
+### TreeSet에서 `null` 허용 (명시 Comparator)
+
 ```java
 import java.util.*;
 
@@ -263,7 +277,7 @@ public class NullFriendlyTreeSet {
 
 ---
 
-## 8. 성능·메모리 관점
+## 성능·메모리 관점
 
 | 항목 | HashSet | TreeSet |
 |---|---|---|
@@ -276,7 +290,7 @@ public class NullFriendlyTreeSet {
 
 ---
 
-## 9. 초기 용량 계산(수식)
+## 초기 용량 계산(수식)
 
 예상 원소 수 \(N\), 로드 팩터 \(\alpha\)(기본 0.75)일 때,
 $$
@@ -292,7 +306,7 @@ Set<Integer> s = new HashSet<>(cap, lf);
 
 ---
 
-## 10. 동시성 컬렉션 간단 가이드
+## 동시성 컬렉션 간단 가이드
 
 | 요구 | 컬렉션 | 메모 |
 |---|---|---|
@@ -316,7 +330,7 @@ public class ConcurrentSets {
 
 ---
 
-## 11. fail-fast 반복과 안전한 삭제
+## fail-fast 반복과 안전한 삭제
 
 ```java
 Set<String> s = new HashSet<>(Set.of("a","b","c"));
@@ -334,9 +348,10 @@ s.removeIf("a"::equals);
 
 ---
 
-## 12. ASCII 구조 도식
+## ASCII 구조 도식
 
 ### HashSet (버킷/체이닝/트리화)
+
 ```
 index: 0    1         2           3 ...
        |    |         |           |
@@ -346,6 +361,7 @@ index: 0    1         2           3 ...
 ```
 
 ### TreeSet (Red-Black Tree 개념)
+
 ```
         (root,B)
         /     \
@@ -356,7 +372,7 @@ index: 0    1         2           3 ...
 
 ---
 
-## 13. 선택 가이드 (최종)
+## 선택 가이드 (최종)
 
 | 상황 | 추천 | 근거 |
 |---|---|---|
@@ -368,7 +384,7 @@ index: 0    1         2           3 ...
 
 ---
 
-## 14. 전체 데모 — 두 Set의 성질 비교
+## 전체 데모 — 두 Set의 성질 비교
 
 ```java
 import java.util.*;
@@ -406,7 +422,7 @@ public class SetLandscape {
 
 ---
 
-## 15. 체크리스트 (실무 베스트 프랙티스)
+## 체크리스트 (실무 베스트 프랙티스)
 
 - [ ] **요소 불변성**: Set에 넣은 뒤 `equals/hashCode`/`compareTo` 결과가 변하지 않게.
 - [ ] **초기 용량**(HashSet) 미리 산정 → 리사이즈 최소화.
@@ -418,6 +434,7 @@ public class SetLandscape {
 ---
 
 ### 마무리
+
 - **HashSet**: “기본값” — 최적의 평균 성능으로 대다수 멤버십/집합 연산을 해결합니다.
 - **TreeSet**: “정렬·범위 탐색기” — 사전식 탐색/이웃/구간 처리가 핵심일 때 선택하세요.
 - **LinkedHashSet/ConcurrentSkipListSet/EnumSet**까지 상황에 맞게 조합하면, **성능·표현력·안정성**을 모두 잡을 수 있습니다.

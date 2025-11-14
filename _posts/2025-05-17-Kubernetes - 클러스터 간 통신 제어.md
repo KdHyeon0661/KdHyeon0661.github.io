@@ -11,7 +11,7 @@ category: Kubernetes
 
 ---
 
-## 0. 개요 다이어그램
+## 개요 다이어그램
 
 ```
 ┌───────────────┐        L3/L7          ┌───────────────┐
@@ -26,7 +26,7 @@ category: Kubernetes
 
 ---
 
-## 1. 왜 Multi-Cluster인가?
+## 왜 Multi-Cluster인가?
 
 | 이유 | 설명 | 직접 효과 |
 |---|---|---|
@@ -38,7 +38,7 @@ category: Kubernetes
 
 ---
 
-## 2. 아키텍처 유형과 선택 기준
+## 아키텍처 유형과 선택 기준
 
 | 유형 | 통신 레벨 | 요약 | 강점 | 주의 |
 |---|---|---|---|---|
@@ -53,7 +53,7 @@ category: Kubernetes
 
 ---
 
-## 3. 실전 시나리오(예시)
+## 실전 시나리오(예시)
 
 - **cluster-a**: `frontend` 사용자를 수용
 - **cluster-b**: `backend` API를 제공
@@ -61,28 +61,33 @@ category: Kubernetes
 
 ---
 
-## 4. L3 기반 연결
+## L3 기반 연결
 
-### 4.1 VPN/WireGuard(개념)
+### VPN/WireGuard(개념)
+
 - 노드/게이트웨이 간 터널로 **사설 라우팅**.
 - 장점: 단순·범용. 단점: L7 정책/가시성은 별도 구성 필요.
 
-### 4.2 Submariner로 간단 연결
+### Submariner로 간단 연결
+
 - **서로 다른 Pod CIDR**을 가진 클러스터를 L3로 연결하고, **ServiceExport/Import** 제공.
 
 > 최소 예시(개념 흐름):
 ```bash
 # 두 클러스터 컨텍스트 준비: kctx a, kctx b 가정
 # (1) operator 설치
+
 kctx a && kubectl apply -f https://get.submariner.io/operator.yaml
 kctx b && kubectl apply -f https://get.submariner.io/operator.yaml
 # (2) broker 생성/참여(간단 흐름; 실제는 join 명령/토큰 사용)
 # 참조: 공식 문서 워크플로에 따라 broker -> join 적용
+
 ```
 
 **서비스 내보내기/가져오기**
 ```yaml
 # cluster-b (backend)에서 export
+
 apiVersion: lighthouse.submariner.io/v2alpha1
 kind: ServiceExport
 metadata:
@@ -90,28 +95,34 @@ metadata:
   namespace: app
 ---
 # cluster-a에서 자동 ServiceImport 반영되어 DNS 제공 (backend.app.svc.supercluster.local 등)
+
 ```
 
 **장점**: IP 라우팅·서비스 검색 자동화. **단점**: L7 보안/정책은 추가(예: 메쉬/프록시) 필요.
 
 ---
 
-## 5. L7 기반(서비스 메쉬) — Istio 예제
+## L7 기반(서비스 메쉬) — Istio 예제
 
-### 5.1 토폴로지
+### 토폴로지
+
 - **Primary/Remote** 또는 **Replicated Control Plane**.
 - 클러스터마다 **East-West Gateway**(크로스 트래픽 진입점) 설치.
 - 사이드카 **Envoy**가 **mTLS**, **정책**, **Telemetry** 책임.
 
-### 5.2 설치 요령(요약)
+### 설치 요령(요약)
+
 ```bash
 # istioctl profile demo 기준(개념)
+
 istioctl install --set profile=demo -y
 kubectl label namespace app istio-injection=enabled
 # EastWest Gateway 설치 템플릿은 공식 예제 참조(클러스터별 hostname 노출)
+
 ```
 
-### 5.3 Cross-Cluster 서비스 진입(ServiceEntry)
+### Cross-Cluster 서비스 진입(ServiceEntry)
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: ServiceEntry
@@ -129,7 +140,8 @@ spec:
   resolution: DNS
 ```
 
-### 5.4 트래픽 라우팅(VirtualService/DestinationRule)
+### 트래픽 라우팅(VirtualService/DestinationRule)
+
 ```yaml
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
@@ -167,7 +179,7 @@ spec:
 
 ---
 
-## 6. Linkerd 멀티클러스터(경량)
+## Linkerd 멀티클러스터(경량)
 
 - **Linkerd Multicluster**는 **gateway + service mirror**로 단순 연결.
 - 기본 **mTLS** 강력, 경량·쉬운 배포. 고급 L7 정책은 Istio 대비 제한적.
@@ -175,10 +187,12 @@ spec:
 **개념 워크플로**
 ```bash
 # 설치(개념)
+
 linkerd install | kubectl apply -f -
 linkerd check
 
 # multicluster extension
+
 linkerd multicluster install | kubectl apply -f -
 linkerd multicluster link --cluster-name cluster-b | kubectl apply -f -
 ```
@@ -187,7 +201,7 @@ linkerd multicluster link --cluster-name cluster-b | kubectl apply -f -
 
 ---
 
-## 7. Cilium ClusterMesh (eBPF/ID 기반)
+## Cilium ClusterMesh (eBPF/ID 기반)
 
 - 다중 클러스터를 **ID/정책**으로 정합, **Hubble**로 가시성 탁월.
 - **CNI=Cilium** 권장. 레벨3 라우팅 + L7 정책(HTTP/gRPC)도 병행 가능.
@@ -219,7 +233,7 @@ spec:
 
 ---
 
-## 8. DNS/서비스 디스커버리 전략
+## DNS/서비스 디스커버리 전략
 
 | 방법 | 사용처 | 장점 | 주의 |
 |---|---|---|---|
@@ -243,7 +257,7 @@ spec:
 
 ---
 
-## 9. 네트워크 정책(egress/ingress)와 방화벽
+## 네트워크 정책(egress/ingress)와 방화벽
 
 MC 환경에서도 **각 클러스터 내부**의 **네트워크 정책**은 기본이다.
 
@@ -270,7 +284,7 @@ spec:
 
 ---
 
-## 10. 보안: mTLS·ID·제로트러스트
+## 보안: mTLS·ID·제로트러스트
 
 - **Service Mesh**: 자동 **mTLS**(TLS 인증서/회전 관리), 정책(RBAC) 적용.
 - **SPIFFE/SPIRE**: ID 기반 워크로드 인증서(`spiffe://trust-domain/ns/app/sa/default`).
@@ -299,9 +313,10 @@ spec:
 
 ---
 
-## 11. 트래픽 전략: 카나리/스플릿/페일오버
+## 트래픽 전략: 카나리/스플릿/페일오버
 
-### 11.1 Istio(카나리)
+### Istio(카나리)
+
 앞서 `VirtualService`의 `weight`로 비율 제어.
 **Failover** 예(지역/클러스터 셋업에 따라)
 ```yaml
@@ -322,7 +337,8 @@ spec:
       simple: LEAST_CONN
 ```
 
-### 11.2 Linkerd(Traffic Split)
+### Linkerd(Traffic Split)
+
 ```yaml
 apiVersion: split.smi-spec.io/v1alpha2
 kind: TrafficSplit
@@ -340,7 +356,7 @@ spec:
 
 ---
 
-## 12. 관측: 메트릭/로그/트레이싱 일원화
+## 관측: 메트릭/로그/트레이싱 일원화
 
 | 영역 | 선택지 | 포인트 |
 |---|---|---|
@@ -356,7 +372,7 @@ Cluster A/B: Prometheus Sidecar ─→ Thanos Store/Query ─→ Grafana
 
 ---
 
-## 13. SLO/에러 예산 간단 수식
+## SLO/에러 예산 간단 수식
 
 월간 SLO 99.9%의 허용 다운타임(초) 계산:
 
@@ -372,9 +388,10 @@ $$
 
 ---
 
-## 14. 실습: “Cluster-A에서 Cluster-B API 호출” 3가지 경로
+## 실습: “Cluster-A에서 Cluster-B API 호출” 3가지 경로
 
-### 14.1 ExternalName(+TLS) — 최소 구성
+### ExternalName(+TLS) — 최소 구성
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -386,12 +403,15 @@ spec:
   externalName: api.cluster-b.internal
 ---
 # egress 정책/방화벽으로 해당 FQDN/IP만 허용
+
 ```
 - 간단하지만, **L7 정책/관측** 미약 → GW/메쉬로 보완 권장.
 
-### 14.2 Submariner ServiceExport/Import — L3 네이티브
+### Submariner ServiceExport/Import — L3 네이티브
+
 ```yaml
 # cluster-b
+
 apiVersion: lighthouse.submariner.io/v2alpha1
 kind: ServiceExport
 metadata:
@@ -401,9 +421,11 @@ metadata:
 - Cluster-A에서 `backend.app.svc.supercluster.local`로 호출.
 - **mTLS/정책은 별도**(메쉬/프록시/방화벽).
 
-### 14.3 Istio East-West — L7 보안/정책 일원화
+### Istio East-West — L7 보안/정책 일원화
+
 ```yaml
 # EastWest Gateway 배치 후
+
 apiVersion: networking.istio.io/v1beta1
 kind: ServiceEntry
 metadata:
@@ -431,7 +453,7 @@ spec:
 
 ---
 
-## 15. 운영 체크리스트
+## 운영 체크리스트
 
 **네트워크/주소**
 - [ ] Pod/Service CIDR 충돌 없는가?
@@ -458,7 +480,7 @@ spec:
 
 ---
 
-## 16. 트러블슈팅 가이드
+## 트러블슈팅 가이드
 
 | 증상 | 원인 후보 | 확인/조치 |
 |---|---|---|
@@ -471,7 +493,7 @@ spec:
 
 ---
 
-## 17. 비용/성능 힌트
+## 비용/성능 힌트
 
 - **데이터 경로 짧게**: 리전간 왕복 최소화(Geo-routing).
 - **L7 정책은 필요한 곳에만**: 사이드카 오버헤드 고려(istio-ambient도 검토).
@@ -480,11 +502,13 @@ spec:
 
 ---
 
-## 18. 참조 YAML 모음
+## 참조 YAML 모음
 
-### 18.1 A 클러스터 egress allowlist + 메쉬 mTLS
+### A 클러스터 egress allowlist + 메쉬 mTLS
+
 ```yaml
 # netpol
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -501,6 +525,7 @@ spec:
     - { protocol: TCP, port: 8080 }
 ---
 # istio authz
+
 apiVersion: security.istio.io/v1beta1
 kind: PeerAuthentication
 metadata:
@@ -511,7 +536,8 @@ spec:
     mode: STRICT
 ```
 
-### 18.2 Linkerd TrafficSplit(멀티클러스터 import 서비스에 적용)
+### Linkerd TrafficSplit(멀티클러스터 import 서비스에 적용)
+
 ```yaml
 apiVersion: split.smi-spec.io/v1alpha2
 kind: TrafficSplit
@@ -527,7 +553,7 @@ spec:
 
 ---
 
-## 19. 결론
+## 결론
 
 - **연결 방식**은 다양하지만, **정책/보안/관측**을 **일관**되게 관리해야 **안전한 멀티클러스터**가 된다.
 - 단순 연결(VPN/Submariner) → **L7 보안/정책(메쉬)** → **관측 일원화(Thanos/Loki/Trace)** 순으로 **성숙도**를 올려라.
@@ -536,20 +562,22 @@ spec:
 
 ---
 
-## 20. 빠른 실행 요약(메모)
+## 빠른 실행 요약(메모)
 
 ```bash
-# 1. 네트워크 연결(택1): VPN/Submariner/Cilium ClusterMesh/메쉬 게이트웨이
-# 2. 서비스 디스커버리: ExternalName or Export/Import or Mesh DNS
-# 3. 보안: mTLS(메쉬), egress allowlist, FQDN 정책
-# 4. 트래픽: 카나리/스플릿/페일오버(메쉬)
-# 5. 관측: Thanos/Loki/Tracing/Hubble
-# 6. 운영: SLO·플레이북·정기 DR 연습
+# 네트워크 연결(택1): VPN/Submariner/Cilium ClusterMesh/메쉬 게이트웨이
+# 서비스 디스커버리: ExternalName or Export/Import or Mesh DNS
+# 보안: mTLS(메쉬), egress allowlist, FQDN 정책
+# 트래픽: 카나리/스플릿/페일오버(메쉬)
+# 관측: Thanos/Loki/Tracing/Hubble
+# 운영: SLO·플레이북·정기 DR 연습
+
 ```
 
 ---
 
-## 21. 참고(심화 읽기)
+## 참고(심화 읽기)
+
 - Istio Multi-Cluster 설치/토폴로지
 - Linkerd Multicluster & SMI TrafficSplit
 - Cilium ClusterMesh & Hubble

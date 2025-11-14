@@ -6,13 +6,13 @@ category: Data Structure
 ---
 # 이진 트리 & 이진 탐색 트리(BST)
 
-## 1. 이진 트리란?
+## 이진 트리란?
 
 > **이진 트리(Binary Tree)** 는 각 노드가 **최대 2개의 자식 노드**(왼쪽, 오른쪽)를 갖는 트리다.
 
 ---
 
-## 2. 이진 트리의 종류
+## 이진 트리의 종류
 
 | 분류 | 설명 |
 |---|---|
@@ -50,9 +50,9 @@ category: Data Structure
 
 ---
 
-## 3. 노드 정의 & 표현 방식
+## 노드 정의 & 표현 방식
 
-### 3.1 포인터 기반(클래식)
+### 포인터 기반(클래식)
 
 ```cpp
 struct Node {
@@ -66,14 +66,14 @@ struct Node {
 - 장점: 일반적인 BST, 다양한 비완전 트리 표현에 적합.
 - 단점: 연속 메모리가 아니라 캐시 친화성 ↓.
 
-### 3.2 배열 기반(완전/힙형 레이아웃)
+### 배열 기반(완전/힙형 레이아웃)
 
 완전 이진 트리는 배열로도 표현이 쉽다(인덱스 `i`에서 `L=2i+1`, `R=2i+2`, `P=(i-1)/2`).
 BST는 **완전**일 필요가 없으므로 배열 표현의 **널 슬롯 관리 비용**이 커서 일반적이지 않다(힙과 달리 **BST는 포인터형**이 보편).
 
 ---
 
-## 4. 순회(Traversal)
+## 순회(Traversal)
 
 트리는 선형이 아니므로 순회 순서에 따라 방문 결과가 달라진다.
 대표 3순회(전/중/후위) + 레벨 순회(BFS) + 반복/스택 기반 + **Morris**(O(1) 보조 메모리).
@@ -82,6 +82,7 @@ BST는 **완전**일 필요가 없으므로 배열 표현의 **널 슬롯 관리
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct Node {
@@ -90,7 +91,7 @@ struct Node {
 };
 ```
 
-### 4.1 전위/중위/후위(재귀)
+### 전위/중위/후위(재귀)
 
 ```cpp
 void preorder(Node* n){ if(!n) return; cout<<n->data<<" "; preorder(n->left); preorder(n->right); }
@@ -100,7 +101,7 @@ void postorder(Node* n){ if(!n) return; postorder(n->left); postorder(n->right);
 
 > **BST에서 `inorder`는 오름차순 출력**을 보장한다.
 
-### 4.2 중위(반복, 스택 활용)
+### 중위(반복, 스택 활용)
 
 ```cpp
 void inorderIter(Node* root){
@@ -114,7 +115,7 @@ void inorderIter(Node* root){
 }
 ```
 
-### 4.3 레벨 순회(BFS, 큐)
+### 레벨 순회(BFS, 큐)
 
 ```cpp
 void levelOrder(Node* root){
@@ -129,7 +130,7 @@ void levelOrder(Node* root){
 }
 ```
 
-### 4.4 **Morris 중위 순회**(O(1) 보조 메모리)
+### **Morris 중위 순회**(O(1) 보조 메모리)
 
 임시 스레딩을 이용해 스택/재귀 없이 중위 순회:
 
@@ -154,19 +155,19 @@ void inorderMorris(Node* root){
 
 ---
 
-## 5. 이진 탐색 트리(BST): 삽입/탐색/삭제
+## 이진 탐색 트리(BST): 삽입/탐색/삭제
 
 > 정의: 각 노드 `x`에 대해 **왼쪽 서브트리 < x < 오른쪽 서브트리**(키 기준).
 > 본문에서는 키가 `data` 필드에 저장된다고 가정한다.
 
-### 5.1 중복 처리 정책
+### 중복 처리 정책
 
 - **금지**: 동일 키 삽입 시 무시(본 예시 기본값)
 - **왼쪽 허용**: `<=`는 왼쪽으로
 - **오른쪽 허용**: `<`는 왼쪽, `>=`는 오른쪽
 - **카운트 보강**: 노드가 `(key, count)` 를 보유(중복 키 빈도 저장)
 
-### 5.2 삽입/탐색
+### 삽입/탐색
 
 ```cpp
 Node* insert(Node* root, int val){
@@ -183,7 +184,7 @@ bool search(Node* root, int val){
 }
 ```
 
-### 5.3 선행자/후속자 (in-order predecessor/successor)
+### 선행자/후속자 (in-order predecessor/successor)
 
 ```cpp
 Node* findMin(Node* n){ while(n && n->left ) n = n->left;  return n; }
@@ -207,7 +208,7 @@ Node* predecessor(Node* root, int k){
 }
 ```
 
-### 5.4 삭제(재귀) — 후속자 교체
+### 삭제(재귀) — 후속자 교체
 
 ```cpp
 Node* deleteNode(Node* root, int val){
@@ -230,7 +231,7 @@ Node* deleteNode(Node* root, int val){
 
 > **선행자 교체** 버전은 `findMax(root->left)` 를 써서 동일하게 구현 가능.
 
-### 5.5 삭제(반복) — 스택 없이
+### 삭제(반복) — 스택 없이
 
 ```cpp
 Node* deleteIter(Node* root, int val){
@@ -263,7 +264,7 @@ Node* deleteIter(Node* root, int val){
 
 ---
 
-## 6. 예시 — 구성·순회·삭제
+## 예시 — 구성·순회·삭제
 
 ```cpp
 int main(){
@@ -286,7 +287,7 @@ Inorder after delete:  1 4 6 7 8 10 14
 
 ---
 
-## 7. 검증/유틸: 높이·노드/리프 수·isBST
+## 검증/유틸: 높이·노드/리프 수·isBST
 
 ```cpp
 int height(Node* n){ if(!n) return -1; return 1 + max(height(n->left), height(n->right)); }
@@ -308,7 +309,7 @@ bool isBST(Node* n, long long lo=LLONG_MIN, long long hi=LLONG_MAX){
 
 ---
 
-## 8. 직렬화·역직렬화
+## 직렬화·역직렬화
 
 전위 + 널 토큰(`#`) 방식을 사용한다.
 
@@ -333,9 +334,9 @@ Node* deserialize(istringstream& iss){
 
 ---
 
-## 9. 범위 쿼리/집계
+## 범위 쿼리/집계
 
-### 9.1 범위 출력 \([L,R]\)
+### 범위 출력 \([L,R]\)
 
 ```cpp
 void rangePrint(Node* n, int L, int R){
@@ -346,7 +347,7 @@ void rangePrint(Node* n, int L, int R){
 }
 ```
 
-### 9.2 범위 합(키 합계)
+### 범위 합(키 합계)
 
 ```cpp
 long long rangeSum(Node* n, int L, int R){
@@ -357,7 +358,7 @@ long long rangeSum(Node* n, int L, int R){
 }
 ```
 
-### 9.3 floor/ceil(lower_bound/upper_bound 유사)
+### floor/ceil(lower_bound/upper_bound 유사)
 
 ```cpp
 Node* floorBST(Node* root, int x){ // <= x 중 가장 큰 키
@@ -382,7 +383,7 @@ Node* ceilBST(Node* root, int x){ // >= x 중 가장 작은 키
 
 ---
 
-## 10. 순서 통계(Order Statistics): k번째 & rank
+## 순서 통계(Order Statistics): k번째 & rank
 
 노드에 **서브트리 크기 `sz`** 를 보강한다.
 
@@ -441,9 +442,9 @@ int rankOf(OSNode* r, int x){
 
 ---
 
-## 11. 정렬 배열 ↔ 균형 BST
+## 정렬 배열 ↔ 균형 BST
 
-### 11.1 정렬 배열 → 높이 균형 BST
+### 정렬 배열 → 높이 균형 BST
 
 ```cpp
 Node* buildBalanced(const vector<int>& a, int l, int r){
@@ -456,7 +457,7 @@ Node* buildBalanced(const vector<int>& a, int l, int r){
 }
 ```
 
-### 11.2 BST → 정렬 배열(중위 수집)
+### BST → 정렬 배열(중위 수집)
 
 ```cpp
 void toSortedArray(Node* n, vector<int>& out){
@@ -469,7 +470,7 @@ void toSortedArray(Node* n, vector<int>& out){
 
 ---
 
-## 12. 테스트·퍼징 & 실전 팁
+## 테스트·퍼징 & 실전 팁
 
 - **중복 정책**을 코드로 **일관**되게 강제(비교식/경계 포함 여부 통일).
 - 삭제 2자식 케이스: 후속자/선행자 교체 후 **해당 서브트리에서** 삭제를 수행.
@@ -498,15 +499,15 @@ void toSortedArray(Node* n, vector<int>& out){
 
 ---
 
-## 13. 복잡도 & 간단 근거
+## 복잡도 & 간단 근거
 
-### 13.1 평균/최악
+### 평균/최악
 
 | 연산 | 평균 | 최악(편향) |
 |---|---|---|
 | 탐색/삽입/삭제 | \(O(\log n)\) | \(O(n)\) |
 
-### 13.2 스케치
+### 스케치
 
 - 트리 높이를 \(h\)라 하면 경로를 따라 내려가는 연산은 \(O(h)\).
 - 균형 시 \(h=\Theta(\log n)\), 편향 시 \(h=\Theta(n)\).
@@ -520,7 +521,7 @@ $$
 
 ---
 
-## 14. 미니 데모(종합)
+## 미니 데모(종합)
 
 ```cpp
 int main(){
@@ -567,7 +568,7 @@ int main(){
 
 ---
 
-## 15. 정리
+## 정리
 
 - **표현**: 포인터형(일반/BST), 배열형(완전).
 - **순회**: 전/중/후위 + BFS + 반복/스택 + **Morris**(O(1) 보조 메모리).

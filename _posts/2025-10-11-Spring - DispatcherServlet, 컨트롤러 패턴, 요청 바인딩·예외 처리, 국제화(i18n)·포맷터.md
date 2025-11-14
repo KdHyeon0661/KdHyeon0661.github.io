@@ -4,7 +4,7 @@ title: Spring - DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외
 date: 2025-10-11 21:25:23 +0900
 category: Spring
 ---
-# 3. 웹 MVC 기본기 — DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외 처리, 국제화(i18n)·포맷터
+# 웹 MVC 기본기 — DispatcherServlet, 컨트롤러 패턴, 요청 바인딩·예외 처리, 국제화(i18n)·포맷터
 
 > 목표: **“요청 → 컨트롤러 → 응답”** 흐름을 정확히 이해하고, **검증·예외·국제화**를 표준화하여 **예측 가능**한 API를 만든다.
 > 환경 가정: Spring Boot 3.3+, Java 21, Gradle, JSON API.
@@ -14,6 +14,7 @@ category: Spring
 ## A. DispatcherServlet 동작 흐름(요청 수명주기)
 
 ### A-1. 큰 그림: 필터 → 서블릿 → 핸들러 매핑 → 핸들러 어댑터 → 컨트롤러 → 뷰/메시지컨버터
+
 1. **톰캣/서블릿 컨테이너**가 요청을 받음 → **Filter** 체인 통과(`OncePerRequestFilter`, `SecurityFilterChain` 등)
 2. **`DispatcherServlet`** 진입
 3. **HandlerMapping**이 요청 경로/메서드로 **핸들러(컨트롤러 메서드)** 탐색
@@ -29,6 +30,7 @@ category: Spring
 ---
 
 ### A-2. Content-Negotiation(콘텐츠 협상) 핵심
+
 - 기본은 `Accept` 헤더로 결정(JSON이 일반적).
 - 확장자 기반 협상은 비권장(`.json`, `.xml` URI).
 - `produces`, `consumes`로 메서드별 명시 가능.
@@ -41,6 +43,7 @@ public ItemDto get(@PathVariable long id) { /* ... */ }
 ---
 
 ### A-3. HandlerMethodArgumentResolver(핵심 훅)
+
 - 컨트롤러 **메서드 인자**에 값을 주입하는 확장 포인트.
 - 스프링이 제공: `@RequestParam`, `@PathVariable`, `@RequestHeader`, `@CookieValue`, `Principal`, `Pageable`, `@RequestBody` 등.
 - 커스텀 사용자 정보 주입기(예: JWT에서 userId 꺼내기)도 구현 가능.
@@ -48,6 +51,7 @@ public ItemDto get(@PathVariable long id) { /* ... */ }
 ---
 
 ### A-4. Interceptor vs Filter (어디서 무엇을?)
+
 - **Filter**: 서블릿 스펙, 시큐리티·XSS 방어·로깅 헤더 등 **아주 앞단**.
 - **HandlerInterceptor**: 핸들러(컨트롤러) 앞/뒤, `preHandle/postHandle/afterCompletion`. **로깅/트레이싱/Locale** 제어에 적합.
 
@@ -65,6 +69,7 @@ class WebMvcConfig implements WebMvcConfigurer {
 ## B. 컨트롤러 작성 패턴 — `@RestController`, Validation, 설계 지침
 
 ### B-1. `@RestController` 기본 패턴
+
 ```java
 @RestController
 @RequestMapping("/api/users")
@@ -99,6 +104,7 @@ class UserController {
 ---
 
 ### B-2. 요청 DTO, 응답 DTO, 도메인 분리
+
 - 컨트롤러는 **DTO(입출력)**만. 도메인 엔티티를 직접 노출하지 않는다.
 - 응답 표준화: `data`, `error`, `meta` 등 일관 구조.
 
@@ -131,6 +137,7 @@ public record UserResponse(long id, String email, String name) {
 ---
 
 ### B-4. `ResponseEntity`와 헤더·상태 제어
+
 ```java
 @PostMapping
 public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest req, UriComponentsBuilder uri) {
@@ -143,6 +150,7 @@ public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest
 ---
 
 ### B-5. Validation(Bean Validation + 그룹)
+
 ```java
 public interface OnCreate {}
 public interface OnUpdate {}
@@ -166,6 +174,7 @@ public UserResponse update(@PathVariable long id,
 ---
 
 ### B-6. 파일 업로드/다운로드(스트리밍)
+
 ```java
 @PostMapping(path="/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 public Map<String,Object> upload(@RequestPart("file") MultipartFile file) throws IOException {
@@ -190,6 +199,7 @@ public ResponseEntity<Resource> download(@PathVariable long id) {
 ## C. 요청 바인딩 & 예외 처리 — `@ControllerAdvice`, Error Handling 표준
 
 ### C-1. 에러 응답 표준 정의(예: RFC 7807 스타일)
+
 - **권장**: `ProblemDetails`(Spring 6 도입) 또는 **유사 구조**.
 
 ```java
@@ -203,6 +213,7 @@ public record ApiError(String type, String title, int status, String detail, Str
 ---
 
 ### C-2. 글로벌 예외 처리기 — `@RestControllerAdvice`
+
 ```java
 @RestControllerAdvice
 class GlobalExceptionHandler {
@@ -248,6 +259,7 @@ class GlobalExceptionHandler {
 ---
 
 ### C-3. BindingResult로 **부분 실패** 처리(선택)
+
 ```java
 @PostMapping("/bulk")
 public Map<String,Object> bulk(@RequestBody List<@Valid CreateUserRequest> reqs, BindingResult binding) {
@@ -262,6 +274,7 @@ public Map<String,Object> bulk(@RequestBody List<@Valid CreateUserRequest> reqs,
 ---
 
 ### C-4. 도메인/서비스 예외 → API 에러 매핑
+
 - 도메인 계층에서 `DuplicateEmailException`, `InsufficientBalance` 등 **의미 있는 예외**를 던지고,
 - `@ControllerAdvice`에서 **HTTP 상태**로 매핑.
 
@@ -276,6 +289,7 @@ ApiError duplicate(DuplicateEmailException ex) {
 ---
 
 ### C-5. 예외 발생 시 트랜잭션
+
 - `@Transactional` 메서드 안에서 **런타임 예외** 발생 시 **롤백**.
 - API 레벨에서 적절한 상태코드와 메시지로 변환.
 
@@ -284,10 +298,12 @@ ApiError duplicate(DuplicateEmailException ex) {
 ## D. 국제화(i18n) & 포맷터/메시지 — `MessageSource`, Locale, Formatter
 
 ### D-1. MessageSource 설정(부트 기본)
+
 - 부트는 `messages.properties`(기본), `messages_ko.properties`, `messages_en.properties` 자동 로드.
 
 ```yaml
 # application.yml
+
 spring:
   messages:
     basename: messages,errors          # 여러 파일 접두어 가능
@@ -308,6 +324,7 @@ user.created=사용자 {0}이(가) 생성되었습니다.
 ---
 
 ### D-2. Locale 결정 — `LocaleResolver` + `LocaleChangeInterceptor`
+
 - 기본은 `Accept-Language` 헤더.
 - **쿼리 파라미터**로 언어 바꾸기: `?lang=ko`
 
@@ -345,6 +362,7 @@ class GreetingController {
 ---
 
 ### D-3. 포맷터/컨버터 — 도메인 타입 바인딩
+
 - **ConversionService**가 문자열 ↔ 타입 변환.
 - 날짜/숫자/자체 타입에 **Formatter/Converter** 등록.
 
@@ -383,6 +401,7 @@ public ReportQuery q(@Valid @ModelAttribute ReportQuery q){ return q; }
 ---
 
 ### D-4. 검증 메시지 국제화
+
 - Bean Validation 메시지를 `messages_*.properties`에서 제공.
 
 `messages.properties`
@@ -408,6 +427,7 @@ public record CreateUserRequest(
 ## E. 통합 예제 — “사용자 관리” 미니 API (검증·예외·i18n·포맷터 적용)
 
 ### E-1. 도메인/서비스(요약)
+
 ```java
 @Entity @Table(name="users")
 class User {
@@ -442,6 +462,7 @@ class DuplicateEmailException extends RuntimeException {
 ```
 
 ### E-2. API + i18n 메시지
+
 ```java
 @RestController
 @RequestMapping("/api/users")
@@ -478,6 +499,7 @@ user.created=사용자 {0}이(가) 생성되었습니다.
 ```
 
 ### E-3. 글로벌 예외 처리(도메인 매핑 포함)
+
 ```java
 @RestControllerAdvice
 class ApiErrors {
@@ -540,6 +562,7 @@ class UserApiTest {
 ## G. 운영 실전 팁 & 체크리스트
 
 ### G-1. 설계 원칙
+
 - **DTO/도메인 분리**: 컨트롤러는 DTO 변환만 담당.
 - **검증은 가장자리에서**: 요청 DTO에 Bean Validation → 서비스로 들어오기 전에 실패시킴.
 - **예외 매핑 통일**: `@ControllerAdvice`로 하나의 에러 포맷.
@@ -547,12 +570,14 @@ class UserApiTest {
 - **로깅 상관ID**: Interceptor에서 `MDC.put("traceId", …)` → 에러 응답에도 포함.
 
 ### G-2. 보안/성능
+
 - **CORS/CSRF** 정책 명확히 (`Spring Security`).
 - **페이징/정렬** 정확한 기본값과 상한 설정.
 - **Jackson 보안**: `FAIL_ON_UNKNOWN_PROPERTIES`(요청 바디 엄격 모드), 민감 필드 직렬화 제외.
 - **대용량 응답**: 스트리밍(`ResponseBodyEmitter`, `SseEmitter`)·gzip·캐시 헤더 활용.
 
 ### G-3. 흔한 함정
+
 - 컨트롤러에서 엔티티 직접 반환 → 무한루프/LAZY 로딩 폭발 → **DTO로 바꾸기**.
 - `@Valid` 누락 → 검증 안 됨.
 - 내부 예외 메시지를 그대로 노출 → **국제화/일반화된 메시지**로 변환.
@@ -561,6 +586,7 @@ class UserApiTest {
 ---
 
 ## H. 요약(한 페이지)
+
 - **DispatcherServlet 파이프라인**을 이해하면 “왜 이 지점에서 실패하는지”가 보인다.
 - **컨트롤러 패턴**: DTO 경계·검증·상태코드 명확화 → API 일관성.
 - **예외 처리 표준화**: `@RestControllerAdvice`로 전역 에러 포맷, 도메인 예외 매핑.

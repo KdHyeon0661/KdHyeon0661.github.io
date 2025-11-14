@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes Auto Scaling
 
-## 0. 큰 그림: 레이어별 오토스케일
+## 큰 그림: 레이어별 오토스케일
 
 ```
 요청 트래픽/큐 -> 메트릭 수집(Metrics Server/Prometheus/KEDA)
@@ -26,7 +26,7 @@ category: Kubernetes
 
 ---
 
-## 1. 전제 조건 체크리스트
+## 전제 조건 체크리스트
 
 | 항목 | 왜 중요한가 | 빠른 확인 |
 |---|---|---|
@@ -38,15 +38,16 @@ category: Kubernetes
 
 ---
 
-## 2. HPA (Horizontal Pod Autoscaler) — 수평 확장
+## HPA (Horizontal Pod Autoscaler) — 수평 확장
 
-### 2.1 기본 흐름과 핵심 개념
+### 기본 흐름과 핵심 개념
 
 - HPA는 주기적으로 목표 워크로드의 메트릭을 읽고 `desiredReplicas`를 계산해 **Replica 수**를 변경.
 - CPU/메모리(리소스 메트릭) 외에 **외부/객체 메트릭**(Prometheus Adapter, CloudWatch 등) 기반도 가능.
 - 안정화(안티 플랩): _scaleUp/Down_ 시 **안정화 창**, **정책**(rate-limit) 적용.
 
 #### HPA 목표값 계산(리소스 메트릭, averageUtilization)
+
 메트릭 정의가 `averageUtilization = U_target(%)`일 때,
 현재 평균 사용률 \(U_{\text{current}}\) 과 현재 레플리카 \(R_{\text{current}}\) 에 대해:
 
@@ -58,7 +59,7 @@ $$
 
 > CPU 기준 예: 현재 평균 80%, 목표 50%면 `80/50=1.6` → 60% 증설.
 
-### 2.2 필수 스펙 (autoscaling/v2)
+### 필수 스펙 (autoscaling/v2)
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -97,7 +98,7 @@ spec:
         averageUtilization: 50
 ```
 
-### 2.3 여러 메트릭 동시 사용
+### 여러 메트릭 동시 사용
 
 - HPA는 각 메트릭별 desiredReplicas를 계산 후 **가장 큰 값**을 선택(보수적).
 - 예: CPU 50%, 메모리 70%, 큐 길이 100개 기준 → 셋 모두 계산 후 **최대치** 적용.
@@ -128,7 +129,7 @@ metrics:
       averageValue: "100"
 ```
 
-### 2.4 커스텀/외부 메트릭: Prometheus Adapter
+### 커스텀/외부 메트릭: Prometheus Adapter
 
 1) 어댑터 설치(개념):
 
@@ -148,6 +149,7 @@ helm install prom-adapter prometheus-adapter/prometheus-adapter -n monitoring \
 
 ```yaml
 # values 일부 예시
+
 rules:
   default: false
   custom:
@@ -189,7 +191,7 @@ spec:
         averageValue: "200"
 ```
 
-### 2.5 KEDA(대안/보완)
+### KEDA(대안/보완)
 
 - 이벤트/큐 기반 스케일(제로까지도): Kafka, RabbitMQ, SQS, HTTP 등 60+ 스케일러.
 - **HPA를 내부적으로 생성**해줌. **버스트 부하**에 빠르게 대응.
@@ -221,13 +223,14 @@ spec:
 
 ---
 
-## 3. VPA (Vertical Pod Autoscaler) — 수직 확장
+## VPA (Vertical Pod Autoscaler) — 수직 확장
 
-### 3.1 개념/전략
+### 개념/전략
+
 - 컨테이너의 `requests/limits`를 **추천**하고(Off/Initial), **자동 반영**(Auto) 가능.
 - 반영 시 **Pod 재시작**이 필요. 무중단 레이어(롤링/레디니스/피어)와 조합 필수.
 
-### 3.2 모드
+### 모드
 
 | updateMode | 의미 | 권장 사용 |
 |---|---|---|
@@ -235,10 +238,11 @@ spec:
 | `Initial` | 최초 생성 시 추천값 반영 | 베이스라인 자동화 |
 | `Auto` | 동적으로 반영(재시작 수반) | 비상태/탄력적 워크로드, 야간 윈도우 |
 
-### 3.3 설치/예시
+### 설치/예시
 
 ```bash
 # 최신 릴리즈 경로 확인 후 적용
+
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-<ver>/deploy/vpa-crd.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-<ver>/deploy/recommender.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/vertical-pod-autoscaler-<ver>/deploy/updater.yaml
@@ -273,17 +277,19 @@ spec:
 
 ---
 
-## 4. Cluster Autoscaler — 노드 자동 확장
+## Cluster Autoscaler — 노드 자동 확장
 
-### 4.1 동작 개요
+### 동작 개요
+
 - 새 Pod이 **스케줄 불가**(자원 부족) → 노드 증가.
 - 노드가 **유휴**(빈/축출 가능) → 노드 감소 (PodDisruptionBudget/PDB 존중).
 
-### 4.2 전제
+### 전제
+
 - 클라우드 매니지드: GKE/EKS/AKS NodeGroup/ASG.
 - 온프레: Karpenter/Cluster API 등 대안 고려.
 
-### 4.3 설치(Helm 예시: EKS)
+### 설치(Helm 예시: EKS)
 
 ```bash
 helm repo add autoscaler https://kubernetes.github.io/autoscaler
@@ -300,7 +306,7 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 
 ---
 
-## 5. 레이어 조합 전략
+## 레이어 조합 전략
 
 | 시나리오 | 권장 조합 | 메모 |
 |---|---|---|
@@ -316,7 +322,7 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 
 ---
 
-## 6. 운영 튜닝: Behavior/쿨다운/워밍업
+## 운영 튜닝: Behavior/쿨다운/워밍업
 
 - **stabilizationWindowSeconds**: 급격한 변동 억제(특히 scaleDown).
 - **policies**: 분당/퍼센트 상한으로 과잉 확장/축소 방지.
@@ -325,9 +331,9 @@ helm install cluster-autoscaler autoscaler/cluster-autoscaler -n kube-system \
 
 ---
 
-## 7. 실전: 샘플 애플리케이션 스케일링
+## 실전: 샘플 애플리케이션 스케일링
 
-### 7.1 예제 디플로이 + HPA + PDB
+### 예제 디플로이 + HPA + PDB
 
 ```yaml
 apiVersion: apps/v1
@@ -399,14 +405,14 @@ spec:
     matchLabels: { app: echo }
 ```
 
-### 7.2 부하 유발(간단)
+### 부하 유발(간단)
 
 ```bash
 kubectl run -it --rm load --image=busybox --restart=Never -- /bin/sh -c \
  'while true; do wget -q -O- http://echo.demo.svc.cluster.local; done'
 ```
 
-### 7.3 관측/검증 포인트
+### 관측/검증 포인트
 
 - `kubectl get hpa -n demo -w`
 - `kubectl top pods -n demo`
@@ -414,9 +420,9 @@ kubectl run -it --rm load --image=busybox --restart=Never -- /bin/sh -c \
 
 ---
 
-## 8. 수학/알고리즘 디테일
+## 수학/알고리즘 디테일
 
-### 8.1 리소스 메트릭(평균 활용률) 공식
+### 리소스 메트릭(평균 활용률) 공식
 
 $$
 U_{\text{avg}} = \frac{\sum_{i=1}^{N} \text{usage}_i}{\sum_{i=1}^{N} \text{request}_i} \times 100
@@ -424,7 +430,7 @@ U_{\text{avg}} = \frac{\sum_{i=1}^{N} \text{usage}_i}{\sum_{i=1}^{N} \text{reque
 R_{\text{desired}} = R_{\text{current}} \times \frac{U_{\text{avg}}}{U_{\text{target}}}
 $$
 
-### 8.2 외부 메트릭(평균 값) 공식
+### 외부 메트릭(평균 값) 공식
 
 외부 메트릭 목표가 `AverageValue = V_target` 일 때:
 
@@ -436,7 +442,7 @@ $$
 
 ---
 
-## 9. 테스트 전략/시나리오
+## 테스트 전략/시나리오
 
 | 시나리오 | 목표 | 방법 |
 |---|---|---|
@@ -448,7 +454,7 @@ $$
 
 ---
 
-## 10. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 원인 후보 | 해결 가이드 |
 |---|---|---|
@@ -462,7 +468,7 @@ $$
 
 ---
 
-## 11. 보안/거버넌스 포인트
+## 보안/거버넌스 포인트
 
 - **리소스 요청 표준화**(팀별 가이드/최소값).
 - **네임스페이스/라벨링** 일관성: HPA/어댑터 셀렉터가 명확히 매칭되도록.
@@ -471,7 +477,7 @@ $$
 
 ---
 
-## 12. 운영 예시 플레이북(요약)
+## 운영 예시 플레이북(요약)
 
 1) 메트릭 소스 준비(Metrics Server/Prometheus).
 2) 워크로드에 **requests/limits** 정의.
@@ -484,9 +490,9 @@ $$
 
 ---
 
-## 13. 부록: 실무형 템플릿 모음
+## 부록: 실무형 템플릿 모음
 
-### 13.1 CPU+메모리+큐 혼합 HPA
+### CPU+메모리+큐 혼합 HPA
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -534,7 +540,7 @@ spec:
         averageValue: "120"
 ```
 
-### 13.2 VPA 추천 + 범위 제한
+### VPA 추천 + 범위 제한
 
 ```yaml
 apiVersion: autoscaling.k8s.io/v1
@@ -553,7 +559,7 @@ spec:
       maxAllowed: { cpu: "6", memory: "12Gi" }
 ```
 
-### 13.3 KEDA HTTP(게이트웨이) 스케일 아웃(예시)
+### KEDA HTTP(게이트웨이) 스케일 아웃(예시)
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -573,7 +579,7 @@ spec:
 
 ---
 
-## 14. 마무리
+## 마무리
 
 - **HPA**는 레플리카, **VPA**는 리소스 사이징, **Cluster Autoscaler**는 노드 용량을 맡는다.
 - 기본은 **HPA + Cluster Autoscaler**, 사이징 개선은 **VPA(Off/Initial)** 로 **추천→반영 루프**.

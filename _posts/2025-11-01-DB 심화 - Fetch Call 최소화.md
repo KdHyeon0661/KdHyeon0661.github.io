@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0. 실습 데이터 준비
+## 실습 데이터 준비
 
 ```sql
 -- 대용량 샘플 테이블
@@ -48,13 +48,14 @@ END;
 
 ---
 
-## 1. Fetch Call과 실행 단계의 관계(짧은 복습)
+## Fetch Call과 실행 단계의 관계(짧은 복습)
 
 - **Parse**: 파싱/최적화/권한 → 보통 1회
 - **Execute**: 실행계획 실행 시작 → 보통 1회
 - **Fetch**: 결과를 **배열 단위**로 전송 → **여러 회**(ArraySize에 의해 결정)
 
 ### Fetch 왕복 수 근사
+
 $$
 N_{\text{fetch calls}} \approx \left\lceil \frac{\text{전송할 행 수}}{\text{ArraySize}} \right\rceil
 $$
@@ -69,22 +70,25 @@ $$
 
 ---
 
-## 2. 부분범위처리(PRP; Stopkey) 원리
+## 부분범위처리(PRP; Stopkey) 원리
 
-### 2.1 개념
+### 개념
+
 - “전체를 끝까지 읽고 **그중 일부만** 쓰는” 대신, **필요한 앞부분만** 읽고 **즉시 멈춘다**.
 - Oracle 실행계획에는 **`STOPKEY`** 연산자로 표현되며, 보통 다음과 결합한다.
   - `FETCH FIRST N ROWS ONLY` (또는 `ROWNUM <= :N`)
   - 인덱스가 **필터/정렬 순서**를 만족 → **Index Range Scan + STOPKEY**
   - 가능하면 **커버링 인덱스**(필요 컬럼이 인덱스에 모두 포함)로 **Table Access BY ROWID** 조차 회피
 
-### 2.2 PRP가 잘 되는 조건
+### PRP가 잘 되는 조건
+
 1) **WHERE + ORDER BY** 가 **같은 복합 인덱스**로 **SARG** 가능
 2) 정렬이 인덱스 순서와 일치 (예: `order_dt DESC` 인덱스, `ORDER BY order_dt DESC`)
 3) 필요한 컬럼이 인덱스에 **다 있으면** 최고 (커버링)
 4) TOP-N, 페이지네이션(**Keyset** 방식: `WHERE (order_dt, order_id) < (:last_dt, :last_id)`)
 
-### 2.3 PRP 예제: 고객의 최신 주문 상위 20건만
+### PRP 예제: 고객의 최신 주문 상위 20건만
+
 ```sql
 -- “APAC 고객 123의 최신 주문 20건”
 SELECT /*+ index(o ix_orders_cust_dt) */
@@ -105,7 +109,8 @@ FETCH FIRST 20 ROWS ONLY;  -- STOPKEY
 > - `STOPKEY` (Fetch First 20)
 > - 필요 컬럼이 인덱스에 있지 않으면 `TABLE ACCESS BY ROWID` 로 보강
 
-### 2.4 (반례) PRP가 깨지는 경우
+### (반례) PRP가 깨지는 경우
+
 ```sql
 -- 나쁜 예: 정렬이 인덱스로 해결되지 않음 → 전체 정렬 후 상위 N
 SELECT order_id, order_dt, amount
@@ -120,7 +125,7 @@ FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 3. OLTP 환경에서 PRP가 성능을 끌어올리는 원리
+## OLTP 환경에서 PRP가 성능을 끌어올리는 원리
 
 OLTP는 **짧은 쿼리**가 **매우 자주** 발생한다. PRP는 아래 효과를 합산해 **p95/최대 응답시간**을 낮춘다.
 
@@ -135,9 +140,10 @@ OLTP는 **짧은 쿼리**가 **매우 자주** 발생한다. PRP는 아래 효�
 
 ---
 
-## 4. ArraySize 조정에 의한 Fetch call 감소 및 (간접) I/O 효과
+## ArraySize 조정에 의한 Fetch call 감소 및 (간접) I/O 효과
 
-### 4.1 Fetch call 수 감소 공식
+### Fetch call 수 감소 공식
+
 $$
 N_{\text{fetch}} = \left\lceil \frac{R}{A} \right\rceil,
 $$
@@ -147,7 +153,8 @@ $$
 - ArraySize=1000 → **10회** 왕복
 - RTT(왕복 지연)가 3ms만 되어도, **200회 ↦ 10회**는 왕복 지연만 **570ms 절감** 가능
 
-### 4.2 ArraySize가 **블록 I/O 자체를 줄이진 않는다**, 다만…
+### ArraySize가 **블록 I/O 자체를 줄이진 않는다**, 다만…
+
 - **같은 행 수**를 읽는다면, 논리/물리 블록 I/O는 **대체로 동일**하다.
 - 다만 **왕복 경계**가 줄어 **스캔 모멘텀**이 유지되고, 서버/네트워크 컨텍스트 스위칭이 적어져
   **경합/대기**(예: `SQL*Net message to/from client`)가 줄고, 일부 환경에선 **락/래치 재진입**이 줄면서
@@ -156,12 +163,12 @@ $$
 
 ---
 
-## 5. 언어별 Array Fetch 세팅과 예제
+## 언어별 Array Fetch 세팅과 예제
 
 > **중요**: ArraySize는 “행 갯수”인 경우(JDBC, Python 등), “바이트”인 경우(ODP.NET `FetchSize`)가 있다.
 > LOB/폭넓은 컬럼이 많으면 **메모리와 네트워크 프레임**을 고려하여 **중간값**을 찾자.
 
-### 5.1 JDBC (Oracle JDBC Thin)
+### JDBC (Oracle JDBC Thin)
 
 ```java
 String sql = """
@@ -188,7 +195,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 > - 대용량 스트리밍 조회라면 `setFetchSize(1000~5000)`로 시작해 실측.
 > - Statement Cache 활성(Implicit/Explicit)로 Parse 경감.
 
-### 5.2 ODP.NET (C#)
+### ODP.NET (C#)
 
 ```csharp
 using var cmd = new OracleCommand(@"
@@ -207,7 +214,7 @@ using var rdr = cmd.ExecuteReader();
 while (rdr.Read()) { /* consume */ }
 ```
 
-### 5.3 Python (python-oracledb)
+### Python (python-oracledb)
 
 ```python
 cur.arraysize = 1000  # 행 단위
@@ -221,7 +228,7 @@ cur.execute("""
 rows = cur.fetchall()  # PRP라 20행 내외 → 왕복 1회면 끝
 ```
 
-### 5.4 Node.js (node-oracledb)
+### Node.js (node-oracledb)
 
 ```js
 const result = await connection.execute(
@@ -239,9 +246,10 @@ const result = await connection.execute(
 
 ---
 
-## 6. PRP를 위한 **SQL 패턴**과 인덱스 설계
+## PRP를 위한 **SQL 패턴**과 인덱스 설계
 
-### 6.1 TOP-N(최신 N) 리스트
+### TOP-N(최신 N) 리스트
+
 ```sql
 SELECT /*+ index(o ix_orders_cust_dt) */
        o.order_id, o.order_dt, o.amount, o.status
@@ -253,7 +261,8 @@ FETCH FIRST :N ROWS ONLY;
 - 인덱스 `(customer_id, order_dt DESC)` → `INDEX RANGE SCAN + STOPKEY`
 - 필요한 열이 인덱스에 다 있다면 **커버링**으로 테이블 액세스 제거
 
-### 6.2 Keyset Pagination(다음 페이지)
+### Keyset Pagination(다음 페이지)
+
 ```sql
 -- 마지막으로 본 행 (last_dt, last_id) 이후 상위 20
 SELECT order_id, order_dt, amount, status
@@ -266,7 +275,8 @@ FETCH FIRST 20 ROWS ONLY;
 - `(customer_id, order_dt DESC, order_id DESC)` 인덱스 추천
 - **OFFSET … FETCH** 대비 **PRP가 확실**히 작동 (OFFSET은 앞부분을 버리느라 비효율)
 
-### 6.3 주문 목록 + 상태 필터
+### 주문 목록 + 상태 필터
+
 ```sql
 SELECT /*+ index(o ix_orders_cust_dt) */
        o.order_id, o.order_dt, o.amount
@@ -282,7 +292,7 @@ FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 7. TKPROF/Trace로 **전/후** 확인하는 절차
+## TKPROF/Trace로 **전/후** 확인하는 절차
 
 1) 세션에서 Trace ON
 ```sql
@@ -308,7 +318,7 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 
 ---
 
-## 8. (중요) 안티 패턴과 교정
+## (중요) 안티 패턴과 교정
 
 | 안티 패턴 | 문제 | 교정 |
 |---|---|---|
@@ -321,28 +331,32 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 
 ---
 
-## 9. OLTP 튜닝 시나리오 3선
+## OLTP 튜닝 시나리오 3선
 
-### 9.1 주문 목록 첫 페이지 API
+### 주문 목록 첫 페이지 API
+
 - **Before**: `OFFSET 0 FETCH 50` + 정렬 인덱스 없음 → 평균 400ms
 - **After**: `(customer_id, order_dt DESC)` 인덱스 + `FETCH FIRST 50` + fetchSize=1000
 - **결과**: **Index Range Scan + STOPKEY**, Fetch 왕복 1~2회 → 평균 40ms
 
-### 9.2 알람 피드(무한스크롤)
+### 알람 피드(무한스크롤)
+
 - **Keyset**: `(tenant_id, created_at DESC, id DESC)`
 - API는 `(last_ts, last_id)` 전달
 - PRP로 **연속 페이지**도 매번 상위 50만 읽고 종료 → 안정적인 지연
 
-### 9.3 백오피스 그리드 조회
+### 백오피스 그리드 조회
+
 - 컬럼 최소화(보여줄 것만), 정렬·필터 컬럼 **복합 인덱스화**
 - 사용자 스크롤 시 **Lazy Fetch**(다음 페이지 요청 시만)
 - fetchSize=2000, 네트워크 RTT 큰 사내망은 5000도 시도
 
 ---
 
-## 10. 프로그램 언어별 “Array 단위 Fetch” 활용 모음
+## 프로그램 언어별 “Array 단위 Fetch” 활용 모음
 
-### 10.1 JDBC
+### JDBC
+
 ```java
 PreparedStatement ps = conn.prepareStatement(SQL);
 ps.setFetchSize(1000);         // 500~2000 권장 (행당 크기 고려)
@@ -350,21 +364,24 @@ ResultSet rs = ps.executeQuery();
 // 대량일수록 효과 큼. PRP면 100~500도 충분.
 ```
 
-### 10.2 ODP.NET
+### ODP.NET
+
 ```csharp
 cmd.FetchSize = 8 * 1024 * 1024; // 바이트 단위, 4~16MB부터 실측
 using var rdr = cmd.ExecuteReader();
 while (rdr.Read()) { /* ... */ }
 ```
 
-### 10.3 Python (python-oracledb)
+### Python (python-oracledb)
+
 ```python
 cur.arraysize = 2000  # 기본 100~50 → 1000~5000으로 키워보며 측정
 cur.execute(SQL, ...)
 rows = cur.fetchall()
 ```
 
-### 10.4 Node.js (node-oracledb)
+### Node.js (node-oracledb)
+
 ```js
 const result = await connection.execute(SQL, binds, {
   prefetchRows: 500,      // 서버가 미리 보내는 행
@@ -374,7 +391,7 @@ const result = await connection.execute(SQL, binds, {
 
 ---
 
-## 11. 정량 지표(간이)
+## 정량 지표(간이)
 
 - **Fetch 효율**
   $$
@@ -394,7 +411,7 @@ const result = await connection.execute(SQL, binds, {
 
 ---
 
-## 12. 종합 실습: “느린 목록”을 10배 빠르게
+## 종합 실습: “느린 목록”을 10배 빠르게
 
 **문제**: 고객 포털에서 “주문 목록” 첫 페이지가 p95 1.1s
 **원인**: `OFFSET/FETCH`, 정렬 인덱스 없음, fetchSize=50
@@ -412,7 +429,7 @@ const result = await connection.execute(SQL, binds, {
 
 ---
 
-## 13. 체크리스트
+## 체크리스트
 
 - [ ] **PRP 가능**한가? (TOP-N/Keyset)
 - [ ] **정렬/필터**가 **복합 인덱스**로 해결되는가? (DESC 포함)

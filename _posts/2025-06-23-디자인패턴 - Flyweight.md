@@ -69,6 +69,7 @@ from dataclasses import dataclass
 from typing import Dict, Tuple
 
 # Flyweight (내부 상태: 이름/색상/텍스처) — 불변 객체
+
 @dataclass(frozen=True)
 class TreeType:
     name: str
@@ -79,6 +80,7 @@ class TreeType:
         print(f"[{self.name}] ({x},{y}) 색:{self.color}, 텍스처:{self.texture}")
 
 # Factory (캐시)
+
 class TreeFactory:
     _cache: Dict[Tuple[str, str, str], TreeType] = {}
 
@@ -94,6 +96,7 @@ class TreeFactory:
         return len(cls._cache)
 
 # Client (외부 상태 보유)
+
 @dataclass
 class Tree:
     x: int
@@ -104,16 +107,19 @@ class Tree:
         self.type.draw(self.x, self.y)
 
 # 사용
+
 forest: list[Tree] = []
 for i in range(0, 10_000, 1_000):
     forest.append(Tree(i, i,   TreeFactory.get_tree_type("자작나무", "초록",   "거칠게")))
     forest.append(Tree(i+5, i, TreeFactory.get_tree_type("소나무",  "진초록", "가늘게")))
 
 # 확인
+
 forest[0].draw()
 forest[1].draw()
 print("캐시된 TreeType 개수:", TreeFactory.stats())  # 2개
 # 동일 TreeType 공유 여부(식별성)
+
 assert forest[0].type is TreeFactory.get_tree_type("자작나무", "초록", "거칠게")
 ```
 

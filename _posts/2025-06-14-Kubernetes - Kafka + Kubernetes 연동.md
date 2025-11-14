@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # 실습: Kafka + Kubernetes 연동
 
-## 1. 아키텍처 개요
+## 아키텍처 개요
 
 ```text
 [Client Pod / kcat / Python]  ──(ClusterIP)──> [Kafka Brokers (StatefulSet)]
@@ -24,7 +24,7 @@ category: Kubernetes
 
 ---
 
-## 2. 배포 방식 선택: Helm, Operator, 수동 YAML
+## 배포 방식 선택: Helm, Operator, 수동 YAML
 
 | 방식 | 장점 | 단점 | 추천 상황 |
 |---|---|---|---|
@@ -36,19 +36,19 @@ category: Kubernetes
 
 ---
 
-## 3. Helm으로 Kafka + ZooKeeper 배포 (내부접속용)
+## Helm으로 Kafka + ZooKeeper 배포 (내부접속용)
 
 > 로컬/내부 접근만 필요한 **기본 PLAINTEXT**.
 > 시작은 단순하게, 이후 외부접속·보안으로 확장합니다.
 
-### 3.1 Helm 리포지토리 & 설치
+### Helm 리포지토리 & 설치
 
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 ```
 
-### 3.2 values-internal.yaml (권장) — 최소 구성
+### values-internal.yaml (권장) — 최소 구성
 
 ```yaml
 replicaCount: 1
@@ -68,6 +68,7 @@ service:
   type: ClusterIP
 
 # 내부 리스너(PLAINTEXT)
+
 listeners:
   client:
     protocol: PLAINTEXT
@@ -75,6 +76,7 @@ listeners:
     protocol: PLAINTEXT
 
 # Kubernetes DNS로 브로커 광고(내부 only)
+
 advertisedListeners:
   - name: CLIENT
     value: PLAINTEXT://my-kafka.default.svc.cluster.local:9092
@@ -85,7 +87,7 @@ advertisedListeners:
 > Bitnami 차트의 `advertisedListeners`는 브로커 수/헤드리스 서비스에 맞춰 **자동 생성**되지만,
 > 내부 DNS 기반 고정이 필요하면 명시적으로 제공할 수 있습니다.
 
-### 3.3 설치
+### 설치
 
 ```bash
 helm install my-kafka bitnami/kafka -f values-internal.yaml
@@ -100,63 +102,68 @@ kubectl get svc
 
 ---
 
-## 4. 파드 내부에서 토픽/메시지 테스트
+## 파드 내부에서 토픽/메시지 테스트
 
-### 4.1 브로커 파드 접속
+### 브로커 파드 접속
 
 ```bash
 kubectl exec -it my-kafka-0 -- bash
 ```
 
-### 4.2 토픽 생성/목록
+### 토픽 생성/목록
 
 ```bash
 kafka-topics.sh --bootstrap-server localhost:9092 --create --topic demo-topic --partitions 3 --replication-factor 1
 kafka-topics.sh --bootstrap-server localhost:9092 --list
 ```
 
-### 4.3 메시지 송수신
+### 메시지 송수신
 
 ```bash
 # Producer
+
 kafka-console-producer.sh --bootstrap-server localhost:9092 --topic demo-topic
 > hello
 > kafka
 
 # Consumer
+
 kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic demo-topic --from-beginning --timeout-ms 5000
 ```
 
 ---
 
-## 5. kcat로 테스트 (권장 도구)
+## kcat로 테스트 (권장 도구)
 
 > 다양한 옵션/헤더/키/오프셋 제어에 편리.
 
-### 5.1 임시 파드 생성
+### 임시 파드 생성
 
 ```bash
 kubectl run kcat --image=edenhill/kcat:1.7.1 -it --rm --restart=Never -- /bin/sh
 ```
 
-### 5.2 송수신
+### 송수신
 
 ```bash
 # 목록
+
 kcat -b my-kafka.default.svc.cluster.local:9092 -L
 
 # Producer
+
 echo "hello-from-kcat" | kcat -b my-kafka.default.svc.cluster.local:9092 -t demo-topic
 
 # Consumer
+
 kcat -b my-kafka.default.svc.cluster.local:9092 -t demo-topic -o beginning -e
 ```
 
 ---
 
-## 6. Python Producer/Consumer를 Kubernetes로 배포
+## Python Producer/Consumer를 Kubernetes로 배포
 
-### 6.1 코드
+### 코드
 
 **producer.py**
 ```python
@@ -194,7 +201,7 @@ for msg in consumer:
     print("recv:", msg.value.decode("utf-8"))
 ```
 
-### 6.2 Dockerfile
+### Dockerfile
 
 ```Dockerfile
 FROM python:3.12-slim
@@ -211,7 +218,7 @@ docker build -t <username>/kafka-demo:0.1.0 .
 docker push <username>/kafka-demo:0.1.0
 ```
 
-### 6.3 K8s 배포
+### K8s 배포
 
 ```yaml
 apiVersion: v1
@@ -276,11 +283,11 @@ kubectl logs deploy/kafka-consumer -f
 
 ---
 
-## 7. 외부 접속(클러스터 밖에서) — NodePort/LoadBalancer
+## 외부 접속(클러스터 밖에서) — NodePort/LoadBalancer
 
 Kafka는 **클라이언트가 브로커에 재접속**하기 때문에 `advertised.listeners`를 **외부 IP/도메인**으로 맞춰야 합니다.
 
-### 7.1 간단 NodePort 예(학습용)
+### 간단 NodePort 예(학습용)
 
 **values-external.yaml**
 
@@ -299,6 +306,7 @@ listeners:
 
 # 주의: advertised listeners를 외부로
 # Minikube라면: minikube ip 로 확인
+
 advertisedListeners:
   - name: CLIENT
     value: PLAINTEXT://$(MINIKUBE_IP):30092
@@ -319,6 +327,7 @@ extraEnvVars:
 
 ```bash
 # minikube ip 저장
+
 kubectl create configmap cluster-info --from-literal=minikube_ip=$(minikube ip)
 
 helm upgrade --install my-kafka bitnami/kafka -f values-external.yaml
@@ -332,7 +341,7 @@ kcat -b $(minikube ip):30092 -L
 
 ---
 
-## 8. 보안(옵션): SASL/PLAIN + TLS 개요
+## 보안(옵션): SASL/PLAIN + TLS 개요
 
 운영환경에서는 **최소 SASL/PLAIN**, 가능하면 **TLS**를 적용합니다. Bitnami Chart는 다음을 지원:
 
@@ -363,7 +372,7 @@ tls:
 
 ---
 
-## 9. 토픽 자동 생성: Job로 초기화
+## 토픽 자동 생성: Job로 초기화
 
 환경 부팅 시 필요한 **토픽/파티션/리텐션**을 **코드처럼 관리**하는 것이 중요합니다.
 
@@ -399,7 +408,7 @@ kubectl logs job/kafka-init-topics -f
 
 ---
 
-## 10. Kafka UI 배포 (Provectus)
+## Kafka UI 배포 (Provectus)
 
 ```yaml
 apiVersion: apps/v1
@@ -443,7 +452,7 @@ http://<노드IP>:30080
 
 ---
 
-## 11. 모니터링: JMX Exporter + Prometheus
+## 모니터링: JMX Exporter + Prometheus
 
 Bitnami Kafka는 JMX Exporter 연동을 지원합니다(차트 옵션 참고).
 
@@ -466,7 +475,7 @@ serviceMonitor:
 
 ---
 
-## 12. 리소스/가용성/네트워크
+## 리소스/가용성/네트워크
 
 - **리소스**: 브로커는 디스크/IO/메모리 영향 큼. `requests/limits` + 적절한 스토리지 클래스(IOPS).
 - **PDB**: 점검 시 최소 가용 브로커 유지. 예: 3브로커 구성 시 `minAvailable: 2`.
@@ -519,7 +528,7 @@ spec:
 
 ---
 
-## 13. ZooKeeper vs KRaft(무ZK)
+## ZooKeeper vs KRaft(무ZK)
 
 - **ZooKeeper 모드**: 안정적이며 풍부한 레퍼런스. Bitnami 기본값.
 - **KRaft 모드**: 최근 Kafka의 **내장 메타데이터 관리**. 구성 단순화, ZK 제거.
@@ -535,7 +544,7 @@ spec:
 
 ---
 
-## 14. 트러블슈팅 체크리스트
+## 트러블슈팅 체크리스트
 
 - `kubectl get events --sort-by=.lastTimestamp`: 스케줄 실패/리소스 부족
 - 브로커 로그: `kubectl logs my-kafka-0 -c kafka -f`
@@ -550,19 +559,23 @@ spec:
 
 ---
 
-## 15. 전체 정리 · 삭제
+## 전체 정리 · 삭제
 
 ```bash
 # UI
+
 kubectl delete deploy/kafka-ui svc/kafka-ui
 
 # Kafka(Helm)
+
 helm uninstall my-kafka
 
 # 토픽 Job
+
 kubectl delete job kafka-init-topics
 
 # 테스트 앱
+
 kubectl delete -f kafka-demo.yaml
 ```
 

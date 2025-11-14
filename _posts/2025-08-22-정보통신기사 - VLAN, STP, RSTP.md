@@ -6,7 +6,7 @@ category: 정보통신기사
 ---
 # VLAN / STP / RSTP 개념과 설계 총정리
 
-## 0. 큰 그림: “레이어2의 분리(브로드캐스트 도메인)와 루프 억제”
+## 큰 그림: “레이어2의 분리(브로드캐스트 도메인)와 루프 억제”
 
 - **VLAN**: 하나의 스위치/트렁크 위에서 **여러 개의 L2 브로드캐스트 도메인**(논리 스위치) 생성.
 - **STP**: L2 루프를 **자동 차단**하고 **루트 브리지**를 중심으로 트리 구성.
@@ -18,35 +18,41 @@ category: 정보통신기사
 
 ---
 
-## 1. VLAN (IEEE 802.1Q) 기본
+## VLAN (IEEE 802.1Q) 기본
 
-### 1.1 Access/Trunk 포트
+### Access/Trunk 포트
+
 - **Access 포트**: **단일 VLAN**의 **언태그드** 프레임만 전송/수신. PC/프린터/서버(싱글 NIC)에 사용.
 - **Trunk 포트**: **여러 VLAN**을 **태그**(802.1Q Tag)로 구분하여 운반. 스위치↔스위치, 스위치↔서버(팀/하이퍼바이저) 등.
 
-### 1.2 802.1Q 태그와 Native VLAN
+### 802.1Q 태그와 Native VLAN
+
 - 802.1Q 태그: **TPID 0x8100**, **TCI(PCP 3b / DEI 1b / VID 12b)**.
 - **Native VLAN**: 트렁크 상에서 **태그 없이(언태그드)** 전송되는 VLAN.
   - **권장**: Native VLAN을 **미사용(전용/빈 VLAN)** 혹은 **각 단에 동일하게 고정**하고, **허용 VLAN 목록을 엄격히**.
   - **Native VLAN 불일치**는 **프레임 누수/보안 이슈**의 대표 원인.
 
-### 1.3 VLAN 범위와 네이밍
+### VLAN 범위와 네이밍
+
 - **1–4094**(0, 4095 예약).
 - **1, 1002–1005(전통)**: 특수 취급하는 장비 존재 → 운영에서는 **사용 지양**.
 - **이름 규칙**: `SITE-FLOOR-PURPOSE` 등으로 **정책/문서화一致**.
 
-### 1.4 VLAN 프레임 길이
+### VLAN 프레임 길이
+
 - 태그 4바이트 추가 → **1522B**(FCS 포함)까지. 점보프레임 환경이면 **MTU 일치** 필요.
 
 ---
 
-## 2. STP(802.1D) 개념
+## STP(802.1D) 개념
 
-### 2.1 왜 필요한가?
+### 왜 필요한가?
+
 - 스위치 링/메시에선 **브로드캐스트 프레임이 순환** → **브로드캐스트 스톰**, **MAC 플래핑**, 네트워크 마비.
 - **STP**가 루프를 **논리적으로 차단**하고, 링크 장애 시 **대체 경로**를 **천천히** 올려줌.
 
-### 2.2 루트 브리지와 경로 비용
+### 루트 브리지와 경로 비용
+
 - **루트 브리지**: **가장 낮은 Bridge ID(BID)** 보유 스위치가 선출.
   - $\text{BID} = \text{Priority(4bit)} \parallel \text{Extended System ID(VLAN)} \parallel \text{MAC}$
   - **우선순위** 기본 `32768`(PVST+/RSTP-VLAN별), **작을수록 우선**.
@@ -56,29 +62,32 @@ category: 정보통신기사
 
 > 설계 Tip: 코어/분배에 **루트 우선순위**를 명시(`spanning-tree vlan X priority 4096/8192`)해 **의도한 루트**를 만든다.
 
-### 2.3 포트 역할/상태 (802.1D 전통)
+### 포트 역할/상태 (802.1D 전통)
+
 - **역할**: Root Port(각 브리지에서 루트까지 최단), Designated Port(세그먼트 대표), Non-Designated(차단).
 - **상태**: Blocking → Listening → Learning → Forwarding (장애/추가 시 **수~수십초** 소요).
 - **타이머**: Hello=2s, MaxAge=20s, ForwardDelay=15s (기본값, 도메인 하나로 일관해야 안정).
 
 ---
 
-## 3. RSTP(802.1w) — 빠른 수렴
+## RSTP(802.1w) — 빠른 수렴
 
-### 3.1 차이점 요약
+### 차이점 요약
+
 - **상태**: Discarding / Learning / Forwarding (단순화).
 - **역할**: Root / **Alternate**(루트로 가는 백업) / **Backup**(세그먼트 내 백업) / Designated.
 - **핸드셰이크**: **Proposal/Agreement**(P/A)로 포인트투포인트 링크에서 **즉시 전환** 가능.
 - **에지 포트**: **PortFast=Edge**; BPDU 수신 시 **즉시 에지 취소**(Loop 보호).
 - **링크 타입**: **Point-to-Point**(풀듀플렉스) vs **Shared**(허브/반이중). P2P일수록 **빠른 합의**.
 
-### 3.2 수렴 직감
+### 수렴 직감
+
 - 포인트투포인트 + 에지 포트 조합 → **수백 ms~1초 내** 트리 재구성.
 - 다만 **멀티액세스/공유** 세그먼트, **BPDU 손실/단방향 링크**에선 보호 기능이 필요.
 
 ---
 
-## 4. PVST+/Rapid-PVST vs MSTP(802.1s)
+## PVST+/Rapid-PVST vs MSTP(802.1s)
 
 - **PVST+**: **VLAN마다 별도의** (R)STP 인스턴스. **세밀한 제어**(VLAN별 루트/부하분산) 가능, **규모↑ 시 CPU/메모리/TCN↑**.
 - **MSTP**: VLAN들을 **몇 개의 MST 인스턴스(MSTI)**로 **묶어** 트리를 줄임.
@@ -87,24 +96,27 @@ category: 정보통신기사
 
 ---
 
-## 5. VLAN 설계 — 분리·할당·트렁크
+## VLAN 설계 — 분리·할당·트렁크
 
-### 5.1 분리 기준
+### 분리 기준
+
 - **보안/역할**(서버/사용자/프린터/IoT), **L3 경계**(서브넷 1개=VLAN 1개 권장), **브로드캐스트 통제**.
 - **멀티캐스트/VoIP**: 음성 VLAN, 멀티캐스트 전송 영역 고려(IGMP Snooping/Querier).
 
-### 5.2 트렁크 설계
+### 트렁크 설계
+
 - **허용 VLAN 목록**을 **명시**(Pruning)하고, **Native VLAN 고정**(가능하면 전용 빈 VLAN).
 - **DTP(자동안됨)**: `switchport nonegotiate`로 **수동 트렁크** 권장.
 - **포트채널(EtherChannel)** 묶음: STP는 **포트채널을 하나**로 인식 → 루프 위험↓/대역폭↑.
 
-### 5.3 L3 게이트웨이
+### L3 게이트웨이
+
 - **SVI**(Switch Virtual Interface) 또는 **라우터 서브인터페이스**(Router-on-a-Stick).
 - **인터-VLAN 라우팅** 정책/ACL/방화벽 경계 설계.
 
 ---
 
-## 6. STP/RSTP 동작을 수식으로 요약
+## STP/RSTP 동작을 수식으로 요약
 
 - **BID 비교**:
   $$
@@ -125,7 +137,7 @@ category: 정보통신기사
 
 ---
 
-## 7. 보호 기능(운영 필수)
+## 보호 기능(운영 필수)
 
 | 기능 | 목적 | 동작 |
 |---|---|---|
@@ -140,7 +152,7 @@ category: 정보통신기사
 
 ---
 
-## 8. 부하 분산(Per-VLAN Root 최적화)
+## 부하 분산(Per-VLAN Root 최적화)
 
 - **VLAN10 루트 = SW-A**, **VLAN20 루트 = SW-B**처럼 **루트 스위치 분담**으로 **양 방향 트래픽 분산**.
 - 포트채널을 사용하면 STP는 **한 링크**로 보지만, **LACP 해시**로 **유량 분산**.
@@ -155,24 +167,26 @@ spanning-tree vlan 20 priority 4096
 
 ---
 
-## 9. 타이머·코스트 표(참고)
+## 타이머·코스트 표(참고)
 
-### 9.1 STP 기본 타이머(도메인 공통)
+### STP 기본 타이머(도메인 공통)
+
 - **Hello**: 2 s
 - **MaxAge**: 20 s
 - **Forward Delay**: 15 s
 - 전통 STP 수렴: **최대 ~50 s**(차단→포워드), RSTP: **<<**.
 
-### 9.2 링크 속도별 코스트(예시)
+### 링크 속도별 코스트(예시)
+
 - **클래식**: 10M=100, 100M=19, 1G=4, 10G=2
 - **롱 코스트(권장)**: 10M=2,000,000 / 100M=200,000 / 1G=20,000 / 10G=2,000 / 100G=200 …
   (벤더/OS에서 **자동 전환 옵션** 존재: `spanning-tree pathcost method long`)
 
 ---
 
-## 10. 예시 토폴로지 & 설계
+## 예시 토폴로지 & 설계
 
-### 10.1 3-스위치 코어/액세스
+### 3-스위치 코어/액세스
 
 ```
         [SW-A]====(Po1)====[SW-B]
@@ -191,9 +205,10 @@ spanning-tree vlan 20 priority 4096
 
 ---
 
-## 11. 설정 예시(Cisco IOS 스타일)
+## 설정 예시(Cisco IOS 스타일)
 
-### 11.1 VLAN/트렁크
+### VLAN/트렁크
+
 ```bash
 vlan 10
  name USER
@@ -220,7 +235,8 @@ interface range gi1/0/10 - 48
  storm-control broadcast level 1.00 0.50
 ```
 
-### 11.2 STP 모드/루트 분산
+### STP 모드/루트 분산
+
 ```bash
 spanning-tree mode rapid-pvst
 spanning-tree extend system-id
@@ -231,7 +247,8 @@ spanning-tree portfast default
 spanning-tree pathcost method long
 ```
 
-### 11.3 MSTP(대규모 코어)
+### MSTP(대규모 코어)
+
 ```bash
 spanning-tree mode mst
 spanning-tree mst configuration
@@ -247,7 +264,7 @@ spanning-tree mst 2 priority 4096
 
 ---
 
-## 12. 검증/운영 명령
+## 검증/운영 명령
 
 ```bash
 show spanning-tree summary
@@ -271,7 +288,7 @@ show errdisable recovery
 
 ---
 
-## 13. 자주 발생하는 문제 & 대처
+## 자주 발생하는 문제 & 대처
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -285,25 +302,29 @@ show errdisable recovery
 
 ---
 
-## 14. 계산/미니 도구(개념)
+## 계산/미니 도구(개념)
 
-### 14.1 경로 코스트 합 비교(예)
+### 경로 코스트 합 비교(예)
+
 - 링크: 액세스(1G)→분배(10G)→코어(10G)
 - **롱 코스트**: 1G=20,000, 10G=2,000
 - 경로1(1G+10G)=22,000, 경로2(1G+10G)=22,000 → **동일 비용** → **RSTP Alternate** 결정은 BPDU 우월성(MAC/Port ID) 비교.
 
-### 14.2 포트 우월성 타이브레이커(요지)
+### 포트 우월성 타이브레이커(요지)
+
 1) Root Path Cost ↓
 2) Sender Bridge ID ↓
 3) Sender Port ID ↓
 
 ```python
 # 교육용: RSTP 우월성 비교
+
 from dataclasses import dataclass
 @dataclass(order=True)
 class BPDU:
     root_cost:int; sender_bridge:str; sender_port:int
 # 낮을수록 우월
+
 bpdu_a = BPDU(22000, "32768.0011.2233.4455", 1)
 bpdu_b = BPDU(22000, "32768.0011.2233.4466", 1)
 print("Winner:", "A" if bpdu_a<bpdu_b else "B")
@@ -311,23 +332,26 @@ print("Winner:", "A" if bpdu_a<bpdu_b else "B")
 
 ---
 
-## 15. 디자인 패턴
+## 디자인 패턴
 
-### 15.1 소규모 캠퍼스(2계층)
+### 소규모 캠퍼스(2계층)
+
 - **Rapid-PVST** + **VLAN별 루트 분산**.
 - 모든 액세스 포트 **Edge+BPDU Guard**, 업링크 **Loop Guard/UDLD**.
 
-### 15.2 대규모 캠퍼스(3계층/MSTP)
+### 대규모 캠퍼스(3계층/MSTP)
+
 - **MSTP**로 VLAN→MSTI 매핑(예: MST1=사용자/IoT, MST2=서버/VoIP).
 - **분배층**을 루트, **코어**는 **라우팅(ECMP)** 우선으로 L3 업링크(가능하면 **L3 to Access**로 STP 도메인 축소).
 
-### 15.3 데이터센터(권장: L3/패브릭)
+### 데이터센터(권장: L3/패브릭)
+
 - 가능하면 **L2 도메인 축소**, **VxLAN/EVPN** 등 L3 패브릭.
 - L2가 필요하면 **포트채널 + RSTP Edge/Backbone 보호** **+ MLAG/스택**.
 
 ---
 
-## 16. 보안/컴플라이언스 체크
+## 보안/컴플라이언스 체크
 
 - **미사용 포트**: `shutdown`, Access+VLAN Blackhole(999), BPDU Guard on.
 - **VTP**: 대형 사고 방지 위해 **Transparent** 권장(수동 관리).
@@ -336,7 +360,7 @@ print("Winner:", "A" if bpdu_a<bpdu_b else "B")
 
 ---
 
-## 17. 로그 사례(의미 파악)
+## 로그 사례(의미 파악)
 
 ```
 %SPANTREE-2-ROOTGUARD_BLOCK: Root guard blocking port Gi1/0/24 on VLAN0010.
@@ -344,13 +368,14 @@ print("Winner:", "A" if bpdu_a<bpdu_b else "B")
 
 %UDLD-4-UDLD_PORT_DISABLED: UDLD disabled interface Gi1/0/1 on Tx
 # 단방향 링크 감지 → 루프 위험 차단
+
 ```
 
 대응: 상위 장비 루트/타이머 확인, 광패치 재연결, 포트 재가동 전 원인 제거.
 
 ---
 
-## 18. 자주 틀리는 포인트(정오표)
+## 자주 틀리는 포인트(정오표)
 
 1) **RSTP**는 STP의 “빠른 수렴”판이지 **프로토콜 목적**(루프 방지)이 바뀐 게 아니다.
 2) **PortFast(Edge)**는 **단말 포트**에만. **트렁크나 서버-브리징**엔 신중(`portfast trunk`는 루프 가능성 이해 후).
@@ -361,7 +386,7 @@ print("Winner:", "A" if bpdu_a<bpdu_b else "B")
 
 ---
 
-## 19. 연습문제(풀이 포함)
+## 연습문제(풀이 포함)
 
 **Q1.** PVST+에서 VLAN 10의 루트를 SW-A로 강제하려면?
 **A.** `spanning-tree vlan 10 priority 4096`(SW-A), 타 스위치는 기본(32768) 유지.
@@ -386,7 +411,7 @@ print("Winner:", "A" if bpdu_a<bpdu_b else "B")
 
 ---
 
-## 20. 구축/점검 체크리스트
+## 구축/점검 체크리스트
 
 - [ ] **VLAN 설계**: 서브넷=VLAN 1:1, 네이밍/문서화, 멀티캐스트/VoIP 정책
 - [ ] **트렁크**: Allowed VLAN 제한, **Native=빈 VLAN**, `nonegotiate`
@@ -399,7 +424,7 @@ print("Winner:", "A" if bpdu_a<bpdu_b else "B")
 
 ---
 
-## 21. 마무리
+## 마무리
 
 - **VLAN**으로 **논리 격리**를 하고, **(R)STP**로 **루프 없는 트리**를 만든 뒤,
 - **루트/코스트/보호 기능**을 **의도적으로** 설계하면 **안정**과 **빠른 복구**를 동시에 얻습니다.

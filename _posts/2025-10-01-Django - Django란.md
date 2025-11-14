@@ -4,7 +4,7 @@ title: Django - Django란
 date: 2025-10-01 14:25:23 +0900
 category: Django
 ---
-# 0. 시작하기 — Django란? 환경 설정, 첫 프로젝트/앱 생성 (Django 5.x 기준)
+# 시작하기 — Django란? 환경 설정, 첫 프로젝트/앱 생성 (Django 5.x 기준)
 
 > 이 글은 **Django 초심자~중급자**가 **실전 프로젝트**를 바로 시작할 수 있도록,
 > “무엇을 왜 그렇게 하는지”까지 **맥락 + 예제 + 체크리스트**로 빠짐없이 정리한다.
@@ -15,6 +15,7 @@ category: Django
 ## 0-1. Django란? — 역사·철학(MTV)·Django 5.x 관점 핵심
 
 ### (1) Django의 탄생 배경과 철학
+
 - **신문사 콘텐츠 CMS**에서 출발(빠른 개발 속도에 초점)
 - **“배터리 포함(batteries-included)”**: 인증, 관리자, ORM, 국제화, 보안 프레임워크 등 **웹 서비스 필수 기능**을 광범위하게 기본 제공
 - **일관된 설계 철학**: 단순함, 명시성, DRY(Don’t Repeat Yourself), 보안 우선, 확장성
@@ -31,6 +32,7 @@ category: Django
   - API 백엔드(DRF 추가 시)
 
 ### (2) MTV 아키텍처(= Django의 MVC 해석)
+
 - **M(Model)**: 데이터/도메인 규칙 → Django ORM의 `models.Model`
 - **T(Template)**: 프론트 표현 → DTL(Django Template Language)
 - **V(View)**: 요청 처리·비즈니스 규칙 → 함수형 뷰/클래스형 뷰(CBV)
@@ -43,6 +45,7 @@ category: Django
 4. **Middleware**는 요청/응답의 전후 훅에서 횡단 관심사 처리(보안 헤더, 로깅 등)
 
 ### (3) Django 5.x 관점(핵심 포인트 위주)
+
 - **ASGI(비동기) 서포트 성숙**: `async def` 뷰, 일부 ORM I/O 최적화 지향(단, ORM은 전면 async 완성 전환이 아닌, 제한적/선택적 활용이 일반적이었음)
 - **Form/템플릿/유틸리티** 등 점진 개선, 오래된 API 정리·폐기 가속(장기 지원 정책에 따라 주기적 디프리케이션)
 - **보안 디폴트 강화** 추세(보안 헤더/쿠키 속성/CSRF 개선 등)
@@ -53,14 +56,17 @@ category: Django
 ## 0-2. 개발 환경 설정 — Python/venv/Poetry, VS Code, 프로젝트 구조
 
 ### (1) 파이썬 설치 & 가상 환경(venv)
+
 - **권장 버전**: Django 5.x 라인과 호환되는 최신 안정 파이썬(3.10+ 권장)
 - **venv 생성/활성화**
 ```bash
 # Windows (PowerShell)
+
 py -3.11 -m venv .venv
 .venv\Scripts\Activate.ps1
 
 # macOS/Linux (bash/zsh)
+
 python3.11 -m venv .venv
 source .venv/bin/activate
 ```
@@ -70,9 +76,11 @@ python -m pip install --upgrade pip wheel setuptools
 ```
 
 ### (2) Poetry로 의존성/빌드 관리(선택)
+
 - **Poetry 설치**
 ```bash
 # 권장: pipx 사용
+
 pipx install poetry
 poetry --version
 ```
@@ -81,6 +89,7 @@ poetry --version
 poetry init  # 질의응답으로 pyproject.toml 생성
 poetry add django python-dotenv django-environ
 # 개발 전용
+
 poetry add -D black isort ruff pytest pytest-django
 ```
 - **Poetry 가상환경 진입**
@@ -114,6 +123,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 # 선택: 포맷터/린터 설정
+
 [tool.black]
 line-length = 100
 target-version = ["py311"]
@@ -127,6 +137,7 @@ select = ["E", "F", "I"]
 ```
 
 ### (3) VS Code 설정 포인트
+
 - **익스텐션**: Python, Pylance, Django Template, GitLens, dotenv
 - **Interpreter 선택**: `Ctrl/Cmd + Shift + P` → *Python: Select Interpreter* → `.venv`
 - **디버그 설정**: `.vscode/launch.json` 예시
@@ -159,6 +170,7 @@ select = ["E", "F", "I"]
 ```
 
 ### (4) 디렉터리 구조 베스트프랙티스
+
 - **권장 구조(단일 레포 내 다중 앱)**
 ```
 myproject/
@@ -199,6 +211,7 @@ myproject/
 ## 0-3. 첫 프로젝트/앱 생성 — `django-admin` vs `manage.py`, 설정 분리(dev/prod)
 
 ### (1) django-admin과 manage.py의 차이
+
 - `django-admin`: **글로벌 진입점**(가상환경 PATH에 노출). 어떤 프로젝트 맥락 없이도 명령 실행 가능
 - `manage.py`: **프로젝트 로컬 진입점**. 내부에서 `DJANGO_SETTINGS_MODULE`을 지정해 **해당 프로젝트 설정**을 자동 로드
 - 실무에서는 **프로젝트 하위에서 `python manage.py <cmd>`** 사용이 안전하고 명확하다.
@@ -206,26 +219,33 @@ myproject/
 간단 실험:
 ```bash
 # 프로젝트 외부에서 가능 (django-admin)
+
 django-admin startproject config .
 
 # 프로젝트 내부에서 권장 (manage.py)
+
 python manage.py runserver
 python manage.py makemigrations
 python manage.py migrate
 ```
 
 ### (2) 프로젝트 생성 & 기본 기동
+
 ```bash
 # 작업 루트 생성
+
 mkdir myproject && cd myproject
 
 # 가상환경(venv) 또는 poetry shell 활성화 후
+
 pip install "django>=5.0,<6.0" django-environ
 
 # 프로젝트 생성 (현재 폴더에 생성하려면 끝의 '.')
+
 django-admin startproject config .
 
 # 서버 기동
+
 python manage.py runserver 0.0.0.0:8000
 ```
 
@@ -242,6 +262,7 @@ myproject/
 ```
 
 ### (3) 앱 생성 & URL 연결
+
 ```bash
 python manage.py startapp core  # apps/core 생성
 ```
@@ -293,6 +314,7 @@ INSTALLED_APPS = [
 브라우저 `http://127.0.0.1:8000/` → “Hello, Django!” 표시.
 
 ### (4) 템플릿(DTL)로 전환
+
 `apps/core/templates/core/home.html`:
 {% raw %}
 ```html
@@ -345,6 +367,7 @@ TEMPLATES = [
 > 팁: 규모가 커지면 `templates/`를 최상위에 만들고 각 앱에서 **네임스페이스(폴더명)**로 분리해 충돌을 방지한다.
 
 ### (5) 정적 파일 셋업(개발 기본)
+
 `config/settings.py`:
 ```python
 STATIC_URL = "static/"
@@ -355,6 +378,7 @@ STATICFILES_DIRS = [
 개발 중에는 `runserver`가 자동 서빙. 운영에서는 Nginx 등 별도 서빙 권장.
 
 ### (6) 데이터베이스 & 마이그레이션 기본
+
 - 기본 SQLite 사용(시작에 충분)
 - 모델 작성 → `makemigrations` → `migrate`
 
@@ -381,6 +405,7 @@ python manage.py migrate
 Django Admin 등록:
 ```python
 # apps/core/admin.py
+
 from django.contrib import admin
 from .models import Article
 
@@ -402,11 +427,13 @@ python manage.py createsuperuser
 ## 0-4. 설정 분리(dev/prod) — django-environ + 다중 설정 모듈
 
 ### (1) 왜 분리하나?
+
 - **12-Factor** 원칙: 코드와 설정 분리, 환경변수로 비밀/환경값 관리
 - 개발/운영 **동일 코드**로 **환경만 바꿔** 배포
 - 실수 방지: 디버그, 로깅 레벨, DB/캐시/도메인 등 **환경별 차이**를 명시적으로 분기
 
 ### (2) django-environ으로 .env 읽기
+
 설치:
 ```bash
 pip install django-environ
@@ -429,6 +456,7 @@ DJANGO_DB_URL=
 ```
 
 ### (3) settings 디렉터리 분리
+
 ```
 config/settings/
 ├─ __init__.py
@@ -479,11 +507,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
 # DB: DATABASE_URL 형식 (sqlite:///db.sqlite3, postgres://user:pass@host:port/db)
+
 DATABASES = {
     "default": env.db("DJANGO_DB_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")
 }
 
 # Templates
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -501,6 +531,7 @@ TEMPLATES = [
 ]
 
 # Static & Media
+
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"  # collectstatic 대상(운영)
 STATICFILES_DIRS = [BASE_DIR / "static"]  # 개발용
@@ -509,6 +540,7 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # 국제화
+
 LANGUAGE_CODE = "ko-kr"
 TIME_ZONE = "Asia/Seoul"
 USE_I18N = True
@@ -524,12 +556,15 @@ from .base import *
 DEBUG = True
 
 # 개발 편의
+
 INTERNAL_IPS = ["127.0.0.1"]
 
 # 이메일(콘솔로 출력)
+
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # 보안(개발 완화)
+
 CSRF_COOKIE_SECURE = False
 SESSION_COOKIE_SECURE = False
 SECURE_SSL_REDIRECT = False
@@ -542,6 +577,7 @@ from .base import *
 DEBUG = False
 
 # 보안 헤더/HTTPS(리버스 프록시 환경 고려)
+
 SECURE_SSL_REDIRECT = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
@@ -550,6 +586,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # 로깅(예: JSON 구조화 로깅으로 교체 가능)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -565,9 +602,11 @@ LOGGING = {
 - 다중 파일로 바꿨다면 **명시**:
 ```bash
 # 개발
+
 DJANGO_SETTINGS_MODULE=config.settings.dev python manage.py runserver
 
 # 운영 (gunicorn/uvicorn 서비스 환경 변수에 지정)
+
 DJANGO_SETTINGS_MODULE=config.settings.prod gunicorn config.wsgi:application
 ```
 
@@ -586,6 +625,7 @@ DJANGO_SETTINGS_MODULE=config.settings.dev
 `manage.py` 확인:
 ```python
 #!/usr/bin/env python
+
 import os
 import sys
 
@@ -605,6 +645,7 @@ if __name__ == "__main__":
 ## 0-5. 개발 품질 기본 세팅(선택 강추)
 
 ### (1) pre-commit 훅으로 포맷/린트
+
 `.pre-commit-config.yaml`:
 ```yaml
 repos:
@@ -628,6 +669,7 @@ pre-commit install
 ```
 
 ### (2) pytest/pytest-django 기본
+
 `pytest.ini`:
 ```ini
 [pytest]
@@ -678,8 +720,10 @@ def test_home(client):
 ## 0-7. 확장 예제 — 간단한 CRUD 스켈레톤(Article)
 
 ### URL
+
 ```python
 # apps/core/urls.py
+
 from django.urls import path
 from . import views
 
@@ -694,8 +738,10 @@ urlpatterns = [
 ```
 
 ### Views
+
 ```python
 # apps/core/views.py
+
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import Article
 from .forms import ArticleForm
@@ -723,8 +769,10 @@ def article_new(request):
 ```
 
 ### Forms
+
 ```python
 # apps/core/forms.py
+
 from django import forms
 from .models import Article
 
@@ -735,6 +783,7 @@ class ArticleForm(forms.ModelForm):
 ```
 
 ### Templates
+
 `apps/core/templates/core/article_list.html`:
 {% raw %}
 ```html
@@ -837,19 +886,23 @@ class ArticleForm(forms.ModelForm):
 
 ```bash
 # 새 프로젝트/앱
+
 django-admin startproject config .
 python manage.py startapp core
 
 # 서버/DB
+
 python manage.py runserver
 python manage.py makemigrations
 python manage.py migrate
 python manage.py createsuperuser
 
 # 정적파일 수집(운영)
+
 python manage.py collectstatic
 
 # 테스트
+
 python manage.py test
 pytest -q  # pytest 사용 시
 ```

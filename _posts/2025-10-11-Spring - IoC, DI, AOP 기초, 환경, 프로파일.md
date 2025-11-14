@@ -4,7 +4,8 @@ title: Spring - IoC/DI, AOP 기초, 환경/프로파일
 date: 2025-10-11 19:25:23 +0900
 category: Spring
 ---
-# 1. 스프링 핵심 개념 — IoC/DI, AOP 기초, 환경/프로파일
+# 스프링 핵심 개념 — IoC/DI, AOP 기초, 환경/프로파일
+
 > “**객체의 생명주기와 의존성은 컨테이너가 맡고**, 횡단 관심사는 **프록시(Proxy)**로 분리하며, 실행 환경별 설정은 **프로파일(Profile)**로 관리한다.”
 
 ---
@@ -360,6 +361,7 @@ class AnnotationLoggingAspect {
 
 ```yaml
 # application.yml
+
 spring:
   application:
     name: shop-api
@@ -388,11 +390,14 @@ logging:
 
 실행 시 프로파일 지정:
 ```bash
-# 1. 환경변수
+# 환경변수
+
 export SPRING_PROFILES_ACTIVE=dev
-# 2. JVM 파라미터
+# JVM 파라미터
+
 java -jar app.jar --spring.profiles.active=prod
-# 3. 테스트에서
+# 테스트에서
+
 @ActiveProfiles("test")
 ```
 
@@ -445,6 +450,7 @@ class InfoController {
 
 ```yaml
 # application.yml
+
 app:
   server:
     host: localhost
@@ -496,6 +502,7 @@ class MetricsConfig {
 
 ```yaml
 # application-prod.yml
+
 spring:
   datasource:
     password: ${DB_PASSWORD}    # 런타임에 주입
@@ -628,6 +635,7 @@ class OrderController {
 
 ```yaml
 # application.yml
+
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/shop

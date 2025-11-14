@@ -18,7 +18,7 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 
 ---
 
-## 0. 전제(Preliminaries)
+## 전제(Preliminaries)
 
 - DFA \(D=(Q,\Sigma,\delta,q_0,F)\) 는 **완전(complete)** 하다고 가정(모든 \((q,a)\)에 대해 전이 정의).
   완전하지 않으면 **sink(죽은) 상태**를 추가해 완전화하고 최소화해야 **여집합/차집합** 등 연산이 정확해진다.
@@ -27,9 +27,10 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 
 ---
 
-## 1. Hopcroft’s Algorithm
+## Hopcroft’s Algorithm
 
-### 1.1 핵심 아이디어
+### 핵심 아이디어
+
 > “**작은 분할부터** 효율적으로 쪼개며(Refinement) 한 번의 작업에서 **최대한 많은 상태를 한꺼번에 분리**한다.”
 
 - 초기 분할 \(P=\{F,\ Q\setminus F\}\)
@@ -38,7 +39,7 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
   \(\mathrm{Pre}(A,a)=\{\,q\in Q\mid \delta(q,a)\in A\,\}\) 를 계산,
   이 집합이 다른 블록 \(Y\)를 **둘로** 쪼개면 \(Y\cap \mathrm{Pre}\), \(Y\setminus \mathrm{Pre}\)로 분할
 
-### 1.2 절차(요약)
+### 절차(요약)
 
 1) \(P\gets\{F,\ Q\setminus F\}\), \(W\gets\) (작은 쪽부터)
 2) while \(W\neq\emptyset\):
@@ -47,21 +48,24 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
    worklist에는 **원래 Y가 들어있었으면** 둘 다, 아니면 **더 작은 쪽**을 추가
 3) 더 이상 분할이 안 되면 종료. \(P\)의 각 블록이 **최소 DFA**의 상태
 
-### 1.3 복잡도
+### 복잡도
+
 - 전형적으로 **\(O(|\Sigma|\,n\log n)\)**
 - 상태 수 \(n=|Q|\), 알파벳 크기 \(|\Sigma|\)
 - 대형 DFA/정규식 엔진/컴파일러에서 **사실상 표준**
 
-### 1.4 장점/주의
+### 장점/주의
+
 - 빠르고 확장성 우수.
 - 구현 시 **역전이 리스트(Reverse edges)** 또는 \(\mathrm{Pre}\) 계산 최적화가 성능에 중요.
 - 불완전 DFA(전이 누락)는 최소화 전에 **sink 추가**로 완전화 필수.
 
 ---
 
-## 2. Moore’s Algorithm
+## Moore’s Algorithm
 
-### 2.1 핵심 아이디어
+### 핵심 아이디어
+
 > “현재 분할에서 **같은 블록**에 있는 상태들이 **다음 전이의 블록 시퀀스**가 다르면 **분리**한다.”
 
 - 초기 분할 \(P_0=\{F, Q\setminus F\}\)
@@ -70,7 +74,7 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 - 같은 블록 내에서 서명이 다르면 그 블록을 **쪼갬**
 - 서명 안정화(분리가 더 이상 발생하지 않음)까지 반복
 
-### 2.2 절차(요약)
+### 절차(요약)
 
 1) \(P\gets\{F,\ Q\setminus F\}\)
 2) do:
@@ -79,13 +83,14 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
    (보통 ‘변화 없음’이 될 때까지)
 3) 종료 시 \(P\)의 각 블록이 최소 DFA의 상태
 
-### 2.3 복잡도/특징
+### 복잡도/특징
+
 - **\(O(|\Sigma|\,n^2)\)** 근방(상황 따라 더 느릴 수 있음)
 - **구현이 매우 직관적**이고 코드가 간결 → 학습용/소형 DFA에 적합
 
 ---
 
-## 3. 동작 예제(완전 전개)
+## 동작 예제(완전 전개)
 
 예제 DFA:
 
@@ -101,11 +106,13 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 | D | E | D |
 | E | E | E |
 
-### 3.1 선행 처리
+### 선행 처리
+
 - 도달 불가 상태 없음(표에서 전부 연결)
 - 완전 DFA(모든 전이 정의)
 
-### 3.2 Hopcroft로 최소화(핵심 스텝)
+### Hopcroft로 최소화(핵심 스텝)
+
 - 초기 \(P=\{\{C,E\},\{A,B,D\}\}\), \(W=\{\{C,E\}\}\) (작은 블록 우선)
 
 1) \(A:=\{C,E\}\) 꺼냄.
@@ -124,7 +131,8 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 - \(C,E\)는 **동치**(둘 다 이후 모든 입력을 항상 수용)
 - \(A,B,D\)는 서로 구별됨(예: ‘1’은 \(A\to C\) 수용, \(B\to D\) 비수용 등)
 
-### 3.3 Moore로 최소화(핵심 스텝)
+### Moore로 최소화(핵심 스텝)
+
 - \(P_0=\{\{C,E\},\{A,B,D\}\}\)
 
 **서명 계산(블록 ID를 0:수용블록, 1:비수용블록로 가정)**
@@ -144,7 +152,7 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 
 ---
 
-## 4. 어떤 알고리즘을 언제 쓰나?
+## 어떤 알고리즘을 언제 쓰나?
 
 | 항목 | Hopcroft | Moore |
 |---|---|---|
@@ -159,11 +167,11 @@ DFA(Deterministic Finite Automaton)는 **같은 언어를 인식**하는 서로 
 
 ---
 
-## 5. Python 구현(교육용, 실행 가능)
+## Python 구현(교육용, 실행 가능)
 
 > 주의: 학습용으로 간결하게 작성. 실서비스는 입력 검증·예외처리·메모리/속도 최적화 필요.
 
-### 5.1 공통 DFA 유틸(도달 가능 제거, 완전화, 시뮬레이터)
+### 공통 DFA 유틸(도달 가능 제거, 완전화, 시뮬레이터)
 
 ```python
 from collections import deque, defaultdict
@@ -231,7 +239,7 @@ class DFA:
         return DFA(states2, self.alphabet, delta2, self.start, self.accepts)
 ```
 
-### 5.2 Hopcroft 최소화
+### Hopcroft 최소화
 
 ```python
 def hopcroft_minimize(dfa: DFA) -> DFA:
@@ -292,7 +300,7 @@ def hopcroft_minimize(dfa: DFA) -> DFA:
     return DFA(new_states, Σ, new_delta, new_start, new_accepts)
 ```
 
-### 5.3 Moore 최소화
+### Moore 최소화
 
 ```python
 def moore_minimize(dfa: DFA) -> DFA:
@@ -337,10 +345,11 @@ def moore_minimize(dfa: DFA) -> DFA:
     return DFA(new_states, Σ, new_delta, new_start, new_accepts)
 ```
 
-### 5.4 예제 DFA에 적용(두 알고리즘 결과 비교)
+### 예제 DFA에 적용(두 알고리즘 결과 비교)
 
 ```python
 # 예제 DFA 구성
+
 states = {'A','B','C','D','E'}
 alphabet = {'0','1'}
 delta = {
@@ -362,6 +371,7 @@ print("Hopcroft:", Dh.states, Dh.start, Dh.accepts)
 print("Moore   :", Dm.states, Dm.start, Dm.accepts)
 
 # 간단 동등성 체크: 길이 ≤ 6의 모든 문자열에서 수용 결과 비교
+
 def eq_on_prefix(d1: DFA, d2: DFA, depth=6):
     from itertools import product
     Σ = sorted(d1.alphabet)
@@ -381,7 +391,7 @@ print("두 결과 DFA 동등성:", ok, "| 반례:", witness or "(없음)")
 
 ---
 
-## 6. (부록) 표 채움(Table-Filling) 스케치
+## (부록) 표 채움(Table-Filling) 스케치
 
 - **아이디어**: 상태쌍 \((p,q)\)가 **구별 가능(distinguishable)**한지 표로 표시
   1) 한쪽은 수용, 한쪽은 비수용이면 **표시**
@@ -391,7 +401,7 @@ print("두 결과 DFA 동등성:", ok, "| 반례:", witness or "(없음)")
 
 ---
 
-## 7. 올바름(정당성)과 Myhill–Nerode 연결
+## 올바름(정당성)과 Myhill–Nerode 연결
 
 - **정리**: 최소 DFA의 상태 수 = Myhill–Nerode 동치류 수
 - Hopcroft/Moore는 모두 **동치관계의 몫집합**을 효과적으로 구해 **파티션 안정화**를 달성하는 절차
@@ -399,7 +409,7 @@ print("두 결과 DFA 동등성:", ok, "| 반례:", witness or "(없음)")
 
 ---
 
-## 8. 자주 하는 실수 & 베스트 프랙티스
+## 자주 하는 실수 & 베스트 프랙티스
 
 1) **불완전 DFA**를 그대로 최소화 → 여집합/차집합에서 오답
    - **sink 추가로 완전화 후** 최소화할 것
@@ -412,7 +422,7 @@ print("두 결과 DFA 동등성:", ok, "| 반례:", witness or "(없음)")
 
 ---
 
-## 9. 복잡도·실전 팁 요약
+## 복잡도·실전 팁 요약
 
 - **Hopcroft**: 대규모(수만~수백만 상태)에도 실용. 역전이 준비 + 작은 블록 우선으로 빠름
 - **Moore**: 코드 단순, 학습·테스트·소형 DFA에 매우 적합
@@ -420,7 +430,7 @@ print("두 결과 DFA 동등성:", ok, "| 반례:", witness or "(없음)")
 
 ---
 
-## 10. 연습문제(해설 가이드)
+## 연습문제(해설 가이드)
 
 1) **복합 DFA 최소화**:
    두 DFA \(D_1,D_2\)에 대해 교집합 DFA(곱구성) 만든 뒤 Hopcroft로 최소화하라. 곱구성 전·후 상태 수를 비교하라.

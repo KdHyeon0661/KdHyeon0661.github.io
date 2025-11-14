@@ -5,6 +5,7 @@ date: 2025-09-06 21:25:23 +0900
 category: MFC
 ---
 # Automation(Dispatch) 개요와 스크립팅 통합 아이디어
+
 (MFC/Win32/ATL 기준: `IDispatch` 늦은 바인딩, Type Library, 이벤트 싱크, Active Scripting/PowerShell/Python 연동까지)
 
 이 글은 **COM Automation(IDispatch)**의 동작 원리와 **애플리케이션을 스크립팅 가능**하게 만드는 전체적인 설계·구현 패턴을 정리합니다.
@@ -14,7 +15,7 @@ MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하�
 
 ---
 
-## 0. 큰 그림: Automation이 뭐고, 왜 쓰는가?
+## 큰 그림: Automation이 뭐고, 왜 쓰는가?
 
 - **COM Automation** = 인터페이스 `IDispatch` 기반의 **늦은 바인딩** 모델.
   - **클라이언트**: `IDispatch::GetIDsOfNames`로 **이름 → DISPID**를 얻고, `Invoke`로 **메서드/프로퍼티 호출**.
@@ -29,9 +30,10 @@ MFC/ATL에서 **클라이언트로서 외부 앱(예: Excel)을 자동화**하�
 
 ---
 
-## 1. 클라이언트(Consumer)로 쓰기: 외부 앱 자동화
+## 클라이언트(Consumer)로 쓰기: 외부 앱 자동화
 
 ### 1-1. COM 초기화와 아파트먼트
+
 - 기본: **STA**(Single-Threaded Apartment) 권장 — 대부분의 Office/스크립팅은 STA 가정
 - `CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);` + 스레드 종료 시 `CoUninitialize();`
 
@@ -46,10 +48,12 @@ struct ComInit {
 ```
 
 ### 1-2. #import 기반(조기 바인딩/래퍼 생성) — Excel 예제
+
 `#import`는 Type Library로부터 **스마트 포인터**와 **래퍼**를 생성합니다.
 
 ```cpp
 #import "progid:Excel.Application" rename("DialogBox", "ExcelDialogBox") \
+
     rename("RGB", "ExcelRGB") no_auto_exclude
 // 또는 #import "C:\\Program Files\\Microsoft Office\\root\\Office16\\EXCEL.EXE"
 
@@ -74,6 +78,7 @@ void AutomateExcelEarlyBinding() {
 장점: 타입 안전/인텔리센스/간결. 단점: **타입/버전 의존성**이 있고 배포 시 typelib 접근이 필요.
 
 ### 1-3. 늦은 바인딩(IDispatch 직접 호출) — Excel 예제
+
 모든 스크립팅 언어와 동일한 경로. **버전 변화에 강함**.
 
 ```cpp
@@ -147,6 +152,7 @@ HRESULT AutoExcelLateBinding() {
 - 문자열은 **`BSTR`**( `_bstr_t` 사용 권장 ), 수치/논리는 **`VARIANT`**로 포장
 
 ### 1-4. SAFEARRAY(배열) 전달 예
+
 ```cpp
 // 2x2 배열을 Excel Range.Value2에 한 번에 대입
 SAFEARRAYBOUND bnd[2] = { {2,1},{2,1} }; // [row, col], lLbound=1
@@ -166,9 +172,10 @@ VARIANT arr; VariantInit(&arr); arr.vt = VT_ARRAY|VT_VARIANT; arr.parray = psa;
 
 ---
 
-## 2. 서버(Provider)로 노출: 우리 앱을 자동화 가능하게 만들기
+## 서버(Provider)로 노출: 우리 앱을 자동화 가능하게 만들기
 
 ### 2-1. MFC OLE Automation(레거시) 빠른 길
+
 - `AfxOleInit()`, `DECLARE_DISPATCH_MAP`, `BEGIN_DISPATCH_MAP` 매크로 기반
 - `COleDispatchDriver`/`CCmdTarget` 파생으로 **메서드/프로퍼티**를 스크립트에 노출
 
@@ -196,9 +203,11 @@ void CMyAuto::DoWork(LPCTSTR path, long flags) { /* ... */ }
 - 장점: 빠르고 간단. 단점: 근대적 툴링/IDL 제약, 대규모 모델엔 한계
 
 ### 2-2. ATL + `IDispatchImpl` (권장)
+
 - **IDL(Type Library)** 기반으로 명확한 계약 제공 → IntelliSense/문서화/상호 운용성 ↑
 
 #### (A) IDL 정의 (샘플)
+
 ```idl
 // MyApp.idl
 import "oaidl.idl";
@@ -225,6 +234,7 @@ library MyAppLib {
 ```
 
 #### (B) C++ 클래스(ATL)
+
 ```cpp
 class ATL_NO_VTABLE CApp :
   public CComObjectRootEx<CComSingleThreadModel>,
@@ -255,9 +265,11 @@ OBJECT_ENTRY_AUTO(__uuidof(App), CApp)
 - **ThreadingModel=Apartment** 지정(STA)
 
 ### 2-3. 이벤트(Outbound) — Connection Point / `IDispatch` 이벤트 싱크
+
 서버가 **이벤트**를 내보내면(예: 진행률, 완료), 스크립트가 핸들링 가능.
 
 #### ATL 서버: 이벤트 소스
+
 - IDL에 `dispinterface _IAppEvents` 정의 → coclass에 `uuid, source`로 연결
 - 코드에서 `IDispEventSimpleImpl` 또는 `IConnectionPointContainer`를 통해 **Fire_OnProgress(percent)** 등 호출
 
@@ -280,6 +292,7 @@ m_vec; // IConnectionPoint::EnumConnections 를 통해 구독자 나열
 ```
 
 #### 클라이언트(ATL)에서 이벤트 싱크
+
 ```cpp
 class CAppSink : public IDispEventSimpleImpl<1, CAppSink, &__uuidof(_IAppEvents)> {
 public:
@@ -300,11 +313,12 @@ CAppSink sink; AtlAdvise(app, &sink, __uuidof(_IAppEvents), &cookie);
 
 ---
 
-## 3. 스크립팅 엔진과의 통합
+## 스크립팅 엔진과의 통합
 
 ### 3-1. Windows Script Host(WSH)에서 우리 객체 사용 (VBScript/JScript)
 
 #### VBScript 예 (파일: `test.vbs`)
+
 ```vb
 Dim app : Set app = CreateObject("MyApp.App")
 WScript.Echo app.Version
@@ -314,6 +328,7 @@ WScript.Echo s(0) & " / " & s(1)
 ```
 
 #### PowerShell 예
+
 ```powershell
 $app = New-Object -ComObject "MyApp.App"
 $app.Version
@@ -323,6 +338,7 @@ $stats
 ```
 
 #### Python(pywin32) 예
+
 ```python
 import win32com.client as win32
 app = win32.Dispatch("MyApp.App")
@@ -339,6 +355,7 @@ print(app.GetStats())
 - VBS/JScript 엔진을 로드하여 **호스트 객체**(우리 `IApp`)를 Script에 주입 → 스크립트에서 `App.DoWork` 호출 가능
 
 #### 최소 예(개념 코드)
+
 ```cpp
 CComPtr<IActiveScript>       engine;
 CComPtr<IActiveScriptParse>  parse;
@@ -360,14 +377,16 @@ engine->SetScriptState(SCRIPTSTATE_CONNECTED);
 - 주의: 보안(샌드박스), 장기적으로 **Windows Active Scripting(JScript/VBScript) 폐기 이슈** 고려 → **PowerShell/JS(ChakraCore)/Lua/Python 임베딩** 대안 검토
 
 ### 3-3. PowerShell 호스팅(권장 대안)
+
 - .NET Hosting or External PowerShell 호출, **COM 객체를 PS에 노출**
 - 스크립트 실행 시 **App**을 자동 바인딩해주면 친화적인 개발자 경험 제공
 
 ---
 
-## 4. 설계: “스크립팅 가능한 애플리케이션”의 객체 모델
+## 설계: “스크립팅 가능한 애플리케이션”의 객체 모델
 
 ### 4-1. 오브젝트 트리 예(도면 앱 가정)
+
 ```
 Application
  ├─ Documents (collection)
@@ -392,6 +411,7 @@ dispinterface IDocuments {
 ```
 
 ### 4-2. 이름있는/옵셔널 인수
+
 - `DISPID_PROPERTYPUT`, `DISPID_PROPERTYPUTREF`, `DISPATCH_PROPERTYPUT`
 - IDL에서 `defaultvalue`, `optional` 지정 → VBScript/PowerShell에서 자연스럽게 사용
 
@@ -400,12 +420,13 @@ dispinterface IDocuments {
 ```
 
 ### 4-3. 에러 전달
+
 - 실패 시 `HRESULT` + `EXCEPINFO` 채움 → 스크립트에서 **런타임 오류**로 인식
 - 의미 있는 **에러 코드/메시지/소스** 제공
 
 ---
 
-## 5. 메모리/형 변환 규칙(실무 필수)
+## 메모리/형 변환 규칙(실무 필수)
 
 - 문자열: **BSTR** ( `SysAllocString` / `_bstr_t` )
 - 값: **VARIANT** ( `_variant_t` )
@@ -415,7 +436,7 @@ dispinterface IDocuments {
 
 ---
 
-## 6. 배포/레지스트리/64비트
+## 배포/레지스트리/64비트
 
 - ProgID → CLSID 매핑: `HKCR\MyApp.App\CLSID`
 - CLSID → 서버: `HKCR\CLSID\{...}\LocalServer32`(EXE) / `InprocServer32`(DLL)
@@ -425,7 +446,7 @@ dispinterface IDocuments {
 
 ---
 
-## 7. 이벤트/콜백(스크립트→앱, 앱→스크립트) 활용 아이디어
+## 이벤트/콜백(스크립트→앱, 앱→스크립트) 활용 아이디어
 
 - **진행률 이벤트**: 긴 작업 중 `OnProgress(pct)` 발행 → 스크립트에서 UI/로그로 반영
 - **취소 토큰**: 스크립트가 `App.Cancel` 호출 → 앱에서 작업 중단
@@ -433,7 +454,7 @@ dispinterface IDocuments {
 
 ---
 
-## 8. 보안/안전 가이드
+## 보안/안전 가이드
 
 - 자동화는 사실상 **원격 코드 실행과 유사**: 신뢰할 수 있는 스크립트만 허용
 - 샌드박스: 제한된 오브젝트만 노출, 파일시스템/레지스트리 접근 최소화
@@ -442,7 +463,7 @@ dispinterface IDocuments {
 
 ---
 
-## 9. 문제해결/디버깅 팁
+## 문제해결/디버깅 팁
 
 - `oleview.exe`(OLE/COM Object Viewer)로 **TypeLib 확인**
 - 스크립트 오류 → **EXCEPINFO** 내용과 `HRESULT` 로깅
@@ -452,9 +473,10 @@ dispinterface IDocuments {
 
 ---
 
-## 10. “양방향 샘플” — 우리 앱을 노출하고 PowerShell에서 자동화
+## “양방향 샘플” — 우리 앱을 노출하고 PowerShell에서 자동화
 
 ### 10-1. 서버(IDL/ATL) — 핵심만
+
 ```idl
 dispinterface IApp {
   properties:
@@ -509,9 +531,11 @@ public:
 ```
 
 ### 10-2. PowerShell 클라이언트
+
 ```powershell
 $app = New-Object -ComObject "MyApp.App"
 # 이벤트 구독(등록형식은 PS 버전에 따라)
+
 Register-ObjectEvent -InputObject $app -EventName OnProgress -Action {
     param($sender,$e)  # COM dispid 기반으로 args가 들어옴(PS 버전에 따라 다름)
     Write-Host ("Progress: " + $EventArgs[0] + " " + $EventArgs[1])
@@ -524,7 +548,7 @@ $app.DoWork("C:\temp\in.txt", 0)
 
 ---
 
-## 11. 통합 아이디어(제품화 관점)
+## 통합 아이디어(제품화 관점)
 
 1. **스크립트 콘솔** 내장:
    - PowerShell 또는 JS/Lua 콘솔 패널, **App** 객체 바인딩, 즉시 실행/히스토리
@@ -539,7 +563,7 @@ $app.DoWork("C:\temp\in.txt", 0)
 
 ---
 
-## 12. 체크리스트 요약
+## 체크리스트 요약
 
 - [ ] `CoInitializeEx(COINIT_APARTMENTTHREADED)` / STA
 - [ ] 서버: **IDL(TypeLib)**, `IDispatchImpl`, `ConnectionPoint`(이벤트)

@@ -4,7 +4,8 @@ title: Spring - Spring Security
 date: 2025-10-16 15:25:23 +0900
 category: Spring
 ---
-# 7. 보안 — Spring Security 기초
+# 보안 — Spring Security 기초
+
 > 목표: **요구사항 모델링(인증/인가)**부터 시작해 **필터 체인/AuthenticationProvider**의 흐름을 이해하고, **폼 로그인·세션/쿠키·Remember-me**를 손에 익히며, **패스워드 저장·CSRF/XSS/CORS**의 필수 보안 기초를 실전 예제로 정리한다.
 > 환경 가정: Spring Boot 3.3+, Spring Security 6.x, Java 21, MVC(서블릿).
 
@@ -13,6 +14,7 @@ category: Spring
 ## A. 요구사항 모델링 — 인증(Authentication) vs 인가(Authorization)
 
 ### A-1. 핵심 개념 요약
+
 - **인증**: “누구인지”를 확인. (아이디/비밀번호, OTP, SSO, 토큰 등)
 - **인가**: “무엇을 할 수 있는지”를 결정. (권한/역할/정책에 따른 접근 통제)
 - **주체(Principal)**: 인증된 사용자(또는 클라이언트 애플리케이션).
@@ -20,6 +22,7 @@ category: Spring
 - **컨텍스트(SecurityContext)**: 현재 요청의 인증 정보(`Authentication`)가 담긴 공간(스레드 로컬 by default).
 
 ### A-2. 요구사항 정리 체크리스트
+
 1) **누가** 접속하나? (내부직원/파트너/최종사용자/머신계정)
 2) **어떻게** 인증하나? (폼 로그인/SSO/SAML/OIDC/JWT/MTLS)
 3) **무엇을** 보호하나? (경로·메서드·리소스)
@@ -32,6 +35,7 @@ category: Spring
 ## B. Spring Security 러닝맵 — “요청 → 필터 → 인증 → 인가” 흐름
 
 ### B-1. 큰 흐름(서블릿 스택)
+
 ```
 Client → (Servlet Filter Chain)
       → Security Filters … → UsernamePasswordAuthenticationFilter (폼 로그인)
@@ -41,6 +45,7 @@ Client → (Servlet Filter Chain)
 ```
 
 ### B-2. 핵심 구성요소
+
 - **SecurityFilterChain**: 보안 필터들의 순서/설정을 담는 빈(여러 개 구성 가능).
 - **AuthenticationManager**: 인증 시도 총괄(Provider 위임).
 - **AuthenticationProvider**: 실제 인증(비밀번호 매칭, 사용자 조회).
@@ -53,6 +58,7 @@ Client → (Servlet Filter Chain)
 ## C. 최소 실습: 폼 로그인 + 인가 규칙
 
 ### C-1. 의존성
+
 ```kotlin
 dependencies {
   implementation("org.springframework.boot:spring-boot-starter-security")
@@ -62,6 +68,7 @@ dependencies {
 ```
 
 ### C-2. 유저/비밀번호/권한 정의
+
 > 실무에서는 DB/LDAP/OIDC를 쓰지만, 먼저 **인메모리**로 흐름부터 체득한다.
 
 ```java
@@ -92,6 +99,7 @@ public class SecurityUsersConfig {
 ```
 
 ### C-3. 필터 체인 설정(기본 폼 로그인)
+
 ```java
 @Configuration
 @EnableMethodSecurity // @PreAuthorize 등 메서드 보안 사용 가능
@@ -137,6 +145,7 @@ public class SecurityConfig {
 > - Remember-me 활성 시 **장기 쿠키**로 인증 복원
 
 ### C-4. 로그인 폼(예시)
+
 ```html
 <!-- templates/login.html (간단 예제) -->
 <form method="post" action="/doLogin">
@@ -154,6 +163,7 @@ public class SecurityConfig {
 ## D. 인증 흐름 내부 — 필터/Provider/세션
 
 ### D-1. 폼 로그인 인증 시퀀스
+
 1) `UsernamePasswordAuthenticationFilter`가 `/doLogin` POST를 가로챔
 2) `UsernamePasswordAuthenticationToken(unauthenticated)` 생성 → `AuthenticationManager.authenticate()` 호출
 3) `DaoAuthenticationProvider`가 `UserDetailsService`로 사용자 조회 → `PasswordEncoder.matches()`로 비밀번호 검증
@@ -162,6 +172,7 @@ public class SecurityConfig {
 6) 이후 요청은 **세션 복원**으로 인증 유지
 
 ### D-2. 커스텀 AuthenticationProvider (예: 사내 LDAP/외부 API 인증)
+
 ```java
 @Component
 public class ExternalAuthProvider implements AuthenticationProvider {
@@ -208,6 +219,7 @@ public class ProviderOrderConfig {
 ## E. 인가 — 경로/메서드 보안
 
 ### E-1. 경로 기반(위에서 사용)
+
 ```java
 .authorizeHttpRequests(auth -> auth
   .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -216,6 +228,7 @@ public class ProviderOrderConfig {
 ```
 
 ### E-2. 메서드 보안(`@EnableMethodSecurity`)
+
 ```java
 @Service
 public class OrderService {
@@ -236,6 +249,7 @@ public class OrderService {
 ## F. 세션/쿠키/Remember-me 전략
 
 ### F-1. 세션 관리
+
 ```java
 http
   .sessionManagement(sm -> sm
@@ -249,6 +263,7 @@ http
 - **고객센터/어드민**은 STATEFUL이 일반적, **순수 API**는 보통 **STATELESS**(JWT)로 구성
 
 ### F-2. Remember-me
+
 - 디폴트 쿠키 이름: `remember-me`
 - 동작: 쿠키가 유효하면 세션 없어도 인증 컨텍스트 복원
 - 보안: **강한 키/짧은 수명/도메인 제한/SameSite=strict** 권장, 민감 기능은 재인증
@@ -266,6 +281,7 @@ http
 ## G. 패스워드 저장 — 해시·업그레이드·정책
 
 ### G-1. 해시(BCrypt 권장)
+
 - 적응형 해시(비용 인자)로 **무차별 대입 공격** 지연
 - 스프링 기본 `DelegatingPasswordEncoder`는 `{id}encoded` 형식을 이해(BCrypt 기본)
 
@@ -276,10 +292,12 @@ http
 ```
 
 ### G-2. 마이그레이션/업그레이드
+
 - 기존 해시(MD5/SHA-1 등) → 로그인 성공 시 **BCrypt 재해시**로 업그레이드
 - 비밀번호 정책: 최소 길이/복잡도/누출 목록(hibp API) 체크, **락아웃/백오프**(실패 횟수)
 
 ### G-3. 비밀번호 재설정
+
 - 토큰 기반(단기/일회용), **시도 제한** 및 **IP/디바이스 지표** 로깅
 
 ---
@@ -287,6 +305,7 @@ http
 ## H. CSRF / XSS / CORS — 브라우저 보안 기초
 
 ### H-1. CSRF (Cross-Site Request Forgery)
+
 - **문제**: 브라우저가 자동으로 **쿠키를 동봉** → 공격자가 다른 사이트에서 희생자의 쿠키로 POST/PUT/DELETE 실행
 - **해결**: **CSRF 토큰**(양식/헤더에 담아 서버가 검증)
 - Spring Security: **폼/세션 기반 앱에서 기본 활성화**(Boot 3는 기본 on). API만 쓰는 **stateless** 백엔드는 보통 **disable**.
@@ -310,11 +329,13 @@ fetch('/do/post', { method: 'POST', headers: { [header]: token } });
 > **API 서버**에서 세션/쿠키 인증을 사용하지 않고 **Bearer 토큰**만 쓰면 보통 `csrf.disable()`.
 
 ### H-2. XSS (Cross-Site Scripting)
+
 - **출력 인코딩**이 최우선(템플릿 엔진 기본 인코딩 유지, React/Vue는 v-html/dangerouslySetInnerHTML 주의)
 - 입력에서 HTML 허용 시 **화이트리스트 기반 sanitize**(OWASP Java HTML Sanitizer 등)
 - 응답 헤더: `Content-Security-Policy`, `X-XSS-Protection`(구형 브라우저), `X-Content-Type-Options: nosniff`
 
 ### H-3. CORS (Cross-Origin Resource Sharing)
+
 - 브라우저의 **타 출처 요청 제한**을 제어
 - 서버에서 명시적으로 허용 도메인/메서드/헤더 지정
 
@@ -368,6 +389,7 @@ http.headers(h -> h
 ## J. 로그인/로그아웃 UX와 감사(로그)
 
 ### J-1. 성공/실패 핸들러
+
 ```java
 .formLogin(form -> form
   .successHandler((req,res,auth) -> {
@@ -382,6 +404,7 @@ http.headers(h -> h
 ```
 
 ### J-2. 감사 로깅(MDC)
+
 - 요청 ID/사용자/원격 IP/UA 기록
 - 로그인 시도 성공/실패/로그아웃 시점 이벤트 리스너 등록(`AbstractAuthenticationEvent`)
 
@@ -435,6 +458,7 @@ public class MultiChainSecurityConfig {
 ## L. 테스트 — MockMvc + Security 테스트 지원
 
 ### L-1. 컨트롤러 테스트에서 사용자 주입
+
 ```java
 @WebMvcTest(controllers = AdminController.class)
 @Import(SecurityConfig.class)
@@ -459,6 +483,7 @@ class AdminControllerTest {
 ```
 
 ### L-2. 메서드 보안 테스트
+
 ```java
 @SpringBootTest
 @AutoConfigureMockMvc

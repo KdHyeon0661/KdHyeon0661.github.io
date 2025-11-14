@@ -6,7 +6,7 @@ category: Docker
 ---
 # Flask/Django 기반 커뮤니티 사이트의 Docker 컨테이너화
 
-## 0. 최종 목표와 아키텍처 개요
+## 최종 목표와 아키텍처 개요
 
 - 웹 프레임워크: **Flask** 또는 **Django** (둘 다 예시 제공)
 - 데이터베이스: **PostgreSQL 15** (필요 시 MySQL 전환 예시 포함)
@@ -20,7 +20,7 @@ category: Docker
 
 ---
 
-## 1. 디렉터리 구조(Flask 기준) — 최소 구성
+## 디렉터리 구조(Flask 기준) — 최소 구성
 
 ```plaintext
 community-app/
@@ -48,9 +48,9 @@ community-app/
 
 ---
 
-## 2. Python 요구사항 파일
+## Python 요구사항 파일
 
-### 2.1 Flask용 `requirements.txt`
+### Flask용 `requirements.txt`
 
 ```
 Flask==2.3.3
@@ -62,7 +62,7 @@ python-dotenv==1.0.1
 
 > MySQL을 쓸 경우 `psycopg2-binary` 대신 `mysqlclient` 또는 `PyMySQL` 사용.
 
-### 2.2 Django용 `requirements.txt`
+### Django용 `requirements.txt`
 
 ```
 Django==4.2.16
@@ -74,18 +74,20 @@ python-dotenv==1.0.1
 
 ---
 
-## 3. Dockerfile — 멀티스테이지 + 런타임 최적화
+## Dockerfile — 멀티스테이지 + 런타임 최적화
 
 두 프레임워크 공용으로 쓸 수 있는 기본 이미지(엔트리 명령만 다르게 지정).
 
 ```Dockerfile
 # Dockerfile
+
 FROM python:3.11-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # 시스템 패키지 (빌드/런타임 공용 최소)
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl netcat-openbsd ca-certificates \
  && rm -rf /var/lib/apt/lists/*
@@ -93,20 +95,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # 의존성만 먼저 복사 → 캐시 최대로 활용
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 앱 소스 복사
+
 COPY . .
 
 # wait-for-db 스크립트 실행 권한
+
 RUN chmod +x docker/wait-for-db.sh
 
 # 기본 포트(Flask dev) — 운영에서는 Gunicorn 사용
+
 EXPOSE 5000
 
 # 기본 CMD는 환경변수로 전환 가능(FLASK/DJANGO)
 # 개발 디폴트 (Flask)
+
 CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
 ```
 
@@ -114,9 +121,9 @@ CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
 
 ---
 
-## 4. Flask 애플리케이션 샘플
+## Flask 애플리케이션 샘플
 
-### 4.1 `app/models.py`
+### `app/models.py`
 
 ```python
 from flask_sqlalchemy import SQLAlchemy
@@ -130,7 +137,7 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
 ```
 
-### 4.2 `app/__init__.py`
+### `app/__init__.py`
 
 ```python
 import os
@@ -156,7 +163,7 @@ def create_app():
     return app
 ```
 
-### 4.3 `app/views.py`
+### `app/views.py`
 
 ```python
 from flask import Blueprint, jsonify, request
@@ -182,7 +189,7 @@ def create_post():
     return jsonify({"id": p.id}), 201
 ```
 
-### 4.4 `app/wsgi.py`
+### `app/wsgi.py`
 
 ```python
 from . import create_app
@@ -196,9 +203,9 @@ app.register_blueprint(bp)
 
 ---
 
-## 5. Django 애플리케이션 포인트(간략 예시)
+## Django 애플리케이션 포인트(간략 예시)
 
-### 5.1 `community/settings.py` (핵심 DB/정적 설정만)
+### `community/settings.py` (핵심 DB/정적 설정만)
 
 ```python
 import os
@@ -247,20 +254,23 @@ DATABASES = {
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 # gzip/brotli 사용 가능 (설정 추가 가능)
+
 ```
 
-### 5.2 Django 운영 실행 예
+### Django 운영 실행 예
+
 - 개발: `python manage.py runserver 0.0.0.0:8000`
 - 운영(Gunicorn): `gunicorn community.wsgi:application -c docker/gunicorn.conf.py`
 
 ---
 
-## 6. DB 준비 대기 스크립트 `docker/wait-for-db.sh`
+## DB 준비 대기 스크립트 `docker/wait-for-db.sh`
 
 DB가 뜨기 전에 앱이 연결을 시도하면 실패하므로, 간단한 대기 스크립트를 사용한다.
 
 ```bash
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 HOST="${DB_HOST:-db}"
@@ -276,7 +286,7 @@ exec "$@"
 
 ---
 
-## 7. Compose — 개발용 `docker-compose.yml`
+## Compose — 개발용 `docker-compose.yml`
 
 - 실시간 코드 반영을 위해 **바인드 마운트**
 - **env_file** 주입
@@ -285,6 +295,7 @@ exec "$@"
 
 ```yaml
 # docker-compose.yml (dev)
+
 version: "3.9"
 
 services:
@@ -338,7 +349,7 @@ networks:
 
 ---
 
-## 8. Compose — 운영용 `docker-compose.prod.yml`
+## Compose — 운영용 `docker-compose.prod.yml`
 
 - **Gunicorn**으로 WSGI 서비스
 - **Nginx 리버스 프록시**(정적 캐싱 및 SSL 종단 선택)
@@ -347,6 +358,7 @@ networks:
 
 ```yaml
 # docker-compose.prod.yml
+
 version: "3.9"
 
 services:
@@ -412,9 +424,9 @@ networks:
 
 ---
 
-## 9. Gunicorn & Nginx 설정
+## Gunicorn & Nginx 설정
 
-### 9.1 `docker/gunicorn.conf.py`
+### `docker/gunicorn.conf.py`
 
 ```python
 bind = "0.0.0.0:8000"
@@ -427,7 +439,7 @@ errorlog = "-"
 loglevel = "info"
 ```
 
-### 9.2 `docker/nginx/nginx.conf` (정석 예시)
+### `docker/nginx/nginx.conf` (정석 예시)
 
 ```nginx
 user  nginx;
@@ -470,9 +482,9 @@ http {
 
 ---
 
-## 10. .env 샘플(개발/운영 분리)
+## .env 샘플(개발/운영 분리)
 
-### 10.1 `.env` (dev)
+### `.env` (dev)
 
 ```
 WEB_PORT=5000
@@ -483,7 +495,7 @@ FLASK_ENV=development
 DB_PORT=5432
 ```
 
-### 10.2 `.env.prod` (prod)
+### `.env.prod` (prod)
 
 ```
 POSTGRES_DB=community_db
@@ -498,9 +510,9 @@ DJANGO_ALLOWED_HOSTS=yourdomain.com,localhost
 
 ---
 
-## 11. 마이그레이션·초기화 절차
+## 마이그레이션·초기화 절차
 
-### 11.1 Flask(SQLAlchemy) — 간단 초기화
+### Flask(SQLAlchemy) — 간단 초기화
 
 ```bash
 docker compose run --rm web python -c \
@@ -517,7 +529,7 @@ docker compose run --rm web python -c \
 > - `alembic init migrations` → env.py에 SQLAlchemy 연결
 > - 스키마 변경 시 `alembic revision --autogenerate -m "msg"` → `alembic upgrade head`
 
-### 11.2 Django — 마이그레이션
+### Django — 마이그레이션
 
 ```bash
 docker compose run --rm web bash -lc \
@@ -527,9 +539,9 @@ docker compose run --rm web bash -lc "python manage.py createsuperuser"
 
 ---
 
-## 12. MySQL로 전환하기(선택)
+## MySQL로 전환하기(선택)
 
-### 12.1 Compose 변경
+### Compose 변경
 
 ```yaml
 db:
@@ -549,7 +561,8 @@ db:
     retries: 20
 ```
 
-### 12.2 앱 연결 문자열
+### 앱 연결 문자열
+
 - Flask: `mysql+pymysql://admin:securepass@db:3306/community_db`
 - Django: `ENGINE: django.db.backends.mysql` 및 포트 3306
 
@@ -557,7 +570,7 @@ db:
 
 ---
 
-## 13. 헬스체크/레디니스 전략
+## 헬스체크/레디니스 전략
 
 - DB 컨테이너: `pg_isready` 또는 `mysqladmin ping`
 - 웹 컨테이너: 어플리케이션 자체 헬스 엔드포인트(예: `/healthz`) 추가 후 Nginx/Gateway에서 사용
@@ -573,23 +586,29 @@ Nginx에서 /healthz는 `app_upstream` 프록시 그대로 통과시켜 상태 �
 
 ---
 
-## 14. 백업/복구 전략(핵심만)
+## 백업/복구 전략(핵심만)
 
-### 14.1 PostgreSQL
+### PostgreSQL
+
 ```bash
 # 백업
+
 docker compose exec db pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" > backup.sql
 
 # 복구
+
 cat backup.sql | docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
-### 14.2 MySQL
+### MySQL
+
 ```bash
 # 백업
+
 docker compose exec db sh -lc 'mysqldump -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' > backup.sql
 
 # 복구
+
 cat backup.sql | docker compose exec -T db sh -lc 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
 ```
 
@@ -597,7 +616,7 @@ cat backup.sql | docker compose exec -T db sh -lc 'mysql -u"$MYSQL_USER" -p"$MYS
 
 ---
 
-## 15. 로깅/모니터링·리소스 제한
+## 로깅/모니터링·리소스 제한
 
 - **로깅**: 기본 json-file 드라이버 로테이션
 - **리소스 제한**: 컨테이너별 `deploy.resources.limits`(Swarm) 또는 `mem_limit`, `cpus`(Compose 확장)
@@ -622,7 +641,7 @@ services:
 
 ---
 
-## 16. CI/CD 파이프라인(요점)
+## CI/CD 파이프라인(요점)
 
 - `.env.prod`는 **CI Secret/Protected Var**로 관리
 - 배포 전 `docker compose --env-file .env.prod config`로 **치환 검증**
@@ -646,7 +665,7 @@ GitHub Actions 예시 스텝(요약):
 
 ---
 
-## 17. 트러블슈팅 체크리스트
+## 트러블슈팅 체크리스트
 
 | 증상 | 점검 포인트 | 빠른 확인 |
 |---|---|---|
@@ -658,29 +677,34 @@ GitHub Actions 예시 스텝(요약):
 
 ---
 
-## 18. 실행 순서(개발/운영)
+## 실행 순서(개발/운영)
 
-### 18.1 개발(Flask)
+### 개발(Flask)
+
 ```bash
 docker compose up -d --build
 # 초기 테이블 생성
+
 docker compose exec web python -c "from app import create_app; from app.models import db; app=create_app(); from app.models import Post; \
                                    from flask import current_app; \
                                    ctx=app.app_context(); ctx.push(); db.create_all(); print('tables created')"
 # 동작 확인
+
 curl http://localhost:5000/
 ```
 
-### 18.2 운영
+### 운영
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build
 # (Django라면) 최초 배포시
+
 docker compose exec web bash -lc "python manage.py migrate && python manage.py collectstatic --noinput"
 ```
 
 ---
 
-## 19. 보안·권한·베스트 프랙티스
+## 보안·권한·베스트 프랙티스
 
 - 컨테이너 실행 사용자: 필요 시 `USER` 추가로 루트 회피
 - 비밀 관리: 환경변수 대신 **Compose secrets** 또는 외부 Vault 권장
@@ -704,7 +728,7 @@ down:
 
 ---
 
-## 20. 결론
+## 결론
 
 - **하나의 이미지**로 개발/운영을 공통화하고, **Compose의 .env/프로파일/헬스체크**를 조합하면 **안정적이고 재현 가능한 스택**을 구성할 수 있다.
 - 운영 시에는 **Gunicorn + Nginx + 헬스체크 + 백업/모니터링/리소스 제한**까지 포함해 **실서비스 요건**을 충족하라.

@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 정렬(Sorting) 알고리즘
 
-## 0. 정렬이 왜 중요한가 — 하한선과 문제 정의
+## 정렬이 왜 중요한가 — 하한선과 문제 정의
 
 정렬은 **순서가 없는 데이터**를 특정 **전순서(total order)** 혹은 **엄격 약순서(strict weak ordering)** 로 배치하는 문제다.
 비교 기반 정렬은 **결정 트리 모델** 하에서 최악 시간복잡도의 하한이 존재한다.
@@ -24,7 +24,7 @@ category: Data Structure
 
 ---
 
-## 1. 용어·속성 체크리스트
+## 용어·속성 체크리스트
 
 - **안정성(stability)**: 동치 키의 **상대 순서 보존** 여부
 - **제자리(in-place)**: 추가 메모리 \(O(1)\) (스택은 \(O(\log n)\) 허용 관행)
@@ -37,12 +37,14 @@ category: Data Structure
 
 ---
 
-## 2. O(n²) 기초 정렬 — 학습용 + 소규모 최적화
+## O(n²) 기초 정렬 — 학습용 + 소규모 최적화
 
-### 2.1 선택 정렬 (Selection Sort) — 스왑 최소
+### 선택 정렬 (Selection Sort) — 스왑 최소
+
 ```cpp
 #include <vector>
 #include <utility>
+
 void selectionSort(std::vector<int>& a){
     const int n = (int)a.size();
     for(int i=0;i<n-1;++i){
@@ -55,10 +57,12 @@ void selectionSort(std::vector<int>& a){
 - 비교 \( \Theta(n^2) \), 스왑 \( \le n-1 \)
 - **안정성 X**, **제자리 O**
 
-### 2.2 버블 정렬 (Bubble) — 조기 종료 최적화
+### 버블 정렬 (Bubble) — 조기 종료 최적화
+
 ```cpp
 #include <vector>
 #include <utility>
+
 void bubbleSort(std::vector<int>& a){
     int n=(int)a.size();
     bool swapped=true;
@@ -74,9 +78,11 @@ void bubbleSort(std::vector<int>& a){
 - 최선 \(O(n)\) (이미 정렬), 평균/최악 \(O(n^2)\)
 - **안정성 O**, **제자리 O**
 
-### 2.3 삽입 정렬 (Insertion) — 작거나 거의 정렬된 입력에 강함
+### 삽입 정렬 (Insertion) — 작거나 거의 정렬된 입력에 강함
+
 ```cpp
 #include <vector>
+
 void insertionSort(std::vector<int>& a){
     for(int i=1;i<(int)a.size();++i){
         int key=a[i], j=i-1;
@@ -89,8 +95,10 @@ void insertionSort(std::vector<int>& a){
 - **안정성 O**, **제자리 O**
 
 #### (옵션) 이진 삽입 정렬 — 비교 수 감소
+
 ```cpp
 #include <vector>
+
 int lowerBound(const std::vector<int>& a, int hi, int key){
     int lo=0;
     while(lo<hi){
@@ -108,9 +116,11 @@ void binaryInsertionSort(std::vector<int>& a){
 }
 ```
 
-### 2.4 셸 정렬 (Shell Sort) — O(n^1.2~1.5) 실전 성능
+### 셸 정렬 (Shell Sort) — O(n^1.2~1.5) 실전 성능
+
 ```cpp
 #include <vector>
+
 void shellSort(std::vector<int>& a){
     int n=(int)a.size();
     // Knuth 간격: 1,4,13,40,...
@@ -129,12 +139,14 @@ void shellSort(std::vector<int>& a){
 
 ---
 
-## 3. O(n log n) 정렬 — 실전 주력군
+## O(n log n) 정렬 — 실전 주력군
 
-### 3.1 병합 정렬 (Merge Sort) — 안정 + 외부정렬 친화
+### 병합 정렬 (Merge Sort) — 안정 + 외부정렬 친화
+
 **Top-Down (재귀)**
 ```cpp
 #include <vector>
+
 template<class It>
 void merge(It l, It m, It r, std::vector<typename It::value_type>& buf){
     auto i=l, j=m; auto k=buf.begin();
@@ -160,6 +172,7 @@ void mergeSort(It l, It r){
 **Bottom-Up (반복)**
 ```cpp
 #include <vector>
+
 template<class T>
 void mergeBottomUp(std::vector<T>& a){
     int n=(int)a.size();
@@ -176,10 +189,12 @@ void mergeBottomUp(std::vector<T>& a){
 }
 ```
 
-### 3.2 힙 정렬 (Heap Sort) — 제자리, 최악도 \(O(n\log n)\)
+### 힙 정렬 (Heap Sort) — 제자리, 최악도 \(O(n\log n)\)
+
 ```cpp
 #include <vector>
 #include <utility>
+
 void siftDown(std::vector<int>& a, int n, int i){
     while(true){
         int l=2*i+1, r=2*i+2, big=i;
@@ -199,7 +214,8 @@ void heapSort(std::vector<int>& a){
 ```
 - **안정성 X**, **제자리 O**, **브랜치 예측에 다소 불리**
 
-### 3.3 퀵 정렬(Three-Way + Tail Call) — 평균 최강, 나쁜 피벗 방지
+### 퀵 정렬(Three-Way + Tail Call) — 평균 최강, 나쁜 피벗 방지
+
 ```cpp
 #include <vector>
 #include <utility>
@@ -241,11 +257,13 @@ void quickSort3(std::vector<int>& a, int l, int r){
 ```
 - 평균 \(O(n\log n)\), 최악 \(O(n^2)\) → **인트로소트**로 보강
 
-### 3.4 인트로소트(IntroSort) — `std::sort`의 핵심 아이디어
+### 인트로소트(IntroSort) — `std::sort`의 핵심 아이디어
+
 - 시작은 **퀵정렬**, 재귀 깊이가 \(2\lfloor \log_2 n\rfloor\) 를 넘으면 **힙정렬**로 전환 (최악 \(O(n\log n)\) 보장)
 - 소구간은 **삽입정렬**로 마무리 → 실전 최강 하이브리드
 
 #### 인트로소트 스케치
+
 ```cpp
 #include <vector>
 #include <cmath>
@@ -314,12 +332,14 @@ void introSort(std::vector<int>& a){
 
 ---
 
-## 4. 비교 기반이 아닌 정렬 — 선형 시간까지
+## 비교 기반이 아닌 정렬 — 선형 시간까지
 
-### 4.1 카운팅 정렬 (Counting Sort) — 작은 키 범위 정수
+### 카운팅 정렬 (Counting Sort) — 작은 키 범위 정수
+
 ```cpp
 #include <vector>
 #include <algorithm>
+
 std::vector<int> countingSort(const std::vector<int>& a, int K /*max value*/){
     std::vector<int> cnt(K+1), out(a.size());
     for(int x: a) ++cnt[x];
@@ -332,11 +352,13 @@ std::vector<int> countingSort(const std::vector<int>& a, int K /*max value*/){
 ```
 - 시간 \(O(n+K)\), 공간 \(O(n+K)\), **안정 O**
 
-### 4.2 기수 정렬 (Radix Sort) — 정수·고정길이 키
+### 기수 정렬 (Radix Sort) — 정수·고정길이 키
+
 **LSD(하위 자릿수부터)** — 32-bit 비음수 정수 예:
 ```cpp
 #include <vector>
 #include <cstdint>
+
 std::vector<uint32_t> radixLSD(std::vector<uint32_t> a){
     const int B=256; // 바이트 단위
     std::vector<uint32_t> tmp(a.size());
@@ -356,10 +378,12 @@ std::vector<uint32_t> radixLSD(std::vector<uint32_t> a){
 - 시간 \(O(d\cdot (n + B))\) (d=자릿수), **안정 O**, 비교 없음
 - **부호 있는 정수**는 **바이트 순서를 부호 비트 기준으로 조정**(최상위 바이트에서 `xor 0x80` 등)하여 자연 순서 보장
 
-### 4.3 버킷 정렬 (Bucket Sort) — [0,1) 균일 분포 실수 등
+### 버킷 정렬 (Bucket Sort) — [0,1) 균일 분포 실수 등
+
 ```cpp
 #include <vector>
 #include <algorithm>
+
 std::vector<double> bucketSort(std::vector<double> a){
     int n=(int)a.size(); if(n==0) return a;
     std::vector<std::vector<double>> B(n);
@@ -379,15 +403,16 @@ std::vector<double> bucketSort(std::vector<double> a){
 
 ---
 
-## 5. C++에서 **정렬을 올바르게** 쓰는 법
+## C++에서 **정렬을 올바르게** 쓰는 법
 
-### 5.1 비교자(Comparator) — 올바른 정의가 먼저
+### 비교자(Comparator) — 올바른 정의가 먼저
 
 {% raw %}
 ```cpp
 #include <vector>
 #include <string>
 #include <algorithm>
+
 struct Record{ std::string name; int score; int id; };
 
 // 1) 점수 내림차순, 2) 이름 오름차순, 3) id 오름차순
@@ -407,12 +432,14 @@ int main(){
 - `return a.key < b.key;` 규칙을 지키며 **비교의 추이성** 깨지지 않게 주의
 - 부동소수점에 **NaN** 포함 시, 비교 불능(반사성 위배) → 정렬 전 필터링/정의 처리
 
-### 5.2 다중 키 정렬 — 안정 정렬 체이닝 vs 하나의 비교자
+### 다중 키 정렬 — 안정 정렬 체이닝 vs 하나의 비교자
+
 - **안정 정렬을 뒤에서부터** 적용하면 중첩 키 효과
 ```cpp
 #include <algorithm>
 #include <vector>
 #include <string>
+
 struct R{ std::string name; int c1,c2; };
 void multiKeyStable(std::vector<R>& v){
     std::stable_sort(v.begin(), v.end(), [](auto& a, auto& b){ return a.name<b.name; });
@@ -422,7 +449,8 @@ void multiKeyStable(std::vector<R>& v){
 ```
 - 한 번의 비교자로 끝내도 되지만, **가독성/안정성 의도**가 중요
 
-### 5.3 부분 정렬·Top-K — `std::nth_element`/`partial_sort`
+### 부분 정렬·Top-K — `std::nth_element`/`partial_sort`
+
 ```cpp
 #include <vector>
 #include <algorithm>
@@ -439,11 +467,13 @@ int main(){
 ```
 - `nth_element` 평균 \(O(n)\), Top-K나 분위수 계산에 최적
 
-### 5.4 안정 정렬 — `std::stable_sort`
+### 안정 정렬 — `std::stable_sort`
+
 - 대부분의 구현에서 **병합 정렬 기반**(안정, \(O(n\log n)\), \(O(n)\) 메모리)
 - 동치 요소의 **입력 순서 보존**
 
-### 5.5 병렬 정렬 — C++17 실행 정책
+### 병렬 정렬 — C++17 실행 정책
+
 ```cpp
 #include <algorithm>
 #include <execution>
@@ -459,17 +489,20 @@ int main(){
 
 ---
 
-## 6. 외부 정렬(External Sort) — 메모리 초과 데이터
+## 외부 정렬(External Sort) — 메모리 초과 데이터
 
-### 6.1 전략
+### 전략
+
 1) RAM에 들어가는 크기 \(M\)로 **런(run)** 생성(각 덩어리 정렬)
 2) **k-way merge** 로 최종 병합 (우선순위 큐)
 
-### 6.2 k-way merge 스케치
+### k-way merge 스케치
+
 ```cpp
 #include <queue>
 #include <vector>
 #include <utility>
+
 struct Node {
     int value; int runId;
     bool operator<(Node const& o) const { return value > o.value; } // min-heap
@@ -492,7 +525,7 @@ std::vector<int> kWayMerge(std::vector<std::vector<int>>& runs){
 
 ---
 
-## 7. 실무 최적화 포인트 — 캐시·분기·하이브리드
+## 실무 최적화 포인트 — 캐시·분기·하이브리드
 
 - **소구간 삽입 정렬**: \( n\le 16\sim 32 \) 구간은 삽입정렬이 더 빠름
 - **3-way 파티션**: 중복 키 많은 데이터는 필수
@@ -503,7 +536,7 @@ std::vector<int> kWayMerge(std::vector<std::vector<int>>& runs){
 
 ---
 
-## 8. 알고리즘 선택 가이드
+## 알고리즘 선택 가이드
 
 1) **정수·범위 제한**: 카운팅/기수
 2) **문자열(고정 길이)**: MSD/LSD 기수, 또는 비교 기반 + 캐시된 키
@@ -515,7 +548,7 @@ std::vector<int> kWayMerge(std::vector<std::vector<int>>& runs){
 
 ---
 
-## 9. 정확도 체크 — 테스트 유틸
+## 정확도 체크 — 테스트 유틸
 
 ```cpp
 #include <vector>
@@ -536,7 +569,7 @@ bool isSorted(const std::vector<T>& v, Cmp cmp){
 
 ---
 
-## 10. 복잡도·속성 요약표 (확장)
+## 복잡도·속성 요약표 (확장)
 
 | 알고리즘     | 최선 | 평균 | 최악 | 공간 | 안정 | 제자리 | 비고 |
 |---|---:|---:|---:|---:|:--:|:--:|---|
@@ -556,10 +589,11 @@ bool isSorted(const std::vector<T>& v, Cmp cmp){
 
 ---
 
-## 11. 통합 예시 — 입력 스펙에 따라 자동 선택
+## 통합 예시 — 입력 스펙에 따라 자동 선택
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 enum class Algo { Auto, Stable, Counting32, Radix32, Intro };
@@ -606,7 +640,7 @@ int main(){
 
 ---
 
-## 12. 실전 팁 — 성능·정확성 유지
+## 실전 팁 — 성능·정확성 유지
 
 - **데이터 특성 파악**: 중복/분포/도메인/안정성 필요 여부
 - **소구간 임계값**을 조정(16~32): 프로파일 후 확정
@@ -618,7 +652,7 @@ int main(){
 
 ---
 
-## 13. 학습/면접 포인트 요약
+## 학습/면접 포인트 요약
 
 1) 비교 기반 하한 \( \Omega(n\log n) \) 유도
 2) `std::sort` = **인트로소트** (퀵 + 힙 + 삽입)
@@ -630,7 +664,7 @@ int main(){
 
 ---
 
-## 14. 빠른 레퍼런스 — STL 정렬 API
+## 빠른 레퍼런스 — STL 정렬 API
 
 ```cpp
 #include <algorithm>
@@ -646,7 +680,7 @@ std::is_sorted(v.begin(), v.end());                     // 정렬 여부 체크
 
 ---
 
-## 15. 마무리
+## 마무리
 
 - 비교 기반 정렬의 하한은 피할 수 없다 → **하이브리드 설계**가 핵심
 - **데이터 특성**(분포·중복·도메인)을 알면 **선형급**까지 가능

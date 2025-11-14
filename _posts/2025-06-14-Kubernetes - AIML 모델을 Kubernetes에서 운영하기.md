@@ -46,6 +46,7 @@ category: Kubernetes
 
 ```python
 # train_model.py
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import load_iris
 import joblib
@@ -139,6 +140,7 @@ COPY --from=base /usr/local /usr/local
 COPY app.py model.pkl .
 ENV PORT=5000
 # 프로덕션: Gunicorn + gevent/uvicorn workers (Flask→FastAPI 전환시 uvicorn 워커)
+
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "2", "app:app"]
 ```
 
@@ -154,7 +156,7 @@ docker push <docker_id>/ml-api:0.1.0
 
 ## 🚀 3. Kubernetes 배포 — Deployment/Service/Config/Secret/Probe/Resource
 
-### 3.1 ConfigMap/Secret (환경·민감정보 분리)
+### ConfigMap/Secret (환경·민감정보 분리)
 
 ```yaml
 apiVersion: v1
@@ -174,7 +176,7 @@ stringData:
   API_KEY: "local-dev-only-change-me"
 ```
 
-### 3.2 PVC(선택: 대형 모델/캐시)
+### PVC(선택: 대형 모델/캐시)
 
 ```yaml
 apiVersion: v1
@@ -191,7 +193,7 @@ spec:
 
 > 오브젝트 스토리지에서 **InitContainer**로 모델을 내려받아 PVC에 저장하는 패턴도 유용합니다.
 
-### 3.3 Deployment + Service
+### Deployment + Service
 
 ```yaml
 apiVersion: apps/v1
@@ -290,7 +292,7 @@ spec:
 
 ## 🌐 4. Ingress + TLS — 실서비스 노출
 
-### 4.1 NGINX Ingress (기본)
+### NGINX Ingress (기본)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -319,7 +321,7 @@ spec:
 127.0.0.1 ml.local
 ```
 
-### 4.2 cert-manager를 이용한 TLS(실서비스)
+### cert-manager를 이용한 TLS(실서비스)
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -378,7 +380,8 @@ curl -X POST http://ml.local/predict \
 
 ## 📈 6. 오토스케일링 — HPA(기본) + KEDA(이벤트)
 
-### 6.1 HPA(CPU 기반)
+### HPA(CPU 기반)
+
 ```bash
 kubectl autoscale deployment ml-api \
   --cpu-percent=60 --min=2 --max=8
@@ -387,7 +390,7 @@ kubectl get hpa
 
 > CPU/메모리만으로 예측부하를 정확히 반영하긴 어려울 수 있습니다. **KEDA**로 큐 길이/요청 수 기반 확장도 함께 고려하세요.
 
-### 6.2 KEDA(요청 수·큐 기반, 예: Prometheus Scaler)
+### KEDA(요청 수·큐 기반, 예: Prometheus Scaler)
 
 **KEDA 설치 후**, 아래처럼 `ScaledObject`를 정의하면 Prometheus 지표(초당 요청 수 등)에 맞춰 스케일합니다.
 
@@ -428,6 +431,7 @@ pip install opentelemetry-api opentelemetry-sdk opentelemetry-instrumentation-fl
 
 ```python
 # app.py 상단
+
 from opentelemetry.instrumentation.flask import FlaskInstrumentor
 FlaskInstrumentor().instrument_app(app)
 ```
@@ -438,7 +442,8 @@ Collector/Jaeger/Tempo 연동은 환경에 맞춰 배치(Helm 차트 추천).
 
 ## 🔐 8. 보안·격리 — SecurityContext, Pod Security, NetworkPolicy
 
-### 8.1 Pod Security(네임스페이스 레벨)
+### Pod Security(네임스페이스 레벨)
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -448,7 +453,8 @@ metadata:
     pod-security.kubernetes.io/enforce: "restricted"
 ```
 
-### 8.2 NetworkPolicy(내부 통신만 허용)
+### NetworkPolicy(내부 통신만 허용)
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -465,14 +471,16 @@ spec:
     ports: [{ port: 5000, protocol: TCP }]
 ```
 
-### 8.3 이미지서명/검증(권장)
+### 이미지서명/검증(권장)
+
 - Cosign으로 서명 → OPA/Kyverno로 검증 정책 적용
 
 ---
 
 ## 🧪 9. 카나리/블루그린 — 점진배포·롤백
 
-### 9.1 NGINX Ingress 기반 간단 Canary(가중치)
+### NGINX Ingress 기반 간단 Canary(가중치)
+
 ```yaml
 metadata:
   name: ml-api-canary
@@ -481,7 +489,8 @@ metadata:
     nginx.ingress.kubernetes.io/canary-weight: "20"  # 20% 트래픽
 ```
 
-### 9.2 Argo Rollouts(권장)
+### Argo Rollouts(권장)
+
 - Rollout CR로 **Step(10%→30%→50%→100%)** 정의, 메트릭 게이팅(Prometheus), 자동 롤백
 
 ---

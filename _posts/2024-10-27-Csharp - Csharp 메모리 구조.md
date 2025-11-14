@@ -7,7 +7,7 @@ category: Csharp
 # C# 메모리 구조
 
 
-## 0. 한 장 요약
+## 한 장 요약
 
 - **값 타입**(`struct`, 기본형)은 “값 자체”가 복사된다. **작고 불변/단수 소유**에 적합.
 - **참조 타입**(`class`, `string`, 배열)은 힙에 객체, 스택/필드엔 **참조(포인터)**. 복사는 **주소 복사**.
@@ -20,14 +20,15 @@ category: Csharp
 
 ---
 
-## 1. 메모리 구역: 스택 vs 힙
+## 메모리 구역: 스택 vs 힙
 
 | 구역 | 용도 | 해제 방식 | 특성 |
 |---|---|---|---|
 | **스택(Stack)** | 호출 프레임, 지역 값 타입, 일부 `ref struct` | 스코프 종료 시 자동 | **초고속**, 연속 메모리, 크기 제한 |
 | **힙(Heap)** | 참조 타입 인스턴스, 배열, 박싱 객체 | **GC가 회수** | 유연, 상대적으로 느림, 단편화 관리 |
 
-### 1.1 간단 예
+### 간단 예
+
 ```csharp
 class Person { public string Name = ""; }
 
@@ -41,7 +42,7 @@ void Demo()
 
 ---
 
-## 2. 값 타입 vs 참조 타입
+## 값 타입 vs 참조 타입
 
 | 구분 | 값 타입(Value Type) | 참조 타입(Reference Type) |
 |---|---|---|
@@ -51,7 +52,8 @@ void Demo()
 | 상속 | 불가(인터페이스 구현 가능) | 가능 |
 | GC 대상 | 보통 아님(힙에 박싱되면 대상) | 맞음 |
 
-### 2.1 복사 의미
+### 복사 의미
+
 ```csharp
 struct Money { public int Won; }
 
@@ -72,7 +74,7 @@ Console.WriteLine(b1.V); // 2000
 
 ---
 
-## 3. 박싱(Boxing) & 언박싱(Unboxing)
+## 박싱(Boxing) & 언박싱(Unboxing)
 
 - **박싱**: 값 타입을 **`object`** 또는 인터페이스로 취급하기 위해 **힙에 새 객체로 감싸는 것**.
 - **언박싱**: 박싱된 객체를 **원래 값 타입으로 꺼내는 것**(캐스트 필요).
@@ -83,7 +85,8 @@ object boxed = n;        // 박싱 (힙 할당)
 int n2 = (int)boxed;     // 언박싱 (값 복사)
 ```
 
-### 3.1 박싱 비용 사례
+### 박싱 비용 사례
+
 ```csharp
 // ❌ 박싱 발생: object 리스트에 값 타입을 넣음
 var list = new List<object>();
@@ -100,11 +103,11 @@ for (int i = 0; i < 1000; i++)
 
 ---
 
-## 4. .NET GC 구조 이해하기
+## .NET GC 구조 이해하기
 
 GC는 **세대(Generations)**, **세그먼트(Segments)** 개념으로 성능을 최적화한다.
 
-### 4.1 세대별 수집
+### 세대별 수집
 
 | Generation | 대상 | 특징 |
 |---|---|---|
@@ -116,12 +119,14 @@ GC는 **세대(Generations)**, **세그먼트(Segments)** 개념으로 성능을
 
 > 대략 **85,000 바이트 이상의 배열/문자열**은 LOH로 간다. LOH는 **압축(compaction)이 제한**되어 **단편화** 이슈가 큼.
 
-### 4.2 세그먼트
+### 세그먼트
+
 - **Ephemeral Segment**: Gen0/Gen1가 위치하는 **가장 뜨거운** 세그먼트.
 - **Gen2 Segment**: 장수 객체.
 - **LOH/POH Segment**: 각각 별도.
 
-### 4.3 GC 모드
+### GC 모드
+
 | 모드 | 설명 | 기본 |
 |---|---|---|
 | Workstation GC | 데스크탑/개발 환경 | 기본 |
@@ -132,7 +137,7 @@ GC는 **세대(Generations)**, **세그먼트(Segments)** 개념으로 성능을
 
 ---
 
-## 5. GC의 작동 메커니즘(개략)
+## GC의 작동 메커니즘(개략)
 
 1. **루트(Root) 탐색**: 스택/레지스터/정적 변수/GCHandle/핀 등 **도달 가능한 참조**를 찾는다.
 2. **마킹(Mark)**: 도달 가능한 객체 마킹.
@@ -143,13 +148,15 @@ GC는 **세대(Generations)**, **세그먼트(Segments)** 개념으로 성능을
 
 ---
 
-## 6. LOH/POH와 Pinning
+## LOH/POH와 Pinning
 
-### 6.1 LOH (Large Object Heap)
+### LOH (Large Object Heap)
+
 - **큰 배열/문자열**은 LOH에 할당.
 - 압축 비용이 커서 **단편화 위험**. 큰 버퍼는 **풀링(ArrayPool<T>)** 고려.
 
-### 6.2 POH (Pinned Object Heap)
+### POH (Pinned Object Heap)
+
 - **Pinned** 객체 고유 영역.
 - Pinning은 **GC 이동/압축을 방해**. 장시간 Pin은 단편화 가속 → **최소화**가 핵심.
 
@@ -166,13 +173,14 @@ finally { handle.Free(); }
 
 ---
 
-## 7. Finalizer(소멸자) vs Dispose vs SafeHandle
+## Finalizer(소멸자) vs Dispose vs SafeHandle
 
 - **Finalizer**(`~TypeName()`): GC가 객체를 회수할 때 한 번 호출(언제일지 모름). **OS 자원**을 여기서 해제하면 **비결정적/늦음**.
 - **Dispose**(`IDisposable`): **명시적** 자원 해제(파일 핸들/소켓/DB 연결 등).
 - **SafeHandle**: OS 핸들을 안전하게 래핑. Finalizer보다 **권장**.
 
-### 7.1 표준 Dispose 패턴(.NET 6+)
+### 표준 Dispose 패턴(.NET 6+)
+
 ```csharp
 public class MyResource : IDisposable
 {
@@ -204,7 +212,8 @@ public class MyResource : IDisposable
 }
 ```
 
-### 7.2 `using` / using 선언
+### `using` / using 선언
+
 ```csharp
 using var fs = File.OpenRead("a.bin"); // 스코프 종료 시 Dispose 자동
 // ...
@@ -214,9 +223,10 @@ using var fs = File.OpenRead("a.bin"); // 스코프 종료 시 Dispose 자동
 
 ---
 
-## 8. 실전: 메모리/GC 관점으로 코드 읽기
+## 실전: 메모리/GC 관점으로 코드 읽기
 
-### 8.1 값/참조 차이로 인한 의도치 않은 공유
+### 값/참조 차이로 인한 의도치 않은 공유
+
 ```csharp
 class Node { public int V; }
 var a = new Node { V = 1 };
@@ -225,13 +235,15 @@ b.V = 99;
 Console.WriteLine(a.V); // 99
 ```
 
-### 8.2 박싱 폭탄
+### 박싱 폭탄
+
 ```csharp
 // ToString, IComparable, non-generic 컬렉션 등에서 암묵 박싱 주의
 object Acc(object acc, int x) => (int)acc + x; // 매번 박싱/언박싱
 ```
 
-### 8.3 큰 버퍼 할당/해제 반복 → LOH 단편화
+### 큰 버퍼 할당/해제 반복 → LOH 단편화
+
 ```csharp
 // ❌ 매 요청마다 1MB 배열 생성
 byte[] buf = new byte[1_000_000]; // LOH
@@ -244,23 +256,27 @@ finally { pool.Return(rented, clearArray: true); }
 
 ---
 
-## 9. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 ### Q1. **값 타입은 항상 스택에, 참조 타입은 항상 힙에?**
+
 A. **아니다.** 값 타입은 **필드**로 존재하면 **컨테이너의 메모리**에 **inline**으로 저장된다(예: 클래스 필드면 해당 객체의 힙 메모리). 참조 타입은 객체는 힙이지만 **참조 변수** 자체는 스택/필드에 저장된다.
 
 ### Q2. **Dispose를 호출하면 GC가 덜 도나요?**
+
 A. 메모리 관점의 GC 빈도와는 직접적 상관이 없다. 하지만 **OS 자원 누수**를 막아 시스템 전체 안정성에 중요.
 
 ### Q3. **GC.Collect()를 직접 호출해도 되나요?**
+
 A. 특별한 이유(대형 상태 전환 지점/벤치마크 격리 등)가 아니면 **권장하지 않음**. 런타임이 더 잘 안다.
 
 ### Q4. **string은 왜 참조 타입인데 불변?**
+
 A. **불변(Immutable)** 설계로 해싱/공유/스레드 안전/인터닝에 유리. 수정은 **새 인스턴스**를 만든다.
 
 ---
 
-## 10. 고급: 스택 vs 힙—어디에 저장되나(도식)
+## 고급: 스택 vs 힙—어디에 저장되나(도식)
 
 ```
 [스택 프레임]
@@ -276,7 +292,7 @@ A. **불변(Immutable)** 설계로 해싱/공유/스레드 안전/인터닝에 �
 
 ---
 
-## 11. 수식으로 보는 “복사 비용” 직관
+## 수식으로 보는 “복사 비용” 직관
 
 값 타입 크기를 \( S \)바이트, 복사 횟수를 \( N \)이라 하면 단순 복사 총량은
 
@@ -289,7 +305,7 @@ A. **불변(Immutable)** 설계로 해싱/공유/스레드 안전/인터닝에 �
 
 ---
 
-## 12. 진단/도구
+## 진단/도구
 
 - **빠른 계측**: `GC.GetAllocatedBytesForCurrentThread()`
 - **카운터**: `dotnet-counters monitor System.Runtime`
@@ -306,7 +322,7 @@ Console.WriteLine($"Allocated: {after - before} bytes");
 
 ---
 
-## 13. 누수/leak 패턴 & 대응
+## 누수/leak 패턴 & 대응
 
 | 패턴 | 원인 | 해결 |
 |---|---|---|
@@ -318,9 +334,10 @@ Console.WriteLine($"Allocated: {after - before} bytes");
 
 ---
 
-## 14. 실전 샘플
+## 실전 샘플
 
-### 14.1 박싱 제거 리팩터링
+### 박싱 제거 리팩터링
+
 ```csharp
 // Before: 박싱
 int Sum(IEnumerable<object> xs)
@@ -339,7 +356,8 @@ int Sum(IEnumerable<int> xs)
 }
 ```
 
-### 14.2 대형 버퍼 풀링
+### 대형 버퍼 풀링
+
 ```csharp
 var pool = ArrayPool<byte>.Shared;
 byte[] buf = pool.Rent(1024 * 1024); // 1MB
@@ -353,7 +371,8 @@ finally
 }
 ```
 
-### 14.3 구조체 복사 비용 줄이기
+### 구조체 복사 비용 줄이기
+
 ```csharp
 readonly struct Big
 {
@@ -369,7 +388,7 @@ long Use(in Big big) // in: 읽기 전용 참조 전달 → 복사 회피
 
 ---
 
-## 15. 체크리스트 (메모리 친화 설계)
+## 체크리스트 (메모리 친화 설계)
 
 - [ ] 값 타입은 **작고 불변**인가? (크면 참조 타입 고려)
 - [ ] **박싱**이 숨어 있지 않은가? (인터페이스/비제네릭 컬렉션 주의)
@@ -381,7 +400,7 @@ long Use(in Big big) // in: 읽기 전용 참조 전달 → 복사 회피
 
 ---
 
-## 16. 요약
+## 요약
 
 - 스택/힙 구분은 “저장 위치”와 “수명 관리”의 차이: 스택은 **자동**, 힙은 **GC**.
 - 값/참조 타입의 복사 의미를 이해하면 **무의식적 공유/복사 비용**을 피할 수 있다.
@@ -413,6 +432,7 @@ string s = "hi";
 ## 부록 B) 참고 코드 모음
 
 ### B.1 스레드별 할당량 측정
+
 ```csharp
 long before = GC.GetAllocatedBytesForCurrentThread();
 // work
@@ -421,6 +441,7 @@ Console.WriteLine($"{after - before:N0} bytes allocated");
 ```
 
 ### B.2 using 선언과 다중 리소스
+
 ```csharp
 using var fs = File.OpenRead("in.bin");
 using var ms = new MemoryStream();
@@ -428,6 +449,7 @@ using var ms = new MemoryStream();
 ```
 
 ### B.3 WeakReference로 캐시 힌트
+
 ```csharp
 var cache = new Dictionary<string, WeakReference<byte[]>>();
 

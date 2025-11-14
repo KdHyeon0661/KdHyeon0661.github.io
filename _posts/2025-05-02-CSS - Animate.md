@@ -13,7 +13,7 @@ category: CSS
 
 ---
 
-## 0. Animate.css 한 줄 정의
+## Animate.css 한 줄 정의
 
 - **오픈소스** CSS 애니메이션 컬렉션 (by Daniel Eden, v4+)
 - 요소에 `animate__animated` + **효과 이름**(예: `animate__fadeInUp`) 클래스를 붙이면 **즉시 실행**
@@ -21,9 +21,9 @@ category: CSS
 
 ---
 
-## 1. 설치
+## 설치
 
-### 1.1 CDN (가장 빠름)
+### CDN (가장 빠름)
 
 ```html
 <link rel="stylesheet"
@@ -32,7 +32,7 @@ category: CSS
 
 > `<head>`에 포함 후 바로 사용
 
-### 1.2 npm
+### npm
 
 ```bash
 npm install animate.css --save
@@ -45,7 +45,7 @@ npm install animate.css --save
 
 ---
 
-## 2. 기본 사용법
+## 기본 사용법
 
 ```html
 <div class="animate__animated animate__bounce">Hello!</div>
@@ -54,7 +54,7 @@ npm install animate.css --save
 - `animate__animated`: 필수 베이스 클래스
 - `animate__bounce`: 실행할 애니메이션 이름
 
-### 2.1 가장 자주 쓰는 효과군(샘플)
+### 가장 자주 쓰는 효과군(샘플)
 
 | 카테고리 | 대표 클래스 |
 |---|---|
@@ -67,9 +67,9 @@ npm install animate.css --save
 
 ---
 
-## 3. 유틸(옵션) 클래스 & CSS 변수로 미세 제어
+## 유틸(옵션) 클래스 & CSS 변수로 미세 제어
 
-### 3.1 속도/지연/반복 (미리 정의된 유틸)
+### 속도/지연/반복 (미리 정의된 유틸)
 
 ```html
 <div class="animate__animated animate__fadeInUp animate__slow animate__delay-1s"></div>
@@ -79,7 +79,7 @@ npm install animate.css --save
 - 지연: `animate__delay-1s` ~ `animate__delay-5s`
 - 반복: `animate__infinite`, 또는 `animate__repeat-1`/`-2`/`-3`
 
-### 3.2 CSS 변수(권장, 더 유연)
+### CSS 변수(권장, 더 유연)
 
 ```css
 /* 전역 기본값 수정 */
@@ -104,9 +104,9 @@ npm install animate.css --save
 
 ---
 
-## 4. 즉시 써먹는 실전 스니펫
+## 즉시 써먹는 실전 스니펫
 
-### 4.1 “아래에서 위로 페이드 인” 히어로 카피
+### “아래에서 위로 페이드 인” 히어로 카피
 
 ```html
 <h1 class="animate__animated animate__fadeInUp animate__faster">
@@ -114,7 +114,7 @@ npm install animate.css --save
 </h1>
 ```
 
-### 4.2 버튼 Hover 한 번만 “Pulse” (재실행 패턴 포함)
+### 버튼 Hover 한 번만 “Pulse” (재실행 패턴 포함)
 
 ```html
 <button class="btn">Hover Me</button>
@@ -136,7 +136,7 @@ btn.addEventListener('animationend', () => {
 });
 ```
 
-### 4.3 카드 그리드 스태거(순차 지연)
+### 카드 그리드 스태거(순차 지연)
 
 ```html
 <div class="grid">
@@ -148,7 +148,7 @@ btn.addEventListener('animationend', () => {
 
 > 숫자를 서버/JS에서 루프 돌며 넣으면 유지보수 용이.
 
-### 4.4 알림 Toast (등장/퇴장 두 효과)
+### 알림 Toast (등장/퇴장 두 효과)
 
 ```html
 <div id="toast" class="toast animate__animated" hidden>Saved!</div>
@@ -181,7 +181,7 @@ function onInDone() {
 
 ---
 
-## 5. 스크롤 진입 시 애니메이션(Intersection Observer만으로)
+## 스크롤 진입 시 애니메이션(Intersection Observer만으로)
 
 WOW/AOS 없이도 **표준 API**로 충분히 구현 가능합니다.
 
@@ -212,9 +212,9 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
 ---
 
-## 6. WOW.js / AOS와의 연동(선택)
+## WOW.js / AOS와의 연동(선택)
 
-### 6.1 WOW.js
+### WOW.js
 
 ```html
 <div class="wow animate__animated animate__fadeInUp">Hello</div>
@@ -223,16 +223,16 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 <script> new WOW().init(); </script>
 ```
 
-### 6.2 AOS (별도 클래스 체계)
+### AOS (별도 클래스 체계)
 
 AOS는 자체 `data-aos` 속성을 사용합니다. Animate.css와 **함께 쓸 수는 있지만**,
 같은 요소에 **중복 애니메이션**을 얹지 않도록 주의하세요.
 
 ---
 
-## 7. 재실행/한정 실행/상태 제어 패턴
+## 재실행/한정 실행/상태 제어 패턴
 
-### 7.1 (재실행) `animationend`로 클래스 제거
+### (재실행) `animationend`로 클래스 제거
 
 ```js
 function playAnim(el, name){
@@ -250,7 +250,7 @@ function playAnim(el, name){
 playAnim(document.querySelector('.badge'), 'animate__tada');
 ```
 
-### 7.2 (한정 실행) 최초 1회만
+### (한정 실행) 최초 1회만
 
 ```js
 const once = document.querySelectorAll('.once');
@@ -260,7 +260,7 @@ once.forEach(el => {
 });
 ```
 
-### 7.3 (상태 토글) “열기/닫기”에 서로 다른 애니메이션
+### (상태 토글) “열기/닫기”에 서로 다른 애니메이션
 
 ```js
 function openDrawer(el){
@@ -275,9 +275,9 @@ function closeDrawer(el){
 
 ---
 
-## 8. 성능·접근성 체크리스트
+## 성능·접근성 체크리스트
 
-### 8.1 성능
+### 성능
 
 - 가능한 한 **`transform`, `opacity` 기반** 효과 사용(합성 단계, 부드러움 ↑)
 - 동일 시점에 **과도한 요소**에 애니메이션 금지(특히 모바일)
@@ -285,7 +285,7 @@ function closeDrawer(el){
 - `transition/animation: all` 지양, 필요한 속성만 지정
 - DevTools Performance 탭으로 Layout/Paint/Composite 확인
 
-### 8.2 접근성 — `prefers-reduced-motion`
+### 접근성 — `prefers-reduced-motion`
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -300,7 +300,7 @@ function closeDrawer(el){
 
 ---
 
-## 9. 커스터마이징(선택)
+## 커스터마이징(선택)
 
 - Animate.css는 **Sass** 기반 — 필요 효과만 빌드하여 **크기 최적화** 가능
 - 또는 애니메이션 이름은 유지하고 **CSS 변수**로 팀 가이드에 맞게 전역 Duration/Delay를 조정
@@ -312,9 +312,9 @@ function closeDrawer(el){
 
 ---
 
-## 10. 실전 컴포넌트 레시피
+## 실전 컴포넌트 레시피
 
-### 10.1 배너 “ZoomIn + 페이드 업” 병렬
+### 배너 “ZoomIn + 페이드 업” 병렬
 
 ```html
 <div class="banner animate__animated animate__zoomIn animate__fadeInUp"
@@ -323,7 +323,7 @@ function closeDrawer(el){
 
 > Animate.css는 **여러 이름**을 공존시켜 병렬 재생 가능(브라우저별 순서 이슈가 있으면 하나로 충분한지 검토).
 
-### 10.2 Skeleton → 실제 카드 전환
+### Skeleton → 실제 카드 전환
 
 ```html
 <article class="card">
@@ -351,7 +351,7 @@ real.hidden = false;
 real.classList.add('animate__fadeInUp');
 ```
 
-### 10.3 Nav 드롭다운: “slideInDown/slideOutUp”
+### Nav 드롭다운: “slideInDown/slideOutUp”
 
 ```html
 <nav>
@@ -379,9 +379,9 @@ document.getElementById('menuBtn').addEventListener('click', () => {
 
 ---
 
-## 11. 프레임워크 연동 스니펫
+## 프레임워크 연동 스니펫
 
-### 11.1 React (컴포넌트 마운트 때 1회 등장)
+### React (컴포넌트 마운트 때 1회 등장)
 
 ```jsx
 import "animate.css";
@@ -399,7 +399,7 @@ export default function FadeInSection({ children }) {
 }
 ```
 
-### 11.2 Vue (v-if로 등장/퇴장)
+### Vue (v-if로 등장/퇴장)
 
 ```html
 <template>
@@ -418,7 +418,7 @@ defineProps({ open: Boolean });
 
 ---
 
-## 12. 디버깅 FAQ
+## 디버깅 FAQ
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -430,7 +430,7 @@ defineProps({ open: Boolean });
 
 ---
 
-## 13. 종합 예제 — 랜딩 히어로 + 스크롤 리빌 + 버튼 피드백
+## 종합 예제 — 랜딩 히어로 + 스크롤 리빌 + 버튼 피드백
 
 ```html
 <header class="hero">
@@ -492,6 +492,7 @@ cta.addEventListener('click', ()=>{
 ---
 
 ### 🔗 링크 모음
+
 - 공식: https://animate.style/
 - GitHub: https://github.com/animate-css/animate.css
 - WOW.js: https://wowjs.uk/

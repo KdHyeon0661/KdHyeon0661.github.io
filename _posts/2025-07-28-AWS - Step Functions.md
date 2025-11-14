@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Step Functions: 서버리스 워크플로우 오케스트레이션
 
-## 0. 한눈에 보는 Step Functions
+## 한눈에 보는 Step Functions
 
 - **무상태 코드를 상태로 감싼다**: 비즈니스 로직을 **상태 기계(State Machine)** 로 선언(ASL: Amazon States Language).
 - **서버리스 오케스트레이션**: Lambda, ECS, Batch, Glue, SageMaker, DynamoDB, SQS/SNS, EventBridge, EMR 등과 **코드 없이 연결**.
@@ -16,9 +16,9 @@ category: AWS
 
 ---
 
-## 1. Amazon States Language(ASL) 핵심 문법
+## Amazon States Language(ASL) 핵심 문법
 
-### 1.1 최소 예제
+### 최소 예제
 
 ```json
 {
@@ -36,7 +36,7 @@ category: AWS
 }
 ```
 
-### 1.2 주요 상태 타입 요약
+### 주요 상태 타입 요약
 
 | 타입 | 용도 | 핵심 속성 |
 |---|---|---|
@@ -48,7 +48,7 @@ category: AWS
 | `Succeed`/`Fail` | 종료 | `Cause`, `Error` |
 | `Pass` | 변환/전달 | `Parameters`, `ResultPath` |
 
-### 1.3 입력/출력 경로 3총사
+### 입력/출력 경로 3총사
 
 - **`InputPath`**: 들어오는 JSON에서 사용할 **부분만** 선택
 - **`Parameters`**: 입력을 **새 JSON**으로 **구성**(`.$` 사용 시 JSON 경로 바인딩)
@@ -69,7 +69,7 @@ category: AWS
 }
 ```
 
-### 1.4 Intrinsic Functions(내장 함수)
+### Intrinsic Functions(내장 함수)
 
 - 문자열/JSON 조작: `States.Format`, `States.StringToJson`, `States.JsonToString`
 - 배열/수학: `States.Array`, `States.ArrayContains`, `States.MathRandom`
@@ -85,9 +85,9 @@ category: AWS
 
 ---
 
-## 2. 오류 처리: Retry/Catch, 지수 백오프, 조건부 재시도
+## 오류 처리: Retry/Catch, 지수 백오프, 조건부 재시도
 
-### 2.1 Retry with Backoff
+### Retry with Backoff
 
 ```json
 {
@@ -108,7 +108,7 @@ category: AWS
 }
 ```
 
-### 2.2 서킷브레이커 느낌의 Choice 결합
+### 서킷브레이커 느낌의 Choice 결합
 
 - 실패 누적 카운트를 **상태 입력**에 유지 → 임계 초과 시 **빠른 우회 경로**로 전송.
 
@@ -144,9 +144,9 @@ category: AWS
 
 ---
 
-## 3. 동적 반복: Map, **Distributed Map**, 병렬/팬아웃
+## 동적 반복: Map, **Distributed Map**, 병렬/팬아웃
 
-### 3.1 Map(일반)
+### Map(일반)
 
 ```json
 {
@@ -168,7 +168,7 @@ category: AWS
 }
 ```
 
-### 3.2 Distributed Map(대규모 병렬)
+### Distributed Map(대규모 병렬)
 
 - **수십만~수백만** 항목 팬아웃을 **서브워크플로우**로 분산 처리.
 - 소스: S3(리스트/매니페스트), Items: 대규모 JSON.
@@ -199,15 +199,15 @@ category: AWS
 
 ---
 
-## 4. 서비스 통합 패턴: `.sync`, 콜백(토큰), Activity, ECS/Batch/Glue
+## 서비스 통합 패턴: `.sync`, 콜백(토큰), Activity, ECS/Batch/Glue
 
-### 4.1 **Request-Response** (Lambda, DynamoDB 등)
+### **Request-Response** (Lambda, DynamoDB 등)
 
 ```json
 { "Type": "Task", "Resource": "arn:aws:states:::lambda:invoke", "Parameters": { ... } }
 ```
 
-### 4.2 **`.sync` Job-run** 패턴(Glue/ECS/Batch/SageMaker 등 장시간 잡 대기)
+### **`.sync` Job-run** 패턴(Glue/ECS/Batch/SageMaker 등 장시간 잡 대기)
 
 ```json
 {
@@ -223,7 +223,7 @@ category: AWS
 
 - `.sync` 를 쓰면 잡 완료까지 **상태가 대기**하며 결과/상태코드 취득.
 
-### 4.3 **콜백(Wait for Callback with Task Token)**
+### **콜백(Wait for Callback with Task Token)**
 
 - 외부 시스템/사람이 **토큰으로 완료 신호**를 줄 때까지 대기.
 
@@ -246,20 +246,21 @@ category: AWS
 - 외부에서 완료:
   - `SendTaskSuccess` / `SendTaskFailure`(SDK/CLI) 로 토큰에 응답.
 
-### 4.4 **Activity** (커스텀 워커 Pull)
+### **Activity** (커스텀 워커 Pull)
 
 - Step Functions Activity 생성 → 온프레미스/EC2 워커가 **작업 폴링** 후 결과 회신.
   (현업에선 **Lambda/ECS + 콜백** 선호, Activity는 레거시 통합에 유용)
 
 ---
 
-## 5. 실전 시나리오 1: **주문 처리 SAGA(보상 트랜잭션)**
+## 실전 시나리오 1: **주문 처리 SAGA(보상 트랜잭션)**
 
-### 5.1 요구사항
+### 요구사항
+
 - 결제 승인 → 재고 예약 → 출고 요청
 - 중간 실패 시 **보상(취소/롤백)**
 
-### 5.2 상태 기계(요지)
+### 상태 기계(요지)
 
 ```json
 {
@@ -313,7 +314,7 @@ category: AWS
 
 ---
 
-## 6. 실전 시나리오 2: **사람 승인(휴먼 인 더 루프)**
+## 실전 시나리오 2: **사람 승인(휴먼 인 더 루프)**
 
 - Step Functions → 승인 요청 Lambda → **SNS/이메일/Slack** 전송
 - 승인자가 클릭/응답 → API → `SendTaskSuccess` 로 **콜백**
@@ -343,7 +344,7 @@ category: AWS
 
 ---
 
-## 7. 실전 시나리오 3: **ETL/데이터 파이프라인**
+## 실전 시나리오 3: **ETL/데이터 파이프라인**
 
 - EventBridge(스케줄) → Glue `.sync` → Athena Partition 추가 → 결과 Slack 알림
 
@@ -379,9 +380,9 @@ category: AWS
 
 ---
 
-## 8. 표준 vs 익스프레스, 비용 모델, 대략 계산
+## 표준 vs 익스프레스, 비용 모델, 대략 계산
 
-### 8.1 비교 요약
+### 비교 요약
 
 | 항목 | 표준(Standard) | 익스프레스(Express) |
 |---|---|---|
@@ -391,7 +392,7 @@ category: AWS
 | 추적 | 상세 이력 | 요약/로그 중심 |
 | 용도 | 승인/업무플로우/긴 ETL | 클릭스트림/IoT/초고TPS 오케스트레이션 |
 
-### 8.2 비용 근사 수식(표준)
+### 비용 근사 수식(표준)
 
 - 상태 전이 비용 단가를 \(p\) (건당)라 하고, 한 실행에 전이 수가 \(t\), 실행 수가 \(n\)이라면:
 
@@ -399,7 +400,7 @@ $$
 \text{총비용} \approx n \cdot t \cdot p \quad (+\ \text{서비스 통합 비용, 예: Lambda, Glue 등})
 $$
 
-### 8.3 익스프레스(요청+GB-초)
+### 익스프레스(요청+GB-초)
 
 - 실행 시간(초) = \(T\), 메모리(GB) = \(M\), 요청 수 \(n\)
 - GB-초 단가 \(c\), 요청 당 단가 \(r\)
@@ -412,7 +413,7 @@ $$
 
 ---
 
-## 9. 관측성: 로깅, 메트릭, X-Ray, 입력/출력 샘플링
+## 관측성: 로깅, 메트릭, X-Ray, 입력/출력 샘플링
 
 - **CloudWatch Logs**: 실행별 입력/출력 로깅 레벨(ALL/ERROR) 및 샘플링 비율 설정
 - **메트릭**: `ExecutionsStarted/Failed/Succeeded/Throttled/TimedOut`, `ExecutionTime`, 서비스 통합별 지표
@@ -421,7 +422,7 @@ $$
 
 ---
 
-## 10. 테스트 전략: Unit/Local/Simulate
+## 테스트 전략: Unit/Local/Simulate
 
 - **Local**: ASL JSON을 **sam local/ASF Local**(시뮬레이터)로 구동(단, 제한적)
 - **단위테스트**: **Lambda/Glue 쪽 로직**을 별도 테스트 → 상태 기계는 **통합테스트** 위주
@@ -430,9 +431,9 @@ $$
 
 ---
 
-## 11. IaC: CDK / SAM / CloudFormation
+## IaC: CDK / SAM / CloudFormation
 
-### 11.1 AWS CDK (TypeScript) 예시
+### AWS CDK (TypeScript) 예시
 
 ```ts
 import * as cdk from "aws-cdk-lib";
@@ -480,7 +481,7 @@ export class OrderFlowStack extends cdk.Stack {
 }
 ```
 
-### 11.2 SAM(템플릿)로 정의 일부
+### SAM(템플릿)로 정의 일부
 
 ```yaml
 Resources:
@@ -502,7 +503,7 @@ Resources:
 
 ---
 
-## 12. 보안/거버넌스
+## 보안/거버넌스
 
 - **IAM 최소 권한**: 상태 기계가 호출하는 리소스만 허용 (정확한 ARN 스코프)
 - **입출력 민감정보 마스킹**: CloudWatch Logs 로깅 레벨/필드 마스킹
@@ -511,7 +512,7 @@ Resources:
 
 ---
 
-## 13. 모범 패턴 카탈로그
+## 모범 패턴 카탈로그
 
 1. **Job-run `.sync`**: Batch/Glue/ECS/SageMaker 학습/변환 완료까지 기다림
 2. **콜백 토큰**: 외부/사람 승인까지 대기(Wait for Callback)
@@ -523,7 +524,7 @@ Resources:
 
 ---
 
-## 14. 확장 예제: **Kinesis → Step Functions(익스프레스) → Lambda → Firehose/S3**
+## 확장 예제: **Kinesis → Step Functions(익스프레스) → Lambda → Firehose/S3**
 
 - Kinesis 레코드 배치 → Express State Machine(Map with concurrency) → 변환 → Firehose PutRecordBatch
 - 수식상 **GB-초**가 저렴, 대량 이벤트 오케스트레이션에 적합
@@ -555,7 +556,7 @@ Resources:
 
 ---
 
-## 15. 실무 체크리스트(요약)
+## 실무 체크리스트(요약)
 
 - 입력/출력 경로: `InputPath/Parameters/ResultPath/OutputPath` **정확히** 설계해 **불필요 페이로드 축소**
 - Retry/Catch: 외부 의존성 에러만 선택적으로 재시도(5xx/429), **영구 실패**는 빠른 Catch

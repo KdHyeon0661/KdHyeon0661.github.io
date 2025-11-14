@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes에서 TLS 인증서 및 Secret 관리
 
-## 0. 배경 지식: X.509, SAN, 체인, SNI
+## 배경 지식: X.509, SAN, 체인, SNI
 
 - TLS 서버 인증서는 **X.509** 형식의 공개키 인증서입니다.
 - **SAN(Subject Alternative Name)** 에 호스트명이 포함되어야 브라우저/클라이언트가 신뢰합니다.
@@ -15,9 +15,9 @@ category: Kubernetes
 
 ---
 
-## 1. Secret의 핵심: `type: kubernetes.io/tls`
+## Secret의 핵심: `type: kubernetes.io/tls`
 
-### 1.1 TLS Secret 스펙
+### TLS Secret 스펙
 
 ```yaml
 apiVersion: v1
@@ -35,10 +35,11 @@ data:
 - `tls.key`: **PEM** 포맷 비공개키. 절대로 유출 금지.
 - Secret 데이터는 **base64 인코딩**입니다.
 
-### 1.2 OpenSSL로 self-signed(테스트용) 발급 → Secret 생성
+### OpenSSL로 self-signed(테스트용) 발급 → Secret 생성
 
 ```bash
-# 1. 키/인증서 생성 (SAN 포함, 1년)
+# 키/인증서 생성 (SAN 포함, 1년)
+
 cat > san.cnf <<'EOF'
 [req]
 distinguished_name=req
@@ -58,7 +59,8 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 ```
 
 ```bash
-# 2. Secret 생성
+# Secret 생성
+
 kubectl create secret tls my-tls-secret \
   --cert=tls.crt --key=tls.key -n default
 ```
@@ -67,9 +69,9 @@ kubectl create secret tls my-tls-secret \
 
 ---
 
-## 2. Ingress와 TLS 연동 (NGINX/Traefik/ALB, Gateway API까지)
+## Ingress와 TLS 연동 (NGINX/Traefik/ALB, Gateway API까지)
 
-### 2.1 NGINX Ingress Controller 예제
+### NGINX Ingress Controller 예제
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -96,7 +98,7 @@ spec:
               number: 80
 ```
 
-### 2.2 Traefik 예제
+### Traefik 예제
 
 ```yaml
 metadata:
@@ -104,7 +106,7 @@ metadata:
     traefik.ingress.kubernetes.io/router.tls: "true"
 ```
 
-### 2.3 AWS ALB Ingress Controller (AWS Load Balancer Controller)
+### AWS ALB Ingress Controller (AWS Load Balancer Controller)
 
 - 보통 **ACM 인증서 ARN**을 Ingress annotation으로 지정합니다(Secret 대신).
 
@@ -114,7 +116,7 @@ metadata:
     alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-northeast-2:123456789012:certificate/xxxx
 ```
 
-### 2.4 Gateway API (HTTPRoute + TLS)
+### Gateway API (HTTPRoute + TLS)
 
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
@@ -149,9 +151,9 @@ spec:
 
 ---
 
-## 3. Secret 운용 — 확인/복호화/교체/회전
+## Secret 운용 — 확인/복호화/교체/회전
 
-### 3.1 확인/복호화
+### 확인/복호화
 
 ```bash
 kubectl get secret my-tls-secret -n default -o yaml
@@ -159,18 +161,18 @@ kubectl get secret my-tls-secret -n default -o jsonpath='{.data.tls\.crt}' | bas
 kubectl get secret my-tls-secret -n default -o jsonpath='{.data.tls\.key}' | base64 -d | openssl pkey -noout -text
 ```
 
-### 3.2 무중단 교체(rollover)
+### 무중단 교체(rollover)
 
 1) 새 인증서/키로 **동일 이름** Secret 업데이트 → Ingress 컨트롤러가 **자동 리로드**(컨트롤러마다 반영 타이밍 상이).
 2) 안전하게 하려면 **새 Secret 이름**으로 만들고 Ingress의 `secretName`을 **원자적 변경** 후 롤백 가능하도록 관리.
 
 ---
 
-## 4. cert-manager로 **자동 발급/갱신** (ACME / 내부 CA)
+## cert-manager로 **자동 발급/갱신** (ACME / 내부 CA)
 
 `cert-manager`는 `Issuer/ClusterIssuer/Certificate` CRD를 이용해 인증서 라이프사이클을 관리합니다.
 
-### 4.1 설치 (Helm)
+### 설치 (Helm)
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
@@ -186,7 +188,7 @@ helm install cert-manager jetstack/cert-manager \
 kubectl get pods -n cert-manager
 ```
 
-### 4.2 ACME(렌츠/공인CA) — HTTP-01(간편) / DNS-01(와일드카드)
+### ACME(렌츠/공인CA) — HTTP-01(간편) / DNS-01(와일드카드)
 
 #### (A) ClusterIssuer (Let’s Encrypt: 프로덕션)
 
@@ -285,7 +287,7 @@ spec:
 
 > cert-manager가 Ingress를 감지해 `Certificate`를 생성하고, 검증/발급/갱신까지 자동 처리.
 
-### 4.3 내부 CA(사설 PKI) 연동
+### 내부 CA(사설 PKI) 연동
 
 - 사내 CA의 루트/중간 CA로 서명하는 Issuer 구성(예: `Issuer` + `ca` 설정).
 - 또는 `Vault Issuer` 플러그인으로 HashiCorp Vault의 PKI 엔진 사용.
@@ -303,9 +305,9 @@ spec:
 
 ---
 
-## 5. mTLS(서버/클라이언트 양방향 인증) — Ingress NGINX 예제
+## mTLS(서버/클라이언트 양방향 인증) — Ingress NGINX 예제
 
-### 5.1 클라이언트 인증서 요구(서버 입장)
+### 클라이언트 인증서 요구(서버 입장)
 
 - 서버(Ingress)가 **클라이언트 인증서**를 검사.
 - 신뢰하는 CA 번들을 Secret로 제공.
@@ -346,9 +348,9 @@ spec:
 
 ---
 
-## 6. 운영 보안: RBAC, etcd 암호화, 외부 비밀관리, GitOps
+## 운영 보안: RBAC, etcd 암호화, 외부 비밀관리, GitOps
 
-### 6.1 RBAC — Secret 접근 최소화
+### RBAC — Secret 접근 최소화
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -378,7 +380,7 @@ roleRef:
 
 > 앱이 정말로 Secret을 **읽어야만** 하는지 점검하세요. 가능하면 **Ingress/Gateway**가 TLS를 처리하고, 앱은 평문 HTTP로 내부 통신.
 
-### 6.2 etcd 암호화(Encryption at Rest)
+### etcd 암호화(Encryption at Rest)
 
 API 서버 설정(예: kubeadm 환경):
 
@@ -399,7 +401,7 @@ resources:
 `kube-apiserver` 인자에 `--encryption-provider-config=/etc/kubernetes/encryption-config.yaml`.
 **키 회전**(새 key 추가 → 리인코드 → 구 key 제거) 전략 수립 필수.
 
-### 6.3 외부 비밀관리 / GitOps
+### 외부 비밀관리 / GitOps
 
 - **Sealed Secrets**: 개발자가 공개 리포에 올려도 복호화는 클러스터에서만 가능.
 - **SOPS(+KMS)**: Git에 암호화된 Secret 저장, 배포 시 컨트롤러/파이프라인에서 복호화.
@@ -432,7 +434,7 @@ spec:
 
 ---
 
-## 7. 운영 베스트 프랙티스
+## 운영 베스트 프랙티스
 
 1. **도메인 별로 SAN 확실히**: `example.com`, `www.example.com` 등 실제 사용 호스트 모두 나열.
 2. **체인 완전성**: `tls.crt`에 **intermediate 포함**.
@@ -446,19 +448,19 @@ spec:
 
 ---
 
-## 8. 트러블슈팅 시나리오 모음
+## 트러블슈팅 시나리오 모음
 
-### 8.1 브라우저 “인증서 신뢰 안 됨”
+### 브라우저 “인증서 신뢰 안 됨”
 
 - 체인 누락 가능성↑. `tls.crt`에 **leaf + intermediate** 붙였는지 확인.
 - 사설 CA 사용 시, **루트/중간 CA** 를 클라이언트 신뢰 저장소에 배포.
 
-### 8.2 `404 Not Found` 혹은 HTTP로만 응답
+### `404 Not Found` 혹은 HTTP로만 응답
 
 - Ingress가 올바른 **host** 룰을 가졌는지, `ingressClassName`/annotations 확인.
 - DNS가 올바른 LB 주소를 가리키는지 `dig example.com` 확인.
 
-### 8.3 cert-manager 발급 실패
+### cert-manager 발급 실패
 
 ```bash
 kubectl describe certificate site-cert -n default
@@ -471,22 +473,22 @@ kubectl logs -n cert-manager deploy/cert-manager
 - HTTP-01: `/.well-known/acme-challenge/*`가 외부에서 접근 가능한지 `curl -vkL http://example.com/.well-known/acme-challenge/TEST`
 - DNS-01: TXT 레코드가 정확히 생성/전파됐는지 확인.
 
-### 8.4 만료 임박인데 갱신 안 됨
+### 만료 임박인데 갱신 안 됨
 
 - `Certificate`의 `renewBefore` 확인(기본 720h).
 - cert-manager 컨트롤러 로그에 에러가 없는지 확인.
 - 퍼미션/솔버 설정(Route53 권한 등) 재점검.
 
-### 8.5 mTLS 연결 거부
+### mTLS 연결 거부
 
 - 클라이언트가 **올바른 cert/key** 로 접속하는지.
 - Ingress annotation의 `auth-tls-secret` CA 번들 정확성, verify-depth 조정.
 
 ---
 
-## 9. 예제 모음: “운영에서 바로 쓰는” 템플릿
+## 예제 모음: “운영에서 바로 쓰는” 템플릿
 
-### 9.1 Let’s Encrypt 스테이징 + 자동 TLS Ingress
+### Let’s Encrypt 스테이징 + 자동 TLS Ingress
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -523,7 +525,7 @@ spec:
         backend: { service: { name: web, port: { number: 80 } } }
 ```
 
-### 9.2 내부 CA + mTLS(서버/클라이언트) 혼합
+### 내부 CA + mTLS(서버/클라이언트) 혼합
 
 - 서버 인증서는 `corp-ca` Issuer로 발급.
 - 클라이언트 CA 번들은 별도 Secret.
@@ -579,26 +581,30 @@ spec:
 
 ---
 
-## 10. 간단한 검증 명령 레퍼런스
+## 간단한 검증 명령 레퍼런스
 
 ```bash
 # 인증서 정보
+
 kubectl get secret mysite-tls -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -text -noout
 
 # 원격 서버의 체인 확인
+
 openssl s_client -connect example.com:443 -servername example.com -showcerts </dev/null 2>/dev/null | openssl x509 -noout -issuer -subject -dates
 
 # HTTP-01 챌린지 경로 확인
+
 curl -vkL http://example.com/.well-known/acme-challenge/TEST
 
 # cert-manager 리소스 상태
+
 kubectl get certificate,certificaterequest,order,challenge -A
 kubectl describe certificate <name> -n <ns>
 ```
 
 ---
 
-## 11. 체크리스트 요약
+## 체크리스트 요약
 
 - [ ] Ingress/Gateway에 **올바른 Secret 참조**(체인 포함).
 - [ ] cert-manager: Issuer/ClusterIssuer/Certificate **상태 녹색**.
@@ -629,6 +635,7 @@ Kubernetes에서 TLS를 제대로 다루는 것은 **신뢰·보안·운영 효�
 ---
 
 ## 참고
+
 - Kubernetes TLS Secret: <https://kubernetes.io/docs/concepts/configuration/secret/#tls-secrets>
 - cert-manager: <https://cert-manager.io/>
 - Let’s Encrypt ACME: <https://letsencrypt.org/docs/acme-protocol/>

@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # Lint / Prettier 사용법 정리
 
-## 1. 개념 정리 — Lint vs Prettier 역할 구분
+## 개념 정리 — Lint vs Prettier 역할 구분
 
 - **ESLint(Lint)**: 정적 분석으로 **문법 오류, 잠재 버그, 안티패턴** 탐지 + 일부 자동 수정(`--fix`)
 - **Prettier(Formatter)**: **코드 모양(줄바꿈, 들여쓰기, 세미콜론, 따옴표, 줄폭)**을 **일관 규칙으로 자동 정렬**
@@ -18,21 +18,26 @@ category: JavaScript
 
 ---
 
-## 2. 프로젝트 세팅 빠른 시작
+## 프로젝트 세팅 빠른 시작
 
-### 2.1 의존성 설치(기본)
+### 의존성 설치(기본)
+
 ```bash
 # ESLint 본체
+
 npm i -D eslint
 
 # Prettier 본체
+
 npm i -D prettier
 
 # ESLint ↔ Prettier 충돌 제거/연계
+
 npm i -D eslint-config-prettier eslint-plugin-prettier
 ```
 
-### 2.2 Prettier 설정 `.prettierrc`
+### Prettier 설정 `.prettierrc`
+
 ```json
 {
   "singleQuote": true,
@@ -44,9 +49,10 @@ npm i -D eslint-config-prettier eslint-plugin-prettier
 }
 ```
 
-### 2.3 ESLint 설정 — 두 가지 방식
+### ESLint 설정 — 두 가지 방식
 
 #### (A) 신형: **Flat Config** (`eslint.config.js`)
+
 ```js
 // eslint.config.js (Flat Config)
 import eslint from '@eslint/js';
@@ -85,6 +91,7 @@ export default [
 ```
 
 #### (B) 구형: `.eslintrc.json`
+
 ```json
 {
   "env": { "browser": true, "es2021": true },
@@ -101,7 +108,7 @@ export default [
 
 ---
 
-## 3. 실행 스크립트 & 기본 사용
+## 실행 스크립트 & 기본 사용
 
 `package.json`
 ```json
@@ -125,7 +132,7 @@ npm run fmt:write
 
 ---
 
-## 4. VS Code 연동(저장 시 자동)
+## VS Code 연동(저장 시 자동)
 
 `.vscode/settings.json`
 ```json
@@ -142,14 +149,16 @@ npm run fmt:write
 
 ---
 
-## 5. TypeScript 통합
+## TypeScript 통합
 
-### 5.1 패키지
+### 패키지
+
 ```bash
 npm i -D typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin
 ```
 
-### 5.2 Flat Config 예시
+### Flat Config 예시
+
 ```js
 // eslint.config.js
 import tseslint from '@typescript-eslint/eslint-plugin';
@@ -177,21 +186,24 @@ export default [
 ];
 ```
 
-### 5.3 자주 쓰는 TS 규칙 팁
+### 자주 쓰는 TS 규칙 팁
+
 - `@typescript-eslint/no-floating-promises`: 미처리 `Promise` 잡기
 - `@typescript-eslint/explicit-function-return-type`: API 경계에서 명시적 반환형
 - `no-restricted-imports`: 모놀리포지토리 경로 제한
 
 ---
 
-## 6. React/Next.js 통합
+## React/Next.js 통합
 
-### 6.1 패키지
+### 패키지
+
 ```bash
 npm i -D eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-jsx-a11y
 ```
 
-### 6.2 Flat Config 예시
+### Flat Config 예시
+
 ```js
 // eslint.config.js
 import react from 'eslint-plugin-react';
@@ -221,15 +233,17 @@ export default [
 ];
 ```
 
-### 6.3 Next.js
+### Next.js
+
 - Next는 자체 ESLint 설정을 제공(명령: `next lint`).
 - 커스텀 시에도 **Prettier 충돌 제거**와 **react-hooks**, **a11y** 규칙 유지 권장.
 
 ---
 
-## 7. Node 라이브러리(ESM/CJS) 및 테스트
+## Node 라이브러리(ESM/CJS) 및 테스트
 
-### 7.1 Node 전용 규칙
+### Node 전용 규칙
+
 ```js
 // eslint.config.js 일부
 {
@@ -244,7 +258,8 @@ export default [
 }
 ```
 
-### 7.2 Jest / Vitest
+### Jest / Vitest
+
 ```bash
 npm i -D eslint-plugin-jest
 ```
@@ -262,7 +277,7 @@ export default [
 
 ---
 
-## 8. 파일 제외/오버라이드
+## 파일 제외/오버라이드
 
 - **Prettier 제외**: `.prettierignore`
 ```
@@ -283,21 +298,24 @@ node_modules
 
 ---
 
-## 9. Husky + lint-staged로 커밋 전 자동 검사
+## Husky + lint-staged로 커밋 전 자동 검사
 
-### 9.1 설치
+### 설치
+
 ```bash
 npm i -D husky lint-staged
 npx husky install
 npm set-script prepare "husky install"
 ```
 
-### 9.2 훅 생성
+### 훅 생성
+
 ```bash
 npx husky add .husky/pre-commit "npx lint-staged"
 ```
 
-### 9.3 `package.json`
+### `package.json`
+
 ```json
 {
   "lint-staged": {
@@ -311,7 +329,7 @@ npx husky add .husky/pre-commit "npx lint-staged"
 
 ---
 
-## 10. CI 통합(GitHub Actions 예시)
+## CI 통합(GitHub Actions 예시)
 
 `.github/workflows/lint.yml`
 ```yaml
@@ -338,7 +356,7 @@ jobs:
 
 ---
 
-## 11. 성능 최적화·대규모 적용 노하우
+## 성능 최적화·대규모 적용 노하우
 
 - **ESLint 캐시**: `eslint . --cache --cache-location .eslintcache`
 - **TS 타입 규칙 부담 줄이기**: 빌드/CI에만 `parserOptions.project`를 켜고, 로컬은 기본 규칙만으로 빠르게
@@ -351,7 +369,7 @@ jobs:
 
 ---
 
-## 12. 흔한 오류와 해결
+## 흔한 오류와 해결
 
 | 상황 | 원인 | 해결 |
 |------|------|------|
@@ -363,9 +381,10 @@ jobs:
 
 ---
 
-## 13. 실전 템플릿 모음
+## 실전 템플릿 모음
 
-### 13.1 JS + React + Prettier(Flat Config)
+### JS + React + Prettier(Flat Config)
+
 ```js
 // eslint.config.js
 import eslint from '@eslint/js';
@@ -396,7 +415,8 @@ export default [
 ];
 ```
 
-### 13.2 TS + React + Prettier(Flat Config)
+### TS + React + Prettier(Flat Config)
+
 ```js
 // eslint.config.js
 import tsParser from '@typescript-eslint/parser';
@@ -425,7 +445,8 @@ export default [
 ];
 ```
 
-### 13.3 Node 라이브러리(ESM) + Prettier(Flat Config)
+### Node 라이브러리(ESM) + Prettier(Flat Config)
+
 ```js
 // eslint.config.js
 import eslint from '@eslint/js';
@@ -449,7 +470,7 @@ export default [
 
 ---
 
-## 14. 마이그레이션 가이드(요약)
+## 마이그레이션 가이드(요약)
 
 - 기존 `.eslintrc` → 점진적 이전:
   1) Flat Config 파일 `eslint.config.js` 생성
@@ -462,7 +483,7 @@ export default [
 
 ---
 
-## 15. 마무리
+## 마무리
 
 - **ESLint**는 버그/품질, **Prettier**는 포맷. **역할을 분리**하면 충돌 없이 깔끔합니다.
 - 신형 **Flat Config**는 구성 파일을 **표준 JS로 명시**하고, **오버라이드와 모듈화**가 간결합니다.

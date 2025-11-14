@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Razor 문법 **고급편**
 
-## 0. 전략 요약 — 언제 **무엇**을 쓰나?
+## 전략 요약 — 언제 **무엇**을 쓰나?
 
 | 상황 | 권장 도구 | 이유 |
 |---|---|---|
@@ -18,9 +18,10 @@ category: AspNet
 
 ---
 
-## 1. View 내부 **Custom Helper** (경량/한 파일 한정)
+## View 내부 **Custom Helper** (경량/한 파일 한정)
 
-### 1.1 `@functions`로 간단 헬퍼
+### `@functions`로 간단 헬퍼
+
 ```razor
 @functions {
     public string FormatCurrency(decimal amount)
@@ -37,15 +38,17 @@ category: AspNet
 - **장점**: 가장 빠르고 간단.
 - **제한**: 현재 `.cshtml` 파일에서만 재사용. 로직이 커지면 분리 권장.
 
-### 1.2 Razor Pages의 `@functions` vs MVC `@section`
+### Razor Pages의 `@functions` vs MVC `@section`
+
 - `@functions`는 **C# 멤버**를 정의(메서드/필드).
 - *크게 복잡하면* **ViewModel/Service**로 승격 후 주입(테스트성↑).
 
 ---
 
-## 2. 재사용을 **전역화**: HtmlHelper 확장 메서드
+## 재사용을 **전역화**: HtmlHelper 확장 메서드
 
-### 2.1 `IHtmlHelper` 확장 (전역 재사용)
+### `IHtmlHelper` 확장 (전역 재사용)
+
 ```csharp
 // /Infrastructure/HtmlHelperExtensions.cs
 using Microsoft.AspNetCore.Html;
@@ -79,9 +82,10 @@ public static class HtmlHelperExtensions
 
 ---
 
-## 3. **Partial View** — 뷰 조각 재사용
+## **Partial View** — 뷰 조각 재사용
 
-### 3.1 기본
+### 기본
+
 ```razor
 @* Views/Shared/_ProductCard.cshtml *@
 @model Product
@@ -104,15 +108,17 @@ public static class HtmlHelperExtensions
 - **장점**: 빠르고 쉬움.
 - **주의**: 데이터/DI/로깅 등 로직이 커지면 **ViewComponent**로 이동.
 
-### 3.2 Partial vs Section
+### Partial vs Section
+
 - **Partial**: UI 조각 자체.
 - **Section**: 레이아웃이 `@RenderSection`으로 **슬롯** 제공 → 각 뷰가 채움.
 
 ---
 
-## 4. **ViewComponent** — DI·로직·테스트 가능한 컴포넌트
+## **ViewComponent** — DI·로직·테스트 가능한 컴포넌트
 
-### 4.1 예제: 장바구니 요약
+### 예제: 장바구니 요약
+
 ```csharp
 // /ViewComponents/CartSummaryViewComponent.cs
 using Microsoft.AspNetCore.Mvc;
@@ -149,11 +155,12 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 5. **Custom Tag Helper** — HTML 친화 DSL
+## **Custom Tag Helper** — HTML 친화 DSL
 
 > 속성/마크업 레벨에서 재사용/규칙을 강제하고 싶을 때.
 
-### 5.1 조건 클래스 자동 부여 Tag Helper
+### 조건 클래스 자동 부여 Tag Helper
+
 ```csharp
 // /TagHelpers/WhenClassTagHelper.cs
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -189,7 +196,8 @@ public class WhenClassTagHelper : TagHelper
 
 - **효과**: 조건 로직을 **HTML 속성**으로 승격 → 뷰 가독성↑, 중복↓.
 
-### 5.2 출력 자체를 억제 (`SuppressOutput`)
+### 출력 자체를 억제 (`SuppressOutput`)
+
 ```csharp
 [HtmlTargetElement("if-claims")]
 public class IfClaimsTagHelper : TagHelper
@@ -214,7 +222,8 @@ public class IfClaimsTagHelper : TagHelper
 
 - **장점**: 권한/상태 조건부 렌더링을 마크업에서 선언적으로.
 
-### 5.3 자주 쓰는 패턴
+### 자주 쓰는 패턴
+
 - **데이터 포맷**(예: 통화/날짜) → `<span money-for="Model.Price">…`
 - **국제화** → `<loc key="Welcome" />` (IStringLocalizer 래핑)
 - **Feature Flag** → `<feature name="NewHeader">…`
@@ -223,15 +232,17 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 6. 조건부 HTML 생성 — 깨끗한 패턴
+## 조건부 HTML 생성 — 깨끗한 패턴
 
-### 6.1 클래스/속성 조건
+### 클래스/속성 조건
+
 ```razor
 <button class="btn @(Model.Enabled ? "btn-primary" : "btn-outline-secondary")"
         disabled="@(Model.Enabled ? null : "disabled")">저장</button>
 ```
 
-### 6.2 빌더 패턴으로 속성 합성(뷰 내부)
+### 빌더 패턴으로 속성 합성(뷰 내부)
+
 ```razor
 @{
     var css = new List<string> {"card"};
@@ -241,7 +252,8 @@ public class IfClaimsTagHelper : TagHelper
 <div class="@cls">내용</div>
 ```
 
-### 6.3 HTML 청크를 조건 조립
+### HTML 청크를 조건 조립
+
 ```razor
 @{
     IHtmlContentBuilder b = new HtmlContentBuilder();
@@ -258,14 +270,16 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 7. 성능 & 보안 **핵심 체크리스트**
+## 성능 & 보안 **핵심 체크리스트**
 
-### 7.1 성능
+### 성능
+
 - **부분 뷰 남발** 주의: 큰 루프 내부의 Partial 렌더링은 비용↑ → ViewComponent/Batch 처리/캐시 고려.
 - **정적 리소스**: `asp-append-version`로 캐시 제어, CDN·HTTP/2, 압축(브로틀리/Gzip).
 - **Razor Runtime Compilation**은 개발용. 운영에서는 **미리 컴파일**(기본) 사용.
 
-### 7.2 보안
+### 보안
+
 - 기본은 **HTML 인코딩**. 임의 HTML은 `Html.Raw`나 `IHtmlContent`로 **의도적** 사용.
 - **Anti-forgery**: form Tag Helper 사용 시 자동 삽입. Ajax면 헤더에 토큰 포함.
 - **출처 데이터 신뢰 금지**: 사용자 입력 포함 조립 시 반드시 인코딩.
@@ -273,9 +287,10 @@ public class IfClaimsTagHelper : TagHelper
 
 ---
 
-## 8. 테스트 전략 (단위/통합)
+## 테스트 전략 (단위/통합)
 
-### 8.1 ViewComponent 단위 테스트
+### ViewComponent 단위 테스트
+
 ```csharp
 public class CartSummaryViewComponentTests
 {
@@ -297,15 +312,17 @@ public class CartSummaryViewComponentTests
 }
 ```
 
-### 8.2 Razor 출력 검증 팁
+### Razor 출력 검증 팁
+
 - **View 없음** 로직은 **ViewModel/Service**로 빼서 테스트.
 - 통합 테스트에서 `WebApplicationFactory`로 **실제 HTML 응답** 검증.
 
 ---
 
-## 9. 국제화(Localization)와 조합
+## 국제화(Localization)와 조합
 
-### 9.1 IStringLocalizer 헬퍼화
+### IStringLocalizer 헬퍼화
+
 ```csharp
 public static class HtmlL10nExtensions
 {
@@ -323,9 +340,10 @@ public static class HtmlL10nExtensions
 
 ---
 
-## 10. 예제 — “조건부 뱃지 · 카드 · 구매 버튼” 컴포넌트 풀셋
+## 예제 — “조건부 뱃지 · 카드 · 구매 버튼” 컴포넌트 풀셋
 
-### 10.1 HtmlHelper 확장(통화/뱃지)
+### HtmlHelper 확장(통화/뱃지)
+
 ```csharp
 public static class UiHelpers
 {
@@ -336,7 +354,8 @@ public static class UiHelpers
 }
 ```
 
-### 10.2 Tag Helper(조건 클래스)
+### Tag Helper(조건 클래스)
+
 ```csharp
 [HtmlTargetElement(Attributes = "if, add-class")]
 public class IfClassTagHelper : TagHelper
@@ -354,7 +373,8 @@ public class IfClassTagHelper : TagHelper
 }
 ```
 
-### 10.3 ViewComponent(재고·혜택 로직)
+### ViewComponent(재고·혜택 로직)
+
 ```csharp
 public class ProductCardViewComponent : ViewComponent
 {
@@ -418,9 +438,10 @@ public class ProductCardVM
 
 ---
 
-## 11. 폼/검증 고급 — 동적 필드 표시, 부분 유효성
+## 폼/검증 고급 — 동적 필드 표시, 부분 유효성
 
-### 11.1 조건부 입력 필드
+### 조건부 입력 필드
+
 ```razor
 @if (Model.IsCompany)
 {
@@ -432,20 +453,21 @@ public class ProductCardVM
 }
 ```
 
-### 11.2 클라이언트 검증(부분 무효화)
+### 클라이언트 검증(부분 무효화)
+
 - 「서버 검증은 항상」, 클라이언트 검증은 **조건부** 스크립트로 제어.
 - 동적 표시/숨김일 때 **ModelState** 정합성 확인.
 
 ---
 
-## 12. 응답 조각 **캐싱**(성능)
+## 응답 조각 **캐싱**(성능)
 
 - Output Caching(.NET 8+) 또는 Response Caching으로 **ViewComponent/Partial** 결과를 캐시.
 - **키 전략**(언어, 인증, 쿼리)에 유의.
 
 ---
 
-## 13. 디자이너/퍼블리셔 협업 팁
+## 디자이너/퍼블리셔 협업 팁
 
 - **Tag Helper**로 “디자인 규칙”을 코드화 → 마크업을 선언적으로.
 - `_ViewImports.cshtml`에 디자이너가 쓸 네임스페이스·TagHelper만 노출.
@@ -453,7 +475,7 @@ public class ProductCardVM
 
 ---
 
-## 14. 안티패턴 🚫
+## 안티패턴 🚫
 
 - **`Html.Raw` 남용**: 사용자 입력 포함시 XSS 위험.
 - **루프 안에서 DB 호출**: 데이터는 컨트롤러/VC에서 **미리 수집**.
@@ -462,7 +484,7 @@ public class ProductCardVM
 
 ---
 
-## 15. 요약
+## 요약
 
 | 주제 | 한 줄 가이드 |
 |---|---|
@@ -477,6 +499,7 @@ public class ProductCardVM
 ---
 
 ### 부록) 수식 표기(블로그용)
+
 ```
 $$
 \text{ScoreBadge}(x) =

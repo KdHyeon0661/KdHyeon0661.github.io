@@ -11,7 +11,7 @@ WPF의 **Command**는 GoF의 **Command 패턴**을 UI에 최적화해 구현한 
 
 ---
 
-## 1. Command 패턴 한눈에 (GoF 관점)
+## Command 패턴 한눈에 (GoF 관점)
 
 - **목표**: “사용자 액션(요청)”을 **객체(커맨드)**로 캡슐화 → 호출자(버튼/단축키)와 수신자(실행 로직) **분리**
 - **효과**: 실행 취소/재실행(undo/redo), 큐잉, 로깅, 권한 제어, 단축키 바인딩 등 **유연성** 확보
@@ -19,9 +19,10 @@ WPF의 **Command**는 GoF의 **Command 패턴**을 UI에 최적화해 구현한 
 
 ---
 
-## 2. WPF 커맨딩 모델 구성요소
+## WPF 커맨딩 모델 구성요소
 
-### 2.1 ICommand (기본)
+### ICommand (기본)
+
 ```csharp
 public interface ICommand {
   event EventHandler CanExecuteChanged;
@@ -32,7 +33,8 @@ public interface ICommand {
 - **CanExecute**=false → 버튼 등 **자동 비활성화**
 - **CanExecuteChanged** 발생 시 UI가 상태를 다시 평가
 
-### 2.2 RoutedCommand / RoutedUICommand (뷰 쪽 전통 패턴)
+### RoutedCommand / RoutedUICommand (뷰 쪽 전통 패턴)
+
 - **RoutedCommand**: 커맨드 실행 요청이 **요소 트리**를 따라 `CommandBinding`이 있는 곳을 찾음
 - **RoutedUICommand**: 표시 문자열·제스처를 추가로 보유
 
@@ -59,7 +61,8 @@ void OnCanExport(object s, CanExecuteRoutedEventArgs e) => e.CanExecute = CanExp
 void OnExport(object s, ExecutedRoutedEventArgs e)      => DoExport();
 ```
 
-### 2.3 InputBindings / CommandTarget
+### InputBindings / CommandTarget
+
 - **InputBindings**: 키/마우스 제스처 → 커맨드 연결 (`KeyBinding`, `MouseBinding`)
 - **CommandTarget**: 커맨드의 **목표 요소** 지정(포커스가 바뀌어도 고정 대상에 실행)
 
@@ -71,11 +74,12 @@ void OnExport(object s, ExecutedRoutedEventArgs e)      => DoExport();
 
 ---
 
-## 3. MVVM에서의 커맨드 (바인딩 중심)
+## MVVM에서의 커맨드 (바인딩 중심)
 
 MVVM에서는 **뷰모델이 ICommand 구현체**(예: `RelayCommand`)를 노출하고, **XAML에서 바인딩**합니다.
 
-### 3.1 ViewModel
+### ViewModel
+
 ```csharp
 public class MainViewModel : INotifyPropertyChanged {
   private string _name = "";
@@ -99,7 +103,8 @@ public class MainViewModel : INotifyPropertyChanged {
 }
 ```
 
-### 3.2 XAML
+### XAML
+
 ```xml
 <Grid>
   <Grid.DataContext>
@@ -128,9 +133,10 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 4. CommandParameter 바인딩 패턴
+## CommandParameter 바인딩 패턴
 
-### 4.1 강타입 파라미터 (RelayCommand\<T\>)
+### 강타입 파라미터 (RelayCommand\<T\>)
+
 ```xml
 <Button Content="삭제"
         Command="{Binding DeleteCommand}"
@@ -138,7 +144,8 @@ public class MainViewModel : INotifyPropertyChanged {
 <ListBox x:Name="OrderList" ItemsSource="{Binding Orders}"/>
 ```
 
-### 4.2 여러 값 전달 (튜플/DTO/MultiBinding)
+### 여러 값 전달 (튜플/DTO/MultiBinding)
+
 ```xml
 <Button Content="이동">
   <Button.CommandParameter>
@@ -151,7 +158,8 @@ public class MainViewModel : INotifyPropertyChanged {
 ```
 > 또는 `RelayCommand<(int id, string name)>`처럼 **튜플**을 직접 사용할 수도 있습니다.
 
-### 4.3 DataTemplate 내부에서 상위 VM 커맨드 호출
+### DataTemplate 내부에서 상위 VM 커맨드 호출
+
 ```xml
 <ListBox ItemsSource="{Binding Orders}">
   <ListBox.ItemTemplate>
@@ -164,7 +172,8 @@ public class MainViewModel : INotifyPropertyChanged {
 </ListBox>
 ```
 
-### 4.4 ContextMenu/Popup(별도 시각 트리)의 Command 바인딩
+### ContextMenu/Popup(별도 시각 트리)의 Command 바인딩
+
 ```xml
 <ListBox x:Name="OrderList" ItemsSource="{Binding Orders}">
   <ListBox.ItemContainerStyle>
@@ -188,7 +197,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 5. RoutedCommand vs MVVM ICommand 비교
+## RoutedCommand vs MVVM ICommand 비교
 
 | 항목 | RoutedCommand (뷰 중심) | ViewModel ICommand (MVVM) |
 |---|---|---|
@@ -203,7 +212,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 6. Event → Command (이벤트를 커맨드로)
+## Event → Command (이벤트를 커맨드로)
 
 버튼 외에도 **아무 이벤트**를 커맨드로 연결하고 싶다면 **Behaviors**를 사용합니다.
 
@@ -223,7 +232,7 @@ public class MainViewModel : INotifyPropertyChanged {
 
 ---
 
-## 7. 비동기 커맨드(Async)와 재진입 방지
+## 비동기 커맨드(Async)와 재진입 방지
 
 긴 작업은 **UI 프리징 방지**와 **중복 실행 차단**이 필요합니다.
 
@@ -243,7 +252,7 @@ LoadCommand = new AsyncRelayCommand(async ct => await LoadAsync(ct), () => !IsBu
 
 ---
 
-## 8. 베스트 프랙티스 & 체크리스트
+## 베스트 프랙티스 & 체크리스트
 
 1. **Click 핸들러 대신 Command**: 테스트/재사용/단축키 연계가 쉬움
 2. **CanExecute 즉시 갱신**: 관련 속성 Setter에서 `RaiseCanExecuteChanged()` 호출
@@ -256,7 +265,7 @@ LoadCommand = new AsyncRelayCommand(async ct => await LoadAsync(ct), () => !IsBu
 
 ---
 
-## 9. 미니 예제 (동작하는 전형 패턴)
+## 미니 예제 (동작하는 전형 패턴)
 
 **ViewModel**
 ```csharp

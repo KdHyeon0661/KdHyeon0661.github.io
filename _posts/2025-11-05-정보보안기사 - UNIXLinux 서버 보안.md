@@ -34,6 +34,7 @@ category: 정보보안기사
 ## 계정/인증 하드닝
 
 ### 정책 적용(요약)
+
 - **비밀번호**: 길이/복잡도/재사용 금지, 만료/경고/유예.
 - **잠금**: 실패 N회 시 잠금/백오프.
 - **sudo**: 명령 단위 허용, 로깅·시간 제한.
@@ -44,16 +45,19 @@ category: 정보보안기사
 apt install -y libpam-pwquality libpam-google-authenticator
 
 # /etc/pam.d/common-password (예시)
+
 password requisite pam_pwquality.so retry=3 minlen=12 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1 remember=5
 
 # /etc/pam.d/common-auth (faillock는 RHEL 계열, Debian은 pam_tally2 또는 외부 사용)
 # RHEL 계열(권장): authselect select sssd with-faillock --force
+
 ```
 
 sudo 최소권한 위임:
 ```bash
 visudo
 # /etc/sudoers.d/webops
+
 %webops ALL=(root) NOPASSWD: /usr/bin/systemctl restart web,/usr/bin/journalctl -u web
 Defaults:%webops timestamp_timeout=5,log_output
 ```
@@ -100,6 +104,7 @@ systemctl reload sshd
 원천지 제한(ufw/firewalld):
 ```bash
 # ufw
+
 ufw default deny incoming
 ufw allow from 10.0.0.0/24 to any port 22 proto tcp
 ufw enable
@@ -139,6 +144,7 @@ systemctl disable --now cups avahi-daemon rpcbind 2>/dev/null || true
 systemd 샌드박스(서비스 격리) — 운영(03편) 확장:
 ```ini
 # /etc/systemd/system/web.service (추가 보안)
+
 [Service]
 NoNewPrivileges=true
 PrivateTmp=true
@@ -172,6 +178,7 @@ systemd-analyze security web.service
 ## 파일시스템/권한 하드닝
 
 ### 마운트 옵션
+
 `/etc/fstab` 예:
 ```text
 /dev/vdb1 /data ext4 defaults,noexec,nodev,nosuid 0 2
@@ -183,20 +190,25 @@ mount -a
 ```
 
 ### SUID/세계 쓰기 점검
+
 ```bash
 # SUID/SGID 바이너리 조사
+
 find / -xdev -perm -4000 -o -perm -2000 -type f -print 2>/dev/null | sort
 
 # 세계 쓰기 디렉터리(Sticky 없는 경우 포함) 조사
+
 find / -xdev -type d -perm -0002 ! -perm -1000 -print 2>/dev/null
 ```
 
 ### Sticky bit(공유 디렉터리)
+
 ```bash
 chmod +t /tmp /var/tmp
 ```
 
 ### Capabilities 활용(특권 최소화)
+
 ```bash
 setcap 'cap_net_bind_service=+ep' /usr/local/bin/web-lite
 getcap /usr/local/bin/web-lite
@@ -250,6 +262,7 @@ firewall-cmd --reload
 `/etc/sysctl.d/99-security.conf`:
 ```conf
 # Anti-spoofing / redirect / source route
+
 net.ipv4.conf.all.rp_filter = 1
 net.ipv4.conf.default.rp_filter = 1
 net.ipv4.conf.all.accept_redirects = 0
@@ -258,15 +271,18 @@ net.ipv6.conf.all.accept_redirects = 0
 net.ipv4.conf.all.send_redirects = 0
 
 # TCP
+
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_timestamps = 1
 net.ipv4.tcp_fin_timeout = 30
 
 # IP forwarding off (기본 서버)
+
 net.ipv4.ip_forward = 0
 net.ipv6.conf.all.forwarding = 0
 
 # 파일 핸들/코어덤프/ASLR
+
 fs.suid_dumpable = 0
 kernel.randomize_va_space = 2
 kernel.kptr_restrict = 2
@@ -305,8 +321,10 @@ systemctl restart systemd-journald
 rsyslog TLS 원격 전송(예):
 ```bash
 # /etc/rsyslog.d/90-remote.conf
+
 *.* @@(o)logs.example.corp:6514
 # (o)=TLS, 인증서 신뢰 구성 필요
+
 systemctl restart rsyslog
 ```
 
@@ -330,14 +348,18 @@ grep -E 'segfault|denied|permission' /var/log/syslog 2>/dev/null | tail
 ```bash
 apt install -y auditd audispd-plugins || dnf install -y audit
 # sudoers/계정 DB
+
 auditctl -w /etc/sudoers -p wa -k sudoers
 auditctl -w /etc/passwd -p wa -k passwd
 auditctl -w /etc/shadow -p wa -k shadow
 # SSH 설정
+
 auditctl -w /etc/ssh/sshd_config -p wa -k sshcfg
 # 서비스·유닛 변경
+
 auditctl -w /etc/systemd/system -p wa -k unitdir
 # setuid 파일 생성/변경 탐지(권장: SCAP 규칙 사용)
+
 auditctl -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat -F a2&~0x1FF=0x0 -k permchange
 ```
 검색:
@@ -365,6 +387,7 @@ apt install -y aide || dnf install -y aide
 aideinit
 mv /var/lib/aide/aide.db.new /var/lib/aide/aide.db
 # 정기 검증(타이머/크론)
+
 aide --check | tee /var/log/aide/latest.txt
 ```
 정책 파일(`/etc/aide/aide.conf`)에서 감시 경로/속성 지정.
@@ -379,11 +402,13 @@ aide --check | tee /var/log/aide/latest.txt
 ## SELinux/AppArmor(LSM) 적용
 
 ### SELinux(RHEL/Alma/Rocky)
+
 상태/모드:
 ```bash
 getenforce
 setenforce 1      # Enforcing (임시)
 # 영구: /etc/selinux/config -> SELINUX=enforcing
+
 ```
 컨텍스트 복구:
 ```bash
@@ -402,6 +427,7 @@ semodule -i mypolicy.pp
 ```
 
 ### AppArmor(Ubuntu/Debian)
+
 상태:
 ```bash
 aa-status
@@ -410,6 +436,7 @@ aa-status
 ```bash
 aa-genprof /usr/sbin/nginx
 # 안내에 따라 허용/거부 학습
+
 ```
 
 체크리스트
@@ -456,6 +483,7 @@ mount /dev/mapper/securedata /secure
 원격 백업(암호화 + 무결성):
 ```bash
 # borg/ restic 권장. 예시는 restic
+
 apt install -y restic
 export RESTIC_REPOSITORY=sftp:backup@backup.example:/backups/server1
 export RESTIC_PASSWORD=...

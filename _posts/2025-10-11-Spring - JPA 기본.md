@@ -4,7 +4,8 @@ title: Spring - JPA 기본
 date: 2025-10-11 22:25:23 +0900
 category: Spring
 ---
-# 4. 데이터 접근 I — JPA 기본
+# 데이터 접근 I — JPA 기본
+
 > 영속성 컨텍스트/엔티티·값 타입/연관관계, 지연·즉시 로딩과 N+1/캐시, 트랜잭션 전파·격리·롤백을 **실행 가능한 예제**와 함께 정리한다.
 > 환경 가정: Spring Boot 3.3+, Hibernate ORM 6.x, Java 21, Gradle, PostgreSQL 16 (RDB 특성은 DB마다 조금씩 다를 수 있음).
 
@@ -13,10 +14,12 @@ category: Spring
 ## A. 영속성 컨텍스트(Persistence Context)
 
 ### A-1. 개념
+
 - **영속성 컨텍스트** = 엔티티 인스턴스를 **1차 캐시(Identity Map)**에 저장하고 **변경 감지(Dirty Checking)**를 통해 트랜잭션 종료 시점(or flush 시점)에 DB와 동기화하는 **세션 범위의 컨텍스트**.
 - 단일 트랜잭션 동안 같은 `@Id`(PK)를 가진 엔티티는 **동일한 자바 객체**(동일성 `==`)를 반환한다.
 
 ### A-2. 상태 전이(State Transition)
+
 1) **비영속(new/transient)**: 컨텍스트와 무관한 새 객체
 2) **영속(managed)**: 컨텍스트가 관리(1차 캐시에 등록)
 3) **준영속(detached)**: 컨텍스트에서 떨어진 상태(더 이상 변경 감지 X)
@@ -31,6 +34,7 @@ em.remove(m2);               // 삭제 예약 (flush 시 DELETE)
 ```
 
 ### A-3. 1차 캐시, 동일성 보장, 쓰기 지연(Transactional Write-Behind)
+
 - **1차 캐시**: 동일 트랜잭션에서 같은 엔티티를 조회할 때 **조회 쿼리 최소화** + **동일 객체 보장**.
 - **쓰기 지연**: `persist()` 시점에는 즉시 INSERT를 날리지 않고, **flush**에서 SQL 배치로 한 번에 보냄(성능 ↑).
 - **Flush 트리거**:
@@ -46,6 +50,7 @@ assert m1 == m2; // true (동일성 보장)
 ```
 
 ### A-4. 변경 감지(Dirty Checking)와 Flush
+
 - 영속 엔티티의 필드 변경 → Flush 시점에 **변경된 필드만 UPDATE**.
 - 하이버네이트는 스냅샷을 보관하여 변경 여부를 판단.
 
@@ -64,10 +69,12 @@ m.changeName("Alice");   // setter or 도메인 메서드
 ## B. 엔티티/값 타입
 
 ### B-1. 엔티티 vs 값 타입
+
 - **엔티티**: 식별자(@Id)로 구분되는 **생명주기**가 있는 객체. 독립적으로 저장/삭제.
 - **값 타입(Value Type)**: **식별자 없음**, 불변(권장), **소유자 엔티티에 종속**. JPA에서는 `@Embeddable`로 표현.
 
 ### B-2. 값 타입(임베디드)
+
 ```java
 // B-2-1) 값 타입 정의
 @Embeddable
@@ -90,6 +97,7 @@ public class Member {
 - **불변성**: 값 타입은 가급적 **불변 객체**로 설계(`record` 적합). 변경은 **새 인스턴스 교체**로.
 
 ### B-3. 컬렉션 값 타입(권장X, 대안 제시)
+
 - JPA의 `@ElementCollection`은 별도 테이블에 **소유자 PK + 값**으로 저장한다.
 - 변경 추적/삭제 전략이 까다롭고, 실무에서는 **엔티티**로 승격하는 편이 안정적.
 
@@ -103,6 +111,7 @@ private Set<String> tags = new HashSet<>();
 > **실무 팁**: 태그/속성 같은 값 모음은 **별도 엔티티**(ex. `MemberTag`)로 승격해 PK/인덱스/감사 등을 확보하자.
 
 ### B-4. 열거형(ENUM)
+
 - `@Enumerated(EnumType.STRING)`을 권장: **ORDINAL(숫자)**는 변경·삽입 시 의미 붕괴 위험.
 
 ```java
@@ -117,11 +126,13 @@ private OrderStatus status;
 ## C. 연관관계 매핑
 
 ### C-1. 방향과 소유
+
 - **단방향** vs **양방향**: JPA는 **객체 그래프**와 **테이블 관계**를 매핑해야 한다.
 - **연관관계의 주인(owning side)**: 외래키를 가진 쪽(일반적으로 `@ManyToOne`)이 주인.
 - 양방향에서는 **주인만이 외래키를 관리**한다(`mappedBy`는 읽기 전용).
 
 ### C-2. 다대일(N:1) — 가장 흔함
+
 ```java
 @Entity
 class Order {
@@ -158,6 +169,7 @@ public void addOrder(Order o){
 ```
 
 ### C-3. 일대일(1:1)
+
 - 외래키를 어느 테이블에 둘지 **업무 특성**에 맞게 결정.
 - JPA는 LAZY 프록시 최적화가 까다롭다(하이버네이트는 대체 프록시 전략 사용).
 
@@ -176,10 +188,12 @@ class MemberProfile {
 ```
 
 ### C-4. 일대다(1:N) 단방향 (권장X)
+
 - `@OneToMany` 단방향은 **조인 테이블** or **업데이트 2번** 발생으로 비효율적.
 - 가능하면 **다대일 양방향**으로 모델링.
 
 ### C-5. 다대다(M:N) (권장X, 조인 엔티티 권장)
+
 - 순수 `@ManyToMany`는 **추가 컬럼**(수량/가격/상태)이 필요해지면 곧 **파괴**됨.
 - **조인 엔티티**(예: `OrderItem`)로 **명시적** 매핑.
 
@@ -200,6 +214,7 @@ class OrderItem {
 ```
 
 ### C-6. 고아 객체 제거 & Cascade
+
 - `orphanRemoval = true`: 컬렉션에서 제거되면 DB에서 **DELETE**.
 - `cascade = CascadeType.ALL`: 부모 영속/삭제에 자식도 전이.
   - **주의**: 생명주기 동일한 **Aggregate 내부**에서만 사용(DDD 관점).
@@ -209,6 +224,7 @@ class OrderItem {
 ## D. 지연 로딩(LAZY) / 즉시 로딩(EAGER), N+1, 페치 전략
 
 ### D-1. LAZY vs EAGER
+
 - **LAZY**: 연관 엔티티를 **프록시**로 두고 실제 접근 시 쿼리 실행(권장 기본값).
 - **EAGER**: 엔티티 조회 시 연관 엔티티도 즉시 로딩(예상치 못한 쿼리 폭발/N+1).
 
@@ -220,6 +236,7 @@ private Member member;
 > **규칙**: 모든 연관은 **LAZY**로 시작하고, 조회 케이스별 **Fetch Join/EntityGraph**로 필요한 것만 묶어 가져온다.
 
 ### D-2. N+1 문제
+
 - **설명**: 루트 엔티티 **N건 조회** + 각 엔티티의 연관을 개별 조회 → 총 1+N 쿼리.
 - **발생 패턴**: 컬렉션/연관을 **루프에서 접근**할 때.
 
@@ -233,6 +250,7 @@ for (Order o : orders) {
 ```
 
 ### D-3. 해결 전략
+
 1) **Fetch Join**(JPQL)
 ```java
 List<Order> orders = em.createQuery(
@@ -275,10 +293,12 @@ List<OrderView> list = em.createQuery(
 ## E. 캐시 기초 — 1차 캐시 / 2차 캐시 / 쿼리 캐시
 
 ### E-1. 1차 캐시(영속성 컨텍스트)
+
 - 트랜잭션 범위에서 **동일성 보장**, 반복 조회 최적화.
 - flush 전까지 같은 엔티티 재조회 시 **쿼리 없이 반환**.
 
 ### E-2. 2차 캐시(세션팩토리 레벨, 선택)
+
 - **엔티티 캐시**: 읽기 빈도 높고 변경 적은 엔티티에 적합(코드표/권역 데이터 등).
 - **캐시 전략**(Hibernate): `READ_ONLY`, `NONSTRICT_READ_WRITE`, `READ_WRITE`, `TRANSACTIONAL`
 - 활성화(예: Ehcache, Caffeine, Infinispan 연동)
@@ -300,6 +320,7 @@ class Region { @Id Long id; String name; }
 ```
 
 ### E-3. 쿼리 캐시(주의)
+
 - **입력 파라미터 + 쿼리 문자열** 기반 캐시.
 - 트랜잭션 격리/동기화가 어렵고, 실무에서는 **2차 캐시 + 애플리케이션 캐시(Redis 등)**를 선호.
 
@@ -316,6 +337,7 @@ List<Region> r = em.createQuery("select r from Region r", Region.class)
 ## F. 트랜잭션: 전파(Propagation), 격리(Isolation), 롤백
 
 ### F-1. ACID와 스프링 트랜잭션 추상화
+
 - **ACID**: Atomicity, Consistency, Isolation, Durability
 - 스프링은 `@Transactional`로 **플랫폼 트랜잭션 매니저**를 감싸 RDB/JPA/메시징 등 일관된 프로그래밍 모델 제공.
 
@@ -331,6 +353,7 @@ public class OrderService {
 ```
 
 ### F-2. 전파(Propagation)
+
 - **REQUIRED(기본)**: 트랜잭션 있으면 참여, 없으면 새로 시작.
 - **REQUIRES_NEW**: **항상 새 트랜잭션**(기존 트랜잭션 **일시 중단**, 별도 커밋/롤백).
 - **MANDATORY**: 반드시 기존 트랜잭션 필요(없으면 예외).
@@ -347,6 +370,7 @@ public void audit(AuditLog log) { auditRepo.save(log); }
 > **패턴**: 본거래 실패 시에도 **감사 로그는 남겨야** 하면 `REQUIRES_NEW`로 분리.
 
 ### F-3. 격리 수준(Isolation)
+
 - **DEFAULT**: 드라이버/DB 기본(보통 READ COMMITTED)
 - **READ_UNCOMMITTED**: Dirty Read 허용(권장X)
 - **READ_COMMITTED**: **커밋된 데이터만** 읽음(가장 많이 사용, PostgreSQL 기본)
@@ -361,6 +385,7 @@ public void doWork() { /* ... */ }
 > **DB 차이**: PostgreSQL은 REPEATABLE READ가 **스냅샷 격리**. MySQL(InnoDB)의 REPEATABLE READ는 Phantom Read 방지 여부/락 동작이 다르니 주의.
 
 ### F-4. 롤백 전략
+
 - 기본: **런타임 예외(언체크)** 발생 시 롤백, **체크 예외**는 커밋.
 - 조정: `rollbackFor`, `noRollbackFor`
 
@@ -372,6 +397,7 @@ public void process() throws IOException { /* ... */ }
 - **읽기 전용 최적화**: `@Transactional(readOnly = true)` → 플러시 최적화/힌트(드라이버 의존)
 
 ### F-5. 트랜잭션 경계와 LAZY
+
 - **서비스 계층**에서 트랜잭션 시작/종료.
 - 컨트롤러에서 **LAZY 필드 접근** 시 이미 트랜잭션이 끝나면 `LazyInitializationException`.
 - 해결: 서비스 계층에서 DTO로 변환 후 반환(또는 OSIV 정책 고려하되 **권장X**).
@@ -419,6 +445,7 @@ class AuditService {
 ## G. 실전 예제 — “주문 도메인”으로 종합
 
 ### G-1. 모델
+
 - `Member(1) - (N) Order`
 - `Order(1) - (N) OrderItem`
 - `OrderItem(N) - (1) Product`
@@ -485,6 +512,7 @@ class OrderItem {
 ```
 
 ### G-2. 리포지토리 + N+1 케이스
+
 ```java
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
@@ -530,6 +558,7 @@ public record OrderView(Long id, String memberName, long total){}
 > `listOptimized()`는 한 번의 **join fetch**로 `member`까지 로딩.
 
 ### G-3. 배치 페치 사이즈로 컬렉션 최적화
+
 ```yaml
 spring:
   jpa:
@@ -543,6 +572,7 @@ spring:
 ## H. 테스트 전략 — 슬라이스/통합 + 고립된 트랜잭션
 
 ### H-1. `@DataJpaTest`로 JPA 슬라이스
+
 ```java
 @DataJpaTest
 class OrderRepositoryTest {
@@ -560,6 +590,7 @@ class OrderRepositoryTest {
 ```
 
 ### H-2. Testcontainers로 실DB 통합
+
 ```java
 @SpringBootTest
 @Testcontainers
@@ -590,28 +621,33 @@ class TxIsolationTest {
 ## I. 운영 체크리스트 & 베스트 프랙티스
 
 ### I-1. 매핑/모델링
+
 - [ ] **모든 연관 LAZY** 기본.
 - [ ] **다대다 금지** → 조인 엔티티로 모델링.
 - [ ] 값 타입(`@Embeddable`)은 **불변**으로.
 - [ ] `equals/hashCode`는 **식별자 불변성** 고려(영속 전/후 주의).
 
 ### I-2. 쿼리/성능
+
 - [ ] 조회 API는 **fetch join/EntityGraph/DTO**로 N+1 차단.
 - [ ] **배치 페치 사이즈** 활용.
 - [ ] 페이징 + 컬렉션 fetch join은 지양(필요 시 **두 번 조회** 또는 서브쿼리 패턴).
 
 ### I-3. 트랜잭션
+
 - [ ] 서비스 계층에서 **경계를 명확히** (`@Transactional`).
 - [ ] 복잡한 시나리오는 **REQUIRES_NEW**로 분리(감사/알림).
 - [ ] 읽기는 `readOnly=true`.
 - [ ] **OSIV 비활성** 시(권장) 컨트롤러에서 LAZY 접근 금지 → DTO 변환을 서비스에서.
 
 ### I-4. 캐시
+
 - [ ] 2차 캐시는 **정적 데이터**에 한정.
 - [ ] 일반 데이터 캐시는 **Spring Cache + Redis**로.
 - [ ] 캐시 무효화 시나리오(동시성/일관성) 문서화.
 
 ### I-5. 장애/데드락
+
 - [ ] **락 타임아웃/재시도** 설계(낙관적 락 버전 필드, 비관적 락 시 대기 제한).
 - [ ] 트랜잭션 시간 최소화(외부 호출 포함 금지).
 

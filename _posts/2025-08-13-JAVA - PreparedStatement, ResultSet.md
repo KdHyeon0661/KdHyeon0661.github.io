@@ -6,7 +6,7 @@ category: Java
 ---
 # PreparedStatement, ResultSet / 트랜잭션 처리
 
-## 0. 빠른 준비 — 커넥션/리소스 관리 기본 틀
+## 빠른 준비 — 커넥션/리소스 관리 기본 틀
 
 가장 안전한 **try-with-resources** 패턴:
 
@@ -38,14 +38,15 @@ try (Connection conn = ds.getConnection()) {
 
 ---
 
-## 1. PreparedStatement — 파라미터 바인딩/재사용/배치
+## PreparedStatement — 파라미터 바인딩/재사용/배치
 
-### 1.1 개념 & 장점
+### 개념 & 장점
+
 - `?` **자리표시자**로 값과 SQL을 분리 → **SQL 인젝션** 방지
 - 동일 SQL을 **재사용**할 때 파싱/플랜 캐시 **히트**
 - JDBC 타입 ↔ DB 타입 **변환 책임**을 드라이버에 위임
 
-### 1.2 기본 사용
+### 기본 사용
 
 ```java
 String sql = """
@@ -69,7 +70,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 }
 ```
 
-### 1.3 바인딩 메서드 필수 정리
+### 바인딩 메서드 필수 정리
 
 | 카테고리 | 대표 메서드 | 메모 |
 |---|---|---|
@@ -81,7 +82,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
 > **TIP**: 원시형 `getXxx`는 NULL 구분이 어려우니, 읽을 때는 **래퍼/`getObject`**를 적절히 활용한다(2.1 참고).
 
-### 1.4 배치(Batch) — 대량 DML 가속
+### 배치(Batch) — 대량 DML 가속
 
 ```java
 String sql = "INSERT INTO users(name, email, status) VALUES(?, ?, ?)";
@@ -105,7 +106,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 - DB/드라이버에 따라 **배치 재작성**(멀티 values) 최적화가 자동으로 적용되기도 함
 - 초대량은 **청크 분할**(`executeBatch()` 주기 조절)로 메모리/락 경합 완화
 
-### 1.5 생성된 키 회수 (AUTO_INCREMENT/시퀀스)
+### 생성된 키 회수 (AUTO_INCREMENT/시퀀스)
 
 ```java
 String sql = "INSERT INTO users(name, email) VALUES(?, ?)";
@@ -125,7 +126,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATE
 
 > 일부 DB는 **배치 + 생성키**를 동시에 제한한다. 드라이버 릴리즈 노트 확인.
 
-### 1.6 동적 IN 절 유틸 (가독성 개선)
+### 동적 IN 절 유틸 (가독성 개선)
 
 ```java
 static class SqlWithParams {
@@ -148,16 +149,17 @@ try (PreparedStatement ps = conn.prepareStatement(built.sql)) {
 }
 ```
 
-### 1.7 (선택) 특수 타입 매핑 힌트
+### (선택) 특수 타입 매핑 힌트
+
 - **PostgreSQL 배열**: `ps.setArray(idx, conn.createArrayOf("text", arr))`
 - **JSON**(PG): `ps.setObject(idx, "{\"k\":\"v\"}", java.sql.Types.OTHER)`
 - **ENUM**: 문자열로 저장/매핑하거나 DB ENUM과 1:1 매핑(드라이버별 지원 확인)
 
 ---
 
-## 2. ResultSet — 안전한 읽기/스트리밍/커서 제어
+## ResultSet — 안전한 읽기/스트리밍/커서 제어
 
-### 2.1 안전한 읽기 패턴(NUll 처리)
+### 안전한 읽기 패턴(NUll 처리)
 
 ```java
 try (ResultSet rs = ps.executeQuery()) {
@@ -173,7 +175,7 @@ try (ResultSet rs = ps.executeQuery()) {
 - `getXxx(1)`처럼 **인덱스 기반**은 빠르지만 컬럼 순서 변경에 취약 → 가능하면 **컬럼명 기반** 권장
 - 대용량 BLOB/CLOB은 `getBinaryStream`/`getCharacterStream`으로 스트리밍
 
-### 2.2 커서 타입/동시성/홀더빌리티
+### 커서 타입/동시성/홀더빌리티
 
 ```java
 try (PreparedStatement ps = conn.prepareStatement(
@@ -195,7 +197,7 @@ try (PreparedStatement ps = conn.prepareStatement(
 | `TYPE_SCROLL_SENSITIVE` | 변경 반영 | 지원 드묾 |
 | `CONCUR_UPDATABLE` | 결과 셋에서 `updateRow()` | 제약 多, 신중히 사용 |
 
-### 2.3 페치 사이즈/스트리밍
+### 페치 사이즈/스트리밍
 
 ```java
 ps.setFetchSize(500);   // 네트워크 왕복/메모리 균형점 찾기
@@ -209,7 +211,7 @@ ps.setFetchSize(500);   // 네트워크 왕복/메모리 균형점 찾기
 
 > **주의**: 스트리밍 시 커서를 닫기 전에 **ResultSet을 끝까지 소모**하거나 명시적으로 `close()` 하자. (풀링 커넥션의 리소스 누수 방지)
 
-### 2.4 메타데이터 기반 매핑(가벼운 RowMapper)
+### 메타데이터 기반 매핑(가벼운 RowMapper)
 
 ```java
 static Map<String, Object> rowToMap(ResultSet rs) throws SQLException {
@@ -225,9 +227,9 @@ static Map<String, Object> rowToMap(ResultSet rs) throws SQLException {
 
 ---
 
-## 3. 트랜잭션 — 경계·격리·복구
+## 트랜잭션 — 경계·격리·복구
 
-### 3.1 기본 경계
+### 기본 경계
 
 ```java
 boolean old = conn.getAutoCommit();
@@ -246,7 +248,7 @@ try {
 - **짧고 명확한 범위**로 유지 (락 경합/타임아웃 최소화)
 - `conn.setReadOnly(true)`는 옵티마이저 힌트로 작동하는 DB도 있다(선택)
 
-### 3.2 격리 수준과 현상
+### 격리 수준과 현상
 
 ```java
 conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -261,7 +263,7 @@ conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
 
 > 실제 의미/기본값은 DBMS마다 조금씩 다르다. **요구 수준**과 **성능 비용**을 함께 고려하자.
 
-### 3.3 세이브포인트 — 부분 롤백
+### 세이브포인트 — 부분 롤백
 
 ```java
 conn.setAutoCommit(false);
@@ -280,7 +282,7 @@ try {
 }
 ```
 
-### 3.4 잠금/동시성 — `SELECT ... FOR UPDATE` 등
+### 잠금/동시성 — `SELECT ... FOR UPDATE` 등
 
 ```sql
 -- 행 잠금 예
@@ -290,7 +292,7 @@ SELECT * FROM accounts WHERE id = ? FOR UPDATE;
 - 큐 처리에선 `FOR UPDATE SKIP LOCKED`(지원 DB 한정)로 **경합 완화**
 - 인덱스 순서/범위를 사용해 **락 순서**를 일관되게 가져가면 교착상태 감소
 
-### 3.5 실패 분류 & 재시도(Deadlock/Serialization)
+### 실패 분류 & 재시도(Deadlock/Serialization)
 
 ```java
 static boolean isRetryable(SQLException e) {
@@ -326,13 +328,14 @@ static boolean isRetryable(SQLException e) {
 
 > **주의**: **비멱등(POST-like) 작업**은 재시도 시 **중복 처리 방지 키**(idempotency key)나 **고유 제약**을 결합하자.
 
-### 3.6 분산 트랜잭션이 필요하다면
+### 분산 트랜잭션이 필요하다면
+
 - 서로 다른 DB/서비스를 하나의 트랜잭션으로 묶으려면 **XA/JTA** 같은 **분산 트랜잭션** 기술이 필요
 - 가능하면 **사건 저장/보상 트랜잭션**(Saga) 등 **비동기/파편화** 패턴 고려
 
 ---
 
-## 4. 실전 레포지토리 — 조회/삽입/배치/트랜잭션
+## 실전 레포지토리 — 조회/삽입/배치/트랜잭션
 
 ```java
 public record User(long id, String name, String email, String status) {}
@@ -449,7 +452,7 @@ public final class UserService {
 
 ---
 
-## 5. 시간 제한/취소/연결 문제 — 운영 팁
+## 시간 제한/취소/연결 문제 — 운영 팁
 
 - **문 레벨**: `ps.setQueryTimeout(seconds)` — 드라이버/DB에 따라 **서버/클라이언트 중 어느 쪽에서** 시간 제한이 적용되는지 다름
 - **소켓 레벨**: 드라이버 연결 문자열의 `socketTimeout`/`loginTimeout` 등의 **전송 계층** 타임아웃
@@ -461,7 +464,7 @@ public final class UserService {
 
 ---
 
-## 6. 커넥션 풀(DataSource) 스니펫 (HikariCP 예)
+## 커넥션 풀(DataSource) 스니펫 (HikariCP 예)
 
 ```java
 import com.zaxxer.hikari.HikariConfig;
@@ -483,7 +486,7 @@ DataSource ds = new HikariDataSource(cfg);
 
 ---
 
-## 7. 성능/안정성 체크리스트
+## 성능/안정성 체크리스트
 
 - **안전성**
   - [ ] 문자열 연결 금지 → **PreparedStatement** 필수
@@ -507,7 +510,7 @@ DataSource ds = new HikariDataSource(cfg);
 
 ---
 
-## 8. (부록) 문제 재현/테스트 팁
+## (부록) 문제 재현/테스트 팁
 
 - **단위 테스트**: JDBC 호출을 인터페이스로 추상화 후 **Fake/Mock** 주입
 - **통합 테스트**: Testcontainers로 DB 띄우고 실제 JDBC 실행

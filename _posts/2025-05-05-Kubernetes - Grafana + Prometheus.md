@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Grafana + Prometheus로 Kubernetes 모니터링 구축하기
 
-## 1. 아키텍처 개요
+## 아키텍처 개요
 
 ```
 +-------------------+       +-----------------------+       +----------------+
@@ -27,9 +27,9 @@ category: Kubernetes
 
 ---
 
-## 2. 설치 방법 — Helm (권장)
+## 설치 방법 — Helm (권장)
 
-### 2.1 리포지토리 추가
+### 리포지토리 추가
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
@@ -37,7 +37,7 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 ```
 
-### 2.2 kube-prometheus-stack 설치
+### kube-prometheus-stack 설치
 
 ```bash
 helm install prometheus prometheus-community/kube-prometheus-stack \
@@ -58,19 +58,21 @@ kubectl get svc  -n monitoring
 
 ---
 
-## 3. 기본 접속
+## 기본 접속
 
-### 3.1 Grafana 접근
+### Grafana 접근
 
 ```bash
 kubectl port-forward svc/prometheus-grafana -n monitoring 3000:80
 # 브라우저에서 http://localhost:3000
+
 ```
 
 기본 계정:
 
 ```bash
 # 초기 암호 확인
+
 kubectl get secret prometheus-grafana -n monitoring \
   -o jsonpath="{.data.admin-password}" | base64 -d; echo
 ```
@@ -78,21 +80,23 @@ kubectl get secret prometheus-grafana -n monitoring \
 ID: `admin`
 PW: 위 명령어 결과
 
-### 3.2 Prometheus UI
+### Prometheus UI
 
 ```bash
 kubectl port-forward svc/prometheus-kube-prometheus-prometheus -n monitoring 9090:9090
 # http://localhost:9090
+
 ```
 
 ---
 
-## 4. 값 커스터마이징(설치/업그레이드)
+## 값 커스터마이징(설치/업그레이드)
 
 실전에서는 리텐션/퍼시스턴스/리소스/보안 등을 조정해야 한다. 예시 values:
 
 ```yaml
 # values-monitoring.yaml (발췌)
+
 grafana:
   adminPassword: "change-me"
   service:
@@ -142,14 +146,15 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
 
 ---
 
-## 5. ServiceMonitor / PodMonitor 로 커스텀 앱 수집
+## ServiceMonitor / PodMonitor 로 커스텀 앱 수집
 
-### 5.1 앱이 `/metrics` 노출
+### 앱이 `/metrics` 노출
 
 예: Flask
 
 ```python
 # app.py
+
 from flask import Flask, Response
 from prometheus_client import Counter, generate_latest
 
@@ -184,7 +189,7 @@ spec:
       targetPort: 8080
 ```
 
-### 5.2 ServiceMonitor 정의
+### ServiceMonitor 정의
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -208,7 +213,7 @@ spec:
 
 - `release: prometheus` 라벨은 kube-prometheus-stack이 생성한 Prometheus 리소스가 자신이 감시할 ServiceMonitor를 **라벨 셀렉터로 선택**하기 위해 필요하다(차트 기본값 기준).
 
-### 5.3 PodMonitor(사이드카/헤드리스 등 상황)
+### PodMonitor(사이드카/헤드리스 등 상황)
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -231,21 +236,25 @@ spec:
 
 ---
 
-## 6. PromQL 실전 쿼리
+## PromQL 실전 쿼리
 
 노드/컨테이너/클러스터 기초:
 
 ```promql
 # 컨테이너 CPU 사용률(초당)
+
 rate(container_cpu_usage_seconds_total{container!=""}[5m])
 
 # 컨테이너 메모리 사용량
+
 container_memory_usage_bytes{container!=""}
 
 # Pod 재시작 수
+
 kube_pod_container_status_restarts_total
 
 # 노드 CPU Idle 비율
+
 avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m]))
 ```
 
@@ -269,6 +278,7 @@ sum by (namespace) (
 
 ```promql
 # CPU 사용률(%): 사용/요청
+
 100 * sum by (namespace) (
   rate(container_cpu_usage_seconds_total{container!="",pod!=""}[5m])
 )
@@ -280,7 +290,7 @@ sum by (namespace) (
 
 ---
 
-## 7. Recording Rules로 비용 절감 및 성능 향상
+## Recording Rules로 비용 절감 및 성능 향상
 
 반복 계산되는 무거운 PromQL은 **Recording Rule**로 미리 계산해 저장한다.
 
@@ -306,9 +316,9 @@ spec:
 
 ---
 
-## 8. Alerting — PrometheusRule + Alertmanager
+## Alerting — PrometheusRule + Alertmanager
 
-### 8.1 경보 예시: 노드 CPU 고사용
+### 경보 예시: 노드 CPU 고사용
 
 {% raw %}
 ```yaml
@@ -333,25 +343,27 @@ spec:
 ```
 {% endraw %}
 
-### 8.2 Alertmanager 라우팅(예: Slack)
+### Alertmanager 라우팅(예: Slack)
 
 values에서 Alertmanager 설정을 오버라이드하거나 `Secret`로 구성:
 - 라우팅 트리, 경보 묶음, 재알림 간격, 수신자(Webhook/Slack/Email) 설정
 
 ---
 
-## 9. Grafana — 대시보드 가져오기/프로비저닝
+## Grafana — 대시보드 가져오기/프로비저닝
 
-### 9.1 UI에서 임포트
+### UI에서 임포트
+
 - grafana.com 대시보드 ID로 Import
 - Kubernetes/Node/Pod/Cluster/etcd/Network 등 풍부한 카탈로그 활용
 
-### 9.2 YAML 프로비저닝(권장)
+### YAML 프로비저닝(권장)
 
 데이터소스:
 
 ```yaml
 # values-monitoring.yaml (발췌)
+
 grafana:
   additionalDataSources:
     - name: Prometheus
@@ -369,6 +381,7 @@ grafana:
     default: "grafana-dashboards"
 
 # ConfigMap에 JSON 대시보드 저장
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -386,7 +399,7 @@ data:
 
 ---
 
-## 10. SLO/에러버짓을 위한 수학적 정의
+## SLO/에러버짓을 위한 수학적 정의
 
 가용성 SLO와 에러버짓:
 
@@ -404,7 +417,7 @@ $$
 
 ---
 
-## 11. 보안, RBAC, 네트워크, 비밀 관리
+## 보안, RBAC, 네트워크, 비밀 관리
 
 - **네임스페이스 분리**: `monitoring` 전용
 - **RBAC 최소화**: kube-state-metrics 권한 범위 확인
@@ -415,7 +428,7 @@ $$
 
 ---
 
-## 12. 퍼시스턴스, 리텐션, 리소스/HPA, 비용 최적화
+## 퍼시스턴스, 리텐션, 리소스/HPA, 비용 최적화
 
 - Prometheus TSDB는 IOPS 영향이 크다. SSD/PD-SSD/EBS gp3 등 블록 스토리지 권장
 - `prometheus.prometheusSpec.retention`(기간), `retentionSize`(용량)로 관리 비용 제어
@@ -449,7 +462,7 @@ spec:
 
 ---
 
-## 13. 멀티클러스터/장기보관 — Thanos(요약)
+## 멀티클러스터/장기보관 — Thanos(요약)
 
 - 각 클러스터 Prometheus에 Thanos Sidecar를 붙이고, 오브젝트 스토리지(S3/GCS)에 업로드
 - 중앙에 Thanos Querier로 **수년 단위**의 장기 메트릭 집계/조회
@@ -458,16 +471,16 @@ spec:
 
 ---
 
-## 14. End-to-End 예제 모음
+## End-to-End 예제 모음
 
-### 14.1 커스텀 애플리케이션 지표 + ServiceMonitor + 대시보드
+### 커스텀 애플리케이션 지표 + ServiceMonitor + 대시보드
 
 1) 앱 `/metrics` 노출(언어별 라이브러리)
 2) Service/Deployment에 라벨 추가
 3) ServiceMonitor로 스크랩 선언
 4) Grafana에서 임포트/프로비저닝으로 패널 추가
 
-### 14.2 경보: 네임스페이스별 CPU 사용률 과다
+### 경보: 네임스페이스별 CPU 사용률 과다
 
 {% raw %}
 ```yaml
@@ -497,7 +510,7 @@ spec:
 
 ---
 
-## 15. 운영 트러블슈팅
+## 운영 트러블슈팅
 
 - ServiceMonitor가 안 먹으면:
   - `metadata.labels.release` 가 Prometheus 셀렉터와 일치하는지
@@ -517,30 +530,34 @@ spec:
 
 ---
 
-## 16. 실습 커맨드 모음
+## 실습 커맨드 모음
 
 ```bash
 # 설치
+
 helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
   -n monitoring --create-namespace -f values-monitoring.yaml --atomic --wait
 
 # 기본 포워딩
+
 kubectl port-forward svc/prometheus-grafana -n monitoring 3000:80
 kubectl port-forward svc/prometheus-kube-prometheus-prometheus -n monitoring 9090:9090
 
 # CRDs 리소스 확인
+
 kubectl get servicemonitors.monitoring.coreos.com -A
 kubectl get podmonitors.monitoring.coreos.com -A
 kubectl get prometheusrules.monitoring.coreos.com -A
 
 # 룰/알람 디버깅
+
 kubectl -n monitoring exec -it deploy/prometheus-kube-prometheus-operator -- \
   sh -c 'curl -s localhost:8080/metrics | head -n 20'
 ```
 
 ---
 
-## 17. 예제 대시보드 패널 PromQL 레시피
+## 예제 대시보드 패널 PromQL 레시피
 
 - 노드별 CPU 사용률(%):
 
@@ -569,7 +586,7 @@ sum by (namespace) (container_memory_working_set_bytes{container!=""}) / 1024^3
 
 ---
 
-## 18. 참고 구조: Blackbox Exporter(HTTP 핑)
+## 참고 구조: Blackbox Exporter(HTTP 핑)
 
 외부 엔드포인트 가용성도 Prometheus에 수집:
 
@@ -613,7 +630,7 @@ spec:
 
 ---
 
-## 19. 결론
+## 결론
 
 - **kube-prometheus-stack**으로 빠르게 통합 모니터링 스택을 올리고,
 - **ServiceMonitor/PodMonitor/PrometheusRule**로 지표·경보를 선언적으로 관리하며,

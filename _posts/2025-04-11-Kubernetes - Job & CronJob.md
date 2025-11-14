@@ -6,14 +6,16 @@ category: Kubernetes
 ---
 # Kubernetes 핵심 오브젝트 이해하기
 
-## 1. Job — 일회성 작업을 “성공 개수”로 보장
+## Job — 일회성 작업을 “성공 개수”로 보장
 
-### 1.1 기본 개념(정확히 이해하기)
+### 기본 개념(정확히 이해하기)
+
 - **Job = “성공한 Pod 수를 목표치까지 만들면 종료”**
   실패한 Pod는 `backoffLimit` 한도 내에서 **새 Pod로 재시도**한다.
 - 완료된 Job은 **상태(완료/실패)와 Pod 이력**이 남는다(자동 정리 옵션: `ttlSecondsAfterFinished`).
 
-### 1.2 최소 예제(Hello)
+### 최소 예제(Hello)
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -29,7 +31,8 @@ spec:
       restartPolicy: Never
 ```
 
-### 1.3 핵심 파라미터
+### 핵심 파라미터
+
 ```yaml
 spec:
   completions: 3          # 총 "성공"해야 하는 Pod 수
@@ -43,7 +46,8 @@ spec:
 - `backoffLimit`은 **Job 레벨 재시도 횟수**(실패 Pod를 새 Pod로 다시 실행).
 - `activeDeadlineSeconds`: **전체 벽시계 제한**(무한 루프/장기 대기 방지).
 
-### 1.4 병렬 Job(배치 처리의 기본기)
+### 병렬 Job(배치 처리의 기본기)
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -62,7 +66,8 @@ spec:
 ```
 - 최대 3개씩 동시에 처리, 총 10회 **성공**하면 완료.
 
-### 1.5 인덱스드(Indexed) 컴플리션 — 샤딩 처리
+### 인덱스드(Indexed) 컴플리션 — 샤딩 처리
+
 각 작업에 고유 인덱스를 부여하여 **입력 데이터 샤딩**에 활용한다.
 
 ```yaml
@@ -89,7 +94,8 @@ spec:
 
 > 인덱스 값은 각 Pod에 **고유**하게 주어지므로, 예컨대 S3 파티션 `shard-<index>`를 병렬 처리하기 쉽다.
 
-### 1.6 워크 큐(Work-Queue) 패턴 — 동적 분배
+### 워크 큐(Work-Queue) 패턴 — 동적 분배
+
 입력 수를 모를 때는 `parallelism`만 설정하고, **공유 큐(예: Redis/SQS/Kafka)** 에서 일을 가져가며 끝낼 때까지 루프. Job은 **작업자 수**만 보장한다.
 
 ```yaml
@@ -108,7 +114,8 @@ spec:
       restartPolicy: OnFailure
 ```
 
-### 1.7 실패 정책(고급) — Pod Failure Policy(버전 의존)
+### 실패 정책(고급) — Pod Failure Policy(버전 의존)
+
 클러스터 버전에 따라 **특정 종료 코드/상태에 대해 즉시 실패/재시도**를 세밀 제어하는 `podFailurePolicy`를 쓸 수 있다(지원 버전에서).
 
 ```yaml
@@ -124,13 +131,15 @@ spec:
 
 ---
 
-## 2. CronJob — 크론 스케줄에 따라 Job 생성
+## CronJob — 크론 스케줄에 따라 Job 생성
 
-### 2.1 개념
+### 개념
+
 - **스케줄러**가 Cron 표현식(`.spec.schedule`)을 기준으로 새로운 Job 오브젝트를 **주기 생성**한다.
 - 생성된 Job의 성공/실패 이력을 **보존 개수**로 관리한다.
 
-### 2.2 최소 예제(매분 실행)
+### 최소 예제(매분 실행)
+
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
@@ -149,7 +158,8 @@ spec:
           restartPolicy: OnFailure
 ```
 
-### 2.3 중요한 필드들
+### 중요한 필드들
+
 ```yaml
 spec:
   schedule: "0 0 * * *"        # 매일 00:00
@@ -182,7 +192,7 @@ spec:
 
 ---
 
-## 3. Job vs CronJob 요약
+## Job vs CronJob 요약
 
 | 항목 | Job | CronJob |
 |---|---|---|
@@ -194,9 +204,10 @@ spec:
 
 ---
 
-## 4. 운영 실습 흐름(명령 모음)
+## 운영 실습 흐름(명령 모음)
 
-### 4.1 Job
+### Job
+
 ```bash
 kubectl apply -f hello-job.yaml
 kubectl get jobs
@@ -205,7 +216,8 @@ kubectl logs job/hello-job
 kubectl describe job hello-job
 ```
 
-### 4.2 CronJob
+### CronJob
+
 ```bash
 kubectl apply -f hello-cron.yaml
 kubectl get cronjobs
@@ -216,9 +228,10 @@ kubectl describe cronjob hello-cron
 
 ---
 
-## 5. 리소스/스케줄링/보안 베스트 프랙티스
+## 리소스/스케줄링/보안 베스트 프랙티스
 
-### 5.1 리소스/스케줄링
+### 리소스/스케줄링
+
 ```yaml
 spec:
   template:
@@ -247,7 +260,8 @@ spec:
 - **전용 노드풀**(taints/tolerations)로 상시 서비스와 배치를 **격리**하라.
 - 요청/상한을 명시해 **스케줄 실패/노드 과부하**를 예방.
 
-### 5.2 설정/비밀 주입
+### 설정/비밀 주입
+
 ```yaml
 envFrom:
 - configMapRef: { name: job-config }
@@ -255,16 +269,18 @@ envFrom:
 ```
 - 민감정보는 **Secret + 파일 마운트** 권장(환경변수는 덤프/로그로 새기 쉬움).
 
-### 5.3 종료/중단/타임아웃
+### 종료/중단/타임아웃
+
 - **활동 타임아웃**: `activeDeadlineSeconds`.
 - **우아한 종료**: 컨테이너 **TERM 신호 처리**, `terminationGracePeriodSeconds` 고려.
 - **일시 정지**: CronJob `suspend: true`.
 
 ---
 
-## 6. 패턴 모음(실전)
+## 패턴 모음(실전)
 
-### 6.1 데이터 백업(매일 자정, 동시 실행 금지)
+### 데이터 백업(매일 자정, 동시 실행 금지)
+
 ```yaml
 apiVersion: batch/v1
 kind: CronJob
@@ -290,7 +306,8 @@ spec:
             args: ["--out=s3://bucket/daily/$(date +%F).sql.gz"]
 ```
 
-### 6.2 대용량 ETL — 인덱스드 샤딩
+### 대용량 ETL — 인덱스드 샤딩
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -312,7 +329,8 @@ spec:
         args: ["--input", "s3://raw/2025-11/", "--shard", "$(SHARD)"]
 ```
 
-### 6.3 워크 큐(동적 길이 작업)
+### 워크 큐(동적 길이 작업)
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -332,7 +350,8 @@ spec:
 
 ---
 
-## 7. 비용/성능 감 잡기(간단 산식)
+## 비용/성능 감 잡기(간단 산식)
+
 평균 처리시간 \(t\)초, 초당 유입 작업량 \(R\)일 때 필요한 **병렬도** \(P\)의 1차 추정:
 $$
 P \approx \lceil R \cdot t \rceil \cdot \text{버퍼}
@@ -342,7 +361,7 @@ $$
 
 ---
 
-## 8. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 1차 확인 | 원인 후보 | 해결 |
 |---|---|---|---|
@@ -355,7 +374,8 @@ $$
 
 ---
 
-## 9. 보안·거버넌스 체크리스트
+## 보안·거버넌스 체크리스트
+
 - **RBAC 최소권한**: Job/CronJob가 읽는 Secret/ConfigMap만 허용.
 - **이미지 서명/취약점 스캔**: 배치 컨테이너도 동일 기준.
 - **리소스 쿼터**: 네임스페이스에 **동시 실행 제한**(무분별한 Cron 폭주 방지).
@@ -363,9 +383,11 @@ $$
 
 ---
 
-## 10. 명령 치트시트
+## 명령 치트시트
+
 ```bash
 # 생성/조회
+
 kubectl apply -f job.yaml
 kubectl apply -f cronjob.yaml
 kubectl get jobs,cronjobs
@@ -374,20 +396,24 @@ kubectl describe job/<name>
 kubectl describe cronjob/<name>
 
 # 로그
+
 kubectl logs job/<name>
 kubectl logs -l job-name=<name> --tail=100 -f
 
 # 강제 삭제/정리
+
 kubectl delete job/<name> --force --grace-period=0
 kubectl delete cronjob/<name>
 
 # 이력/TTL(적용)
+
 kubectl patch job/<name> -p '{"spec":{"ttlSecondsAfterFinished":300}}'
 ```
 
 ---
 
 ## 결론 — 선택 기준
+
 | 상황 | 리소스 |
 |---|---|
 | **한 번만** 또는 유한 횟수로 끝내야 하는 배치 | **Job** |

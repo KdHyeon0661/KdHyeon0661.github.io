@@ -6,7 +6,7 @@ category: CSS
 ---
 # Viewport와 Media Query 완전 정리
 
-## 1. Viewport란? (Layout vs Visual)
+## Viewport란? (Layout vs Visual)
 
 - **Layout Viewport**: CSS 레이아웃 계산에 쓰이는 **논리적 뷰포트**. `vw/vh` 단위, `@media (width)` 등에서 사용.
 - **Visual Viewport**: 사용자가 실제로 보는 **가시 영역**. 모바일에서 주소창 등장/스크롤에 따라 크기가 변합니다.
@@ -50,7 +50,7 @@ category: CSS
 
 ---
 
-## 2. 최신 Viewport 단위 — `dvh`, `svh`, `lvh`
+## 최신 Viewport 단위 — `dvh`, `svh`, `lvh`
 
 모바일 주소창 노출/숨김에 따라 `100vh`가 **튀는 문제**를 해결하기 위한 신단위:
 
@@ -81,7 +81,7 @@ category: CSS
 
 ---
 
-## 3. Media Query란? (문법·논리·타입)
+## Media Query란? (문법·논리·타입)
 
 ### 3-1) 기본 문법
 
@@ -105,7 +105,7 @@ category: CSS
 
 ---
 
-## 4. 자주 쓰는 미디어 특성(Features) — 기본부터 고급까지
+## 자주 쓰는 미디어 특성(Features) — 기본부터 고급까지
 
 ### 4-1) 크기 기반
 
@@ -176,7 +176,7 @@ category: CSS
 
 ---
 
-## 5. 반응형 브레이크포인트 전략
+## 반응형 브레이크포인트 전략
 
 **모바일 퍼스트**가 유지보수에 유리합니다.
 
@@ -210,7 +210,7 @@ category: CSS
 
 ---
 
-## 6. 유동 타이포/간격 — `clamp()` 패턴
+## 유동 타이포/간격 — `clamp()` 패턴
 
 ```css
 :root {
@@ -232,7 +232,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ---
 
-## 7. 실전 예제 모음
+## 실전 예제 모음
 
 ### 7-1) 반응형 헤더/내비 + 햄버거
 
@@ -329,7 +329,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ---
 
-## 8. 흔한 함정과 대처
+## 흔한 함정과 대처
 
 1. **`100vh` 점프** (모바일 주소창 표시/숨김)
    → `100dvh/svh/lvh` 활용 + 레이아웃에 `min-height` 사용.
@@ -344,7 +344,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ---
 
-## 9. 성능·유지보수 팁
+## 성능·유지보수 팁
 
 - 브레이크포인트는 **토큰화**(`--bp-md: 900px`)하여 재사용.
 - **컴포넌트화**(BEM/유틸리티/프레임워크)로 미디어쿼리 분산 관리.
@@ -354,7 +354,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ---
 
-## 10. 최종 체크리스트
+## 최종 체크리스트
 
 - [ ] `<meta name="viewport" content="width=device-width, initial-scale=1">`
 - [ ] `100vh` 대신 `100dvh/svh/lvh` 검토

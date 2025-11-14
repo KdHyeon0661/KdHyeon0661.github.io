@@ -6,7 +6,7 @@ category: HTML
 ---
 # Semantic Elements란 무엇인가? – HTML5 의미론적 요소 정리
 
-## 1. Semantic Element란?
+## Semantic Element란?
 
 > **Semantic Element**는 “보여지는 모습”이 아니라 “콘텐츠의 의미와 역할”을 HTML 수준에서 드러내는 요소다.
 > 동일한 화면을 `<div>`만으로 그릴 수 있어도, **기계가 이해 가능한 구조**를 제공하기 위해 의미론적 요소를 사용한다.
@@ -17,7 +17,7 @@ category: HTML
 
 ---
 
-## 2. 왜 시맨틱 태그가 중요한가?
+## 왜 시맨틱 태그가 중요한가?
 
 | 이유 | 설명 |
 |---|---|
@@ -28,7 +28,7 @@ category: HTML
 
 ---
 
-## 3. 대표 시맨틱 태그와 기본 역할
+## 대표 시맨틱 태그와 기본 역할
 
 | 태그 | 요약 | 기본 ARIA 역할(브라우저가 암시적으로 부여) |
 |---|---|---|
@@ -48,7 +48,7 @@ category: HTML
 
 ---
 
-## 4. 시맨틱 태그 구조(기본 골격)
+## 시맨틱 태그 구조(기본 골격)
 
 ```html
 <body>
@@ -114,7 +114,7 @@ category: HTML
 
 ---
 
-## 5. 헤딩(Heading) 아웃라인과 섹셔닝 전략
+## 헤딩(Heading) 아웃라인과 섹셔닝 전략
 
 - **문서 전체의 최상위 제목**은 보통 `<h1>` 하나.
 - 이후 **문맥 깊이**에 따라 `<h2> … <h6>`까지 하위 제목 사용.
@@ -126,9 +126,10 @@ category: HTML
 
 ---
 
-## 6. 보조 시맨틱 요소로 정보 강화
+## 보조 시맨틱 요소로 정보 강화
 
-### 6.1 `figure`/`figcaption`
+### `figure`/`figcaption`
+
 ```html
 <figure>
   <img src="/images/semantics.png" alt="시맨틱 요소 관계 다이어그램">
@@ -136,12 +137,14 @@ category: HTML
 </figure>
 ```
 
-### 6.2 `time` (정규화된 날짜/시간)
+### `time` (정규화된 날짜/시간)
+
 ```html
 <p>출시일: <time datetime="2025-07-01">2025년 7월 1일</time></p>
 ```
 
-### 6.3 `address` (작성자/조직 연락처)
+### `address` (작성자/조직 연락처)
+
 ```html
 <footer>
   <address>
@@ -150,7 +153,8 @@ category: HTML
 </footer>
 ```
 
-### 6.4 `abbr` (약어 풀이), `mark`(강조), `data`(기계가독 값)
+### `abbr` (약어 풀이), `mark`(강조), `data`(기계가독 값)
+
 ```html
 <p><abbr title="Search Engine Optimization">SEO</abbr>는 검색 노출을 개선한다.</p>
 <p>핵심 포인트는 <mark>의도적 구조화</mark>다.</p>
@@ -159,14 +163,16 @@ category: HTML
 
 ---
 
-## 7. 접근성(a11y) 확장: 랜드마크, 스킵 링크, 이름 표기
+## 접근성(a11y) 확장: 랜드마크, 스킵 링크, 이름 표기
 
-### 7.1 랜드마크와 여러 내비게이션
+### 랜드마크와 여러 내비게이션
+
 - `<nav>`가 **여러 개**일 수 있다(메인 메뉴/푸터 메뉴/서브 메뉴).
   각각 `aria-label="주요 메뉴"`, `aria-label="푸터 링크"`처럼 **이름**을 부여한다.
 - `<aside>`도 여러 개 가능. `aria-label` 또는 `aria-labelledby`로 **역할 명시**를 강화.
 
-### 7.2 스킵 링크(키보드 사용자 배려)
+### 스킵 링크(키보드 사용자 배려)
+
 ```html
 <a class="skip" href="#content">본문 바로가기</a>
 ```
@@ -175,7 +181,8 @@ category: HTML
 .skip:focus { position:static; width:auto; height:auto; }
 ```
 
-### 7.3 `section`에 접근 가능한 이름 부여
+### `section`에 접근 가능한 이름 부여
+
 ```html
 <section aria-labelledby="popular-posts-title">
   <h2 id="popular-posts-title">인기 글</h2>
@@ -184,14 +191,15 @@ category: HTML
 ```
 `<section>`은 **제목이 있거나 접근 가능한 이름**이 있을 때 더 의미 있다.
 
-### 7.4 ARIA 보강 원칙
+### ARIA 보강 원칙
+
 - **가능하면 네이티브 요소**를 먼저 사용.
 - 필요한 경우에만 `role`, `aria-*`로 **최소 보강**.
 - 네이티브 의미를 **덮어쓰는 ARIA는 지양**.
 
 ---
 
-## 8. SEO와 시맨틱: 구조화 데이터(JSON-LD) 예시
+## SEO와 시맨틱: 구조화 데이터(JSON-LD) 예시
 
 시맨틱 마크업 + **구조화 데이터**를 병행하면 검색엔진이 더 잘 이해한다.
 
@@ -223,9 +231,9 @@ category: HTML
 
 ---
 
-## 9. 실전 패턴 모음
+## 실전 패턴 모음
 
-### 9.1 블로그 글 상세 페이지(완성형)
+### 블로그 글 상세 페이지(완성형)
 
 ```html
 <header>
@@ -286,7 +294,7 @@ category: HTML
 </footer>
 ```
 
-### 9.2 제품(전자상거래) 상세 페이지(요약)
+### 제품(전자상거래) 상세 페이지(요약)
 
 ```html
 <main id="content">
@@ -328,7 +336,7 @@ category: HTML
 
 ---
 
-## 10. CSS로 시맨틱 레이아웃 구성(간단 예시)
+## CSS로 시맨틱 레이아웃 구성(간단 예시)
 
 ```html
 <style>
@@ -347,7 +355,7 @@ category: HTML
 
 ---
 
-## 11. 섹셔닝/랜드마크 베스트 프랙티스 체크리스트
+## 섹셔닝/랜드마크 베스트 프랙티스 체크리스트
 
 - [ ] 문서당 **`<main>`은 1개**만 존재한다.
 - [ ] `<section>`에는 헤딩 또는 접근 가능한 이름(`aria-label/aria-labelledby`)이 있다.
@@ -362,7 +370,7 @@ category: HTML
 
 ---
 
-## 12. 오해와 주의사항 (반패턴 정리)
+## 오해와 주의사항 (반패턴 정리)
 
 | 오해/반패턴 | 왜 문제인가 | 대안 |
 |---|---|---|
@@ -374,7 +382,7 @@ category: HTML
 
 ---
 
-## 13. 검증과 품질 관리
+## 검증과 품질 관리
 
 - **HTML 검증기(validator)** 로 시맨틱/문법 오류 탐지.
 - **axe**, **Lighthouse** 등으로 접근성/SEO 검사.
@@ -383,7 +391,7 @@ category: HTML
 
 ---
 
-## 14. 요약
+## 요약
 
 - 시맨틱 태그는 **브라우저·보조기술·검색엔진**이 이해할 수 있는 **의미**를 제공한다.
 - `<main>`/`<nav>`/`<section>`/`<article>`/`<aside>`/`<header>`/`<footer>`를 **역할 중심**으로 사용하라.

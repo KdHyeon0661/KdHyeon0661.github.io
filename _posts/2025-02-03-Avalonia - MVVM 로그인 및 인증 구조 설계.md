@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM 로그인·인증 구조 설계
 
-## 0. 핵심 목표와 전체 플로우
+## 핵심 목표와 전체 플로우
 
 - 로그인 화면 분리: `LoginView` / `LoginViewModel`
 - 인증 처리: API 연동(아이디/패스워드 → JWT/세션 토큰), `IAuthService`
@@ -24,7 +24,7 @@ category: Avalonia
 
 ---
 
-## 1. 프로젝트 구조(확장)
+## 프로젝트 구조(확장)
 
 ```
 MyApp/
@@ -53,9 +53,9 @@ MyApp/
 
 ---
 
-## 2. 모델
+## 모델
 
-### 2.1 사용자 세션
+### 사용자 세션
 
 ```csharp
 // Models/UserSession.cs
@@ -73,7 +73,7 @@ public class UserSession
 }
 ```
 
-### 2.2 서버 응답 DTO(예시)
+### 서버 응답 DTO(예시)
 
 ```csharp
 // Models/AuthResult.cs
@@ -88,7 +88,7 @@ public class AuthResult
 
 ---
 
-## 3. 전역 상태(AppState)
+## 전역 상태(AppState)
 
 ```csharp
 // State/AppState.cs
@@ -112,7 +112,7 @@ public class AppState : ReactiveObject
 
 ---
 
-## 4. 토큰 저장소(자동로그인/암호화)
+## 토큰 저장소(자동로그인/암호화)
 
 자동로그인을 위해 토큰을 로컬에 저장할 수 있다. **평문 저장 금지** → AES-256-GCM으로 암호화.
 
@@ -179,9 +179,9 @@ public sealed class EncryptedJsonTokenStore : ITokenStore
 
 ---
 
-## 5. 인증 서비스(IAuthService)
+## 인증 서비스(IAuthService)
 
-### 5.1 인터페이스
+### 인터페이스
 
 ```csharp
 // Services/IAuthService.cs
@@ -193,7 +193,7 @@ public interface IAuthService
 }
 ```
 
-### 5.2 구현(HTTP API 연동 예시)
+### 구현(HTTP API 연동 예시)
 
 ```csharp
 // Services/AuthService.cs
@@ -265,7 +265,7 @@ public sealed class AuthService : IAuthService
 
 ---
 
-## 6. HTTP Authorization 자동 주입/갱신
+## HTTP Authorization 자동 주입/갱신
 
 401 수신 시 Refresh → 재시도 패턴(단순화 예시).
 
@@ -327,7 +327,7 @@ public sealed class AuthHttpMessageHandler : DelegatingHandler
 
 ---
 
-## 7. 로그인 ViewModel (UI/상태/자동로그인/검증)
+## 로그인 ViewModel (UI/상태/자동로그인/검증)
 
 ```csharp
 // ViewModels/LoginViewModel.cs
@@ -443,7 +443,7 @@ public sealed class LoginViewModel : ReactiveObject
 
 ---
 
-## 8. 로그인 View (Password 마스킹, 진행 UI)
+## 로그인 View (Password 마스킹, 진행 UI)
 
 ```xml
 <!-- Views/LoginView.axaml -->
@@ -474,7 +474,7 @@ public sealed class LoginViewModel : ReactiveObject
 
 ---
 
-## 9. App 초기화와 화면 전환
+## App 초기화와 화면 전환
 
 ```csharp
 // App.axaml.cs (핵심 부분)
@@ -549,7 +549,7 @@ public class App : Application
 
 ---
 
-## 10. 메인 화면에서 로그아웃 처리
+## 메인 화면에서 로그아웃 처리
 
 ```csharp
 // ViewModels/MainViewModel.cs
@@ -594,7 +594,7 @@ public sealed class MainViewModel : ReactiveObject
 
 ---
 
-## 11. 보안·신뢰성 체크리스트
+## 보안·신뢰성 체크리스트
 
 - 비밀번호는 **네트워크 전송 시 TLS** 필수, 평문 로그에 남기지 말 것
 - 토큰 저장은 **암호화(AES-256-GCM)** + 파일 권한 최소화
@@ -606,7 +606,7 @@ public sealed class MainViewModel : ReactiveObject
 
 ---
 
-## 12. 단위 테스트(예시)
+## 단위 테스트(예시)
 
 ```csharp
 // Tests/LoginViewModelTests.cs
@@ -674,7 +674,7 @@ public class LoginViewModelTests
 
 ---
 
-## 13. 고급 확장
+## 고급 확장
 
 - **역할/권한(Role/Policy)**: AccessToken의 클레임 파싱 → AppState에 `IsAdmin` 등 노출
 - **2FA/MFA**: 1차 비밀번호 성공 후 OTP 화면으로 분기
@@ -684,7 +684,7 @@ public class LoginViewModelTests
 
 ---
 
-## 14. 운영 팁
+## 운영 팁
 
 - **서버 시간과의 오차**(Clock Skew) 보정 → 만료 60초 전 미리 갱신
 - **HttpClient 재사용**: DI 팩토리로 생성, 소켓 핸들 고갈 방지
@@ -693,7 +693,7 @@ public class LoginViewModelTests
 
 ---
 
-## 15. 요약
+## 요약
 
 | 항목 | 핵심 포인트 |
 |------|-------------|

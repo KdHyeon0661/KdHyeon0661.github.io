@@ -6,7 +6,7 @@ category: HTML
 ---
 # XHTML 완전 정복
 
-## 1. XHTML이란?
+## XHTML이란?
 
 - **XHTML (eXtensible HyperText Markup Language)**: **HTML을 XML 문법으로 재정의**한 마크업 언어.
 - **W3C 표준**(XHTML 1.0/1.1). HTML의 표현력 + XML의 **엄격/일관/도구친화성**.
@@ -28,9 +28,9 @@ category: HTML
 
 ---
 
-## 2. XHTML 문서 기본 구조와 직렬화(Serialization)
+## XHTML 문서 기본 구조와 직렬화(Serialization)
 
-### 2.1 XHTML 1.0 기본 예제(Strict)
+### XHTML 1.0 기본 예제(Strict)
 
 ```html
 <?xml version="1.0" encoding="UTF-8"?>
@@ -60,7 +60,7 @@ category: HTML
 
 ---
 
-## 3. XHTML 필수 문법 규칙(잘 틀리는 것들)
+## XHTML 필수 문법 규칙(잘 틀리는 것들)
 
 | 규칙 | 설명 | 예/비예 |
 |---|---|---|
@@ -71,19 +71,21 @@ category: HTML
 | **정확한 중첩** | 교차 중첩 금지 | `<b><i>x</b></i>` ❌ |
 | **불린 속성 값 명시** | 속성 존재=참 패턴 금지 | `checked` ❌ → `checked="checked"` ✅ |
 
-### 3.1 빈(Empty) 요소 목록 예
+### 빈(Empty) 요소 목록 예
+
 `<br />`, `<hr />`, `<img />`, `<meta />`, `<link />`, `<input />`, `<base />`, `<col />`, `<param />`, `<area />`, `<source />`, `<track />` …
 
 > **주의:** `script`/`style`은 **빈 요소가 아니다**. `<script />`처럼 self-closing 하면 **내용이 없는 스크립트**가 된다.
 
-### 3.2 엔티티(Entities) 주의
+### 엔티티(Entities) 주의
+
 - 순수 XML에는 **사전정의 5종**만 존재: `&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`.
 - XHTML 1.x에서는 DTD로 HTML 엔티티 집합을 가져오지만, **네트워크에서 DTD를 못 가져오면 이름 엔티티가 실패**할 수 있다.
   → **가급적 숫자 엔티티(예: `&#169;`/`&#xA9;`) 사용**을 권장.
 
 ---
 
-## 4. HTML과의 차이 — 파서·오류 모델·속성 직렬화
+## HTML과의 차이 — 파서·오류 모델·속성 직렬화
 
 | 항목 | HTML (text/html) | XHTML (application/xhtml+xml) |
 |---|---|---|
@@ -100,11 +102,12 @@ category: HTML
 
 ---
 
-## 5. 스크립트/스타일 포함 — CDATA와 이스케이프
+## 스크립트/스타일 포함 — CDATA와 이스케이프
 
 XML 파서는 `<`/`&`에 민감하므로, `script`/`style` 내용에 **문자 데이터**가 들어갈 때 CDATA 또는 이스케이프가 필요하다.
 
-### 5.1 권장 패턴 (CDATA)
+### 권장 패턴 (CDATA)
+
 ```html
 <script type="application/javascript">
 //<![CDATA[
@@ -123,7 +126,8 @@ XML 파서는 `<`/`&`에 민감하므로, `script`/`style` 내용에 **문자 �
 
 > 일부 UA/도구 호환을 위해 주석 혼합 패턴(과거 HTML 파서용 `/* */` 또는 `//`)을 덧대던 관습이 있으나, **현대 환경에서는 위와 같은 CDATA 패턴**이 간결하다.
 
-### 5.2 self-closing 금지 예
+### self-closing 금지 예
+
 ```html
 <!-- 빈 스크립트로 직렬화되어 의도한 코드가 실행되지 않음 -->
 <script type="application/javascript" />
@@ -131,11 +135,12 @@ XML 파서는 `<`/`&`에 민감하므로, `script`/`style` 내용에 **문자 �
 
 ---
 
-## 6. 네임스페이스와 XML 통합 — SVG/MathML 포함
+## 네임스페이스와 XML 통합 — SVG/MathML 포함
 
 XHTML의 강점: **다중 XML 네임스페이스 통합**.
 
-### 6.1 SVG 포함
+### SVG 포함
+
 ```html
 <div>
   <svg xmlns="http://www.w3.org/2000/svg" width="120" height="60" viewBox="0 0 120 60">
@@ -145,7 +150,8 @@ XHTML의 강점: **다중 XML 네임스페이스 통합**.
 </div>
 ```
 
-### 6.2 MathML 포함
+### MathML 포함
+
 ```html
 <div xmlns:m="http://www.w3.org/1998/Math/MathML">
   <m:math display="block">
@@ -158,31 +164,37 @@ XHTML의 강점: **다중 XML 네임스페이스 통합**.
 
 ---
 
-## 7. MIME 타입과 서버 설정
+## MIME 타입과 서버 설정
 
-### 7.1 권장 MIME
+### 권장 MIME
+
 - **진짜 XHTML로서 파싱**: `application/xhtml+xml`
 - **호환을 위해 HTML 파서로 처리**: `text/html` (XHTML 문법을 쓰더라도 HTML로 파싱됨)
 
 **주의(레거시 IE):** `application/xhtml+xml` **미지원**. B2B/레거시 환경이면 **콘텐츠 협상** 또는 `text/html` 서비스가 현실적.
 
-### 7.2 Apache 설정 예
+### Apache 설정 예
+
 ```apache
 # .xhtml을 XHTML로 서비스
+
 AddType application/xhtml+xml .xhtml
 
 # 강제 헤더(사이트 정책에 맞게)
+
 <FilesMatch "\.xhtml$">
   Header set Content-Type "application/xhtml+xml; charset=UTF-8"
 </FilesMatch>
 ```
 
-### 7.3 Nginx 설정 예
+### Nginx 설정 예
+
 ```nginx
 types {
   application/xhtml+xml  xhtml;
 }
 # 또는 location 기반
+
 location ~ \.xhtml$ {
   add_header Content-Type "application/xhtml+xml; charset=UTF-8";
 }
@@ -192,9 +204,10 @@ location ~ \.xhtml$ {
 
 ---
 
-## 8. DTO/폼/불린 속성 직렬화 — 자주 하는 실수
+## DTO/폼/불린 속성 직렬화 — 자주 하는 실수
 
-### 8.1 폼 요소와 불린 속성
+### 폼 요소와 불린 속성
+
 ```html
 <form action="/submit" method="post" enctype="application/x-www-form-urlencoded">
   <label for="email">이메일</label>
@@ -205,7 +218,8 @@ location ~ \.xhtml$ {
 ```
 - `required="required"`, `checked="checked"`처럼 **명시적 값** 필요.
 
-### 8.2 링크/이미지
+### 링크/이미지
+
 ```html
 <a href="https://example.com" title="예제">링크</a>
 <img src="/img/logo.png" alt="로고" width="120" height="32" />
@@ -215,7 +229,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 9. 오류 모델 — 디버깅/검증
+## 오류 모델 — 디버깅/검증
 
 - HTML: 에러를 **가능한 복구**. 표시되지만 의도와 다를 수 있다.
 - XHTML(XML): **치명적인 오류 시 렌더 중단**(노출되지 않음).
@@ -227,13 +241,15 @@ location ~ \.xhtml$ {
 
 ---
 
-## 10. Polyglot & XHTML5 — 현대적 전략
+## Polyglot & XHTML5 — 현대적 전략
 
-### 10.1 Polyglot Markup(양쪽 파서 호환)
+### Polyglot Markup(양쪽 파서 호환)
+
 - 문법을 **HTML 파서·XML 파서 모두에서 합법**이 되도록 제약.
 - 규칙 예: **소문자 태그/속성**, **속성값 모두 인용**, **빈 요소에 `/>`**, **엔티티는 숫자 권장**, **불린 속성에 값 지정**, `id` 유일성 등.
 
-### 10.2 XHTML5(HTML5 어휘의 XML 직렬화)
+### XHTML5(HTML5 어휘의 XML 직렬화)
+
 - HTML Living Standard의 **요소/속성 어휘** + **XML 직렬화 규칙**.
 - Doctype은 단순화 가능(일부는 omit), **네임스페이스는 동일**.
 - 서비스는 `application/xhtml+xml`. (레거시 대응 필요 시 **콘텐츠 협상**)
@@ -257,7 +273,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 11. 접근성·SEO·국제화
+## 접근성·SEO·국제화
 
 - `lang` + `xml:lang`: 언어 인식 향상(스크린 리더, 검색엔진).
 - 제목 구조 `<h1>`~`<h6>` 엄격 중첩, 리스트/테이블 시맨틱 태그 준수.
@@ -265,7 +281,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 12. 실전 종합 예제(보안·SVG·스크립트 포함)
+## 실전 종합 예제(보안·SVG·스크립트 포함)
 
 ```html
 <?xml version="1.0" encoding="UTF-8"?>
@@ -327,7 +343,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 13. 체크리스트(요약)
+## 체크리스트(요약)
 
 - [ ] 태그/속성 **소문자**
 - [ ] **모든 속성값 인용**
@@ -342,7 +358,7 @@ location ~ \.xhtml$ {
 
 ---
 
-## 14. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q. .xhtml로 저장만 하면 XHTML인가요?**
 A. **아니오.** **문법(Well-formed) + 올바른 MIME/인코딩**이 만족되어야 XML로서 XHTML이다.
@@ -358,7 +374,7 @@ A. **XHTML5(HTML 어휘의 XML 직렬화)** 또는 **Polyglot**을 고려. 레�
 
 ---
 
-## 15. 결론
+## 결론
 
 - XHTML은 **엄격한 문법 + XML 생태계 통합**이 강점.
 - 현대 웹앱은 대부분 **HTML5**로 충분하지만, **전자문서/출판/정적 변환 파이프라인**에서는 XHTML이 여전히 가치가 크다.

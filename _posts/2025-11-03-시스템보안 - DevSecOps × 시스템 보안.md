@@ -4,11 +4,11 @@ title: 시스템보안 - DevSecOps × 시스템 보안
 date: 2025-11-03 14:30:23 +0900
 category: 시스템보안
 ---
-# 17. DevSecOps × 시스템 보안
+# DevSecOps × 시스템 보안
 
-## 17.1 CI/CD에서 정적·동적·Fuzz·SCA 자동화
+## CI/CD에서 정적·동적·Fuzz·SCA 자동화
 
-### 17.1.1 아키텍처 개요
+### 아키텍처 개요
 
 ```
 [Developer] --(pre-commit, local)-->
@@ -36,7 +36,7 @@ category: 시스템보안
 
 ---
 
-### 17.1.2 로컬 프리훅(pre-commit) — 첫 방어선
+### 로컬 프리훅(pre-commit) — 첫 방어선
 
 **.pre-commit-config.yaml (발췌)**
 - 포맷터/린터 + 비밀 스캔 + 기본 Semgrep
@@ -64,7 +64,7 @@ repos:
 
 ---
 
-### 17.1.3 GitHub Actions: SAST/SCA/Secrets/Fuzz/DAST/SBOM/Sign 일괄 파이프라인
+### GitHub Actions: SAST/SCA/Secrets/Fuzz/DAST/SBOM/Sign 일괄 파이프라인
 
 **.github/workflows/sec-ci.yml**
 ```yaml
@@ -188,7 +188,7 @@ jobs:
 
 ---
 
-### 17.1.4 GitLab CI 변형(요지)
+### GitLab CI 변형(요지)
 
 **.gitlab-ci.yml (발췌)**
 ```yaml
@@ -227,7 +227,7 @@ build:
 
 ---
 
-### 17.1.5 SAST 규칙 커스터마이징(예: Semgrep)
+### SAST 규칙 커스터마이징(예: Semgrep)
 
 **semgrep-rules/crypto-insecure.yaml**
 ```yaml
@@ -249,7 +249,7 @@ semgrep --config semgrep-rules/ --error
 
 ---
 
-### 17.1.6 Fuzzing + Sanitizers (C/C++ libFuzzer, Python Atheris)
+### Fuzzing + Sanitizers (C/C++ libFuzzer, Python Atheris)
 
 **C++ fuzz 타깃**
 ```cpp
@@ -257,6 +257,7 @@ semgrep --config semgrep-rules/ --error
 #include <stdint.h>
 #include <stddef.h>
 #include "parser.hpp"
+
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t *Data, size_t Size) {
   try { Parser p; p.feed(Data, Size); } catch(...) {}
   return 0;
@@ -273,6 +274,7 @@ clang++ -fsanitize=address,undefined,fuzzer -O1 \
 **Python (Atheris)**
 ```python
 # tests/fuzz_json.py
+
 import atheris, json, sys
 def TestOneInput(data: bytes):
     try:
@@ -289,7 +291,7 @@ if __name__ == "__main__":
 
 ---
 
-### 17.1.7 DAST (OWASP ZAP Baseline) + API 스캔 힌트
+### DAST (OWASP ZAP Baseline) + API 스캔 힌트
 
 **Docker 명령**
 ```bash
@@ -306,18 +308,19 @@ zap-api-scan.py -t http://app:8080/openapi.json -f openapi -r api_zap.html -d
 
 ---
 
-### 17.1.8 SBOM/CycloneDX + 라이선스 게이트
+### SBOM/CycloneDX + 라이선스 게이트
 
 **CycloneDX 검사 예(license allowlist)**
 ```bash
 cyclonedx-cli analyze -o license-report.json sbom.cdx.json
 jq '.components[] | select(.licenses[]?.license.id | IN("MIT","Apache-2.0") | not)' license-report.json
 # 결과가 비어있지 않으면 Fail
+
 ```
 
 ---
 
-### 17.1.9 공급망: 서명·증명(SLSA, cosign, in-toto)
+### 공급망: 서명·증명(SLSA, cosign, in-toto)
 
 - **Build provenance**: 빌드 시점, 빌더 ID, 소스 커밋, 파라미터 → **attestation**
 - **Keyless(OIDC) 서명**: CI 러너 OIDC 토큰으로 cosign sign/attest
@@ -331,17 +334,19 @@ cosign verify-attestation --type cyclonedx ghcr.io/org/app:TAG
 
 ---
 
-## 17.2 컨테이너 이미지·런타임 스캔, 정책(OPA/Gatekeeper)
+## 컨테이너 이미지·런타임 스캔, 정책(OPA/Gatekeeper)
 
-### 17.2.1 Dockerfile 하드닝 베스트 프랙티스
+### Dockerfile 하드닝 베스트 프랙티스
 
 **예시**
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM gcr.io/distroless/python3-debian12@sha256:...
 # 또는 python:3.11-slim + multi-stage
 
 # (멀티스테이지) 빌드 단계
+
 FROM python:3.11-slim AS build
 WORKDIR /app
 COPY pyproject.toml poetry.lock ./
@@ -351,6 +356,7 @@ COPY src/ ./src/
 RUN pip wheel ./src -w wheels
 
 # 런타임 단계
+
 FROM gcr.io/distroless/python3-debian12
 WORKDIR /app
 COPY --from=build /app/wheels /wheels
@@ -370,14 +376,14 @@ CMD ["app"]
 
 ---
 
-### 17.2.2 이미지 스캔(Trivy/Grype) — CI와 레지스트리 훅
+### 이미지 스캔(Trivy/Grype) — CI와 레지스트리 훅
 
 **CI**: 위 17.1.3 참조 (Fail on HIGH/CRITICAL)
 **레지스트리 훅**: Harbor/ACR/ECR 이미지 취약점 스캔 결과를 **정책 게이트**에 반영(예: Gatekeeper가 어노테이션/라벨 기반으로 허용/거부)
 
 ---
 
-### 17.2.3 런타임 스캔/탐지 (Falco/eBPF)
+### 런타임 스캔/탐지 (Falco/eBPF)
 
 **Falco 규칙(발췌)** — *“컨테이너 내 쉘 스폰 금지”*
 ```yaml
@@ -399,7 +405,7 @@ helm install falco falcosecurity/falco -n falco --create-namespace
 
 ---
 
-### 17.2.4 OPA/Gatekeeper로 “진입 시” 정책 강제
+### OPA/Gatekeeper로 “진입 시” 정책 강제
 
 **(A) 기본 구성**
 ```bash
@@ -463,7 +469,7 @@ spec:
 
 ---
 
-### 17.2.5 이미지만 허용(서명·프로비넌스) — OPA 정책
+### 이미지만 허용(서명·프로비넌스) — OPA 정책
 
 **(A) 이미지 서명 검증 (예: cosign 어노테이션 요구)**
 - Admission 시 이미지 메타데이터 또는 **증명 어노테이션** 존재 여부 확인(실전에서는 **policy-controller**/cosign-policy-controller 고려).
@@ -507,11 +513,12 @@ spec:
 
 ---
 
-### 17.2.6 배포 전 CI 수준의 OPA 검증(shift-left)
+### 배포 전 CI 수준의 OPA 검증(shift-left)
 
 **Conftest로 쿠버네티스 매니페스트 사전 검사**
 ```bash
 # 정책 디렉터리(policy/)에 Rego 작성 후:
+
 conftest test k8s-manifests/ -p policy/ --output table
 ```
 
@@ -528,7 +535,7 @@ conftest test k8s-manifests/ -p policy/ --output table
 
 ---
 
-### 17.2.7 읽기 전용 루트/임시 디렉터리 마운트 등 PodSecurity 강화 예
+### 읽기 전용 루트/임시 디렉터리 마운트 등 PodSecurity 강화 예
 
 **Deployment (발췌)**
 ```yaml
@@ -561,7 +568,7 @@ spec:
 
 ---
 
-### 17.2.8 운영 대시보드/게이트 기준(추천)
+### 운영 대시보드/게이트 기준(추천)
 
 - **SAST**: ERROR ≥ 1 → Fail, WARNING는 PR 코멘트/TODO
 - **Secrets**: 발견 시 **무조건 Fail**(허위양성은 allowlist, 만료일)
@@ -575,7 +582,7 @@ spec:
 
 ---
 
-## 17.3 (옵션) 예제 저장소 구조 제안
+## (옵션) 예제 저장소 구조 제안
 
 ```
 repo/
@@ -593,7 +600,7 @@ repo/
 
 ---
 
-## 17.4 트러블슈팅 & FAQ
+## 트러블슈팅 & FAQ
 
 **Q. 오탐 때문에 빌드가 자주 깨져요.**
 A. “**PR 코멘트(정보)** → **Warning(점수)** → **Fail(치명)** 3단계로 점진. 허용 리스트에는 **만료일**을 부여하세요.
@@ -609,7 +616,7 @@ A. Sigstore **policy-controller** 또는 Kyverno **verifyImages** 사용으로 �
 
 ---
 
-## 17.5 체크리스트(요약)
+## 체크리스트(요약)
 
 - [ ] **pre-commit**(gitleaks+semgrep)
 - [ ] **CI: SAST/Secrets/SCA** + **Fail 기준**

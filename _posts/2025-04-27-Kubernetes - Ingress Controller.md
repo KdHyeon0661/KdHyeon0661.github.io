@@ -25,6 +25,7 @@ category: Kubernetes
 ## Ingress Controller 설치
 
 ### Minikube(가장 간단)
+
 ```bash
 minikube addons enable ingress
 kubectl get pods -n ingress-nginx
@@ -32,11 +33,13 @@ kubectl get svc  -n ingress-nginx
 ```
 
 ### 일반 클러스터(Helm 권장)
+
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo update
 
 # 기본 설치
+
 helm install nginx-ingress ingress-nginx/ingress-nginx \
   --create-namespace -n ingress-nginx
 ```
@@ -54,6 +57,7 @@ kubectl get svc  -n ingress-nginx
 ## 예제 애플리케이션 두 개 배포
 
 ### app1
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -86,6 +90,7 @@ spec:
 ```
 
 ### app2
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -160,9 +165,11 @@ kubectl get ingress
 ```
 
 ### 테스트(Minikube)
+
 ```bash
 minikube ip
 # 예: 192.168.49.2
+
 curl http://192.168.49.2/app1
 curl http://192.168.49.2/app2
 ```
@@ -214,7 +221,8 @@ spec:
 
 > 컨트롤러별로 키가 다를 수 있다. 아래는 **NGINX Ingress Controller** 기준.
 
-### 1. 정규식/캡처 기반 리라이트
+### 정규식/캡처 기반 리라이트
+
 ```yaml
 metadata:
   annotations:
@@ -230,7 +238,8 @@ spec:
           service: { name: app1-svc, port: { number: 80 } }
 ```
 
-### 2. 요청/응답 헤더 조작
+### 요청/응답 헤더 조작
+
 ```yaml
 metadata:
   annotations:
@@ -247,7 +256,8 @@ data:
   X-Request-From: "ingress"
 ```
 
-### 3. 타임아웃/바디 사이즈
+### 타임아웃/바디 사이즈
+
 ```yaml
 metadata:
   annotations:
@@ -256,7 +266,8 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
 ```
 
-### 4. 기본 인증(베이직)
+### 기본 인증(베이직)
+
 ```yaml
 metadata:
   annotations:
@@ -275,7 +286,8 @@ data:
     dXNlcjokYXByMSR6bkQxcy9aJGFqWkdScXBiT3lCUzZ0Q2ZxLw==
 ```
 
-### 5. CORS
+### CORS
+
 ```yaml
 metadata:
   annotations:
@@ -286,7 +298,8 @@ metadata:
     nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
 ```
 
-### 6. Sticky 세션(쿠키 기반)
+### Sticky 세션(쿠키 기반)
+
 ```yaml
 metadata:
   annotations:
@@ -295,7 +308,8 @@ metadata:
     nginx.ingress.kubernetes.io/session-cookie-max-age: "86400"
 ```
 
-### 7. Rate Limit(초당/분당)
+### Rate Limit(초당/분당)
+
 ```yaml
 metadata:
   annotations:
@@ -303,7 +317,8 @@ metadata:
     nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
 ```
 
-### 8. gRPC / WebSocket
+### gRPC / WebSocket
+
 - gRPC: Service 포트 명을 `grpc`로 지정하거나 `nginx.ingress.kubernetes.io/backend-protocol: "GRPC"`
 - WebSocket: NGINX는 기본 업그레이드를 지원(대개 추가 설정 불필요)
 
@@ -317,7 +332,8 @@ metadata:
 
 ## TLS(HTTPS) 설정
 
-### 1. 수동 Secret
+### 수동 Secret
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -344,7 +360,8 @@ spec:
         backend: { service: { name: app1-svc, port: { number: 80 } } }
 ```
 
-### 2. cert-manager(권장: 자동 발급/갱신)
+### cert-manager(권장: 자동 발급/갱신)
+
 - ClusterIssuer/Issuer 생성(Let’s Encrypt HTTP-01/ DNS-01)
 - Ingress에 `cert-manager.io/cluster-issuer: "letsencrypt-prod"` 애노테이션 추가
 - cert-manager가 적절한 TLS Secret을 생성/갱신
@@ -363,11 +380,13 @@ spec:
 
 ## Canary / Blue-Green 라우팅(간단 패턴)
 
-### 1. Canary by Header
+### Canary by Header
+
 두 개의 Ingress를 같은 호스트/경로로 정의하고, 하나에 Canary 플래그 부여.
 
 ```yaml
 # 기본 트래픽
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -384,6 +403,7 @@ spec:
         backend: { service: { name: api-v1-svc, port: { number: 80 } } }
 ---
 # Canary
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -403,7 +423,8 @@ spec:
         backend: { service: { name: api-v2-svc, port: { number: 80 } } }
 ```
 
-### 2. Canary by Weight
+### Canary by Weight
+
 ```yaml
 metadata:
   annotations:

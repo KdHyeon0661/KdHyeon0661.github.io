@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 고급 Trie 구조 — 이진 Trie(Bitwise) & 압축 Trie(Radix/Compressed)
 
-## 0. 개요와 비교
+## 개요와 비교
 
 | 구조 | 키 단위 | 주 용도 | 깊이 상한 | 장점 | 단점 |
 |---|---|---|---|---|---|
@@ -16,9 +16,10 @@ category: Data Structure
 
 ---
 
-## 1. 이진 Trie (Bitwise Trie)
+## 이진 Trie (Bitwise Trie)
 
-### 1.1 핵심 아이디어
+### 핵심 아이디어
+
 - 키를 고정 길이 **비트열**(예: 32비트 `uint32_t`)로 보고, 매 레벨에서 **0/1**로 분기.
 - 경로 카운트(`cnt`)를 두면 **중복 허용**·**삭제**·**빈 노드 정리**가 가능.
 
@@ -26,10 +27,11 @@ category: Data Structure
 
 ---
 
-### 1.2 완전 구현 (삽입/삭제/탐색/최대·최소 XOR)
+### 완전 구현 (삽입/삭제/탐색/최대·최소 XOR)
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct BNode {
@@ -152,7 +154,7 @@ struct BinaryTrie {
 
 ---
 
-### 1.3 실전 패턴 ① — 배열 최대 XOR 쌍
+### 실전 패턴 ① — 배열 최대 XOR 쌍
 
 > 문제: 정수 배열 `nums`에서 **서로 다른 두 수의 XOR 최대값**을 구하라.
 
@@ -175,7 +177,7 @@ int main(){
 
 ---
 
-### 1.4 실전 패턴 ② — 부분배열 최대 XOR
+### 실전 패턴 ② — 부분배열 최대 XOR
 
 아이디어: **prefix XOR**를 이용해
 \[
@@ -199,7 +201,7 @@ uint32_t maxSubarrayXOR(const vector<uint32_t>& a){
 
 ---
 
-### 1.5 실전 패턴 ③ — IPv4 LPM(가장 긴 접두사 일치)
+### 실전 패턴 ③ — IPv4 LPM(가장 긴 접두사 일치)
 
 - 라우팅 테이블: `prefix/len → nextHop`
 - 탐색: 주소의 비트를 따라가며 **마지막으로 만난 매칭 엔트리**(nextHop 있는 노드)를 기억.
@@ -260,7 +262,7 @@ int main(){
 
 ---
 
-### 1.6 복잡도 & 메모리
+### 복잡도 & 메모리
 
 - 고정 폭 \(W\)에 대해 **삽입/삭제/쿼리**: \(O(W)\) — 보통 \(W\in\{32,64\}\)
 - 노드 수 상한: **\(O(n \cdot W)\)** (중복/공유 경로로 실제는 더 작음)
@@ -270,9 +272,10 @@ int main(){
 
 ---
 
-## 2. 압축 Trie (Radix / Compressed Trie)
+## 압축 Trie (Radix / Compressed Trie)
 
-### 2.1 개념
+### 개념
+
 - **단독 경로(차일드 1개)**가 연속되는 구간을 **한 노드(label)**로 **압축**한다.
 - 덕분에 깊이가 크게 줄고 메모리 효율이 좋아진다. (문자열 키에 적합)
 
@@ -280,7 +283,7 @@ int main(){
 
 ---
 
-### 2.2 핵심 연산 — LCP(최장 공통 접두사)에 따른 **분할(splitting)**
+### 핵심 연산 — LCP(최장 공통 접두사)에 따른 **분할(splitting)**
 
 케이스(부모→자식 `child.label`, 삽입할 `word`):
 1) **공통 접두사 길이 = 0** → 다음 자식 검사
@@ -292,10 +295,11 @@ int main(){
 
 ---
 
-### 2.3 완전 구현(삽입/검색/삭제/병합/디버그)
+### 완전 구현(삽입/검색/삭제/병합/디버그)
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct RNode {
@@ -469,7 +473,7 @@ int main(){
 
 ---
 
-### 2.4 예시 동작 (개념적)
+### 예시 동작 (개념적)
 
 삽입 순서: `romane`, `romanus`, `romulus`, …
 초기 분기: `ro` → 이후 `ma...`/`mu...`/`bu...` 등으로 **한 번에 내려감** (압축 덕에 깊이 얕음)
@@ -493,13 +497,15 @@ int main(){
 
 ---
 
-## 3. 성능·메모리·테스트
+## 성능·메모리·테스트
 
-### 3.1 복잡도
+### 복잡도
+
 - 이진 Trie: \(O(W)\) (고정폭 비트) — 사실상 상수
 - 압축 Trie: 평균 \(O(m)\) (\(m\)=문자열 길이), 단 각각의 LCP 비교 비용이 추가
 
-### 3.2 최적화 팁
+### 최적화 팁
+
 - **이진 Trie**
   - **메모리 풀**/슬랩 할당자: `new`/`delete` 비용 절감
   - **Patricia**(분기 비트 인덱스) → 노드 수·메모리 축소
@@ -507,7 +513,7 @@ int main(){
   - 자식 컨테이너: `vector`(작은 분기) → `unordered_map<char,int>`(큰 분기) 하이브리드
   - 대소문자/노멀라이징/토크나이저로 LCP 가능성 ↑
 
-### 3.3 퍼징/검증 (스케치)
+### 퍼징/검증 (스케치)
 
 ```cpp
 // 이진 Trie vs std::multiset 동치성
@@ -518,7 +524,7 @@ int main(){
 
 ---
 
-## 4. 수학 스냅샷: XOR 최대화가 “반대 비트 선호”인 이유
+## 수학 스냅샷: XOR 최대화가 “반대 비트 선호”인 이유
 
 한 비트 위치 \(i\)에서, \(x_i \in \{0,1\}\)이고 트라이에 \(p_i\in \{0,1\}\)가 존재할 때,
 해당 비트의 XOR 기여는
@@ -534,7 +540,7 @@ x_i \oplus p_i =
 
 ---
 
-## 5. 자주 하는 실수 & 디버깅 포인트
+## 자주 하는 실수 & 디버깅 포인트
 
 1. **이진 Trie 삭제** 시 `cnt` 감소/가지치기 누락 → 유령 경로(contains 거짓양성)
 2. **IPv4 LPM**에서 “마지막 매칭(nextHop)” 갱신을 잊음 → 더 짧은 프리픽스 미반영
@@ -545,7 +551,7 @@ x_i \oplus p_i =
 
 ---
 
-## 6. 요약
+## 요약
 
 - **이진 Trie**: 정수 비트 문제(XOR 최대/최소, 부분배열 XOR, IP LPM)에 **정답 같은 선택**.
 - **압축 Trie(Radix)**: 문자열 세상에서 **깊이를 줄이고 메모리를 절약**.
@@ -556,6 +562,7 @@ x_i \oplus p_i =
 ```cpp
 // 단일 파일 스니펫(빌드용 최소 예): BinaryTrie + maxPairXOR
 #include <bits/stdc++.h>
+
 using namespace std;
 struct BNode{ BNode* ch[2]; int cnt; BNode():ch{nullptr,nullptr},cnt(0){} };
 struct BinaryTrie{

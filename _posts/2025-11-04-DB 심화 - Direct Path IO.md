@@ -23,7 +23,7 @@ category: DB 심화
 
 ---
 
-## 0. 실습 스키마 & 공통 환경
+## 실습 스키마 & 공통 환경
 
 ```sql
 -- 실습용 큰 테이블 생성
@@ -65,18 +65,21 @@ END;
 
 ---
 
-## 1. Direct Path의 큰 그림
+## Direct Path의 큰 그림
 
-### 1.1 무엇을 “우회(bypass)”하나?
+### 무엇을 “우회(bypass)”하나?
+
 - **버퍼 캐시(SGA) 우회**: 전통적 버퍼드 읽기/쓰기(캐시에 블록 적재)를 건너뛰고,
 - **세션/프로세스 버퍼(주로 PGA)** ↔ **스토리지(데이터파일/TEMP 파일)** 로 **큰 I/O 청크**를 직접 발주.
 
-### 1.2 왜 빠를 수 있나?
+### 왜 빠를 수 있나?
+
 - **큰 I/O 사이즈**(연속 블록 읽기/쓰기)로 **요청 수↓, 대역폭↑, 컨텍스트 스위칭↓**
 - **버퍼 캐시 오염 방지**: 대용량 작업이 캐시를 밀어내지 않음 → OLTP 캐시 보호.
 - **병렬 실행(PX)** 과 결합 시 스토리지 파이프라인을 **동시에 폭 넓게 사용**.
 
-### 1.3 언제 선택되나? (일반적 휴리스틱)
+### 언제 선택되나? (일반적 휴리스틱)
+
 - **대량 Full/Partition Scan**(카디널리티 크고 재사용성 낮음)
 - **정렬/해시 연산**이 PGA를 초과하여 **TEMP 스필** 발생
 - **CTAS/INSERT /*+ APPEND */ / 병렬 적재**, 일부 `ALTER INDEX REBUILD` 등
@@ -91,14 +94,16 @@ END;
 
 ---
 
-## 2. `direct path read temp` / `direct path write temp` — TEMP 기반 Direct I/O
+## `direct path read temp` / `direct path write temp` — TEMP 기반 Direct I/O
 
-### 2.1 개념
+### 개념
+
 - **정렬(SORT)**, **해시 조인/해시 집계**, **Analytic** 윈도우, **ORDER BY + FETCH** 등 **작업 영역(workarea)** 이 **PGA 용량을 초과**하면,
   엔진은 중간 결과를 **TEMP 테이블스페이스**로 **스필(spill)** 한다.
 - 이때 TEMP 파일로의 I/O는 **버퍼 캐시와 무관** → `direct path write temp` / `direct path read temp`.
 
-### 2.2 실습: 의도적으로 TEMP 스필 유도
+### 실습: 의도적으로 TEMP 스필 유도
+
 ```sql
 -- (테스트 세션에서) PGA를 작게 잡아 스필 유도
 ALTER SESSION SET workarea_size_policy = AUTO;
@@ -141,7 +146,8 @@ WHERE  name IN ('physical writes direct temporary',
 - 이후 결과를 소비할 때 `direct path read temp` 로 **직접 읽음**
 - TEMP가 과도하면 I/O 지연 → **PGA 증가**, **쿼리 재작성**, **병렬/파티션 전략** 등으로 개선
 
-### 2.3 튜닝 포인트
+### 튜닝 포인트
+
 - **PGA/Workarea**: `workarea_size_policy=AUTO` + **적절한 `pga_aggregate_target`** (AWR에서 PGA Target Hit% 관찰)
 - **실행계획**: JOIN 순서/방법을 바꿔 **해시 테이블 크기↓**, **프루닝**으로 입력량↓, **조기 필터링**
 - **TOP-N/Stopkey**: ORDER BY 전체 정렬 ↓ → `FETCH FIRST N ROWS ONLY` + 정렬일치 인덱스
@@ -149,16 +155,18 @@ WHERE  name IN ('physical writes direct temporary',
 
 ---
 
-## 3. `direct path read` — 데이터파일 직접 읽기
+## `direct path read` — 데이터파일 직접 읽기
 
-### 3.1 개념
+### 개념
+
 - 테이블/인덱스 **세그먼트**에서 대량 연속 I/O가 필요할 때, **버퍼 캐시를 거치지 않고** 세션 버퍼로 **직접 읽음**.
 - 전형 사례
   - **대량 Full/Partition Scan**(특히 **재사용성 낮은** 블록)
   - **병렬 실행(PX)** 의 스캔 단계
   - **Exadata Smart Scan** 동반(이벤트는 `cell smart table scan` 등으로 표기, 함께 나타날 수 있음)
 
-### 3.2 실습: 직렬 세션에서 direct path read 유도
+### 실습: 직렬 세션에서 direct path read 유도
+
 ```sql
 -- 테스트 세션: 직렬 direct read 유도 (주의: 테스트 용도)
 ALTER SESSION SET "_serial_direct_read" = TRUE;
@@ -186,7 +194,8 @@ WHERE  name LIKE 'physical reads direct%';
 - `direct path read` 가 증가하면 **데이터파일에서 캐시 우회 읽기** 수행 중.
 - `db file scattered read` 대비 **호출 수↓/I/O 크기↑** 경향(스토리지 상황에 따라 상이).
 
-### 3.3 병렬 실행(PX)에서의 direct path read
+### 병렬 실행(PX)에서의 direct path read
+
 ```sql
 -- 병렬 스캔
 ALTER SESSION SET parallel_degree_policy = MANUAL;
@@ -201,16 +210,18 @@ GROUP  BY status;
 - PX 슬레이브가 각 파티션/범위를 나눠 **동시에 direct path read**.
 - 스토리지가 받쳐주면 **대역폭 극대화**, 그렇지 않으면 **큐 포화**로 RT↑.
 
-### 3.4 언제 `direct path read` 가 덜 유리한가?
+### 언제 `direct path read` 가 덜 유리한가?
+
 - **작은 랜덤 조회**(OLTP)에서는 **버퍼 캐시 재사용**이 더 낫다.
 - **혼합 워크로드**에서 무차별 direct read는 **캐시 재사용** 기회를 놓치고, **I/O 경쟁**을 유발할 수 있다.
 - 판단 기준은 항상 **실측 RT/대기 이벤트**.
 
 ---
 
-## 4. `direct path write` — 데이터파일 직접 쓰기
+## `direct path write` — 데이터파일 직접 쓰기
 
-### 4.1 개념
+### 개념
+
 - **대량 적재/변경** 시, 세션 버퍼에서 데이터파일로 **직접 쓰기** 수행.
 - 전형 사례
   - **CTAS (CREATE TABLE AS SELECT)**
@@ -218,7 +229,8 @@ GROUP  BY status;
   - **병렬 INSERT/병렬 로드**(SQL*Loader Direct Path 등)
   - **인덱스 재구성/리빌드**의 일부 단계
 
-### 4.2 실습: APPEND 적재와 CTAS
+### 실습: APPEND 적재와 CTAS
+
 ```sql
 -- APPEND: High Water Mark(HWM) 위쪽에 연속 공간을 확보해 직접 쓰기 (버퍼 캐시 오염 최소)
 CREATE TABLE big_sales_copy NOLOGGING AS
@@ -245,16 +257,18 @@ WHERE  name IN ('physical writes direct', 'physical writes direct temporary');
 - `direct path write` 증가: **데이터파일로 직접 쓰기**
 - APPEND는 **연속 공간** 할당 → **멀티블록 쓰기** 유리, **캐시 오염 방지**
 
-### 4.3 주의와 팁
+### 주의와 팁
+
 - **REDO/UNDO 정책**: NOLOGGING + APPEND는 **REDO 최소화** 가능(복구 전략 고려 필수).
 - **병렬도**: 과도한 병렬 쓰기는 **스토리지 큐 포화** → RT 급증 가능.
 - **세그먼트 공간 관리**(ASSM 등)와 **확장(extent) 크기**가 **연속성**에 영향.
 
 ---
 
-## 5. Direct Path I/O와 실행계획/트레이스 진단
+## Direct Path I/O와 실행계획/트레이스 진단
 
-### 5.1 플랜·실행 통계 확인
+### 플랜·실행 통계 확인
+
 ```sql
 ALTER SESSION SET statistics_level = ALL;
 
@@ -268,7 +282,8 @@ FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'ALLSTATS LAST +PEEKED_BINDS +A
   - 대량 Sort/Hash → TEMP 사용 → `direct path write temp` / `direct path read temp`
 - **Row Source stats** 에서 **`rows`, `bytes`, `starts`, `A-Rows`** 로 각 단계의 **데이터 양** 파악
 
-### 5.2 세션/시스템 이벤트, 통계
+### 세션/시스템 이벤트, 통계
+
 ```sql
 -- 세션 이벤트
 SELECT event, total_waits, time_waited_micro/1e6 sec
@@ -288,7 +303,8 @@ JOIN   v$tempseg_usage u ON s.saddr=u.session_addr
 WHERE  s.sid = SYS_CONTEXT('USERENV','SID');
 ```
 
-### 5.3 ASH로 최근 10분 관찰
+### ASH로 최근 10분 관찰
+
 ```sql
 SELECT event, COUNT(*) samples
 FROM   v$active_session_history
@@ -301,9 +317,10 @@ ORDER  BY samples DESC;
 
 ---
 
-## 6. 튜닝 전략 총정리 — 언제/어떻게 Direct Path를 취할 것인가?
+## 튜닝 전략 총정리 — 언제/어떻게 Direct Path를 취할 것인가?
 
-### 6.1 읽기 측면
+### 읽기 측면
+
 - **DW/보고·배치**:
   - **해시 조인 + Full/Partition Scan** 중심 → **direct path read** 자연 발생
   - **프루닝/블룸**으로 **스캔 범위 자체 축소**(작은 전체)
@@ -313,21 +330,23 @@ ORDER  BY samples DESC;
   - 무차별 `"_serial_direct_read"=TRUE` 금물
   - **정렬 일치 인덱스 + Stopkey**, **커버링 인덱스**로 **읽을 양 자체 감소**
 
-### 6.2 TEMP(정렬/해시) 측면
+### TEMP(정렬/해시) 측면
+
 - **PGA 여유**와 **AUTO Workarea**로 스필 최소화 → `direct path read/write temp` 감소
 - 쿼리 구조 변경: **사전 집계/조기 필터/윈도우 범위 축소**
 - **Top-N/Keyset**으로 불필요 전체정렬 방지
 
-### 6.3 쓰기 측면(대량 적재/변경)
+### 쓰기 측면(대량 적재/변경)
+
 - **APPEND/CTAS/병렬**로 **direct path write** 활용
 - **NOLOGGING** + 백업/복구 정책 수립(필요 시 FORCE LOGGING 환경 주의)
 - **분할 정복**: 파티션 단위 CTAS/교체(Exchange Partition)로 **가동중 적재** 최적화
 
 ---
 
-## 7. BEFORE → AFTER 시나리오
+## BEFORE → AFTER 시나리오
 
-### 7.1 (보고) 최근 분기 집계 보고서
+### (보고) 최근 분기 집계 보고서
 
 **Before (버퍼드 + 랜덤 혼재)**
 ```sql
@@ -354,7 +373,7 @@ GROUP  BY 'APAC';
 - **`direct path read` 비중↑**, 호출 수↓, 총 시간 단축
 - TEMP 스필 줄이려면 Top-N/사전 필터 추가
 
-### 7.2 (적재) 하루치 증분 적재
+### (적재) 하루치 증분 적재
 
 **Before**
 ```sql
@@ -372,7 +391,7 @@ COMMIT;
 - **`direct path write`** 관찰, **연속 공간**에 쓰기로 **I/O 호출 효율↑**, **버퍼 캐시 오염↓**
 - 필요 시 **NOLOGGING** + 백업 전략 병행
 
-### 7.3 (정렬/해시) TEMP 스필 줄이기
+### (정렬/해시) TEMP 스필 줄이기
 
 **Before (스필 과다)**
 ```sql
@@ -398,7 +417,7 @@ FETCH FIRST 5000 ROWS ONLY;
 
 ---
 
-## 8. 체크리스트
+## 체크리스트
 
 - [ ] **보고/배치**: `direct path read`로 **순차 대량 읽기**를 가져왔는가? (프루닝/병렬/블룸)
 - [ ] **적재/변경**: APPEND/CTAS로 **`direct path write`**를 활용하는가? (연속성/NOLOGGING 정책)
@@ -408,7 +427,7 @@ FETCH FIRST 5000 ROWS ONLY;
 
 ---
 
-## 9. 수식으로 보는 의사 의사결정
+## 수식으로 보는 의사 의사결정
 
 - **대량 스캔 처리량 근사**
   $$ \text{Throughput} \approx \frac{\text{Read Size per IO} \times \text{IOPS}}{\text{Concurrency Penalty}} $$
@@ -419,7 +438,7 @@ FETCH FIRST 5000 ROWS ONLY;
 
 ---
 
-## 10. 명령·질의 스니펫 모음 (복사/붙여넣기)
+## 명령·질의 스니펫 모음 (복사/붙여넣기)
 
 **10.1 이벤트·통계 한눈에**
 ```sql

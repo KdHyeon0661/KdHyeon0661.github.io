@@ -27,7 +27,7 @@ category: AspNet
 
 ---
 
-## 1. REST 핵심 복습 — 리소스·표현·상태 전이
+## REST 핵심 복습 — 리소스·표현·상태 전이
 
 - **리소스(Resource)**: 식별 가능한 대상(사용자, 주문, 결제 등) — **URI**로 식별.
 - **표현(Representation)**: 리소스를 나타내는 구체 포맷(JSON/XML 등).
@@ -37,9 +37,9 @@ category: AspNet
 
 ---
 
-## 2. 리소스 모델링 — URI 규칙, 계층·연관, 다형성, 수집 설계
+## 리소스 모델링 — URI 규칙, 계층·연관, 다형성, 수집 설계
 
-### 2.1 URI 규칙(권장)
+### URI 규칙(권장)
 
 - **복수형 명사** 사용: `/users`, `/orders`
 - **소문자-케밥케이스**: `/purchase-orders`, `/access-logs`
@@ -50,13 +50,13 @@ category: AspNet
   - `/posts/{id}/comments`
   - 다만, **깊이를 2~3단계 이내**로 유지. 너무 깊으면 별도 루트 리소스로 승격 고려.
 
-### 2.2 관계 설계
+### 관계 설계
 
 - **포린키 기반 조회**: `/posts?userId=42`
 - **중첩 리소스**: `GET /users/42/posts` — 특정 사용자 관점의 컬렉션
 - **링크/HATEOAS 최소형**: 응답에 `links.self`, `links.related`(선택)를 추가해 탐색성↑
 
-### 2.3 다형성·서브타입
+### 다형성·서브타입
 
 - 단일 컬렉션에서 여러 타입을 제공해야 한다면 `type` 필드 추가:
   ```json
@@ -67,9 +67,9 @@ category: AspNet
 
 ---
 
-## 3. 요청 설계 — 페이징/정렬/필터/검색, 필드 마스킹, Include
+## 요청 설계 — 페이징/정렬/필터/검색, 필드 마스킹, Include
 
-### 3.1 페이징
+### 페이징
 
 - **Offset 모델**:
   - `GET /users?page=1&pageSize=20`
@@ -78,28 +78,28 @@ category: AspNet
   - `GET /events?cursor=eyJpZCI6MTIzfQ==&limit=50`
   - 다음 페이지 커서만 제공하여 **불변성** 유지
 
-### 3.2 정렬/필터/검색
+### 정렬/필터/검색
 
 - 정렬: `GET /users?sort=-createdAt,name` (`-` 내림차순)
 - 필터: `GET /orders?status=paid&from=2025-01-01&to=2025-01-31`
 - 검색(풀텍스트/간단검색): `GET /posts?q=aspnet core`
 - 인덱스/쿼리 비용 고려하여 **필터 허용 목록(white-list)** 명세화
 
-### 3.3 부분 필드 선택(마스킹)
+### 부분 필드 선택(마스킹)
 
 - `GET /users?fields=id,name,email`
 - 대전제: 과도한 N+1 필드 노출 방지, 응답 트래픽 절감
 
-### 3.4 연관 포함(Include)
+### 연관 포함(Include)
 
 - `GET /orders?include=items,customer`
 - 포함 가능한 연관을 **명세/문서화**하고, 깊이를 제한.
 
 ---
 
-## 4. 응답 규격 — JSON 스키마, 메타/링크/HATEOAS 최소형, Enveloping
+## 응답 규격 — JSON 스키마, 메타/링크/HATEOAS 최소형, Enveloping
 
-### 4.1 단일/목록 응답 스켈레톤
+### 단일/목록 응답 스켈레톤
 
 ```json
 // 단일
@@ -127,7 +127,7 @@ category: AspNet
 
 ---
 
-## 5. 상태 코드·표준 헤더 — 일관성 표
+## 상태 코드·표준 헤더 — 일관성 표
 
 | 상황 | 상태 | 헤더/설명 |
 |---|---|---|
@@ -146,9 +146,9 @@ category: AspNet
 
 ---
 
-## 6. 오류 처리 — ProblemDetails 규격(추천)
+## 오류 처리 — ProblemDetails 규격(추천)
 
-### 6.1 표준 오류 포맷
+### 표준 오류 포맷
 
 ```json
 {
@@ -166,7 +166,7 @@ category: AspNet
 - `type`(문서화된 오류 유형 URL), `title`, `status`, `traceId`, `errors`(필드별)
 - ASP.NET Core: `ProblemDetails`, `ValidationProblemDetails` 자동/수동 사용
 
-### 6.2 ASP.NET Core 샘플
+### ASP.NET Core 샘플
 
 ```csharp
 if (!ModelState.IsValid)
@@ -175,14 +175,14 @@ if (!ModelState.IsValid)
 
 ---
 
-## 7. 부분 업데이트 — PUT vs PATCH
+## 부분 업데이트 — PUT vs PATCH
 
 - **PUT**: **전체 교체**(클라이언트가 리소스 전체 표현을 제공)
 - **PATCH**: **부분 업데이트**(일부 필드만 변경)
   - **JSON Merge Patch** (`application/merge-patch+json`): 단순·직관
   - **JSON Patch** (`application/json-patch+json`): 연산 목록(op/add/replace/remove) — 강력하지만 복잡
 
-### 7.1 JSON Merge Patch 예
+### JSON Merge Patch 예
 
 요청:
 ```http
@@ -197,9 +197,9 @@ Content-Type: application/merge-patch+json
 
 ---
 
-## 8. 멱등성·동시성 — Idempotency-Key, ETag/If-Match
+## 멱등성·동시성 — Idempotency-Key, ETag/If-Match
 
-### 8.1 멱등성(Idempotency)
+### 멱등성(Idempotency)
 
 - **PUT**, **DELETE**는 멱등적(같은 요청 반복해도 결과 동일)
 - **POST**는 기본 비멱등 → 중복 생성 방지:
@@ -213,7 +213,7 @@ Idempotency-Key: 6b6c9d7f-...
 { "amount": 1000, "currency": "KRW" }
 ```
 
-### 8.2 동시성 제어(Optimistic Concurrency)
+### 동시성 제어(Optimistic Concurrency)
 
 - 응답에 **ETag** 제공 → 클라이언트는 갱신 시 `If-Match: <etag>`:
   - 불일치 시 **412 Precondition Failed** (낙관적 잠금)
@@ -228,7 +228,7 @@ If-Match: "v3-7b2c..."
 
 ---
 
-## 9. 캐싱 전략 — Cache-Control, ETag, Last-Modified, 304
+## 캐싱 전략 — Cache-Control, ETag, Last-Modified, 304
 
 - **ETag** 또는 **Last-Modified**를 제공
 - 재검사 요청:
@@ -240,7 +240,7 @@ If-Match: "v3-7b2c..."
 
 ---
 
-## 10. 장기 작업·비동기 — 202 + Location/Retry-After
+## 장기 작업·비동기 — 202 + Location/Retry-After
 
 대량 처리/외부 연동 등 **즉시 완료 불가**:
 - **202 Accepted** 반환 + **Location: /operations/{id}**
@@ -263,7 +263,7 @@ Retry-After: 5
 
 ---
 
-## 11. 파일 업로드·큰 요청
+## 파일 업로드·큰 요청
 
 - **multipart/form-data** + `IFormFile`(ASP.NET Core)
 - 서버·프록시 **요청 크기 한도** 설정, 확장자/시그니처 검증, 바이러스 스캔
@@ -271,7 +271,7 @@ Retry-After: 5
 
 ---
 
-## 12. 버전 관리 — URI/헤더/협상, Deprecation 시그널
+## 버전 관리 — URI/헤더/협상, Deprecation 시그널
 
 - **URI 방식(권장)**: `/api/v1/users`
 - **헤더/미디어 타입**: `Accept: application/vnd.myapp.v2+json` (운영 복잡도↑)
@@ -281,7 +281,7 @@ Retry-After: 5
 
 ---
 
-## 13. 보안 — 인증·인가, CORS, 입력 검증, Rate Limit
+## 보안 — 인증·인가, CORS, 입력 검증, Rate Limit
 
 - **HTTPS 필수**, HSTS 적용
 - **JWT/OAuth2/OIDC**: 표준 기반 인증, 최소 권한(Scopes/Claims)
@@ -293,7 +293,7 @@ Retry-After: 5
 
 ---
 
-## 14. 문서화 — OpenAPI(Swagger)
+## 문서화 — OpenAPI(Swagger)
 
 - **정확한 스키마**(요청/응답), **상태코드**, **예제** 포함
 - 가능한 한 **DTO를 명확히 분리**(엔티티 직접 노출 금지)
@@ -312,7 +312,7 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 15. 테스트·운영 체크리스트
+## 테스트·운영 체크리스트
 
 - **계약 테스트(Consumer-Driven)**: 프런트/클라이언트 기대와 서버 API 계약 검증
 - **회귀 테스트**: 버전·엔드포인트·상태코드·스키마 변경 감지
@@ -322,11 +322,12 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 16. 통합 예제 — Users/Posts 도메인
+## 통합 예제 — Users/Posts 도메인
 
-### 16.1 URI/요청/응답 예시
+### URI/요청/응답 예시
 
 #### 생성(POST)
+
 ```http
 POST /api/v1/users
 Content-Type: application/json
@@ -356,6 +357,7 @@ ETag: "v1-67fd3a"
 ```
 
 #### 목록 조회(페이징/정렬/필드)
+
 ```http
 GET /api/v1/users?page=1&pageSize=20&sort=-createdAt&fields=id,name,email
 ```
@@ -373,6 +375,7 @@ GET /api/v1/users?page=1&pageSize=20&sort=-createdAt&fields=id,name,email
 ```
 
 #### 부분 업데이트(PATCH, Merge Patch)
+
 ```http
 PATCH /api/v1/users/101
 Content-Type: application/merge-patch+json
@@ -387,6 +390,7 @@ ETag: "v2-1f9c0b"
 ```
 
 #### 삭제(멱등)
+
 ```http
 DELETE /api/v1/users/101
 ```
@@ -395,6 +399,7 @@ HTTP/1.1 204 No Content
 ```
 
 #### 오류(유효성)
+
 ```http
 POST /api/v1/users
 Content-Type: application/json
@@ -414,7 +419,7 @@ Content-Type: application/json
 }
 ```
 
-### 16.2 ASP.NET Core 컨트롤러 스니펫
+### ASP.NET Core 컨트롤러 스니펫
 
 ```csharp
 [ApiController]
@@ -473,7 +478,7 @@ public class UsersController : ControllerBase
 }
 ```
 
-### 16.3 서비스 구현 포인트(의사코드)
+### 서비스 구현 포인트(의사코드)
 
 ```csharp
 public (int id, string etag) Create(UserCreateDto dto)

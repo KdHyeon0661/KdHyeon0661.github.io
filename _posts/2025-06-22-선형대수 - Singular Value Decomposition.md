@@ -13,7 +13,7 @@ category: 선형대수
 
 ---
 
-## 1. SVD의 정식 정의와 구성요소
+## SVD의 정식 정의와 구성요소
 
 - $$A=U\Sigma V^\top$$
   - $$U=[\vec{u}_1,\ldots,\vec{u}_m]$$: **좌측 특이벡터(Left singular vectors)**, $$U^\top U=I_m$$
@@ -27,7 +27,7 @@ category: 선형대수
 
 ---
 
-## 2. 고유값 분해와 무엇이 다른가?
+## 고유값 분해와 무엇이 다른가?
 
 | 구분 | 고유값 분해 | SVD |
 |---|---|---|
@@ -41,7 +41,7 @@ category: 선형대수
 
 ---
 
-## 3. 기하학적 의미—원판을 타원으로
+## 기하학적 의미—원판을 타원으로
 
 - 단위 구(원판) $$\{x:\|x\|_2=1\}$$를 $$A$$로 사상하면 **타원(타원체)**가 된다.
   - 주축 방향: **우측 특이벡터** $$\vec{v}_i$$
@@ -51,7 +51,7 @@ category: 선형대수
 
 ---
 
-## 4. SVD가 주는 핵심 정보
+## SVD가 주는 핵심 정보
 
 - **스펙트럴 노름**: $$\|A\|_2=\sigma_{\max}=\sigma_1$$
 - **프로베니우스 노름**: $$\|A\|_F=\sqrt{\sum_i\sigma_i^2}$$
@@ -63,7 +63,7 @@ category: 선형대수
 
 ---
 
-## 5. 최적 저랭크 근사 (Eckart–Young–Mirsky 정리)
+## 최적 저랭크 근사 (Eckart–Young–Mirsky 정리)
 
 - **최적의 랭크-$$k$$ 근사** $$A_k$$(스펙트럴/프로베니우스 노름 모두에서 최적):
   $$
@@ -78,20 +78,22 @@ category: 선형대수
 
 ---
 
-## 6. 최소제곱, 유사역행렬, 정규화
+## 최소제곱, 유사역행렬, 정규화
 
-### 6.1 모어–펜로즈 유사역행렬
+### 모어–펜로즈 유사역행렬
+
 - $$A^+=V\,\Sigma^+\,U^\top,\quad \Sigma^+=\operatorname{diag}(\sigma_1^{-1},\ldots,\sigma_r^{-1})$$
 - **최소제곱 해** $$\vec{x}_\star=A^+\vec{b}$$ (해가 없을 때 잔차 최소)
 
-### 6.2 Tikhonov(릿지) 정규화의 SVD 표현
+### Tikhonov(릿지) 정규화의 SVD 표현
+
 - $$\vec{x}_\lambda=(A^\top A+\lambda I)^{-1}A^\top \vec{b}
 =V\,\operatorname{diag}\!\Big(\frac{\sigma_i}{\sigma_i^2+\lambda}\Big)U^\top \vec{b}$$
 - 작은 $$\sigma_i$$에 대한 **필터링 효과**로 과적합/불안정 완화.
 
 ---
 
-## 7. PCA와의 직접 연결
+## PCA와의 직접 연결
 
 - 데이터 행렬 $$X\in\mathbb{R}^{n\times d}$$(평균 제거) **SVD**: $$X=U\Sigma V^\top$$
 - 공분산: $$C=\frac{1}{n}X^\top X = V\,\frac{\Sigma^\top \Sigma}{n}\,V^\top$$
@@ -100,7 +102,7 @@ category: 선형대수
 
 ---
 
-## 8. 계산법·복잡도·대규모 데이터
+## 계산법·복잡도·대규모 데이터
 
 - 고전 알고리즘: **Golub–Kahan bidiagonalization** → QR/Divide-and-Conquer
 - 복잡도(대략): $$\mathcal{O}(mn\min\{m,n\})$$
@@ -111,7 +113,7 @@ category: 선형대수
 
 ---
 
-## 9. 자주 놓치는 디테일
+## 자주 놓치는 디테일
 
 - **부호(또는 복소위상) 불일정성**: $$\vec{u}_i,\vec{v}_i$$는 동시에 부호 반전 가능(결과는 동일).
 - **중복 특이값**: 해당 부분공간의 기저(특이벡터)는 **비고유적**.
@@ -120,9 +122,10 @@ category: 선형대수
 
 ---
 
-## 10. 손계산 감각—작은 예제
+## 손계산 감각—작은 예제
 
-### 10.1 간단 2×2
+### 간단 2×2
+
 $$
 A=\begin{bmatrix}3&1\\0&2\end{bmatrix}.
 $$
@@ -132,7 +135,8 @@ $$
 - 대응 우측 특이벡터 $$\vec{v}_i$$를 구하고, $$\vec{u}_i=A\vec{v}_i/\sigma_i$$로 좌측을 구해
   $$A=U\Sigma V^\top$$ 완성(실무에선 라이브러리 사용 권장).
 
-### 10.2 랭크 결손 3×2
+### 랭크 결손 3×2
+
 $$
 A=\begin{bmatrix}1&2\\2&4\\3&6\end{bmatrix}=\begin{bmatrix}1\\2\\3\end{bmatrix}\begin{bmatrix}1&2\end{bmatrix}.
 $$
@@ -141,9 +145,10 @@ $$
 
 ---
 
-## 11. 파이썬 코드 (NumPy / PyTorch)
+## 파이썬 코드 (NumPy / PyTorch)
 
-### 11.1 기본 SVD와 복원 (NumPy)
+### 기본 SVD와 복원 (NumPy)
+
 ```python
 import numpy as np
 
@@ -159,11 +164,13 @@ print("VT=\n", VT)
 print("Reconstruction error ‖A - UΣVᵀ‖_F =", np.linalg.norm(A - A_rec, 'fro'))
 ```
 
-### 11.2 Truncated SVD (상위 k만, NumPy)
+### Truncated SVD (상위 k만, NumPy)
+
 ```python
 import numpy as np
 
 # 예시 행렬 (m >> n일 수도, 여기선 6x4)
+
 A = np.array([[1., 0., 2., 0.],
               [0., 3., 0., 0.],
               [1., 1., 0., 0.],
@@ -184,7 +191,8 @@ print("Spectral-norm error ≈", err2)
 print("Frobenius-norm error =", errF)
 ```
 
-### 11.3 최소제곱/유사역행렬 (NumPy)
+### 최소제곱/유사역행렬 (NumPy)
+
 ```python
 import numpy as np
 
@@ -203,7 +211,8 @@ print("Residual norm:", np.linalg.norm(res))
 print("Q-orthogonality (Uᵀ res):", U.T @ res)  # 앞 r개는 거의 0
 ```
 
-### 11.4 릿지 정규화의 필터 계수 (NumPy)
+### 릿지 정규화의 필터 계수 (NumPy)
+
 ```python
 import numpy as np
 
@@ -220,7 +229,8 @@ x_ridge = VT.T @ (f * (U.T @ b))   # V diag(f) Uᵀ b
 print("ridge solution norm:", np.linalg.norm(x_ridge))
 ```
 
-### 11.5 PyTorch 버전 (GPU 가속 가능)
+### PyTorch 버전 (GPU 가속 가능)
+
 ```python
 import torch
 
@@ -228,6 +238,7 @@ A = torch.tensor([[3., 1.],
                   [0., 2.]])
 
 # full_matrices=False 가 경제 SVD
+
 U, S, Vh = torch.linalg.svd(A, full_matrices=False)
 A_rec = U @ torch.diag(S) @ Vh
 
@@ -242,29 +253,33 @@ print("‖A - UΣVᵀ‖_F =", torch.linalg.matrix_norm(A - A_rec, ord='fro').it
 
 ---
 
-## 12. 이미지/문서 예시 시나리오
+## 이미지/문서 예시 시나리오
 
-### 12.1 이미지 압축(회색조 행렬)
+### 이미지 압축(회색조 행렬)
+
 - 이미지 행렬 $$I\in\mathbb{R}^{m\times n}$$에 대해 상위 $$k$$ 특이값만으로
   $$I_k=U_k\Sigma_k V_k^\top$$ 을 저장하면 **저용량 근사**.
 - 품질–용량 트레이드오프: $$k$$↑ ⇒ 품질↑, 용량↑.
 
 #### 코드 스케치(파일 IO는 환경에 맞게 대체)
+
 ```python
 import numpy as np
 # img: m x n 실수 행렬(0~255 등)이라 가정
+
 U, S, VT = np.linalg.svd(img, full_matrices=False)
 k = 50
 img_k = (U[:, :k] @ np.diag(S[:k]) @ VT[:k, :]).clip(0, 255)
 ```
 
-### 12.2 LSA(잠재 의미 분석)
+### LSA(잠재 의미 분석)
+
 - 단어–문서 행렬 $$X$$에 SVD 적용: $$X=U\Sigma V^\top$$
   상위 $$k$$ 성분만 유지: **잠재 의미 공간**에서 유사도 계산.
 
 ---
 
-## 13. 체크리스트—SVD를 고를 때
+## 체크리스트—SVD를 고를 때
 
 1. **형태**: 정방이든 아니든 **항상 SVD 가능**.
 2. **안정성**: 직교 기저 → 수치안정 우수.
@@ -275,7 +290,7 @@ img_k = (U[:, :k] @ np.diag(S[:k]) @ VT[:k, :]).clip(0, 255)
 
 ---
 
-## 14. 연습문제(핸즈온 권장)
+## 연습문제(핸즈온 권장)
 
 1) 무작위 $$A\in\mathbb{R}^{200\times 50}$$에 노이즈를 섞고 상위 $$k$$로 복원할 때
    $$\|A-A_k\|_F/\|A\|_F$$가 $$k$$에 따라 어떻게 변하는지 그려보라.

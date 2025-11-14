@@ -6,7 +6,7 @@ category: Docker
 ---
 # Dockerfile & 이미지 최적화 베스트 프랙티스
 
-## 0. 빠른 개요(핵심 복습)
+## 빠른 개요(핵심 복습)
 
 - **캐시**: Dockerfile **위→아래**로 레이어 캐시. **윗단 변경 = 아랫단 전부 무효화**.
 - **.dockerignore**: 빌드 컨텍스트 다이어트(성능·보안·크기).
@@ -17,28 +17,32 @@ category: Docker
 
 ---
 
-## 1. 캐시(Cache) 제대로 활용하기
+## 캐시(Cache) 제대로 활용하기
 
-### 1.1 원칙
+### 원칙
+
 - Dockerfile은 **위에서 아래로** 평가·레이어화.
 - 어떤 레이어가 바뀌면 **그 아래 레이어는 모두 재빌드**.
 - COPY/ADD는 **컨텍스트의 해시**에 민감. 작은 변화도 캐시 무효화 유발.
 
-### 1.2 안 좋은 예 vs 좋은 예
+### 안 좋은 예 vs 좋은 예
+
 ```Dockerfile
 # 잘못된 예: 캐시 무효화 유발
+
 COPY . .                       # 변경 잦은 코드 전체 복사
 RUN pip install -r requirements.txt
 ```
 
 ```Dockerfile
 # 권장 예: 의존성 먼저, 소스 나중
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ```
 
-### 1.3 전략 요약
+### 전략 요약
 
 | 항목 | 설명 |
 |---|---|
@@ -55,11 +59,13 @@ $$
 
 ---
 
-## 2. .dockerignore로 컨텍스트 다이어트
+## .dockerignore로 컨텍스트 다이어트
 
-### 2.1 예시
+### 예시
+
 ```dockerignore
 # VCS/캐시/빌드산출물/비밀 제외
+
 .git/
 .gitignore
 __pycache__/
@@ -75,14 +81,15 @@ README.md
 tests/
 ```
 
-### 2.2 효과
+### 효과
+
 - 빌드 속도↑(전송·해시 비용↓)
 - 보안↑(비밀/토큰 유출 방지)
 - 캐시 적중 안정화(불필요 변경 억제)
 
 ---
 
-## 3. 경량 베이스 이미지 선택
+## 경량 베이스 이미지 선택
 
 | 언어/플랫폼 | 경량 추천 | 비고 |
 |---|---|---|
@@ -95,29 +102,34 @@ tests/
 
 ---
 
-## 4. 레이어 줄이기와 APT 모범 사례
+## 레이어 줄이기와 APT 모범 사례
 
-### 4.1 RUN 묶기 + 캐시 삭제
+### RUN 묶기 + 캐시 삭제
+
 ```Dockerfile
 # 비효율
+
 RUN apt-get update
 RUN apt-get install -y curl
 RUN apt-get clean
 
 # 개선
+
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl \
  && rm -rf /var/lib/apt/lists/*
 ```
 
-### 4.2 임시파일 정리
+### 임시파일 정리
+
 ```Dockerfile
 RUN wget file.zip \
  && unzip file.zip \
  && rm -f file.zip
 ```
 
-### 4.3 APT 스텝을 한 RUN에서
+### APT 스텝을 한 RUN에서
+
 ```Dockerfile
 RUN apt-get update \
  && apt-get install -y --no-install-recommends build-essential ca-certificates \
@@ -127,11 +139,13 @@ RUN apt-get update \
 
 ---
 
-## 5. 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 슬림하게”
+## 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 슬림하게”
 
-### 5.1 Node → Nginx
+### Node → Nginx
+
 ```Dockerfile
 # Stage 1: 빌드
+
 FROM node:20 AS builder
 WORKDIR /app
 COPY package*.json ./
@@ -140,13 +154,16 @@ COPY . .
 RUN npm run build
 
 # Stage 2: 런타임
+
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 ```
 
-### 5.2 Python wheel 전략
+### Python wheel 전략
+
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM python:3.12-alpine AS build
 WORKDIR /app
 RUN apk add --no-cache build-base libffi-dev
@@ -166,7 +183,8 @@ ENTRYPOINT ["gunicorn"]
 CMD ["-w","2","-b","0.0.0.0:5000","app:app"]
 ```
 
-### 5.3 Go → scratch/distroless
+### Go → scratch/distroless
+
 ```Dockerfile
 FROM golang:1.22-alpine AS build
 WORKDIR /src
@@ -183,28 +201,34 @@ ENTRYPOINT ["/app"]
 
 ---
 
-## 6. BuildKit 고급 기능: 캐시·시크릿·SSH
+## BuildKit 고급 기능: 캐시·시크릿·SSH
 
 BuildKit 활성화:
 ```bash
 export DOCKER_BUILDKIT=1
 ```
 
-### 6.1 캐시 마운트
+### 캐시 마운트
+
 ```Dockerfile
 # Node
+
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Go
+
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 # Python
+
 RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 ```
 
-### 6.2 시크릿 마운트(빌드 시 비밀 노출 금지)
+### 시크릿 마운트(빌드 시 비밀 노출 금지)
+
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine
 RUN --mount=type=secret,id=npmrc \
     cp /run/secrets/npmrc /root/.npmrc && npm ci || true
@@ -213,12 +237,15 @@ RUN --mount=type=secret,id=npmrc \
 docker build --secret id=npmrc,src=$HOME/.npmrc -t app:secret .
 ```
 
-### 6.3 SSH 포워딩(프라이빗 Git)
+### SSH 포워딩(프라이빗 Git)
+
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine:3.20
 RUN apk add --no-cache git openssh
 # 빌드 중 ssh-agent 인증 사용
+
 RUN --mount=type=ssh git clone git@github.com:org/private.git /src
 ```
 ```bash
@@ -227,9 +254,10 @@ docker build --ssh default -t app:git .
 
 ---
 
-## 7. 언어별 최적화 패턴
+## 언어별 최적화 패턴
 
-### 7.1 Python
+### Python
+
 ```Dockerfile
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
@@ -244,7 +272,8 @@ CMD ["python","app.py"]
 - `PYTHONDONTWRITEBYTECODE` 로 `.pyc` 쓰기 방지.
 - wheel 캐시 사용, dev 의존성 분리(`requirements-prod.txt` 권장).
 
-### 7.2 Node.js
+### Node.js
+
 ```Dockerfile
 FROM node:20-slim
 WORKDIR /app
@@ -256,7 +285,8 @@ CMD ["node","server.js"]
 ```
 - `npm ci`로 재현 가능 설치, 프로덕션 모드 `--omit=dev`.
 
-### 7.3 Java
+### Java
+
 ```Dockerfile
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
@@ -265,20 +295,23 @@ ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app/app.jar"]
 ```
 - JRE 베이스로 경량화, 힙/GC 옵션 조정.
 
-### 7.4 Go
+### Go
+
 - 정적 링크 후 `scratch/distroless` 런타임, CA 필요 시 번들 주의.
 
 ---
 
-## 8. 보안·권한·실행옵션
+## 보안·권한·실행옵션
 
-### 8.1 USER 전환
+### USER 전환
+
 ```Dockerfile
 RUN addgroup -S app && adduser -S app -G app
 USER app
 ```
 
-### 8.2 런 옵션(최소 권한)
+### 런 옵션(최소 권한)
+
 ```bash
 docker run --rm \
   --read-only \
@@ -288,34 +321,40 @@ docker run --rm \
   myimg:prod
 ```
 
-### 8.3 ENTRYPOINT/CMD exec form
+### ENTRYPOINT/CMD exec form
+
 ```Dockerfile
 ENTRYPOINT ["nginx","-g","daemon off;"]
 # CMD는 기본 인자(override 용)
+
 ```
 - exec form은 **신호 전달/종료 처리** 안정적(PID 1 문제 회피).
 
 ---
 
-## 9. 재현성·서명·SBOM
+## 재현성·서명·SBOM
 
-### 9.1 다이제스트 고정
+### 다이제스트 고정
+
 {% raw %}
 ```bash
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # nginx@sha256:...
+
 docker run --rm nginx@sha256:...
 ```
 {% endraw %}
 
-### 9.2 의존성 잠금
+### 의존성 잠금
+
 - Python: `pip-tools`, `poetry.lock`
 - Node: `package-lock.json`/`pnpm-lock.yaml`
 - Go: `go.sum`
 - Java: `mvn dependency:go-offline` + reproducible builds 설정
 
-### 9.3 SBOM/취약점/서명(예시 도구)
+### SBOM/취약점/서명(예시 도구)
+
 - SBOM: `syft`
 - 취약점 스캔: `trivy`
 - 서명/검증: `cosign`
@@ -323,7 +362,7 @@ docker run --rm nginx@sha256:...
 
 ---
 
-## 10. 이미지 크기 줄이기 체크리스트
+## 이미지 크기 줄이기 체크리스트
 
 - `*-slim`/`alpine`/`distroless`/`scratch` 검토.
 - 멀티스테이지로 **산출물만** 복사.
@@ -334,7 +373,7 @@ docker run --rm nginx@sha256:...
 
 ---
 
-## 11. 측정·검증 도구
+## 측정·검증 도구
 
 ```bash
 docker images                       # 크기
@@ -346,7 +385,7 @@ docker run -it --rm <image> sh      # 실제 파일 시스템 확인
 
 ---
 
-## 12. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -359,7 +398,7 @@ docker run -it --rm <image> sh      # 실제 파일 시스템 확인
 
 ---
 
-## 13. 예제: 실전 Flask 서비스 최적화(종합)
+## 예제: 실전 Flask 서비스 최적화(종합)
 
 ```
 my-app/
@@ -370,6 +409,7 @@ my-app/
 
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
@@ -410,7 +450,7 @@ docker run -d --name api -p 5000:5000 \
 
 ---
 
-## 14. 예제: 프런트엔드(React/Vite) → Nginx 배포
+## 예제: 프런트엔드(React/Vite) → Nginx 배포
 
 ```Dockerfile
 FROM node:20-slim AS build
@@ -423,12 +463,13 @@ RUN npm run build
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 # 헬스엔드포인트
+
 RUN printf "events {}\nhttp { server { listen 80; location /health { return 200 'ok'; } } }" > /etc/nginx/nginx.conf
 ```
 
 ---
 
-## 15. 베이스 선택 의사결정 간단 가이드
+## 베이스 선택 의사결정 간단 가이드
 
 1) 네이티브 확장/빌드 필요한가? → 그렇다면 `slim` 우선.
 2) 순수 정적 산출물? → `alpine`/`distroless`/`scratch` 고려.
@@ -436,7 +477,7 @@ RUN printf "events {}\nhttp { server { listen 80; location /health { return 200 
 
 ---
 
-## 16. 수학 메모(캐시 적중률과 빌드 비용 직관)
+## 수학 메모(캐시 적중률과 빌드 비용 직관)
 
 레이어별 캐시 적중률 \(p_i\), 레이어 비용 \(c_i\)일 때:
 $$
@@ -446,7 +487,7 @@ $$
 
 ---
 
-## 17. 결론 요약
+## 결론 요약
 
 | 목표 | 전략 |
 |---|---|
@@ -458,26 +499,31 @@ $$
 
 ---
 
-## 18. 참고 명령 모음
+## 참고 명령 모음
 
 {% raw %}
 ```bash
 # 이미지/레이어/디스크
+
 docker images
 docker history <image:tag>
 docker system df
 
 # 실행 확인
+
 docker run -it --rm <image> sh
 dive <image:tag>
 
 # BuildKit on
+
 export DOCKER_BUILDKIT=1
 
 # 캐시/시크릿/SSH 사용 빌드 예
+
 docker build --secret id=npmrc,src=$HOME/.npmrc --ssh default -t app:opt .
 
 # 재현 가능한 실행(다이제스트)
+
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 docker run --rm nginx@sha256:...
 ```

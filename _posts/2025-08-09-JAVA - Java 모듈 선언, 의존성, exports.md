@@ -6,7 +6,7 @@ category: Java
 ---
 # Java 모듈 선언, 의존성, exports
 
-## 0. 한눈에 핵심(요약)
+## 한눈에 핵심(요약)
 
 - **module-info.java**에 모듈의 **의존성**(`requires`), **공개 범위**(`exports`), **리플렉션 허용**(`opens`), **서비스 노출/소비**(`provides/uses`)를 선언한다.
 - `requires transitive`로 **전이 의존성**을 공개할 수 있고, `requires static`은 **컴파일 전용** 의존성이다.
@@ -16,9 +16,10 @@ category: Java
 
 ---
 
-## 1. 모듈 선언 `module` — 구조·규칙·레이아웃
+## 모듈 선언 `module` — 구조·규칙·레이아웃
 
-### 1.1 module-info.java 기본
+### module-info.java 기본
+
 ```java
 module com.example.myapp {
     requires java.sql;                 // 의존성 선언
@@ -31,7 +32,8 @@ module com.example.myapp {
 - 한 모듈은 **하나의 `module-info.java`**만 가진다.
 - `module-info.java`는 **소스 루트**(모듈 루트)에 위치한다.
 
-### 1.2 권장 폴더 레이아웃(멀티 모듈 예)
+### 권장 폴더 레이아웃(멀티 모듈 예)
+
 ```
 root/
  ├─ app/                     (module: com.example.app)
@@ -50,9 +52,10 @@ root/
 
 ---
 
-## 2. 의존성 `requires` — 기본/전이/컴파일 전용
+## 의존성 `requires` — 기본/전이/컴파일 전용
 
-### 2.1 기본 의존성
+### 기본 의존성
+
 ```java
 module com.example.myapp {
     requires java.sql;
@@ -61,7 +64,8 @@ module com.example.myapp {
 ```
 - 선언된 모듈의 **공개 패키지**에 접근 가능.
 
-### 2.2 전이 의존성 `requires transitive`
+### 전이 의존성 `requires transitive`
+
 ```java
 module com.example.service {
     requires transitive com.example.core;
@@ -71,7 +75,8 @@ module com.example.service {
 - **`com.example.service`를 사용하는 모듈**은 별도 선언 없이 **`com.example.core`에도 접근 가능**.
 - 상위 레이어가 **하위 레이어 API를 외부에 재노출**해야 할 때 유용하나 **남용 금지**.
 
-### 2.3 컴파일 전용 `requires static`
+### 컴파일 전용 `requires static`
+
 ```java
 module com.example.compiler {
     requires static com.example.annotations; // 컴파일 시에만 필요
@@ -80,7 +85,8 @@ module com.example.compiler {
 ```
 - 예: 애너테이션/애너테이션 프로세서 등 **런타임 불필요** 의존성.
 
-### 2.4 JDK 기본 모듈 예시
+### JDK 기본 모듈 예시
+
 | 모듈명       | 설명                                                   |
 |--------------|--------------------------------------------------------|
 | `java.base`  | **암시적으로 포함**. `java.lang`, `java.util` 등 필수 |
@@ -90,9 +96,10 @@ module com.example.compiler {
 
 ---
 
-## 3. 패키지 공개 `exports` — 전체 공개 vs 선택적 공개
+## 패키지 공개 `exports` — 전체 공개 vs 선택적 공개
 
-### 3.1 기본 공개
+### 기본 공개
+
 ```java
 module com.example.myapp {
     exports com.example.myapp.api; // public 타입 외부 접근 허용
@@ -100,7 +107,8 @@ module com.example.myapp {
 ```
 - 공개하지 않으면 **모듈 내부에서만** 접근 가능(강한 캡슐화).
 
-### 3.2 특정 모듈에만 공개(친구 모듈)
+### 특정 모듈에만 공개(친구 모듈)
+
 ```java
 module com.example.myapp {
     exports com.example.myapp.internal to com.example.test; // test 모듈만 접근
@@ -110,13 +118,15 @@ module com.example.myapp {
 
 ---
 
-## 4. `exports` vs `opens` — 리플렉션 차이(매우 중요)
+## `exports` vs `opens` — 리플렉션 차이(매우 중요)
 
-### 4.1 차이 요약
+### 차이 요약
+
 - `exports`: **컴파일·런타임의 정적 접근** 허용(소스/바이트코드 참조). 리플렉션으로 **비공개 멤버 접근 허용 아님**.
 - `opens`: **런타임 리플렉션**(예: `setAccessible(true)`)을 허용. 프레임워크(Jackson/Hibernate/MapStruct 등) 호환에 필수.
 
-### 4.2 구문
+### 구문
+
 ```java
 module com.example.app {
     exports com.example.app.api;                    // 정적 공개
@@ -124,7 +134,8 @@ module com.example.app {
 }
 ```
 
-### 4.3 모두 열기(권장 X)
+### 모두 열기(권장 X)
+
 ```java
 open module com.example.app {  // 모듈 내 모든 패키지를 리플렉션에 개방
     requires com.fasterxml.jackson.databind;
@@ -134,9 +145,10 @@ open module com.example.app {  // 모듈 내 모든 패키지를 리플렉션에
 
 ---
 
-## 5. 서비스(플러그인) — `uses` + `provides ... with` + `ServiceLoader`
+## 서비스(플러그인) — `uses` + `provides ... with` + `ServiceLoader`
 
-### 5.1 API 모듈
+### API 모듈
+
 ```java
 // module-info.java (com.example.calc.api)
 module com.example.calc.api {
@@ -154,7 +166,8 @@ public interface Calculator {
 }
 ```
 
-### 5.2 구현 모듈(플러그인)
+### 구현 모듈(플러그인)
+
 ```java
 // module-info.java (com.example.calc.add)
 module com.example.calc.add {
@@ -174,7 +187,8 @@ public class AddCalculator implements Calculator {
 }
 ```
 
-### 5.3 소비자(애플리케이션)
+### 소비자(애플리케이션)
+
 ```java
 // module-info.java (com.example.app)
 module com.example.app {
@@ -202,58 +216,68 @@ public class Main {
 
 ---
 
-## 6. 모듈 패스 vs 클래스패스, 자동/이름 없는 모듈
+## 모듈 패스 vs 클래스패스, 자동/이름 없는 모듈
 
-### 6.1 용어
+### 용어
+
 - **모듈패스**: 모듈(JAR 안에 `module-info.class`가 있거나 **Automatic-Module-Name** 매니페스트로 이름이 지정된 JAR)을 배치.
 - **클래스패스**: 기존 방식. 모듈 경계/검증 없음.
 
-### 6.2 자동 모듈(automatic module)
+### 자동 모듈(automatic module)
+
 - `module-info.class`가 없어도, JAR 파일명이 **모듈 이름**으로 간주되어 **모듈패스**에서 사용 가능.
 - `MANIFEST.MF`에 `Automatic-Module-Name: com.example.lib`를 넣어 **안정적 이름** 부여 권장.
 
-### 6.3 이름 없는 모듈(unnamed module)
+### 이름 없는 모듈(unnamed module)
+
 - **클래스패스**에 놓인 모든 코드 → **하나의 이름 없는 모듈**로 취급.
 - 이름 없는 모듈은 **모든 모듈을 읽을 수 있으나**, **모듈들은 이름 없는 모듈을 읽지 못함**.
 - 점진적 마이그레이션 시 흔히 발생. 처음엔 앱을 **클래스패스**로, 라이브러리/부분을 모듈패스로 두는 혼합 형태가 가능하지만, 최종적으로 **모듈패스 정착**을 권장.
 
 ---
 
-## 7. 컴파일/패키징/실행(순수 JDK 도구)
+## 컴파일/패키징/실행(순수 JDK 도구)
 
 예시는 `core`, `add`(플러그인), `app` 3모듈 구성.
 
-### 7.1 컴파일
+### 컴파일
+
 ```bash
-# 1. 모듈 소스 컴파일
+# 모듈 소스 컴파일
+
 javac -d out/core $(find core/src/main/java -name "*.java")
 
-# 2. add 모듈(의존: core)
+# add 모듈(의존: core)
+
 javac --module-path out -d out/add  $(find add/src/main/java -name "*.java")
 
-# 3. app 모듈(의존: core)
+# app 모듈(의존: core)
+
 javac --module-path out -d out/app  $(find app/src/main/java -name "*.java")
 ```
 
-### 7.2 모듈 JAR 만들기
+### 모듈 JAR 만들기
+
 ```bash
 jar --create --file mods/com.example.core.jar -C out/core .
 jar --create --file mods/com.example.calc.add.jar -C out/add .
 jar --create --file mods/com.example.app.jar -C out/app .
 ```
 
-### 7.3 실행
+### 실행
+
 ```bash
 java --module-path mods \
      --module com.example.app/com.example.app.Main
 ```
 
-### 7.4 서비스 누락 시
+### 서비스 누락 시
+
 `ServiceLoader`로 아무 구현을 찾지 못하면 루프가 비어 있음. 구현 JAR을 **모듈패스에 추가**해야 한다.
 
 ---
 
-## 8. `exports` + 테스트: 제한 공개와 테스트 모듈
+## `exports` + 테스트: 제한 공개와 테스트 모듈
 
 테스트 전용 API 접근이 필요할 때:
 ```java
@@ -275,7 +299,7 @@ java --add-exports com.example.core/com.example.core.internal=ALL-UNNAMED ...
 
 ---
 
-## 9. 리플렉션 호환 — `opens`, `--add-opens`, `open module`
+## 리플렉션 호환 — `opens`, `--add-opens`, `open module`
 
 - 프레임워크(예: Jackson/Hibernate/Spring)에서 **프라이빗 필드/생성자 접근**이 필요하다면 `opens`가 필수.
 - 선택적 개방:
@@ -295,7 +319,7 @@ java --add-exports com.example.core/com.example.core.internal=ALL-UNNAMED ...
 
 ---
 
-## 10. 트러블슈팅(현장에서 자주 만나는 문제)
+## 트러블슈팅(현장에서 자주 만나는 문제)
 
 | 증상/에러 | 원인 | 해결 |
 |---|---|---|
@@ -307,7 +331,7 @@ java --add-exports com.example.core/com.example.core.internal=ALL-UNNAMED ...
 
 ---
 
-## 11. 베스트 프랙티스
+## 베스트 프랙티스
 
 1. **exports 최소화**: API만 공개, 구현은 패키지 캡슐화.
 2. **transitive 절제 사용**: 외부에 불필요한 의존성 누수 방지.
@@ -318,9 +342,10 @@ java --add-exports com.example.core/com.example.core.internal=ALL-UNNAMED ...
 
 ---
 
-## 12. 실전 예제 — API/구현/앱 + 리플렉션 + 테스트 제한 공개
+## 실전 예제 — API/구현/앱 + 리플렉션 + 테스트 제한 공개
 
-### 12.1 API 모듈
+### API 모듈
+
 ```java
 // calc-api/module-info.java
 module com.example.calc.api {
@@ -338,7 +363,8 @@ public interface Calculator {
 }
 ```
 
-### 12.2 구현 모듈(반사 필요 모델 포함)
+### 구현 모듈(반사 필요 모델 포함)
+
 ```java
 // calc-impl/module-info.java
 module com.example.calc.impl {
@@ -365,7 +391,8 @@ package com.example.calc.impl.model;
 public class Factor { private int a; private int b; public int getA(){return a;} public int getB(){return b;} }
 ```
 
-### 12.3 앱 모듈(테스트용 제한 공개)
+### 앱 모듈(테스트용 제한 공개)
+
 ```java
 // app/module-info.java
 module com.example.app {
@@ -389,7 +416,8 @@ public class Main {
 }
 ```
 
-### 12.4 테스트 모듈
+### 테스트 모듈
+
 ```java
 // app-tests/module-info.java
 module com.example.app.tests {
@@ -400,9 +428,10 @@ module com.example.app.tests {
 
 ---
 
-## 13. Maven/Gradle 팁(요약)
+## Maven/Gradle 팁(요약)
 
 ### Maven
+
 - `maven-compiler-plugin`은 JDK 9+에서 **모듈패스**를 인식.
 - 라이브러리 JAR에 모듈 이름을 고정하려면 `Automatic-Module-Name` 매니페스트를 설정.
 ```xml
@@ -416,12 +445,13 @@ module com.example.app.tests {
 ```
 
 ### Gradle
+
 - Java 플러그인 사용 시 Gradle이 모듈패스/클래스패스를 자동 구성하려 시도.
 - 초기 이슈가 있으면 `--patch-module`, `--add-reads`, `--add-opens`를 `tasks.withType(JavaExec)` 등에 추가해 점진 적용.
 
 ---
 
-## 14. 마이그레이션 전략(단계별)
+## 마이그레이션 전략(단계별)
 
 1. **현황 파악**: split-package, 리플렉션 사용 지점(프레임워크/라이브러리) 식별.
 2. **Automatic-Module-Name** 부여(라이브러리) → 안정적 모듈 이름 확보.
@@ -432,7 +462,7 @@ module com.example.app.tests {
 
 ---
 
-## 15. 치트시트
+## 치트시트
 
 ```text
 module M { ... }                         # 모듈 선언
@@ -464,7 +494,7 @@ java --module-path mods --module m/pkg.Main
 
 ---
 
-## 16. 결론
+## 결론
 
 - **`requires`/`exports`/`opens`/`uses`/`provides`**를 이해하면, 모듈 경계에서 **명확한 캡슐화와 제어된 개방**을 동시에 달성할 수 있다.
 - 마이그레이션은 **모듈패스/클래스패스 혼용**과 **자동/이름 없는 모듈**을 적절히 활용해 단계적으로 진행하라.

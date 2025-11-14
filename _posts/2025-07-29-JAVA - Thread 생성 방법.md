@@ -6,7 +6,7 @@ category: Java
 ---
 # Thread 생성 방법 (Thread, Runnable)
 
-## 0. 한눈에 요약
+## 한눈에 요약
 
 | 항목 | 핵심 포인트 |
 |---|---|
@@ -22,7 +22,7 @@ category: Java
 
 ---
 
-## 1. Thread vs Runnable — 개념과 선택
+## Thread vs Runnable — 개념과 선택
 
 | 비교 항목 | `extends Thread` | `implements Runnable` (권장) |
 |---|---|---|
@@ -35,7 +35,7 @@ category: Java
 
 ---
 
-## 2. 방법 A — `Thread` 상속 (예제와 주의)
+## 방법 A — `Thread` 상속 (예제와 주의)
 
 ```java
 public class MyThread extends Thread {
@@ -66,7 +66,7 @@ public class MyThread extends Thread {
 
 ---
 
-## 3. 방법 B — `Runnable` 구현 (권장 기본)
+## 방법 B — `Runnable` 구현 (권장 기본)
 
 ```java
 public class MyRunnable implements Runnable {
@@ -96,7 +96,7 @@ public class MyRunnable implements Runnable {
 
 ---
 
-## 4. 람다/익명 클래스 — 보일러플레이트 최소화
+## 람다/익명 클래스 — 보일러플레이트 최소화
 
 ```java
 // 익명 클래스
@@ -110,7 +110,7 @@ new Thread(() -> System.out.println("람다 Runnable"), "Lambda").start();
 
 ---
 
-## 5. `start()` vs `run()` — 헷갈리는 포인트 정리
+## `start()` vs `run()` — 헷갈리는 포인트 정리
 
 ```java
 Thread t = new Thread(() -> System.out.println(Thread.currentThread().getName()));
@@ -123,9 +123,10 @@ t.start(); // 출력: Thread-0 (새 스레드 O)
 
 ---
 
-## 6. 스레드 생명주기와 주요 메서드
+## 스레드 생명주기와 주요 메서드
 
-### 6.1 상태(State)
+### 상태(State)
+
 `NEW → RUNNABLE ↔ BLOCKED/WAITING/TIMED_WAITING → TERMINATED`
 
 | 메서드/상황 | 효과 |
@@ -136,7 +137,8 @@ t.start(); // 출력: Thread-0 (새 스레드 O)
 | `join()` | **다른 스레드 종료 대기** → 호출자 `WAITING/TIMED_WAITING` |
 | **종료** | `run()` 종료 또는 미처리 예외 → `TERMINATED` |
 
-### 6.2 `join()` 패턴
+### `join()` 패턴
+
 ```java
 Thread t1 = new Thread(task1, "t1");
 Thread t2 = new Thread(task2, "t2");
@@ -147,14 +149,16 @@ t2.join(1000); // 최대 1초만 대기
 
 ---
 
-## 7. 인터럽트(Interrupt) — 안전한 종료의 표준
+## 인터럽트(Interrupt) — 안전한 종료의 표준
 
-### 7.1 핵심 규칙
+### 핵심 규칙
+
 - `interrupt()`는 **요청**일 뿐 **강제 종료 아님**.
 - 차단 메서드(`sleep`, `wait`, `join`, 일부 I/O 등)는 **`InterruptedException`** 발생.
 - 루프에서는 `Thread.currentThread().isInterrupted()` **폴링** 또는 예외 캐치로 **협력 종료**.
 
-### 7.2 패턴: 루프 + 슬립
+### 패턴: 루프 + 슬립
+
 ```java
 public void run() {
     while (!Thread.currentThread().isInterrupted()) {
@@ -173,7 +177,7 @@ public void run() {
 
 ---
 
-## 8. 데몬(daemon) vs 사용자(user) 스레드
+## 데몬(daemon) vs 사용자(user) 스레드
 
 ```java
 Thread daemon = new Thread(() -> { /* 백그라운드 */ }, "daemon");
@@ -186,14 +190,16 @@ daemon.start();
 
 ---
 
-## 9. 동기화 & 메모리 모델 — 원자성/가시성/순서
+## 동기화 & 메모리 모델 — 원자성/가시성/순서
 
-### 9.1 왜 문제가 생기는가?
+### 왜 문제가 생기는가?
+
 - `count++`는 **원자적 아님**(읽기→증가→쓰기). 다중 스레드에서 **레이스 컨디션**.
 
-### 9.2 해결 옵션
+### 해결 옵션
 
 #### A) `synchronized` (내장 락)
+
 ```java
 class SafeCounter {
     private int n;
@@ -204,18 +210,21 @@ class SafeCounter {
 - **진입/이탈**이 **happens-before**를 형성 → **가시성** 보장.
 
 #### B) `AtomicInteger` (무잠금 CAS)
+
 ```java
 AtomicInteger n = new AtomicInteger();
 n.incrementAndGet();
 ```
 
 #### C) `volatile` (가시성 전용)
+
 ```java
 volatile boolean running = true; // 플래그 변경이 즉시 보임
 ```
 - **원자성 보장 X**. 카운터 등엔 부적합.
 
 #### D) `Lock` (`ReentrantLock`) — 고급 기능
+
 ```java
 Lock lock = new ReentrantLock();
 lock.lock();
@@ -223,10 +232,12 @@ try { /* 임계 구역 */ }
 finally { lock.unlock(); }
 ```
 
-### 9.3 안전한 게시(Safe Publication)
+### 안전한 게시(Safe Publication)
+
 - 불변/`final` 필드, 정적 초기화, 락/volatile 경유, 스레드 안전 컨테이너를 통해 **초기화가 완료된 객체**를 공개.
 
-### 9.4 금지 패턴: 잘못된 DCL
+### 금지 패턴: 잘못된 DCL
+
 ```java
 // 잘못된 예시
 class Lazy {
@@ -245,7 +256,7 @@ class Lazy {
 
 ---
 
-## 10. UncaughtExceptionHandler — 보이지 않는 예외 잡기
+## UncaughtExceptionHandler — 보이지 않는 예외 잡기
 
 ```java
 Thread t = new Thread(() -> { throw new RuntimeException("Boom"); }, "Worker");
@@ -260,7 +271,7 @@ t.start();
 
 ---
 
-## 11. 스레드 이름/우선순위/팩토리
+## 스레드 이름/우선순위/팩토리
 
 ```java
 Thread t = new Thread(r, "ETL-Worker-1");
@@ -284,7 +295,7 @@ class NamedFactory implements ThreadFactory {
 
 ---
 
-## 12. 반드시 피할 것(안티패턴)
+## 반드시 피할 것(안티패턴)
 
 - `stop() / suspend() / resume()` **금지**(데드락/일관성 파괴).
 - `run()` 직접 호출(새 스레드 미생성).
@@ -295,7 +306,7 @@ class NamedFactory implements ThreadFactory {
 
 ---
 
-## 13. 스레드 풀/고수준 API와의 접점 (간단 스니펫)
+## 스레드 풀/고수준 API와의 접점 (간단 스니펫)
 
 > 대량/반복 작업은 **직접 Thread 생성 대신 스레드 풀** 권장
 
@@ -310,7 +321,7 @@ pool.shutdown();
 
 ---
 
-## 14. (선택) Virtual Thread — Java 21+ 가벼운 스레드
+## (선택) Virtual Thread — Java 21+ 가벼운 스레드
 
 > **개념**: OS 스레드보다 **훨씬 가벼운** JVM 스케줄 스레드. **블로킹 동작을 가독성 그대로** 유지하며 대규모 동시성 구현.
 
@@ -329,7 +340,7 @@ try (var exec = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()
 
 ---
 
-## 15. 실전 체크리스트
+## 실전 체크리스트
 
 - [ ] 작업은 `Runnable/Callable`로, 실행은 `Thread/Executor`.
 - [ ] **항상 `start()`**, 동일 스레드 2중 시작 금지.
@@ -342,7 +353,7 @@ try (var exec = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()
 
 ---
 
-## 16. 끝판왕 종합 예제 — 안전 종료·예외 로깅·조인·동기화
+## 끝판왕 종합 예제 — 안전 종료·예외 로깅·조인·동기화
 
 ```java
 import java.util.concurrent.CountDownLatch;
@@ -414,7 +425,7 @@ public class ThreadPlayground {
 
 ---
 
-## 17. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 - **Q. 왜 `run()`을 호출하면 안 되나요?**
   A. 별도 스레드가 생성되지 않고 **현재 스레드**에서 실행됩니다.
@@ -430,7 +441,7 @@ public class ThreadPlayground {
 
 ---
 
-## 18. 마무리
+## 마무리
 
 - **학습용**으로 `Thread`/`Runnable` 생성법을 익히되, **실무**에서는 스레드 풀/고수준 동시성 도구를 우선 사용하세요.
 - 올바른 종료(인터럽트), 확실한 동기화, 예외 로깅/모니터링을 갖춘 스레드만이 **운영 환경에서 견고**합니다.

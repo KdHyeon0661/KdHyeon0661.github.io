@@ -6,7 +6,7 @@ category: AspNet
 ---
 # SignalR로 실시간 기능 구현하기
 
-## 0. 빠른 개요
+## 빠른 개요
 
 - **SignalR**: ASP.NET Core의 **양방향 실시간 통신** 프레임워크
 - **전송 자동 선택**: WebSocket → SSE → Long Polling
@@ -15,9 +15,9 @@ category: AspNet
 
 ---
 
-## 1. 프로젝트 뼈대 & 의존성
+## 프로젝트 뼈대 & 의존성
 
-### 1.1 디렉터리 구조(권장)
+### 디렉터리 구조(권장)
 
 ```
 MyChatApp/
@@ -39,7 +39,7 @@ MyChatApp/
     └── MyChatApp.Tests/          # xUnit + Moq로 Hub 테스트
 ```
 
-### 1.2 패키지
+### 패키지
 
 ```bash
 dotnet add src/MyChatApp package Microsoft.AspNetCore.SignalR
@@ -57,9 +57,9 @@ dotnet add tests/MyChatApp.Tests package Microsoft.AspNetCore.SignalR
 
 ---
 
-## 2. 최소 동작 예제 — 브로드캐스트 채팅
+## 최소 동작 예제 — 브로드캐스트 채팅
 
-### 2.1 Hub (서버)
+### Hub (서버)
 
 ```csharp
 // src/MyChatApp/Hubs/ChatHub.cs
@@ -93,7 +93,7 @@ public class ChatHub : Hub<IChatClient>
 > - **Strongly-Typed Hub**(`IChatClient`)로 런타임/리팩터링 안정성 ↑
 > - 인증을 붙이면 `Context.User`로 사용자 식별 가능
 
-### 2.2 Program.cs (맵핑/프로토콜)
+### Program.cs (맵핑/프로토콜)
 
 ```csharp
 // src/MyChatApp/Program.cs
@@ -125,7 +125,7 @@ app.MapHub<ChatHub>("/hubs/chat"); // 허브 엔드포인트
 app.Run();
 ```
 
-### 2.3 Razor Page
+### Razor Page
 
 ```html
 <!-- src/MyChatApp/Pages/Chat.cshtml -->
@@ -154,7 +154,7 @@ app.Run();
 </html>
 ```
 
-### 2.4 클라이언트 JS
+### 클라이언트 JS
 
 ```javascript
 // src/MyChatApp/wwwroot/chat.js
@@ -230,9 +230,9 @@ function appendLine(text) {
 
 ---
 
-## 3. DM(1:1)과 방(그룹) — 실제 현업 패턴
+## DM(1:1)과 방(그룹) — 실제 현업 패턴
 
-### 3.1 UserIdentifier 매핑 (커스텀 사용자 키)
+### UserIdentifier 매핑 (커스텀 사용자 키)
 
 ```csharp
 // src/MyChatApp/Services/NameIdentifierProvider.cs
@@ -250,7 +250,7 @@ public class NameIdentifierProvider : IUserIdProvider
 builder.Services.AddSingleton<IUserIdProvider, NameIdentifierProvider>();
 ```
 
-### 3.2 DM/그룹 메서드
+### DM/그룹 메서드
 
 ```csharp
 // Hubs/ChatHub.cs (일부)
@@ -279,7 +279,7 @@ public async Task SendDirect(string toUser, string message)
 }
 ```
 
-### 3.3 JS 예시
+### JS 예시
 
 ```javascript
 await connection.invoke('JoinRoom', 'dev');
@@ -289,9 +289,9 @@ await connection.invoke('SendDirect', 'alice', 'DM hi!');
 
 ---
 
-## 4. Presence(접속/상태) 추적
+## Presence(접속/상태) 추적
 
-### 4.1 In-Memory 트래커(단일 인스턴스)
+### In-Memory 트래커(단일 인스턴스)
 
 ```csharp
 // src/MyChatApp/Services/PresenceTracker.cs
@@ -352,9 +352,9 @@ public class ChatHub : Hub<IChatClient>
 
 ---
 
-## 5. 인증/권한(쿠키 or JWT)
+## 인증/권한(쿠키 or JWT)
 
-### 5.1 쿠키 인증(간단)
+### 쿠키 인증(간단)
 
 ```csharp
 // Program.cs (개념 예시)
@@ -369,7 +369,7 @@ builder.Services.AddAuthorization();
 public class ChatHub : Hub<IChatClient> { ... }
 ```
 
-### 5.2 JWT 토큰(모바일/SPA)
+### JWT 토큰(모바일/SPA)
 
 ```csharp
 // Program.cs
@@ -406,9 +406,9 @@ const connection = new signalR.HubConnectionBuilder()
 
 ---
 
-## 6. 메시지 영속화(EF Core) & 최근 메시지 로드
+## 메시지 영속화(EF Core) & 최근 메시지 로드
 
-### 6.1 모델 & DbContext
+### 모델 & DbContext
 
 ```csharp
 // Data/Message.cs
@@ -437,7 +437,7 @@ builder.Services.AddDbContext<AppDbContext>(opts =>
     opts.UseSqlite("Data Source=app.db"));
 ```
 
-### 6.2 Hub에 저장 로직
+### Hub에 저장 로직
 
 ```csharp
 public class ChatHub : Hub<IChatClient>
@@ -468,7 +468,7 @@ public class ChatHub : Hub<IChatClient>
 }
 ```
 
-### 6.3 클라이언트에서 최근 메시지 로드
+### 클라이언트에서 최근 메시지 로드
 
 ```javascript
 const history = await connection.invoke('RecentMessages', 'dev', 50);
@@ -479,9 +479,9 @@ history.forEach(m => appendLine(`[${new Date(m.utc).toLocaleTimeString()}] ${m.f
 
 ---
 
-## 7. 스트리밍 & 바이너리(대용량) 전송
+## 스트리밍 & 바이너리(대용량) 전송
 
-### 7.1 서버→클라이언트 스트리밍
+### 서버→클라이언트 스트리밍
 
 ```csharp
 using System.Runtime.CompilerServices;
@@ -504,7 +504,7 @@ for await (const item of connection.stream('StreamTime')) {
 }
 ```
 
-### 7.2 클라이언트→서버 스트리밍
+### 클라이언트→서버 스트리밍
 
 ```csharp
 public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToken ct)
@@ -520,7 +520,7 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ---
 
-## 8. 성능 최적화: MessagePack / 전송량 절약 / 배치
+## 성능 최적화: MessagePack / 전송량 절약 / 배치
 
 - **MessagePack 프로토콜** 사용(위 Program.cs 참고)
 - 메시지 **최대 길이 제한/필터링**(욕설/금지 단어)
@@ -529,7 +529,7 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ---
 
-## 9. 재연결/네트워크 회복 전략
+## 재연결/네트워크 회복 전략
 
 - `withAutomaticReconnect()` + **백오프**
 - **상태 표시**: `onreconnecting/onreconnected/onclose`에서 UI 갱신
@@ -537,9 +537,9 @@ public async Task UploadChunks(IAsyncEnumerable<byte[]> chunks, CancellationToke
 
 ---
 
-## 10. 스케일아웃(다중 인스턴스): Redis / Azure SignalR Service
+## 스케일아웃(다중 인스턴스): Redis / Azure SignalR Service
 
-### 10.1 Redis 백플레인
+### Redis 백플레인
 
 ```csharp
 // Program.cs
@@ -551,13 +551,14 @@ builder.Services.AddSignalR()
 - 모든 서버 인스턴스가 **서로의 메시지를 중계** → **Clients.All/Group/User**가 전 인스턴스에 반영
 - Presence도 Redis로 공유(예: `HashSet` 대신 Redis SET/Hash)
 
-### 10.2 Azure SignalR Service
+### Azure SignalR Service
+
 - App에 연결 대신 Azure가 허브 역할(프록시/스케일/장애 조치)
 - 간단히 **연결 문자열**만 설정하고 App은 Azure SignalR에 붙인다.
 
 ---
 
-## 11. 보안/운영 체크리스트
+## 보안/운영 체크리스트
 
 | 항목 | 권장 |
 |---|---|
@@ -604,7 +605,7 @@ public async Task SafeSend(string message)
 
 ---
 
-## 12. 프런트엔드 UX 패턴(채팅 특화)
+## 프런트엔드 UX 패턴(채팅 특화)
 
 - 타이핑 표시: `SetTyping`(디바운스 1~2초)
 - 읽음 표시: 메시지 ID 기반 **read receipt** 이벤트
@@ -613,7 +614,7 @@ public async Task SafeSend(string message)
 
 ---
 
-## 13. 리버스 프록시(Nginx) 설정
+## 리버스 프록시(Nginx) 설정
 
 WebSocket 업그레이드 헤더 필수:
 
@@ -639,10 +640,11 @@ server {
 
 ---
 
-## 14. 컨테이너 & docker-compose
+## 컨테이너 & docker-compose
 
 ```yaml
 # docker-compose.yml
+
 version: "3.9"
 services:
   redis:
@@ -660,9 +662,9 @@ services:
 
 ---
 
-## 15. 테스트(단위/통합)
+## 테스트(단위/통합)
 
-### 15.1 Hub 단위테스트 (xUnit + Moq)
+### Hub 단위테스트 (xUnit + Moq)
 
 ```csharp
 // tests/MyChatApp.Tests/ChatHubTests.cs
@@ -700,14 +702,14 @@ public class ChatHubTests
 
 > `Hub`은 `Clients`, `Context`, `Groups`가 virtual settable → Moq로 주입 가능.
 
-### 15.2 통합 테스트(WebApplicationFactory)
+### 통합 테스트(WebApplicationFactory)
 
 - `Microsoft.AspNetCore.Mvc.Testing`으로 앱을 띄우고, `HubConnection`(클라이언트)로 실제 연결
 - CI에서 **WebSocket 지원 러너** 필요(일반 ubuntu-latest OK)
 
 ---
 
-## 16. 고급: 관리자/모더레이션/감사
+## 고급: 관리자/모더레이션/감사
 
 - `KickUser(toUser)`, `MuteUser(toUser)` 등 **권한별 허브 메서드**
 - 메시지 삭제/신고: 메시지 ID로 상태 업데이트 후 **이벤트 브로드캐스트**
@@ -721,7 +723,7 @@ public Task KickUser(string userId) =>
 
 ---
 
-## 17. 장애 대응 & 트러블슈팅
+## 장애 대응 & 트러블슈팅
 
 | 증상 | 점검 |
 |---|---|
@@ -733,7 +735,7 @@ public Task KickUser(string userId) =>
 
 ---
 
-## 18. 확장 아이디어
+## 확장 아이디어
 
 - **알림 센터**: 주문 상태/빌드 상태/댓글 알림
 - **협업 편집**: 문서/화이트보드 동시 편집(Operational Transform)

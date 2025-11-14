@@ -16,7 +16,7 @@ category: Docker
 
 ---
 
-## 1. 왜 Volume Plugin인가?
+## 왜 Volume Plugin인가?
 
 기본 `local` 볼륨은 도커 호스트의 로컬 디스크에 저장됩니다. 다음 상황에서는 **외부 스토리지**가 필요합니다.
 
@@ -33,7 +33,7 @@ $$
 
 ---
 
-## 2. 개념/아키텍처: Docker Volume Driver vs Plugin
+## 개념/아키텍처: Docker Volume Driver vs Plugin
 
 - **Volume Driver**: Docker가 특정 스토리지를 **볼륨처럼** 취급하도록 하는 드라이버.
 - **Docker Plugin**: 드라이버/네트워크 등 기능을 **외부 플러그인** 프로세스로 제공(수명/설정/권한을 엔진과 분리).
@@ -56,7 +56,7 @@ docker run --mount type=volume,source=<vol>,target=/path ...
 
 ---
 
-## 3. 스토리지 유형과 선택 기준(요약)
+## 스토리지 유형과 선택 기준(요약)
 
 | 유형 | 예시 | 장점 | 주의 |
 |---|---|---|---|
@@ -66,19 +66,23 @@ docker run --mount type=volume,source=<vol>,target=/path ...
 
 ---
 
-## 4. NFS with Docker — 가장 간단한 멀티호스트 공유
+## NFS with Docker — 가장 간단한 멀티호스트 공유
 
-### 4.1 전제: NFS 서버
+### 전제: NFS 서버
+
 - 서버 예: `10.0.0.1:/exports/data`
 - 클라이언트(도커 호스트)에 NFS 유틸 설치
 ```bash
 # Ubuntu/Debian
+
 sudo apt update && sudo apt install -y nfs-common
 # RHEL/CentOS
+
 sudo yum install -y nfs-utils
 ```
 
-### 4.2 local 드라이버로 NFS 마운트(권장: --mount 옵션 이해)
+### local 드라이버로 NFS 마운트(권장: --mount 옵션 이해)
+
 ```bash
 docker volume create \
   --driver local \
@@ -88,7 +92,8 @@ docker volume create \
   nfs-volume
 ```
 
-### 4.3 컨테이너에서 사용
+### 컨테이너에서 사용
+
 ```bash
 docker run -d --name web \
   --mount type=volume,source=nfs-volume,target=/var/www/html \
@@ -96,12 +101,14 @@ docker run -d --name web \
 ```
 
 #### 옵션 팁
+
 - `nfsvers=4.1`(또는 4.2): 최신 프로토콜, 성능/보안 유리
 - `timeo/retrans`: 네트워크 지연/재전송 튜닝
 - SELinux 환경은 `context` 라벨 정책(CentOS/RHEL) 고려
 - 보안 민감 시 **NFSv4 + Kerberos(krb5/krb5i/krb5p)** 구성
 
-### 4.4 Compose 패턴
+### Compose 패턴
+
 ```yaml
 version: "3.9"
 services:
@@ -121,11 +128,12 @@ volumes:
 
 ---
 
-## 5. 클라우드 블록 스토리지 — EBS / PD / Azure Disk
+## 클라우드 블록 스토리지 — EBS / PD / Azure Disk
 
 > 원칙: **블록 디바이스는 기본적으로 단일 EC2/VM에 어태치**(읽기/읽기쓰기 모드 제약). 멀티 노드 공유가 필요하면 파일시스템 레이어(NFS/FSx for Lustre/Filestore/ANF 등)를 별도로 구성.
 
-### 5.1 AWS EBS (예: rexray/ebs 플러그인)
+### AWS EBS (예: rexray/ebs 플러그인)
+
 플러그인 설치:
 ```bash
 docker plugin install rexray/ebs \
@@ -154,37 +162,42 @@ docker volume create \
 - **AZ 일치** 필수(EC2 인스턴스와 같은 AZ).
 - 스냅샷 기반 생성: `-o snapshotid=snap-xxxxxxxx`.
 
-### 5.2 GCP PD (rexray/gcepd 등)
+### GCP PD (rexray/gcepd 등)
+
 ```bash
 docker plugin install rexray/gcepd GCEPD_PROJECT=<project-id> GCEPD_TAGS="docker"
 docker volume create --driver rexray/gcepd --name gpd-1 -o size=100
 docker run -d --mount type=volume,source=gpd-1,target=/data busybox sleep 3600
 ```
 
-### 5.3 Azure Disk (예: rexray/azureud 등 플러그인)
+### Azure Disk (예: rexray/azureud 등 플러그인)
+
 - 설치/인증은 서비스 프린시펄 또는 MSI 방식.
 - 동일하게 `docker volume create --driver ...` 패턴으로 사용.
 
 #### 실전 팁
+
 - DB/큐 등 랜덤 IO 워크로드 → **IOPS/스루풋 지표** 기준 선택(gp3/io2, pd-ssd 등)
 - 스냅샷/백업은 **클라우드 네이티브 방법**(EBS Snapshot, GCP Snapshot) 사용 권장
 - **AZ 이동**은 스냅샷 → 재생성 경로로 수행
 
 ---
 
-## 6. 오브젝트 스토리지(S3/MinIO) — FUSE로 “마운트처럼” 쓰기
+## 오브젝트 스토리지(S3/MinIO) — FUSE로 “마운트처럼” 쓰기
 
 > 오브젝트 스토리지는 **디렉터리/원자성/락/퍼미션**이 파일시스템과 다릅니다.
 > DB/트랜잭션/빈번한 작은 쓰기에는 부적합. 정적 파일/백업/로그 적합.
 
-### 6.1 s3fs (FUSE) 설치/자격증명
+### s3fs (FUSE) 설치/자격증명
+
 ```bash
 sudo apt update && sudo apt install -y s3fs
 echo "AKIAXXX:SECRETXXX" > ~/.passwd-s3fs
 chmod 600 ~/.passwd-s3fs
 ```
 
-### 6.2 마운트
+### 마운트
+
 ```bash
 mkdir -p /mnt/s3
 s3fs mybucket /mnt/s3 \
@@ -195,7 +208,8 @@ s3fs mybucket /mnt/s3 \
   -o umask=0022
 ```
 
-### 6.3 Docker에 연결(Bind Mount)
+### Docker에 연결(Bind Mount)
+
 ```bash
 docker run -d --name web \
   --mount type=bind,source=/mnt/s3,target=/usr/share/nginx/html,readonly \
@@ -203,13 +217,14 @@ docker run -d --name web \
 ```
 
 #### 대안/고급
+
 - **goofys**(지연쓰기/메타데이터 빠름)
 - **MinIO Gateway** 또는 MinIO 자체를 **NFS/포지식 파일시스템 뒤에 올려** 제공
 - 성능/일관성 요구가 높다면 **파일시스템 계층(NAS/FSx/Filestore/ANF)** 고려
 
 ---
 
-## 7. 보안 — 자격증명/네트워크/SELinux/Kerberos
+## 보안 — 자격증명/네트워크/SELinux/Kerberos
 
 - 자격증명:
   - 클라우드 플러그인은 **인스턴스 롤/서비스 계정** 활용(키 저장 최소화)
@@ -233,7 +248,7 @@ docker run -d \
 
 ---
 
-## 8. 성능 — 마운트 옵션/캐시/IOPS/스루풋
+## 성능 — 마운트 옵션/캐시/IOPS/스루풋
 
 - **NFS**: `nfsvers=4.1/4.2`, `rsize/wsize`, `timeo`, `retrans`, `noatime` 고려.
 - **블록**: 스토리지 클래스(gp3/io2, pd-ssd 등)와 **크기→IOPS/Throughput** 관계 숙지.
@@ -249,35 +264,41 @@ $$
 
 ---
 
-## 9. 백업/복구/스냅샷/마이그레이션
+## 백업/복구/스냅샷/마이그레이션
 
-### 9.1 Volume 내용 tar 백업/복구
+### Volume 내용 tar 백업/복구
+
 ```bash
 # 백업
+
 docker run --rm \
   -v myvol:/src \
   -v "$(pwd)":/backup \
   alpine sh -c "cd /src && tar czf /backup/myvol-$(date +%F).tgz ."
 
 # 복구
+
 docker run --rm \
   -v myvol:/dest \
   -v "$(pwd)":/backup \
   alpine sh -c "cd /dest && tar xzf /backup/myvol-2025-11-06.tgz"
 ```
 
-### 9.2 클라우드 스냅샷
+### 클라우드 스냅샷
+
 - EBS/PD/Azure Disk는 **스냅샷 → 새 볼륨 생성** 루트로 손쉬운 마이그레이션.
 - DB는 **애플리케이션 일관 시점** 확보 후 스냅샷/덤프 권장.
 
-### 9.3 오브젝트
+### 오브젝트
+
 - `rclone sync`, S3 버전닝/수명주기 정책으로 보존/아카이빙.
 
 ---
 
-## 10. Compose 패턴 총정리
+## Compose 패턴 총정리
 
-### 10.1 NFS
+### NFS
+
 ```yaml
 volumes:
   webdata:
@@ -288,7 +309,8 @@ volumes:
       device: ":/exports/web"
 ```
 
-### 10.2 EBS(예: rexray/ebs 사용 가정)
+### EBS(예: rexray/ebs 사용 가정)
+
 ```yaml
 volumes:
   ebsdata:
@@ -298,7 +320,8 @@ volumes:
       size: "200"
 ```
 
-### 10.3 S3(FUSE 마운트 후 바인드)
+### S3(FUSE 마운트 후 바인드)
+
 ```yaml
 services:
   app:
@@ -309,7 +332,7 @@ services:
 
 ---
 
-## 11. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -322,11 +345,13 @@ services:
 
 ---
 
-## 12. 실습 시나리오 묶음
+## 실습 시나리오 묶음
 
-### 12.1 “멀티 호스트 공유 정적 자산” — NFS
+### “멀티 호스트 공유 정적 자산” — NFS
+
 ```bash
 # 볼륨 만들기
+
 docker volume create \
   --driver local \
   --opt type=nfs \
@@ -335,18 +360,21 @@ docker volume create \
   web-nfs
 
 # 컨텐츠 주입(호스트 A)
+
 docker run --rm \
   -v web-nfs:/dst \
   -v "$(pwd)"/public:/src:ro \
   alpine sh -c "cp -r /src/* /dst/"
 
 # 어느 호스트에서나 서비스
+
 docker run -d -p 8080:80 \
   --mount type=volume,source=web-nfs,target=/usr/share/nginx/html,readonly \
   nginx:alpine
 ```
 
-### 12.2 “고IO DB 단일 인스턴스” — EBS
+### “고IO DB 단일 인스턴스” — EBS
+
 ```bash
 docker plugin install rexray/ebs EBS_REGION=ap-northeast-2 REXRAY_PREEMPT=true
 
@@ -360,12 +388,15 @@ docker run -d --name pg \
   -p 5432:5432 postgres:16
 ```
 
-### 12.3 “정적 파일 배포/로그 보관” — S3(FUSE)
+### “정적 파일 배포/로그 보관” — S3(FUSE)
+
 ```bash
 # s3fs 마운트
+
 s3fs mybucket /mnt/s3 -o passwd_file=~/.passwd-s3fs -o url=https://s3.amazonaws.com -o allow_other
 
 # 읽기 전용 서빙
+
 docker run -d -p 8081:80 \
   --mount type=bind,source=/mnt/s3,target=/usr/share/nginx/html,readonly \
   nginx:alpine
@@ -373,7 +404,7 @@ docker run -d -p 8081:80 \
 
 ---
 
-## 13. 운영 체크리스트
+## 운영 체크리스트
 
 - [ ] 데이터 유형별 스토리지 선택(NFS/블록/S3)
 - [ ] DB/트랜잭션 파일은 **POSIX 파일시스템**(NFS/블록) 사용
@@ -387,29 +418,33 @@ docker run -d -p 8081:80 \
 
 ---
 
-## 14. 명령 요약
+## 명령 요약
 
 ```bash
 # 플러그인
+
 docker plugin ls
 docker plugin install <name> [KEY=VALUE ...]
 docker plugin disable <name>
 docker plugin rm <name>
 
 # 볼륨
+
 docker volume create --driver <driver> --name <vol> [--opt k=v ...]
 docker volume ls
 docker volume inspect <vol>
 docker volume rm <vol>
 
 # 컨테이너 마운트(권장 --mount)
+
 docker run --mount type=volume,source=<vol>,target=/path image
 docker run --mount type=bind,source=/host/path,target=/path image
 ```
 
 ---
 
-## 15. 참고(개념적 구분)
+## 참고(개념적 구분)
+
 - Docker Volume Plugin/Driver는 **Docker 엔진 생태계**의 확장 메커니즘
 - Kubernetes 환경에서는 **CSI(컨테이너 스토리지 인터페이스)** 가 표준(개념은 유사, 구현·리소스/정책은 다름)
 
@@ -431,6 +466,7 @@ $$
 ---
 
 ## 참고 자료
+
 - Docker Storage Volumes / Plugins / Engine API 문서
 - 각 클라우드(EBS/PD/Azure Disk) 스냅샷/성능 가이드
 - s3fs-fuse / goofys / MinIO(게이트웨이/디스크 백엔드)

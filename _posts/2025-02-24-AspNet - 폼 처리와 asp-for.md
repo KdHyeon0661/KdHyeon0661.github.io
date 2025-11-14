@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core Razor Pages의 폼 처리와 `asp-for` Tag Helper 완전 정복
 
-## 0. 폼 처리 핵심 요약
+## 폼 처리 핵심 요약
 
 1) Razor 페이지에 `<form>` 작성 → 2) 입력 필드에 `asp-for` 사용 → 3) PageModel의 `[BindProperty]`로 모델 수신 → 4) `OnPost()`에서 `ModelState.IsValid` 검사 → 5) 성공 시 처리/리다이렉트, 실패 시 다시 렌더링.
 
@@ -17,9 +17,9 @@ category: AspNet
 
 ---
 
-## 1. Tag Helper와 `asp-for`의 역할
+## Tag Helper와 `asp-for`의 역할
 
-### 1.1 `asp-for`가 하는 일
+### `asp-for`가 하는 일
 
 ```cshtml
 <input asp-for="Name" class="form-control" />
@@ -34,7 +34,7 @@ category: AspNet
 - `name`과 `id`는 모델 경로를 반영한다. 예) `User.Name` → `id="User_Name"`, `name="User.Name"`.
 - 타입 추론: 숫자는 `type="number"`, 이메일은 `type="email"` 등으로 선택된다(일부는 `DataType`/주석에 따라 힌트).
 
-### 1.2 Tag Helper 전체 지도(자주 쓰는 것)
+### Tag Helper 전체 지도(자주 쓰는 것)
 
 | Tag Helper | 용도 | 예시 |
 |---|---|---|
@@ -50,11 +50,11 @@ category: AspNet
 
 ---
 
-## 2. 실전 예제 1 — 회원 가입 폼(확장판)
+## 실전 예제 1 — 회원 가입 폼(확장판)
 
 기존 예제에 **라벨/요약/반복 가능한 에러**, `DisplayName`, 클라이언트 검증 스크립트 포함, 간단한 PRG 패턴을 더했다.
 
-### 2.1 Pages/Register.cshtml
+### Pages/Register.cshtml
 
 ```cshtml
 @page
@@ -91,7 +91,7 @@ category: AspNet
 }
 ```
 
-### 2.2 Pages/Register.cshtml.cs
+### Pages/Register.cshtml.cs
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -133,7 +133,7 @@ public class UserInputModel
 
 ---
 
-## 3. `[BindProperty]` 정확히 이해하기
+## `[BindProperty]` 정확히 이해하기
 
 ```csharp
 [BindProperty]
@@ -154,9 +154,9 @@ public string? Keyword { get; set; }
 
 ---
 
-## 4. 유효성 검사 흐름과 메시지 표시
+## 유효성 검사 흐름과 메시지 표시
 
-### 4.1 Data Annotations 요약
+### Data Annotations 요약
 
 | 특성 | 설명 |
 |---|---|
@@ -167,7 +167,7 @@ public string? Keyword { get; set; }
 | `[RegularExpression("…")]` | 정규식 |
 | `[Compare("OtherProperty")]` | 일치 비교(예: 비밀번호 확인) |
 
-### 4.2 메시지 출력 패턴
+### 메시지 출력 패턴
 
 - 개별 필드: `<span asp-validation-for="User.Name"></span>`
 - 요약: `<div asp-validation-summary="All"></div>` 또는 `ModelOnly`
@@ -179,11 +179,11 @@ ModelState.AddModelError("User.Email", "이 이메일은 사용할 수 없습니
 
 ---
 
-## 5. 실전 예제 2 — 중첩/컬렉션 바인딩(주소 목록)
+## 실전 예제 2 — 중첩/컬렉션 바인딩(주소 목록)
 
 **목표**: `User.Addresses[i]` 형태로 여러 주소 입력을 받고 유효성 검사까지 수행.
 
-### 5.1 모델
+### 모델
 
 ```csharp
 public class AddressInput
@@ -211,7 +211,7 @@ public class ProfileInput
 }
 ```
 
-### 5.2 PageModel
+### PageModel
 
 ```csharp
 public class ProfileModel : PageModel
@@ -234,7 +234,7 @@ public class ProfileModel : PageModel
 }
 ```
 
-### 5.3 Razor
+### Razor
 
 ```cshtml
 @page
@@ -283,9 +283,9 @@ public class ProfileModel : PageModel
 
 ---
 
-## 6. 실전 예제 3 — 셀렉트/라디오/체크박스와 `asp-items`
+## 실전 예제 3 — 셀렉트/라디오/체크박스와 `asp-items`
 
-### 6.1 PageModel
+### PageModel
 
 ```csharp
 public class ProductCreateModel : PageModel
@@ -328,7 +328,7 @@ public class ProductInput
 }
 ```
 
-### 6.2 Razor
+### Razor
 
 ```cshtml
 @page
@@ -372,7 +372,7 @@ public class ProductInput
 
 ---
 
-## 7. 날짜/통화/숫자 포맷과 문화권(Culture)
+## 날짜/통화/숫자 포맷과 문화권(Culture)
 
 - HTML5 `<input type="date">`는 브라우저가 로케일 포맷을 처리한다. 서버 바인딩은 현재 **Culture**에 영향받으므로 로케일이 다른 환경에서는 ISO 8601(예: `yyyy-MM-dd`) 사용을 권장.
 - 서버에서 표준 포맷 적용:
@@ -384,7 +384,7 @@ public class ProductInput
 
 ---
 
-## 8. 파일 업로드와 `asp-for`
+## 파일 업로드와 `asp-for`
 
 모델:
 
@@ -431,7 +431,7 @@ public class UploadModel : PageModel
 
 ---
 
-## 9. 다중 핸들러와 버튼 라우팅
+## 다중 핸들러와 버튼 라우팅
 
 같은 페이지에서 저장/삭제 등 여러 동작을 분기하고 싶을 때:
 
@@ -475,7 +475,7 @@ public IActionResult OnPost(string handler)
 
 ---
 
-## 10. ModelState 고급: 값 우선순위와 정리
+## ModelState 고급: 값 우선순위와 정리
 
 - 폼 POST 후, 서버에서 `Model.Property` 값을 바꿔도 **ModelState의 원본 값**이 다시 렌더링될 수 있다.
 - 이런 경우:
@@ -488,7 +488,7 @@ public IActionResult OnPost(string handler)
 
 ---
 
-## 11. PRG(Post-Redirect-Get) 패턴
+## PRG(Post-Redirect-Get) 패턴
 
 폼 재제출 방지, 새로고침 안전, URL 공유 안전:
 
@@ -504,22 +504,24 @@ public IActionResult OnPost()
 
 ---
 
-## 12. 보안과 접근성(Accessibility)
+## 보안과 접근성(Accessibility)
 
-### 12.1 보안
+### 보안
+
 - **서버 검증 필수**: 클라이언트 검증은 우회 가능.
 - **Overposting 방지**: 입력 전용 DTO 사용, `[BindNever]`/화이트리스트 적용.
 - **입력 한도**: 본문/파일 크기 제한, 컬렉션 항목 수 제한.
 - **HTML 인코딩**: 사용자 입력 출력 시 자동 인코딩을 신뢰하되, 필요시 `HtmlEncoder`/화이트리스트 마크다운 파서 사용.
 
-### 12.2 접근성
+### 접근성
+
 - `label asp-for`는 `for`/`id`를 정확히 연결해 스크린리더 호환성 향상.
 - 오류 영역에 `role="alert"` 또는 `aria-live="assertive"`를 둘 수 있다.
 - 색만으로 오류를 전달하지 말고 텍스트를 제공하라. `asp-validation-for` 출력은 텍스트 메시지로 전달된다.
 
 ---
 
-## 13. 최소 실행 골격(Program.cs, .NET 8 기준)
+## 최소 실행 골격(Program.cs, .NET 8 기준)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -538,7 +540,7 @@ app.Run();
 
 ---
 
-## 14. 테스트 팁
+## 테스트 팁
 
 - **단위 테스트**: DataAnnotations 유효성은 `Validator.TryValidateObject`로 순수 검증 가능.
 - **통합 테스트**: `WebApplicationFactory<T>`로 폼 POST → 리다이렉트/오류 렌더링 검증.
@@ -546,7 +548,7 @@ app.Run();
 
 ---
 
-## 15. 자주 겪는 문제와 해결
+## 자주 겪는 문제와 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -558,7 +560,7 @@ app.Run();
 
 ---
 
-## 16. 요약
+## 요약
 
 - `asp-for`는 모델에 정합된 `id`/`name`/`value`/`type`을 자동 생성해 **타입 안전한 폼**을 만든다.
 - `[BindProperty]`로 데이터 수신, `ModelState.IsValid`로 서버 검증, 실패 시 **재렌더링**, 성공 시 **PRG**.

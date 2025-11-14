@@ -4,7 +4,7 @@ title: 소켓프로그래밍 - Windows Winsock & IOCP
 date: 2025-09-25 23:25:23 +0900
 category: 소켓프로그래밍
 ---
-## 19. Windows Winsock & IOCP
+## Windows Winsock & IOCP
 
 > 목표: 리눅스에서 배운 저수준 소켓 감각을 **Windows Winsock + IOCP**에 이식한다.
 > (1) **WSAStartup/WSACleanup, closesocket, 에러 체계**를 정확히 이해하고,
@@ -14,9 +14,10 @@ category: 소켓프로그래밍
 
 ---
 
-### 19.1 Winsock 생명주기 & 기본 규칙
+### Winsock 생명주기 & 기본 규칙
 
-#### 19.1.1 시작·종료: `WSAStartup` / `WSACleanup`
+#### 시작·종료: `WSAStartup` / `WSACleanup`
+
 - Winsock은 **프로세스당 초기화**가 필요하다.
 - 보통 앱 시작 시 한 번 `WSAStartup(MAKEWORD(2,2), &data)`, 종료 시 `WSACleanup()`.
 
@@ -39,12 +40,14 @@ int main() {
 
 > 주의: **Thread** 종료 시 `WSACleanup()`를 자동 호출하지 않는다(프로세스 스코프). 중복 `WSAStartup()` 호출 시 **참조 카운트**가 증가하며, 카운트가 0이 되어야 진짜 종료된다.
 
-#### 19.1.2 닫기와 반쯤 닫기: `closesocket`, `shutdown`
+#### 닫기와 반쯤 닫기: `closesocket`, `shutdown`
+
 - Windows 소켓 타입은 `SOCKET`(정수형이지만 POSIX `fd`와 별개).
 - 닫기: `closesocket(s)` (POSIX의 `close(fd)` **사용 금지**).
 - 반쯤 닫기: `shutdown(s, SD_SEND)` / `SD_RECEIVE` / `SD_BOTH`.
 
-#### 19.1.3 에러 체계: `WSAGetLastError` vs `errno`
+#### 에러 체계: `WSAGetLastError` vs `errno`
+
 - 대부분의 Winsock API는 실패 시 `SOCKET_ERROR`(-1) 또는 `FALSE` 반환, 에러는 **스레드 지역**으로 `WSAGetLastError()`에서 읽는다.
 - 비동기(Overlapped) 경로에서 **즉시 완료가 아니면** `WSA_IO_PENDING`(= `ERROR_IO_PENDING`)이 정상이다.
 - 비차단 리턴 값 비교표(대표):
@@ -53,11 +56,13 @@ int main() {
 
 > 참고: **성공**이어도 **즉시 완료가 아니면** *바로 I/O가 끝난 게 아니다*. **완료 통지(IOCP)**를 기다려야 한다.
 
-#### 19.1.4 주소 해석: `getaddrinfo/getnameinfo`
+#### 주소 해석: `getaddrinfo/getnameinfo`
+
 - 함수 시그니처/의미는 POSIX와 동일(헤더/링크만 다름).
 - 링크: `Ws2_32.lib`, 헤더: `<ws2tcpip.h>`.
 
-#### 19.1.5 옵션 차이(핵심 몇 가지)
+#### 옵션 차이(핵심 몇 가지)
+
 - `SO_REUSEADDR` 의미가 리눅스와 다르다(Windows는 TIME_WAIT와 공유 의미가 약함).
   **권장**: 서버 바인드에는 `SO_EXCLUSIVEADDRUSE`(또는 `SIO_EXCLUSIVEADDRUSE`)로 **독점**을 명시.
 - Keepalive 세부값: 리눅스는 `TCP_KEEPIDLE/INTVL/KEEPCNT`,
@@ -65,28 +70,31 @@ int main() {
 
 ---
 
-### 19.2 Overlapped I/O & IOCP 개념 — epoll과의 차이
+### Overlapped I/O & IOCP 개념 — epoll과의 차이
 
-#### 19.2.1 모델 요약
+#### 모델 요약
+
 - **Overlapped I/O**: I/O 호출을 **비동기**로 시작 → 즉시 반환. I/O 완료 시 **완료 패킷** 생성.
 - **IOCP(Completion Port)**: 커널이 완료 패킷을 한 큐에 모아둠. 워커 스레드는 `GetQueuedCompletionStatus(Ex)`로 **완료 이벤트**를 가져와 처리.
 - **준비(readiness)** vs **완료(completion)**:
   - 리눅스 `epoll`은 “읽을 준비됨/쓸 준비됨”을 알려준다(레벨/엣지 트리거).
   - IOCP는 “**이(연산)가 끝났다**”를 알려준다. 그래서 **`WSARecv/WSASend`를 먼저 걸어놓고**(Overlapped), **완료**를 받는다.
 
-#### 19.2.2 스레딩/동시성 직관
+#### 스레딩/동시성 직관
+
 - IOCP는 큐 하나에 대해 **스레드 풀**을 매달아 소비한다.
   `CreateIoCompletionPort(h, NULL, key, concurrency)`의 `concurrency`는 **실행 중인 워커 상한 힌트**(보통 CPU 코어 수).
 - 워커는 **블로킹**으로 `GetQueuedCompletionStatus`를 기다리다, 완료 패킷을 꺼내 **후속 I/O**를 즉시 재무장(post)한다.
 
-#### 19.2.3 수명 규칙(중요!)
+#### 수명 규칙(중요!)
+
 - Overlapped 호출 시 넘긴 `OVERLAPPED*`와 **버퍼**는 **완료가 돌아올 때까지** 살아 있어야 한다(힙/풀에 두기).
 - 소켓을 닫으면(pending I/O 포함) 해당 I/O는 `WSA_OPERATION_ABORTED`로 **완료 패킷이 떨어진다**. 워커가 그걸 수거하며 정리해야 **누수/유출**이 없다.
 - **제로바이트 읽기**: `WSARecv`에 길이 0 버퍼를 올려두면 **데이터 도착 통지** 용으로 사용할 수 있다. (여기서는 일반 버퍼로 구현)
 
 ---
 
-### 19.3 IOCP 에코 서버 — 단일 파일 실전 예제 (C++23, Win10+)
+### IOCP 에코 서버 — 단일 파일 실전 예제 (C++23, Win10+)
 
 > 기능:
 > - IPv4/IPv6(듀얼) 리스닝
@@ -95,7 +103,8 @@ int main() {
 > - 워커 스레드 풀을 IOCP에 연결
 > - 안전한 종료(PostQueuedCompletionStatus로 종료 신호)
 
-#### 19.3.1 빌드 & 실행
+#### 빌드 & 실행
+
 - 컴파일(MSVC):
   ```bat
   cl /EHsc /O2 /std:c++20 iocp_echo.cpp /link Ws2_32.lib Mswsock.lib
@@ -112,7 +121,7 @@ int main() {
   # 또는 Linux/mac에서 telnet/nc로 접속
   ```
 
-#### 19.3.2 전체 코드
+#### 전체 코드
 
 ```cpp
 // iocp_echo.cpp — IOCP 기반 에코 서버(교육용, 단일 파일)
@@ -426,7 +435,7 @@ int main(int argc, char** argv) {
 
 ---
 
-### 19.4 epoll vs IOCP — 사고방식 차이 한 장표
+### epoll vs IOCP — 사고방식 차이 한 장표
 
 | 항목 | epoll(리눅스) | IOCP(윈도우) |
 |---|---|---|
@@ -441,9 +450,10 @@ int main(int argc, char** argv) {
 
 ---
 
-### 19.5 포팅 전략 요약 체크리스트
+### 포팅 전략 요약 체크리스트
 
-#### 19.5.1 API 치환·주의점
+#### API 치환·주의점
+
 - 종료/반쯤 종료: `close` → `closesocket`, `shutdown(SHUT_WR)` → `shutdown(SD_SEND)`
 - 논블로킹: `fcntl(F_SETFL,O_NONBLOCK)` → `ioctlsocket(FIONBIO, ...)` (Overlapped면 필요 없음)
 - 에러 코드: `errno` → `WSAGetLastError()` / `GetLastError()`
@@ -451,7 +461,8 @@ int main(int argc, char** argv) {
 - 멀티프로세스: `fork` 없음. 대신 프로세스보다는 **멀티스레드**가 일반적.
 - 파일 디스크립터 혼용 금지: `SOCKET`은 POSIX `fd`와 호환 아님(단, `HANDLE`로 캐스팅해 IOCP에 연결).
 
-#### 19.5.2 소켓 옵션 대응
+#### 소켓 옵션 대응
+
 - `TCP_NODELAY` 동일.
 - **주소 재사용**: 리눅스의 `SO_REUSEADDR`=TIME_WAIT 공유와 의미 다름 → Windows는 **`SO_EXCLUSIVEADDRUSE` 권장**.
 - Keepalive:
@@ -471,12 +482,14 @@ int main(int argc, char** argv) {
            NULL, 0, &dwBytesReturned, NULL, NULL);
   ```
 
-#### 19.5.3 IPv6/듀얼스택
+#### IPv6/듀얼스택
+
 - Windows는 기본적으로 **듀얼스택 허용**(v4-mapped).
   필요 시 `IPV6_V6ONLY=1`로 IPv6 전용으로 고정.
 - 링크-로컬 통신 시 `scope id`(인터페이스 인덱스)는 리눅스와 동일하게 `sin6_scope_id`에 지정.
 
-#### 19.5.4 IOCP로의 구조 변환(핵심 4단계)
+#### IOCP로의 구조 변환(핵심 4단계)
+
 1) **소켓 생성 시 Overlapped**: `WSASocket(..., WSA_FLAG_OVERLAPPED)`
 2) **IOCP 생성/연결**: `CreateIoCompletionPort` + `attach_to_iocp(sock)`
 3) **I/O를 먼저 건다**: `WSARecv`/`WSASend`/`AcceptEx` 호출 → `WSA_IO_PENDING`이면 OK
@@ -484,7 +497,7 @@ int main(int argc, char** argv) {
 
 ---
 
-### 19.6 실무 팁(운영/디버깅)
+### 실무 팁(운영/디버깅)
 
 - **완료가 0바이트**인 `WSARecv` → peer가 **정상 종료**(FIN)했을 가능성 큼(리눅스와 동일).
 - **취소/종료 시나리오**: `closesocket()` 하면 pending I/O에 대해 **반드시** 완료 패킷이 떨어진다(오류 `WSA_OPERATION_ABORTED`). 워커는 이를 받아 **힙 객체 해제**.
@@ -495,14 +508,16 @@ int main(int argc, char** argv) {
 
 ---
 
-### 19.7 (보너스) IOCP + UDP 한눈에
+### (보너스) IOCP + UDP 한눈에
+
 - UDP도 IOCP로 처리 가능: `WSARecvFrom`/`WSASendTo`를 Overlapped로 올려두고 완료 수거.
 - **메시지 경계 보존**(UDP 특성). 필요한 만큼 **버퍼를 넉넉히** 두고, 짧으면 잘라 쓰기/길면 폐기 정책.
 - **SIO_UDP_CONNRESET** 비활성은 사실상 필수(위 19.5.2).
 
 ---
 
-### 19.8 미니 수식 — 워커 수와 병렬성 감 잡기
+### 미니 수식 — 워커 수와 병렬성 감 잡기
+
 - 워커 수를 코어 수 \(C\)라 할 때, I/O 대기/처리 비율 \(\alpha\)에 대한 직관:
   $$
   N_{\text{workers}} \approx C \cdot \left(1 + \frac{\text{I/O wait}}{\text{CPU work}}\right)
@@ -511,7 +526,7 @@ int main(int argc, char** argv) {
 
 ---
 
-### 19.9 마무리
+### 마무리
 
 - Windows의 네트워킹은 **Overlapped + IOCP**가 정석이다.
 - 핵심 전환은 **“준비(readiness) 루프” → “완료(completion) 소비”**로의 사고 변경.

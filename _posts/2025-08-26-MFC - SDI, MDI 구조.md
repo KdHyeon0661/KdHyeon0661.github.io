@@ -5,13 +5,14 @@ date: 2025-08-26 17:25:23 +0900
 category: MFC
 ---
 # SDI/MDI 구조 이해: `CDocument` / `CView` / `CFrameWnd`, DocTemplate, 명령 라우팅 완전 정리
+
 이 글은 MFC의 **문서/뷰 구조(도큐먼트-뷰-프레임)** 를 **SDI/MDI** 관점에서 끝까지 파고듭니다.
 핵심 클래스의 역할, 생성·수명 주기, **DocTemplate 연결**, **명령/업데이트 라우팅**, **멀티 뷰 구성**, **프린팅 파이프라인**, **MDI 전용 이슈**를 **개념→코드→체크리스트** 순으로 정리합니다.
 (본문은 ~~~markdown, 코드는 ```로 감싸 제공합니다.)
 
 ---
 
-## 0. 큰 그림: 왜 Doc/View인가?
+## 큰 그림: 왜 Doc/View인가?
 
 - **분리(Separation of Concerns)**
   - **`CDocument`**: 데이터·모델(파일 로드/저장, 직렬화, 변경 여부, 뷰에 방송)
@@ -24,9 +25,10 @@ category: MFC
 
 ---
 
-## 1. 핵심 클래스의 역할과 경계
+## 핵심 클래스의 역할과 경계
 
 ### 1-1. `CDocument` (모델)
+
 - **데이터 보유** 및 **직렬화**
 - **수정 플래그**: `SetModifiedFlag(TRUE)` → 종료/닫기 시 저장 확인을 자동화
 - **브로드캐스트**: `UpdateAllViews(pSender, lHint, pHint)`로 뷰 갱신 통지
@@ -65,6 +67,7 @@ public:
 ```
 
 ### 1-2. `CView` (뷰)
+
 - **그리기**: `OnDraw(CDC*)`가 화면 렌더의 중심
 - **입력 처리**: 메뉴/툴바/단축키 명령(커맨드)과 마우스/키보드 메시지
 - **문서 접근**: `GetDocument()`
@@ -101,6 +104,7 @@ END_MESSAGE_MAP()
 ```
 
 ### 1-3. `CFrameWnd` / `CMDIFrameWnd` / `CMDIChildWnd`
+
 - 메뉴/툴바/상태바/도킹·리본 관리
 - 활성 뷰 포커스/전환
 - **SDI**: `CFrameWnd(Ex)` 1개가 문서/뷰를 담음
@@ -119,14 +123,16 @@ public:
 
 ---
 
-## 2. DocTemplate: 문서-프레임-뷰를 연결하는 허브
+## DocTemplate: 문서-프레임-뷰를 연결하는 허브
 
 ### 2-1. 역할
+
 - **런타임 클래스 3종**(Doc/Frame/View) 연결
 - **파일 형식 메타**(DocString) 제공
 - **생성 파이프라인**(새 문서/열기)에서 객체를 **공장 패턴**으로 생성·결합
 
 ### 2-2. 유형
+
 - **`CSingleDocTemplate`**: SDI용(문서 1개)
 - **`CMultiDocTemplate`**: MDI용(문서 여러 개, Child Frame 생성)
 
@@ -171,34 +177,39 @@ m_pMainWnd = pMainFrame;
 ```
 
 ### 2-4. DocString (리소스의 \n 구획)
+
 - 메뉴 이름/파일 필터/확장자/타이틀 템플릿 등
 - **파일 열기/저장 대화상자**의 필터, **창 타이틀** 포맷 등에 사용
 
 ---
 
-## 3. 수명 주기: 생성·열기·저장·닫기
+## 수명 주기: 생성·열기·저장·닫기
 
 ### 3-1. 새 문서(SDI 기본 흐름)
+
 1) `InitInstance` → DocTemplate 등록
 2) `ProcessShellCommand` → `ID_FILE_NEW` → `OpenDocumentFile(nullptr)`
 3) **문서 생성** → **프레임 생성** → **뷰 생성/부착** → `OnInitialUpdate`
 4) 프레임 표시/활성화
 
 ### 3-2. 파일 열기
+
 - `OpenDocumentFile(L"path")` → 문서 생성 → `CDocument::OnOpenDocument` 로드 → 프레임/뷰 결합
 
 ### 3-3. 저장/다른 이름으로 저장
+
 - `CDocument::DoFileSave()` / `OnSaveDocument(L"path")`
 - 저장 성공 후 `SetModifiedFlag(FALSE)`
 
 ### 3-4. 닫기/종료
+
 - 문서가 수정됨 → `SaveModified()`로 저장 여부 확인
 - **SDI**: 창 닫기 = 문서 종료
 - **MDI**: 활성 Child 닫기 = 해당 문서 종료
 
 ---
 
-## 4. 명령/업데이트 라우팅 (핵심)
+## 명령/업데이트 라우팅 (핵심)
 
 ### 4-1. 검색 순서
 
@@ -225,6 +236,7 @@ END_MESSAGE_MAP()
 ```
 
 ### 4-2. `ON_UPDATE_COMMAND_UI` (메뉴/툴바 상태)
+
 - Enable/Disable, Check/Radio, Text 업데이트
 - **Idle 타임**마다 호출 → 비싼 연산/파일 I/O 금지, **캐시된 상태**만 빠르게 반영
 
@@ -242,9 +254,10 @@ END_MESSAGE_MAP()
 
 ---
 
-## 5. 멀티 뷰/스플리터/Hint 패턴
+## 멀티 뷰/스플리터/Hint 패턴
 
 ### 5-1. 한 문서—여러 뷰
+
 - `UpdateAllViews`로 **방송**
 - 각 뷰는 `OnUpdate(lHint, pHint)`에서 **관심 있는 부분만** 갱신
 
@@ -271,6 +284,7 @@ void CMyView::OnUpdate(CView* s, LPARAM hint, CObject* p)
 ```
 
 ### 5-2. 런타임 뷰 교체(고급)
+
 - `CFrameWnd::SetActiveView` + 기존 뷰 파괴/새 뷰 생성
 - **소유권은 프레임**: 뷰를 직접 `delete`하지 말고 프레임 API 경유
 
@@ -290,6 +304,7 @@ void ReplaceView(CFrameWnd* pFrame, CRuntimeClass* pNewViewClass)
 ```
 
 ### 5-3. 스플리터 `CSplitterWnd`
+
 - 한 프레임 안에 **행/열로 여러 뷰** 배치
 
 ```cpp
@@ -305,7 +320,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT, CCreateContext* pCC)
 
 ---
 
-## 6. 프린팅 파이프라인 (요약 & 연결)
+## 프린팅 파이프라인 (요약 & 연결)
 
 1) `CView::OnPreparePrinting` → 페이지 수 계산
 2) `OnBeginPrinting` → 폰트/펜/브러시
@@ -317,7 +332,7 @@ BOOL CMainFrame::OnCreateClient(LPCREATESTRUCT, CCreateContext* pCC)
 
 ---
 
-## 7. MDI 전용 이슈(SDI와 다른 지점)
+## MDI 전용 이슈(SDI와 다른 지점)
 
 - **Child Frame**: 문서마다 독립 창 (`CMDIChildWndEx`)
 - **명령/업데이트 기준**: **활성 Child**의 뷰/문서가 우선
@@ -336,7 +351,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 8. 명령 설계 베스트 프랙티스
+## 명령 설계 베스트 프랙티스
 
 1. **데이터 변경 명령**은 **문서**에, **표시/선택/도구 명령**은 **뷰**에
 2. **ON_UPDATE_COMMAND_UI**는 빠르게: 상태 비트/캐시 읽기만
@@ -347,7 +362,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 9. 문제 해결 가이드
+## 문제 해결 가이드
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -359,7 +374,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 10. SDI vs MDI 선택 가이드
+## SDI vs MDI 선택 가이드
 
 | 항목 | SDI | MDI |
 |---|---|---|
@@ -371,7 +386,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 11. 한 장으로 보는 전체 시퀀스
+## 한 장으로 보는 전체 시퀀스
 
 ```
 [사용자] --(ID_FILE_OPEN)--> [App]
@@ -389,7 +404,7 @@ void CMainFrame::OnFileNewDoc()
 
 ---
 
-## 12. 실무용 코드 모음 (스니펫)
+## 실무용 코드 모음 (스니펫)
 
 ### 12-1. 문서→뷰 방송(선택 변경 힌트)
 
@@ -437,7 +452,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 13. 체크리스트 (요약)
+## 체크리스트 (요약)
 
 - [ ] Doc/View/Frame **역할 분리**가 명확한가
 - [ ] **DocTemplate** 등록/DocString 구성 적절한가

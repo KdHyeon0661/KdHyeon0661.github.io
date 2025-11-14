@@ -11,7 +11,7 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 
 ---
 
-## 1. Cloud Native란 무엇인가 — 운영 관점 재정의
+## Cloud Native란 무엇인가 — 운영 관점 재정의
 
 > **정의**: 불변(Immutable) 아티팩트와 선언형(Declarative) 스펙으로 시스템을 구성하고, 자동화된 파이프라인과 컨트롤루프(Reconciler)로 **원하는 상태(Desired State)** 를 일관되게 유지/복구하는 접근.
 
@@ -29,7 +29,7 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 
 ---
 
-## 2. CNCF Landscape 한 장으로 보기
+## CNCF Landscape 한 장으로 보기
 
 주요 카테고리
 1. **Provisioning & Infrastructure**: IaC, 클러스터 부트스트랩
@@ -49,9 +49,10 @@ CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**�
 
 ---
 
-## 3. Provisioning & Infrastructure — IaC로 시작과 끝을 관리
+## Provisioning & Infrastructure — IaC로 시작과 끝을 관리
 
-### 3.1 Terraform로 EKS 예시(핵심만)
+### Terraform로 EKS 예시(핵심만)
+
 ```hcl
 provider "aws" { region = "ap-northeast-2" }
 
@@ -72,14 +73,16 @@ module "eks" {
 - **원칙**: 모든 인프라(클러스터/노드/보안그룹/Route53)를 코드화.
 - **Pulumi**(TS/Python/Go)도 동일 기능, 언어 친화적인 IaC 선호 시 고려.
 
-### 3.2 Kubeadm/Kubespray
+### Kubeadm/Kubespray
+
 - 온프렘/자체 VM에서 제어성↑. **프로덕션**은 HA control-plane 설계(다중 etcd) 필수.
 
 ---
 
-## 4. Orchestration & Management — Kubernetes 운영 패턴
+## Orchestration & Management — Kubernetes 운영 패턴
 
-### 4.1 기본 배포 매니페스트(검증 지향)
+### 기본 배포 매니페스트(검증 지향)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -113,26 +116,29 @@ spec:
       nodeSelector: {workload: general}
 ```
 
-### 4.2 스케줄링 제약(요약)
+### 스케줄링 제약(요약)
+
 - **Node Affinity/Anti-Affinity**, **topologySpreadConstraints**, **Taint/Toleration**로 **HA + 비용** 균형 설계.
 - **HPA/VPA/Cluster Autoscaler**의 상호작용을 고려(요청치 기반).
 
 ---
 
-## 5. Runtime — 컨테이너 런타임 & Wasm
+## Runtime — 컨테이너 런타임 & Wasm
 
 - **containerd**(권장), **CRI-O**: Kubernetes 친화적인 경량 런타임.
 - **Wasm**(WasmEdge/Wasmtime): 콜드스타트·보안 장점. **게이트웨이 플러그인/필터**나 **경량 함수형 워크로드**에서 파일럿 도입.
 
 ---
 
-## 6. Networking — CNI, Ingress, Gateway API, Mesh
+## Networking — CNI, Ingress, Gateway API, Mesh
 
-### 6.1 CNI 예시: Cilium (eBPF)
+### CNI 예시: Cilium (eBPF)
+
 - **장점**: 고성능 데이터패스, L3-L7 정책, Hubble로 **흐름 관측**.
 - **대안**: Calico(성숙/정책풍부), Flannel(간단·소규모).
 
-### 6.2 Gateway API (차세대 Ingress)
+### Gateway API (차세대 Ingress)
+
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -145,7 +151,8 @@ spec:
 ```
 - Ingress의 한계를 보완한 **표준화된 확장 모델**.
 
-### 6.3 Service Mesh(실전 기본)
+### Service Mesh(실전 기본)
+
 - **Linkerd**(Graduated): 경량/단순 mTLS/헬스.
 - **Istio**: 트래픽 관리/정책/멀티클러스터까지 포괄.
 
@@ -168,9 +175,10 @@ spec:
 
 ---
 
-## 7. Storage — CSI, 분산 스토리지, 백업/복구
+## Storage — CSI, 분산 스토리지, 백업/복구
 
-### 7.1 PVC + StorageClass
+### PVC + StorageClass
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -182,20 +190,23 @@ volumeBindingMode: WaitForFirstConsumer
 ```
 - **WaitForFirstConsumer**: Pod 스케줄 후 **Zone 일치**로 올바른 볼륨 프로비저닝.
 
-### 7.2 분산 스토리지: Rook/Ceph, Longhorn
+### 분산 스토리지: Rook/Ceph, Longhorn
+
 - **Ceph**: 대규모/다양한 프로토콜.
 - **Longhorn**: 경량·K8s 네이티브, 온프렘/엣지 친화.
 
-### 7.3 백업/DR: Velero
+### 백업/DR: Velero
+
 ```bash
 velero backup create daily-$(date +%F) --include-namespaces prod --wait
 ```
 
 ---
 
-## 8. Observability — Prometheus/Loki/Tempo/OTel/Grafana
+## Observability — Prometheus/Loki/Tempo/OTel/Grafana
 
-### 8.1 Prometheus + Alertmanager
+### Prometheus + Alertmanager
+
 **간단 ServiceMonitor (prometheus-operator)**
 ```yaml
 apiVersion: monitoring.coreos.com/v1
@@ -211,12 +222,14 @@ spec:
 **PromQL 예시**
 ```promql
 # CPU 사용률(%)
+
 100 * rate(container_cpu_usage_seconds_total{container!="",pod=~"api-.*"}[5m])
   / on(pod) group_left
     kube_pod_container_resource_requests{resource="cpu", unit="core"}
 ```
 
-### 8.2 Loki(로그) + Promtail
+### Loki(로그) + Promtail
+
 ```yaml
 scrape_configs:
 - job_name: kubernetes-pods
@@ -225,7 +238,8 @@ scrape_configs:
   - docker: {}
 ```
 
-### 8.3 OpenTelemetry(표준화된 SDK/Collector)
+### OpenTelemetry(표준화된 SDK/Collector)
+
 **OTel Collector to Prometheus + Tempo**
 ```yaml
 receivers:
@@ -242,14 +256,15 @@ service:
 
 ---
 
-## 9. Security & Compliance — Shift Left + Runtime
+## Security & Compliance — Shift Left + Runtime
 
-### 9.1 이미지 스캔: Trivy
+### 이미지 스캔: Trivy
+
 ```bash
 trivy image ghcr.io/acme/api:1.4.7 --severity CRITICAL,HIGH
 ```
 
-### 9.2 정책: OPA Gatekeeper / Kyverno
+### 정책: OPA Gatekeeper / Kyverno
 
 **Gatekeeper ConstraintTemplate + Constraint**
 ```yaml
@@ -300,19 +315,23 @@ spec:
             runAsNonRoot: true
 ```
 
-### 9.3 런타임 보안: Falco
+### 런타임 보안: Falco
+
 - 커널 이벤트 기반 **행동 탐지**(eBPF). 무단 쉘/민감파일 접근 규칙으로 경보.
 
-### 9.4 인증서·신뢰: cert-manager / SPIFFE/SPIRE
+### 인증서·신뢰: cert-manager / SPIFFE/SPIRE
+
 - **내부 mTLS**, 서비스 아이덴티티 자동화.
 
 ---
 
-## 10. App Definition & DevOps — Helm/Kustomize/GitOps/CI
+## App Definition & DevOps — Helm/Kustomize/GitOps/CI
 
-### 10.1 Helm 차트 베이스(템플릿 추상화)
+### Helm 차트 베이스(템플릿 추상화)
+
 ```yaml
 # values.yaml
+
 image:
   repository: ghcr.io/acme/api
   tag: "1.4.7"
@@ -325,6 +344,7 @@ resources:
 {% raw %}
 ```yaml
 # templates/deployment.yaml (발췌)
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -340,7 +360,8 @@ spec:
 ```
 {% endraw %}
 
-### 10.2 Kustomize 오버레이
+### Kustomize 오버레이
+
 ```
 base/ (deployment.yaml, service.yaml)
 overlays/
@@ -348,7 +369,8 @@ overlays/
   prod/kustomization.yaml     # replicas/리소스 상향, 주석 주입 등
 ```
 
-### 10.3 GitOps: Argo CD(ApplicationSet 포함)
+### GitOps: Argo CD(ApplicationSet 포함)
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -397,7 +419,8 @@ spec:
 ```
 {% endraw %}
 
-### 10.4 CI(예: GitHub Actions → 이미지 빌드/푸시)
+### CI(예: GitHub Actions → 이미지 빌드/푸시)
+
 {% raw %}
 ```yaml
 name: ci
@@ -422,7 +445,7 @@ jobs:
 
 ---
 
-## 11. Chaos/Resilience — Litmus / Chaos Mesh
+## Chaos/Resilience — Litmus / Chaos Mesh
 
 - 장애 주입으로 **SLO·오토스케일·헬스 체크** 유효성 검증.
 ```yaml
@@ -437,7 +460,7 @@ spec:
 
 ---
 
-## 12. 선택 가이드 — 상황별 추천 조합
+## 선택 가이드 — 상황별 추천 조합
 
 | 요구/규모 | 네트워킹 | 배포 | 관측 | 보안 | 스토리지 |
 |---|---|---|---|---|---|
@@ -451,7 +474,7 @@ spec:
 
 ---
 
-## 13. 비용·성능·안정성 최적화 체크리스트
+## 비용·성능·안정성 최적화 체크리스트
 
 - **Requests/Limits 적정화**: HPA 기준·Throttling/OOM 방지
 - **노드 풀 분리**: CPU/GPU/메모리 최적, 스팟 혼용(비핵심)
@@ -463,7 +486,7 @@ spec:
 
 ---
 
-## 14. 레퍼런스 아키텍처(요약 다이어그램 텍스트)
+## 레퍼런스 아키텍처(요약 다이어그램 텍스트)
 
 ```
 [Dev] --(Git Push)--> [CI: Actions/Tekton] --(Image)--> [Registry]
@@ -480,7 +503,7 @@ spec:
 
 ---
 
-## 15. 실전 운영 런북(핵심 절차)
+## 실전 운영 런북(핵심 절차)
 
 1) **문제 인입**(지연/오류율): SLO 대시보드 확인 → 영향 범위
 2) **서비스 경로 추적**: Gateway/Route/Mesh → 대상 워크로드 식별
@@ -493,7 +516,7 @@ spec:
 
 ---
 
-## 16. 안티패턴 경계
+## 안티패턴 경계
 
 - `latest` 태그 남용(재현 불가/롤백 불가)
 - Requests 미설정(스케줄 편향/HPA 오작동)
@@ -524,6 +547,7 @@ spec:
 
 ```bash
 # Velero 스케줄 예시
+
 velero schedule create daily --schedule="0 2 * * *" --include-namespaces prod
 ```
 

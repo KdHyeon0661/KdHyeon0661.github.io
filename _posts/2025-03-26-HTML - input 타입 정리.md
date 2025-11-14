@@ -25,7 +25,7 @@ category: HTML
 
 ---
 
-## 0. 공통 준비 코드(데모 프레임)
+## 공통 준비 코드(데모 프레임)
 
 아래 템플릿에 원하는 섹션만 끼워 넣어 실험할 수 있다.
 
@@ -58,9 +58,10 @@ category: HTML
 
 ---
 
-## 1. `type="number"` — 숫자만 입력
+## `type="number"` — 숫자만 입력
 
 ### 핵심
+
 - **숫자 전용** 입력. 브라우저가 **스핀 버튼(▲▼)** 제공.
 - `min`, `max`, `step`으로 범위/증분 제어.
 - **주의:** 일부 브라우저/OS에서 마우스 휠로 값이 변할 수 있음(의도치 않은 변경).
@@ -88,9 +89,10 @@ category: HTML
 
 ---
 
-## 2. `type="range"` — 슬라이더 형태로 숫자 선택
+## `type="range"` — 슬라이더 형태로 숫자 선택
 
 ### 핵심
+
 - 슬라이더 UI. 값은 **숫자**지만 시각적으로 조절.
 - 즉시 피드백을 위해 `<output>`과 함께 사용 권장.
 
@@ -110,9 +112,10 @@ category: HTML
 
 ---
 
-## 3. `type="color"` — 색상 선택기
+## `type="color"` — 색상 선택기
 
 ### 핵심
+
 - 시스템/브라우저 기본 **컬러 피커** 제공.
 - 값은 `#RRGGBB` 16진수.
 
@@ -136,9 +139,10 @@ category: HTML
 
 ---
 
-## 4. `type="date"` — 날짜 선택
+## `type="date"` — 날짜 선택
 
 ### 핵심
+
 - 달력 위젯 제공. 값은 **`YYYY-MM-DD`**.
 - `min`/`max`로 범위 제한.
 
@@ -157,9 +161,10 @@ category: HTML
 
 ---
 
-## 5. `type="time"` — 시간 선택
+## `type="time"` — 시간 선택
 
 ### 핵심
+
 - 시간 전용. `step`으로 **초 단위** 제어 가능.
 - 로케일에 따라 12/24시간 **표현이 다를 수 있으나 값은 동일 포맷**.
 
@@ -174,9 +179,10 @@ category: HTML
 
 ---
 
-## 6. `type="datetime-local"` — 날짜 + 시간(로컬)
+## `type="datetime-local"` — 날짜 + 시간(로컬)
 
 ### 핵심
+
 - 로컬 타임존 기준. **UTC가 아니다**.
 - 시간대 혼동이 잦으므로, 서버 저장 시 **UTC 변환**을 강력 권장.
 
@@ -195,9 +201,10 @@ category: HTML
 
 ---
 
-## 7. `type="month"` — 연월(YYYY-MM)
+## `type="month"` — 연월(YYYY-MM)
 
 ### 핵심
+
 - **월 단위** 선택. 결제 주기/월간 리포트에 적합.
 
 ```html
@@ -210,9 +217,10 @@ category: HTML
 
 ---
 
-## 8. `type="week"` — 연-주(ISO Week)
+## `type="week"` — 연-주(ISO Week)
 
 ### 핵심
+
 - 값 형식 **`YYYY-W##`** (예: `2025-W29`).
 - ISO-8601 기준: **첫 주는 그 해의 첫 목요일을 포함한 주**.
 
@@ -227,9 +235,10 @@ category: HTML
 
 ---
 
-## 9. `type="email"` — 이메일 형식 검사
+## `type="email"` — 이메일 형식 검사
 
 ### 핵심
+
 - `@`와 도메인 구조 등 기본 형식을 **브라우저가 검증**.
 - `multiple`로 **쉼표/공백 구분** 다중 입력 가능.
 
@@ -250,9 +259,10 @@ category: HTML
 
 ---
 
-## 10. `type="url"` — URL 형식 입력
+## `type="url"` — URL 형식 입력
 
 ### 핵심
+
 - `http://` 또는 `https://` 등의 **스킴 포함 URL** 형식을 검사.
 - 스킴 없는 `example.com`은 **유효하지 않음**.
 
@@ -267,9 +277,10 @@ category: HTML
 
 ---
 
-## 11. `type="tel"` — 전화번호
+## `type="tel"` — 전화번호
 
 ### 핵심
+
 - **형식 검사를 하지 않는다**(기본). 자유 입력.
 - 모바일에서 **전화 키패드**를 띄우는 효과.
 - 검증은 `pattern` 또는 서버에서 수행.
@@ -289,9 +300,10 @@ category: HTML
 
 ---
 
-## 12. `type="search"` — 검색 입력(시맨틱)
+## `type="search"` — 검색 입력(시맨틱)
 
 ### 핵심
+
 - 기능은 `text`와 유사하나, **검색 UX(지우기 X 버튼 등)** 를 제공.
 - 모바일 키보드의 **검색 전용 버튼**을 유도(`enterkeyhint="search"`).
 
@@ -309,12 +321,14 @@ category: HTML
 ## 공통 속성/검증/UX 향상
 
 ### A) 필수/범위/정규식
+
 ```html
 <input type="number" required min="0" max="100" step="10" />
 <input type="text" required pattern="^[a-zA-Z0-9_]{4,16}$" title="영문/숫자/언더스코어 4~16자" />
 ```
 
 ### B) 자동완성(autocomplete) 토큰(발췌)
+
 - `name`, `email`, `username`, `new-password`, `current-password`,
   `tel`, `tel-national`, `one-time-code`,
   `street-address`, `address-line1`, `postal-code`,
@@ -326,6 +340,7 @@ category: HTML
 ```
 
 ### C) 모바일 최적화
+
 - `inputmode` : `numeric`, `decimal`, `tel`, `email`, `url`, `search`
 - `enterkeyhint` : `search`, `go`, `done`, `next`, `send`, …
 
@@ -334,6 +349,7 @@ category: HTML
 ```
 
 ### D) 접근성(a11y)
+
 - `label for` ↔ `id` 연결은 **기본 중 기본**.
 - 동적 결과는 `aria-live="polite"` 등으로 공지.
 - 에러는 **연결된 설명 영역**에 표시하고 `aria-invalid="true"` 설정.
@@ -345,6 +361,7 @@ category: HTML
 ```
 
 ### E) 클라이언트-서버 검증 협업
+
 - **클라:** 즉시 피드백(형식/범위) 제공.
 - **서버:** 모든 값 재검증(권한/비즈니스 규칙/중복/위조).
 

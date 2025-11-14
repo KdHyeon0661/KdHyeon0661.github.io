@@ -12,7 +12,7 @@ category: 웹해킹
 
 ---
 
-## 0. 큰 그림(Why)
+## 큰 그림(Why)
 
 - **입력값 검증(Validation)**: *의도된 스펙*만 통과시키는 “게이트”. (_들어오기 전_ 막기)
 - **Sanitization(정화)**: *콘텐츠(HTML/마크다운 등)*를 제한된 형태로 “무해화”. (_보여주기 전_ 씻기)
@@ -23,9 +23,9 @@ category: 웹해킹
 
 ---
 
-## 1. 입력값 검증(Validation)과 데이터 Sanitization
+## 입력값 검증(Validation)과 데이터 Sanitization
 
-### 1.1 기본 원칙 7가지
+### 기본 원칙 7가지
 
 1. **화이트리스트(Allowlist)**: “허용할 것만 정의” — 도메인, 포맷, 길이, 범위, 스킴(https) 등.
 2. **정규화 후 비교**: URL/경로/유니코드 입력은 **정규화(NFKC)** → 비교/검사. (혼동 문자 방지)
@@ -39,9 +39,10 @@ category: 웹해킹
 
 ---
 
-### 1.2 검증 레이어 — 언어별 예제
+### 검증 레이어 — 언어별 예제
 
-#### 1.2.1 Node.js(Express) — zod 또는 Joi
+#### Node.js(Express) — zod 또는 Joi
+
 ```javascript
 // validation/user.js
 import { z } from "zod";
@@ -68,7 +69,8 @@ app.post("/register", async (req, res) => {
 });
 ```
 
-#### 1.2.2 Python(Flask/FastAPI) — Pydantic
+#### Python(Flask/FastAPI) — Pydantic
+
 ```python
 from pydantic import BaseModel, EmailStr, constr
 
@@ -84,7 +86,8 @@ def register():
     return "", 201
 ```
 
-#### 1.2.3 Java(Spring Boot) — Bean Validation
+#### Java(Spring Boot) — Bean Validation
+
 ```java
 class RegisterDto {
   @Email @Size(max=254) public String email;
@@ -98,12 +101,13 @@ public ResponseEntity<?> register(@Valid @RequestBody RegisterDto dto){ … }
 
 ---
 
-### 1.3 Sanitization(콘텐츠 무해화) — 언제·어떻게?
+### Sanitization(콘텐츠 무해화) — 언제·어떻게?
 
 - **텍스트 데이터**: 단순 출력이면 **출력 인코딩**(HTML 엔티티)만으로 충분.
 - **HTML/Markdown 입력을 “제한적 허용”**해야 한다면, **화이트리스트 Sanitizer** 필수.
 
-#### 1.3.1 HTML Sanitizer 예제
+#### HTML Sanitizer 예제
+
 - **브라우저(클라)**: DOMPurify
 - **서버**:
   - Node: `isomorphic-dompurify` 또는 `sanitize-html`
@@ -139,6 +143,7 @@ export function sanitizeUserHtml(raw) {
 
 ```python
 # Python — bleach
+
 import bleach
 ALLOWED_TAGS   = ["b","i","em","strong","u","p","ul","ol","li","a","br","code","pre"]
 ALLOWED_ATTRS  = {"a": ["href","title"]}
@@ -161,7 +166,7 @@ String safeHtml = POLICY.sanitize(userHtml);
 
 ---
 
-### 1.4 URL/경로/파일 검증(간단 체크리스트)
+### URL/경로/파일 검증(간단 체크리스트)
 
 - URL: **스킴(https) 화이트리스트**, `new URL(raw, base)`로 정규화 후 **호스트/포트 허용 목록** 확인.
 - 경로: **루트 고정 + 정규화 + prefix 검사**.
@@ -169,11 +174,11 @@ String safeHtml = POLICY.sanitize(userHtml);
 
 ---
 
-## 2. 보안 HTTP 헤더 적용(브라우저 보안 정책)
+## 보안 HTTP 헤더 적용(브라우저 보안 정책)
 
 > **핵심**: CSP(콘텐츠 보안 정책)를 중심으로 **X-Frame-Options·HSTS·nosniff·Referrer-Policy** 등과 **세트**로 설정.
 
-### 2.1 CSP(Content-Security-Policy) — 전략
+### CSP(Content-Security-Policy) — 전략
 
 - **목표**: XSS·리소스 하이재킹을 브라우저 레벨에서 차단.
 - **패턴 1: Nonce 기반 엄격 CSP(권장)**
@@ -183,7 +188,8 @@ String safeHtml = POLICY.sanitize(userHtml);
   - `script-src 'self' cdn1.example cdn2.example` … (인라인 금지)
 - **도입 단계**: **Report-Only** 모드로 먼저 배포 → 위반 리포트 수집 → 본 모드 전환.
 
-#### 2.1.1 Express(Helmet) + Nonce 예제
+#### Express(Helmet) + Nonce 예제
+
 ```javascript
 import crypto from "node:crypto";
 import helmet from "helmet";
@@ -223,7 +229,8 @@ app.get("/", (req, res) => {
 });
 ```
 
-#### 2.1.2 Nginx에서 CSP(정적) — 간단형
+#### Nginx에서 CSP(정적) — 간단형
+
 ```nginx
 add_header Content-Security-Policy "default-src 'none'; base-uri 'none'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'self'; form-action 'self'" always;
 ```
@@ -231,7 +238,8 @@ add_header Content-Security-Policy "default-src 'none'; base-uri 'none'; object-
 
 ---
 
-### 2.2 X-Frame-Options vs `frame-ancestors`
+### X-Frame-Options vs `frame-ancestors`
+
 - 현대 표준은 **CSP의 `frame-ancestors`**.
 - 구형 호환을 위해 **X-Frame-Options: DENY** 또는 `SAMEORIGIN`을 함께 추가.
 
@@ -242,37 +250,43 @@ add_header Content-Security-Policy "frame-ancestors 'self'" always;
 
 ---
 
-### 2.3 HSTS(Strict-Transport-Security)
+### HSTS(Strict-Transport-Security)
 
 - **목표**: 브라우저가 **항상 HTTPS로만** 접속하게 강제.
 - **주의**: HTTPS가 완전히 준비되지 않은 서브도메인이 있다면 **includeSubDomains** 사용 전 신중.
 - **예시**:
 ```nginx
 # HSTS는 오직 HTTPS 응답에서!
+
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 ```
 - `preload`는 브라우저 내장 목록에 등록을 의미(도입 전 충분한 검증 필요).
 
 ---
 
-### 2.4 기타 중요 헤더
+### 기타 중요 헤더
 
 ```nginx
 # MIME 스니핑 금지
+
 add_header X-Content-Type-Options "nosniff" always;
 
 # 리퍼러 최소화(권장 기본)
+
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
 # 권한(센서/카메라 등) 최소화
+
 add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
 # 교차 출처 격리(필요 서비스에 한해)
+
 add_header Cross-Origin-Opener-Policy "same-origin" always;
 add_header Cross-Origin-Embedder-Policy "require-corp" always;
 add_header Cross-Origin-Resource-Policy "same-site" always;
 
 # 민감 응답은 캐시 금지
+
 add_header Cache-Control "no-store" always;
 ```
 
@@ -281,9 +295,9 @@ add_header Cache-Control "no-store" always;
 
 ---
 
-## 3. 세션 관리 보안 — 쿠키 속성과 운영 전략
+## 세션 관리 보안 — 쿠키 속성과 운영 전략
 
-### 3.1 쿠키 속성 요약
+### 쿠키 속성 요약
 
 - **Secure**: HTTPS 연결에서만 전송.
 - **HttpOnly**: JavaScript에서 **접근 불가**(XSS 시 탈취 난이도 상승).
@@ -296,7 +310,7 @@ add_header Cache-Control "no-store" always;
 
 ---
 
-### 3.2 Express — 세션/쿠키 예제
+### Express — 세션/쿠키 예제
 
 ```javascript
 import session from "express-session";
@@ -336,6 +350,7 @@ app.post("/logout", (req, res) => {
 ```
 
 #### CSRF 토큰(세션 쿠키와 함께)
+
 {% raw %}
 ```javascript
 import csurf from "csurf";
@@ -348,7 +363,7 @@ app.use(csurf({ cookie: false })); // 세션 기반 토큰
 
 ---
 
-### 3.3 Flask — 쿠키 & 세션
+### Flask — 쿠키 & 세션
 
 ```python
 app.config.update(
@@ -360,6 +375,7 @@ app.config.update(
 )
 
 # 로그인 후 세션 고정 방지: 새 세션 발급
+
 from flask import session
 @app.post("/login")
 def login():
@@ -381,7 +397,7 @@ def logout():
 
 ---
 
-### 3.4 Spring Security — 세션/쿠키/세션 고정 방지
+### Spring Security — 세션/쿠키/세션 고정 방지
 
 ```java
 @EnableWebSecurity
@@ -411,7 +427,7 @@ class SecurityConfig {
 
 ---
 
-### 3.5 JWT를 사용할 때(필독)
+### JWT를 사용할 때(필독)
 
 - **Access JWT**는 **짧은 TTL(5~15분)**, **Refresh Token**은 **길다란 TTL + 서버 저장(블랙리스트/로테이션)**.
 - 전달 방식:
@@ -423,9 +439,10 @@ class SecurityConfig {
 
 ---
 
-## 4. “끝에서 끝까지” 예제 — Express 미니 앱
+## “끝에서 끝까지” 예제 — Express 미니 앱
 
-### 4.1 기능
+### 기능
+
 - 입력 검증(zod)
 - HTML sanitization(서버)
 - 헤더(Helmet, CSP Nonce)
@@ -524,7 +541,7 @@ app.listen(3000, ()=>console.log("https://localhost:3000"));
 
 ---
 
-## 5. 리버스 프록시(Nginx) 스니펫
+## 리버스 프록시(Nginx) 스니펫
 
 ```nginx
 server {
@@ -553,6 +570,7 @@ server {
 }
 
 # HTTP → HTTPS 리다이렉트(필수)
+
 server {
   listen 80;
   server_name app.example.com;
@@ -562,7 +580,7 @@ server {
 
 ---
 
-## 6. 테스트 페이로드 & 기대 행동(“막혀야 정상”)
+## 테스트 페이로드 & 기대 행동(“막혀야 정상”)
 
 - **HTML 주입**: `<img src=x onerror=alert(1)>` → Sanitizer로 제거
 - **자바스크립트 링크**: `<a href="javascript:alert(1)">` → 링크 스킴 검사로 거절/무력화
@@ -575,7 +593,7 @@ server {
 
 ---
 
-## 7. “마이그레이션” 전략(CSP·세션·헤더)
+## “마이그레이션” 전략(CSP·세션·헤더)
 
 1. **관측 먼저**: CSP **Report-Only**로 위반 리포트 수집 → 외부 스크립트/스타일 정리
 2. **Nonce 전환**: 인라인 스크립트에 nonce 부여, `unsafe-inline` 제거
@@ -585,7 +603,7 @@ server {
 
 ---
 
-## 8. 자주 하는 실수 ↔ 교정
+## 자주 하는 실수 ↔ 교정
 
 | 실수 | 문제 | 교정 |
 |---|---|---|
@@ -599,7 +617,7 @@ server {
 
 ---
 
-## 9. 보안 체크리스트(현장용 요약)
+## 보안 체크리스트(현장용 요약)
 
 - [ ] 모든 입력 **스키마 검증**(서버) + 오류/속도 제한
 - [ ] 표시용 콘텐츠는 **Sanitizer**로 정화 + **링크 스킴 화이트리스트**
@@ -613,5 +631,6 @@ server {
 ---
 
 ### 맺음말
+
 입력 검증·Sanitization·보안 헤더·세션 보안은 **맞물려 돌아가는 하나의 시스템**입니다.
 이 문서의 샘플을 **작은 범위**에서 먼저 적용해 보고, **로그/리포트**로 관찰하면서 **점진**적으로 확대하세요.

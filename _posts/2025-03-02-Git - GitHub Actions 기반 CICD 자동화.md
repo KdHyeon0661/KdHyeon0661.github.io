@@ -6,7 +6,7 @@ category: Git
 ---
 # GitHub Actions 기반 CI/CD 자동화
 
-## 0. Actions 용어·디렉터리 구조 상기
+## Actions 용어·디렉터리 구조 상기
 
 - 워크플로(Workflow): `.github/workflows/*.yml`
 - 잡(Job): 워크플로 내부의 병렬/순차 실행 단위
@@ -26,13 +26,14 @@ category: Git
 
 ---
 
-## 1. 최소 CI — Node.js 테스트 (초안 확장)
+## 최소 CI — Node.js 테스트 (초안 확장)
 
 기본 예제에 캐시와 타 버전 테스트를 더하면 다음과 같다.
 
 {% raw %}
 ```yaml
 # .github/workflows/ci.yml
+
 name: CI
 
 on:
@@ -87,12 +88,13 @@ jobs:
 
 ---
 
-## 2. Python·Java 예제(멀티 언어 저장소/모노레포 대비)
+## Python·Java 예제(멀티 언어 저장소/모노레포 대비)
 
-### 2.1 Python(pytest + 캐시)
+### Python(pytest + 캐시)
 
 ```yaml
 # .github/workflows/ci-python.yml
+
 name: CI (Python)
 
 on:
@@ -125,10 +127,11 @@ jobs:
           retention-days: 7
 ```
 
-### 2.2 Java(Gradle 캐시 + 테스트)
+### Java(Gradle 캐시 + 테스트)
 
 ```yaml
 # .github/workflows/ci-java.yml
+
 name: CI (Java)
 
 on:
@@ -165,9 +168,9 @@ jobs:
 
 ---
 
-## 3. 캐시 전략 심화 — actions/cache, Docker Layer Cache
+## 캐시 전략 심화 — actions/cache, Docker Layer Cache
 
-### 3.1 Node/PNPM/Yarn 등 수동 캐시 키 제어
+### Node/PNPM/Yarn 등 수동 캐시 키 제어
 
 {% raw %}
 ```yaml
@@ -182,11 +185,12 @@ jobs:
 ```
 {% endraw %}
 
-### 3.2 Docker Buildx + 레이어 캐시
+### Docker Buildx + 레이어 캐시
 
 {% raw %}
 ```yaml
 # .github/workflows/docker-build.yml
+
 name: Docker Build
 
 on:
@@ -229,9 +233,9 @@ jobs:
 
 ---
 
-## 4. 아티팩트·커버리지·주석(Annotations)
+## 아티팩트·커버리지·주석(Annotations)
 
-### 4.1 커버리지 업로드(예: Codecov)
+### 커버리지 업로드(예: Codecov)
 
 {% raw %}
 ```yaml
@@ -246,7 +250,7 @@ jobs:
 ```
 {% endraw %}
 
-### 4.2 실패 라인에 주석 달기(ESLint 결과 Annotations)
+### 실패 라인에 주석 달기(ESLint 결과 Annotations)
 
 {% raw %}
 ```yaml
@@ -265,15 +269,17 @@ jobs:
 
 ---
 
-## 5. 브랜치 보호 + Status Checks + 환경(Environments) 보호
+## 브랜치 보호 + Status Checks + 환경(Environments) 보호
 
-### 5.1 브랜치 보호(요지)
+### 브랜치 보호(요지)
+
 - Settings → Branches → Add rule
 - Require pull request reviews
 - Require status checks to pass → 체크 이름은 워크플로 잡 이름(예: `CI / test`)
 - Require linear history(선택)
 
-### 5.2 환경 보호(승인자·비밀 분리·URL)
+### 환경 보호(승인자·비밀 분리·URL)
+
 - Settings → Environments → `production` 생성
 - Required reviewers 지정 → 배포 직전 승인 필요
 - Secrets를 환경 단위로 분리(`secrets.PROD_*`)
@@ -288,9 +294,9 @@ environment:
 
 ---
 
-## 6. GitHub Secrets/Variables/Permissions — 보안 기본기
+## GitHub Secrets/Variables/Permissions — 보안 기본기
 
-### 6.1 최소 권한(Principle of Least Privilege)
+### 최소 권한(Principle of Least Privilege)
 
 워크플로 최상단:
 
@@ -310,7 +316,8 @@ jobs:
       packages: write   # 레지스트리 푸시 등
 ```
 
-### 6.2 환경 변수 계층
+### 환경 변수 계층
+
 - `env:` (워크플로/잡/스텝)
 - `secrets.*` (민감 정보)
 - `vars.*` (민감하지 않은 상수)
@@ -327,17 +334,19 @@ env:
 
 ---
 
-## 7. OIDC로 클라우드에 보안 접속(AWS 예시) — 키 없는 배포
+## OIDC로 클라우드에 보안 접속(AWS 예시) — 키 없는 배포
 
-### 7.1 AWS IAM 역할 구성(개요)
+### AWS IAM 역할 구성(개요)
+
 - GitHub OIDC Provider 등록(Organization/Repository level)
 - 역할 트러스트 정책에 `sub` 조건으로 워크플로 제약
   - 예: `repo:org/repo:ref:refs/heads/main`
 
-### 7.2 AWS 로그인 + 배포 예시(S3/CloudFront)
+### AWS 로그인 + 배포 예시(S3/CloudFront)
 
 ```yaml
 # .github/workflows/deploy-aws.yml
+
 name: Deploy AWS (OIDC)
 
 on:
@@ -382,9 +391,9 @@ jobs:
 
 ---
 
-## 8. Netlify/Firebase 배포(초안 확장)
+## Netlify/Firebase 배포(초안 확장)
 
-### 8.1 Netlify
+### Netlify
 
 {% raw %}
 ```yaml
@@ -398,7 +407,7 @@ jobs:
 ```
 {% endraw %}
 
-### 8.2 Firebase Hosting
+### Firebase Hosting
 
 {% raw %}
 ```yaml
@@ -419,11 +428,12 @@ jobs:
 
 ---
 
-## 9. Kubernetes 배포(kubectl), Helm
+## Kubernetes 배포(kubectl), Helm
 
 {% raw %}
 ```yaml
 # .github/workflows/deploy-k8s.yml
+
 name: Deploy to Kubernetes
 
 on:
@@ -476,11 +486,12 @@ Helm 이용시:
 
 ---
 
-## 10. 모노레포 최적화 — paths-filter로 변경 영역만 실행
+## 모노레포 최적화 — paths-filter로 변경 영역만 실행
 
 {% raw %}
 ```yaml
 # .github/workflows/ci-monorepo.yml
+
 name: CI Monorepo
 
 on:
@@ -524,7 +535,7 @@ jobs:
 
 ---
 
-## 11. 동시성·취소·타임아웃 — 불필요한 실행 줄이기
+## 동시성·취소·타임아웃 — 불필요한 실행 줄이기
 
 {% raw %}
 ```yaml
@@ -544,13 +555,14 @@ jobs:
 
 ---
 
-## 12. 재사용 워크플로(organization-wide 표준화)
+## 재사용 워크플로(organization-wide 표준화)
 
-### 12.1 호출 당하는 워크플로
+### 호출 당하는 워크플로
 
 {% raw %}
 ```yaml
 # .github/workflows/reusable-test.yml (in org/reusable repo)
+
 name: Reusable Test
 
 on:
@@ -573,10 +585,11 @@ jobs:
 ```
 {% endraw %}
 
-### 12.2 호출하는 쪽
+### 호출하는 쪽
 
 ```yaml
 # .github/workflows/ci.yml
+
 name: CI
 
 on: [pull_request]
@@ -590,7 +603,7 @@ jobs:
 
 ---
 
-## 13. 수동 실행(workflow_dispatch) + 입력 파라미터·승인
+## 수동 실행(workflow_dispatch) + 입력 파라미터·승인
 
 {% raw %}
 ```yaml
@@ -618,7 +631,7 @@ jobs:
 
 ---
 
-## 14. 스케줄 작업(schedule) — 야간 빌드·보건 점검
+## 스케줄 작업(schedule) — 야간 빌드·보건 점검
 
 ```yaml
 on:
@@ -635,7 +648,7 @@ jobs:
 
 ---
 
-## 15. 실패 알림 — Slack/Discord/Webhook
+## 실패 알림 — Slack/Discord/Webhook
 
 Slack 예:
 
@@ -656,9 +669,9 @@ Slack 예:
 
 ---
 
-## 16. PR 크기·라벨·자동 병합
+## PR 크기·라벨·자동 병합
 
-### 16.1 PR 라벨링(크기별)
+### PR 라벨링(크기별)
 
 {% raw %}
 ```yaml
@@ -682,11 +695,12 @@ size/S:
       - max-lines-changed: 100
 ```
 
-### 16.2 Dependabot 자동 병합(조건부)
+### Dependabot 자동 병합(조건부)
 
 {% raw %}
 ```yaml
 # .github/workflows/auto-merge.yml
+
 name: Auto-merge dependabot
 
 on:
@@ -706,7 +720,7 @@ jobs:
 
 ---
 
-## 17. Self-hosted Runner — GPU/사내망/프라이빗 네트워크
+## Self-hosted Runner — GPU/사내망/프라이빗 네트워크
 
 - 대규모 빌드·특수 하드웨어(GPU)·내부망 접근이 필요한 경우 Self-hosted Runner 사용
 - 보안 수칙
@@ -719,9 +733,9 @@ jobs:
 
 ---
 
-## 18. 워크플로 간 데이터 전달 — Artifacts·Outputs
+## 워크플로 간 데이터 전달 — Artifacts·Outputs
 
-### 18.1 스텝/잡 Output
+### 스텝/잡 Output
 
 {% raw %}
 ```yaml
@@ -734,7 +748,7 @@ jobs:
 ```
 {% endraw %}
 
-### 18.2 잡 Output → 다음 잡
+### 잡 Output → 다음 잡
 
 {% raw %}
 ```yaml
@@ -756,10 +770,11 @@ jobs:
 
 ---
 
-## 19. 릴리스·태깅·체인지로그 자동화
+## 릴리스·태깅·체인지로그 자동화
 
 ```yaml
 # .github/workflows/release.yml
+
 name: Release
 
 on:
@@ -783,12 +798,13 @@ jobs:
 
 ---
 
-## 20. 품질·보안 내재화: CodeQL, Secret Scanning, 권한
+## 품질·보안 내재화: CodeQL, Secret Scanning, 권한
 
-### 20.1 CodeQL
+### CodeQL
 
 ```yaml
 # .github/workflows/codeql.yml
+
 name: CodeQL
 
 on:
@@ -816,13 +832,14 @@ jobs:
       - uses: github/codeql-action/analyze@v3
 ```
 
-### 20.2 Secret Scanning
+### Secret Scanning
+
 - GitHub Advanced Security가 켜져 있으면 자동 검사
 - 서드파티 CI 로그·아티팩트에 **비밀이 노출되지 않게** `::add-mask::` 또는 `secrets` 사용.
 
 ---
 
-## 21. 운영 팁 모음 — 현업에서 가장 자주 겪는 이슈
+## 운영 팁 모음 — 현업에서 가장 자주 겪는 이슈
 
 1) **러너 시간 절약**: paths-filter로 변경 없는 영역 CI 생략, `concurrency`로 중복 취소
 2) **긴 잡 분해**: “빌드 → 테스트 → 린트”를 병렬 잡으로 쪼개 전체 시간을 단축
@@ -837,7 +854,7 @@ jobs:
 
 ---
 
-## 22. 끝에서 정리 — 실무형 체크리스트
+## 끝에서 정리 — 실무형 체크리스트
 
 - 트리거: `pull_request`, `push(main)`, `workflow_dispatch`, `schedule`, `release`
 - 품질: Lint, Test(JUnit/coverage), CodeQL, Secret Scanning
@@ -855,6 +872,7 @@ jobs:
 {% raw %}
 ```yaml
 # .github/workflows/full-pipeline.yml
+
 name: Full Pipeline
 
 on:

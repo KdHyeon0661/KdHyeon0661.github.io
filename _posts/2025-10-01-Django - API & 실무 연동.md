@@ -4,7 +4,7 @@ title: Django - API & 실무 연동
 date: 2025-10-01 20:25:23 +0900
 category: Django
 ---
-# 4. API & 실무 연동
+# API & 실무 연동
 
 ## A. Django REST Framework — Serializer / ViewSet / Router, 인증·스로틀링, 문서화
 
@@ -16,6 +16,7 @@ pip install djangorestframework drf-spectacular
 
 ```python
 # config/settings/base.py
+
 INSTALLED_APPS += [
     "rest_framework",
     "drf_spectacular",
@@ -49,6 +50,7 @@ REST_FRAMEWORK = {
 
 ```python
 # apps/api/models.py
+
 from django.db import models
 from django.conf import settings
 
@@ -70,6 +72,7 @@ class Comment(models.Model):
 
 ```python
 # apps/api/serializers.py
+
 from rest_framework import serializers
 from .models import Post, Comment
 
@@ -115,6 +118,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 ```python
 # apps/api/views.py
+
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -155,6 +159,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 ```python
 # apps/api/urls.py
+
 from rest_framework.routers import DefaultRouter
 from .views import PostViewSet, CommentViewSet
 
@@ -172,6 +177,7 @@ pip install djangorestframework-simplejwt
 
 ```python
 # config/settings/base.py
+
 REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
     "rest_framework_simplejwt.authentication.JWTAuthentication",
 ]
@@ -179,6 +185,7 @@ REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
 
 ```python
 # config/urls.py
+
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -198,6 +205,7 @@ urlpatterns = [
 
 ```python
 # 전역 설정 외, 뷰에서 개별 적용
+
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 
 class BurstUserThrottle(UserRateThrottle):
@@ -206,6 +214,7 @@ class BurstAnonThrottle(AnonRateThrottle):
     scope = "burst_anon"
 
 # settings.py
+
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"].update({
     "burst_user": "60/min",
     "burst_anon": "30/min",
@@ -228,6 +237,7 @@ pip install django-filter
 
 ```python
 # settings
+
 INSTALLED_APPS += ["django_filters"]
 REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"] = [
     "django_filters.rest_framework.DjangoFilterBackend",
@@ -238,6 +248,7 @@ REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"] = [
 
 ```python
 # views
+
 class PostViewSet(viewsets.ModelViewSet):
     ...
     filterset_fields = ["author", "is_public"]
@@ -250,6 +261,7 @@ class PostViewSet(viewsets.ModelViewSet):
 
 ```python
 # config/urls.py
+
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns += [
@@ -310,6 +322,7 @@ pip install strawberry-graphql strawberry-graphql-django
 
 ```python
 # apps/gql/schema.py
+
 import strawberry
 from typing import List
 from strawberry.types import Info
@@ -356,6 +369,7 @@ schema = strawberry.Schema(query=Query, mutation=Mutation)
 
 ```python
 # config/urls.py
+
 from django.urls import path
 from strawberry.django.views import GraphQLView
 from apps.gql.schema import schema
@@ -366,6 +380,7 @@ urlpatterns += [
 ```
 
 #### 요청 예시 (GraphiQL)
+
 ```graphql
 query {
   posts {
@@ -384,6 +399,7 @@ pip install graphene-django
 
 ```python
 # apps/gql/schema_graphene.py
+
 import graphene
 from graphene_django import DjangoObjectType
 from apps.api.models import Post
@@ -426,12 +442,15 @@ schema = graphene.Schema(query=Query, mutation=Mutation)
 ```python
 # GraphQLView에 인증이 붙은 Django 뷰를 사용하면 info.context.request.user 사용 가능
 # Strawberry
+
 GraphQLView.as_view(schema=schema, graphiql=True)
 # 커스텀: @login_required 데코레이터와 혼합하거나, resolver 내부에서 user 검사
+
 ```
 
 ```python
 # Resolver에서 권한 검사 예시
+
 def resolve_posts(root, info):
     user = info.context.user
     qs = Post.objects.filter(is_public=True)
@@ -450,6 +469,7 @@ pip install aiodataloader
 
 ```python
 # apps/gql/dataloaders.py
+
 from aiodataloader import DataLoader
 from apps.api.models import Post
 
@@ -463,6 +483,7 @@ class PostLoader(DataLoader):
 
 ```python
 # apps/gql/context.py
+
 from .dataloaders import PostLoader
 
 def get_context(request):
@@ -471,11 +492,13 @@ def get_context(request):
 
 ```python
 # urls.py (Strawberry)
+
 GraphQLView.as_view(schema=schema, context_getter=get_context)
 ```
 
 ```python
 # schema.py (Strawberry)
+
 @strawberry.field
 async def post(self, info: Info, id: int) -> PostType | None:
     loader = info.context["loaders"]["post"]
@@ -517,12 +540,14 @@ pip install stripe
 
 ```python
 # config/settings/base.py
+
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 STRIPE_API_KEY = env("STRIPE_API_KEY", default="")
 ```
 
 ```python
 # apps/payments/webhooks.py
+
 import stripe
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest
@@ -562,11 +587,13 @@ def stripe_webhook(request):
 > Stripe는 **서명 헤더 검증**을 제공; 반드시 사용하세요. 또한, **idempotency-key** (요청 측)와 별개로 **웹훅 이벤트 id**를 사용한 **멱등 처리**가 필요합니다.
 
 #### 아임포트(IMP) 개념 흐름
+
 - 결제 완료 콜백에서 **imp_uid** 수신 → **REST API로 영수증 검증**(금액/상태 일치 확인) → 주문 확정
 - **서버 사이드 검증** 필수, 프런트만 믿지 마세요
 
 ```python
 # (간략) 아임포트 검증 스케치
+
 import requests
 IMP_HOST = "https://api.iamport.kr"
 
@@ -593,6 +620,7 @@ pip install django-allauth
 
 ```python
 # settings.py
+
 INSTALLED_APPS += [
     "django.contrib.sites",
     "allauth", "allauth.account", "allauth.socialaccount",
@@ -611,6 +639,7 @@ ACCOUNT_EMAIL_VERIFICATION = "optional"  # "mandatory" 권장
 
 ```python
 # urls.py
+
 from django.urls import path, include
 urlpatterns += [
     path("accounts/", include("allauth.urls")),  # /accounts/login/ 등
@@ -627,8 +656,10 @@ urlpatterns += [
 ### C-3. 이메일 — SMTP / Transactional(발송 로그/템플릿)
 
 #### SMTP(기본)
+
 ```python
 # settings.py
+
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
@@ -640,6 +671,7 @@ DEFAULT_FROM_EMAIL = "MyApp <noreply@example.com>"
 
 ```python
 # apps/notifications/mailers.py
+
 from django.core.mail import send_mail
 def send_welcome(to, name):
     subject = "환영합니다"
@@ -648,16 +680,19 @@ def send_welcome(to, name):
 ```
 
 #### 트랜잭셔널 서비스(예: SendGrid, Mailgun, Amazon SES)
+
 - 장점: **발송 로그/반송/스팸/템플릿 관리**, **웹훅** 으로 **오픈/클릭/반송 이벤트** 처리 가능
 - 단점: 서비스 의존 + 비용
 
 ```python
 # 예: django-anymail + SendGrid
+
 pip install django-anymail
 ```
 
 ```python
 # settings.py
+
 INSTALLED_APPS += ["anymail"]
 EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
 ANYMAIL = {"SENDGRID_API_KEY": env("SENDGRID_API_KEY")}
@@ -665,6 +700,7 @@ ANYMAIL = {"SENDGRID_API_KEY": env("SENDGRID_API_KEY")}
 
 ```python
 # templates 이메일 템플릿 + context 렌더
+
 from django.template.loader import render_to_string
 from anymail.message import AnymailMessage
 
@@ -702,6 +738,7 @@ def send_order_receipt(to, order):
 
 ```python
 # apps/orders/serializers.py
+
 from rest_framework import serializers
 from .models import Order, OrderItem
 
@@ -729,6 +766,7 @@ class OrderWriteSerializer(serializers.ModelSerializer):
 
 ```python
 # apps/orders/views.py
+
 from rest_framework import viewsets, permissions
 from .serializers import OrderWriteSerializer
 from .models import Order
@@ -741,6 +779,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
 ```python
 # apps/orders/urls.py
+
 from rest_framework.routers import DefaultRouter
 from .views import OrderViewSet
 
@@ -753,6 +792,7 @@ urlpatterns = router.urls
 
 ```python
 # apps/payments/api.py
+
 import stripe
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
@@ -782,6 +822,7 @@ def create_payment_intent(request):
 
 ```python
 # apps/orders/tasks.py
+
 from .models import Order
 from apps.notifications.mailers import send_order_receipt
 
@@ -792,6 +833,7 @@ def send_receipt(order_id):
 
 ```python
 # apps/payments/webhooks.py (확정 후)
+
 from apps.orders.tasks import send_receipt
 ...
 if event["type"] == "payment_intent.succeeded":
@@ -803,6 +845,7 @@ if event["type"] == "payment_intent.succeeded":
 
 ```python
 # config/urls.py
+
 urlpatterns += [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="docs"),
@@ -843,8 +886,10 @@ urlpatterns += [
 ## F. 추가 스니펫 모음
 
 ### F-1. DRF 예외 핸들러 통일
+
 ```python
 # apps/api/exceptions.py
+
 from rest_framework.views import exception_handler
 
 def unified_exception_handler(exc, context):
@@ -858,18 +903,23 @@ def unified_exception_handler(exc, context):
     return resp
 
 # settings.py
+
 REST_FRAMEWORK["EXCEPTION_HANDLER"] = "apps.api.exceptions.unified_exception_handler"
 ```
 
 ### F-2. DRF 버저닝
+
 ```python
 REST_FRAMEWORK["DEFAULT_VERSIONING_CLASS"] = "rest_framework.versioning.NamespaceVersioning"
 # urls.py 에서 /api/v1/, /api/v2/ 네임스페이스로 분리
+
 ```
 
 ### F-3. GraphQL 쿼리 제한(예시: depth)
+
 ```python
 # 미들웨어로 depth 검사(의사코드)
+
 class MaxDepthMiddleware:
     def resolve(self, next_, root, info, **args):
         depth = calc_depth(info)  # 구현 필요
@@ -879,8 +929,10 @@ class MaxDepthMiddleware:
 ```
 
 ### F-4. 웹훅 재처리 커맨드
+
 ```python
 # apps/payments/management/commands/replay_webhook.py
+
 from django.core.management.base import BaseCommand
 from apps.payments.models import WebhookLog
 
@@ -894,6 +946,7 @@ class Command(BaseCommand):
 ```
 
 ### F-5. CORS 설정
+
 ```bash
 pip install django-cors-headers
 ```

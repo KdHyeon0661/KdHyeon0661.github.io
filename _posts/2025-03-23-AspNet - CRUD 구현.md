@@ -17,7 +17,7 @@ category: AspNet
 
 ---
 
-## 0. 전제: 모델과 DbContext (업데이트)
+## 전제: 모델과 DbContext (업데이트)
 
 초안의 `Blog` 엔티티에 **유효성**, **동시성 토큰(RowVersion)**, **소프트 삭제** 필드를 추가한다.
 
@@ -80,7 +80,7 @@ public class AppDbContext : DbContext
 
 ---
 
-## 1. 폴더 구조 (초안 유지 + 지원 파일 추가)
+## 폴더 구조 (초안 유지 + 지원 파일 추가)
 
 ```
 Pages/
@@ -102,9 +102,9 @@ Pages/
 
 ---
 
-## 2. 목록(Read) — 검색/정렬/페이징(서버 사이드)
+## 목록(Read) — 검색/정렬/페이징(서버 사이드)
 
-### 2.1 ViewModel 정의
+### ViewModel 정의
 
 ```csharp
 public class BlogListItemDto
@@ -134,7 +134,7 @@ public class PagedResult<T>
 }
 ```
 
-### 2.2 Index.cshtml.cs (비동기 + 투영 + AsNoTracking)
+### Index.cshtml.cs (비동기 + 투영 + AsNoTracking)
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -200,7 +200,7 @@ public class IndexModel : PageModel
 }
 ```
 
-### 2.3 Index.cshtml (정렬/검색/페이징 UI + 쿼리 유지)
+### Index.cshtml (정렬/검색/페이징 UI + 쿼리 유지)
 
 ```razor
 @page
@@ -272,9 +272,9 @@ public class IndexModel : PageModel
 
 ---
 
-## 3. Create(생성) — 오버포스팅 방지 + PRG + TempData 알림
+## Create(생성) — 오버포스팅 방지 + PRG + TempData 알림
 
-### 3.1 DTO(입력 전용)로 오버포스팅 방지
+### DTO(입력 전용)로 오버포스팅 방지
 
 ```csharp
 public class BlogCreateDto
@@ -287,7 +287,7 @@ public class BlogCreateDto
 }
 ```
 
-### 3.2 Create.cshtml.cs
+### Create.cshtml.cs
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -337,7 +337,7 @@ public class CreateModel : PageModel
 }
 ```
 
-### 3.3 Create.cshtml
+### Create.cshtml
 
 ```razor
 @page
@@ -370,7 +370,7 @@ public class CreateModel : PageModel
 
 ---
 
-## 4. Details(상세) — 비동기 + NotFound 처리
+## Details(상세) — 비동기 + NotFound 처리
 
 ### Details.cshtml.cs
 
@@ -416,9 +416,9 @@ public class DetailsModel : PageModel
 
 ---
 
-## 5. Edit(수정) — 낙관적 동시성 제어 (RowVersion)
+## Edit(수정) — 낙관적 동시성 제어 (RowVersion)
 
-### 5.1 DTO(수정 전용) + RowVersion 포함
+### DTO(수정 전용) + RowVersion 포함
 
 ```csharp
 public class BlogEditDto
@@ -436,7 +436,7 @@ public class BlogEditDto
 }
 ```
 
-### 5.2 Edit.cshtml.cs
+### Edit.cshtml.cs
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -514,7 +514,7 @@ public class EditModel : PageModel
 }
 ```
 
-### 5.3 Edit.cshtml
+### Edit.cshtml
 
 ```razor
 @page "{id:int}"
@@ -551,7 +551,7 @@ public class EditModel : PageModel
 
 ---
 
-## 6. Delete(삭제) — 소프트 삭제 + 확인 페이지
+## Delete(삭제) — 소프트 삭제 + 확인 페이지
 
 ### Delete.cshtml.cs
 
@@ -614,7 +614,7 @@ public class DeleteModel : PageModel
 
 ---
 
-## 7. 알림 Partial(TempData) — `_StatusMessage.cshtml`
+## 알림 Partial(TempData) — `_StatusMessage.cshtml`
 
 ```razor
 @* Pages/Shared/_StatusMessage.cshtml *@
@@ -631,7 +631,7 @@ public class DeleteModel : PageModel
 
 ---
 
-## 8. 검증/보안 모범 사례
+## 검증/보안 모범 사례
 
 - **오버포스팅 방지**: 엔티티를 직접 바인딩하지 말고 **DTO** 사용 또는 `TryUpdateModelAsync(entity, includeProperties...)`로 허용 필드만 갱신
 - **[ValidateAntiForgeryToken]**: Razor Pages는 기본 활성. `<form method="post">`에 자동 삽입
@@ -644,7 +644,7 @@ public class DeleteModel : PageModel
 
 ---
 
-## 9. 연관 로딩/투영(예시)
+## 연관 로딩/투영(예시)
 
 `Blog`가 `Posts`를 갖는다고 가정:
 
@@ -675,7 +675,7 @@ var dto = await _db.Blogs
 
 ---
 
-## 10. 트랜잭션/리포지토리(옵션)
+## 트랜잭션/리포지토리(옵션)
 
 단일 SaveChanges면 EF가 내부 트랜잭션을 쓴다. **여러 Aggregate**를 한 번에 처리하면 명시적으로 트랜잭션.
 
@@ -699,7 +699,7 @@ catch
 
 ---
 
-## 11. Seed 데이터 (개발/테스트 편의)
+## Seed 데이터 (개발/테스트 편의)
 
 `Program.cs`에서 마이그레이션 후 시드:
 
@@ -722,7 +722,7 @@ using (var scope = app.Services.CreateScope())
 
 ---
 
-## 12. 테스트(InMemory Provider)
+## 테스트(InMemory Provider)
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -752,7 +752,7 @@ public class BlogTests
 
 ---
 
-## 13. 성능/운영 체크리스트
+## 성능/운영 체크리스트
 
 - [ ] **페이지네이션**: `Skip/Take` + 인덱스
 - [ ] **투영**: 필요한 필드만 `Select`
@@ -765,7 +765,7 @@ public class BlogTests
 
 ---
 
-## 14. 전체 요약
+## 전체 요약
 
 | 작업 | 핵심 포인트 |
 |---|---|
@@ -778,7 +778,7 @@ public class BlogTests
 
 ---
 
-## 15. 부록: _ValidationScriptsPartial.cshtml (기본)
+## 부록: _ValidationScriptsPartial.cshtml (기본)
 
 ```razor
 @* 보통 템플릿에 포함됨: jQuery Validation + Unobtrusive *@

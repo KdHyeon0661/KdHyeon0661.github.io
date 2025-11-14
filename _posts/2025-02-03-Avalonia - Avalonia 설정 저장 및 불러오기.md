@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia 설정 저장 및 불러오기 (JSON, SQLite, 암호화, 마이그레이션)
 
-## 0. 무엇을 만들 것인가
+## 무엇을 만들 것인가
 
 - 설정 모델 `AppSettings`(버전 포함) 정의
 - **JSON 저장**(원자적 쓰기 + 백업)과 **SQLite 저장**(스키마/마이그레이션) 2가지 경로 제공
@@ -18,7 +18,7 @@ category: Avalonia
 
 ---
 
-## 1. 디렉터리 구조(확장판)
+## 디렉터리 구조(확장판)
 
 ```
 MyApp/
@@ -45,7 +45,7 @@ MyApp/
 
 ---
 
-## 2. 저장 위치 설계(크로스플랫폼/포터블)
+## 저장 위치 설계(크로스플랫폼/포터블)
 
 **원칙:** OS 권장 디렉터리 사용 + 포터블 모드(실행 파일 옆 저장) 옵션
 
@@ -89,7 +89,7 @@ public static class Paths
 
 ---
 
-## 3. 모델: 버전/민감정보/유효성
+## 모델: 버전/민감정보/유효성
 
 ```csharp
 // Config/AppSettings.cs
@@ -122,7 +122,7 @@ public class AppSettings
 
 ---
 
-## 4. 암호화 서비스: AES-256-GCM
+## 암호화 서비스: AES-256-GCM
 
 ```csharp
 // Config/ICryptoService.cs
@@ -181,7 +181,7 @@ public sealed class AesCryptoService : ICryptoService
 
 ---
 
-## 5. 저장소 인터페이스
+## 저장소 인터페이스
 
 ```csharp
 // Config/ISettingsService.cs
@@ -194,7 +194,7 @@ public interface ISettingsService
 
 ---
 
-## 6. JSON 저장 구현(원자적 쓰기 + 백업/롤백)
+## JSON 저장 구현(원자적 쓰기 + 백업/롤백)
 
 ```csharp
 // Config/JsonSettingsService.cs
@@ -305,7 +305,7 @@ public sealed class JsonSettingsService : ISettingsService
 
 ---
 
-## 7. SQLite 저장 구현(스키마/마이그레이션)
+## SQLite 저장 구현(스키마/마이그레이션)
 
 **라이브러리:** `Microsoft.Data.Sqlite` (System.Data.SQLite 대체 가능)
 
@@ -447,7 +447,7 @@ public sealed class SqliteSettingsService : ISettingsService
 
 ---
 
-## 8. 전역 상태(AppState)와 반응형 연결
+## 전역 상태(AppState)와 반응형 연결
 
 ```csharp
 // Services/AppState.cs
@@ -479,7 +479,7 @@ public sealed class AppState : ReactiveObject
 
 ---
 
-## 9. 파사드(SettingsFacade): 검증/동기화/자동 저장
+## 파사드(SettingsFacade): 검증/동기화/자동 저장
 
 ```csharp
 // Services/SettingsFacade.cs
@@ -537,7 +537,7 @@ public sealed class SettingsFacade
 
 ---
 
-## 10. App 초기화/DI 등록
+## App 초기화/DI 등록
 
 ```csharp
 // App.axaml.cs (요지)
@@ -586,7 +586,7 @@ public override async void OnFrameworkInitializationCompleted()
 
 ---
 
-## 11. Settings UI: ViewModel & View
+## Settings UI: ViewModel & View
 
 ```csharp
 // ViewModels/SettingsViewModel.cs
@@ -681,7 +681,7 @@ public sealed class SettingsViewModel : ReactiveObject
 
 ---
 
-## 12. 로그인 후 토큰 저장(민감정보 암호화)
+## 로그인 후 토큰 저장(민감정보 암호화)
 
 ```csharp
 // ViewModels/LoginViewModel.cs (요지)
@@ -721,7 +721,7 @@ public sealed class LoginViewModel : ReactiveObject
 
 ---
 
-## 13. 실패/경합/잠금/손상 대응
+## 실패/경합/잠금/손상 대응
 
 - **JSON**
   - 임시 파일 → Move로 **원자성**
@@ -734,7 +734,7 @@ public sealed class LoginViewModel : ReactiveObject
 
 ---
 
-## 14. 성능/최적화
+## 성능/최적화
 
 - 설정은 일반적으로 **작고 드문 쓰기** → JSON이 간단/빠름
 - 복잡한 구조/조회/부분 업데이트/버전 다중 관리 → SQLite가 유리
@@ -742,7 +742,7 @@ public sealed class LoginViewModel : ReactiveObject
 
 ---
 
-## 15. 단위 테스트(요지)
+## 단위 테스트(요지)
 
 ```csharp
 // Test/SettingsTests.cs
@@ -804,7 +804,7 @@ public sealed class SettingsTests
 
 ---
 
-## 16. 검증/에러 메시지(UI와 결합)
+## 검증/에러 메시지(UI와 결합)
 
 - 저장 전 `DataAnnotations`로 **유효성 검사**
 - UI에서는 `ReactiveUI.Validation` 또는 `INotifyDataErrorInfo`로 바인딩
@@ -812,7 +812,7 @@ public sealed class SettingsTests
 
 ---
 
-## 17. 테마/언어/i18n과의 결합(요점)
+## 테마/언어/i18n과의 결합(요점)
 
 - `AppState.Theme` 변경 → ThemeManager(리소스 교체) 호출
 - `AppState.Language` 변경 → LocalizationManager.SetCulture → ViewModels `RaisePropertyChanged`
@@ -820,7 +820,7 @@ public sealed class SettingsTests
 
 ---
 
-## 18. 저장 방식 선택 가이드(확장판)
+## 저장 방식 선택 가이드(확장판)
 
 | 기준 | JSON | SQLite |
 |------|------|--------|
@@ -833,7 +833,7 @@ public sealed class SettingsTests
 
 ---
 
-## 19. 체크리스트(운영 관점)
+## 체크리스트(운영 관점)
 
 - [ ] 저장 경로 존재/권한 확인
 - [ ] JSON 원자적 쓰기 + 백업/복구
@@ -847,7 +847,7 @@ public sealed class SettingsTests
 
 ---
 
-## 20. 결론
+## 결론
 
 - **인터페이스(`ISettingsService`)로 저장소를 추상화**하면 JSON ↔ SQLite 전환이 쉽다.
 - **원자적 쓰기/백업/트랜잭션/암호화/마이그레이션**은 실제 배포에서 반드시 필요하다.

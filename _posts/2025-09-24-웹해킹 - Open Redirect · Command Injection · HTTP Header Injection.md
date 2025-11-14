@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # Open Redirect · Command Injection · HTTP Header Injection
 
-## 0. 큰 그림 요약
+## 큰 그림 요약
 
 - **Open Redirect**: 공격자가 사용자를 **신뢰 도메인 → 악성 도메인**으로 자동 이동시키도록 만드는 취약점. 피싱·세션 탈취 유도·OAuth 토큰 탈취·SSRF 체인 등에 쓰임.
 - **Command Injection**: 애플리케이션이 **OS 명령**을 구성할 때 사용자 입력이 명령의 일부가 되어 **임의 명령 실행**으로 이어지는 취약점. 파일 처리기/이미지 변환기/백업 스크립트 등에서 빈번.
@@ -16,9 +16,10 @@ category: 웹해킹
 
 ---
 
-# 1. Open Redirect
+# Open Redirect
 
-### 1.1 개념과 위협
+### 개념과 위협
+
 - **정의**: 서버가 `?next=...` 같은 **사용자 제공 URL**을 검증 없이 `302 Location` 등으로 리디렉트.
 - **영향**:
   - **피싱 강화**: 합법 도메인 링크 클릭 → 자동으로 악성 사이트 이동.
@@ -28,7 +29,7 @@ category: 웹해킹
 
 ---
 
-### 1.2 취약 예제 → 안전 예제로 고치기
+### 취약 예제 → 안전 예제로 고치기
 
 #### (A) Node.js (Express)
 
@@ -130,7 +131,8 @@ public String go(@RequestParam(required=false) String next){
 
 ---
 
-### 1.3 테스트 & 방어 팁
+### 테스트 & 방어 팁
+
 - **차단해야 할 입력**:
   - 절대 URL: `https://attacker.tld/x`
   - 스킴 상대: `//attacker.tld/x`
@@ -143,9 +145,10 @@ public String go(@RequestParam(required=false) String next){
 
 ---
 
-# 2. Command Injection
+# Command Injection
 
-### 2.1 개념과 위협
+### 개념과 위협
+
 - **정의**: 애플리케이션이 `tar`, `convert`, `ffmpeg`, `grep` 같은 **시스템 명령**을 **문자열로 조립**할 때 사용자 입력이 **옵션/연산자/쉘 메타문자**로 해석되어 **임의 명령 실행**으로 이어짐.
 - **일반 표면**: 썸네일 생성, 압축/백업, 바이러스 스캔 래퍼, PDF/오디오 변환, 관리자 콘솔에서 제공하는 “진단 명령” 등.
 - **영향**: 원격 코드 실행(RCE), 파일 유출/변조, 크리덴셜 탈취, lateral movement.
@@ -154,7 +157,7 @@ public String go(@RequestParam(required=false) String next){
 
 ---
 
-### 2.2 취약 예제 → 안전 예제로 고치기
+### 취약 예제 → 안전 예제로 고치기
 
 #### (A) Node.js
 
@@ -196,6 +199,7 @@ app.post("/resize", (req, res) => {
 ```python
 import os
 # 진단 페이지에서 핑 테스트(취약)
+
 def ping(host):
     return os.popen(f"ping -c 1 {host}").read()
 ```
@@ -255,7 +259,8 @@ Process p = pb.start(); // 쉘 미사용
 
 ---
 
-### 2.3 방어 체크리스트(코드 + 운영)
+### 방어 체크리스트(코드 + 운영)
+
 - **코드 레벨**
   - [ ] **shell 사용 금지**: `exec()`/`system()`/`os.popen()`/백틱 등 피하기.
   - [ ] **argv 배열 호출**(Node `spawn`, Python `subprocess.run([...], shell=False)`, Java `ProcessBuilder`).
@@ -270,9 +275,10 @@ Process p = pb.start(); // 쉘 미사용
 
 ---
 
-# 3. HTTP Header Injection (CRLF / Response Splitting / Host Header)
+# HTTP Header Injection (CRLF / Response Splitting / Host Header)
 
-### 3.1 개념과 위협
+### 개념과 위협
+
 - **정의**: HTTP 응답 헤더에 사용자 입력이 들어가 `\r\n`(CRLF) 삽입 → **새 헤더** 또는 **두 번째 응답** 주입(**응답 스플리팅**).
 - **영향**:
   - **캐시 포이즈닝**(프록시/중간 캐시 오염)
@@ -282,7 +288,7 @@ Process p = pb.start(); // 쉘 미사용
 
 ---
 
-### 3.2 취약 예제 → 안전 예제로 고치기
+### 취약 예제 → 안전 예제로 고치기
 
 #### (A) Location 헤더에 사용자 입력
 
@@ -353,6 +359,7 @@ app.get("/download", (req, res) => {
 ```python
 # ex) https://app.example/reset?token=...
 # 프록시 뒤에서 Host 헤더를 그대로 신뢰
+
 def make_reset_url(req, token):
     return f"{req.scheme}://{req.headers['Host']}/reset?token={token}"
 ```
@@ -369,7 +376,8 @@ def make_reset_url(req, token):
 
 ---
 
-### 3.3 방어 체크리스트
+### 방어 체크리스트
+
 - [ ] 모든 **헤더 값에서 CR(`\r`), LF(`\n`) 금지**(전역 미들웨어).
 - [ ] `Location`/`Content-Disposition`/`Content-Type`/`Set-Cookie` 등 **핵심 헤더**는 **안전 빌더/유틸** 사용.
 - [ ] **Open Redirect 방어**와 **헤더 인젝션 방어**를 함께 적용(동일 입력이 양쪽에 쓰이는 경우 많음).
@@ -378,14 +386,16 @@ def make_reset_url(req, token):
 
 ---
 
-# 4. 공통 “안전 설계” 패턴
+# 공통 “안전 설계” 패턴
 
-### 4.1 입력 처리 3원칙
+### 입력 처리 3원칙
+
 1) **화이트리스트**: 예상되는 값만 통과(도메인/경로/파일명/숫자 범위 등).
 2) **정규화 후 비교**: URL/경로/호스트는 **정규화(canonicalization)** 후 검증.
 3) **컨텍스트별 API**: URL은 **파서/빌더**, 헤더는 **유효성 있는 setter**, 명령은 **argv**.
 
-### 4.2 운영/아키텍처 하드닝
+### 운영/아키텍처 하드닝
+
 - **네트워크 분리/egress 통제**: SSRF·오픈 리다이렉트 체인 영향 축소.
 - **컨테이너/샌드박스**: 명령 실행/파일 접근 범위 최소화, 읽기 전용 마운트, `noexec` 마운트.
 - **권한 최소화**: 애플리케이션/유틸리티 사용자 권한 축소.
@@ -393,7 +403,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 5. 프레임워크별 힌트(요약)
+# 프레임워크별 힌트(요약)
 
 - **Express/Node**:
   - `res.redirect()` 목적지는 반드시 **상대 경로 또는 화이트리스트 도메인**만 허용.
@@ -417,28 +427,31 @@ def make_reset_url(req, token):
 
 ---
 
-# 6. “스모크 테스트” 예시(개발/QA 전용)
+# “스모크 테스트” 예시(개발/QA 전용)
 
-### 6.1 Open Redirect
+### Open Redirect
+
 - 입력:
   - `?next=https://evil.tld/p` (절대 URL) → **/ 로 리디렉트**
   - `?next=//evil.tld` (스킴 상대) → **/ 로 리디렉트**
   - `?next=/profile` (허용 목록) → **/profile 로 리디렉트**
 
-### 6.2 Command Injection
+### Command Injection
+
 - 입력:
   - 파일명에 공백/세미콜론/`&` 포함 → **거부**
   - `size="100x100"`은 OK, `size="100x100;..."` → **거부**
 - 실행: **타임아웃**과 **리소스 제한**이 동작하는지 확인.
 
-### 6.3 Header Injection
+### Header Injection
+
 - 입력:
   - `name="x\r\nX-Test: 1"` → **400 또는 필드 정규화로 제거**
   - `to="/home\r\n\r\n<html>"` → **리디렉트 실패/차단**
 
 ---
 
-# 7. “실전 시나리오” — 세 공격이 이어지는 체인
+# “실전 시나리오” — 세 공격이 이어지는 체인
 
 1) 공격자는 **오픈 리다이렉트**를 이용해 합법 도메인 링크를 클릭한 사용자들을 **피싱 페이지**로 유도.
 2) 피싱 페이지에서 쿠키/OTP를 가로채거나, 브라우저를 대상 앱의 **취약 업로드/변환 엔드포인트**로 몰아 **Command Injection**을 트리거.
@@ -447,7 +460,7 @@ def make_reset_url(req, token):
 
 ---
 
-# 8. 보안 점검 체크리스트(요약)
+# 보안 점검 체크리스트(요약)
 
 - **Open Redirect**
   - [ ] 리디렉트 목적지 입력 **금지** 또는 **화이트리스트**
@@ -472,9 +485,10 @@ def make_reset_url(req, token):
 
 ---
 
-# 9. 부록 — 미니 유틸/스니펫 모음
+# 부록 — 미니 유틸/스니펫 모음
 
-### 9.1 “상대 경로만” 허용 유틸 (Node)
+### “상대 경로만” 허용 유틸 (Node)
+
 ```javascript
 export function onlyInternalPath(input, fallback="/"){
   if (typeof input !== "string") return fallback;
@@ -485,7 +499,8 @@ export function onlyInternalPath(input, fallback="/"){
 }
 ```
 
-### 9.2 헤더 값 검증(공용)
+### 헤더 값 검증(공용)
+
 ```javascript
 export function headerSafe(v){
   if (typeof v !== "string") throw new Error("type");
@@ -494,7 +509,8 @@ export function headerSafe(v){
 }
 ```
 
-### 9.3 Python — 파일명/경로 화이트리스트
+### Python — 파일명/경로 화이트리스트
+
 ```python
 import re, pathlib
 SAFE_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
@@ -506,7 +522,8 @@ def safe_join(root: pathlib.Path, name: str) -> pathlib.Path:
   return p
 ```
 
-### 9.4 Spring — 절대 URL 거부 헬퍼
+### Spring — 절대 URL 거부 헬퍼
+
 ```java
 public static String safeRedirect(String next){
   if (next == null || !next.startsWith("/") || next.startsWith("//")) return "/";
@@ -518,6 +535,7 @@ public static String safeRedirect(String next){
 ---
 
 ## 맺음말
+
 세 취약점은 **겉으로 단순해 보이지만**, 실무에서는 **프록시·클라우드·서드파티 도구**와 얽혀 사고로 번지기 쉽습니다.
 가장 안전한 지름길은 **문자열 결합 금지**, **화이트리스트 중심 설계**, **표준 라이브러리/검증된 유틸 사용**, **네트워크/런타임 하드닝**입니다.
 그리고 무엇보다, **자동화 테스트**로 “막혀야 정상”인 케이스를 꾸준히 검증하세요.

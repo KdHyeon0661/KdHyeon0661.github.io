@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Secrets
 
-## 0. Docker Secrets가 풀어주는 문제
+## Docker Secrets가 풀어주는 문제
 
 | 방식 | 장점 | 치명적 단점 |
 |---|---|---|
@@ -19,7 +19,7 @@ category: Docker
 
 ---
 
-## 1. 원리: Swarm, Raft, 전달·마운트 모델
+## 원리: Swarm, Raft, 전달·마운트 모델
 
 - **Swarm 모드에서만 동작**한다. 매니저 노드는 내부적으로 **Raft 로그에 암호화**하여 Secret 메타데이터를 저장한다.
 - Secret은 서비스에 할당될 때 **TLS 채널로 작업 노드에 전달**되고, 컨테이너 내부에는 **`tmpfs`(메모리) 상의 읽기전용 파일**로 마운트된다.
@@ -36,21 +36,25 @@ Secrets는 **네트워크 구간 암호화**와 **컨테이너 내부 비영속(
 
 ---
 
-## 2. 빠른 시작: Swarm에서 Secrets 기본 플로우
+## 빠른 시작: Swarm에서 Secrets 기본 플로우
 
-### 2.1 Swarm 초기화
+### Swarm 초기화
+
 ```bash
 docker swarm init
 ```
 
-### 2.2 Secret 생성
+### Secret 생성
+
 ```bash
 # 표준입력으로 생성
+
 echo "my-secret-password" | docker secret create db_password -
 docker secret ls
 ```
 
-### 2.3 Secret을 사용하는 서비스 생성
+### Secret을 사용하는 서비스 생성
+
 ```bash
 docker service create \
   --name myapp \
@@ -61,16 +65,19 @@ docker service create \
 컨테이너 내부에서:
 ```bash
 # /run/secrets/db_password 로 읽기
+
 cat /run/secrets/db_password
 ```
 
 ---
 
-## 3. Compose와 Stack: 개발에서 운영까지
+## Compose와 Stack: 개발에서 운영까지
 
-### 3.1 Compose 파일로 선언(로컬 선언 → Swarm 배포)
+### Compose 파일로 선언(로컬 선언 → Swarm 배포)
+
 ```yaml
 # docker-compose.yml
+
 version: "3.9"
 
 services:
@@ -96,7 +103,8 @@ docker service ls
 
 주의: 일반 `docker-compose up`은 로컬 Docker Compose 엔진 기준으로 동작하며, **Secrets를 완전한 Swarm 의미로 사용하려면 `docker stack deploy`** 를 이용해야 한다.
 
-### 3.2 기존 네트워크/볼륨과 통합 예시 (PostgreSQL)
+### 기존 네트워크/볼륨과 통합 예시 (PostgreSQL)
+
 ```yaml
 version: "3.9"
 
@@ -143,9 +151,10 @@ networks:
 
 ---
 
-## 4. 애플리케이션 코드 패턴
+## 애플리케이션 코드 패턴
 
-### 4.1 Python(Flask) 예
+### Python(Flask) 예
+
 ```python
 from pathlib import Path
 import os
@@ -157,9 +166,11 @@ def read_secret(p=SECRET_PATH):
 
 DB_PASSWORD = read_secret()
 # 이후 DB 연결 문자열에 사용
+
 ```
 
-### 4.2 Node.js 예
+### Node.js 예
+
 ```js
 const fs = require('fs');
 const SECRET_PATH = process.env.DB_PASSWORD_FILE || '/run/secrets/db_password';
@@ -167,7 +178,8 @@ const dbPassword = fs.readFileSync(SECRET_PATH, 'utf8').trim();
 // DB client 구성 시 dbPassword 사용
 ```
 
-### 4.3 Java(Spring) 예
+### Java(Spring) 예
+
 ```java
 String path = System.getenv().getOrDefault("DB_PASSWORD_FILE", "/run/secrets/db_password");
 String password = Files.readString(Path.of(path), StandardCharsets.UTF_8).trim();
@@ -178,15 +190,17 @@ String password = Files.readString(Path.of(path), StandardCharsets.UTF_8).trim()
 
 ---
 
-## 5. 운영 설계: 회전(로테이션), 버저닝, 무중단 교체
+## 운영 설계: 회전(로테이션), 버저닝, 무중단 교체
 
-### 5.1 Secret 교체의 원칙
+### Secret 교체의 원칙
+
 - “수정”이 아니라 **새 Secret 생성 → 서비스 업데이트로 교체**다.
 - 버전명 전략을 사용하라:
   - `db_password_v1`, `db_password_v2` 처럼 **명시적 버저닝**
   - 교체 단계에서 두 Secret을 모두 마운트하고 앱이 **새 경로 우선**, 구 경로 fallback 후 재기동 시 구 Secret 제거
 
-### 5.2 무중단 교체 패턴(Blue/Green-like)
+### 무중단 교체 패턴(Blue/Green-like)
+
 1) 새 Secret 생성:
 ```bash
 echo "newpass" | docker secret create db_password_v2 -
@@ -207,17 +221,20 @@ docker service update \
 docker secret rm db_password
 ```
 
-### 5.3 장애 대응
+### 장애 대응
+
 - Secret 파일 접근 실패 시, 앱은 **지수 백오프 재시도** 또는 **읽기 실패시 종료**(오케스트레이션 재시작) 중 하나를 명확히 택하라.
 - 컨테이너 시작 시점부터 Secret 파일이 존재하므로, 일반적으로 초기 접근 실패는 배치 타이밍 이슈보다 **권한·오타** 문제일 확률이 높다.
 
 ---
 
-## 6. Nginx Basic Auth, TLS 키/인증서 관리 예시
+## Nginx Basic Auth, TLS 키/인증서 관리 예시
 
-### 6.1 Basic Auth
+### Basic Auth
+
 ```bash
 # htpasswd로 만든 파일을 secret으로 등록
+
 docker secret create web_htpasswd ./secrets/.htpasswd
 ```
 
@@ -239,7 +256,8 @@ secrets:
     external: true
 ```
 
-### 6.2 TLS Private Key/Cert
+### TLS Private Key/Cert
+
 ```bash
 docker secret create tls_key ./secrets/tls.key
 docker secret create tls_crt ./secrets/tls.crt
@@ -253,7 +271,7 @@ ssl_certificate_key /run/secrets/tls_key;
 
 ---
 
-## 7. Compose 개발 환경과의 간극 메우기
+## Compose 개발 환경과의 간극 메우기
 
 Swarm 없이 로컬 개발만 할 때는 Docker Secrets의 **보안 이점이 완벽히 동일하지 않다.** 대안:
 
@@ -263,13 +281,15 @@ Swarm 없이 로컬 개발만 할 때는 Docker Secrets의 **보안 이점이 �
 
 ---
 
-## 8. BuildKit의 빌드 타임 시크릿(Compose/Swarm 외 영역)
+## BuildKit의 빌드 타임 시크릿(Compose/Swarm 외 영역)
 
 런타임 Secret과 별개로, **빌드 과정에서만** 필요한 자격증명(프라이빗 레포 토큰 등)은 BuildKit의 `RUN --mount=type=secret`으로 안전하게 전달한다. 이 값은 이미지 레이어에 남지 않는다.
 
-### 8.1 사용 예(Dockerfile)
+### 사용 예(Dockerfile)
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine:3.20
 RUN --mount=type=secret,id=npmrc,dst=/root/.npmrc \
     apk add --no-cache nodejs npm && npm ci
@@ -288,7 +308,7 @@ DOCKER_BUILDKIT=1 docker build \
 
 ---
 
-## 9. 외부 시크릿 매니저와의 통합 전략
+## 외부 시크릿 매니저와의 통합 전략
 
 Docker Secrets는 Swarm 내장형이다. 조직에서 이미 **HashiCorp Vault / AWS Secrets Manager / GCP Secret Manager / Azure Key Vault** 를 쓰고 있다면 다음 중 하나를 고른다.
 
@@ -300,7 +320,7 @@ Vault를 쓰더라도, **컨테이너 내부 경로/권한/로그 노출 금지*
 
 ---
 
-## 10. 보안/감사 관점 체크리스트
+## 보안/감사 관점 체크리스트
 
 1) **권한 최소화**: Secret은 해당 서비스에만 연결. 재사용 금지.
 2) **로그 금지**: Secret 내용을 로깅하지 않도록 프레임워크 설정(ORM/에러 리포터).
@@ -311,7 +331,7 @@ Vault를 쓰더라도, **컨테이너 내부 경로/권한/로그 노출 금지*
 
 ---
 
-## 11. 자주 겪는 오류와 해결
+## 자주 겪는 오류와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -323,9 +343,10 @@ Vault를 쓰더라도, **컨테이너 내부 경로/권한/로그 노출 금지*
 
 ---
 
-## 12. 종합 예제: API + PostgreSQL + Nginx(TLS) 스택
+## 종합 예제: API + PostgreSQL + Nginx(TLS) 스택
 
-### 12.1 디렉터리
+### 디렉터리
+
 ```
 stack/
 ├── docker-compose.yml
@@ -335,7 +356,8 @@ stack/
     └── tls.key
 ```
 
-### 12.2 Compose(스택) 파일
+### Compose(스택) 파일
+
 ```yaml
 version: "3.9"
 
@@ -400,7 +422,7 @@ docker stack deploy -c docker-compose.yml mystack
 
 ---
 
-## 13. 성능/운영 팁
+## 성능/운영 팁
 
 - Secret 파일은 작은 텍스트(몇 KB 수준)가 일반적이므로 성능 부담은 미미하다.
 - Secret 갯수가 많다면 **명명 규칙**과 **서비스 단위 묶음**으로 관리 복잡도 최소화.
@@ -408,7 +430,7 @@ docker stack deploy -c docker-compose.yml mystack
 
 ---
 
-## 14. 결론
+## 결론
 
 - Docker Secrets는 Swarm 환경에서 **간결하고 안전한 런타임 비밀 전달**을 제공한다.
 - 핵심 가치는 **환경변수/로그/레이어 비노출**과 **암호화된 전달**에 있다.
@@ -421,17 +443,21 @@ docker stack deploy -c docker-compose.yml mystack
 
 ```bash
 # Swarm
+
 docker swarm init
 
 # 생성/조회/삭제
+
 echo "secret" | docker secret create mysecret -
 docker secret ls
 docker secret rm mysecret
 
 # 서비스에 연결
+
 docker service create --name app --secret mysecret myimg:tag
 
 # 스택 배포(Compose v3+)
+
 docker stack deploy -c docker-compose.yml mystack
 ```
 

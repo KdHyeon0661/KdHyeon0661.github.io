@@ -6,10 +6,11 @@ category: Docker
 ---
 # `docker-compose.yml` 문법
 
-## 0. 실행/검증 기본 명령(요약)
+## 실행/검증 기본 명령(요약)
 
 ```bash
 # (신규) Compose V2: 'docker compose'  ← 권장
+
 docker compose up -d           # 백그라운드 실행
 docker compose down            # 중지 + 네트워크/컨테이너 제거
 docker compose ps              # 상태
@@ -19,14 +20,16 @@ docker compose restart app     # 재시작
 docker compose stop app        # 정지
 
 # (중요) 정합성/머지 결과 확인
+
 docker compose config          # 병합·확장·env 적용된 최종 YAML 출력
 
 # 구버전 바이너리: docker-compose (하이픈 포함) — 기능 유사
+
 ```
 
 ---
 
-## 1. YAML 기본 골격: services / networks / volumes / (secrets, configs)
+## YAML 기본 골격: services / networks / volumes / (secrets, configs)
 
 ```yaml
 version: "3.9"        # Compose 파일 포맷. 최신 Compose(V2)는 version 생략도 허용.
@@ -86,14 +89,16 @@ secrets:
 
 ---
 
-## 2. 필수 키워드 정리(심화)
+## 필수 키워드 정리(심화)
 
-### 2.1 `image` / `build`
+### `image` / `build`
+
 ```yaml
 services:
   app:
     image: myorg/app:1.2.3       # 레지스트리에서 풀
 # 또는
+
   app:
     build:
       context: ./app
@@ -109,7 +114,8 @@ services:
 - **이미지 vs 빌드**: 빌드가 있으면 `docker compose build` 로 이미지 생성 후 올림.
 - `target`으로 멀티 스테이지의 특정 스테이지만 채택 → **경량 런타임** 확보.
 
-### 2.2 `ports`(포트 매핑)
+### `ports`(포트 매핑)
+
 ```yaml
 ports:
   - "127.0.0.1:8080:80"  # 로컬에만 바인딩
@@ -118,7 +124,8 @@ ports:
 ```
 - **외부 공개 최소화**: 필요 포트만 바인딩. 내부 통신은 네트워크 이름 사용.
 
-### 2.3 `environment` / `env_file` / 환경변수 치환
+### `environment` / `env_file` / 환경변수 치환
+
 ```yaml
 environment:
   REDIS_HOST: redis
@@ -129,15 +136,18 @@ env_file:
 - `${VAR}` 치환 가능. 기본값은 `${VAR:-default}`.
 - *민감정보는 `secrets`사용 권장.*
 
-### 2.4 `volumes`(마운트)
+### `volumes`(마운트)
+
 ```yaml
 # 서비스 측
+
 volumes:
   - "./logs:/var/log/app:rw"     # bind mount (개발용)
   - "namedcache:/cache:rw"       # named volume (운영/공유)
   - "tmpfs:/tmp"                 # tmpfs(메모리) 볼륨
 
 # 루트의 정의
+
 volumes:
   namedcache:
   tmpfs:
@@ -145,7 +155,8 @@ volumes:
 ```
 - 개발은 **bind mount**로 핫리로드, 운영은 **named volume**로 이식성/관리성.
 
-### 2.5 `depends_on`(기동 순서)
+### `depends_on`(기동 순서)
+
 ```yaml
 services:
   app:
@@ -155,7 +166,8 @@ services:
 ```
 - 단순 문자열 배열도 가능하지만, **건강상태 기반**이 실무적.
 
-### 2.6 `healthcheck`
+### `healthcheck`
+
 ```yaml
 healthcheck:
   test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
@@ -165,27 +177,31 @@ healthcheck:
   start_period: 20s
 ```
 
-### 2.7 `command` / `entrypoint`
+### `command` / `entrypoint`
+
 ```yaml
 command: ["gunicorn", "-w", "4", "app:app"]
 entrypoint: ["/docker-entrypoint.sh"]
 ```
 - `entrypoint`는 “고정 진입점”, `command`는 인자/기본명령.
 
-### 2.8 `restart`
+### `restart`
+
 ```yaml
 restart: "unless-stopped"   # always / on-failure / unless-stopped
 ```
 
 ---
 
-## 3. 네트워크 심화: 이름 통신·멀티 네트워크·외부 네트워크
+## 네트워크 심화: 이름 통신·멀티 네트워크·외부 네트워크
 
-### 3.1 이름 통신
+### 이름 통신
+
 - 같은 네트워크에서는 `db:5432`처럼 **서비스명**으로 접근.
 - 내장 DNS(127.0.0.11)가 서비스 이름을 IP로 해석.
 
-### 3.2 멀티 네트워크로 노출 통제
+### 멀티 네트워크로 노출 통제
+
 ```yaml
 services:
   fe:
@@ -200,7 +216,8 @@ networks:
   backnet: {}
 ```
 
-### 3.3 외부(이미 있는) 네트워크 사용
+### 외부(이미 있는) 네트워크 사용
+
 ```yaml
 networks:
   corpnet:
@@ -209,7 +226,7 @@ networks:
 
 ---
 
-## 4. 보안/리소스/런타임 고급 옵션
+## 보안/리소스/런타임 고급 옵션
 
 ```yaml
 services:
@@ -237,9 +254,10 @@ services:
 
 ---
 
-## 5. Compose로 “빌드 최적화 + 런타임 경량화”(멀티 스테이지)
+## Compose로 “빌드 최적화 + 런타임 경량화”(멀티 스테이지)
 
-### 5.1 Node.js 프런트엔드(정적 배포)
+### Node.js 프런트엔드(정적 배포)
+
 ```yaml
 services:
   web:
@@ -261,9 +279,10 @@ services:
 
 ---
 
-## 6. Secrets / Configs — 민감정보·설정 분리
+## Secrets / Configs — 민감정보·설정 분리
 
-### 6.1 secrets
+### secrets
+
 ```yaml
 services:
   db:
@@ -278,7 +297,8 @@ secrets:
 ```
 - 컨테이너에서 `/run/secrets/<name>`로 **파일 형태** 접근(환경변수보다 안전).
 
-### 6.2 configs (비밀은 아니지만 변경 가능한 설정)
+### configs (비밀은 아니지만 변경 가능한 설정)
+
 ```yaml
 services:
   fe:
@@ -294,7 +314,7 @@ configs:
 
 ---
 
-## 7. Profiles — 상황별 부분 기동
+## Profiles — 상황별 부분 기동
 
 ```yaml
 services:
@@ -303,6 +323,7 @@ services:
     profiles: ["monitoring"]
 
 # 실행 시 지정
+
 docker compose --profile monitoring up -d
 ```
 
@@ -310,7 +331,7 @@ docker compose --profile monitoring up -d
 
 ---
 
-## 8. Anchors & Extension Fields — 중복 줄이기
+## Anchors & Extension Fields — 중복 줄이기
 
 ```yaml
 x-base: &base
@@ -338,7 +359,7 @@ networks:
 
 ---
 
-## 9. Compose 파일 오버레이(환경별 구성)
+## Compose 파일 오버레이(환경별 구성)
 
 ```
 compose.yaml
@@ -348,12 +369,15 @@ compose.dev.yaml
 
 ```bash
 # prod + 공통 머지
+
 docker compose -f compose.yaml -f compose.prod.yaml up -d
 
 # dev + 공통
+
 docker compose -f compose.yaml -f compose.dev.yaml up -d
 
 # 머지 결과 검사
+
 docker compose -f compose.yaml -f compose.prod.yaml config
 ```
 
@@ -361,7 +385,7 @@ docker compose -f compose.yaml -f compose.prod.yaml config
 
 ---
 
-## 10. 포트·네트워크 트러블슈팅(체크리스트)
+## 포트·네트워크 트러블슈팅(체크리스트)
 
 | 증상 | 진단 | 해결 |
 |---|---|---|
@@ -384,7 +408,7 @@ docker compose exec web sh -lc "ip addr; ip route; getent hosts api"
 
 ---
 
-## 11. 실전 예제 1 — 3계층: Nginx(프록시)/API/Postgres
+## 실전 예제 1 — 3계층: Nginx(프록시)/API/Postgres
 
 ```yaml
 version: "3.9"
@@ -459,7 +483,7 @@ server {
 
 ---
 
-## 12. 실전 예제 2 — 로컬 개발(핫리로드), 운영(세이프)
+## 실전 예제 2 — 로컬 개발(핫리로드), 운영(세이프)
 
 **dev**
 ```yaml
@@ -488,7 +512,8 @@ services:
 
 ---
 
-## 13. 수식 직관: 공개 포트 최소화의 위험 감소
+## 수식 직관: 공개 포트 최소화의 위험 감소
+
 공격면 \(A\)를 공개 포트 수 \(k\)와 각 포트의 위협 가중치 \(w_i\)로 단순 모델링:
 $$
 A \approx \sum_{i=1}^{k} w_i
@@ -497,7 +522,7 @@ $$
 
 ---
 
-## 14. 베스트 프랙티스(요약)
+## 베스트 프랙티스(요약)
 
 1. **사용자 정의 브리지 네트워크**로 서비스 분리(프런트/백).
 2. **secrets/configs**로 민감정보/설정 분리, 환경변수 과다 노출 금지.
@@ -512,33 +537,39 @@ $$
 
 ---
 
-## 15. 빠른 참고 치트시트
+## 빠른 참고 치트시트
 
 ```bash
 # 올리고 내리고 보기
+
 docker compose up -d
 docker compose down
 docker compose ps
 docker compose logs -f api
 
 # 셸/명령 실행
+
 docker compose exec api sh
 docker compose run --rm api pytest
 
 # 스케일(수평확장; stateless 전제)
+
 docker compose up -d --scale api=3
 
 # 구성 검증/머지 결과
+
 docker compose config
 
 # 특정 서비스만 재빌드/재시작
+
 docker compose build api
 docker compose up -d api
 ```
 
 ---
 
-## 16. 참고 링크
+## 참고 링크
+
 - 공식 Compose 사양(파일 리퍼런스): https://docs.docker.com/compose/compose-file/
 - Compose CLI: https://docs.docker.com/compose/
 - YAML 문법: https://yaml.org/spec/

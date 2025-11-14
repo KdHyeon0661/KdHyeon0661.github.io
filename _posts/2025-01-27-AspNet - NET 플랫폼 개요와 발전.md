@@ -6,7 +6,7 @@ category: AspNet
 ---
 # .NET 플랫폼 개요와 발전
 
-## 0. .NET 세대 구분 요약(확장)
+## .NET 세대 구분 요약(확장)
 
 | 항목 | .NET Framework | .NET Core | .NET (5/6/7/8) |
 |---|---|---|---|
@@ -17,19 +17,21 @@ category: AspNet
 | 유지보수 | 레거시(기능 추가 미미) | 현행 이전 세대 | **현행 표준(.NET 8 LTS)** |
 | 대표 기술 | ASP.NET, WPF, WinForms | ASP.NET Core 초창기, CLI | ASP.NET Core, gRPC, Minimal API, Blazor, MAUI 등 |
 
-### 0.1 릴리스 모델
+### 릴리스 모델
+
 - **LTS (Long Term Support)**: 3년 지원. 예: **.NET 8 LTS**. 서버/엔터프라이즈 권장.
 - **STS (Standard Term Support)**: 18개월 전후 지원. 새 기능 시험·조기 도입.
 
 > 실무 팁: 신규/중요 서비스는 **LTS**를 기본값으로 삼고, 프리뷰/STS는 **파일럿·비핵심 워크로드**에 한정하는 전략이 안전합니다.
 
-### 0.2 .NET Core → .NET으로 “브랜드 통합”
+### .NET Core → .NET으로 “브랜드 통합”
+
 - **.NET 5**부터 “Core” 접미사가 사라지고 **.NET**으로 통합.
 - 러닝타임/SDK/라이브러리/도구 체계를 **단일 생태계**로 일원화.
 
 ---
 
-## 1. 마이그레이션 로드맵(Framework → Core/현행 .NET)
+## 마이그레이션 로드맵(Framework → Core/현행 .NET)
 
 현실적으로 다음 네 단계를 권장합니다.
 
@@ -50,7 +52,7 @@ category: AspNet
 
 ---
 
-## 2. ASP.NET Core의 특징(확장)
+## ASP.NET Core의 특징(확장)
 
 1) **크로스 플랫폼**: Windows/IIS, Linux/Nginx, macOS 개발 환경
 2) **고성능/현대화**: Kestrel, HTTP/2·3, 압축/캐싱, AOT/ReadyToRun, 스레드 풀 최적화
@@ -62,7 +64,7 @@ category: AspNet
 
 ---
 
-## 3. 프로젝트 뼈대(Program.cs)와 공통 인프라
+## 프로젝트 뼈대(Program.cs)와 공통 인프라
 
 ```csharp
 // Program.cs (.NET 8)
@@ -114,9 +116,9 @@ public sealed class NotifyHub : Microsoft.AspNetCore.SignalR.Hub { }
 
 ---
 
-## 4. Razor Pages — 서버 렌더링 UI(간단 CRUD에 최적)
+## Razor Pages — 서버 렌더링 UI(간단 CRUD에 최적)
 
-### 4.1 페이지/모델 쌍
+### 페이지/모델 쌍
 
 `Pages/Products/Index.cshtml.cs`
 ```csharp
@@ -154,7 +156,7 @@ public class IndexModel : PageModel
 </table>
 ```
 
-### 4.2 생성/수정/삭제 핸들러(요지)
+### 생성/수정/삭제 핸들러(요지)
 
 `Pages/Products/Create.cshtml.cs`
 ```csharp
@@ -182,7 +184,7 @@ public class CreateModel : PageModel
 
 ---
 
-## 5. MVC — 구조화/복잡 UI/SEO/필터가 중요한 경우
+## MVC — 구조화/복잡 UI/SEO/필터가 중요한 경우
 
 `Controllers/ProductsController.cs`
 ```csharp
@@ -209,9 +211,10 @@ public class ProductsController : Controller
 
 ---
 
-## 6. Web API — REST/내부 서비스/프론트엔드 분리
+## Web API — REST/내부 서비스/프론트엔드 분리
 
-### 6.1 컨트롤러 기반 API
+### 컨트롤러 기반 API
+
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -240,7 +243,8 @@ public class ProductsApiController : ControllerBase
 }
 ```
 
-### 6.2 Minimal API(경량)
+### Minimal API(경량)
+
 ```csharp
 var group = app.MapGroup("/api/v2/products").WithTags("Products");
 group.MapGet("/", async (AppDb db) => Results.Ok(await db.Products.ToListAsync()));
@@ -253,9 +257,10 @@ group.MapPost("/", async (AppDb db, Product p) => { db.Add(p); await db.SaveChan
 
 ---
 
-## 7. Blazor — C#으로 프론트엔드까지
+## Blazor — C#으로 프론트엔드까지
 
-### 7.1 Blazor Server(서버 연결형)
+### Blazor Server(서버 연결형)
+
 - 서버에서 UI 상태를 보유, **SignalR**을 통해 DOM 동기화
 - 빠른 초기 로딩, 보안 경계 서버
 
@@ -272,7 +277,8 @@ group.MapPost("/", async (AppDb db, Product p) => { db.Add(p); await db.SaveChan
 }
 ```
 
-### 7.2 Blazor WebAssembly(클라이언트 실행형)
+### Blazor WebAssembly(클라이언트 실행형)
+
 - 브라우저에서 **WASM 런타임**으로 C# 실행(오프라인 가능)
 - 초기 다운로드 부담, 이후 상호작용 매우 빠름
 
@@ -280,9 +286,10 @@ group.MapPost("/", async (AppDb db, Product p) => { db.Add(p); await db.SaveChan
 
 ---
 
-## 8. SignalR — 실시간 양방향(채팅/알림/대시보드)
+## SignalR — 실시간 양방향(채팅/알림/대시보드)
 
-### 8.1 허브
+### 허브
+
 ```csharp
 using Microsoft.AspNetCore.SignalR;
 
@@ -293,13 +300,15 @@ public class ChatHub : Hub
 }
 ```
 
-### 8.2 서버 등록
+### 서버 등록
+
 ```csharp
 builder.Services.AddSignalR();
 app.MapHub<ChatHub>("/hubs/chat");
 ```
 
-### 8.3 클라이언트(JS)
+### 클라이언트(JS)
+
 ```html
 <script src="/lib/signalr/signalr.min.js"></script>
 <script>
@@ -313,16 +322,18 @@ app.MapHub<ChatHub>("/hubs/chat");
 
 ---
 
-## 9. 보안·구성·성능(핵심 팁)
+## 보안·구성·성능(핵심 팁)
 
-### 9.1 인증/권한(요지)
+### 인증/권한(요지)
+
 ```csharp
 builder.Services.AddAuthentication("Cookies").AddCookie("Cookies", o => o.LoginPath = "/Account/Login");
 builder.Services.AddAuthorization(o => o.AddPolicy("AdminOnly", p => p.RequireRole("Admin")));
 app.UseAuthentication(); app.UseAuthorization();
 ```
 
-### 9.2 CORS·보안 헤더
+### CORS·보안 헤더
+
 ```csharp
 app.UseCors(p => p.WithOrigins("https://app.example.com").AllowAnyHeader().AllowAnyMethod().AllowCredentials());
 app.Use(async (ctx, next) => {
@@ -332,7 +343,8 @@ app.Use(async (ctx, next) => {
 });
 ```
 
-### 9.3 응답 압축·캐싱·레이트 리미트(요지)
+### 응답 압축·캐싱·레이트 리미트(요지)
+
 ```csharp
 builder.Services.AddResponseCompression();
 builder.Services.AddMemoryCache();
@@ -343,9 +355,10 @@ app.UseRateLimiter();
 
 ---
 
-## 10. 배포(컨테이너/리버스 프록시/단일 파일)
+## 배포(컨테이너/리버스 프록시/단일 파일)
 
-### 10.1 Dockerfile
+### Dockerfile
+
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
@@ -360,7 +373,8 @@ EXPOSE 8080
 ENTRYPOINT ["dotnet", "MyApp.dll"]
 ```
 
-### 10.2 Nginx 리버스 프록시(요지)
+### Nginx 리버스 프록시(요지)
+
 ```nginx
 server {
   listen 80;
@@ -374,7 +388,8 @@ server {
 }
 ```
 
-### 10.3 Self-contained/Single-File/ReadyToRun
+### Self-contained/Single-File/ReadyToRun
+
 ```bash
 dotnet publish -c Release -r linux-x64 --self-contained true -o out/linux
 dotnet publish -c Release -r win-x64 -p:PublishSingleFile=true -o out/win
@@ -383,7 +398,7 @@ dotnet publish -c Release -p:PublishReadyToRun=true -o out/r2r
 
 ---
 
-## 11. 관측성/운영: Health Checks·OpenTelemetry(개요)
+## 관측성/운영: Health Checks·OpenTelemetry(개요)
 
 ```csharp
 builder.Services.AddHealthChecks().AddDbContextCheck<AppDb>();
@@ -395,7 +410,7 @@ app.MapHealthChecks("/health");
 
 ---
 
-## 12. 선택 가이드(무엇을 언제 쓸까?)
+## 선택 가이드(무엇을 언제 쓸까?)
 
 | 요구 | 권장 스택 |
 |---|---|
@@ -408,7 +423,7 @@ app.MapHealthChecks("/health");
 
 ---
 
-## 13. 실전 미니 샘플 통합(한 프로젝트에 동시 탑재)
+## 실전 미니 샘플 통합(한 프로젝트에 동시 탑재)
 
 - `/`           → Razor Pages 홈
 - `/products`   → MVC 뷰
@@ -431,7 +446,7 @@ MyApp/
 
 ---
 
-## 14. 흔한 함정과 해결책
+## 흔한 함정과 해결책
 
 1) `UseAuthentication`/`UseAuthorization` 순서 혼동 → **Authentication이 먼저**
 2) CORS에서 `AllowAnyOrigin` + `AllowCredentials` 동시 사용 금지
@@ -441,7 +456,7 @@ MyApp/
 
 ---
 
-## 15. 요약
+## 요약
 
 - **.NET Framework → .NET Core → .NET(5~8)**로 오며 **크로스 플랫폼·고성능·오픈소스**로 수렴했습니다.
 - 현재 실무 표준은 **.NET 8 LTS**. 신규 프로젝트는 이를 기본값으로 삼는 것이 안전합니다.

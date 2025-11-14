@@ -6,9 +6,10 @@ category: Docker
 ---
 # GitHub Actions를 이용한 Docker 배포 자동화
 
-## 0. 목표/흐름/디렉터리
+## 목표/흐름/디렉터리
 
 ### 목표
+
 - 푸시/릴리스 시 **자동 빌드·푸시·배포**
 - **재현 가능한** 멀티스테이지 빌드와 **빠른 캐시**
 - 태그/레이블/라벨 메타데이터 자동화
@@ -42,12 +43,13 @@ my-app/
 
 ---
 
-## 1. Dockerfile — 멀티스테이지 + 런타임 경량화
+## Dockerfile — 멀티스테이지 + 런타임 경량화
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
 
-# 1. 빌드 스테이지
+# 빌드 스테이지
+
 FROM python:3.11-slim AS builder
 WORKDIR /app
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
@@ -56,7 +58,8 @@ COPY requirements.txt .
 RUN python -m pip install --upgrade pip \
  && pip install --prefix=/install -r requirements.txt
 
-# 2. 런타임 스테이지(경량)
+# 런타임 스테이지(경량)
+
 FROM gcr.io/distroless/python3-debian12:nonroot
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
@@ -74,9 +77,10 @@ CMD ["app/main.py"]
 
 ---
 
-## 2. 기본 CI — Docker Hub 로그인/빌드/푸시
+## 기본 CI — Docker Hub 로그인/빌드/푸시
 
 ### 사전 준비(Secrets)
+
 - `DOCKER_USERNAME`, `DOCKER_PASSWORD` (Docker Hub 토큰 권장)
 - (옵션) `IMAGE_NAME` = `yourname/my-app`
 
@@ -148,7 +152,7 @@ jobs:
 
 ---
 
-## 3. GHCR로 푸시(조직/프라이빗 운영에 적합)
+## GHCR로 푸시(조직/프라이빗 운영에 적합)
 
 GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 
@@ -177,9 +181,9 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 
 ---
 
-## 4. 보안·신뢰도: SBOM/취약점 스캔/서명
+## 보안·신뢰도: SBOM/취약점 스캔/서명
 
-### 4.1 SBOM 생성(Syft)
+### SBOM 생성(Syft)
 
 {% raw %}
 ```yaml
@@ -198,7 +202,7 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 ```
 {% endraw %}
 
-### 4.2 취약점 스캔(Trivy)
+### 취약점 스캔(Trivy)
 
 {% raw %}
 ```yaml
@@ -212,7 +216,7 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 ```
 {% endraw %}
 
-### 4.3 컨테이너 이미지 서명(Cosign)
+### 컨테이너 이미지 서명(Cosign)
 
 {% raw %}
 ```yaml
@@ -229,9 +233,10 @@ GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
 
 ---
 
-## 5. 배포 — 원격 서버에 SSH로 롤링 교체
+## 배포 — 원격 서버에 SSH로 롤링 교체
 
 ### 사전 준비(Secrets)
+
 - `REMOTE_HOST`, `REMOTE_USER`, `REMOTE_SSH_KEY`(private key)
 - 서버에 Docker 설치 및 레지스트리 접근 가능해야 함.
 
@@ -295,9 +300,9 @@ services:
 
 ---
 
-## 6. Watchtower/Portainer/Webhook 기반 자동 재배포
+## Watchtower/Portainer/Webhook 기반 자동 재배포
 
-### 6.1 Watchtower로 최신 태그 자동 갱신
+### Watchtower로 최신 태그 자동 갱신
 
 서버에서 워치타워 실행:
 
@@ -317,13 +322,13 @@ docker run -d \
 
 워치타워는 최신 이미지 감지 시 자동 재시작.
 
-### 6.2 Portainer Webhook
+### Portainer Webhook
 
 Portainer에서 Stack에 Webhook URL 발급 → Actions에서 `curl` 호출로 업데이트 트리거.
 
 ---
 
-## 7. 태깅 전략 — latest + semver + sha
+## 태깅 전략 — latest + semver + sha
 
 권장:
 - `latest`는 최신 안정 배포용
@@ -338,17 +343,19 @@ on:
     types: [published]
 
 # metadata-action에서 type=semver 활성화
+
 ```
 
 ---
 
-## 8. 성능 최적화 — 빌드 캐시/레이어 관리/.dockerignore
+## 성능 최적화 — 빌드 캐시/레이어 관리/.dockerignore
 
-### 8.1 캐시
+### 캐시
+
 - `cache-from: type=gha` / `cache-to: type=gha,mode=max`
 - 빈번 변경 파일(앱 코드)은 **Dockerfile 하단**에 COPY → 캐시 활용
 
-### 8.2 .dockerignore
+### .dockerignore
 
 ```
 .git
@@ -360,18 +367,20 @@ node_modules
 public
 ```
 
-### 8.3 멀티스테이지
+### 멀티스테이지
+
 - 런타임에 **필요한 산출물만** COPY
 - **distroless/alpine** 기반 런타임으로 용량/공격면 최소화
 
 ---
 
-## 9. 보호/가시성 — 환경 승인/병행 제어/아티팩트
+## 보호/가시성 — 환경 승인/병행 제어/아티팩트
 
-### 9.1 환경 승인(Approvals)
+### 환경 승인(Approvals)
+
 - `jobs.<job>.environment: production` → 환경 보호 규칙에서 승인자 지정
 
-### 9.2 병행 제어(동시 배포 방지)
+### 병행 제어(동시 배포 방지)
 
 ```yaml
 concurrency:
@@ -379,7 +388,7 @@ concurrency:
   cancel-in-progress: false
 ```
 
-### 9.3 빌드 산출물/로그 보관
+### 빌드 산출물/로그 보관
 
 ```yaml
 - uses: actions/upload-artifact@v4
@@ -390,7 +399,7 @@ concurrency:
 
 ---
 
-## 10. 롤백 전략 — 이전 태그로 빠르게 복귀
+## 롤백 전략 — 이전 태그로 빠르게 복귀
 
 `.github/workflows/rollback.yml`:
 
@@ -426,9 +435,10 @@ jobs:
 
 ---
 
-## 11. 블루-그린/카나리(Compose로 단순화)
+## 블루-그린/카나리(Compose로 단순화)
 
 ### 블루-그린
+
 - `app-blue`, `app-green` 두 서비스를 올리고 **Nginx 프록시**에서 업스트림 전환
 - 전환 전 **헬스체크/사전 트래픽 테스트**
 
@@ -442,11 +452,12 @@ upstream app {
 ```
 
 ### 카나리
+
 - `latest`와 `sha` 태그 이미지를 **서로 다른 서비스**로 띄우고 라우팅 비율 조정
 
 ---
 
-## 12. 개발/스테이징/운영 분리
+## 개발/스테이징/운영 분리
 
 - 브랜치/태그 규칙:
   - `feat/*` → 임시 이미지 `pr-<num>` 태그
@@ -465,7 +476,7 @@ on:
 
 ---
 
-## 13. 종합 예제 — 확장형 워크플로(요약)
+## 종합 예제 — 확장형 워크플로(요약)
 
 {% raw %}
 ```yaml
@@ -566,7 +577,7 @@ jobs:
 
 ---
 
-## 14. 운영 팁 요약
+## 운영 팁 요약
 
 | 항목 | 권장 사항 |
 |---|---|
@@ -580,7 +591,7 @@ jobs:
 
 ---
 
-## 15. 검증/문서화 체크리스트
+## 검증/문서화 체크리스트
 
 - 빌드 로그와 SBOM 아티팩트 보관
 - 취약점 임계값 정책 세우기(예: CRITICAL 발견 시 실패)
@@ -590,11 +601,12 @@ jobs:
 
 ---
 
-## 16. 빠른 시작(최소 버전)
+## 빠른 시작(최소 버전)
 
 {% raw %}
 ```yaml
 # .github/workflows/docker-publish.yml
+
 name: docker-publish
 on: { push: { branches: [ "main" ] } }
 
@@ -617,7 +629,7 @@ jobs:
 
 ---
 
-## 17. 참고 액션/문서 모음
+## 참고 액션/문서 모음
 
 - `actions/checkout`, `docker/login-action`, `docker/build-push-action`, `docker/metadata-action`
 - `docker/setup-qemu-action`, `docker/setup-buildx-action`

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Blazor 소개 및 기존 기술들과의 비교
 
-## 1. Blazor란? (요약 복습 + 배경)
+## Blazor란? (요약 복습 + 배경)
 
 **Blazor**는 C#과 Razor(Component)로 **SPA(단일 페이지 애플리케이션)**를 작성하는 웹 UI 프레임워크다. JavaScript를 완전히 대체하진 않지만, JS 없이도 대부분의 UI를 만들 수 있고, 필요할 땐 **JS Interop**으로 상호연동한다.
 
@@ -17,7 +17,7 @@ category: AspNet
 
 ---
 
-## 2. Blazor의 주요 특징 (확장)
+## Blazor의 주요 특징 (확장)
 
 | 항목 | 설명 | 운영 팁 |
 |---|---|---|
@@ -30,9 +30,9 @@ category: AspNet
 
 ---
 
-## 3. 호스팅 모델 비교 (Server / WASM / Hybrid / “United”)
+## 호스팅 모델 비교 (Server / WASM / Hybrid / “United”)
 
-### 3.1 개념 요약
+### 개념 요약
 
 | 모델 | 실행 위치 | UI 업데이트 | 장점 | 단점 | 적합 사례 |
 |---|---|---|---|---|---|
@@ -43,7 +43,8 @@ category: AspNet
 
 > “United”는 서버 렌더(SSR)를 기본으로 하고, 특정 섹션만 클라이언트 상호작용을 붙이는 **온디맨드 상호작용** 방식(서버/자동/WASM 선택)을 지향한다.
 
-### 3.2 간단한 기준
+### 간단한 기준
+
 - **지연 시간/네트워크 품질이 낮거나 보안 민감(내부망)** → **Server**
 - **오프라인/PWA/모바일 네트워크 환경** → **WASM**
 - **장치 API·오프라인·배포 통합** → **Hybrid**
@@ -51,9 +52,9 @@ category: AspNet
 
 ---
 
-## 4. 시작 예제 (Server/WASM)
+## 시작 예제 (Server/WASM)
 
-### 4.1 Blazor Server Program.cs (기본 골자)
+### Blazor Server Program.cs (기본 골자)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -73,7 +74,7 @@ app.MapRazorComponents<App>()
 app.Run();
 ```
 
-### 4.2 Blazor WASM Program.cs (클라이언트)
+### Blazor WASM Program.cs (클라이언트)
 
 ```csharp
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -89,9 +90,9 @@ await builder.Build().RunAsync();
 
 ---
 
-## 5. 기본 컴포넌트 예제 확장
+## 기본 컴포넌트 예제 확장
 
-### 5.1 Counter.razor (양방향 바인딩/이벤트)
+### Counter.razor (양방향 바인딩/이벤트)
 
 ```razor
 <h3>Counter</h3>
@@ -107,7 +108,7 @@ await builder.Build().RunAsync();
 }
 ```
 
-### 5.2 매개변수/콜백/상태 상승(Lifting State)
+### 매개변수/콜백/상태 상승(Lifting State)
 
 **Child.razor**
 ```razor
@@ -138,7 +139,7 @@ await builder.Build().RunAsync();
 
 ---
 
-## 6. 라우팅과 네비게이션
+## 라우팅과 네비게이션
 
 ```razor
 @page "/products/{id:int}"
@@ -157,9 +158,10 @@ await builder.Build().RunAsync();
 
 ---
 
-## 7. 상태 관리 전략
+## 상태 관리 전략
 
-### 7.1 CascadingParameter
+### CascadingParameter
+
 ```razor
 <!-- App.razor -->
 <CascadingValue Value="_theme">
@@ -178,7 +180,8 @@ await builder.Build().RunAsync();
 }
 ```
 
-### 7.2 상태 컨테이너(서비스) 패턴
+### 상태 컨테이너(서비스) 패턴
+
 ```csharp
 public class AppState
 {
@@ -205,7 +208,8 @@ builder.Services.AddSingleton<AppState>();
 }
 ```
 
-### 7.3 Fluxor(Flux/Redux 스타일) 스니펫
+### Fluxor(Flux/Redux 스타일) 스니펫
+
 ```bash
 dotnet add package Fluxor.Blazor.Web
 ```
@@ -218,16 +222,18 @@ builder.Services.AddFluxor(o => o.ScanAssemblies(typeof(Program).Assembly)
 - 장점: 예측 가능한 상태/타임트래블 디버깅
 - 단점: 러닝 커브, 보일러플레이트
 
-### 7.4 Blazor Server 특수 고려
+### Blazor Server 특수 고려
+
 - **회로 복원/끊김 처리**(네트워크 장애)
 - **유저별 상태**는 **Scoped** 또는 **회로 바인딩** 서비스로 관리
 - **서버 메모리 사용량**/동접 사용량에 따라 **스케일아웃(백플레인)** 필요
 
 ---
 
-## 8. 폼/검증(EditForm + DataAnnotations)
+## 폼/검증(EditForm + DataAnnotations)
 
-### 8.1 모델과 검증 속성
+### 모델과 검증 속성
+
 ```csharp
 public class SignUpModel
 {
@@ -240,7 +246,8 @@ public class SignUpModel
 }
 ```
 
-### 8.2 Razor 폼
+### Razor 폼
+
 ```razor
 @page "/signup"
 @using System.ComponentModel.DataAnnotations
@@ -266,9 +273,10 @@ public class SignUpModel
 
 ---
 
-## 9. JS Interop (필수 작법)
+## JS Interop (필수 작법)
 
-### 9.1 .NET→JS 호출
+### .NET→JS 호출
+
 ```razor
 @inject IJSRuntime JS
 
@@ -280,7 +288,8 @@ public class SignUpModel
 }
 ```
 
-### 9.2 JS→.NET 호출
+### JS→.NET 호출
+
 ```csharp
 public class JsCallback
 {
@@ -302,7 +311,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 10. Blazor Server 운영 이슈: Circuit/SignalR/스케일링
+## Blazor Server 운영 이슈: Circuit/SignalR/스케일링
 
 - **SignalR 백플레인**: Redis/Azure SignalR Service로 다중 서버 확장
 - **상태 보존**: 각 사용자는 서버 메모리에 세션 유사 상태가 존재 → **세션 핀닝** 또는 **스티키 세션** 필요
@@ -315,7 +324,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 11. Blazor WASM 성능/번들 최적화
+## Blazor WASM 성능/번들 최적화
 
 - **트리밍(Trim), AOT(선택), PWA 캐시**, **Lazy Loading(Assembly)**
 - **압축/HTTP/2/3**, CDN 활용
@@ -331,7 +340,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 12. 인증/권한(요약)
+## 인증/권한(요약)
 
 - **ASP.NET Core Identity**(Server) 또는 **JWT/OAuth/OIDC**(WASM + API)
 - Server: 쿠키 기반이 자연스러움
@@ -340,7 +349,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 13. 에러 처리/로깅/진단
+## 에러 처리/로깅/진단
 
 - UI: **ErrorBoundary** 컴포넌트로 컴포넌트 단위 격리
 ```razor
@@ -359,7 +368,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 14. 스타일/컴포넌트 라이브러리
+## 스타일/컴포넌트 라이브러리
 
 - **Bootstrap** 기본 템플릿, **MudBlazor**, **Radzen**, **Syncfusion** 등
 - 서버/클라 공통 UI 키트 선택 시 **라이선스/번들 크기** 고려
@@ -367,7 +376,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 15. 배포 패턴
+## 배포 패턴
 
 - **Server**: 일반 ASP.NET Core처럼 배포(IIS, Nginx+Kestrel, Docker, Azure App Service) + SignalR 백플레인
 - **WASM**: 정적 파일(호스팅된 API와 분리 가능). **Azure Static Web Apps**, Nginx 정적 호스팅
@@ -375,7 +384,7 @@ window.callDotNet = async () => {
 
 ---
 
-## 16. 기존 프론트엔드(React/Vue/Angular)와 비교(확장)
+## 기존 프론트엔드(React/Vue/Angular)와 비교(확장)
 
 | 축 | React/Vue/Angular | Blazor 관점 |
 |---|---|---|
@@ -392,9 +401,9 @@ window.callDotNet = async () => {
 
 ---
 
-## 17. 실전 예제 모음
+## 실전 예제 모음
 
-### 17.1 서버 렌더 + 인터랙티브 섹션(United풍)
+### 서버 렌더 + 인터랙티브 섹션(United풍)
 
 **App.razor**
 ```razor
@@ -416,7 +425,7 @@ window.callDotNet = async () => {
 }
 ```
 
-### 17.2 브라우저 저장소(로컬/세션) 사용 예 (WASM)
+### 브라우저 저장소(로컬/세션) 사용 예 (WASM)
 
 ```bash
 dotnet add package Blazored.LocalStorage
@@ -442,7 +451,7 @@ builder.Services.AddBlazoredLocalStorage();
 
 ---
 
-## 18. 보안 팁
+## 보안 팁
 
 - **XSS/CSRF**: WASM은 토큰 보관 위치 주의(가능하면 메모리+리프레시 전략)
 - **Blazor Server**: 회로 고정/권한 확인은 **서버 측**에서 강제, 중요 로직은 **서버만** 접근 가능
@@ -451,7 +460,7 @@ builder.Services.AddBlazoredLocalStorage();
 
 ---
 
-## 19. 테스트 전략
+## 테스트 전략
 
 - **컴포넌트 단위 테스트**: [bUnit] 사용하여 렌더링/이벤트/검증
 - **E2E**: Playwright/Selenium으로 라우팅/폼/인증 플로우 검증
@@ -476,7 +485,7 @@ public class CounterTests : TestContext
 
 ---
 
-## 20. 성능 체크리스트
+## 성능 체크리스트
 
 - Server
   - 대기 시간 높은 구간 → **인터랙션 최소화**, **서버 CPU/메모리/회로 수 모니터링**
@@ -492,7 +501,7 @@ public class CounterTests : TestContext
 
 ---
 
-## 21. 배포 시나리오 요약
+## 배포 시나리오 요약
 
 - **Blazor Server**: ASP.NET Core 표준 배포(IIS, Nginx+Kestrel, Docker, Azure App Service) + SignalR 스케일 아웃
 - **Blazor WASM**: 정적 자산/CDN + API 서버 분리(or Host in ASP.NET Core)
@@ -502,7 +511,7 @@ public class CounterTests : TestContext
 
 ---
 
-## 22. 요약 정리
+## 요약 정리
 
 | 항목 | 핵심 |
 |---|---|
@@ -516,7 +525,7 @@ public class CounterTests : TestContext
 
 ---
 
-## 23. 다음 단계 제안
+## 다음 단계 제안
 
 1. Blazor WASM + ASP.NET Core API + JWT 인증 실습
 2. United(SSR+Interactive) 패턴으로 마케팅 페이지 + 대시보드 통합

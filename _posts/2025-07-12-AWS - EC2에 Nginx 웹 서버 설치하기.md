@@ -30,7 +30,7 @@ category: AWS
 
 ---
 
-## 1. EC2 접속하기
+## EC2 접속하기
 
 ### Linux/macOS/WSL
 
@@ -40,12 +40,13 @@ ssh -i MyKey.pem ec2-user@<퍼블릭-IP-또는-퍼블릭DNS>
 ```
 
 ### Windows(PuTTY) 참고
+
 - .pem → .ppk 변환(PuTTYgen)
 - 또는 Windows Terminal + OpenSSH 사용 시 Linux/macOS와 동일
 
 ---
 
-## 2. 시스템 패키지 업데이트
+## 시스템 패키지 업데이트
 
 ```bash
 sudo yum update -y
@@ -59,7 +60,7 @@ sudo reboot
 
 ---
 
-## 3. Nginx 설치
+## Nginx 설치
 
 Amazon Linux 2는 amazon-linux-extras를 통해 Nginx 스트림을 활성화 후 설치한다.
 
@@ -81,7 +82,7 @@ sudo yum install -y nginx
 
 ---
 
-## 4. Nginx 서비스 시작 및 부팅 자동화
+## Nginx 서비스 시작 및 부팅 자동화
 
 ```bash
 sudo systemctl start nginx
@@ -93,7 +94,7 @@ active (running)이면 실행 중이다.
 
 ---
 
-## 5. 보안 그룹(인바운드) 확인
+## 보안 그룹(인바운드) 확인
 
 콘솔:
 1) EC2 → 인스턴스 선택 → 보안 탭 → 보안 그룹
@@ -116,7 +117,7 @@ aws ec2 authorize-security-group-ingress \
 
 ---
 
-## 6. 브라우저에서 접속 확인
+## 브라우저에서 접속 확인
 
 브라우저에서 다음 주소로 접속한다.
 
@@ -128,7 +129,7 @@ http://<퍼블릭-IP-또는-퍼블릭DNS>
 
 ---
 
-## 7. Nginx 유용 명령어
+## Nginx 유용 명령어
 
 | 명령어 | 설명 |
 |---|---|
@@ -143,7 +144,7 @@ http://<퍼블릭-IP-또는-퍼블릭DNS>
 
 ---
 
-## 8. 기본 웹 페이지 수정
+## 기본 웹 페이지 수정
 
 ```bash
 sudo bash -c 'cat >/usr/share/nginx/html/index.html' <<'HTML'
@@ -162,7 +163,7 @@ sudo systemctl reload nginx
 
 ---
 
-## 9. 방화벽 서비스 확인(선택)
+## 방화벽 서비스 확인(선택)
 
 Amazon Linux 2는 기본적으로 firewalld 비활성인 경우가 많다. 만약 활성이라면 80/TCP 허용:
 
@@ -174,7 +175,7 @@ sudo firewall-cmd --reload
 
 ---
 
-## 10. 전체 설치 스크립트(핵심)
+## 전체 설치 스크립트(핵심)
 
 ```bash
 sudo yum update -y
@@ -187,10 +188,11 @@ sudo systemctl status nginx
 
 ---
 
-## 11. User Data로 자동 설치(새 인스턴스에 적용)
+## User Data로 자동 설치(새 인스턴스에 적용)
 
 ```bash
 #!/bin/bash
+
 set -eux
 yum update -y
 amazon-linux-extras enable nginx1
@@ -205,7 +207,7 @@ User Data는 Idempotent하게 작성한다. 복잡한 구성은 이미지 빌더
 
 ---
 
-## 12. 리버스 프록시 구성 예시
+## 리버스 프록시 구성 예시
 
 ```bash
 sudo bash -c 'cat >/etc/nginx/conf.d/app.conf' <<'CONF'
@@ -245,7 +247,7 @@ node server.js &
 
 ---
 
-## 13. HTTPS 개요(두 가지 경로)
+## HTTPS 개요(두 가지 경로)
 
 1) ALB에서 TLS 종료
    - ACM(AWS Certificate Manager)로 인증서 발급
@@ -261,7 +263,7 @@ node server.js &
 
 ---
 
-## 14. 로그/모니터링(CloudWatch)
+## 로그/모니터링(CloudWatch)
 
 - CloudWatch Logs 에이전트 또는 CloudWatch Agent로 /var/log/nginx/*.log 적재
 - 주요 지표: 4xx/5xx 비율, 응답 지연, CPU/메모리/네트워크
@@ -282,7 +284,7 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 15. 단순 지연 모델(정적 파일)
+## 단순 지연 모델(정적 파일)
 
 $$
 T_{\text{resp}} \approx T_{\text{net}} + T_{\text{accept}} + T_{\text{read}} + T_{\text{send}}
@@ -294,7 +296,7 @@ $$
 
 ---
 
-## 16. 정리·보안·운영 체크리스트
+## 정리·보안·운영 체크리스트
 
 보안
 - SSH는 내 IP만, 가능하면 SSM 사용
@@ -314,7 +316,7 @@ $$
 
 ---
 
-## 17. 문제 해결
+## 문제 해결
 
 | 증상 | 점검 포인트 | 해결 |
 |---|---|---|
@@ -326,7 +328,7 @@ $$
 
 ---
 
-## 18. 확장: ALB + Auto Scaling 개요
+## 확장: ALB + Auto Scaling 개요
 
 - ALB 앞단, Target Group으로 EC2 묶기
 - ASG로 2개 AZ에 최소 2대 이상 유지, 헬스체크 실패 시 자동 교체
@@ -334,7 +336,7 @@ $$
 
 ---
 
-## 19. Docker로 Nginx 실행(대안)
+## Docker로 Nginx 실행(대안)
 
 ```bash
 sudo yum install -y docker
@@ -351,7 +353,7 @@ sudo docker run --name nginx -p 80:80 -v ~/site:/usr/share/nginx/html:ro -d ngin
 
 ---
 
-## 20. 실습 요약 플로우
+## 실습 요약 플로우
 
 1) SSH 접속 → yum update -y
 2) amazon-linux-extras enable nginx1 && yum install -y nginx
@@ -383,6 +385,7 @@ sudo docker run --name nginx -p 80:80 -v ~/site:/usr/share/nginx/html:ro -d ngin
 
 ```nginx
 # /etc/nginx/conf.d/static.conf
+
 server {
     listen 80;
     server_name _;

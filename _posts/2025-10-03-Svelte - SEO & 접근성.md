@@ -4,7 +4,8 @@ title: Svelte - SEO & 접근성
 date: 2025-10-03 17:30:23 +0900
 category: Svelte
 ---
-# 11. SEO & 접근성
+# SEO & 접근성
+
 **메타/오픈그래프/구조화 데이터 · i18n 다국어 라우팅 · A11y 체크리스트(포커스/키보드/ARIA)**
 
 > 이 장은 SvelteKit로 **검색 친화적(SEO)**이고 **접근 가능한(A11y)** 웹을 만드는 데 필요한 실무 지식을 한곳에 모은다.
@@ -14,9 +15,10 @@ category: Svelte
 
 ---
 
-## 11.1 SvelteKit에서 **메타 태그** 관리하기
+## SvelteKit에서 **메타 태그** 관리하기
 
-### 11.1.1 라우트별 `<svelte:head>` 기본
+### 라우트별 `<svelte:head>` 기본
+
 ```svelte
 <!-- src/routes/about/+page.svelte -->
 <script lang="ts">
@@ -55,7 +57,8 @@ category: Svelte
 </article>
 ```
 
-### 11.1.2 `+page.ts`에서 메타 데이터 구성
+### `+page.ts`에서 메타 데이터 구성
+
 ```ts
 // src/routes/about/+page.ts
 import type { PageLoad } from './$types';
@@ -72,7 +75,8 @@ export const load: PageLoad = async ({ url }) => {
 
 > **권장**: 쿼리스트링이 SEO에 의미 없으면 **canonical**을 쿼리 제거 버전으로 고정.
 
-### 11.1.3 전역 기본값(루트 레이아웃)
+### 전역 기본값(루트 레이아웃)
+
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <script lang="ts">
@@ -106,7 +110,8 @@ export const load: LayoutServerLoad = async ({ url }) => {
 };
 ```
 
-### 11.1.4 성능 관련 `<link>` 힌트
+### 성능 관련 `<link>` 힌트
+
 ```svelte
 <svelte:head>
   <!-- 폰트/API 도메인 연결 -->
@@ -119,9 +124,10 @@ export const load: LayoutServerLoad = async ({ url }) => {
 
 ---
 
-## 11.2 **Open Graph 이미지** 동적 생성(서버)
+## **Open Graph 이미지** 동적 생성(서버)
 
-### 11.2.1 텍스트 → 이미지(간단 SVG → PNG/WebP 변환 예시)
+### 텍스트 → 이미지(간단 SVG → PNG/WebP 변환 예시)
+
 ```ts
 // src/routes/og/[slug]/+server.ts
 import type { RequestHandler } from './$types';
@@ -146,9 +152,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
 ---
 
-## 11.3 **구조화 데이터(JSON-LD)**
+## **구조화 데이터(JSON-LD)**
 
-### 11.3.1 Article(블로그 글)
+### Article(블로그 글)
+
 ```svelte
 <!-- src/routes/blog/[slug]/+page.svelte -->
 <script lang="ts">
@@ -188,7 +195,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 </article>
 ```
 
-### 11.3.2 Organization + Breadcrumbs
+### Organization + Breadcrumbs
+
 ```svelte
 <svelte:head>
   <script type="application/ld+json">
@@ -217,9 +225,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
 ---
 
-## 11.4 **i18n 다국어 라우팅**
+## **i18n 다국어 라우팅**
 
-### 11.4.1 폴더 구조 패턴
+### 폴더 구조 패턴
+
 ```
 src/routes/
   [[lang]]/                 # 선택적 언어 세그먼트
@@ -233,7 +242,8 @@ src/routes/
 - `/about` (기본 언어)
 - `/en/about`, `/ja/about` (명시 언어)
 
-### 11.4.2 언어 결정 로직(서버)
+### 언어 결정 로직(서버)
+
 ```ts
 // src/routes/[[lang]]/+layout.server.ts
 import type { LayoutServerLoad } from './$types';
@@ -264,7 +274,8 @@ export const load: LayoutServerLoad = async ({ params, request, url, cookies }) 
 };
 ```
 
-### 11.4.3 `<html lang>`과 `hreflang`
+### `<html lang>`과 `hreflang`
+
 ```svelte
 <!-- src/routes/[[lang]]/+layout.svelte -->
 <script lang="ts">
@@ -289,7 +300,8 @@ export const load: LayoutServerLoad = async ({ params, request, url, cookies }) 
 
 > **참고**: `app.html`에서 서버 훅(`transformPageChunk`)로 `<html lang="">`을 동적으로 바꾸는 패턴도 가능.
 
-### 11.4.4 번역 문자열 관리(간단 키-값)
+### 번역 문자열 관리(간단 키-값)
+
 ```
 src/lib/i18n/
   messages.ts
@@ -324,7 +336,8 @@ export function t(lang: Lang, key: keyof (typeof dict)['ko']) { return dict[lang
 <nav><a href="/about">{t(data.lang, 'about')}</a></nav>
 ```
 
-### 11.4.5 리다이렉트/언어 협상(최초 방문)
+### 리다이렉트/언어 협상(최초 방문)
+
 - 첫 방문 시 `Accept-Language`를 참고해 추천 언어로 **302** 리다이렉트
 - 이미 쿠키에 `lang` 있으면 존중
 
@@ -349,9 +362,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 ---
 
-## 11.5 검색 크롤링 관련 파일: `robots.txt`/`sitemap.xml`
+## 검색 크롤링 관련 파일: `robots.txt`/`sitemap.xml`
 
-### 11.5.1 robots.txt
+### robots.txt
+
 ```ts
 // src/routes/robots.txt/+server.ts
 import type { RequestHandler } from './$types';
@@ -363,7 +377,8 @@ Sitemap: ${url.origin}/sitemap.xml`;
 };
 ```
 
-### 11.5.2 sitemap.xml(단순)
+### sitemap.xml(단순)
+
 ```ts
 // src/routes/sitemap.xml/+server.ts
 import type { RequestHandler } from './$types';
@@ -385,7 +400,7 @@ export const GET: RequestHandler = ({ url }) => {
 
 ---
 
-## 11.6 A11y(접근성) **기본 원칙**
+## A11y(접근성) **기본 원칙**
 
 1) **의미론적 HTML**: 가능한 `<button>`, `<a>`, `<label>`, `<fieldset>`, `<legend>`, `<nav>` 등 사용
 2) **포커스 가능/순서**: 키보드(Tab/Shift+Tab)로 모든 인터랙션 가능
@@ -398,9 +413,10 @@ export const GET: RequestHandler = ({ url }) => {
 
 ---
 
-## 11.7 포커스 관리 & 키보드 내비
+## 포커스 관리 & 키보드 내비
 
-### 11.7.1 스킵 링크
+### 스킵 링크
+
 ```svelte
 <!-- src/routes/+layout.svelte -->
 <a href="#main" class="skip">본문 바로가기</a>
@@ -413,7 +429,8 @@ export const GET: RequestHandler = ({ url }) => {
 </style>
 ```
 
-### 11.7.2 키보드 트랩(모달)
+### 키보드 트랩(모달)
+
 ```svelte
 <!-- src/lib/components/Modal.svelte -->
 <script lang="ts">
@@ -455,7 +472,8 @@ export const GET: RequestHandler = ({ url }) => {
 
 > **포인트**: `role="dialog"` + `aria-modal="true"` + label/description 연결, Tab 트랩, ESC 닫기.
 
-### 11.7.3 포커스 표시 커스텀
+### 포커스 표시 커스텀
+
 ```css
 :focus-visible { outline: 3px solid #0ea5e9; outline-offset: 2px; }
 button:focus-visible { box-shadow: 0 0 0 3px rgba(14,165,233,.5); }
@@ -463,9 +481,10 @@ button:focus-visible { box-shadow: 0 0 0 3px rgba(14,165,233,.5); }
 
 ---
 
-## 11.8 ARIA & 라이브 영역
+## ARIA & 라이브 영역
 
-### 11.8.1 라이브 알림
+### 라이브 알림
+
 ```svelte
 <!-- src/lib/components/Announcer.svelte -->
 <script lang="ts">
@@ -495,7 +514,8 @@ button:focus-visible { box-shadow: 0 0 0 3px rgba(14,165,233,.5); }
 <button on:click={saved}>저장</button>
 ```
 
-### 11.8.2 토글 가능한 요소의 ARIA
+### 토글 가능한 요소의 ARIA
+
 ```svelte
 <script>
   let expanded = false;
@@ -511,15 +531,17 @@ button:focus-visible { box-shadow: 0 0 0 3px rgba(14,165,233,.5); }
 
 ---
 
-## 11.9 폼 접근성: 라벨/오류/도움말
+## 폼 접근성: 라벨/오류/도움말
 
-### 11.9.1 라벨-컨트롤 연결
+### 라벨-컨트롤 연결
+
 ```svelte
 <label for="email">이메일</label>
 <input id="email" name="email" type="email" autocomplete="email" required />
 ```
 
-### 11.9.2 오류와 도움말 연결
+### 오류와 도움말 연결
+
 ```svelte
 <script>
   let error = '';
@@ -537,9 +559,10 @@ button:focus-visible { box-shadow: 0 0 0 3px rgba(14,165,233,.5); }
 
 ---
 
-## 11.10 색 대비/모션/가독성
+## 색 대비/모션/가독성
 
-### 11.10.1 대비 확인 기준
+### 대비 확인 기준
+
 - 본문/보통 텍스트: **4.5:1 이상**
 - 큰 텍스트(≥24px or 19px bold): **3:1 이상**
 
@@ -554,7 +577,8 @@ body { color: var(--fg); background: var(--bg); }
 a { color: var(--primary); }
 ```
 
-### 11.10.2 모션 최소화
+### 모션 최소화
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -563,7 +587,7 @@ a { color: var(--primary); }
 
 ---
 
-## 11.11 성능 & 인덱싱 실무 팁
+## 성능 & 인덱싱 실무 팁
 
 - **SSR/SSG**: 마케팅/블로그는 SSR/SSG로 **초기 HTML** 제공
 - **LCP 자원 최적화**: Hero 이미지 **preload** + 적절한 크기
@@ -576,9 +600,10 @@ a { color: var(--primary); }
 
 ---
 
-## 11.12 체크리스트(요약)
+## 체크리스트(요약)
 
 ### SEO
+
 - [ ] 라우트별 **`<title>`/`description`/OG/Twitter** 정확
 - [ ] **canonical**(쿼리 정규화), **hreflang**(다국어)
 - [ ] **JSON-LD**(Article/Org/Breadcrumbs 등) 컨텐츠와 일치
@@ -586,11 +611,13 @@ a { color: var(--primary); }
 - [ ] SSR/SSG로 **초기 HTML** 제공, 성능 최적화(LCP/CLS)
 
 ### i18n
+
 - [ ] `[[lang]]` 라우팅 + 쿠키/헤더 협상
 - [ ] `hreflang`/`x-default`/`canonical` 일관
 - [ ] 번역 키 관리/빌드 검증(누락 키 탐지)
 
 ### A11y
+
 - [ ] 의미론적 태그/랜드마크(`<header><nav><main><footer>`)
 - [ ] **스킵 링크** 제공
 - [ ] 키보드 내비게이션 완전 지원(Tab/Shift+Tab/ESC)
@@ -603,7 +630,8 @@ a { color: var(--primary); }
 
 ---
 
-## 11.13 마무리
+## 마무리
+
 - SvelteKit는 **SSR/파일 기반 라우팅**으로 라우트별 **메타/OG/JSON-LD** 관리가 용이하다.
 - 다국어는 `[[lang]]` 패턴과 `hreflang`/canonical을 묶어서 설계하고, **언어 협상**(헤더/쿠키/경로)을 일관되게 운영.
 - 접근성은 **설계 초반**부터: 의미론, 포커스, 키보드, ARIA, 라이브 영역, 대비/모션을 기본값으로.

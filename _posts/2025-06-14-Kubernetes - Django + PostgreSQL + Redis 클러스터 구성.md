@@ -31,7 +31,7 @@ category: Kubernetes
 
 ---
 
-## 0. 사전 준비: 네임스페이스/레이블/주요 변수
+## 사전 준비: 네임스페이스/레이블/주요 변수
 
 ```yaml
 apiVersion: v1
@@ -46,7 +46,7 @@ metadata:
 
 ---
 
-## 1. PostgreSQL (StatefulSet + PVC + Secret)
+## PostgreSQL (StatefulSet + PVC + Secret)
 
 > 단일 인스턴스 기준. 고가용성이 필요하면 Patroni/CloudSQL/RDS 사용을 권장.
 
@@ -140,7 +140,7 @@ kubectl apply -f postgres-statefulset.yaml
 
 ---
 
-## 2. Redis (StatefulSet + Service)
+## Redis (StatefulSet + Service)
 
 > 세션/캐시용. 고가용성은 Redis Sentinel/Operator 고려.
 
@@ -204,7 +204,7 @@ kubectl apply -f redis.yaml
 
 ---
 
-## 3. Django 컨테이너화
+## Django 컨테이너화
 
 **requirements.txt**
 
@@ -273,6 +273,7 @@ COPY . .
 ENV DJANGO_SETTINGS_MODULE=mysite.settings
 ENV PORT=8000
 # collectstatic는 InitContainer에서 수행(아래 참조)
+
 CMD ["gunicorn", "mysite.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--threads", "2", "--timeout", "60"]
 ```
 
@@ -285,7 +286,7 @@ docker push <username>/django-app:0.1.0
 
 ---
 
-## 4. Django 설정: Secret/ConfigMap/ServiceAccount
+## Django 설정: Secret/ConfigMap/ServiceAccount
 
 **django-config.yaml**
 
@@ -324,9 +325,9 @@ kubectl apply -f django-config.yaml
 
 ---
 
-## 5. 정적파일 수집/DB 마이그레이션 자동화
+## 정적파일 수집/DB 마이그레이션 자동화
 
-### 5.1 정적파일: EmptyDir + InitContainer(collectstatic)
+### 정적파일: EmptyDir + InitContainer(collectstatic)
 
 ```yaml
 apiVersion: apps/v1
@@ -406,7 +407,7 @@ spec:
       targetPort: http
 ```
 
-### 5.2 마이그레이션 Job
+### 마이그레이션 Job
 
 ```yaml
 apiVersion: batch/v1
@@ -438,7 +439,7 @@ kubectl apply -f django-web-deployment.yaml
 
 ---
 
-## 6. Ingress + TLS (nginx-ingress + cert-manager)
+## Ingress + TLS (nginx-ingress + cert-manager)
 
 **Ingress (로컬 개발용)**
 
@@ -513,7 +514,7 @@ spec:
 
 ---
 
-## 7. Django 관리: 마이그레이션/슈퍼유저
+## Django 관리: 마이그레이션/슈퍼유저
 
 ```bash
 kubectl exec -n webapp deploy/django-web -- python manage.py migrate
@@ -524,7 +525,7 @@ kubectl exec -n webapp deploy/django-web -- python manage.py createsuperuser
 
 ---
 
-## 8. Redis 세션/캐시 최적화
+## Redis 세션/캐시 최적화
 
 - `SESSION_ENGINE = cache` 및 `django-redis` 사용(이미 settings 반영).
 - 관리자/빈번한 쿼리는 `cache_page`/저수준 캐시로 캐시 효율을 높입니다.
@@ -532,7 +533,7 @@ kubectl exec -n webapp deploy/django-web -- python manage.py createsuperuser
 
 ---
 
-## 9. Celery(옵션): 비동기 작업
+## Celery(옵션): 비동기 작업
 
 **celery.py**
 
@@ -575,7 +576,7 @@ spec:
 
 ---
 
-## 10. 가용성/안정성: HPA, PDB, NetworkPolicy
+## 가용성/안정성: HPA, PDB, NetworkPolicy
 
 **HPA**
 
@@ -639,7 +640,7 @@ spec:
 
 ---
 
-## 11. 보안/운영 팁
+## 보안/운영 팁
 
 - **SecurityContext**: 모든 컨테이너에서 `runAsNonRoot`, `allowPrivilegeEscalation: false`, capabilities drop.
 - **Secret 관리**: K8s Secret + 외부 비밀관리(예: SOPS, External Secrets Operator).
@@ -649,36 +650,42 @@ spec:
 
 ---
 
-## 12. Helm/Kustomize (요약)
+## Helm/Kustomize (요약)
 
 - Helm values에 `image.tag`, `ingress.host`, `resources`, `env`를 파라미터화.
 - Kustomize `base` + `overlays/dev,staging,prod` 로 환경 별 설정(Replica/HPA/Ingress Host/TLS).
 
 ---
 
-## 13. 전체 적용 순서(샘플)
+## 전체 적용 순서(샘플)
 
 ```bash
 # 네임스페이스
+
 kubectl apply -f ns.yaml
 
 # 데이터 계층
+
 kubectl apply -f postgres-secret.yaml
 kubectl apply -f postgres-statefulset.yaml
 kubectl apply -f redis.yaml
 
 # 앱 설정
+
 kubectl apply -f django-config.yaml
 
 # 마이그레이션
+
 kubectl apply -f django-migrate-job.yaml
 kubectl wait --for=condition=complete job/django-migrate -n webapp --timeout=120s
 
 # 웹 배포
+
 kubectl apply -f django-web-deployment.yaml
 kubectl apply -f django-ingress.yaml
 
 # 가용성/보안
+
 kubectl apply -f hpa.yaml
 kubectl apply -f pdb.yaml
 kubectl apply -f networkpolicy.yaml
@@ -686,21 +693,25 @@ kubectl apply -f networkpolicy.yaml
 
 ---
 
-## 14. 검증/운영 명령어
+## 검증/운영 명령어
 
 ```bash
 # 상태
+
 kubectl -n webapp get pods,svc,ingress,cm,secret,pvc
 kubectl -n webapp get events --sort-by=.lastTimestamp
 
 # 상세/로그
+
 kubectl -n webapp describe deploy django-web
 kubectl -n webapp logs deploy/django-web -c web --tail=200
 
 # 셸 진입
+
 kubectl -n webapp exec -it deploy/django-web -- /bin/sh
 
 # 연결 확인
+
 kubectl -n webapp run -it netshoot --rm --image=nicolaka/netshoot -- /bin/sh
 curl -I django-web.webapp.svc.cluster.local
 nc -zv postgres.webapp.svc.cluster.local 5432
@@ -709,7 +720,7 @@ nc -zv redis.webapp.svc.cluster.local 6379
 
 ---
 
-## 15. 정리 및 삭제
+## 정리 및 삭제
 
 ```bash
 kubectl delete ns webapp

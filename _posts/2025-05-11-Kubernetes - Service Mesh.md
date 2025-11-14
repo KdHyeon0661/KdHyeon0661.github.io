@@ -17,7 +17,7 @@ Kubernetes에서 마이크로서비스를 운영하다 보면 다음 요구가 �
 
 ---
 
-## 1. Service Mesh 핵심 개념
+## Service Mesh 핵심 개념
 
 ### Data Plane vs Control Plane
 
@@ -37,7 +37,7 @@ Kubernetes에서 마이크로서비스를 운영하다 보면 다음 요구가 �
 
 ---
 
-## 2. 대표 Mesh: Istio vs Linkerd 한눈 비교
+## 대표 Mesh: Istio vs Linkerd 한눈 비교
 
 | 항목 | **Istio** | **Linkerd** |
 |---|---|---|
@@ -54,13 +54,15 @@ Kubernetes에서 마이크로서비스를 운영하다 보면 다음 요구가 �
 
 ---
 
-## 3. 공통 실습 환경 준비
+## 공통 실습 환경 준비
 
 ```bash
 # 클러스터가 없다면 예: kind
+
 kind create cluster --name mesh-lab
 
 # 네임스페이스 준비
+
 kubectl create ns mesh-demo
 kubectl label ns mesh-demo istio-injection=enabled   # Istio 사용 시
 ```
@@ -69,6 +71,7 @@ kubectl label ns mesh-demo istio-injection=enabled   # Istio 사용 시
 
 ```yaml
 # app.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -117,15 +120,17 @@ kubectl apply -f app.yaml
 
 ---
 
-## 4. Istio: 설치, 주입, 트래픽 제어, 보안, 관측
+## Istio: 설치, 주입, 트래픽 제어, 보안, 관측
 
-### 4.1 설치와 사이드카 주입
+### 설치와 사이드카 주입
 
 ```bash
 # istioctl 다운로드(공식 가이드 참고)
+
 istioctl install --set profile=demo -y
 kubectl label ns mesh-demo istio-injection=enabled
 # 기존 Pod는 재시작 필요
+
 kubectl -n mesh-demo rollout restart deploy
 ```
 
@@ -135,14 +140,16 @@ kubectl -n mesh-demo rollout restart deploy
 kubectl -n istio-system get pods
 kubectl -n mesh-demo get pods -o jsonpath='{..containers[*].name}' | tr ' ' '\n' | sort | uniq
 # 각 Pod에 'istio-proxy'가 보여야 함
+
 ```
 
-### 4.2 기본 라우팅: VirtualService + DestinationRule
+### 기본 라우팅: VirtualService + DestinationRule
 
 **목표:** `api` 서비스로 들어온 트래픽을 `v1:90%`, `v2:10%`로 분배(카나리)
 
 ```yaml
 # istio-traffic.yaml
+
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
@@ -184,10 +191,11 @@ kubectl -n mesh-demo run load --image=curlimages/curl -it --rm -- \
 
 > httpbin은 응답 헤더/바디에서 버전 표시가 없으니, 실제 서비스라면 응답에 버전 로그를 추가하거나, 헤더 기반 라우팅 실험을 위한 커스텀 앱을 권장.
 
-### 4.3 회복성: Retry, Timeout, Outlier Detection
+### 회복성: Retry, Timeout, Outlier Detection
 
 ```yaml
 # istio-resilience.yaml
+
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
@@ -220,12 +228,13 @@ spec:
 
 적용 후, 장애 인스턴스가 연속 5xx를 반환하면 자동 격리된다.
 
-### 4.4 mTLS와 권한(AuthorizationPolicy)
+### mTLS와 권한(AuthorizationPolicy)
 
 **전역 mTLS** 엄격(STRICT):
 
 ```yaml
 # istio-mtls.yaml
+
 apiVersion: security.istio.io/v1
 kind: PeerAuthentication
 metadata:
@@ -240,6 +249,7 @@ spec:
 
 ```yaml
 # istio-authz.yaml
+
 apiVersion: security.istio.io/v1beta1
 kind: AuthorizationPolicy
 metadata:
@@ -256,10 +266,11 @@ spec:
 
 > `frontend-sa` 서비스어카운트를 만든 뒤, `frontend` Deployment에 적용해야 한다. Istio는 **SPIFFE 기반 ID**(예: `cluster.local/ns/<ns>/sa/<sa>`)로 주체를 식별한다.
 
-### 4.5 Ingress 게이트웨이로 외부 유입
+### Ingress 게이트웨이로 외부 유입
 
 ```yaml
 # istio-gw.yaml
+
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
@@ -287,7 +298,7 @@ spec:
 
 LoadBalancer IP 또는 NodePort로 접근하여 `/api` 경로 요청 라우팅을 확인한다.
 
-### 4.6 관측: Kiali/Jaeger/Grafana
+### 관측: Kiali/Jaeger/Grafana
 
 - `profile=demo` 설치 시 일부 컴포넌트 포함.
 - Kiali 대시보드에서 서비스 그래프, 지연/성공률 확인.
@@ -296,13 +307,14 @@ LoadBalancer IP 또는 NodePort로 접근하여 `/api` 경로 요청 라우팅�
 ```bash
 kubectl -n istio-system port-forward svc/kiali 20001:20001
 # 브라우저 http://localhost:20001
+
 ```
 
 ---
 
-## 5. Linkerd: 설치, 주입, 트래픽 분할, 관측
+## Linkerd: 설치, 주입, 트래픽 분할, 관측
 
-### 5.1 설치와 주입
+### 설치와 주입
 
 ```bash
 curl -sL https://run.linkerd.io/install | sh
@@ -319,7 +331,7 @@ kubectl -n mesh-demo rollout restart deploy
 
 Pod에 `linkerd-proxy`가 붙었는지 확인한다.
 
-### 5.2 기본 mTLS와 가시성
+### 기본 mTLS와 가시성
 
 Linkerd는 **기본 mTLS**가 활성화된다. 관측 플러그인 설치:
 
@@ -327,6 +339,7 @@ Linkerd는 **기본 mTLS**가 활성화된다. 관측 플러그인 설치:
 linkerd viz install | kubectl apply -f -
 linkerd viz dashboard &
 # 브라우저 대시보드 확인
+
 ```
 
 CLI 기반 실시간 관측:
@@ -337,10 +350,11 @@ linkerd -n mesh-demo top deploy/api-v1
 linkerd -n mesh-demo tap deploy/api-v1
 ```
 
-### 5.3 트래픽 분할: SMI TrafficSplit
+### 트래픽 분할: SMI TrafficSplit
 
 ```yaml
 # linkerd-split.yaml
+
 apiVersion: split.smi-spec.io/v1alpha2
 kind: TrafficSplit
 metadata:
@@ -357,12 +371,13 @@ spec:
 
 > `api-v1`, `api-v2`는 Service로도 분리하거나, Headless/EndpointSlice 구성을 사용할 수 있다. 간단 실습에선 `api` 단일 서비스에 버전 라벨을 나누는 대신, 버전별 서비스를 두는 패턴을 권장.
 
-### 5.4 회복성: ServiceProfile로 라우트 별 정책
+### 회복성: ServiceProfile로 라우트 별 정책
 
 엔드포인트별 **응답 기대치/타임아웃/재시도**를 선언:
 
 ```yaml
 # linkerd-sp.yaml
+
 apiVersion: linkerd.io/v1alpha2
 kind: ServiceProfile
 metadata:
@@ -390,47 +405,47 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ---
 
-## 6. 공통 시나리오 레시피
+## 공통 시나리오 레시피
 
-### 6.1 Canary → 점진 승격
+### Canary → 점진 승격
 
 1) 초기 `90/10`
 2) 적절한 메트릭(지연, 5xx, SLO 위반) 모니터링
 3) `weight`를 50/50 → 100/0으로 늘리며 점진 배포
 4) 에러율 급증 시 즉시 `rollback`(Istio: VirtualService 수정, Linkerd: TrafficSplit 수정)
 
-### 6.2 헤더 기반 라우팅(A/B)
+### 헤더 기반 라우팅(A/B)
 
 - Istio: `match`의 `headers` 조건으로 사용자 그룹 실험
 - Linkerd: 기본은 TrafficSplit 위주. 헤더 기반 라우팅은 Ingress/애플리케이션 계층과 조합하거나, 별도 통합 컴포넌트 사용
 
-### 6.3 트래픽 미러링(Shadow)
+### 트래픽 미러링(Shadow)
 
 - Istio: `mirror`/`mirrorPercentage`로 실제 트래픽을 v2에 **복제**(응답은 v1으로)
 - Linkerd: 기본 기능으로는 제한적. Ingress 레벨/프록시 확장/옵저버블 라우팅으로 보완
 
-### 6.4 Rate Limit
+### Rate Limit
 
 - Istio: EnvoyFilter/외부 Rate Limiter와 통합(예: envoy rate limit service)
 - Linkerd: 외부 정책 엔진/Ingress/게이트웨이와 조합
 
 ---
 
-## 7. 보안 심화: 인증/인가
+## 보안 심화: 인증/인가
 
-### 7.1 자동 mTLS
+### 자동 mTLS
 
 - **Istio**: 인증서 발급/회전/배포 자동화. `PeerAuthentication`으로 모드 설정(STRICT, PERMISSIVE, DISABLE)
 - **Linkerd**: Control Plane가 루트/중간 인증서를 관리, 워크로드 간 자동 mTLS
 
-### 7.2 인가(Authorization)
+### 인가(Authorization)
 
 - **Istio**: `AuthorizationPolicy`로 주체(사이드카가 주입한 ID), 경로, 메서드, 헤더 조합으로 세밀 제어
 - **Linkerd**: 기본 인가는 제한적. 네임스페이스/NetworkPolicy/Ingress 정책과 병행 설계
 
 ---
 
-## 8. 관측/모니터링
+## 관측/모니터링
 
 - 공통: Prometheus로 지표 수집, Grafana 대시보드
 - **Istio**: Kiali(서비스 그래프), Envoy 가시화, Jaeger/Zipkin 분산 트레이싱
@@ -440,11 +455,13 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ```bash
 # Istio
+
 istioctl proxy-status
 istioctl pc clusters <pod>.mesh-demo
 istioctl analyze
 
 # Linkerd
+
 linkerd check
 linkerd edges deploy
 linkerd diagnostics endpoints api
@@ -452,7 +469,7 @@ linkerd diagnostics endpoints api
 
 ---
 
-## 9. 운영 팁과 장애 트러블슈팅
+## 운영 팁과 장애 트러블슈팅
 
 | 증상 | 점검 포인트 | 대응 |
 |---|---|---|
@@ -471,7 +488,7 @@ linkerd diagnostics endpoints api
 
 ---
 
-## 10. 배포 자동화와 GitOps
+## 배포 자동화와 GitOps
 
 - 헬름 차트/istioctl 프로필/Linkerd Helm을 **환경별 values**로 관리
 - Argo CD/Flux로 **VirtualService/DestinationRule/TrafficSplit**을 선언적으로 운영
@@ -479,12 +496,13 @@ linkerd diagnostics endpoints api
 
 ---
 
-## 11. 실전 예제 번들
+## 실전 예제 번들
 
-### 11.1 Istio: 카나리 + 미러링 + 회복성
+### Istio: 카나리 + 미러링 + 회복성
 
 ```yaml
 # istio-bundle.yaml
+
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
@@ -536,14 +554,16 @@ spec:
 
 ```bash
 # 그룹 B 헤더로 강제 v2 라우팅
+
 kubectl -n mesh-demo run curler --image=curlimages/curl -it --rm -- \
   sh -lc 'curl -s -H "x-exp-group: B" http://api.mesh-demo.svc.cluster.local/get | jq .headers'
 ```
 
-### 11.2 Linkerd: TrafficSplit + ServiceProfile
+### Linkerd: TrafficSplit + ServiceProfile
 
 ```yaml
 # linkerd-bundle.yaml
+
 apiVersion: split.smi-spec.io/v1alpha2
 kind: TrafficSplit
 metadata:
@@ -580,7 +600,7 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ---
 
-## 12. 결론
+## 결론
 
 - **Service Mesh**는 **코드 수정 없이** 마이크로서비스 네트워킹을 표준화한다.
 - **Istio**는 기능이 가장 풍부하고 세밀한 제어가 가능하며, **Linkerd**는 경량/간결성/안정성에 강점이 있다.
@@ -593,12 +613,14 @@ linkerd -n mesh-demo routes deploy/api-v1
 
 ```bash
 # Istio
+
 istioctl install --set profile=demo -y
 kubectl label ns <ns> istio-injection=enabled
 istioctl proxy-status
 istioctl analyze
 
 # Linkerd
+
 linkerd install | kubectl apply -f -
 linkerd check
 kubectl annotate ns <ns> linkerd.io/inject=enabled
@@ -608,6 +630,7 @@ linkerd viz dashboard
 
 ```bash
 # 부하 도구 예시
+
 kubectl -n mesh-demo run hey --image=rakyll/hey -it --rm -- \
   hey -z 30s -q 10 http://api.mesh-demo.svc.cluster.local/status/200
 ```

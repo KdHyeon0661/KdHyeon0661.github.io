@@ -4,9 +4,9 @@ title: 웹해킹 - HTTP Parameter Pollution
 date: 2025-09-30 23:25:23 +0900
 category: 웹해킹
 ---
-# 7. HTTP Parameter Pollution (HPP)
+# HTTP Parameter Pollution (HPP)
 
-## 0. 한눈에 보기 (Executive Summary)
+## 한눈에 보기 (Executive Summary)
 
 - **문제(정의)**: **같은 이름의 파라미터가 다중 전달**될 때(예: `role=user&role=admin`)
   프록시/프레임워크/앱/캐시 **각 계층의 파서가 서로 다르게 해석**(첫 값/마지막 값/배열)하면
@@ -23,7 +23,7 @@ category: 웹해킹
 
 ---
 
-# 1. 왜 HPP가 생기나 — 파서의 “해석 정책” 불일치
+# 왜 HPP가 생기나 — 파서의 “해석 정책” 불일치
 
 같은 쿼리 스트링이라도 **파서마다 정책이 다릅니다.**
 아래는 **일반적인 예**(구현/버전에 따라 달라질 수 있음):
@@ -39,38 +39,45 @@ category: 웹해킹
 
 ---
 
-# 2. 영향 시나리오 (개념 예시)
+# 영향 시나리오 (개념 예시)
 
-### 2.1 권한 상승 (role 파라미터)
+### 권한 상승 (role 파라미터)
+
 - 프론트엔드: `role`이 하나만 있어야 한다고 **첫 값**만 검사 → `role=user` → 통과
 - 백엔드: 라우터 파서는 **마지막 값** 사용 → 실제 처리 시 `role=admin`
 - 요청: `POST /invite?role=user&role=admin` → **검증 통과 + 권한 상승**
 
-### 2.2 정책 우회 (feature flag)
+### 정책 우회 (feature flag)
+
 - 필터: `safe=true`만 허용
 - 요청: `?safe=true&safe=false`
 - **어느 계층이 무엇을 읽느냐**에 따라 **안전 기능 비활성화** 가능
 
-### 2.3 캐시 키 vs 백엔드 해석 차이
+### 캐시 키 vs 백엔드 해석 차이
+
 - CDN 캐시 키는 **첫 값 기준**으로 계산, 백엔드는 **마지막 값**으로 처리
 - 서로 다른 콘텐츠가 **같은 캐시 엔트리**에 저장되거나, 반대로 **같은 요청이 다른 키**로 분리
 
 ---
 
-# 3. 안전한 재현(스테이징 전용) — “막혀야 정상” 스모크
+# 안전한 재현(스테이징 전용) — “막혀야 정상” 스모크
 
 > 목적: **우리가 중복 파라미터를 금지/정규화**하는지 자동 점검.
 
-### 3.1 `curl` 간단 테스트
+### `curl` 간단 테스트
+
 ```bash
-# 1. 중복 role → 400/422 등으로 거절되어야 안전
+# 중복 role → 400/422 등으로 거절되어야 안전
+
 curl -si 'https://staging.example.com/admin?role=user&role=admin' | head -n1
 
-# 2. 세미콜론 분리자도 차단(구성에 따라)
+# 세미콜론 분리자도 차단(구성에 따라)
+
 curl -si 'https://staging.example.com/admin?role=user;role=admin' | head -n1
 ```
 
-### 3.2 Node 스크립트(스테이징 전용)
+### Node 스크립트(스테이징 전용)
+
 ```js
 import https from "node:https";
 function rq(path) {
@@ -96,15 +103,17 @@ for (const c of cases) { /* eslint-disable no-await-in-loop */
 
 ---
 
-# 4. 백엔드(애플리케이션) 레이어 방어
+# 백엔드(애플리케이션) 레이어 방어
 
-## 4.1 정책 결정: **첫 값/마지막 값/배열** 중 **하나**로 고정
+## 정책 결정: **첫 값/마지막 값/배열** 중 **하나**로 고정
+
 - **권장**:
   - **기본은 “중복 금지”**.
   - **배열이 필요한 엔드포인트만** 명시적으로 허용(예: `ids[]=1&ids[]=2`).
   - 불가피하다면 “첫 값만” 또는 “마지막 값만”을 **전 계층에서 동일**하게 채택.
 
-## 4.2 Node.js(Express) — **중복 금지 + 배열 화이트리스트**
+## Node.js(Express) — **중복 금지 + 배열 화이트리스트**
+
 ```js
 // security/hpp.js
 const MULTI_ALLOWED = new Set(["ids[]", "tags[]"]);  // 배열 허용 키(명시적 표기)
@@ -156,7 +165,8 @@ export function hppGuard(req, res, next) {
 > - 프레임워크의 기본 파서가 중복을 **배열**로 주기도 하고, **마지막 값**으로 덮기도 합니다.
 > - 위처럼 **명시적 허용 목록** 외엔 **중복 거절** + (필요 시) **정규화**를 수행하세요.
 
-### 4.2.1 Express에 적용
+### Express에 적용
+
 ```js
 import express from "express";
 import bodyParser from "body-parser";
@@ -185,13 +195,14 @@ app.get("/search", (req, res) => {
 });
 ```
 
-### 4.2.2 **금지**: 혼합 getter
+### **금지**: 혼합 getter
+
 - Express의 과거 API `req.param(name)` 처럼 **route/query/body 혼합 조회**는 **정책 충돌**을 일으킵니다(삭제/미사용 권장).
 - **항상 명시적**으로 `req.query`, `req.body`, `req.params`를 **구분**하세요.
 
 ---
 
-## 4.3 Python — Flask
+## Python — Flask
 
 ```python
 from flask import Flask, request, abort
@@ -218,7 +229,7 @@ def hpp_guard():
 
 ---
 
-## 4.4 Django (배열/중복 명시적 처리)
+## Django (배열/중복 명시적 처리)
 
 ```python
 from django.http import HttpResponseBadRequest
@@ -242,7 +253,7 @@ def hpp_guard(get_response):
 
 ---
 
-## 4.5 Java — Spring Boot(Filter)
+## Java — Spring Boot(Filter)
 
 ```java
 @Component
@@ -270,7 +281,7 @@ public class HppFilter implements Filter {
 
 ---
 
-## 4.6 Go — net/http
+## Go — net/http
 
 ```go
 func HPPGuard(next http.Handler) http.Handler {
@@ -290,7 +301,7 @@ func HPPGuard(next http.Handler) http.Handler {
 
 ---
 
-## 4.7 ASP.NET Core
+## ASP.NET Core
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -312,23 +323,27 @@ app.Use(async (ctx, next) => {
 
 ---
 
-# 5. 게이트웨이/프록시 레벨 선차단
+# 게이트웨이/프록시 레벨 선차단
 
-## 5.1 Nginx (정규식 기반 간단 차단 — 민감 키 예: role)
+## Nginx (정규식 기반 간단 차단 — 민감 키 예: role)
+
 ```nginx
 # role 키가 두 번 이상 등장하면 거절
+
 set $dup_role 0;
 if ($query_string ~* "(^|[;&])role=[^;&]*([;&].*role=)") { set $dup_role 1; }
 if ($dup_role) { return 400; }
 
 # 세미콜론(;)을 분리자로 쓰지 않도록 전역적으로 비허용(정책에 따라)
+
 if ($query_string ~* ";") { return 400; }
 ```
 
 > 정규식만으로 **모든 키의 중복**을 일반화하기는 어렵습니다.
 > **권장**: OpenResty(ngx_lua)나 게이트웨이(예: Kong, APIM)에서 **파싱 후 검사**.
 
-### 5.1.1 OpenResty(Lua) — 정확한 파싱 후 차단
+### OpenResty(Lua) — 정확한 파싱 후 차단
+
 ```nginx
 location / {
   access_by_lua_block {
@@ -344,7 +359,8 @@ location / {
 }
 ```
 
-## 5.2 HAProxy (민감 키별 ACL)
+## HAProxy (민감 키별 ACL)
+
 ```haproxy
 frontend fe
   bind :443 ssl crt /etc/haproxy/cert.pem
@@ -353,14 +369,15 @@ frontend fe
   default_backend be
 ```
 
-## 5.3 클라우드/API 게이트웨이
+## 클라우드/API 게이트웨이
+
 - **AWS API Gateway**: `multiValueQueryStringParameters`를 **전달하지 않게** 매핑하거나, Lambda/Integration에서 **중복 검사** 후 거절.
 - **Kong/Apigee**: Request Transformer/Plugin으로 **중복 제거/차단** 정책 구현.
 - **Cloudflare/CloudFront**: Function/Worker로 URI args 파싱 → **중복 거절**.
 
 ---
 
-# 6. 프런트엔드/클라이언트 수칙
+# 프런트엔드/클라이언트 수칙
 
 - **URL 생성 시** `URLSearchParams` 사용 + **기존 키 존재 여부 검사**
 - **배열은 명시적 표기**(`ids[]`) 또는 JSON 바디를 사용(REST: GET 대신 POST/검색 바디 등)
@@ -385,16 +402,17 @@ function buildQuery(params) {
 
 ---
 
-# 7. “세미콜론(;) 분리자”, “이중 디코딩” 이슈
+# “세미콜론(;) 분리자”, “이중 디코딩” 이슈
 
 - 일부 서버/프록시는 `;`를 **파라미터 분리자**로 해석할 수 있습니다. 정책적으로 **금지**하거나, **정규화 시 모두 `&`로 통일**하세요.
 - **이중 디코딩(Double-decoding)**으로 `a=1%26a%3D2` 같은 값이 **나중 단계에서 다시 분리**되지 않도록, **한 번만 디코딩**하고 **값으로 취급**해야 합니다.
 
 ---
 
-# 8. 테스트/CI — 자동화로 재발 방지
+# 테스트/CI — 자동화로 재발 방지
 
-## 8.1 단위 테스트(Express 예)
+## 단위 테스트(Express 예)
+
 ```js
 import request from "supertest";
 import app from "../app.js"; // hppGuard 적용된 서버
@@ -412,16 +430,18 @@ test("ids[] 배열만 허용", async () => {
 });
 ```
 
-## 8.2 파이프라인 가드(간단 grep 룰)
+## 파이프라인 가드(간단 grep 룰)
+
 ```bash
 # 위험 API 사용(혼합 getter) 탐지
+
 grep -R --line-number -E "req\.param\(" src/ && \
   echo "::error title=HPP risk::Do not use req.param()" && exit 1
 ```
 
 ---
 
-# 9. 로깅/모니터링/탐지
+# 로깅/모니터링/탐지
 
 - **로그 필드**: `ts`, `route`, `ip`, `user_id`, `dup_keys`(배열), `policy`(first/last/none), `status`
 - **탐지 룰 예시**
@@ -443,7 +463,7 @@ index=edge event=reject_hpp
 
 ---
 
-# 10. 운영 체크리스트 (요약)
+# 운영 체크리스트 (요약)
 
 - [ ] **전 계층 동일 정책**: *중복 금지* + 필요 시 *첫 값만 허용*으로 **통일**
 - [ ] **배열 허용은 명시적**(`[]` 표기 or JSON 바디)

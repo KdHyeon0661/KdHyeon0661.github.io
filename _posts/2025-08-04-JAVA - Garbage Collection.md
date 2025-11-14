@@ -6,7 +6,7 @@ category: Java
 ---
 # Garbage Collection(GC)
 
-## 1. 왜 GC인가? (요약 재정리)
+## 왜 GC인가? (요약 재정리)
 
 - **자동 메모리 관리**: 명시적 `free` 없이 가비지 회수 → 메모리 안전성↑.
 - **도달성 기반**: 루트로부터 **도달 불가능**해진 객체를 가비지로 간주.
@@ -14,9 +14,10 @@ category: Java
 
 ---
 
-## 2. 힙/영역/루트/도달성: 정확히 이해하기
+## 힙/영역/루트/도달성: 정확히 이해하기
 
-### 2.1 JVM 메모리 큰 그림
+### JVM 메모리 큰 그림
+
 ```
 [Thread Stacks]   [Native(Direct) Memory]   [Code Cache]
         \                   |                     |
@@ -34,11 +35,13 @@ category: Java
 - **Direct/Native Memory**: NIO DirectBuffer, JNI 등(힙 외).
 - **Code Cache**: JIT 컴파일 코드.
 
-### 2.2 GC Roots
+### GC Roots
+
 - 각 스레드의 **스택 레퍼런스**, **JNI 글로벌 레퍼런스**, **static 필드**, **JVM 내부 루트** 등.
 - **Reachability(도달성)**: GC Root에서 **추적 가능한 객체만** “살아있다”고 정의.
 
-### 2.3 Mark–Sweep–Compact와 트라이컬러 모델
+### Mark–Sweep–Compact와 트라이컬러 모델
+
 - **Mark**: 도달 객체에 “검은색(visited)” 표시
 - **Sweep**: 표시 안 된(흰색) 객체 회수
 - **Compact**: 조각난 메모리 **연속화** (단편화 완화)
@@ -47,7 +50,7 @@ category: Java
 
 ---
 
-## 3. 할당 경로와 승격(Promotion)
+## 할당 경로와 승격(Promotion)
 
 - **TLAB(Thread-Local Allocation Buffer)**: 대부분의 소객체는 **스레드 지역 버퍼**에서 초고속 할당(포인터 bump).
 - **Young → Old 승격**: 서바이버(S0/S1)에서 **나이(tenuring age)**를 채우거나 Eden 압박 시 Old로 이동.
@@ -55,7 +58,7 @@ category: Java
 
 ---
 
-## 4. 수집기별 동작 정리 (선택 가이드 포함)
+## 수집기별 동작 정리 (선택 가이드 포함)
 
 | 수집기 | 핵심 포지션 | 장점 | 주의/제약 | 대표 옵션 |
 |---|---|---|---|---|
@@ -67,27 +70,31 @@ category: Java
 | **Shenandoah** | 초저지연 | Brooks ptr, 동시 compaction | 설정/플랫폼 고려 | `-XX:+UseShenandoahGC` |
 | **Epsilon** | **No-Op GC** | 마이크로벤치, 테스트 | 회수 없음 → OOM | `-XX:+UseEpsilonGC` |
 
-### 4.1 G1 GC 한 장 요약
+### G1 GC 한 장 요약
+
 - 힙을 **고정 크기 Region**으로 분할(1~32MB).
 - **Young GC**(Eden→Survivor/Old 복사) + 주기적 **Mixed GC**(Old 일부 포함)로 힙 관리.
 - **RSet(Remembered Set)** + **Card Table** + **SATB(Snapshot-At-The-Beginning) Write Barrier**로 동시/병렬 마킹.
 - 목표 지연시간: `-XX:MaxGCPauseMillis=200` (기본) 등으로 예측 가능한 pause.
 
-### 4.2 ZGC / Shenandoah 초저지연 개요
+### ZGC / Shenandoah 초저지연 개요
+
 - **ZGC**: 컬러드 포인터/Load Barrier 기반 **동시 Relocation**. STW는 루트 스캔 짧게.
 - **Shenandoah**: 로드 배리어나 브룩스 포인터로 **동시 Compaction** 구현.
 - 최신 JDK에서는 **Generational ZGC** 모드(세대 구분)도 제공 → Young 집중 회수로 효율↑.
 
 ---
 
-## 5. GC 트리거, 실패, 병목 패턴
+## GC 트리거, 실패, 병목 패턴
 
-### 5.1 일반 트리거
+### 일반 트리거
+
 - **Young 부족** → Minor/Young GC
 - **Old 부족** → Mixed/Full GC
 - **System.gc()** → (명시 요청; 대부분 비권장)
 
-### 5.2 실패/경고 지표
+### 실패/경고 지표
+
 - **Promotion Failure**: Young에서 Old로 승격할 공간 부족 → 긴 STW/FullGC 유발.
 - **To-space Exhausted**: 복사 대상 공간 부족(복사형 수집기).
 - **Humongous Allocation 실패(G1)**: 연속 Region 필요 → Mixed/Full로 이어질 수 있음.
@@ -95,9 +102,10 @@ category: Java
 
 ---
 
-## 6. 튜닝 기본기(Collector 공통)
+## 튜닝 기본기(Collector 공통)
 
-### 6.1 힙 크기/비율
+### 힙 크기/비율
+
 - 고정 힙(프리터치 포함):
   ```
   -Xms8g -Xmx8g -XX:+AlwaysPreTouch
@@ -109,7 +117,8 @@ category: Java
   -XX:MaxTenuringThreshold=10
   ```
 
-### 6.2 G1 핵심 옵션 묶음
+### G1 핵심 옵션 묶음
+
 ```
 -XX:+UseG1GC
 -XX:MaxGCPauseMillis=200
@@ -122,13 +131,15 @@ category: Java
 -XX:+UseStringDeduplication
 ```
 
-### 6.3 ZGC/초저지연(예)
+### ZGC/초저지연(예)
+
 ```
 -XX:+UseZGC
 -XX:SoftMaxHeapSize=8g     # ZGC의 '소프트' 상한
 ```
 
-### 6.4 병렬도
+### 병렬도
+
 ```
 -XX:ParallelGCThreads=<N>
 -XX:ConcGCThreads=<N/4~>
@@ -138,14 +149,16 @@ category: Java
 
 ---
 
-## 7. GC 로그 — Unified Logging로 읽기
+## GC 로그 — Unified Logging로 읽기
 
-### 7.1 켜기(현대 JDK)
+### 켜기(현대 JDK)
+
 ```
 -Xlog:gc*,safepoint=info:file=gc.log:time,uptime,level,tags
 ```
 
-### 7.2 Young/Mixed 예시 해설(축약)
+### Young/Mixed 예시 해설(축약)
+
 ```
 [3.456s][info][gc,start] GC(12) Pause Young (Normal) (G1 Evacuation Pause)
 [3.456s][info][gc,heap]  GC(12) Eden regions: 40->0, Survivors: 4->4, Old: 120->122
@@ -155,13 +168,14 @@ category: Java
 - **Eden 40→0**: 복사 완료, **Survivor 유지**, Old 증가(승격).
 - **Pause 6.2ms**: 지연시간 목표와 비교.
 
-### 7.3 흔한 신호
+### 흔한 신호
+
 - **경고**: “to-space exhausted”, “humongous regions”, “promotion failed” → **Old/Reserve/Region/Young 비율** 재조정 필요.
 - **STW 길어짐**: `MaxGCPauseMillis` 상향/하향, Region 크기, Mixed 비율, RSet 비용 점검.
 
 ---
 
-## 8. 코드 실습 ①: 메모리 패턴에 따른 GC 관찰
+## 코드 실습 ①: 메모리 패턴에 따른 GC 관찰
 
 ```java
 // GCPressure.java
@@ -192,7 +206,7 @@ java -Xms2g -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 \
 
 ---
 
-## 9. 코드 실습 ②: GC/메모리 JMX 지표 읽기
+## 코드 실습 ②: GC/메모리 JMX 지표 읽기
 
 ```java
 // GCStats.java
@@ -217,7 +231,7 @@ public class GCStats {
 
 ---
 
-## 10. Reference 타입(Soft/Weak/Phantom)과 Finalization
+## Reference 타입(Soft/Weak/Phantom)과 Finalization
 
 | 타입 | 회수 정책 | 용도 | 주의 |
 |---|---|---|---|
@@ -250,7 +264,7 @@ public class PhantomDemo {
 
 ---
 
-## 11. 메모리 누수·OOM의 흔한 원인과 대처
+## 메모리 누수·OOM의 흔한 원인과 대처
 
 - **캐시/맵에 쌓이는 객체(강한 참조)** → 만료/용량 정책·`Weak/SoftReference`/Caffeine 등 사용.
 - **ThreadLocal 누수** → 스레드 풀 재사용 시 **반드시 remove()**.
@@ -260,7 +274,7 @@ public class PhantomDemo {
 
 ---
 
-## 12. 지연시간/처리량 목표 잡기 (간단 계산)
+## 지연시간/처리량 목표 잡기 (간단 계산)
 
 서비스 지연 SLO를 $$L_{\text{target}}$$, GC로 허용되는 지연 예산을 $$B_{\text{gc}}$$ 라 하면,
 $$
@@ -271,27 +285,30 @@ $$
 
 ---
 
-## 13. Collector별 튜닝 포인트 요약
+## Collector별 튜닝 포인트 요약
 
-### 13.1 Parallel (처리량)
+### Parallel (처리량)
+
 - 크고 단순한 배치: `-XX:+UseParallelGC -Xms -Xmx` 고정, `ParallelGCThreads`만 잡고 끝.
 - Pause 민감하면 부적합.
 
-### 13.2 G1 (균형형/기본)
+### G1 (균형형/기본)
+
 - `MaxGCPauseMillis`: 목표 지연.
 - `G1NewSizePercent/G1MaxNewSizePercent`: Young 크기.
 - `InitiatingHeapOccupancyPercent`: 동시 마킹 시작점.
 - `G1ReservePercent`: 승격/복사 여유.
 - 문자열 중복 제거: `-XX:+UseStringDeduplication`.
 
-### 13.3 ZGC/Shenandoah (초저지연)
+### ZGC/Shenandoah (초저지연)
+
 - 힙 크게, OS/NUMA 고려.
 - `SoftMaxHeapSize`(ZGC), `ShenandoahGCHeuristics` 등.
 - **JFR**로 실측 후 Young/Old(Generational 지원 시) 비중 점검.
 
 ---
 
-## 14. 실전 체크리스트
+## 실전 체크리스트
 
 - [ ] **SLO 정의**: p95/p99 지연 목표, 스루풋 목표.
 - [ ] **Collector 선택**: Latency ↔ Throughput 균형.
@@ -306,19 +323,22 @@ $$
 
 ---
 
-## 15. GC 옵션 치트시트(발췌)
+## GC 옵션 치트시트(발췌)
 
 ```text
 # 공통
+
 -Xms<size> -Xmx<size>                 # 힙 고정 권장(서버)
 -XX:+AlwaysPreTouch                   # 힙 미리 터치
 -Xlog:gc*,safepoint:file=gc.log:time,uptime,level,tags
 
 # Parallel
+
 -XX:+UseParallelGC
 -XX:ParallelGCThreads=<n>
 
 # G1
+
 -XX:+UseG1GC
 -XX:MaxGCPauseMillis=200
 -XX:G1HeapRegionSize=8m
@@ -328,18 +348,20 @@ $$
 -XX:+UseStringDeduplication
 
 # ZGC
+
 -XX:+UseZGC
 -XX:SoftMaxHeapSize=8g
 # (필요 시) Generational 모드/관련 옵션은 JDK 버전에 맞춰 확인
 
 # Shenandoah
+
 -XX:+UseShenandoahGC
 -XX:ShenandoahGCHeuristics=balanced
 ```
 
 ---
 
-## 16. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q. `System.gc()`를 호출해야 하나요?**
 A. 일반적으로 **아니오**. 테스트/디버그용 외 권장하지 않습니다. `-XX:+DisableExplicitGC` 고려.
@@ -355,7 +377,7 @@ A. **스칼라 대체/스택 할당**으로 힙 할당↓ → GC 압력↓. (JIT
 
 ---
 
-## 17. 부록: G1 마이그레이션 가이드(Parallel→G1)
+## 부록: G1 마이그레이션 가이드(Parallel→G1)
 
 1) 동일 힙 크기로 시작: `-Xms/-Xmx` 고정
 2) `-XX:+UseG1GC -XX:MaxGCPauseMillis=200`
@@ -366,7 +388,7 @@ A. **스칼라 대체/스택 할당**으로 힙 할당↓ → GC 압력↓. (JIT
 
 ---
 
-## 18. 부록: 힙/지연 예산 간단 수식
+## 부록: 힙/지연 예산 간단 수식
 
 $$
 \text{Pause} \approx \frac{\text{Live Bytes to Evacuate}}{\text{Copy Throughput}} + \text{Overheads}
@@ -377,7 +399,7 @@ $$
 
 ---
 
-## 19. 마무리
+## 마무리
 
 - GC는 **원리 이해 + 측정 기반 튜닝**이 전부입니다.
 - **지표/JFR/로그**로 실제 워크로드의 **생존률/할당률/승격/장애**를 숫자로 파악하고,
@@ -385,7 +407,7 @@ $$
 
 ---
 
-## 20. 부록 코드: 스트링 중복 제거 효과(체감 예)
+## 부록 코드: 스트링 중복 제거 효과(체감 예)
 
 ```java
 // StringDedupDemo.java (G1에서만 효과)

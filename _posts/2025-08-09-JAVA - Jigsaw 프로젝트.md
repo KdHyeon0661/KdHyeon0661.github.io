@@ -6,15 +6,17 @@ category: Java
 ---
 # Jigsaw 프로젝트 개요
 
-## 1. 배경 — 클래스패스의 구조적 한계와 Jigsaw의 필요
+## 배경 — 클래스패스의 구조적 한계와 Jigsaw의 필요
 
-### 1.1 클래스패스(Classpath) 한계
+### 클래스패스(Classpath) 한계
+
 - **충돌(=Classpath Hell)**: 동일 FQCN이 여러 JAR에 존재 → 로딩 순서 의존.
 - **의존성 비가시성**: *필요 JAR 목록*을 타입 시스템 차원에서 표현할 수 없음.
 - **캡슐화 붕괴**: `public`이면 누구나 접근(내부 구현 노출).
 - **거대 배포물**: 작은 앱도 전체 JRE/JDK 동반.
 
-### 1.2 Jigsaw의 목표(설계 원칙)
+### Jigsaw의 목표(설계 원칙)
+
 | 목표 | 의도 |
 |---|---|
 | **모듈화** | 코드·플랫폼을 **모듈 단위**로 쪼개고 **의존 그래프**로 관리 |
@@ -25,9 +27,10 @@ category: Java
 
 ---
 
-## 2. 핵심 개념 — 모듈, 모듈 그래프, 접근성·가시성
+## 핵심 개념 — 모듈, 모듈 그래프, 접근성·가시성
 
-### 2.1 모듈과 `module-info.java`
+### 모듈과 `module-info.java`
+
 - **모듈** = 패키지 묶음 + 메타데이터(이름, 의존성, 공개/개방 규칙, 서비스).
 - 모듈 선언 예:
 ```java
@@ -41,12 +44,14 @@ module com.example.app {
 }
 ```
 
-### 2.2 읽기(Readability) vs 접근성(Accessibility)
+### 읽기(Readability) vs 접근성(Accessibility)
+
 - **읽기**: A 모듈이 B 모듈을 `requires`로 **읽을 수 있는가**(타입 사용 가능).
 - **접근성**: 읽을 수 있어도, 대상 **패키지가 `exports` 되었는가**가 별개.
 - **리플렉션**: `exports`만으로는 비공개 멤버 접근 불가 → **`opens`** 필요.
 
-### 2.3 모듈 종류
+### 모듈 종류
+
 | 종류 | 설명 |
 |---|---|
 | **Named Module** | `module-info.class` 포함, 모듈 이름 명시 |
@@ -55,9 +60,10 @@ module com.example.app {
 
 ---
 
-## 3. JDK 모듈화 — Platform as Modules
+## JDK 모듈화 — Platform as Modules
 
-### 3.1 예시 구조(발췌)
+### 예시 구조(발췌)
+
 ```
 java.base        # 모든 모듈의 기저 (java.lang, java.util, ...)
 java.logging     # java.util.logging
@@ -66,12 +72,14 @@ java.xml         # XML
 jdk.crypto.ec    # JDK 구현 모듈(elliptic curves)
 ```
 
-### 3.2 실습: 내 런타임의 모듈 나열
+### 실습: 내 런타임의 모듈 나열
+
 ```bash
 java --list-modules
 ```
 
-### 3.3 특정 JAR(또는 모듈) 분석
+### 특정 JAR(또는 모듈) 분석
+
 ```bash
 jar --describe-module --file libs/some-lib.jar
 jdeps --module-path mods --list-deps mods/com.example.app.jar
@@ -79,14 +87,16 @@ jdeps --module-path mods --list-deps mods/com.example.app.jar
 
 ---
 
-## 4. 문법 상세 — `requires`/`exports`/`opens`/서비스
+## 문법 상세 — `requires`/`exports`/`opens`/서비스
 
-### 4.1 `requires`
+### `requires`
+
 - `requires M;` : 컴파일/런타임 모두 **M 읽기** 필요.
 - `requires transitive M;` : 나를 **읽는 자**도 **M을 읽을 수 있게**(API 노출).
 - `requires static M;` : **컴파일 시만** 필요(애너테이션 등), 런타임 optional.
 
-### 4.2 `exports`와 `opens`
+### `exports`와 `opens`
+
 | 키워드 | 목적 | 효과 |
 |---|---|---|
 | `exports p` | **컴파일/런타임 API 공개** | `public` 타입 접근 허용 |
@@ -96,7 +106,8 @@ jdeps --module-path mods --list-deps mods/com.example.app.jar
 
 > **정리**: API 노출은 `exports`, 리플렉션 기반 프레임워크(Jackson/Hibernate/JAXB 등)에는 `opens`를 함께 설계.
 
-### 4.3 서비스 — `uses` / `provides ... with`
+### 서비스 — `uses` / `provides ... with`
+
 - **설계 의도**: 모듈 간 **느슨한 결합**과 **플러그인 구조**.
 - SPI 정의:
 ```java
@@ -128,27 +139,33 @@ for (Payment p : loader) {
 
 ---
 
-## 5. 도구 체인 — `jdeps`, `jar --describe-module`, `jlink`, `jmod`
+## 도구 체인 — `jdeps`, `jar --describe-module`, `jlink`, `jmod`
 
-### 5.1 `jdeps` — 의존성 분석
+### `jdeps` — 의존성 분석
+
 ```bash
 # JAR가 어떤 모듈/패키지에 의존하는지
+
 jdeps --multi-release 9 --print-module-deps app.jar
 jdeps --module-path mods --list-deps mods/com.example.app.jar
 ```
 
-### 5.2 `jar --describe-module`
+### `jar --describe-module`
+
 ```bash
 jar --describe-module --file mods/com.example.app.jar
 ```
 
-### 5.3 `jlink` — 경량 런타임 이미지 구성
+### `jlink` — 경량 런타임 이미지 구성
+
 - 목적: 앱이 **필요로 하는 모듈만** 포함한 **런타임 이미지** 생성.
 ```bash
 # 의존 모듈 확인
+
 jdeps --print-module-deps --ignore-missing-deps mods/com.example.app.jar
 
 # 예: 최소 런타임 생성
+
 jlink \
   --module-path "$JAVA_HOME/jmods:mods" \
   --add-modules com.example.app \
@@ -158,10 +175,12 @@ jlink \
   --output dist/runtime
 
 # 실행
+
 dist/runtime/bin/java -m com.example.app/com.example.app.Main
 ```
 
-### 5.4 `jmod` — 모듈 패키징(고급)
+### `jmod` — 모듈 패키징(고급)
+
 - 네이티브 라이브러리/설치 스크립트 포함 가능한 **.jmod** 포맷 생성·검증.
 ```bash
 jmod describe mods/com.example.core.jmod
@@ -169,9 +188,10 @@ jmod describe mods/com.example.core.jmod
 
 ---
 
-## 6. 마이그레이션 전략 — Classpath → Modulepath
+## 마이그레이션 전략 — Classpath → Modulepath
 
-### 6.1 단계적 접근(권장)
+### 단계적 접근(권장)
+
 1. **현행 유지 + 준비**
    - 모든 라이브러리에 `Automatic-Module-Name`(매니페스트) 지정 → **안정 모듈명** 확보.
    - 예: `Automatic-Module-Name: com.fasterxml.jackson.databind`.
@@ -186,7 +206,8 @@ jmod describe mods/com.example.core.jmod
 5. **배포 최적화**
    - `jlink`로 경량 런타임 생성, 컨테이너 이미지 축소.
 
-### 6.2 빈출 이슈와 해결
+### 빈출 이슈와 해결
+
 | 이슈 | 원인 | 해결 |
 |---|---|---|
 | **Split package** | 동일 패키지가 여러 모듈에 | 패키지 리네임/합치기(모듈=패키지 경계 원칙) |
@@ -196,9 +217,10 @@ jmod describe mods/com.example.core.jmod
 
 ---
 
-## 7. 실전 예 — 코어/API/앱/플러그인(서비스) 구성
+## 실전 예 — 코어/API/앱/플러그인(서비스) 구성
 
-### 7.1 모듈 레이아웃
+### 모듈 레이아웃
+
 ```
 src/
  ├─ com.example.core/
@@ -212,7 +234,8 @@ src/
      └─ com/example/pay/card/CardPayment.java
 ```
 
-### 7.2 선언 파일
+### 선언 파일
+
 ```java
 // src/com.example.core/module-info.java
 module com.example.core {
@@ -236,7 +259,8 @@ module com.example.pay.card {
 }
 ```
 
-### 7.3 구현 & 실행
+### 구현 & 실행
+
 ```java
 // com.example.core.spi.Payment
 package com.example.core.spi;
@@ -270,22 +294,26 @@ public class Main {
 컴파일·패키징·실행:
 ```bash
 # 컴파일(모듈 소스 경로 한 번에)
+
 javac -d out --module-source-path src $(find src -name "*.java")
 
 # 모듈 JAR로 포장
+
 jar --create --file mods/com.example.core.jar       -C out/com.example.core .
 jar --create --file mods/com.example.pay.card.jar   -C out/com.example.pay.card .
 jar --create --file mods/com.example.app.jar        -C out/com.example.app .
 
 # 실행(모듈패스 지정)
+
 java -p mods -m com.example.app/com.example.app.Main
 ```
 
 ---
 
-## 8. 리플렉션·프레임워크·테스트 — `opens`와 런처 플래그
+## 리플렉션·프레임워크·테스트 — `opens`와 런처 플래그
 
-### 8.1 프레임워크(Jackson/Hibernate) 매핑
+### 프레임워크(Jackson/Hibernate) 매핑
+
 ```java
 module com.example.app {
     // POJO가 있는 패키지를 리플렉션 허용
@@ -293,12 +321,14 @@ module com.example.app {
 }
 ```
 
-### 8.2 런처 임시 플래그(마이그레이션 단계)
+### 런처 임시 플래그(마이그레이션 단계)
+
 ```bash
 java --add-opens com.example.app/com.example.app.model=ALL-UNNAMED -jar app.jar
 ```
 
-### 8.3 테스트에서 내부 접근(JUnit)
+### 테스트에서 내부 접근(JUnit)
+
 ```java
 // 테스트 전용으로만 리플렉션 허용
 opens com.example.app.internal to org.junit.platform.commons;
@@ -317,9 +347,10 @@ Maven Surefire 예(선택):
 
 ---
 
-## 9. 빌드 도구 통합(요약) — Maven/Gradle
+## 빌드 도구 통합(요약) — Maven/Gradle
 
-### 9.1 Maven (핵심만)
+### Maven (핵심만)
+
 ```xml
 <plugin>
   <artifactId>maven-compiler-plugin</artifactId>
@@ -335,7 +366,8 @@ Maven Surefire 예(선택):
 - 멀티모듈은 **모듈 간 의존**을 POM으로 관리.
 - 테스트/리플렉션은 Surefire/FailSafe의 `argLine`로 `--add-opens` 조정.
 
-### 9.2 Gradle (핵심만)
+### Gradle (핵심만)
+
 ```groovy
 java {
   toolchain { languageVersion = JavaLanguageVersion.of(17) }
@@ -348,14 +380,16 @@ test {
 
 ---
 
-## 10. jlink로 경량 런타임 만들기 — 컨테이너/임베디드 배포
+## jlink로 경량 런타임 만들기 — 컨테이너/임베디드 배포
 
-### 10.1 절차
+### 절차
+
 1. 앱 모듈 JAR과 의존 모듈 준비(`mods/`).
 2. `jdeps --print-module-deps`로 필요한 플랫폼 모듈 확인.
 3. `jlink`로 이미지 생성.
 
-### 10.2 예시
+### 예시
+
 ```bash
 jdeps --print-module-deps mods/com.example.app.jar
 # 출력 예: java.base,java.logging,com.example.core,com.example.pay.card
@@ -373,7 +407,7 @@ image/app/bin/java -m com.example.app/com.example.app.Main
 
 ---
 
-## 11. 아키텍처와 성능·보안의 영향
+## 아키텍처와 성능·보안의 영향
 
 - **보안**: 내부 API 접근 차단(`sun.*` 등), `opens`로 **정상 선언된** 리플렉션만 허용.
 - **성능**: 클래스 경로 스캔 감소, 런타임 크기 축소(`jlink`)로 **기동/메모리 개선**.
@@ -381,13 +415,15 @@ image/app/bin/java -m com.example.app/com.example.app.Main
 
 ---
 
-## 12. 고급 주제 — 동적 모듈 로딩(`ModuleLayer`), 계층 구성
+## 고급 주제 — 동적 모듈 로딩(`ModuleLayer`), 계층 구성
 
-### 12.1 동적 로딩 개념
+### 동적 로딩 개념
+
 - JPMS는 **계층형(ModuleLayer)** 로 모듈을 동적 로드 가능(플러그인 시스템 등).
 - 기본 계층 위에 **새 레이어**를 구성하여 격리된 환경 제공.
 
-### 12.2 코드 스케치
+### 코드 스케치
+
 ```java
 ModuleLayer parent = ModuleLayer.boot();
 ModuleFinder finder = ModuleFinder.of(Path.of("plugins"));
@@ -406,7 +442,7 @@ Object plugin = c.getDeclaredConstructor().newInstance();
 
 ---
 
-## 13. 트러블슈팅 표(빠른 대응)
+## 트러블슈팅 표(빠른 대응)
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -419,7 +455,7 @@ Object plugin = c.getDeclaredConstructor().newInstance();
 
 ---
 
-## 14. FAQ — 자주 묻는 차이·오해 정리
+## FAQ — 자주 묻는 차이·오해 정리
 
 - **`exports` vs `opens`**
   - `exports`: **컴파일/런타임 API 접근** 허용(타입 사용).
@@ -436,7 +472,7 @@ Object plugin = c.getDeclaredConstructor().newInstance();
 
 ---
 
-## 15. 베스트 프랙티스(체크리스트)
+## 베스트 프랙티스(체크리스트)
 
 1. **모듈=API 경계**: 내부는 감추고(`exports` 최소화), 필요한 패키지만 `opens`.
 2. **전이 의존 최소화**: `requires transitive`는 **API 노출 의도**가 있을 때만.
@@ -449,19 +485,22 @@ Object plugin = c.getDeclaredConstructor().newInstance();
 
 ---
 
-## 16. 부록 — 빠른 실습 레시피
+## 부록 — 빠른 실습 레시피
 
-### 16.1 내 프로젝트의 모듈 의존 탐색
+### 내 프로젝트의 모듈 의존 탐색
+
 ```bash
 jdeps --print-module-deps --ignore-missing-deps target/app.jar
 ```
 
-### 16.2 모듈 JAR에서 메타데이터 확인
+### 모듈 JAR에서 메타데이터 확인
+
 ```bash
 jar --describe-module --file mods/com.example.app.jar
 ```
 
-### 16.3 런타임 이미지 생성/실행
+### 런타임 이미지 생성/실행
+
 ```bash
 jlink --module-path "$JAVA_HOME/jmods:mods" \
       --add-modules com.example.app \
@@ -473,7 +512,7 @@ image/app/bin/java -m com.example.app/com.example.app.Main
 
 ---
 
-## 17. 결론
+## 결론
 
 Project Jigsaw는 **플랫폼과 애플리케이션을 모듈 단위로 재구성**해 **안정성(명시적 의존성)**, **보안(강한 캡슐화)**, **배포 효율(경량 런타임)** 을 동시에 끌어올렸습니다.
 **마이그레이션의 핵심**은:

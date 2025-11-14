@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # WebSocket CSRF (Cross-Site WebSocket Hijacking)
 
-## 0. 한눈에 보기 (Executive Summary)
+## 한눈에 보기 (Executive Summary)
 
 - **문제**
   - WebSocket은 **HTTP Upgrade**로 시작하지만 **CORS에 의해 보호되지 않습니다**.
@@ -27,9 +27,10 @@ category: 웹해킹
 
 ---
 
-## 1. 동작 원리와 위험
+## 동작 원리와 위험
 
-### 1.1 WebSocket 핸드셰이크 요약
+### WebSocket 핸드셰이크 요약
+
 브라우저:
 ```
 GET /ws HTTP/1.1
@@ -50,7 +51,8 @@ Sec-WebSocket-Accept: <...>
 ```
 > **주의**: HTTP CORS는 적용되지 않습니다. **서버가 `Origin`을 직접 검사**해야 합니다.
 
-### 1.2 공격 시나리오(개념)
+### 공격 시나리오(개념)
+
 1) 사용자가 `victim.example`에 로그인(세션 쿠키 보유).
 2) 공격자 페이지(`attacker.tld`)에서:
    ```js
@@ -60,18 +62,20 @@ Sec-WebSocket-Accept: <...>
    ```
 3) 서버가 **`Origin`을 검사하지 않으면** 연결 성립 → **세션 권한으로 API 실행**.
 
-### 1.3 SameSite가 방패가 될까?
+### SameSite가 방패가 될까?
+
 - 기본 `SameSite=Lax`는 **대부분의 교차 사이트 요청에서 쿠키를 차단**하지만, 브라우저/버전/정책 예외와
   **의도적으로 `None`**을 쓴 서비스(SSO/임베드 필요)도 많습니다.
 - **결론**: **쿠키 전송에 의존하여 안전을 기대하지 말고**, **서버단 Origin+토큰 검증**을 필수로 하십시오.
 
 ---
 
-## 2. “안전 재현” 점검(스테이징 전용) — **막혀야 정상**
+## “안전 재현” 점검(스테이징 전용) — **막혀야 정상**
 
 > 아래 스모크 테스트는 **차단 확인** 목적입니다. 운영·외부 시스템 금지.
 
-### 2.1 허용되지 않은 Origin
+### 허용되지 않은 Origin
+
 - 스테이징 도메인과 다른 페이지에서 콘솔 실행:
   ```js
   // https://not-allowed.tld 콘솔에서
@@ -80,14 +84,16 @@ Sec-WebSocket-Accept: <...>
   ```
   **기대**: 서버가 403/핸드셰이크 거절 → 연결 실패.
 
-### 2.2 `Origin: null` 거절
+### `Origin: null` 거절
+
 - 로컬 파일(`file://`) 페이지에서:
   ```js
   const ws = new WebSocket("wss://staging.example.com/ws");
   ```
   **기대**: 거절(`null` Origin은 기본 금지).
 
-### 2.3 토큰 누락/위조 거절
+### 토큰 누락/위조 거절
+
 - 허용 Origin에서라도 토큰 없이:
   ```js
   const ws = new WebSocket("wss://staging.example.com/ws?csrf=missing");
@@ -96,7 +102,7 @@ Sec-WebSocket-Accept: <...>
 
 ---
 
-## 3. 방어 전략(설계 → 구현 → 운영)
+## 방어 전략(설계 → 구현 → 운영)
 
 1) **인증/권한 모델**
    - 연결 직후 **세션/토큰을 재검증**하고, 각 메시지에 대해 **권한 확인**(특히 상태 변경).
@@ -115,11 +121,12 @@ Sec-WebSocket-Accept: <...>
 
 ---
 
-## 4. 프레임워크별 구현 레시피
+## 프레임워크별 구현 레시피
 
-### 4.1 Node.js — `ws` 라이브러리
+### Node.js — `ws` 라이브러리
 
-#### 4.1.1 `Origin` 검사 + 토큰 검증
+#### `Origin` 검사 + 토큰 검증
+
 ```js
 // ws-server.js
 import http from "node:http";
@@ -189,7 +196,8 @@ server.listen(8080);
 > - `server.on('upgrade')` 단계에서 **`Origin`**과 **토큰**을 확인해야 **핸드셰이크 차단**이 확실합니다.
 > - 토큰은 **짧은 TTL** + **1회성**이 이상적.
 
-#### 4.1.2 `Sec-WebSocket-Protocol`(서브프로토콜)에 토큰 싣기
+#### `Sec-WebSocket-Protocol`(서브프로토콜)에 토큰 싣기
+
 브라우저는 임의 헤더를 못 붙입니다. 대신 **서브프로토콜 문자열**을 사용할 수 있습니다.
 ```js
 // 클라이언트
@@ -207,7 +215,7 @@ server.on("upgrade", (req, socket, head) => {
 
 ---
 
-### 4.2 Socket.IO (엔진: WebSocket + 폴백)
+### Socket.IO (엔진: WebSocket + 폴백)
 
 ```ts
 import { createServer } from "http";
@@ -244,7 +252,7 @@ io.on("connection", socket => {
 
 ---
 
-### 4.3 Go — Gorilla WebSocket
+### Go — Gorilla WebSocket
 
 ```go
 var allowed = map[string]bool{
@@ -281,7 +289,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 ---
 
-### 4.4 Python — Starlette / FastAPI
+### Python — Starlette / FastAPI
 
 ```python
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -314,10 +322,11 @@ async def ws_endpoint(ws: WebSocket):
 
 ---
 
-### 4.5 Django Channels
+### Django Channels
 
 ```python
 # asgi.py / routing.py 구성은 생략
+
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from urllib.parse import urlparse, parse_qs
 
@@ -340,7 +349,7 @@ class SecureConsumer(AsyncJsonWebsocketConsumer):
 
 ---
 
-### 4.6 Java Spring (STOMP/SockJS 포함)
+### Java Spring (STOMP/SockJS 포함)
 
 ```java
 @Configuration
@@ -378,11 +387,13 @@ public class CsrfHandshakeInterceptor implements HandshakeInterceptor {
 
 ---
 
-## 5. 리버스 프록시/LB에서 선차단
+## 리버스 프록시/LB에서 선차단
 
-### 5.1 Nginx — `Origin` ACL로 Upgrade 거절
+### Nginx — `Origin` ACL로 Upgrade 거절
+
 ```nginx
 # 허용 오리진 매핑
+
 map $http_origin $ws_ok {
   default 0;
   "~^https://app\.example\.com$"   1;
@@ -406,7 +417,8 @@ server {
 ```
 > **팁**: `Origin`이 비어 있거나 `null`이면 **거절**. 필요 시 `map`에 별도 분기.
 
-### 5.2 HAProxy — ACL
+### HAProxy — ACL
+
 ```haproxy
 frontend fe
   bind :443 ssl crt /etc/haproxy/cert.pem
@@ -416,13 +428,14 @@ frontend fe
   use_backend be_ws if is_ws
 ```
 
-### 5.3 Cloudflare Workers / CDN 엣지
+### Cloudflare Workers / CDN 엣지
+
 - 핸드셰이크의 **`Origin` 헤더 검사** 후 `fetch(request)` 전에 **거절**.
 - 엣지에서 차단하면 **앱까지 트래픽이 가지 않음**(코스트 절감/연결 폭주 완화).
 
 ---
 
-## 6. 토큰 설계 패턴(실무)
+## 토큰 설계 패턴(실무)
 
 1) **더블 서브밋 쿠키**
    - `csrfCookie`(쿠키, HttpOnly 아님)와 `?csrf`(쿼리)를 비교.
@@ -438,7 +451,7 @@ frontend fe
 
 ---
 
-## 7. 메시지 레벨 방어(연결 후)
+## 메시지 레벨 방어(연결 후)
 
 - **메시지 스키마 검증**: JSON Schema/유효성 체크(타입/범위/길이).
 - **리플레이 차단**: 상태 변경 오퍼레이션은 **idempotency key** 필요.
@@ -448,7 +461,7 @@ frontend fe
 
 ---
 
-## 8. 로깅/탐지/알림
+## 로깅/탐지/알림
 
 - **로그 필드**: `ts`, `remote_ip`, `origin`, `allowed`, `token_ok`, `user_id`, `path`, `closed_reason`
 - **탐지 룰**
@@ -472,7 +485,7 @@ index=app service=ws event=handshake allowed=false
 
 ---
 
-## 9. 테스트/CI 자동화
+## 테스트/CI 자동화
 
 - **유닛/통합**:
   - 비허용 `Origin` → 403/close
@@ -488,7 +501,7 @@ index=app service=ws event=handshake allowed=false
 
 ---
 
-## 10. 체크리스트 (현장용)
+## 체크리스트 (현장용)
 
 - [ ] **핸드셰이크에서 `Origin` 화이트리스트**(정확 호스트·프로토콜·포트)
 - [ ] `Origin: null` **거절**(필요 시 예외 경로만)

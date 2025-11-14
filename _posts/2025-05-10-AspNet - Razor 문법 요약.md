@@ -5,7 +5,7 @@ date: 2025-05-10 21:20:23 +0900
 category: AspNet
 ---
 # Razor 문법 완전 정리 (ASP.NET Core)
-## 0. Razor란?
+## Razor란?
 
 - HTML 안에 **C#**을 자연스럽게 섞을 수 있게 하는 **뷰 템플릿 엔진**.
 - 파일 확장자: `.cshtml`
@@ -13,15 +13,17 @@ category: AspNet
 
 ---
 
-## 1. Razor의 핵심: `@` 전환과 출력
+## Razor의 핵심: `@` 전환과 출력
 
-### 1.1 인라인 전환
+### 인라인 전환
+
 ```razor
 <p>Hello, @Model.UserName!</p>
 <p>합계: @(Model.Price * Model.Quantity)</p>  <!-- 복잡 표현은 괄호 권장 -->
 ```
 
-### 1.2 코드 블록
+### 코드 블록
+
 ```razor
 @{
     var now = DateTime.Now;
@@ -33,22 +35,25 @@ category: AspNet
 <p>2 + 3 = @Sum(2, 3)</p>
 ```
 
-### 1.3 문자열/HTML 출력과 인코딩
+### 문자열/HTML 출력과 인코딩
+
 ```razor
 @("<b>Bold</b>")            <!-- &lt;b&gt;Bold&lt;/b&gt; 로 인코딩되어 출력 -->
 @Html.Raw("<b>Bold</b>")    <!-- 실제 <b>Bold</b> 로 렌더링 -->
 ```
 
-### 1.4 `@` 자체를 문자로 출력
+### `@` 자체를 문자로 출력
+
 ```razor
 @@  <!-- 결과: @ -->
 ```
 
 ---
 
-## 2. 흐름 제어(제어문/표현식)
+## 흐름 제어(제어문/표현식)
 
-### 2.1 조건/반복
+### 조건/반복
+
 ```razor
 @if (Model.IsAdmin) { <p>관리자입니다.</p> } else { <p>일반 사용자입니다.</p> }
 
@@ -62,7 +67,8 @@ category: AspNet
 </ul>
 ```
 
-### 2.2 switch
+### switch
+
 ```razor
 @switch (Model.Status)
 {
@@ -72,22 +78,25 @@ category: AspNet
 }
 ```
 
-### 2.3 null 전파/조건부
+### null 전파/조건부
+
 ```razor
 <p>@Model?.Profile?.DisplayName ?? "이름 없음"</p>
 ```
 
 ---
 
-## 3. 모델 바인딩 & 형식 지정
+## 모델 바인딩 & 형식 지정
 
-### 3.1 뷰의 모델 타입 지정
+### 뷰의 모델 타입 지정
+
 ```razor
 @model MyApp.Models.User
 <h1>@Model.UserName 님 환영합니다!</h1>
 ```
 
-### 3.2 날짜/숫자 포맷(문화권 반영)
+### 날짜/숫자 포맷(문화권 반영)
+
 ```razor
 @DateTime.Now.ToString("D", System.Globalization.CultureInfo.CurrentCulture)
 @1234567.ToString("N", System.Globalization.CultureInfo.CurrentCulture)
@@ -95,16 +104,18 @@ category: AspNet
 
 ---
 
-## 4. 레이아웃, 섹션, 시작 파일
+## 레이아웃, 섹션, 시작 파일
 
-### 4.1 레이아웃 지정
+### 레이아웃 지정
+
 ```razor
 @{
     Layout = "_Layout"; // /Views/Shared/_Layout.cshtml 또는 /Pages/Shared/_Layout.cshtml
 }
 ```
 
-### 4.2 섹션 정의/렌더링
+### 섹션 정의/렌더링
+
 _레이아웃 내:_
 ```razor
 <body>
@@ -119,7 +130,8 @@ _각 View에서:_
 }
 ```
 
-### 4.3 `_ViewStart.cshtml` / `_ViewImports.cshtml`
+### `_ViewStart.cshtml` / `_ViewImports.cshtml`
+
 - `_ViewStart.cshtml`: 모든 뷰의 공통 설정(예: `Layout`) 지정.
 - `_ViewImports.cshtml`: 공통 `@using`, Tag Helper, 네임스페이스 등.
 ```razor
@@ -130,7 +142,7 @@ _각 View에서:_
 
 ---
 
-## 5. 주석과 텍스트
+## 주석과 텍스트
 
 - Razor 주석(클라이언트에 출력 안 됨):
 ```razor
@@ -143,9 +155,10 @@ _각 View에서:_
 
 ---
 
-## 6. 폼/바인딩/검증(태그 헬퍼)
+## 폼/바인딩/검증(태그 헬퍼)
 
-### 6.1 폼 + Tag Helper
+### 폼 + Tag Helper
+
 ```razor
 @model MyApp.Models.ContactInput
 
@@ -170,7 +183,8 @@ _각 View에서:_
 
 > `asp-for`는 모델 속성 이름을 기반으로 name/id/value, validation 속성 등을 자동 구성.
 
-### 6.2 Razor Pages의 POST 핸들러
+### Razor Pages의 POST 핸들러
+
 ```csharp
 public class IndexModel : PageModel
 {
@@ -186,33 +200,38 @@ public class IndexModel : PageModel
 }
 ```
 
-### 6.3 검증 메시지와 요약
+### 검증 메시지와 요약
+
 ```razor
 <div asp-validation-summary="All" class="text-danger"></div>
 <span asp-validation-for="Email" class="text-danger"></span>
 ```
 
-### 6.4 Anti-forgery(기본)
+### Anti-forgery(기본)
+
 - `form` Tag Helper가 자동으로 `__RequestVerificationToken` 생성(컨트롤러/페이지에서 `[ValidateAntiForgeryToken]` 기본 활성).
 - Ajax 시 토큰 헤더 포함 필요.
 
 ---
 
-## 7. 링크/라우팅 Tag Helper
+## 링크/라우팅 Tag Helper
 
-### 7.1 MVC 링크
+### MVC 링크
+
 ```razor
 <a asp-controller="Home" asp-action="About">소개</a>
 <a asp-controller="Users" asp-action="Detail" asp-route-id="5">유저</a>
 ```
 
-### 7.2 Razor Pages 링크
+### Razor Pages 링크
+
 ```razor
 <a asp-page="/Contact">문의하기</a>
 <a asp-page="/Products/Detail" asp-route-id="10">제품 상세</a>
 ```
 
-### 7.3 환경별 자원 로딩
+### 환경별 자원 로딩
+
 ```razor
 <environment include="Development">
     <script src="~/lib/jquery/jquery.js"></script>
@@ -224,9 +243,10 @@ public class IndexModel : PageModel
 
 ---
 
-## 8. Partial View, View Component, Editor/Display Templates
+## Partial View, View Component, Editor/Display Templates
 
-### 8.1 Partial View
+### Partial View
+
 ```razor
 <partial name="_LoginPartial" />
 @await Html.PartialAsync("_ProductCard", product)
@@ -234,7 +254,8 @@ public class IndexModel : PageModel
 - **장점**: 재사용 가능, 간단.
 - **주의**: 데이터 전달은 모델/뷰데이터/뷰백 등.
 
-### 8.2 View Component(로직+뷰 결합 재사용)
+### View Component(로직+뷰 결합 재사용)
+
 **클래스:**
 ```csharp
 public class CartSummaryViewComponent : ViewComponent
@@ -255,7 +276,8 @@ public class CartSummaryViewComponent : ViewComponent
 ```
 - **장점**: DI/비즈니스 로직 포함한 캡슐화된 UI 블록.
 
-### 8.3 Editor/Display Templates(이름 규칙 기반)
+### Editor/Display Templates(이름 규칙 기반)
+
 - 위치: `Views/Shared/EditorTemplates/TypeName.cshtml`, `Views/Shared/DisplayTemplates/TypeName.cshtml`
 ```razor
 @Html.EditorFor(m => m.Address)   // Address 타입 템플릿 자동 찾음
@@ -265,16 +287,18 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 9. 조건부/동적 특성 렌더링
+## 조건부/동적 특성 렌더링
 
-### 9.1 조건부 속성
+### 조건부 속성
+
 ```razor
 <input class="@(Model.IsError ? "form-control is-invalid" : "form-control")" />
 
 <button disabled="@(Model.IsBusy ? "disabled" : null)">저장</button>
 ```
 
-### 9.2 반복으로 속성 합성
+### 반복으로 속성 합성
+
 ```razor
 @{
     var attrs = new Dictionary<string, object> {
@@ -288,15 +312,17 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 10. 비동기/await & HtmlHelper
+## 비동기/await & HtmlHelper
 
-### 10.1 비동기 호출
+### 비동기 호출
+
 ```razor
 @await Html.PartialAsync("_User", Model.User)
 @await Component.InvokeAsync("CartSummary")
 ```
 
-### 10.2 Url/Html/Json 헬퍼 예시
+### Url/Html/Json 헬퍼 예시
+
 ```razor
 @Url.Action("Detail", "Products", new { id = 5 })     <!-- /Products/Detail/5 -->
 @Html.DisplayNameFor(m => m.UserName)
@@ -306,7 +332,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 11. 지시문(Directives) 핵심 모음
+## 지시문(Directives) 핵심 모음
 
 | 지시문 | 설명 | 예시 |
 |---|---|---|
@@ -319,13 +345,15 @@ public class CartSummaryViewComponent : ViewComponent
 | `@page` | Razor Pages에서 페이지로 지정 | `@page "{id:int}"`(Pages 전용) |
 | `@functions` | (MVC Razor) 뷰 내부 C# 멤버 | `@functions { string Hi() => "hi"; }` |
 
-### 11.1 `@inject` 예
+### `@inject` 예
+
 ```razor
 @inject Microsoft.Extensions.Logging.ILogger<IndexModel> Logger
 @{ Logger.LogInformation("뷰 렌더링"); }
 ```
 
-### 11.2 `@inherits` 베이스 뷰
+### `@inherits` 베이스 뷰
+
 ```csharp
 public abstract class MyBaseView<T> : RazorPage<T>
 {
@@ -340,7 +368,7 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 12. 라우팅(Razor Pages) — `@page`
+## 라우팅(Razor Pages) — `@page`
 
 ```razor
 @page "{id:int?}"
@@ -352,16 +380,18 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 13. 환경/정적 파일/버전 태그
+## 환경/정적 파일/버전 태그
 
-### 13.1 정적 파일 버전 태그
+### 정적 파일 버전 태그
+
 ```razor
 <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 <script src="~/js/site.js" asp-append-version="true"></script>
 ```
 - 파일 해시를 쿼리스트링에 붙여 캐시 무효화.
 
-### 13.2 환경 태그
+### 환경 태그
+
 ```razor
 <environment include="Development">
     <script src="~/js/dev-only.js"></script>
@@ -373,9 +403,10 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 14. 보안/권한과 Razor
+## 보안/권한과 Razor
 
-### 14.1 인증 상태에 따른 출력
+### 인증 상태에 따른 출력
+
 ```razor
 @using Microsoft.AspNetCore.Authorization
 @inject Microsoft.AspNetCore.Identity.SignInManager<MyUser> SignInManager
@@ -390,7 +421,8 @@ else
 }
 ```
 
-### 14.2 권한 체크
+### 권한 체크
+
 ```razor
 @inject IAuthorizationService Authz
 @{
@@ -401,7 +433,7 @@ else
 
 ---
 
-## 15. 성능/운영 팁
+## 성능/운영 팁
 
 - **인코딩 규칙**: 기본 HTML 인코딩. `HtmlString`/`IHtmlContent`는 신중 사용.
 - **부분 뷰 남발 주의**: 렌더링 비용 + 모델 준비 비용 고려. 캐싱/뷰 컴포넌트와 균형.
@@ -411,15 +443,17 @@ else
 
 ---
 
-## 16. 실전 예제 — 제품 목록 + 상세 카드 + 검증 + 섹션
+## 실전 예제 — 제품 목록 + 상세 카드 + 검증 + 섹션
 
-### 16.1 `_ViewImports.cshtml`
+### `_ViewImports.cshtml`
+
 ```razor
 @using MyApp.Models
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 ```
 
-### 16.2 `_Layout.cshtml`
+### `_Layout.cshtml`
+
 ```razor
 <!doctype html>
 <html>
@@ -438,7 +472,8 @@ else
 </html>
 ```
 
-### 16.3 `Views/Products/Index.cshtml`
+### `Views/Products/Index.cshtml`
+
 ```razor
 @model IEnumerable<Product>
 @{
@@ -456,7 +491,8 @@ else
 </div>
 ```
 
-### 16.4 `Views/Shared/_ProductCard.cshtml` (Partial)
+### `Views/Shared/_ProductCard.cshtml` (Partial)
+
 ```razor
 @model Product
 <div class="card">
@@ -470,7 +506,8 @@ else
 </div>
 ```
 
-### 16.5 `Views/Products/Create.cshtml` (검증/폼)
+### `Views/Products/Create.cshtml` (검증/폼)
+
 ```razor
 @model ProductInput
 @{
@@ -501,7 +538,7 @@ else
 
 ---
 
-## 17. 디버깅/문제 해결 체크
+## 디버깅/문제 해결 체크
 
 | 증상 | 가능 원인 | 해결 힌트 |
 |---|---|---|
@@ -513,7 +550,7 @@ else
 
 ---
 
-## 18. 요약 테이블
+## 요약 테이블
 
 | 구분 | 핵심 |
 |---|---|
@@ -529,6 +566,7 @@ else
 ---
 
 ### 부록) 간단한 수식 포맷(블로그 표기용)
+
 - Razor 자체는 수식을 렌더링하지 않지만, 블로그에 수학을 적을 경우 MathJax 등과 함께 다음처럼 마크업할 수 있다:
 ```
 $$

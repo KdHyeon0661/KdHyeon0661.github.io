@@ -4,33 +4,38 @@ title: 네트워크보안 - DAI/DHCP Snooping/Port Security, HTTPS·HSTS·mTLS, 
 date: 2025-10-23 19:25:23 +0900
 category: 네트워크보안
 ---
-# 4.5 방어: DAI/DHCP Snooping/Port Security, HTTPS·HSTS·mTLS, WIDS/WIPS
+# 방어: DAI/DHCP Snooping/Port Security, HTTPS·HSTS·mTLS, WIDS/WIPS
 
 > 목표: 스위치 L2 보호(DAI, DHCP Snooping, Port Security)와 L7 암호화(HTTPS/HSTS/mTLS),
 > 무선 영역 WIDS/WIPS 정책으로 **스니핑/가로채기 시도 자체를 어렵게** 만든다.
 
 ---
 
-## 4.5.1 L2 보호: DHCP Snooping → DAI(ARP Inspection) → Port Security
+## L2 보호: DHCP Snooping → DAI(ARP Inspection) → Port Security
 
 ### (1) DHCP Snooping — “누가 DHCP 서버인지 정한다”
+
 - **효과**: 신뢰 포트(Trusted)에서 온 DHCP Offer/ACK만 허용, 나머지는 차단.
 - **부가효과**: 클라이언트 **IP–MAC–VLAN–Port 바인딩 테이블**을 유지 → **DAI가 이 테이블을 신뢰**.
 
 **개념 구성(벤더 공통 개념, CLI는 예시)**
 ```text
 # 전역 활성화
+
 ip dhcp snooping
 # VLAN 10만 보호
+
 ip dhcp snooping vlan 10
 
 # 업링크(진짜 DHCP 서버가 있는 방향) 포트만 "trusted"
+
 interface Gi1/0/48
   ip dhcp snooping trust
   # 과도한 Offer/ACK 남발 방지(DoS 억제)
   ip dhcp snooping limit rate 50
 
 # 나머지 액세스 포트는 "untrusted" (기본)
+
 interface Gi1/0/1
   switchport access vlan 10
   # 필요하면 rate limit 설정
@@ -43,6 +48,7 @@ interface Gi1/0/1
 ---
 
 ### (2) DAI (Dynamic ARP Inspection) — “게이트웨이 ARP 위조 차단”
+
 - **효과**: ARP 요청/응답을 **DHCP Snooping 바인딩**과 대조, 불일치 ARP를 드롭.
 - **추가**: ARP rate limit, 로그.
 
@@ -51,10 +57,12 @@ interface Gi1/0/1
 ip arp inspection vlan 10
 
 # trusted 포트에서는 ARP 검사 우회(업링크/서버 포트)
+
 interface Gi1/0/48
   ip arp inspection trust
 
 # 액세스 포트는 기본 untrusted → ARP 검사 적용
+
 interface Gi1/0/1
   ip arp inspection limit rate 15 burst interval 1
 ```
@@ -64,6 +72,7 @@ interface Gi1/0/1
 ---
 
 ### (3) Port Security — “한 포트에 붙을 수 있는 MAC을 제한”
+
 - **효과**: 포트당 MAC 수 제한, 특정 MAC만 허용, 위반 시 shutdown/restrict.
 - **활용**: **MAC 플러딩/스니핑 시도**의 부작용(다중 MAC 유입)을 **초기에 차단**.
 
@@ -82,9 +91,10 @@ interface Gi1/0/1
 
 ---
 
-## 4.5.2 L7 암호화: HTTPS·HSTS·mTLS
+## L7 암호화: HTTPS·HSTS·mTLS
 
 ### (1) HTTPS + HSTS — 평문 제거의 기본
+
 - **HSTS**: 브라우저가 **항상 HTTPS만** 사용하도록 강제(HTTP→HTTPS 리다이렉트도 HSTS 없이는 첫 요청은 평문일 수 있음).
 - **프리로드**: hstspreload.org 등록(요건 충족 시) → 브라우저 내장 목록으로 초회도 안전.
 
@@ -112,6 +122,7 @@ server {
 }
 
 # HTTP로 오면 즉시 HTTPS로
+
 server {
   listen 80;
   server_name example.com;
@@ -124,6 +135,7 @@ server {
 ---
 
 ### (2) 내부/서버간 mTLS — “서버/클라이언트 모두 인증”
+
 - **효과**: 내부 API/관리자 콘솔에 **클라이언트 인증서** 없이는 접근 불가.
 - **장점**: 쿠키·토큰 탈취만으로는 접근 어려움(스니핑 난이도 급상승).
 
@@ -152,19 +164,23 @@ server {
 
 **테스트용 CA/클라이언트 인증서(학습용 OpenSSL)**
 ```bash
-# 1. 루트 CA(테스트용)
+# 루트 CA(테스트용)
+
 openssl req -x509 -newkey rsa:4096 -days 365 -nodes \
   -keyout ca.key -out ca.crt -subj "/CN=LabCA"
 
-# 2. 서버 CSR & 발급
+# 서버 CSR & 발급
+
 openssl req -newkey rsa:2048 -nodes -keyout srv.key -out srv.csr -subj "/CN=internal.example.local"
 openssl x509 -req -in srv.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out srv.crt -days 180
 cat srv.crt ca.crt > srv_fullchain.pem
 
-# 3. 클라이언트 CSR & 발급
+# 클라이언트 CSR & 발급
+
 openssl req -newkey rsa:2048 -nodes -keyout cli.key -out cli.csr -subj "/CN=developer01"
 openssl x509 -req -in cli.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out cli.crt -days 180
 # 브라우저 테스트용 P12
+
 openssl pkcs12 -export -inkey cli.key -in cli.crt -certfile ca.crt -out cli.p12 -passout pass:
 ```
 
@@ -172,7 +188,8 @@ openssl pkcs12 -export -inkey cli.key -in cli.crt -certfile ca.crt -out cli.p12 
 
 ---
 
-## 4.5.3 무선 WIDS/WIPS(탐지·차단)
+## 무선 WIDS/WIPS(탐지·차단)
+
 - **WIDS**: 무선 이상(Deauth 급증, Rogue/Evil Twin, 불법 AP, WEP/오픈 SSID 등) **탐지**.
 - **WIPS**: 특정 기준 충족 시 **자동 차단**(우선은 탐지→운영 검증→선별 차단 권장).
 - **정책 제언**
@@ -183,18 +200,20 @@ openssl pkcs12 -export -inkey cli.key -in cli.crt -certfile ca.crt -out cli.p12 
 
 ---
 
-# 4.6 탐지: ARP Reply 폭증, 게이트웨이 MAC 변화, Suricata/Zeek 룰
+# 탐지: ARP Reply 폭증, 게이트웨이 MAC 변화, Suricata/Zeek 룰
 
 > 목표: L2~L7에서 **가시적 신호**를 포착해 경보/대응한다.
 > 아래 룰·스크립트는 **개념 템플릿**이며, 배포 전 **테스트망에서 오탐·성능 평가** 필수.
 
 ---
 
-## 4.6.1 Suricata 예시 룰(EVE JSON 기반 운영)
+## Suricata 예시 룰(EVE JSON 기반 운영)
 
 ### (1) ARP Reply 비정상 빈도(폭증)
+
 ```conf
 # 간단 예시: 짧은 시간 한 소스에서 과도한 ARP Reply
+
 alert ether any any -> any any (msg:"L2 ARP Reply storm suspected";
   ether type 0x806;           # ARP
   # detection_filter는 by_src MAC 추적에서 한계가 있어 환경 맞춤 필요
@@ -203,6 +222,7 @@ alert ether any any -> any any (msg:"L2 ARP Reply storm suspected";
 ```
 
 ### (2) 게이트웨이 MAC 변동 감지(개념)
+
 > Suricata 룰만으로 “MAC 변경” 상태를 기억하기 어렵다 → **로그 후단(파이프라인)**에서 **스테이트풀 비교** 추천.
 아래는 “게이트웨이 IP에서 오는 ARP Reply”를 태깅 → 후단에서 MAC change diff.
 
@@ -221,11 +241,13 @@ alert ether any any -> any any (msg:"ARP Reply from gateway IP";
 
 ---
 
-## 4.6.2 Zeek 스크립트(ARP/DHCP/TLS 메타)
+## Zeek 스크립트(ARP/DHCP/TLS 메타)
 
 ### (1) ARP 게이트웨이 MAC 변경 감지(개요)
+
 ```zeek
 # file: arp_gateway_watch.zeek
+
 @load protocols/arp
 
 const gateway_ip: addr = 10.10.0.1;  # 환경에 맞추어 설정
@@ -246,8 +268,10 @@ event arp_reply(c: connection, spa: addr, sha: string, tpa: addr, tha: string) {
 ```
 
 ### (2) DHCP 다중 서버 관찰(개요)
+
 ```zeek
 # file: dhcp_multi_server_watch.zeek
+
 @load protocols/dhcp
 
 global dhcp_servers: set[addr] &create_expire=10mins;
@@ -261,11 +285,12 @@ event dhcp_offer(c: connection, msg: dhcp_msg, yiaddr: addr, siaddr: addr, subne
 ```
 
 ### (3) TLS 메타(예: JA3 상위·비정상 도메인 패턴)
+
 Zeek는 기본적으로 TLS 이벤트를 레코드화. SIEM에서 **도메인 평판/SNI 패턴**과 결합하면 효과적.
 
 ---
 
-## 4.6.3 SIEM 룰(의사코드·Sigma 스타일)
+## SIEM 룰(의사코드·Sigma 스타일)
 
 **[Rule] 게이트웨이 MAC 변경**
 ```
@@ -301,16 +326,17 @@ level: high
 
 ---
 
-# 4.7 랩: L2 ARP 기반 가로채기, 무선 오픈망 캡처, 탐지 룰 제작
+# 랩: L2 ARP 기반 가로채기, 무선 오픈망 캡처, 탐지 룰 제작
 
 > **취지**: 실제 공격 행위를 하지 않고도, **탐지/방어가 제대로 동작하는지** 확인한다.
 > (PCAP 재생, 합성 이벤트, 샌드박스 캡처, **무해한 ARP 변동** 등)
 
 ---
 
-## 4.7.1 랩 토폴로지(로컬 네임스페이스 또는 Docker)
+## 랩 토폴로지(로컬 네임스페이스 또는 Docker)
 
 ### (A) 네임스페이스 미니 랩(요약)
+
 ```
 [ns-client]──veth-c  \
                       (br0)──veth-g──[ns-gw]
@@ -321,6 +347,7 @@ level: high
 - `ns-client`: 트래픽 발생
 
 ### (B) Docker Compose 랩(요약)
+
 - `client` / `server` / `observer(tcpdump|zeek|suricata)`
 - `observer`는 `pcap` 볼륨에 저장, 후단 도구가 읽어 분석
 
@@ -341,7 +368,7 @@ networks: { labnet: { driver: bridge } }
 
 ---
 
-## 4.7.2 시나리오 1 — “L2 ARP 기반 가로채기” **탐지만** 검증
+## 시나리오 1 — “L2 ARP 기반 가로채기” **탐지만** 검증
 
 > 실제 ARP 포이즈닝은 하지 않는다. 대신 **무해한 GARP 반복**으로 “ARP 변동” 시그널만 발생시켜
 > **DAI/Zeek/Suricata/SIEM 룰이 울리는지** 확인한다.
@@ -350,6 +377,7 @@ networks: { labnet: { driver: bridge } }
 ```python
 # safe_arp_churn_generator.py (요약)
 # 목적: 자신의 IP/MAC로 GARP 반복 → ARP 변동 신호를 탐지 체인으로 밀어넣기
+
 ```
 
 **절차**
@@ -365,7 +393,7 @@ networks: { labnet: { driver: bridge } }
 
 ---
 
-## 4.7.3 시나리오 2 — “무선 오픈망 캡처(패시브)”
+## 시나리오 2 — “무선 오픈망 캡처(패시브)”
 
 > **공격 불가**. 자신이 소유/관리하는 **테스트 AP**만 사용. 오픈 SSID에서 **패시브 캡처**로
 > 관리 프레임(Beacon/Probe)와 데이터 프레임 메타만 관찰 → **WIDS 룰 테스트**.
@@ -380,6 +408,7 @@ networks: { labnet: { driver: bridge } }
 ```python
 # synth_deauth_events.py (요약)
 # "DEAUTH_OBSERVED_SYNTH" 이벤트를 NDJSON으로 생성해 테스트 인제션
+
 ```
 
 **성공 기준**
@@ -389,7 +418,7 @@ networks: { labnet: { driver: bridge } }
 
 ---
 
-## 4.7.4 시나리오 3 — “탐지 룰 제작 & 회귀(Regression) 테스트”
+## 시나리오 3 — “탐지 룰 제작 & 회귀(Regression) 테스트”
 
 > 탐지 체인을 **CI 처럼** 돌려서, 룰 업데이트가 **기존 탐지 품질**을 깨지 않는지 확인.
 
@@ -401,29 +430,36 @@ networks: { labnet: { driver: bridge } }
 
 **TShark 자동 채점 예시**
 ```bash
-# 1. ARP Reply 카운트(윈도 내) 기준
+# ARP Reply 카운트(윈도 내) 기준
+
 tshark -r pcap/arp_churn_ok.pcap -Y "arp.opcode == 2" | wc -l
 
-# 2. DHCP Offer 송신자 수
+# DHCP Offer 송신자 수
+
 tshark -r pcap/dhcp_dual_offer.pcap -Y "bootp.option.dhcp == 2" -T fields -e ip.src | sort -u | wc -l
 ```
 
 **Suricata EVE 기반 채점(예: jq)**
 ```bash
 # ARP storm 룰 hit 수
+
 jq -r 'select(.alert and .alert.signature_id==4202001) | .timestamp' eve.json | wc -l
 
 # TLS JA3 상위 Top N(의심 지문 확인)
+
 jq -r 'select(.event_type=="tls") | .tls.ja3_hash' eve.json | sort | uniq -c | sort -nr | head
 ```
 
 **회귀 테스트 스크립트(개념)**
 ```bash
 #!/usr/bin/env bash
+
 set -euo pipefail
-# 1. Suricata로 오프라인 분석
+# Suricata로 오프라인 분석
+
 suricata -r pcap/arp_churn_ok.pcap -l out/arp --runmode=single
-# 2. 기대치와 비교
+# 기대치와 비교
+
 hits=$(jq -r 'select(.alert and .alert.signature_id==4202001)' out/arp/eve.json | wc -l)
 if [ "$hits" -lt 1 ]; then
   echo "[FAIL] ARP storm alert not triggered"; exit 1
@@ -433,7 +469,7 @@ echo "[PASS] ARP storm minimal hit: $hits"
 
 ---
 
-## 4.7.5 운영 반영 체크리스트
+## 운영 반영 체크리스트
 
 - [ ] **DHCP Snooping**: trusted 포트 정의, rate limit, 바인딩 테이블 점검 자동화
 - [ ] **DAI**: VLAN별 활성화, 정적 IP 단말 바인딩 수동 등록 플로우
@@ -445,7 +481,7 @@ echo "[PASS] ARP storm minimal hit: $hits"
 
 ---
 
-## 4.7.6 성공/실패를 가르는 운영 팁
+## 성공/실패를 가르는 운영 팁
 
 - **탐지만 울리고 끝나지 말 것**: 룰 → 알림 → **운영 대응(격리/차단/원복)** 절차가 체인으로 묶여야 한다.
 - **오탐 관리**: ARP/DHCP는 변동이 잦은 환경(VDI/무선 로밍)에서 오탐 유발 → **베이스라인/예외 목록/시간 창 튜닝**이 핵심.

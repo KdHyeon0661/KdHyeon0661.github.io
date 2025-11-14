@@ -15,7 +15,7 @@ category: DB 심화
 
 ---
 
-## 1. `DETERMINISTIC`의 정확한 의미
+## `DETERMINISTIC`의 정확한 의미
 
 ```sql
 CREATE OR REPLACE FUNCTION fx_norm(p_txt IN VARCHAR2)
@@ -34,9 +34,10 @@ END;
 
 ---
 
-## 2. 왜 위험한가: “거짓 결정성”이 **틀린 결과**를 만든다
+## 왜 위험한가: “거짓 결정성”이 **틀린 결과**를 만든다
 
-### 2.1 나쁜 예 1 — 시간 의존
+### 나쁜 예 1 — 시간 의존
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_today()
 RETURN DATE
@@ -50,7 +51,8 @@ END;
 - **문제**: 동일 입력(없음)인데 **출력이 날마다 바뀜**.
 - FBI/가상컬럼에 쓰면 **인덱스 키가 데이터 수정 없이 달라지는 모순** → 잘못된 액세스/결과.
 
-### 2.2 나쁜 예 2 — 세션/NLS 의존
+### 나쁜 예 2 — 세션/NLS 의존
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_title(p_txt VARCHAR2)
 RETURN VARCHAR2
@@ -64,7 +66,8 @@ END;
 ```
 - 세션마다 `NLS_SORT`, `NLS_COMP` 등 **문화권 설정**이 다르면 **같은 입력**도 **출력이 달라질 수 있음**.
 
-### 2.3 나쁜 예 3 — 테이블/패키지 상태 의존
+### 나쁜 예 3 — 테이블/패키지 상태 의존
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_rate(p_ccy VARCHAR2)
 RETURN NUMBER
@@ -85,7 +88,7 @@ END;
 
 ---
 
-## 3. `DETERMINISTIC` vs `RESULT_CACHE` (둘의 차이)
+## `DETERMINISTIC` vs `RESULT_CACHE` (둘의 차이)
 
 | 항목 | `DETERMINISTIC` | `RESULT_CACHE` (PL/SQL) |
 |---|---|---|
@@ -99,9 +102,10 @@ END;
 
 ---
 
-## 4. 함수기반 인덱스(FBI)/가상컬럼에서의 필수 요건
+## 함수기반 인덱스(FBI)/가상컬럼에서의 필수 요건
 
-### 4.1 안전한 예 — 문자열 정규화 인덱스
+### 안전한 예 — 문자열 정규화 인덱스
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_norm_ascii(p_txt VARCHAR2)
 RETURN VARCHAR2
@@ -126,7 +130,8 @@ WHERE name_norm = fx_norm_ascii(:q);  -- 인덱스 사용
 ```
 - **조건**: 함수는 **오직 입력 인자만** 사용, 외부 상태 0%.
 
-### 4.2 위험한 예 — 환율 인덱스
+### 위험한 예 — 환율 인덱스
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_rate_det(p_ccy VARCHAR2)
 RETURN NUMBER
@@ -146,7 +151,7 @@ END;
 
 ---
 
-## 5. “결정성”을 깨는 요소 체크리스트
+## “결정성”을 깨는 요소 체크리스트
 
 - [ ] `SYSDATE`/`SYSTIMESTAMP`/`CURRENT_DATE`
 - [ ] `DBMS_RANDOM`, `SYS_GUID`, `SEQUENCE.NEXTVAL`
@@ -159,11 +164,12 @@ END;
 
 ---
 
-## 6. 성능 관점: 행단위 함수 호출의 비용과 대안
+## 성능 관점: 행단위 함수 호출의 비용과 대안
 
 > `SELECT ... WHERE fx(col)=:x` 는 **행마다 함수 호출**. 함수가 비싸면 **I/O보다 CPU가 병목**.
 
-### 6.1 집합 재작성(가장 안전/빠름)
+### 집합 재작성(가장 안전/빠름)
+
 ```sql
 -- 나쁜 패턴
 SELECT * FROM sales WHERE fx_rate_det(ccy) > 1300;
@@ -175,7 +181,8 @@ JOIN rates r ON r.ccy = s.ccy
 WHERE r.rate > 1300;
 ```
 
-### 6.2 스칼라 서브쿼리 캐시 (Oracle이 자동 캐시)
+### 스칼라 서브쿼리 캐시 (Oracle이 자동 캐시)
+
 ```sql
 -- 같은 키에 대해 여러번 평가되면 엔진이 결과를 캐시
 SELECT *
@@ -184,7 +191,8 @@ WHERE (SELECT r.rate FROM rates r WHERE r.ccy=s.ccy) > 1300;
 ```
 - **주의**: 그래도 `DETERMINISTIC`처럼 FBI 요건은 충족 못함. 단, **함수 호출 폭탄**은 완화.
 
-### 6.3 `RESULT_CACHE` (PL/SQL, 결정성 보장 가능할 때만)
+### `RESULT_CACHE` (PL/SQL, 결정성 보장 가능할 때만)
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_tax(p_region VARCHAR2)
 RETURN NUMBER
@@ -202,7 +210,7 @@ END;
 
 ---
 
-## 7. 병렬/분산/에디션·권한 관점의 함정
+## 병렬/분산/에디션·권한 관점의 함정
 
 - **병렬 실행**: 슬레이브 프로세스들이 **세션 상태**가 다르거나(예: NLS) 환경이 달라지면 결정성이 깨질 수 있다.
 - **DB Link**: 원격 DB의 데이터/세션 상태에 의존 → 결과가 시간/장소에 따라 달라질 수 있다.
@@ -213,7 +221,7 @@ END;
 
 ---
 
-## 8. 실제로 “틀린 결과”가 나오는 시연
+## 실제로 “틀린 결과”가 나오는 시연
 
 ```sql
 -- 외부 테이블 rates
@@ -257,7 +265,7 @@ SELECT * FROM txn WHERE usd_rate = 1300; -- ❌ 찾을 수 있음(오래된 값)
 
 ---
 
-## 9. 안전한 사용 패턴
+## 안전한 사용 패턴
 
 1) **순수 계산**: 수학적 변환, 포맷 정규화(공백/문장부호 제거), 고정 규칙 매핑(단, 룩업 테이블 X).
 2) **바이트/비트 조작**: `HASH`, `CRC`(단, 해시 알고리즘 Seed가 고정이고 NLS/캐릭터셋 영향 없는 전제).
@@ -279,7 +287,7 @@ END;
 
 ---
 
-## 10. `DETERMINISTIC`과 옵티마이저 상호작용
+## `DETERMINISTIC`과 옵티마이저 상호작용
 
 - 옵티마이저는 `DETERMINISTIC`을 보고 **함수 호출 축소**(공통 값 중복 제거) 등을 시도할 수 있다.
 - 하지만 **비용 모델상 유의미한 축소**가 아닐 때는 그대로 호출한다.
@@ -287,9 +295,10 @@ END;
 
 ---
 
-## 11. 단위 테스트/감사 스크립트 (결정성 검증)
+## 단위 테스트/감사 스크립트 (결정성 검증)
 
-### 11.1 반복 호출 일관성
+### 반복 호출 일관성
+
 ```sql
 WITH t(val) AS (
   SELECT :x FROM dual
@@ -299,7 +308,8 @@ SELECT CASE WHEN COUNT(DISTINCT fx_candidate(val))=1
 FROM t CONNECT BY LEVEL <= 1000;  -- 동일 입력 1000회 평가
 ```
 
-### 11.2 세션/NLS 변화 시 검증
+### 세션/NLS 변화 시 검증
+
 ```sql
 ALTER SESSION SET NLS_COMP=BINARY;
 SELECT fx_candidate(:x) FROM dual;
@@ -309,7 +319,8 @@ ALTER SESSION SET NLS_SORT=GERMAN;
 SELECT fx_candidate(:x) FROM dual;  -- 결과가 달라지면 DETERMINISTIC 금지
 ```
 
-### 11.3 시간/패키지 상태 검증
+### 시간/패키지 상태 검증
+
 ```sql
 -- 시간
 SELECT fx_candidate(:x) FROM dual;
@@ -325,7 +336,7 @@ SELECT fx_candidate(:x) FROM dual; -- 바뀌면 금지
 
 ---
 
-## 12. 실무 가이드라인(체크리스트)
+## 실무 가이드라인(체크리스트)
 
 - [ ] 함수가 **입력 인자 외 아무것도** 보지 않는가? (테이블/시간/세션/패키지 상태 X)
 - [ ] **NLS/Locale/Timezone** 영향이 없는가? (있다면 고정/격리)
@@ -336,9 +347,10 @@ SELECT fx_candidate(:x) FROM dual; -- 바뀌면 금지
 
 ---
 
-## 13. 대안 설계 예제
+## 대안 설계 예제
 
-### 13.1 룩업을 함수로 하지 말고 **조인**으로
+### 룩업을 함수로 하지 말고 **조인**으로
+
 ```sql
 -- ❌ (위험) 룩업 함수 + DETERMINISTIC
 SELECT * FROM sales WHERE fx_rate_det(ccy) > 1300;
@@ -350,7 +362,8 @@ JOIN rates r ON r.ccy = s.ccy
 WHERE r.rate > 1300;
 ```
 
-### 13.2 “정규화 + FBI” 안전 패턴
+### “정규화 + FBI” 안전 패턴
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_email_norm(p VARCHAR2)
 RETURN VARCHAR2
@@ -370,7 +383,7 @@ SELECT * FROM users WHERE email_norm = fx_email_norm(:q);
 
 ---
 
-## 14. 요약
+## 요약
 
 - `DETERMINISTIC`은 **캐시 기능이 아니라 “절대 변하지 않음”을 보증하는 선언**이다.
 - 이 선언을 믿고 엔진은 **함수기반 인덱스/가상컬럼/재작성** 등을 허용한다.

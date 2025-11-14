@@ -10,7 +10,7 @@ category: Git
 
 ---
 
-## 0. Monorepo 한 줄 정의와 사용 맥락
+## Monorepo 한 줄 정의와 사용 맥락
 
 - **정의**: 여러 앱·라이브러리·도구를 **하나의 Git 저장소**에서 관리하는 전략.
 - **목표**: 코드 공유·일관 툴링·단일 CI를 통해 **개발/검증/배포 파이프라인의 중복을 제거**.
@@ -18,9 +18,9 @@ category: Git
 
 ---
 
-## 1. 대표 구조 패턴
+## 대표 구조 패턴
 
-### 1.1 기본 구조
+### 기본 구조
 
 ```
 📁 my-org-repo/
@@ -38,7 +38,7 @@ category: Git
 └── nx.json / turbo.json      # Nx 또는 Turborepo 설정
 ```
 
-### 1.2 언어별 변형 예
+### 언어별 변형 예
 
 - **Node/TS**: npm/pnpm/yarn workspace + Lerna/Nx/Turborepo
 - **Go**: 루트 `go.work` + 각 모듈 `go.mod`
@@ -48,9 +48,9 @@ category: Git
 
 ---
 
-## 2. 장단점 확장
+## 장단점 확장
 
-### 2.1 장점
+### 장점
 
 | 장점 | 설명 | 보완책 |
 |------|------|--------|
@@ -59,7 +59,7 @@ category: Git
 | 일관된 툴링 | 하나의 ESLint/Prettier/Test/Build 설정 | 루트 config + 패키지별 오버라이드 |
 | 단일 CI 파이프라인 | 파이프라인 중복 제거, 공통 캐시 | Affected Only, paths-filter, 캐시 |
 
-### 2.2 단점과 대응
+### 단점과 대응
 
 | 단점 | 상세 | 대응 |
 |------|------|------|
@@ -70,31 +70,35 @@ category: Git
 
 ---
 
-## 3. Git 최적화: Partial Clone, Sparse Checkout, Worktree
+## Git 최적화: Partial Clone, Sparse Checkout, Worktree
 
-### 3.1 Partial Clone + Sparse Checkout
+### Partial Clone + Sparse Checkout
 
 대규모 저장소에서 **필요 디렉터리만** 빠르게 내려받는다.
 
 ```bash
-# 1. 히스토리/Blob 최소화
+# 히스토리/Blob 최소화
+
 git clone --filter=blob:none --no-checkout https://github.com/your-org/monorepo.git
 cd monorepo
 
-# 2. sparse 모드 활성화
+# sparse 모드 활성화
+
 git sparse-checkout init --cone
 
-# 3. 필요한 디렉터리만
+# 필요한 디렉터리만
+
 git sparse-checkout set apps/web packages/ui
 
-# 4. 필요한 시점에만 다른 경로 추가
+# 필요한 시점에만 다른 경로 추가
+
 git sparse-checkout add packages/auth
 ```
 
 - `--filter=blob:none`은 **partial clone**(서버를 promisor로) 하여 blob 지연 다운로드.
 - `--cone` 패턴은 트리 성능 최적화.
 
-### 3.2 부분 히스토리만 받기(shallow)
+### 부분 히스토리만 받기(shallow)
 
 ```bash
 git fetch --depth=1 origin main
@@ -103,7 +107,7 @@ git checkout main
 
 - 빌드/테스트만 필요한 CI에서 유용.
 
-### 3.3 Worktree로 병렬 개발
+### Worktree로 병렬 개발
 
 하나의 저장소에 **여러 작업 트리**를 연결해 브랜치별 코드를 동시에 열 수 있다.
 
@@ -116,9 +120,9 @@ git worktree list
 
 ---
 
-## 4. JavaScript/TypeScript Monorepo 도구
+## JavaScript/TypeScript Monorepo 도구
 
-### 4.1 npm/pnpm/yarn workspaces
+### npm/pnpm/yarn workspaces
 
 - 루트에서 의존성 설치/호이스팅 및 패키지 간 **로컬 링크** 자동.
 
@@ -147,7 +151,7 @@ packages:
 }
 ```
 
-### 4.2 Lerna
+### Lerna
 
 설치 및 초기화:
 
@@ -183,7 +187,7 @@ npx lerna publish           # 버전/배포 (independent/fixed)
 - `version: "independent"`: 패키지별 버전을 독립 관리.
 - `conventionalCommits`: 커밋 메시지에서 자동 버전 결정 가능.
 
-### 4.3 Nx
+### Nx
 
 의존성 그래프, 영향도 기반 실행, 캐시.
 
@@ -203,7 +207,7 @@ nx run-many --target=build --all
 
 캐시 저장소(Remote Cache) 연결(예: Nx Cloud)로 CI 속도 향상.
 
-### 4.4 Turborepo
+### Turborepo
 
 파이프라인 선언형 + 캐시/병렬 최적화.
 
@@ -237,7 +241,7 @@ pnpm dlx turbo run build test lint --filter=...
 - 상위 의존 빌드를 선행(`^build`)
 - 캐시가 동일 입력/환경에서 **결과 재사용**
 
-### 4.5 pnpm workspace
+### pnpm workspace
 
 의존성 저장 방식이 효율적(중복 제거). **대형 Monorepo**에서 디스크 절약.
 
@@ -251,15 +255,16 @@ pnpm --filter "@org/ui" build
 
 ---
 
-## 5. CI/CD 최적화 (GitHub Actions 예시)
+## CI/CD 최적화 (GitHub Actions 예시)
 
-### 5.1 변경 경로 기반 실행(paths-filter)
+### 변경 경로 기반 실행(paths-filter)
 
 변경된 영역만 테스트/빌드:
 
 {% raw %}
 ```yaml
 # .github/workflows/ci-monorepo.yml
+
 name: CI Monorepo
 
 on:
@@ -305,7 +310,7 @@ jobs:
 ```
 {% endraw %}
 
-### 5.2 Nx/Turbo 기반 Affected Only
+### Nx/Turbo 기반 Affected Only
 
 Nx:
 
@@ -320,7 +325,7 @@ Turborepo:
 - run: pnpm dlx turbo run test --filter=...[HEAD^1]
 ```
 
-### 5.3 Git 최적화 활용
+### Git 최적화 활용
 
 ```yaml
 - uses: actions/checkout@v4
@@ -331,7 +336,7 @@ Turborepo:
       packages/ui
 ```
 
-### 5.4 캐시
+### 캐시
 
 {% raw %}
 ```yaml
@@ -351,9 +356,9 @@ Turborepo:
 
 ---
 
-## 6. 버전·릴리스 전략
+## 버전·릴리스 전략
 
-### 6.1 전략 옵션
+### 전략 옵션
 
 | 전략 | 설명 | 장단점 |
 |------|------|--------|
@@ -361,7 +366,7 @@ Turborepo:
 | Independent | 패키지별 버전 | 현실적/정확 vs 관리 복잡 |
 | 앱은 태그, 라이브러리는 패키지 버전 | 배포 단위에 맞춤 | 이중 전략 관리 필요 |
 
-### 6.2 Changesets로 체인지로그·버전 자동화
+### Changesets로 체인지로그·버전 자동화
 
 설치:
 
@@ -391,15 +396,15 @@ CI 자동화 예(태그 푸시 시):
 ```
 {% endraw %}
 
-### 6.3 Conventional Commits + 자동 버전
+### Conventional Commits + 자동 버전
 
 `feat:`, `fix:`, `chore:` 규칙으로 릴리스 판단. Lerna `conventionalCommits` 사용 또는 semantic-release.
 
 ---
 
-## 7. 거버넌스: CODEOWNERS, 브랜치 보호, 경로 제한
+## 거버넌스: CODEOWNERS, 브랜치 보호, 경로 제한
 
-### 7.1 CODEOWNERS
+### CODEOWNERS
 
 `.github/CODEOWNERS`:
 
@@ -413,21 +418,21 @@ CI 자동화 예(태그 푸시 시):
 - PR 생성 시 자동 리뷰어 지정.
 - 브랜치 보호에서 **Require review from Code Owners** 활성화.
 
-### 7.2 브랜치 보호
+### 브랜치 보호
 
 - Require status checks to pass
 - Require pull request reviews
 - Require linear history (선택)
 - Restrict who can push(필요 시)
 
-### 7.3 경로 기반 정책
+### 경로 기반 정책
 
 - GitHub는 **디렉터리 권한**을 직접 제공하지 않으므로, **CI에서 경로 검증**하여 정책 위반 PR 실패 처리.
 - 예: `apps/banking/**`는 특정 팀만 수정 허용 → CI에서 작성자/팀 검증.
 
 ---
 
-## 8. Submodule vs Subtree vs Monorepo
+## Submodule vs Subtree vs Monorepo
 
 | 항목 | Submodule | Subtree | Monorepo |
 |------|-----------|---------|----------|
@@ -440,9 +445,9 @@ CI 자동화 예(태그 푸시 시):
 
 ---
 
-## 9. 언어별 모듈·빌드 특이점
+## 언어별 모듈·빌드 특이점
 
-### 9.1 Go
+### Go
 
 루트 `go.work`:
 
@@ -458,20 +463,20 @@ use (
 - 각 디렉터리 `go.mod`에서 모듈 선언. `go work sync`로 go.work 반영.
 - 변경 영향도 기반 빌드: `go list -deps` + CI paths-filter.
 
-### 9.2 Python
+### Python
 
 - `pyproject.toml` 기반. Poetry/Hatch로 관리.
 - 공통 툴링(ruff/black/pytest) 루트 설정 + 패키지별 env 관리.
 - wheel 생성 및 내부 index(예: Nexus/PyPI private)로 배포.
 
-### 9.3 Java
+### Java
 
 - Gradle 멀티 모듈: 루트 `settings.gradle`에서 포함 프로젝트 선언.
 - 빌드 캐시, configuration cache로 속도 개선.
 
 ---
 
-## 10. 마이그레이션 로드맵(Polyrepo → Monorepo)
+## 마이그레이션 로드맵(Polyrepo → Monorepo)
 
 1) **목록 정리**: 서비스/라이브러리/공통 구성요소 인벤토리
 2) **합치는 순서**: 공통 라이브러리 → 소비 앱 순으로
@@ -485,9 +490,9 @@ use (
 
 ---
 
-## 11. 실전 레시피 모음
+## 실전 레시피 모음
 
-### 11.1 루트 스크립트 예
+### 루트 스크립트 예
 
 `package.json`:
 
@@ -504,7 +509,7 @@ use (
 }
 ```
 
-### 11.2 Apps/Web 빌드 스크립트 예
+### Apps/Web 빌드 스크립트 예
 
 `apps/web/package.json`:
 
@@ -523,7 +528,7 @@ use (
 }
 ```
 
-### 11.3 Turborepo 파이프라인 예
+### Turborepo 파이프라인 예
 
 `turbo.json`:
 
@@ -545,11 +550,12 @@ use (
 }
 ```
 
-### 11.4 GitHub Actions 전체 예시(변경 영향 + 캐시 + 릴리스)
+### GitHub Actions 전체 예시(변경 영향 + 캐시 + 릴리스)
 
 {% raw %}
 ```yaml
 # .github/workflows/ci.yml
+
 name: Monorepo CI
 
 on:
@@ -638,7 +644,7 @@ jobs:
 
 ---
 
-## 12. 운영 체크리스트
+## 운영 체크리스트
 
 - Git
   - partial clone `--filter=blob:none`, sparse-checkout로 필요한 디렉터리만
@@ -660,7 +666,7 @@ jobs:
 
 ---
 
-## 13. 도입 여부 판단 가이드
+## 도입 여부 판단 가이드
 
 - 다음에 해당하면 Monorepo를 고려
   - 공통 코드/디자인 시스템을 여러 앱이 공유

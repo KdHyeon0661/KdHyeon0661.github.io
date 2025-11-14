@@ -6,7 +6,7 @@ category: HTML
 ---
 # Server-Sent Events (SSE)
 
-## 0. SSE 한눈에 보기
+## SSE 한눈에 보기
 
 - **정의**: 브라우저에서 `EventSource`로 서버에 **하나의 HTTP 연결**을 열고, 서버가 `text/event-stream`으로 **지속적 이벤트를 푸시**하는 **단방향** 실시간 통신.
 - **특징**
@@ -17,7 +17,7 @@ category: HTML
 
 ---
 
-## 1. 기본 동작 구조
+## 기본 동작 구조
 
 ```
 Client --------> Server   : GET /events  (Accept: text/event-stream)
@@ -34,7 +34,7 @@ Client <======== Server   : HTTP 200, Content-Type: text/event-stream
 
 ---
 
-## 2. 클라이언트: EventSource 기본
+## 클라이언트: EventSource 기본
 
 ```html
 <button id="stop">연결 해제</button>
@@ -69,7 +69,7 @@ Client <======== Server   : HTTP 200, Content-Type: text/event-stream
 
 ---
 
-## 3. 서버: 최소 Express 예제(기본기 + 즉시 flush)
+## 서버: 최소 Express 예제(기본기 + 즉시 flush)
 
 ```js
 // server.js
@@ -114,7 +114,7 @@ app.listen(3000, () => console.log('SSE on :3000'));
 
 ---
 
-## 4. 전송 포맷 상세
+## 전송 포맷 상세
 
 메시지는 **여러 필드**로 구성 가능하며, 각 필드는 `key: value` 형식이다.
 
@@ -144,7 +144,7 @@ data: {"json":"ok"}
 
 ---
 
-## 5. 재연결/복구 설계 — Last-Event-ID
+## 재연결/복구 설계 — Last-Event-ID
 
 SSE의 진짜 힘은 **자동 재연결 + 마지막 ID 복구**다.
 
@@ -200,7 +200,7 @@ app.get('/events', (req, res) => {
 
 ---
 
-## 6. 커스텀 이벤트 수신
+## 커스텀 이벤트 수신
 
 서버:
 
@@ -222,9 +222,9 @@ es.addEventListener('price', (e) => {
 
 ---
 
-## 7. CORS/인증/보안
+## CORS/인증/보안
 
-### 7.1 CORS
+### CORS
 
 - 단순 GET이지만 **장기 연결**이므로 정확한 헤더가 중요.
 - **자격증명(쿠키) 사용 시**:
@@ -243,21 +243,21 @@ app.get('/events', (req, res) => {
 });
 ```
 
-### 7.2 토큰 전달
+### 토큰 전달
 
 - EventSource는 커스텀 헤더 설정 불가 → **쿼리스트링**(예: `/events?token=...`) 이나 **쿠키**로 전달.
 - 토큰은 **짧은 TTL**과 **서버측 검증** 필수. URL 로그/리퍼러에 노출될 수 있으니 주의.
 
-### 7.3 HTTPS/CSP
+### HTTPS/CSP
 
 - 사용자 데이터가 섞이는 경우 **HTTPS 필수**.
 - CSP로 `connect-src` 에 SSE 엔드포인트 도메인을 허용.
 
 ---
 
-## 8. 프록시/배포/성능
+## 프록시/배포/성능
 
-### 8.1 프록시 버퍼링
+### 프록시 버퍼링
 
 - Nginx 등은 기본적으로 응답을 버퍼링 → **SSE가 묶일 수 있음**.
   Nginx 설정:
@@ -275,26 +275,26 @@ app.get('/events', (req, res) => {
   ```
 - Cloudflare/ELB/Ingress 등도 **buffering/idle timeout** 설정을 조정.
 
-### 8.2 Keep-Alive/Idle Timeout
+### Keep-Alive/Idle Timeout
 
 - PaaS(예: Heroku, 일부 LB)는 **빈 응답 장시간 유지**를 끊을 수 있음 → **주기적 heartbeat** 전송(`: ping\n\n`) 권장.
 - HTTP/2 환경에서도 대부분 잘 동작하나, **중간 프록시 호환성**을 확인.
 
-### 8.3 동시 연결/스케일
+### 동시 연결/스케일
 
 - 브라우저/오리진당 동시 연결 제한(브라우저 네트워크 정책)을 고려. 페이지당 **SSE 1개 연결**을 권장.
 - 서버는 연결 수만큼 파일 디스크립터/메모리/타이머를 소비 → **수평 확장** 필요 시 **메시지 브로커(Redis/Kafka)** 로 분기.
 
-### 8.4 압축
+### 압축
 
 - `text/event-stream` 은 **Content-Length 없이 스트리밍**.
   일부 프록시는 압축을 비권장/비활성화. 압축이 필요하면 **서버와 프록시 양쪽에서 안전성**을 검증.
 
 ---
 
-## 9. 실전 패턴
+## 실전 패턴
 
-### 9.1 대시보드(여러 위젯 동시 업데이트)
+### 대시보드(여러 위젯 동시 업데이트)
 
 - 단일 SSE 연결에서 **서로 다른 `event:` 이름**으로 구분 → 위젯별 리스너에 라우팅.
 
@@ -304,20 +304,20 @@ es.addEventListener('ram', (e) => updateRAM(JSON.parse(e.data)));
 es.addEventListener('jobs', (e) => updateJobs(JSON.parse(e.data)));
 ```
 
-### 9.2 알림/토스트
+### 알림/토스트
 
 - 브라우저 백그라운드 탭 고려: `document.visibilityState` 응용, **토스트 UI**로 비침투적 표시.
 
-### 9.3 스트리밍 진행률/LLM 토큰
+### 스트리밍 진행률/LLM 토큰
 
 - 긴 작업의 중간 상태를 `data:` 로 chunking → 사용자 체감 개선.
 - 작업 ID와 `Last-Event-ID` 로 **중단 후 복구** 템플릿.
 
 ---
 
-## 10. 다양한 서버 구현
+## 다양한 서버 구현
 
-### 10.1 Node.js (Express) — CORS/Heartbeat/Retry
+### Node.js (Express) — CORS/Heartbeat/Retry
 
 ```js
 import express from 'express';
@@ -350,10 +350,11 @@ app.get('/events', (req, res) => {
 app.listen(3000);
 ```
 
-### 10.2 Python — FastAPI(ASGI) / StreamingResponse
+### Python — FastAPI(ASGI) / StreamingResponse
 
 ```python
 # pip install fastapi uvicorn
+
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 import asyncio, json, time
@@ -380,7 +381,7 @@ async def events(request: Request):
     return StreamingResponse(stream(), media_type="text/event-stream")
 ```
 
-### 10.3 Java — Spring Boot (SseEmitter)
+### Java — Spring Boot (SseEmitter)
 
 ```java
 // build.gradle: implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -407,7 +408,7 @@ public class SseController {
 }
 ```
 
-### 10.4 Go — net/http + Flusher
+### Go — net/http + Flusher
 
 ```go
 package main
@@ -458,7 +459,7 @@ func main() {
 
 ---
 
-## 11. React 클라이언트 미니 패턴(자동 정리 포함)
+## React 클라이언트 미니 패턴(자동 정리 포함)
 
 ```jsx
 import { useEffect, useRef, useState } from 'react';
@@ -487,14 +488,14 @@ export default function UseSSE() {
 
 ---
 
-## 12. 파일 업로드/명령 전송 등 “역방향”이 필요할 때
+## 파일 업로드/명령 전송 등 “역방향”이 필요할 때
 
 - SSE는 **단방향**. 클라이언트→서버 요청은 **기존 HTTP(Fetch/XHR)** 를 병행한다.
 - 예) “실행 버튼 클릭 → POST /run → 진행률은 SSE로 수신” 같은 **CQRS 패턴**이 깔끔하다.
 
 ---
 
-## 13. 문제 해결 체크리스트
+## 문제 해결 체크리스트
 
 | 증상 | 점검 항목 |
 |---|---|
@@ -508,7 +509,7 @@ export default function UseSSE() {
 
 ---
 
-## 14. WebSocket vs SSE — 선택 가이드
+## WebSocket vs SSE — 선택 가이드
 
 - **SSE**: 서버→클라이언트 푸시만 필요, 구현 단순/저비용, HTTP 친화, 자동 재연결/복구 쉬움
 - **WebSocket**: 채팅/게임/협업 편집처럼 **양방향/저지연** 필요할 때
@@ -516,9 +517,10 @@ export default function UseSSE() {
 
 ---
 
-## 15. 미니 실전: “배치 작업 진행률 + 로그 스트림”
+## 미니 실전: “배치 작업 진행률 + 로그 스트림”
 
 ### 흐름
+
 1) 사용자가 “배치 실행” 클릭 → `POST /jobs` → jobId 반환
 2) 클라가 `EventSource(/jobs/:id/stream)` 연결
 3) 서버는 상태/로그를 `event: progress`, `event: log` 로 전송
@@ -547,7 +549,7 @@ es.addEventListener('log', e => appendLog(e.data));
 
 ---
 
-## 16. 정리
+## 정리
 
 | 항목 | 내용 |
 |---|---|
@@ -558,7 +560,7 @@ es.addEventListener('log', e => appendLog(e.data));
 
 ---
 
-## 17. 추가 참고
+## 추가 참고
 
 - MDN: Server-sent events
 - HTML Living Standard: EventSource

@@ -5,6 +5,7 @@ date: 2025-10-18 17:25:23 +0900
 category: 영상처리
 ---
 # Dithering (RGB565 같은 **저비트 표면**을 위한 디더링 총정리)
+
 > 목표
 > - 24/32bpp(8bit/channel) 소스 이미지를 **RGB565(5-6-5)** 같은 저비트 표면으로 보낼 때, **계조 밴딩/블로킹**을 줄인다.
 > - **Ordered(규칙) 디더링**과 **Error Diffusion(오차 확산)**(Floyd–Steinberg 등)의 C++ 실전 코드를 제공한다.
@@ -13,7 +14,8 @@ category: 영상처리
 
 ---
 
-## 1. 왜 디더링이 필요한가?
+## 왜 디더링이 필요한가?
+
 - RGB565는 **R=5bit(32단계), G=6bit(64단계), B=5bit(32단계)** 에 불과해, 8bit 채널 대비 **계조 단계가 크게 줄어** 밴딩/계단 현상이 나타난다.
 - 디더링은 **양자화(quantization)** 로 생기는 오차를 **공간적으로 흩뿌려** 시각적으로 **균질한 노이즈**로 바꾸는 기술이다.
   - **Ordered(규칙) 디더링**: 작은 타일(예: 8×8 Bayer) 임계치 행렬로 **빠르고 일정한** 노이즈.
@@ -21,7 +23,8 @@ category: 영상처리
 
 ---
 
-## 2. RGB565로의 양자화(기본식)
+## RGB565로의 양자화(기본식)
+
 - R,G,B 원 신호를 \(r,g,b \in [0,1]\) 로 두고, 5/6bit에 매핑:
 \[
 R_5 = \left\lfloor 32 \cdot r + \tfrac{1}{2} \right\rfloor \;\;(\text{clamp }0..31), \quad
@@ -36,7 +39,8 @@ B_5 = \left\lfloor 32 \cdot b + \tfrac{1}{2} \right\rfloor \;\;(\text{clamp }0..
 
 ---
 
-## 3. 감마(전달함수)와 디더링 — 어디에서 할까?
+## 감마(전달함수)와 디더링 — 어디에서 할까?
+
 - 대부분의 565 LCD는 **sRGB 유사 감마**(≈2.2)를 내장 가정.
 - **연산(리사이즈/블렌드/컨볼루션)** 은 **선형광**에서 하는 것이 맞다.
 - **디더링 단계**는 보통 **최종 코드값 경계**에 맞춰 **sRGB 코드공간**에서 하는 것이 실용적이다.
@@ -47,7 +51,8 @@ B_5 = \left\lfloor 32 \cdot b + \tfrac{1}{2} \right\rfloor \;\;(\text{clamp }0..
 
 ---
 
-## 4. 공통 유틸 (sRGB 변환, 패킹 등)
+## 공통 유틸 (sRGB 변환, 패킹 등)
+
 ```cpp
 #include <algorithm>
 #include <cmath>
@@ -80,16 +85,18 @@ inline uint16_t pack_rgb565(uint8_t r8, uint8_t g8, uint8_t b8) {
 
 ---
 
-## 5. **Ordered Dithering** (8×8 Bayer) — 빠르고 간단, 패턴 일정
+## **Ordered Dithering** (8×8 Bayer) — 빠르고 간단, 패턴 일정
 
-### 5.1 원리
+### 원리
+
 - M×M 임계치 행렬 \(B[y,x]\in[0..M^2-1]\) 로 **정규화 임계치** \(t=\frac{B+0.5}{M^2}\in[0,1)\) 를 만들고,
 \[
 q = \left\lfloor s \cdot L + t \right\rfloor,\qquad L=\text{레벨 수}(5bit\to 32,\;6bit\to 64)
 \]
 - 즉, **코드 경계**에 소량의 임계치를 더해 **올리기/내리기**를 번갈아 결정한다.
 
-### 5.2 코드
+### 코드
+
 ```cpp
 // 8x8 Bayer threshold matrix (0..63)
 static const uint8_t BAYER8[8][8] = {
@@ -143,9 +150,10 @@ void DitherOrdered_RGB565(const uint8_t* srcBGRA, int w, int h, int sstrideBytes
 
 ---
 
-## 6. **Error Diffusion (Floyd–Steinberg)** — 품질 우선
+## **Error Diffusion (Floyd–Steinberg)** — 품질 우선
 
-### 6.1 원리
+### 원리
+
 - 픽셀마다 양자화 후 **오차** \(e = s - \hat{s}\) 를 **이웃 픽셀로 분배**하여, 전체적으로 평균이 맞게 한다.
 - Floyd–Steinberg 커널(좌→우 스캔):
 \[
@@ -156,7 +164,8 @@ void DitherOrdered_RGB565(const uint8_t* srcBGRA, int w, int h, int sstrideBytes
 \]
 - **Serpentine(지그재그)** 스캔으로 방향성 패턴을 완화.
 
-### 6.2 코드 (sRGB 코드공간에서 레벨 오차 확산)
+### 코드 (sRGB 코드공간에서 레벨 오차 확산)
+
 ```cpp
 #include <vector>
 
@@ -252,20 +261,23 @@ void DitherFS_RGB565(const uint8_t* srcBGRA, int w, int h, int sstrideBytes,
 
 ---
 
-## 7. **랜덤/블루 노이즈 Ordered** — 패턴 저감, 캐시 친화
+## **랜덤/블루 노이즈 Ordered** — 패턴 저감, 캐시 친화
+
 - **Bayer**의 규칙 패턴이 거슬리면, **블루 노이즈 타일(예: 64×64)** 을 t로 써서 `t∈[0,1)` 로 정규화해 §5의 공식을 그대로 적용한다.
 - 블루 노이즈는 **저주파 성분이 적어** 눈에 덜 띄는 장점.
 - 간단 대안: **크게 섞은 LCG/PCG 난수 타일**을 미리 생성해 반복 사용(프레임 간 고정하면 깜빡임 없음).
 
 ---
 
-## 8. 알파가 있는 입력을 565로 내려야 할 때
+## 알파가 있는 입력을 565로 내려야 할 때
+
 - RGB565엔 **알파 없음** → 565로 **내리기 전에** **배경색과 선형 프리멀티 합성**을 끝낸다(§5/감마 절 참고).
 - 절차: BGRA(sRGB) → **sRGB→Linear**, 프리멀티 합성 → **Linear→sRGB** → 디더/양자화 → RGB565.
 
 ---
 
-## 9. 성능 팁
+## 성능 팁
+
 - **정규화 LUT**: `u8→s(0..1)` 는 `lut[256]` 로, `s→code` 는 `(u*levels + offs)>>8` 같은 정수 근사로 가속.
 - **SIMD**: SSE2/NEON으로 4~16픽셀 병렬. Ordered는 **분기 없음** → SIMD 적합.
 - **타일링**: 캐시/버퍼 스와핑 줄이기 위해 **행 타일** 단위 처리.
@@ -273,7 +285,8 @@ void DitherFS_RGB565(const uint8_t* srcBGRA, int w, int h, int sstrideBytes,
 
 ---
 
-## 10. MFC/Win32에서 **RGB565 DIBSection** 만들기(화면 출력)
+## MFC/Win32에서 **RGB565 DIBSection** 만들기(화면 출력)
+
 ```cpp
 #include <windows.h>
 
@@ -315,7 +328,8 @@ void BlitRGB565(HDC hdc, int dx, int dy, int w, int h, const void* bits, int pit
 
 ---
 
-## 11. (선택) **선형광 기반 디더링**으로 더 정확히
+## (선택) **선형광 기반 디더링**으로 더 정확히
+
 - 디더링을 **선형광**에서 하면 밝기 보존이 더 좋다. 절차:
   1) sRGB(0..1) → **Linear**(0..1)
   2) (Ordered 또는 FS) 디더링을 **Linear** 값에 적용
@@ -327,7 +341,8 @@ void BlitRGB565(HDC hdc, int dx, int dy, int w, int h, const void* bits, int pit
 
 ---
 
-## 12. 비교 가이드 (언제 어떤 기법?)
+## 비교 가이드 (언제 어떤 기법?)
+
 | 상황 | 추천 |
 |---|---|
 | 사진/그라디언트 넓은 영역 | **Floyd–Steinberg**(Serpentine) 또는 **블루 노이즈 Ordered** |
@@ -337,7 +352,8 @@ void BlitRGB565(HDC hdc, int dx, int dy, int w, int h, const void* bits, int pit
 
 ---
 
-## 13. 품질 검증 체크리스트
+## 품질 검증 체크리스트
+
 - 밴딩 감소: 8/16 px 간격 그라디언트에서 **밴딩→노이즈**로 바뀌는지.
 - 얇은 글꼴 테두리/아이콘: 수평/수직/대각선 라인에서 **색 흔들림** 최소화.
 - 패턴성: Bayer 체커가 보이면 **블루 노이즈/FS** 로 전환.
@@ -345,7 +361,8 @@ void BlitRGB565(HDC hdc, int dx, int dy, int w, int h, const void* bits, int pit
 
 ---
 
-## 14. 통합 예시 — “모드 스위치” 함수
+## 통합 예시 — “모드 스위치” 함수
+
 ```cpp
 enum class DitherMode { None, OrderedBayer8, FloydSteinberg };
 
@@ -375,7 +392,8 @@ void Convert_BGRA8_to_RGB565(const uint8_t* srcBGRA, int w, int h, int sstrideBy
 
 ---
 
-## 15. 흔한 실수 & 해결
+## 흔한 실수 & 해결
+
 | 실수 | 증상 | 해결 |
 |---|---|---|
 | 디더 전 **리사이즈/블렌드**를 sRGB에서 함 | 어두운 쪽 뭉개짐, 링잉 | **선형광에서 연산** 후 디더링 |
@@ -386,7 +404,8 @@ void Convert_BGRA8_to_RGB565(const uint8_t* srcBGRA, int w, int h, int sstrideBy
 
 ---
 
-## 16. 요약
+## 요약
+
 - 저비트 표면(RGB565)에서 밴딩을 줄이려면, **Ordered**(빠름, 예측가능) 또는 **Floyd–Steinberg**(품질↑)를 사용하라.
 - **연산은 선형**, **디더/양자화는 sRGB 코드 경계 기준**이 현실적이고, 필요 시 선형 기반 디더로 확장 가능.
 - 제공한 C++ 함수들을 **ImageTool/MFC**에 그대로 이식하면, **565 대상 장치**(임베디드 LCD, DIBSection 등)에 즉시 적용 가능하다.

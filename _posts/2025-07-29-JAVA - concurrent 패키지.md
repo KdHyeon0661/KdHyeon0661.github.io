@@ -6,7 +6,7 @@ category: Java
 ---
 # java.util.concurrent 패키지
 
-## 0. 왜 `java.util.concurrent`(JUC) 인가?
+## 왜 `java.util.concurrent`(JUC) 인가?
 
 - `synchronized` + `wait/notify`만으로는 **락 경합·스레드 폭주·자원 누수·깨지기 쉬운 코드**가 되기 쉽다.
 - JUC는 **표준화된 스레드 풀/락/동시성 컬렉션/원자 연산/비동기 조합**을 제공:
@@ -16,9 +16,9 @@ category: Java
 
 ---
 
-## 1. Executor Framework — 스레드 풀의 표준
+## Executor Framework — 스레드 풀의 표준
 
-### 1.1 핵심 개념
+### 핵심 개념
 
 | 구성요소 | 역할 | 비고 |
 |---|---|---|
@@ -30,6 +30,7 @@ category: Java
 | `ThreadPoolExecutor` | 스레드 풀 구현 | 모든 튜닝 포인트 보유 |
 
 #### `ThreadPoolExecutor` 생성자(핵심 파라미터)
+
 ```java
 ThreadPoolExecutor(
   int corePoolSize,
@@ -45,7 +46,7 @@ ThreadPoolExecutor(
 2) 큐가 가득이면 `maximum`까지 스레드 증가
 3) 그래도 못 담으면 **거부 정책** 수행
 
-### 1.2 큐/거부 정책/스레드 팩토리 — 선택 가이드
+### 큐/거부 정책/스레드 팩토리 — 선택 가이드
 
 | 항목 | 옵션 | 사용 시점 |
 |---|---|---|
@@ -58,7 +59,7 @@ ThreadPoolExecutor(
 |  | `DiscardPolicy`/`DiscardOldestPolicy` | 지양(정보 손실) |
 | ThreadFactory | 이름/우선순위/데몬 | 로깅·모니터링/디버깅 용이 |
 
-### 1.3 생명주기 관리
+### 생명주기 관리
 
 ```java
 executor.shutdown();                      // 신규 제출 금지
@@ -68,7 +69,7 @@ executor.shutdownNow();                   // 인터럽트로 즉시 종료 시�
 
 > 규칙: **항상 종료**(try-finally 또는 shutdown hook), **인터럽트 정책 준수**(차단 메서드 호출 시 `InterruptedException` 처리 후 `Thread.currentThread().interrupt()` 재설정).
 
-### 1.4 실전 레시피 — “안전한 고정 스레드 풀 + 백프레셔”
+### 실전 레시피 — “안전한 고정 스레드 풀 + 백프레셔”
 
 ```java
 var queue = new ArrayBlockingQueue<Runnable>(2000);
@@ -91,7 +92,7 @@ var pool = new ThreadPoolExecutor(
 
 - **고정 크기**(CPU 바운드) + **유한 큐**(메모리 보호) + **CallerRunsPolicy**(자연스런 조절).
 
-### 1.5 `CompletionService` — 먼저 끝난 것부터 받기
+### `CompletionService` — 먼저 끝난 것부터 받기
 
 ```java
 var pool = Executors.newFixedThreadPool(8);
@@ -105,7 +106,7 @@ for (int i=0; i<urls.size(); i++) {
 pool.shutdown();
 ```
 
-### 1.6 스케줄링 — `ScheduledExecutorService`
+### 스케줄링 — `ScheduledExecutorService`
 
 ```java
 var sch = Executors.newScheduledThreadPool(2);
@@ -119,9 +120,9 @@ sch.scheduleWithFixedDelay(() -> poll(), 0, 1, TimeUnit.MINUTES);
 
 ---
 
-## 2. 동기화 도구 — Lock/Condition와 동기화 장치
+## 동기화 도구 — Lock/Condition와 동기화 장치
 
-### 2.1 `ReentrantLock` & `Condition`
+### `ReentrantLock` & `Condition`
 
 - 장점: **공정성 옵션**, `tryLock(타임아웃)`, `lockInterruptibly()`, **여러 Condition** 지원
 - `Condition.await()`는 **스퍼리어스 웨이크업** 가능 → 항상 **조건을 while로 재검사**
@@ -159,7 +160,7 @@ class BoundedBuffer<T> {
 }
 ```
 
-### 2.2 읽기-쓰기 락 & `StampedLock`
+### 읽기-쓰기 락 & `StampedLock`
 
 | 도구 | 특징 | 사용 팁 |
 |---|---|---|
@@ -190,7 +191,7 @@ class Point {
 }
 ```
 
-### 2.3 기타 동기화 장치
+### 기타 동기화 장치
 
 | 클래스 | 용도 | 예제 아이디어 |
 |---|---|---|
@@ -212,9 +213,9 @@ void call() throws InterruptedException {
 
 ---
 
-## 3. 동시성 컬렉션 — 안전한 컨테이너
+## 동시성 컬렉션 — 안전한 컨테이너
 
-### 3.1 `ConcurrentHashMap`(CHM)
+### `ConcurrentHashMap`(CHM)
 
 - **null 키/값 불가**, **약한 일관성 반복자**(ConcurrentModificationException 미발생)
 - Java 8+: **bin-tree(레드블랙트리)로 충돌 성능 개선**
@@ -234,12 +235,12 @@ var hits = new java.util.concurrent.ConcurrentHashMap<String, java.util.concurre
 hits.computeIfAbsent(path, k -> new java.util.concurrent.atomic.LongAdder()).increment();
 ```
 
-### 3.2 `CopyOnWriteArrayList/Set`
+### `CopyOnWriteArrayList/Set`
 
 - **읽기 매우 많고, 쓰기 적음** → 반복자는 **스냅샷** 기반, 락 경쟁 거의 없음
 - 단점: 쓰기 시 **배열 복사 비용** 큼
 
-### 3.3 `BlockingQueue` 계열
+### `BlockingQueue` 계열
 
 | 큐 | 특성 | 사용 |
 |---|---|---|
@@ -267,7 +268,7 @@ pool.submit(() -> {
 
 ---
 
-## 4. 원자 변수 & Adder/Accumulator
+## 원자 변수 & Adder/Accumulator
 
 | 클래스 | 용도 | 비고 |
 |---|---|---|
@@ -285,7 +286,7 @@ long sum = adder.sum(); // 스냅샷 합계
 
 ---
 
-## 5. Fork/Join — 분할정복과 work-stealing
+## Fork/Join — 분할정복과 work-stealing
 
 - `ForkJoinPool`(공용 풀 포함): 각 워커가 자기 덱에서 팝, 부족하면 **다른 워커의 뒤에서 훔침**
 - `RecursiveTask<V>`(값 반환) / `RecursiveAction`(void)
@@ -316,9 +317,9 @@ class SumTask extends java.util.concurrent.RecursiveTask<Long> {
 
 ---
 
-## 6. `CompletableFuture` — 비동기 조합
+## `CompletableFuture` — 비동기 조합
 
-### 6.1 생성과 실행
+### 생성과 실행
 
 ```java
 var pool = Executors.newFixedThreadPool(8);
@@ -330,7 +331,7 @@ CompletableFuture<Void> g =
   CompletableFuture.runAsync(() -> sideEffect());       // 공용 풀
 ```
 
-### 6.2 조합/변환
+### 조합/변환
 
 | 메서드 | 의미 | 비고 |
 |---|---|---|
@@ -361,7 +362,7 @@ f.cancel(true);
 
 ---
 
-## 7. 랜덤/시간/유틸
+## 랜덤/시간/유틸
 
 - `ThreadLocalRandom` — 다중 스레드에서 `Random`보다 경합이 낮음
 ```java
@@ -372,7 +373,7 @@ int n = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 
 ---
 
-## 8. 자바 메모리 모델(JMM) — 가시성과 순서 보장 핵심
+## 자바 메모리 모델(JMM) — 가시성과 순서 보장 핵심
 
 **happens-before** 주요 규칙(요점):
 - **락 언락 → 같은 락의 이후 락 획득** 사이의 쓰기/읽기 가시성
@@ -385,7 +386,7 @@ int n = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 
 ---
 
-## 9. 디버깅/테스트/운영 체크리스트
+## 디버깅/테스트/운영 체크리스트
 
 - 스레드 덤프(`jstack`/JFR)로 **데드락** 탐지: 락 소유/대기 관계 확인
 - **인터럽트 정책** 준수: 차단 메서드에서 인터럽트 시 `interrupt()` 재설정
@@ -396,7 +397,7 @@ int n = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 
 ---
 
-## 10. 선택 가이드 — 무엇을 언제 쓰나
+## 선택 가이드 — 무엇을 언제 쓰나
 
 | 문제 | 권장 도구 | 이유 |
 |---|---|---|
@@ -411,7 +412,7 @@ int n = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 
 ---
 
-## 11. 종합 예제 — “I/O 바운드 호출 + 캐시 + 비동기 조합 + 백프레셔”
+## 종합 예제 — “I/O 바운드 호출 + 캐시 + 비동기 조합 + 백프레셔”
 
 ```java
 import java.util.concurrent.*;
@@ -470,7 +471,7 @@ public class App {
 
 ---
 
-## 12. 흔한 함정과 방어 전략
+## 흔한 함정과 방어 전략
 
 - 무제한 큐 + 큰 `maximumPoolSize` → **메모리 폭증**: 항상 **유한 큐** 또는 `SynchronousQueue`로 의도 명시
 - `Future.get()` 남용 → **스레드 블로킹**: 가능하면 **조합 API**(`thenCompose/thenCombine`) 사용
@@ -481,15 +482,17 @@ public class App {
 
 ---
 
-## 13. 빠른 레퍼런스 표
+## 빠른 레퍼런스 표
 
-### 13.1 스케줄러 차이
+### 스케줄러 차이
+
 | 메서드 | 특징 | 사용 |
 |---|---|---|
 | `scheduleAtFixedRate` | 시작 간격 고정(드리프트 가능) | 모니터링 비트 |
 | `scheduleWithFixedDelay` | 종료→다음 시작 지연 고정 | 폴링/청소 작업 |
 
-### 13.2 Latch/Barrier/Phaser
+### Latch/Barrier/Phaser
+
 | 도구 | 일회성 | 재사용 | 동적 파티 | 비고 |
 |---|---|---|---|---|
 | `CountDownLatch` | 예 | 아니오 | 아니오 | 0되면 영원히 열린다 |
@@ -498,7 +501,7 @@ public class App {
 
 ---
 
-## 14. 결론
+## 결론
 
 - **Executor(풀)로 스레드를 직접 관리하지 말라** — 큐·거부·종료를 표준으로.
 - 락 선택은 **읽기/쓰기 패턴**과 **경합 정도**로 결정, 조건 대기는 **while 재검사**.

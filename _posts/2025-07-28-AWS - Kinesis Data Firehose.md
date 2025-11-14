@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Kinesis Data Firehose 기반 ETL 파이프라인 설계
 
-## 0. 전체 흐름(확장판)
+## 전체 흐름(확장판)
 
 ```text
 [Producers: App/Batch/IoT/Fluent Bit/CloudFront/ALB Logs]
@@ -27,32 +27,37 @@ Destinations:
 
 ---
 
-## 1. Firehose 핵심 개념 정리
+## Firehose 핵심 개념 정리
 
-### 1.1 소스(Source) 유형
+### 소스(Source) 유형
+
 - **Direct PUT**: 애플리케이션에서 Firehose API로 직접 전송
 - **Kinesis Data Streams → Firehose**: Streams를 소스로 연결(샤드 스케일링을 Streams에서)
 - **CloudWatch Logs/Events, VPC Flow Logs, CloudFront/ALB Access Logs**: 서비스 통합 경로(리전별 지원)
 
-### 1.2 버퍼링·배치
+### 버퍼링·배치
+
 - **Size**: 1–128 MiB (S3/OpenSearch 기준), 보통 16–64 MiB 권장
 - **Interval**: 60–900 s(기본 300s). 저지연 vs 비용(요청/오브젝트 수) 트레이드오프
 
-### 1.3 포맷 변환 & 스키마
+### 포맷 변환 & 스키마
+
 - **데이터 포맷 변환**: JSON/CSV → **Parquet/ORC** (열지향, 압축 효율↑, Athena/Redshift Spectrum 친화)
 - **Glue Schema Registry**: 스키마 버전 관리(Avro/JSON/Protobuf), 진화 대응
 
-### 1.4 동적 파티셔닝 (S3)
+### 동적 파티셔닝 (S3)
+
 - 레코드의 필드로 **Prefix**를 동적으로 구성: `year=!{timestamp:YYYY}/month=!{timestamp:MM}/country=!{partitionKeyFromQuery:$.country}/`
 - Athena/Glue 파티션 비용·성능 최적화의 핵심
 
-### 1.5 변환(Transformation)
+### 변환(Transformation)
+
 - **Lambda Transform**: 레코드 단위/배치 단위 변환, PII 마스킹, 필터링, 정규화
 - 입력/출력은 **Base64 인코딩** 컨트랙트 필수
 
 ---
 
-## 2. IAM 최소 권한 설계(샘플)
+## IAM 최소 권한 설계(샘플)
 
 ```json
 {
@@ -70,13 +75,15 @@ Destinations:
 
 ---
 
-## 3. Lambda 변환: 실전 패턴(PII 마스킹, 스키마 진화, 에러 분기)
+## Lambda 변환: 실전 패턴(PII 마스킹, 스키마 진화, 에러 분기)
 
-### 3.1 입력/출력 컨트랙트
+### 입력/출력 컨트랙트
+
 - `event.records[]` 각 항목: `{ recordId, data, approximateArrivalTimestamp }`
 - 응답: `result`: `Ok` | `Dropped` | `ProcessingFailed`
 
-### 3.2 예제: JSON 정규화 + PII 마스킹 + 동적 파티션 키 세팅
+### 예제: JSON 정규화 + PII 마스킹 + 동적 파티션 키 세팅
+
 ```python
 import base64, json, re, hashlib, os
 
@@ -131,14 +138,16 @@ def lambda_handler(event, context):
 
 ---
 
-## 4. S3 목적지: 포맷 변환/파티셔닝/Glue/Athena
+## S3 목적지: 포맷 변환/파티셔닝/Glue/Athena
 
-### 4.1 S3 구성 전략
+### S3 구성 전략
+
 - Prefix 설계: `s3://datalake/events/year=YYYY/month=MM/day=DD/country=KR/`
 - 압축: **GZIP**(JSON) 또는 **Snappy**(Parquet)
 - 포맷 변환: **Parquet**로 저장 → Athena/Redshift Spectrum 비용·성능 극대화
 
-### 4.2 Firehose S3 구성(JSON)
+### Firehose S3 구성(JSON)
+
 ```json
 {
   "RoleARN": "arn:aws:iam::123456789012:role/FirehoseDeliveryRole",
@@ -161,7 +170,8 @@ def lambda_handler(event, context):
 }
 ```
 
-### 4.3 S3 + Parquet 변환(Glue Schema Registry)
+### S3 + Parquet 변환(Glue Schema Registry)
+
 ```json
 {
   "DataFormatConversionConfiguration": {
@@ -180,7 +190,8 @@ def lambda_handler(event, context):
 }
 ```
 
-### 4.4 Athena 쿼리 예시
+### Athena 쿼리 예시
+
 ```sql
 -- Glue Crawler로 카탈로그 등록 후
 SELECT country, action, count(*)
@@ -193,29 +204,32 @@ LIMIT 20;
 
 ---
 
-## 5. Redshift 목적지: COPY 자동화
+## Redshift 목적지: COPY 자동화
 
-### 5.1 설계 포인트
+### 설계 포인트
+
 - Firehose가 **S3 staging → Redshift COPY**를 자동 실행
 - Target 테이블 스키마와 S3 포맷 일치, IAM Role의 `redshift:CopyFromS3` 권한 필요
 - **원자성**: COPY 실패 시 staging 보존/알람
 
-### 5.2 적재 컬럼 타입과 DIST/SORT KEY
+### 적재 컬럼 타입과 DIST/SORT KEY
+
 - 사실 테이블: `DISTKEY(user_id)` or AUTO, `SORTKEY(ts)`
 - WLM/Auto WLM과 COPY 동시성 고려
 
 ---
 
-## 6. OpenSearch 목적지
+## OpenSearch 목적지
 
-### 6.1 색인 설계
+### 색인 설계
+
 - Index: `events-YYYY.MM.DD` 롤오버 정책
 - Mapping 동적 필드 제한, 키 필드에 `keyword` 타입 적용
 - Bulk size/Flush interval은 Firehose가 관리
 
 ---
 
-## 7. 오류 처리·백업·재처리
+## 오류 처리·백업·재처리
 
 - **Retry**: 네트워크/스로틀링에 대해 내부 재시도
 - **Backup Bucket**: 변환 실패/전송 실패를 `etl-errors/`로 백업
@@ -227,14 +241,16 @@ LIMIT 20;
 
 ---
 
-## 8. 관측성(Observability)
+## 관측성(Observability)
 
-### 8.1 CloudWatch 메트릭 핵심
+### CloudWatch 메트릭 핵심
+
 - `DeliveryToS3.Records`, `DeliveryToS3.Success`
 - `ThrottledRecords`, `KMSKeyAccessDenied`, `DataFreshness`
 - `FailedConversionRecords`, `BackupToS3.Success`
 
-### 8.2 알람 예시(CLI)
+### 알람 예시(CLI)
+
 ```bash
 aws cloudwatch put-metric-alarm \
   --alarm-name Firehose-Delivery-Failures \
@@ -248,21 +264,25 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 9. 성능·비용 최적화
+## 성능·비용 최적화
 
-### 9.1 버퍼·압축·포맷
+### 버퍼·압축·포맷
+
 - S3: **Size 32–64 MiB / Interval 60–180 s** → 적절한 파일 크기(Parquet 128–256MiB)
 - Parquet+Snappy → S3 저장·Athena 스캔 비용 절감(10~100배)
 
-### 9.2 동적 파티셔닝 비용 밸런스
+### 동적 파티셔닝 비용 밸런스
+
 - 파티션이 과도하면 **파일 수 증가 → List 비용/작은 파일 문제**
 - 시간 파티션(시간/일)+소수 키(country 등) 조합으로 상한 관리
 
-### 9.3 Lambda 변환 한계
+### Lambda 변환 한계
+
 - 타임아웃(최대 15분), 동시성, **payload 크기(6MB/레코드)**, 배치 크기
 - 변환 로직은 **O(n)** 선형, 외부 호출 최소화. PII 해시는 CPU 바운드 → 메모리 상향
 
-### 9.4 간이 비용 모델
+### 간이 비용 모델
+
 $$
 \text{Total Monthly Cost} \approx \text{Firehose Ingest GB} \times p_F
 + \text{Lambda GB-s} \times p_L + \text{S3 Storage GB} \times p_{S3}
@@ -273,7 +293,7 @@ $$
 
 ---
 
-## 10. 보안 설계
+## 보안 설계
 
 - **SSE-KMS**: S3 객체 암호화, Firehose 전송 시 KMS 사용
 - **VPC 엔드포인트(Interface/Gateway)**: 사설 경로로 S3/Kinesis/KMS/Logs 접근
@@ -282,7 +302,7 @@ $$
 
 ---
 
-## 11. IaC: Terraform 스니펫
+## IaC: Terraform 스니펫
 
 ```hcl
 resource "aws_kinesis_firehose_delivery_stream" "etl" {
@@ -323,9 +343,10 @@ resource "aws_kinesis_firehose_delivery_stream" "etl" {
 
 ---
 
-## 12. 테스트 & 프로듀서 예시
+## 테스트 & 프로듀서 예시
 
-### 12.1 Python(Direct PUT)
+### Python(Direct PUT)
+
 ```python
 import boto3, json, base64
 firehose = boto3.client('firehose', region_name='ap-northeast-2')
@@ -341,7 +362,8 @@ def send(user, action, ts, country):
 send("kimdh","login","2025-11-10T02:45:00Z","kr")
 ```
 
-### 12.2 대량 배치
+### 대량 배치
+
 ```python
 def put_batch(records):
     entries = [{"Data": (json.dumps(r)+"\n").encode()} for r in records]
@@ -350,7 +372,7 @@ def put_batch(records):
 
 ---
 
-## 13. 운영 체크리스트
+## 운영 체크리스트
 
 - [ ] S3 Prefix/파티션 키 설계 확정(쿼리 패턴 역설계)
 - [ ] Lambda 변환: 타임아웃/동시성/메모리 적정치 튜닝
@@ -362,7 +384,7 @@ def put_batch(records):
 
 ---
 
-## 14. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. 레코드 순서는 보장되나?**
 - Firehose는 **전송 순서 보장하지 않음**. 순서 의존 시 Kinesis Data Streams + 소비자 애플리케이션(Flink/KDA) 고려.
@@ -378,7 +400,7 @@ def put_batch(records):
 
 ---
 
-## 15. 미니 실습 시나리오(엔드투엔드)
+## 미니 실습 시나리오(엔드투엔드)
 
 1) **S3 버킷** 생성, KMS 키 준비
 2) **Lambda 변환** 배포(PII 마스킹/partitionKeys 세팅)
@@ -390,7 +412,7 @@ def put_batch(records):
 
 ---
 
-## 16. 결론
+## 결론
 
 - Firehose는 **운영 난이도를 낮춘 실시간 ETL**의 표준 경로다.
 - 핵심은 **(1) 변환 품질(Lambda), (2) 포맷 전환(Parquet), (3) 파티션 설계, (4) 에러 백업/리플레이, (5) 보안·관측성**이다.

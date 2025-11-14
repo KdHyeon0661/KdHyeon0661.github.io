@@ -6,12 +6,12 @@ category: Java
 ---
 # Java의 Object 클래스
 
-## 0. 왜 `Object`인가 — “모두의 부모”
+## 왜 `Object`인가 — “모두의 부모”
 
 - **Java의 모든 클래스는 암묵적으로 `java.lang.Object`를 상속**합니다. (예외: 기본형 `int`, `double` 등은 객체가 아님)
 - 따라서 모든 객체는 최소한 다음 메서드 군을 **보유/상속**합니다.
 
-### 0.1 주요 메서드 시그니처(요약)
+### 주요 메서드 시그니처(요약)
 
 | 메서드 | 요약 |
 |---|---|
@@ -27,20 +27,23 @@ category: Java
 
 ---
 
-## 1. `equals(Object)` — “논리적 동등성” 계약
+## `equals(Object)` — “논리적 동등성” 계약
 
-### 1.1 기본 동작과 오버라이드 필요성
+### 기본 동작과 오버라이드 필요성
+
 - 기본 구현은 **동일성**(same reference) 비교: `this == obj`.
 - **값 객체(Value Object)** 를 정의한다면 반드시 **오버라이드**하여 **내용 기반**으로 동등성을 정의.
 
-### 1.2 `equals`가 지켜야 할 5가지 규약
+### `equals`가 지켜야 할 5가지 규약
+
 1. **반사성(Reflexive)**: `x.equals(x)`는 `true`.
 2. **대칭성(Symmetric)**: `x.equals(y)`와 `y.equals(x)`는 동일 결과.
 3. **추이성(Transitive)**: `x=y`, `y=z`이면 `x=z`.
 4. **일관성(Consistent)**: 비교 대상이 불변이면 결과도 변하지 않음.
 5. **null-비동등**: `x.equals(null)`은 `false`.
 
-### 1.3 구현 패턴 (instanceof 패턴 매칭, null-안전)
+### 구현 패턴 (instanceof 패턴 매칭, null-안전)
+
 ```java
 public final class Email {
     private final String local;
@@ -71,30 +74,35 @@ public final class Email {
 > - **`getClass()` 비교**: **정확히 같은 런타임 타입**만 동등하게 취급할 때 적합.
 > 값 의미가 **상속으로 확장될 여지**가 있다면 `instanceof`가 보통 더 안전합니다.
 
-### 1.4 컬렉션과의 일관성
+### 컬렉션과의 일관성
+
 - `HashSet`, `HashMap`, `LinkedHashMap` 등 **해시 기반 컬렉션**은 `equals`와 `hashCode`의 **일관**을 전제.
 - 정렬 컬렉션(`TreeSet`/`TreeMap`)을 쓸 때는 `equals`와 `compareTo`도 **가능하면 일치**하도록 설계.
 
 ---
 
-## 2. `hashCode()` — 해시 기반 컬렉션의 친구
+## `hashCode()` — 해시 기반 컬렉션의 친구
 
-### 2.1 규약
+### 규약
+
 - `x.equals(y) == true` 라면 **반드시** `x.hashCode() == y.hashCode()`.
 - 반대는 필수 아님(충돌 허용)이나, **충돌은 적을수록 성능↑**.
 
-### 2.2 구현 팁
+### 구현 팁
+
 - `java.util.Objects.hash(...)` 또는 **수동 조합**: `31 * result + fieldHash`.
 - **가변 필드**로 `equals`/`hashCode`를 구성하면, 컬렉션에 넣은 뒤 값이 바뀌었을 때 **검색 실패/불변식 파괴** 위험 → 가급적 **불변** 또는 **키 필드 고정**.
 
 ---
 
-## 3. `toString()` — 로그/디버깅/도메인 출력
+## `toString()` — 로그/디버깅/도메인 출력
 
-### 3.1 기본 형태
+### 기본 형태
+
 - 기본은 `클래스이름@16진수hashCode`, 예: `Email@5a39699c`.
 
-### 3.2 오버라이드 가이드
+### 오버라이드 가이드
+
 - **간결·의미있는 요약**만 담기(민감 정보 노출 금지).
 - 디버깅/로그 가치를 높이되, **무거운 계산 금지**.
 - 예:
@@ -108,7 +116,7 @@ public final class Email {
 
 ---
 
-## 4. `getClass()` — 런타임 타입과 리플렉션의 관문
+## `getClass()` — 런타임 타입과 리플렉션의 관문
 
 - **`final` 메서드**: 오버라이드 불가.
 - 반환 타입은 `Class<?>`; 리플렉션으로 필드/메서드 탐색 가능.
@@ -120,13 +128,15 @@ System.out.println(o.getClass().getName()); // java.util.ArrayList
 
 ---
 
-## 5. `clone()` — 얕은 복제, 주의 깊게만 쓰기
+## `clone()` — 얕은 복제, 주의 깊게만 쓰기
 
-### 5.1 전제
+### 전제
+
 - `Object.clone()`은 **`protected`** + **얕은 복제**.
 - 사용하려면 **`Cloneable` 인터페이스**를 구현하고, 보통 **가시성을 `public`으로 올려 재정의**.
 
-### 5.2 기본 패턴
+### 기본 패턴
+
 ```java
 public class Person implements Cloneable {
     private String name;             // String은 불변이라 얕은 복제 OK
@@ -145,7 +155,8 @@ public class Person implements Cloneable {
 }
 ```
 
-### 5.3 대안(권장 순)
+### 대안(권장 순)
+
 1) **복사 생성자**: `new Person(other)`
 2) **정적 팩토리**: `Person.from(other)`
 3) (복잡한 그래프) 전용 매퍼/직렬화
@@ -154,7 +165,7 @@ public class Person implements Cloneable {
 
 ---
 
-## 6. `finalize()` — 쓰지 마세요
+## `finalize()` — 쓰지 마세요
 
 - GC 직전 호출되는 훅이었으나, **비결정성/성능/보안 문제**로 **비권장** 및 **폐지 예정/중단 추세**.
 - 외부 자원 해제는 **`AutoCloseable` + try-with-resources** 사용이 표준.
@@ -166,13 +177,15 @@ try (var in = java.nio.file.Files.newInputStream(path)) {
 
 ---
 
-## 7. `wait()/notify()/notifyAll()` — 객체 모니터 기반 동기화
+## `wait()/notify()/notifyAll()` — 객체 모니터 기반 동기화
 
-### 7.1 핵심 규칙
+### 핵심 규칙
+
 - 세 메서드는 **반드시 같은 객체 모니터를 보유한 `synchronized` 블록 안**에서 호출.
 - **스퍼리어스 웨이크업**(허위 기상)을 고려해 **조건 대기 시 `while` 루프**가 표준.
 
-### 7.2 생산자-소비자(미니 버전)
+### 생산자-소비자(미니 버전)
+
 ```java
 class BoundedQueue<T> {
     private final java.util.Queue<T> q = new java.util.ArrayDeque<>();
@@ -201,14 +214,15 @@ class BoundedQueue<T> {
 > 실무에서는 **`java.util.concurrent`**(예: `BlockingQueue`, `ReentrantLock/Condition`) 사용을 우선 고려하세요.
 > `wait/notify`는 **저수준 원시**로서 정확한 사용이 까다롭습니다.
 
-### 7.3 타임아웃 오버로드
+### 타임아웃 오버로드
+
 - `wait(long timeout)`/`wait(long timeout, int nanos)` 제공.
 - `notify()`는 임의의 하나, `notifyAll()`은 **모든 대기 스레드** 깨움.
   **여러 조건이 섞이면 `notifyAll()`이 안전한 경우가 많음**(또는 Condition으로 분리).
 
 ---
 
-## 8. 배열/래퍼와 `equals`의 함정
+## 배열/래퍼와 `equals`의 함정
 
 - **배열의 `equals`는 참조 동일성**. 내용 비교는 `java.util.Arrays.equals(...)` / `deepEquals(...)`.
 ```java
@@ -221,7 +235,7 @@ System.out.println(java.util.Arrays.equals(a, b));  // true
 
 ---
 
-## 9. 아이덴티티/유틸
+## 아이덴티티/유틸
 
 - **식별 해시**가 필요하면 `System.identityHashCode(obj)` (논리 `hashCode`와 무관).
 - `java.util.Objects` 유틸: `equals(a,b)`, `hash(...)`, `requireNonNull(...)`, `toString(obj, default)`.
@@ -229,9 +243,10 @@ System.out.println(java.util.Arrays.equals(a, b));  // true
 
 ---
 
-## 10. 실전 예제 모음
+## 실전 예제 모음
 
-### 10.1 `equals/hashCode` 누락 시 문제
+### `equals/hashCode` 누락 시 문제
+
 ```java
 import java.util.*;
 
@@ -246,7 +261,8 @@ public class Demo {
 }
 ```
 
-### 10.2 올바른 값 타입
+### 올바른 값 타입
+
 ```java
 final class Point {
     final int x,y;
@@ -261,14 +277,15 @@ final class Point {
 }
 ```
 
-### 10.3 레코드(record)로 간단히
+### 레코드(record)로 간단히
+
 ```java
 public record Person(String name, int age) {} // equals/hashCode/toString 자동 생성
 ```
 
 ---
 
-## 11. 표 — 메서드별 설계 체크리스트
+## 표 — 메서드별 설계 체크리스트
 
 | 메서드 | 꼭 지킬 것 | 피해야 할 것 |
 |---|---|---|
@@ -281,7 +298,7 @@ public record Person(String name, int age) {} // equals/hashCode/toString 자동
 
 ---
 
-## 12. 종합 미니 프로젝트 — `equals/hashCode/toString` 일관성 검증
+## 종합 미니 프로젝트 — `equals/hashCode/toString` 일관성 검증
 
 ```java
 import java.util.*;
@@ -332,7 +349,7 @@ public class App {
 
 ---
 
-## 13. 요약
+## 요약
 
 - `Object`는 **모든 클래스의 공통 조상**이며, 그 메서드는 **언어적 계약의 뼈대**입니다.
 - `equals`/`hashCode`는 **함께 재정의**하고 **계약을 지키는 것**이 핵심.

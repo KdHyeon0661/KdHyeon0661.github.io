@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia에서 멀티스레딩 UI 처리
 
-## 0. 왜 Dispatcher인가?
+## 왜 Dispatcher인가?
 
 Avalonia의 모든 `Visual` 은 **UI 스레드 소유**입니다. 다른 스레드에서 접근하면 예외/경합/크래시가 납니다.
 따라서 **백그라운드**에서 무거운 일을 처리하고, **UI 갱신만 UI 스레드**로 안전하게 큐잉해야 합니다.
@@ -19,7 +19,7 @@ Avalonia의 모든 `Visual` 은 **UI 스레드 소유**입니다. 다른 스레�
 
 ---
 
-## 1. Avalonia Dispatcher 기초
+## Avalonia Dispatcher 기초
 
 ```csharp
 using Avalonia.Threading;
@@ -47,7 +47,7 @@ else await Dispatcher.UIThread.InvokeAsync(UpdateUI, DispatcherPriority.Input);
 
 ---
 
-## 2. async/await + 백그라운드 작업 기본 패턴
+## async/await + 백그라운드 작업 기본 패턴
 
 **무거운 연산은 백그라운드**, 결괏값만 **UI 스레드**로:
 
@@ -71,7 +71,7 @@ public async Task LoadAsync(CancellationToken ct)
 
 ---
 
-## 3. ReactiveUI 스케줄러와 함께 쓰기
+## ReactiveUI 스케줄러와 함께 쓰기
 
 ReactiveUI를 사용한다면 **Avalonia 전용 메인 스케줄러**가 제공됩니다.
 
@@ -95,7 +95,7 @@ this.WhenAnyValue(x => x.Query)
 
 ---
 
-## 4. DispatcherTimer vs System.Timers.Timer vs PeriodicTimer
+## DispatcherTimer vs System.Timers.Timer vs PeriodicTimer
 
 | 타이머 | 실행 스레드 | 용도 | 주의 |
 |---|---|---|---|
@@ -125,7 +125,7 @@ _ = Task.Run(async () =>
 
 ---
 
-## 5. 대량 갱신: 배치·스냅샷·가상화
+## 대량 갱신: 배치·스냅샷·가상화
 
 **수천 개 항목**을 한 번에 `ObservableCollection`에 추가하면 **레이아웃/바인딩/Measure** 폭탄이 됩니다. 해결책:
 
@@ -165,7 +165,7 @@ await Dispatcher.UIThread.InvokeAsync(() =>
 
 ---
 
-## 6. 진행률 보고(Progress<T>)와 취소(CancellationToken)
+## 진행률 보고(Progress<T>)와 취소(CancellationToken)
 
 ```csharp
 public async Task DownloadAsync(string url, IProgress<double> progress, CancellationToken ct)
@@ -204,7 +204,7 @@ public async Task StartAsync()
 
 ---
 
-## 7. 스레드-세이프 파이프라인: Channel / BlockingCollection
+## 스레드-세이프 파이프라인: Channel / BlockingCollection
 
 실시간 로그/센서/소켓 스트림을 **생산자-소비자**로 처리:
 
@@ -233,7 +233,7 @@ _ = Task.Run(async () =>
 
 ---
 
-## 8. Deadlock/프리징 방지 체크리스트
+## Deadlock/프리징 방지 체크리스트
 
 - UI 스레드에서 **동기 블록 I/O 금지** (`.Result`, `.Wait()` 자제)
 - 무거운 바운드 작업은 `Task.Run`
@@ -250,7 +250,7 @@ for (int i = 0; i < N; i++)
 
 ---
 
-## 9. DispatcherPriority 활용
+## DispatcherPriority 활용
 
 | Priority | 쓰임새 |
 |---|---|
@@ -267,7 +267,7 @@ await Dispatcher.UIThread.InvokeAsync(
 
 ---
 
-## 10. 예: 다운로드 + 해시 검증 + 리스트 갱신(종합)
+## 예: 다운로드 + 해시 검증 + 리스트 갱신(종합)
 
 ```csharp
 public ReactiveCommand<Unit, Unit> FetchCmd { get; }
@@ -300,7 +300,7 @@ public MyVm()
 
 ---
 
-## 11. 수학적 관점(프레임 예산)
+## 수학적 관점(프레임 예산)
 
 UI가 **초당 \( f \) FPS**로 부드럽게 보이려면,
 프레임당 처리 시간 예산은:
@@ -314,7 +314,7 @@ $$
 
 ---
 
-## 12. 흔한 실수와 대안
+## 흔한 실수와 대안
 
 | 실수 | 증상 | 대안 |
 |---|---|---|
@@ -325,7 +325,7 @@ $$
 
 ---
 
-## 13. 테스트 전략
+## 테스트 전략
 
 - **Dispatcher 있는 코드**는 가능한 한 **ViewModel에선 최소화**.
   UI 접근은 메소드 경계에서만 → **단위 테스트** 시 대부분 로직은 순수 비동기로 검증 가능.
@@ -334,7 +334,7 @@ $$
 
 ---
 
-## 14. 실전 샘플 — “검색 + 스트림 + 진행률 + 배치 UI”
+## 실전 샘플 — “검색 + 스트림 + 진행률 + 배치 UI”
 
 ```csharp
 public sealed class SearchViewModel : ReactiveObject
@@ -430,7 +430,7 @@ public sealed class SearchViewModel : ReactiveObject
 
 ---
 
-## 15. 성능/전력 팁
+## 성능/전력 팁
 
 - 모바일/배터리 환경을 염두: **샘플링 주기 늘리기**, `DispatcherPriority.Background` 활용
 - 스크롤 중에는 **비싼 계산 중지**(가시 항목만 처리) — `IsScrolling` 플래그와 `Throttle`
@@ -438,7 +438,7 @@ public sealed class SearchViewModel : ReactiveObject
 
 ---
 
-## 16. 요약·결론
+## 요약·결론
 
 - **원칙**: **연산은 백그라운드**, **UI 갱신만 Dispatcher**
 - **Reactive 패턴**: `Throttle/Distinct/Switch/ObserveOn(MainThread)`로 깔끔한 흐름

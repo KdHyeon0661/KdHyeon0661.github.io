@@ -6,7 +6,7 @@ category: Git
 ---
 # Git Submodule
 
-## 0. 서브모듈 한 줄 요약
+## 서브모듈 한 줄 요약
 
 - **서브모듈(Submodule)** = 상위 리포 안에서 **별도 Git 리포를 디렉터리로 연결**하는 링크.
 - 상위 리포는 **서브모듈의 “커밋 해시(정확한 한 점)”만 기록**한다.
@@ -15,7 +15,7 @@ category: Git
 
 ---
 
-## 1. 언제 서브모듈을 선택할까?
+## 언제 서브모듈을 선택할까?
 
 - 여러 프로젝트가 공유하는 **내부 공용 라이브러리**를 모듈화하여 **독립적 릴리스/권한**을 유지하고 싶은 경우
 - **외부 오픈소스**를 특정 커밋에 고정하여 재현성을 극대화하고 싶은 경우
@@ -25,9 +25,9 @@ category: Git
 
 ---
 
-## 2. 기본 사용 — 추가→커밋→클론/초기화→업데이트
+## 기본 사용 — 추가→커밋→클론/초기화→업데이트
 
-### 2.1 서브모듈 추가
+### 서브모듈 추가
 
 ```bash
 git submodule add https://github.com/my-org/common-ui.git libs/common-ui
@@ -36,7 +36,7 @@ git submodule add https://github.com/my-org/common-ui.git libs/common-ui
 - 상위 리포에 `.gitmodules`가 생성되고, `libs/common-ui` 폴더가 **별도 Git 리포**로 초기화된다.
 - 상위 리포는 `libs/common-ui`가 가리키는 **정확한 커밋 해시**를 스냅샷으로 기록한다.
 
-### 2.2 커밋/푸시
+### 커밋/푸시
 
 ```bash
 git add .gitmodules libs/common-ui
@@ -52,15 +52,17 @@ git push origin main
   url = https://github.com/my-org/common-ui.git
 ```
 
-### 2.3 클론과 초기화
+### 클론과 초기화
 
 서브모듈 포함 리포를 클론할 때 두 가지 접근:
 
 ```bash
 # 방법 A: 한 번에 전부
+
 git clone --recurse-submodules https://github.com/my-org/my-repo.git
 
 # 방법 B: 나중에 초기화
+
 git clone https://github.com/my-org/my-repo.git
 cd my-repo
 git submodule update --init --recursive
@@ -68,7 +70,7 @@ git submodule update --init --recursive
 
 > `--recursive`는 **서브모듈 내부의 서브모듈(중첩 서브모듈)**까지 초기화한다.
 
-### 2.4 서브모듈 상태/업데이트
+### 서브모듈 상태/업데이트
 
 ```bash
 git submodule status                   # 현재 pin 된 커밋 확인
@@ -80,7 +82,7 @@ git submodule update --init --recursive
 
 ---
 
-## 3. 내부 구조와 사고방식
+## 내부 구조와 사고방식
 
 - 상위 리포는 서브모듈 디렉터리를 **Git 트리에서 “링크(특별한 엔트리)”**로 보유하고, 해당 링크가 **특정 커밋 해시**를 참조한다.
 - 상위 리포의 커밋에는 “서브모듈 디렉터리 → 커밋 해시” 매핑이 포함된다.
@@ -97,20 +99,23 @@ $$
 
 ---
 
-## 4. 서브모듈 “버전 업(핀 이동)” 표준 절차
+## 서브모듈 “버전 업(핀 이동)” 표준 절차
 
 상위 리포에서 서브모듈을 최신으로 끌어올리고 싶을 때:
 
 ```bash
-# 1. 서브모듈 디렉터리로 진입
+# 서브모듈 디렉터리로 진입
+
 cd libs/common-ui
 
-# 2. 원하는 기준으로 업데이트 (브랜치 최신, 특정 태그 등)
+# 원하는 기준으로 업데이트 (브랜치 최신, 특정 태그 등)
+
 git fetch origin
 git checkout main
 git pull origin main
 
-# 3. 상위로 돌아와 "핀 이동" 커밋
+# 상위로 돌아와 "핀 이동" 커밋
+
 cd ../..
 git add libs/common-ui       # 서브모듈 디렉터리의 pointer 변경을 stage
 git commit -m "Bump common-ui to <new-commit>"
@@ -121,7 +126,7 @@ git push
 
 ---
 
-## 5. `.gitmodules` 고급 설정 — 브랜치 추적/업데이트 정책/깊은 클론
+## `.gitmodules` 고급 설정 — 브랜치 추적/업데이트 정책/깊은 클론
 
 ```ini
 [submodule "libs/common-ui"]
@@ -132,7 +137,8 @@ git push
   shallow = true        # 얕은 클론(선택, Git 2.9+)
 ```
 
-### 5.1 `branch = <name>`
+### `branch = <name>`
+
 - `git submodule update --remote` 시 해당 브랜치의 최신 커밋으로 **핀 이동**을 자동화한다.
 - **주의**: 상위 리포에 “자동으로 최신”이 반영되는 게 아니라, **update 후 상위에서 다시 커밋**해야 고정점이 바뀐다.
 
@@ -142,37 +148,42 @@ git add libs/common-ui
 git commit -m "Track common-ui to latest main"
 ```
 
-### 5.2 `update = rebase|merge|checkout`
+### `update = rebase|merge|checkout`
+
 - `git submodule update` 수행 방식(로컬 변경이 있을 때 정책).
 - 기본은 `checkout`(깨끗한 워크트리를 가정). 로컬 커밋 유지가 필요하면 `rebase`나 `merge` 고려.
 
-### 5.3 `shallow = true`
+### `shallow = true`
+
 - 서브모듈 클론을 얕게 수행하여 CI 시간/네트워크를 절약.
 - 과거 이력 접근이 필요하면 해제.
 
 ---
 
-## 6. 팀 협업 관점의 워크플로
+## 팀 협업 관점의 워크플로
 
-### 6.1 PR 흐름(상위에만 변경)
+### PR 흐름(상위에만 변경)
+
 1. 기여자는 상위 리포에서 서브모듈 **포인터만** 변경해 PR 생성.
 2. 리뷰어는 `git submodule status` 또는 UI에서 **어느 커밋으로 바뀌는지** 확인.
 3. CI는 `submodules: true`로 체크아웃 후 빌드/테스트.
 4. 머지되면 상위 리포의 핀이 갱신.
 
-### 6.2 PR 흐름(하위와 상위 모두 변경)
+### PR 흐름(하위와 상위 모두 변경)
+
 1. 서브모듈 리포에 PR을 먼저 만들어 머지/태그.
 2. 상위 리포에서 해당 커밋/태그로 포인터 이동 PR.
 3. 두 PR 간 의존성이 있다면 **체인드 PR** 전략 또는 **멀티-리포 동시 릴리스** 관리.
 
 ---
 
-## 7. CI/CD — GitHub Actions 예제
+## CI/CD — GitHub Actions 예제
 
-### 7.1 기본(재귀 체크아웃)
+### 기본(재귀 체크아웃)
 
 ```yaml
 # .github/workflows/ci.yml
+
 name: CI
 on: [push, pull_request]
 jobs:
@@ -194,7 +205,7 @@ jobs:
           npm test -- --ci
 ```
 
-### 7.2 부분 체크아웃(성능/권한 제약 시)
+### 부분 체크아웃(성능/권한 제약 시)
 
 ```yaml
 - uses: actions/checkout@v4
@@ -209,13 +220,14 @@ jobs:
     git -C libs/common-ui checkout FETCH_HEAD
 ```
 
-### 7.3 캐시 전략
+### 캐시 전략
+
 - 서브모듈은 리포가 분리되어 있어 **의존 캐시**를 각자 유지해야 한다.
 - Node/Gradle/Maven 등 **빌드 캐시**와 **아티팩트**를 조합해 CI 시간을 줄인다.
 
 ---
 
-## 8. 권한/토큰/프라이빗 서브모듈
+## 권한/토큰/프라이빗 서브모듈
 
 - **프라이빗 서브모듈**은 체크아웃 시 **개별 인증**이 필요하다.
 - GitHub Actions의 경우 **동일 Org 프라이빗 서브모듈**은 `actions/checkout@v4`가 **GITHUB_TOKEN**으로 처리 가능(리포 권한 설정 필요).
@@ -229,13 +241,14 @@ jobs:
 
 ---
 
-## 9. 서브모듈 삭제/경로 변경/URL 변경
+## 서브모듈 삭제/경로 변경/URL 변경
 
-### 9.1 삭제(정식 절차)
+### 삭제(정식 절차)
 
 ```bash
-# 1. .gitmodules에서 항목 제거
-# 2. .git/config에서 submodule.<path> 섹션 제거 (자동 동기화 가능)
+# .gitmodules에서 항목 제거
+# .git/config에서 submodule.<path> 섹션 제거 (자동 동기화 가능)
+
 git submodule deinit -f libs/common-ui
 git rm -f libs/common-ui
 rm -rf .git/modules/libs/common-ui
@@ -244,7 +257,7 @@ git commit -m "Remove submodule common-ui"
 
 > 수동으로 `.gitmodules`, `.git/config`, `.git/modules/<path>`를 정리하지 않으면 **유령 레코드**가 남아 혼란을 준다.
 
-### 9.2 경로 변경
+### 경로 변경
 
 ```bash
 git mv libs/common-ui libs/ui
@@ -254,7 +267,7 @@ git add .gitmodules
 git commit -m "Move submodule to libs/ui"
 ```
 
-### 9.3 URL 변경
+### URL 변경
 
 ```bash
 git config -f .gitmodules submodule.libs/ui.url git@github.com:my-org/ui.git
@@ -266,36 +279,41 @@ git commit -m "Point submodule to new remote"
 
 ---
 
-## 10. 자주 쓰는 명령어 모음(치트시트)
+## 자주 쓰는 명령어 모음(치트시트)
 
 ```bash
 # 상태/초기화/업데이트
+
 git submodule status
 git submodule init
 git submodule update
 git submodule update --init --recursive
 
 # 업스트림 추적(브랜치 기반)
+
 git submodule update --remote
 git config -f .gitmodules submodule.libs/common-ui.branch main
 git add .gitmodules && git commit -m "Track branch for common-ui"
 
 # 모두 순회
+
 git submodule foreach 'git status'
 git submodule foreach --recursive 'git pull --rebase --autostash'
 
 # 삭제
+
 git submodule deinit -f libs/common-ui
 git rm -f libs/common-ui
 rm -rf .git/modules/libs/common-ui
 
 # 동기화(경로/URL 변경 시)
+
 git submodule sync --recursive
 ```
 
 ---
 
-## 11. 중첩 서브모듈(Nested Submodules)과 모노레포
+## 중첩 서브모듈(Nested Submodules)과 모노레포
 
 - **중첩 구조**: A(상위) → B(서브모듈) → C(서브모듈).
   `--recursive` 옵션으로 한 번에 초기화/업데이트 가능하나, 권한/토큰/네트워크 비용이 누적된다.
@@ -304,36 +322,42 @@ git submodule sync --recursive
 
 ---
 
-## 12. 서브모듈 트러블슈팅
+## 서브모듈 트러블슈팅
 
-### 12.1 “서브모듈 디렉토리가 비어 보임”
+### “서브모듈 디렉토리가 비어 보임”
+
 - 초기화/업데이트 안 한 상태.
   → `git submodule update --init --recursive`
 
-### 12.2 “권한 오류(프라이빗 리포 접근 불가)”
+### “권한 오류(프라이빗 리포 접근 불가)”
+
 - CI/로컬의 인증 미구성.
   → HTTPS(토큰) 또는 SSH 키 설정, `actions/checkout@v4`의 `ssh-key`/`token` 사용.
 
-### 12.3 “로컬 변경 때문에 업데이트 실패”
+### “로컬 변경 때문에 업데이트 실패”
+
 - 서브모듈 내부에서 수정이 남아있어 `checkout` 불가.
   → `git -C libs/common-ui stash` 후 `git submodule update`
   또는 `.gitmodules`의 `update=rebase`로 정책 조정.
 
-### 12.4 “상위에서 submodule 포인터만 바뀌었는데 빌드가 예전 코드로”
+### “상위에서 submodule 포인터만 바뀌었는데 빌드가 예전 코드로”
+
 - CI가 `submodules: true` 없이 체크아웃.
   → Actions에서 `submodules: recursive` 사용, 또는 수동 `git submodule update --init`.
 
-### 12.5 “경로/URL을 바꿨는데 sync가 안 됨”
+### “경로/URL을 바꿨는데 sync가 안 됨”
+
 - `.gitmodules`만 고치고 `sync`를 누락.
   → `git submodule sync --recursive`
 
-### 12.6 “의존 캐시가 계속 깨짐”
+### “의존 캐시가 계속 깨짐”
+
 - 서브모듈 해시가 자주 바뀌면 캐시 적중률이 떨어짐.
   → 서브모듈 릴리스 주기 재설계, 빌드 아티팩트 캐시로 보완.
 
 ---
 
-## 13. 서브모듈 vs 서브트리(Subtree) — 실전 비교
+## 서브모듈 vs 서브트리(Subtree) — 실전 비교
 
 | 항목 | Submodule | Subtree |
 |---|---|---|
@@ -349,9 +373,9 @@ git submodule sync --recursive
 
 ---
 
-## 14. 시나리오 예제
+## 시나리오 예제
 
-### 14.1 공통 UI 라이브러리를 여러 서비스가 공용 사용
+### 공통 UI 라이브러리를 여러 서비스가 공용 사용
 
 구성:
 ```
@@ -370,11 +394,13 @@ git commit -m "Add common-ui as submodule"
 일상 업데이트:
 ```bash
 # common-ui 최신 main으로
+
 git -C libs/common-ui fetch origin
 git -C libs/common-ui checkout main
 git -C libs/common-ui pull origin main
 
 # 상위에서 핀 이동 커밋
+
 git add libs/common-ui
 git commit -m "Bump common-ui to latest main"
 git push
@@ -387,7 +413,7 @@ CI(요지):
 - run: npm ci && npm run build && npm test
 ```
 
-### 14.2 외부 OSS를 특정 태그에 고정
+### 외부 OSS를 특정 태그에 고정
 
 ```bash
 git submodule add https://github.com/some/oss.git vendor/oss
@@ -397,7 +423,7 @@ git add vendor/oss
 git commit -m "Pin oss to v2.3.1"
 ```
 
-### 14.3 브랜치 추적 자동화(.gitmodules)
+### 브랜치 추적 자동화(.gitmodules)
 
 ```ini
 [submodule "libs/common-ui"]
@@ -414,7 +440,7 @@ git commit -m "Track common-ui: update to latest main"
 
 ---
 
-## 15. 성능/안정성 최적화
+## 성능/안정성 최적화
 
 - 서브모듈 수를 신중히 제한(네트워크/CI 비용 선형 증가).
 - **얕은 클론(shallow)** + **부분 초기화**로 필요한 것만 받는다.
@@ -423,23 +449,28 @@ git commit -m "Track common-ui: update to latest main"
 
 ---
 
-## 16. 전체 흐름 명령 요약(한 컷)
+## 전체 흐름 명령 요약(한 컷)
 
 ```bash
 # 추가
+
 git submodule add <url> path/to/sub
 git add .gitmodules path/to/sub
 git commit -m "Add submodule"
 
 # 클론/초기화
+
 git clone --recurse-submodules <root-url>
 # 또는
+
 git submodule update --init --recursive
 
 # 최신 반영(브랜치 추적 시)
+
 git submodule update --remote --recursive
 
 # 포인터 업그레이드(수동)
+
 git -C path/to/sub fetch origin
 git -C path/to/sub checkout <branch-or-tag>
 git -C path/to/sub pull --ff-only origin <branch>
@@ -448,18 +479,20 @@ git commit -m "Bump submodule"
 git push
 
 # 삭제
+
 git submodule deinit -f path/to/sub
 git rm -f path/to/sub
 rm -rf .git/modules/path/to/sub
 git commit -m "Remove submodule"
 
 # 동기화
+
 git submodule sync --recursive
 ```
 
 ---
 
-## 17. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. 서브모듈이 왜 “브랜치”가 아니라 “커밋”을 가리키나요?**
 A. 상위 리포의 재현성을 보장하려면 “시간에 따라 움직이지 않는 한 점”이 필요하기 때문이다. 브랜치를 추적하고 싶다면 `.gitmodules`의 `branch` + `update --remote`를 활용하되, **결국 상위에서 다시 커밋**해야 고정점이 바뀐다.
@@ -472,7 +505,7 @@ A. 가능하면 패키지 매니저를 권장한다. 서브모듈은 “소스 �
 
 ---
 
-## 18. 결론
+## 결론
 
 - 서브모듈은 **정밀한 고정/경계/권한 분리**에 매우 강력하지만, **명시적 관리 비용**이 따른다.
 - 팀에서는 **온보딩 문서·CI 체크아웃 설정·포인터 업데이트 절차**를 표준화하여 “서브모듈이 어렵다”는 인식을 없애자.

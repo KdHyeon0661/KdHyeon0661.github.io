@@ -6,7 +6,7 @@ category: AWS
 ---
 # API Gateway: API 게이트웨이 구성
 
-## 0. 한 장 요약
+## 한 장 요약
 
 - **HTTP API**: 가볍고 저렴/고성능. JWT Authorizer, 통합 단순화. 대부분의 **새로운 REST형 API**에 추천.
 - **REST API(클래식)**: 세밀한 **매핑 템플릿, 모델/밸리데이션, 캐시, Usage Plan** 등 **풍부한 기능**. 복잡 변환/레거시 호환 시 적합.
@@ -17,14 +17,14 @@ category: AWS
 
 ---
 
-## 1. API Gateway란? (초안 보강)
+## API Gateway란? (초안 보강)
 
 **역할**: 클라이언트 요청을 받아 **인증/인가** → **요청 가공** → **백엔드 통합(Integration)** → **응답 가공** → 반환.
 **그림**: Client → API Gateway(리소스/메서드/라우트, Authorizer, Mapping, Throttle, Cache) → Lambda/HTTP/AWS 서비스 → 응답.
 
 ---
 
-## 2. 유형 비교
+## 유형 비교
 
 | 유형 | 권장 시나리오 | 장점 | 제약 |
 |---|---|---|---|
@@ -36,7 +36,7 @@ category: AWS
 
 ---
 
-## 3. 구성 요소 (초안 보강)
+## 구성 요소 (초안 보강)
 
 | 구성 요소 | HTTP API | REST API(클래식) |
 |---|---|---|
@@ -51,7 +51,7 @@ category: AWS
 
 ---
 
-## 4. 작동 흐름 (요청 → 검증/인가 → 통합 → 응답)
+## 작동 흐름 (요청 → 검증/인가 → 통합 → 응답)
 
 1) **라우팅**: 경로/메서드 매칭
 2) **보안**: Authorizer/JWT/IAM/WAF/리소스 정책
@@ -63,11 +63,13 @@ category: AWS
 
 ---
 
-## 5. 실습 A: Lambda + HTTP API(권장 경로)
+## 실습 A: Lambda + HTTP API(권장 경로)
 
-### 5.1 람다 함수 (Python)
+### 람다 함수 (Python)
+
 ```python
 # app.py
+
 import json
 
 def lambda_handler(event, context):
@@ -84,7 +86,8 @@ def lambda_handler(event, context):
 
 필요 권한: `AWSLambdaBasicExecutionRole`.
 
-### 5.2 HTTP API 생성(간단 콘솔 절차)
+### HTTP API 생성(간단 콘솔 절차)
+
 - API Gateway → **HTTP API** → 라우트 `GET /hello` → 통합: Lambda(`app.lambda_handler`) → 배포 `$default`
 - 실행:
 ```bash
@@ -93,9 +96,10 @@ curl "https://<api-id>.execute-api.<region>.amazonaws.com/hello?name=Kim"
 
 ---
 
-## 6. 실습 B: REST API(클래식) + 매핑 템플릿 + 캐시
+## 실습 B: REST API(클래식) + 매핑 템플릿 + 캐시
 
-### 6.1 람다 (Node)
+### 람다 (Node)
+
 ```js
 // index.js
 exports.handler = async (event) => {
@@ -110,9 +114,11 @@ exports.handler = async (event) => {
 };
 ```
 
-### 6.2 요청 매핑 템플릿(VTL)
+### 요청 매핑 템플릿(VTL)
+
 ```vtl
 #set($inputRoot = $input.params())
+
 {
   "a": $util.parseJson($input.body).a,
   "b": $util.parseJson($input.body).b,
@@ -124,36 +130,44 @@ exports.handler = async (event) => {
 }
 ```
 
-### 6.3 응답 매핑 템플릿(VTL)
+### 응답 매핑 템플릿(VTL)
+
 ```vtl
 #set($resp = $util.parseJson($input.body))
+
 {
   "result": $resp.sum,
   "timestamp": "$context.requestTime"
 }
 ```
 
-### 6.4 캐시(REST API 스테이지)
+### 캐시(REST API 스테이지)
+
 - 스테이지 → **Cache Enabled** → TTL 설정
 - 캐시 키 파라미터: `Integration Request`에서 **쿼리/헤더**를 캐시 키에 포함.
 
 ---
 
-## 7. 인증/인가
+## 인증/인가
 
-### 7.1 IAM 인증(서명 요청)
+### IAM 인증(서명 요청)
+
 - 서버-서버/사내 콜에서 주로 사용.
 - 클라이언트가 **SigV4 서명**으로 호출.
 
-### 7.2 Cognito(JWT)
+### Cognito(JWT)
+
 - User Pool로 로그인 → **ID 토큰/Access 토큰(JWT)** 발급 → HTTP API에서 **JWT Authorizer**로 검증.
 
 #### HTTP API의 JWT Authorizer 예(콘솔 요약)
+
 - Authorizers → **JWT** → Issuer/오디언스 설정 → 라우트에 연결
 
-### 7.3 Lambda Authorizer(토큰 커스텀 로직)
+### Lambda Authorizer(토큰 커스텀 로직)
+
 ```python
 # 람다 권한자(HTTP API or REST API)
+
 def lambda_handler(event, context):
     token = event.get("headers",{}).get("authorization","")
     # 검증 로직(예: HMAC, 외부 권한 서버 질의)
@@ -173,7 +187,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 8. 요청/응답 매핑 & 유효성(REST API 중심)
+## 요청/응답 매핑 & 유효성(REST API 중심)
 
 - **매핑 템플릿(VTL)**: 바디/헤더/쿼리/경로 → 백엔드 계약형으로 변환.
 - **모델/Validator**: OpenAPI/스키마 기반 검증(에러를 게이트웨이에서 반환해 백엔드 부담 완화).
@@ -192,7 +206,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 9. CORS
+## CORS
 
 - **HTTP API**: CORS 탭에서 Origin/Headers/Methods 설정.
 - **REST API**: `OPTIONS` 메서드 + 응답 헤더 추가 또는 콘솔의 CORS 활성화.
@@ -206,7 +220,7 @@ Access-Control-Allow-Headers: Content-Type,Authorization
 
 ---
 
-## 10. 스테이지/버전/도메인/배포
+## 스테이지/버전/도메인/배포
 
 - **Stage**: `dev`, `test`, `prod` 분리.
 - **Stage Variables(REST)**: 백엔드 엔드포인트/Lambda 버전 바인딩.
@@ -215,27 +229,29 @@ Access-Control-Allow-Headers: Content-Type,Authorization
 
 ---
 
-## 11. 관측성 & 제어
+## 관측성 & 제어
 
-### 11.1 로깅/메트릭
+### 로깅/메트릭
+
 - **Access Logs**: 요청/응답 요약(HTTP API/REST 모두).
 - **Execution Logs(REST)**: 통합/매핑 디버깅.
 - **CloudWatch Metrics**: `4XXError`, `5XXError`, `Latency`, `Count`, `IntegrationLatency`.
 
-### 11.2 스로틀/쿼터
+### 스로틀/쿼터
+
 - **Account/Region 기본 한도** + **Usage Plan(REST)** + **Route별 제한(HTTP/REST)**
 - **WAF** 연계로 L7 보호(봇/SQLi/XSS 룰셋).
 
 ---
 
-## 12. 캐싱(REST API)
+## 캐싱(REST API)
 
 - **스테이지 캐시**: 응답 TTL, 캐시 키 셀렉터(쿼리/헤더/경로).
 - DB 조회/가격표/정적 변환 결과 캐시 → 비용/지연 절감.
 
 ---
 
-## 13. 프라이빗/하이브리드 통합
+## 프라이빗/하이브리드 통합
 
 - **Private Integration**: VPC 내부 **NLB** 뒤의 서비스로 연결(**VPC Link**).
 - **Private API(REST)**: 엔드포인트 타입 Private + 리소스 정책(한정된 VPC/엔드포인트에서만 접근).
@@ -243,7 +259,7 @@ Access-Control-Allow-Headers: Content-Type,Authorization
 
 ---
 
-## 14. 파일 업로드(대용량) 패턴
+## 파일 업로드(대용량) 패턴
 
 - **API Gateway 직접 업로드**는 비효율.
 - **S3 Pre-signed URL** 발급 API → 클라이언트가 **S3로 직접 업/다운로드**.
@@ -264,7 +280,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 15. 비용 모델 직관
+## 비용 모델 직관
 
 $$
 \text{월 비용} \approx \sum_a (R_a \cdot p_a) + C_{\text{cache}} + B_{\text{egress}}
@@ -277,7 +293,7 @@ $$
 
 ---
 
-## 16. OpenAPI로 API 정의(HTTP API 예)
+## OpenAPI로 API 정의(HTTP API 예)
 
 ```yaml
 openapi: 3.0.1
@@ -305,7 +321,7 @@ aws apigatewayv2 import-api --body file://openapi.yaml
 
 ---
 
-## 17. SAM으로 배포(HTTP API + Lambda + CORS)
+## SAM으로 배포(HTTP API + Lambda + CORS)
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -340,7 +356,7 @@ sam build && sam deploy --guided
 
 ---
 
-## 18. Terraform(요약: HTTP API + 람다 통합)
+## Terraform(요약: HTTP API + 람다 통합)
 
 ```hcl
 provider "aws" { region = "ap-northeast-2" }
@@ -382,7 +398,7 @@ resource "aws_lambda_permission" "apigw" {
 
 ---
 
-## 19. WebSocket API(간단 개념 & 예시)
+## WebSocket API(간단 개념 & 예시)
 
 - **경로**: `$connect`, `$disconnect`, `$default`
 - **상태**: 연결ID(ConnectionId)를 **DynamoDB/ElastiCache** 등에 저장해 타깃 브로드캐스트.
@@ -399,7 +415,7 @@ def push_message(api_id, region, connection_id, body):
 
 ---
 
-## 20. 베스트 프랙티스
+## 베스트 프랙티스
 
 - **HTTP API 우선**, 레거시/정밀 변환/캐시 필요 시 REST API.
 - 인증은 **Cognito JWT** 또는 **Lambda Authorizer**(필요 시) 사용.
@@ -412,7 +428,7 @@ def push_message(api_id, region, connection_id, body):
 
 ---
 
-## 21. 트러블슈팅
+## 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -425,7 +441,7 @@ def push_message(api_id, region, connection_id, body):
 
 ---
 
-## 22. CI/CD(예: GitHub Actions)
+## CI/CD(예: GitHub Actions)
 
 ```yaml
 name: Deploy API
@@ -451,7 +467,7 @@ jobs:
 
 ---
 
-## 23. 보안/규정/거버넌스
+## 보안/규정/거버넌스
 
 - **Least Privilege**: 배포 역할/람다 역할 최소화.
 - **키/비밀**: Secrets Manager/SSM Parameter Store.
@@ -460,7 +476,7 @@ jobs:
 
 ---
 
-## 24. 마무리 요약(초안 정리 + 보강)
+## 마무리 요약(초안 정리 + 보강)
 
 - **HTTP API**로 **간단/저렴/고성능** 경로를 우선 채택,
 - 필요 시 **REST API**의 **세밀 매핑/캐시/Usage Plan**을 사용,

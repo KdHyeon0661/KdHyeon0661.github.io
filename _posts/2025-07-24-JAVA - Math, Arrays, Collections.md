@@ -6,13 +6,15 @@ category: Java
 ---
 # Math, Arrays, Collections
 
-## 1. `java.lang.Math` — 수학 함수·정밀도·성능
+## `java.lang.Math` — 수학 함수·정밀도·성능
 
-### 1.1 핵심 상수와 구조
+### 핵심 상수와 구조
+
 - **정적 클래스**: 인스턴스화 불가, 모든 메서드 `static`
 - 상수: `Math.PI`, `Math.E`
 
-### 1.2 기본 연산 메서드(확장)
+### 기본 연산 메서드(확장)
+
 | 범주 | 메서드 | 설명/특징 |
 |---|---|---|
 | 절댓값/최대/최소 | `abs`, `max`, `min` | 원시/랩퍼 오버로드 제공 |
@@ -40,15 +42,18 @@ public class MathBasics {
 ```
 
 #### 수학적 정의(반올림 비교)
+
 - $$\text{round}(x)\ \text{≈ 가장 가까운 정수, .5는 0에서 멀리}$$
 - $$\text{rint}(x)\ \text{≈ 가장 가까운 정수, .5는 짝수쪽}$$
 - $$\text{floor}(x)=\max\{n\in\mathbb{Z}\mid n\le x\},\quad \text{ceil}(x)=\min\{n\in\mathbb{Z}\mid n\ge x\}$$
 
-### 1.3 `StrictMath` vs `Math`
+### `StrictMath` vs `Math`
+
 - **`StrictMath`**: 플랫폼 독립적 결정적 결과(fdlibm 기반)
 - **`Math`**: JIT/하드웨어 가속 허용(보통 더 빠름). **정확성 vs 일관성** 요구에 따라 선택.
 
-### 1.4 난수: 무엇을 쓸까?
+### 난수: 무엇을 쓸까?
+
 | 케이스 | 권장 |
 |---|---|
 | 단일 스레드/일반 용도 | `new java.util.Random(seed)` 또는 `Math.random()` |
@@ -61,7 +66,8 @@ public class MathBasics {
 int r = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 ```
 
-### 1.5 금고급(정밀) 주의: 금융/화폐는?
+### 금고급(정밀) 주의: 금융/화폐는?
+
 - 부동소수점 **이진 표현** 오차 → **`BigDecimal`** 사용 권장
 ```java
 import java.math.*;
@@ -72,9 +78,10 @@ System.out.println(vat.setScale(2, RoundingMode.HALF_UP)); // 2.00
 
 ---
 
-## 2. `java.util.Arrays` — 배열 유틸(정렬·비교·복사·병렬·스트림)
+## `java.util.Arrays` — 배열 유틸(정렬·비교·복사·병렬·스트림)
 
-### 2.1 대표 메서드(확장 표)
+### 대표 메서드(확장 표)
+
 | 그룹 | 메서드 | 설명/주의 |
 |---|---|---|
 | 출력/비교 | `toString`, `deepToString`, `equals`, `deepEquals`, `compare`, `mismatch` | **다차원 배열**은 `deep*` 사용 |
@@ -112,7 +119,8 @@ public class ArraysBasics {
 ```
 {% endraw %}
 
-### 2.2 성능/함정 체크리스트
+### 성능/함정 체크리스트
+
 1) **`Arrays.asList(arr)` 함정**
    - **고정 크기 리스트 뷰**: `add/remove` 불가, `set`만 가능
    - **원시 배열**: `int[]`를 넘기면 **단일 요소 리스트**가 됨
@@ -137,9 +145,10 @@ List<Integer> l = Arrays.stream(p).boxed().toList();
 
 ---
 
-## 3. `java.util.Collections` — 컬렉션 유틸(정렬·뷰·동기화·레시피)
+## `java.util.Collections` — 컬렉션 유틸(정렬·뷰·동기화·레시피)
 
-### 3.1 대표 메서드(확장 표)
+### 대표 메서드(확장 표)
+
 | 그룹 | 메서드 | 설명/주의 |
 |---|---|---|
 | 정렬/순서 | `sort(list)`, `reverse`, `shuffle`, `rotate`, `swap` | 정렬은 **안정적**(TimSort) |
@@ -167,7 +176,8 @@ public class CollectionsBasics {
 }
 ```
 
-### 3.2 불변 vs 수정불가 vs JDK 9 팩토리
+### 불변 vs 수정불가 vs JDK 9 팩토리
+
 | 종류 | 생성 | 특징 |
 |---|---|---|
 | **수정불가 뷰** | `Collections.unmodifiableList(base)` | **기저 변경이 보임** |
@@ -180,7 +190,8 @@ base.add(4);
 System.out.println(view); // [1, 2, 3, 4] (뷰는 기저를 반영)
 ```
 
-### 3.3 동기화/검사 뷰
+### 동기화/검사 뷰
+
 ```java
 List<String> unsafe = new ArrayList<>();
 List<String> sync = Collections.synchronizedList(unsafe);
@@ -192,7 +203,8 @@ synchronized (sync) {
 }
 ```
 
-### 3.4 정렬 고급: Comparator 유틸
+### 정렬 고급: Comparator 유틸
+
 ```java
 record Person(String name, int age) {}
 
@@ -204,7 +216,8 @@ people.sort(Comparator.comparing(Person::name)
 ```
 - `naturalOrder()`, `reverseOrder()`, `nullsFirst/Last`, `comparingInt/Long/Double`
 
-### 3.5 실전 레시피 모음
+### 실전 레시피 모음
+
 **1) 빈도수 테이블**
 ```java
 Map<String,Integer> freq = new HashMap<>();
@@ -235,9 +248,10 @@ System.out.println(Collections.indexOfSubList(hay, needle)); // 1
 
 ---
 
-## 4. 세 클래스 함께 쓰는 실전 시나리오
+## 세 클래스 함께 쓰는 실전 시나리오
 
-### 4.1 점수 통계(정렬·최솟값·평균·표준편차)
+### 점수 통계(정렬·최솟값·평균·표준편차)
+
 ```java
 import java.util.*;
 
@@ -258,7 +272,8 @@ public class StatsExample {
 }
 ```
 
-### 4.2 배열 → 정렬 → 중복 제거(입력 순서 보존)
+### 배열 → 정렬 → 중복 제거(입력 순서 보존)
+
 ```java
 int[] a = {3,1,2,3,2,1,4};
 Arrays.sort(a);
@@ -267,7 +282,8 @@ for (int v : a) uniqueOrdered.add(v);
 System.out.println(uniqueOrdered); // [1, 2, 3, 4]
 ```
 
-### 4.3 큰 배열 병렬 초기화/연산
+### 큰 배열 병렬 초기화/연산
+
 ```java
 int n = 1_000_000;
 int[] big = new int[n];
@@ -277,7 +293,7 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 
 ---
 
-## 5. 성능·정확성 체크리스트
+## 성능·정확성 체크리스트
 
 1) **반올림 규칙**을 명확히: 재무는 `BigDecimal + RoundingMode`.
 2) **멀티스레드 난수**: `ThreadLocalRandom`/`SplittableRandom`.
@@ -292,7 +308,7 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 
 ---
 
-## 6. 요약 표
+## 요약 표
 
 | 항목 | 포인트 | 한 줄 팁 |
 |---|---|---|
@@ -313,12 +329,14 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 ---
 
 ## 참고 수식(반올림 비교의 직관)
+
 - $$\text{round}(x) = \left\lfloor x + \tfrac{1}{2} \right\rfloor \ \ (\text{for } x\ge 0),\quad \text{음수는 구현 정의에 유의}$$
 - $$\text{rint}(x) = \operatorname*{argmin}_{n\in\mathbb{Z}} |x-n| \quad(\text{동일 거리면 짝수 } n)$$
 
 ---
 
 ## 마무리
+
 - `Math`는 **정확성**(반올림/정밀), `Arrays`는 **배열 조작/병렬**, `Collections`는 **컬렉션 조립/뷰/레시피**의 기반입니다.
 - 이 세 축을 정확히 이해하면, **성능·안정성·가독성**이 모두 올라갑니다.
 - 실무에서는 **불변 노출 + 내부 가변 캡슐화**, **정확 산술/반올림 규칙 명시**, **프로파일 기반의 병렬화**가 베스트 프랙티스입니다.

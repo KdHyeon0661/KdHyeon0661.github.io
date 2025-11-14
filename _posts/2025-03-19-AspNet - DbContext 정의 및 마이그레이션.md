@@ -6,7 +6,7 @@ category: AspNet
 ---
 # EF Core - DbContext 정의 및 마이그레이션
 
-## 0. 큰 그림: EF Core로 보는 애플리케이션-DB 상호작용
+## 큰 그림: EF Core로 보는 애플리케이션-DB 상호작용
 
 1. **엔티티**(모델 클래스) 작성
 2. **DbContext**에 `DbSet<TEntity>` 노출 + `OnModelCreating`에서 구성
@@ -16,7 +16,7 @@ category: AspNet
 
 ---
 
-## 1. 모델 클래스(Entity) 정의
+## 모델 클래스(Entity) 정의
 
 초안의 `Blog`를 확장해 **제약/탐색 속성/인덱스 후보**를 포함한다.
 
@@ -51,7 +51,7 @@ public class Post
 
 ---
 
-## 2. DbContext 클래스 정의
+## DbContext 클래스 정의
 
 초안에서 **Fluent API**, **인덱스**, **제약**, **고급 구성**까지 확장한다.
 
@@ -109,7 +109,7 @@ public class AppDbContext : DbContext
 
 ---
 
-## 3. Program.cs 구성과 연결 문자열
+## Program.cs 구성과 연결 문자열
 
 초안의 SQL Server 예시에 더해 **Provider 별 패턴**을 한 번에 보여준다.
 
@@ -162,14 +162,16 @@ app.Run();
 
 ---
 
-## 4. 마이그레이션(Migration) 총정리
+## 마이그레이션(Migration) 총정리
 
-### 4.1 dotnet-ef 도구 설치 (최초 1회)
+### dotnet-ef 도구 설치 (최초 1회)
+
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-### 4.2 초기 마이그레이션 생성
+### 초기 마이그레이션 생성
+
 ```bash
 dotnet ef migrations add InitialCreate
 ```
@@ -178,37 +180,47 @@ dotnet ef migrations add InitialCreate
 - `Migrations/<timestamp>_InitialCreate.cs` : `Up/Down` 메서드 포함
 - `Migrations/AppDbContextModelSnapshot.cs` : 현재 모델 스냅샷
 
-### 4.3 DB 반영
+### DB 반영
+
 ```bash
 dotnet ef database update
 ```
 
-### 4.4 모델 변경 → 새 마이그레이션 → 업데이트
+### 모델 변경 → 새 마이그레이션 → 업데이트
+
 ```bash
 # 예) Post에 Summary 속성 추가
+
 dotnet ef migrations add AddSummaryToPost
 dotnet ef database update
 ```
 
-### 4.5 롤백/제거
+### 롤백/제거
+
 ```bash
 # 특정 지점으로 DB 되돌리기
+
 dotnet ef database update InitialCreate
 
 # 마지막 마이그레이션 제거(스냅샷/코드 되돌림, DB는 영향 없음)
+
 dotnet ef migrations remove
 ```
 
-### 4.6 스크립트 추출(운영 배포)
+### 스크립트 추출(운영 배포)
+
 ```bash
 # 전체 스키마 생성 스크립트
+
 dotnet ef migrations script -o ./sql/000_full.sql
 
 # 특정 버전 ~ 특정 버전 간 증분 스크립트
+
 dotnet ef migrations script 20240101120000_InitialCreate 20240210110000_AddSummaryToPost -o ./sql/010_delta.sql
 ```
 
-### 4.7 Migration Bundle(.NET 7+)
+### Migration Bundle(.NET 7+)
+
 로컬 SDK 없이 서버에서 실행 가능한 **단일 실행 파일**로 마이그레이션을 번들링
 ```bash
 dotnet ef migrations bundle --configuration Release --self-contained
@@ -217,7 +229,7 @@ dotnet ef migrations bundle --configuration Release --self-contained
 
 ---
 
-## 5. 마이그레이션 파일 anatomy
+## 마이그레이션 파일 anatomy
 
 예시(일부):
 
@@ -281,9 +293,10 @@ public partial class InitialCreate : Migration
 
 ---
 
-## 6. 데이터 시드(Seed)와 초기화
+## 데이터 시드(Seed)와 초기화
 
-### 6.1 Fluent API 시드 (마이그레이션 기반)
+### Fluent API 시드 (마이그레이션 기반)
+
 ```csharp
 modelBuilder.Entity<Blog>().HasData(
     new Blog { Id = 1, Title = "EF Core 101", Author = "kim", CreatedAt = DateTime.UtcNow },
@@ -296,7 +309,8 @@ modelBuilder.Entity<Post>().HasData(
 ```
 - `HasData`는 마이그레이션에 삽입 SQL이 포함된다.
 
-### 6.2 런타임 시드(앱 시작 시)
+### 런타임 시드(앱 시작 시)
+
 ```csharp
 public static class DbInitializer
 {
@@ -321,9 +335,10 @@ await DbInitializer.SeedAsync(app.Services);
 
 ---
 
-## 7. 실제 사용: CRUD, 관계, 로딩 전략
+## 실제 사용: CRUD, 관계, 로딩 전략
 
-### 7.1 추가/수정/삭제
+### 추가/수정/삭제
+
 ```csharp
 public class BlogService
 {
@@ -356,7 +371,8 @@ public class BlogService
 }
 ```
 
-### 7.2 로딩 전략
+### 로딩 전략
+
 - **즉시 로딩(Eager)**: `Include`
 - **명시적 로딩(Explicit)**: `Entry(...).Collection(...).LoadAsync()`
 - **지연 로딩(Lazy)**: 프록시 사용(성능/예상치 못한 N+1 주의)
@@ -374,7 +390,8 @@ var blog = await _db.Blogs.FirstAsync();
 await _db.Entry(blog).Collection(b => b.Posts).LoadAsync();
 ```
 
-### 7.3 추적 전략
+### 추적 전략
+
 - 기본은 **추적(Tracking)**. 읽기 전용 쿼리는 `AsNoTracking()`으로 **변경 추적 오버헤드 제거**.
 ```csharp
 var list = await _db.Blogs.AsNoTracking().ToListAsync();
@@ -382,9 +399,10 @@ var list = await _db.Blogs.AsNoTracking().ToListAsync();
 
 ---
 
-## 8. 고급 구성: 소유 타입(Owned), 값 변환기(ValueConverter), 그림자 속성(Shadow), 동시성 토큰
+## 고급 구성: 소유 타입(Owned), 값 변환기(ValueConverter), 그림자 속성(Shadow), 동시성 토큰
 
-### 8.1 Owned 타입(복합 값 객체)
+### Owned 타입(복합 값 객체)
+
 ```csharp
 public class Audit
 {
@@ -412,7 +430,8 @@ protected override void OnModelCreating(ModelBuilder mb)
 }
 ```
 
-### 8.2 ValueConverter(예: enum/flags/string 압축 저장)
+### ValueConverter(예: enum/flags/string 압축 저장)
+
 ```csharp
 public enum Visibility { Private, Unlisted, Public }
 
@@ -434,7 +453,8 @@ protected override void OnModelCreating(ModelBuilder mb)
 }
 ```
 
-### 8.3 Shadow Property(모델에 없는 컬럼)
+### Shadow Property(모델에 없는 컬럼)
+
 ```csharp
 protected override void OnModelCreating(ModelBuilder mb)
 {
@@ -446,7 +466,8 @@ protected override void OnModelCreating(ModelBuilder mb)
 _db.Entry(post).Property("LastModified").CurrentValue = DateTime.UtcNow;
 ```
 
-### 8.4 동시성 제어(낙관적 Lock)
+### 동시성 제어(낙관적 Lock)
+
 ```csharp
 public class Inventory
 {
@@ -469,7 +490,7 @@ catch (DbUpdateConcurrencyException ex)
 
 ---
 
-## 9. 트랜잭션/유닛오브워크/원자성
+## 트랜잭션/유닛오브워크/원자성
 
 기본적으로 `SaveChanges()`는 트랜잭션을 포함한다. 여러 `DbContext` 또는 외부 리소스 동시 작업 시 명시적 트랜잭션 사용.
 
@@ -491,9 +512,10 @@ catch
 
 ---
 
-## 10. Raw SQL 과 안전한 파라미터화
+## Raw SQL 과 안전한 파라미터화
 
-### 10.1 읽기 쿼리
+### 읽기 쿼리
+
 ```csharp
 var recent = await _db.Posts
     .FromSqlInterpolated($"SELECT * FROM Posts WHERE PublishedAt > {DateTime.UtcNow.AddDays(-7)}")
@@ -501,7 +523,8 @@ var recent = await _db.Posts
     .ToListAsync();
 ```
 
-### 10.2 비-엔티티 결과(프로젝션)
+### 비-엔티티 결과(프로젝션)
+
 ```csharp
 public record PostSummary(int Id, string Slug);
 
@@ -514,7 +537,7 @@ var rows = await _db.Database
 
 ---
 
-## 11. 성능 체크리스트
+## 성능 체크리스트
 
 - **컨텍스트 풀링**(`AddDbContextPool`)로 할당/GC 감축
 - **읽기 쿼리 `AsNoTracking()`**
@@ -532,7 +555,7 @@ private static readonly Func<AppDbContext, int, Task<Post?>> _getPostById =
 
 ---
 
-## 12. 설계/운영: 다중 DbContext, 다중 마이그레이션, 스키마 분리
+## 설계/운영: 다중 DbContext, 다중 마이그레이션, 스키마 분리
 
 - **다중 컨텍스트**: Bounded Context 별 분리(`AppDbContext`, `ReportingDbContext` 등)
 - **마이그레이션 세트 분리**: `--context` 옵션으로 컨텍스트별 마이그레이션 폴더 관리
@@ -543,26 +566,29 @@ dotnet ef migrations add InitReporting --context ReportingDbContext --output-dir
 
 ---
 
-## 13. 테스트: InMemory/Sqlite/컨테이너
+## 테스트: InMemory/Sqlite/컨테이너
 
-### 13.1 InMemory 기능 테스트(관계/제약이 약함)
+### InMemory 기능 테스트(관계/제약이 약함)
+
 ```csharp
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("test"));
 ```
 
-### 13.2 Sqlite In-Memory(제약/인덱스 검증에 유리)
+### Sqlite In-Memory(제약/인덱스 검증에 유리)
+
 ```csharp
 var keepAlive = new SqliteConnection("DataSource=:memory:");
 keepAlive.Open();
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(keepAlive));
 ```
 
-### 13.3 Testcontainers로 진짜 DB 통합 테스트
+### Testcontainers로 진짜 DB 통합 테스트
+
 - PostgreSQL/MSSQL Docker 컨테이너 기동 → 실제 동작 검증
 
 ---
 
-## 14. 보안/탄력성
+## 보안/탄력성
 
 - **연결 재시도**, **명령 타임아웃** 설정
 ```csharp
@@ -575,9 +601,10 @@ opt.UseSqlServer(conn, sql => sql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(1
 
 ---
 
-## 15. 종합 예제: API + EF Core
+## 종합 예제: API + EF Core
 
-### 15.1 DTO/요청 검증
+### DTO/요청 검증
+
 ```csharp
 public record CreatePostRequest(int BlogId, string Slug, string Content);
 
@@ -610,7 +637,8 @@ public static class PostEndpoints
 }
 ```
 
-### 15.2 Program.cs
+### Program.cs
+
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContextPool<AppDbContext>(opt => opt.UseSqlite("Data Source=blog.db"));
@@ -629,7 +657,7 @@ app.Run();
 
 ---
 
-## 16. 트러블슈팅 FAQ
+## 트러블슈팅 FAQ
 
 - **마이그레이션 생성 안 됨**: 올바른 `Startup/Program` 구성/`DbContext` 생성자/Provider 체크
 - **스냅샷 충돌**: 수동 편집 시 주의. 필요 시 `remove` 후 재생성
@@ -640,7 +668,7 @@ app.Run();
 
 ---
 
-## 17. 요약 표
+## 요약 표
 
 | 항목 | 키 포인트 |
 |------|-----------|

@@ -16,7 +16,7 @@ category: MFC
 
 ---
 
-## 0. 로드맵: 무엇을 구현할 건가?
+## 로드맵: 무엇을 구현할 건가?
 
 1. **리본 바** 골격 만들기 (앱 버튼/탭/패널/버튼/스플릿/체크/콤보)
 2. **갤러리**(아이콘/색/스타일 미리보기) + **라이브 프리뷰** 패턴
@@ -30,7 +30,7 @@ category: MFC
 
 ---
 
-## 1. 프로젝트 준비 & 기본 골격
+## 프로젝트 준비 & 기본 골격
 
 ### 1-1. App/Frame 기본 세팅 (CWinAppEx 추천)
 
@@ -156,7 +156,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT cs)
 
 ---
 
-## 2. 갤러리(Gallery) 구축 — 미리보기/라이브 프리뷰 패턴
+## 갤러리(Gallery) 구축 — 미리보기/라이브 프리뷰 패턴
 
 ### 2-1. 아이콘 세트 준비
 
@@ -259,7 +259,7 @@ void CMainFrame::OnThemeSelected()
 
 ---
 
-## 3. Quick Access Toolbar(QAT) — 기본/사용자 커스터마이징/영구 저장
+## Quick Access Toolbar(QAT) — 기본/사용자 커스터마이징/영구 저장
 
 ### 3-1. 기본 항목 추가
 
@@ -304,7 +304,7 @@ void CMainFrame::OnRibbonCustomize()
 
 ---
 
-## 4. 애플리케이션 메뉴(파일 메뉴) / Backstage 접근
+## 애플리케이션 메뉴(파일 메뉴) / Backstage 접근
 
 ### 4-1. 기본 애플리케이션 메뉴(리본 방식)
 
@@ -329,7 +329,7 @@ MFC 버전에 따라 **Backstage** API 지원이 다릅니다.
 
 ---
 
-## 5. 리본 요소 집합 (버튼/스플릿/체크/라디오/콤보/스핀/색 선택/갤러리)
+## 리본 요소 집합 (버튼/스플릿/체크/라디오/콤보/스핀/색 선택/갤러리)
 
 ### 5-1. Split Button (드롭다운 + 메인 동작)
 
@@ -384,7 +384,7 @@ pPanel->Add(pColor);
 
 ---
 
-## 6. 명령 라우팅 & UI 업데이트 (리본과의 연결)
+## 명령 라우팅 & UI 업데이트 (리본과의 연결)
 
 ### 6-1. 표준 ON_COMMAND / ON_UPDATE_COMMAND_UI
 
@@ -422,7 +422,7 @@ CString s; if (pFind) s = pFind->GetEditText();
 
 ---
 
-## 7. HiDPI/아이콘 — 32bpp PNG·스케일·투명
+## HiDPI/아이콘 — 32bpp PNG·스케일·투명
 
 ### 7-1. HiColor 아이콘 활성화
 
@@ -443,7 +443,7 @@ imgs.Load(IDB_MY_ICONS_32, TRUE);
 
 ---
 
-## 8. 다크 모드 / 테마 접근법
+## 다크 모드 / 테마 접근법
 
 ### 8-1. Visual Manager로 전역 테마 스위치
 
@@ -529,7 +529,7 @@ void UpdateDarkPalette(bool dark) { g_Pal = dark ? g_PalDark : g_PalLight; }
 
 ---
 
-## 9. 상태 저장/복원 (QAT/리본 구성/키보드/창 레이아웃)
+## 상태 저장/복원 (QAT/리본 구성/키보드/창 레이아웃)
 
 `CWinAppEx`는 다음 상태를 자동 저장/복원합니다.
 
@@ -556,7 +556,7 @@ void CMyApp::LoadCustomState()
 
 ---
 
-## 10. 성능/UX/접근성 체크리스트
+## 성능/UX/접근성 체크리스트
 
 1. **명령 응답 속도**: 리본 버튼 클릭 → 핸들러 O(1), 무거운 작업은 백그라운드 + 진행 표시
 2. **툴팁/키팁**: 툴팁 텍스트/키보드 키팁(Alt 키) 확인, 현지화
@@ -569,7 +569,7 @@ void CMyApp::LoadCustomState()
 
 ---
 
-## 11. 종합 예제: “홈” 탭(클립보드/스타일/테마) + 갤러리 라이브 프리뷰 + QAT + 다크 토글
+## 종합 예제: “홈” 탭(클립보드/스타일/테마) + 갤러리 라이브 프리뷰 + QAT + 다크 토글
 
 ### 11-1. 리본 구성
 
@@ -658,7 +658,7 @@ void CMainFrame::OnToggleDark() {
 
 ---
 
-## 12. 문제 해결 가이드
+## 문제 해결 가이드
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -671,7 +671,7 @@ void CMainFrame::OnToggleDark() {
 
 ---
 
-## 13. 확장 아이디어
+## 확장 아이디어
 
 - **명령 팔레트(Ctrl+P)**: 커맨드 검색 UI → `CMFCRibbonButton` 목록에서 텍스트 매칭
 - **Ribbon-Document 인사이트**: 문서 상태에 따라 패널 Enabled/Disabled 동적 제어
@@ -681,7 +681,7 @@ void CMainFrame::OnToggleDark() {
 
 ---
 
-## 14. 요약
+## 요약
 
 - **리본**: `CMFCRibbonBar` → **카테고리/패널/버튼/갤러리**를 계층적으로 구성
 - **갤러리**: 이미지 스트립 + `AFX_WM_ON_HIGHLIGHT_RIBBON_LIST_ITEM`으로 **라이브 프리뷰**
@@ -712,6 +712,7 @@ void CMainFrame::OnToggleDark() {
 #define ID_FMT_COLOR        32782
 #define ID_GAL_THEME        32790
 #define ID_VIEW_DARKMODE    32800
+
 ```
 
 ## 부록 C) 다크 팔레트 적용 예시(리스트/트리 커스텀 드로우 연계)

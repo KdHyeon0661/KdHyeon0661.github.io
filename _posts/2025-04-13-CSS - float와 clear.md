@@ -6,7 +6,7 @@ category: CSS
 ---
 # float와 clear 속성 — 개념, 함정, 해결책(clearfix/flow-root), 그리고 현대 대체안까지
 
-## 1. `float`란 무엇인가 — “흐름에서 떠서, 텍스트를 감싼다”
+## `float`란 무엇인가 — “흐름에서 떠서, 텍스트를 감싼다”
 
 ```css
 img.thumb { float: left; margin: 0 12px 8px 0; }
@@ -27,25 +27,28 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 2. float의 동작 원리(한 번에 이해)
+## float의 동작 원리(한 번에 이해)
 
-### 2.1 라인 박스와의 상호작용
+### 라인 박스와의 상호작용
+
 - 인라인 포맷팅 컨텍스트(IFC)에서 텍스트는 **라인 박스(line box)**를 형성합니다.
 - 떠 있는 상자(float box)를 피하기 위해 라인 박스가 **수평 폭을 줄이며** 텍스트를 재흐름(reflow)시킵니다.
   → 결과: 텍스트가 마치 이미지를 둘러싸듯 흐름.
 
-### 2.2 박스 포맷팅 컨텍스트(BFC)와 float
+### 박스 포맷팅 컨텍스트(BFC)와 float
+
 - **float 요소 자체는 새로운 BFC를 생성**합니다.
   - BFC 내부의 마진은 바깥과 **마진 겹침이 일어나지 않음**(레이아웃 안정성↑).
   - float의 내부는 스스로 레이아웃을 “자급자족”합니다(외부 float의 지배 감소).
 
-### 2.3 부모 높이 상실(고전 함정)
+### 부모 높이 상실(고전 함정)
+
 - float는 **정상 흐름(out-of-flow)** 요소로 취급 → 부모는 자식 float의 높이를 **컨텐츠 높이에 포함시키지 않음**.
   → 배경/테두리가 “꺼져 보이는” 현상이 발생(초안에서 지적한 바로 그 문제).
 
 ---
 
-## 3. 예전 레이아웃에서의 float — 왜 더 이상 권장되지 않나
+## 예전 레이아웃에서의 float — 왜 더 이상 권장되지 않나
 
 ```html
 <div class="container">
@@ -68,7 +71,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 4. `clear` — float 아래에서 새 줄 시작
+## `clear` — float 아래에서 새 줄 시작
 
 ```css
 .clear-both { clear: both; } /* left/right 어느 쪽 float도 회피 */
@@ -86,9 +89,10 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 5. clearfix — “부모가 float 자식을 감싸도록” 만드는 고전 처방
+## clearfix — “부모가 float 자식을 감싸도록” 만드는 고전 처방
 
-### 5.1 가장 표준적인 clearfix(의사요소)
+### 가장 표준적인 clearfix(의사요소)
+
 ```css
 /* 재사용 가능한 클래스 */
 .clearfix::after {
@@ -107,14 +111,16 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 - 원리: 보이지 않는 블록을 **마지막에 삽입**하여 float 아래로 내려가게 하고, 그 블록이 부모 높이에 기여 → 부모가 내용물을 **정상적으로 감쌈**.
 
-### 5.2 overflow 해법(간단하지만 부작용 주의)
+### overflow 해법(간단하지만 부작용 주의)
+
 ```css
 .wrapper { overflow: hidden; } /* 또는 overflow:auto */
 ```
 - 장점: 간단, float를 포함하는 **새로운 BFC**를 만들어 부모 높이 복구.
 - 단점: 원치 않는 스크롤/클리핑 발생 가능(특히 도형/그림자/툴팁이 넘칠 때).
 
-### 5.3 최신 해법: `display: flow-root`(권장)
+### 최신 해법: `display: flow-root`(권장)
+
 ```css
 .flow-root { display: flow-root; }
 ```
@@ -131,16 +137,17 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 6. float가 레이어/페인팅에 미치는 영향(요약)
+## float가 레이어/페인팅에 미치는 영향(요약)
 
 - 일반적으로 **float는 비포지셔닝(non-positioned) 콘텐츠보다 먼저 페인트**되며, 인라인 콘텐츠는 그 주변을 회피하며 흐릅니다.
 - `z-index`는 포지셔닝 컨텍스트가 필요하지만, float 자체의 페인팅 순서가 겹침 결과에 영향을 줄 수 있습니다(복잡한 중첩에서는 포지셔닝 사용 권장).
 
 ---
 
-## 7. 실전 패턴
+## 실전 패턴
 
-### 7.1 본문 이미지 감싸기(표준)
+### 본문 이미지 감싸기(표준)
+
 ```html
 <article class="prose">
   <img class="float-img" src="..." alt="..." width="320" height="200">
@@ -153,7 +160,8 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 .float-img { float: left; margin: 0 12px 8px 0; shape-margin: 8px; }
 ```
 
-### 7.2 카드/요약박스의 좌측 썸네일
+### 카드/요약박스의 좌측 썸네일
+
 ```html
 <div class="media flow-root">
   <img class="thumb" src="..." alt="">
@@ -167,7 +175,8 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 .media .thumb { float: left; width: 96px; height: 96px; margin: 0 12px 4px 0; object-fit: cover; }
 ```
 
-### 7.3 구형 코드 유지: clearfix 유틸
+### 구형 코드 유지: clearfix 유틸
+
 ```css
 .clearfix::after { content:""; display:block; clear:both; }
 .float-left { float:left; } .float-right { float:right; }
@@ -175,7 +184,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 8. 문제 해결 시나리오별 처방전
+## 문제 해결 시나리오별 처방전
 
 | 증상 | 원인 | 처방 |
 |---|---|---|
@@ -187,7 +196,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 9. `clear`의 미세 규칙(정확히 이해)
+## `clear`의 미세 규칙(정확히 이해)
 
 ```css
 .break { clear: both; }
@@ -198,9 +207,10 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 10. 현대 대안: Flex/Grid로 대체
+## 현대 대안: Flex/Grid로 대체
 
-### 10.1 사이드바/본문(구 float → 신 Flex)
+### 사이드바/본문(구 float → 신 Flex)
+
 ```css
 /* 예전: .sidebar{float:left;width:30%} .content{float:right;width:70%} */
 .layout { display: flex; gap: 1rem; }
@@ -208,13 +218,15 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 .content { flex: 1 1 auto; min-width: 0; }
 ```
 
-### 10.2 카드 갤러리(구 float-wrap → 신 Flex wrap)
+### 카드 갤러리(구 float-wrap → 신 Flex wrap)
+
 ```css
 .gallery { display:flex; flex-wrap:wrap; gap:1rem; }
 .card { flex: 1 1 220px; }
 ```
 
-### 10.3 2차원 격자(Grid)
+### 2차원 격자(Grid)
+
 ```css
 .grid {
   display: grid;
@@ -228,7 +240,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 11. float로 “모양대로 감싸기”: `shape-outside`(텍스트 래핑 고급)
+## float로 “모양대로 감싸기”: `shape-outside`(텍스트 래핑 고급)
 
 ```html
 <div class="shape"></div>
@@ -251,7 +263,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 12. 종합 예제(복붙 가능)
+## 종합 예제(복붙 가능)
 
 ```html
 <!doctype html>
@@ -307,7 +319,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 13. 디버깅/체크리스트
+## 디버깅/체크리스트
 
 1. **부모 높이 붕괴?** → `flow-root` 또는 `.clearfix` 적용.
 2. **원치 않는 스크롤/클리핑?** → `overflow`로 해결했다면 `flow-root`로 교체.
@@ -317,7 +329,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 14. 요약 표
+## 요약 표
 
 | 주제 | 핵심 |
 |---|---|
@@ -329,7 +341,7 @@ img.thumb { float: left; margin: 0 12px 8px 0; }
 
 ---
 
-## 15. 결론
+## 결론
 
 - float는 원래 **텍스트 래핑**용. 레이아웃에는 **이제 쓰지 않는다**가 표준 실무 감각입니다.
 - **부모 높이 문제**는 `flow-root`로 명시적으로 해결하는 시대.

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Razor Pages의 PageModel 구조
 
-## 0. Razor Pages의 구조 핵심: View와 PageModel의 1:1 쌍
+## Razor Pages의 구조 핵심: View와 PageModel의 1:1 쌍
 
 ```
 Pages/
@@ -20,7 +20,7 @@ Pages/
 
 ---
 
-## 1. PageModel 클래스의 기본 형태와 생애주기
+## PageModel 클래스의 기본 형태와 생애주기
 
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -56,7 +56,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 2. Razor Page와 PageModel 연결
+## Razor Page와 PageModel 연결
 
 `Index.cshtml`
 ```cshtml
@@ -77,7 +77,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 3. 폼 제출과 데이터 바인딩: `[BindProperty]`와 SupportsGet
+## 폼 제출과 데이터 바인딩: `[BindProperty]`와 SupportsGet
 
 PageModel
 ```csharp
@@ -128,7 +128,7 @@ public class ContactModel : PageModel
 
 ---
 
-## 4. 여러 핸들러: `asp-page-handler`와 `OnPostX` 패턴
+## 여러 핸들러: `asp-page-handler`와 `OnPostX` 패턴
 
 PageModel
 ```csharp
@@ -185,7 +185,7 @@ public class EditModel : PageModel
 
 ---
 
-## 5. 라우팅 템플릿과 매개변수 바인딩
+## 라우팅 템플릿과 매개변수 바인딩
 
 `@page` 템플릿
 ```cshtml
@@ -215,7 +215,7 @@ public class DetailsModel : PageModel
 
 ---
 
-## 6. PageModel의 환경과 기본 제공 멤버
+## PageModel의 환경과 기본 제공 멤버
 
 PageModel에서 자주 쓰는 멤버:
 - `HttpContext`, `Request`, `Response`
@@ -236,7 +236,7 @@ public IActionResult OnGet()
 
 ---
 
-## 7. 반환 결과 패턴: Page(), RedirectToPage(), NotFound(), File(), Forbid() 등
+## 반환 결과 패턴: Page(), RedirectToPage(), NotFound(), File(), Forbid() 등
 
 핸들러에서 자주 쓰는 결과:
 ```csharp
@@ -264,7 +264,7 @@ public IActionResult OnPost()
 
 ---
 
-## 8. 모델 바인딩 심화: 컬렉션/중첩/화이트리스트/TryUpdateModelAsync
+## 모델 바인딩 심화: 컬렉션/중첩/화이트리스트/TryUpdateModelAsync
 
 DTO와 화이트리스트 바인딩:
 ```csharp
@@ -295,7 +295,7 @@ public async Task<IActionResult> OnPostAsync(int id)
 
 ---
 
-## 9. 유효성 검증 통합: DataAnnotations, IValidatableObject, 커스텀 Attribute
+## 유효성 검증 통합: DataAnnotations, IValidatableObject, 커스텀 Attribute
 
 DataAnnotations:
 ```csharp
@@ -336,7 +336,7 @@ public sealed class NotDisposableEmailAttribute : ValidationAttribute
 
 ---
 
-## 10. 보안: CSRF, XSS, 인증/인가, Anti-forgery, 파일 업로드
+## 보안: CSRF, XSS, 인증/인가, Anti-forgery, 파일 업로드
 
 - **CSRF**: Razor Pages의 `<form method="post">`는 기본적으로 **안티포저리 토큰** 포함
 - **XSS**: Razor는 **기본 HTML 인코딩**. `Html.Raw`는 신뢰 콘텐츠만
@@ -365,7 +365,7 @@ builder.Services.AddRazorPages(options =>
 
 ---
 
-## 11. 페이지 필터: IPageFilter / IAsyncPageFilter로 횡단 관심사 처리
+## 페이지 필터: IPageFilter / IAsyncPageFilter로 횡단 관심사 처리
 
 필터 구현:
 ```csharp
@@ -400,7 +400,7 @@ builder.Services.AddRazorPages()
 
 ---
 
-## 12. TempData, ViewData, [TempData] 바인딩
+## TempData, ViewData, [TempData] 바인딩
 
 TempData 사용:
 ```csharp
@@ -425,7 +425,7 @@ public class ResultModel : PageModel
 
 ---
 
-## 13. 비동기와 데이터 접근 패턴
+## 비동기와 데이터 접근 패턴
 
 ```csharp
 public class ProductsModel : PageModel
@@ -450,7 +450,7 @@ public class ProductsModel : PageModel
 
 ---
 
-## 14. DI(의존성 주입)와 서비스 계층
+## DI(의존성 주입)와 서비스 계층
 
 Program.cs
 ```csharp
@@ -481,7 +481,7 @@ public class DashboardModel : PageModel
 
 ---
 
-## 15. 고급 라우팅/링크: `asp-page`, `asp-route-*`, `LinkGenerator`
+## 고급 라우팅/링크: `asp-page`, `asp-route-*`, `LinkGenerator`
 
 뷰
 ```cshtml
@@ -506,7 +506,7 @@ public class LinksModel : PageModel
 
 ---
 
-## 16. 부분 페이지(Partial), ViewComponent와 PageModel 협업
+## 부분 페이지(Partial), ViewComponent와 PageModel 협업
 
 - **Partial**: 단순 UI 조각 재사용
 - **ViewComponent**: 데이터+뷰 캡슐화(미니 컴포넌트), PageModel에서 데이터 준비 부담 축소
@@ -531,7 +531,7 @@ public class ListModel : PageModel
 
 ---
 
-## 17. 다국어/문화권과 PageModel
+## 다국어/문화권과 PageModel
 
 - 날짜·숫자 파싱은 **CurrentCulture**에 의존
 - PageModel에서 문화권을 로깅/검사해 불일치를 조기 탐지
@@ -539,7 +539,7 @@ public class ListModel : PageModel
 
 ---
 
-## 18. 테스트 전략: PageModel 단위 테스트의 요령
+## 테스트 전략: PageModel 단위 테스트의 요령
 
 - **PageModel**은 단순 C# 클래스이므로 **컨트롤러 테스트와 유사**
 - DI로 주입되는 서비스·리포지토리를 **Mock**
@@ -562,7 +562,7 @@ public async Task Post_WhenInvalid_ReturnsPage()
 
 ---
 
-## 19. 에러 처리와 사용자 친화적 메시지
+## 에러 처리와 사용자 친화적 메시지
 
 - 공통 예외 처리: `UseExceptionHandler("/Error")` + `Error.cshtml`
 - PageModel에서 예외 포착 시 `ModelState.AddModelError("", "메시지")`로 사용자에 안전한 안내
@@ -570,7 +570,7 @@ public async Task Post_WhenInvalid_ReturnsPage()
 
 ---
 
-## 20. 체크리스트 요약
+## 체크리스트 요약
 
 1) 핸들러 명명 규칙(HTTP + 선택적 Handler) 준수: `OnGet`, `OnPostSave`
 2) `[BindProperty]`와 `SupportsGet` 사용 구분

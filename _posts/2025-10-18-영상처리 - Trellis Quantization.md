@@ -12,7 +12,7 @@ category: 영상처리
 
 ---
 
-## 0. 왜 Trellis Quantization인가?
+## 왜 Trellis Quantization인가?
 
 - **문제점(기본 JPEG)**: 각 DCT 계수는 양자화 후 **독립적으로** 반올림된다. 그러나 실제 JPEG 비트스트림은
   **허프만 부호화 + (AC) 런-길이(RLE)** 로 엮여 있어, 한 계수의 선택이 **이웃 계수들의 런/코드비용**에 영향을 준다.
@@ -28,9 +28,10 @@ category: 영상처리
 
 ---
 
-## 1. 수학적 모델(요지)
+## 수학적 모델(요지)
 
-### 1.1 비용함수
+### 비용함수
+
 - 각 블록의 원래 DCT 계수 \(C_k\) (지그재그 인덱스 \(k=0..63\))와 양자화 스텝 \(Q_k\).
 - 정수 양자화 후보 \(q_k \in \mathbb{Z}\) 를 고르면, 복원 계수는 \(\hat{C}_k = q_k \cdot Q_k\).
 - 왜곡(제곱 오차):
@@ -45,7 +46,8 @@ category: 영상처리
 
 > 트렐리스는 상태로 **“현재까지의 0런 길이(run)”**를 기억하며, 후보 \(q_k\) 를 선택할 때의 **추가비용 \(\Delta J_k\)** 를 계산하여 누적 최소비용 경로를 갱신한다.
 
-### 1.2 동적계획(개략)
+### 동적계획(개략)
+
 - 상태 \(s_k = (\text{runlen})\), 천이 \(s_k \to s_{k+1}\)
   - \(q_k = 0\)이면 runlen 증가
   - \(q_k \neq 0\)이면 그 직전 runlen과 합쳐 **(runlen, size)** 허프만 기호 비용 + amplitude비용 지불, runlen=0으로 리셋
@@ -53,7 +55,7 @@ category: 영상처리
 
 ---
 
-## 2. 툴/엔진 선택지
+## 툴/엔진 선택지
 
 - **mozjpeg(cjpeg)**: Trellis Quantization/스캔 최적화/감각 품질 튜닝(예: `-tune-ssim`) 제공.
   - **명령행 사용**이 가장 현실적인 접근. (옵션 이름·유무는 빌드 버전에 따라 상이)
@@ -63,18 +65,21 @@ category: 영상처리
 
 ---
 
-## 3. 실무 사용(추천): **mozjpeg cjpeg** 파이프라인
+## 실무 사용(추천): **mozjpeg cjpeg** 파이프라인
 
 > **시나리오**: `IppDib`/`IppImage` → **PPM/PGM** 임시 파일 → **mozjpeg cjpeg**로 trellis 인코딩 → JPEG bytes 회수
 
-### 3.1 예시 커맨드 (버전에 따라 다를 수 있음)
+### 예시 커맨드 (버전에 따라 다를 수 있음)
+
 ```bash
 # 자연사진(4:2:0), trellis+허프만 최적화+프로그레시브(선택)
+
 cjpeg -quality 85 -sample 420 -optimize -progressive \
       -trellis \
       -outfile out.jpg in.ppm
 
 # UI/문서(4:4:4), 선명도 유지(고주파 보호), trellis
+
 cjpeg -quality 92 -sample 444 -optimize \
       -trellis \
       -quant-table 1 \
@@ -86,7 +91,8 @@ cjpeg -quality 92 -sample 444 -optimize \
 - `-quant-table`: mozjpeg 프리셋 테이블 선택(버전에 따라 의미 다름).
 > 정확한 옵션은 `cjpeg -h` 또는 해당 배포의 README를 확인하세요. (빌드/배포에 따라 이름·기능이 상이)
 
-### 3.2 C++에서 외부 인코더 호출(간단 스케치)
+### C++에서 외부 인코더 호출(간단 스케치)
+
 ```cpp
 // 1) IppDib → in.ppm 저장(BGRA → PPM, 또는 그레이면 PGM)
 // 2) system() 또는 CreateProcess로 cjpeg 호출
@@ -107,7 +113,7 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
 
 ---
 
-## 4. (고급) **mozjpeg 라이브러리** 직접 사용 스케치
+## (고급) **mozjpeg 라이브러리** 직접 사용 스케치
 
 모든 배포가 동일 API를 제공하진 않습니다. 일부 버전에선
 `jpeg_c_set_bool_param / jpeg_c_set_int_param / jpeg_c_set_float_param` 과 같은 “확장 파라미터”로 trellis를 켭니다.
@@ -116,6 +122,7 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
 // 주의: 아래 심볼/파라미터명은 mozjpeg 배포본에 따라 달라질 수 있습니다.
 // 실제 사용 전 반드시 mozjpeg의 jpeglib.h / README를 확인하세요.
 #ifdef MOZJPEG_EXT_PARAMS
+
     jpeg_c_set_bool_param(&cinfo, JBOOLEAN_TRELLIS_QUANT, TRUE);
     jpeg_c_set_bool_param(&cinfo, JBOOLEAN_TRELLIS_QUANT_DC, TRUE); // DC도 trellis
     jpeg_c_set_bool_param(&cinfo, JBOOLEAN_TRELLIS_EOB_OPT, TRUE);  // EOB 최적화
@@ -123,6 +130,7 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
     jpeg_c_set_float_param(&cinfo, JFLOAT_TRELLIS_LAMBDA, 1.0f);    // 람다 스케일(버전별 상이)
     // 곡선에 맞춘 튜닝(예: -tune-ssim)도 float 파라미터로 조정 가능할 수 있음
 #endif
+
 ```
 
 > ✅ **실전 팁**
@@ -132,20 +140,22 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
 
 ---
 
-## 5. (교육용) **블록 단위 Trellis** 미니 구현
+## (교육용) **블록 단위 Trellis** 미니 구현
 
 > **목표**: 한 8×8 블록에 대해, **표준 허프만** 길이 근사와 **작은 후보 집합**(예: {0, q0, q0±1})으로
 > \(J=D+\lambda R\) 최소화 경로를 찾아 **정수 양자화 계수 q[k]** 를 산출.
 > (연구/학습용으로 충분히 동작하는 스케치입니다. 제품화엔 더 정교한 비용/스캔/경계처리 필요)
 
-### 5.1 전제
+### 전제
+
 - 입력: 공간영역 8×8 픽셀(0..255) 또는 이미 DCT된 값
 - DCT: 표준 부동소수점 8×8 DCT 사용(예시 포함)
 - 양자화표: 8비트 `Q[64]`
 - 허프만 길이: **표준 DC/AC 테이블**의 **코드 길이**를 미리 계산해 **룩업**(예시 포함)
 - 후보: 각 AC에 대해 `{0, q0, q0±1}`(범위 허용 시), DC는 `{q0, q0±1}`
 
-### 5.2 코드
+### 코드
+
 ```cpp
 #include <cmath>
 #include <cstdint>
@@ -153,6 +163,7 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
 #include <algorithm>
 #include <limits>
 #include <array>
+
 using std::vector;
 
 // -------------------- 8x8 DCT (간단 버전) --------------------
@@ -311,7 +322,7 @@ TrellisResult TrellisQuantBlock(const double dct[64], const uint8_t Q[64],
 
 ---
 
-## 6. 람다 \(\lambda\)와 후보폭 **튜닝 가이드**
+## 람다 \(\lambda\)와 후보폭 **튜닝 가이드**
 
 - **람다 크면(R↑ 가중)**: 더 작은 파일(하지만 세밀 도려냄↑)
 - **람다 작으면(D↑ 가중)**: 화질 유지(파일 커짐)
@@ -322,7 +333,7 @@ TrellisResult TrellisQuantBlock(const double dct[64], const uint8_t Q[64],
 
 ---
 
-## 7. **사진 vs UI/문서** 운영 레시피
+## **사진 vs UI/문서** 운영 레시피
 
 - **사진(4:2:0)**
   - trellis **ON**, 허프만 최적화 ON, progressive ON(감상성↑)
@@ -334,7 +345,7 @@ TrellisResult TrellisQuantBlock(const double dct[64], const uint8_t Q[64],
 
 ---
 
-## 8. 검증 & 로그
+## 검증 & 로그
 
 - **품질 지표**: PSNR, **SSIM/MS-SSIM**(mozjpeg `-tune-ssim` 계열과 상성)
 - **크기/시간**: 파일 바이트, 인코드 시간(트렐리스 루프 수 × 블록 수)
@@ -345,7 +356,7 @@ TrellisResult TrellisQuantBlock(const double dct[64], const uint8_t Q[64],
 
 ---
 
-## 9. Pitfalls / 주의사항
+## Pitfalls / 주의사항
 
 - **바이트 재현성**: trellis + 허프만 최적화 + progressive는 **입력 데이터**에 따라 코드 길이가 바뀌므로
   **강한 재현성**(바이트 동일) 요구 시에는 비권장. (스캔 스크립트/허프만 테이블 고정 등 추가 조치 필요)
@@ -355,7 +366,7 @@ TrellisResult TrellisQuantBlock(const double dct[64], const uint8_t Q[64],
 
 ---
 
-## 10. “우리 프로젝트에 붙이기” 실전 시나리오
+## “우리 프로젝트에 붙이기” 실전 시나리오
 
 1. **ImageTool 편집 파이프라인**:
    - 편집/미리보기: TurboJPEG(BGRA)로 고속 디코드/표시
@@ -368,7 +379,7 @@ TrellisResult TrellisQuantBlock(const double dct[64], const uint8_t Q[64],
 
 ---
 
-## 11. 요약
+## 요약
 
 - Trellis Quantization은 JPEG의 **허프만/RLE 구조**를 고려한 **R-D 최적 양자화**로,
   **용량을 줄이면서** 시각 품질을 **잘 유지**하는 실전 기술.

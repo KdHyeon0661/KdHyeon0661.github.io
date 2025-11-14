@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML `<input>` 태그
 
-## 1. `<input>`이란?
+## `<input>`이란?
 
 - 문서의 **단일 self-contained 입력 컨트롤**.
 - 표시/동작은 `type`으로 결정(기본값: `text`).
@@ -18,9 +18,9 @@ category: HTML
 
 ---
 
-## 2. `type`별 총정리(실전 메모 포함)
+## `type`별 총정리(실전 메모 포함)
 
-### 2.1 텍스트 계열
+### 텍스트 계열
 
 | 타입 | 용도 | 핵심 포인트 |
 |---|---|---|
@@ -36,7 +36,7 @@ category: HTML
 <input type="password" name="pw" required minlength="8" autocomplete="current-password">
 ```
 
-### 2.2 숫자/범위/날짜·시간
+### 숫자/범위/날짜·시간
 
 | 타입 | 용도 | 핵심 포인트 |
 |---|---|---|
@@ -54,7 +54,7 @@ category: HTML
 
 > **국제화 팁**: 가격/실수 입력은 `type="number"`가 로케일 소수점 이슈를 일으킬 수 있습니다. 대안으로 `type="text" inputmode="decimal" pattern="^\d+([.,]\d+)?$"`를 고려하세요.
 
-### 2.3 선택 계열
+### 선택 계열
 
 | 타입 | 용도 | 핵심 포인트 |
 |---|---|---|
@@ -75,7 +75,7 @@ category: HTML
 </fieldset>
 ```
 
-### 2.4 파일/버튼/기타
+### 파일/버튼/기타
 
 | 타입 | 용도 | 핵심 포인트 |
 |---|---|---|
@@ -94,9 +94,9 @@ category: HTML
 
 ---
 
-## 3. 필수·중요 속성 — 작게 보이지만 큰 차이를 만든다
+## 필수·중요 속성 — 작게 보이지만 큰 차이를 만든다
 
-### 3.1 값/이름/상태
+### 값/이름/상태
 
 | 속성 | 설명 |
 |---|---|
@@ -106,7 +106,7 @@ category: HTML
 | `placeholder` | 힌트(접근성 관점에선 라벨 대체 아님) |
 | `readonly` / `disabled` | 읽기 전용(전송됨)/비활성(전송 안 됨) |
 
-### 3.2 제약(유효성)
+### 제약(유효성)
 
 | 속성 | 대상 | 설명 |
 |---|---|---|
@@ -120,7 +120,7 @@ category: HTML
        pattern="^\d{5}$" title="5자리 숫자를 입력하세요" required>
 ```
 
-### 3.3 자동완성·키보드·IME
+### 자동완성·키보드·IME
 
 | 속성 | 용도 | 예 |
 |---|---|---|
@@ -133,7 +133,7 @@ category: HTML
 <input type="text" name="otp" inputmode="numeric" autocomplete="one-time-code" enterkeyhint="done">
 ```
 
-### 3.4 라우팅/멀티 폼 제어(파생 속성)
+### 라우팅/멀티 폼 제어(파생 속성)
 
 - 어느 버튼이 눌렸는지에 따라 **폼 전송 속성**을 덮어쓰기
 
@@ -153,7 +153,7 @@ category: HTML
 </form>
 ```
 
-### 3.5 `list` + `<datalist>`
+### `list` + `<datalist>`
 
 ```html
 <label>기술 <input name="skill" list="skills"></label>
@@ -162,7 +162,7 @@ category: HTML
 </datalist>
 ```
 
-### 3.6 접근성 보조
+### 접근성 보조
 
 | 속성 | 설명 |
 |---|---|
@@ -173,9 +173,9 @@ category: HTML
 
 ---
 
-## 4. HTML5 Constraint Validation — 브라우저 내장 검증 + JS API
+## HTML5 Constraint Validation — 브라우저 내장 검증 + JS API
 
-### 4.1 상태 의사클래스와 CSS
+### 상태 의사클래스와 CSS
 
 ```html
 <style>
@@ -189,7 +189,7 @@ category: HTML
 <small id="em-err" class="error" role="alert"></small>
 ```
 
-### 4.2 JS API
+### JS API
 
 - `checkValidity()` / `reportValidity()`
 - `setCustomValidity(message)` + `validity` 상태(예: `patternMismatch`, `tooShort`)
@@ -216,9 +216,10 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 5. 파일 업로드 — UX와 보안 체크리스트
+## 파일 업로드 — UX와 보안 체크리스트
 
-### 5.1 클라이언트 UX
+### 클라이언트 UX
+
 ```html
 <input type="file" name="avatar" accept="image/*" capture="environment">
 <!-- 다중 -->
@@ -228,7 +229,8 @@ f.addEventListener('submit', e => {
 - `accept`는 **힌트**일 뿐(우회 가능). 서버에서 재검증 필수.
 - 모바일 카메라 우선 요청: `capture`(브라우저/기기 의존).
 
-### 5.2 서버 보안
+### 서버 보안
+
 - [ ] `enctype="multipart/form-data"`
 - [ ] **MIME + 매직넘버** 이중 검증(확장자 신뢰 금지)
 - [ ] 업로드 디렉터리 **웹 루트 밖**
@@ -238,23 +240,26 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 6. 접근성(a11y) — 라벨·오류·그룹·포커스
+## 접근성(a11y) — 라벨·오류·그룹·포커스
 
-### 6.1 라벨 연결
+### 라벨 연결
+
 ```html
 <label for="email">이메일</label>
 <input id="email" name="email" type="email" required>
 ```
 - `placeholder`는 **라벨 대체 아님**.
 
-### 6.2 오류 안내 링크
+### 오류 안내 링크
+
 ```html
 <input id="zip" name="zip" required pattern="^\d{5}$" aria-describedby="zip-hint zip-err">
 <small id="zip-hint">5자리 숫자</small>
 <div id="zip-err" class="error" role="alert" aria-live="polite"></div>
 ```
 
-### 6.3 그룹화
+### 그룹화
+
 ```html
 <fieldset>
   <legend>연락 방법</legend>
@@ -263,13 +268,14 @@ f.addEventListener('submit', e => {
 </fieldset>
 ```
 
-### 6.4 키보드/포커스
+### 키보드/포커스
+
 - 자연스러운 탭 순서 유지(레이아웃으로 바꾸지 말 것).
 - 포커스 링 제거 금지(`:focus-visible` 스타일 개선은 OK).
 
 ---
 
-## 7. 보안 — XSS/CSRF/자동완성·민감정보
+## 보안 — XSS/CSRF/자동완성·민감정보
 
 | 이슈 | 설명 | 대응 |
 |---|---|---|
@@ -285,13 +291,14 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 8. 모바일/국제화 UX
+## 모바일/국제화 UX
 
 - `inputmode="numeric|decimal|tel|email|url"`로 키패드 최적화.
 - `enterkeyhint="next|done|search|go|send"`로 행동 힌트.
 - 자동완성 토큰(아래)으로 입력 자동완성 신뢰도 ↑.
 
-### 8.1 자동완성 토큰 예시(선별)
+### 자동완성 토큰 예시(선별)
+
 - 계정: `username`, `new-password`, `current-password`, `one-time-code`
 - 연락처: `email`, `tel`, `postal-code`, `address-line1/2`, `country`
 - 결제: `cc-name`, `cc-number`, `cc-exp`, `cc-csc`
@@ -303,7 +310,7 @@ f.addEventListener('submit', e => {
 
 ---
 
-## 9. 고급 패턴 — `datalist`, `output`, 실시간 계산
+## 고급 패턴 — `datalist`, `output`, 실시간 계산
 
 ```html
 <label>상품 <input name="product" list="products"></label>
@@ -329,7 +336,7 @@ calc();
 
 ---
 
-## 10. 종합 예제 — 회원가입(검증·접근성·모바일/보안 동시 반영)
+## 종합 예제 — 회원가입(검증·접근성·모바일/보안 동시 반영)
 
 ```html
 <!doctype html>
@@ -426,7 +433,7 @@ form.addEventListener('submit', async (e) => {
 
 ---
 
-## 11. 흔한 문제와 해결책
+## 흔한 문제와 해결책
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -439,7 +446,7 @@ form.addEventListener('submit', async (e) => {
 
 ---
 
-## 12. 요약
+## 요약
 
 - `<input>`은 폼의 **핵심 단위**: 타입/속성 조합으로 대부분의 사용자 입력 처리 가능.
 - **유효성**: HTML5 속성 + CSS 상태 + JS API(`setCustomValidity`)의 삼박자.

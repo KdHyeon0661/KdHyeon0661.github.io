@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # 실습: 블로그 플랫폼을 쿠버네티스로 배포하기
 
-## 1. 준비
+## 준비
 
 ```bash
 minikube start --driver=docker
@@ -23,7 +23,7 @@ kubectl get storageclass
 
 ---
 
-## 2. 아키텍처
+## 아키텍처
 
 ```text
 [Client] → [Ingress(nginx)] → [Service/ghost] → [Pod/ghost]
@@ -35,9 +35,9 @@ kubectl get storageclass
 
 ---
 
-## 3. MySQL — Stateful 구성과 보안
+## MySQL — Stateful 구성과 보안
 
-### 3.1 MySQL 매니페스트 (PVC/Secret/Deployment/Service)
+### MySQL 매니페스트 (PVC/Secret/Deployment/Service)
 
 `mysql-deployment.yaml`
 
@@ -135,11 +135,11 @@ kubectl rollout status deploy/mysql
 
 ---
 
-## 4. Ghost — 콘텐츠 영속화, URL, 헬스 프로브
+## Ghost — 콘텐츠 영속화, URL, 헬스 프로브
 
 Ghost는 `/var/lib/ghost/content` 아래에 **이미지/테마/SQLite(미사용)/설정 일부**를 저장합니다. **PVC**를 붙여 영속화합니다.
 
-### 4.1 Ghost ConfigMap/Secret
+### Ghost ConfigMap/Secret
 
 `ghost-config.yaml`
 
@@ -174,7 +174,7 @@ data:
 kubectl apply -f ghost-config.yaml
 ```
 
-### 4.2 Ghost PVC + Deployment + Service
+### Ghost PVC + Deployment + Service
 
 `ghost-deployment.yaml`
 
@@ -268,7 +268,7 @@ kubectl rollout status deploy/ghost
 
 ---
 
-## 5. Ingress — 호스트 라우팅 및 헤더
+## Ingress — 호스트 라우팅 및 헤더
 
 `ghost-ingress.yaml`
 
@@ -316,7 +316,7 @@ kubectl apply -f ghost-ingress.yaml
 
 ---
 
-## 6. 운영 확장: 마이그레이션, 초기 관리자, 이미지 업로드 경로
+## 운영 확장: 마이그레이션, 초기 관리자, 이미지 업로드 경로
 
 - **초기 관리자**: Ghost는 첫 접속 시 어드민 비번 생성 페이지가 뜹니다. 동시성 문제를 피하려면 접근 제어(임시 Basic Auth)나 유지보수 윈도우 권장.
 - **이미지 업로드**: `/var/lib/ghost/content/images`에 저장. **PVC 크기/백업 주기** 계획 필수.
@@ -347,9 +347,9 @@ spec:
 
 ---
 
-## 7. 백업/복구 및 유지보수
+## 백업/복구 및 유지보수
 
-### 7.1 DB 백업 Job (mysqldump)
+### DB 백업 Job (mysqldump)
 
 `mysql-backup-cronjob.yaml`
 
@@ -410,7 +410,7 @@ kubectl get cronjob
 
 복구는 `mysql` 컨테이너 내부에서 `mysql -u... -p... ghost < dump.sql` 로 진행합니다.
 
-### 7.2 Ghost 콘텐츠 백업
+### Ghost 콘텐츠 백업
 
 - PVC 스냅샷(스토리지 클래스가 지원 시)
 - `kubectl cp`로 `/var/lib/ghost/content` 백업
@@ -418,9 +418,9 @@ kubectl get cronjob
 
 ---
 
-## 8. 보안: TLS, 인증, 비밀 관리
+## 보안: TLS, 인증, 비밀 관리
 
-### 8.1 cert-manager + Let’s Encrypt
+### cert-manager + Let’s Encrypt
 
 `ClusterIssuer`(http01) 생성:
 
@@ -454,16 +454,16 @@ spec:
 
 > 실도메인을 사용할 것. Minikube의 `blog.local`은 퍼블릭 인증서를 발급받을 수 없습니다(자체 CA 또는 mkcert 사용).
 
-### 8.2 어드민 보호
+### 어드민 보호
 
 - NGINX Ingress `auth`(basic auth) 또는 OIDC 리버스 프록시(Keycloak/Gatekeeper, oauth2-proxy)로 `/ghost` 경로 보호.
 - 보안 헤더(HSTS, CSP) 추가.
 
 ---
 
-## 9. 확장성: HPA, PDB, Anti-Affinity
+## 확장성: HPA, PDB, Anti-Affinity
 
-### 9.1 HPA (CPU 기준)
+### HPA (CPU 기준)
 
 ```bash
 kubectl autoscale deployment ghost --cpu-percent=60 --min=1 --max=5
@@ -472,7 +472,7 @@ kubectl get hpa
 
 > Ghost는 stateful 콘텐츠를 PVC로 공유(단일 RWX가 아닌 RWO)하므로 **복수 레플리카 시 공유 스토리지 고려**가 필요합니다. NFS/RWX 클래스 또는 로드밸런서/외부 저장소 연동으로 정적 파일을 공용화(예: S3 저장 플러그인)하는 패턴이 일반적입니다.
 
-### 9.2 PDB
+### PDB
 
 `pdb-ghost.yaml`
 
@@ -487,7 +487,7 @@ spec:
     matchLabels: { app: ghost }
 ```
 
-### 9.3 Anti-Affinity (멀티노드 시)
+### Anti-Affinity (멀티노드 시)
 
 ```yaml
 spec:
@@ -508,7 +508,7 @@ spec:
 
 ---
 
-## 10. 관측: 로그/메트릭/대시보드
+## 관측: 로그/메트릭/대시보드
 
 - **로그**: `kubectl logs deploy/ghost -f`
 - **리소스**: `kubectl top pods`, `kubectl top nodes` (metrics-server)
@@ -517,7 +517,7 @@ spec:
 
 ---
 
-## 11. GitOps/Helm로 패키징
+## GitOps/Helm로 패키징
 
 - Directory 구조 예:
 
@@ -539,7 +539,7 @@ k8s/
 
 ---
 
-## 12. 트러블슈팅
+## 트러블슈팅
 
 | 증상 | 원인 후보 | 조치 |
 |---|---|---|
@@ -564,7 +564,7 @@ initContainers:
 
 ---
 
-## 13. 삭제
+## 삭제
 
 ```bash
 kubectl delete -f ghost-ingress.yaml
@@ -580,7 +580,7 @@ kubectl delete pdb ghost-pdb
 
 ---
 
-## 14. 전체 매니페스트 요약
+## 전체 매니페스트 요약
 
 - `mysql-deployment.yaml` — PVC/Secret/Deployment/Service
 - `ghost-config.yaml` — ConfigMap/Secret(앱 설정)

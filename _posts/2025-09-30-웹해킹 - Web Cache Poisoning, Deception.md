@@ -12,7 +12,7 @@ category: 웹해킹
 
 ---
 
-## 0. 요약(Executive Summary)
+## 요약(Executive Summary)
 
 - **문제**
   - **Unkeyed header**(캐시 키에 포함되지 않는 헤더, 예: `X-Forwarded-Host`, `X-Original-URL`, `X-Forwarded-Proto`)가 **응답 내용에 영향을 주는데 캐시 키에는 반영되지 않으면** 공격자가 **악성 변형 응답을 캐시에 주입**할 수 있습니다.
@@ -30,9 +30,9 @@ category: 웹해킹
 
 ---
 
-# 1. 동작 원리(왜 당하는가)
+# 동작 원리(왜 당하는가)
 
-## 1.1 Unkeyed Header Poisoning
+## Unkeyed Header Poisoning
 
 - 캐시는 보통 **키**(Host, Path, Query, 일부 헤더 `Vary`)로 응답을 저장합니다.
 - 애플리케이션이 `X-Forwarded-Host` 같은 **프록시 전달용 헤더**를 믿고 **HTML 내 절대 URL**이나 **메타 태그/리다이렉트 위치**를 구성한다면,
@@ -40,7 +40,7 @@ category: 웹해킹
   - 캐시: 이 헤더를 **키에 넣지 않으면** “정상” 키로 **오염된 응답을 저장**
   - 다른 사용자: 같은 URL 요청 → **오염된 응답**(피싱/스크립트 포함)을 받음
 
-## 1.2 Cache Deception
+## Cache Deception
 
 - CDN/프록시가 **확장자 기반** 또는 **Content-Type 기반** 휴리스틱으로 캐시할 때,
   - 공격자: `/profile/.css` 또는 `/profile?cb=.css`처럼 **동적 경로를 정적으로 보이게** 요청
@@ -49,11 +49,11 @@ category: 웹해킹
 
 ---
 
-# 2. 안전한 재현·탐지(자신의 스테이징에서만)
+# 안전한 재현·탐지(자신의 스테이징에서만)
 
 > 목적: **우리가 캐시 키를 잘 구성했는지**, **민감 응답이 캐시되지 않는지** 확인.
 
-## 2.1 Node 스크립트 — “X-Forwarded-Host 변조”가 캐시에 반영되는지(안 돼야 정상)
+## Node 스크립트 — “X-Forwarded-Host 변조”가 캐시에 반영되는지(안 돼야 정상)
 
 ```js
 // test/cache-poisoning-check.js  (스테이징 CDN/프록시에만!)
@@ -99,30 +99,34 @@ run();
 
 > 기대: **언제나 안전**해야 합니다. `X-Forwarded-Host`를 조작해도 캐시 HIT가 나면서 HTML에 그 값이 반영되면 **오염 위험**.
 
-## 2.2 Curl로 Cache Deception 빠른 점검
+## Curl로 Cache Deception 빠른 점검
 
 ```bash
 # A: 의도적 "정적처럼 보이는" 경로로 접근
+
 curl -sI https://cdn.staging.example.com/account/.css | egrep "Cache-Control|Age|X-Cache"
 
 # B: 동일 URL 재요청 → HIT + Age 증가 + Content-Type: text/html 이면 **위험신호**
+
 curl -sI https://cdn.staging.example.com/account/.css
 ```
 
 ---
 
-# 3. 프록시/Nginx — “키 명시 + 변칙 헤더 정규화 + 민감 BYPASS”
+# 프록시/Nginx — “키 명시 + 변칙 헤더 정규화 + 민감 BYPASS”
 
-## 3.1 Nginx(리버스 프록시 + 내부 캐시) 기본 템플릿
+## Nginx(리버스 프록시 + 내부 캐시) 기본 템플릿
 
 ```nginx
 # 캐시 저장소 및 키(명시: Scheme + Host + Path + Query)
+
 proxy_cache_path /var/cache/nginx levels=1:2 keys_zone=app_zone:128m max_size=5g inactive=30m use_temp_path=off;
 
 map $request_method $cacheable_method { default 0; GET 1; HEAD 1; }
 map $http_cookie $has_cookie { default 0; "~=" 1; }
 
 # 민감 경로 BYPASS
+
 map $request_uri $sensitive {
   default 0;
   ~^/account 1;
@@ -188,7 +192,7 @@ server {
 
 ---
 
-# 4. Varnish(VCL) — 캐시 키·정규화
+# Varnish(VCL) — 캐시 키·정규화
 
 ```vcl
 vcl 4.1;
@@ -240,7 +244,7 @@ sub vcl_deliver {
 
 ---
 
-# 5. CDN(CloudFront/Cloudflare/Fastly) 설계 포인트
+# CDN(CloudFront/Cloudflare/Fastly) 설계 포인트
 
 - **Cache Policy**:
   - **QueryString**: “모두 전달/모두 키 포함”은 위험. **화이트리스트**(필요한 키만) 권장.
@@ -253,9 +257,9 @@ sub vcl_deliver {
 
 ---
 
-# 6. 애플리케이션 방어(보조 안전망)
+# 애플리케이션 방어(보조 안전망)
 
-## 6.1 “절대 URL/리다이렉트”는 **고정 원본**을 사용
+## “절대 URL/리다이렉트”는 **고정 원본**을 사용
 
 **❌ 취약(Express):** `X-Forwarded-Host`를 신뢰
 ```js
@@ -278,7 +282,7 @@ app.get("/abs", (req, res) => {
 });
 ```
 
-## 6.2 민감 응답은 **무조건 캐시 금지**
+## 민감 응답은 **무조건 캐시 금지**
 
 ```js
 app.use((req, res, next) => {
@@ -293,7 +297,7 @@ app.use((req, res, next) => {
 });
 ```
 
-## 6.3 `Set-Cookie`가 있으면 **절대 캐시 금지**(양쪽에서)
+## `Set-Cookie`가 있으면 **절대 캐시 금지**(양쪽에서)
 
 ```js
 // 응답 직전에 미들웨어로 보수적 차단
@@ -304,7 +308,7 @@ app.use((req,res,next) => {
 });
 ```
 
-## 6.4 “확장자 덫” 무력화
+## “확장자 덫” 무력화
 
 - 라우터에서 **경로 정규화**: `/account/.css` → **404**
 - 콘텐츠 협상: “`.css` 요청이면 무조건 `text/css`만” — **HTML 반환 금지**
@@ -315,7 +319,7 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.status(404).send("No
 
 ---
 
-# 7. 헤더·표준의 올바른 사용
+# 헤더·표준의 올바른 사용
 
 - **Cache-Control**
   - **민감/개인화**: `no-store`
@@ -329,7 +333,7 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.status(404).send("No
 
 ---
 
-# 8. 모니터링·탐지
+# 모니터링·탐지
 
 - **지표**: 경로별 `X-Cache: HIT` 비율, `Age` 분포, `Set-Cookie` 동반 응답의 HIT=0 확인.
 - **로그 규칙 예시 (Loki / Splunk)**
@@ -351,7 +355,7 @@ index=edge sourcetype=nginx "text/html" "X-Cache:HIT" (uri="*.css" OR uri="*.js"
 
 ---
 
-# 9. 사고 대응(런북 요약)
+# 사고 대응(런북 요약)
 
 1. **식별**: 특정 URL에서 **의심스런 HIT 증가/콘텐츠 불일치** 확인.
 2. **격리**:
@@ -364,9 +368,9 @@ index=edge sourcetype=nginx "text/html" "X-Cache:HIT" (uri="*.css" OR uri="*.js"
 
 ---
 
-# 10. “끝에서 끝까지” 작은 실습(스테이징용)
+# “끝에서 끝까지” 작은 실습(스테이징용)
 
-## 10.1 Express 앱(간단)
+## Express 앱(간단)
 
 ```js
 import express from "express";
@@ -398,19 +402,21 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.sendStatus(404));
 app.listen(8080, () => console.log("app on 8080"));
 ```
 
-## 10.2 Nginx 프록시(요약) — §3 템플릿 적용
+## Nginx 프록시(요약) — §3 템플릿 적용
+
 - `proxy_cache_key` = `$scheme$host$request_uri`
 - `X-Forwarded-Host`/`X-Original-URL` 제거
 - 쿠키/Authorization/민감 경로 BYPASS
 - 정적 휴리스틱 제거
 
-## 10.3 스모크 테스트
+## 스모크 테스트
+
 - §2 Node 스크립트로 **X-Forwarded-Host 변조**가 캐시에 남는지 확인 → **항상 안전**
 - `/account/.css` 두 번 `curl -I` → **항상 MISS/Age 없음** + 404/또는 no-store
 
 ---
 
-# 11. 체크리스트(현장용)
+# 체크리스트(현장용)
 
 - [ ] **캐시 키 명시**(Scheme+Host+Path+Query). 헤더 기반 키 지양.
 - [ ] **전달용 헤더 무시/삭제**: XFH, XOP, XP 등.

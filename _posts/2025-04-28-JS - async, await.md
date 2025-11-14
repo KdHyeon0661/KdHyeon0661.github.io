@@ -6,9 +6,10 @@ category: JavaScript
 ---
 # async / await
 
-## 1. async 함수란?
+## async 함수란?
 
-### 1.1 정의와 반환 규칙
+### 정의와 반환 규칙
+
 - 함수 앞에 `async`를 붙이면 **항상 `Promise`를 반환**합니다.
 - `return 값`은 자동으로 `Promise.resolve(값)`에 **포장**됩니다.
 - `throw 에러`는 자동으로 `Promise.reject(에러)`가 됩니다.
@@ -27,7 +28,8 @@ async function fail() {
 fail().catch(e => console.log(e.message)); // "boom"
 ```
 
-### 1.2 `thenable` 지원
+### `thenable` 지원
+
 - `await`는 진짜 `Promise`뿐 아니라 **then 메서드가 있는 객체(thenable)** 도 기다립니다.
 
 ```js
@@ -41,9 +43,10 @@ demo();
 
 ---
 
-## 2. await의 의미와 스케줄링
+## await의 의미와 스케줄링
 
-### 2.1 await의 동작
+### await의 동작
+
 - `await P`는 **해당 async 함수의 실행만** 중단하고, `P`가 해결되면 **다음 줄**로 이어갑니다.
 - **메인 스레드를 블로킹하지 않습니다.** (이벤트 루프가 다른 작업을 계속 처리)
 
@@ -55,7 +58,8 @@ async function getData() {
 }
 ```
 
-### 2.2 마이크로태스크 순서
+### 마이크로태스크 순서
+
 - `await` 뒤 코드는 **마이크로태스크 큐**에서 실행됩니다.
 - `Promise.then` 콜백과 같은 우선순위를 가집니다.
 
@@ -72,9 +76,10 @@ console.log("4");
 
 ---
 
-## 3. 콜백 → Promise → async/await 변환 감각
+## 콜백 → Promise → async/await 변환 감각
 
-### 3.1 콜백 기반
+### 콜백 기반
+
 ```js
 getUser((uErr, user) => {
   if (uErr) return console.error(uErr);
@@ -85,7 +90,8 @@ getUser((uErr, user) => {
 });
 ```
 
-### 3.2 Promise 체인
+### Promise 체인
+
 ```js
 getUserP()
   .then(user => getProfileP(user.id))
@@ -93,7 +99,8 @@ getUserP()
   .catch(console.error);
 ```
 
-### 3.3 async/await
+### async/await
+
 ```js
 async function showProfile() {
   try {
@@ -111,9 +118,10 @@ showProfile();
 
 ---
 
-## 4. 예외 처리 패턴 (try/catch/finally)
+## 예외 처리 패턴 (try/catch/finally)
 
-### 4.1 전체 래핑 vs. 부분 래핑
+### 전체 래핑 vs. 부분 래핑
+
 ```js
 // 전체 래핑: 간단하지만 에러 지점 파악이 어렵기도
 async function loadAll() {
@@ -135,7 +143,8 @@ async function loadAll2() {
 }
 ```
 
-### 4.2 finally로 정리 보장
+### finally로 정리 보장
+
 ```js
 async function withLock(task) {
   let lock;
@@ -150,9 +159,10 @@ async function withLock(task) {
 
 ---
 
-## 5. 동시성(병렬) 패턴
+## 동시성(병렬) 패턴
 
-### 5.1 직렬 vs 병렬
+### 직렬 vs 병렬
+
 ```js
 // ❌ 직렬(느림)
 const a = await fetchA(); // 1s
@@ -162,7 +172,8 @@ const b = await fetchB(); // 또 1s → 총 2s
 const [a2, b2] = await Promise.all([fetchA(), fetchB()]); // 1s 내 완료
 ```
 
-### 5.2 집합 대기 유틸
+### 집합 대기 유틸
+
 ```js
 // 모두 성공해야 결과: 하나라도 실패하면 reject
 await Promise.all([p1, p2, p3]);
@@ -177,7 +188,8 @@ const fastest = await Promise.any([p1, p2, p3]);
 const first = await Promise.race([p1, p2]);
 ```
 
-### 5.3 태스크 수 제한(세마포어)
+### 태스크 수 제한(세마포어)
+
 ```js
 function limit(concurrency) {
   let running = 0, queue = [];
@@ -204,9 +216,10 @@ const texts = await Promise.all(jobs);
 
 ---
 
-## 6. 타임아웃·취소(AbortController)
+## 타임아웃·취소(AbortController)
 
-### 6.1 fetch 타임아웃 + 취소
+### fetch 타임아웃 + 취소
+
 ```js
 async function fetchWithTimeout(url, { ms = 3000, ...opts } = {}) {
   const ac = new AbortController();
@@ -220,7 +233,8 @@ async function fetchWithTimeout(url, { ms = 3000, ...opts } = {}) {
 }
 ```
 
-### 6.2 Promise.race로 타임아웃
+### Promise.race로 타임아웃
+
 ```js
 function withTimeout(p, ms = 3000) {
   const t = new Promise((_, rej) =>
@@ -231,9 +245,10 @@ function withTimeout(p, ms = 3000) {
 
 ---
 
-## 7. 재시도(리트라이)·백오프
+## 재시도(리트라이)·백오프
 
-### 7.1 지수 백오프(기본식)
+### 지수 백오프(기본식)
+
 - 대기 시간: $$ t_k = t_0 \cdot 2^{k} $$
 - **지터**(무작위성)로 동시 재시도 폭주 예방:
   $$ t_k = U(0,1)\cdot t_0 \cdot 2^{k} $$
@@ -256,9 +271,10 @@ async function retry(fn, { attempts = 3, base = 300, jitter = true } = {}) {
 
 ---
 
-## 8. forEach와 await의 함정
+## forEach와 await의 함정
 
-### 8.1 `forEach`는 `await`를 못 기다립니다
+### `forEach`는 `await`를 못 기다립니다
+
 ```js
 // ❌ 완료를 기다리지 않음
 arr.forEach(async v => {
@@ -267,7 +283,8 @@ arr.forEach(async v => {
 console.log("끝"); // 먼저 출력될 수 있음
 ```
 
-### 8.2 `for...of` 또는 `map → Promise.all`
+### `for...of` 또는 `map → Promise.all`
+
 ```js
 // 직렬
 for (const v of arr) {
@@ -280,16 +297,18 @@ await Promise.all(arr.map(v => doWork(v)));
 
 ---
 
-## 9. 흔한 실수와 디버깅 팁
+## 흔한 실수와 디버깅 팁
 
-### 9.1 `await` 누락
+### `await` 누락
+
 ```js
 async function f() {
   doAsync(); // ❌ 잊음 → 실패가 밖으로 전파 안 됨
 }
 ```
 
-### 9.2 `return` 누락으로 의도치 않은 `undefined`
+### `return` 누락으로 의도치 않은 `undefined`
+
 ```js
 async function g() {
   const x = await calc();
@@ -298,7 +317,8 @@ async function g() {
 }
 ```
 
-### 9.3 전역 미처리 거부 감지
+### 전역 미처리 거부 감지
+
 ```js
 // 브라우저
 window.addEventListener("unhandledrejection", e => {
@@ -311,19 +331,22 @@ process.on("unhandledRejection", (reason) => {
 });
 ```
 
-### 9.4 CPU 바운드 작업은 워커로
+### CPU 바운드 작업은 워커로
+
 - `await`는 **I/O 대기**에 적합. 무거운 계산은 **Web Worker/Worker Threads**로 분리.
 
 ---
 
-## 10. 실전 유틸 모음
+## 실전 유틸 모음
 
-### 10.1 sleep
+### sleep
+
 ```js
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 ```
 
-### 10.2 `promisify` (콜백 → Promise)
+### `promisify` (콜백 → Promise)
+
 ```js
 function promisify(fn){
   return (...args) => new Promise((res, rej) =>
@@ -331,7 +354,8 @@ function promisify(fn){
 }
 ```
 
-### 10.3 withTimeout + withRetry 조합
+### withTimeout + withRetry 조합
+
 ```js
 async function robust(fn) {
   return retry(() => withTimeout(fn(), 5000), { attempts: 4, base: 400 });
@@ -340,9 +364,10 @@ async function robust(fn) {
 
 ---
 
-## 11. 테스트에서의 async/await
+## 테스트에서의 async/await
 
-### 11.1 Jest 예시
+### Jest 예시
+
 ```js
 test("fetches user", async () => {
   const user = await getUser(1);
@@ -350,14 +375,16 @@ test("fetches user", async () => {
 });
 ```
 
-### 11.2 병렬 테스트 시 주의
+### 병렬 테스트 시 주의
+
 - 외부 리소스/포트 사용 시 **충돌 방지**(고유 리소스 할당 또는 직렬화).
 
 ---
 
-## 12. 미니 프로젝트: 목록→상세 동시성 최적화
+## 미니 프로젝트: 목록→상세 동시성 최적화
 
-### 12.1 요구
+### 요구
+
 1) `/posts`로 ID 목록 로드
 2) 각 ID 상세 `/posts/:id` 병렬 로드
 3) 일부 실패해도 전체 결과 목록을 보여주되, 실패 항목은 표시
@@ -375,7 +402,7 @@ async function loadPosts() {
 
 ---
 
-## 13. 체크리스트
+## 체크리스트
 
 - [ ] **직렬 vs 병렬**: 독립 작업은 `Promise.all`
 - [ ] **에러 범위**: `try/catch` 위치를 최소·명확하게
@@ -388,7 +415,7 @@ async function loadPosts() {
 
 ---
 
-## 14. 요약
+## 요약
 
 - `async`는 **Promise를 반환**, `await`는 **Promise 완료까지 비동기 대기**합니다.
 - `try/catch/finally`로 **동기 수준의 예외·정리**를 표현할 수 있습니다.

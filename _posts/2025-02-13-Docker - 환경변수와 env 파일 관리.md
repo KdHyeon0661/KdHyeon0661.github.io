@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Compose의 환경변수와 `.env` 파일 관리
 
-## 0. 한눈에 보는 개념 맵
+## 한눈에 보는 개념 맵
 
 - **`.env`**: Compose가 **파일을 읽어 변수 치환**(substitution)에 사용. (파일 자체가 컨테이너 안으로 들어가진 않음)
 - **`environment:`**: **컨테이너 런타임 환경변수** 설정.
@@ -16,15 +16,17 @@ category: Docker
 
 ---
 
-## 1. `.env` 파일 — 구조, 위치, 로딩
+## `.env` 파일 — 구조, 위치, 로딩
 
-### 1.1 기본 규칙
+### 기본 규칙
+
 - 위치: **`docker-compose.yml`와 같은 디렉터리** (기본값).
 - 자동 로드: `docker compose up` 시 자동 읽음.
 - 형식: **dotenv 포맷**(줄별 `KEY=VALUE`, `#` 주석).
 
 ```env
 # .env
+
 MYSQL_ROOT_PASSWORD=root_pass
 MYSQL_DATABASE=mydb
 MYSQL_USER=myuser
@@ -35,7 +37,8 @@ WEB_PORT=8080
 > 공백이 포함되면 `"값"` 같이 **따옴표를 사용**하세요.
 > CRLF(Windows)·BOM은 문제를 유발할 수 있으니 **UTF-8 / LF** 권장.
 
-### 1.2 CLI로 다른 파일 지정
+### CLI로 다른 파일 지정
+
 - v2에서는 `--env-file` 지원:
 ```bash
 docker compose --env-file .env.prod up -d
@@ -44,9 +47,9 @@ docker compose --env-file .env.prod up -d
 
 ---
 
-## 2. Compose 파일에서 환경변수 쓰는 법(치환)
+## Compose 파일에서 환경변수 쓰는 법(치환)
 
-### 2.1 `${VAR}` 치환(Variable Substitution)
+### `${VAR}` 치환(Variable Substitution)
 
 ```yaml
 version: '3.9'
@@ -72,7 +75,8 @@ services:
 
 - `${VAR}`는 **쉘 환경변수** 또는 **`.env`**에서 읽어 치환됩니다.
 
-### 2.2 기본값/필수값 문법
+### 기본값/필수값 문법
+
 - 기본값:
 ```yaml
 environment:
@@ -84,7 +88,8 @@ environment:
 image: my/app:${APP_VERSION?APP_VERSION가 필요합니다}
 ```
 
-### 2.3 달러문자 이스케이프
+### 달러문자 이스케이프
+
 - 리터럴 `${...}`가 필요하면 `$$` 사용:
 ```yaml
 command: ["sh", "-lc", "echo $$HOME && echo \${NOT_EXPANDED}"]
@@ -92,7 +97,7 @@ command: ["sh", "-lc", "echo $$HOME && echo \${NOT_EXPANDED}"]
 
 ---
 
-## 3. `environment:` vs `env_file:` vs `.env` — 역할과 차이
+## `environment:` vs `env_file:` vs `.env` — 역할과 차이
 
 | 구분 | 목적 | 어디에 쓰이나 | 치환 처리 | 우선순위(컨테이너에 주입될 때) |
 |---|---|---|---|---|
@@ -113,9 +118,9 @@ services:
 
 ---
 
-## 4. 빌드 인자(`build.args`)와 Dockerfile `ARG/ENV`
+## 빌드 인자(`build.args`)와 Dockerfile `ARG/ENV`
 
-### 4.1 이미지 빌드 시점 변수
+### 이미지 빌드 시점 변수
 
 ```yaml
 services:
@@ -130,6 +135,7 @@ services:
 
 ```Dockerfile
 # Dockerfile
+
 ARG RUNTIME
 ARG APP_VERSION=0.0.0
 ENV APP_VERSION=${APP_VERSION}
@@ -142,23 +148,26 @@ RUN echo "runtime=$RUNTIME, version=$APP_VERSION"
 
 ---
 
-## 5. 우선순위와 전파(Precedence)
+## 우선순위와 전파(Precedence)
 
-### 5.1 Compose YAML 치환 우선순위(파일을 해석할 때)
+### Compose YAML 치환 우선순위(파일을 해석할 때)
+
 1) **쉘 환경변수**(실행한 터미널/CI에서 `export VAR=value`)
 2) `--env-file`
 3) `.env`
 4) 없으면 기본값(`:-`) 또는 에러(`?msg`)
 
-### 5.2 컨테이너 런타임 환경변수 우선순위
+### 컨테이너 런타임 환경변수 우선순위
+
 - `environment:` **>** `env_file:` **>** Dockerfile의 `ENV`
 - `env_file`의 동일 키는 `environment`가 **덮어씀**.
 
 ---
 
-## 6. 멀티 환경(dev/stage/prod) 운영 패턴
+## 멀티 환경(dev/stage/prod) 운영 패턴
 
-### 6.1 `.env.*` + `--env-file`
+### `.env.*` + `--env-file`
+
 ```
 .env.dev
 .env.stage
@@ -168,7 +177,8 @@ RUN echo "runtime=$RUNTIME, version=$APP_VERSION"
 docker compose --env-file .env.stage up -d
 ```
 
-### 6.2 `docker-compose.override.yml` 자동 병합
+### `docker-compose.override.yml` 자동 병합
+
 - `docker-compose.yml`(공통) + `docker-compose.override.yml`(개발용 Overwrite)
 
 `docker-compose.yml`:
@@ -195,7 +205,8 @@ services:
 docker compose up -d
 ```
 
-### 6.3 프로파일(Profiles)
+### 프로파일(Profiles)
+
 - `COMPOSE_PROFILES=debug` 환경변수 또는 `--profile dev` 사용:
 
 ```yaml
@@ -211,14 +222,16 @@ services:
 
 ```bash
 # 디폴트만
+
 docker compose up -d
 # 디버그 서비스 추가
+
 docker compose --profile debug up -d
 ```
 
 ---
 
-## 7. 보안/비밀값 관리 전략
+## 보안/비밀값 관리 전략
 
 | 항목 | 권장 |
 |---|---|
@@ -248,9 +261,10 @@ DB_PASSWORD = pathlib.Path(p).read_text().strip()
 
 ---
 
-## 8. 실전 예제 — WordPress + MySQL(확장판)
+## 실전 예제 — WordPress + MySQL(확장판)
 
-### 8.1 `.env`
+### `.env`
+
 ```env
 WEB_PORT=8080
 MYSQL_ROOT_PASSWORD=strong_root
@@ -260,7 +274,8 @@ MYSQL_PASSWORD=strong_pass
 APP_VERSION=1.2.3
 ```
 
-### 8.2 `docker-compose.yml`
+### `docker-compose.yml`
+
 ```yaml
 version: '3.9'
 
@@ -297,7 +312,8 @@ volumes:
   db-data:
 ```
 
-### 8.3 실행·검증
+### 실행·검증
+
 ```bash
 docker compose up -d
 docker compose ps
@@ -306,35 +322,41 @@ curl -I http://localhost:${WEB_PORT}
 
 ---
 
-## 9. 자주 묻는 질문(FAQ)과 함정
+## 자주 묻는 질문(FAQ)과 함정
 
 ### Q1. `.env`와 `env_file`의 차이?
+
 - `.env`는 **Compose 파일 변수 치환용**.
 - `env_file`은 **컨테이너 환경변수 주입용**.
 - 둘 다 쓰되, **치환은 `.env`**가, **주입은 `env_file`**이 담당.
 
 ### Q2. 왜 `${VAR}`가 안 치환되나?
+
 - 현재 쉘의 `export`/`--env-file`/`.env` 어디에도 값이 없는 경우.
 - 오타/대소문자, `--env-file` 경로, 실행 디렉터리 확인.
 - 필요한 경우 기본값(`:-`)이나 필수값(`?`) 문법 사용.
 
 ### Q3. `env_file` 안의 `${VAR}`는 치환되나?
+
 - **아니오.** `env_file`은 **그대로** 컨테이너에 전달됩니다.
 - 치환이 필요하면 Compose YAML의 `environment:`에서 처리하세요.
 
 ### Q4. Windows에서 값이 이상하게 들어간다?
+
 - 줄 끝 CRLF, 인코딩, PowerShell 변수 확장 규칙 차이 확인.
 - `.env`는 **UTF-8/LF** 권장.
 - PowerShell에서 `${VAR}`는 일반 문자열로 남겨두고 Compose가 치환합니다.
 
 ### Q5. 민감값이 `docker inspect`에서 보인다?
+
 - 네. 런타임 env는 메타데이터로 노출될 수 있습니다. **파일 마운트/외부 비밀관리**로 전환을 검토하세요.
 
 ---
 
-## 10. 고급 패턴
+## 고급 패턴
 
-### 10.1 서비스별 `.env` 분리(런타임 주입 전용)
+### 서비스별 `.env` 분리(런타임 주입 전용)
+
 ```
 .env             # 치환용 공통 (포트, 버전 등)
 .env.db          # DB 컨테이너 런타임 변수
@@ -350,7 +372,8 @@ services:
     env_file: [.env.web]
 ```
 
-### 10.2 빌드·런 분리
+### 빌드·런 분리
+
 ```yaml
 services:
   api:
@@ -362,13 +385,15 @@ services:
       RUNTIME_ENV: ${RUNTIME_ENV:-prod}      # 런타임 전용
 ```
 
-### 10.3 여러 Compose 파일 오버레이
+### 여러 Compose 파일 오버레이
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 - `prod.yml`에서 `image` 태그나 `environment`를 재정의.
 
-### 10.4 프로젝트 이름 고정
+### 프로젝트 이름 고정
+
 ```bash
 export COMPOSE_PROJECT_NAME=myblog
 docker compose up -d
@@ -377,7 +402,7 @@ docker compose up -d
 
 ---
 
-## 11. 트러블슈팅 가이드
+## 트러블슈팅 가이드
 
 | 증상 | 점검 포인트 | 해결 |
 |---|---|---|
@@ -391,17 +416,20 @@ docker compose up -d
 유용 명령:
 ```bash
 # Compose 레벨에서 어떻게 치환됐는지 보기
+
 docker compose config
 
 # 컨테이너에 실제로 들어간 환경변수 확인
+
 docker compose exec <svc> env | sort
 ```
 
 ---
 
-## 12. 완전 예제 — FastAPI + PostgreSQL (프로파일·오버레이·빌드인자 포함)
+## 완전 예제 — FastAPI + PostgreSQL (프로파일·오버레이·빌드인자 포함)
 
-### 12.1 `.env`
+### `.env`
+
 ```env
 APP_VERSION=2.0.0
 HTTP_PORT=8088
@@ -410,7 +438,8 @@ POSTGRES_DB=appdb
 POSTGRES_USER=appuser
 ```
 
-### 12.2 `docker-compose.yml`(공통)
+### `docker-compose.yml`(공통)
+
 ```yaml
 version: '3.9'
 
@@ -452,7 +481,8 @@ volumes:
   db-data:
 ```
 
-### 12.3 `docker-compose.override.yml`(개발용)
+### `docker-compose.override.yml`(개발용)
+
 ```yaml
 services:
   api:
@@ -466,7 +496,8 @@ services:
     profiles: ["default"]
 ```
 
-### 12.4 `api/Dockerfile`
+### `api/Dockerfile`
+
 ```Dockerfile
 FROM python:3.12-slim
 ARG APP_VERSION=0.0.0
@@ -478,20 +509,23 @@ COPY src/ .
 CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port=8080"]
 ```
 
-### 12.5 실행
+### 실행
+
 ```bash
 # 개발(override 자동 병합)
+
 docker compose up -d
 
 # 운영 (override 제외, 또는 prod 파일 오버레이)
+
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 
 ---
 
-## 13. 요약 표
+## 요약 표
 
-### 13.1 무엇을 어디에?
+### 무엇을 어디에?
 
 | 목적 | 권장 위치 |
 |---|---|
@@ -501,28 +535,32 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 | 민감값 | 파일 마운트/비밀관리(Secrets/SSM/Vault), `.env`는 Git 제외 |
 | 다중 환경 | `.env.*` + `--env-file`, override, profiles |
 
-### 13.2 우선순위 핵심
+### 우선순위 핵심
+
 - **치환**: Shell 환경 > `--env-file` > `.env`
 - **런타임 주입**: `environment:` > `env_file:` > Dockerfile `ENV`
 
 ---
 
-## 14. 참고/검증 도구
+## 참고/검증 도구
 
 ```bash
 # 최종 해석된 Compose 출력(치환 결과 확인)
+
 docker compose config
 
 # 컨테이너 내부 환경변수 리스트
+
 docker compose exec <service> env | sort
 
 # 특정 변수만 대조
+
 docker compose exec <service> sh -lc 'echo "$APP_VERSION"'
 ```
 
 ---
 
-## 15. 마무리
+## 마무리
 
 - `.env`는 **치환**, `env_file`은 **주입**이라는 역할 분담을 항상 기억하세요.
 - **빌드/런**의 생명주기 차이를 명확히 나눠 변수 사용을 설계하세요.

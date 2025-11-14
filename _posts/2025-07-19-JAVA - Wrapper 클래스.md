@@ -6,7 +6,7 @@ category: Java
 ---
 # Java의 Wrapper 클래스
 
-## 0. 한눈에 보는 핵심
+## 한눈에 보는 핵심
 
 | 항목 | 기본형(primitive) | Wrapper(참조형) |
 |---|---|---|
@@ -33,33 +33,38 @@ Wrapper 클래스 매핑:
 
 ---
 
-## 1. 왜 Wrapper가 필요한가?
+## 왜 Wrapper가 필요한가?
 
-### 1.1 제네릭/컬렉션에서 객체만 허용
+### 제네릭/컬렉션에서 객체만 허용
+
 ```java
 // List<int>  // 불가
 List<Integer> nums = new ArrayList<>(); // 가능
 ```
 
-### 1.2 null 표현
+### null 표현
+
 ```java
 Integer maybeCount = null; // "없음" 상태 표현 가능
 ```
 
-### 1.3 문자열 변환 및 유틸 메서드
+### 문자열 변환 및 유틸 메서드
+
 ```java
 int v = Integer.parseInt("123");
 String s = Integer.toString(123);   // "123"
 ```
 
-### 1.4 리플렉션/varargs/빈 컨테이너와의 상호 운용
+### 리플렉션/varargs/빈 컨테이너와의 상호 운용
+
 - `Object...` 가변인자, 리플렉션 API 등은 **객체**를 기대하므로 Wrapper가 필요합니다.
 
 ---
 
-## 2. 오토박싱/언박싱(Autoboxing/Unboxing)
+## 오토박싱/언박싱(Autoboxing/Unboxing)
 
-### 2.1 개념
+### 개념
+
 - **박싱(Boxing)**: 기본형 → Wrapper 객체
 - **언박싱(Unboxing)**: Wrapper → 기본형
   Java는 문맥상 필요한 경우 **자동으로 변환**합니다.
@@ -69,13 +74,15 @@ Integer a = 5;     // 오토박싱: Integer.valueOf(5)
 int b = a;         // 오토언박싱: a.intValue()
 ```
 
-### 2.2 산술/비교 시 암묵적 언박싱
+### 산술/비교 시 암묵적 언박싱
+
 ```java
 Integer x = 10, y = 20;
 int sum = x + y; // 둘 다 언박싱되어 int 연산
 ```
 
-### 2.3 주의: null 언박싱은 NPE
+### 주의: null 언박싱은 NPE
+
 ```java
 Integer n = null;
 int k = n; // NullPointerException
@@ -90,9 +97,10 @@ int safe2 = java.util.Optional.ofNullable(n).orElse(0);
 
 ---
 
-## 3. 캐싱과 `==` 비교의 함정
+## 캐싱과 `==` 비교의 함정
 
-### 3.1 정수/문자/불리언 캐싱
+### 정수/문자/불리언 캐싱
+
 - `Integer`, `Short`, `Byte`, `Long` : **[-128, 127]** 범위 **캐싱**
 - `Character` : **[0, 127]** 캐싱
 - `Boolean` : `Boolean.TRUE` / `Boolean.FALSE` **싱글턴**
@@ -100,7 +108,8 @@ int safe2 = java.util.Optional.ofNullable(n).orElse(0);
 
 > 일부 JVM에서는 **`Integer` 캐시 상한(-XX:AutoBoxCacheMax)** 를 조정할 수 있습니다. 이식성 관점에서는 **`==` 비교에 의존하지 말 것**.
 
-### 3.2 `==` vs `equals`
+### `==` vs `equals`
+
 ```java
 Integer a = 127, b = 127;   // 캐시 범위
 System.out.println(a == b);      // true (같은 인스턴스일 가능성 높음)
@@ -114,9 +123,10 @@ System.out.println(c.equals(d)); // true  (값 비교)
 
 ---
 
-## 4. 클래스별 특징과 자주 쓰는 API
+## 클래스별 특징과 자주 쓰는 API
 
-### 4.1 `Integer` / `Long`
+### `Integer` / `Long`
+
 - 파싱/출력:
 ```java
 int  n  = Integer.parseInt("101", 2);     // 2진수 → 5
@@ -140,7 +150,8 @@ int lo = Integer.lowestOneBit(20);        // 4
 int rl = Integer.rotateLeft(0b0011, 2);   // 0b1100
 ```
 
-### 4.2 `Float` / `Double` (부동소수점)
+### `Float` / `Double` (부동소수점)
+
 - 파싱/판별:
 ```java
 double d = Double.parseDouble("3.14");
@@ -166,7 +177,8 @@ System.out.println(Double.compare(+0.0, -0.0));    // 1 (부호 구분)
 
 > 화폐/금융 계산은 부동소수점 대신 **`BigDecimal`** 사용 권장.
 
-### 4.3 `Boolean`
+### `Boolean`
+
 - 파싱 규칙:
 ```java
 Boolean b1 = Boolean.valueOf("true");   // 대소문자 무관
@@ -178,7 +190,8 @@ boolean p  = Boolean.parseBoolean("TRUE"); // true
 System.out.println(Boolean.TRUE == Boolean.valueOf(true)); // true
 ```
 
-### 4.4 `Character`
+### `Character`
+
 - 분류/변환:
 ```java
 char ch = '한';
@@ -191,7 +204,7 @@ int  codePoint  = Character.codePointAt("A😊", 1); // 이모지 코드포인�
 
 ---
 
-## 5. `Number` 추상 클래스와 다형성
+## `Number` 추상 클래스와 다형성
 
 `Integer`, `Long`, `Float`, `Double`, `Byte`, `Short`는 `Number`를 상속.
 공통 변환 메서드 제공:
@@ -215,7 +228,7 @@ static double sumAll(List<? extends Number> xs) {
 
 ---
 
-## 6. 문자열 ↔ 숫자 변환 모음
+## 문자열 ↔ 숫자 변환 모음
 
 | 변환 | 메서드 |
 |---|---|
@@ -234,9 +247,10 @@ static double sumAll(List<? extends Number> xs) {
 
 ---
 
-## 7. 스트림/컬렉션과 성능: 박싱 회피
+## 스트림/컬렉션과 성능: 박싱 회피
 
-### 7.1 박싱이 많은 코드(비권장)
+### 박싱이 많은 코드(비권장)
+
 ```java
 List<Integer> xs = IntStream.range(0, 1_000_000) // 박싱 발생
     .boxed()
@@ -244,12 +258,14 @@ List<Integer> xs = IntStream.range(0, 1_000_000) // 박싱 발생
 long sum = xs.stream().mapToLong(Integer::longValue).sum();
 ```
 
-### 7.2 원시 스트림으로 처리(권장)
+### 원시 스트림으로 처리(권장)
+
 ```java
 long sum = java.util.stream.IntStream.range(0, 1_000_000).asLongStream().sum();
 ```
 
-### 7.3 Optional vs OptionalInt
+### Optional vs OptionalInt
+
 ```java
 Optional<Integer> oi = Optional.of(10);     // 박싱 존재
 OptionalInt     oi2 = OptionalInt.of(10);   // 박싱 없음
@@ -257,9 +273,10 @@ OptionalInt     oi2 = OptionalInt.of(10);   // 박싱 없음
 
 ---
 
-## 8. null 안전 패턴
+## null 안전 패턴
 
-### 8.1 안전 언박싱
+### 안전 언박싱
+
 ```java
 Integer in = null;
 // 방법 1
@@ -270,12 +287,14 @@ int v2 = java.util.Optional.ofNullable(in).orElse(0);
 Integer v3 = java.util.Objects.requireNonNullElse(in, 0);
 ```
 
-### 8.2 Comparator에서 null 처리
+### Comparator에서 null 처리
+
 ```java
 Comparator<Integer> cmp = Comparator.nullsFirst(Integer::compare);
 ```
 
-### 8.3 switch와 null
+### switch와 null
+
 ```java
 Integer k = null;
 // switch (k) { ... } // NPE 위험(언박싱)
@@ -283,9 +302,10 @@ Integer k = null;
 
 ---
 
-## 9. 실전 예제
+## 실전 예제
 
-### 9.1 CSV 숫자 컬럼 파싱(검증 포함)
+### CSV 숫자 컬럼 파싱(검증 포함)
+
 ```java
 import java.util.*;
 import java.util.stream.*;
@@ -312,7 +332,8 @@ public class CsvParse {
 }
 ```
 
-### 9.2 Double 특수값 처리
+### Double 특수값 처리
+
 ```java
 static double parsePrice(String s) {
     double v = Double.parseDouble(s);
@@ -323,7 +344,8 @@ static double parsePrice(String s) {
 }
 ```
 
-### 9.3 정수 비트 통계/표현
+### 정수 비트 통계/표현
+
 ```java
 int x = -1;
 System.out.println(Integer.toUnsignedString(x)); // 4294967295
@@ -332,7 +354,7 @@ System.out.println(Integer.bitCount(0b101010));   // 3
 
 ---
 
-## 10. 성능/메모리 관점 팁
+## 성능/메모리 관점 팁
 
 - **루프 누적/연산은 기본형**을 사용하라. 불가피하면 원시 스트림 사용.
 - **박싱 남발 금지**: `List<Integer>` 수백만 개는 **객체 오버헤드/GC 압박**.
@@ -343,7 +365,7 @@ System.out.println(Integer.bitCount(0b101010));   // 3
 
 ---
 
-## 11. 자주 하는 실수와 예방 체크리스트
+## 자주 하는 실수와 예방 체크리스트
 
 | 실수 | 증상 | 해결 |
 |---|---|---|
@@ -356,7 +378,7 @@ System.out.println(Integer.bitCount(0b101010));   // 3
 
 ---
 
-## 12. 요약
+## 요약
 
 - **Wrapper는 기본형을 객체로 감싸** 제네릭/컬렉션/리플렉션 등에서 사용 가능하게 한다.
 - **오토박싱/언박싱** 은 편리하지만 **null·성능 위험**이 있다.

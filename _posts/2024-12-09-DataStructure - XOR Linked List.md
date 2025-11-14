@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # XOR Linked List
 
-## 1. XOR Linked List란?
+## XOR Linked List란?
 
 **XOR 연결 리스트**는 이중 연결 리스트의 `prev`/`next` 두 포인터를 **단 하나의 필드**로 합친다.
 
@@ -26,7 +26,7 @@ category: Data Structure
 
 ---
 
-## 2. 구조 개념 복습
+## 구조 개념 복습
 
 ### 이중 리스트
 
@@ -45,7 +45,7 @@ category: Data Structure
 
 ---
 
-## 3. 안전성·이식성 경고(매우 중요)
+## 안전성·이식성 경고(매우 중요)
 
 - C/C++ 이외 언어(특히 **이동/압축 GC**)에서는 **주소가 바뀌면 XOR 값이 무효** → 금지.
 - **AddressSanitizer(ASan)**, **HWASan** 등 도구가 붙은 환경에서는 포인터 태깅/레드존으로 인해 **예상치 못한 동작**을 유발 가능.
@@ -56,7 +56,7 @@ category: Data Structure
 
 ---
 
-## 4. 기초 도우미와 노드 정의
+## 기초 도우미와 노드 정의
 
 ```cpp
 // xor_list.hpp
@@ -94,7 +94,7 @@ struct Node {
 
 ---
 
-## 5. 컨테이너 설계(양끝·사이즈·반복자)
+## 컨테이너 설계(양끝·사이즈·반복자)
 
 - `head_`, `tail_`을 들고 있으면 **양방향 순회/삽입/삭제**가 편해진다.
 - 반복자는 **(prev, cur, next)** 3튜플을 유지하면 `++/--`를 안전하게 구현할 수 있다.
@@ -210,9 +210,9 @@ public:
 
 ---
 
-## 6. 핵심 연산 구현
+## 핵심 연산 구현
 
-### 6.1 양끝 삽입/삭제
+### 양끝 삽입/삭제
 
 ```cpp
 // xor_list_impl.hpp
@@ -300,7 +300,7 @@ void XorList<T>::clear() noexcept {
 } // namespace xorll
 ```
 
-### 6.2 반복자 기반 `emplace/insert`(pos 앞에 삽입)
+### 반복자 기반 `emplace/insert`(pos 앞에 삽입)
 
 - 표준 `std::list::insert(pos, v)`와 동일하게 **`pos` 앞**에 들어간다고 가정한다.
 - `pos`가 `begin()`이면 `emplace_front`, `end()`면 `emplace_back`.
@@ -410,13 +410,14 @@ XorList<T>::erase(iterator pos){
 
 ---
 
-## 7. 사용 예제
+## 사용 예제
 
-### 7.1 기본 동작
+### 기본 동작
 
 ```cpp
 // main_basic.cpp
 #include "xor_list_impl.hpp"
+
 using namespace xorll;
 
 int main(){
@@ -454,11 +455,12 @@ int main(){
 }
 ```
 
-### 7.2 예외 테스트(경계)
+### 예외 테스트(경계)
 
 ```cpp
 // main_edge.cpp
 #include "xor_list_impl.hpp"
+
 using namespace xorll;
 
 int main(){
@@ -478,7 +480,7 @@ int main(){
 
 ---
 
-## 8. 복잡도·메모리·수학 스냅샷
+## 복잡도·메모리·수학 스냅샷
 
 - **시간**
   - 전/후진 1스텝: $$O(1)$$
@@ -496,7 +498,7 @@ int main(){
 
 ---
 
-## 9. 디버깅·테스트 전략
+## 디버깅·테스트 전략
 
 1. **일관성 체크**: 순방향으로 수집한 시퀀스와 역방향 시퀀스가 서로 역순인지 비교.
 2. **브루트 대조**: 동일 연산 시퀀스를 `std::list`와 동시 실행 후 결과 비교.
@@ -508,6 +510,7 @@ int main(){
 #include <list>
 #include <random>
 #include <cassert>
+
 using namespace xorll;
 
 int main(){
@@ -544,7 +547,7 @@ int main(){
 
 ---
 
-## 10. 왜 실무에서 거의 안 쓰일까?
+## 왜 실무에서 거의 안 쓰일까?
 
 - **가독성/유지보수성**: 포인터 XOR은 직관적이지 않아 협업 난이도↑.
 - **디버깅 지옥**: 중간 상태를 디버거로 보기 어려움. 크래시 시 체인 복원이 힘듦.
@@ -554,7 +557,7 @@ int main(){
 
 ---
 
-## 11. 추가 팁/변형
+## 추가 팁/변형
 
 - **정렬 유지 리스트**: 삽입 시 순회 비용은 동일. XOR의 이점은 **포인터 1개**뿐.
 - **스레드 안전**: 단일 원자 갱신만으로 충분하지 않다. **락/RCU/해저드 포인터** 설계가 필요.
@@ -562,7 +565,7 @@ int main(){
 
 ---
 
-## 12. 전체 빌드
+## 전체 빌드
 
 ```bash
 g++ -std=c++17 -O2 -Wall -Wextra -pedantic main_basic.cpp -o basic
@@ -579,7 +582,7 @@ g++ -std=c++17 -O2 -fsanitize=address,undefined -g test_fuzz.cpp -o fuzz
 
 ---
 
-## 13. 요약
+## 요약
 
 - XOR 리스트는 **이중 리스트의 공간을 절반으로 줄이는** 고전 테크닉이다.
 - 구현은 간단해 보이나, **연결 갱신/반복자/예외/디버깅**에서 난이도가 높다.

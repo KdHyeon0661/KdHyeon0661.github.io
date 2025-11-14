@@ -6,7 +6,7 @@ category: Docker
 ---
 # 첫 번째 Docker 컨테이너 실행하기: Hello World
 
-## 0. 실행 전 체크리스트(요약)
+## 실행 전 체크리스트(요약)
 
 - Docker Desktop(Windows/macOS) 또는 Docker Engine(Linux)이 **실행 중**이어야 합니다.
 - Windows Home은 **WSL2 엔진**이 필요합니다.
@@ -15,9 +15,10 @@ category: Docker
 
 ---
 
-## 1. Docker 데몬이 실행 중인지 확인
+## Docker 데몬이 실행 중인지 확인
 
-### 1.1 공통(Windows PowerShell / Bash / WSL)
+### 공통(Windows PowerShell / Bash / WSL)
+
 ```bash
 docker version
 ```
@@ -32,13 +33,17 @@ Server: Docker Engine - Community
 ```bash
 docker info
 # 문제 시: 에러 메시지(소켓 권한/데몬 미기동/프로시)로 원인 파악
+
 ```
 
-### 1.2 Windows에서 자주 쓰는 점검
+### Windows에서 자주 쓰는 점검
+
 ```powershell
 # WSL2 엔진 상태 확인
+
 wsl --status
 # WSL2 환경 리셋(캐시/리소스 갱신)
+
 wsl --shutdown
 ```
 - Docker Desktop 트레이 아이콘이 실행 중인지 확인합니다.
@@ -46,14 +51,16 @@ wsl --shutdown
 
 ---
 
-## 2. Hello World 이미지 다운로드 및 실행
+## Hello World 이미지 다운로드 및 실행
 
-### 2.1 한 줄로 실행
+### 한 줄로 실행
+
 ```bash
 docker run hello-world
 ```
 
-### 2.2 내부에서 일어나는 일(요약 흐름)
+### 내부에서 일어나는 일(요약 흐름)
+
 1. **이미지 조회**: 로컬에 `hello-world:latest` 존재 확인
 2. **이미지 pull**: 없으면 Docker Hub에서 다운로드
 3. **컨테이너 create**: 이미지 기반으로 컨테이너 생성
@@ -67,9 +74,10 @@ run = pull(if needed) + create + start + attach + wait(Exit 0)
 
 ---
 
-## 3. 실행 결과 예시와 의미
+## 실행 결과 예시와 의미
 
-### 3.1 기대 출력
+### 기대 출력
+
 ```
 Hello from Docker!
 This message shows that your installation appears to be working correctly.
@@ -77,7 +85,8 @@ This message shows that your installation appears to be working correctly.
 ```
 - 이 메시지가 보이면 **엔진/네트워크/이미지/컨테이너 경로 전체가 정상**입니다.
 
-### 3.2 종료 상태 확인
+### 종료 상태 확인
+
 ```bash
 docker ps -a
 ```
@@ -90,9 +99,10 @@ e98dbd4c5cc5   hello-world   "/hello"    Exited (0) 10 seconds ago   dreamy_lala
 
 ---
 
-## 4. 이미지/컨테이너 세부 관찰
+## 이미지/컨테이너 세부 관찰
 
-### 4.1 이미지 목록
+### 이미지 목록
+
 ```bash
 docker images
 ```
@@ -102,7 +112,8 @@ REPOSITORY    TAG       IMAGE ID       CREATED        SIZE
 hello-world   latest    d1165f2...     2 weeks ago    13.3kB
 ```
 
-### 4.2 로그/상세/포트
+### 로그/상세/포트
+
 ```bash
 docker logs e98dbd4c5cc5
 docker inspect e98dbd4c5cc5 | jq '.[0].State, .[0].Config.Image'
@@ -112,13 +123,15 @@ docker inspect e98dbd4c5cc5 | jq '.[0].State, .[0].Config.Image'
 
 ---
 
-## 5. 정리 명령어(옵션)
+## 정리 명령어(옵션)
 
 ```bash
 # 종료된 컨테이너 삭제
+
 docker rm <컨테이너_ID_or_NAME>
 
 # 이미지 삭제
+
 docker rmi hello-world
 ```
 
@@ -126,29 +139,34 @@ docker rmi hello-world
 
 ---
 
-## 6. Hello World 이후: 한 단계씩 확장 실습
+## Hello World 이후: 한 단계씩 확장 실습
 
-### 6.1 재실행과 `--rm` 옵션
+### 재실행과 `--rm` 옵션
+
 ```bash
 docker run --rm hello-world
 ```
 - 컨테이너가 종료되면 **자동으로 컨테이너를 삭제**합니다(이미지는 유지).
 
-### 6.2 BusyBox/Alpine로 셸 체험
+### BusyBox/Alpine로 셸 체험
+
 ```bash
 docker run --rm busybox echo "ok"
 docker run --rm -it alpine:3.20 sh
 # 컨테이너 내부에서 몇 가지 명령 실행 후 'exit'
+
 ```
 
-### 6.3 포트 매핑(웹 서버 기초)
+### 포트 매핑(웹 서버 기초)
+
 ```bash
 docker run -d --name web -p 8080:80 nginx:alpine
 curl http://localhost:8080
 docker rm -f web
 ```
 
-### 6.4 볼륨/바인드 마운트(파일 공유)
+### 볼륨/바인드 마운트(파일 공유)
+
 ```bash
 mkdir -p ~/demo && echo "hi" > ~/demo/index.html
 docker run -d --name web -p 8080:80 \
@@ -158,7 +176,8 @@ curl http://localhost:8080
 docker rm -f web
 ```
 
-### 6.5 네트워크(컨테이너 간 통신)
+### 네트워크(컨테이너 간 통신)
+
 ```bash
 docker network create appnet
 docker run -d --name web --network appnet nginx:alpine
@@ -169,7 +188,7 @@ docker network rm appnet
 
 ---
 
-## 7. 정확성·재현성 강화: digest 고정
+## 정확성·재현성 강화: digest 고정
 
 태그는 가변, **digest** 는 이미지 내용 해시로 **불변**입니다. 재현 가능한 실행을 원한다면 digest 고정이 유리합니다.
 
@@ -178,13 +197,14 @@ docker network rm appnet
 docker pull hello-world:latest
 docker inspect --format='{{index .RepoDigests 0}}' hello-world:latest
 # 출력 예: hello-world@sha256:abcdef...
+
 docker run --rm hello-world@sha256:abcdef...
 ```
 {% endraw %}
 
 ---
 
-## 8. 보안 옵션으로 한 번 더 실행
+## 보안 옵션으로 한 번 더 실행
 
 hello-world는 간단하지만, **보안 습관**을 같이 익혀두면 좋습니다.
 
@@ -202,7 +222,7 @@ docker run --rm \
 
 ---
 
-## 9. 자주 겪는 문제와 해결
+## 자주 겪는 문제와 해결
 
 | 증상/오류 | 원인 | 해결 |
 |---|---|---|
@@ -227,12 +247,13 @@ sudo systemctl restart docker
 
 ---
 
-## 10. Compose로 “Hello” 맛보기(도구 사용 흐름 익히기)
+## Compose로 “Hello” 맛보기(도구 사용 흐름 익히기)
 
 Hello World 자체는 단일 컨테이너지만, Compose 명령 흐름을 **빠르게 경험**합니다.
 
 ```yaml
 # docker-compose.yaml
+
 services:
   hello:
     image: hello-world
@@ -246,7 +267,7 @@ docker compose down
 
 ---
 
-## 11. 내부 동작을 한눈에(텍스트 다이어그램)
+## 내부 동작을 한눈에(텍스트 다이어그램)
 
 ```text
 +----------------------- Docker CLI -----------------------+
@@ -277,7 +298,7 @@ docker compose down
 
 ---
 
-## 12. 수학적 메모(선택): 캐시 적중 직관
+## 수학적 메모(선택): 캐시 적중 직관
 
 Dockerfile 레이어별 캐시 적중률을 \(p_i\), 빌드 비용을 \(c_i\) 라고 하면 기대 빌드 시간의 근사는
 $$
@@ -287,9 +308,10 @@ $$
 
 ---
 
-## 13. 확장 실습 시나리오 3선
+## 확장 실습 시나리오 3선
 
-### 13.1 “조금 더” 복습: busybox/alpine/ubuntu 비교
+### “조금 더” 복습: busybox/alpine/ubuntu 비교
+
 ```bash
 docker run --rm busybox sh -c 'echo BB && uname -a'
 docker run --rm alpine  sh -c 'echo AL && uname -a'
@@ -297,7 +319,8 @@ docker run --rm ubuntu  bash -lc 'echo UB && uname -a'
 ```
 - 기본 셸/패키지 관리자 차이, 이미지 크기 차이를 체감합니다.
 
-### 13.2 Nginx 정적 페이지 제공
+### Nginx 정적 페이지 제공
+
 ```bash
 mkdir -p site && echo "hello" > site/index.html
 docker run -d --name web -p 8080:80 \
@@ -307,10 +330,12 @@ curl http://localhost:8080
 docker rm -f web
 ```
 
-### 13.3 내부 셸과 패키지 설치
+### 내부 셸과 패키지 설치
+
 ```bash
 docker run -it --name a1 alpine:3.20 sh
 # 컨테이너 내부에서
+
 apk add --no-cache curl
 curl -I https://example.com
 exit
@@ -319,7 +344,7 @@ docker rm a1
 
 ---
 
-## 14. 요약 명령어 정리(보강판)
+## 요약 명령어 정리(보강판)
 
 | 작업 | 기본 | 보강 |
 |---|---|---|
@@ -334,7 +359,7 @@ docker rm a1
 
 ---
 
-## 15. 결론 및 다음 단계
+## 결론 및 다음 단계
 
 - `docker run hello-world` 는 **설치·네트워크·이미지·컨테이너** 경로가 정상임을 입증하는 **가장 작은 실습**입니다.
 - 뒤이어 `ps / logs / inspect` 로 내부 정보를 확인하고, `nginx`·`alpine` 등으로 **포트/볼륨/네트워크**를 체험하면 운영에 가까운 감을 빠르게 얻습니다.

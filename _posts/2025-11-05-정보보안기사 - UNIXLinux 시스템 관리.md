@@ -7,6 +7,7 @@ category: 정보보안기사
 # SECTION 01 시스템 기본 학습 — 03. UNIX/Linux 시스템 관리
 
 ## 운영자 베이스라인(핵심 요약)
+
 - 사용자는 **최소권한 원칙**, 역할별 그룹/`sudoers` 분리, `pam_faillock`·`pam_pwquality`.
 - 서비스는 **systemd 유닛**으로 관리하고, **오버라이드**·`Restart=`·`Sandboxing` 적용.
 - 파일시스템은 **LVM/RAID**로 유연히 운영하고, **noexec/nodev/nosuid**·`logrotate`·쿼터를 적용.
@@ -20,22 +21,27 @@ category: 정보보안기사
 ## 사용자/그룹/권한 관리
 
 ### 계정 수명주기
+
 ```bash
 # 생성과 기본 그룹 지정
+
 useradd -m -s /bin/bash -G dev alice
 passwd alice
 
 # 만료/비활성화/잠금
+
 chage -l alice
 chage -M 90 -W 14 -I 7 alice   # 최대 90일, 만료 14일 전 경고, 유예 7일
 usermod -L alice               # 잠금
 ```
 
 ### sudo 정책(권한 위임)
+
 ```bash
 visudo   # /etc/sudoers 혹은 /etc/sudoers.d/*
 
 # 예: dev 그룹은 특정 명령만 비암호로 허용
+
 %dev ALL=(root) NOPASSWD: /usr/bin/systemctl restart web.service,/usr/bin/journalctl -u web
 ```
 
@@ -55,18 +61,22 @@ sudo -l -U alice
 ## PAM과 로그인 정책(보안·추적)
 
 ### 암호 품질/락아웃
+
 Debian/Ubuntu:
 ```bash
 apt install -y libpam-pwquality
 # /etc/pam.d/common-password 내 예시
+
 password requisite pam_pwquality.so retry=3 minlen=12 ucredit=-1 lcredit=-1 dcredit=-1 ocredit=-1
 ```
 
 RHEL/Rocky/Alma(락아웃):
 ```bash
 # 권장 프로파일 선택
+
 authselect select sssd with-faillock --force
 # 확인
+
 faillock --user alice
 ```
 
@@ -87,17 +97,21 @@ PASS_WARN_AGE   14
 ## 패키지/리포지토리/패치 관리
 
 ### apt/dnf 기본
+
 ```bash
 # Debian/Ubuntu
+
 apt update && apt upgrade -y
 apt install -y htop jq curl
 
 # RHEL 계열
+
 dnf makecache && dnf upgrade -y
 dnf install -y htop jq curl
 ```
 
 ### 자동 업데이트
+
 Ubuntu:
 ```bash
 apt install -y unattended-upgrades
@@ -119,6 +133,7 @@ systemctl enable --now dnf-automatic.timer
 ## systemd: 서비스·타이머·오버라이드·샌드박스
 
 ### 서비스 관리
+
 ```bash
 systemctl status nginx
 systemctl enable --now nginx
@@ -127,6 +142,7 @@ journalctl -u nginx -S -2h
 ```
 
 ### 사용자 정의 유닛
+
 `/etc/systemd/system/web.service`:
 ```ini
 [Unit]
@@ -144,11 +160,13 @@ Restart=always
 RestartSec=3
 
 # 리소스 제한
+
 LimitNOFILE=65535
 MemoryMax=512M
 CPUQuota=80%
 
 # 보안 샌드박스
+
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
@@ -169,12 +187,15 @@ systemctl enable --now web
 ```
 
 ### 오버라이드(벤더 유닛 변경 없이)
+
 ```bash
 systemctl edit nginx
 # [Service] 블록에 Restart=always 등 추가 후 저장
+
 ```
 
 ### 타이머(주기 작업)
+
 `/etc/systemd/system/db-backup.service`:
 ```ini
 [Service]
@@ -206,6 +227,7 @@ systemctl list-timers | grep db-backup
 ## 파일시스템/스토리지: 파티션·LVM·RAID·마운트 옵션·쿼터
 
 ### 파티션/FS 생성
+
 ```bash
 lsblk -f
 parted /dev/vdb mklabel gpt
@@ -217,6 +239,7 @@ mount -a
 ```
 
 ### LVM 확장
+
 ```bash
 pvcreate /dev/vdc
 vgextend vg0 /dev/vdc
@@ -224,14 +247,17 @@ lvextend -r -L +20G /dev/vg0/lvdata   # -r은 온라인 FS 확장
 ```
 
 ### 소프트웨어 RAID(md)
+
 ```bash
 mdadm --create /dev/md0 --level=1 --raid-devices=2 /dev/vdd1 /dev/vde1
 mkfs.xfs /dev/md0
 ```
 
 ### 디스크 쿼터
+
 ```bash
 # /etc/fstab: usrquota,grpquota 추가
+
 /dev/vg0/lvhome /home xfs defaults,usrquota,grpquota 0 2
 mount -o remount /home
 xfs_quota -x -c 'limit bsoft=10G bhard=12G alice' /home
@@ -248,6 +274,7 @@ xfs_quota -x -c 'report -h' /home
 ## 네트워킹: IP/DNS/라우팅/관리도구
 
 ### 인터페이스/라우팅/DNS
+
 ```bash
 ip addr show
 ip route
@@ -255,6 +282,7 @@ resolvectl status 2>/dev/null || cat /etc/resolv.conf
 ```
 
 ### Netplan(Ubuntu) 예
+
 `/etc/netplan/01-prod.yaml`:
 ```yaml
 network:
@@ -272,6 +300,7 @@ netplan apply
 ```
 
 ### nmcli(RHEL) 예
+
 ```bash
 nmcli con add type ethernet ifname eth0 con-name prod ip4 10.0.0.20/24 gw4 10.0.0.1
 nmcli con mod prod ipv4.dns "10.0.0.2 1.1.1.1" ipv4.method manual
@@ -279,6 +308,7 @@ nmcli con up prod
 ```
 
 ### 방화벽
+
 firewalld(RHEL):
 ```bash
 firewall-cmd --get-active-zones
@@ -303,6 +333,7 @@ ufw status verbose
 ## 성능·상태 모니터링: CPU/메모리/IO/네트워크
 
 ### 즉시 관측
+
 ```bash
 top -o %CPU
 free -h
@@ -312,6 +343,7 @@ ss -s
 ```
 
 ### sar(시계열)
+
 ```bash
 apt install -y sysstat  # Debian/Ubuntu
 dnf install -y sysstat  # RHEL
@@ -321,6 +353,7 @@ sar -n DEV 1 5 # 인터페이스별 네트워크
 ```
 
 ### 병목 단서
+
 - CPU 100%: 실제 사용 vs IO wait 구분(`%wa`).
 - 메모리 압박: swap in/out, OOM 로그 확인(`dmesg`).
 - IO: `iostat -xz`의 `await`/`util`.
@@ -335,6 +368,7 @@ sar -n DEV 1 5 # 인터페이스별 네트워크
 ## 로깅/회전/중앙수집
 
 ### journald
+
 ```bash
 journalctl -p warning -S -2h
 journalctl -u web --since "2025-11-11 00:00:00"
@@ -347,13 +381,16 @@ MaxRetentionSec=2w
 ```
 
 ### rsyslog(선택)
+
 ```bash
 # 원격 전송 예시
+
 *.* @@log.example.corp:514
 systemctl restart rsyslog
 ```
 
 ### logrotate
+
 ```bash
 logrotate -d /etc/logrotate.conf     # 드라이런
 cat /etc/logrotate.d/nginx
@@ -369,6 +406,7 @@ cat /etc/logrotate.d/nginx
 ## 감사(auditd): 설정과 검색
 
 ### 규칙 추가/검색
+
 ```bash
 apt install -y auditd audispd-plugins || dnf install -y audit
 auditctl -w /etc/sudoers -p wa -k sudoers
@@ -388,6 +426,7 @@ augenrules --load
 ## 커널/리밋/sysctl(네트워크/파일/메모리)
 
 ### 파일 디스크립터
+
 ```bash
 ulimit -n
 echo '* soft nofile 65535' >> /etc/security/limits.conf
@@ -395,9 +434,11 @@ echo '* hard nofile 65535' >> /etc/security/limits.conf
 ```
 
 ### sysctl
+
 `/etc/sysctl.d/99-tuning.conf`:
 ```conf
 # 네트워크 감소 공격 방어·성능
+
 net.ipv4.tcp_syncookies = 1
 net.ipv4.tcp_fin_timeout = 30
 net.ipv4.ip_forward = 0
@@ -406,6 +447,7 @@ net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.conf.all.send_redirects = 0
 
 # 파일 핸들 수
+
 fs.file-max = 2097152
 ```
 ```bash
@@ -421,6 +463,7 @@ sysctl --system
 ## 시간 동기화와 타임존
 
 ### chrony/systemd-timesyncd
+
 ```bash
 timedatectl set-timezone Asia/Seoul
 apt install -y chrony || dnf install -y chrony
@@ -436,19 +479,23 @@ chronyc sources -v
 ## 백업/복구: rsync/tar/borg + LVM 스냅샷
 
 ### rsync 증분 백업
+
 ```bash
 rsync -aHAX --delete /srv/web/ /backup/web/$(date +%F)/
 ```
 
 ### tar 스냅샷
+
 ```bash
 tar --xattrs --acls -czf /backup/etc_$(date +%F).tar.gz /etc
 ```
 
 ### LVM 스냅샷 롤백
+
 ```bash
 lvcreate -s -n snap_web -L 2G /dev/vg0/lvweb
 # 패치/배포 → 문제시 롤백
+
 umount /srv/web
 lvconvert --merge /dev/vg0/snap_web
 mount -a
@@ -463,12 +510,15 @@ mount -a
 ## 자동화: cron/at → systemd timers, 그리고 Ansible
 
 ### cron → 타이머 전환
+
 ```bash
 crontab -l
 # 가능하면 동일 로직을 systemd timer로 이관(상태/로그 일원화)
+
 ```
 
 ### 간단 Ansible 예(패키지·서비스)
+
 `site.yml`:
 ```yaml
 - hosts: app
@@ -499,6 +549,7 @@ crontab -l
 ## 부팅/복구: GRUB, initramfs, SELinux/AppArmor
 
 ### 부팅 문제 공략
+
 - GRUB 편집: 커널 라인에 `systemd.unit=rescue.target` 부팅.
 - initramfs 재생성:
 ```bash
@@ -507,9 +558,11 @@ dracut -f                  # RHEL
 ```
 
 ### SELinux/AppArmor 기본 복구
+
 - SELinux 컨텍스트 복구:
 ```bash
 # RHEL
+
 touch /.autorelabel
 reboot
 ```
@@ -606,11 +659,13 @@ EOF
 예시 답안 스니펫:
 ```bash
 # 1
+
 echo '/dev/vdb1 /data ext4 defaults,noexec,nodev,nosuid 0 2' >> /etc/fstab
 mount -a
 ```
 ```ini
-# 2 (서비스 일부)
+# (서비스 일부)
+
 [Service]
 Restart=always
 RestartSec=3
@@ -621,15 +676,18 @@ PrivateTmp=true
 ```
 ```bash
 # 3
+
 authselect select sssd with-faillock --force
 faillock --user alice
 ```
 ```bash
 # 4
+
 lvextend -r -L +20G /dev/vg0/lvapp
 ```
 ```bash
 # 5
+
 mkdir -p /var/log/journal
 sed -i 's/^#\?Storage=.*/Storage=persistent/' /etc/systemd/journald.conf
 sed -i 's/^#\?SystemMaxUse=.*/SystemMaxUse=1G/' /etc/systemd/journald.conf
@@ -638,13 +696,15 @@ systemctl restart systemd-journald
 ```
 ```bash
 # 6
+
 ufw default deny incoming
 ufw default allow outgoing
 ufw allow from 10.0.0.0/24 to any port 22 proto tcp
 ufw enable
 ```
 ```bash
-# 7 (xfs)
+# (xfs)
+
 mount -o remount /home
 xfs_quota -x -c 'limit bsoft=10G bhard=12G alice' /home
 xfs_quota -x -c 'report -h' /home

@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Compose에서 볼륨과 네트워크 설정 완전 정복
 
-## 0. 빠른 개념 지도
+## 빠른 개념 지도
 
 - **볼륨(Volumes)**: 컨테이너 수명과 분리된 **데이터 영속화/공유 레이어**
   - 종류: **Named Volume**, **Bind Mount**, (tmpfs 포함)
@@ -19,9 +19,9 @@ category: Docker
 
 ---
 
-## 1. 볼륨(Volumes)
+## 볼륨(Volumes)
 
-### 1.1 볼륨의 3가지 유형
+### 볼륨의 3가지 유형
 
 | 유형 | 선언/예시 | 특징/용도 |
 |---|---|---|
@@ -33,7 +33,7 @@ category: Docker
 
 ---
 
-### 1.2 Compose에서의 선언 위치와 의미
+### Compose에서의 선언 위치와 의미
 
 - **서비스 섹션 내부의 `volumes:`** → “어디를 마운트할지”를 지정
 - **루트 레벨의 `volumes:`** → “Named Volume을 정의” (드라이버/옵션 포함)
@@ -51,7 +51,7 @@ volumes:
 
 ---
 
-### 1.3 단문/장문 문법 비교 (short vs long syntax)
+### 단문/장문 문법 비교 (short vs long syntax)
 
 **Short syntax** *(간단, 빠른)*
 
@@ -88,7 +88,7 @@ services:
 
 ---
 
-### 1.4 Bind Mount 운영체제별 주의점
+### Bind Mount 운영체제별 주의점
 
 | OS | 경로 표기 | 비고 |
 |---|---|---|
@@ -103,14 +103,14 @@ services:
 
 ---
 
-### 1.5 읽기전용/전파/권한
+### 읽기전용/전파/권한
 
 - 읽기전용: `- ./config:/app/config:ro` 또는 `read_only: true`
 - 마운트 전파(propagation): 고급 시나리오(호스트-컨테이너 중첩 마운트). 필요 시 long syntax의 `bind.propagation: rshared` 등.
 
 ---
 
-### 1.6 데이터베이스 표준 패턴 (Named Volume 권장)
+### 데이터베이스 표준 패턴 (Named Volume 권장)
 
 ```yaml
 version: '3.9'
@@ -136,7 +136,7 @@ volumes:
 
 ---
 
-### 1.7 개발용 핫리로드 패턴 (Bind Mount 권장)
+### 개발용 핫리로드 패턴 (Bind Mount 권장)
 
 ```yaml
 services:
@@ -152,7 +152,7 @@ services:
 
 ---
 
-### 1.8 tmpfs (메모리) 마운트
+### tmpfs (메모리) 마운트
 
 ```yaml
 services:
@@ -170,7 +170,7 @@ services:
 
 ---
 
-### 1.9 Volume Driver/옵션(외부 스토리지)
+### Volume Driver/옵션(외부 스토리지)
 
 ```yaml
 volumes:
@@ -187,7 +187,7 @@ volumes:
 
 ---
 
-### 1.10 운영 팁
+### 운영 팁
 
 - **이름 있는 볼륨**을 선호(백업/이식성)
 - 개발/운영 **오버라이드**: `docker-compose.override.yml`에서 bind mount만 추가
@@ -196,9 +196,9 @@ volumes:
 
 ---
 
-## 2. 네트워크(Networks)
+## 네트워크(Networks)
 
-### 2.1 기본 — bridge + 서비스명 DNS
+### 기본 — bridge + 서비스명 DNS
 
 ```yaml
 version: '3.9'
@@ -224,6 +224,7 @@ networks:
 컨테이너 내부 통신 예:
 ```bash
 # app 컨테이너 쉘에서
+
 curl http://web
 mysql -h db -u root -p
 ```
@@ -232,7 +233,7 @@ mysql -h db -u root -p
 
 ---
 
-### 2.2 드라이버 지정/고급 옵션
+### 드라이버 지정/고급 옵션
 
 ```yaml
 networks:
@@ -253,7 +254,7 @@ networks:
 
 ---
 
-### 2.3 외부 네트워크 사용
+### 외부 네트워크 사용
 
 공유 리버스 프록시(예: `nginx-proxy`) 네트워크를 재사용:
 
@@ -274,7 +275,7 @@ networks:
 
 ---
 
-### 2.4 네트워크 앨리어스(alias)와 고정 IP(테스트 한정)
+### 네트워크 앨리어스(alias)와 고정 IP(테스트 한정)
 
 ```yaml
 services:
@@ -295,7 +296,7 @@ networks:
 
 ---
 
-### 2.5 network_mode 특수값
+### network_mode 특수값
 
 ```yaml
 services:
@@ -310,14 +311,14 @@ services:
 
 ---
 
-### 2.6 Overlay/macvlan 요약(Compose 관점)
+### Overlay/macvlan 요약(Compose 관점)
 
 - `overlay`: 다중 호스트 간 네트워크(Swarm/Orchestrator), Compose 단독으로는 **제약**
 - `macvlan`: 컨테이너에 **실 IP** 부여(스위치/라우터에서 호스트처럼 보임). 호스트↔컨테이너 통신 제약/보안정책 고려.
 
 ---
 
-## 3. 종합 실전 예시: WordPress + MySQL (네트워크 분리, 볼륨/헬스체크/보안)
+## 종합 실전 예시: WordPress + MySQL (네트워크 분리, 볼륨/헬스체크/보안)
 
 초안 예시를 보강해, **네트워크 분리**·**영속화**·**헬스체크**·**기동 순서 안정화**를 반영합니다.
 
@@ -373,7 +374,7 @@ volumes:
 
 ---
 
-## 4. 개발/운영 분리: `.env` + `docker-compose.override.yml`
+## 개발/운영 분리: `.env` + `docker-compose.override.yml`
 
 `.env` (공통/개발 변수만)
 ```env
@@ -405,7 +406,7 @@ services:
 
 ---
 
-## 5. 보안·운영 체크리스트
+## 보안·운영 체크리스트
 
 - **불필요한 포트 노출 금지**: DB 컨테이너의 `ports:` 제거(내부 네트워크만)
 - **비밀값 관리**: `.env` 최소화, CI/CD 비밀관리(Secrets Manager/Vault/Parameter Store)
@@ -427,7 +428,7 @@ services:
 
 ---
 
-## 6. 트러블슈팅
+## 트러블슈팅
 
 | 현상 | 가능 원인 | 해결 |
 |---|---|---|
@@ -442,12 +443,14 @@ services:
 {% raw %}
 ```bash
 # 네트워크/볼륨 현황
+
 docker network ls
 docker network inspect <net>
 docker volume ls
 docker volume inspect <vol>
 
 # 컨테이너별 네트워크/마운트 바인딩 확인
+
 docker inspect <container> --format '{{json .NetworkSettings.Networks}}'
 docker inspect <container> --format '{{json .Mounts}}' | jq
 ```
@@ -455,7 +458,7 @@ docker inspect <container> --format '{{json .Mounts}}' | jq
 
 ---
 
-## 7. 고급 토픽 모음
+## 고급 토픽 모음
 
 - **서비스별 read-only 루트 FS**:
   ```yaml
@@ -471,9 +474,9 @@ docker inspect <container> --format '{{json .Mounts}}' | jq
 
 ---
 
-## 8. 최소/확장 예제 요약
+## 최소/확장 예제 요약
 
-### 8.1 최소(초안 스타일 유지)
+### 최소(초안 스타일 유지)
 
 ```yaml
 version: '3.9'
@@ -500,7 +503,7 @@ volumes:
   db-data:
 ```
 
-### 8.2 확장(분리/보안/헬스체크)
+### 확장(분리/보안/헬스체크)
 
 ```yaml
 version: '3.9'
@@ -542,9 +545,9 @@ volumes:
 
 ---
 
-## 9. 핵심 정리표
+## 핵심 정리표
 
-### 9.1 볼륨
+### 볼륨
 
 | 목적 | 권장 |
 |---|---|
@@ -553,7 +556,7 @@ volumes:
 | 비영구 고성능 임시 | **tmpfs** |
 | 외부 스토리지 | volume driver(NFS/ceph 등) |
 
-### 9.2 네트워크
+### 네트워크
 
 | 시나리오 | 권장 |
 |---|---|
@@ -565,7 +568,7 @@ volumes:
 
 ---
 
-## 10. 마무리
+## 마무리
 
 - **Compose는 선언형**입니다. 재현 가능·문서화 가능한 방식으로 **볼륨/네트워크**를 정의하세요.
 - **개발/운영 분리**(Bind Mount ↔ Named Volume, 포트/로그/비밀)로 수명주기 전환을 쉽게.

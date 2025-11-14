@@ -13,7 +13,7 @@ category: 딥러닝
 
 ---
 
-## 0. 프로젝트 목표·로드맵
+## 프로젝트 목표·로드맵
 
 - **목표**: “서울권 식생(녹지) 상태가 2019년 대비 2024년에 **어디서** 늘고/줄었는지”를 한 눈에 보여주는 **변화 지도**·**요약 차트**·**다운로드 가능한 결과물**을 만든다.
 - **데이터**: Sentinel-2 SR(10m) — 빨강(RED=B4), 근적외(NIR=B8), 구름마스크(QA60)
@@ -30,7 +30,7 @@ category: 딥러닝
 
 ---
 
-## 1. 환경 준비
+## 환경 준비
 
 > 사전 요건
 > - [earthengine.google.com](https://earthengine.google.com/)에서 Earth Engine 계정을 활성화했습니다.
@@ -47,13 +47,14 @@ import matplotlib.pyplot as plt
 # ee.Authenticate()  # 대화형 브라우저 인증 팝업 (주석 해제 후 1회 실행)
 
 # 세션 초기화
+
 ee.Initialize()
 print("GEE initialized:", ee.Number(1).getInfo())
 ```
 
 ---
 
-## 2. 프로젝트 변수를 정하자 (ROI, 기간, 파라미터)
+## 프로젝트 변수를 정하자 (ROI, 기간, 파라미터)
 
 - **ROI**: 서울권을 대략 포함하는 사각형(간단화를 위해 대략 경계)
   - 위도 37.35~37.75, 경도 126.70~127.30 (임의·예시)
@@ -61,16 +62,19 @@ print("GEE initialized:", ee.Number(1).getInfo())
 - **센서**: `COPERNICUS/S2_SR` (Sentinel-2 Surface Reflectance)
 
 ```python
-# 2.1 ROI(관심영역) — 간단한 사각형(경도, 위도 순서)
+# ROI(관심영역) — 간단한 사각형(경도, 위도 순서)
+
 roi = ee.Geometry.Rectangle([126.70, 37.35, 127.30, 37.75])  # (minLon, minLat, maxLon, maxLat)
 
-# 2.2 분석 기간
+# 분석 기간
+
 periods = {
     "ref":  ("2019-04-01", "2019-10-31"),  # 기준연도(Reference)
     "curr": ("2024-04-01", "2024-10-31"),  # 비교연도(Current)
 }
 
-# 2.3 시각화 파라미터(색표현)
+# 시각화 파라미터(색표현)
+
 vis_truecolor = {"min": 0, "max": 3000, "bands": ["B4", "B3", "B2"]}
 vis_ndvi      = {"min": 0.0, "max": 0.8,  "palette": ["brown","beige","yellow","lightgreen","green"]}
 vis_diff      = {"min": -0.3, "max": 0.3, "palette": ["#313695","#74add1","#fefefe","#f46d43","#a50026"]}  # 블루(감소)↔레드(증가)
@@ -78,7 +82,7 @@ vis_diff      = {"min": -0.3, "max": 0.3, "palette": ["#313695","#74add1","#fefe
 
 ---
 
-## 3. 전처리 유틸 함수: 클라우드 마스킹 + NDVI 밴드
+## 전처리 유틸 함수: 클라우드 마스킹 + NDVI 밴드
 
 - **구름 마스크(QA60)**: Sentinel-2 SR의 QA60 밴드 **10, 11비트**에 구름/서큘러스 마스크 정보가 들어있습니다.
   - `cloudBitMask = 1 << 10`, `cirrusBitMask = 1 << 11`
@@ -103,7 +107,7 @@ def add_ndvi(img: ee.Image) -> ee.Image:
 
 ---
 
-## 4. 연도별 시즌 합성(클린 모자이크)
+## 연도별 시즌 합성(클린 모자이크)
 
 > 목표: 2019/2024년의 **4~10월** 이미지에서 **구름 제거** 후, **median 합성**으로 대표 이미지를 만든다.
 
@@ -123,6 +127,7 @@ ref_img  = seasonal_median(*periods["ref"],  roi)  # 2019 시즌
 curr_img = seasonal_median(*periods["curr"], roi)  # 2024 시즌
 
 # NDVI 밴드만 꺼내어 차이 계산(2024 - 2019)
+
 ndvi_ref  = ref_img.select("NDVI")
 ndvi_curr = curr_img.select("NDVI")
 ndvi_diff = ndvi_curr.subtract(ndvi_ref).rename("NDVI_DIFF")
@@ -130,7 +135,7 @@ ndvi_diff = ndvi_curr.subtract(ndvi_ref).rename("NDVI_DIFF")
 
 ---
 
-## 5. Folium에 Earth Engine 레이어 붙이기
+## Folium에 Earth Engine 레이어 붙이기
 
 > **Folium**은 Leaflet 기반 파이썬 래퍼입니다. Earth Engine 이미지를 **타일 URL**로 가져와 오버레이할 수 있습니다.
 > 아래 헬퍼는 `ee.Image.getMapId(vis_params)`에서 타일 URL을 얻고, Folium에 레이어로 추가합니다.
@@ -150,10 +155,12 @@ def add_ee_layer(m, ee_image, vis_params, name, shown=True, opacity=1.0):
     ).add_to(m)
 
 # 지도 생성 및 레이어 추가
+
 center = [37.55, 127.00]  # 서울 중심부 근사
 m = folium.Map(location=center, zoom_start=11, control_scale=True)
 
 # 베이스맵 + 레이어
+
 add_ee_layer(m, ref_img.select(["B4","B3","B2"]), vis_truecolor, name="TrueColor 2019", shown=False)
 add_ee_layer(m, curr_img.select(["B4","B3","B2"]), vis_truecolor, name="TrueColor 2024", shown=False)
 add_ee_layer(m, ndvi_ref,  vis_ndvi, name="NDVI 2019", shown=False)
@@ -161,6 +168,7 @@ add_ee_layer(m, ndvi_curr, vis_ndvi, name="NDVI 2024", shown=False)
 add_ee_layer(m, ndvi_diff, vis_diff, name="ΔNDVI (2024-2019)", shown=True)
 
 # ROI 테두리
+
 folium.GeoJson(data=roi.getInfo(), name="ROI(Seoul-ish)").add_to(m)
 folium.LayerControl(collapsed=False).add_to(m)
 
@@ -171,7 +179,7 @@ m
 
 ---
 
-## 6. ΔNDVI 해석 가이드
+## ΔNDVI 해석 가이드
 
 - **양수(빨강)**: 2024년이 2019년보다 NDVI가 높음 → **녹지/식생 증가** 가능성(신규 조성, 계절·관리 영향 포함)
 - **음수(파랑)**: 2024년이 더 낮음 → **녹지 감소** 가능성(공사, 포장, 건물 신축, 가뭄·계절 요인 등)
@@ -182,7 +190,7 @@ m
 
 ---
 
-## 7. 월별 NDVI 타임시리즈(ROI 평균) + Matplotlib 차트
+## 월별 NDVI 타임시리즈(ROI 평균) + Matplotlib 차트
 
 > ROI 전체 평균 NDVI의 월별 시계열을 만들고, 2019 vs 2024를 비교합니다.
 
@@ -235,12 +243,13 @@ plt.show()
 
 ---
 
-## 8. 통계 요약(ROI 기준)
+## 통계 요약(ROI 기준)
 
 > ΔNDVI의 **평균/분위수/면적 비율**(증가·감소)을 ROI 차원에서 산출합니다.
 
 ```python
 # ΔNDVI 이미지의 ROI 평균/표준편차/분위수
+
 stats = ndvi_diff.reduceRegion(
     reducer = ee.Reducer.mean().combine(ee.Reducer.stdDev(), sharedInputs=True)
                             .combine(ee.Reducer.percentile([10,25,50,75,90]), sharedInputs=True),
@@ -252,6 +261,7 @@ for k,v in stats.items():
     print(f" - {k}: {v}")
 
 # 증가/감소 면적 비율(단순 임계)
+
 thr_inc = 0.05   # +0.05 이상 증가
 thr_dec = -0.05  # -0.05 이하 감소
 
@@ -272,12 +282,13 @@ print(f"비율(%) — 증가: {100*inc_km2/max(1e-9,tot_km2):.2f}, 감소: {100*
 
 ---
 
-## 9. 결과 내보내기(Drive / Cloud Storage)
+## 결과 내보내기(Drive / Cloud Storage)
 
 > 결과(GeoTIFF)를 **Google Drive**로 내보내는 방법입니다. (Drive 연결 필요)
 
 ```python
 # 내보내기 이미지: ΔNDVI
+
 export_img = ndvi_diff.clip(roi)
 
 task = ee.batch.Export.image.toDrive(
@@ -293,6 +304,7 @@ task.start()
 print("Export started:", task.id)
 
 # (선택) 간단 폴링으로 상태 확인
+
 while task.active():
     print("  Task state:", task.status().get("state"))
     time.sleep(5)
@@ -303,7 +315,7 @@ print("Done:", task.status())
 
 ---
 
-## 10. 유효성 검증(간단 체크리스트)
+## 유효성 검증(간단 체크리스트)
 
 - [ ] ROI에 **물/바위/건물**만 있는 구역을 임의로 택해, NDVI가 낮게 나오는지 확인
 - [ ] **대형 공원/산지**를 찍어 2019·2024 **둘 다 NDVI가 높고** ΔNDVI가 0 근처인지 확인
@@ -312,7 +324,7 @@ print("Done:", task.status())
 
 ---
 
-## 11. 코드 한 번에(**함수화** + 깔끔 실행)
+## 코드 한 번에(**함수화** + 깔끔 실행)
 
 > 위 스니펫을 하나의 스크립트/노트북 셀로 묶습니다.
 
@@ -380,19 +392,22 @@ display(folium_map(roi, ref_img, curr_img, ndvi_ref, ndvi_curr, ndvi_diff))
 
 ---
 
-## 12. (옵션) 포인트/구역별 드릴다운
+## (옵션) 포인트/구역별 드릴다운
 
 > 지도에서 관심 지점을 찍어 **해당 지점의 NDVI 시계열**과 **ΔNDVI 값**을 보고 싶다면:
 
 ```python
 # 관심 포인트(예: 남산타워 인근 근사 좌표)
+
 pt = ee.Geometry.Point([126.988, 37.551])
 
 # ΔNDVI 포인트 추출
+
 val = ndvi_diff.sample(pt, scale=10).first().get("NDVI_DIFF").getInfo()
 print("Point ΔNDVI (2024-2019):", val)
 
 # 포인트 주변 버퍼(100m) 평균 NDVI 타임시리즈(2019/2024 각각)
+
 buf = pt.buffer(100)
 def series(start, end):
     col = (ee.ImageCollection("COPERNICUS/S2_SR").filterDate(start, end).filterBounds(buf)
@@ -425,7 +440,7 @@ plt.show()
 
 ---
 
-## 13. 정확도·강건성 팁
+## 정확도·강건성 팁
 
 1. **계절 동치성**: 잎이 무성한 계절 같은 기간을 비교(여기선 4~10월) → 계절 편차 감소
 2. **클라우드 마스킹**: QA60만으로 부족하면 **SCL(Scene Classification) 밴드** 활용(그림자·눈 등 추가 마스크)
@@ -436,7 +451,7 @@ plt.show()
 
 ---
 
-## 14. 오류·함정(트러블슈팅)
+## 오류·함정(트러블슈팅)
 
 - **지도에 타일이 안 뜸**: 인증/초기화 누락(`ee.Initialize()`), 방화벽/네트워크 이슈, 혹은 Folium 렌더 경로 문제
 - **Export 실패**: ROI 너무 큼 → `region`을 줄이고 `scale`을 키우거나, 타일 분할(여러 번 내보내기)
@@ -445,7 +460,7 @@ plt.show()
 
 ---
 
-## 15. 확장 아이디어
+## 확장 아이디어
 
 - **행정구역 단위 요약**: 구/동 경계(벡터)별 ΔNDVI 평균·면적 비율 계산 후 **Choropleth**
 - **타임슬라이더 지도**: 2019/2024 레이어를 슬라이더로 전환(프런트 UI에서 지원)
@@ -454,7 +469,7 @@ plt.show()
 
 ---
 
-## 16. 라이선스·정책·운영
+## 라이선스·정책·운영
 
 - **데이터 사용조건**: Sentinel-2 및 GEE의 이용약관/라이선스를 준수
 - **재현성**: ROI/기간/스케일/임계/버전(스크립트 SHA) 기록
@@ -462,13 +477,14 @@ plt.show()
 
 ---
 
-## 17. 전체 코드(요약본) — 한 번에 실행 가능한 최소 예제
+## 전체 코드(요약본) — 한 번에 실행 가능한 최소 예제
 
 ```python
 import ee, folium, time, matplotlib.pyplot as plt
 ee.Initialize()
 
 # Params
+
 roi = ee.Geometry.Rectangle([126.70, 37.35, 127.30, 37.75])
 REF = ("2019-04-01", "2019-10-31")
 CUR = ("2024-04-01", "2024-10-31")
@@ -513,7 +529,7 @@ m
 
 ---
 
-## 18. 마무리
+## 마무리
 
 - 본 프로젝트는 **GEE Python API**로 **도시 녹지 변화**를 **정량화·시각화·내보내기**까지 구현한 **블로그형 튜토리얼**입니다.
 - 여기서 출발해 **행정구역 레벨 통계, 변화점 탐지, 다른 지수(NDWI/NDBI)** 등을 곁들이면 즉시 실무/연구 대시보드의 토대가 됩니다.

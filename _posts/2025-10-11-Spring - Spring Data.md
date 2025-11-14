@@ -4,7 +4,8 @@ title: Spring - Spring Data
 date: 2025-10-11 23:25:23 +0900
 category: Spring
 ---
-# 5. 데이터 접근 II — Spring Data
+# 데이터 접근 II — Spring Data
+
 > Spring Data JPA의 리포지토리 패턴에서 시작해 **Query Method / `@Query` / QueryDSL 개요**, 그리고 **페이징·정렬·동적 검색·Specification**까지 한 번에 정리합니다.
 > 환경 가정: Spring Boot 3.3+, Spring Data JPA, Hibernate 6.x, Java 21, PostgreSQL 16.
 
@@ -13,10 +14,12 @@ category: Spring
 ## A. Spring Data JPA 리포지토리 패턴
 
 ### A-1. 핵심 철학
+
 - **“레포지토리는 도메인 컬렉션”**: 영속성 기술(JPA/SQL)을 감추고 **의미 있는 쿼리 이름**으로 모델링.
 - **관점 분리**: 비즈니스 흐름은 **서비스(유즈케이스)**가 담당, 레포지토리는 **데이터 접근 계약**만.
 
 ### A-2. `JpaRepository` 상속 구조
+
 ```java
 public interface MemberRepository extends JpaRepository<Member, Long> {
   // + PagingAndSortingRepository + CrudRepository 기능 포함
@@ -28,6 +31,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
   - 변경은 서비스 계층 `@Transactional`에서 수행.
 
 ### A-3. 단위 테스트(슬라이스) 기본
+
 ```java
 @DataJpaTest
 class MemberRepositoryTest {
@@ -50,6 +54,7 @@ class MemberRepositoryTest {
 ## B. Query Method — 이름으로 쿼리를 표현하기
 
 ### B-1. 네이밍 규칙 핵심
+
 - `findBy`, `readBy`, `getBy`, `existsBy`, `countBy`, `deleteBy` …
 - 조건 연결: `And`, `Or`, `Between`, `LessThan`, `GreaterThan`, `Like`, `StartingWith`, `Containing`, `In`, `IsNull`, `True`, `Before`, `After`, `IgnoreCase`…
 - 정렬: `OrderBy…Asc/Desc`
@@ -66,12 +71,14 @@ long countByActiveFalse();
 **한계**: 복잡한 조인/동적 필터/집계는 **가독성이 급격히 떨어짐** → `@Query`/QueryDSL로 승격.
 
 ### B-2. 파라미터 바인딩
+
 ```java
 List<Member> findByEmailIn(Collection<String> emails);
 List<Member> findTop10ByActiveTrueAndCreatedAtAfter(LocalDateTime since);
 ```
 
 ### B-3. Streaming & Slicing
+
 ```java
 @QueryHints(@QueryHint(name = HINT_FETCH_SIZE, value = "1000"))
 Stream<Member> findByActiveTrue();
@@ -83,6 +90,7 @@ Stream<Member> findByActiveTrue();
 ## C. `@Query` — JPQL/네이티브로 표현력 확장
 
 ### C-1. JPQL `@Query`
+
 ```java
 @Query("""
   select m from Member m
@@ -96,6 +104,7 @@ List<Member> search(@Param("active") Boolean active, @Param("q") String q);
 - **주의**: 엔티티 반환 시 N+1 위험 → fetch join/EntityGraph/배치 페치 크기 고려.
 
 ### C-2. DTO 프로젝션
+
 ```java
 public record MemberView(Long id, String username, String teamName) {}
 
@@ -109,6 +118,7 @@ List<MemberView> findViewsByTeam(@Param("teamId") Long teamId);
 - **장점**: **정확한 셀렉트** + **불필요한 로딩 차단**.
 
 ### C-3. 네이티브 쿼리
+
 ```java
 @Query(value = """
   select m.id, m.username, t.name as team_name
@@ -121,6 +131,7 @@ List<Object[]> rawByTeamName(@Param("name") String name);
 - **단점**: 이식성↓, 엔티티 상태/변경감지와 동기화 주의. DTO 매핑은 `SqlResultSetMapping` 또는 스프링 `JdbcTemplate`/`RecordClassMapper` 고려.
 
 ### C-4. 수정 쿼리(벌크 업데이트)
+
 ```java
 @Modifying(clearAutomatically = true, flushAutomatically = true)
 @Query("update Member m set m.active = false where m.lastLoginAt < :threshold")
@@ -133,6 +144,7 @@ int deactivateOld(@Param("threshold") LocalDateTime threshold);
 ## D. 스프링 데이터의 다양한 프로젝션
 
 ### D-1. 인터페이스 기반
+
 ```java
 public interface MemberNameOnly {
   String getUsername();
@@ -142,6 +154,7 @@ List<MemberNameOnly> findByActiveTrue();
 ```
 
 ### D-2. 클래스 기반(생성자)
+
 ```java
 public record MemberNameAndTeam(String username, String teamName) {}
 @Query("""
@@ -152,6 +165,7 @@ List<MemberNameAndTeam> list();
 ```
 
 ### D-3. 동적 프로젝션(리턴 타입 제네릭)
+
 ```java
 <T> List<T> findByTeamId(Long teamId, Class<T> type);
 
@@ -165,6 +179,7 @@ repo.findByTeamId(1L, MemberView.class);
 ## E. 페이징(Page) / 슬라이싱(Slice) / 정렬(Sort)
 
 ### E-1. API 개요
+
 - `Page<T>`: **총 건수** 포함. 리스트+페이지 메타.
 - `Slice<T>`: 다음 페이지 여부만, **count 쿼리 생략**으로 성능↑.
 - `List<T>`: 페이징 없이 전부.
@@ -175,6 +190,7 @@ Slice<Member> findByTeamId(Long teamId, Pageable pageable);
 ```
 
 ### E-2. 요청 예
+
 ```java
 Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.asc("id")));
 Page<Member> page = repo.findByActiveTrue(pageable);
@@ -183,6 +199,7 @@ Page<Member> page = repo.findByActiveTrue(pageable);
 - **Nested 정렬** 가능: `Sort.by("team.name").ascending()`(JPA가 조인 필요 → 주의)
 
 ### E-3. 커스텀 countQuery 최적화
+
 ```java
 @Query(
   value = "select m from Member m join m.team t where t.id = :teamId",
@@ -193,6 +210,7 @@ Page<Member> pageByTeam(@Param("teamId") Long teamId, Pageable pageable);
 - 복잡한 fetch join을 **카운트에서는 제거**(불필요 조인 제거로 속도↑).
 
 ### E-4. `Slice` 사용 시점
+
 - 모바일 **무한 스크롤** 등 “다음 페이지 존재 여부”만 필요할 때 적합.
 - **대용량 테이블**에서 전체 카운트가 고가일 때.
 
@@ -201,6 +219,7 @@ Page<Member> pageByTeam(@Param("teamId") Long teamId, Pageable pageable);
 ## F. 동적 검색 ① — Example & ExampleMatcher (간단 필터)
 
 ### F-1. Example (Query By Example; QBE)
+
 ```java
 Member probe = new Member();
 probe.setActive(true);
@@ -221,6 +240,7 @@ List<Member> result = repo.findAll(example);
 ## G. 동적 검색 ② — `Specification` (JPA Criteria 기반)
 
 ### G-1. `Specification` 인터페이스
+
 ```java
 public interface MemberRepository extends JpaRepository<Member, Long>, JpaSpecificationExecutor<Member> { }
 ```
@@ -257,6 +277,7 @@ Page<Member> page = repo.findAll(spec, PageRequest.of(0, 20));
 - **단점**: 코드가 장황, 복잡한 케이스는 **QueryDSL**로 넘어가면 가독성↑.
 
 ### G-2. 정렬/페이징과 함께
+
 - `JpaSpecificationExecutor`의 `findAll(Specification, Pageable)` 사용.
 - **카운트 쿼리** 자동 생성(복잡하면 `@Query`처럼 countQuery 최적화가 어려움).
 
@@ -267,6 +288,7 @@ Page<Member> page = repo.findAll(spec, PageRequest.of(0, 20));
 > 팀이 **동적 조건**을 많이 사용하거나 쿼리 복잡성이 높다면 **QueryDSL**을 진지하게 고려하세요.
 
 ### H-1. 세팅(요약; Gradle Kotlin DSL)
+
 ```kotlin
 dependencies {
   implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
@@ -277,6 +299,7 @@ dependencies {
 - 빌드 시 **Q타입**(예: `QMember`) 생성: `build/generated` 하위.
 
 ### H-2. 기본 사용
+
 ```java
 @Repository
 @RequiredArgsConstructor
@@ -306,6 +329,7 @@ public class MemberQueryDslRepository {
 - **주의**: `fetchJoin` + 페이징 시 DB 결과 왜곡 가능 → **두 번 조회**(id만 페이징 → IN 조회) 패턴 사용.
 
 ### H-3. DTO 프로젝션
+
 ```java
 public record MemberView(Long id, String username, String teamName) {}
 
@@ -324,6 +348,7 @@ public List<MemberView> viewsByTeam(Long teamId, int page, int size) {
 ```
 
 ### H-4. 카운트 최적화
+
 ```java
 JPAQuery<Long> countQuery = queryFactory
     .select(m.id.count())
@@ -340,6 +365,7 @@ return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
 ## I. 리포지토리 커스텀 구현(확장 포인트)
 
 ### I-1. 커스텀 인터페이스 + Impl
+
 ```java
 public interface MemberRepositoryCustom {
   List<MemberView> searchViews(Boolean active, String q, Pageable pageable);
@@ -381,6 +407,7 @@ public interface MemberRepository
 ## J. 정렬 고급 & 안전 가이드
 
 ### J-1. Sort 유효성 검증
+
 - 클라이언트 입력 정렬 컬럼 화이트리스트 검증:
 ```java
 Set<String> ALLOWED = Set.of("createdAt","id","username");
@@ -392,11 +419,13 @@ Sort sanitizeSort(Sort sort) {
 ```
 
 ### J-2. 대소문자 무시 정렬
+
 ```java
 Sort sort = Sort.by(Sort.Order.by("username").ignoreCase().ascending());
 ```
 
 ### J-3. 다국어 정렬(콜레이션)
+
 - DB **collation**(한국어/영문) 또는 **ICU** 설정, 네이티브 `order by username collate ...` 고려.
 
 ---
@@ -404,6 +433,7 @@ Sort sort = Sort.by(Sort.Order.by("username").ignoreCase().ascending());
 ## K. N+1과 페이징의 함정, 그리고 해결책
 
 ### K-1. 컬렉션 fetch join + 페이징 금지
+
 - 하이버네이트는 내부에서 메모리 페이징 → 결과 왜곡/성능 악화.
 - **해결**:
   1) **두 번 조회**: id 목록만 페이징 → IN 쿼리로 연관 로딩
@@ -424,6 +454,7 @@ List<Order> findWithMemberByIdIn(@Param("ids") List<Long> ids);
 ## L. 트랜잭션 & 읽기 전용 최적화
 
 ### L-1. 서비스 계층에서 경계 설정
+
 ```java
 @Service
 @RequiredArgsConstructor
@@ -437,6 +468,7 @@ public class MemberReadService {
 - 읽기 전용은 플러시 생략, 드라이버/DB 힌트(벤더 따라 다름).
 
 ### L-2. 벌크/배치 업데이트는 분리
+
 - `@Modifying` JPQL 또는 QueryDSL `update()` 사용 후 **영속성 컨텍스트 클리어**.
 
 ---
@@ -444,6 +476,7 @@ public class MemberReadService {
 ## M. 테스트 전략 — Query Method, Spec, QueryDSL
 
 ### M-1. 슬라이스로 빠르게
+
 ```java
 @DataJpaTest
 class MemberSearchSpecTest {
@@ -462,6 +495,7 @@ class MemberSearchSpecTest {
 ```
 
 ### M-2. Testcontainers로 실제 동작 검증
+
 - LIKE/정렬/인덱스 힌트/윈도우 함수 등 **DB 의존 케이스**는 컨테이너로 통합 테스트.
 
 ---
@@ -504,11 +538,13 @@ class MemberSearchSpecTest {
 ## P. 미니 레퍼런스(치트시트)
 
 ### P-1. 리포지토리 리턴 타입
+
 - 단건: `Optional<T>`/`T`/`@Nullable T`
 - 다건: `List<T>`/`Page<T>`/`Slice<T>`/`Stream<T>`
 - 프로젝션: 인터페이스/레코드/DTO
 
 ### P-2. 키워드 스니펫
+
 ```
 findBy, readBy, getBy, countBy, existsBy
 And, Or, Between, LessThan, GreaterThan, Like, In, Not, True, False, IsNull, StartingWith, Containing
@@ -517,6 +553,7 @@ Top1, First10
 ```
 
 ### P-3. JPA 힌트/락
+
 ```java
 @QueryHints(@QueryHint(name = "org.hibernate.readOnly", value = "true"))
 @Lock(LockModeType.PESSIMISTIC_WRITE)

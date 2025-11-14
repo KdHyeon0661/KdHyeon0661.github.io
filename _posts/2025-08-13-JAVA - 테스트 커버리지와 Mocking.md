@@ -12,7 +12,7 @@ category: Java
 
 ---
 
-## 0. 2025-11 기준 빠른 버전 안내
+## 2025-11 기준 빠른 버전 안내
 
 실무 예시에서 사용하는 대표 도구의 *최신 안정* 라인(2025-11 기준):
 
@@ -27,7 +27,7 @@ category: Java
 
 ---
 
-## 1. 커버리지 지표 — 무엇을 ‘덮’었는가?
+## 커버리지 지표 — 무엇을 ‘덮’었는가?
 
 | 지표 | 설명 | 해석 팁 |
 |---|---|---|
@@ -42,9 +42,9 @@ category: Java
 
 ---
 
-## 2. JaCoCo로 커버리지 측정 — 설정 스니펫
+## JaCoCo로 커버리지 측정 — 설정 스니펫
 
-### 2.1 Maven (기본 + 기준 미달 시 실패)
+### Maven (기본 + 기준 미달 시 실패)
 
 ```xml
 <!-- pom.xml -->
@@ -102,7 +102,7 @@ category: Java
 </build>
 ```
 
-### 2.2 Gradle (Kotlin DSL)
+### Gradle (Kotlin DSL)
 
 ```kotlin
 // build.gradle.kts
@@ -151,7 +151,8 @@ tasks.register<JacocoCoverageVerification>("jacocoVerify") {
 // tasks.check { dependsOn("jacocoTestReport", "jacocoVerify") }
 ```
 
-### 2.3 리포트 읽는 법(핵심 포인트)
+### 리포트 읽는 법(핵심 포인트)
+
 - **Missed Instructions/Branches**: 놓친 라인/분기를 먼저 본다.
 - **복잡도(Cyclomatic Complexity)**가 높은 클래스는 브랜치 기준을 특히 강화.
 - **변경 라인(diff coverage)** 중심 정책(예: “변경된 라인 90% 이상”)이 **전체 N%**보다 현실적.
@@ -164,7 +165,7 @@ $$
 
 ---
 
-## 3. 커버리지 ‘숫자’가 아니라 ‘위험’을 낮춰라 — 품질 중심 전략
+## 커버리지 ‘숫자’가 아니라 ‘위험’을 낮춰라 — 품질 중심 전략
 
 1. **경계/예외 경로**: 정상 플로우만 덮지 말고 **빈 컬렉션/null/극단값/예외**를 반드시 포함.
 2. **시간/난수/환경 분리**: `Clock`/`Random`/`Supplier<T>` 주입으로 **결정성** 확보.
@@ -174,11 +175,12 @@ $$
 
 ---
 
-## 4. 뮤테이션 테스트(PIT) — 테스트 ‘힘’ 점검
+## 뮤테이션 테스트(PIT) — 테스트 ‘힘’ 점검
 
 일반 커버리지는 “실행” 여부만 알려준다. **PIT**는 산술/조건 연산자 등을 변형해 **테스트가 실패를 일으키는지**로 *질*을 측정한다.
 
-### 4.1 Maven 설정(핵심만)
+### Maven 설정(핵심만)
+
 ```xml
 <!-- pom.xml -->
 <plugin>
@@ -199,7 +201,8 @@ $$
 ```
 (버전 출처: Sonatype Central)
 
-### 4.2 Gradle 설정
+### Gradle 설정
+
 ```kotlin
 // build.gradle.kts
 plugins { id("info.solidsoft.pitest") version "1.15.0" } // 2025-11 기준
@@ -217,9 +220,9 @@ pitest {
 
 ---
 
-## 5. Mocking — 원칙, 선택, 경계
+## Mocking — 원칙, 선택, 경계
 
-### 5.1 Test Double 분류 요약
+### Test Double 분류 요약
 
 | 종류 | 목적 | 예 |
 |---|---|---|
@@ -232,17 +235,19 @@ pitest {
 **원칙**: *Don’t mock what you don’t own*.
 도메인/값 객체는 **실제 구현**을, **경계(네트워크/DB/파일/시간/난수)** 만 **Mock/Fake**로 치환하라.
 
-### 5.2 언제 Mock/Fake인가?
+### 언제 Mock/Fake인가?
+
 - **단위 테스트**: DB/네트워크/파일 → **Mock/Fake** (속도·결정성↑)
 - **통합 단계**: **Testcontainers/WireMock**으로 실제 흐름도 검증(여기서는 간단 언급만).
 
 ---
 
-## 6. Mockito 실전 스니펫 (JUnit 5/Jupiter)
+## Mockito 실전 스니펫 (JUnit 5/Jupiter)
 
 > 의존성(예시): `org.mockito:mockito-junit-jupiter:5.20.0` (Core最新版 릴리스 기준)
 
-### 6.1 기본 Stubbing/Verify
+### 기본 Stubbing/Verify
+
 ```java
 import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -276,14 +281,16 @@ class ServiceTest {
 }
 ```
 
-### 6.2 예외/void/Answer
+### 예외/void/Answer
+
 ```java
 when(repo.findName(99L)).thenThrow(new NoSuchElementException());
 doThrow(new RuntimeException()).when(mail).send(any(), any());
 when(repo.findName(anyLong())).thenAnswer(inv -> "user-" + inv.getArgument(0, Long.class));
 ```
 
-### 6.3 ArgumentCaptor로 값 검증
+### ArgumentCaptor로 값 검증
+
 ```java
 import org.mockito.ArgumentCaptor;
 
@@ -295,7 +302,8 @@ assertEquals("bob@ex.com", to.getValue());
 assertTrue(body.getValue().contains("bob"));
 ```
 
-### 6.4 Spy(부분 모킹) — 안전 패턴
+### Spy(부분 모킹) — 안전 패턴
+
 ```java
 List<String> real = new ArrayList<>();
 List<String> spy = spy(real);
@@ -306,7 +314,8 @@ spy.add("x");
 assertEquals(42, spy.size());
 ```
 
-### 6.5 정적 메서드 모킹 (Mockito 3.4+)
+### 정적 메서드 모킹 (Mockito 3.4+)
+
 ```java
 import java.util.UUID;
 import org.mockito.MockedStatic;
@@ -318,9 +327,10 @@ try (MockedStatic<UUID> mocked = mockStatic(UUID.class)) {
 
 ---
 
-## 7. 파일/시간/난수/동시성 — 결정성 확보 패턴
+## 파일/시간/난수/동시성 — 결정성 확보 패턴
 
-### 7.1 파일 — `@TempDir` (Jupiter)
+### 파일 — `@TempDir` (Jupiter)
+
 ```java
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.*;
@@ -337,13 +347,15 @@ class FileTest {
 }
 ```
 
-### 7.2 시간 — `Clock` 주입
+### 시간 — `Clock` 주입
+
 - 프로덕션: `LocalDate.now(clock)`
 - 테스트: `Clock.fixed(Instant.parse("2025-01-01T00:00:00Z"), ZoneOffset.UTC)`
 
-### 7.3 난수 — `Random`/UUID 주입 또는 정적 모킹
+### 난수 — `Random`/UUID 주입 또는 정적 모킹
 
-### 7.4 동시성 — 타이밍 의존 제거
+### 동시성 — 타이밍 의존 제거
+
 ```java
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -373,7 +385,7 @@ void inc_threadSafe() throws Exception {
 
 ---
 
-## 8. Mocking 안티패턴 — 이렇게 쓰지 말자
+## Mocking 안티패턴 — 이렇게 쓰지 말자
 
 - **오버모킹**: 값/도메인 객체까지 전부 Mock → 설계 변경에 **취약**.
 - **네거티브 검증 남발**: `verifyNoMoreInteractions`를 광범위하게 → 사소한 변경에도 깨짐.
@@ -383,7 +395,7 @@ void inc_threadSafe() throws Exception {
 
 ---
 
-## 9. 커버리지+Mocking을 팀에서 ‘운영’하는 법
+## 커버리지+Mocking을 팀에서 ‘운영’하는 법
 
 **정책 제안(예시)**
 - 변경 라인(**diff coverage**) **라인 ≥ 90%**, **브랜치 ≥ 80%**.
@@ -399,9 +411,10 @@ void inc_threadSafe() throws Exception {
 
 ---
 
-## 10. 종합 예제 — 서비스 + 리포지토리 + 메일러
+## 종합 예제 — 서비스 + 리포지토리 + 메일러
 
-### 10.1 대상 코드
+### 대상 코드
+
 ```java
 package com.example;
 
@@ -438,7 +451,8 @@ public final class UserService {
 }
 ```
 
-### 10.2 단위 테스트 (Mockito + 결정성 확보)
+### 단위 테스트 (Mockito + 결정성 확보)
+
 ```java
 package com.example;
 
@@ -496,7 +510,7 @@ class UserServiceTest {
 
 ---
 
-## 11. 체크리스트
+## 체크리스트
 
 - [ ] 브랜치/예외/경계값이 포함되어 있는가?
 - [ ] 변경 라인(디프)의 커버리지를 우선 보나?
@@ -507,7 +521,7 @@ class UserServiceTest {
 
 ---
 
-## 12. 결론
+## 결론
 
 - 커버리지는 **양**(어디까지 실행했나), **뮤테이션은 질**(버그를 잡아내는 힘)을 보여준다.
 - Mocking은 **경계 의존성**을 대체해 **빠르고 신뢰 가능한** 단위 테스트를 만든다.

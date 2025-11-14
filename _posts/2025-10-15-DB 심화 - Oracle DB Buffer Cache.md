@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 0. 큰 그림 — “블록” 단위 I/O와 캐시 생태계
+## 큰 그림 — “블록” 단위 I/O와 캐시 생태계
 
 오라클 **버퍼 캐시(Buffer Cache)** 는 디스크의 **데이터파일 블록**을 **메모리**에 적재해 **논리적 I/O**(consistent/current)로 빠르게 접근하게 하는 영역입니다.
 핵심 키워드:
@@ -28,9 +28,9 @@ category: DB 심화
 
 ---
 
-## 1. 버퍼 캐시 내부 구조 — “버퍼 프레임 + 버퍼 헤더”
+## 버퍼 캐시 내부 구조 — “버퍼 프레임 + 버퍼 헤더”
 
-### 1.1 버퍼 프레임(Buffer Frame)과 클래스
+### 버퍼 프레임(Buffer Frame)과 클래스
 
 - 프레임 한 칸이 **DB 블록(8KB 등)** 하나를 담습니다.
 - 프레임은 **상태**(free, xcur, scur, cr 등)와 **클래스**(data block, segment header, undo 등)로 구분됩니다.
@@ -58,7 +58,7 @@ ORDER  BY cnt DESC;
 
 > RAC에선 **gc current/cr** 상태와 **GCS** 통신이 추가됩니다(§7).
 
-### 1.2 버퍼 헤더(Buffer Header) — 무엇을 들고 있나?
+### 버퍼 헤더(Buffer Header) — 무엇을 들고 있나?
 
 - (파일#, 블록#), **SCN/버전**, **Dirty 여부**, **핀 카운트**(고정 중이면 제거 금지), **Touch Count(tch)**, **체인 포인터** 등.
 - **버퍼 헤더**는 **해시 버킷 체인**에 연결되며, **LRU 체인**에도 링크로 연결됩니다.
@@ -76,9 +76,9 @@ ORDER  BY tch DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 2. Cache Buffer Chains(CBC) — 해시 버킷과 래치 경합
+## Cache Buffer Chains(CBC) — 해시 버킷과 래치 경합
 
-### 2.1 CBC 동작 원리
+### CBC 동작 원리
 
 1. **(파일#, 블록#)** 조합을 **해시** → **해시 버킷** 선택.
 2. 해당 버킷의 **체인(링크드 리스트)** 에서 **버퍼 헤더**를 탐색.
@@ -88,7 +88,7 @@ ORDER  BY tch DESC FETCH FIRST 20 ROWS ONLY;
 > **장점**: O(1)에 근접한 탐색.
 > **단점**: **특정 버킷/블록에 접근이 집중**되면 **래치 경합**.
 
-### 2.2 CBC 경합이 왜 생기나? (Hot Block 패턴)
+### CBC 경합이 왜 생기나? (Hot Block 패턴)
 
 - **단일 수치 증가 카운터 테이블**(모든 트랜잭션이 같은 블록/행 갱신)
 - **편향된 인덱스 액세스**(예: 증가하는 시퀀스로 **인덱스 한쪽 리프**가 과열)
@@ -111,7 +111,7 @@ AND    (event LIKE 'latch:%' OR event LIKE 'buffer busy%');
 > 과거/단일 인스턴스: `latch: cache buffers chains`
 > RAC: 글로벌 캐시 관련 `gc buffer busy`로 나타나기도.
 
-### 2.3 CBC 경합 완화 전략(핵심)
+### CBC 경합 완화 전략(핵심)
 
 - **액세스 분산**:
   - **Reverse Key Index** 로 **순차 삽입 핫 리프** 분산.
@@ -139,16 +139,16 @@ PARTITIONS 16;
 
 ---
 
-## 3. LRU 체인 — 냉/온 리스트와 터치 카운트
+## LRU 체인 — 냉/온 리스트와 터치 카운트
 
-### 3.1 개념 업데이트: “순수 LRU”가 아니다
+### 개념 업데이트: “순수 LRU”가 아니다
 
 - 오래전 **단일 LRU**가 아니라, 현재는 **터치 카운트(tch)**, **핫/콜드 리스트**, **중간 삽입(midpoint)**, **버퍼 풀(KEEP/RECYCLE/DEFAULT)** 등 **복합 정책**을 사용합니다.
 - 목적: **대용량 Full Scan** 같은 **일시적 접근**이 **핵심 워킹셋**을 **몰아내지 않도록**.
 
 > 정확한 알고리즘은 버전에 따라 달라질 수 있고 **공식 문서에 완전 공개되지 않습니다**. 여기서는 **관찰로 추정 가능한 동작**을 설명합니다.
 
-### 3.2 냉/온 리스트, midpoint 삽입, touch count
+### 냉/온 리스트, midpoint 삽입, touch count
 
 - 새로 읽은 블록은 **콜드(냉) 영역** 중간 부근에 삽입.
 - **반복 참조**되면 **tch 증가**, 상대적으로 **온(핫) 영역**에 잔류.
@@ -165,7 +165,7 @@ SHOW PARAMETER db_keep_cache_size;
 SHOW PARAMETER db_recycle_cache_size;
 ```
 
-### 3.3 Keep/Recycle Buffer Pool — 워킹셋 힌팅
+### Keep/Recycle Buffer Pool — 워킹셋 힌팅
 
 - **KEEP**: 항상 메모리에 남기고 싶은 “작은 핵심 테이블/인덱스”.
 - **RECYCLE**: **일시적 접근**(예: 로그성 대테이블) → 캐시 오염 최소화.
@@ -185,9 +185,9 @@ ALTER TABLE fact_tx STORAGE (BUFFER_POOL RECYCLE);
 
 ---
 
-## 4. CR(Consistent Read)와 버퍼 — 같은 블록의 “여러 버전”
+## CR(Consistent Read)와 버퍼 — 같은 블록의 “여러 버전”
 
-### 4.1 왜 CR가 필요한가?
+### 왜 CR가 필요한가?
 
 - 쿼리 시작 시 **SCN**을 고정. 읽는 블록의 변경 SCN이 크면 **Undo** 로 과거 버전을 재조립 → **CR 버퍼** 생성.
 - 결과: **트랜잭션 격리/일관** 보장.
@@ -203,16 +203,16 @@ FROM   v$sysstat
 WHERE  name IN ('consistent gets', 'db block gets', 'physical reads');
 ```
 
-### 4.2 CR 버퍼 수명과 LRU
+### CR 버퍼 수명과 LRU
 
 - **CR 버퍼**도 버퍼 캐시에 존재합니다. **일시적** 성격이 강해 LRU **콜드 측**에서 빨리 밀려나가기 쉬움.
 - **장시간 쿼리 + 대규모 DML** → Undo 부족 시 **ORA-01555(snapshot too old)**.
 
 ---
 
-## 5. 실습: 눈으로 보는 버퍼 캐시
+## 실습: 눈으로 보는 버퍼 캐시
 
-### 5.1 준비 — 샘플 테이블/인덱스
+### 준비 — 샘플 테이블/인덱스
 
 ```sql
 -- 샘플: 판매 테이블 (앞 절의 예시와 유사)
@@ -244,7 +244,7 @@ END;
 /
 ```
 
-### 5.2 캐시 히트·물리 읽기 감각잡기
+### 캐시 히트·물리 읽기 감각잡기
 
 ```sql
 -- 수행 전 베이스라인
@@ -266,7 +266,7 @@ WHERE  name IN ('db block gets','consistent gets','physical reads');
 
 > 인덱스 범위 스캔은 **단일 블록 읽기**가 많고 캐시 히트율이 비교적 높게 나옵니다.
 
-### 5.3 Full Scan이 캐시에 미치는 영향(RECYCLE 활용)
+### Full Scan이 캐시에 미치는 영향(RECYCLE 활용)
 
 ```sql
 -- 대량 Full Scan
@@ -286,7 +286,7 @@ ALTER TABLE sales_demo STORAGE (BUFFER_POOL RECYCLE);
 
 > Full Scan은 과거엔 `db file scattered read`, 11g+ 에선 조건에 따라 **direct path read** 경로도 탑니다(바이패스/부분적 사용). **RECYCLE 풀**은 워킹셋 보호에 도움.
 
-### 5.4 CBC 핫 블록 재현(소규모)과 경감
+### CBC 핫 블록 재현(소규모)과 경감
 
 ```sql
 -- "카운터 1행" 패턴(비추천: 핫 블록의 전형)
@@ -326,7 +326,7 @@ FROM   v$latch
 WHERE  LOWER(name) LIKE '%cache buffers chain%';
 ```
 
-### 5.5 KEEP 풀로 핵심 룩업 고정
+### KEEP 풀로 핵심 룩업 고정
 
 ```sql
 -- 소형 코드 테이블을 KEEP로 항상 메모리에
@@ -347,9 +347,9 @@ ALTER TABLE dim_code STORAGE (BUFFER_POOL KEEP);
 
 ---
 
-## 6. 운영·튜닝 관점 — 어떤 지표를 보나?
+## 운영·튜닝 관점 — 어떤 지표를 보나?
 
-### 6.1 상위 대기 이벤트·세션 관측
+### 상위 대기 이벤트·세션 관측
 
 ```sql
 -- 시스템 Top Waits
@@ -372,7 +372,7 @@ ORDER  BY seconds_in_wait DESC;
 - **`buffer busy waits`**: 버퍼 헤더 단의 다양한 경합(로드/쓰기 완료 대기 포함).
 - **`read by other session`**: 다른 세션이 같은 블록을 디스크에서 읽는 중, 완료 대기.
 
-### 6.2 버퍼 풀·LRU 상태
+### 버퍼 풀·LRU 상태
 
 ```sql
 SELECT * FROM v$buffer_pool;
@@ -391,7 +391,7 @@ WHERE  tch >= 64
 ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 ```
 
-### 6.3 수학적 감각 (지표는 참고용)
+### 수학적 감각 (지표는 참고용)
 
 - **캐시 히트률(참고용)**
   $$ \text{Hit Ratio} \approx 1 - \frac{\text{physical reads}}{\text{db block gets} + \text{consistent gets}} $$
@@ -400,7 +400,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 7. RAC 관점 한 줄 — 글로벌 캐시와 핫 블록
+## RAC 관점 한 줄 — 글로벌 캐시와 핫 블록
 
 - RAC에서는 **같은 데이터베이스**를 **여러 인스턴스**가 공유. 블록 소유권 전환에 **GCS/GES** 개입.
 - **핫 블록**은 **인스턴스 간** 지속 왕복으로 `gc buffer busy`, `gc cr request` 등의 **gc 대기**로 표출.
@@ -408,7 +408,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 8. 자주 하는 질문(FAQ)
+## 자주 하는 질문(FAQ)
 
 **Q1. LRU 체인을 “강제로” 조정할 수 있나?**
 - 직접 조정은 불가. 대신 **KEEP/RECYCLE 풀**, **오브젝트 설계**, **쿼리 패턴**을 조정해 **LRU 결과**를 바꿉니다.
@@ -424,7 +424,7 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 9. 체크리스트 — 버퍼 캐시 튜닝 12선
+## 체크리스트 — 버퍼 캐시 튜닝 12선
 
 1. **Top Waits** 에 `latch: cache buffers chains` 있는가?
 2. **핫 블록**(x$bh.tch가 비정상 고카운트) 존재? 해당 오브젝트/인덱스 리프/루트 편향?
@@ -441,9 +441,9 @@ ORDER  BY tch DESC FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 10. 통합 실습 시나리오 — “문제 만들고, 관측하고, 고친다”
+## 통합 실습 시나리오 — “문제 만들고, 관측하고, 고친다”
 
-### 10.1 CBC 핫 블록 만들기
+### CBC 핫 블록 만들기
 
 ```sql
 -- 1) 단일-카운터(나쁜 예시)
@@ -466,7 +466,7 @@ FROM   x$bh
 ORDER  BY tch DESC FETCH FIRST 10 ROWS ONLY;
 ```
 
-### 10.2 개선: 샤딩 카운터 + 커버링 인덱스
+### 개선: 샤딩 카운터 + 커버링 인덱스
 
 ```sql
 DROP TABLE t_counter_shard PURGE;
@@ -494,7 +494,7 @@ FROM   v$latch
 WHERE  LOWER(name) LIKE '%cache buffers chain%';
 ```
 
-### 10.3 Full Scan 오염 완화: RECYCLE & 보고서 쿼리 분리
+### Full Scan 오염 완화: RECYCLE & 보고서 쿼리 분리
 
 ```sql
 -- 대테이블을 RECYCLE로
@@ -508,7 +508,7 @@ ALTER TABLE dim_code STORAGE (BUFFER_POOL KEEP);
 SELECT * FROM v$buffer_pool_statistics;
 ```
 
-### 10.4 CR/Undo 관측: 장시간 쿼리 + 동시 DML
+### CR/Undo 관측: 장시간 쿼리 + 동시 DML
 
 ```sql
 -- 세션 A: 장시간 집계
@@ -526,7 +526,7 @@ SHOW PARAMETER undo_retention;
 
 ---
 
-## 11. 참고 SQL 묶음 — 진단 단축키
+## 참고 SQL 묶음 — 진단 단축키
 
 ```sql
 -- 11.1 v$bh: 오브젝트별 블록 분포
@@ -565,7 +565,7 @@ ORDER  BY pr DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 12. 결론 요약
+## 결론 요약
 
 - **CBC**: (파일#, 블록#) → **해시 버킷** → **체인 탐색**. **핫 블록**은 `latch: cache buffers chains`로 드러남 — **접근 분산/쿼리 리라이트/인덱스 설계**가 핵심 처방.
 - **LRU**: 순수 LRU가 아니라 **터치 카운트 기반 핫/콜드**. **KEEP/RECYCLE**로 워킹셋 의도적 보존/격리.

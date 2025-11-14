@@ -6,7 +6,7 @@ category: Java
 ---
 # `module-info.java` 구조
 
-## 1. `module-info.java`가 담는 것: 개념 맵
+## `module-info.java`가 담는 것: 개념 맵
 
 - **모듈 선언**: `module` 또는 `open module`
 - **의존성**: `requires`, `requires transitive`, `requires static`
@@ -33,7 +33,7 @@ module com.example.app {
 
 ---
 
-## 2. 키워드별 역할과 차이
+## 키워드별 역할과 차이
 
 | 구분 | 키워드 | 적용 시점/의미 | 접근 범위 |
 |---|---|---|---|
@@ -56,7 +56,7 @@ module com.example.app {
 
 ---
 
-## 3. 모듈 이름, 패키지, JAR의 관계
+## 모듈 이름, 패키지, JAR의 관계
 
 - **모듈 이름**: 보통 패키지 네이밍과 유사(역도메인; 소문자·`.`).
 - **한 모듈 = 하나의 `module-info.java`**.
@@ -66,9 +66,10 @@ module com.example.app {
 
 ---
 
-## 4. 설계 패턴: API / 구현 / 리플렉션
+## 설계 패턴: API / 구현 / 리플렉션
 
-### 4.1 API/구현 분리
+### API/구현 분리
+
 ```
 com.example.api      → exports com.example.api.* (인터페이스·DTO)
 com.example.impl     → exports com.example.impl.spi to com.example.app (선택 공개)
@@ -77,7 +78,8 @@ com.example.app      → requires transitive com.example.api, requires com.examp
 
 API는 폭넓게 `exports`, 구현은 최대한 은닉(필요 시 `exports … to`).
 
-### 4.2 직렬화/바인딩(리플렉션) 최소 개방
+### 직렬화/바인딩(리플렉션) 최소 개방
+
 ```java
 module com.example.bind {
     requires com.fasterxml.jackson.databind;
@@ -86,7 +88,8 @@ module com.example.bind {
 }
 ```
 
-### 4.3 서비스 플러그인 구조
+### 서비스 플러그인 구조
+
 ```java
 module com.example.spi {
     exports com.example.spi;
@@ -101,18 +104,22 @@ module com.example.plugins.json {
 
 ---
 
-## 5. 빌드·실행·패키징(명령행, Maven, Gradle)
+## 빌드·실행·패키징(명령행, Maven, Gradle)
 
-### 5.1 명령행(단일 모듈 예)
+### 명령행(단일 모듈 예)
+
 ```bash
 # 컴파일
+
 javac --module-source-path src -d out $(find src -name "*.java")
 
 # 실행
+
 java --module-path out -m com.example.app/com.example.app.Main
 ```
 
-### 5.2 Maven (JPMS 인지)
+### Maven (JPMS 인지)
+
 ```xml
 <!-- pom.xml -->
 <properties>
@@ -133,7 +140,8 @@ java --module-path out -m com.example.app/com.example.app.Main
 - 자동으로 모듈 경로 인식.
 - 리플렉션 프레임워크 테스트 시 Surefire/Failsafe에 `--add-opens` 전달이 필요할 수 있다.
 
-### 5.3 Gradle (Kotlin DSL)
+### Gradle (Kotlin DSL)
+
 ```kotlin
 plugins { java; application }
 
@@ -149,12 +157,15 @@ tasks.test {
 application { mainClass.set("com.example.app.Main") }
 ```
 
-### 5.4 jdeps + jlink 파이프라인
+### jdeps + jlink 파이프라인
+
 ```bash
 # 필요한 플랫폼 모듈 자동 추론
+
 jdeps --print-module-deps --ignore-missing-deps out/com.example.app > deps.txt
 
 # 경량 런타임 생성
+
 jlink --module-path "$JAVA_HOME/jmods:out" \
       --add-modules com.example.app,$(cat deps.txt) \
       --strip-debug --no-header-files --no-man-pages \
@@ -163,9 +174,10 @@ jlink --module-path "$JAVA_HOME/jmods:out" \
 
 ---
 
-## 6. 자주 쓰는 문법 패턴(정리 예제)
+## 자주 쓰는 문법 패턴(정리 예제)
 
-### 6.1 `requires` 변형
+### `requires` 변형
+
 ```java
 module com.example.compiler {
     // 런타임 불필요: 컴파일 시 애너테이션만
@@ -176,7 +188,8 @@ module com.example.compiler {
 }
 ```
 
-### 6.2 선택적 공개(정교한 exports/opens)
+### 선택적 공개(정교한 exports/opens)
+
 ```java
 module com.example.selective {
     exports com.example.selective.api; // 일반 공개
@@ -186,7 +199,8 @@ module com.example.selective {
 }
 ```
 
-### 6.3 서비스 다중 제공자
+### 서비스 다중 제공자
+
 ```java
 module com.example.pay {
     exports com.example.pay.spi;
@@ -200,9 +214,10 @@ module com.example.pay {
 
 ---
 
-## 7. 테스트·프레임워크와의 상호작용
+## 테스트·프레임워크와의 상호작용
 
-### 7.1 Jackson/Hibernate 등 리플렉션 라이브러리
+### Jackson/Hibernate 등 리플렉션 라이브러리
+
 - 원칙: **모델 패키지에만 `opens`** (혹은 `open module`은 지양).
 - 테스트에서만 필요하면 **런처 옵션**으로 보완:
 ```bash
@@ -226,13 +241,14 @@ tasks.test {
 }
 ```
 
-### 7.2 Unnamed(클래스패스)와 혼용
+### Unnamed(클래스패스)와 혼용
+
 - **이름 있는 모듈**은 **클래스패스(unnamed)** 를 **자동으로 읽지 않는다**.
 - 마이그레이션 중엔 **라이브러리를 자동 모듈**로 두거나, 임시로 `--add-reads` 등으로 연결.
 
 ---
 
-## 8. 오류·경고 트러블슈팅 매트릭스
+## 오류·경고 트러블슈팅 매트릭스
 
 | 증상/메시지 | 원인 | 해결 |
 |---|---|---|
@@ -248,9 +264,10 @@ tasks.test {
 
 ---
 
-## 9. 서비스 로더(ServiceLoader)와 모듈
+## 서비스 로더(ServiceLoader)와 모듈
 
-### 9.1 인터페이스/구현/소비자
+### 인터페이스/구현/소비자
+
 ```java
 // com.example.spi module
 package com.example.spi;
@@ -269,7 +286,8 @@ module com.example.app {
 }
 ```
 
-### 9.2 런타임 로딩
+### 런타임 로딩
+
 ```java
 ServiceLoader<Plugin> loader = ServiceLoader.load(Plugin.class);
 for (Plugin p : loader) {
@@ -281,7 +299,7 @@ for (Plugin p : loader) {
 
 ---
 
-## 10. 보안·유지보수 관점 가이드
+## 보안·유지보수 관점 가이드
 
 1. **기본은 닫고 필요한 최소만 연다**
    - 공개: `exports` 최소
@@ -298,7 +316,7 @@ for (Plugin p : loader) {
 
 ---
 
-## 11. 마이그레이션 단계 로드맵
+## 마이그레이션 단계 로드맵
 
 1. **의존성 지도 작성**: `jdeps`로 JAR 간 참조 파악
 2. **Split Package 제거**: 패키지 리팩터링
@@ -310,7 +328,7 @@ for (Plugin p : loader) {
 
 ---
 
-## 12. 모듈 레이어(고급): 플러그인 격리 로딩
+## 모듈 레이어(고급): 플러그인 격리 로딩
 
 여러 버전의 플러그인을 **격리된 로더**로 올릴 때:
 ```java
@@ -327,7 +345,7 @@ ServiceLoader<Plugin> loader = ServiceLoader.load(layer, Plugin.class);
 
 ---
 
-## 13. 리소스·리플렉션·도구 상식
+## 리소스·리플렉션·도구 상식
 
 - **리소스 로드**(`Class.getResource*`)는 모듈화와 무관하게 동작하나, 모듈 경로 상 JAR의 구조를 따른다.
 - **`opens`는 컴파일에는 영향 없음**(오직 런타임 반사). 반대로 `exports`는 컴파일 가시성에도 영향.
@@ -336,9 +354,10 @@ ServiceLoader<Plugin> loader = ServiceLoader.load(layer, Plugin.class);
 
 ---
 
-## 14. 실전 예시: 세 모듈 구성
+## 실전 예시: 세 모듈 구성
 
-### 14.1 디렉터리
+### 디렉터리
+
 ```
 src/
  ├─ com.example.core/
@@ -352,7 +371,7 @@ src/
      └─ com/example/app/...
 ```
 
-### 14.2 module-info.java
+### module-info.java
 
 **core**
 ```java
@@ -384,7 +403,8 @@ module com.example.app {
 }
 ```
 
-### 14.3 컴파일·실행
+### 컴파일·실행
+
 ```bash
 javac --module-source-path src -d out $(find src -name "*.java")
 java  --module-path out -m com.example.app/com.example.app.Main
@@ -392,7 +412,7 @@ java  --module-path out -m com.example.app/com.example.app.Main
 
 ---
 
-## 15. 체크리스트
+## 체크리스트
 
 - [ ] **Split Package**가 없는가? (패키지 경계 = 모듈 경계)
 - [ ] `exports`는 **필요 최소**로만 열었는가?
@@ -405,7 +425,7 @@ java  --module-path out -m com.example.app/com.example.app.Main
 
 ---
 
-## 16. 자주 묻는 질문(요약)
+## 자주 묻는 질문(요약)
 
 **Q1. `exports`와 `opens`를 둘 다 써야 하나요?**
 A. 목적이 다르다. **API 공개**는 `exports`, **반사(직렬화/프레임워크)**는 `opens`. 필요에 따라 병행 가능.
@@ -424,7 +444,7 @@ A. 단기 우회책일 뿐이다. 보안/가시성/버전 관리 측면에서 **
 
 ---
 
-## 17. 완성형 예제: 최소 앱 + 서비스 제공자
+## 완성형 예제: 최소 앱 + 서비스 제공자
 
 **`com.example.spi/module-info.java`**
 ```java
@@ -490,7 +510,7 @@ java  --module-path out -m com.example.app/com.example.app.Main "개발자"
 
 ---
 
-## 18. 한 장 표 — 문법 요약
+## 한 장 표 — 문법 요약
 
 | 문법 | 목적 | 컴파일 시 영향 | 런타임 영향 | 노출 범위 |
 |---|---|---|---|---|
@@ -506,7 +526,7 @@ java  --module-path out -m com.example.app/com.example.app.Main "개발자"
 
 ---
 
-## 19. 마무리
+## 마무리
 
 `module-info.java`는 단순 선언 파일이 아니라 **아키텍처의 계약서**다.
 - **API/구현/리플렉션/서비스**를 구분하고,

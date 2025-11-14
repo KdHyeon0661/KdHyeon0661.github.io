@@ -6,7 +6,7 @@ category: Java
 ---
 # AWT, Swing, JavaFX
 
-## 1. 공통 큰 그림과 역사
+## 공통 큰 그림과 역사
 
 | 항목 | AWT | Swing | JavaFX (OpenJFX) |
 |---|---|---|---|
@@ -22,14 +22,16 @@ category: Java
 
 ---
 
-## 2. AWT (Abstract Window Toolkit)
+## AWT (Abstract Window Toolkit)
 
-### 2.1 핵심 요약
+### 핵심 요약
+
 - OS 네이티브 위젯을 감싼 **heavyweight** 컴포넌트.
 - **이벤트 위임 모델**(delegation model)을 최초 도입.
 - 저수준 드로잉 `Graphics`, 입력 디바이스, 클립보드 등 **플랫폼 브리지** 역할.
 
-### 2.2 최소 예제
+### 최소 예제
+
 ```java
 import java.awt.*;
 import java.awt.event.*;
@@ -50,21 +52,24 @@ public class AWTExample {
 }
 ```
 
-### 2.3 장단점 & 실전 팁
+### 장단점 & 실전 팁
+
 - 장점: **네이티브 룩**, OS 자원 접근.
 - 단점: 플랫폼별 차이, **커스터마이징 제약**, heavyweight 혼합 시 Z-order 문제.
 - 팁: 레거시 유지/OS 통합(프린팅/클립보드) 시에만 선택. 신규는 Swing/JavaFX 권장.
 
 ---
 
-## 3. Swing
+## Swing
 
-### 3.1 핵심 요약
+### 핵심 요약
+
 - **경량 컴포넌트**: 그리기를 Java가 담당 → 일관된 UI·고급 커스터마이징.
 - **EDT(Event Dispatch Thread)** 에서 모든 UI 변경 수행.
 - MVC 설계(모델 분리), **룩앤필(L&F)** 변경 가능(Nimbus 등).
 
-### 3.2 EDT 규칙 (매우 중요)
+### EDT 규칙 (매우 중요)
+
 - **UI 생성/갱신은 항상 EDT에서**.
 - `SwingUtilities.invokeLater(...)` 또는 `invokeAndWait(...)` 사용.
 
@@ -87,7 +92,8 @@ public class SwingHello {
 }
 ```
 
-### 3.3 레이아웃 매니저 요약
+### 레이아웃 매니저 요약
+
 | 매니저 | 특징 | 사용 예 |
 |---|---|---|
 | `BorderLayout` | 북/남/동/서/중앙 | 메인 프레임 기본 |
@@ -102,7 +108,8 @@ p.add(new JButton("North"), BorderLayout.NORTH);
 p.add(new JButton("Center"), BorderLayout.CENTER);
 ```
 
-### 3.4 커스텀 페인팅 (Graphics2D)
+### 커스텀 페인팅 (Graphics2D)
+
 Swing에서는 `JComponent#paintComponent`를 오버라이드한다.
 
 ```java
@@ -135,7 +142,8 @@ public class PaintDemo {
 }
 ```
 
-### 3.5 백그라운드 작업 (SwingWorker)
+### 백그라운드 작업 (SwingWorker)
+
 ```java
 new SwingWorker<String, Void>() {
     @Override protected String doInBackground() throws Exception {
@@ -147,7 +155,8 @@ new SwingWorker<String, Void>() {
 }.execute();
 ```
 
-### 3.6 룩앤필 & 하이 DPI
+### 룩앤필 & 하이 DPI
+
 ```java
 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 ```
@@ -155,15 +164,17 @@ UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
 ---
 
-## 4. JavaFX (OpenJFX)
+## JavaFX (OpenJFX)
 
-### 4.1 핵심 요약
+### 핵심 요약
+
 - **Scene Graph**(트리)로 UI 구성, **GPU 가속** 렌더링.
 - **JavaFX Application Thread**에서 UI 변경.
 - **CSS 스타일링**, **FXML**로 선언적 UI, **프로퍼티/바인딩**으로 상태 동기화.
 - 2D/3D, **애니메이션**, **Media**, **WebView**까지 포괄.
 
-### 4.2 최소 예제
+### 최소 예제
+
 ```java
 import javafx.application.Application;
 import javafx.scene.Scene;
@@ -183,7 +194,8 @@ public class FxHello extends Application {
 }
 ```
 
-### 4.3 레이아웃 & 컨트롤
+### 레이아웃 & 컨트롤
+
 | 레이아웃 | 용도 |
 |---|---|
 | `HBox`/`VBox` | 수평/수직 스택 |
@@ -198,7 +210,8 @@ root.setTop(new javafx.scene.control.MenuBar());
 root.setCenter(new javafx.scene.control.TableView<>());
 ```
 
-### 4.4 CSS 스타일링
+### CSS 스타일링
+
 - `-fx-` 접두사의 CSS 속성.
 
 ```css
@@ -213,7 +226,8 @@ scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
 Button b = new Button("Save"); b.getStyleClass().add("primary");
 ```
 
-### 4.5 FXML + 컨트롤러 (선언적 UI)
+### FXML + 컨트롤러 (선언적 UI)
+
 `sample.fxml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -244,7 +258,8 @@ Scene scene = new Scene(loader.load());
 stage.setScene(scene);
 ```
 
-### 4.6 프로퍼티와 바인딩
+### 프로퍼티와 바인딩
+
 ```java
 import javafx.beans.property.*;
 
@@ -254,7 +269,8 @@ label.textProperty().bind(name.concat(" !")); // name 변경 시 자동 반영
 name.set("Bob"); // Label 텍스트: "Bob !"
 ```
 
-### 4.7 애니메이션 & 미디어
+### 애니메이션 & 미디어
+
 ```java
 import javafx.animation.*;
 import javafx.util.Duration;
@@ -266,13 +282,15 @@ tt.setToX(200); tt.setAutoReverse(true); tt.setCycleCount(Animation.INDEFINITE);
 tt.play();
 ```
 
-### 4.8 WebView 임베드
+### WebView 임베드
+
 ```java
 javafx.scene.web.WebView web = new javafx.scene.web.WebView();
 web.getEngine().load("https://openjdk.org/");
 ```
 
-### 4.9 백그라운드 작업 (Task/Service)
+### 백그라운드 작업 (Task/Service)
+
 ```java
 import javafx.concurrent.Task;
 
@@ -287,14 +305,15 @@ new Thread(task, "worker").start();
 
 ---
 
-## 5. Swing ↔ JavaFX 상호 운용
+## Swing ↔ JavaFX 상호 운용
 
 | 방향 | 컴포넌트 | 설명 |
 |---|---|---|
 | Swing 안에 JavaFX | **`JFXPanel`** | 기존 Swing 앱에 JavaFX 뷰 삽입 |
 | JavaFX 안에 Swing | **`SwingNode`** | JavaFX Scene에 Swing 컴포넌트 삽입 |
 
-### 5.1 Swing → JavaFX (JFXPanel)
+### Swing → JavaFX (JFXPanel)
+
 ```java
 import javafx.embed.swing.JFXPanel; // JavaFX 스레드 초기화 트리거
 import javax.swing.*;
@@ -323,9 +342,10 @@ public class FxInSwing {
 
 ---
 
-## 6. 프로젝트 설정 (Maven/Gradle) & 모듈(JPMS)
+## 프로젝트 설정 (Maven/Gradle) & 모듈(JPMS)
 
-### 6.1 JavaFX 의존성 (JDK 11+ OpenJFX 분리)
+### JavaFX 의존성 (JDK 11+ OpenJFX 분리)
+
 **Gradle(Kotlin DSL)**:
 ```kotlin
 plugins {
@@ -359,7 +379,8 @@ application {
 
 > 일부 환경에서는 플랫폼 분류자(`:win`, `:mac`, `:linux`)가 필요한 배포 구성이 있으며, Gradle 플러그인이 이를 간소화한다.
 
-### 6.2 `module-info.java` (JPMS)
+### `module-info.java` (JPMS)
+
 ```java
 module demo.app {
     requires javafx.controls;
@@ -371,9 +392,10 @@ module demo.app {
 
 ---
 
-## 7. 배포: jlink & jpackage
+## 배포: jlink & jpackage
 
-### 7.1 jlink — 경량 런타임 이미지
+### jlink — 경량 런타임 이미지
+
 - **필요 모듈만 포함한 JRE**를 생성하여 배포 크기↓, 시작 속도↑.
 
 ```bash
@@ -383,7 +405,8 @@ jlink --module-path $JAVA_HOME/jmods:mods \
       --output build/image
 ```
 
-### 7.2 jpackage — 네이티브 설치본
+### jpackage — 네이티브 설치본
+
 - `.msi/.pkg/.dmg/.deb/.rpm` 등 **OS 네이티브 설치 파일** 생성.
 
 ```bash
@@ -398,27 +421,31 @@ jpackage --name DemoApp \
 
 ---
 
-## 8. 고급 주제
+## 고급 주제
 
-### 8.1 AWT/Swing heavyweight vs lightweight 혼합
+### AWT/Swing heavyweight vs lightweight 혼합
+
 - Swing은 lightweight, AWT 일부는 heavyweight. 과거 **혼합 시 Z-order/포커스** 문제가 있었다.
 - 최신 JDK는 대부분 개선되었지만, **비디오/브라우저 임베드** 등 일부 케이스에서 주의.
 
-### 8.2 페인팅 파이프라인 차이
+### 페인팅 파이프라인 차이
+
 - **Swing**: OS 윈도우→Java 더블버퍼→`paintComponent` 호출 흐름. `RepaintManager`가 스케줄링.
 - **JavaFX**: Scene Graph 트리를 **펄스(pulse)** 주기로 평가하고 GPU로 플러시. 레이아웃→CSS→렌더 단계 파이프라인.
 
-### 8.3 접근성/국제화
+### 접근성/국제화
+
 - Swing/JavaFX 모두 접근성 API, 입력기(IM) 및 **RTL 레이아웃** 일부 지원.
 - i18n: `ResourceBundle`로 문자열 분리, FXML에서 `resources` 속성으로 주입 가능.
 
-### 8.4 테스트 전략
+### 테스트 전략
+
 - Swing: **AssertJ-Swing**, **Jemmy** 등 UI 테스트 프레임워크.
 - JavaFX: **TestFX**, headless 모드 설정(서버 CI).
 
 ---
 
-## 9. 성능·메모리·스레딩 체크리스트
+## 성능·메모리·스레딩 체크리스트
 
 1. **EDT/JFX thread 규칙**: 모든 UI 변경은 전용 스레드에서.
    - Swing: `SwingUtilities.invokeLater`
@@ -431,9 +458,10 @@ jpackage --name DemoApp \
 
 ---
 
-## 10. 실전 UI 조각 레시피
+## 실전 UI 조각 레시피
 
-### 10.1 Swing TableModel (대용량 데이터 가상화)
+### Swing TableModel (대용량 데이터 가상화)
+
 ```java
 import javax.swing.table.AbstractTableModel;
 
@@ -445,7 +473,8 @@ class LazyModel extends AbstractTableModel {
 }
 ```
 
-### 10.2 JavaFX TableView + ObservableList
+### JavaFX TableView + ObservableList
+
 ```java
 import javafx.collections.*;
 import javafx.scene.control.*;
@@ -457,7 +486,8 @@ name.setCellValueFactory(c -> c.getValue().nameProperty());
 table.getColumns().add(name);
 ```
 
-### 10.3 JavaFX 3D 간단 샘플
+### JavaFX 3D 간단 샘플
+
 ```java
 import javafx.scene.*;
 import javafx.scene.paint.Color;
@@ -474,7 +504,7 @@ scene.setFill(Color.BLACK);
 
 ---
 
-## 11. AWT vs Swing vs JavaFX — 확장 비교표
+## AWT vs Swing vs JavaFX — 확장 비교표
 
 | 비교축 | AWT | Swing | JavaFX |
 |---|---|---|---|
@@ -491,7 +521,7 @@ scene.setFill(Color.BLACK);
 
 ---
 
-## 12. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. Swing은 deprecated 인가?**
 A. **아니다.** 여전히 지원되며 대규모 레거시 현장에 많다. 다만 **신규**는 JavaFX 권장.
@@ -507,7 +537,7 @@ A. **jpackage** 사용. 플랫폼별 실행 파일/인스톨러 생성.
 
 ---
 
-## 13. 마무리 가이드
+## 마무리 가이드
 
 - **신규 개발**: JavaFX(Controls/FXML/CSS/Animation/WebView/Media) + **jpackage**.
 - **기존 Swing 대규모 자산**: 유지/개선 + 부분 화면 JavaFX 삽입(**JFXPanel**)로 점진 전환.
@@ -516,9 +546,10 @@ A. **jpackage** 사용. 플랫폼별 실행 파일/인스톨러 생성.
 
 ---
 
-## 14. 부록 — 빌드 스니펫 모음
+## 부록 — 빌드 스니펫 모음
 
-### 14.1 Gradle(JavaFX + 애플리케이션)
+### Gradle(JavaFX + 애플리케이션)
+
 ```kotlin
 plugins {
     application
@@ -532,7 +563,8 @@ javafx {
 application { mainClass.set("demo.FxHello") }
 ```
 
-### 14.2 Maven(JavaFX)
+### Maven(JavaFX)
+
 ```xml
 <dependencies>
   <dependency>
@@ -548,7 +580,8 @@ application { mainClass.set("demo.FxHello") }
 </dependencies>
 ```
 
-### 14.3 module-info.java
+### module-info.java
+
 ```java
 module demo.app {
     requires javafx.controls;
@@ -560,7 +593,7 @@ module demo.app {
 
 ---
 
-## 15. 참고 체크리스트
+## 참고 체크리스트
 
 - [ ] UI 스레드(EDT/FX) 이외에서 UI 변경 금지
 - [ ] 백그라운드 작업(네트워크/IO/CPU)은 SwingWorker/Task로
@@ -571,4 +604,5 @@ module demo.app {
 ---
 
 ### 끝.
+
 본 문서는 구식 정보를 제거하고, **JDK 11 이후 OpenJFX 분리**, **jlink/jpackage** 등 최신 배포 스택을 반영했다. 필요 시 이 글의 코드 조각을 바로 복사해 실습할 수 있다.

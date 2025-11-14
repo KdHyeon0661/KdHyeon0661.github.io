@@ -12,7 +12,7 @@ category: Django
 
 ---
 
-## 0. 개요 & 목표
+## 개요 & 목표
 
 - **도메인**: 간단한 “프로젝트 & 작업(ToDo)” API
   - `Project` (소유자/이름/설명)
@@ -25,9 +25,9 @@ category: Django
 
 ---
 
-## 1. 초기 세팅
+## 초기 세팅
 
-### 1.1 설치
+### 설치
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -42,10 +42,11 @@ python manage.py startapp core      # 공용 유틸
 python manage.py startapp projects  # 프로젝트/태스크 도메인
 ```
 
-### 1.2 settings.py (핵심)
+### settings.py (핵심)
 
 ```python
 # config/settings.py
+
 from pathlib import Path
 import environ, datetime
 
@@ -105,6 +106,7 @@ STATIC_ROOT = BASE_DIR/"staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # DRF 기본설정
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -133,6 +135,7 @@ REST_FRAMEWORK = {
 }
 
 # SimpleJWT
+
 from datetime import timedelta
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
@@ -149,6 +152,7 @@ SIMPLE_JWT = {
 }
 
 # Spectacular
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Projects API",
     "DESCRIPTION": "프로젝트/태스크 관리 REST API",
@@ -159,9 +163,11 @@ SPECTACULAR_SETTINGS = {
 }
 
 # CORS
+
 CORS_ALLOW_ALL_ORIGINS = True  # 프로덕션에서 도메인 화이트리스트로 제한 권장
 
 # 보안(배포 시)
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
@@ -178,10 +184,11 @@ DB_URL=postgres://user:pass@db:5432/app
 
 ---
 
-## 2. 도메인 모델 & 마이그레이션
+## 도메인 모델 & 마이그레이션
 
 ```python
 # projects/models.py
+
 from django.db import models
 from django.conf import settings
 
@@ -220,10 +227,11 @@ python manage.py migrate
 
 ---
 
-## 3. 직렬화기(Serializer)
+## 직렬화기(Serializer)
 
 ```python
 # projects/serializers.py
+
 from rest_framework import serializers
 from .models import Project, Task
 
@@ -254,10 +262,11 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
 
 ---
 
-## 4. 권한/퍼미션 & 필터
+## 권한/퍼미션 & 필터
 
 ```python
 # projects/permissions.py
+
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -268,6 +277,7 @@ class IsOwnerOrReadOnly(BasePermission):
 
 ```python
 # projects/filters.py
+
 import django_filters
 from .models import Task
 
@@ -283,10 +293,11 @@ class TaskFilter(django_filters.FilterSet):
 
 ---
 
-## 5. ViewSet & Router (버저닝 지원)
+## ViewSet & Router (버저닝 지원)
 
 ```python
 # projects/views.py
+
 from rest_framework import viewsets, mixins, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -340,12 +351,13 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 ---
 
-## 6. JWT 인증: 엔드포인트 & 커스텀 클레임
+## JWT 인증: 엔드포인트 & 커스텀 클레임
 
-### 6.1 URLs
+### URLs
 
 ```python
 # config/urls.py
+
 from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
@@ -376,10 +388,11 @@ urlpatterns = [
 ]
 ```
 
-### 6.2 커스텀 토큰(추가 클레임)
+### 커스텀 토큰(추가 클레임)
 
 ```python
 # core/jwt.py
+
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -394,6 +407,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 ```python
 # core/views.py
+
 from rest_framework_simplejwt.views import TokenObtainPairView
 from .jwt import MyTokenObtainPairSerializer
 
@@ -403,6 +417,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 ```python
 # config/urls.py (교체)
+
 from core.views import MyTokenObtainPairView
 urlpatterns[1:1] = [
     path("api/token/", MyTokenObtainPairView.as_view(), name="token_obtain_pair"),
@@ -413,7 +428,7 @@ urlpatterns[1:1] = [
 
 ---
 
-## 7. 문서화(OpenAPI) — Swagger UI & Redoc
+## 문서화(OpenAPI) — Swagger UI & Redoc
 
 - `drf-spectacular` 가 **APIView/ViewSet/Serializer** 를 스캔해 OpenAPI 스키마를 생성
 - `/api/docs/` (Swagger UI), `/api/redoc/` (Redoc) 자동 제공
@@ -422,6 +437,7 @@ urlpatterns[1:1] = [
 
 ```python
 # settings.py 내 SPECTACULAR_SETTINGS 확장
+
 SPECTACULAR_SETTINGS.update({
     "SERVERS": [{"url": "https://api.example.com", "description": "Prod"}],
     "SECURITY": [{"bearerAuth": []}],
@@ -439,10 +455,11 @@ SPECTACULAR_SETTINGS.update({
 
 ---
 
-## 8. 공통 예외 처리 & 표준 응답
+## 공통 예외 처리 & 표준 응답
 
 ```python
 # core/exceptions.py
+
 from rest_framework.views import exception_handler
 from rest_framework.response import Response
 from rest_framework import status as st
@@ -470,10 +487,11 @@ def custom_exception_handler(exc, context):
 
 ---
 
-## 9. 업로드(파일) 예시 (간단)
+## 업로드(파일) 예시 (간단)
 
 ```python
 # projects/models.py (추가)
+
 class Attachment(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="attachments")
     file = models.FileField(upload_to="attachments/%Y/%m/")
@@ -482,6 +500,7 @@ class Attachment(models.Model):
 
 ```python
 # projects/serializers.py (추가)
+
 class AttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attachment
@@ -491,6 +510,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
 ```python
 # projects/views.py (추가)
+
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Attachment
 from .serializers import AttachmentSerializer
@@ -511,6 +531,7 @@ class AttachmentViewSet(viewsets.ModelViewSet):
 
 ```python
 # config/urls.py (등록)
+
 router_v1.register(r"attachments", AttachmentViewSet, basename="attachment")
 ```
 
@@ -518,7 +539,7 @@ router_v1.register(r"attachments", AttachmentViewSet, basename="attachment")
 
 ---
 
-## 10. 쓰로틀/페이지/필터/정렬/검색 예시
+## 쓰로틀/페이지/필터/정렬/검색 예시
 
 - 이미 settings에서 전역 설정함.
 - 쿼리 예:
@@ -528,7 +549,7 @@ router_v1.register(r"attachments", AttachmentViewSet, basename="attachment")
 
 ---
 
-## 11. 버전 전략
+## 버전 전략
 
 - `NamespaceVersioning` 으로 `api/v1/` 경로 네임스페이스 제공
 - 새로운 호환성 깨짐이 생기면 `router_v2` 로 분리, `path("api/v2/", include(...))` 추가
@@ -536,7 +557,7 @@ router_v1.register(r"attachments", AttachmentViewSet, basename="attachment")
 
 ---
 
-## 12. CORS/보안 헤더
+## CORS/보안 헤더
 
 - `django-cors-headers` 로 SPA/모바일 도메인 허용
 - 배포시:
@@ -546,9 +567,9 @@ router_v1.register(r"attachments", AttachmentViewSet, basename="attachment")
 
 ---
 
-## 13. 테스트 (pytest + DRF APIClient)
+## 테스트 (pytest + DRF APIClient)
 
-### 13.1 설치 & 설정
+### 설치 & 설정
 
 ```bash
 pip install pytest pytest-django pytest-cov
@@ -562,10 +583,11 @@ DJANGO_SETTINGS_MODULE = config.settings
 python_files = tests.py test_*.py *_tests.py
 ```
 
-### 13.2 토큰 헬퍼 & API 테스트
+### 토큰 헬퍼 & API 테스트
 
 ```python
 # projects/tests/test_api.py
+
 import pytest
 from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
@@ -609,30 +631,35 @@ def test_project_crud():
 
 ---
 
-## 14. 사용 예(curl/HTTPie)
+## 사용 예(curl/HTTPie)
 
 ```bash
 # 회원가입(기본 Django auth 사용 시 DRF로 직접 뷰 작성하거나 admin에서 생성)
 # 토큰 발급
+
 http POST :8000/api/token/ username==admin password==admin
 # => {"access":"...","refresh":"..."}
 
 # 인증 붙여 프로젝트 생성
+
 http POST :8000/api/v1/projects/ "Authorization:Bearer <ACCESS>" name="REST 백엔드" description="demo"
 
 # 태스크 생성
+
 http POST :8000/api/v1/tasks/ "Authorization:Bearer <ACCESS>" project:=1 title="API 문서 쓰기"
 
 # 목록/검색/정렬
+
 http GET  :8000/api/v1/tasks/?search=문서 "Authorization:Bearer <ACCESS>"
 ```
 
 ---
 
-## 15. 어드민
+## 어드민
 
 ```python
 # projects/admin.py
+
 from django.contrib import admin
 from .models import Project, Task, Attachment
 
@@ -655,10 +682,11 @@ class AttachmentAdmin(admin.ModelAdmin):
 
 ---
 
-## 16. 로깅 & 헬스체크
+## 로깅 & 헬스체크
 
 ```python
 # settings.py (추가)
+
 LOGGING = {
   "version": 1,
   "disable_existing_loggers": False,
@@ -674,6 +702,7 @@ LOGGING = {
 
 ```python
 # core/views.py (추가)
+
 from django.http import JsonResponse
 def health(request):
     return JsonResponse({"status":"ok"})
@@ -681,24 +710,27 @@ def health(request):
 
 ```python
 # config/urls.py (추가)
+
 from core.views import health
 urlpatterns += [path("health/", health)]
 ```
 
 ---
 
-## 17. 배포
+## 배포
 
-### 17.1 Dockerfile (멀티스테이지)
+### Dockerfile (멀티스테이지)
 
 ```dockerfile
 # Dockerfile
+
 FROM python:3.12-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
 COPY pyproject.toml poetry.lock* requirements.txt* ./
 # (pip 또는 poetry 중 하나 선택) 여기선 pip:
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 FROM base AS runtime
@@ -711,10 +743,11 @@ CMD ["gunicorn","config.wsgi:application","-w","3","-b","0.0.0.0:8000","--access
 > **대안**: ASGI 성능 필요 시
 > `CMD ["uvicorn","config.asgi:application","--host","0.0.0.0","--port","8000","--workers","3"]`
 
-### 17.2 docker-compose (Postgres + Nginx)
+### docker-compose (Postgres + Nginx)
 
 ```yaml
 # docker-compose.yml
+
 services:
   db:
     image: postgres:16
@@ -765,10 +798,11 @@ server {
 
 ---
 
-## 18. CI/CD (GitHub Actions 예시)
+## CI/CD (GitHub Actions 예시)
 
 ```yaml
 # .github/workflows/ci.yml
+
 name: CI
 on: [push, pull_request]
 jobs:
@@ -802,7 +836,7 @@ jobs:
 
 ---
 
-## 19. 성능 팁
+## 성능 팁
 
 - **쿼리 최적화**: `select_related`, `prefetch_related`, 인덱스 확인
 - **읽기 집중**: Elasticsearch/캐시 읽기 모델(이전 장 참조)
@@ -813,7 +847,7 @@ jobs:
 
 ---
 
-## 20. 흔한 이슈 & 해결
+## 흔한 이슈 & 해결
 
 - **JWT 401**: Authorization 헤더 `Bearer <token>` 확인, 토큰 만료/서명키 불일치
 - **CORS 오류**: `corsheaders` 순서/설정 확인(`CorsMiddleware` 는 `CommonMiddleware` 앞)
@@ -823,7 +857,7 @@ jobs:
 
 ---
 
-## 21. 확장 로드맵
+## 확장 로드맵
 
 - 소셜 로그인 → JWT 발급(로그인 후 백엔드에서 simplejwt 토큰 발급)
 - RBAC/Permissions → `groups`, `permissions` 커스터마이즈 & `DjangoObjectPermissions`
@@ -833,7 +867,7 @@ jobs:
 
 ---
 
-## 22. 마무리
+## 마무리
 
 - 본 가이드는 **DRF + SimpleJWT** 로 **표준 REST 백엔드**를 구축하고
   **OpenAPI(스웨거/레닥)**, **도커 배포** 까지 **프로덕션 관점**에서 다뤘습니다.
@@ -848,9 +882,11 @@ jobs:
 
 ```bash
 # 빠른 스모크 테스트
+
 python manage.py createsuperuser
 python manage.py runserver
-# 1. /api/token/ 로 토큰 발급
-# 2. /api/v1/projects/ POST (Bearer 토큰)
-# 3. /api/docs/ Swagger에서 Try it out
+# /api/token/ 로 토큰 발급
+# /api/v1/projects/ POST (Bearer 토큰)
+# /api/docs/ Swagger에서 Try it out
+
 ```

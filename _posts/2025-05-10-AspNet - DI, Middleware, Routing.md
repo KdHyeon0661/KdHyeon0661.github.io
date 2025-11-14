@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 핵심 개념 확장 요약: DI, Middleware, Routing
 
-## 0. 큰 그림: 요청이 앱을 통과하는 방법
+## 큰 그림: 요청이 앱을 통과하는 방법
 
 1. 앱 시작 시 **DI 컨테이너**에 서비스 등록(싱글턴/스코프/트랜지언트, 옵션, HttpClient 등)
 2. **미들웨어 파이프라인** 구성(정적 파일 → 라우팅 → 인증/권한 → 엔드포인트)
@@ -16,9 +16,9 @@ category: AspNet
 
 ---
 
-## 1. DI(Dependency Injection) — 기본에서 고급까지
+## DI(Dependency Injection) — 기본에서 고급까지
 
-### 1.1 기본 등록 & 수명(Lifetime) 복습
+### 기본 등록 & 수명(Lifetime) 복습
 
 ```csharp
 builder.Services.AddTransient<IMyService, MyService>();   // 매 호출마다 새 인스턴스
@@ -31,12 +31,13 @@ builder.Services.AddSingleton<ILogger, ConsoleLogger>();  // 앱 전체 1개
 - **Singleton**: 구성/캐시/클라이언트(스레드 안전) 등 **공유 자원**
 
 #### Anti-pattern 주의
+
 - **Scoped → Singleton 주입 금지**: 싱글턴에서 스코프 서비스 참조 시 수명 역전
 - **Heavy Transient 남발**: 고빈도 호출에서 GC 압박; 풀링/캐시 고려
 
 ---
 
-### 1.2 생성자 주입(권장) & 기타 주입
+### 생성자 주입(권장) & 기타 주입
 
 ```csharp
 public class HomeController : Controller
@@ -52,7 +53,7 @@ public class HomeController : Controller
 
 ---
 
-### 1.3 Options 패턴 — 설정을 타입으로
+### Options 패턴 — 설정을 타입으로
 
 ```csharp
 public sealed class MyOptions
@@ -82,7 +83,7 @@ public class DataService(IOptionsSnapshot<MyOptions> options, HttpClient http)
 
 ---
 
-### 1.4 HttpClient 팩토리 — 타임아웃/폴리시/네이밍
+### HttpClient 팩토리 — 타임아웃/폴리시/네이밍
 
 ```csharp
 builder.Services.AddHttpClient("Weather", c =>
@@ -109,14 +110,16 @@ builder.Services.AddHttpClient<WeatherClient>(c =>
 
 ---
 
-### 1.5 Open Generics / Decorator / Scrutor / Keyed Services(.NET 8)
+### Open Generics / Decorator / Scrutor / Keyed Services(.NET 8)
 
 #### Open Generics
+
 ```csharp
 builder.Services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
 ```
 
 #### Decorator (Scrutor)
+
 ```csharp
 // dotnet add package Scrutor
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -124,6 +127,7 @@ builder.Services.Decorate<IOrderService, CachingOrderService>();
 ```
 
 #### Keyed Services(.NET 8)
+
 ```csharp
 builder.Services.AddKeyedScoped<IStorage>("s3", sp => new S3Storage(...));
 builder.Services.AddKeyedScoped<IStorage>("blob", sp => new BlobStorage(...));
@@ -135,7 +139,7 @@ public class Uploader([FromKeyedServices("s3")] IStorage storage) { ... }
 
 ---
 
-### 1.6 Factory/Scope/Async Disposal
+### Factory/Scope/Async Disposal
 
 - **IServiceScopeFactory**로 **수동 스코프** 생성(백그라운드 작업 등)
 - **IAsyncDisposable** 구현 서비스는 컨테이너가 안전하게 `DisposeAsync` 호출
@@ -158,9 +162,9 @@ public class Worker(IServiceScopeFactory scopes) : BackgroundService
 
 ---
 
-## 2. 미들웨어 — 파이프라인, 순서, 분기, 단위테스트
+## 미들웨어 — 파이프라인, 순서, 분기, 단위테스트
 
-### 2.1 파이프라인 핵심
+### 파이프라인 핵심
 
 ```csharp
 var app = builder.Build();
@@ -178,7 +182,7 @@ app.Run();
 
 ---
 
-### 2.2 커스텀 미들웨어
+### 커스텀 미들웨어
 
 ```csharp
 public class LoggingMiddleware(RequestDelegate next, ILogger<LoggingMiddleware> log)
@@ -199,7 +203,7 @@ app.UseMiddleware<LoggingMiddleware>();
 
 ---
 
-### 2.3 분기(특정 경로/조건만)
+### 분기(특정 경로/조건만)
 
 ```csharp
 // 경로 분기
@@ -218,7 +222,7 @@ app.UseWhen(ctx => ctx.Request.Path.StartsWithSegments("/api"), branch =>
 
 ---
 
-### 2.4 Minimal API Filters(.NET 7+) & Endpoint Filters(.NET 8)
+### Minimal API Filters(.NET 7+) & Endpoint Filters(.NET 8)
 
 ```csharp
 app.MapPost("/orders", (OrderDto dto) => Results.Ok())
@@ -233,7 +237,7 @@ app.MapPost("/orders", (OrderDto dto) => Results.Ok())
 
 ---
 
-### 2.5 Rate Limiting, CORS, Compression(간단 예)
+### Rate Limiting, CORS, Compression(간단 예)
 
 ```csharp
 builder.Services.AddResponseCompression();
@@ -251,7 +255,7 @@ app.UseRateLimiter();
 
 ---
 
-### 2.6 미들웨어 테스트
+### 미들웨어 테스트
 
 - **WebApplicationFactory**(Microsoft.AspNetCore.Mvc.Testing)로 통합 검증
 - 헤더/리다이렉트/상태코드/쿠키 확인
@@ -271,9 +275,9 @@ public class PipelineTests(CustomFactory factory)
 
 ---
 
-## 3. 라우팅 — 속성 라우팅, 제약, 링크 생성, 그룹, 버저닝
+## 라우팅 — 속성 라우팅, 제약, 링크 생성, 그룹, 버저닝
 
-### 3.1 Razor Pages
+### Razor Pages
 
 ```csharp
 app.MapRazorPages(); // Pages/Index.cshtml → "/"
@@ -283,7 +287,7 @@ app.MapRazorPages(); // Pages/Index.cshtml → "/"
 
 ---
 
-### 3.2 MVC 속성 라우팅
+### MVC 속성 라우팅
 
 ```csharp
 [ApiController]
@@ -300,7 +304,7 @@ public class UsersController : ControllerBase
 
 ---
 
-### 3.3 전역 라우트 템플릿 / 기본 라우트
+### 전역 라우트 템플릿 / 기본 라우트
 
 ```csharp
 app.MapControllerRoute(
@@ -310,7 +314,7 @@ app.MapControllerRoute(
 
 ---
 
-### 3.4 Parameter Transformer(슬러그 변환)
+### Parameter Transformer(슬러그 변환)
 
 ```csharp
 // dotnet add package Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation (개발 시)
@@ -333,7 +337,7 @@ app.MapControllerRoute(
 
 ---
 
-### 3.5 LinkGenerator로 안전한 링크 생성
+### LinkGenerator로 안전한 링크 생성
 
 ```csharp
 public class MenuService(LinkGenerator linker, IHttpContextAccessor accessor)
@@ -351,7 +355,7 @@ public class MenuService(LinkGenerator linker, IHttpContextAccessor accessor)
 
 ---
 
-### 3.6 Minimal API + 그룹 라우팅(.NET 8)
+### Minimal API + 그룹 라우팅(.NET 8)
 
 ```csharp
 var api = app.MapGroup("/api").RequireRateLimiting("fixed");
@@ -364,16 +368,16 @@ api.MapGet("/users/{id:int}", (int id) => Results.Ok(new { id }));
 
 ---
 
-### 3.7 API Versioning(간단 개념)
+### API Versioning(간단 개념)
 
 - 패키지: `Asp.Versioning.Http` (전문 버저닝)
 - 경로/헤더/쿼리 기반 버전 협상 + `ApiVersion` 특성 사용
 
 ---
 
-## 4. 엔드투엔드 예제(Program.cs + 컨트롤러 + 테스트)
+## 엔드투엔드 예제(Program.cs + 컨트롤러 + 테스트)
 
-### 4.1 Program.cs
+### Program.cs
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -425,7 +429,7 @@ public sealed class WeatherClient(HttpClient http)
 }
 ```
 
-### 4.2 컨트롤러(속성 라우팅 + 제약 + DI)
+### 컨트롤러(속성 라우팅 + 제약 + DI)
 
 ```csharp
 [ApiController]
@@ -443,7 +447,7 @@ public class UsersController(IUserService users, IOptionsSnapshot<MyOptions> opt
 }
 ```
 
-### 4.3 통합 테스트(WebApplicationFactory)
+### 통합 테스트(WebApplicationFactory)
 
 ```csharp
 public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
@@ -465,30 +469,34 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 5. 성능·안정성 체크리스트
+## 성능·안정성 체크리스트
 
-### 5.1 DI/옵션/HttpClient
+### DI/옵션/HttpClient
+
 - **HttpClientFactory** 사용(소켓 고갈 방지)
 - 구성 검증: `ValidateOnStart`
 - Options는 **IOptionsSnapshot**(웹) vs **IOptionsMonitor**(백그라운드) 구분
 
-### 5.2 미들웨어/파이프라인
+### 미들웨어/파이프라인
+
 - **순서** 검증(라우팅 전/후, 인증/권한 순서)
 - 비용 큰 로직은 **UseWhen/MapGroup**으로 필요한 경로에만
 - 응답 스트리밍/압축/캐시 헤더 세팅 최적화
 
-### 5.3 라우팅
+### 라우팅
+
 - 제약/정규식은 최소화(성능 고려)
 - LinkGenerator로 링크 안전성 유지
 - Minimal API 그룹으로 정책 일괄 적용(권한/레이트 리밋)
 
-### 5.4 메모리/할당
+### 메모리/할당
+
 - `AsNoTracking()`(EF Core), `ArrayPool`/`ObjectPool`(빈번한 할당 방지)
 - DTO/Record 구조체화는 신중하게(복사 비용/박싱 고려)
 
 ---
 
-## 6. 보안·유지보수·운영 팁
+## 보안·유지보수·운영 팁
 
 - **헤더 표준화**: `X-Correlation-ID`, `X-Request-Time`
 - **예외 처리**: 글로벌 핸들러 + ProblemDetails(표준 오류 응답)
@@ -499,7 +507,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 7. 흔한 오류 패턴과 해법
+## 흔한 오류 패턴과 해법
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -511,7 +519,7 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 8. 요약 표 — DI / Middleware / Routing
+## 요약 표 — DI / Middleware / Routing
 
 | 영역 | 핵심 | 고급 포인트 |
 |---|---|---|
@@ -521,9 +529,10 @@ public class ApiTests : IClassFixture<WebApplicationFactory<Program>>
 
 ---
 
-## 9. 실무용 스니펫 모음
+## 실무용 스니펫 모음
 
-### 9.1 ProblemDetails(표준 오류 응답)
+### ProblemDetails(표준 오류 응답)
+
 ```csharp
 app.UseExceptionHandler(errApp =>
 {
@@ -535,7 +544,8 @@ app.UseExceptionHandler(errApp =>
 });
 ```
 
-### 9.2 응답 시작 직전 헤더 주입
+### 응답 시작 직전 헤더 주입
+
 ```csharp
 app.Use(async (ctx, next) =>
 {
@@ -548,7 +558,8 @@ app.Use(async (ctx, next) =>
 });
 ```
 
-### 9.3 Minimal API + 권한/필터/캐싱
+### Minimal API + 권한/필터/캐싱
+
 ```csharp
 var v1 = app.MapGroup("/api/v1").RequireAuthorization("Admin");
 v1.MapGet("/stats", (IMetrics m) => Results.Ok(m.Snapshot()))

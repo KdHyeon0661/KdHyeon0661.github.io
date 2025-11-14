@@ -11,7 +11,7 @@ JUnit은 자바 생태계의 사실상 표준 테스트 프레임워크다. 이 
 
 ---
 
-## 0. 큰 그림 — 아키텍처·개념 비교
+## 큰 그림 — 아키텍처·개념 비교
 
 | 항목 | JUnit 4 | JUnit 5 (Jupiter) |
 |---|---|---|
@@ -29,7 +29,7 @@ JUnit은 자바 생태계의 사실상 표준 테스트 프레임워크다. 이 
 
 ---
 
-## 1. 애너테이션 매핑: 4 → 5 (자주 쓰는 것)
+## 애너테이션 매핑: 4 → 5 (자주 쓰는 것)
 
 | 목적 | JUnit 4 | JUnit 5 (Jupiter) |
 |---|---|---|
@@ -47,9 +47,9 @@ JUnit은 자바 생태계의 사실상 표준 테스트 프레임워크다. 이 
 
 ---
 
-## 2. 예제 — 동일 시나리오를 4/5로 비교
+## 예제 — 동일 시나리오를 4/5로 비교
 
-### 2.1 기본 테스트
+### 기본 테스트
 
 ```java
 // JUnit 4
@@ -81,7 +81,7 @@ class CalculatorTest {
 }
 ```
 
-### 2.2 예외/타임아웃
+### 예외/타임아웃
 
 ```java
 // JUnit 4
@@ -111,7 +111,7 @@ void slow() {
 
 > `assertThrows`, `@Timeout`/`assertTimeout`은 Jupiter API로 제공된다.
 
-### 2.3 파라미터화 테스트
+### 파라미터화 테스트
 
 ```java
 // JUnit 5
@@ -138,7 +138,7 @@ class LengthTest {
 
 > `@ParameterizedTest`와 `@ValueSource/@CsvSource` 등은 Jupiter Params 모듈에서 제공된다.
 
-### 2.4 중첩/동적 테스트
+### 중첩/동적 테스트
 
 ```java
 // 중첩
@@ -159,7 +159,7 @@ java.util.stream.Stream<DynamicTest> dynamic() {
 
 > 중첩/동적 테스트는 Jupiter가 공식 지원한다.
 
-### 2.5 조건부/환경 의존 테스트
+### 조건부/환경 의존 테스트
 
 ```java
 import org.junit.jupiter.api.condition.*;
@@ -175,7 +175,7 @@ void onlyOnCi() { /* ... */ }
 
 > 조건부 실행 애너테이션은 OS/JRE/환경변수/시스템프로퍼티 기반으로 필터링한다.
 
-### 2.6 임시 디렉터리 (Rule → Extension)
+### 임시 디렉터리 (Rule → Extension)
 
 ```java
 // JUnit 5
@@ -194,7 +194,7 @@ class FileTest {
 
 ---
 
-## 3. 병렬 실행 & 설정 파일
+## 병렬 실행 & 설정 파일
 
 JUnit 5/6에서는 **`junit-platform.properties`** 로 병렬 실행을 포함한 다양한 동작을 설정한다.
 
@@ -202,10 +202,13 @@ JUnit 5/6에서는 **`junit-platform.properties`** 로 병렬 실행을 포함�
 
 ```properties
 # 병렬 실행 활성화
+
 junit.jupiter.execution.parallel.enabled=true
 # 모드: same_thread / concurrent
+
 junit.jupiter.execution.parallel.mode.default=concurrent
 # 클래스/메서드 레벨 정책
+
 junit.jupiter.execution.parallel.mode.classes.default=concurrent
 ```
 
@@ -215,6 +218,7 @@ Vintage(=JUnit 4)를 Platform에서 실행할 때 병렬 비활성화 등 **엔�
 
 ```properties
 # Vintage 엔진 병렬 비활성화 예
+
 junit.vintage.execution.parallel.enabled=false
 ```
 
@@ -222,7 +226,7 @@ junit.vintage.execution.parallel.enabled=false
 
 ---
 
-## 4. 의존성(2025-11 최신 예시)
+## 의존성(2025-11 최신 예시)
 
 > **JUnit 6.0.1 GA** 기준. Jupiter API/Params/Engine 등 아티팩트 구성은 **5 → 6** 으로 버전만 상향되었다. (기본 JDK는 **17**)
 
@@ -290,7 +294,7 @@ tasks.test {
 
 ---
 
-## 5. 확장 모델: Runner/Rule → Extension
+## 확장 모델: Runner/Rule → Extension
 
 JUnit 4의 `Runner`(단일 선택), `@Rule/@ClassRule` 조합은 JUnit 5에서 **Extension** 포인트로 통합·일원화되었다. 파라미터 리졸버, 라이프사이클 인터셉터, 조건/예외/타임아웃, 임시 디렉터리 등 공통 패턴이 **확장 API**로 제공된다.
 
@@ -304,7 +308,7 @@ class UserServiceTest {
 
 ---
 
-## 6. 파라미터화 테스트 — Jupiter Params 모듈
+## 파라미터화 테스트 — Jupiter Params 모듈
 
 - **소스**: `@ValueSource`, `@CsvSource`, `@CsvFileSource`, `@EnumSource`, `@MethodSource`, `@ArgumentsSource`
 - **널/빈 처리**: `@NullSource`, `@EmptySource`, `@NullAndEmptySource` (원시형은 변환 필요)
@@ -316,7 +320,7 @@ class UserServiceTest {
 
 ---
 
-## 7. 조건/태깅/선택자
+## 조건/태깅/선택자
 
 - **태그**: `@Tag("integration")` → 빌드/IDE/CI에서 **포함/제외** 필터링
 - **선택자**: 패키지/클래스/메서드/태그 기반 실행은 **JUnit Platform**의 런처에서 처리
@@ -324,7 +328,7 @@ class UserServiceTest {
 
 ---
 
-## 8. 마이그레이션 가이드 (4 → 5/6)
+## 마이그레이션 가이드 (4 → 5/6)
 
 1. **플랫폼 전환**: 빌드 도구에서 **JUnit Platform** 활성화(Maven Surefire/Gradle `useJUnitPlatform()`).
 2. **점진 전환**: 기존 JUnit 4 테스트는 **Vintage 엔진**으로 계속 실행하고, 신규는 **Jupiter**로 작성. (엔진 공존 가능)
@@ -341,7 +345,7 @@ class UserServiceTest {
 
 ---
 
-## 9. 테스트 품질·표현력·성능 팁
+## 테스트 품질·표현력·성능 팁
 
 - **Assertions**: `assertAll`, `assertIterableEquals`, `assertLinesMatch` 등 활용으로 실패 메시지 가독성↑
 - **`@DisplayName`**/**`@DisplayNameGeneration`** 으로 리포트 품질 향상
@@ -353,9 +357,9 @@ class UserServiceTest {
 
 ---
 
-## 10. 실전 스니펫 모음
+## 실전 스니펫 모음
 
-### 10.1 JUnit 4 테스트를 JUnit 5/6 Platform에서 실행 (Vintage)
+### JUnit 4 테스트를 JUnit 5/6 Platform에서 실행 (Vintage)
 
 ```xml
 <!-- Maven: JUnit 4 자산 유지 -->
@@ -369,19 +373,22 @@ class UserServiceTest {
 
 > Vintage 엔진을 추가하면 JUnit 4 테스트를 Platform 상에서 그대로 실행할 수 있다. (병렬·필터링 등 Platform 기능 활용 가능)
 
-### 10.2 `junit-platform.properties` 예시(부분)
+### `junit-platform.properties` 예시(부분)
 
 ```properties
 # 공통
+
 junit.platform.output.capture.stderr=true
 junit.platform.output.capture.stdout=true
 
 # 병렬
+
 junit.jupiter.execution.parallel.enabled=true
 junit.jupiter.execution.parallel.mode.default=concurrent
 junit.jupiter.execution.parallel.mode.classes.default=concurrent
 
 # Vintage 엔진 제어(선택)
+
 junit.vintage.execution.parallel.enabled=false
 ```
 
@@ -389,14 +396,14 @@ junit.vintage.execution.parallel.enabled=false
 
 ---
 
-## 11. (중요) 2025-11 최신 동향 요약
+## (중요) 2025-11 최신 동향 요약
 
 - **JUnit 6.0.1 GA(2025-10-31)**: JDK **17+** 요구. Jupiter/Platform 체계 유지, CLI/빌드/특성 개선. (기존 Jupiter 테스트 대부분 **그대로 동작**)
 - 문서/가이드/설정 키는 **공식 User Guide**를 우선 참조. (5/6 모두 동일 섹션 구조)
 
 ---
 
-## 12. 결론
+## 결론
 
 - **새 프로젝트**: **JUnit 6(Jupiter)** 채택을 권장 — 5의 API와 동일한 개발 경험이며, 최신 Platform 기능/성능/설정을 그대로 활용한다. (JDK 17+)
 - **기존 JUnit 4**: **Vintage**로 공존 실행 → 점진적으로 Jupiter로 이전. `Runner/Rule` → **Extension/@TempDir/assertThrows** 로 치환.

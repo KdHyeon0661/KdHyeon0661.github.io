@@ -6,7 +6,7 @@ category: CSS
 ---
 # 디버깅을 위한 DevTools(개발자 도구) 활용 가이드
 
-## 0. DevTools 빠르게 열기 & 환경 준비
+## DevTools 빠르게 열기 & 환경 준비
 
 - 단축키
   - **열기**: `F12`, `Ctrl+Shift+I`(Win/Linux), `Cmd+Opt+I`(macOS)
@@ -19,22 +19,25 @@ category: CSS
 
 ---
 
-## 1. Elements 패널 — DOM·CSS 실시간 수정의 중심
+## Elements 패널 — DOM·CSS 실시간 수정의 중심
 
-### 1.1 필수 기능
+### 필수 기능
+
 - **DOM 트리 편집**: 더블클릭/Enter로 태그/텍스트/속성 수정
 - **강제 상태**: `:hov` → `:hover/:focus/:active/:visited` 강제 적용
 - **클래스 토글**: `.cls` 버튼에서 클래스 추가/체크
 - **Box Model**: margin/padding/border 시각화
 - **Grid/Flex 시각화**: Layout 도우미로 영역/그리드 라인 표시
 
-### 1.2 레시피: “클릭 안 되는 버튼” CSS 원인 추적
+### 레시피: “클릭 안 되는 버튼” CSS 원인 추적
+
 1) **요소 선택기**로 버튼 선택
 2) **Styles**에서 `pointer-events: none;` 또는 `z-index`/`position` 상위 오버레이 확인
 3) **Computed**에서 `pointer-events` 최종 계산값 확인
 4) 문제 속성 토글/수정 후 원인 규명
 
-### 1.3 예제: z-index·포지셔닝 충돌
+### 예제: z-index·포지셔닝 충돌
+
 ```html
 <div class="overlay"></div>
 <button class="btn">Buy</button>
@@ -54,13 +57,14 @@ category: CSS
 
 ---
 
-## 2. Styles / Computed / Layout — CSS 충돌과 우선순위 끝장내기
+## Styles / Computed / Layout — CSS 충돌과 우선순위 끝장내기
 
 - **Styles**: 규칙 정의 순서/특이성/오버라이드 흐름 확인, 체크박스로 즉시 토글
 - **Computed**: 최종 계산값(색상/크기/폰트 등) 및 **상속 경로** 확인
 - **Layout(Chrome)**: Flex/Grid 오버레이, gap/정렬/축 정보 시각화
 
 ### 레시피: “정렬이 틀어진 Flex 박스” 즉시 진단
+
 - **Layout**에서 Flex 오버레이 활성화 → 메인/교차축 정렬 상태 파악
 - `min-width: 0`/`min-height: 0` 누락 시 콘텐츠 넘침 → **Flex 자식**에 보정
 
@@ -71,16 +75,18 @@ category: CSS
 
 ---
 
-## 3. Console — JS 가시성 극대화 & 순간 분석
+## Console — JS 가시성 극대화 & 순간 분석
 
-### 3.1 실전 단축 기능
+### 실전 단축 기능
+
 - `$0`: Elements에서 마지막 선택 요소
 - `copy(obj)`: 객체를 클립보드로 복사
 - `console.table(arr)`: 테이블 형태 출력
 - `console.time/console.timeEnd('label')`: 구간 시간 측정
 - `dir(obj)`: 속성 트리 보기
 
-### 3.2 예제: 로그·타임라인·그룹
+### 예제: 로그·타임라인·그룹
+
 ```js
 console.group('fetch /api/products');
 console.time('fetch');
@@ -91,14 +97,16 @@ console.timeEnd('fetch');
 console.groupEnd();
 ```
 
-### 3.3 라이브 편집 & 일시 패치
+### 라이브 편집 & 일시 패치
+
 - `Sources → Overrides`(또는 **Local Overrides**)로 CDN/정적 파일을 DevTools에서 저장 후 요청 가로채어 적용
 
 ---
 
-## 4. Sources — 중단점 & 실행 흐름 완전 제어
+## Sources — 중단점 & 실행 흐름 완전 제어
 
-### 4.1 브레이크포인트 종류
+### 브레이크포인트 종류
+
 - **Line**: 특정 줄에서 정지
 - **Conditional**: 조건식이 참일 때만 정지
 - **Logpoint**: 정지 대신 메시지 로깅 (실행 흐름 멈추지 않음)
@@ -106,7 +114,8 @@ console.groupEnd();
 - **Event**: `click`, `keydown` 등 이벤트 발생 시 정지
 - **DOM 변경**: 속성/노드 추가·삭제 감지 시 정지
 
-### 4.2 예제: 조건부 브레이크포인트 & 로그포인트
+### 예제: 조건부 브레이크포인트 & 로그포인트
+
 ```js
 function total(items) {
   let sum = 0;
@@ -119,20 +128,23 @@ function total(items) {
 - 라인 번호 우클릭 → **Add conditional breakpoint…** → `it.qty < 0`
 - 혹은 **Add logpoint…** → `'NEGATIVE_QTY:' , it`
 
-### 4.3 비동기 콜스택 & Blackboxing
+### 비동기 콜스택 & Blackboxing
+
 - **Async stack traces** 켜기: 비동기 경로 추적
 - **Blackbox** 라이브러리: `node_modules`·프레임워크 코드를 스택에서 감추어 사용자 코드만 집중
 
 ---
 
-## 5. Network — API·리소스·캐시 문제의 진원지
+## Network — API·리소스·캐시 문제의 진원지
 
-### 5.1 핵심 시나리오
+### 핵심 시나리오
+
 - **CORS/인증**: 응답 헤더/상태코드 확인, `www-authenticate`/`set-cookie` 확인
 - **캐시**: `cache-control`, `etag`, `age` 분석, Disable cache로 재현
 - **Waterfall**: DNS→TCP→TLS→TTFB→Content Download 구간별 병목 파악
 
-### 5.2 예제: 실패하는 파일 업로드 디버그
+### 예제: 실패하는 파일 업로드 디버그
+
 1) `Network`에서 `fetch`/`XHR` 필터
 2) Request Payload(FormData) 구조/헤더(특히 `Content-Type`) 확인
 3) 응답 본문/에러 메시지/상태코드로 서버측 원인 파악
@@ -140,15 +152,17 @@ function total(items) {
 
 ---
 
-## 6. Performance — 레이아웃/페인트/스크립팅 병목 추적
+## Performance — 레이아웃/페인트/스크립팅 병목 추적
 
-### 6.1 절차
+### 절차
+
 1) **Record** 시작 → 실사용 동작 재현(스크롤/탭 전환/검색)
 2) **Stop** → 타임라인 상단에서 구간 확대
 3) **Main** 스레드에서 `Recalculate Style`, `Layout`, `Paint`, `Composite` 비중 확인
 4) **Bottom-Up/Call Tree**로 무거운 함수/작업 식별
 
-### 6.2 CSS 관점 최적화 포인트
+### CSS 관점 최적화 포인트
+
 - 레이아웃 잦으면 → 변화 속성 `transform/opacity`로 전환
 - 긴 리스트 → `content-visibility: auto; contain-intrinsic-size` 적용
 - 애니메이션 → `will-change`를 짧게, 필요한 시점에만
@@ -161,7 +175,7 @@ function total(items) {
 
 ---
 
-## 7. Lighthouse & Core Web Vitals — 품질 지표 자동 리포트
+## Lighthouse & Core Web Vitals — 품질 지표 자동 리포트
 
 - **Performance/SEO/Accessibility/Best Practices** 점수와 **LCP/FID/CLS** 지표 제공
 - **기능 제안(To-do)**을 항목별로 확인 → 실전 리팩토링 항목 선정
@@ -171,9 +185,10 @@ function total(items) {
 
 ---
 
-## 8. Application — 스토리지·서비스워커·PWA
+## Application — 스토리지·서비스워커·PWA
 
-### 8.1 스토리지
+### 스토리지
+
 - **Local/SessionStorage, Cookies, IndexedDB, Cache Storage** 관찰·수정·삭제
 - 로그인 이슈 재현 시 **토큰/쿠키 만료**와 `SameSite/Secure/HttpOnly` 플래그 체크
 
@@ -183,34 +198,40 @@ localStorage.setItem('token', 'dev-override');
 document.cookie = "exp=0; path=/";
 ```
 
-### 8.2 Service Worker & Cache
+### Service Worker & Cache
+
 - **Update on reload**, **Unregister**로 구버전 SW 청소
 - **Cache Storage**에서 잘못 캐싱된 응답 제거(드문 304/프리플라이트 꼬임 해결)
 
 ---
 
-## 9. Rendering / Sensors / Layers / Coverage — 숨은 보석들
+## Rendering / Sensors / Layers / Coverage — 숨은 보석들
 
-### 9.1 Rendering
+### Rendering
+
 - **Paint flashing**: 페인트 영역 시각화
 - **Layout Shift Regions**: CLS 발생 영역 표시
 - **FPS meter**: 프레임 드롭 구간 파악
 
-### 9.2 Sensors
+### Sensors
+
 - **Geolocation**, **Device orientation**, **Touch**, **Network Throttling** 시뮬레이션
 
-### 9.3 Layers
+### Layers
+
 - 합성 레이어 수/경계 시각화 → 과도한 레이어(will-change 남용) 탐지
 
-### 9.4 Coverage
+### Coverage
+
 - 로드된 **CSS/JS 사용률** 측정 → 미사용 바이트 제거 목록 생성
 - CSS 성능 최적화의 **출발점**으로 활용
 
 ---
 
-## 10. 보너스: DevTools로 재현 가능한 대표 버그 8선
+## 보너스: DevTools로 재현 가능한 대표 버그 8선
 
-### 10.1 Margin Collapsing
+### Margin Collapsing
+
 ```html
 <div class="parent">
   <h1 class="title">Title</h1>
@@ -225,38 +246,45 @@ document.cookie = "exp=0; path=/";
 .parent { overflow:hidden; /* 또는 display:flow-root */ }
 ```
 
-### 10.2 이미지 하단 공백
+### 이미지 하단 공백
+
 ```css
 img { display:block; } /* 또는 vertical-align: middle; */
 ```
 
-### 10.3 인라인 요소 width/height 미적용
+### 인라인 요소 width/height 미적용
+
 ```css
 a { display:inline-block; width:120px; height:40px; }
 ```
 
-### 10.4 Flex 줄바꿈 안 됨
+### Flex 줄바꿈 안 됨
+
 ```css
 .wrap { display:flex; flex-wrap:wrap; }
 ```
 
-### 10.5 Absolute 기준 엇갈림
+### Absolute 기준 엇갈림
+
 ```css
 .parent { position:relative; }
 .child  { position:absolute; inset:0; }
 ```
 
-### 10.6 z-index 미적용
+### z-index 미적용
+
 ```css
 .box { position:relative; z-index:10; }
 ```
 
-### 10.7 iOS 100vh 이슈
+### iOS 100vh 이슈
+
 ```css
 .hero { height: 100dvh; min-height:-webkit-fill-available; }
 ```
 
-### 10.8 폼 요소 브라우저별 차이
+### 폼 요소 브라우저별 차이
+
 ```css
 input, button {
   appearance: none;
@@ -267,7 +295,7 @@ input, button {
 
 ---
 
-## 11. 팀 생산성을 높이는 DevTools 루틴
+## 팀 생산성을 높이는 DevTools 루틴
 
 1) **Issue 템플릿**: “어떤 URL/해상도/브라우저/재현 절차/기대/실제/스크린샷/Har/프로파일”
 2) **Command Palette**로 기능 검색 → `:screenshots`, `:show rulers`, `:coverage` 등 즉시 실행
@@ -276,9 +304,10 @@ input, button {
 
 ---
 
-## 12. 실전 시나리오 3종 — 처음부터 끝까지
+## 실전 시나리오 3종 — 처음부터 끝까지
 
-### 12.1 “검색창 입력 시 렉이 걸린다”
+### “검색창 입력 시 렉이 걸린다”
+
 - **Performance** 녹화 → `Recalculate Style` & `Layout` 급증 확인
 - **Elements→Styles**: 입력마다 바뀌는 속성이 `width/left` 등 레이아웃 트리거
 - **해결**: CSS 변경을 `transform`/`opacity` 기반으로, 또는 스타일 변경 빈도 축소(디바운스)
@@ -288,7 +317,8 @@ input, button {
 input.addEventListener('input', debounce(onInput, 120));
 ```
 
-### 12.2 “이미지 로딩이 매우 느리다”
+### “이미지 로딩이 매우 느리다”
+
 - **Network**: TTFB/O(size) 확인, 큰 JPEG/PNG 탐지
 - **해결**: `srcset/sizes`/AVIF/WebP 도입, **Cache-Control** 향상, `preload` 남용 지양
 - **Coverage**로 CSS 미사용 바이트 제거 → 초기 페인트 앞당김
@@ -302,14 +332,15 @@ input.addEventListener('input', debounce(onInput, 120));
 />
 ```
 
-### 12.3 “로그인 후 옛 UI가 계속 보인다”
+### “로그인 후 옛 UI가 계속 보인다”
+
 - **Application**: Service Worker **Unregister/Update on reload**, Cache Storage 비우기
 - **Network**: `Cache-Control`/ETag/`Vary` 설정 검토
 - **해결**: SW 버전 전략/정적 자산 해시(`app.a1b2.css`) 도입
 
 ---
 
-## 13. 자주 쓰는 콘솔 스니펫 모음
+## 자주 쓰는 콘솔 스니펫 모음
 
 ```js
 // 1) 이벤트 리스너 목록 확인
@@ -338,7 +369,7 @@ async function retry(fn, n=3){
 
 ---
 
-## 14. 단축키·팁 총정리
+## 단축키·팁 총정리
 
 | 항목 | 단축키/팁 |
 |---|---|
@@ -354,7 +385,7 @@ async function retry(fn, n=3){
 
 ---
 
-## 15. 체크리스트 요약
+## 체크리스트 요약
 
 - DOM/CSS: **Elements + Styles/Computed/Layout**로 충돌/우선순위/겹침 해소
 - JS: **Console/Sources**로 로그·중단점·흐름 제어

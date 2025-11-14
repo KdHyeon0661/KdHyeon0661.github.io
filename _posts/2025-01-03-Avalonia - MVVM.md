@@ -6,14 +6,14 @@ category: Avalonia
 ---
 # MVVM 패턴이란? (Model–View–ViewModel)
 
-## 1. MVVM의 정의
+## MVVM의 정의
 
 **MVVM(Model–View–ViewModel)**은 XAML 계열 UI 프레임워크(WPF, Avalonia, Xamarin, MAUI 등)에서 광범위하게 쓰이는 **관심사 분리(Separation of Concerns)** 아키텍처 패턴이다.
 핵심 목표는 **UI(View)**와 **비즈니스 로직(Model)** 사이의 결합을 **ViewModel**을 통해 느슨하게 만드는 것이다. ViewModel은 **상태(state)**와 **명령(command)**를 노출하고, View는 **바인딩(binding)**으로 이를 소비한다. View와 ViewModel은 서로 **직접 참조하지 않거나(권장)**, 최소한으로만 참조하도록 설계한다.
 
 ---
 
-## 2. 구성 요소 (요약 + 확장)
+## 구성 요소 (요약 + 확장)
 
 | 구성 요소 | 핵심 역할 | 구현 포인트 |
 |-----------|-----------|-------------|
@@ -23,7 +23,7 @@ category: Avalonia
 
 ---
 
-## 3. 흐름 구조
+## 흐름 구조
 
 ```
 [사용자] → View ↔ ViewModel ↔ Model
@@ -37,7 +37,7 @@ category: Avalonia
 
 ---
 
-## 4. 왜 MVVM인가? (장점 재정리)
+## 왜 MVVM인가? (장점 재정리)
 
 | 이유 | 설명 |
 |------|------|
@@ -49,9 +49,9 @@ category: Avalonia
 
 ---
 
-## 5. Avalonia에서 MVVM 구현: 시작하기
+## Avalonia에서 MVVM 구현: 시작하기
 
-### 5.1 솔루션 구조(권장 템플릿)
+### 솔루션 구조(권장 템플릿)
 
 ```
 MyApp/
@@ -78,7 +78,7 @@ MyApp/
     └── SettingsView.axaml
 ```
 
-### 5.2 패키지 선택
+### 패키지 선택
 
 - **ReactiveUI 기반**: `ReactiveObject`, `ReactiveCommand`로 간결한 INPC/커맨드 구현
 - **CommunityToolkit.Mvvm 기반**: `[ObservableProperty]`, `[RelayCommand]` 소스 생성기로 보일러플레이트 제거
@@ -87,9 +87,9 @@ MyApp/
 
 ---
 
-## 6. 기본 예제 (확장)
+## 기본 예제 (확장)
 
-### 6.1 Model
+### Model
 
 ```csharp
 // Models/Person.cs
@@ -111,7 +111,7 @@ namespace MyApp.Models
 }
 ```
 
-### 6.2 ViewModel (ReactiveUI 버전)
+### ViewModel (ReactiveUI 버전)
 
 ```csharp
 // ViewModels/ViewModelBase.cs
@@ -155,7 +155,7 @@ namespace MyApp.ViewModels
 }
 ```
 
-### 6.3 View (Avalonia XAML)
+### View (Avalonia XAML)
 
 > Avalonia XAML 네임스페이스 매핑은 일반적으로 `using:` 구문을 사용한다. 다음 예시는 `using:MyApp.ViewModels`를 사용한다.
 
@@ -178,7 +178,7 @@ namespace MyApp.ViewModels
 </Window>
 ```
 
-### 6.4 코드 비하인드
+### 코드 비하인드
 
 ```csharp
 // Views/MainWindow.axaml.cs
@@ -199,9 +199,9 @@ namespace MyApp.Views
 
 ---
 
-## 7. 명령(ICommand) 설계 — ReactiveUI vs CommunityToolkit
+## 명령(ICommand) 설계 — ReactiveUI vs CommunityToolkit
 
-### 7.1 ReactiveUI `ReactiveCommand`
+### ReactiveUI `ReactiveCommand`
 
 - 장점: 비동기/예외 스트림/CanExecute 스트림 연계가 자연스러움
 - 예: API 호출 후 상태 갱신
@@ -250,7 +250,7 @@ XAML:
 <TextBlock Text="{Binding Status}"/>
 ```
 
-### 7.2 CommunityToolkit `[RelayCommand]`
+### CommunityToolkit `[RelayCommand]`
 
 ```csharp
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -281,9 +281,9 @@ XAML:
 
 ---
 
-## 8. 바인딩 심화 — 모드, 경로, 업데이트, 변환기
+## 바인딩 심화 — 모드, 경로, 업데이트, 변환기
 
-### 8.1 모드
+### 모드
 
 - `OneWay`(기본 TextBlock 등), `TwoWay`(TextBox 등), `OneTime`(초기값만), `OneWayToSource`(드묾)
 - 예:
@@ -293,7 +293,7 @@ XAML:
 <TextBox Text="{Binding UserInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 ```
 
-### 8.2 변환기(IValueConverter)
+### 변환기(IValueConverter)
 
 ```csharp
 // Converters/BoolToTextConverter.cs
@@ -322,7 +322,7 @@ XAML 등록/사용:
 </Window>
 ```
 
-### 8.3 DataTemplate — ViewModel→View 자동 매핑
+### DataTemplate — ViewModel→View 자동 매핑
 
 ```xml
 <!-- App.axaml -->
@@ -353,9 +353,9 @@ ViewModel만 바꾸면 View가 자동으로 교체된다.
 
 ---
 
-## 9. 검증(Validation) — DataAnnotations/커스텀
+## 검증(Validation) — DataAnnotations/커스텀
 
-### 9.1 CommunityToolkit `ObservableValidator`
+### CommunityToolkit `ObservableValidator`
 
 ```csharp
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -383,15 +383,15 @@ XAML(간단한 에러 표시 예):
 <!-- 컨트롤 템플릿/Adorner로 에러 스타일링 가능 -->
 ```
 
-### 9.2 ReactiveUI ValidatableObject(직접 구현)
+### ReactiveUI ValidatableObject(직접 구현)
 
 - Reactive Validation 패턴 혹은 `IDataErrorInfo`/`INotifyDataErrorInfo`를 구현해도 된다.
 
 ---
 
-## 10. 네비게이션(Navigation) — 셸 + 서비스
+## 네비게이션(Navigation) — 셸 + 서비스
 
-### 10.1 셸(MainWindow) + CurrentViewModel 패턴
+### 셸(MainWindow) + CurrentViewModel 패턴
 
 ```csharp
 // ViewModels/MainWindowViewModel.cs
@@ -430,7 +430,7 @@ XAML:
 </DockPanel>
 ```
 
-### 10.2 DI 기반 네비게이션 서비스
+### DI 기반 네비게이션 서비스
 
 ```csharp
 // Services/INavigationService.cs
@@ -469,7 +469,7 @@ public sealed class NavigationService : INavigationService
 
 ---
 
-## 11. 다이얼로그(Dialog) — 서비스 추상화
+## 다이얼로그(Dialog) — 서비스 추상화
 
 ViewModel이 `Window`를 직접 생성하지 않도록 **IDialogService**를 둔다.
 
@@ -506,7 +506,7 @@ ViewModel은 인터페이스에만 의존하므로 테스트가 쉬워진다.
 
 ---
 
-## 12. DI(의존성 주입) — Microsoft.Extensions.DependencyInjection
+## DI(의존성 주입) — Microsoft.Extensions.DependencyInjection
 
 ```csharp
 // App.axaml.cs
@@ -548,9 +548,9 @@ public partial class App : Application
 
 ---
 
-## 13. 비동기·취소·예외 — 견고한 ViewModel
+## 비동기·취소·예외 — 견고한 ViewModel
 
-### 13.1 ReactiveUI: 취소 토큰/에러 스트림
+### ReactiveUI: 취소 토큰/에러 스트림
 
 ```csharp
 public class SearchViewModel : ViewModelBase
@@ -575,7 +575,7 @@ public class SearchViewModel : ViewModelBase
 }
 ```
 
-### 13.2 Toolkit: `AsyncRelayCommand` + 취소
+### Toolkit: `AsyncRelayCommand` + 취소
 
 ```csharp
 public partial class SearchViewModel : ObservableObject
@@ -604,9 +604,9 @@ public partial class SearchViewModel : ObservableObject
 
 ---
 
-## 14. 리스트/그리드/가상화
+## 리스트/그리드/가상화
 
-### 14.1 ObservableCollection + DataGrid
+### ObservableCollection + DataGrid
 
 ```xml
 <DataGrid Items="{Binding People}" AutoGenerateColumns="False">
@@ -627,7 +627,7 @@ public ObservableCollection<Person> People { get; } = new();
 
 ---
 
-## 15. 디자인 타임 데이터(Design.DataContext)
+## 디자인 타임 데이터(Design.DataContext)
 
 디자인 상태에서 XAML 힌트를 보려면:
 
@@ -652,9 +652,9 @@ public ObservableCollection<Person> People { get; } = new();
 
 ---
 
-## 16. 테스트(단위/통합) — ViewModel 중심
+## 테스트(단위/통합) — ViewModel 중심
 
-### 16.1 xUnit 테스트 프로젝트 생성
+### xUnit 테스트 프로젝트 생성
 
 ```bash
 dotnet new xunit -o MyApp.Tests
@@ -662,7 +662,7 @@ cd MyApp.Tests
 dotnet add reference ../MyApp/MyApp.csproj
 ```
 
-### 16.2 ViewModel 테스트 예시
+### ViewModel 테스트 예시
 
 ```csharp
 using Xunit;
@@ -691,7 +691,7 @@ Toolkit 사용 시 `RelayCommand`/`AsyncRelayCommand` 호출 방식에 맞게 �
 
 ---
 
-## 17. 리소스/스타일/테마 — 전역 관리
+## 리소스/스타일/테마 — 전역 관리
 
 `App.axaml`에서 리소스 병합:
 
@@ -728,7 +728,7 @@ Toolkit 사용 시 `RelayCommand`/`AsyncRelayCommand` 호출 방식에 맞게 �
 
 ---
 
-## 18. 로깅/설정/구성
+## 로깅/설정/구성
 
 - **로깅**: `AppBuilder.LogToTrace()`로 기본 로그. 필요하면 Serilog/NLog 사용.
 - **설정**: JSON 기반 설정 파일을 서비스로 로딩해 ViewModel에 주입.
@@ -736,7 +736,7 @@ Toolkit 사용 시 `RelayCommand`/`AsyncRelayCommand` 호출 방식에 맞게 �
 
 ---
 
-## 19. 성능/스레딩/반응성 팁
+## 성능/스레딩/반응성 팁
 
 - 과도한 중첩 레이아웃/효과는 렌더링 비용을 증가시킨다.
 - 빈번한 `PropertyChanged` 폭주를 막기 위해 디바운스/배치 갱신 고려.
@@ -746,7 +746,7 @@ Toolkit 사용 시 `RelayCommand`/`AsyncRelayCommand` 호출 방식에 맞게 �
 
 ---
 
-## 20. 자주 겪는 문제와 해결
+## 자주 겪는 문제와 해결
 
 - **DataTemplate 미적용**: `xmlns:vm="using:..."`, `DataType="{x:Type vm:MyVm}"` 네임스페이스/타입명 오타 점검.
 - **바인딩 실패**: 출력 로그 확인, 프로퍼티명/INPC 구현/경로 점검.
@@ -755,9 +755,9 @@ Toolkit 사용 시 `RelayCommand`/`AsyncRelayCommand` 호출 방식에 맞게 �
 
 ---
 
-## 21. 완성 예제: 홈/설정 전환 + 서비스/DI(요약)
+## 완성 예제: 홈/설정 전환 + 서비스/DI(요약)
 
-### 21.1 ViewModels
+### ViewModels
 
 ```csharp
 // ViewModels/HomeViewModel.cs (ReactiveUI)
@@ -814,7 +814,7 @@ public class MainWindowViewModel : ViewModelBase
 }
 ```
 
-### 21.2 Views
+### Views
 
 ```xml
 <!-- Views/HomeView.axaml -->
@@ -854,7 +854,7 @@ public class MainWindowViewModel : ViewModelBase
 </Window>
 ```
 
-### 21.3 App.axaml — DataTemplate 매핑
+### App.axaml — DataTemplate 매핑
 
 ```xml
 <Application
@@ -879,7 +879,7 @@ public class MainWindowViewModel : ViewModelBase
 </Application>
 ```
 
-### 21.4 App.axaml.cs — DI/부트스트랩
+### App.axaml.cs — DI/부트스트랩
 
 ```csharp
 using Avalonia;
@@ -913,7 +913,7 @@ public partial class App : Application
 
 ---
 
-## 22. 빌드/디버그/핫 리로드/배포
+## 빌드/디버그/핫 리로드/배포
 
 - 개발 실행: `dotnet run`, 핫 리로드: `dotnet watch`
 - 배포(self-contained):
@@ -928,7 +928,7 @@ dotnet publish -c Release -r osx-x64 --self-contained true
 
 ---
 
-## 23. 요약 체크리스트
+## 요약 체크리스트
 
 - View는 **바인딩과 스타일**만, 로직은 ViewModel/서비스로 이동
 - ViewModel은 **INPC**와 **ICommand**로 상태/동작 노출

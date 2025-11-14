@@ -6,7 +6,7 @@ category: AWS
 ---
 # AWS Free Tier 이해와 **실전 활용** 끝장 가이드 (2025 업데이트 반영)
 
-## 0. 빠른 요약
+## 빠른 요약
 
 - AWS Free Tier는 크게 **(A) Always Free**, **(B) 신규 고객용 Free Tier(신 모델: 크레딧 + 월별 크레딧)**, **(C) Legacy Free Tier(예: 12개월 무료)** 세 축으로 구성.
 - **항상 무료(Always Free)** 예: Lambda 100만 요청/월(지역/정책에 따라 상이 가능), DynamoDB 읽기/쓰기 용량 및 스토리지 일정량 등(세부 한도는 각 서비스 가격/Free Tier 페이지에서 확인).
@@ -15,15 +15,15 @@ category: AWS
 
 ---
 
-## 1. Free Tier 구성의 **두 갈래**: 신 모델 vs. 레거시
+## Free Tier 구성의 **두 갈래**: 신 모델 vs. 레거시
 
-### 1. 새로운 Free Tier (2025.07.15 도입)
+### 새로운 Free Tier (2025.07.15 도입)
 
 - **핵심**: 신규 고객에게 **시작 크레딧** + **월별 크레딧(최대 6개월)** + **Always Free** 제공.
 - **의미**: 과거처럼 “EC2 750시간” 등 **고정 리소스 한도**만으로 체험하던 방식에서 벗어나, **크레딧을 유연하게 배분**해 다양한 서비스를 맛볼 수 있게 됨.
 - **무엇이 달라졌나**: 기간/금액/대상 서비스가 **지역과 시점에 따라 다를 수 있음** → **본인 콘솔의 Free Tier**와 **공식 FAQ/Overview**를 반드시 확인.
 
-### 2. Legacy Free Tier (이전 계정)
+### Legacy Free Tier (이전 계정)
 
 - **구성**:
   - **12개월 무료**: (예) EC2 t2.micro/t3.micro 급 **월 750시간**, S3 **5GB**, RDS **월 750시간** 등 **고정 한도**(세부 항목과 대상 인스턴스 패밀리는 지역/시점에 따라 상이 가능).
@@ -33,7 +33,7 @@ category: AWS
 
 ---
 
-## 2. 언제 무엇을 쓸까? (학습/PoC/프로토타입 시나리오 7선)
+## 언제 무엇을 쓸까? (학습/PoC/프로토타입 시나리오 7선)
 
 1) **정적 웹 호스팅**
 - **S3** 정적 호스팅 + **CloudFront** 캐시 + **Route 53** 도메인.
@@ -61,7 +61,7 @@ category: AWS
 
 ---
 
-## 3. **비용·한도**를 수식으로 빠르게 감 잡기
+## **비용·한도**를 수식으로 빠르게 감 잡기
 
 Free Tier를 넘기지 않으려면, **월간 사용량**을 대략 계산하고 모니터링하자.
 
@@ -76,15 +76,17 @@ Free Tier를 넘기지 않으려면, **월간 사용량**을 대략 계산하고
 
 ---
 
-## 4. **모니터링 & 경보** — 초과 과금 방지 필수 루틴
+## **모니터링 & 경보** — 초과 과금 방지 필수 루틴
 
-### 4.1 콘솔에서 확인하기
+### 콘솔에서 확인하기
+
 - **Billing & Cost Management → Free Tier** 대시보드에서 **서비스별 사용량/남은 한도**를 확인. (계정 유형/시점에 따라 항목이 다름)
 
-### 4.2 AWS Budgets로 경보 만들기 (월별 비용 알림)
+### AWS Budgets로 경보 만들기 (월별 비용 알림)
 
 ```bash
 # 예: 월 1 USD 초과 시 이메일 알림(샘플)
+
 aws budgets create-budget --account-id 123456789012 --budget '{
   "BudgetName": "FreeTierGuard",
   "BudgetLimit": {"Amount": "1", "Unit": "USD"},
@@ -108,7 +110,7 @@ aws budgets create-budget --account-id 123456789012 --budget '{
 ]'
 ```
 
-### 4.3 Cost Explorer로 빠른 사용량/비용 조회(CLI)
+### Cost Explorer로 빠른 사용량/비용 조회(CLI)
 
 ```bash
 aws ce get-cost-and-usage \
@@ -120,13 +122,14 @@ aws ce get-cost-and-usage \
 
 ---
 
-## 5. **자동 종료/정리** 스크립트 — 실수 방지
+## **자동 종료/정리** 스크립트 — 실수 방지
 
-### 5.1 유휴 EC2 자동 종료(태그 기반)
+### 유휴 EC2 자동 종료(태그 기반)
 
 ```bash
 # 태그 "AutoStop=true" 인스턴스 중 상태가 running이고 지난 6시간 내 CPU 평균 < 2% → 종료
 # (CloudWatch Metric/Period/Statistics는 실제 운영 환경에 맞게 수정)
+
 INSTANCE_IDS=$(aws ec2 describe-instances \
   --filters "Name=tag:AutoStop,Values=true" "Name=instance-state-name,Values=running" \
   --query "Reservations[].Instances[].InstanceId" --output text)
@@ -145,10 +148,11 @@ for id in $INSTANCE_IDS; do
 done
 ```
 
-### 5.2 S3 정리(Lifecycle) — 실습 로그 7일 보관 후 삭제
+### S3 정리(Lifecycle) — 실습 로그 7일 보관 후 삭제
 
 ```yaml
 # bucket-lifecycle.yaml (S3 Lifecycle Rule)
+
 Rules:
   - ID: "delete-lab-logs-7days"
     Status: Enabled
@@ -161,9 +165,9 @@ Rules:
 
 ---
 
-## 6. **실전 예제**: Always Free 중심 서버리스 API (Lambda + API Gateway + DynamoDB)
+## **실전 예제**: Always Free 중심 서버리스 API (Lambda + API Gateway + DynamoDB)
 
-### 6.1 리소스 아키텍처
+### 리소스 아키텍처
 
 ```
 [Client] → [API Gateway] → [Lambda] ↔ [DynamoDB(Table: items)]
@@ -171,7 +175,7 @@ Rules:
 
 - 저/중소량 트래픽의 학습/PoC 용도로 **Always Free 범위**에서 동작하도록 설계.
 
-### 6.2 CDK(TypeScript) 템플릿
+### CDK(TypeScript) 템플릿
 
 ```ts
 import * as cdk from 'aws-cdk-lib';
@@ -215,6 +219,7 @@ export class FreeTierServerlessStack extends cdk.Stack {
 npm i -g aws-cdk
 cdk init app --language typescript
 # 위 스택 파일을 lib/에 배치 후
+
 npm i aws-cdk-lib constructs
 cdk synth
 cdk deploy
@@ -224,9 +229,9 @@ cdk deploy
 
 ---
 
-## 7. **레거시 Free Tier** 가정: EC2 1대 + S3 정적 사이트 실습
+## **레거시 Free Tier** 가정: EC2 1대 + S3 정적 사이트 실습
 
-### 7.1 CloudFormation 스니펫 (EC2 + 보안그룹)
+### CloudFormation 스니펫 (EC2 + 보안그룹)
 
 ```yaml
 AWSTemplateFormatVersion: '2010-09-09'
@@ -257,7 +262,7 @@ Resources:
 
 ---
 
-## 8. **보안/운영 모범 사례 12가지**
+## **보안/운영 모범 사례 12가지**
 
 1) **리소스 태그 표준화**: `Project`, `Owner`, `ExpireAt`(ISO8601) 등으로 정리.
 2) **자동 만료**: Lambda/Step Functions로 태그 `ExpireAt` 이 지난 자원 정리.
@@ -274,7 +279,7 @@ Resources:
 
 ---
 
-## 9. **자주 하는 실수 & 방지 체크리스트**
+## **자주 하는 실수 & 방지 체크리스트**
 
 - [ ] EC2 두 대를 24x7 가동(레거시 750시간 가정 시 초과).
 - [ ] 오브젝트 버저닝/로그 누적으로 S3 스토리지 초과.
@@ -288,7 +293,7 @@ Resources:
 
 ---
 
-## 10. **운영 자동화**: GitHub Actions로 실습 스택 생성→테스트→삭제
+## **운영 자동화**: GitHub Actions로 실습 스택 생성→테스트→삭제
 
 ```yaml
 name: free-tier-lab
@@ -312,7 +317,7 @@ jobs:
 
 ---
 
-## 11. **FAQ**
+## **FAQ**
 
 **Q1. 내 계정이 신규 Free Tier인지, Legacy인지 어떻게 알 수 있나?**
 A. **Free Tier 페이지/FAQ**에서 계정 상태를 확인. **신규 고객**에게는 크레딧 기반 Free Tier가 안내되며, **2025-07-15 이전** 생성 계정은 Legacy 모델이 적용된다.
@@ -325,7 +330,7 @@ A. **시점/지역/계정 유형에 따라 달라질 수 있음**. 본문 예시
 
 ---
 
-## 12. **현장용 체크리스트** (복붙해서 쓰기)
+## **현장용 체크리스트** (복붙해서 쓰기)
 
 - [ ] 콘솔 **Free Tier 대시보드** 즐겨찾기(매주 확인).
 - [ ] **Budgets** 월 1~5 USD 알림 설정.
@@ -339,7 +344,7 @@ A. **시점/지역/계정 유형에 따라 달라질 수 있음**. 본문 예시
 
 ---
 
-## 13. 마무리
+## 마무리
 
 AWS Free Tier는 **단순 무료 쿠폰**이 아니라, **비용 위험을 통제**하면서도 **실전 학습/PoC**를 반복할 수 있게 만든 **안전 그물**이다.
 2025년 도입된 **크레딧 기반 Free Tier** 덕분에 초기 실험의 폭은 넓어졌지만, **모니터링/자동정리/태깅/경보**가 없으면 초과 과금 위험은 여전하다.
@@ -353,5 +358,6 @@ AWS Free Tier는 **단순 무료 쿠폰**이 아니라, **비용 위험을 통�
 ---
 
 ### 참고 & 원문
+
 - AWS Free Tier FAQ (2025): 새 크레딧 기반 모델, Legacy Free Tier 안내, 지역/계정별 차이 명시.
 - AWS Free Tier Overview (2025): 프로그램 개요/구성요소/신규 고객 혜택 설명.

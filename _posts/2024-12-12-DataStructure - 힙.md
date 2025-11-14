@@ -18,7 +18,7 @@ category: Data Structure
 
 ---
 
-## 1. 힙이란?
+## 힙이란?
 
 > **힙**은 **완전 이진 트리(Complete Binary Tree)** 기반의 자료구조로, **부모와 자식 간 우선순위 관계**(힙 성질)를 만족한다.
 
@@ -37,7 +37,7 @@ category: Data Structure
 
 ---
 
-## 2. 힙 vs 우선순위 큐
+## 힙 vs 우선순위 큐
 
 | 항목 | 힙(Heap) | 우선순위 큐(Priority Queue) |
 |---|---|---|
@@ -50,7 +50,7 @@ category: Data Structure
 
 ---
 
-## 3. 배열 인덱스 규칙(0-based)
+## 배열 인덱스 규칙(0-based)
 
 완전 이진 트리는 **왼쪽부터 빈틈없이** 채워진다.
 
@@ -60,7 +60,7 @@ category: Data Structure
 
 ---
 
-## 4. 이진 힙의 연산과 복잡도
+## 이진 힙의 연산과 복잡도
 
 | 연산 | 설명 | 시간 |
 |---|---|---|
@@ -70,6 +70,7 @@ category: Data Structure
 | `build-heap` | 무작위 배열을 힙으로 변환 | \(O(n)\) |
 
 ### 왜 `build-heap`이 \(O(n)\)인가?
+
 아래쪽 레벨의 노드가 훨씬 많아서 **총 이동 거리의 합**이 선형으로 수렴한다.
 
 $$
@@ -78,9 +79,9 @@ $$
 
 ---
 
-## 5. 템플릿 이진 힙 구현(최대/최소/커스텀 비교자)
+## 템플릿 이진 힙 구현(최대/최소/커스텀 비교자)
 
-### 5.1 핵심 구현
+### 핵심 구현
 
 ```cpp
 ```cpp
@@ -154,7 +155,7 @@ public:
 - **최대 힙**: `Comp = std::less<T>` (기본)
 - **최소 힙**: `Comp = std::greater<T>`
 
-### 5.2 구조체와 커스텀 비교자
+### 구조체와 커스텀 비교자
 
 ```cpp
 ```cpp
@@ -173,9 +174,9 @@ struct JobCmp {
 
 ---
 
-## 6. STL 힙 알고리즘 & `priority_queue`
+## STL 힙 알고리즘 & `priority_queue`
 
-### 6.1 힙 알고리즘(컨테이너는 vector 등 임의 접근 필요)
+### 힙 알고리즘(컨테이너는 vector 등 임의 접근 필요)
 
 ```cpp
 ```cpp
@@ -201,7 +202,7 @@ std::sort_heap(v.begin(), v.end());
 
 - 최소 힙을 원한다면 **역비교자**를 쓰거나 원소에 부호를 바꾸는 방식.
 
-### 6.2 `std::priority_queue`
+### `std::priority_queue`
 
 ```cpp
 ```cpp
@@ -218,7 +219,7 @@ std::priority_queue<int, std::vector<int>, std::greater<int>> minpq; // 최소 �
 
 ---
 
-## 7. d-ary 힙(특히 4-ary 힙) — 팬아웃으로 상수 줄이기
+## d-ary 힙(특히 4-ary 힙) — 팬아웃으로 상수 줄이기
 
 - 이진 힙의 자식 2개 → **d개**로 확장
 - **장점**: 트리 높이 감소 → `sift_down` 비교 단계 수 감소
@@ -232,7 +233,7 @@ std::priority_queue<int, std::vector<int>, std::greater<int>> minpq; // 최소 �
 
 ---
 
-## 8. Indexed Priority Queue — decrease-key가 필요할 때
+## Indexed Priority Queue — decrease-key가 필요할 때
 
 **다익스트라/A\***에서 핵심은 **키 감소(decrease-key)**. 항목별 **id**를 고정하고, `pos[id]`가 **힙 내 위치**를 추적한다.
 
@@ -325,9 +326,9 @@ public:
 
 ---
 
-## 9. 힙 정렬(Heap Sort) — 불안정, In-place \(O(n \log n)\)
+## 힙 정렬(Heap Sort) — 불안정, In-place \(O(n \log n)\)
 
-### 9.1 `std::make_heap`/`sort_heap` 활용(in-place)
+### `std::make_heap`/`sort_heap` 활용(in-place)
 
 ```cpp
 ```cpp
@@ -341,7 +342,7 @@ void heap_sort(std::vector<int>& v){
 ```
 ```
 
-### 9.2 직접 MaxHeap 객체로 정렬(단계적 pop)
+### 직접 MaxHeap 객체로 정렬(단계적 pop)
 
 ```cpp
 ```cpp
@@ -360,9 +361,9 @@ void heap_sort2(std::vector<int>& arr){
 
 ---
 
-## 10. 실전 응용 레시피
+## 실전 응용 레시피
 
-### 10.1 스트리밍 Top-K(최대값 K개 유지) — 최소 힙 크기 K
+### 스트리밍 Top-K(최대값 K개 유지) — 최소 힙 크기 K
 
 ```cpp
 ```cpp
@@ -383,7 +384,7 @@ std::vector<int> topK(const std::vector<int>& a, int K){
 ```
 ```
 
-### 10.2 스트리밍 중간값(Running Median) — 두 힙
+### 스트리밍 중간값(Running Median) — 두 힙
 
 - **max-heap**(왼쪽 절반), **min-heap**(오른쪽 절반) 유지
 - 균형을 맞춰 두 힙 사이 크기 차가 1 이하가 되도록
@@ -421,7 +422,7 @@ public:
 ```
 ```
 
-### 10.3 다익스트라(Indexed PQ 버전, 인접 리스트)
+### 다익스트라(Indexed PQ 버전, 인접 리스트)
 
 ```cpp
 ```cpp
@@ -455,7 +456,7 @@ std::vector<int> dijkstra_indexedPQ(int n, const std::vector<std::vector<Edge>>&
 ```
 ```
 
-### 10.4 작업 스케줄링(우선순위·소요시간 기준)
+### 작업 스케줄링(우선순위·소요시간 기준)
 
 ```cpp
 ```cpp
@@ -490,21 +491,23 @@ long long simulate(std::vector<Task> tasks){
 
 ---
 
-## 11. 수학/복잡도 스냅샷
+## 수학/복잡도 스냅샷
 
-### 11.1 `build-heap`의 \(O(n)\)
+### `build-heap`의 \(O(n)\)
+
 레벨 \(\ell\)의 노드 수는 \(\approx n/2^{\ell+1}\), 각 노드는 최대 \(O(h-\ell)\)만큼 내려간다:
 
 $$
 \sum_{\ell=0}^{h} \frac{n}{2^{\ell+1}} (h-\ell) \in O(n)
 $$
 
-### 11.2 두 힙 중간값의 균형
+### 두 힙 중간값의 균형
+
 좌우 힙 크기 차를 \(\le 1\)로 유지하면, 삽입마다 재배치는 상수 번 비교/이동으로 처리되어 **평균 \(O(\log n)\)** 로 안정적으로 유지된다.
 
 ---
 
-## 12. 자주 나오는 버그 & 체크리스트
+## 자주 나오는 버그 & 체크리스트
 
 1. **비교자 반전**: `less`/`greater` 의미를 혼동 → `higher()` 구현을 **명시적**으로 점검.
 2. **sift_down 종료 조건**: 자식 인덱스 경계 체크, `best==i`일 때 종료.
@@ -516,7 +519,7 @@ $$
 
 ---
 
-## 13. 퍼징(간단 검증) — 힙 vs `priority_queue`
+## 퍼징(간단 검증) — 힙 vs `priority_queue`
 
 ```cpp
 ```cpp
@@ -542,7 +545,7 @@ int main(){
 
 ---
 
-## 14. 확장: 페어링 힙/피보나치 힙(개요)
+## 확장: 페어링 힙/피보나치 힙(개요)
 
 - **페어링 힙(Pairing Heap)**: 단순 링크 기반, 실제 성능 우수, decrease-key가 **상대적으로 빠름**(분석은 복잡).
 - **피보나치 힙(Fibonacci Heap)**: 이론상 `decrease-key`가 \(O(1)\) amortized, `pop`이 \(O(\log n)\).
@@ -552,7 +555,7 @@ int main(){
 
 ---
 
-## 15. 요약
+## 요약
 
 - **힙**은 완전 이진 트리 기반으로 `push/pop/top`에 강하며, `build-heap`이 \(O(n)\)이라 초기화도 빠르다.
 - **템플릿 이진 힙**으로 최대/최소/커스텀 우선순위를 일관되게 지원하고,

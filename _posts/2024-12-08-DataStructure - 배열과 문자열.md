@@ -6,9 +6,9 @@ category: Data Structure
 ---
 # 배열과 문자열
 
-## 1. 배열(Array)
+## 배열(Array)
 
-### 1.1 정의와 메모리 모델
+### 정의와 메모리 모델
 
 배열은 **같은 타입의 요소들이 연속된 메모리**에 저장된 구조다. 연속성 덕분에 임의 인덱스 접근이 상수 시간에 가능하다.
 
@@ -19,14 +19,14 @@ int arr[5] = {1, 2, 3, 4, 5}; // 스택/정적 영역에 연속 배치
 - 인덱스 i의 주소는 `base + i * sizeof(T)`로 계산된다.
 - 캐시 지역성이 좋아 순차 순회가 매우 빠르다.
 
-### 1.2 시간/공간 특성
+### 시간/공간 특성
 
 - **접근**: $$O(1)$$
 - **검색(선형)**: $$O(n)$$
 - **삽입/삭제(중간)**: 시프트 필요 → $$O(n)$$
 - **메모리**: 연속 블록 필요(큰 배열은 할당 실패 가능)
 
-### 1.3 정적 배열 vs 동적 배열
+### 정적 배열 vs 동적 배열
 
 ```cpp
 // 정적(스택) 크기 고정
@@ -42,7 +42,7 @@ delete[] b;            // 해제 (반드시)
 - 정적 배열은 크기 변경 불가.
 - 동적 배열은 크기 선택이 유연하나 **수동 관리 오류**(누수/이중 해제/경계 초과)에 주의.
 
-### 1.4 경계/예외: UB(Undefined Behavior)
+### 경계/예외: UB(Undefined Behavior)
 
 ```cpp
 int x[3] = {1,2,3};
@@ -52,7 +52,7 @@ x[-1] = 7;     // UB: 음수 인덱스
 
 경계 체크가 필요하면 `std::vector::at()`처럼 예외를 던지는 접근을 사용하라.
 
-### 1.5 기본 예제: 선형 검색
+### 기본 예제: 선형 검색
 
 ```cpp
 int find_index(const int* arr, int n, int target) {
@@ -62,7 +62,7 @@ int find_index(const int* arr, int n, int target) {
 }
 ```
 
-### 1.6 이진 검색(정렬 가정)
+### 이진 검색(정렬 가정)
 
 ```cpp
 int lower_bound_index(const std::vector<int>& v, int key){
@@ -79,7 +79,7 @@ int lower_bound_index(const std::vector<int>& v, int key){
 - 시간: $$O(\log n)$$
 - 전제: **정렬** 유지
 
-### 1.7 배열 변형 패턴
+### 배열 변형 패턴
 
 #### (1) 회전(rotate) — 세 번 뒤집기
 
@@ -119,7 +119,7 @@ int partition(std::vector<int>& a, int l, int r){
 }
 ```
 
-### 1.8 누적합 / 차분 배열
+### 누적합 / 차분 배열
 
 - 누적합 $$P[i] = \sum_{k=0}^{i-1} A[k]$$ → 구간합 $$[l,r)$$은 $$P[r]-P[l]$$
 
@@ -133,12 +133,13 @@ std::vector<long long> prefix(const std::vector<int>& a){
 
 - 차분 배열로 구간 업데이트를 상수 시간으로 축적 후 한 번에 복원 가능.
 
-### 1.9 투 포인터 / 슬라이딩 윈도우
+### 투 포인터 / 슬라이딩 윈도우
 
 #### (1) 고유 원소 최대 길이 부분배열
 
 ```cpp
 #include <unordered_map>
+
 int longest_distinct(const std::vector<int>& a){
     std::unordered_map<int,int> last;
     int best=0, l=0;
@@ -167,9 +168,9 @@ int max_len_leq_sum(const std::vector<int>& a, long long S){
 
 ---
 
-## 2. 문자열(String)
+## 문자열(String)
 
-### 2.1 C 문자열 vs C++ `std::string`
+### C 문자열 vs C++ `std::string`
 
 - C 문자열: `char*` + **널 종료 `\0`**. 길이 계산이 $$O(n)$$.
 - `std::string`: 길이/용량 보관, 동적 확장, 예외/대입/이동 지원.
@@ -184,7 +185,7 @@ s += " world";            // 편의 + 자동 확장
 std::cout << s.size();    // O(1)
 ```
 
-### 2.2 대표 연산 복잡도
+### 대표 연산 복잡도
 
 | 연산 | 설명 | 시간 |
 |---|---|---|
@@ -197,10 +198,11 @@ std::cout << s.size();    // O(1)
 
 > 구현체에 따라 **SSO(Small String Optimization)** 등 상수항 최적화가 있을 수 있으나 표준에서 보장되지는 않는다.
 
-### 2.3 `std::string_view` — 복사 없이 참조
+### `std::string_view` — 복사 없이 참조
 
 ```cpp
 #include <string_view>
+
 void log_line(std::string_view sv){
     // 문자열/리터럴/부분범위를 모두 비용 없이 참조
 }
@@ -208,7 +210,7 @@ void log_line(std::string_view sv){
 
 - 비소유 참조이므로 수명 주의.
 
-### 2.4 유니코드 기본기
+### 유니코드 기본기
 
 - UTF-8은 **가변 길이** 인코딩. `s[i]`는 **바이트 i**이지 문자 i가 아니다.
 - 문자의 수를 세거나 자르려면 **코드 포인트 파싱**이 필요.
@@ -216,9 +218,9 @@ void log_line(std::string_view sv){
 
 ---
 
-## 3. 문자열 알고리즘 실전
+## 문자열 알고리즘 실전
 
-### 3.1 회문(팰린드롬)
+### 회문(팰린드롬)
 
 #### (1) 투 포인터
 
@@ -248,10 +250,11 @@ int longest_pal_substr(const std::string& s){
 
 > 선형 시간 알고리즘 **Manacher**도 있으나 구현이 길어 개요만 소개.
 
-### 3.2 아나그램 판단
+### 아나그램 판단
 
 ```cpp
 #include <array>
+
 bool is_anagram_latin(const std::string& a, const std::string& b){
     if(a.size()!=b.size()) return false;
     std::array<int,256> cnt{}; // 바이트 범위
@@ -261,10 +264,11 @@ bool is_anagram_latin(const std::string& a, const std::string& b){
 }
 ```
 
-### 3.3 슬라이딩 윈도우: 모든 아나그램 시작 위치
+### 슬라이딩 윈도우: 모든 아나그램 시작 위치
 
 ```cpp
 #include <vector>
+
 std::vector<int> find_anagrams(const std::string& s, const std::string& p){
     if(s.size()<p.size()) return {};
     std::array<int,26> need{}, win{};
@@ -308,9 +312,10 @@ std::vector<int> find_anagrams(const std::string& s, const std::string& p){
 }
 ```
 
-### 3.4 KMP(접두사 함수/실패 함수)
+### KMP(접두사 함수/실패 함수)
 
 #### 아이디어
+
 패턴의 **자기 접두사=접미사** 길이를 이용해 텍스트 인덱스를 되돌리지 않고 이동.
 
 - 접두사 함수(파이 함수) 정의:
@@ -352,7 +357,7 @@ std::vector<int> kmp_search(const std::string& s, const std::string& p){
 - 시간: $$O(n+m)$$
 - 공간: $$O(m)$$
 
-### 3.5 Z-알고리즘
+### Z-알고리즘
 
 - 문자열 `S`에 대해 `Z[i]` = `S`와 `S[i..]`의 최장 공통 접두사 길이.
 - 패턴 매칭을 위해 `P + '#' + T`에 Z를 적용하는 방식 사용.
@@ -370,7 +375,7 @@ std::vector<int> z_function(const std::string& s){
 }
 ```
 
-### 3.6 롤링 해시(라빈-카프)
+### 롤링 해시(라빈-카프)
 
 - 다항 해시:
   $$
@@ -400,7 +405,7 @@ struct RH {
 
 ---
 
-## 4. 배열 <> 문자열: 상호 환원과 실전 문제
+## 배열 <> 문자열: 상호 환원과 실전 문제
 
 - 문자열은 결국 **바이트/문자 코드의 배열**. 투 포인터/슬라이딩 윈도우/누적합류 기법이 그대로 적용된다.
 - 대표 문제군:
@@ -412,9 +417,9 @@ struct RH {
 
 ---
 
-## 5. `std::vector`로 확장: 동적 배열 핵심
+## `std::vector`로 확장: 동적 배열 핵심
 
-### 5.1 자동 성장과 상환분석
+### 자동 성장과 상환분석
 
 크기가 꽉 차면 용량을 **c → g·c**로 늘리며 재할당한다. 보통 g≈2.
 
@@ -422,13 +427,13 @@ $$
 \underbrace{1+1+2+4+\cdots}_{\le 2n} \Rightarrow \text{amortized } O(1)
 $$
 
-### 5.2 공통 실수
+### 공통 실수
 
 - 반복자 무효화: **재할당/중간 삽입/삭제** 후 기존 포인터/참조는 무효 가능.
 - `reserve()` 없이 대량 `push_back` → 잦은 재할당.
 - `at()` 대신 `operator[]`만 사용 → 경계 예외 놓침.
 
-### 5.3 예제
+### 예제
 
 ```cpp
 #include <vector>
@@ -446,7 +451,7 @@ int main(){
 
 ---
 
-## 6. 성능과 캐시, SIMD 힌트
+## 성능과 캐시, SIMD 힌트
 
 - **연속 메모리** 순차 접근은 **캐시 미스**가 적어 매우 빠르다.
 - 조건 분기보다 **분기 예측 친화적** 루프가 유리.
@@ -454,7 +459,7 @@ int main(){
 
 ---
 
-## 7. 테스트 전략과 디버깅
+## 테스트 전략과 디버깅
 
 - **경계 케이스**: 빈, 길이 1, 모두 동일 문자, 매우 긴 입력.
 - **무작위 퍼징**: 느린 정답(브루트포스)과 결과 대조.
@@ -476,9 +481,9 @@ void kmp_selftest(){
 
 ---
 
-## 8. 종합 예제 모음
+## 종합 예제 모음
 
-### 8.1 부분합으로 고정 길이 k의 최대 합
+### 부분합으로 고정 길이 k의 최대 합
 
 ```cpp
 long long max_sum_k(const std::vector<int>& a, int k){
@@ -493,7 +498,7 @@ long long max_sum_k(const std::vector<int>& a, int k){
 }
 ```
 
-### 8.2 문자열 내 최소 윈도우 커버(필수 문자 모두 포함)
+### 문자열 내 최소 윈도우 커버(필수 문자 모두 포함)
 
 ```cpp
 #include <unordered_map>
@@ -520,13 +525,13 @@ std::pair<int,int> min_window_substr(const std::string& s, const std::string& t)
 }
 ```
 
-### 8.3 패턴 매칭 벤치: KMP vs Z vs find
+### 패턴 매칭 벤치: KMP vs Z vs find
 
 문자열 길이가 크고 패턴 반복 구조가 있으면 **KMP/Z**가 유리. 일반 텍스트에서는 구현/플랫폼에 따라 `std::string::find`가 매우 빠를 수도 있다(최적화/어셈 수준).
 
 ---
 
-## 9. 복잡도 요약표
+## 복잡도 요약표
 
 | 구조/연산 | 시간 | 비고 |
 |---|---|---|
@@ -540,7 +545,7 @@ std::pair<int,int> min_window_substr(const std::string& s, const std::string& t)
 
 ---
 
-## 10. 자주 하는 질문(FAQ)
+## 자주 하는 질문(FAQ)
 
 - **Q. `std::string`은 유니코드 안전한가?**
   바이트 시퀀스를 담는 컨테이너다. 유니코드 문자를 단위로 다루려면 UTF 디코딩이 필요.
@@ -553,6 +558,6 @@ std::pair<int,int> min_window_substr(const std::string& s, const std::string& t)
 
 ---
 
-## 11. 마무리
+## 마무리
 
 배열·문자열은 **연속 메모리 모델** 위에 세워진 가장 기본 단위다. 여기서 출발해 **슬라이딩 윈도우/투 포인터/누적합** 같은 테크닉과 **KMP/Z/롤링 해시** 같은 문자열 알고리즘을 익히면, 대부분의 문자열/배열 문제를 강력하게 해결할 수 있다. 다음 글에서는 **접미사 배열/트리**, **Manacher**, **문자열 해시 충돌 완화** 등을 더 깊이 다룬다.

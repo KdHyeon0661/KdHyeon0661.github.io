@@ -6,18 +6,21 @@ category: AspNet
 ---
 # .NET CLI 기본 명령어 정리
 
-## 0. 시작 전에 — 환경 점검과 버전 고정
+## 시작 전에 — 환경 점검과 버전 고정
 
-### 0.1 SDK/런타임 점검
+### SDK/런타임 점검
+
 ```bash
 dotnet --info           # 설치된 SDK/런타임, OS/RID, 경로 확인
 dotnet --list-sdks      # 설치된 SDK 버전 목록
 dotnet --list-runtimes  # 설치된 런타임 목록
 ```
 
-### 0.2 팀/CI용 SDK 버전 고정(global.json)
+### 팀/CI용 SDK 버전 고정(global.json)
+
 ```bash
 # 루트에서 원하는 SDK 버전 지정
+
 dotnet new globaljson --sdk-version 8.0.403 --force
 ```
 - 여러 SDK가 설치된 환경에서 **일관된 빌드**를 보장합니다.
@@ -25,9 +28,10 @@ dotnet new globaljson --sdk-version 8.0.403 --force
 
 ---
 
-## 1. 프로젝트 생성 — `dotnet new`
+## 프로젝트 생성 — `dotnet new`
 
-### 1.1 기본 문법
+### 기본 문법
+
 ```bash
 dotnet new [템플릿] -n [프로젝트명] [-o 출력폴더] [옵션...]
 ```
@@ -52,14 +56,16 @@ dotnet new list                      # 설치된 템플릿 나열
 dotnet new webapp --help             # 템플릿별 옵션 도움말
 ```
 
-### 1.2 예시
+### 예시
+
 ```bash
 dotnet new webapp -n MyWebApp
 dotnet new api     -n MyApi
 dotnet new classlib -n MyLib
 ```
 
-### 1.3 고급 옵션
+### 고급 옵션
+
 ```bash
 dotnet new console -n ToolingDemo --framework net8.0
 dotnet new api -n MyApi --no-https
@@ -68,9 +74,10 @@ dotnet new webapp -n MyWebApp --auth Individual   # Identity 포함(로컬 DB)
 
 ---
 
-## 2. 애플리케이션 실행 — `dotnet run`
+## 애플리케이션 실행 — `dotnet run`
 
-### 2.1 기본
+### 기본
+
 ```bash
 cd MyWebApp
 dotnet run
@@ -78,14 +85,16 @@ dotnet run
 - `launchSettings.json` 설정이 있으면 해당 URL/포트로 기동합니다.
 - 기본적으로 개발 환경에서 `http://localhost:5000`, `https://localhost:5001`가 사용될 수 있습니다.
 
-### 2.2 구성/포트/환경 지정
+### 구성/포트/환경 지정
+
 ```bash
 dotnet run --configuration Debug
 ASPNETCORE_URLS=http://localhost:8080 dotnet run
 ASPNETCORE_ENVIRONMENT=Development dotnet run
 ```
 
-### 2.3 변경 감지 실행(개발 편의)
+### 변경 감지 실행(개발 편의)
+
 ```bash
 dotnet watch run
 ```
@@ -93,22 +102,25 @@ dotnet watch run
 
 ---
 
-## 3. 빌드 — `dotnet build`
+## 빌드 — `dotnet build`
 
-### 3.1 기본
+### 기본
+
 ```bash
 dotnet build
 ```
 - 산출물: `bin/Debug/net8.0/` 또는 `bin/Release/net8.0/`
 
-### 3.2 구성/경고/병렬/정확성 옵션
+### 구성/경고/병렬/정확성 옵션
+
 ```bash
 dotnet build -c Release
 dotnet build -warnaserror
 dotnet build -maxcpucount
 ```
 
-### 3.3 멀티타기팅 프로젝트
+### 멀티타기팅 프로젝트
+
 `.csproj`에서
 ```xml
 <TargetFrameworks>net8.0;net7.0</TargetFrameworks>
@@ -120,15 +132,17 @@ dotnet build -c Release
 
 ---
 
-## 4. 패키지 복원 — `dotnet restore`
+## 패키지 복원 — `dotnet restore`
 
-### 4.1 기본
+### 기본
+
 ```bash
 dotnet restore
 ```
 - 최신 SDK에서는 `build`/`run` 시 자동 복원되므로 명시 호출은 생략 가능.
 
-### 4.2 소스/잠금/구성
+### 소스/잠금/구성
+
 ```bash
 dotnet restore --source https://api.nuget.org/v3/index.json
 dotnet restore --locked-mode     # packages.lock.json 기반 고정 복원
@@ -137,9 +151,10 @@ NuGet 소스 구성(`NuGet.Config`)을 저장소에 포함하면, 팀/CI 환경�
 
 ---
 
-## 5. 솔루션/프로젝트 관리 — `dotnet sln`, `dotnet new sln`, `dotnet add reference`
+## 솔루션/프로젝트 관리 — `dotnet sln`, `dotnet new sln`, `dotnet add reference`
 
-### 5.1 솔루션 생성·추가
+### 솔루션 생성·추가
+
 ```bash
 dotnet new sln -n MySolution
 dotnet sln MySolution.sln add MyWebApp/MyWebApp.csproj
@@ -147,48 +162,56 @@ dotnet sln MySolution.sln add MyApi/MyApi.csproj
 dotnet sln MySolution.sln add MyLib/MyLib.csproj
 ```
 
-### 5.2 프로젝트 참조
+### 프로젝트 참조
+
 ```bash
 # WebApp에서 Lib 참조 추가
+
 dotnet add MyWebApp/MyWebApp.csproj reference MyLib/MyLib.csproj
 ```
 
-### 5.3 제거
+### 제거
+
 ```bash
 dotnet sln MySolution.sln remove MyApi/MyApi.csproj
 ```
 
 ---
 
-## 6. 테스트 — `dotnet test`
+## 테스트 — `dotnet test`
 
-### 6.1 기본
+### 기본
+
 ```bash
 dotnet new xunit -n MyLib.Tests
 dotnet test
 ```
 
-### 6.2 선택 실행/필터/로그
+### 선택 실행/필터/로그
+
 ```bash
 dotnet test --filter "Category=Fast"
 dotnet test --logger "trx;LogFileName=test.trx"
 ```
 
-### 6.3 변경 감지 테스트
+### 변경 감지 테스트
+
 ```bash
 dotnet watch test
 ```
 
 ---
 
-## 7. 정리/패키지/의존성 — `dotnet clean`, `dotnet add package`, `dotnet remove package`, `dotnet list package`
+## 정리/패키지/의존성 — `dotnet clean`, `dotnet add package`, `dotnet remove package`, `dotnet list package`
 
-### 7.1 빌드 결과물 정리
+### 빌드 결과물 정리
+
 ```bash
 dotnet clean
 ```
 
-### 7.2 NuGet 패키지 추가/제거/목록
+### NuGet 패키지 추가/제거/목록
+
 ```bash
 dotnet add package Microsoft.EntityFrameworkCore.Sqlite
 dotnet remove package Microsoft.EntityFrameworkCore.Sqlite
@@ -196,7 +219,8 @@ dotnet list package
 dotnet list package --outdated
 ```
 
-### 7.3 사설 피드나 사내 캐시 활용
+### 사설 피드나 사내 캐시 활용
+
 `NuGet.Config`에 사설 레지스트리 추가 후:
 ```bash
 dotnet restore --source "PrivateFeed" --source "nuget.org"
@@ -204,18 +228,21 @@ dotnet restore --source "PrivateFeed" --source "nuget.org"
 
 ---
 
-## 8. 배포 — `dotnet publish`
+## 배포 — `dotnet publish`
 
-### 8.1 기본
+### 기본
+
 ```bash
 dotnet publish -c Release -o ./publish
 ```
 - 산출물: 애플리케이션 DLL, 런타임종속 파일 등
 
-### 8.2 Self-contained/Single-file/Trimming/AOT/ReadyToRun
+### Self-contained/Single-file/Trimming/AOT/ReadyToRun
+
 운영 체제별 **RID(Runtime Identifier)** 지정:
 ```bash
 # Linux x64 Self-contained
+
 dotnet publish -c Release -r linux-x64 --self-contained true -o publish/linux-x64
 ```
 
@@ -243,25 +270,30 @@ dotnet publish -c Release -r win-x64 -p:PublishAot=true -o publish/aot
 
 ---
 
-## 9. 실전 예시 시나리오
+## 실전 예시 시나리오
 
-### 9.1 최소 웹앱 생성부터 배포까지
+### 최소 웹앱 생성부터 배포까지
+
 ```bash
 dotnet new webapp -n MySite
 cd MySite
 
 # 개발 실행
+
 dotnet run
 
 # 테스트(필요 시)
+
 dotnet new xunit -n MySite.Tests
 dotnet test
 
 # 배포용
+
 dotnet publish -c Release -o ./publish
 ```
 
-### 9.2 단일 솔루션 + Web + API + Lib + Test
+### 단일 솔루션 + Web + API + Lib + Test
+
 ```bash
 mkdir Monorepo && cd Monorepo
 dotnet new sln -n Monorepo
@@ -279,7 +311,8 @@ dotnet build -c Release
 dotnet test
 ```
 
-### 9.3 다중 대상 프레임워크/교차 배포
+### 다중 대상 프레임워크/교차 배포
+
 `.csproj` 설정:
 ```xml
 <PropertyGroup>
@@ -294,23 +327,26 @@ dotnet publish -c Release -r win-x64   --self-contained true -o out/win
 
 ---
 
-## 10. 구성/비밀/환경 — appsettings, User Secrets, 환경 변수
+## 구성/비밀/환경 — appsettings, User Secrets, 환경 변수
 
-### 10.1 환경별 설정
+### 환경별 설정
+
 ```
 appsettings.json
 appsettings.Development.json
 appsettings.Production.json
 ```
 
-### 10.2 개발 비밀(User Secrets)
+### 개발 비밀(User Secrets)
+
 ```bash
 cd MyWebApp
 dotnet user-secrets init
 dotnet user-secrets set "Jwt:Key" "local-dev-secret"
 ```
 
-### 10.3 환경 변수 주입
+### 환경 변수 주입
+
 ```bash
 ASPNETCORE_ENVIRONMENT=Production dotnet run
 ConnectionStrings__Default="Server=...;" dotnet run
@@ -318,29 +354,33 @@ ConnectionStrings__Default="Server=...;" dotnet run
 
 ---
 
-## 11. 도구(툴) — `dotnet tool`
+## 도구(툴) — `dotnet tool`
 
-### 11.1 전역/로컬 설치
+### 전역/로컬 설치
+
 ```bash
 dotnet tool install -g dotnet-ef
 dotnet tool install --local dotnet-ef
 ```
 
-### 11.2 사용
+### 사용
+
 ```bash
 dotnet ef --help
 dotnet ef migrations add Init
 dotnet ef database update
 ```
 
-### 11.3 프로젝트 내부 `.config/dotnet-tools.json`
+### 프로젝트 내부 `.config/dotnet-tools.json`
+
 - 로컬 도구를 **프로젝트와 함께 버전 고정**하여 팀/CI 일관성 확보.
 
 ---
 
-## 12. 빌드/테스트/배포 자동화 — CI 기본 스케치
+## 빌드/테스트/배포 자동화 — CI 기본 스케치
 
-### 12.1 GitHub Actions 예
+### GitHub Actions 예
+
 ```yaml
 name: ci
 on: [push, pull_request]
@@ -364,20 +404,23 @@ jobs:
 
 ---
 
-## 13. 디버깅/성능/분석 — watch, 로그, 트리밍 경고
+## 디버깅/성능/분석 — watch, 로그, 트리밍 경고
 
-### 13.1 변경 감지
+### 변경 감지
+
 ```bash
 dotnet watch run
 dotnet watch test
 ```
 
-### 13.2 빌드 경고와 실패 처리
+### 빌드 경고와 실패 처리
+
 ```bash
 dotnet build -warnaserror
 ```
 
-### 13.3 트리밍 경고 점검
+### 트리밍 경고 점검
+
 ```bash
 dotnet publish -c Release -p:PublishTrimmed=true -p:TrimmerDefaultAction=link
 ```
@@ -385,7 +428,7 @@ dotnet publish -c Release -p:PublishTrimmed=true -p:TrimmerDefaultAction=link
 
 ---
 
-## 14. 흔한 함정과 체크리스트
+## 흔한 함정과 체크리스트
 
 1. SDK 불일치
    - CI/로컬 간 SDK 버전 차이로 빌드 실패
@@ -405,7 +448,7 @@ dotnet publish -c Release -p:PublishTrimmed=true -p:TrimmerDefaultAction=link
 
 ---
 
-## 15. 확장 요약표 — 자주 쓰는 명령과 옵션
+## 확장 요약표 — 자주 쓰는 명령과 옵션
 
 | 작업 | 명령 |
 |------|------|
@@ -429,39 +472,45 @@ dotnet publish -c Release -p:PublishTrimmed=true -p:TrimmerDefaultAction=link
 
 ---
 
-## 16. 실전 흐름 정리(확장판)
+## 실전 흐름 정리(확장판)
 
 ```bash
-# 1. 솔루션/프로젝트 생성
+# 솔루션/프로젝트 생성
+
 dotnet new sln -n MySolution
 dotnet new webapp -n MySite
 dotnet new classlib -n MySite.Domain
 dotnet new xunit -n MySite.Tests
 
-# 2. 솔루션/참조 구성
+# 솔루션/참조 구성
+
 dotnet sln MySolution.sln add MySite/MySite.csproj MySite.Domain/MySite.Domain.csproj MySite.Tests/MySite.Tests.csproj
 dotnet add MySite/MySite.csproj reference MySite.Domain/MySite.Domain.csproj
 dotnet add MySite.Tests/MySite.Tests.csproj reference MySite.Domain/MySite.Domain.csproj
 
-# 3. 의존성 추가
+# 의존성 추가
+
 dotnet add MySite/MySite.csproj package Microsoft.EntityFrameworkCore.Sqlite
 dotnet add MySite/MySite.csproj package Swashbuckle.AspNetCore
 
-# 4. 개발 실행/테스트
+# 개발 실행/테스트
+
 dotnet watch run --project MySite/MySite.csproj
 dotnet test
 
-# 5. 릴리스 빌드/배포
+# 릴리스 빌드/배포
+
 dotnet build -c Release
 dotnet publish MySite/MySite.csproj -c Release -o ./publish
 
-# 6. 운영 타입별 빌드(예: Linux x64)
+# 운영 타입별 빌드(예: Linux x64)
+
 dotnet publish MySite/MySite.csproj -c Release -r linux-x64 --self-contained true -o ./publish/linux
 ```
 
 ---
 
-## 17. 결론
+## 결론
 
 - `.NET CLI`는 **편집기 독립**적으로 프로젝트 생성부터 빌드/테스트/배포까지를 **크로스 플랫폼**으로 일관되게 수행할 수 있게 합니다.
 - 본 글은 기존 요약에 **옵션·시나리오·자동화·배포 전략**을 더해 **현업에서 바로 쓰는 레벨**로 확장했습니다.

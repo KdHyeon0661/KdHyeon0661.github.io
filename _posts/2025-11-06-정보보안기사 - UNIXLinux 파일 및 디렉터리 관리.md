@@ -21,16 +21,19 @@ category: 정보보안기사
 ## 리마인드 — Unix 권한 모델과 특수 비트
 
 ### 기본 권한과 표기
+
 - **소유자/그룹/기타** 3세트의 `r(4) w(2) x(1)`
 - 8진수 표기: `chmod 750 file` → `rwx r-x ---`
 - 디렉터리에서 `x`는 **디렉터리 진입·이름 탐색** 권한.
 
 ### 특수 비트
+
 - **SUID(4xxx)**: 실행 시 소유자 권한 상속(파일만).
 - **SGID(2xxx)**: 실행 시 그룹 상속(파일), 디렉터리에서 **기본 그룹 상속**.
 - **Sticky(1xxx)**: `1777` 디렉터리에서 **소유자만 삭제 가능**(`/tmp` 등).
 
 ### umask와 최종 권한
+
 파일 생성 요청 권한 \(R\)과 umask \(U\)의 **유효 권한** \(E\):
 $$
 E = R \ \&\ \sim U
@@ -83,10 +86,12 @@ getcap -r / 2>/dev/null | head -100
 ## 공유 디렉터리와 `/tmp` — Sticky 비트와 tmpfs + noexec
 
 ### 원칙
+
 - **공유 쓰기 디렉터리**는 반드시 **Sticky(1xxx)**.
 - `/tmp`,`/var/tmp`는 **`mode=1777,nodev,nosuid,noexec` tmpfs** 권장(서버 성격에 따라).
 
 ### 설정 예시
+
 `/etc/fstab`:
 ```
 tmpfs /tmp tmpfs defaults,rw,nosuid,nodev,noexec,relatime,mode=1777 0 0
@@ -98,6 +103,7 @@ mount -a
 ```
 
 ### 운영 점검
+
 ```bash
 ls -ld /tmp /var/tmp    # drwxrwxrwt (t = sticky)
 mount | grep -E '/tmp|/var/tmp'
@@ -114,20 +120,25 @@ chmod 1777 /shared_tmp
 ## SUID/SGID — 최소화와 대체(Capabilities)
 
 ### 위험성
+
 - SUID root 바이너리는 **환경변수/경로/LD_PRELOAD/argv 처리** 결함과 결합 시 권한 상승 통로.
 
 ### 절차
+
 1) 목록 산출 → 기능 확인 → 제거/업데이트/대체.
 2) **가능하면 setcap로 대체**(예: 1024↓ 포트 바인드).
 
 ```bash
 # SUID/SGID 목록
+
 find / -xdev -type f -perm -4000 -o -perm -2000 -print 2>/dev/null
 
 # SUID 제거(예시)
+
 chmod u-s /usr/bin/at
 
-# 1024 이하 포트 바인딩이 필요한 비루트 서버
+# 이하 포트 바인딩이 필요한 비루트 서버
+
 setcap 'cap_net_bind_service=+ep' /usr/local/bin/web-lite
 getcap /usr/local/bin/web-lite
 ```
@@ -141,12 +152,14 @@ getcap /usr/local/bin/web-lite
 ## umask/UMask — 시스템·서비스 기본 권한 정책
 
 ### 시스템 기본
+
 `/etc/profile` 또는 `/etc/profile.d/*`:
 ```bash
 umask 027
 ```
 
 ### 서비스 단위(systemd)
+
 `/etc/systemd/system/web.service`:
 ```ini
 [Service]
@@ -168,19 +181,23 @@ systemctl daemon-reload && systemctl restart web
 ## 디렉터리 협업 설계 — SGID+기본 ACL
 
 ### 목표
+
 - 팀 디렉터리에서 생성 파일이 **항상 팀 그룹**으로, 권한도 **일관**되게.
 
 ```bash
 # 팀 그룹 생성
+
 groupadd devteam
 mkdir -p /srv/project
 chgrp devteam /srv/project
 chmod 2770 /srv/project    # SGID(2) + rwx for owner/group
 
 # 기본 ACL로 파일/디렉터리 권한 고정
+
 setfacl -d -m g::rwx /srv/project
 setfacl -d -m o::--- /srv/project
 # 사용자별 ACL 추가(필요 시)
+
 setfacl -m u:alice:rwx /srv/project
 getfacl /srv/project
 ```
@@ -194,6 +211,7 @@ getfacl /srv/project
 ## 마운트 옵션 하드닝 — noexec/nodev/nosuid/bind, ro
 
 ### 원칙
+
 - **코드 실행이 필요 없는** 파티션: `noexec`.
 - **디바이스 파일 불필요**: `nodev`.
 - **SUID 필요 없음**: `nosuid`.
@@ -220,6 +238,7 @@ mount -o remount,bind,ro /srv/app/static
 ## 로그·백업 — 권한/회전/유출 방지
 
 ### logrotate (권한/보존/압축)
+
 `/etc/logrotate.d/web`:
 ```
 /var/log/web/*.log {
@@ -236,11 +255,14 @@ mount -o remount,bind,ro /srv/app/static
 ```
 
 ### rsync/tar — 권한 보존/유출 방지
+
 ```bash
 # 권장 rsync: 권한/ACL/xattr/하드링크/소유자 보존
+
 rsync -aHAX --numeric-ids --delete /srv/web/ backup:/backups/web/
 
 # tar 아카이브(ACL/xattr 포함)
+
 tar --acls --xattrs -cpf web_$(date +%F).tar /srv/web
 ```
 **주의**: 외부 전송 시 **암호화 채널**(ssh, restic/borg) 사용, 백업 경로는 `nodev,nosuid,ro` 고려.
@@ -254,11 +276,14 @@ tar --acls --xattrs -cpf web_$(date +%F).tar /srv/web
 ## 확장 속성 — xattr/Immutable/Append-only
 
 ### chattr/lsattr (ext 계열)
+
 ```bash
 # 중요 설정 파일을 변경 불가(Immutable)로
+
 chattr +i /etc/resolv.conf
 lsattr /etc/resolv.conf
 # 로그 디렉터리는 append-only(+a)로 제한 가능(운영 영향 고려)
+
 chattr +a /var/log/app.log
 ```
 
@@ -266,6 +291,7 @@ chattr +a /var/log/app.log
 > 배포/업데이트 파이프라인과 충돌 가능 — **변경 관리에 문서화**할 것.
 
 ### xattr (getfattr/setfattr)
+
 ```bash
 setfattr -n user.owner -v "web" /srv/web/README.txt
 getfattr -d /srv/web/README.txt
@@ -277,6 +303,7 @@ getfattr -d /srv/web/README.txt
 ## 링크/TOCTOU(레이스) 방어 — sysctl + 안전한 생성
 
 ### sysctl 보호(커널 레벨)
+
 ```bash
 cat >/etc/sysctl.d/99-link-protect.conf <<'EOF'
 fs.protected_hardlinks = 1
@@ -287,6 +314,7 @@ sysctl --system
 ```
 
 ### 안전한 임시 파일 생성
+
 - **mktemp 사용**(쉘) 또는 `open(O_CREAT|O_EXCL|O_NOFOLLOW)`(C/Python).
 - **/tmp 대신 PrivateTmp**(systemd) 또는 앱별 전용 `0700` 디렉터리.
 
@@ -295,6 +323,7 @@ sysctl --system
 tmp=$(mktemp -d -p /tmp app.XXXXXX)
 install -m 600 /dev/null "$tmp/data"
 # ... 사용 후
+
 rm -rf "$tmp"
 ```
 
@@ -321,10 +350,12 @@ ProtectSystem=strict
 ## NFS/원격 마운트 — root-squash와 안전 옵션
 
 ### 위험 포인트
+
 - `no_root_squash`: 클라이언트 root가 서버에서도 root 권한.
 - `rw` 공유 + 권한 느슨함 → 임의 변조.
 
 ### 점검/설정
+
 서버(`/etc/exports`):
 ```
 /srv/share 10.0.0.0/24(rw,sync,no_subtree_check,root_squash)
@@ -343,6 +374,7 @@ nfsserver:/srv/share /mnt/share nfs4 rw,nosuid,nodev,noexec 0 0
 ## 무결성/감사 — AIDE + auditd(디렉터리/파일)
 
 ### AIDE
+
 ```bash
 apt install -y aide || dnf install -y aide
 aideinit
@@ -352,6 +384,7 @@ aide --check | tee /var/log/aide/last.txt
 정책에서 `/etc`, `/usr/local/bin`, `/etc/systemd/system`, `/var/www` 등 지정.
 
 ### auditd — 디렉터리 변경 감시
+
 ```bash
 auditctl -w /etc -p wa -k etcchg
 auditctl -w /etc/sudoers -p wa -k sudoers
@@ -392,6 +425,7 @@ location /uploads/ {
 ## 하드링크/심링크 기반 공격 차단 — 운영 시나리오
 
 ### 시나리오: 로그 로테이션 심링크 공격
+
 - 취약: `logrotate`가 보호되지 않은 경로에서 `create 0644 root root`로 파일 생성.
 - 대응: **소유/권한/경로 고정**, `create 0640 app app` + 디렉터리 0750 + Sticky 경로 회피.
 
@@ -518,15 +552,18 @@ xfs_quota -x -c 'limit -p bhard=100g proj1' /
 
 예시 스니펫:
 ```bash
-# 1. sticky 비트 확인
+# sticky 비트 확인
+
 ls -ld /tmp        # drwxrwxrwt  (t)
 ```
 ```bash
-# 2. fstab 예
+# fstab 예
+
 /dev/vdb1 /data ext4 defaults,noexec,nodev,nosuid 0 2
 ```
 ```bash
-# 5. sysctl
+# sysctl
+
 sysctl fs.protected_symlinks=1
 sysctl fs.protected_hardlinks=1
 sysctl fs.protected_fifos=2

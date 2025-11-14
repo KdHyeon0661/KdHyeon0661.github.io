@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Entity Framework Core (EF Core) 소개 및 설치
 
-## 1. EF Core란?
+## EF Core란?
 
 **EF Core**는 .NET 애플리케이션에서 **객체-관계 매핑(ORM)**을 제공하여 C# 객체로 데이터베이스를 다룰 수 있게 한다.
 
@@ -18,7 +18,7 @@ category: AspNet
 
 ---
 
-## 2. EF Core의 주요 특징 정리
+## EF Core의 주요 특징 정리
 
 | 기능 | 요점 |
 |---|---|
@@ -33,7 +33,7 @@ category: AspNet
 
 ---
 
-## 3. 지원 데이터베이스와 선택 기준
+## 지원 데이터베이스와 선택 기준
 
 - **SQL Server**: 기본 선택, 기능·도구 지원이 가장 풍부
 - **SQLite**: 로컬/임베디드/테스트에 적합
@@ -48,11 +48,12 @@ category: AspNet
 
 ---
 
-## 4. 설치 — 패키지 의존 관계와 권장 조합
+## 설치 — 패키지 의존 관계와 권장 조합
 
-### 4.1 필수 패키지(프로바이더 + 도구)
+### 필수 패키지(프로바이더 + 도구)
 
 #### SQL Server
+
 ```bash
 dotnet add package Microsoft.EntityFrameworkCore.SqlServer
 dotnet add package Microsoft.EntityFrameworkCore.Tools
@@ -60,6 +61,7 @@ dotnet add package Microsoft.EntityFrameworkCore.Design
 ```
 
 #### PostgreSQL
+
 ```bash
 dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL
 dotnet add package Microsoft.EntityFrameworkCore.Tools
@@ -67,6 +69,7 @@ dotnet add package Microsoft.EntityFrameworkCore.Design
 ```
 
 #### SQLite
+
 ```bash
 dotnet add package Microsoft.EntityFrameworkCore.Sqlite
 dotnet add package Microsoft.EntityFrameworkCore.Tools
@@ -77,9 +80,9 @@ dotnet add package Microsoft.EntityFrameworkCore.Design
 
 ---
 
-## 5. 프로젝트에 DbContext 등록
+## 프로젝트에 DbContext 등록
 
-### 5.1 엔티티(Entity)와 DbContext
+### 엔티티(Entity)와 DbContext
 
 ```csharp
 public class Blog
@@ -142,7 +145,7 @@ public class AppDbContext : DbContext
 }
 ```
 
-### 5.2 Program.cs — Provider 구성
+### Program.cs — Provider 구성
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -166,7 +169,7 @@ app.MapGet("/", (AppDbContext db) => db.Blogs.Count());
 app.Run();
 ```
 
-### 5.3 연결 문자열
+### 연결 문자열
 
 ```json
 {
@@ -179,14 +182,16 @@ app.Run();
 
 ---
 
-## 6. 마이그레이션 도입과 운용
+## 마이그레이션 도입과 운용
 
-### 6.1 dotnet-ef 도구 설치(최초 1회)
+### dotnet-ef 도구 설치(최초 1회)
+
 ```bash
 dotnet tool install --global dotnet-ef
 ```
 
-### 6.2 초기 마이그레이션 생성
+### 초기 마이그레이션 생성
+
 ```bash
 dotnet ef migrations add InitialCreate
 ```
@@ -195,31 +200,37 @@ dotnet ef migrations add InitialCreate
 - `Migrations/<timestamp>_InitialCreate.cs` (Up/Down)
 - `Migrations/AppDbContextModelSnapshot.cs` (스냅샷)
 
-### 6.3 DB 반영
+### DB 반영
+
 ```bash
 dotnet ef database update
 ```
 
-### 6.4 모델 변경 → 누적 마이그레이션
+### 모델 변경 → 누적 마이그레이션
+
 ```bash
 # 엔티티에 속성/관계 추가 후
+
 dotnet ef migrations add AddPostSummary
 dotnet ef database update
 ```
 
-### 6.5 롤백/제거
+### 롤백/제거
+
 ```bash
 dotnet ef database update InitialCreate   # 특정 버전으로 롤백
 dotnet ef migrations remove               # 마지막 마이그레이션 제거(코드만)
 ```
 
-### 6.6 SQL 스크립트 추출(운영 반영)
+### SQL 스크립트 추출(운영 반영)
+
 ```bash
 dotnet ef migrations script -o ./sql/000_full.sql
 dotnet ef migrations script PrevMigName NewMigName -o ./sql/010_delta.sql
 ```
 
-### 6.7 Migration Bundle(.NET 7+)
+### Migration Bundle(.NET 7+)
+
 ```bash
 dotnet ef migrations bundle --configuration Release --self-contained
 ./efbundle --connection "Data Source=blog.db"
@@ -227,7 +238,7 @@ dotnet ef migrations bundle --configuration Release --self-contained
 
 ---
 
-## 7. LINQ 사용 예 — 쿼리/정렬/프로젝션
+## LINQ 사용 예 — 쿼리/정렬/프로젝션
 
 ```csharp
 public class IndexModel : PageModel
@@ -262,9 +273,9 @@ public class IndexModel : PageModel
 
 ---
 
-## 8. CRUD 패턴과 트랜잭션
+## CRUD 패턴과 트랜잭션
 
-### 8.1 추가/수정/삭제
+### 추가/수정/삭제
 
 ```csharp
 public class BlogService
@@ -298,7 +309,7 @@ public class BlogService
 }
 ```
 
-### 8.2 트랜잭션(원자성)
+### 트랜잭션(원자성)
 
 ```csharp
 using var tx = await _db.Database.BeginTransactionAsync();
@@ -317,7 +328,7 @@ catch
 
 ---
 
-## 9. 로딩 전략 — Eager/Explicit/Lazy
+## 로딩 전략 — Eager/Explicit/Lazy
 
 - **Eager**: `Include`로 즉시 합류
 ```csharp
@@ -337,9 +348,10 @@ await _db.Entry(blog).Collection(b => b.Posts).LoadAsync();
 
 ---
 
-## 10. 고급 매핑 — ValueConverter/Owned/Shadow/동시성
+## 고급 매핑 — ValueConverter/Owned/Shadow/동시성
 
-### 10.1 ValueConverter
+### ValueConverter
+
 ```csharp
 public enum Visibility { Private, Public }
 
@@ -362,7 +374,8 @@ protected override void OnModelCreating(ModelBuilder mb)
 }
 ```
 
-### 10.2 Owned Type
+### Owned Type
+
 ```csharp
 public class AuditInfo { public string CreatedBy { get; set; } = default!; public DateTime CreatedAt { get; set; } }
 public class Comment { public int Id { get; set; } public int PostId { get; set; } public AuditInfo Audit { get; set; } = new(); public string Body { get; set; } = default!; }
@@ -373,7 +386,8 @@ protected override void OnModelCreating(ModelBuilder mb)
 }
 ```
 
-### 10.3 Shadow Property
+### Shadow Property
+
 ```csharp
 protected override void OnModelCreating(ModelBuilder mb)
 {
@@ -384,7 +398,8 @@ protected override void OnModelCreating(ModelBuilder mb)
 _db.Entry(post).Property("LastModified").CurrentValue = DateTime.UtcNow;
 ```
 
-### 10.4 동시성 토큰
+### 동시성 토큰
+
 ```csharp
 public class Inventory
 {
@@ -400,7 +415,7 @@ catch (DbUpdateConcurrencyException) { /* 재시도/사용자 병합 로직 */ }
 
 ---
 
-## 11. Raw SQL 과 안전한 파라미터화
+## Raw SQL 과 안전한 파라미터화
 
 ```csharp
 // 엔티티 반환
@@ -421,16 +436,18 @@ var rows = await _db.Database
 
 ---
 
-## 12. 시드(Seed) 데이터
+## 시드(Seed) 데이터
 
-### 12.1 Fluent API 기반(마이그레이션 포함)
+### Fluent API 기반(마이그레이션 포함)
+
 ```csharp
 modelBuilder.Entity<Blog>().HasData(
     new Blog { Id = 1, Title = "EF Core Guide", Author = "kim", CreatedAt = DateTime.UtcNow }
 );
 ```
 
-### 12.2 런타임 초기화
+### 런타임 초기화
+
 ```csharp
 public static class DbInit
 {
@@ -451,7 +468,7 @@ public static class DbInit
 
 ---
 
-## 13. 성능 최적화 체크리스트
+## 성능 최적화 체크리스트
 
 - **AsNoTracking**: 읽기 전용 쿼리
 - **Include 최소화** + 필요한 속성만 `Select`
@@ -469,7 +486,7 @@ private static readonly Func<AppDbContext,int,Task<Post?>> GetPostById =
 
 ---
 
-## 14. DbContext 수명과 DI
+## DbContext 수명과 DI
 
 - DbContext는 **Scoped**가 표준(요청당 1개)
 - Singleton에서 DbContext 직접 주입 금지(스코프 불일치). 필요 시 `IServiceScopeFactory`로 스코프 생성
@@ -493,7 +510,7 @@ public class MySingleton
 
 ---
 
-## 15. 테스트 전략 — InMemory/Sqlite/Testcontainers
+## 테스트 전략 — InMemory/Sqlite/Testcontainers
 
 - **InMemory**: 빠르지만 관계/제약 검증 한계
 ```csharp
@@ -511,7 +528,7 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite(keep));
 
 ---
 
-## 16. 트러블슈팅 FAQ
+## 트러블슈팅 FAQ
 
 - **마이그레이션이 안 생김**: `DbContext`가 DI에 등록됐는지, 생성자/Provider 확인
 - **스냅샷 충돌**: 수동 편집 주의. 필요 시 마지막 마이그레이션 제거 후 재생성
@@ -521,7 +538,7 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlite(keep));
 
 ---
 
-## 17. 실전 예제 — Minimal API + EF Core
+## 실전 예제 — Minimal API + EF Core
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -550,7 +567,7 @@ app.Run();
 
 ---
 
-## 18. 요약
+## 요약
 
 | 단계 | 핵심 |
 |---|---|
@@ -575,6 +592,7 @@ EF Core는 내부적으로 이 $$ \Delta \mathbf{x} $$가 0인지 여부로 수�
 ---
 
 # 다음 추천 주제
+
 - 관계 매핑 심화(일대일/다대다/고급 키 매핑)
 - Lazy vs Eager vs Explicit 로딩 사례 비교
 - Seed 전략(고정 시드 vs 런타임 시드)와 환경별 분기

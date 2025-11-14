@@ -6,7 +6,7 @@ category: Java
 ---
 # `throw` vs `throws`
 
-## 0. 한눈에 보는 차이
+## 한눈에 보는 차이
 
 | 키워드 | 핵심 의미 | 쓰는 곳 | 역할 |
 |---|---|---|---|
@@ -15,20 +15,23 @@ category: Java
 
 ---
 
-## 1. `throw` — 예외를 “발생”시키는 문(statement)
+## `throw` — 예외를 “발생”시키는 문(statement)
 
 ### 문법
+
 ```java
 throw new ExceptionType("메시지");  // new로 생성한 Throwable 하위 타입만 허용
 ```
 
 ### 특징 요약
+
 - 실행되는 그 지점에서 **제어 흐름을 끊고** 예외를 상위 스택으로 전파.
 - 한 번에 **단 하나의** 예외 객체만 던질 수 있음.
 - `throw null;` → 즉시 `NullPointerException` (컴파일 OK, 런타임 NPE).
 - `throw` 뒤 코드는 **도달 불가**로 간주(컴파일 오류 가능).
 
 ### 기본 예제
+
 ```java
 public class ThrowExample {
     static int normalizeAge(int age) {
@@ -45,20 +48,23 @@ public class ThrowExample {
 
 ---
 
-## 2. `throws` — 예외를 “선언”하는 시그니처
+## `throws` — 예외를 “선언”하는 시그니처
 
 ### 문법
+
 ```java
 public void readFile(Path p) throws IOException { ... }
 public MyService() throws ConfigException { ... } // 생성자에도 가능
 ```
 
 ### 특징 요약
+
 - **Checked** 예외가 전파될 수 있음을 **호출자에게** 알리는 계약(contract).
 - 쉼표로 **여러 타입**을 선언 가능: `throws IOException, ParseException`.
 - **Unchecked(RuntimeException 하위)** 는 선언 의무 없음(선언해도 무방).
 
 ### 기본 예제
+
 ```java
 public class ThrowsExample {
     public static void main(String[] args) {
@@ -78,7 +84,7 @@ public class ThrowsExample {
 
 ---
 
-## 3. Checked vs Unchecked와의 관계
+## Checked vs Unchecked와의 관계
 
 | 구분 | 대표 타입 | `throws` 필요? | `throw` 사용 |
 |---|---|---|---|
@@ -90,7 +96,7 @@ public class ThrowsExample {
 
 ---
 
-## 4. `throw`와 `throws`를 함께 쓰는 전형 패턴
+## `throw`와 `throws`를 함께 쓰는 전형 패턴
 
 ```java
 // 선언: 이 메서드는 AgeException을 전파할 수 있음
@@ -110,9 +116,10 @@ public class AgeException extends Exception {
 
 ---
 
-## 5. 재던지기(rethrow)·전환(translation)·체이닝(chaining)
+## 재던지기(rethrow)·전환(translation)·체이닝(chaining)
 
-### 5.1 있는 그대로 재던지기
+### 있는 그대로 재던지기
+
 ```java
 try {
     doIo();
@@ -123,7 +130,8 @@ try {
 }
 ```
 
-### 5.2 예외 **전환**(Checked → Unchecked 또는 도메인 예외로 감싸기)
+### 예외 **전환**(Checked → Unchecked 또는 도메인 예외로 감싸기)
+
 ```java
 try {
     doIo();
@@ -132,7 +140,8 @@ try {
 }
 ```
 
-### 5.3 다중 캐치 + 정밀 재던지기(precise rethrow, Java 7+)
+### 다중 캐치 + 정밀 재던지기(precise rethrow, Java 7+)
+
 ```java
 try {
     mayThrow();
@@ -148,7 +157,7 @@ try {
 
 ---
 
-## 6. 오버라이딩 시 `throws` 규칙 (중요!)
+## 오버라이딩 시 `throws` 규칙 (중요!)
 
 - **하위(오버라이딩) 메서드**는 상위 메서드보다 **넓은 Checked 예외**를 **새로 추가할 수 없음**.
 - 하위는 **더 적거나, 더 좁은(하위 타입)** Checked 예외만 선언 가능.
@@ -170,7 +179,7 @@ class B extends A {
 
 ---
 
-## 7. `try-with-resources`와 suppressed 예외
+## `try-with-resources`와 suppressed 예외
 
 - 본문이 `throw`로 실패하고, 리소스 `close()`에서도 예외가 나면, **close 예외는 suppressed**로 붙음.
 - 반대 상황(본문은 정상, `close()`에서 실패)이면 **close 예외가 던져지고** 본문은 성공으로 간주.
@@ -195,7 +204,7 @@ throw primary;
 
 ---
 
-## 8. `finally`와 `throw`의 미묘한 상호작용 (주의!)
+## `finally`와 `throw`의 미묘한 상호작용 (주의!)
 
 - `finally`에서 **`return`을 하면** 앞서 던진 예외가 **소거**될 수 있음(절대 금지).
 - `finally`에서 **새 예외를 던지면** 원래 예외가 사라지고 새 예외만 보임(필요 시 suppressed로 연결).
@@ -211,7 +220,7 @@ try {
 
 ---
 
-## 9. 인터럽트/동시성과 예외 (실무 필수)
+## 인터럽트/동시성과 예외 (실무 필수)
 
 - 차단 메서드(`sleep`, `wait`, `join`)는 **`InterruptedException`(Checked)** 을 던짐 →
   **메서드 시그니처에 `throws` 하거나, catch 후 `Thread.currentThread().interrupt()`로 복원**.
@@ -237,7 +246,7 @@ void loop() {
 
 ---
 
-## 10. 람다·메서드 참조와 Checked 예외
+## 람다·메서드 참조와 Checked 예외
 
 - `Runnable.run()`은 `throws`가 없으므로 **람다 내부에서 Checked 예외를 직접 던질 수 없음**.
   → **전환(wrap)** 또는 **사용자 정의 함수형 인터페이스**로 `throws`를 선언.
@@ -260,26 +269,30 @@ ex.submit(uncheck(() -> doIo()));
 
 ---
 
-## 11. 실무 예외 설계 지침
+## 실무 예외 설계 지침
 
-### 11.1 언제 Checked / Unchecked?
+### 언제 Checked / Unchecked?
+
 - **Checked**: 호출자가 **복구/대체경로**가 명확(재시도, 다른 리소스 선택 등).
 - **Unchecked**: 호출자 **버그** 또는 **불변식 위반**(잘못된 인수, 부적절한 상태).
 
-### 11.2 예외 전환 & 도메인 예외
+### 예외 전환 & 도메인 예외
+
 - 외부 계층(드라이버/네트워크) → **도메인 특정 예외**로 감싸서 상위 계층에 의미 전달.
 - 항상 `cause` 체인 보존.
 
-### 11.3 메시지·타입
+### 메시지·타입
+
 - **구체적 타입** 사용(일반 `Exception`/`RuntimeException` 남발 금지).
 - 메시지는 **행동 지침**을 포함(무엇을 할지).
 
-### 11.4 로그·모니터링
+### 로그·모니터링
+
 - 잡은 예외는 **의도적으로 무시**하지 말고, 로그 레벨/메트릭을 정책화.
 
 ---
 
-## 12. 성능 팁과 안티패턴
+## 성능 팁과 안티패턴
 
 - 예외 생성은 **스택트레이스 채움**(비용 큼). **정상 흐름 제어**에 예외를 쓰지 말 것.
 - 고빈도 경로에서 예외가 예상되면 **사전 검증**(예: `Files.exists`, preconditions).
@@ -293,7 +306,7 @@ throw new MyFastException("msg", null, true, false); // 스택 비활성화(매�
 
 ---
 
-## 13. 자주 틀리는 포인트(FAQ)
+## 자주 틀리는 포인트(FAQ)
 
 - **Q. `throws`는 클래스에 쓸 수 있나요?** → **아니요.** 메서드/생성자에만.
 - **Q. `main`에 `throws Exception` 써도 되나요?** → 가능. JVM까지 전파되어 스택 출력 후 종료.
@@ -303,9 +316,10 @@ throw new MyFastException("msg", null, true, false); // 스택 비활성화(매�
 
 ---
 
-## 14. 예제 모음
+## 예제 모음
 
-### 14.1 검증(Validation) 가드
+### 검증(Validation) 가드
+
 ```java
 public static void requireNonEmpty(String s) {
     if (s == null || s.isEmpty())
@@ -313,7 +327,8 @@ public static void requireNonEmpty(String s) {
 }
 ```
 
-### 14.2 I/O 래핑(전환)
+### I/O 래핑(전환)
+
 ```java
 String load(Path p) {
     try { return java.nio.file.Files.readString(p); }
@@ -326,7 +341,8 @@ class ConfigLoadException extends RuntimeException {
 }
 ```
 
-### 14.3 precise rethrow + 로깅
+### precise rethrow + 로깅
+
 ```java
 void service() throws IOException, SQLException {
     try {
@@ -338,7 +354,8 @@ void service() throws IOException, SQLException {
 }
 ```
 
-### 14.4 인터럽트 전파 (Checked throws)
+### 인터럽트 전파 (Checked throws)
+
 ```java
 void timedWait(CountDownLatch latch) throws InterruptedException {
     if (!latch.await(1, java.util.concurrent.TimeUnit.SECONDS)) {
@@ -347,7 +364,8 @@ void timedWait(CountDownLatch latch) throws InterruptedException {
 }
 ```
 
-### 14.5 finally에서 예외 보존
+### finally에서 예외 보존
+
 ```java
 try {
     doMain();
@@ -360,7 +378,7 @@ try {
 
 ---
 
-## 15. 요약 표
+## 요약 표
 
 | 항목 | `throw` | `throws` |
 |---|---|---|
@@ -373,7 +391,7 @@ try {
 
 ---
 
-## 16. 실전 체크리스트
+## 실전 체크리스트
 
 - [ ] 복구 가능? → **Checked**로 `throws` 또는 `try-catch`.
 - [ ] 계약 위반/버그? → **Unchecked**로 `throw`.

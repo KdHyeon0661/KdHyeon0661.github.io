@@ -10,19 +10,22 @@ Kubernetes에서 `Pending`, `FailedScheduling`, `Insufficient CPU/Memory` 메시
 
 ---
 
-## 0. 3분 초진단 루틴
+## 3분 초진단 루틴
 
 ```bash
-# 1. 파드/이벤트: 왜 못 올라가는지 스케줄러의 근거부터 본다
+# 파드/이벤트: 왜 못 올라가는지 스케줄러의 근거부터 본다
+
 kubectl describe pod <pod> | sed -n '/Events:/,$p'
 kubectl get events -A --sort-by='.lastTimestamp' | tail -n 50
 
-# 2. 노드 상태/압력: 조건부 거부(Pressure, Taints)와 가용량 확인
+# 노드 상태/압력: 조건부 거부(Pressure, Taints)와 가용량 확인
+
 kubectl describe node <node-name> | egrep -i 'Taints|Pressure|Allocatable|Condition'
 kubectl top nodes
 kubectl top pod -A
 
-# 3. 스토리지(있다면): PVC 바인딩·프로비저닝 상태
+# 스토리지(있다면): PVC 바인딩·프로비저닝 상태
+
 kubectl get pvc -A
 kubectl describe pvc <pvc-name>
 ```
@@ -36,7 +39,7 @@ kubectl describe pvc <pvc-name>
 
 ---
 
-## 1. 증상 요약과 기본 예시
+## 증상 요약과 기본 예시
 
 ```bash
 kubectl get pods
@@ -56,7 +59,7 @@ Warning  FailedScheduling  default-scheduler
 
 ---
 
-## 2. 원인 분류표 (무엇이 스케줄을 막는가)
+## 원인 분류표 (무엇이 스케줄을 막는가)
 
 | 범주 | 대표 원인 | 스케줄러 메시지 힌트 | 첫 확인 명령 |
 |---|---|---|---|
@@ -71,9 +74,9 @@ Warning  FailedScheduling  default-scheduler
 
 ---
 
-## 3. 리소스 부족(Insufficient CPU/Memory) — 해법 설계
+## 리소스 부족(Insufficient CPU/Memory) — 해법 설계
 
-### 3.1 핵심 개념 복습
+### 핵심 개념 복습
 
 ```yaml
 resources:
@@ -100,7 +103,7 @@ $$ \exists n \in \text{Nodes} :
 
 > 위 식은 직관을 위한 개념 설명이며, 실제 스케줄러는 더 많은 필터·스코어링을 수행합니다.
 
-### 3.2 즉시 조치(전술)
+### 즉시 조치(전술)
 
 - **요청치 낮추기**: 과도한 `requests`를 실제 사용량 근처로
 - **노드 증설**: 수평 확장(수동 또는 Cluster Autoscaler)
@@ -127,7 +130,7 @@ spec:
             memory: "512Mi"
 ```
 
-### 3.3 중장기(전략)
+### 중장기(전략)
 
 - **HPA**: 부하에 따른 **Pod 수 자동 조절**
 - **VPA**: 관측 기반 **requests 자동 추천/적용**(운영 주의)
@@ -162,13 +165,14 @@ spec:
 
 ---
 
-## 4. 정책·배치 제약으로 인한 실패
+## 정책·배치 제약으로 인한 실패
 
-### 4.1 Taints/Tolerations
+### Taints/Tolerations
 
 ```bash
 kubectl describe node <node> | grep -i Taints
 # 예) Taints: dedicated=infra:NoSchedule
+
 ```
 
 **해결: Pod에 toleration 부여**
@@ -180,7 +184,7 @@ tolerations:
   effect: "NoSchedule"
 ```
 
-### 4.2 Node Affinity / Node Selector
+### Node Affinity / Node Selector
 
 ```yaml
 affinity:
@@ -200,7 +204,7 @@ kubectl label node <node> disktype=ssd
 ```
 - 전략: 필수(required)→선호(preferred)로 완화하여 배치 탄력성 확보.
 
-### 4.3 Pod Affinity / Anti-Affinity
+### Pod Affinity / Anti-Affinity
 
 - 동일 노드/존에 묶거나 분산
 - 초기 배치에서 상호 의존 파드가 **동시에 생성되면 교착**될 수 있음 → 일부를 먼저 띄우거나 규칙을 완화
@@ -218,9 +222,9 @@ affinity:
 
 ---
 
-## 5. 네임스페이스 한도·기본값에 막히는 경우
+## 네임스페이스 한도·기본값에 막히는 경우
 
-### 5.1 ResourceQuota 초과
+### ResourceQuota 초과
 
 ```bash
 kubectl describe quota -n <ns>
@@ -231,7 +235,7 @@ kubectl describe quota -n <ns>
 - Quota 상향 (플랫폼 정책과 협의)
 - requests/limits 합계가 hard 한도를 넘지 않도록 라이트사이징
 
-### 5.2 LimitRange 위반/미지정
+### LimitRange 위반/미지정
 
 - 일부 네임스페이스는 **requests/limits 미지정 시 거부** 또는 **자동 기본값** 적용
 ```bash
@@ -258,9 +262,9 @@ spec:
 
 ---
 
-## 6. 스토리지(PVC)로 인한 Pending
+## 스토리지(PVC)로 인한 Pending
 
-### 6.1 상태 확인
+### 상태 확인
 
 ```bash
 kubectl get pvc
@@ -272,7 +276,7 @@ kubectl describe pvc <pvc>
 no persistent volumes available for this claim
 ```
 
-### 6.2 해결 체크리스트
+### 해결 체크리스트
 
 - **StorageClass** 이름·파라미터 일치 여부
 - **동일 Zone/Topology** 제약 (AZ 맞춤) → `WaitForFirstConsumer` 사용 권장
@@ -297,9 +301,9 @@ parameters:
 
 ---
 
-## 7. 우선순위·선점(Preemption)·PDB 상호작용
+## 우선순위·선점(Preemption)·PDB 상호작용
 
-### 7.1 PriorityClass로 중요도 선언
+### PriorityClass로 중요도 선언
 
 ```yaml
 apiVersion: scheduling.k8s.io/v1
@@ -319,7 +323,7 @@ spec:
 - 높은 우선순위 파드는 낮은 파드를 **선점**하여 공간 확보 가능.
 - 단, **PDB(PodDisruptionBudget)**가 엄격하면 선점이 차단될 수 있음.
 
-### 7.2 PDB가 선점/드레인과 충돌하는 경우
+### PDB가 선점/드레인과 충돌하는 경우
 
 ```yaml
 apiVersion: policy/v1
@@ -337,16 +341,16 @@ spec:
 
 ---
 
-## 8. 관측 기반 용량 추정 — 실무 팁
+## 관측 기반 용량 추정 — 실무 팁
 
-### 8.1 프로메테우스 지표로 requests 대비 실제 사용률 측정
+### 프로메테우스 지표로 requests 대비 실제 사용률 측정
 
 - 컨테이너 CPU:
   - `rate(container_cpu_usage_seconds_total[5m])` vs. `container_spec_cpu_quota`/`container_spec_cpu_shares`
 - 메모리:
   - `container_memory_working_set_bytes` vs. `container_spec_memory_limit_bytes`
 
-### 8.2 라이트사이징(권장 휴리스틱)
+### 라이트사이징(권장 휴리스틱)
 
 - **CPU requests**: 최근 1~2주 **P95 사용률** × 안전계수(1.2~1.5)
 - **Memory requests**: 최근 **P99 피크** × 안전계수(1.1~1.3)
@@ -354,9 +358,9 @@ spec:
 
 ---
 
-## 9. 케이스 스터디
+## 케이스 스터디
 
-### 9.1 `Insufficient memory`로 신규 릴리즈가 Pending
+### `Insufficient memory`로 신규 릴리즈가 Pending
 
 **상황**
 - `deploy/web` 신규 이미지 배포 후 절반 이상 Pending
@@ -369,7 +373,7 @@ spec:
 4) HPA min=6, max=18로 확장 탄력 부여
 5) `kubectl rollout status` 모니터링 → 정상 완료
 
-### 9.2 Taint된 인프라 노드로만 가능한 워크로드
+### Taint된 인프라 노드로만 가능한 워크로드
 
 **상황**
 - 인프라 노드 `dedicated=infra:NoSchedule` 태인트
@@ -386,7 +390,7 @@ tolerations:
 ```
 - 즉시 스케줄 성공
 
-### 9.3 PVC Pending — Zone 미스매치
+### PVC Pending — Zone 미스매치
 
 **상황**
 - SC `standard`는 Z1·Z2 제공, 파드는 `nodeAffinity`로 Z3 강제
@@ -398,9 +402,10 @@ tolerations:
 
 ---
 
-## 10. 운영 템플릿 모음
+## 운영 템플릿 모음
 
-### 10.1 ResourceQuota (팀 한도 관리)
+### ResourceQuota (팀 한도 관리)
+
 ```yaml
 apiVersion: v1
 kind: ResourceQuota
@@ -416,7 +421,8 @@ spec:
     pods: "200"
 ```
 
-### 10.2 PodTopologySpread로 균등 분산
+### PodTopologySpread로 균등 분산
+
 ```yaml
 topologySpreadConstraints:
 - maxSkew: 1
@@ -427,9 +433,11 @@ topologySpreadConstraints:
       app: web
 ```
 
-### 10.3 Kustomize로 환경별 리소스 오버레이
+### Kustomize로 환경별 리소스 오버레이
+
 ```yaml
 # overlays/prod/patch-resources.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -446,26 +454,31 @@ spec:
 
 ---
 
-## 11. 스케줄링 실패 트러블슈팅 명령 세트
+## 스케줄링 실패 트러블슈팅 명령 세트
 
 ```bash
 # 이벤트 타임라인
+
 kubectl get events -A --sort-by='.lastTimestamp' | tail -n 100
 
 # 파드 디테일
+
 kubectl describe pod <pod>
 kubectl get pod <pod> -o yaml
 
 # 노드 라벨/테인트/가용량
+
 kubectl get nodes --show-labels
 kubectl describe node <node> | sed -n '/Taints:/,/Non-terminated/p'
 kubectl top nodes
 
 # 네임스페이스 정책
+
 kubectl get resourcequota -n <ns> -o wide
 kubectl get limitrange -n <ns> -o yaml
 
 # 스토리지
+
 kubectl get sc
 kubectl get pvc -A
 kubectl describe pvc <pvc>
@@ -473,7 +486,7 @@ kubectl describe pvc <pvc>
 
 ---
 
-## 12. 베스트 프랙티스 요약
+## 베스트 프랙티스 요약
 
 - **항상 requests 지정**: 스케줄러 정확도와 비용 최적화의 출발점
 - **메모리는 보수적으로**, CPU는 HPA 전제라면 낮게 시작 후 확장
@@ -484,7 +497,7 @@ kubectl describe pvc <pvc>
 
 ---
 
-## 13. 결론
+## 결론
 
 | 키포인트 | 요약 |
 |---|---|
@@ -498,6 +511,7 @@ kubectl describe pvc <pvc>
 ## 부록 A. 예제 매니페스트 묶음
 
 ### A.1 문제 재현용 Deployment (과도한 requests)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -525,6 +539,7 @@ spec:
 ```
 
 ### A.2 완화된 리소스 + HPA
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -564,6 +579,7 @@ spec:
 ```
 
 ### A.3 우선순위 + PDB(적정)
+
 ```yaml
 apiVersion: scheduling.k8s.io/v1
 kind: PriorityClass

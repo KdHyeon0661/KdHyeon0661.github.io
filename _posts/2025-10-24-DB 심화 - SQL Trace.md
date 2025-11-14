@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Oracle **SQL Trace**
 
-## 0. SQL Trace 한눈 요약
+## SQL Trace 한눈 요약
 
 - **무엇?** Oracle에서 커서의 **PARSE/EXEC/FETCH 호출**, **대기 이벤트**(waits), **바인드 값**(binds) 등을 **세부 로그**로 파일에 남기는 기능. (이벤트 번호 **10046**)
 - **왜?** “**어디서 얼마나** 시간이 쓰였는지”를 **근거**로 파악하기 위해. AUTOTRACE/AWR보다 **호출 단위**로 상세.
@@ -19,7 +19,7 @@ category: DB 심화
 
 ---
 
-## 1. 준비 — 트레이스 파일 위치/이름 파악
+## 준비 — 트레이스 파일 위치/이름 파악
 
 ```sql
 -- 현재 세션의 기본 트레이스 파일 전체 경로
@@ -42,9 +42,9 @@ ALTER SESSION SET tracefile_identifier = 'PAYROLL_JUN_RUN';
 
 ---
 
-## 2. 자기 세션에 트레이스 걸기 (가장 안전·기본)
+## 자기 세션에 트레이스 걸기 (가장 안전·기본)
 
-### 2.1 `DBMS_MONITOR` 권장 방식
+### `DBMS_MONITOR` 권장 방식
 
 ```sql
 -- (1) 바인드/대기 포함하여 시작
@@ -66,7 +66,7 @@ EXEC DBMS_MONITOR.SESSION_TRACE_DISABLE;
 - `plan_stat` : 실행 중 **Plan statistics**(라인별 A-rows/Starts/Temp 등)도 함께 캡처(버전에 따라 10046 + 10132/SQLTraceExt 항목 반영)
 - 트레이스는 **필요 구간**만 켜서 **오버헤드 최소화**(보통 5~15%대, 상황·옵션에 따라 더 큼)
 
-### 2.2 `ALTER SESSION SET EVENTS '10046'` 고전 방식
+### `ALTER SESSION SET EVENTS '10046'` 고전 방식
 
 ```sql
 -- Level: 12 = waits(8)+binds(4), 8=waits만, 4=binds만, 1=기본
@@ -81,11 +81,11 @@ ALTER SESSION SET EVENTS '10046 trace name context off';
 
 ---
 
-## 3. 다른 세션에 트레이스 걸기 (운영 이슈 재현·현장점검)
+## 다른 세션에 트레이스 걸기 (운영 이슈 재현·현장점검)
 
 > 전제: **권한** 필요(보통 DBA). 대상 세션의 **SID, SERIAL#** 확보가 우선.
 
-### 3.1 대상 세션 식별
+### 대상 세션 식별
 
 ```sql
 -- 최근 10분간 활동/대기 많은 세션 파악(예시)
@@ -102,7 +102,7 @@ WHERE  username = 'APPUSER'
   AND  module   = 'PAYROLL-BATCH';
 ```
 
-### 3.2 `DBMS_MONITOR.SESSION_TRACE_ENABLE` (권장)
+### `DBMS_MONITOR.SESSION_TRACE_ENABLE` (권장)
 
 ```sql
 -- SYS/DBA 권한 세션에서 실행
@@ -122,7 +122,7 @@ EXEC DBMS_MONITOR.SESSION_TRACE_DISABLE(:sid, :serial#);
 **장점**
 - **해당 세션만** 정밀 추적, **서비스 전체**에 비해 **오버헤드/로그량 최소화**
 
-### 3.3 `DBMS_SYSTEM.SET_SQL_TRACE_IN_SESSION` (레거시)
+### `DBMS_SYSTEM.SET_SQL_TRACE_IN_SESSION` (레거시)
 
 ```sql
 -- 켜기
@@ -140,12 +140,12 @@ EXEC DBMS_SYSTEM.SET_SQL_TRACE_IN_SESSION(:sid, :serial#, FALSE);
 
 ---
 
-## 4. Service / Module / Action 단위로 트레이스 걸기 (대상 그룹 지정)
+## Service / Module / Action 단위로 트레이스 걸기 (대상 그룹 지정)
 
 > 대규모 애플리케이션에서 “**특정 서비스나 화면/배치**”에 속한 **모든 세션**을 자동 추적하는 방법.
 > **오버헤드/로그 폭증** 가능 — **범위를 좁혀** 사용!
 
-### 4.1 애플리케이션에서 Module/Action 세팅
+### 애플리케이션에서 Module/Action 세팅
 
 ```sql
 -- (PL/SQL/SQL*Plus 예시) 현재 세션의 모듈/액션 지정
@@ -159,7 +159,7 @@ END;
 
 > **Service** 는 보통 **Listener/DB Service 설정** 또는 `ALTER SYSTEM/DBMS_SERVICE` 로 운용.
 
-### 4.2 `DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE`
+### `DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE`
 
 ```sql
 -- 1) 특정 Service 전체
@@ -199,7 +199,7 @@ EXEC DBMS_MONITOR.SERV_MOD_ACT_TRACE_DISABLE(
 );
 ```
 
-### 4.3 Client Identifier 기반(참고)
+### Client Identifier 기반(참고)
 
 ```sql
 -- 클라이언트 아이디(예: 고객/테넌트) 단위
@@ -214,9 +214,10 @@ EXEC DBMS_MONITOR.CLIENT_ID_TRACE_DISABLE(client_id => 'TENANT#ACME');
 
 ---
 
-## 5. 실전 시나리오
+## 실전 시나리오
 
-### 5.1 배치 작업 “6월 마감” 느림 — 모듈/액션 트레이스
+### 배치 작업 “6월 마감” 느림 — 모듈/액션 트레이스
+
 **상황**: `PAYROLL-BATCH / CLOSE_JUNE` 단계가 느려짐 (다수 세션/워커 사용)
 
 1) **애플리케이션**에서 해당 단계 진입 시 `SET_MODULE/SET_ACTION` 호출 보장
@@ -233,7 +234,8 @@ EXEC DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE(
 4) 종료 후 **OFF**
 5) 파일을 **TKPROF** 로 묶어 주요 SQL/대기 요약
 
-### 5.2 특정 사용자 화면 느림 — Service 단위(짧게) 트레이스
+### 특정 사용자 화면 느림 — Service 단위(짧게) 트레이스
+
 **상황**: 사용자 불특정, 특정 서비스(웹) 레이어 전체에서 간헐적 느림
 
 1) **짧은 시간 창**으로 service trace ON
@@ -242,16 +244,18 @@ EXEC DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE(
 
 ---
 
-## 6. TKPROF로 읽기 (요약 가이드)
+## TKPROF로 읽기 (요약 가이드)
 
 ```bash
 # 서버(또는 파일 접근 가능 위치)에서
+
 tkprof input.trc output.prf sys=no sort=exeela,fchela
 
 # 옵션
 # sys=no  : SYS 호출 제외
 # waits=yes : 대기 이벤트 표시(일부 버전 기본)
 # sort=... : 실행시간/페치시간/파스시간 등 정렬
+
 ```
 
 **해석 포인트**
@@ -264,7 +268,7 @@ tkprof input.trc output.prf sys=no sort=exeela,fchela
 
 ---
 
-## 7. 운영 시 주의/정책
+## 운영 시 주의/정책
 
 1) **오버헤드**: waits/binds/plan_stat ON은 로그량·CPU 증가 → **범위/기간 최소화**
 2) **보안/개인정보**: `binds=>TRUE` 는 **민감 값**이 남는다 → **마스킹/보관 정책**
@@ -275,9 +279,9 @@ tkprof input.trc output.prf sys=no sort=exeela,fchela
 
 ---
 
-## 8. API·옵션 치트시트
+## API·옵션 치트시트
 
-### 8.1 켜기/끄기
+### 켜기/끄기
 
 | 목적 | 권장 API | 예 |
 |---|---|---|
@@ -288,7 +292,7 @@ tkprof input.trc output.prf sys=no sort=exeela,fchela
 | 서비스/모듈/액션 | `DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE` | `EXEC …(service,module,action,TRUE,TRUE);` |
 | 클라이언트 ID | `DBMS_MONITOR.CLIENT_ID_TRACE_ENABLE` | `EXEC …('TENANT#ACME',TRUE,FALSE);` |
 
-### 8.2 10046 레벨
+### 10046 레벨
 
 | Level | 의미 |
 |---|---|
@@ -299,7 +303,7 @@ tkprof input.trc output.prf sys=no sort=exeela,fchela
 
 ---
 
-## 9. 문제 해결 루틴(현장 템플릿)
+## 문제 해결 루틴(현장 템플릿)
 
 1) **증상/대상 식별**: 서비스? 모듈? 특정 사용자/세션?
 2) **범위 결정**: 세션 단위가 가능한지(최소 범위 우선)
@@ -313,9 +317,9 @@ tkprof input.trc output.prf sys=no sort=exeela,fchela
 
 ---
 
-## 10. 미니 예제 세트(끝까지 따라하기)
+## 미니 예제 세트(끝까지 따라하기)
 
-### 10.1 자기 세션 — 바인드·대기 포함 + 식별자
+### 자기 세션 — 바인드·대기 포함 + 식별자
 
 ```sql
 ALTER SESSION SET tracefile_identifier = 'HOT_REPORT';
@@ -336,7 +340,7 @@ EXEC DBMS_MONITOR.SESSION_TRACE_DISABLE;
 SELECT value FROM v$diag_info WHERE name='Default Trace File';
 ```
 
-### 10.2 다른 세션 — SID/SERIAL#로
+### 다른 세션 — SID/SERIAL#로
 
 ```sql
 -- 대상 찾기
@@ -351,7 +355,7 @@ EXEC DBMS_MONITOR.SESSION_TRACE_ENABLE( :sid, :serial#, waits=>TRUE, binds=>FALS
 EXEC DBMS_MONITOR.SESSION_TRACE_DISABLE( :sid, :serial# );
 ```
 
-### 10.3 서비스/모듈/액션 — 배치 구간만
+### 서비스/모듈/액션 — 배치 구간만
 
 ```sql
 -- 앱이 진입 시 다음 호출 보장
@@ -379,7 +383,7 @@ EXEC DBMS_MONITOR.SERV_MOD_ACT_TRACE_DISABLE(
 
 ---
 
-## 11. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. 트레이스 파일이 너무 많아요.**
 A. **범위를 줄이거나 기간을 짧게**, `tracefile_identifier` 로 켜고 끄는 구간을 명확히. 서비스 단위는 **최후 수단**.
@@ -395,7 +399,7 @@ A. `SERV_MOD_ACT_TRACE_ENABLE` 의 `instance_name` 활용. 또는 **그 인스�
 
 ---
 
-## 12. 결론
+## 결론
 
 - **세션 단위**가 기본, **서비스/모듈/액션**은 “정말 필요할 때만” **좁게**.
 - **waits/binds/plan_stat** 조합으로 **원인(락/I/O/네트워크/파싱/플랜)** 을 **증거**로 잡아라.

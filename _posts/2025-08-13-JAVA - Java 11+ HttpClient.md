@@ -6,7 +6,7 @@ category: Java
 ---
 # Java 11+ `HttpClient` — 현대적 HTTP 클라이언트 API
 
-## 0. 한눈에 개요 — 왜 HttpClient인가
+## 한눈에 개요 — 왜 HttpClient인가
 
 | 항목 | 내용 |
 |---|---|
@@ -20,7 +20,7 @@ category: Java
 
 ---
 
-## 1. 클라이언트 만들기 — 빌더 패턴과 권장 기본값
+## 클라이언트 만들기 — 빌더 패턴과 권장 기본값
 
 ```java
 import java.net.http.HttpClient;
@@ -35,7 +35,7 @@ HttpClient client = HttpClient.newBuilder()
 // 실무 팁: HttpClient는 스레드-세이프. 앱 전체에서 싱글턴 재사용(연결 재사용/HTTP2 세션 이점).
 ```
 
-### 1.1 옵션 요약
+### 옵션 요약
 
 | 메서드 | 의미 | 비고 |
 |---|---|---|
@@ -52,9 +52,10 @@ HttpClient client = HttpClient.newBuilder()
 
 ---
 
-## 2. 요청(Request) 구성 — GET/POST/헤더/타임아웃/쿼리
+## 요청(Request) 구성 — GET/POST/헤더/타임아웃/쿼리
 
-### 2.1 GET (쿼리 인코딩·헤더·요청별 타임아웃)
+### GET (쿼리 인코딩·헤더·요청별 타임아웃)
+
 ```java
 import java.net.URI;
 import java.net.URLEncoder;
@@ -79,7 +80,8 @@ System.out.println(res.body());
 
 > **주의**: `URLEncoder`는 **쿼리 파라미터** 전용이다. **경로 세그먼트** 인코딩은 별도 유틸(예: RFC 3986 안전 문자만 허용)로 처리하라.
 
-### 2.2 POST(JSON) — Jackson 직렬화
+### POST(JSON) — Jackson 직렬화
+
 ```java
 // Gradle (Kotlin)
 // implementation("com.fasterxml.jackson.core:jackson-databind:2.18.0")
@@ -103,7 +105,8 @@ System.out.println(res.statusCode());
 System.out.println(res.body());
 ```
 
-### 2.3 x-www-form-urlencoded
+### x-www-form-urlencoded
+
 ```java
 String form = "id=" + URLEncoder.encode("kim", UTF_8)
             + "&pw=" + URLEncoder.encode("s3cr3t", UTF_8);
@@ -114,7 +117,8 @@ HttpRequest req = HttpRequest.newBuilder(URI.create("https://example.com/login")
         .build();
 ```
 
-### 2.4 Expect: 100-continue (대용량 업로드 최적화)
+### Expect: 100-continue (대용량 업로드 최적화)
+
 ```java
 HttpRequest req = HttpRequest.newBuilder(URI.create("https://upload.example.com"))
         .expectContinue(true) // 서버가 100 Continue를 주면 본문 전송 시작
@@ -124,7 +128,7 @@ HttpRequest req = HttpRequest.newBuilder(URI.create("https://upload.example.com"
 
 ---
 
-## 3. 응답(BodyHandler) — 문자열/바이트/스트림/파일
+## 응답(BodyHandler) — 문자열/바이트/스트림/파일
 
 | 핸들러 | 설명 | 용도 |
 |---|---|---|
@@ -146,7 +150,7 @@ try (java.io.InputStream is = r.body();
 
 ---
 
-## 4. 비동기(CompletableFuture) — 팬아웃·합류·예외
+## 비동기(CompletableFuture) — 팬아웃·합류·예외
 
 ```java
 HttpRequest req = HttpRequest.newBuilder(URI.create("https://httpbin.org/delay/1"))
@@ -177,7 +181,7 @@ futs.forEach(f -> System.out.println(f.join().statusCode()));
 
 ---
 
-## 5. 멀티파트 파일 업로드 — **메모리 복사 없이 스트리밍**
+## 멀티파트 파일 업로드 — **메모리 복사 없이 스트리밍**
 
 표준 API에는 멀티파트 퍼블리셔가 없으므로 **경계(boundary)**/파트를 직접 구성한다.
 아래 유틸은 **파일을 스트리밍**하여 대용량 업로드 시 메모리 사용을 최소화한다.
@@ -237,7 +241,7 @@ HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString()
 
 ---
 
-## 6. 리다이렉트 정책 — 보안·호환성
+## 리다이렉트 정책 — 보안·호환성
 
 ```java
 HttpClient c1 = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER).build();   // 금지
@@ -250,7 +254,7 @@ HttpClient c3 = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWA
 
 ---
 
-## 7. 쿠키/프록시/인증 — 기업망·보안
+## 쿠키/프록시/인증 — 기업망·보안
 
 ```java
 import java.net.*;
@@ -277,7 +281,7 @@ HttpRequest req = HttpRequest.newBuilder(URI.create("https://api.example.com"))
 
 ---
 
-## 8. TLS·mTLS — 자체 CA/클라이언트 인증서
+## TLS·mTLS — 자체 CA/클라이언트 인증서
 
 ```java
 import javax.net.ssl.*;
@@ -306,7 +310,7 @@ HttpClient secure = HttpClient.newBuilder().sslContext(ssl).build();
 
 ---
 
-## 9. 재시도·백오프·레이트 리미트 — 멱등 우선
+## 재시도·백오프·레이트 리미트 — 멱등 우선
 
 ```java
 import java.net.http.HttpResponse;
@@ -339,7 +343,7 @@ if (res == null || res.statusCode()/100 != 2) throw new IllegalStateException("H
 
 ---
 
-## 10. 캐싱·조건부 요청 — ETag/If-None-Match
+## 캐싱·조건부 요청 — ETag/If-None-Match
 
 ```java
 HttpResponse<String> first = client.send(
@@ -361,7 +365,7 @@ first.headers().firstValue("ETag").ifPresent(etag -> {
 
 ---
 
-## 11. 압축·스트리밍 — GZip 수동 처리 예
+## 압축·스트리밍 — GZip 수동 처리 예
 
 ```java
 HttpResponse<java.io.InputStream> r =
@@ -379,7 +383,7 @@ try (java.io.InputStream raw = r.body();
 
 ---
 
-## 12. WebSocket — 실시간 양방향
+## WebSocket — 실시간 양방향
 
 ```java
 import java.net.http.WebSocket;
@@ -407,7 +411,7 @@ ws.sendClose(WebSocket.NORMAL_CLOSURE, "bye");
 
 ---
 
-## 13. 오류·예외 — 분류와 대응
+## 오류·예외 — 분류와 대응
 
 | 유형 | 원인 | 대응 |
 |---|---|---|
@@ -420,7 +424,7 @@ ws.sendClose(WebSocket.NORMAL_CLOSURE, "bye");
 
 ---
 
-## 14. 실행기(Executor)·관측성 — 고부하 대응
+## 실행기(Executor)·관측성 — 고부하 대응
 
 ```java
 var exec = java.util.concurrent.Executors.newFixedThreadPool(
@@ -435,7 +439,7 @@ HttpClient tuned = HttpClient.newBuilder().executor(exec).build();
 
 ---
 
-## 15. 간단 헬퍼 — 안전한 GET/POST 래퍼
+## 간단 헬퍼 — 안전한 GET/POST 래퍼
 
 ```java
 import java.net.http.*;
@@ -470,7 +474,7 @@ public final class SimpleHttp {
 
 ---
 
-## 16. 테스트 전략 — Mock 서버로 결정성 확보
+## 테스트 전략 — Mock 서버로 결정성 확보
 
 - **단위 테스트**: HTTP 호출부를 인터페이스로 감싸 Mock/Fake 주입
 - **통합 테스트**: **OkHttp MockWebServer** 또는 **WireMock** 사용
@@ -488,7 +492,7 @@ String baseUrl = mockWebServer.url("/").toString(); // 클라이언트 베이스
 
 ---
 
-## 17. 레거시 비교 — `HttpURLConnection` (참고용)
+## 레거시 비교 — `HttpURLConnection` (참고용)
 
 ```java
 import java.net.*;
@@ -513,7 +517,7 @@ conn.disconnect();
 
 ---
 
-## 18. 체크리스트 — 운영 품질을 높이기 위한 최소 기준
+## 체크리스트 — 운영 품질을 높이기 위한 최소 기준
 
 1. **HttpClient 싱글턴** 재사용(연결·세션 재활용)
 2. **타임아웃**: `connectTimeout` + 요청별 `.timeout()` **반드시** 지정
@@ -528,7 +532,7 @@ conn.disconnect();
 
 ---
 
-## 19. 고급 주제 메모
+## 고급 주제 메모
 
 - **HTTP/2 서버 푸시**: 일부 서버/브라우저에서 비권장·중단 추세. JDK API는 핸들러가 있으나 실제 활용은 드묾.
 - **인터셉터**: 표준 HttpClient는 전용 인터셉터 API 없음. 공통 래퍼/팩토리/데코레이터로 해결(로깅/서명/재시도).

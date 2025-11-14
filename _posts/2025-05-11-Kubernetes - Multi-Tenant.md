@@ -16,7 +16,7 @@ category: Kubernetes
 
 ---
 
-## 0. 설계 개요(빠른 로드맵)
+## 설계 개요(빠른 로드맵)
 
 | 범주 | 핵심 결정 |
 |---|---|
@@ -32,12 +32,13 @@ category: Kubernetes
 
 ---
 
-## 1. 테넌트 네임스페이스 생성 + 표준 라벨/PSA
+## 테넌트 네임스페이스 생성 + 표준 라벨/PSA
 
 테넌트 생성 시 **라벨 표준**과 **PSA**를 함께 부여한다.
 
 ```yaml
 # ns-tenant-a.yaml
+
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -58,9 +59,9 @@ kubectl apply -f ns-tenant-a.yaml
 
 ---
 
-## 2. 리소스 격리: ResourceQuota + LimitRange + PriorityClass
+## 리소스 격리: ResourceQuota + LimitRange + PriorityClass
 
-### 2.1 ResourceQuota
+### ResourceQuota
 
 ```yaml
 apiVersion: v1
@@ -79,7 +80,7 @@ spec:
     requests.storage: 2Ti
 ```
 
-### 2.2 LimitRange(기본 요청/제한 강제)
+### LimitRange(기본 요청/제한 강제)
 
 ```yaml
 apiVersion: v1
@@ -101,7 +102,7 @@ spec:
       memory: "2Gi"
 ```
 
-### 2.3 PriorityClass(선택)
+### PriorityClass(선택)
 
 공용 클러스터에서 운영/개발 우선순위를 구분한다.
 
@@ -126,12 +127,13 @@ spec:
 
 ---
 
-## 3. 네트워크 격리: Default Deny + 허용 목록
+## 네트워크 격리: Default Deny + 허용 목록
 
-### 3.1 Ingress/Egress 기본 거부
+### Ingress/Egress 기본 거부
 
 ```yaml
 # deny-by-default.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -142,7 +144,7 @@ spec:
   policyTypes: ["Ingress", "Egress"]
 ```
 
-### 3.2 내부 통신 허용(동일 네임스페이스)
+### 내부 통신 허용(동일 네임스페이스)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -158,10 +160,11 @@ spec:
     - podSelector: {}   # 같은 NS 전체 허용(상황에 따라 app 라벨로 더 좁히기)
 ```
 
-### 3.3 DNS/Egress 허용(필수 아웃바운드)
+### DNS/Egress 허용(필수 아웃바운드)
 
 ```yaml
 # allow-egress-dns-and-web.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -194,9 +197,9 @@ spec:
 
 ---
 
-## 4. 권한 격리: RBAC(역할/바인딩), 서비스어카운트 경계
+## 권한 격리: RBAC(역할/바인딩), 서비스어카운트 경계
 
-### 4.1 팀 운영자 롤(팀 네임스페이스 한정 관리자)
+### 팀 운영자 롤(팀 네임스페이스 한정 관리자)
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -231,7 +234,7 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### 4.2 읽기 전용 롤
+### 읽기 전용 롤
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -247,7 +250,7 @@ rules:
 
 ---
 
-## 5. 스토리지 격리: StorageClass/Quota/백업 경계
+## 스토리지 격리: StorageClass/Quota/백업 경계
 
 - PVC는 네임스페이스 경계를 벗어나지 않는다.
 - 필요한 경우 팀 전용 StorageClass를 제공하고 ResourceQuota로 `requests.storage`를 제한한다.
@@ -257,12 +260,13 @@ rules:
 
 ---
 
-## 6. 노드 격리(선택): 테인트/톨러레이션 + 노드어피니티
+## 노드 격리(선택): 테인트/톨러레이션 + 노드어피니티
 
 민감 고객이나 빌링 분리를 강하게 원하면 **전용 노드풀**을 만든다.
 
 ```yaml
 # 노드에 테인트 추가(예: nodepool=team-dev 전용)
+
 kubectl taint nodes <node-name> tenant=team-dev:NoSchedule
 ```
 
@@ -285,12 +289,13 @@ spec:
 
 ---
 
-## 7. 거버넌스/정책 강제: Kyverno 또는 Gatekeeper(OPA)
+## 거버넌스/정책 강제: Kyverno 또는 Gatekeeper(OPA)
 
-### 7.1 리소스 요청/제한 강제(없으면 거부)
+### 리소스 요청/제한 강제(없으면 거부)
 
 ```yaml
 # kyverno: require-requests-limits.yaml
+
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
 metadata:
@@ -316,7 +321,7 @@ spec:
                 memory: "?*"
 ```
 
-### 7.2 허용된 이미지 레지스트리만 사용
+### 허용된 이미지 레지스트리만 사용
 
 ```yaml
 apiVersion: kyverno.io/v1
@@ -339,7 +344,7 @@ spec:
           - image: "registry.example.com/*"
 ```
 
-### 7.3 위험 플래그 차단(hostNetwork/privileged 등)
+### 위험 플래그 차단(hostNetwork/privileged 등)
 
 ```yaml
 apiVersion: kyverno.io/v1
@@ -371,9 +376,9 @@ spec:
 
 ---
 
-## 8. 디플로이 기본 템플릿(테넌트 킷) — Helm/Kustomize
+## 디플로이 기본 템플릿(테넌트 킷) — Helm/Kustomize
 
-### 8.1 Helm 값으로 테넌트 변수화 예시
+### Helm 값으로 테넌트 변수화 예시
 
 `values.yaml`:
 
@@ -414,7 +419,7 @@ metadata:
 helm install tenant-team-dev ./tenant-kit -n kube-system
 ```
 
-### 8.2 Kustomize 베이스/오버레이
+### Kustomize 베이스/오버레이
 
 ```
 tenant-kit/
@@ -433,9 +438,9 @@ tenant-kit/
 
 ---
 
-## 9. 관측/감사/과금
+## 관측/감사/과금
 
-### 9.1 라벨 표준화
+### 라벨 표준화
 
 모든 리소스에 공통 라벨을 강제:
 
@@ -448,14 +453,14 @@ metadata:
 
 Kyverno `mutate`로 자동 주입하는 것도 좋다.
 
-### 9.2 메트릭/로그/트레이싱
+### 메트릭/로그/트레이싱
 
 - Prometheus: `namespace` 별 리소스/애플리케이션 대시보드
 - Grafana: 폴더/팀별 대시보드 분리
 - Loki: `{namespace="team-dev"}` 쿼리로 로그 필터
 - Tracing(Tempo/Jaeger): 팀 별 서비스맵
 
-### 9.3 과금/쇼백(Showback/Chargeback)
+### 과금/쇼백(Showback/Chargeback)
 
 - 자원 사용량 쿼리: `container_cpu_usage_seconds_total`, `container_memory_working_set_bytes`
 - 스토리지 사용: PVC capacity 및 CSI metrics
@@ -463,7 +468,7 @@ Kyverno `mutate`로 자동 주입하는 것도 좋다.
 
 ---
 
-## 10. 신뢰성: PDB/HPA/BU
+## 신뢰성: PDB/HPA/BU
 
 - **PodDisruptionBudget(PDB)**: 유지보수/노드 드레인에도 다운타임 최소화
 
@@ -485,9 +490,9 @@ spec:
 
 ---
 
-## 11. 예제 앱으로 격리 검증
+## 예제 앱으로 격리 검증
 
-### 11.1 배포
+### 배포
 
 ```bash
 kubectl -n team-dev create deployment web --image=nginx
@@ -496,7 +501,7 @@ kubectl -n team-qa create deployment web --image=nginx
 kubectl -n team-qa expose deployment web --port=80
 ```
 
-### 11.2 통신 테스트
+### 통신 테스트
 
 기본 거부가 적용되었으므로, `team-qa`에서 `team-dev`의 `web` 접근은 차단되어야 한다.
 
@@ -509,7 +514,7 @@ wget -S -O- http://web.team-dev.svc.cluster.local   # 실패해야 정상
 
 ---
 
-## 12. 운영 체크리스트
+## 운영 체크리스트
 
 - 네임스페이스 생성 시 **PSA 라벨**과 **라벨 표준**을 반드시 포함
 - **ResourceQuota/LimitRange** 없이는 배포 금지(정책으로 Enforce)
@@ -523,7 +528,7 @@ wget -S -O- http://web.team-dev.svc.cluster.local   # 실패해야 정상
 
 ---
 
-## 13. 트러블슈팅 가이드
+## 트러블슈팅 가이드
 
 | 현상 | 가능 원인 | 해결 |
 |---|---|---|
@@ -535,10 +540,11 @@ wget -S -O- http://web.team-dev.svc.cluster.local   # 실패해야 정상
 
 ---
 
-## 14. “테넌트 키트” 한 번에 적용(샘플 번들)
+## “테넌트 키트” 한 번에 적용(샘플 번들)
 
 ```yaml
 # 01-namespace.yaml
+
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -548,6 +554,7 @@ metadata:
     pod-security.kubernetes.io/enforce: "restricted"
 ---
 # 02-quota.yaml
+
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -562,6 +569,7 @@ spec:
     limits.memory: 32Gi
 ---
 # 03-limitrange.yaml
+
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -574,6 +582,7 @@ spec:
     default:        {cpu: "1",    memory: "1Gi"}
 ---
 # 04-netpol-default-deny.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -584,6 +593,7 @@ spec:
   policyTypes: ["Ingress","Egress"]
 ---
 # 05-netpol-egress-core.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -602,6 +612,7 @@ spec:
     - {protocol: TCP, port: 53}
 ---
 # 06-rbac-operator.yaml
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

@@ -6,16 +6,16 @@ category: Avalonia
 ---
 # Avalonia의 View 구조와 확장 방법
 
-## 1. View란 무엇인가
+## View란 무엇인가
 
 **View**는 사용자가 직접 보는 UI를 의미하며 Avalonia에서는 **`.axaml` 파일(XAML)** 로 정의된다.
 MVVM 구조에서 View는 **표현과 레이아웃, 스타일**에 집중하고, **상태·동작은 ViewModel**이 담당한다. View는 일반적으로 **DataContext**로 ViewModel을 참조하며, 바인딩(속성/명령)으로 상호작용한다.
 
 ---
 
-## 2. 기본 구조와 파일 구성
+## 기본 구조와 파일 구성
 
-### 2.1 예시: MainWindow.axaml
+### 예시: MainWindow.axaml
 
 ```xml
 <Window xmlns="https://github.com/avaloniaui"
@@ -38,7 +38,7 @@ MVVM 구조에서 View는 **표현과 레이아웃, 스타일**에 집중하고,
 </Window>
 ```
 
-### 2.2 코드 비하인드: MainWindow.axaml.cs
+### 코드 비하인드: MainWindow.axaml.cs
 
 ```csharp
 using Avalonia.Controls;
@@ -60,13 +60,13 @@ public partial class MainWindow : Window
 
 ---
 
-## 3. 새 View 만들기
+## 새 View 만들기
 
 1) `Views` 폴더에 **`.axaml` + `.axaml.cs`** 쌍 생성
 2) `ViewModels` 폴더에 대응되는 ViewModel 생성
 3) View의 **DataContext**를 ViewModel로 연결
 
-### 3.1 예: SettingsView.axaml
+### 예: SettingsView.axaml
 
 ```xml
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -85,7 +85,7 @@ public partial class MainWindow : Window
 </UserControl>
 ```
 
-### 3.2 SettingsView.axaml.cs
+### SettingsView.axaml.cs
 
 ```csharp
 using Avalonia.Controls;
@@ -107,7 +107,7 @@ public partial class SettingsView : UserControl
 
 ---
 
-## 4. View 종류와 사용 시점
+## View 종류와 사용 시점
 
 | View 타입     | 용도                                   | 예시                         |
 |---------------|----------------------------------------|------------------------------|
@@ -130,7 +130,7 @@ public partial class SettingsView : UserControl
 
 ---
 
-## 5. 레이아웃 패널과 배치 전략
+## 레이아웃 패널과 배치 전략
 
 대표 패널
 - `StackPanel`: 수직/수평 스택. 간단 폼/툴바에 적합
@@ -138,7 +138,7 @@ public partial class SettingsView : UserControl
 - `DockPanel`: 상하좌우 고정 + 중앙 채우기
 - `UniformGrid`: 균일한 격자 배치
 
-### 5.1 Grid 예시(대화면 기본 레이아웃)
+### Grid 예시(대화면 기본 레이아웃)
 
 ```xml
 <Grid>
@@ -176,11 +176,11 @@ public partial class SettingsView : UserControl
 
 ---
 
-## 6. 스타일과 리소스 분리
+## 스타일과 리소스 분리
 
 View가 커질수록 **스타일/브러시/두께/여백** 등은 전역 리소스로 분리한다.
 
-### 6.1 App.axaml에서 리소스 사전 병합
+### App.axaml에서 리소스 사전 병합
 
 ```xml
 <Application xmlns="https://github.com/avaloniaui"
@@ -205,7 +205,7 @@ View가 커질수록 **스타일/브러시/두께/여백** 등은 전역 리소�
 </Application>
 ```
 
-### 6.2 Styles.axaml 예시
+### Styles.axaml 예시
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
@@ -240,11 +240,11 @@ View가 커질수록 **스타일/브러시/두께/여백** 등은 전역 리소�
 
 ---
 
-## 7. DataTemplate를 활용한 View 자동 연결
+## DataTemplate를 활용한 View 자동 연결
 
 **핵심**: ViewModel 타입에 따라 자동으로 View를 선택하는 **DataTemplate 매핑**을 전역으로 등록하면, View에서는 `ContentControl.Content`에 ViewModel만 바인딩해도 뷰가 바뀐다.
 
-### 7.1 App.axaml에 템플릿 등록
+### App.axaml에 템플릿 등록
 
 ```xml
 <Application
@@ -265,7 +265,7 @@ View가 커질수록 **스타일/브러시/두께/여백** 등은 전역 리소�
 </Application>
 ```
 
-### 7.2 셸에서 화면 전환
+### 셸에서 화면 전환
 
 ```xml
 <!-- MainWindow.axaml -->
@@ -309,7 +309,7 @@ public class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 8. ViewLocator 패턴(이름 규칙 기반 자동 매핑)
+## ViewLocator 패턴(이름 규칙 기반 자동 매핑)
 
 DataTemplate 대신 **ViewLocator**를 사용하면 `FooViewModel` → `FooView`로 **이름 규칙**에 따라 자동 매핑할 수 있다.
 
@@ -358,7 +358,7 @@ App.axaml에 등록
 
 ---
 
-## 9. ControlTemplate과 템플릿 커스터마이징
+## ControlTemplate과 템플릿 커스터마이징
 
 `UserControl`은 내부를 XAML로 합성하는 방식이다. 더 고급화하려면 **TemplatedControl + ControlTemplate**로 **컨트롤의 외형 전체를 스타일/템플릿**으로 교체 가능하게 만든다.
 
@@ -390,7 +390,7 @@ App.axaml에 등록
 
 ---
 
-## 10. 명령/바인딩/컨버터 — View에서의 소비
+## 명령/바인딩/컨버터 — View에서의 소비
 
 View는 **상태 바인딩**과 **명령 바인딩**을 통해 ViewModel을 소비한다.
 
@@ -416,7 +416,7 @@ View는 **상태 바인딩**과 **명령 바인딩**을 통해 ViewModel을 소�
 
 ---
 
-## 11. 다이얼로그와 모달 View
+## 다이얼로그와 모달 View
 
 - 간단 팝업: `Window`를 생성하여 `ShowDialog<T>()`
 - 권장: View에서 직접 창을 만들기보다 **IDialogService** 인터페이스로 추상화하고, DI로 구현체를 주입해 ViewModel에서 호출
@@ -434,7 +434,7 @@ ViewModel은 `IDialogService`만 참조하므로 테스트가 용이하다.
 
 ---
 
-## 12. 국제화·접근성·테스트
+## 국제화·접근성·테스트
 
 - 국제화: 문자열을 리소스 사전으로 분리, 문화권에 따라 리소스 교체
 - 접근성: 키보드 탐색 가능, 포커스 표시, 색 대비 등 고려
@@ -459,7 +459,7 @@ public class SettingsViewModelTests
 
 ---
 
-## 13. 성능과 구조 팁
+## 성능과 구조 팁
 
 - 복잡한 화면은 **UserControl**로 분해하여 유지보수성을 높인다.
 - 스타일/리소스는 **전역 사전**으로 관리하여 중복/상충을 최소화한다.
@@ -468,7 +468,7 @@ public class SettingsViewModelTests
 
 ---
 
-## 14. 종합 예제: 셸 + 페이지 전환 + 스타일 + 리소스
+## 종합 예제: 셸 + 페이지 전환 + 스타일 + 리소스
 
 폴더 구조
 
@@ -684,7 +684,7 @@ public class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 15. 설계 체크리스트
+## 설계 체크리스트
 
 - View는 **표현과 레이아웃**만, 로직은 ViewModel로 이동한다.
 - **DataContext 주입**은 조립 루트(App 초기화/DI)나 DataTemplate/Locator로 처리한다.
@@ -696,7 +696,7 @@ public class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 16. 결론
+## 결론
 
 초안의 핵심을 유지하면서, 실전 애플리케이션에서 View를 **조립 가능한 단위**로 설계하고, **DataTemplate/Locator**로 뷰 전환을 자동화하며, **스타일/리소스/템플릿**으로 테마를 체계화하는 방법을 확장했다.
 이 원칙을 따르면 View는 **가볍고 재사용 가능**해지고, ViewModel/서비스는 **테스트 가능한 구조**를 유지한다. 애플리케이션이 커져도 유지보수가 쉬운 **견고한 MVVM 기반 UI**를 지속적으로 확장할 수 있다.

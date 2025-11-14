@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Razor 문법 기초 완전 정복
 
-## 0. Razor란 무엇인가 — HTML + C# 혼합 템플릿
+## Razor란 무엇인가 — HTML + C# 혼합 템플릿
 
 - **Razor**는 **C# 기반**의 서버 사이드 템플릿 엔진입니다.
 - `.cshtml` 파일에서 **HTML**과 **C#**을 자연스럽게 혼합하며, 기본적으로 **HTML 인코딩이 자동 적용**되어 XSS를 예방합니다.
@@ -14,15 +14,17 @@ category: AspNet
 
 ---
 
-## 1. Razor 핵심 기호 `@` — 출력과 코드 전환
+## Razor 핵심 기호 `@` — 출력과 코드 전환
 
-### 1.1 기본 출력
+### 기본 출력
+
 ```cshtml
 @DateTime.Now
 @("안녕하세요! 오늘은 " + DateTime.Today.ToString("yyyy-MM-dd") + "입니다.")
 ```
 
-### 1.2 식과 코드의 경계
+### 식과 코드의 경계
+
 - 단순 식은 `@식`으로 바로 출력합니다.
 - **HTML과 혼합**될 때 **모호성**이 생기면 `@( … )`로 감싸 명확히 합니다.
 
@@ -31,7 +33,8 @@ category: AspNet
 <p>결과: @(Model.Score >= 60 ? "합격" : "불합격")</p>
 ```
 
-### 1.3 코드 블록 `@{ ... }`
+### 코드 블록 `@{ ... }`
+
 ```cshtml
 @{
     var name = "홍길동";
@@ -44,9 +47,10 @@ category: AspNet
 
 ---
 
-## 2. 모델 지시문 `@model`과 `@Model`
+## 모델 지시문 `@model`과 `@Model`
 
-### 2.1 모델 지정
+### 모델 지정
+
 ```cshtml
 @model MyApp.Models.Product
 <h2>@Model.Name</h2>
@@ -56,7 +60,8 @@ category: AspNet
 - 뷰/페이지 상단에서 **단일 모델 타입**을 지정합니다.
 - 페이지 모델(Razor Pages)에서는 `@page`와 함께 사용됩니다.
 
-### 2.2 ViewData/ViewBag/TempData(간단 비교)
+### ViewData/ViewBag/TempData(간단 비교)
+
 ```cshtml
 @{
     ViewData["Title"] = "상품";
@@ -72,9 +77,10 @@ category: AspNet
 
 ---
 
-## 3. 흐름 제어: 반복문/조건문/스위치/for/while
+## 흐름 제어: 반복문/조건문/스위치/for/while
 
-### 3.1 foreach
+### foreach
+
 ```cshtml
 @model List<string>
 <ul>
@@ -85,7 +91,8 @@ category: AspNet
 </ul>
 ```
 
-### 3.2 for/while
+### for/while
+
 ```cshtml
 @{
     for (var i = 0; i < 3; i++)
@@ -95,7 +102,8 @@ category: AspNet
 }
 ```
 
-### 3.3 switch
+### switch
+
 ```cshtml
 @{
     var grade = "A";
@@ -116,55 +124,63 @@ category: AspNet
 
 ---
 
-## 4. 출력과 인코딩 — Html.Raw, IHtmlContent, 보안
+## 출력과 인코딩 — Html.Raw, IHtmlContent, 보안
 
-### 4.1 기본 인코딩
+### 기본 인코딩
+
 - Razor는 **기본적으로 HTML 인코딩**을 수행합니다.
 
 ```cshtml
 @("<script>alert('XSS')</script>")  <!-- 안전하게 문자열로 렌더링됨 -->
 ```
 
-### 4.2 Html.Raw(주의)
+### Html.Raw(주의)
+
 ```cshtml
 @Html.Raw("<strong>굵게</strong>")
 ```
 - **신뢰 가능한 콘텐츠만** Raw로 렌더링하십시오. 사용자 입력 그대로 Raw 출력은 XSS 위험.
 
-### 4.3 IHtmlContent
+### IHtmlContent
+
 - Tag Helper/뷰 컴포넌트가 반환하는 HTML은 **IHtmlContent**로 안전하게 처리됩니다.
 
 ---
 
-## 5. 주석, 문자 그대로, 이스케이프
+## 주석, 문자 그대로, 이스케이프
 
-### 5.1 Razor 주석(클라이언트에 미노출)
+### Razor 주석(클라이언트에 미노출)
+
 ```cshtml
 @* 이건 Razor 주석입니다. HTML에는 표시되지 않음 *@
 ```
 
-### 5.2 HTML 주석(클라이언트에 노출)
+### HTML 주석(클라이언트에 노출)
+
 ```html
 <!-- 이건 HTML 주석입니다 -->
 ```
 
-### 5.3 `@` 이스케이프
+### `@` 이스케이프
+
 ```cshtml
 @@user  <!-- 결과: @user -->
 ```
 
 ---
 
-## 6. 디렉티브 모음 — 실제로 자주 쓰는 것들
+## 디렉티브 모음 — 실제로 자주 쓰는 것들
 
-### 6.1 `@page` (Razor Pages에서 라우팅)
+### `@page` (Razor Pages에서 라우팅)
+
 ```cshtml
 @page "{id:int:min(1)}"
 @model DetailsModel
 <h1>상품 #@Model.Id</h1>
 ```
 
-### 6.2 `@using`, `@inject`, `@addTagHelper`
+### `@using`, `@inject`, `@addTagHelper`
+
 ```cshtml
 @using MyApp.Services
 @inject IClock Clock   <!-- DI로 서비스 주입 -->
@@ -175,20 +191,23 @@ category: AspNet
 
 > `_ViewImports.cshtml`에서 공통으로 선언해 반복을 줄입니다.
 
-### 6.3 `@namespace`, `@inherits` (고급)
+### `@namespace`, `@inherits` (고급)
+
 ```cshtml
 @namespace MyApp.Pages
 @inherits Microsoft.AspNetCore.Mvc.Razor.RazorPage<dynamic>
 ```
 
-### 6.4 `@section` / `@RenderSection`
+### `@section` / `@RenderSection`
+
 - 레이아웃과 함께 사용(아래 7장 참조).
 
 ---
 
-## 7. 레이아웃, ViewStart, ViewImports
+## 레이아웃, ViewStart, ViewImports
 
-### 7.1 레이아웃 적용
+### 레이아웃 적용
+
 `Pages/Shared/_Layout.cshtml`
 ```cshtml
 <!DOCTYPE html>
@@ -217,7 +236,8 @@ category: AspNet
 <h1>Products</h1>
 ```
 
-### 7.2 `_ViewStart.cshtml`
+### `_ViewStart.cshtml`
+
 ```cshtml
 @{
     Layout = "_Layout";
@@ -225,7 +245,8 @@ category: AspNet
 ```
 - 모든 뷰/페이지에 기본 레이아웃 적용.
 
-### 7.3 `_ViewImports.cshtml`
+### `_ViewImports.cshtml`
+
 ```cshtml
 @using MyApp.Models
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
@@ -235,9 +256,10 @@ category: AspNet
 
 ---
 
-## 8. 부분 뷰(Partial)와 뷰 컴포넌트(ViewComponent)
+## 부분 뷰(Partial)와 뷰 컴포넌트(ViewComponent)
 
-### 8.1 Partial
+### Partial
+
 `Pages/Shared/_ProductRow.cshtml`
 ```cshtml
 @model MyApp.Models.Product
@@ -260,7 +282,8 @@ category: AspNet
 </table>
 ```
 
-### 8.2 ViewComponent
+### ViewComponent
+
 `ViewComponents/SummaryViewComponent.cs`
 ```csharp
 using Microsoft.AspNetCore.Mvc;
@@ -286,7 +309,7 @@ public class SummaryViewComponent : ViewComponent
 
 ---
 
-## 9. Tag Helper 기초 — Razor 문법과의 만남
+## Tag Helper 기초 — Razor 문법과의 만남
 
 > Tag Helper는 2편에서 폼/검증과 함께 자세히 다루지만, **Razor 문법과 동시에 이해**하면 좋습니다.
 
@@ -302,15 +325,17 @@ public class SummaryViewComponent : ViewComponent
 
 ---
 
-## 10. 비동기, `await`, 비동기 부분 렌더링
+## 비동기, `await`, 비동기 부분 렌더링
 
-### 10.1 View에서 async 호출
+### View에서 async 호출
+
 ```cshtml
 @await Html.PartialAsync("_ProductRow", p)
 @await Component.InvokeAsync("Summary", new { total = 10 })
 ```
 
-### 10.2 페이지 모델/컨트롤러에서 async
+### 페이지 모델/컨트롤러에서 async
+
 ```csharp
 public async Task<IActionResult> OnGetAsync()
 {
@@ -323,7 +348,7 @@ public async Task<IActionResult> OnGetAsync()
 
 ---
 
-## 11. 로컬라이제이션(뷰 로컬라이저)와 Razor
+## 로컬라이제이션(뷰 로컬라이저)와 Razor
 
 `_ViewImports.cshtml` 등에서:
 ```cshtml
@@ -341,9 +366,10 @@ public async Task<IActionResult> OnGetAsync()
 
 ---
 
-## 12. HTML 특성 렌더링, 조건부 특성, null 병합/조건
+## HTML 특성 렌더링, 조건부 특성, null 병합/조건
 
-### 12.1 조건부 특성
+### 조건부 특성
+
 ```cshtml
 @{
     bool disabled = true;
@@ -351,19 +377,21 @@ public async Task<IActionResult> OnGetAsync()
 <input type="text" @(disabled ? "disabled" : "") />
 ```
 
-### 12.2 null 병합/조건 연산자
+### null 병합/조건 연산자
+
 ```cshtml
 <p>@(Model?.Name ?? "이름 없음")</p>
 ```
 
-### 12.3 문자열 보간
+### 문자열 보간
+
 ```cshtml
 <p>가격: @($"{Model.Price:n0} 원")</p>
 ```
 
 ---
 
-## 13. 디버깅과 오류 메시지 이해
+## 디버깅과 오류 메시지 이해
 
 - **컴파일 오류**: `.cshtml`은 **빌드시 C#으로 변환**되어 컴파일됩니다. 라인/컬럼을 보고 해당 블록을 점검.
 - **런타임 예외**: NullReferenceException 등은 **`@Model`/바인딩 경로**를 우선 확인.
@@ -371,7 +399,7 @@ public async Task<IActionResult> OnGetAsync()
 
 ---
 
-## 14. 성능/유지보수 팁
+## 성능/유지보수 팁
 
 1) **Partial/Component의 과다 중첩**은 렌더링 비용 증가 → 캐시/조합 최적화
 2) **ViewModel** 사용으로 뷰 전용 데이터를 한 번에 전달 → 데이터 접근 명확화
@@ -381,7 +409,7 @@ public async Task<IActionResult> OnGetAsync()
 
 ---
 
-## 15. 2편과의 연결: 폼/바인딩/검증으로 이어지는 문법 포인트
+## 2편과의 연결: 폼/바인딩/검증으로 이어지는 문법 포인트
 
 - `@model`과 `@Model`로 **폼의 강한 형식 연결**
 - `asp-for`, `asp-validation-for`, `asp-page-handler`로 **검증/핸들러 라우팅**
@@ -390,7 +418,7 @@ public async Task<IActionResult> OnGetAsync()
 
 ---
 
-## 16. 요약 표(확장)
+## 요약 표(확장)
 
 | 문법 | 설명 | 예시 |
 |---|---|---|
@@ -409,9 +437,10 @@ public async Task<IActionResult> OnGetAsync()
 
 ---
 
-## 17. 실전 미니 샘플: 목록+부분뷰+뷰컴포넌트 조합
+## 실전 미니 샘플: 목록+부분뷰+뷰컴포넌트 조합
 
-### 17.1 페이지 모델
+### 페이지 모델
+
 ```csharp
 public class ProductsModel : PageModel
 {
@@ -425,7 +454,8 @@ public class ProductsModel : PageModel
 }
 ```
 
-### 17.2 페이지 뷰
+### 페이지 뷰
+
 ```cshtml
 @page
 @model ProductsModel
@@ -451,7 +481,8 @@ public class ProductsModel : PageModel
 }
 ```
 
-### 17.3 부분뷰
+### 부분뷰
+
 ```cshtml
 @model MyApp.Models.Product
 <tr>
@@ -461,7 +492,8 @@ public class ProductsModel : PageModel
 </tr>
 ```
 
-### 17.4 뷰 컴포넌트
+### 뷰 컴포넌트
+
 ```csharp
 public class SummaryViewComponent : ViewComponent
 {
@@ -476,7 +508,7 @@ public class SummaryViewComponent : ViewComponent
 
 ---
 
-## 18. 마무리
+## 마무리
 
 - Razor는 **C# 표현식 → 코드 블록 → 디렉티브 → 재사용(Partial/Component) → 레이아웃/섹션**으로 계층적 사고가 가능합니다.
 - **기본 인코딩, 모호성 방지 `@( … )`, 주석/디렉티브, 비동기 렌더링, 로컬라이제이션**을 숙지하면 **안전하고 유지보수성 높은 서버 렌더링**을 구현할 수 있습니다.

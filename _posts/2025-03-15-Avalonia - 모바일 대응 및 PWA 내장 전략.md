@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia의 모바일 대응 및 PWA 내장 전략
 
-## 1. 지원 현황 요약과 프로젝트 전략
+## 지원 현황 요약과 프로젝트 전략
 
 | 플랫폼 | 현재 상태 | 실전 권장 전략 |
 |---|---|---|
@@ -21,7 +21,7 @@ category: Avalonia
 
 ---
 
-## 2. 솔루션 구조(멀티 타겟) 예시
+## 솔루션 구조(멀티 타겟) 예시
 
 ```
 MySuite/
@@ -36,7 +36,7 @@ MySuite/
    └─ sw.js                          # Service Worker(오프라인 캐시)
 ```
 
-### 2.1 공통 코드 예시 (ViewModel)
+### 공통 코드 예시 (ViewModel)
 
 ```csharp
 // MyApp.Core/ViewModels/DashboardViewModel.cs
@@ -57,11 +57,11 @@ public class DashboardViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 3. 데스크톱: WebView 하이브리드(내장 웹앱) 설계
+## 데스크톱: WebView 하이브리드(내장 웹앱) 설계
 
 > 정식 Web(PWA) 실행은 아직 이르므로, **데스크톱 앱 안에 WebView**를 넣고 로컬에 번들링한 웹앱을 **파일 또는 커스텀 스킴**으로 로드하는 접근이 가장 실용적이다.
 
-### 3.1 패키지 설치
+### 패키지 설치
 
 ```bash
 dotnet add package Avalonia.WebView.Desktop
@@ -69,7 +69,7 @@ dotnet add package Avalonia.WebView.Desktop
 
 > 구현체에 따라 WebView2(Windows)·CEF(크로스) 등이 사용된다. 프로젝트에 맞는 변형 패키지를 선택한다.
 
-### 3.2 XAML: WebView 자리 배치
+### XAML: WebView 자리 배치
 
 ```xml
 <!-- MyApp.WebHost/Views/WebShellView.axaml -->
@@ -89,7 +89,7 @@ dotnet add package Avalonia.WebView.Desktop
 </UserControl>
 ```
 
-### 3.3 Code-behind: 로컬 파일/커스텀 스킴 로드
+### Code-behind: 로컬 파일/커스텀 스킴 로드
 
 ```csharp
 // MyApp.WebHost/ViewModels/WebShellViewModel.cs
@@ -125,12 +125,12 @@ public class WebShellViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 4. JS ↔ .NET 브리지(양방향 메시징)
+## JS ↔ .NET 브리지(양방향 메시징)
 
 WebView 기반 하이브리드는 **로그인/결제/지도** 등 “웹으로 구현한 화면”과 “Avalonia 네이티브 화면”을 연결해야 한다.
 대표적인 패턴은 **postMessage/MessageReceived** 이벤트 기반 브리지다.
 
-### 4.1 JS 측(웹 번들)
+### JS 측(웹 번들)
 
 ```html
 <!-- web/index.html 일부 -->
@@ -161,7 +161,7 @@ WebView 기반 하이브리드는 **로그인/결제/지도** 등 “웹으로 �
 </script>
 ```
 
-### 4.2 .NET 측(메시지 수신/응답)
+### .NET 측(메시지 수신/응답)
 
 구현체마다 이벤트 명이 다르므로 “어댑터” 클래스로 추상화한다.
 
@@ -231,11 +231,11 @@ public class WebShellViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 5. 반응형 레이아웃/입력/스케일링(모바일 대비)
+## 반응형 레이아웃/입력/스케일링(모바일 대비)
 
 모바일/임베디드 타겟을 고려하면 **크기/밀도/입력**을 재검토해야 한다.
 
-### 5.1 화면 크기에 따른 레이아웃 전환
+### 화면 크기에 따른 레이아웃 전환
 
 ```xml
 <!-- RootView.axaml -->
@@ -289,13 +289,13 @@ this.AttachedToVisualTree += (_,__) =>
 };
 ```
 
-### 5.2 입력(터치/제스처)
+### 입력(터치/제스처)
 
 - 리스트 아이템의 **HitTarget**을 넓힌다(버튼 최소 44px).
 - 스와이프/두 손가락 확대 등은 **제스처 라이브러리**나 **PointerPressed/Released/Pinch 계산**으로 구현.
 - ScrollViewer 속성: 터치관성/오버스크롤을 검토.
 
-### 5.3 DPI/리소스 스케일
+### DPI/리소스 스케일
 
 - **벡터(Geometry/IconFont)** 사용 권장.
 - 래스터 이미지는 `1x/2x/3x` 분기(테마 리소스 키를 이용해 런타임 선택).
@@ -303,11 +303,11 @@ this.AttachedToVisualTree += (_,__) =>
 
 ---
 
-## 6. 모바일(실험) 타겟팅: 빌드와 조건부 컴파일
+## 모바일(실험) 타겟팅: 빌드와 조건부 컴파일
 
 > Avalonia.Mobile 흐름은 실험적이다. 빌드 파이프라인을 시도하고, UI/입력 시나리오를 작은 화면에서 검증하는 수준으로 접근한다.
 
-### 6.1 프로젝트 파일(예시)
+### 프로젝트 파일(예시)
 
 ```xml
 <!-- MyApp.Mobile.csproj -->
@@ -331,18 +331,22 @@ this.AttachedToVisualTree += (_,__) =>
 </Project>
 ```
 
-### 6.2 조건부 컴파일
+### 조건부 컴파일
 
 ```csharp
 public static class Platform
 {
 #if ANDROID
+
     public static string Name => "Android";
 #elif IOS
+
     public static string Name => "iOS";
 #else
+
     public static string Name => "Desktop";
 #endif
+
 }
 ```
 
@@ -350,11 +354,11 @@ public static class Platform
 
 ---
 
-## 7. 내장 PWA: 오프라인 웹앱 번들 + 캐시
+## 내장 PWA: 오프라인 웹앱 번들 + 캐시
 
 > “앱 안에 웹앱”을 **로컬로 포함**하고, **Service Worker**로 오프라인 캐시를 활성화하면 네트워크 없이도 WebView UI가 동작한다.
 
-### 7.1 manifest.webmanifest
+### manifest.webmanifest
 
 ```json
 {
@@ -371,7 +375,7 @@ public static class Platform
 }
 ```
 
-### 7.2 Service Worker(sw.js)
+### Service Worker(sw.js)
 
 ```js
 const CACHE_NAME = 'myapp-cache-v1';
@@ -402,7 +406,7 @@ self.addEventListener('fetch', e => {
 });
 ```
 
-### 7.3 index.html에 등록
+### index.html에 등록
 
 ```html
 <link rel="manifest" href="manifest.webmanifest">
@@ -417,7 +421,7 @@ self.addEventListener('fetch', e => {
 
 ---
 
-## 8. 인증/보안 고려(하이브리드 기준)
+## 인증/보안 고려(하이브리드 기준)
 
 - OAuth/OIDC는 **WebView**로 로그인 페이지를 띄우고, **리디렉션 URI**를 커스텀 스킴으로 돌려받아 **토큰 추출**.
 - 토큰은 **보안 저장소**(Windows DPAPI, macOS Keychain, Android Keystore 등)에 저장. 데스크톱은 가능한 **OS 보안 저장소** 사용.
@@ -425,7 +429,7 @@ self.addEventListener('fetch', e => {
 
 ---
 
-## 9. 성능 팁
+## 성능 팁
 
 - WebView는 **한 화면에서만** 유지하고 내부 라우팅으로 페이지를 바꾼다(매번 생성/파괴 금지).
 - 대용량 데이터는 **스트리밍/가상화**(리스트/테이블).
@@ -433,7 +437,7 @@ self.addEventListener('fetch', e => {
 
 ---
 
-## 10. 빌드·배포·업데이트
+## 빌드·배포·업데이트
 
 - 데스크톱: `dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true`
 - 웹 번들은 `web/` 폴더 채로 포함(또는 임베디드 리소스 → 최초 실행 시 사용자 캐시 폴더에 풀기).
@@ -441,9 +445,9 @@ self.addEventListener('fetch', e => {
 
 ---
 
-## 11. 통합 예제: 네이티브 + WebView + JS 브리지 + PWA
+## 통합 예제: 네이티브 + WebView + JS 브리지 + PWA
 
-### 11.1 ViewModel: 차트 데이터 송수신
+### ViewModel: 차트 데이터 송수신
 
 ```csharp
 public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
@@ -483,7 +487,7 @@ public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
 }
 ```
 
-### 11.2 JS 측: 차트 갱신
+### JS 측: 차트 갱신
 
 ```html
 <script>
@@ -501,7 +505,7 @@ public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 12. 리스크와 완화책
+## 리스크와 완화책
 
 | 리스크 | 완화 전략 |
 |---|---|
@@ -513,7 +517,7 @@ public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 13. 체크리스트
+## 체크리스트
 
 - 공통 코드 80% 이상을 **MyApp.Core**에 유지
 - 데스크톱/모바일 호스트는 **최소 기능**만(창/권한/파일/브라우저 호스팅)

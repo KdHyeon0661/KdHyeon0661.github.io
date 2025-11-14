@@ -65,23 +65,27 @@ category: 디자인패턴
 from abc import ABC, abstractmethod
 
 # Component
+
 class Coffee(ABC):
     @abstractmethod
     def cost(self) -> int: ...
     def description(self) -> str: return "Coffee"
 
 # ConcreteComponent
+
 class BasicCoffee(Coffee):
     def cost(self) -> int: return 3000
     def description(self) -> str: return "Basic Coffee"
 
 # Decorator
+
 class CoffeeDecorator(Coffee):
     def __init__(self, coffee: Coffee): self._coffee = coffee
     def cost(self) -> int: return self._coffee.cost()
     def description(self) -> str: return self._coffee.description()
 
 # ConcreteDecorators
+
 class Milk(CoffeeDecorator):
     def cost(self) -> int: return self._coffee.cost() + 500
     def description(self) -> str: return self._coffee.description() + " + Milk"
@@ -95,6 +99,7 @@ class Caramel(CoffeeDecorator):
     def description(self) -> str: return self._coffee.description() + " + Caramel"
 
 # 사용
+
 coffee = Caramel(Whip(Milk(BasicCoffee())))
 print(coffee.description(), coffee.cost())  # Basic Coffee + Milk + Whip + Caramel 5200
 ```
@@ -114,11 +119,13 @@ import time
 from abc import ABC, abstractmethod
 
 # Component
+
 class Repo(ABC):
     @abstractmethod
     def get(self, key: str) -> str: ...
 
 # Concrete
+
 class RealRepo(Repo):
     def __init__(self, store: dict[str, str]): self._db = store
     def get(self, key: str) -> str:
@@ -127,6 +134,7 @@ class RealRepo(Repo):
         return self._db[key]
 
 # Decorators
+
 class LoggingRepo(Repo):
     def __init__(self, inner: Repo): self._inner = inner
     def get(self, key: str) -> str:
@@ -164,11 +172,13 @@ class CacheRepo(Repo):
         return v
 
 # 조합: Logging→Retry→Cache→Real
+
 repo: Repo = LoggingRepo(RetryRepo(CacheRepo(RealRepo({"a":"A","b":"B"}))))
 print(repo.get("a"))
 ```
 
 ### 순서 가이드
+
 - **읽기 경로**: `Logging → Retry → Cache → Real`
   - 캐시 미스 시에만 리트라이가 작동.
   - 로깅은 항상 가장 바깥(가시성↑).

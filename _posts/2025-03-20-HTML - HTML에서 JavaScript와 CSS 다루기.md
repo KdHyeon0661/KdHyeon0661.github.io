@@ -6,9 +6,10 @@ category: HTML
 ---
 # HTML에서 JavaScript와 CSS 다루기
 
-## 1. CSS — HTML에 스타일을 더하는 3가지 기본 방법
+## CSS — HTML에 스타일을 더하는 3가지 기본 방법
 
-### 1.1 인라인 스타일(Inline)
+### 인라인 스타일(Inline)
+
 ```html
 <p style="color: red; font-size: 18px;">빨간 텍스트</p>
 ```
@@ -18,7 +19,8 @@ category: HTML
 
 ---
 
-### 1.2 내부 스타일(Internal)
+### 내부 스타일(Internal)
+
 ```html
 <head>
   <style>
@@ -33,7 +35,8 @@ category: HTML
 
 ---
 
-### 1.3 외부 스타일(External) — 권장
+### 외부 스타일(External) — 권장
+
 ```html
 <!-- head 내부 -->
 <link rel="stylesheet" href="/assets/style.css">
@@ -50,13 +53,14 @@ h1 { color: var(--brand); }
 
 ---
 
-## 2. CSS를 “어디에” 둘 것인가 — 위치와 성능
+## CSS를 “어디에” 둘 것인가 — 위치와 성능
 
 - `<link rel="stylesheet">`는 **반드시 `<head>`**에.
   브라우저는 CSS를 **렌더 차단** 리소스로 다루므로, head 초반에 로드해야 **FOUC(깜빡임)** 최소화.
 - `@import`는 **비권장**: 추가 네트워크 홉으로 느려질 수 있음.
 
-### 2.1 핵심 성능 패턴(초기 페인트 최적화)
+### 핵심 성능 패턴(초기 페인트 최적화)
+
 ```html
 <!-- 핵심 above-the-fold 스타일 일부를 인라인(크리티컬 CSS) -->
 <style>/* …필요 최소한의 핵심 스타일… */</style>
@@ -71,9 +75,10 @@ h1 { color: var(--brand); }
 
 ---
 
-## 3. JavaScript — HTML에 “동작”을 더하는 3가지 방법
+## JavaScript — HTML에 “동작”을 더하는 3가지 방법
 
-### 3.1 인라인 스크립트(이벤트 속성) — 비권장
+### 인라인 스크립트(이벤트 속성) — 비권장
+
 ```html
 <button onclick="alert('클릭!')">클릭</button>
 ```
@@ -82,7 +87,8 @@ h1 { color: var(--brand); }
 
 ---
 
-### 3.2 내부 스크립트(Internal)
+### 내부 스크립트(Internal)
+
 ```html
 <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -94,7 +100,8 @@ h1 { color: var(--brand); }
 
 ---
 
-### 3.3 외부 스크립트(External) — 권장
+### 외부 스크립트(External) — 권장
+
 ```html
 <script src="/assets/main.js" defer></script>
 ```
@@ -109,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 4. 스크립트 “위치”와 로드 전략 — defer vs async vs module
+## 스크립트 “위치”와 로드 전략 — defer vs async vs module
 
 | 속성/위치 | 실행 타이밍 | 의존성/순서 | 사용처 |
 |---|---|---|---|
@@ -118,7 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
 | `async` | 다운로드 끝나는 즉시 실행(파싱 중단) | **불가** | 광고/분석 스크립트 |
 | `type="module"` | 모듈 의존성 자동 로드, **defer처럼** 실행 | 모듈 그래프 순서 | 현대적 앱(ESM) |
 
-### 4.1 예시
+### 예시
+
 ```html
 <!-- 권장: 의존성 있는 앱 코드 -->
 <script src="/assets/vendor.js" defer></script>
@@ -136,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 5. 통합 예제 — HTML + CSS + JS (접근성/성능/보안 포함)
+## 통합 예제 — HTML + CSS + JS (접근성/성능/보안 포함)
 
 ```html
 <!DOCTYPE html>
@@ -252,27 +260,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 6. CSS 실전 토픽 — 선택자·특이성·레이어·변수
+## CSS 실전 토픽 — 선택자·특이성·레이어·변수
 
-### 6.1 특이성(Specificity) 요약
+### 특이성(Specificity) 요약
+
 - 인라인 > ID > 클래스/속성/가상 > 태그/가상요소.
 - 무분별한 `!important`는 피하고, **레이어(@layer)**와 **구조적 네이밍(BEM)** 으로 관리.
 
-### 6.2 CSS 변수(Custom Properties)
+### CSS 변수(Custom Properties)
+
 ```css
 :root { --brand: #0e7afe; --radius: 12px; }
 .button { background: var(--brand); border-radius: var(--radius); }
 ```
 - 런타임 토글(다크 모드, 테마 스위치)에 강력.
 
-### 6.3 반응형/접근성 미디어 쿼리
+### 반응형/접근성 미디어 쿼리
+
 ```css
 @media (max-width: 768px) { /* 모바일 레이아웃 */ }
 @media (prefers-color-scheme: dark) { /* 다크 */ }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 ```
 
-### 6.4 @layer로 우선순위 제어
+### @layer로 우선순위 제어
+
 ```css
 @layer reset, base, components, utilities;
 ```
@@ -280,13 +292,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ---
 
-## 7. JavaScript 실전 토픽 — DOM, 이벤트, 모듈, 대기열
+## JavaScript 실전 토픽 — DOM, 이벤트, 모듈, 대기열
 
-### 7.1 DOMContentLoaded vs load
+### DOMContentLoaded vs load
+
 - **DOMContentLoaded**: DOM 트리가 준비되면 실행(이미지/스타일 로드 기다리지 않음).
 - **load**: 모든 리소스 로드 후 실행.
 
-### 7.2 이벤트 위임(Event Delegation)
+### 이벤트 위임(Event Delegation)
+
 ```js
 document.body.addEventListener('click', (e) => {
   const a = e.target.closest('a[data-track]');
@@ -296,7 +310,8 @@ document.body.addEventListener('click', (e) => {
 ```
 - 동적 요소에 유용, 리스너 개수 감소 → 성능/메모리 이점.
 
-### 7.3 ES 모듈(권장)
+### ES 모듈(권장)
+
 ```html
 <script type="module">
   import { init } from '/assets/boot.mjs';
@@ -307,9 +322,10 @@ document.body.addEventListener('click', (e) => {
 
 ---
 
-## 8. 보안 — CSP, SRI, 교차 출처
+## 보안 — CSP, SRI, 교차 출처
 
-### 8.1 CSP(Content-Security-Policy) 기본
+### CSP(Content-Security-Policy) 기본
+
 ```http
 Content-Security-Policy:
   default-src 'self';
@@ -320,7 +336,8 @@ Content-Security-Policy:
 - 인라인 스크립트는 **차단**이 기본. 필요한 경우 **nonce** 또는 **해시**를 사용.
 - 프레임 삽입 방지: `frame-ancestors 'self';`
 
-### 8.2 스크립트 무결성(SRI) + CORS
+### 스크립트 무결성(SRI) + CORS
+
 ```html
 <script src="https://cdn.example/lib.min.js"
         integrity="sha384-...hash..."
@@ -334,7 +351,7 @@ Content-Security-Policy:
 
 ---
 
-## 9. 성능 — 로딩/페인트/인터랙션 최적화 체크리스트
+## 성능 — 로딩/페인트/인터랙션 최적화 체크리스트
 
 - CSS: **크리티컬 인라인 + 비차단 로드**, `@import` 지양.
 - JS: **defer** 기본, 광고/분석은 **async**.
@@ -346,7 +363,7 @@ Content-Security-Policy:
 
 ---
 
-## 10. 유지보수 — 아키텍처와 네이밍
+## 유지보수 — 아키텍처와 네이밍
 
 - CSS: **BEM**(`.card__title--large`), ITCSS/레이어링(@layer)로 예측 가능한 우선순위.
 - JS: 기능 단위 모듈(`user.mjs`, `cart.mjs`) + index에서 조립.
@@ -354,29 +371,32 @@ Content-Security-Policy:
 
 ---
 
-## 11. 반응형·다크모드·설정 저장까지 한 번에
+## 반응형·다크모드·설정 저장까지 한 번에
 
-### 11.1 반응형 컨테이너/그리드
+### 반응형 컨테이너/그리드
+
 ```css
 .container { width: min(100% - 2rem, 72rem); margin-inline: auto; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1rem; }
 ```
 
-### 11.2 사용자 설정 보존(LocalStorage)
+### 사용자 설정 보존(LocalStorage)
+
 ```js
 const key = 'theme';
 const saved = localStorage.getItem(key);
 if (saved) document.documentElement.dataset.theme = saved;
 ```
 
-### 11.3 CSS 변수로 테마 분기
+### CSS 변수로 테마 분기
+
 ```css
 :root[data-theme="dark"] { --bg:#0e0e0e; --fg:#e8e8e8; }
 ```
 
 ---
 
-## 12. 디버깅 팁
+## 디버깅 팁
 
 - **DevTools**: Elements(Computed)로 충돌/특이성 확인.
 - **Coverage**: 미사용 CSS/JS 파악.
@@ -385,7 +405,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 13. 자주 겪는 문제와 해결
+## 자주 겪는 문제와 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -397,7 +417,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 14. 요약 표
+## 요약 표
 
 | 구분 | 방식 | 장점 | 단점 | 권장도 |
 |---|---|---|---|---|
@@ -413,7 +433,7 @@ if (saved) document.documentElement.dataset.theme = saved;
 
 ---
 
-## 15. 다음 단계 제안
+## 다음 단계 제안
 
 - CSS: **Flexbox/Grid** 레이아웃, `@container`(지원 브라우저에서)
 - JS: **모듈·동적 import**, 이벤트 위임 패턴, Fetch/Streams

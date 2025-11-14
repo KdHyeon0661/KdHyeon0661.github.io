@@ -6,7 +6,7 @@ category: Java
 ---
 # Java의 Map 구현 클래스 총정리 — HashMap · TreeMap · LinkedHashMap
 
-## 0. 한눈 요약 (Cheat Sheet)
+## 한눈 요약 (Cheat Sheet)
 
 | 선택 기준 | 권장 Map | 이유/메모 |
 |---|---|---|
@@ -21,7 +21,7 @@ category: Java
 
 ---
 
-## 1. Map 인터페이스 공통기초
+## Map 인터페이스 공통기초
 
 ```java
 Map<K,V> m;
@@ -36,6 +36,7 @@ m.keySet(); m.values(); m.entrySet(); // 반복/뷰
 - **스레드 안전 아님**: 병렬 환경은 외부 동기화 또는 동시성 컬렉션.
 
 ### 해시·동등성 계약(중요)
+
 - 키 타입은 `equals()`/`hashCode()` 일관 필요.
 - **키를 Map에 넣은 뒤 필드를 바꿔 hashCode가 변하면 탐색 불가**(버그 원인 1순위).
 
@@ -50,9 +51,9 @@ final class Point {
 
 ---
 
-## 2. HashMap — 내부 동작과 실전
+## HashMap — 내부 동작과 실전
 
-### 2.1 구조 개요
+### 구조 개요
 
 ```
 table (배열, 길이=2^k)
@@ -65,7 +66,8 @@ table (배열, 길이=2^k)
 - **Java 8+**: 버킷 길이 ≥ **8**이면 트리화, ≤ **6**이면 리스트로 되돌림.
 - `null` 키 **1개 허용**(해시 0 특별취급).
 
-### 2.2 핵심 파라미터
+### 핵심 파라미터
+
 - **초기 용량**(power-of-two), **로드 팩터**(기본 0.75)
 - 리사이즈 임계값: `threshold = capacity * loadFactor`
 
@@ -79,13 +81,15 @@ $$
 > **권장 크기 산정**: 예상 엔트리 `N`이면
 > `initialCapacity = ceil(N / loadFactor)` 로 설정 → **리사이즈 최소화**.
 
-### 2.3 해시 분산(요지)
+### 해시 분산(요지)
+
 - 인덱스 = `(table.length - 1) & spread(hash)`
 - 상위/하위 비트를 섞어 버킷 균형화(실제 구현은 JDK 버전별 상이할 수 있으나 개념 동일).
 
-### 2.4 실전 레시피
+### 실전 레시피
 
 #### A) 빈도수 계산(가독성/성능 우수)
+
 ```java
 import java.util.*;
 
@@ -100,6 +104,7 @@ public class Freq {
 ```
 
 #### B) 다중값 맵(리스트 누적)
+
 ```java
 Map<String, List<Integer>> idx = new HashMap<>();
 idx.computeIfAbsent("k", k -> new ArrayList<>()).add(1);
@@ -108,27 +113,31 @@ System.out.println(idx.get("k")); // [1,2]
 ```
 
 #### C) 초기 용량 최적화(대량 put)
+
 ```java
 int expected = 1_000_000;
 int initialCapacity = (int)Math.ceil(expected / 0.75);
 Map<Integer,Integer> m = new HashMap<>(initialCapacity, 0.75f);
 ```
 
-### 2.5 흔한 함정
+### 흔한 함정
+
 - **키 가변성**(필드 변경) ⇒ `equals/hashCode` 변동 ⇒ 탐색 실패.
 - **값 기준 정렬 필요**: `HashMap` 자체로 불가 → 스트림 정렬 후 `LinkedHashMap`으로 수집.
 - `containsValue`는 O(n) (피해야 함). 인덱스용 보조 구조를 고려.
 
 ---
 
-## 3. LinkedHashMap — 순서 유지 & LRU
+## LinkedHashMap — 순서 유지 & LRU
 
-### 3.1 구조
+### 구조
+
 - **HashMap + 이중연결리스트**(head ↔ … ↔ tail)
 - **삽입 순서** 또는 **접근 순서(accessOrder=true)** 유지
 - **null 키 1개 허용**
 
-### 3.2 LRU 캐시(정석)
+### LRU 캐시(정석)
+
 ```java
 import java.util.*;
 
@@ -152,14 +161,16 @@ public class LruDemo {
 
 ---
 
-## 4. TreeMap — 정렬 & 범위 질의
+## TreeMap — 정렬 & 범위 질의
 
-### 4.1 개요
+### 개요
+
 - **Red-Black Tree**(균형 이진탐색트리) 기반, **키 정렬 유지**.
 - **null 키 불가**, 값 `null`은 가능.
 - 시간복잡도: 삽입/탐색/삭제 **O(log n)**.
 
-### 4.2 정렬 기준
+### 정렬 기준
+
 - 키의 **자연 순서**(`Comparable`) 또는 **생성자에 `Comparator` 전달**.
 
 ```java
@@ -176,17 +187,19 @@ public class TreeMapDemo {
 }
 ```
 
-### 4.3 Navigable API(강력)
+### Navigable API(강력)
+
 - `firstKey/lastKey`, `higher/lower`, `ceiling/floor`,
   `subMap/headMap/tailMap`(경계 포함/제외 선택).
 
-### 4.4 주의
+### 주의
+
 - `Comparator`가 `equals`와 **일관되지 않으면** `Map` 규약(키 유일성) 혼란.
   (예: 대소문자 무시 비교기는 서로 다른 “a”/“A”를 동일 키로 간주)
 
 ---
 
-## 5. 성능·메모리·복잡도 비교 (정밀)
+## 성능·메모리·복잡도 비교 (정밀)
 
 | 항목 | HashMap | LinkedHashMap | TreeMap |
 |---|---|---|---|
@@ -200,9 +213,10 @@ public class TreeMapDemo {
 
 ---
 
-## 6. 값 기준 정렬, 상위 K, 그룹핑 등 실전 레시피
+## 값 기준 정렬, 상위 K, 그룹핑 등 실전 레시피
 
-### 6.1 값으로 정렬해 순서 유지
+### 값으로 정렬해 순서 유지
+
 ```java
 import java.util.*;
 import java.util.stream.*;
@@ -220,7 +234,8 @@ public class SortByValue {
 }
 ```
 
-### 6.2 상위 K 빈도 (HashMap + 힙)
+### 상위 K 빈도 (HashMap + 힙)
+
 ```java
 import java.util.*;
 
@@ -245,7 +260,8 @@ public class TopK {
 }
 ```
 
-### 6.3 접두사/범위 검색(사전식)
+### 접두사/범위 검색(사전식)
+
 ```java
 TreeMap<String,Integer> dict = new TreeMap<>();
 dict.put("app",1); dict.put("apple",2); dict.put("apricot",3); dict.put("banana",4);
@@ -256,7 +272,8 @@ SortedMap<String,Integer> apOnly =
 System.out.println(apOnly); // {app=1, apple=2, apricot=3}
 ```
 
-### 6.4 삽입 순서 보존 출력(로그/리플레이)
+### 삽입 순서 보존 출력(로그/리플레이)
+
 ```java
 Map<Long, String> log = new LinkedHashMap<>();
 log.put(1001L,"login");
@@ -267,7 +284,7 @@ log.forEach((t,ev)->System.out.println(t+" : "+ev));
 
 ---
 
-## 7. 현대 자바 Map API 꿀팁
+## 현대 자바 Map API 꿀팁
 
 - **안전 삽입**: `putIfAbsent(k, v)`
 - **조건부 제거/치환**: `remove(k, v)`, `replace(k, oldV, newV)`
@@ -285,7 +302,7 @@ m.merge("a", 1, Integer::sum);       // 2
 
 ---
 
-## 8. 동시성/반복/불변성 주의
+## 동시성/반복/불변성 주의
 
 - 세 구현체 모두 **동기화 없음** → 멀티스레드 쓰기에는 **ConcurrentHashMap**(분절/노드 레벨 동시성) 사용.
 - 반복 중 구조 변경은 fail-fast. 필요한 경우:
@@ -295,14 +312,14 @@ m.merge("a", 1, Integer::sum);       // 2
 
 ---
 
-## 9. 테스트·벤치마크 메모
+## 테스트·벤치마크 메모
 
 - 마이크로 벤치마크는 **JMH** 권장(워밍업/포크/GC 제어).
 - `System.nanoTime()` 단발 측정은 왜곡이 큼(옵티마이저·캐시·분기 예측 등).
 
 ---
 
-## 10. 확장 토픽(짚고 넘어가기)
+## 확장 토픽(짚고 넘어가기)
 
 - **WeakHashMap**: 키가 약참조(캐시·메모리 릭 방지 용)
 - **IdentityHashMap**: `==` 으로 키 동일성 판정(실험/특수 목적)
@@ -311,7 +328,7 @@ m.merge("a", 1, Integer::sum);       // 2
 
 ---
 
-## 11. 종합 선택 가이드 (표)
+## 종합 선택 가이드 (표)
 
 | 요구사항 | 추천 | 근거 |
 |---|---|---|
@@ -324,7 +341,7 @@ m.merge("a", 1, Integer::sum);       // 2
 
 ---
 
-## 12. 전체 데모: 세 Map의 차이 한 번에 보기
+## 전체 데모: 세 Map의 차이 한 번에 보기
 
 ```java
 import java.util.*;
@@ -363,6 +380,7 @@ public class MapLandscape {
 ## 부록) ASCII 도식
 
 ### HashMap (버킷/체이닝/트리화)
+
 ```
 index: 0    1        2         3 ...
        |    |        |         |
@@ -373,6 +391,7 @@ index: 0    1        2         3 ...
 ```
 
 ### LinkedHashMap (순회 순서)
+
 ```
 head <-> e1 <-> e2 <-> e3 <-> tail
    ^             ^
@@ -380,6 +399,7 @@ head <-> e1 <-> e2 <-> e3 <-> tail
 ```
 
 ### TreeMap (Red-Black Tree 개념)
+
 ```
         (root,B)
         /     \

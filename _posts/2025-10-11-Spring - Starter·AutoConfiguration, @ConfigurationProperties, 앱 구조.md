@@ -4,7 +4,7 @@ title: Spring - Starter·AutoConfiguration, @ConfigurationProperties, 앱 구조
 date: 2025-10-11 20:25:23 +0900
 category: Spring
 ---
-# 2. 스프링 부트 빠른 시작 — Starter·AutoConfiguration, `@ConfigurationProperties`, 앱 구조(패키지/계층/멀티모듈)
+# 스프링 부트 빠른 시작 — Starter·AutoConfiguration, `@ConfigurationProperties`, 앱 구조(패키지/계층/멀티모듈)
 
 > 부트는 “**의존성 + 기본 설정 = 바로 실행 가능한 앱**”을 목표로 한다.
 > 핵심은 ① Starter(의존성 세트) ② AutoConfiguration(조건부 자동 설정) ③ 타입-세이프 설정 바인딩(`@ConfigurationProperties`) ④ 일관성 있는 패키지/계층/멀티모듈 설계다.
@@ -14,6 +14,7 @@ category: Spring
 ## A. Starter & AutoConfiguration 이해
 
 ### A-1. Starter란?
+
 - **Starter** = 관련 라이브러리들을 한 번에 묶은 **의존성 묶음**.
 - 예) `spring-boot-starter-web` = Spring MVC + Jackson + 내장 톰캣 + 로깅(등등).
 - 장점: **버전 충돌 최소화**(부트 BOM), **의존성 선택 스트레스↓**.
@@ -29,6 +30,7 @@ dependencies {
 ```
 
 ### A-2. AutoConfiguration이란?
+
 - “**클래스패스 상태 + 환경 + 빈 존재 여부**를 조건으로 **자동으로 빈을 등록**”하는 구성.
 - 예) `spring-boot-starter-web` 추가 + `spring-webmvc` 존재 → `DispatcherServlet`, `RequestMappingHandlerMapping` 등 자동 등록.
 - **조건부 애노테이션**으로 제어:
@@ -70,6 +72,7 @@ root/
 ```
 
 #### A-3-2. 커스텀 Starter `build.gradle.kts`
+
 ```kotlin
 plugins {
   `java-library`
@@ -91,6 +94,7 @@ dependencies {
 ```
 
 #### A-3-3. 자동 구성 클래스
+
 ```java
 // company-boot-starter/src/main/java/com/company/autoconfig/MaskingAutoConfiguration.java
 package com.company.autoconfig;
@@ -114,6 +118,7 @@ public class MaskingAutoConfiguration {
 ```
 
 #### A-3-4. 구성 속성 바인딩(Starter 내부)
+
 ```java
 // company-boot-starter/src/main/java/com/company/autoconfig/MaskingProperties.java
 package com.company.autoconfig;
@@ -144,10 +149,12 @@ public class MaskingPropsAutoConfig {
 ```
 
 #### A-3-5. AutoConfiguration 등록 (Boot 3.x 방식)
+
 - **Boot 3.x**부터 `spring.factories`가 아니라 `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports` 사용.
 
 ```
 # company-boot-starter/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+
 com.company.autoconfig.MaskingAutoConfiguration
 com.company.autoconfig.MaskingPropsAutoConfig
 ```
@@ -160,10 +167,12 @@ com.company.autoconfig.MaskingPropsAutoConfig
 ## B. `@ConfigurationProperties`로 타입-세이프 설정 바인딩
 
 ### B-1. 왜 필요한가?
+
 - `@Value`는 **흩어진 단일 값**에 적합하지만, 설정이 많아지면 유지보수가 어렵다.
 - `@ConfigurationProperties`는 **계층 구조**를 **타입**에 **일괄 바인딩**하고, 빌더/레코드로 **불변성**을 지키며 검증까지 가능.
 
 ### B-2. 기본 예제 (레코드 + 검증)
+
 ```java
 // src/main/java/com/example/config/AppProperties.java
 package com.example.config;
@@ -211,6 +220,7 @@ class PropsConfig { }
 
 ```yaml
 # src/main/resources/application.yml
+
 app:
   server:
     host: localhost
@@ -260,8 +270,10 @@ dependencies {
 ---
 
 ### B-3. 프로파일 별 바인딩 + 중첩 문서 사용
+
 ```yaml
 # application.yml
+
 app:
   server: { host: localhost, port: 8080 }
   auth: { issuer: local, timeout: 10s, jwkSetUri: "http://localhost:9000/jwks" }
@@ -291,6 +303,7 @@ class AppPropertiesTest {
 ---
 
 ### B-4. 리팩토링 팁
+
 - 설정이 방대해질 때 **도메인/기능별 클래스**로 나누고 prefix도 분리(`app.payment`, `app.security`).
 - 외부 비밀 값은 `${ENV_VAR}`로 **환경변수**에서 바인딩하고, 기본값은 **개발 프로파일**에만 둔다.
 - **@ConfigurationProperties** 클래스는 **순수 데이터**만(비즈니스 로직 금지). 로직은 서비스/컴포넌트에.
@@ -300,6 +313,7 @@ class AppPropertiesTest {
 ## C. 부트 앱 구조 — 패키지 전략·계층 구조·멀티 모듈
 
 ### C-1. 패키지 기본 전략
+
 - `@SpringBootApplication`이 있는 패키지를 **루트**로 하여 **하위 패키지**를 컴포넌트 스캔.
 - **권장 구조**(단일 모듈 기준):
 
@@ -403,6 +417,7 @@ class OrderController {
 > 목표: **도메인/애플리케이션 로직을 프레임워크로부터 분리**하고, 재사용 가능한 **공통 모듈**을 만든다.
 
 #### C-3-1. 구조 예시
+
 ```
 myapp/
 ├─ settings.gradle.kts
@@ -415,12 +430,14 @@ myapp/
 ```
 
 #### C-3-2. `settings.gradle.kts`
+
 ```kotlin
 rootProject.name = "myapp"
 include("common", "domain", "application", "infrastructure", "boot-api")
 ```
 
 #### C-3-3. 루트 `build.gradle.kts`
+
 ```kotlin
 plugins {
   id("org.springframework.boot") version "3.3.4" apply false
@@ -436,6 +453,7 @@ subprojects {
 ```
 
 #### C-3-4. 각 모듈 의존성
+
 ```kotlin
 // common/build.gradle.kts
 plugins { `java-library` }
@@ -484,6 +502,7 @@ dependencies {
 ---
 
 ### C-4. DTO/엔티티 매핑과 계층 간 변환
+
 - Controller는 **Request/Response DTO**만 다룬다.
 - Application 계층은 **Command/Query 모델**을 사용.
 - Infrastructure는 **JPA 엔티티 ↔ 도메인 모델 매핑** 책임.
@@ -513,12 +532,14 @@ class OrderMapper {
 ---
 
 ### C-5. 설정/보안/관측 모듈화
+
 - `infrastructure`에 **JPA 설정/레포 구현**, 메시지 브로커(Kafka/Rabbit) 클라이언트, 외부 API 어댑터.
 - `boot-api`에 **Spring Security** config, WebMvc config, Actuator 노출 범위 등 **배포 앱 전용 설정**.
 
 ---
 
 ### C-6. 테스트 전략(슬라이스 & 통합)
+
 - **슬라이스 테스트**: `@DataJpaTest`(JPA만), `@WebMvcTest`(Controller만), `@JsonTest`(직렬화 검증) …
 - **통합 테스트**: `@SpringBootTest` + Testcontainers(DB/브로커)로 **실제 환경 복제**.
 - **도메인 단위 테스트**: 순수 자바로 **빠르게**.
@@ -542,6 +563,7 @@ class OrderJpaTest {
 ## D. 빠른 실습: 10분 안에 “부트 API + 설정 바인딩 + 자동 구성 오버라이드” 맛보기
 
 ### D-1. 프로젝트 생성(요약)
+
 ```bash
 curl -s https://start.spring.io/starter.tgz \
   -d bootVersion=3.3.4 \
@@ -557,6 +579,7 @@ curl -s https://start.spring.io/starter.tgz \
 ```
 
 ### D-2. `@ConfigurationProperties` 추가
+
 ```java
 // com/example/quick/config/ApiProps.java
 package com.example.quick.config;
@@ -576,6 +599,7 @@ class Config { }
 
 ```yaml
 # application.yml
+
 api:
   title: "Quick Boot"
   baseUrl: "https://api.local"
@@ -583,6 +607,7 @@ api:
 ```
 
 ### D-3. Controller에서 사용
+
 ```java
 @RestController
 @RequestMapping("/hello")
@@ -602,6 +627,7 @@ class HelloController {
 ```
 
 ### D-4. 자동 구성 **오버라이드** 체험
+
 - Jackson ObjectMapper를 개발자가 직접 등록하면 **부트 기본 구성**이 물러난다.
 
 ```java
@@ -624,27 +650,32 @@ class JacksonConfig {
 ## E. 실전 체크리스트 & 베스트 프랙티스
 
 ### E-1. Starter/AutoConfiguration
+
 - [ ] “팀 Starter”를 만들어 **로깅/응답 표준/에러 핸들러**를 중앙화.
 - [ ] `@ConditionalOnMissingBean`으로 **개발자 오버라이드** 허용.
 - [ ] `AutoConfiguration.imports`에 **자동 구성 클래스**를 등록(Boot 3.x).
 
 ### E-2. `@ConfigurationProperties`
+
 - [ ] 기능별로 prefix 분리(`app.auth`, `app.payment`, `app.cache`).
 - [ ] 레코드/불변 타입 + **검증 애노테이션**으로 초기부터 **유효성 보장**.
 - [ ] `configuration-processor` 추가로 IDE **힌트** 활용.
 
 ### E-3. 구조/계층/멀티모듈
+
 - [ ] **부트 의존은 boot-api에만**. 도메인/애플리케이션은 **순수 자바**.
 - [ ] Controller는 DTO만, 비즈니스는 UseCase/Domain에 배치.
 - [ ] Infra에서만 JPA/외부 API/메시징 구현(포트/어댑터).
 
 ### E-4. 운영/성능
+
 - [ ] Actuator 노출은 최소화(프로파일/네트워크 경계 뒤).
 - [ ] `spring.main.lazy-initialization=true`는 **개발 빌드 속도**에만(운영은 권장X).
 - [ ] 이미지 빌드: Jib/Buildpacks/멀티스테이지 중 팀 표준화, 계층 캐시 효율을 극대화.
 - [ ] 트래픽/DTO 큰 경우 **Jackson Afterburner** 등 고려.
 
 ### E-5. 흔한 함정
+
 - **자동 구성 무시**: 같은 타입의 커스텀 빈 존재로 오토구성이 꺼지는 경우 → 의도 확인.
 - **패키지 스캔 누락**: `@SpringBootApplication`의 루트 위치를 잘못 잡아 하위가 스캔되지 않음.
 - **프로퍼티 키 오타**: IDE 힌트/테스트로 조기 탐지.

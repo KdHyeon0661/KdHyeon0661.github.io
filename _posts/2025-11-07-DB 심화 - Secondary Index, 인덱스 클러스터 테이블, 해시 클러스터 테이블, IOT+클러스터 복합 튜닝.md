@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Secondary Index, 인덱스 클러스터 테이블, 해시 클러스터 테이블, IOT+클러스터 복합 튜닝 사례
 
-## 0. 공통 준비
+## 공통 준비
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -15,18 +15,21 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST 보기
 
 ---
 
-# 1. Secondary Index(보조 인덱스) — Heap vs IOT의 의미 차이
+# Secondary Index(보조 인덱스) — Heap vs IOT의 의미 차이
 
-## 1.1 Secondary Index란?
+## Secondary Index란?
+
 - **테이블을 식별하는 기본 키(Primary Key) 인덱스 외**에 추가로 만드는 모든 인덱스.
 - 목적: **비PK 조건**(검색/정렬/조인)을 빠르게 처리하거나 **커버링**(테이블 미방문) 달성.
 
-## 1.2 Heap과 IOT에서의 차이
+## Heap과 IOT에서의 차이
+
 - **Heap 테이블**의 보조 인덱스: **물리 ROWID**를 가진다 → 인덱스에서 ROWID로 **테이블 블록을 바로** 튕김.
 - **IOT(ORGANIZATION INDEX)**의 보조 인덱스: **논리 ROWID(=IOT PK)**를 가진다 → 보조 인덱스 → **PK 재탐색**이 한 번 더 필요.
   - IOT에서 비PK 조건이 많다면 **보조 인덱스 커버링**(SELECT-LIST 포함)으로 **PK 재탐색 최소화**를 검토.
 
-## 1.3 Secondary Index 설계 체크포인트
+## Secondary Index 설계 체크포인트
+
 - **선행 컬럼 선택도**(카디널리티)와 **업무 조건 패턴**을 일치.
 - **정렬/Top-N**을 인덱스 순서/방향으로 흡수(ASC/DESC).
 - **커버링**을 위해 SELECT-LIST를 인덱스에 포함(Oracle에는 INCLUDE가 없어 **키 뒤에 추가**).
@@ -34,9 +37,10 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST 보기
 
 ---
 
-## 2. Secondary Index 실습
+## Secondary Index 실습
 
-### 2.1 샘플 스키마
+### 샘플 스키마
+
 ```sql
 DROP TABLE s_order PURGE;
 
@@ -79,7 +83,8 @@ END;
 /
 ```
 
-### 2.2 커버링 없는 보조 인덱스 → 테이블 랜덤 액세스 발생
+### 커버링 없는 보조 인덱스 → 테이블 랜덤 액세스 발생
+
 ```sql
 -- 최근 30일, 특정 고객의 주문 목록(금액/상태 필요)
 SELECT order_id, order_dt, status, amount
@@ -92,7 +97,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 ```
 - 계획에 `TABLE ACCESS BY INDEX ROWID S_ORDER`가 보이면 **랜덤 I/O**가 발생(인덱스에는 status/amount가 없어 테이블 방문).
 
-### 2.3 커버링 보조 인덱스 — 테이블 미방문화
+### 커버링 보조 인덱스 — 테이블 미방문화
+
 ```sql
 -- 커버링 인덱스: SELECT-LIST 포함
 CREATE INDEX ix_so_cdt_cov
@@ -112,7 +118,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 ```
 - Buffers/Reads가 대폭 줄어드는지 확인.
 
-### 2.4 최신순 Top-N을 인덱스에서 흡수(Descending)
+### 최신순 Top-N을 인덱스에서 흡수(Descending)
+
 ```sql
 -- 최신 50건(정렬 제거 + Stopkey)
 SELECT order_id, order_dt, amount
@@ -127,13 +134,15 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 3. 인덱스 클러스터 테이블(Index Cluster Table)
+# 인덱스 클러스터 테이블(Index Cluster Table)
 
-## 3.1 개념
+## 개념
+
 - **클러스터 키**를 기준으로 **여러 테이블의 행을 물리적으로 같은 블록 근처**에 배치.
 - **동일 키 조인**(예: 고객+주문, 게시글+댓글)이나 **키 단건/소수 다건 조회**에서 **랜덤 I/O 극소화**.
 
-## 3.2 실습 — 고객/주문을 클러스터링
+## 실습 — 고객/주문을 클러스터링
+
 ```sql
 -- 1) 클러스터 정의
 DROP CLUSTER c_cust PURGE;
@@ -183,7 +192,8 @@ END;
 /
 ```
 
-### 3.3 동일 키 조인 비교
+### 동일 키 조인 비교
+
 ```sql
 -- 동일 cust_id 조인(랜덤 I/O 감소 기대)
 SELECT /* CLUSTER EQ JOIN */
@@ -198,21 +208,24 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - Heap+별도 인덱스 구조 대비 **Buffers/Reads** 감소가 관찰되는지 점검.
 - 이유: **같은 cust_id**의 행이 **같은 블록 근처**에 물리적으로 저장되어 **블록 재사용률↑**.
 
-## 3.4 설계 팁
+## 설계 팁
+
 - **SIZE**는 키당 평균 행 길이/건수로 넉넉히 설정(오버플로 방지).
 - 데이터 분포가 바뀌면 재클러스터링(CTAS/MOVE) 고려.
 - **키 기준 접근**이 아닐 때는 이점이 크지 않을 수 있음.
 
 ---
 
-# 4. 해시 클러스터 테이블(Hash Cluster Table)
+# 해시 클러스터 테이블(Hash Cluster Table)
 
-## 4.1 개념
+## 개념
+
 - **해시 함수**로 **키 → 블록** 위치를 **직접 계산**하여 접속(인덱스 불필요).
 - **키=값 단건 조회**가 매우 빠름.
 - 범위/정렬/부분 일치에는 부적합. **HASHKEYS/SIZE**를 **정확히 추정**해야 충돌/오버플로가 줄어듦.
 
-## 4.2 실습 — 사용자 프로필 고속 조회
+## 실습 — 사용자 프로필 고속 조회
+
 ```sql
 -- 1) 해시 클러스터 생성
 DROP CLUSTER hc_user PURGE;
@@ -242,7 +255,8 @@ BEGIN DBMS_STATS.GATHER_TABLE_STATS(USER,'HC_PROFILE',cascade=>TRUE); END;
 /
 ```
 
-### 4.3 포인트 조회 성능 확인
+### 포인트 조회 성능 확인
+
 ```sql
 SELECT /* HASH CLUSTER POINT LOOKUP */
        name, email, tier
@@ -256,16 +270,17 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 5. IOT + 클러스터 **복합 튜닝 사례**
+# IOT + 클러스터 **복합 튜닝 사례**
 
 > 시나리오:
 > - **Account(계정) 테이블**: **PK 기반 단건/범위 조회**가 대부분(최근 로그인/정렬/Top-N). → **IOT**가 적합.
 > - **Account에 종속된 여러 세부 테이블**(예: Profile, Settings, Small Logs)을 **동일 키로 자주 조인**. → **인덱스 클러스터**로 **동일 키 묶기**.
 > - 추가로 **특정 Lookup**(e.g., `token_id`)은 **키=값** 단건 조회를 극대화 → **해시 클러스터**.
 
-## 5.1 스키마 구성
+## 스키마 구성
 
 ### A) 계정(마스터): IOT
+
 ```sql
 DROP TABLE iot_account PURGE;
 
@@ -283,6 +298,7 @@ CREATE TABLE iot_account (
 ```
 
 ### B) 동일 키 종속 테이블: 인덱스 클러스터
+
 ```sql
 DROP CLUSTER c_acct PURGE;
 CREATE CLUSTER c_acct (acct_id NUMBER)
@@ -307,6 +323,7 @@ CREATE TABLE c_settings (
 ```
 
 ### C) 키=값 포인트 조회 전용: 해시 클러스터
+
 ```sql
 DROP CLUSTER hc_token PURGE;
 CREATE CLUSTER hc_token (token_id VARCHAR2(64))
@@ -320,7 +337,8 @@ CREATE TABLE hc_token_map (
 ) CLUSTER hc_token(token_id);
 ```
 
-## 5.2 데이터 적재 & 통계
+## 데이터 적재 & 통계
+
 ```sql
 -- IOT account
 BEGIN
@@ -367,9 +385,10 @@ END;
 /
 ```
 
-## 5.3 접근 패턴별 성능 포인트
+## 접근 패턴별 성능 포인트
 
 ### (1) 계정 타임라인/최신순 Top-N: **IOT로 PK 범위 + Stopkey**
+
 ```sql
 -- 계정 생성일 기준 최신 20건 조회(정렬 제거 + Stopkey)
 SELECT acct_id, created_at, status, tier
@@ -383,6 +402,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - IOT는 **PK가 곧 테이블**이므로 최신/Top-N에 특히 강함.
 
 ### (2) 동일 키 조인(프로필/세팅): **인덱스 클러스터로 랜덤 I/O 최소화**
+
 ```sql
 -- 단일 계정 상세 조회(프로필/세팅 조인)
 SELECT /* CLUSTER EQ JOIN */
@@ -397,6 +417,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - `p`와 `s`가 **같은 클러스터 블록 근처**에 있어 **블록 재사용률↑**.
 
 ### (3) 토큰→계정 매핑: **해시 클러스터 포인트 조회**
+
 ```sql
 -- 토큰으로 계정 찾기(키=값 단건 조회 최적)
 SELECT acct_id
@@ -409,6 +430,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - 토큰 기반 인증/세션 매핑 등에서 초저지연 목표 달성.
 
 ### (4) 앱 API 종단 간 — 세 경로 결합
+
 ```sql
 -- 1) token→acct_id (해시 클러스터)
 -- 2) acct 기본(최근 상태) (IOT)
@@ -422,7 +444,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 ```
 - **포인트 조회 + 최신 Top-N + 동일 키 조인**이 각 물리구조에서 **최소 I/O**로 처리.
 
-## 5.4 튜닝 체크리스트
+## 튜닝 체크리스트
+
 - **IOT**
   - PK가 접근/정렬 패턴과 일치하는가?
   - UPDATE로 행 길이 변동이 많다면 **OVERFLOW(PCTTHRESHOLD/INCLUDING)** 적용 검토.
@@ -443,7 +466,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 6. 실패/주의 사례와 대응
+# 실패/주의 사례와 대응
 
 - **IOT를 남용**: 비PK 질의가 다수 → 보조 인덱스 경유 + PK 재탐색이 쌓여 기대만큼 이득이 없음.
   → **핫 경로**만 IOT, 나머지는 Heap 유지/혼용.
@@ -456,7 +479,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 7. 검증 템플릿 모음
+# 검증 템플릿 모음
 
 ```sql
 -- 최근 실행 SQL 실제 수행 통계
@@ -481,7 +504,7 @@ FROM   user_clusters;
 
 ---
 
-## 8. 핵심 요약
+## 핵심 요약
 
 - **Secondary Index**는 **조건/정렬/커버링**을 위해 필수이되, DML·공간 비용을 감안해 **핵심 질의 중심 최소화**.
 - **인덱스 클러스터**는 **동일 키 조인/같은 키의 소수 다건 조회**에서 **랜덤 I/O**를 구조적으로 줄인다.

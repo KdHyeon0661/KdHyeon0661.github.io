@@ -15,7 +15,7 @@ category: DB 심화
 
 ---
 
-## 0. 실습 환경 준비
+## 실습 환경 준비
 
 > 아래 스키마는 **인덱스 범위 스캔 → 테이블 접근** 경로에서 **프리페치 효과**를 관찰해보기 위한 예다.
 
@@ -85,9 +85,10 @@ END;
 
 ---
 
-## 1. 인덱스 프리페치(Index Prefetch)
+## 인덱스 프리페치(Index Prefetch)
 
-### 1.1 개념
+### 개념
+
 - **목표**: 인덱스 리프를 **키 순서대로 쭉 훑을 때** 매번 “다음 리프 블록”을 기다리느라 생기는 **왕복 지연**을 줄이기.
 - **방법**: 엔진이 **인접 리프 블록** 또는 **연속 리프 범위**를 **멀티블록/병렬로 미리 발주**(read-ahead)하여,
   커서가 다음 키로 진행할 때 이미 **버퍼 캐시** 또는 **세션 IO 큐**에 블록이 존재하도록 만든다.
@@ -97,7 +98,7 @@ END;
 
 > 직관: **인덱스 키 순서**가 **물리 리프 순서**에 가깝고, 조건이 **연속 범위**라면 **프리페치로 효과**가 더 커진다.
 
-### 1.2 실습 1 — 인덱스 범위 스캔 + Top-N(Stopkey)
+### 실습 1 — 인덱스 범위 스캔 + Top-N(Stopkey)
 
 ```sql
 -- "고객별 최근 매출 Top-100" : 스캔 키가 정렬 인덱스와 일치 → 인접 리프 순회
@@ -117,7 +118,7 @@ FETCH FIRST 100 ROWS ONLY;
   - 세션 이벤트에 `db file sequential read`(단일) 비중이 여전히 보이지만, **호출 간 평균 대기**가 작아지고,
     상황에 따라 `db file parallel read` 로 **여러 블록 발주** 흔적이 함께 나타날 수 있다.
 
-### 1.3 실습 2 — 인덱스 Fast Full Scan(FFS)로 읽기량 자체 줄이기
+### 실습 2 — 인덱스 Fast Full Scan(FFS)로 읽기량 자체 줄이기
 
 ```sql
 -- 상태별 건수: 테이블 컬럼을 방문하지 않아도 된다면 인덱스만 훑기
@@ -131,7 +132,8 @@ GROUP  BY s.status;
 - **장점**: **테이블 BY ROWID 접근 자체가 없음** → 이후 테이블 프리페치 필요도 없음.
 - **관찰**: `db file scattered read` 또는 `direct path read` 비중↑, `db file sequential read`↓.
 
-### 1.4 인덱스 프리페치 효과를 **극대화**하는 조건
+### 인덱스 프리페치 효과를 **극대화**하는 조건
+
 - **정렬을 인덱스로 해결**(ORDER BY와 인덱스 컬럼 순서 일치) → **STOPKEY**로 앞부분만.
 - **클러스터링 팩터**가 좋다(인덱스 키 순서가 물리적 근접) → **리프/테이블 블록 모두 근접**.
 - **커버링 인덱스**면 테이블 방문 없음 → 인덱스 읽기만 최적화하면 끝.
@@ -139,9 +141,10 @@ GROUP  BY s.status;
 
 ---
 
-## 2. 테이블 프리페치(Table Prefetch) — Batched Table Access
+## 테이블 프리페치(Table Prefetch) — Batched Table Access
 
-### 2.1 개념
+### 개념
+
 - **문제 배경**: 인덱스 범위 스캔 후 **ROWID마다** 테이블 블록을 **한 블록씩** 랜덤 접근하면
   **`db file sequential read` 호출**이 폭증하고 지연이 누적된다.
 - **해법**: 인덱스에서 ROWID를 **일단 모아서**(버퍼링), **중복 제거/정렬** 후,
@@ -153,7 +156,7 @@ GROUP  BY s.status;
 
 > 직관: **“ROWID 하나당 1 IO”** → **“ROWID 50~100개 모아 1~몇 번의 복합 IO”** 로 바꾸는 것.
 
-### 2.2 실행계획에서 BATCHED 확인
+### 실행계획에서 BATCHED 확인
 
 ```sql
 -- 최근 N일 동안 특정 고객군의 상세 조회(행 수가 조금 많은 편)
@@ -177,7 +180,8 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS'))
 - **이때** `V$SESSION_EVENT` / `V$SYSTEM_EVENT` 에서 `db file parallel read` 가 보이면,
   **테이블 프리페치가 동작**하며 **배치로 블록을 읽는 중**일 가능성이 크다.
 
-### 2.3 Batched가 **안** 잡힐 때의 원인과 대안
+### Batched가 **안** 잡힐 때의 원인과 대안
+
 - **히스토그램/통계 오판**으로 옵티마이저가 **NL + 단건 접근**이 싸다고 믿는 경우
   → 통계를 정확히, 힌트(`LEADING`/`USE_HASH`/`FULL`/`INDEX`), 또는 SQL 재작성으로 후보 축소.
 - **클러스터링 팩터가 나쁨**: ROWID가 너무 흩어져 있어 **배치 이득↓**
@@ -189,9 +193,9 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS'))
 
 ---
 
-## 3. 인덱스·테이블 프리페치 **시나리오별** 실전 예
+## 인덱스·테이블 프리페치 **시나리오별** 실전 예
 
-### 3.1 목록(Top-N) + 상세 혼합 흐름
+### 목록(Top-N) + 상세 혼합 흐름
 
 **목록(Top-N) — 인덱스 프리페치가 핵심**
 
@@ -221,7 +225,7 @@ WHERE  s.sale_id IN (:id1, :id2, ... :id50);
 - 옵티마이저가 **IN LIST** 를 정렬된 ROWID로 묶어 **BATCHED** 테이블 접근을 시도.
 - **`TABLE ACCESS BY INDEX ROWID BATCHED`** 확인 → **`db file parallel read`** 증가 경향.
 
-### 3.2 조건이 넓은 범위(배치 이득 vs 해시 조인 비교)
+### 조건이 넓은 범위(배치 이득 vs 해시 조인 비교)
 
 ```sql
 -- 최근 3개월, 특정 등급 고객의 상세 목록 (로우가 제법 많음)
@@ -241,17 +245,20 @@ FETCH FIRST 1000 ROWS ONLY;
 
 ---
 
-## 4. 프리페치가 **잘 먹히는 구조** 만들기
+## 프리페치가 **잘 먹히는 구조** 만들기
 
-### 4.1 정렬 일치 & Stopkey
+### 정렬 일치 & Stopkey
+
 - ORDER BY와 인덱스 컬럼 순서가 일치하면, **인덱스 리프 체인**을 **한 방향**으로 순회 가능 → **리드어헤드** 효율↑.
 - Stopkey로 **앞부분만** 필요하면, 프리페치로 **짧은 구간**을 **끊김 없이** 가져와 **왕복 최소화**.
 
-### 4.2 커버링 인덱스
+### 커버링 인덱스
+
 - SELECT-LIST/필터/정렬 열이 인덱스에 **다 들어있으면**, **테이블 방문 제거** → **테이블 프리페치 자체가 불필요**.
 - 커버링이 어려우면, 적어도 **테이블 방문을 작은 세트**에만 하도록 **뷰 머지 방지 + Stopkey**.
 
-### 4.3 클러스터링 팩터 개선
+### 클러스터링 팩터 개선
+
 - 같은 키(또는 인접 키)의 로우가 **근접 블록**에 모여 있으면,
   **BATCHED ROWID** 가 **적은 IO로 많은 로우**를 끌어온다.
 ```sql
@@ -274,15 +281,17 @@ END;
 /
 ```
 
-### 4.4 IOT/클러스터 테이블
+### IOT/클러스터 테이블
+
 - **IOT**: PK 기반 조회는 **데이터 자체가 인덱스 구조** → **랜덤 IO 최소화**, 프리페치 효과도 높음.
 - **클러스터 테이블**: 동일 클러스터 키의 로우가 **같은 블록/근접 블록** → BATCHED가 **큰 이득**.
 
 ---
 
-## 5. 프리페치 관찰·진단·계량
+## 프리페치 관찰·진단·계량
 
-### 5.1 실행계획
+### 실행계획
+
 ```sql
 SELECT *
 FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS +ALIAS'));
@@ -292,7 +301,8 @@ FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS +ALI
   - `INDEX FAST FULL SCAN ...` (멀티블록 기반 인덱스 프리페치)
   - `TABLE ACCESS BY INDEX ROWID **BATCHED**` (테이블 프리페치)
 
-### 5.2 대기 이벤트/통계
+### 대기 이벤트/통계
+
 ```sql
 -- 세션/시스템 이벤트: 배치가 잘 되면 아래 경향이 보임
 SELECT event, total_waits, time_waited_micro/1e6 AS sec
@@ -309,7 +319,8 @@ ORDER  BY avg_disk DESC FETCH FIRST 20 ROWS ONLY;
 ```
 - **테이블 프리페치**가 동작하면, **`db file sequential read` 호출 수 감소**, **`db file parallel read` 일부 증가** 경향.
 
-### 5.3 ASH로 최근 분포
+### ASH로 최근 분포
+
 ```sql
 SELECT event, COUNT(*) samples
 FROM   v$active_session_history
@@ -322,25 +333,28 @@ ORDER  BY samples DESC;
 
 ---
 
-## 6. 프리페치 관련 **자주 하는 질문(FAQ)**
+## 프리페치 관련 **자주 하는 질문(FAQ)**
 
 ### Q1. 프리페치를 강제하는 힌트가 있나요?
+
 - **직접적인 “프리페치 힌트”**는 거의 없다.
 - 대신 프리페치가 **잘 일어나는 경로**(정렬 일치 인덱스 범위 스캔 + Stopkey, 인덱스 FFS, Batched Table Access)가
   **자연스럽게 선택되도록** 힌트/통계/SQL 구조를 설계한다.
 
 ### Q2. 왜 `db file parallel read` 가 늘었는데 체감은 빨라지죠?
+
 - 여러 단일블록 IO를 **한 묶음으로 발주** → **왕복 횟수·락/래치·컨텍스트 스위칭**이 줄어서 **총 지연이 감소**.
 - **호출 수**와 **평균 대기**를 함께 보자. **총 시간**이 줄었으면 **성공**이다.
 
 ### Q3. 항상 BATCHED가 좋은가요?
+
 - 대부분의 “많은 로우를 읽는 인덱스 경로”에서 유리.
 - 하지만 **해시 조인 + Full Scan(멀티블록)** 이 더 나은 경우도 많다(특히 **넓은 범위**).
 - **실측**으로 비교하자.
 
 ---
 
-## 7. 안티패턴 → 교정
+## 안티패턴 → 교정
 
 | 안티패턴 | 증상 | 교정 |
 |---|---|---|
@@ -352,7 +366,7 @@ ORDER  BY samples DESC;
 
 ---
 
-## 8. 전/후 비교 스크립트(측정 루틴)
+## 전/후 비교 스크립트(측정 루틴)
 
 ```sql
 ALTER SESSION SET statistics_level = ALL;
@@ -386,7 +400,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-## 9. 요약 체크리스트
+## 요약 체크리스트
 
 - [ ] **ORDER BY** 와 **인덱스 순서** 일치 → **STOPKEY** 로 앞부분만?
 - [ ] **커버링 인덱스** 로 테이블 방문을 없앨 수 있는가? (불가하면 소수 행만 테이블 방문)

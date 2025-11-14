@@ -6,46 +6,54 @@ category: Docker
 ---
 # Docker Hub
 
-## 0. Docker Hub란?
+## Docker Hub란?
+
 - Docker Inc.가 운영하는 **컨테이너 이미지 레지스트리**.
 - `docker pull` / `docker push`의 **기본 원격 저장소**로 널리 사용.
 - **개인/조직(Organization)** 저장소, **공개/비공개(Private)** 리포지토리, **자동 빌드/웹훅/팀 권한** 등을 제공.
 
 ---
 
-## 1. 가입·로그인과 인증 토큰
+## 가입·로그인과 인증 토큰
 
-### 1.1 가입
+### 가입
+
 - https://hub.docker.com → ID 생성(고유), 이메일 인증, 2FA 권장.
 
-### 1.2 CLI 로그인
+### CLI 로그인
+
 ```bash
 docker login
 # Username: <Docker ID>
 # Password: <비밀번호 또는 Personal Access Token>
+
 ```
 - 최초 로그인 시 `~/.docker/config.json`에 **Base64 인코딩된 자격**이 저장된다.
 - **권장**: 비밀번호 대신 **Personal Access Token(PAT)** 을 생성해 사용.
 
-### 1.3 PAT(개인 액세스 토큰) 사용
+### PAT(개인 액세스 토큰) 사용
+
 1) Hub 웹 → Settings → Security → New Access Token
 2) CI/CD나 서버에서는 다음처럼 사용:
 ```bash
 # 비대화식 로그인(예: CI)
+
 echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
 ```
 - 토큰은 **권한/기한**을 세분화하여 발급·폐기할 수 있어 안전하다.
 
-### 1.4 로그아웃
+### 로그아웃
+
 ```bash
 docker logout
 ```
 
 ---
 
-## 2. 이미지 검색과 공식/검증 이미지 판별
+## 이미지 검색과 공식/검증 이미지 판별
 
-### 2.1 검색
+### 검색
+
 ```bash
 docker search nginx
 ```
@@ -54,20 +62,22 @@ docker search nginx
 - **STARS**: 커뮤니티 신뢰 지표
 - **DESCRIPTION**: 요약
 
-### 2.2 레포지토리 네임스페이스
+### 레포지토리 네임스페이스
+
 - `nginx` → `library/nginx` (공식 이미지 네임스페이스)
 - 사용자/조직 소유: `<namespace>/<repo>:<tag>` (예: `johndoe/myapp:1.0.0`)
 
 ---
 
-## 3. Pull: 이미지 내려받기
+## Pull: 이미지 내려받기
 
 ```bash
 docker pull ubuntu:22.04
 docker pull nginx                 # 태그 생략 시 :latest
 ```
 
-### 3.1 다이제스트로 고정(Pin by digest)
+### 다이제스트로 고정(Pin by digest)
+
 ```bash
 docker pull nginx@sha256:<digest>
 ```
@@ -75,26 +85,30 @@ docker pull nginx@sha256:<digest>
 
 ---
 
-## 4. Build → Tag → Push 의 표준 루틴
+## Build → Tag → Push 의 표준 루틴
 
-### 4.1 로컬 빌드
+### 로컬 빌드
+
 ```bash
 docker build -t myapp:dev .
 ```
 
-### 4.2 태깅(네임스페이스 포함)
+### 태깅(네임스페이스 포함)
+
 ```bash
 docker tag myapp:dev johndoe/myapp:1.0.0
 docker tag myapp:dev johndoe/myapp:latest   # latest는 '가장 최신'이란 보장이 아님. 포인터 개념.
 ```
 
-### 4.3 푸시
+### 푸시
+
 ```bash
 docker push johndoe/myapp:1.0.0
 docker push johndoe/myapp:latest
 ```
 
-### 4.4 실전 태그 묶음(버전 + 커밋)
+### 실전 태그 묶음(버전 + 커밋)
+
 ```bash
 APP=johndoe/myapp
 VER=1.4.2
@@ -108,7 +122,7 @@ docker push $APP:latest
 
 ---
 
-## 5. 버전 전략(태그 체계)와 운영 팁
+## 버전 전략(태그 체계)와 운영 팁
 
 | 태그 | 용도 | 비고 |
 |---|---|---|
@@ -122,14 +136,16 @@ docker push $APP:latest
 
 ---
 
-## 6. 멀티 아키텍처(amd64/arm64) 이미지 푸시
+## 멀티 아키텍처(amd64/arm64) 이미지 푸시
 
-### 6.1 buildx 활성화
+### buildx 활성화
+
 ```bash
 docker buildx create --use
 ```
 
-### 6.2 멀티플랫폼 빌드·푸시
+### 멀티플랫폼 빌드·푸시
+
 ```bash
 docker buildx build \
   --platform linux/amd64,linux/arm64 \
@@ -141,26 +157,30 @@ docker buildx build \
 
 ---
 
-## 7. 개인/조직 레포지토리, 권한, 팀 협업
+## 개인/조직 레포지토리, 권한, 팀 협업
 
-### 7.1 레포지토리 생성
+### 레포지토리 생성
+
 - Hub 웹 → Repositories → **Create Repository**
 - 이름, 설명, 공개/비공개 선택.
 
-### 7.2 Organization/Team
+### Organization/Team
+
 - Organization을 만들고 멤버 초대 후, **팀 권한**(Read/Write/Admin)을 부여.
 - CI에서 사용할 **Org 토큰**을 별도 발급하여 회수/교체를 쉽게 한다.
 
 ---
 
-## 8. 자동 빌드/자동 푸시(옵션 다양화)
+## 자동 빌드/자동 푸시(옵션 다양화)
 
-### 8.1 Docker Hub 내장 자동 빌드(연동형)
+### Docker Hub 내장 자동 빌드(연동형)
+
 - Hub → Repository → **Builds** → GitHub/GitLab 연결
 - 브랜치/경로/빌드 컨텍스트/태그 규칙 설정
 - 코드 푸시 시 Hub가 자동 빌드·푸시 수행
 
-### 8.2 GitHub Actions(CI)로 직접 빌드·푸시(권장 예시)
+### GitHub Actions(CI)로 직접 빌드·푸시(권장 예시)
+
 {% raw %}
 ```yaml
 name: docker-publish
@@ -205,35 +225,39 @@ jobs:
 
 ---
 
-## 9. 프라이빗 레포지토리 사용
+## 프라이빗 레포지토리 사용
 
-### 9.1 Pull(인증 필요)
+### Pull(인증 필요)
+
 ```bash
 docker login
 docker pull johndoe/private-app:1.2.0
 ```
 
-### 9.2 팀원 접근
+### 팀원 접근
+
 - 해당 레포지토리가 포함된 **Org/team에 읽기 권한**이 있어야 한다.
 
 ---
 
-## 10. 이미지 관리(목록, 삭제, 정리)
+## 이미지 관리(목록, 삭제, 정리)
 
-### 10.1 로컬
+### 로컬
+
 ```bash
 docker images
 docker image rm johndoe/myapp:oldtag
 docker system prune -f
 ```
 
-### 10.2 Hub 웹
+### Hub 웹
+
 - Repo → **Tags** 탭에서 태그별 삭제/설명/Immutable(고정) 옵션 등 관리.
 - 오래된 태그 **보존 정책**(수동/자동 스크립트)으로 비용·혼잡을 줄인다.
 
 ---
 
-## 11. 속도·용량·비용 최적화(실전 체크리스트)
+## 속도·용량·비용 최적화(실전 체크리스트)
 
 | 주제 | 핵심 팁 |
 |---|---|
@@ -246,20 +270,23 @@ docker system prune -f
 
 ---
 
-## 12. 보안: 토큰·서명·취약점 스캔
+## 보안: 토큰·서명·취약점 스캔
 
-### 12.1 비밀 관리
+### 비밀 관리
+
 - 비밀번호 대신 **PAT** 사용, **2FA** 활성화.
 - CI에서는 `--password-stdin`을 사용, 작업 후 `docker logout` 수행.
 
-### 12.2 이미지 서명(예: cosign)
+### 이미지 서명(예: cosign)
+
 ```bash
 cosign sign johndoe/myapp:1.0.0
 cosign verify johndoe/myapp:1.0.0
 ```
 - 서명 검증을 배포 파이프라인에 **게이트**로 추가.
 
-### 12.3 취약점 스캔(사전 차단)
+### 취약점 스캔(사전 차단)
+
 - Trivy(로컬/CI), Docker Scout(Hub/CLI/데스크톱 연동).
 ```bash
 trivy image johndoe/myapp:1.0.0
@@ -269,22 +296,24 @@ docker scout quickview johndoe/myapp:1.0.0
 
 ---
 
-## 13. Pull Rate Limit/가용성 주의
+## Pull Rate Limit/가용성 주의
 
 - Hub는 **풀 레이트 제한**을 적용한다(익명 < 로그인 < 유료 플랜).
 - CI/CD·대규모 배포 환경은 **로그인 상태**로 풀을 수행하고, 캐시/프록시/미러(사설 레지스트리)를 고려한다.
 
 ---
 
-## 14. 레지스트리 전환/병행(GHCR 등)
+## 레지스트리 전환/병행(GHCR 등)
 
 - 동일 파이프라인에서 **여러 레지스트리**에 푸시 가능:
 ```bash
 # Docker Hub
+
 docker tag myapp:1.0.0 johndoe/myapp:1.0.0
 docker push johndoe/myapp:1.0.0
 
 # GHCR
+
 docker tag myapp:1.0.0 ghcr.io/johndoe/myapp:1.0.0
 echo "$GHCR_TOKEN" | docker login ghcr.io -u johndoe --password-stdin
 docker push ghcr.io/johndoe/myapp:1.0.0
@@ -293,7 +322,7 @@ docker push ghcr.io/johndoe/myapp:1.0.0
 
 ---
 
-## 15. 웹훅/자동 재배포(옵션)
+## 웹훅/자동 재배포(옵션)
 
 - Hub 레포지토리 **Webhooks** → 새 이미지 푸시 시 URL 호출.
 - 서버 측에서는 Watchtower/Portainer/자체 스크립트가 훅을 받아 `docker pull && restart` 수행.
@@ -302,6 +331,7 @@ docker push ghcr.io/johndoe/myapp:1.0.0
 ```bash
 #!/usr/bin/env bash
 # /opt/hooks/deploy-myapp.sh
+
 set -e
 IMAGE="johndoe/myapp:latest"
 
@@ -313,9 +343,10 @@ docker run -d --name myapp -p 80:8080 "$IMAGE"
 
 ---
 
-## 16. 실전 시나리오: 작은 Flask 앱을 Hub로 배포
+## 실전 시나리오: 작은 Flask 앱을 Hub로 배포
 
-### 16.1 프로젝트
+### 프로젝트
+
 ```
 myapp/
 ├─ app.py
@@ -348,7 +379,8 @@ EXPOSE 8080
 CMD ["python", "app.py"]
 ```
 
-### 16.2 빌드·푸시
+### 빌드·푸시
+
 ```bash
 APP=johndoe/myapp
 docker build -t $APP:1.0.0 -t $APP:latest .
@@ -357,18 +389,20 @@ docker push $APP:1.0.0
 docker push $APP:latest
 ```
 
-### 16.3 다른 호스트에서 실행
+### 다른 호스트에서 실행
+
 ```bash
 docker login
 docker pull johndoe/myapp:latest
 docker run -d --name myapp -p 80:8080 johndoe/myapp:latest
 curl localhost
 # {"message":"Hello Hub"}
+
 ```
 
 ---
 
-## 17. 운영 체크리스트(요약)
+## 운영 체크리스트(요약)
 
 - 태그 전략: **SemVer + latest 포인터 + 커밋 해시**(선택).
 - 운영 고정: 태그 대신 **다이제스트** 사용 권장.
@@ -386,25 +420,30 @@ curl localhost
 {% raw %}
 ```bash
 # 로그인/로그아웃
+
 docker login
 docker logout
 
 # 빌드/태그/푸시
+
 docker build -t johndoe/myapp:1.0.0 .
 docker tag johndoe/myapp:1.0.0 johndoe/myapp:latest
 docker push johndoe/myapp:1.0.0
 docker push johndoe/myapp:latest
 
 # 멀티아키(amd64+arm64)
+
 docker buildx create --use
 docker buildx build --platform linux/amd64,linux/arm64 \
   -t johndoe/myapp:1.0.0 --push .
 
 # 취약점 스캔
+
 trivy image johndoe/myapp:1.0.0
 docker scout quickview johndoe/myapp:1.0.0
 
 # 다이제스트 확인
+
 docker inspect --format='{{index .RepoDigests 0}}' johndoe/myapp:1.0.0
 ```
 {% endraw %}
@@ -426,6 +465,7 @@ $$
 ---
 
 ## 참고 링크
+
 - Docker Hub: https://hub.docker.com/
 - Docker Hub Docs: https://docs.docker.com/docker-hub/
 - Docker CLI: https://docs.docker.com/engine/reference/commandline/cli/

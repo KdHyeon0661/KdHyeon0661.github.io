@@ -11,7 +11,7 @@ category: WPF
 
 ---
 
-## 0. TL;DR — 한 장 요약
+## TL;DR — 한 장 요약
 
 - **PresentationFramework.dll**
   - XAML, 컨트롤, 스타일/템플릿, 데이터 바인딩, 리소스 시스템, 명령/입력 라우팅 등 **UI 프레임워크 레이어**.
@@ -27,7 +27,7 @@ category: WPF
 
 ---
 
-## 1. 왜 3계층 구조인가?
+## 왜 3계층 구조인가?
 
 WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을 계층화해 **생산성**과 **성능**을 동시에 잡습니다.
 
@@ -41,7 +41,7 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 
 ---
 
-## 2. 어셈블리별 역할 지도
+## 어셈블리별 역할 지도
 
 | 계층 | 대표 어셈블리 | 핵심 네임스페이스 | 하는 일 |
 |---|---|---|---|
@@ -53,9 +53,9 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 
 ---
 
-## 3. **PresentationFramework** — “프레임워크의 얼굴”
+## **PresentationFramework** — “프레임워크의 얼굴”
 
-### 3.1 XAML & 객체화 파이프라인
+### XAML & 객체화 파이프라인
 
 - XAML을 로딩하면 **BAML**(컴파일된 XAML)→ 객체 그래프로 실체화
 - 이때 **스타일/리소스** 머지, **템플릿 확장**, **바인딩** 초기화
@@ -80,7 +80,7 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 </Window>
 ```
 
-### 3.2 컨트롤 모델 & 템플릿
+### 컨트롤 모델 & 템플릿
 
 - 컨트롤은 시각화를 **ControlTemplate**로 위임 → **Lookless** 디자인
 - `ItemsControl` 계열은 가상화, 패널 배치(ItemsPanel), 컨테이너 생성(Container Generator) 등 **구성 요소화**가 핵심
@@ -95,7 +95,7 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 </ListBox>
 ```
 
-### 3.3 데이터 바인딩
+### 데이터 바인딩
 
 - `{Binding}`은 **DependencyProperty** 시스템과 맞물려 **변경 전파**를 자동화
 - **BindingExpression**이 소스→타깃 동기화를 관리, Validation/Converters 지원
@@ -104,7 +104,7 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
 ```
 
-### 3.4 리소스 & 스타일
+### 리소스 & 스타일
 
 - **ResourceDictionary** 병합(MergedDictionaries), **DynamicResource** vs `StaticResource` 차이
 - **ThemeDictionary**를 통한 OS 테마 대응
@@ -118,7 +118,7 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 </Window.Resources>
 ```
 
-### 3.5 라우티드 이벤트 & 명령
+### 라우티드 이벤트 & 명령
 
 - **터널링(Preview→)** → **버블링** 순으로 트리 경로를 따라 전파
 - `ICommand`/`CommandBinding`로 **입력**과 **동작**을 느슨하게 결합
@@ -127,16 +127,16 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 <Button Command="ApplicationCommands.Copy" Content="Copy"/>
 ```
 
-### 3.6 문서(FlowDocument) & Navigation
+### 문서(FlowDocument) & Navigation
 
 - `FlowDocument`는 리플로우 가능한 문서 레이아웃
 - NavigationWindow/Frame은 XAML 페이지 기반 **네비게이션 앱** 구성 허용
 
 ---
 
-## 4. **PresentationCore** — “렌더링 추상화와 시각적 트리”
+## **PresentationCore** — “렌더링 추상화와 시각적 트리”
 
-### 4.1 DependencyProperty & Freezable
+### DependencyProperty & Freezable
 
 - **DependencyObject**는 속성 값의 **우선순위 체계**(로컬 값, 스타일, 트리거, 애니메이션…)와 **변경 알림**을 제공
 - **Freezable**: 동결 시 **쓰레드 간 공유** 가능 + **변경 비용** 제거 → 브러시, 변환, 기하 등에서 성능 핵심
@@ -168,7 +168,7 @@ public class MeterBrush : Freezable
 }
 ```
 
-### 4.2 Visual / DrawingContext
+### Visual / DrawingContext
 
 - **Visual**은 WPF 렌더링의 최소 단위. `UIElement`는 Visual을 상속해 입력/레이아웃/이벤트를 추가.
 - 커스텀 그리기는 `OnRender(DrawingContext dc)`에서 수행 → **장면 그래프 노드**에 드로잉 커맨드를 기록
@@ -193,7 +193,7 @@ public class MeterBar : FrameworkElement
 }
 ```
 
-### 4.3 Transform/Geometry/Brush
+### Transform/Geometry/Brush
 
 - 모든 그리기 명령은 **불변 구조**(Freezable/Freeze 사용)로 캐시/공유되어 **Overhead 최소화**
 - `Geometry`(StreamGeometry)로 파스 경량화 → 경로 렌더 비용 절감
@@ -209,7 +209,7 @@ geo.Freeze();
 dc.DrawGeometry(Brushes.CornflowerBlue, null, geo);
 ```
 
-### 4.4 애니메이션 클록 & 타임라인
+### 애니메이션 클록 & 타임라인
 
 - `AnimationClock`가 **Property 변경을 시간에 따라 적용**
 - 프레임마다 값 강제 설정이 아니라, **애니메이션 시스템**이 DP 수준에서 **변경 레이어**로 합산
@@ -219,7 +219,7 @@ var da = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(1.2)) { AutoReverse = tr
 this.BeginAnimation(MeterBar.ValueProperty, da);
 ```
 
-### 4.5 텍스트 파이프라인
+### 텍스트 파이프라인
 
 - `TextFormatter`가 **줄나눔, 폰트/스크립트, 힌팅**을 처리하여 **GlyphRun**을 생성
 - 고급 시나리오엔 `FormattedText`/`GlyphRunDrawing`으로 저수준 렌더링
@@ -237,16 +237,16 @@ var ft = new FormattedText(
 dc.DrawText(ft, new Point(8, 8));
 ```
 
-### 4.6 Imaging
+### Imaging
 
 - `BitmapSource`, `WriteableBitmap`, `RenderTargetBitmap` 등 **이미지 소스** 모델
 - DPI=96 기반의 **DIP(Device Independent Pixel)** 좌표: 1DIP = 1/96 인치
 
 ---
 
-## 5. **milcore** — “합성과 렌더의 심장”
+## **milcore** — “합성과 렌더의 심장”
 
-### 5.1 컴포지터(Composition) 스레드
+### 컴포지터(Composition) 스레드
 
 - **UI 스레드**: 트리/속성 변경 → **DUCE 채널**로 **렌더 명령 배치**
 - **컴포지터 스레드**(milcore): 채널 읽어 **장면 그래프(컴포지션 트리)**를 업데이트 후 **D3D**로 합성
@@ -256,26 +256,26 @@ dc.DrawText(ft, new Point(8, 8));
 [UI Thread] --(DUCE batch)--> [milcore/Compositor Thread] --(D3D)--> [GPU/SwapChain]
 ```
 
-### 5.2 DUCE (Dispatcher-UI-Channel-to-Engine)
+### DUCE (Dispatcher-UI-Channel-to-Engine)
 
 - 피연산자 생성/속성 변경/리소스 텍스처 업로드/지오메트리 등 **명령 스트림**
 - **배치(Batching)**로 왕복 비용 최소화, **Dirty Region** 기반 부분 갱신
 
-### 5.3 Direct3D & 렌더링 계층
+### Direct3D & 렌더링 계층
 
 - 전통적으로 D3D9 기반(운영체제/프레임워크 버전에 따라 상이), **Tier 0/1/2** 하드웨어 가속
 - GPU 불가 시 **소프트웨어 패스(렌더 테셀레이션/라스터라이즈)**로 폴백
 
-### 5.4 HwndTarget & 합성 경계
+### HwndTarget & 합성 경계
 
 - `HwndSource/HwndHost`를 통해 **Win32 HWND**와 브리지
 - 최종 출력은 윈도우의 **타깃 서피스**로 합성
 
 ---
 
-## 6. 스레드 모델 & 디스패처
+## 스레드 모델 & 디스패처
 
-### 6.1 STA + Dispatcher
+### STA + Dispatcher
 
 - WPF UI는 **STA** 스레드와 **Dispatcher** 메시지 루프에 종속
 - 렌더/합성은 **컴포지터 스레드**, 미디어/타이머/애니메이션은 별도 워커가 도울 수 있음
@@ -289,14 +289,14 @@ public static void Main()
 }
 ```
 
-### 6.2 Freezable와 스레드 안전
+### Freezable와 스레드 안전
 
 - **Freeze**된 리소스는 읽기 전용으로 **크로스 스레드 공유 가능**
 - 비프리즈 객체는 **소유 스레드에서만** 접근
 
 ---
 
-## 7. 레이아웃 파이프라인(Measure/Arrange)와 렌더 파이프라인의 연결
+## 레이아웃 파이프라인(Measure/Arrange)와 렌더 파이프라인의 연결
 
 - **Measure → Arrange → Render**
   - 레이아웃 단계에서 **사이즈/배치** 결정
@@ -334,7 +334,7 @@ public class FixedCellPanel : Panel
 
 ---
 
-## 8. 입력, 명령, 라우팅 이벤트 → 시각화/합성과의 상호작용
+## 입력, 명령, 라우팅 이벤트 → 시각화/합성과의 상호작용
 
 - 입력 라우팅(프리뷰→버블)이 **HitTest(Visual Tree)**와 결합
 - 시각적 상태/트리거 변경은 DP 변경으로 이어져 **렌더 배치**가 발생
@@ -348,12 +348,14 @@ protected override void OnMouseEnter(MouseEventArgs e)
 
 ---
 
-## 9. 리소스 수명주기와 성능 (Freeze/대량 객체/가상화)
+## 리소스 수명주기와 성능 (Freeze/대량 객체/가상화)
 
-### 9.1 Freeze로 비용 절감
+### Freeze로 비용 절감
+
 - 브러시/지오메트리/변환 등 **불변화**로 **트랜잭션/클론** 비용 최소화
 
-### 9.2 대량 시각화
+### 대량 시각화
+
 - **VirtualizingPanel** 사용으로 **실 가시 항목만** 실체화
 - DrawingVisual/`AddVisualChild`로 **경량 시각화**를 직접 관리하면 더 큰 스케일 처리 가능
 
@@ -380,14 +382,14 @@ public class MillionPoints : FrameworkElement
 
 ---
 
-## 10. 미디어/비디오/애니메이션과 컴포지션
+## 미디어/비디오/애니메이션과 컴포지션
 
 - `MediaElement`/`MediaPlayer` 등은 **프레임 스트림**을 텍스처로 올려 **합성**
 - 애니메이션 클록은 DP 레벨에서 값 변화를 추적 → 렌더 배치로 반영
 
 ---
 
-## 11. D3D 상호운용 (D3DImage, HwndHost)
+## D3D 상호운용 (D3DImage, HwndHost)
 
 - **D3DImage**로 Direct3D 텍스처를 WPF 비주얼에 투영
 - **HwndHost**로 외부 HWND 콘텐츠(예: Win32/DX 윈도우)를 WPF 트리 안에 포함
@@ -407,7 +409,7 @@ public class DxHost : HwndHost
 
 ---
 
-## 12. 텍스트 렌더 품질: DPI, 픽셀 스냅, 힌팅
+## 텍스트 렌더 품질: DPI, 픽셀 스냅, 힌팅
 
 - DIP 기반 좌표계라 폰트가 **1px 경계**에 어긋나면 흐릿함
 - `UseLayoutRounding="True"`/`SnapsToDevicePixels="True"` 등으로 **픽셀 경계 정렬**
@@ -420,7 +422,7 @@ public class DxHost : HwndHost
 
 ---
 
-## 13. 하드웨어 가속 Tiers & 폴백
+## 하드웨어 가속 Tiers & 폴백
 
 - **Tier 2**: 고급 하드웨어 가속
 - **Tier 1**: 제한적 가속
@@ -434,7 +436,7 @@ Debug.WriteLine($"Render Tier: {tier}"); // 0, 1, 2
 
 ---
 
-## 14. 리소스 경합과 배치: 장면 그래프 최적화 관점
+## 리소스 경합과 배치: 장면 그래프 최적화 관점
 
 - **시각적 계층 평탄화**(불필요한 Panel/Border 제거)
 - **공유 브러시/Geometry** + Freeze
@@ -447,14 +449,14 @@ Debug.WriteLine($"Render Tier: {tier}"); // 0, 1, 2
 
 ---
 
-## 15. 측정 단위, DPI 인식, Per-Monitor DPI
+## 측정 단위, DPI 인식, Per-Monitor DPI
 
 - **DIP**로 선언했더라도 **실제 픽셀**은 모니터 DPI마다 다름
 - 최신 Windows에선 **Per-Monitor DPI 인식**이 중요 (WPF .NET 4.6+에서 개선)
 
 ---
 
-## 16. 프레임 타이밍과 합성: “왜 초당 60프레임이 안 나올까?”
+## 프레임 타이밍과 합성: “왜 초당 60프레임이 안 나올까?”
 
 - UI 스레드가 바쁘면 **배치 밀림** → 합성 스레드는 이전 프레임 반복 출력
 - **애니메이션/미디어는** 합성 스레드가 독립적으로 유지하지만, **새 장면** 없이 오래가면 시각 업데이트 한계
@@ -462,7 +464,7 @@ Debug.WriteLine($"Render Tier: {tier}"); // 0, 1, 2
 
 ---
 
-## 17. Visual Layer API로 “템플릿 없는” 화면 만들기
+## Visual Layer API로 “템플릿 없는” 화면 만들기
 
 - 컨트롤 프레임워크를 거치지 않고 **Visual + DrawingContext**로 장면 구성
 - 대규모 데이터 렌더(차트, 맵, 타일러) 시 오버헤드 대폭 절감
@@ -487,7 +489,7 @@ public sealed class VisualLayerCanvas : FrameworkElement
 
 ---
 
-## 18. 애니메이션 vs Composition Target
+## 애니메이션 vs Composition Target
 
 - **Storyboard/Timeline** 기반 애니메이션은 DP와 통합
 - `CompositionTarget.Rendering` 이벤트로 **프레임 동기** 루프를 구현 가능 (게임/시뮬레이션)
@@ -501,7 +503,7 @@ CompositionTarget.Rendering += (s, e) =>
 
 ---
 
-## 19. 이미지 처리 & `WriteableBitmap`(CPU) / ShaderEffect(GPU)
+## 이미지 처리 & `WriteableBitmap`(CPU) / ShaderEffect(GPU)
 
 - CPU로 픽셀 조작: `WriteableBitmap`
 - GPU로 픽셀 이펙트: `ShaderEffect`(픽셀 셰이더 HLSL)
@@ -517,14 +519,14 @@ wb.Unlock();
 
 ---
 
-## 20. 문서/인쇄 파이프라인
+## 문서/인쇄 파이프라인
 
 - `FixedDocument`/`FlowDocument`에서 **Paginator**로 페이지 생산
 - `PrintDialog` / `XpsDocumentWriter`로 출력 → 화면과 유사한 **벡터 품질**
 
 ---
 
-## 21. 리소스 로딩과 이미지 캐시
+## 리소스 로딩과 이미지 캐시
 
 - Image/BitmapCacheOption, DecodePixelWidth/Height 등으로 **메모리/시간 최적화**
 - 같은 URI의 BitmapSource는 **디코더 캐시 공유**(조건부)로 메모리 절감
@@ -535,7 +537,7 @@ wb.Unlock();
 
 ---
 
-## 22. 성능 문제 체크리스트
+## 성능 문제 체크리스트
 
 1) **Layout thrash**: 빈번한 `Measure/Arrange` 유발
 2) **대형 Visual 트리**: 불필요한 Panel/Decorator 제거
@@ -548,7 +550,7 @@ wb.Unlock();
 
 ---
 
-## 23. milcore와 “그 아래”를 굳이 더 알면 좋은 포인트
+## milcore와 “그 아래”를 굳이 더 알면 좋은 포인트
 
 - **Dirty Region/Clip/Transform**을 활용한 합성 비용 절감
 - **Z-Order/Overdraw** 최소화
@@ -559,7 +561,7 @@ wb.Unlock();
 
 ---
 
-## 24. 종단 간 흐름을 하나의 예로
+## 종단 간 흐름을 하나의 예로
 
 1. 개발자: XAML로 `ListBox` + `DataTemplate` 구성
 2. PresentationFramework: ItemsControl이 컨테이너/패널/가상화 설정
@@ -570,7 +572,7 @@ wb.Unlock();
 
 ---
 
-## 25. 실전 예제 — “컨트롤 없이” 60FPS 막대 차트
+## 실전 예제 — “컨트롤 없이” 60FPS 막대 차트
 
 > 컨트롤 프레임워크 대신 Visual Layer로 그려 **오버헤드 최소화**, 애니메이션은 CompositionTarget에 맞춰 값 갱신.
 
@@ -631,7 +633,7 @@ public sealed class Bars : FrameworkElement
 
 ---
 
-## 26. 실전 예제 — `D3DImage`를 통한 네이티브 텍스처 합성
+## 실전 예제 — `D3DImage`를 통한 네이티브 텍스처 합성
 
 > Direct3D에서 만든 텍스처를 WPF 트리에 올려 **고가의 영상/과학 시각화**를 WPF UI와 결합
 
@@ -672,7 +674,7 @@ public class D3DImageHost : Image
 
 ---
 
-## 27. 흔한 난관과 처방
+## 흔한 난관과 처방
 
 - **텍스트 흐릿함**: LayoutRounding/PixelSnap + 정수 좌표
 - **스케일 변환(Zoom) 시 성능 저하**: 전체 트리 ScaleTransform 남용 주의, 레이어링/타일링
@@ -682,7 +684,7 @@ public class D3DImageHost : Image
 
 ---
 
-## 28. 체크리스트: PresentationFramework → PresentationCore → milcore **정렬 맞추기**
+## 체크리스트: PresentationFramework → PresentationCore → milcore **정렬 맞추기**
 
 1. **프레임워크 오버헤드 최소화**
    - 불필요한 컨트롤/패널/데코레이터 제거
@@ -699,7 +701,7 @@ public class D3DImageHost : Image
 
 ---
 
-## 29. FAQ
+## FAQ
 
 - **Q. milcore를 직접 건드릴 수 있나요?**
   - A. 아니요. 공개 API가 아닙니다. 하지만 **상위 계층에서 올바른 설계**로 milcore의 작업 부담을 크게 줄일 수 있습니다.
@@ -712,7 +714,7 @@ public class D3DImageHost : Image
 
 ---
 
-## 30. 마무리
+## 마무리
 
 이 글의 핵심은 **“프레임워크(편의)와 렌더링(성능) 사이의 계약”**을 정확히 이해하는 것입니다.
 - **PresentationFramework**에선 **바인딩/템플릿/스타일**을 사용하되, 과유불급을 경계합니다.
@@ -820,4 +822,5 @@ if (typeface.TryGetGlyphTypeface(out var gtf))
 ---
 
 ## 끝
+
 이제 WPF를 설계할 때, “이 레이어의 결정이 저 레이어에 어떤 비용을 남기는가?”를 항상 떠올려 보세요. 그 습관이 성능과 유지보수성을 동시에 끌어올립니다.

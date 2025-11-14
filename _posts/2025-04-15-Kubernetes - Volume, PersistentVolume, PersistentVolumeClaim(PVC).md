@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Volume, PersistentVolume, PersistentVolumeClaim(PVC)
 
-## 1. 왜 Volume이 필요한가
+## 왜 Volume이 필요한가
 
 컨테이너와 Pod의 파일시스템은 기본적으로 일시적이다. 재스케줄링, 롤링 업데이트, 노드 장애가 발생하면 내부 데이터는 사라질 수 있다. 데이터베이스, 사용자 업로드, 장기 로그 등은 Pod의 생명주기와 분리된 **영속성**이 요구된다.
 
@@ -17,7 +17,7 @@ category: Kubernetes
 
 ---
 
-## 2. Volume의 큰 그림
+## Volume의 큰 그림
 
 ```
 Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ───> 실제 스토리지(NFS/블록/파일/CSI)
@@ -29,7 +29,7 @@ Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ─�
 
 ---
 
-## 3. Volume 종류 요약
+## Volume 종류 요약
 
 | 종류 | 수명 | 대표 사용처 | 주의점 |
 |---|---|---|---|
@@ -40,15 +40,17 @@ Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ─�
 
 ---
 
-## 4. PersistentVolume(PV)와 PersistentVolumeClaim(PVC)
+## PersistentVolume(PV)와 PersistentVolumeClaim(PVC)
 
-### 4.1 PV 핵심 필드
+### PV 핵심 필드
+
 - `capacity.storage`: 크기
 - `accessModes`: 접근 모드(RWO/ROX/RWX/RWO-Pod)
 - `persistentVolumeReclaimPolicy`: 삭제 정책(Retain/Delete)
 - 백엔드 스펙: `nfs`, `csi`, `gcePersistentDisk`, `awsElasticBlockStore` 등
 
-### 4.2 PVC 핵심 필드
+### PVC 핵심 필드
+
 - `resources.requests.storage`: 요청 크기
 - `accessModes`: 필요 접근 모드
 - `storageClassName`: 동적 프로비저닝 시 사용
@@ -56,7 +58,7 @@ Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ─�
 
 ---
 
-## 5. 접근 모드(Access Modes) 설계
+## 접근 모드(Access Modes) 설계
 
 | 모드 | 의미 | 전형적 백엔드 | 비고 |
 |---|---|---|---|
@@ -72,7 +74,7 @@ Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ─�
 
 ---
 
-## 6. 리클레임 정책(Reclaim Policy)
+## 리클레임 정책(Reclaim Policy)
 
 | 정책 | 설명 | 사용 맥락 |
 |---|---|---|
@@ -84,7 +86,7 @@ Pod ───> PVC(요청자) ─── 바인딩 ───> PV(공급자) ─�
 
 ---
 
-## 7. 예제 1: 수동 PV/PVC/Pod (hostPath는 학습용)
+## 예제 1: 수동 PV/PVC/Pod (hostPath는 학습용)
 
 > 실무에선 `hostPath` 대신 NFS/CSI/클라우드 디스크를 사용한다. 여기선 개념 확인용 최소 예제를 제시한다.
 
@@ -138,7 +140,7 @@ kubectl exec -it pod-with-pvc -- sh -c 'echo ok > /usr/share/nginx/html/health &
 
 ---
 
-## 8. 예제 2: NFS 기반 PV/PVC (RWX 공유)
+## 예제 2: NFS 기반 PV/PVC (RWX 공유)
 
 여러 Pod가 동시에 읽기/쓰기를 해야 한다면 RWX가 필요하며, 파일 스토리지(NFS/EFS/Azure Files 등)가 적합하다.
 
@@ -191,7 +193,7 @@ spec:
 
 ---
 
-## 9. 동적 프로비저닝(StorageClass)와 WaitForFirstConsumer
+## 동적 프로비저닝(StorageClass)와 WaitForFirstConsumer
 
 PVC가 생성되면 StorageClass/CSI가 자동으로 PV를 만들고 바인딩한다. 멀티존 환경에서는 `WaitForFirstConsumer`로 스케줄링된 노드의 토폴로지를 참고해 올바른 존의 볼륨을 생성하도록 한다.
 
@@ -228,7 +230,7 @@ kubectl get pvc pvc-gp3 -w
 
 ---
 
-## 10. 퍼미션과 보안 컨텍스트(runAsUser, fsGroup, SELinux)
+## 퍼미션과 보안 컨텍스트(runAsUser, fsGroup, SELinux)
 
 루트가 아닌 사용자로 컨테이너를 실행할 때, 마운트된 볼륨에 쓰기 권한이 없으면 실패한다. 다음을 조정한다.
 
@@ -260,7 +262,7 @@ spec:
 
 ---
 
-## 11. subPath로 단일 파일/하위 디렉터리 마운트
+## subPath로 단일 파일/하위 디렉터리 마운트
 
 설정 파일 하나만 마운트하고 싶을 때 유용하다. 단, 실시간 변경이 제한될 수 있다.
 
@@ -274,7 +276,7 @@ volumeMounts:
 
 ---
 
-## 12. StatefulSet과 volumeClaimTemplates
+## StatefulSet과 volumeClaimTemplates
 
 상태 저장 워크로드(예: DB, 메시지 큐)는 Pod마다 고유 PVC가 필요하다. StatefulSet은 이를 자동 생성한다.
 
@@ -310,7 +312,7 @@ spec:
 
 ---
 
-## 13. VolumeSnapshot으로 시점 백업/복구
+## VolumeSnapshot으로 시점 백업/복구
 
 CSI 스냅샷 CRDs가 설치되어 있어야 한다.
 
@@ -348,7 +350,7 @@ spec:
 
 ---
 
-## 14. 볼륨 확장(Resize)
+## 볼륨 확장(Resize)
 
 StorageClass에서 `allowVolumeExpansion: true`가 필요하다. 드라이버/파일시스템에 따라 온라인 확장 가능 여부가 다르다.
 
@@ -365,10 +367,11 @@ kubectl exec -it <pod> -- df -h
 
 ---
 
-## 15. 관측·운영 명령어
+## 관측·운영 명령어
 
 ```bash
 # 나열
+
 kubectl get sc
 kubectl get pv
 kubectl get pvc
@@ -376,27 +379,31 @@ kubectl get volumesnapshotclass
 kubectl get volumesnapshot
 
 # 상세
+
 kubectl describe sc <name>
 kubectl describe pv <name>
 kubectl describe pvc <name>
 kubectl describe volumesnapshot <name>
 
 # 이벤트/로그 중심 진단
+
 kubectl describe pvc <name> | sed -n '/Events/,$p'
 kubectl describe pod <name> | sed -n '/Events/,$p'
 
 # 컨테이너 내부 상태
+
 kubectl exec -it <pod> -- ls -al /mountpoint
 kubectl exec -it <pod> -- df -h
 
 # 삭제
+
 kubectl delete pvc <name>
 kubectl delete pv <name>
 ```
 
 ---
 
-## 16. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 1차 확인 | 원인 | 해결 |
 |---|---|---|---|
@@ -417,7 +424,7 @@ kubectl get events --sort-by=.lastTimestamp | tail -n 20
 
 ---
 
-## 17. 설계 체크리스트
+## 설계 체크리스트
 
 - 접근 모드와 워크로드 패턴 정의
   - 단일 Pod R/W(RWO)인지, 다중 Pod 공유(RWX)인지
@@ -436,7 +443,7 @@ kubectl get events --sort-by=.lastTimestamp | tail -n 20
 
 ---
 
-## 18. 통합 예제: Nginx + 동적 PVC + Ingress
+## 통합 예제: Nginx + 동적 PVC + Ingress
 
 실전 스캐폴딩으로 바로 테스트 가능하다.
 
@@ -518,7 +525,7 @@ curl http://<노드IP>:30080
 
 ---
 
-## 19. 결론
+## 결론
 
 - Volume은 Pod의 일시성과 데이터의 영속성 사이 간극을 메운다.
 - PV/PVC/StorageClass를 통해 공급자-요청자 모델을 확립하고, 접근 모드와 리클레임 정책을 요구사항에 맞춰 설계한다.
@@ -527,16 +534,18 @@ curl http://<노드IP>:30080
 
 ---
 
-## 20. 참고 명령 요약
+## 참고 명령 요약
 
 ```bash
 # 상태
+
 kubectl get sc
 kubectl get pv
 kubectl get pvc
 kubectl get events --sort-by=.lastTimestamp | tail
 
 # 상세/디버깅
+
 kubectl describe pvc <name>
 kubectl describe pv <name>
 kubectl exec -it <pod> -- df -h

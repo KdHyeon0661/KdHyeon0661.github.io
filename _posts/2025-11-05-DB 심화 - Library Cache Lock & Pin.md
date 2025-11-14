@@ -20,15 +20,17 @@ category: DB 심화
 
 ---
 
-## 1. Library Cache의 객체와 직렬화 개요
+## Library Cache의 객체와 직렬화 개요
 
-### 1.1 Library Cache 안에 뭐가 있나
+### Library Cache 안에 뭐가 있나
+
 - **SQL AREA**: Parent/Child Cursor(텍스트·파싱 정보·실행계획·바인드 민감도 등)
 - **PL/SQL**: 패키지/프로시저/함수의 컴파일 산출물(코드·메타)
 - **데이터 딕셔너리 캐시 연계 정보**: 테이블/인덱스 메타 참조
 - **기타 네임스페이스**: `TABLE/INDEX/VIEW/SEQUENCE/PROCEDURE/PACKAGE/BODY/TRIGGER/TYPE` …, `SQL AREA`, `CURSOR STATS` 등
 
-### 1.2 KGL 개념(개요)
+### KGL 개념(개요)
+
 - **KGL Lock(=Library Cache Lock)**: **오브젝트 핸들(정의/이름)**에 대한 공유/배타 모드 획득
 - **KGL Pin(=Library Cache Pin)**: **오브젝트 힙(실행체, child heap)** 에 대해 **고정(PIN)**
 - **수명**:
@@ -38,9 +40,10 @@ category: DB 심화
 
 ---
 
-## 2. 왜 **LOCK**과 **PIN**을 따로 두었나? (설계 동기)
+## 왜 **LOCK**과 **PIN**을 따로 두었나? (설계 동기)
 
-### 2.1 “정의”와 “실행체”의 **보호 대상이 다르다**
+### “정의”와 “실행체”의 **보호 대상이 다르다**
+
 - **정의(Definition/Name)**: SQL 텍스트·오브젝트 이름·DDL 구조 등.
   → **LOCK** 으로 보호.
   → 예: `ALTER PACKAGE …`, `ALTER TABLE …`, `CREATE OR REPLACE FUNCTION …`, 커서 **하드 파싱/로드** 등
@@ -48,17 +51,19 @@ category: DB 심화
   → **PIN** 으로 보호.
   → 예: 실행 도중 **에이징(Shared Pool 단편화/압박)**, **재컴파일**로 인한 교체 방지
 
-### 2.2 **동시성 극대화**
+### **동시성 극대화**
+
 - 수백/수천 세션이 **동일 Child** 를 동시에 실행해도 **각자 PIN** 을 들고 있으면 **자유롭게 실행**할 수 있다.
 - 이때 DDL 같은 **정의 변경**은 LOCK 레벨에서만 직렬화되어 **실행 경합**이 불필요하게 커지지 않는다.
 
-### 2.3 **비용 제어/수명 최적화**
+### **비용 제어/수명 최적화**
+
 - 실행이 길면 **PIN** 을 오래 들고 있어도 **정의 변경(LOCK)** 은 다른 통로로 제어된다.
 - 반대로 파싱 순간에만 **LOCK** 으로 짧게 보호하고, 실행 들어가면 **PIN** 으로 전환해 **락 홀드 시간 최소화**.
 
 ---
 
-## 3. 대기 이벤트로 보는 차이
+## 대기 이벤트로 보는 차이
 
 | 이벤트 | 언제 발생 | 의미/상황 |
 |---|---|---|
@@ -72,11 +77,12 @@ category: DB 심화
 
 ---
 
-## 4. 재현 시나리오 (실습용)
+## 재현 시나리오 (실습용)
 
 > 아래 실습은 **두 세션**(세션 A, B)을 사용한다. 실제로는 SYS 권한 없이도 충분히 관찰 가능(일부 내부 X$ 뷰 제외).
 
-### 4.1 **PIN 경합**: 패키지 실행 중 재컴파일 시
+### **PIN 경합**: 패키지 실행 중 재컴파일 시
+
 **세션 A** – 패키지/함수 실행(오래 걸리게 만들기)
 ```sql
 -- 세션 A
@@ -132,7 +138,8 @@ GROUP  BY event ORDER BY samples DESC;
 
 ---
 
-### 4.2 **LOCK 경합**: 테이블 DDL과 쿼리 파싱 충돌
+### **LOCK 경합**: 테이블 DDL과 쿼리 파싱 충돌
+
 **세션 A** – 테이블 DDL(정의 변경)
 ```sql
 -- 세션 A
@@ -158,7 +165,8 @@ SELECT /* 하드파싱 유도: 리터럴 */
 
 ---
 
-### 4.3 **LOAD LOCK**: 에이징된 커서를 동시에 재적재
+### **LOAD LOCK**: 에이징된 커서를 동시에 재적재
+
 **세션 A/B** – shared pool 압박 또는 `ALTER SYSTEM FLUSH SHARED_POOL` 후 동일 SQL 동시 수행
 ```sql
 -- (운영 주의) 데모 목적으로만
@@ -173,7 +181,7 @@ FROM   dual CONNECT BY LEVEL <= 100000;
 
 ---
 
-## 5. 내부 흐름(직관 모델)
+## 내부 흐름(직관 모델)
 
 1) **파싱/하드파싱 시점**
    - 이름 해석 → **Library Cache Handle** 찾기/만들기 → **LOCK 획득**(정의 충돌 방지)
@@ -193,9 +201,10 @@ FROM   dual CONNECT BY LEVEL <= 100000;
 
 ---
 
-## 6. 흔한 원인 & 증상 & 해법
+## 흔한 원인 & 증상 & 해법
 
-### 6.1 잦은 DDL/컴파일(== 정의 변경)
+### 잦은 DDL/컴파일(== 정의 변경)
+
 - **증상**: `library cache lock`/`library cache pin`/`library cache load lock` 증가, 파싱 지연/실행 중 단기 스톨
 - **원인 예**
   - 배포 스크립트가 **업무시간**에 자주 수행(PL/SQL 재컴파일, Synonym 교체 등)
@@ -207,7 +216,8 @@ FROM   dual CONNECT BY LEVEL <= 100000;
   - 불필요 DDL 제거, **변경 묶음** 처리
   - `DBMS_RESULT_CACHE`/MView 등으로 **정의 의존 감소**
 
-### 6.2 대량 하드 파싱/리터럴 난사
+### 대량 하드 파싱/리터럴 난사
+
 - **증상**: `library cache load lock`, Mutex 핀 대기, Shared pool 단편화
 - **원인**: 바인드 미사용, SQL 텍스트 변종 폭증 → 커서 수 폭증·재로드
 - **해법**
@@ -215,7 +225,8 @@ FROM   dual CONNECT BY LEVEL <= 100000;
   - `SESSION_CACHED_CURSORS`, `OPEN_CURSORS` 적정
   - 상위 트래픽 SQL **정규화**(일부 인기 리터럴은 전략적 분리)
 
-### 6.3 통계/DDL에 의한 **인밸리데이션 폭발**
+### 통계/DDL에 의한 **인밸리데이션 폭발**
+
 - **증상**: 특정 시간대에 `library cache pin` 스파이크
 - **원인**
   - `DBMS_STATS` 수행 시 **즉시 무효화**(많은 커서 재하드파싱 유발)
@@ -223,7 +234,8 @@ FROM   dual CONNECT BY LEVEL <= 100000;
   - `DBMS_STATS` 의 **`no_invalidate => DBMS_STATS.AUTO_INVALIDATE`**(또는 TRUE) 활용: **점진적** 무효화
   - 통계 작업 **분할/스케줄링**(저부하 시간)
 
-### 6.4 Shared Pool 압박/에이징
+### Shared Pool 압박/에이징
+
 - **증상**: `library cache load lock`/PIN 대기, 자주 리로드
 - **원인**: Shared pool 크기 부족, 거대 패키지/커서
 - **해법**
@@ -233,9 +245,10 @@ FROM   dual CONNECT BY LEVEL <= 100000;
 
 ---
 
-## 7. 모니터링/진단 스크립트
+## 모니터링/진단 스크립트
 
-### 7.1 현재 대기 & 블로킹 체인
+### 현재 대기 & 블로킹 체인
+
 ```sql
 SELECT sid, serial#, username, event, wait_class,
        blocking_session, seconds_in_wait, state
@@ -245,7 +258,8 @@ WHERE  event LIKE 'library cache%'
 ORDER BY seconds_in_wait DESC;
 ```
 
-### 7.2 ASH로 최근 15분 집중 분석
+### ASH로 최근 15분 집중 분석
+
 ```sql
 SELECT event, COUNT(*) samples
 FROM   v$active_session_history
@@ -255,7 +269,8 @@ GROUP  BY event
 ORDER  BY samples DESC;
 ```
 
-### 7.3 어떤 오브젝트/커서가 문제?
+### 어떤 오브젝트/커서가 문제?
+
 > **DBA 권한**이면 `X$KGL` 계열로 해시값/주소→오브젝트 매핑 가능.
 권한이 제한적이라면 **시간 상관**으로 Top SQL/최근 컴파일/DDL 로그를 함께 본다.
 ```sql
@@ -271,7 +286,8 @@ FROM   v$sqlarea
 ORDER  BY parse_calls DESC FETCH FIRST 30 ROWS ONLY;
 ```
 
-### 7.4 커서 버전/Mutex 신호
+### 커서 버전/Mutex 신호
+
 ```sql
 -- child 커서 다중화(버전 폭증) 감시
 SELECT sql_id, version_count, loaded_versions, kept_versions
@@ -281,7 +297,7 @@ ORDER  BY version_count DESC FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 8. 실전 튜닝 플레이북
+## 실전 튜닝 플레이북
 
 1) **증상 확인**: `library cache lock/pin/load lock`, `cursor: pin S` 등 **이벤트 분포** 수집
 2) **원인 유형 분류**
@@ -301,7 +317,7 @@ ORDER  BY version_count DESC FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 9. 추가 예제: “동일 Child 커서에 대한 Mutex 경합”
+## 추가 예제: “동일 Child 커서에 대한 Mutex 경합”
 
 **세션 A** – 대량 실행(Child 핀 공유)
 ```sql
@@ -325,7 +341,7 @@ SELECT COUNT(*) FROM orders WHERE cust_id = :b2;
 
 ---
 
-## 10. FAQ
+## FAQ
 
 **Q1. `library cache lock` 과 `enq: TX - …` 같은 DML 락과의 차이는?**
 - **범위가 다름**: LC Lock은 **Library Cache 내부 메타/코드** 직렬화, TX는 **데이터(행/트랜잭션)** 직렬화.
@@ -341,7 +357,7 @@ SELECT COUNT(*) FROM orders WHERE cust_id = :b2;
 
 ---
 
-## 11. 운영 체크리스트 (요약)
+## 운영 체크리스트 (요약)
 
 - [ ] 업무시간 DDL/컴파일 금지(배포 윈도우/Edition)
 - [ ] 바인드 변수·커서 재사용(세션 커서 캐시, SQL 정규화)
@@ -352,7 +368,7 @@ SELECT COUNT(*) FROM orders WHERE cust_id = :b2;
 
 ---
 
-## 12. 마무리
+## 마무리
 
 - **LOCK**은 “**정의/이름을 바꾸는 순간**의 안전벨트”, **PIN**은 “**실행 중 코드/힙을 지키는 안전핀**”.
 - 두 장치를 **분리**했기 때문에 Oracle은 **대규모 동시 실행**과 **드문 정의 변경**을 **서로 방해 없이** 처리할 수 있다.

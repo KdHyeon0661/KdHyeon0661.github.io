@@ -19,7 +19,7 @@ category: Avalonia
 
 ---
 
-## 1. 템플릿 생성
+## 템플릿 생성
 
 ```bash
 dotnet new avalonia.app -o MyAvaloniaApp
@@ -32,7 +32,7 @@ cd MyAvaloniaApp
 
 ---
 
-## 2. 기본 프로젝트 구조
+## 기본 프로젝트 구조
 
 초안에서 제시된 구조는 다음과 유사하다(템플릿/옵션에 따라 달라질 수 있음):
 
@@ -61,7 +61,7 @@ MyAvaloniaApp/
 
 ---
 
-## 3. Program.cs — 부트스트랩, Lifetime, 환경 분기
+## Program.cs — 부트스트랩, Lifetime, 환경 분기
 
 초안의 코드:
 
@@ -99,13 +99,16 @@ public static class Program
     public static AppBuilder BuildAvaloniaApp()
     {
 #if DEBUG
+
         var builder = AppBuilder.Configure<App>()
             .UsePlatformDetect()
             .LogToTrace(); // 디버그 환경 로깅 강화
 #else
+
         var builder = AppBuilder.Configure<App>()
             .UsePlatformDetect();
 #endif
+
         return builder;
     }
 }
@@ -113,7 +116,7 @@ public static class Program
 
 ---
 
-## 4. App.axaml / App.axaml.cs — 전역 리소스, 스타일, 시작 윈도우
+## App.axaml / App.axaml.cs — 전역 리소스, 스타일, 시작 윈도우
 
 초안의 XAML:
 
@@ -185,7 +188,7 @@ public partial class App : Application
 
 ---
 
-## 5. MainWindow — 셸로서의 역할과 레이아웃
+## MainWindow — 셸로서의 역할과 레이아웃
 
 초안의 단순 바인딩:
 
@@ -224,7 +227,7 @@ public partial class App : Application
 
 ---
 
-## 6. ViewModelBase와 바인딩 기초
+## ViewModelBase와 바인딩 기초
 
 템플릿에 따라 `ViewModelBase`는 다음 중 하나일 수 있다:
 
@@ -236,7 +239,7 @@ public partial class App : Application
 
 초안에 등장한 `RaiseAndSetIfChanged`는 **ReactiveUI** 문법이다. 이하 기본 예제는 ReactiveUI를 기준으로 하고, 바로 뒤에 Toolkit 대안을 함께 제시한다.
 
-### 6.1 ReactiveUI 기반 ViewModelBase
+### ReactiveUI 기반 ViewModelBase
 
 ```csharp
 // ViewModels/ViewModelBase.cs
@@ -249,7 +252,7 @@ public class ViewModelBase : ReactiveObject
 }
 ```
 
-### 6.2 간단 ViewModel 예시
+### 간단 ViewModel 예시
 
 ```csharp
 // ViewModels/MainWindowViewModel.cs
@@ -292,11 +295,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 7. 화면 추가와 화면 전환 — DataTemplate + ContentControl
+## 화면 추가와 화면 전환 — DataTemplate + ContentControl
 
 초안의 방향(새로운 View/VM 추가 → DataTemplate → `ContentControl`)을 **완성형 패턴**으로 제시한다.
 
-### 7.1 폴더 정리
+### 폴더 정리
 
 ```
 Views/
@@ -307,7 +310,7 @@ ViewModels/
   SettingsViewModel.cs
 ```
 
-### 7.2 View 정의
+### View 정의
 
 ```xml
 <!-- Views/MainView.axaml -->
@@ -333,7 +336,7 @@ ViewModels/
 </UserControl>
 ```
 
-### 7.3 ViewModel 정의(reactive)
+### ViewModel 정의(reactive)
 
 ```csharp
 // ViewModels/MainViewModel.cs
@@ -369,7 +372,7 @@ public class SettingsViewModel : ViewModelBase
 }
 ```
 
-### 7.4 App.axaml에 DataTemplate 등록
+### App.axaml에 DataTemplate 등록
 
 **중요**: 네임스페이스 매핑이 정확해야 한다.
 
@@ -398,7 +401,7 @@ public class SettingsViewModel : ViewModelBase
 </Application>
 ```
 
-### 7.5 MainWindowViewModel에서 전환 로직
+### MainWindowViewModel에서 전환 로직
 
 ```csharp
 // ViewModels/MainWindowViewModel.cs  (네비게이션 허브)
@@ -449,7 +452,7 @@ public partial class MainWindowViewModel : ViewModelBase
 }
 ```
 
-### 7.6 MainWindow에 버튼 + ContentControl
+### MainWindow에 버튼 + ContentControl
 
 ```xml
 <!-- Views/MainWindow.axaml -->
@@ -471,11 +474,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 8. DI(의존성 주입)와 서비스 계층
+## DI(의존성 주입)와 서비스 계층
 
 규모가 커지면 ViewModel 생성/수명 관리를 DI 컨테이너로 맡기는 것이 좋다.
 
-### 8.1 Microsoft.Extensions.DependencyInjection 사용
+### Microsoft.Extensions.DependencyInjection 사용
 
 ```csharp
 // App.axaml.cs
@@ -512,7 +515,7 @@ public partial class App : Application
 }
 ```
 
-### 8.2 간단 네비게이션 서비스
+### 간단 네비게이션 서비스
 
 ```csharp
 // Services/INavigationService.cs
@@ -551,7 +554,7 @@ public class NavigationService : INavigationService
 
 ---
 
-## 9. 다이얼로그 서비스 패턴(권장)
+## 다이얼로그 서비스 패턴(권장)
 
 ViewModel이 직접 `Window`를 생성하지 않도록 **IDialogService**를 둔다.
 
@@ -589,9 +592,9 @@ public class DialogService : IDialogService
 
 ---
 
-## 10. 스타일/리소스/테마 — 분리와 상태 스타일
+## 스타일/리소스/테마 — 분리와 상태 스타일
 
-### 10.1 리소스 딕셔너리 분리
+### 리소스 딕셔너리 분리
 
 ```
 Resources/
@@ -627,7 +630,7 @@ Resources/
 <Button Classes="confirm" Content="저장"/>
 ```
 
-### 10.2 상태 스타일
+### 상태 스타일
 
 ```xml
 <Style Selector="Button:pointerover">
@@ -645,9 +648,9 @@ Resources/
 
 ---
 
-## 11. 검증/컨버터/템플릿
+## 검증/컨버터/템플릿
 
-### 11.1 IValueConverter
+### IValueConverter
 
 ```csharp
 // Converters/BoolToTextConverter.cs
@@ -676,7 +679,7 @@ XAML 등록/사용:
 </Window>
 ```
 
-### 11.2 검증(CommunityToolkit 예)
+### 검증(CommunityToolkit 예)
 
 ```csharp
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -694,9 +697,9 @@ public partial class AccountViewModel : ObservableValidator
 
 ---
 
-## 12. 리스트/그리드 — ItemsControl, ListBox, DataGrid
+## 리스트/그리드 — ItemsControl, ListBox, DataGrid
 
-### 12.1 ListBox 선택 바인딩
+### ListBox 선택 바인딩
 
 ```xml
 <ListBox Items="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
@@ -711,7 +714,7 @@ public partial class AccountViewModel : ObservableValidator
 </ListBox>
 ```
 
-### 12.2 DataGrid
+### DataGrid
 
 ```bash
 dotnet add package Avalonia.Controls.DataGrid
@@ -728,7 +731,7 @@ dotnet add package Avalonia.Controls.DataGrid
 
 ---
 
-## 13. 단위 테스트 — ViewModel 중심
+## 단위 테스트 — ViewModel 중심
 
 ```bash
 dotnet new xunit -o MyAvaloniaApp.Tests
@@ -753,28 +756,32 @@ public class MainViewModelTests
 
 ---
 
-## 14. 빌드/실행/핫 리로드/배포
+## 빌드/실행/핫 리로드/배포
 
-### 14.1 개발
+### 개발
 
 ```bash
 dotnet run
 dotnet watch   # 핫 리로드/자동 빌드
 ```
 
-### 14.2 배포(self-contained, 단일 파일 선택)
+### 배포(self-contained, 단일 파일 선택)
 
 ```bash
 # Windows
+
 dotnet publish -c Release -r win-x64 --self-contained true
 
 # Linux
+
 dotnet publish -c Release -r linux-x64 --self-contained true
 
 # macOS
+
 dotnet publish -c Release -r osx-x64 --self-contained true
 
 # 단일 파일 (선택)
+
 dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
@@ -782,7 +789,7 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 ---
 
-## 15. 성능/구조/운영 팁
+## 성능/구조/운영 팁
 
 - `ContentControl + DataTemplate`는 화면 교체의 표준 패턴. View 이름 규칙과 `ViewLocator`를 도입하면 매핑 자동화 가능.
 - 바인딩 에러는 반드시 로그에서 확인. 속성명/INPC 여부/네임스페이스 철자 점검.
@@ -793,9 +800,9 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 
 ---
 
-## 16. 예제 묶음: Settings 화면 추가 및 전환(완결)
+## 예제 묶음: Settings 화면 추가 및 전환(완결)
 
-### 16.1 View/VM 생성
+### View/VM 생성
 
 ```bash
 mkdir -p Views ViewModels
@@ -830,7 +837,7 @@ public class SettingsViewModel : ViewModelBase
 </UserControl>
 ```
 
-### 16.2 App.axaml DataTemplate
+### App.axaml DataTemplate
 
 ```xml
 <Application.DataTemplates xmlns:vm="using:MyAvaloniaApp.ViewModels"
@@ -844,7 +851,7 @@ public class SettingsViewModel : ViewModelBase
 </Application.DataTemplates>
 ```
 
-### 16.3 Shell ViewModel(전환 커맨드)
+### Shell ViewModel(전환 커맨드)
 
 ```csharp
 // ViewModels/MainWindowViewModel.cs
@@ -873,7 +880,7 @@ public class MainWindowViewModel : ViewModelBase
 }
 ```
 
-### 16.4 MainWindow에서 연결
+### MainWindow에서 연결
 
 ```xml
 <!-- Views/MainWindow.axaml -->
@@ -893,7 +900,7 @@ public class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 17. 자주 겪는 오류와 해결
+## 자주 겪는 오류와 해결
 
 - **DataTemplate가 적용되지 않음**
   - `App.axaml`에서 `xmlns:vm="using:...ViewModels"` / `xmlns:views="using:...Views"` 정확히 지정
@@ -910,7 +917,7 @@ public class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 18. 요약 표
+## 요약 표
 
 | 구성 요소 | 핵심 역할 | 확장 포인트 |
 |-----------|-----------|-------------|
@@ -925,7 +932,7 @@ public class MainWindowViewModel : ViewModelBase
 
 ---
 
-## 19. 다음 단계
+## 다음 단계
 
 - 사용자 정의 컨트롤/템플릿 확장(Attached Property, Behaviors)
 - 복잡한 네비게이션(스택/백버튼, 모달/시트, 영역 분할)

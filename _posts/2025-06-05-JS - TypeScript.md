@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # TypeScript 도입하기: JavaScript 프로젝트를 타입 안전하게 전환하는 방법
 
-## 0. TL;DR (요약 체크리스트)
+## TL;DR (요약 체크리스트)
 
 - `npm i -D typescript` → `npx tsc --init` 로 **기본 세팅**
 - **엄격 모드(`strict`) + 최소 예외**로 시작, 막히는 곳은 `@ts-expect-error`로 국소 완충
@@ -19,12 +19,13 @@ category: JavaScript
 
 ---
 
-## 1. TypeScript란? 왜 지금 도입해야 하는가
+## TypeScript란? 왜 지금 도입해야 하는가
 
 > TypeScript는 JavaScript의 **상위 집합**(Superset)으로, 정적 타입 시스템을 제공하여
 > **런타임 이전**에 오류를 포착하고, 에디터 지능(Autocomplete/Refactor/Go-to-Definition)을 강화한다.
 
 ### 기대 효과 (현실적으로)
+
 - 리팩토링 비용 절감: “용감한 리네임” 가능
 - API 계약(Contract) 문서화: 타입이 곧 사양
 - 온보딩 속도 향상: 타입 정의를 따라가며 학습
@@ -32,7 +33,7 @@ category: JavaScript
 
 ---
 
-## 2. 설치와 최소 tsconfig 템플릿
+## 설치와 최소 tsconfig 템플릿
 
 ```bash
 npm i -D typescript
@@ -75,9 +76,10 @@ npx tsc --init
 
 ---
 
-## 3. 점진적 마이그레이션 전략 (중요)
+## 점진적 마이그레이션 전략 (중요)
 
-### 3.1 가장 쉬운 시작: JS 유지 + 타입 검사
+### 가장 쉬운 시작: JS 유지 + 타입 검사
+
 **파일은 그대로 JS**로 두고, 상단에 체크만 켠다.
 
 ```js
@@ -95,7 +97,8 @@ export function add(a, b) {
 - 에디터에서 즉시 타입 검사
 - **JSDoc**으로 타입을 표현해 코드 변경 최소화
 
-### 3.2 혼합 모드: 일부만 `.ts/.tsx`
+### 혼합 모드: 일부만 `.ts/.tsx`
+
 - 유틸/순수 함수부터 `.ts` 변환
 - React라면 컴포넌트 1~2개만 `.tsx`로 시작
 - 막히는 곳은 한시적으로 `any` / `@ts-ignore` → **`@ts-expect-error`** 권장
@@ -105,15 +108,17 @@ export function add(a, b) {
 const sdk = window.ExternalSdk;
 ```
 
-### 3.3 “타입 부채” 관리
+### “타입 부채” 관리
+
 - `any` 개수, `@ts-expect-error` 줄 수를 대시보드화
 - 스프린트마다 **부채 상환 티켓** 10~20% 유지
 
 ---
 
-## 4. 도메인 타입 설계 패턴
+## 도메인 타입 설계 패턴
 
-### 4.1 타입 vs 인터페이스
+### 타입 vs 인터페이스
+
 - **상호 확장/선언 병합**이 필요하면 `interface`, 변형/조합은 `type` 선호
 - 팀 룰로 통일하되, 라이브러리 인터페이스 확장에는 `interface`가 편리
 
@@ -134,7 +139,8 @@ type OrderState = "pending" | "paid" | "shipped" | "canceled";
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 ```
 
-### 4.2 유틸리티 타입 적극 사용
+### 유틸리티 타입 적극 사용
+
 ```ts
 type PartialUser = Partial<User>;
 type ReadonlyUser = Readonly<User>;
@@ -142,14 +148,16 @@ type Picked = Pick<User, "id" | "email">;
 type WithId<T> = T & { id: string };
 ```
 
-### 4.3 좁히기(Narrowing)와 타입 가드
+### 좁히기(Narrowing)와 타입 가드
+
 ```ts
 function isResultOk<T>(r: Result<T>): r is { ok: true; value: T } {
   return r.ok;
 }
 ```
 
-### 4.4 브랜드 타입(도메인 안전)
+### 브랜드 타입(도메인 안전)
+
 ```ts
 type Brand<T, B extends string> = T & { readonly __brand: B };
 
@@ -163,9 +171,10 @@ findUser(asUserId("u_123"));
 
 ---
 
-## 5. React/JSX에서 TSX로 전환
+## React/JSX에서 TSX로 전환
 
-### 5.1 기본 패턴
+### 기본 패턴
+
 ```tsx
 type ButtonProps = {
   label: string;
@@ -179,7 +188,8 @@ export const Button = ({ label, onClick, as = "button" }: ButtonProps) => {
 };
 ```
 
-### 5.2 이벤트, ref, 제네릭 컴포넌트
+### 이벤트, ref, 제네릭 컴포넌트
+
 ```tsx
 type InputProps<T extends HTMLInputElement | HTMLTextAreaElement> = {
   as?: "input" | "textarea";
@@ -194,7 +204,8 @@ export function FancyInput<T extends HTMLInputElement = HTMLInputElement>(
 }
 ```
 
-### 5.3 상태 관리 라이브러리와 타입
+### 상태 관리 라이브러리와 타입
+
 - React Query/Zustand/Redux Toolkit: **훅 반환형**/스토어 셀렉터의 타입 명시
 - `infer`로 API 응답 자동 파생
 
@@ -205,14 +216,16 @@ type User = ApiResponse["user"];
 
 ---
 
-## 6. 외부 라이브러리 타입
+## 외부 라이브러리 타입
 
-### 6.1 DefinitelyTyped
+### DefinitelyTyped
+
 ```bash
 npm i -D @types/lodash
 ```
 
-### 6.2 임시 선언(모듈 보강)
+### 임시 선언(모듈 보강)
+
 ```ts
 // src/types/global.d.ts
 declare module "some-legacy-sdk" {
@@ -220,7 +233,7 @@ declare module "some-legacy-sdk" {
 }
 ```
 
-### 6.3 JSDoc로 외부 스크립트 난국 완화
+### JSDoc로 외부 스크립트 난국 완화
 
 {% raw %}
 ```js
@@ -232,13 +245,15 @@ const Analytics = window.Analytics;
 
 ---
 
-## 7. 빌드/번들 통합: Vite, Webpack, SWC, ESBuild
+## 빌드/번들 통합: Vite, Webpack, SWC, ESBuild
 
-### 7.1 “타입체크”와 “트랜스파일” 분리 원칙
+### “타입체크”와 “트랜스파일” 분리 원칙
+
 - **빠른 개발 빌드**: SWC/ESBuild로 트랜스파일만
 - **타입 검증**: 병렬 `tsc --noEmit` 또는 `vite-plugin-checker`
 
 #### Vite 예시
+
 ```bash
 npm i -D vite @vitejs/plugin-react vite-plugin-checker
 ```
@@ -258,6 +273,7 @@ export default defineConfig({
 ```
 
 #### Webpack 예시
+
 ```bash
 npm i -D ts-loader fork-ts-checker-webpack-plugin
 ```
@@ -278,9 +294,10 @@ module.exports = {
 
 ---
 
-## 8. 테스트: Vitest/Jest + TS
+## 테스트: Vitest/Jest + TS
 
-### 8.1 Vitest (권장: Vite와 궁합 우수)
+### Vitest (권장: Vite와 궁합 우수)
+
 ```bash
 npm i -D vitest @vitest/coverage-v8 ts-node
 ```
@@ -305,7 +322,8 @@ describe("add", () => {
 });
 ```
 
-### 8.2 Jest
+### Jest
+
 ```bash
 npm i -D jest ts-jest @types/jest
 npx ts-jest config:init
@@ -321,7 +339,7 @@ module.exports = {
 
 ---
 
-## 9. ESLint/Prettier와 충돌 없이 쓰기
+## ESLint/Prettier와 충돌 없이 쓰기
 
 ```bash
 npm i -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-config-prettier prettier
@@ -352,9 +370,10 @@ module.exports = {
 
 ---
 
-## 10. 경로 별칭과 모노레포
+## 경로 별칭과 모노레포
 
-### 10.1 경로 별칭
+### 경로 별칭
+
 ```json
 // tsconfig.json
 {
@@ -370,7 +389,8 @@ module.exports = {
 
 Vite/Webpack도 동일 별칭을 plugin/resolve에 반영.
 
-### 10.2 Project References (대규모/모노레포)
+### Project References (대규모/모노레포)
+
 루트 `tsconfig.json`:
 ```json
 {
@@ -401,7 +421,7 @@ Vite/Webpack도 동일 별칭을 plugin/resolve에 반영.
 
 ---
 
-## 11. 런타임 안전 보강 (Zod/Valibot + TS)
+## 런타임 안전 보강 (Zod/Valibot + TS)
 
 정적 타입만으로 부족한 **런타임 입력 검증**은 스키마로 보강.
 
@@ -424,14 +444,16 @@ export function createUser(body: unknown) {
 
 ---
 
-## 12. 빌드/배포 파이프라인 예(웹 + 서버/서버리스)
+## 빌드/배포 파이프라인 예(웹 + 서버/서버리스)
 
-### 12.1 웹 앱 (Vite)
+### 웹 앱 (Vite)
+
 - Dev: Vite HMR + `vite-plugin-checker`
 - CI: `npm run typecheck` (`tsc --noEmit`), `vitest run --coverage`, `vite build`
 - 배포: Static hosting (Vercel/Netlify/S3+CF)
 
-### 12.2 Node/서버리스
+### Node/서버리스
+
 - 트랜스파일: `tsup`/`esbuild`/`swc`
 - 타입 검증: `tsc --noEmit`
 - 배포: Vercel Functions/Cloudflare Workers/AWS Lambda
@@ -452,7 +474,7 @@ export function createUser(body: unknown) {
 
 ---
 
-## 13. 흔한 에러/함정과 해결
+## 흔한 에러/함정과 해결
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -464,7 +486,7 @@ export function createUser(body: unknown) {
 
 ---
 
-## 14. 팀 규약과 지표로 굳히기
+## 팀 규약과 지표로 굳히기
 
 - **규약**: `strict` 유지, `any` 허용 정책, 외부 경계에서만 `unknown→narrowing`
 - **지표**:
@@ -475,9 +497,9 @@ export function createUser(body: unknown) {
 
 ---
 
-## 15. 예제: JS → TS 전환(작게 시작해 보기)
+## 예제: JS → TS 전환(작게 시작해 보기)
 
-### 15.1 기존 JS 유틸
+### 기존 JS 유틸
 
 ```js
 // src/price.js
@@ -486,7 +508,7 @@ export function toKRW(amount, { currency = "KRW" } = {}) {
 }
 ```
 
-### 15.2 JSDoc로 타입 힌트
+### JSDoc로 타입 힌트
 
 {% raw %}
 ```js
@@ -503,7 +525,7 @@ export function toKRW(amount, opts = {}) {
 ```
 {% endraw %}
 
-### 15.3 `.ts` 변환
+### `.ts` 변환
 
 ```ts
 // src/price.ts
@@ -515,7 +537,7 @@ export function toKRW(amount: number, opts: FormatOpts = {}) {
 }
 ```
 
-### 15.4 사용처에서 안전한 오용 차단
+### 사용처에서 안전한 오용 차단
 
 ```ts
 toKRW(1000);               // OK
@@ -525,7 +547,7 @@ toKRW(1000, { currency: "USD" }); // OK
 
 ---
 
-## 16. 고급: 제네릭, 조건부 타입, 매핑 타입 한 방에
+## 고급: 제네릭, 조건부 타입, 매핑 타입 한 방에
 
 ```ts
 // 엔드포인트 응답 매핑
@@ -556,7 +578,7 @@ type CreatePost = z.infer<typeof CreatePost>;
 
 ---
 
-## 17. 마이그레이션 로드맵(예시)
+## 마이그레이션 로드맵(예시)
 
 1. **주 1~2일**: JSDoc + `//@ts-check`로 경고 줄이기
 2. 1차 전환: **공통 유틸/퓨어 함수**를 `.ts`로 변경
@@ -568,7 +590,7 @@ type CreatePost = z.infer<typeof CreatePost>;
 
 ---
 
-## 18. 결론
+## 결론
 
 TypeScript 도입은 “한 번에”가 아니라 **지속 가능한 속도로 부채를 상환**하며 **DX와 안정성을 동반 상승**시키는 장기 전략이다.
 **작게 시작**하되, CI 게이트/팀 규약/지표로 **일관성**을 확보하면, 전환 비용보다 **리팩토링·협업·품질 향상 이득**이 더 크다.

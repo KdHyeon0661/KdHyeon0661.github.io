@@ -4,7 +4,8 @@ title: 영상처리 - Huffman 최적화 / Restart 마커
 date: 2025-10-14 16:25:23 +0900
 category: 영상처리
 ---
-# 2. **Huffman 최적화 / Restart 마커**의 기본 정책
+# **Huffman 최적화 / Restart 마커**의 기본 정책
+
 *(네트워크 견고성 & 파일 크기 최적화 — TurboJPEG/jpeglib 실전 가이드)*
 
 > 핵심 요약
@@ -13,7 +14,7 @@ category: 영상처리
 
 ---
 
-## 0. 왜 둘 다 중요할까?
+## 왜 둘 다 중요할까?
 
 - 저장/배포(**정적 파일**)에는 **최소 용량**이 중요 → **Huffman 최적화 ON**, **Restart OFF(=0)** 가 보통 최적.
 - 전송/스트리밍(**네트워크**)에는 **오류 격리/빠른 복구**가 중요 → **Restart ON**(간격을 짧게), Huffman 최적화도 함께 ON 권장.
@@ -22,9 +23,10 @@ category: 영상처리
 
 ---
 
-## 1. JPEG 허프만 최적화(Optimize Coding)
+## JPEG 허프만 최적화(Optimize Coding)
 
-### 1.1 개념
+### 개념
+
 JPEG 기본 인코드는 **표준 허프만 테이블**이나 **품질 기반의 고정 테이블**을 쓸 수 있습니다.
 하지만 각 이미지의 실제 심볼 분포(DC/AC 계수 run-length, size 등)는 다르므로 **이미지별 최적 테이블**을 만들면 **엔트로피 길이가 짧아져** 파일이 줄어듭니다.
 
@@ -35,7 +37,8 @@ JPEG 기본 인코드는 **표준 허프만 테이블**이나 **품질 기반의
 > - 사진·문서 혼합 세트: **평균 3–7% 감소** 사례가 흔함(씬·설정에 따라 1–10%).
 > - CPU 오버헤드는 보통 **수 ms–수십 ms** 수준(이미지/플랫폼 의존).
 
-### 1.2 코드 (TurboJPEG)
+### 코드 (TurboJPEG)
+
 ```cpp
 struct TJEncodeOpts {
     int quality = 90;
@@ -72,7 +75,8 @@ bool TJ_Encode_Optimized(const IppDib& img, const TJEncodeOpts& o,
 }
 ```
 
-### 1.3 코드 (jpeglib)
+### 코드 (jpeglib)
+
 ```cpp
 jpeg_compress_struct c; jpeg_error_mgr jerr;
 c.err = jpeg_std_error(&jerr); jpeg_create_compress(&c);
@@ -80,8 +84,10 @@ jpeg_mem_dest(&c, &mem, &memSize);
 
 c.image_width  = W; c.image_height = H;
 #ifdef JCS_EXTENSIONS
+
 c.in_color_space = JCS_EXT_BGRA; c.input_components = 4;
 #else
+
 c.in_color_space = JCS_RGB;      c.input_components = 3;
 #endif
 
@@ -101,9 +107,10 @@ jpeg_destroy_compress(&c);
 
 ---
 
-## 2. Restart 마커 — **오류 격리와 병렬성**
+## Restart 마커 — **오류 격리와 병렬성**
 
-### 2.1 구조
+### 구조
+
 - **DRI(Define Restart Interval)**: `0xFFDD` 마커 + 길이(4) + **Ri(2바이트)**. 여기서 **Ri = 세그먼트당 MCU 수**.
 - **RSTn**: 세그먼트 경계마다 **2바이트 마커**(`0xFFD0`~`0xFFD7`) 삽입. **n은 0–7 순환**.
 
@@ -115,7 +122,8 @@ jpeg_destroy_compress(&c);
 - 각 세그먼트마다 **2바이트** 오버헤드(+DRI 4바이트).
 - 세그먼트가 많을수록 파일이 약간 커짐(보통 0.1–0.6% 수준, 간격 설정에 따라 다름).
 
-### 2.2 MCU 크기와 세그먼트 수
+### MCU 크기와 세그먼트 수
+
 샘플링에 따라 **MCU 크기**가 달라집니다.
 
 - 4:4:4 → MCU = **8×8**
@@ -142,7 +150,7 @@ N_{\text{seg}} \approx \left\lceil \frac{MCU\_rows}{n} \right\rceil \times MCU\_
 > **오버헤드 ≈ 4 + 2×11750 = 23504B ≈ 23KB**
 > (10MB 사진이면 0.2% 수준)
 
-### 2.3 언제, 얼마 간격?
+### 언제, 얼마 간격?
 
 - **네트워크 스트리밍/MJPEG/원격 뷰**: **`n = 2~8` MCU-rows** 권장(오류 격리↑).
 - **중요 자료 보관(손상 복구성 우선)**: **`n = 8~16`** 정도.
@@ -152,9 +160,10 @@ N_{\text{seg}} \approx \left\lceil \frac{MCU\_rows}{n} \right\rceil \times MCU\_
 
 ---
 
-## 3. 구현 — jpeglib에서 Restart 간격 주기
+## 구현 — jpeglib에서 Restart 간격 주기
 
-### 3.1 “row 단위”로 지정하기
+### “row 단위”로 지정하기
+
 - `cinfo.restart_in_rows = n;` : **MCU row 단위**(권장, 직관적).
 - 내부에서 `Ri = n × MCU_cols`로 변환됩니다.
 
@@ -170,10 +179,13 @@ void Encode_NetworkRobust(const IppDib& img, int quality, JpegChroma cs,
 
     c.image_width = img.width(); c.image_height= img.height();
 #ifdef JCS_EXTENSIONS
+
     c.in_color_space = JCS_EXT_BGRA; c.input_components = 4;
 #else
+
     c.in_color_space = JCS_RGB;      c.input_components = 3;
 #endif
+
     jpeg_set_defaults(&c);
     SetChromaSampling(c, cs);        // 420/444 등
     jpeg_set_quality(&c, quality, TRUE);
@@ -188,12 +200,15 @@ void Encode_NetworkRobust(const IppDib& img, int quality, JpegChroma cs,
     while (c.next_scanline < c.image_height){
         const uint8_t* s = (const uint8_t*)img.bits() + (size_t)c.next_scanline*img.stride();
 #ifdef JCS_EXTENSIONS
+
         JSAMPROW rp = (JSAMPROW)s;
 #else
+
         static std::vector<uint8_t> row; row.resize(img.width()*3);
         for (int x=0;x<img.width();++x){ row[x*3+0]=s[x*4+2]; row[x*3+1]=s[x*4+1]; row[x*3+2]=s[x*4+0]; }
         JSAMPROW rp = row.data();
 #endif
+
         jpeg_write_scanlines(&c, &rp, 1);
     }
 
@@ -203,7 +218,8 @@ void Encode_NetworkRobust(const IppDib& img, int quality, JpegChroma cs,
 }
 ```
 
-### 3.2 (대안) `restart_interval`(MCU 개수 직접 지정)
+### (대안) `restart_interval`(MCU 개수 직접 지정)
+
 - 특정 **바이트 목표 세그먼트 길이**를 추정해 직접 MCU 수로 넣고 싶다면:
 ```cpp
 c.restart_interval = Ri; // MCU count per segment (DRI Ri)
@@ -212,7 +228,7 @@ c.restart_interval = Ri; // MCU count per segment (DRI Ri)
 
 ---
 
-## 4. TurboJPEG에서의 Restart 제어
+## TurboJPEG에서의 Restart 제어
 
 - **클래식 TurboJPEG API**(tjCompress2)는 **Restart 간격을 직접 노출하지 않습니다**.
 - **정밀 제어**(DRI 필요)는 **jpeglib** 경로를 사용하세요.
@@ -222,14 +238,16 @@ c.restart_interval = Ri; // MCU count per segment (DRI Ri)
 
 ---
 
-## 5. **정책 설계** — 실전 권장값
+## **정책 설계** — 실전 권장값
 
-### 5.1 저장/배포(정적 파일)
+### 저장/배포(정적 파일)
+
 - **Huffman 최적화**: **ON**
 - **Restart**: **OFF**
 - **Progressive**: 웹/클라우드 미리보기용이라면 ON 권장(하지만 스캔 수가 많아지면 파일 크기↑ 가능, 보통 1~5% 내외).
 
-### 5.2 네트워크 스트리밍(RTP/RTSP/MJPEG/모바일 업로드)
+### 네트워크 스트리밍(RTP/RTSP/MJPEG/모바일 업로드)
+
 - **Huffman 최적화**: **ON** (네트워크 대역폭 절감)
 - **Restart**: **ON, `restart_in_rows=2~8`**
 - **샘플링**: 사진 420, UI 444(필요 시)
@@ -242,7 +260,7 @@ c.restart_interval = Ri; // MCU count per segment (DRI Ri)
 
 ---
 
-## 6. “세그먼트 크기 목표”로 **Restart 간격 자동 튜닝**
+## “세그먼트 크기 목표”로 **Restart 간격 자동 튜닝**
 
 **목표**: 세그먼트(두 Restart 사이) 평균 크기를 **4–16KB** 수준으로 맞추고 싶다(오류 격리/캐시 친화).
 **방법**: **프로브 인코딩**(일단 Restart=0으로 한 번 압축) → **평균 바이트/MCU-row**를 추정 → 그 값으로 `restart_in_rows` 계산 → **재인코딩**.
@@ -261,22 +279,28 @@ static ProbeStats Probe_McuStats(const IppDib& img, int quality, JpegChroma cs){
         jpeg_mem_dest(&c,&mem,&memSize);
         c.image_width=img.width(); c.image_height=img.height();
 #ifdef JCS_EXTENSIONS
+
         c.in_color_space=JCS_EXT_BGRA; c.input_components=4;
 #else
+
         c.in_color_space=JCS_RGB;      c.input_components=3;
 #endif
+
         jpeg_set_defaults(&c); SetChromaSampling(c, cs); jpeg_set_quality(&c, quality, TRUE);
         c.optimize_coding = TRUE; // 통계도 더 현실적으로
         jpeg_start_compress(&c, TRUE);
         while (c.next_scanline<c.image_height){
             const uint8_t* s=(const uint8_t*)img.bits() + (size_t)c.next_scanline*img.stride();
 #ifdef JCS_EXTENSIONS
+
             JSAMPROW rp=(JSAMPROW)s;
 #else
+
             static std::vector<uint8_t> row; row.resize(img.width()*3);
             for(int x=0;x<img.width();++x){ row[x*3+0]=s[x*4+2]; row[x*3+1]=s[x*4+1]; row[x*3+2]=s[x*4+0]; }
             JSAMPROW rp=row.data();
 #endif
+
             jpeg_write_scanlines(&c,&rp,1);
         }
         jpeg_finish_compress(&c);
@@ -315,24 +339,27 @@ bool Encode_WithTargetSegment(const IppDib& img, int quality, JpegChroma cs,
 
 ---
 
-## 7. 시나리오별 레시피
+## 시나리오별 레시피
 
-### 7.1 **모바일 업로드(메신저/클라우드)**
+### **모바일 업로드(메신저/클라우드)**
+
 - **사진**: 420, Q=85–92, **Optimize ON**, **Restart OFF**
   → 전송 중 오류는 상위 전송 계층이 보통 재시도/체크섬으로 방지. 저장 크기가 우선.
 - **저품질 네트워크**(MMS/이동체 환경): **Restart ON(`rows=4~8`)** 옵션 제공 → 화면 깨짐 국소화.
 
-### 7.2 **MJPEG 스트리밍(CCTV/로봇)**
+### **MJPEG 스트리밍(CCTV/로봇)**
+
 - Baseline, 420, Q=70–85, **Optimize ON**, **Restart rows=2~8**
   → 손상 프레임의 **잔상 폭발 방지**. 하드웨어 디코더와 상성 좋음.
 
-### 7.3 **스캔·문서 캡처(텍스트 중요)**
+### **스캔·문서 캡처(텍스트 중요)**
+
 - 444, Q=90–95, **Accurate DCT**, **Optimize ON**, **Restart OFF**(정적)
 - 실시간 전송이면 **rows=4~8** 켜서 글리치 국소화.
 
 ---
 
-## 8. 검증과 측정 포인트
+## 검증과 측정 포인트
 
 - **파일 크기**: Optimize ON/OFF 차이(%, ms).
 - **Restart 간격**: rows=0/2/4/8 별 파일 크기(‰), 오류 주입 시 **손상 면적**.
@@ -342,7 +369,7 @@ bool Encode_WithTargetSegment(const IppDib& img, int quality, JpegChroma cs,
 
 ---
 
-## 9. MathJax — 오버헤드 근사식
+## MathJax — 오버헤드 근사식
 
 세그먼트 개수 \(N_{\text{seg}}\) 와 오버헤드 \(O\):
 \[
@@ -354,7 +381,7 @@ O \approx 4 + 2 \cdot N_{\text{seg}} \ \text{(bytes)}
 
 ---
 
-## 10. UI/도구 통합(권장 UX)
+## UI/도구 통합(권장 UX)
 
 - [x] 체크박스 **“허프만 최적화(용량 감소)”** (기본 ON)
 - [x] 체크박스 **“Restart 마커(네트워크 견고성)”** + 콤보 **행 간격(2/4/8/16)**
@@ -366,7 +393,7 @@ O \approx 4 + 2 \cdot N_{\text{seg}} \ \text{(bytes)}
 
 ---
 
-## 11. 요약 결론
+## 요약 결론
 
 - **허프만 최적화**: 항상 켜두고(특히 배치 변환/보관/클라우드), **무료 용량 절감**을 챙기자.
 - **Restart 마커**: **네트워크/스트리밍**/불안정 채널에선 **짧은 간격(2~8 rows)** 으로 **오류 격리**를 보장.
@@ -375,7 +402,7 @@ O \approx 4 + 2 \cdot N_{\text{seg}} \ \text{(bytes)}
 
 ---
 
-## 12. 간단 실험 코드(크기 비교 & 손상 시뮬)
+## 간단 실험 코드(크기 비교 & 손상 시뮬)
 
 ```cpp
 // 1) 허프만 최적화 ON/OFF 크기 비교

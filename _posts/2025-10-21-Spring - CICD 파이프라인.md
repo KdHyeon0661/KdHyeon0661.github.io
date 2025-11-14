@@ -4,7 +4,7 @@ title: Spring - CI/CD 파이프라인
 date: 2025-10-21 17:25:23 +0900
 category: Spring
 ---
-# 21. CI/CD 파이프라인 — GitHub Actions·Argo CD, 품질 게이트, 버전/릴리스/체인지로그 자동화
+# CI/CD 파이프라인 — GitHub Actions·Argo CD, 품질 게이트, 버전/릴리스/체인지로그 자동화
 
 > 목표: **“푸시 → 테스트 → 이미지빌드/보안스캔 → 매니페스트 업데이트 → 자동 배포/승인 → 프로덕션 릴리스”**까지의 풀파이프라인을 예제와 함께 뼈대부터 완성한다.
 > 기준: Spring Boot 3.x(Gradle), Docker/BuildKit, Kubernetes(+Helm), **GitHub Actions**로 CI, **Argo CD**로 CD, 품질은 **테스트·커버리지·Lint**를 **게이트**로 삼는다. 버전/릴리스/체인지로그는 **Conventional Commits**를 기반으로 자동화한다.
@@ -388,6 +388,7 @@ jobs:
 ## F. 품질 게이트 — 테스트·커버리지·Lint를 “막는” 규칙으로
 
 ### F-1. 테스트·커버리지(Gradle+JaCoCo)
+
 `build.gradle.kts` (발췌)
 ```kotlin
 plugins {
@@ -431,6 +432,7 @@ tasks.register("enforceCoverage") {
 CI에선 `./gradlew enforceCoverage`를 호출하거나, 위의 **gate job**과 같이 XML 파싱으로 실패 처리.
 
 ### F-2. Lint/정적 분석
+
 - **Spotless**: 포매팅/라이선스 헤더.
 - **Checkstyle/PMD**: 코드 규약 위반 차단.
 - **SonarQube**: 신규 코드 품질 게이트(커버리지, 버그 0, 취약 0).
@@ -443,12 +445,14 @@ CI에선 `./gradlew enforceCoverage`를 호출하거나, 위의 **gate job**과 
 ## G. 버전·릴리스·체인지로그 자동화
 
 ### G-1. Conventional Commits(권장 규약)
+
 - 형식: `type(scope)!: subject`
   예) `feat(api)!: add pagination to /orders`
 - 주요 타입: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`, `build`, `ci`.
 - **BREAKING CHANGE**는 `!` 또는 바디에 `BREAKING CHANGE:`로 표시 → **메이저** 승격.
 
 ### G-2. semantic-release (Node 기반, 언어 독립)
+
 `.releaserc.json`
 ```json
 {
@@ -491,6 +495,7 @@ jobs:
 → 자동으로 **버전 결정(semver)**, **Git 태그**, **GitHub Release** 생성, **CHANGELOG.md 업데이트**.
 
 ### G-3. Gradle 버전 동기화
+
 - semantic-release가 만든 태그를 **Gradle**이 참조하여 **앱 버전/이미지 태그**에 반영:
 ```kotlin
 val ver = System.getenv("GIT_TAG") ?: "0.0.0-SNAPSHOT"
@@ -504,10 +509,12 @@ Actions에서:
 ```
 
 ### G-4. release-please(대안, Google)
+
 - 언어 독립, PR 기반 릴리스 관리.
 - GitHub App/Action로 **릴리스 PR**을 자동 생성 → 리뷰 후 머지하면 태그/릴리스/체인지로그 생성.
 
 ### G-5. 체인지로그 템플릿 커스터마이즈
+
 - 팀에서 중요 섹션만: **Features**, **Fixes**, **Breaking**, **Chores/Docs** 숨김.
 - 이슈/PR 번호 자동 링크(semantic-release 기본 제공).
 
@@ -611,6 +618,7 @@ echo "- Coverage: ${RATE}%" >> $GITHUB_STEP_SUMMARY
 `.husky/commit-msg` (Node 환경 예)
 ```bash
 #!/usr/bin/env bash
+
 npx --yes commitlint --edit "$1"
 ```
 
@@ -646,6 +654,7 @@ repos:
 ---
 
 ## N. 결론
+
 - Actions로 **빠르고 표준화된 CI**, Argo CD로 **안전하고 가시적인 CD**를 만든다.
 - 품질 게이트는 “블로킹 규칙”으로, 릴리스는 “규약 기반 자동화”로 **사람의 실수를 시스템이 보완**한다.
 - 모든 산출물(이미지·SBOM·서명·차트·릴리스노트)을 **Git & 레지스트리**에 남겨 추적 가능성을 극대화하라.

@@ -4,7 +4,8 @@ title: 웹해킹 - Idempotency-Key + 유니크 제약
 date: 2025-10-15 14:25:23 +0900
 category: 웹해킹
 ---
-# 28. Idempotency-Key(결제/주문) + 유니크 제약
+# Idempotency-Key(결제/주문) + 유니크 제약
+
 **— 문제정의 · 설계 원칙 · API 계약 · DB/캐시 스키마 · 트랜잭션/잠금 전략 · 다중 스택 예제(Express/Node + Postgres, Django/DRF + Postgres, Spring Boot + JPA) · Redis/Lua 원자화 · 실패/복구 · 테스트 시나리오 · 운영 체크리스트**
 
 > **핵심 목표**
@@ -13,7 +14,7 @@ category: 웹해킹
 
 ---
 
-## 0. 한눈에 보기(Executive Summary)
+## 한눈에 보기(Executive Summary)
 
 - **Idempotency-Key**: 클라이언트가 **의도 단위**로 생성하는 **난수 토큰**(예: `Idempotency-Key: 6b3e-...`).
 - **유니크 제약**: 서버/DB가 `(tenant|user, endpoint, key)`에 **유일성**을 강제.
@@ -25,7 +26,7 @@ category: 웹해킹
 
 ---
 
-## 1. 문제 모델(왜 필요한가?)
+## 문제 모델(왜 필요한가?)
 
 - 사용자는 결제 버튼을 **두 번 클릭**한다.
 - 모바일에서 네트워크가 **재전송**한다(HTTP 클라이언트의 **자동 재시도**).
@@ -37,7 +38,7 @@ category: 웹해킹
 
 ---
 
-## 2. 설계 원칙
+## 설계 원칙
 
 1. **의도 스코프 정의**: 키의 유효범위를 **엔드포인트+주체**에 한정
    - 예: `(merchant_id, POST /v1/orders, idempotency_key)` 유니크.
@@ -50,7 +51,7 @@ category: 웹해킹
 
 ---
 
-## 3. API 계약(권장)
+## API 계약(권장)
 
 - **요청 헤더**
   - `Idempotency-Key: <base64url-128bit+>` (필수)
@@ -68,9 +69,9 @@ category: 웹해킹
 
 ---
 
-## 4. 데이터 모델 & 인덱스(예: PostgreSQL)
+## 데이터 모델 & 인덱스(예: PostgreSQL)
 
-### 4.1 테이블
+### 테이블
 
 ```sql
 -- (1) 아이템포턴시 키 레지스트리
@@ -101,7 +102,7 @@ CREATE INDEX idx_idem_exp ON idempotency_keys(expires_at);
 > **왜 DB 보관?**
 > “한 번만 성공”은 **영속 레벨**에서 보장해야 한다. 인메모리/단일 인스턴스 캐시는 노드가 바뀌면 깨진다.
 
-### 4.2 상태 전이(State Machine)
+### 상태 전이(State Machine)
 
 ```
 CLAIM(INSERT .. ON CONFLICT)
@@ -115,9 +116,9 @@ CLAIM(INSERT .. ON CONFLICT)
 
 ---
 
-## 5. 트랜잭션/잠금 패턴
+## 트랜잭션/잠금 패턴
 
-### 5.1 “선점 + 같은 트랜잭션에서 생성” (Postgres)
+### “선점 + 같은 트랜잭션에서 생성” (Postgres)
 
 1) **선점**: `INSERT ... ON CONFLICT DO NOTHING`
 2) **행 잠금**: `SELECT ... FOR UPDATE`(**SKIP LOCKED** 활용 가능)
@@ -127,9 +128,9 @@ CLAIM(INSERT .. ON CONFLICT)
 
 ---
 
-## 6. 구현 예시 A — **Node/Express + PostgreSQL**
+## 구현 예시 A — **Node/Express + PostgreSQL**
 
-### 6.1 헬퍼: 요청 바디 해시
+### 헬퍼: 요청 바디 해시
 
 ```js
 // lib/hash.js
@@ -152,7 +153,7 @@ function sortKeys(obj) {
 }
 ```
 
-### 6.2 라우트: `POST /v1/orders`
+### 라우트: `POST /v1/orders`
 
 ```js
 // routes/orders.js
@@ -276,12 +277,13 @@ export default router;
 
 ---
 
-## 7. 구현 예시 B — **Django/DRF + PostgreSQL**
+## 구현 예시 B — **Django/DRF + PostgreSQL**
 
-### 7.1 모델
+### 모델
 
 ```python
 # app/models.py
+
 from django.db import models
 
 class IdempotencyKey(models.Model):
@@ -304,10 +306,11 @@ class IdempotencyKey(models.Model):
         unique_together = ('tenant_id','endpoint','idempotency_key')
 ```
 
-### 7.2 뷰
+### 뷰
 
 ```python
 # app/views.py
+
 import hashlib, json, os, time
 from django.db import transaction
 from django.http import JsonResponse
@@ -367,7 +370,7 @@ def create_order(request):
 
 ---
 
-## 8. 구현 예시 C — **Spring Boot + JPA**
+## 구현 예시 C — **Spring Boot + JPA**
 
 > 포인트: **`@Transactional`** 내에서 키 선점 → 비즈니스 → 스냅샷 저장.
 
@@ -436,7 +439,7 @@ public class OrderService {
 
 ---
 
-## 9. Redis + Lua(원자 선점) 패턴
+## Redis + Lua(원자 선점) 패턴
 
 > DB 대신 분산 KV를 쓸 때, **Lua 스크립트**로 “키 선점/검증/TTL 설정”을 **원자**로 처리.
 
@@ -472,7 +475,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 10. 결제 게이트웨이 연동
+## 결제 게이트웨이 연동
 
 - Stripe 등 일부 PG는 자체 **Idempotency-Key**를 지원.
 - **서버 내부 키**와 **PG 키**를 **둘 다** 사용하라.
@@ -482,7 +485,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 11. 실패·타임아웃·충돌 처리
+## 실패·타임아웃·충돌 처리
 
 - **서버 타임아웃** 후 내부에서 성공했을 수 있다 → **재시도는 동일 키**로 오게 하라(클라이언트 SDK 가이드).
 - **PROCESSING 장기화**: `locked_at` + **워치독**(예: 2분) 초과 시 **FAILED**로 전이 or **해제** 후 재시도 허용.
@@ -492,7 +495,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 12. 테스트 시나리오(자동화 권장)
+## 테스트 시나리오(자동화 권장)
 
 1) **더블 클릭**: 10ms 간격으로 동일 키 2회 → **주문 1개**만 생성, 1회는 **재생**.
 2) **서버 지연**: 첫 요청 2초 슬립 중, 동일 키 재호출 → **202** 또는 대기 후 동일 결과.
@@ -503,7 +506,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 13. 운영 & 모니터링
+## 운영 & 모니터링
 
 - **지표**:
   - `idem.claimed.count`, `idem.replayed.count`, `idem.mismatch.count`, `idem.processing.timeout.count`
@@ -514,7 +517,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 14. 클라이언트 가이드(UX)
+## 클라이언트 가이드(UX)
 
 - **액션당 1개 키** 생성(버튼 클릭 시 즉시 생성).
 - 실패/시간초과가 나더라도 **같은 키로 재시도**.
@@ -523,7 +526,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 15. 수학적 관점(직관)
+## 수학적 관점(직관)
 
 > **멱등성(idempotence)**: 연산 \( f \) 에 대해
 > $$ f(f(x)) = f(x) $$
@@ -532,7 +535,7 @@ if (Array.isArray(r) && r[1] === 'MISMATCH') return 409;
 
 ---
 
-## 16. “복붙” 최소 구현 템플릿(Express + Postgres)
+## “복붙” 최소 구현 템플릿(Express + Postgres)
 
 ```sql
 -- migration
@@ -563,7 +566,7 @@ app.listen(3000);
 
 ---
 
-## 17. 체크리스트
+## 체크리스트
 
 - [ ] `Idempotency-Key` 필수 + **난수성**(128bit+)
 - [ ] `(tenant, endpoint, key)` **유니크 인덱스**
@@ -579,6 +582,7 @@ app.listen(3000);
 ---
 
 ### 마무리
+
 Idempotency-Key + 유니크 제약은 **간단하지만 강력한 방패**다.
 핵심은 **의도 식별 → 강한 유일성 → 응답 재생 → 일관된 상태 전이**이며,
 DB 트랜잭션과 결합하면 **클러스터/재시도/장애**에도 **이중 청구 없는** 견고한 결제/주문 시스템을 만들 수 있다.

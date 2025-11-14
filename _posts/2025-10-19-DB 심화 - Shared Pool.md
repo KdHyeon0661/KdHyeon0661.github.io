@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0. 큰 그림 — Shared Pool이 하는 일
+## 큰 그림 — Shared Pool이 하는 일
 
 - **SGA의 Shared Pool** 은 **SQL/PLSQL 실행에 필요한 공용 메타데이터**와 **코드/실행 계획**을 캐시하여,
   - **파싱 비용 감소**(Hard Parse → Soft Parse),
@@ -33,7 +33,7 @@ category: DB 심화
 
 ---
 
-## 1. Shared Pool 사이징·상태 점검
+## Shared Pool 사이징·상태 점검
 
 ```sql
 -- Shared Pool 전체 상태(메모리, 프리, Reserved)
@@ -57,9 +57,9 @@ SHOW PARAMETER shared_pool_reserved_size;
 
 ---
 
-## 2. Dictionary Cache (Row Cache)
+## Dictionary Cache (Row Cache)
 
-### 2.1 무엇을 담나?
+### 무엇을 담나?
 
 - 파싱·실행 중 필요한 **데이터 사전 테이블의 메타데이터**를 **키 기반 캐시**로 보관합니다.
 - 예: **`dc_objects`**, **`dc_users`**, **`dc_segments`**, **`dc_constraints`**, **`dc_synonyms`**, **`dc_sequences`**, **`dc_profiles`**, **`dc_histogram_defs`** 등.
@@ -68,7 +68,7 @@ SHOW PARAMETER shared_pool_reserved_size;
 > - **행 단위(Row)** 로 캐시(그래서 **Row Cache**)
 > - **Library Cache** 보다 **더 자주·짧게** 접근됨(파싱/권한체크/오브젝트 조회)
 
-### 2.2 관측 뷰
+### 관측 뷰
 
 ```sql
 -- 캐시 품질, Get/Miss 비율
@@ -83,7 +83,7 @@ FROM   v$rowcache_parent
 ORDER  BY getmisses DESC;
 ```
 
-### 2.3 관련 대기 이벤트
+### 관련 대기 이벤트
 
 - **`row cache mutex`**
   - Row Cache 접근 **뮤텍스** 경합(19c 이후 뮤텍스 기반)
@@ -91,7 +91,7 @@ ORDER  BY getmisses DESC;
 - **`row cache lock`**
   - **Row Cache 엔트리 수정** 시 보호(예: DDL, sequence cache 조정)
 
-### 2.4 실습: DDL 폭주로 Row Cache 경합 유도(테스트 환경)
+### 실습: DDL 폭주로 Row Cache 경합 유도(테스트 환경)
 
 ```sql
 -- 주의: 테스트 전용
@@ -118,16 +118,16 @@ ORDER  BY sec DESC;
 
 ---
 
-## 3. Library Cache
+## Library Cache
 
-### 3.1 무엇을 담나?
+### 무엇을 담나?
 
 - **SQL 커서 공유**(파싱 트리, 최적화 결과/실행계획, 실행 상태 일부)
 - **PL/SQL 오브젝트**(패키지/프로시저/함수/트리거) **코드와 메타**
 - **Java 소스/클래스**
 - **DDL 오브젝트 정의**(의존성 그래프 포함)
 
-### 3.2 Hard Parse vs Soft Parse
+### Hard Parse vs Soft Parse
 
 - **Hard Parse**:
   1) 구문 해석 → 2) 메타데이터 검사(**Row Cache** 사용) → 3) **최적화(플랜 생성)** → 4) **Library Cache**에 **커서 생성·등록**
@@ -136,7 +136,7 @@ ORDER  BY sec DESC;
 
 > **효과**: Hard Parse 줄이면 **CPU·Row Cache·Latch/Mutex 경합**이 동시에 줄어듭니다.
 
-### 3.3 관측 뷰
+### 관측 뷰
 
 ```sql
 -- 커서 재사용/미스
@@ -155,7 +155,7 @@ FROM   v$sql_shared_cursor
 WHERE  sql_id = :sql_id;
 ```
 
-### 3.4 Child Cursor(버전) 분기 — 왜 늘어나는가?
+### Child Cursor(버전) 분기 — 왜 늘어나는가?
 
 - **바인드 타입/길이 상이**, **NLS 설정 차이**, **환경 파라미터 차이**
 - **Bind Peeking** → **Adaptive Cursor Sharing(ACS)** 로 **바인드 값 분포** 따라 다른 플랜
@@ -163,7 +163,7 @@ WHERE  sql_id = :sql_id;
 
 > **증상**: `version_count` 고도화, `cursor: mutex S/X`, `library cache: lock/pin`, `mutex spin` 증가
 
-### 3.5 대기 이벤트
+### 대기 이벤트
 
 - **`library cache: lock`**: 오브젝트(커서/PLSQL/테이블 정의 등) **정합성 보장** 위한 Lock
 - **`library cache: pin`**: **실행/컴파일 중** 오브젝트 **변경 금지**를 위한 Pin
@@ -172,9 +172,9 @@ WHERE  sql_id = :sql_id;
 
 ---
 
-## 4. 예제 시나리오 — 리터럴 남발 vs 바인드 변수
+## 예제 시나리오 — 리터럴 남발 vs 바인드 변수
 
-### 4.1 준비
+### 준비
 
 ```sql
 DROP TABLE t_sales PURGE;
@@ -195,7 +195,7 @@ END;
 CREATE INDEX ix_sales_cid ON t_sales(cid);
 ```
 
-### 4.2 **리터럴 남발** (나쁜 예)
+### **리터럴 남발** (나쁜 예)
 
 ```sql
 -- (의도적으로) 서로 다른 상수 값으로 같은 형태를 수천 번 실행
@@ -218,7 +218,7 @@ ORDER  BY parse_calls DESC;
 - **Library Cache/Row Cache** 경합, `cursor: mutex S/X`, `library cache: lock` 상승
 - **Shared Pool 파편화**/메모리 압박 → **ORA-04031** 위험
 
-### 4.3 **바인드 변수** (좋은 예)
+### **바인드 변수** (좋은 예)
 
 ```sql
 VARIABLE b NUMBER
@@ -246,7 +246,7 @@ ORDER  BY parse_calls DESC;
 
 ---
 
-## 5. Bind Peeking & Adaptive Cursor Sharing(ACS)
+## Bind Peeking & Adaptive Cursor Sharing(ACS)
 
 - **Bind Peeking**: 최초 하드 파싱 시 **바인드 값**을 엿보고 통계·선택도를 기반으로 **플랜 결정**
 - 이후 **바인드 값 분포**가 다양하면, **ACS** 가 **바인드 셀렉티비티 히스토리**를 학습해 **다른 Child Cursor** 를 생성(= 값 범주별 최적 플랜)
@@ -265,7 +265,7 @@ WHERE  sql_id = :sql_id;
 
 ---
 
-## 6. Invalidation(무효화) — 언제/왜 생기나?
+## Invalidation(무효화) — 언제/왜 생기나?
 
 - **DDL**(테이블 구조 변경, 인덱스 생성/삭제)
 - **통계 갱신**(표본/히스토그램)으로 선택도 변동
@@ -284,7 +284,7 @@ WHERE  namespace IN ('SQL AREA','TABLE/PROCEDURE','BODY','TRIGGER');
 
 ---
 
-## 7. Library Cache/Row Cache 관련 대기 이벤트 빠르게 읽기
+## Library Cache/Row Cache 관련 대기 이벤트 빠르게 읽기
 
 | 이벤트 | 의미 | 원인/대응 |
 |---|---|---|
@@ -296,7 +296,7 @@ WHERE  namespace IN ('SQL AREA','TABLE/PROCEDURE','BODY','TRIGGER');
 
 ---
 
-## 8. DBMS_SHARED_POOL.KEEP — 핫 오브젝트 핀(Pin)
+## DBMS_SHARED_POOL.KEEP — 핫 오브젝트 핀(Pin)
 
 - 자주 사용하는 **패키지/PLSQL/커서 템플릿** 등을 **Shared Pool에서 축출되지 않게 고정**
 - **주의**: 과도한 KEEP은 **메모리 고정 낭비** → **엄선** 필요
@@ -316,7 +316,7 @@ WHERE  sql_text LIKE 'SELECT /* bind */ COUNT(*) FROM t_sales WHERE cid=:1';
 
 ---
 
-## 9. 세션/커서 캐시 — 소프트 파싱 보조
+## 세션/커서 캐시 — 소프트 파싱 보조
 
 ```sql
 -- 세션 단 캐시
@@ -334,7 +334,7 @@ ORDER  BY name;
 
 ---
 
-## 10. ORA-04031 대비 체크리스트
+## ORA-04031 대비 체크리스트
 
 1. **리터럴 유입 통제**: 바인드 변수, `CURSOR_SHARING=FORCE`(임시), SQL 표준화
 2. **Child Cursor 폭증 관리**: 타입/길이 일관성, NLS/환경 일치, ACS 과도화 점검
@@ -346,13 +346,14 @@ ORDER  BY name;
 
 ---
 
-## 11. 종합 실습 — “나쁜 패턴 → 개선 → 지표 비교”
+## 종합 실습 — “나쁜 패턴 → 개선 → 지표 비교”
 
-### 11.1 나쁜 패턴 실행
+### 나쁜 패턴 실행
+
 - 리터럴 남발 루프(§4.2)
 - 동시에 DDL/리컴파일 루프(§2.4)
 
-### 11.2 지표 스냅샷
+### 지표 스냅샷
 
 ```sql
 -- 전/후 비교용 스냅샷
@@ -372,15 +373,17 @@ SELECT parameter, gets, getmisses
 FROM   v$rowcache;
 ```
 
-### 11.3 개선책 적용
+### 개선책 적용
+
 - 바인드 변수로 전환(§4.3), `session_cached_cursors` 상향, KEEP 최소화, DDL 배치화
 
-### 11.4 재측정
+### 재측정
+
 - **Hard Parse↓**, **cursor mutex/row cache 대기↓**, **Library/Row cache 미스↓** 기대
 
 ---
 
-## 12. 수학적 감각(개념식)
+## 수학적 감각(개념식)
 
 - **평균 파싱 비용**
   $$ \mathrm{Parse\ Cost} \approx \alpha \cdot \mathrm{HardParse} + \beta \cdot \mathrm{SoftParse} $$
@@ -391,7 +394,7 @@ FROM   v$rowcache;
 
 ---
 
-## 13. 마무리 요약
+## 마무리 요약
 
 - **Dictionary Cache(=Row Cache)** 는 **메타데이터**를 행 단위로 캐시해 **파싱/권한체크**를 빠르게 합니다.
   - 경합 시 **`row cache mutex/lock`**, DDL/권한 변경/Hard Parse 폭주가 흔한 원인.

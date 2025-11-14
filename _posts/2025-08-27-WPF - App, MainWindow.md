@@ -11,16 +11,18 @@ WPF 애플리케이션의 **진입점(App.xaml)**과 **첫 화면(MainWindow.xam
 
 ---
 
-## 1. App.xaml: 애플리케이션 진입점 & 전역 리소스
+## App.xaml: 애플리케이션 진입점 & 전역 리소스
 
-### 1.1 App.xaml의 역할
+### App.xaml의 역할
+
 - **애플리케이션 수명주기**: 시작(Startup), 종료(Exit), 세션 종료(SessionEnding) 이벤트 연결
 - **전역 리소스 루트**: `ResourceDictionary`를 통해 **스타일/템플릿/브러시/컨버터** 등 앱 전체 공용 리소스 제공
 - **시작 화면 지정**: `StartupUri`로 최초 윈도우 지정, 혹은 `Startup` 이벤트에서 동적으로 결정
 - **종료 조건 관리**: `ShutdownMode`(`OnLastWindowClose`, `OnMainWindowClose`, `OnExplicitShutdown`)
 - **테마 병합/스위칭**: `MergedDictionaries`로 사전 구조화 후 런타임 교체
 
-### 1.2 App.xaml 기본 예시
+### App.xaml 기본 예시
+
 ```xml
 <Application x:Class="MyWpfApp.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -51,7 +53,8 @@ WPF 애플리케이션의 **진입점(App.xaml)**과 **첫 화면(MainWindow.xam
 > 같은 어셈블리: `pack://application:,,,/경로/파일.xaml`
 > 다른 어셈블리 `MyLib`: `pack://application:,,,/MyLib;component/경로/파일.xaml`
 
-### 1.3 App.xaml.cs에서 커스텀 시작 흐름
+### App.xaml.cs에서 커스텀 시작 흐름
+
 `StartupUri` 대신 **Startup 이벤트**로 초기 로직(로그인/권한/설정)을 처리하고 창을 선택합니다.
 
 ```csharp
@@ -79,7 +82,8 @@ public partial class App : Application
 }
 ```
 
-### 1.4 전역 예외 처리(권장)
+### 전역 예외 처리(권장)
+
 ```csharp
 public partial class App : Application
 {
@@ -103,7 +107,8 @@ public partial class App : Application
 }
 ```
 
-### 1.5 테마 스위칭(런타임에 MergedDictionaries 교체)
+### 테마 스위칭(런타임에 MergedDictionaries 교체)
+
 ```csharp
 public static class ThemeManager
 {
@@ -118,22 +123,25 @@ public static class ThemeManager
 // 사용: ThemeManager.Apply(new Uri("pack://application:,,,/Themes/Colors.Dark.xaml"));
 ```
 
-### 1.6 ShutdownMode 이해
+### ShutdownMode 이해
+
 - `OnLastWindowClose`(기본): 마지막 창이 닫히면 종료
 - `OnMainWindowClose`: **MainWindow**가 닫힐 때만 종료(다른 창은 무관)
 - `OnExplicitShutdown`: `Application.Shutdown()` 호출 시에만 종료
 
 ---
 
-## 2. MainWindow.xaml: 루트 창 & 화면 구성
+## MainWindow.xaml: 루트 창 & 화면 구성
 
-### 2.1 MainWindow.xaml의 역할
+### MainWindow.xaml의 역할
+
 - **최초 표시되는 화면**(혹은 Shell): 메뉴/내비게이션/컨텐츠 영역/상태바 등 **앱 골격**
 - **Window 수준 리소스**: 페이지 전용 스타일/템플릿/브러시(앱 전역 리소스와 분리)
 - **데이터 바인딩의 중심**: `DataContext`(ViewModel) 연결, `CommandBindings`/`InputBindings`로 단축키/명령 처리
 - **레이아웃 루트**: `Grid`(권장)로 **반응형 배치**, `Row/Column` 설계
 
-### 2.2 MainWindow.xaml 기본 구조(실전형 예시)
+### MainWindow.xaml 기본 구조(실전형 예시)
+
 ```xml
 <Window x:Class="MyWpfApp.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -212,7 +220,8 @@ public static class ThemeManager
 > **DataTemplate**로 형식→뷰를 매핑하면 **페이지 전환**을 깔끔하게 구현할 수 있습니다.
 > (이 매핑은 보통 `Themes/DataTemplates.xaml`에 배치)
 
-### 2.3 MainWindow.xaml.cs (필요 최소한)
+### MainWindow.xaml.cs (필요 최소한)
+
 MVVM을 쓰더라도 **DataContext 연결**과 **윈도우 이벤트** 정도는 코드비하인드에서 담당할 수 있습니다.
 
 ```csharp
@@ -245,7 +254,8 @@ public partial class MainWindow : Window
 > **권장**: 실제 프로젝트에서는 **의존성 주입**으로 `MainWindow(MainViewModel vm)` 생성자 주입을 선호합니다.
 > (App.xaml.cs에서 Host/ServiceProvider로 생성하여 `DataContext` 자동 세팅)
 
-### 2.4 디자인 타임 데이터 주입(편리)
+### 디자인 타임 데이터 주입(편리)
+
 XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext**를 사용합니다.
 
 ```xml
@@ -260,7 +270,8 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 </Window>
 ```
 
-### 2.5 Window 속성 설계 팁
+### Window 속성 설계 팁
+
 - **크기 정책**: `SizeToContent`, `MinWidth/MinHeight`, `MaxWidth/MaxHeight`
 - **스타일/크롬**: `WindowStyle=None` + `AllowsTransparency=True`로 커스텀 타이틀바(드래그/리사이즈 코드 필요)
 - **시작 위치**: `WindowStartupLocation=CenterScreen/CenterOwner`
@@ -268,13 +279,15 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 
 ---
 
-## 3. 리소스(스타일/템플릿) 조직 전략
+## 리소스(스타일/템플릿) 조직 전략
 
-### 3.1 전역 vs 창 전용
+### 전역 vs 창 전용
+
 - **전역(App.xaml)**: 공통 스타일/색상/템플릿(앱 전체에 일관성)
 - **창/뷰 전용(Window.Resources)**: 특정 화면에만 필요한 것(충돌 최소화, 빌드/로드 성능 개선)
 
-### 3.2 StaticResource vs DynamicResource
+### StaticResource vs DynamicResource
+
 - **StaticResource**: 로드 시점 고정(성능 우수). **변경 감지 없음**
 - **DynamicResource**: 런타임 변경 반영(테마 전환 등). **성능 비용 有**
 
@@ -283,7 +296,8 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 <TextBlock Foreground="{DynamicResource PrimaryBrush}"/> <!-- 테마 전환 대응 -->
 ```
 
-### 3.3 DataTemplate로 뷰-뷰모델 연결(강력 추천)
+### DataTemplate로 뷰-뷰모델 연결(강력 추천)
+
 ```xml
 <!-- Themes/DataTemplates.xaml -->
 <ResourceDictionary
@@ -302,7 +316,7 @@ XAML 미리보기에서 더 나은 디자이너 경험을 위해 **d:DataContext
 
 ---
 
-## 4. App.xaml + MainWindow.xaml 통합 샘플(요약)
+## App.xaml + MainWindow.xaml 통합 샘플(요약)
 
 **App.xaml**
 ```xml
@@ -365,7 +379,7 @@ public partial class App : Application
 
 ---
 
-## 5. 체크리스트(요약)
+## 체크리스트(요약)
 
 - **App.xaml**
   - `MergedDictionaries`로 리소스 모듈화(Colors/Styles/Templates/DataTemplates)

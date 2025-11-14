@@ -13,7 +13,7 @@ category: Avalonia
 
 ---
 
-## 0. 용어·구성 요약
+## 용어·구성 요약
 
 | 개념 | 설명 |
 |------|------|
@@ -26,11 +26,11 @@ category: Avalonia
 
 ---
 
-## 1. 디자인 토큰(Design Tokens)으로 **일관성** 확보
+## 디자인 토큰(Design Tokens)으로 **일관성** 확보
 
 대규모 앱은 색상/타이포/간격/반경을 **토큰**으로 모아야 유지보수성이 높아진다.
 
-### 1.1 프로젝트 구조 예시
+### 프로젝트 구조 예시
 
 ```
 Styles/
@@ -50,7 +50,7 @@ Styles/
     └── HighContrast.xaml
 ```
 
-### 1.2 Colors.xaml — 역할(role) 기반 팔레트
+### Colors.xaml — 역할(role) 기반 팔레트
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui">
@@ -73,7 +73,7 @@ Styles/
 </ResourceDictionary>
 ```
 
-### 1.3 Typography.xaml — 폰트/계층화
+### Typography.xaml — 폰트/계층화
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui">
@@ -86,7 +86,7 @@ Styles/
 </ResourceDictionary>
 ```
 
-### 1.4 Spacing.xaml — 간격 스케일
+### Spacing.xaml — 간격 스케일
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui">
@@ -105,9 +105,9 @@ Styles/
 
 ---
 
-## 2. App.axaml — 리소스 사전 병합과 테마 로딩
+## App.axaml — 리소스 사전 병합과 테마 로딩
 
-### 2.1 App.axaml에 토큰/컨트롤/테마 포함
+### App.axaml에 토큰/컨트롤/테마 포함
 
 ```xml
 <Application xmlns="https://github.com/avaloniaui"
@@ -139,9 +139,9 @@ Styles/
 
 ---
 
-## 3. 기본 스타일 선언 & 적용 — 선택자와 변형(variant)
+## 기본 스타일 선언 & 적용 — 선택자와 변형(variant)
 
-### 3.1 Button 변형(variant) 스타일
+### Button 변형(variant) 스타일
 
 ```xml
 <!-- Buttons.xaml -->
@@ -184,9 +184,9 @@ Styles/
 
 ---
 
-## 4. 리소스 분리와 병합 — 모듈/패키지로 확장
+## 리소스 분리와 병합 — 모듈/패키지로 확장
 
-### 4.1 모듈에서 Styles를 제공하는 NuGet 패키지
+### 모듈에서 Styles를 제공하는 NuGet 패키지
 
 - 모듈 `YourApp.Modules.Reports` 내 `Styles/Reports.xaml` 생성
 - `.csproj`에 `AvaloniaResource`로 포함
@@ -200,7 +200,7 @@ Styles/
 
 ---
 
-## 5. 다크/라이트/고대비 — ThemeVariant 및 런타임 전환
+## 다크/라이트/고대비 — ThemeVariant 및 런타임 전환
 
 Avalonia 11부터는 `ThemeVariant`를 통해 테마 변형을 자연스럽게 관리할 수 있다.
 대표 전략 두 가지:
@@ -208,7 +208,7 @@ Avalonia 11부터는 `ThemeVariant`를 통해 테마 변형을 자연스럽게 �
 1) **전역 교체형**: `Application.Styles[i]`에 들어있는 Theme 사전을 통째로 교체
 2) **범위 지정형**: `ThemeVariantScope`로 **영역별** 테마 지정
 
-### 5.1 Theme 리소스 예시(Light.xaml / Dark.xaml)
+### Theme 리소스 예시(Light.xaml / Dark.xaml)
 
 ```xml
 <!-- Light.xaml -->
@@ -227,7 +227,7 @@ Avalonia 11부터는 `ThemeVariant`를 통해 테마 변형을 자연스럽게 �
 </ResourceDictionary>
 ```
 
-### 5.2 런타임 전환 서비스(ThemeService)
+### 런타임 전환 서비스(ThemeService)
 
 ```csharp
 public interface IThemeService
@@ -262,7 +262,7 @@ public sealed class ThemeService : IThemeService
 _themeService.SetThemeVariant(ThemeVariant.Dark);
 ```
 
-### 5.3 영역별 테마(ThemeVariantScope)
+### 영역별 테마(ThemeVariantScope)
 
 ```xml
 <ThemeVariantScope RequestedThemeVariant="Dark">
@@ -276,9 +276,9 @@ _themeService.SetThemeVariant(ThemeVariant.Dark);
 
 ---
 
-## 6. 스타일 상속(BasedOn)과 키 스타일(Keyed Style)
+## 스타일 상속(BasedOn)과 키 스타일(Keyed Style)
 
-### 6.1 BasedOn으로 변형만 다른 스타일
+### BasedOn으로 변형만 다른 스타일
 
 ```xml
 <Style x:Key="Button.Base" Selector="Button">
@@ -293,7 +293,7 @@ _themeService.SetThemeVariant(ThemeVariant.Dark);
 </Style>
 ```
 
-### 6.2 키 지정 스타일을 특정 컨트롤에만 적용
+### 키 지정 스타일을 특정 컨트롤에만 적용
 
 ```xml
 <Style x:Key="SearchTextBoxStyle" Selector="TextBox">
@@ -309,9 +309,9 @@ _themeService.SetThemeVariant(ThemeVariant.Dark);
 
 ---
 
-## 7. DataTrigger/가상 선택자 — 상태 기반 스타일
+## DataTrigger/가상 선택자 — 상태 기반 스타일
 
-### 7.1 가상 선택자
+### 가상 선택자
 
 ```xml
 <Style Selector="Button:pointerover">
@@ -327,7 +327,7 @@ _themeService.SetThemeVariant(ThemeVariant.Dark);
 </Style>
 ```
 
-### 7.2 DataTrigger(속성 값에 따라)
+### DataTrigger(속성 값에 따라)
 
 ```xml
 <Style Selector="TextBlock">
@@ -342,9 +342,9 @@ _themeService.SetThemeVariant(ThemeVariant.Dark);
 
 ---
 
-## 8. 컨트롤 템플릿 완전 재정의 — TemplatedControl
+## 컨트롤 템플릿 완전 재정의 — TemplatedControl
 
-### 8.1 커스텀 컨트롤(TemplatedControl)
+### 커스텀 컨트롤(TemplatedControl)
 
 ```csharp
 public class MyFancyButton : TemplatedControl
@@ -360,7 +360,7 @@ public class MyFancyButton : TemplatedControl
 }
 ```
 
-### 8.2 컨트롤 테마(Style)로 Template 정의
+### 컨트롤 테마(Style)로 Template 정의
 
 ```xml
 <!-- Controls/FancyButton.xaml -->
@@ -395,7 +395,7 @@ public class MyFancyButton : TemplatedControl
 
 ---
 
-## 9. 애니메이션을 스타일에 조합(선택)
+## 애니메이션을 스타일에 조합(선택)
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
@@ -412,9 +412,9 @@ public class MyFancyButton : TemplatedControl
 
 ---
 
-## 10. 런타임 테마 전환 UI 예시
+## 런타임 테마 전환 UI 예시
 
-### 10.1 ThemeSelectorViewModel
+### ThemeSelectorViewModel
 
 ```csharp
 public sealed class ThemeSelectorViewModel : ReactiveObject
@@ -429,7 +429,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 }
 ```
 
-### 10.2 XAML
+### XAML
 
 ```xml
 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -443,7 +443,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ---
 
-## 11. 성능·우선순위·모듈화 팁
+## 성능·우선순위·모듈화 팁
 
 - **우선순위**: 로컬 값 > 트리거 > 스타일 > 테마/리소스.
   의도치 않은 덮어쓰기를 피하려면 변형마다 **명확한 Selector**를 사용.
@@ -455,7 +455,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ---
 
-## 12. 예시 확장: 검색 상자 스타일 일괄 적용
+## 예시 확장: 검색 상자 스타일 일괄 적용
 
 ```xml
 <!-- Inputs.xaml -->
@@ -482,7 +482,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ---
 
-## 13. 접근성(HighContrast)와 사용자 설정
+## 접근성(HighContrast)와 사용자 설정
 
 - HighContrast.xaml에서 텍스트 대비, 포커스 링 두께 등을 **강조**한다.
 - 폰트 크기를 사용자 설정과 연결하여 `FontSize` 토큰을 **확대/축소**할 수 있게 한다.
@@ -490,7 +490,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ---
 
-## 14. 테스트 전략
+## 테스트 전략
 
 - **시각 회귀 테스트**: 샷 비교(Playwright/스크린샷)로 테마 변경 시 파손 여부 확인.
 - **리소스 참조 검증**: 주요 컨트롤 템플릿의 리소스 키 사용 여부 단위 테스트(정적 분석 수준).
@@ -498,7 +498,7 @@ public sealed class ThemeSelectorViewModel : ReactiveObject
 
 ---
 
-## 15. 요약 표
+## 요약 표
 
 | 주제 | 핵심 |
 |------|------|

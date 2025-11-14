@@ -6,7 +6,7 @@ category: Docker
 ---
 # Dockerfile 완전 정복: 기본 문법과 개념 설명
 
-## 1. Dockerfile이란?
+## Dockerfile이란?
 
 - Docker 이미지를 **선언적으로 정의**하는 스크립트 파일.
 - 빌드 시 **위에서 아래로** 순차 실행되며, 각 지시문은 일반적으로 **레이어**를 형성합니다.
@@ -22,15 +22,18 @@ my-app/
 
 ---
 
-## 2. 빌드 컨텍스트와 .dockerignore
+## 빌드 컨텍스트와 .dockerignore
 
-### 2.1 빌드 컨텍스트
+### 빌드 컨텍스트
+
 `docker build` 시 지정한 디렉터리(예: `.`)의 파일들이 **컨텍스트**로 데몬에 전송됩니다.
 컨텍스트가 크면 느려지고 캐시가 자주 무효화됩니다. 반드시 `.dockerignore`로 다이어트하세요.
 
-### 2.2 .dockerignore 예시
+### .dockerignore 예시
+
 ```dockerignore
 # VCS/캐시/산출물/비밀
+
 .git/
 .gitignore
 __pycache__/
@@ -41,6 +44,7 @@ build/
 *.log
 .env
 # Docker 메타파일은 보통 제외
+
 Dockerfile
 docker-compose.yml
 README.md
@@ -54,7 +58,7 @@ tests/
 
 ---
 
-## 3. 기본 문법 총정리(확장)
+## 기본 문법 총정리(확장)
 
 아래 표는 기존 표를 유지하되, 실전 차이를 보강합니다.
 
@@ -78,12 +82,13 @@ tests/
 
 ---
 
-## 4. FROM — 베이스 이미지 전략
+## FROM — 베이스 이미지 전략
 
 ```dockerfile
 FROM python:3.11-slim
 # 또는 다이제스트 고정
 # FROM python@sha256:<digest>
+
 ```
 
 - `*-slim`, `alpine`, `distroless`, `scratch` 등을 요구에 따라 선택.
@@ -91,7 +96,7 @@ FROM python:3.11-slim
 
 ---
 
-## 5. RUN — 레이어 최소화와 캐시
+## RUN — 레이어 최소화와 캐시
 
 좋은 예:
 ```dockerfile
@@ -105,36 +110,42 @@ RUN apt-get update \
 
 ---
 
-## 6. COPY vs ADD — 무엇을 쓸까?
+## COPY vs ADD — 무엇을 쓸까?
 
 원칙: **COPY가 기본**, ADD는 **정말 필요한 경우**만.
 
 ```dockerfile
 # 예측 가능한 복사
+
 COPY ./app.py /app/app.py
 
 # ADD는 tar 자동 해제/URL 다운로드가 있지만, 빌드 재현성과 보안상 COPY 권장
+
 ADD https://example.com/app.tar.gz /opt/   # 특별한 경우
 ```
 
 ---
 
-## 7. CMD vs ENTRYPOINT — exec form을 기본으로
+## CMD vs ENTRYPOINT — exec form을 기본으로
 
-### 7.1 exec form vs shell form
+### exec form vs shell form
+
 - exec form(권장): `["nginx","-g","daemon off;"]`
   신호 전달/프로세스 종료가 안정적(PID 1 문제 감소)
 - shell form: `nginx -g "daemon off;"`
   셸을 거쳐 신호 전달이 왜곡될 수 있음
 
-### 7.2 조합 패턴
+### 조합 패턴
+
 ```dockerfile
 ENTRYPOINT ["curl"]
 CMD ["--help"]         # => 기본은 curl --help
 # docker run 이미지 -I https://...  => curl -I https://...
+
 ```
 
-### 7.3 흔한 실수 교정
+### 흔한 실수 교정
+
 나쁜 예:
 ```dockerfile
 ENTRYPOINT service nginx start
@@ -146,7 +157,7 @@ ENTRYPOINT ["nginx","-g","daemon off;"]
 
 ---
 
-## 8. WORKDIR — 상대경로를 안전하게
+## WORKDIR — 상대경로를 안전하게
 
 ```dockerfile
 WORKDIR /app
@@ -158,7 +169,7 @@ RUN ls -al       # /app에서 실행
 
 ---
 
-## 9. ENV vs ARG — 수명과 용도
+## ENV vs ARG — 수명과 용도
 
 ```dockerfile
 ARG BUILD_ENV=prod        # 빌드 시간 변수
@@ -170,29 +181,31 @@ ENV APP_ENV=$BUILD_ENV    # 런타임에도 남김
 
 ---
 
-## 10. EXPOSE — 문서, 실제 매핑은 -p
+## EXPOSE — 문서, 실제 매핑은 -p
 
 ```dockerfile
 EXPOSE 8080
 # 실행: docker run -p 8080:8080 이미지
+
 ```
 
 - 문서용이므로 **네트워크 공개 효과는 없음**.
 
 ---
 
-## 11. VOLUME — 상태 데이터 분리
+## VOLUME — 상태 데이터 분리
 
 ```dockerfile
 VOLUME /var/lib/postgresql/data
 # 실행 시: -v pgdata:/var/lib/postgresql/data
+
 ```
 
 - 컨테이너 레이어는 휘발. 볼륨/바인드 마운트로 영속화.
 
 ---
 
-## 12. LABEL — 메타데이터
+## LABEL — 메타데이터
 
 ```dockerfile
 LABEL org.opencontainers.image.title="myapp" \
@@ -204,7 +217,7 @@ LABEL org.opencontainers.image.title="myapp" \
 
 ---
 
-## 13. HEALTHCHECK — 헬스 판단과 운영
+## HEALTHCHECK — 헬스 판단과 운영
 
 ```dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
@@ -216,7 +229,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 
 ---
 
-## 14. STOPSIGNAL — 종료 시그널 지정
+## STOPSIGNAL — 종료 시그널 지정
 
 ```dockerfile
 STOPSIGNAL SIGQUIT
@@ -226,7 +239,7 @@ STOPSIGNAL SIGQUIT
 
 ---
 
-## 15. SHELL — 기본 셸 변경(비일반)
+## SHELL — 기본 셸 변경(비일반)
 
 윈도우 컨테이너나 특별한 환경에서 셸 명령 해석기 지정:
 ```dockerfile
@@ -235,9 +248,10 @@ SHELL ["powershell", "-Command"]
 
 ---
 
-## 16. 멀티스테이지 빌드 — 빌드는 무겁게, 런타임은 슬림하게
+## 멀티스테이지 빌드 — 빌드는 무겁게, 런타임은 슬림하게
 
-### 16.1 Node → Nginx
+### Node → Nginx
+
 ```dockerfile
 FROM node:20 AS build
 WORKDIR /app
@@ -250,9 +264,11 @@ FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 ```
 
-### 16.2 Python wheel 전략
+### Python wheel 전략
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM python:3.12-alpine AS build
 WORKDIR /app
 RUN apk add --no-cache build-base libffi-dev
@@ -270,7 +286,8 @@ ENTRYPOINT ["gunicorn"]
 CMD ["-w","2","-b","0.0.0.0:5000","app:app"]
 ```
 
-### 16.3 Go → scratch
+### Go → scratch
+
 ```dockerfile
 FROM golang:1.22-alpine AS build
 WORKDIR /src
@@ -287,23 +304,26 @@ ENTRYPOINT ["/app"]
 
 ---
 
-## 17. BuildKit 고급 기능 — 캐시/시크릿/SSH/허리독
+## BuildKit 고급 기능 — 캐시/시크릿/SSH/허리독
 
 BuildKit 활성화:
 ```bash
 export DOCKER_BUILDKIT=1
 ```
 
-### 17.1 캐시 마운트
+### 캐시 마운트
+
 ```dockerfile
 RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
 RUN --mount=type=cache,target=/root/.npm npm ci
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 ```
 
-### 17.2 시크릿(비밀 파일을 이미지에 남기지 않기)
+### 시크릿(비밀 파일을 이미지에 남기지 않기)
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine
 RUN --mount=type=secret,id=npmrc \
     cp /run/secrets/npmrc /root/.npmrc && npm ci || true
@@ -313,9 +333,11 @@ RUN --mount=type=secret,id=npmrc \
 docker build --secret id=npmrc,src=$HOME/.npmrc -t myapp:secret .
 ```
 
-### 17.3 SSH 포워딩(프라이빗 Git)
+### SSH 포워딩(프라이빗 Git)
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine:3.20
 RUN apk add --no-cache git openssh
 RUN --mount=type=ssh git clone git@github.com:org/private.git /src
@@ -325,9 +347,11 @@ RUN --mount=type=ssh git clone git@github.com:org/private.git /src
 docker build --ssh default -t app:git .
 ```
 
-### 17.4 허리독(Heredoc)로 가독성 향상
+### 허리독(Heredoc)로 가독성 향상
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 RUN <<'SH'
 set -eux
 apk add --no-cache curl jq
@@ -337,7 +361,7 @@ SH
 
 ---
 
-## 18. 보안과 최소 권한 실행
+## 보안과 최소 권한 실행
 
 ```dockerfile
 RUN addgroup -S app && adduser -S app -G app
@@ -358,7 +382,7 @@ docker run --rm \
 
 ---
 
-## 19. 재현성과 태깅
+## 재현성과 태깅
 
 - 태그보다 **다이제스트 고정** 권장:
 {% raw %}
@@ -372,7 +396,7 @@ docker run --rm nginx@sha256:...
 
 ---
 
-## 20. 빌드 시간 직관(레이어 캐시 적중률)
+## 빌드 시간 직관(레이어 캐시 적중률)
 
 레이어별 캐시 적중률 \(p_i\), 레이어 비용 \(c_i\)일 때, 기대 빌드 시간 근사는:
 $$
@@ -382,10 +406,11 @@ $$
 
 ---
 
-## 21. 실전 예제: Python 앱(최적화 버전)
+## 실전 예제: Python 앱(최적화 버전)
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM python:3.11-slim AS base
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
@@ -424,7 +449,7 @@ docker run -p 5000:5000 my-python-app
 
 ---
 
-## 22. 실전 예제: ENTRYPOINT/CMD 조합
+## 실전 예제: ENTRYPOINT/CMD 조합
 
 ```dockerfile
 FROM alpine
@@ -432,11 +457,12 @@ RUN apk add --no-cache curl
 ENTRYPOINT ["curl"]
 CMD ["--help"]
 # docker run 이미지 -I https://example.com → curl -I https://example.com
+
 ```
 
 ---
 
-## 23. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 원인 | 진단 | 해결 |
 |---|---|---|---|
@@ -449,7 +475,7 @@ CMD ["--help"]
 
 ---
 
-## 24. 작성 팁 재정리
+## 작성 팁 재정리
 
 | 팁 | 설명 |
 |---|---|
@@ -464,7 +490,7 @@ CMD ["--help"]
 
 ---
 
-## 25. 명령어 요약
+## 명령어 요약
 
 | 명령 | 설명 |
 |---|---|
@@ -477,7 +503,7 @@ CMD ["--help"]
 
 ---
 
-## 26. 결론
+## 결론
 
 - Dockerfile은 **선언적**이고 **레이어 기반**이므로, **순서**와 **컨텍스트**가 성능/재현성/보안에 직결됩니다.
 - **COPY 우선**, **exec form**, **의존성 먼저**, **멀티스테이지**, **.dockerignore**, **BuildKit**이 실무의 기본기입니다.

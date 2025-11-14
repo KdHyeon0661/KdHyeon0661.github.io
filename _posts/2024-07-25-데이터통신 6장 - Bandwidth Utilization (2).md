@@ -4,16 +4,16 @@ title: 데이터 통신 6장 - Bandwidth Utilization (2)
 date: 2024-07-25 19:20:23 +0900
 category: DataCommunication
 ---
-# 6. Bandwidth Utilization: Multiplexing and Spectrum Spreading
+# Bandwidth Utilization: Multiplexing and Spectrum Spreading
 
-## 6.2 Spread Spectrum (SS, 확산 대역 방식)
+## Spread Spectrum (SS, 확산 대역 방식)
 
 **핵심 요약**
 - 원 신호의 대역폭 \(B\)를 **의도적으로 크게** \(B_{\text{ss}}\)로 확장(Spread)하여 **간섭/도청/페이딩**에 강하고, **다중접속(MA)**을 가능하게 하는 전송 기법.
 - 초기에는 **군용(재밍·도청 방지)**에서 출발했지만, 상용 **무선 LAN/셀룰러/위성** 등에서 널리 활용.
 - 확산의 대가로 **대역폭**을 더 쓰지만, **처리이득(Processing Gain)**으로 **SNR/간섭 내성**을 보전·향상한다.
 
-### 6.2.0 공통 수학 & 직관
+### 공통 수학 & 직관
 
 - **스프레딩 팩터(SF)**:
   $$
@@ -34,12 +34,13 @@ category: DataCommunication
 
 ---
 
-## 6.2.1 Frequency Hopping Spread Spectrum (FHSS)
+## Frequency Hopping Spread Spectrum (FHSS)
 
 **아이디어**: **반송 주파수**를 **의사난수 시퀀스**에 따라 **빠르게 바꿔가며(홉핑)** 전송.
 한순간엔 좁은 대역만 쓰지만, **시간에 걸쳐** 넓은 대역을 탐색하므로 **간섭 회피·보안성·다중접속** 장점.
 
 ### 용어 & 파라미터
+
 - **홉셋(hop-set)**: 사용 가능한 주파수 리스트 \(\{f_1,\dots,f_M\}\)
 - **홉 간격 \(\Delta f\)**: 인접 주파수 간격(가드 포함)
 - **정주시간(Dwell time)** \(T_h\): 한 주파수에 머무는 시간
@@ -47,6 +48,7 @@ category: DataCommunication
 - **Slow FH / Fast FH**: 한 비트에 여러 홉(빠름) vs 여러 비트에 한 홉(느림) 반대로 쓰는 경우가 있으므로, **정주시간과 심볼시간의 상대관계**로 명시하는 것이 안전
 
 ### 동작 개념
+
 1. **송신부**:
    - PRNG(의사난수 발생기)가 매 홉 구간마다 **k-bit 패턴** 생성 → **주파수 테이블**에서 \(f_i\) 선택
    - 선택 주파수로 **변조**(대개 FSK/PSK/QAM 가능) 후 전송
@@ -55,11 +57,13 @@ category: DataCommunication
    - 해당 주파수 성분만 복조 → 심볼 검출
 
 ### 다중접속(FHMA)
+
 - 홉셋을 **서로 다른 시프트/시퀀스**로 사용하여 **여러 링크가 동일 \(B_{\text{ss}}\)**를 공유
 - **충돌 확률**(동일 슬롯에서 같은 \(f_i\) 선택)이 낮을수록 성능 우수
   - 이상화하여, \(M\)개 후보 중 균등 선택 시 두 링크 간 충돌 확률 \(\approx 1/M\)
 
 ### 대역폭 감각
+
 - 전체 확산 대역:
   $$
   B_{\text{ss}} \approx M \cdot \Delta f
@@ -67,6 +71,7 @@ category: DataCommunication
 - 한 순간에 쓰는 대역: 변조 스펙에 따르는 **좁은 대역**(예: FSK 톤폭)
 
 ### 장단점 요약
+
 - **장점**:
   - 특정 협대역 간섭을 **회피**(해당 순간 피하면 됨)
   - **주파수 다양성**으로 페이딩에 강함
@@ -77,6 +82,7 @@ category: DataCommunication
   - 고속화 시 PLL/주파수 합성기 성능 요구
 
 ### FHSS 미니 코드(개념)
+
 ```python
 import numpy as np
 
@@ -89,6 +95,7 @@ def hop_sequence(hopset_size, seed, num_hops):
     return [int(x % hopset_size) for x in rnd]
 
 # 예: M=79(예시), T_h=625us 등은 시스템별 상이. 여기선 시퀀스만 개념 확인.
+
 M = 79
 seq = hop_sequence(M, seed=2025, num_hops=16)
 print("Hop indices:", seq)  # 각 인덱스가 hopset 내 주파수 선택을 의미
@@ -96,12 +103,13 @@ print("Hop indices:", seq)  # 각 인덱스가 hopset 내 주파수 선택을 �
 
 ---
 
-## 6.2.2 Direct Sequence Spread Spectrum (DSSS)
+## Direct Sequence Spread Spectrum (DSSS)
 
 **아이디어**: 데이터의 각 비트를 **칩열(chip sequence)**로 **직접 확산**.
 데이터율 \(R_b\) 대비 칩율 \(R_c\)를 크게 하여 **확산 대역**과 **처리이득**을 확보.
 
 ### 수식과 흐름
+
 - 데이터 비트열 \(b[n]\in\{+1,-1\}\)
 - 칩 시퀀스 \(c[k]\in\{+1,-1\}\), 길이 \(L=\) **칩 길이**(=SF)
 - 한 비트당 \(L\)개 칩: \(s[k]=b[n]\cdot c[k]\)
@@ -110,6 +118,7 @@ print("Hop indices:", seq)  # 각 인덱스가 hopset 내 주파수 선택을 �
 - **처리이득** \(G_p \approx L = \frac{R_c}{R_b}\)
 
 ### 상관 복원(수신)
+
 - 수신 신호 \(r[k] = s[k] + n[k]\) (간섭/잡음 포함)
 - 동일 코드로 상관:
   $$
@@ -118,10 +127,12 @@ print("Hop indices:", seq)  # 각 인덱스가 hopset 내 주파수 선택을 �
   → 의도된 비트는 **코히어런트하게 합산**, 간섭은 평균화 → **검출성 향상**
 
 ### 바커(Barker) 코드 예(무선 LAN 등 역사적 활용)
+
 - 길이 11의 바커: \(+1,+1,+1,-1,-1,-1,+1,-1,-1,+1,-1\) (표기 편의를 위해 \(\{1,0\}\)로도 자주 씀)
 - **자기상관**이 짧은 지연에서 낮아 **동기 획득**에 유리(짧은 길이일수록 처리이득은 작지만 동기·탐지에 강점)
 
 ### DSSS 파이썬(개념 구현)
+
 ```python
 import numpy as np
 
@@ -141,23 +152,27 @@ def dsss_despread(rx_pm, chip_pm):
     return np.where(corr >= 0, 1, -1)
 
 # 예시: 데이터 '10110', Barker(11)로 확산
+
 data = "10110"
 bits_pm = to_pm(data)
 barker11 = np.array([+1,+1,+1,-1,-1,-1,+1,-1,-1,+1,-1], dtype=np.int8)
 tx = dsss_spread(bits_pm, barker11)
 
 # 채널에서 임의 간섭/잡음(개념) 추가
+
 np.random.seed(0)
 noise = np.random.normal(scale=2.0, size=tx.size)  # 칩단 가우시안 잡음
 rx = tx + noise
 
 # 복원
+
 rec_pm = dsss_despread(rx, barker11)
 rec_bits = ''.join('1' if v>0 else '0' for v in rec_pm)
 print("TX bits:", data, "| RX bits:", rec_bits)
 ```
 
 ### DSSS 장단점
+
 - **장점**:
   - 협대역 간섭에 매우 강함(상관 복원으로 **Spread-out**된 간섭 전력 희석)
   - 코드 분할 다중접속(**CDMA**) 가능(코드 상호상관이 낮을수록 간섭 적음)
@@ -169,7 +184,7 @@ print("TX bits:", data, "| RX bits:", rec_bits)
 
 ---
 
-## 6.2.3 FHSS vs DSSS — 설계 관점 비교
+## FHSS vs DSSS — 설계 관점 비교
 
 | 항목 | FHSS | DSSS |
 |---|---|---|
@@ -184,9 +199,10 @@ print("TX bits:", data, "| RX bits:", rec_bits)
 
 ---
 
-## 6.2.4 미니 실전 시나리오 & 계산
+## 미니 실전 시나리오 & 계산
 
 ### 시나리오 A — DSSS로 1 Mbps 링크 설계
+
 - 데이터율 \(R_b=1\ \text{Mbps}\), 칩율 \(R_c=11\ \text{Mcps}\) (바커-11 가정)
 - 스프레딩 팩터 \(L=11\), 처리이득(dB)
   $$
@@ -199,6 +215,7 @@ print("TX bits:", data, "| RX bits:", rec_bits)
   (예: \(\beta=0.22\Rightarrow B_{\text{ss}}\approx 13.42\ \text{MHz}\) 근사)
 
 ### 시나리오 B — FHMA 충돌 확률 감각
+
 - 홉셋 크기 \(M=50\), 두 사용자 링크가 같은 슬롯에서 **독립 균등** 선택 시
   $$
   P(\text{충돌}) \approx \frac{1}{M} = 2\%
@@ -207,7 +224,7 @@ print("TX bits:", data, "| RX bits:", rec_bits)
 
 ---
 
-## 6.2.5 구현/동기 팁 (요약)
+## 구현/동기 팁 (요약)
 
 - **FHSS**:
   - 정밀한 **주파수 합성기**(스위칭 속도/위상 잡음), **홉 타이밍** 정확도
@@ -219,7 +236,7 @@ print("TX bits:", data, "| RX bits:", rec_bits)
 
 ---
 
-## 6.2.6 체크 문제
+## 체크 문제
 
 1. 처리이득 \(G_p\)가 100(=20 dB 근사)인 DSSS 시스템에서, 동일 SNR 환경에서 비확산 대비 어떤 이득이 있는지 **상관 복원 관점**으로 설명하라.
 2. FHMA에서 홉셋 크기 \(M\)과 충돌 확률의 관계를 쓰고, 충돌이 **링크 처리율**에 미치는 영향을 간단 모델로 기술하라.
@@ -229,7 +246,7 @@ print("TX bits:", data, "| RX bits:", rec_bits)
 
 ---
 
-## 6.2.7 실습 코드 스니펫 — FHSS+DSSS 하이브리드(개념)
+## 실습 코드 스니펫 — FHSS+DSSS 하이브리드(개념)
 
 > 일부 시스템은 **하이브리드** 설계를 사용한다(예: DSSS 위에 FH, 또는 OFDM과 결합 등). 아래는 **개념**을 보여주는 소규모 실습용.
 
@@ -256,20 +273,24 @@ def hop_sequence(M, seed, num_hops):
     return [int(x % M) for x in np.random.randint(0, 255, size=num_hops)]
 
 # 파이프라인: DSSS -> (개념적으로) 각 홉에 실음 -> 수신 상관 복원
+
 data = "1011001110001111"
 bits = to_pm(data)
 
 # Barker-11
+
 chip = np.array([+1,+1,+1,-1,-1,-1,+1,-1,-1,+1,-1], dtype=np.int8)
 tx_dsss = dsss_spread(bits, chip)
 
 # FHSS 개념: 구간을 나눠 홉 인덱스를 찍어보기만(실주파 변조는 생략)
+
 M = 32
 L = len(chip)
 num_hops = len(tx_dsss)//L
 hops = hop_sequence(M, seed=7, num_hops=num_hops)
 
 # 각 홉 구간별로 채널 상태가 다르다고 가정(개념)
+
 np.random.seed(1)
 fading = 0.6 + 0.8*np.random.rand(num_hops)   # 0.6~1.4 배
 rx = np.zeros_like(tx_dsss, dtype=float)
@@ -280,6 +301,7 @@ for i in range(num_hops):
 rx = awgn(rx, snr_db=5)
 
 # DSSS 복원
+
 rx_blocks = rx.reshape(-1, L)
 corr = (rx_blocks * chip).sum(axis=1)
 rec_bits_pm = np.where(corr >= 0, 1, -1)
@@ -291,7 +313,7 @@ print("Hop indices(sample):", hops[:8])
 
 ---
 
-## 6.2 결론 요약
+## 결론 요약
 
 - **FHSS**: 시간에 따라 **주파수를 바꾸며** 간섭을 **회피**, **주파수 다양성** 확보, 다중접속은 **FHMA**.
 - **DSSS**: **칩열로 직접 확산**, 상관 복원으로 **협대역 간섭 평균화**·**처리이득** 확보, 다중접속은 **CDMA**.

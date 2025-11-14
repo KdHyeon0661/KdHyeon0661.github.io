@@ -11,7 +11,7 @@ Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만,
 
 ---
 
-## 1. 기존 K8s의 구조적 한계와 개선 목표
+## 기존 K8s의 구조적 한계와 개선 목표
 
 | 영역 | 기존 컨테이너 한계 | 개선 목표(요약) |
 |---|---|---|
@@ -22,20 +22,23 @@ Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만,
 
 ---
 
-## 2. WASM(WebAssembly) — 컨테이너 이후의 실행 단위
+## WASM(WebAssembly) — 컨테이너 이후의 실행 단위
 
-### 2.1 핵심 개념
+### 핵심 개념
+
 - **바이트코드 포맷** + **안전한 샌드박스 실행**(WASI로 시스템 인터페이스 표준화)
 - **수 MB 런타임**, **ms급 콜드스타트**, **아키 독립(이식성)**, **보안 격리 강화**
 - 서버리스·플러그인·엣지 런타임에 적합
 
-### 2.2 K8s 연동 방식(대표 패턴)
+### K8s 연동 방식(대표 패턴)
+
 1) **containerd WASM shim**: OCI/Pod는 그대로, 컨테이너 자리에 WASM 실행
 2) **Krustlet**: WASM 전용 kubelet(학습·PoC에 유용)
 3) **서버리스 프레임워크**: Knative/OpenFaaS/Spin 등과 결합
 4) **프록시/필터 WASM**: Envoy WASM Filter(네트워크 플러그인), 사이드카 축소
 
-### 2.3 Rust + WASI “Hello” (기초)
+### Rust + WASI “Hello” (기초)
+
 ```rust
 // src/main.rs
 use std::env;
@@ -50,9 +53,11 @@ fn main() {
 rustup target add wasm32-wasi
 cargo build --release --target wasm32-wasi
 # 결과물: target/wasm32-wasi/release/hello_wasi.wasm
+
 ```
 
-### 2.4 containerd + wasmtime shim으로 K8s에서 실행
+### containerd + wasmtime shim으로 K8s에서 실행
+
 **RuntimeClass 정의**
 ```yaml
 apiVersion: node.k8s.io/v1
@@ -83,7 +88,8 @@ spec:
 
 > 주: 이미지 없이 `.wasm`을 OCI 아티팩트로 푸시할 수 있습니다(oras/oci artifacts).
 
-### 2.5 Spin(Fermyon)으로 서버리스형 WASM
+### Spin(Fermyon)으로 서버리스형 WASM
+
 **Spin.toml**
 ```toml
 spin_version = "1"
@@ -107,31 +113,36 @@ K8s 배포(예: Spin Operator 사용) 시, Pod 없이도 **WASM 함수형 배포
 
 ---
 
-## 3. eBPF — 커널 레벨 관측/제어를 쿠버네티스에
+## eBPF — 커널 레벨 관측/제어를 쿠버네티스에
 
-### 3.1 핵심 개념
+### 핵심 개념
+
 - **유저 공간에서 작성한 BPF 프로그램을 커널에 로드**해 특정 hook(XDP, tc, kprobe, tracepoint 등)에서 실행
 - **Verifier**가 안전성 검사 → 커널 패닉 방지
 - 저오버헤드로 **네트워크·보안·트레이싱·로깅**을 통합
 
-### 3.2 대표 스택
+### 대표 스택
+
 - **Cilium**(CNI): eBPF로 kube-proxy 대체, L7 정책(HTTP/gRPC), 고성능 LB
 - **Hubble**: eBPF 이벤트 기반 실시간 플로우 관측
 - **Falco/Tracee**: 런타임 보안(시스템콜/행위 기반 탐지)
 - **Pixie(px.dev)**: 프로브 없이 eBPF로 애플리케이션 가시성 확보
 
-### 3.3 bpftrace로 특정 컨테이너 sys_open 추적
+### bpftrace로 특정 컨테이너 sys_open 추적
+
 ```bash
 # 컨테이너 cgroup id(혹은 container id) 얻은 뒤:
+
 bpftrace -e 'tracepoint:syscalls:sys_enter_openat /cgroup == C/12345/ / { printf("%s %s\n", comm, str(args->filename)); }'
 ```
 > 디버깅/포렌식 시 특정 Pod의 파일 접근 패턴을 즉시 확인 가능.
 
 ---
 
-## 4. Cilium로 eBPF 네트워킹·보안·관측 통합
+## Cilium로 eBPF 네트워킹·보안·관측 통합
 
-### 4.1 설치(개요)
+### 설치(개요)
+
 ```bash
 helm repo add cilium https://helm.cilium.io/
 helm install cilium cilium/cilium \
@@ -145,7 +156,8 @@ helm install cilium cilium/cilium \
 ```
 > `kubeProxyReplacement=strict` 로 iptables 대신 **eBPF LB** 를 사용.
 
-### 4.2 L7 HTTP 정책(메서드/Path 기반)
+### L7 HTTP 정책(메서드/Path 기반)
+
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -171,7 +183,8 @@ spec:
 ```
 > 사이드카 없이 **L7 정책**을 적용(Envoy/istio 미도입 환경에서 경량).
 
-### 4.3 Hubble로 플로우 가시화
+### Hubble로 플로우 가시화
+
 ```bash
 cilium hubble enable
 hubble status
@@ -180,23 +193,26 @@ hubble observe --from-pod default/web-xxx --protocol http
 
 ---
 
-## 5. WASM + eBPF를 함께 쓰는 운영 패턴
+## WASM + eBPF를 함께 쓰는 운영 패턴
 
 ### 패턴 A) 서버리스 API는 WASM, 네트워크·보안은 eBPF
+
 - **WASM(Spin/Knative WASM 런타임/wasmtime)** 으로 API 함수 구성 → 빠른 콜드스타트
 - **Cilium** 으로 north-south LB/L7 정책, **Hubble** 로 플로우 관측
 
 ### 패턴 B) 사이드카 없는 메시·관측
+
 - 사이드카 대신 **Cilium + Hubble** 로 L7 관측/정책
 - 트래픽 조절/카나리는 K8s 네이티브(Deployment/Ingress) 혹은 Gateway API 사용
 
 ### 패턴 C) 엣지·이질 아키텍처 혼합
+
 - ARM/x86 혼재 환경에서 애플리케이션을 **WASM** 으로 통일
 - eBPF로 엣지 노드의 네트워크·보안·관측 일관성 보장
 
 ---
 
-## 6. 지연·용량 추정 (간단 모델)
+## 지연·용량 추정 (간단 모델)
 
 서버리스 콜드스타트 비용을 포함한 기대 응답시간(ERT) 근사:
 $$
@@ -212,9 +228,10 @@ Knative/OpenFaaS(KEDA) 튜닝 시 위 파라미터(c, target concurrency, window
 
 ---
 
-## 7. 실전 예제 모음
+## 실전 예제 모음
 
-### 7.1 K8s + WASM (containerd shim)로 간단 Echo
+### K8s + WASM (containerd shim)로 간단 Echo
+
 **Pod**
 ```yaml
 apiVersion: v1
@@ -242,7 +259,8 @@ spec:
     targetPort: 8080
 ```
 
-### 7.2 Cilium L7 정책으로 Echo API 제한
+### Cilium L7 정책으로 Echo API 제한
+
 ```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
@@ -260,9 +278,11 @@ spec:
           path: "^/echo"
 ```
 
-### 7.3 Falco로 의심스런 행동 탐지(컨테이너 내부 쉘 스폰)
+### Falco로 의심스런 행동 탐지(컨테이너 내부 쉘 스폰)
+
 ```yaml
 # /etc/falco/falco_rules.local.yaml
+
 - rule: Terminal shell in container
   desc: Detect a shell spawned by a containerized application
   condition: container and shell_procs and evt.type = execve
@@ -270,7 +290,8 @@ spec:
   priority: WARNING
 ```
 
-### 7.4 Pixie로 코드변경 없이 트레이싱
+### Pixie로 코드변경 없이 트레이싱
+
 ```bash
 px deploy        # Pixie 플랫폼 설치
 px run px/http_data --pods echo-wasm
@@ -279,7 +300,7 @@ px live          # 라이브 뷰/대시보드
 
 ---
 
-## 8. 보안·서플라이체인·거버넌스
+## 보안·서플라이체인·거버넌스
 
 - **WASM 모듈 서명/검증**: Sigstore Cosign으로 OCI 아티팩트 서명 → Admission Policy(OPA/Kyverno)로 검증
 - **PSA(파드 보안 허용)**: `pod-security.kubernetes.io/enforce: restricted`
@@ -288,7 +309,7 @@ px live          # 라이브 뷰/대시보드
 
 ---
 
-## 9. 운영 체크리스트
+## 운영 체크리스트
 
 | 항목 | WASM | eBPF |
 |---|---|---|
@@ -300,7 +321,7 @@ px live          # 라이브 뷰/대시보드
 
 ---
 
-## 10. 의사결정 가이드
+## 의사결정 가이드
 
 | 상황 | 권장 조합 |
 |---|---|
@@ -312,7 +333,7 @@ px live          # 라이브 뷰/대시보드
 
 ---
 
-## 11. 자주 만나는 이슈와 해법
+## 자주 만나는 이슈와 해법
 
 - **WASM 네이밍/디스트로**: `.wasm` OCI 푸시 시 레지스트리 호환성 확인(oras, ghcr 권장)
 - **RuntimeClass 미설정**: Pod가 일반 컨테이너 런타임으로 스케줄 → `RuntimeClass` 필수
@@ -322,7 +343,7 @@ px live          # 라이브 뷰/대시보드
 
 ---
 
-## 12. 마무리
+## 마무리
 
 - **WASM** 은 컨테이너의 자리를 **보완/대체**하는 **경량 실행 단위**로, 서버리스·엣지·멀티아키를 강하게 밀어줍니다.
 - **eBPF** 는 커널 레벨 **관측/보안/네트워크 제어**를 제공해 사이드카 부담을 줄이고 고성능 정책을 가능케 합니다.
@@ -335,6 +356,7 @@ px live          # 라이브 뷰/대시보드
 ---
 
 ## 참고 리소스
+
 - WasmEdge: https://github.com/WasmEdge/WasmEdge
 - Wasmtime: https://wasmtime.dev/
 - Spin: https://www.fermyon.com/spin

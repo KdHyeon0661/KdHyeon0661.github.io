@@ -6,7 +6,7 @@ category: Java
 ---
 # Lock & Condition 내부 동작 원리, 동시성 컬렉션 특성, Fork/Join 심화, CompletableFuture 사용법
 
-## 0. 한눈에 구조도
+## 한눈에 구조도
 
 ```
 [앱 코드]
@@ -20,9 +20,10 @@ category: Java
 
 ---
 
-## 1. `Lock`과 `Condition` 내부 동작 원리
+## `Lock`과 `Condition` 내부 동작 원리
 
-### 1.1 왜 `Lock`인가? (`synchronized` vs `Lock`)
+### 왜 `Lock`인가? (`synchronized` vs `Lock`)
+
 | 항목 | `synchronized` | `ReentrantLock` |
 |---|---|---|
 | 획득/해제 | 진입/블록 종료 시 자동 | `lock()/unlock()` 수동 (try/finally 필수) |
@@ -36,7 +37,8 @@ category: Java
 
 ---
 
-### 1.2 AQS 핵심: 상태/큐/차단
+### AQS 핵심: 상태/큐/차단
+
 - **state (int)**: 소유/재진입 카운트 등 (exclusive), 공유 모드도 지원.
 - **Sync Queue(FIFO)**: 실패한 획득 시 노드를 enq → `LockSupport.park()`로 잠듦 → 해제 시 `unpark()`.
 - **CAS**: 락 소유/대기 노드 링크 연산을 원자적으로 수행.
@@ -57,7 +59,8 @@ $$
 
 ---
 
-### 1.3 Condition의 두 큐: Condition Queue → Sync Queue
+### Condition의 두 큐: Condition Queue → Sync Queue
+
 - 하나의 `Lock`에 **여러 Condition** 가능(서로 다른 wait-set).
 - `await()` 흐름:
   1) 락 소유 검사(아니면 `IllegalMonitorStateException`)
@@ -79,7 +82,8 @@ await  +--------------------+                +-----------------+
 
 ---
 
-### 1.4 실전: `ReentrantLock + Condition` 단일-버퍼
+### 실전: `ReentrantLock + Condition` 단일-버퍼
+
 ```java
 import java.util.concurrent.locks.*;
 
@@ -119,7 +123,8 @@ public class OneCellBuffer<T> {
 
 ---
 
-### 1.5 추가 API와 패턴
+### 추가 API와 패턴
+
 - `tryLock(long, TimeUnit)`: 데드락 회피/순환 대기 타임아웃에 유용
 - `lockInterruptibly()`: 인터럽트 가능한 획득 (취소/종료 설계에 필수)
 - `awaitNanos`, `awaitUntil(Date)`, `awaitUninterruptibly`
@@ -127,8 +132,9 @@ public class OneCellBuffer<T> {
 
 ---
 
-### 1.6 `ReentrantReadWriteLock` & `StampedLock`
+### `ReentrantReadWriteLock` & `StampedLock`
 #### ReadWriteLock
+
 - **여러 reader 동시** + **writer 단독**
 - 업/다운그레이드: **쓰기 → 읽기** 다운그레이드만 권장(쓰기 락 보유 중 read lock 획득 후 write 해제)
 ```java
@@ -150,6 +156,7 @@ try {
 ```
 
 #### StampedLock
+
 - **낙관적 읽기**(optimistic read): 충돌 없으면 잠금 없이 읽기 성공
 - 재검사 실패 시 read/write 락으로 격상
 ```java
@@ -173,7 +180,8 @@ class Point {
 
 ---
 
-### 1.7 실무 체크리스트
+### 실무 체크리스트
+
 - [ ] **while-await** 필수(조건 재검사)
 - [ ] `try/finally`로 `unlock()` 보장
 - [ ] `tryLock(timeout)`으로 **교착 방지**
@@ -183,9 +191,10 @@ class Point {
 
 ---
 
-## 2. 동시성 컬렉션 내부 전략과 선택 가이드
+## 동시성 컬렉션 내부 전략과 선택 가이드
 
-### 2.1 ConcurrentHashMap (JDK 8+)
+### ConcurrentHashMap (JDK 8+)
+
 - **버킷 단위 CAS + 필요시 bin-level 동기화**
 - 빈이 길어지면 **트리화(Red-Black Tree)**
 - Resize는 **점진적**으로 이루어져 STW 방지
@@ -197,7 +206,8 @@ map.compute("k", (k, v) -> v == null ? 1 : v+1); // 원자적 누적
 ```
 > **LongAdder**와 궁합: 다중 스레드 카운팅은 `map.computeIfAbsent(k, kk -> new LongAdder()).increment()` 권장.
 
-### 2.2 CopyOnWriteArrayList/Set
+### CopyOnWriteArrayList/Set
+
 - 쓰기 때 **전체 배열 복사 → 불변 스냅샷**
 - **읽기 많고 쓰기 드문** 구성/설정/리스너 테이블에 적합
 ```java
@@ -206,7 +216,8 @@ listeners.add(() -> { /* ... */ }); // 쓰기: 비싸지만 드뭄
 for (var l : listeners) l.run();    // 읽기: 락 없이 안전
 ```
 
-### 2.3 BlockingQueue
+### BlockingQueue
+
 | 구현 | 내부 | 특징 |
 |---|---|---|
 | ArrayBlockingQueue | **단일 락** + 두 Condition | 고정 크기/메모리 예측 |
@@ -215,11 +226,13 @@ for (var l : listeners) l.run();    // 읽기: 락 없이 안전
 | PriorityBlockingQueue | 힙 | 우선순위, FIFO 보장 아님 |
 | DelayQueue | 타임+우선순위 | 스케줄링/재시도 큐 |
 
-### 2.4 SkipList/CLQ
+### SkipList/CLQ
+
 - `ConcurrentSkipListMap/Set`: 정렬 + 동시성(락-프리 성질)
 - `ConcurrentLinkedQueue/Deque`: **락-프리 CAS 큐**, 대기 없는 빠른 인큐/디큐
 
-### 2.5 선택 요약
+### 선택 요약
+
 - **캐시/카운팅**: CHM(+LongAdder)
 - **생산자-소비자**: Linked/Array/SynchronousQueue
 - **읽기≫쓰기**: COW 계열
@@ -228,14 +241,16 @@ for (var l : listeners) l.run();    // 읽기: 락 없이 안전
 
 ---
 
-## 3. Fork/Join 프레임워크 심화
+## Fork/Join 프레임워크 심화
 
-### 3.1 Work-Stealing 핵심
+### Work-Stealing 핵심
+
 - 워커는 자신의 **데크**에 푸시한 작업을 LIFO로 처리(지역성↑)
 - 놀고 있는 워커는 타 워커의 **앞쪽(FIFO)** 에서 **steal**
 - **과분할**은 steal/스케줄링 오버헤드↑, **과소분할**은 병렬성↓ → **임계값(THRESHOLD)** 튜닝 관건
 
-### 3.2 예제: 병렬 머지소트
+### 예제: 병렬 머지소트
+
 ```java
 import java.util.concurrent.*;
 
@@ -272,7 +287,8 @@ class MergeSortTask extends RecursiveAction {
 }
 ```
 
-### 3.3 블로킹 작업과 ManagedBlocker
+### 블로킹 작업과 ManagedBlocker
+
 ForkJoin 워커가 블록되면 풀 전체가 굶을 수 있음 → **ManagedBlocker**로 보정
 ```java
 class IOBoundBlocker implements ForkJoinPool.ManagedBlocker {
@@ -287,16 +303,18 @@ ForkJoinPool pool = new ForkJoinPool();
 ForkJoinPool.managedBlock(new IOBoundBlocker(channel));
 ```
 
-### 3.4 실무 팁
+### 실무 팁
+
 - [ ] **THRESHOLD**를 작업/머신에 맞게 실험
 - [ ] **공용 풀(commonPool)** 공유 주의(병렬 스트림/다른 컴포넌트와 경합) → **전용 풀** 고려
 - [ ] I/O/블로킹은 **ManagedBlocker** 또는 별도 Executor
 
 ---
 
-## 4. `CompletableFuture` 심화 — 조합/예외/타임아웃/취소
+## `CompletableFuture` 심화 — 조합/예외/타임아웃/취소
 
-### 4.1 기본기
+### 기본기
+
 - 시작: `supplyAsync`, `runAsync` (+executor)
 - 변환: `thenApply(Async)`, `thenAccept(Async)`, `thenRun(Async)`
 - 연속(FlatMap): `thenCompose`
@@ -304,7 +322,8 @@ ForkJoinPool.managedBlock(new IOBoundBlocker(channel));
 - 예외: `exceptionally`, `handle`, `whenComplete`
 - 제어: `orTimeout`, `completeOnTimeout`, `cancel`, `obtrudeValue/Exception`
 
-### 4.2 조합 예시: 팬아웃/팬인 + 타임아웃 + 폴백
+### 조합 예시: 팬아웃/팬인 + 타임아웃 + 폴백
+
 ```java
 import java.util.concurrent.*;
 import java.util.stream.*;
@@ -335,7 +354,8 @@ class CfPatterns {
 }
 ```
 
-### 4.3 `thenCompose` vs `thenApply`
+### `thenCompose` vs `thenApply`
+
 ```java
 // thenApply: T -> U
 cf.thenApply(x -> transform(x));
@@ -345,7 +365,8 @@ cf.thenCompose(x -> asyncTransform(x));
 ```
 - **여러 원격 호출을 순차적으로 연결**할 때 `thenCompose`가 자연스럽고 낭비 없음.
 
-### 4.4 에러 전파/복구 패턴
+### 에러 전파/복구 패턴
+
 ```java
 CompletableFuture<String> f = fetch("api")
   .thenApply(this::parse)
@@ -355,7 +376,8 @@ CompletableFuture<String> f = fetch("api")
 f.handle((res, ex) -> ex != null ? "bad" : res);
 ```
 
-### 4.5 allOf/anyOf 안전하게 결과 모으기
+### allOf/anyOf 안전하게 결과 모으기
+
 ```java
 CompletableFuture<String> a = fetch("a");
 CompletableFuture<String> b = fetch("b");
@@ -370,19 +392,22 @@ CompletableFuture<java.util.List<String>> joined = all.thenApply(v ->
 ```
 > 실패 원인 추적 시 `handle`로 각 future를 감싸 개별 예외/결과를 수집.
 
-### 4.6 취소/인터럽트/리소스 정리
+### 취소/인터럽트/리소스 정리
+
 ```java
 var cf = CompletableFuture.supplyAsync(this::slow);
 cf.cancel(true); // true면 인터럽트 신호 (작업이 인터럽트-친화적이어야 효과)
 ```
 - 비동기 작업 내부에서 **인터럽트 체크**(`Thread.currentThread().isInterrupted()`) 및 **타임아웃**/**정리** 로직 필요.
 
-### 4.7 커스텀 Executor 설계
+### 커스텀 Executor 설계
+
 - **CPU 바운드**: 코어 수 ~= 스레드 수 (`newFixedThreadPool(Runtime.getRuntime().availableProcessors())`)
 - **I/O 바운드**: 동시 I/O 수에 맞춰 더 큼 + 큐 제한/백프레셔
 - **공용 풀(commonPool)** 오염 금지: 외부 라이브러리/프레임워크와 경합 → 성능/지연 변동
 
-### 4.8 재시도(지수 백오프) 유틸 패턴
+### 재시도(지수 백오프) 유틸 패턴
+
 ```java
 static <T> CompletableFuture<T> retry(
         Supplier<CompletableFuture<T>> op, int max, long backoffMs) {
@@ -395,29 +420,33 @@ static <T> CompletableFuture<T> retry(
 }
 ```
 
-### 4.9 디버깅 팁
+### 디버깅 팁
+
 - 스테이지 이름 붙이기(로깅 람다)
 - `whenComplete`로 타임라인 로깅
 - `JFR` 이벤트(스레드/락/정지/할당/네트워크)와 함께 분석
 
 ---
 
-## 5. 성능/안정성 수식 & 체크리스트
+## 성능/안정성 수식 & 체크리스트
 
-### 5.1 Amdahl 법칙(최대 가속도 직감)
+### Amdahl 법칙(최대 가속도 직감)
+
 $$
 S(N)=\frac{1}{(1-P)+\frac{P}{N}} \quad (P:\ \text{병렬화 가능한 비율})
 $$
 - 임계 영역(락 구간)이 크면 `P`가 작아져 **스레드를 더 늘려도 한계**.
 
-### 5.2 Fork/Join 임계값 추정(감각식)
+### Fork/Join 임계값 추정(감각식)
+
 $$
 T \approx \frac{W}{B\cdot N} + O_{\text{split}} + O_{\text{steal}}
 $$
 - `W`: 총 작업량, `B`: 단일 스레드 처리량, `N`: 워커 수
 - **`THRESHOLD`는 `O_split`와 `O_steal`을 최소화**하도록 조정
 
-### 5.3 체크리스트(현장)
+### 체크리스트(현장)
+
 - [ ] 락 구간 최소화(필요한 필드만 보호, 불변·분할)
 - [ ] **`while`-await** / **signalAll 기본** / 필요시 `signal` 최적화
 - [ ] CHM `compute/merge`로 **원자적 갱신**
@@ -428,7 +457,7 @@ $$
 
 ---
 
-## 6. 안티패턴 모음
+## 안티패턴 모음
 
 - `if (cond) await()` — ❌ → **`while` 사용**
 - `unlock()` 누락 — ❌ → **try/finally**
@@ -440,9 +469,10 @@ $$
 
 ---
 
-## 7. 확장 예제 모음
+## 확장 예제 모음
 
-### 7.1 `tryLock(timeout)`으로 데드락 회피
+### `tryLock(timeout)`으로 데드락 회피
+
 ```java
 boolean acquireBoth(Lock a, Lock b, long timeout, TimeUnit u) throws InterruptedException {
     long end = System.nanoTime() + u.toNanos(timeout);
@@ -462,7 +492,8 @@ boolean acquireBoth(Lock a, Lock b, long timeout, TimeUnit u) throws Interrupted
 }
 ```
 
-### 7.2 `LongAdder`를 이용한 고컨텐션 카운팅
+### `LongAdder`를 이용한 고컨텐션 카운팅
+
 ```java
 var counts = new java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.atomic.LongAdder>();
 void incr(String key) {
@@ -470,14 +501,16 @@ void incr(String key) {
 }
 ```
 
-### 7.3 `ConcurrentLinkedQueue`로 무대기 파이프라인
+### `ConcurrentLinkedQueue`로 무대기 파이프라인
+
 ```java
 var q = new java.util.concurrent.ConcurrentLinkedQueue<Runnable>();
 void submit(Runnable r){ q.offer(r); } // 생산
 void drain() { Runnable r; while ((r=q.poll()) != null) r.run(); } // 소비(폴링)
 ```
 
-### 7.4 CF: 레이트 리미터와 결합(토큰 버킷 흉내)
+### CF: 레이트 리미터와 결합(토큰 버킷 흉내)
+
 ```java
 class RateLimiter {
     private final java.util.concurrent.Semaphore sem;
@@ -493,7 +526,7 @@ class RateLimiter {
 
 ---
 
-## 8. 마무리 요약
+## 마무리 요약
 
 - **Lock/Condition**: AQS 큐/상태/park-unpark를 이해하면 공정성/타임아웃/다중 조건을 정확히 설계할 수 있습니다.
 - **동시성 컬렉션**: 내부 전략(CAS/트리화/이중 락/스냅샷)을 이해하면 **올바른 선택과 원자적 API 사용**으로 락 직접 사용을 줄일 수 있습니다.

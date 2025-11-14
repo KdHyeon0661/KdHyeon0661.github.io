@@ -6,9 +6,9 @@ category: AspNet
 ---
 # ASP.NET Core Web API 특성(Attribute)
 
-## 1. [ApiController] — 자동 바인딩/검증/오류 응답
+## [ApiController] — 자동 바인딩/검증/오류 응답
 
-### 1.1 핵심 효과
+### 핵심 효과
 
 - **자동 모델 유효성 검사**: 액션 진입 전에 `ModelState.IsValid`가 false면 **자동 400 BadRequest**로 종료. (문제세부 ProblemDetails 응답)
 - **바인딩 원천 추론**(Infer Binding Sources): 복합 타입은 Body, 원시/간단 타입은 Query/Route 에서 추론
@@ -50,7 +50,7 @@ builder.Services.AddControllers()
 
 ---
 
-## 2. HTTP 메서드 특성 — 액션 선택
+## HTTP 메서드 특성 — 액션 선택
 
 ```csharp
 [HttpGet]                     // GET /api/products
@@ -62,15 +62,16 @@ builder.Services.AddControllers()
 [AcceptVerbs("HEAD","OPTIONS","TRACE")] // 비표준/다중
 ```
 
-### 2.1 PATCH 주의
+### PATCH 주의
+
 - JSON Patch(`application/json-patch+json`) 사용 시 `Microsoft.AspNetCore.Mvc.NewtonsoftJson` 또는 System.Text.Json 기반 구현 필요.
 - 동시성/검증 규칙 별도 고려.
 
 ---
 
-## 3. [Route] / [Http…("template")] — 특성 라우팅
+## [Route] / [Http…("template")] — 특성 라우팅
 
-### 3.1 컨트롤러·액션 템플릿
+### 컨트롤러·액션 템플릿
 
 ```csharp
 [Route("api/[controller]")]
@@ -91,7 +92,7 @@ public class OrdersController : ControllerBase
 - 라우트 제약조건: `int`, `guid`, `min`, `max`, `length`, `regex(…)` 등
 - 선택 매개변수: `{slug?}`
 
-### 3.2 컨트롤러 상위 경로 + 액션 상대 경로
+### 컨트롤러 상위 경로 + 액션 상대 경로
 
 ```csharp
 [Route("api/inventory")]
@@ -105,7 +106,7 @@ public class InventoryController : ControllerBase
 }
 ```
 
-### 3.3 이름 있는 라우트
+### 이름 있는 라우트
 
 ```csharp
 [HttpGet("{id:int}", Name = "orders.get")]
@@ -121,9 +122,9 @@ public IActionResult Create(OrderCreateDto dto)
 
 ---
 
-## 4. 바인딩 소스 특성 — 데이터가 ‘어디서 오는가’
+## 바인딩 소스 특성 — 데이터가 ‘어디서 오는가’
 
-### 4.1 기본 규칙([ApiController] 활성 시)
+### 기본 규칙([ApiController] 활성 시)
 
 - **복합 타입(클래스/레코드/DTO)** → Body에서 추론
 - **단순 타입(int/string/Guid/DateTime 등)** → Route/Query에서 추론
@@ -131,7 +132,7 @@ public IActionResult Create(OrderCreateDto dto)
 
 > 불분명할 땐 **명시 특성**으로 혼동 제거.
 
-### 4.2 대표 특성
+### 대표 특성
 
 | 특성 | 바인딩 위치 | 비고 |
 |---|---|---|
@@ -143,7 +144,7 @@ public IActionResult Create(OrderCreateDto dto)
 | `[FromServices]` | DI 컨테이너 | 액션 매개변수로 서비스 직접 주입 |
 | `[Bind]` | 화이트리스트/블랙리스트 | 오버포스팅 방지(모델 수준) |
 
-#### 4.2.1 혼합 바인딩 예시
+#### 혼합 바인딩 예시
 
 ```csharp
 public record SearchFilter(int Page, int PageSize);
@@ -158,7 +159,7 @@ public IActionResult Search(
 }
 ```
 
-#### 4.2.2 헤더·서비스 바인딩
+#### 헤더·서비스 바인딩
 
 ```csharp
 [HttpGet]
@@ -171,7 +172,7 @@ public IActionResult GetAll(
 }
 ```
 
-#### 4.2.3 오버포스팅 방지 — [Bind]
+#### 오버포스팅 방지 — [Bind]
 
 ```csharp
 public class UserUpdateDto
@@ -197,9 +198,9 @@ public IActionResult Update(
 
 ---
 
-## 5. 모델 검증 — 자동/수동 제어
+## 모델 검증 — 자동/수동 제어
 
-### 5.1 Data Annotations
+### Data Annotations
 
 ```csharp
 public class ProductCreateDto
@@ -215,7 +216,7 @@ public class ProductCreateDto
 }
 ```
 
-### 5.2 자동 400 (ApiController)
+### 자동 400 (ApiController)
 
 ```csharp
 [HttpPost]
@@ -226,7 +227,7 @@ public IActionResult Create(ProductCreateDto dto)
 }
 ```
 
-### 5.3 수동 제어(자동 400 해제 시)
+### 수동 제어(자동 400 해제 시)
 
 ```csharp
 [HttpPost]
@@ -240,9 +241,9 @@ public IActionResult Create(ProductCreateDto dto)
 
 ---
 
-## 6. 컨텐츠 협상/미디어 타입 — [Produces]/[Consumes]/[ProducesResponseType]
+## 컨텐츠 협상/미디어 타입 — [Produces]/[Consumes]/[ProducesResponseType]
 
-### 6.1 응답 포맷 명시
+### 응답 포맷 명시
 
 ```csharp
 [Produces("application/json")]       // 또는 컨트롤러 상단에 적용
@@ -252,7 +253,7 @@ public IActionResult Create(ProductCreateDto dto)
 public IActionResult Get(int id) => ...
 ```
 
-### 6.2 요청 포맷 제한
+### 요청 포맷 제한
 
 ```csharp
 [HttpPost]
@@ -260,7 +261,7 @@ public IActionResult Get(int id) => ...
 public IActionResult Create([FromBody] ProductCreateDto dto) => ...
 ```
 
-### 6.3 다양한 미디어 타입 반환
+### 다양한 미디어 타입 반환
 
 ```csharp
 [HttpGet("{id:int}")]
@@ -268,7 +269,7 @@ public IActionResult Create([FromBody] ProductCreateDto dto) => ...
 public IActionResult Get(int id) => ...
 ```
 
-### 6.4 포맷 필터([FormatFilter])
+### 포맷 필터([FormatFilter])
 
 ```csharp
 [HttpGet("{id}.{format}")]  // /api/products/5.json 또는 5.xml
@@ -280,9 +281,9 @@ public IActionResult Get(int id) => Ok(...);
 
 ---
 
-## 7. 결과 형식·상태코드 — CreatedAt*, ProblemDetails
+## 결과 형식·상태코드 — CreatedAt*, ProblemDetails
 
-### 7.1 리소스 생성 패턴
+### 리소스 생성 패턴
 
 ```csharp
 [HttpPost]
@@ -293,7 +294,7 @@ public IActionResult Create(ProductCreateDto dto)
 }
 ```
 
-### 7.2 ProblemDetails 직접 사용
+### ProblemDetails 직접 사용
 
 ```csharp
 if (conflict)
@@ -309,9 +310,9 @@ if (conflict)
 
 ---
 
-## 8. 파일 업로드·요청 한도
+## 파일 업로드·요청 한도
 
-### 8.1 단일/다중 파일 업로드
+### 단일/다중 파일 업로드
 
 ```csharp
 [HttpPost("upload")]
@@ -337,7 +338,7 @@ public async Task<IActionResult> UploadMany([FromForm] List<IFormFile> files)
 }
 ```
 
-### 8.2 요청 크기 제한 조정
+### 요청 크기 제한 조정
 
 ```csharp
 [DisableRequestSizeLimit]                      // 무제한(주의)
@@ -351,9 +352,9 @@ public IActionResult UploadLarge([FromForm] IFormFile file) => Ok();
 
 ---
 
-## 9. 보안·권한·캐싱
+## 보안·권한·캐싱
 
-### 9.1 인증/인가
+### 인증/인가
 
 ```csharp
 [Authorize]                   // 컨트롤러/액션 단위
@@ -368,7 +369,7 @@ public class SecureController : ControllerBase
 }
 ```
 
-### 9.2 응답 캐싱 힌트
+### 응답 캐싱 힌트
 
 ```csharp
 [ResponseCache(Duration = 60, Location = ResponseCacheLocation.Any, NoStore = false)]
@@ -380,7 +381,7 @@ public IActionResult List() => Ok(_svc.List());
 
 ---
 
-## 10. API 탐색/Swagger — [ApiExplorerSettings]
+## API 탐색/Swagger — [ApiExplorerSettings]
 
 ```csharp
 [ApiExplorerSettings(IgnoreApi = true)] // Swagger/ApiExplorer에서 숨김
@@ -396,7 +397,7 @@ public class V1ProductsController : ControllerBase { ... }
 
 ---
 
-## 11. 버전 관리 — [ApiVersion]/[MapToApiVersion]
+## 버전 관리 — [ApiVersion]/[MapToApiVersion]
 
 > `Microsoft.AspNetCore.Mvc.Versioning` 패키지 필요.
 
@@ -434,7 +435,7 @@ public class ProductsController : ControllerBase
 
 ---
 
-## 12. 액션/컨트롤러 제어 — [NonAction], [ActionName]
+## 액션/컨트롤러 제어 — [NonAction], [ActionName]
 
 ```csharp
 [NonAction]
@@ -447,15 +448,15 @@ public IActionResult CreateAlias([FromBody] OrderCreateDto dto) => ...
 
 ---
 
-## 13. 고급 라우팅 — 링크 생성/영역/네임드 경로
+## 고급 라우팅 — 링크 생성/영역/네임드 경로
 
-### 13.1 링크 생성
+### 링크 생성
 
 ```csharp
 var url = Url.Link("orders.get", new { id = 123 }); // 이름 있는 라우트의 절대 URL
 ```
 
-### 13.2 Area 패턴(관리 콘솔 등 분리)
+### Area 패턴(관리 콘솔 등 분리)
 
 ```csharp
 [Area("Admin")]
@@ -465,9 +466,9 @@ public class UsersController : ControllerBase { ... }
 
 ---
 
-## 14. 커스텀 모델 바인더/필터
+## 커스텀 모델 바인더/필터
 
-### 14.1 모델 바인더
+### 모델 바인더
 
 ```csharp
 public class CsvIntArrayBinder : IModelBinder
@@ -498,7 +499,7 @@ public class FromCsvAttribute : ModelBinderAttribute
 public IActionResult BulkGet([FromCsv] int[] ids) => Ok(_svc.GetByIds(ids));
 ```
 
-### 14.2 액션 필터로 공통 로직
+### 액션 필터로 공통 로직
 
 ```csharp
 public class CorrelationIdFilter : IActionFilter
@@ -518,7 +519,7 @@ builder.Services.AddControllers(o => o.Filters.Add<CorrelationIdFilter>());
 
 ---
 
-## 15. 자주 겪는 함정과 체크리스트
+## 자주 겪는 함정과 체크리스트
 
 | 증상 | 원인 | 해결 |
 |---|---|---|

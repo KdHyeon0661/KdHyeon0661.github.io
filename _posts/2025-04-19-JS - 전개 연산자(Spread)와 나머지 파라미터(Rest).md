@@ -11,7 +11,7 @@ category: JavaScript
 
 ---
 
-## 0. 한눈에 보는 규칙
+## 한눈에 보는 규칙
 
 - **배열/함수 Spread**는 **이터러블만** 가능(배열, 문자열, Set, Map, 제너레이터…).
   `Math.max(...nums)`, `fn(...args)`
@@ -22,9 +22,10 @@ category: JavaScript
 
 ---
 
-## 1. 배열에서의 Spread — 복사·병합·전달
+## 배열에서의 Spread — 복사·병합·전달
 
-### 1.1 복사(얕은 복사)
+### 복사(얕은 복사)
+
 ```js
 const arr1 = [1, 2, { n: 3 }];
 const copy = [...arr1];
@@ -32,20 +33,23 @@ copy[2].n = 99;
 console.log(arr1[2].n); // 99  ← 얕은 복사(참조 공유)
 ```
 
-### 1.2 병합/삽입
+### 병합/삽입
+
 ```js
 const a = [1, 2], b = [3, 4];
 const merged = [...a, 0, ...b]; // [1,2,0,3,4]
 ```
 
-### 1.3 인자 전달 — `apply` 대체
+### 인자 전달 — `apply` 대체
+
 ```js
 function sum(x, y, z) { return x + y + z; }
 const nums = [1, 2, 3];
 console.log(sum(...nums)); // 6
 ```
 
-### 1.4 문자열·이터러블
+### 문자열·이터러블
+
 ```js
 [...'hello'];            // ['h','e','l','l','o']
 const s = new Set([1,2,3]);
@@ -55,7 +59,8 @@ function* g(){ yield 10; yield 20; }
 [...g()];                // [10,20]
 ```
 
-### 1.5 희소 배열(holes) 처리
+### 희소 배열(holes) 처리
+
 ```js
 const a = [, 2, , 4];   // length=4, 홀(비어있는 슬롯) 포함
 [...a];                 // [undefined, 2, undefined, 4]
@@ -65,9 +70,10 @@ const a = [, 2, , 4];   // length=4, 홀(비어있는 슬롯) 포함
 
 ---
 
-## 2. 객체에서의 Spread — 복사·병합(ES2018+)
+## 객체에서의 Spread — 복사·병합(ES2018+)
 
-### 2.1 얕은 복사
+### 얕은 복사
+
 ```js
 const user = { name: "Alice", meta: { score: 10 } };
 const copy = { ...user };
@@ -75,7 +81,8 @@ copy.meta.score = 42;
 console.log(user.meta.score); // 42  ← 얕은 복사
 ```
 
-### 2.2 병합(뒤에 오는 것이 우선)
+### 병합(뒤에 오는 것이 우선)
+
 ```js
 const a = { name: "Alice", role: "user" };
 const b = { role: "admin", active: true };
@@ -83,7 +90,8 @@ const merged = { ...a, ...b };
 // { name: "Alice", role: "admin", active: true }
 ```
 
-### 2.3 접근자/프로퍼티 기술자 주의
+### 접근자/프로퍼티 기술자 주의
+
 ```js
 const src = {
   get x(){ return 7; }
@@ -96,18 +104,21 @@ console.log(dst.x);    // 7
 - 객체 spread는 **데이터 프로퍼티**로 붙는다(`writable/configurable/enumerable: true`).
 - 원본의 **접근자(get/set)**, 세밀한 **속성 기술자**는 **보존되지 않는다**.
 
-### 2.4 프로토타입/비열거·상속 프로퍼티
+### 프로토타입/비열거·상속 프로퍼티
+
 - **프로토타입**은 복사되지 않는다(새 객체의 [[Prototype]]은 `Object.prototype`).
 - **own + enumerable**만 대상(상속/비열거는 제외). **심볼 enumerable**도 포함.
 
-### 2.5 순서 규칙
+### 순서 규칙
+
 복사/열거 순서는: **정수형 키 → 문자열 키 → 심볼 키**(각 그룹은 정의 순서).
 
 ---
 
-## 3. 함수 인자 — Rest(수집) vs Spread(펼침)
+## 함수 인자 — Rest(수집) vs Spread(펼침)
 
-### 3.1 Rest 파라미터(선언부에서 수집)
+### Rest 파라미터(선언부에서 수집)
+
 ```js
 function logLevels(first, ...rest) {
   console.log(first); // 첫 인자
@@ -119,13 +130,15 @@ logLevels("info","warn","error");
 - **항상 마지막 매개변수**여야 함.
 - `arguments`와 달리 **진짜 배열**이고 **나머지만** 담는다.
 
-### 3.2 가변 인자 합계
+### 가변 인자 합계
+
 ```js
 const sumAll = (...nums) => nums.reduce((a,b)=>a+b, 0);
 sumAll(1,2,3,4); // 10
 ```
 
-### 3.3 Spread로 인자 전달(호출부에서 펼침)
+### Spread로 인자 전달(호출부에서 펼침)
+
 ```js
 const args = [1, 2, 3];
 fn(...args);
@@ -133,15 +146,17 @@ fn(...args);
 
 ---
 
-## 4. 구조 분해와 Rest — 나머지 수집 패턴
+## 구조 분해와 Rest — 나머지 수집 패턴
 
-### 4.1 배열
+### 배열
+
 ```js
 const [first, ...others] = [10, 20, 30, 40];
 // first=10, others=[20,30,40]
 ```
 
-### 4.2 객체
+### 객체
+
 ```js
 const user = { name: "Bob", age: 27, job: "dev" };
 const { name, ...info } = user;
@@ -152,7 +167,7 @@ const { name, ...info } = user;
 
 ---
 
-## 5. Spread vs Rest 비교 요약
+## Spread vs Rest 비교 요약
 
 | 구분 | Spread(펼침) | Rest(수집) |
 |---|---|---|
@@ -164,23 +179,26 @@ const { name, ...info } = user;
 
 ---
 
-## 6. 실전 레시피
+## 실전 레시피
 
-### 6.1 최댓값/최솟값
+### 최댓값/최솟값
+
 ```js
 const nums = [1, 7, 3];
 Math.max(...nums); // 7
 Math.min(...nums); // 1
 ```
 
-### 6.2 배열 비우지 않고 `push`(여러 개)
+### 배열 비우지 않고 `push`(여러 개)
+
 ```js
 const base = [1, 2];
 const extra = [3, 4];
 base.push(...extra);        // base = [1,2,3,4]
 ```
 
-### 6.3 디폴트 + 오버라이드(얕은 병합)
+### 디폴트 + 오버라이드(얕은 병합)
+
 ```js
 const defaults = { timeout: 5000, retries: 2, headers: { "X-Req": "base" } };
 const cfg = { retries: 5, headers: { "X-Req": "custom" } };
@@ -188,7 +206,8 @@ const final = { ...defaults, ...cfg };
 // headers는 통째로 덮임(얕은 병합)
 ```
 
-### 6.4 중첩 병합이 필요하면
+### 중첩 병합이 필요하면
+
 ```js
 function deepMerge(a, b){
   if (Array.isArray(a) && Array.isArray(b)) return [...a, ...b];
@@ -203,7 +222,8 @@ function deepMerge(a, b){
 }
 ```
 
-### 6.5 Set/Map 변환
+### Set/Map 변환
+
 ```js
 const set = new Set([1,2,2,3]);
 const arr = [...set];                 // [1,2,3]
@@ -212,7 +232,8 @@ const map = new Map([["a",1],["b",2]]);
 const obj = Object.fromEntries(map);  // { a:1, b:2 }
 ```
 
-### 6.6 안전한 옵션 패턴(함수 인자 + Rest)
+### 안전한 옵션 패턴(함수 인자 + Rest)
+
 ```js
 function connect({ host="localhost", port=3306, ...rest } = {}) {
   return { host, port, rest };
@@ -223,7 +244,7 @@ connect({ port: 5432, ssl: true });
 
 ---
 
-## 7. 성능·가독성 팁
+## 성능·가독성 팁
 
 - **큰 배열 복사/병합**을 빈번히 하면 비용↑.
   성능이 중요하면 **원본 재사용** 또는 **단일 루프**를 고려.
@@ -233,9 +254,10 @@ connect({ port: 5432, ssl: true });
 
 ---
 
-## 8. 자주 하는 오해/함정
+## 자주 하는 오해/함정
 
-### 8.1 깊은 복사 아님
+### 깊은 복사 아님
+
 ```js
 const o1 = { nested: { v: 1 } };
 const o2 = { ...o1 };
@@ -244,28 +266,33 @@ console.log(o1.nested.v); // 9
 ```
 > 깊은 복사가 필요하면 `structuredClone(o1)`(지원 환경) 또는 커스텀/라이브러리 사용.
 
-### 8.2 객체 spread는 접근자/프로토타입 미보존
+### 객체 spread는 접근자/프로토타입 미보존
+
 - getter/setter → **값**으로 복사, 접근자 사라짐
 - `Object.getPrototypeOf(copy) === Object.prototype`
 
-### 8.3 `null`/`undefined`는 펼칠 수 없음
+### `null`/`undefined`는 펼칠 수 없음
+
 ```js
 const x = null;
 // [...x];          // TypeError: null is not iterable
 // { ...x };        // TypeError: Cannot convert undefined or null to object
 ```
 
-### 8.4 Rest 위치 제약
+### Rest 위치 제약
+
 ```js
 // function f(...a, b) {} // SyntaxError
 function f(a, ...rest) { /* ok */ }
 ```
 
-### 8.5 희소 배열 기대와 달리
+### 희소 배열 기대와 달리
+
 - `[...Array(3)]` → `[undefined, undefined, undefined]` (밀집)
 - `Array(3).map(()=>1)`은 콜백이 **호출되지 않음**(holes 건너뜀)
 
-### 8.6 객체 키 충돌 순서
+### 객체 키 충돌 순서
+
 ```js
 const merged = { a:1, ...{ a:2 } };
 console.log(merged.a); // 2 (뒤에 오는 값 우선)
@@ -273,7 +300,7 @@ console.log(merged.a); // 2 (뒤에 오는 값 우선)
 
 ---
 
-## 9. 디버깅/점검 체크리스트
+## 디버깅/점검 체크리스트
 
 - [ ] **대상 타입** 확인: 배열/함수 Spread는 이터러블? 객체 Spread는 null/undefined 아님?
 - [ ] **얕은 복사**임을 기억: 중첩 변경 전파 위험.
@@ -283,23 +310,26 @@ console.log(merged.a); // 2 (뒤에 오는 값 우선)
 
 ---
 
-## 10. 실습 스니펫
+## 실습 스니펫
 
-### 10.1 holes와 spread 차이 체감
+### holes와 spread 차이 체감
+
 ```js
 const a = Array(3);                 // [ <3 empty items> ]
 console.log(a.map(x => 1));         // [ <3 empty items> ] (콜백 미호출)
 console.log([...a]);                // [ undefined, undefined, undefined ]
 ```
 
-### 10.2 getter가 값으로 복사됨
+### getter가 값으로 복사됨
+
 ```js
 const src = { get t(){ console.log("hit"); return 5; } };
 const dst = { ...src };             // "hit" (복사 시 평가됨)
 console.log(Object.getOwnPropertyDescriptor(dst,"t").get); // undefined
 ```
 
-### 10.3 얕은 병합에서의 덮어쓰기
+### 얕은 병합에서의 덮어쓰기
+
 ```js
 const base = { cfg:{ a:1, b:2 } };
 const over = { cfg:{ b:9 } };
@@ -309,7 +339,7 @@ console.log(merged.cfg);             // { b:9 }
 
 ---
 
-## 11. 미니 퀴즈
+## 미니 퀴즈
 
 ```js
 // Q1: 결과는?
@@ -342,7 +372,7 @@ console.log(Object.getOwnPropertyDescriptor(c,'x').get, c.x);
 
 ---
 
-## 12. 결론
+## 결론
 
 - `...`은 **펼침(Spread)**과 **수집(Rest)**이라는 상반된 역할을 한다.
 - Spread는 **전달/복사/병합**, Rest는 **가변 수집/나머지 캡처**를 간결하게 만든다.

@@ -6,7 +6,7 @@ category: Docker
 ---
 # BuildKit과 Docker 캐시 전략
 
-## 0. BuildKit 한 장 요약 (기존 핵심 + 확장)
+## BuildKit 한 장 요약 (기존 핵심 + 확장)
 
 | 항목 | Legacy Builder | BuildKit |
 |---|---|---|
@@ -25,9 +25,10 @@ category: Docker
 
 ---
 
-## 1. BuildKit 활성화 & 기본 사용
+## BuildKit 활성화 & 기본 사용
 
-### 1.1 활성화
+### 활성화
+
 Linux 환경:
 
 ```bash
@@ -46,14 +47,15 @@ export DOCKER_BUILDKIT=1
 
 > `docker buildx build ...`를 쓰면 BuildKit이 자동 사용된다.
 
-### 1.2 가장 단순한 실행
+### 가장 단순한 실행
+
 ```bash
 DOCKER_BUILDKIT=1 docker build -t myapp:latest .
 ```
 
 ---
 
-## 2. 캐시 작동 원리 이해: “레이어 해시”와 무효화 규칙
+## 캐시 작동 원리 이해: “레이어 해시”와 무효화 규칙
 
 BuildKit은 **각 명령(COPY/RUN/ADD/ENV/ARG 등)** 을 레이어로 기록하고, **명령 자체 + 입력 파일 스냅샷 + 환경**으로 **해시**를 만들며, 이 해시가 같으면 **캐시 히트**가 난다. 아래는 **캐시 무효화**를 유발하는 대표 요인:
 
@@ -67,15 +69,17 @@ BuildKit은 **각 명령(COPY/RUN/ADD/ENV/ARG 등)** 을 레이어로 기록하�
 
 ---
 
-## 3. 캐시 전략 설계 — “순서”와 “컨텍스트”를 지배하라
+## 캐시 전략 설계 — “순서”와 “컨텍스트”를 지배하라
 
-### 3.1 자주 바뀌지 않는 의존성 먼저
+### 자주 바뀌지 않는 의존성 먼저
+
 **Node.js 예시**
 
 ```dockerfile
 FROM node:20-alpine AS deps
 WORKDIR /app
 # 의존성 정의만 먼저 복사 → 의존성 설치 레이어 캐시화
+
 COPY package.json package-lock.json ./
 RUN npm ci
 
@@ -83,6 +87,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 # 이제 소스 전체를 복사 → 소스 변경 시 아래 레이어만 무효화
+
 COPY . .
 RUN npm run build
 
@@ -99,15 +104,18 @@ FROM python:3.11-slim AS base
 WORKDIR /app
 
 # 의존성 먼저
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 소스는 나중
+
 COPY . .
 CMD ["python","app.py"]
 ```
 
-### 3.2 `.dockerignore` 로 빌드컨텍스트 최소화
+### `.dockerignore` 로 빌드컨텍스트 최소화
+
 ```dockerignore
 node_modules
 .git
@@ -121,9 +129,10 @@ dist
 
 ---
 
-## 4. Inline Cache & 원격 캐시(Registry/GHA/Local) — CI에서 진짜 빨라지는 법
+## Inline Cache & 원격 캐시(Registry/GHA/Local) — CI에서 진짜 빨라지는 법
 
-### 4.1 Inline Cache (단일 레포에서 간단히)
+### Inline Cache (단일 레포에서 간단히)
+
 이미지 자체에 캐시 메타데이터를 담는다.
 
 ```bash
@@ -139,7 +148,8 @@ docker build \
 
 > **주의**: 이미지를 **push**해야 다른 머신(CI runner)에서도 캐시 활용 가능.
 
-### 4.2 Buildx + 원격 캐시(추천)
+### Buildx + 원격 캐시(추천)
+
 **type=registry** 를 가장 범용적으로 사용.
 
 ```bash
@@ -177,11 +187,13 @@ docker buildx build \
 
 ---
 
-## 5. 멀티 스테이지 + BuildKit 고급 mount (secret/ssh/cache)
+## 멀티 스테이지 + BuildKit 고급 mount (secret/ssh/cache)
 
-### 5.1 Secret mount — 비밀을 레이어에 남기지 않기
+### Secret mount — 비밀을 레이어에 남기지 않기
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine:3.20
 RUN --mount=type=secret,id=apikey \
     sh -c 'apk add --no-cache curl && curl -H "X-API-Key: $(cat /run/secrets/apikey)" https://api.example.com'
@@ -196,9 +208,11 @@ docker buildx build \
 
 > **장점**: 비밀값이 이미지 레이어/로그에 남지 않는다.
 
-### 5.2 SSH mount — private git 접근
+### SSH mount — private git 접근
+
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine:3.20
 RUN apk add --no-cache git openssh
 RUN --mount=type=ssh git clone git@github.com:org/private-repo.git
@@ -209,9 +223,11 @@ RUN --mount=type=ssh git clone git@github.com:org/private-repo.git
 docker buildx build --ssh default -t ssh-demo:latest .
 ```
 
-### 5.3 캐시 mount — 툴 체인 캐시 디렉토리 고정
+### 캐시 mount — 툴 체인 캐시 디렉토리 고정
+
 ```dockerfile
 # npm 캐시 예
+
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 ```
@@ -220,7 +236,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 ---
 
-## 6. 멀티 플랫폼(amd64/arm64) + 캐시 — 빠르고, 어디서나
+## 멀티 플랫폼(amd64/arm64) + 캐시 — 빠르고, 어디서나
 
 ```bash
 docker buildx create --use --name mybuilder
@@ -241,11 +257,13 @@ docker buildx build \
 
 ---
 
-## 7. 언어별 캐시 최적화 템플릿
+## 언어별 캐시 최적화 템플릿
 
-### 7.1 Go (크로스 컴파일 쉬움, distroless 런타임)
+### Go (크로스 컴파일 쉬움, distroless 런타임)
+
 ```dockerfile
-# 1. Build
+# Build
+
 FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 ARG TARGETOS TARGETARCH
 WORKDIR /src
@@ -255,14 +273,16 @@ COPY . .
 ENV CGO_ENABLED=0
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /out/app ./cmd/app
 
-# 2. Runtime
+# Runtime
+
 FROM gcr.io/distroless/static:nonroot
 COPY --from=builder /out/app /app
 USER 65532:65532
 ENTRYPOINT ["/app"]
 ```
 
-### 7.2 Python (wheel 선빌드)
+### Python (wheel 선빌드)
+
 ```dockerfile
 FROM --platform=$BUILDPLATFORM python:3.11-alpine AS wheels
 WORKDIR /w
@@ -278,7 +298,8 @@ COPY . .
 CMD ["python","app.py"]
 ```
 
-### 7.3 Java (JLink로 런타임 축소)
+### Java (JLink로 런타임 축소)
+
 ```dockerfile
 FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /src
@@ -297,9 +318,10 @@ CMD ["java","-jar","/app/app.jar"]
 
 ---
 
-## 8. CI/CD 통합 (GitHub/GitLab/Jenkins) — 캐시를 파이프라인의 “첫급유소”로
+## CI/CD 통합 (GitHub/GitLab/Jenkins) — 캐시를 파이프라인의 “첫급유소”로
 
-### 8.1 GitHub Actions (레지스트리 캐시)
+### GitHub Actions (레지스트리 캐시)
+
 {% raw %}
 ```yaml
 name: Build & Push with Remote Cache
@@ -336,7 +358,8 @@ jobs:
 ```
 {% endraw %}
 
-### 8.2 GitLab CI (Docker-in-Docker)
+### GitLab CI (Docker-in-Docker)
+
 ```yaml
 stages: [ build ]
 
@@ -358,7 +381,8 @@ build:
         -t $IMAGE:latest --push .
 ```
 
-### 8.3 Jenkins Pipeline
+### Jenkins Pipeline
+
 ```groovy
 pipeline {
   agent any
@@ -393,7 +417,7 @@ pipeline {
 
 ---
 
-## 9. 수식으로 보는 “캐시가 주는 시간 이득”
+## 수식으로 보는 “캐시가 주는 시간 이득”
 
 이미지 빌드 총 시간 \(T\)는 캐시 미사용 시간 \(T_0\)에 캐시 적중률 \(\gamma \in [0,1]\)을 곱한 실제 실행 시간 \(T\_{\text{exec}}\)의 합으로 근사할 수 있다.
 
@@ -406,7 +430,7 @@ $$
 
 ---
 
-## 10. 재현성/결정성(Determinism) 팁
+## 재현성/결정성(Determinism) 팁
 
 - **버전 고정**: `package-lock.json`/`poetry.lock`/`go.mod` 등 lock 파일 사용
 - **시간 영향 최소화**: 빌드 타임스탬프 삽입 시 `LABEL` 등 별도 레이어 또는 빌드 아규먼트로 제어
@@ -415,7 +439,7 @@ $$
 
 ---
 
-## 11. 트러블슈팅
+## 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -428,7 +452,7 @@ $$
 
 ---
 
-## 12. 고급: Bake 파일로 선언형 멀티 타깃 빌드
+## 고급: Bake 파일로 선언형 멀티 타깃 빌드
 
 `docker-bake.hcl`:
 
@@ -453,7 +477,7 @@ docker buildx bake --push
 
 ---
 
-## 13. 보안/거버넌스와 BuildKit
+## 보안/거버넌스와 BuildKit
 
 - **비밀 주입은 mount만**: `--mount=type=secret/ssh` (ENV로 넣지 않기)
 - **정책 게이트**: PR 단계에서 Dockerfile 린트(Dockle), 취약점 스캔(Trivy/Scout), OPA/Gatekeeper
@@ -462,23 +486,26 @@ docker buildx bake --push
 
 ---
 
-## 14. 종합 예제 — “Node 앱” 완전체 (캐시/시크릿/멀티플랫폼)
+## 종합 예제 — “Node 앱” 완전체 (캐시/시크릿/멀티플랫폼)
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
 
 ########################
-# 1. deps (캐시 최대화)
+# deps (캐시 최대화)
 ########################
+
 FROM --platform=$BUILDPLATFORM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 # npm 캐시 mount로 반복 속도 향상
+
 RUN --mount=type=cache,target=/root/.npm npm ci
 
 ########################
-# 2. build (소스 변화만 빌드)
+# build (소스 변화만 빌드)
 ########################
+
 FROM --platform=$BUILDPLATFORM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -486,13 +513,15 @@ COPY . .
 RUN npm run build
 
 ########################
-# 3. runtime (슬림)
+# runtime (슬림)
 ########################
+
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=build /app/dist ./dist
 # 비밀이 필요하면 runtime이 아닌 build에서만 사용하도록 설계
+
 CMD ["node","dist/index.js"]
 ```
 
@@ -509,38 +538,44 @@ docker buildx build \
 
 ---
 
-## 15. 참고 명령 스니펫 모음
+## 참고 명령 스니펫 모음
 
 ```bash
 # BuildKit on
+
 export DOCKER_BUILDKIT=1
 
 # Buildx builder
+
 docker buildx create --use --name mybuilder
 docker buildx inspect --bootstrap
 
 # 레지스트리 캐시
+
 docker buildx build \
   --cache-from type=registry,ref=repo/app:buildcache \
   --cache-to   type=registry,ref=repo/app:buildcache,mode=max \
   -t repo/app:latest --push .
 
 # Inline cache
+
 docker build \
   --build-arg BUILDKIT_INLINE_CACHE=1 \
   -t repo/app:latest \
   --cache-from=repo/app:latest .
 
 # Secret
+
 docker buildx build --secret id=apikey,src=./apikey.txt -t secret-demo .
 
 # 멀티 플랫폼
+
 docker buildx build --platform linux/amd64,linux/arm64 -t repo/app:latest --push .
 ```
 
 ---
 
-## 16. 결론 요약
+## 결론 요약
 
 | 축 | 핵심 실천 |
 |---|---|
@@ -558,6 +593,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -t repo/app:latest --push
 ---
 
 ## 참고 문서
+
 - BuildKit: https://docs.docker.com/build/buildkit/
 - Dockerfile Best Practices: https://docs.docker.com/develop/develop-images/dockerfile_best-practices/
 - docker/build-push-action: https://github.com/docker/build-push-action

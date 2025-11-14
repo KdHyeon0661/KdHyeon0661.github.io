@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML5 Drag and Drop
 
-## 1. 개요와 정신 모델
+## 개요와 정신 모델
 
 HTML5 DnD는 크게 세 축으로 이해합니다.
 
@@ -23,7 +23,7 @@ HTML5 DnD는 크게 세 축으로 이해합니다.
 
 ---
 
-## 2. 기본 예제 — 하나의 박스를 다른 영역으로 이동
+## 기본 예제 — 하나의 박스를 다른 영역으로 이동
 
 ```html
 <style>
@@ -83,13 +83,15 @@ box.addEventListener('dragend', () => box.setAttribute('aria-grabbed', 'false'))
 
 ---
 
-## 3. 이벤트 흐름과 DataTransfer 모델
+## 이벤트 흐름과 DataTransfer 모델
 
-### 3.1 이벤트 타임라인
+### 이벤트 타임라인
+
 - dragstart → drag → (dragenter → dragover → dragleave)* → drop → dragend
 - drop은 타깃에서, dragend는 **원본**에서 발생합니다.
 
-### 3.2 DataTransfer 핵심 속성/메서드
+### DataTransfer 핵심 속성/메서드
+
 - `setData(type, data)`, `getData(type)`
 - `types`(전송된 타입 목록), `clearData([type])`
 - `effectAllowed`(소스 허용: `none|copy|link|move|copyLink|copyMove|linkMove|all|uninitialized`)
@@ -107,9 +109,9 @@ e.dataTransfer.setData('application/x.myapp.card', JSON.stringify({ id: 42, titl
 
 ---
 
-## 4. 파일 드래그 앤드 드롭 업로드
+## 파일 드래그 앤드 드롭 업로드
 
-### 4.1 미리보기 + 확장자 필터 + 업로드
+### 미리보기 + 확장자 필터 + 업로드
 
 ```html
 <style>
@@ -189,7 +191,7 @@ area.addEventListener('drop', async (e) => {
 
 ---
 
-## 5. 카드 정렬(재배치) — Sortable UI를 순수 DnD로 구현
+## 카드 정렬(재배치) — Sortable UI를 순수 DnD로 구현
 
 ```html
 <style>
@@ -267,9 +269,9 @@ function getDragAfterElement(container, y, x) {
 
 ---
 
-## 6. 고급 주제
+## 고급 주제
 
-### 6.1 effectAllowed vs dropEffect
+### effectAllowed vs dropEffect
 
 ```js
 // 소스
@@ -283,7 +285,7 @@ dragover  -> e.dataTransfer.dropEffect = 'move'; // move, copy, link 중 effectA
 - 브라우저마다 키 조합(Alt/Option=copy, Cmd/Ctrl=link 등) 처리 차이가 있습니다.
 - `dropEffect`는 **타깃 힌트**일 뿐, 최종 동작은 **애플리케이션 로직**으로 결정하세요.
 
-### 6.2 사용자 지정 드래그 이미지
+### 사용자 지정 드래그 이미지
 
 ```js
 const ghost = document.createElement('canvas');
@@ -294,12 +296,12 @@ g.globalAlpha=1; g.fillStyle='#fff'; g.font='14px system-ui'; g.fillText('이동
 e.dataTransfer.setDragImage(ghost, 10, 10);
 ```
 
-### 6.3 콘텐츠 선택/링크 충돌 회피
+### 콘텐츠 선택/링크 충돌 회피
 
 - 링크/이미지 기본 드래그 방지: `draggable="false"`, `event.preventDefault()`
 - 텍스트가 드래그 중 선택되지 않게 `user-select: none` 지정.
 
-### 6.4 성능 최적화
+### 성능 최적화
 
 - `dragover`는 매우 자주 발생. 내부 연산은 **가볍게**(레이아웃 계산 최소, 스로틀).
 - `getBoundingClientRect()` 호출을 줄이고, 필요 시 캐시/버치 처리.
@@ -307,7 +309,7 @@ e.dataTransfer.setDragImage(ghost, 10, 10);
 
 ---
 
-## 7. 접근성(Accessibility)과 키보드 대안
+## 접근성(Accessibility)과 키보드 대안
 
 DnD는 기본적으로 마우스 중심이므로 **키보드/스크린리더 사용자**를 위한 대체가 필요합니다.
 
@@ -332,7 +334,7 @@ box.addEventListener('keydown', (e) => {
 
 ---
 
-## 8. 모바일/터치 환경 대응 — 포인터/터치 기반 커스텀 DnD
+## 모바일/터치 환경 대응 — 포인터/터치 기반 커스텀 DnD
 
 브라우저의 HTML5 DnD는 모바일에서 제한적입니다. 모바일 대응은 **Pointer/Touch 이벤트로 커스텀 DnD**를 구현하는 것이 일반적입니다.
 
@@ -367,7 +369,7 @@ el.addEventListener('pointerup', () => {
 
 ---
 
-## 9. 보안·프라이버시 고려사항
+## 보안·프라이버시 고려사항
 
 - 파일 드롭: 사용자가 실제로 드롭한 파일 핸들에만 접근 가능. 임의 경로/다른 파일 접근 불가.
 - 교차 출처 데이터: 브라우저는 임의의 민감 데이터가 드래그 중 유출되지 않도록 차단.
@@ -375,7 +377,7 @@ el.addEventListener('pointerup', () => {
 
 ---
 
-## 10. 브라우저별 팁과 함정
+## 브라우저별 팁과 함정
 
 - Firefox: `dragstart`에 `setData`가 없으면 일반 요소 드래그 불가한 경우가 있음(관용적으로 `text/plain` 설정 권장).
 - Safari: `dropEffect` 반영이 다르게 보일 수 있음. 고스트 이미지가 다소 흐릿하게 보일 수 있음.
@@ -384,7 +386,7 @@ el.addEventListener('pointerup', () => {
 
 ---
 
-## 11. 테스트 시나리오 체크리스트
+## 테스트 시나리오 체크리스트
 
 - 마우스만으로 드래그/드롭 가능한가?
 - 키보드/스크린리더 사용자 대체 수단이 있는가?
@@ -395,7 +397,7 @@ el.addEventListener('pointerup', () => {
 
 ---
 
-## 12. 미니 프로젝트 종합 예제 — 카드 정렬 + 파일 드롭 업로더가 섞인 보드
+## 미니 프로젝트 종합 예제 — 카드 정렬 + 파일 드롭 업로더가 섞인 보드
 
 ```html
 <style>
@@ -477,7 +479,7 @@ board.querySelectorAll('.col').forEach(col => {
 
 ---
 
-## 13. 요약
+## 요약
 
 - 핵심 3요소: **소스(draggable)**, **타깃(dragover에서 preventDefault)**, **DataTransfer 모델**.
 - 파일 드롭은 `files/items`로 접근, 폴더는 별도 API 필요.
@@ -490,7 +492,7 @@ board.querySelectorAll('.col').forEach(col => {
 
 ---
 
-## 14. 참고 구현 체크포인트
+## 참고 구현 체크포인트
 
 - [ ] `dragover`에서 `preventDefault()` 호출
 - [ ] `dragstart`에서 `setData('text/plain', ...)` 호출(호환성)
@@ -504,7 +506,7 @@ board.querySelectorAll('.col').forEach(col => {
 
 ---
 
-## 15. 자주 묻는 질문
+## 자주 묻는 질문
 
 1) 왜 `drop`이 발생하지 않나요?
 → `dragover`에서 `event.preventDefault()`를 호출하지 않으면 기본 거부 상태라 `drop`이 발생하지 않습니다.

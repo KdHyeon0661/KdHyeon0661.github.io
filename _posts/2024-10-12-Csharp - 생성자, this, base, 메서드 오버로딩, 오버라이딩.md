@@ -6,7 +6,7 @@ category: Csharp
 ---
 # 생성자, this/base 키워드, 메서드 오버로딩, 메서드 오버라이딩
 
-## 0. 빠른 개요 (TL;DR)
+## 빠른 개요 (TL;DR)
 
 - **생성자**: 유효 상태 보장(검증/불변조건), **체이닝**은 `this(...)`·**상속 호출**은 `base(...)`로, 둘 다 **첫 줄**에서만 호출.
 - **this**: 현재 인스턴스 참조, 멤버 숨김 해소, **생성자 체이닝**. 확장 메서드의 `this T`는 **수신자 매개변수**.
@@ -17,9 +17,9 @@ category: Csharp
 
 ---
 
-## 1. 생성자(Constructor)
+## 생성자(Constructor)
 
-### 1.1 기본 생성자와 초기화
+### 기본 생성자와 초기화
 
 ```csharp
 class Person
@@ -36,7 +36,7 @@ var p = new Person();
 Console.WriteLine(p.Name); // "이름 없음"
 ```
 
-### 1.2 매개변수 생성자와 검증
+### 매개변수 생성자와 검증
 
 ```csharp
 class Person2
@@ -54,7 +54,7 @@ class Person2
 
 - **역할**: 객체를 **유효한 상태**로만 생성 가능하게 한다(불변조건 확보).
 
-### 1.3 생성자 체이닝 — `this(...)`
+### 생성자 체이닝 — `this(...)`
 
 ```csharp
 class Person3
@@ -73,7 +73,7 @@ class Person3
 
 > **규칙**: `this(...)` 또는 `base(...)` 호출은 **반드시 첫 줄**에 있어야 하며, 둘 중 **하나만** 가능.
 
-### 1.4 상속과 부모 생성자 호출 — `base(...)`
+### 상속과 부모 생성자 호출 — `base(...)`
 
 ```csharp
 class Animal
@@ -94,7 +94,7 @@ class Dog : Animal
 
 - **실행 순서**: **부모 생성자 → 자식 생성자**.
 
-### 1.5 정적 생성자(Static Constructor)
+### 정적 생성자(Static Constructor)
 
 ```csharp
 class EnvConfig
@@ -109,7 +109,7 @@ class EnvConfig
 
 - 인스턴스 생성과 무관, **타입 단위 초기화**에 사용.
 
-### 1.6 구조체/레코드/프라이머리 생성자
+### 구조체/레코드/프라이머리 생성자
 
 - **구조체(struct)**: C# 10+에서 **매개변수 없는 생성자 허용**. 모든 필드를 설정해야 함.
 - **레코드(record)**: **프라이머리 생성자**로 간결히 정의.
@@ -126,9 +126,9 @@ public class Point(int x, int y) // C# 12: 클래스 프라이머리 생성자
 
 ---
 
-## 2. `this` 키워드
+## `this` 키워드
 
-### 2.1 현재 인스턴스 참조/숨김 해소
+### 현재 인스턴스 참조/숨김 해소
 
 ```csharp
 class Person
@@ -138,13 +138,13 @@ class Person
 }
 ```
 
-### 2.2 생성자 체이닝
+### 생성자 체이닝
 
 ```csharp
 public Person(string name) : this(name, 0) { /*...*/ }
 ```
 
-### 2.3 확장 메서드의 `this` (수신자)
+### 확장 메서드의 `this` (수신자)
 
 ```csharp
 static class StringExt
@@ -158,9 +158,9 @@ Console.WriteLine("  ".IsNullOrWhite()); // true
 
 ---
 
-## 3. `base` 키워드
+## `base` 키워드
 
-### 3.1 부모 생성자 호출
+### 부모 생성자 호출
 
 ```csharp
 class Cat : Animal
@@ -169,7 +169,7 @@ class Cat : Animal
 }
 ```
 
-### 3.2 부모 메서드 호출
+### 부모 메서드 호출
 
 ```csharp
 class Animal
@@ -189,7 +189,7 @@ class Dog : Animal
 
 ---
 
-## 4. 생성자 오버로딩(Overloading)과 패턴
+## 생성자 오버로딩(Overloading)과 패턴
 
 ```csharp
 class Rectangle
@@ -218,9 +218,9 @@ public static Rectangle Square(int size) => new(size, size);
 
 ---
 
-## 5. 메서드 오버로딩 (Method Overloading)
+## 메서드 오버로딩 (Method Overloading)
 
-### 5.1 기본 규칙
+### 기본 규칙
 
 - **시그니처** = 메서드 이름 + **매개변수 목록**(개수/순서/타입/`ref/out/in`).
 - **반환형만 달라서는** 오버로딩 **불가**.
@@ -237,7 +237,7 @@ class Printer
 }
 ```
 
-### 5.2 `params`/옵셔널/이름있는 인자와 오버로딩
+### `params`/옵셔널/이름있는 인자와 오버로딩
 
 ```csharp
 void Log(string msg, string level = "INFO") { /*...*/ }
@@ -259,7 +259,7 @@ void F(double x) { }
 // F(5); // 모호할 수 있음 → F(5L) 또는 F(5.0)로 명시
 ```
 
-### 5.3 `ref/out/in`은 서로 다른 시그니처
+### `ref/out/in`은 서로 다른 시그니처
 
 ```csharp
 void Inc(ref int x) => x++;
@@ -269,9 +269,9 @@ int Sum(in ReadOnlySpan<int> s) { /*...*/ return 0; }
 
 ---
 
-## 6. 메서드 오버라이딩 (Method Overriding)
+## 메서드 오버라이딩 (Method Overriding)
 
-### 6.1 기본
+### 기본
 
 ```csharp
 class Animal
@@ -290,7 +290,7 @@ a.Speak(); // "야옹" (런타임 다형성)
 
 - **부모에 `virtual`**, **자식에 `override`** 필요.
 
-### 6.2 `sealed`/`abstract`/`virtual` 조합
+### `sealed`/`abstract`/`virtual` 조합
 
 ```csharp
 abstract class Shape
@@ -309,7 +309,7 @@ class Circle : Shape
 }
 ```
 
-### 6.3 `new` 숨김 vs `override` 재정의
+### `new` 숨김 vs `override` 재정의
 
 ```csharp
 class Foo { public void Print() => Console.WriteLine("Foo"); }
@@ -328,7 +328,7 @@ z.Print(); // Zoo2 (동적 바인딩)
 - **숨김(new)**: 참조 타입에 따라 **정적 바인딩**.
 - **오버라이드**: **동적 바인딩**으로 다형성.
 
-### 6.4 공변 반환(Covariant Return)
+### 공변 반환(Covariant Return)
 
 ```csharp
 abstract class Repo
@@ -344,7 +344,7 @@ class UserRepo : Repo
 
 ---
 
-## 7. `base`와 오버라이딩 활용 패턴
+## `base`와 오버라이딩 활용 패턴
 
 ```csharp
 class Logger
@@ -365,7 +365,7 @@ class TimeLogger : Logger
 
 ---
 
-## 8. 실전 종합 예제 — 생성자 체이닝·검증·오버로딩·오버라이딩
+## 실전 종합 예제 — 생성자 체이닝·검증·오버로딩·오버라이딩
 
 ```csharp
 using System;
@@ -434,7 +434,7 @@ class Program
 
 ---
 
-## 9. 오버로드 해석(Overload Resolution) 미세 규칙 요약
+## 오버로드 해석(Overload Resolution) 미세 규칙 요약
 
 1. **정확 일치**가 최우선.
 2. **암시적 수치 변환**(int→long, float→double 등)은 가능하나, 모호하면 오류.
@@ -451,7 +451,7 @@ void F(long x) {}
 
 ---
 
-## 10. 설계 팁과 체크리스트
+## 설계 팁과 체크리스트
 
 - **생성자**
   - 유효성 검증을 **항상** 포함.
@@ -473,7 +473,7 @@ void F(long x) {}
 
 ---
 
-## 11. 수학적 직관 — 오버로드/오버라이드 선택
+## 수학적 직관 — 오버로드/오버라이드 선택
 
 오버로드 해석은 **정적(컴파일 타임)** 최적 일치 문제이며, 타입 변환 비용 함수 \(c\)가 있을 때
 
@@ -485,7 +485,7 @@ $$
 
 ---
 
-## 12. 연습 문제
+## 연습 문제
 
 1) `Order`
    - 생성자 오버로딩: `(id)`, `(id, items)`, `(id, items, coupon)` → 모든 검증은 **하나의 생성자**에 집중 후 `this(...)`.
@@ -500,7 +500,7 @@ $$
 
 ---
 
-## 13. 요약
+## 요약
 
 - **생성자**: 유효 상태 보장, `this(...)`/`base(...)` 규칙 숙지.
 - **this/base**: 현재/부모 맥락 명시, 체이닝·부모호출에 필수.

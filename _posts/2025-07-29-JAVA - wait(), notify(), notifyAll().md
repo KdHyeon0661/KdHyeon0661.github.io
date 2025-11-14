@@ -6,7 +6,7 @@ category: Java
 ---
 # `wait()`, `notify()`, `notifyAll()`
 
-## 0. 한눈에 핵심 요약
+## 한눈에 핵심 요약
 
 | 메서드 | 하는 일 | 반드시 필요한 전제 | 깨어난 뒤 |
 |---|---|---|---|
@@ -26,7 +26,7 @@ synchronized (lock) {
 
 ---
 
-## 1. 동작 원리 (정밀)
+## 동작 원리 (정밀)
 
 1. `wait()`
    - 호출 스레드는 **해당 객체의 모니터를 반드시 보유**해야 함(= `synchronized(obj)` 안).
@@ -47,7 +47,7 @@ synchronized (lock) {
 
 ---
 
-## 2. 필수 규칙 · 예외
+## 필수 규칙 · 예외
 
 - `wait/notify/notifyAll`은 **반드시** 해당 객체의 모니터를 가진 상태에서 호출(아니면 `IllegalMonitorStateException`).
 - `wait()`는 `InterruptedException`을 던짐 → **catch 후 인터럽트 상태 복원** 또는 **상위로 전파**.
@@ -56,7 +56,7 @@ synchronized (lock) {
 
 ---
 
-## 3. 안전 패턴 ① — Guarded Suspension (while + wait)
+## 안전 패턴 ① — Guarded Suspension (while + wait)
 
 ```java
 final class Mailbox<T> {
@@ -94,7 +94,7 @@ final class Mailbox<T> {
 
 ---
 
-## 4. 안전 패턴 ② — 타임아웃 대기 (`wait(timeout)`)
+## 안전 패턴 ② — 타임아웃 대기 (`wait(timeout)`)
 
 **벽시계(clock) 오류 방지**를 위해 `System.nanoTime()` 기반 남은시간 재계산:
 
@@ -116,7 +116,7 @@ void awaitUntil(BooleanSupplier condition, long timeoutMillis) throws Interrupte
 
 ---
 
-## 5. 안전 패턴 ③ — 인터럽트 처리
+## 안전 패턴 ③ — 인터럽트 처리
 
 `wait()`가 던진 `InterruptedException`은 **인터럽트 상태를 지움**. 보존하려면 복원:
 
@@ -133,15 +133,17 @@ try {
 
 ---
 
-## 6. 흔한 실수와 교정
+## 흔한 실수와 교정
 
-### 6.1 `synchronized` 없이 `wait()` 호출
+### `synchronized` 없이 `wait()` 호출
+
 ```java
 lock.wait(); // IllegalMonitorStateException
 ```
 **교정**: 반드시 `synchronized (lock) { lock.wait(); }`
 
-### 6.2 `if` 가드 사용
+### `if` 가드 사용
+
 ```java
 synchronized (lock) {
     if (queue.isEmpty()) lock.wait();  // ❌
@@ -150,13 +152,14 @@ synchronized (lock) {
 ```
 **교정**: `while (queue.isEmpty()) lock.wait();`
 
-### 6.3 `notify()` 오남용
+### `notify()` 오남용
+
 - 생산자/소비자 **여러 종류의 대기자**가 섞인 경우 `notify()`는 **틀린 스레드를 깨울 수 있음** → 다시 대기 → **교착/활성정지** 위험.
 **권장**: 기본은 `notifyAll()`을 쓰고, 정확히 한 종류의 대기자·단일 버퍼 등 **증명 가능한** 단순 조건에서만 `notify()` 최적화를 고려.
 
 ---
 
-## 7. `notify()` vs `notifyAll()` — 선택 기준
+## `notify()` vs `notifyAll()` — 선택 기준
 
 | 상황 | 권장 |
 |---|---|
@@ -168,7 +171,7 @@ synchronized (lock) {
 
 ---
 
-## 8. 메모리 모델 · 가시성 (happens-before)
+## 메모리 모델 · 가시성 (happens-before)
 
 - 같은 객체 모니터에 대해
   - **`synchronized` 블록 종료(모니터 해제)** 는 그 이전 쓰기들을 **배출(release)**
@@ -178,7 +181,7 @@ synchronized (lock) {
 
 ---
 
-## 9. 실전 예제 — 유한 버퍼(배열 기반) 생산자/소비자
+## 실전 예제 — 유한 버퍼(배열 기반) 생산자/소비자
 
 ```java
 import java.util.Arrays;
@@ -231,7 +234,7 @@ public final class BoundedQueue<T> {
 
 ---
 
-## 10. Sleep vs Wait (자주 혼동)
+## Sleep vs Wait (자주 혼동)
 
 | 항목 | `Thread.sleep` | `Object.wait` |
 |---|---|---|
@@ -242,7 +245,7 @@ public final class BoundedQueue<T> {
 
 ---
 
-## 11. 락 선택, 재진입, 중첩락 주의
+## 락 선택, 재진입, 중첩락 주의
 
 - 락 객체는 **`private final Object lock = new Object();`** 처럼 **비공개 전용**으로.
   - `this`, 상수 `String`(intern 공유) 등은 외부 코드와 **락 간섭** 위험.
@@ -261,9 +264,10 @@ synchronized (lockA) {
 
 ---
 
-## 12. 고수준 대안 (권장)
+## 고수준 대안 (권장)
 
-### 12.1 `java.util.concurrent.locks.Condition`
+### `java.util.concurrent.locks.Condition`
+
 - `await()` / `signal()` / `signalAll()` — **복수 조건을 명시적 분리** 가능.
 ```java
 import java.util.concurrent.locks.*;
@@ -298,7 +302,8 @@ final class BQ2<T> {
 }
 ```
 
-### 12.2 `BlockingQueue`
+### `BlockingQueue`
+
 - 생산자/소비자에 최적. 내부에서 모든 대기/신호/경쟁을 처리.
 ```java
 BlockingQueue<String> q = new java.util.concurrent.ArrayBlockingQueue<>(1024);
@@ -310,9 +315,10 @@ String s = q.take();    // 비면 자동 대기
 
 ---
 
-## 13. 데모: 잘못된 코드 → 교정
+## 데모: 잘못된 코드 → 교정
 
-### 13.1 Lost Notification 재현
+### Lost Notification 재현
+
 ```java
 // ❌ 잘못된 순서: notify가 먼저, 그 후에 wait
 final Object lock = new Object();
@@ -346,7 +352,7 @@ synchronized (lock) {
 
 ---
 
-## 14. 테스트 하네스(간단)
+## 테스트 하네스(간단)
 
 ```java
 public class WaitNotifyHarness {
@@ -371,7 +377,7 @@ public class WaitNotifyHarness {
 
 ---
 
-## 15. FAQ
+## FAQ
 
 - **Q. `wait()`는 어떤 락을 풀나요?** → **해당 객체의 모니터**만 풉니다. 다른 락은 유지.
 - **Q. `wait()`는 반드시 `while`과?** → 예. **항상** `while`입니다.
@@ -380,7 +386,7 @@ public class WaitNotifyHarness {
 
 ---
 
-## 16. 실전 체크리스트
+## 실전 체크리스트
 
 - [ ] **상태 변수**(e.g., `size`, `ready`)로 조건을 표현하고 **동일 락**에서만 읽고 쓴다.
 - [ ] **`while` 가드 + `wait()`** 를 사용한다.
@@ -393,7 +399,7 @@ public class WaitNotifyHarness {
 
 ---
 
-## 17. 요약
+## 요약
 
 - `wait/notify/notifyAll`은 강력하지만 **취약한 저수준 도구**.
 - **같은 락**에서 **상태(조건)** 를 갱신·검사하고, **`while` 가드**로 재검사하며, **상태→신호 순서**를 지키면 올바르게 동작.

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Razor Pages에서 Query String과 Route Parameter 다루기
 
-## 0. 페이지 간 데이터 전달의 두 축
+## 페이지 간 데이터 전달의 두 축
 
 - **Route Parameter**: 경로 일부로 리소스를 식별. RESTful, SEO 친화, 캐싱 용이.
 - **Query String**: `?key=value` 추가 파라미터. 검색/필터/정렬/페이지네이션에 적합.
@@ -21,9 +21,9 @@ GET /search?keyword=tv&page=2 → Query(keyword=tv, page=2)
 
 ---
 
-## 1. Route Parameter — Razor Pages의 파일 기반 라우팅
+## Route Parameter — Razor Pages의 파일 기반 라우팅
 
-### 1.1 기본 사용
+### 기본 사용
 
 **Pages/Product/Details.cshtml**
 ```cshtml
@@ -49,7 +49,7 @@ public class ProductDetailsModel : PageModel
 GET /Product/Details/3 → id=3
 ```
 
-### 1.2 제약(Constraints)과 옵션
+### 제약(Constraints)과 옵션
 
 | 문법                         | 설명                                      | 예시                                       |
 |-----------------------------|-------------------------------------------|--------------------------------------------|
@@ -64,7 +64,7 @@ GET /Product/Details/3 → id=3
 
 > 규칙은 엄격할수록 **잘못된 요청을 라우트 단계에서 거부**할 수 있어 보안/성능상 유리합니다.
 
-### 1.3 다중 라우트(별칭)
+### 다중 라우트(별칭)
 
 ```cshtml
 @page "/Notice"
@@ -83,9 +83,9 @@ builder.Services.AddRazorPages(o =>
 
 ---
 
-## 2. Query String — 검색/필터/정렬/페이지의 핵심
+## Query String — 검색/필터/정렬/페이지의 핵심
 
-### 2.1 기본 바인딩
+### 기본 바인딩
 
 **Pages/Search.cshtml.cs**
 ```csharp
@@ -114,7 +114,7 @@ public class SearchModel : PageModel
 GET /Search?keyword=apple&page=2 → keyword=apple, page=2
 ```
 
-### 2.2 `[BindProperty(SupportsGet = true)]`와 비교
+### `[BindProperty(SupportsGet = true)]`와 비교
 
 **SupportsGet = true**를 쓰면 쿼리(또는 라우트) 값을 **속성**에 바로 바인딩:
 
@@ -132,7 +132,7 @@ public class GridModel : PageModel
 
 ---
 
-## 3. Route vs Query — 역할과 선택 기준
+## Route vs Query — 역할과 선택 기준
 
 | 항목           | Route Parameter                             | Query String                                  |
 |----------------|----------------------------------------------|-----------------------------------------------|
@@ -149,7 +149,7 @@ public class GridModel : PageModel
 
 ---
 
-## 4. 함께 쓰기 — 카테고리(Route) + 검색/페이지(Query)
+## 함께 쓰기 — 카테고리(Route) + 검색/페이지(Query)
 
 **Pages/Search/Index.cshtml**
 ```cshtml
@@ -196,21 +196,24 @@ public class SearchModel : PageModel
 
 ---
 
-## 5. 링크 생성 — `asp-page`/`asp-route-*` Tag Helper
+## 링크 생성 — `asp-page`/`asp-route-*` Tag Helper
 
-### 5.1 쿼리스트링 링크
+### 쿼리스트링 링크
+
 ```cshtml
 <a asp-page="/Search" asp-route-keyword="camera" asp-route-page="2">
   카메라 검색
 </a>
 ```
 
-### 5.2 라우트 파라미터 링크
+### 라우트 파라미터 링크
+
 ```cshtml
 <a asp-page="/Product/Details" asp-route-id="10">상품 상세보기</a>
 ```
 
-### 5.3 현재 쿼리를 유지하며 일부만 변경
+### 현재 쿼리를 유지하며 일부만 변경
+
 ```cshtml
 @{
     // 현재 Request.Query를 기반으로 RouteValueDictionary 구성(헬퍼 메서드로 추출 권장)
@@ -227,7 +230,7 @@ public class SearchModel : PageModel
 
 ---
 
-## 6. Redirect 시 쿼리스트링 유지 — PRG 패턴
+## Redirect 시 쿼리스트링 유지 — PRG 패턴
 
 **PRG(Post-Redirect-Get)**: 폼 POST 후 **Redirect**로 새로고침 중복을 방지하고 URL을 공유 가능한 GET으로 통일.
 
@@ -253,9 +256,10 @@ public IActionResult OnPostSetPage(int page)
 
 ---
 
-## 7. 페이징/정렬/필터 — 실전 패턴
+## 페이징/정렬/필터 — 실전 패턴
 
-### 7.1 모델/기본값/화이트리스트 검증
+### 모델/기본값/화이트리스트 검증
+
 ```csharp
 public class ListQuery
 {
@@ -282,7 +286,8 @@ public class ProductsModel : PageModel
 }
 ```
 
-### 7.2 링크(정렬 토글)
+### 링크(정렬 토글)
+
 ```cshtml
 <a asp-page="./Index" asp-route-sort="name"   asp-route-page="@Model.Q.Page">이름↑</a>
 <a asp-page="./Index" asp-route-sort="-name"  asp-route-page="@Model.Q.Page">이름↓</a>
@@ -294,9 +299,10 @@ public class ProductsModel : PageModel
 
 ---
 
-## 8. 컬렉션/복합 타입 바인딩 — 체크박스·다중 선택
+## 컬렉션/복합 타입 바인딩 — 체크박스·다중 선택
 
-### 8.1 다중 체크박스 → `int[]`
+### 다중 체크박스 → `int[]`
+
 ```cshtml
 @page
 @model FilterModel
@@ -325,7 +331,8 @@ public class FilterModel : PageModel
 /?brands=1&brands=2
 ```
 
-### 8.2 복합 타입(`FilterDto`) — 키 접두사로 하위 매핑
+### 복합 타입(`FilterDto`) — 키 접두사로 하위 매핑
+
 ```cshtml
 <input name="filter.minPrice" />
 <input name="filter.maxPrice" />
@@ -338,7 +345,7 @@ public void OnGet([FromQuery] FilterDto filter) { /* ... */ }
 
 ---
 
-## 9. 문화권/인코딩/형식 — 날짜·숫자 파싱 이슈
+## 문화권/인코딩/형식 — 날짜·숫자 파싱 이슈
 
 - 쿼리/라우트 값 파싱은 **현재 Culture**에 의존.
   예: `1,234` vs `1.234` (천 단위/소수점).
@@ -360,7 +367,7 @@ public void OnGet(string date)
 
 ---
 
-## 10. 보안 — 신뢰 불가 입력과 화이트리스트
+## 보안 — 신뢰 불가 입력과 화이트리스트
 
 - **모든 URL 파라미터는 신뢰하지 않는다**: 정렬/필터 이름, 페이지/사이즈는 범위 제한과 허용 목록 필요.
 - **경로 순회 방지**: 파일 경로/슬러그를 받아 파일 접근 시 `Path.GetFileName` 등으로 정규화.
@@ -369,7 +376,7 @@ public void OnGet(string date)
 
 ---
 
-## 11. 고급: `Url.Page`/`LinkGenerator`로 코드에서 링크 생성
+## 고급: `Url.Page`/`LinkGenerator`로 코드에서 링크 생성
 
 PageModel/서비스:
 ```csharp
@@ -393,7 +400,7 @@ public class LinksModel : PageModel
 
 ---
 
-## 12. 유틸: 현재 쿼리 유지/병합 헬퍼
+## 유틸: 현재 쿼리 유지/병합 헬퍼
 
 **확장 메서드**로 자주 쓰는 병합 로직을 캡슐화:
 ```csharp
@@ -419,7 +426,7 @@ return RedirectToPage("./Index", merged);
 
 ---
 
-## 13. 실전 예제 — 제품 목록: 카테고리(Route) + 필터(Query) + PRG
+## 실전 예제 — 제품 목록: 카테고리(Route) + 필터(Query) + PRG
 
 **Pages/Products/Index.cshtml**
 ```cshtml
@@ -532,7 +539,7 @@ public class ProductsIndexModel : PageModel
 
 ---
 
-## 14. 에지 케이스/함정 정리
+## 에지 케이스/함정 정리
 
 1) **중복 키**: `/search?tag=a&tag=b` → `string[]` 또는 `IEnumerable<string>`로 바인딩
 2) **잘못된 형식**: `?page=abc`는 int 변환 실패 → 0/기본값. 필요 시 `TryParse`로 명시적 처리
@@ -544,7 +551,7 @@ public class ProductsIndexModel : PageModel
 
 ---
 
-## 15. 테스트 아이디어
+## 테스트 아이디어
 
 - **라우팅 테스트**: `/products/42`가 원하는 PageModel로 매핑되는지 통합 테스트
 - **바인딩 테스트**: `?page=2&size=2000` → 클램핑 적용 여부
@@ -553,7 +560,7 @@ public class ProductsIndexModel : PageModel
 
 ---
 
-## 16. 요약 표
+## 요약 표
 
 | 주제                        | 핵심 요점 |
 |-----------------------------|-----------|

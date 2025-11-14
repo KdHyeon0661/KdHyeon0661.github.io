@@ -6,7 +6,7 @@ category: AspNet
 ---
 # 자주 쓰는 .NET CLI 명령어 정리
 
-## 0. CLI를 쓰는 이유 — “IDE 없이 끝까지 간다”
+## CLI를 쓰는 이유 — “IDE 없이 끝까지 간다”
 
 - 로컬 개발: `dotnet new/run/watch/test`
 - 패키지/참조 관리: `dotnet add package/reference`
@@ -17,7 +17,7 @@ category: AspNet
 
 ---
 
-## 1. 핵심 명령어 — 상시 쓰는 핫키 모음
+## 핵심 명령어 — 상시 쓰는 핫키 모음
 
 | 명령 | 핵심 역할 | 실전 옵션/메모 |
 |---|---|---|
@@ -40,9 +40,9 @@ category: AspNet
 
 ---
 
-## 2. `dotnet new` — 템플릿 파헤치기
+## `dotnet new` — 템플릿 파헤치기
 
-### 2.1 자주 쓰는 생성
+### 자주 쓰는 생성
 
 ```bash
 dotnet new webapp -n MyWebApp              # Razor Pages
@@ -52,7 +52,7 @@ dotnet new classlib -n CoreLib              # Class Library
 dotnet new xunit -n MyApp.Tests             # xUnit 테스트
 ```
 
-### 2.2 옵션 패턴
+### 옵션 패턴
 
 ```bash
 dotnet new mvc -n Shop.Web \
@@ -72,7 +72,7 @@ dotnet new mvc -n Shop.Web \
 
 ---
 
-## 3. 솔루션/참조/패키지 — 멀티 프로젝트 구조 빠르게
+## 솔루션/참조/패키지 — 멀티 프로젝트 구조 빠르게
 
 ```bash
 dotnet new sln -n Shop
@@ -91,7 +91,7 @@ dotnet remove src/Shop.Api/Shop.Api.csproj package Bogus
 
 ---
 
-## 4. 실행/빌드 — 속도·재현성·진단 옵션
+## 실행/빌드 — 속도·재현성·진단 옵션
 
 ```bash
 dotnet restore --force-evaluate --locked-mode   # lock파일 기반 재현 복원
@@ -105,7 +105,7 @@ dotnet run --project src/Shop.Api/Shop.Api.csproj
 
 ---
 
-## 5. 테스트 — 필터/로그/커버리지
+## 테스트 — 필터/로그/커버리지
 
 ```bash
 dotnet test tests/Shop.Api.Tests/Shop.Api.Tests.csproj \
@@ -129,7 +129,7 @@ dotnet watch test --project tests/Shop.Api.Tests
 
 ---
 
-## 6. `dotnet watch` — Hot Reload & 프론트감성 반복
+## `dotnet watch` — Hot Reload & 프론트감성 반복
 
 ```bash
 dotnet watch run --project src/Shop.Web
@@ -142,21 +142,23 @@ dotnet watch run --project src/Shop.Web
 
 ---
 
-## 7. 배포: `dotnet publish` — 모드/플랫폼/최적화 매트릭스
+## 배포: `dotnet publish` — 모드/플랫폼/최적화 매트릭스
 
-### 7.1 기본형
+### 기본형
 
 ```bash
 dotnet publish -c Release -o ./publish
 ```
 
-### 7.2 플랫폼/런타임 식별자(RID)
+### 플랫폼/런타임 식별자(RID)
 
 ```bash
 # 프레임워크 의존(서버에 .NET 런타임 필요)
+
 dotnet publish -c Release -r linux-x64 --self-contained false -o ./out/linux
 
 # Self-contained(런타임 포함)
+
 dotnet publish -c Release -r win-x64 --self-contained true -o ./out/win
 ```
 
@@ -166,7 +168,7 @@ dotnet publish -c Release -r win-x64 --self-contained true -o ./out/win
 | `linux-x64`, `linux-arm64` | Linux |
 | `osx-x64`, `osx-arm64` | macOS |
 
-### 7.3 단일 파일/트리밍/네이티브 프리뷰
+### 단일 파일/트리밍/네이티브 프리뷰
 
 ```bash
 dotnet publish -c Release -r linux-x64 --self-contained true \
@@ -176,6 +178,7 @@ dotnet publish -c Release -r linux-x64 --self-contained true \
   -o ./publish/linux
 
 # 빠른 시작(ReadyToRun)
+
 dotnet publish -c Release -r win-x64 \
   -p:PublishReadyToRun=true -o ./publish/win
 ```
@@ -183,7 +186,7 @@ dotnet publish -c Release -r win-x64 \
 > **주의**: Trim은 리플렉션/다이내믹 로드 코드에서 누락 위험.
 > 문제 영역에 `DynamicDependency`/`TrimmerRootDescriptor`/`ILLink` 설정으로 보정.
 
-### 7.4 AOT(네이티브) 시나리오 스케치
+### AOT(네이티브) 시나리오 스케치
 
 ```bash
 dotnet publish -c Release -r linux-x64 \
@@ -192,7 +195,7 @@ dotnet publish -c Release -r linux-x64 \
 
 - 서버 사이드에서는 적용 범위를 신중히(빌드시간↑, 디버깅 제약)
 
-### 7.5 MSBuild 속성 한번에
+### MSBuild 속성 한번에
 
 ```bash
 dotnet publish -c Release -r linux-x64 \
@@ -205,38 +208,42 @@ dotnet publish -c Release -r linux-x64 \
 
 ---
 
-## 8. NuGet — 패키징/푸시/소스
+## NuGet — 패키징/푸시/소스
 
 ```bash
 # 패키지 만들기
+
 dotnet pack src/Shop.Core/Shop.Core.csproj -c Release -o ./nupkgs
 
 # 소스 추가(Private feed)
+
 dotnet nuget add source "https://nuget.example.com/v3/index.json" -n PrivateFeed \
   --username USER --password TOKEN --store-password-in-clear-text
 
 # 패키지 푸시
+
 dotnet nuget push ./nupkgs/Shop.Core.1.2.3.nupkg \
   --api-key $NUGET_API_KEY --source "https://api.nuget.org/v3/index.json"
 ```
 
 ---
 
-## 9. 도구/워크로드 — 개발 경험 확장
+## 도구/워크로드 — 개발 경험 확장
 
-### 9.1 전역/로컬 도구
+### 전역/로컬 도구
 
 ```bash
 dotnet tool install -g dotnet-ef
 dotnet tool update -g dotnet-ef
 
 # 로컬(매니페스트)
+
 dotnet new tool-manifest
 dotnet tool install dotnet-ef
 dotnet tool restore
 ```
 
-### 9.2 워크로드
+### 워크로드
 
 ```bash
 dotnet workload install wasm-tools
@@ -247,14 +254,16 @@ dotnet workload list
 
 ---
 
-## 10. EF Core CLI(도구 조합 예시)
+## EF Core CLI(도구 조합 예시)
 
 ```bash
 # 디자인 패키지(프로젝트에)
+
 dotnet add src/Shop.Api/Shop.Api.csproj package Microsoft.EntityFrameworkCore.Design
 dotnet add src/Shop.Api/Shop.Api.csproj package Npgsql.EntityFrameworkCore.PostgreSQL
 
 # 마이그레이션/업데이트
+
 dotnet ef migrations add Init --project src/Shop.Api --startup-project src/Shop.Api
 dotnet ef database update --project src/Shop.Api --startup-project src/Shop.Api
 ```
@@ -263,24 +272,27 @@ dotnet ef database update --project src/Shop.Api --startup-project src/Shop.Api
 
 ---
 
-## 11. 개발 편의 — 시크릿/개발인증서/포맷/애널라이저
+## 개발 편의 — 시크릿/개발인증서/포맷/애널라이저
 
 ```bash
 # User Secrets
+
 dotnet user-secrets init --project src/Shop.Api
 dotnet user-secrets set "Jwt:Key" "LOCAL-SECRET" --project src/Shop.Api
 
 # 개발 HTTPS 인증서
+
 dotnet dev-certs https --trust
 
 # 코드 포맷/분석
+
 dotnet format
 dotnet format analyzers
 ```
 
 ---
 
-## 12. 환경 고정 — `global.json`와 SDK 매칭
+## 환경 고정 — `global.json`와 SDK 매칭
 
 ```json
 {
@@ -295,9 +307,9 @@ dotnet format analyzers
 
 ---
 
-## 13. 고급 빌드/구성 — 공통 속성/경고·품질 강제
+## 고급 빌드/구성 — 공통 속성/경고·품질 강제
 
-### 13.1 `Directory.Build.props` (솔루션 루트)
+### `Directory.Build.props` (솔루션 루트)
 
 ```xml
 <Project>
@@ -312,7 +324,7 @@ dotnet format analyzers
 </Project>
 ```
 
-### 13.2 `Directory.Build.targets` (패키징/아티팩트 규약 가능)
+### `Directory.Build.targets` (패키징/아티팩트 규약 가능)
 
 ```xml
 <Project>
@@ -324,7 +336,7 @@ dotnet format analyzers
 
 ---
 
-## 14. 성능/용량 기본기 — 빠른 스타트, 작은 배포
+## 성능/용량 기본기 — 빠른 스타트, 작은 배포
 
 - **ReadyToRun**: 초기 JIT 부담 완화(파일↑)
 - **SingleFile**: 파일/배포 간소화
@@ -335,7 +347,7 @@ dotnet format analyzers
 
 ---
 
-## 15. 트러블슈팅 TOP 10
+## 트러블슈팅 TOP 10
 
 1. **패키지 복원 실패**: `dotnet nuget locals all --clear`, 프록시/인증 확인, `--interactive`
 2. **SDK 충돌**: `dotnet --list-sdks`, `global.json` 고정
@@ -350,34 +362,40 @@ dotnet format analyzers
 
 ---
 
-## 16. 실전 레시피 — “3줄로 끝내는” 상황별 스니펫
+## 실전 레시피 — “3줄로 끝내는” 상황별 스니펫
 
-### 16.1 API 템플릿+패키지+실행
+### API 템플릿+패키지+실행
+
 ```bash
 dotnet new webapi -n Api && cd Api
 dotnet add package Swashbuckle.AspNetCore
 dotnet run
 ```
 
-### 16.2 멀티 OS 배포 산출
+### 멀티 OS 배포 산출
+
 ```bash
 dotnet publish -c Release -r linux-x64 --self-contained true -o out/linux
 dotnet publish -c Release -r win-x64   --self-contained true -o out/win
 ```
 
-### 16.3 최소 배포(단일파일+트림)
+### 최소 배포(단일파일+트림)
+
 ```bash
 dotnet publish -c Release -r linux-x64 --self-contained true \
   -p:PublishSingleFile=true -p:PublishTrimmed=true -o out/min
 ```
 
-### 16.4 테스트 + 커버리지 + 리포트
+### 테스트 + 커버리지 + 리포트
+
 ```bash
 dotnet test --collect:"XPlat Code Coverage" --logger:"trx;LogFileName=test.trx"
 # (ReportGenerator 도구로 변환)
+
 ```
 
-### 16.5 코드 일괄 포맷
+### 코드 일괄 포맷
+
 ```bash
 dotnet tool install -g dotnet-format
 dotnet format
@@ -385,34 +403,40 @@ dotnet format
 
 ---
 
-## 17. 빠른 치트시트
+## 빠른 치트시트
 
 ```bash
 # 템플릿
+
 dotnet new --list
 dotnet new mvc -n Web --framework net8.0 --auth Individual
 
 # 솔루션/참조/패키지
+
 dotnet new sln -n App
 dotnet sln App.sln add src/Web/Web.csproj
 dotnet add src/Web/Web.csproj package Serilog.AspNetCore
 dotnet add src/Web/Web.csproj reference src/Core/Core.csproj
 
 # 빌드/실행/감시
+
 dotnet restore
 dotnet build -c Release --no-restore
 dotnet run --project src/Web/Web.csproj
 dotnet watch run --project src/Web/Web.csproj
 
 # 테스트
+
 dotnet test --filter "Category=Unit" --logger trx
 
 # 배포
+
 dotnet publish -c Release -o ./publish
 dotnet publish -c Release -r linux-x64 --self-contained true \
   -p:PublishSingleFile=true -p:PublishTrimmed=true -o ./publish/linux
 
 # 도구/시크릿/인증서
+
 dotnet tool install -g dotnet-ef
 dotnet user-secrets init --project src/Web
 dotnet user-secrets set "Jwt:Key" "LOCAL" --project src/Web
@@ -421,7 +445,7 @@ dotnet dev-certs https --trust
 
 ---
 
-## 18. 결론
+## 결론
 
 - **CLI는 표준화된 자동화의 언어**다. 한 번 정립한 스크립트는 로컬·CI·서버 어디서나 동일하게 동작한다.
 - **빌드/배포 최적화(Trim/SingleFile/ReadyToRun/AOT)**는 효과와 리스크를 함께 가진다.

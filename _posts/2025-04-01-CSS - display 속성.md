@@ -6,7 +6,7 @@ category: CSS
 ---
 # display 속성: block, inline, inline-block
 
-## 0. 한눈 개요
+## 한눈 개요
 
 - **`display`는 요소가 생성하는 “박스 트리”와 그 박스들이 **어떤 문맥에서** 배치되는지**를 정의**합니다.
 - 핵심 축:
@@ -20,9 +20,10 @@ category: CSS
 
 ---
 
-## 1. `display: block` — 블록 포맷팅 컨텍스트의 기본
+## `display: block` — 블록 포맷팅 컨텍스트의 기본
 
-### 1.1 요약
+### 요약
+
 - **새 줄에서 시작**, 가능한 가로 공간을 **가득 차지**(width가 auto면 컨테이너의 content box만큼).
 - 블록 정류: `<div>`, `<p>`, `<h1>…<h6>`, `<section>` …
 
@@ -31,20 +32,23 @@ category: CSS
 <span style="display:block;background:#c8f7c8">Span도 block이 되면 줄바꿈</span>
 ```
 
-### 1.2 레이아웃 규칙(핵심)
+### 레이아웃 규칙(핵심)
+
 - Block Formatting Context(IFC가 아닌 **BFC**)에 참여.
 - 수직 방향으로 **상하 margin이 겹침**(margin collapse): 인접 형제·부모/첫·마지막 자식 간.
 - `width/height/margin/padding/border` 모두 효과적.
 - `vertical-align`은 **인라인 컨텍스트**에서만 의미 → block에는 영향 없음.
 
-### 1.3 상하 마진 겹침(요약 수식)
+### 상하 마진 겹침(요약 수식)
+
 - 두 블록의 상하 마진 \(m_1, m_2\)가 만날 때 실제 간격:
   $$
   \text{gap} = \max(m_1, m_2)
   $$
   (음수 마진 포함 시 합성 규칙이 더 복잡해짐)
 
-### 1.4 실전 팁
+### 실전 팁
+
 - 문단 간격은 `.prose p{ margin-block:1em; }`처럼 **block 마진**으로.
 - 겹침을 피하고 싶으면 **BFC 생성**: `overflow:auto|hidden` 또는 `display: flow-root;` 적용.
 
@@ -54,9 +58,10 @@ category: CSS
 
 ---
 
-## 2. `display: inline` — 인라인 포맷팅 컨텍스트(IFC)
+## `display: inline` — 인라인 포맷팅 컨텍스트(IFC)
 
-### 2.1 요약
+### 요약
+
 - **줄 안(line box)** 에서 다른 인라인들과 **흐름대로 배치**.
 - 대표: `<span>`, `<a>`, `<strong>`, `<em>`, `<code>`, 텍스트 노드 등.
 
@@ -65,7 +70,8 @@ category: CSS
 <span style="display:inline;background:#ffc299">옆에 붙습니다</span>
 ```
 
-### 2.2 레이아웃 규칙(핵심)
+### 레이아웃 규칙(핵심)
+
 - **IFC**에서 `line-height`, 글꼴 메트릭, 공백/줄바꿈 규칙에 따라 줄 상자(line box)가 생성.
 - `width/height`는 **직접 지정해도 무시**(컨텐츠 크기에 의해 결정).
 - `padding/border`는 적용되나, **수직 마진(top/bottom)**은 라인 박스 배치에 **영향이 거의 없음**(겹치거나 무시됨처럼 보임).
@@ -85,7 +91,8 @@ category: CSS
 </p>
 ```
 
-### 2.3 replaced 요소 예외
+### replaced 요소 예외
+
 - `img`, `video`, `canvas` 등 **replaced elements**는 기본 `display:inline`이지만,
   **width/height 지정이 유효**(컨텐츠 자체가 치수 가짐).
   즉, 인라인이라도 사이즈를 직접 제어 가능.
@@ -96,9 +103,10 @@ category: CSS
 
 ---
 
-## 3. `display: inline-block` — 줄에 놓이는 **미니 독립 박스**
+## `display: inline-block` — 줄에 놓이는 **미니 독립 박스**
 
-### 3.1 요약
+### 요약
+
 - 줄 안에 놓이되(**Outside=inline**), 내부는 작은 블록처럼 **width/height/margin/padding** 모두 적용.
 - 내부는 사실상 **flow-root**(자체 BFC) → 자식 블록 마진이 밖으로 겹치지 않음.
 
@@ -107,7 +115,8 @@ category: CSS
 <span style="display:inline-block;width:140px;height:48px;background:#ffb3c1">또 다른 박스</span>
 ```
 
-### 3.2 베이스라인/문자 간 간극
+### 베이스라인/문자 간 간극
+
 - `inline-block`은 기본적으로 **박스의 베이스라인**을 라인 박스 정렬 기준으로 삼음.
   다른 인라인들과 높이 차이가 나면 **baseline이 어긋난 듯** 보일 수 있음 → `vertical-align: middle|top|bottom` 등으로 조정.
 - **인접 inline-block 사이 공백 문자**(HTML 소스의 줄바꿈/스페이스)가 **시각적 간격**을 만듦.
@@ -130,7 +139,7 @@ category: CSS
 
 ---
 
-## 4. 세 값 비교 — 개념/속성/문맥
+## 세 값 비교 — 개념/속성/문맥
 
 | 속성 | 줄바꿈 | 가로 점유 | width/height | margin/padding | 포맷팅 컨텍스트 | 베이스라인 정렬 |
 |---|---|---|---|---|---|---|
@@ -140,7 +149,7 @@ category: CSS
 
 ---
 
-## 5. 두-값 디스플레이 구문(현대 문법)
+## 두-값 디스플레이 구문(현대 문법)
 
 - 문법: `display: <outside> <inside>;`
   - `<outside>`: `block` | `inline`
@@ -160,29 +169,34 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 6. 실무에서 자주 묻는 질문(FAQ) — 핵심 이슈
+## 실무에서 자주 묻는 질문(FAQ) — 핵심 이슈
 
-### 6.1 왜 인라인에 `width/height`가 안 먹나요?
+### 왜 인라인에 `width/height`가 안 먹나요?
+
 - IFC에서는 **컨텐츠의 글꼴 메트릭**이 줄 높이를 결정. 크기 지정은 무시됨(패딩/보더는 시각적 영역만 확장).
   **해결**: `display:inline-block`/`inline-flex`로 바꿔 박스화.
 
-### 6.2 인라인의 상하 마진이 안 먹는 것처럼 보여요
+### 인라인의 상하 마진이 안 먹는 것처럼 보여요
+
 - 수직 마진은 라인 박스 배치에 큰 영향이 없음.
   **해결**: 상하 간격은 `line-height`, `padding`, 또는 래퍼를 블록으로 분리.
 
-### 6.3 inline-block 사이의 간격(화이트스페이스)이 싫어요
+### inline-block 사이의 간격(화이트스페이스)이 싫어요
+
 - 소스의 공백이 **텍스트 노드**로 간주되어 간격이 생김.
   **해결**: 주석/붙여쓰기/`font-size:0` 트릭, 또는 Grid/Flex 사용.
 
-### 6.4 블록 자식의 상단 마진이 부모 밖으로 튀어나옵니다
+### 블록 자식의 상단 마진이 부모 밖으로 튀어나옵니다
+
 - BFC의 **마진 겹침** 때문.
   **해결**: 부모에 `overflow:auto|hidden` 또는 `display: flow-root;` 로 BFC 경계 생성.
 
 ---
 
-## 7. `display: contents`/`flow-root`/`list-item` — 유용한 보너스
+## `display: contents`/`flow-root`/`list-item` — 유용한 보너스
 
-### 7.1 `display: contents`
+### `display: contents`
+
 - **자기 박스를 없애고** 자식만 **부모의 레이아웃**에 참여시킴(“래퍼를 없애는” 효과).
 - 스타일 상속·선택자 스코프는 유지하지만, **접근성 트리/스크린리더 영향** 있을 수 있음(주의).
 
@@ -197,14 +211,16 @@ display: block grid;      /* == display:grid */
 <!-- 렌더링상 div 래퍼가 사라져 li들이 같은 계층처럼 작동 -->
 ```
 
-### 7.2 `display: flow-root`
+### `display: flow-root`
+
 - **새 BFC 생성**. 자식의 상단 마진 겹침 방지, float 컨테이너 라핑 등 레이아웃 안정에 유용.
 
 ```css
 .card { display: flow-root; }
 ```
 
-### 7.3 `display: list-item`
+### `display: list-item`
+
 - 블록처럼 배치 + **리스트 마커**(`::marker`)를 가짐.
   커스텀 컴포넌트에 목록 스타일을 입힐 때 유용.
 
@@ -215,9 +231,10 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 8. 실전 패턴 모음
+## 실전 패턴 모음
 
-### 8.1 버튼/배지: 인라인 → inline-block으로 히트영역 확보
+### 버튼/배지: 인라인 → inline-block으로 히트영역 확보
+
 ```html
 <style>
   .btn {
@@ -234,7 +251,8 @@ display: block grid;      /* == display:grid */
 <a class="btn" href="#">다음</a>
 ```
 
-### 8.2 인라인 아이콘 정렬: baseline vs middle
+### 인라인 아이콘 정렬: baseline vs middle
+
 ```html
 <style>
   .icon { width:1em; height:1em; vertical-align:-0.125em; } /* 살짝 내려 시각적 중앙 */
@@ -242,7 +260,8 @@ display: block grid;      /* == display:grid */
 텍스트와 <img class="icon" src="check.svg" alt=""> 아이콘 정렬
 ```
 
-### 8.3 카드 그리드: inline-block 대안으로 Flex/Grid
+### 카드 그리드: inline-block 대안으로 Flex/Grid
+
 ```html
 <style>
   .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(16rem,1fr)); gap:1rem; }
@@ -256,7 +275,8 @@ display: block grid;      /* == display:grid */
 ```
 - **권장**: inline-block 대신 Grid/Flex를 사용하면 **공백 간극 문제**/정렬/분배가 한 번에 해결.
 
-### 8.4 문단 상단 마진 “겹침” 제거: flow-root
+### 문단 상단 마진 “겹침” 제거: flow-root
+
 ```html
 <style>
   .prose { display:flow-root; padding:1rem; background:#f8fafc; }
@@ -268,7 +288,8 @@ display: block grid;      /* == display:grid */
 </div>
 ```
 
-### 8.5 inline-block 공백 제거 트릭
+### inline-block 공백 제거 트릭
+
 ```html
 <style>.ib{display:inline-block;width:6ch;background:#eef2ff}</style>
 <div>
@@ -280,7 +301,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 9. 데모: 핵심 차이 한눈에
+## 데모: 핵심 차이 한눈에
 
 ```html
 <!doctype html>
@@ -322,7 +343,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 10. “display만 바꿔” 해결하려다 겪는 함정과 해법
+## “display만 바꿔” 해결하려다 겪는 함정과 해법
 
 | 증상 | 원인 | 빠른 해법 |
 |---|---|---|
@@ -334,7 +355,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 11. 수학(요약) — 라인 박스/베이스라인 개념
+## 수학(요약) — 라인 박스/베이스라인 개념
 
 - **라인 박스 높이**는 해당 줄에 들어있는 인라인 박스들의 **`line-height`의 최대치**와 글꼴 메트릭으로 결정.
 - 동일 줄의 인라인 박스 i에 대한 **정렬 오프셋**:
@@ -346,7 +367,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 12. 마이그레이션 체크리스트
+## 마이그레이션 체크리스트
 
 - **줄에서 자연스럽게** 놓이되 **크기 제어**가 필요 → `inline-block` 또는 `inline-flex`.
 - 박스 간 **분배/정렬**이 핵심 → `flex`/`grid`.
@@ -356,7 +377,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 13. 보너스: 기타 display 값 간단 메모
+## 보너스: 기타 display 값 간단 메모
 
 - `none`: **박스 생성 안 함**(렌더·탭순서에서 제외). 애니메이션/전환 시나리오는 `visibility`/`opacity`가 더 매끄럽기도.
 - `flex`: 1차원 레이아웃(축 정렬/분배).
@@ -367,7 +388,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 14. 예제: “초안 + 확장” 통합 실습 페이지
+## 예제: “초안 + 확장” 통합 실습 페이지
 
 ```html
 <!doctype html>
@@ -451,7 +472,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 15. 최종 체크리스트
+## 최종 체크리스트
 
 - 줄 안에서 **히트 영역/크기 제어**가 필요 → `inline-block`/`inline-flex`.
 - 간격과 분배가 핵심 → `flex`/`grid`(+ `gap`).
@@ -462,7 +483,7 @@ display: block grid;      /* == display:grid */
 
 ---
 
-## 16. 결론
+## 결론
 
 - **block/inline/inline-block**은 레이아웃의 **기초 문맥**을 고르는 스위치입니다.
 - **무엇이 줄을 만들고**, **무엇이 라인 박스를 만들며**, **마진이 어떻게 상호작용하는지**를 이해하면

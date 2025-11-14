@@ -6,7 +6,7 @@ category: CSS
 ---
 # CSS `transition`과 `transform`
 
-## 0. 개요
+## 개요
 
 - **`transition`**: 어떤 *상태 변화*가 일어날 때, 그 *변화 과정*을 부드럽게 보이게 함.
 - **`transform`**: 요소의 기하학적 변형(이동/회전/확대/기울임)을 시각적으로 적용. 레이아웃엔 영향 없음(= reflow 유발 X).
@@ -15,7 +15,7 @@ category: CSS
 
 ---
 
-## 1. `transition` 핵심
+## `transition` 핵심
 
 ```css
 .box {
@@ -24,7 +24,8 @@ category: CSS
 /* 축약형: [property] [duration] [timing] [delay] */
 ```
 
-### 1.1 속성 분해
+### 속성 분해
+
 | 속성 | 의미 | 예시 |
 |---|---|---|
 | `transition-property` | 애니메이션 대상 속성 | `transform, opacity` |
@@ -34,7 +35,8 @@ category: CSS
 
 > 권장: `transition: all ...`은 피하고 **필요한 속성만** 지정(성능/예측성↑).
 
-### 1.2 애니메이션 가능한 속성(요지)
+### 애니메이션 가능한 속성(요지)
+
 - **권장**: `opacity`, `transform` 계열(translate/scale/rotate) → 합성(compositing) 단계에서 처리되어 부드럽고 비용 낮음.
 - **주의**: `width/height/left/top/margin` 등 레이아웃에 영향 주는 속성은 **reflow**를 유발, 프레임 드랍 위험.
 
@@ -42,7 +44,7 @@ category: CSS
 
 ---
 
-## 2. `transform` 핵심
+## `transform` 핵심
 
 ```css
 .target {
@@ -50,7 +52,8 @@ category: CSS
 }
 ```
 
-### 2.1 주요 함수(2D)
+### 주요 함수(2D)
+
 | 함수 | 설명 | 예 |
 |---|---|---|
 | `translate(x, y)` | 평행 이동 | `translate(20px, -10px)` |
@@ -61,7 +64,8 @@ category: CSS
 | `skew(xa, ya)` | 기울이기 | `skew(10deg, 0)` |
 | `matrix(a,b,c,d,e,f)` | 행렬 직접 지정 | 고급용 |
 
-### 2.2 트랜스폼 순서 중요
+### 트랜스폼 순서 중요
+
 ```css
 /* 회전 후 확대 */
 transform: rotate(45deg) scale(1.2);
@@ -70,7 +74,8 @@ transform: scale(1.2) rotate(45deg);
 ```
 복수 함수는 **왼쪽부터** 차례로 적용됩니다.
 
-### 2.3 기준점: `transform-origin`
+### 기준점: `transform-origin`
+
 ```css
 .box {
   transform-origin: bottom right; /* 기본: center center */
@@ -78,7 +83,8 @@ transform: scale(1.2) rotate(45deg);
 }
 ```
 
-### 2.4 3D 확장
+### 3D 확장
+
 | 함수 | 설명 | 예 |
 |---|---|---|
 | `translateZ(z)` | Z축 이동 | `translateZ(40px)` |
@@ -100,7 +106,7 @@ transform: scale(1.2) rotate(45deg);
 
 ---
 
-## 3. 타이밍 함수 깊게 보기
+## 타이밍 함수 깊게 보기
 
 타이밍 함수는 시간 \(t \in [0,1]\)에 대한 *진행도* \(p = f(t)\)를 정의합니다.
 대표적인 **Cubic Bezier**는 네 점 \((0,0), (x_1, y_1), (x_2, y_2), (1,1)\)로 정의:
@@ -122,9 +128,10 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 
 ---
 
-## 4. 상태 변화 패턴 모음
+## 상태 변화 패턴 모음
 
-### 4.1 카드 호버 리프트(권장 패턴: transform+shadow)
+### 카드 호버 리프트(권장 패턴: transform+shadow)
+
 ```html
 <div class="card">콘텐츠</div>
 ```
@@ -143,7 +150,8 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 }
 ```
 
-### 4.2 버튼 프레스(누르는 느낌)
+### 버튼 프레스(누르는 느낌)
+
 ```css
 .button {
   transform: translateY(0);
@@ -155,7 +163,8 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 }
 ```
 
-### 4.3 토글 아이콘(햄버거→X)
+### 토글 아이콘(햄버거→X)
+
 ```html
 <button class="burger" aria-expanded="false"><span></span></button>
 ```
@@ -179,7 +188,8 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 .burger[aria-expanded="true"]::after  { transform: translateY(-7px) rotate(-45deg); }
 ```
 
-### 4.4 아코디언(높이 애니메이션의 한계와 우회)
+### 아코디언(높이 애니메이션의 한계와 우회)
+
 `height: auto`는 **직접 애니메이션 불가**. `max-height` 트릭 또는 `grid`/`scaleY`/`content-visibility` 응용.
 
 ```css
@@ -206,7 +216,7 @@ transition-timing-function: cubic-bezier(.2, .7, .2, 1);
 
 ---
 
-## 5. 이벤트 훅: `transitionend`
+## 이벤트 훅: `transitionend`
 
 상태 전환 완료 후 DOM 조작이 필요할 때:
 
@@ -223,7 +233,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 6. 성능 체크리스트
+## 성능 체크리스트
 
 - **합성 단계**에서 끝나는 속성만 전환: `transform`, `opacity`
 - `top/left/width/height` 등 레이아웃 변화는 피하기 → 필요하면 `transform`으로 **대체**
@@ -236,7 +246,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 7. 접근성 고려
+## 접근성 고려
 
 - 모션 민감 사용자: `prefers-reduced-motion` 반영
 ```css
@@ -249,7 +259,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 8. 스태킹/레이어링과 트랜스폼
+## 스태킹/레이어링과 트랜스폼
 
 - `transform`을 적용하면 요소는 **새 스태킹 컨텍스트**를 생성(일반적으로).
 - `z-index` 계산이 달라질 수 있으니, 모달/툴팁/드롭다운 계층은 **레이어 토큰**으로 명시 관리:
@@ -260,7 +270,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 9. 3D 카드 플립 예제
+## 3D 카드 플립 예제
 
 ```html
 <div class="scene">
@@ -293,7 +303,7 @@ panel.addEventListener('transitionend', (e) => {
 
 ---
 
-## 10. 실전 컴포넌트: 토스트 알림
+## 실전 컴포넌트: 토스트 알림
 
 ```html
 <button id="show">토스트</button>
@@ -326,7 +336,7 @@ btn.addEventListener('click', () => {
 
 ---
 
-## 11. 스크롤 구동 인터랙션(기본형)
+## 스크롤 구동 인터랙션(기본형)
 
 스크롤에 따라 클래스만 토글하고, 실제 애니메이션은 `transition`이 처리.
 
@@ -348,7 +358,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 12. 개별 트랜스폼 속성(Transforms Level 2)
+## 개별 트랜스폼 속성(Transforms Level 2)
 
 현대 브라우저는 `transform` 단일 속성 외에 **개별 속성**도 지원:
 
@@ -365,7 +375,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 13. 디버깅 팁
+## 디버깅 팁
 
 - DevTools → **Elements** 패널에서 `:hov` 상태 강제, `computed`에서 전환 중 속성 확인.
 - **Performance**/**Layers**(또는 Rendering)로 합성 경로와 레이어 승격 여부 확인.
@@ -373,7 +383,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 14. 흔한 함정과 해결책
+## 흔한 함정과 해결책
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -385,7 +395,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 15. 종합 예제: 카드 리스트
+## 종합 예제: 카드 리스트
 
 ```html
 <ul class="cards">
@@ -423,7 +433,7 @@ addEventListener('scroll', () => {
 
 ---
 
-## 16. 요약
+## 요약
 
 | 항목 | 핵심 정리 |
 |---|---|
@@ -438,6 +448,7 @@ addEventListener('scroll', () => {
 ---
 
 ## 참고
+
 - MDN: transition / transform
 - CSS Transforms Level 2(개별 변환 속성: `translate/scale/rotate`)
 - Core Web Vitals를 고려한 합성 중심 애니메이션 전략

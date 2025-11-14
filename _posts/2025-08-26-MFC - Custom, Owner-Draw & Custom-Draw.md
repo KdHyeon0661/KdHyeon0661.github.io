@@ -11,7 +11,7 @@ category: MFC
 
 ---
 
-## 0. 큰 그림 요약
+## 큰 그림 요약
 
 - **Owner-Draw**
   - 컨트롤이 **그리기 책임을 ‘소유자(부모)’에게 전가**.
@@ -28,9 +28,10 @@ category: MFC
 
 ---
 
-## 1. Owner-Draw (ListBox/Combo) — 기본과 고급
+## Owner-Draw (ListBox/Combo) — 기본과 고급
 
 ### 1-1. 스타일/흐름
+
 - **리소스 스타일**
   - ListBox: `LBS_OWNERDRAWFIXED` / `LBS_OWNERDRAWVARIABLE`(+ `LBS_HASSTRINGS`)
   - ComboBox: `CBS_OWNERDRAWFIXED` / `CBS_OWNERDRAWVARIABLE`(+ `CBS_HASSTRINGS`)
@@ -125,9 +126,10 @@ public:
 
 ---
 
-## 2. Custom-Draw (ListView=`CListCtrl`) — 단계/기법 총정리
+## Custom-Draw (ListView=`CListCtrl`) — 단계/기법 총정리
 
 ### 2-1. 단계(DWORD `dwDrawStage`)
+
 - `CDDS_PREPAINT` → **아이템 단위 알림 허용 요청**: `*pResult = CDRF_NOTIFYITEMDRAW`
 - `CDDS_ITEMPREPAINT` → 행 단위 커스터마이즈
   - 여기서 `*pResult = CDRF_NOTIFYSUBITEMDRAW` 반환 시 `CDDS_SUBITEM|CDDS_ITEMPREPAINT` 단계가 옴
@@ -231,6 +233,7 @@ case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
 ```
 
 #### (B) 체크박스/상태 아이콘 직접 렌더
+
 - 기본 체크박스(`LVS_EX_CHECKBOXES`) 대신 **상태이미지** 또는 사용자 지정 그래픽을 쓰려면 `CDRF_SKIPDEFAULT` 후 직접 그리기.
 
 ```cpp
@@ -290,9 +293,10 @@ void CMyDlg::OnGetDispInfo(NMHDR* n, LRESULT* r) {
 
 ---
 
-## 3. Custom-Draw (TreeView=`CTreeCtrl`) — 전체 행/노드 스타일링
+## Custom-Draw (TreeView=`CTreeCtrl`) — 전체 행/노드 스타일링
 
 ### 3-1. 필수 스타일/확장 스타일
+
 - `TVS_HASBUTTONS`, `TVS_HASLINES`, `TVS_LINESATROOT`, `TVS_FULLROWSELECT`, `TVS_TRACKSELECT`
 - 확장: `TVS_EX_DOUBLEBUFFER`(테마 환경에서 깜빡임 저감; OS/버전에 따라 다름)
 
@@ -301,6 +305,7 @@ m_tree.ModifyStyle(0, TVS_FULLROWSELECT | TVS_TRACKSELECT);
 ```
 
 ### 3-2. 커스텀드로우 단계 (`NMTVCUSTOMDRAW`)
+
 - `CDDS_PREPAINT` → `CDRF_NOTIFYITEMDRAW`
 - `CDDS_ITEMPREPAINT` → 노드별 색/배경 지정
 - (`CDDS_ITEMPOSTPAINT` → 후처리 가능)
@@ -332,6 +337,7 @@ void CMyDlg::OnTreeCustomDraw(NMHDR* n, LRESULT* r){
 ```
 
 ### 3-3. “진짜 그리기”로 아이콘/배지/진행률/라인 커스터마이즈
+
 - Tree는 기본적으로 **텍스트/아이콘**을 OS가 그림
 - 더 복잡한 배지를 붙이거나, **전체 행 배경**을 칠하려면 **클라이언트 영역 직도**가 필요
   - 방법 1) `CDDS_ITEMPOSTPAINT`에서 `GetItemRect(..., TRUE)`로 행 영역 구한 뒤 **오버레이**
@@ -351,12 +357,13 @@ case CDDS_ITEMPOSTPAINT:
 ```
 
 ### 3-4. 테마 API(UXTheme)와의 조합
+
 - `OpenThemeData(hWnd, L"TreeView")` + `DrawThemeBackground`로 **현대 테마**에 맞춰 드로잉
 - 필요시 `SetWindowTheme(m_hWnd, L"Explorer", nullptr)`로 익스플로러 스타일 라인/확장 단추 사용
 
 ---
 
-## 4. 공통 고급 패턴
+## 공통 고급 패턴
 
 ### 4-1. 더블 버퍼링 공통 헬퍼
 
@@ -382,6 +389,7 @@ public:
 > 일반적으로 ListView/TreeView는 **자체 더블버퍼**가 있어 필요 없지만, **Owner-Draw 컨트롤**을 윈도우 전체 레벨로 복잡하게 그릴 때 유용.
 
 ### 4-2. 히트 테스트 & 인플레이스 편집
+
 - ListView: `SubItemRect`로 셀 영역 얻고, 클릭 좌표로 **어느 열인지** 판별
 - Tree: `TVHITTESTINFO`로 아이콘/텍스트/버튼 영역 구분
 - 인플레이스 편집은 **동적 `CEdit`/`CComboBox` 생성** → 완료 시 내용 반영 + 삭제
@@ -397,6 +405,7 @@ void CMyDlg::BeginEditCell(int row, int col) {
 ```
 
 ### 4-3. 상태 이미지/오버레이 이미지
+
 - 이미지 리스트에 **상태 이미지**를 등록 후 `LVIS_STATEIMAGEMASK`를 사용하면 체크/경고/오프라인 등 표현 용이
 - Tree도 `TVS_CHECKBOXES`(레지스터 스타일)나 상태 이미지 사용 가능
 
@@ -406,12 +415,13 @@ m_list.SetItemState(row, StateImageMask(2), LVIS_STATEIMAGEMASK);
 ```
 
 ### 4-4. 다크 테마/하이 콘트라스트 대응
+
 - **색 하드코딩 최소화**, 시스템 색/테마 질의 → `GetSysColor`, UxTheme 색상
 - 하이 콘트라스트 모드(`SystemParametersInfo(SPI_GETHIGHCONTRAST, ...)`) 감지 후 **기본 그리기 우선**
 
 ---
 
-## 5. 통합 예제 ①: `CListCtrlEx` — 지브라/호버/체크/진행률/가상 모드
+## 통합 예제 ①: `CListCtrlEx` — 지브라/호버/체크/진행률/가상 모드
 
 ```cpp
 class CListCtrlEx : public CListCtrl {
@@ -482,7 +492,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 6. 통합 예제 ②: `CTreeCtrlEx` — 풀로우 선택/호버/배지
+## 통합 예제 ②: `CTreeCtrlEx` — 풀로우 선택/호버/배지
 
 ```cpp
 class CTreeCtrlEx : public CTreeCtrl {
@@ -519,7 +529,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 7. 성능 & 안정성 & UX 체크리스트
+## 성능 & 안정성 & UX 체크리스트
 
 1. **깜빡임**: `LVS_EX_DOUBLEBUFFER`, `TVS_EX_DOUBLEBUFFER`(가능 시), 필요 시 수동 더블버퍼
 2. **GDI 리소스 누수**: `CPen/ CBrush/ CFont` 생성/선택/해제 철저
@@ -534,7 +544,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 8. 문제 해결 가이드
+## 문제 해결 가이드
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -546,7 +556,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 9. 빠른 스타터(요약 스니펫)
+## 빠른 스타터(요약 스니펫)
 
 ```cpp
 // 메시지 맵
@@ -560,7 +570,7 @@ END_MESSAGE_MAP()
 
 ---
 
-## 10. 결론
+## 결론
 
 - **Owner-Draw**(ListBox/Combo)는 **완전 커스텀**이 필요한 단순 목록/선택 UI에 적합.
 - **Custom-Draw**(ListView/TreeView)는 **서브아이템/상태/가상/성능**까지 잡는 **현실적 솔루션**.

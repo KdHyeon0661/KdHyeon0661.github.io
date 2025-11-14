@@ -6,7 +6,7 @@ category: CSS
 ---
 # 반응형 디자인 기초: Media Query 사용법
 
-## 0. 미디어 쿼리란?
+## 미디어 쿼리란?
 
 CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조건으로 삼아 **조건부 스타일**을 적용하는 규칙입니다.
 
@@ -18,9 +18,10 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 
 ---
 
-## 1. 미디어 타입과 기본 문법
+## 미디어 타입과 기본 문법
 
-### 1.1 미디어 타입
+### 미디어 타입
+
 - `screen` (화면), `print` (인쇄), `speech`(음성) 등
 
 ```css
@@ -33,7 +34,8 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 }
 ```
 
-### 1.2 연결자
+### 연결자
+
 - `and`: AND 조건
 - `,`(쉼표): OR 조건
 - `not`: 부정
@@ -48,7 +50,7 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 
 ---
 
-## 2. Media Features(핵심 특성) — 치트시트
+## Media Features(핵심 특성) — 치트시트
 
 | 분류 | 특성 | 예시 | 설명 |
 |---|---|---|---|
@@ -66,7 +68,7 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 
 ---
 
-## 3. Level 4 범위 문법(가독성↑)
+## Level 4 범위 문법(가독성↑)
 
 기존: `min-/max-` 조합 → **범위 표현**으로 더 자연스럽게:
 
@@ -85,7 +87,7 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 
 ---
 
-## 4. 모바일 퍼스트 전략(권장)
+## 모바일 퍼스트 전략(권장)
 
 1) **기본 스타일** = 모바일(좁은 화면)
 2) **확장** = `min-width`로 큰 화면에만 오버라이드
@@ -113,9 +115,10 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 
 ---
 
-## 5. 브레이크포인트 설계(토큰화)
+## 브레이크포인트 설계(토큰화)
 
-### 5.1 권장 구간
+### 권장 구간
+
 - `sm: 600px`, `md: 768px`, `lg: 1024px`, `xl: 1280px`, `2xl: 1536px` 등
 - 프로젝트/디자인 시스템에 맞춰 **토큰 변수**로 통일
 
@@ -130,16 +133,18 @@ CSS에서 **환경(화면 크기, 방향, 해상도, 입력 방식 등)**을 조
 @media (min-width:  var(--bp-lg)) { /* ... */ }
 ```
 
-### 5.2 구간 정의(수학적)
+### 구간 정의(수학적)
+
 한 요소 스타일의 활성 구간을
 $$\text{Active}(w) = [w_\text{min},\; w_\text{max})$$
 로 두고, **상충/틈(겹침/빈 구간)** 없게 설계합니다.
 
 ---
 
-## 6. 주요 패턴 — 실전 스니펫
+## 주요 패턴 — 실전 스니펫
 
-### 6.1 내비게이션: mobile → desktop
+### 내비게이션: mobile → desktop
+
 ```css
 .nav {
   display:flex; align-items:center; gap:.75rem;
@@ -150,7 +155,8 @@ $$\text{Active}(w) = [w_\text{min},\; w_\text{max})$$
 }
 ```
 
-### 6.2 사이드바: off-canvas → 고정
+### 사이드바: off-canvas → 고정
+
 ```css
 .sidebar {
   position: fixed; inset: 0 0 0 20%; transform: translateX(-100%);
@@ -163,7 +169,8 @@ $$\text{Active}(w) = [w_\text{min},\; w_\text{max})$$
 }
 ```
 
-### 6.3 카드 그리드(반응형)
+### 카드 그리드(반응형)
+
 ```css
 .cards {
   display:grid; grid-template-columns: 1fr; gap: 1rem;
@@ -173,7 +180,8 @@ $$\text{Active}(w) = [w_\text{min},\; w_\text{max})$$
 @media (min-width: 1200px) { .cards { grid-template-columns: repeat(4, 1fr); } }
 ```
 
-### 6.4 유동 타이포그래피: `clamp()`
+### 유동 타이포그래피: `clamp()`
+
 ```css
 :root{
   --fs-body: clamp(0.95rem, 0.5vw + 0.8rem, 1.1rem);
@@ -185,7 +193,7 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 
 ---
 
-## 7. 입력/상호작용 환경 고려
+## 입력/상호작용 환경 고려
 
 터치 스크린에서 `:hover`는 기대대로 동작하지 않을 수 있습니다. `hover/pointer`를 활용해 UI를 조정합니다.
 
@@ -206,9 +214,10 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 
 ---
 
-## 8. 방향/비율 기반 레이아웃
+## 방향/비율 기반 레이아웃
 
-### 8.1 방향
+### 방향
+
 ```css
 /* 가로 모드일 때 사이드바 + 콘텐츠 배치 */
 @media (orientation: landscape) {
@@ -216,7 +225,8 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 }
 ```
 
-### 8.2 비율 기반(영화/슬라이드)
+### 비율 기반(영화/슬라이드)
+
 ```css
 /* 16:9보다 넓은 와이드 레이아웃 */
 @media (aspect-ratio > 16/9) {
@@ -226,9 +236,10 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 
 ---
 
-## 9. 해상도/색역(고품질 이미지/아이콘)
+## 해상도/색역(고품질 이미지/아이콘)
 
-### 9.1 고DPI 그래픽
+### 고DPI 그래픽
+
 ```css
 /* 2배 밀도 이상 디스플레이 */
 @media (min-resolution: 2dppx) {
@@ -236,7 +247,8 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 }
 ```
 
-### 9.2 넓은 색역(P3)
+### 넓은 색역(P3)
+
 ```css
 /* P3 색역에서만 더 선명한 색상 사용 */
 @media (color-gamut: p3) {
@@ -246,9 +258,10 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 
 ---
 
-## 10. 사용자 선호도: 다크모드/모션/대비
+## 사용자 선호도: 다크모드/모션/대비
 
-### 10.1 다크 모드
+### 다크 모드
+
 ```css
 /* 기본(라이트) */
 :root{ --bg: #ffffff; --fg: #111; --card: #fff; }
@@ -260,7 +273,8 @@ h1   { font-size: var(--fs-h1); line-height: 1.2; }
 body { background: var(--bg); color: var(--fg); }
 ```
 
-### 10.2 모션 감소
+### 모션 감소
+
 ```css
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
@@ -268,7 +282,8 @@ body { background: var(--bg); color: var(--fg); }
 }
 ```
 
-### 10.3 높은 대비(지원 브라우저 한정)
+### 높은 대비(지원 브라우저 한정)
+
 ```css
 @media (prefers-contrast: more) {
   :root { --border: #000; --focus: #1d4ed8; }
@@ -279,14 +294,16 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 11. 뷰포트 메타와 동적 뷰포트 단위
+## 뷰포트 메타와 동적 뷰포트 단위
 
-### 11.1 필수 `<meta>`
+### 필수 `<meta>`
+
 ```html
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 ```
 
-### 11.2 동적 뷰포트 단위 (모바일 브라우저 UI 반영)
+### 동적 뷰포트 단위 (모바일 브라우저 UI 반영)
+
 - `svh`, `lvh`, `dvh` 등: 안전/큰/동적 viewport height
 ```css
 .hero { height: 100dvh; } /* 주소창 유무에 동적으로 반응 */
@@ -294,9 +311,10 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 12. 인쇄/접근성 미디어
+## 인쇄/접근성 미디어
 
-### 12.1 인쇄
+### 인쇄
+
 ```css
 @media print {
   /* 배경 제거, 잉크 절약 */
@@ -307,7 +325,8 @@ body { background: var(--bg); color: var(--fg); }
 }
 ```
 
-### 12.2 대화형(키오스크 등)
+### 대화형(키오스크 등)
+
 ```css
 @media speech {
   /* 음성 합성 환경에 특화된 스타일(필요시) */
@@ -316,7 +335,7 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 13. 종합 예제 — 반응형 마케팅 섹션
+## 종합 예제 — 반응형 마케팅 섹션
 
 ```html
 <!doctype html>
@@ -441,7 +460,7 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 14. 그리드/플렉스와의 조합
+## 그리드/플렉스와의 조합
 
 - **Breakpoints**는 “언제 레이아웃을 바꿀지” 결정 → **Grid/Flex**는 “어떻게 배치할지” 처리
 - 예: 모바일 1열 → `(min-width: 768px)`에서 2열, `(min-width: 1024px)`에서 3열
@@ -459,7 +478,7 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 15. 디버깅/성능/안정성 체크리스트
+## 디버깅/성능/안정성 체크리스트
 
 - [ ] **중첩/중복 규칙**으로 인한 특이성 폭증을 방지(컴포넌트 범위화, BEM/SCSS 모듈)
 - [ ] 불필요한 `max-width`/`min-width` 조합 제거, **범위 문법**으로 단순화
@@ -471,7 +490,7 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 16. 자주 쓰는 미디어 쿼리 스니펫 모음
+## 자주 쓰는 미디어 쿼리 스니펫 모음
 
 ```css
 /* 1) 3단계 브레이크포인트 */
@@ -503,7 +522,7 @@ body { background: var(--bg); color: var(--fg); }
 
 ---
 
-## 17. 실수/함정 피하기
+## 실수/함정 피하기
 
 - **브레이크포인트 남발** → 유지보수 지옥. **컴포넌트 목적** 중심으로 3~5개 이내.
 - 터치환경에서 **hover 의존 UI** → 요약 뱃지/툴팁은 클릭/포커스로도 접근 가능하게.

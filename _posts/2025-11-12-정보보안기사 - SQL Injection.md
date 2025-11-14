@@ -7,6 +7,7 @@ category: 정보보안기사
 # SECTION 08 웹 애플리케이션 취약점 — 01. SQL Injection 취약점 완전 정리 (원리·유형·DBMS 차이·실습용 최소 재현·방어 전략·점검/모니터링·체크리스트·예상문제)
 
 ## 개요 — “쿼리와 데이터의 경계가 무너지면”
+
 **SQL Injection(SQI)**은 애플리케이션이 **사용자 입력을 SQL 구문과 안전하게 분리하지 못할 때** 발생한다. 공격자는 입력값을 이용해 **쿼리 구조를 변형**하여 인증 우회, 임의 조회/수정, 시스템 명령 실행(일부 DBMS)까지 도달할 수 있다.
 핵심은 단 하나: **쿼리와 데이터 사이에 ‘파라미터 경계’를 만든다(=준비문/바인딩)**.
 
@@ -15,12 +16,14 @@ category: 정보보안기사
 ## 위협 모델과 원리
 
 ### 데이터 흐름
+
 ```
 [클라이언트 입력] -> [웹서버] -> [쿼리 생성] -> [DB서버] -> [결과 반환]
                                ^    (문자열 연결로 SQL 생성 시 취약)
 ```
 
 ### 형식적 관점(간단)
+
 사용자 입력 `x`가 쿼리 템플릿 `Q(·)`에 삽입될 때,
 - 안전: $$ \text{safe\_sql} = Q(\text{bind}(x)) $$
 - 취약: $$ \text{unsafe\_sql} = Q(\text{concat}(x)) $$
@@ -30,18 +33,22 @@ category: 정보보안기사
 
 ## 취약점 유형 분류
 
-### 1. In-band(직접 반사/결과 수집)
+### In-band(직접 반사/결과 수집)
+
 - **Union-based**: 결과셋을 **UNION SELECT**로 합쳐 민감 정보 노출
 - **Error-based**: DB 오류 메시지에 스키마/데이터가 반사
 
-### 2. Blind(응답에 데이터 직접 없음)
+### Blind(응답에 데이터 직접 없음)
+
 - **Boolean-based**: 조건식 참/거짓에 따라 응답 길이나 상태 차이 관찰
 - **Time-based**: 지연 함수(`SLEEP`, `pg_sleep`, `WAITFOR DELAY`, `DBMS_LOCK.SLEEP`)로 참/거짓 구분
 
-### 3. Out-of-band(OoB)
+### Out-of-band(OoB)
+
 - DB가 **외부 채널**(DNS/HTTP 등)로 데이터를 밀어내는 케이스(일부 환경/권한에서 가능)
 
-### 4. 특수 상황
+### 특수 상황
+
 - **Stacked queries**: 여러 쿼리를 `;`로 이어 실행(드라이버/DB 설정에 따라 차이)
 - **2차(Stored) 인젝션**: 저장된 악성 입력이 **나중에** 다른 쿼리 문맥에서 실행
 - **ORM/빌더 인젝션**: ORM을 쓴다고 안전이 아님. **문자열 보간**·Raw 쿼리로 취약
@@ -67,6 +74,7 @@ category: 정보보안기사
 > 아래 **취약 예시**는 **로컬 랩/교육 목적**으로만 사용하라. 운영 코드에 **반드시 안전 예시**를 적용할 것.
 
 ### Java (JDBC)
+
 ```java
 // ❌ 취약: 문자열 연결
 String sql = "SELECT * FROM users WHERE id = '" + request.getParameter("id") + "'";
@@ -82,16 +90,20 @@ ResultSet rs = ps.executeQuery();
 ```
 
 ### Python (psycopg2, PostgreSQL)
+
 ```python
 # ❌ 취약
+
 cur.execute(f"SELECT * FROM products WHERE name LIKE '%{q}%'")
 ```
 ```python
 # ✅ 안전
+
 cur.execute("SELECT * FROM products WHERE name LIKE %s", (f"%{q}%",))
 ```
 
 ### C# (.NET, Dapper)
+
 ```csharp
 // ❌ 취약
 var sql = $"SELECT * FROM Orders WHERE OrderId = {orderId}";
@@ -103,6 +115,7 @@ var rows = conn.Query("SELECT * FROM Orders WHERE OrderId = @id", new { id = ord
 ```
 
 ### PHP (PDO)
+
 ```php
 // ❌ 취약
 $sql = "SELECT * FROM users WHERE email = '".$_GET['email']."'";
@@ -116,6 +129,7 @@ $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ```
 
 ### Node.js (pg)
+
 ```js
 // ❌ 취약
 const sql = `SELECT * FROM blog WHERE slug = '${req.params.slug}'`;
@@ -147,9 +161,11 @@ const { rows } = await client.query(
 > 목적: **취약 동작을 눈으로 확인**하고, **바로 패치**하는 훈련.
 > 대상 DB: SQLite(내장). 운영망/실서버 금지.
 
-### 1. 최소 Flask 앱 (취약 라우트 + 안전 라우트)
+### 최소 Flask 앱 (취약 라우트 + 안전 라우트)
+
 ```python
 # app.py (학습용)
+
 from flask import Flask, request, jsonify
 import sqlite3
 
@@ -203,29 +219,35 @@ if __name__ == "__main__":
 
 ## 방어 전략 — “바인딩 만능론 + 최소권한 + 검증/로깅”
 
-### 1. 1차 방어선: **준비문(Prepared Statement) + 파라미터 바인딩**
+### 1차 방어선: **준비문(Prepared Statement) + 파라미터 바인딩**
+
 - 모든 **데이터 값**은 바인딩. 문자열을 **절대** 쿼리에 직접 넣지 않는다.
 - LIKE 검색: `"name LIKE ?"` + `('%' + term + '%')` 식으로 값만 바인딩.
 
-### 2. 2차: **화이트리스트 검증**
+### 2차: **화이트리스트 검증**
+
 - **식별자/키워드**(ORDER BY 컬럼, 정렬 방향, 테이블명 등)는 **사전에 정한 집합**에서만 허용.
 - 정수·범위·리스트 등 **스키마 기반** 입력 검증(JSON 스키마, Joi, FluentValidation 등).
 
-### 3. 3차: **최소 권한 DB 계정**
+### 3차: **최소 권한 DB 계정**
+
 - 애플리케이션 DB 계정은 **SELECT/INSERT/UPDATE/DELETE** 등 필요한 권한만.
 - **DDL/EXECUTE/OS 명령 호출** 권한 제거. **xp_cmdshell**(MSSQL) 같은 위험 기능 비활성.
 - **스키마 분리**: 관리·집계·배치 계정 분리.
 
-### 4. 추가: **저장 프로시저는 만능 아님**
+### 추가: **저장 프로시저는 만능 아님**
+
 - 프로시저 내부에서 **동적 SQL 문자열**을 만들면 **똑같이 취약**.
 - 프로시저도 **파라미터 바인딩**을 사용할 것.
 
-### 5. 에러/로깅/모니터링
+### 에러/로깅/모니터링
+
 - **DB 오류 메시지 노출 금지**(스택 트레이스 숨김, 일반화 응답).
 - **SIEM/로그**에 실패 쿼리 패턴, **SLEEP/pg_sleep/WAITFOR** 호출, **주석/UNION 키워드** 빈도 등 탐지 룰.
 - **WAF/프록시 룰**: 공격 징후 차단(완전한 방어 X, **방어망의 한겹**으로 사용).
 
-### 6. 빌드 파이프라인 보안
+### 빌드 파이프라인 보안
+
 - **SAST**: 문자열 연결 쿼리 탐지 룰(예: `ExecuteQuery(string concatenation)`).
 - **IAST/RASP/DAST**: 런타임/동적 분석으로 인젝션 시도 탐지.
 - **보안 코드 리뷰 체크리스트** 준수.
@@ -247,19 +269,23 @@ if __name__ == "__main__":
 ## 방어 레시피(프레임워크별 관용구)
 
 ### Spring(Data/JPA)
+
 - `@Query` + `:param` 바인딩, `JpaRepository` 메서드 쿼리 사용
 - **Native Query**가 꼭 필요하면 **파라미터**로만, 식별자 화이트리스트
 - `JdbcTemplate`도 `?` 바인딩 사용
 
 ### Django/SQLAlchemy
+
 - Django ORM QuerySet / SQLAlchemy Core/ORM 바인딩
 - Raw SQL은 `text()` + `bindparams()`(SQLAlchemy), Django는 `params` 인자 사용
 
 ### ASP.NET EF Core/Dapper
+
 - LINQ → SQL 변환(안전) / Dapper는 **이름 바인딩**
 - FromSqlRaw는 변수 직접 결합 금지, 반드시 파라미터화 API 사용
 
 ### Laravel/Node ORM(Prisma/TypeORM/Sequelize)
+
 - Query Builder/ORM 메서드 우선, Raw 쿼리는 바인딩 자리표시자 사용
 - 마이그레이션/시드에서 문자열 결합 금지
 
@@ -297,6 +323,7 @@ if __name__ == "__main__":
 2) **문항**: 아래 코드의 문제점과 수정안을 간단히 서술하시오.
 ```python
 # Flask + SQLite
+
 q = request.args.get("q","")
 sql = f"SELECT * FROM emp WHERE name LIKE '%{q}%'"
 rows = db.execute(sql)
@@ -315,6 +342,7 @@ rows = db.execute(sql)
 ---
 
 ## 요약
+
 - SQLi는 **데이터가 쿼리 구조를 침식**할 때 발생한다.
 - **항상 ‘바인딩’으로 경계**를 만들고, 식별자/정렬 등은 **화이트리스트**로만.
 - DB 권한 최소화, 에러 노출 금지, 로깅/모니터링으로 **조기 탐지**.

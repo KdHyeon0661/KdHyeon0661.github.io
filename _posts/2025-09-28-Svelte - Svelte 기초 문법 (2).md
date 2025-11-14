@@ -4,7 +4,8 @@ title: Svelte - Svelte 기초 문법 (2)
 date: 2025-09-28 17:25:23 +0900
 category: Svelte
 ---
-# 2. Svelte 기초 문법 (2)
+# Svelte 기초 문법 (2)
+
 **클래스/스타일 바인딩 · 슬롯(slot)/프래그먼트(fragment) · 라이프사이클(onMount/beforeUpdate/afterUpdate/onDestroy) · 액션(actions)**
 
 > 이 장은 **컴포넌트 실사용에서 꼭 쓰는 4대 기능**을 예제로 정리한다.
@@ -15,7 +16,7 @@ category: Svelte
 
 ---
 
-## 2.1 클래스/스타일 바인딩
+## 클래스/스타일 바인딩
 
 Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간단하게 바인딩할 수 있다.
 핵심 문법:
@@ -27,7 +28,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
   - `style="..."` + `{}` 표현식
   - `style:width={value}` 처럼 **단일 속성**에 바인딩
 
-### 2.1.1 조건부 클래스 — `class:NAME={조건}`
+### 조건부 클래스 — `class:NAME={조건}`
+
 ```svelte
 <script>
   let active = false;
@@ -54,7 +56,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 - `class:active={active}`는 `active === true`일 때만 `.active` 클래스를 추가한다.
 - 여러 조건부 클래스를 **나란히** 쓸 수 있어 가독성이 좋다.
 
-### 2.1.2 클래스 문자열 계산 — `class={expr}`
+### 클래스 문자열 계산 — `class={expr}`
+
 ```svelte
 <script>
   let size = 'md'; // 'sm' | 'md' | 'lg'
@@ -81,7 +84,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 - 복잡한 조합은 배열 → `filter(Boolean)` → `join(' ')` 패턴이 깔끔하다.
 - **반응식 `$:`**로 `cls`를 계산하면 상태가 바뀔 때 자동으로 갱신된다.
 
-### 2.1.3 스타일 바인딩 — 인라인/단일 속성
+### 스타일 바인딩 — 인라인/단일 속성
+
 ```svelte
 <script>
   let progress = 30; // 0~100
@@ -105,7 +109,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 - `style:width={...}` 처럼 **속성 단위**로 묶으면 직관적이다.
 - 여러 속성을 한 번에 넣고 싶다면 `style={\`...\`}` 문자열로 처리한다.
 
-### 2.1.4 상태에 따른 트랜지션/애니메이션과 궁합
+### 상태에 따른 트랜지션/애니메이션과 궁합
+
 클래스 변화를 **CSS 트랜지션**과 함께 쓰면 상태 전환이 부드럽다.
 ```svelte
 <script>
@@ -129,12 +134,13 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 
 ---
 
-## 2.2 슬롯(slot)과 프래그먼트(fragment)
+## 슬롯(slot)과 프래그먼트(fragment)
 
 **슬롯**은 “부모가 자식 컴포넌트 내부의 특정 위치에 콘텐츠를 주입”하는 메커니즘이다.
 **프래그먼트(svelte:fragment)**는 **여러 노드**를 하나의 슬롯 위치에 묶어서 넣고 싶을 때 사용한다.
 
-### 2.2.1 기본 슬롯(기본 콘텐츠 + 대체 콘텐츠)
+### 기본 슬롯(기본 콘텐츠 + 대체 콘텐츠)
+
 ```svelte
 <!-- Card.svelte -->
 <script>
@@ -168,7 +174,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 <Card title="No Content" />
 ```
 
-### 2.2.2 **이름 있는 슬롯** — `<slot name="...">` + `slot="..."` 전달
+### **이름 있는 슬롯** — `<slot name="...">` + `slot="..."` 전달
+
 ```svelte
 <!-- Dialog.svelte -->
 <dialog class="dlg">
@@ -207,7 +214,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 - 부모는 특정 슬롯 위치에 콘텐츠를 넣기 위해 **`slot="name"`**을 지정한다.
 - 전달할 요소가 **여러 개**일 때 `<svelte:fragment slot="name">…</svelte:fragment>`로 묶는다.
 
-### 2.2.3 **슬롯 props** — 자식 → 부모로 데이터 넘기기
+### **슬롯 props** — 자식 → 부모로 데이터 넘기기
+
 ```svelte
 <!-- List.svelte -->
 <script>
@@ -242,7 +250,8 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 - 슬롯은 **단방향**: 자식이 “슬롯에 노출할 값”을 정의하고, 부모가 `let:`으로 받는다.
 - 이 패턴으로 **완전히 커스터마이즈 가능한 리스트/테이블**을 만들 수 있다.
 
-### 2.2.4 프래그먼트 응용: 여러 조각을 한 슬롯에
+### 프래그먼트 응용: 여러 조각을 한 슬롯에
+
 ```svelte
 <!-- Tabs.svelte -->
 <nav class="tabs">
@@ -274,7 +283,7 @@ Svelte는 CSS 클래스/스타일을 **데이터에 반응**하도록 아주 간
 
 ---
 
-## 2.3 라이프사이클 훅 — onMount / beforeUpdate / afterUpdate / onDestroy
+## 라이프사이클 훅 — onMount / beforeUpdate / afterUpdate / onDestroy
 
 Svelte 컴포넌트의 DOM 수명에 맞춰 실행되는 훅:
 
@@ -285,7 +294,8 @@ Svelte 컴포넌트의 DOM 수명에 맞춰 실행되는 훅:
 
 > **중요**: 서버 렌더링(SSR) 중에는 **`onMount`가 실행되지 않는다**. 브라우저에서만 돌기 때문에 **브라우저 API** 사용은 `onMount` 내부에서 하라.
 
-### 2.3.1 onMount — 브라우저 API/비동기 초기화
+### onMount — 브라우저 API/비동기 초기화
+
 ```svelte
 <script>
   import { onMount } from 'svelte';
@@ -307,7 +317,8 @@ Svelte 컴포넌트의 DOM 수명에 맞춰 실행되는 훅:
 - **클린업 함수**를 반환하면 `onDestroy` 시점에 자동 호출된다.
 - 네트워크 데이터 **초기 fetch**도 보통 여기서 수행한다.
 
-### 2.3.2 beforeUpdate / afterUpdate — DOM 변경 전·후 타이밍
+### beforeUpdate / afterUpdate — DOM 변경 전·후 타이밍
+
 ```svelte
 <script>
   import { beforeUpdate, afterUpdate } from 'svelte';
@@ -329,7 +340,8 @@ Svelte 컴포넌트의 DOM 수명에 맞춰 실행되는 훅:
 - **측정·로그** 등 변경 타이밍을 알아야 하는 경우 유용하다.
 - 레이아웃/크기 측정은 **afterUpdate**가 안전하다(실제 DOM 반영 이후).
 
-### 2.3.3 onDestroy — 타이머/옵저버/구독 해제
+### onDestroy — 타이머/옵저버/구독 해제
+
 ```svelte
 <script>
   import { onDestroy } from 'svelte';
@@ -348,7 +360,8 @@ Svelte 컴포넌트의 DOM 수명에 맞춰 실행되는 훅:
 
 - 이벤트/타이머/옵저버/스토어 구독 등 **누수 가능성**이 있으면 **반드시 정리**한다.
 
-### 2.3.4 `tick` — 업데이트 플러시 이후를 기다리기
+### `tick` — 업데이트 플러시 이후를 기다리기
+
 ```svelte
 <script>
   import { tick } from 'svelte';
@@ -371,14 +384,15 @@ Svelte 컴포넌트의 DOM 수명에 맞춰 실행되는 훅:
 
 - `tick()`은 “지금 큐에 쌓인 DOM 변경이 **실제로 반영된 뒤**를 기다리는 Promise”다.
 
-### 2.3.5 SSR 주의 요약
+### SSR 주의 요약
+
 - **DOM/윈도우 접근**은 `onMount` 안에서만.
 - `beforeUpdate/afterUpdate`는 클라이언트 렌더링 과정에서만 의미가 있다.
 - 데이터는 SvelteKit의 `load`에서 미리 받아 SSR로 **완성된 HTML**을 보내는 게 일반적(본 장의 포커스는 컴포넌트 생명주기).
 
 ---
 
-## 2.4 액션(actions) 소개 — `use:action`
+## 액션(actions) 소개 — `use:action`
 
 **액션**은 “DOM 요소에 **부착되어 동작**하는 함수”다.
 형식:
@@ -394,7 +408,8 @@ function action(node: HTMLElement, params?: any) {
 
 컴포넌트 마크업에서 `use:action={params}`로 **부착**한다.
 
-### 2.4.1 가장 단순한 액션 — 자동 포커스
+### 가장 단순한 액션 — 자동 포커스
+
 ```svelte
 <!-- actions/autoFocus.js -->
 export function autoFocus(node) {
@@ -411,7 +426,8 @@ export function autoFocus(node) {
 <input use:autoFocus placeholder="mounted → focus" />
 ```
 
-### 2.4.2 파라미터가 있는 액션 — 클릭 바깥 감지
+### 파라미터가 있는 액션 — 클릭 바깥 감지
+
 ```svelte
 <!-- actions/clickOutside.ts -->
 export function clickOutside(node: HTMLElement, callback: () => void) {
@@ -446,7 +462,8 @@ export function clickOutside(node: HTMLElement, callback: () => void) {
 
 - `destroy()`에서 **리스너 해제**로 누수를 방지한다.
 
-### 2.4.3 반응 파라미터 — `update`로 재설정
+### 반응 파라미터 — `update`로 재설정
+
 ```svelte
 <!-- actions/tooltip.ts -->
 type Params = { text: string; placement?: 'top'|'right'|'bottom'|'left' };
@@ -504,7 +521,8 @@ export function tooltip(node: HTMLElement, params: Params) {
 
 - 부모에서 `msg`가 바뀌면 **액션의 `update`**가 호출되어 DOM을 갱신한다.
 
-### 2.4.4 고급 액션 예: IntersectionObserver로 **무한 스크롤**
+### 고급 액션 예: IntersectionObserver로 **무한 스크롤**
+
 ```svelte
 <!-- actions/intersect.ts -->
 export function intersect(node: Element, onEnter: () => void) {
@@ -544,7 +562,8 @@ export function intersect(node: Element, onEnter: () => void) {
 
 - 스크롤 **끝에 닿을 때마다** 더 로드하는 패턴을 **한 줄(use:intersect)** 로 재사용할 수 있다.
 
-### 2.4.5 여러 액션 동시 부착
+### 여러 액션 동시 부착
+
 {% raw %}
 ```svelte
 <input use:autoFocus use:tooltip={{ text: '자동 포커스 됩니다' }} />
@@ -552,18 +571,20 @@ export function intersect(node: Element, onEnter: () => void) {
 {% endraw %}
 - 여러 `use:`를 **띄어쓰기**로 나란히 적으면 된다.
 
-### 2.4.6 액션의 장점 요약
+### 액션의 장점 요약
+
 - **DOM 지향 동작**(포커스, 드래그, 관찰자, 바깥클릭 등)을 **캡슐화**
 - 다른 컴포넌트에서도 **그대로 재사용**
 - **정리(destroy)** 타이밍이 명확하므로 누수 위험 낮음
 
 ---
 
-## 2.5 종합 실습 — “Modal + Slot + Action + Lifecycle”
+## 종합 실습 — “Modal + Slot + Action + Lifecycle”
 
 아래는 지금까지 배운 개념을 모두 쓰는 **모달 컴포넌트**다.
 
-### 2.5.1 액션: ESC 키 닫기
+### 액션: ESC 키 닫기
+
 ```svelte
 <!-- actions/esc.ts -->
 export function esc(node, callback) {
@@ -573,7 +594,8 @@ export function esc(node, callback) {
 }
 ```
 
-### 2.5.2 컴포넌트: Modal.svelte
+### 컴포넌트: Modal.svelte
+
 ```svelte
 <script>
   import { onMount, onDestroy } from 'svelte';
@@ -640,7 +662,8 @@ export function esc(node, callback) {
 - **슬롯**: `header`/기본/`footer` 이름 슬롯 지원
 - **조건부 로직**: `$:`로 `open` 변화 → `showModal/close` 호출
 
-### 2.5.3 사용 예
+### 사용 예
+
 ```svelte
 <script>
   import Modal from '$lib/components/Modal.svelte';
@@ -668,7 +691,7 @@ export function esc(node, callback) {
 
 ---
 
-## 2.6 흔한 함정 · 베스트 프랙티스
+## 흔한 함정 · 베스트 프랙티스
 
 1) **조건부 클래스 계산이 지저분**
    → `class:foo={cond}`를 **여러 줄**로 쓰거나 **배열 → join** 패턴 사용.
@@ -691,7 +714,7 @@ export function esc(node, callback) {
 
 ---
 
-## 2.7 체크리스트 (요점 정리)
+## 체크리스트 (요점 정리)
 
 - [ ] `class:NAME={cond}` / `class={expr}` 로 조건부/동적 클래스
 - [ ] `style:prop={value}` / `style="…"` 로 반응 스타일

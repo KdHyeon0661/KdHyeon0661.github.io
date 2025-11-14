@@ -6,7 +6,7 @@ category: Java
 ---
 # Java 컬렉션 상세 : ArrayList vs LinkedList
 
-## 0. 한눈 요약 (Cheat Sheet)
+## 한눈 요약 (Cheat Sheet)
 
 | 질문 | 권장 선택 | 이유/메모 |
 |---|---|---|
@@ -20,9 +20,10 @@ category: Java
 
 ---
 
-## 1. 내부 구조와 핵심 개념
+## 내부 구조와 핵심 개념
 
-### 1.1 ArrayList — “동적 배열(Dynamic Array)”
+### ArrayList — “동적 배열(Dynamic Array)”
+
 - 내부에 **연속된 `Object[]` 배열**을 보유.
 - 공간이 부족해지면 **확장(reallocate)**: 보통 **1.5배** 수준으로 증가(JDK 버전별 세부 구현은 약간 상이할 수 있으나 개념적으로 1.5x).
 - 인덱스 접근은 `array[index]` → **O(1)**.
@@ -36,7 +37,8 @@ list.ensureCapacity(100_000); // 대량 추가 전 확장 비용 줄이기
 list.trimToSize();            // 여유 capacity를 size에 맞춰 줄이기
 ```
 
-### 1.2 LinkedList — “이중 연결 리스트(Doubly Linked List)”
+### LinkedList — “이중 연결 리스트(Doubly Linked List)”
+
 - 각 요소는 `Node { E item; Node prev; Node next; }`로 **개별 객체**.
 - **앞/뒤 노드 참조**를 통한 연결.
 - **장점**: **현재 위치(ListIterator)가 있다면** 그 지점에서의 삽입/삭제가 **O(1)**.
@@ -57,7 +59,7 @@ list.push(x); list.pop(); // 스택처럼
 
 ---
 
-## 2. 시간복잡도(정밀 버전)
+## 시간복잡도(정밀 버전)
 
 | 연산 | ArrayList | LinkedList | 비고 |
 |---|---|---|---|
@@ -74,9 +76,10 @@ list.push(x); list.pop(); // 스택처럼
 
 ---
 
-## 3. 실무에서 자주 쓰는 패턴과 팁
+## 실무에서 자주 쓰는 패턴과 팁
 
-### 3.1 대량 추가 성능 올리기 (ArrayList)
+### 대량 추가 성능 올리기 (ArrayList)
+
 ```java
 import java.util.*;
 
@@ -92,7 +95,8 @@ public class BulkAdd {
 ```
 - **초기 용량 지정** 또는 `ensureCapacity`로 **재할당 횟수** 최소화.
 
-### 3.2 중간 삽입/삭제가 잦은 경우의 안전한 선택
+### 중간 삽입/삭제가 잦은 경우의 안전한 선택
+
 - **반드시** `ListIterator`로 **위치 고정** 후 `add/remove`(O(1))를 활용.
 - 예시: 편집기 버퍼, 슬라이드 이동 같은 **인접 위치 변형이 잦은 시나리오**.
 
@@ -115,7 +119,8 @@ public class InsertManyWithIterator {
 
 > **대부분의 비즈니스 로직**에서는 **ArrayList 재설계**(배치 삽입, 끝 중심 처리)만으로도 성능/단순성을 담보할 수 있습니다.
 
-### 3.3 큐/덱/스택
+### 큐/덱/스택
+
 - **ArrayDeque**가 일반적으로 **LinkedList보다 빠름** (박싱 없이 원형 배열).
 - 단, **자연스러운 노드 교체/이동**이 핵심이면 `LinkedList` + `ListIterator`.
 
@@ -136,7 +141,7 @@ public class UseArrayDeque {
 
 ---
 
-## 4. 실패-안전(Fail-Fast) 반복자 & 동시수정
+## 실패-안전(Fail-Fast) 반복자 & 동시수정
 
 - 두 구현 모두 **modCount** 기반 **fail-fast iterator**: 반복 중 구조가 바뀌면 `ConcurrentModificationException`.
 - 해결:
@@ -169,7 +174,7 @@ while (it.hasNext()) {
 
 ---
 
-## 5. RandomAccess 마커와 알고리즘 분기
+## RandomAccess 마커와 알고리즘 분기
 
 - `ArrayList`는 `RandomAccess`를 구현(빠른 인덱스 접근 신호).
 - `LinkedList`는 **미구현** → 인덱스 반복 대신 **Iterator** 기반 루프가 유리.
@@ -193,9 +198,10 @@ static <E> void process(List<E> list) {
 
 ---
 
-## 6. 정렬/검색/부분보기(subList)
+## 정렬/검색/부분보기(subList)
 
-### 6.1 정렬
+### 정렬
+
 - `ArrayList`는 내부 배열 기반 → **TimSort** 최적화가 잘 먹힘.
 - `LinkedList`는 보통 **배열로 복사 후 정렬**하거나, 리스트 자체 정렬 시 **추가 비용**(메모리/탐색)이 따름.
 
@@ -207,17 +213,19 @@ a.sort(Integer::compareTo); // TimSort
 System.out.println(a);
 ```
 
-### 6.2 이진검색
+### 이진검색
+
 - `Collections.binarySearch(list, key)`는 **정렬된 리스트** + **RandomAccess**일 때 유리.
 - `LinkedList`에 이진검색은 이점 거의 없음(랜덤 접근 비용 O(n)).
 
-### 6.3 subList 뷰
+### subList 뷰
+
 - `list.subList(from, to)`는 **원본의 뷰**. 구조 변경 시 **동기화 필요 및 예외** 주의.
 - **원본/뷰 중 한 쪽의 구조적 변경**이 다른 쪽 반복자에 영향을 줌.
 
 ---
 
-## 7. 메모리/GC 관점
+## 메모리/GC 관점
 
 | 항목 | ArrayList | LinkedList |
 |---|---|---|
@@ -230,27 +238,31 @@ System.out.println(a);
 
 ---
 
-## 8. 실전 시나리오 의사결정
+## 실전 시나리오 의사결정
 
-### 8.1 로그 버퍼(읽기 많고, 끝에 추가)
+### 로그 버퍼(읽기 많고, 끝에 추가)
+
 - **ArrayList**
 - 주기적으로 용량 증가가 걱정되면 **초기 용량** 지정
 
-### 8.2 문서 편집 버퍼(커서 인근 삽입/삭제 잦음)
+### 문서 편집 버퍼(커서 인근 삽입/삭제 잦음)
+
 - `LinkedList` + **커서용 ListIterator 유지**
 - 또는 **ArrayList + 배치 편집 모델**(작업을 모아서 한 번에 재구성)로 재설계
 
-### 8.3 메시지 큐/덱
+### 메시지 큐/덱
+
 - **ArrayDeque** 우선
 - 이미 `List` API가 꼭 필요하다면 `LinkedList`의 `Deque` 메서드 사용
 
-### 8.4 정렬/검색 중심(대량)
+### 정렬/검색 중심(대량)
+
 - **ArrayList** + `sort` + `binarySearch`
 - 필요 시 `Collections.unmodifiableList`로 불변 뷰 제공
 
 ---
 
-## 9. 자주 하는 실수와 예방
+## 자주 하는 실수와 예방
 
 | 실수 | 문제 | 예방책 |
 |---|---|---|
@@ -262,7 +274,7 @@ System.out.println(a);
 
 ---
 
-## 10. 간단 퍼포먼스 데모(주의: 진짜 벤치는 JMH 권장)
+## 간단 퍼포먼스 데모(주의: 진짜 벤치는 JMH 권장)
 
 > **주의**: `System.nanoTime()` 미세 측정은 JIT/GC/워밍업 영향으로 왜곡될 수 있습니다. 신뢰도 높은 측정엔 **JMH**를 사용하세요.
 
@@ -307,22 +319,25 @@ public class Micro {
 
 ---
 
-## 11. 안전한 API 사용 예제 모음
+## 안전한 API 사용 예제 모음
 
-### 11.1 안전한 제거(조건부)
+### 안전한 제거(조건부)
+
 ```java
 List<String> a = new ArrayList<>(List.of("a","b","c","d"));
 a.removeIf(s -> s.equals("b")); // 내부적으로 Iterator.remove 사용
 ```
 
-### 11.2 정렬 후 이진검색
+### 정렬 후 이진검색
+
 ```java
 List<Integer> a = new ArrayList<>(List.of(5,1,4,2,3));
 a.sort(Integer::compareTo);
 int idx = Collections.binarySearch(a, 3); // >=0이면 존재
 ```
 
-### 11.3 subList 안전 사용
+### subList 안전 사용
+
 ```java
 List<Integer> a = new ArrayList<>(List.of(1,2,3,4,5,6,7));
 List<Integer> view = a.subList(2, 5); // [3,4,5]
@@ -330,7 +345,8 @@ view.set(0, 30); // 원본 반영
 // 구조적 변경은 주의(원본/뷰 동시 수정 금지)
 ```
 
-### 11.4 대규모 초기화
+### 대규모 초기화
+
 ```java
 int n = 1_000_000;
 ArrayList<Integer> a = new ArrayList<>(n);
@@ -339,7 +355,7 @@ for (int i = 0; i < n; i++) a.add(i);
 
 ---
 
-## 12. 최종 선택 가이드(간단 표)
+## 최종 선택 가이드(간단 표)
 
 | 상황 | ArrayList | LinkedList | 코멘트 |
 |---|---|---|---|
@@ -352,7 +368,7 @@ for (int i = 0; i < n; i++) a.add(i);
 
 ---
 
-## 13. 결론
+## 결론
 
 - **ArrayList**는 “연속 배열” 기반으로 **대부분의 일반적 시나리오에서 더 빠르고 간단**합니다.
 - **LinkedList**는 **Iterator로 위치를 붙잡아 두고 주변을 국소적으로 조작**하는 특수 상황에서 의미가 있습니다.

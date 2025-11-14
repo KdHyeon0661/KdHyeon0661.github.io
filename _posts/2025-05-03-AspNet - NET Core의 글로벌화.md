@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core의 글로벌화(Localization)
 
-## 0. 로드맵
+## 로드맵
 
 1) **리소스 준비**: `.resx` or DB/JSON
 2) **미들웨어**: `AddLocalization` + `UseRequestLocalization`
@@ -18,9 +18,10 @@ category: AspNet
 
 ---
 
-## 1. 필수 구성: 서비스와 미들웨어
+## 필수 구성: 서비스와 미들웨어
 
-### 1.1 Program.cs (기본형 + 다중 Provider + 리소스 경로)
+### Program.cs (기본형 + 다중 Provider + 리소스 경로)
+
 ```csharp
 using System.Globalization;
 using Microsoft.AspNetCore.Localization;
@@ -74,9 +75,10 @@ app.Run();
 
 ---
 
-## 2. 리소스(.resx) 구성 — 규칙/패턴
+## 리소스(.resx) 구성 — 규칙/패턴
 
-### 2.1 폴더 구조(권장)
+### 폴더 구조(권장)
+
 ```
 Resources/
 ├── Pages/
@@ -91,7 +93,8 @@ Resources/
 - **페이지/컨트롤러별** 리소스: `Pages/Index.ko.resx` (클래스/뷰명에 매칭)
 - **공용 리소스**: `SharedResource.resx` 패턴(“마커 클래스” 방식)
 
-### 2.2 마커 클래스(SharedResource)
+### 마커 클래스(SharedResource)
+
 ```csharp
 public class SharedResource { } // 빈 클래스 (타입 기준 Localizer 생성)
 ```
@@ -111,9 +114,10 @@ public class LayoutModel : PageModel
 
 ---
 
-## 3. Razor Pages/MVC에서 문자열 로컬라이징
+## Razor Pages/MVC에서 문자열 로컬라이징
 
-### 3.1 PageModel에서 사용
+### PageModel에서 사용
+
 ```csharp
 public class IndexModel : PageModel
 {
@@ -125,7 +129,8 @@ public class IndexModel : PageModel
 }
 ```
 
-### 3.2 View에서 사용 (`IViewLocalizer`)
+### View에서 사용 (`IViewLocalizer`)
+
 ```razor
 @using System.Globalization
 @inject Microsoft.AspNetCore.Mvc.Localization.IViewLocalizer L
@@ -134,7 +139,8 @@ public class IndexModel : PageModel
 <p>@DateTime.Now.ToString("D", CultureInfo.CurrentCulture)</p>
 ```
 
-### 3.3 HTML 인코딩 제어 (`IHtmlLocalizer`)
+### HTML 인코딩 제어 (`IHtmlLocalizer`)
+
 ```razor
 @inject Microsoft.AspNetCore.Mvc.Localization.IHtmlLocalizer<SharedResource> H
 
@@ -143,9 +149,10 @@ public class IndexModel : PageModel
 
 ---
 
-## 4. 문화권 전환 UI — 쿠키/쿼리/링크
+## 문화권 전환 UI — 쿠키/쿼리/링크
 
-### 4.1 Razor Pages 핸들러(쿠키 기록)
+### Razor Pages 핸들러(쿠키 기록)
+
 ```csharp
 public IActionResult OnPostSetLanguage(string culture, string? returnUrl = null)
 {
@@ -158,7 +165,8 @@ public IActionResult OnPostSetLanguage(string culture, string? returnUrl = null)
 }
 ```
 
-### 4.2 선택 UI
+### 선택 UI
+
 ```razor
 <form method="post" asp-page-handler="SetLanguage">
     <select name="culture" onchange="this.form.submit()">
@@ -170,17 +178,19 @@ public IActionResult OnPostSetLanguage(string culture, string? returnUrl = null)
 </form>
 ```
 
-### 4.3 쿼리스트링 방식 (간편 테스트)
+### 쿼리스트링 방식 (간편 테스트)
+
 - `https://site.com/?culture=ko-KR`
 - Provider 우선순위를 “Query → Cookie → Header”로 구성했으므로 즉시 반영
 
 ---
 
-## 5. 라우트 기반 Localization (`/{culture}/...`)
+## 라우트 기반 Localization (`/{culture}/...`)
 
 > SEO/북마크/시맨틱 URL에 유리. 예) `/ko-KR/products/42`
 
-### 5.1 라우트 템플릿/제약
+### 라우트 템플릿/제약
+
 ```csharp
 app.UseRequestLocalization(loc.Value);
 
@@ -191,7 +201,8 @@ app.MapControllerRoute(
 );
 ```
 
-### 5.2 라우트 Provider 추가
+### 라우트 Provider 추가
+
 ```csharp
 public class RouteDataRequestCultureProviderEx : RequestCultureProvider
 {
@@ -213,7 +224,8 @@ builder.Services.PostConfigure<RequestLocalizationOptions>(opt =>
 });
 ```
 
-### 5.3 문화권 포함 링크 생성
+### 문화권 포함 링크 생성
+
 ```csharp
 @{
     var ci = System.Globalization.CultureInfo.CurrentUICulture.Name;
@@ -223,9 +235,10 @@ builder.Services.PostConfigure<RequestLocalizationOptions>(opt =>
 
 ---
 
-## 6. 데이터 주석/검증 메시지 다국어
+## 데이터 주석/검증 메시지 다국어
 
-### 6.1 서비스 구성(이미 등록됨)
+### 서비스 구성(이미 등록됨)
+
 ```csharp
 builder.Services
     .AddRazorPages()
@@ -238,7 +251,8 @@ builder.Services
     });
 ```
 
-### 6.2 모델
+### 모델
+
 ```csharp
 public class ContactModel
 {
@@ -248,7 +262,8 @@ public class ContactModel
 }
 ```
 
-### 6.3 리소스(Validation.ko.resx)
+### 리소스(Validation.ko.resx)
+
 ```
 NameRequired = 이름은 필수입니다.
 NameLength = 이름은 2자 이상 30자 이하여야 합니다.
@@ -258,13 +273,14 @@ NameLength = 이름은 2자 이상 30자 이하여야 합니다.
 
 ---
 
-## 7. 날짜/숫자/통화/모델바인딩
+## 날짜/숫자/통화/모델바인딩
 
 - **출력**: `ToString("C", CultureInfo.CurrentCulture)` → 통화
 - **입력/모델바인딩**: 폼의 숫자/날짜 패턴은 **현재 Culture**를 따른다
   (예: `fr-FR` 는 쉼표가 소수점, `MM/dd/yyyy` vs `dd/MM/yyyy` 이슈)
 
-### 7.1 Razor 사용 예
+### Razor 사용 예
+
 ```razor
 @using System.Globalization
 <p>@DateTime.UtcNow.ToLocalTime().ToString("f", CultureInfo.CurrentCulture)</p>
@@ -272,19 +288,22 @@ NameLength = 이름은 2자 이상 30자 이하여야 합니다.
 <p>@(1234.5m.ToString("C", CultureInfo.CurrentCulture))</p>
 ```
 
-### 7.2 커스텀 모델바인더(문화 고정 필드) — 선택
+### 커스텀 모델바인더(문화 고정 필드) — 선택
+
 - 특정 필드를 “항상 en-US 서식”으로 파싱하고 싶다면 전용 ModelBinder를 붙인다(금융/내부API 수치 등).
 
 ---
 
-## 8. Minimal API/Blazor에서의 Localization
+## Minimal API/Blazor에서의 Localization
 
-### 8.1 Minimal API 예
+### Minimal API 예
+
 ```csharp
 app.MapGet("/hello", (IStringLocalizer<SharedResource> L) => new { message = L["Hello"] });
 ```
 
-### 8.2 Blazor (Server/WASM 공통)
+### Blazor (Server/WASM 공통)
+
 - `@inject IStringLocalizer<App> L`
 - WASM은 **리소스 번들 포함** 필요(위성 어셈블리), `blazor.boot.json`의 `resources` 섹션에 포함됨
 - `CultureInfo.CurrentUICulture` 전환 시 `CultureChanged` 트리거 또는 네비게이션 리로드 전략 사용
@@ -310,7 +329,7 @@ app.MapGet("/hello", (IStringLocalizer<SharedResource> L) => new { message = L["
 
 ---
 
-## 9. 플러럴(복수)·성별·포매팅 — 실무 패턴
+## 플러럴(복수)·성별·포매팅 — 실무 패턴
 
 `.resx`는 기본적으로 **단순 키-값**이다. 다음 패턴 중 하나를 고려:
 
@@ -318,7 +337,8 @@ app.MapGet("/hello", (IStringLocalizer<SharedResource> L) => new { message = L["
 2) **SmartFormat/Humanizer** 라이브러리 활용 (ICU 메시지 형식 유사)
 3) **PO 파일(OrchardCore.Localization)** 사용(고급 언어 규칙/플러럴 규칙 포함)
 
-### 9.1 키 분리 예
+### 키 분리 예
+
 ```csharp
 public static string ItemsCount(IStringLocalizer<SharedResource> L, int n)
 {
@@ -340,11 +360,12 @@ ItemsCount_Other=항목이 {0}개 있습니다.
 
 ---
 
-## 10. 동적 번역(데이터베이스/JSON) — 커스텀 Localizer
+## 동적 번역(데이터베이스/JSON) — 커스텀 Localizer
 
 > 운영 중 자주 바뀌는 문구를 **DB**에서 관리하고 싶을 때
 
-### 10.1 IStringLocalizer 구현 개략
+### IStringLocalizer 구현 개략
+
 ```csharp
 public class DbStringLocalizer : IStringLocalizer
 {
@@ -365,7 +386,8 @@ public class DbStringLocalizer : IStringLocalizer
 }
 ```
 
-### 10.2 팩토리/서비스 등록
+### 팩토리/서비스 등록
+
 ```csharp
 public class DbStringLocalizerFactory : IStringLocalizerFactory
 {
@@ -385,26 +407,29 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ---
 
-## 11. 성능/캐싱/보안
+## 성능/캐싱/보안
 
-### 11.1 성능
+### 성능
+
 - `.resx → 위성 어셈블리`는 **ResourceManager** 레벨 캐싱이 기본 제공
 - Localizer를 빈번히 생성하기보다 **DI 주입**으로 재사용
 - **키 정규화**(일관 키), **공용 리소스** 적극 활용
 - 동적 번역(DB/JSON) 시 **메모리 캐시 + TTL + 변경 알림** 필수
 
-### 11.2 보안
+### 보안
+
 - **사용자 입력을 키로 사용하지 말 것**(키 주입 공격 방지)
 - **HTML 포함 문자열**은 `IHtmlLocalizer` 사용(중복 인코딩/미인코딩 방지)
 - **Right-To-Left(RTL)** 언어 지원 시 레이아웃/아이콘 방향성 점검
 
-### 11.3 운영성(로깅/진단)
+### 운영성(로깅/진단)
+
 - 누락 키 탐지 로그: `resourceNotFound == true` 일 때 Warning
 - `Accept-Language` 오용/무한 다양 문화권 → 지원 목록 강제 매핑
 
 ---
 
-## 12. 국제화와 데이터 계층/정렬
+## 국제화와 데이터 계층/정렬
 
 - **DB 정렬/Collation**(예: SQL Server `Korean_100_CI_AI` vs `Latin1_General_*`)은 **검색/정렬**에 큰 영향
 - UI 문화권과 DB Collation이 다르면 정렬 결과가 사용자 기대와 다를 수 있음 → **문서화/정책화**
@@ -412,9 +437,10 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ---
 
-## 13. 테스트(단위/통합) 시 문화 고정
+## 테스트(단위/통합) 시 문화 고정
 
-### 13.1 단위 테스트에서 Culture 스코프
+### 단위 테스트에서 Culture 스코프
+
 ```csharp
 public class CultureScope : IDisposable
 {
@@ -446,7 +472,8 @@ public void Number_Format_frFR()
 }
 ```
 
-### 13.2 통합 테스트에서 Accept-Language 시뮬레이션
+### 통합 테스트에서 Accept-Language 시뮬레이션
+
 ```csharp
 var req = new HttpRequestMessage(HttpMethod.Get, "/");
 req.Headers.AcceptLanguage.ParseAdd("ko-KR, en;q=0.8");
@@ -455,7 +482,7 @@ var res = await _client.SendAsync(req);
 
 ---
 
-## 14. 진짜로 자주 겪는 실무 이슈 & 해결
+## 진짜로 자주 겪는 실무 이슈 & 해결
 
 | 이슈 | 원인 | 해결 |
 |---|---|---|
@@ -467,9 +494,10 @@ var res = await _client.SendAsync(req);
 
 ---
 
-## 15. 샘플: 종합 예제(페이지 + 라우트 + 공용/검증)
+## 샘플: 종합 예제(페이지 + 라우트 + 공용/검증)
 
-### 15.1 Program.cs 요약
+### Program.cs 요약
+
 ```csharp
 builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 builder.Services.AddRazorPages().AddViewLocalization().AddDataAnnotationsLocalization();
@@ -497,7 +525,8 @@ app.MapRazorPages();
 app.Run();
 ```
 
-### 15.2 모델(검증 메시지 키)
+### 모델(검증 메시지 키)
+
 ```csharp
 public class SignupModel
 {
@@ -511,7 +540,8 @@ public class SignupModel
 }
 ```
 
-### 15.3 Razor (View/Pages) — 공용 + 페이지 로컬라이저
+### Razor (View/Pages) — 공용 + 페이지 로컬라이저
+
 ```razor
 @page
 @model IndexModel
@@ -532,7 +562,8 @@ public class SignupModel
 </form>
 ```
 
-### 15.4 리소스 예 (Validation.ko.resx)
+### 리소스 예 (Validation.ko.resx)
+
 ```
 UsernameRequired=사용자 이름은 필수입니다.
 UsernameLength=사용자 이름은 3~20자여야 합니다.
@@ -542,7 +573,7 @@ EmailInvalid=올바른 이메일 형식이 아닙니다.
 
 ---
 
-## 16. 운영 체크리스트 (요약)
+## 운영 체크리스트 (요약)
 
 - [ ] `UseRequestLocalization`을 Routing 전에 구성
 - [ ] Provider 순서: Route/Query/Cookie/Header 중 정책화

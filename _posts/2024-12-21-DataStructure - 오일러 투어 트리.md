@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # Euler Tour Tree (ETT)
 
-## 1. 무엇을 다루는가 (개요 & 목표)
+## 무엇을 다루는가 (개요 & 목표)
 
 **Euler Tour Tree (ETT)** 는 트리(또는 포레스트)를 **오일러 순회(Euler Tour) 결과**로 “1차원 배열”에 펴서, 세그먼트 트리·펜윅 트리·Splay/트립(implicit treap) 같은 자료구조로 **서브트리/경로 질의와 갱신을 \(O(\log n)\)** 에 처리하려는 기법이다.
 이 글은 다음을 한 번에 정리한다.
@@ -26,7 +26,7 @@ category: Data Structure
 
 ---
 
-## 2. 두 가지 ETT 관점: “정적(Subtree/Q)” vs “동적(Link/Cut)”
+## 두 가지 ETT 관점: “정적(Subtree/Q)” vs “동적(Link/Cut)”
 
 | 구분 | 핵심 아이디어 | 장점 | 단점/주의 |
 |---|---|---|---|
@@ -38,7 +38,7 @@ category: Data Structure
 
 ---
 
-## 3. 오일러 순회 수학: 구간화의 원리
+## 오일러 순회 수학: 구간화의 원리
 
 루트를 \(r\) 로 정하고 DFS 전위 순회를 하자. `tin[u]`를 **u에 최초 진입 시각**, `tout[u]`를 **u의 서브트리 처리가 끝나고 나갈 때**의 시각으로 두면:
 
@@ -60,12 +60,13 @@ category: Data Structure
 
 ---
 
-## 4. 정적 ETT ① — 가장 많이 쓰는 `tin/tout` + 세그먼트 트리
+## 정적 ETT ① — 가장 많이 쓰는 `tin/tout` + 세그먼트 트리
 
-### 4.1 DFS로 입·출시각과 1차원 전개
+### DFS로 입·출시각과 1차원 전개
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 const int MAXN = 200000;
@@ -91,7 +92,7 @@ void dfs(int u, int p){
 
 - `euler[1..N]` 는 “첫 방문만” 저장. 덕분에 **서브트리(u) = [tin[u], tout[u]]** 가 **연속 구간**이 된다.
 
-### 4.2 세그먼트 트리(합) + 서브트리 합/가산 갱신
+### 세그먼트 트리(합) + 서브트리 합/가산 갱신
 
 ```cpp
 struct Seg {
@@ -137,7 +138,7 @@ struct Seg {
 };
 ```
 
-### 4.3 사용 예 — 서브트리 합과 갱신
+### 사용 예 — 서브트리 합과 갱신
 
 ```cpp
 int main(){
@@ -181,7 +182,7 @@ int main(){
 
 ---
 
-## 5. 정적 ETT ② — 경로 질의(정적)까지: LCA + prefix
+## 정적 ETT ② — 경로 질의(정적)까지: LCA + prefix
 
 경로 질의는 정적 트리에서 보통 다음 식을 쓴다:
 
@@ -223,11 +224,11 @@ int lca(int a,int b){
 
 ---
 
-## 6. 동적 ETT — implicit treap으로 “오일러 시퀀스 자체” 유지
+## 동적 ETT — implicit treap으로 “오일러 시퀀스 자체” 유지
 
 정적 ETT는 간선이 바뀌면 재DFS가 필요하다. **동적 ETT** 는 각 트리를 **오일러 시퀀스(원형 리스트)** 로 보고, 이를 **암시적 키 트립(implicit treap)** 로 구현하여 **split/merge** 로 다룬다.
 
-### 6.1 설계 원칙(본 글 구현의 목표)
+### 설계 원칙(본 글 구현의 목표)
 
 - **연산**: `connected(u,v)`, `link(u,v)`(서로 다른 트리 연결), `cut(u,v)`(간선 제거), `reroot(r)`(원형 시퀀스 회전),
   그리고 **루트 r 기준** `subtreeAdd(u,Δ)` / `subtreeSum(u)` (노드 값 합)
@@ -237,7 +238,7 @@ int lca(int a,int b){
 
 > 경로 질의(임의 u–v)는 동적 ETT만으로는 까다롭다. 보통 **LCT/Top Tree** 가 더 적합. 본 구현은 **서브트리 질의/갱신** 중점.
 
-### 6.2 implicit treap 노드와 연산
+### implicit treap 노드와 연산
 
 ```cpp
 struct TNode{
@@ -317,7 +318,7 @@ TNode* merge(TNode* a,TNode* b){
 }
 ```
 
-### 6.3 인덱스 탐색 & 구간 연산
+### 인덱스 탐색 & 구간 연산
 
 ```cpp
 // k번째 (0-index) 노드
@@ -360,13 +361,13 @@ long long rangeSum(TNode*& root,int l,int r){
 }
 ```
 
-### 6.4 ETT 시퀀스: ENTER/EXIT 토큰, 포인터 테이블
+### ETT 시퀀스: ENTER/EXIT 토큰, 포인터 테이블
 
 - 각 정점 \(u\) 에 대해 **ENTER(u)**, **EXIT(u)** 토큰 포인터를 저장한다.
 - 시퀀스에서 **루트 r 기준**으로 보면, \([ \mathrm{pos}(\mathrm{ENTER}(u))\,..\,\mathrm{pos}(\mathrm{EXIT}(u)) ]\) 가 **u 서브트리**.
 - `reroot(r)` = **시퀀스 회전**: `pos(ENTER(r))` 를 맨 앞으로 오게 split/merge.
 
-### 6.5 link/cut/connected 구현 개요
+### link/cut/connected 구현 개요
 
 - **초기화**: 각 \(u\) 의 독립 트리는 \([ENTER(u), EXIT(u)]\) (길이 2) 로 만들어 둔다.
 - **connected(u,v)**: 각 시퀀스의 **대표(root 포인터)** 가 같은지로 판정.
@@ -380,7 +381,7 @@ long long rangeSum(TNode*& root,int l,int r){
 
 > 주의: ETT 변형은 많다. 여기 구현은 **교육용**으로, `link/cut` 의 핵심 감각(회전→split/merge)과 **(루트 기준) 서브트리 질의/가산**을 보여준다. 완전한 일반성(모든 케이스 cut의 엄밀성, 경로 질의 등)은 LCT가 편하다.
 
-### 6.6 시연 코드 (연결성 + reroot + 서브트리 합/가산)
+### 시연 코드 (연결성 + reroot + 서브트리 합/가산)
 
 ```cpp
 // ------- 교육용 Dynamic ETT (ENTER/EXIT 기반) -------
@@ -491,7 +492,7 @@ struct ETT {
   실전에서는 **간선 토큰(두 방향)** 을 시퀀스에 **명시적으로 삽입**해두면 `cut(u,v)` 가 더 명확하고 안전하다.
 - 경로 질의는 동적 ETT 단독으론 불편. 경로 문제가 주력이면 **Link-Cut Tree** 가 구현·이론 모두 더 잘 맞는다.
 
-### 6.7 동작 예 (입출력 없이 간단 시연)
+### 동작 예 (입출력 없이 간단 시연)
 
 ```cpp
 int main(){
@@ -533,7 +534,7 @@ int main(){
 
 ---
 
-## 7. ETT vs LCT: 언제 무엇을 쓰나
+## ETT vs LCT: 언제 무엇을 쓰나
 
 | 문제 유형 | 추천 |
 |---|---|
@@ -544,7 +545,7 @@ int main(){
 
 ---
 
-## 8. 실전 팁 & 함정
+## 실전 팁 & 함정
 
 - 정적 ETT: **첫 방문만** 기록하는 방식이 서브트리 구간화를 가장 깔끔하게 만든다.
   “들어갈 때/나올 때” 2회 기록법은 **LCA**(RMQ) 같은 곳에 좋다.
@@ -554,7 +555,7 @@ int main(){
 
 ---
 
-## 9. 요약
+## 요약
 
 - **정적 ETT**: `tin/tout` 기반으로 트리를 1차원화 → 서브트리 구간 질의/갱신을 **세그먼트/펜윅** 으로 \(O(\log n)\).
 - **경로 질의(정적)**: LCA + prefix 조합이 간단·견고.

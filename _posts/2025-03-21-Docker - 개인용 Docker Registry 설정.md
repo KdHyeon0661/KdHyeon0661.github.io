@@ -6,7 +6,7 @@ category: Docker
 ---
 # 개인용 Docker Registry 설정
 
-## 1. 왜 개인 Registry가 필요한가?
+## 왜 개인 Registry가 필요한가?
 
 | 필요성 | 설명 |
 |---|---|
@@ -18,7 +18,7 @@ category: Docker
 
 ---
 
-## 2. 옵션 비교: `registry:2` vs Harbor
+## 옵션 비교: `registry:2` vs Harbor
 
 | 항목 | Docker Registry (registry:2) | Harbor |
 |---|---|---|
@@ -38,7 +38,7 @@ category: Docker
 
 ---
 
-## 3. Registry 아키텍처 요약
+## Registry 아키텍처 요약
 
 - **Manifests**: 이미지 메타(레이어 목록, 플랫폼). 동일 태그가 여러 아키(amd64/arm64) **매니페스트 리스트**를 가질 수 있음.
 - **Layers(Blobs)**: 압축된 파일시스템 조각. **중복 제거**로 저장공간 절약.
@@ -46,9 +46,10 @@ category: Docker
 
 ---
 
-## 4. 공식 Docker Registry(경량) — 빠른 시작
+## 공식 Docker Registry(경량) — 빠른 시작
 
-### 4.1 가장 단순한 실행
+### 가장 단순한 실행
+
 ```bash
 docker run -d --name registry -p 5000:5000 registry:2
 ```
@@ -56,13 +57,15 @@ docker run -d --name registry -p 5000:5000 registry:2
 
 ```bash
 # 영속 볼륨
+
 docker run -d --name registry \
   -p 5000:5000 \
   -v registry-data:/var/lib/registry \
   registry:2
 ```
 
-### 4.2 푸시/풀 테스트
+### 푸시/풀 테스트
+
 ```bash
 docker pull ubuntu:20.04
 docker tag ubuntu:20.04 localhost:5000/my-ubuntu
@@ -74,9 +77,10 @@ docker pull localhost:5000/my-ubuntu
 
 ---
 
-## 5. TLS(HTTPS) 구성
+## TLS(HTTPS) 구성
 
-### 5.1 자체 서명(테스트)
+### 자체 서명(테스트)
+
 ```bash
 mkdir -p certs
 openssl req -newkey rsa:4096 -nodes -sha256 \
@@ -84,7 +88,8 @@ openssl req -newkey rsa:4096 -nodes -sha256 \
   -subj "/CN=registry.example.com"
 ```
 
-### 5.2 TLS로 Registry 실행(443 바인딩)
+### TLS로 Registry 실행(443 바인딩)
+
 ```bash
 docker run -d --name registry \
   -p 443:5000 \
@@ -94,9 +99,11 @@ docker run -d --name registry \
   registry:2
 ```
 
-### 5.3 클라이언트 신뢰 구성
+### 클라이언트 신뢰 구성
+
 ```bash
 # certs.d 디렉터리명은 "호스트:포트"와 정확히 일치해야 함
+
 sudo mkdir -p /etc/docker/certs.d/registry.example.com:443
 sudo cp certs/domain.crt /etc/docker/certs.d/registry.example.com:443/ca.crt
 ```
@@ -105,16 +112,18 @@ sudo cp certs/domain.crt /etc/docker/certs.d/registry.example.com:443/ca.crt
 
 ---
 
-## 6. Basic Auth(아이디/비번) — registry:2
+## Basic Auth(아이디/비번) — registry:2
 
-### 6.1 htpasswd 생성
+### htpasswd 생성
+
 ```bash
 mkdir -p auth
 docker run --rm --entrypoint htpasswd registry:2 \
   -Bbn testuser testpassword > auth/htpasswd
 ```
 
-### 6.2 인증 활성화 실행
+### 인증 활성화 실행
+
 ```bash
 docker run -d --name registry \
   -p 5000:5000 \
@@ -125,7 +134,8 @@ docker run -d --name registry \
   registry:2
 ```
 
-### 6.3 로그인
+### 로그인
+
 ```bash
 docker login localhost:5000
 ```
@@ -134,9 +144,10 @@ docker login localhost:5000
 
 ---
 
-## 7. Compose로 운영형 배치 + 가비지 컬렉션·프록시 캐시·S3
+## Compose로 운영형 배치 + 가비지 컬렉션·프록시 캐시·S3
 
-### 7.1 `docker-compose.yml` 예시(파일시스템 + Basic Auth + TLS)
+### `docker-compose.yml` 예시(파일시스템 + Basic Auth + TLS)
+
 ```yaml
 version: "3.9"
 services:
@@ -157,14 +168,16 @@ services:
     restart: unless-stopped
 ```
 
-### 7.2 Pull-through 캐시(도커 허브 프록시)
+### Pull-through 캐시(도커 허브 프록시)
+
 ```yaml
 environment:
   REGISTRY_PROXY_REMOTEURL: https://registry-1.docker.io
 ```
 - 외부 이미지를 사내에 **캐시**하여 **레이트리밋/대역 절감**.
 
-### 7.3 S3/MinIO 백엔드(대용량·중복제거·리전 복제)
+### S3/MinIO 백엔드(대용량·중복제거·리전 복제)
+
 ```yaml
 environment:
   REGISTRY_STORAGE: s3
@@ -179,33 +192,39 @@ environment:
   REGISTRY_STORAGE_REDIRECT: "true"                     # 성능↑(오브젝트 직접 다운로드)
 ```
 
-### 7.4 가비지 컬렉션(GC)
+### 가비지 컬렉션(GC)
+
 - Registry는 **참조되지 않는 blob**을 정리해야 용량 회수.
 - 안전한 절차:
 ```bash
-# 1. 푸시/삭제 중단(정지 권장)
+# 푸시/삭제 중단(정지 권장)
+
 docker stop registry
 
-# 2. 오프라인 GC 실행
+# 오프라인 GC 실행
+
 docker run --rm \
   -v $(pwd)/data:/var/lib/registry \
   -v $(pwd)/config.yml:/etc/docker/registry/config.yml \
   registry:2 garbage-collect /etc/docker/registry/config.yml --delete-untagged=true
 
-# 3. 재기동
+# 재기동
+
 docker start registry
 ```
 - `config.yml`은 실제 실행과 동일해야 함(스토리지 설정 포함).
 
 ---
 
-## 8. Reverse Proxy(Nginx) 앞단 구성(선택)
+## Reverse Proxy(Nginx) 앞단 구성(선택)
 
-### 8.1 이유
+### 이유
+
 - **TLS/리다이렉트/접근제어/레이트리밋** 등 고급 정책을 일관 처리.
 - 다중 레지스트리/서비스를 **도메인별 라우팅**.
 
-### 8.2 간단 Nginx 설정 예
+### 간단 Nginx 설정 예
+
 ```nginx
 server {
   listen 443 ssl http2;
@@ -228,13 +247,15 @@ server {
 
 ---
 
-## 9. Harbor(풀스택) 설치
+## Harbor(풀스택) 설치
 
-### 9.1 요구
+### 요구
+
 - Docker & Docker Compose(또는 K8s + Helm)
 - 4GB+ RAM, FQDN, TLS(권장), 외부 DB/객체스토리지 선택 가능
 
-### 9.2 설치(Compose 기반)
+### 설치(Compose 기반)
+
 ```bash
 wget https://github.com/goharbor/harbor/releases/download/v2.10.0/harbor-online-installer-v2.10.0.tgz
 tar xvf harbor-online-installer-*.tgz
@@ -255,7 +276,8 @@ sudo ./install.sh
 - 접속: `https://registry.example.com`
 - 기본 관리자: `admin / Harbor12345`(설치 직후 **즉시 변경**)
 
-### 9.3 Helm(Kubernetes) 배포 개요
+### Helm(Kubernetes) 배포 개요
+
 - `helm repo add harbor https://helm.goharbor.io`
 - `values.yaml`에 Ingress/TLS/스토리지/DB/Redis/Trivy/Notary/OIDC/RBAC 설정 후 배포:
 ```bash
@@ -264,43 +286,51 @@ helm install harbor harbor/harbor -f values.yaml -n harbor --create-namespace
 
 ---
 
-## 10. Harbor 핵심 기능 운영 가이드
+## Harbor 핵심 기능 운영 가이드
 
-### 10.1 프로젝트/RBAC
+### 프로젝트/RBAC
+
 - 프로젝트 단위로 **퍼블릭/프라이빗** 설정, **역할(관리자/개발/게스트)** 부여.
 - **Robot Account** 발급 → CI/CD가 비밀번호 대신 토큰으로 푸시/풀.
 
-### 10.2 Proxy Cache Project
+### Proxy Cache Project
+
 - 외부 레지스트리(도커 허브/ghcr) 캐시 전용 프로젝트.
 - 개발 속도↑, 레이트리밋 회피.
 
-### 10.3 보안 스캔
+### 보안 스캔
+
 - **Trivy** 내장 선택(오프라인 DB 동기화 가능).
 - 프로젝트 정책: 푸시/프로모션 시 **취약점 임계치** 기준 차단.
 
-### 10.4 서명/신뢰(NOTARY/Cosign)
+### 서명/신뢰(NOTARY/Cosign)
+
 - Harbor는 **서명 아티팩트**와 **정책**을 관리(아티팩트 탭).
 ```bash
 # cosign 예시(외부에서 서명 → Harbor는 결과/메타 관리)
+
 cosign generate-key-pair
 cosign sign registry.example.com/demo/app:1.0.0
 cosign verify registry.example.com/demo/app:1.0.0
 ```
 
-### 10.5 리텐션/쿼터/불변 태그
+### 리텐션/쿼터/불변 태그
+
 - **Retention Policy**: 오래된 태그/패턴 자동 삭제(스케줄).
 - **Tag Immutability**: 특정 패턴(예: `v*`) 태그 **덮어쓰기 방지**.
 - **Project Quota**: 스토리지/태그 개수 제한.
 
-### 10.6 복제(Replication)
+### 복제(Replication)
+
 - 원격 Harbor/Registry와 **push/pull 방향** 복제, **네임스페이스/태그 필터**, 스케줄/수동 트리거.
 - DR/멀티리전/에지노드 동기화에 활용.
 
 ---
 
-## 11. CI/CD에서 사설 레지스트리 사용
+## CI/CD에서 사설 레지스트리 사용
 
-### 11.1 GitHub Actions 예
+### GitHub Actions 예
+
 {% raw %}
 ```yaml
 name: push-to-private-registry
@@ -334,29 +364,34 @@ jobs:
 
 ---
 
-## 12. 백업·복구
+## 백업·복구
 
-### 12.1 registry:2 (FS/S3)
+### registry:2 (FS/S3)
+
 - **FS**: `/var/lib/registry` 디렉터리 스냅샷(정지 후).
 - **S3**: 스토리지 백업 정책에 따름(버킷 버저닝/라이프사이클).
 
-### 12.2 Harbor
+### Harbor
+
 - 구성요소: **DB(PostgreSQL)**, **Registry Storage**, **Redis**(메타 캐시).
 - **필수 백업**: DB dump + Registry 스토리지 스냅샷 + 설정 파일.
 - 예시:
 ```bash
 # PostgreSQL
+
 docker exec -t harbor-db pg_dump -U postgres > harbor_$(date +%F).sql
 
 # 파일 스토리지(로컬일 때)
+
 rsync -a /data/harbor/ /backup/harbor-$(date +%F)/
 
 # 복구는 같은 버전으로 재배포 후 DB/스토리지 복원
+
 ```
 
 ---
 
-## 13. 성능·용량 최적화 체크리스트
+## 성능·용량 최적화 체크리스트
 
 | 항목 | 요령 |
 |---|---|
@@ -370,7 +405,7 @@ rsync -a /data/harbor/ /backup/harbor-$(date +%F)/
 
 ---
 
-## 14. 보안 모범사례
+## 보안 모범사례
 
 - **TLS 강제**, 사설 CA 체인 배포 표준화.
 - `docker login`은 **PAT/로봇 계정**(Harbor) 사용.
@@ -381,7 +416,7 @@ rsync -a /data/harbor/ /backup/harbor-$(date +%F)/
 
 ---
 
-## 15. 네임 해석·포트·인프라 팁
+## 네임 해석·포트·인프라 팁
 
 - Docker는 `certs.d/<호스트:포트>/ca.crt` 규칙으로 CA를 찾는다.
   예) `registry.example.com:443` 디렉터리명에 **포트까지 포함**.
@@ -390,7 +425,7 @@ rsync -a /data/harbor/ /backup/harbor-$(date +%F)/
 
 ---
 
-## 16. 트러블슈팅
+## 트러블슈팅
 
 | 증상 | 원인/해결 |
 |---|---|
@@ -402,7 +437,7 @@ rsync -a /data/harbor/ /backup/harbor-$(date +%F)/
 
 ---
 
-## 17. 대역 절감 추정(간단 계산 메모)
+## 대역 절감 추정(간단 계산 메모)
 
 한 기간 동안 외부에서 당겨 오던 N개의 이미지를 Proxy Cache로 내부화하면 총 트래픽 절감량 \(S\)는 대략
 
@@ -415,6 +450,7 @@ $$
 ---
 
 ## 부록 A. registry:2 전체 설정 파일 예시(`config.yml`)
+
 ```yaml
 version: 0.1
 log:
@@ -425,12 +461,14 @@ http:
   headers:
     X-Content-Type-Options: [nosniff]
 # TLS는 환경변수로 지정했으면 생략 가능
+
 storage:
   filesystem:
     rootdirectory: /var/lib/registry
   delete:
     enabled: true
 # 프록시 캐시(선택)
+
 proxy:
   remoteurl: https://registry-1.docker.io
 ```
@@ -440,6 +478,7 @@ GC 시에는 **실행 중인 설정과 동일한 파일**을 사용해야 한다
 ---
 
 ## 부록 B. Harbor values.yaml(Helm) 핵심 발췌
+
 ```yaml
 expose:
   type: ingress

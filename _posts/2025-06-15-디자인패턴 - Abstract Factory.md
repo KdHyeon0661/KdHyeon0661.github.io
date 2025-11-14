@@ -6,14 +6,14 @@ category: 디자인패턴
 ---
 # Abstract Factory(추상 팩토리 패턴)
 
-## 1. 정의(Definition)
+## 정의(Definition)
 
 **추상 팩토리(Abstract Factory)**는 **서로 관련된 객체들의 제품군(family of products)**을 **일관되게 생성**하기 위한 **인터페이스**를 제공하는 생성 패턴이다.
 클라이언트는 **구체 클래스**를 알 필요가 없고, **추상 타입에만 의존**한다. 제품군의 예: “다크 테마 위젯 세트(버튼/체크박스/라벨)”, “DB 제품군(커넥션/커맨드/트랜잭션)”, “클라우드 제품군(스토리지/큐/시크릿)”.
 
 ---
 
-## 2. 의도(Intent)·적용 시점
+## 의도(Intent)·적용 시점
 
 - 관련 객체들을 **한 세트**로 **일관되게** 생성/교체하고 싶다.
 - 플랫폼/테마/벤더에 따라 **여러 객체를 함께 바꿔야** 한다.
@@ -27,7 +27,7 @@ category: 디자인패턴
 
 ---
 
-## 3. 구조(Structure) — 제공한 그림을 보존
+## 구조(Structure) — 제공한 그림을 보존
 
 ```
           ┌─────────────────────────┐
@@ -67,12 +67,13 @@ category: 디자인패턴
 
 ---
 
-## 4. 최소 구현 — Python(GUI 위젯 제품군)
+## 최소 구현 — Python(GUI 위젯 제품군)
 
 ```python
 from abc import ABC, abstractmethod
 
 # 제품 계약
+
 class Button(ABC):
     @abstractmethod
     def render(self) -> None: ...
@@ -82,6 +83,7 @@ class Checkbox(ABC):
     def render(self) -> None: ...
 
 # 구체 제품 (Windows)
+
 class WindowsButton(Button):
     def render(self) -> None:
         print("윈도우 버튼 렌더링")
@@ -91,6 +93,7 @@ class WindowsCheckbox(Checkbox):
         print("윈도우 체크박스 렌더링")
 
 # 구체 제품 (Mac)
+
 class MacButton(Button):
     def render(self) -> None:
         print("맥 버튼 렌더링")
@@ -100,6 +103,7 @@ class MacCheckbox(Checkbox):
         print("맥 체크박스 렌더링")
 
 # 추상 팩토리
+
 class GUIFactory(ABC):
     @abstractmethod
     def create_button(self) -> Button: ...
@@ -107,6 +111,7 @@ class GUIFactory(ABC):
     def create_checkbox(self) -> Checkbox: ...
 
 # 구체 팩토리
+
 class WindowsFactory(GUIFactory):
     def create_button(self) -> Button: return WindowsButton()
     def create_checkbox(self) -> Checkbox: return WindowsCheckbox()
@@ -116,6 +121,7 @@ class MacFactory(GUIFactory):
     def create_checkbox(self) -> Checkbox: return MacCheckbox()
 
 # 클라이언트 (팩토리만 의존)
+
 def render_ui(factory: GUIFactory) -> None:
     btn = factory.create_button()
     chk = factory.create_checkbox()
@@ -130,7 +136,7 @@ render_ui(MacFactory())
 
 ---
 
-## 5. C# 예시 — DB 제품군(Conn/Command/Tx)
+## C# 예시 — DB 제품군(Conn/Command/Tx)
 
 ```csharp
 public interface IDbConnectionX { void Open(); }
@@ -179,7 +185,7 @@ public class Repository {
 
 ---
 
-## 6. Java 예시 — 테마 위젯 + ServiceLoader(선택)
+## Java 예시 — 테마 위젯 + ServiceLoader(선택)
 
 ```java
 public interface Button { void render(); }
@@ -204,9 +210,10 @@ public class DarkFactory implements GuiFactory {
 
 ---
 
-## 7. 변형(Variants)·구현 기법
+## 변형(Variants)·구현 기법
 
-### 7.1 등록(Registry) 기반 추상 팩토리
+### 등록(Registry) 기반 추상 팩토리
+
 런타임에 **키→팩토리**를 등록/선택(플러그인 친화).
 
 ```python
@@ -225,7 +232,8 @@ FactoryRegistry.register("mac", MacFactory())
 factory = FactoryRegistry.resolve("win")
 ```
 
-### 7.2 프로토타입 기반 추상 팩토리
+### 프로토타입 기반 추상 팩토리
+
 **프로토타입 레지스트리**에서 복제하여 제품군 생성.
 
 ```python
@@ -238,7 +246,8 @@ class ProtoFactory(GUIFactory):
     def create_checkbox(self) -> Checkbox: return copy.deepcopy(self._p_chk)
 ```
 
-### 7.3 함수형/람다 기반(경량)
+### 함수형/람다 기반(경량)
+
 팩토리 자체를 **생성자 함수들의 모음**으로 본다.
 
 ```python
@@ -251,7 +260,8 @@ class FuncFactory(GUIFactory):
     def create_checkbox(self) -> Checkbox: return self._mk_chk()
 ```
 
-### 7.4 DI/IoC와의 결합
+### DI/IoC와의 결합
+
 - **조립은 컨테이너**, **선택은 팩토리**: 환경/테넌트/플래그에 따라 팩토리를 **주입/선택**.
 - ASP.NET Core 예(개념):
   - `services.AddSingleton<IDbFactory, MySqlFactory>();`
@@ -259,7 +269,7 @@ class FuncFactory(GUIFactory):
 
 ---
 
-## 8. 제품 추가 vs 제품군 추가 — OCP 트레이드오프
+## 제품 추가 vs 제품군 추가 — OCP 트레이드오프
 
 | 변화 | 영향 | 비고 |
 |---|---|---|
@@ -271,24 +281,27 @@ class FuncFactory(GUIFactory):
 
 ---
 
-## 9. 실제 시나리오 설계 템플릿 3선
+## 실제 시나리오 설계 템플릿 3선
 
-### 9.1 UI 테마(다크/라이트/하이 콘트라스트)
+### UI 테마(다크/라이트/하이 콘트라스트)
+
 - 제품군: `Button/Checkbox/Label/Panel`
 - 제약: 테마 **일관성** 필수 → 추상 팩토리 적합
 - 변형: 등록 기반 + A/B 테스트 토글과 연계
 
-### 9.2 DB 벤더(MySQL/PostgreSQL/SQLite)
+### DB 벤더(MySQL/PostgreSQL/SQLite)
+
 - 제품군: `Connection/Command/Transaction`
 - 교체: CI에서 **모든 팩토리 계약 테스트** 수행
 
-### 9.3 클라우드 벤더(AWS/Azure/GCP)
+### 클라우드 벤더(AWS/Azure/GCP)
+
 - 제품군: `StorageClient/QueueClient/SecretClient`
 - 보안: 자격증명/엔드포인트 주입, 서명 전략은 **Strategy**로 분리 → 팩토리가 전략을 조합해 생성
 
 ---
 
-## 10. 테스트 전략(계약 테스트 & 모킹)
+## 테스트 전략(계약 테스트 & 모킹)
 
 - **계약 테스트**: 제품군 계약(예: `Button.render`가 예외 없이 호출 가능)을 공통 테스트로 만들고, **모든 ConcreteFactory**에 대해 **동일 테스트 재사용**.
 - **InMemory/TestFactory**: 실제 I/O 없는 테스트용 팩토리를 주입.
@@ -308,7 +321,7 @@ def test_gui_family_contract(factory: GUIFactory):
 
 ---
 
-## 11. 성능·동시성·수명 고려
+## 성능·동시성·수명 고려
 
 - **지연 로딩**: 팩토리가 내부 캐시/풀과 결합될 때 초기 지연 vs 호출 지연을 트레이드오프.
 - **수명 관리**: C#에서는 `IDisposable` 제품을 팩토리가 만든다면 **소유권**과 **해제 시점**을 명시(클라이언트가 해제? 팩토리가 풀 관리?).
@@ -316,7 +329,7 @@ def test_gui_family_contract(factory: GUIFactory):
 
 ---
 
-## 12. 리팩토링 가이드 — 흩어진 생성 → 추상 팩토리
+## 리팩토링 가이드 — 흩어진 생성 → 추상 팩토리
 
 **냄새**
 - 여러 곳에 `if (theme==dark) new DarkButton() else new LightButton()`
@@ -331,7 +344,7 @@ def test_gui_family_contract(factory: GUIFactory):
 
 ---
 
-## 13. 비교 — Factory Method / Builder / Prototype
+## 비교 — Factory Method / Builder / Prototype
 
 | 항목 | Factory Method | **Abstract Factory** | Builder | Prototype |
 |---|---|---|---|---|
@@ -342,7 +355,7 @@ def test_gui_family_contract(factory: GUIFactory):
 
 ---
 
-## 14. 안티패턴·흔한 실수
+## 안티패턴·흔한 실수
 
 - **불필요한 세트화**: 실제로 함께 쓰지 않는 제품을 억지로 묶음 → 과추상화.
 - **인터페이스 비대화**: 제품 수가 늘며 `AbstractFactory`가 점점 커짐 → **분할/컴포지션** 고려.
@@ -351,7 +364,7 @@ def test_gui_family_contract(factory: GUIFactory):
 
 ---
 
-## 15. 추가 예제 — 함수형 조합과 전략 결합
+## 추가 예제 — 함수형 조합과 전략 결합
 
 **전송 클라이언트 제품군 + 전략(서명/재시도) 조합**
 
@@ -400,7 +413,7 @@ class GrpcFactory(NetFactory):
 
 ---
 
-## 16. 체크리스트(최종)
+## 체크리스트(최종)
 
 - 세트 일관성(테마/벤더)이 **핵심 제약**인가?
 - 제품 **변형 추가**가 흔하고, 제품 **종류 추가**는 드문가? (반대면 다른 설계 고려)
@@ -410,7 +423,7 @@ class GrpcFactory(NetFactory):
 
 ---
 
-## 17. 장단점 요약
+## 장단점 요약
 
 **장점**
 - 세트 단위 **일관 생성/교체**
@@ -424,6 +437,6 @@ class GrpcFactory(NetFactory):
 
 ---
 
-## 18. 마무리
+## 마무리
 
 추상 팩토리는 “**세트로 움직이는 변화**”를 **추상화된 공장** 하나로 수렴시켜 **일관성·교체 용이성**을 보장한다. 실제 시스템에서 **Factory Method/Strategy/DI**와 함께 조합해 쓰면 가장 강력하다. 다만, **제품 타입 추가의 OCP 트레이드오프**와 **인터페이스 비대화**를 항상 염두에 두고, 억지로 세트화하지 말 것. **현실의 변화 축**을 정확히 읽는 것이 패턴 성공의 핵심이다.

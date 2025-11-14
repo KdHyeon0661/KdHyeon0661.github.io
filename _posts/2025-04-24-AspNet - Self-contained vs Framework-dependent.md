@@ -6,7 +6,7 @@ category: AspNet
 ---
 # Self-contained vs Framework-dependent 배포
 
-## 0. 핵심 요약(의사결정 트리)
+## 핵심 요약(의사결정 트리)
 
 - **서버/컨테이너**(런타임 표준화, 빠른 패치) → **Framework-dependent (FDD)** 권장
 - **설치형/폐쇄망/런타임 없는 환경** → **Self-contained (SCD)** 권장
@@ -15,7 +15,7 @@ category: AspNet
 
 ---
 
-## 1. 개요 복습
+## 개요 복습
 
 | 배포 방식 | 설명 |
 |---|---|
@@ -28,7 +28,7 @@ category: AspNet
 
 ---
 
-## 2. 장단점 비교(심화)
+## 장단점 비교(심화)
 
 | 항목 | Framework-dependent | Self-contained |
 |---|---|---|
@@ -43,35 +43,40 @@ category: AspNet
 
 ---
 
-## 3. 기본 빌드 예제
+## 기본 빌드 예제
 
-### 3.1 Framework-dependent(FDD)
+### Framework-dependent(FDD)
 
 ```bash
 dotnet publish -c Release -o ./publish
 # 또는 플랫폼을 지정하되, self-contained는 false
+
 dotnet publish -c Release -r win-x64 --self-contained false -o ./publish
 # 실행
+
 dotnet ./publish/MyApp.dll
 ```
 
-### 3.2 Self-contained(SCD)
+### Self-contained(SCD)
 
 ```bash
 # Windows x64
+
 dotnet publish -c Release -r win-x64 --self-contained true -o ./publish
 # Linux x64
+
 dotnet publish -c Release -r linux-x64 --self-contained true -o ./publish
 # 실행
+
 ./publish/MyApp            # (Linux)
 ./publish/MyApp.exe        # (Windows)
 ```
 
 ---
 
-## 4. 고급 퍼블리시 옵션(공통 적용 가능)
+## 고급 퍼블리시 옵션(공통 적용 가능)
 
-### 4.1 Single-file (단일 파일)
+### Single-file (단일 파일)
 
 > 배포 편의성 향상(파일 하나). **FDD**도 가능하지만, 보통 **SCD + Single-file**을 활용.
 
@@ -90,7 +95,7 @@ dotnet publish -c Release -r linux-x64 --self-contained true \
 - `DOTNET_BUNDLE_EXTRACT_BASE_DIR=/tmp/dotnet_bundle`
 - `DOTNET_BUNDLE_EXTRACT_TO_TEMP=1` (강제 임시 폴더)
 
-### 4.2 ReadyToRun (사전 JIT: R2R)
+### ReadyToRun (사전 JIT: R2R)
 
 > **콜드 스타트 개선**(특히 Windows 서비스/함수형 앱). 크기 증가.
 
@@ -102,7 +107,7 @@ dotnet publish -c Release -r win-x64 --self-contained true \
 - `-p:PublishReadyToRunComposite=true` (일부 시나리오에 콜드 스타트 추가 개선)
 - R2R은 **JIT 일부 대체**. 런타임/CPU에 따라 성능 편차 존재.
 
-### 4.3 AOT(nativeaot, .NET 8+)
+### AOT(nativeaot, .NET 8+)
 
 > 네이티브 바이너리로 **초저지연/초경량 런타임**. 제약 많음(리플렉션/동적로딩 제한), 호환성 검토 필수.
 
@@ -113,7 +118,7 @@ dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o ./publish
 - 서버보단 **CLI/에이전트/함수형 워크로드**에 유리
 - 크기 작고 시작 빠름. 대신 기능 제약/빌드시간↑
 
-### 4.4 Trim (링커로 미사용 코드 제거)
+### Trim (링커로 미사용 코드 제거)
 
 ```bash
 dotnet publish -c Release -r linux-x64 --self-contained true \
@@ -123,10 +128,11 @@ dotnet publish -c Release -r linux-x64 --self-contained true \
 - **반드시 테스트 필요**: 리플렉션/다이내믹 호출/소스제너레이터 사용 시 `TrimmerRootDescriptor.xml` 또는 `DynamicDependency` 특성으로 **보존 규칙** 지정 필요
 - 이점: 크기 절감, 보안 표면 축소. 리스크: 런타임 누락 오류.
 
-### 4.5 Globalization/ICU 축소
+### Globalization/ICU 축소
 
 ```bash
 # 문화권/지역화 기능 최소화 → 크기↓
+
 dotnet publish -c Release -r linux-x64 --self-contained true \
   -p:InvariantGlobalization=true -o ./publish
 ```
@@ -136,9 +142,9 @@ dotnet publish -c Release -r linux-x64 --self-contained true \
 
 ---
 
-## 5. csproj 구성 템플릿(프로파일/환경별)
+## csproj 구성 템플릿(프로파일/환경별)
 
-### 5.1 다중 프로파일(조건부 PropertyGroup)
+### 다중 프로파일(조건부 PropertyGroup)
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk.Web">
@@ -178,18 +184,21 @@ dotnet publish -c Release -r linux-x64 --self-contained true \
 
 ```bash
 # 기본(FDD)
+
 dotnet publish -c Release -o ./publish
 
 # SCD Windows
+
 dotnet publish -c Release -p:PublishProfile=scd-win -o ./publish
 
 # SCD Linux Trim
+
 dotnet publish -c Release -p:PublishProfile=scd-linux-trim -o ./publish
 ```
 
 ---
 
-## 6. RID(Runtime Identifier) 심화
+## RID(Runtime Identifier) 심화
 
 - SCD는 **RID를 명시**해야 한다(`win-x64`, `linux-x64`, `osx-arm64`, `linux-arm`, `linux-musl-x64` 등).
 - **musl**(Alpine Linux) 기반은 별도 RID(`linux-musl-x64`) 필요.
@@ -205,7 +214,7 @@ steps:
 
 ---
 
-## 7. 보안/패치/유지보수 전략
+## 보안/패치/유지보수 전략
 
 | 관점 | FDD | SCD |
 |---|---|---|
@@ -219,7 +228,7 @@ steps:
 
 ---
 
-## 8. 성능/시작 시간 최적화 가이드
+## 성능/시작 시간 최적화 가이드
 
 - **R2R**: 콜드스타트 개선, 용량 증가 감수
 - **AOT**: 극저지연/초경량, 호환성 제약
@@ -229,7 +238,7 @@ steps:
 
 ---
 
-## 9. 컨테이너에서의 선택
+## 컨테이너에서의 선택
 
 - 보통 **FDD** (런타임 포함 base 이미지 사용)
   예: `mcr.microsoft.com/dotnet/aspnet:8.0`
@@ -239,12 +248,14 @@ steps:
 
 ```dockerfile
 # build
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet publish -c Release -o /out
 
 # run (FDD)
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /out .
@@ -268,7 +279,7 @@ ENTRYPOINT ["./MyApp"]  # SCD 단일 바이너리
 
 ---
 
-## 10. 진단/로깅/크래시덤프 차이
+## 진단/로깅/크래시덤프 차이
 
 - Single-file + 추출 모드: 일시 디렉터리에 어셈블리 전개 → **파일 경로/심볼 로드** 방식 유의
 - Trim/AOT: 리플렉션 기반 라이브러리/로거 템플릿이 **제거**될 수 있음 → 루트 보존 규칙 정의
@@ -276,12 +287,13 @@ ENTRYPOINT ["./MyApp"]  # SCD 단일 바이너리
 
 ---
 
-## 11. 스크립트 예시(운영 배포 파이프라인)
+## 스크립트 예시(운영 배포 파이프라인)
 
-### 11.1 Linux 배포 스크립트(SCD + R2R + 단일파일)
+### Linux 배포 스크립트(SCD + R2R + 단일파일)
 
 ```bash
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 RID="linux-x64"
@@ -295,25 +307,27 @@ dotnet publish -c Release -r $RID --self-contained true \
   -o $OUT
 
 # 서빙 경로로 교체(원자적 교체를 위해 심볼릭 링크/버전 폴더 사용 권장)
+
 sudo systemctl stop myapp || true
 rsync -av --delete "$OUT/" /var/www/myapp/
 sudo systemctl start myapp
 sudo systemctl status myapp --no-pager
 ```
 
-### 11.2 PowerShell(Windows, FDD + IIS)
+### PowerShell(Windows, FDD + IIS)
 
 ```powershell
 $Out = ".\publish"
 dotnet publish -c Release -o $Out
 # IIS 사이트 경로에 복사
+
 Copy-Item "$Out\*" "C:\Sites\MyApp\" -Recurse -Force
 iisreset
 ```
 
 ---
 
-## 12. 흔한 오류와 해결
+## 흔한 오류와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -325,7 +339,7 @@ iisreset
 
 ---
 
-## 13. 실무 선택 가이드(상황별)
+## 실무 선택 가이드(상황별)
 
 | 상황 | 권장 |
 |---|---|
@@ -337,7 +351,7 @@ iisreset
 
 ---
 
-## 14. 예제: 모든 조합을 비교하는 매트릭스 빌드
+## 예제: 모든 조합을 비교하는 매트릭스 빌드
 
 GitHub Actions 매트릭스:
 
@@ -373,7 +387,7 @@ jobs:
 
 ---
 
-## 15. 보너스: `runtimeconfig.json`/RollForward
+## 보너스: `runtimeconfig.json`/RollForward
 
 FDD에서 런타임 상향 호환(롤포워드) 정책은 **호환범위**를 제어:
 
@@ -383,7 +397,7 @@ FDD에서 런타임 상향 호환(롤포워드) 정책은 **호환범위**를 �
 
 ---
 
-## 16. 결론
+## 결론
 
 - **운영 표준화/패치 민첩성**이 중요하면 **Framework-dependent**.
 - **런타임 없는 환경/설치형 배포**가 필요하면 **Self-contained**.

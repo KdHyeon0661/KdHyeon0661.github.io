@@ -6,7 +6,7 @@ category: 정보통신기사
 ---
 # 무선LAN · CSMA/CA · 보안 개념 총정리
 
-## 0. 큰 그림: 802.11 네트워크 한 장
+## 큰 그림: 802.11 네트워크 한 장
 
 - **역할**: AP(Access Point) ↔ STA(클라이언트). BSS(셀)들의 집합이 ESS.
 - **프레임 3대장**: Management(Beacon, Probe, Auth, Assoc), Control(RTS/CTS/ACK/BA), Data(QoS Data).
@@ -16,7 +16,7 @@ category: 정보통신기사
 
 ---
 
-## 1. 802.11 PHY·대역·채널 빠른 맵
+## 802.11 PHY·대역·채널 빠른 맵
 
 | 세대 | 대역폭 | 변조/특징 | 최대 링크 속도(개념) |
 |---|---|---|---|
@@ -32,7 +32,7 @@ category: 정보통신기사
 
 ---
 
-## 2. 802.11 프레임 구조 개요
+## 802.11 프레임 구조 개요
 
 ```
 [ MAC Header (24/30/34 B) | QoS Control? | HT/VHT/HE Control? | Frame Body | FCS(4) ]
@@ -46,35 +46,40 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 
 ---
 
-## 3. CSMA/CA(충돌 회피)와 EDCA(802.11e QoS)
+## CSMA/CA(충돌 회피)와 EDCA(802.11e QoS)
 
-### 3.1 DCF 기본(Distributed Coordination Function)
+### DCF 기본(Distributed Coordination Function)
+
 1) **물리 감지**(CCA): 채널이 Busy면 대기.
 2) **DIFS** 경과 후 **백오프 카운트다운** 시작.
 3) **무작위 백오프**: `backoff = rand[0..CW]` 슬롯, Idle 슬롯마다 1씩 감소.
 4) 0이 되면 **프레임 전송**. 성공 시 상대가 **SIFS 후 ACK**. 실패(ACK 미수신) → **CW↑(BEB)** 후 재시도.
 - **타이밍**: `SIFS < PIFS < DIFS` (수치 예: 2.4G OFDM 계열 SIFS=10 µs, DIFS=28 µs, Slot=9 µs 등; 표준/대역에 따라 다름)
 
-### 3.2 EDCA (Enhanced DCF, 802.11e/WMM)
+### EDCA (Enhanced DCF, 802.11e/WMM)
+
 - 4개 **AC**(BK, BE, VI, VO)별 **AIFS**, **CWmin/max**, **TXOP** 차등.
   - **VO**: AIFS↓, CWmin↓ → 먼저 잡음. **TXOP**로 **연속 프레임** 전송(ACK 포함) 허용.
 - **목적**: 음성/영상의 **지연·지터** 보장.
 
-### 3.3 RTS/CTS & CTS-to-Self
+### RTS/CTS & CTS-to-Self
+
 - **RTS/CTS**: RTS→CTS 교환으로 **NAV** 셋업, **Hidden Node** 충돌 예방. 작은 프레임엔 오버헤드.
 - **CTS-to-Self**: 송신자가 자기에게 CTS 발행, **단일 프레임 보호**. 11n 보호/혼재 환경에서 사용.
 
-### 3.4 BEB (Binary Exponential Backoff)
+### BEB (Binary Exponential Backoff)
+
 - 재시도 i번째: `CW = min(2^i*(CWmin+1)-1, CWmax)`
 - **기대 백오프 슬롯** $\mathbb{E}[k] \approx \frac{CW}{2}$.
 - 재시도 한계/드롭은 드라이버/칩셋 정책.
 
-### 3.5 NAV/가상 캐리어 감지
+### NAV/가상 캐리어 감지
+
 - 프레임의 **Duration**을 이용해 타 STA들이 **대기**. 물리 감지와 **둘 다 만족**해야 송신.
 
 ---
 
-## 4. 802.11n/ac/ax MAC 효율 기능
+## 802.11n/ac/ax MAC 효율 기능
 
 - **프레임 집계**
   - **A-MSDU**: 상위 MSDU 여러 개를 **하나의 MPDU Payload**에 결합(헤더 오버헤드↓, 에러 시 전체 재전송).
@@ -86,7 +91,7 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 
 ---
 
-## 5. 802.11ax(HE, Wi-Fi 6/6E) 핵심
+## 802.11ax(HE, Wi-Fi 6/6E) 핵심
 
 - **OFDMA**: RU(Resource Unit) 단위로 **다수 STA 동시** UL/DL 전송 → **에어타임 효율↑**(작은 패킷/IoT 유리).
 - **MU-MIMO UL/DL**: 공간 다중화 극대화(채널 상태 정보 필요).
@@ -96,21 +101,24 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 
 ---
 
-## 6. 처리량(Throughput)과 에어타임(Airtime) 계산
+## 처리량(Throughput)과 에어타임(Airtime) 계산
 
-### 6.1 기본 아이디어
+### 기본 아이디어
+
 - **유효 처리량** $\approx \dfrac{\text{유저 페이로드}}{\text{에어타임 총합}}$
 - 총합 = **프리앰블/PLCP + (DIFS/AIFS + 백오프) + PPDU + SIFS + ACK** (+ RTS/CTS/BA 등).
 - **Aggregation/BA**를 쓰면 페이로드↑, ACK 수↓ → 효율↑.
 
-### 6.2 근사 수식(단일 프레임)
+### 근사 수식(단일 프레임)
+
 $$
 T_\text{air} \approx T_\text{preamble} + T_\text{AIFS} + T_\text{bo} + T_\text{data} + T_\text{SIFS} + T_\text{ACK}
 $$
 - $T_\text{data}=\dfrac{L_\text{MAC+LLC+IP+TCP}+ \text{MAC 헤더}+FCS}{R_\text{PHY, data}}$ (물리 부호화 반올림 존재)
 - **블록ACK + A-MPDU**라면 `ACK` 1회로 다수 MPDU 승인.
 
-### 6.3 예제(개념 수치)
+### 예제(개념 수치)
+
 - **가정**: 11n, 20 MHz, MCS 7(65 Mb/s, GI=800ns), A-MPDU로 20개 MPDU(각 1500B 유저 페이로드), BA 사용.
 - 대략:
   - **Data 에어타임** ≈ (20 × (1500+MAC/FCS 등) / 65 Mb/s)
@@ -121,7 +129,7 @@ $$
 
 ---
 
-## 7. 로밍과 관리: 802.11k/v/r
+## 로밍과 관리: 802.11k/v/r
 
 - **11k**: Neighbor Report로 **인근 AP 목록** 제공 → 탐색 부담↓.
 - **11v**: BSS Transition(스티어링), 타임 동기 등 관리 프레임.
@@ -130,7 +138,7 @@ $$
 
 ---
 
-## 8. 전력절감: Power Save·U-APSD·TWT
+## 전력절감: Power Save·U-APSD·TWT
 
 - **Legacy PS-Poll**: TIM/DTIM에 따라 버퍼된 프레임 수신.
 - **U-APSD(WMM-PS)**: 트리거 기반 절전(VoIP에 유리).
@@ -138,53 +146,62 @@ $$
 
 ---
 
-## 9. 무선 보안: 세대와 개념
+## 무선 보안: 세대와 개념
 
-### 9.1 WEP(역사·비권고)
+### WEP(역사·비권고)
+
 - **RC4 + 24-bit IV**, 키 재사용/IV 고갈 문제 → **취약**. 사용 금지.
 
-### 9.2 WPA/WPA2
+### WPA/WPA2
+
 - **WPA-TKIP**: WEP 보완(임시), 현재 비권고.
 - **WPA2-PSK(CCMP-AES)**: 가정/소규모 표준. **4-Way Handshake**로 PTK 생성, **GTK**(그룹 키) 별도.
 - **WPA2-Enterprise(802.1X/EAP + RADIUS)**: 기업용. 사용자/디바이스별 인증(**EAP-TLS/PEAP** 등), **동적 키**.
 
-### 9.3 WPA3
+### WPA3
+
 - **WPA3-SAE (Personal)**: 오프라인 추측 공격 방지, **비밀번호 기반 상호 인증**(Dragonfly).
 - **WPA3-Enterprise**: 192-bit Suite 옵션, **EAP-TLS 권장**.
 - **PMF(802.11w)**: **관리프레임 보호**(Deauth/Disassoc 스푸핑 방지). WPA3에선 **필수**.
 
-### 9.4 키 계층·핸드셰이크 요약
+### 키 계층·핸드셰이크 요약
+
 - **PMK**: PSK 또는 802.1X(EAP)로 생성.
 - **4-Way**: $\text{PTK} = \mathrm{PRF}(\text{PMK}, \text{ANonce}, \text{SNonce}, \text{AA}, \text{SA})$
 - **GTK**: 브로드/멀티캐스트용 **그룹키**(주기적 재키).
 - **회선 보안**: **CCMP(AES-CTR+CBC-MAC)**, 최신은 **GCMP**(성능↑).
 
-### 9.5 개방형/캡티브 포털 주의
+### 개방형/캡티브 포털 주의
+
 - **Open SSID + Captive**는 **평문**. 민감 데이터는 **상위 계층 TLS**에 의존. 가능하면 **OWE(Enhanced Open)** 고려.
 
 ---
 
-## 10. 전파 이슈와 설계
+## 전파 이슈와 설계
 
-### 10.1 채널 계획
+### 채널 계획
+
 - **2.4 GHz**: **1/6/11** 고정, AP Tx 파워 **균형**(셀 오버랩 15~20%).
 - **5 GHz**: 40/80 MHz는 **채널 재사용·DFS** 고려. 혼잡 환경이면 20/40로 **셀 밀도↑**.
 - **6 GHz**: PSC 우선, WPA3 필수, 외부 간섭 적음.
 
-### 10.2 최소 데이터레이트/저속 비활성
+### 최소 데이터레이트/저속 비활성
+
 - **1/2/5.5/11 Mb/s**(2.4G) 같은 저속을 **비활성** → **에어타임 낭비 감소**, 로밍 개선.
 
-### 10.3 밴드 스티어링·Airtime Fairness
+### 밴드 스티어링·Airtime Fairness
+
 - 단말을 5/6 GHz로 유도(밴드 스티어링).
 - **Airtime Fairness**: 느린 단말이 **셀 전체**를 잡아먹지 않게 **에어타임 기준** 스케줄.
 
-### 10.4 Hidden/Exposed Node
+### Hidden/Exposed Node
+
 - **Hidden**: 서로 안 들리는 STA끼리 충돌 → **RTS/CTS**, **CCA 임계 조정**, **셀 크기 재설계**.
 - **Exposed**: 불필요 회피로 동시성↓ → BSS Coloring/OBSS-PD가 완화.
 
 ---
 
-## 11. 트러블슈팅·카운터 해석
+## 트러블슈팅·카운터 해석
 
 | 증상/지표 | 의심 | 처방 |
 |---|---|---|
@@ -206,18 +223,21 @@ wlan.fc.retry == 1
 
 ---
 
-## 12. 계산 예제 (빠른 감 잡기)
+## 계산 예제 (빠른 감 잡기)
 
-### 12.1 평균 백오프 시간(EDCA-BE 예)
+### 평균 백오프 시간(EDCA-BE 예)
+
 - **2.4G OFDM 가정**: Slot=9 µs, `CWmin=15` → 평균 `CW/2=7.5 슬롯` ≈ **67.5 µs**
 - `CWmax=1023`까지 증가 가능(혼잡시).
 
-### 12.2 A-MPDU의 효과(개념 수치)
+### A-MPDU의 효과(개념 수치)
+
 - 단일 MPDU: 매 전송마다 **SIFS+ACK** 필요.
 - A-MPDU 32개 묶음: **프리앰블+백오프+SIFS+BA** 한 번 → 헤더/IFS 비율↓ → 처리량 ↑.
 - 실무 체감: **2~3배**↑도 흔함(환경/에러율 의존).
 
-### 12.3 Airtime 비중
+### Airtime 비중
+
 $$
 \text{Airtime} = \frac{\text{Bytes} \times 8}{\text{PHY Rate}} + \sum \text{오버헤드(µs)}
 $$
@@ -225,7 +245,7 @@ $$
 
 ---
 
-## 13. 설정 체크리스트(현장용)
+## 설정 체크리스트(현장용)
 
 - [ ] **보안**: WPA2-AES 이상, **WPA3-SAE/Enterprise + PMF** 권장(6 GHz 필수)
 - [ ] **SSID 개수 최소화**(브로드캐스트 오버헤드↓)
@@ -239,7 +259,7 @@ $$
 
 ---
 
-## 14. 자주 틀리는 포인트(정오표)
+## 자주 틀리는 포인트(정오표)
 
 1) **CSMA/CD**는 **유선**. 무선은 **CSMA/CA**(+NAV/백오프/ACK).
 2) PHY 속도=사용자 속도 **아님**. **에어타임/오버헤드**가 좌우.
@@ -252,7 +272,7 @@ $$
 
 ---
 
-## 15. 연습문제(풀이 포함)
+## 연습문제(풀이 포함)
 
 **Q1.** CSMA/CA에서 전송 직전 대기하는 간격은?
 **A.** **AIFS(또는 DIFS)** 후 **무작위 백오프**. 성공 시 수신측은 **SIFS 후 ACK**.
@@ -277,10 +297,11 @@ $$
 
 ---
 
-## 16. 미니 계산기 (개념용 Python)
+## 미니 계산기 (개념용 Python)
 
 ```python
 # 단순 Airtime 근사 계산기
+
 def airtime_us(payload_bytes, mac_header=34, llc_snap=8, fcs=4,
                phy_rate_mbps=65.0, preamble_us=36, aifs_us=28, sifs_us=10, ack_us=30,
                cw_slots=7.5, slot_us=9.0):
@@ -297,7 +318,7 @@ for p in [256, 1500]:
 
 ---
 
-## 17. 압축 요약(시험 직전 12줄)
+## 압축 요약(시험 직전 12줄)
 
 1) **CSMA/CA**: AIFS/DIFS → **Backoff** → Tx → **SIFS+ACK**, 실패 시 **BEB**.
 2) **EDCA**: AC별 AIFS/CW/TXOP 차등(VO가 우선).
@@ -314,7 +335,7 @@ for p in [256, 1500]:
 
 ---
 
-## 18. 마무리
+## 마무리
 
 무선 LAN의 성패는 **PHY 속도**가 아니라 **에어타임**을 누구에게 어떻게 배분하느냐에 달려 있습니다.
 **CSMA/CA의 대기·충돌·재시도**를 줄이고, **집계/BA/EDCA/11ax 기능**을 제대로 쓰면 같은 하드웨어로도 **두 배 이상의 체감 차이**가 납니다.

@@ -4,19 +4,20 @@ title: 데이터 통신 3장 - Introduction to Physical Layer (2)
 date: 2024-07-15 19:20:23 +0900
 category: DataCommunication
 ---
-# 3.3 Digital Signaling Fundamentals
+# Digital Signaling Fundamentals
 
 본 글은 기존 초안을 **정확성 보강**(잘못된/모호한 부분 교정) + **실전 수치·코드** + **추가 이론**으로 확장했습니다.
 요청에 따라 **그림 링크는 모두 제거**했으며 수식은 **MathJax( \$\$ ... \$\$ )**, 코드는 ```로 표기합니다.
 
 ---
 
-## 3.3.1 Bit Rate (비트율)
+## Bit Rate (비트율)
 
 - **정의**: 단위 시간(초)당 전송되는 **비트 수**
   $$ \text{bit rate } R \;[\text{bps}] = \frac{\text{전송 비트 수}}{\text{초}} $$
 
 ### 예시 1) “100페이지 책” 전송량과 비트율 구분
+
 - 가정(초안 보정):
   - 한 페이지에 **문장 24개**, 각 문장 **문자 80개**, 문자 1개 **8비트**(ASCII)
   - 총 데이터량(비트):
@@ -27,6 +28,7 @@ category: DataCommunication
   - 예) 0.5초에 보냈다면 **3.072 Mbps**
 
 ### 예시 2) “HDTV 비트레이트”
+
 - 가정(원시 비압축 RGB):
   - 해상도 \(1920\times1080\), 프레임 레이트 \(30\ \text{fps}\), 픽셀당 24비트(RGB 8:8:8)
   - **원시 비트율**:
@@ -35,13 +37,14 @@ category: DataCommunication
   즉 “1.5 Gbps”는 **비압축**일 때의 이론치임을 명확히 하자.
 
 ### 필수 팁
+
 - **bit rate**(bps) vs **symbol rate**(Baud) 구분:
   \(M\)레벨 심볼이면
   $$ R_{\text{bit}} = R_{\text{symbol}}\cdot \log_2 M $$
 
 ---
 
-## 3.3.2 Bit Length (비트 길이)
+## Bit Length (비트 길이)
 
 - **정의**: 전송 중 **공간상** 한 비트가 차지하는 **길이**
   $$ \text{bit length } \ell = v \times \tau $$
@@ -54,6 +57,7 @@ $$
 $$
 
 ### 예시
+
 - 트위스티드 페어에서 \(v\approx 2.0\times 10^8\ \text{m/s}\), \(R=100\ \text{Mbps}\) →
   $$ \ell \approx \frac{2.0\times10^8}{1.0\times10^8} = 2.0\ \text{m/bit} $$
 - 같은 매체에서 \(R=1\ \text{Gbps}\) →
@@ -63,7 +67,8 @@ $$
 
 ---
 
-## 3.3.3 Digital Signal as a Composite Analog Signal
+## Digital Signal as a Composite Analog Signal
+
 (디지털 파형의 주파수 성분)
 
 - 디지털(예: 사각) 신호는 **무한한 고조파**를 갖는 **합성 아날로그 신호**로 이해할 수 있음.
@@ -71,6 +76,7 @@ $$
 - 이 관점에서 디지털 신호의 **대역폭(BW)** 을 정의/근사할 수 있음.
 
 ### 정사각파의 이상적 스펙트럼(복습)
+
 $$
 x(t)=\frac{4A}{\pi}\big(\sin(\omega_0 t)+\frac{1}{3}\sin(3\omega_0 t)+\frac{1}{5}\sin(5\omega_0 t)+\cdots\big)
 $$
@@ -79,10 +85,12 @@ $$
 
 ---
 
-## 3.3.4 Transmission of Digital Signals
+## Transmission of Digital Signals
+
 (Baseband vs Broadband, 실무적 해석)
 
 ### Baseband Transmission (기저대역 전송)
+
 - **정의**: 디지털 신호를 **그대로(라인코딩 등)** 전송.
 - **채널**: **Low-pass** 채널(0 Hz부터 에너지 통과).
   > 초안에 “필요로 하지 않는다”라는 문장은 정정 필요: **Baseband는 Low-pass 채널이 필요**합니다.
@@ -92,11 +100,13 @@ $$
   - 더 충실한 파형(엣지 재현)을 원하면 **상위 고조파**까지 포함 필요 → BW ↑
 
 ### Limited-BW Low-pass 채널에서의 근사
+
 - 제한된 BW에서 디지털 파형은 **저역 고조파**들의 합으로 **근사**됨.
   - \(R/2, \; 3R/2, \; 5R/2,\dots\)를 더 포함할수록 파형이 원형에 근접(링잉/오버슈트 주의).
 - **클럭 복원**/ISI 억제를 위해 **라인코딩**(Manchester, 4B/5B, 8b/10b 등) 채택.
 
 ### Broadband Transmission (대역통과/변조)
+
 - **정의**: 디지털 데이터를 **반송파**(carrier)로 **변조**(ASK/FSK/PSK/QAM/OFDM 등)하여 **Band-pass** 채널을 통해 전송.
 - 예: 무선, 케이블 모뎀, 위성, 광 무선 링크 등.
 - 장점: 채널의 가용 **주파수 대역(비영점 시작)** 을 효율적으로 활용, **주파수 재사용**, 전파특성 최적화.
@@ -120,17 +130,18 @@ print("BW (approx) for NRZ @R=1 Gbps:", baseband_bw_nrz(1.0e9)/1e6, "MHz")
 
 ---
 
-# 3.4 Transmission Impairment (전송 장애)
+# Transmission Impairment (전송 장애)
 
 현실의 매체는 **완벽하지 않다**. 대표적인 장애:
 **감쇠(Attenuation)**, **왜곡(Distortion)**, **노이즈(Noise)**.
 
-## 3.4.1 Attenuation (감쇠)
+## Attenuation (감쇠)
 
 - 매체 저항·누설 등으로 **전력 손실** 발생 → 거리 ↑, 주파수 ↑에서 심화.
 - **대응**: **증폭기(Amplifier)** 또는 **리피터(디지털 재생)** 를 적절 간격으로 배치.
 
 ### 데시벨(dB) 표기
+
 - 전력 기준:
   $$ \text{dB} = 10\log_{10}\!\left(\frac{P_2}{P_1}\right) $$
 - 전압/전류(임피던스 동일 가정) 기준:
@@ -138,9 +149,11 @@ print("BW (approx) for NRZ @R=1 Gbps:", baseband_bw_nrz(1.0e9)/1e6, "MHz")
 - **연쇄 구간**: dB 값은 **합산**됨(편리!).
 
 ### 예시
+
 - 구간 A: \(-3\ \text{dB}\), 구간 B: \(-7\ \text{dB}\), 증폭 +10 dB → 총합 \(=0\ \text{dB}\) → 입력과 출력 전력이 같음.
 
 ### 코드 — dB 유틸
+
 ```python
 import math
 
@@ -156,7 +169,7 @@ print("Power ratio for +10dB:", power_ratio_from_db(10))
 
 ---
 
-## 3.4.2 Distortion (왜곡)
+## Distortion (왜곡)
 
 - **정의**: 파형 모양이 변형되는 현상(주파수 성분별 크기/위상 응답의 차이).
 - **원인**:
@@ -169,7 +182,7 @@ print("Power ratio for +10dB:", power_ratio_from_db(10))
 
 ---
 
-## 3.4.3 Noise (노이즈)
+## Noise (노이즈)
 
 - **열 노이즈(Thermal/Johnson-Nyquist)**:
   - 대역폭 \(B\)에서의 평균 잡음 전력:
@@ -183,6 +196,7 @@ print("Power ratio for +10dB:", power_ratio_from_db(10))
 - **양자화 노이즈**(A/D), **위상 잡음**(발진기) 등도 실무에서 중요.
 
 ### SNR (Signal-to-Noise Ratio)
+
 - **선형비**:
   $$ \text{SNR} = \frac{P_{\text{signal}}}{P_{\text{noise}}} $$
 - **dB**:
@@ -191,10 +205,12 @@ print("Power ratio for +10dB:", power_ratio_from_db(10))
   너무 낮으면 BER 급증, 용량 \(C=B\log_2(1+\text{SNR})\)도 제한.
 
 ### 예시 — SNR과 채널 용량
+
 - \(B=1\ \text{MHz}\), \(\text{SNR}_{\text{dB}}=20\) dB → \(\text{SNR}=100\)
   $$ C = 10^6 \log_2(101) \approx 6.66\ \text{Mbps} $$
 
 ### 코드 — SNR/용량 계산기
+
 ```python
 import math
 

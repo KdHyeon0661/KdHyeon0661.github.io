@@ -6,7 +6,7 @@ category: WPF
 ---
 # InputBindings
 
-## 0. 무엇이 InputBindings 인가?
+## 무엇이 InputBindings 인가?
 
 - **InputBindings**는 **키/마우스 동작(제스처)**을 **Command** 실행으로 **바인딩**하는 WPF의 메커니즘입니다.
 - 핵심 클래스
@@ -19,9 +19,10 @@ category: WPF
 
 ---
 
-## 1. 가장 간단한 예 — Ctrl+S 로 저장
+## 가장 간단한 예 — Ctrl+S 로 저장
 
-### 1.1 XAML (Window 범위)
+### XAML (Window 범위)
+
 ```xml
 <Window x:Class="InputBindingsDemo.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -43,7 +44,8 @@ category: WPF
 </Window>
 ```
 
-### 1.2 Code-behind
+### Code-behind
+
 ```csharp
 private void Save_CanExecute(object sender, CanExecuteRoutedEventArgs e) => e.CanExecute = true;
 
@@ -58,7 +60,7 @@ private void Save_Executed(object sender, ExecutedRoutedEventArgs e)
 
 ---
 
-## 2. MouseBinding — 마우스 제스처로 명령 실행
+## MouseBinding — 마우스 제스처로 명령 실행
 
 ```xml
 <Border Background="LightSteelBlue" Padding="24">
@@ -88,7 +90,7 @@ public static class EditorCommands
 
 ---
 
-## 3. InputBinding 동작 흐름과 스코프
+## InputBinding 동작 흐름과 스코프
 
 1. 사용자가 **키/마우스 입력**을 발생
 2. WPF 입력 시스템이 **현재 포커스 요소**에서 **Visual Tree 상위**로 탐색하며
@@ -98,6 +100,7 @@ public static class EditorCommands
    (현재 요소 → 부모 → … → Window → Application 레벨 등록까지)
 
 ### 스코프 설계 팁
+
 - 특정 **컨트롤 내부에서만** 동작해야 하면: **그 컨트롤의 InputBindings**에 정의
 - 화면 **어디서든** 동작해야 하면: **Window**(또는 **UserControl 루트**)에 정의
 - **애플리케이션 공통 단축키**: `Application.Current.MainWindow.InputBindings` 초기화 시 추가
@@ -105,9 +108,10 @@ public static class EditorCommands
 
 ---
 
-## 4. KeyBinding의 모든 것
+## KeyBinding의 모든 것
 
-### 4.1 Key + Modifiers
+### Key + Modifiers
+
 ```xml
 <KeyBinding Command="{x:Static local:AppCommands.New}"
             Key="N" Modifiers="Control"/>
@@ -123,11 +127,13 @@ public static class EditorCommands
 - `KeyGesture` 문자열 파서는 **로케일의 키 이름**을 따르므로,
   코드에서는 **`new KeyGesture(Key.F, ModifierKeys.Control)`**를 권장(다국어 안정성).
 
-### 4.2 시스템 예약 키와 충돌
+### 시스템 예약 키와 충돌
+
 - `Alt+F4`, `Alt+Tab`, `Win` 키 조합 등 **OS 레벨** 단축키는 가로채기 불가(또는 권장하지 않음).
 - `Ctrl+Alt+Del` 등 보안 시퀀스는 불가.
 
-### 4.3 텍스트 입력 컨트롤(TextBox/RichTextBox)과의 상호작용
+### 텍스트 입력 컨트롤(TextBox/RichTextBox)과의 상호작용
+
 - TextBox는 **기본 편집 키**(예: `Ctrl+C`, `Ctrl+V`, `Ctrl+Z`, `Ctrl+X`, `Ctrl+A`, `Del`, `Backspace`, `Enter`, `Esc`, `Tab`)에 대해
   내부에서 **미리 처리**하거나 `Handled=true`로 소비하는 경우가 많습니다.
 - **내 단축키가 안 먹는다?**
@@ -135,7 +141,8 @@ public static class EditorCommands
   2) **InputBindings를 상위(예: Window)에 두되**, TextBox의 기본 동작과 **충돌하지 않는 제스처** 선택, 또는
   3) `AddHandler(CommandManager.PreviewCanExecuteEvent, ..., true)`로 **handledEventsToo** 활용(고급)
 
-### 4.4 Enter 키/ESC 키의 전형적인 처리
+### Enter 키/ESC 키의 전형적인 처리
+
 ```xml
 <TextBox x:Name="Input" AcceptsReturn="False">
   <TextBox.InputBindings>
@@ -149,29 +156,32 @@ public static class EditorCommands
 
 ---
 
-## 5. MouseBinding의 모든 것
+## MouseBinding의 모든 것
 
-### 5.1 MouseAction
+### MouseAction
+
 ```xml
 <MouseBinding MouseAction="LeftClick" Command="{Binding SelectCommand}"/>
 <MouseBinding MouseAction="RightClick" Command="{Binding ContextCommand}"/>
 <MouseBinding MouseAction="WheelClick" Command="{Binding MiddleCommand}"/>
 ```
 
-### 5.2 Modifiers와 조합
+### Modifiers와 조합
+
 ```xml
 <MouseBinding MouseAction="LeftClick" Modifiers="Control"
               Command="{Binding AddToSelectionCommand}"/>
 ```
 
-### 5.3 더블클릭/드래그 등 복합 제스처
+### 더블클릭/드래그 등 복합 제스처
+
 - WPF 표준 `MouseGesture`는 **단일 클릭** 기반.
 - 더블클릭은 `MouseDoubleClick` 이벤트를 **RoutedEvent → Command**로 연결하거나
   **커스텀 InputGesture**를 만들어 **InputBindings**에 넣는 방식(후술 “커스텀 제스처”).
 
 ---
 
-## 6. RoutedCommand, CommandBinding, InputBinding의 관계
+## RoutedCommand, CommandBinding, InputBinding의 관계
 
 - **InputBinding**은 **`ICommand`**(대개 **`RoutedCommand`/`RoutedUICommand`**)와 **제스처**를 매핑.
 - **CommandBinding**은 해당 명령의 **실행 로직(Executed)**과 **활성화 판단(CanExecute)**을 제공.
@@ -180,7 +190,8 @@ public static class EditorCommands
   2) 프레임워크가 **CommandBinding**을 **버블 라우팅**으로 찾음
   3) `CanExecute` → `Executed` 호출
 
-### 6.1 RoutedUICommand + 기본 제스처
+### RoutedUICommand + 기본 제스처
+
 ```csharp
 public static class AppCommands
 {
@@ -210,7 +221,7 @@ public static class AppCommands
 
 ---
 
-## 7. 우선순위/충돌 규칙
+## 우선순위/충돌 규칙
 
 - **가장 가까운 요소**의 `InputBindings`가 우선(포커스 기준).
   예) TextBox 내부 `InputBindings` > Grid의 `InputBindings` > Window의 `InputBindings`.
@@ -220,7 +231,7 @@ public static class AppCommands
 
 ---
 
-## 8. Preview 단계와 InputBindings
+## Preview 단계와 InputBindings
 
 - 표준 `InputBindings` 매칭은 **KeyDown/MouseDown** 처리의 **일반(버블)** 라우트에서 이뤄지는 것으로 이해하면 쉽습니다.
 - 상위 요소의 `PreviewKeyDown/PreviewMouseDown`에서 `Handled=true`를 설정하면 **InputBinding이 실행되지 않을 수 있음**.
@@ -243,9 +254,10 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 
 ---
 
-## 9. MVVM에서의 “깨끗한” InputBindings
+## MVVM에서의 “깨끗한” InputBindings
 
-### 9.1 ViewModel에 ICommand 공개 + Window에서 바인딩
+### ViewModel에 ICommand 공개 + Window에서 바인딩
+
 ```xml
 <Window.InputBindings>
   <KeyBinding Key="N" Modifiers="Control" Command="{Binding NewItemCommand}"/>
@@ -256,7 +268,8 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 - **좋은 점**: Code-behind가 필요 없음, 테스트 용이.
 - **주의**: TextBox의 기본 키와 겹치지 않도록, 또는 Preview 정책을 명확히.
 
-### 9.2 Attached Behavior/Blend Behavior로 선언적 구성
+### Attached Behavior/Blend Behavior로 선언적 구성
+
 ```xml
 <i:Interaction.Triggers>
   <i:KeyTrigger Key="Enter">
@@ -269,9 +282,10 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 
 ---
 
-## 10. 커스텀 제스처(InputGesture) 만들기
+## 커스텀 제스처(InputGesture) 만들기
 
-### 10.1 예: 더블클릭을 명령으로
+### 예: 더블클릭을 명령으로
+
 ```csharp
 public sealed class DoubleClickGesture : MouseGesture
 {
@@ -293,7 +307,8 @@ public sealed class DoubleClickGesture : MouseGesture
 - 사실 WPF의 `MouseAction` enum에는 **LeftDoubleClick**가 **내장**되어 있습니다.
   (버전에 따라 다를 수 있으니, 없는 경우 위와 유사한 커스텀 구현으로 대체합니다)
 
-### 10.2 예: “Ctrl+휠 위로” → 확대
+### 예: “Ctrl+휠 위로” → 확대
+
 ```csharp
 public sealed class WheelUpGesture : InputGesture
 {
@@ -321,14 +336,15 @@ public sealed class WheelUpGesture : InputGesture
 </Window.InputBindings>
 ```
 
-### 10.3 예: “멀티스텝” 제스처(Up → Up → Down 같은 시퀀스)
+### 예: “멀티스텝” 제스처(Up → Up → Down 같은 시퀀스)
+
 - `InputGesture` 내부에서 **상태 머신**을 갖고, 일정 시간 내 순서를 만족하면 `true`.
 - 또는 **PreviewKeyDown**에서 상태를 관리하고, 완성 시 `Command.Execute`를 호출.
 - 실전에서는 **복잡 제스처는 전용 핸들러/서비스**로 관리하고, **View에서는 단일 명령**에 연결하는 것이 유지보수에 유리.
 
 ---
 
-## 11. 메뉴/툴바와 InputBindings의 관계
+## 메뉴/툴바와 InputBindings의 관계
 
 - **MenuItem.InputGestureText** 속성으로 **단축키 안내 텍스트**만 표시할 수 있습니다.
 - 실제 동작은 **InputBindings** 또는 **Command(기본 제스처)** 가 처리합니다.
@@ -344,7 +360,7 @@ public sealed class WheelUpGesture : InputGesture
 
 ---
 
-## 12. 포커스/탭 순서/액세스 키(AccessText)와의 상호작용
+## 포커스/탭 순서/액세스 키(AccessText)와의 상호작용
 
 - **Alt+문자** 액세스 키는 **메뉴/버튼**에 우선 적용될 수 있습니다.
 - **TextBox**에서 Alt 조합은 보통 사용되지 않으므로 충돌 적음.
@@ -352,7 +368,7 @@ public sealed class WheelUpGesture : InputGesture
 
 ---
 
-## 13. “왜 단축키가 안 먹죠?” 트러블슈팅 체크리스트
+## “왜 단축키가 안 먹죠?” 트러블슈팅 체크리스트
 
 1. **포커스가 어디에 있나?**
    - 포커스 요소의 **InputBindings**가 우선.
@@ -374,7 +390,7 @@ public sealed class WheelUpGesture : InputGesture
 
 ---
 
-## 14. 대규모 화면에서의 관리 전략
+## 대규모 화면에서의 관리 전략
 
 - **중앙 등록 서비스**: Shell/Window가 시작 시 공통 제스처를 등록.
 - **기능 모듈별 레지스트리**: 각 모듈 View가 로드될 때 **필요한 InputBindings만 추가/제거**.
@@ -383,7 +399,7 @@ public sealed class WheelUpGesture : InputGesture
 
 ---
 
-## 15. 디버깅/프로파일링 팁
+## 디버깅/프로파일링 팁
 
 - **Snoop / Live Visual Tree**로 포커스/트리 확인.
 - `InputManager.PreProcessInput` 이벤트 구독하여 **입력 파이프라인** 로깅:
@@ -399,9 +415,10 @@ InputManager.Current.PreProcessInput += (s, e) =>
 
 ---
 
-## 16. 예제: “편집 화면” 종합 샘플 (MVVM, TextBox 충돌 회피)
+## 예제: “편집 화면” 종합 샘플 (MVVM, TextBox 충돌 회피)
 
-### 16.1 ViewModel
+### ViewModel
+
 ```csharp
 public class EditorViewModel
 {
@@ -432,7 +449,8 @@ public class EditorViewModel
 }
 ```
 
-### 16.2 View (Window)
+### View (Window)
+
 ```xml
 <Window x:Class="InputBindingsDemo.EditorWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -501,9 +519,10 @@ public class EditorViewModel
 
 ---
 
-## 17. 스타일/리소스로 재사용 가능한 InputBindings 패턴
+## 스타일/리소스로 재사용 가능한 InputBindings 패턴
 
-### 17.1 스타일에 포함(특정 Control 공통 키)
+### 스타일에 포함(특정 Control 공통 키)
+
 ```xml
 <Style TargetType="DataGrid" x:Key="EditableGridKeys">
   <Setter Property="InputBindings">
@@ -517,13 +536,14 @@ public class EditorViewModel
 </Style>
 ```
 
-### 17.2 리소스 딕셔너리 분리
+### 리소스 딕셔너리 분리
+
 - `Keys.xaml`에 InputBinding 컬렉션을 정의한 뒤, 필요한 화면에서 **머지**.
 - 팀 단축키 가이드에 맞춰 **일관성 유지**.
 
 ---
 
-## 18. 보안/접근성/국제화 관점
+## 보안/접근성/국제화 관점
 
 - **접근성(Accessibility)**: 키보드만으로도 모든 기능 접근 가능하도록 **단축키 제공**.
   화면 리더 사용자는 `Alt` 메뉴/AccessKey를 주로 사용.
@@ -532,7 +552,7 @@ public class EditorViewModel
 
 ---
 
-## 19. 테스트 자동화
+## 테스트 자동화
 
 - **UI 자동화**: Appium/WinAppDriver, FlaUI 등으로 키 입력 시뮬레이션.
 - **단위 테스트**: `ICommand.CanExecute/Execute` 로직을 **ViewModel 단위**로 테스트.
@@ -540,7 +560,7 @@ public class EditorViewModel
 
 ---
 
-## 20. 요약 체크리스트
+## 요약 체크리스트
 
 - [ ] **InputBindings**는 **요소 스코프**로 작동. **포커스**가 중요
 - [ ] **KeyBinding/MouseBinding** → **RoutedCommand/CommandBinding**과 결합
@@ -553,26 +573,29 @@ public class EditorViewModel
 
 ---
 
-## 21. 부록: 미니 레퍼런스
+## 부록: 미니 레퍼런스
 
-### 21.1 Key enum 예시
+### Key enum 예시
+
 - 문자/숫자: `A`~`Z`, `D0`~`D9` (상단 숫자), `NumPad0`~`NumPad9`
 - 기능키: `F1`~`F24`
 - 편집키: `Enter`, `Escape`, `Back`, `Delete`, `Insert`, `Tab`, `Space`
 - 방향키: `Left`, `Right`, `Up`, `Down`
 - 특수: `Home`, `End`, `PageUp`, `PageDown`, `Scroll`, `Pause`, `PrintScreen`
 
-### 21.2 Modifiers
+### Modifiers
+
 - `Control`, `Alt`, `Shift`, `Windows`
   *(Windows 키는 조합 동작이 제한적이며, 사용자 기대와 충돌하므로 권장하지 않음)*
 
-### 21.3 MouseAction
+### MouseAction
+
 - `LeftClick`, `RightClick`, `MiddleClick`, `WheelClick`
 - (버전에 따라) `LeftDoubleClick` 등 제공. 없으면 커스텀 구현.
 
 ---
 
-## 22. 자주 하는 실수와 해법
+## 자주 하는 실수와 해법
 
 - **실수**: “Window에 키를 묶었는데 TextBox 포커스일 땐 안 된다”
   **해법**: TextBox 기본 편집 키와 충돌하는지 확인. 다른 제스처 사용, PreviewKeyDown에서 수동 처리, 또는 포커스 이동(Enter 시 `MoveFocus` 등).
@@ -583,9 +606,10 @@ public class EditorViewModel
 
 ---
 
-## 23. 실전 템플릿(요약) — 프로젝트에 바로 붙여 쓰는 코드
+## 실전 템플릿(요약) — 프로젝트에 바로 붙여 쓰는 코드
 
-### 23.1 공통 명령 정의
+### 공통 명령 정의
+
 ```csharp
 public static class CommonCommands
 {
@@ -600,7 +624,8 @@ public static class CommonCommands
 }
 ```
 
-### 23.2 Shell(메인 윈도우)
+### Shell(메인 윈도우)
+
 ```xml
 <Window ...>
   <Window.InputBindings>
@@ -618,7 +643,8 @@ public static class CommonCommands
 </Window>
 ```
 
-### 23.3 사용자 컨트롤(로컬 제스처)
+### 사용자 컨트롤(로컬 제스처)
+
 ```xml
 <UserControl ...>
   <UserControl.InputBindings>
@@ -631,7 +657,7 @@ public static class CommonCommands
 
 ---
 
-## 24. 마무리
+## 마무리
 
 **InputBindings**는 “**사용자 입력 → 명령 실행**”을 **선언적**으로 연결하는 WPF의 핵심 도구입니다.
 적절한 **스코프 설계**, **텍스트 입력 컨트롤과의 충돌 회피**, **커스텀 제스처**로 복잡한 요구도 깔끔하게 처리할 수 있습니다.

@@ -5,6 +5,7 @@ date: 2025-10-24 17:25:23 +0900
 category: DB 심화
 ---
 # Oracle `V$SYSSTAT` 완전 가이드
+
 — **시스템 수행 통계 수집 & 분석** + **Ratio 기반 성능 분석** (예제 풍부, 함정·해석법까지)
 
 > 목표
@@ -14,7 +15,7 @@ category: DB 심화
 
 ---
 
-## 0. 큰 그림: `V$SYSSTAT`를 왜, 어떻게 보나?
+## 큰 그림: `V$SYSSTAT`를 왜, 어떻게 보나?
 
 - `V$SYSSTAT` = 인스턴스 기동 이후 누적된 **시스템 전체** 통계(“statistic#”, “name”, “value”).
 - **샘플링 시점 A, B의 차이(Δ)** 를 내면 **해당 구간의 활동량**을 얻는다.
@@ -23,7 +24,7 @@ category: DB 심화
 
 ---
 
-## 1. 준비: 자주 쓰는 주요 지표 이름(요지)
+## 준비: 자주 쓰는 주요 지표 이름(요지)
 
 | 범주 | 대표 통계명(`name`) | 의미(누적) |
 |---|---|---|
@@ -47,9 +48,9 @@ WHERE LOWER(name) LIKE '%consistent gets%' OR LOWER(name) LIKE '%parse count%';
 
 ---
 
-## 2. 수집 원칙: **누적 → 델타 → 단위 시간 보정** (핵심 템플릿 제공)
+## 수집 원칙: **누적 → 델타 → 단위 시간 보정** (핵심 템플릿 제공)
 
-### 2.1 스냅샷 테이블(임시) 만들기
+### 스냅샷 테이블(임시) 만들기
 
 ```sql
 -- 1) 샘플 저장용 GTT(세션 단위 유지)
@@ -66,7 +67,7 @@ SELECT name, value FROM v$sysstat;
 COMMIT;
 ```
 
-### 2.2 N초 후 델타 계산
+### N초 후 델타 계산
 
 ```sql
 -- N초 대기(예: 60s) 후 비교
@@ -91,9 +92,9 @@ ORDER  BY 2 DESC;
 
 ---
 
-## 3. Ratio 라이브러리(수식 + SQL)
+## Ratio 라이브러리(수식 + SQL)
 
-### 3.1 Buffer Cache Hit Ratio (BCHR) — (주의: 과신 금물)
+### Buffer Cache Hit Ratio (BCHR) — (주의: 과신 금물)
 
 **아이디어**: 논리읽기 중 물리읽기가 차지하는 비율.
 가볍게는 다음 근사 사용:
@@ -126,7 +127,7 @@ FROM d;
 
 ---
 
-### 3.2 Soft-Parse Ratio
+### Soft-Parse Ratio
 
 **정의**: 전체 파싱 중 하드 파싱이 차지하는 비율.
 소프트파싱 비율(Soft %):
@@ -155,7 +156,7 @@ FROM d;
 
 ---
 
-### 3.3 논리/물리 Mix (Logical per Physical)
+### 논리/물리 Mix (Logical per Physical)
 
 $$
 \text{Logical per Physical} = \frac{\Delta\text{session logical reads}}{\Delta\text{physical reads}}
@@ -181,7 +182,7 @@ FROM d;
 
 ---
 
-### 3.4 Sort In-Memory Ratio (정렬 스필 감시)
+### Sort In-Memory Ratio (정렬 스필 감시)
 
 $$
 \text{SortInMem\%} = \frac{\Delta\text{sorts (memory)}}{\Delta\text{sorts (memory)}+\Delta\text{sorts (disk)}}
@@ -207,7 +208,7 @@ FROM d;
 
 ---
 
-### 3.5 Redo per Transaction / Commit Rate
+### Redo per Transaction / Commit Rate
 
 ```sql
 WITH d AS (
@@ -231,7 +232,7 @@ FROM d;
 
 ---
 
-### 3.6 Execute per Parse (실행/파싱 효율)
+### Execute per Parse (실행/파싱 효율)
 
 $$
 \text{Exec/Parse} = \frac{\Delta\text{execute count}}{\Delta\text{parse count (total)}}
@@ -256,7 +257,7 @@ FROM d;
 
 ---
 
-### 3.7 Current vs Consistent Reads Mix
+### Current vs Consistent Reads Mix
 
 ```sql
 WITH d AS (
@@ -279,7 +280,7 @@ FROM d;
 
 ---
 
-## 4. “원클릭” 델타 & Ratio 리포트(예제 뷰)
+## “원클릭” 델타 & Ratio 리포트(예제 뷰)
 
 아래는 **이전 스냅샷 vs 현재**의 델타와 주요 Ratio를 **한 번에** 보는 예시.
 
@@ -336,7 +337,7 @@ FROM m;
 
 ---
 
-## 5. 해석의 기술: Ratio만 보지 말고 “함께” 보라
+## 해석의 기술: Ratio만 보지 말고 “함께” 보라
 
 1) **Ratio + 절대치(per second)** 를 함께 본다.
    - BCHR 높아도 **초당 물리 I/O**가 큰데 느릴 수 있다.
@@ -351,28 +352,31 @@ FROM m;
 
 ---
 
-## 6. 사례 연구
+## 사례 연구
 
-### 6.1 “BCHR 99.5%인데 느리다”
+### “BCHR 99.5%인데 느리다”
+
 - **관측**: `bchr_approx=0.995`, 하지만 `direct path read temp`/`log file sync`가 Top Wait.
 - **원인 가설**: 대형 정렬 스필 또는 커밋 과다.
 - **검증**: `sort_in_mem_ratio`↓, `redo_per_tx_bytes`/`commits per sec` 확인, SQL Monitor에서 TempSpc↑ 확인.
 - **조치**: PGA 상향/카디널리티 보정(스필 감소) 또는 커밋 정책/스토리지 지연 점검.
 
-### 6.2 Soft-Parse% 낮음 + Exec/Parse 낮음
+### Soft-Parse% 낮음 + Exec/Parse 낮음
+
 - **관측**: `soft_parse_ratio=0.7`, `exec_per_parse≈1.3`.
 - **원인**: 리터럴 남발/커서 재사용 실패.
 - **검증**: `v$sql_shared_cursor`, `version_count`↑, `session_cached_cursors` 낮음.
 - **조치**: 바인드 도입, 커서 캐시 설정, SQL 표준화.
 
-### 6.3 Sort In-Memory% 저조, 물리읽기 폭증
+### Sort In-Memory% 저조, 물리읽기 폭증
+
 - **관측**: `sort_in_mem_ratio=0.4`, `physical_reads/sec` 큼.
 - **원인**: 대형 해시/정렬 스필.
 - **조치**: 인덱스 설계/조인순서 조정, PGA↑, 파티션 프루닝.
 
 ---
 
-## 7. 빠른 동일-시각 스냅 비교(“전/후” 실험)
+## 빠른 동일-시각 스냅 비교(“전/후” 실험)
 
 튜닝 전후 **같은 기간**에 아래처럼 두 스냅을 비교해 **효과**를 수치로 증명한다.
 
@@ -400,7 +404,7 @@ ORDER BY name;
 
 ---
 
-## 8. 자동화 스크립트(간단 샘플)
+## 자동화 스크립트(간단 샘플)
 
 > 크론/스케줄러로 주기 실행하여 CSV로 떨구기(개념).
 
@@ -437,7 +441,7 @@ SPOOL OFF
 
 ---
 
-## 9. 보완 지표(교차 확인 추천)
+## 보완 지표(교차 확인 추천)
 
 - `V$SYSTEM_EVENT` / `V$SESSION`(EVENT, BLOCKING_SESSION) → **Top Waits**
 - `V$SYS_TIME_MODEL` → **DB CPU vs Elapsed**
@@ -447,7 +451,7 @@ SPOOL OFF
 
 ---
 
-## 10. 함정 & 베스트 프랙티스 요약
+## 함정 & 베스트 프랙티스 요약
 
 **함정**
 - Ratio는 **맥락 없이 절대값**이 아니다. **절대치/Top Wait/Top SQL** 을 같이 보라.
@@ -463,22 +467,24 @@ SPOOL OFF
 
 ---
 
-## 11. 미니 실습 시나리오
+## 미니 실습 시나리오
 
-### 11.1 정렬 스필 개선 효과 보기
+### 정렬 스필 개선 효과 보기
+
 1) 60초 구간 스냅 A → 쿼리(대형 ORDER BY) 수행 → 스냅 B
 2) `sort_in_mem_ratio`와 `physical reads`/sec 비교
 3) 인덱스 추가(정렬 회피) 또는 `PGA` 상향 → 동일 부하 재측정
 4) Ratio↑, 물리 I/O↓ 확인
 
-### 11.2 커서 재사용 개선
+### 커서 재사용 개선
+
 1) 초기 SoftParse% 낮음, Exec/Parse 낮음
 2) 바인드 도입 및 `session_cached_cursors` 조정 → 동일 부하 재측정
 3) SoftParse%↑, Exec/Parse↑, `parse count (hard)` 델타↓ 확인
 
 ---
 
-## 12. 수학 한 줄(개념 정리)
+## 수학 한 줄(개념 정리)
 
 - **초당 값**:
   $$ \text{per\_sec} = \frac{\Delta \text{value}}{\Delta t\ (\text{sec})} $$
@@ -491,7 +497,7 @@ SPOOL OFF
 
 ---
 
-## 13. 결론
+## 결론
 
 - `V$SYSSTAT`는 **시스템 전역의 “맥박”** 이다.
 - **누적→델타→시간정규화** 로 **구간 활동**을 만들고, **Ratio** 로 **상대 효율**을 읽되, **절대치와 대기/핫SQL**로 **현상→원인**을 닫아라.

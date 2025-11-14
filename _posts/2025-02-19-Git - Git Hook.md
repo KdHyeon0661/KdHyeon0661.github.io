@@ -6,7 +6,7 @@ category: Git
 ---
 # Git Hooks 완전 정리 (feat. Husky)
 
-## 0. Git Hooks란?
+## Git Hooks란?
 
 Git은 커밋, 병합, 푸시, 체크아웃 등 **지정 이벤트 시 자동 실행되는 스크립트**(Hook)를 제공한다. 각 로컬 저장소의 `.git/hooks/` 디렉터리에 위치하며, 파일에 **실행 권한**이 있고 **파일명이 훅 이름과 정확히 일치**하면 동작한다.
 
@@ -20,7 +20,7 @@ $$
 
 ---
 
-## 1. 내장 Git Hook 종류 — 무엇을 언제 실행하나
+## 내장 Git Hook 종류 — 무엇을 언제 실행하나
 
 `.git/hooks/`에는 샘플 파일(`*.sample`)이 있다. 확장자를 지우고 실행 권한을 주면 즉시 동작한다.
 
@@ -41,13 +41,14 @@ $$
 
 ---
 
-## 2. 순정 Git Hook — 바로 써먹는 최소 예제
+## 순정 Git Hook — 바로 써먹는 최소 예제
 
-### 2.1 `pre-commit`에서 ESLint/Prettier 검사
+### `pre-commit`에서 ESLint/Prettier 검사
 
 ```bash
 # .git/hooks/pre-commit
 #!/bin/sh
+
 echo "[pre-commit] Running format & lint..."
 npx prettier --check .
 if [ $? -ne 0 ]; then
@@ -69,11 +70,12 @@ chmod +x .git/hooks/pre-commit
 - 실패 시 `exit 1`로 커밋을 중단한다.
 - 장점: 깃만 있으면 동작. 단점: **이 디렉터리는 Git이 추적하지 않아 팀 공유가 어렵다.**
 
-### 2.2 `commit-msg`로 메시지 규칙 검사
+### `commit-msg`로 메시지 규칙 검사
 
 ```bash
 # .git/hooks/commit-msg
 #!/bin/sh
+
 MSG_FILE="$1"
 echo "[commit-msg] Checking message..."
 grep -Eq "^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .{1,}$" "$MSG_FILE"
@@ -85,16 +87,17 @@ fi
 
 ---
 
-## 3. 팀과 공유하려면? — 세 가지 전략
+## 팀과 공유하려면? — 세 가지 전략
 
 1) **Husky 사용**
 2) **`core.hooksPath`로 버전 관리 디렉터리 지정**
 3) **언어별 Hook 프레임워크(예: Python `pre-commit`, Ruby `overcommit`, Go `lefthook`)**
 
-### 3.1 `core.hooksPath` (순정 Git만으로 공유)
+### `core.hooksPath` (순정 Git만으로 공유)
 
 ```bash
 # 저장소 루트에 hooks 디렉터리 버전 관리
+
 mkdir -p .githooks
 git config core.hooksPath .githooks
 ```
@@ -104,11 +107,11 @@ git config core.hooksPath .githooks
 
 ---
 
-## 4. Husky — JavaScript 생태계 표준 도구
+## Husky — JavaScript 생태계 표준 도구
 
 Husky는 Git Hook을 **프로젝트 내부 디렉터리(`.husky/`)**로 관리하게 해주고, 설치 자동화(`prepare` 스크립트)로 팀 온보딩을 단순화한다.
 
-### 4.1 설치
+### 설치
 
 ```bash
 npm init -y
@@ -128,7 +131,7 @@ npx husky install
 
 > 이제 누군가 이 프로젝트를 clone하고 `npm install`만 해도 `.husky/`가 활성화된다.
 
-### 4.2 Hook 추가
+### Hook 추가
 
 ```bash
 npx husky add .husky/pre-commit "npm run lint"
@@ -139,12 +142,13 @@ npx husky add .husky/pre-commit "npm run lint"
 ```bash
 # .husky/pre-commit
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 npm run lint
 ```
 
-### 4.3 `lint-staged`와 함께 “스테이징 파일만” 검사
+### `lint-staged`와 함께 “스테이징 파일만” 검사
 
 대용량 리포에서 전체 폴더 검사 대신 **스테이징된 변경만** 검사하면 눈에 띄게 빨라진다.
 
@@ -167,6 +171,7 @@ npm install -D lint-staged
 ```bash
 # .husky/pre-commit
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 npx lint-staged
@@ -174,7 +179,7 @@ npx lint-staged
 
 > 성능상 이점이 크며, **개발자 경험(DX)** 을 현저히 개선한다.
 
-### 4.4 `commitlint`로 메시지 규칙 강제
+### `commitlint`로 메시지 규칙 강제
 
 ```bash
 npm install -D @commitlint/{config-conventional,cli}
@@ -182,6 +187,7 @@ npm install -D @commitlint/{config-conventional,cli}
 
 ```bash
 # commitlint.config.cjs
+
 module.exports = { extends: ['@commitlint/config-conventional'] };
 ```
 
@@ -191,7 +197,7 @@ npx husky add .husky/commit-msg "npx commitlint --edit \$1"
 
 > 실패 시 커밋이 취소된다. Conventional Commits를 통해 자동 릴리즈(semantic-release)와도 연계가 쉽다.
 
-### 4.5 Commitizen으로 메시지 가이드
+### Commitizen으로 메시지 가이드
 
 ```bash
 npm install -D commitizen cz-conventional-changelog
@@ -211,7 +217,7 @@ npx commitizen init cz-conventional-changelog --save-dev --save-exact
 
 ---
 
-## 5. 모노레포/여러 패키지에서의 Hook
+## 모노레포/여러 패키지에서의 Hook
 
 - 루트 `.husky/`에서 훅을 만들고, 하위 패키지에 맞게 스크립트를 라우팅한다.
 - 예: pnpm 워크스페이스에서 변경된 패키지에만 테스트 실행
@@ -219,6 +225,7 @@ npx commitizen init cz-conventional-changelog --save-dev --save-exact
 ```bash
 # .husky/pre-push
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 echo "[pre-push] Running tests only for changed packages..."
@@ -229,14 +236,15 @@ pnpm -r --filter ...[origin/main] test
 
 ---
 
-## 6. 다양한 언어별 조합 예시
+## 다양한 언어별 조합 예시
 
-### 6.1 Python 프로젝트
+### Python 프로젝트
 
 - `pre-commit` 프레임워크(파이썬 생태계 표준)와 Husky를 함께 써도 된다. 혹은 **Git만**으로 `core.hooksPath`로도 충분.
 
 ```yaml
 # .pre-commit-config.yaml
+
 repos:
   - repo: https://github.com/psf/black
     rev: 24.8.0
@@ -258,16 +266,18 @@ Husky로 래핑하면:
 ```bash
 # .husky/pre-commit
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 pre-commit run --all-files
 ```
 
-### 6.2 .NET/C#
+### .NET/C#
 
 ```bash
 # .husky/pre-push
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 dotnet build -c Release
@@ -278,11 +288,12 @@ fi
 dotnet test --no-build --configuration Release
 ```
 
-### 6.3 Go
+### Go
 
 ```bash
 # .husky/pre-commit
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 gofmt -l .
@@ -298,7 +309,7 @@ go test ./...
 
 ---
 
-## 7. Windows/WSL/CI 환경 주의점
+## Windows/WSL/CI 환경 주의점
 
 - **Shebang**: `#!/bin/sh` 권장(크로스 플랫폼). Windows Git Bash/WSL에서 정상 동작.
 - **권한**: `chmod +x .husky/*` 가 필요. CI에서는 체크아웃 옵션으로 권한이 깨질 수 있으니, CI 스크립트에서 한 번 더 `chmod` 하거나 Git 속성으로 관리.
@@ -306,7 +317,7 @@ go test ./...
 
 ---
 
-## 8. 성능 최적화 체크리스트
+## 성능 최적화 체크리스트
 
 - **`lint-staged`** 로 스테이징 파일만 검사
 - **작은 훅**: `pre-commit`은 빠르게 끝내고, 무거운 작업(통합 테스트)은 `pre-push`나 CI로 미룬다
@@ -320,6 +331,7 @@ npm install -D concurrently
 ```bash
 # .husky/pre-commit
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 npx concurrently \
@@ -329,7 +341,7 @@ npx concurrently \
 
 ---
 
-## 9. 보안/정책 및 우회 방지
+## 보안/정책 및 우회 방지
 
 - 로컬 훅은 `--no-verify` 로 우회 가능:
   ```bash
@@ -342,6 +354,7 @@ npx concurrently \
 ```bash
 # .husky/pre-push
 #!/bin/sh
+
 . "$(dirname "$0")/_/husky.sh"
 
 npx gitleaks detect --no-banner --verbose
@@ -349,7 +362,7 @@ npx gitleaks detect --no-banner --verbose
 
 ---
 
-## 10. CI와의 역할 분담
+## CI와의 역할 분담
 
 - 훅은 **개발자 머신에서 빠른 피드백** 제공
 - CI는 **권위(authoritative) 검사**로, 반드시 통과해야 병합되도록 보호 규칙과 연결
@@ -357,6 +370,7 @@ npx gitleaks detect --no-banner --verbose
 
 ```yaml
 # .github/workflows/ci.yml
+
 name: CI
 on:
   pull_request:
@@ -378,7 +392,7 @@ jobs:
 
 ---
 
-## 11. 트러블슈팅 모음
+## 트러블슈팅 모음
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -391,7 +405,7 @@ jobs:
 
 ---
 
-## 12. 실전 레시피 — “웹 프론트 단일 리포” 표준 세트
+## 실전 레시피 — “웹 프론트 단일 리포” 표준 세트
 
 1) 의존성
 ```bash
@@ -417,6 +431,7 @@ npm i -D husky lint-staged @commitlint/{cli,config-conventional} prettier eslint
 
 ```bash
 # commitlint.config.cjs
+
 module.exports = { extends: ['@commitlint/config-conventional'] };
 ```
 
@@ -429,7 +444,7 @@ npx husky add .husky/pre-push "npm test"
 
 ---
 
-## 13. 대안/변형: Node 의존 없이 공유하려면
+## 대안/변형: Node 의존 없이 공유하려면
 
 - `core.hooksPath` + 순정 쉘 스크립트로 버전관리
 - 다국어 팀이면 언어별 프레임워크를 존중: Python(`pre-commit`), Go(`lefthook`), Ruby(`overcommit`)
@@ -444,6 +459,7 @@ git config core.hooksPath tools/hooks
 ```bash
 # tools/hooks/pre-commit
 #!/bin/sh
+
 set -e
 printf "[pre-commit] fmt+lint...\n"
 prettier --check .
@@ -452,7 +468,7 @@ eslint . --max-warnings=0
 
 ---
 
-## 14. 수학적 요약 — 커밋 파이프라인에서의 훅 실행 모델
+## 수학적 요약 — 커밋 파이프라인에서의 훅 실행 모델
 
 커밋 과정에서 훅의 실패가 파이프라인을 중단하는 것을 다음처럼 쓸 수 있다:
 
@@ -477,7 +493,7 @@ $$
 
 ---
 
-## 15. 요약 표 — 내장 Hook vs Husky vs core.hooksPath
+## 요약 표 — 내장 Hook vs Husky vs core.hooksPath
 
 | 항목 | 내장 Hook(.git/hooks) | Husky(.husky) | core.hooksPath(예: .githooks) |
 |---|---|---|---|
@@ -490,30 +506,36 @@ $$
 
 ---
 
-## 16. 명령 치트시트
+## 명령 치트시트
 
 ```bash
 # 훅 활성화(순정)
+
 chmod +x .git/hooks/pre-commit
 
 # Husky 설치/활성화
+
 npm i -D husky
 npx husky install
 npx husky add .husky/pre-commit "npx lint-staged"
 
 # lint-staged
+
 npm i -D lint-staged
 # package.json에 "lint-staged": { ... }
 
 # commitlint
+
 npm i -D @commitlint/{cli,config-conventional}
 # .husky/commit-msg에 "npx commitlint --edit $1"
 
 # 훅 우회(로컬만, 정책상 지양)
+
 git commit -m "msg" --no-verify
 git push --no-verify
 
 # 순정 Git로 공유
+
 git config core.hooksPath .githooks
 ```
 

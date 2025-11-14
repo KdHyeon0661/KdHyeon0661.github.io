@@ -15,7 +15,7 @@ category: Docker
 
 ---
 
-## 0. 핵심 흐름 복습
+## 핵심 흐름 복습
 
 1) Docker 이미지 빌드
 2) 레지스트리에 Push(Docker Hub/Harbor/ECR/GHCR 등)
@@ -25,32 +25,39 @@ category: Docker
 
 ---
 
-## 1. Docker 이미지 빌드 & Push
+## Docker 이미지 빌드 & Push
 
 ```bash
-# 1. 이미지 빌드
+# 이미지 빌드
+
 docker build -t yourname/myapp:1.0.0 .
 
-# 2. 로그인(Docker Hub 예시)
+# 로그인(Docker Hub 예시)
+
 docker login
 
-# 3. 태그 추가(가독 태그 + 불변 태그)
+# 태그 추가(가독 태그 + 불변 태그)
+
 docker tag yourname/myapp:1.0.0 yourname/myapp:latest
 
-# 4. 푸시
+# 푸시
+
 docker push yourname/myapp:1.0.0
 docker push yourname/myapp:latest
 ```
 
-### 1.1 다이제스트 고정 이미지(권장)
+### 다이제스트 고정 이미지(권장)
+
 K8s 매니페스트에는 태그 대신 **다이제스트**를 고정 사용하면 재현성이 좋아진다.
 
 {% raw %}
 ```bash
 # 다이제스트 조회
+
 docker pull yourname/myapp:1.0.0
 docker inspect --format='{{index .RepoDigests 0}}' yourname/myapp:1.0.0
 # 출력 예: yourname/myapp@sha256:abcdef...
+
 ```
 {% endraw %}
 
@@ -61,7 +68,7 @@ image: yourname/myapp@sha256:abcdef...   # 태그 대신 다이제스트
 
 ---
 
-## 2. 네임스페이스 & 기본 권장 설정
+## 네임스페이스 & 기본 권장 설정
 
 ```bash
 kubectl create namespace prod
@@ -74,10 +81,11 @@ kubectl config set-context --current --namespace=prod
 
 ---
 
-## 3. 기초 Deployment 매니페스트
+## 기초 Deployment 매니페스트
 
 ```yaml
 # myapp-deployment.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -134,10 +142,11 @@ spec:
 
 ---
 
-## 4. 서비스(Service) 노출
+## 서비스(Service) 노출
 
 ```yaml
 # myapp-service.yaml
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -158,6 +167,7 @@ spec:
 
 ```yaml
 # NodePort 예시
+
 spec:
   type: NodePort
   ports:
@@ -168,12 +178,13 @@ spec:
 
 ---
 
-## 5. Ingress + TLS(권장)
+## Ingress + TLS(권장)
 
 Ingress Controller(NGINX 등) 설치 후:
 
 ```yaml
 # myapp-ingress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -202,7 +213,7 @@ spec:
 
 ---
 
-## 6. 프라이빗 레지스트리 이미지 Pull
+## 프라이빗 레지스트리 이미지 Pull
 
 ```bash
 kubectl create secret docker-registry regcred \
@@ -233,6 +244,7 @@ imagePullSecrets:
 apiVersion: apps/v1
 kind: Deployment
 # ...
+
 spec:
   template:
     spec:
@@ -241,10 +253,11 @@ spec:
 
 ---
 
-## 7. 구성/비밀 — ConfigMap & Secret
+## 구성/비밀 — ConfigMap & Secret
 
 ```yaml
 # config
+
 apiVersion: v1
 kind: ConfigMap
 metadata: { name: myapp-config }
@@ -253,6 +266,7 @@ data:
   APP_REGION: ap-northeast-2
 ---
 # secret (base64 인코딩 but k8s 저장소는 평문에 가까움 → KMS/SealedSecret/Vault 고려)
+
 apiVersion: v1
 kind: Secret
 metadata: { name: myapp-secret }
@@ -286,9 +300,10 @@ volumes:
 
 ---
 
-## 8. 리소스/스케일 — HPA/VPA/PDB
+## 리소스/스케일 — HPA/VPA/PDB
 
-### 8.1 HPA(수평 오토스케일)
+### HPA(수평 오토스케일)
+
 Metrics Server 필요.
 
 ```yaml
@@ -311,7 +326,8 @@ spec:
           averageUtilization: 60
 ```
 
-### 8.2 PDB(중단 예산)
+### PDB(중단 예산)
+
 노드 업그레이드 등 동안 최소 가용성 보장.
 
 ```yaml
@@ -324,7 +340,8 @@ spec:
     matchLabels: { app: myapp }
 ```
 
-### 8.3 대략 용량 산정(간이)
+### 대략 용량 산정(간이)
+
 요청 기준으로 노드 수 산정:
 $$
 \text{노드수} \approx \left\lceil \frac{\sum_{i=1}^{N} \text{pod}_i\_\text{cpu\_request}}{\text{노드당 vCPU}} \cdot \frac{1}{\alpha} \right\rceil
@@ -333,9 +350,10 @@ $$
 
 ---
 
-## 9. 네트워크/보안 — RBAC/SA/NetworkPolicy/SecContext
+## 네트워크/보안 — RBAC/SA/NetworkPolicy/SecContext
 
-### 9.1 RBAC + ServiceAccount
+### RBAC + ServiceAccount
+
 필요 최소 권한 부여.
 
 ```yaml
@@ -359,10 +377,11 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### 9.2 NetworkPolicy(기본 거부 + 화이트리스트)
+### NetworkPolicy(기본 거부 + 화이트리스트)
 
 ```yaml
 # 같은 네임스페이스 내 myapp로 향하는 80/tcp만 허용
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata: { name: myapp-allow-frontend }
@@ -377,7 +396,7 @@ spec:
           port: 80
 ```
 
-### 9.3 SecurityContext(비루트/읽기전용 fs/드롭 Cap)
+### SecurityContext(비루트/읽기전용 fs/드롭 Cap)
 
 ```yaml
 securityContext:
@@ -391,7 +410,7 @@ securityContext:
 
 ---
 
-## 10. 멀티 컨테이너/사이드카 패턴(예: Reverse Proxy, 로그 셰퍼)
+## 멀티 컨테이너/사이드카 패턴(예: Reverse Proxy, 로그 셰퍼)
 
 ```yaml
 spec:
@@ -413,19 +432,22 @@ spec:
 
 ---
 
-## 11. Blue-Green/Canary 배포
+## Blue-Green/Canary 배포
 
-### 11.1 Blue-Green(서비스 스위치)
+### Blue-Green(서비스 스위치)
+
 - `myapp-blue`, `myapp-green` 두 Deployment
 - `Service.selector`를 원하는 색으로 전환 → 무중단 릴리스/롤백
 
 ```yaml
 # Service selector만 바꾸면 트래픽 전환
+
 spec:
   selector: { app: myapp, color: blue }  # → green 으로 교체 시 전환
 ```
 
-### 11.2 Canary(NGINX Ingress 가중치)
+### Canary(NGINX Ingress 가중치)
+
 - canary 어노테이션으로 일부 비율만 신버전에 라우팅
 
 ```yaml
@@ -437,19 +459,23 @@ metadata:
 
 ---
 
-## 12. 롤아웃/이력/롤백
+## 롤아웃/이력/롤백
 
 ```bash
 # 진행 상황
+
 kubectl rollout status deploy/myapp
 
 # 이력
+
 kubectl rollout history deploy/myapp
 
 # 특정 리비전 상세
+
 kubectl rollout history deploy/myapp --revision=3
 
 # 롤백
+
 kubectl rollout undo deploy/myapp --to-revision=3
 ```
 
@@ -457,9 +483,10 @@ kubectl rollout undo deploy/myapp --to-revision=3
 
 ---
 
-## 13. 관측성 — 로그/지표/트레이싱 핸드북
+## 관측성 — 로그/지표/트레이싱 핸드북
 
-### 13.1 빠른 명령어
+### 빠른 명령어
+
 ```bash
 kubectl get pods -o wide
 kubectl describe pod <pod>
@@ -467,18 +494,20 @@ kubectl logs -f deploy/myapp      # 모든 파드 스트리밍
 kubectl top pod                   # CPU/메모리 사용(메트릭 서버 필요)
 ```
 
-### 13.2 애플리케이션 레벨
+### 애플리케이션 레벨
+
 - /healthz, /livez, /metrics(Prometheus) 노출
 - 로깅: JSON 구조화 → Loki/ELK
 - 트레이싱: OpenTelemetry SDK → Collector → Jaeger/Tempo
 
 ---
 
-## 14. Helm으로 배포(차트화)
+## Helm으로 배포(차트화)
 
 ```bash
 helm create myapp
 # values.yaml 수정(이미지/replica/probes/env/resources 등)
+
 helm install myapp ./myapp -n prod
 helm upgrade myapp ./myapp -f values-prod.yaml
 helm rollback myapp 3
@@ -488,7 +517,7 @@ Helm 값만 바꿔 환경(dev/stage/prod) 별 커스터마이징.
 
 ---
 
-## 15. Kustomize(오버레이로 환경 분리)
+## Kustomize(오버레이로 환경 분리)
 
 ```
 k8s/
@@ -506,9 +535,10 @@ kubectl apply -k k8s/overlays/prod
 
 ---
 
-## 16. 실습: Flask 앱(간단) → K8s
+## 실습: Flask 앱(간단) → K8s
 
-### 16.1 Dockerfile
+### Dockerfile
+
 ```dockerfile
 FROM python:3.11-alpine
 WORKDIR /app
@@ -518,9 +548,11 @@ EXPOSE 80
 CMD ["python","app.py"]
 ```
 
-### 16.2 앱
+### 앱
+
 ```python
 # app.py
+
 from flask import Flask
 app = Flask(__name__)
 @app.get("/")
@@ -536,9 +568,11 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
 ```
 
-### 16.3 배포 리소스
+### 배포 리소스
+
 ```yaml
 # flask.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: flask-app, labels: { app: flask-app } }
@@ -568,11 +602,12 @@ spec:
 kubectl apply -f flask.yaml
 kubectl get svc flask-svc -o wide
 # http://<노드IP>:<NodePort> 로 접속
+
 ```
 
 ---
 
-## 17. 운영 팁/트러블슈팅
+## 운영 팁/트러블슈팅
 
 | 증상 | 원인/대응 |
 |---|---|
@@ -585,7 +620,7 @@ kubectl get svc flask-svc -o wide
 
 ---
 
-## 18. 보안/거버넌스 요약
+## 보안/거버넌스 요약
 
 - **이미지**: 최소 베이스(슬림/알파인/디스트로리스), Trivy 스캔, Cosign 서명, 다이제스트 배포
 - **Pod 보안**: 비루트, readOnlyRootFilesystem, drop ALL caps, AppArmor/SELinux, seccomp
@@ -596,7 +631,8 @@ kubectl get svc flask-svc -o wide
 
 ---
 
-## 19. 간단 용량/비용 감 잡기
+## 간단 용량/비용 감 잡기
+
 - 평균 요청당 CPU 시간 \(c\), 초당 요청 \(r\), 포드당 CPU 할당 \(C\)일 때 필요한 포드 수 \(k\)의 근사:
 $$
 k \approx \left\lceil \frac{c \cdot r}{C \cdot \beta} \right\rceil
@@ -605,7 +641,7 @@ $$
 
 ---
 
-## 20. 배포 자동화(선택) — GitOps/Helm/Kustomize
+## 배포 자동화(선택) — GitOps/Helm/Kustomize
 
 - **GitOps(Argo CD/Flux)**: 매니페스트/차트를 Git에 선언 → 클러스터가 Pull로 동기화
 - **Helm**: 값 파일 프로모션(dev→staging→prod), 릴리스 이력/롤백 쉬움
@@ -613,7 +649,7 @@ $$
 
 ---
 
-## 21. 최종 체크리스트
+## 최종 체크리스트
 
 - [ ] 이미지: 보안 스캔/서명, 다이제스트 고정
 - [ ] 리소스: requests/limits 정의, HPA/PDB 설정
@@ -626,6 +662,7 @@ $$
 ---
 
 ## 참고 자료
+
 - Kubernetes Concepts & API Reference: https://kubernetes.io/docs/home/
 - kubectl 명령어: https://kubernetes.io/docs/reference/kubectl/
 - Ingress-NGINX: https://kubernetes.github.io/ingress-nginx/

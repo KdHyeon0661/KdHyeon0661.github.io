@@ -4,7 +4,8 @@ title: Svelte - SvelteKit 기본 (2)
 date: 2025-09-28 23:30:23 +0900
 category: Svelte
 ---
-# 7. SvelteKit 기본 (2)
+# SvelteKit 기본 (2)
+
 **`load` 함수(클라이언트/서버), 실행 순서와 캐싱/무효화 · 폼 액션(`actions`)과 점진적 향상(Progressive Enhancement)**
 
 > 이 장은 **데이터 로딩의 생애주기**와 **폼 제출 흐름**을 중심으로, SvelteKit 앱을 실무적으로 튜닝하는 방법을 예제와 함께 정리한다.
@@ -14,10 +15,12 @@ category: Svelte
 
 ---
 
-## 7.1 `load` 함수 총정리 — “무엇을 어디에서, 어떤 순서로?”
+## `load` 함수 총정리 — “무엇을 어디에서, 어떤 순서로?”
+
 SvelteKit의 `load`는 “**라우트 전환마다 데이터 계약을 수행**하는 함수”다. 파일 위치와 확장자에 따라 **실행 위치**가 달라진다.
 
-### 7.1.1 종류와 실행 위치
+### 종류와 실행 위치
+
 - **서버 전용(Server load)**
   - `+layout.server.ts` / `+page.server.ts`
   - **항상 서버에서만** 실행. 쿠키/세션/DB/비밀키 사용 가능.
@@ -29,7 +32,8 @@ SvelteKit의 `load`는 “**라우트 전환마다 데이터 계약을 수행**�
 
 > **결과 병합**: 같은 레벨에서 `server` → `universal` 순으로 실행되고 **반환 객체가 병합**되어 하위로 **캐스케이딩**된다.
 
-### 7.1.2 실행 순서(중첩 레이아웃 포함)
+### 실행 순서(중첩 레이아웃 포함)
+
 루트에서 하위로 내려가며 **서버 → 유니버설** 순서로 실행:
 
 1. `src/routes/+layout.server.ts`
@@ -41,7 +45,8 @@ SvelteKit의 `load`는 “**라우트 전환마다 데이터 계약을 수행**�
 
 > 각 `load`의 결과는 **누적 병합**되어 최종 `data`로 페이지 컴포넌트에 전달된다.
 
-### 7.1.3 `load` 시그니처와 매개변수
+### `load` 시그니처와 매개변수
+
 ```ts
 // +page.ts (universal)
 import type { PageLoad } from './$types';
@@ -61,7 +66,8 @@ export const load: PageLoad = async ({ fetch, params, url, parent, depends, data
 
 ---
 
-## 7.2 `fetch`와 캐싱 — 서버·클라이언트 모두에서 “같이” 동작
+## `fetch`와 캐싱 — 서버·클라이언트 모두에서 “같이” 동작
+
 SvelteKit이 `load`에 주입하는 `fetch`는 **다음 특성**을 가진다.
 
 1) **쿠키/자격 자동 전파**
@@ -78,7 +84,8 @@ SvelteKit이 `load`에 주입하는 `fetch`는 **다음 특성**을 가진다.
    - API 응답에서 설정한 **`cache-control` 헤더**를 그대로 존중.
    - SSR의 `setHeaders()`로 페이지 응답 자체의 캐시를 제어할 수도 있다.
 
-### 7.2.1 예: 서버 캐시 헤더 + API 캐시 헤더
+### 예: 서버 캐시 헤더 + API 캐시 헤더
+
 ```ts
 // +page.server.ts
 import type { PageServerLoad } from './$types';
@@ -95,7 +102,8 @@ export const load: PageServerLoad = async ({ fetch, setHeaders }) => {
 };
 ```
 
-### 7.2.2 외부 API와 캐시 무력화
+### 외부 API와 캐시 무력화
+
 ```ts
 // +page.ts
 export const load = async ({ fetch, depends }) => {
@@ -110,16 +118,18 @@ export const load = async ({ fetch, depends }) => {
 
 ---
 
-## 7.3 `depends` / `invalidate` / `invalidateAll` — “언제 다시 불러올까?”
+## `depends` / `invalidate` / `invalidateAll` — “언제 다시 불러올까?”
 
 SvelteKit의 무효화 시스템은 “**어떤 `load`가 어떤 리소스에 의존하는지**”를 기억했다가,
 **클라이언트에서** 해당 리소스가 바뀌었다고 신호하면 필요한 `load`만 다시 실행한다.
 
-### 7.3.1 의존성 등록
+### 의존성 등록
+
 - **자동 등록**: `fetch('/api/x')`로 가져오면 **그 URL**이 자동 등록
 - **수동 등록**: `depends('app:key')`로 **추상 키** 등록 (API 아닌 로컬 변화도 트리거 가능)
 
-### 7.3.2 클라이언트에서 무효화
+### 클라이언트에서 무효화
+
 ```svelte
 <script lang="ts">
   import { invalidate, invalidateAll } from '$app/navigation';
@@ -137,12 +147,14 @@ SvelteKit의 무효화 시스템은 “**어떤 `load`가 어떤 리소스에 �
 <button on:click={hardRefresh}>강제 재로드</button>
 ```
 
-### 7.3.3 예: 폼 제출 후 정확히 필요한 것만 갱신
+### 예: 폼 제출 후 정확히 필요한 것만 갱신
+
 폼 액션에서 서버가 데이터를 바꿨다면, **성공 후** 클라이언트에서 `invalidate('app:key')` 혹은 해당 API URL을 **선택적**으로 무효화한다.
 
 ---
 
-## 7.4 `parent()`와 데이터 병합 — 상하위 계약
+## `parent()`와 데이터 병합 — 상하위 계약
+
 유니버설/서버 `load`에서 `parent()`를 `await`하면 **상위 레이아웃의 반환값**을 가져올 수 있다.
 
 ```ts
@@ -165,7 +177,8 @@ export const load = async ({ parent, fetch }) => {
 
 ---
 
-## 7.5 스트리밍/지연 데이터(간단 패턴)
+## 스트리밍/지연 데이터(간단 패턴)
+
 가벼운 방법: `load`에서 **Promise 그대로 반환**하고 컴포넌트에서 `{#await}`로 처리한다.
 (대용량/세밀 스트리밍은 프레임워크 버전에 따라 전용 유틸이 있으나, 여기선 **범용 패턴**만 소개한다.)
 
@@ -195,7 +208,8 @@ export const load = async ({ fetch }) => {
 
 ---
 
-## 7.6 에러/리다이렉트 — `error`, `redirect`, `fail`
+## 에러/리다이렉트 — `error`, `redirect`, `fail`
+
 - **`error(status, message)`**: 해당 라우트에서 에러 페이지로 분기
 - **`redirect(status, location)`**: 즉시 리다이렉트 (307/308/303 등)
 - **`fail(status, data)`**: **폼 액션**에서 유효성 실패 시 페이지로 **데이터와 함께** 돌아감
@@ -228,10 +242,12 @@ export const actions = {
 # 7.B 폼 액션(actions)과 점진적 향상(PE)
 
 ## 7.B.1 “서버 우선” 폼
+
 SvelteKit은 **서버 우선** 폼 제출을 기본 제공한다.
 `+page.server.ts`에 `export const actions = { ... }`를 정의하고, 페이지에 **표준 `<form method="POST">`**를 작성하면 된다.
 
 ### 7.B.1.1 가장 단순한 폼 액션
+
 ```ts
 // +page.server.ts
 import type { Actions } from './$types';
@@ -268,6 +284,7 @@ export const actions: Actions = {
 > **핵심**: JS가 꺼져 있어도 **서버로 POST → 페이지 리렌더**가 되므로 **접근성/내결함성**이 높다.
 
 ### 7.B.1.2 유효성 실패: `fail(status, data)`
+
 ```ts
 // +page.server.ts
 import { fail } from '@sveltejs/kit';
@@ -297,6 +314,7 @@ export const actions = {
 > **포인트**: 실패시에도 입력값을 잃지 않게 `values`를 돌려주면 UX가 좋아진다.
 
 ### 7.B.1.3 여러 액션 핸들러 사용
+
 ```ts
 // +page.server.ts
 export const actions = {
@@ -316,6 +334,7 @@ export const actions = {
 ---
 
 ## 7.B.2 점진적 향상: `$app/forms`의 `enhance`
+
 `enhance`를 쓰면 **페이지 이동 없이 AJAX로 제출**하고, 반환 결과를 **현재 페이지 상태에 적용**한다.
 
 ```svelte
@@ -335,6 +354,7 @@ export const actions = {
 > JS가 없는 환경에선 그냥 **기본 POST**가 일어나고, JS가 있으면 AJAX로 변환된다. → **프로그레시브**.
 
 ### 7.B.2.1 `enhance` 커스터마이즈(로딩/에러/무효화)
+
 ```svelte
 <script lang="ts">
   import { enhance } from '$app/forms';
@@ -381,6 +401,7 @@ export const actions = {
 ```
 
 ### 7.B.2.2 `applyAction` — 폼 없이도 액션 결과를 적용
+
 SPA 상호작용 중 **직접 FormData를 만들어 액션으로 보내고**, 반환값을 현재 페이지에 **적용**한다.
 
 ```svelte
@@ -404,6 +425,7 @@ SPA 상호작용 중 **직접 FormData를 만들어 액션으로 보내고**, �
 ---
 
 ## 7.B.3 업로드/멀티파트/파일
+
 `request.formData()`는 파일도 함께 받는다. **액션에서 파일을 받고 저장**한 뒤, 성공 시 **무효화** 또는 **리다이렉트**한다.
 
 ```ts
@@ -436,6 +458,7 @@ export const actions = {
 ## 7.B.4 폼 액션 + 무효화(새로고침 없이 목록 갱신)
 
 ### 7.B.4.1 서버: 액션 성공 후 **키 통지(선택)**
+
 액션 자체에는 “키 통지”가 없지만, 클라이언트에서 `enhance`의 `result`에서 **무효화**를 호출하면 된다.
 (또는 리다이렉트 전략으로 간단화)
 
@@ -463,6 +486,7 @@ export const actions = {
 ---
 
 ## 7.B.5 접근성/UX 모범사례
+
 1) **서버 우선**: JS가 꺼져도 동작하도록 `<form method="POST">`를 기본으로.
 2) **에러 반환은 `fail`**: 상태코드와 함께 **필드 값**을 돌려주어 재입력 방지.
 3) **포커스 관리**: 실패 시 **첫 오류 필드**로 포커스 이동.
@@ -475,6 +499,7 @@ export const actions = {
 # 7.C 실전: “할 일 목록” — load + actions + 무효화 + 점진적 향상
 
 ### 7.C.1 API 라우트(데모용 간이 저장)
+
 ```ts
 // src/routes/api/todos/+server.ts
 import type { RequestHandler } from './$types';
@@ -509,6 +534,7 @@ export const DELETE: RequestHandler = async ({ request }) => {
 ```
 
 ### 7.C.2 페이지: 목록 로딩(`load`) + 액션 정의
+
 ```ts
 // src/routes/todos/+page.ts (universal)
 import type { PageLoad } from './$types';
@@ -545,6 +571,7 @@ export const actions: Actions = {
 ```
 
 ### 7.C.3 페이지 컴포넌트: `enhance` + 무효화
+
 ```svelte
 <!-- src/routes/todos/+page.svelte -->
 <script lang="ts">
@@ -619,6 +646,7 @@ export const actions: Actions = {
 ---
 
 ## 7.E 요약
+
 - `load`는 **레이아웃→페이지**, **서버→유니버설** 순으로 실행되어 결과를 병합한다.
 - 래핑된 `fetch`는 **SSR/CSR 모두 동일**하고, **의존성/중복제거/쿠키 전파**를 처리한다.
 - **의존성 등록(`depends`) + 무효화(`invalidate`)**로 “언제 다시 불러올지”를 제어한다.

@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 펜윅 트리 (Fenwick Tree, BIT)
 
-## 1. 개요와 동기
+## 개요와 동기
 
 **펜윅 트리(Fenwick Tree)** 또는 **BIT(Binary Indexed Tree)**는
 **누적 합(prefix sum)**·**구간 합(range sum)**·**빈도 누적** 등을 **\(O(\log n)\)** 으로 처리하는 **배열 기반 트리**다.
@@ -24,7 +24,7 @@ category: Data Structure
 
 ---
 
-## 2. 핵심 아이디어 — LSB로 덩어리 묶기
+## 핵심 아이디어 — LSB로 덩어리 묶기
 
 - BIT는 **인덱스 i의 최하위 1비트(LSB)** 길이만큼을 **하나의 덩어리**로 관리한다.
 - 비트 연산 **`i & -i`** 는 정수 \(i\)의 **LSB(2-adic 분해)** 를 반환:
@@ -44,7 +44,7 @@ category: Data Structure
 
 ---
 
-## 3. 인터페이스 설계 — 1-based vs 0-based
+## 인터페이스 설계 — 1-based vs 0-based
 
 - 전통 구현은 **1-based 인덱스**를 쓴다. (가장 간단)
 - 0-based가 꼭 필요하면 **내부는 1-based로, 외부에서 ±1 시프트** 래핑을 권장.
@@ -54,13 +54,14 @@ category: Data Structure
 
 ---
 
-## 4. 기본 템플릿 구현 (C++17)
+## 기본 템플릿 구현 (C++17)
 
-### 4.1 단일 트리: 점 갱신 + prefix/구간 합
+### 단일 트리: 점 갱신 + prefix/구간 합
 
 ```cpp
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 template <class T = long long>
@@ -109,7 +110,7 @@ struct Fenwick {
 - `build()`는 **O(n)** 에 초기화(클래식) → 초기 로딩이 많은 경우 유용.
 - 그 외 일반적 초기화는 `add(i, arr[i])`를 \(i=1..n\)에 수행(총 \(O(n\log n)\)).
 
-### 4.2 사용 예
+### 사용 예
 
 ```cpp
 ```cpp
@@ -133,7 +134,7 @@ int main() {
 
 ---
 
-## 5. 왜 맞는가? — 분해 아이디어 스냅샷
+## 왜 맞는가? — 분해 아이디어 스냅샷
 
 정수 \(i\)를 이진 전개하면,
 \[
@@ -149,7 +150,7 @@ BIT는 각 \(i\)에 대해 길이 \(\operatorname{LSB}(i)\)의 구간 **\([i-\op
 
 ---
 
-## 6. 변형 A — **구간 덧셈 + 점 질의**(RUPQ)
+## 변형 A — **구간 덧셈 + 점 질의**(RUPQ)
 
 - 목표: \([l, r]\)에 \(+v\)를 더하고, 최종 배열 \(A\)의 **점 값 \(A[i]\)** 를 즉시 질의.
 - 트릭: 차분 배열 \(D\)를 사용하면 \(A = \operatorname{prefix}(D)\).
@@ -179,7 +180,7 @@ struct FenwickRUPQ {
 
 ---
 
-## 7. 변형 B — **구간 덧셈 + 구간 합 질의**(RURQ) (BIT 2개)
+## 변형 B — **구간 덧셈 + 구간 합 질의**(RURQ) (BIT 2개)
 
 유명 공식:
 \[
@@ -222,7 +223,7 @@ struct FenwickRURQ {
 
 ---
 
-## 8. 2D Fenwick — 행렬 구간 합
+## 2D Fenwick — 행렬 구간 합
 
 - 2D 배열 \(A[r][c]\)에 대해 **점 업데이트 + 직사각형 합** 또는
   **직사각형 업데이트 + 점/직사각형 질의**를 2D BIT로 확장 가능.
@@ -259,7 +260,7 @@ struct Fenwick2D {
 
 ---
 
-## 9. 순서 통계 — **k번째(이하 누적) 찾기**
+## 순서 통계 — **k번째(이하 누적) 찾기**
 
 BIT를 **빈도 배열**로 쓰면,
 `find_kth(k)` (누적 합이 처음으로 \( \ge k \)가 되는 최소 인덱스)를 **이진 리프 보행**으로 \(O(\log n)\)에 찾는다.
@@ -291,7 +292,7 @@ int find_kth(const Fenwick<long long>& fw, long long k) {
 
 ---
 
-## 10. 인버전 수 — 좌표 압축과 BIT
+## 인버전 수 — 좌표 압축과 BIT
 
 배열 \(A\)의 인버전 수는
 \[
@@ -332,9 +333,9 @@ long long inversion_count(vector<int> a) {
 
 ---
 
-## 11. 0-based 래핑, 모듈러, 실전 유틸
+## 0-based 래핑, 모듈러, 실전 유틸
 
-### 11.1 0-based 외부 API
+### 0-based 외부 API
 
 ```cpp
 ```cpp
@@ -351,13 +352,14 @@ struct Fenwick0 {
 ```
 ```
 
-### 11.2 모듈러 연산 (예: \(10^9+7\))
+### 모듈러 연산 (예: \(10^9+7\))
+
 - 누적 시 `% MOD` 적용
 - 음수 델타는 `(x%MOD+MOD)%MOD` normalize
 
 ---
 
-## 12. 디버깅/테스트 체크리스트
+## 디버깅/테스트 체크리스트
 
 - **경계**: `l=1`, `r=n`, 공배열, 단일 원소
 - **자료형**: 합이 `int` 범위를 초과 → `long long`
@@ -372,7 +374,7 @@ struct Fenwick0 {
 
 ---
 
-## 13. 복잡도/공간/캐시
+## 복잡도/공간/캐시
 
 - 시간: 모든 변형이 **\(O(\log n)\)**
 - 초기화: `build()`는 **\(O(n)\)**, `n`번 `add`는 **\(O(n\log n)\)**
@@ -381,11 +383,12 @@ struct Fenwick0 {
 
 ---
 
-## 14. 예제 — 통합 데모
+## 예제 — 통합 데모
 
 ```cpp
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 // 앞서 정의한 Fenwick / FenwickRUPQ / FenwickRURQ / find_kth / inversion_count를 가정
@@ -447,7 +450,7 @@ int main(){
 
 ---
 
-## 15. 수학 스냅샷 — LSB와 덩어리 증명
+## 수학 스냅샷 — LSB와 덩어리 증명
 
 - 각 인덱스 \(i\)는 길이 \(\operatorname{LSB}(i)\) 구간 \([i-\operatorname{LSB}(i)+1, i]\)에 대한 합을 저장.
 - 임의의 \(i\)에 대해
@@ -459,7 +462,7 @@ int main(){
 
 ---
 
-## 16. 실전 팁/버그 포인트
+## 실전 팁/버그 포인트
 
 1. **1-based 강제**: `i=0`에서 `i&-i=0` 무한루프에 걸리지 않게 하라.
 2. **자료형**: 합계가 큰 경우 **`long long`** 으로.
@@ -471,7 +474,7 @@ int main(){
 
 ---
 
-## 17. 연습 과제(권장)
+## 연습 과제(권장)
 
 1. **RUPQ**와 **RURQ**를 하나의 클래스로 일반화하라(정적 bool 플래그 or 정책 클래스).
 2. `find_kth`를 **템플릿 멤버**로 안전하게 제공하고, k 범위 예외 처리 추가.
@@ -481,7 +484,7 @@ int main(){
 
 ---
 
-## 18. 요약
+## 요약
 
 | 항목 | 핵심 |
 |---|---|

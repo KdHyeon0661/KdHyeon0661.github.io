@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0. 한눈에 보는 결론
+## 한눈에 보는 결론
 
 - 오라클은 **기본 SELECT** 에 대해 **“문장 시작 시점의 데이터 일관성”** 을 **항상 보장**한다.
 - 문장 시작 시 오라클은 내부적으로 **쿼리 SCN(= S)** 을 잡는다. 그 문장이 끝날 때까지,
@@ -25,9 +25,9 @@ category: DB 심화
 
 ---
 
-## 1. 문장 수준 읽기 일관성(Statement-Level Read Consistency)란?
+## 문장 수준 읽기 일관성(Statement-Level Read Consistency)란?
 
-### 1.1 정의
+### 정의
 
 - **문장 시작 시점**(파서/실행기 진입 직후) **고정된 SCN** 을 기준으로,
 - **SELECT** 는 **해당 문장이 끝날 때까지** **그 시점에 커밋되어 있던 상태**만 보이도록 결과를 반환한다.
@@ -35,16 +35,16 @@ category: DB 심화
 
 > 이는 PostgreSQL의 “트랜잭션 수준 MVCC”와 달리, **오라클의 기본은 문장 수준**이다. 트랜잭션 전체에 대해 동일한 스냅샷을 강제하려면 **SERIALIZABLE** 로 올려야 한다.
 
-### 1.2 직관적 이해
+### 직관적 이해
 
 - SELECT가 시작될 때 **스냅샷(=쿼리 SCN)** 을 찍고, 그 이후의 변경은 **Undo** 를 통해 **과거 버전**으로 되돌려 읽는다.
 - 이렇게 하면 **긴 스캔 중간에 들어온 커밋** 때문에 **부분적으로 새로운 값/예전 값이 섞이는 문제**가 없다.
 
 ---
 
-## 2. Consistent 모드 블록 읽기(Consistent Get, CR Read)의 큰 그림
+## Consistent 모드 블록 읽기(Consistent Get, CR Read)의 큰 그림
 
-### 2.1 Current vs Consistent
+### Current vs Consistent
 
 - **Current 모드**(db block gets): **현재 버전**을 그대로 본다. 주로
   - DML 수행,
@@ -62,14 +62,14 @@ WHERE  name IN ('consistent gets','db block gets','physical reads')
 ORDER  BY name;
 ```
 
-### 2.2 왜 CR 블록을 만드나?
+### 왜 CR 블록을 만드나?
 
 - 문장 수준 일관성을 지키려면 **쿼리 SCN보다 새로운 변경**은 **보여주면 안 된다**.
 - 해당 블록의 **Row Lock Byte → ITL → 트랜잭션 슬롯(XID) → Undo 체인**을 따라 **과거 상태**로 재조립한 **CR 버퍼**를 만들어서 사용한다.
 
 ---
 
-## 3. 블록 내부 구조와 일관성 — ITL · Row Lock Byte · 트랜잭션 슬롯
+## 블록 내부 구조와 일관성 — ITL · Row Lock Byte · 트랜잭션 슬롯
 
 - **블록 헤더의 ITL 슬롯**:
   “이 블록을 현재/최근 변경한 **트랜잭션(XID)**” 의 자리표.
@@ -84,7 +84,7 @@ ORDER  BY name;
 
 ---
 
-## 4. CR Read의 세부 알고리즘(개념적 단계)
+## CR Read의 세부 알고리즘(개념적 단계)
 
 SELECT가 블록을 읽을 때, 내부적으로 아래와 같은 절차를 밟는다(요약):
 
@@ -111,9 +111,9 @@ $$
 
 ---
 
-## 5. 세션 시나리오로 보는 문장 수준 일관성
+## 세션 시나리오로 보는 문장 수준 일관성
 
-### 5.1 데이터 준비
+### 데이터 준비
 
 ```sql
 DROP TABLE t_cr PURGE;
@@ -136,7 +136,7 @@ END;
 CREATE INDEX ix_t_cr_grp ON t_cr(grp);
 ```
 
-### 5.2 세션 A — 긴 스캔(의도적으로 느리게)
+### 세션 A — 긴 스캔(의도적으로 느리게)
 
 ```sql
 -- 세션 A
@@ -147,7 +147,7 @@ WHERE  grp IN (0,1,2,3,4);  -- 전체의 절반쯤 스캔
 -- 의도적으로 fetch 사이 사이에 DBMS_LOCK.SLEEP(0.5) 등으로 느리게 만들 수 있음(PL/SQL에서)
 ```
 
-### 5.3 세션 B — 중간에 UPDATE + COMMIT
+### 세션 B — 중간에 UPDATE + COMMIT
 
 ```sql
 -- 세션 B
@@ -155,7 +155,7 @@ UPDATE t_cr SET val = 100 WHERE grp = 0;
 COMMIT;
 ```
 
-### 5.4 관찰 포인트
+### 관찰 포인트
 
 - 세션 A의 SELECT 는 **시작 시점의 SCN** 으로 **전 구간을 읽는다**.
 - 세션 B가 중간에 커밋해도, 세션 A는 **그 커밋 이후 변경을 보지 않는다**.
@@ -166,7 +166,7 @@ COMMIT;
 
 ---
 
-## 6. 인덱스/테이블 조인 시 CR — “인덱스는 현재 버전, 테이블은 CR로”
+## 인덱스/테이블 조인 시 CR — “인덱스는 현재 버전, 테이블은 CR로”
 
 - 오라클은 **인덱스 구조 탐색**에서 대부분 **현재 버전**을 사용하되,
 - **테이블 행 데이터** 를 가져올 때 그 행의 **커밋 시점** 을 확인해 **필요 시 CR** 로 되돌린다.
@@ -185,7 +185,7 @@ WHERE  grp = 7;
 
 ---
 
-## 7. SELECT FOR UPDATE와 Current Read
+## SELECT FOR UPDATE와 Current Read
 
 - `SELECT ... FOR UPDATE` 는 **행 잠금**을 위해 **현재 버전**(current)을 본다(= **db block gets**).
 - 이는 문장 수준 **읽기 일관성** 과는 다른 목적(락 취득)이므로 주의.
@@ -202,14 +202,14 @@ SELECT COUNT(*) FROM t_cr WHERE grp = 0 FOR UPDATE;   -- 행 잠금 + current re
 
 ---
 
-## 8. ORA-01555(snapshot too old) — 왜 터지나?
+## ORA-01555(snapshot too old) — 왜 터지나?
 
-### 8.1 원인
+### 원인
 
 - SELECT 가 **아주 오래** 걸리고, 그동안 **다른 세션의 DML/COMMIT** 로 인해 **필요한 Undo 레코드**가 **재사용**(순환)되어 사라졌다.
 - 그러면 해당 행을 **쿼리 SCN 시점** 으로 **되돌릴** 수 없으므로 ORA-01555.
 
-### 8.2 대응
+### 대응
 
 - **UNDO 테이블스페이스 용량** / **`UNDO_RETENTION`** 확보
 - **장시간 보고서** ↔ **대규모 DML/배치** 시간대 분리
@@ -231,7 +231,7 @@ ORDER  BY begin_time DESC FETCH FIRST 24 ROWS ONLY;
 
 ---
 
-## 9. 지연 클린아웃(Deferred Cleanout)과 CR 비용
+## 지연 클린아웃(Deferred Cleanout)과 CR 비용
 
 - 트랜잭션 **커밋 직후**, 모든 관련 블록의 ITL에 **커밋 SCN** 을 **즉시** 기록하지 못할 수 있다(부담/타이밍 문제).
 - **다음에 해당 블록을 읽는 세션** 이 **트랜잭션 테이블** 을 확인해 **커밋 SCN** 을 알아내고, **ITL 엔트리** 에 그것을 적어 넣는다(**클린아웃**).
@@ -250,7 +250,7 @@ ORDER  BY sec DESC;
 
 ---
 
-## 10. “Consistent gets” 가 높다는 건 나쁜가?
+## “Consistent gets” 가 높다는 건 나쁜가?
 
 - **아니다.** 일관성을 지키려면 필요한 비용이다.
 - 다만, **불필요한 스캔/조인/중복 읽기** 로 **consistent gets** 가 과도하게 많다면 **쿼리 튜닝 신호**일 수 있다.
@@ -262,16 +262,16 @@ ORDER  BY sec DESC;
 
 ---
 
-## 11. RAC에서의 CR — GC 대기와의 연동(한 줄 요약)
+## RAC에서의 CR — GC 대기와의 연동(한 줄 요약)
 
 - RAC에선 블록이 **인스턴스 간** 이동/요청되며, **CR 이미지를 원격에서 조립**/전송하는 경로도 있다.
 - `gc cr request`, `gc buffer busy` 등 **GC 대기**가 표출될 수 있으며, **서비스 기반 파티셔닝/로컬리티** 설계가 중요.
 
 ---
 
-## 12. 실습: CR 동작을 체감하는 미니 데모
+## 실습: CR 동작을 체감하는 미니 데모
 
-### 12.1 준비
+### 준비
 
 ```sql
 DROP TABLE t_demo_cr PURGE;
@@ -292,7 +292,7 @@ END;
 CREATE INDEX ix_demo_cr_g ON t_demo_cr(g);
 ```
 
-### 12.2 세션 A — 느린 SELECT
+### 세션 A — 느린 SELECT
 
 ```sql
 -- 세션 A
@@ -305,7 +305,7 @@ FROM   t_demo_cr t
 WHERE  g IN (0,1,2);   -- 넓은 범위
 ```
 
-### 12.3 세션 B — 중간에 값 변경 후 커밋
+### 세션 B — 중간에 값 변경 후 커밋
 
 ```sql
 -- 세션 B
@@ -313,14 +313,14 @@ UPDATE t_demo_cr SET v = 999 WHERE g = 0;
 COMMIT;
 ```
 
-### 12.4 기대 관찰
+### 기대 관찰
 
 - 세션 A의 **COUNT(*)** 결과는 **변경 이전 기준**(문장 시작 시점)과 일치.
 - 세션 A가 **아직 읽지 못한 블록**을 읽는 시점에 g=0 행들이 이미 커밋되어 있더라도, A는 **Undo 적용(CR)** 으로 **변경 전 버전**을 본다.
 
 ---
 
-## 13. 진단/관측 SQL 단축키
+## 진단/관측 SQL 단축키
 
 ```sql
 -- 시스템 전반 일관성/현재 읽기/물리I/O 감
@@ -346,7 +346,7 @@ ORDER  BY begin_time DESC FETCH FIRST 24 ROWS ONLY;
 
 ---
 
-## 14. 성능/안정성 체크리스트 (CR 관점)
+## 성능/안정성 체크리스트 (CR 관점)
 
 1. **ORA-01555** 가 보이면
    - `UNDO_RETENTION` / Undo TS 용량 / DML·보고서 시간 분리 / 쿼리 튜닝
@@ -364,7 +364,7 @@ ORDER  BY begin_time DESC FETCH FIRST 24 ROWS ONLY;
 
 ---
 
-## 15. 보너스: 수식으로 보는 CR 판정 규칙(개념)
+## 보너스: 수식으로 보는 CR 판정 규칙(개념)
 
 - 쿼리 시작 시 **SCN = S**
 - 각 행의 “유효 커밋 SCN” 을 **C** 라고 하면, 보여줄 값의 조건은
@@ -382,7 +382,7 @@ $$
 
 ---
 
-## 16. 마무리 요약
+## 마무리 요약
 
 - 오라클은 **기본적으로 모든 SELECT** 에 대해 **문장 수준 일관성** 을 제공한다.
 - 구현의 핵심은 **Consistent 모드 블록 읽기(CR Read)** 이며, **Undo/ITL/Row Lock Byte/커밋 SCN/지연 클린아웃** 이 맞물려 동작한다.

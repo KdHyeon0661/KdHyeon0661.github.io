@@ -31,24 +31,30 @@ category: Kubernetes
 
 ```bash
 # 차트 스캐폴드
+
 helm create mychart
 
 # 렌더 결과(적용 전 확인)
+
 helm template myrel ./mychart -f values-prod.yaml
 
 # 규칙/구문 점검
+
 helm lint ./mychart
 
 # 설치(없으면 설치, 있으면 업그레이드)
+
 helm upgrade --install myrel ./mychart -n app --create-namespace \
   -f values.yaml -f values-prod.yaml --atomic --wait --timeout 5m
 
 # 상태/이력/롤백
+
 helm list -n app
 helm history myrel -n app
 helm rollback myrel 2 -n app
 
 # 제거
+
 helm uninstall myrel -n app
 ```
 

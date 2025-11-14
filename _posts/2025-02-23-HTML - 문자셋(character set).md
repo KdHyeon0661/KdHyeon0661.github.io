@@ -6,7 +6,7 @@ category: HTML
 ---
 # 문자셋(Character Set)이란?
 
-## 1. 개념 정리 — 문자셋·인코딩·유니코드·코드포인트
+## 개념 정리 — 문자셋·인코딩·유니코드·코드포인트
 
 - **문자셋(Character Set)**: 표현 가능한 **문자의 집합**. 예: 유니코드(전 세계 문자), ASCII(128자), EUC-KR(한글 중심).
 - **인코딩(Encoding)**: 문자(코드포인트)를 **바이트 시퀀스**로 변환하는 규칙. 예: UTF-8, UTF-16, EUC-KR.
@@ -17,7 +17,7 @@ category: HTML
 
 ---
 
-## 2. 역사와 현재 — 왜 UTF-8인가?
+## 역사와 현재 — 왜 UTF-8인가?
 
 - **ASCII(1960s)**: 7비트, 128자(영문/숫자/기호). 국제화 불가.
 - **ISO-8859-1(Latin-1)**: 서유럽 문자 확장. 한글/한자 미지원.
@@ -28,9 +28,10 @@ category: HTML
 
 ---
 
-## 3. HTML에서의 지정 — 메타/순서/낚시줄(혼합 인코딩) 주의
+## HTML에서의 지정 — 메타/순서/낚시줄(혼합 인코딩) 주의
 
-### 3.1 권장 메타 태그
+### 권장 메타 태그
+
 ```html
 <!-- 반드시 <head> 최상단 근처 -->
 <meta charset="UTF-8">
@@ -44,7 +45,8 @@ category: HTML
 ```
 > 유지보수성/명확성 측면에서 **HTML5 방식**을 권장.
 
-### 3.2 혼합 인코딩의 함정
+### 혼합 인코딩의 함정
+
 - HTML 파일은 `UTF-8`인데, **서버 헤더**가 `charset=EUC-KR`로 응답 → 브라우저는 **HTTP 헤더**를 우선하기 때문에 깨짐.
 - 반대로 서버는 UTF-8, **문서 메타가 EUC-KR** → 일부 브라우저/도구에서 혼선.
 
@@ -52,9 +54,10 @@ category: HTML
 
 ---
 
-## 4. HTTP·서버 사이드 — 헤더/프레임워크별 설정
+## HTTP·서버 사이드 — 헤더/프레임워크별 설정
 
-### 4.1 HTTP 응답 헤더
+### HTTP 응답 헤더
+
 ```http
 Content-Type: text/html; charset=UTF-8
 ```
@@ -65,7 +68,8 @@ Content-Type: text/css; charset=UTF-8
 Content-Type: application/javascript; charset=UTF-8
 ```
 
-### 4.2 Node.js(Express)
+### Node.js(Express)
+
 ```js
 const express = require('express');
 const app = express();
@@ -85,7 +89,8 @@ app.get('/api', (req, res) => {
 app.listen(3000);
 ```
 
-### 4.3 Python Flask
+### Python Flask
+
 ```python
 from flask import Flask, Response, jsonify
 app = Flask(__name__)
@@ -102,7 +107,8 @@ def api():
     return resp
 ```
 
-### 4.4 Django
+### Django
+
 - `settings.py` 템플릿/파일 저장은 UTF-8로.
 - 미들웨어/뷰에서 `Content-Type` 확인:
 ```python
@@ -119,14 +125,16 @@ def api(request):
     return resp
 ```
 
-### 4.5 PHP
+### PHP
+
 ```php
 <?php
 header('Content-Type: text/html; charset=UTF-8');
 echo "<!doctype html><meta charset='utf-8'><h1>안녕하세요 😊</h1>";
 ```
 
-### 4.6 Nginx
+### Nginx
+
 ```nginx
 http {
   charset utf-8;                   # 기본 charset
@@ -139,7 +147,8 @@ http {
 }
 ```
 
-### 4.7 Apache
+### Apache
+
 ```apache
 AddDefaultCharset UTF-8
 AddType 'text/html; charset=UTF-8' .html
@@ -150,9 +159,10 @@ AddType 'application/json; charset=UTF-8' .json
 
 ---
 
-## 5. DB 설정 — MySQL·PostgreSQL·ORM, 그리고 이모지
+## DB 설정 — MySQL·PostgreSQL·ORM, 그리고 이모지
 
-### 5.1 MySQL/MariaDB — `utf8mb4`가 정답
+### MySQL/MariaDB — `utf8mb4`가 정답
+
 - MySQL의 `utf8`은 **최대 3바이트**로, 일부 이모지(4바이트) 저장 실패.
 - **반드시 `utf8mb4`와 적절한 정렬(예: `utf8mb4_0900_ai_ci`)**을 사용.
 
@@ -182,25 +192,29 @@ SET NAMES utf8mb4;
 `VARCHAR(191)`는 utf8mb4(4바이트) 기준 **191×4=764바이트**로 안전(옛 호환).
 최신 MySQL에서는 큰 키 길이도 가능하지만, **프리픽스 인덱스** 고려 권장.
 
-### 5.2 PostgreSQL
+### PostgreSQL
+
 - 데이터베이스 자체가 유니코드 친화적. 기본적으로 **UTF-8 권장**.
 ```sql
 CREATE DATABASE appdb WITH ENCODING 'UTF8' LC_COLLATE='ko_KR.utf8' LC_CTYPE='ko_KR.utf8' TEMPLATE=template0;
 ```
 
-### 5.3 ORM(Django/SQLAlchemy/TypeORM 등)
+### ORM(Django/SQLAlchemy/TypeORM 등)
+
 - **커넥션 파라미터**에서 `charset=utf8mb4` 명시.
 - 마이그레이션 시 스키마에 **문자셋/콜레이션**이 반영되는지 확인.
 
 ---
 
-## 6. 이모지/조합문자/정규화 — 보이는 것과 길이가 다르다
+## 이모지/조합문자/정규화 — 보이는 것과 길이가 다르다
 
-### 6.1 가시 문자 ≠ 코드포인트 수 ≠ 바이트 수
+### 가시 문자 ≠ 코드포인트 수 ≠ 바이트 수
+
 - “👩‍💻”(여성 기술자 이모지)은 **여러 코드포인트의 조합(ZWJ, 변형 선택자 등)** 일 수 있습니다.
 - 문자열 길이 제한/자르기/색인/정렬 시 **문자 경계(grapheme cluster)** 를 고려해야 합니다.
 
 #### 길이 개념(요약)
+
 - **문자 수(사용자가 보는 글자 수)**: grapheme cluster
 - **코드포인트 수**: 유니코드 포인트 개수
 - **바이트 수**: 인코딩(UTF-8 등) 적용 후의 실제 저장 크기
@@ -216,13 +230,15 @@ $$
 \end{cases}
 $$
 
-### 6.2 정규화(Normalization)
+### 정규화(Normalization)
+
 - 유니코드에는 **동일한 가시 결과**를 낳는 **서로 다른 조합**이 존재.
 - 예: `é`는 **단일 코드포인트(U+00E9)** 혹은 **`e`(U+0065)+결합 악센트(U+0301)`**.
 - **NFC**(권장), NFD, NFKC, NFKD 등 **정규화** 개념 필요.
 - 파일명/검색/중복 검사 전 **NFC 정규화**로 일관성 확보.
 
-### 6.3 서버 사이드 예(정규화)
+### 서버 사이드 예(정규화)
+
 - Node.js:
 ```js
 const s = 'e\u0301'; // 'e' + 결합 악센트
@@ -237,7 +253,7 @@ nfc = unicodedata.normalize('NFC', s)
 
 ---
 
-## 7. BOM(Byte Order Mark) — UTF-8 with BOM의 함정
+## BOM(Byte Order Mark) — UTF-8 with BOM의 함정
 
 - UTF-8은 바이트 순서가 고정이라 **BOM이 불필요**.
 - 일부 편집기는 `UTF-8 with BOM`으로 저장 → **서버 사이드 파서/CLI 스크립트/JSON 파서**가 **선행 바이트를 내용으로 오인**.
@@ -245,27 +261,31 @@ nfc = unicodedata.normalize('NFC', s)
 
 ---
 
-## 8. 폼/API/CSV/이메일 — 입출력 경로별 주의점
+## 폼/API/CSV/이메일 — 입출력 경로별 주의점
 
-### 8.1 HTML 폼/서버
+### HTML 폼/서버
+
 - HTML 기본은 UTF-8. 서버 측 **요청 바디 파서의 문자셋** 확인.
 - 파일 업로드(멀티파트)에서 **파일명 인코딩(RFC 5987/2231)** 이 이슈가 될 수 있음.
 - URL 쿼리스트링/경로는 **퍼센트 인코딩**. 서버 라우팅에서 **디코딩 시점/중복 디코딩** 주의.
 
-### 8.2 JSON API
+### JSON API
+
 - 명시적으로:
 ```http
 Content-Type: application/json; charset=UTF-8
 ```
 - 일부 클라이언트/프록시가 **잘못 추정**하는 경우 있음 → 항상 헤더로 명시.
 
-### 8.3 CSV
+### CSV
+
 - Excel은 지역 설정에 따라 **CP949/EUC-KR/Shift_JIS** 가 섞일 수 있음.
 - **UTF-8 with BOM**을 요구하는 환경도 존재(구버전 Excel).
   가능하면 **명시**하고, 사내 표준을 문서화.
 - 샘플 헤더/메타 파일로 **인코딩 사전 합의**.
 
-### 8.4 이메일(MIME)
+### 이메일(MIME)
+
 - 헤더/본문 모두 인코딩 명시 필요.
 ```http
 Content-Type: text/plain; charset=UTF-8
@@ -279,7 +299,7 @@ Subject: =?UTF-8?B?7JWI64WV7ZWY?=
 
 ---
 
-## 9. 브라우저/도구에서의 확인
+## 브라우저/도구에서의 확인
 
 - **개발자도구 → Network**: `Content-Type` 헤더의 `charset` 확인.
 - **View Source**: `<meta charset="...">` 위치/값 확인.
@@ -295,31 +315,36 @@ iconv -f EUC-KR -t UTF-8 old.html > new.html
 
 ---
 
-## 10. 트러블슈팅 — 흔한 증상과 원인·해결
+## 트러블슈팅 — 흔한 증상과 원인·해결
 
-### 10.1 "���" 또는 물음표/깨짐
+### "���" 또는 물음표/깨짐
+
 - 원인: **서버 헤더/HTML 메타/파일 저장 인코딩 불일치**
 - 해결: **세 곳 모두 UTF-8로 통일**. 에디터 저장 형식 확인. BOM 제거.
 
-### 10.2 DB에 저장 시 깨짐/에러
+### DB에 저장 시 깨짐/에러
+
 - 원인: DB/커넥션/테이블/컬럼 인코딩 불일치, MySQL `utf8` 사용.
 - 해결: **utf8mb4**로 전환, `SET NAMES utf8mb4`, 마이그레이션 시 스키마/인덱스 재점검.
 
-### 10.3 이모지 저장 실패
+### 이모지 저장 실패
+
 - 원인: MySQL `utf8` 3바이트 제한.
 - 해결: **utf8mb4** + 적절 콜레이션.
 
-### 10.4 문자열 자르기 시 이모지 반쪽(깨짐)
+### 문자열 자르기 시 이모지 반쪽(깨짐)
+
 - 원인: 바이트/코드포인트 단위 자르기.
 - 해결: **grapheme cluster 단위** 자르기(라이브러리 사용).
 
-### 10.5 혼합 인코딩 문서
+### 혼합 인코딩 문서
+
 - 원인: 일부 포함 파일/템플릿이 EUC-KR 등.
 - 해결: 빌드 파이프라인에서 **정적 검사** + **iconv** 일괄 변환.
 
 ---
 
-## 11. 마이그레이션 가이드 — EUC-KR/CP949 → UTF-8
+## 마이그레이션 가이드 — EUC-KR/CP949 → UTF-8
 
 1. **소스/템플릿/정적 파일**: 에디터 일괄 변환(백업 필수).
    `iconv -f CP949 -t UTF-8 old.html > new.html`
@@ -332,9 +357,10 @@ iconv -f EUC-KR -t UTF-8 old.html > new.html
 
 ---
 
-## 12. 실전 예제 모음
+## 실전 예제 모음
 
-### 12.1 HTML 스켈레톤(권장)
+### HTML 스켈레톤(권장)
+
 ```html
 <!DOCTYPE html>
 <html lang="ko">
@@ -350,7 +376,8 @@ iconv -f EUC-KR -t UTF-8 old.html > new.html
 </html>
 ```
 
-### 12.2 JSON API 응답(명시적 헤더)
+### JSON API 응답(명시적 헤더)
+
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/json; charset=UTF-8
@@ -358,7 +385,8 @@ Content-Type: application/json; charset=UTF-8
 {"message":"한글/Emoji OK 🚀"}
 ```
 
-### 12.3 MySQL 테이블 생성(utf8mb4)
+### MySQL 테이블 생성(utf8mb4)
+
 ```sql
 CREATE TABLE messages (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -366,7 +394,8 @@ CREATE TABLE messages (
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
-### 12.4 Python CSV(UTF-8 BOM 필요 환경 대응)
+### Python CSV(UTF-8 BOM 필요 환경 대응)
+
 ```python
 import csv
 
@@ -375,9 +404,11 @@ with open("out.csv", "w", newline="", encoding="utf-8-sig") as f:
     writer = csv.writer(f)
     writer.writerows(rows)
 # utf-8-sig: Excel 일부 환경 호환을 위해 BOM 첨부
+
 ```
 
-### 12.5 이메일(MIME 헤더 + 본문)
+### 이메일(MIME 헤더 + 본문)
+
 ```text
 Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
@@ -390,7 +421,7 @@ Subject: =?UTF-8?B?7JWI64WV7ZWYIOyImO2DgA==?=
 
 ---
 
-## 13. 품질 체크리스트(배포 전)
+## 품질 체크리스트(배포 전)
 
 - [ ] HTML `<meta charset="UTF-8">`가 `<head>` 초반에 있는가?
 - [ ] 모든 HTTP 응답에 올바른 `Content-Type; charset=UTF-8`가 설정되는가?
@@ -403,7 +434,7 @@ Subject: =?UTF-8?B?7JWI64WV7ZWYIOyImO2DgA==?=
 
 ---
 
-## 14. FAQ — 실무에서 자주 묻는 것
+## FAQ — 실무에서 자주 묻는 것
 
 **Q1. MySQL `utf8`인데 가끔 이모지가 깨져요.**
 A. `utf8`은 3바이트까지만. **utf8mb4**로 전환하세요.
@@ -422,7 +453,7 @@ A. 표준적으로 브라우저는 **HTTP 헤더의 charset**을 우선합니다
 
 ---
 
-## 15. 결론
+## 결론
 
 - 문자셋은 **단순 설정**이 아니라, **시스템 전체의 합의**입니다.
 - **UTF-8(무BOM)** 을 기본으로, DB는 **utf8mb4**, 헤더/메타/파일/툴 전부를 일치시킵니다.

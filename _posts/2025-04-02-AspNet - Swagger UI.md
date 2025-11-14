@@ -26,7 +26,7 @@ category: AspNet
 
 ---
 
-## 1. 핵심 요약(빠른 스타트)
+## 핵심 요약(빠른 스타트)
 
 ```bash
 dotnet add package Swashbuckle.AspNetCore
@@ -56,18 +56,19 @@ app.Run();
 
 ---
 
-## 2. 기본 설정(패키지, Program.cs, Development/Production 분기)
+## 기본 설정(패키지, Program.cs, Development/Production 분기)
 
-### 2.1 필수 패키지
+### 필수 패키지
 
 ```bash
 dotnet add package Swashbuckle.AspNetCore
 # 선택(예제/필터 등 확장)
+
 dotnet add package Swashbuckle.AspNetCore.Annotations
 dotnet add package Swashbuckle.AspNetCore.Filters
 ```
 
-### 2.2 Program.cs 기본 골격
+### Program.cs 기본 골격
 
 ```csharp
 using System.Reflection;
@@ -129,9 +130,9 @@ app.Run();
 
 ---
 
-## 3. 문서 메타데이터 & XML 주석 & Annotations
+## 문서 메타데이터 & XML 주석 & Annotations
 
-### 3.1 csproj 설정
+### csproj 설정
 
 ```xml
 <PropertyGroup>
@@ -142,7 +143,7 @@ app.Run();
 </PropertyGroup>
 ```
 
-### 3.2 컨트롤러/액션 XML 주석 & Annotations
+### 컨트롤러/액션 XML 주석 & Annotations
 
 ```csharp
 using Swashbuckle.AspNetCore.Annotations;
@@ -164,9 +165,9 @@ public class UsersController : ControllerBase
 
 ---
 
-## 4. 보안 연동(JWT, OAuth2)과 테스트 흐름
+## 보안 연동(JWT, OAuth2)과 테스트 흐름
 
-### 4.1 JWT Bearer 버튼
+### JWT Bearer 버튼
 
 ```csharp
 builder.Services.AddSwaggerGen(c =>
@@ -194,7 +195,7 @@ builder.Services.AddSwaggerGen(c =>
 
 컨트롤러 레벨에서 `[Authorize]`를 적용하면 UI에서 **Authorize** 버튼으로 토큰 입력 후 테스트 가능.
 
-### 4.2 OAuth2(Authorization Code 예)
+### OAuth2(Authorization Code 예)
 
 ```csharp
 c.AddSecurityDefinition("OAuth2", new OpenApiSecurityScheme
@@ -236,9 +237,9 @@ app.UseSwaggerUI(ui =>
 
 ---
 
-## 5. API 버전 관리와 Swagger 다중 문서
+## API 버전 관리와 Swagger 다중 문서
 
-### 5.1 Microsoft.AspNetCore.Mvc.Versioning 연동(선택)
+### Microsoft.AspNetCore.Mvc.Versioning 연동(선택)
 
 ```bash
 dotnet add package Microsoft.AspNetCore.Mvc.Versioning
@@ -300,9 +301,9 @@ app.UseSwaggerUI(ui =>
 
 ---
 
-## 6. 예제 페이로드/응답 스니펫(Example) 넣기
+## 예제 페이로드/응답 스니펫(Example) 넣기
 
-### 6.1 Swashbuckle.Filters 사용(간결)
+### Swashbuckle.Filters 사용(간결)
 
 ```csharp
 // Program.cs
@@ -332,7 +333,7 @@ public class UserCreateRequestExample : IExamplesProvider<UserCreateRequest>
 public IActionResult Create(UserCreateRequest request) => Created(...);
 ```
 
-### 6.2 Attributes 없이 수동 Example
+### Attributes 없이 수동 Example
 
 ```csharp
 c.MapType<DateOnly>(() => new OpenApiSchema
@@ -345,9 +346,9 @@ c.MapType<DateOnly>(() => new OpenApiSchema
 
 ---
 
-## 7. 스키마 커스터마이징(Enums, Nullable, Polymorphism)
+## 스키마 커스터마이징(Enums, Nullable, Polymorphism)
 
-### 7.1 Enums 문자열로 노출 + 설명
+### Enums 문자열로 노출 + 설명
 
 ```csharp
 builder.Services.AddSwaggerGen(c =>
@@ -380,13 +381,13 @@ public class EnumSchemaFilter : ISchemaFilter
 c.SchemaFilter<EnumSchemaFilter>();
 ```
 
-### 7.2 Nullable 참조 타입 반영
+### Nullable 참조 타입 반영
 
 ```csharp
 c.SupportNonNullableReferenceTypes(); // 참조형 nullability 반영
 ```
 
-### 7.3 Polymorphism(oneOf/allOf) 표현
+### Polymorphism(oneOf/allOf) 표현
 
 ```csharp
 // 예: Base -> Photo/Article
@@ -422,9 +423,9 @@ c.OperationFilter<PolymorphismOperationFilter>();
 
 ---
 
-## 8. Operation 커스터마이징(헤더/필터/상태코드 표준화)
+## Operation 커스터마이징(헤더/필터/상태코드 표준화)
 
-### 8.1 공통 헤더(예: X-Request-Id) 추가
+### 공통 헤더(예: X-Request-Id) 추가
 
 ```csharp
 public class CorrelationIdOperationFilter : IOperationFilter
@@ -448,7 +449,7 @@ public class CorrelationIdOperationFilter : IOperationFilter
 c.OperationFilter<CorrelationIdOperationFilter>();
 ```
 
-### 8.2 표준 상태코드/응답 헤더 부착
+### 표준 상태코드/응답 헤더 부착
 
 - `ProducesResponseType`로 최소 명세
 - 공통 에러는 OperationFilter로 ProblemDetails 추가
@@ -482,7 +483,7 @@ c.OperationFilter<ProblemDetailsOperationFilter>();
 
 ---
 
-## 9. Minimal API와 Swagger(WithOpenApi)
+## Minimal API와 Swagger(WithOpenApi)
 
 ```csharp
 var app = builder.Build();
@@ -503,9 +504,9 @@ app.Run();
 
 ---
 
-## 10. 파일 업로드/다운로드 문서화
+## 파일 업로드/다운로드 문서화
 
-### 10.1 업로드
+### 업로드
 
 ```csharp
 [HttpPost("upload")]
@@ -520,7 +521,7 @@ public IActionResult Upload([FromForm] IFormFile file)
 
 Swagger는 `multipart/form-data`를 감지해 파일 선택 UI 제공.
 
-### 10.2 다운로드(바이너리)
+### 다운로드(바이너리)
 
 ```csharp
 [HttpGet("files/{id}")]
@@ -534,14 +535,14 @@ public IActionResult Download(int id)
 
 ---
 
-## 11. ProblemDetails 및 에러 응답 문서화
+## ProblemDetails 및 에러 응답 문서화
 
 - ASP.NET Core의 **ProblemDetails** 사용 권장(`application/problem+json`)
 - 전역 예외 처리 미들웨어에서 변환 → Swagger에 4xx/5xx 응답으로 기술(앞선 OperationFilter 참고)
 
 ---
 
-## 12. 캐싱/ETag/조건부 요청 문서화
+## 캐싱/ETag/조건부 요청 문서화
 
 ```csharp
 [HttpGet("{id}")]
@@ -559,9 +560,9 @@ Swagger 설명에 `ETag`, `If-None-Match`, `If-Match`의 사용법을 주석/Ope
 
 ---
 
-## 13. Swagger UI 커스터마이징, ReDoc 병행
+## Swagger UI 커스터마이징, ReDoc 병행
 
-### 13.1 Swagger UI 옵션
+### Swagger UI 옵션
 
 ```csharp
 app.UseSwaggerUI(ui =>
@@ -577,7 +578,7 @@ app.UseSwaggerUI(ui =>
 
 정적 파일 제공 설정 후 `/wwwroot/swagger-ui/custom.css` 배치.
 
-### 13.2 ReDoc 병행(선택)
+### ReDoc 병행(선택)
 
 ```csharp
 dotnet add package Redoc.AspNetCore
@@ -594,7 +595,7 @@ app.UseReDoc(o =>
 
 ---
 
-## 14. 배포/운영 Tips(보안, 성능, 문서 품질 체크리스트)
+## 배포/운영 Tips(보안, 성능, 문서 품질 체크리스트)
 
 - **보안**: 운영에서 Swagger 노출 시 **IP 제한/Auth** 적용, 관리자만 접근
 - **성능**: 대형 스키마 생성 비용 → 캐시/사전 생성 사용 고려
@@ -607,9 +608,9 @@ app.UseReDoc(o =>
 
 ---
 
-## 15. 종합 예제
+## 종합 예제
 
-### 15.1 DTO
+### DTO
 
 ```csharp
 public record UserDto(int Id, string Name, string Email);
@@ -618,7 +619,7 @@ public class UserCreateRequest { public string Name { get; set; } = ""; public s
 public class UserCreateResponse { public int Id { get; set; } public string Location { get; set; } = ""; }
 ```
 
-### 15.2 Controller
+### Controller
 
 ```csharp
 [ApiController]
@@ -657,7 +658,7 @@ public class UsersController : ControllerBase
 }
 ```
 
-### 15.3 Program.cs(요약)
+### Program.cs(요약)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);

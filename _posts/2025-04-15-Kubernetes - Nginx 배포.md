@@ -17,7 +17,7 @@ category: Kubernetes
 
 ---
 
-## 0. 사전 준비
+## 사전 준비
 
 - 클러스터: Minikube/Kind/EKS/GKE/AKS 등 (실습은 Minikube/Kind 가볍게 권장)
 - `kubectl` 연결 확인:
@@ -29,9 +29,10 @@ kubectl get nodes -o wide
 
 ---
 
-## 1. Nginx Deployment 정의(기본형)
+## Nginx Deployment 정의(기본형)
 
 ### `nginx-deployment.yaml` (가장 단순한 형태)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -55,6 +56,7 @@ spec:
 ```
 
 ### 설명
+
 | 항목 | 설명 |
 |------|------|
 | `replicas: 2` | Pod 2개 실행(가용성↑, 롤링 업데이트 안전) |
@@ -66,9 +68,10 @@ spec:
 
 ---
 
-## 2. Service 정의 (NodePort)
+## Service 정의 (NodePort)
 
 ### `nginx-service.yaml`
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -85,6 +88,7 @@ spec:
 ```
 
 ### 설명
+
 | 항목 | 설명 |
 |------|------|
 | `type: NodePort` | 모든 노드의 `nodePort`로 외부 접근 허용 |
@@ -98,7 +102,7 @@ spec:
 
 ---
 
-## 3. 리소스 배포 & 확인
+## 리소스 배포 & 확인
 
 ```bash
 kubectl apply -f nginx-deployment.yaml
@@ -125,27 +129,31 @@ nginx-service    NodePort   10.96.22.121   <none>        80:30080/TCP   1m
 
 ---
 
-## 4. 외부에서 접근 테스트
+## 외부에서 접근 테스트
 
 ### 방법 1) Minikube
+
 ```bash
 minikube service nginx-service
 ```
 → 브라우저에서 Nginx 환영 페이지가 열린다.
 
 ### 방법 2) NodePort 직접 접근
+
 ```bash
 # 클러스터 노드(또는 Minikube IP) 조회
+
 kubectl get nodes -o wide
 minikube ip   # Minikube일 때
 
 # 접근
+
 curl -I http://<노드 IP>:30080
 ```
 
 ---
 
-## 5. “운영형”으로 보강한 Deployment
+## “운영형”으로 보강한 Deployment
 
 기본형은 학습용으로 충분하지만, 운영에선 다음을 추가해야 한다:
 - **readinessProbe / livenessProbe**: 정상 판정·자가 치유
@@ -155,6 +163,7 @@ curl -I http://<노드 IP>:30080
 - **롤링 업데이트 파라미터**: 무중단 배포
 
 ### 📄 `nginx-deployment.ops.yaml`
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -225,11 +234,12 @@ kubectl rollout undo deploy/nginx-deployment
 
 ---
 
-## 6. ConfigMap로 컨텐츠/설정 주입
+## ConfigMap로 컨텐츠/설정 주입
 
 실전에서 Nginx를 “빈 환영 페이지” 대신 **우리 콘텐츠**로 바꾸려면 `ConfigMap`을 **파일 마운트** 한다.
 
-### 6.1 정적 파일 ConfigMap
+### 정적 파일 ConfigMap
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -254,7 +264,8 @@ data:
     }
 ```
 
-### 6.2 Nginx에 마운트
+### Nginx에 마운트
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -305,7 +316,7 @@ curl http://<노드 IP>:30080 | head -n 5
 
 ---
 
-## 7. Ingress로 도메인 노출(선택)
+## Ingress로 도메인 노출(선택)
 
 NodePort 대신 **Ingress Controller**(예: NGINX Ingress, Traefik)를 쓰면, 도메인/경로 라우팅·TLS 등 **L7 기능**을 쉽게 적용할 수 있다.
 Minikube:
@@ -314,6 +325,7 @@ minikube addons enable ingress
 ```
 
 ### `nginx-ingress.yaml`
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -341,6 +353,7 @@ spec:
 kubectl apply -f nginx-ingress.yaml
 kubectl get ingress
 # hosts 파일에 <minikube ip> example.local 등록 후:
+
 curl -I http://example.local
 ```
 
@@ -357,6 +370,7 @@ kubectl top pods
 ```
 
 ### HPA 적용
+
 ```bash
 kubectl autoscale deployment nginx-deployment --cpu-percent=50 --min=2 --max=10
 kubectl get hpa -w
@@ -365,6 +379,7 @@ kubectl get hpa -w
 부하 생성 예시:
 ```bash
 # 임시 부하 Pod 생성
+
 kubectl run hey --image=rakyll/hey --restart=Never -- \
   -z 5s -c 50 -q 10 http://nginx-service.default.svc.cluster.local
 kubectl get hpa -w
@@ -374,25 +389,28 @@ kubectl get hpa -w
 
 ---
 
-## 9. 관측 & 로그 & 디버깅 루틴
+## 관측 & 로그 & 디버깅 루틴
 
 ```bash
 # 이벤트/상태 확인
+
 kubectl get events --sort-by=.lastTimestamp | tail
 kubectl describe deploy nginx-deployment
 kubectl describe svc nginx-service
 
 # 엔드포인트 집합 확인(연결 핵심)
+
 kubectl get endpoints nginx-service -o yaml
 
 # Pod 로그/쉘
+
 kubectl logs -l app=nginx --tail=100
 kubectl exec -it deploy/nginx-deployment -- sh -c 'ls -l /usr/share/nginx/html && nginx -T | head -n 40'
 ```
 
 ---
 
-## 10. 트러블슈팅 표
+## 트러블슈팅 표
 
 | 증상 | 1차 확인 | 원인 | 해결 |
 |---|---|---|---|
@@ -405,9 +423,10 @@ kubectl exec -it deploy/nginx-deployment -- sh -c 'ls -l /usr/share/nginx/html &
 
 ---
 
-## 11. YAML 하나로 묶기(기본형 유지)
+## YAML 하나로 묶기(기본형 유지)
 
 ### `nginx-full.yaml` — Deployment + Service
+
 ```yaml
 ---
 apiVersion: apps/v1
@@ -451,14 +470,16 @@ kubectl get all -l app=nginx
 
 ---
 
-## 12. 리소스 정리
+## 리소스 정리
 
 ```bash
 kubectl delete -f nginx-full.yaml
 # 또는 개별 삭제
+
 kubectl delete deployment nginx-deployment
 kubectl delete service nginx-service
 # Ingress/HPA/ConfigMap 등을 추가했다면 따로 정리
+
 kubectl delete ingress nginx-ingress || true
 kubectl delete hpa nginx-deployment || true
 kubectl delete configmap nginx-static || true
@@ -466,7 +487,7 @@ kubectl delete configmap nginx-static || true
 
 ---
 
-## 13. 실전 체크리스트(요약)
+## 실전 체크리스트(요약)
 
 - **버전 고정**: `nginx:<정확 태그>` (latest 지양)
 - **프로브 설정**: readiness/liveness(필수), startupProbe(초기 무거운 앱)

@@ -18,7 +18,8 @@ category: Kubernetes
 
 ---
 
-## 1. 공통점(복습)
+## 공통점(복습)
+
 - CNCF 인증 **표준 K8s** (kubectl/Helm/Argo CD 등과 호환)
 - **노드풀/오토스케일링/롤링 업데이트/롤백**
 - IAM 연동, 로깅/모니터링 통합, API/콘솔/CLI 제공
@@ -26,7 +27,7 @@ category: Kubernetes
 
 ---
 
-## 2. 핵심 차이 한눈에(확장 개요)
+## 핵심 차이 한눈에(확장 개요)
 
 | 영역 | GKE | EKS | AKS |
 |---|---|---|---|
@@ -44,15 +45,17 @@ category: Kubernetes
 
 ---
 
-## 3. 각 서비스 상세
+## 각 서비스 상세
 
-### 3.1 GKE (Google Kubernetes Engine)
+### GKE (Google Kubernetes Engine)
+
 - **모드**: Standard(노드 직접 운영) / **Autopilot**(노드 자동, Pod단 과금)
 - **네트워킹**: VPC-native(Secondary Range), Dataplane V2(선택, eBPF 기반)
 - **보안**: Workload Identity(권장), Binary Authorization, GKE Sandbox(GVisor)
 - **운영**: 릴리스 채널, 자동 수리/자동 업그레이드, 노드 자동수리
 
 #### 빠른 생성(Autopilot 예)
+
 ```bash
 gcloud container clusters create-auto demo \
   --region=asia-northeast3 \
@@ -62,6 +65,7 @@ kubectl get nodes
 ```
 
 #### NodeLocal DNS, DataplaneV2 스니펫(개념)
+
 ```bash
 gcloud container clusters update demo \
   --enable-dataplane-v2 \
@@ -70,12 +74,14 @@ gcloud container clusters update demo \
 
 ---
 
-### 3.2 EKS (Elastic Kubernetes Service)
+### EKS (Elastic Kubernetes Service)
+
 - **네트워킹**: AWS VPC CNI(ENI 기반 Pod IP), SecurityGroups for Pods 선택 가능
 - **보안**: **IRSA**(IAM Roles for Service Accounts) 표준, KMS, PrivateLink
 - **서버리스**: **Fargate**(Pod 단위), ALB/NLB와 깊은 통합
 
 #### 빠른 생성(eksctl)
+
 ```bash
 eksctl create cluster --name demo --region ap-northeast-2 \
   --with-oidc --nodes 3 --node-type m5.large
@@ -84,8 +90,10 @@ kubectl get nodes
 ```
 
 #### ALB Ingress Controller 설치(요지)
+
 ```bash
 # OIDC/IRSA 설정 후, 헬름으로 aws-load-balancer-controller 설치
+
 helm repo add eks https://aws.github.io/eks-charts
 helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-controller \
   -n kube-system --set clusterName=demo \
@@ -95,12 +103,14 @@ helm upgrade --install aws-load-balancer-controller eks/aws-load-balancer-contro
 
 ---
 
-### 3.3 AKS (Azure Kubernetes Service)
+### AKS (Azure Kubernetes Service)
+
 - **네트워킹**: Azure CNI(Overlay/기본), Cilium dataplane 도입, UDR/VNet 통합 수월
 - **보안**: AAD 통합, Azure Workload Identity, Key Vault provider
 - **운영**: UI/CLI 친화, 자동 업그레이드/노드풀 관리 간편, GitHub Actions/ADO 연계
 
 #### 빠른 생성(az)
+
 ```bash
 az group create -n rg-aks -l koreacentral
 az aks create -g rg-aks -n demo \
@@ -111,13 +121,16 @@ kubectl get nodes
 ```
 
 #### AGIC(앱 게이트웨이) 인그레스(개념)
+
 ```bash
 # App Gateway 생성 후 AGIC 애드온 활성화(az aks enable-addons --addons ingress-appgw ...)
+
 ```
 
 ---
 
-## 4. 네트워킹·LB·Ingress — 실무 논점
+## 네트워킹·LB·Ingress — 실무 논점
+
 - **CNI IP 할당**
   - GKE: Secondary Range(노드/Pod CIDR 분리) → 대규모 IP 관리 용이
   - EKS: ENI 할당 모델 → 서브넷/ENI/Pod 밀도/비용 고려
@@ -146,7 +159,8 @@ spec:
 
 ---
 
-## 5. 스토리지/CSI — 볼륨 클래스 매핑
+## 스토리지/CSI — 볼륨 클래스 매핑
+
 | 목적 | GKE | EKS | AKS |
 |---|---|---|---|
 | 블록(PVC RWO) | **PD**(balanced/ssd) | **EBS**(gp3/io2) | **Azure Disk**(Premium/Ultra) |
@@ -166,7 +180,8 @@ spec:
 
 ---
 
-## 6. 오토스케일링 — HPA/VPA/CA/노드풀
+## 오토스케일링 — HPA/VPA/CA/노드풀
+
 - **HPA**: Pod 수 자동 조정(CPU/메모리/사용자 지표)
 - **VPA**: Pod 리소스 요청 상향/권고(실험→운영 점진 적용)
 - **Cluster Autoscaler**: 노드풀 증감. Managed Node Group/Node Pool과 연동
@@ -190,7 +205,8 @@ spec:
 
 ---
 
-## 7. 보안 — IAM/OIDC/PSA/비밀/정책
+## 보안 — IAM/OIDC/PSA/비밀/정책
+
 - **ID 연동**
   - GKE: Workload Identity(GSA↔KSA)
   - EKS: **IRSA(OIDC)**
@@ -211,7 +227,8 @@ metadata:
 
 ---
 
-## 8. 업그레이드/가용성/관측
+## 업그레이드/가용성/관측
+
 - **업그레이드**: CP→노드풀 순, 불가역 변경/API 제거 주의
 - **멀티존/멀티리전**: 노드풀 Zonal 분산, 스토리지 클래스/존 한정 유의
 - **관측**: 관리형 모니터링 + Prom/Grafana(OSS) 혼용, OpenTelemetry 권장
@@ -230,9 +247,10 @@ spec:
 
 ---
 
-## 9. IaC/CLI — 가장 짧은 생성 예 모음
+## IaC/CLI — 가장 짧은 생성 예 모음
 
 ### GKE(Standard, Zonal)
+
 ```bash
 gcloud container clusters create demo \
   --zone=asia-northeast3-a --num-nodes=3 \
@@ -240,12 +258,14 @@ gcloud container clusters create demo \
 ```
 
 ### EKS(eksctl)
+
 ```bash
 eksctl create cluster --name demo --region ap-northeast-2 \
   --nodegroup-name ng --nodes 3 --with-oidc
 ```
 
 ### AKS(az)
+
 ```bash
 az aks create -g rg-aks -n demo --node-count 3 \
   --network-plugin azure --enable-managed-identity
@@ -254,6 +274,7 @@ az aks create -g rg-aks -n demo --node-count 3 \
 Terraform(개념 스니펫):
 ```hcl
 # 각 provider 블록과 모듈 생략, 가독 목적의 최소화만 표기
+
 resource "google_container_cluster" "gke" {
   name     = "demo"
   location = "asia-northeast3-a"
@@ -264,7 +285,8 @@ resource "google_container_cluster" "gke" {
 
 ---
 
-## 10. 간단 비용 개념식(학습용)
+## 간단 비용 개념식(학습용)
+
 요청률(QPS), 평균 처리시간 \(t\), 파드당 안정 동시 처리량 \(\text{cap}_{pod}\), 노드당 파드 수 \(\text{pods/node}\), 리소스 단가를 둔다면:
 
 $$
@@ -281,7 +303,7 @@ $$
 
 ---
 
-## 11. 트러블슈팅(공통 체크리스트)
+## 트러블슈팅(공통 체크리스트)
 
 | 증상 | 공통 원인 후보 | 1차 점검 | 플랫폼 특이점 |
 |---|---|---|---|
@@ -293,7 +315,7 @@ $$
 
 ---
 
-## 12. 어떤 서비스를 선택할까? — 의사결정 트리
+## 어떤 서비스를 선택할까? — 의사결정 트리
 
 1) **클라우드 주력**이 명확?
    - GCP 중심 → **GKE**, AWS 중심 → **EKS**, Azure 중심 → **AKS**
@@ -309,7 +331,8 @@ $$
 
 ---
 
-## 13. 데모 매니페스트(공통) — 웹+HPA+PVC
+## 데모 매니페스트(공통) — 웹+HPA+PVC
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -364,7 +387,8 @@ spec:
 
 ---
 
-## 14. 요약·베스트 프랙티스
+## 요약·베스트 프랙티스
+
 - **공통**: 선언형(IaC), 릴리스 계획, 관측/알람, 보안 기준선(RBAC/PSA/Secret 암호화)
 - **GKE**: Autopilot로 운영 복잡도↓, Dataplane V2/eBPF, Workload Identity
 - **EKS**: **IRSA+ALB** 조합, VPC/ENI 설계, 스팟/온디맨드 혼합 노드풀
@@ -376,14 +400,17 @@ spec:
 부록: 필수 명령 모음
 ```bash
 # GKE
+
 gcloud container clusters create-auto demo --region=asia-northeast3
 gcloud container clusters get-credentials demo --region=asia-northeast3
 
 # EKS
+
 eksctl create cluster --name demo --region ap-northeast-2 --with-oidc
 aws eks update-kubeconfig --name demo --region ap-northeast-2
 
 # AKS
+
 az aks create -g rg-aks -n demo --node-count 3 --enable-managed-identity
 az aks get-credentials -g rg-aks -n demo
 kubectl get nodes -o wide

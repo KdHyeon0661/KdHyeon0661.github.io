@@ -18,17 +18,18 @@ category: Kubernetes
 
 ---
 
-## 1. 기본 사용법과 출력 구조
+## 기본 사용법과 출력 구조
 
-### 1.1 기본 명령
+### 기본 명령
 
 ```bash
 kubectl describe pod <pod-name>
 # 예
+
 kubectl describe pod myapp-79c6dbcf7c-sntbz
 ```
 
-### 1.2 출력 구조 훑어보기
+### 출력 구조 훑어보기
 
 ```
 Name:           myapp-79c6dbcf7c-sntbz
@@ -88,7 +89,7 @@ Events:
   Normal   Started             59s   kubelet            Started container myapp
 ```
 
-### 1.3 핵심 필드 표
+### 핵심 필드 표
 
 | 구역 | 확인 포인트 |
 |---|---|
@@ -102,11 +103,11 @@ Events:
 
 ---
 
-## 2. 상황별 진단 절차(레시피)
+## 상황별 진단 절차(레시피)
 
 아래 절차는 **describe → 보조 명령** 순으로 빠르게 원인을 좁힌다.
 
-### 2.1 Pod이 Pending 상태로 멈춤
+### Pod이 Pending 상태로 멈춤
 
 ```bash
 kubectl describe pod myapp
@@ -125,13 +126,16 @@ kubectl describe pod myapp
 
 ```bash
 # 스케줄링 이벤트를 시간순으로
+
 kubectl get events --sort-by=.lastTimestamp
 
 # 노드 리소스/테인트 점검
+
 kubectl describe node <node-name>
 kubectl get node <node-name> -o jsonpath='{.spec.taints}'
 
 # PVC 상태
+
 kubectl describe pvc my-pvc
 kubectl get pvc my-pvc -o yaml
 ```
@@ -145,7 +149,7 @@ kubectl get pvc my-pvc -o yaml
 
 ---
 
-### 2.2 CrashLoopBackOff / Error / OOMKilled
+### CrashLoopBackOff / Error / OOMKilled
 
 ```bash
 kubectl describe pod <pod>
@@ -161,8 +165,10 @@ kubectl describe pod <pod>
 
 ```bash
 # 이전 컨테이너 인스턴스의 로그(크래시 직전)
+
 kubectl logs <pod> -c <container> --previous
 # 현재 인스턴스
+
 kubectl logs <pod> -c <container>
 ```
 
@@ -183,7 +189,7 @@ $$
 
 ---
 
-### 2.3 ImagePullBackOff / ErrImagePull
+### ImagePullBackOff / ErrImagePull
 
 ```bash
 kubectl describe pod <pod>
@@ -206,13 +212,14 @@ kubectl create secret docker-registry regcred \
   --docker-password=<PASS> --docker-email=<EMAIL>
 
 # ServiceAccount에 imagePullSecrets 연결 후 Pod/Deployment에 사용
+
 ```
 
 - 프록시/사설 CA 환경은 노드 레벨 신뢰체계/CRI 설정을 점검.
 
 ---
 
-### 2.4 Readiness/Liveness/Startup Probe 실패
+### Readiness/Liveness/Startup Probe 실패
 
 ```bash
 kubectl describe pod <pod>
@@ -241,7 +248,7 @@ curl -i http://localhost:8080/health
 
 ---
 
-### 2.5 PVC 바인딩/마운트 실패
+### PVC 바인딩/마운트 실패
 
 ```bash
 kubectl describe pod <pod>
@@ -264,7 +271,7 @@ kubectl describe pv  <pv>   # 바인딩된 PV가 있다면
 
 ---
 
-### 2.6 DNS/Service 연결 불가
+### DNS/Service 연결 불가
 
 ```bash
 kubectl describe pod <client-pod>
@@ -286,37 +293,41 @@ kubectl get ep my-svc -o wide
 
 ---
 
-## 3. describe를 더 잘 쓰는 실전 패턴
+## describe를 더 잘 쓰는 실전 패턴
 
-### 3.1 네임스페이스/라벨로 대상을 좁혀 가장 최신 Pod 확인
+### 네임스페이스/라벨로 대상을 좁혀 가장 최신 Pod 확인
 
 ```bash
 # 가장 최근 생성된 Pod 1개 describe
+
 kubectl get pods -n prod -l app=myapp --sort-by=.metadata.creationTimestamp \
   | tail -n 1 \
   | awk '{print $1}' \
   | xargs -I{} kubectl describe pod {} -n prod
 ```
 
-### 3.2 Events만 빠르게 추출
+### Events만 빠르게 추출
 
 ```bash
 kubectl describe pod <pod> | sed -n '/^Events:/,$p'
 # 또는
+
 kubectl get events --sort-by=.lastTimestamp | tail -n 50
 ```
 
-### 3.3 JSONPath / wide 보기
+### JSONPath / wide 보기
 
 ```bash
 # 컨테이너 상태와 재시작 횟수
+
 kubectl get pod <pod> -o jsonpath='{range .status.containerStatuses[*]}{.name}{" "}{.state}{" restarts="}{.restartCount}{"\n"}{end}'
 
 # Pod → Node 매핑
+
 kubectl get pod -o wide
 ```
 
-### 3.4 RBAC로 describe 권한 열기(읽기 전용)
+### RBAC로 describe 권한 열기(읽기 전용)
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -337,7 +348,7 @@ rules:
 
 ---
 
-## 4. 문제 유형별 “원인 → 증상 → 확인 → 해결” 표
+## 문제 유형별 “원인 → 증상 → 확인 → 해결” 표
 
 | 유형 | 대표 증상(`describe`/Events) | 확인 포인트 | 해결 |
 |---|---|---|---|
@@ -352,38 +363,44 @@ rules:
 
 ---
 
-## 5. `kubectl describe`와 함께 쓰는 필수 명령 세트
+## `kubectl describe`와 함께 쓰는 필수 명령 세트
 
 ```bash
 # 리소스 스냅샷
+
 kubectl get pods -o wide
 kubectl top pods
 kubectl top nodes
 
 # 이벤트 타임라인
+
 kubectl get events --sort-by=.lastTimestamp
 
 # 엔드포인트/서비스
+
 kubectl get svc <name> -o yaml
 kubectl get ep  <name> -o wide
 
 # 스케줄러 관점에서 보기(스케줄 실패시)
+
 kubectl get pod <pod> -o yaml | sed -n '/schedulerName/p;/tolerations:/,/^$/{p}'
 
 # 노드 상태/테인트
+
 kubectl describe node <node>
 kubectl get node <node> -o jsonpath='{.spec.taints}'
 
 # 스토리지
+
 kubectl get pvc,pv -o wide
 kubectl describe pvc <name>
 ```
 
 ---
 
-## 6. 재현용 샘플 — 일부러 실패나 경보를 만들어 보자
+## 재현용 샘플 — 일부러 실패나 경보를 만들어 보자
 
-### 6.1 이미지 오타로 ImagePullBackOff 유발
+### 이미지 오타로 ImagePullBackOff 유발
 
 ```yaml
 apiVersion: apps/v1
@@ -409,7 +426,7 @@ kubectl apply -f bad-image.yaml
 kubectl describe pod -l app=bad-image
 ```
 
-### 6.2 Readiness 실패 유발(잘못된 경로)
+### Readiness 실패 유발(잘못된 경로)
 
 ```yaml
 apiVersion: v1
@@ -433,7 +450,7 @@ kubectl describe pod bad-ready
 kubectl get endpoints # 서비스에 연결 안 됨 확인에 활용
 ```
 
-### 6.3 PVC 미바인딩 유발(없는 StorageClass)
+### PVC 미바인딩 유발(없는 StorageClass)
 
 ```yaml
 apiVersion: v1
@@ -455,13 +472,13 @@ kubectl describe pvc pvc-missing-sc
 
 ---
 
-## 7. 추가 고급 주제
+## 추가 고급 주제
 
-### 7.1 Init Containers와 스타트업 경로
+### Init Containers와 스타트업 경로
 
 `Init Containers`가 실패하면 애플리케이션 컨테이너는 시작되지 않는다. `describe`에서 **Init 컨테이너의 State/ExitCode**를 확인한다.
 
-### 7.2 SecurityContext/권한 문제
+### SecurityContext/권한 문제
 
 `permission denied`, `read-only file system` 류는 보통 다음을 확인:
 
@@ -469,7 +486,7 @@ kubectl describe pvc pvc-missing-sc
 - 마운트 경로 권한/SELinux/AppArmor
 - rootless 이미지 사용 여부
 
-### 7.3 네트워크 정책
+### 네트워크 정책
 
 `NetworkPolicy`로 인해 통신이 차단될 수 있다. `describe`만으로는 직접 보이지 않으므로 네임스페이스의 네트폴을 점검:
 
@@ -480,9 +497,9 @@ kubectl describe networkpolicy <np> -n <ns>
 
 ---
 
-## 8. 운영 자동화 스니펫 모음
+## 운영 자동화 스니펫 모음
 
-### 8.1 최근 10분간 Warning 이벤트
+### 최근 10분간 Warning 이벤트
 
 ```bash
 since="$(date -u -d '-10 min' +%Y-%m-%dT%H:%M:%SZ)"
@@ -491,7 +508,7 @@ kubectl get events --all-namespaces --field-selector type=Warning \
   | tail -n 100
 ```
 
-### 8.2 특정 네임스페이스에서 CrashLoopBackOff Pod 나열
+### 특정 네임스페이스에서 CrashLoopBackOff Pod 나열
 
 ```bash
 kubectl get pods -n prod \
@@ -500,7 +517,7 @@ kubectl get pods -n prod \
 | awk '/CrashLoopBackOff/'
 ```
 
-### 8.3 describe + logs 원샷(가장 최근 Pod)
+### describe + logs 원샷(가장 최근 Pod)
 
 ```bash
 ns=default; app=myapp
@@ -511,7 +528,7 @@ kubectl logs "$pod" -n "$ns" --all-containers --tail=200
 
 ---
 
-## 9. 요약 결론
+## 요약 결론
 
 - `kubectl describe`는 **현재 상태와 이벤트 타임라인을 한 화면**에 제공한다.
 - **Pending**은 스케줄링/리소스/PVC/어피니티/테인트를 먼저 의심한다.

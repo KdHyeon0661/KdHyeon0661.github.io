@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia TextBox 심화: 포커스 이벤트, 입력 포맷, 커맨드 바인딩
 
-## 0. 준비물: NuGet 패키지
+## 준비물: NuGet 패키지
 
 - Avalonia 11.x (Core)
 - ReactiveUI (MVVM)
@@ -22,9 +22,9 @@ dotnet add package Avalonia.Xaml.Interactions
 
 ---
 
-## 1. 포커스 이벤트를 MVVM으로: GotFocus / LostFocus
+## 포커스 이벤트를 MVVM으로: GotFocus / LostFocus
 
-### 1.1 ViewModel — `AdvancedBindingViewModel.cs`
+### ViewModel — `AdvancedBindingViewModel.cs`
 
 ```csharp
 using ReactiveUI;
@@ -58,7 +58,7 @@ public class AdvancedBindingViewModel : ReactiveObject
 }
 ```
 
-### 1.2 View — `AdvancedBindingView.axaml` (Behaviors로 이벤트→커맨드)
+### View — `AdvancedBindingView.axaml` (Behaviors로 이벤트→커맨드)
 
 ```xml
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -98,11 +98,11 @@ public class AdvancedBindingViewModel : ReactiveObject
 
 ---
 
-## 2. 입력 포맷 제어: 숫자·대문자·마스킹(전화번호) — 3가지 전략
+## 입력 포맷 제어: 숫자·대문자·마스킹(전화번호) — 3가지 전략
 
 입력 제어는 보통 ① 변환기(Converter), ② 검증(Validation), ③ 동작(Behavior/이벤트) 중 **목적**에 맞게 고른다.
 
-### 2.1 변환기(Converter)로 ViewModel 타입을 안전 변환
+### 변환기(Converter)로 ViewModel 타입을 안전 변환
 
 - 장점: **순수 MVVM**, 바인딩 오류를 Validation 스타일로 표시 가능
 - 단점: 마스킹(중간 하이픈 삽입 등)은 입력 UX가 약간 어색할 수 있음
@@ -142,7 +142,7 @@ XAML:
 </UserControl>
 ```
 
-### 2.2 Behavior/이벤트로 **마스킹**(전화번호 등) — UX 친화적
+### Behavior/이벤트로 **마스킹**(전화번호 등) — UX 친화적
 
 - 장점: 사용자가 입력할 때 즉시 포맷이 **자연스럽게 적용**
 - 단점: IME(조합 입력)·Caret 이동 처리 등 세심한 구현 필요
@@ -206,7 +206,7 @@ XAML:
 </UserControl>
 ```
 
-### 2.3 숫자 전용(하드 제한) — 간단 Behavior
+### 숫자 전용(하드 제한) — 간단 Behavior
 
 ```csharp
 // Views/Behaviors/NumericOnlyBehavior.cs
@@ -259,9 +259,9 @@ XAML:
 
 ---
 
-## 3. 커맨드와 입력 결합: Enter로 제출하기
+## 커맨드와 입력 결합: Enter로 제출하기
 
-### 3.1 가장 깔끔한 방법 — KeyBinding
+### 가장 깔끔한 방법 — KeyBinding
 
 ```xml
 <UserControl ...>
@@ -298,9 +298,9 @@ public partial class AdvancedBindingViewModel : ReactiveObject
 
 ---
 
-## 4. 폼 유효성 검증 + 스피너 + 제출
+## 폼 유효성 검증 + 스피너 + 제출
 
-### 4.1 모델 + ViewModel
+### 모델 + ViewModel
 
 ```csharp
 // Models/UserForm.cs
@@ -377,7 +377,7 @@ public class FormViewModel : ReactiveObject
 }
 ```
 
-### 4.2 View — `FormView.axaml`
+### View — `FormView.axaml`
 
 ```xml
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -419,11 +419,11 @@ public class FormViewModel : ReactiveObject
 
 ---
 
-## 5. 재사용 가능한 LabeledTextBox 컨트롤
+## 재사용 가능한 LabeledTextBox 컨트롤
 
 간단 UserControl로도 충분하지만, 템플릿/스타일 재정의까지 고려하면 **TemplatedControl**이 더 유연하다. 여기서는 간단 버전으로 제시한다.
 
-### 5.1 컨트롤
+### 컨트롤
 
 ```csharp
 // Controls/LabeledTextBox.axaml.cs
@@ -470,7 +470,7 @@ public partial class LabeledTextBox : UserControl
 </UserControl>
 ```
 
-### 5.2 사용
+### 사용
 
 ```xml
 <local:LabeledTextBox Label="이름" Text="{Binding Form.Name}"/>
@@ -479,7 +479,7 @@ public partial class LabeledTextBox : UserControl
 
 ---
 
-## 6. 디바운스 검색(보너스): TextBox 입력 폭주 억제
+## 디바운스 검색(보너스): TextBox 입력 폭주 억제
 
 ```csharp
 // ViewModels/ThrottledSearchViewModel.cs
@@ -532,7 +532,7 @@ XAML:
 
 ---
 
-## 7. 문제 해결 체크리스트
+## 문제 해결 체크리스트
 
 - **이벤트→커맨드가 안 된다**: `Avalonia.Xaml.Interactions` 설치/네임스페이스 확인, `EventTriggerBehavior`/`InvokeCommandAction` 사용 여부 확인.
 - **IME 조합 입력과 마스킹 충돌**: Behavior에서 `TextChanging`/`TextInput` 모두 시험. 조합 중인 텍스트(플랫폼별 차이) 변경 억제는 피하고, 최종 커밋 순간에만 포맷을 적용해 UX를 높인다.
@@ -542,7 +542,7 @@ XAML:
 
 ---
 
-## 8. 핵심 요약
+## 핵심 요약
 
 | 주제 | 권장 패턴 |
 |------|-----------|
@@ -554,7 +554,7 @@ XAML:
 
 ---
 
-## 9. 전체 예시 뷰: 핵심 요소 한 화면 통합
+## 전체 예시 뷰: 핵심 요소 한 화면 통합
 
 ```xml
 <UserControl xmlns="https://github.com/avaloniaui"
@@ -612,7 +612,7 @@ XAML:
 
 ---
 
-## 10. 결론
+## 결론
 
 - **포커스 이벤트**는 `Avalonia.Xaml.Interactions`를 통해 **MVVM스럽게** 커맨드에 연결하자.
 - **입력 포맷**은 목적에 맞춰 **Converter(타입 변환)**, **Behavior(마스킹)**, **Validation(오류 메시지)**를 조합하자.

@@ -6,7 +6,7 @@ category: Docker
 ---
 # Multi-arch Docker 이미지 만들기
 
-## 0. 왜 Multi-arch 인가? (기존 글의 핵심 + 확장)
+## 왜 Multi-arch 인가? (기존 글의 핵심 + 확장)
 
 | 항목 | 설명 |
 |------|------|
@@ -17,7 +17,7 @@ category: Docker
 
 ---
 
-## 1. 핵심 도구: BuildKit + `docker buildx`
+## 핵심 도구: BuildKit + `docker buildx`
 
 - **Buildx**: Docker BuildKit 프론트엔드로 **멀티 플랫폼 빌드**와 **manifest list** 생성 지원
 - **QEMU/binfmt**: 다른 아키텍처를 에뮬레이션하여 로컬/CI에서 크로스 빌드 가능
@@ -25,13 +25,15 @@ category: Docker
 
 ---
 
-## 2. 로컬 준비 — buildx/binfmt 초기화
+## 로컬 준비 — buildx/binfmt 초기화
 
 ```bash
-# 1. buildx 확인
+# buildx 확인
+
 docker buildx version
 
-# 2. 빌더 생성 및 활성화
+# 빌더 생성 및 활성화
+
 docker buildx create --use --name mybuilder
 docker buildx inspect --bootstrap
 ```
@@ -46,17 +48,18 @@ docker run --privileged --rm tonistiigi/binfmt --install all
 
 ---
 
-## 3. 첫 실습 — “가장 단순한” multi-arch 빌드
+## 첫 실습 — “가장 단순한” multi-arch 빌드
 
-### 3.1 Dockerfile (Alpine 기반)
+### Dockerfile (Alpine 기반)
 
 ```dockerfile
 # Dockerfile
+
 FROM alpine:3.20
 CMD ["echo", "Hello from Multi-arch!"]
 ```
 
-### 3.2 멀티 플랫폼 빌드 & 푸시
+### 멀티 플랫폼 빌드 & 푸시
 
 ```bash
 docker buildx build \
@@ -69,7 +72,7 @@ docker buildx build \
 - `--push`: 로컬 대신 레지스트리로 바로 밀어 manifest list 생성
 - `--load`: 로컬 도커에 적재. 단, **단일 플랫폼**일 때만 사용 가능
 
-### 3.3 결과 검증
+### 결과 검증
 
 ```bash
 docker buildx imagetools inspect yourname/hello-multiarch:latest
@@ -79,13 +82,14 @@ docker buildx imagetools inspect yourname/hello-multiarch:latest
 
 ---
 
-## 4. 언어/런타임별 설계 패턴
+## 언어/런타임별 설계 패턴
 
-### 4.1 Go (정적 바이너리, 크로스 컴파일 최적)
+### Go (정적 바이너리, 크로스 컴파일 최적)
 
 ```dockerfile
 # Dockerfile (Go multi-stage, CGO off)
-# 1. Build stage
+# Build stage
+
 FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS builder
 ARG TARGETOS TARGETARCH
 WORKDIR /src
@@ -93,7 +97,8 @@ COPY . .
 ENV CGO_ENABLED=0 GO111MODULE=on
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /out/app ./cmd/app
 
-# 2. Runtime stage (scratch/distroless 권장)
+# Runtime stage (scratch/distroless 권장)
+
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
 COPY --from=builder /out/app /app
@@ -114,10 +119,11 @@ docker buildx build \
 
 ---
 
-### 4.2 Node.js (native addon 주의)
+### Node.js (native addon 주의)
 
 ```dockerfile
 # Dockerfile (Node, native module 캐시 최적화)
+
 FROM --platform=$BUILDPLATFORM node:20-alpine AS builder
 ARG TARGETOS TARGETARCH
 WORKDIR /app
@@ -125,6 +131,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 # 네이티브 애드온이 있다면 arch별로 rebuild 필요
+
 RUN npm run build
 
 FROM node:20-alpine
@@ -140,14 +147,16 @@ CMD ["node", "dist/index.js"]
 
 ---
 
-### 4.3 Python (C 확장/머신러닝 주의)
+### Python (C 확장/머신러닝 주의)
 
 ```dockerfile
 # Dockerfile (Python multi-stage with wheels)
+
 FROM --platform=$BUILDPLATFORM python:3.11-alpine AS builder
 WORKDIR /wheels
 COPY requirements.txt .
 # 네이티브 확장 모듈 대비 도구 설치
+
 RUN apk add --no-cache build-base musl-dev linux-headers \
  && pip wheel --wheel-dir /wheels -r requirements.txt
 
@@ -163,16 +172,18 @@ CMD ["python", "app.py"]
 
 ---
 
-### 4.4 Java/JVM (플랫폼 무관이지만 네이티브 lib 주의)
+### Java/JVM (플랫폼 무관이지만 네이티브 lib 주의)
 
 ```dockerfile
 # Dockerfile (JLink로 경량화)
+
 FROM --platform=$BUILDPLATFORM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /src
 COPY . .
 RUN ./gradlew clean build -x test
 
 # (선택) JLink로 custom JRE 생성
+
 RUN jlink --add-modules java.base,java.logging \
           --strip-debug --compress=2 --no-header-files --no-man-pages \
           --output /customjre
@@ -189,7 +200,7 @@ CMD ["java","-jar","/app/app.jar"]
 
 ---
 
-## 5. Manifest/Tag 전략 (latest + 버전 + 다이제스트)
+## Manifest/Tag 전략 (latest + 버전 + 다이제스트)
 
 **권장**:
 - 가독용(`1.0.0`, `latest`) + **불변 참조용 다이제스트**를 함께 운영
@@ -210,9 +221,10 @@ docker buildx imagetools inspect yourname/app:1.0.0
 
 ---
 
-## 6. 캐시/속도 최적화
+## 캐시/속도 최적화
 
-### 6.1 레이어/캐시 전략
+### 레이어/캐시 전략
+
 - `.dockerignore`로 빌드 컨텍스트 최소화
 - `package*.json`/`requirements.txt` 먼저 복사 → 의존성 레이어 캐시
 - Buildx 캐시 내보내기/가져오기
@@ -225,20 +237,23 @@ docker buildx build \
   -t yourname/app:1.0.0 --push .
 ```
 
-### 6.2 CI에서 캐시 복원
+### CI에서 캐시 복원
+
 - GitHub Actions: `docker/build-push-action@v5` + `cache-from/to`
 - GitLab: 레지스트리 캐시 태그 유지
 
 ---
 
-## 7. BuildKit 고급: secrets/ssh/빌드 인수
+## BuildKit 고급: secrets/ssh/빌드 인수
 
 ```dockerfile
 # 예: private repo pip install
 # syntax=docker/dockerfile:1.7
+
 FROM alpine:3.20
 # BuildKit secret mount 예
 # docker buildx build --secret id=netrc,src=$HOME/.netrc ...
+
 RUN --mount=type=secret,id=netrc,mode=0400,target=/root/.netrc \
     apk add --no-cache curl
 ```
@@ -262,9 +277,9 @@ docker buildx build \
 
 ---
 
-## 8. CI 파이프라인 (확장) — GitHub / GitLab / Jenkins
+## CI 파이프라인 (확장) — GitHub / GitLab / Jenkins
 
-### 8.1 GitHub Actions (multi-arch + 캐시 + 서명/리포트 예시)
+### GitHub Actions (multi-arch + 캐시 + 서명/리포트 예시)
 
 {% raw %}
 ```yaml
@@ -307,7 +322,7 @@ jobs:
 ```
 {% endraw %}
 
-### 8.2 GitLab CI
+### GitLab CI
 
 ```yaml
 stages: [ build ]
@@ -327,7 +342,7 @@ build:
         -t "$IMAGE:$TAGS" -t "$IMAGE:latest" --push .
 ```
 
-### 8.3 Jenkins (Pipeline)
+### Jenkins (Pipeline)
 
 ```groovy
 pipeline {
@@ -360,13 +375,15 @@ pipeline {
 
 ---
 
-## 9. 로컬 테스트 — QEMU 런/바이너리 확인
+## 로컬 테스트 — QEMU 런/바이너리 확인
 
 ```bash
 # 현재 호스트 아키텍처 확인
+
 uname -m
 
 # 이미지 내부 arch 확인(간단)
+
 docker run --rm -it --platform linux/arm64 alpine:3.20 uname -m
 docker run --rm -it --platform linux/amd64 alpine:3.20 uname -m
 ```
@@ -375,7 +392,7 @@ docker run --rm -it --platform linux/amd64 alpine:3.20 uname -m
 
 ---
 
-## 10. 흔한 문제/트러블슈팅
+## 흔한 문제/트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |------|------|------|
@@ -388,7 +405,8 @@ docker run --rm -it --platform linux/amd64 alpine:3.20 uname -m
 
 ---
 
-## 11. 성능/시간 대략 추정(간이)
+## 성능/시간 대략 추정(간이)
+
 병렬 빌드 워커가 \(k\)개, 각 아키텍처 빌드 시간 평균이 \(t\)일 때 전체 시간 \(T\)는 대략:
 $$
 T \approx \left\lceil \frac{N_{\text{arch}}}{k} \right\rceil \cdot t \quad (\text{캐시 미적용 근사})
@@ -402,27 +420,30 @@ $$
 
 ---
 
-## 12. 보안·무결성 — 서명(Cosign) & SBOM
+## 보안·무결성 — 서명(Cosign) & SBOM
 
-### 12.1 Cosign 서명(요약)
+### Cosign 서명(요약)
 
 ```bash
 cosign generate-key-pair
 # 서명
+
 cosign sign --key cosign.key yourname/myapp:1.0.0
 # 검증
+
 cosign verify --key cosign.pub yourname/myapp:1.0.0
 ```
 
 > Manifest list에 대해 **각 플랫폼 manifest**가 서명 대상. CI에서 자동화 권장.
 
-### 12.2 SBOM
+### SBOM
+
 - `docker sbom` 또는 `syft`로 SBOM 생성 → 아티팩트로 보관/검증
 - 취약점 스캔(Trivy/Scout) + 정책 게이트(Gatekeeper/Kyverno) 연계
 
 ---
 
-## 13. Buildx Bake — 매트릭스 선언형 빌드
+## Buildx Bake — 매트릭스 선언형 빌드
 
 `docker-bake.hcl`:
 
@@ -450,10 +471,11 @@ docker buildx bake --push
 
 ---
 
-## 14. 실전 템플릿 — 멀티스테이지 + 아키텍처별 스위치
+## 실전 템플릿 — 멀티스테이지 + 아키텍처별 스위치
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
+
 ARG RUNTIME=node:20-alpine
 ARG BUILDER=node:20-alpine
 
@@ -464,6 +486,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 # 아키텍처 조건 분기 예: 특정 바이너리 교체
+
 RUN case "$TARGETARCH" in \
       "arm64") echo "ARM64 tweak";; \
       "amd64") echo "AMD64 tweak";; \
@@ -488,7 +511,7 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 
 ---
 
-## 15. 정책/거버넌스 (조직 운영 가이드)
+## 정책/거버넌스 (조직 운영 가이드)
 
 - Base 이미지: 공식/기업 표준만 허용(서명 검증, 정기 갱신)
 - Tag 규칙: `MAJOR.MINOR.PATCH`, `latest`는 **사내 규정**에 따라 제한
@@ -499,7 +522,7 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 
 ---
 
-## 16. 종합 “레시피” (체크리스트)
+## 종합 “레시피” (체크리스트)
 
 1. 빌더/QEMU 준비: `buildx create --use` + `binfmt --install all`
 2. Dockerfile: 멀티스테이지 + 언어별 네이티브 의존성 해결
@@ -514,10 +537,11 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 
 ---
 
-## 17. 부록 — 로컬 전용(단일 아키) 빌드/검증
+## 부록 — 로컬 전용(단일 아키) 빌드/검증
 
 ```bash
 # 현재 호스트 아키만 빌드해 로컬로 적재
+
 docker buildx build --platform linux/arm64 -t test/app:arm64 --load .
 docker run --rm test/app:arm64 uname -m
 ```
@@ -530,17 +554,21 @@ docker run --rm test/app:arm64 uname -m
 
 ```bash
 # 빌더 준비
+
 docker buildx create --use --name mybuilder
 docker buildx inspect --bootstrap
 docker run --privileged --rm tonistiigi/binfmt --install all
 
 # 멀티 아키 빌드/푸시
+
 docker buildx build --platform linux/amd64,linux/arm64 -t repo/app:1.0.0 --push .
 
 # 매니페스트 확인
+
 docker buildx imagetools inspect repo/app:1.0.0
 
 # 캐시 레지스트리 사용
+
 docker buildx build --cache-from type=registry,ref=repo/app:buildcache \
                     --cache-to   type=registry,ref=repo/app:buildcache,mode=max \
                     --platform linux/amd64,linux/arm64 -t repo/app:1.0.1 --push .

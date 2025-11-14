@@ -6,7 +6,7 @@ category: HTML
 ---
 # Web Storage API 완전 정리 (localStorage vs sessionStorage)
 
-## 0. 큰 그림: 언제 무엇을 쓰나?
+## 큰 그림: 언제 무엇을 쓰나?
 
 | 시나리오 | 권장 |
 |---|---|
@@ -20,9 +20,9 @@ category: HTML
 
 ---
 
-## 1. API 빠른 복습
+## API 빠른 복습
 
-### 1.1 저장/조회/삭제/비우기
+### 저장/조회/삭제/비우기
 
 ```js
 // 저장
@@ -40,14 +40,14 @@ localStorage.clear();
 
 `sessionStorage`도 동일한 메서드를 가집니다. **차이는 수명(스코프)** 뿐입니다.
 
-### 1.2 보조 속성
+### 보조 속성
 
 ```js
 localStorage.length;      // 저장된 항목 수
 localStorage.key(0);      // 인덱스로 key 조회 (구현별 순서는 보장되지 않음)
 ```
 
-### 1.3 문자열만 저장
+### 문자열만 저장
 
 ```js
 const user = { name: 'Kim', age: 25 };
@@ -62,7 +62,7 @@ console.log(restored?.name); // "Kim"
 
 ---
 
-## 2. 에러 처리 & 용량 제한
+## 에러 처리 & 용량 제한
 
 브라우저·사설탭마다 한도(대략 5–10MB)가 다릅니다. 초과시 `QuotaExceededError` 발생.
 
@@ -83,7 +83,8 @@ function safeSetItem(key, value) {
 }
 ```
 
-### 2.1 사파리 프라이빗 모드 이슈
+### 사파리 프라이빗 모드 이슈
+
 프라이빗 모드에서 `localStorage` 접근 자체가 예외를 던지거나 용량이 0일 수 있습니다.
 → **기능 감지** + **폴백**(메모리 저장소) 준비.
 
@@ -100,9 +101,9 @@ function hasLocalStorage() {
 
 ---
 
-## 3. 실무 유틸: 네임스페이스, 버전, TTL, 스키마
+## 실무 유틸: 네임스페이스, 버전, TTL, 스키마
 
-### 3.1 네임스페이스로 충돌 방지
+### 네임스페이스로 충돌 방지
 
 ```js
 const NS = 'myapp:';
@@ -119,7 +120,7 @@ const storage = {
 };
 ```
 
-### 3.2 버전 태깅 & 마이그레이션
+### 버전 태깅 & 마이그레이션
 
 ```js
 const META_KEY = 'myapp:meta';
@@ -141,7 +142,7 @@ function migrate() {
 migrate();
 ```
 
-### 3.3 TTL(만료) 지원 래퍼
+### TTL(만료) 지원 래퍼
 
 ```js
 const ttlStore = {
@@ -170,7 +171,7 @@ const ttlStore = {
 ttlStore.set('weather:seoul', { temp: 9 }, 5 * 60 * 1000); // 5분 캐시
 ```
 
-### 3.4 JSON 직렬화 커스텀(날짜/맵/셋)
+### JSON 직렬화 커스텀(날짜/맵/셋)
 
 ```js
 function stringify(value) {
@@ -194,7 +195,7 @@ function parse(text) {
 
 ---
 
-## 4. 탭 간 동기화: `storage` 이벤트
+## 탭 간 동기화: `storage` 이벤트
 
 다른 탭에서 변경된 항목을 실시간 반영할 수 있습니다.
 
@@ -212,7 +213,7 @@ window.addEventListener('storage', (e) => {
 
 ---
 
-## 5. 보안 — 반드시 알아야 할 6가지
+## 보안 — 반드시 알아야 할 6가지
 
 1) **민감정보 저장 금지**
    액세스 토큰/리프레시 토큰/개인정보/결제수단은 **XSS에 탈취**됩니다.
@@ -235,9 +236,9 @@ window.addEventListener('storage', (e) => {
 
 ---
 
-## 6. 패턴 모음
+## 패턴 모음
 
-### 6.1 사용자 설정(테마/언어) 유지
+### 사용자 설정(테마/언어) 유지
 
 ```js
 const PFX = 'settings:';
@@ -255,7 +256,7 @@ setSetting('theme', 'dark');
 document.documentElement.dataset.theme = getSetting('theme', 'light');
 ```
 
-### 6.2 임시 폼 자동 저장(sessionStorage)
+### 임시 폼 자동 저장(sessionStorage)
 
 ```js
 const KEY = 'draft:post';
@@ -276,7 +277,7 @@ form.addEventListener('input', () => {
 });
 ```
 
-### 6.3 API 캐시(짧은 TTL, 실패 시 폴백)
+### API 캐시(짧은 TTL, 실패 시 폴백)
 
 ```js
 async function getWithCache(url, ttlMs) {
@@ -296,7 +297,7 @@ async function getWithCache(url, ttlMs) {
 }
 ```
 
-### 6.4 LRU(최근 미사용) 삭제로 쿼터 극복
+### LRU(최근 미사용) 삭제로 쿼터 극복
 
 간단 구현: 저장 시 접근 시간 업데이트, 용량 초과 시 **가장 오래된** 키 제거.
 
@@ -337,7 +338,7 @@ lruEvictIfNeeded(() => {
 });
 ```
 
-### 6.5 타입 안전(TypeScript) 래퍼
+### 타입 안전(TypeScript) 래퍼
 
 ```ts
 type StoreValue = string | number | boolean | null | object;
@@ -362,7 +363,7 @@ const fs = prefs.get('fontSize', 16);
 
 ---
 
-## 7. 테스트 & 디버깅 팁
+## 테스트 & 디버깅 팁
 
 - **개발자도구** → Application(또는 Storage) 패널에서 local/sessionStorage 확인·수정·삭제
 - 자동화 테스트에서 **스토리지 목킹**:
@@ -388,7 +389,7 @@ Object.defineProperty(window, 'localStorage', { value: mockStorage() });
 
 ---
 
-## 8. 브라우저·도메인 스코프
+## 브라우저·도메인 스코프
 
 - **도메인별 격리**: `https://a.example.com` 과 `https://b.example.com` 은 서로 접근 불가
 - **포트/프로토콜 포함**: `http` vs `https` 저장소는 별개
@@ -396,7 +397,7 @@ Object.defineProperty(window, 'localStorage', { value: mockStorage() });
 
 ---
 
-## 9. 성능 최적화
+## 성능 최적화
 
 - 큰 데이터를 여러 키로 쪼개지 말고 **IndexedDB** 사용 고려
 - 잦은 쓰기는 **배치/디바운스**:
@@ -419,7 +420,7 @@ const scheduleSet = (k, v) => {
 
 ---
 
-## 10. 비교표 (쿠키/IndexedDB/Cache API)
+## 비교표 (쿠키/IndexedDB/Cache API)
 
 | 항목 | localStorage | sessionStorage | 쿠키 | IndexedDB | Cache API |
 |---|---|---|---|---|---|
@@ -432,9 +433,9 @@ const scheduleSet = (k, v) => {
 
 ---
 
-## 11. 예제 모음
+## 예제 모음
 
-### 11.1 첫 방문 환영 배너(7일간 숨기기)
+### 첫 방문 환영 배너(7일간 숨기기)
 
 ```js
 const KEY = 'welcome:hidden';
@@ -449,7 +450,7 @@ document.querySelector('#welcome .close').addEventListener('click', () => {
 });
 ```
 
-### 11.2 탭 간 로그아웃 동기화
+### 탭 간 로그아웃 동기화
 
 ```js
 function logoutEverywhere() {
@@ -462,7 +463,7 @@ window.addEventListener('storage', (e) => {
 });
 ```
 
-### 11.3 A/B 테스트 배정(안정적 랜덤)
+### A/B 테스트 배정(안정적 랜덤)
 
 ```js
 function getBucket() {
@@ -479,7 +480,7 @@ document.body.dataset.bucket = getBucket();
 
 ---
 
-## 12. 체크리스트
+## 체크리스트
 
 - [ ] 민감정보 저장 금지 (토큰/PII/결제정보)
 - [ ] TTL/버전/네임스페이스 설계

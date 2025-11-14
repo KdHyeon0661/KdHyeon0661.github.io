@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Oracle **Statspack & AWR**
 
-## 0. 큰 그림: Statspack vs AWR
+## 큰 그림: Statspack vs AWR
 
 | 항목 | Statspack | AWR (Automatic Workload Repository) |
 |---|---|---|
@@ -21,9 +21,10 @@ category: DB 심화
 
 ---
 
-## 1. Statspack: 설치 → 스냅샷 → 리포트
+## Statspack: 설치 → 스냅샷 → 리포트
 
-### 1.1 설치(최초 1회)
+### 설치(최초 1회)
+
 ```sql
 -- SYS로 접속
 @?/rdbms/admin/spcreate.sql
@@ -31,7 +32,8 @@ category: DB 심화
 ```
 > 제거 시 `spdrop.sql`. 설치 중 **테이블스페이스**/패스워드 지정 단계가 있다.
 
-### 1.2 스냅샷(수동/잡)
+### 스냅샷(수동/잡)
+
 ```sql
 -- 즉시 스냅샷
 EXEC perfstat.statspack.snap;
@@ -46,7 +48,8 @@ END;
 PRINT jobno;
 ```
 
-### 1.3 스냅샷 목록 확인 → 리포트 생성
+### 스냅샷 목록 확인 → 리포트 생성
+
 ```sql
 -- 스냅샷 목록
 SELECT snap_id, begin_interval_time, end_interval_time
@@ -60,9 +63,10 @@ ORDER  BY snap_id DESC;
 
 ---
 
-## 2. AWR: 설정 → 리포트 → 비교/SQL 전용/다중 인스턴스
+## AWR: 설정 → 리포트 → 비교/SQL 전용/다중 인스턴스
 
-### 2.1 스냅샷 주기/보관 기간 조정
+### 스냅샷 주기/보관 기간 조정
+
 ```sql
 -- 현 설정
 SELECT snap_interval, retention FROM dba_hist_wr_control;
@@ -77,12 +81,14 @@ END;
 /
 ```
 
-### 2.2 수동 스냅샷
+### 수동 스냅샷
+
 ```sql
 EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 ```
 
-### 2.3 표준 리포트
+### 표준 리포트
+
 ```sql
 -- 단일 인스턴스
 @?/rdbms/admin/awrrpt.sql
@@ -101,7 +107,7 @@ EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 
 ---
 
-## 3. 리포트 읽는 순서(탑다운 루틴)
+## 리포트 읽는 순서(탑다운 루틴)
 
 > **핵심**: “**느리다**”를 **시간**으로 해체 → **CPU vs WAIT** → **어떤 WAIT?** → **누가 발생? (SQL/세그먼트/파일/라인)**
 
@@ -127,11 +133,12 @@ EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 
 ---
 
-## 4. 예제 시나리오 & 리포트 읽기
+## 예제 시나리오 & 리포트 읽기
 
 > 아래 예제는 “월말 보고서가 **느려진 피크 30분**” 구간을 AWR로 분석한다는 가정. (Statspack도 거의 동일)
 
-### 4.1 구간 선택(스냅샷 범위)
+### 구간 선택(스냅샷 범위)
+
 ```sql
 -- 후보 스냅샷 범위 조회
 SELECT snap_id, begin_interval_time, end_interval_time
@@ -143,15 +150,17 @@ ORDER  BY snap_id;
 ```
 > 10:30~11:00 구간이 피크로 가정하여 **Start Snap=1201, End Snap=1202** 선택.
 
-### 4.2 리포트 생성
+### 리포트 생성
+
 ```sql
 @?/rdbms/admin/awrrpt.sql
 -- DBID/Inst 선택 → 1201 ~ 1202 → HTML
 ```
 
-### 4.3 핵심 섹션 해석(요약 샘플)
+### 핵심 섹션 해석(요약 샘플)
 
 #### (1) Load Profile (요지)
+
 ```
 Per Second
   DB Time(s):            120.3
@@ -168,6 +177,7 @@ Per Second
 - Executes/sec ↑ , Parses/sec 적당, Hard parses 낮음(좋음)
 
 #### (2) Top Timed Events / Time Model
+
 ```
 Top Timed Events
   Event                            %DB time   Wait Class
@@ -184,6 +194,7 @@ Time Model Statistics
 - **Temp 읽기(정렬/해시 스필)** 1위, 랜덤 I/O 2위, 커밋 지연 3위 → **정렬/해시 과다 + 랜덤 I/O 많음 + 커밋 빈도/지연** 혼합.
 
 #### (3) SQL ordered by Elapsed Time
+
 ```
 SQL ID       Elapsed(s)  Executions  Elap/Exec  CPU(s)  Buffer Gets  Disk Reads
 9pqs1m..         42,300        25      1,692     5,900    1.2e9       58,000,000
@@ -193,6 +204,7 @@ SQL ID       Elapsed(s)  Executions  Elap/Exec  CPU(s)  Buffer Gets  Disk Reads
 - **9pqs1m..** 상위 1 SQL이 **총 응답시간의 20%** 기여. 선순위 타겟.
 
 #### (4) Segment Statistics (logical/physical/ITL/buffer busy 상위)
+
 ```
 Top Segments by Logical Reads
   OWNER.TABLE / INDEX ...   Logical Reads  %Total
@@ -207,6 +219,7 @@ Top Segments by Physical Reads
 - Temp 스필 많음(예상 일치). `ORDERS_IDX1`/`ORDERS` 핫.
 
 #### (5) I/O Stats / Temp
+
 ```
 IOStat by Filetype Summary
   Temp: Read 55,000,000 blocks (avg read time 8.2 ms)
@@ -214,7 +227,8 @@ IOStat by Filetype Summary
 ```
 - Temp I/O 지배적 → **PGA/정렬/해시/카디널리티** 점검 필요.
 
-### 4.4 타겟 SQL 라인 통계(Plan 연결)
+### 타겟 SQL 라인 통계(Plan 연결)
+
 ```sql
 -- SQL ID 9pqs1m.. 의 실제 라인 통계(마지막/최근)
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
@@ -235,7 +249,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 5. Statspack 리포트 분석(동일 루틴 적용)
+## Statspack 리포트 분석(동일 루틴 적용)
 
 `spreport.sql` 결과의 핵심 섹션도 **Top 5 Timed Events**, **Load Profile**, **SQL ordered by…**, **Instance Activity** 등 **유사**하다.
 
@@ -247,9 +261,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 6. **비교 리포트**로 “튜닝 효과/회귀” 증명
+## **비교 리포트**로 “튜닝 효과/회귀” 증명
 
-### 6.1 AWR Diff Report
+### AWR Diff Report
+
 ```sql
 @?/rdbms/admin/awrdiff.sql
 -- DBID/Inst → Before(Start1,End1) vs After(Start2,End2) 선택
@@ -259,7 +274,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 - **SQL Diff** 섹션에서 **새로 튄 SQL**/개선된 SQL 식별
 - **I/O/Temp/Redo** 볼륨 비교로 작업성격 변화 확인
 
-### 6.2 RAC 다중 인스턴스 비교
+### RAC 다중 인스턴스 비교
+
 ```sql
 @?/rdbms/admin/awrddrpt.sql
 ```
@@ -267,9 +283,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 7. **베이스라인**(AWR)으로 “좋을 때 상태” 고정
+## **베이스라인**(AWR)으로 “좋을 때 상태” 고정
 
-### 7.1 베이스라인 생성/관리
+### 베이스라인 생성/관리
+
 ```sql
 -- 스냅샷 범위 베이스라인
 DECLARE
@@ -292,7 +309,8 @@ END;
 /
 ```
 
-### 7.2 이동 윈도 베이스라인(피크 시간 자동 고정)
+### 이동 윈도 베이스라인(피크 시간 자동 고정)
+
 ```sql
 BEGIN
   DBMS_WORKLOAD_REPOSITORY.CREATE_BASELINE_TEMPLATE(
@@ -310,9 +328,10 @@ END;
 
 ---
 
-## 8. **특정 SQL** 리포트/해석(AWR)
+## **특정 SQL** 리포트/해석(AWR)
 
-### 8.1 `awrsqrpt.sql` — SQL 한 건 집중
+### `awrsqrpt.sql` — SQL 한 건 집중
+
 ```sql
 @?/rdbms/admin/awrsqrpt.sql
 -- DBID/Inst/Snap 범위/SQL_ID 입력
@@ -320,7 +339,8 @@ END;
 - **실행 횟수, 평균 elapsed/CPU/reads**, child cursor 현황, 계획 변동(스냅샷 시점별)
 - **계획 변동**이 응답시간 변화를 만든 경우 → **통계/히스토그램/바인드/프로파일** 조치
 
-### 8.2 라인 통계(실행 후)
+### 라인 통계(실행 후)
+
 ```sql
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', NULL,
   'ALLSTATS LAST +PEEKED_BINDS +PREDICATE +PROJECTION +OUTLINE +NOTE'));
@@ -330,7 +350,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', NULL,
 
 ---
 
-## 9. **리포트 해석 체크리스트**(암기 카드)
+## **리포트 해석 체크리스트**(암기 카드)
 
 1) **구간 고정**: 피크 30분 등 **일관된** 범위
 2) **DB Time vs DB CPU**: 대기 비중 판단
@@ -345,9 +365,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', NULL,
 
 ---
 
-## 10. 자동화/스크립트(샘플)
+## 자동화/스크립트(샘플)
 
-### 10.1 최신 6시간 스냅샷 범위에서 AWR HTML 리포트 생성
+### 최신 6시간 스냅샷 범위에서 AWR HTML 리포트 생성
+
 ```sql
 -- SQL*Plus
 DEF hours = 6
@@ -364,7 +385,8 @@ HOST echo Generating AWR report for &&bsn to &&esn ...
 -- 프롬프트에서 bsn/esn 사용
 ```
 
-### 10.2 특정 서비스/모듈의 SQL Top-N(ASH) — 보조
+### 특정 서비스/모듈의 SQL Top-N(ASH) — 보조
+
 ```sql
 SELECT sql_id,
        COUNT(*) samples,
@@ -379,7 +401,7 @@ ORDER  BY samples DESC FETCH FIRST 10 ROWS ONLY;
 
 ---
 
-## 11. 일반 함정 & 베스트 프랙티스
+## 일반 함정 & 베스트 프랙티스
 
 **함정**
 - 스냅샷 **구간 길이**가 너무 길면 스파이크가 **희석**된다. 너무 짧으면 **노이즈**. (보통 15~30분 추천)
@@ -396,9 +418,10 @@ ORDER  BY samples DESC FETCH FIRST 10 ROWS ONLY;
 
 ---
 
-## 12. 미니 실습(끝까지 따라하기)
+## 미니 실습(끝까지 따라하기)
 
-### 12.1 피크 구간 리포트 → 병목 SQL → 라인
+### 피크 구간 리포트 → 병목 SQL → 라인
+
 1) **AWR 리포트**: 10:30~11:00
    - Top Event: `direct path read temp` 1위
    - SQL Top1: `9pqs1m..`
@@ -417,7 +440,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 13. 수학(개념 리마인드)
+## 수학(개념 리마인드)
 
 - **응답시간 분해**
   $$ T_{\text{elapsed}} = T_{\text{CPU}} + \sum_k T_{\text{wait}_k} $$
@@ -428,7 +451,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## 14. 결론
+## 결론
 
 - **Statspack/AWR**는 **시계열 성능 DNA**를 남기는 표준 도구다.
 - 리포트는 **Top Events → Top SQL → Plan 라인 → 세그먼트/I/O** 순서로 읽는다.

@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Volume, PersistentVolume, PersistentVolumeClaim(PVC)
 
-## 0. 큰 그림: 저장소 계층도
+## 큰 그림: 저장소 계층도
 
 ```
 [Pod]
@@ -20,9 +20,9 @@ category: Kubernetes
 
 ---
 
-## 1. Volume 기초와 유형
+## Volume 기초와 유형
 
-### 1.1 주요 볼륨 타입(요약)
+### 주요 볼륨 타입(요약)
 
 | 타입 | 특성 | 사용 예 |
 |---|---|---|
@@ -37,9 +37,10 @@ category: Kubernetes
 
 ---
 
-## 2. PersistentVolume(PV)와 PersistentVolumeClaim(PVC)
+## PersistentVolume(PV)와 PersistentVolumeClaim(PVC)
 
-### 2.1 개념
+### 개념
+
 - **PV**: 클러스터 관점의 **실제 스토리지 단위**(관리자/프로비저너가 생성)
 - **PVC**: 개발자/배포자가 요구하는 **스토리지 요청서** (크기/모드/클래스)
 
@@ -47,7 +48,8 @@ category: Kubernetes
 Pod ──(volumeMounts)──> PVC ──(바인딩)──> PV ──> 물리 스토리지/CSI 드라이버
 ```
 
-### 2.2 PV 예시(수동 프로비저닝, 데모용 hostPath)
+### PV 예시(수동 프로비저닝, 데모용 hostPath)
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -63,7 +65,8 @@ spec:
     path: "/mnt/data"
 ```
 
-### 2.3 PVC 예시
+### PVC 예시
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -76,7 +79,8 @@ spec:
       storage: 500Mi
 ```
 
-### 2.4 Pod에서 PVC 사용
+### Pod에서 PVC 사용
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -97,9 +101,10 @@ spec:
 
 ---
 
-## 3. AccessMode, VolumeMode, ReclaimPolicy
+## AccessMode, VolumeMode, ReclaimPolicy
 
-### 3.1 AccessMode
+### AccessMode
+
 | 모드 | 의미 | 예 |
 |---|---|---|
 | `RWO` | 단일 **노드**에서 Read/Write | EBS/AzureDisk/GCE PD 기본 |
@@ -108,7 +113,8 @@ spec:
 
 > 멀티 Pod가 **동일 데이터를 동시에 RW**해야 하면 **RWX**가 필요. 클라우드 블록디스크는 보통 **RWO** 제한이므로 **공유 파일시스템(CSI)**이 대안.
 
-### 3.2 VolumeMode
+### VolumeMode
+
 - `Filesystem`: 일반 마운트(대부분 기본)
 - `Block`: **원시 블록 디바이스**로 노출(데이터베이스/특수 워크로드 튜닝용)
 
@@ -117,7 +123,8 @@ spec:
   volumeMode: Block
 ```
 
-### 3.3 ReclaimPolicy
+### ReclaimPolicy
+
 | 값 | 동작 |
 |---|---|
 | `Retain` | PVC 삭제해도 PV/데이터 유지(수동 정리) |
@@ -128,9 +135,10 @@ spec:
 
 ---
 
-## 4. StorageClass와 동적 프로비저닝(Dynamic Provisioning)
+## StorageClass와 동적 프로비저닝(Dynamic Provisioning)
 
-### 4.1 StorageClass 정의
+### StorageClass 정의
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -151,7 +159,8 @@ volumeBindingMode: WaitForFirstConsumer
 - `allowVolumeExpansion`: PVC **확장** 허용
 - `volumeBindingMode`: `Immediate` vs `WaitForFirstConsumer`(**토폴로지** 결정 후 디스크 생성 → 스케줄 실패 예방)
 
-### 4.2 PVC에서 StorageClass 사용
+### PVC에서 StorageClass 사용
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -168,7 +177,7 @@ spec:
 
 ---
 
-## 5. StatefulSet + volumeClaimTemplates 패턴
+## StatefulSet + volumeClaimTemplates 패턴
 
 **Pod N개 각각** 고유 디스크를 가지려면 StatefulSet을 사용한다.
 
@@ -206,9 +215,10 @@ spec:
 
 ---
 
-## 6. 데이터 초기화/마이그레이션: initContainer + subPath
+## 데이터 초기화/마이그레이션: initContainer + subPath
 
-### 6.1 초기 데이터 투입
+### 초기 데이터 투입
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -234,7 +244,8 @@ spec:
       claimName: my-pvc
 ```
 
-### 6.2 디렉터리 매핑: `subPath`
+### 디렉터리 매핑: `subPath`
+
 ```yaml
 volumeMounts:
 - name: data
@@ -245,9 +256,10 @@ volumeMounts:
 
 ---
 
-## 7. 보안·권한: fsGroup, SELinux, readOnlyRootFilesystem
+## 보안·권한: fsGroup, SELinux, readOnlyRootFilesystem
 
-### 7.1 Pod 보안 컨텍스트
+### Pod 보안 컨텍스트
+
 ```yaml
 spec:
   securityContext:
@@ -257,7 +269,8 @@ spec:
 - 마운트된 볼륨의 파일 소유권을 `fsGroup`으로 조정
 - `OnRootMismatch`: 루트 소유만 변경해 **지연 최소화**
 
-### 7.2 컨테이너 보안 컨텍스트
+### 컨테이너 보안 컨텍스트
+
 ```yaml
 containers:
 - name: app
@@ -267,7 +280,8 @@ containers:
     readOnlyRootFilesystem: true
 ```
 
-### 7.3 SELinux(사용 배포판 한정)
+### SELinux(사용 배포판 한정)
+
 ```yaml
 securityContext:
   seLinuxOptions:
@@ -278,9 +292,10 @@ securityContext:
 
 ---
 
-## 8. 성능 튜닝: mountOptions, fsType, atime, 블록 모드
+## 성능 튜닝: mountOptions, fsType, atime, 블록 모드
 
-### 8.1 StorageClass 또는 PV에 마운트 옵션
+### StorageClass 또는 PV에 마운트 옵션
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -297,7 +312,8 @@ mountOptions:
 - `noatime`: 읽기 접근시 atime 미갱신 → 메타데이터 IO 감소
 - `xfs`는 대용량/병렬 IO에 유리한 경우가 많다(워크로드/벤치마크 필수)
 
-### 8.2 PVC 확장(online resize)
+### PVC 확장(online resize)
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -312,12 +328,14 @@ spec:
 
 ---
 
-## 9. 스냅샷 & 복구(CSI VolumeSnapshot)
+## 스냅샷 & 복구(CSI VolumeSnapshot)
 
-### 9.1 CRD 설치(클러스터당 1회, 배포별 번들 사용 권장)
+### CRD 설치(클러스터당 1회, 배포별 번들 사용 권장)
+
 - `VolumeSnapshotClass`, `VolumeSnapshot`, `VolumeSnapshotContent`
 
-### 9.2 스냅샷 클래스
+### 스냅샷 클래스
+
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
@@ -326,7 +344,8 @@ driver: ebs.csi.aws.com
 deletionPolicy: Delete
 ```
 
-### 9.3 스냅샷 생성
+### 스냅샷 생성
+
 ```yaml
 apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshot
@@ -337,7 +356,8 @@ spec:
   volumeSnapshotClassName: csi-snapclass
 ```
 
-### 9.4 스냅샷으로 PVC 복원
+### 스냅샷으로 PVC 복원
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -357,7 +377,7 @@ spec:
 
 ---
 
-## 10. 토폴로지/스케줄링: `WaitForFirstConsumer`와 가용영역
+## 토폴로지/스케줄링: `WaitForFirstConsumer`와 가용영역
 
 - 블록 디스크는 **특정 AZ/Zone에 귀속**된다.
 - `volumeBindingMode: WaitForFirstConsumer`를 사용하면 **Pod가 스케줄될 노드의 AZ**를 보고 그곳에 볼륨을 생성 → **스케줄 실패** 줄임.
@@ -372,7 +392,7 @@ allowedTopologies:
 
 ---
 
-## 11. RWX(공유 쓰기) 패턴 옵션
+## RWX(공유 쓰기) 패턴 옵션
 
 | 선택지 | 특성 | 주의 |
 |---|---|---|
@@ -384,7 +404,7 @@ allowedTopologies:
 
 ---
 
-## 12. 용량 계획(간단)
+## 용량 계획(간단)
 
 초기 용량 $$C_0$$, 연평균 증가율 $$g$$, 기간 $$t$$(년)일 때 최소 용량:
 $$
@@ -394,31 +414,36 @@ $$
 
 ---
 
-## 13. 운영 명령 치트시트
+## 운영 명령 치트시트
 
 ```bash
 # PV/PVC 현황
+
 kubectl get pv
 kubectl get pvc -A
 
 # 상세 상태
+
 kubectl describe pvc <name>
 kubectl describe pv <name>
 
 # 스토리지 클래스
+
 kubectl get sc
 kubectl describe sc <name>
 
 # PVC ↔ Pod 매핑
+
 kubectl get pod -A -o=jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{range .spec.volumes[*]}{.persistentVolumeClaim.claimName}{" "}{end}{"\n"}{end}' | column -t
 
 # 파일시스템 타입 확인(노드 내부)
+
 mount | grep kubelet
 ```
 
 ---
 
-## 14. 장애·트러블슈팅 가이드
+## 장애·트러블슈팅 가이드
 
 | 증상 | 원인 | 조치 |
 |---|---|---|
@@ -435,9 +460,10 @@ mount | grep kubelet
 
 ---
 
-## 15. 예제 모음
+## 예제 모음
 
-### 15.1 Nginx + PV/PVC(수동)
+### Nginx + PV/PVC(수동)
+
 ```yaml
 apiVersion: v1
 kind: PersistentVolume
@@ -471,7 +497,8 @@ spec:
     persistentVolumeClaim: { claimName: my-pvc }
 ```
 
-### 15.2 동적 프로비저닝 + RWX(EFS 예시, 개념용)
+### 동적 프로비저닝 + RWX(EFS 예시, 개념용)
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -496,7 +523,8 @@ spec:
   resources: { requests: { storage: 20Gi } }
 ```
 
-### 15.3 StatefulSet DB(블록 모드, XFS 예시)
+### StatefulSet DB(블록 모드, XFS 예시)
+
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -538,7 +566,7 @@ spec:
 
 ---
 
-## 16. 멀티테넌시/거버넌스
+## 멀티테넌시/거버넌스
 
 - **네임스페이스별 ResourceQuota**로 **스토리지 총량 제한**:
 ```yaml
@@ -557,7 +585,7 @@ spec:
 
 ---
 
-## 17. 베스트 프랙티스 요약
+## 베스트 프랙티스 요약
 
 1. **데이터 특성→스토리지 매핑**(RWO vs RWX, 블록 vs 파일, IOPS/지연)
 2. **WaitForFirstConsumer**로 AZ 스케줄 실패 방지
@@ -572,7 +600,7 @@ spec:
 
 ---
 
-## 18. 현업 체크리스트
+## 현업 체크리스트
 
 - [ ] 워크로드 I/O 패턴(랜덤/순차, R/W 비율, 파일 크기) 파악
 - [ ] AccessMode 요구사항 정리(RWO/RWX/ROX)
@@ -584,7 +612,7 @@ spec:
 
 ---
 
-## 19. 결론
+## 결론
 
 - **PV/PVC/StorageClass/CSI**는 Kubernetes 저장소의 **표준 추상화**이며, 올바른 설계로 **데이터 일관성과 민첩성**을 모두 얻을 수 있다.
 - **AccessMode/VolumeMode/ReclaimPolicy/BindingMode/Topology**를 이해하면 **스케줄 실패·권한·성능** 문제를 사전에 방지할 수 있다.
@@ -594,6 +622,7 @@ spec:
 ---
 ```bash
 # 빠른 실습(요약)
+
 kubectl get sc,pv,pvc
 kubectl describe pvc <pvc>
 kubectl apply -f your-pv-pvc-and-pod.yaml

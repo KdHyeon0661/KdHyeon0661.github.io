@@ -4,7 +4,7 @@ title: Spring - API 설계
 date: 2025-10-16 14:25:23 +0900
 category: Spring
 ---
-# 6. API 설계 실전 — REST 설계 가이드, HATEOAS/문서화, 파일 업·다운로드/대용량 스트리밍
+# API 설계 실전 — REST 설계 가이드, HATEOAS/문서화, 파일 업·다운로드/대용량 스트리밍
 
 > 목표: 실무에서 **예측 가능하고 확장 가능한 HTTP API**를 설계/구현/문서화하고, **대용량 파일 전송**까지 안전하게 다루는 방법을 예제로 정리한다.
 > 환경 가정: Spring Boot 3.3+, Java 21, Spring Web MVC, springdoc-openapi 또는 Spring REST Docs, JPA(Optional), S3/로컬 스토리지.
@@ -537,6 +537,7 @@ public SseEmitter live() {
 ## F. 보안/성능/운영 실무 체크리스트
 
 ### F-1. 보안
+
 - 인증/인가: Spring Security + JWT/OAuth2
 - 입력 검증: Bean Validation + JSON strict 모드(`FAIL_ON_UNKNOWN_PROPERTIES=true`)
 - CORS: Origin 화이트리스트 + 자격증명 쿠키 전략
@@ -545,6 +546,7 @@ public SseEmitter live() {
 - 민감 데이터 마스킹(로그/에러)
 
 ### F-2. 성능
+
 - 압축: `server.compression.enabled=true` (큰 JSON/CSV)
 - 페이징 상한: `maxSize` 정책(예: 100)
 - DTO 프로젝션: 필요한 필드만
@@ -552,6 +554,7 @@ public SseEmitter live() {
 - DB N+1 차단: fetch join/배치 페치
 
 ### F-3. 관측성
+
 - **요청 ID(MDC)** 주입 + 로깅 포맷 JSON
 - Actuator: `/actuator/health`, `/actuator/metrics`, `/actuator/httptrace`(대체는 Micrometer)
 - 분산 트레이싱: OpenTelemetry → traceId를 응답 헤더로 노출(예: `X-Trace-Id`)
@@ -561,6 +564,7 @@ public SseEmitter live() {
 ## G. 끝에서 끝까지 예시 — “파일 + 주문” API 스니펫 모음
 
 ### G-1. Idempotency-Key로 멱등 POST
+
 ```java
 @PostMapping("/payments")
 public ResponseEntity<?> pay(@RequestHeader("Idempotency-Key") String key,
@@ -574,6 +578,7 @@ public ResponseEntity<?> pay(@RequestHeader("Idempotency-Key") String key,
 ```
 
 ### G-2. 조건부 업데이트(If-Match)
+
 ```java
 @PutMapping("/products/{id}")
 public ResponseEntity<ProductView> replace(@PathVariable long id,
@@ -585,6 +590,7 @@ public ResponseEntity<ProductView> replace(@PathVariable long id,
 ```
 
 ### G-3. 문제 응답(Problem+JSON) 샘플
+
 ```json
 {
   "type": "about:blank",

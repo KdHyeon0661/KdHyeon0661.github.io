@@ -6,7 +6,7 @@ category: Cpp
 ---
 # 문자열(string)
 
-## 0. 개요 — 오늘날 문자열은 무엇으로 다루나?
+## 개요 — 오늘날 문자열은 무엇으로 다루나?
 
 - 과거: `char*`, `char[]`, `std::strlen/std::strcpy` 등 **C-스타일 문자열**
 - 현재: **`std::string`(가변/소유)**, **`std::string_view`(비소유/뷰)** 중심
@@ -20,13 +20,14 @@ category: Cpp
 
 ---
 
-## 1. `std::string` 기초
+## `std::string` 기초
 
-### 1.1 기본 사용
+### 기본 사용
 
 ```cpp
 #include <string>
 #include <iostream>
+
 int main() {
     std::string s = "Hello";
     s += " World";
@@ -34,7 +35,7 @@ int main() {
 }
 ```
 
-### 1.2 길이/비어 있음/접근
+### 길이/비어 있음/접근
 
 ```cpp
 std::string s = "abcdef";
@@ -44,7 +45,7 @@ char c0 = s[0];            // 경계 검사 없음 (UB 위험)
 char c1 = s.at(1);         // 경계 검사, 예외 발생 가능
 ```
 
-### 1.3 부분 문자열/탐색/치환
+### 부분 문자열/탐색/치환
 
 ```cpp
 std::string s = "abcdef";
@@ -64,7 +65,7 @@ if (pos != std::string::npos) {
 
 ---
 
-## 2. 삽입/삭제/변형 — 안전·성능 팁 포함
+## 삽입/삭제/변형 — 안전·성능 팁 포함
 
 ```cpp
 std::string s = "hello world";
@@ -86,7 +87,7 @@ for (...) { out += piece; }
 
 ---
 
-## 3. 비교/정렬/사전식
+## 비교/정렬/사전식
 
 ```cpp
 std::string a = "abc", b = "abd";
@@ -98,9 +99,9 @@ bool eq = (a == b);   // 사전식 비교 지원(==, !=, <, >, <=, >=)
 
 ---
 
-## 4. 숫자 ↔ 문자열 변환
+## 숫자 ↔ 문자열 변환
 
-### 4.1 쉬운 방법 (예외 기반)
+### 쉬운 방법 (예외 기반)
 
 ```cpp
 std::string s = std::to_string(42); // "42"
@@ -111,7 +112,7 @@ double d = std::stod("3.14");       // 3.14
 - `stoi/stol/stoll/stof/stod/stold`는 **예외**(invalid_argument, out_of_range)를 던진다.
 - 부분 파싱 규칙: `"123abc"` → 123 까지 읽고 멈춤(뒤에 문자가 있어도 일부 구현에선 예외 없이 파싱됨).
 
-### 4.2 고성능/비예외 `<charconv>` (C++17)
+### 고성능/비예외 `<charconv>` (C++17)
 
 ```cpp
 #include <charconv>
@@ -135,7 +136,7 @@ std::string s(buf, ptr2);
 
 ---
 
-## 5. 입력/출력/라인 처리
+## 입력/출력/라인 처리
 
 ```cpp
 #include <iostream>
@@ -152,9 +153,9 @@ int main() {
 
 ---
 
-## 6. 토큰화/스플릿(표준 유틸 부재 → 직접 구현)
+## 토큰화/스플릿(표준 유틸 부재 → 직접 구현)
 
-### 6.1 공백 기준
+### 공백 기준
 
 ```cpp
 #include <sstream>
@@ -169,7 +170,7 @@ std::vector<std::string> split_ws(const std::string& s) {
 }
 ```
 
-### 6.2 구분자 기준 (단일 문자)
+### 구분자 기준 (단일 문자)
 
 ```cpp
 #include <string_view>
@@ -196,7 +197,7 @@ std::vector<std::string_view> split_sv(std::string_view s, char delim) {
 
 ---
 
-## 7. `std::string_view` — 비소유 뷰(매우 중요)
+## `std::string_view` — 비소유 뷰(매우 중요)
 
 - “문자열 데이터를 **복사하지 않고** 바라보기” 위한 **얇은 포인터+길이** 뷰.
 - 소유가 없으므로 **댕글링** 위험: 원본이 소멸/재배치되면 **모든 view 무효**.
@@ -223,7 +224,7 @@ int main() {
 
 ---
 
-## 8. C 문자열과 상호운용
+## C 문자열과 상호운용
 
 - C API 호출 시 `c_str()` 사용:
 
@@ -239,7 +240,7 @@ c_api(s.c_str()); // NUL-terminated 보장
 
 ---
 
-## 9. 문자열 리터럴 — 인코딩·접두/접미사
+## 문자열 리터럴 — 인코딩·접두/접미사
 
 | 리터럴 예 | 의미 |
 |---|---|
@@ -262,7 +263,7 @@ auto u8 = u8"안녕";       // UTF-8 (char8_t[])
 
 ---
 
-## 10. 인코딩/로케일/대소문자 변환
+## 인코딩/로케일/대소문자 변환
 
 - `std::toupper`/`std::tolower`는 **단순 ASCII 가정**시 안전. 유니코드 전반 처리엔 부정확.
 - **정말로 국제화가 필요**하면 ICU, Boost.Text 등 전문 라이브러리 고려.
@@ -279,9 +280,9 @@ void to_upper_ascii(std::string& s) {
 
 ---
 
-## 11. 고급 기능: `<format>`(C++20), `<regex>`
+## 고급 기능: `<format>`(C++20), `<regex>`
 
-### 11.1 현대적 포맷팅
+### 현대적 포맷팅
 
 ```cpp
 #include <format>
@@ -298,7 +299,7 @@ int main() {
 - 타입 안전, `printf`보다 가독성 우수.
 - 지역화/유니코드 폭 처리 등은 구현에 따라 다름.
 
-### 11.2 정규식
+### 정규식
 
 ```cpp
 #include <regex>
@@ -320,12 +321,13 @@ int main() {
 
 ---
 
-## 12. 파일시스템/경로와 문자열
+## 파일시스템/경로와 문자열
 
 ```cpp
 #include <filesystem>
 #include <string>
 #include <iostream>
+
 namespace fs = std::filesystem;
 
 int main(){
@@ -341,7 +343,7 @@ int main(){
 
 ---
 
-## 13. 성능·메모리 — SSO/연결/빌더 패턴
+## 성능·메모리 — SSO/연결/빌더 패턴
 
 - **SSO(Small String Optimization)**: 짧은 문자열을 **동적 할당 없이** 내부 버퍼에 저장(크기와 정책은 **구현 의존적**).
 - **여러 조각을 반복해서 연결**할 땐:
@@ -359,7 +361,7 @@ for (const auto& piece : pieces) out += piece;
 
 ---
 
-## 14. 안전(수명) 체크리스트 — 댕글링/무효화/참조
+## 안전(수명) 체크리스트 — 댕글링/무효화/참조
 
 - [ ] **string_view 보관 금지**(원본 재할당·소멸 시 치명적)
 - [ ] `std::string`에 `push_back`/`append`로 재할당되면 **이전의 `char*`/참조/이터레이터 무효화**
@@ -369,9 +371,9 @@ for (const auto& piece : pieces) out += piece;
 
 ---
 
-## 15. 예제 모음 — 실전 패턴
+## 예제 모음 — 실전 패턴
 
-### 15.1 안전한 찾기/치환 유틸
+### 안전한 찾기/치환 유틸
 
 ```cpp
 #include <string>
@@ -384,7 +386,7 @@ bool replace_first(std::string& s, std::string_view from, std::string_view to) {
 }
 ```
 
-### 15.2 트림(trim) — 공백 제거
+### 트림(trim) — 공백 제거
 
 ```cpp
 #include <string>
@@ -401,7 +403,7 @@ std::string trim(std::string s) {
 }
 ```
 
-### 15.3 조인(join) — 간단 구현
+### 조인(join) — 간단 구현
 
 ```cpp
 #include <string>
@@ -421,7 +423,7 @@ std::string join(const std::vector<std::string>& v, std::string_view sep){
 }
 ```
 
-### 15.4 빠른 수치 파싱 — 부분 실패 감지
+### 빠른 수치 파싱 — 부분 실패 감지
 
 ```cpp
 #include <charconv>
@@ -437,7 +439,7 @@ std::optional<int> parse_int(std::string_view s){
 }
 ```
 
-### 15.5 CSV 라인 파서(간단, 따옴표 미해결 버전)
+### CSV 라인 파서(간단, 따옴표 미해결 버전)
 
 ```cpp
 #include <string>
@@ -460,7 +462,7 @@ std::vector<std::string_view> split_csv(std::string_view s){
 
 ---
 
-## 16. 해시/키 조회 — `unordered_map`과 이종 조회
+## 해시/키 조회 — `unordered_map`과 이종 조회
 
 - `unordered_map<std::string, V>`에서 **키 조회 시 임시 `std::string` 생성** 비용 회피를 위해
   “투명(transparent) 비교/해시”를 구성하면 `std::string_view`로 바로 조회 가능.
@@ -492,7 +494,7 @@ int main(){
 
 ---
 
-## 17. 테스트/디버깅 팁
+## 테스트/디버깅 팁
 
 - **가시화**: 길이/코드포인트/헥사덤프 유틸 준비
 - **경계**: 빈 문자열, 매우 긴 문자열, NUL 포함, 유니코드 결합 문자
@@ -501,7 +503,7 @@ int main(){
 
 ---
 
-## 18. 작은 종합 예제 — 로그 라인 파서(UTF-8 가정)
+## 작은 종합 예제 — 로그 라인 파서(UTF-8 가정)
 
 > 요구: `"LEVEL ts=... msg=... user=..."` 형식에서 `level/msg/user`를 추출.
 > 제약: **복사 최소화**(string_view), **안전한 실패**(optional), **트림**.
@@ -558,7 +560,7 @@ int main(){
 
 ---
 
-## 19. 요약 체크리스트
+## 요약 체크리스트
 
 - [ ] **소유**: `std::string` / **비소유**: `std::string_view`
 - [ ] **성능**: 반복 연결은 `reserve` + `append`; 파싱은 `<charconv>` 우선

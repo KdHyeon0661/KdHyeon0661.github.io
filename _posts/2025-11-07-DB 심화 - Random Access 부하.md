@@ -5,6 +5,7 @@ date: 2025-11-07 17:25:23 +0900
 category: DB 심화
 ---
 # 테이블 **Random Access** 부하 완전 정복
+
 — `TABLE ACCESS BY INDEX ROWID`가 왜 느려지는지, **db file sequential read**를 어떻게 줄이는지, 실전 튜닝 시나리오/스크립트까지
 
 > 목표: 인덱스로 ROWID를 얻은 뒤 **Heap 테이블**을 “톡톡” 찌르는 **랜덤 I/O**가 커지면 왜 전체 성능이 무너지는지,
@@ -12,7 +13,7 @@ category: DB 심화
 
 ---
 
-## 0. 실습 스키마 준비
+## 실습 스키마 준비
 
 ```sql
 -- 깨끗이
@@ -61,7 +62,7 @@ ALTER SESSION SET statistics_level = ALL; -- 수행통계 확인용
 
 ---
 
-# 1. 개념: “**랜덤** vs **순차** I/O”
+# 개념: “**랜덤** vs **순차** I/O”
 
 - **Table Random Access** = 인덱스 Leaf에서 얻은 **ROWID**로 테이블 **임의 블록**을 “툭툭” 찍는 것.
   - 실행계획 오퍼레이터: `TABLE ACCESS BY INDEX ROWID [BATCHED]`
@@ -76,7 +77,7 @@ ALTER SESSION SET statistics_level = ALL; -- 수행통계 확인용
 
 ---
 
-# 2. 증상과 지표: 무엇을 보면 랜덤 부하라고 확신할 수 있나?
+# 증상과 지표: 무엇을 보면 랜덤 부하라고 확신할 수 있나?
 
 - AWR/ASH/Statspack에서 **Top Events**가 `db file sequential read` 우세.
 - SQL 실행계획에 **`TABLE ACCESS BY INDEX ROWID`** 반복, `Buffers/Reads`가 높음.
@@ -100,7 +101,7 @@ ORDER BY name;
 
 ---
 
-# 3. 데모 ①: 범위는 작지만 **테이블 랜덤**이 누적되는 케이스
+# 데모 ①: 범위는 작지만 **테이블 랜덤**이 누적되는 케이스
 
 ```sql
 -- 고객 12345의 최근 90일 주문 목록
@@ -122,7 +123,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 4. 데모 ②: **Nested Loops**로 **랜덤 폭탄**
+# 데모 ②: **Nested Loops**로 **랜덤 폭탄**
 
 ```sql
 -- 고객 Master와 주문을 NL 조인 (많은 고객을 선택하는 상황 가정)
@@ -149,9 +150,10 @@ AND    d.order_dt >= DATE '2024-09-01';
 
 ---
 
-# 5. 원인 별 해법 총정리
+# 원인 별 해법 총정리
 
-## 5.1 **테이블 방문 자체를 없애기** — 커버링/Index-Only/INDEX JOIN
+## **테이블 방문 자체를 없애기** — 커버링/Index-Only/INDEX JOIN
+
 - **커버링 인덱스**: SELECT-LIST 컬럼을 인덱스에 포함 → 테이블 미방문.
 - **INDEX JOIN**: 둘 이상의 인덱스에서 필요한 컬럼을 모아 테이블을 대체.
 
@@ -181,7 +183,7 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 5.2 **Random → 순차화** — **Clustering Factor** 개선(물리 재배치)
+## **Random → 순차화** — **Clustering Factor** 개선(물리 재배치)
 
 - **CF(Cluster Factor)**가 나쁠수록 인덱스 순서대로 읽을 때 테이블 블록 **재사용이 적다**.
 - 해법: **인덱스 키 순서**로 테이블을 **재적재(CTAS)** 후 인덱스 재생성.
@@ -210,7 +212,7 @@ END;
 
 ---
 
-## 5.3 **Batched Rowid** — “조금 모았다가” 접근
+## **Batched Rowid** — “조금 모았다가” 접근
 
 - Oracle은 상황에 따라 `TABLE ACCESS BY INDEX ROWID **BATCHED**`를 사용,
   **ROWID를 모아** I/O를 **줄 맞춰** 던지며 랜덤성을 완화.
@@ -225,7 +227,7 @@ TABLE ACCESS BY INDEX ROWID BATCHED RA_DEMO
 
 ---
 
-## 5.4 **조인 전략 전환** — NL → HASH, 혹은 **Bloom Filter** 활용
+## **조인 전략 전환** — NL → HASH, 혹은 **Bloom Filter** 활용
 
 - 선택도가 낮아 **내부 테이블**을 많이 건드리면 **NL**은 랜덤 I/O 폭탄.
 - **Hash Join**으로 전환해 **대량 스캔 + 해시**로 풀면 랜덤 점프를 순차화.
@@ -245,7 +247,7 @@ AND    d.order_dt >= DATE '2024-09-01';
 
 ---
 
-## 5.5 **Keyset Paging / Stopkey** — “앞부분만 읽고 끝내기”
+## **Keyset Paging / Stopkey** — “앞부분만 읽고 끝내기”
 
 - OFFSET 페이징은 앞쪽을 **버리기 위해** 불필요하게 많이 읽는다(랜덤 I/O 누적).
 - **Keyset Paging**으로 **마지막 키**를 기억해 이어서 읽는다.
@@ -272,7 +274,7 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 5.6 **Partitioning / Pruning** — “읽을 영역 자체를 쪼개기”
+## **Partitioning / Pruning** — “읽을 영역 자체를 쪼개기”
 
 - Range 혹은 Hash Partition으로 **물리 데이터를 작게 분할**,
   파티션 조건으로 **불필요한 구역 건드리지 않게**.
@@ -286,7 +288,7 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 5.7 **IOT/Cluster/Heap 대안** — 저장 구조 자체 바꾸기
+## **IOT/Cluster/Heap 대안** — 저장 구조 자체 바꾸기
 
 - **IOT(Index-Organized Table)**: PK 순서로 **테이블 자체가 인덱스 구조**. PK 기반 조회는 **랜덤 없음**.
   - 단, **넓은 로우/비PK 액세스**가 많은 경우 불리.
@@ -295,7 +297,7 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 5.8 **결과/함수 캐시** — “아예 읽지 않게”
+## **결과/함수 캐시** — “아예 읽지 않게”
 
 - **SQL Result Cache / PL/SQL RESULT_CACHE** / **Materialized View** / **어플리케이션 캐시**
 - 동일 질의 반복이면 “읽지 않는 게 최고”다.
@@ -303,7 +305,7 @@ FETCH FIRST 50 ROWS ONLY;
 
 ---
 
-## 5.9 **프리패치/Array Fetch/배치** — 콜/왕복 최소화
+## **프리패치/Array Fetch/배치** — 콜/왕복 최소화
 
 - 드라이버에서 **Fetch Size**(e.g., `arraysize`)를 키워 **네트워크 왕복** 감소.
 - **Array DML**(배치 삽입/갱신)은 랜덤 I/O와는 별개지만 **DB Call** 회수를 줄여 전체 체감 성능 개선.
@@ -323,7 +325,7 @@ rows = cur.fetchall()
 
 ---
 
-# 6. 데모 ③: CTAS로 **CF 개선** 전/후 비교
+# 데모 ③: CTAS로 **CF 개선** 전/후 비교
 
 ```sql
 -- BEFORE
@@ -341,7 +343,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 7. 데모 ④: 조인 전략 전환 효과
+# 데모 ④: 조인 전략 전환 효과
 
 ```sql
 -- NL (랜덤 폭탄 가능)
@@ -365,7 +367,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 8. 운영 현장에서의 **원인→해법** 매핑
+# 운영 현장에서의 **원인→해법** 매핑
 
 | 증상/원인 | 설명 | 해법(우선순) |
 |---|---|---|
@@ -380,7 +382,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 9. RAC/스토리지/버퍼캐시 관점 한 줄 요약
+# RAC/스토리지/버퍼캐시 관점 한 줄 요약
 
 - **RAC**: 같은 블록을 여러 인스턴스가 번갈아 랜덤으로 잡으면 **캐시 퓨전** 교통량 증가. 파티셔닝/서비스 로컬리티로 **데이터/워크로드 분리**.
 - **스토리지**: NVMe/Flash에서도 **랜덤은 여전히 비싸다**(큐잉/락/왕복). IOPS/큐뎁스를 고려.
@@ -388,7 +390,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ---
 
-# 10. 최종 체크리스트
+# 최종 체크리스트
 
 - [ ] 실행계획에 `TABLE ACCESS BY INDEX ROWID`가 과도한가? `Buffers/Reads` 수치 확인
 - [ ] 커버링 인덱스/INDEX JOIN으로 **테이블 미방문**화 가능한가?

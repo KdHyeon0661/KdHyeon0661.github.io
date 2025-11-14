@@ -4,19 +4,22 @@ title: 시스템보안 - 실습(Volatility로 프로세스/네트워크/드라�
 date: 2025-10-26 22:30:23 +0900
 category: 시스템보안
 ---
-# 11.3 실습: Volatility로 프로세스/네트워크/드라이버 아티팩트 복원
+# 실습: Volatility로 프로세스/네트워크/드라이버 아티팩트 복원
 
-## 11.3.1 준비 — 덤프 취득과 증거 보전(Checklist)
+## 준비 — 덤프 취득과 증거 보전(Checklist)
 
 **Windows (권장: WinPmem/Raw)**
 ```powershell
 # 도구 해시로 검증
+
 Get-FileHash .\winpmem.exe -Algorithm SHA256
 
 # RAW 메모리 덤프 (외장 저장소 권장)
+
 .\winpmem.exe --format raw --output E:\evidence\WS-001_2025-11-01.raw
 
 # 해시 산출(보전)
+
 Get-FileHash E:\evidence\WS-001_2025-11-01.raw -Algorithm SHA256 |
   Out-File E:\evidence\WS-001_2025-11-01.raw.sha256.txt
 ```
@@ -33,7 +36,7 @@ sha256sum /mnt/usb/LIN-01_2025-11-01.lime > /mnt/usb/LIN-01_2025-11-01.lime.sha2
 
 ---
 
-## 11.3.2 Volatility 3 빠른 길라잡이 (Windows 중심)
+## Volatility 3 빠른 길라잡이 (Windows 중심)
 
 > 표준 명령 패턴: `vol -f <dump> <plugin> [옵션]`
 > 심볼 자동 다운로드가 어려우면 `--offline` 대신 심볼 캐시 준비.
@@ -42,15 +45,18 @@ sha256sum /mnt/usb/LIN-01_2025-11-01.lime > /mnt/usb/LIN-01_2025-11-01.lime.sha2
 
 ```bash
 # 핵심 인덱스
+
 vol -f WS-001.raw windows.info
 vol -f WS-001.raw windows.pslist
 vol -f WS-001.raw windows.pstree
 
 # 명령줄/환경
+
 vol -f WS-001.raw windows.cmdline  | head -n 30
 vol -f WS-001.raw windows.environ  --pid <PID> | head -n 50
 
 # 의심 프로세스 휴리스틱(예: 부모-자식 이상/위치 불일치)
+
 vol -f WS-001.raw windows.psscan | grep -i "powershell\|wscript\|rundll32\|mshta"
 ```
 
@@ -63,11 +69,14 @@ vol -f WS-001.raw windows.psscan | grep -i "powershell\|wscript\|rundll32\|mshta
 
 ```bash
 # 프로세스 모듈 목록(로드 타임·경로·InMemory)
+
 vol -f WS-001.raw windows.dlllist --pid <PID> | head -n 60
 
 # 메모리 내 의심 영역(코드 인젝션/Reflective Load 후보), 덤프까지
+
 vol -f WS-001.raw windows.malfind --pid <PID> --dump
 # 덤프 산출물은 ./dump/ 하위 → 해시/AV/YARA로 정적 스캔
+
 ```
 
 **YARA (기본 IOC 예)**
@@ -85,9 +94,11 @@ rule Suspicious_PowerShell_EncodedCommand {
 
 ```bash
 # 프로세스 핸들(파일/Mutant/Key/Section) — 잠금/은닉 힌트
+
 vol -f WS-001.raw windows.handles --pid <PID> | head -n 80
 
 # SID/토큰/권한(권한 상승 흔적)
+
 vol -f WS-001.raw windows.getsids --pid <PID> | head -n 40
 ```
 
@@ -95,9 +106,11 @@ vol -f WS-001.raw windows.getsids --pid <PID> | head -n 40
 
 ```bash
 # TCP/UDP (지원 OS/빌드에 따라 플러그인 가용성 상이)
+
 vol -f WS-001.raw windows.netstat
 
 # 소켓 소유 프로세스 상관
+
 vol -f WS-001.raw windows.netscan | grep -i ESTAB | head -n 30
 ```
 
@@ -109,10 +122,12 @@ vol -f WS-001.raw windows.netscan | grep -i ESTAB | head -n 30
 
 ```bash
 # 로드된 드라이버/이미지
+
 vol -f WS-001.raw windows.driverscan | head -n 40
 vol -f WS-001.raw windows.driverirp | head -n 60
 
 # SSDT/콜백(지원 빌드): 커널 후킹 관측(변경 금지, '유무' 확인용)
+
 vol -f WS-001.raw windows.ssdt | head -n 30
 vol -f WS-001.raw windows.devicetree | head -n 50
 ```
@@ -124,10 +139,11 @@ vol -f WS-001.raw windows.devicetree | head -n 50
 
 ---
 
-## 11.3.3 Linux 메모리(개요)
+## Linux 메모리(개요)
 
 ```bash
 # pslist/psscan 유사
+
 vol -f LIN-01_2025-11-01.lime linux.pslist
 vol -f LIN-01_2025-11-01.lime linux.netstat
 vol -f LIN-01_2025-11-01.lime linux.lsmod
@@ -141,7 +157,7 @@ vol -f LIN-01_2025-11-01.lime linux.bash | head -n 40
 
 ---
 
-## 11.3.4 미니 케이스 — “다운로드 실행 의심” 복원 시나리오
+## 미니 케이스 — “다운로드 실행 의심” 복원 시나리오
 
 **상황**
 - 17:43 KST: `powershell.exe` 통한 외부 443 연결 경보
@@ -150,17 +166,22 @@ vol -f LIN-01_2025-11-01.lime linux.bash | head -n 40
 **절차 요약**
 ```bash
 # 실행 트리
+
 vol -f WS-001.raw windows.pstree | grep -i powershell -n
 
 # 명령줄
+
 vol -f WS-001.raw windows.cmdline | grep -i powershell
 
 # 네트워크
+
 vol -f WS-001.raw windows.netstat | grep -i powershell
 
 # 주입/스캔
+
 vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 # 덤프 파일 해시 → 위협 인텔/YARA 스캔
+
 ```
 
 **결론 기록(예)**
@@ -170,9 +191,9 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 
 ---
 
-# 11.4 플레이북: 분류·격리·제거·복구·사후 보고
+# 플레이북: 분류·격리·제거·복구·사후 보고
 
-## 11.4.1 분류(Classification)
+## 분류(Classification)
 
 **초기 티어링**
 - **Critical**: 랜섬 암호화 진행 / DA 토큰 탈취 징후 / 대규모 exfil
@@ -185,7 +206,7 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 
 ---
 
-## 11.4.2 격리(Containment)
+## 격리(Containment)
 
 **기술 조치 예**
 - 네트워크 분리(EDR 네트워크 격리, NAC VLAN 이동)
@@ -201,7 +222,7 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 
 ---
 
-## 11.4.3 제거(Eradication)
+## 제거(Eradication)
 
 - 악성 서비스/계정/스케줄러/런키 제거
 - 지속성(Persistence) 제거: Run/RunOnce/Services/Task/WMIC/IFEO/AppInit_DLLs 등
@@ -210,6 +231,7 @@ vol -f WS-001.raw windows.malfind --pid <PS_PID> --dump
 **Windows 스크립트 예(관찰 위주)**
 ```powershell
 # 런키/서비스/스케줄 태그 점검(삭제는 Change Control 승인 후)
+
 Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -ErrorAction SilentlyContinue
 Get-Service | Where-Object {$_.StartType -eq 'Automatic' -and -not $_.DisplayName -like '*Microsoft*'} |
   Select Name,DisplayName,Status,PathName
@@ -219,7 +241,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 
 ---
 
-## 11.4.4 복구(Recovery)
+## 복구(Recovery)
 
 - 패치/구성(ASR/WDAC/LSA PPL/HVCI/LDAP·SMB 서명) 반영
 - 자격 회전(gMSA·LAPS·Secrets), API 키·토큰 재발급
@@ -228,7 +250,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 
 ---
 
-## 11.4.5 사후 보고(Post-Incident Report)
+## 사후 보고(Post-Incident Report)
 
 **골격**
 1) 사건 개요(탐지→대응→종결 타임라인)
@@ -255,9 +277,9 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 
 ---
 
-# 11.5 방어: 수집 정책(Sysmon/OSQuery), 중앙집중 로깅, 보존 주기
+# 방어: 수집 정책(Sysmon/OSQuery), 중앙집중 로깅, 보존 주기
 
-## 11.5.1 수집 정책 — Sysmon (Windows)
+## 수집 정책 — Sysmon (Windows)
 
 > 원칙: **가시성 극대화 + 오탐 억제**. “허용 리스트 → 감사 → 강제” 순.
 
@@ -310,7 +332,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 
 ---
 
-## 11.5.2 수집 정책 — osquery (Windows/Linux/macOS)
+## 수집 정책 — osquery (Windows/Linux/macOS)
 
 **핵심 테이블/쿼리**
 - `processes`, `process_open_files`, `listening_ports`, `hash`, `drivers`, `kernel_extensions`
@@ -353,7 +375,7 @@ Get-ScheduledTask | Where-Object {$_.TaskPath -notlike '\Microsoft\*'} |
 
 ---
 
-## 11.5.3 중앙집중 로깅 아키텍처
+## 중앙집중 로깅 아키텍처
 
 **구성 요소**
 - **Forwarder/Agent**: Winlogbeat/Fluent/Osquery/EDR
@@ -377,7 +399,7 @@ SecurityEvent
 
 ---
 
-## 11.5.4 보존 주기(레텐션) & 법·비용 균형
+## 보존 주기(레텐션) & 법·비용 균형
 
 **권장 범위(예시, 조직·규정 따라 조정)**
 - **핵심 보안 이벤트**: 180~365일 온라인 (빠른 검색)
@@ -393,7 +415,7 @@ SecurityEvent
 
 ---
 
-## 11.5.5 탐지 룰 번들(샘플)
+## 탐지 룰 번들(샘플)
 
 **Sigma — PowerShell 다운로드 실행**
 ```yaml
@@ -433,7 +455,7 @@ level: high
 
 ---
 
-## 11.5.6 운영 점검표
+## 운영 점검표
 
 **수집/전송**
 - [ ] Sysmon 채널 손실률 < 0.5%

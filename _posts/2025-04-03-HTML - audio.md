@@ -6,7 +6,7 @@ category: HTML
 ---
 # HTML5 `<audio>` 태그
 
-## 1. `<audio>` 한눈에 보기
+## `<audio>` 한눈에 보기
 
 - HTML5의 네이티브 오디오 플레이어.
 - **플러그인 없이** 재생/일시정지/탐색/볼륨 등 제공.
@@ -31,7 +31,7 @@ category: HTML
 
 ---
 
-## 2. 핵심 속성 총정리
+## 핵심 속성 총정리
 
 | 속성 | 의미/기능 | 비고 |
 |---|---|---|
@@ -57,7 +57,7 @@ category: HTML
 
 ---
 
-## 3. 브라우저 자동재생 정책 정확히 이해하기
+## 브라우저 자동재생 정책 정확히 이해하기
 
 - **기본 원칙**: 사용자의 명시적 상호작용(클릭/탭) **이전에는** “소리가 나는” 미디어의 자동재생을 차단.
 - **음소거(`muted`)** 상태는 자동재생 허용 범위가 넓지만, **오디오를 음소거 재생하는 UX는 실효성 낮음**.
@@ -80,7 +80,7 @@ category: HTML
 
 ---
 
-## 4. 지원 포맷과 MIME
+## 지원 포맷과 MIME
 
 | 포맷 | 확장자 | MIME | 특성/비고 |
 |---|---|---|---|
@@ -101,7 +101,7 @@ types {
 
 ---
 
-## 5. `preload` 전략과 성능
+## `preload` 전략과 성능
 
 | 값 | 동작 | 권장 상황 |
 |---|---|---|
@@ -116,7 +116,7 @@ types {
 
 ---
 
-## 6. 이벤트/상태 흐름 이해 (디버깅 핵심)
+## 이벤트/상태 흐름 이해 (디버깅 핵심)
 
 주요 이벤트:
 
@@ -150,7 +150,7 @@ types {
 
 ---
 
-## 7. JS 제어: 필수/확장 API
+## JS 제어: 필수/확장 API
 
 핵심:
 
@@ -197,7 +197,7 @@ document.querySelectorAll('button').forEach(b=>{
 
 ---
 
-## 8. 커스텀 컨트롤(UI) 만들기
+## 커스텀 컨트롤(UI) 만들기
 
 네이티브 `controls`는 일관성이 높지만 스타일 제어가 제한. 직접 UI를 만들 수 있다.
 
@@ -239,7 +239,7 @@ toggle.addEventListener('click', async () => {
 
 ---
 
-## 9. 접근성(A11y)과 대체 콘텐츠
+## 접근성(A11y)과 대체 콘텐츠
 
 - **스크린 리더**: 오디오 컨트롤에 레이블을 명확히(버튼에 텍스트 제공).
 - **대체 수단**: 자막/가사 파일(WebVTT)이나 **텍스트 대본** 링크 제공.
@@ -271,7 +271,7 @@ WEBVTT
 
 ---
 
-## 10. Media Session API (잠금 화면/시스템 UI 통합)
+## Media Session API (잠금 화면/시스템 UI 통합)
 
 모바일/데스크톱에서 **미디어 메타데이터**와 **플랫폼 컨트롤** 통합.
 
@@ -302,7 +302,7 @@ if ('mediaSession' in navigator) {
 
 ---
 
-## 11. Web Audio API 연동(비주얼라이저/이펙트)
+## Web Audio API 연동(비주얼라이저/이펙트)
 
 `<audio>` → `AudioContext`로 라우팅하여 FFT 시각화/필터 적용 가능.
 
@@ -342,7 +342,7 @@ document.addEventListener('click', () => { if (ctx.state !== 'running') ctx.resu
 
 ---
 
-## 12. CORS와 Canvas/Web Audio
+## CORS와 Canvas/Web Audio
 
 - 다른 도메인에서 오디오를 불러오려면:
   - 서버: `Access-Control-Allow-Origin: *` (또는 특정 오리진)
@@ -357,7 +357,7 @@ document.addEventListener('click', () => { if (ctx.state !== 'running') ctx.resu
 
 ---
 
-## 13. 스트리밍(라이브/롱폼) 개요: HLS/DASH
+## 스트리밍(라이브/롱폼) 개요: HLS/DASH
 
 긴 오디오/라이브 라디오/팟캐스트에는 **적응형 스트리밍**이 유리:
 - HLS (`.m3u8`), DASH (`.mpd`)
@@ -386,7 +386,7 @@ if (audio.canPlayType('application/vnd.apple.mpegurl')) {
 
 ---
 
-## 14. 서버·배포 팁
+## 서버·배포 팁
 
 - **Range 요청(부분 전송)** 활성화 → 탐색/스트리밍 반응성 개선.
 - `Cache-Control`/`ETag`로 캐시 히트 유도.
@@ -395,9 +395,9 @@ if (audio.canPlayType('application/vnd.apple.mpegurl')) {
 
 ---
 
-## 15. 실전 예제 모음
+## 실전 예제 모음
 
-### 15.1 팟캐스트 플레이어(자동재생 정책 친화)
+### 팟캐스트 플레이어(자동재생 정책 친화)
 
 ```html
 <section>
@@ -415,7 +415,7 @@ if (audio.canPlayType('application/vnd.apple.mpegurl')) {
 </script>
 ```
 
-### 15.2 효과음(낮은 지연)
+### 효과음(낮은 지연)
 
 ```html
 <button id="hit">효과음</button>
@@ -430,7 +430,7 @@ if (audio.canPlayType('application/vnd.apple.mpegurl')) {
 </script>
 ```
 
-### 15.3 다수 플레이어 성능 패턴
+### 다수 플레이어 성능 패턴
 
 ```html
 <ul id="list">
@@ -453,7 +453,7 @@ document.getElementById('list').addEventListener('click', e => {
 
 ---
 
-## 16. 체크리스트(프로덕션)
+## 체크리스트(프로덕션)
 
 - [ ] **포맷**: MP3 필수 + Opus(Ogg/WebM) 보조(선택)
 - [ ] **자동재생**: 사용자 제스처 이후 `.play()` 호출
@@ -467,7 +467,7 @@ document.getElementById('list').addEventListener('click', e => {
 
 ---
 
-## 17. 요약
+## 요약
 
 - `<audio>`는 **호환성·성능·접근성**을 균형 있게 챙기면 가장 안정적인 오디오 전달 수단이다.
 - 자동재생 정책을 존중하고, 포맷 폴백(MP3 + Opus)과 적절한 `preload` 전략을 사용하라.

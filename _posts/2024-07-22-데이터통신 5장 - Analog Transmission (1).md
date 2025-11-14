@@ -4,11 +4,12 @@ title: 데이터 통신 5장 - Analog Transmission (1)
 date: 2024-07-22 19:20:23 +0900
 category: DataCommunication
 ---
-# 5. Analog Transmission
+# Analog Transmission
 
-## 5.1 Digital-to-Analog Conversion (디지털→아날로그 변조)
+## Digital-to-Analog Conversion (디지털→아날로그 변조)
 
-### 5.1.0 큰그림
+### 큰그림
+
 디지털 비트열 \( \{0,1\} \)을 **반송파(carrier)** \( c(t)=\cos(2\pi f_c t) \)의 **진폭/주파수/위상**(혹은 I/Q 복소평면의 좌표)로 매핑해 **대역통과(passband)** 신호를 만든다.
 핵심 변수:
 
@@ -26,26 +27,30 @@ category: DataCommunication
 
 ---
 
-### 5.1.1 변조의 공통 관점
+### 변조의 공통 관점
 
 #### 데이터 요소 vs 신호 요소
+
 - **데이터 요소**: 비트(혹은 비트 묶음)
 - **신호 요소(심볼)**: 반송파의 **진폭/주파수/위상(I/Q)**로 표현되는 **파형 단위**
 - **심볼당 비트수** \(r=\log_2 L\), **심볼률** \(S=N/r\)
 
 #### 대역폭
+
 - RRC 필터(롤오프 \(\alpha\)) 사용 시 **양측 대역폭**은 \((1+\alpha)S/2\), 총점유는 \((1+\alpha)S\)
 
 #### 반송파
+
 - 변조 신호는 일반적으로
   $$ s(t)=\Re\{\,x(t)\,e^{j2\pi f_c t}\} $$
   여기서 \(x(t)\)는 **저역 복소 베이스밴드** (I/Q) 신호.
 
 ---
 
-### 5.1.2 Amplitude Shift Keying (ASK)
+### Amplitude Shift Keying (ASK)
 
 #### Binary ASK (BASK / OOK)
+
 - **아이디어**: 비트에 따라 **진폭**을 바꿈. 대표적으로 **OOK**(On-Off Keying):
   - \(b=1 \Rightarrow A\cos(2\pi f_c t)\), \(b=0 \Rightarrow 0\)
 - **대역폭**:
@@ -54,9 +59,11 @@ category: DataCommunication
 - **단점**: 진폭 잡음에 취약, 전력 효율 낮음.
 
 #### M-ASK (다준위 ASK)
+
 - 레벨 \(L\)개 → 심볼당 \(r=\log_2 L\) 비트. 실무에선 **QAM**이 ASK의 상위호환(진폭+위상)으로 더 자주 사용.
 
 #### 간단한 BASK 파이썬 예
+
 ```python
 import numpy as np
 
@@ -85,9 +92,10 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
 
 ---
 
-### 5.1.3 Frequency Shift Keying (FSK)
+### Frequency Shift Keying (FSK)
 
 #### Binary FSK (BFSK)
+
 - **아이디어**: 두 주파수로 비트를 표현
   - \(b=0 \Rightarrow f_1=f_c-\Delta f\), \(b=1 \Rightarrow f_2=f_c+\Delta f\)
 - **정합 주파수 간격**:
@@ -99,13 +107,15 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
   - **Noncoherent**(비동기): 구현 단순, 성능 ↓
 
 #### M-FSK
+
 - 레벨 \(L\)개 → \(L\)개의 주파수 사용. **대역폭↑**, 심볼 에너지 분산. 고차 M에서는 대체로 **QAM/PSK** 선호.
 
 ---
 
-### 5.1.4 Phase Shift Keying (PSK)
+### Phase Shift Keying (PSK)
 
 #### BPSK
+
 - **아이디어**: 위상 0°/180° 두 상태
   - \(b\in\{0,1\}\Rightarrow s=\pm A\cos(2\pi f_c t)\)
 - **대역폭**:
@@ -114,19 +124,22 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
   $$ P_b = Q\!\Big(\sqrt{2\,\frac{E_b}{N_0}}\Big) $$
 
 #### QPSK
+
 - 심볼당 2비트(\(r=2\)), 위상 4상태(45°, 135°, −45°, −135° 등), **대역폭은 BPSK와 동일한 심볼률 기준**.
 - **BER(그레이 코딩)**: BPSK와 동일식
   $$ P_b = Q\!\Big(\sqrt{2\,\frac{E_b}{N_0}}\Big) $$
 
 #### OQPSK, π/4-DQPSK
+
 - **OQPSK**: I/Q 반 비트 시프트로 **위상 점프**(180° 등) 제한 → **피크 전력/필터링** 안정
 - **π/4-DQPSK**: 위상 변화가 \(\{\pm\pi/4, \pm 3\pi/4\}\)로 제한, **비동기/이동통신** 친화
 
 ---
 
-### 5.1.5 Quadrature Amplitude Modulation (QAM)
+### Quadrature Amplitude Modulation (QAM)
 
 #### 개념
+
 - **ASK + PSK**의 결합 = **I/Q 평면 상의 격자(성상도)**에 심볼 배치
 - \(M\)-QAM: \(L=M\)개의 점 → 심볼당 \(r=\log_2 M\) 비트
 - **대역폭**:
@@ -134,6 +147,7 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
   → **같은 데이터율 N**에서 **M 증가** 시 **심볼률 S↓ → 대역폭 절약**
 
 #### BER 근사(그레이 코딩, 코히어런트)
+
 - **M-PSK**(큰 \(M\) 근사):
   $$ P_b \approx \frac{2}{\log_2 M}\,Q\!\Big(\sqrt{2\,\frac{E_s}{N_0}}\sin\frac{\pi}{M}\Big) $$
 - **M-QAM**(정사각형 QAM):
@@ -143,10 +157,12 @@ def bask_mod(bits, fc=10e3, fs=200e3, Rs=1e3, A=1.0, alpha=0.25):
 > **트레이드오프**: \(M\)을 키우면 **대역폭 절약**↑, 그러나 **심볼간 최소거리**↓ → **요구 SNR↑**.
 
 #### 간단 16-QAM 매퍼 예(그레이 코딩 예시 중 하나)
+
 ```python
 import numpy as np
 
 # 16-QAM: I,Q ∈ {-3,-1,+1,+3} (정규화 전)
+
 GRAY2 = { '00':-3, '01':-1, '11':+1, '10':+3 }
 
 def bits_to_syms_16qam(bits):
@@ -207,9 +223,10 @@ def qam_passband(syms, fc=20e3, fs=400e3, Rs=10e3, alpha=0.25):
 
 ---
 
-## 5.1 실전 시나리오와 계산
+## 실전 시나리오와 계산
 
 ### 시나리오 A — **데이터율 20 Mbps, 롤오프 0.25, 16-QAM**
+
 - \(M=16 \Rightarrow r=4\), \(N=20\) Mbps → **심볼률**
   $$ S=\frac{N}{r}=5\ \text{MBd} $$
 - **대역폭(근사)**:
@@ -217,16 +234,18 @@ def qam_passband(syms, fc=20e3, fs=400e3, Rs=10e3, alpha=0.25):
 - 동일 \(N\)에서 **QPSK**라면 \(r=2\Rightarrow S=10\ \text{MBd}\Rightarrow B\approx 12.5\ \text{MHz}\) → **16-QAM이 대역 절반**!
 
 ### 시나리오 B — **BFSK, 직교, S=200 kBd**
+
 - 직교 BFSK(코히어런트)라면 \(\Delta f=S/2=100\,\text{kHz}\)
 - **대역폭(카슨 근사)**:
   $$ B\approx 2\Delta f + (1+\alpha)S \approx 2\cdot 100k + 1.25\cdot 200k = 450\ \text{kHz} $$
 
 ### 시나리오 C — **목표 BER=10⁻⁵에서 QPSK가 요구하는 \(E_b/N_0\)**
+
 - \(P_b = Q(\sqrt{2\gamma_b})=10^{-5}\)에서 \(\sqrt{2\gamma_b}\approx 4.265\Rightarrow \gamma_b\approx 9.1\ \text{(linear)}\approx 9.6\ \text{dB}\)
 
 ---
 
-## 5.1 실습 미니 모뎀 (BPSK/QPSK/16-QAM) — 베이스밴드 AWGN
+## 실습 미니 모뎀 (BPSK/QPSK/16-QAM) — 베이스밴드 AWGN
 
 ```python
 import numpy as np
@@ -278,6 +297,7 @@ def awgn(x, sigma2):
     return x + n
 
 # 스위프: QPSK
+
 nBits = 200000
 bits = rng.integers(0,2,size=nBits)
 x = qpsk_mod(bits)
@@ -292,7 +312,7 @@ for ebn0_db in [4,6,8,10]:
 
 ---
 
-## 5.1 정리
+## 정리
 
 - **공식 묶음**
   - 심볼률:
@@ -314,7 +334,7 @@ for ebn0_db in [4,6,8,10]:
 
 ---
 
-## 5.1 체크 문제
+## 체크 문제
 
 1. **QPSK**로 50 Mbps 전송, \(\alpha=0.35\). 점유 대역폭을 구하라.
    $$S=\frac{N}{2}=25\,\text{MBd},\quad B\approx(1+0.35)S=33.75\,\text{MHz}$$
@@ -328,7 +348,7 @@ for ebn0_db in [4,6,8,10]:
 
 ---
 
-## 5.1 보너스: 표준과의 연결(감)
+## 보너스: 표준과의 연결(감)
 
 - **100BASE-TX**: 4B/5B → NRZ-I → **MLT-3**(베이스밴드)
 - **LTE/5G/와이파이**: **OFDM**(다중 부반송), 각 부반송에서 **QPSK/16-QAM/64-QAM/256-QAM**

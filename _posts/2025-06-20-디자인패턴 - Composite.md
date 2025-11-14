@@ -55,6 +55,7 @@ from abc import ABC, abstractmethod
 from typing import List, Iterable
 
 # 공통 인터페이스
+
 class Graphic(ABC):
     @abstractmethod
     def draw(self) -> None:
@@ -65,6 +66,7 @@ class Graphic(ABC):
         yield self  # 기본: 자신만
 
 # Leaf
+
 class Line(Graphic):
     def __init__(self, x1, y1, x2, y2):
         self.x1, self.y1, self.x2, self.y2 = x1, y1, x2, y2
@@ -80,6 +82,7 @@ class Circle(Graphic):
         print(f"Circle(center=({self.cx},{self.cy}), r={self.r})")
 
 # Composite
+
 class Picture(Graphic):
     def __init__(self):
         self._children: List[Graphic] = []
@@ -102,6 +105,7 @@ class Picture(Graphic):
             yield from c.iter()
 
 # 사용
+
 scene = Picture()
 scene.add(Circle(0, 0, 10))
 scene.add(Line(0, 0, 5, 5))
@@ -109,6 +113,7 @@ scene.draw()
 # [Picture begin] ... [Picture end]
 
 # 트리 전체 순회
+
 for node in scene.iter():
     pass  # 로그/검색/집계에 활용
 ```
@@ -186,6 +191,7 @@ class Dir(Node):
         return sum(ch.size() for ch in self._children)
 
 # 테스트
+
 root = Dir("root")
 root.add(File("a.txt", 10))
 img = Dir("img"); img.add(File("logo.png", 120))
@@ -396,6 +402,7 @@ class Mul(Expr):
     def eval(self) -> float: return self.l.eval() * self.r.eval()
 
 # (3+4)*5 = 35
+
 expr = Mul(Add(Lit(3), Lit(4)), Lit(5))
 assert expr.eval() == 35.0
 ```

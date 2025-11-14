@@ -6,7 +6,7 @@ category: 디자인패턴
 ---
 # Strategy vs State 패턴 차이와 선택 기준
 
-## 1. 한눈 요약
+## 한눈 요약
 
 | 구분 | Strategy | State |
 |---|---|---|
@@ -19,7 +19,7 @@ category: 디자인패턴
 
 ---
 
-## 2. 공통 구조와 중요한 차이
+## 공통 구조와 중요한 차이
 
 ```
 Context ─────▶ Strategy/State (인터페이스) ─────▶ ConcreteX (실제 행위)
@@ -32,16 +32,18 @@ Context ─────▶ Strategy/State (인터페이스) ─────▶ C
 
 ---
 
-## 3. 수학적 모델로 보는 차이
+## 수학적 모델로 보는 차이
 
-### 3.1 Strategy 선택 함수
+### Strategy 선택 함수
+
 알고리즘 집합을 \( \mathcal{A} = \{a_1,\dots,a_n\} \)라 하자. 환경/설정 \(e\), 입력 \(x\)에 대해 **선택 함수**:
 $$
 \sigma: E \times X \rightarrow \mathcal{A}
 $$
 Context는 \( a = \sigma(e, x) \)를 선택해 실행한다. **전이 개념 없음**.
 
-### 3.2 State 유한상태기계(FSM)
+### State 유한상태기계(FSM)
+
 상태 집합 \( S \), 입력 \( I \), 전이 함수 \( \delta \)와 출력 \( \lambda \)가 있을 때:
 $$
 \delta: S \times I \rightarrow S,\quad \lambda: S \times I \rightarrow O
@@ -50,20 +52,22 @@ $$
 
 ---
 
-## 4. 코드로 비교: 같은 도메인, 다른 의도
+## 코드로 비교: 같은 도메인, 다른 의도
 
-### 4.1 Strategy 예제 — 압축기 교체 (Python)
+### Strategy 예제 — 압축기 교체 (Python)
 
 ```python
 from abc import ABC, abstractmethod
 import gzip, bz2, lzma
 
 # Strategy 인터페이스
+
 class Compressor(ABC):
     @abstractmethod
     def compress(self, data: bytes) -> bytes: ...
 
 # 구체 전략
+
 class GzipCompressor(Compressor):
     def compress(self, data: bytes) -> bytes:
         return gzip.compress(data)
@@ -77,6 +81,7 @@ class LzmaCompressor(Compressor):
         return lzma.compress(data)
 
 # Context: 외부가 전략을 선택·교체
+
 class ArchiveService:
     def __init__(self, compressor: Compressor):
         self._c = compressor
@@ -86,6 +91,7 @@ class ArchiveService:
         return self._c.compress(payload)
 
 # 사용
+
 svc = ArchiveService(GzipCompressor())
 blob = svc.archive(b"hello")
 svc.set_strategy(LzmaCompressor())  # 외부가 교체
@@ -96,7 +102,7 @@ blob2 = svc.archive(b"world")
 
 ---
 
-### 4.2 State 예제 — 업로더 FSM (Python)
+### State 예제 — 업로더 FSM (Python)
 
 요구: Idle → Uploading → Paused/Completed/Error 로 전이. 이벤트는 `start/pause/resume/success/fail`.
 
@@ -112,19 +118,23 @@ blob2 = svc.archive(b"world")
 from abc import ABC, abstractmethod
 
 # 이벤트 정의
+
 class Event:
     START="start"; PAUSE="pause"; RESUME="resume"
     SUCCESS="success"; FAIL="fail"; RESET="reset"
 
 # 전방 선언 위해 컨텍스트 타입 힌트 지연
+
 class Uploader: ...
 
 # 상태 인터페이스
+
 class State(ABC):
     @abstractmethod
     def on(self, ctx: 'Uploader', event: str) -> None: ...
 
 # 구체 상태들
+
 class Idle(State):
     def on(self, ctx, event):
         if event == Event.START:
@@ -175,6 +185,7 @@ class Error(State):
             ctx.log("에러 상태: 무시")
 
 # 컨텍스트
+
 class Uploader:
     def __init__(self):
         self._state: State = Idle()
@@ -187,6 +198,7 @@ class Uploader:
         self.history.append(msg)
 
 # 사용
+
 u = Uploader()
 u.dispatch(Event.START)    # Idle -> Uploading
 u.dispatch(Event.PAUSE)    # Uploading -> Paused
@@ -201,15 +213,17 @@ print("\n".join(u.history))
 
 ---
 
-## 5. 선택 체크리스트 & 의사결정 트리
+## 선택 체크리스트 & 의사결정 트리
 
-### 5.1 체크리스트
+### 체크리스트
+
 - **동일 작업의 대체 알고리즘**이 필요하고, 서로 간 전이가 필요 없다 → **Strategy**.
 - **시간/이벤트에 따라 합법적 전이**가 존재하고, 상태에 따라 허용 행위가 바뀐다 → **State**.
 - 외부 설정이나 기능 토글에 따라 교체 → Strategy.
 - 워크플로·UI 단계·프로토콜 단계처럼 **전이 테이블**이 그려진다 → State.
 
-### 5.2 의사결정 트리(ASCII)
+### 의사결정 트리(ASCII)
+
 ```
 필요는 "전이"인가 "교체"인가?
            ├─ 전이(FSM) → State
@@ -218,7 +232,7 @@ print("\n".join(u.history))
 
 ---
 
-## 6. 실무 매핑 표
+## 실무 매핑 표
 
 | 도메인 | Strategy 적합 | State 적합 |
 |---|---|---|
@@ -232,7 +246,7 @@ print("\n".join(u.history))
 
 ---
 
-## 7. 함께 쓰면 좋은 패턴
+## 함께 쓰면 좋은 패턴
 
 - Strategy × Factory: 전략 선택 로직을 **팩토리/DI**로 외부화.
 - State × Memento: **되돌리기(Undo)/복원**이 필요하면 상태 스냅샷 저장.
@@ -241,7 +255,7 @@ print("\n".join(u.history))
 
 ---
 
-## 8. 안티패턴과 냄새
+## 안티패턴과 냄새
 
 | 냄새 | 설명 | 대책 |
 |---|---|---|
@@ -253,9 +267,10 @@ print("\n".join(u.history))
 
 ---
 
-## 9. 테스트 전략
+## 테스트 전략
 
-### 9.1 Strategy 테스트
+### Strategy 테스트
+
 - 각 전략을 **독립 단위 테스트**.
 - 컨텍스트는 **전략 주입/교체**가 가능한지 확인.
 - 경계값·성능 비교를 데이터 주도 테스트로.
@@ -267,7 +282,8 @@ def test_sort_desc():
     assert isinstance(ctx.archive(data), bytes)
 ```
 
-### 9.2 State 테스트
+### State 테스트
+
 - **전이 테이블 기반** 시나리오 테스트.
 - 올바르지 않은 이벤트가 무시/예외 처리되는지.
 - 복구 경로(RESET 등) 검증.
@@ -281,7 +297,7 @@ def test_uploader_flow():
 
 ---
 
-## 10. 성능·동시성 관점
+## 성능·동시성 관점
 
 - Strategy: 호출 오버헤드는 **가상 호출 1회** 수준. 선택 로직(팩토리/DI)이 잦다면 **캐시**.
 - State: 전이 빈도가 매우 높다면 **테이블 기반 전이**(2차원 배열/딕셔너리)로 분기 비용을 상수화.
@@ -298,15 +314,17 @@ TRANSITIONS = {
 
 ---
 
-## 11. 리팩터링 절차
+## 리팩터링 절차
 
-### 11.1 거대 분기를 Strategy로
+### 거대 분기를 Strategy로
+
 1) 분기 기준(알고리즘)을 인터페이스로 추출
 2) 구현별 클래스 분리
 3) 컨텍스트에 인터페이스 주입
 4) 선택 로직은 **팩토리/DI** 로 이동
 
-### 11.2 플래그/열거형 상태를 State로
+### 플래그/열거형 상태를 State로
+
 1) 상태별 행위를 **상태 클래스**로 추출
 2) 전이 규칙을 상태/컨텍스트 내부로 이동
 3) 외부의 직접 전이 금지(이벤트만 노출)
@@ -314,9 +332,10 @@ TRANSITIONS = {
 
 ---
 
-## 12. 확장 예시(타 언어)
+## 확장 예시(타 언어)
 
-### 12.1 C# Strategy
+### C# Strategy
+
 ```csharp
 public interface IDiscount { decimal Apply(decimal price); }
 public sealed class NoDiscount : IDiscount { public decimal Apply(decimal p) => p; }
@@ -330,7 +349,8 @@ public sealed class Cart {
 // 사용: var cart = new Cart(new RateDiscount(0.1m));
 ```
 
-### 12.2 Java State
+### Java State
+
 ```java
 interface State { void on(Context c, String evt); }
 class Context { State s = new Idle(); void dispatch(String e){ s.on(this,e);} void set(State ns){ s=ns; } }
@@ -341,7 +361,7 @@ class Idle implements State { public void on(Context c, String e){ if(e.equals("
 
 ---
 
-## 13. 설계 요령(핵심 문장 모음)
+## 설계 요령(핵심 문장 모음)
 
 - **전이가 중요**하면 State, **교체가 중요**하면 Strategy.
 - State는 **합법적 전이만 허용**하도록 내부에 규칙을 둔다.
@@ -350,7 +370,7 @@ class Idle implements State { public void on(Context c, String e){ if(e.equals("
 
 ---
 
-## 14. 부록: 전이 검증을 수식으로 명세하기
+## 부록: 전이 검증을 수식으로 명세하기
 
 상태 그래프 \( G = (S, E) \)에서 간선 \( E \subseteq S \times I \times S \). 합법 전이 집합을 \( \mathcal{T} \)라 하면, 구현의 전이 \( \delta \)가 다음을 만족해야 한다.
 $$
@@ -360,7 +380,7 @@ $$
 
 ---
 
-## 15. 결론
+## 결론
 
 - **Strategy**: “같은 일을 다른 방법으로” — 외부 선택/교체, 전이 없음.
 - **State**: “상태에 맞는 행동을” — 내부 전이, 상태 모델 필수.

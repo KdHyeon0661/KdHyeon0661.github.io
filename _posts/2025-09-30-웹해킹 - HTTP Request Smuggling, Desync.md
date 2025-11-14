@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 🔀 HTTP Request Smuggling / Desync (H1/H2)
 
-## 0. 한눈에 보는 요약
+## 한눈에 보는 요약
 
 - **문제(Desync)**: 클라이언트–프록시–백엔드가 **요청 경계(boundary)**를 서로 다르게 해석하면(예: `Content-Length` vs `Transfer-Encoding`), 프록시가 다음 사용자의 요청 일부를 **앞선 요청의 바디로 붙여 보내는** 등 **요청이 섞임**.
   - 결과: **세션 하이재킹**, **캐시 오염(Cache Poisoning)**, **ACL 우회**, **로그 교란**.
@@ -27,15 +27,15 @@ category: 웹해킹
 
 ---
 
-# 1. 동작 원리와 분류
+# 동작 원리와 분류
 
-## 1.1 왜 “경계”가 어긋나나?
+## 왜 “경계”가 어긋나나?
 
 HTTP/1.1은 요청 본문 경계를 **`Content-Length`**(고정 길이) 또는 **`Transfer-Encoding: chunked`**(청크 길이들의 합)로 구분합니다.
 규격상 **두 개를 동시에 둘 수 없으며**, 있어도 **해석 일관**이 필요합니다.
 그러나 현실에선 프록시 A·백엔드 B가 **다른 우선순위/버그**를 가지면 **서로 다른 경계**로 해석되어 **요청이 한쪽에서 남거나 넘치는 현상**이 생깁니다.
 
-## 1.2 유형(콘셉트)
+## 유형(콘셉트)
 
 > 아래는 **개념적 설명**입니다. 실제 공격 페이로드는 **생략/단순화**합니다.
 
@@ -46,7 +46,7 @@ HTTP/1.1은 요청 본문 경계를 **`Content-Length`**(고정 길이) 또는 *
 
 ---
 
-# 2. **징후**와 **관측 포인트**
+# **징후**와 **관측 포인트**
 
 - **프록시 경유 vs 백엔드 직결** 응답 차이(콘텐츠/헤더/캐시 키)
 - 간헐적인 **4xx/5xx**(특히 400/408/411/413/502/504)
@@ -63,12 +63,12 @@ upstream prematurely closed connection
 
 ---
 
-# 3. 안전한 재현용(승인된 랩 환경) 테스트
+# 안전한 재현용(승인된 랩 환경) 테스트
 
 > 다음은 **자신의 연구/스테이징** 환경에서, **차단이 올바르게 작동**하는지 확인하기 위한 **방어 검증** 테스트입니다.
 > 실제 시스템에 대한 공격으로 사용하지 마십시오.
 
-## 3.1 구성 예시(도커-스케치)
+## 구성 예시(도커-스케치)
 
 - **edge**: 리버스 프록시(Nginx/Envoy/HAProxy)
 - **app**: 간단한 애플리케이션(Node/Flask)
@@ -77,14 +77,15 @@ upstream prematurely closed connection
 [Client] → [edge(proxy)] → [app(server)]
 ```
 
-## 3.2 방어 검증 테스트 아이디어
+## 방어 검증 테스트 아이디어
 
 - **이중 헤더**(예: `Content-Length`가 두 번) → **400**이어야 정상
 - **`CL` + `TE` 동시 존재** → **400**이어야 정상
 - **H2 → H1 변환 경로**에서도 동일하게 **거절/정규화**되는지 확인
 - **버퍼링** ON 상태에서 **edge가 백엔드로 단일 `Content-Length`만 전달**하는지 확인
 
-### 3.3 Node.js로 **부적합 요청을 보냈을 때 400 기대** 테스트(안전)
+### Node.js로 **부적합 요청을 보냈을 때 400 기대** 테스트(안전)
+
 ```js
 // test/desync-guard.test.js  (승인된 사내 스테이징용)
 // 목적: 엣지가 모순 헤더를 가진 요청을 반드시 400으로 거절하는지 확인
@@ -122,11 +123,11 @@ HELLO`;
 
 ---
 
-# 4. 프록시·게이트웨이 **방어 설정** (벤더 중립 원칙 + 대표 예시)
+# 프록시·게이트웨이 **방어 설정** (벤더 중립 원칙 + 대표 예시)
 
 > 현실적으로 “**프론트에서 단일 표준 형태**로 **정규화**해 백엔드에 전달”하는 것이 최선입니다.
 
-## 4.1 공통 원칙(요약)
+## 공통 원칙(요약)
 
 1. **요청 완충(Buffering)**: 프록시가 **요청 전체를 읽고 유효성 검증** 후 백엔드로 **단일 규격**(`Content-Length` 1개)으로 전달.
 2. **헤더 정규화/차단**:
@@ -140,14 +141,16 @@ HELLO`;
 
 ---
 
-## 4.2 Nginx(리버스 프록시) 예시
+## Nginx(리버스 프록시) 예시
 
 ```nginx
 # ① 요청 버퍼링으로 백엔드에 단일 Content-Length만 전달
+
 proxy_request_buffering on;     # 기본 on (명시)
 proxy_http_version 1.1;         # 업스트림과 H1 고정(환경에 맞게)
 
 # ② TE 제거(모순 방지) — map/if 조합으로 방어
+
 map $http_transfer_encoding $te_bad {
   default         1;
   "~*^chunked$"   0;   # 필요 시 허용하지만, 보통 proxy_request_buffering on이면 필요 없음
@@ -180,7 +183,7 @@ server {
 
 ---
 
-## 4.3 HAProxy 예시(개념적)
+## HAProxy 예시(개념적)
 
 ```haproxy
 global
@@ -216,7 +219,7 @@ backend be_app
 
 ---
 
-## 4.4 Envoy 예시(개념적 YAML)
+## Envoy 예시(개념적 YAML)
 
 ```yaml
 static_resources:
@@ -264,31 +267,35 @@ static_resources:
 
 ---
 
-## 4.5 Apache httpd(리버스) 포인트
+## Apache httpd(리버스) 포인트
 
 ```apache
 # 엄격 모드
+
 HttpProtocolOptions Strict
 
 # Proxy 경유 시
+
 ProxyRequests Off
 RequestReadTimeout header=20-40,MinRate=500 body=20,MinRate=500
 
 # 과도한/중복 헤더 거절(모듈·버전 의존)
+
 LimitRequestFieldSize 16384
 LimitRequestFields 100
 
 # (환경에 맞게) TE 헤더 제거
+
 RequestHeader unset Transfer-Encoding early
 ```
 
 ---
 
-# 5. 애플리케이션 레이어 **완화책**(보조)
+# 애플리케이션 레이어 **완화책**(보조)
 
 > 핵심 문제는 **HTTP 레이어**의 경계 불일치지만, 앱에서도 “이상 상황을 탐지/거절”하여 **2차 안전망**을 만들 수 있습니다.
 
-## 5.1 Node/Express — 모순 헤더 선거절
+## Node/Express — 모순 헤더 선거절
 
 ```js
 app.use((req, res, next) => {
@@ -303,7 +310,7 @@ app.use((req, res, next) => {
 });
 ```
 
-## 5.2 Flask — 무효 요청 거절
+## Flask — 무효 요청 거절
 
 ```python
 @app.before_request
@@ -319,7 +326,7 @@ def reject_conflicts():
 
 ---
 
-# 6. **HTTP/2 관련** 주의점
+# **HTTP/2 관련** 주의점
 
 - **HTTP/2는 바이너리 프레이밍**으로 경계 모호성이 작습니다.
   하지만 **게이트웨이가 H2→H1으로 변환**할 때 **길이/TE/CL 재구성**을 수행합니다.
@@ -331,7 +338,7 @@ def reject_conflicts():
 
 ---
 
-# 7. **캐시 오염**(Cache Poisoning)과 결합 방지
+# **캐시 오염**(Cache Poisoning)과 결합 방지
 
 - 프록시/캐시(LB, CDN, Varnish 등)는 **요청 라인·헤더**로 **캐시 키**를 만듭니다.
 - Desync로 **다음 사용자의 요청 일부가 앞 요청에 붙으면**, **엣지 캐시가 오염**될 수 있습니다.
@@ -343,7 +350,7 @@ def reject_conflicts():
 
 ---
 
-# 8. **모니터링/탐지** 룰 예시
+# **모니터링/탐지** 룰 예시
 
 - **로그 파이프라인에서**
   - `Transfer-Encoding` 존재율(HTTP/1.1에서 클라이언트→프록시 경로 기준): **0%에 가깝게**
@@ -366,7 +373,7 @@ index=edge msg=http_access ("Transfer-Encoding"=* OR content_length_count>1)
 
 ---
 
-# 9. **운영 체크리스트** (배포 전/후)
+# **운영 체크리스트** (배포 전/후)
 
 - [ ] **프록시**: 요청 **버퍼링 on**, 백엔드로 **단일 `Content-Length`**만 전달
 - [ ] **TE 거절/제거**, **CL 중복 거절**
@@ -380,7 +387,7 @@ index=edge msg=http_access ("Transfer-Encoding"=* OR content_length_count>1)
 
 ---
 
-# 10. **사고 대응 런북(요약)** — “Desync 의심” 시
+# **사고 대응 런북(요약)** — “Desync 의심” 시
 
 1. **식별**: 프록시 경유/직결 응답 차이, 로그상 모순 헤더, 에러율 급증
 2. **격리**:
@@ -393,7 +400,7 @@ index=edge msg=http_access ("Transfer-Encoding"=* OR content_length_count>1)
 
 ---
 
-# 11. 부록 — “프로토콜 유효성” **자동화 테스트** 아이디어
+# 부록 — “프로토콜 유효성” **자동화 테스트** 아이디어
 
 > 목적: **배포 전** 프록시가 **모순 헤더를 거부**하는지, **H2/H1 변환**에서도 동일 동작인지 “스모크”로 확인.
 
@@ -448,7 +455,7 @@ for (const [name, req] of [["A-dupCL", reqA], ["B-CL+TE", reqB]]) {
 
 ---
 
-## 12. 정리
+## 정리
 
 - **Desync**는 “**요청 경계 해석의 불일치**”가 만든 사고입니다.
 - **가장 효과적인 방어**는 엣지 프록시에서 **요청을 완충/정상화**하여 백엔드에 **단 하나의 표준 형태**로 전달하는 것입니다.

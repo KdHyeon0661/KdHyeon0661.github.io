@@ -5,6 +5,7 @@ date: 2025-11-10 16:25:23 +0900
 category: DB 심화
 ---
 # Nested Loops 조인 **튜닝 실습**
+
 — **Table Prefetch(ROWID Batched Table Access)** · **Batched I/O(NLJ Batching)** · **Buffer Pinning**까지 전부 뜯어보기 (Oracle 기준)
 
 > 목표: **같은 SQL**이라도 **조인 방법(특히 NL)**과 **I/O 패턴**을 바꾸면 응답시간이 얼마나 달라지는지,
@@ -13,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0. 공통 세션 설정
+## 공통 세션 설정
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD HH24:MI:SS';
@@ -23,13 +24,13 @@ ALTER SESSION SET optimizer_features_enable = '19.1.0';   -- (환경에 맞게 �
 
 ---
 
-# 1. 실습 데이터 모델 만들기
+# 실습 데이터 모델 만들기
 
 > 포인트: **Outer(작게) → Inner(인덱스 Lookup)** 패턴을 갖는 전형적인 NL 후보 쿼리를 만들고,
 > **ROWID Batched Table Access**(= Table Prefetch) 활성/비활성에 따른 차이와
 > **NLJ Batching**(배치 I/O)의 체감을 유도합니다.
 
-## 1.1 테이블/데이터 생성
+## 테이블/데이터 생성
 
 ```sql
 -- 고객
@@ -107,7 +108,7 @@ END;
 /
 ```
 
-## 1.2 인덱스 및 통계
+## 인덱스 및 통계
 
 ```sql
 -- Outer 후보: cust_id + 최신 정렬(Stopkey) 유리
@@ -129,7 +130,7 @@ END;
 
 ---
 
-# 2. 베이스라인: 전형적인 NL 조인 쿼리
+# 베이스라인: 전형적인 NL 조인 쿼리
 
 ```sql
 VAR cid NUMBER;
@@ -154,9 +155,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 3. **Table Prefetch**(= ROWID Batched Table Access)
+# **Table Prefetch**(= ROWID Batched Table Access)
 
-## 3.1 개념 정리
+## 개념 정리
 
 - NL에서 Inner는 보통:
   **(1)** 인덱스로 `ROWID`들을 **획득** → **(2)** 각 `ROWID`가 가리키는 **Table Block을 읽음**.
@@ -175,7 +176,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 > 요점: **“ROWID들을 모아서, 같은 블록끼리 묶어 읽는다.”** → **랜덤 I/O↓, latch/pin 재사용↑**
 > **NL 유지**하면서도 Inner의 **물리 I/O 패턴을 더 순차적으로 가깝게** 만들어 준다고 이해하면 편합니다.
 
-## 3.2 실습: 활성/비활성 비교
+## 실습: 활성/비활성 비교
 
 ### (A) **강제 비활성화** 후 실행
 
@@ -222,9 +223,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 4. **Batched I/O (NLJ Batching)**
+# **Batched I/O (NLJ Batching)**
 
-## 4.1 개념
+## 개념
 
 - **NLJ Batching**은 말 그대로 **NL 루프의 Lookup을 묶어서 처리**하는 최적화입니다.
 - 핵심 아이디어: Outer에서 뽑힌 조인 키들을 **일정 크기로 모아** Inner 인덱스/테이블 접근을 **배치**로 수행 →
@@ -235,7 +236,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 > - **NLJ Batching**은 보다 넓은 개념으로 **“Outer 키를 모아 Inner Lookup 자체를 묶는”** 전략.
 >   (버전/옵션에 따라 자동 적용/완화되며, 표시가 노출되지 않을 수도 있습니다.)
 
-## 4.2 실습: Outer 결과를 **조금 더 크게** 만들어 배치 이득 확인
+## 실습: Outer 결과를 **조금 더 크게** 만들어 배치 이득 확인
 
 > 배치의 이득은 **“재사용할 수 있는 블록이 많을수록”** 커집니다. Outer를 50 → 500/1000으로 늘려보세요.
 
@@ -259,15 +260,15 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 5. **Buffer Pinning** (버퍼 핀ning) — 왜 Batched가 더 유리한가
+# **Buffer Pinning** (버퍼 핀ning) — 왜 Batched가 더 유리한가
 
-## 5.1 개념
+## 개념
 
 - Oracle은 블록을 버퍼 캐시에 읽어올 때 **버퍼 헤더 래치(latch)**를 잡고,
   읽는 동안 **버퍼를 “핀(pin)”** 해 둡니다(= 다른 세션이 위험하게 건드리지 못하도록 **고정**).
 - 같은 블록에서 **여러 행**을 읽는다면, **핀을 유지한 채** 연속으로 처리할 수 있어 **래치/핀 횟수**가 줄고 **CPU/경합**이 감소합니다.
 
-## 5.2 NL + Batched가 주는 이득
+## NL + Batched가 주는 이득
 
 - **ROWID Batched Table Access**가 **같은 블록의 행들을 묶어서** 방문하도록 만들면,
   한 번 **블록을 Pin**한 상태에서 **여러 행**을 연속 확인 → **Pin 유지 시간 대비 효율↑**,
@@ -281,9 +282,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 6. NL 튜닝 **레시피**: 실전 힌트/옵션 모음
+# NL 튜닝 **레시피**: 실전 힌트/옵션 모음
 
-## 6.1 조인 메소드/순서/경로
+## 조인 메소드/순서/경로
 
 ```sql
 /*+ LEADING(o)          */  -- 조인 시작(Outer) 고정
@@ -293,19 +294,20 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 /*+ INDEX(o ix_ord_c_dt)*/  -- Outer 액세스 경로(정렬 흡수 + Stopkey)
 ```
 
-## 6.2 Table Prefetch (ROWID Batched Table Access)
+## Table Prefetch (ROWID Batched Table Access)
 
 ```sql
 /*+ BATCH_TABLE_ACCESS_BY_ROWID(i)    */  -- Inner 테이블 방문을 배치/프리패치
 /*+ NO_BATCH_TABLE_ACCESS_BY_ROWID(i) */  -- 비활성(비교용)
 ```
 
-## 6.3 NLJ Batching(배치 I/O) 관점
+## NLJ Batching(배치 I/O) 관점
+
 - 버전/옵티마이저에 따라 **자동** 적용되며, 별도 표시가 없을 수 있습니다.
 - 핵심은 **Outer를 한꺼번에 조금 더 많이 뽑아**(Stopkey를 넉넉히/부분범위처리와 균형)
   Inner에서 **같은 블록 재사용** 기회를 **극대화**하는 것입니다.
 
-## 6.4 기타(정렬 흡수/커버링/SARG)
+## 기타(정렬 흡수/커버링/SARG)
 
 ```sql
 -- 정렬 흡수: (cust_id, order_dt DESC, order_id DESC)
@@ -315,9 +317,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 7. 비교 실습 세트 — “나쁜→좋은” 전환
+# 비교 실습 세트 — “나쁜→좋은” 전환
 
-## 7.1 Batched 미적용 (비교 기준)
+## Batched 미적용 (비교 기준)
 
 ```sql
 SELECT /*+ LEADING(o) USE_NL(i)
@@ -333,7 +335,7 @@ FETCH FIRST 300 ROWS ONLY;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICATE +IOSTATS'));
 ```
 
-## 7.2 Batched 적용
+## Batched 적용
 
 ```sql
 SELECT /*+ LEADING(o) USE_NL(i)
@@ -356,7 +358,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 8. ‘대량 Outer’ 상황에서의 선택: NL vs Hash
+# ‘대량 Outer’ 상황에서의 선택: NL vs Hash
 
 > NL을 고집하면 안 되는 경우도 있습니다. **Outer가 큰데** Inner 인덱스 재사용이 낮고,
 > 블록 재사용/Pinning 이득이 적다면 **해시 조인**이 유리합니다.
@@ -377,7 +379,7 @@ GROUP  BY o.cust_id;
 
 ---
 
-# 9. Buffer Pinning을 체감하는 팁
+# Buffer Pinning을 체감하는 팁
 
 > 직접 “핀 수”를 카운트하긴 어렵지만, **동일 쿼리**에서 Batched 여부에 따라
 > **Bufffers(논리 읽기)**, **db file sequential read 호출 수**가 **눈에 띄게 달라지는지** 보세요.
@@ -388,7 +390,7 @@ GROUP  BY o.cust_id;
 
 ---
 
-# 10. 확인/진단 스니펫
+# 확인/진단 스니펫
 
 ```sql
 -- 최근 실행계획 중 BATCHED 등장 여부
@@ -407,7 +409,7 @@ WHERE  table_name IN ('T_ITEM','T_ORD');
 
 ---
 
-# 11. 체크리스트
+# 체크리스트
 
 - [ ] NL이 **맞는 상황**인가? (Outer 작음/Top-N/부분범위, Inner 인덱스 양호)
 - [ ] **정렬 흡수**(ORDER BY 일치 인덱스)로 **Stopkey**가 작동하는가?
@@ -419,7 +421,7 @@ WHERE  table_name IN ('T_ITEM','T_ORD');
 
 ---
 
-## 12. 요약
+## 요약
 
 - **Table Prefetch(ROWID Batched Table Access)**는 NL의 **Inner 테이블 방문을 묶어서** 처리하여
   **랜덤 I/O를 줄이고** **버퍼 Pin 재사용**을 촉진합니다. (계획에 **BATCHED**로 표시)

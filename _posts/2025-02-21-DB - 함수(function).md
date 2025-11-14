@@ -6,9 +6,9 @@ category: DB
 ---
 # SQL 함수(Function)
 
-## 1. 함수 분류와 3값 논리
+## 함수 분류와 3값 논리
 
-### 1.1 함수 분류(재정의)
+### 함수 분류(재정의)
 
 | 분류 | 설명 | 예시 |
 |---|---|---|
@@ -19,7 +19,7 @@ category: DB
 
 > 윈도 함수는 **GROUP BY로는 표현하기 어려운 “행별 집계”**를 제공한다.
 
-### 1.2 SQL의 3값 논리(Three-Valued Logic)
+### SQL의 3값 논리(Three-Valued Logic)
 
 - 비교 결과는 `TRUE / FALSE / UNKNOWN(NULL)` 중 하나.
 - `NULL = NULL`은 `TRUE`가 아니라 **UNKNOWN**.
@@ -28,9 +28,9 @@ category: DB
 
 ---
 
-## 2. 문자열 함수 — MySQL vs SQL Server
+## 문자열 함수 — MySQL vs SQL Server
 
-### 2.1 길이와 바이트: `LENGTH` vs `CHAR_LENGTH` vs `LEN` vs `DATALENGTH`
+### 길이와 바이트: `LENGTH` vs `CHAR_LENGTH` vs `LEN` vs `DATALENGTH`
 
 | DB | 문자 길이 | 바이트 길이 | 주의 |
 |---|---|---|---|
@@ -44,7 +44,7 @@ SELECT CHAR_LENGTH('가'), LENGTH('가');  -- 1, 3 (utf8) 또는 4(utf8mb4)
 SELECT LEN(N'abc  '), DATALENGTH(N'abc  ');  -- 3, 10 (NVARCHAR는 2바이트/문자)
 ```
 
-### 2.2 대/소문자, 트림/패딩/치환
+### 대/소문자, 트림/패딩/치환
 
 | 기능 | MySQL | SQL Server | 예시 |
 |---|---|---|---|
@@ -61,7 +61,7 @@ SELECT TRIM(BOTH '/' FROM '/a/b/');  -- 'a/b'
 SELECT TRIM('  abc  '), LTRIM(RTRIM('  abc  '));  -- 'abc'
 ```
 
-### 2.3 부분 문자열, 검색, 위치
+### 부분 문자열, 검색, 위치
 
 | 기능 | MySQL | SQL Server |
 |---|---|---|
@@ -76,7 +76,7 @@ SELECT SUBSTRING_INDEX('a/b/c', '/', 2);  -- 'a/b'
 SELECT value FROM STRING_SPLIT('a,b,c', ',');
 ```
 
-### 2.4 패턴/정규식
+### 패턴/정규식
 
 - MySQL: `LIKE`(전방 고정 인덱스 가능), `REGEXP_LIKE/REGEXP_REPLACE`(8.0+).
 - SQL Server: 정규식 내장 X → CLR/외부/LIKE 조합, 또는 `TRANSLATE`, `REPLACE` 조합.
@@ -85,7 +85,7 @@ SELECT value FROM STRING_SPLIT('a,b,c', ',');
 
 ---
 
-## 3. 숫자/수학 함수 — 반올림·절삭·안전 계산
+## 숫자/수학 함수 — 반올림·절삭·안전 계산
 
 | 기능 | MySQL | SQL Server | 메모 |
 |---|---|---|---|
@@ -116,7 +116,7 @@ SELECT ISNULL(1.0 * numerator / NULLIF(denominator, 0), 0);
 
 ---
 
-## 4. 날짜/시간 함수 — 경계, 타임존, 리포트
+## 날짜/시간 함수 — 경계, 타임존, 리포트
 
 | 기능 | MySQL | SQL Server |
 |---|---|---|
@@ -145,9 +145,9 @@ WHERE order_dt >= DATEFROMPARTS(2025, 01, 01)
 
 ---
 
-## 5. NULL/조건/집계 — 조건부 집계의 정석
+## NULL/조건/집계 — 조건부 집계의 정석
 
-### 5.1 NULL 처리를 통일
+### NULL 처리를 통일
 
 | 목적 | MySQL | SQL Server |
 |---|---|---|
@@ -157,7 +157,7 @@ WHERE order_dt >= DATEFROMPARTS(2025, 01, 01)
 
 > **집계**: `COUNT(col)`은 NULL 제외, `COUNT(*)`는 NULL 포함.
 
-### 5.2 조건부 집계(보고서 핵심)
+### 조건부 집계(보고서 핵심)
 
 ```sql
 -- 월별 상태별 건수(양 테이블 동일)
@@ -181,7 +181,7 @@ GROUP BY CONVERT(char(7), order_dt, 126)
 ORDER BY ym;
 ```
 
-### 5.3 안전 평균/비율
+### 안전 평균/비율
 
 ```sql
 -- 비율 = 분자 / 분모, 0 나눗셈 방지
@@ -193,11 +193,11 @@ FROM orders;
 
 ---
 
-## 6. 윈도 함수 — 누계/이동 집계/그룹 Top-N
+## 윈도 함수 — 누계/이동 집계/그룹 Top-N
 
 > MySQL 8.0+, SQL Server 2012+ 지원
 
-### 6.1 누계/이동합
+### 누계/이동합
 
 ```sql
 -- MySQL: 최근 90일, 일자별 매출과 이동 7일 합
@@ -227,7 +227,7 @@ GROUP BY sale_date
 ORDER BY sale_date;
 ```
 
-### 6.2 파티션별 순위 / Top-N per group
+### 파티션별 순위 / Top-N per group
 
 ```sql
 -- 카테고리별 매출 Top 3 상품
@@ -243,7 +243,7 @@ WHERE rn <= 3
 ORDER BY category_id, rn;
 ```
 
-### 6.3 누적/비율
+### 누적/비율
 
 ```sql
 -- 카테고리 내 누적 점유율
@@ -263,7 +263,7 @@ ORDER BY category_id, cum_amt DESC;
 
 ---
 
-## 7. 형변환·타입 검사 — 안전 변환과 성능
+## 형변환·타입 검사 — 안전 변환과 성능
 
 | 기능 | MySQL | SQL Server | 메모 |
 |---|---|---|---|
@@ -278,9 +278,9 @@ SELECT TRY_CONVERT(INT, '123'), TRY_CONVERT(INT, '12A');  -- 123, NULL
 
 ---
 
-## 8. JSON 함수 — 반정규화/스키마 유연성 대처
+## JSON 함수 — 반정규화/스키마 유연성 대처
 
-### 8.1 MySQL
+### MySQL
 
 - 추출: `JSON_EXTRACT(doc, '$.a.b')` 또는 `doc->'$.a.b'`
 - 스칼라화: `JSON_UNQUOTE(JSON_EXTRACT(...))`
@@ -296,7 +296,7 @@ ALTER TABLE events
 SELECT * FROM events WHERE item_id = 'A001';
 ```
 
-### 8.2 SQL Server
+### SQL Server
 
 - 추출: `JSON_VALUE(doc, '$.a')`(스칼라) / `JSON_QUERY(doc, '$.arr')`(JSON)
 - 펼치기: `OPENJSON(doc)` (CROSS APPLY)
@@ -314,7 +314,7 @@ SELECT * FROM dbo.events WHERE item_id = 'A001';
 
 ---
 
-## 9. 보안·암호화·마스킹(간단 정리)
+## 보안·암호화·마스킹(간단 정리)
 
 - MySQL: `AES_ENCRYPT/AES_DECRYPT`(주의: 키 관리), `SHA2`, `MD5`(비권장).
 - SQL Server: `HASHBYTES`, `ENCRYPTBYKEY/DECRYPTBYKEY`, 동적 데이터 마스킹(Dynamic Data Masking), Always Encrypted.
@@ -322,9 +322,9 @@ SELECT * FROM dbo.events WHERE item_id = 'A001';
 
 ---
 
-## 10. 인덱스와 함수 — SARGability 핵심
+## 인덱스와 함수 — SARGability 핵심
 
-### 10.1 함수가 인덱스를 막는 경우
+### 함수가 인덱스를 막는 경우
 
 - **컬럼을 함수/연산으로 감싸면** B-tree 인덱스 활용이 어려워짐.
 
@@ -338,7 +338,7 @@ WHERE order_dt >= CURDATE() AND order_dt < CURDATE() + INTERVAL 1 DAY;
 WHERE order_dt >= CAST(GETDATE() AS DATE) AND order_dt < DATEADD(DAY, 1, CAST(GETDATE() AS DATE));
 ```
 
-### 10.2 함수 기반 인덱스 / 계산 열
+### 함수 기반 인덱스 / 계산 열
 
 - **MySQL 8.0**: 함수 기반 인덱스 지원.
 
@@ -358,37 +358,37 @@ CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
 
 ---
 
-## 11. UDF(사용자 정의 함수) — 성능·보안·가이드
+## UDF(사용자 정의 함수) — 성능·보안·가이드
 
-### 11.1 유형
+### 유형
 
 | DB | 스칼라 UDF | 테이블 반환 UDF |
 |---|---|---|
 | MySQL | Stored Function | (주로 Stored Procedure/뷰/테이블로 대체) |
 | SQL Server | `CREATE FUNCTION ... RETURNS scalar` | Inline TVF(권장)/Multi-Statement TVF(주의) |
 
-### 11.2 성능
+### 성능
 
 - SQL Server **스칼라 UDF**는 **행 단위 호출**로 느릴 수 있음.
   2019+의 **UDF 인라이닝**(제약 조건하에)으로 대폭 개선 가능.
 - **Inline TVF**는 옵티마이저가 조인/필터링 최적화에 유리 → **선호**.
 - MySQL Stored Function은 트랜잭션/결정성/보안 고려 필요.
 
-### 11.3 결정성/인덱스
+### 결정성/인덱스
 
 - 계산 열 인덱스(PERSISTED)에는 **결정적(Deterministic)** 함수만 허용(SQL Server).
 - MySQL 함수 기반 인덱스는 표현식이 인덱싱 가능해야 한다.
 
-### 11.4 보안/권한
+### 보안/권한
 
 - 권한 에스컬레이션, 임의 파일/네트워크 접근 금지(서버 설정).
 - SQL Server는 `SCHEMABINDING`/권한 최소화 원칙.
 
 ---
 
-## 12. 실전 시나리오 8종
+## 실전 시나리오 8종
 
-### 12.1 “Gmail 사용자만, 이메일 소문자 매칭 + 인덱스”
+### “Gmail 사용자만, 이메일 소문자 매칭 + 인덱스”
 
 ```sql
 -- MySQL: 가상 컬럼 + 인덱스(성능)
@@ -410,7 +410,7 @@ FROM dbo.users
 WHERE email_lower LIKE '%@gmail.com';
 ```
 
-### 12.2 “월별·상태별 매출 리포트 — 조건부 집계 + 날짜 경계”
+### “월별·상태별 매출 리포트 — 조건부 집계 + 날짜 경계”
 
 ```sql
 -- MySQL
@@ -441,7 +441,7 @@ GROUP BY ym_first
 ORDER BY ym_first;
 ```
 
-### 12.3 “이동 7일 합(윈도) + 주말 제외(조건부)”
+### “이동 7일 합(윈도) + 주말 제외(조건부)”
 
 ```sql
 -- MySQL: 주말 제외는 CASE로 0 처리
@@ -465,7 +465,7 @@ GROUP BY dt
 ORDER BY dt;
 ```
 
-### 12.4 “그룹별 Top-N — ROW_NUMBER”
+### “그룹별 Top-N — ROW_NUMBER”
 
 ```sql
 -- 카테고리별 판매 상위 3개 상품
@@ -481,11 +481,11 @@ WHERE rn <= 3
 ORDER BY category_id, rn;
 ```
 
-### 12.5 “JSON 속성 인덱싱 — 가상/계산 열”
+### “JSON 속성 인덱싱 — 가상/계산 열”
 
 (8절 예시 참고 — 반복 생략)
 
-### 12.6 “안전한 평균단가 — 0 나눗셈 방지 + 반올림”
+### “안전한 평균단가 — 0 나눗셈 방지 + 반올림”
 
 ```sql
 -- MySQL
@@ -501,7 +501,7 @@ FROM dbo.order_items
 GROUP BY product_id;
 ```
 
-### 12.7 “정규식 치환(이메일 도메인 표준화) — MySQL”
+### “정규식 치환(이메일 도메인 표준화) — MySQL”
 
 ```sql
 -- MySQL 8.0: REGEXP_REPLACE
@@ -511,7 +511,7 @@ SET email = CONCAT(SUBSTRING_INDEX(email, '@', 1), '@', LOWER(SUBSTRING_INDEX(em
 
 (SQL Server는 정규식 미지원 → 분해/REPLACE로 조합 또는 CLR)
 
-### 12.8 “기간 페이징 — 키셋 페이징”
+### “기간 페이징 — 키셋 페이징”
 
 ```sql
 -- 마지막 (dt, id)을 알고 있을 때 다음 페이지
@@ -530,7 +530,7 @@ ORDER BY dt DESC, id DESC;
 
 ---
 
-## 13. 체크리스트(요약·실무 가드)
+## 체크리스트(요약·실무 가드)
 
 - **NULL**: `= NULL` 금지 → `IS NULL`. `NOT IN` + NULL 함정 피하고 `NOT EXISTS` 사용.
 - **SARGability**: 컬럼을 함수/연산으로 감싸지 말고, **함수는 인덱스로 끌어내리기**(계산 열/함수 인덱스).

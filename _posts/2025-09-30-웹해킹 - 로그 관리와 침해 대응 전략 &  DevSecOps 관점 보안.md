@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # 🧭 로그 관리와 침해 대응 전략 &  DevSecOps 관점에서의 웹 애플리케이션 보안
 
-## 0. 큰 그림
+## 큰 그림
 
 - **로그 관리**는 “누가, 무엇을, 언제, 어디서, 어떻게”를 잃지 않게 하는 **증거 보존·관측 기반**입니다.
 - **침해(Incident) 대응**은 **탐지 → 분류 → 격리/완화 → 근절 → 복구 → 교훈화**의 반복 가능한 프로세스입니다.
@@ -14,9 +14,9 @@ category: 웹해킹
 
 ---
 
-# 1. 로그 관리 전략 (수집·전송·보관·탐지·가치화)
+# 로그 관리 전략 (수집·전송·보관·탐지·가치화)
 
-### 1.1 무엇을 기록할 것인가 (웹앱 기준 최소 세트)
+### 무엇을 기록할 것인가 (웹앱 기준 최소 세트)
 
 1) **HTTP 접근 로그**: 메서드, 경로, 상태, 바이트, 지연, 클라이언트 IP, UA, **추적/상관 ID**
 2) **인증/인가 이벤트**: 로그인 성공/실패, MFA, 비밀번호 변경, 세션 생성/폐기, 역할 변경
@@ -29,7 +29,7 @@ category: 웹해킹
 
 ---
 
-### 1.2 표준화된 로그 스키마(JSON Lines 권장)
+### 표준화된 로그 스키마(JSON Lines 권장)
 
 - **필수 필드**: `ts`(RFC3339/UTC), `severity`, `service`, `env`, `trace_id`, `span_id`, `corr_id`, `user_id`(또는 주체), `src_ip`, `method`, `path`, `status`, `latency_ms`, `bytes_out`, `ua`, `msg`, `tags`
 - **추적 연계**: W3C Trace Context(`traceparent` 헤더) 또는 `X-Correlation-Id`
@@ -51,9 +51,10 @@ category: 웹해킹
 
 ---
 
-### 1.3 애플리케이션 레벨 구현 (상관 ID/PII 마스킹/구조화)
+### 애플리케이션 레벨 구현 (상관 ID/PII 마스킹/구조화)
 
 #### Node.js(Express) 미들웨어 — 상관 ID + 구조 로그 + 마스킹
+
 ```javascript
 import crypto from "node:crypto";
 import pino from "pino";
@@ -99,6 +100,7 @@ export { requestLogger, auditLog, logger };
 ```
 
 #### Flask — 로거/필터/상관 ID
+
 ```python
 import logging, uuid, time
 from flask import g, request
@@ -127,7 +129,7 @@ def after(resp):
 
 ---
 
-### 1.4 수집·전송 파이프라인 예 (Fluent Bit / OpenTelemetry / Loki)
+### 수집·전송 파이프라인 예 (Fluent Bit / OpenTelemetry / Loki)
 
 **Fluent Bit → OTEL Collector → SIEM**
 - **에이전트**: 컨테이너/노드에서 로그 tail
@@ -194,7 +196,7 @@ service:
 
 ---
 
-### 1.5 보존·무결성·접근 통제
+### 보존·무결성·접근 통제
 
 - **보존 기간**: 운영 30~90일(핫), 규정 준수/포렌식 1~7년(아카이브/WORM)
 - **암호화**: 전송 TLS, 저장 시 KMS로 암호화
@@ -205,6 +207,7 @@ service:
 **간단 해시 체인(교육용)**
 ```bash
 # new.logl: 새 줄 추가 전 해시 누적
+
 prev=$(tail -n1 chain.txt | cut -d' ' -f1)
 h=$(printf "%s%s" "$prev" "$(cat line.json)" | sha256sum | cut -d' ' -f1)
 echo "$h $(cat line.json)" >> chain.txt
@@ -212,7 +215,7 @@ echo "$h $(cat line.json)" >> chain.txt
 
 ---
 
-### 1.6 탐지 쿼리/규칙 예 (Splunk/Elastic/Loki/Sigma)
+### 탐지 쿼리/규칙 예 (Splunk/Elastic/Loki/Sigma)
 
 **1) 과도한 로그인 실패(자격증명 대입 의심)**
 - *Splunk SPL*:
@@ -267,9 +270,9 @@ fields:
 
 ---
 
-# 2. 침해 대응(Incident Response) 전략 & 플레이북
+# 침해 대응(Incident Response) 전략 & 플레이북
 
-### 2.1 프로세스(요지)
+### 프로세스(요지)
 
 1. **준비(Preparation)**: 자산/연락망/권한/연습/런북/로깅
 2. **식별(Identification)**: 알림·탐지 규칙·휴리스틱으로 사건 여부 판단
@@ -282,7 +285,7 @@ fields:
 
 ---
 
-### 2.2 공통 런북 뼈대(템플릿)
+### 공통 런북 뼈대(템플릿)
 
 **사건 카드(예)**
 - 식별자: `INC-YYYYMMDD-###`
@@ -299,9 +302,10 @@ fields:
 
 ---
 
-### 2.3 상황별 플레이북
+### 상황별 플레이북
 
 #### A) **SQL Injection 의심**
+
 - **신호**: “syntax error near”, “UNION SELECT”, ORM 경고, DB 대량 스캔, WAF 탐지
 - **즉시**
   1) 공격 계정/IP 임시 차단(단, 대규모 IP 변이 주의)
@@ -318,12 +322,14 @@ fields:
   - 규칙/경보 조정, 고객 공지(필요 시), 규제 보고(해당 시)
 
 #### B) **SSRF 의심**
+
 - **신호**: 백엔드가 `169.254.169.254` 등 메타데이터로 아웃바운드, 비정상 egress
 - **즉시**: egress 프록시/SG/NACL에서 **링크로컬/메타데이터 차단**, 크레덴셜 로테이션
 - **근절**: URL **허용목록**, DNS/IP 재검증, 리다이렉트 차단, IMDSv2/헤더 요구 강제
 - **복구/LL**: 코드 리뷰(프록시 강제), 테스트 케이스 추가
 
 #### C) **계정 탈취(ATO) 의심**
+
 - **신호**: 짧은 시간 다지역 로그인, 장치 프린트 변경, 쿠키 재사용
 - **즉시**: 해당 계정 세션 **전부 무효화**, MFA 강제, 비밀번호 재설정 링크 발송
 - **조사**: 로그인/토큰/장치 지문/리퍼러/비정상 IP 대역
@@ -331,6 +337,7 @@ fields:
 - **복구/LL**: 사용자 공지 템플릿, 지원 채널 준비
 
 #### D) **업로드 후 웹셸 의심**
+
 - **신호**: 업로드 디렉터리에서 실행, 낯선 프로세스 스폰(Falco/EDR)
 - **즉시**: 경로 격리/읽기전용 마운트, 웹앱 컨테이너 교체(immutable infra)
 - **근절**: 확장자/콘텐츠 스니핑/스토리지 분리(정적 CDN), 실행권한 제거, CDR/AV
@@ -338,7 +345,7 @@ fields:
 
 ---
 
-### 2.4 알림·의사소통
+### 알림·의사소통
 
 - **내부 알림**: Slack/Teams(보안 채널) + On-call (PagerDuty/Alertmanager)
 - **외부 커뮤니케이션**: 고객 공지/법무/규제 기관 보고(해당 시)
@@ -371,16 +378,16 @@ receivers:
 
 ---
 
-# 3. DevSecOps 관점의 웹 애플리케이션 보안
+# DevSecOps 관점의 웹 애플리케이션 보안
 
-### 3.1 “Shift-left + Shift-right” 원칙
+### “Shift-left + Shift-right” 원칙
 
 - **Shift-left(개발 단계)**: 설계/코드에서 **결함 예방** — Threat Modeling, SAST, SCA, IaC Scan, Secret Scan
 - **Shift-right(운영 단계)**: **관측/탐지/대응** 자동화 — DAST, CWPP/KSPM, 런타임 보호(WAF/RASP), 관측(OTEL)
 
 ---
 
-### 3.2 CI 파이프라인 예 (GitHub Actions 기준)
+### CI 파이프라인 예 (GitHub Actions 기준)
 
 ```yaml
 name: ci-secure
@@ -433,7 +440,7 @@ jobs:
 
 ---
 
-### 3.3 공급망/배포 보안
+### 공급망/배포 보안
 
 - **SBOM**: 릴리스마다 생성(예: CycloneDX), **취약 의존성** 사전 차단
 - **서명/증명**: 컨테이너 이미지 **서명(cosign)**, **프로비넌스(SLSA)**
@@ -448,7 +455,7 @@ cosign verify --key cosign.pub registry/app:1.2.3
 
 ---
 
-### 3.4 IaC/Kubernetes 정책-코드 (OPA/Gatekeeper, Kyverno)
+### IaC/Kubernetes 정책-코드 (OPA/Gatekeeper, Kyverno)
 
 **Rego 예 — Ingress는 TLS 필수**
 ```rego
@@ -483,10 +490,11 @@ spec:
 
 ---
 
-### 3.5 런타임 보안(Falco) — 웹셸/이상 행위 탐지
+### 런타임 보안(Falco) — 웹셸/이상 행위 탐지
 
 ```yaml
 # Nginx/Apache/PHP-FPM 컨테이너가 쉘 스폰 시 경보
+
 - rule: WebServer Spawns Shell
   desc: Detect web server spawning a shell
   condition: proc.name in (bash,sh,zsh) and
@@ -498,7 +506,7 @@ spec:
 
 ---
 
-### 3.6 관측 통합(OpenTelemetry) — 로그·트레이스 상관
+### 관측 통합(OpenTelemetry) — 로그·트레이스 상관
 
 **Node(Express) — OTEL 초기화**
 ```javascript
@@ -523,7 +531,7 @@ logger.info({
 
 ---
 
-### 3.7 WAF/RASP/레이트 제한
+### WAF/RASP/레이트 제한
 
 - **WAF**: 관리형 규칙(SQLi/XSS/PRCE) + **애플리케이션 특화 규칙**(경로/메서드/속도)
 - **레이트 제한**: 사용자/토큰/IP/엔드포인트 조합, **버스트+지속** 두 축
@@ -541,7 +549,7 @@ app.use("/api/", limiter);
 
 ---
 
-# 4. 정책·거버넌스·개인정보 보호
+# 정책·거버넌스·개인정보 보호
 
 - **데이터 분류**: 공개/내부/기밀/고기밀
 - **PII/민감정보 처리**: 수집 최소화, 저장 시 암호화, **로그 마스킹** 기본
@@ -551,9 +559,10 @@ app.use("/api/", limiter);
 
 ---
 
-# 5. 추가 예제 — 로그 스키마/대시보드/보고
+# 추가 예제 — 로그 스키마/대시보드/보고
 
-### 5.1 Nginx 구조화 로그
+### Nginx 구조화 로그
+
 ```nginx
 log_format json_combined escape=json
   '{ "ts":"$time_iso8601", "service":"edge", "env":"prod", "src_ip":"$remote_addr",'
@@ -564,13 +573,15 @@ log_format json_combined escape=json
 access_log /var/log/nginx/access.json.log json_combined;
 ```
 
-### 5.2 Elastic/Kibana KQL(대시보드 타일 예)
+### Elastic/Kibana KQL(대시보드 타일 예)
+
 ```kql
 msg:"http_access" and env:"prod"
 | stats avg(latency_ms) as p50_latency by path
 ```
 
-### 5.3 주간 보안 리포트(템플릿)
+### 주간 보안 리포트(템플릿)
+
 - 요약: 주요 사건 N건, 심각도 분포, MTTA/MTTR, 재발 방지 진행상황
 - Top 탐지 규칙 발생: (규칙명/건수/유효율)
 - 인증 이상: 실패 상위 IP/ASN/국가
@@ -579,7 +590,7 @@ msg:"http_access" and env:"prod"
 
 ---
 
-# 6. 교육/훈련(게임데이/블루팀 드릴)
+# 교육/훈련(게임데이/블루팀 드릴)
 
 - **게임데이 시나리오**: SQLi 알림 → 런북 실행 → 격리/근절 → 포스트모템
 - **근무시간 외 온콜 훈련**: 페일오버/롤백/키 로테이션 리허설
@@ -587,7 +598,7 @@ msg:"http_access" and env:"prod"
 
 ---
 
-# 7. 체크리스트(요약)
+# 체크리스트(요약)
 
 - [ ] JSON 구조 로그/상관 ID/UTC 타임스탬프
 - [ ] OTEL로 **로그·트레이스·메트릭** 통합

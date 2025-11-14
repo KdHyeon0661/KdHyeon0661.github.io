@@ -25,7 +25,7 @@ category: Avalonia
 
 ---
 
-## 0. 예제 구조
+## 예제 구조
 
 ```
 ValidationSamples/
@@ -48,9 +48,9 @@ ValidationSamples/
 
 ---
 
-## 1. ReactiveUI.Validation 기반 — 선언적 규칙/교차 필드/비동기
+## ReactiveUI.Validation 기반 — 선언적 규칙/교차 필드/비동기
 
-### 1.1 ViewModel (권장)
+### ViewModel (권장)
 
 ```csharp
 // ViewModels/ValidationViewModel.cs
@@ -157,7 +157,7 @@ public sealed class ValidationViewModel : ReactiveValidationObject
 
 > `ReactiveValidationObject`는 `INotifyDataErrorInfo`를 구현한다. Avalonia는 이 인터페이스를 인식하여 컨트롤을 `:invalid` 상태로 만든다.
 
-### 1.2 비동기 검증용 서비스 (시뮬레이션)
+### 비동기 검증용 서비스 (시뮬레이션)
 
 ```csharp
 // Services/FakeUserService.cs
@@ -178,7 +178,7 @@ public sealed class FakeUserService : IFakeUserService
 
 ---
 
-## 2. INotifyDataErrorInfo 수동 구현 — 프레임워크 의존↓/세밀 제어
+## INotifyDataErrorInfo 수동 구현 — 프레임워크 의존↓/세밀 제어
 
 ReactiveUI.Validation 없이도 가능하다.
 장점: 의존성↓, 런타임 제어↑. 단점: 코드량↑.
@@ -267,7 +267,7 @@ public sealed class ValidationViewModel_INDEI : INotifyPropertyChanged, INotifyD
 
 ---
 
-## 3. DataAnnotations — 모델/DTO 재사용에 유리
+## DataAnnotations — 모델/DTO 재사용에 유리
 
 ```csharp
 // ViewModels/ValidationViewModel_DataAnno.cs
@@ -342,9 +342,9 @@ public sealed class UserForm : INotifyPropertyChanged, INotifyDataErrorInfo
 
 ---
 
-## 4. View — 오류 시각화(스타일) + 메시지 바인딩
+## View — 오류 시각화(스타일) + 메시지 바인딩
 
-### 4.1 공통 리소스 (컨버터)
+### 공통 리소스 (컨버터)
 
 ```csharp
 // Converters/InverseBooleanConverter.cs
@@ -380,7 +380,7 @@ public sealed class FirstErrorConverter : IValueConverter
 }
 ```
 
-### 4.2 뷰(XAML)
+### 뷰(XAML)
 
 > 핵심: Avalonia는 `:invalid` 의사 클래스와 `DataValidationErrors`(첨부 속성)를 제공한다.
 
@@ -495,9 +495,9 @@ public sealed class FirstErrorConverter : IValueConverter
 
 ---
 
-## 5. 고급 규칙 모음
+## 고급 규칙 모음
 
-### 5.1 다중 규칙(이름 길이 + 허용 문자)
+### 다중 규칙(이름 길이 + 허용 문자)
 
 ```csharp
 this.ValidationRule(vm => vm.Name,
@@ -515,7 +515,7 @@ this.ValidationRule(vm => vm.Name,
 
 > 한 속성에 **여러 개의 룰**을 선언하면, 실패한 모든 규칙의 메시지가 Errors 컬렉션에 누적된다.
 
-### 5.2 날짜 범위/구간 검증
+### 날짜 범위/구간 검증
 
 ```csharp
 private DateTimeOffset? _from, _to;
@@ -527,7 +527,7 @@ this.ValidationRule(vm => vm.To,
     "종료일은 시작일 이후여야 합니다.");
 ```
 
-### 5.3 서버 사이드 검증(비동기) + 디바운스
+### 서버 사이드 검증(비동기) + 디바운스
 
 앞서 `UserName`에서 구현한 패턴처럼,
 `WhenAnyValue(...).Throttle(...).SelectMany(async ...)` 형태로 비동기 호출을 연결한다.
@@ -535,7 +535,7 @@ this.ValidationRule(vm => vm.To,
 
 ---
 
-## 6. 검증과 Command 활성화 연동
+## 검증과 Command 활성화 연동
 
 - **ReactiveUI.Validation**: `this.IsValid()`가 `IObservable<bool>`을 내어주므로 Command 생성 시 그대로 적용
 - **수동(INotifyDataErrorInfo)**: `HasErrors` 변화에 대응해 `RaiseCanExecuteChanged()`(표준 ICommand) 또는 ReactiveCommand의 `canExecute`를 구성
@@ -554,7 +554,7 @@ SubmitCommand = ReactiveCommand.Create(OnSubmit, canSubmit);
 
 ---
 
-## 7. ValidationSummary 패턴 (폼 상단/하단에 전역 메시지)
+## ValidationSummary 패턴 (폼 상단/하단에 전역 메시지)
 
 `INotifyDataErrorInfo`의 모든 에러를 한데 모아 사용자에게 요약을 보여준다.
 간단한 구현은 VM에서 `AllErrors` 파생 속성을 제공하면 된다.
@@ -573,7 +573,7 @@ public string AllErrors =>
 
 ---
 
-## 8. 저장/복원(옵션)
+## 저장/복원(옵션)
 
 검증과 무관하지만 폼 UX에서는 유용하다.
 
@@ -590,7 +590,7 @@ private void Restore(FormSnapshot s)
 
 ---
 
-## 9. 단위 테스트(요지)
+## 단위 테스트(요지)
 
 검증 로직은 **View 없이** 테스트 가능해야 한다.
 
@@ -617,7 +617,7 @@ public async Task UserName_Duplicate_Fails()
 
 ---
 
-## 10. 성능/설계 팁
+## 성능/설계 팁
 
 - **규칙은 VM**에, **스타일은 XAML**에: 관심사 분리
 - **데이터 흐름은 단방향**으로(입력 → 검증 → 요약/상태)

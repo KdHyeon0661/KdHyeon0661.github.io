@@ -6,7 +6,8 @@ category: DB
 ---
 # SQL 명령어 분류: DDL, DML, DCL
 
-## 0. 용어 관점 정리(빠르게 복습)
+## 용어 관점 정리(빠르게 복습)
+
 - **DDL**: 오브젝트(스키마) 정의/변경/삭제. 대부분 DB에서 **암묵적 커밋**(자동 커밋) 동반.
 - **DML**: 데이터 조작(SELECT/INSERT/UPDATE/DELETE…); **트랜잭션 제어 대상**.
 - **DCL**: 권한 부여/회수(GRANT/REVOKE…); 사용자·롤 기반 접근 제어.
@@ -17,9 +18,10 @@ category: DB
 
 ---
 
-## 1. DDL(데이터 정의) — 구조 설계·변경의 성능/가용성 이슈까지
+## DDL(데이터 정의) — 구조 설계·변경의 성능/가용성 이슈까지
 
-### 1.1 핵심 명령과 공통 개념
+### 핵심 명령과 공통 개념
+
 ```sql
 -- 공통적 DDL
 CREATE TABLE ...;
@@ -33,11 +35,13 @@ RENAME TABLE ...;   -- 또는 ALTER ... RENAME TO ...
 ```
 
 #### 실무 포인트
+
 - **DDL은 암묵적 커밋**: 동일 트랜잭션 내 다른 DML과 **원자적으로 롤백**되지 않을 수 있다(DBMS 차이 큼).
 - **온라인 DDL 지원 범위**: 무중단 변경 가능 여부/락 레벨/백그라운드 빌드 비용이 DB마다 다르다.
 - **TRUNCATE**: 빠르지만 **회복 불가**(Oracle은 `FLASHBACK` 옵션/리사이클빈 등 예외적 경로 존재), 트리거 미발화가 보통.
 
-### 1.2 DBMS별 Online DDL·락 특성(요약)
+### DBMS별 Online DDL·락 특성(요약)
+
 | 구분 | Online DDL | 컬럼 추가/변경 | 인덱스 생성/삭제 | 비고 |
 |---|---|---|---|---|
 | PostgreSQL | 일부(11+부터 인덱스 `CONCURRENTLY`) | ADD COLUMN 기본 O(메타데이터만), 타입 변경은 재작성 가능 | `CREATE INDEX CONCURRENTLY`로 오래 락 피함 | 장시간 `CONCURRENTLY` 실패 시 재시도 필요 |
@@ -47,9 +51,10 @@ RENAME TABLE ...;   -- 또는 ALTER ... RENAME TO ...
 
 > 운영에서는 **DDL 윈도우**(배포 창)·**세이프티 플래그**(세션 타임아웃/쿼터)·**백업 및 롤백 플랜**을 함께 설계.
 
-### 1.3 확장 DDL 실무 패턴
+### 확장 DDL 실무 패턴
 
 #### (A) 제약조건(무결성) 설계
+
 ```sql
 -- PostgreSQL 예
 CREATE TABLE employee (
@@ -65,6 +70,7 @@ CREATE TABLE employee (
 - **FK ON DELETE/UPDATE**: CASCADE/SET NULL/RESTRICT의 의미를 비즈니스 규칙과 일치시킬 것.
 
 #### (B) 파티셔닝/파티션 프루닝
+
 ```sql
 -- Postgres 범위 파티셔닝
 CREATE TABLE logs (
@@ -82,6 +88,7 @@ SELECT count(*) FROM logs WHERE ts >= '2024-06-01' AND ts < '2024-07-01';
 - 대용량 테이블에서 **프루닝**은 핵심 성능 요소. **로테이션/아카이브 DDL**을 자동화한다.
 
 #### (C) 가상/생성(Generated) 컬럼, 가시성 제어
+
 ```sql
 -- MySQL 8.0: 생성 컬럼 + 인덱스
 ALTER TABLE orders
@@ -92,6 +99,7 @@ CREATE INDEX ix_orders_month ON orders(order_month);
 - 보고서/필터 공통식은 **생성 컬럼 + 인덱스**로 CPU·I/O를 절감.
 
 #### (D) 인덱스 전략(커버링, 파셜/필터드, 함수형)
+
 ```sql
 -- Postgres: 파셜 인덱스
 CREATE INDEX ix_active_users ON users (last_login)
@@ -109,9 +117,10 @@ CREATE INDEX ix_users_email_norm ON users ((lower(email)));
 
 ---
 
-## 2. DML(데이터 조작) — 트랜잭션, 격리수준, 벌크·머지, UPSERT
+## DML(데이터 조작) — 트랜잭션, 격리수준, 벌크·머지, UPSERT
 
-### 2.1 기본과 트랜잭션 제어
+### 기본과 트랜잭션 제어
+
 ```sql
 BEGIN;  -- 또는 START TRANSACTION
   INSERT INTO employee(emp_id, name, salary) VALUES (1001, '홍길동', 4000.00);
@@ -121,6 +130,7 @@ COMMIT;  -- 또는 ROLLBACK;
 ```
 
 #### 격리 수준 개요
+
 | Isolation | 허용 현상 | 설명 |
 |---|---|---|
 | READ UNCOMMITTED | Dirty Read | 실무 비권장(대부분 엔진에서 READ COMMITTED와 유사/동일 처리) |
@@ -130,7 +140,8 @@ COMMIT;  -- 또는 ROLLBACK;
 
 > 실무 기본: **READ COMMITTED** 또는 **REPEATABLE READ**. **핫 라인·정합성 중시** 구간만 SERIALIZABLE.
 
-### 2.2 UPSERT/머지 이식성
+### UPSERT/머지 이식성
+
 ```sql
 -- PostgreSQL
 INSERT INTO users(id, email, name)
@@ -152,7 +163,8 @@ WHEN NOT MATCHED THEN INSERT (id,email,name) VALUES (s.id,s.email,s.name);
 - **충돌 키**와 **멱등성** 확보(동일 입력 반복 시 동일 결과).
 - 고부하 UPSERT는 **배치/버퍼**로 묶고, **락 경합**·**보조 인덱스 갱신 비용**을 감안.
 
-### 2.3 벌크 로딩/삭제 전략
+### 벌크 로딩/삭제 전략
+
 ```sql
 -- (예) PostgreSQL: COPY(가장 빠른 바닥 프로토콜)
 COPY big_table(col1,col2,...) FROM '/path/data.csv' CSV HEADER;
@@ -166,7 +178,8 @@ DELETE FROM logs WHERE created_at < now() - INTERVAL '90 days' LIMIT 10000; -- �
 ```
 - **대량 삭제는 청크/파티션 드롭**으로. 단일 대량 DELETE는 언두/리두·락·아카이빙 비용 폭증.
 
-### 2.4 읽기 성능 패턴(커버링·스캔 회피·페이징)
+### 읽기 성능 패턴(커버링·스캔 회피·페이징)
+
 ```sql
 -- 커버링 인덱스: 선택한 컬럼만 포함
 CREATE INDEX ix_emp_cover ON employee (dept_id, salary) INCLUDE (name);  -- SQL Server식
@@ -183,9 +196,10 @@ LIMIT 50;
 
 ---
 
-## 3. DCL(접근 제어) — 롤 기반 설계, 최소권한, RLS
+## DCL(접근 제어) — 롤 기반 설계, 최소권한, RLS
 
-### 3.1 기본 권한
+### 기본 권한
+
 ```sql
 -- PostgreSQL
 CREATE ROLE app_readonly;
@@ -203,7 +217,8 @@ GRANT 'app_readonly' TO 'user_dev'@'%';
 ```
 - **역할(Role) 우선**: 사용자에게 직접 권한 주지 말고, 역할에 GRANT → 사용자에 역할만 부여.
 
-### 3.2 세분화: 컬럼/행 단위
+### 세분화: 컬럼/행 단위
+
 ```sql
 -- PostgreSQL: Row Level Security(RLS)
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
@@ -221,7 +236,8 @@ WITH (STATE = ON);
 ```
 - RLS는 강력하지만 오류/오동작 시 **전면 차단** 가능 → 철저한 통합 테스트가 필요.
 
-### 3.3 REVOKE/소유권/위임
+### REVOKE/소유권/위임
+
 ```sql
 -- WITH GRANT OPTION 로 위임 시, 피수여자가 다시 제3자에게 권한 부여 가능
 GRANT SELECT ON employee TO analyst WITH GRANT OPTION;
@@ -232,7 +248,7 @@ REVOKE GRANT OPTION FOR SELECT ON employee FROM analyst; -- 위임능력 회수
 
 ---
 
-## 4. TCL(트랜잭션 제어) — 세이브포인트, 예외 복구, 배포 전략
+## TCL(트랜잭션 제어) — 세이브포인트, 예외 복구, 배포 전략
 
 ```sql
 BEGIN;
@@ -245,14 +261,16 @@ BEGIN;
 COMMIT;
 ```
 
-### 4.1 예외/리트라이(낙관적 동시성)
+### 예외/리트라이(낙관적 동시성)
+
 - **유니크 충돌/시리얼라이즈 실패**는 정상 경로. 클라이언트에서 **리트라이 루프**(최대 N회, 지터 포함) 구현.
 - **비즈니스 멱등키**(예: `request_id`)를 DDL로 보장:
 ```sql
 ALTER TABLE payments ADD CONSTRAINT uq_req UNIQUE (request_id);
 ```
 
-### 4.2 배포 시퀀스(Blue/Green)
+### 배포 시퀀스(Blue/Green)
+
 1) **DDL 사전 배포**: 새 칼럼 추가(널 허용/디폴트), 인덱스 백그라운드 빌드
 2) **앱 이중 쓰기**: 구/신 칼럼 동시 기록(멱등)
 3) **백필(Backfill)**: 배치로 과거 데이터 이전
@@ -261,9 +279,10 @@ ALTER TABLE payments ADD CONSTRAINT uq_req UNIQUE (request_id);
 
 ---
 
-## 5. 케이스 스터디 — 쇼핑몰 주문/정산 도메인
+## 케이스 스터디 — 쇼핑몰 주문/정산 도메인
 
-### 5.1 DDL: 핵심 테이블·제약
+### DDL: 핵심 테이블·제약
+
 ```sql
 -- PostgreSQL
 CREATE TABLE customer(
@@ -304,7 +323,8 @@ CREATE INDEX ix_order_customer_time ON "order"(customer_id, ordered_at DESC);
 CREATE INDEX ix_item_product ON order_item(product_id);
 ```
 
-### 5.2 DML: 멱등 주문 생성(UPSERT) + 재고 차감
+### DML: 멱등 주문 생성(UPSERT) + 재고 차감
+
 ```sql
 -- 멱등키 도입
 ALTER TABLE "order" ADD COLUMN request_id TEXT;
@@ -336,7 +356,8 @@ BEGIN;
 COMMIT;
 ```
 
-### 5.3 DCL: 역할 기반 접근 + RLS(고객 자신만 읽기)
+### DCL: 역할 기반 접근 + RLS(고객 자신만 읽기)
+
 ```sql
 -- 역할
 CREATE ROLE app_read, app_write, app_admin;
@@ -350,7 +371,8 @@ CREATE POLICY order_owner ON "order"
   USING (customer_id = current_setting('app.user_id')::BIGINT);
 ```
 
-### 5.4 TCL: 부분 실패 복구
+### TCL: 부분 실패 복구
+
 ```sql
 BEGIN;
   SAVEPOINT sp1;
@@ -361,7 +383,7 @@ COMMIT;
 
 ---
 
-## 6. 성능/안전 안티패턴과 교정
+## 성능/안전 안티패턴과 교정
 
 | 안티패턴 | 결과 | 교정 |
 |---|---|---|
@@ -374,7 +396,7 @@ COMMIT;
 
 ---
 
-## 7. 이식성 체크리스트(DDL/DML/DCL/TCL)
+## 이식성 체크리스트(DDL/DML/DCL/TCL)
 
 - **자동 증가 키**: Postgres `SERIAL/IDENTITY`, MySQL `AUTO_INCREMENT`, SQL Server `IDENTITY`, Oracle `IDENTITY/SEQUENCE` — **표준화는 `GENERATED ... AS IDENTITY`**.
 - **UPSERT**: `ON CONFLICT`(PG) / `ON DUPLICATE KEY`(MySQL) / `MERGE`(MSSQL/Oracle).
@@ -386,7 +408,7 @@ COMMIT;
 
 ---
 
-## 8. 감사(Compliance)·운영 거버넌스
+## 감사(Compliance)·운영 거버넌스
 
 - **DDL 변경 기록**: 마이그레이션 도구(Flyway/Liquibase)로 **버전드 DDL**.
 - **DML 중요 테이블**: CDC(Change Data Capture)/감사 트리거/로그 테이블.
@@ -395,9 +417,10 @@ COMMIT;
 
 ---
 
-## 9. 연습용 미니 프로젝트 스크립트(통합)
+## 연습용 미니 프로젝트 스크립트(통합)
 
-### 9.1 스키마(DDL)
+### 스키마(DDL)
+
 ```sql
 -- 공용 스키마
 CREATE TABLE dept (
@@ -417,7 +440,8 @@ CREATE TABLE employee (
 CREATE INDEX ix_emp_dept_hired ON employee(dept_id, hired_at DESC);
 ```
 
-### 9.2 데이터 조작(DML) + 트랜잭션(TCL)
+### 데이터 조작(DML) + 트랜잭션(TCL)
+
 ```sql
 BEGIN;
   INSERT INTO dept(id,name) VALUES (10,'Sales'),(20,'Tech') ON CONFLICT DO NOTHING;
@@ -431,7 +455,8 @@ BEGIN;
 COMMIT;
 ```
 
-### 9.3 권한(DCL)
+### 권한(DCL)
+
 ```sql
 -- 읽기 전용 롤과 사용자
 CREATE ROLE report_reader;
@@ -444,7 +469,7 @@ GRANT report_reader TO dev_analyst;
 
 ---
 
-## 10. 정리 — 실무에서의 작동 순서·원칙
+## 정리 — 실무에서의 작동 순서·원칙
 
 1. **DDL**: 스키마/인덱스/제약 설계 → 온라인 DDL 여부 확인 → 배포 창/백업 계획.
 2. **DCL**: 롤 기반 최소권한 → 컬럼/행 단위 제어 필요 시 RLS·마스킹.

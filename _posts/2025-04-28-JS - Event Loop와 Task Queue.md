@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # 이벤트 루프(Event Loop)와 태스크 큐(Task Queue)
 
-## 0. 한눈에 보는 규칙
+## 한눈에 보는 규칙
 
 - **콜 스택(Call Stack)** 이 비면, 이벤트 루프가 **마이크로태스크(Microtask) 큐**를 **먼저** 비우고, 그 다음 **매크로태스크(Macro task)** 를 1개 실행합니다.
 - **Microtask**: `Promise.then/catch/finally`, `queueMicrotask`, `MutationObserver`, **(Node)** `process.nextTick(특수)`.
@@ -16,9 +16,10 @@ category: JavaScript
 
 ---
 
-## 1. 실행 모델과 구성요소
+## 실행 모델과 구성요소
 
-### 1.1 콜 스택(Call Stack)
+### 콜 스택(Call Stack)
+
 - 현재 실행 중인 프레임(함수 호출)이 쌓이는 스택.
 - **동기 코드**는 스택이 빌 때까지 계속 실행.
 
@@ -27,21 +28,25 @@ console.log("A");
 console.log("B"); // A → B 순서로 즉시 실행
 ```
 
-### 1.2 호스트(브라우저/Node)의 백그라운드
+### 호스트(브라우저/Node)의 백그라운드
+
 - 타이머, 네트워크, 파일 I/O, DOM 이벤트 대기 등은 **호스트 스레드/스레드풀**이 처리.
 
-### 1.3 큐(Queues)
+### 큐(Queues)
+
 - **Microtask Queue**: 우선순위가 높음. 스택이 빌 때마다 **전부** 비우려 시도.
 - **Macro Task Queue**: 한 번에 **하나**씩 꺼내 실행.
 
-### 1.4 이벤트 루프(Event Loop)
+### 이벤트 루프(Event Loop)
+
 - “스택이 비었는가?”를 감시. 비면 **Microtask → Macro task(1개)** 순서로 실행을 스케줄.
 
 ---
 
-## 2. 큐의 종류와 대표 작업
+## 큐의 종류와 대표 작업
 
-### 2.1 마이크로태스크(Microtask)
+### 마이크로태스크(Microtask)
+
 - **브라우저**: `Promise.then/catch/finally`, `queueMicrotask`, `MutationObserver`.
 - **Node**: 위 + `process.nextTick`(특수 큐: 일반 마이크로태스크보다 **먼저** 실행).
 
@@ -51,7 +56,8 @@ queueMicrotask(() => console.log("microtask B"));
 // A → B (등록 순서 보장, FIFO)
 ```
 
-### 2.2 매크로태스크(Macro task)
+### 매크로태스크(Macro task)
+
 - **브라우저**: `setTimeout`, `setInterval`, `MessageChannel`, `postMessage`, 일부 I/O 콜백.
 - **Node**: `setTimeout`/`setInterval`(timers phase), I/O callbacks(pending), `setImmediate`(check phase), close callbacks 등.
 
@@ -59,7 +65,8 @@ queueMicrotask(() => console.log("microtask B"));
 setTimeout(() => console.log("macro (timeout)"), 0);
 ```
 
-### 2.3 렌더링 관련(브라우저 고유)
+### 렌더링 관련(브라우저 고유)
+
 - **requestAnimationFrame(rAF)**: 렌더 직전에 호출.
 - **requestIdleCallback**: 브라우저가 한가할 때 호출(마감시간 제공). 중요한 UI에 선호 X, 보조 작업에 유용.
 
@@ -71,9 +78,10 @@ requestAnimationFrame(() => {
 
 ---
 
-## 3. 브라우저 이벤트 루프(개략 알고리즘)
+## 브라우저 이벤트 루프(개략 알고리즘)
 
-### 3.1 한 턴의 흐름
+### 한 턴의 흐름
+
 1) **콜 스택**이 비면
 2) **Microtask Queue**가 빌 때까지 계속 실행 (무한 생성 주의)
 3) 필요 시 **렌더 단계** 진입 (스타일/레이아웃/페인트)
@@ -90,7 +98,8 @@ graph TD
   E -- No --> G --> A
 ```
 
-### 3.2 대표 예제: `Promise` vs `setTimeout`
+### 대표 예제: `Promise` vs `setTimeout`
+
 ```js
 console.log("1");
 setTimeout(() => console.log("2"), 0);
@@ -103,9 +112,10 @@ console.log("4");
 
 ---
 
-## 4. Node.js 이벤트 루프(libuv) 개요
+## Node.js 이벤트 루프(libuv) 개요
 
-### 4.1 phases 순서(간단화)
+### phases 순서(간단화)
+
 1) **timers**: `setTimeout`/`setInterval` 만기 콜백
 2) **pending callbacks**: 일부 I/O 콜백
 3) **idle/prepare**
@@ -128,9 +138,10 @@ Promise.resolve().then(() => console.log("promise"));
 
 ---
 
-## 5. 실험 예제 모음(브라우저)
+## 실험 예제 모음(브라우저)
 
-### 5.1 Microtask 여러 개와 순서
+### Microtask 여러 개와 순서
+
 ```js
 Promise.resolve().then(() => console.log("A"));
 Promise.resolve().then(() => console.log("B"));
@@ -138,7 +149,8 @@ queueMicrotask(() => console.log("C"));
 // A → B → C
 ```
 
-### 5.2 Microtask가 Macro task를 ‘가로막는’ 효과
+### Microtask가 Macro task를 ‘가로막는’ 효과
+
 ```js
 setTimeout(() => console.log("macro timeout"), 0);
 
@@ -154,7 +166,8 @@ queueMicrotask(flood);
 ```
 > Microtask는 **스택이 빌 때마다 전부** 비우려 시도. 과도하면 **굶주림(starvation)** 발생.
 
-### 5.3 rAF vs Promise vs Timeout
+### rAF vs Promise vs Timeout
+
 ```js
 requestAnimationFrame(() => console.log("rAF"));
 Promise.resolve().then(() => console.log("micro"));
@@ -163,7 +176,8 @@ console.log("sync");
 // sync → micro → rAF → macro (일반적 시나리오)
 ```
 
-### 5.4 MessageChannel은 Macro task
+### MessageChannel은 Macro task
+
 ```js
 const ch = new MessageChannel();
 ch.port1.onmessage = () => console.log("messagechannel (macro)");
@@ -175,9 +189,10 @@ console.log("sync");
 
 ---
 
-## 6. 실험 예제 모음(Node.js)
+## 실험 예제 모음(Node.js)
 
-### 6.1 nextTick의 초고우선
+### nextTick의 초고우선
+
 ```js
 setTimeout(() => console.log("timer"), 0);
 setImmediate(() => console.log("immediate"));
@@ -189,7 +204,8 @@ Promise.resolve().then(() => console.log("promise 2"));
 // nextTick 1 → nextTick 2 → promise 1 → promise 2 → (timer|immediate)
 ```
 
-### 6.2 poll 이후 check phase
+### poll 이후 check phase
+
 ```js
 const fs = require("fs");
 fs.readFile(__filename, () => {
@@ -201,14 +217,16 @@ fs.readFile(__filename, () => {
 
 ---
 
-## 7. 렌더링 타이밍과 프레임(브라우저)
+## 렌더링 타이밍과 프레임(브라우저)
 
-### 7.1 렌더링 파이프라인
+### 렌더링 파이프라인
+
 - **스타일 계산 → 레이아웃 → 페인트 → 합성**.
 - 한 이벤트 루프 턴이 끝나고 **마이크로태스크가 비어야** 렌더 기회.
 - **장시간 동기 작업(Long Task)** 이 있으면 프레임 드롭.
 
-### 7.2 적절한 훅
+### 적절한 훅
+
 - **rAF**: 다음 프레임 직전(애니메이션 스텝 업데이트).
 - **requestIdleCallback**: 한가한 시간(우선순위 낮은 작업, 마감시간 확인).
 
@@ -222,9 +240,10 @@ requestAnimationFrame(step);
 
 ---
 
-## 8. 실전 패턴: 순차 vs 병렬, 백오프, 타임슬라이스
+## 실전 패턴: 순차 vs 병렬, 백오프, 타임슬라이스
 
-### 8.1 순차 vs 배치 처리
+### 순차 vs 배치 처리
+
 ```js
 // 순차(응답성이 중요할 때)
 for (const id of ids) {
@@ -235,7 +254,8 @@ for (const id of ids) {
 await Promise.all(ids.map(id => fetchDetail(id)));
 ```
 
-### 8.2 타임슬라이스로 UI 멈춤 방지
+### 타임슬라이스로 UI 멈춤 방지
+
 ```js
 async function chunkedWork(items, chunk = 100) {
   for (let i = 0; i < items.length; i += chunk) {
@@ -246,14 +266,16 @@ async function chunkedWork(items, chunk = 100) {
 }
 ```
 
-### 8.3 Microtask 굶주림 방지
+### Microtask 굶주림 방지
+
 - 긴 루프에서는 간헐적으로 **매크로태스크로 양보**: `await new Promise(r => setTimeout(r, 0))` 또는 `await new Promise(r => queueMicrotask(r))`(전자는 매크로, 후자는 마이크로).
 
 ---
 
-## 9. 디버깅/관찰 도구
+## 디버깅/관찰 도구
 
-### 9.1 브라우저
+### 브라우저
+
 - **DevTools Performance**: Main/Task/Microtask/rAF 타이밍, Long Task 확인.
 - **PerformanceObserver**: longtask 관찰.
 
@@ -266,7 +288,8 @@ const po = new PerformanceObserver((list) => {
 po.observe({ entryTypes: ["longtask"] });
 ```
 
-### 9.2 Node.js
+### Node.js
+
 - `--trace-turbo --trace-gc` 등 저수준은 과하지만, 보통은 **프로파일러/inspector** 사용.
 - 이벤트 루프 지연 측정: `perf_hooks.monitorEventLoopDelay()`.
 
@@ -279,9 +302,10 @@ setInterval(() => console.log('EL delay p95(ms):', Math.round(h.percentiles.get(
 
 ---
 
-## 10. 자주 하는 실수/함정
+## 자주 하는 실수/함정
 
-### 10.1 `forEach` + `async` 오해
+### `forEach` + `async` 오해
+
 ```js
 // ❌ forEach는 await를 기다려 주지 않음
 arr.forEach(async v => {
@@ -291,26 +315,31 @@ arr.forEach(async v => {
 ```
 **해결**: 직렬 `for...of` 또는 병렬 `Promise.all(map)`.
 
-### 10.2 Microtask 폭주로 렌더 기회 소실
+### Microtask 폭주로 렌더 기회 소실
+
 - `Promise.resolve().then(재귀 등록)` 패턴은 프레임 드랍 유발 가능.
   **해결**: 일정 단계마다 매크로태스크로 양보(`setTimeout 0`).
 
-### 10.3 Node의 `process.nextTick` 남용
+### Node의 `process.nextTick` 남용
+
 - `nextTick`은 지나치게 우선. 과도하면 I/O 굶주림.
   **해결**: 일반 마이크로태스크(`Promise`)나 적절한 phase(`setImmediate`)로 이동.
 
-### 10.4 `setTimeout(fn, 0)`의 “즉시 실행” 오해
+### `setTimeout(fn, 0)`의 “즉시 실행” 오해
+
 - 0은 **최소 지연 보장 X**, 환경별 **최소 지연 시간(clamp)** 가 있음.
 
-### 10.5 rAF에서 비싼 동기 작업
+### rAF에서 비싼 동기 작업
+
 - rAF 콜백에서 무거운 연산 → 다음 프레임 미스.
   **해결**: 작업 분할/워커/타임슬라이스.
 
 ---
 
-## 11. 순서 추론 예제(해설 포함)
+## 순서 추론 예제(해설 포함)
 
-### 11.1 기본
+### 기본
+
 ```js
 console.log("start");
 setTimeout(() => console.log("timeout"), 0);
@@ -320,7 +349,8 @@ console.log("end");
 **출력**: `start → end → promise → timeout`
 **이유**: 동기 → 마이크로태스크 → 매크로태스크.
 
-### 11.2 rAF과 Micro/Macro
+### rAF과 Micro/Macro
+
 ```js
 requestAnimationFrame(() => console.log("rAF"));
 setTimeout(() => console.log("timeout"), 0);
@@ -329,7 +359,8 @@ console.log("sync");
 ```
 **출력(일반적)**: `sync → micro → rAF → timeout`.
 
-### 11.3 Node: I/O 이후 setImmediate vs setTimeout
+### Node: I/O 이후 setImmediate vs setTimeout
+
 ```js
 const fs = require("fs");
 fs.readFile(__filename, () => {
@@ -341,9 +372,10 @@ fs.readFile(__filename, () => {
 
 ---
 
-## 12. 실전 레시피
+## 실전 레시피
 
-### 12.1 Microtask 안전한 배치 실행
+### Microtask 안전한 배치 실행
+
 ```js
 function flushMicrotasks(tasks) {
   return new Promise((resolve, reject) => {
@@ -361,7 +393,8 @@ function flushMicrotasks(tasks) {
 }
 ```
 
-### 12.2 응답성 유지형 대량 처리
+### 응답성 유지형 대량 처리
+
 ```js
 async function processLarge(items, step = 500) {
   for (let i = 0; i < items.length; i += step) {
@@ -373,7 +406,8 @@ async function processLarge(items, step = 500) {
 }
 ```
 
-### 12.3 타임아웃 래퍼
+### 타임아웃 래퍼
+
 ```js
 function withTimeout(promise, ms = 3000) {
   const to = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms));
@@ -383,7 +417,7 @@ function withTimeout(promise, ms = 3000) {
 
 ---
 
-## 13. 체크리스트
+## 체크리스트
 
 - [ ] **Microtask 먼저**: `Promise/queueMicrotask`가 `setTimeout`보다 앞선다.
 - [ ] **렌더 타이밍**: 마이크로태스크가 다 비워져야 렌더 기회. rAF는 렌더 직전.
@@ -394,7 +428,7 @@ function withTimeout(promise, ms = 3000) {
 
 ---
 
-## 14. 미니 퀴즈
+## 미니 퀴즈
 
 ```js
 // Q1) 출력 순서?
@@ -425,7 +459,7 @@ fs.readFile(__filename, () => {
 
 ---
 
-## 15. 요약
+## 요약
 
 - **스택이 비면** 이벤트 루프는 **Microtask 전부 → Macro task 1개** 순서로 소비합니다.
 - 브라우저는 이 사이사이에 **렌더링**이 개입하며, rAF는 **렌더 직전** 실행됩니다.

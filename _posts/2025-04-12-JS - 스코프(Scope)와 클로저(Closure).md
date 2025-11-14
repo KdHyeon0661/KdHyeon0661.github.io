@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # 스코프(Scope)와 클로저(Closure)
 
-## 0. 용어 및 수학적 관점(간단 정의)
+## 용어 및 수학적 관점(간단 정의)
 
 엔진이 관리하는 렉시컬 환경을 다음 튜플로 볼 수 있다:
 
@@ -21,9 +21,9 @@ $$
 
 ---
 
-## 1. 스코프(Scope) — 범위의 종류와 해석 규칙
+## 스코프(Scope) — 범위의 종류와 해석 규칙
 
-### 1.1 스코프의 종류
+### 스코프의 종류
 
 | 스코프 | 설명 | 대표 선언 |
 |---|---|---|
@@ -34,7 +34,7 @@ $$
 
 > **렉시컬 스코프**: “함수가 **어디서 호출**되었는지”가 아니라, **어디서 정의**되었는지로 스코프가 결정된다.
 
-### 1.2 전역 vs 함수 vs 블록 스코프
+### 전역 vs 함수 vs 블록 스코프
 
 ```js
 let globalVar = "global";
@@ -58,7 +58,7 @@ console.log(globalVar);   // OK
 // console.log(a, b); // ReferenceError (블록 밖에서 접근 불가)
 ```
 
-### 1.3 렉시컬 스코프(정의 위치 기준)
+### 렉시컬 스코프(정의 위치 기준)
 
 ```js
 let x = 10;
@@ -74,7 +74,7 @@ outer();
 
 ---
 
-## 2. 실행 컨텍스트·렉시컬 환경 — 엔진이 스코프를 다루는 방식
+## 실행 컨텍스트·렉시컬 환경 — 엔진이 스코프를 다루는 방식
 
 자바스크립트는 코드를 실행할 때 **실행 컨텍스트(Execution Context)**를 만들고, 그 안에 **렉시컬 환경**을 구성한다.
 
@@ -100,11 +100,11 @@ TDZ 범위는 **해당 선언이 평가되어 초기화되기 전까지**다.
 
 ---
 
-## 3. 클로저(Closure) — 정의, 동작, 메모리
+## 클로저(Closure) — 정의, 동작, 메모리
 
 > “클로저는 **함수가 생성될 때의 렉시컬 환경을 기억**하여, 함수가 살아있는 동안 그 환경의 식별자에 접근할 수 있게 해주는 기능”이다.
 
-### 3.1 기본 예제(상태 유지)
+### 기본 예제(상태 유지)
 
 ```js
 function makeCounter() {
@@ -121,7 +121,7 @@ console.log(counter()); // 2
 console.log(counter()); // 3
 ```
 
-### 3.2 정보 은닉/캡슐화(게터/세터)
+### 정보 은닉/캡슐화(게터/세터)
 
 ```js
 function createUser(name) {
@@ -140,7 +140,7 @@ console.log(u.getName()); // "Bob"
 
 외부에서 `privateName`에 직접 접근할 수 없고, 오직 제공된 인터페이스로만 제어한다.
 
-### 3.3 메모리 관점
+### 메모리 관점
 
 - **클로저가 참조하는 바깥 변수**는 함수가 살아있는 동안 **GC 대상에서 제외**된다(참조가 남아있으므로).
 - 이벤트 핸들러/타이머/전역 배열에 **클로저를 오래 저장**하면 해당 환경도 오래 유지된다 → *누수처럼 보일 수 있음*.
@@ -166,9 +166,9 @@ detach();
 
 ---
 
-## 4. 반복문과 클로저 — 루프 캡처 이슈
+## 반복문과 클로저 — 루프 캡처 이슈
 
-### 4.1 `var` 사용 시 버그
+### `var` 사용 시 버그
 
 ```js
 for (var i = 0; i < 3; i++) {
@@ -177,7 +177,7 @@ for (var i = 0; i < 3; i++) {
 // 3 3 3 — 단 하나의 i 바인딩을 공유
 ```
 
-### 4.2 `let`으로 해결(반복마다 새 바인딩)
+### `let`으로 해결(반복마다 새 바인딩)
 
 ```js
 for (let i = 0; i < 3; i++) {
@@ -186,7 +186,7 @@ for (let i = 0; i < 3; i++) {
 // 0 1 2
 ```
 
-### 4.3 구형 코드에서의 IIFE 패턴
+### 구형 코드에서의 IIFE 패턴
 
 ```js
 for (var i = 0; i < 3; i++) {
@@ -196,7 +196,7 @@ for (var i = 0; i < 3; i++) {
 }
 ```
 
-### 4.4 콜백 파라미터 캡처 활용
+### 콜백 파라미터 캡처 활용
 
 ```js
 [10, 20, 30].forEach((v, idx) => {
@@ -206,9 +206,9 @@ for (var i = 0; i < 3; i++) {
 
 ---
 
-## 5. 모듈 스코프·전역 바인딩·this와의 관계
+## 모듈 스코프·전역 바인딩·this와의 관계
 
-### 5.1 비모듈 스크립트(브라우저)
+### 비모듈 스크립트(브라우저)
 
 ```html
 <script>
@@ -218,7 +218,7 @@ for (var i = 0; i < 3; i++) {
 </script>
 ```
 
-### 5.2 ES 모듈
+### ES 모듈
 
 - 모듈 파일(`type="module"`, `.mjs`)은 **모듈 스코프**를 갖는다.
 - 최상단 `this === undefined`, 전역 `var`라도 `window`에 붙지 않는다.
@@ -226,7 +226,7 @@ for (var i = 0; i < 3; i++) {
 
 ---
 
-## 6. 이름 해석 규칙(변수 탐색 알고리즘)
+## 이름 해석 규칙(변수 탐색 알고리즘)
 
 1. **현재 렉시컬 환경**에서 식별자 탐색
 2. 없으면 **Outer**로 이동
@@ -249,7 +249,7 @@ f();
 
 ---
 
-## 7. TDZ(Temporal Dead Zone) — 선언 전 접근 금지
+## TDZ(Temporal Dead Zone) — 선언 전 접근 금지
 
 ```js
 {
@@ -269,9 +269,9 @@ f();
 
 ---
 
-## 8. 클로저 실전 패턴 모음
+## 클로저 실전 패턴 모음
 
-### 8.1 once: 한 번만 실행
+### once: 한 번만 실행
 
 ```js
 function once(fn) {
@@ -286,7 +286,7 @@ const init = once(() => ({ db: "connected" }));
 console.log(init() === init()); // true
 ```
 
-### 8.2 debounce/throttle(상태 유지)
+### debounce/throttle(상태 유지)
 
 ```js
 function debounce(fn, wait = 200) {
@@ -309,7 +309,7 @@ function throttle(fn, wait = 200) {
 }
 ```
 
-### 8.3 커링/부분 적용
+### 커링/부분 적용
 
 ```js
 const add = (a) => (b) => a + b;
@@ -317,7 +317,7 @@ const add10 = add(10);
 console.log(add10(5)); // 15
 ```
 
-### 8.4 모듈 패턴(IIFE) — 레거시 환경
+### 모듈 패턴(IIFE) — 레거시 환경
 
 ```js
 const CounterModule = (function () {
@@ -330,7 +330,7 @@ CounterModule.inc();
 console.log(CounterModule.get()); // 1
 ```
 
-### 8.5 클래스의 프라이빗 필드 vs 클로저
+### 클래스의 프라이빗 필드 vs 클로저
 
 ```js
 // # 프라이빗 필드
@@ -350,7 +350,7 @@ function Bank2() {
 }
 ```
 
-### 8.6 DOM과 데이터 결합(WeakMap로 누수 완화)
+### DOM과 데이터 결합(WeakMap로 누수 완화)
 
 ```js
 const store = new WeakMap();
@@ -366,9 +366,9 @@ function bind(node, data) {
 
 ---
 
-## 9. 비동기 + 클로저 — 타이머/Promise/async
+## 비동기 + 클로저 — 타이머/Promise/async
 
-### 9.1 타이머와 캡처
+### 타이머와 캡처
 
 ```js
 function scheduleTasks() {
@@ -380,7 +380,7 @@ scheduleTasks();
 // T 1, T 2, T 3
 ```
 
-### 9.2 `for` + `await` 캡처(반복마다 새 바인딩이므로 안전)
+### `for` + `await` 캡처(반복마다 새 바인딩이므로 안전)
 
 ```js
 async function run() {
@@ -393,7 +393,7 @@ run();
 // A 1, A 2, A 3
 ```
 
-### 9.3 값 스냅샷이 필요한 경우(기본값 파라미터 트릭)
+### 값 스냅샷이 필요한 경우(기본값 파라미터 트릭)
 
 ```js
 for (let i = 0; i < 3; i++) {
@@ -403,7 +403,7 @@ for (let i = 0; i < 3; i++) {
 
 ---
 
-## 10. 보안/안정성 — `eval`/`with`와 스코프
+## 보안/안정성 — `eval`/`with`와 스코프
 
 - `eval`은 현재 스코프에 영향을 줄 수 있어 **지양**. 엄격 모드에서는 영향 축소.
 - `with`는 렉시컬 해석을 혼란스럽게 하므로 **사용 금지**(strict 모드 금지).
@@ -415,7 +415,7 @@ for (let i = 0; i < 3; i++) {
 
 ---
 
-## 11. 디버깅/프로파일링 팁
+## 디버깅/프로파일링 팁
 
 - DevTools Sources/Scope 패널에서 **Closures**/`Local`/`Global` 확인.
 - 메모리 프로파일러로 **Detached DOM**과 **Listener**를 점검.
@@ -423,9 +423,9 @@ for (let i = 0; i < 3; i++) {
 
 ---
 
-## 12. 실전 예제 — 버튼 클릭 카운터(확장 버전)
+## 실전 예제 — 버튼 클릭 카운터(확장 버전)
 
-### 12.1 기본(단일 버튼)
+### 기본(단일 버튼)
 
 ```js
 function createCounterHandler() {
@@ -440,7 +440,7 @@ const handler = createCounterHandler();
 document.querySelector("button").addEventListener("click", handler);
 ```
 
-### 12.2 여러 버튼에 독립 상태 부여
+### 여러 버튼에 독립 상태 부여
 
 ```js
 function attachCounter(btn) {
@@ -454,7 +454,7 @@ const offs = [...document.querySelectorAll("button")].map(attachCounter);
 // 나중에 필요 없으면: offs.forEach(off => off());
 ```
 
-### 12.3 요청 취소(AbortController) + 클로저로 상태 보관
+### 요청 취소(AbortController) + 클로저로 상태 보관
 
 ```js
 function makeFetchOnce(url) {
@@ -478,7 +478,7 @@ const run = makeFetchOnce("/api/data");
 
 ---
 
-## 13. 체크리스트(요약)
+## 체크리스트(요약)
 
 - [ ] **렉시컬 스코프**: 정의 위치가 곧 스코프.
 - [ ] 스코프 종류: 전역/함수/블록/모듈 — 구분해서 사용.
@@ -491,7 +491,7 @@ const run = makeFetchOnce("/api/data");
 
 ---
 
-## 14. 미니 퀴즈
+## 미니 퀴즈
 
 ```js
 // Q1: 출력은?
@@ -520,7 +520,7 @@ Q1) `ReferenceError`(TDZ), Q2) `2 2`, Q3) 직접 변경 불가(인터페이스�
 
 ---
 
-## 15. 결론
+## 결론
 
 - 스코프는 **이름 해석의 경로**이고, 클로저는 **그 경로(환경)를 보존**한다.
 - 이 원리를 이해하면 **의도치 않은 참조/전역 오염/루프 버그**를 줄이고, **정보 은닉·상태 유지**·유틸 구현을 견고하게 만들 수 있다.

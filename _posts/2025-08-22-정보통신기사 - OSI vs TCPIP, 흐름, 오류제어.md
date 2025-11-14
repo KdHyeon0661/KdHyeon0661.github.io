@@ -6,7 +6,7 @@ category: 정보통신기사
 ---
 # OSI vs TCP/IP, 흐름/오류제어(ARQ/윈도우) 총정리
 
-## 0. 큰 그림 한 장
+## 큰 그림 한 장
 
 - **OSI 7계층**: 이론적 모델(**표준화·용어 정리**)
 - **TCP/IP 4~5계층**: 실제 인터넷 스택(**구현·배포**)
@@ -18,9 +18,9 @@ category: 정보통신기사
 
 ---
 
-## 1. OSI 7계층 vs TCP/IP
+## OSI 7계층 vs TCP/IP
 
-### 1.1 계층 매핑 표
+### 계층 매핑 표
 
 | OSI | 키워드 | PDU명 | 대표 프로토콜/예 |
 |---|---|---|---|
@@ -34,7 +34,7 @@ category: 정보통신기사
 
 > **TCP/IP 모델**은 보통 **응용/전송/인터넷/네트워크접근(=L2+L1)**의 4층 또는 **5층(링크/물리 분리)**으로 설명.
 
-### 1.2 캡슐화/디캡슐화와 주소체계
+### 캡슐화/디캡슐화와 주소체계
 
 - **캡슐화**: App Data → (L4 헤더)Segment → (L3 헤더)Packet → (L2 헤더/트레일러)Frame → (L1)Bit
 - **주소계층**
@@ -48,7 +48,7 @@ category: 정보통신기사
 
 ---
 
-## 2. 오류제어 vs 흐름제어 vs 혼잡제어
+## 오류제어 vs 흐름제어 vs 혼잡제어
 
 - **오류제어(Error Control)**: 에러 검출/정정/재전송(ARQ).
   - **링크계층**: 무선(L2 ARQ, Hybrid-ARQ), 유선(Ethernet은 재전송 없음·상위에 맡김).
@@ -63,9 +63,9 @@ category: 정보통신기사
 
 ---
 
-## 3. ARQ(Automatic Repeat reQuest)와 슬라이딩 윈도우
+## ARQ(Automatic Repeat reQuest)와 슬라이딩 윈도우
 
-### 3.1 정지-대기(Stop-and-Wait, SW)
+### 정지-대기(Stop-and-Wait, SW)
 
 - 1개 프레임 전송 → **ACK 기다림** → 다음 프레임.
 - **순환 비트**(0/1)로 중복검출. 단순하지만 **대역지연 제품(BDP)** 큰 링크에서 **효율↓**.
@@ -89,7 +89,7 @@ U_\text{SW} \approx \frac{T_\text{tx}}{T_\text{tx}+2T_p}
 $$
 - $a$가 클수록(=긴 RTT/짧은 프레임) **U ↓**.
 
-### 3.2 Go-Back-N (GBN)
+### Go-Back-N (GBN)
 
 - **윈도우 W**개까지 연속 전송. 누락 검출 시 **해당 프레임 이후 모두 재전송**.
 - **누적 ACK**(cumulative ACK). 구현 간단, 손실 시 **연쇄 재전송**(낭비↑).
@@ -106,7 +106,7 @@ $$
 
 **에러 존재 시 직감**: $p$가 작을수록 SR과 격차↓, $p$가 크면 **GBN 손해** 커짐.
 
-### 3.3 Selective Repeat (SR)
+### Selective Repeat (SR)
 
 - **손실된 프레임만 선택 재전송**, 수신측 **아웃오브오더 수용/버퍼링**.
 - 가장 효율적이지만 수신 버퍼/번호공간 관리 필요(**윈도우 ≤ 시퀀스공간/2** 보통).
@@ -114,7 +114,7 @@ $$
 **무오류 이용률**: GBN과 동일 조건에서 **1**에 더 빨리 수렴(실제로는 유사).
 **손실 시**: 선택 재전송 덕에 **처리량 저하 최소화**.
 
-### 3.4 타임아웃 & 재전송
+### 타임아웃 & 재전송
 
 - **재전송 타이머**는 **RTT 추정** 기반(§5).
 - **누락/중복 ACK**: GBN은 누적 ACK n 도착 시 n까지 모두 확인.
@@ -122,9 +122,9 @@ $$
 
 ---
 
-## 4. BDP와 윈도우 크기
+## BDP와 윈도우 크기
 
-### 4.1 BDP(Bandwidth–Delay Product)
+### BDP(Bandwidth–Delay Product)
 
 $$
 \mathrm{BDP}[\mathrm{bits}] = \text{대역폭 }R[\mathrm{bit/s}] \times \text{RTT }T[\mathrm{s}]
@@ -139,26 +139,26 @@ $$
 $\mathrm{BDP}=100\times10^6 \times 0.05 = 5\times 10^6$ b → $W\approx 5\mathrm{e}6/11680\approx 428$ 세그먼트.
 → **윈도우 스케일** 없으면 불가(기본 65,535B 한계). **윈도우 스케일 옵션** 필수.
 
-### 4.2 Stop-and-Wait의 병목
+### Stop-and-Wait의 병목
 
 - 사실상 $W=1$. 위 예에서 활용률 $U\approx 1/(1+2a)$로 **극저**. → **슬라이딩 윈도우 필수**.
 
 ---
 
-## 5. TCP 핵심 메커니즘 (흐름·오류·혼잡·타이머)
+## TCP 핵심 메커니즘 (흐름·오류·혼잡·타이머)
 
-### 5.1 흐름제어: **수신창(rwnd)**
+### 흐름제어: **수신창(rwnd)**
 
 - 수신자는 **Advertised Window**(가용 버퍼)로 송신자 속도 제한.
 - **Silly Window Syndrome(SWS)** 회피: 너무 작은 윈도우 광고/전송 금지(Clark’s solution), **Nagle**와 조합.
 
-### 5.2 오류제어: ACK, 재전송, SACK
+### 오류제어: ACK, 재전송, SACK
 
 - **누적 ACK**: 마지막 연속 수신 바이트까지 승인.
 - **타임아웃 재전송**, **Fast Retransmit**(중복 ACK 3회) → 빠른 손실 복구.
 - **SACK** 옵션: 도착한 구간 범위를 전달 → **선택 재전송**(SR 유사).
 
-### 5.3 혼잡제어: cwnd
+### 혼잡제어: cwnd
 
 - **Slow Start**: `cwnd`를 **지수** 증가(ACK당 MSS 추가).
 - **Congestion Avoidance**: 선형 증가.
@@ -166,7 +166,7 @@ $\mathrm{BDP}=100\times10^6 \times 0.05 = 5\times 10^6$ b → $W\approx 5\mathrm
 
 > 송신 허용 데이터 ≈ `min(rwnd, cwnd)` 바이트. 링크 꽉 채우려면 **둘 다 BDP 이상**이어야.
 
-### 5.4 RTT 추정과 RTO (Jacobson/Karels + Karn)
+### RTT 추정과 RTO (Jacobson/Karels + Karn)
 
 - **SRTT/RTTVAR** 갱신:
 $$
@@ -179,53 +179,60 @@ $$
 $$
 - **Karn’s Algorithm**: 재전송된 세그먼트의 RTT는 **샘플에서 제외**.
 
-### 5.5 Nagle, Delayed ACK
+### Nagle, Delayed ACK
 
 - **Nagle**: 작은 패킷을 모아 전송(소형 세그먼트 폭발 방지). **대화형 지연** 유발 가능 → 지연 민감 앱은 `TCP_NODELAY`.
 - **Delayed ACK**: ACK 지연(예 40ms)으로 ACK 수 절감. Nagle와 **상호작용** 주의.
 
 ---
 
-## 6. 수치 예제
+## 수치 예제
 
 ### 예제 1) Stop-and-Wait 효율
+
 - 링크 10 Mb/s, 프레임 10 kB, 거리 왕복 전파 40 ms(=RTT), ACK 40 B 무시.
 - $T_\text{tx} = 10\,\text{kB} \times 8 / (10\,\text{Mb/s}) = 8\,\text{ms}$
 - $U \approx \frac{8}{8+40} = \mathbf{0.167}$ (≈16.7%). → **비효율**, 슬라이딩 윈도우 필요.
 
 ### 예제 2) GBN 윈도우로 파이프 채우기
+
 - 위 링크에서 $a=T_p/T_{tx}=20/8=2.5$, $1+2a=6$.
 - **$W \ge 6$**이면 **U→1**(무오류 근사). 실제는 ACK/헤더/손실 고려해 약간↓.
 
 ### 예제 3) BDP로 TCP 윈도우 요구량
+
 - 1 Gb/s, RTT 30 ms, MSS 1448 B
   - BDP = $1\mathrm{e}9\times 0.03 = 30\,\mathrm{Mb} = 3.75\,\mathrm{MB}$
   - 세그먼트 수 ≈ $3.75\text{MB}/1448 \approx 2666$ → **윈도우스케일 필요**(`wscale`로 2^n 배 확장).
 
 ### 예제 4) 손실이 있는 SW 처리량
+
 - 손실확률 $p=0.01$, 예제1의 분모 동일:
   $\text{Throughput}=(1-p)\cdot L /(T_\text{cycle})=0.99\cdot 80\,\text{kbit}/48\,\text{ms}\approx \mathbf{1.65\,Mb/s}$.
   (무손실 1.67 Mb/s 대비 소폭 감소)
 
 ### 예제 5) TCP cwnd 성장(개념)
+
 - 초기 `cwnd=1 MSS`, RTT마다 2배(ACK마다 +1 MSS) → 몇 RTT 안에 BDP 근처 도달.
 - 도달 후 **선형 증가**(혼잡회피), 손실 시 **감소**.
 
 ---
 
-## 7. Python 미니 계산기
+## Python 미니 계산기
 
 ```python
 import math
 
-# 1. Stop-and-Wait 처리량
+# Stop-and-Wait 처리량
+
 def sw_throughput_bps(R_bps, L_bytes, RTT_s, p_loss=0.0, ack_bytes=0):
     Ttx = (L_bytes*8)/R_bps
     Tack = (ack_bytes*8)/R_bps
     Tcycle = Ttx + RTT_s + Tack
     return (1.0 - p_loss) * (L_bytes*8) / Tcycle
 
-# 2. GBN 무오류 이용률 근사
+# GBN 무오류 이용률 근사
+
 def gbn_utilization(W, R_bps, L_bytes, RTT_s):
     Ttx = (L_bytes*8)/R_bps
     a = (RTT_s/2)/Ttx  # one-way prop/Ttx
@@ -233,12 +240,14 @@ def gbn_utilization(W, R_bps, L_bytes, RTT_s):
         return W/(1+2*a)
     return 1.0
 
-# 3. BDP와 윈도우
+# BDP와 윈도우
+
 def window_for_bdp(R_bps, RTT_s, MSS_bytes):
     bdp_bits = R_bps*RTT_s
     return math.ceil(bdp_bits/(MSS_bytes*8))
 
-# 4. Jacobson/Karels RTO 갱신
+# Jacobson/Karels RTO 갱신
+
 def rto_series(samples, alpha=1/8, beta=1/4, G=0.001, K=4):
     SRTT = samples[0]
     RTTVAR = samples[0]/2
@@ -252,6 +261,7 @@ def rto_series(samples, alpha=1/8, beta=1/4, G=0.001, K=4):
     return out
 
 # Demo
+
 R=10e6; L=10*1024; RTT=0.040
 print("SW throughput (10Mb/s,10KB,40ms):", round(sw_throughput_bps(R,L,RTT)/1e6,3),"Mb/s")
 print("GBN U(W=6):", round(gbn_utilization(6,R,L,RTT),3))
@@ -261,7 +271,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 8. 링크/계층별 오류·흐름제어 배치 감
+## 링크/계층별 오류·흐름제어 배치 감
 
 - **L1/L2**: 비트/프레임 수준 오류 → **FEC/ARQ/CRC**. 무선은 **HARQ(Soft-Combining)**로 지연 낮춤.
 - **L3**: IPv6는 헤더 체크섬 없음(상하위에 맡김). ICMP는 진단용.
@@ -270,7 +280,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 9. TCP 고급 토픽 압축 정리
+## TCP 고급 토픽 압축 정리
 
 - **윈도우 스케일**: `WSopt = 2^s`, `AdvertisedWindow << s`로 확장.
 - **SACK**: 구간 단위로 도착 범위 알림 → 재전송 효율 ↑.
@@ -280,7 +290,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 10. 자주 틀리는 포인트(정오표)
+## 자주 틀리는 포인트(정오표)
 
 1) **흐름제어 vs 혼잡제어** 혼동 금지: **rwnd(수신버퍼)** vs **cwnd(네트워크 상태)**.
 2) **Stop-and-Wait**는 RTT 큰 링크에서 **거의 사용 안 함**(교육용). 실제는 **슬라이딩 윈도우**.
@@ -292,7 +302,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 11. 체크리스트(설계/튜닝)
+## 체크리스트(설계/튜닝)
 
 - [ ] RTT·대역폭으로 **BDP** 계산 → `rwnd/cwnd` 목표치 가늠
 - [ ] **윈도우 스케일/SACK/ECN** 활성(가능 시)
@@ -303,30 +313,36 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 12. 연습문제(풀이 포함)
+## 연습문제(풀이 포함)
 
 ### Q1. 50 Mb/s 링크, RTT 80 ms, MSS 1460 B. 파이프를 채우는 최소 세그먼트 윈도우?
+
 **풀이**: BDP = $50\mathrm{e}6 \times 0.08 = 4\mathrm{e}6\,b = 500{,}000\,B$.
 세그먼트 수 ≈ 500,000 / 1460 ≈ **343**.
 
 ### Q2. Stop-and-Wait에서 $L=5$ kB, $R=5$ Mb/s, RTT=60 ms일 때 이용률?
+
 **풀이**: $T_{tx}= (5k\times8)/5M = 8\,\text{ms}$. $U=8/(8+60)=\mathbf{0.117}$ (11.7%).
 
 ### Q3. GBN에서 $a=3$일 때 $W=7$이면 무오류 이용률은?
+
 **풀이**: $1+2a=7$. $W=7\Rightarrow U=1$ (파이프 채움).
 
 ### Q4. TCP의 송신 가능량을 제한하는 두 창은? 그리고 실제 송신 허용은?
+
 **풀이**: **rwnd(흐름제어)**, **cwnd(혼잡제어)**. 실제 허용 = **min(rwnd, cwnd)**.
 
 ### Q5. RTO 추정에서 재전송된 세그먼트의 RTT 샘플을 제외하는 이유는?
+
 **풀이**: 어떤 ACK가 **원전송**을 가리키는지 불명확 → **RTT 왜곡 방지**(Karn의 알고리즘).
 
 ### Q6. SR에서 시퀀스 번호 공간이 8이라면 최대 윈도우는?
+
 **풀이**: **번호공간/2 = 4** (혼동 방지 원칙).
 
 ---
 
-## 13. 빠른 암기표(Cheat Sheet)
+## 빠른 암기표(Cheat Sheet)
 
 - **OSI→TCP/IP**: (L7~L5)응용 / L4전송 / L3인터넷 / (L2+L1)네트워크접근
 - **PDU**: L4=세그먼트, L3=패킷, L2=프레임
@@ -340,7 +356,7 @@ print("RTO series:", [tuple(round(v,4) for v in t) for t in rto_series([0.05,0.0
 
 ---
 
-## 14. 마무리
+## 마무리
 
 - **링크가 빠른데도 느리다?** 거의 항상 **BDP 대비 윈도우/RTT/손실/큐** 문제입니다.
 - **학습 순서 추천**: (1) SW 직감 → (2) GBN/SR로 파이프라인 → (3) BDP로 윈도우 산출 → (4) TCP의 rwnd/cwnd/RTO/SACK/ECN 조립.

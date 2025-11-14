@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 스택(Stack)
 
-## 1. 스택이란?
+## 스택이란?
 
 > 스택은 **후입선출(LIFO: Last In, First Out)** 구조다.
 
@@ -15,7 +15,7 @@ category: Data Structure
 
 ---
 
-## 2. 기본 연산과 복잡도
+## 기본 연산과 복잡도
 
 | 연산      | 의미                      | 평균 시간 |
 |-----------|---------------------------|-----------|
@@ -33,7 +33,7 @@ $$
 
 ---
 
-## 3. 배열 기반 스택 (정적 용량)
+## 배열 기반 스택 (정적 용량)
 
 초안의 정적 배열 버전을 유지하되, 몇 가지 세부 조언을 포함한다.
 
@@ -77,7 +77,7 @@ public:
 
 ---
 
-## 4. 동적 배열 기반 스택 (템플릿, Amortized O(1))
+## 동적 배열 기반 스택 (템플릿, Amortized O(1))
 
 실전에서는 **제네릭 템플릿 + 자동 확장**이 편리하다.
 
@@ -153,7 +153,7 @@ public:
 
 ---
 
-## 5. 연결 리스트 기반 스택 (템플릿)
+## 연결 리스트 기반 스택 (템플릿)
 
 초안의 int 고정형을 **템플릿**으로 일반화.
 
@@ -211,7 +211,7 @@ public:
 
 ---
 
-## 6. 표준 `std::stack` 올바르게 쓰기
+## 표준 `std::stack` 올바르게 쓰기
 
 ```cpp
 #include <stack>
@@ -228,9 +228,9 @@ std::stack<int, std::deque<int>>  s3;    // deque 명시
 
 ---
 
-## 7. 필수 응용 문제
+## 필수 응용 문제
 
-### 7.1 괄호 검사(다종 괄호)
+### 괄호 검사(다종 괄호)
 
 초안의 `()`만이 아니라 `()[]{}` 전부.
 
@@ -253,7 +253,7 @@ bool isValidBrackets(const std::string& s) {
 }
 ```
 
-### 7.2 중위식 → 후위식(Shunting-yard)
+### 중위식 → 후위식(Shunting-yard)
 
 연산자 우선순위/결합 법칙을 스택으로 처리.
 
@@ -299,7 +299,7 @@ std::vector<std::string> infixToPostfix(const std::string& s){
 }
 ```
 
-### 7.3 후위식 계산(RPN)
+### 후위식 계산(RPN)
 
 ```cpp
 #include <stack>
@@ -326,13 +326,14 @@ int evalRPN(const std::vector<std::string>& toks){
 
 ---
 
-## 8. 확장 스택: `MinStack` (O(1) 최소값 조회)
+## 확장 스택: `MinStack` (O(1) 최소값 조회)
 
 보조 스택에 **최소값 누적** 저장.
 
 ```cpp
 #include <stack>
 #include <stdexcept>
+
 template <class T>
 class MinStack {
     std::stack<T> s, mins;
@@ -357,9 +358,9 @@ public:
 
 ---
 
-## 9. 모노토닉 스택(Monotonic Stack) — 실전 핵심
+## 모노토닉 스택(Monotonic Stack) — 실전 핵심
 
-### 9.1 다음 큰 원소(Next Greater Element)
+### 다음 큰 원소(Next Greater Element)
 
 오른쪽으로 **자신보다 큰 첫 원소**의 인덱스/값을 구한다. 스택에 **내림차순**을 유지.
 
@@ -384,7 +385,7 @@ std::vector<int> nextGreater(const std::vector<int>& a){
 
 - **복잡도**: 각 인덱스가 **한 번 push, 한 번 pop** → 총 O(n)
 
-### 9.2 히스토그램의 최대 직사각형 (LeetCode 84)
+### 히스토그램의 최대 직사각형 (LeetCode 84)
 
 높이 배열에서 **가장 큰 직사각형** 넓이 구하기. **증가 스택** 유지.
 
@@ -415,7 +416,7 @@ long long largestRectangle(const std::vector<int>& h){
 
 ---
 
-## 10. 브라우저 뒤로/앞으로 — 두 스택 패턴
+## 브라우저 뒤로/앞으로 — 두 스택 패턴
 
 ```cpp
 #include <string>
@@ -451,9 +452,9 @@ public:
 
 ---
 
-## 11. 재귀 제거 / DFS
+## 재귀 제거 / DFS
 
-### 11.1 재귀 → 명시적 스택 치환
+### 재귀 → 명시적 스택 치환
 
 ```cpp
 // 재귀 DFS
@@ -464,6 +465,7 @@ void dfs_rec(int u, const std::vector<std::vector<int>>& g, std::vector<int>& vi
 
 // 반복 DFS
 #include <stack>
+
 void dfs_iter(int s, const std::vector<std::vector<int>>& g, std::vector<int>& vis){
     std::stack<int> st; st.push(s);
     while(!st.empty()){
@@ -477,7 +479,7 @@ void dfs_iter(int s, const std::vector<std::vector<int>>& g, std::vector<int>& v
 
 - **스택**은 **시스템 호출 스택의 역할**을 직접 수행한다.
 
-### 11.2 문자열 역전/수식 평가 등 미니 예제
+### 문자열 역전/수식 평가 등 미니 예제
 
 ```cpp
 #include <stack>
@@ -493,7 +495,7 @@ std::string reverseStr(const std::string& s){
 
 ---
 
-## 12. 수학적 뒷받침 (암ORTIZED 분석 스냅샷)
+## 수학적 뒷받침 (암ORTIZED 분석 스냅샷)
 
 동적 배열 기반 스택에서 용량을 두 배로 늘린다면, `push`의 평균 비용은 상수로 수렴한다.
 
@@ -506,7 +508,7 @@ std::string reverseStr(const std::string& s){
 
 ---
 
-## 13. 경계/예외/성능 팁
+## 경계/예외/성능 팁
 
 - **예외 안전**: `pop()`은 비어 있으면 던진다. API 설계 시 **사전 검사** vs **예외** 선택 명확히.
 - **성능**:
@@ -517,7 +519,7 @@ std::string reverseStr(const std::string& s){
 
 ---
 
-## 14. 추가 연습 과제
+## 추가 연습 과제
 
 1. **MinStack**을 1개 스택/차이 저장 방식으로 구현해 보라(메모리 더 절약).
 2. 모노토닉 스택으로 **다음 작은 원소**/ **이전 큰 원소**도 구해 보라.
@@ -527,7 +529,7 @@ std::string reverseStr(const std::string& s){
 
 ---
 
-## 15. 요약
+## 요약
 
 - 스택은 가장 기본적이면서 **파싱/탐색/최적화**에 광범위하게 쓰인다.
 - **배열 기반**은 빠르고 간단, **연결 리스트**는 유연.

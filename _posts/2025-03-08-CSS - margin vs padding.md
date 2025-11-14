@@ -6,7 +6,7 @@ category: CSS
 ---
 # margin vs padding
 
-## 0. 한눈 요약
+## 한눈 요약
 
 - **padding**: 콘텐츠 **안쪽 여백**. 배경색·그라디언트·이미지가 **포함**됨.
 - **margin**: 박스 **바깥 여백**. 배경에 **포함되지 않음**. **마진 겹침**이 발생할 수 있음.
@@ -15,7 +15,7 @@ category: CSS
 
 ---
 
-## 1. 박스 모델 재정리
+## 박스 모델 재정리
 
 ```
 [ margin ]
@@ -48,7 +48,7 @@ category: CSS
 
 ---
 
-## 2. margin — 바깥 여백
+## margin — 바깥 여백
 
 특징
 - 배경에 포함되지 않음(완전히 투명).
@@ -67,7 +67,7 @@ category: CSS
 
 ---
 
-## 3. padding — 안쪽 여백
+## padding — 안쪽 여백
 
 특징
 - 배경색/배경이미지/그라디언트가 **패딩 영역까지** 칠해짐.
@@ -87,7 +87,7 @@ category: CSS
 
 ---
 
-## 4. margin collapse(마진 겹침) — 반드시 알아야 할 규칙
+## margin collapse(마진 겹침) — 반드시 알아야 할 규칙
 
 **상하 방향 블록 마진**끼리는 종종 **겹쳐서 하나로** 계산됩니다. 대표 규칙:
 
@@ -107,6 +107,7 @@ p { margin: 20px 0; }
 → 두 문단 사이 간격은 **40px가 아니라 20px**.
 
 ### 겹침 방지(택 1)
+
 - 부모에 **padding**이나 **border** 추가
 - 부모에 **`overflow: auto|hidden`** (BFC 생성)
 - **`display: flow-root`**(새 BFC)
@@ -123,7 +124,7 @@ p { margin: 20px 0; }
 
 ---
 
-## 5. 논리 속성으로 쓰기(다국어/세로쓰기 대응)
+## 논리 속성으로 쓰기(다국어/세로쓰기 대응)
 
 글 방향 혹은 쓰기 모드가 바뀌어도 유지보수 쉬운 **논리 속성**:
 
@@ -141,7 +142,7 @@ p { margin: 20px 0; }
 
 ---
 
-## 6. 퍼센트 padding의 기준
+## 퍼센트 padding의 기준
 
 `padding`의 `%`는 **항상 컨테이너의 **가로 너비** 기준**입니다(수직 패딩도 width 기준).
 
@@ -159,7 +160,7 @@ p { margin: 20px 0; }
 
 ---
 
-## 7. Flex/Grid에서의 간격 — margin vs gap
+## Flex/Grid에서의 간격 — margin vs gap
 
 **권장:** 아이템 간 간격은 **`gap`** 사용.
 장점: 마진 겹침 없음, 부모/첫·마지막 아이템 보정 불필요, 읽기 쉬움.
@@ -175,18 +176,19 @@ p { margin: 20px 0; }
 
 ---
 
-## 8. scroll-margin / scroll-padding — 스크롤 위치 제어
+## scroll-margin / scroll-padding — 스크롤 위치 제어
 
 앵커 이동/프래그먼트 내비게이션 시 **고정 헤더에 가리는 현상** 해결:
 
 ```css
 :root { scroll-padding-top: 72px; }     /* 전역 헤더 높이 */
 #section-title { scroll-margin-top: 72px; } /* 특정 타깃만 보정 */
+
 ```
 
 ---
 
-## 9. 안전 영역(iOS Notch) — env()와 padding
+## 안전 영역(iOS Notch) — env()와 padding
 
 모바일 브라우저 상단 노치/하단 홈 인디케이터를 피하려면 **padding + safe area**:
 
@@ -201,7 +203,7 @@ p { margin: 20px 0; }
 
 ---
 
-## 10. 배경 페인팅 영역과 clipping
+## 배경 페인팅 영역과 clipping
 
 - **padding**은 배경에 포함 ⇒ `background-clip`으로 경계 제어 가능:
 ```css
@@ -216,7 +218,7 @@ p { margin: 20px 0; }
 
 ---
 
-## 11. `auto` margin으로 정렬/분배
+## `auto` margin으로 정렬/분배
 
 블록에서 가운데 정렬:
 ```css
@@ -231,9 +233,10 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 12. 실전 비교 & 리팩터링
+## 실전 비교 & 리팩터링
 
-### 12.1 버튼 내부 여백은 padding
+### 버튼 내부 여백은 padding
+
 ```css
 .btn {
   padding: .5rem 1rem;
@@ -241,7 +244,8 @@ Flex에서 남는 공간 밀어내기:
 }
 ```
 
-### 12.2 카드 묶음 간 간격은 gap(대안: margin)
+### 카드 묶음 간 간격은 gap(대안: margin)
+
 ```css
 .cards {
   display: grid;
@@ -250,7 +254,8 @@ Flex에서 남는 공간 밀어내기:
 }
 ```
 
-### 12.3 문단 간격 — margin vs padding
+### 문단 간격 — margin vs padding
+
 문단 사이 간격은 **문단의 바깥 관계**이므로 margin:
 ```css
 .prose p { margin-block: 1em; }
@@ -262,7 +267,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 13. 시각 예시(간단 데모)
+## 시각 예시(간단 데모)
 
 ```html
 <style>
@@ -287,7 +292,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 14. 마진 겹침 — 실제 문제와 해결 패턴
+## 마진 겹침 — 실제 문제와 해결 패턴
 
 문제 예시
 ```css
@@ -315,7 +320,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 15. 흔한 함정과 체크리스트
+## 흔한 함정과 체크리스트
 
 | 주제 | 실수 | 권장 |
 |---|---|---|
@@ -328,7 +333,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 16. 반응형·유동 여백 설계
+## 반응형·유동 여백 설계
 
 `clamp(min, preferred, max)`로 적응형 패딩:
 ```css
@@ -348,7 +353,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 17. 접근성/UX와 여백
+## 접근성/UX와 여백
 
 - 텍스트 블록은 **line-height** + **문단 간 margin**으로 가독성 유지.
 - 터치 대상은 **padding**으로 히트영역 확대(44px 안팎 권장).
@@ -364,21 +369,24 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 18. 실전 레시피 모음
+## 실전 레시피 모음
 
-### 18.1 카드 레이아웃(권장안: gap)
+### 카드 레이아웃(권장안: gap)
+
 ```css
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1.25rem; }
 .card  { padding: 1rem; border: 1px solid #e5e7eb; border-radius: .75rem; background: #fff; }
 ```
 
-### 18.2 네비게이션 바
+### 네비게이션 바
+
 ```css
 .nav   { display: flex; align-items: center; gap: .75rem; padding: .5rem 1rem; }
 .nav a { padding: .375rem .5rem; border-radius: .375rem; }
 ```
 
-### 18.3 기사 본문
+### 기사 본문
+
 ```css
 .prose {
   max-inline-size: 70ch; margin-inline: auto;
@@ -389,7 +397,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 19. 종합 비교 표(확장판)
+## 종합 비교 표(확장판)
 
 | 항목 | margin | padding |
 |---|---|---|
@@ -405,7 +413,7 @@ Flex에서 남는 공간 밀어내기:
 
 ---
 
-## 20. 최종 결론
+## 최종 결론
 
 - **의도**가 “요소 **밖**과의 거리”면 **margin**, “요소 **안**의 여유”면 **padding**.
 - **리스트/그리드/행 간격**은 **gap**이 안전·간결.

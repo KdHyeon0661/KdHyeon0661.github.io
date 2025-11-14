@@ -4,7 +4,7 @@ title: JavaScript - Promise와 then(), catch()
 date: 2025-04-22 20:20:23 +0900
 category: JavaScript
 ---
-# 1. Promise란? — “미래에 결정될 값(또는 실패 이유)을 담는 상자”
+# Promise란? — “미래에 결정될 값(또는 실패 이유)을 담는 상자”
 
 ```js
 const p = new Promise((resolve, reject) => {
@@ -26,7 +26,7 @@ const p = new Promise((resolve, reject) => {
 
 ---
 
-# 2. `.then()` — 성공/실패 핸들러와 “평탄화(flattening)”
+# `.then()` — 성공/실패 핸들러와 “평탄화(flattening)”
 
 ```js
 p.then(
@@ -44,7 +44,7 @@ p.then(
 
 ---
 
-# 3. `.catch()` — 실패 전용 핸들러(전파/복구/재throw)
+# `.catch()` — 실패 전용 핸들러(전파/복구/재throw)
 
 ```js
 p
@@ -63,7 +63,7 @@ p
 
 ---
 
-# 4. `.finally()` — 성공/실패 무관 “청소 영역”
+# `.finally()` — 성공/실패 무관 “청소 영역”
 
 ```js
 doSomething()
@@ -77,7 +77,7 @@ doSomething()
 
 ---
 
-# 5. 체이닝 & 에러 전파 규칙 — “항상 Promise를 반환한다”
+# 체이닝 & 에러 전파 규칙 — “항상 Promise를 반환한다”
 
 ```js
 login()
@@ -100,7 +100,7 @@ login()
 
 ---
 
-# 6. 실전 예제 — 모의 비동기 API
+# 실전 예제 — 모의 비동기 API
 
 ```js
 function asyncJob() {
@@ -121,7 +121,7 @@ asyncJob()
 
 ---
 
-# 7. 중첩 then ❌ vs 체이닝 ✅
+# 중첩 then ❌ vs 체이닝 ✅
 
 ```js
 // ❌ 중첩(콜백 지옥과 유사)
@@ -140,9 +140,10 @@ login()
 
 ---
 
-# 8. Promise 조합기(Combinators) — 병렬/경쟁/종료 대기
+# Promise 조합기(Combinators) — 병렬/경쟁/종료 대기
 
-## 8.1 `Promise.all(iterable)`
+## `Promise.all(iterable)`
+
 - 모든 Promise가 **성공**해야 전체가 성공. 하나라도 실패 → 즉시 reject.
 - 결과는 **입력 순서**를 보장한 배열.
 
@@ -154,7 +155,8 @@ Promise.all([pa, pb])
   .catch(err => console.error("둘 중 하나 실패:", err));
 ```
 
-## 8.2 `Promise.allSettled(iterable)`
+## `Promise.allSettled(iterable)`
+
 - 모두 **정착(settled)**할 때까지 기다림(성공/실패 포함).
 - 각 항목 `{ status: "fulfilled", value }` 또는 `{ status: "rejected", reason }`.
 
@@ -167,7 +169,8 @@ Promise.allSettled([fetchA(), fetchB()])
   });
 ```
 
-## 8.3 `Promise.race(iterable)`
+## `Promise.race(iterable)`
+
 - **가장 먼저 정착**한 Promise의 결과를 그대로 반영.
 
 ```js
@@ -176,7 +179,8 @@ Promise.race([slow(), timeoutAfter(1000)])
   .catch(console.error);
 ```
 
-## 8.4 `Promise.any(iterable)`
+## `Promise.any(iterable)`
+
 - **첫 성공**을 반환. 모든 항목이 실패하면 `AggregateError`로 reject.
 
 ```js
@@ -187,15 +191,17 @@ Promise.any([tryPrimary(), trySecondary()])
 
 ---
 
-# 9. 직렬/병렬/동시성 제어 패턴
+# 직렬/병렬/동시성 제어 패턴
 
-## 9.1 직렬(순차) 실행
+## 직렬(순차) 실행
+
 ```js
 const tasks = [t1, t2, t3]; // () => Promise
 tasks.reduce((p, task) => p.then(task), Promise.resolve());
 ```
 
-## 9.2 제한된 동시성(concurrency) — 간단한 세마포어
+## 제한된 동시성(concurrency) — 간단한 세마포어
+
 ```js
 function withLimit(limit, tasks) {
   const queue = [...tasks];         // () => Promise
@@ -222,9 +228,10 @@ function withLimit(limit, tasks) {
 
 ---
 
-# 10. 타임아웃/취소/리트라이 — 견고한 네트워킹
+# 타임아웃/취소/리트라이 — 견고한 네트워킹
 
-## 10.1 타임아웃 래퍼
+## 타임아웃 래퍼
+
 ```js
 const timeout = (ms, name="timeout") =>
   new Promise((_, reject) => setTimeout(() => reject(new Error(name)), ms));
@@ -234,7 +241,8 @@ Promise.race([fetch(url), timeout(5000, "5s exceeded")])
   .catch(console.error);
 ```
 
-## 10.2 AbortController로 취소(fetch)
+## AbortController로 취소(fetch)
+
 ```js
 function fetchWithTimeout(url, { ms = 5000 } = {}) {
   const ac = new AbortController();
@@ -251,7 +259,8 @@ fetchWithTimeout("/api/data", { ms: 3000 })
   });
 ```
 
-## 10.3 리트라이 + 지수 백오프
+## 리트라이 + 지수 백오프
+
 ```js
 async function retry(fn, { attempts = 3, baseMs = 300 } = {}) {
   let last;
@@ -269,7 +278,7 @@ async function retry(fn, { attempts = 3, baseMs = 300 } = {}) {
 
 ---
 
-# 11. 콜백 API를 Promise로 — promisify
+# 콜백 API를 Promise로 — promisify
 
 ```js
 const fs = require("fs");
@@ -284,7 +293,7 @@ readFileP("a.txt")
 
 ---
 
-# 12. 마이크로태스크 큐와 이벤트 루프 — 실행 타이밍 이해
+# 마이크로태스크 큐와 이벤트 루프 — 실행 타이밍 이해
 
 - `then/catch/finally` 콜백은 **마이크로태스크 큐**에 들어가며,
   현재 **콜스택**이 비고 **매크로태스크**(timer, I/O 등)보다 **우선** 처리된다.
@@ -298,7 +307,7 @@ console.log("sync");
 
 ---
 
-# 13. `unhandledrejection` — 놓친 에러 잡기
+# `unhandledrejection` — 놓친 에러 잡기
 
 브라우저:
 ```js
@@ -318,9 +327,10 @@ process.on("unhandledRejection", (reason, promise) => {
 
 ---
 
-# 14. 안티패턴 & 베스트 프랙티스
+# 안티패턴 & 베스트 프랙티스
 
-## 14.1 “Promise 생성자 오남용(new Promise 안에서 또 Promise)”
+## “Promise 생성자 오남용(new Promise 안에서 또 Promise)”
+
 ```js
 // ❌ 불필요한 포장
 function foo() {
@@ -334,7 +344,8 @@ function foo() {
 }
 ```
 
-## 14.2 `then` 안에서 `return` 누락
+## `then` 안에서 `return` 누락
+
 ```js
 // ❌ 다음 then에 값 전달 안 됨
 get().then(v => { process(v); });
@@ -343,18 +354,21 @@ get().then(v => { process(v); });
 get().then(v => process(v));
 ```
 
-## 14.3 `then`/`catch`와 `async/await` 혼용 시 흐름 분리
+## `then`/`catch`와 `async/await` 혼용 시 흐름 분리
+
 - 한 체인에서는 **하나의 스타일**을 유지하라. 필요 시 가장 바깥에서 변환.
 
-## 14.4 중첩 then
+## 중첩 then
+
 - 중첩하지 말고 **체이닝**으로 펼쳐라(가독성, 에러 전파 일관성).
 
-## 14.5 무한 대기 방지
+## 무한 대기 방지
+
 - 네트워크/IO에는 **타임아웃**이나 **AbortController**를 결합하라.
 
 ---
 
-# 15. then ↔ async/await 대응 관계(응용)
+# then ↔ async/await 대응 관계(응용)
 
 ```js
 // then/catch
@@ -389,7 +403,7 @@ async function flow() {
 
 ---
 
-# 16. 실전 시나리오 — 사용자/게시글 가져오기
+# 실전 시나리오 — 사용자/게시글 가져오기
 
 ```js
 function getUser() {
@@ -421,16 +435,18 @@ getUser()
 
 ---
 
-# 17. 패턴 모음 — 실무에서 바로 쓰는 스니펫
+# 패턴 모음 — 실무에서 바로 쓰는 스니펫
 
-## 17.1 조건부 체이닝(가드)
+## 조건부 체이닝(가드)
+
 ```js
 fetchConfig()
   .then(cfg => cfg.enabled ? run(cfg) : skip())
   .catch(log);
 ```
 
-## 17.2 캐싱(메모이즈) Promise
+## 캐싱(메모이즈) Promise
+
 ```js
 const loadOnce = (() => {
   let memo;
@@ -438,13 +454,15 @@ const loadOnce = (() => {
 })();
 ```
 
-## 17.3 결과/오류 튜플화(try/catch 대체)
+## 결과/오류 튜플화(try/catch 대체)
+
 ```js
 const to = p => p.then(v => [null, v]).catch(e => [e]);
 const [err, data] = await to(fetch(...));
 ```
 
-## 17.4 파이프라인(체이닝으로 데이터 흐름 구성)
+## 파이프라인(체이닝으로 데이터 흐름 구성)
+
 ```js
 getA()
   .then(a => toB(a))
@@ -455,7 +473,7 @@ getA()
 
 ---
 
-# 18. 디버깅 팁
+# 디버깅 팁
 
 - 체인의 각 단계에 **이름 있는 함수**를 사용하면 스택과 로깅이 명확해진다.
 - `.catch()`를 **가까운 곳**과 **끝**에 각각 두어,
@@ -464,7 +482,7 @@ getA()
 
 ---
 
-# 19. 체크리스트 요약
+# 체크리스트 요약
 
 - [ ] 핸들러는 **값/Promise 반환**, 실패는 **throw**.
 - [ ] 에러는 아래 **첫 `.catch()`** 가 받는다(복구/재throw 선택).
@@ -476,7 +494,7 @@ getA()
 
 ---
 
-# 20. 미니 퀴즈
+# 미니 퀴즈
 
 ```js
 // Q1: 아래의 출력 순서는?

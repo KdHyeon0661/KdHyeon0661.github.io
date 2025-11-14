@@ -7,9 +7,11 @@ category: Kubernetes
 # 쿠버네티스 아키텍처
 
 ## 들어가며 — 기존 글의 핵심 요지와 확장 방향
+
 기존 글에서 잘 정리된 대로, 쿠버네티스는 **Control Plane(마스터 역할)** 과 **Worker Node(작업자 역할)** 로 나뉜다. 이번 재정리는 다음을 더 깊이 파고든다: 구성요소 상세 동작, 데이터/트래픽 경로, 운영(HA/업그레이드/DR), 보안/정책, 관측/진단, 실전 예시와 트러블슈팅.
 
 ## 상위 아키텍처 개요 (Master vs Node)
+
 - **Control Plane**: *원하는 상태(Desired State)* 저장 및 컨트롤 루프로 수렴.
 - **Worker Node**: Pod 실행, 네트워킹/스토리지 연결, 로컬 자원 관리.
 
@@ -38,6 +40,7 @@ category: Kubernetes
 ## Control Plane 심층
 
 ### kube-apiserver — 단일 진입점과 선언형 API
+
 - 인증(쿠키/토큰/MTLS/OIDC) → 인가(RBAC) → 어드미션(기본+Webhook) → 유효성 검증 → etcd 저장.
 - 리소스 버전과 **Watch** 스트림으로 컨트롤러/클라이언트가 실시간 변경 수신.
 
@@ -48,6 +51,7 @@ kubectl explain deployment.spec.strategy
 ```
 
 ### etcd — 강한 일관성 KV 저장소
+
 - 쿠버네티스의 **단일 진실 원천**. 멀티 노드(홀수) Raft 합의.
 - 스냅샷/복구가 DR의 핵심.
 
@@ -61,6 +65,7 @@ ETCDCTL_API=3 etcdctl \
 ```
 
 ### kube-scheduler — 점수화 기반 배치
+
 필터링(자원/테인트/어피니티/토폴로지) → 점수화(가중치) → 최적 노드 선택.
 
 $$
@@ -70,14 +75,17 @@ $$
 **입력 제어 포인트**: `resources.requests`, `nodeSelector`, `affinity/antiAffinity`, `topologySpreadConstraints`, `tolerations`, `pdb` 등.
 
 ### kube-controller-manager — 원하는 상태로 수렴
+
 - 수많은 컨트롤러(Deployment/ReplicaSet/Job/Node/EndpointSlice …)가 워치 이벤트를 구독, 차이를 줄이기 위해 **행동** 실행.
 
 ### cloud-controller-manager — 퍼블릭 클라우드 통합
+
 - 노드/로드밸런서/볼륨/라우팅 등 클라우드 API 연계를 Control Plane에서 분리.
 
 ## Worker Node 심층
 
 ### kubelet — 노드의 관리자
+
 - 할당된 PodSpec을 받아 컨테이너 생성/감시, Probe/라이프사이클 훅/termination 유예 준수.
 
 ```bash
@@ -87,15 +95,18 @@ journalctl -u kubelet -e --no-pager
 ```
 
 ### kube-proxy vs eBPF 기반 L4
+
 - kube-proxy(iptables/ipvs): Service → Pod L4 LB.
 - Cilium 등 eBPF CNI: kube-proxy 없이 고성능 데이터패스/가시성.
 
 ### 컨테이너 런타임 — CRI 추상화
+
 - **containerd/CRI-O** 권장(도커 shim 제거). 이미지 풀/컨테이너 라이프사이클 표준화.
 
 ## 리소스 선언과 API 경로 — 실전 YAML
 
 ### 최소 웹 앱(Probe/Resource/Service 포함)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -135,6 +146,7 @@ spec:
 ```
 
 ### ConfigMap/Secret 분리
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -151,6 +163,7 @@ stringData:
 ```
 
 ### 배치/스케줄 작업(Job/CronJob)
+
 ```yaml
 apiVersion: batch/v1
 kind: Job
@@ -169,9 +182,11 @@ spec:
 ## 네트워킹 데이터 경로와 정책
 
 ### Service/Endpoints/EndpointSlice
+
 - Service(가상 IP) → EndpointSlice(실제 Pod IP 목록) → kube-proxy/eBPF가 DNAT/분산.
 
 ### Ingress vs Gateway API
+
 - Ingress: L7 HTTP(S) 라우팅 규칙.
 - Gateway API: Listener/Route로 역할 분리·표현력 향상.
 
@@ -194,6 +209,7 @@ spec:
 ```
 
 ### NetworkPolicy — 허용 리스트 기반
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -212,6 +228,7 @@ spec:
 ```
 
 ## 스케줄링 제어 — 어피니티/테인트/토폴로지 분산
+
 ```yaml
 spec:
   nodeSelector:
@@ -235,12 +252,14 @@ spec:
 ```
 
 ## 자원 모델, QoS, 축출(Eviction)
+
 - **Requests**: 스케줄러 기준(최소 보장), **Limits**: 상한. 메모리 초과 시 OOMKill.
 - **QoS**: Guaranteed(요청=한도), Burstable, BestEffort. 노드 압박 시 축출 우선순위: BestEffort → Burstable → Guaranteed.
 
 ## 보안 아키텍처 — RBAC/PSA/Admission
 
 ### RBAC 최소 권한
+
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -263,6 +282,7 @@ roleRef:
 ```
 
 ### Pod Security Admission(PSA)
+
 ```yaml
 apiVersion: v1
 kind: Namespace
@@ -273,9 +293,11 @@ metadata:
 ```
 
 ### Admission Webhook (검증/변형)
+
 OPA Gatekeeper/Kyverno로 이미지 서명/루트 권한 금지/호스트 네트 금지 등 정책 강제.
 
 ## 관측(Observability) — 이벤트/메트릭/로그/트레이스
+
 - **이벤트**: `kubectl get events -A --sort-by=.lastTimestamp`
 - **메트릭**: metrics-server/Prometheus(+ kube-state-metrics)/Alertmanager
 - **로그**: stdout/stderr → Fluent Bit/Fluentd → Elasticsearch/Opensearch → Kibana
@@ -296,11 +318,13 @@ spec:
 ## 고가용성(HA) Control Plane
 
 ### 토폴로지
+
 - **etcd** 3/5개(홀수), 서로 다른 AZ.
 - **apiserver** 다중 인스턴스 + 앞단 LB.
 - 컨트롤러/스케줄러 다중 인스턴스(리더 선출).
 
 ### kubeadm HA 개념
+
 ```bash
 kubeadm init --control-plane-endpoint "cp-lb:6443" --upload-certs
 ```
@@ -308,13 +332,16 @@ kubeadm init --control-plane-endpoint "cp-lb:6443" --upload-certs
 ## 업그레이드, 백업/DR, 감사(Audit)
 
 ### 업그레이드
+
 - Control Plane → Worker 순. 릴리스 노트/Deprecated API 확인.
 
 ### 백업/DR
+
 - etcd 스냅샷 + 리소스 매니페스트(Helm/Kustomize) + 이미지 레지스트리 가용성.
 - Velero로 PVC 스냅샷/이관.
 
 ### 감사(Audit)
+
 ```yaml
 apiVersion: audit.k8s.io/v1
 kind: Policy
@@ -324,6 +351,7 @@ rules:
 ```
 
 ## 스토리지/CSI와 상태풀(Stateful) 워크로드
+
 - **CSI** 드라이버 표준, **StatefulSet**: 안정 ID/스토리지 바인딩.
 
 ```yaml
@@ -353,14 +381,17 @@ spec:
 ## 실전 운영 시나리오
 
 ### 노드 유지보수(커널 업데이트) — 드레이닝/언코드론
+
 ```bash
 kubectl cordon <node>
 kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
 # 업데이트 후
+
 kubectl uncordon <node>
 ```
 
 ### 부분 장애 대응 — 패턴별 트러블슈팅
+
 | 증상 | 원인 후보 | 1차 확인 | 해결 가이드 |
 |---|---|---|---|
 | CrashLoopBackOff | 설정/포트/OOM | `logs -p`, `describe pod` | 설정 복원, 리소스 조정, probe 수정 |
@@ -370,6 +401,7 @@ kubectl uncordon <node>
 | PVC 바인딩 실패 | SC/용량/모드 불일치 | `describe pvc` | SC/용량/zone 정책 맞춤 |
 
 ## 개발자 경험(DX)과 배포 전략
+
 - **Helm** 패키징, **Kustomize** 오버레이, **GitOps(Argo CD/Flux)**.
 - 기본 롤링 + 카나리/블루그린(서비스 메시/Ingress 가중치).
 
@@ -405,19 +437,23 @@ spec:
 ## 로컬/테스트 클러스터 빠른 시작
 
 ### kind(개발자 친화)
+
 ```bash
 kind create cluster --name demo
 kubectl cluster-info
 ```
 
 ### kubeadm(실전 학습)
+
 ```bash
 kubeadm init --pod-network-cidr=10.244.0.0/16
 mkdir -p $HOME/.kube && sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config && sudo chown $(id -u):$(id -g) $HOME/.kube/config
 # CNI 설치(예: Calico/Cilium)
+
 ```
 
 ## Control Plane vs Worker 요약 테이블 (확장판)
+
 | 항목 | Control Plane | Worker Node |
 |---|---|---|
 | 핵심 책임 | 상태 저장, 정책/스케줄, 컨트롤 루프 | Pod 실행, 네트워킹/스토리지 연결 |
@@ -427,5 +463,6 @@ mkdir -p $HOME/.kube && sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config &&
 | 보안 포커스 | 인증/인가/어드미션/감사, etcd 암호화 | 런타임 최소 권한, NetworkPolicy/볼륨 격리 |
 
 ## 결론 — 선언형 오케스트레이션의 심장
+
 쿠버네티스 아키텍처는 **중앙 집중 제어**와 **분산 실행**을 분리해, **원하는 상태를 선언**하고 컨트롤 플레인이 **지속 수렴**하도록 만든다. 다음 단계 제안:
 1) Helm/Kustomize 템플릿화, 2) HPA+관측 대시보드, 3) RBAC/PSA/NetworkPolicy 기준선, 4) 업그레이드/백업/DR 리허설.

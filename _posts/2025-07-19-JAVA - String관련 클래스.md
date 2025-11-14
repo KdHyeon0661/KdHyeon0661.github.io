@@ -6,7 +6,7 @@ category: Java
 ---
 # String, StringBuilder, StringBuffer
 
-## 0. 한눈에 보는 차이
+## 한눈에 보는 차이
 
 | 항목 | String | StringBuilder | StringBuffer |
 |---|---|---|---|
@@ -20,19 +20,22 @@ category: Java
 
 ---
 
-## 1. String — 불변(Immutable)의 의미와 이점
+## String — 불변(Immutable)의 의미와 이점
 
-### 1.1 불변의 이점
+### 불변의 이점
+
 - **안전성**: 공유해도 값이 변하지 않음 → 동시성 버그 감소.
 - **해시 캐시** 가능: `hashCode()`를 캐시해 **Map 키**로 적합.
 - **문자열 상수 풀(String Pool)** 운용: 같은 리터럴은 재사용되어 **메모리 절감**.
 - **보안/캐싱**: 파라미터 검증/로그/메시지에 적합.
 
-### 1.2 내부 표현(요약)
+### 내부 표현(요약)
+
 - **JDK 9+**: Compact Strings — 문자열이 **Latin-1**로 표현 가능하면 1바이트 배열 + coder(플래그), 아니면 UTF-16(2바이트).
   (이 최적화는 개발자가 직접 제어하지 않지만, 평균 메모리 효율을 개선합니다.)
 
-### 1.3 `==` vs `equals()`
+### `==` vs `equals()`
+
 ```java
 String a = "Hello";
 String b = "Hello";
@@ -44,7 +47,8 @@ System.out.println(a.equals(c));  // true (내용 같음)
 ```
 - **항상 내용 비교는 `equals`** 를 사용.
 
-### 1.4 String Pool / `intern()`
+### String Pool / `intern()`
+
 ```java
 String x = new String("java");
 String y = x.intern();        // 풀에 있는 "java" 참조 반환
@@ -52,7 +56,8 @@ System.out.println(y == "java"); // true
 ```
 - `intern()`은 **풀에 등록**하므로 과도한 사용은 메모리/시간 비용. **특수 케이스**(매우 반복적인 동일 문자열)에서만.
 
-### 1.5 코드 포인트 주의(이모지, 한자 확장 등)
+### 코드 포인트 주의(이모지, 한자 확장 등)
+
 - `length()`는 **UTF-16 코드 유닛 개수**, 사람이 인식하는 “문자 수”와 다를 수 있음.
 - 보조 평면 문자 처리:
 ```java
@@ -71,9 +76,10 @@ for (int i = 0; i < s.length(); ) {
 
 ---
 
-## 2. StringBuilder — 단일 스레드에서의 고성능 가변 문자열
+## StringBuilder — 단일 스레드에서의 고성능 가변 문자열
 
-### 2.1 기본 패턴
+### 기본 패턴
+
 ```java
 StringBuilder sb = new StringBuilder(256); // 예상 용량 지정 권장
 sb.append("id=").append(42).append("&name=").append("kim");
@@ -82,7 +88,8 @@ String result = sb.toString();
 - 체이닝으로 **중간 객체 생성 없음**.
 - **초기 용량(capacity)** 를 넉넉히 주면 확장 비용 감소.
 
-### 2.2 주요 API
+### 주요 API
+
 ```java
 append(..)         // 뒤에 붙이기
 insert(pos, ..)    // 삽입
@@ -94,11 +101,13 @@ ensureCapacity(n)  // 최소 용량 보장
 trimToSize()       // 실제 길이에 맞게 줄이기
 ```
 
-### 2.3 용량 확장 전략
+### 용량 확장 전략
+
 - 확장 시 내부적으로 **대략 2배(+2)** 수준으로 버퍼를 키움(구현 세부는 JDK에 따라 상이할 수 있으나 “지수적 증가”가 핵심).
 - 예상 크기를 아는 경우 **`new StringBuilder(expected)`** 또는 **`ensureCapacity`** 사용.
 
-### 2.4 루프에서의 `+=` vs Builder
+### 루프에서의 `+=` vs Builder
+
 ```java
 // 비효율: 매 반복 새 Builder 생성되어 연결
 String s = "";
@@ -112,30 +121,34 @@ String s2 = sb.toString();
 
 ---
 
-## 3. StringBuffer — 동기화된 가변 문자열
+## StringBuffer — 동기화된 가변 문자열
 
-### 3.1 언제 쓰나?
+### 언제 쓰나?
+
 - 다수의 스레드가 **하나의 동일 인스턴스**를 공유·수정하는 경우.
 - 메서드 수준 동기화(`synchronized`) 제공 → **원자적 복합 연산은 아님**에 유의.
   - 예: `if (buf.length() > 0) buf.delete(0,1);`는 **두 호출 사이에 끼어들기 가능**.
     복합 작업은 **외부에서 추가 동기화** 필요.
 
-### 3.2 대안: 스레드 지역 빌더
+### 대안: 스레드 지역 빌더
+
 - 대개 멀티스레드 환경에서도 **스레드마다 별도 `StringBuilder`** 를 쓰면 충분.
 - 고급: `ThreadLocal<StringBuilder>` 로 재사용(사용 후 `setLength(0)`).
 
 ---
 
-## 4. 포맷팅·결합·분해 — 주변 API와의 협업
+## 포맷팅·결합·분해 — 주변 API와의 협업
 
-### 4.1 `String.format` / `Formatter`
+### `String.format` / `Formatter`
+
 ```java
 String m = String.format("name=%s, score=%.2f", "kim", 98.123);
 ```
 - 가독성↑, 다국어·포맷 제어 유리.
 - 빈번한 루프에서는 **포맷터 비용으로 느릴 수 있음**.
 
-### 4.2 `StringJoiner` / `Collectors.joining`
+### `StringJoiner` / `Collectors.joining`
+
 ```java
 // 1) StringJoiner
 var joiner = new java.util.StringJoiner(", ", "[", "]");
@@ -147,22 +160,25 @@ var s = java.util.stream.Stream.of("a","b","c")
         .collect(java.util.stream.Collectors.joining(","));
 ```
 
-### 4.3 분해/치환
+### 분해/치환
+
 - `split(regex)` 는 **정규식 비용**. 단순 구분자는 `indexOf`/수동 파싱 고려.
 - 대량 치환은 `String.replace`(리터럴), 정규식은 `replaceAll`.
 
 ---
 
-## 5. 파일·인코딩·문자셋
+## 파일·인코딩·문자셋
 
-### 5.1 인코딩 명시
+### 인코딩 명시
+
 ```java
 var s = java.nio.file.Files.readString(path, java.nio.charset.StandardCharsets.UTF_8);
 java.nio.file.Files.writeString(path, s, java.nio.charset.StandardCharsets.UTF_8);
 ```
 - 네트워크/파일 I/O에서는 **항상 문자셋 지정**. 플랫폼 기본값 의존 지양.
 
-### 5.2 `getBytes(Charset)` / `new String(bytes, Charset)`
+### `getBytes(Charset)` / `new String(bytes, Charset)`
+
 ```java
 byte[] utf8 = "한글".getBytes(java.nio.charset.StandardCharsets.UTF_8);
 String back = new String(utf8, java.nio.charset.StandardCharsets.UTF_8);
@@ -170,7 +186,7 @@ String back = new String(utf8, java.nio.charset.StandardCharsets.UTF_8);
 
 ---
 
-## 6. 성능 비교(설명 + 예제)
+## 성능 비교(설명 + 예제)
 
 > 정확한 비교는 **JMH** 같은 마이크로벤치마크 프레임워크로 **워밍업/옵트레이션 제어** 하에 수행해야 합니다. 아래 코드는 개념 예시입니다.
 
@@ -214,9 +230,10 @@ String s = "abc" + "def"; // 컴파일 시 "abcdef" 로 상수 폴딩
 
 ---
 
-## 7. 자주 쓰는 코드 스니펫
+## 자주 쓰는 코드 스니펫
 
-### 7.1 안전한 코드포인트 기반 잘라내기(이모지 깨짐 방지)
+### 안전한 코드포인트 기반 잘라내기(이모지 깨짐 방지)
+
 ```java
 static String safeCut(String s, int codePoints) {
     int i = 0, count = 0;
@@ -228,7 +245,8 @@ static String safeCut(String s, int codePoints) {
 }
 ```
 
-### 7.2 대용량 로그 메시지 구성
+### 대용량 로그 메시지 구성
+
 ```java
 StringBuilder sb = new StringBuilder(1024);
 sb.append("reqId=").append(reqId)
@@ -237,7 +255,8 @@ sb.append("reqId=").append(reqId)
 log.info(sb.toString());
 ```
 
-### 7.3 ThreadLocal 재사용(고급)
+### ThreadLocal 재사용(고급)
+
 ```java
 final class ReusableBuilder {
     private static final ThreadLocal<StringBuilder> TL =
@@ -256,7 +275,7 @@ String msg = ReusableBuilder.build(sb -> sb.append("id=").append(10));
 
 ---
 
-## 8. 함정 & 베스트 프랙티스 체크리스트
+## 함정 & 베스트 프랙티스 체크리스트
 
 | 주제 | 권장/주의 |
 |---|---|
@@ -273,7 +292,7 @@ String msg = ReusableBuilder.build(sb -> sb.append("id=").append(10));
 
 ---
 
-## 9. 확장 비교 표(심화)
+## 확장 비교 표(심화)
 
 | 항목 | String | StringBuilder | StringBuffer |
 |---|---|---|---|
@@ -285,7 +304,7 @@ String msg = ReusableBuilder.build(sb -> sb.append("id=").append(10));
 
 ---
 
-## 10. 요약
+## 요약
 
 - **String**: 불변. 안전/간결. **변경이 적은 텍스트**, Map 키, 메시지에 최적.
 - **StringBuilder**: 가변. **단일 스레드에서 반복 조작**이 빠름. 루프에서 **무조건 사용**.

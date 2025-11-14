@@ -21,7 +21,7 @@ category: Avalonia
 
 ---
 
-## 0. 예시 솔루션 구조
+## 예시 솔루션 구조
 
 ```
 MyAvaloniaApp/
@@ -78,9 +78,9 @@ MyAvaloniaApp/
 
 ---
 
-## 1. 서비스 인터페이스와 구현
+## 서비스 인터페이스와 구현
 
-### 1.1 인증 서비스
+### 인증 서비스
 
 ```csharp
 // Services/Abstractions/IAuthService.cs
@@ -126,7 +126,7 @@ public sealed class AuthService : IAuthService
 }
 ```
 
-### 1.2 파일 다이얼로그 서비스
+### 파일 다이얼로그 서비스
 
 ```csharp
 // Services/Abstractions/IFileDialogService.cs
@@ -178,7 +178,7 @@ public sealed class FileDialogService : IFileDialogService
 }
 ```
 
-### 1.3 NavigationService
+### NavigationService
 
 ```csharp
 // Services/Abstractions/INavigationService.cs
@@ -207,7 +207,7 @@ public sealed class NavigationService : INavigationService
 }
 ```
 
-### 1.4 MessageBus (간단 구현)
+### MessageBus (간단 구현)
 
 ```csharp
 // Services/Abstractions/IMessageBus.cs
@@ -260,7 +260,7 @@ public sealed class MessageBus : IMessageBus
 }
 ```
 
-### 1.5 ThemeService
+### ThemeService
 
 ```csharp
 // Services/Abstractions/IThemeService.cs
@@ -305,7 +305,7 @@ public sealed class ThemeService : IThemeService
 }
 ```
 
-### 1.6 간단한 JSON 저장소
+### 간단한 JSON 저장소
 
 ```csharp
 // Services/Abstractions/IJsonStore.cs
@@ -351,9 +351,9 @@ public sealed class JsonStore : IJsonStore
 
 ---
 
-## 2. ViewModel — 생성자 주입
+## ViewModel — 생성자 주입
 
-### 2.1 LoginViewModel
+### LoginViewModel
 
 ```csharp
 // ViewModels/LoginViewModel.cs
@@ -406,7 +406,7 @@ public sealed class LoginViewModel : ReactiveObject
 }
 ```
 
-### 2.2 DashboardViewModel
+### DashboardViewModel
 
 ```csharp
 // ViewModels/DashboardViewModel.cs
@@ -437,7 +437,7 @@ public sealed class DashboardViewModel : ReactiveObject
 }
 ```
 
-### 2.3 MainViewModel — Navigation 바인딩
+### MainViewModel — Navigation 바인딩
 
 ```csharp
 // ViewModels/MainViewModel.cs
@@ -470,9 +470,9 @@ public sealed class MainViewModel : ReactiveObject
 
 ---
 
-## 3. DI 구성 — 두 가지 방식
+## DI 구성 — 두 가지 방식
 
-### 3.1 [A] App에서 간단 구성 (`ServiceCollection` 직접)
+### [A] App에서 간단 구성 (`ServiceCollection` 직접)
 
 ```csharp
 // App.axaml.cs
@@ -535,7 +535,7 @@ public partial class App : Application
 
 ---
 
-### 3.2 [B] Generic Host 연동 — 구성/로깅/옵션/HttpClient까지 표준대로
+### [B] Generic Host 연동 — 구성/로깅/옵션/HttpClient까지 표준대로
 
 ```csharp
 // Program.cs
@@ -668,9 +668,9 @@ public partial class App : Application
 
 ---
 
-## 4. View 연결 — ViewLocator + DataTemplates
+## View 연결 — ViewLocator + DataTemplates
 
-### 4.1 ViewLocator
+### ViewLocator
 
 ```csharp
 // Infrastructure/ViewLocator.cs
@@ -703,7 +703,7 @@ public sealed class ViewLocator : IDataTemplate
 > DI를 통해 **View까지** 만들고 싶다면 `Build` 내부에서 `App.Host.Services.GetRequiredService<SomeView>()`로 해결할 수 있다.
 > 단, Avalonia의 XAML 로더와의 균형을 맞추기 위해 View는 보통 XAML 인스턴스화를 그대로 두고, **DataContext만 DI**로 공급하는 패턴이 흔하다.
 
-### 4.2 App.axaml — DataTemplates 등록
+### App.axaml — DataTemplates 등록
 
 ```xml
 <!-- App.axaml -->
@@ -722,7 +722,7 @@ public sealed class ViewLocator : IDataTemplate
 </Application>
 ```
 
-### 4.3 MainView — ContentControl로 페이지 교체
+### MainView — ContentControl로 페이지 교체
 
 ```xml
 <!-- Views/MainView.axaml -->
@@ -802,7 +802,7 @@ public sealed class MainViewModel : ReactiveObject
 
 ---
 
-## 5. 수명 주기(Lifetime) 선택과 “유사 Scoped”
+## 수명 주기(Lifetime) 선택과 “유사 Scoped”
 
 | 등록 | 권장 사용 |
 |---|---|
@@ -824,9 +824,9 @@ await window.ShowDialog(owner);
 
 ---
 
-## 6. Settings/Options 패턴과 저장
+## Settings/Options 패턴과 저장
 
-### 6.1 Options 정의/바인딩
+### Options 정의/바인딩
 
 ```csharp
 // Infrastructure/Options/AppOptions.cs
@@ -877,7 +877,7 @@ public sealed class SettingsViewModel : ReactiveObject
 }
 ```
 
-### 6.2 사용자 설정(런타임) 저장
+### 사용자 설정(런타임) 저장
 
 서비스(`IJsonStore`)로 AppData 경로에 저장/불러오기:
 
@@ -911,7 +911,7 @@ public sealed class SettingsViewModel : ReactiveObject
 
 ---
 
-## 7. HTTP 클라이언트(typed client)와 DI
+## HTTP 클라이언트(typed client)와 DI
 
 ```csharp
 // Services/Http/ApiClientOptions.cs
@@ -960,7 +960,7 @@ public sealed class DashboardViewModel : ReactiveObject
 
 ---
 
-## 8. Dialog/Navigation/Theme/MessageBus DI 결합
+## Dialog/Navigation/Theme/MessageBus DI 결합
 
 - **Dialog**: `IFileDialogService`를 주입받아 모든 열기/저장 상호작용을 **VM에서** 트리거
 - **Navigation**: `INavigationService.NavigateTo(vm)`로 페이지 교체 — **ViewModel끼리 종속 제거**
@@ -971,7 +971,7 @@ public sealed class DashboardViewModel : ReactiveObject
 
 ---
 
-## 9. 테스트 — 목 주입으로 VM 단위 테스트
+## 테스트 — 목 주입으로 VM 단위 테스트
 
 ```csharp
 // Tests/LoginViewModelTests.cs
@@ -1029,7 +1029,7 @@ public class LoginViewModelTests
 
 ---
 
-## 10. 디자인-타임 데이터 (XAML 프리뷰)
+## 디자인-타임 데이터 (XAML 프리뷰)
 
 ```xml
 <!-- Views/LoginView.axaml -->
@@ -1056,7 +1056,7 @@ public class LoginViewModelTests
 
 ---
 
-## 11. 모듈/플러그인 아키텍처(확장)
+## 모듈/플러그인 아키텍처(확장)
 
 크게 나누어 **기본 모듈**과 **기능 모듈**로 나누고, 각 모듈에서 `IServiceCollection` 확장 메서드로 자기 등록을 수행:
 
@@ -1093,7 +1093,7 @@ services.AddCoreServices()
 
 ---
 
-## 12. 다중 윈도우와 스코프
+## 다중 윈도우와 스코프
 
 여러 윈도우를 동시에 띄우면서 **각 윈도우마다 다른 DI 스코프**를 주고 싶다면:
 
@@ -1109,7 +1109,7 @@ win.Show();
 
 ---
 
-## 13. 백그라운드 작업/타이머와 DI
+## 백그라운드 작업/타이머와 DI
 
 `.NET`의 `PeriodicTimer`를 통한 폴링/백그라운드 작업:
 
@@ -1141,7 +1141,7 @@ public sealed record RefreshTick();
 
 ---
 
-## 14. 요약/가이드라인
+## 요약/가이드라인
 
 - **생성자 주입** 고정: ViewModel/Service는 항상 DI에서 제공
 - **Singleton**: 전역 상태/라우팅/테마/메시지버스/저장소

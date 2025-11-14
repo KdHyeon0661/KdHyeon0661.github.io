@@ -4,13 +4,13 @@ title: 데이터 통신 2장 - Network Model
 date: 2024-07-13 19:20:23 +0900
 category: DataCommunication
 ---
-# 2.1 Protocol Layering
+# Protocol Layering
 
 본 글은 당신의 원고를 바탕으로 **핵심을 보존**하면서, 실전 예제·수식·코드·ASCII 도식으로 **깊이와 정확성**을 보강한 확장판입니다. 모든 이미지 링크는 요청에 따라 **삭제**했습니다.
 
 ---
 
-## 2.1.1 Scenarios (왜 레이어링인가)
+## Scenarios (왜 레이어링인가)
 
 레이어링은 **복잡한 통신 기능을 계층별로 분해**하여, 각 계층이 **명확한 역할**만 수행하게 만드는 설계 원칙입니다. 그 결과:
 
@@ -32,7 +32,7 @@ category: DataCommunication
 
 ---
 
-## 2.1.2 Principles of Protocol Layering (레이어링 원칙)
+## Principles of Protocol Layering (레이어링 원칙)
 
 - **양방향성(Bidirectional)**: 각 계층은 **송·수신** 모두를 처리.
 - **일관된 계층 구조(Homogeneous Stacking)**: 통신 양단은 **동일한 계층 스택**을 공유(해당 계층의 의미·PDU 형식의 합의).
@@ -43,7 +43,7 @@ category: DataCommunication
 
 ---
 
-## 2.1.3 Logical Connections (논리적 연결)
+## Logical Connections (논리적 연결)
 
 논리적 연결은 **동일 계층의 동등체(peer)** 사이에서 개념적으로 형성됩니다.
 
@@ -59,9 +59,9 @@ category: DataCommunication
 
 ---
 
-# 2.2 TCP/IP Protocol Suite
+# TCP/IP Protocol Suite
 
-## 2.2.1 Layered Architecture (스택 구성)
+## Layered Architecture (스택 구성)
 
 현대 인터넷 스택을 실용적으로 5계층으로 나타내면:
 
@@ -81,7 +81,7 @@ category: DataCommunication
 
 ---
 
-## 2.2.2 End-to-End vs Hop-to-Hop
+## End-to-End vs Hop-to-Hop
 
 - **Application/Transport/Network**: (기능의 관점에서) **종단 간** 의미를 형성.
   - 예: TCP의 재전송·순서 보장은 **종단**에서 성립.
@@ -90,7 +90,7 @@ category: DataCommunication
 
 ---
 
-## 2.2.3 Description of Each Layer (계층 상세)
+## Description of Each Layer (계층 상세)
 
 ### Physical (물리)
 
@@ -123,7 +123,7 @@ category: DataCommunication
 
 ---
 
-## 2.2.4 Encapsulation & Decapsulation (캡슐화/역캡슐화)
+## Encapsulation & Decapsulation (캡슐화/역캡슐화)
 
 각 계층은 상위 계층 PDU 앞에 **자신의 헤더(필요 시 트레일러)** 를 붙입니다.
 
@@ -151,7 +151,7 @@ $$
 
 ---
 
-## 2.2.5 Addressing (주소 계층)
+## Addressing (주소 계층)
 
 - **Link(MAC)**: 동일 **링크/브로드캐스트 도메인**에서 장치 식별.
   예: `00:1A:2B:...`
@@ -170,7 +170,7 @@ $$
 
 ---
 
-## 2.2.6 Multiplexing / Demultiplexing (다중화/역다중화)
+## Multiplexing / Demultiplexing (다중화/역다중화)
 
 - **Multiplexing(송신)**: 다양한 응용의 데이터가 **하나의 하위 계층**으로 내려오며, **포트/프로토콜 번호**로 구분되도록 캡슐화.
 - **Demultiplexing(수신)**: 수신 측에서 **헤더의 식별자**(예: IP proto=6, dst port=443)를 읽어 **올바른 상위 엔드포인트**로 분배.
@@ -194,11 +194,12 @@ for p in (9001, 9002):
 # 클라이언트는 포트 번호로 원하는 "상위 애플리케이션"을 구분
 # $ echo hi | nc -u 127.0.0.1 9001
 # $ echo hi | nc -u 127.0.0.1 9002
+
 ```
 
 ---
 
-# 2.3 The OSI Model
+# The OSI Model
 
 > OSI(Open Systems Interconnection) **기준 참조 모델**은 **ISO**가 1980년대에 제정(참조 모델은 1984년 표준화)한 **7계층** 이론적 프레임워크입니다. (※ ISO는 1947년 설립, OSI 모델 자체가 1947년에 제정된 것은 아닙니다.)
 
@@ -216,7 +217,7 @@ for p in (9001, 9002):
 
 ---
 
-## 2.3.1 OSI vs TCP/IP (대응 관계와 차이)
+## OSI vs TCP/IP (대응 관계와 차이)
 
 대응(대표적 매핑):
 
@@ -238,7 +239,7 @@ for p in (9001, 9002):
 
 ---
 
-## 2.3.2 Why OSI Didn’t Win (OSI 모델의 한계와 비성공 요인)
+## Why OSI Didn’t Win (OSI 모델의 한계와 비성공 요인)
 
 - **시장 타이밍과 구현 복잡성**: TCP/IP가 **이미 광범위하게 구현·배포**되는 동안 OSI 기반 스택과 프로토콜은 **무겁고 복잡**하다는 인식을 받음.
 - **상호운용/성능 이슈**: 벤더마다 다른 해석·프로파일, **고성능 구현 난도**.
@@ -307,26 +308,29 @@ for p in (8080, 9090):
     threading.Thread(target=serve, args=(p,), daemon=True).start()
 
 # 서로 다른 포트(애플리케이션)로 역다중화됨
+
 ```
 
 ---
 
 # 퀵 실습: 캡슐화 관찰하기
 
-## 1. 패킷 캡처 필터
+## 패킷 캡처 필터
 
 ```bash
 # TCP 443(HTTPS) 트래픽 캡처
+
 sudo tcpdump -i eth0 -n -vv 'tcp port 443' -w tls.pcap
 ```
 
 - 캡슐화 단계별 헤더를 **Wireshark**에서 관찰(L2/L3/L4/App).
 
-## 2. ICMP와 라우팅 (Hop-to-Hop 확인)
+## ICMP와 라우팅 (Hop-to-Hop 확인)
 
 ```bash
 traceroute 1.1.1.1
 # 각 홉에서 TTL 감소/ICMP Time Exceeded 응답으로 경로 확인
+
 ```
 
 ---

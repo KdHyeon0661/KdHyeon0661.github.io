@@ -6,14 +6,16 @@ category: Docker
 ---
 # Docker 이미지 보안 스캔 도구 완전 정복: Trivy & Docker Scout
 
-## 0. 스캐너가 해결하는 문제와 위협 모델
+## 스캐너가 해결하는 문제와 위협 모델
 
 ### 왜 스캔이 필요한가
+
 - **이미지 레이어** 속 OS 패키지/언어 런타임/라이브러리에는 CVE가 누적된다.
 - 운영 중 **새 CVE가 공개**되면, 빌드 시점엔 없던 취약점이 런타임에 생긴다(“취약점 드리프트”).
 - 규제/감사 대응: SBOM 의무화, 배포 전 취약점 **정책 게이트** 필요.
 
 ### 스캐너의 관점
+
 - **패키지 인벤토리**(apk, apt, rpm, pip, npm, gem …)를 추출
 - **CVE DB**(NVD 등)와 매칭 → 심각도(Severity), 고정 버전(Fix Version), 영향 범위를 산정
 - **정책 엔진**으로 파이프라인 Fail/Pass 결정
@@ -21,9 +23,10 @@ category: Docker
 
 ---
 
-## 1. Trivy — 범용 오픈소스 스캐너
+## Trivy — 범용 오픈소스 스캐너
 
-### 1.1 개요
+### 개요
+
 - 오픈소스, 가볍고 빠르며 **이미지·파일시스템·Git 리포·IaC(Dockerfile/Terraform/K8s Manifests)** 등 **멀티 타깃** 지원.
 - 실행 모드:
   - `trivy image`: 컨테이너 이미지
@@ -32,27 +35,35 @@ category: Docker
   - `trivy config`: IaC 정적 분석(정책 기반)
   - `trivy sbom`: SBOM 생성/소비
 
-### 1.2 설치
+### 설치
+
 ```bash
 # macOS(Homebrew)
+
 brew install aquasecurity/trivy/trivy
 
 # Debian/Ubuntu
+
 sudo apt update && sudo apt install -y trivy
 
 # 컨테이너로 사용(도커 소켓 공유)
+
 docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image nginx:alpine
 ```
 
-### 1.3 이미지 스캔 기초
+### 이미지 스캔 기초
+
 ```bash
 # 최신 태그 스캔
+
 trivy image nginx:latest
 
 # 상세 + JSON 결과(머신리더블, CI 아티팩트 보관)
+
 trivy image --format json --output trivy-image.json nginx:latest
 
 # 심각도 필터 + 실패 처리(게이트)
+
 trivy image --severity CRITICAL,HIGH --exit-code 1 nginx:latest
 ```
 
@@ -60,22 +71,28 @@ trivy image --severity CRITICAL,HIGH --exit-code 1 nginx:latest
 - **Installed** vs **Fixed Version**: 업그레이드하면 사라지는 취약점인지 판단.
 - **Layer**: 어느 Dockerfile 레이어에서 유입됐는지 추적.
 
-### 1.4 파일/코드/IaC 스캔
+### 파일/코드/IaC 스캔
+
 ```bash
 # 워크스페이스의 의존/비밀/민감정보/바이너리 점검
+
 trivy fs .
 
 # Dockerfile 규칙 검사(베이스 이미지 EOL, 루트 실행, 비효율적 레이어 등)
+
 trivy config Dockerfile
 
 # Terraform/K8s 매니페스트의 보안 설정 검증
+
 trivy config infra/
 ```
 
-### 1.5 CI/CD 연동(예: GitHub Actions)
+### CI/CD 연동(예: GitHub Actions)
+
 {% raw %}
 ```yaml
 # .github/workflows/trivy.yml
+
 name: trivy
 on: [push, pull_request]
 jobs:
@@ -110,10 +127,12 @@ jobs:
 - `exit-code`: 파이프라인 Fail 기준.
 - `format`: `table`, `json`, `sarif` 등.
 
-### 1.6 오탐/허용 예외 관리
+### 오탐/허용 예외 관리
+
 ```bash
 # .trivyignore 예시
 # 형식: VulnerabilityID [# comment]
+
 CVE-2023-0001
 CVE-2024-12345
 ```
@@ -122,7 +141,8 @@ trivy image --ignorefile .trivyignore my/app:latest
 ```
 - 비즈니스 리스크 평가 후 **만료 기한**을 코멘트로 남겨 주기적으로 재검토.
 
-### 1.7 오프라인/사설 레지스트리/프록시
+### 오프라인/사설 레지스트리/프록시
+
 - DB 미러링: 사내 미러를 구성해 인터넷 불가 환경에서 **DB 업데이트** 가능.
 - 프락시/자격증명:
 ```bash
@@ -130,41 +150,51 @@ export HTTP_PROXY=http://proxy.local:3128
 trivy image --username $REG_USER --password $REG_PASS registry.local/my/app:tag
 ```
 
-### 1.8 성능·정확도 팁
+### 성능·정확도 팁
+
 - **빌드 캐시**를 활용해 빈번한 OS 패키지 업데이트 구간을 최소화 → 취약점 수 자체가 줄어든다.
 - `--scanners vuln,secret,config,license` 등 필요한 스캐너만 선택해 시간 단축.
 - CI에서 **병렬 스캔**(다중 아키텍처/다중 태그)을 지원.
 
-### 1.9 SBOM 생성·활용
+### SBOM 생성·활용
+
 ```bash
 # CycloneDX SBOM 생성(JSON)
+
 trivy sbom --format cyclonedx --output sbom.json my/app:latest
 
 # SPDX 형식 생성
+
 trivy sbom --format spdx-json --output sbom-spdx.json my/app:latest
 ```
 - SBOM을 아티팩트로 보관 → 감사지원/사고대응(“이 CVE가 어디에 있는가?”) 질의가 쉬워짐.
 
 ---
 
-## 2. Docker Scout — Docker 생태계에 긴밀 통합된 분석
+## Docker Scout — Docker 생태계에 긴밀 통합된 분석
 
-### 2.1 개요
+### 개요
+
 - Docker CLI/Hub/Desktop과 통합된 스캐너. **SBOM·CVE 분석·이미지 비교·업그레이드 제안**이 장점.
 - CI 없이도 개발자가 **로컬에서 빠르게 가시성**을 확보하기 좋다.
 
-### 2.2 기본 사용
+### 기본 사용
+
 ```bash
 # 요약 뷰
+
 docker scout quickview nginx:latest
 
 # 취약점 목록
+
 docker scout cves nginx:latest
 
 # SBOM 출력
+
 docker scout sbom nginx:latest
 
 # 이미지 비교(태그 간 패키지/취약점 차이)
+
 docker scout compare my/app:1.2.0 my/app:1.3.0
 ```
 
@@ -172,13 +202,14 @@ docker scout compare my/app:1.2.0 my/app:1.3.0
 - “**Recommendations**”: 취약점이 줄어드는 **권장 태그/버전** 안내.
 - 이미지 간 **변화 레이어**를 추적해 “어디서 악화/개선되었나”를 파악.
 
-### 2.3 Docker Desktop UI
+### Docker Desktop UI
+
 - 로컬 이미지에서 **Analyze** 실행 → CVE/패키지/레이어 시각화.
 - 팀 온보딩/디버깅 단계에서 **학습 곡선이 낮다**는 장점.
 
 ---
 
-## 3. Trivy vs Docker Scout — 선택 가이드
+## Trivy vs Docker Scout — 선택 가이드
 
 | 축 | Trivy | Docker Scout |
 |---|---|---|
@@ -193,15 +224,17 @@ docker scout compare my/app:1.2.0 my/app:1.3.0
 
 ---
 
-## 4. 파이프라인 표준 템플릿
+## 파이프라인 표준 템플릿
 
-### 4.1 빌드 직후 스캔(게이트)
+### 빌드 직후 스캔(게이트)
+
 ```bash
 docker build -t registry.example.com/team/app:${GIT_SHA} .
 trivy image --severity HIGH,CRITICAL --exit-code 1 registry.example.com/team/app:${GIT_SHA}
 ```
 
-### 4.2 푸시 전 태그 고정 + SBOM 아티팩트
+### 푸시 전 태그 고정 + SBOM 아티팩트
+
 ```bash
 docker tag registry.example.com/team/app:${GIT_SHA} registry.example.com/team/app:latest
 trivy sbom --format cyclonedx --output sbom-${GIT_SHA}.json registry.example.com/team/app:${GIT_SHA}
@@ -209,9 +242,11 @@ docker push registry.example.com/team/app:${GIT_SHA}
 docker push registry.example.com/team/app:latest
 ```
 
-### 4.3 배포 전 최종 확인(서명/증빙)
+### 배포 전 최종 확인(서명/증빙)
+
 ```bash
 # 예: cosign으로 이미지 서명 및 SBOM 첨부(어테스테이션)
+
 cosign sign --yes registry.example.com/team/app:${GIT_SHA}
 cosign attest --yes --predicate sbom-${GIT_SHA}.json --type cyclonedx \
   registry.example.com/team/app:${GIT_SHA}
@@ -219,9 +254,10 @@ cosign attest --yes --predicate sbom-${GIT_SHA}.json --type cyclonedx \
 
 ---
 
-## 5. 정책 게이트 고도화(예: 팀 표준)
+## 정책 게이트 고도화(예: 팀 표준)
 
-### 5.1 최소 기준
+### 최소 기준
+
 - **CRITICAL/HIGH** 존재하면 Fail
 - **Fix Version 존재**하는 이슈는 반드시 해결(유지보수 가능한 범위)
 - **EOL 베이스 이미지** 사용 금지
@@ -230,11 +266,13 @@ cosign attest --yes --predicate sbom-${GIT_SHA}.json --type cyclonedx \
 trivy image --severity HIGH,CRITICAL --ignore-unfixed=false --exit-code 1 my/app:tag
 ```
 
-### 5.2 환경별 차등
+### 환경별 차등
+
 - Dev: 경고(통과), Staging: HIGH 이상 차단, Prod: MEDIUM 이상도 차단
 - `.trivyignore`는 **만료 주석**을 강제해 영구 무시 방지
 
-### 5.3 수학적 리스크 총합(간단 모델)
+### 수학적 리스크 총합(간단 모델)
+
 취약점 \(i\)의 심각도를 가중치 \(w_i\)로 두고, 총 위험도 \(R\)를
 $$
 R = \sum_{i=1}^{N} w_i \cdot \mathbb{1}\{\text{exploitable}(i)\}
@@ -245,7 +283,7 @@ $$
 
 ---
 
-## 6. 문제 원인별 개선 접근
+## 문제 원인별 개선 접근
 
 | 유형 | 원인 | 개선 |
 |---|---|---|
@@ -257,9 +295,10 @@ $$
 
 ---
 
-## 7. 실제 데모: 취약 이미지 만들고, 고치고, 재스캔
+## 실제 데모: 취약 이미지 만들고, 고치고, 재스캔
 
-### 7.1 취약한 Dockerfile(예시)
+### 취약한 Dockerfile(예시)
+
 ```dockerfile
 FROM python:3.11
 RUN pip install flask==2.0.0  # 의도적으로 구버전
@@ -273,7 +312,8 @@ docker build -t demo/vuln:bad .
 trivy image demo/vuln:bad
 ```
 
-### 7.2 개선 버전(베이스/패키지 업)
+### 개선 버전(베이스/패키지 업)
+
 ```dockerfile
 FROM python:3.11-slim
 ENV PIP_NO_CACHE_DIR=1
@@ -294,7 +334,7 @@ docker scout compare demo/vuln:bad demo/vuln:good
 
 ---
 
-## 8. 조직 운영 체크리스트
+## 조직 운영 체크리스트
 
 1. **기준선(Base image) 카탈로그**: 승인된 베이스 이미지 목록/버전/EOL 관리.
 2. **주기 스캔**: 배포 시점 + **정기 리스캔**(새 CVE 반영).
@@ -306,7 +346,7 @@ docker scout compare demo/vuln:bad demo/vuln:good
 
 ---
 
-## 9. 성능 최적화 팁
+## 성능 최적화 팁
 
 - **멀티플랫폼 빌드**(`linux/amd64,arm64`) 시 아키텍처별 스캔을 병렬화.
 - **캐시 재사용**: 레이어 변경을 최소화(의존 설치 전에 `COPY requirements*`).
@@ -314,7 +354,7 @@ docker scout compare demo/vuln:bad demo/vuln:good
 
 ---
 
-## 10. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. “Unfixed” 취약점은 어떻게 할까?**
 A. `ignore-unfixed=true`로 게이트는 완화하되, 리포트에는 남겨 추적한다. 공급사 패치 일정 공유/교체 대안 검토.
@@ -327,22 +367,27 @@ A. 슬림/멀티스테이지로 크기 자체를 줄이고, **정밀 스캔은 �
 
 ---
 
-## 11. 명령어 치트시트
+## 명령어 치트시트
 
 ```bash
 # Trivy: 이미지 스캔(게이트)
+
 trivy image --severity HIGH,CRITICAL --exit-code 1 my/app:tag
 
 # Trivy: IaC(Dockerfile/K8s/Terraform) 점검
+
 trivy config .
 
 # Trivy: SBOM 생성
+
 trivy sbom --format cyclonedx --output sbom.json my/app:tag
 
 # Trivy: 오탐/예외
+
 trivy image --ignorefile .trivyignore my/app:tag
 
 # Docker Scout: 요약/비교/SBOM
+
 docker scout quickview my/app:tag
 docker scout compare my/app:old my/app:new
 docker scout sbom my/app:tag
@@ -350,7 +395,7 @@ docker scout sbom my/app:tag
 
 ---
 
-## 12. 결론
+## 결론
 
 - **Trivy**는 “넓게·깊게” 스캔하는 오픈소스 표준 도구로, CI/CD 정책 게이트·IaC·SBOM까지 포괄한다.
 - **Docker Scout**는 Docker 개발자 워크플로우에 긴밀히 녹아 있어 **빠른 피드백·이미지 비교·권장 업그레이드**가 강점이다.

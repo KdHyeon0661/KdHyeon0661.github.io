@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes에서 ConfigMap / Secret으로 설정 분리하기
 
-## 1. 왜 설정을 분리해야 하나?
+## 왜 설정을 분리해야 하나?
 
 | 이유 | 설명 |
 |---|---|
@@ -17,7 +17,7 @@ category: Kubernetes
 
 ---
 
-## 2. 오브젝트 개요 — ConfigMap vs Secret
+## 오브젝트 개요 — ConfigMap vs Secret
 
 - **ConfigMap**: 평문 구성값(비민감). 텍스트 설정, 플래그, 엔드포인트, 기능 토글 등.
 - **Secret**: 민감정보. 기본적으로 **base64 인코딩** 저장(암호화 아님). etcd **암호화 설정**으로 저장 시 암호화 가능.
@@ -35,9 +35,9 @@ category: Kubernetes
 
 ---
 
-## 3. 기본 예제(보강)
+## 기본 예제(보강)
 
-### 3.1 ConfigMap (일반 설정)
+### ConfigMap (일반 설정)
 
 ```yaml
 apiVersion: v1
@@ -56,7 +56,7 @@ data:
     cache.size=1024
 ```
 
-### 3.2 Secret (민감 정보)
+### Secret (민감 정보)
 
 ```yaml
 apiVersion: v1
@@ -77,9 +77,9 @@ stringData:
 
 ---
 
-## 4. Pod에 주입하는 3가지 경로
+## Pod에 주입하는 3가지 경로
 
-### 4.1 환경 변수 일괄 주입(envFrom)
+### 환경 변수 일괄 주입(envFrom)
 
 ```yaml
 apiVersion: v1
@@ -100,7 +100,7 @@ spec:
 - **충돌 규칙**: 동일 키가 중복되면 **뒤에 나오는 항목이 덮어쓰지 않는다.**(컨테이너 시작 실패) → 키 네이밍 규칙으로 방지.
 - 프로세스에서 `APP_MODE`, `DB_USER` 등으로 사용.
 
-### 4.2 개별 키 매핑(env)
+### 개별 키 매핑(env)
 
 ```yaml
 env:
@@ -118,7 +118,7 @@ env:
 
 - 미존재 키 시 `optional: true`를 활용해 유연성 확보 가능.
 
-### 4.3 볼륨으로 파일 마운트
+### 볼륨으로 파일 마운트
 
 ```yaml
 apiVersion: v1
@@ -152,13 +152,15 @@ spec:
 
 ---
 
-## 5. 변경 전파와 롤링/핫 리로드
+## 변경 전파와 롤링/핫 리로드
 
-### 5.1 env 주입의 특성
+### env 주입의 특성
+
 - **환경변수는 컨테이너 시작 시에만** 주입됨 → **ConfigMap/Secret 변경 ≠ 자동 적용**.
 - 재시작/롤링이 필요.
 
 #### 패턴 A: 애노테이션 해시를 템플릿에 삽입(권장)
+
 Helm/Kustomize에서 ConfigMap/Secret의 해시를 Pod 템플릿 애노테이션에 주입하여 **값이 바뀌면 자동 롤링**.
 
 ```yaml
@@ -186,11 +188,13 @@ spec:
         - secretRef: { name: db-secret }
 ```
 
-### 5.2 파일 마운트의 특성
+### 파일 마운트의 특성
+
 - **볼륨으로 마운트된 파일은 값 변경 시 kubelet이 파일을 갱신**(수 초 지연).
 - 애플리케이션이 해당 파일을 **감시(inotify)** 하거나 주기적 재로딩 로직이 있으면 **무중단 핫 리로드** 가능.
 
 #### 패턴 B: SIGHUP/HTTP 핫 리로드 엔드포인트
+
 - 컨테이너 내 사이드카(예: reloader) 또는 `ConfigMap` 변경 감지 → 앱에 SIGHUP/HTTP `/reload` 호출.
 
 ```yaml
@@ -204,7 +208,7 @@ lifecycle:
 
 ---
 
-## 6. 값 형식과 제약
+## 값 형식과 제약
 
 - 모든 값은 문자열로 간주. 정수/불리언은 앱에서 파싱.
 - **크기**: 오브젝트당 수백 KB–1MiB 내를 권장(과대하면 apiserver/etcd 성능 저하).
@@ -223,9 +227,10 @@ data:
 
 ---
 
-## 7. 보안 심화 — Secret 안전하게 쓰기
+## 보안 심화 — Secret 안전하게 쓰기
 
-### 7.1 최소 권한(RBAC)
+### 최소 권한(RBAC)
+
 - Secret 읽기 권한을 **네임스페이스/리소스 단위로 최소화**.
 
 ```yaml
@@ -258,7 +263,8 @@ roleRef:
 
 - 워크로드에 **전용 ServiceAccount**를 부여하고 필요한 Secret만 허용.
 
-### 7.2 etcd 저장 암호화(서버사이드)
+### etcd 저장 암호화(서버사이드)
+
 - kube-apiserver의 `EncryptionConfiguration`으로 Secret을 **저장 시 암호화**.
 
 예시(클러스터 관리 영역):
@@ -277,12 +283,14 @@ resources:
 
 > 운영환경에서는 **반드시** 활성화. 키 로테이션/백업 정책 포함.
 
-### 7.3 노출면 최소화
+### 노출면 최소화
+
 - Secret을 **환경변수**로 노출하면 프로세스 크래시 덤프/프로파일에서 유출 가능. 가능하면 **파일 마운트**가 더 안전.
 - 컨테이너 로그에 비밀을 출력하지 말 것.
 - `kubectl describe`/`get -o yaml` 권한을 제한.
 
-### 7.4 외부 비밀 소스 연계(CSI Driver)
+### 외부 비밀 소스 연계(CSI Driver)
+
 - 클라우드 KMS/Secrets Manager(AWS/GCP/Azure)와 동기화하려면 **Secrets Store CSI Driver** 사용.
 - 장점: Secret을 etcd에 저장하지 않거나, 동기화 주기를 제어 가능.
 
@@ -312,9 +320,9 @@ spec:
 
 ---
 
-## 8. 실전 운영 패턴
+## 실전 운영 패턴
 
-### 8.1 Kustomize(해시 유도 롤아웃)
+### Kustomize(해시 유도 롤아웃)
 
 `kustomization.yaml`:
 ```yaml
@@ -341,7 +349,7 @@ generatorOptions:
 
 - 생성된 이름(`app-config-<hash>`)이 바뀌면 Deployment 템플릿의 참조도 바뀌며 **자동 롤링**.
 
-### 8.2 Helm(템플릿 값 → CM/Secret)
+### Helm(템플릿 값 → CM/Secret)
 
 `values.yaml`:
 ```yaml
@@ -364,13 +372,14 @@ metadata:
 ```
 {% endraw %}
 
-### 8.3 GitOps(SOPS/Sealed Secrets)
+### GitOps(SOPS/Sealed Secrets)
+
 - 레포에 비밀을 평문으로 두지 않기 위해 **SOPS**(KMS/PGP 기반 파일 암호화) 또는 **Sealed Secrets**(클러스터 퍼블릭 키로 암호화) 사용.
 - 파이프라인에서 복호화/적용.
 
 ---
 
-## 9. 네임스페이스/레이블/셀렉터와의 결합
+## 네임스페이스/레이블/셀렉터와의 결합
 
 - 환경별 네임스페이스(`dev`,`stage`,`prod`)로 Secret/ConfigMap을 분리.
 - `app`, `env`, `component` 레이블을 통일하여 **정책/검색/감사** 용이화.
@@ -387,7 +396,7 @@ metadata:
 
 ---
 
-## 10. 트러블슈팅
+## 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -408,9 +417,10 @@ kubectl exec -it deploy/web -- ls -l /etc/config /etc/secret
 
 ---
 
-## 11. 고급 주제
+## 고급 주제
 
-### 11.1 Projected Volume로 한 디렉터리에 합치기
+### Projected Volume로 한 디렉터리에 합치기
+
 ConfigMap/Secret/DownwardAPI/ServiceAccount 토큰을 한 디렉터리에 투영.
 
 ```yaml
@@ -424,7 +434,7 @@ volumes:
         name: db-secret
 ```
 
-### 11.2 subPath로 파일만 선택 마운트
+### subPath로 파일만 선택 마운트
 
 ```yaml
 volumeMounts:
@@ -433,12 +443,13 @@ volumeMounts:
   subPath: app.properties
 ```
 
-### 11.3 컨피그 스키마 검증
+### 컨피그 스키마 검증
+
 - 애플리케이션 기동 시 스키마 검증 실패 → `readiness=false`로 유지해 **잘못된 설정이 트래픽에 노출되지 않도록**.
 
 ---
 
-## 12. 실전 통합 예시(Deployment + CM/Secret + 롤링)
+## 실전 통합 예시(Deployment + CM/Secret + 롤링)
 
 ```yaml
 ---
@@ -523,10 +534,11 @@ spec:
 
 ---
 
-## 13. 명령어 실습(요약)
+## 명령어 실습(요약)
 
 ```bash
 # 생성
+
 kubectl create configmap app-config \
   --from-literal=APP_MODE=dev \
   --from-literal=LOG_LEVEL=debug
@@ -536,21 +548,24 @@ kubectl create secret generic db-secret \
   --from-literal=DB_PASSWORD=mysecret
 
 # 조회
+
 kubectl get cm app-config -o yaml
 kubectl get secret db-secret -o yaml
 echo c2VjcmV0 | base64 -d
 
 # 적용/롤링
+
 kubectl apply -f deployment.yaml
 kubectl rollout status deploy/web
 
 # 변경 후 롤링 유도(해시 미사용 시)
+
 kubectl rollout restart deploy/web
 ```
 
 ---
 
-## 14. 결론
+## 결론
 
 - **ConfigMap**은 일반 설정, **Secret**은 민감 데이터를 다룬다.
 - **env 주입은 재시작 필요**, **파일 마운트는 실시간 갱신 + 핫리로드 패턴**으로 무중단 적용이 가능하다.

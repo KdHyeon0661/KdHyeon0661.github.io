@@ -6,7 +6,7 @@ category: JavaScript
 ---
 # Vanilla JS vs 프레임워크: 언제, 왜, 무엇을 선택할까?
 
-## 0. 판단 가이드(요약)
+## 판단 가이드(요약)
 
 - **작고 단순**: Vanilla JS → 빠른 납기, 의존성 0
 - **중~대형/기능 다각화**: 프레임워크 → 구조·재사용·협업·생태계
@@ -21,16 +21,19 @@ category: JavaScript
 > **프레임워크/라이브러리 없이** 순수 자바스크립트 + 브라우저 표준 API만으로 구현하는 방식.
 
 ### 장점
+
 - **의존성 0**: 번들 크기 최소, 보안/라이선스 리스크↓
 - **러닝 커브 낮음**: JS/DOM만 알면 시작 가능
 - **미세 제어**: 성능·접근성·렌더링 타이밍까지 직접 조절 가능
 
 ### 단점
+
 - **구조/패턴 부재**: 규모↑ → 이벤트/상태/DOM 업데이트 난맥상
 - **재사용/조직화 비용↑**: 컴포넌트·라우팅·i18n 등 직접 설계
 - **테스트/빌드/SSR/코드스플릿**: 수작업 구성 필요
 
 ### 가장 단순한 예시
+
 ```html
 <p id="text">Hello</p>
 <button onclick="changeText()">변경</button>
@@ -48,6 +51,7 @@ category: JavaScript
 > UI를 **컴포넌트 단위**로 쪼개고, **상태·라우팅·빌드·테스트·SSR**까지 생태계를 제공하는 개발 틀.
 
 ### 대표 프레임워크
+
 | 이름 | 특성 |
 |---|---|
 | React | 선언적 UI, Hooks, 거대 생태계(Next.js, React Query 등) |
@@ -56,6 +60,7 @@ category: JavaScript
 | Svelte | 컴파일 타임 최적화, 런타임 오버헤드↓ |
 
 ### React 스타일 예시
+
 ```jsx
 import { useState } from 'react';
 export default function App() {
@@ -296,6 +301,7 @@ export default function App(){
 ## 8️⃣ Vanilla의 “컴포넌트화” 패턴(프레임워크 없이도 구조 잡기)
 
 ### (1) 템플릿 렌더 + 이벤트 위임
+
 ```js
 function h(strings, ...vals){ // 템플릿 헬퍼(옵션)
   return strings.reduce((s, str, i) => s + str + (vals[i]??''), '');
@@ -314,6 +320,7 @@ function mount($root, items){
 ```
 
 ### (2) Proxy/Signals로 반응성 흉내
+
 ```js
 function signal(value){
   const subs = new Set();
@@ -329,6 +336,7 @@ document.getElementById('inc').addEventListener('click', () => count.set(count.g
 ```
 
 ### (3) 경량 라우팅(History API)
+
 ```js
 const routes = {
   '/': () => 'Home',
@@ -443,6 +451,7 @@ render();
 ---
 
 ## 부록 B. 라우팅/상태/템플릿 경량 라이브러리 제안(중립)
+
 - 라우팅: Navigo, tiny-router
 - 상태: Nano Stores, Zustand(React), Pinia(Vue)
 - 템플릿: lit-html, uhtml

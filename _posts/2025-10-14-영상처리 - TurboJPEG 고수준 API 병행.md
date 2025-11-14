@@ -4,7 +4,8 @@ title: 영상처리 - TurboJPEG 고수준 API 병행
 date: 2025-10-14 17:25:23 +0900
 category: 영상처리
 ---
-# 9. **TurboJPEG 고수준 API 병행 (성능·단순화)**
+# **TurboJPEG 고수준 API 병행 (성능·단순화)**
+
 > jpeglib의 유연함은 그대로 두고, **썸네일·미리보기·일반 디코드/인코드** 경로는 **TurboJPEG**로 단순화/가속!
 
 - **왜**: `tjDecompress2()`/`tjCompress2()`는 **BGRA 버퍼를 그대로** 넣고 빼기 쉽고, SIMD(AVX2/NEON)로 **매우 빠릅니다**.
@@ -12,7 +13,8 @@ category: 영상처리
 
 ---
 
-## 0. 빠른 개념 맵
+## 빠른 개념 맵
+
 - **디코드(파일→BGRA)**: `tjInitDecompress` → `tjDecompressHeader3`(원본 W/H/서브샘플링 파악) → (옵션) 스케일 팩터 선택 → `tjDecompress2`.
 - **인코드(BGRA→JPEG)**: `tjInitCompress` → `tjCompress2` (포맷=BGRA, 샘플링=420/444, quality, progressive).
 - **무손실 변환(JPEG→JPEG)**: `tjInitTransform` → `tjTransform` (회전/반전/트림/크롭: MCU 경계 기반).
@@ -20,7 +22,8 @@ category: 영상처리
 
 ---
 
-## 1. 빌드 & 준비
+## 빌드 & 준비
+
 - vcpkg(Windows) 예:
   ```powershell
   .\vcpkg\vcpkg install libjpeg-turbo:x64-windows
@@ -41,8 +44,9 @@ category: 영상처리
 
 ---
 
-## 2. 디코드: **JPEG → BGRA(IppDib)**
-### 2.1 스케일 팩터 선택(1/1, 1/2, 1/4, 1/8 등)
+## 디코드: **JPEG → BGRA(IppDib)**
+### 스케일 팩터 선택(1/1, 1/2, 1/4, 1/8 등)
+
 ```cpp
 #include <turbojpeg.h>
 #include <vector>
@@ -137,7 +141,8 @@ bool TJ_DecodeToBGRA(const std::wstring& path, const TJDecodeOpts& opts, IppDib&
 
 ---
 
-## 3. 인코드: **BGRA(IppDib) → JPEG**
+## 인코드: **BGRA(IppDib) → JPEG**
+
 ```cpp
 struct TJEncodeOpts {
     int quality = 85;            // 1~100
@@ -186,7 +191,8 @@ bool TJ_EncodeFromBGRA(const IppDib& img, const TJEncodeOpts& o,
 
 ---
 
-## 4. (옵션) **타깃 사이즈** 맞추기 — TurboJPEG로도 “이진 탐색” 간단
+## (옵션) **타깃 사이즈** 맞추기 — TurboJPEG로도 “이진 탐색” 간단
+
 ```cpp
 bool TJ_Encode_ToTarget(const IppDib& img, size_t targetBytes, size_t tol,
                         const TJEncodeOpts& base, std::vector<unsigned char>& best, int& usedQ)
@@ -208,7 +214,8 @@ bool TJ_Encode_ToTarget(const IppDib& img, size_t targetBytes, size_t tol,
 
 ---
 
-## 5. **무손실 변환(회전/반전/크롭)** — `tjTransform`
+## **무손실 변환(회전/반전/크롭)** — `tjTransform`
+
 > `jpegtran`/`transupp` 없이 TurboJPEG만으로 **MCU 경계 기반** 회전/반전/크롭 가능.
 
 ```cpp
@@ -257,24 +264,28 @@ bool TJ_LosslessTransform(const std::vector<unsigned char>& inJpeg,
 
 ---
 
-## 6. **시나리오 통합** (ImageTool에 넣기)
+## **시나리오 통합** (ImageTool에 넣기)
 
-### 6.1 썸네일 경로
+### 썸네일 경로
+
 - 목록/그리드: `TJ_DecodeToBGRA(maxThumb=256, FASTUPSAMPLE, FASTDCT, LIMITSCANS)`.
 - 결과 `IppDib`를 `StretchDIBits()`로 즉시 그리기.
 - 클릭/확대 시 원본(또는 1/2) 재디코드.
 
-### 6.2 일괄 리사이즈·저장
+### 일괄 리사이즈·저장
+
 - 디코드(`TJ_DecodeToBGRA`) → (선택) 리사이즈 → 인코드(`TJ_EncodeFromBGRA`).
 - 옵션: 사진=420/90Q/optimize/progressive, UI 캡처=444/85Q/accurate DCT.
 
-### 6.3 EXIF 회전 반영 + 무손실
+### EXIF 회전 반영 + 무손실
+
 - 원본 JPEG(바이트) + Orientation 읽기 → `TJ_LosslessTransform`으로 회전/반전 →
   메타 재주입(앞에서 만든 jpeglib 메타 모듈) → **Orientation=1**로 정정 후 저장.
 
 ---
 
-## 7. 성능/안전 플래그 가이드
+## 성능/안전 플래그 가이드
+
 - **FASTUPSAMPLE + FASTDCT**: 가장 빠름(썸네일/프리뷰).
 - **ACCURATEDCT**: 고품질(모던 CPU에서도 충분히 빠름).
 - **LIMITSCANS**: 진행형 JPEG **스캔 폭탄** 완화(권장).
@@ -282,7 +293,8 @@ bool TJ_LosslessTransform(const std::vector<unsigned char>& inJpeg,
 
 ---
 
-## 8. 주의 사항 & 팁
+## 주의 사항 & 팁
+
 - TurboJPEG는 **APP 마커 편집/보존 제어가 제한**됩니다. 메타데이터(EXIF/XMP/ICC) 정밀 제어가 필요하면
   **jpeglib 경로**(이전 섹션)로 **추출/재주입**하세요.
 - CMYK/YCCK JPEG 디코드는 TurboJPEG로도 가능하지만 **표시 경로**는 **RGB/BGRA**로 통일하세요(ICC 변환은 lcms2).
@@ -291,7 +303,8 @@ bool TJ_LosslessTransform(const std::vector<unsigned char>& inJpeg,
 
 ---
 
-## 9. 테스트 체크리스트
+## 테스트 체크리스트
+
 - [ ] 동일 이미지에 대해 **tjDecompress2** vs **libjpeg 디코드** 품질/속도 비교.
 - [ ] **스케일 팩터**(1/2,1/4,1/8)에서 크기 정확성, 썸네일 FPS 측정.
 - [ ] **LIMITSCANS** 켠/끈 성능/안전 차이(악성 프로그레시브 샘플).
@@ -300,10 +313,12 @@ bool TJ_LosslessTransform(const std::vector<unsigned char>& inJpeg,
 
 ---
 
-## 10. 미니 CLI 예제 (소스→썸네일→저장)
+## 미니 CLI 예제 (소스→썸네일→저장)
+
 ```cpp
 // tj_cli.cpp
 #include <iostream>
+
 int wmain(int argc, wchar_t** argv){
     if (argc<4){ std::wcout<<L"usage: tjcli <in.jpg> <out.jpg> <maxThumb>\n"; return 0; }
     std::wstring in=argv[1], out=argv[2]; int maxThumb=_wtoi(argv[3]);
@@ -325,7 +340,8 @@ int wmain(int argc, wchar_t** argv){
 
 ---
 
-## 11. 결론
+## 결론
+
 - **TurboJPEG**는 “**BGRA 직결·스케일 디코드·간단 인코드**”가 강력해서
   **미리보기/썸네일/일반 파이프라인**의 복잡도를 크게 줄여줍니다.
 - **무손실 변환**도 `tjTransform` 한 방.

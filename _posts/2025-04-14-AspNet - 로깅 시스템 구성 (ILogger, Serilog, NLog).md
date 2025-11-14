@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 로깅 시스템 완전 가이드
 
-## 1. ASP.NET Core 로깅 추상화 개요
+## ASP.NET Core 로깅 추상화 개요
 
 - 모든 로그는 `Microsoft.Extensions.Logging`의 **`ILogger<T>` 추상화**를 통해 기록.
 - 실제 출력(콘솔/파일/DB/Elastic/Seq/Cloud)은 **프로바이더**가 담당(플러그 가능).
@@ -37,9 +37,9 @@ public sealed class HomeController : Controller
 
 ---
 
-## 2. 로그 레벨, 카테고리, 필터링
+## 로그 레벨, 카테고리, 필터링
 
-### 2.1 로그 레벨
+### 로그 레벨
 
 | 레벨 | 용도 |
 |---|---|
@@ -50,7 +50,7 @@ public sealed class HomeController : Controller
 | Error | 실패 이벤트(복구 필요) |
 | Critical | 시스템 중단 급 |
 
-### 2.2 `appsettings.json` 필터
+### `appsettings.json` 필터
 
 ```json
 {
@@ -70,9 +70,9 @@ public sealed class HomeController : Controller
 
 ---
 
-## 3. `ILogger` 핵심 패턴 — 구조화, 스코프, 이벤트 ID
+## `ILogger` 핵심 패턴 — 구조화, 스코프, 이벤트 ID
 
-### 3.1 구조화 메시지(파라미터를 필드로)
+### 구조화 메시지(파라미터를 필드로)
 
 ```csharp
 _logger.LogInformation("사용자 {UserId}가 {Action}을 수행", userId, action);
@@ -80,7 +80,7 @@ _logger.LogInformation("사용자 {UserId}가 {Action}을 수행", userId, actio
 
 - Serilog/NLog 등 **구조화 가능한 프로바이더**에서 `{UserId}`, `{Action}`이 **필드**로 저장되어 조회·쿼리 가능.
 
-### 3.2 스코프(`BeginScope`) — 요청/트랜잭션 상관관계
+### 스코프(`BeginScope`) — 요청/트랜잭션 상관관계
 
 ```csharp
 using (_logger.BeginScope(new Dictionary<string, object?>
@@ -96,7 +96,7 @@ using (_logger.BeginScope(new Dictionary<string, object?>
 
 - 스코프 내 모든 로그에 **공통 메타데이터**가 자동 첨부.
 
-### 3.3 이벤트 ID
+### 이벤트 ID
 
 ```csharp
 public static class LogEvents
@@ -111,7 +111,7 @@ _logger.LogInformation(LogEvents.OrderFetched, "주문 {OrderId} 조회", orderI
 
 ---
 
-## 4. 콘솔/디버그/이벤트소스 기본 프로바이더
+## 콘솔/디버그/이벤트소스 기본 프로바이더
 
 Program.cs(또는 `builder.Logging`)에서 활성화/제거 가능:
 
@@ -128,18 +128,19 @@ builder.Logging
 
 ---
 
-## 5. Serilog — 구조화 로깅의 표준
+## Serilog — 구조화 로깅의 표준
 
-### 5.1 패키지
+### 패키지
 
 ```bash
 dotnet add package Serilog.AspNetCore
 dotnet add package Serilog.Sinks.Console
 dotnet add package Serilog.Sinks.File
 # 선택: Elastic/Seq/ApplicationInsights/ConsoleJson 등
+
 ```
 
-### 5.2 부트스트랩(가장 먼저 구성)
+### 부트스트랩(가장 먼저 구성)
 
 ```csharp
 using Serilog;
@@ -160,7 +161,7 @@ var app = builder.Build();
 app.Run();
 ```
 
-### 5.3 JSON 기반 구성(appsettings) + 자동 재로드
+### JSON 기반 구성(appsettings) + 자동 재로드
 
 ```json
 {
@@ -201,7 +202,7 @@ builder.Host.UseSerilog();
 
 > `builder.Configuration`에 `reloadOnChange: true`가 기본 활성화되어 있으면 파일 변경 시 **동적 반영** 가능(일부 항목).
 
-### 5.4 Serilog Request Logging(자동 요청/응답 로그)
+### Serilog Request Logging(자동 요청/응답 로그)
 
 ```csharp
 app.UseSerilogRequestLogging(options =>
@@ -217,7 +218,7 @@ app.UseSerilogRequestLogging(options =>
 
 - 각 요청 단위의 지표(지연/상태 코드/사용자)를 표준화.
 
-### 5.5 민감 정보 마스킹 — 메시지 템플릿/필터
+### 민감 정보 마스킹 — 메시지 템플릿/필터
 
 ```csharp
 // 예: 비밀번호 마스킹
@@ -236,7 +237,7 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 ```
 
-### 5.6 동적 레벨 스위치
+### 동적 레벨 스위치
 
 ```csharp
 var levelSwitch = new Serilog.Core.LoggingLevelSwitch(Serilog.Events.LogEventLevel.Information);
@@ -253,9 +254,9 @@ Log.Logger = new LoggerConfiguration()
 
 ---
 
-## 6. NLog — 고성능·XML 구성 선호 환경
+## NLog — 고성능·XML 구성 선호 환경
 
-### 6.1 패키지 & 기본 설정
+### 패키지 & 기본 설정
 
 ```bash
 dotnet add package NLog.Web.AspNetCore
@@ -286,7 +287,7 @@ var app = builder.Build();
 app.Run();
 ```
 
-### 6.2 레이아웃 렌더러로 상관관계/사용자 출력
+### 레이아웃 렌더러로 상관관계/사용자 출력
 
 ```xml
 <target name="file" xsi:type="File" fileName="logs/app-${shortdate}.log"
@@ -295,7 +296,7 @@ app.Run();
 
 ---
 
-## 7. 보안/프라이버시 — PII 마스킹·GDPR
+## 보안/프라이버시 — PII 마스킹·GDPR
 
 - 로그에 **암호/토큰/주민번호/카드번호** 등 **PII** 저장 금지.
 - 수집 최소화(원칙), 보존 주기(예: 7~30일)와 파기 정책 명시.
@@ -317,9 +318,9 @@ _logger.LogInformation("가입: {Email}", PiiMask.MaskEmail(email));
 
 ---
 
-## 8. 상관관계/분산 추적 — `Activity`/OpenTelemetry 연동
+## 상관관계/분산 추적 — `Activity`/OpenTelemetry 연동
 
-### 8.1 `Activity`로 Trace/Span 추적
+### `Activity`로 Trace/Span 추적
 
 ```csharp
 using System.Diagnostics;
@@ -334,7 +335,7 @@ app.Use(async (ctx, next) =>
 });
 ```
 
-### 8.2 OpenTelemetry(OTel) 로깅/트레이싱
+### OpenTelemetry(OTel) 로깅/트레이싱
 
 ```bash
 dotnet add package OpenTelemetry.Extensions.Hosting
@@ -359,7 +360,7 @@ builder.Services.AddOpenTelemetry()
 
 ---
 
-## 9. 전역 예외 처리와 로깅 통합
+## 전역 예외 처리와 로깅 통합
 
 - 글로벌 예외 미들웨어(혹은 `UseExceptionHandler`)에서 **`LogError(ex, ...)`** + **`ProblemDetails`** 반환.
 
@@ -393,7 +394,7 @@ app.UseExceptionHandler(err =>
 
 ---
 
-## 10. 성능: 비동기·배칭·롤링·필터
+## 성능: 비동기·배칭·롤링·필터
 
 - **비동기/배칭**: 파일/네트워크 싱크에서 I/O 병목 최소화(Serilog/NLog 기본 제공).
 - **롤링 파일**: 일별/용량별 분할 + 보존 개수 제한.
@@ -413,7 +414,7 @@ Serilog File Sink 예:
 
 ---
 
-## 11. 환경별 구성/핫 리로드
+## 환경별 구성/핫 리로드
 
 `appsettings.Development.json`과 `Production.json`에서 로그 레벨/싱크 분리:
 
@@ -435,9 +436,9 @@ Serilog File Sink 예:
 
 ---
 
-## 12. 각 계층에서의 로깅 패턴
+## 각 계층에서의 로깅 패턴
 
-### 12.1 미들웨어(요청 전후/지표)
+### 미들웨어(요청 전후/지표)
 
 ```csharp
 app.Use(async (ctx, next) =>
@@ -452,7 +453,7 @@ app.Use(async (ctx, next) =>
 });
 ```
 
-### 12.2 EF Core 로깅(쿼리·성능)
+### EF Core 로깅(쿼리·성능)
 
 ```json
 {
@@ -467,7 +468,7 @@ app.Use(async (ctx, next) =>
 
 - `Information` 이상으로 설정 시 SQL/시간/파라미터 출력(PII 주의).
 
-### 12.3 HttpClient(외부 호출)
+### HttpClient(외부 호출)
 
 ```json
 {
@@ -481,7 +482,7 @@ app.Use(async (ctx, next) =>
 
 - 요청/응답 요약 로깅(헤더/본문 PII 주의).
 
-### 12.4 백그라운드 작업(HostedService)
+### 백그라운드 작업(HostedService)
 
 ```csharp
 public sealed class Worker : BackgroundService
@@ -504,7 +505,7 @@ public sealed class Worker : BackgroundService
 
 ---
 
-## 13. 클라우드/집중 수집: Elastic/Seq/CloudWatch/Application Insights
+## 클라우드/집중 수집: Elastic/Seq/CloudWatch/Application Insights
 
 - **Serilog**: `Serilog.Sinks.Elasticsearch`, `Serilog.Sinks.Seq`, `Serilog.Sinks.ApplicationInsights`.
 - **NLog**: Elastic/DB 타깃 등 다양한 타깃.
@@ -512,7 +513,7 @@ public sealed class Worker : BackgroundService
 
 ---
 
-## 14. 운영 가이드 — 알람/보존/용량/비용
+## 운영 가이드 — 알람/보존/용량/비용
 
 - **알람**: `Error/Critical` 폭증, 5xx 비율 증가, 특정 이벤트 ID 임계값 초과.
 - **보존**: 규정/보안 기준에 따라 7~90일. 일일 롤링 + 자동 삭제.
@@ -521,7 +522,7 @@ public sealed class Worker : BackgroundService
 
 ---
 
-## 15. 종합 예시 — Serilog + 글로벌 예외 + 요청 로깅 + EF/HTTP 튜닝
+## 종합 예시 — Serilog + 글로벌 예외 + 요청 로깅 + EF/HTTP 튜닝
 
 ```csharp
 using Serilog;
@@ -582,7 +583,7 @@ app.Run();
 
 ---
 
-## 16. 체크리스트 — 실제 프로젝트에 적용하기
+## 체크리스트 — 실제 프로젝트에 적용하기
 
 - [ ] 카테고리별 로그 레벨 정의(개발/운영 분리)
 - [ ] 구조화 로깅(메시지 템플릿 파라미터 적극 사용)
@@ -597,7 +598,7 @@ app.Run();
 
 ---
 
-## 17. 요약
+## 요약
 
 | 항목 | 핵심 |
 |---|---|

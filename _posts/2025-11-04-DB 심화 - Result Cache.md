@@ -5,6 +5,7 @@ date: 2025-11-04 21:25:23 +0900
 category: DB 심화
 ---
 # Oracle **Result Cache** 완전 가이드
+
 — **SQL Result Cache**와 **PL/SQL Function Result Cache**, 메모리/무효화/제약/튜닝/진단/사례
 
 > **핵심 요약**
@@ -17,9 +18,10 @@ category: DB 심화
 
 ---
 
-## 0. 준비 체크: 파라미터·뷰·패키지
+## 준비 체크: 파라미터·뷰·패키지
 
-### 0.1 핵심 파라미터
+### 핵심 파라미터
+
 ```sql
 -- 현재 설정 확인
 SHOW PARAMETER RESULT_CACHE
@@ -34,7 +36,8 @@ SHOW PARAMETER RESULT_CACHE
   - `MANUAL` : 힌트가 있는 경우만 캐시
   - `FORCE`  : 가능하면 자동 캐시(제약/비적합 상황이면 캐시 제외). 운영에선 **MANUAL 권장**(명시적 관리).
 
-### 0.2 관리·통계 뷰/패키지
+### 관리·통계 뷰/패키지
+
 ```sql
 -- 상태/통계
 SELECT * FROM V$RESULT_CACHE_STATISTICS;  -- 전역 통계(히트율, 메모리, 해시버킷 등)
@@ -54,14 +57,16 @@ END;
 
 ---
 
-## 1. SQL Result Cache
+## SQL Result Cache
 
-### 1.1 개념
+### 개념
+
 - 특정 `SELECT`의 **결과 집합**을 캐시에 저장 → **동일 SQL(바인드 포함), 동일 세션 컨텍스트**로 재실행 시 **결과를 메모리에서 즉시 반환**.
 - **무효화**: 결과에 **의존하는 객체(테이블/뷰 등)** 에 DML/DDL이 발생하면 자동 무효화.
 - **키 구성 요소(간단화)**: **정규화된 SQL 텍스트**, **바인드 값**, **NLS/환경 일부**, **현재 스키마**, **ROLE/권한 영향** 등.
 
-### 1.2 힌트 사용법
+### 힌트 사용법
+
 ```sql
 -- 명시적 캐시
 SELECT /*+ RESULT_CACHE */ c.cust_id, SUM(o.amount) AS amt
@@ -74,7 +79,8 @@ SELECT /*+ NO_RESULT_CACHE */ ...
 ```
 > `RESULT_CACHE_MODE=FORCE` 인 환경에서도 **NO_RESULT_CACHE** 로 제외 가능.
 
-### 1.3 캐시 적합/부적합 판별(주요 규칙·예시)
+### 캐시 적합/부적합 판별(주요 규칙·예시)
+
 - **적합**
   - 변경이 드문 **참조성 테이블**(코드/마스터), **집계/랭킹** 등 반복된 조회
   - **바인드 패턴**이 제한적(예: `:region` 이 소수 값)
@@ -84,7 +90,8 @@ SELECT /*+ NO_RESULT_CACHE */ ...
   - **FOR UPDATE**, **병렬 쿼리의 일부 단계**, **Long/LOB 스트리밍 특성**, **세션 컨텍스트 민감성 매우 큼**
   - 결과셋이 **아주 큼** → `RESULT_CACHE_MAX_RESULT` 제한에 걸려 미캐시
 
-### 1.4 예제: “리포트 상단 배너용” Top-N 집계
+### 예제: “리포트 상단 배너용” Top-N 집계
+
 > 시나리오: 홈 대시보드가 **같은 Top-N**을 분당 수십~수백회 반복 조회. 소스 테이블은 10분에 1회 배치 반영.
 
 ```sql
@@ -120,27 +127,31 @@ WHERE  rco.TYPE = 'Result';
 
 > **무효화 규칙**: 예를 들어 `orders` 에서 **INSERT/UPDATE/DELETE** 가 발생하면 **해당 결과가 INVALID로 표기되고 재사용되지 않음**(개별 결과 단위 무효화).
 
-### 1.5 리모트(데이터베이스 링크) 결과 TTL
+### 리모트(데이터베이스 링크) 결과 TTL
+
 ```sql
 ALTER SYSTEM SET RESULT_CACHE_REMOTE_EXPIRATION = 10; -- 10분 TTL
 -- 원격 테이블이 참조되는 결과는 TTL 경과 후 자동 만료(무효화 이벤트 없더라도).
 ```
 
-### 1.6 운영 팁
+### 운영 팁
+
 - `RESULT_CACHE_MODE=MANUAL` + **핵심 질의에만 힌트**로 **정밀 제어** 권장.
 - `RESULT_CACHE_MAX_SIZE` 는 너무 작으면 **교체/할당 실패**↑, 너무 크면 **SGA 압박**. AWR/메모리 리포트로 적정치 산정.
 - **바인드 상수화**(리터럴) 남발 시 동일 SQL로 인식되지 않아 **캐시 파편화**. **바인드 변수** 사용 권장.
 
 ---
 
-## 2. PL/SQL **Function Result Cache**
+## PL/SQL **Function Result Cache**
 
-### 2.1 개념
+### 개념
+
 - PL/SQL 함수에 `RESULT_CACHE` 프라그마를 붙여, **함수 인자**(+ 일부 세션 컨텍스트)를 키로 **반환값**을 캐시.
 - **무효화**: 함수가 참조하는 **데이터베이스 객체** 변경 시 관련 결과 **자동 무효화**.
 - 과거 문법의 `RELIES_ON (obj ...)` 는 버전에 따라 **권장되지 않음**(자동 의존성 추적을 사용).
 
-### 2.2 함수 선언/정의
+### 함수 선언/정의
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_currency_rate(
     p_from IN VARCHAR2,
@@ -175,12 +186,14 @@ SELECT * FROM V$RESULT_CACHE_OBJECTS WHERE TYPE='Dependency'; -- fx_currency_rat
 SELECT * FROM V$RESULT_CACHE_OBJECTS WHERE TYPE='Result' AND NAME LIKE 'FX_CURRENCY_RATE%';
 ```
 
-### 2.3 세션 컨텍스트 고려
+### 세션 컨텍스트 고려
+
 - 함수 결과 키는 **인자** 외에도 일부 **세션 상태**에 민감할 수 있다(예: NLS 설정에 따라 숫자 포맷/라운딩 로직이 달라지는 경우).
 - **순수 결정성**을 유지해야 캐시 효율이 높다.
   - 부적합: 내부에서 `SYSDATE`, `SYSTIMESTAMP`, `DBMS_RANDOM` 사용, **변화하는 외부 상태** 의존 등.
 
-### 2.4 고비용 변환/규칙 함수 예
+### 고비용 변환/규칙 함수 예
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_vat_rate(p_region IN VARCHAR2)
 RETURN NUMBER
@@ -205,9 +218,10 @@ WHERE  o.order_dt >= TRUNC(SYSDATE)-30;
 
 ---
 
-## 3. 메모리·무효화·삽입/교체 정책
+## 메모리·무효화·삽입/교체 정책
 
-### 3.1 메모리 구조(요약)
+### 메모리 구조(요약)
+
 - Result Cache는 **SGA 내 전용 영역**(보통 Shared Pool 한 켠)에서 **해시 버킷**으로 관리.
 - **오브젝트 유형**
   - `Result`  : SQL 결과셋/함수 반환값
@@ -215,18 +229,20 @@ WHERE  o.order_dt >= TRUNC(SYSDATE)-30;
   - `Other` : 기타 메타
 - **교체 정책**: 공간 부족 시 **LRU 유사 정책**으로 추출(세부는 버전별 상이).
 
-### 3.2 무효화 트리거
+### 무효화 트리거
+
 - 의존 오브젝트에 **DML/DDL** 발생 → 관련 **Result** 를 **INVALID** 로 표기 → 다음 접근 시 **재계산**.
 - **원격 오브젝트**는 `RESULT_CACHE_REMOTE_EXPIRATION` (TTL) 정책.
 - **권한/오브젝트 접근 가능성**이 달라지면 해당 결과 재사용 불가.
 
-### 3.3 크기 제한
+### 크기 제한
+
 - `RESULT_CACHE_MAX_RESULT` (%) : 단일 결과가 전체 캐시에서 차지 가능한 상한. 너무 큰 결과는 삽입 자체가 **거부**.
 - 실습/운영에서 **큰 결과셋**(수만~수십만 행)을 캐시시키는 것은 비현실적. **Top-N·요약·lookup** 중심으로.
 
 ---
 
-## 4. 제약/금지/주의 리스트
+## 제약/금지/주의 리스트
 
 - **비결정성**: `DBMS_RANDOM`, `SYS_GUID`, 일부 `SYS_CONTEXT`, `CURRENT_SCHEMA` 변동 등 **세션/시간 의존** → 캐시 제외/무용.
 - **시간 함수**: `SYSDATE`/`SYSTIMESTAMP` 포함 질의는 일반적으로 **캐시 부적합**(TTL로 보완 가능하나 주의).
@@ -236,7 +252,7 @@ WHERE  o.order_dt >= TRUNC(SYSDATE)-30;
 
 ---
 
-## 5. RAC에서의 Result Cache
+## RAC에서의 Result Cache
 
 - **인스턴스 로컬 캐시**: 각 인스턴스의 SGA에 **별도 보유**(글로벌 공유 아님).
 - **무효화**: 의존 오브젝트 변경 시 **모든 인스턴스에 무효화 브로드캐스트** → 각 인스턴스의 관련 결과 **INVALID**.
@@ -246,9 +262,10 @@ WHERE  o.order_dt >= TRUNC(SYSDATE)-30;
 
 ---
 
-## 6. 실전 튜닝 절차
+## 실전 튜닝 절차
 
-### 6.1 후보 발굴
+### 후보 발굴
+
 ```sql
 -- 반복 호출이 많은 SQL Top-N
 SELECT sql_id, parsing_schema_name, executions, buffer_gets, rows_processed
@@ -264,14 +281,16 @@ AND    num_rows < 100000
 ORDER  BY num_rows;
 ```
 
-### 6.2 실험
+### 실험
+
 1) **기존 응답시간/CPU** 기준선 채취(AWR/ASH/SQL Monitor).
 2) 대상 SQL에 `/*+ RESULT_CACHE */` 부여.
 3) 재실행 후 **V$RESULT_CACHE_OBJECTS**/STATISTICS/메모리 리포트 점검.
 4) **히트율/응답시간/리소스** 개선 확인.
 5) DML 빈도/배치 타이밍에 따른 **무효화 영향** 모니터링.
 
-### 6.3 실패/비효과 원인과 대응
+### 실패/비효과 원인과 대응
+
 | 현상 | 원인 | 대응 |
 |---|---|---|
 | 캐시가 안 생김 | 비결정성/제약, 결과 과대 | 쿼리/함수 재작성, Top-N/집계 요약, 파라미터 조정 |
@@ -281,26 +300,30 @@ ORDER  BY num_rows;
 
 ---
 
-## 7. 고급 주제
+## 고급 주제
 
-### 7.1 TTL 기반 제어(원격/시간 민감)
+### TTL 기반 제어(원격/시간 민감)
+
 - 원격 테이블이 포함된 SQL은 `RESULT_CACHE_REMOTE_EXPIRATION` 값(분)만큼 **유효**.
 - **시간 의존** 로직은 Result Cache보다 **머티리얼라이즈드 뷰 REFRESH** 또는 **애플리케이션 레벨 캐시**가 더 적합한 경우가 많다.
 
-### 7.2 머티리얼라이즈드 뷰/Server-Side Cache 비교
+### 머티리얼라이즈드 뷰/Server-Side Cache 비교
+
 - **Result Cache**: **쿼리 결과/함수 반환**을 **SGA**에 보관, **메모리 기반**(DML 시 자동 무효화). 즉시성/간단성 장점.
 - **MView**: **디스크 기반 사본** 저장, **스케줄/온디맨드 리프레시**. 변경이 빈번해도 **비동기 갱신**으로 조회 분리 가능.
 - **둘의 목적 다름**: **짧은 재사용 창구** vs **물리적 사본/오프로드**.
 
-### 7.3 Client Result Cache(참고)
+### Client Result Cache(참고)
+
 - OCI/ODP.NET 등 **클라이언트 프로세스 내** 캐시(네트워크 왕복도 절감).
 - 서버 Result Cache와는 별도. 애플리케이션 아키텍처 관점에서 **양쪽 계층의 캐시 전략**을 **중복/경합없이** 설계.
 
 ---
 
-## 8. 종합 예제 — “대시보드 가속”
+## 종합 예제 — “대시보드 가속”
 
-### 8.1 스키마
+### 스키마
+
 ```sql
 CREATE TABLE dim_region (
   region   VARCHAR2(8) PRIMARY KEY,
@@ -323,7 +346,8 @@ END;
 /
 ```
 
-### 8.2 PL/SQL 함수 결과 캐시
+### PL/SQL 함수 결과 캐시
+
 ```sql
 CREATE OR REPLACE FUNCTION fx_vat(p_region IN VARCHAR2)
 RETURN NUMBER
@@ -339,7 +363,8 @@ END;
 /
 ```
 
-### 8.3 SQL Result Cache 적용 쿼리
+### SQL Result Cache 적용 쿼리
+
 ```sql
 -- 대시보드 상단: 최근 7일 지역별 매출+VAT 합계(반복 조회)
 SELECT /*+ RESULT_CACHE */
@@ -356,7 +381,8 @@ ORDER  BY amt DESC;
 - **조회 빈번**, **기초 테이블 갱신은 배치 5분/10분 간격** → 그 사이 **Result Cache 적중**으로 **응답시간 단축**.
 - 배치가 반영되면 **무효화 → 첫 조회가 재계산** 후 다시 캐시.
 
-### 8.4 관찰/리포트
+### 관찰/리포트
+
 ```sql
 SELECT name, value
 FROM   v$result_cache_statistics;
@@ -374,7 +400,7 @@ END;
 
 ---
 
-## 9. 운영 플레이북(체크리스트)
+## 운영 플레이북(체크리스트)
 
 1) **대상 선정**: “변경 드문+반복 조회+계산 비싼” 질의·함수.
 2) **수동 모드**: `RESULT_CACHE_MODE=MANUAL` 유지, 후보 SQL/함수에 **명시 적용**.
@@ -387,7 +413,7 @@ END;
 
 ---
 
-## 10. 자주 하는 질문(FAQ)
+## 자주 하는 질문(FAQ)
 
 - **Q. 왜 힌트를 줬는데도 캐시가 안 생기나요?**
   **A.** 비결정적 요소가 있거나 결과가 너무 크거나, 의존 오브젝트가 캐시 부적합일 수 있습니다. `V$RESULT_CACHE_OBJECTS` 를 확인하고, 쿼리/함수를 **순수 결정적**으로 재작성하세요.
@@ -403,7 +429,7 @@ END;
 
 ---
 
-## 11. 빠른 진단 스니펫 모음
+## 빠른 진단 스니펫 모음
 
 ```sql
 -- 전체 통계

@@ -16,9 +16,10 @@ category: 논리회로설계
 
 ---
 
-## 1. 조합회로의 VHDL 표현
+## 조합회로의 VHDL 표현
 
-### 1.1 동시문(Concurrent Statements) 3형식 요약
+### 동시문(Concurrent Statements) 3형식 요약
+
 동시문은 **회로의 지속적 구동**을 의미합니다(=배선/게이트에 항상 걸려 있는 드라이버).
 
 1) **조건부 신호 할당(when–else)** — 2:1 선택, 간단한 보호 로직
@@ -44,7 +45,8 @@ with sel select
 
 ---
 
-### 1.2 조합 프로세스(Combinational Process) 정석 패턴
+### 조합 프로세스(Combinational Process) 정석 패턴
+
 - **민감도 목록**: VHDL-2008의 `process(all)` 권장(누락 방지).
 - **완전할당**: 모든 출력에 기본값 또는 모든 분기에서 값 할당 → **래치 방지**.
 
@@ -66,7 +68,8 @@ end architecture;
 
 ---
 
-### 1.3 시뮬레이션 지연 모델(테스트벤치 전용)
+### 시뮬레이션 지연 모델(테스트벤치 전용)
+
 - **관성(inertial)**: 짧은 펄스를 소거(게이트 모델, 기본)
 - **수송(transport)**: 펄스를 그대로 전달(배선 모델)
 ```vhdl
@@ -77,7 +80,8 @@ y <= transport a after 2 ns;             -- 수송
 
 ---
 
-### 1.4 SOP/POS, 간단 예
+### SOP/POS, 간단 예
+
 ```vhdl
 -- F = A·B + A'·C  (정적-1 해저드 방지: +B·C를 합의항으로 추가 가능)
 f <= (a and b) or ((not a) and c);
@@ -85,9 +89,10 @@ f <= (a and b) or ((not a) and c);
 
 ---
 
-## 2. 멀티플렉서(MUX) VHDL 모델
+## 멀티플렉서(MUX) VHDL 모델
 
-### 2.1 2:1 MUX — 3가지 스타일
+### 2:1 MUX — 3가지 스타일
+
 **(1) when–else**
 ```vhdl
 y <= d0 when sel = '0' else d1;
@@ -112,7 +117,8 @@ end process;
 
 ---
 
-### 2.2 4:1 MUX — 가독성 우선 템플릿
+### 4:1 MUX — 가독성 우선 템플릿
+
 ```vhdl
 entity mux4 is
   generic (WIDTH : positive := 8);
@@ -135,8 +141,9 @@ end architecture;
 
 ---
 
-### 2.3 *N:1* 파라메트릭 MUX — VHDL-2008 **비제약 배열** 사용
-#### 2.3.1 유틸 패키지(배열 타입 + clog2)
+### *N:1* 파라메트릭 MUX — VHDL-2008 **비제약 배열** 사용
+#### 유틸 패키지(배열 타입 + clog2)
+
 ```vhdl
 package util_pkg is
   type slv_array_t is array (natural range <>) of std_logic_vector;
@@ -152,7 +159,8 @@ package body util_pkg is
 end package body;
 ```
 
-#### 2.3.2 N:1 MUX 본체
+#### N:1 MUX 본체
+
 ```vhdl
 library ieee; use ieee.std_logic_1164.all; use ieee.numeric_std.all;
 use work.util_pkg.all;
@@ -182,7 +190,8 @@ end;
 
 ---
 
-### 2.4 우선순위 MUX (우선 선택/디폴트 포함)
+### 우선순위 MUX (우선 선택/디폴트 포함)
+
 ```vhdl
 -- sel3 > sel2 > sel1 > sel0 우선순위
 process(all) is
@@ -199,7 +208,8 @@ end process;
 
 ---
 
-### 2.5 3-State와 외부 버스 (Top-level에만)
+### 3-State와 외부 버스 (Top-level에만)
+
 대부분의 FPGA 내부는 **진짜 3상태**를 지원하지 않으므로 내부는 **MUX로 합성**됩니다. 외부 핀만 tri-state를 사용하세요.
 ```vhdl
 -- top 레벨 예: I/O 핀에만 'Z' 허용
@@ -208,9 +218,10 @@ y <= data_out when oe = '1' else (others => 'Z');
 
 ---
 
-## 3. VHDL 모듈: **Entity / Architecture** (+ Configuration/Package)
+## VHDL 모듈: **Entity / Architecture** (+ Configuration/Package)
 
-### 3.1 역할
+### 역할
+
 - **Entity**: **포트/제네릭**을 정의하는 **인터페이스**
 - **Architecture**: 동작/구조 기술(**구현 본문**)
 - (옵션) **Configuration**: 특정 Entity에 사용할 Architecture/바인딩 지정
@@ -228,7 +239,8 @@ begin
 end;
 ```
 
-### 3.2 직접 인스턴스(현대 권장) vs 컴포넌트 선언
+### 직접 인스턴스(현대 권장) vs 컴포넌트 선언
+
 ```vhdl
 -- 직접 인스턴스(권장, 간결/안전)
 u0 : entity work.mux4(rtl)
@@ -237,7 +249,8 @@ u0 : entity work.mux4(rtl)
 ```
 > 컴포넌트 선언은 레거시/혼합언어 환경에서 유지 보수 목적으로만 사용하세요.
 
-### 3.3 구조적 계층화 예
+### 구조적 계층화 예
+
 ```vhdl
 entity top is
   port ( din0,din1,din2,din3 : in  std_logic_vector(7 downto 0);
@@ -253,7 +266,8 @@ begin
 end;
 ```
 
-### 3.4 테스트벤치(조합 장치용 기본형)
+### 테스트벤치(조합 장치용 기본형)
+
 ```vhdl
 library ieee; use ieee.std_logic_1164.all; use ieee.numeric_std.all;
 
@@ -280,9 +294,10 @@ end;
 
 ---
 
-## 4. **신호(signal)·상수(constant)** (+ 변수 variable 요약)
+## **신호(signal)·상수(constant)** (+ 변수 variable 요약)
 
-### 4.1 신호 vs 변수 — 차이 표
+### 신호 vs 변수 — 차이 표
+
 | 항목 | **signal** | **variable** |
 |---|---|---|
 | 대입 기호 | `<=` | `:=` |
@@ -300,7 +315,8 @@ end process;
 ```
 > **델타 사이클**을 이해하면 “왜 같은 시각에 값이 한 박자 늦게 보이나?” 문제를 쉽게 해결할 수 있습니다.
 
-### 4.2 상수/제네릭
+### 상수/제네릭
+
 ```vhdl
 constant ZERO4 : std_logic_vector(3 downto 0) := (others => '0');
 
@@ -310,12 +326,14 @@ entity foo is
 end entity;
 ```
 
-### 4.3 해상형/미해상형 타입 & 다중 드라이버
+### 해상형/미해상형 타입 & 다중 드라이버
+
 - **`std_logic(_vector)`**: **해상(resolved)** 타입 — 다중 드라이버 충돌시 `'X'` 등으로 해석(버스/3state 모델)
 - **`std_ulogic(_vector)`**: **미해상(unresolved)** — 다중 드라이버 금지(안전하지만 제약↑)
 > RTL 실무는 보통 `std_logic(_vector)`를 사용합니다.
 
-### 4.4 수치 연산 — `numeric_std`만
+### 수치 연산 — `numeric_std`만
+
 ```vhdl
 signal a,b : std_logic_vector(7 downto 0);
 signal s   : std_logic_vector(8 downto 0);
@@ -326,9 +344,10 @@ lt <= '1' when signed(a) < signed(b) else '0';
 
 ---
 
-## 5. 배열(Array) — **std_logic_vector**, 사용자 정의 배열, ROM/LUT
+## 배열(Array) — **std_logic_vector**, 사용자 정의 배열, ROM/LUT
 
-### 5.1 기본 `std_logic_vector`
+### 기본 `std_logic_vector`
+
 ```vhdl
 signal v : std_logic_vector(7 downto 0);
 w <= x & y;                                -- 연결
@@ -337,7 +356,8 @@ y <= (3 downto 0 => '1', others => '0');   -- 부분 지정
 ```
 - 방향: `downto`(MSB→LSB), `to`(LSB→MSB). 팀 컨벤션을 유지하세요.
 
-### 5.2 사용자 정의 배열(비제약 1차/2차)
+### 사용자 정의 배열(비제약 1차/2차)
+
 ```vhdl
 -- 1차: N개의 벡터
 type slv_array_t is array (natural range <>) of std_logic_vector;
@@ -348,7 +368,8 @@ type mat_t is array (natural range <>) of slv_array_t(0 to 3)(7 downto 0);
 ```
 > 일부 합성기는 “중첩 비제약 배열”에 제한이 있습니다. 문제가 생기면 1차 벡터로 평탄화하고, 슬라이스 함수로 다루세요.
 
-### 5.3 ROM/LUT를 **배열 상수**로
+### ROM/LUT를 **배열 상수**로
+
 ```vhdl
 type rom_t is array (natural range <>) of std_logic_vector(6 downto 0);
 constant SEVSEG : rom_t(0 to 15) := (
@@ -361,7 +382,8 @@ constant SEVSEG : rom_t(0 to 15) := (
 seg <= SEVSEG(to_integer(unsigned(bin)));
 ```
 
-### 5.4 Generate — 패턴 반복/벡터화
+### Generate — 패턴 반복/벡터화
+
 ```vhdl
 gen_bit : for i in 0 to WIDTH-1 generate
   y(i) <= a(i) xor b(i);
@@ -370,9 +392,10 @@ end generate;
 
 ---
 
-## 6. 실전 레시피 — **합성 친화 조합 템플릿** & 함정 회피
+## 실전 레시피 — **합성 친화 조합 템플릿** & 함정 회피
 
-### 6.1 조합 템플릿(완전할당, VHDL-2008)
+### 조합 템플릿(완전할당, VHDL-2008)
+
 ```vhdl
 architecture rtl of foo is
 begin
@@ -389,7 +412,8 @@ begin
 end architecture;
 ```
 
-### 6.2 흔한 실수 → 예방책
+### 흔한 실수 → 예방책
+
 - **민감도 누락**(VHDL-93): `process(a,b)`에서 `c` 빠짐 → 래치 유도 → **`process(all)` 사용**
 - **불완전 할당**: 어떤 분기에서 출력 미할당 → 래치 생성 → **기본값/others** 추가
 - **형 변환 누락**: `std_logic_vector`끼리 덧셈 → **반드시 `unsigned()`/`signed()` 캐스팅**
@@ -397,7 +421,7 @@ end architecture;
 
 ---
 
-## 7. 스타일 비교: MUX 구현 선택 가이드
+## 스타일 비교: MUX 구현 선택 가이드
 
 | 스타일          | 코드량 | 가독성      | 확장성     | 합성 품질 |
 |-----------------|--------|-------------|------------|-----------|
@@ -408,7 +432,8 @@ end architecture;
 
 ---
 
-## 8. 보너스: 유틸 패키지 모듈화(자주 쓰는 함수)
+## 보너스: 유틸 패키지 모듈화(자주 쓰는 함수)
+
 ```vhdl
 package math_pkg is
   function max_nat(a,b : natural) return natural;
@@ -436,7 +461,7 @@ end package body;
 
 ---
 
-## 9. 종합 예제 — **조합 논리 + MUX + 배열(평탄화)**
+## 종합 예제 — **조합 논리 + MUX + 배열(평탄화)**
 
 요구: 4채널 입력 중 선택한 채널에 후처리 연산을 적용해 출력.
 - `sel`: 4:1 MUX 선택
@@ -491,7 +516,8 @@ begin
 end;
 ```
 
-### 9.1 간단 테스트벤치(랜덤 자극)
+### 간단 테스트벤치(랜덤 자극)
+
 ```vhdl
 library ieee; use ieee.std_logic_1164.all; use ieee.numeric_std.all;
 library std;  use std.textio.all;
@@ -532,7 +558,8 @@ end;
 
 ---
 
-## 10. 포켓 요약
+## 포켓 요약
+
 - **조합 표현**: `when-else`, `with-select`, `process(all)+case` — 공통 핵심은 **완전할당**으로 래치 방지.
 - **MUX**: 2:1~N:1까지 스타일별 구현. VHDL-2008 **비제약 배열**로 파라메트릭화 깔끔.
 - **모듈 구조**: Entity(인터페이스) + Architecture(구현) + Package(Context로 묶기).
@@ -543,6 +570,7 @@ end;
 ---
 
 ### 부록 A: 수식 메모(우선순위/델타 개념)
+
 - 연산자 **우선순위** \(높음→낮음\):
   $$ \*,/,\mathrm{mod},\mathrm{rem}\ >\ +,-,\&\ >\ \text{shift/rotate}\ >\ \text{relational}\ >\ \text{and}\ >\ \text{or,xor}\ >\ \text{nand,nor,xnor} $$
 - **델타 사이클**: 물리 시간 \(t\)에서 이벤트 정착을 위해 \((t,\delta)\) 단계를 반복하여 안정점에 도달 후 \(t+\Delta t\)로 진행.

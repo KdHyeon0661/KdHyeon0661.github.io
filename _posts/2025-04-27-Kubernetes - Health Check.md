@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes Health Check 이해하기
 
-## 1. Probe란?
+## Probe란?
 
 Kubernetes는 컨테이너 단위로 **주기적 상태 점검**(probe)을 수행한다. 세 가지가 있다.
 
@@ -24,7 +24,7 @@ Probe는 다음 중 한 방식으로 수행된다:
 
 ---
 
-## 2. Probe가 실제로 하는 일
+## Probe가 실제로 하는 일
 
 - **Readiness 실패**: 해당 Pod는 **Service의 Endpoints(또는 EndpointSlice)** 에서 제외되며 로드밸런서/Ingress 트래픽 대상이 아니다.
 - **Liveness 실패**: kubelet이 컨테이너를 **강제 재시작**한다(프로세스 초기화).
@@ -43,7 +43,7 @@ Probe 타이밍 파라미터:
 
 ---
 
-## 3. 최소 구현 예제 (HTTP 앱)
+## 최소 구현 예제 (HTTP 앱)
 
 애플리케이션이 `/livez`, `/readyz`, `/startupz` 엔드포인트를 제공한다고 가정한다.
 
@@ -90,9 +90,9 @@ spec:
 
 ---
 
-## 4. HTTP 서버가 없는 앱 (TCP·exec)
+## HTTP 서버가 없는 앱 (TCP·exec)
 
-### 4.1 DB, 브로커, 캐시 등 포트 개방 확인(TCP)
+### DB, 브로커, 캐시 등 포트 개방 확인(TCP)
 
 ```yaml
 readinessProbe:
@@ -109,7 +109,7 @@ livenessProbe:
 
 - 포트가 열려 있어도 내부 상태가 정상이라고 보장하진 않는다. 가능하면 exec 또는 별도 health 에이전트를 병행.
 
-### 4.2 exec로 내부 상태 점검
+### exec로 내부 상태 점검
 
 ```yaml
 readinessProbe:
@@ -127,7 +127,7 @@ livenessProbe:
 
 ---
 
-## 5. gRPC 애플리케이션
+## gRPC 애플리케이션
 
 gRPC는 HTTP/2 바이너리 프로토콜로 기본 `httpGet`는 부적합하다. 다음 중 택1:
 
@@ -145,9 +145,10 @@ livenessProbe:
 
 ---
 
-## 6. 느린 기동 앱을 보호하는 Startup Probe
+## 느린 기동 앱을 보호하는 Startup Probe
 
-### 6.1 전형적 패턴
+### 전형적 패턴
+
 - 초기화(마이그레이션, 캐시워밍, 모델 로딩 등) 동안 **Startup만 성공/실패**를 판단.
 - Startup 성공 이후부터 Liveness/Readiness가 활성화.
 
@@ -158,13 +159,14 @@ startupProbe:
   failureThreshold: 60   # 최대 5분까지 허용
 ```
 
-### 6.2 Startup 미사용 시의 문제
+### Startup 미사용 시의 문제
+
 - Liveness가 초기화 중의 느린 응답을 “오작동”으로 오인 → 재시작 루프.
 - Readiness만 둘 경우, 준비는 막지만 Liveness가 때때로 죽여버릴 수 있다.
 
 ---
 
-## 7. 사이드카·멀티컨테이너 Pod
+## 사이드카·멀티컨테이너 Pod
 
 컨테이너별로 **독립된 Probe**를 둔다.
 
@@ -184,7 +186,7 @@ spec:
 
 ---
 
-## 8. Service·배포·롤링과의 상호작용
+## Service·배포·롤링과의 상호작용
 
 - **Readiness = false** → **EndpointSlice에서 제외** → 로드밸런싱 대상 아님.
 - **Deployment 롤링 업데이트**에서 `maxUnavailable`, `maxSurge`, `minReadySeconds`와 결합하여 **무중단 배포**를 설계한다.
@@ -197,7 +199,7 @@ spec:
 
 ---
 
-## 9. 시간 파라미터 튜닝 공식
+## 시간 파라미터 튜닝 공식
 
 대략적 가이드(HTTP 기준):
 
@@ -220,9 +222,9 @@ liveness: initialDelay=30, period=10, timeout=2, failure=3
 
 ---
 
-## 10. 애플리케이션 코드 샘플
+## 애플리케이션 코드 샘플
 
-### 10.1 Express(Node.js)
+### Express(Node.js)
 
 ```javascript
 // server.js
@@ -265,7 +267,7 @@ EXPOSE 8080
 CMD ["node","server.js"]
 ```
 
-### 10.2 Spring Boot (관리자 엔드포인트)
+### Spring Boot (관리자 엔드포인트)
 
 `application.yaml`:
 ```yaml
@@ -296,7 +298,7 @@ startupProbe:
 
 ---
 
-## 11. 데이터베이스·외부 의존성과의 연계
+## 데이터베이스·외부 의존성과의 연계
 
 - Readiness는 **외부 의존성(예: DB, 캐시, 메시지 브로커, API)** 이 준비되었을 때만 200을 반환하라.
 - Liveness는 외부 의존성 실패로 **즉시 죽이지 말 것**(잠시 장애일 수 있음).
@@ -308,7 +310,7 @@ startupProbe:
 
 ---
 
-## 12. 멱등 롤링을 위한 프로브 + 종료 시그널
+## 멱등 롤링을 위한 프로브 + 종료 시그널
 
 정상 종료에도 섬세함이 필요하다.
 
@@ -327,7 +329,7 @@ terminationGracePeriodSeconds: 30
 
 ---
 
-## 13. 자주 발생하는 문제와 해결
+## 자주 발생하는 문제와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -349,7 +351,7 @@ kubectl logs <pod> -c <container>
 
 ---
 
-## 14. Anti-Patterns
+## Anti-Patterns
 
 - **모든 실패를 Liveness로 처리**: 외부 의존 장애까지 재시작으로 덮으면 상황 악화.
 - **하드코딩 1초 주기 검사**: 불필요한 부하와 노이즈. 합리적 주기·임계치를 두자.
@@ -359,23 +361,26 @@ kubectl logs <pod> -c <container>
 
 ---
 
-## 15. 테스트·시뮬레이션
+## 테스트·시뮬레이션
 
 ### Liveness 실패 유도(Express 예시)
+
 ```bash
 # 앱에 /panic 같은 엔드포인트가 있다면
+
 kubectl exec -it deploy/web -- curl -sS http://127.0.0.1:8080/panic
 kubectl describe pod <pod> | grep -A2 "Liveness probe failed"
 ```
 
 ### Readiness 플립 관찰
+
 ```bash
 watch -n1 'kubectl get endpoints <svc> -o jsonpath="{.subsets[*].addresses[*].ip}"'
 ```
 
 ---
 
-## 16. 보안·성능 고려
+## 보안·성능 고려
 
 - 헬스 엔드포인트는 **내부 바인딩(127.0.0.1)** 또는 **NetworkPolicy**로 외부 노출을 제한.
 - 헬스 핸들러는 **최소 비용**으로 구현(무거운 DB 쿼리 금지, 캐시 히트만 확인).
@@ -383,7 +388,7 @@ watch -n1 'kubectl get endpoints <svc> -o jsonpath="{.subsets[*].addresses[*].ip
 
 ---
 
-## 17. 종합 예시(Deployment + Service)
+## 종합 예시(Deployment + Service)
 
 ```yaml
 ---
@@ -447,7 +452,7 @@ spec:
 
 ---
 
-## 18. 요약
+## 요약
 
 - **Readiness**는 **트래픽 라우팅**의 스위치, **Liveness**는 **프로세스 생존 판정**, **Startup**은 **부팅 보호막**이다.
 - 느린 기동·외부 의존성·GC 등 현실을 반영해 **시간/임계치**를 설계하라.

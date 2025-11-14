@@ -6,7 +6,7 @@ category: Git
 ---
 # Git Rebase
 
-## 0. TL;DR(핵심 요약)
+## TL;DR(핵심 요약)
 
 - **Rebase** = “내 브랜치 커밋들을 **다른 베이스** 위로 **재배치**해 **선형 이력**으로 만든다.”
 - **언제?** 개인 브랜치 정리·리뷰 전 히스토리 단순화·FF 병합을 위해.
@@ -17,7 +17,7 @@ category: Git
 
 ---
 
-## 1. Rebase란? (개념 재정의)
+## Rebase란? (개념 재정의)
 
 **rebase**는 현재 브랜치의 커밋들을 **새로운 기준 커밋** 뒤로 옮겨 붙이면서 **새 커밋 해시**로 다시 쓰는 과정입니다.
 - 결과: **병합 커밋 없이** 선형 이력이 만들어짐(그래프가 단순해짐).
@@ -43,11 +43,12 @@ main:     A---B
                    \
 feature:            C'--D'
 # C, D는 C', D'로 "재작성"되어 해시가 달라짐
+
 ```
 
 ---
 
-## 2. rebase vs merge (실무형 비교)
+## rebase vs merge (실무형 비교)
 
 | 항목 | merge | rebase |
 |---|---|---|
@@ -60,7 +61,7 @@ feature:            C'--D'
 
 ---
 
-## 3. Rebase 충돌 처리(기본→실전)
+## Rebase 충돌 처리(기본→실전)
 
 충돌 메시지:
 
@@ -71,20 +72,25 @@ CONFLICT (content): Merge conflict in index.html
 해결 절차:
 
 ```bash
-# 1. 충돌 파일 수정(마커 <<<<<<<, =======, >>>>>>> 제거/통합)
+# 충돌 파일 수정(마커 <<<<<<<, =======, >>>>>>> 제거/통합)
+
 git add index.html
 
-# 2. 계속
+# 계속
+
 git rebase --continue
 
 # 포기(시작 전으로 되돌리기)
+
 git rebase --abort
 
 # 현재 커밋 스킵
+
 git rebase --skip
 ```
 
 ### 충돌 학습/재사용: rerere
+
 같은 유형 충돌을 반복 해결할 때 자동 제안:
 
 ```bash
@@ -93,10 +99,11 @@ git config --global rerere.enabled true
 
 ---
 
-## 4. 인터랙티브 Rebase(-i) — 정리·스쿼시·메시지·순서
+## 인터랙티브 Rebase(-i) — 정리·스쿼시·메시지·순서
 
 ```bash
 # 최근 5개 커밋 정리
+
 git rebase -i HEAD~5
 ```
 
@@ -135,12 +142,13 @@ git rebase -i --autosquash origin/main
 
 ---
 
-## 5. 고급: `--onto`로 “특정 구간만” 새 베이스로 이동
+## 고급: `--onto`로 “특정 구간만” 새 베이스로 이동
 
 `--onto`는 **A 이후 B까지의 구간을 떼어내서** 새 베이스로 붙이는 강력한 도구입니다.
 
 ```bash
 # 의미: A..B 구간(= B에서 A를 뺀 커밋들)을 newbase 위로 옮긴다.
+
 git rebase --onto newbase A B
 ```
 
@@ -151,15 +159,17 @@ git rebase --onto newbase A B
 실전 절차(검증형):
 ```bash
 # 먼저 어떤 커밋이 옮겨질지 확인
+
 git log --oneline A..B
 
 # 이동
+
 git rebase --onto newbase A B
 ```
 
 ---
 
-## 6. 병합 토폴로지 유지: `--rebase-merges`
+## 병합 토폴로지 유지: `--rebase-merges`
 
 기본 rebase는 병합 커밋을 평탄화하지만, 복잡한 브랜치 구조를 **보존**하고 싶다면:
 
@@ -172,13 +182,14 @@ git rebase --rebase-merges origin/main
 
 ---
 
-## 7. 작업 보관/자동 스태시: `--autostash` 와 설정
+## 작업 보관/자동 스태시: `--autostash` 와 설정
 
 rebase 시작 전에 워킹 디렉터리가 더럽다면 자동으로 stash/복원:
 
 ```bash
 git rebase --autostash origin/main
 # 또는 전역 설정
+
 git config --global rebase.autoStash true
 ```
 
@@ -187,13 +198,14 @@ git config --global rebase.autoStash true
 
 ---
 
-## 8. 업스트림 동기화 패턴: `git pull --rebase`
+## 업스트림 동기화 패턴: `git pull --rebase`
 
 기본 `git pull`은 merge를 수행하지만, 로컬 이력을 선형으로 유지하려면:
 
 ```bash
 git config --global pull.rebase true
 # 또는 개별 호출
+
 git pull --rebase
 ```
 
@@ -207,12 +219,13 @@ git pull --rebase=interactive
 
 ---
 
-## 9. rebase 전/후 비교: `git range-diff`
+## rebase 전/후 비교: `git range-diff`
 
 rebase(또는 `--onto`) 전/후에 “패치 시리즈”가 어떻게 변했는지 비교:
 
 ```bash
 # main 기준, topic 브랜치를 재배치 전후 비교
+
 git range-diff main...topic   # 또는 main..topic (환경에 맞게)
 ```
 
@@ -221,7 +234,7 @@ git range-diff main...topic   # 또는 main..topic (환경에 맞게)
 
 ---
 
-## 10. Rebase 이후 푸시: 안전한 강제 푸시
+## Rebase 이후 푸시: 안전한 강제 푸시
 
 Rebase는 해시가 바뀌므로 원격에 **강제 푸시** 필요:
 
@@ -234,13 +247,14 @@ git push --force-with-lease origin feature/login
 
 ---
 
-## 11. 복구와 보험: ORIG_HEAD / reflog / 백업
+## 복구와 보험: ORIG_HEAD / reflog / 백업
 
 rebase, reset, cherry-pick 등 **파괴적 작업 전** 스냅샷:
 
 ```bash
 git branch backup/pre-rebase-$(date +%Y%m%d-%H%M)
 # 또는
+
 git tag pre-rebase
 ```
 
@@ -249,19 +263,20 @@ git tag pre-rebase
 git reflog                  # 최근 HEAD 이동 내역
 git reset --hard ORIG_HEAD  # 직전 큰 작업 이전으로
 # 또는 특정 시점으로 새 브랜치 구출
+
 git switch -c rescue HEAD@{3}
 ```
 
 ---
 
-## 12. 서브모듈·LFS와 rebase
+## 서브모듈·LFS와 rebase
 
 - **서브모듈**: 상위 리포가 가리키는 **포인터(커밋 해시)** 가 재작성될 수 있음 → 서브모듈 디렉터리에서 적절한 커밋으로 체크아웃 후 상위에서 해당 포인터를 **다시 커밋** 필요.
 - **Git LFS**: 포인터 파일/락 정책 확인. CI/개발 환경에서 `git lfs install` 누락 시 포인터만 남는 문제 발생.
 
 ---
 
-## 13. 팀 운영 규칙(정책화 권장)
+## 팀 운영 규칙(정책화 권장)
 
 - **공유 브랜치(예: main/release/hotfix)는 rebase 금지**.
 - 개인 브랜치에서는 rebase 자유, 단 **푸시 전**에만.
@@ -271,88 +286,106 @@ git switch -c rescue HEAD@{3}
 
 ---
 
-## 14. 자주 쓰는 명령어(치트시트, 확장)
+## 자주 쓰는 명령어(치트시트, 확장)
 
 ```bash
 # 기본
+
 git rebase main
 git rebase origin/main
 git rebase --continue | --abort | --skip
 
 # 인터랙티브/자동 스쿼시
+
 git rebase -i HEAD~5
 git rebase -i --autosquash origin/main
 
 # 특정 구간만 새 베이스로
+
 git rebase --onto <newbase> <A> <B>
 
 # 병합 토폴로지 보존
+
 git rebase --rebase-merges origin/main
 
 # 작업 보관 자동
+
 git rebase --autostash
 git config --global rebase.autoStash true
 
 # pull 시 rebase
+
 git config --global pull.rebase true
 git pull --rebase
 git pull --rebase=merges
 
 # 전/후 비교
+
 git range-diff main...feature/x
 
 # 푸시
+
 git push --force-with-lease
 ```
 
 ---
 
-## 15. 실전 시나리오
+## 실전 시나리오
 
-### 15.1 개인 브랜치 정리 → FF 병합
+### 개인 브랜치 정리 → FF 병합
+
 ```bash
 git fetch origin
 git checkout feature/pay
 git rebase origin/main
 # 충돌 해결 → add → rebase --continue 반복
+
 git checkout main
 git merge --ff-only feature/pay
 ```
 
-### 15.2 오래된 중간 구간만 최신 베이스로(`--onto`)
+### 오래된 중간 구간만 최신 베이스로(`--onto`)
+
 ```bash
 # 토픽 브랜치 topic에서 A..B 구간만 newbase로 이동
+
 git checkout topic
 git log --oneline A..B          # 이동 대상 확인
 git rebase --onto newbase A B
 ```
 
-### 15.3 인터랙티브로 스쿼시 + 메시지 정리
+### 인터랙티브로 스쿼시 + 메시지 정리
+
 ```bash
 git rebase -i --autosquash origin/main
 # fixup!/squash! 커밋은 원 커밋 뒤로 자동 정렬
+
 ```
 
-### 15.4 rebase 도중 테스트 자동 실행(`exec`)
+### rebase 도중 테스트 자동 실행(`exec`)
+
 ```bash
 git rebase -i HEAD~4
 # todo 파일에:
 # pick ...
 # exec npm test
 # pick ...
+
 ```
 
-### 15.5 사고 복구
+### 사고 복구
+
 ```bash
 git reflog
 git reset --hard ORIG_HEAD
 # 또는
+
 git switch -c rescue HEAD@{2}
 ```
 
 ---
 
-## 16. 트러블슈팅(상황→원인→해결)
+## 트러블슈팅(상황→원인→해결)
 
 | 상황/증상 | 원인 | 해결 |
 |---|---|---|
@@ -366,7 +399,7 @@ git switch -c rescue HEAD@{2}
 
 ---
 
-## 17. 안전한 워크플로우 체크리스트
+## 안전한 워크플로우 체크리스트
 
 - [ ] **개인 브랜치**에서만 rebase
 - [ ] 시작 전 `git fetch`로 최신 업스트림 동기화
@@ -379,44 +412,50 @@ git switch -c rescue HEAD@{2}
 
 ---
 
-## 18. 최소 실습 루틴(로컬 재현)
+## 최소 실습 루틴(로컬 재현)
 
 ```bash
-# 1. 준비
+# 준비
+
 mkdir rebase-lab && cd rebase-lab
 git init
 echo "v1" > app.txt
 git add . && git commit -m "init: v1"
 git branch -M main
 
-# 2. 토픽 생성
+# 토픽 생성
+
 git checkout -b feature/ui
 echo "ui1" >> app.txt
 git commit -am "feat(ui): ui1"
 echo "ui2" >> app.txt
 git commit -am "feat(ui): ui2"
 
-# 3. main도 변경
+# main도 변경
+
 git checkout main
 echo "core1" >> app.txt
 git commit -am "feat(core): core1"
 
-# 4. rebase
+# rebase
+
 git checkout feature/ui
 git rebase main
 # 충돌 시: 파일 수정 → git add → git rebase --continue
 
-# 5. 인터랙티브 정리
+# 인터랙티브 정리
+
 git rebase -i HEAD~2
 
-# 6. 복구 체험
+# 복구 체험
+
 git reflog
 git reset --hard ORIG_HEAD
 ```
 
 ---
 
-## 19. 결론
+## 결론
 
 - **Rebase**는 “선형 이력”과 “리뷰/분석 편의”를 주지만, **협업 안전성**을 대가로 합니다.
 - 개인 브랜치에서 **정리·스쿼시·재배치**에 적극 활용하고, 공유 브랜치에서는 **merge 중심**으로 운용하세요.

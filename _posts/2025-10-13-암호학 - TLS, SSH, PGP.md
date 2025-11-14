@@ -4,7 +4,7 @@ title: 암호학 - TLS/SSH/PGP
 date: 2025-10-13 18:30:23 +0900
 category: 암호학
 ---
-# 10. 프로토콜: TLS/SSH/PGP 등 (⚙️)
+# 프로토콜: TLS/SSH/PGP 등 (⚙️)
 
 > 이 장은 **네트워크·전자우편 보안을 실무 관점**에서 압축 정리합니다.
 > **TLS 1.3 핸드셰이크(키 스케줄/0-RTT 위험) → SSH(키 교환·호스트키·포워딩) → 전자우편 보안(S/MIME·OpenPGP)** 순서로, 그림/명세/명령 예제/미스유스를 함께 담았습니다.
@@ -14,13 +14,14 @@ category: 암호학
 
 ## ✅ 10.1 TLS 1.3 — 핸드셰이크 흐름 & 키 스케줄
 
-### 10.1.1 한눈에 보는 변화(1.2 → 1.3)
+### 한눈에 보는 변화(1.2 → 1.3)
+
 - **왕복(RTT) 감소**: 풀 핸드셰이크 1-RTT, 세션 재개 0-RTT(옵션).
 - **암호 스위트 단순화**: `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384`, `TLS_CHACHA20_POLY1305_SHA256` 등 **AEAD + HKDF** 고정.
 - **서버 인증 의무화**, **완전 전진 기밀성(FS)**: (EC)DHE 필수.
 - 취약한 구성(예: RSA 키교환, CBC, RC4, static RSA, SHA-1) 제거.
 
-### 10.1.2 풀 핸드셰이크 흐름(개념 그림)
+### 풀 핸드셰이크 흐름(개념 그림)
 
 ```
 Client                         Server
@@ -41,7 +42,8 @@ ClientHello
 - 중괄호 `{...}`: **암호화됨(Handshake traffic keys)**.
 - 최종 앱 데이터는 **Application traffic keys**로 보호.
 
-### 10.1.3 키 스케줄(요약 직관)
+### 키 스케줄(요약 직관)
+
 핵심은 **HKDF**. 입력 비밀들을 단계적으로 결합하고, 라벨(label)로 도메인 분리.
 
 - **Early Secret** = HKDF-Extract(0, PSK)
@@ -57,7 +59,8 @@ ClientHello
 - (EC)DHE로 **전진기밀성**.
 - PSK(재개) 사용 시도라도 **(EC)DHE + PSK**(하이브리드)가 권장.
 
-### 10.1.4 0-RTT(Zero-RTT) 데이터 — 속도 vs 위험
+### 0-RTT(Zero-RTT) 데이터 — 속도 vs 위험
+
 **장점**: 세션 재개 시 **클라이언트가 0-RTT로 앱 데이터 전송** 가능(왕복 절감).
 **위험(핵심 두 가지)**:
 1) **리플레이 가능(replayable)**: 엄밀한 의미의 FS가 약화. 중간자가 0-RTT 레코드를 **다시 재전송** 가능.
@@ -68,11 +71,12 @@ ClientHello
 - 서버는 **Anti-Replay** 창(트래킹)·**짧은 수용 시간**·**토큰 바인딩** 사용.
 - 중요한 변경/결제/쓰기 요청은 **1-RTT 이후**에만 허용.
 
-### 10.1.5 실무 설정·점검(예시)
+### 실무 설정·점검(예시)
 
 **OpenSSL s_client 디버깅**
 ```bash
 # 서버와 TLS 1.3로 통신, 핸드셰이크·알고리즘 확인
+
 openssl s_client -connect example.com:443 -tls1_3 -msg -state
 ```
 
@@ -86,6 +90,7 @@ curl --tlsv1.3 --ciphers TLS_AES_256_GCM_SHA384 https://example.com/
 ssl_protocols TLSv1.3;
 ssl_ciphers TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256;
 # 0-RTT(early data) 비활성화 권장 (필요시 앱 레벨 멱등성 검사)
+
 ssl_early_data off;
 ```
 
@@ -99,13 +104,15 @@ ssl_early_data off;
 
 ## ✅ 10.2 SSH — 키 교환·호스트키·포워딩
 
-### 10.2.1 SSH의 빌딩 블록
+### SSH의 빌딩 블록
+
 - **KEX(Key Exchange)**: (EC)DH 또는 PQC 하이브리드 변형 등으로 **세션키 합의**.
 - **Host Key**: 서버 신원 검증(Ed25519/RSA/ECDSA…).
 - **User Auth**: 공개키/패스워드/키보드-인터랙티브/SSO.
 - **채널/포워딩**: 포트/에이전트/X11/프록시.
 
-### 10.2.2 핸드셰이크 흐름(요약)
+### 핸드셰이크 흐름(요약)
+
 1) 알고리즘 협상: `kex_algorithms`, `server_host_key_algorithms`, `ciphers`, `MACs`
 2) **KEX**: (EC)DH로 공유비밀 \(K\)
 3) **서버 HostKey** 로 `H`(트랜스크립트 해시)에 **서명** → **서버 진위** 검증
@@ -117,7 +124,8 @@ ssl_early_data off;
 - **호스트키**: **ed25519** 선호(작고 빠름), RSA도 3072+
 - **암호**: `chacha20-poly1305@openssh.com` 또는 `aes256-gcm@openssh.com`
 
-### 10.2.3 호스트키 검증 & known_hosts
+### 호스트키 검증 & known_hosts
+
 - 첫 접속 시 서버 키 지문 확인(**TOFU** 모델) 또는 **사전 배포**.
 - `~/.ssh/known_hosts` 에 서버의 호스트키(또는 `@cert-authority`) 기록.
 - **호스트키 회전** 시 `UpdateHostKeys` 사용(서버가 새 키를 알려주고 클라이언트가 업데이트).
@@ -126,15 +134,18 @@ ssl_early_data off;
 ```bash
 ssh -o StrictHostKeyChecking=ask user@host
 # 또는 서버 측: ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub
+
 ```
 
 **호스트 인증서(OpenSSH CA)**
 ```bash
 # CA로 서버 호스트키 서명 → 클라이언트는 CA만 신뢰
+
 @cert-authority *.corp.example ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...  # known_hosts
 ```
 
-### 10.2.4 사용자 인증 & 에이전트 포워딩
+### 사용자 인증 & 에이전트 포워딩
+
 - **공개키 인증**(권장): `~/.ssh/id_ed25519` + 서버의 `authorized_keys`.
 - **에이전트 포워딩**: `ssh -A host` → 원격에서 **로컬 에이전트**로 서명 위임.
   - **주의**: 신뢰할 수 없는 중간 호스트에 에이전트 포워딩 **금지**(키 탈취 위험). 필요 시 **`ProxyJump`**/단일 홉 원칙.
@@ -156,7 +167,8 @@ Host app-*
   ForwardAgent no
 ```
 
-### 10.2.5 포트 포워딩 & 터널
+### 포트 포워딩 & 터널
+
 - **로컬 포워딩**: `-L [bind:]lport:dst:port` (내 로컬에서 원격으로 터널)
   ```bash
   ssh -L 127.0.0.1:8443:db.internal:443 user@bastion
@@ -169,7 +181,8 @@ Host app-*
 - 바인드 주소 `127.0.0.1` 로 제한(무심코 0.0.0.0로 노출 금지).
 - 접근통제(방화벽/SSH `PermitOpen`) 병행.
 
-### 10.2.6 흔한 실수 & 체크리스트
+### 흔한 실수 & 체크리스트
+
 - [ ] `PasswordAuthentication no`(가능하면 비활성) + **공개키만**.
 - [ ] `PermitRootLogin prohibit-password` 이상.
 - [ ] `KexAlgorithms`, `HostKeyAlgorithms`, `Ciphers`에서 구식 제거.
@@ -181,13 +194,14 @@ Host app-*
 
 ## ✅ 10.3 전자우편 보안 — S/MIME & OpenPGP
 
-### 10.3.1 문제 배경
+### 문제 배경
+
 전자우편은 **기본 평문** 전송(서버 간은 STARTTLS 사용 가능하지만 종단 간 보장은 별개).
 **종단 간 보안**을 위해 **콘텐츠 암호화·서명**이 필요 → **S/MIME** 또는 **OpenPGP**.
 
 ---
 
-### 10.3.2 S/MIME (CMS 기반, PKI 신뢰)
+### S/MIME (CMS 기반, PKI 신뢰)
 
 - **표준**: CMS(Cryptographic Message Syntax, PKCS#7) 기반.
 - **신뢰모델**: **X.509 PKI**(기업/조직 CA) — 인증서 발급·폐기·체인 검증.
@@ -202,12 +216,15 @@ Host app-*
 **OpenSSL 예(개념)**
 ```bash
 # 수신자 인증서로 암호화
+
 openssl smime -encrypt -aes256 -in mail.txt -out mail.p7m -outform DER recipient.crt
 
 # 서명 생성(발신자 측)
+
 openssl smime -sign -in mail.txt -signer sender.crt -inkey sender.key -out mail_signed.eml -text
 
 # 수신자 복호
+
 openssl smime -decrypt -in mail.p7m -inform DER -recip me.crt -inkey me.key -out mail.dec.txt
 ```
 
@@ -216,7 +233,7 @@ openssl smime -decrypt -in mail.p7m -inform DER -recip me.crt -inkey me.key -out
 
 ---
 
-### 10.3.3 OpenPGP (PGP/GnuPG, Web-of-Trust)
+### OpenPGP (PGP/GnuPG, Web-of-Trust)
 
 - **신뢰모델**: **웹오브트러스트**(서로의 키를 서명하여 신뢰를 전달) 또는 **키 디렉터리/투명성 로그**.
 - **포맷**: `multipart/signed` + `application/pgp-encrypted` / `application/pgp-signature`.
@@ -226,16 +243,20 @@ openssl smime -decrypt -in mail.p7m -inform DER -recip me.crt -inkey me.key -out
 **GnuPG 예(개념)**
 ```bash
 # 키 생성
+
 gpg --quick-generate-key "Alice <alice@example.com>" ed25519 cert,sign  # 주키
 gpg --quick-add-key <Alice-keyid> cv25519 encrypt                        # 암호화 서브키
 
 # 수신자 키 가져오기(키 서버/파일)
+
 gpg --recv-keys <Bob-keyid>
 
 # 메일 암호화(+서명)
+
 gpg --encrypt --sign -r bob@example.com -o mail.asc mail.txt
 
 # 검증/복호
+
 gpg --decrypt mail.asc > mail.dec.txt
 ```
 
@@ -300,27 +321,34 @@ gpg --decrypt mail.asc > mail.dec.txt
 
 ## ✅ 10.7 미니 실습 묶음
 
-### 10.7.1 TLS 핸드셰이크 관찰
+### TLS 핸드셰이크 관찰
+
 ```bash
 # JA3/알고리즘은 별도 도구 필요. 여기서는 서버 선택된 스위트·ALPN 확인
+
 openssl s_client -connect www.example:443 -tls1_3 -alpn h2 -servername www.example
 ```
 
-### 10.7.2 SSH 에이전트 안전 사용
+### SSH 에이전트 안전 사용
+
 ```bash
 # 현재 에이전트에 등록된 키 확인
+
 ssh-add -l
 # 세션 한정 키(잠금 프롬프트) 추가
+
 ssh-add -t 3600 ~/.ssh/id_ed25519
 ```
 
-### 10.7.3 S/MIME 서명/검증 라운드트립
+### S/MIME 서명/검증 라운드트립
+
 ```bash
 openssl smime -sign -in note.txt -signer me.crt -inkey me.key -out note.signed.eml -text
 openssl smime -verify -in note.signed.eml -CAfile ca.crt -out note.verified.txt
 ```
 
-### 10.7.4 PGP 암호화/서명 라운드트립
+### PGP 암호화/서명 라운드트립
+
 ```bash
 gpg --encrypt --sign -r bob@example.com -o msg.asc msg.txt
 gpg --verify msg.asc

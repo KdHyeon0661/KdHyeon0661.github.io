@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # GitHub Actions로 Kubernetes 자동 배포하기
 
-## 0. 전체 그림
+## 전체 그림
 
 ```mermaid
 flowchart LR
@@ -21,7 +21,7 @@ flowchart LR
 
 ---
 
-## 1. 트리거 & 브랜치 전략
+## 트리거 & 브랜치 전략
 
 - `main` → **프로덕션** 자동 배포
 - `develop` → **스테이징** 자동 배포
@@ -39,9 +39,9 @@ on:
 
 ---
 
-## 2. 컨테이너 빌드: 태깅·캐시·멀티플랫폼
+## 컨테이너 빌드: 태깅·캐시·멀티플랫폼
 
-### 2.1 태깅 전략 (가시성 + 재현성)
+### 태깅 전략 (가시성 + 재현성)
 
 - `latest`는 **사람용**; **머신/배포에는 Git SHA** 활용
 - 환경별 태그: `myapp:prod-<sha>`, `myapp:stg-<sha>`
@@ -51,10 +51,11 @@ on:
 IMAGE_REG=${{ secrets.DOCKER_USERNAME }}/myapp
 TAG=${{ github.sha }}
 # 결과: <registry>/myapp:<sha>
+
 ```
 {% endraw %}
 
-### 2.2 Buildx + 캐시 (속도·비용 최적화)
+### Buildx + 캐시 (속도·비용 최적화)
 
 {% raw %}
 ```yaml
@@ -80,9 +81,9 @@ TAG=${{ github.sha }}
 
 ---
 
-## 3. 보안 내장: 이미지 스캔 + 서명 + 정책 게이트
+## 보안 내장: 이미지 스캔 + 서명 + 정책 게이트
 
-### 3.1 Trivy로 취약점 스캔
+### Trivy로 취약점 스캔
 
 {% raw %}
 ```yaml
@@ -98,7 +99,7 @@ TAG=${{ github.sha }}
 
 > 실패 시 파이프라인 중단(기본 임계값을 팀 정책에 맞춰 조정)
 
-### 3.2 Cosign으로 서명 & 검증
+### Cosign으로 서명 & 검증
 
 {% raw %}
 ```yaml
@@ -127,7 +128,7 @@ TAG=${{ github.sha }}
 ```
 {% endraw %}
 
-### 3.3 정책 게이트(옵션)
+### 정책 게이트(옵션)
 
 - OPA Conftest로 **K8s 매니페스트 정책** 검사(예: `runAsNonRoot` 강제):
 ```yaml
@@ -139,9 +140,9 @@ TAG=${{ github.sha }}
 
 ---
 
-## 4. K8s 인증: kubeconfig vs ServiceAccount(OIDC)
+## K8s 인증: kubeconfig vs ServiceAccount(OIDC)
 
-### 4.1 빠른 시작 (kubeconfig Secrets)
+### 빠른 시작 (kubeconfig Secrets)
 
 - `KUBECONFIG_DATA`에 base64로 저장 (최소권한 계정 사용)
 
@@ -159,7 +160,8 @@ cat ~/.kube/config | base64 -w0
 ```
 {% endraw %}
 
-### 4.2 권장(클라우드): **ServiceAccount + RBAC + OIDC**
+### 권장(클라우드): **ServiceAccount + RBAC + OIDC**
+
 - GitHub Actions의 **OIDC 토큰**으로 클러스터에서 **짧은 수명의 자격** 발급
 - 구체 설정(EKS/IAM Role for Service Accounts, GKE Workload Identity, AKS federated credential)은 각 클라우드 가이드에 따릅니다.
 
@@ -167,7 +169,7 @@ cat ~/.kube/config | base64 -w0
 
 ---
 
-## 5. RBAC 최소권한 예시
+## RBAC 최소권한 예시
 
 ```yaml
 apiVersion: v1
@@ -205,9 +207,9 @@ roleRef:
 
 ---
 
-## 6. 배포 방식 3종: `kubectl` / Kustomize / Helm
+## 배포 방식 3종: `kubectl` / Kustomize / Helm
 
-### 6.1 kubectl (가장 단순)
+### kubectl (가장 단순)
 
 {% raw %}
 ```yaml
@@ -224,7 +226,7 @@ roleRef:
 ```
 {% endraw %}
 
-### 6.2 Kustomize (환경 오버레이)
+### Kustomize (환경 오버레이)
 
 디렉토리 예시:
 ```
@@ -252,7 +254,7 @@ k8s/
     kubectl rollout status deploy/myapp -n staging
 ```
 
-### 6.3 Helm (복잡한 차트/값 관리)
+### Helm (복잡한 차트/값 관리)
 
 {% raw %}
 ```yaml
@@ -273,7 +275,7 @@ k8s/
 
 ---
 
-## 7. **실전 워크플로우** (엔드투엔드)
+## **실전 워크플로우** (엔드투엔드)
 
 `.github/workflows/deploy.yml`
 
@@ -395,9 +397,9 @@ jobs:
 
 ---
 
-## 8. 배포 매니페스트 예시
+## 배포 매니페스트 예시
 
-### 8.1 Deployment (기본형)
+### Deployment (기본형)
 
 ```yaml
 apiVersion: apps/v1
@@ -449,9 +451,9 @@ spec:
 
 ---
 
-## 9. 시크릿 관리(강화): Sealed Secrets / SOPS
+## 시크릿 관리(강화): Sealed Secrets / SOPS
 
-### 9.1 Sealed Secrets (클러스터에서만 복호화)
+### Sealed Secrets (클러스터에서만 복호화)
 
 - 개발자는 **암호화된 SealedSecret**만 Git에 커밋
 - 컨트롤러가 SealedSecret → Secret으로 자동 복호화
@@ -467,16 +469,16 @@ spec:
     DB_PASSWORD: AgAvZk...   # kubeseal로 암호화된 값
 ```
 
-### 9.2 SOPS + age/GPG
+### SOPS + age/GPG
 
 - 레포에 `*.enc.yaml`로 저장, CI에서 복호화 후 `kubectl apply`
 - Git 기록에 평문 비밀값이 남지 않음
 
 ---
 
-## 10. 롤아웃 검증 & 알림
+## 롤아웃 검증 & 알림
 
-### 10.1 롤아웃 상태 실패 시 즉시 실패
+### 롤아웃 상태 실패 시 즉시 실패
 
 ```yaml
 - name: Verify rollout
@@ -484,7 +486,7 @@ spec:
     kubectl rollout status deploy/myapp -n prod --timeout=240s
 ```
 
-### 10.2 슬랙/디스코드 알림
+### 슬랙/디스코드 알림
 
 {% raw %}
 ```yaml
@@ -502,7 +504,7 @@ spec:
 
 ---
 
-## 11. 멀티 클러스터/환경 배포 (matrix)
+## 멀티 클러스터/환경 배포 (matrix)
 
 {% raw %}
 ```yaml
@@ -529,7 +531,7 @@ steps:
 
 ---
 
-## 12. GitHub Actions ↔ GitOps(Argo CD) 조합
+## GitHub Actions ↔ GitOps(Argo CD) 조합
 
 - **CI는 이미지 빌드/스캔/서명**까지
 - **CD는 Argo CD**가 **Git 상태를 기준으로** 자동 동기화
@@ -543,14 +545,14 @@ steps:
 
 ---
 
-## 13. Blue-Green/Canary (헬스 체크 동반)
+## Blue-Green/Canary (헬스 체크 동반)
 
-### 13.1 간단 Canary (두 Deployment 가중치 전환)
+### 간단 Canary (두 Deployment 가중치 전환)
 
 - `svc`는 `selector`로 트래픽 분기(수동 스텝)
 - 또는 **Argo Rollouts**로 점진적 비율 전환 + 자동 중단
 
-### 13.2 `kubectl`만으로 안전장치
+### `kubectl`만으로 안전장치
 
 - 배포 직후 **스모크 테스트 Job** 실행
 - 실패 시 `kubectl rollout undo`
@@ -564,7 +566,7 @@ steps:
 
 ---
 
-## 14. 성능·비용 최적화
+## 성능·비용 최적화
 
 - Buildx 캐시 공유(GHA 캐시) → **빌드 시간 단축**
 - 레이어 구조 개선: 의존 설치/앱 빌드 → 런타임 분리(멀티스테이지)
@@ -579,7 +581,7 @@ steps:
 
 ---
 
-## 15. 장애대응/트러블슈팅 체크리스트
+## 장애대응/트러블슈팅 체크리스트
 
 | 증상 | 진단 | 해결 |
 |---|---|---|
@@ -591,7 +593,7 @@ steps:
 
 ---
 
-## 16. **완성형** 샘플 레포 구조
+## **완성형** 샘플 레포 구조
 
 ```
 .
@@ -612,7 +614,7 @@ steps:
 
 ---
 
-## 17. 수학적(개념) 메트릭 목표식(옵션)
+## 수학적(개념) 메트릭 목표식(옵션)
 
 배포 실패율 \(p_f\), 평균 복구시간 MTTR \(T_r\), 배포 빈도 \(f_d\)일 때 안정성 효용 \(U\) (개념 모델):
 
@@ -625,7 +627,7 @@ $$
 
 ---
 
-## 18. 요약
+## 요약
 
 - **태그는 SHA**, 캐시/스캔/서명으로 **신뢰 가능한 아티팩트**를 만든다.
 - 배포는 **kubectl/Kustomize/Helm** 중 팀 숙련도와 복잡도에 맞춰 선택.

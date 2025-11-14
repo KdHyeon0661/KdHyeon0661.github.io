@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 시크릿 매니저(Secret Manager) 사용법
 
-## 1. Secret Manager란? — “개발 시 로컬에서 비밀을 소스코드 밖에 두는 도구”
+## Secret Manager란? — “개발 시 로컬에서 비밀을 소스코드 밖에 두는 도구”
 
 - **목적**: 개발 환경에서 **민감 정보(API 키, DB 비밀번호 등)**를 `appsettings.json`에 넣지 않고, **개발자 로컬 프로필**에 따로 저장해 **버전관리(Git)에서 격리**.
 - **저장 방식**: 사용자 프로필 경로의 **JSON 파일**에 저장된다.
@@ -15,6 +15,7 @@ category: AspNet
   운영(Production)에서는 **환경 변수/Key Vault** 등으로 전환 권장.
 
 ### 실제 저장 경로
+
 | OS | 경로 |
 |----|------|
 | Windows | `%APPDATA%\Microsoft\UserSecrets\{UserSecretsId}\secrets.json` |
@@ -24,7 +25,7 @@ category: AspNet
 
 ---
 
-## 2. 사용 전 준비
+## 사용 전 준비
 
 - .NET SDK 설치
 - 프로젝트(`.csproj`)에 `UserSecretsId` 존재(없으면 `init`로 생성)
@@ -32,7 +33,7 @@ category: AspNet
 
 ---
 
-## 3. 프로젝트에 Secret Manager 활성화
+## 프로젝트에 Secret Manager 활성화
 
 ```bash
 dotnet user-secrets init
@@ -51,9 +52,9 @@ dotnet user-secrets init
 
 ---
 
-## 4. 비밀 값 저장/조회/삭제 — CLI 실습
+## 비밀 값 저장/조회/삭제 — CLI 실습
 
-### 4.1 저장(Set)
+### 저장(Set)
 
 ```bash
 dotnet user-secrets set "JwtSettings:SecretKey" "MySuperSecretKey123"
@@ -68,7 +69,7 @@ dotnet user-secrets set "Smtp:Password" "app-specific-password"
 - `:`로 **계층 키** 표현
 - 문자열 이외 타입(정수/불린/TimeSpan 등)도 문자열로 저장되며, **바인딩 시 변환**된다.
 
-### 4.2 조회(List)
+### 조회(List)
 
 ```bash
 dotnet user-secrets list
@@ -85,7 +86,7 @@ Smtp:Username = user@example.com
 Smtp:Password = app-specific-password
 ```
 
-### 4.3 삭제(Remove/Clear)
+### 삭제(Remove/Clear)
 
 ```bash
 dotnet user-secrets remove "JwtSettings:SecretKey"
@@ -96,9 +97,9 @@ dotnet user-secrets clear
 
 ---
 
-## 5. 코드에서 사용하기 — `IConfiguration`/Options 패턴
+## 코드에서 사용하기 — `IConfiguration`/Options 패턴
 
-### 5.1 기본: `IConfiguration`로 직접 읽기
+### 기본: `IConfiguration`로 직접 읽기
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -109,7 +110,7 @@ var conn = builder.Configuration.GetConnectionString("DefaultConnection");
 Console.WriteLine($"SecretKey? {secretKey is not null}, Conn? {conn is not null}");
 ```
 
-### 5.2 Options 바인딩(권장)
+### Options 바인딩(권장)
 
 ```csharp
 public sealed class JwtSettings
@@ -135,22 +136,22 @@ app.Run();
 
 ---
 
-## 6. EF Core/DB 연결 문자열을 Secret로 관리
+## EF Core/DB 연결 문자열을 Secret로 관리
 
-### 6.1 CLI로 저장
+### CLI로 저장
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=AppDev;User Id=dev;Password=devpass;"
 ```
 
-### 6.2 `Program.cs` DbContext 구성
+### `Program.cs` DbContext 구성
 
 ```csharp
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 ```
 
-### 6.3 마이그레이션/실행 테스트
+### 마이그레이션/실행 테스트
 
 ```bash
 dotnet ef migrations add Init
@@ -162,15 +163,15 @@ dotnet run
 
 ---
 
-## 7. JWT/서드파티 키 — Secret + Swagger 연동까지
+## JWT/서드파티 키 — Secret + Swagger 연동까지
 
-### 7.1 시크릿 저장
+### 시크릿 저장
 
 ```bash
 dotnet user-secrets set "JwtSettings:SecretKey" "dev-only-ultra-secret"
 ```
 
-### 7.2 JWT 인증 구성
+### JWT 인증 구성
 
 ```csharp
 builder.Services.AddAuthentication("Bearer")
@@ -188,7 +189,7 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddAuthorization();
 ```
 
-### 7.3 Swagger에서 “Authorize” 입력 허용(선택)
+### Swagger에서 “Authorize” 입력 허용(선택)
 
 ```csharp
 builder.Services.AddSwaggerGen(c =>
@@ -206,7 +207,7 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 8. 우선순위/덮어쓰기 규칙 — Secret은 어디에 끼어드나?
+## 우선순위/덮어쓰기 규칙 — Secret은 어디에 끼어드나?
 
 일반 템플릿의 구성 추가 순서 예(아래로 갈수록 우선순위 ↑):
 
@@ -221,15 +222,15 @@ builder.Services.AddSwaggerGen(c =>
 
 ---
 
-## 9. 멀티 프로젝트/솔루션/테스트에서의 사용
+## 멀티 프로젝트/솔루션/테스트에서의 사용
 
-### 9.1 여러 프로젝트가 같은 비밀을 공유해야 한다면?
+### 여러 프로젝트가 같은 비밀을 공유해야 한다면?
 
 - 가장 단순한 방법: **각 프로젝트에 동일 키를 각각 설정**(개발자 편의 스크립트 마련).
 - 혹은 **한 프로젝트의 `UserSecretsId`를 다른 프로젝트로 복사**(의도적으로 동일 ID).
   다만 프로젝트 분리 간 **의존/누수**를 초래할 수 있어 설계 상 신중히.
 
-### 9.2 통합 테스트 프로젝트
+### 통합 테스트 프로젝트
 
 - 테스트 프로젝트에도 `dotnet user-secrets init` 수행 후 테스트 전용 비밀 주입.
 - `WebApplicationFactory`를 사용하는 경우 **테스트 프로젝트 환경**이 Development로 동작하도록 설정하거나, `ConfigureAppConfiguration`에서 `AddUserSecrets`를 명시 호출.
@@ -249,7 +250,7 @@ public class TestFactory : WebApplicationFactory<Program>
 
 ---
 
-## 10. Docker/Kubernetes/CI-CD와 Secret Manager
+## Docker/Kubernetes/CI-CD와 Secret Manager
 
 - Secret Manager는 **호스트(개발 PC) 사용자 프로필**에 저장되므로, **컨테이너 내부**에서는 접근 불가.
 - 컨테이너/클러스터 배포 시:
@@ -262,7 +263,7 @@ public class TestFactory : WebApplicationFactory<Program>
 
 ---
 
-## 11. 설정 진단 — 안전하게 값 확인하기
+## 설정 진단 — 안전하게 값 확인하기
 
 실무 중 “왜 값이 안 들어오지?”를 빨리 확인하려면 **일부 키만 노출**하는 진단 엔드포인트를 만든다.
 
@@ -285,7 +286,7 @@ app.MapGet("/__cfg-check", (IConfiguration cfg) =>
 
 ---
 
-## 12. 자주 하는 실수 & 트러블슈팅
+## 자주 하는 실수 & 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |------|------|------|
@@ -298,7 +299,7 @@ app.MapGet("/__cfg-check", (IConfiguration cfg) =>
 
 ---
 
-## 13. 시크릿 스키마를 Options로 강타입/검증
+## 시크릿 스키마를 Options로 강타입/검증
 
 ```csharp
 public sealed class SmtpOptions
@@ -321,7 +322,7 @@ builder.Services.AddOptions<SmtpOptions>()
 
 ---
 
-## 14. 예제: Razor Pages 로그인용 쿠키 키/Anti-CSRF/외부 API 키
+## 예제: Razor Pages 로그인용 쿠키 키/Anti-CSRF/외부 API 키
 
 ```bash
 dotnet user-secrets set "Auth:CookieName" ".MyApp.Auth"
@@ -352,7 +353,7 @@ builder.Services.AddHttpClient("openai", (sp, http) =>
 
 ---
 
-## 15. 실무 운영 전환(Production) 권장 패턴
+## 실무 운영 전환(Production) 권장 패턴
 
 - **개발**: Secret Manager
 - **스테이징/운영**:
@@ -372,9 +373,9 @@ builder.Configuration.AddAzureKeyVault(
 
 ---
 
-## 16. 전체 샘플 — EF/JWT/SMTP/외부키를 Secret으로 관리
+## 전체 샘플 — EF/JWT/SMTP/외부키를 Secret으로 관리
 
-### 16.1 시크릿 넣기
+### 시크릿 넣기
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=.;Database=DevDb;User Id=dev;Password=dev;"
@@ -386,7 +387,7 @@ dotnet user-secrets set "Smtp:Password" "dev-app-pass"
 dotnet user-secrets set "ThirdParty:Stripe:ApiKey" "sk_test_123"
 ```
 
-### 16.2 `Program.cs`
+### `Program.cs`
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -441,7 +442,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 17. 보안 주의사항 — 핵심 요약
+## 보안 주의사항 — 핵심 요약
 
 - Secret Manager는 **개발 전용**. 운영에서는 쓰지 않는다.
 - Secret 파일은 **암호화되어 있지 않다**. 사용자 프로필 권한 보호에 의존.
@@ -451,7 +452,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 18. 체크리스트
+## 체크리스트
 
 - [ ] `.csproj`에 `UserSecretsId`가 있는가?
 - [ ] `ASPNETCORE_ENVIRONMENT=Development`인가(혹은 `AddUserSecrets` 수동 추가)?
@@ -461,7 +462,7 @@ public sealed class SmtpOptions
 
 ---
 
-## 19. 요약
+## 요약
 
 | 항목 | 내용 |
 |------|------|

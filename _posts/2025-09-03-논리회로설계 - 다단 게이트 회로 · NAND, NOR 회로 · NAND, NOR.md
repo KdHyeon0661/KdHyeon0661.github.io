@@ -12,7 +12,7 @@ category: 논리회로설계
 
 ---
 
-## 0. 개요(왜 2단·다단을 구분하는가)
+## 개요(왜 2단·다단을 구분하는가)
 
 2-level(2단) 회로는 **깊이 2**(곱항→최종 OR 또는 합항→최종 AND)로, **논리 깊이 최소**이지만 한 게이트의 **팬인**이 커지기 쉽다. 반대로 다단(>2) 회로는 **인수화·공유**로 팬인/배선을 줄여 **지연·전력**을 개선할 여지가 있다.
 
@@ -22,16 +22,18 @@ category: 논리회로설계
 
 ---
 
-## 1. 다단 게이트 회로(Multilevel Logic)
+## 다단 게이트 회로(Multilevel Logic)
 
-### 1.1 정의와 비용 지표
+### 정의와 비용 지표
+
 - **2단(2-level)**: 입력 → (1단)곱항/합항 → (2단)최종 OR/AND. (예: \(F=\sum\) 형태)
 - **다단(>2-level)**: 공통인수 인수화, 중간 신호 공유, AOI/OAI 등 복합 게이트 활용.
 
 주요 지표:
 - **리터럴 수**(PLA/ROM/면적 근사), **게이트 수**, **팬인/팬아웃**, **배선 길이**, **지연 \(t_{pd}\)**, **전력**.
 
-### 1.2 지연 모델(직관)
+### 지연 모델(직관)
+
 조합 경로 지연 근사:
 \[
 t_{pd} \approx \sum_{g\in\text{경로}} t_{pd}(g) + t_{\text{배선}}
@@ -39,7 +41,8 @@ t_{pd} \approx \sum_{g\in\text{경로}} t_{pd}(g) + t_{\text{배선}}
 - **팬인↑ → 지연↑**: CMOS에서 NOR는 **pMOS 직렬**로 상승지연이 커지므로 큰 팬인은 불리.
 - 길고 얇은 배선은 RC가 커져 **배선 지연** 우세.
 
-### 1.3 논리적 노력(Logical Effort) 관점(요지)
+### 논리적 노력(Logical Effort) 관점(요지)
+
 - **기준 인버터**의 논리적 노력 \(g=1\), 기생 \(p\approx1\).
 - 대략적 경향(공정·셀에 따라 다소 상이):
   - **NAND2**: \(g \approx 4/3,\ p \approx 2\)
@@ -49,9 +52,10 @@ t_{pd} \approx \sum_{g\in\text{경로}} t_{pd}(g) + t_{\text{배선}}
 
 ---
 
-## 2. NAND/NOR 회로의 성질
+## NAND/NOR 회로의 성질
 
-### 2.1 보편 게이트(Functional Completeness)
+### 보편 게이트(Functional Completeness)
+
 **NAND만으로**
 \[
 \overline{A}=A\,\text{NAND}\,A,\quad
@@ -66,20 +70,23 @@ A+B=\overline{A\,\text{NOR}\,B},\quad
 AB=\overline{\overline{A}+\overline{B}}
 \]
 
-### 2.2 CMOS 트랜지스터 직관
+### CMOS 트랜지스터 직관
+
 - **NAND(n입력)**: **nMOS 직렬**(풀다운)·**pMOS 병렬**(풀업) → 풀업 강함 → **NOR보다 유리**.
 - **NOR(n입력)**: **pMOS 직렬**(풀업)로 **상승 지연↑** → 큰 팬인에 취약.
 - 실무: 큰 팬인은 **NAND 선호**, NOR는 **2~3입력** 권장.
 
-### 2.3 버블 푸시(bubble pushing)
+### 버블 푸시(bubble pushing)
+
 - 드모르간으로 **인버전(버블)** 을 게이트 **전후로 이동**해 같은 기능을 유지.
 - 마주보는 버블은 **상쇄**. 입력의 보수(\(\overline{A}\))는 **입력 버블**로 표현해 인버터를 줄인다.
 
 ---
 
-## 3. 2단 회로 설계 절차(핵심 레시피)
+## 2단 회로 설계 절차(핵심 레시피)
 
-### 3.1 SOP → **NAND–NAND**
+### SOP → **NAND–NAND**
+
 규칙:
 1) \(F = P_1 + P_2 + \cdots + P_k\) (각 \(P_i\): 곱항)
 2) 드모르간:
@@ -96,7 +103,8 @@ F=\overline{(AB)'\cdot(\overline{A}C)'\cdot(BC)'}
 - 1단: \(N_1=\text{NAND}(A,B)\), \(N_2=\text{NAND}(\overline{A},C)\), \(N_3=\text{NAND}(B,C)\)
 - 2단: \(F=\text{NAND}(N_1,N_2,N_3)\)
 
-### 3.2 POS → **NOR–NOR**
+### POS → **NOR–NOR**
+
 규칙:
 1) \(F=S_1 S_2 \cdots S_k\) (각 \(S_i\): 합항)
 2) 드모르간:
@@ -113,11 +121,13 @@ F=\overline{(A+B)' + (A+\overline{C})' + (B+D)'}
 - 1단: \(M_1=\text{NOR}(A,B)\), \(M_2=\text{NOR}(A,\overline{C})\), \(M_3=\text{NOR}(B,D)\)
 - 2단: \(F=\text{NOR}(M_1,M_2,M_3)\)
 
-### 3.3 혼성 2단(NAND–NOR / NOR–NAND)
+### 혼성 2단(NAND–NOR / NOR–NAND)
+
 - 목표 팬인·인버전 수를 맞추기 위해 혼성 구조가 유리할 수 있다.
 - 예) \(\overline{P_1+P_2+\cdots}\) 형태는 **NAND–NOR** 직결로 추가 인버터 없이 구현.
 
-### 3.4 인버터/버블 최소화 4원칙
+### 인버터/버블 최소화 4원칙
+
 1) **SOP→NAND–NAND**, **POS→NOR–NOR**를 기본.
 2) **보수 리터럴은 입력 버블**로 표현해 중간 인버터 제거.
 3) **마주보는 버블**은 상쇄.
@@ -125,41 +135,47 @@ F=\overline{(A+B)' + (A+\overline{C})' + (B+D)'}
 
 ---
 
-## 4. 팬인과 트리 구조(속도·전력 최적화)
+## 팬인과 트리 구조(속도·전력 최적화)
 
-### 4.1 큰 OR/AND를 트리로
+### 큰 OR/AND를 트리로
+
 - 큰 OR(예: 8입력)은 **NAND–NAND**에서 **1단 NAND**의 팬인이 커짐 →
   **균형 트리**(예: 2→4→8)로 분해하면 각 게이트 부하·기생이 감소.
 
-### 4.2 AOI/OAI(복합 게이트) 활용
+### AOI/OAI(복합 게이트) 활용
+
 - 표준셀에 **AOI21/22, OAI21/22**가 있다면, SOP/POS 일부를 **직접 1단**으로 매핑해 지연을 줄인다.
   - 예: \(Y=\overline{AB+C}\)는 **AOI21** 1개.
   - 버블 푸시로 같은 기능을 AOI/OAI에 끼워 맞추면 **레벨 단축**.
 
 ---
 
-## 5. 해저드(글리치) — 분석과 완화
+## 해저드(글리치) — 분석과 완화
 
-### 5.1 정적-1/0 해저드
+### 정적-1/0 해저드
+
 - 이론상 출력이 1(또는 0)로 유지되어야 하는 **입력 전이**에서 순간 0(또는 1)이 튀는 현상.
 - K-map에서 **인접 1(또는 0)** 들이 **중첩 없이 다른 묶음**으로만 덮일 때 발생 가능.
 
-### 5.2 완화
+### 완화
+
 - **합의항(consensus)** 추가: \(AB+\overline{A}C\Rightarrow +BC\)
 - **게이트 공유/중첩**으로 재합성.
 - **동기 경계(레지스터)** 로 후단에서 글리치 흡수.
 
 ---
 
-## 6. 완전 예제 — 설계·검증·코드
+## 완전 예제 — 설계·검증·코드
 
-### 6.1 예제 C(최소 SOP → NAND–NAND)
+### 예제 C(최소 SOP → NAND–NAND)
+
 K-map 최소화 결과:
 \[
 F=\overline{A}\,\overline{B}C + \overline{A}BC + A\overline{B}C
 \]
 
 #### (1) 게이트 수준 설계
+
 - 1단 NAND:
   - \(N_1=\text{NAND}(\overline{A},\overline{B},C)\)
   - \(N_2=\text{NAND}(\overline{A},B,C)\)
@@ -167,6 +183,7 @@ F=\overline{A}\,\overline{B}C + \overline{A}BC + A\overline{B}C
 - 2단 NAND: \(F=\text{NAND}(N_1,N_2,N_3)\)
 
 #### (2) Verilog(구조적 스케치)
+
 ```verilog
 module nand2level(
   input  logic A,B,C,
@@ -182,6 +199,7 @@ endmodule
 ```
 
 #### (3) Python 검증(진리표 등가성)
+
 ```python
 from itertools import product
 def F_ref(A,B,C):
@@ -196,7 +214,8 @@ def F_nand(A,B,C):
 print(all(F_ref(*v)==F_nand(*v) for v in product([0,1],[0,1],[0,1])))
 ```
 
-### 6.2 예제 D(최소 POS → NOR–NOR)
+### 예제 D(최소 POS → NOR–NOR)
+
 \[
 F=(A+B)(\overline{A}+C)(\overline{B}+D)
 \]
@@ -215,7 +234,8 @@ module nor2level(
 endmodule
 ```
 
-### 6.3 예제 E(혼성 & AOI/OAI)
+### 예제 E(혼성 & AOI/OAI)
+
 \[
 Y=\overline{AB+C}\quad(\text{AOI21})
 \]
@@ -224,34 +244,39 @@ Y=\overline{AB+C}\quad(\text{AOI21})
 
 ---
 
-## 7. 큰 팬인 다루기 — 분해와 균형화
+## 큰 팬인 다루기 — 분해와 균형화
 
-### 7.1 8입력 OR의 SOP→NAND–NAND 분해
+### 8입력 OR의 SOP→NAND–NAND 분해
+
 - 곱항 \(P_1,\dots,P_8\)이 많아 2단 최종 NAND의 팬인이 8이면 느릴 수 있음.
 - **균형 트리**: (NAND of 4) → (NAND of 2) → (NAND final)로 재구성.
 - 또는 **AOI22** 블록으로 4개씩 묶은 뒤 최종 NOR/NAND 결합.
 
-### 7.2 배선·부하 균형
+### 배선·부하 균형
+
 - 큰 부하(팬아웃↑)에는 **버퍼/업사이징**.
 - 긴 배선은 **게이트 삽입(리피터)** 로 RC 저감.
 
 ---
 
-## 8. 표준셀 실전 매핑
+## 표준셀 실전 매핑
 
-### 8.1 버블 푸시로 AOI/OAI에 끼워 맞추기
+### 버블 푸시로 AOI/OAI에 끼워 맞추기
+
 - \(F=\overline{(AB)+(CD)}\) → **AOI22** 1개
 - \(F=\overline{AB\cdot(C+D)}\) → **OAI21** 등으로 단축
 
-### 8.2 라이브러리 제약
+### 라이브러리 제약
+
 - 많은 라이브러리가 **NOR3/4 상한**, **NAND4 상한** 보유.
 - 팬인 초과 시 **분해/인수화** 또는 **복합셀**로 치환.
 
 ---
 
-## 9. 해저드 안전 2단 설계(옵션)
+## 해저드 안전 2단 설계(옵션)
 
-### 9.1 정적-1 해저드 제거 예
+### 정적-1 해저드 제거 예
+
 \[
 F=AB+\overline{A}C\quad\Rightarrow\quad F'=AB+\overline{A}C+BC
 \]
@@ -260,7 +285,7 @@ F=AB+\overline{A}C\quad\Rightarrow\quad F'=AB+\overline{A}C+BC
 
 ---
 
-## 10. 수학 요약(드모르간/쌍대성)
+## 수학 요약(드모르간/쌍대성)
 
 - 드모르간:
 \[
@@ -272,9 +297,9 @@ F=AB+\overline{A}C\quad\Rightarrow\quad F'=AB+\overline{A}C+BC
 
 ---
 
-## 11. 추가 예제(설계·검증 묶음)
+## 추가 예제(설계·검증 묶음)
 
-### 11.1 \(F=AC+BD\)
+### \(F=AC+BD\)
 
 **(a) NAND–NAND**
 \[
@@ -293,7 +318,8 @@ F=\overline{(A+C)' + (B+D)'}
 
 **팬인/지연 논평**: 2입력 블록만 사용하므로 두 방식 모두 양호. 공정상 NAND 유리 경향.
 
-### 11.2 테스트벤치 스케치
+### 테스트벤치 스케치
+
 ```verilog
 module tb;
   logic A,B,C,D, F1,F2;
@@ -311,7 +337,7 @@ endmodule
 
 ---
 
-## 12. 체크리스트(실전용)
+## 체크리스트(실전용)
 
 - [ ] **SOP→NAND–NAND**, **POS→NOR–NOR**로 시작하되, **AOI/OAI** 대체 가능성 탐색
 - [ ] **입력 보수는 입력 버블**로, 중간 인버터 제거
@@ -322,7 +348,7 @@ endmodule
 
 ---
 
-## 13. 연습문제
+## 연습문제
 
 1) \(F=AB+\overline{A}C+BC\) 를 **NAND–NAND** 2단으로 그려라.
    - (a) 필요한 **인버터 수**(입력 버블 포함)
@@ -341,7 +367,7 @@ endmodule
 
 ---
 
-## 14. 요약(포켓 카드)
+## 요약(포켓 카드)
 
 - **SOP→NAND–NAND**, **POS→NOR–NOR**, **버블 푸시**로 인버터 최소화
 - **NAND가 NOR보다 일반적으로 빠름**(팬인 동일 시)

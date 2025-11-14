@@ -6,7 +6,7 @@ category: DB
 ---
 # ORDER BY
 
-## 0. 핵심 한 줄 요약
+## 핵심 한 줄 요약
 
 - **정확성**: 동일 키 동점(tie)이 있을 때 **보조 정렬 키**를 넣어 **결정성**을 보장하라.
 - **성능**: 정렬은 비싸다. **인덱스 정렬 재활용**(index order)과 **키셋 페이징**을 최우선 고려하라.
@@ -14,7 +14,7 @@ category: DB
 
 ---
 
-## 1. 개념과 실행 순서(논리 파이프라인)
+## 개념과 실행 순서(논리 파이프라인)
 
 `ORDER BY`는 **결과 집합의 최종 정렬** 단계다. SQL의 논리적 실행 순서는 개념적으로 다음과 같다.
 
@@ -31,7 +31,7 @@ category: DB
 
 ---
 
-## 2. 기본 문법과 결정성(Determinism)
+## 기본 문법과 결정성(Determinism)
 
 ```sql
 SELECT col1, col2
@@ -39,7 +39,8 @@ FROM T
 ORDER BY col1 [ASC|DESC], col2 [ASC|DESC];
 ```
 
-### 2.1 동점(tie)과 결정성
+### 동점(tie)과 결정성
+
 동일한 `col1` 값이 다수면 **결과 순서가 비결정적**일 수 있다. **항상 보조 키**를 넣어 결정적으로 만든다.
 
 ```sql
@@ -54,9 +55,10 @@ ORDER BY col1, col2;
 
 ---
 
-## 3. 컬럼 번호 정렬, 별칭, 표현식, CASE 정렬
+## 컬럼 번호 정렬, 별칭, 표현식, CASE 정렬
 
-### 3.1 컬럼 번호 정렬
+### 컬럼 번호 정렬
+
 ```sql
 SELECT name, age, salary
 FROM Employee
@@ -64,21 +66,24 @@ ORDER BY 2 DESC;      -- 2번째 열(age)
 ```
 > 실무 권장: **가독성/유지보수** 때문에 **컬럼명(또는 별칭)**을 쓰자.
 
-### 3.2 별칭 정렬
+### 별칭 정렬
+
 ```sql
 SELECT name, salary * 1.1 AS salary_new
 FROM Employee
 ORDER BY salary_new DESC;
 ```
 
-### 3.3 표현식 정렬
+### 표현식 정렬
+
 ```sql
 SELECT order_id, order_dt
 FROM Orders
 ORDER BY DATE(order_dt), order_id;
 ```
 
-### 3.4 CASE로 사용자 정의 순서
+### CASE로 사용자 정의 순서
+
 ```sql
 -- 상태의 임의 우선순위 지정: PENDING > PAID > REFUND > 그 외
 SELECT order_id, status
@@ -92,7 +97,8 @@ ORDER BY
   END, order_id;
 ```
 
-### 3.5 불리언/조건식 정렬
+### 불리언/조건식 정렬
+
 ```sql
 -- 최근 7일 이내 주문을 상단에 올리고, 그 안에서는 최신순
 SELECT order_id, order_dt
@@ -103,9 +109,10 @@ ORDER BY (order_dt >= CURRENT_DATE - INTERVAL '7 DAY') DESC,
 
 ---
 
-## 4. NULL 정렬과 Collation/Locale
+## NULL 정렬과 Collation/Locale
 
-### 4.1 NULL 순서
+### NULL 순서
+
 DBMS별 기본 NULL 위치가 다르다(사용자 초안 요약과 동일). **명시적으로 제어**하라.
 
 ```sql
@@ -116,7 +123,8 @@ ORDER BY score DESC NULLS LAST;
 ORDER BY (score IS NULL), score DESC;  -- NULL이 마지막
 ```
 
-### 4.2 Collation/Locale
+### Collation/Locale
+
 문자 정렬은 **Collation**에 따라 다르다(대소문자, 악센트, 한글 초성/종성 등).
 
 ```sql
@@ -130,7 +138,7 @@ ORDER BY name COLLATE utf8mb4_0900_as_cs;  -- 악센트/대소문자 구분
 
 ---
 
-## 5. 자연 정렬(Natural Sort)과 숫자형 문자열
+## 자연 정렬(Natural Sort)과 숫자형 문자열
 
 문자열 `"2" < "10"` 문제를 해결하려면 **숫자 캐스팅** 또는 **패딩**을 사용한다.
 
@@ -148,9 +156,10 @@ ORDER BY LPAD(code, 6, '0');
 
 ---
 
-## 6. 정렬과 인덱스 — “정렬 생략”이 최강의 최적화
+## 정렬과 인덱스 — “정렬 생략”이 최강의 최적화
 
-### 6.1 인덱스 순서 재사용(Index order)
+### 인덱스 순서 재사용(Index order)
+
 `WHERE`의 **선택도 높은 선행 컬럼**과 `ORDER BY`의 컬럼 순서/방향이 **인덱스 정의와 일치**하면 **정렬 없이** 스캔만으로 정렬된 결과를 얻는다.
 
 ```sql
@@ -169,7 +178,8 @@ ORDER BY dept_id ASC, salary DESC;
 - `ORDER BY`가 인덱스 **키 순서/방향과 동일**,
 - 필요 시 **커버링 인덱스**(SELECT 컬럼이 모두 인덱스에 존재)면 **랜덤 접근도 감소**.
 
-### 6.2 정렬 방향 혼합
+### 정렬 방향 혼합
+
 서로 다른 방향(ASC/DESC) 혼합도 **인덱스 정의에서 방향까지 일치**해야 정렬 생략 가능(DBMS별 제약 다름).
 
 ```sql
@@ -182,7 +192,8 @@ WHERE order_dt >= '2025-01-01'
 ORDER BY order_dt DESC, amount ASC;
 ```
 
-### 6.3 함수 적용 시 인덱스 무력화
+### 함수 적용 시 인덱스 무력화
+
 `ORDER BY DATE(order_dt)`처럼 **표현식**을 감싸면 인덱스 정렬을 재사용하지 못한다.
 → **계산(생성) 열 + 인덱스** 또는 **반열림 구간 + 원본 컬럼 정렬**을 고려.
 
@@ -201,9 +212,10 @@ ORDER BY order_date, order_id; -- 정렬 생략 가능
 
 ---
 
-## 7. Top-N, 페이징, WITH TIES, 키셋 페이징
+## Top-N, 페이징, WITH TIES, 키셋 페이징
 
-### 7.1 Top-N
+### Top-N
+
 ```sql
 -- Oracle 12c+
 SELECT name, salary
@@ -218,7 +230,8 @@ ORDER BY salary DESC
 LIMIT 5;
 ```
 
-### 7.2 WITH TIES (동점 포함)
+### WITH TIES (동점 포함)
+
 ```sql
 -- SQL Server / Oracle 12c+ / PostgreSQL(호환 구문 상이)
 SELECT name, salary
@@ -227,7 +240,8 @@ ORDER BY salary DESC
 FETCH FIRST 5 ROWS WITH TIES;  -- 5위와 동점 모두 포함
 ```
 
-### 7.3 OFFSET의 비용과 대안
+### OFFSET의 비용과 대안
+
 `OFFSET 100000`은 **앞선 10만 건을 스킵**해야 하므로 매우 비싸다.
 **키셋 페이징(Keyset/Cursor Paging)**으로 전환하라.
 
@@ -245,9 +259,10 @@ LIMIT 50;
 
 ---
 
-## 8. ORDER BY와 집계/윈도 함수의 경계
+## ORDER BY와 집계/윈도 함수의 경계
 
-### 8.1 집계 + 정렬
+### 집계 + 정렬
+
 ```sql
 SELECT dept_id, COUNT(*) AS emp_count
 FROM Employee
@@ -255,7 +270,8 @@ GROUP BY dept_id
 ORDER BY emp_count DESC, dept_id ASC;
 ```
 
-### 8.2 윈도 함수의 `ORDER BY`
+### 윈도 함수의 `ORDER BY`
+
 윈도 함수의 `ORDER BY`는 **파티션 내부의 계산 순서**를 정의한다.
 **결과의 표시 순서**를 바꾸려면 **외부 `ORDER BY`**가 별도로 필요하다.
 
@@ -272,7 +288,7 @@ ORDER BY customer_id, rn;  -- 최종 표시 순서
 
 ---
 
-## 9. 날짜/시간 정렬 — 반열림 구간과 안정 키
+## 날짜/시간 정렬 — 반열림 구간과 안정 키
 
 ```sql
 -- 월 범위(반열림) + 안정 정렬 키
@@ -288,14 +304,14 @@ ORDER BY order_dt, order_id;
 
 ---
 
-## 10. 정렬 안정성(Stable Sort)과 타 DB 영향
+## 정렬 안정성(Stable Sort)과 타 DB 영향
 
 일부 엔진은 내부적으로 **안정 정렬이 아닐 수 있다**. 즉, 동점의 상대 순서가 입력 순서와 같다는 보장이 없다.
 → **언제나 보조 키를 포함**해 결정적으로 하라.
 
 ---
 
-## 11. 대용량 정렬: 메모리 vs 디스크(Temp)와 근사해법
+## 대용량 정렬: 메모리 vs 디스크(Temp)와 근사해법
 
 - 정렬 메모리를 초과하면 디스크(Temp)로 spill. I/O 급증.
 - **인덱스 순서 재활용**, **Top-N with index**, **키셋 페이징**으로 회피.
@@ -303,7 +319,7 @@ ORDER BY order_dt, order_id;
 
 ---
 
-## 12. 다이얼렉트 차이 요약
+## 다이얼렉트 차이 요약
 
 | 항목 | MySQL | PostgreSQL | SQL Server | Oracle |
 |---|---|---|---|---|
@@ -317,16 +333,18 @@ ORDER BY order_dt, order_id;
 
 ---
 
-## 13. 실무 시나리오와 예제
+## 실무 시나리오와 예제
 
-### 13.1 고객 등급 > 이름 순
+### 고객 등급 > 이름 순
+
 ```sql
 SELECT customer_name, grade
 FROM Customers
 ORDER BY grade DESC, customer_name ASC;
 ```
 
-### 13.2 최근 주문순 + NULL 주문일 뒤로
+### 최근 주문순 + NULL 주문일 뒤로
+
 ```sql
 -- PostgreSQL/Oracle
 SELECT order_id, customer_id, order_dt
@@ -334,7 +352,8 @@ FROM Orders
 ORDER BY order_dt DESC NULLS LAST, order_id DESC;
 ```
 
-### 13.3 집계 결과 정렬(부서 인원 Top-K)
+### 집계 결과 정렬(부서 인원 Top-K)
+
 ```sql
 -- MySQL/PostgreSQL
 SELECT dept_id, COUNT(*) AS emp_count
@@ -344,7 +363,8 @@ ORDER BY emp_count DESC, dept_id
 LIMIT 10;
 ```
 
-### 13.4 사용자 지정 정렬(카테고리 그룹 우선)
+### 사용자 지정 정렬(카테고리 그룹 우선)
+
 ```sql
 SELECT product_id, category
 FROM Products
@@ -358,7 +378,8 @@ ORDER BY
   product_id;
 ```
 
-### 13.5 문자열 숫자 자연 정렬
+### 문자열 숫자 자연 정렬
+
 ```sql
 -- MySQL
 SELECT version
@@ -368,7 +389,8 @@ ORDER BY CAST(SUBSTRING_INDEX(version, '.', 1) AS UNSIGNED),
          CAST(SUBSTRING_INDEX(version, '.', -1) AS UNSIGNED);
 ```
 
-### 13.6 키셋 페이징(무한 스크롤)
+### 키셋 페이징(무한 스크롤)
+
 ```sql
 -- 마지막 행의 (created_at, id)를 기억
 SELECT id, created_at, title
@@ -378,7 +400,8 @@ ORDER BY created_at DESC, id DESC
 LIMIT 30;
 ```
 
-### 13.7 인덱스와 정렬 재활용
+### 인덱스와 정렬 재활용
+
 ```sql
 -- 인덱스 준비
 CREATE INDEX ix_emp_dept_salary ON Employee(dept_id, salary DESC);
@@ -390,7 +413,8 @@ WHERE dept_id BETWEEN 10 AND 20
 ORDER BY dept_id, salary DESC;
 ```
 
-### 13.8 날짜 버킷 행렬: 일자 오름·금액 내림
+### 날짜 버킷 행렬: 일자 오름·금액 내림
+
 ```sql
 SELECT order_date, SUM(amount) AS amt
 FROM Orders
@@ -400,7 +424,8 @@ GROUP BY order_date
 ORDER BY order_date ASC;   -- 집계 후 표 형식용
 ```
 
-### 13.9 WITH TIES로 동점 포함 Top-N
+### WITH TIES로 동점 포함 Top-N
+
 ```sql
 -- Oracle/SQL Server/PostgreSQL (구문 차이 있음)
 SELECT name, sales
@@ -409,7 +434,8 @@ ORDER BY sales DESC
 FETCH FIRST 3 ROWS WITH TIES;
 ```
 
-### 13.10 다국어 정렬(한국어/영문 혼재)
+### 다국어 정렬(한국어/영문 혼재)
+
 ```sql
 -- MySQL 예시
 SELECT name
@@ -419,7 +445,7 @@ ORDER BY name COLLATE 'utf8mb4_0900_ai_ci', id;  -- 악센트/대소문자 무�
 
 ---
 
-## 14. 성능 체크리스트
+## 성능 체크리스트
 
 - [ ] **정렬 컬럼 인덱스** 보유 여부 확인(가능하면 정렬 생략)
 - [ ] `WHERE` 선택도 높은 컬럼이 **인덱스 선두**에 있는가
@@ -433,7 +459,7 @@ ORDER BY name COLLATE 'utf8mb4_0900_ai_ci', id;  -- 악센트/대소문자 무�
 
 ---
 
-## 15. 자주 하는 실수와 예방
+## 자주 하는 실수와 예방
 
 | 실수 | 영향 | 예방 |
 |---|---|---|

@@ -6,7 +6,7 @@ category: 웹해킹
 ---
 # File Upload 취약점 — 웹쉘 업로드 사례와 보안 조치 완전 가이드
 
-## 0. 개요: 왜 업로드가 위험한가
+## 개요: 왜 업로드가 위험한가
 
 사용자 업로드는 “**신뢰할 수 없는 바이너리**가 **서버·브라우저·보조 처리기(이미지 라이브러리, AV, 변환기)**로 흘러드는 통로”입니다. 업로드 취약점은 크게 다음으로 나뉩니다.
 
@@ -19,25 +19,25 @@ category: 웹해킹
 
 ---
 
-## 1. 대표 공격 경로 디테일
+## 대표 공격 경로 디테일
 
-### 1.1 웹쉘 업로드(서버 실행)
+### 웹쉘 업로드(서버 실행)
 
 - 이중 확장자: `file.jpg.php`, `file.php.jpg` 등으로 **서버 파서/설정 빈틈**을 이용해 실행. 일부 환경/설정에서 실제로 실행될 수 있음.
 - 구 버전 취약점: **널 바이트**(`.php%00.jpg`), **NTFS ADS**(`.asax:.jpg`, `::$DATA`) 등 **우회 케이스** 다수.
 
 > **핵심**: “확장자만 보지 말고” 웹 서버가 **어떤 경로에서 무엇을 실행**하는지, 그리고 **저장 위치가 웹 루트인지**를 점검하세요.
 
-### 1.2 클라이언트 공격(콘텐츠 하이재킹/XSS)
+### 클라이언트 공격(콘텐츠 하이재킹/XSS)
 
 - **SVG**는 단순 이미지가 아니라 **스크립트/외부참조** 가능한 **활성 포맷**입니다. 많은 서비스/메일 클라이언트가 최근 SVG 취급을 강화했습니다. 업로드 SVG는 **표시하지 않거나** 라스터화/샌드박스로 처리하세요.
 - **MIME 스니핑** 방지 헤더(`X-Content-Type-Options: nosniff`)가 없으면 브라우저가 콘텐츠를 **추정 렌더링**해 위험이 커집니다.
 
-### 1.3 파일 처리기/변환기 RCE
+### 파일 처리기/변환기 RCE
 
 - **ImageMagick** 계열 처리(리사이즈, 썸네일) 중 **ImageTragick(CVE-2016-3714)** 같은 **RCE** 사례가 있었습니다. 외부 “delegate” 호출 경로, 정책 파일 설정이 중요합니다.
 
-### 1.4 업로드 로직의 논리 결함
+### 업로드 로직의 논리 결함
 
 - 이름/경로를 그대로 사용 → **경로 조작/덮어쓰기**
 - 사이즈/개수 제한 없음 → **스토리지 고갈**
@@ -45,9 +45,9 @@ category: 웹해킹
 
 ---
 
-## 2. 취약 코드 → 안전 코드 (언어별 레시피)
+## 취약 코드 → 안전 코드 (언어별 레시피)
 
-### 2.1 Node.js(Express + Multer) — 이미지 업로드
+### Node.js(Express + Multer) — 이미지 업로드
 
 **❌ 취약 예시**: 확장자/`content-type`만 믿고, 웹 루트에 저장
 ```javascript
@@ -112,7 +112,7 @@ app.post("/upload", upload.single("file"), async (req, res, next) => {
 
 > **참고**: libmagic/`file` 기반의 **시그니처 검증**은 확장자/헤더 우회를 어느 정도 막지만, **단독으로는 충분하지 않음**—반드시 **허용 목록**·**사이즈 제한**·**재인코딩/샌드박스**와 **조합**하세요.
 
-### 2.2 PHP — `move_uploaded_file` 안전 패턴
+### PHP — `move_uploaded_file` 안전 패턴
 
 **❌ 취약 예시**
 ```php
@@ -150,7 +150,7 @@ echo json_encode(["id" => $safe]);
 ```
 - **팁**: PHP-FPM/Apache 실행과 **물리적으로 분리된 디렉터리**를 쓰고, **.htaccess로 실행 차단**을 병행하세요(아래 서버 설정 참조).
 
-### 2.3 Spring Boot(Java) — `MultipartFile` + Tika/libmagic 검증
+### Spring Boot(Java) — `MultipartFile` + Tika/libmagic 검증
 
 ```java
 @PostMapping("/upload")
@@ -180,11 +180,13 @@ public ResponseEntity<?> upload(@RequestParam("f") MultipartFile f) throws Excep
 
 ---
 
-## 3. 서버/리버스 프록시 설정으로 “실행”을 구조적으로 차단
+## 서버/리버스 프록시 설정으로 “실행”을 구조적으로 차단
 
-### 3.1 Nginx — 업로드 경로에서 스크립트 실행 금지 & 다운로드 전용 헤더
+### Nginx — 업로드 경로에서 스크립트 실행 금지 & 다운로드 전용 헤더
+
 ```nginx
 # 업로드는 별도 가상경로나 별도 도메인/서브도메인 권장
+
 location ^~ /uploads/ {
     # MIME 스니핑 방지 + 브라우저 표시 억제
     add_header X-Content-Type-Options nosniff;
@@ -194,15 +196,18 @@ location ^~ /uploads/ {
 }
 
 # PHP 실행 금지(업로드 경로 내)
+
 location ~* ^/uploads/.*\.(php|phtml|phar)$ {
     return 403;
 }
 ```
 - **`X-Content-Type-Options: nosniff`**로 브라우저의 MIME 추정을 막고, **`Content-Disposition: attachment`**로 업로드 파일을 **브라우저 내 렌더 대신 다운로드**하게 만들어 XSS/콘텐츠 하이재킹 위험을 낮춥니다.
 
-### 3.2 Apache(.htaccess/가상호스트) — 실행 금지
+### Apache(.htaccess/가상호스트) — 실행 금지
+
 ```apache
 # /uploads/ 이하에서 PHP 등 스크립트 직접 실행 금지
+
 <Directory "/var/www/site/uploads">
   RemoveHandler .php .phtml .phar
   <FilesMatch "\.(php|phtml|phar)$">
@@ -216,32 +221,34 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 4. 클라우드(S3/CloudFront)로 안전하게 서빙하기(권장 아키텍처)
+## 클라우드(S3/CloudFront)로 안전하게 서빙하기(권장 아키텍처)
 
 - **S3는 기본적으로 비공개**(Block Public Access)로 두고, **CloudFront(OAC)**를 통해서만 접근 허용. 이렇게 하면 **직접 URL 노출**과 과도한 퍼블릭 액세스를 줄입니다.
 - CloudFront **응답 헤더 정책**으로 `X-Content-Type-Options: nosniff`, `Content-Disposition: attachment`를 고정 설정하여 **렌더링 억제**. (S3에서는 객체 메타로 `Content-Disposition`도 지정 가능)
 
 ---
 
-## 5. “콘텐츠” 자체를 무해화(이미지/문서)
+## “콘텐츠” 자체를 무해화(이미지/문서)
 
-### 5.1 이미지
+### 이미지
+
 - 업로드 이미지는 **재인코딩(라스터화)**해서 **EXIF/메타**와 숨겨진 페이로드를 제거.
 - ImageMagick 사용 시 **정책 파일**로 위험 delegate 차단(과거 **ImageTragick**) 및 최신 버전 유지.
 
-### 5.2 문서(PDF/Office) — **CDR(Content Disarm & Reconstruction)**
+### 문서(PDF/Office) — **CDR(Content Disarm & Reconstruction)**
+
 - AV는 **서명 기반**이라 우회가 가능. **CDR**은 “**실행 가능한 부분 제거 → 안전한 규격으로 재조립**” 접근으로 **제로데이 위험**을 낮춥니다(문서형 업로드에 특히 유용).
 
 ---
 
-## 6. 악성 여부 스캔(AV) 파이프라인
+## 악성 여부 스캔(AV) 파이프라인
 
 - **ClamAV** 같은 서버측 AV로 업로드 직후 **동기/비동기 스캔**을 수행하고 **격리/차단** 플로우를 둡니다. (예: `clamdscan`/REST)
 - 규모가 크면 **큐 기반(업로드 → 임시저장 → 스캔 → 정식저장)**으로 구성. 상용/오픈소스 모두 실무 적용사례 다수.
 
 ---
 
-## 7. 특별 위험 포맷과 주의사항
+## 특별 위험 포맷과 주의사항
 
 - **SVG**: 스크립트·외부참조 가능 → **라스터화**(PNG 등)·**서버 렌더러 사용** 또는 **전면 비허용**. 최근 메일 클라이언트도 **Inline SVG 표시 제한** 추세.
 - **PDF**: JavaScript/임베디드 컨텐츠 가능 → **CDR** 또는 **첨부 다운로드 강제**.
@@ -249,7 +256,7 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 8. 파일명·경로·권한 하드닝 체크리스트
+## 파일명·경로·권한 하드닝 체크리스트
 
 - **파일명**
   - **랜덤/UUID**로 교체, **허용 문자 제한**(영숫자·`-`·`_`·`.` 정도), **길이 제한**.
@@ -262,9 +269,10 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 9. “웹쉘 업로드” 시나리오와 방어(교육용)
+## “웹쉘 업로드” 시나리오와 방어(교육용)
 
-### 9.1 상황
+### 상황
+
 - 취약 애플리케이션이 `public/uploads`에 업로드를 저장하고, **이중 확장자**를 막지 않음.
 - 공격자는 `avatar.jpg.php`를 업로드(내용은 단순 `<?php echo "test"; ?>` 같은 **비해로운 데모**).
 
@@ -273,14 +281,14 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 10. 프런트엔드/브라우저 레벨의 안전장치
+## 프런트엔드/브라우저 레벨의 안전장치
 
 - 업로드 성공 후 **미리보기**는 가능하면 **서버 라스터화 결과**(PNG)만 사용.
 - 사용자 업로드 파일을 페이지에 **inline 렌더링 금지**(특히 SVG/PDF). **항상 다운로드(attachment)**로 제공. **MIME 스니핑 금지** 헤더 필수.
 
 ---
 
-## 11. 테스트 벤치(보안/QA용) — “막혀야 정상”
+## 테스트 벤치(보안/QA용) — “막혀야 정상”
 
 1) **이중 확장자**: `test.jpg.php` 업로드 → 저장/접근이 **거부**되어야 함.
 2) **널 바이트**: `file.php%00.jpg` → **거부** 또는 **정상화**되어야 함.
@@ -291,7 +299,7 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 12. 운영 가이드(필수 설정 요약)
+## 운영 가이드(필수 설정 요약)
 
 - **서버/리버스 프록시**: 업로드 경로 **실행 금지** + `nosniff` + `Content-Disposition: attachment`.
 - **저장소**: **웹 루트 밖** 또는 **S3+CloudFront(OAC)**로 **사설 저장·프록시 서빙**.
@@ -301,9 +309,10 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 13. 부록 — 실전 스니펫 모음
+## 부록 — 실전 스니펫 모음
 
-### 13.1 Express 다운로드 핸들러(안전 헤더 포함)
+### Express 다운로드 핸들러(안전 헤더 포함)
+
 ```javascript
 app.get("/files/:id", async (req, res, next) => {
   const id = req.params.id.replace(/[^a-zA-Z0-9._-]/g, "");
@@ -319,7 +328,8 @@ app.get("/files/:id", async (req, res, next) => {
 });
 ```
 
-### 13.2 Nginx: 업로드 전용 서브도메인(정적 다운로드 프록시)
+### Nginx: 업로드 전용 서브도메인(정적 다운로드 프록시)
+
 ```nginx
 server {
   listen 443 ssl;
@@ -337,13 +347,14 @@ server {
 }
 ```
 
-### 13.3 S3/CloudFront(개요)
+### S3/CloudFront(개요)
+
 - S3 버킷: **Block Public Access ON**, 객체는 **사설**.
 - CloudFront: **OAC** 설정으로만 접근, **응답 헤더 정책**에 `nosniff`/`attachment` 추가.
 
 ---
 
-## 14. 자주 하는 실수 ↔ 교정
+## 자주 하는 실수 ↔ 교정
 
 - **클라이언트 검증만**으로 충분하다고 생각 → 프록시/도구로 헤더·본문은 쉽게 조작됩니다. **서버측**이 최종 심판.
 - **`Content-Type`만** 믿음 → 스푸핑 가능. **시그니처 검사**와 **허용 목록**을 결합하세요.
@@ -366,5 +377,6 @@ server {
 ---
 
 ### 한 줄 요약
+
 > 업로드 보안의 정석은 **“수용 최소화(허용 목록)” + “검증 중첩(확장자·MIME·시그니처·콘텐츠)” + “저장/서빙 분리(웹루트 외·프록시)” + “실행 차단(서버 설정)” + “무해화/스캔(CDR/AV)”** 입니다.
 > 이 다층 방어가 **웹쉘 업로드·콘텐츠 하이재킹·변환기 RCE**까지 포괄적으로 낮춥니다.

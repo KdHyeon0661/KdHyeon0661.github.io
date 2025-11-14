@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core MVC — Partial View와 Layout
 
-## 1. View 계층 개관 (복습 + 확장)
+## View 계층 개관 (복습 + 확장)
 
 ```
 _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터/공통 스크립트)
@@ -22,9 +22,10 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 
 ---
 
-## 2. Layout — _Layout.cshtml 구조와 모범 사례
+## Layout — _Layout.cshtml 구조와 모범 사례
 
-### 2.1 기본 위치/지정
+### 기본 위치/지정
+
 - 기본 위치: `Views/Shared/_Layout.cshtml`
 - 모든 뷰에 기본 레이아웃을 적용하려면 `Views/_ViewStart.cshtml`에서 지정
 
@@ -43,7 +44,7 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 }
 ```
 
-### 2.2 _Layout 기본 골격(Section/Environment/Partial 포함)
+### _Layout 기본 골격(Section/Environment/Partial 포함)
 
 ```cshtml
 @* Views/Shared/_Layout.cshtml *@
@@ -95,13 +96,14 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 
 ---
 
-## 3. Partial View — 4가지 호출 방식과 데이터 전달
+## Partial View — 4가지 호출 방식과 데이터 전달
 
-### 3.1 위치/명명
+### 위치/명명
+
 - 위치: `Views/Shared/` 또는 `Views/{Controller}/`
 - 컨벤션: 파일명 앞에 `_` 접두(예: `_ProductCard.cshtml`)
 
-### 3.2 호출 방식 비교
+### 호출 방식 비교
 
 | 방식 | 문법 | 반환/동작 | 비고 |
 |---|---|---|---|
@@ -112,7 +114,7 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 
 > 실무에선 **Partial Tag Helper** 또는 **`Html.PartialAsync`**를 주로 사용.
 
-### 3.3 Partial 예시(카드 구성)
+### Partial 예시(카드 구성)
 
 ```cshtml
 @* Views/Shared/_ProductCard.cshtml *@
@@ -150,7 +152,7 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 @* @foreach (var p in Model) { @await Html.PartialAsync("_ProductCard", p) } *@
 ```
 
-### 3.4 Partial에 추가 데이터(ViewData) 전달
+### Partial에 추가 데이터(ViewData) 전달
 
 ```cshtml
 @{
@@ -171,7 +173,7 @@ Partial 내에서:
 
 ---
 
-## 4. Partial vs Layout vs ViewComponent — 언제 무엇을?
+## Partial vs Layout vs ViewComponent — 언제 무엇을?
 
 | 대상 | 사용 상황 | 장점 | 주의 |
 |---|---|---|---|
@@ -179,7 +181,7 @@ Partial 내에서:
 | Partial View | **단순한 뷰 조각** 재사용(데이터는 **이미** 준비됨) | 단순/빠름 | 데이터 로딩 로직을 포함하지 않음 |
 | **ViewComponent** | 부분 데이터 로딩 + 렌더링이 함께 필요(“미니 컨트롤러”) | 테스트 용이, 독립성↑ | 파일 2개(클래스/뷰), 학습 요소 |
 
-### 4.1 ViewComponent 간단 예시
+### ViewComponent 간단 예시
 
 ```csharp
 // Components/CartSummaryViewComponent.cs
@@ -214,16 +216,16 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 5. Section — 페이지별 스크립트/스타일 주입
+## Section — 페이지별 스크립트/스타일 주입
 
-### 5.1 Layout에 정의
+### Layout에 정의
 
 ```cshtml
 @RenderSection("Head", required: false)
 @RenderSection("Scripts", required: false)
 ```
 
-### 5.2 View에서 채우기
+### View에서 채우기
 
 ```cshtml
 @section Head {
@@ -239,9 +241,10 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 6. _ViewStart / _ViewImports — 전역 Razor 설정
+## _ViewStart / _ViewImports — 전역 Razor 설정
 
-### 6.1 _ViewStart.cshtml
+### _ViewStart.cshtml
+
 - 모든 뷰에 **기본 Layout** 지정
 - 뷰 단에서 필요 시 덮어쓰기 가능
 
@@ -251,7 +254,8 @@ public class CartSummaryViewComponent : ViewComponent
 }
 ```
 
-### 6.2 _ViewImports.cshtml
+### _ViewImports.cshtml
+
 - 네임스페이스, Tag Helper, 공통 using 지정
 
 ```cshtml
@@ -264,9 +268,10 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 7. Partial로 폼 조립하기 — 중첩 폼 주의 & 검증 스크립트
+## Partial로 폼 조립하기 — 중첩 폼 주의 & 검증 스크립트
 
-### 7.1 중첩 폼 금지
+### 중첩 폼 금지
+
 HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 “부품 폼”을 Partial로 분리할 수는 있지만, **최상위 폼은 하나**여야 한다.
 
@@ -298,7 +303,8 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 </div>
 ```
 
-### 7.2 안티포저리 토큰
+### 안티포저리 토큰
+
 - Razor `form` Tag Helper는 자동으로 토큰을 넣지만, 순수 `<form>`을 직접 쓸 땐 `@Html.AntiForgeryToken()` 추가.
 
 ```cshtml
@@ -310,7 +316,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 8. Partial Tag Helper 고급 옵션
+## Partial Tag Helper 고급 옵션
 
 ```cshtml
 <partial name="_ProductCard"
@@ -324,7 +330,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 9. EditorTemplates/DisplayTemplates — Partial과 다른 “형식 템플릿”
+## EditorTemplates/DisplayTemplates — Partial과 다른 “형식 템플릿”
 
 - 위치: `Views/Shared/EditorTemplates/` 또는 `Views/{Controller}/EditorTemplates/`
 - 파일명 = 타입명(또는 별칭)
@@ -353,9 +359,9 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 10. 캐시/환경 분기/조건부 렌더링
+## 캐시/환경 분기/조건부 렌더링
 
-### 10.1 Cache Tag Helper (부분 캐싱)
+### Cache Tag Helper (부분 캐싱)
 
 ```cshtml
 <cache expires-after="00:05:00"
@@ -367,10 +373,11 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 - 핫한 목록/요약 카드 조각에 적용하면 성능↑
 
-### 10.2 Environment Tag Helper
+### Environment Tag Helper
+
 - 개발/운영에 따라 리소스 분리(이미 레이아웃에서 사용)
 
-### 10.3 권한/상태에 따른 조건부 노출
+### 권한/상태에 따른 조건부 노출
 
 ```cshtml
 @if (User.IsInRole("Admin")) {
@@ -380,9 +387,9 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 11. 동적 레이아웃 전환 패턴
+## 동적 레이아웃 전환 패턴
 
-### 11.1 _ViewStart에서 조건 분기
+### _ViewStart에서 조건 분기
 
 ```cshtml
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAcc
@@ -397,12 +404,13 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 > 경로/도메인/쿠키/테넌트에 따라 다른 레이아웃을 적용 가능.
 
-### 11.2 액션 단에서 ViewBag/RouteData로 전달하여 뷰에서 선택
+### 액션 단에서 ViewBag/RouteData로 전달하여 뷰에서 선택
+
 - 컨트롤러에서 `ViewBag.UseAdmin = true;` 후 뷰에서 `Layout = ViewBag.UseAdmin ? "_AdminLayout" : "_Layout";`
 
 ---
 
-## 12. 메뉴 활성화(Active) — 현재 라우트 반영
+## 메뉴 활성화(Active) — 현재 라우트 반영
 
 ```cshtml
 @* Views/Shared/_Navbar.cshtml *@
@@ -420,7 +428,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 13. Areas와 레이아웃/Partial 배치
+## Areas와 레이아웃/Partial 배치
 
 구조:
 
@@ -439,7 +447,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 14. 다국어(Localization) — 뷰/레이아웃에서 문자열
+## 다국어(Localization) — 뷰/레이아웃에서 문자열
 
 ```cshtml
 @* _Layout.cshtml *@
@@ -455,16 +463,16 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 15. 실전 예시 — “목록 + 카드 + 상세 + 레이아웃 섹션 스크립트” 종합
+## 실전 예시 — “목록 + 카드 + 상세 + 레이아웃 섹션 스크립트” 종합
 
-### 15.1 ViewModel
+### ViewModel
 
 ```csharp
 public record ProductCardVm(int Id, string Name, string Description, decimal Price);
 public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Size, int Total);
 ```
 
-### 15.2 목록 뷰(부분 카드 사용 + 섹션 스크립트)
+### 목록 뷰(부분 카드 사용 + 섹션 스크립트)
 
 ```cshtml
 @* Views/Products/Index.cshtml *@
@@ -501,7 +509,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 }
 ```
 
-### 15.3 카드 Partial(데이터 속성으로 식별자 부여)
+### 카드 Partial(데이터 속성으로 식별자 부여)
 
 ```cshtml
 @* Views/Shared/_ProductCard.cshtml *@
@@ -517,7 +525,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 
 ---
 
-## 16. 모듈화 팁 & 성능/안전 체크리스트
+## 모듈화 팁 & 성능/안전 체크리스트
 
 - **모듈화**
   - 작은 Partial로 쪼개고 조립(카드/리스트/필터/폼 섹션)
@@ -538,7 +546,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 
 ---
 
-## 17. 자주 겪는 실수와 해결책
+## 자주 겪는 실수와 해결책
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -551,7 +559,7 @@ public record ProductListVm(IReadOnlyList<ProductCardVm> Items, int Page, int Si
 
 ---
 
-## 18. 마무리 요약
+## 마무리 요약
 
 | 개념 | 핵심 |
 |---|---|

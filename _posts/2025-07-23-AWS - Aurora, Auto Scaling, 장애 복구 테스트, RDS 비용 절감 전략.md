@@ -6,7 +6,7 @@ category: AWS
 ---
 # Amazon Aurora, Auto Scaling, 장애 복구 테스트, RDS 비용 절감 전략
 
-## 0. 한 장 요약
+## 한 장 요약
 
 - **Aurora**는 **컴퓨트(인스턴스)**와 **분산 스토리지(6-way, 3AZ)**를 분리한 **관리형 RDB**로, **고성능/고가용/확장성**을 제공한다.
 - **Auto Scaling**은 **Serverless v2(세밀한 ACU 스케일)**, **리드 리플리카 자동 증감**, **글로벌 읽기** 등으로 달성한다.
@@ -15,9 +15,9 @@ category: AWS
 
 ---
 
-## 1. Amazon Aurora란 무엇인가? (초안 보강)
+## Amazon Aurora란 무엇인가? (초안 보강)
 
-### 1.1 개요 & 특징
+### 개요 & 특징
 
 | 항목 | 설명 |
 |---|---|
@@ -31,7 +31,7 @@ category: AWS
 
 > **핵심 관점**: Aurora는 “**스토리지 엔진을 서비스화**”했기 때문에 로그/체크포인트/복구 경로가 전통적인 RDB보다 **더 빠르고 탄력적**이다.
 
-### 1.2 Aurora 클러스터 구성 요소
+### Aurora 클러스터 구성 요소
 
 | 컴포넌트 | 역할 |
 |---|---|
@@ -42,9 +42,9 @@ category: AWS
 
 ---
 
-## 2. Auto Scaling (서버리스 v2, 리플리카, 글로벌)
+## Auto Scaling (서버리스 v2, 리플리카, 글로벌)
 
-### 2.1 Aurora Serverless v2 (세밀 탄력)
+### Aurora Serverless v2 (세밀 탄력)
 
 - **초 단위**로 **ACU(Aurora Capacity Unit)**를 조정하여 vCPU/메모리를 **부하에 맞추어 축소/확장**.
 - **프로비저닝 없는** 운영(최소/최대 ACU 범위 지정) → 유휴시 비용 절감.
@@ -55,6 +55,7 @@ category: AWS
 
 ```bash
 # (개념) 서버리스 v2 클러스터 파라미터 예시
+
 aws rds create-db-cluster \
   --db-cluster-identifier aurora-slv2-demo \
   --engine aurora-mysql \
@@ -65,7 +66,7 @@ aws rds create-db-cluster \
 
 > 주: 실제 파라미터 명/지원값은 엔진/버전에 따라 다르므로 배포 전 콘솔/공식 문서로 확인.
 
-### 2.2 Reader Auto Scaling
+### Reader Auto Scaling
 
 - **리드 리플리카 개수**를 CloudWatch ALB/탐색 요청 지표 기반으로 **자동 증감**.
 - 엔드포인트 `reader-endpoint`로 **읽기 부하 분산**.
@@ -94,22 +95,23 @@ resource "aws_appautoscaling_policy" "aurora_scale_out" {
 }
 ```
 
-### 2.3 Aurora Global Database (전세계 읽기/재해 리전)
+### Aurora Global Database (전세계 읽기/재해 리전)
 
 - **Primary Region**의 로그 블록을 **비동기**로 서브 리전 **Secondary**에 전파 → **cross-region 읽기 지연 최소화**.
 - **리전 장애 시** Secondary를 **승격(Promote)**하여 쓰기 가능한 독립 클러스터로 전환(수동/자동 전환 시나리오 수립).
 
 ---
 
-## 3. 연결/성능 운영 (실전 팁)
+## 연결/성능 운영 (실전 팁)
 
-### 3.1 RDS Proxy
+### RDS Proxy
 
 - Lambda/서버리스/대규모 연결 수 **스파이크** 대응
 - **커넥션 풀/재활용**로 Aurora 보호, 콜드스타트/오버헤드 감소
 
 ```bash
 # RDS Proxy 생성(개념)
+
 aws rds create-db-proxy \
   --db-proxy-name app-proxy \
   --engine-family MYSQL \
@@ -118,13 +120,13 @@ aws rds create-db-proxy \
   --vpc-subnet-ids subnet-1 subnet-2
 ```
 
-### 3.2 세션/풀 전략
+### 세션/풀 전략
 
 - **짧은 트랜잭션** 유지(긴 트랜잭션은 Failover 지연/락 확장 리스크)
 - ORM 커넥션 풀 크기를 **작게 시작 → 관측성으로 점증**
 - **읽기/쓰기 분리**: 읽기는 `reader-endpoint`로 라우팅
 
-### 3.3 파라미터 튜닝
+### 파라미터 튜닝
 
 - **innodb_buffer_pool_size(유사)**, **work_mem(포스트그레)** 등 **워크로드 프로파일**에 맞게 조정
 - Autovacuum(포스트그레) 설정/모니터링
@@ -132,9 +134,9 @@ aws rds create-db-proxy \
 
 ---
 
-## 4. 장애 복구(Failover) 테스트 (게임데이 Runbook 포함)
+## 장애 복구(Failover) 테스트 (게임데이 Runbook 포함)
 
-### 4.1 장애 시 처리 흐름 (초안 정리 + 보강)
+### 장애 시 처리 흐름 (초안 정리 + 보강)
 
 | 구성 | 동작 |
 |---|---|
@@ -142,10 +144,11 @@ aws rds create-db-proxy \
 | Aurora Cluster | Reader 승격(수초~수십초), **스토리지 독립**으로 빠른 복구 목표 |
 | Global Database | 2차 리전 승격(Promote)로 DR 수행 |
 
-### 4.2 테스트 명령(의도적 Failover)
+### 테스트 명령(의도적 Failover)
 
 ```bash
 # Aurora 기본 인스턴스 강제 Failover(Writer 재시작)
+
 aws rds reboot-db-instance \
   --db-instance-identifier my-aurora-writer \
   --force-failover
@@ -156,7 +159,7 @@ aws rds reboot-db-instance \
 - 커넥션 풀 **자동 재연결** 여부
 - 트랜잭션 재시도/멱등성(Idempotency) 구현 확인
 
-### 4.3 게임데이 Runbook (샘플)
+### 게임데이 Runbook (샘플)
 
 1) **사전 조건**
    - IaC 상태 최신화, 최근 스냅샷, 알림 채널(Slack/PagerDuty) 점검
@@ -174,9 +177,9 @@ aws rds reboot-db-instance \
 
 ---
 
-## 5. 백업/복구/클로닝/백트래킹
+## 백업/복구/클로닝/백트래킹
 
-### 5.1 백업/스냅샷
+### 백업/스냅샷
 
 - **지속 백업**: 보존기간 내 **PITR**
 - **스냅샷**: 수동/공유/카탈로그화
@@ -187,7 +190,7 @@ aws rds create-db-snapshot \
   --db-instance-identifier my-aurora-writer
 ```
 
-### 5.2 복구
+### 복구
 
 ```bash
 aws rds restore-db-cluster-from-snapshot \
@@ -196,36 +199,36 @@ aws rds restore-db-cluster-from-snapshot \
   --engine aurora-mysql
 ```
 
-### 5.3 Fast Cloning / Backtrack(엔진/버전 의존)
+### Fast Cloning / Backtrack(엔진/버전 의존)
 
 - **Fast Database Cloning**: 스토리지 레벨 **Copy-on-Write**로 **대용량 즉시 클론**(테스트/리포팅)
 - **Backtrack(일부 MySQL 호환)**: **시점 되감기**(DDL/엔진 제약 확인)
 
 ---
 
-## 6. 보안/컴플라이언스
+## 보안/컴플라이언스
 
-### 6.1 암호화/네트워크
+### 암호화/네트워크
 
 - **KMS 암호화**(at-rest), **TLS(in-transit)**
 - 전용 **서브넷 그룹**, 보안그룹 최소 허용
 - **프라이빗 엔드포인트** 우선
 
-### 6.2 인증/권한
+### 인증/권한
 
 - **IAM 데이터베이스 인증**(토큰 기반, 유효기간 짧음)
 - 최소 권한 원칙, **비밀은 Secrets Manager**에 저장/로테이션
 
-### 6.3 감사/감사로그
+### 감사/감사로그
 
 - **CloudTrail**(제어면), DB Audit 로그(데이터면)
 - 장기 보관 시 **S3 + Object Lock(Compliance/Governance)** 조합
 
 ---
 
-## 7. 관측성(Observability)
+## 관측성(Observability)
 
-### 7.1 CloudWatch 지표(샘플)
+### CloudWatch 지표(샘플)
 
 | 지표 | 의미/임계값 아이디어 |
 |---|---|
@@ -236,7 +239,7 @@ aws rds restore-db-cluster-from-snapshot \
 | `Deadlocks` | 트랜잭션 경합/락 순서 문제 |
 | `DiskQueueDepth` | 스토리지 압박 시 신호 |
 
-### 7.2 퍼포먼스 관점 SQL 점검(예: PostgreSQL)
+### 퍼포먼스 관점 SQL 점검(예: PostgreSQL)
 
 ```sql
 -- 느린 쿼리 확인(Extension/pg_stat_statements 가정)
@@ -256,9 +259,9 @@ LIMIT 20;
 
 ---
 
-## 8. 비용 모델과 최적화 (수식 포함)
+## 비용 모델과 최적화 (수식 포함)
 
-### 8.1 근사비용 수식
+### 근사비용 수식
 
 $$
 \text{Monthly Cost} \approx
@@ -273,7 +276,7 @@ $$
 - \(G_b\): 백업 스토리지(GB·월), \(p_b\): 단가
 - \(E_x\): egress(GB), \(d_x\): GB당 전송 단가
 
-### 8.2 절감 전략(초안 정리 + 보강)
+### 절감 전략(초안 정리 + 보강)
 
 | 전략 | 요지 | 팁 |
 |---|---|---|
@@ -301,9 +304,9 @@ aws rds modify-db-instance \
 
 ---
 
-## 9. IaC & 배포 파이프라인
+## IaC & 배포 파이프라인
 
-### 9.1 Terraform (개념 요약: Aurora 클러스터 + 파라미터 그룹)
+### Terraform (개념 요약: Aurora 클러스터 + 파라미터 그룹)
 
 ```hcl
 provider "aws" { region = "ap-northeast-2" }
@@ -336,7 +339,7 @@ resource "aws_rds_cluster_instance" "reader" {
 }
 ```
 
-### 9.2 GitHub Actions (개념: 마이그레이션 + 배포)
+### GitHub Actions (개념: 마이그레이션 + 배포)
 
 ```yaml
 name: DB Migrate & Deploy
@@ -360,7 +363,7 @@ jobs:
 
 ---
 
-## 10. 마이그레이션/호환/개발자 경험
+## 마이그레이션/호환/개발자 경험
 
 - **호환성**: 기존 **MySQL/PostgreSQL 드라이버/ORM** 그대로 사용 가능(버전 제약 확인).
 - **스키마 관리**: Flyway/Liquibase/Alembic으로 **버전형 마이그레이션** 표준화.
@@ -368,9 +371,9 @@ jobs:
 
 ---
 
-## 11. 트러블슈팅 & 체크리스트
+## 트러블슈팅 & 체크리스트
 
-### 11.1 자주 겪는 이슈
+### 자주 겪는 이슈
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -380,7 +383,7 @@ jobs:
 | 비용 급증 | 스냅샷 누적/서버 과스펙 | 스냅샷 정리, 다운사이징, Serverless |
 | 쓰기 병목 | Hot row/PK 경합 | 샤딩키/파티션/쓰기 패턴 개선 |
 
-### 11.2 운용 체크리스트
+### 운용 체크리스트
 
 - [x] Multi-AZ(Aurora는 기본 다중AZ 스토리지) + 리플리카 구성
 - [x] 장애 복구 **게임데이 분기별 1회**
@@ -393,9 +396,9 @@ jobs:
 
 ---
 
-## 12. 실습: 읽기/쓰기 라우팅 & 간단 부하 테스트
+## 실습: 읽기/쓰기 라우팅 & 간단 부하 테스트
 
-### 12.1 애플리케이션 라우팅(Python 예)
+### 애플리케이션 라우팅(Python 예)
 
 ```python
 import pymysql
@@ -421,10 +424,11 @@ def get_orders(user_id, limit=50):
             return cur.fetchall()
 ```
 
-### 12.2 간단 부하(동시 읽기)
+### 간단 부하(동시 읽기)
 
 ```bash
-# 100 동시 GET 호출 시뮬레이션(예: wrk)
+# 동시 GET 호출 시뮬레이션(예: wrk)
+
 wrk -t8 -c100 -d30s http://api.example.com/orders?user=42
 ```
 
@@ -432,7 +436,7 @@ wrk -t8 -c100 -d30s http://api.example.com/orders?user=42
 
 ---
 
-## 13. 마무리 요약 (초안 + 보강)
+## 마무리 요약 (초안 + 보강)
 
 | 주제 | 핵심 |
 |---|---|

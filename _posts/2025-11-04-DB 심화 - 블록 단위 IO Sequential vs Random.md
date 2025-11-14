@@ -17,7 +17,7 @@ category: DB 심화
 
 ---
 
-## 0. 실습 스키마(공통)
+## 실습 스키마(공통)
 
 ```sql
 -- 고객, 주문, 주문품목 — 2백만~5백만 행 규모를 가정
@@ -74,9 +74,10 @@ END;
 
 ---
 
-## 1. 블록 단위 I/O 개요 — **Sequential vs Random**
+## 블록 단위 I/O 개요 — **Sequential vs Random**
 
-### 1.1 Sequential(순차) I/O
+### Sequential(순차) I/O
+
 - **특징**: **연속된 블록**을 **멀티블록**으로 읽음 → **처리량↑**
 - **대표 연산**:
   - **Table Full Scan** (버퍼드 또는 Direct Path Read)
@@ -85,7 +86,8 @@ END;
   - **Partition Full Scan**(Pruning이 되면 “작은 전체”를 순차 읽기)
 - **대기 이벤트(개념)**: (버전에 따라 명칭 차이 있지만) `db file scattered read`(Full Scan), `direct path read` 등
 
-### 1.2 Random(랜덤) I/O
+### Random(랜덤) I/O
+
 - **특징**: **비연속 블록**을 **한 블록씩** 읽음 → **지연↑**
 - **대표 연산**:
   - **Index Range/Unique Scan + Table by ROWID** (Nested Loops에서 inner 쪽)
@@ -93,7 +95,8 @@ END;
   - 분산된 ROWID 방문이 많은 **OLTP** 패턴
 - **대기 이벤트(개념)**: `db file sequential read`(단일 블록 읽기) 등
 
-### 1.3 왜 순차가 유리한가?
+### 왜 순차가 유리한가?
+
 - 디스크/스토리지·OS·파일 시스템·DB 버퍼에서 **연속 블록**은 **읽기 헤더 이동/컨텍스트 스위칭**이 적음
 - 멀티블록 수(MBRC, $$m$$라 하자)가 크면 **한 I/O당 읽는 블록 수**가 $$m$$
   - **순차 읽기량**(블록): $$\text{IO 수} \times m$$
@@ -102,9 +105,9 @@ END;
 
 ---
 
-## 2. Sequential vs Random — 실행계획 관점 비교
+## Sequential vs Random — 실행계획 관점 비교
 
-### 2.1 대량 범위 조건: 해시 조인 + Full Scan(순차) vs 중첩 루프(랜덤)
+### 대량 범위 조건: 해시 조인 + Full Scan(순차) vs 중첩 루프(랜덤)
 
 **(A) 나쁜 패턴 — NL 조인으로 inner 테이블 랜덤 접근 폭증**
 ```sql
@@ -137,11 +140,12 @@ GROUP  BY c.cust_id;
 
 ---
 
-## 3. **Sequential 액세스의 “선택도” 높이기** — “작은 전체”만 빠르게 훑기
+## **Sequential 액세스의 “선택도” 높이기** — “작은 전체”만 빠르게 훑기
 
 > 여기서 “선택도”는 “순차 스캔으로 읽는 **범위 자체를 얼마나 줄였는가**”라는 실용적 의미로 사용
 
-### 3.1 파티셔닝 + 프루닝(Pruning)
+### 파티셔닝 + 프루닝(Pruning)
+
 - **시간/해시/리스트** 파티셔닝으로 **불필요 파티션 제외** → “작은 전체”만 Full Scan
 - **예제: 최근 분기만 스캔**
 ```sql
@@ -158,7 +162,8 @@ WHERE  o.order_dt >= DATE '2025-10-01'  -- p_2025q4만
 AND    o.status = 'OK';
 ```
 
-### 3.2 조인 필터/블룸 필터(Join Filter / Bloom Filter)
+### 조인 필터/블룸 필터(Join Filter / Bloom Filter)
+
 - **해시 조인** 단계에서 **필터(블룸) 비트셋**으로 **대상 파티션/블록**을 더 줄임
 - **예제: 고객 후보를 먼저 좁힌 후 주문 스캔**
 ```sql
@@ -177,7 +182,8 @@ GROUP  BY o.cust_id;
 ```
 - 실행계획에 `JOIN FILTER`(bloom) 가 보이면, **orders** 스캔 중 **대상 아닌 키를 즉시 배제** → **읽기량↓**
 
-### 3.3 **부분범위처리(Stopkey, TOP-N/Keyset)** + 인덱스 정렬 일치
+### **부분범위처리(Stopkey, TOP-N/Keyset)** + 인덱스 정렬 일치
+
 - **목록 첫 페이지/Top-N** 은 **정렬 포함 복합 인덱스** + `FETCH FIRST N` 으로 **STOPKEY** 유도
 ```sql
 SELECT /*+ index(o ix_orders_cust_dt) */
@@ -189,7 +195,8 @@ FETCH FIRST 50 ROWS ONLY;  -- STOPKEY
 ```
 - 인덱스가 정렬을 해결하므로 **정렬 없이** **필요한 앞부분만** 읽고 멈춤
 
-### 3.4 커버링 인덱스 / 인덱스 Fast Full Scan
+### 커버링 인덱스 / 인덱스 Fast Full Scan
+
 - 필요한 컬럼이 인덱스에 **다 있으면** 테이블로 내려가지 않고 **연속된 리프 블록**만 스캔
 ```sql
 -- 간단 집계/조건이 인덱스 컬럼으로만 이루어질 때
@@ -203,9 +210,10 @@ GROUP  BY status;
 
 ---
 
-## 4. **Random 액세스 발생량 줄이기** — “ROWID 점프”를 구조적으로 억제
+## **Random 액세스 발생량 줄이기** — “ROWID 점프”를 구조적으로 억제
 
-### 4.1 **Nested Loops 남발** 방지 (넓은 범위일수록 해시/병합 조인)
+### **Nested Loops 남발** 방지 (넓은 범위일수록 해시/병합 조인)
+
 - **규칙**: **선택도가 낮거나(=많이 매칭), 범위가 넓으면 해시 조인**
 - **힌트/통계**로 옵티마이저가 **NL→HJ** 를 고르도록 유도
 ```sql
@@ -213,7 +221,8 @@ SELECT /*+ USE_HASH(o) FULL(o) */ ...
 ```
 - **히스토그램/컬럼 그룹 통계**로 **카디널리티 추정** 정확화 → 잘못된 NL 선택 방지
 
-### 4.2 **클러스터링 팩터(Clustering Factor)** 개선 → 인덱스 Range Scan의 “준-순차”화
+### **클러스터링 팩터(Clustering Factor)** 개선 → 인덱스 Range Scan의 “준-순차”화
+
 - **클러스터링 팩터**가 낮을수록(=테이블 물리 순서가 인덱스 키 순서와 유사) **ROWID 방문이 근접**
 - **개선 방법**: 테이블을 **인덱스 키 순으로 재정렬(CTAS/Move)** 후 인덱스 재생성
 ```sql
@@ -237,16 +246,19 @@ END;
 - 이후 `user_indexes.clustering_factor` 를 확인하면 **블록 수에 근접**하게 낮아져야 이상적
 - 결과적으로 **Range Scan + BY ROWID** 패턴의 **랜덤성**이 **크게 줄어듦**
 
-### 4.3 **커버링 인덱스** / **IOT(인덱스 조직 테이블)** / **클러스터 테이블**
+### **커버링 인덱스** / **IOT(인덱스 조직 테이블)** / **클러스터 테이블**
+
 - **커버링**: SELECT-LIST/조건/JOIN 컬럼이 인덱스에 모두 존재 → **Table by ROWID 제거**
 - **IOT**: PK 순서로 **데이터 자체가 인덱스에 저장** → PK 기반 접근은 **랜덤성↓**
 - **클러스터 테이블**: 같은 키의 여러 로우를 **한 블록/근접 블록**에 저장 → **멀티 로우 접근 시 효율**
 
-### 4.4 **Bitmap Index + Bitmap Combine** (DW/보고계)
+### **Bitmap Index + Bitmap Combine** (DW/보고계)
+
 - **저카디널리티** 다수 조건을 **비트 연산**으로 결합 후 한 번에 ROWID 변환
 - 단, **DML 많은 OLTP**에는 부적합(잠금/유지비용 큼)
 
-### 4.5 **서브쿼리/세미조인**으로 **불필요한 BY ROWID 방문** 차단
+### **서브쿼리/세미조인**으로 **불필요한 BY ROWID 방문** 차단
+
 - `EXISTS`/`IN` 을 활용하여 **테이블 방문 전** 후보 축소
 ```sql
 SELECT /*+ SEMIJOIN */ o.*
@@ -258,15 +270,17 @@ WHERE  EXISTS (
 );
 ```
 
-### 4.6 **통계·히스토그램**으로 계획 오류 방지
+### **통계·히스토그램**으로 계획 오류 방지
+
 - 선택도 오판 → NL 선택 → 랜덤 I/O 폭증
 - **히스토그램**(skew), **컬럼 그룹 통계**(상관관계), **정확한 NUM_ROWS/NDV** 로 예측 개선
 
 ---
 
-## 5. “Sequential 선택도↑ + Random↓” 통합 시나리오
+## “Sequential 선택도↑ + Random↓” 통합 시나리오
 
-### 5.1 요구사항
+### 요구사항
+
 - “APAC VIP 고객의 **최근 3개월 주문 합계 Top-50** 보여줘”
 
 **(Before) — NL + OFFSET + 정렬 비용 + 랜덤 I/O 다발**
@@ -311,9 +325,10 @@ FETCH FIRST 50 ROWS ONLY;  -- STOPKEY
 
 ---
 
-## 6. 클러스터링 팩터와 예상 랜덤 I/O 근사
+## 클러스터링 팩터와 예상 랜덤 I/O 근사
 
-### 6.1 개념 공식 (직관적 근사)
+### 개념 공식 (직관적 근사)
+
 - **랜덤 I/O(블록 수)** 대략:
 $$
 \text{Random Blocks} \approx \frac{\text{방문 로우 수}}{\text{평균 로우/블록}} \times \alpha
@@ -327,7 +342,8 @@ $$
 
 > **해석**: 같은 로우 수를 읽어도 **물리적 근접성**(클러스터링 팩터 개선)으로 랜덤 블록 수가 크게 준다.
 
-### 6.2 팩터 확인
+### 팩터 확인
+
 ```sql
 SELECT index_name, clustering_factor, leaf_blocks, num_rows
 FROM   user_indexes
@@ -338,9 +354,10 @@ WHERE  table_name='ORDERS';
 
 ---
 
-## 7. 인덱스 전략으로 랜덤 I/O 줄이기
+## 인덱스 전략으로 랜덤 I/O 줄이기
 
-### 7.1 **커버링 인덱스** 설계
+### **커버링 인덱스** 설계
+
 - 자주 쓰는 조회(필터/정렬/SELECT-LIST)를 분석해 **복합 인덱스**로 덮기
 - 테이블 방문 제거(= BY ROWID 제거) → 랜덤 I/O 대폭 감소
 ```sql
@@ -348,19 +365,22 @@ WHERE  table_name='ORDERS';
 CREATE INDEX ix_orders_cover ON orders(cust_id, order_dt DESC, order_id DESC, amount, status);
 ```
 
-### 7.2 **Index Fast Full Scan** 활용
+### **Index Fast Full Scan** 활용
+
 - 집계/COUNT/조건이 인덱스에 다 있을 때 **순차적 인덱스 스캔**으로 고속 처리
 - 필요 시 `INDEX_FFS` 힌트로 유도
 
-### 7.3 **IOT/클러스터 테이블**
+### **IOT/클러스터 테이블**
+
 - **IOT**: PK접근은 곧 데이터 접근 → **랜덤 I/O**가 **인덱스 수준**
 - **클러스터 테이블**: 같은 키(예: `cust_id`)의 로우를 **근접 저장** → **여러 로우를 한 블록에서**
 
 ---
 
-## 8. DW/리포트에서의 패턴
+## DW/리포트에서의 패턴
 
-### 8.1 Bitmap 인덱스 + Bitmap Combine
+### Bitmap 인덱스 + Bitmap Combine
+
 ```sql
 -- 지역/등급/상태 저카디널리티 조합을 bitmap 으로 결합 후 일괄 ROWID 변환
 SELECT /* DW */
@@ -373,12 +393,13 @@ AND    amount BETWEEN 100 AND 500;
 - **장점**: 여러 조건을 **비트 연산**으로 빠르게 결합 → 실제 테이블 방문 전 **후보 극소화**
 - **주의**: DML 많은 OLTP에는 **부적합**
 
-### 8.2 파티션 와이즈 조인(Partition-Wise Join)
+### 파티션 와이즈 조인(Partition-Wise Join)
+
 - 동일 파티션 키로 분할된 두 테이블을 **파티션 단위로 독립 조인** → **순차 I/O** + **병렬 효율↑**
 
 ---
 
-## 9. 클라이언트/애플리케이션 레벨의 보조
+## 클라이언트/애플리케이션 레벨의 보조
 
 - **부분범위처리(Stopkey)** 로 “읽을 양” 자체를 줄인다(Top-N, Keyset 페이지).
 - **배열 페치(Array Fetch)** 로 **Fetch 왕복 수**를 줄여 I/O 대기와 컨텍스트 전환을 줄인다.
@@ -387,7 +408,7 @@ AND    amount BETWEEN 100 AND 500;
 
 ---
 
-## 10. 안티 패턴 → 교정 요약
+## 안티 패턴 → 교정 요약
 
 | 안티 패턴 | 결과 | 교정 |
 |---|---|---|
@@ -400,9 +421,9 @@ AND    amount BETWEEN 100 AND 500;
 
 ---
 
-## 11. BEFORE → AFTER: 실전형 코드 모음
+## BEFORE → AFTER: 실전형 코드 모음
 
-### 11.1 대량 범위 + 합계
+### 대량 범위 + 합계
 
 **BEFORE (랜덤 I/O 다발)**
 ```sql
@@ -428,7 +449,7 @@ WHERE  o.order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -12)
 GROUP  BY c.cust_id;
 ```
 
-### 11.2 Top-N 목록 API
+### Top-N 목록 API
 
 **BEFORE (OFFSET + 정렬 인덱스 없음)**
 ```sql
@@ -449,7 +470,7 @@ ORDER  BY o.order_dt DESC, o.order_id DESC
 FETCH FIRST :take ROWS ONLY;
 ```
 
-### 11.3 Range Scan 품질(클러스터링) 개선
+### Range Scan 품질(클러스터링) 개선
 
 **개선 전**
 ```sql
@@ -468,7 +489,7 @@ AND    order_dt BETWEEN :d1 AND :d2;
 
 ---
 
-## 12. 체크리스트(배포 전)
+## 체크리스트(배포 전)
 
 - [ ] 큰 범위·저선택도 쿼리는 **해시 조인 + 순차 읽기**인가?
 - [ ] **파티션 프루닝**이 정확히 되고 있는가? (`PARTITION RANGE` 연산 확인)

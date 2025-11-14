@@ -11,7 +11,7 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 
 ---
 
-## 1. 핵심 차이 한눈에
+## 핵심 차이 한눈에
 
 | 항목 | DataTemplate | ControlTemplate |
 |---|---|---|
@@ -23,9 +23,10 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 
 ---
 
-## 2. DataTemplate: 데이터 → 뷰
+## DataTemplate: 데이터 → 뷰
 
-### 2.1 기본 사용 (Implicit by DataType)
+### 기본 사용 (Implicit by DataType)
+
 `DataType`만 지정하면 **해당 타입의 데이터가 표시될 때 자동 적용**됩니다.
 
 ```xml
@@ -45,7 +46,8 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 > `x:Key`를 함께 지정하면 **암시적 적용이 꺼지고** 키로만 사용할 수 있습니다.
 > **암시적 적용을 원하면 `x:Key`를 생략**하세요.
 
-### 2.2 ItemsControl / ContentControl 연계
+### ItemsControl / ContentControl 연계
+
 - `ItemsControl.ItemTemplate`: 각 **아이템마다** 적용
 - `ContentControl.ContentTemplate`: **단일 콘텐츠**에 적용
 
@@ -54,7 +56,8 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
                 ContentTemplate="{StaticResource SelectedOrderTemplate}"/>
 ```
 
-### 2.3 셀 템플릿 (ListView + GridViewColumn)
+### 셀 템플릿 (ListView + GridViewColumn)
+
 ```xml
 <ListView ItemsSource="{Binding Orders}">
   <ListView.View>
@@ -73,7 +76,8 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 </ListView>
 ```
 
-### 2.4 HierarchicalDataTemplate (트리)
+### HierarchicalDataTemplate (트리)
+
 ```xml
 <TreeView ItemsSource="{Binding Departments}">
   <TreeView.ItemTemplate>
@@ -84,7 +88,8 @@ WPF에서 **DataTemplate**는 “데이터 → 표시(뷰)”를, **ControlTempl
 </TreeView>
 ```
 
-### 2.5 DataTemplateSelector (런타임 선택)
+### DataTemplateSelector (런타임 선택)
+
 여러 조건(타입·상태)에 따라 **템플릿을 동적으로 선택**합니다.
 
 ```csharp
@@ -118,7 +123,8 @@ public class OrderTemplateSelector : DataTemplateSelector
 <ListBox ItemsSource="{Binding Orders}" ItemTemplateSelector="{StaticResource OrderSelector}"/>
 ```
 
-### 2.6 템플릿 내부 트리거
+### 템플릿 내부 트리거
+
 ```xml
 <DataTemplate DataType="{x:Type vm:Order}">
   <Border Padding="8">
@@ -140,7 +146,8 @@ public class OrderTemplateSelector : DataTemplateSelector
 </DataTemplate>
 ```
 
-### 2.7 컨텍스트 주의점
+### 컨텍스트 주의점
+
 - DataTemplate 내부 `DataContext`는 **항목 자체**입니다.
 - 상위 ViewModel 속성이 필요하면:
 ```xml
@@ -151,9 +158,10 @@ public class OrderTemplateSelector : DataTemplateSelector
 
 ---
 
-## 3. ControlTemplate: 컨트롤의 스킨
+## ControlTemplate: 컨트롤의 스킨
 
-### 3.1 기본 구조
+### 기본 구조
+
 - **컨트롤의 시각 트리**를 재정의합니다.
 - 내부에서 컨트롤의 속성은 **`{TemplateBinding ...}`** 또는
   **`{Binding RelativeSource={RelativeSource TemplatedParent}, Path=...}`**로 참조합니다.
@@ -178,7 +186,8 @@ public class OrderTemplateSelector : DataTemplateSelector
 </Style>
 ```
 
-### 3.2 VisualStateManager (상태별 시각)
+### VisualStateManager (상태별 시각)
+
 **Normal/MouseOver/Pressed/Disabled** 같은 시각 상태를 정의합니다.
 
 ```xml
@@ -220,7 +229,8 @@ public class OrderTemplateSelector : DataTemplateSelector
 </ControlTemplate>
 ```
 
-### 3.3 ItemsControl의 ControlTemplate (ItemsPresenter 필수)
+### ItemsControl의 ControlTemplate (ItemsPresenter 필수)
+
 ```xml
 <Style TargetType="ListBox">
   <Setter Property="Template">
@@ -238,7 +248,8 @@ public class OrderTemplateSelector : DataTemplateSelector
 </Style>
 ```
 
-### 3.4 TemplateBinding vs TemplatedParent
+### TemplateBinding vs TemplatedParent
+
 - **`{TemplateBinding Property=...}`**: **가볍고 빠른 OneWay** 바인딩 (ControlTemplate 전용)
 - **`RelativeSource TemplatedParent`**: 일반 바인딩 문법(Converter, MultiBinding 등 확장 가능)
 
@@ -250,7 +261,8 @@ Background="{TemplateBinding Background}"
 {Binding Path=Background, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource ...}}
 ```
 
-### 3.5 커스텀 컨트롤 & PART 규약
+### 커스텀 컨트롤 & PART 규약
+
 일부 컨트롤은 템플릿에 **필수 파트**가 필요합니다(예: `PART_Editor`).
 커스텀 컨트롤을 만들 때 `[TemplatePart]`로 계약을 표시하고, `OnApplyTemplate`에서 찾아 사용합니다.
 
@@ -292,7 +304,7 @@ public class SearchBox : Control
 
 ---
 
-## 4. ItemsTemplate vs ItemContainerStyle vs ItemsPanel
+## ItemsTemplate vs ItemContainerStyle vs ItemsPanel
 
 - **ItemTemplate / ItemTemplateSelector**: **각 데이터 항목의 모양**
 - **ItemContainerStyle**: **컨테이너(ListBoxItem, TreeViewItem)의 속성/상태**
@@ -326,7 +338,7 @@ public class SearchBox : Control
 
 ---
 
-## 5. 성능 & 구조 팁
+## 성능 & 구조 팁
 
 - **가상화**: 대량 목록은 `VirtualizingStackPanel.IsVirtualizing="True"`(기본) 유지, `ScrollUnit="Pixel"` 검토
 - **Reusable 리소스**: 브러시/그라디언트/Geometry는 리소스로 올려 **공유** (가능하면 Freezable Freeze)
@@ -336,7 +348,7 @@ public class SearchBox : Control
 
 ---
 
-## 6. 언제 어떤 템플릿을 쓸까?
+## 언제 어떤 템플릿을 쓸까?
 
 - **데이터가 다르면 모양도 달라야** → **DataTemplate / Selector**
 - **같은 컨트롤인데 스킨을 바꾸고 싶다** → **ControlTemplate**
@@ -345,7 +357,7 @@ public class SearchBox : Control
 
 ---
 
-## 7. 흔한 실수 체크리스트
+## 흔한 실수 체크리스트
 
 - **ItemsPresenter 누락**(ItemsControl 템플릿) → 아이템이 안 보임
 - ControlTemplate 안에서 **일반 `{Binding}`으로 부모 속성 접근** → **`TemplatedParent`**로 바인딩
@@ -355,7 +367,7 @@ public class SearchBox : Control
 
 ---
 
-## 8. 종합 예: 타입별 DataTemplate + 스킨 교체 Button
+## 종합 예: 타입별 DataTemplate + 스킨 교체 Button
 
 ```xml
 <Window.Resources>
@@ -423,6 +435,7 @@ public class SearchBox : Control
 ---
 
 ### 결론
+
 - **DataTemplate**: 데이터의 “표현”을 선언하고, **ControlTemplate**: 컨트롤의 “스킨/구조”를 교체합니다.
 - 템플릿, 스타일, ItemsPanel을 **역할별로 분리**하면 **테마 교체**, **확장성**, **성능**까지 챙길 수 있습니다.
 - 위 원칙과 예제를 베이스로 프로젝트 템플릿(Styles/ControlTemplates/DataTemplates/Selectors)을 구성하면

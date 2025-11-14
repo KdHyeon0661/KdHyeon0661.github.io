@@ -5,9 +5,10 @@ date: 2025-10-02 15:25:23 +0900
 category: 딥러닝
 ---
 # 모델 내보내기(ONNX), 런타임(TensorRT 개론), TorchScript 개념
+
 **PyTorch 모델을 배포-가속하기 위한 3가지 경로: ONNX → (ONNXRuntime/TensorRT), TorchScript(Libtorch/모바일)**
 
-## 0. 큰 그림과 선택 가이드
+## 큰 그림과 선택 가이드
 
 | 경로 | 장점 | 단점/유의 | 언제 쓰나 |
 |---|---|---|---|
@@ -21,9 +22,10 @@ category: 딥러닝
 
 ---
 
-## 1. ONNX 내보내기 (PyTorch → ONNX)
+## ONNX 내보내기 (PyTorch → ONNX)
 
-### 1.1 베이스라인 예제 모델
+### 베이스라인 예제 모델
+
 ```python
 import torch, torch.nn as nn, torch.nn.functional as F
 
@@ -45,7 +47,8 @@ model = SmallCNN().eval()  # ★ 반드시 eval 모드 (BN/Dropout 고정)
 dummy = torch.randn(1,3,224,224)
 ```
 
-### 1.2 가장 단순한 내보내기
+### 가장 단순한 내보내기
+
 ```python
 torch.onnx.export(
     model, dummy, "smallcnn.onnx",
@@ -55,7 +58,8 @@ torch.onnx.export(
 )
 ```
 
-### 1.3 **동적 크기**(배치/H/W) 지원 — `dynamic_axes`
+### **동적 크기**(배치/H/W) 지원 — `dynamic_axes`
+
 ```python
 torch.onnx.export(
     model, dummy, "smallcnn_dynamic.onnx",
@@ -70,7 +74,8 @@ torch.onnx.export(
 > **의미**: ONNX 그래프에 “0축은 batch, 2/3축은 가변 크기”라는 힌트를 남겨 **런타임에서 다양한 입력 크기**를 받을 수 있게 합니다.
 > (TensorRT에선 **Optimization Profile**과 매칭됩니다 — 아래 2.5절)
 
-### 1.4 ONNX 검증(ONNXRuntime로 기능 확인)
+### ONNX 검증(ONNXRuntime로 기능 확인)
+
 ```python
 import onnx, onnxruntime as ort, numpy as np
 
@@ -86,7 +91,8 @@ y = sess.run(["logits"], {"input": x})[0]
 print(y.shape)  # (2, 10)
 ```
 
-### 1.5 흔한 변환 이슈 & 대응
+### 흔한 변환 이슈 & 대응
+
 - **`model.train()` 상태로 export**: BN/Dropout이 학습 모드 → 결과 불안정. **`eval()`** 필수.
 - **지원되지 않는 연산**:
   - 대체 경로(공식/커스텀 함수)로 바꾸거나, **TorchScript로 우회**(ONNX 불가면 TorchScript 경로 고려).
@@ -95,7 +101,8 @@ print(y.shape)  # (2, 10)
   - 미리 torch 연산으로 **벡터화**하거나, **TorchScript 경로** 고려.
 - **정밀도 차이**: log/exp/softmax 등 **수치 안정** 구현 차이 → 허용 오차 범위(`rtol/atol`) 내 비교.
 
-### 1.6 그래프 단순화 & 모양 추론
+### 그래프 단순화 & 모양 추론
+
 - **ONNX-Simplifier(onnxsim)** 로 불필요 노드 제거/상수 폴딩 → 변환 성공률/속도↑
 - **onnx.shape_inference** 로 텐서 shape 주석 추가 → 디버깅 용이
 
@@ -107,23 +114,27 @@ m = shape_inference.infer_shapes(m)
 onnx.save(m, "smallcnn_dynamic_shaped.onnx")
 ```
 
-### 1.7 (심화) 새 API: `torch.onnx.dynamo_export` 개념
+### (심화) 새 API: `torch.onnx.dynamo_export` 개념
+
 - PyTorch 2.x의 **Dynamo 기반 exporter**는 트레이싱 덜 민감, 더 많은 동적 패턴 지원(환경별 가용성 확인).
 - 기본 아이디어는 동일: **예시 입력**에서 그래프 캡처 → ONNX 변환.
 
 ---
 
-## 2. TensorRT 개론: 빌더–엔진–컨텍스트
+## TensorRT 개론: 빌더–엔진–컨텍스트
 
-### 2.1 핵심 객체
+### 핵심 객체
+
 - **Network**: 연산 그래프(ONNX를 파싱하여 구성)
 - **Builder**: 최적화/전략(tactic) 검색 및 **Engine** 생성
 - **Engine**(Serialized Engine): 하드웨어/드라이버에 최적화된 **실행 바이너리**
 - **Execution Context**: 엔진의 1회 실행 상태(입출력 바인딩, 스트림 등)
 
-### 2.2 가장 빠른 시작 — `trtexec` CLI
+### 가장 빠른 시작 — `trtexec` CLI
+
 ```bash
 # FP16 엔진 생성 (가능한 하드웨어에서)
+
 trtexec --onnx=smallcnn_dynamic.onnx --saveEngine=smallcnn_fp16.plan --fp16 \
         --minShapes=input:1x3x224x224 \
         --optShapes=input:8x3x224x224 \
@@ -139,7 +150,8 @@ trtexec --onnx=smallcnn_dynamic.onnx --saveEngine=smallcnn_fp16.plan --fp16 \
 trtexec --loadEngine=smallcnn_fp16.plan --shapes=input:8x3x224x224 --separateProfileRun
 ```
 
-### 2.3 Python API로 엔진 빌드(ONNX→TRT)
+### Python API로 엔진 빌드(ONNX→TRT)
+
 ```python
 import tensorrt as trt
 
@@ -179,7 +191,8 @@ profiles = {
 build_engine_from_onnx("smallcnn_dynamic.onnx", fp16=True, int8=False, profiles=profiles)
 ```
 
-### 2.4 정밀도 옵션( FP32 / FP16 / INT8 )
+### 정밀도 옵션( FP32 / FP16 / INT8 )
+
 - **FP16**: 대개 **정확도 손실 미미** + 지연/스루풋 개선.
 - **INT8**:
   - **PTQ(교정)**: 대표 데이터로 **활성 분포** 스케일 추정(정확도 민감).
@@ -188,6 +201,7 @@ build_engine_from_onnx("smallcnn_dynamic.onnx", fp16=True, int8=False, profiles=
 (PTQ 캘리브레이터 초간단 골격)
 ```python
 # PyCalibrator 스케치(실전은 tensorrt.IInt8EntropyCalibrator2 등 상속 필요)
+
 class MyCalibrator(trt.IInt8EntropyCalibrator2):
     def __init__(self, loader, input_name):
         super().__init__()
@@ -202,12 +216,14 @@ class MyCalibrator(trt.IInt8EntropyCalibrator2):
 ```
 > **QAT 경로**: PyTorch QAT → ONNX에 **QuantizeLinear/DequantizeLinear(Q/DQ)** 포함 → TRT가 그대로 해석(교정 불필요).
 
-### 2.5 동적 입력 & 최적화 프로파일
+### 동적 입력 & 최적화 프로파일
+
 - TRT는 입력마다 **min/opt/max shape**를 정의해야 tactic을 고릅니다.
 - 런타임에서는 **프로파일 범위 내**의 shape만 허용됩니다(범위 바깥 → 오류/성능저하).
 - 실전 팁: **요청의 분포**(예: 224, 256, 384)를 보고 **여러 프로파일**을 준비하면 안정적.
 
-### 2.6 실행(엔진 로딩 & 추론)
+### 실행(엔진 로딩 & 추론)
+
 ```python
 import numpy as np, pycuda.driver as cuda, pycuda.autoinit
 import tensorrt as trt
@@ -246,7 +262,8 @@ y = infer_trt("smallcnn_fp16.plan", batch=8, h=224, w=224)
 print(y.shape)  # (8, 10)
 ```
 
-### 2.7 디버깅·성능 팁
+### 디버깅·성능 팁
+
 - **`--verbose`** 로 레이어별 tactic/정밀도 확인.
 - **Fusion**: Conv+BN(+ReLU)는 자동 결합. **export 전에 `eval()`** 이 필수(런타임이 BN을 상수로 접기 쉽도록).
 - **Plugin**: 미지원 op는 **커스텀 플러그인**으로 구현 가능(고급).
@@ -255,20 +272,23 @@ print(y.shape)  # (8, 10)
 
 ---
 
-## 3. TorchScript 개념: `script` vs `trace`
+## TorchScript 개념: `script` vs `trace`
 
-### 3.1 TorchScript 란?
+### TorchScript 란?
+
 - **PyTorch 모델을 Python 런타임 없이 실행**하기 위해, **연산 그래프**와 **런타임**(Libtorch)을 담은 중간 표현.
 - **저장**: `model_jit = torch.jit.script(model)` 또는 `torch.jit.trace` → `model_jit.save("m.pt")`
 - **로드**: Python(`torch.jit.load`) 또는 **C++(libtorch)** 에서 로드/실행.
 
-### 3.2 `script`(스크립팅) vs `trace`(트레이싱)
+### `script`(스크립팅) vs `trace`(트레이싱)
+
 - **`script`**: 함수/모듈을 **해석**하여 TorchScript로 변환 → **데이터 의존 분기/루프** 지원.
   - 제약: **타입 주석**, 일부 Python API 불가(파일 I/O, `.numpy()` 등), Tensor 연산만 허용.
 - **`trace`**: **예시 입력** 경로를 **기록** → 단순/고정 흐름 모델은 빠르게 변환.
   - **데이터 의존 제어흐름**은 기록되지 않아 **오류/누락 가능**.
 
-### 3.3 스크립팅 예제
+### 스크립팅 예제
+
 ```python
 import torch, torch.nn as nn, torch.nn.functional as F
 from typing import Tuple
@@ -297,7 +317,8 @@ m_jit.save("m_script.pt")
 m2 = torch.jit.load("m_script.pt")
 ```
 
-### 3.4 트레이싱 예제(+주의)
+### 트레이싱 예제(+주의)
+
 ```python
 m = MyNet().eval()
 example = torch.randn(1,32,32,32)
@@ -307,11 +328,13 @@ m_trace.save("m_trace.pt")
 > **주의**: 입력 크기나 제어 흐름에 따라 경로가 바뀌는 모델은 **`trace` 부적합**.
 > `torch.jit.trace(..., check_inputs=[...])` 로 몇 가지 입력을 더 넣어 **검증**을 추가.
 
-### 3.5 C++ (Libtorch) 추론 예시
+### C++ (Libtorch) 추론 예시
+
 ```cpp
 // infer.cpp (컴파일 시 -ltorch_cpu -lc10 등 링크 필요)
 #include <torch/script.h>
 #include <iostream>
+
 int main() {
   torch::jit::script::Module mod = torch::jit::load("m_script.pt");
   mod.eval();
@@ -323,12 +346,14 @@ int main() {
 }
 ```
 
-### 3.6 모바일(Lite Interpreter) 개관
+### 모바일(Lite Interpreter) 개관
+
 - TorchScript를 **Lite Interpreter** 포맷으로 줄여 **모바일 앱**에 포함.
 - `torch.utils.mobile_optimizer` 로 최적화 후 `torch.jit.save`(lite 모드).
 - Android/iOS에서 **libtorch lite**로 로드.
 
-### 3.7 TorchScript 사용 규칙(체크)
+### TorchScript 사용 규칙(체크)
+
 - 텐서 외부의 **Python 오브젝트/사이드이펙트** 금지(파일 I/O, OS 호출 등).
 - `.numpy()`, `.item()` 남발 지양(그래프 끊김/비결정).
 - 동적 제어흐름은 **스크립팅**으로 가능하지만, **타입 주석**·`if isinstance` 등 제약에 맞춰 작성.
@@ -336,64 +361,75 @@ int main() {
 
 ---
 
-## 4. 엔드-투-엔드 미니 프로젝트
+## 엔드-투-엔드 미니 프로젝트
 
-### 4.1 분류 모델: PyTorch → ONNX → ONNXRuntime → TensorRT
+### 분류 모델: PyTorch → ONNX → ONNXRuntime → TensorRT
+
 ```python
-# 0. 학습된 모델 로드 & eval
+# 학습된 모델 로드 & eval
+
 model = SmallCNN(); model.load_state_dict(torch.load("smallcnn_fp32.pth")); model.eval()
 
-# 1. ONNX export (동적 axes)
+# ONNX export (동적 axes)
+
 dummy = torch.randn(1,3,224,224)
 torch.onnx.export(model, dummy, "smallcnn.onnx",
     input_names=["input"], output_names=["logits"],
     dynamic_axes={"input":{0:"batch",2:"h",3:"w"}, "logits":{0:"batch"}},
     opset_version=17, do_constant_folding=True)
 
-# 2. ORT 검증
+# ORT 검증
+
 import onnxruntime as ort, numpy as np
 sess = ort.InferenceSession("smallcnn.onnx", providers=["CPUExecutionProvider"])
 x = np.random.randn(4,3,224,224).astype(np.float32)
 pred = sess.run(["logits"], {"input": x})[0]
 
-# 3. TRT 엔진 빌드 (trtexec or Python API)
+# TRT 엔진 빌드 (trtexec or Python API)
 #    trtexec --onnx=smallcnn.onnx --saveEngine=smallcnn_fp16.plan --fp16 \
 #            --minShapes=input:1x3x224x224 --optShapes=input:8x3x224x224 --maxShapes=input:16x3x384x384
 
-# 4. TRT 추론 (2.6 코드 재사용)
+# TRT 추론 (2.6 코드 재사용)
+
 y = infer_trt("smallcnn_fp16.plan", batch=8, h=224, w=224)
 ```
 
-### 4.2 동일 모델: TorchScript(C++/모바일 용)
+### 동일 모델: TorchScript(C++/모바일 용)
+
 ```python
 # Python 저장
+
 m = SmallCNN().eval()
 m.load_state_dict(torch.load("smallcnn_fp32.pth"))
 m_jit = torch.jit.script(m)
 m_jit.save("smallcnn_script.pt")
 
 # C++ 서비스에 smallcnn_script.pt 배포 → Libtorch로 로드/추론
+
 ```
 
 ---
 
-## 5. 운영 체크리스트
+## 운영 체크리스트
 
-### 5.1 ONNX Export 체크
+### ONNX Export 체크
+
 - [ ] `model.eval()`(BN/Dropout 고정)
 - [ ] `opset_version`(보통 17 근처) 지정
 - [ ] **동적 축**(batch/H/W) 필요 시 `dynamic_axes` 지정
 - [ ] **ONNXRuntime**로 결과/shape/수치 검증
 - [ ] 변환 불가 op → 대체/커스텀/버전 조정
 
-### 5.2 TensorRT 빌드/추론 체크
+### TensorRT 빌드/추론 체크
+
 - [ ] **프로파일(min/opt/max)** 실제 트래픽 범위를 반영
 - [ ] FP16 가능 여부 확인(하드웨어) / INT8은 **교정** or **Q/DQ**
 - [ ] `--workspace` 충분히 크게(수 GB) 후 성능 비교
 - [ ] `--verbose` 로 tactic/정밀도 확인, 병목 레이어 탐색
 - [ ] 배치=1 초저지연 엔진 별도 고려
 
-### 5.3 TorchScript 체크
+### TorchScript 체크
+
 - [ ] **스크립팅**으로 동적 제어흐름 커버 / `trace`는 고정경로 모델에만
 - [ ] 타입 주석 / Python 사이드이펙트 제거
 - [ ] `torch.jit.load`(Python) & **Libtorch(C++)** 둘 다 smoke-test
@@ -401,7 +437,7 @@ m_jit.save("smallcnn_script.pt")
 
 ---
 
-## 6. 자주 묻는 질문 (FAQ)
+## 자주 묻는 질문 (FAQ)
 
 **Q1. ONNX로 안 나가는 연산이 있어요.**
 A. 같은 기능의 **대체 연산 조합**으로 바꾸거나, **TorchScript 경로**를 고려하세요. ONNX opset을 한두 버전 조정해도 풀릴 때가 있습니다.
@@ -420,9 +456,10 @@ A. **QAT**(학습 시 FakeQuant) 경로가 가장 안전합니다. PTQ면 **대�
 
 ---
 
-## 7. 덤: 실전 성능 측정 스니펫
+## 덤: 실전 성능 측정 스니펫
 
-### 7.1 ONNXRuntime(배치별) 시간
+### ONNXRuntime(배치별) 시간
+
 ```python
 import time, numpy as np, onnxruntime as ort
 sess = ort.InferenceSession("smallcnn.onnx", providers=["CPUExecutionProvider"])
@@ -434,7 +471,8 @@ for bs in [1,2,4,8]:
     print(f"ORT bs={bs}: {(time.time()-t0)/30*1000:.2f} ms")
 ```
 
-### 7.2 TensorRT(배치별) 시간
+### TensorRT(배치별) 시간
+
 ```python
 def bench_trt(engine_path, shapes=[(1,224,224),(8,224,224),(16,384,384)], iters=50):
     import time
@@ -450,6 +488,7 @@ bench_trt("smallcnn_fp16.plan")
 ---
 
 ### 마무리
+
 - **ONNX**는 “**호환성**”과 “**백엔드 선택권**”을, **TensorRT**는 “**NVIDIA GPU에서의 극한 성능**”을, **TorchScript**는 “**PyTorch 생태계 내의 완결형 배포(C++/모바일)**”를 제공합니다.
 - 한 줄 요약: **기능 검증은 ONNXRuntime, 성능은 TensorRT, C++/모바일은 TorchScript** — 이 조합으로 대부분의 산업 배포 시나리오를 커버할 수 있습니다.
 - 위 템플릿을 바로 붙여 돌려보며, **동적 크기/프로파일/정밀도 옵션**만 바꿔도 체감 성능이 크게 바뀌는 것을 확인해 보세요.

@@ -4,7 +4,7 @@ title: 네트워크보안 - SDN/NFV·데이터센터·BGP
 date: 2025-10-27 20:25:23 +0900
 category: 네트워크보안
 ---
-# 15. SDN/NFV·데이터센터·BGP
+# SDN/NFV·데이터센터·BGP
 
 > 목표: **SDN/NFV** 환경에서의 위협과 보호 포인트를 정리하고,
 > **BGP 하이재킹·루트 리크**를 막는 **RPKI/ROA·필터링·세션 하드닝**을 체화한다.
@@ -14,9 +14,10 @@ category: 네트워크보안
 
 ---
 
-## 15.1 SDN 위협/보호 포인트
+## SDN 위협/보호 포인트
 
-### 15.1.1 위협 표면
+### 위협 표면
+
 - **컨트롤 플레인 집중화(Controller)**
   - DoS/리소스 고갈, 권한 탈취(남용), 앱(북향 API) 취약점 → **Tenant 전체 영향**.
 - **Southbound 채널(OpenFlow/OVSDB/NETCONF/gNMI)**
@@ -28,7 +29,8 @@ category: 네트워크보안
 - **정책/오케스트레이션**
   - IaC/컨트롤러 정책의 “잘못된 기본값/광역 허용”, 승인 없는 변경.
 
-### 15.1.2 보호 포인트(체크리스트)
+### 보호 포인트(체크리스트)
+
 - **컨트롤러 하드닝**
   - 전용 관리망/Out-of-Band, **RBAC/Just-in-time** 접근, **감사 로그/서명된 변경**.
   - **HA**(컨트롤러 이중화) + **Rate-limit/큐 보호**(Southbound 세션 수 제한).
@@ -48,9 +50,11 @@ category: 네트워크보안
 **Open vSwitch(OVSDB + TLS) 예시**
 ```bash
 # CA/서버/클라이언트 키 준비됨 가정
+
 ovs-vsctl set-ssl /etc/ssl/ovs/client.key /etc/ssl/ovs/client.crt /etc/ssl/ovs/ca.crt
 ovs-vsctl set-manager pssl:6640:0.0.0.0
 # 컨트롤러(OVSDB 서버)는 ptcp 대신 pssl
+
 ovs-vsctl set-manager pssl:6640
 ```
 
@@ -62,15 +66,17 @@ ovs-vsctl set-controller connection-mode=out-of-band
 
 ---
 
-## 15.2 BGP 하이재킹·루트 리크, RPKI/ROA
+## BGP 하이재킹·루트 리크, RPKI/ROA
 
-### 15.2.1 위협 시나리오
+### 위협 시나리오
+
 - **하이재킹(Hijack)**: 다른 AS가 **귀사의 프리픽스**(더 특정/동일 길이)를 기원(Origin) → 트래픽 납치.
 - **루트 리크(Route Leak)**: 타 AS에서 받은 경로를 **부적절한 방향**으로 재전파(정책 위반).
 - **AS-PATH 위조**: 더 짧은 AS-PATH 꾸미기, **ORIGIN 조작**.
 - **모범 사례 미적용**: 기본 Accept-all, 마티안(Bogon) 수용, **Max-Prefix 없이 수천 경로 유입**.
 
-### 15.2.2 방어의 큰 축
+### 방어의 큰 축
+
 1) **세션 하드닝**:
    - **MD5/TCP-AO** 비밀키, **GTSM**(TTL Security, TTL=255), **Graceful Restart/LLGR** 튜닝.
 2) **유입 필터(Import)**:
@@ -83,7 +89,8 @@ ovs-vsctl set-controller connection-mode=out-of-band
 5) **모니터링/BMP**:
    - BMP/Streaming Telemetry로 피어별 이상(경로 급증, ORIGIN 변화) 경보.
 
-### 15.2.3 FRRouting: 세션 하드닝
+### FRRouting: 세션 하드닝
+
 ```text
 router bgp 65010
  bgp router-id 10.0.0.1
@@ -96,7 +103,8 @@ router bgp 65010
  bgp graceful-restart
 ```
 
-### 15.2.4 Prefix/Bogon 필터(입력)
+### Prefix/Bogon 필터(입력)
+
 ```text
 ip prefix-list BOGONS seq 5 deny 0.0.0.0/0
 ip prefix-list BOGONS seq 10 deny 10.0.0.0/8 le 32
@@ -117,14 +125,16 @@ router bgp 65010
  neighbor 203.0.113.1 route-map IN-FILTER in
 ```
 
-### 15.2.5 Max-Prefix
+### Max-Prefix
+
 ```text
 router bgp 65010
  neighbor 203.0.113.1 maximum-prefix 200000 90 restart 10
 ! 20만 경로 임계, 90% 경고, 10분 후 세션 재시도
 ```
 
-### 15.2.6 RPKI/ROA(RTR 캐시와 연동)
+### RPKI/ROA(RTR 캐시와 연동)
+
 **frr.conf (RPKI)**
 ```text
 rpki
@@ -152,7 +162,8 @@ router bgp 65010
 
 > 운영 팁: 초기엔 `invalid → lower local-pref`로 경고 모드 → **충분한 관찰 후 Drop** 전환.
 
-### 15.2.7 AS-PATH/Export 衛生
+### AS-PATH/Export 衛生
+
 ```text
 ip as-path access-list ASPATH-BAD permit _0_         ! 잘못된/빈 AS, 예시
 ip as-path access-list ASPATH-BAD permit _23456_     ! 예약 AS
@@ -169,7 +180,8 @@ router bgp 65010
  neighbor 203.0.113.1 send-community both
 ```
 
-### 15.2.8 Route Leak 방지(기본 거부, RFC 8212 정신)
+### Route Leak 방지(기본 거부, RFC 8212 정신)
+
 - 벤더별로 **BGP 기본 임포트/익스포트 정책을 명시적 허용만**으로 변경.
 - **EBGP/IBGP**별 **Policy 존재하지 않으면 광고 금지**.
 
@@ -192,16 +204,18 @@ protocols {
 
 ---
 
-## 15.3 EVPN/VXLAN 패브릭 보안
+## EVPN/VXLAN 패브릭 보안
 
-### 15.3.1 배경
+### 배경
+
 - **EVPN + VXLAN**: L2/IRB 확장, **Type-2(MAC/IP)**, **Type-5(IP Prefix)** 경로로 컨트롤 플레인 광고.
 - 보안 목표:
   - **테넌트 격리**(VNI/VRF/RT), **게이트웨이 일관성**(Distributed Anycast GW)
   - **ARP/ND 억제**로 L2 노이즈 감소, **MAC 이동/루프** 감지 및 완화
   - **Type-5 경계**에서 **정책 라우팅/필터**로 L3 확산 통제
 
-### 15.3.2 보안 포인트
+### 보안 포인트
+
 - **RT/RT-Filter 상한**: 허용된 라우트타겟만 수용(다른 테넌트 RT 거부).
 - **MAC Move Dampening**: 짧은 시간 다수 이동 → **도난/스푸핑 의심** → 페널티.
 - **ARP/ND Proxy**: **Type-2** 테이블/프록시로 **그레어/스푸핑 완화**(DAI 유사).
@@ -244,22 +258,25 @@ protocols {
 }
 ```
 
-### 15.3.3 DHCP 보안/게이트웨이 연계
+### DHCP 보안/게이트웨이 연계
+
 - **DHCP Relay** 시 Option-82/Client-ID 검증, **Snooping** 유사 스택(벤더 종속).
 - **IRB/Distributed GW**에서 **RA Guard/ND Inspection**(IPv6) 사용.
 
-### 15.3.4 데이터플레인 안전장치
+### 데이터플레인 안전장치
+
 - **Storm Control**(Bcast/UnknownUcast/Multicast), **MLAG** fast-converge + loop-protect.
 - **Control Plane Policing(CoPP)**: BGP/EVPN 세션, OSPF, ICMP Rate-limit.
 
 ---
 
-## 15.4 실습: 라우트 필터/Max-Prefix/RTBH
+## 실습: 라우트 필터/Max-Prefix/RTBH
 
 > 랩 목표: FRRouting 두 대(R1=자사, R2=업스트림)로 **필터/Max-Prefix/RTBH**를 구성하고,
 > 추가로 **RPKI** 캐시를 붙여 **Invalid Drop**을 시험한다. (Docker/컨테이너 기반 권장)
 
-### 15.4.1 토폴로지
+### 토폴로지
+
 ```
         (RTR-CACHE)
          198.51.100.10:3323
@@ -269,7 +286,8 @@ protocols {
    광고: 203.0.113.0/24
 ```
 
-### 15.4.2 R2(업스트림) – 기본 보안 정책
+### R2(업스트림) – 기본 보안 정책
+
 ```text
 router bgp 64501
  bgp router-id 10.0.0.2
@@ -299,7 +317,8 @@ router bgp 64501
 
 - 의미: **고객이 광고 가능한 프리픽스만 화이트리스트**, **Invalid ROA는 Drop**, **Max-Prefix** 경고.
 
-### 15.4.3 R1(자사) – Export 衛生 & RTBH
+### R1(자사) – Export 衛生 & RTBH
+
 ```text
 router bgp 65010
  bgp router-id 10.0.0.1
@@ -342,7 +361,8 @@ neighbor 10.0.0.2 route-map RTBH-MATCH out
 
 > 주의: RTBH는 **마지막 수단**. 스크러빙 센터/리다이렉션(FlowSpec/미러)와 병행 검토.
 
-### 15.4.4 하이재킹 모의(실험)와 차단
+### 하이재킹 모의(실험)와 차단
+
 - **상황**: R1이 실수로 `198.51.100.0/24`를 광고.
 - **R2 정책**: `CUST-IN` 화이트리스트에 없으므로 **거부**.
 - **관찰**: `show bgp ipv4 unicast neighbors 10.0.0.1 routes`에 **수용 안 됨**.
@@ -356,7 +376,7 @@ show bgp ipv4 unicast neighbors 10.0.0.1 routes
 show rpki
 ```
 
-### 15.4.5 BIRD/GoBGP 대안 스니펫
+### BIRD/GoBGP 대안 스니펫
 
 **BIRD v2: RPKI**
 ```conf
@@ -411,6 +431,7 @@ increase(bgp_announcements_total{peer="10.0.0.2"}[5m]) > 100
 ---
 
 ## 트러블슈팅 빠른 표
+
 | 증상 | 가능 원인 | 조치 |
 |---|---|---|
 | 세션은 오르나 경로 無 | Import 정책 전부 reject | Route-map/Prefix-list 매칭 재검 |
@@ -422,6 +443,7 @@ increase(bgp_announcements_total{peer="10.0.0.2"}[5m]) > 100
 ---
 
 ## 운영 체크리스트(요점)
+
 - [ ] **MD5/TCP-AO, GTSM**로 BGP 세션 하드닝
 - [ ] **Import/Export 기본 거부 + 화이트리스트**(**RFC 8212 정신**)
 - [ ] **Max-Prefix** 임계 & 경보, **Bogon 필터** 상시
@@ -434,6 +456,7 @@ increase(bgp_announcements_total{peer="10.0.0.2"}[5m]) > 100
 ---
 
 ## 마무리
+
 - **SDN/NFV**는 **컨트롤 채널 보안**과 **정책 기본 거부**가 심장이다.
 - **BGP 보안**은 **세션 하드닝 + 필터 + RPKI + 관측**의 합으로 이뤄진다.
 - **EVPN/VXLAN**은 **RT/정책 경계**와 **L2 소음 억제**로 테넌트 안전을 유지한다.

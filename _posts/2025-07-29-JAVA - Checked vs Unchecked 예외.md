@@ -6,7 +6,7 @@ category: Java
 ---
 # Checked vs Unchecked 예외
 
-## 1. 큰 그림 — 개념 요약
+## 큰 그림 — 개념 요약
 
 | 분류 | 상속 루트 | 컴파일러 강제 | 의도/의미 | 대표 예 |
 |---|---|---|---|---|
@@ -26,9 +26,9 @@ Throwable
 
 ---
 
-## 2. 기본 문법과 동작
+## 기본 문법과 동작
 
-### 2.1 처리 vs 선언
+### 처리 vs 선언
 
 ```java
 // Checked 예외: 반드시 처리하거나(try-catch) 선언해야 함
@@ -44,7 +44,7 @@ int divide(int a, int b) {            // throws 선언 없어도 됨
 }
 ```
 
-### 2.2 다중 catch & 멀티-catch
+### 다중 catch & 멀티-catch
 
 ```java
 try {
@@ -54,7 +54,7 @@ try {
 }
 ```
 
-### 2.3 finally와 자원 해제
+### finally와 자원 해제
 
 ```java
 // 전통 패턴
@@ -76,7 +76,7 @@ try (var br = new java.io.BufferedReader(new java.io.FileReader("in.txt"))) {
 
 ---
 
-## 3. 억제(Suppressed) 예외 — try-with-resources의 숨은 핵심
+## 억제(Suppressed) 예외 — try-with-resources의 숨은 핵심
 
 자원 닫기(`close`) 중 발생한 예외는 **억제(suppressed)** 되어 **주 예외**에 연결됩니다.
 
@@ -101,7 +101,7 @@ static void mainLogic() {
 
 ---
 
-## 4. 오버라이딩과 `throws` 제약
+## 오버라이딩과 `throws` 제약
 
 - 하위 클래스는 **상위 메서드가 선언한 checked 예외보다 더 넓은**(상위 타입의) **checked 예외**를 **던질 수 없음**
 - 더 **좁히거나(하위 타입)**, **unchecked만 던지는 것**은 허용
@@ -118,7 +118,7 @@ class Child extends Base {
 
 ---
 
-## 5. 사용자 정의 예외 — Checked vs Unchecked
+## 사용자 정의 예외 — Checked vs Unchecked
 
 ```java
 // Checked: 호출자가 복구/대응해야 하는 시나리오
@@ -136,9 +136,9 @@ public class DomainInvariantViolationException extends RuntimeException {
 
 ---
 
-## 6. 예외 전환(번역)과 체이닝 — 원인 보존이 생명
+## 예외 전환(번역)과 체이닝 — 원인 보존이 생명
 
-### 6.1 Checked → Unchecked (API 부담 줄이기)
+### Checked → Unchecked (API 부담 줄이기)
 
 ```java
 String readSilently(java.nio.file.Path path) {
@@ -150,7 +150,7 @@ String readSilently(java.nio.file.Path path) {
 }
 ```
 
-### 6.2 Unchecked → 도메인 예외(명시적 의미화)
+### Unchecked → 도메인 예외(명시적 의미화)
 
 ```java
 try {
@@ -164,11 +164,11 @@ try {
 
 ---
 
-## 7. 람다/스트림에서 Checked 예외 다루기
+## 람다/스트림에서 Checked 예외 다루기
 
 스트림 연산의 함수형 인터페이스는 **checked 예외를 선언하지 않음**. 처리 방법:
 
-### 7.1 래핑 유틸리티로 변환
+### 래핑 유틸리티로 변환
 
 ```java
 @FunctionalInterface interface ThrowingFunction<T, R, E extends Exception> {
@@ -189,7 +189,7 @@ var lines = java.util.stream.Stream.of("a.txt", "b.txt")
     .toList();
 ```
 
-### 7.2 개별 try-catch로 매핑
+### 개별 try-catch로 매핑
 
 ```java
 var list = files.stream().map(p -> {
@@ -205,7 +205,7 @@ var list = files.stream().map(p -> {
 
 ---
 
-## 8. `CompletableFuture`와 예외
+## `CompletableFuture`와 예외
 
 - 비동기 작업의 예외는 **CompletionException**(Unchecked)으로 래핑되어 전파
 - `join()`은 언체크 예외로, `get()`은 체크드(`ExecutionException`)로 노출
@@ -231,7 +231,7 @@ f.handle((val, ex) -> ex == null ? val : fallback());
 
 ---
 
-## 9. 레이어드 아키텍처 — 예외 매핑 가이드
+## 레이어드 아키텍처 — 예외 매핑 가이드
 
 | 레이어 | 권장 예외 | 비고 |
 |---|---|---|
@@ -254,7 +254,7 @@ class GlobalHandler {
 
 ---
 
-## 10. 베스트 프랙티스 체크리스트
+## 베스트 프랙티스 체크리스트
 
 - [ ] **무의미한 `catch (Exception e) {}` 금지** — 로그/대응/전달 중 하나는 반드시
 - [ ] **도메인 의미가 드러나는 예외 타입** 설계(메시지에 원인/키값 포함)
@@ -267,9 +267,9 @@ class GlobalHandler {
 
 ---
 
-## 11. 실전 예제 모음
+## 실전 예제 모음
 
-### 11.1 체크드 처리 + 복구/대체 플로우
+### 체크드 처리 + 복구/대체 플로우
 
 ```java
 String readWithFallback(java.nio.file.Path p, String fallback) {
@@ -282,7 +282,7 @@ String readWithFallback(java.nio.file.Path p, String fallback) {
 }
 ```
 
-### 11.2 체크드 → 도메인 언체크 전환(체이닝)
+### 체크드 → 도메인 언체크 전환(체이닝)
 
 ```java
 class DataAccessException extends RuntimeException {
@@ -297,7 +297,7 @@ String loadUser(long id) {
 }
 ```
 
-### 11.3 억제 예외 관찰
+### 억제 예외 관찰
 
 ```java
 try (var in = java.nio.file.Files.newInputStream(java.nio.file.Path.of("x"))) {
@@ -307,7 +307,7 @@ try (var in = java.nio.file.Files.newInputStream(java.nio.file.Path.of("x"))) {
 }
 ```
 
-### 11.4 정확한 재-throw(precise rethrow, Java 7+)
+### 정확한 재-throw(precise rethrow, Java 7+)
 
 ```java
 static void rethrow() throws java.io.IOException, java.sql.SQLException {
@@ -321,9 +321,9 @@ static void rethrow() throws java.io.IOException, java.sql.SQLException {
 
 ---
 
-## 12. 안티패턴 예시와 개선
+## 안티패턴 예시와 개선
 
-### 12.1 예외 삼키기
+### 예외 삼키기
 
 ```java
 try { risky(); } catch (Exception e) { /* 침묵 */ } // ❌
@@ -338,7 +338,7 @@ try { risky(); } catch (SpecificException e) {
 }
 ```
 
-### 12.2 finally에서 주 예외 유실
+### finally에서 주 예외 유실
 
 ```java
 try {
@@ -352,7 +352,7 @@ try {
 
 ---
 
-## 13. 성능과 테스트 관점
+## 성능과 테스트 관점
 
 - 예외 생성/스택트레이스 채우기는 **비용이 큼** → 빈번한 정상 흐름에 사용 금지
 - 단위 테스트에서 **예외 발생 조건/메시지/원인 체이닝/억제 예외**까지 검증
@@ -369,7 +369,7 @@ void testCause() {
 
 ---
 
-## 14. 최종 정리(선택 가이드)
+## 최종 정리(선택 가이드)
 
 1) **복구 가능성**이 있고 호출자가 결정/대응해야 한다 → **Checked**
 2) **계약 위반/버그/잘못된 사용** → **Unchecked**

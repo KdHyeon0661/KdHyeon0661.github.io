@@ -7,11 +7,12 @@ category: Kubernetes
 # kubeadm으로 실제 서버에 쿠버네티스 클러스터 구성하기
 
 ## 들어가며 — 기존 글의 핵심을 뽑아 확장하기
+
 기존 글은 **사전 준비 → kubeadm init → 네트워크 플러그인 → 워커 조인** 흐름이 잘 잡혀 있다. 이 글에서는 여기에 **시스템 튜닝(커널/방화벽/cgroup)**, **containerd 표준 설정**, **공식 APT 서명 방식(apt-key 미사용)**, **kubeadm 구성 파일 방식(init/join)**, **운영/업그레이드/리셋/토큰 재발급**, **자주 겪는 문제 해결**을 보강한다.
 
 ---
 
-## 1. 목표 아키텍처
+## 목표 아키텍처
 
 - **Control Plane(마스터) 1대**: `kube-apiserver`, `etcd`, `kube-controller-manager`, `kube-scheduler`
 - **Worker N대**: 애플리케이션 Pod 실행
@@ -28,24 +29,28 @@ category: Kubernetes
 
 ---
 
-## 2. 모든 노드 공통 — 시스템 준비
+## 모든 노드 공통 — 시스템 준비
 
-### 2.1 호스트네임/hosts
+### 호스트네임/hosts
+
 ```bash
 # 각 노드에서 (예시)
+
 sudo hostnamectl set-hostname control-plane   # 또는 worker-1, worker-2 ...
 echo "192.168.56.101 control-plane" | sudo tee -a /etc/hosts
 echo "192.168.56.102 worker-1"       | sudo tee -a /etc/hosts
 echo "192.168.56.103 worker-2"       | sudo tee -a /etc/hosts
 ```
 
-### 2.2 스왑 비활성 (kubelet 요구 사항)
+### 스왑 비활성 (kubelet 요구 사항)
+
 ```bash
 sudo swapoff -a
 sudo sed -i '/ swap / s/^/#/' /etc/fstab
 ```
 
-### 2.3 커널 모듈/네트 필터
+### 커널 모듈/네트 필터
+
 ```bash
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
@@ -62,7 +67,8 @@ EOF
 sudo sysctl --system
 ```
 
-### 2.4 방화벽(테스트 편의)
+### 방화벽(테스트 편의)
+
 실무에선 포트 단일 허용을 권장한다. 학습 목적이라면 임시 비활성:
 ```bash
 sudo ufw disable
@@ -71,9 +77,10 @@ sudo ufw disable
 
 ---
 
-## 3. 컨테이너 런타임 — containerd 권장 설정
+## 컨테이너 런타임 — containerd 권장 설정
 
-### 3.1 containerd 설치
+### containerd 설치
+
 ```bash
 sudo apt update
 sudo apt install -y containerd
@@ -81,7 +88,8 @@ sudo mkdir -p /etc/containerd
 containerd config default | sudo tee /etc/containerd/config.toml >/dev/null
 ```
 
-### 3.2 SystemdCgroup 활성화 (kubelet과 cgroup 드라이버 일치)
+### SystemdCgroup 활성화 (kubelet과 cgroup 드라이버 일치)
+
 `/etc/containerd/config.toml` 에서 `SystemdCgroup = true` 로 변경:
 ```bash
 sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
@@ -90,9 +98,10 @@ sudo systemctl enable --now containerd
 
 ---
 
-## 4. kubeadm / kubelet / kubectl 설치 (공식 APT 서명 방식)
+## kubeadm / kubelet / kubectl 설치 (공식 APT 서명 방식)
 
-### 4.1 패키지 저장소 키/리스트
+### 패키지 저장소 키/리스트
+
 ```bash
 sudo apt update
 sudo apt install -y apt-transport-https ca-certificates curl gpg
@@ -107,7 +116,8 @@ https://pkgs.k8s.io/core:/stable:/v1.30/deb/ /" \
 ```
 > 버전 트랙은 환경에 맞춰 `v1.29`, `v1.31` 등으로 조정.
 
-### 4.2 설치 및 홀드
+### 설치 및 홀드
+
 ```bash
 sudo apt update
 sudo apt install -y kubeadm kubelet kubectl
@@ -116,7 +126,7 @@ sudo apt-mark hold kubeadm kubelet kubectl
 
 ---
 
-## 5. kubeadm 구성 파일로 초기화 준비(권장)
+## kubeadm 구성 파일로 초기화 준비(권장)
 
 **구성 파일을 써야 재현성과 옵션 관리가 쉽다.**
 
@@ -151,15 +161,17 @@ mode: "ipvs"
 
 ---
 
-## 6. Control Plane 초기화
+## Control Plane 초기화
 
-### 6.1 init
+### init
+
 ```bash
 sudo kubeadm init --config kubeadm-config.yaml
 ```
 성공 시 `kubeadm join ...` 명령이 출력된다(워커에서 사용).
 
-### 6.2 kubectl 사용 준비 (Control Plane 노드)
+### kubectl 사용 준비 (Control Plane 노드)
+
 ```bash
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -169,14 +181,16 @@ kubectl get nodes
 
 ---
 
-## 7. 네트워크 플러그인(CNI) 설치
+## 네트워크 플러그인(CNI) 설치
 
-### 7.1 Calico (예)
+### Calico (예)
+
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
 ```
 
-### 7.2 Flannel (대안 — Pod CIDR 10.244.0.0/16 필요)
+### Flannel (대안 — Pod CIDR 10.244.0.0/16 필요)
+
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 ```
@@ -185,15 +199,17 @@ kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Doc
 
 ---
 
-## 8. 워커 노드 조인
+## 워커 노드 조인
 
-### 8.1 join 실행 (각 워커 노드)
+### join 실행 (각 워커 노드)
+
 ```bash
 sudo kubeadm join 192.168.56.101:6443 --token <TOKEN> \
   --discovery-token-ca-cert-hash sha256:<HASH>
 ```
 
-### 8.2 Control Plane에서 확인
+### Control Plane에서 확인
+
 ```bash
 kubectl get nodes -o wide
 ```
@@ -201,32 +217,37 @@ kubectl get nodes -o wide
 
 ---
 
-## 9. 간단 기능 검증
+## 간단 기능 검증
 
-### 9.1 Nginx 배포/노출
+### Nginx 배포/노출
+
 ```bash
 kubectl create deployment nginx --image=nginx:1.27-alpine
 kubectl expose deployment nginx --type=NodePort --port=80
 kubectl get svc
 ```
 
-### 9.2 서비스 접속
+### 서비스 접속
+
 ```bash
 # 노드 IP + 할당된 NodePort 로 접속
+
 curl http://<worker-node-ip>:<nodeport>
 ```
 
 ---
 
-## 10. 운영자를 위한 필수 팁
+## 운영자를 위한 필수 팁
 
-### 10.1 kubelet 서비스/부팅 연동
+### kubelet 서비스/부팅 연동
+
 ```bash
 systemctl status kubelet
 sudo systemctl enable --now kubelet
 ```
 
-### 10.2 CRI 도구(crictl) 유용 명령
+### CRI 도구(crictl) 유용 명령
+
 ```bash
 sudo apt install -y cri-tools
 sudo crictl ps
@@ -234,44 +255,53 @@ sudo crictl images
 sudo crictl logs <container-id>
 ```
 
-### 10.3 토큰/해시 재발급(워커 추가 시)
+### 토큰/해시 재발급(워커 추가 시)
+
 ```bash
 # 새 토큰 생성
+
 sudo kubeadm token create
 
 # CA cert hash 출력
+
 openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt \
   | openssl rsa -pubin -outform der 2>/dev/null \
   | openssl dgst -sha256 -hex | sed 's/^.* //'
 ```
 
-### 10.4 업그레이드 개요(단일 CP)
+### 업그레이드 개요(단일 CP)
+
 ```bash
 # 원하는 버전 채널로 apt 소스 교체 후
+
 sudo apt update
 sudo apt install -y kubeadm=1.30.x-00
 sudo kubeadm upgrade plan
 sudo kubeadm upgrade apply v1.30.x
 
 # 각 노드에서 kubelet/kubectl
+
 sudo apt install -y kubelet=1.30.x-00 kubectl=1.30.x-00
 sudo systemctl restart kubelet
 ```
 
-### 10.5 리셋(연습 환경 정리)
+### 리셋(연습 환경 정리)
+
 ```bash
 sudo kubeadm reset -f
 sudo systemctl restart containerd
 sudo rm -rf $HOME/.kube
 # (필요 시 iptables/브리지 규칙 정리)
+
 ```
 
 ---
 
-## 11. 선언형으로 더 엄격하게 — JoinConfiguration 사용
+## 선언형으로 더 엄격하게 — JoinConfiguration 사용
 
 ```yaml
 # worker-join.yaml
+
 apiVersion: kubeadm.k8s.io/v1beta4
 kind: JoinConfiguration
 discovery:
@@ -290,19 +320,22 @@ sudo kubeadm join --config worker-join.yaml
 
 ---
 
-## 12. 선택: Ingress/Metric·HPA 빠른 구성
+## 선택: Ingress/Metric·HPA 빠른 구성
 
-### 12.1 NGINX Ingress Controller(매니페스트 예시)
+### NGINX Ingress Controller(매니페스트 예시)
+
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/baremetal/deploy.yaml
 ```
 
-### 12.2 Metrics Server
+### Metrics Server
+
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
-### 12.3 HPA 스니펫
+### HPA 스니펫
+
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -320,7 +353,7 @@ spec:
 
 ---
 
-## 13. 자주 겪는 문제 해결(확장판)
+## 자주 겪는 문제 해결(확장판)
 
 | 증상/오류 | 원인 후보 | 해결 방법 |
 |---|---|---|
@@ -343,7 +376,7 @@ kubectl describe pod <pod> -n <ns>
 
 ---
 
-## 14. 네트워킹/성능/용량 개념식(학습용)
+## 네트워킹/성능/용량 개념식(학습용)
 
 Pod 수용량 추정의 단순식:
 $$
@@ -355,10 +388,11 @@ $$
 
 ---
 
-## 15. 실전 예제 — 간단 API + Ingress 배포
+## 실전 예제 — 간단 API + Ingress 배포
 
 ```yaml
 # api-deploy.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: echo-api, labels: { app: echo } }
@@ -399,13 +433,15 @@ spec:
 ```bash
 kubectl apply -f api-deploy.yaml
 # /etc/hosts에 control-plane or ingress LB IP 매핑
+
 echo "<INGRESS_IP> echo.local" | sudo tee -a /etc/hosts
 curl http://echo.local/
 ```
 
 ---
 
-## 16. 마무리 — 현업 이행 체크리스트
+## 마무리 — 현업 이행 체크리스트
+
 - **재현성**: kubeadm 구성 파일로 init/join, Git에 버전 관리
 - **표준화**: containerd(SystemdCgroup), CNI 선택/Pod CIDR, kube-proxy 모드
 - **보안**: RBAC 최소 권한, etcd 암호화(EncryptionConfiguration), 감사 로깅

@@ -6,7 +6,7 @@ category: AWS
 ---
 # ECS / EKS: 컨테이너 서비스
 
-## 0. 빠른 개요: 언제 ECS? 언제 EKS?
+## 빠른 개요: 언제 ECS? 언제 EKS?
 
 | 질문 | ECS 권장 | EKS 권장 |
 |---|---|---|
@@ -21,16 +21,18 @@ category: AWS
 
 ---
 
-## 1. 공통 토대: 컨테이너 아키텍처 핵심
+## 공통 토대: 컨테이너 아키텍처 핵심
 
-### 1.1 네트워킹(VPC) 설계 기본
+### 네트워킹(VPC) 설계 기본
+
 - **퍼블릭 서브넷**: ALB/NLB, NAT GW 등 외부 노출 리소스
 - **프라이빗 서브넷**: 서비스(타스크/파드), RDS/ElastiCache 등 데이터 계층
 - **보안그룹**: 허용 규칙만(Stateless NACL은 억제적으로)
 - **엔드포인트**: S3/DynamoDB/STS 등 **Interface/Gateway Endpoint**로 NAT 비용↓
 - **로깅**: VPC Flow Logs, CloudTrail, Config, GuardDuty
 
-### 1.2 컨테이너 레지스트리
+### 컨테이너 레지스트리
+
 - **ECR** 사용: 이미지 스캔, **수명주기(Lifecycle)** 규칙로 이미지 정리
 ```json
 {
@@ -40,16 +42,18 @@ category: AWS
 }
 ```
 
-### 1.3 CI/CD 파이프라인(샘플 흐름)
+### CI/CD 파이프라인(샘플 흐름)
+
 ```
 Git → Build(gha/CodeBuild) → ECR Push → IaC(CDK/CFn/Terraform) → ECS/EKS 배포
 ```
 
 ---
 
-## 2. Amazon ECS 완전 가이드
+## Amazon ECS 완전 가이드
 
-### 2.1 핵심 개념 복습
+### 핵심 개념 복습
+
 - **Task Definition**: 컨테이너 이미지/리소스/환경/로깅/볼륨 등 정의(JSON)
 - **Task**: 실행 단위(1..n 컨테이너) — K8s Pod에 대응
 - **Service**: Task의 **지속 실행/DesiredCount 유지** 및 배포 전략 관리
@@ -57,11 +61,13 @@ Git → Build(gha/CodeBuild) → ECR Push → IaC(CDK/CFn/Terraform) → ECS/EKS
 - **Launch Type**: `EC2` vs `FARGATE`
 - **Capacity Provider**: Spot/On-Demand/혼합 정책, Auto Scaling 연계
 
-### 2.2 네트워킹 모드
+### 네트워킹 모드
+
 - **awsvpc(권장)**: 컨테이너(ENI) 단위 IP 부여 → 보안그룹/네트워크 제어 용이
 - bridge/host(EC2)도 가능하나 신규는 awsvpc 추천
 
-### 2.3 Task Definition 예제(로깅, 헬스체크, ulimits, Secret, FireLens)
+### Task Definition 예제(로깅, 헬스체크, ulimits, Secret, FireLens)
+
 ```json
 {
   "family": "webapp",
@@ -100,15 +106,19 @@ Git → Build(gha/CodeBuild) → ECR Push → IaC(CDK/CFn/Terraform) → ECS/EKS
 }
 ```
 
-### 2.4 서비스+ALB(Fargate) 배포 CLI
+### 서비스+ALB(Fargate) 배포 CLI
+
 ```bash
 # 클러스터
+
 aws ecs create-cluster --cluster-name app-cluster
 
 # 태스크 정의 등록
+
 aws ecs register-task-definition --cli-input-json file://taskdef.json
 
 # 서비스 생성(서브넷·보안그룹은 프라이빗/앱SG)
+
 aws ecs create-service \
   --cluster app-cluster \
   --service-name web-service \
@@ -121,7 +131,8 @@ aws ecs create-service \
   --scheduling-strategy REPLICA
 ```
 
-### 2.5 배포 전략
+### 배포 전략
+
 - **롤링 기본**, 실패시 **Deployment Circuit Breaker**(자동 롤백)
 ```bash
 aws ecs update-service \
@@ -131,7 +142,8 @@ aws ecs update-service \
 ```
 - **Blue/Green**: CodeDeploy와 연동(테스트 트래픽 전환, 단계적 라우팅)
 
-### 2.6 오토스케일링
+### 오토스케일링
+
 - **Service Auto Scaling**: CPU/Memory/Request 기반 DesiredCount 자동 조정
 ```bash
 aws application-autoscaling register-scalable-target \
@@ -151,20 +163,24 @@ aws application-autoscaling put-scaling-policy \
   }'
 ```
 
-### 2.7 서비스 디스커버리
+### 서비스 디스커버리
+
 - Cloud Map로 `app.namespace.local` 이름해결 → 내부 gRPC/HTTP 서비스 연결 용이
 
-### 2.8 로깅·모니터링
+### 로깅·모니터링
+
 - **awslogs** 혹은 **FireLens(Fluent Bit)** → CloudWatch Logs/Elastic/OpenSearch
 - X-Ray, CloudWatch ServiceLens로 트레이스
 - 메트릭: CPU/Memory/RunningTask/Service Deployment 지표
 
-### 2.9 보안/권한
+### 보안/권한
+
 - **Task Execution Role**: ECR Pull/Logs 권한
 - **Task Role**: 애플리케이션이 필요한 AWS API 최소권한(IAM Boundary/ABAC 고려)
 - SG: ALB→App 80/TCP 허용, 외부는 ALB만 공개
 
-### 2.10 비용 최적화 팁
+### 비용 최적화 팁
+
 - Fargate vCPU/GB-초 과금 → **리소스 할당 상향 주의**
 - EC2 Launch + **Spot**(Capacity Provider) 혼합로 비용↓
 - NAT GW 절감: VPC Endpoint 적극 활용
@@ -172,15 +188,17 @@ aws application-autoscaling put-scaling-policy \
 
 ---
 
-## 3. Amazon EKS 완전 가이드
+## Amazon EKS 완전 가이드
 
-### 3.1 핵심 개념 복습
+### 핵심 개념 복습
+
 - **Control Plane**: AWS 관리(HA)
 - **노드 그룹**: EC2(Managed/Unmanaged) 또는 **Fargate Profile**(서버리스 파드)
 - **AWS VPC CNI**: 파드에 VPC IP 할당(서브넷 IP 용량 고려)
 - **IRSA(권장)**: IAM Role for Service Account — 파드별 세밀 권한
 
-### 3.2 클러스터 생성(eksctl 예)
+### 클러스터 생성(eksctl 예)
+
 ```bash
 eksctl create cluster \
   --name app-eks \
@@ -190,9 +208,11 @@ eksctl create cluster \
   --managed
 ```
 
-### 3.3 애플리케이션 배포(Deployment/Service/Ingress)
+### 애플리케이션 배포(Deployment/Service/Ingress)
+
 ```yaml
 # deployment.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: web, labels: { app: web } }
@@ -239,7 +259,8 @@ spec:
             backend: { service: { name: web-svc, port: { number: 80 } } }
 ```
 
-### 3.4 오토스케일링
+### 오토스케일링
+
 - **HPA**: 파드 수준
 ```yaml
 apiVersion: autoscaling/v2
@@ -258,7 +279,8 @@ spec:
 - **Cluster Autoscaler / Karpenter**: 노드 증감(Spot/온디맨드 혼합)
   - Karpenter는 가용성/가격 최적의 개별 노드 프로비저닝
 
-### 3.5 스토리지/시크릿
+### 스토리지/시크릿
+
 - **EBS CSI**: 블록 스토리지(PV/PVC)
 - **EFS CSI**: 공유 파일시스템
 - **Secrets Store CSI**: Secrets Manager/SSM 파드 마운트
@@ -272,23 +294,27 @@ spec:
   resources: { requests: { storage: 20Gi } }
 ```
 
-### 3.6 보안
+### 보안
+
 - **IRSA**: 파드별 IAM(필수)
 - **RBAC**: 최소 권한 Role/RoleBinding
 - **Pod Security(기본 표준)** 또는 Kyverno/OPA Gatekeeper 정책 준수
 - **NetworkPolicy**(Calico/Cilium): 파드 간 트래픽 허용 목록
 - **서비스 메시**(App Mesh/Istio): mTLS, 트래픽 분할, 관측성
 
-### 3.7 관측성(Observability)
+### 관측성(Observability)
+
 - **Prometheus/Grafana**(AMP/AMG), **CloudWatch Agent**(컨테이너 인사이트), **OpenTelemetry**
 - **X-Ray**(애플리케이션 트레이스) + ServiceLens
 - **로그**: Fluent Bit DaemonSet → CloudWatch/OS/OpenSearch
 
-### 3.8 배포 전략
+### 배포 전략
+
 - **RollingUpdate** 기본, **Canary/BlueGreen**: Argo Rollouts, Flagger 등
 - GitOps: **ArgoCD**로 선언형 배포 파이프라인
 
-### 3.9 비용·용량 계산 감각
+### 비용·용량 계산 감각
+
 - 파드 요청/리밋 합이 노드 용량을 초과하지 않도록 **Packing** 최적화
   $$ \text{Node 수} \approx \left\lceil \max\left( \frac{\sum \text{CPU requests}}{\text{Node CPU}}, \frac{\sum \text{Mem requests}}{\text{Node Mem}} \right) \right\rceil $$
 - IP 소진: VPC CNI 파드당 IP → **서브넷 여유**/PrefixMode 확인
@@ -296,7 +322,7 @@ spec:
 
 ---
 
-## 4. ECS vs EKS: 운영·배포 전략 비교
+## ECS vs EKS: 운영·배포 전략 비교
 
 | 주제 | ECS | EKS |
 |---|---|---|
@@ -309,38 +335,45 @@ spec:
 
 ---
 
-## 5. 실습 I — ECS Fargate 표준 패턴(End-to-End)
+## 실습 I — ECS Fargate 표준 패턴(End-to-End)
 
-### 5.1 전제
+### 전제
+
 - **프라이빗 서브넷** 2개, **퍼블릭 서브넷** 2개, **ALB** 퍼블릭에 배치
 - ECR에 `webapp:latest` 이미지
 
-### 5.2 ALB/TG/SG
+### ALB/TG/SG
+
 ```bash
 # 보안그룹(예시)
+
 aws ec2 create-security-group --group-name alb-sg --description alb --vpc-id vpc-xxx
 aws ec2 authorize-security-group-ingress --group-id sg-alb --protocol tcp --port 80 --cidr 0.0.0.0/0
 aws ec2 create-security-group --group-name app-sg --description app --vpc-id vpc-xxx
 aws ec2 authorize-security-group-ingress --group-id sg-app --protocol tcp --port 8080 --source-group sg-alb
 ```
 
-### 5.3 ECS 리소스
+### ECS 리소스
+
 - 위 2.3 TaskDef JSON + 2.4 create-service로 배포
 - 헬스체크 패스 → ALB 경유 정상 응답
 
-### 5.4 오토스케일/배포회로차단/로그 보존 기간 설정
+### 오토스케일/배포회로차단/로그 보존 기간 설정
+
 - 2.5/2.6/로깅 수명주기 함께 적용
 
 ---
 
-## 6. 실습 II — EKS 표준 패턴(End-to-End)
+## 실습 II — EKS 표준 패턴(End-to-End)
 
-### 6.1 클러스터
+### 클러스터
+
 ```bash
 eksctl create cluster --name demo --region ap-northeast-2 --with-oidc --nodes 3 --managed
 ```
 
-### 6.2 AWS Load Balancer Controller 설치(Helm)
+### AWS Load Balancer Controller 설치(Helm)
+
 ```bash
 helm repo add eks https://aws.github.io/eks-charts
 helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
@@ -349,34 +382,40 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 ```
 > 사전에 IRSA 권한 바인딩(ServiceAccount + IAM Policy) 필요
 
-### 6.3 앱/서비스/인그레스 + HPA
+### 앱/서비스/인그레스 + HPA
+
 - 3.3/3.4 예제 적용 후 `kubectl get ingress,svc,deploy,hpa -n default`로 확인
 
-### 6.4 관측성
+### 관측성
+
 - CloudWatch Agent + Fluent Bit DaemonSet 설치, 대시보드 구성
 
 ---
 
-## 7. 패턴·참고 설계
+## 패턴·참고 설계
 
-### 7.1 멀티테넌시
+### 멀티테넌시
+
 - **ECS**: 서비스/클러스터 분리 + Task Role/SG/네임스페이스 태깅
 - **EKS**: Namespace 격리 + NetworkPolicy + ResourceQuota + IRSA
 
-### 7.2 데이터 계층 접근
+### 데이터 계층 접근
+
 - RDS/EKS/ECS: SG로 L4 제어, IAM DB Auth(옵션), 시크릿은 SM/SSM/CSI
 
-### 7.3 메시/고급 트래픽
+### 메시/고급 트래픽
+
 - **ECS**: App Mesh(Envoy 사이드카)로 서킷브레이커/재시도/관측성
 - **EKS**: Istio/App Mesh/Linkerd
 
-### 7.4 배치/이벤트 처리
+### 배치/이벤트 처리
+
 - **ECS**: Scheduled Tasks(EventBridge)로 크론 잡
 - **EKS**: CronJob
 
 ---
 
-## 8. 트러블슈팅 체크리스트
+## 트러블슈팅 체크리스트
 
 - **접속 실패**: ALB 헬스체크 경로/보안그룹/서브넷 라우팅 확인
 - **DNS 불가**: VPC DNS Hostnames/Support 켜기, CoreDNS/조건부포워딩(eks)
@@ -387,7 +426,7 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ---
 
-## 9. 비용·성능 최적화 포인트
+## 비용·성능 최적화 포인트
 
 - **ECS Fargate**: vCPU/메모리 티어 최소화, **서브 프로세스/스레드 수 조정**으로 오버프로비 방지
 - **EKS**: Spot + Karpenter, 바이너리 최적화(distroless/Alpine), **멀티스테이지 빌드**로 이미지 크기↓
@@ -396,9 +435,10 @@ helm upgrade -i aws-load-balancer-controller eks/aws-load-balancer-controller \
 
 ---
 
-## 10. IaC: CDK 스니펫(요약)
+## IaC: CDK 스니펫(요약)
 
-### 10.1 CDK로 ECS Fargate 서비스
+### CDK로 ECS Fargate 서비스
+
 ```ts
 import * as cdk from 'aws-cdk-lib';
 import { Cluster, FargateService, FargateTaskDefinition, ContainerImage, AwsLogDriver } from 'aws-cdk-lib/aws-ecs';
@@ -427,7 +467,8 @@ export class EcsFargateStack extends cdk.Stack {
 }
 ```
 
-### 10.2 CDK로 EKS 클러스터(요약)
+### CDK로 EKS 클러스터(요약)
+
 ```ts
 import * as cdk from 'aws-cdk-lib';
 import * as eks from 'aws-cdk-lib/aws-eks';
@@ -449,7 +490,7 @@ export class EksStack extends cdk.Stack {
 
 ---
 
-## 11. 요약 테이블
+## 요약 테이블
 
 | 항목 | ECS | EKS |
 |---|---|---|
@@ -464,7 +505,7 @@ export class EksStack extends cdk.Stack {
 
 ---
 
-## 12. 결론
+## 결론
 
 - **ECS**는 **빠른 가치실현과 운영 단순성**이 강점 — Fargate와 결합하면 서버 관리 부담이 사실상 0에 수렴.
 - **EKS**는 **표준 쿠버네티스 생태계와 유연성**을 최대화 — 대규모/복잡한 조직에 적합.

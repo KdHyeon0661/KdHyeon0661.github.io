@@ -6,19 +6,20 @@ category: JavaScript
 ---
 # Serverless와 JavaScript: 프론트엔드 개발자를 위한 서버리스 입문
 
-## 1. Serverless 한 줄 정의와 오해 풀기
+## Serverless 한 줄 정의와 오해 풀기
 
 > **Serverless** = “서버 없음”이 아니라 “**서버 관리 부담 없음**”.
 > 코드를 **함수 단위**로 배포하면, 실행 시점에만 **자동으로 인프라가 뜨고** 끝나면 내려갑니다(종량 과금).
 
 ### 동작 순서(이벤트 구동)
+
 1. 이벤트 발생(HTTP 호출, Cron, 큐/스토리지/DB 트리거 등)
 2. 플랫폼이 함수를 **컨테이너/아이솔레이트**에서 **자동 실행**
 3. 실행 종료 → **자원 회수** → 사용량만 과금
 
 ---
 
-## 2. 왜 JavaScript와 궁합이 좋은가?
+## 왜 JavaScript와 궁합이 좋은가?
 
 | 이유 | 상세 |
 |---|---|
@@ -29,7 +30,7 @@ category: JavaScript
 
 ---
 
-## 3. 플랫폼 스펙트럼: Regional Lambda vs Edge Functions
+## 플랫폼 스펙트럼: Regional Lambda vs Edge Functions
 
 | 구분 | 예 | 런타임 | 콜드스타트 | 파일 접근 | 네트워킹 | 용도 |
 |---|---|---|---|---|---|---|
@@ -40,7 +41,7 @@ category: JavaScript
 
 ---
 
-## 4. 자주 쓰는 JS 서버리스 플랫폼 요약
+## 자주 쓰는 JS 서버리스 플랫폼 요약
 
 | 플랫폼 | 진입 난이도 | 장점 | 유의점 |
 |---|---|---|---|
@@ -52,9 +53,9 @@ category: JavaScript
 
 ---
 
-## 5. 첫 코드 — “Hello”를 넘어서 실용 패턴으로
+## 첫 코드 — “Hello”를 넘어서 실용 패턴으로
 
-### 5.1 AWS Lambda (Node.js 20, API Gateway Proxy)
+### AWS Lambda (Node.js 20, API Gateway Proxy)
 
 /**`lambda/index.mjs`**/
 ```js
@@ -79,7 +80,7 @@ sam local start-api
 
 ---
 
-### 5.2 Vercel Functions (Node.js) — 파일 기반 라우팅
+### Vercel Functions (Node.js) — 파일 기반 라우팅
 
 /**`api/sendMail.js`**/
 ```js
@@ -111,7 +112,7 @@ export default async function handler(req, res) {
 
 ---
 
-### 5.3 Cloudflare Workers (에지, 빠른 프록시/인증)
+### Cloudflare Workers (에지, 빠른 프록시/인증)
 
 /**`src/index.js`**/
 ```js
@@ -132,9 +133,10 @@ export default {
 
 ---
 
-## 6. 서버리스 “필수” 아키텍처 패턴
+## 서버리스 “필수” 아키텍처 패턴
 
-### 6.1 입력 검증(Validation) — *Zod 등 스키마 기반*
+### 입력 검증(Validation) — *Zod 등 스키마 기반*
+
 ```js
 import { z } from 'zod';
 
@@ -160,18 +162,21 @@ export async function handle(eventOrReq) {
 }
 ```
 
-### 6.2 오류 처리 & 표준 응답 포맷
+### 오류 처리 & 표준 응답 포맷
+
 ```js
 const ok = (data) => ({ statusCode: 200, body: JSON.stringify({ ok: true, data }) });
 const badRequest = (err) => ({ statusCode: 400, body: JSON.stringify({ ok: false, error: err }) });
 const fail = (e) => ({ statusCode: 500, body: JSON.stringify({ ok: false, error: 'internal' }) });
 ```
 
-### 6.3 인증(JWT/세션) — 에지 선필터 → 리저널 백엔드
+### 인증(JWT/세션) — 에지 선필터 → 리저널 백엔드
+
 - **Edge**에서 쿠키/헤더 검사, 빠른 401/302 처리
 - 통과 시 **백엔드 함수**로 전달하여 DB 등 무거운 연산 수행
 
-### 6.4 파일 업로드 — **Presigned URL**
+### 파일 업로드 — **Presigned URL**
+
 - 서버리스 함수에서 **S3/R2** 업로드 **사전 서명 URL** 발급 → 프론트가 직접 업로드(서버 부하↓)
 
 **AWS S3 presign 예**
@@ -186,11 +191,13 @@ export async function createUploadUrl(key, contentType) {
 }
 ```
 
-### 6.5 비동기 파이프라인 — 큐/이벤트/크론
+### 비동기 파이프라인 — 큐/이벤트/크론
+
 - **EventBridge(Cron)/Cloud Scheduler/Vercel Cron**으로 주기 작업
 - **SQS/Cloud Tasks/Queues**로 비동기 처리, 재시도/보관/지연 지원
 
-### 6.6 DB 연결 베스트 프랙티스
+### DB 연결 베스트 프랙티스
+
 - 서버리스는 **컨테이너가 재사용**될 수 있어 연결을 **모듈 스코프에 캐시**
 - RDBMS는 커넥션 폭증 위험 → **RDS Proxy/pgBouncer** 또는 **서버리스 친화 DB(PlanetScale/Neon/DynamoDB/Firestore)** 고려
 
@@ -203,14 +210,15 @@ export function getDb() {
 }
 ```
 
-### 6.7 관측성(Observability)
+### 관측성(Observability)
+
 - **로그**: CloudWatch/Workers Logs/Vercel Logs
 - **추적/분산 트레이싱**: AWS X-Ray, OpenTelemetry(OTel)
 - **지표**: 함수 호출/오류/지연 시간, 큐 길이, 재시도 횟수
 
 ---
 
-## 7. 성능‧콜드스타트 최소화
+## 성능‧콜드스타트 최소화
 
 | 요령 | 설명 |
 |---|---|
@@ -222,7 +230,7 @@ export function getDb() {
 
 ---
 
-## 8. 비용 구조 이해(간단 모델)
+## 비용 구조 이해(간단 모델)
 
 - 서버리스 비용은 주로 **요청 수**, **실행 시간(ms)**, **메모리(MB)**에 의해 결정.
 - 개략식(설명용):
@@ -234,7 +242,7 @@ $$
 
 ---
 
-## 9. 보안 체크리스트
+## 보안 체크리스트
 
 - **원천 비밀관리**: AWS SSM/Secrets Manager, Vercel/Workers Secrets
 - **최소 권한 IAM**: S3 접근시 **특정 버킷/프리픽스**만 허용
@@ -245,7 +253,7 @@ $$
 
 ---
 
-## 10. 로컬 개발/디버깅
+## 로컬 개발/디버깅
 
 | 플랫폼 | 로컬 도구 |
 |---|---|
@@ -258,9 +266,9 @@ $$
 
 ---
 
-## 11. 실전 예제 모음
+## 실전 예제 모음
 
-### 11.1 연락 폼 메일 전송(Production-Ready)
+### 연락 폼 메일 전송(Production-Ready)
 
 // **Vercel Functions + 입력 검증 + 속도 제한 + 로깅**
 
@@ -297,7 +305,7 @@ export default async function handler(req, res) {
 }
 ```
 
-### 11.2 이미지 업로드(프리사인 + 리사이징 파이프)
+### 이미지 업로드(프리사인 + 리사이징 파이프)
 
 // **Lambda**: S3 presign 발급 → **프론트**가 직접 PUT 업로드 → **S3 이벤트**로 리사이즈 Lambda 실행
 
@@ -319,7 +327,7 @@ export const handler = async (event) => {
 > S3 `ObjectCreated` 트리거로 리사이즈 Lambda → 썸네일 버킷에 저장.
 > 에지(CloudFront Functions/Workers)에서 이미지 URL 라우팅/캐시.
 
-### 11.3 크론 잡(스케줄) 예 — Cloudflare Workers
+### 크론 잡(스케줄) 예 — Cloudflare Workers
 
 /**`src/cron.js`**/
 ```js
@@ -338,7 +346,7 @@ export default {
 crons = ["0 * * * *"] # 매시 0분
 ```
 
-### 11.4 에지 인증 프록시 — Cloudflare → 리저널 API
+### 에지 인증 프록시 — Cloudflare → 리저널 API
 
 /**`src/auth-proxy.js`**/
 ```js
@@ -359,7 +367,7 @@ export default {
 
 ---
 
-## 12. 테스트/품질 — TDD/계약/부하
+## 테스트/품질 — TDD/계약/부하
 
 - **단위 테스트**: Zod 스키마/핸들러 로직 순수 함수화 → Jest/Vitest로 검증
 - **계약 테스트**: 클라이언트와 API 응답 스키마 고정 → Pact/Schema snapshot
@@ -367,7 +375,7 @@ export default {
 
 ---
 
-## 13. 번들/빌드 — 작은 것이 빠르다
+## 번들/빌드 — 작은 것이 빠르다
 
 - **ESM 우선** + **Tree-shaking** 가능한 빌드(Vite/Rollup/esbuild)
 - **서버 전용 코드 분리**: 프론트 공유 코드와 섞이지 않게 경로/에일리어스 구분
@@ -382,7 +390,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 ---
 
-## 14. 운영 자동화(CI/CD)
+## 운영 자동화(CI/CD)
 
 - **Git Push → 미리보기/프로덕션**: Vercel/Netlify는 기본 탑재
 - **AWS**: GitHub Actions → CDK/SAM 배포, 환경별 스택(Dev/Prod) 분리
@@ -390,7 +398,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 ---
 
-## 15. 언제 Serverless가 정답이 아닐까?
+## 언제 Serverless가 정답이 아닐까?
 
 - **항시 연결/저지연**: 초저지연 WebSocket 대규모 상시 연결(게임/트레이딩)
 - **대용량 스트리밍/배치**: 길고 무거운 작업(영상 인코딩) — **Batch/ECS/배포형 서버** 고려
@@ -398,7 +406,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 ---
 
-## 16. 전체 비교표(요약)
+## 전체 비교표(요약)
 
 | 항목 | 장점 | 단점 | 우수 사례 |
 |---|---|---|---|
@@ -408,9 +416,10 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 ---
 
-## 17. 빠른 시작 “템플릿” 3종
+## 빠른 시작 “템플릿” 3종
 
 ### A) **Vercel Node 함수 + Zod + CORS 헤더**
+
 ```js
 // api/hello.js
 import { z } from 'zod';
@@ -425,6 +434,7 @@ export default function handler(req, res) {
 ```
 
 ### B) **Lambda + API Gateway + 에러 안전 래퍼**
+
 ```js
 const wrap = (fn) => async (event) => {
   try { return await fn(event); }
@@ -438,6 +448,7 @@ export const handler = wrap(async (event) => {
 ```
 
 ### C) **Cloudflare Worker 에지 캐시 프록시**
+
 ```js
 export default {
   async fetch(req, env) {
@@ -459,7 +470,7 @@ export default {
 
 ---
 
-## 18. 결론
+## 결론
 
 - JS/TS 개발자에게 서버리스는 **API·웹훅·파일 업로드·정기 작업**을 빠르게 만들 수 있는 **가장 짧은 경로**입니다.
 - **입력 검증/오류/관측/보안/비용**의 다섯 축만 지키면, 작은 함수들의 조합으로 **유지보수 가능한 백엔드**를 운영할 수 있습니다.

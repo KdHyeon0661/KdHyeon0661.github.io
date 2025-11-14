@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # 그래프(Graph) 자료구조
 
-## 1. 그래프란?
+## 그래프란?
 
 그래프 \(G=(V,E)\)는 **정점(Vertex)** 집합 \(V\)와 **간선(Edge)** 집합 \(E\)로 구성된 구조다.
 정점은 도시·웹페이지·사용자 등 **개체**를, 간선은 도로·하이퍼링크·팔로우 등 **관계**를 나타낸다.
@@ -32,7 +32,7 @@ category: Data Structure
 
 ---
 
-## 2. 그래프의 분류 (요약 표)
+## 그래프의 분류 (요약 표)
 
 | 분류 | 종류 | 핵심 포인트 |
 |---|---|---|
@@ -44,9 +44,9 @@ category: Data Structure
 
 ---
 
-## 3. 그래프 표현
+## 그래프 표현
 
-### 3.1 인접 행렬 (Adjacency Matrix)
+### 인접 행렬 (Adjacency Matrix)
 
 - \(n\times n\) 배열 \(A\), \(A[u][v]\)가 간선 존재/가중치를 담음.
 - 공간 \(O(n^2)\) — **밀집 그래프**에서 단순·빠름.
@@ -58,7 +58,7 @@ const long long INF = (1LL<<60);
 long long adj[N][N];
 ```
 
-### 3.2 인접 리스트 (Adjacency List)
+### 인접 리스트 (Adjacency List)
 
 - 각 정점에 연결된 간선 목록.
 - 공간 \(O(n+m)\) — **희소 그래프**에 적합.
@@ -66,21 +66,23 @@ long long adj[N][N];
 
 ```cpp
 #include <vector>
+
 struct Edge { int to; long long w; };
 std::vector<std::vector<Edge>> adj; // adj[u] = { (v,w), ... }
 ```
 
-### 3.3 간선 리스트 (Edge List)
+### 간선 리스트 (Edge List)
 
 - 간선만 모아둔 배열 \((u,v,w)\).
 - **크루스칼**(정렬→유니온파인드) 등에서 유용.
 
 ---
 
-## 4. C++ 기본 그래프 클래스 (가중/무방향 옵션)
+## C++ 기본 그래프 클래스 (가중/무방향 옵션)
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct Edge { int to; long long w; };
@@ -112,9 +114,9 @@ for(int i=0;i<m;++i){
 
 ---
 
-## 5. 그래프 탐색: DFS / BFS
+## 그래프 탐색: DFS / BFS
 
-### 5.1 DFS (재귀)
+### DFS (재귀)
 
 ```cpp
 void dfs_rec(int u, const Graph& g, vector<char>& vis) {
@@ -124,7 +126,7 @@ void dfs_rec(int u, const Graph& g, vector<char>& vis) {
 }
 ```
 
-### 5.2 DFS (반복, 스택)
+### DFS (반복, 스택)
 
 ```cpp
 void dfs_iter(int s, const Graph& g) {
@@ -138,7 +140,7 @@ void dfs_iter(int s, const Graph& g) {
 }
 ```
 
-### 5.3 BFS (최단 간선 수 = 거리)
+### BFS (최단 간선 수 = 거리)
 
 - 비가중 그래프에서 **최단 간선 수**는 BFS로 계산.
 
@@ -172,7 +174,7 @@ vector<int> buildPath(int s, int t, const vector<int>& parent){
 
 ---
 
-## 6. 연결 요소(컴포넌트)
+## 연결 요소(컴포넌트)
 
 무방향 그래프에서 **연결 요소 수**와 각 요소를 찾기:
 
@@ -196,9 +198,9 @@ int components(const Graph& g, vector<int>& compId){
 
 ---
 
-## 7. 사이클 탐지
+## 사이클 탐지
 
-### 7.1 무방향 사이클 (DFS, 부모 추적)
+### 무방향 사이클 (DFS, 부모 추적)
 
 ```cpp
 bool hasCycleUndirected(const Graph& g){
@@ -218,7 +220,7 @@ bool hasCycleUndirected(const Graph& g){
 }
 ```
 
-### 7.2 방향 사이클 (색 배열: 0/1/2 = 미방문/스택/완료)
+### 방향 사이클 (색 배열: 0/1/2 = 미방문/스택/완료)
 
 ```cpp
 bool hasCycleDirected(const Graph& g){
@@ -239,9 +241,9 @@ bool hasCycleDirected(const Graph& g){
 
 ---
 
-## 8. 위상 정렬 (DAG 전용)
+## 위상 정렬 (DAG 전용)
 
-### 8.1 Kahn(진입차수 0 큐)
+### Kahn(진입차수 0 큐)
 
 ```cpp
 vector<int> topoKahn(const Graph& g){
@@ -259,7 +261,7 @@ vector<int> topoKahn(const Graph& g){
 }
 ```
 
-### 8.2 DFS 후역 순서 역순
+### DFS 후역 순서 역순
 
 ```cpp
 vector<int> topoDFS(const Graph& g){
@@ -278,7 +280,7 @@ vector<int> topoDFS(const Graph& g){
 
 ---
 
-## 9. 이분 그래프(이분성 검사)
+## 이분 그래프(이분성 검사)
 
 - 무방향 그래프가 **2-컬러링** 가능 ⇔ **홀수 사이클 없음**.
 
@@ -302,13 +304,13 @@ bool isBipartite(const Graph& g, vector<int>& color){
 
 ---
 
-## 10. 최단 경로
+## 최단 경로
 
-### 10.1 비가중 그래프: BFS
+### 비가중 그래프: BFS
 
 - 간선 비용이 모두 1인 경우 **BFS**로 최단 간선 수 구함(§5.3 참고).
 
-### 10.2 Dijkstra (비음수 가중치)
+### Dijkstra (비음수 가중치)
 
 ```cpp
 struct DijRes { vector<long long> dist; vector<int> par; };
@@ -335,7 +337,7 @@ DijRes dijkstra(const Graph& g, int s){
 }
 ```
 
-### 10.3 Bellman–Ford (음수 가중치/사이클 감지)
+### Bellman–Ford (음수 가중치/사이클 감지)
 
 ```cpp
 struct BFRes { vector<long long> dist; vector<int> par; bool negCycle; };
@@ -370,9 +372,9 @@ BFRes bellmanFord(const Graph& g, int s){
 
 ---
 
-## 11. 최소 신장 트리 (MST, 무방향)
+## 최소 신장 트리 (MST, 무방향)
 
-### 11.1 Kruskal (정렬 + 유니온파인드)
+### Kruskal (정렬 + 유니온파인드)
 
 ```cpp
 struct DSU{
@@ -398,7 +400,7 @@ long long kruskal(int n, vector<tuple<int,int,long long>>& edges){
 }
 ```
 
-### 11.2 Prim (하나의 컴포넌트에서 자라나기)
+### Prim (하나의 컴포넌트에서 자라나기)
 
 ```cpp
 long long prim(const Graph& g){
@@ -418,9 +420,9 @@ long long prim(const Graph& g){
 
 ---
 
-## 12. 강연결요소(SCC, 방향 그래프)
+## 강연결요소(SCC, 방향 그래프)
 
-### 12.1 Kosaraju (역방향 그래프 + 2-pass)
+### Kosaraju (역방향 그래프 + 2-pass)
 
 ```cpp
 void dfs1(int u, const Graph& g, vector<char>& vis, vector<int>& order){
@@ -451,7 +453,7 @@ int scc_kosaraju(const Graph& g, vector<int>& comp){
 
 ---
 
-## 13. 브리지(단절간선) & 단절점 (무방향, Tarjan)
+## 브리지(단절간선) & 단절점 (무방향, Tarjan)
 
 ```cpp
 void bridgesAP(const Graph& g, vector<pair<int,int>>& bridges, vector<int>& art){
@@ -484,7 +486,7 @@ void bridgesAP(const Graph& g, vector<pair<int,int>>& bridges, vector<int>& art)
 
 ---
 
-## 14. 모든쌍 최단경로 (Floyd–Warshall)
+## 모든쌍 최단경로 (Floyd–Warshall)
 
 점화식:
 \[
@@ -508,7 +510,7 @@ vector<vector<long long>> floydWarshall(const Graph& g){
 
 ---
 
-## 15. 실전 예제: 방향+가중치 그래프
+## 실전 예제: 방향+가중치 그래프
 
 정점: A,B,C,D,E (0..4)
 간선: A→B(4), A→C(2), B→C(5), B→D(10), C→E(3), E→D(4)
@@ -547,7 +549,7 @@ int main(){
 
 ---
 
-## 16. 시간/공간 복잡도 요약
+## 시간/공간 복잡도 요약
 
 | 주제 | 알고리즘 | 시간 | 공간 | 비고 |
 |---|---|---|---|---|
@@ -566,7 +568,7 @@ int main(){
 
 ---
 
-## 17. 수학적 관점 몇 가지
+## 수학적 관점 몇 가지
 
 - **무방향 그래프 합차수 정리**
   \[
@@ -576,7 +578,7 @@ int main(){
 
 ---
 
-## 18. 실전 구현 팁
+## 실전 구현 팁
 
 - **인덱스**: 입력이 1..n이면 반드시 `--u; --v;`로 0-index 통일.
 - **가중치/거리형**: `long long` + `INF=2^60` 등 **오버플로 주의**.
@@ -588,10 +590,11 @@ int main(){
 
 ---
 
-## 19. 종합 데모(메뉴 기반)
+## 종합 데모(메뉴 기반)
 
 ```cpp
 #include <bits/stdc++.h>
+
 using namespace std;
 
 struct Edge{ int to; long long w; };
@@ -646,7 +649,7 @@ int main(){
 
 ---
 
-## 20. 마무리 요약
+## 마무리 요약
 
 | 키워드 | 요약 |
 |---|---|

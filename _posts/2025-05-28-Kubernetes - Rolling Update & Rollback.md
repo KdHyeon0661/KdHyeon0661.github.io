@@ -6,16 +6,18 @@ category: Kubernetes
 ---
 # Kubernetes 배포 전략: Rolling Update & Rollback
 
-## 1. Rolling Update — 원리와 수학적 직관
+## Rolling Update — 원리와 수학적 직관
 
-### 1.1 동작 원리
+### 동작 원리
+
 1. 기존 `ReplicaSet(old)` 유지
 2. 새 템플릿으로 `ReplicaSet(new)` 생성
 3. **최대 허용 증설량**(`maxSurge`)만큼 새 Pod 추가
 4. **최대 허용 가용성 감소**(`maxUnavailable`) 범위에서 구(舊) Pod 제거
 5. 새 RS가 목표 `replicas`만큼 차오르면 완료
 
-### 1.2 핵심 파라미터
+### 핵심 파라미터
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -44,7 +46,8 @@ spec:
 - `maxUnavailable`: 배포 중 **잠시 비워도 되는** Pod 수
 - 정수/퍼센트 혼용 가능(반올림 규칙에 유의)
 
-### 1.3 가용성 계산 (직관)
+### 가용성 계산 (직관)
+
 배포 중 **동시 운영** 가능한 총 Pod 상한은
 $$
 \text{maxPods} = \text{replicas} + \text{maxSurge}
@@ -63,7 +66,7 @@ $$
 
 ---
 
-## 2. 배포 헬스체크: Readiness/Liveness/Startup
+## 배포 헬스체크: Readiness/Liveness/Startup
 
 **헬스 프로브**는 롤링의 품질을 좌우합니다.
 
@@ -91,27 +94,33 @@ startupProbe:
 
 ---
 
-## 3. 배포·롤백 명령 모음(기본기 철저)
+## 배포·롤백 명령 모음(기본기 철저)
 
 ```bash
 # 배포 상태 모니터링
+
 kubectl rollout status deploy my-app
 
 # 현재/과거 히스토리
+
 kubectl rollout history deploy my-app
 kubectl rollout history deploy my-app --revision=3
 
 # 이미지 교체(원클릭 배포)
+
 kubectl set image deploy my-app app=my-app:v2
 
 # 일시정지/재개(Incremental 확인·검증에 유용)
+
 kubectl rollout pause deploy my-app
 kubectl rollout resume deploy my-app
 
 # 즉시 롤백(직전)
+
 kubectl rollout undo deploy my-app
 
 # 특정 리비전으로 롤백
+
 kubectl rollout undo deploy my-app --to-revision=3
 ```
 
@@ -119,7 +128,7 @@ kubectl rollout undo deploy my-app --to-revision=3
 
 ---
 
-## 4. 실전 전략 1 — “보수적” RollingUpdate 프로파일
+## 실전 전략 1 — “보수적” RollingUpdate 프로파일
 
 트래픽 민감·코어 서비스에 추천:
 
@@ -136,7 +145,7 @@ strategy:
 
 ---
 
-## 5. 실전 전략 2 — “속도 우선” 프로파일
+## 실전 전략 2 — “속도 우선” 프로파일
 
 비핵심 서비스·스테이징·대량 마이크로서비스에:
 
@@ -151,36 +160,42 @@ rollingUpdate:
 
 ---
 
-## 6. Canary 스타일 RollingUpdate(경량 버전)
+## Canary 스타일 RollingUpdate(경량 버전)
 
 **전체 트래픽 중 일부만** 새 버전에 흘려 문제를 감지:
 
-### 6.1 두 개의 Deployment로 단순 Canary
+### 두 개의 Deployment로 단순 Canary
+
 ```yaml
 # stable
+
 spec: {replicas: 8, template: {metadata: {labels:{track: stable}}}}
 
 # canary
+
 spec: {replicas: 2, template: {metadata: {labels:{track: canary}}}}
 ```
 
 - Service의 `selector`에 `app=my-app`만 포함 → **stable+canary 합산 트래픽** 분배
 - canary 비율을 10~20%로 시작 → 메트릭 관찰 후 증량
 
-### 6.2 단일 Deployment로 점진(서지/언어버블 튜닝)
+### 단일 Deployment로 점진(서지/언어버블 튜닝)
+
 - **`maxUnavailable: 0`** + 충분한 `maxSurge`: 안정성 유지하며 **추가 Pod로 탐색**
 - **readinessGate**(옵션): 외부 컨트롤러가 “품질 승인” 시 Ready로 전환
 
 ---
 
-## 7. Blue/Green(무중단 스위치) — Service 전환
+## Blue/Green(무중단 스위치) — Service 전환
 
 **두 환경(Blue=현재, Green=신규)**를 병렬 운영 후 **한 번에 스위치**. 다운타임 없이 전환이 가능하고 **즉시 롤백이 간단**.
 
-### 7.1 단순 Service 스위치
+### 단순 Service 스위치
+
 ```yaml
 # blue와 green은 서로 다른 label (e.g., version: blue/green)
 # Service selector만 바꿔서 트래픽을 일괄 전환
+
 kubectl patch svc my-svc -p '{"spec":{"selector":{"app":"my-app","version":"green"}}}'
 ```
 
@@ -189,11 +204,12 @@ kubectl patch svc my-svc -p '{"spec":{"selector":{"app":"my-app","version":"gree
 
 ---
 
-## 8. Argo Rollouts로 Canary/BlueGreen 자동화
+## Argo Rollouts로 Canary/BlueGreen 자동화
 
 **CRD 기반**의 고급 롤링 컨트롤러. **메트릭 게이트**, **자동 롤백**, **트래픽 셰이핑** 지원.
 
-### 8.1 Canary with steps & metric gate 예시
+### Canary with steps & metric gate 예시
+
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
@@ -223,7 +239,8 @@ spec:
 - **AnalysisTemplate**로 에러율/지연 시간 조건을 만족해야 다음 단계 진행
 - 조건 위반 시 **자동 롤백**
 
-### 8.2 BlueGreen with preview
+### BlueGreen with preview
+
 ```yaml
 strategy:
   blueGreen:
@@ -234,13 +251,15 @@ strategy:
 
 ---
 
-## 9. 배포와 다른 리소스의 상호작용
+## 배포와 다른 리소스의 상호작용
 
-### 9.1 HPA(수평 오토스케일러)
+### HPA(수평 오토스케일러)
+
 - 배포 중 **증설/감축**이 겹칠 수 있음 → **`maxSurge` 여유** vs **노드 자원/CA** 확인
 - HPA가 갑자기 다운스케일하면 새 RS 안정화 전 가용성 저하 위험
 
-### 9.2 PDB(PodDisruptionBudget)
+### PDB(PodDisruptionBudget)
+
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -251,14 +270,16 @@ spec:
 ```
 - 롤링+노드 드레인+업그레이드 시 **동시 중단 상한** 보장
 
-### 9.3 Cluster Autoscaler(노드 자동 확장)
+### Cluster Autoscaler(노드 자동 확장)
+
 - `maxSurge`가 크면 **임시 노드 확장** 필요 → CA 정책과 코스트 주의
 
 ---
 
-## 10. 실전 예제 — “안전한 점진 배포 + 빠른 롤백”
+## 실전 예제 — “안전한 점진 배포 + 빠른 롤백”
 
-### 10.1 매니페스트(배포·프로브·PDB 포함)
+### 매니페스트(배포·프로브·PDB 포함)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -300,20 +321,23 @@ spec:
     matchLabels: { app: shop-api }
 ```
 
-### 10.2 배포·검증·롤백 시나리오
+### 배포·검증·롤백 시나리오
+
 ```bash
 # 배포
+
 kubectl apply -f deploy.yaml
 kubectl rollout status deploy shop-api
 
 # 에러율↑ 감지 → 즉시 롤백
+
 kubectl rollout undo deploy shop-api
 kubectl rollout status deploy shop-api
 ```
 
 ---
 
-## 11. 트러블슈팅 체크리스트
+## 트러블슈팅 체크리스트
 
 | 증상 | 원인 후보 | 해결 |
 |---|---|---|
@@ -325,7 +349,7 @@ kubectl rollout status deploy shop-api
 
 ---
 
-## 12. 데이터베이스/스키마와 롤백
+## 데이터베이스/스키마와 롤백
 
 **스키마 변경**이 수반되면 단순 롤백이 파괴적일 수 있습니다.
 권장 패턴: **Expand → Code Switch → Contract**
@@ -337,11 +361,13 @@ kubectl rollout status deploy shop-api
 
 ---
 
-## 13. Helm·GitOps·파이프라인 팁
+## Helm·GitOps·파이프라인 팁
 
-### 13.1 Helm 값으로 전략 주입
+### Helm 값으로 전략 주입
+
 ```yaml
 # values.yaml
+
 rollingUpdate:
   maxSurge: 1
   maxUnavailable: 0
@@ -349,6 +375,7 @@ rollingUpdate:
 {% raw %}
 ```yaml
 # templates/deploy.yaml
+
 strategy:
   type: RollingUpdate
   rollingUpdate:
@@ -357,13 +384,14 @@ strategy:
 ```
 {% endraw %}
 
-### 13.2 GitOps(Argo CD/Flux)
+### GitOps(Argo CD/Flux)
+
 - `rollout pause/resume`를 PR 리뷰·승인과 연동
 - **메트릭 게이트(프로메테우스 쿼리)** → **자동 승격/자동 롤백** 파이프라인
 
 ---
 
-## 14. 모니터링 메트릭과 SLO 게이트
+## 모니터링 메트릭과 SLO 게이트
 
 **배포 단계별**로 다음을 감시:
 - **에러율**(HTTP 5xx RPS, 비율)
@@ -378,7 +406,7 @@ strategy:
 
 ---
 
-## 15. 운영 레시피 요약
+## 운영 레시피 요약
 
 1. **헬스 프로브**를 먼저 튜닝(Startup → Readiness → Liveness)
 2. **보수적 시작**: `maxUnavailable: 0`, 작은 `maxSurge`
@@ -393,6 +421,7 @@ strategy:
 ---
 
 ## 부록 A) Recreate 전략(완전 재시작)
+
 ```yaml
 strategy:
   type: Recreate     # 모든 Pod 종료 후 새 버전 기동
@@ -433,6 +462,7 @@ spec:
 ---
 
 ## 참고 명령·링크(요약)
+
 - `kubectl rollout status|history|undo|pause|resume`
 - `kubectl set image deploy X app=image:tag`
 - 공식 문서: Deployment RollingUpdate, Rollout, Probes, PDB, HPA, Argo Rollouts

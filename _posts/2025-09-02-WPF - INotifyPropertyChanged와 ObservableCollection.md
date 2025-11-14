@@ -14,11 +14,13 @@ WPF의 데이터 바인딩은 **데이터 소스(ViewModel)**의 값이 변경�
 ## `INotifyPropertyChanged`란?
 
 ### 개념
+
 - .NET에서 **객체의 속성(Property)이 변경되었음을 알리는 인터페이스**.
 - ViewModel에서 UI에 데이터 변경 사실을 알릴 때 사용합니다.
 - UI는 이 알림을 받고 바인딩된 값을 자동으로 갱신합니다.
 
 ### 정의
+
 ```csharp
 public interface INotifyPropertyChanged
 {
@@ -27,6 +29,7 @@ public interface INotifyPropertyChanged
 ```
 
 ### ⚡ 구현 방법
+
 - `PropertyChanged` 이벤트를 호출해 UI에 알립니다.
 - 보통 ViewModel의 속성 Setter에서 `OnPropertyChanged()`를 호출합니다.
 
@@ -59,6 +62,7 @@ public class PersonViewModel : INotifyPropertyChanged
 ```
 
 ### 동작 원리
+
 1. `Name` 속성이 변경됨
 2. `OnPropertyChanged("Name")` 실행 → `PropertyChanged` 이벤트 발생
 3. WPF 바인딩 엔진이 이벤트를 감지
@@ -69,11 +73,13 @@ public class PersonViewModel : INotifyPropertyChanged
 ## `ObservableCollection<T>`란?
 
 ### 개념
+
 - **컬렉션(리스트) 데이터 변경을 UI에 알릴 수 있는 컬렉션 클래스**.
 - `Add`, `Remove`, `Clear` 등 요소의 추가/삭제를 감지해 UI에 반영합니다.
 - 일반 `List<T>`는 데이터 추가/삭제를 UI에 알리지 못하기 때문에, WPF에서는 `ObservableCollection<T>`를 사용해야 합니다.
 
 ### 정의
+
 ```csharp
 public class ObservableCollection<T> : Collection<T>, INotifyCollectionChanged, INotifyPropertyChanged
 ```
@@ -81,6 +87,7 @@ public class ObservableCollection<T> : Collection<T>, INotifyCollectionChanged, 
 - `INotifyPropertyChanged` 구현 → `Count` 등 속성 변경 알림.
 
 ### 예제
+
 ```csharp
 using System.Collections.ObjectModel;
 
@@ -169,6 +176,7 @@ public class MainViewModel : INotifyPropertyChanged
 ---
 
 # 결론
+
 - **속성 변경 알림 → `INotifyPropertyChanged`**
 - **컬렉션 변경 알림 → `ObservableCollection<T>`**
 - MVVM 패턴에서 UI와 ViewModel을 동기화하려면 이 두 가지는 사실상 필수적입니다.

@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Compose의 환경변수와 `.env` 파일 관리
 
-## 1. 환경변수란? (핵심 복습)
+## 환경변수란? (핵심 복습)
 
 컨테이너/애플리케이션이 **코드 밖에서 주입받는 설정값**입니다.
 
@@ -18,7 +18,7 @@ category: Docker
 
 ---
 
-## 2. `.env` 파일 — 로딩 위치, 기본 형식, 자주 틀리는 포인트
+## `.env` 파일 — 로딩 위치, 기본 형식, 자주 틀리는 포인트
 
 - **위치**: 기본은 `docker-compose.yml`(또는 `compose.yaml`)와 **같은 디렉터리**.
 - **자동 로드**: `docker compose up` 시 별도 옵션 없이 자동 탐색/로드.
@@ -26,6 +26,7 @@ category: Docker
 
 ```env
 # .env (예시)
+
 MYSQL_ROOT_PASSWORD=root_pass
 MYSQL_DATABASE=mydb
 MYSQL_USER=myuser
@@ -42,7 +43,7 @@ WEB_PORT=8080
 
 ---
 
-## 3. Compose에서 환경변수를 쓰는 3가지 경로 — 개념 분리
+## Compose에서 환경변수를 쓰는 3가지 경로 — 개념 분리
 
 | 위치 | 용도 | 변수 치환(인터폴레이션) | 실제 컨테이너에 주입 |
 |---|---|---|---|
@@ -56,7 +57,7 @@ WEB_PORT=8080
 
 ---
 
-## 4. 변수 **우선순위(Precedence)** — 어떤 값이 최종 적용되나
+## 변수 **우선순위(Precedence)** — 어떤 값이 최종 적용되나
 
 Compose가 `${VAR}`를 해석할 때의 일반적인 우선순위(높음→낮음):
 
@@ -76,7 +77,7 @@ Compose가 `${VAR}`를 해석할 때의 일반적인 우선순위(높음→낮�
 
 ---
 
-## 5. Compose YAML에서의 변수 치환 문법(정석)
+## Compose YAML에서의 변수 치환 문법(정석)
 
 ```yaml
 services:
@@ -92,6 +93,7 @@ services:
 ```
 
 ### 기본/확장 문법
+
 ```yaml
 environment:
   # 기본값 제공
@@ -118,13 +120,15 @@ environment:
 
 ---
 
-## 6. `.env` vs `env_file` — 완전히 다른 역할
+## `.env` vs `env_file` — 완전히 다른 역할
 
 ### `.env` (프로젝트 루트에 있는 전역 치환 소스)
+
 - Compose 파일에 있는 `${VAR}` **치환**에 사용.
 - 컨테이너 안에는 자동으로 **주입되지 않음**.
 
 ### `env_file` (컨테이너 환경변수 주입 목록)
+
 ```yaml
 services:
   app:
@@ -141,15 +145,17 @@ services:
 
 ---
 
-## 7. 개발/운영 환경 분리 — 파일, 프로필, Makefile 조합
+## 개발/운영 환경 분리 — 파일, 프로필, Makefile 조합
 
-### 7.1 `.env.dev` / `.env.prod`와 `--env-file`
+### `.env.dev` / `.env.prod`와 `--env-file`
+
 ```bash
 docker compose --env-file .env.dev  up -d
 docker compose --env-file .env.prod up -d
 ```
 
-### 7.2 `profiles`로 서비스 온/오프(예: 캐시, 모니터링)
+### `profiles`로 서비스 온/오프(예: 캐시, 모니터링)
+
 ```yaml
 services:
   redis:
@@ -162,12 +168,15 @@ services:
 ```
 ```bash
 # 캐시만 올림
+
 COMPOSE_PROFILES=cache docker compose up -d
 # 캐시+관측
+
 COMPOSE_PROFILES=cache,observability docker compose up -d
 ```
 
-### 7.3 Makefile로 팀 규칙 표준화
+### Makefile로 팀 규칙 표준화
+
 ```makefile
 up-dev:
 	@docker compose --env-file .env.dev up -d
@@ -181,7 +190,7 @@ config-dev:
 
 ---
 
-## 8. 포트/볼륨/네트워크에서도 치환 가능
+## 포트/볼륨/네트워크에서도 치환 가능
 
 ```yaml
 services:
@@ -204,7 +213,7 @@ volumes:
 
 ---
 
-## 9. 보안 — 비밀번호는 환경변수로만? 더 안전한 선택지
+## 보안 — 비밀번호는 환경변수로만? 더 안전한 선택지
 
 | 방식 | 장점 | 주의점 |
 |---|---|---|
@@ -213,6 +222,7 @@ volumes:
 | **secrets**(Compose/Swarm) | 파일로 **/run/secrets/** 에 마운트, ENV에 안 뜸 | 앱이 **파일을 읽도록** 구현 필요 |
 
 ### Compose secrets(로컬에서도 사용 가능)
+
 ```yaml
 services:
   db:
@@ -241,9 +251,10 @@ secrets/
 
 ---
 
-## 10. 실전 예시 — WordPress + MySQL, dev/prod 분리
+## 실전 예시 — WordPress + MySQL, dev/prod 분리
 
-### 10.1 `.env.dev`
+### `.env.dev`
+
 ```env
 WEB_PORT=8080
 MYSQL_ROOT_PASSWORD=devroot
@@ -252,7 +263,8 @@ MYSQL_USER=devuser
 MYSQL_PASSWORD=devpass
 ```
 
-### 10.2 `.env.prod`
+### `.env.prod`
+
 ```env
 WEB_PORT=80
 MYSQL_ROOT_PASSWORD=please_change_me_strong
@@ -261,7 +273,8 @@ MYSQL_USER=wpuser
 MYSQL_PASSWORD=strong_random_64
 ```
 
-### 10.3 `docker-compose.yml`
+### `docker-compose.yml`
+
 ```yaml
 version: '3.9'
 
@@ -290,32 +303,38 @@ services:
 **실행**
 ```bash
 # 개발
+
 docker compose --env-file .env.dev up -d
 
 # 운영
+
 docker compose --env-file .env.prod up -d
 ```
 
 ---
 
-## 11. 검증/디버깅 — 실제로 어떤 값이 적용됐나
+## 검증/디버깅 — 실제로 어떤 값이 적용됐나
 
-### 11.1 Compose가 해석한 최종 YAML 보기
+### Compose가 해석한 최종 YAML 보기
+
 ```bash
 docker compose config
 # 또는
+
 docker compose --env-file .env.prod config
 ```
 - 이 출력에는 `${VAR}`가 **전부 치환된 상태**로 나타납니다.
 - CI 파이프라인에서 **사전 검증** 단계로 강력 추천.
 
-### 11.2 컨테이너 내부에서 ENV 확인
+### 컨테이너 내부에서 ENV 확인
+
 ```bash
 docker compose exec web env | sort
 docker compose exec db  printenv | sort
 ```
 
-### 11.3 빠른 건강검진
+### 빠른 건강검진
+
 ```bash
 docker compose ps
 docker compose logs -f db
@@ -324,7 +343,7 @@ docker compose logs -f wordpress
 
 ---
 
-## 12. 트러블슈팅(자주 겪는 함정과 해결책)
+## 트러블슈팅(자주 겪는 함정과 해결책)
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -338,7 +357,7 @@ docker compose logs -f wordpress
 
 ---
 
-## 13. CI/CD 파이프라인에서의 베스트 프랙티스
+## CI/CD 파이프라인에서의 베스트 프랙티스
 
 - **Secrets/Variables**: CI 시스템의 **보안 저장소**(GitHub Actions Secrets, GitLab CI Variables 등)에 보관.
 - **템플릿 파일**: `.env.example`를 리포에 포함(키 목록만 제공).
@@ -348,7 +367,7 @@ docker compose logs -f wordpress
 
 ---
 
-## 14. 심화 예제 — `env_file` + `environment` 혼합, 기본값, 필수값
+## 심화 예제 — `env_file` + `environment` 혼합, 기본값, 필수값
 
 ```yaml
 services:
@@ -371,7 +390,7 @@ services:
 
 ---
 
-## 15. 요약 정리 — 한눈에 보는 체크리스트
+## 요약 정리 — 한눈에 보는 체크리스트
 
 1. `.env`는 **치환 소스**, `env_file`은 **컨테이너 주입**(치환 X).
 2. 우선순위는 **`--env-file` > 쉘 ENV > .env > 기본값**.
@@ -387,6 +406,7 @@ services:
 
 ```bash
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 ENV_FILE="${1:-.env}"
@@ -411,10 +431,12 @@ echo "[OK] Validation passed."
 
 ```gitignore
 # env & secrets
+
 .env
 .env.*
 secrets/
 # local artifacts
+
 *.log
 *.tmp
 ```
@@ -422,6 +444,7 @@ secrets/
 ---
 
 ## 참고 문서(추가 탐독 권장)
+
 - Docker Compose: Environment variables / Variable substitution
 - 12-Factor: Config
 - Docker secrets & Swarm / Compose secrets

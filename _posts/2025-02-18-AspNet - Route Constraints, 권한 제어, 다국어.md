@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 고급 라우팅: Route Constraints, 권한 제어, 다국어(Localization)
 
-## 0. 라우팅 고급 개요 — “경로가 규칙을 말한다”
+## 라우팅 고급 개요 — “경로가 규칙을 말한다”
 
 - **Route Constraints**로 **형식·범위**를 라우팅 단계에서 강제 → 잘못된 요청을 **초기에 거부**하고 핸들러 오버헤드를 줄입니다.
 - **권한(Authorization)**은 라우트 구조와 결합하여 **영역/리소스 단위의 접근 정책**을 명확히 합니다.
@@ -20,9 +20,9 @@ category: AspNet
 
 ---
 
-## 1. Route Constraints(라우트 제약 조건) — 카탈로그와 조합 규칙
+## Route Constraints(라우트 제약 조건) — 카탈로그와 조합 규칙
 
-### 1.1 기본 사용
+### 기본 사용
 
 Razor Pages:
 ```cshtml
@@ -35,7 +35,7 @@ public IActionResult Details(int id) => View();
 ```
 - 정수가 아니면 404(매칭 실패). 컨트롤러/핸들러 실행 이전에 **차단**됩니다.
 
-### 1.2 내장 제약 카탈로그(실무 예 포함)
+### 내장 제약 카탈로그(실무 예 포함)
 
 | 제약 | 설명 | Razor Pages 예 | MVC/Minimal 예 |
 |---|---|---|---|
@@ -53,7 +53,7 @@ public IActionResult Details(int id) => View();
 - **조합 가능**: `{id:int:min(1)}`
 - **엄격한 제약**은 곧 **보안**(불필요한 컨트롤러/DB 접근 차단)과 **성능**(미스매치 조기 종료)입니다.
 
-### 1.3 고급: 커스텀 제약 구현(IRouteConstraint)
+### 고급: 커스텀 제약 구현(IRouteConstraint)
 
 예) 특정 화이트리스트 코드만 허용
 ```csharp
@@ -79,7 +79,7 @@ app.MapControllerRoute("code", "promo/{code:codewl}",
     new { controller = "Promo", action = "Show" });
 ```
 
-### 1.4 파라미터 변환기(출력 변환)로 SEO 개선
+### 파라미터 변환기(출력 변환)로 SEO 개선
 
 PascalCase 컨트롤러/액션을 kebab-case로 노출:
 ```csharp
@@ -99,11 +99,11 @@ app.MapControllerRoute(
 
 ---
 
-## 2. 라우트 기반 권한 제어 — 정책과 구조의 결합
+## 라우트 기반 권한 제어 — 정책과 구조의 결합
 
 권한은 “**라우트가 가리키는 리소스**”의 **접근 통제**입니다. 라우팅 구조가 명확할수록, 권한 정책도 **예측 가능**합니다.
 
-### 2.1 Razor Pages — 페이지/폴더별 정책
+### Razor Pages — 페이지/폴더별 정책
 
 PageModel 속성:
 ```csharp
@@ -130,7 +130,7 @@ builder.Services.AddAuthorization(options =>
 });
 ```
 
-### 2.2 MVC/Minimal — 속성·필터 기반
+### MVC/Minimal — 속성·필터 기반
 
 컨트롤러/액션:
 ```csharp
@@ -153,7 +153,7 @@ public class OrderModel : PageModel
 }
 ```
 
-### 2.3 정책 기반(Claims·조건·시간대)
+### 정책 기반(Claims·조건·시간대)
 
 예) 만 18세 이상 정책(간단화 예):
 ```csharp
@@ -172,7 +172,7 @@ builder.Services.AddAuthorization(o =>
 public class AdultOnlyPage : PageModel { }
 ```
 
-### 2.4 엔드포인트 라우팅과 정책의 만남
+### 엔드포인트 라우팅과 정책의 만남
 
 엔드포인트에 메타데이터로 정책 포함(필터 없이도 가능):
 ```csharp
@@ -183,7 +183,7 @@ app.MapControllerRoute(
 ```
 - 경로 자체에 **RequireAuthorization**를 부여 → 영역 전체를 보호.
 
-### 2.5 실무 설계 지침
+### 실무 설계 지침
 
 - **네임스페이스화**: `/admin`, `/account`, `/api` 같은 프리픽스로 **권한 경계**를 분명히.
 - **정책 이름 = 역할/목적**: “AdminPolicy”, “PaidCustomer”, “OwnerOrAdmin”.
@@ -191,7 +191,7 @@ app.MapControllerRoute(
 
 ---
 
-## 3. 라우트 기반 Localization(다국어 URL) — 문화권을 경로에 담기
+## 라우트 기반 Localization(다국어 URL) — 문화권을 경로에 담기
 
 URL에 문화권을 포함:
 ```
@@ -201,7 +201,7 @@ URL에 문화권을 포함:
 ```
 장점: **SEO**, **공유/북마크**, **언어 전환 링크**가 명확.
 
-### 3.1 RequestLocalizationOptions 설정
+### RequestLocalizationOptions 설정
 
 ```csharp
 var cultures = new[] { "en", "ko", "fr" };
@@ -228,7 +228,7 @@ app.UseRequestLocalization(); // 반드시 UseRouting 이전/이후 상관없이
 app.UseRouting();
 ```
 
-### 3.2 라우트 템플릿에 `{culture}` 추가
+### 라우트 템플릿에 `{culture}` 추가
 
 MVC 컨벤션:
 ```csharp
@@ -255,7 +255,7 @@ builder.Services.AddRazorPages(options =>
 });
 ```
 
-### 3.3 문화권 제약(정규식) — 잘못된 코드 차단
+### 문화권 제약(정규식) — 잘못된 코드 차단
 
 두 글자 언어 코드만 허용(간략화):
 ```csharp
@@ -269,7 +269,7 @@ app.MapControllerRoute(
 "{culture:regex(^[a-z]{2}-[A-Z]{2}$)}"
 ```
 
-### 3.4 뷰/페이지에서 문화권 유지 링크
+### 뷰/페이지에서 문화권 유지 링크
 
 Razor Pages:
 ```cshtml
@@ -292,7 +292,7 @@ MVC:
 <a asp-page="/Index" asp-all-route-data="route">한국어(쿼리 유지)</a>
 ```
 
-### 3.5 리소스 파일 `.resx`와 IStringLocalizer
+### 리소스 파일 `.resx`와 IStringLocalizer
 
 리소스 배치:
 ```
@@ -311,7 +311,7 @@ Resources/
 - 현재 `Thread.CurrentUICulture`에 따라 적절한 리소스를 로드.
 - URL로 문화권이 바뀌어도 **일관된 키**로 메시지를 조회.
 
-### 3.6 Culture 유지 PRG 패턴
+### Culture 유지 PRG 패턴
 
 POST 이후 Redirect 시 문화권 유지:
 ```csharp
@@ -324,9 +324,9 @@ public IActionResult OnPost(string culture)
 
 ---
 
-## 4. 링크 생성/리다이렉트 — 문화권·권한·제약과 함께
+## 링크 생성/리다이렉트 — 문화권·권한·제약과 함께
 
-### 4.1 LinkGenerator/Url.* API
+### LinkGenerator/Url.* API
 
 서비스에서 안전하게 경로 생성:
 ```csharp
@@ -341,7 +341,7 @@ public class Links
 }
 ```
 
-### 4.2 `asp-route-*`와 `asp-all-route-data`
+### `asp-route-*`와 `asp-all-route-data`
 
 검색 상태(쿼리) 보존:
 ```cshtml
@@ -355,21 +355,21 @@ public class Links
 
 ---
 
-## 5. 보안·성능·SEO — 라우팅 단계에서의 품질 설계
+## 보안·성능·SEO — 라우팅 단계에서의 품질 설계
 
-### 5.1 보안 수칙
+### 보안 수칙
 
 - **화이트리스트 기반 제약**: 정렬/필드명/슬러그/코드 등은 라우팅 또는 바인딩 레벨에서 허용값 제한.
 - **민감정보 GET 금지**: 토큰/비밀은 URL에 두지 말 것. POST/헤더/쿠키/서버 상태 사용.
 - **경로 순회 방지**: 파일 경로를 파라미터로 받을 때 `Path.GetFileName()` 등으로 정규화.
 
-### 5.2 성능
+### 성능
 
 - 제약으로 미매칭 요청을 **빠르게 배제** → 컨트롤러/페이지 진입 전 종료.
 - **정확-특정 → 일반** 순서로 라우트 등록(특히 MVC 컨벤션).
 - 정규식 제약은 강력하지만 **비싸다**: 가능한 구체적 타입/길이 제약 우선.
 
-### 5.3 SEO·국제화
+### SEO·국제화
 
 - 문화권을 경로 프리픽스로 노출(예: `/ko/…`), 슬러그는 소문자/kebab-case.
 - 중복 URL 방지: **Canoncial Link** 또는 리다이렉트 규칙을 정의.
@@ -377,9 +377,9 @@ public class Links
 
 ---
 
-## 6. 실전 시나리오
+## 실전 시나리오
 
-### 6.1 지역화 + 제약 + 권한(관리 영역)
+### 지역화 + 제약 + 권한(관리 영역)
 
 라우트:
 ```csharp
@@ -400,7 +400,7 @@ public class HomeController : Controller
 }
 ```
 
-### 6.2 Razor Pages — 제품 상세(숫자 ID) + 문화권 + SEO 별칭
+### Razor Pages — 제품 상세(숫자 ID) + 문화권 + SEO 별칭
 
 Program.cs(별칭 라우트):
 ```csharp
@@ -420,7 +420,7 @@ Page:
 
 ---
 
-## 7. 테스트/디버깅 전략
+## 테스트/디버깅 전략
 
 - **라우팅 통합 테스트**: 특정 URL → 원하는 핸들러/상태 코드/리다이렉트 확인.
 - **엔드포인트 확인 미들웨어**:
@@ -437,7 +437,7 @@ app.Use(async (ctx, next) =>
 
 ---
 
-## 8. 에지 케이스와 함정
+## 에지 케이스와 함정
 
 1) **제약 충돌**: 같은 경로 패턴에 서로 다른 제약이 섞여 등록되면 **예기치 못한 미스매치**.
 2) **문화권 코드 느슨함**: `en`, `en-US`, `EN-us` 혼용 → 제약으로 **형식 고정**.
@@ -447,7 +447,7 @@ app.Use(async (ctx, next) =>
 
 ---
 
-## 9. 요약 표
+## 요약 표
 
 | 주제 | 핵심 |
 |---|---|

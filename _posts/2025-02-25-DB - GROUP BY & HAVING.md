@@ -6,7 +6,7 @@ category: DB
 ---
 # GROUP BY & HAVING
 
-## 0. 빠른 로드맵
+## 빠른 로드맵
 
 1. 개념·실행 순서(논리적 단계)
 2. GROUP BY 핵심 규칙(함정 포함)
@@ -22,7 +22,7 @@ category: DB
 
 ---
 
-## 1. 개념과 실행 순서(논리적 파이프라인)
+## 개념과 실행 순서(논리적 파이프라인)
 
 **GROUP BY**는 동일 키를 가진 행을 묶어 **집계 함수**(`SUM/AVG/COUNT/MIN/MAX/STDDEV/VARIANCE …`)를 계산한다.
 **HAVING**은 **그룹** 단위로 **집계 결과**를 필터링한다.
@@ -42,9 +42,10 @@ SQL의 **논리적 실행 순서(개념적)**
 
 ---
 
-## 2. GROUP BY 핵심 규칙과 흔한 함정
+## GROUP BY 핵심 규칙과 흔한 함정
 
-### 2.1 비집계 컬럼 규칙
+### 비집계 컬럼 규칙
+
 - ANSI SQL에서 **`SELECT`에 나오는 비집계 컬럼은 전부 `GROUP BY`에 포함**되어야 한다.
 
 ```sql
@@ -62,7 +63,8 @@ GROUP BY dept_id;
 SET sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION';
 ```
 
-### 2.2 집계 없는 GROUP BY는 불가
+### 집계 없는 GROUP BY는 불가
+
 - **집계 함수 없이** `GROUP BY`만 쓰면 보통 의미가 없거나 오류.
   (PostgreSQL은 `GROUP BY`만으로도 “중복 제거 + 정렬된 유사 효과”가 나지만 **집계가 목적**이 아니라면 `DISTINCT`가 더 명확.)
 
@@ -71,7 +73,8 @@ SET sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ENGINE_SU
 SELECT DISTINCT dept_id FROM Employee;
 ```
 
-### 2.3 표현식으로 그룹핑 가능
+### 표현식으로 그룹핑 가능
+
 - `GROUP BY`에는 **컬럼만**이 아니라 **표현식**도 올 수 있다(다이얼렉트별 제한 약간).
 
 ```sql
@@ -86,7 +89,7 @@ ORDER BY d;
 
 ---
 
-## 3. HAVING 핵심 규칙 — 행 vs 그룹
+## HAVING 핵심 규칙 — 행 vs 그룹
 
 - `WHERE`은 **개별 행 조건**. 집계 함수 사용 불가.
 - `HAVING`은 **그룹 조건**. 집계 함수 사용 가능.
@@ -104,9 +107,10 @@ HAVING AVG(salary) >= 300;
 
 ---
 
-## 4. NULL, DISTINCT, 조건부 집계
+## NULL, DISTINCT, 조건부 집계
 
-### 4.1 NULL과 COUNT의 차이
+### NULL과 COUNT의 차이
+
 - `COUNT(*)` : NULL 포함 **전체 행수**
 - `COUNT(col)` : **NULL 제외** 카운트
 
@@ -116,7 +120,8 @@ SELECT COUNT(*) AS rows_all,
 FROM Customer;
 ```
 
-### 4.2 DISTINCT와 집계
+### DISTINCT와 집계
+
 - `COUNT(DISTINCT col)` : 고유 값 개수
 - 다중 컬럼 고유 개수: `COUNT(DISTINCT col1, col2)`(MySQL),
   SQL Server/PostgreSQL은 `COUNT(DISTINCT CONCAT(...))` 또는 구조에 따라 `COUNT(*)` + `DISTINCT` 서브쿼리.
@@ -133,7 +138,8 @@ SELECT COUNT(*) FROM (
 ) d;
 ```
 
-### 4.3 조건부 집계(리포트의 기본)
+### 조건부 집계(리포트의 기본)
+
 ```sql
 -- 상태별 카운트/금액 합을 한 번에
 SELECT
@@ -145,9 +151,10 @@ FROM Orders;
 
 ---
 
-## 5. 다중 컬럼·표현식 그룹핑 & 날짜 버킷팅
+## 다중 컬럼·표현식 그룹핑 & 날짜 버킷팅
 
-### 5.1 다중 컬럼 그룹핑
+### 다중 컬럼 그룹핑
+
 ```sql
 -- 부서+직무 별 인원
 SELECT dept_id, job, COUNT(*) AS emp_count
@@ -155,7 +162,7 @@ FROM Employee
 GROUP BY dept_id, job;
 ```
 
-### 5.2 날짜 버킷팅(일/주/월)
+### 날짜 버킷팅(일/주/월)
 
 > **권장 패턴**: “**반열림 구간**” 범위 조건 + **원본 컬럼**으로 그룹 키를 만들어 **인덱스 타기**.
 
@@ -187,9 +194,10 @@ ORDER BY ym;
 
 ---
 
-## 6. 고급 집계 — ROLLUP, CUBE, GROUPING SETS
+## 고급 집계 — ROLLUP, CUBE, GROUPING SETS
 
-### 6.1 ROLLUP (계층 소계 + 총계)
+### ROLLUP (계층 소계 + 총계)
+
 ```sql
 -- 부서/직무별 인원 + 부서 소계 + 전체 합계
 SELECT dept_id, job, COUNT(*) AS emp_count
@@ -198,7 +206,8 @@ GROUP BY ROLLUP (dept_id, job);
 ```
 - (dept_id, job) → (dept_id, NULL) → (NULL, NULL) 순으로 소계/합계 행이 추가.
 
-### 6.2 CUBE (모든 조합의 소계)
+### CUBE (모든 조합의 소계)
+
 ```sql
 -- (부서), (직무), (부서+직무), (전체) 소계/합계 모두
 SELECT dept_id, job, COUNT(*) AS emp_count
@@ -206,7 +215,8 @@ FROM Employee
 GROUP BY CUBE (dept_id, job);
 ```
 
-### 6.3 GROUPING SETS (원하는 조합만)
+### GROUPING SETS (원하는 조합만)
+
 ```sql
 -- 부서 소계와 전체 합계만 원할 때
 SELECT dept_id, COUNT(*) AS emp_count
@@ -214,7 +224,8 @@ FROM Employee
 GROUP BY GROUPING SETS ((dept_id), ());
 ```
 
-### 6.4 GROUPING / GROUPING_ID로 “소계 행” 식별
+### GROUPING / GROUPING_ID로 “소계 행” 식별
+
 ```sql
 -- SQL Server/PostgreSQL/Oracle: GROUPING, GROUPING_ID 지원
 SELECT
@@ -232,7 +243,7 @@ ORDER BY dept_id, job;
 
 ---
 
-## 7. 집계 vs 윈도 함수 — 언제 무엇을 쓰나
+## 집계 vs 윈도 함수 — 언제 무엇을 쓰나
 
 | 요구 | 사용 |
 |---|---|
@@ -252,9 +263,10 @@ FROM sales_by_product;
 
 ---
 
-## 8. 성능 최적화 핵심
+## 성능 최적화 핵심
 
-### 8.1 WHERE로 먼저 줄여라
+### WHERE로 먼저 줄여라
+
 - `HAVING` 대신 **가능한 조건은 `WHERE`**로 내려 **행 수 줄이기**.
 
 ```sql
@@ -271,7 +283,8 @@ WHERE order_dt >= '2025-10-01'
 GROUP BY customer_id;
 ```
 
-### 8.2 인덱스와 집계
+### 인덱스와 집계
+
 - **그룹 키(=GROUP BY 컬럼)**에 **인덱스**가 있으면 **정렬/해시 작업 감소** 가능.
 - MySQL InnoDB는 **인덱스 순회 + 조기 집계**가 이득인 경우가 많다(핵심: **선택도/카디널리티**).
 
@@ -280,11 +293,13 @@ GROUP BY customer_id;
 CREATE INDEX ix_orders_customer_dt ON Orders (customer_id, order_dt);
 ```
 
-### 8.3 DISTINCT vs GROUP BY 비용
+### DISTINCT vs GROUP BY 비용
+
 - “고유 목록”만 필요하면 `SELECT DISTINCT`가 명시적.
 - 다만 인덱스 유무/옵티마이저 계획에 따라 비용 차이가 있으므로 **실행계획 확인**.
 
-### 8.4 계산 열/함수 기반 인덱스
+### 계산 열/함수 기반 인덱스
+
 - 날짜 버킷팅 키(월/주/일)와 같이 **표현식 그룹핑**이 잦다면,
   **계산 열(또는 생성 열) + 인덱스**로 **SARGable**하게.
 
@@ -297,9 +312,10 @@ CREATE INDEX ix_orders_ym_first ON dbo.Orders(ym_first);
 
 ---
 
-## 9. 실전 시나리오 10선
+## 실전 시나리오 10선
 
-### 9.1 부서별 평균 급여 + 평균 300 이상만 (기본기)
+### 부서별 평균 급여 + 평균 300 이상만 (기본기)
+
 ```sql
 SELECT dept_id, AVG(salary) AS avg_salary
 FROM Employee
@@ -308,7 +324,8 @@ HAVING AVG(salary) >= 300
 ORDER BY avg_salary DESC;
 ```
 
-### 9.2 최근 6개월, 고객별 총액 500 이상 (반열림 + 재필터)
+### 최근 6개월, 고객별 총액 500 이상 (반열림 + 재필터)
+
 ```sql
 -- MySQL
 SELECT customer_id, SUM(total_amount) AS total
@@ -320,7 +337,8 @@ HAVING SUM(total_amount) >= 500
 ORDER BY total DESC;
 ```
 
-### 9.3 월별/상태별 매출(조건부 집계) + 월 버킷팅
+### 월별/상태별 매출(조건부 집계) + 월 버킷팅
+
 ```sql
 -- SQL Server
 WITH base AS (
@@ -342,7 +360,8 @@ GROUP BY ym_first
 ORDER BY ym_first;
 ```
 
-### 9.4 상품·지역 이중 축 집계 + ROLLUP (소계/합계)
+### 상품·지역 이중 축 집계 + ROLLUP (소계/합계)
+
 ```sql
 SELECT region, product, SUM(amount) AS amt
 FROM Sales
@@ -350,7 +369,8 @@ GROUP BY ROLLUP (region, product)
 ORDER BY region, product;
 ```
 
-### 9.5 원하는 소계만 — GROUPING SETS
+### 원하는 소계만 — GROUPING SETS
+
 ```sql
 -- 상품 소계 + 지역 소계 + 전체 합계
 SELECT
@@ -366,7 +386,8 @@ GROUP BY GROUPING SETS (
 );
 ```
 
-### 9.6 DAU/WAU/MAU(일/주/월 활성 사용자) — DISTINCT + 버킷팅
+### DAU/WAU/MAU(일/주/월 활성 사용자) — DISTINCT + 버킷팅
+
 ```sql
 -- MySQL 예시: 월별 활성 사용자
 SELECT DATE_FORMAT(event_dt, '%Y-%m') AS ym,
@@ -377,7 +398,8 @@ GROUP BY DATE_FORMAT(event_dt, '%Y-%m')
 ORDER BY ym;
 ```
 
-### 9.7 반품 비율 — 안전 나눗셈
+### 반품 비율 — 안전 나눗셈
+
 ```sql
 -- 반품수/전체주문수
 SELECT
@@ -386,7 +408,8 @@ SELECT
 FROM Orders;
 ```
 
-### 9.8 키셋 페이징용 그룹 집계(Stable sort)
+### 키셋 페이징용 그룹 집계(Stable sort)
+
 ```sql
 -- 월별 합계를 구하고, 마지막 ym 이후 다음 페이지 가져오기
 SELECT ym, amt
@@ -396,7 +419,8 @@ ORDER BY ym DESC
 LIMIT 50;
 ```
 
-### 9.9 JSON 속성별 집계(가상/계산 열)
+### JSON 속성별 집계(가상/계산 열)
+
 ```sql
 -- MySQL: 생성 열 + 인덱스
 ALTER TABLE events
@@ -410,7 +434,8 @@ GROUP BY category
 HAVING COUNT(*) >= 100;
 ```
 
-### 9.10 고액 고객 상위 3등급만 — GROUP BY + 서브쿼리
+### 고액 고객 상위 3등급만 — GROUP BY + 서브쿼리
+
 ```sql
 -- 고객별 총액 산출 후 상위 등급 필터
 WITH agg AS (
@@ -426,7 +451,7 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 
 ---
 
-## 10. 다이얼렉트 차이 요약
+## 다이얼렉트 차이 요약
 
 | 항목 | MySQL | SQL Server | PostgreSQL | Oracle |
 |---|---|---|---|---|
@@ -441,7 +466,7 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 
 ---
 
-## 11. 체크리스트
+## 체크리스트
 
 - [ ] **비집계 컬럼 = 전부 GROUP BY** (표준 준수)
 - [ ] 행 필터는 **WHERE**, 그룹 필터는 **HAVING**
@@ -459,6 +484,7 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 ## 부록) 추가 예제 모음
 
 ### A. 집계 결과에 별칭 사용 (ORDER BY, HAVING)
+
 ```sql
 -- 대부분 DB에서 SELECT 별칭은 ORDER BY에서 사용 가능
 SELECT dept_id, AVG(salary) AS avg_salary
@@ -469,6 +495,7 @@ ORDER BY avg_salary DESC;
 ```
 
 ### B. 조건부 평균(0 나눗셈 방지)
+
 ```sql
 SELECT
   1.0 * SUM(CASE WHEN status='PAID' THEN amount ELSE 0 END)
@@ -477,6 +504,7 @@ FROM Orders;
 ```
 
 ### C. 상위 N 그룹 (서브쿼리로 두 단계)
+
 ```sql
 -- 월별 합계 중 상위 5개월
 WITH m AS (
@@ -491,6 +519,7 @@ LIMIT 5;
 ```
 
 ### D. 근사 고유 수(빅데이터)
+
 - **MySQL**: HyperLogLog 내장 없음 → 앱/ETL에서 계산 또는 ClickHouse/Redis HLL 활용
 - **PostgreSQL/BigQuery/ClickHouse**: `approx_count_distinct`류 제공
 - 대용량 N:M 고유 집계는 **近似**를 고려(대시보드·랭킹 등).

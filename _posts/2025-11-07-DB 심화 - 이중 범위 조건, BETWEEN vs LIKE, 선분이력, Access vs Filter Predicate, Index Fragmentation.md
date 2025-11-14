@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # 같은 컬럼 **이중 범위 조건**, `BETWEEN` vs `LIKE` 스캔 범위, **선분이력** 인덱스 스캔 효율, **Access vs Filter Predicate**, **Index Fragmentation**까지 한 번에 정리
 
-## 0. 실습 공통 준비
+## 실습 공통 준비
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD HH24:MI:SS';
@@ -15,13 +15,14 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST 확인용
 
 ---
 
-# 1. 같은 컬럼에 **두 개의 범위 검색 조건**을 걸 때의 주의 사항
+# 같은 컬럼에 **두 개의 범위 검색 조건**을 걸 때의 주의 사항
 
 > B-Tree는 **선행 키**부터 **사전순**으로 탐색합니다.
 > **같은 컬럼**에 범위가 **두 개** 붙으면, 옵티마이저는 **합집합(OR)** 또는 **교집합(AND)**을 만들어 **여러 구간**을 스캔하거나, **Full Scan**으로 빠지기도 합니다.
 > **핵심**은 “**정규화된 단일 범위**”로 바꿔 **스캔 구간을 최소화**하는 것.
 
-## 1.1 스키마 & 데이터
+## 스키마 & 데이터
+
 ```sql
 DROP TABLE ord PURGE;
 
@@ -60,7 +61,8 @@ END;
 /
 ```
 
-## 1.2 **같은 컬럼** 두 범위: “교집합(AND)”로 더 좁히는 경우
+## **같은 컬럼** 두 범위: “교집합(AND)”로 더 좁히는 경우
+
 ```sql
 -- 예: 월말 실적만 뽑겠다고 날짜를 두 범위로 겹쳐 쓰는 코드
 VAR b1 VARCHAR2; VAR b2 VARCHAR2;
@@ -81,6 +83,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_B
 - **항상** 같은 컬럼의 범위는 **한 번만**: **최대/최소 경계값**으로 **정규화**하세요.
 
 ### 바른 형태
+
 ```sql
 SELECT /* A1’ */
        COUNT(*)
@@ -88,7 +91,8 @@ FROM   ord
 WHERE  order_dt BETWEEN DATE '2025-10-15' AND DATE '2025-10-31' + 0.999994; -- 23:59:59 근사
 ```
 
-## 1.3 같은 컬럼 두 범위: **합집합(OR)**일 때
+## 같은 컬럼 두 범위: **합집합(OR)**일 때
+
 ```sql
 -- 10월 혹은 12월 구간(두 범위 OR) : 두 "연속 구간"의 합집합
 SELECT /* A2 */
@@ -121,13 +125,14 @@ ON     o.order_dt >= m.base_dt
 
 ---
 
-# 2. `BETWEEN` vs `LIKE` **스캔 범위 비교** (접두사 검색을 날짜/코드 범위로 변환)
+# `BETWEEN` vs `LIKE` **스캔 범위 비교** (접두사 검색을 날짜/코드 범위로 변환)
 
 > `LIKE 'ABC%'` 는 **사전순 범위**를 하나 만들어 B-Tree 스캔이 가능합니다.
 > 날짜/코드의 “접두사”를 `BETWEEN` **하·상한**으로 바꾸면 **같은 효과**를 얻습니다.
 > 핵심은 **SARGable**(인덱스가 먹히도록) 만들기.
 
-## 2.1 코드 접두사 예
+## 코드 접두사 예
+
 ```sql
 DROP TABLE item PURGE;
 CREATE TABLE item(
@@ -169,8 +174,9 @@ AND    sku <  'ABD'; -- 문자열 상한=다음 접두사
 - **문자열 상한**은 보통 “다음 접두사”로 잡습니다(여기선 `'ABD'`).
 - `LIKE '%ABC'`(접미사)는 **상한/하한**을 만들 수 없어 **Full Scan** 위험 → **역인덱스/함수기반 인덱스** 등 별도 설계 필요.
 
-## 2.2 날짜 접두사 예 (`TRUNC`/포맷 문자열 주의)
+## 날짜 접두사 예 (`TRUNC`/포맷 문자열 주의)
 ### (실패 예) SARGability 깨지는 패턴
+
 ```sql
 -- 암시적 형변환/함수 적용 → 인덱스 비활성화 위험
 SELECT /* C0: 나쁜 예 */
@@ -181,6 +187,7 @@ WHERE  TO_CHAR(order_dt,'YYYY-MM-DD') LIKE '2025-10-%';
 - `TO_CHAR(order_dt, ...)`는 **컬럼에 함수** → **인덱스 못탐(일반적으로)**.
 
 ### (성공 예) 범위로 변환
+
 ```sql
 -- 10월 한 달 = [2025-10-01 00:00:00, 2025-11-01 00:00:00)
 SELECT /* C1: 좋은 예 */
@@ -193,13 +200,14 @@ AND    order_dt <  DATE '2025-11-01';
 
 ---
 
-# 3. **선분이력(유효기간 이력)**의 인덱스 스캔 효율
+# **선분이력(유효기간 이력)**의 인덱스 스캔 효율
 
 > 전형 스키마: `(entity_id, start_dt, end_dt)`
 > 질의: “시점 `:asof`에 **유효한 행**을 찾아라”
 > WHERE: `entity_id = :id AND start_dt <= :asof AND end_dt >= :asof`
 
-## 3.1 베이스 스키마
+## 베이스 스키마
+
 ```sql
 DROP TABLE hist PURGE;
 CREATE TABLE hist (
@@ -230,7 +238,8 @@ END;
 /
 ```
 
-## 3.2 인덱스 설계 후보와 **Access vs Filter** 차이
+## 인덱스 설계 후보와 **Access vs Filter** 차이
+
 ```sql
 -- 후보1: (emp_id, start_dt)   -- 흔히 먼저 떠올리는 구조
 CREATE INDEX ix_hist_e_s ON hist(emp_id, start_dt);
@@ -245,6 +254,7 @@ END;
 ```
 
 ### 질의 & 실행계획 관찰
+
 ```sql
 VAR id NUMBER; VAR asof DATE;
 EXEC :id := 12345; EXEC :asof := DATE '2025-10-15';
@@ -270,7 +280,8 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
   → **후행 end_dt 등치/범위가 Access로 승격되긴 어렵다**(B-Tree의 정렬축은 선행→후행).
   → 하지만 **커버링 효과**(인덱스만으로 선분 조건 검사)를 기대할 수 있어 **테이블 미방문**이 가능해집니다(선택적).
 
-## 3.3 더 빠른 한 건 찾기(포인트 시점): **가장 최근 start_dt** 한 건만
+## 더 빠른 한 건 찾기(포인트 시점): **가장 최근 start_dt** 한 건만
+
 > 같은 `emp_id` 내에서 `start_dt <= :asof` 중 **가장 큰 start_dt** 1건을 가져오고, 그 **end_dt ≥ :asof**만 확인.
 
 ```sql
@@ -290,7 +301,8 @@ FROM (
 - `(emp_id, start_dt)`에 **DESC 스캔 + Stopkey**로 **맨 앞 한 블록**만 읽고 **필터** 1회 확인 → **최소 I/O**.
 - **일반 포인트 질의**라면 이 패턴이 가장 안정적으로 빠릅니다.
 
-## 3.4 선분 겹침/조회가 많을 때의 전략
+## 선분 겹침/조회가 많을 때의 전략
+
 - **파티셔닝**(기간/emp_id 해시) + **로컬 인덱스**로 범위를 줄임.
 - **엔티티별 유효행 단 1건**만 유지(과거는 별도 테이블) → 온라인 조회 경로 단순화.
 - **비교적 큰 범위 조회**(예: `:asof` 구간에 겹치는 모든 선분)라면
@@ -298,13 +310,14 @@ FROM (
 
 ---
 
-# 4. **Access Predicate vs Filter Predicate** — 계획에서 “먹히는 조건”과 “읽고 거르는 조건”
+# **Access Predicate vs Filter Predicate** — 계획에서 “먹히는 조건”과 “읽고 거르는 조건”
 
 > `DBMS_XPLAN.DISPLAY_CURSOR(..., 'ALLSTATS LAST +PREDICATE')`를 보면
 > - **access**: 인덱스/파티션 접근 **키로 사용**, **스캔 범위 축소**
 > - **filter**: 접근 후 **읽고 나서 거름**(스캔량에는 포함)
 
-## 4.1 예제: 함수로 SARGability를 깨면 → **filter**로 떨어진다
+## 예제: 함수로 SARGability를 깨면 → **filter**로 떨어진다
+
 ```sql
 -- 나쁜 예: 컬럼에 함수
 SELECT /* E1: BAD - filter로 떨어짐 */
@@ -335,24 +348,27 @@ WHERE  order_dt >= DATE '2025-10-15'
 AND    order_dt <  DATE '2025-10-16';
 ```
 
-## 4.2 두 조건 중 하나라도 **access**로 끌어올려라
+## 두 조건 중 하나라도 **access**로 끌어올려라
+
 - 복합 인덱스에서 **선행 컬럼 = 등치**가 **access**를 보장.
 - 후행은 범위라도 **선행 =** 덕분에 **짧은 연속 구간**으로 탐색 가능.
 - **형변환 통일**, **함수기반 인덱스**, **가상 컬럼**으로 access 승격 기회를 적극 만들 것.
 
 ---
 
-# 5. **Index Fragmentation**(인덱스 파편화) — 언제, 무엇을, 어떻게 조치?
+# **Index Fragmentation**(인덱스 파편화) — 언제, 무엇을, 어떻게 조치?
 
 > Oracle B-Tree는 **리밸런스**가 자동으로 일어나 실질적 “조각화”가 OS 파일 시스템처럼 크게 문제 되지 않는 경우가 많습니다.
 > 다만 아래 상황에서는 **리빌드/Coalesce**가 의미가 있습니다.
 
-## 5.1 파편화/과대 성장의 전형
+## 파편화/과대 성장의 전형
+
 - **대량 삭제 후 미회수 공간**: Leaf에 **del row** 다수, **leaf_blocks↑**.
 - **편향 삽입(오른쪽 증가 키)**: 상위/특정 Leaf **핫 블록 경합** + **여유 공간 불균형**.
 - **BLEVEL(트리 높이) 과도**: 인덱스가 **높아져** 탐색 I/O가 늘어남(대용량·낮은 PCTFREE).
 
-## 5.2 상태 확인
+## 상태 확인
+
 ```sql
 -- 1) INDEX_STATS (VALIDATE STRUCTURE는 일시적인 잠금/비용 주의)
 ALTER INDEX ix_ord_dt  VALIDATE STRUCTURE;
@@ -369,7 +385,8 @@ WHERE  table_name = 'ORD';
 - `del_lf_rows / lf_rows` 비율이 **크고**, `leaf_blocks`가 **과대**, `pct_used`가 **낮을 때** 조치 고려.
 - `blevel` 4 이상이면(환경/버퍼에 따라 다름) 탐색 비용 체크.
 
-## 5.3 조치: **COALESCE** vs **REBUILD** vs **REVERSE KEY**
+## 조치: **COALESCE** vs **REBUILD** vs **REVERSE KEY**
+
 ```sql
 -- COALESCE: 인접 빈 Leaf를 병합(온라인/빠름/UNUSABLE 안 됨)
 ALTER INDEX ix_ord_dt COALESCE;
@@ -388,9 +405,10 @@ CREATE INDEX ix_ord_dt ON ord(order_dt, order_id) REVERSE;
 
 ---
 
-# 6. 통합 실습 시나리오 · “나쁜 예 → 좋은 예” 비교
+# 통합 실습 시나리오 · “나쁜 예 → 좋은 예” 비교
 
-## 6.1 같은 컬럼 이중 범위(AND) 정규화
+## 같은 컬럼 이중 범위(AND) 정규화
+
 ```sql
 VAR a DATE; VAR b DATE; VAR c DATE;
 EXEC :a := DATE '2025-10-01'; EXEC :b := DATE '2025-10-31' + 0.999994; EXEC :c := DATE '2025-10-15';
@@ -411,7 +429,8 @@ WHERE  order_dt BETWEEN :c AND :b;
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 ```
 
-## 6.2 LIKE 접두사 ↔ BETWEEN 변환
+## LIKE 접두사 ↔ BETWEEN 변환
+
 ```sql
 -- 나쁜 예(암시적 형변환)
 SELECT /* F2 BAD */
@@ -427,7 +446,8 @@ WHERE  order_dt >= DATE '2025-10-01'
 AND    order_dt <  DATE '2025-11-01';
 ```
 
-## 6.3 선분이력 포인트 최적화
+## 선분이력 포인트 최적화
+
 ```sql
 VAR id NUMBER; VAR t DATE;
 EXEC :id := 777; EXEC :t := DATE '2025-10-10';
@@ -447,7 +467,8 @@ FROM (
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICATE'));
 ```
 
-## 6.4 Access vs Filter 승격(가상 컬럼)
+## Access vs Filter 승격(가상 컬럼)
+
 ```sql
 ALTER TABLE ord ADD (order_dt_day AS (TRUNC(order_dt)));
 CREATE INDEX ix_ord_day ON ord(order_dt_day);
@@ -460,7 +481,8 @@ WHERE  order_dt_day = DATE '2025-10-15';
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICATE'));
 ```
 
-## 6.5 Fragmentation 조치 전/후 비교
+## Fragmentation 조치 전/후 비교
+
 ```sql
 -- 전 상태
 SELECT index_name, blevel, leaf_blocks FROM user_indexes WHERE index_name='IX_ORD_DT';
@@ -473,7 +495,7 @@ SELECT index_name, blevel, leaf_blocks FROM user_indexes WHERE index_name='IX_OR
 
 ---
 
-# 7. 체크리스트 (현업 적용용)
+# 체크리스트 (현업 적용용)
 
 - [ ] **같은 컬럼**에 **범위 두 번** 쓰지 말고 **단일 범위**로 **정규화**했는가?
 - [ ] `LIKE 'ABC%'`는 **BETWEEN 하·상한**으로 변환 가능한가(문자열·날짜 모두)?
@@ -485,7 +507,7 @@ SELECT index_name, blevel, leaf_blocks FROM user_indexes WHERE index_name='IX_OR
 
 ---
 
-## 8. 요약
+## 요약
 
 - **같은 컬럼**에 범위 조건을 **여러 번** 사용하면 **스캔 구간이 불명확**해져 **불필요 I/O**가 늘 수 있습니다. ⇒ **단일 범위로 정규화**.
 - `LIKE 'prefix%'`는 **BETWEEN 하·상한**으로 바꿔 **동일한 인덱스 범위**로 안전하게 스캔하세요.

@@ -388,6 +388,7 @@ helm dependency update mychart
 
 ```yaml
 # values.yaml
+
 cache:
   enabled: true
   architecture: standalone
@@ -411,10 +412,12 @@ global:
 {% raw %}
 ```yaml
 # values.yaml
+
 config:
   welcome: "Hello {{ .Release.Name }}"
 
 # ConfigMap
+
 data:
   message: |-
     {{ tpl .Values.config.welcome . }}
@@ -435,10 +438,12 @@ dataFromCluster: {{ $cm.data | toYaml | nindent 2 }}
 - 재현성/테스트성을 해칠 수 있어 **가급적 선언형**으로 유지하되, 마이그레이션/참조 시 신중히 사용.
 
 ### 조건부 리소스 생성
+
 {% raw %}
 ```yaml
 {{- if .Values.hpa.enabled }}
 # hpa.yaml …
+
 {{- end }}
 ```
 {% endraw %}
@@ -449,26 +454,33 @@ dataFromCluster: {{ $cm.data | toYaml | nindent 2 }}
 
 ```bash
 # 드라이런 + 렌더 결과 확인(클러스터에 적용 X)
+
 helm template web ./mychart -f values-prod.yaml
 
 # 문법/스키마/베스트 프랙티스 점검
+
 helm lint ./mychart
 
 # 설치 또는 업그레이드(존재하면 upgrade, 없으면 install)
+
 helm upgrade --install web ./mychart -n app --create-namespace -f values-prod.yaml
 
 # 변경점 비교(diff 플러그인)
+
 helm plugin install https://github.com/databus23/helm-diff
 helm diff upgrade web ./mychart -f values-prod.yaml
 
 # 되돌리기
+
 helm history web
 helm rollback web 2
 
 # 테스트
+
 helm test web
 
 # 패키징/배포
+
 helm package mychart
 helm repo index .
 ```
@@ -487,6 +499,7 @@ Helm 자체는 Secret 암호화를 제공하지 않는다. 일반적으로는:
 {% raw %}
 ```yaml
 # templates/external-secret.yaml
+
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -512,6 +525,7 @@ Ingress 애노테이션/두 릴리스 병행으로 Canary를 구현하거나, **
 helm upgrade --install web-blue  ./mychart -n app -f values-blue.yaml
 helm upgrade --install web-green ./mychart -n app -f values-green.yaml
 # LB/Ingress 백엔드 전환 후 검증 → Blue 삭제
+
 ```
 
 ---
@@ -536,6 +550,7 @@ helm upgrade --install web-green ./mychart -n app -f values-green.yaml
 ## 실전 미니 차트 — 단일 포트 웹앱
 
 ### values.yaml
+
 ```yaml
 replicaCount: 2
 image:

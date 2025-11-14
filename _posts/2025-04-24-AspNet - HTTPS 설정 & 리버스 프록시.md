@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core HTTPS 설정 & 리버스 프록시(Nginx, Apache)
 
-## 0. 큰 그림: 왜 리버스 프록시인가?
+## 큰 그림: 왜 리버스 프록시인가?
 
 - `Kestrel`은 고성능이지만 **엣지(Edge) 보안/암호화/로깅/로드밸런싱**은 프록시(Nginx/Apache)가 더 유리
 - 공통 패턴
@@ -15,9 +15,9 @@ category: AspNet
 
 ---
 
-## 1. 개발 환경에서 HTTPS (로컬)
+## 개발 환경에서 HTTPS (로컬)
 
-### 1.1 launchSettings.json 확인
+### launchSettings.json 확인
 
 ```json
 "profiles": {
@@ -33,7 +33,7 @@ category: AspNet
 }
 ```
 
-### 1.2 개발 인증서 신뢰
+### 개발 인증서 신뢰
 
 ```bash
 dotnet dev-certs https --trust
@@ -44,11 +44,11 @@ dotnet dev-certs https --trust
 
 ---
 
-## 2. Kestrel에 직접 HTTPS 바인딩(선택)
+## Kestrel에 직접 HTTPS 바인딩(선택)
 
 > 운영에서는 보통 프록시에서 TLS 종료(Termination)를 하지만, **직접 바인딩도 가능**.
 
-### 2.1 Program/Host 설정
+### Program/Host 설정
 
 ```csharp
 using System.Net;
@@ -71,7 +71,7 @@ app.MapControllers();
 app.Run();
 ```
 
-### 2.2 appsettings.json로 선언적 구성
+### appsettings.json로 선언적 구성
 
 ```json
 {
@@ -99,10 +99,11 @@ builder.WebHost.ConfigureKestrel((ctx, opt) =>
 });
 ```
 
-### 2.3 PEM → PFX 변환
+### PEM → PFX 변환
 
 ```bash
 # fullchain.pem + privkey.pem → site.pfx
+
 openssl pkcs12 -export -out site.pfx -inkey privkey.pem -in fullchain.pem -password pass:pfx-password
 ```
 
@@ -110,7 +111,7 @@ openssl pkcs12 -export -out site.pfx -inkey privkey.pem -in fullchain.pem -passw
 
 ---
 
-## 3. HTTPS 기본 보강: 리다이렉션 + HSTS
+## HTTPS 기본 보강: 리다이렉션 + HSTS
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -137,16 +138,16 @@ app.Run();
 
 ---
 
-## 4. 리버스 프록시: Nginx 구성 (Ubuntu 기준)
+## 리버스 프록시: Nginx 구성 (Ubuntu 기준)
 
-### 4.1 설치
+### 설치
 
 ```bash
 sudo apt update
 sudo apt install -y nginx
 ```
 
-### 4.2 .NET 앱 배포/실행
+### .NET 앱 배포/실행
 
 ```bash
 dotnet publish -c Release -o /var/www/myapp
@@ -156,10 +157,11 @@ dotnet MyApp.dll
 
 > 실제로는 **systemd**로 서비스화하여 관리.
 
-### 4.3 Nginx 서버 블록(HTTP→HTTPS 리디렉트 + TLS + 프록시)
+### Nginx 서버 블록(HTTP→HTTPS 리디렉트 + TLS + 프록시)
 
 ```nginx
 # /etc/nginx/sites-available/myapp.conf
+
 server {
     listen 80;
     server_name example.com;
@@ -205,15 +207,16 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 4.4 Let’s Encrypt 발급/자동설정
+### Let’s Encrypt 발급/자동설정
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d example.com
 # 자동 인증서 설정, 80→443 리디렉션 구성
+
 ```
 
-### 4.5 자동 갱신 확인
+### 자동 갱신 확인
 
 ```bash
 sudo systemctl status certbot.timer
@@ -222,16 +225,16 @@ sudo certbot renew --dry-run
 
 ---
 
-## 5. Apache 리버스 프록시
+## Apache 리버스 프록시
 
-### 5.1 모듈 활성화
+### 모듈 활성화
 
 ```bash
 sudo a2enmod proxy proxy_http ssl headers proxy_wstunnel http2
 sudo systemctl restart apache2
 ```
 
-### 5.2 VirtualHost
+### VirtualHost
 
 ```apache
 <VirtualHost *:80>
@@ -262,7 +265,7 @@ sudo systemctl restart apache2
 
 ---
 
-## 6. 프록시 뒤 ASP.NET Core 필수: Forwarded Headers
+## 프록시 뒤 ASP.NET Core 필수: Forwarded Headers
 
 프록시(공인 IP) 뒤에 숨은 앱은 실제 클라이언트 정보(원 IP/프로토콜)를 프록시 헤더로 받는다.
 
@@ -292,15 +295,15 @@ app.Run();
 
 ---
 
-## 7. WebSocket, gRPC, HTTP/2/3
+## WebSocket, gRPC, HTTP/2/3
 
-### 7.1 WebSocket
+### WebSocket
 
 - Nginx: `proxy_set_header Upgrade` & `Connection $connection_upgrade`
 - Apache: `mod_proxy_wstunnel` 사용
 - ASP.NET Core: `app.UseWebSockets()` 또는 SignalR 사용 시 자동 지원
 
-### 7.2 gRPC
+### gRPC
 
 - gRPC는 **HTTP/2** 필요
 - Nginx는 `grpc_pass` 지시어 사용
@@ -321,14 +324,14 @@ server {
 
 - Kestrel 쪽도 `HttpProtocols.Http2`로 리슨하거나 gRPC 템플릿 사용
 
-### 7.3 HTTP/3(QUIC, 선택)
+### HTTP/3(QUIC, 선택)
 
 - 최신 Nginx/Cloud 프록시가 지원
 - 운영 환경 제약/방화벽 고려. 우선 HTTP/2 안정화 → HTTP/3 점진 도입
 
 ---
 
-## 8. 보안 헤더/강화 체크리스트
+## 보안 헤더/강화 체크리스트
 
 - HSTS: `Strict-Transport-Security`
 - CSP(Content-Security-Policy): XSS 방어
@@ -340,7 +343,7 @@ server {
 
 ---
 
-## 9. systemd 서비스로 .NET 앱 데몬화
+## systemd 서비스로 .NET 앱 데몬화
 
 `/etc/systemd/system/myapp.service`:
 
@@ -354,11 +357,13 @@ WorkingDirectory=/var/www/myapp
 ExecStart=/usr/bin/dotnet /var/www/myapp/MyApp.dll
 Restart=always
 # 예: 환경변수로 연결문자열/키 주입
+
 Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ConnectionStrings__Default=Server=db;Database=app;User Id=app;Password=***
 Environment=Urls=http://0.0.0.0:5000
 
 # 보안 경량화(선택)
+
 NoNewPrivileges=true
 PrivateTmp=true
 
@@ -376,7 +381,7 @@ sudo systemctl status myapp
 
 ---
 
-## 10. 방화벽/포트
+## 방화벽/포트
 
 - 프록시는 80/443, 앱은 5000/5001(내부)
 - UFW 예시:
@@ -390,18 +395,20 @@ sudo ufw status
 
 ---
 
-## 11. Docker/Compose로 배포(선택)
+## Docker/Compose로 배포(선택)
 
-### 11.1 Dockerfile(.NET)
+### Dockerfile(.NET)
 
 ```dockerfile
 # build
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet publish -c Release -o /out
 
 # run
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /out .
@@ -410,7 +417,7 @@ EXPOSE 5000
 ENTRYPOINT ["dotnet", "MyApp.dll"]
 ```
 
-### 11.2 docker-compose.yml (Nginx + App)
+### docker-compose.yml (Nginx + App)
 
 ```yaml
 version: "3.9"
@@ -437,7 +444,7 @@ services:
 
 ---
 
-## 12. 운영 체크리스트
+## 운영 체크리스트
 
 | 항목 | 점검 |
 |---|---|
@@ -453,9 +460,9 @@ services:
 
 ---
 
-## 13. 실전 예제 모음
+## 실전 예제 모음
 
-### 13.1 최소 ASP.NET Core 앱(HTTPS 리다이렉트, 프록시 헤더, 헬스 체크)
+### 최소 ASP.NET Core 앱(HTTPS 리다이렉트, 프록시 헤더, 헬스 체크)
 
 ```csharp
 using Microsoft.AspNetCore.HttpOverrides;
@@ -497,14 +504,14 @@ app.MapHealthChecks("/health");
 app.Run();
 ```
 
-### 13.2 Nginx 업스트림 헬스체크(간단)
+### Nginx 업스트림 헬스체크(간단)
 
 - Nginx OSS에는 **능동적 헬스체크**가 제한적. 대신 시스템 레벨 헬스/로드밸런서 사용을 권장
 - 최소한 `/health` 엔드포인트로 LB 수준에서 체크하도록 구성
 
 ---
 
-## 14. 자주 겪는 문제와 해법
+## 자주 겪는 문제와 해법
 
 | 문제 | 원인 | 해결 |
 |---|---|---|
@@ -517,7 +524,7 @@ app.Run();
 
 ---
 
-## 15. 마무리 요약
+## 마무리 요약
 
 - 개발: `dotnet dev-certs https --trust`, 로컬 HTTPS
 - 운영: **리버스 프록시에서 TLS 종료**, Kestrel은 HTTP로 단순화
@@ -539,6 +546,7 @@ add_header Referrer-Policy no-referrer-when-downgrade always;
 add_header Permissions-Policy "geolocation=(), microphone=()" always;
 # CSP는 앱 상황에 맞게 조정 필요
 # add_header Content-Security-Policy "default-src 'self'; script-src 'self'; object-src 'none'" always;
+
 ```
 
 ### B) Apache 보안 헤더 예

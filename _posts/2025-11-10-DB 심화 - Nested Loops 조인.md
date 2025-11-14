@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 0. 공통 준비
+## 공통 준비
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -21,9 +21,10 @@ ALTER SESSION SET optimizer_features_enable = '19.1.0'; -- (환경에 맞게, �
 
 ---
 
-# 1. Nested Loops 조인: **기본 메커니즘**
+# Nested Loops 조인: **기본 메커니즘**
 
-## 1.1 직관
+## 직관
+
 - **Outer(바깥) row-source**에서 **한 행**을 꺼낸다 → **Inner(안쪽) row-source**를 **해당 키로 즉시 조회**한다.
 - 이 과정을 **반복(loop)** 하며 **매칭되는 행**을 출력한다.
 - **눈에 보이는 핵심**: **바깥은 “적게”**, **안쪽은 “빠르게(=인덱스)”**.
@@ -33,21 +34,23 @@ ALTER SESSION SET optimizer_features_enable = '19.1.0'; -- (환경에 맞게, �
 > $$ \text{총비용} \approx \text{Outer Rows} \times (\text{Inner Lookup 비용}) $$
 > Inner Lookup 비용은 보통 **인덱스 탐색 + 소량 블록 랜덤 I/O**.
 
-## 1.2 동작 스텝 (단순 2-테이블 조인)
+## 동작 스텝 (단순 2-테이블 조인)
+
 1) Outer에서 **첫 행** Fetch
 2) 그 행의 **조인 키**로 Inner에 **인덱스 탐색(Index Range/Unique Scan)**
 3) 매칭되는 Inner 행들을 읽어 **출력**
 4) Outer의 **다음 행**으로 이동 → 2)~3) 반복
 5) Outer 끝나면 종료
 
-## 1.3 언제 좋은가
+## 언제 좋은가
+
 - Outer가 **작다**(혹은 빠르게 줄어든다: `ROWNUM`, Top-N, 선택도 높은 필터/파티션 프루닝)
 - Inner에 **선행 = 등치**가 걸리며 **인덱스**로 **짧고 빠르게** 찾을 수 있음
 - **조기 종료(Stopkey)**, **부분범위처리**가 유리한 화면/OLTP 조회
 
 ---
 
-# 2. 실습 스키마
+# 실습 스키마
 
 ```sql
 DROP TABLE customers PURGE;
@@ -137,7 +140,7 @@ END;
 
 ---
 
-# 3. 기본 예제: 고객의 **최근 주문 Top-N** + 상세 (NL 조인 이상적)
+# 기본 예제: 고객의 **최근 주문 Top-N** + 상세 (NL 조인 이상적)
 
 ```sql
 -- Outer(작음): 고객 필터 + 최신순 Stopkey
@@ -181,21 +184,24 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 4. **힌트**로 NL 조인 제어하기
+# **힌트**로 NL 조인 제어하기
 
-## 4.1 조인 순서/메소드
+## 조인 순서/메소드
+
 - `/*+ ORDERED */` : FROM 순서대로 조인
 - `/*+ LEADING(t1 t2 t3) */` : 정확한 조인 순서 지정
 - `/*+ USE_NL(t) */` : `t`를 Inner로 NL 사용
 - `/*+ NO_USE_NL(t) */` : `t`에 NL 금지(다른 메소드 선택 유도)
 - (대비) `USE_HASH(t)`, `USE_MERGE(t)` : 각각 Hash/Merge 유도
 
-## 4.2 Inner 액세스 경로
+## Inner 액세스 경로
+
 - `/*+ INDEX(t idx) */`, `INDEX_ASC/DESC` : 인덱스 스캔 지정
 - `/*+ FULL(t) */` : 풀스캔
 - `/*+ USE_NL_WITH_INDEX(t idx) */` : **t**를 NL로 조인하며 **해당 인덱스**를 반드시 사용(경우에 따라 강제 수준↑)
 
-## 4.3 세미/안티 조인(NL)
+## 세미/안티 조인(NL)
+
 - `EXISTS`/`NOT EXISTS`는 **NL 세미/안티** 조인으로 가기 쉬움
 - 힌트: `/*+ USE_NL_SJ */`(세미), `/*+ USE_NL_AJ */`(안티) — 버전에 따라 `NL_SJ`, `NL_AJ` 형태도 사용
 
@@ -218,7 +224,7 @@ AND    EXISTS (
 
 ---
 
-# 5. NL 조인 **수행 과정 분석** (실행계획/통계 해석)
+# NL 조인 **수행 과정 분석** (실행계획/통계 해석)
 
 다음 쿼리를 실행하고, `ALLSTATS LAST`로 **row-source 통계**를 본다.
 
@@ -257,16 +263,18 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 6. NL 조인의 **특징** 정리
+# NL 조인의 **특징** 정리
 
-## 6.1 장점
+## 장점
+
 - Outer가 작고 Inner lookup이 빠르면 **가장 빠른 응답**
 - **Stopkey/Top-N/페이징**과 **궁합 최고** (앞 블록만 읽고 끝)
 - **부분범위처리**: 결과를 **흘려보내며** 즉시 화면에 렌더
 - 인덱스가 잘 설계되어 있으면 **정렬 생략**(정렬 일치 인덱스) 가능
 - 조인 조건 외에도 Inner에서 **추가 필터**를 바로 적용 가능(필요 최소만 읽음)
 
-## 6.2 단점/주의
+## 단점/주의
+
 - Outer가 커지고 Inner 인덱스가 부실하면 **랜덤 I/O 폭증**
 - **클러스터링 팩터** 나쁨(= 인덱스 순서와 테이블 물리 순서 상관↓)이면 랜덤 I/O↑
 - **배치 집계(대량 스캔)**에는 해시 조인/머지 조인이 유리한 경우 많음
@@ -274,27 +282,30 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 7. NL 조인 성능을 **좋게 만드는 설계 포인트**
+# NL 조인 성능을 **좋게 만드는 설계 포인트**
 
-## 7.1 인덱스 설계
+## 인덱스 설계
+
 - Inner에 **선두 = 등치**가 오도록 **복합 인덱스** 설계
 - Outer의 정렬 요구까지 **인덱스로 흡수**(DESC/ASC + Stopkey)
 - **커버링 인덱스**로 Inner 테이블 **미방문**(Index Only) 가능성 확보
 - **함수기반/가상 컬럼**으로 SARGability 확보(형변환/함수로 인덱스 무력화 방지)
 
-## 7.2 데이터/통계
+## 데이터/통계
+
 - 통계 최신화(히스토그램으로 스큐 보정)
 - **바인드 피킹/ACS**에 의한 플랜 흔들림 대비(플랜 관리 혹은 값별 전략)
 - **클러스터링 팩터** 확인/개선(테이블 재정렬은 어렵지만 파티셔닝/저장 설계/인덱스 재구성 검토)
 
-## 7.3 쿼리 작성
+## 쿼리 작성
+
 - **필요 최소 조건**을 Outer에 최대한 적용(Outer Rows ↓)
 - **ROWNUM/Top-N**을 적극 활용
 - `EXISTS`(세미 조인)로 **있음/없음** 판정 → **중간 결과 최소화**
 
 ---
 
-# 8. 대조: NL vs Hash vs Merge (간단 감별법)
+# 대조: NL vs Hash vs Merge (간단 감별법)
 
 | 상황 | 추천 |
 |---|---|
@@ -306,9 +317,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 9. 추가 예제 모음
+# 추가 예제 모음
 
-## 9.1 고객 최근 주문 + 품목 Top-N (정렬/Stopkey 결합)
+## 고객 최근 주문 + 품목 Top-N (정렬/Stopkey 결합)
 
 ```sql
 -- 인덱스: (orders) (cust_id, order_dt DESC, order_id DESC)
@@ -322,7 +333,7 @@ ORDER  BY o.order_dt DESC, o.order_id DESC
 FETCH FIRST 50 ROWS ONLY;
 ```
 
-## 9.2 EXISTS 기반 세미 조인(NL 유도)
+## EXISTS 기반 세미 조인(NL 유도)
 
 ```sql
 SELECT /*+ USE_NL_SJ(o) */
@@ -338,7 +349,7 @@ AND    EXISTS (
        );
 ```
 
-## 9.3 NL이 **나빠지는** 케이스(Outer 큼 + Inner 인덱스 부적절)
+## NL이 **나빠지는** 케이스(Outer 큼 + Inner 인덱스 부적절)
 
 ```sql
 -- Outer가 방대하고 Inner 인덱스가 없으면 랜덤 I/O 폭발
@@ -356,7 +367,7 @@ AND    o.status IN ('PAID','SHIP');     -- 선택도 낮다(행이 많다)
 
 ---
 
-# 10. NL 수행 과정 **깊이 있는** 관찰 팁
+# NL 수행 과정 **깊이 있는** 관찰 팁
 
 ```sql
 -- 1) 쿼리 실행
@@ -380,7 +391,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# 11. 체크리스트
+# 체크리스트
 
 - [ ] **Outer를 작게**: 선행 등치, 강한 필터, 파티션 프루닝, Top-N/ROWNUM
 - [ ] **Inner 인덱스**: 조인 키 선두 = 등치 / 커버링 고려 / 클러스터링 팩터 점검
@@ -392,7 +403,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-## 12. 요약
+## 요약
 
 - **Nested Loops**는 **바깥(적은 행)** × **안쪽(빠른 인덱스 lookup)**의 구조로,
   **화면 조회/Top-N/부분범위처리**에서 **최고의 응답**을 내는 조인 방식이다.

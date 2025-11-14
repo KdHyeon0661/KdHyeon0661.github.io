@@ -17,7 +17,8 @@ category: Kubernetes
 
 ---
 
-## 1. Kind란 무엇인가?
+## Kind란 무엇인가?
+
 - Docker 컨테이너를 **가상 노드**처럼 사용해 **쿠버네티스 클러스터**를 구성하는 공식 도구.
 - 추가 하이퍼바이저 없이 **가볍고 빠르게** 클러스터를 띄움.
 - 로컬 개발/테스트, CI 파이프라인에서 **E2E 검증**에 최적.
@@ -25,21 +26,24 @@ category: Kubernetes
 
 ---
 
-## 2. 사전 요구사항
+## 사전 요구사항
+
 - **Docker** 설치 및 실행(데몬 구동 상태).
 - `kubectl` 설치 권장.
 - Go 환경은 필요 없음(바이너리 사용).
 
 ---
 
-## 3. 설치
+## 설치
 
 ### macOS(Homebrew)
+
 ```bash
 brew install kind
 ```
 
 ### Linux (바이너리)
+
 ```bash
 curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.22.0/kind-linux-amd64
 chmod +x ./kind
@@ -47,6 +51,7 @@ sudo mv ./kind /usr/local/bin/kind
 ```
 
 ### Windows(Chocolatey)
+
 ```powershell
 choco install kind
 ```
@@ -58,7 +63,7 @@ kind version
 
 ---
 
-## 4. 가장 빠른 시작(기본 설정)
+## 가장 빠른 시작(기본 설정)
 
 ```bash
 kind create cluster
@@ -76,12 +81,13 @@ docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}'
 
 ---
 
-## 5. 커스텀 구성 — 멀티 노드, 포트 매핑, 볼륨 마운트
+## 커스텀 구성 — 멀티 노드, 포트 매핑, 볼륨 마운트
 
 아래 예제는 **1 control-plane + 2 worker**, 호스트의 **80/443 → control-plane의 80/443** 포워딩(ingress 접근용), 그리고 호스트 디렉터리를 노드에 **마운트**한다.
 
 ```yaml
 # cluster-config.yaml
+
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 name: my-cluster
@@ -123,9 +129,10 @@ kubectl get nodes -o wide
 
 ---
 
-## 6. Ingress(ingress-nginx) 설치와 외부 접속
+## Ingress(ingress-nginx) 설치와 외부 접속
 
-### 6.1 Ingress 컨트롤러 설치
+### Ingress 컨트롤러 설치
+
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 kubectl -n ingress-nginx rollout status deploy/ingress-nginx-controller
@@ -133,9 +140,11 @@ kubectl -n ingress-nginx rollout status deploy/ingress-nginx-controller
 
 > 위 매니페스트는 Kind 환경에서의 DaemonSet/NodePort/HostPort 조합을 고려한 배포이며, 앞서 `extraPortMappings(80/443)` 덕에 **호스트 브라우저에서 바로 접근** 가능.
 
-### 6.2 테스트 서비스/인그레스
+### 테스트 서비스/인그레스
+
 ```yaml
 # echo-app.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: echo, labels: { app: echo } }
@@ -176,23 +185,27 @@ spec:
 ```bash
 kubectl apply -f echo-app.yaml
 # /etc/hosts에 127.0.0.1 echo.local 추가(Kind의 80/443이 호스트로 포워딩됨)
+
 echo "127.0.0.1 echo.local" | sudo tee -a /etc/hosts
 curl http://echo.local/
 ```
 
 ---
 
-## 7. MetalLB로 LoadBalancer 타입 실습(옵션)
+## MetalLB로 LoadBalancer 타입 실습(옵션)
 
 Kind는 베어메탈과 유사해 **외부 LB가 없다**. L4 LB 실습을 위해 **MetalLB**를 배포한다.
 
-### 7.1 설치 및 IP 풀 구성
+### 설치 및 IP 풀 구성
+
 ```bash
 # 설치
+
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
 kubectl -n metallb-system rollout status deploy/controller
 
 # IPAddressPool + L2Advertisement (Kind Docker 네트워크 대역 고려)
+
 cat <<EOF | kubectl apply -f -
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
@@ -214,7 +227,8 @@ spec:
 EOF
 ```
 
-### 7.2 LoadBalancer 서비스 테스트
+### LoadBalancer 서비스 테스트
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -238,23 +252,28 @@ curl http://<EXTERNAL-IP>/
 
 ---
 
-## 8. 로컬/사설 레지스트리 연동과 이미지 반영
+## 로컬/사설 레지스트리 연동과 이미지 반영
 
-### 8.1 로컬 이미지 로딩(간단)
+### 로컬 이미지 로딩(간단)
+
 ```bash
 docker build -t my-app:dev .
 kind load docker-image my-app:dev --name my-cluster
 # Deployment에서 image: my-app:dev + imagePullPolicy: IfNotPresent
+
 ```
 
-### 8.2 로컬 레지스트리 컨테이너와 연결(권장)
+### 로컬 레지스트리 컨테이너와 연결(권장)
+
 킨드 문서의 패턴을 따라 **도커 레지스트리**를 띄우고, 킨드 노드에 **미러로 인식**시키면 팀/CI와 연계가 쉬워진다.
 
 ```bash
-# 1. 레지스트리 컨테이너
+# 레지스트리 컨테이너
+
 docker run -d --restart=always -p "5001:5000" --name registry registry:2
 
-# 2. registry 미러를 사용하는 kind 클러스터
+# registry 미러를 사용하는 kind 클러스터
+
 cat <<EOF > kind-with-registry.yaml
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
@@ -269,30 +288,35 @@ nodes:
   - role: worker
 EOF
 
-# 3. 클러스터 생성
+# 클러스터 생성
+
 kind create cluster --config kind-with-registry.yaml
 
-# 4. registry 컨테이너를 kind 네트워크에 붙임
+# registry 컨테이너를 kind 네트워크에 붙임
+
 docker network connect kind registry || true
 ```
 
 이미지 푸시/사용:
 ```bash
 # 호스트에서 빌드 → 로컬 레지스트리에 푸시
+
 docker build -t localhost:5001/my-app:dev .
 docker push localhost:5001/my-app:dev
 
 # K8s 매니페스트에서는 image: localhost:5001/my-app:dev 로 참조
+
 ```
 
 ---
 
-## 9. 볼륨/데이터 — 호스트↔Pod 개발 루프
+## 볼륨/데이터 — 호스트↔Pod 개발 루프
 
 `extraMounts`로 **호스트 디렉터리**를 노드에 마운트해두면, 그 경로를 **hostPath**로 Pod에 연결해 빠른 개발 루프를 만든다.
 
 ```yaml
 # cluster-config.yaml의 extraMounts로 /mnt/workspace 마운트했다고 가정
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: web-dev }
@@ -319,17 +343,20 @@ spec:
 
 ---
 
-## 10. 네트워크/클러스터 디버깅
+## 네트워크/클러스터 디버깅
 
-### 10.1 내부 통신 점검
+### 내부 통신 점검
+
 ```bash
 kubectl run -it --rm netshoot --image=nicolaka/netshoot -- /bin/bash
 # 컨테이너 내부
+
 curl -v http://echo-svc
 dig echo-svc.default.svc.cluster.local
 ```
 
-### 10.2 이벤트/리소스
+### 이벤트/리소스
+
 ```bash
 kubectl get events -A --sort-by=.lastTimestamp
 kubectl top pod -A
@@ -338,10 +365,11 @@ kubectl get endpointslices -A
 
 ---
 
-## 11. CI(깃허브 액션)에서 Kind로 E2E 테스트
+## CI(깃허브 액션)에서 Kind로 E2E 테스트
 
 ```yaml
 # .github/workflows/e2e.yml
+
 name: e2e-kind
 on: [push, pull_request]
 
@@ -386,7 +414,7 @@ jobs:
 
 ---
 
-## 12. 자주 겪는 문제 해결(확장판)
+## 자주 겪는 문제 해결(확장판)
 
 | 증상/오류 | 원인 후보 | 해결 |
 |---|---|---|
@@ -409,7 +437,8 @@ docker logs <kind-node-container>
 
 ---
 
-## 13. 간단 수용량 계산(학습용)
+## 간단 수용량 계산(학습용)
+
 서비스 목표 QPS, 평균 처리시간 \(t\), 파드당 안정 처리량 \(\text{cap}_{pod}\) 이면:
 $$
 \text{필요 레플리카} \approx
@@ -421,10 +450,11 @@ Kind는 **로컬**이므로 과도한 부하는 호스트 스펙에 좌우된다
 
 ---
 
-## 14. 한 번에 실행해 보는 미니 스택(웹+API+Ingress)
+## 한 번에 실행해 보는 미니 스택(웹+API+Ingress)
 
 ```yaml
 # mini-stack.yaml
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: web, labels: { app: web } }
@@ -491,6 +521,7 @@ spec:
 실행 순서:
 ```bash
 # 클러스터는 extraPortMappings(80/443) 포함 구성으로 생성되어 있다고 가정
+
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 kubectl apply -f mini-stack.yaml
 echo "127.0.0.1 web.local api.local" | sudo tee -a /etc/hosts
@@ -500,7 +531,8 @@ curl http://api.local/
 
 ---
 
-## 15. Minikube와 비교 — 어떤 상황에 어떤 도구?
+## Minikube와 비교 — 어떤 상황에 어떤 도구?
+
 | 항목 | Kind | Minikube |
 |---|---|---|
 | 기반 | Docker 컨테이너 | VM 또는 Docker |
@@ -512,7 +544,8 @@ curl http://api.local/
 
 ---
 
-## 16. 정리 및 다음 단계
+## 정리 및 다음 단계
+
 - Kind는 **가볍고 빠른 개발/테스트/CI용 쿠버네티스**의 표준급 도구다.
 - 핵심 포인트 요약:
   1) **커스텀 설정**으로 포트/마운트/노드 수를 환경에 맞게 조정

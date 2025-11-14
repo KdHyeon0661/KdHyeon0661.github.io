@@ -6,15 +6,17 @@ category: Java
 ---
 # 스트림(Stream) 개념과 `InputStream`/`OutputStream`
 
-## 1. 스트림 기본 개념
+## 스트림 기본 개념
 
-### 1.1 단방향·순차 처리
+### 단방향·순차 처리
+
 - **스트림(Stream)**: 데이터가 흐르는 **단방향 통로**.
   - **입력 스트림**: 소스 → 프로그램 (`InputStream`)
   - **출력 스트림**: 프로그램 → 싱크/목적지 (`OutputStream`)
 - **순차 접근**이 기본: 임의 접근(시크)은 `RandomAccessFile` 또는 NIO의 `SeekableByteChannel`/`FileChannel` 사용.
 
-### 1.2 추상화 계층과 데코레이터(필터) 패턴
+### 추상화 계층과 데코레이터(필터) 패턴
+
 - 기반 자원: 파일, 소켓, 메모리, 파이프, 압축 파일 등.
 - **데코레이터 체인**으로 기능을 합성:
   ```
@@ -23,16 +25,18 @@ category: Java
   ```
 - 장점: **관심사 분리**(소스/버퍼링/형식/압축/암호화 등), **조립식 확장**.
 
-### 1.3 바이트 vs 문자
+### 바이트 vs 문자
+
 - 본 문서: **바이트 스트림**(`InputStream`/`OutputStream`).
 - 사람이 읽는 텍스트는 **문자 스트림**(`Reader`/`Writer`) + **인코딩 지정** 권장(UTF-8).
   바이트↔문자 다리는 `InputStreamReader`/`OutputStreamWriter`.
 
 ---
 
-## 2. `InputStream` — 핵심 API와 올바른 읽기
+## `InputStream` — 핵심 API와 올바른 읽기
 
-### 2.1 주요 메서드
+### 주요 메서드
+
 | 메서드 | 의미/주의 |
 |---|---|
 | `int read()` | 1바이트 읽기(0~255), EOF 시 **-1**. 느림(시演용) |
@@ -57,6 +61,7 @@ try (InputStream in = new BufferedInputStream(new FileInputStream("in.bin"))) {
 ```
 
 #### “정확히 N바이트” 읽기
+
 ```java
 static int readFully(InputStream in, byte[] b, int off, int len) throws IOException {
   int read = 0;
@@ -69,7 +74,8 @@ static int readFully(InputStream in, byte[] b, int off, int len) throws IOExcept
 }
 ```
 
-### 2.2 구현 클래스
+### 구현 클래스
+
 - `FileInputStream`(파일), `ByteArrayInputStream`(메모리), `BufferedInputStream`(버퍼링),
   `DataInputStream`(원시형 읽기), `GZIPInputStream`/`ZipInputStream`(압축),
   `ObjectInputStream`(객체 복원), `DigestInputStream`/`CheckedInputStream`(해시/체크섬),
@@ -77,9 +83,10 @@ static int readFully(InputStream in, byte[] b, int off, int len) throws IOExcept
 
 ---
 
-## 3. `OutputStream` — 핵심 API와 안전한 쓰기
+## `OutputStream` — 핵심 API와 안전한 쓰기
 
-### 3.1 주요 메서드
+### 주요 메서드
+
 | 메서드 | 의미/주의 |
 |---|---|
 | `void write(int b)` | 1바이트 쓰기(느림) |
@@ -90,7 +97,8 @@ static int readFully(InputStream in, byte[] b, int off, int len) throws IOExcept
 > **쓰기 루프 패턴**
 > 보통 한 번의 `write`로 모두 전송되지만, 상위 레이어에서 부분 쓰기가 발생할 수 있음을 염두에 두고 **API 보장**을 확인하세요(채널 계층에서는 부분 쓰기 흔함).
 
-### 3.2 구현 클래스
+### 구현 클래스
+
 - `FileOutputStream`, `ByteArrayOutputStream`, `BufferedOutputStream`,
   `DataOutputStream`, `GZIPOutputStream`/`ZipOutputStream`,
   `ObjectOutputStream`, `CipherOutputStream`, `DigestOutputStream`,
@@ -98,7 +106,7 @@ static int readFully(InputStream in, byte[] b, int off, int len) throws IOExcept
 
 ---
 
-## 4. 버퍼링과 `flush()` — 성능과 데이터 무결성
+## 버퍼링과 `flush()` — 성능과 데이터 무결성
 
 - **버퍼 스트림**(`BufferedInputStream`/`BufferedOutputStream`)을 **항상** 고려: I/O 호출 횟수 감소 → 성능 향상.
 - **`flush()` 필요 시점**
@@ -115,9 +123,10 @@ try (OutputStream out = new BufferedOutputStream(new FileOutputStream("out.bin")
 
 ---
 
-## 5. 실전: 파일 복사·이동·원자적 갱신
+## 실전: 파일 복사·이동·원자적 갱신
 
-### 5.1 간단 파일 복사(스트림)
+### 간단 파일 복사(스트림)
+
 ```java
 static void copy(Path src, Path dst) throws IOException {
   try (InputStream in = new BufferedInputStream(Files.newInputStream(src));
@@ -129,12 +138,14 @@ static void copy(Path src, Path dst) throws IOException {
 }
 ```
 
-### 5.2 NIO 유틸로 복사(권장)
+### NIO 유틸로 복사(권장)
+
 ```java
 Files.copy(src, dst, StandardCopyOption.REPLACE_EXISTING);
 ```
 
-### 5.3 안전한 덮어쓰기(원자적 교체)
+### 안전한 덮어쓰기(원자적 교체)
+
 ```java
 Path temp = Files.createTempFile(dst.getParent(), "tmp-", ".bin");
 try (OutputStream out = Files.newOutputStream(temp)) {
@@ -145,7 +156,7 @@ Files.move(temp, dst, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE
 
 ---
 
-## 6. 데이터 형식: `DataInput/OutputStream`과 바이너리 프로토콜
+## 데이터 형식: `DataInput/OutputStream`과 바이너리 프로토콜
 
 - **Java 원시형**을 **이식 가능한 바이너리 형식**으로 읽고/쓸 수 있음(빅엔디안).
 - 텍스트보다 작고 빠른 **바이너리 프로토콜** 구현에 유용.
@@ -173,9 +184,10 @@ try (DataInputStream dis = new DataInputStream(
 
 ---
 
-## 7. 압축/아카이브: GZIP/ZIP 스트림
+## 압축/아카이브: GZIP/ZIP 스트림
 
-### 7.1 GZIP으로 압축/해제(단일 파일)
+### GZIP으로 압축/해제(단일 파일)
+
 ```java
 // 압축
 try (InputStream in = Files.newInputStream(Path.of("raw.log"));
@@ -190,7 +202,8 @@ try (InputStream in = new GZIPInputStream(Files.newInputStream(Path.of("raw.log.
 }
 ```
 
-### 7.2 ZIP(여러 엔트리)
+### ZIP(여러 엔트리)
+
 ```java
 // 생성
 try (ZipOutputStream zos = new ZipOutputStream(
@@ -215,9 +228,10 @@ try (ZipInputStream zis = new ZipInputStream(
 
 ---
 
-## 8. 체크섬·해시: `Checked*`/`Digest*` 스트림
+## 체크섬·해시: `Checked*`/`Digest*` 스트림
 
-### 8.1 체크섬(CRC/Adler)
+### 체크섬(CRC/Adler)
+
 ```java
 import java.util.zip.*;
 
@@ -229,7 +243,8 @@ try (CheckedInputStream cin = new CheckedInputStream(
 }
 ```
 
-### 8.2 메시지 다이제스트(SHA-256)
+### 메시지 다이제스트(SHA-256)
+
 ```java
 import java.security.*;
 import java.io.*;
@@ -245,7 +260,7 @@ byte[] hash = md.digest();
 
 ---
 
-## 9. 네트워크 소켓 I/O — 부분 읽기/타임아웃/버퍼링
+## 네트워크 소켓 I/O — 부분 읽기/타임아웃/버퍼링
 
 ```java
 try (Socket sock = new Socket("example.com", 80)) {
@@ -269,7 +284,7 @@ try (Socket sock = new Socket("example.com", 80)) {
 
 ---
 
-## 10. 파이프/스레드 간 연결: `PipedInput/OutputStream`
+## 파이프/스레드 간 연결: `PipedInput/OutputStream`
 
 ```java
 PipedInputStream pin = new PipedInputStream();
@@ -294,7 +309,7 @@ new Thread(() -> {
 
 ---
 
-## 11. 객체 직렬화 스트림 — 주의와 예제
+## 객체 직렬화 스트림 — 주의와 예제
 
 > **보안 주의**: `ObjectInputStream`은 임의 클래스 인스턴스화를 유발 → **신뢰할 수 없는 입력**에 절대 사용 금지. 안전 대안: JSON/CBOR + 명시적 매핑.
 
@@ -323,12 +338,14 @@ class User implements Serializable {
 
 ---
 
-## 12. NIO와의 연동 — 채널·버퍼·제로카피
+## NIO와의 연동 — 채널·버퍼·제로카피
 
-### 12.1 `Files.newInputStream/OutputStream`
+### `Files.newInputStream/OutputStream`
+
 - 기존 스트림과 동일하게 쓰되 NIO `Path` 기반으로 간결.
 
-### 12.2 `FileChannel` + `ByteBuffer`
+### `FileChannel` + `ByteBuffer`
+
 ```java
 try (FileChannel ch = FileChannel.open(Path.of("big.bin"),
         StandardOpenOption.READ)) {
@@ -341,7 +358,8 @@ try (FileChannel ch = FileChannel.open(Path.of("big.bin"),
 }
 ```
 
-### 12.3 제로카피 전송 — `transferTo/transferFrom`
+### 제로카피 전송 — `transferTo/transferFrom`
+
 ```java
 try (FileChannel src = FileChannel.open(srcPath, StandardOpenOption.READ);
      FileChannel dst = FileChannel.open(dstPath, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
@@ -350,7 +368,8 @@ try (FileChannel src = FileChannel.open(srcPath, StandardOpenOption.READ);
 }
 ```
 
-### 12.4 메모리 매핑 — 초대형 파일 랜덤 접근
+### 메모리 매핑 — 초대형 파일 랜덤 접근
+
 ```java
 try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ)) {
   MappedByteBuffer map = ch.map(FileChannel.MapMode.READ_ONLY, 0, ch.size());
@@ -362,7 +381,7 @@ try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ)) {
 
 ---
 
-## 13. 필터 스트림 빠른 인덱스(무엇을 언제 쓰나)
+## 필터 스트림 빠른 인덱스(무엇을 언제 쓰나)
 
 | 목적 | 입력(읽기) | 출력(쓰기) |
 |---|---|---|
@@ -377,7 +396,7 @@ try (FileChannel ch = FileChannel.open(p, StandardOpenOption.READ)) {
 
 ---
 
-## 14. 클래스패스 리소스 읽기(내장 자원)
+## 클래스패스 리소스 읽기(내장 자원)
 
 ```java
 try (InputStream in = MyApp.class.getResourceAsStream("/templates/welcome.txt")) {
@@ -390,16 +409,18 @@ try (InputStream in = MyApp.class.getResourceAsStream("/templates/welcome.txt"))
 
 ---
 
-## 15. 올바른 패턴과 안티패턴
+## 올바른 패턴과 안티패턴
 
-### 15.1 반드시 지킬 것
+### 반드시 지킬 것
+
 - **`try-with-resources`**로 닫기 보장.
 - **버퍼링** 기본 적용.
 - **읽기 루프**에서 반환값 체크 및 누적.
 - **네트워크**는 `flush()`/타임아웃/부분 읽기 대비.
 - **에러 문맥 로깅**(경로, 바이트 오프셋, 엔트리명 등).
 
-### 15.2 피해야 할 것
+### 피해야 할 것
+
 - `available()`를 **파일 크기**로 사용(오개념).
   → 파일 크기는 `Files.size(path)` 또는 채널 `size()` 사용.
 - 바이트를 **곧바로 `char` 캐스팅**(텍스트 인코딩 무시).
@@ -410,7 +431,8 @@ try (InputStream in = MyApp.class.getResourceAsStream("/templates/welcome.txt"))
 
 ---
 
-## 16. 벤치마크 힌트(간단)
+## 벤치마크 힌트(간단)
+
 - 충분한 크기의 버퍼(예: 64KiB 이상)로 **시스템 호출 수**를 줄이면 대개 유리.
 - **`transferTo/transferFrom`**는 커널 제로카피에 의해 매우 빠른 경향.
 - GC 부담을 줄이려면 **직접 버퍼**(`allocateDirect`)와 **버퍼 재사용** 검토.
@@ -418,9 +440,10 @@ try (InputStream in = MyApp.class.getResourceAsStream("/templates/welcome.txt"))
 
 ---
 
-## 17. 레시피 모음
+## 레시피 모음
 
-### 17.1 바이너리 헤더 + 가변 페이로드 프레이밍
+### 바이너리 헤더 + 가변 페이로드 프레이밍
+
 ```java
 // [len:int][type:byte][payload:len-1 bytes]
 static void writeFrame(OutputStream out, byte type, byte[] payload) throws IOException {
@@ -441,7 +464,8 @@ static Frame readFrame(InputStream in) throws IOException {
 }
 ```
 
-### 17.2 바이트 단위 탐색(버퍼 슬라이딩)
+### 바이트 단위 탐색(버퍼 슬라이딩)
+
 ```java
 static long countOccurrences(Path path, byte[] needle) throws IOException {
   try (InputStream in = new BufferedInputStream(Files.newInputStream(path))) {
@@ -459,7 +483,8 @@ static long countOccurrences(Path path, byte[] needle) throws IOException {
 }
 ```
 
-### 17.3 파일 구간 추출(오프셋/길이)
+### 파일 구간 추출(오프셋/길이)
+
 ```java
 static void slice(Path src, Path dst, long offset, long length) throws IOException {
   try (var in = FileChannel.open(src, StandardOpenOption.READ);
@@ -476,7 +501,7 @@ static void slice(Path src, Path dst, long offset, long length) throws IOExcepti
 
 ---
 
-## 18. 요약 표 — 무엇을 선택할까?
+## 요약 표 — 무엇을 선택할까?
 
 | 요구사항 | 권장 조합 |
 |---|---|
@@ -492,7 +517,7 @@ static void slice(Path src, Path dst, long offset, long length) throws IOExcepti
 
 ---
 
-## 19. 결론
+## 결론
 
 - `InputStream`/`OutputStream`은 **바이트 I/O의 표준 축**입니다.
 - **버퍼링 + 올바른 읽기/쓰기 루프 + `try-with-resources` + 상황별 필터 스트림**을 조합하면, 파일/네트워크/압축/체크섬/직렬화 등 대부분의 I/O 니즈를 **안전하고 빠르게** 충족할 수 있습니다.

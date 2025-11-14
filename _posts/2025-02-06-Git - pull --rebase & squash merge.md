@@ -6,7 +6,7 @@ category: Git
 ---
 # `git pull --rebase` 완벽 가이드 + GitHub `Squash and merge` 심화
 
-## 0. 빠른 개요
+## 빠른 개요
 
 - **`git pull --rebase`**: 원격의 최신 커밋을 가져온 뒤, **내 로컬 커밋들을 ‘꺼냈다가’ 최신 위로 다시 재생성**해 **선형 이력**을 만든다.
 - **GitHub `Squash and merge`**: PR 내 **여러 커밋을 하나의 커밋**으로 압축(squash)하여 병합한다.
@@ -14,9 +14,9 @@ category: Git
 
 ---
 
-# 1. `git pull --rebase`: 깔끔한 로컬 병합
+# `git pull --rebase`: 깔끔한 로컬 병합
 
-## 1.1 개념 복습
+## 개념 복습
 
 ```bash
 git pull --rebase origin main
@@ -39,9 +39,10 @@ git pull --rebase origin main
 
 ---
 
-## 1.2 실전 옵션 — 모드, 자동 스태시, 반복 충돌 학습
+## 실전 옵션 — 모드, 자동 스태시, 반복 충돌 학습
 
 ### A) `--rebase`의 모드
+
 ```bash
 git pull --rebase=merges        # merge 토폴로지를 보존하며 rebase
 git pull --rebase=interactive   # 대화형(reword/squash/fixup 등)
@@ -51,6 +52,7 @@ git pull --rebase=false         # 평소처럼 merge
 - 팀에 **선형 이력** 규칙이 있다면 `true` 또는 `merges`를 조직 표준으로.
 
 ### B) 변경 보관: `--autostash` / 자동 설정
+
 ```bash
 git pull --rebase --autostash
 git config --global rebase.autoStash true
@@ -58,6 +60,7 @@ git config --global rebase.autoStash true
 - 워킹 디렉터리에 미커밋 변경이 있을 때 자동으로 stash/복원.
 
 ### C) 반복 충돌 자동 해결 힌트: `rerere`
+
 ```bash
 git config --global rerere.enabled true
 ```
@@ -65,23 +68,27 @@ git config --global rerere.enabled true
 
 ---
 
-## 1.3 충돌 처리 루틴(필수 루프)
+## 충돌 처리 루틴(필수 루프)
 
 ```bash
 git pull --rebase
 # 충돌 발생 시:
-# 1. 파일 열어 충돌 마커(<<<<<<<, =======, >>>>>>>) 해결
+# 파일 열어 충돌 마커(<<<<<<<, =======, >>>>>>>) 해결
+
 git add <수정파일>
 git rebase --continue
 
 # 현재 커밋 건너뛰기
+
 git rebase --skip
 
 # 전체 중단(시작 전으로 복귀)
+
 git rebase --abort
 ```
 
 ### 파일 단위 빠른 선택(전체 채택)
+
 ```bash
 git checkout --ours   path/to/file   # 현재 브랜치 쪽 선택
 git checkout --theirs path/to/file   # 원격(적용 대상) 쪽 선택
@@ -96,10 +103,11 @@ git add path/to/file
 
 ---
 
-## 1.4 재현 가능한 실습(로컬에서 그대로 따라하기)
+## 재현 가능한 실습(로컬에서 그대로 따라하기)
 
 ```bash
 # 실습 레포 초기화
+
 rm -rf pull-rebase-lab && mkdir pull-rebase-lab && cd pull-rebase-lab
 git init
 git config user.name  "lab"
@@ -112,6 +120,7 @@ git remote add origin https://example.com/your/repo.git    # 예시 URL(실사�
 
 # 원격 시뮬레이션 없이도 체험:
 # main에서 커밋 추가(원격 최신이라고 가정)
+
 git checkout -b temp
 echo "upstream 2" >> app.txt
 git commit -am "feat: upstream 2"
@@ -119,28 +128,34 @@ git checkout main
 git merge --ff-only temp
 
 # 로컬에서 작업 커밋 만들어 충돌 유도
+
 git checkout -b feature/line
 echo "local 2" >> app.txt
 git commit -am "feat: local 2"
 
 # 이제 "원격 최신(main)" 위로 내 커밋 재배치
+
 git checkout feature/line
 git rebase main   # 충돌이 나도록 일부러 같은 줄을 수정해도 됨
 # 충돌 해결 → add → rebase --continue
+
 ```
 
 ---
 
-## 1.5 기본/전역 설정(매번 타이핑 방지)
+## 기본/전역 설정(매번 타이핑 방지)
 
 ```bash
 # pull 기본을 rebase로
+
 git config --global pull.rebase true
 
 # pull 시 자동 스태시
+
 git config --global rebase.autoStash true
 
 # 브랜치 생성 시 자동 추적+rebase
+
 git config --global branch.autosetuprebase always
 ```
 
@@ -148,7 +163,7 @@ git config --global branch.autosetuprebase always
 
 ---
 
-## 1.6 CI·보호 브랜치·협업 규칙과의 상호작용
+## CI·보호 브랜치·협업 규칙과의 상호작용
 
 - **보호 브랜치(Protected Branch)**: Required status checks(테스트/린트/빌드), Required reviews, Linear history 등이 설정되어 있으면 **rebase 후 강제 푸시가 제한**될 수 있음.
 - PR 워크플로우:
@@ -158,7 +173,7 @@ git config --global branch.autosetuprebase always
 
 ---
 
-## 1.7 장단점·리스크·회피법
+## 장단점·리스크·회피법
 
 | 항목 | 장점 | 단점/리스크 | 회피/보완 |
 |---|---|---|---|
@@ -176,16 +191,17 @@ git switch -c rescue HEAD@{2}
 
 ---
 
-# 2. GitHub `Squash and merge` 심화
+# GitHub `Squash and merge` 심화
 
-## 2.1 개념 복습
+## 개념 복습
+
 - PR의 **모든 커밋을 단 하나의 커밋으로 압축**해 base 브랜치에 병합.
 - 결과: **히스토리 단순화**(기능 단위 1커밋).
 - 대가: **세부 커밋의 추적성**은 줄어듦(디버깅 시 granularity 감소).
 
 ---
 
-## 2.2 실전 흐름
+## 실전 흐름
 
 1) PR에서 **Squash and merge** 선택
 2) GitHub가 **커밋 메시지 편집 창**을 제공
@@ -211,7 +227,7 @@ feat(auth): 로그인 화면 구현
 
 ---
 
-## 2.3 메시지 규칙·트레일러(Co-authored-by, Signed-off-by)
+## 메시지 규칙·트레일러(Co-authored-by, Signed-off-by)
 
 - 다수 기여자를 **Co-authored-by** 트레일러로 유지:
 ```
@@ -239,7 +255,7 @@ Signed-off-by: You <you@example.com>
 
 ---
 
-## 2.4 장단점·선택 기준
+## 장단점·선택 기준
 
 | 항목 | 장점 | 단점 |
 |---|---|---|
@@ -258,7 +274,7 @@ Signed-off-by: You <you@example.com>
 
 ---
 
-## 2.5 충돌과 보호 브랜치 정책
+## 충돌과 보호 브랜치 정책
 
 - Squash and merge 전에 **PR 충돌이 없어야** 병합 버튼이 활성화된다.
 - 보호 브랜치의 **Required status checks**, **Required reviews**, **Linear history** 등에 따라 병합이 **보류/거부**될 수 있다.
@@ -266,13 +282,15 @@ Signed-off-by: You <you@example.com>
 
 ---
 
-## 2.6 CLI/자동화(옵션)
+## CLI/자동화(옵션)
 
 - GitHub CLI:
 ```bash
 # Squash merge
+
 gh pr merge <PR_NUMBER> --squash --admin
 # 메시지를 자동 생성/편집하려면 --body 옵션 병행
+
 ```
 
 - 병합 전략 제어는 저장소 설정에서 허용/차단 가능
@@ -280,10 +298,11 @@ gh pr merge <PR_NUMBER> --squash --admin
 
 ---
 
-## 2.7 재현 가능한 PR 시뮬레이션(로컬 → GitHub)
+## 재현 가능한 PR 시뮬레이션(로컬 → GitHub)
 
 ```bash
-# 1. 로컬 새 레포
+# 로컬 새 레포
+
 rm -rf squash-lab && mkdir squash-lab && cd squash-lab
 git init
 git config user.name  "lab"
@@ -292,7 +311,8 @@ git branch -M main
 echo "v1" > README.md
 git add . && git commit -m "chore: init"
 
-# 2. 기능 브랜치 커밋 여러 개
+# 기능 브랜치 커밋 여러 개
+
 git checkout -b feature/login
 echo "- login form" >> README.md
 git commit -am "feat: login form"
@@ -301,19 +321,21 @@ git commit -am "fix: button style"
 echo "- rename vars" >> README.md
 git commit -am "refactor: rename vars"
 
-# 3. 원격 생성 및 푸시(실제 사용 시 본인 리포로 교체)
+# 원격 생성 및 푸시(실제 사용 시 본인 리포로 교체)
 #   gh repo create <owner>/<name> --public --source=. --push
 #   gh pr create --fill --base main --head feature/login
 
-# 4. PR 화면에서 Squash and merge 선택 →
+# PR 화면에서 Squash and merge 선택 →
 #    최종 메시지 정리 → Confirm.
+
 ```
 
 ---
 
-# 3. 종합 체크리스트
+# 종합 체크리스트
 
 ### A. `git pull --rebase`
+
 - [ ] 개인 브랜치에서만 사용(공유 브랜치 rebase 금지)
 - [ ] `pull.rebase=true`, `rebase.autoStash=true` 설정
 - [ ] 충돌 시 `edit → add → rebase --continue`
@@ -322,6 +344,7 @@ git commit -am "refactor: rename vars"
 - [ ] 푸시는 `--force-with-lease`
 
 ### B. `Squash and merge`
+
 - [ ] 메시지 정리(Conventional Commits 권장)
 - [ ] Co-authored-by, Signed-off-by 트레일러 유지
 - [ ] 보호 브랜치 정책/CI 체크 통과 확인
@@ -330,22 +353,25 @@ git commit -am "refactor: rename vars"
 
 ---
 
-# 4. 명령어 요약
+# 명령어 요약
 
 ```bash
 # pull --rebase 기본
+
 git pull --rebase
 git pull --rebase=merges
 git pull --rebase=interactive
 git pull --rebase --autostash
 
 # 설정
+
 git config --global pull.rebase true
 git config --global rebase.autoStash true
 git config --global rerere.enabled true
 git config --global branch.autosetuprebase always
 
 # 충돌 루틴
+
 git status
 git checkout --ours   <path>
 git checkout --theirs <path>
@@ -354,6 +380,7 @@ git add <path>
 git rebase --continue | --skip | --abort
 
 # 복구 비상키
+
 git reflog
 git reset --hard ORIG_HEAD
 git switch -c rescue HEAD@{N}
@@ -361,7 +388,7 @@ git switch -c rescue HEAD@{N}
 
 ---
 
-## 5. 결론
+## 결론
 
 - **`git pull --rebase`** 는 로컬 협업의 마찰을 줄이고 **선형 이력**을 만든다.
 - **`Squash and merge`** 는 PR을 **기능 단위 1커밋**으로 정리해 읽기 쉬운 히스토리를 만든다.
@@ -371,6 +398,7 @@ git switch -c rescue HEAD@{N}
 ---
 
 ## 참고
+
 - Git Docs — `git pull` (`--rebase`)
   https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---rebase
 - GitHub Docs — Merge a PR (Squash and merge)

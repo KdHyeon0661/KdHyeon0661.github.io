@@ -6,14 +6,16 @@ category: Java
 ---
 # Java에서 Spring으로 넘어가기 / POJO·DI 개념 / 애너테이션 기반 개발
 
-## 1. 전환 개요 — 왜 Spring인가, 무엇이 달라지는가
+## 전환 개요 — 왜 Spring인가, 무엇이 달라지는가
 
-### 1.1 왜 Spring인가
+### 왜 Spring인가
+
 - **IoC/DI 컨테이너**가 객체 생명주기·의존성 조립을 맡는다 → **결합도↓, 테스트 용이성↑**
 - **횡단 관심사**(트랜잭션, 보안, 로깅, 캐시)를 **AOP**로 선언·정책화
 - **생태계**: MVC/WebFlux, Data(JPA/Redis), Security, Batch, Integration, Actuator 등
 
-### 1.2 전환 후 달라지는 점
+### 전환 후 달라지는 점
+
 | 항목 | 전(코어 Java) | 후(Spring) |
 |---|---|---|
 | 객체 생성/조립 | `new`/팩토리 직접 호출 | **컨테이너가 주입(DI)** |
@@ -25,9 +27,10 @@ category: Java
 
 ---
 
-## 2. POJO와 DI — 용어, 이점, 주입 방식 비교
+## POJO와 DI — 용어, 이점, 주입 방식 비교
 
-### 2.1 POJO(Plain Old Java Object)
+### POJO(Plain Old Java Object)
+
 특정 프레임워크에 의존하지 않는 **순수 자바 객체**. 테스트·재사용·리팩터링이 수월하다.
 
 ```java
@@ -40,11 +43,13 @@ public class FlatPricingPolicy implements PricingPolicy {
 }
 ```
 
-### 2.2 IoC/DI 개념
+### IoC/DI 개념
+
 - **IoC**: 객체 생명주기와 조립의 **제어권을 컨테이너가 가짐**
 - **DI**: 필요한 의존을 **외부에서 주입** (생성자/세터/필드)
 
 #### 주입 방식 비교
+
 | 방식 | 장점 | 단점 | 권장 |
 |---|---|---|---|
 | **생성자 주입** | 불변성, 테스트 용이, 순환 의존 조기 검출 | 생성자 파라미터 증가 | **기본 선택** |
@@ -53,9 +58,10 @@ public class FlatPricingPolicy implements PricingPolicy {
 
 ---
 
-## 3. 애너테이션 기반 개발 — 컴포넌트 스캔, 설정, 주입, 스코프
+## 애너테이션 기반 개발 — 컴포넌트 스캔, 설정, 주입, 스코프
 
-### 3.1 컴포넌트와 스캔
+### 컴포넌트와 스캔
+
 - **빈 등록**: `@Component`(범용), `@Service`, `@Repository`, `@Controller`/`@RestController`
 - **스캔 루트**: `@SpringBootApplication`이 위치한 **루트 패키지 하위**가 기본 스캔 대상
 
@@ -70,7 +76,8 @@ public class OrderService {
 }
 ```
 
-### 3.2 자바 설정과 팩토리 메서드
+### 자바 설정과 팩토리 메서드
+
 ```java
 import org.springframework.context.annotation.*;
 
@@ -81,7 +88,8 @@ class PricingConfig {
 }
 ```
 
-### 3.3 구현 다형성과 선호도 지정
+### 구현 다형성과 선호도 지정
+
 ```java
 public class TieredPricingPolicy implements PricingPolicy { /* ... */ }
 
@@ -102,7 +110,8 @@ class AnotherService {
 }
 ```
 
-### 3.4 스코프와 지연 로딩
+### 스코프와 지연 로딩
+
 ```java
 import org.springframework.context.annotation.Scope;
 import org.springframework.web.context.WebApplicationContext;
@@ -122,9 +131,10 @@ class UsesRequest {
 
 ---
 
-## 4. 계층 구조와 샘플 애플리케이션 — MVC + Service + Repository
+## 계층 구조와 샘플 애플리케이션 — MVC + Service + Repository
 
-### 4.1 도메인/DTO/Repository
+### 도메인/DTO/Repository
+
 ```java
 // 도메인
 public record Product(Long id, String name, long unitPrice) {}
@@ -144,7 +154,8 @@ class InMemoryProductRepository implements ProductRepository {
 }
 ```
 
-### 4.2 서비스 + 트랜잭션 경계(읽기/쓰기 분리)
+### 서비스 + 트랜잭션 경계(읽기/쓰기 분리)
+
 ```java
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -170,7 +181,8 @@ class ProductService {
 }
 ```
 
-### 4.3 컨트롤러 + 검증
+### 컨트롤러 + 검증
+
 ```java
 import jakarta.validation.constraints.*;
 import org.springframework.validation.annotation.Validated;
@@ -200,9 +212,10 @@ class ProductController {
 
 ---
 
-## 5. 트랜잭션, AOP, 검증, 예외 처리 — 실전 패턴
+## 트랜잭션, AOP, 검증, 예외 처리 — 실전 패턴
 
-### 5.1 트랜잭션 규칙
+### 트랜잭션 규칙
+
 - **읽기 전용**은 `@Transactional(readOnly = true)`로 플러시 최소화
 - **체크 예외**는 기본 롤백 대상 아님 → `rollbackFor = Exception.class` 지정 가능
 - **메서드 내부 `this` 호출**은 프록시를 거치지 않음 → **자기호출 주의**
@@ -212,7 +225,8 @@ class ProductController {
 public void placeOrder(...) { /* ... */ }
 ```
 
-### 5.2 AOP로 횡단 관심사(실행 시간 로깅)
+### AOP로 횡단 관심사(실행 시간 로깅)
+
 ```java
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -230,7 +244,8 @@ class ProfilingAspect {
 }
 ```
 
-### 5.3 컨트롤러 예외 처리
+### 컨트롤러 예외 처리
+
 ```java
 import org.springframework.http.*;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -253,11 +268,13 @@ class GlobalExceptionHandler {
 
 ---
 
-## 6. 설정 외부화와 프로파일 — 타입 안전 바인딩
+## 설정 외부화와 프로파일 — 타입 안전 바인딩
 
-### 6.1 `@ConfigurationProperties` 바인딩
+### `@ConfigurationProperties` 바인딩
+
 ```yaml
 # application.yml
+
 app:
   name: demo
   pricing:
@@ -277,14 +294,17 @@ class PricingProps {
 }
 ```
 
-### 6.2 프로파일 분기
+### 프로파일 분기
+
 ```yaml
 # application-dev.yml
+
 logging:
   level:
     com.example: debug
 
 # application-prod.yml
+
 server:
   tomcat:
     threads:
@@ -302,9 +322,10 @@ class DevOnlyBean { /* 개발 환경에서만 활성 */ }
 
 ---
 
-## 7. 테스트 전략 — 단위/슬라이스/통합
+## 테스트 전략 — 단위/슬라이스/통합
 
-### 7.1 단위 테스트(순수 자바)
+### 단위 테스트(순수 자바)
+
 ```java
 class OrderServiceUnitTest {
     @Test
@@ -317,7 +338,8 @@ class OrderServiceUnitTest {
 }
 ```
 
-### 7.2 슬라이스 테스트 — MVC
+### 슬라이스 테스트 — MVC
+
 ```java
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -339,7 +361,8 @@ class ProductControllerTest {
 }
 ```
 
-### 7.3 통합 테스트 — `@SpringBootTest`
+### 통합 테스트 — `@SpringBootTest`
+
 - H2/PostgreSQL(Testcontainers)로 실제 영속 계층 검증
 - `@AutoConfigureMockMvc`로 MockMvc 주입
 
@@ -362,9 +385,10 @@ class IntegrationTest {
 
 ---
 
-## 8. 마이그레이션 가이드 — “new → DI → Boot” 단계별 변환
+## 마이그레이션 가이드 — “new → DI → Boot” 단계별 변환
 
-### 8.1 0단계: 코어 Java (직접 조립)
+### 0단계: 코어 Java (직접 조립)
+
 ```java
 public class App0 {
     public static void main(String[] args) {
@@ -376,7 +400,8 @@ public class App0 {
 }
 ```
 
-### 8.2 1단계: Spring 컨테이너 도입(애너테이션 설정)
+### 1단계: Spring 컨테이너 도입(애너테이션 설정)
+
 ```java
 @Configuration
 @ComponentScan(basePackages = "com.example")
@@ -392,7 +417,8 @@ public class App1 {
 }
 ```
 
-### 8.3 2단계: Spring Boot로 전환
+### 2단계: Spring Boot로 전환
+
 ```java
 @SpringBootApplication
 public class DemoApplication {
@@ -404,9 +430,10 @@ public class DemoApplication {
 
 ---
 
-## 9. 확장 토픽 — 캐시, 스케줄링, 이벤트, 모듈 경계
+## 확장 토픽 — 캐시, 스케줄링, 이벤트, 모듈 경계
 
-### 9.1 캐싱
+### 캐싱
+
 ```java
 @EnableCaching
 @SpringBootApplication
@@ -419,7 +446,8 @@ class PricingCacheService {
 }
 ```
 
-### 9.2 스케줄링
+### 스케줄링
+
 ```java
 @EnableScheduling
 @SpringBootApplication
@@ -432,7 +460,8 @@ class HousekeepingJob {
 }
 ```
 
-### 9.3 이벤트
+### 이벤트
+
 ```java
 @Component
 class Publisher {
@@ -448,16 +477,18 @@ class Listener {
 }
 ```
 
-### 9.4 모듈 경계(헥사고날/포트-어댑터)
+### 모듈 경계(헥사고날/포트-어댑터)
+
 - **도메인**: 규칙/값/서비스(포트 인터페이스) — **Spring 비의존**
 - **어댑터**: Web/JPA/외부 API(스프링 컴포넌트) — 구현 교체 용이
 - **구성**: `domain`, `application`, `adapter-web`, `adapter-persistence` 멀티모듈 추천
 
 ---
 
-## 10. 안티패턴과 베스트 프랙티스
+## 안티패턴과 베스트 프랙티스
 
-### 10.1 안티패턴
+### 안티패턴
+
 - **필드 주입**: 테스트와 불변성에 취약
 - **무분별한 컴포넌트 스캔**: 광범위 스캔으로 **의도치 않은 빈 등록**
 - **순환 의존**: 설계 개선 없이 `@Lazy` 남발
@@ -465,7 +496,8 @@ class Listener {
 - **자기호출 트랜잭션**: 프록시 미적용
 - **설정 하드코딩**: `@Value` 남발 → `@ConfigurationProperties`로 타입 안전 전환
 
-### 10.2 베스트 프랙티스
+### 베스트 프랙티스
+
 - **생성자 주입 + 불변 필드**
 - **인터페이스(포트) → 구현(어댑터)** 분리
 - **설정 외부화 + 프로파일**
@@ -476,7 +508,7 @@ class Listener {
 
 ---
 
-## 11. 체크리스트 — 전환 전/후 최종 점검
+## 체크리스트 — 전환 전/후 최종 점검
 
 - [ ] 도메인 규칙이 **POJO**로 분리되어 있는가
 - [ ] `new`를 **생성자 DI**로 대체했는가

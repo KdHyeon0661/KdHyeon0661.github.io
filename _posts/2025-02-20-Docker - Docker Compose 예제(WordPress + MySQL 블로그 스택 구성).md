@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker Compose 예제 : WordPress + MySQL 블로그 스택 구성하기
 
-## 1. 목표 & 아키텍처 개요
+## 목표 & 아키텍처 개요
 
 - **목표**
   - WordPress 웹사이트와 MySQL DB를 **Docker Compose**로 손쉽게 구성
@@ -31,7 +31,7 @@ category: Docker
 
 ---
 
-## 2. 폴더 구조
+## 폴더 구조
 
 ```plaintext
 wordpress-docker/
@@ -48,7 +48,7 @@ wordpress-docker/
 
 ---
 
-## 3. 기본 docker-compose.yml (확장/강화 버전)
+## 기본 docker-compose.yml (확장/강화 버전)
 
 > 초안의 스택을 기반으로 **healthcheck**, **restart 정책**, **명시적 버전 태그**, **리소스 제한(옵션)**, **로깅 제한** 등을 추가했습니다.
 
@@ -129,6 +129,7 @@ networks:
 ```
 
 ### 핵심 포인트
+
 - **`depends_on.condition: service_healthy`**: 단순 순서가 아니라 DB **헬스체크 통과 후** WordPress가 의존하도록 함.
 - **`docker-entrypoint-initdb.d`**: 초기 스키마/유저를 자동 세팅.
 - **로깅/리소스**: json-file 로그 롤링, 메모리/CPU 제한은 운영 환경 안정성에 도움.
@@ -136,7 +137,7 @@ networks:
 
 ---
 
-## 4. .env 예시(민감값/포트 분리)
+## .env 예시(민감값/포트 분리)
 
 ```env
 WEB_PORT=8080
@@ -150,58 +151,69 @@ MYSQL_ROOT_PASSWORD=very_strong_root
 
 ---
 
-## 5. 실행 & 초기 접근
+## 실행 & 초기 접근
 
 ```bash
-# 1. 실행
+# 실행
+
 docker compose up -d --build
 
-# 2. 상태 확인
+# 상태 확인
+
 docker compose ps
 
-# 3. 브라우저 접속
+# 브라우저 접속
 # http://localhost:8080
+
 ```
 
 - 첫 접속 시 WordPress 설치 마법사가 진행됩니다(사이트 제목/관리자 계정 생성).
 
 ---
 
-## 6. 볼륨 설계 & 백업/복구 전략
+## 볼륨 설계 & 백업/복구 전략
 
-### 6.1 볼륨 역할
+### 볼륨 역할
+
 | 볼륨 | 컨테이너 경로 | 설명 |
 |---|---|---|
 | `wordpress_data` | `/var/www/html` | WP 코어/플러그인/테마/업로드 |
 | `db_data` | `/var/lib/mysql` | InnoDB 데이터 파일(영속성 핵심) |
 
-### 6.2 간단 백업 스크립트(덤프 + 웹 파일 아카이브)
+### 간단 백업 스크립트(덤프 + 웹 파일 아카이브)
+
 ```bash
 #!/usr/bin/env bash
+
 set -euo pipefail
 TS="$(date +%Y%m%d_%H%M%S)"
 BACKUP_DIR="./backup/${TS}"
 mkdir -p "${BACKUP_DIR}"
 
 # DB 덤프
+
 docker compose exec -T db \
   mysqldump -u"${WP_DB_USER:-wp_user}" -p"${WP_DB_PASSWORD:-wp_pass}" \
   "${WP_DB_NAME:-wp_db}" > "${BACKUP_DIR}/db.sql"
 
 # WordPress 파일 아카이브
+
 docker compose exec -T wordpress \
   sh -lc "tar -C /var/www -czf - html" > "${BACKUP_DIR}/wordpress.tgz"
 
 echo "Backup done: ${BACKUP_DIR}"
 ```
 
-### 6.3 복구(주의: 운영 중 덮어쓰기 전에 스냅샷/정지)
+### 복구(주의: 운영 중 덮어쓰기 전에 스냅샷/정지)
+
 ```bash
 # DB 복구(테이블 drop/생성 포함 시 주의)
+
 cat backup/20240101_120000/db.sql | docker compose exec -T db \
   mysql -u"${WP_DB_USER:-wp_user}" -p"${WP_DB_PASSWORD:-wp_pass}" "${WP_DB_NAME:-wp_db}"
 
 # 파일 복구(필요 시 기존 파일 백업 후)
+
 cat backup/20240101_120000/wordpress.tgz | \
   docker compose exec -T wordpress sh -lc "tar -C /var/www -xzf -"
 ```
@@ -210,7 +222,7 @@ cat backup/20240101_120000/wordpress.tgz | \
 
 ---
 
-## 7. phpMyAdmin 추가(선택)
+## phpMyAdmin 추가(선택)
 
 ```yaml
   phpmyadmin:
@@ -233,9 +245,10 @@ cat backup/20240101_120000/wordpress.tgz | \
 
 ---
 
-## 8. wp-cli 자동화(설치/플러그인/테마/유저)
+## wp-cli 자동화(설치/플러그인/테마/유저)
 
-### 8.1 ad-hoc 실행
+### ad-hoc 실행
+
 ```bash
 docker compose exec wordpress bash -lc \
   'curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar && \
@@ -243,7 +256,8 @@ docker compose exec wordpress bash -lc \
    php wp-cli.phar core version'
 ```
 
-### 8.2 컨테이너 빌드에 내장(선택)
+### 컨테이너 빌드에 내장(선택)
+
 `wordpress`를 직접 `Dockerfile`로 래핑해 `wp` 바이너리 포함, 초기 설치 스크립트까지 자동화 가능:
 ```Dockerfile
 FROM wordpress:6.5.5-php8.2-apache
@@ -256,6 +270,7 @@ COPY docker-entrypoint.d/ /docker-entrypoint.d/
 `docker-entrypoint.d/01-wp-setup.sh` (예: 첫 부팅시 자동 설치 — 멱등성 주의)
 ```bash
 #!/usr/bin/env bash
+
 set -e
 cd /var/www/html
 
@@ -277,13 +292,15 @@ fi
 
 ---
 
-## 9. Nginx 리버스 프록시 & HTTPS(선택)
+## Nginx 리버스 프록시 & HTTPS(선택)
 
-### 9.1 목적
+### 목적
+
 - WordPress 컨테이너의 포트를 **내부로만 노출**하고, 외부는 Nginx가 SSL/TLS 종료.
 - 도메인: `blog.example.com`
 
-### 9.2 compose 예시(간단 reverse proxy)
+### compose 예시(간단 reverse proxy)
+
 ```yaml
   nginx:
     image: nginx:1.27
@@ -329,7 +346,7 @@ server {
 
 ---
 
-## 10. 운영 보안 체크리스트
+## 운영 보안 체크리스트
 
 - **비밀번호/Secret 분리**: `.env`는 반드시 Git 제외. 운영은 Secret Manager/Vault로 관리.
 - **최소 권한**: DB 계정은 `wp_db`만 접근 권한. 루트 사용 금지.
@@ -341,7 +358,7 @@ server {
 
 ---
 
-## 11. 성능 & 확장
+## 성능 & 확장
 
 - **OPcache/오브젝트 캐시**: Redis 캐시 연동(별도 컨테이너)로 DB 부하 완화.
 - **업로드 공유 문제**: WordPress 복수 인스턴스(Scale-out) 시 업로드를 **공유 볼륨/S3 호환**으로 외부화.
@@ -351,7 +368,7 @@ server {
 
 ---
 
-## 12. 기존 사이트 마이그레이션(핵심 단계)
+## 기존 사이트 마이그레이션(핵심 단계)
 
 1. 원본 서버에서 DB 덤프:
    ```bash
@@ -378,7 +395,7 @@ server {
 
 ---
 
-## 13. 트러블슈팅(증상→원인→조치)
+## 트러블슈팅(증상→원인→조치)
 
 | 증상 | 원인 | 조치 |
 |---|---|---|
@@ -399,9 +416,10 @@ docker compose exec wordpress wp core version --allow-root
 
 ---
 
-## 14. Compose 파일(최소/기본/전체) 비교
+## Compose 파일(최소/기본/전체) 비교
 
-### 14.1 최소 구성(학습/로컬)
+### 최소 구성(학습/로컬)
+
 ```yaml
 version: '3.9'
 services:
@@ -426,15 +444,17 @@ services:
 volumes: {wordpress_data:, db_data:}
 ```
 
-### 14.2 본문 기본(헬스체크/로깅/리소스)
+### 본문 기본(헬스체크/로깅/리소스)
+
 → **3장 compose** 참조
 
-### 14.3 운영 확장(Reverse Proxy/HTTPS/캐시/백업)
+### 운영 확장(Reverse Proxy/HTTPS/캐시/백업)
+
 - Nginx+Certbot, Redis, 백업 자동화 크론 컨테이너 등을 추가.
 
 ---
 
-## 15. 마무리 요약
+## 마무리 요약
 
 - **핵심**: *Compose로 WordPress + MySQL를 빠르게 올리고*, **Named Volume**으로 영속성 확보, **헬스체크/로그/리소스**까지 챙긴다.
 - **운영 필수**: 비밀값 분리(.env 제한), 정기 백업(덤프+파일), 보안(WAF/업데이트/권한), 모니터링.
@@ -462,14 +482,17 @@ FLUSH PRIVILEGES;
 
 ```bash
 #!/usr/bin/env bash
+
 set -euo pipefail
 
 # 헬스체크 워드프레스 페이지
+
 curl -fsS http://localhost:${WEB_PORT:-8080}/wp-login.php >/dev/null \
   && echo "[OK] WordPress HTTP reachable" \
   || { echo "[FAIL] WordPress not reachable"; exit 1; }
 
 # DB 단순 쿼리
+
 docker compose exec -T db \
   mysql -u"${WP_DB_USER:-wp_user}" -p"${WP_DB_PASSWORD:-wp_pass}" \
   -e "SELECT 1" "${WP_DB_NAME:-wp_db}" >/dev/null \
@@ -480,6 +503,7 @@ docker compose exec -T db \
 ---
 
 ## 참고(공식 문서 권장 탐독)
+
 - WordPress Docker Hub / MySQL Docker Hub / phpMyAdmin Docker Hub
 - Docker Compose 문서(환경변수/볼륨/네트워크/헬스체크)
 - WordPress 운영 가이드(보안/성능/캐시/업데이트 수칙)

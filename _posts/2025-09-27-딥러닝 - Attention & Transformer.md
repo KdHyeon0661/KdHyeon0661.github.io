@@ -4,16 +4,19 @@ title: 딥러닝 - Attention & Transformer
 date: 2025-09-27 21:25:23 +0900
 category: 딥러닝
 ---
-# 1.10 Attention & Transformer 핵심
+# Attention & Transformer 핵심
+
 **쿼리/키/값 · 멀티헤드 · 포지셔널 인코딩 · 마스킹(causal/패딩) · 디코딩 전략(그리디/빔/샘플링)**
 
 ## A. Scaled Dot-Product Attention
 
 ### A-1. 핵심 직관
+
 - 입력 시퀀스의 각 토큰은 **내가 지금 누구를 봐야 하는가?**(Query) / **나를 얼마나 참고할 것인가?**(Key) / **참고할 때 어떤 정보를 줄 것인가?**(Value)로 분해되어 상호작용합니다.
 - 한 쿼리 벡터 $$\mathbf{q}\in\mathbb{R}^{d_k}$$ 와 모든 키 $$\mathbf{K}\in\mathbb{R}^{T\times d_k}$$ 의 유사도(점곱)를 소프트맥스로 정규화하여 가중합으로 값을 모읍니다.
 
 ### A-2. 수식
+
 쿼리/키/값: $$\mathbf{Q}=\mathbf{X}\mathbf{W}^Q,\quad \mathbf{K}=\mathbf{X}\mathbf{W}^K,\quad \mathbf{V}=\mathbf{X}\mathbf{W}^V$$
 스코어/어텐션/출력:
 $$
@@ -24,6 +27,7 @@ $$
 - $$\mathbf{M}$$: **마스크(additive)**. 금지 위치는 $$-\infty$$(또는 아주 작은 수)로 채워 softmax에서 0 확률을 강제.
 
 ### A-3. 왜 스케일링 $$\sqrt{d_k}$$?
+
 - $$\langle \mathbf{q},\mathbf{k}\rangle$$ 의 분산을 고정시켜 **큰 차원에서 softmax가 포화**하지 않도록 예방 → 안정적 그라디언트.
 
 ---
@@ -31,6 +35,7 @@ $$
 ## B. Multi-Head Attention (MHA)
 
 ### B-1. 동시 다각도 뷰
+
 - 하나의 큰 공간에서 한 번 계산하는 대신, $$h$$개의 헤드로 **부분 공간**을 나누어 병렬로 어텐션:
 $$
 \mathrm{MHA}(\mathbf{X})=\mathrm{Concat}(\mathrm{head}_1,\dots,\mathrm{head}_h)\mathbf{W}^O,
@@ -41,6 +46,7 @@ $$
 - 보통 $$d_{\text{model}} = h\cdot d_k = h\cdot d_v$$.
 
 ### B-2. 복잡도
+
 - 시간/메모리 복잡도는 **$$\mathcal{O}(T^2 d)$$**(셀프-어텐션). 긴 시퀀스에서 비용 급증 → FlashAttention/저랭크/스파스/선형 어텐션 등 실전 최적화가 등장.
 
 ---
@@ -50,6 +56,7 @@ $$
 어텐션은 순서를 모릅니다. → **위치 정보**를 주입해야 합니다.
 
 ### C-1. 사인/코사인(고정형; Transformer 원 논문)
+
 $$
 \mathrm{PE}_{(pos,2i)}=\sin\!\Big(\frac{pos}{10000^{2i/d_{\text{model}}}}\Big),\quad
 \mathrm{PE}_{(pos,2i+1)}=\cos\!\Big(\frac{pos}{10000^{2i/d_{\text{model}}}}\Big).
@@ -57,9 +64,11 @@ $$
 - **장점**: 외삽(긴 길이) 가능, 파라미터 없음.
 
 ### C-2. 학습형 포지션 임베딩(learned)
+
 - 위치마다 임베딩 벡터를 **학습**. 구현 단순, 길이 고정(max_len 안)에서 강력.
 
 ### C-3. RoPE(회전 포지셔널 인코딩; Rotary)
+
 - $$\mathbf{q},\mathbf{k}$$ 의 2차원 쌍을 **각도 회전**으로 위치를 주입 → **상대적 거리**에 민감, 길이 스케일링/외삽에 유리. (간단 구현 포함)
 
 ---
@@ -67,10 +76,12 @@ $$
 ## D. 마스킹(Masking)
 
 ### D-1. 패딩 마스크(Padding mask)
+
 - 배치 내 문장 길이가 다르면 **PAD 토큰**을 채웁니다. PAD 위치는 **어텐션 확률 0**이어야 합니다.
 - 보통 shape: `(B, 1, 1, S)`(브로드캐스트) 또는 `(B, 1, S, S)`.
 
 ### D-2. 카우절 마스크(Causal mask)
+
 - **미래 토큰 금지**(오토리그레시브 LM; GPT류):
 $$
 \mathbf{M}_{\text{causal}}[i,j]=
@@ -81,6 +92,7 @@ $$
 $$
 
 ### D-3. 결합
+
 - **self-attn**: `mask = causal_mask OR padding_mask(키 쪽)`
 - **cross-attn(디코더→인코더)**: 디코더 쿼리는 과거만 보되, **인코더 key/value에서 PAD만** 막기.
 
@@ -174,6 +186,7 @@ class MultiHeadAttention(nn.Module):
 ## F. 포지셔널 인코딩 구현(사인/코사인, RoPE)
 
 ### F-1. 사인/코사인(고정형)
+
 ```python
 class SinusoidalPE(nn.Module):
     def __init__(self, d_model, max_len=10000):
@@ -195,6 +208,7 @@ class SinusoidalPE(nn.Module):
 ```
 
 ### F-2. RoPE(간이 구현; Q/K에 회전만 부여)
+
 ```python
 def rope_rotate(x, base=10000):
     """
@@ -221,6 +235,7 @@ def rope_rotate(x, base=10000):
     return torch.cat([x1r, x2r], dim=-1)
 
 # 실전에서는 헤드별/차원별로 RoPE를 적용하고, 캐싱 시 각 step에 맞춰 회전 각을 업데이트합니다.
+
 ```
 > 주: 위 RoPE 코드는 **개념 시연용**입니다(실전에서는 헤드 차원 포함형 및 캐시형 구현을 권장).
 
@@ -229,6 +244,7 @@ def rope_rotate(x, base=10000):
 ## G. Transformer 블록(Pre-LN) 구현
 
 ### G-1. Feed-Forward (FFN)
+
 $$
 \mathrm{FFN}(\mathbf{x}) = \mathbf{W}_2\,\phi(\mathbf{W}_1\mathbf{x}+\mathbf{b}_1)+\mathbf{b}_2,
 $$
@@ -248,6 +264,7 @@ class FeedForward(nn.Module):
 ```
 
 ### G-2. 디코더 전용 블록(GPT 스타일; 마스킹된 self-attn)
+
 ```python
 class DecoderBlock(nn.Module):
     def __init__(self, d_model=512, nhead=8, d_ff=2048, attn_drop=0.0, resid_drop=0.0):
@@ -270,6 +287,7 @@ class DecoderBlock(nn.Module):
 ```
 
 ### G-3. 전체 디코더(언어모델 헤드 포함)
+
 ```python
 class GPTMini(nn.Module):
     def __init__(self, vocab_size, d_model=512, nlayer=6, nhead=8, d_ff=2048, max_len=2048, p_drop=0.1, learned_pos=False):
@@ -303,6 +321,7 @@ class GPTMini(nn.Module):
 ```
 
 ### G-4. 마스크 만들기(패딩+카우절)
+
 ```python
 def build_decoder_mask(input_ids, pad_id=None):
     """
@@ -340,7 +359,8 @@ def build_decoder_mask(input_ids, pad_id=None):
 import torch, torch.nn as nn, torch.nn.functional as F
 torch.manual_seed(0)
 
-# 1. Toy vocab & 데이터
+# Toy vocab & 데이터
+
 chars = list("0123456789+-= ")
 stoi = {ch:i for i,ch in enumerate(chars)}
 itos = {i:ch for ch,i in stoi.items()}
@@ -350,6 +370,7 @@ def encode(s): return torch.tensor([stoi[c] for c in s], dtype=torch.long)
 def decode(ids): return "".join([itos[int(i)] for i in ids])
 
 # 랜덤 산식 같은 문자열 만들기
+
 def make_batch(B=64, T=32):
     X = torch.full((B,T), pad_id, dtype=torch.long)
     for b in range(B):
@@ -363,11 +384,13 @@ def make_batch(B=64, T=32):
         X[b] = encode(s)
     return X
 
-# 2. 모델
+# 모델
+
 model = GPTMini(vocab_size=V, d_model=192, nlayer=4, nhead=6, d_ff=768, max_len=128, p_drop=0.1, learned_pos=True)
 opt = torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.05)
 
-# 3. 학습 루프 (LM: shift target)
+# 학습 루프 (LM: shift target)
+
 for step in range(200):
     xb = make_batch(B=64, T=64)
     # LM target: 다음 토큰
@@ -389,6 +412,7 @@ for step in range(200):
 생성 모델에서 **다음 토큰을 어떻게 고를 것인가**가 품질/다양성에 큰 영향을 줍니다.
 
 ### J-1. 그리디(Argmax)
+
 - 매 스텝 $$\arg\max p(\cdot|{\small \text{prefix}})$$ 선택. **결정적** / 반복·루프 위험.
 
 ```python
@@ -405,6 +429,7 @@ def greedy_decode(model, prompt_ids, max_new_tokens=50, pad_id=None):
 ```
 
 ### J-2. 빔 서치(Beam Search)
+
 - 상위 $$B$$개의 **부분 시퀀스**를 유지하며 확장 → **우도 최대** 근사.
 - **길이 편향**을 막기 위해 **length penalty** $$\frac{\log P}{(5+|y|)^\alpha/(5+1)^\alpha}$$ 등을 사용.
 
@@ -439,6 +464,7 @@ def beam_search(model, prompt_ids, beam_size=4, max_new_tokens=50, pad_id=None, 
 ```
 
 ### J-3. 샘플링(Temperature · Top-k · Nucleus Top-p)
+
 - **Temperature** $$\tau$$: $$\mathrm{softmax}(z/\tau)$$, $$\tau>1$$ → 평탄화(**창의**↑), $$\tau<1$$ → 날카로움(**정확**↑)
 - **Top-k**: 상위 k 토큰만 남기고 재정규화.
 - **Top-p(Nucleus)**: 누적 확률이 p가 될 때까지 토큰 집합 선택 → 적응적 k.
@@ -480,6 +506,7 @@ def sampling_decode(model, prompt_ids, max_new_tokens=50, pad_id=None, temperatu
 ```
 
 ### J-4. 반복 방지(간단 버전)
+
 - **repetition penalty**(반복된 토큰의 로짓을 나눔/곱함), **no-repeat-ngram**(최근 n-그램 재출현 금지) 등.
 
 ```python
@@ -574,5 +601,6 @@ $$
 ---
 
 ### 마무리
+
 **어텐션**은 “**가중 합으로 문맥을 모으는 연산**”, **Transformer**는 이를 **정규화/FFN/잔차**와 결합한 **범용 시퀀스 블록**입니다.
 포지션·마스크·디코딩·캐시까지 이해하면 **사전학습 LM/RAG/번역/비전 트랜스포머** 등 대부분의 현대 딥러닝 모델을 **읽고, 수정하고, 직접 구현**할 수 있습니다.

@@ -16,7 +16,7 @@ Kubernetes에서 **수요에 따라 Pod 수를 자동 조절**하려면 **실시
 
 ---
 
-## 0. 필수 개념 요약
+## 필수 개념 요약
 
 - HPA는 **컨테이너 리소스 request**를 기준으로 **사용률(Utilization)**을 계산한다. request가 없으면 CPU 기준 HPA가 동작하지 않는다(메모리 Utilization도 동일).
 - `autoscaling/v2`(또는 `v2beta2`)를 사용하면 **여러 메트릭 동시 지정**, **behavior(스케일 속도/완충) 정책**, **메모리/컨테이너 포트/외부/커스텀 메트릭** 등을 활용할 수 있다.
@@ -24,7 +24,7 @@ Kubernetes에서 **수요에 따라 Pod 수를 자동 조절**하려면 **실시
 
 ---
 
-## 1. Metrics Server란?
+## Metrics Server란?
 
 - kubelet Summary API를 스크레이프 → **Node/Pod** 단위로 CPU/메모리 사용량을 집계
 - API 리소스(Group: `metrics.k8s.io`)를 제공하여 `kubectl top`과 HPA가 사용
@@ -42,9 +42,9 @@ kubectl top pods -A
 
 ---
 
-## 2. Metrics Server 설치
+## Metrics Server 설치
 
-### 2.1 공식 매니페스트(권장)
+### 공식 매니페스트(권장)
 
 ```bash
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
@@ -54,6 +54,7 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 
 ```yaml
 # components.yaml의 metrics-server 컨테이너 args 예시
+
 containers:
 - name: metrics-server
   image: k8s.gcr.io/metrics-server/metrics-server:v0.7.2
@@ -65,7 +66,7 @@ containers:
 
 > 운영환경에서는 `--kubelet-insecure-tls` 사용을 가급적 피하고, **정상적인 Kubelet 인증서**를 구성하는 것을 권장한다.
 
-### 2.2 설치 검증
+### 설치 검증
 
 ```bash
 kubectl -n kube-system get deploy metrics-server
@@ -76,7 +77,7 @@ kubectl top pods -A
 
 ---
 
-## 3. HPA란? (autoscaling/v1 vs v2)
+## HPA란? (autoscaling/v1 vs v2)
 
 - **대상**: Deployment / StatefulSet / ReplicaSet 등
 - **기준 메트릭**
@@ -95,9 +96,9 @@ $$
 
 ---
 
-## 4. 실습: 예제 앱 배포 및 부하 유발
+## 실습: 예제 앱 배포 및 부하 유발
 
-### 4.1 예제 Deployment (CPU request/limit 포함)
+### 예제 Deployment (CPU request/limit 포함)
 
 ```yaml
 apiVersion: apps/v1
@@ -137,11 +138,12 @@ kubectl apply -f cpu-demo.yaml
 kubectl expose deploy cpu-demo --name=cpu-demo --port=80
 ```
 
-### 4.2 부하 유발(간단)
+### 부하 유발(간단)
 
 ```bash
 kubectl run -it --rm loadgen --image=busybox -- /bin/sh
 # pod 내부에서
+
 while true; do wget -q -O- http://cpu-demo.default.svc.cluster.local > /dev/null; done
 ```
 
@@ -149,9 +151,9 @@ while true; do wget -q -O- http://cpu-demo.default.svc.cluster.local > /dev/null
 
 ---
 
-## 5. HPA 생성
+## HPA 생성
 
-### 5.1 CLI(v1) 간단 생성 (CPU 기준, 50% 목표)
+### CLI(v1) 간단 생성 (CPU 기준, 50% 목표)
 
 ```bash
 kubectl autoscale deployment cpu-demo \
@@ -167,7 +169,7 @@ kubectl get hpa
 kubectl describe hpa cpu-demo
 ```
 
-### 5.2 YAML(v2) — CPU + 메모리 동시
+### YAML(v2) — CPU + 메모리 동시
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -206,7 +208,7 @@ kubectl apply -f hpa-v2.yaml
 
 ---
 
-## 6. HPA 동작 관찰
+## HPA 동작 관찰
 
 ```bash
 kubectl get hpa -w
@@ -223,7 +225,7 @@ kubectl top pods -l app=cpu-demo
 
 ---
 
-## 7. autoscaling/v2 고급: behavior(스케일 속도/완충)
+## autoscaling/v2 고급: behavior(스케일 속도/완충)
 
 트래픽 스파이크/노이즈로 **과도한 스케일링**을 방지하려면 `behavior`를 설정한다.
 
@@ -269,7 +271,7 @@ spec:
 
 ---
 
-## 8. 메모리 기반 HPA(autoscaling/v2)
+## 메모리 기반 HPA(autoscaling/v2)
 
 메모리는 스로틀링이 없으므로 **임계치 설정에 주의**. 예: 70% 목표.
 
@@ -296,7 +298,7 @@ spec:
 
 ---
 
-## 9. 다중 컨테이너 Pod의 HPA
+## 다중 컨테이너 Pod의 HPA
 
 HPA는 **Pod 전체**의 CPU(또는 메모리) 사용률을 계산한다.
 Pod 내 컨테이너의 `requests` 합과 `usage` 합으로 계산되므로 **필수 컨테이너**에 `requests`를 명확히 설정하자.
@@ -304,7 +306,7 @@ Sidecar(예: Envoy, Istio-proxy)가 큰 사용량을 갖는다면 **별도 reque
 
 ---
 
-## 10. HPA + Cluster Autoscaler 연동
+## HPA + Cluster Autoscaler 연동
 
 HPA는 **Pod 개수**를 조절할 뿐, **Node 수**는 늘리지 않는다.
 Pod가 늘며 스케줄링 불가가 발생하면 **Cluster Autoscaler**가 노드를 증설해야 스케일이 완성된다.
@@ -316,7 +318,7 @@ Pod가 늘며 스케줄링 불가가 발생하면 **Cluster Autoscaler**가 노�
 
 ---
 
-## 11. 실전 트러블슈팅
+## 실전 트러블슈팅
 
 | 현상 | 원인 | 점검 명령 | 해결책 |
 |------|------|-----------|--------|
@@ -329,7 +331,7 @@ Pod가 늘며 스케줄링 불가가 발생하면 **Cluster Autoscaler**가 노�
 
 ---
 
-## 12. 상태 관찰을 위한 describe 예시 해석
+## 상태 관찰을 위한 describe 예시 해석
 
 ```bash
 kubectl describe hpa cpu-demo-behavior
@@ -346,9 +348,9 @@ kubectl describe hpa cpu-demo-behavior
 
 ---
 
-## 13. 예제 모음
+## 예제 모음
 
-### 13.1 v2 — 다중 메트릭 + OR(최대값) 스케일
+### v2 — 다중 메트릭 + OR(최대값) 스케일
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -377,7 +379,7 @@ spec:
           averageUtilization: 75
 ```
 
-### 13.2 v2 — 특정 포트의 큐 길이를 Pods 메트릭으로(참고용)
+### v2 — 특정 포트의 큐 길이를 Pods 메트릭으로(참고용)
 
 Prometheus Adapter 등을 통해 `Pods` 메트릭으로 노출했다 가정:
 
@@ -407,7 +409,7 @@ spec:
 
 ---
 
-## 14. 운영 체크리스트
+## 운영 체크리스트
 
 - 컨테이너별 `resources.requests`와 실제 워크로드의 **사용량 프로파일**이 일치하는가?
 - HPA **target**은 경험적/실측 기반으로 설정했는가? (CPU 50~70% 권장 출발점)
@@ -418,10 +420,11 @@ spec:
 
 ---
 
-## 15. 전체 예시 묶음(YAML 일괄)
+## 전체 예시 묶음(YAML 일괄)
 
 ```yaml
-# 1. Deployment + Service
+# Deployment + Service
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -452,7 +455,8 @@ spec:
   - port: 80
     targetPort: 80
 ---
-# 2. HPA v2 with behavior
+# HPA v2 with behavior
+
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
@@ -496,7 +500,7 @@ kubectl apply -f demo-all.yaml
 
 ---
 
-## 16. 부록 — 로컬/클라우드 특이사항
+## 부록 — 로컬/클라우드 특이사항
 
 - **Minikube/Kind**: Kubelet 인증서 이슈 시 `--kubelet-insecure-tls`로 우회 가능(운영 비권장)
 - **EKS/AKS/GKE**: 대부분 Metrics Server를 add-on/설치로 제공. 클러스터 버전에 맞춰 릴리스 사용

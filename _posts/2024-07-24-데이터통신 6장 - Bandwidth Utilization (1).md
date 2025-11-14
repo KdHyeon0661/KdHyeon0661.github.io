@@ -4,9 +4,9 @@ title: 데이터 통신 6장 - Bandwidth Utilization (1)
 date: 2024-07-24 19:20:23 +0900
 category: DataCommunication
 ---
-# 6. Bandwidth Utilization: Multiplexing and Spectrum Spreading
+# Bandwidth Utilization: Multiplexing and Spectrum Spreading
 
-## 6.1 Multiplexing (다중화)
+## Multiplexing (다중화)
 
 **정의**: 하나의 물리 링크(매질) 용량을 **여러 논리 채널**로 나누어 다수의 송수신자가 **동시에**(혹은 빠른 시분할로) 쓰게 하는 기술.
 - 송신측: **Multiplexer(MUX)**
@@ -17,11 +17,12 @@ category: DataCommunication
 
 ---
 
-### 6.1.1 Frequency-Division Multiplexing (FDM, 주파수 분할)
+### Frequency-Division Multiplexing (FDM, 주파수 분할)
 
 아날로그 대역통과 매질에서 각 사용자의 신호를 **서로 다른 반송 주파수**로 올려(변조) **주파수 축**으로 나누어 전송한다.
 
 #### 핵심 아이디어
+
 - 각 사용자 \(i\)의 메시지 대역폭 \(B_i\) → 반송파 \(f_{c,i}\)에 **상향변환**
 - 결합된 합성 신호의 총 점유 대역폭은
   $$
@@ -31,12 +32,14 @@ category: DataCommunication
 - 수신부는 **밴드패스 필터**로 분리 후 각 반송 제거(복조).
 
 #### 가드밴드 설계 감각
+
 - 인접 채널 누설(ACI)·필터 롤오프·주파수 드리프트를 고려하여
   $$
   G_i \gtrsim \alpha\cdot B_{\text{RF},i} \quad (\alpha \text{는 시스템/필터 품질에 의존})
   $$
 
 #### 전화/방송 계층 예시(역사적 구조)
+
 - **Voice channel**: 약 \(4~\text{kHz}\)
 - **Group**: 12채널 \(\Rightarrow\) 약 \(48~\text{kHz}\)
 - **Super-group**: 5 그룹 \(\Rightarrow\) 약 \(240~\text{kHz}\)
@@ -46,6 +49,7 @@ category: DataCommunication
 > **실무 감각**: 라디오/TV/CATV, 초기 이동통신(좁은 채널폭) 등에서 FDM이 핵심. 동적 주파수 할당이 필요한 경우 기지국이 **가용 채널**을 사용자에게 할당하고 통화 종료 시 회수한다.
 
 #### 미니 계산(예)
+
 - 10개 음성 채널, 각 **AM(DSB-FC)** 로 \(B=4\text{kHz}\)를 운반, 가드밴드 채널당 \(G=1\text{kHz}\)라면
   $$
   B_{\text{ch}} = 2B = 8\text{kHz},\quad
@@ -54,11 +58,12 @@ category: DataCommunication
 
 ---
 
-### 6.1.2 Wavelength-Division Multiplexing (WDM, 파장 분할)
+### Wavelength-Division Multiplexing (WDM, 파장 분할)
 
 광섬유에서 **서로 다른 파장(=주파수)**의 **광 캐리어**를 합쳐 한 가닥으로 전송. 프리즘/회절격자 원리로 분해가 가능.
 
 #### 특징
+
 - **FDM의 광 버전**: 파장 \(\lambda\)별 채널.
 - **투명성**: IP/ATM/SONET/SDH/Ethernet 등 **다양한 비트율/프로토콜**을 파장별 실어 나름.
 - **확장성**: **파장 추가**만으로 용량 증설 (장비/섬유 증설 최소화).
@@ -66,68 +71,77 @@ category: DataCommunication
 - **DWDM/CWDM**: 채널 간격(그리드) 차이로 구분(고밀도/저밀도).
 
 #### 간단 파장↔주파수 변환
+
 $$
 f = \frac{c}{\lambda}.
 $$
 예) \(\lambda=1550\,\text{nm}\Rightarrow f\approx 193.5\,\text{THz}\).
 
 #### 미니 계산(예)
+
 - 80채널 DWDM, 채널 간격 \(50\,\text{GHz}\), 파장대역 중앙 \(193.5\,\text{THz}\):
   총 스팬 \(\approx 80\times 50\,\text{GHz}=4\,\text{THz}\) 범위 내 설계 필요.
 
 ---
 
-### 6.1.3 Time-Division Multiplexing (TDM, 시분할)
+### Time-Division Multiplexing (TDM, 시분할)
 
 **시간축**으로 링크를 나누어 **타임슬롯**에 사용자 데이터를 **교차 삽입**(interleaving)한다.
 
 #### 공통 개념
+
 - **프레임**: 한 바퀴 도는 주기 내 모든 채널의 슬롯이 들어있는 단위
 - **프레이밍 비트**: 수신측 동기/경계 인지를 위한 패턴
 - **인터리빙**: 송수신의 고속 스위칭으로 슬롯을 교차 배치
 
 #### 동기식 TDM (Synchronous TDM)
+
 - 각 채널은 **고정 슬롯**을 항상 가짐(데이터 유무 무관) → **빈 슬롯 낭비** 가능
 - 장점: **간단/예측 가능/순서 유지 쉬움**
 - 단점: **비효율**(저부하 시)
 
 ##### 빈 슬롯 완화 기법
+
 1) **Multilevel Multiplexing**: 일부 입력의 데이터율이 정수배 관계일 때 레벨을 맞추어 계층 구성
 2) **Multiple-slot Allocation**: 고속 입력에 **복수 슬롯** 할당
 3) **Pulse Stuffing(비트 패딩)**: 비슷한 속도로 맞추기 위해 **더미 비트** 삽입
 
 #### 통계적 TDM (Statistical TDM, Asynchronous TDM)
+
 - **데이터가 있을 때만** 프레임에 삽입
 - 각 슬롯에 **주소/식별자** 포함 필요
 - 장점: 평균 부하가 낮을 때 **대역 효율↑**
 - 단점: 피크 부하 시 **버퍼링/대기 지연(queuing)** 발생
 
 ##### 주소 비트 수
+
 사용자 수 \(N\)일 때 주소 비트 수
 $$
 n_{\text{addr}} = \lceil \log_2 N \rceil.
 $$
 
 ##### 출력 링크 속도 조건
+
 집계 입력 평균율 \(\sum \bar{R_i}\)에 대해
 $$
 R_{\text{out}} > \sum \bar{R_i} \quad (\text{여유 포함}).
 $$
 
 #### 동기/준동기 관점(PDH/SDH 감각)
+
 - **Plesiochronous(준동기)**: 각 입력이 자체 클럭 → **비트 스터핑**으로 정렬
 - **Synchronous(완전 동기)**: 단일 기준 클럭에 동기 → 헤더/포인터로 하위 신호 정렬(개념적으로 SONET/SDH)
 
 ---
 
-### 6.1.4 Frame Synchronizing (프레이밍)
+### Frame Synchronizing (프레이밍)
 
 프레임 경계를 알리기 위해 **프레이밍 비트/패턴**을 주기적으로 삽입.
 복호기는 이 패턴을 탐색해 **프레임 록**을 얻고 유지한다.
 
 ---
 
-### 6.1.5 DS (Digital Signal) 계층 & T/E-Line 감각
+### DS (Digital Signal) 계층 & T/E-Line 감각
 
 **미국식 DS 계층(역사적 표준)**:
 - **DS-0**: 64 kbps (8 kHz 샘플 × 8비트 PCM)
@@ -146,7 +160,7 @@ $$
 
 ---
 
-### 6.1.6 Interleaving 작동 미니 예제(파이썬, 개념용)
+### Interleaving 작동 미니 예제(파이썬, 개념용)
 
 ```python
 def sync_tdm_frame(chunks):
@@ -184,20 +198,23 @@ def stat_tdm_pack(inputs, max_frame_bytes):
 
 ---
 
-### 6.1.7 실전 시나리오 계산
+### 실전 시나리오 계산
 
 #### 시나리오 A — 음성 30채널을 FDM으로
+
 - 각 음성 \(B=3.4\,\text{kHz}\) (편의상 \(B\approx 4\,\text{kHz}\)), AM(DSB-SC) 가정
 - 채널당 RF 대역폭 \(=2B\approx 8\text{kHz}\)
 - 가드밴드 \(G=1\text{kHz}\) → 채널 폭 \(9\text{kHz}\)
 - 총 대역폭 \(\approx 30\times 9=270\text{kHz}\)
 
 #### 시나리오 B — 24채널 데이터를 동기식 TDM으로 (DS-1)
+
 - DS-0 = 64 kbps, 24채널 → 24×64=1.536 Mbps
 - 프레이밍 오버헤드 포함 1.544 Mbps
 - 슬롯 낭비는 있지만 **고정 지연/간단 복구** 장점
 
 #### 시나리오 C — 통계적 TDM
+
 - 사용자 64명, 평균 10%만 활성 → 평균 동시 활성 6.4명
 - 주소 비트 \(\lceil\log_2 64\rceil=6\)
 - 패킷화/헤더 오버헤드 고려 시, 평균 처리율은 훨씬 **낮은 링크 속도**로도 만족
@@ -205,7 +222,7 @@ def stat_tdm_pack(inputs, max_frame_bytes):
 
 ---
 
-## 6.2 Spectrum Spreading (스펙트럼 확산)
+## Spectrum Spreading (스펙트럼 확산)
 
 > 질문 본문에는 다중화가 중심이었지만, 섹션 제목에 포함된 **확산(Spreading)**을 **보완**하여 정리한다. (부족한 내용 충원)
 
@@ -222,24 +239,28 @@ def stat_tdm_pack(inputs, max_frame_bytes):
 
 ---
 
-### 6.2.1 DSSS (Direct-Sequence Spread Spectrum)
+### DSSS (Direct-Sequence Spread Spectrum)
 
 데이터 비트를 **칩 시퀀스**(PN code, 골드코드 등)와 **칩 단위 XOR/곱**하여 **직접 확산**.
 
 #### 송신
+
 - 데이터 비트열 \(b[n]\in\{\pm1\}\)
 - 칩 시퀀스 \(c[k]\in\{\pm1\}\) (길이 \(L=\)SF)
 - 칩화된 심볼: \(s[k]=b[n]\cdot c[k]\) (한 비트 당 \(L\)칩)
 
 #### 수신
+
 - 동일 코드로 **상관(correlation)** 하여 **디스프레딩** → 원하는 신호만 합쳐지고, **타 신호/잡음은 퍼짐**.
 
 #### 장점
+
 - **협대역 간섭**에 강함(확산 → 간섭이 분산되어 평균화)
 - **보안성/도청 난이도 증가**(코드 필요)
 - **코드 분할 다중접속(CDMA)** 가능
 
 #### 간단 파이썬 예(개념용)
+
 ```python
 import numpy as np
 
@@ -262,7 +283,7 @@ def dsss_despread(rx, chip_seq):
 
 ---
 
-### 6.2.2 FHSS (Frequency-Hopping Spread Spectrum)
+### FHSS (Frequency-Hopping Spread Spectrum)
 
 시간에 따라 **반송 주파수**를 **의사난수 시퀀스**에 따라 급격히 바꾸며 전송.
 
@@ -272,20 +293,20 @@ def dsss_despread(rx, chip_seq):
 
 ---
 
-### 6.2.3 RAKE 수신기(개념)
+### RAKE 수신기(개념)
 
 다중경로 채널에서 DSSS는 서로 다른 지연 성분들을 **포수신기(핑거)**로 **상관 후 합성**(최대비결합).
 → 페이딩에 강하고, **멀티패스 이득**을 얻는다.
 
 ---
 
-### 6.2.4 처리이득/BER 감각
+### 처리이득/BER 감각
 
 **처리이득** \(G_p\)이 클수록 동일 SNR에서 더 낮은 BER 기대. 단, **코드 상관 특성**, **동기 정밀도**, **멀티유저 간섭(MAI)**가 실제 성능을 좌우.
 
 ---
 
-### 6.2.5 다중화 vs 확산 — 관점 정리
+### 다중화 vs 확산 — 관점 정리
 
 - **다중화**: **여러 사용자/스트림을 분리**(주파수/시간/파장/코드 등)
 - **확산**: **한 사용자 신호를 넓혀** **간섭/보안/다중접속**에서 이득
@@ -293,7 +314,7 @@ def dsss_despread(rx, chip_seq):
 
 ---
 
-## 6.3 간단 체크 문제
+## 간단 체크 문제
 
 1) FDM에서 채널 20개, 각 RF 대역폭 12 kHz, 가드밴드 2 kHz/채널이면 총 대역폭은?
    **해**: \((12+2)\times 20=280\ \text{kHz}\).
@@ -312,7 +333,7 @@ def dsss_despread(rx, chip_seq):
 
 ---
 
-## 6.4 핵심 요약
+## 핵심 요약
 
 - **FDM/WDM/TDM**은 **주파수/파장/시간** 축으로 자원을 나누어 **여러 채널을 동시에** 운반.
 - **동기식 TDM**은 단순/예측 가능하나 **빈 슬롯 낭비**, **통계적 TDM**은 평균 부하에서 효율적이나 **피크 지연**.

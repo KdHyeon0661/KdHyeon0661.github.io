@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM: ViewModel 간 메시지 전달
 
-## 0. 왜 ViewModel 간 통신이 필요한가?
+## 왜 ViewModel 간 통신이 필요한가?
 
 MVVM에서 ViewModel끼리는 **직접 참조를 피해야** 한다. 그러나 다음 상황에서는 간접 통신이 필요하다.
 
@@ -19,7 +19,7 @@ MVVM에서 ViewModel끼리는 **직접 참조를 피해야** 한다. 그러나 �
 
 ---
 
-## 1. 선택지 비교: Event vs MessageBus
+## 선택지 비교: Event vs MessageBus
 
 | 항목 | Event / EventAggregator | ReactiveUI MessageBus |
 |------|-------------------------|------------------------|
@@ -33,15 +33,15 @@ MVVM에서 ViewModel끼리는 **직접 참조를 피해야** 한다. 그러나 �
 
 ---
 
-## 2. ReactiveUI MessageBus 빠른 시작
+## ReactiveUI MessageBus 빠른 시작
 
-### 2.1 패키지
+### 패키지
 
 ```bash
 dotnet add package ReactiveUI
 ```
 
-### 2.2 메시지 타입 정의
+### 메시지 타입 정의
 
 ```csharp
 public sealed class UserNameChangedMessage
@@ -57,7 +57,7 @@ public sealed class UserNameChangedMessage
 public sealed record ThemeChangedMessage(bool IsDark);
 ```
 
-### 2.3 발송자(SettingsViewModel)
+### 발송자(SettingsViewModel)
 
 ```csharp
 using ReactiveUI;
@@ -84,7 +84,7 @@ public sealed class SettingsViewModel : ReactiveObject
 }
 ```
 
-### 2.4 수신자(DashboardViewModel)
+### 수신자(DashboardViewModel)
 
 ```csharp
 using ReactiveUI;
@@ -120,7 +120,7 @@ public sealed class DashboardViewModel : ReactiveObject, IActivatableViewModel
 
 ---
 
-## 3. 계약(Contract)으로 채널 분리하기
+## 계약(Contract)으로 채널 분리하기
 
 MessageBus는 **타입 + 계약 문자열**(선택)로 구분한다. 동일 타입을 **기능별로 분리**할 때 유용하다.
 
@@ -144,11 +144,11 @@ MessageBus.Current.Listen<UserNameChangedMessage>(BusContracts.Profile)
 
 ---
 
-## 4. 요청/응답 패턴 구현
+## 요청/응답 패턴 구현
 
 단방향 알림만이 아니라 **질의/응답**이 필요할 때가 있다. 두 가지 접근을 제공한다.
 
-### 4.1 코리드 메시지로 응답 스트림 전달
+### 코리드 메시지로 응답 스트림 전달
 
 ```csharp
 public sealed record QueryUserDetail(string UserId, IObserver<UserDetail> ReplyTo);
@@ -174,7 +174,7 @@ MessageBus.Current.Listen<QueryUserDetail>()
 장점: 간단, 스트림 조합 용이.
 주의: `ReplyTo`를 반드시 `OnCompleted`로 닫아 수명 누수 방지.
 
-### 4.2 CorrelationId(상관관계 ID) + 단일 응답 버스
+### CorrelationId(상관관계 ID) + 단일 응답 버스
 
 ```csharp
 public sealed record Request<TResponse>(Guid CorrelationId, object Payload);
@@ -204,7 +204,7 @@ MessageBus.Current.Listen<Request<UserDetail>>()
 
 ---
 
-## 5. 스레딩·디스패처 정석
+## 스레딩·디스패처 정석
 
 - **Listen**은 기본적으로 구독 스레드에서 콜백 실행
 - UI 업데이트는 반드시 `ObserveOn(RxApp.MainThreadScheduler)`
@@ -226,9 +226,9 @@ MessageBus.Current.Listen<ThemeChangedMessage>()
 
 ---
 
-## 6. 실전 패턴 모음
+## 실전 패턴 모음
 
-### 6.1 테마 브로드캐스트
+### 테마 브로드캐스트
 
 ```csharp
 public sealed record ThemeChangedMessage(bool IsDark);
@@ -242,7 +242,7 @@ MessageBus.Current.Listen<ThemeChangedMessage>()
     .Subscribe(m => IsDarkUi = m.IsDark);
 ```
 
-### 6.2 로그인 상태 공유
+### 로그인 상태 공유
 
 ```csharp
 public sealed record AuthStateChanged(bool IsAuthenticated, string? UserId);
@@ -253,7 +253,7 @@ MessageBus.Current.SendMessage(new AuthStateChanged(true, userId));
 MessageBus.Current.SendMessage(new AuthStateChanged(false, null));
 ```
 
-### 6.3 진행률(Progress) 브로드캐스트
+### 진행률(Progress) 브로드캐스트
 
 ```csharp
 public sealed record TaskProgress(string TaskId, double Percent, string Stage);
@@ -270,7 +270,7 @@ MessageBus.Current.Listen<TaskProgress>()
     .Subscribe(p => { Progress = p.Percent; Stage = p.Stage; });
 ```
 
-### 6.4 탭/네비게이션 동기화
+### 탭/네비게이션 동기화
 
 ```csharp
 public sealed record NavigateTo(string Route, object? Parameter = null);
@@ -281,7 +281,7 @@ MessageBus.Current.SendMessage(new NavigateTo("Settings", null));
 
 ---
 
-## 7. 메모리/수명 관리 — 누수 없이 운영하기
+## 메모리/수명 관리 — 누수 없이 운영하기
 
 - 항상 `WhenActivated` + `DisposeWith` 사용(뷰모델 또는 뷰)
 - 장시간 구독은 `IHostedService` 성격의 **앱 스코프 싱글톤**에서 운영
@@ -295,7 +295,7 @@ public sealed record StartLongJob(Guid JobId, CancellationToken Token);
 
 ---
 
-## 8. 장애·품질 — 재시도·시간제한·버퍼링
+## 장애·품질 — 재시도·시간제한·버퍼링
 
 Reactive 스트림 연산자를 결합해 품질을 높인다.
 
@@ -313,7 +313,7 @@ MessageBus.Current.Listen<UserNameChangedMessage>()
 
 ---
 
-## 9. EventAggregator(경량) 패턴의 안전한 구현
+## EventAggregator(경량) 패턴의 안전한 구현
 
 초안의 단순 이벤트는 누수 위험이 있다. **약한 참조(WeakReference)** 또는 **구독 해제 API**를 제공하자.
 
@@ -356,7 +356,7 @@ sub.Dispose();
 
 ---
 
-## 10. DI(의존성 주입)와 테스트
+## DI(의존성 주입)와 테스트
 
 MessageBus는 전역 `MessageBus.Current`를 써도 되지만, **인터페이스로 주입**하면 테스트가 쉬워진다.
 
@@ -415,7 +415,7 @@ public void Settings_Apply_Publishes_UserName()
 
 ---
 
-## 11. 스코프 분리: 모듈/대화상자/문서별 버스
+## 스코프 분리: 모듈/대화상자/문서별 버스
 
 대규모 앱에서는 `MessageBus.Current` 단일 전역 대신 **스코프별 Bus**가 유용하다.
 
@@ -439,21 +439,21 @@ public sealed class DocumentScope : IMessageBusScope
 
 ---
 
-## 12. 예제 통합: 설정 화면 → 대시보드·헤더·알림창 동시 갱신
+## 예제 통합: 설정 화면 → 대시보드·헤더·알림창 동시 갱신
 
-### 12.1 메시지
+### 메시지
 
 ```csharp
 public sealed record SettingsApplied(string UserName, bool IsDark);
 ```
 
-### 12.2 발송자
+### 발송자
 
 ```csharp
 MessageBus.Current.SendMessage(new SettingsApplied(UserName, IsDark));
 ```
 
-### 12.3 수신자들
+### 수신자들
 
 - 대시보드: 사용자명 표시
 - 헤더: 사용자명과 테마 토글 반영
@@ -471,7 +471,7 @@ IDisposable SubscribeSettings(Action<SettingsApplied> onNext) =>
 
 ---
 
-## 13. 성능/신뢰성 팁
+## 성능/신뢰성 팁
 
 - 잦은 발송 이벤트는 **`Throttle`/`Sample`** 로 줄인다.
 - 네트워크/디스크 작업은 **백그라운드 스레드**에서 실행하고 결과만 UI 스레드에 붙인다.
@@ -480,7 +480,7 @@ IDisposable SubscribeSettings(Action<SettingsApplied> onNext) =>
 
 ---
 
-## 14. 요약 체크리스트
+## 요약 체크리스트
 
 - 타입·계약 기반 MessageBus로 **느슨한 결합** 확보
 - `WhenActivated` + `DisposeWith`로 **누수 방지**
@@ -491,7 +491,7 @@ IDisposable SubscribeSettings(Action<SettingsApplied> onNext) =>
 
 ---
 
-## 15. 부록: 최소 동작 샘플 XAML
+## 부록: 최소 동작 샘플 XAML
 
 ### DashboardView.axaml
 

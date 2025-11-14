@@ -4,7 +4,7 @@ title: Kubernetes - 개요
 date: 2025-03-31 19:20:23 +0900
 category: Kubernetes
 ---
-# 1. 들어가며
+# 들어가며
 
 - 왜 필요한가? → **수작업 배포의 한계**, **대규모 컨테이너 운영의 필요**, **자동화와 신뢰성**
 - 무엇을 제공하는가? → **배포/롤링 업데이트/롤백**, **부하분산과 트래픽 제어**, **헬스체크와 자가치유**, **자동 확장**, **설정/비밀 관리**
@@ -13,7 +13,7 @@ category: Kubernetes
 
 ---
 
-# 2. 쿠버네티스의 정의와 어원
+# 쿠버네티스의 정의와 어원
 
 - **Kubernetes**는 그리스어 **“조타수(helmsman)”** 에서 유래.
 - Google 내부 Borg/Borgmon 경험을 토대로 공개, 현재는 **CNCF** 산하에서 커뮤니티 주도로 발전.
@@ -23,22 +23,22 @@ category: Kubernetes
 
 ---
 
-# 3. 왜 필요한가? — 전통/컨테이너/오케스트레이션의 맥락
+# 왜 필요한가? — 전통/컨테이너/오케스트레이션의 맥락
 
-## 3.1 수작업 배포의 한계 (기존 글 확장)
+## 수작업 배포의 한계 (기존 글 확장)
 
 - **환경 편차**: 서버마다 OS 패키지/런타임 버전이 달라, 재현 불가 이슈 빈발
 - **스케일링 난이도**: 서버 개수를 늘릴수록 배포/롤백/상태 점검 비용 급증
 - **가용성 관리**: 장애 시 수동 재시작, 시그널 처리, 헬스체크 부재
 - **운영 가시성 결핍**: 로그/메트릭/트레이스의 표준화/집중화 부족
 
-## 3.2 컨테이너화의 대두 (기존 글 확장)
+## 컨테이너화의 대두 (기존 글 확장)
 
 - **이미지 기반 불변 인프라**: Docker/OCI 이미지로 동형 배포(같은 이미지면 어디서나 동일)
 - **격리/밀도**: 프로세스 격리, VM 대비 가벼움 → **리소스 효율** ↑
 - **하지만** 컨테이너 수가 늘면 **스케줄링, 복구, 네트워킹, 스토리지, 배포 전략** 등이 필요 → **오케스트레이션**의 등장
 
-## 3.3 쿠버네티스가 해결하는 것 (기존 글 강화)
+## 쿠버네티스가 해결하는 것 (기존 글 강화)
 
 - **자동 배포/업데이트/롤백**: 롤링/카나리/블루그린 전략
 - **부하분산/서비스 디스커버리**: Service/Ingress/게이트웨이
@@ -49,7 +49,7 @@ category: Kubernetes
 
 ---
 
-# 4. 전통 vs Docker vs Kubernetes (기존 표 확장)
+# 전통 vs Docker vs Kubernetes (기존 표 확장)
 
 | 항목 | 전통 배포 | Docker 단독 | Kubernetes |
 |---|---|---|---|
@@ -65,9 +65,9 @@ category: Kubernetes
 
 ---
 
-# 5. 빠른 비교 예시 (기존 예시 확장)
+# 빠른 비교 예시 (기존 예시 확장)
 
-## 5.1 Docker로 단일 Nginx
+## Docker로 단일 Nginx
 
 ```bash
 docker run -d -p 80:80 --name web nginx
@@ -76,7 +76,7 @@ docker run -d -p 80:80 --name web nginx
 - 장점: 간단함
 - 한계: 스케일/복구/업데이트/트래픽 제어/관측은 수동 구성 필요
 
-## 5.2 Kubernetes로 Nginx (Deployment + Service)
+## Kubernetes로 Nginx (Deployment + Service)
 
 ```yaml
 apiVersion: apps/v1
@@ -144,16 +144,16 @@ kubectl get deploy,rs,po,svc -l app=web
 
 ---
 
-# 6. 쿠버네티스 아키텍처 — Control Plane와 Worker
+# 쿠버네티스 아키텍처 — Control Plane와 Worker
 
-## 6.1 Control Plane
+## Control Plane
 
 - **API Server**: 모든 요청의 단일 진입점. `kubectl`/컨트롤러/스케줄러가 이 경로로 상호작용
 - **etcd**: 클러스터 상태 저장(강한 일관성 Key-Value Store)
 - **Controller Manager**: Deployment/Job/Node 등 **실제 상태를 원하는 상태**로 맞추는 컨트롤 루프
 - **Scheduler**: 새 Pod을 자원/제약 조건 만족 노드로 **할당**
 
-## 6.2 Worker Node
+## Worker Node
 
 - **kubelet**: 노드/Pod 라이프사이클 관리
 - **Container Runtime**: containerd/CRI-O 등
@@ -162,9 +162,9 @@ kubectl get deploy,rs,po,svc -l app=web
 
 ---
 
-# 7. 핵심 리소스와 실전 YAML
+# 핵심 리소스와 실전 YAML
 
-## 7.1 Pod, ReplicaSet, Deployment
+## Pod, ReplicaSet, Deployment
 
 - **Pod**: 배포 가능한 최소 단위(1+ 컨테이너)
 - **ReplicaSet**: 동일 Pod의 목표 복제수 유지
@@ -198,7 +198,7 @@ spec:
           initialDelaySeconds: 10
 ```
 
-## 7.2 Service & Ingress
+## Service & Ingress
 
 ```yaml
 apiVersion: v1
@@ -234,7 +234,7 @@ spec:
               number: 80
 ```
 
-## 7.3 ConfigMap & Secret
+## ConfigMap & Secret
 
 ```yaml
 apiVersion: v1
@@ -254,7 +254,7 @@ stringData:
 
 > Secret은 Base64 인코딩일 뿐이므로, **암호화 제공자(KMS) 연계**/`EncryptionConfiguration`으로 **at-rest 암호화** 권장.
 
-## 7.4 Volume, PVC, StorageClass
+## Volume, PVC, StorageClass
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -275,9 +275,9 @@ spec:
 
 ---
 
-# 8. 배포 전략 — 롤링/카나리/블루그린
+# 배포 전략 — 롤링/카나리/블루그린
 
-## 8.1 롤링 업데이트 (기본)
+## 롤링 업데이트 (기본)
 
 ```yaml
 strategy:
@@ -290,7 +290,7 @@ strategy:
 - 장점: 다운타임 최소화
 - 주의: readinessProbe가 정확해야 트래픽 안정
 
-## 8.2 카나리
+## 카나리
 
 - 새 버전 ReplicaSet 일부만 노출 → 오류/성능 검증 후 점진적 확대
 - Ingress/서비스 라우팅(헤더/가중치) or 서비스 셀렉터 분리로 구현
@@ -299,22 +299,23 @@ strategy:
 
 ```yaml
 # canary-annotation 예시(nginx ingress 기반)
+
 metadata:
   annotations:
     nginx.ingress.kubernetes.io/canary: "true"
     nginx.ingress.kubernetes.io/canary-weight: "10"
 ```
 
-## 8.3 블루그린
+## 블루그린
 
 - Blue(현재)와 Green(신규)를 병행 배치 → 스위치 순간에 트래픽 전환
 - 롤백 빠름. 비용/자원 여유 필요
 
 ---
 
-# 9. 오토스케일링 — HPA / VPA / Cluster Autoscaler
+# 오토스케일링 — HPA / VPA / Cluster Autoscaler
 
-## 9.1 HPA (Horizontal Pod Autoscaler)
+## HPA (Horizontal Pod Autoscaler)
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -339,19 +340,19 @@ spec:
 - 메트릭 소스: CPU/메모리/외부/커스텀(예: QPS, 대기열 길이)
 - **readiness**가 부정확하면 HPA가 오류를 키울 수 있음
 
-## 9.2 VPA (Vertical Pod Autoscaler)
+## VPA (Vertical Pod Autoscaler)
 
 - Pod의 `requests/limits`를 동적으로 조정 (재시작 수반 가능)
 - 안정화 기간/관측 기간 고려
 
-## 9.3 Cluster Autoscaler
+## Cluster Autoscaler
 
 - Node 그룹 규모 자동 증감(클라우드 종속)
 - 스케줄 실패 → 노드 증설 트리거
 
 ---
 
-# 10. 스케줄링 제어 — Affinity/Taints/TopologySpread
+# 스케줄링 제어 — Affinity/Taints/TopologySpread
 
 ```yaml
 spec:
@@ -382,7 +383,7 @@ spec:
 
 ---
 
-# 11. 리소스 모델과 QoS
+# 리소스 모델과 QoS
 
 - **Requests**: 최소 보장, 스케줄러 기준
 - **Limits**: 상한. CPU 제한 시 cgroup throttle, 메모리 초과 시 OOMKill
@@ -404,7 +405,7 @@ $$
 
 ---
 
-# 12. 네트워킹과 서비스 메시 (선택)
+# 네트워킹과 서비스 메시 (선택)
 
 - **CNI**: Pod ↔ Pod 기본 통신
 - **Service**: ClusterIP/NodePort/LoadBalancer
@@ -415,14 +416,14 @@ $$
 
 ---
 
-# 13. 관측(Observability) — 로그/메트릭/트레이스
+# 관측(Observability) — 로그/메트릭/트레이스
 
-## 13.1 로그
+## 로그
 
 - **EFK/ELK**: Fluent Bit/Fluentd → Elasticsearch → Kibana
 - 앱 표준 출력(stdout/stderr)로 남기고, 사이드카 혹은 데몬셋 수집
 
-## 13.2 메트릭
+## 메트릭
 
 - **Prometheus** + **exporter**(node, kube-state, app)
 - **Alertmanager**로 경보 라우팅
@@ -443,22 +444,22 @@ spec:
     interval: 30s
 ```
 
-## 13.3 트레이스
+## 트레이스
 
 - OpenTelemetry(OTel) SDK/Collector → Jaeger/Tempo
 - 분산 트랜잭션 성능 병목 파악
 
 ---
 
-# 14. 보안 — 계층별 체크리스트
+# 보안 — 계층별 체크리스트
 
-## 14.1 접근제어
+## 접근제어
 
 - **RBAC**: 최소 권한 원칙
 - **네임스페이스 격리**, **리소스 쿼터**
 - **Pod Security Admission(PSA)**: `baseline/restricted` 적용
 
-## 14.2 네트워크
+## 네트워크
 
 - **NetworkPolicy**: Pod 간 트래픽 허용 리스트
 - **Ingress 보안**: TLS/보안 헤더, WAF/라이트레이트 제한
@@ -476,7 +477,7 @@ spec:
     ports: [{ protocol: TCP, port: 80 }]
 ```
 
-## 14.3 런타임
+## 런타임
 
 - Root-less 컨테이너, readOnlyRootFilesystem, drop capabilities
 - 이미지 서명/취약점 스캔(Trivy/Grype), 정책 게이트(Kyverno/OPA)
@@ -484,14 +485,14 @@ spec:
 
 ---
 
-# 15. CI/CD와 GitOps
+# CI/CD와 GitOps
 
-## 15.1 CI
+## CI
 
 - 이미지 빌드: Docker/BuildKit/kaniko/Buildpacks
 - 스캔/테스트/서명(SBOM 포함)
 
-## 15.2 CD
+## CD
 
 - **Helm**: 템플릿 기반 패키징
 - **Kustomize**: 오버레이/패치 기반
@@ -519,7 +520,7 @@ ingress:
 
 ---
 
-# 16. 환경별 전략 — 로컬/스테이징/프로덕션
+# 환경별 전략 — 로컬/스테이징/프로덕션
 
 - **로컬**: kind/minikube → 기능 검증, 개발 루프 단축
 - **스테이징**: 실제와 유사한 인프라, 데이터 샘플링, 카나리 사전 검증
@@ -527,7 +528,7 @@ ingress:
 
 ---
 
-# 17. 스토리지와 상태풀(Stateful) 워크로드
+# 스토리지와 상태풀(Stateful) 워크로드
 
 - **StatefulSet**: 안정된 네트워크 ID/스토리지 바인딩
 - DB/RabbitMQ/Kafka 등은 **운영 책임 경계**를 명확히:
@@ -562,7 +563,7 @@ spec:
 
 ---
 
-# 18. 운영 수명주기 — 업그레이드/백업/DR
+# 운영 수명주기 — 업그레이드/백업/DR
 
 - **업그레이드**: Control Plane → Worker 순, 호환성/디프리케이션 체크
 - **백업**: etcd 스냅샷, 오브젝트 백업(Velero), PVC 스냅샷
@@ -581,7 +582,7 @@ ETCDCTL_API=3 etcdctl \
 
 ---
 
-# 19. 비용/성능 최적화
+# 비용/성능 최적화
 
 - **리소스 요청/상한 정밀화**: 실제 사용량 기반 조정
 - **노드 패킹/스팟 혼합**: 파드 우선순위/선점 고려
@@ -591,9 +592,9 @@ ETCDCTL_API=3 etcdctl \
 
 ---
 
-# 20. 시나리오 기반 실습
+# 시나리오 기반 실습
 
-## 20.1 “3주 내 MSA 전환 PoC” 시나리오
+## “3주 내 MSA 전환 PoC” 시나리오
 
 **목표**: 단일 API 서버를 3개 마이크로서비스로 분리, 카나리로 점진 이행
 
@@ -613,10 +614,11 @@ ETCDCTL_API=3 etcdctl \
 - 캐패시티 여유율, HPA 동작 로그
 - 알람 민감도/오탐률
 
-## 20.2 “고가용 웹 + 캐시 + 백엔드 API” 예제 매니페스트
+## “고가용 웹 + 캐시 + 백엔드 API” 예제 매니페스트
 
 ```yaml
 # web-frontend Deployment
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: web }
@@ -649,6 +651,7 @@ spec:
     targetPort: 3000
 ---
 # cache (Redis)
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: cache }
@@ -674,6 +677,7 @@ spec:
     targetPort: 6379
 ---
 # api backend
+
 apiVersion: apps/v1
 kind: Deployment
 metadata: { name: api }
@@ -704,6 +708,7 @@ spec:
     targetPort: 8080
 ---
 # ingress
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -729,7 +734,7 @@ spec:
 
 ---
 
-# 21. 트러블슈팅 — 자주 겪는 문제와 해결
+# 트러블슈팅 — 자주 겪는 문제와 해결
 
 | 증상 | 원인 후보 | 해결 접근 |
 |---|---|---|
@@ -753,7 +758,7 @@ kubectl get --raw /metrics | head
 
 ---
 
-# 22. 보강 학습 포인트 (기존 글에서 부족할 수 있는 부분 채우기)
+# 보강 학습 포인트 (기존 글에서 부족할 수 있는 부분 채우기)
 
 - **Pod lifecycle**: initContainers, preStop hook, terminationGracePeriod
 - **잡/크론잡**: 배치/스케줄 작업
@@ -777,16 +782,16 @@ spec:
 
 ---
 
-# 23. 현업 체크리스트 — 도입 전/후
+# 현업 체크리스트 — 도입 전/후
 
-## 23.1 도입 전 질문
+## 도입 전 질문
 
 - 왜 K8s인가? (관리형 PaaS/서버리스 대비)
 - 팀의 **운영 역량**(SRE/플랫폼팀)과 **툴체인** 준비?
 - 애플리케이션이 **12-Factor**에 근접하는가?
 - 관측/보안/백업/DR **기준선**은 있는가?
 
-## 23.2 도입 후 가드레일
+## 도입 후 가드레일
 
 - 네임스페이스/리소스쿼터/LimitRange 표준값
 - 공용 모듈화(Helm/Kustomize), 릴리즈 네이밍 규약
@@ -795,7 +800,7 @@ spec:
 
 ---
 
-# 24. 결론 — 쿠버네티스는 “신뢰 가능한 운영”의 기반
+# 결론 — 쿠버네티스는 “신뢰 가능한 운영”의 기반
 
 쿠버네티스는 **단순히 많은 컨테이너를 띄우는 도구가 아니라**,
 _원하는 상태를 선언_ 하고, **계속 그 상태를 지키도록 자동화**하는 **운영 플랫폼**이다.
@@ -814,12 +819,15 @@ _원하는 상태를 선언_ 하고, **계속 그 상태를 지키도록 자동�
 
 ```bash
 # kind 설치 후
+
 kind create cluster --name demo
 
 # Ingress-NGINX 설치(예시)
+
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 
 # 샘플 배포
+
 kubectl apply -f web.yaml
 kubectl get all -A
 ```
@@ -854,6 +862,7 @@ func main() {
 
 ```dockerfile
 # Dockerfile
+
 FROM golang:1.23 as build
 WORKDIR /src
 COPY . .

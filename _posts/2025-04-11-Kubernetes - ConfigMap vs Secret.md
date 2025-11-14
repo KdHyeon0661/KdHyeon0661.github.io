@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes ConfigMap vs Secret
 
-## 1. 공통점(요약)
+## 공통점(요약)
 
 | 항목 | 설명 |
 |---|---|
@@ -19,9 +19,10 @@ category: Kubernetes
 
 ---
 
-## 2. ConfigMap — 비민감 설정
+## ConfigMap — 비민감 설정
 
-### 2.1 기본 YAML
+### 기본 YAML
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -36,7 +37,8 @@ data:
     port = 8080
 ```
 
-### 2.2 Pod 주입 — envFrom / 개별 키 참조 / 파일 마운트
+### Pod 주입 — envFrom / 개별 키 참조 / 파일 마운트
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -68,7 +70,8 @@ spec:
         path: app.conf
 ```
 
-### 2.3 특성/옵션
+### 특성/옵션
+
 - **`binaryData`**: 바이너리(베이스64 인코딩 텍스트로 기술) 보관.
 - **`immutable: true`**: 변경 불가로 만들어 성능 향상(워처/갱신 비용↓).
 - 크기 제한(클러스터/버전 의존, 일반적으로 수백 KB 수준)과 키 길이 제한 유의.
@@ -83,9 +86,10 @@ volumes:
 
 ---
 
-## 3. Secret — 민감정보 저장
+## Secret — 민감정보 저장
 
-### 3.1 기본 YAML(베이스64 `data`)
+### 기본 YAML(베이스64 `data`)
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -97,7 +101,8 @@ data:
   DB_PASSWORD: cGFzc3dvcmQ=  # "password"
 ```
 
-### 3.2 `stringData`로 간단 작성(생성 시 자동 base64 변환)
+### `stringData`로 간단 작성(생성 시 자동 base64 변환)
+
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -109,7 +114,8 @@ stringData:
   DB_PASSWORD: password
 ```
 
-### 3.3 Pod 주입 — envFrom / 개별 키 / 파일
+### Pod 주입 — envFrom / 개별 키 / 파일
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -140,7 +146,8 @@ spec:
       defaultMode: 0400
 ```
 
-### 3.4 특성/보안 포인트
+### 특성/보안 포인트
+
 - Secret은 **RBAC**로 접근 통제. `kubectl get secret -o yaml` 출력 시 일부 UI/툴에서 **마스킹**.
 - etcd **암호화(at rest)** 활성화 권장(Cluster 설정). Base64는 **암호화가 아니다**.
 - 타입:
@@ -150,7 +157,7 @@ spec:
 
 ---
 
-## 4. ConfigMap vs Secret — 핵심 차이
+## ConfigMap vs Secret — 핵심 차이
 
 | 항목 | ConfigMap | Secret |
 |---|---|---|
@@ -163,9 +170,10 @@ spec:
 
 ---
 
-## 5. 고급 주입 패턴
+## 고급 주입 패턴
 
-### 5.1 projected volume(여러 소스 합쳐 마운트)
+### projected volume(여러 소스 합쳐 마운트)
+
 ```yaml
 volumes:
 - name: projected
@@ -183,7 +191,8 @@ volumes:
           path: secrets/db_password
 ```
 
-### 5.2 하위 디렉터리/파일명 제어
+### 하위 디렉터리/파일명 제어
+
 ```yaml
 volumes:
 - name: cfg
@@ -194,7 +203,8 @@ volumes:
       path: app/app.conf
 ```
 
-### 5.3 서브패스(subPath) 마운트(단일 파일만)
+### 서브패스(subPath) 마운트(단일 파일만)
+
 ```yaml
 volumeMounts:
 - name: cfg
@@ -206,12 +216,13 @@ volumeMounts:
 
 ---
 
-## 6. 동적 갱신 vs 롤아웃 트리거
+## 동적 갱신 vs 롤아웃 트리거
 
 - **파일 마운트**: kubelet이 주기적으로 투영 볼륨을 **갱신**. 애플리케이션이 SIGHUP/파일 감시로 **핫 리로드** 가능하면 **무중단**.
 - **환경변수**: 컨테이너 시작 시 주입 → **재시작해야 변경 반영**.
 
-### 6.1 변경 시 롤아웃 자동 트리거(체크섬 애노테이션 패턴)
+### 변경 시 롤아웃 자동 트리거(체크섬 애노테이션 패턴)
+
 Helm/Kustomize에서 ConfigMap/Secret 내용을 해시하여 Pod 템플릿 애노테이션에 주입 → 변경 시 자동 롤링.
 
 ```yaml
@@ -241,9 +252,10 @@ spec:
 
 ---
 
-## 7. 실전 예제 — 하나의 앱에 ConfigMap+Secret 동시 주입
+## 실전 예제 — 하나의 앱에 ConfigMap+Secret 동시 주입
 
-### 7.1 리소스
+### 리소스
+
 ```yaml
 apiVersion: v1
 kind: ConfigMap
@@ -267,7 +279,8 @@ stringData:
   DB_PASSWORD: "S3cureP@ss"
 ```
 
-### 7.2 Deployment
+### Deployment
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -315,31 +328,35 @@ spec:
 
 ---
 
-## 8. 생성/검증/유틸 명령
+## 생성/검증/유틸 명령
 
 ```bash
 # ConfigMap/Secret 생성(리터럴)
+
 kubectl create configmap my-config --from-literal=APP_ENV=dev
 kubectl create secret generic my-secret --from-literal=DB_USER=admin --from-literal=DB_PASSWORD=password
 
 # 디렉터리/파일로 생성
+
 kubectl create configmap web-cm --from-file=./conf/
 kubectl create secret generic tls-cert --type=kubernetes.io/tls \
   --from-file=tls.crt=./server.crt --from-file=tls.key=./server.key
 
 # 조회/내용 확인
+
 kubectl get cm,secret
 kubectl describe cm my-config
 kubectl get secret my-secret -o yaml           # 주의: base64 값 노출
 kubectl get cm web-cm -o jsonpath='{.data.app\.conf}'
 
 # 디코딩(로컬)
+
 kubectl get secret my-secret -o jsonpath='{.data.DB_USER}' | base64 -d; echo
 ```
 
 ---
 
-## 9. 보안/거버넌스 베스트 프랙티스
+## 보안/거버넌스 베스트 프랙티스
 
 - **RBAC 최소권한**: `get/list/watch` 권한을 좁힌 역할(Role)과 RoleBinding 사용.
 - **etcd 암호화(at-rest)**: 클러스터 단에서 **EncryptionConfiguration** 활성화.
@@ -355,11 +372,13 @@ kubectl get secret my-secret -o jsonpath='{.data.DB_USER}' | base64 -d; echo
 
 ---
 
-## 10. Kustomize/Helm 실전 패턴
+## Kustomize/Helm 실전 패턴
 
-### 10.1 Kustomize generator
+### Kustomize generator
+
 ```yaml
 # kustomization.yaml
+
 configMapGenerator:
 - name: app-config
   literals:
@@ -376,7 +395,8 @@ generatorOptions:
   disableNameSuffixHash: false   # 해시 붙여 롤아웃 자동 트리거
 ```
 
-### 10.2 Helm — 체크섬 애노테이션
+### Helm — 체크섬 애노테이션
+
 {% raw %}
 ```yaml
 metadata:
@@ -388,7 +408,7 @@ metadata:
 
 ---
 
-## 11. 트러블슈팅 테이블
+## 트러블슈팅 테이블
 
 | 증상 | 1차 점검 | 원인 후보 | 해결 |
 |---|---|---|---|
@@ -401,7 +421,7 @@ metadata:
 
 ---
 
-## 12. 요약·선택 가이드
+## 요약·선택 가이드
 
 - **ConfigMap**: 비민감 설정(포맷/플래그/엔드포인트). 파일 마운트로 **핫 리로드**를 노려라.
 - **Secret**: 민감정보. **RBAC 최소권한 + etcd 암호화 + 감사**는 필수. 가능하면 **파일 마운트** 사용.

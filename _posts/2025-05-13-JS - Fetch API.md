@@ -10,7 +10,7 @@ category: JavaScript
 
 ---
 
-## 1. 빠른 시작 — 가장 작은 GET
+## 빠른 시작 — 가장 작은 GET
 
 ```js
 fetch("https://jsonplaceholder.typicode.com/posts/1")
@@ -28,7 +28,7 @@ fetch("https://jsonplaceholder.typicode.com/posts/1")
 
 ---
 
-## 2. 기본 패턴(Async/Await)
+## 기본 패턴(Async/Await)
 
 ```js
 async function fetchUser() {
@@ -47,7 +47,7 @@ async function fetchUser() {
 
 ---
 
-## 3. Response 다루기 — 상태/헤더/본문 1회 규칙
+## Response 다루기 — 상태/헤더/본문 1회 규칙
 
 ```js
 const res = await fetch("/api/data");
@@ -66,7 +66,7 @@ const text = await res.text();
 
 ---
 
-## 4. 다양한 본문 파싱
+## 다양한 본문 파싱
 
 ```js
 await res.text();        // 문자열
@@ -80,7 +80,7 @@ await res.formData();    // multipart/form-data 파싱
 
 ---
 
-## 5. 요청 옵션 총정리
+## 요청 옵션 총정리
 
 ```js
 fetch(url, {
@@ -106,9 +106,10 @@ fetch(url, {
 
 ---
 
-## 6. POST 패턴 모음
+## POST 패턴 모음
 
-### 6.1 JSON POST
+### JSON POST
+
 ```js
 await fetch("/api/login", {
   method: "POST",
@@ -117,7 +118,8 @@ await fetch("/api/login", {
 });
 ```
 
-### 6.2 `application/x-www-form-urlencoded`
+### `application/x-www-form-urlencoded`
+
 ```js
 const params = new URLSearchParams({ q: "hello", page: 1 });
 await fetch("/search", {
@@ -127,7 +129,8 @@ await fetch("/search", {
 });
 ```
 
-### 6.3 `multipart/form-data`(파일 업로드)
+### `multipart/form-data`(파일 업로드)
+
 ```js
 const fd = new FormData();
 fd.append("avatar", fileInput.files[0]);
@@ -137,13 +140,15 @@ await fetch("/profile", { method: "POST", body: fd }); // 헤더 자동
 
 ---
 
-## 7. 파일 업로드/다운로드
+## 파일 업로드/다운로드
 
-### 7.1 업로드 진행률(대안)
+### 업로드 진행률(대안)
+
 - 표준 Fetch는 **업로드 진행률 이벤트 미지원**.
   옵션: `XMLHttpRequest`로 전환 또는 **Service Worker + Streams** 커스텀(고급).
 
-### 7.2 다운로드 → Blob 저장
+### 다운로드 → Blob 저장
+
 ```js
 const res = await fetch("/report.pdf");
 if (!res.ok) throw new Error();
@@ -156,19 +161,22 @@ URL.revokeObjectURL(url);
 
 ---
 
-## 8. 에러 처리 전략
+## 에러 처리 전략
 
-### 8.1 HTTP 에러는 `ok`로 판정 X
+### HTTP 에러는 `ok`로 판정 X
+
 ```js
 const res = await fetch("/api");
 if (!res.ok) throw new Error(`HTTP ${res.status}`);
 ```
 
-### 8.2 네트워크/중단/CORS 차단
+### 네트워크/중단/CORS 차단
+
 - DNS 실패/네트워크 끊김/요청 취소/브라우저 보안 차단 → **Promise reject**.
 - CORS 위반 시 **opaque**/reject/에러 메시지 제약.
 
-### 8.3 재시도(Backoff) — **멱등 메서드 우선**
+### 재시도(Backoff) — **멱등 메서드 우선**
+
 ```js
 async function fetchWithRetry(url, init = {}, { retries = 3, backoff = 300 } = {}) {
   let lastErr;
@@ -189,9 +197,10 @@ async function fetchWithRetry(url, init = {}, { retries = 3, backoff = 300 } = {
 
 ---
 
-## 9. 취소와 타임아웃
+## 취소와 타임아웃
 
-### 9.1 `AbortController`
+### `AbortController`
+
 ```js
 const ac = new AbortController();
 const p = fetch("/slow", { signal: ac.signal })
@@ -200,7 +209,8 @@ setTimeout(() => ac.abort(), 1000);
 await p;
 ```
 
-### 9.2 타임아웃 헬퍼
+### 타임아웃 헬퍼
+
 ```js
 async function fetchWithTimeout(url, init={}, ms=5000) {
   const ac = new AbortController();
@@ -217,7 +227,7 @@ async function fetchWithTimeout(url, init={}, ms=5000) {
 
 ---
 
-## 10. 병렬·병목 제어(동시성 제한)
+## 병렬·병목 제어(동시성 제한)
 
 ```js
 async function withLimit(limit, tasks) {
@@ -237,9 +247,10 @@ await withLimit(5, urls.map(u => () => fetch(u)));
 
 ---
 
-## 11. 스트리밍(ReadableStream) — 대용량/점진 처리
+## 스트리밍(ReadableStream) — 대용량/점진 처리
 
-### 11.1 텍스트 스트림 읽기(진행률)
+### 텍스트 스트림 읽기(진행률)
+
 ```js
 const res = await fetch("/large.txt");
 const reader = res.body.getReader();
@@ -256,7 +267,8 @@ while (true) {
 chunks += decoder.decode();
 ```
 
-### 11.2 NDJSON(줄 단위 JSON)
+### NDJSON(줄 단위 JSON)
+
 ```js
 async function* ndjson(stream) {
   const reader = stream.getReader();
@@ -285,7 +297,7 @@ for await (const row of ndjson((await fetch("/stream")).body)) {
 
 ---
 
-## 12. 인증/쿠키·세션과 `credentials`
+## 인증/쿠키·세션과 `credentials`
 
 ```js
 await fetch("/me", { credentials: "include" });
@@ -296,7 +308,7 @@ await fetch("/me", { credentials: "include" });
 
 ---
 
-## 13. CORS 심화
+## CORS 심화
 
 - 사전 요청(Preflight): `OPTIONS` + `Access-Control-Request-*`
   서버는 `Access-Control-Allow-Origin`, `-Methods`, `-Headers` 적절 응답 필요.
@@ -305,15 +317,17 @@ await fetch("/me", { credentials: "include" });
 
 ---
 
-## 14. 캐싱 전략
+## 캐싱 전략
 
-### 14.1 HTTP 캐시 + `cache` 옵션
+### HTTP 캐시 + `cache` 옵션
+
 - `cache: "no-cache"`: **검증 후** 사용(If-None-Match/If-Modified-Since)
 - `cache: "reload"`: 네트워크 강제
 - `cache: "force-cache"`: 캐시 우선
 - ETag/Last-Modified를 서버가 제공하면 효율↑.
 
-### 14.2 Cache Storage API(프로그래매틱 캐시)
+### Cache Storage API(프로그래매틱 캐시)
+
 ```js
 const res = await fetch("/data");
 const cache = await caches.open("v1");
@@ -325,21 +339,21 @@ const cached = await cache.match("/data");
 
 ---
 
-## 15. 서비스 워커 연계(요약)
+## 서비스 워커 연계(요약)
 
 - `fetch` 이벤트 가로채서 캐싱/프록시/폴백.
 - 전략: **Cache First**, **Network First**, **Stale-While-Revalidate** 등.
 
 ---
 
-## 16. 리다이렉트
+## 리다이렉트
 
 - 기본 `redirect: "follow"`(최대 횟수 제한).
 - `redirect: "manual"`은 브라우저에서 `opaqueredirect`로 제한적(헤더 확인 어려움) — 보통 서버/라우터에서 처리.
 
 ---
 
-## 17. 보안 모범사례
+## 보안 모범사례
 
 - **XSS**: 서버가 반환한 HTML을 `innerHTML`로 주입하지 말고, 가능하면 텍스트로. JSON은 렌더 전 **escape**.
 - **CSRF**: 쿠키 기반 세션이면 **SameSite=Strict/Lax + CSRF 토큰**. API는 Bearer 토큰 추천.
@@ -348,7 +362,7 @@ const cached = await cache.match("/data");
 
 ---
 
-## 18. 브라우저 vs Node.js
+## 브라우저 vs Node.js
 
 - Node.js **18+**: `globalThis.fetch` 기본 제공(undici 기반).
 - 차이:
@@ -358,9 +372,10 @@ const cached = await cache.match("/data");
 
 ---
 
-## 19. 실전 유틸 함수 모음
+## 실전 유틸 함수 모음
 
-### 19.1 안전 JSON 헬퍼
+### 안전 JSON 헬퍼
+
 ```js
 export async function fetchJson(url, init) {
   const res = await fetch(url, init);
@@ -374,7 +389,8 @@ export async function fetchJson(url, init) {
 }
 ```
 
-### 19.2 타임아웃 + 재시도 합본
+### 타임아웃 + 재시도 합본
+
 ```js
 export async function robustFetch(url, init={}, { timeout=8000, retries=2 }={}) {
   for (let i=0;; i++) {
@@ -393,7 +409,8 @@ export async function robustFetch(url, init={}, { timeout=8000, retries=2 }={}) 
 }
 ```
 
-### 19.3 업로드 헬퍼(FormData)
+### 업로드 헬퍼(FormData)
+
 ```js
 export async function upload(url, files, extra = {}) {
   const fd = new FormData();
@@ -407,7 +424,7 @@ export async function upload(url, files, extra = {}) {
 
 ---
 
-## 20. 디버깅 팁
+## 디버깅 팁
 
 - **DevTools Network 탭**: 요청/응답/헤더/CORS/캐시 상태 확인.
 - **콘솔에서 재전송**: Network 항목 우클릭 → Copy as fetch.
@@ -415,7 +432,7 @@ export async function upload(url, files, extra = {}) {
 
 ---
 
-## 21. 체크리스트 & 미니 퀴즈
+## 체크리스트 & 미니 퀴즈
 
 체크리스트
 - [ ] `res.ok` 확인(HTTP 에러 수동 처리)

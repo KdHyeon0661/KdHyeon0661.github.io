@@ -6,12 +6,13 @@ category: Java
 ---
 # Java의 Iterator와 foreach
 
-## 1. Iterator 기본기
+## Iterator 기본기
 
-### 1.1 개념
+### 개념
+
 `Iterator<E>`는 컬렉션 요소를 **순차 접근**하기 위한 표준 인터페이스입니다. 모든 `Collection` 구현체에서 `iterator()`로 획득합니다.
 
-### 1.2 핵심 메서드
+### 핵심 메서드
 
 | 메서드 | 설명 | 예외/비고 |
 |---|---|---|
@@ -20,7 +21,8 @@ category: Java
 | `void remove()` | **직전 `next()`로 반환한 요소** 삭제 | 선택적 연산(미지원 시 `UnsupportedOperationException`), **`next()` 호출 전엔 `IllegalStateException`** |
 | `default void forEachRemaining(Consumer<? super E> action)` | 남은 요소에 일괄 동작 | Java 8+ |
 
-### 1.3 기본 사용
+### 기본 사용
+
 ```java
 import java.util.*;
 
@@ -38,9 +40,10 @@ public class IteratorExample {
 
 ---
 
-## 2. foreach (향상된 for) — 문법은 간결, 내부는 Iterator
+## foreach (향상된 for) — 문법은 간결, 내부는 Iterator
 
-### 2.1 문법과 대상
+### 문법과 대상
+
 ```java
 for (타입 변수 : 배열_or_Iterable) {
   // 처리
@@ -49,7 +52,8 @@ for (타입 변수 : 배열_or_Iterable) {
 - **배열**: 컴파일러가 **인덱스 기반 루프**로 변환.
 - **`Iterable`**: 내부적으로 `iterator()`를 호출해 Iterator 기반 루프로 변환.
 
-### 2.2 간단 예
+### 간단 예
+
 ```java
 import java.util.*;
 
@@ -63,14 +67,15 @@ public class ForeachExample {
 }
 ```
 
-### 2.3 특징
+### 특징
+
 - **가독성** 우수, **인덱스** 접근 불가.
 - 루프 변수에 값을 할당해도 **원본을 수정하지 않음**.
 - 루프 중 컬렉션 요소를 **직접 제거하면 위험**(CME 가능) → §4 참고.
 
 ---
 
-## 3. Iterator vs foreach — 선택 기준
+## Iterator vs foreach — 선택 기준
 
 | 항목 | Iterator | foreach(향상된 for) |
 |---|---|---|
@@ -85,12 +90,14 @@ public class ForeachExample {
 
 ---
 
-## 4. 실패-안전(fail-fast)과 ConcurrentModificationException
+## 실패-안전(fail-fast)과 ConcurrentModificationException
 
-### 4.1 왜 발생하나?
+### 왜 발생하나?
+
 대부분의 비동시성 컬렉션은 **구조적 변경(추가/삭제)** 시 내부 수정 횟수(`modCount`)를 증가시킵니다. Iterator는 생성 당시의 `modCount`를 캐싱하고, 순회 중 값이 달라지면 **최대한 빨리** `ConcurrentModificationException`(CME)을 던집니다(보장 아님, **best-effort**).
 
-### 4.2 잘못된 삭제(예: foreach)
+### 잘못된 삭제(예: foreach)
+
 ```java
 List<String> list = new ArrayList<>(List.of("a","b","c"));
 for (String s : list) {
@@ -100,7 +107,8 @@ for (String s : list) {
 }
 ```
 
-### 4.3 안전한 삭제 (정석)
+### 안전한 삭제 (정석)
+
 ```java
 List<String> list = new ArrayList<>(List.of("a","b","c"));
 for (Iterator<String> it = list.iterator(); it.hasNext();) {
@@ -110,12 +118,14 @@ for (Iterator<String> it = list.iterator(); it.hasNext();) {
 }
 ```
 
-### 4.4 대안 1 — `removeIf` (Java 8+)
+### 대안 1 — `removeIf` (Java 8+)
+
 ```java
 list.removeIf("b"::equals);  // 조건부 일괄 삭제, 내부적으로 안전 처리
 ```
 
-### 4.5 대안 2 — 인덱스 루프 역순 삭제
+### 대안 2 — 인덱스 루프 역순 삭제
+
 ```java
 for (int i = list.size()-1; i >= 0; --i) {
   if (list.get(i).equals("b")) list.remove(i); // 역방향이면 인덱스 안정
@@ -124,7 +134,7 @@ for (int i = list.size()-1; i >= 0; --i) {
 
 ---
 
-## 5. ListIterator — 양방향 이동, 중간 삽입/치환
+## ListIterator — 양방향 이동, 중간 삽입/치환
 
 `ListIterator<E>`는 `List` 전용 확장 반복자.
 
@@ -134,7 +144,8 @@ for (int i = list.size()-1; i >= 0; --i) {
 | 현재 위치 인덱스 | `nextIndex()`, `previousIndex()` |
 | 삭제/치환/삽입 | `remove()`, `set(E e)`, `add(E e)` |
 
-### 5.1 예: 순회하며 조건부 치환·삽입
+### 예: 순회하며 조건부 치환·삽입
+
 ```java
 import java.util.*;
 
@@ -156,7 +167,7 @@ public class ListIteratorDemo {
 
 ---
 
-## 6. Map 순회 — entrySet가 정석
+## Map 순회 — entrySet가 정석
 
 | 방식 | 코드 | 특징 |
 |---|---|---|
@@ -173,12 +184,13 @@ for (Map.Entry<String,Integer> e : m.entrySet()) {
 
 ---
 
-## 7. 배열 vs 컬렉션 — foreach가 만드는 실제 코드
+## 배열 vs 컬렉션 — foreach가 만드는 실제 코드
 
 - **배열**: 컴파일러가 단순 인덱스 루프로 바꿈.
 - **컬렉션**: `for (T x : coll)` → `for (Iterator<T> it=coll.iterator(); it.hasNext();) { T x = it.next(); ... }`
 
-### 7.1 루프 변수 재할당은 원본에 영향 없음
+### 루프 변수 재할당은 원본에 영향 없음
+
 ```java
 List<String> xs = new ArrayList<>(List.of("a","b"));
 for (String s : xs) {
@@ -189,7 +201,7 @@ System.out.println(xs); // [a, b]
 
 ---
 
-## 8. Stream과 forEach/forEachOrdered
+## Stream과 forEach/forEachOrdered
 
 | 대상 | 메서드 | 순서 보장 | 용도 |
 |---|---|---|---|
@@ -197,7 +209,8 @@ System.out.println(xs); // [a, b]
 | `Stream` | `void forEach(Consumer)` | **병렬 스트림에서 순서 비보장** | 사이드이펙트 최소화 권장 |
 | `Stream` | `void forEachOrdered(Consumer)` | **순서 보장**(비용↑) | 순서가 중요한 경우 |
 
-### 8.1 Stream은 변환/집계에 강함
+### Stream은 변환/집계에 강함
+
 ```java
 List<String> upper =
   list.stream()
@@ -209,7 +222,7 @@ List<String> upper =
 
 ---
 
-## 9. 동시성 컬렉션의 반복자 — 약한 일관성(weakly consistent)
+## 동시성 컬렉션의 반복자 — 약한 일관성(weakly consistent)
 
 | 컬렉션 | 반복자 특성 |
 |---|---|
@@ -237,7 +250,7 @@ public class WeaklyConsistentDemo {
 
 ---
 
-## 10. Spliterator — 병렬 분할 순회(Streams의 하부)
+## Spliterator — 병렬 분할 순회(Streams의 하부)
 
 `Spliterator`는 **분할 가능한 반복자**로, 스트림의 병렬 처리 기반입니다.
 
@@ -248,7 +261,8 @@ public class WeaklyConsistentDemo {
 | `forEachRemaining(Consumer)` | 남은 요소 일괄 처리 |
 | `characteristics()` | `SIZED`, `ORDERED`, `SORTED`, `CONCURRENT`, `IMMUTABLE`, `NONNULL`, `SUBSIZED` 등 |
 
-### 10.1 커스텀 Spliterator 간단 예
+### 커스텀 Spliterator 간단 예
+
 ```java
 import java.util.Spliterator;
 import java.util.function.Consumer;
@@ -276,7 +290,7 @@ class RangeSpliterator implements Spliterator<Integer> {
 
 ---
 
-## 11. Iterable 구현 — 사용자 정의 컨테이너에 foreach 지원
+## Iterable 구현 — 사용자 정의 컨테이너에 foreach 지원
 
 ```java
 import java.util.*;
@@ -308,9 +322,10 @@ public class CustomIterableDemo {
 
 ---
 
-## 12. 실전 패턴 모음
+## 실전 패턴 모음
 
-### 12.1 안전한 조건부 삭제 3종 비교
+### 안전한 조건부 삭제 3종 비교
+
 ```java
 // 1) Iterator.remove
 for (Iterator<String> it = list.iterator(); it.hasNext();) if (bad(it.next())) it.remove();
@@ -322,7 +337,8 @@ list.removeIf(MyClass::isBad);
 for (int i=list.size()-1;i>=0;--i) if (bad(list.get(i))) list.remove(i);
 ```
 
-### 12.2 변환(치환)이 목표면: 새 컨테이너로 수집
+### 변환(치환)이 목표면: 새 컨테이너로 수집
+
 ```java
 List<String> out = new ArrayList<>(list.size());
 for (String s : list) out.add(transform(s));
@@ -333,7 +349,8 @@ list = out;
 list = list.stream().map(this::transform).toList();
 ```
 
-### 12.3 Map 정렬 출력(키 기준)
+### Map 정렬 출력(키 기준)
+
 ```java
 map.entrySet().stream()
    .sorted(Map.Entry.comparingByKey())
@@ -342,7 +359,7 @@ map.entrySet().stream()
 
 ---
 
-## 13. 성능·메모리 관점
+## 성능·메모리 관점
 
 - **foreach vs 전통 for**: 배열에서는 인덱스 루프와 성능 유사. 컬렉션에서는 Iterator 오버헤드가 미세하게 있을 수 있으나 **대부분 미미**.
 - **삭제 동반 작업**: `removeIf`가 가장 간결하고 빠른 편(내부 루프 최적화).
@@ -350,7 +367,7 @@ map.entrySet().stream()
 
 ---
 
-## 14. 자주 묻는 함정(FAQ)
+## 자주 묻는 함정(FAQ)
 
 1) **`remove()`를 언제 부를 수 있나?**
 → **`next()` 직후의 요소**에만, 한 번만. 그 외엔 `IllegalStateException`.
@@ -366,7 +383,7 @@ map.entrySet().stream()
 
 ---
 
-## 15. 종합 비교표
+## 종합 비교표
 
 | 목적 | 가장 단순한 선택 | 수정(삭제/치환/삽입) 필요 | 동시성 |
 |---|---|---|---|
@@ -376,7 +393,7 @@ map.entrySet().stream()
 
 ---
 
-## 16. 전체 데모 — Iterator/foreach/ListIterator/Stream 한 번에 보기
+## 전체 데모 — Iterator/foreach/ListIterator/Stream 한 번에 보기
 
 ```java
 import java.util.*;
@@ -419,7 +436,7 @@ public class AllInOne {
 
 ---
 
-## 17. 결론 — 무엇을 언제 쓰나?
+## 결론 — 무엇을 언제 쓰나?
 
 - **foreach**: 가장 읽기 좋은 **읽기 전용 순회**.
 - **Iterator.remove / ListIterator**: 순회 중 **안전한 삭제/치환/삽입**.

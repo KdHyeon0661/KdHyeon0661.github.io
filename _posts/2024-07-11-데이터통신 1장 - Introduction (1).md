@@ -4,9 +4,9 @@ title: 데이터 통신 1장 - Introduction (1)
 date: 2024-07-11 19:20:23 +0900
 category: DataCommunication
 ---
-# 1.1 Data Communication
+# Data Communication
 
-## 1.1.1 Data Communication (데이터 통신)
+## Data Communication (데이터 통신)
 
 두 장치(노드) 간에 유·무선 매체를 통해 데이터를 **전송·교환**하는 과정.
 
@@ -37,7 +37,7 @@ category: DataCommunication
 
 ---
 
-## 1.1.2 Components (구성 요소)
+## Components (구성 요소)
 
 데이터 통신을 이루는 5가지 구성 요소를 **현대 네트워크 관점**으로 풀어쓴다.
 
@@ -62,6 +62,7 @@ category: DataCommunication
 - 예: 이더넷(프레임링), IP(주소/라우팅), TCP(연결/흐름/혼잡), UDP(비연결), TLS(암호화), HTTP/2·3(스트리밍/헤더압축/QUIC), RTP/RTCP(미디어), MQTT/AMQP(Kafka/브로커).
 
 ### 실무 시나리오: “라이브 주가 스트리밍”
+
 - **메시지**: 종목 코드, 가격, 타임스탬프(밀리·마이크로초)
 - **송신자**: 거래소 게이트웨이(UDP 멀티캐스트 또는 QUIC)
 - **매체**: 전용 광회선(DC 간) + 퍼블릭 인터넷(클라이언트)
@@ -70,25 +71,29 @@ category: DataCommunication
 
 ---
 
-## 1.1.3 Data Representation (데이터 표현)
+## Data Representation (데이터 표현)
 
-### 1. Text (텍스트)
+### Text (텍스트)
+
 - 코드체계: **ASCII(7-bit)**, **Unicode(UTF-8/16)**.
 - UTF-8은 가변길이. 영문은 1바이트로 효율적, 한글/이모지는 다바이트.
 
 ```python
 # 예제: UTF-8/UTF-16 인코딩 차이
+
 s = "데이터"
 print(len(s.encode("utf-8")))   # 바이트 길이
 print(len(s.encode("utf-16")))  # BOM 포함 길이
 ```
 
-### 2. Numbers (숫자)
+### Numbers (숫자)
+
 - **이진수** 표현, 2의 보수(정수), IEEE 754(실수).
 - 엔디언(Little/Big) 이슈에 주의 — 네트워크 바이트 오더는 **Big Endian**.
 
 ```python
 # 예제: 정수의 네트워크 바이트 오더 변환
+
 import struct
 x = 0x12345678
 net = struct.pack("!I", x)  # !: network(big-endian), I: unsigned int
@@ -96,34 +101,40 @@ host = struct.unpack("!I", net)[0]
 assert x == host
 ```
 
-### 3. Image (이미지)
+### Image (이미지)
+
 - **픽셀 래스터**: RGB/YCbCr/Grayscale, 알파 채널.
 - 압축: 무손실(PNG), 손실(JPEG, WebP).
 - 전송 시 **색공간/프로파일**(sRGB) 명시가 중요.
 
-### 4. Audio (오디오)
+### Audio (오디오)
+
 - 아날로그 → **표본화**(샘플링) & **양자화**(비트 폭).
 - 나이키스트:
   $$ f_s \ge 2 f_\text{max} $$
 - 예: 44.1kHz/16bit 스테레오 PCM. 전송은 AAC/Opus 같은 코덱 활용.
 
-### 5. Video (비디오)
+### Video (비디오)
+
 - 프레임(초당 24~120fps), 해상도, 색공간(4:2:0).
 - 인코딩: H.264/H.265/AV1. **GOP**(I/P/B 프레임), **비트레이트 제어**(CBR/VBR).
 
 ---
 
-## 1.1.4 Data Flow (데이터 흐름)
+## Data Flow (데이터 흐름)
 
-### 1. Simplex (단방향)
+### Simplex (단방향)
+
 - 한쪽 방향으로만 전송(예: 센서→수집기, 방송).
 - **장점**: 단순/효율적. **단점**: 피드백 불가(ARQ 미사용).
 
-### 2. Half-Duplex (반이중)
+### Half-Duplex (반이중)
+
 - 양방향 가능하나 **동시 전송 불가**(무전기).
 - 충돌 회피/전환 프로토콜 필요(토큰 기반/RTS-CTS 등).
 
-### 3. Full-Duplex (전이중)
+### Full-Duplex (전이중)
+
 - **동시에 양방향** 전송(전화, 스위치 이더넷).
 - 물리적/논리적 분리(쌍선 분리, 주파수 분할, 시분할).
 
@@ -140,11 +151,11 @@ A <---> B  (동시에 송수신)
 
 ---
 
-# 1.2 Networks
+# Networks
 
-## 1.2.1 Network Criteria (네트워크 기준)
+## Network Criteria (네트워크 기준)
 
-### 1. Performance (성능)
+### Performance (성능)
 
 - **처리량(Throughput)**:
   $$ \text{Throughput} = \frac{\text{성공적으로 전달된 비트 수}}{\text{시간}} $$
@@ -179,14 +190,14 @@ def simulate(n=1000, base_gap_ms=10, jitter_ms=5, loss_prob=0.02):
 print(simulate())
 ```
 
-### 2. Reliability (신뢰도)
+### Reliability (신뢰도)
 
 - **MTBF(평균고장간격)**, **MTTR(평균복구시간)**.
   가용도(Availability):
   $$ A = \frac{\text{MTBF}}{\text{MTBF} + \text{MTTR}} $$
 - **지점별 중복**(링크/장비/전원), **경로 다양성**, **Failover/VRRP/HSRP**, **ECMP**.
 
-### 3. Security (보안)
+### Security (보안)
 
 - **CIA**(기밀성·무결성·가용성).
 - 위협: 무단 접근, 스푸핑/스니핑, MITM, DoS/DDoS, 악성코드, 공급망.
@@ -194,9 +205,9 @@ print(simulate())
 
 ---
 
-## 1.2.2 Physical Structures (물리적 구조)
+## Physical Structures (물리적 구조)
 
-### 1. Type of Connection (연결 유형)
+### Type of Connection (연결 유형)
 
 - **Point-to-Point (점대점)**: 두 노드가 직접 연결.
   - 예: 서버↔스위치 업링크, 전용회선, 직결 DAC/광모듈.
@@ -217,7 +228,7 @@ Multipoint (Shared Bus/Medium)
  B --+       +-- D
 ```
 
-### 2. Physical Topology (물리적 토폴로지)
+### Physical Topology (물리적 토폴로지)
 
 #### (1) Mesh Topology (그물망형)
 
@@ -266,9 +277,9 @@ Multipoint (Shared Bus/Medium)
 
 ---
 
-# 2. 실전 확장: 정확성(오류 제어)·흐름/혼잡 제어·QoS
+# 실전 확장: 정확성(오류 제어)·흐름/혼잡 제어·QoS
 
-## 2.1 오류 검출·정정
+## 오류 검출·정정
 
 - **패리티**: 저비용 검출(단일 비트 오류만).
 - **CRC**: 다항식 기반 강력 검출(이더넷 FCS).
@@ -284,6 +295,7 @@ $$
 
 ```python
 # 간단한 패리티(짝수) 예제
+
 def add_parity(bits):
     p = sum(bits) % 2
     bits.append(p)  # 짝수 패리티
@@ -299,7 +311,7 @@ rx[1] ^= 1  # 전송 중 1비트 오류 유발
 print("valid?", check_parity(rx))  # False -> 재전송(ARQ)
 ```
 
-## 2.2 흐름 제어(Flow Control) & 혼잡 제어(Congestion Control)
+## 흐름 제어(Flow Control) & 혼잡 제어(Congestion Control)
 
 - **흐름 제어**: 송신 속도 ≤ 수신 처리능력(버퍼 오버런 방지).
   - Stop-and-Wait, 슬라이딩 윈도우
@@ -311,6 +323,7 @@ print("valid?", check_parity(rx))  # False -> 재전송(ARQ)
 
 ```python
 # 윈도우 최적값 계산 도우미
+
 def optimal_window_bytes(bw_mbps, rtt_ms):
     bw_bps = bw_mbps * 1_000_000
     rtt_s = rtt_ms / 1000
@@ -319,16 +332,16 @@ def optimal_window_bytes(bw_mbps, rtt_ms):
 print(optimal_window_bytes(100, 50))  # 100Mbps, RTT 50ms일 때 윈도우 바이트
 ```
 
-## 2.3 QoS(품질 보장)
+## QoS(품질 보장)
 
 - 분류/마킹(DSCP), 큐잉(LLQ/CBWFQ), 셰이핑/폴리싱, WRED.
 - 미디어 스트림: **지터 버퍼**, FEC, 적응형 비트레이트(ABR).
 
 ---
 
-# 3. 사례 중심 학습 시나리오
+# 사례 중심 학습 시나리오
 
-## 3.1 “원격 제어 로봇” 링크 설계
+## “원격 제어 로봇” 링크 설계
 
 **요구**: 720p@30fps 영상 + 제어명령 왕복 지연 < 80ms, 손실 1% 이내.
 
@@ -342,7 +355,7 @@ $$
 \text{Video Rate} \approx \text{Res} \times \text{fps} \times \text{bits/pixel} \times \text{압축효율}
 $$
 
-## 3.2 “사무실 VoIP” 최적화 체크리스트
+## “사무실 VoIP” 최적화 체크리스트
 
 - 스위치: 음성 VLAN 분리, 포트 트러스트, PoE 안정성.
 - 라우터: LLQ(음성 우선), 지터 < 30ms, 패킷 손실 < 1%.
@@ -351,24 +364,28 @@ $$
 
 ---
 
-# 4. 간단 실습: 패킷 지연/지터 관측
+# 간단 실습: 패킷 지연/지터 관측
 
-## 4.1 ping/iperf 조합
+## ping/iperf 조합
 
 ```bash
 # 지연/손실 관측
+
 ping -i 0.2 -c 50 target.example.com
 
 # 처리량 측정 (TCP)
+
 iperf3 -c target -t 15
 # UDP에서 손실/지터
+
 iperf3 -c target -u -b 20M -t 15 --get-server-output
 ```
 
-## 4.2 캡처/분석 스니펫
+## 캡처/분석 스니펫
 
 ```bash
 # tcpdump로 5060(SIP)와 RTP(16384-32767)만 캡처
+
 sudo tcpdump -i eth0 -w voip.pcap 'port 5060 or portrange 16384-32767'
 ```
 
@@ -381,7 +398,7 @@ udp && frame.len > 1200
 
 ---
 
-# 5. 문제풀이 감각을 위한 퀵 퀴즈
+# 문제풀이 감각을 위한 퀵 퀴즈
 
 1) **BDP**가 12.5 MB인 회선에서 윈도우가 4 MB라면 링크 사용률은? (대략 **32%**)
 2) **Half-Duplex** 환경에서 두 노드가 동시에 전송하려 할 때 필요한 절차는? (예: **RTS/CTS**, 백오프)
@@ -390,7 +407,7 @@ udp && frame.len > 1200
 
 ---
 
-# 6. 체크리스트 요약
+# 체크리스트 요약
 
 - **전달·정확성·적시성·지터**를 각기 **주소지정/오류제어/지연최적화/버퍼링**으로 대응.
 - **데이터 표현**은 인코딩·엔디언·코덱의 호환성을 우선 검토.

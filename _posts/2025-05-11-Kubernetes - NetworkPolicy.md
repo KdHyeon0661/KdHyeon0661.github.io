@@ -20,7 +20,7 @@ Kubernetes 클러스터는 **정책이 없으면 Pod 간 통신이 모두 허용
 
 ---
 
-## 1. 개념과 동작 원리
+## 개념과 동작 원리
 
 - **NetworkPolicy가 하나도 없으면:** 모든 Pod ↔ Pod 통신 **허용**
 - **하나라도 적용되면:** 해당 정책이 **선택한 Pod**에 대해 **명시된 트래픽만 허용**, 나머지 **차단**
@@ -67,7 +67,7 @@ spec:
 
 ---
 
-## 2. 준비: 네임스페이스/라벨 구성
+## 준비: 네임스페이스/라벨 구성
 
 테스트용 네임스페이스와 라벨을 만든다.
 
@@ -83,12 +83,14 @@ kubectl label ns team-b team=b
 
 ```bash
 # team-a에 nginx 서버와 curl 클라이언트
+
 kubectl -n team-a run nginx --image=nginx:1.25 --port=80 --labels app=nginx
 kubectl -n team-a expose pod nginx --port=80
 
 kubectl -n team-a run curl --image=curlimages/curl:8.9.1 -it --restart=Never -- /bin/sh
 
 # team-b에 curl 클라이언트
+
 kubectl -n team-b run curl --image=curlimages/curl:8.9.1 -it --restart=Never -- /bin/sh
 ```
 
@@ -96,17 +98,19 @@ kubectl -n team-b run curl --image=curlimages/curl:8.9.1 -it --restart=Never -- 
 
 ```bash
 # team-b 쉘에서:
+
 curl -sS http://nginx.team-a.svc.cluster.local
 ```
 
 ---
 
-## 3. 기본 거부(deny)부터: “명시한 것만 허용”
+## 기본 거부(deny)부터: “명시한 것만 허용”
 
-### 3.1 Ingress 기본 거부
+### Ingress 기본 거부
 
 ```yaml
 # deny-all-ingress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -126,13 +130,15 @@ kubectl apply -f deny-all-ingress.yaml
 
 ```bash
 # team-b에서 nginx.team-a로 접근: 타임아웃/거부되어야 함
+
 curl -m 3 -sS http://nginx.team-a.svc.cluster.local || echo "blocked"
 ```
 
-### 3.2 같은 네임스페이스 내부만 허용
+### 같은 네임스페이스 내부만 허용
 
 ```yaml
 # allow-from-same-ns.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -154,15 +160,18 @@ kubectl apply -f allow-from-same-ns.yaml
 
 ```bash
 # team-a의 curl Pod에서 접근: 허용
+
 curl -sS http://nginx.team-a.svc.cluster.local | head -n1
 
 # team-b의 curl Pod에서 접근: 여전히 차단
+
 ```
 
-### 3.3 특정 포트만 허용(예: 80/TCP)
+### 특정 포트만 허용(예: 80/TCP)
 
 ```yaml
 # allow-port-80-only.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -184,12 +193,13 @@ spec:
 
 ---
 
-## 4. 네임스페이스 간 격리: team-a만 허용
+## 네임스페이스 간 격리: team-a만 허용
 
-### 4.1 네임스페이스 라벨 기반 허용
+### 네임스페이스 라벨 기반 허용
 
 ```yaml
 # allow-ingress-from-namespace-label.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -210,18 +220,20 @@ spec:
 ```bash
 # team-a -> team-a: 허용
 # team-b -> team-a: 차단
+
 ```
 
 **중요:** `namespaceSelector`를 사용하려면 대상 네임스페이스에 라벨이 정확히 있어야 한다(이미 앞에서 부여).
 
 ---
 
-## 5. Egress 제어: 외부로 나가는 트래픽 제한
+## Egress 제어: 외부로 나가는 트래픽 제한
 
-### 5.1 Egress 기본 거부
+### Egress 기본 거부
 
 ```yaml
 # deny-all-egress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -233,12 +245,13 @@ spec:
   egress: []   # 아무 데도 나가지 못함
 ```
 
-### 5.2 DNS 허용(필수)
+### DNS 허용(필수)
 
 많은 애플리케이션은 DNS가 없으면 외부 연결이 모두 실패한다. `kube-dns(CoreDNS)`가 있는 네임스페이스(kube-system)로의 53/UDP/TCP를 허용한다.
 
 ```yaml
 # allow-egress-dns.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -257,12 +270,13 @@ spec:
         - { protocol: TCP, port: 53 }
 ```
 
-### 5.3 특정 외부 대역/포트만 화이트리스트
+### 특정 외부 대역/포트만 화이트리스트
 
 예: 인터넷(0.0.0.0/0) 중 내부망(10.0.0.0/8)은 제외하고 **443/TCP만** 허용
 
 ```yaml
 # allow-egress-web443.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -285,9 +299,9 @@ spec:
 
 ---
 
-## 6. 고급 예제 모음
+## 고급 예제 모음
 
-### 6.1 특정 앱 라벨만 접근 허용
+### 특정 앱 라벨만 접근 허용
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -307,7 +321,7 @@ spec:
         - { protocol: TCP, port: 80 }
 ```
 
-### 6.2 egress 대상이 내부 Service일 때(네임스페이스 분리)
+### egress 대상이 내부 Service일 때(네임스페이스 분리)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -327,7 +341,7 @@ spec:
         - { protocol: TCP, port: 8080 }
 ```
 
-### 6.3 포트 범위 허용(endPort)
+### 포트 범위 허용(endPort)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -347,7 +361,7 @@ spec:
           endPort: 30010   # 30000~30010 허용
 ```
 
-### 6.4 IPv6 예시
+### IPv6 예시
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -368,9 +382,9 @@ spec:
 
 ---
 
-## 7. 테스트/검증 레시피
+## 테스트/검증 레시피
 
-### 7.1 도구 Pod
+### 도구 Pod
 
 - **curl**: `curlimages/curl:latest`
 - **busybox**: `busybox:1.36` (`wget` 내장)
@@ -380,18 +394,22 @@ spec:
 kubectl -n team-a run netshoot --image=nicolaka/netshoot -it --rm -- /bin/bash
 ```
 
-### 7.2 연결 테스트 패턴
+### 연결 테스트 패턴
 
 ```bash
 # DNS 확인
+
 dig +short nginx.team-a.svc.cluster.local
 
 # 포트 체크
+
 curl -v telnet://nginx.team-a.svc.cluster.local:80
 # 또는
+
 nc -vz nginx.team-a.svc.cluster.local 80
 
 # 외부(예: https)
+
 curl -I https://example.com
 ```
 
@@ -399,7 +417,7 @@ curl -I https://example.com
 
 ---
 
-## 8. 운영 팁 & 베스트 프랙티스
+## 운영 팁 & 베스트 프랙티스
 
 - **기본 거부(deny-all)** 부터 시작해 **필요한 것만 허용**(화이트리스트)
 - **DNS egress**를 잊지 말 것(53/UDP/TCP). DNS가 막히면 모든 외부 접근이 무너진다.
@@ -413,12 +431,13 @@ curl -I https://example.com
 
 ---
 
-## 9. 시나리오 통합 실습(한 번에 적용)
+## 시나리오 통합 실습(한 번에 적용)
 
 아래 번들은 **team-a를 기본 차단**, **동일 NS 허용**, **포트80만**, **DNS & 외부 443만 허용**을 묶은 **현실적인 스타터 정책**이다.
 
 ```yaml
 # 01-deny-all-ingress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -429,6 +448,7 @@ spec:
   policyTypes: ["Ingress"]
 ---
 # 02-allow-same-ns-on-80.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -444,6 +464,7 @@ spec:
         - { protocol: TCP, port: 80 }
 ---
 # 03-deny-all-egress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -455,6 +476,7 @@ spec:
   egress: []
 ---
 # 04-allow-dns-egress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -473,6 +495,7 @@ spec:
         - { protocol: TCP, port: 53 }
 ---
 # 05-allow-web443-egress.yaml
+
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -507,7 +530,7 @@ kubectl apply -f 01-deny-all-ingress.yaml \
 
 ---
 
-## 10. 트러블슈팅 가이드
+## 트러블슈팅 가이드
 
 | 증상 | 원인 후보 | 해결 방안 |
 |---|---|---|
@@ -522,7 +545,7 @@ kubectl apply -f 01-deny-all-ingress.yaml \
 
 ---
 
-## 11. CNI 지원 현황(요지)
+## CNI 지원 현황(요지)
 
 | CNI | NetworkPolicy |
 |---|---|

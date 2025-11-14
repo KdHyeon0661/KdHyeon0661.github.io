@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 배포 방법 완전 정복 (IIS, Linux, Docker, Azure)
 
-## 0. 배포 전략 큰 그림
+## 배포 전략 큰 그림
 
 - ASP.NET Core는 **자체 웹서버(Kestrel)** 를 포함한다. 엣지(Edge) 역활은 IIS/Nginx/Apache(리버스 프록시)가 담당.
 - 배포 4대 축
@@ -18,9 +18,9 @@ category: AspNet
 
 ---
 
-## 1. 사전 공통: Publish 산출물과 런타임 모드
+## 사전 공통: Publish 산출물과 런타임 모드
 
-### 1.1 Self-contained vs Framework-dependent
+### Self-contained vs Framework-dependent
 
 | 구분 | 설명 | 장점 | 단점 | 사용 예 |
 |---|---|---|---|---|
@@ -29,35 +29,38 @@ category: AspNet
 
 ```bash
 # Framework-dependent
+
 dotnet publish -c Release -o ./publish
 
 # Self-contained (Linux x64 예시)
+
 dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishTrimmed=true -o ./publish
 ```
 
-### 1.2 appsettings.{ENV}.json + 환경 변수 구성
+### appsettings.{ENV}.json + 환경 변수 구성
 
 - `ASPNETCORE_ENVIRONMENT` 로 Development/Staging/Production 분기
 - 민감정보는 **환경 변수** 또는 **User Secrets(개발용)** / 비밀 저장소(Azure Key Vault 등)
 
 ```bash
 # Linux 예
+
 export ASPNETCORE_ENVIRONMENT=Production
 export ConnectionStrings__Default="Server=db;Database=app;User Id=app;Password=***"
 ```
 
 ---
 
-## 2. Windows IIS 배포 (Internet Information Services)
+## Windows IIS 배포 (Internet Information Services)
 
-### 2.1 준비물
+### 준비물
 
 - **.NET Hosting Bundle** (ASP.NET Core Module 포함) 설치
   → dotnet 공식 다운로드의 Hosting Bundle
 - Windows Server + IIS 역할(Role)
 - 방화벽/포트(80/443) 개방
 
-### 2.2 Publish & 사이트 구성
+### Publish & 사이트 구성
 
 ```bash
 dotnet publish -c Release -o C:\Sites\MyApp
@@ -67,7 +70,7 @@ IIS 관리자 → **사이트 추가**
 - 물리 경로: `C:\Sites\MyApp`
 - 호스트 이름/포트: 실제 운영 도메인/포트
 
-### 2.3 web.config (in-process 권장)
+### web.config (in-process 권장)
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
@@ -97,12 +100,12 @@ IIS 관리자 → **사이트 추가**
 > `hostingModel="inprocess"`: IIS 워커 프로세스 내 호스팅으로 성능/일체감 우수.
 > `stdoutLogEnabled` 는 **문제 발생 시에만** 잠깐 켜고, 정상화 후 꺼둘 것.
 
-### 2.4 HTTPS 바인딩
+### HTTPS 바인딩
 
 - IIS → 사이트 → 바인딩 → **https 추가**
 - 인증서(서버 인증) 선택, SNI 사용(다중도메인 시)
 
-### 2.5 응용 프로그램 풀(App Pool) 설정 팁
+### 응용 프로그램 풀(App Pool) 설정 팁
 
 - .NET CLR 버전: **무관**(in-process)
 - 고급 설정:
@@ -110,7 +113,7 @@ IIS 관리자 → **사이트 추가**
   - **Recycling**: 시간/요청수 기반 재시작 정책
 - 아이덴티티: 애플리케이션 파일 접근 권한 필요한 경우 **권한 조정**
 
-### 2.6 URL Rewrite & 리다이렉트(선택)
+### URL Rewrite & 리다이렉트(선택)
 
 HTTP→HTTPS 강제, www 제거 등은 URL Rewrite 모듈로 처리.
 
@@ -128,7 +131,7 @@ HTTP→HTTPS 강제, www 제거 등은 URL Rewrite 모듈로 처리.
 </rewrite>
 ```
 
-### 2.7 로깅/핵심 트러블슈팅
+### 로깅/핵심 트러블슈팅
 
 - **Windows Event Viewer → Application**: ASP.NET Core Module 오류 확인
 - `.\logs\stdout_*.log` (임시): 앱 초기화 실패 추적
@@ -137,9 +140,9 @@ HTTP→HTTPS 강제, www 제거 등은 URL Rewrite 모듈로 처리.
 
 ---
 
-## 3. Linux + Nginx + Kestrel
+## Linux + Nginx + Kestrel
 
-### 3.1 .NET Runtime 설치(런타임형 배포 시)
+### .NET Runtime 설치(런타임형 배포 시)
 
 ```bash
 wget https://dot.net/v1/dotnet-install.sh
@@ -147,13 +150,13 @@ chmod +x dotnet-install.sh
 ./dotnet-install.sh --channel 8.0
 ```
 
-### 3.2 배포
+### 배포
 
 ```bash
 dotnet publish -c Release -o /var/www/myapp
 ```
 
-### 3.3 systemd 서비스로 데몬화
+### systemd 서비스로 데몬화
 
 `/etc/systemd/system/myapp.service`:
 
@@ -181,10 +184,11 @@ sudo systemctl enable --now myapp
 sudo systemctl status myapp
 ```
 
-### 3.4 Nginx 리버스 프록시(HTTPS 권장)
+### Nginx 리버스 프록시(HTTPS 권장)
 
 ```nginx
 # /etc/nginx/sites-available/myapp.conf
+
 server {
     listen 80;
     server_name example.com;
@@ -223,7 +227,7 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 3.5 Let’s Encrypt 자동 발급/갱신
+### Let’s Encrypt 자동 발급/갱신
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
@@ -231,7 +235,7 @@ sudo certbot --nginx -d example.com
 sudo certbot renew --dry-run
 ```
 
-### 3.6 ASP.NET Core에서 프록시 헤더 처리
+### ASP.NET Core에서 프록시 헤더 처리
 
 ```csharp
 using Microsoft.AspNetCore.HttpOverrides;
@@ -256,18 +260,20 @@ app.Run();
 
 ---
 
-## 4. Docker 배포(단독 컨테이너/Compose)
+## Docker 배포(단독 컨테이너/Compose)
 
-### 4.1 Dockerfile (멀티스테이지)
+### Dockerfile (멀티스테이지)
 
 ```dockerfile
 # build
+
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY . .
 RUN dotnet publish -c Release -o /out
 
 # run
+
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 COPY --from=build /out .
@@ -286,7 +292,7 @@ docker run -d -p 8080:8080 --name myapp \
 
 > HTTPS는 컨테이너 외부 프록시(Nginx/Traefik, 클라우드 LB)에서 처리하는 패턴이 일반적.
 
-### 4.2 docker-compose로 Nginx + 앱
+### docker-compose로 Nginx + 앱
 
 `docker-compose.yml`:
 
@@ -342,7 +348,7 @@ server {
 docker compose up -d --build
 ```
 
-### 4.3 컨테이너 운영 팁
+### 컨테이너 운영 팁
 
 - 읽기 전용 루트, non-root 유저, 헬스체크 추가
 - 로그는 **표준 출력**으로 수집(ELK/CloudWatch/Log Analytics 연계)
@@ -350,22 +356,23 @@ docker compose up -d --build
 
 ---
 
-## 5. Azure App Service (PaaS)
+## Azure App Service (PaaS)
 
-### 5.1 장점/특징
+### 장점/특징
 
 - 운영 부담 최소화: 인프라 관리, OS 패치, LB, 인증서 바인딩, 스케일링, 슬롯 배포 제공
 - CI/CD: GitHub Actions/DevOps와 **원클릭** 통합
 
-### 5.2 기본 배포(Visual Studio/CLI)
+### 기본 배포(Visual Studio/CLI)
 
 ```bash
 dotnet publish -c Release -o ./publish
 # Azure CLI zip 배포 예시
+
 az webapp deploy --name <app-name> --resource-group <rg> --src-path ./publish
 ```
 
-### 5.3 GitHub Actions 예시
+### GitHub Actions 예시
 
 `.github/workflows/azure.yml`:
 
@@ -392,13 +399,13 @@ jobs:
         package: ./publish
 ```
 
-### 5.4 슬롯(Slot) 무중단 배포
+### 슬롯(Slot) 무중단 배포
 
 - **Staging → Production** 스왑
 - 설정 스티키(슬롯 고정)로 비밀키/연결문자열 분리
 - 장애시 **즉시 롤백(스왑 백)** 가능
 
-### 5.5 App Service 구성
+### App Service 구성
 
 - **구성 → 애플리케이션 설정**: 환경 변수 주입
 - **TLS/SSL 설정**: 인증서 바인딩
@@ -406,7 +413,7 @@ jobs:
 
 ---
 
-## 6. HTTPS/보안/성능 필수 체크리스트
+## HTTPS/보안/성능 필수 체크리스트
 
 - HTTPS 강제(리다이렉트) + HSTS(프로덕션만)
 - TLS 1.2+ 제한, 약한 Cipher 제외
@@ -420,7 +427,7 @@ jobs:
 
 ---
 
-## 7. 무중단/점진 배포(Blue-Green/Canary)
+## 무중단/점진 배포(Blue-Green/Canary)
 
 - **Nginx 업스트림 이원화**: `upstream app { server A; server B; }` 로 새 버전 가중치 조절
 - Azure App Service **슬롯 스왑**: 표준 기능
@@ -429,9 +436,9 @@ jobs:
 
 ---
 
-## 8. 헬스체크/상태 페이지
+## 헬스체크/상태 페이지
 
-### 8.1 .NET 내장 헬스체크
+### .NET 내장 헬스체크
 
 ```csharp
 builder.Services.AddHealthChecks()
@@ -444,7 +451,7 @@ app.Run();
 
 - Nginx/Cloud LB가 `/health` 200일 때만 트래픽 라우팅
 
-### 8.2 간단 상태 엔드포인트
+### 간단 상태 엔드포인트
 
 ```csharp
 app.MapGet("/status", () =>
@@ -458,7 +465,7 @@ app.MapGet("/status", () =>
 
 ---
 
-## 9. 로그/모니터링 권장
+## 로그/모니터링 권장
 
 - **Serilog** + Console/File/Seq/Elastic sink
 - Nginx/IIS 액세스 로그와 상관관계 분석
@@ -481,7 +488,7 @@ builder.Host.UseSerilog();
 
 ---
 
-## 10. 트러블슈팅 모음
+## 트러블슈팅 모음
 
 | 증상 | 원인 | 대처 |
 |---|---|---|
@@ -494,7 +501,7 @@ builder.Host.UseSerilog();
 
 ---
 
-## 11. 보너스: Windows 서비스(Worker) 배포
+## 보너스: Windows 서비스(Worker) 배포
 
 웹이 아닌 백그라운드 서비스:
 
@@ -517,7 +524,7 @@ host.Run();
 
 ---
 
-## 12. 최종 요약: 상황별 추천
+## 최종 요약: 상황별 추천
 
 | 상황 | 추천 |
 |---|---|
@@ -528,9 +535,9 @@ host.Run();
 
 ---
 
-## 13. 실습 지향 QuickStart 레시피
+## 실습 지향 QuickStart 레시피
 
-### 13.1 최소 API + 헬스 + HTTPS 리다이렉트 + 프록시 헤더
+### 최소 API + 헬스 + HTTPS 리다이렉트 + 프록시 헤더
 
 ```csharp
 using Microsoft.AspNetCore.HttpOverrides;
@@ -552,7 +559,7 @@ app.MapHealthChecks("/health");
 app.Run();
 ```
 
-### 13.2 Nginx(프로덕션) 최소 설정
+### Nginx(프로덕션) 최소 설정
 
 ```nginx
 server { listen 80; server_name example.com; return 301 https://$host$request_uri; }

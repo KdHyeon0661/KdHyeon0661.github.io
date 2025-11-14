@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core에서 파일 업로드 및 이미지 처리
 
-## 0. 요구사항 정리와 아키텍처 선택
+## 요구사항 정리와 아키텍처 선택
 
 | 상황 | 권장 아키텍처 |
 |---|---|
@@ -18,9 +18,10 @@ category: AspNet
 
 ---
 
-## 1. 기본: Razor Pages 단일 파일 업로드(보안 강화 버전)
+## 기본: Razor Pages 단일 파일 업로드(보안 강화 버전)
 
-### 1.1 폴더 구조
+### 폴더 구조
+
 ```
 MyApp/
 ├── Pages/
@@ -33,7 +34,8 @@ MyApp/
 │   └── uploads/
 ```
 
-### 1.2 업로드 폼
+### 업로드 폼
+
 ```razor
 @page
 @model UploadModel
@@ -52,7 +54,8 @@ MyApp/
 }
 ```
 
-### 1.3 백엔드: 유효성 검사 + 안전 저장
+### 백엔드: 유효성 검사 + 안전 저장
+
 ```csharp
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -130,7 +133,8 @@ public class UploadModel : PageModel
 }
 ```
 
-### 1.4 유효성 검사 유틸
+### 유효성 검사 유틸
+
 ```csharp
 public class FileValidator
 {
@@ -191,7 +195,7 @@ public class FileValidator
 
 ---
 
-## 2. 다중 파일 업로드(대용량 안전 처리)
+## 다중 파일 업로드(대용량 안전 처리)
 
 ```razor
 @page
@@ -244,9 +248,10 @@ public class MultiUploadModel : PageModel
 
 ---
 
-## 3. 업로드 제한 및 서버 보호
+## 업로드 제한 및 서버 보호
 
-### 3.1 글로벌 제한(Program.cs)
+### 글로벌 제한(Program.cs)
+
 ```csharp
 using Microsoft.AspNetCore.Http.Features;
 
@@ -257,13 +262,15 @@ builder.Services.Configure<FormOptions>(o =>
 });
 ```
 
-### 3.2 엔드포인트별 제한
+### 엔드포인트별 제한
+
 ```csharp
 [RequestSizeLimit(10_000_000)]
 public IActionResult Upload() => View();
 ```
 
-### 3.3 레이트리미팅(.NET 8)
+### 레이트리미팅(.NET 8)
+
 ```csharp
 builder.Services.AddRateLimiter(_ => _.AddTokenBucketLimiter("upload", options =>
 {
@@ -278,9 +285,10 @@ app.MapPost("/upload", async context => { /* ... */ }).RequireRateLimiting("uplo
 
 ---
 
-## 4. 이미지 처리 파이프라인(ImageSharp)
+## 이미지 처리 파이프라인(ImageSharp)
 
-### 4.1 리사이즈/포맷/품질/EXIF 제거
+### 리사이즈/포맷/품질/EXIF 제거
+
 ```csharp
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -328,7 +336,8 @@ public class ImagePipeline
 }
 ```
 
-### 4.2 워터마크/크롭 예시
+### 워터마크/크롭 예시
+
 ```csharp
 image.Mutate(x => x
     .Crop(new Rectangle(10, 10, 400, 400))
@@ -337,9 +346,10 @@ image.Mutate(x => x
 
 ---
 
-## 5. AJAX 업로드(Minimal API)와 진척도 표시
+## AJAX 업로드(Minimal API)와 진척도 표시
 
-### 5.1 클라이언트
+### 클라이언트
+
 ```html
 <input type="file" id="fileInput" />
 <progress id="pg" value="0" max="100"></progress>
@@ -362,7 +372,8 @@ input.addEventListener('change', async () => {
 </script>
 ```
 
-### 5.2 서버(Minimal API)
+### 서버(Minimal API)
+
 ```csharp
 app.MapPost("/api/upload", async (HttpRequest req, IWebHostEnvironment env, FileValidator validator) =>
 {
@@ -390,7 +401,7 @@ app.MapPost("/api/upload", async (HttpRequest req, IWebHostEnvironment env, File
 
 ---
 
-## 6. 대용량 스트리밍(BodyReader)으로 메모리 사용 줄이기
+## 대용량 스트리밍(BodyReader)으로 메모리 사용 줄이기
 
 ```csharp
 app.MapPost("/api/upload/stream", async (HttpContext ctx, IWebHostEnvironment env) =>
@@ -424,13 +435,14 @@ app.MapPost("/api/upload/stream", async (HttpContext ctx, IWebHostEnvironment en
 
 ---
 
-## 7. 조각(Resumable) 업로드(간단 버전)
+## 조각(Resumable) 업로드(간단 버전)
 
 1) 클라이언트가 업로드 세션 생성 요청 → 서버가 `uploadId` 반환
 2) 각 조각(chunkIndex, totalChunks)로 전송 → 서버는 임시 디렉터리에 저장
 3) 마지막 조각 도착 시 서버가 머지하고 무결성 해시 검증 → 완료
 
-### 7.1 세션 생성
+### 세션 생성
+
 ```csharp
 app.MapPost("/api/chunk/init", () =>
 {
@@ -439,7 +451,8 @@ app.MapPost("/api/chunk/init", () =>
 });
 ```
 
-### 7.2 조각 업로드
+### 조각 업로드
+
 ```csharp
 app.MapPost("/api/chunk/{uploadId}/{index:int}/{total:int}", async (string uploadId, int index, int total, HttpRequest req, IWebHostEnvironment env) =>
 {
@@ -475,9 +488,10 @@ app.MapPost("/api/chunk/{uploadId}/{index:int}/{total:int}", async (string uploa
 
 ---
 
-## 8. 다운로드 보호 및 직접 접근 차단
+## 다운로드 보호 및 직접 접근 차단
 
-### 8.1 공개 디렉터리 대신 컨트롤러를 통한 제공
+### 공개 디렉터리 대신 컨트롤러를 통한 제공
+
 ```csharp
 [ApiController]
 [Route("files")]
@@ -498,7 +512,8 @@ public class FilesController : ControllerBase
 }
 ```
 
-### 8.2 서명 URL(짧은 TTL) 발급 패턴
+### 서명 URL(짧은 TTL) 발급 패턴
+
 - 다운로드 URL에 `token=HMAC(fileId, expires)` 추가
 - 미들웨어에서 토큰/만료 검증 후 통과
 
@@ -513,9 +528,10 @@ public static string Sign(string input, string secret)
 
 ---
 
-## 9. 클라우드 스토리지(Blob/S3) 연동
+## 클라우드 스토리지(Blob/S3) 연동
 
-### 9.1 Azure Blob 기본 업로드
+### Azure Blob 기본 업로드
+
 ```csharp
 // dotnet add package Azure.Storage.Blobs
 var blob = new BlobClient(connectionString, "uploads", fileName);
@@ -523,7 +539,8 @@ await using var stream = file.OpenReadStream();
 await blob.UploadAsync(stream, overwrite: false);
 ```
 
-### 9.2 SAS로 브라우저 직업로드(백엔드 부하 제로)
+### SAS로 브라우저 직업로드(백엔드 부하 제로)
+
 - 서버: **쓰기 권한이 담긴 SAS URL**을 짧게 발급
 - 프런트: 그 URL에 바로 PUT 업로드
 
@@ -536,7 +553,8 @@ var signedUrl = new UriBuilder(blobUri) { Query = sig.ToString() }.Uri;
 return Results.Ok(new { url = signedUrl.ToString() });
 ```
 
-### 9.3 AWS S3 Presigned URL
+### AWS S3 Presigned URL
+
 ```csharp
 // dotnet add package AWSSDK.S3
 var request = new GetPreSignedUrlRequest
@@ -554,7 +572,7 @@ var url = s3Client.GetPreSignedURL(request);
 
 ---
 
-## 10. 백그라운드 작업으로 썸네일/워터마크 처리
+## 백그라운드 작업으로 썸네일/워터마크 처리
 
 ```csharp
 public class ImageJobQueue
@@ -601,7 +619,7 @@ await _queue.EnqueueAsync(filePath);
 
 ---
 
-## 11. CORS, CSRF, 헤더 보안
+## CORS, CSRF, 헤더 보안
 
 - 폼 업로드는 CSRF 보호(기본 `@Html.AntiForgeryToken()` / Razor Pages는 자동)
 - AJAX 업로드는 `RequestVerificationToken` 헤더로 CSRF 토큰 전달
@@ -611,7 +629,7 @@ await _queue.EnqueueAsync(filePath);
 
 ---
 
-## 12. 로깅/감사/관찰
+## 로깅/감사/관찰
 
 - 업로드 결과: 파일명, 원본명, 크기, 해시, 사용자ID, IP, User-Agent
 - 처리 파이프라인: 단계별 소요시간(MiniProfiler), 실패 사유
@@ -626,9 +644,10 @@ _logger.LogInformation("Upload ok {UserId} {File} {Size} {Sha256}",
 
 ---
 
-## 13. 테스트(xUnit + Integration)
+## 테스트(xUnit + Integration)
 
-### 13.1 단위: 검증기
+### 단위: 검증기
+
 ```csharp
 public class FileValidatorTests
 {
@@ -643,7 +662,8 @@ public class FileValidatorTests
 }
 ```
 
-### 13.2 통합: 업로드 엔드포인트
+### 통합: 업로드 엔드포인트
+
 ```csharp
 public class UploadIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -668,7 +688,7 @@ public class UploadIntegrationTests : IClassFixture<WebApplicationFactory<Progra
 
 ---
 
-## 14. 운영 체크리스트
+## 운영 체크리스트
 
 - 확장자/MIME/시그니처 **3중 검증**
 - 파일명 랜덤화, 경로 탐색 방지, 전용 디렉터리(권한 최소)
@@ -681,9 +701,10 @@ public class UploadIntegrationTests : IClassFixture<WebApplicationFactory<Progra
 
 ---
 
-## 15. 구성 스니펫 모음
+## 구성 스니펫 모음
 
-### 15.1 업로드 제한 응답을 ProblemDetails로
+### 업로드 제한 응답을 ProblemDetails로
+
 ```csharp
 app.Use(async (ctx, next) =>
 {
@@ -699,7 +720,8 @@ app.Use(async (ctx, next) =>
 });
 ```
 
-### 15.2 wwwroot/uploads/{yyyy}/{MM}/ 경로
+### wwwroot/uploads/{yyyy}/{MM}/ 경로
+
 ```csharp
 var now = DateTime.UtcNow;
 var dir = Path.Combine(_env.WebRootPath, "uploads", now.ToString("yyyy"), now.ToString("MM"));

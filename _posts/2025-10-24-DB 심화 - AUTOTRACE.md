@@ -13,7 +13,7 @@ category: DB 심화
 
 ---
 
-## 0. 한눈 요약
+## 한눈 요약
 
 - `AUTOTRACE`는 **SQL*Plus/SQLcl**에서 **SQL 실행 직후**에
   1) **예상 실행계획(EXPLAIN PLAN 기반)** 과
@@ -28,15 +28,17 @@ category: DB 심화
 
 ---
 
-## 1. 설치·권한(최초 1회)
+## 설치·권한(최초 1회)
 
-### 1.1 PLAN_TABLE 준비
+### PLAN_TABLE 준비
+
 ```sql
 -- 이미 있는 경우가 많지만, 없으면 스키마에서 실행
 @?/rdbms/admin/utlxplan.sql
 ```
 
-### 1.2 PLUSTRACE 역할(세션 통계 접근 권한)
+### PLUSTRACE 역할(세션 통계 접근 권한)
+
 > AUTOTRACE의 “Statistics” 출력에 필요(세션이 v$sesstat 등의 조회 권한).
 
 ```sql
@@ -52,7 +54,7 @@ GRANT plustrace TO your_user;
 
 ---
 
-## 2. 기본 사용법(옵션 총정리)
+## 기본 사용법(옵션 총정리)
 
 ```sql
 -- 결과 + 계획 + 통계(둘 다). 쿼리 결과도 화면에 출력
@@ -81,7 +83,7 @@ SET AUTOTRACE OFF;
 
 ---
 
-## 3. 출력 형식 이해(무엇을 보여주나?)
+## 출력 형식 이해(무엇을 보여주나?)
 
 AUTOTRACE는 보통 **두 블록**을 보여줍니다.
 
@@ -99,7 +101,7 @@ AUTOTRACE는 보통 **두 블록**을 보여줍니다.
 
 ---
 
-## 4. 예제 스키마 준비
+## 예제 스키마 준비
 
 ```sql
 DROP TABLE customers PURGE;
@@ -151,9 +153,10 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER,'ORDERS',cascade=>TRUE);
 
 ---
 
-## 5. 케이스 1 — **인덱스 범위 스캔 vs 풀스캔** 비교
+## 케이스 1 — **인덱스 범위 스캔 vs 풀스캔** 비교
 
-### 5.1 인덱스 활용 쿼리
+### 인덱스 활용 쿼리
+
 ```sql
 SET AUTOTRACE TRACEONLY;
 
@@ -174,7 +177,8 @@ AND    o.order_date BETWEEN :d1 AND :d2;
   - `physical reads` 가 0이면 **버퍼캐시 히트**
   - `bytes sent via SQL*Net to client` 가 작으면 결과 출력 부담 미미
 
-### 5.2 풀스캔 유도(힌트로 비교)
+### 풀스캔 유도(힌트로 비교)
+
 ```sql
 SELECT /*+ FULL(o) */ SUM(o.amount)
 FROM   orders o
@@ -189,7 +193,7 @@ AND    o.order_date BETWEEN :d1 AND :d2;
 
 ---
 
-## 6. 케이스 2 — **정렬/스필** 감지(Temp 사용)
+## 케이스 2 — **정렬/스필** 감지(Temp 사용)
 
 ```sql
 -- 정렬이 필요한 쿼리
@@ -211,7 +215,7 @@ ORDER  BY amt DESC;
 
 ---
 
-## 7. 케이스 3 — **조인 전략(NL vs HASH)** 빠른 스크리닝
+## 케이스 3 — **조인 전략(NL vs HASH)** 빠른 스크리닝
 
 ```sql
 -- 기본 (옵티마이저 기본 선택)
@@ -242,7 +246,7 @@ WHERE  c.grade >= 3;
 
 ---
 
-## 8. 케이스 4 — **DML**(UPDATE/INSERT)에서 AUTOTRACE
+## 케이스 4 — **DML**(UPDATE/INSERT)에서 AUTOTRACE
 
 ```sql
 SET AUTOTRACE ON;
@@ -263,7 +267,7 @@ AND    order_date  >= :d1;
 
 ---
 
-## 9. 케이스 5 — **TRACEONLY STATISTICS**로 **쿼리 결과 전송 비용 제거**
+## 케이스 5 — **TRACEONLY STATISTICS**로 **쿼리 결과 전송 비용 제거**
 
 ```sql
 SET AUTOTRACE TRACEONLY STATISTICS;
@@ -276,7 +280,7 @@ SELECT * FROM orders WHERE customer_id = :cid;
 
 ---
 
-## 10. AUTOTRACE vs `DISPLAY_CURSOR(ALLSTATS LAST)` 차이
+## AUTOTRACE vs `DISPLAY_CURSOR(ALLSTATS LAST)` 차이
 
 | 항목 | AUTOTRACE | DISPLAY_CURSOR('ALLSTATS LAST') |
 |---|---|---|
@@ -296,7 +300,7 @@ SELECT * FROM orders WHERE customer_id = :cid;
 
 ---
 
-## 11. AUTOTRACE 출력 해석 팁(지표별)
+## AUTOTRACE 출력 해석 팁(지표별)
 
 - `recursive calls`: 데이터 딕셔너리 접근/자동 통계/뷰 변환 등 **부수 SQL**. 과다 시 **원인 SQL** 확인.
 - `db block gets`(현재 읽기) vs `consistent gets`(CR 읽기): DML/갱신 경로에서 **db block gets** 증가 경향.
@@ -308,7 +312,7 @@ SELECT * FROM orders WHERE customer_id = :cid;
 
 ---
 
-## 12. AUTOTRACE 한계 & 주의점
+## AUTOTRACE 한계 & 주의점
 
 1) **계획은 EXPLAIN**: **실제 실행과 다를 수 있음**(바인드 피킹/적응 계획/병렬/자료 변동).
 2) **라인 단위 분해 없음**: 어느 Plan Id에서 시간을 쓰는지 **직접 알 수 없음**.
@@ -318,7 +322,7 @@ SELECT * FROM orders WHERE customer_id = :cid;
 
 ---
 
-## 13. AUTOTRACE + 정밀 도구 조합
+## AUTOTRACE + 정밀 도구 조합
 
 - **세션 통계만으로 부족**하면:
   - **SQL Monitor**(Real-Time Report): Plan 라인별 경과시간/Temp/읽기/병렬 그레인
@@ -340,9 +344,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 
 ---
 
-## 14. 자주 쓰는 운영 패턴(템플릿)
+## 자주 쓰는 운영 패턴(템플릿)
 
-### 14.1 튜닝 5분 루틴
+### 튜닝 5분 루틴
+
 ```sql
 SET AUTOTRACE TRACEONLY;
 -- 1) 후보 SQL 실행 → 세션 통계(consistent/physical/sorts/redo) 확인
@@ -356,21 +361,22 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 -- 4) 수정(인덱스/통계/조인순서/힌트) → 반복
 ```
 
-### 14.2 대량 배치 전 검증
+### 대량 배치 전 검증
+
 - `TRACEONLY EXPLAIN` 으로 **대략의 경로** 확인
 - 소량 샘플로 `TRACEONLY STATISTICS` → **Redo/Sort/Reads** 규모 감지
 - 예상보다 `sorts (disk)` / `physical writes` 가 크면 **PGA/TEMP/조인 전략 조정**
 
 ---
 
-## 15. (참고) SQLcl / SQL Developer에서의 Autotrace
+## (참고) SQLcl / SQL Developer에서의 Autotrace
 
 - **SQLcl**: `SET AUTOTRACE` 동일, 출력이 `DBMS_XPLAN` 기반으로 다소 **가독성 향상**.
 - **SQL Developer**: **Autotrace 탭** 제공(실행 후 Plan/Statistics), GUI에서 **실행 결과 숨기기** 옵션 존재.
 
 ---
 
-## 16. 미니 FAQ
+## 미니 FAQ
 
 **Q1. AUTOTRACE의 Plan이 실제와 달라 보여요.**
 A. 정상입니다. AUTOTRACE Plan은 **EXPLAIN** 기반입니다. **실제는 `DISPLAY_CURSOR(ALLSTATS LAST)`** 로 보세요.
@@ -386,7 +392,7 @@ A. `SET AUTOTRACE TRACEONLY` 로 **결과 출력**을 생략하세요. 네트워
 
 ---
 
-## 17. 핵심 정리
+## 핵심 정리
 
 - **AUTOTRACE** = **빠른 스크리닝 도구**:
   - **예상 계획**(EXPLAIN) + **세션 통계 요약**으로 **쿼리 성격**을 즉시 파악

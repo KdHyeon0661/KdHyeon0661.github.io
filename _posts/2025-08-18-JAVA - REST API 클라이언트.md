@@ -6,7 +6,7 @@ category: Java
 ---
 # REST API 클라이언트
 
-## 0. 빠른 개요 — 언제 무엇을 쓸까?
+## 빠른 개요 — 언제 무엇을 쓸까?
 
 | 상황 | 추천 라이브러리 | 이유/특징 |
 |---|---|---|
@@ -20,7 +20,7 @@ category: Java
 
 ---
 
-## 1. REST 클라이언트 기본기
+## REST 클라이언트 기본기
 
 - **HTTP 메서드/의미**: GET(조회), POST(생성), PUT/PATCH(부분/전체 수정), DELETE(삭제)
 - **상태 코드**: 2xx 성공, 4xx 클라이언트 오류, 5xx 서버 오류
@@ -30,9 +30,10 @@ category: Java
 
 ---
 
-## 2. 의존성 (예시)
+## 의존성 (예시)
 
 ### Maven
+
 ```xml
 <dependencies>
   <!-- JSON 직렬화/역직렬화 -->
@@ -74,6 +75,7 @@ category: Java
 ```
 
 ### Gradle (Kotlin DSL)
+
 ```kotlin
 dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
@@ -91,14 +93,16 @@ dependencies {
 
 ---
 
-## 3. 데이터 모델 & 공통 유틸
+## 데이터 모델 & 공통 유틸
 
-### 3.1 DTO는 `record`로 간결하게
+### DTO는 `record`로 간결하게
+
 ```java
 public record Post(long id, long userId, String title, String body) {}
 ```
 
-### 3.2 Jackson `ObjectMapper` 공용 인스턴스
+### Jackson `ObjectMapper` 공용 인스턴스
+
 ```java
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -113,9 +117,10 @@ public final class Jsons {
 
 ---
 
-## 4. JDK 표준 `HttpClient` — 기본/비동기/타임아웃/백오프
+## JDK 표준 `HttpClient` — 기본/비동기/타임아웃/백오프
 
-### 4.1 설정과 간단 GET
+### 설정과 간단 GET
+
 ```java
 import java.net.http.*;
 import java.net.*;
@@ -143,7 +148,8 @@ if (res.statusCode() / 100 == 2) {
 }
 ```
 
-### 4.2 POST(JSON) — idempotency-key/추적 헤더
+### POST(JSON) — idempotency-key/추적 헤더
+
 ```java
 String body = Jsons.MAPPER.writeValueAsString(new Post(0, 1, "Hello", "World"));
 
@@ -157,7 +163,8 @@ HttpRequest req = HttpRequest.newBuilder()
 HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
 ```
 
-### 4.3 비동기 — `CompletableFuture`
+### 비동기 — `CompletableFuture`
+
 ```java
 client.sendAsync(req, HttpResponse.BodyHandlers.ofString())
       .thenApply(HttpResponse::body)
@@ -167,7 +174,8 @@ client.sendAsync(req, HttpResponse.BodyHandlers.ofString())
       .join();
 ```
 
-### 4.4 지수 백오프 재시도(간단 구현)
+### 지수 백오프 재시도(간단 구현)
+
 ```java
 static <T> T withRetry(java.util.concurrent.Callable<T> op, int max, long baseMillis) throws Exception {
     int attempt = 0;
@@ -196,7 +204,8 @@ Post p = withRetry(() -> {
 }, 3, 200);
 ```
 
-### 4.5 멀티파트 업로드(간단 빌더)
+### 멀티파트 업로드(간단 빌더)
+
 ```java
 public static HttpRequest multipartRequest(URI uri, Map<String,String> fields, String fileField, String filename, byte[] file) {
     String boundary = "----JavaClientBoundary" + System.currentTimeMillis();
@@ -226,9 +235,10 @@ public static HttpRequest multipartRequest(URI uri, Map<String,String> fields, S
 
 ---
 
-## 5. OkHttp — 간결한 API, 인터셉터, 핀닝(옵션)
+## OkHttp — 간결한 API, 인터셉터, 핀닝(옵션)
 
-### 5.1 기본 GET/POST/타임아웃
+### 기본 GET/POST/타임아웃
+
 ```java
 import okhttp3.*;
 
@@ -260,7 +270,8 @@ Request post = new Request.Builder()
     .build();
 ```
 
-### 5.2 인증 토큰 주입 인터셉터
+### 인증 토큰 주입 인터셉터
+
 ```java
 class BearerAuth implements Interceptor {
   private volatile String token;
@@ -280,7 +291,8 @@ class BearerAuth implements Interceptor {
 }
 ```
 
-### 5.3 인증서 핀닝(선택)
+### 인증서 핀닝(선택)
+
 ```java
 CertificatePinner pinner = new CertificatePinner.Builder()
     .add("api.example.com", "sha256/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
@@ -290,7 +302,7 @@ OkHttpClient secure = ok.newBuilder().certificatePinner(pinner).build();
 
 ---
 
-## 6. Apache HttpClient — 풀/프록시/정교한 구성
+## Apache HttpClient — 풀/프록시/정교한 구성
 
 ```java
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -324,9 +336,10 @@ try (CloseableHttpClient cli = HttpClients.custom()
 
 ---
 
-## 7. Spring **WebClient** — 리액티브/필터/에러 매핑
+## Spring **WebClient** — 리액티브/필터/에러 매핑
 
-### 7.1 기본 구성
+### 기본 구성
+
 ```java
 import org.springframework.web.reactive.function.client.*;
 
@@ -345,7 +358,8 @@ Post p = client.get().uri("/posts/{id}", 1)
     .block(); // 데모용. 실제로는 논블로킹 체인으로 사용하는 것이 이상적.
 ```
 
-### 7.2 필터(인터셉터 유사)로 공통 헤더/로깅/재시도
+### 필터(인터셉터 유사)로 공통 헤더/로깅/재시도
+
 ```java
 ExchangeFilterFunction auth = (req, next) -> {
     ClientRequest r = ClientRequest.from(req)
@@ -362,7 +376,8 @@ WebClient wc = WebClient.builder()
     .build();
 ```
 
-### 7.3 대용량/스트리밍(JSON Lines, SSE)
+### 대용량/스트리밍(JSON Lines, SSE)
+
 ```java
 Flux<String> lines = wc.get().uri("/stream")
     .accept(org.springframework.http.MediaType.APPLICATION_NDJSON)
@@ -375,7 +390,7 @@ Flux<String> lines = wc.get().uri("/stream")
 
 ---
 
-## 8. 에러 매핑(예외 계층) — 실무 패턴
+## 에러 매핑(예외 계층) — 실무 패턴
 
 ```java
 sealed interface HttpProblem extends RuntimeException permits BadRequest, Unauthorized, TooManyRequests, ServerError { }
@@ -397,9 +412,10 @@ static void ensure2xx(HttpResponse<?> res) {
 
 ---
 
-## 9. 인증 — API Key / OAuth 2.0(Client Credentials)
+## 인증 — API Key / OAuth 2.0(Client Credentials)
 
-### 9.1 API Key (단순 헤더)
+### API Key (단순 헤더)
+
 ```java
 HttpRequest req = HttpRequest.newBuilder()
     .uri(URI.create("https://api.example.com/data"))
@@ -407,7 +423,8 @@ HttpRequest req = HttpRequest.newBuilder()
     .GET().build();
 ```
 
-### 9.2 OAuth2 Client Credentials (표준 플로우)
+### OAuth2 Client Credentials (표준 플로우)
+
 ```java
 record TokenResponse(String access_token, String token_type, long expires_in) {}
 
@@ -430,7 +447,7 @@ static String fetchToken(HttpClient cli, URI tokenEndpoint, String clientId, Str
 
 ---
 
-## 10. **Typed Client** 만들기 — 재사용 가능한 API 모듈
+## **Typed Client** 만들기 — 재사용 가능한 API 모듈
 
 ```java
 interface PostsClient {
@@ -479,10 +496,11 @@ final class HttpPostsClient implements PostsClient {
 
 ---
 
-## 11. **Resilience** — 재시도/백오프/서킷브레이커
+## **Resilience** — 재시도/백오프/서킷브레이커
 
-### 11.1 간단 재시도(상단 4.4 참고) + Retry-After 존중
-### 11.2 Resilience4j로 데코레이터(선택)
+### 간단 재시도(상단 4.4 참고) + Retry-After 존중
+### Resilience4j로 데코레이터(선택)
+
 ```java
 // pseudo: Decorators.ofSupplier(() -> client.get(1)).withCircuitBreaker(cb).withRetry(retry).get();
 ```
@@ -490,7 +508,7 @@ final class HttpPostsClient implements PostsClient {
 
 ---
 
-## 12. 로깅/추적 — 요청/응답/코릴레이션
+## 로깅/추적 — 요청/응답/코릴레이션
 
 - **코릴레이션 ID**: `X-Request-Id`를 요청/응답에 통일해 로그 상관.
 - **민감정보 마스킹**: Authorization/쿠키/개인정보는 로깅 금지/마스킹.
@@ -499,9 +517,10 @@ final class HttpPostsClient implements PostsClient {
 
 ---
 
-## 13. 테스트 — WireMock / MockWebServer / 통합
+## 테스트 — WireMock / MockWebServer / 통합
 
-### 13.1 WireMock(JUnit 5)
+### WireMock(JUnit 5)
+
 ```java
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -528,7 +547,8 @@ class PostsClientTest {
 }
 ```
 
-### 13.2 OkHttp MockWebServer
+### OkHttp MockWebServer
+
 ```java
 MockWebServer server = new MockWebServer();
 server.enqueue(new MockResponse().setBody("{\"id\":1,\"userId\":1,\"title\":\"t\",\"body\":\"b\"}").setHeader("Content-Type","application/json"));
@@ -541,7 +561,7 @@ server.shutdown();
 
 ---
 
-## 14. 고급 주제 — 캐시/압축/페이징/HATEOAS/프록시
+## 고급 주제 — 캐시/압축/페이징/HATEOAS/프록시
 
 - **HTTP 캐시**: `ETag`/`If-None-Match`, `Last-Modified`/`If-Modified-Since`로 304 핸들링.
 - **압축**: `Accept-Encoding: gzip` + 응답 자동 압축 해제(대부분 라이브러리 기본).
@@ -551,7 +571,7 @@ server.shutdown();
 
 ---
 
-## 15. 보안 체크리스트
+## 보안 체크리스트
 
 - [ ] **TLS 필수**, 호스트 검증/루트 CA 신뢰 고정.
 - [ ] (필요 시) **인증서 핀닝**으로 중간자 공격 억제.
@@ -561,7 +581,7 @@ server.shutdown();
 
 ---
 
-## 16. 운영/성능 팁
+## 운영/성능 팁
 
 - **타임아웃 3종** 구분: 연결/응답(소켓 읽기)/요청(전체) — **기본값 금지**.
 - **커넥션 풀**: OkHttp/Apache는 풀 사이즈/유휴 시간 조정.
@@ -571,9 +591,10 @@ server.shutdown();
 
 ---
 
-## 17. 미니 레퍼런스 — 코드 조각 모음
+## 미니 레퍼런스 — 코드 조각 모음
 
-### 17.1 쿼리 파라미터 안전 조립
+### 쿼리 파라미터 안전 조립
+
 ```java
 static URI uri(String base, Map<String,String> q) {
   StringBuilder sb = new StringBuilder(base);
@@ -588,7 +609,8 @@ static URI uri(String base, Map<String,String> q) {
 }
 ```
 
-### 17.2 파일 다운로드(스트리밍)
+### 파일 다운로드(스트리밍)
+
 ```java
 HttpResponse<java.io.InputStream> res = client.send(req, HttpResponse.BodyHandlers.ofInputStream());
 ensure2xx(res);
@@ -599,7 +621,7 @@ try (var in = res.body(); var out = java.nio.file.Files.newOutputStream(java.nio
 
 ---
 
-## 18. 최종 체크리스트
+## 최종 체크리스트
 
 - [ ] **라이브러리 선택**이 요구(동기/비동기, 스프링 여부, 운영 제약)에 부합하는가?
 - [ ] **타임아웃/재시도/백오프**와 **에러 매핑**이 일관적으로 구현됐는가?
@@ -611,7 +633,7 @@ try (var in = res.body(); var out = java.nio.file.Files.newOutputStream(java.nio
 
 ---
 
-## 19. 요약
+## 요약
 
 - 표준 `HttpClient`만으로도 **의존성 없이** 상당수 요구사항을 충족한다.
 - 스프링 환경/리액티브 요구는 **WebClient**가 자연스러운 선택.

@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core CI/CD 구성 (with GitHub Actions)
 
-## 1. CI/CD 핵심 개념(요약 복습)
+## CI/CD 핵심 개념(요약 복습)
 
 | 구분 | 핵심 |
 |---|---|
@@ -16,7 +16,7 @@ category: AspNet
 
 ---
 
-## 2. GitHub Actions 기본 빌딩 블록
+## GitHub Actions 기본 빌딩 블록
 
 | 요소 | 설명 | 팁 |
 |---|---|---|
@@ -27,7 +27,7 @@ category: AspNet
 
 ---
 
-## 3. 표준 리포지토리 구조와 브랜치 전략
+## 표준 리포지토리 구조와 브랜치 전략
 
 ```bash
 MyApp/
@@ -47,16 +47,18 @@ MyApp/
 
 ---
 
-## 4. 안전한 자격 증명: Secrets vs OIDC 연동
+## 안전한 자격 증명: Secrets vs OIDC 연동
 
-### 4.1 Secrets
+### Secrets
+
 - 위치: GitHub → Repository → Settings → Secrets and variables → Actions
 - 예: `AZURE_WEBAPP_NAME`, `AZURE_WEBAPP_PUBLISH_PROFILE`, `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`
 
 장점: 간편.
 단점: 장기 비밀 보관, **회전 주기/노출 위험** 관리 필요.
 
-### 4.2 OIDC (Federated Credentials)
+### OIDC (Federated Credentials)
+
 - GitHub Actions가 **클라우드에 신뢰 토큰을 교환**하여 **장기 키 없이** 로그인
 - Azure 예시: **Entra ID**에 **Federated Credentials** 생성 → 워크플로에서 `azure/login@v2`로 로그인
 
@@ -76,7 +78,7 @@ MyApp/
 
 ---
 
-## 5. NuGet 캐시/속도 최적화 베스트 프랙티스
+## NuGet 캐시/속도 최적화 베스트 프랙티스
 
 {% raw %}
 ```yaml
@@ -100,7 +102,7 @@ MyApp/
 
 ---
 
-## 6. CI 워크플로(확장형)
+## CI 워크플로(확장형)
 
 {% raw %}
 ```yaml
@@ -170,9 +172,10 @@ jobs:
 
 ---
 
-## 7. 아티팩트/버전/릴리스 노트 자동화
+## 아티팩트/버전/릴리스 노트 자동화
 
-### 7.1 버전 자동화(태그 기반)
+### 버전 자동화(태그 기반)
+
 ```yaml
 - name: Get Version from Tag or Commit
   id: ver
@@ -186,7 +189,8 @@ jobs:
 
 {% raw %}`dotnet publish -p:Version=${{ steps.ver.outputs.version }}`{% endraw %}로 주입.
 
-### 7.2 릴리스 노트
+### 릴리스 노트
+
 ```yaml
 - name: Create GitHub Release (on tag)
   if: startsWith(github.ref, 'refs/tags/v')
@@ -199,9 +203,9 @@ jobs:
 
 ---
 
-## 8. CD: Azure App Service(슬롯/승인/롤백)
+## CD: Azure App Service(슬롯/승인/롤백)
 
-### 8.1 Staging 자동 배포
+### Staging 자동 배포
 
 {% raw %}
 ```yaml
@@ -241,7 +245,8 @@ jobs:
 ```
 {% endraw %}
 
-### 8.2 운영 수동 승인(Environments 보호 규칙)
+### 운영 수동 승인(Environments 보호 규칙)
+
 - GitHub → Settings → Environments → `production` → **Required reviewers** 지정
 
 {% raw %}
@@ -275,9 +280,10 @@ jobs:
 
 ---
 
-## 9. Docker 기반 배포(빌드 캐시/멀티플랫폼)
+## Docker 기반 배포(빌드 캐시/멀티플랫폼)
 
-### 9.1 Dockerfile(멀티스테이지)
+### Dockerfile(멀티스테이지)
+
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
@@ -295,7 +301,7 @@ COPY --from=build /out .
 ENTRYPOINT ["dotnet", "MyApp.dll"]
 ```
 
-### 9.2 GH Actions: buildx + 캐시 + 푸시
+### GH Actions: buildx + 캐시 + 푸시
 
 {% raw %}
 ```yaml
@@ -328,7 +334,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 10. Kubernetes 배포(옵션)
+## Kubernetes 배포(옵션)
 
 - 매니페스트/Helm 차트 관리, 이미지 태그로 롤링 업데이트
 - 예: `kubectl set image deploy/myapp myapp=myuser/myapp:${{ steps.ver.outputs.version }}`
@@ -350,7 +356,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 11. IIS/Windows 서버 배포(옵션)
+## IIS/Windows 서버 배포(옵션)
 
 - 방법: Web Deploy(MSDeploy) / WinRM / FTP
 - 간단 FTP 예시:
@@ -370,7 +376,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 12. 데이터베이스 마이그레이션(EF Core)
+## 데이터베이스 마이그레이션(EF Core)
 
 - 스테이징/운영 배포 전후에 **마이그레이션 명령** 실행
 - 무중단을 위해 **백필드/점진 스키마** 전략 적용
@@ -391,7 +397,7 @@ ENTRYPOINT ["dotnet", "MyApp.dll"]
 
 ---
 
-## 13. 환경 변수/설정 주입
+## 환경 변수/설정 주입
 
 - `appsettings.{ENV}.json` + **환경 변수** 오버라이드
 - GH Actions의 **Environment Variables / Secrets**로 안전하게 주입
@@ -406,7 +412,7 @@ env:
 
 ---
 
-## 14. 정적 분석/보안/라이선스/SBOM
+## 정적 분석/보안/라이선스/SBOM
 
 - `dotnet analyzers`, `dotnet format`, `SonarCloud`, `CodeQL`(GitHub 제공)
 - SBOM/서명:
@@ -424,9 +430,10 @@ env:
 
 ---
 
-## 15. 모노레포/조건부 실행/재사용 워크플로
+## 모노레포/조건부 실행/재사용 워크플로
 
 ### 조건부 실행(특정 경로 변경 시에만)
+
 ```yaml
 on:
   push:
@@ -437,6 +444,7 @@ on:
 ```
 
 ### 재사용 워크플로 호출
+
 ```yaml
 jobs:
   call-shared:
@@ -447,7 +455,7 @@ jobs:
 
 ---
 
-## 16. 실패 자동 롤백/배포 잠금/동시성
+## 실패 자동 롤백/배포 잠금/동시성
 
 - **동시성**: 같은 브랜치의 배포 충돌 방지
 ```yaml
@@ -461,18 +469,19 @@ concurrency:
 
 ---
 
-## 17. 셀프 호스티드 러너(옵션)
+## 셀프 호스티드 러너(옵션)
 
 - 장점: 사내 네트워크/비공개 자원 접근, 속도/캐시 향상
 - 주의: **보안 격리**, 최소 권한 PAT/OIDC, 러너 자동 패치
 
 ---
 
-## 18. 통합 예: CI → Staging → 승인 → Prod
+## 통합 예: CI → Staging → 승인 → Prod
 
 아래는 **CI**, **Staging CD**, **Prod CD**를 분리한 현실적인 구성 예다.
 
-### 18.1 ci.yml (PR/Develop)
+### ci.yml (PR/Develop)
+
 ```yaml
 name: CI
 on:
@@ -485,7 +494,8 @@ jobs:
       # checkout/setup/cache/restore/build/format/test/coverage 업로드 (6장 참조)
 ```
 
-### 18.2 cd-staging.yml (main merge → 자동 배포)
+### cd-staging.yml (main merge → 자동 배포)
+
 ```yaml
 name: CD-Staging
 on:
@@ -498,7 +508,8 @@ jobs:
       # publish → OIDC 로그인 → App Service staging 배포
 ```
 
-### 18.3 cd-prod.yml (태그 → 승인 후 운영)
+### cd-prod.yml (태그 → 승인 후 운영)
+
 ```yaml
 name: CD-Prod
 on:
@@ -515,7 +526,7 @@ jobs:
 
 ---
 
-## 19. 문제 해결 체크리스트
+## 문제 해결 체크리스트
 
 | 증상 | 원인/해결 |
 |---|---|
@@ -529,7 +540,7 @@ jobs:
 
 ---
 
-## 20. 결론 요약
+## 결론 요약
 
 | 항목 | 권장사항 |
 |---|---|

@@ -6,7 +6,7 @@ category: CSS
 ---
 # 📐 CSS 함수 정리: `calc()`, `clamp()`, `min()`, `max()`
 
-## 0. 핵심 한 장 요약
+## 핵심 한 장 요약
 
 - `calc()` : **단위 혼합/산술 연산**으로 “정확히 이만큼 빼기/더하기/비율” 같은 미세 조정.
 - `clamp(min, ideal, max)` : **유동값(예: `vw`)**을 안전 범위 안에 가둬, **미디어쿼리 없는 반응형**.
@@ -17,9 +17,9 @@ category: CSS
 
 ---
 
-## 1. `calc()` — 단위 혼합/산술의 만능 렌치
+## `calc()` — 단위 혼합/산술의 만능 렌치
 
-### 1.1 기본 문법/규칙
+### 기본 문법/규칙
 
 ```css
 .selector {
@@ -33,13 +33,13 @@ category: CSS
 - **단위 혼합 가능**: `% + px`, `rem + vw`, `vh - px` 등.
 - **우선순위**: `*` `/` → `+` `-` (괄호로 명시적 제어 권장).
 
-### 1.2 퍼센트의 기준(percentage basis)
+### 퍼센트의 기준(percentage basis)
 
 - `width`의 `%` → **근접 블록 컨테이너의 content-box** 기준.
 - `height`의 `%` → 부모의 **계산된 height** 필요(미설정시 0처럼 행동) → `min-height`/`aspect-ratio`와 조합하거나 `dvh`/`svh` 등 사용.
 - `padding/margin`의 `%` → **수평/수직 모두 컨테이너의 inline-size(가로)** 기준(전통 규칙).
 
-### 1.3 실전 패턴
+### 실전 패턴
 
 #### (A) 고정 사이드바 + 유동 본문
 
@@ -87,9 +87,9 @@ category: CSS
 
 ---
 
-## 2. `clamp()` — 유동값을 안전한 범위로 “클램프”
+## `clamp()` — 유동값을 안전한 범위로 “클램프”
 
-### 2.1 문법과 의미
+### 문법과 의미
 
 ```css
 /* 최소, 이상적(유동), 최대 */
@@ -99,7 +99,7 @@ font-size: clamp(1rem, 2.5vw, 2rem);
 - **min ≤ ideal ≤ max** 가 되도록 브라우저가 자동 보정.
 - 유동값이 작은 화면에서 너무 작아지거나 큰 화면에서 과하게 커지는 문제를 해결.
 
-### 2.2 수학적 직관
+### 수학적 직관
 
 유동 폰트 크기 \( f(w) \)를 뷰포트 너비 \( w \)에 대해 선형 근사로 두되, **하한 \( f_{\min} \)** 과 **상한 \( f_{\max} \)**을 둔다:
 
@@ -110,7 +110,7 @@ $$
 - CSS에서는 `ideal` 자리에 예: `4vw` 같이 **뷰포트 비율값**을 넣어 선형 스케일을 구성.
 - 브라우저가 자동으로 **하한/상한으로 잘라냄**.
 
-### 2.3 실전 패턴
+### 실전 패턴
 
 #### (A) 유동 타이포 스케일
 
@@ -145,9 +145,9 @@ h2 { font-size: var(--fs-h2); line-height: 1.2; }
 
 ---
 
-## 3. `min()` / `max()` — 상한/하한을 즉시 표현
+## `min()` / `max()` — 상한/하한을 즉시 표현
 
-### 3.1 문법
+### 문법
 
 ```css
 width: min(100%, 1280px);   /* 1280px를 넘지 않는다(상한). */
@@ -156,7 +156,7 @@ padding: max(1rem, 3vw);    /* 1rem 보다 작아지지 않는다(하한). */
 
 - 다수 인자도 가능: `min(a, b, c)`, `max(a, b, c)`
 
-### 3.2 실전 패턴
+### 실전 패턴
 
 #### (A) 래핑 컨테이너 최대 너비 제한
 
@@ -188,9 +188,9 @@ padding: max(1rem, 3vw);    /* 1rem 보다 작아지지 않는다(하한). */
 
 ---
 
-## 4. 함수 조합 레시피 — 흔한 요구를 간결하게
+## 함수 조합 레시피 — 흔한 요구를 간결하게
 
-### 4.1 반응형 카드 그리드 (미디어쿼리 없음)
+### 반응형 카드 그리드 (미디어쿼리 없음)
 
 ```css
 .grid {
@@ -207,7 +207,7 @@ padding: max(1rem, 3vw);    /* 1rem 보다 작아지지 않는다(하한). */
 - `auto-fit + minmax`로 그리드를 유동 구성.
 - `min(100%, var(--min))`로 **작은 화면에서 칼럼 폭이 100%를 초과하지 않게** 제한.
 
-### 4.2 헤더 높이 + 컨텐츠 뷰포트 맞춤
+### 헤더 높이 + 컨텐츠 뷰포트 맞춤
 
 ```css
 :root { --header: clamp(56px, 6vw, 88px); }
@@ -218,7 +218,7 @@ main {
 }
 ```
 
-### 4.3 안전 영역(safe area)까지 고려한 패딩
+### 안전 영역(safe area)까지 고려한 패딩
 
 ```css
 :root{
@@ -233,7 +233,7 @@ main {
 }
 ```
 
-### 4.4 이미지/비디오 박스: 종횡비 + 최대/최소 조합
+### 이미지/비디오 박스: 종횡비 + 최대/최소 조합
 
 ```css
 .media {
@@ -246,9 +246,9 @@ main {
 
 ---
 
-## 5. 타이포그래피: 수학으로 보는 유동 디자인
+## 타이포그래피: 수학으로 보는 유동 디자인
 
-### 5.1 선형 스케일의 `clamp()` 구현
+### 선형 스케일의 `clamp()` 구현
 
 목표: `w = 360px`에서 `f = 16px`, `w = 1440px`에서 `f = 22px`로 선형 증가.
 
@@ -269,9 +269,9 @@ body { font-size: var(--fs-body); }
 
 ---
 
-## 6. 레이아웃과의 상호작용 — Flex/Grid/Aspect-ratio
+## 레이아웃과의 상호작용 — Flex/Grid/Aspect-ratio
 
-### 6.1 Flex 컨테이너에서의 `%`/`calc()`
+### Flex 컨테이너에서의 `%`/`calc()`
 
 - Flex 아이템의 `flex-basis` 에 `calc()` 사용 가능.
 - `flex-basis: calc(50% - 1rem);` 로 두 칸 배치 시 gap 대체 가능(요즘은 그냥 `gap` 쓰는 게 더 명확).
@@ -288,7 +288,7 @@ body { font-size: var(--fs-body); }
 }
 ```
 
-### 6.2 Grid 트랙과 `minmax()` + 함수 혼합
+### Grid 트랙과 `minmax()` + 함수 혼합
 
 ```css
 .grid {
@@ -301,7 +301,7 @@ body { font-size: var(--fs-body); }
 - 작은 화면에서는 단일 컬럼(100%),
 - 충분히 넓으면 22rem을 하한으로 유지하며 자동 래핑.
 
-### 6.3 `aspect-ratio`와 min/max
+### `aspect-ratio`와 min/max
 
 ```css
 .thumb {
@@ -313,9 +313,9 @@ body { font-size: var(--fs-body); }
 
 ---
 
-## 7. 상태/상호작용과의 조합
+## 상태/상호작용과의 조합
 
-### 7.1 :hover/:focus-visible와 애니메이션
+### :hover/:focus-visible와 애니메이션
 
 ```css
 .card {
@@ -331,7 +331,7 @@ body { font-size: var(--fs-body); }
 .card:focus-visible { outline: max(2px, 0.2vw) solid #2563eb; }
 ```
 
-### 7.2 스크롤 잠금/안전 높이(모달)
+### 스크롤 잠금/안전 높이(모달)
 
 ```css
 body.modal-open { overflow: hidden; }
@@ -345,7 +345,7 @@ body.modal-open { overflow: hidden; }
 
 ---
 
-## 8. 디버깅/퍼포먼스 체크포인트
+## 디버깅/퍼포먼스 체크포인트
 
 - `calc()` 중첩 과다/복잡한 네스팅은 **읽기성↓** → 디자인 토큰(변수)로 **분해**.
 - `%`의 기준이 모호하면 DevTools로 **computed** 확인. 부모의 `position/height/overflow`가 영향.
@@ -354,7 +354,7 @@ body.modal-open { overflow: hidden; }
 
 ---
 
-## 9. IE/레거시 폴백(정책적으로 필요한 경우)
+## IE/레거시 폴백(정책적으로 필요한 경우)
 
 - `calc()` : IE9+ 지원(가능)
 - `clamp()/min()/max()` : **IE 미지원**(폴리필 불가) → **미디어쿼리**/고정 값 **대체**.
@@ -373,7 +373,7 @@ body.modal-open { overflow: hidden; }
 
 ---
 
-## 10. 컴포넌트 예제 — “절대 안 깨지는” 카드는 이렇게
+## 컴포넌트 예제 — “절대 안 깨지는” 카드는 이렇게
 
 ```html
 <section class="wrap">
@@ -442,7 +442,7 @@ body{ margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Noto 
 
 ---
 
-## 11. 디버깅/검증 체크리스트
+## 디버깅/검증 체크리스트
 
 - [ ] `calc()` 연산자 **공백** 확인.
 - [ ] `%` 기준이 모호하면 DevTools **Computed/Box Model**로 부모 계산 확인.

@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia Hot Reload / Live Preview
 
-## 1. 개념과 적용 시나리오
+## 개념과 적용 시나리오
 
 | 기능 | 핵심 |
 |---|---|
@@ -22,9 +22,9 @@ category: Avalonia
 
 ---
 
-## 2. 필수 요구사항 및 설치
+## 필수 요구사항 및 설치
 
-### 2.1 버전 권장치
+### 버전 권장치
 
 | 구성 | 권장 |
 |---|---|
@@ -33,7 +33,7 @@ category: Avalonia
 | IDE | JetBrains Rider 최신 / Visual Studio 2022 최신 |
 | CLI | `dotnet` 최신 + `dotnet watch` 사용 |
 
-### 2.2 프로젝트 설정(.csproj)
+### 프로젝트 설정(.csproj)
 
 핵심 속성들(컴파일된 XAML, 트림/싱글파일 시 미리보기 예외 등은 개발 중 비활성화 권장):
 
@@ -65,7 +65,7 @@ category: Avalonia
 
 ---
 
-## 3. 앱 부트스트랩: DevTools/Hot Reload 친화 설정
+## 앱 부트스트랩: DevTools/Hot Reload 친화 설정
 
 `Program.cs`(또는 `AppBuilder`)에서 플랫폼 옵션과 DevTools 연결:
 
@@ -89,11 +89,14 @@ internal static class Program
     public static void Main(string[] args)
     {
 #if DEBUG
+
         // DevTools: 런타임에 F12 또는 Ctrl+Shift+I로 열 수 있음
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args, ShutdownMode.OnLastWindowClose);
 #else
+
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 #endif
+
     }
 }
 ```
@@ -103,9 +106,9 @@ internal static class Program
 
 ---
 
-## 4. Hot Reload 실행(권장 워크플로)
+## Hot Reload 실행(권장 워크플로)
 
-### 4.1 CLI
+### CLI
 
 ```bash
 dotnet watch
@@ -114,21 +117,21 @@ dotnet watch
 - XAML 저장 즉시 재컴파일 → 실행 중 앱에 반영
 - C# 변경은 부분적으로 반영되며, 경우에 따라 재시작이 필요(자세한 제한은 아래 §10).
 
-### 4.2 IDE
+### IDE
 
 - Rider: 상단 툴바의 **Run with ‘dotnet watch’** 또는 “Hot Reload” 버튼 활성
 - Visual Studio: Avalonia 확장 설치 후 **Hot Reload**/Debug 세션에서 XAML 편집→반영
 
 ---
 
-## 5. Live Preview(Previewer) 극대화
+## Live Preview(Previewer) 극대화
 
-### 5.1 XAML 미리보기 패널
+### XAML 미리보기 패널
 
 - Rider: `.axaml` 열면 우측 **Preview** 탭 활성
 - VS: Avalonia Extension 설치 후 Preview 사용 가능(안정성은 Rider가 우수한 편)
 
-### 5.2 디자인타임 바인딩 필수 패턴
+### 디자인타임 바인딩 필수 패턴
 
 ```xml
 <UserControl
@@ -176,9 +179,9 @@ public class OrderListViewModelDesign : OrderListViewModel
 
 ---
 
-## 6. MVVM과 Hot Reload 결합
+## MVVM과 Hot Reload 결합
 
-### 6.1 가벼운 ViewModel 예시
+### 가벼운 ViewModel 예시
 
 ```csharp
 public class MainWindowViewModel : ReactiveUI.ReactiveObject
@@ -214,7 +217,7 @@ Hot Reload 시나리오:
 - `Spacing`, `Margin`, `FontSize` 같은 스타일/레이아웃 값을 바꾸면 **바로 반영**
 - `DataTemplate`/`ControlTemplate`도 즉시 적용되어 시각적 실험 속도 ↑
 
-### 6.2 스타일/리소스 변경 즉시 반영
+### 스타일/리소스 변경 즉시 반영
 
 `App.axaml`:
 
@@ -246,7 +249,7 @@ View:
 
 ---
 
-## 7. DevTools(인스펙터)로 런타임 검사
+## DevTools(인스펙터)로 런타임 검사
 
 - 실행 중 **F12** 또는 `Ctrl+Shift+I`로 DevTools 오픈(디버그 빌드 + `Avalonia.Diagnostics`)
 - 기능: 시각 트리/바인딩 상태/리소스 해석/측정·정렬 박스/실시간 수정
@@ -256,7 +259,7 @@ View:
 
 ---
 
-## 8. 대형 화면/복잡 템플릿에서의 팁
+## 대형 화면/복잡 템플릿에서의 팁
 
 1) **Partial Reload**를 유도
 - 스타일/템플릿/리소스 파일을 **모듈화**하여 변경 범위를 최소화
@@ -270,9 +273,9 @@ View:
 
 ---
 
-## 9. Live Preview와 컴포넌트 설계(패턴)
+## Live Preview와 컴포넌트 설계(패턴)
 
-### 9.1 DataTemplate Playground
+### DataTemplate Playground
 
 ```xml
 <UserControl ...>
@@ -291,7 +294,7 @@ View:
 
 템플릿을 빠르게 실험하면서 스타일/간격/아이콘/상태 표시를 반복 적용.
 
-### 9.2 ControlTemplate 수정
+### ControlTemplate 수정
 
 ```xml
 <Style Selector="Button.theme-primary">
@@ -309,7 +312,7 @@ View:
 
 ---
 
-## 10. Hot Reload의 한계와 우회 전략
+## Hot Reload의 한계와 우회 전략
 
 | 항목 | 가능한가 | 메모 |
 |---|---|---|
@@ -326,7 +329,7 @@ View:
 
 ---
 
-## 11. Rider / Visual Studio / CLI 병행 전략
+## Rider / Visual Studio / CLI 병행 전략
 
 - **Rider**: Previewer 안정/성능이 좋아 XAML 설계에 최적
 - **VS**: Avalonia Extension 최신 버전 유지, Previewer 에러 발생 시 “Rebuild → 다시 열기”
@@ -334,7 +337,7 @@ View:
 
 ---
 
-## 12. 팀/모듈 구조와 핫리로드 최적화
+## 팀/모듈 구조와 핫리로드 최적화
 
 ```
 MyApp/
@@ -356,9 +359,9 @@ MyApp/
 
 ---
 
-## 13. 샘플: 빠른 스타일 실험 루프
+## 샘플: 빠른 스타일 실험 루프
 
-### 13.1 `App.axaml`
+### `App.axaml`
 
 ```xml
 <Application xmlns="https://github.com/avaloniaui"
@@ -378,7 +381,7 @@ MyApp/
 </Application>
 ```
 
-### 13.2 View
+### View
 
 ```xml
 <StackPanel Spacing="10" Margin="20">
@@ -392,9 +395,10 @@ MyApp/
 
 ---
 
-## 14. 디버깅/트러블슈팅
+## 디버깅/트러블슈팅
 
-### 14.1 Previewer 빈 화면/예외
+### Previewer 빈 화면/예외
+
 - **디자인타임 DataContext**가 없는 경우: `d:DataContext` 추가
 - 정적 생성자/서비스 초기화에서 예외 발생: `Design.IsDesignMode`로 분기
 
@@ -416,27 +420,31 @@ public class OrdersViewModel
 }
 ```
 
-### 14.2 Hot Reload가 반영되지 않는 경우
+### Hot Reload가 반영되지 않는 경우
+
 - 파일 저장이 IDE에서 실제 디스크로 내려가는지 확인
 - `AvaloniaUseCompiledXaml`가 `true`인지 확인
 - 큰 변경(C# 타입 서명 등)은 앱 재시작
 
-### 14.3 DevTools 미표시
+### DevTools 미표시
+
 - `Avalonia.Diagnostics` 패키지 확인
 - 디버그 빌드인지 확인(릴리즈/싱글파일/트리밍 환경은 DevTools가 비활성일 수 있음)
 
 ---
 
-## 15. CI/팀 온보딩을 위한 스크립트
+## CI/팀 온보딩을 위한 스크립트
 
 `Makefile` 또는 PowerShell로 **공통 실행** 정의:
 
 ```bash
 # 개발 서버(Hot Reload)
+
 dev:
 	dotnet watch --project src/MyApp.Desktop
 
 # 빠른 클린/빌드
+
 re:
 	dotnet clean && dotnet build -c Debug
 ```
@@ -447,7 +455,7 @@ re:
 
 ---
 
-## 16. 고급: 리소스 테마 스위치(다크/라이트)도 실시간
+## 고급: 리소스 테마 스위치(다크/라이트)도 실시간
 
 ```xml
 <!-- App.axaml에 두 테마를 ResourceDictionary로 분리 -->
@@ -470,7 +478,7 @@ re:
 
 ---
 
-## 17. 체크리스트(핵심 요약)
+## 체크리스트(핵심 요약)
 
 - `.csproj`에 `AvaloniaUseCompiledXaml=true`
 - `Avalonia.Diagnostics` 설치 + 디버그에서 DevTools 사용

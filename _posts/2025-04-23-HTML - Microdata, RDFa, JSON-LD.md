@@ -6,7 +6,7 @@ category: HTML
 ---
 # Microdata, RDFa, JSON-LD
 
-## 0. 공통 기반 — Schema.org란?
+## 공통 기반 — Schema.org란?
 
 - **schema.org**는 웹의 대표 검색엔진들이 합의한 **공통 어휘(vocabulary) 집합**입니다.
 - 대표 타입: `Product`, `Article`, `Event`, `FAQPage`, `HowTo`, `Organization`, `Person`, `BreadcrumbList`, `VideoObject` 등.
@@ -14,7 +14,7 @@ category: HTML
 
 ---
 
-## 1. 세 방식 한눈에 비교
+## 세 방식 한눈에 비교
 
 | 구분 | Microdata | RDFa (Lite) | JSON-LD |
 |---|---|---|---|
@@ -28,11 +28,12 @@ category: HTML
 
 ---
 
-## 2. “같은 상품 페이지”를 세 방식으로 — 축약 기본 예제
+## “같은 상품 페이지”를 세 방식으로 — 축약 기본 예제
 
 아래는 동일한 `Product` 정보를 Microdata/RDFa/JSON-LD로 각각 마크업하는 최소 예시입니다.
 
-### 2.1 Microdata
+### Microdata
+
 ```html
 <div itemscope itemtype="https://schema.org/Product">
   <h1 itemprop="name">무선 키보드</h1>
@@ -47,7 +48,8 @@ category: HTML
 </div>
 ```
 
-### 2.2 RDFa (Lite)
+### RDFa (Lite)
+
 ```html
 <div vocab="https://schema.org/" typeof="Product">
   <h1 property="name">무선 키보드</h1>
@@ -62,7 +64,8 @@ category: HTML
 </div>
 ```
 
-### 2.3 JSON-LD (권장)
+### JSON-LD (권장)
+
 ```html
 <script type="application/ld+json">
 {
@@ -86,11 +89,12 @@ category: HTML
 
 ---
 
-## 3. JSON-LD 실무 패턴 — 꼭 알아야 할 10가지
+## JSON-LD 실무 패턴 — 꼭 알아야 할 10가지
 
 JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확장 기능이 강력합니다.
 
-### 3.1 `@id`와 `mainEntityOfPage`로 ID 고정
+### `@id`와 `mainEntityOfPage`로 ID 고정
+
 ```html
 <script type="application/ld+json">
 {
@@ -108,7 +112,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 ```
 - **@id**는 컨텐츠의 **영속 식별자**(fragment 포함)를 고정합니다. 캐시·중복 색인 방지에 도움.
 
-### 3.2 여러 엔티티를 **@graph**로 묶기
+### 여러 엔티티를 **@graph**로 묶기
+
 ```html
 <script type="application/ld+json">
 {
@@ -139,7 +144,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </script>
 ```
 
-### 3.3 `BreadcrumbList`(빵크럼) — 탐색 컨텍스트 강화
+### `BreadcrumbList`(빵크럼) — 탐색 컨텍스트 강화
+
 ```html
 <script type="application/ld+json">
 {
@@ -154,7 +160,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </script>
 ```
 
-### 3.4 `Product` 심화 — 가격·재고·평점·SKU/GTIN
+### `Product` 심화 — 가격·재고·평점·SKU/GTIN
+
 ```html
 <script type="application/ld+json">
 {
@@ -188,7 +195,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 - **가격/통화/유효기간**을 ISO 포맷으로 명확히.
 - **식별자**: `sku`, `gtin8/12/13/14`, `mpn` 등 하나 이상 제공 권장.
 
-### 3.5 `Article/NewsArticle/BlogPosting` — 이미지·헤드라인 규칙
+### `Article/NewsArticle/BlogPosting` — 이미지·헤드라인 규칙
+
 ```html
 <script type="application/ld+json">
 {
@@ -211,7 +219,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 - 헤드라인은 **간결**(과도한 반복/키워드 나열 금지).
 - 이미지 1200×630 권장(큰 썸네일 카드 대응).
 
-### 3.6 `FAQPage` — 리치결과에 자주 쓰는 패턴
+### `FAQPage` — 리치결과에 자주 쓰는 패턴
+
 ```html
 <script type="application/ld+json">
 {
@@ -234,7 +243,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 ```
 - **실제 페이지에 보이는 Q/A와 동일**해야 하며, 과도한 마크업 남용 금지.
 
-### 3.7 `HowTo` — 단계형 가이드(이미지·시간·재료)
+### `HowTo` — 단계형 가이드(이미지·시간·재료)
+
 ```html
 <script type="application/ld+json">
 {
@@ -252,7 +262,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </script>
 ```
 
-### 3.8 `Event` — 시간/장소/티켓
+### `Event` — 시간/장소/티켓
+
 ```html
 <script type="application/ld+json">
 {
@@ -274,7 +285,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </script>
 ```
 
-### 3.9 `VideoObject` — 재생/썸네일/길이
+### `VideoObject` — 재생/썸네일/길이
+
 ```html
 <script type="application/ld+json">
 {
@@ -291,7 +303,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </script>
 ```
 
-### 3.10 `Organization`/`WebSite` — 기본 신뢰 신호
+### `Organization`/`WebSite` — 기본 신뢰 신호
+
 ```html
 <script type="application/ld+json">
 {
@@ -327,9 +340,10 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 
 ---
 
-## 4. Microdata/RDFa 심화 포인트
+## Microdata/RDFa 심화 포인트
 
-### 4.1 Microdata 중첩(offers/review 등)
+### Microdata 중첩(offers/review 등)
+
 ```html
 <div itemscope itemtype="https://schema.org/Product">
   <span itemprop="name">무선 키보드</span>
@@ -341,7 +355,8 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </div>
 ```
 
-### 4.2 RDFa 어휘 스위칭
+### RDFa 어휘 스위칭
+
 ```html
 <!-- 기본 어휘를 schema.org로 선언 -->
 <div vocab="https://schema.org/" typeof="Article">
@@ -355,9 +370,9 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 
 ---
 
-## 5. SPA/SSR 환경: 삽입·동기화 전략
+## SPA/SSR 환경: 삽입·동기화 전략
 
-### 5.1 Next.js에서 JSON-LD 주입
+### Next.js에서 JSON-LD 주입
 
 {% raw %}
 ```jsx
@@ -392,14 +407,15 @@ export default function ProductSEO({ product }) {
 - **SSR 시점**에 JSON-LD가 HTML에 포함되도록 하세요(크롤러 호환성 향상).
 - 클라이언트 전용 렌더 시, **초기 페인트 직후 삽입**하되 DOMContentLoaded 이전 가시성이 좋음.
 
-### 5.2 다국어/멀티도메인
+### 다국어/멀티도메인
+
 - `inLanguage` 사용 `("ko-KR", "en-US")`.
 - 도메인별 **정규 URL/캐노니컬** 일관 유지.
 - `@id`를 로케일별로 고정(언어 페이지마다 별도 @id 필요).
 
 ---
 
-## 6. 리치결과 대상별 필수/권장 필드 베스트 프랙티스
+## 리치결과 대상별 필수/권장 필드 베스트 프랙티스
 
 | 대상 | 필수/권장 포인트 |
 |---|---|
@@ -414,7 +430,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 7. 검증/모니터링 — 배포 전·후 체크리스트
+## 검증/모니터링 — 배포 전·후 체크리스트
 
 1. **스키마 문법 검사**
    - Google **Rich Results Test**
@@ -434,7 +450,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 8. 자주 발생하는 오류와 해결
+## 자주 발생하는 오류와 해결
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -446,7 +462,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 9. Microdata/RDFa ↔ JSON-LD 전환 요령
+## Microdata/RDFa ↔ JSON-LD 전환 요령
 
 - **전략**: 우선 JSON-LD로 핵심 스니펫(Organization/WebSite/Product/Article/FAQ)을 구축 →
   Microdata/RDFa 잔존 시 **중복·충돌**을 피하도록 **동일 사실을 두 번 마크업하지 않기**(특히 Product 가격 등).
@@ -454,9 +470,10 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 10. 예제 모음 — “한 페이지에 필요한 전형 조합”
+## 예제 모음 — “한 페이지에 필요한 전형 조합”
 
-### 10.1 블로그 포스트 + 빵크럼 + 사이트 정보
+### 블로그 포스트 + 빵크럼 + 사이트 정보
+
 ```html
 <!-- Organization & Website & Breadcrumb & BlogPosting -->
 <script type="application/ld+json">
@@ -504,7 +521,8 @@ export default function ProductSEO({ product }) {
 </script>
 ```
 
-### 10.2 상품 상세 + FAQ(선택)
+### 상품 상세 + FAQ(선택)
+
 ```html
 <script type="application/ld+json">
 {
@@ -542,7 +560,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 11. 운영 관점 체크리스트(팀 적용)
+## 운영 관점 체크리스트(팀 적용)
 
 - [ ] **스키마 카탈로그** 작성(페이지 유형별: 제품/기사/이벤트/FAQ/동영상)
 - [ ] 필수/권장 필드 표준 정의(가격/통화/날짜 형식/이미지 규격)
@@ -554,9 +572,10 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 12. Microdata/RDFa 예제 확장(참고)
+## Microdata/RDFa 예제 확장(참고)
 
-### 12.1 Microdata로 FAQ
+### Microdata로 FAQ
+
 ```html
 <div itemscope itemtype="https://schema.org/FAQPage">
   <div itemscope itemprop="mainEntity" itemtype="https://schema.org/Question">
@@ -568,7 +587,8 @@ export default function ProductSEO({ product }) {
 </div>
 ```
 
-### 12.2 RDFa로 Article
+### RDFa로 Article
+
 ```html
 <article vocab="https://schema.org/" typeof="Article">
   <h1 property="headline">시맨틱 마크업 가이드</h1>
@@ -580,7 +600,7 @@ export default function ProductSEO({ product }) {
 
 ---
 
-## 13. 테스트 도구 & 참고 링크
+## 테스트 도구 & 참고 링크
 
 - Google **Rich Results Test** / **Search Console**(리치결과 보고서)
 - **Schema.org Validator**

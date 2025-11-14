@@ -97,6 +97,7 @@ class Shape(Prototype):
         return new_obj
 
 # 데모
+
 s1 = Shape(meta={"color":"red"}, points=[(0,0),(1,1)])
 s2 = s1.clone()
 s2.meta["color"] = "blue"     # s1과 분리됨(깊은 복제)
@@ -153,6 +154,7 @@ class Node:
         return clone
 
 # 순환 구성
+
 a = Node("A"); b = Node("B"); c = Node("C")
 a.neighbors = [b]; b.neighbors = [c]; c.neighbors = [a]  # cycle
 clone_a = copy.deepcopy(a)   # 안전하게 복제
@@ -193,6 +195,7 @@ class PrototypeRegistry:
         return obj
 
 # 사용: 게임 몬스터 템플릿
+
 class Monster:
     def __init__(self, kind, hp, atk): self.kind, self.hp, self.atk = kind, hp, atk
     def __repr__(self): return f"{self.kind}(hp={self.hp}, atk={self.atk})"
@@ -260,11 +263,13 @@ static <T extends Serializable> T cloneBySer(T obj) {
 ## 🧑‍💻 언어별 구현 팁
 
 ### Python
+
 - `copy.copy`(얕은), `copy.deepcopy`(깊은).
 - 커스텀은 `__copy__` / `__deepcopy__(memo)` 구현.
 - **슬롯/프록시/파일 핸들/락** 등 복제 불가 자원은 **랩핑** 또는 **재초기화 정책** 문서화.
 
 ### C# (.NET)
+
 - `MemberwiseClone()`으로 **얕은 복제**(protected).
 - `ICloneable`은 **비권장**(의미가 모호) → **명시 인터페이스** `IDeepCloneable<T>` 또는 **Copy Ctor** 권장.
 - **record** 타입은 **값 기반** `with` 복사가 자연스러운 대안.
@@ -283,6 +288,7 @@ public sealed class Tree : IDeepCloneable<Tree> {
 ```
 
 ### Java
+
 - `Cloneable`+`clone()`은 **주의**(얕은 복제 기본, 예외/가시성/불변식 붕괴 위험).
 - 실전에서는 **복사 생성자/정적 팩토리** 또는 **빌더**가 더 명확.
 - 그래도 `clone()`을 쓴다면 **깊은 복제**를 명시적으로 구현/문서화.
@@ -302,6 +308,7 @@ public class Node implements Cloneable {
 ```
 
 ### TypeScript(보너스)
+
 - 구조적 타입 + 얕은 복제는 `{...obj}` / `Array.slice()`
 - 깊은 복제는 구조적 순회/직렬화(JSON 기반은 Date/Map/Set/함수 손실 주의)
 
@@ -414,7 +421,7 @@ def test_shared_graph_preserved():
 
 ## 🧑‍💻 추가 실전 예제
 
-### 1. 문서 편집기(계층 모델) — Python
+### 문서 편집기(계층 모델) — Python
 
 ```python
 import copy
@@ -441,6 +448,7 @@ class Document:
         return copy.deepcopy(self)
 
 # 템플릿
+
 tpl = Document(
     title="Template",
     sections=[Section("Intro", [Paragraph("Welcome", {"size":12})])]
@@ -450,7 +458,7 @@ doc1 = tpl.clone(); doc1.title = "Doc A"
 doc2 = tpl.clone(); doc2.sections[0].paragraphs[0].text = "Changed"
 ```
 
-### 2. C# 레지스트리 + 덮어쓰기
+### C# 레지스트리 + 덮어쓰기
 
 ```csharp
 public interface IPrototype<T> { T DeepClone(); }
@@ -476,7 +484,7 @@ reg.Register("goblin", new Enemy{ Kind="goblin", Hp=50, Atk=7 });
 var e1 = reg.Clone("goblin").With(hp:60);
 ```
 
-### 3. Java: `clone()` 대신 복사 생성자
+### Java: `clone()` 대신 복사 생성자
 
 ```java
 public final class Profile {

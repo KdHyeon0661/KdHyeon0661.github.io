@@ -6,7 +6,7 @@ category: Java
 ---
 # Maven, Gradle 개요 및 비교
 
-## 0. 개요
+## 개요
 
 - **Maven**: 선언형(XML)·관례 중심. 표준 수명주기/플러그인으로 **안정적**이고 **예측 가능한** 빌드. 온보딩 용이.
 - **Gradle**: DSL 기반(Task 그래프)·증분/캐시·병렬화로 **빠르고 유연**. 복잡한 빌드/대규모 멀티모듈에서 강력.
@@ -22,9 +22,10 @@ category: Java
 
 ---
 
-## 1. 철학과 동작 모델
+## 철학과 동작 모델
 
-### 1.1 Maven — Convention over Configuration
+### Maven — Convention over Configuration
+
 - **POM 모델**로 GAV(Group/Artifact/Version), 의존성, 플러그인을 선언.
 - **수명주기(phase)**에 **goal**(플러그인 실행)을 바인딩하여 실행.
 - 디렉터리 구조·패키징 타입·플러그인 구성이 **관례로 표준화**.
@@ -34,7 +35,8 @@ category: Java
 validate → compile → test → package → verify → install → deploy
 ```
 
-### 1.2 Gradle — Task Graph & Incremental
+### Gradle — Task Graph & Incremental
+
 - **Task** 간 의존 그래프를 구성해 필요한 작업만 실행(증분).
 - **입출력 스냅샷**, **빌드 캐시(로컬/원격)**, **병렬 실행**으로 속도 최적화.
 - Groovy/Kotlin DSL로 로직을 **코드처럼** 표현(조건/반복/함수화).
@@ -46,9 +48,10 @@ Task 예(개념):
 
 ---
 
-## 2. 기본 골격 비교(예제 포함)
+## 기본 골격 비교(예제 포함)
 
-### 2.1 디렉터리 관례(공통)
+### 디렉터리 관례(공통)
+
 ```
 src
  ├─ main
@@ -59,7 +62,8 @@ src
      └─ resources
 ```
 
-### 2.2 Maven 최소 POM
+### Maven 최소 POM
+
 ```xml
 <!-- pom.xml -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -97,7 +101,8 @@ src
 </project>
 ```
 
-### 2.3 Gradle 최소 Kotlin DSL
+### Gradle 최소 Kotlin DSL
+
 ```kotlin
 // settings.gradle.kts
 rootProject.name = "demo"
@@ -130,9 +135,10 @@ application {
 
 ---
 
-## 3. 의존성 관리 — 범위/구성, 전이, BOM/카탈로그, 충돌 해결
+## 의존성 관리 — 범위/구성, 전이, BOM/카탈로그, 충돌 해결
 
-### 3.1 Maven
+### Maven
+
 - **범위(scope)**: `compile`(기본), `provided`, `runtime`, `test`, `system`, `import(BOM)`
 - **전이 의존성**: 상위 의존의 의존성을 자동 포함
 - **충돌 해결**: **가장 가까운(Nearest) 선언 우선** → 명시 버전 고정은 `dependencyManagement`
@@ -160,7 +166,8 @@ BOM 적용:
 </dependencies>
 ```
 
-### 3.2 Gradle
+### Gradle
+
 - **구성(configuration)**: `api`/`implementation`/`compileOnly`/`runtimeOnly`/`testImplementation` …
   - `api`는 상위 모듈의 **공개 API**(하위 의존 전파), `implementation`은 내부 구현(은닉)
 - **버전 카탈로그**(`libs.versions.toml`)로 버전·별칭 중앙 관리
@@ -170,6 +177,7 @@ BOM 적용:
 버전 카탈로그 예:
 ```toml
 # gradle/libs.versions.toml
+
 [versions]
 junit = "5.10.2"
 slf4j = "2.0.13"
@@ -189,9 +197,10 @@ dependencies {
 
 ---
 
-## 4. 멀티모듈/모노레포
+## 멀티모듈/모노레포
 
-### 4.1 Maven 멀티모듈
+### Maven 멀티모듈
+
 루트 POM:
 ```xml
 <project>
@@ -218,7 +227,8 @@ dependencies {
 </dependency>
 ```
 
-### 4.2 Gradle 멀티프로젝트
+### Gradle 멀티프로젝트
+
 ```
 demo
  ├─ settings.gradle.kts
@@ -265,7 +275,7 @@ dependencies {
 
 ---
 
-## 5. 성능 — 증분·캐시·병렬·Configuration Cache
+## 성능 — 증분·캐시·병렬·Configuration Cache
 
 | 항목 | Maven | Gradle |
 |---|---|---|
@@ -285,9 +295,10 @@ org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
 
 ---
 
-## 6. 테스트 전략(단위/통합), 소스셋 확장
+## 테스트 전략(단위/통합), 소스셋 확장
 
-### 6.1 Maven
+### Maven
+
 - **Surefire**(단위), **Failsafe**(통합) 분리:
 ```xml
 <plugin>
@@ -311,7 +322,8 @@ org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8
 </plugin>
 ```
 
-### 6.2 Gradle
+### Gradle
+
 - **소스셋**으로 통합 테스트 분리:
 ```kotlin
 // build.gradle.kts
@@ -340,15 +352,17 @@ tasks.check { dependsOn("integrationTest") }
 
 ---
 
-## 7. 패키징·실행·배포
+## 패키징·실행·배포
 
-### 7.1 공통 개념
+### 공통 개념
+
 - **JAR**: 라이브러리/실행 JAR
 - **Fat/Shadow JAR**: 의존 JAR을 하나로 병합(충돌/라이선스 주의)
 - **Spring Boot**: Boot 플러그인(Gradle `bootJar`, Maven `spring-boot-maven-plugin`)
 - **퍼블리시**: 사내/중앙 리포지토리(Nexus, Artifactory)
 
-### 7.2 Maven 실행형 JAR
+### Maven 실행형 JAR
+
 ```xml
 <plugin>
   <artifactId>maven-jar-plugin</artifactId>
@@ -363,14 +377,16 @@ tasks.check { dependsOn("integrationTest") }
 </plugin>
 ```
 
-### 7.3 Gradle 실행형 JAR
+### Gradle 실행형 JAR
+
 ```kotlin
 tasks.jar {
     manifest { attributes["Main-Class"] = "com.example.Main" }
 }
 ```
 
-### 7.4 Fat JAR(Gradle Shadow 예)
+### Fat JAR(Gradle Shadow 예)
+
 ```kotlin
 plugins { id("com.github.johnrengelman.shadow") version "8.1.1" }
 tasks.shadowJar {
@@ -379,7 +395,7 @@ tasks.shadowJar {
 }
 ```
 
-### 7.5 퍼블리시
+### 퍼블리시
 
 **Maven**
 ```xml
@@ -414,9 +430,10 @@ signing { sign(publishing.publications["mavenJava"]) }
 
 ---
 
-## 8. JPMS(모듈 시스템)·jlink·jdeps와의 연계
+## JPMS(모듈 시스템)·jlink·jdeps와의 연계
 
-### 8.1 Maven
+### Maven
+
 ```xml
 <properties>
   <maven.compiler.release>17</maven.compiler.release>
@@ -424,7 +441,8 @@ signing { sign(publishing.publications["mavenJava"]) }
 ```
 JPMS 사용 시 `module-info.java` 포함, 테스트/프레임워크 리플렉션은 `--add-opens` 혹은 설계상 `opens` 사용.
 
-### 8.2 Gradle
+### Gradle
+
 ```kotlin
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("--release", "17"))
@@ -437,9 +455,10 @@ tasks.withType<JavaCompile>().configureEach {
 
 ---
 
-## 9. CI/CD — 재현 가능 빌드
+## CI/CD — 재현 가능 빌드
 
 ### 공통 원칙
+
 - **Wrapper**로 도구 버전 고정: `mvnw` / `gradlew`
 - 중앙 리포 미러/캐시, 사내 프록시, 의존성 잠금(BOM/Locking)
 - 병렬/캐시 활성화
@@ -454,23 +473,25 @@ tasks.withType<JavaCompile>().configureEach {
 
 ---
 
-## 10. 마이그레이션 가이드
+## 마이그레이션 가이드
 
-### 10.1 Maven → Gradle
+### Maven → Gradle
+
 1. `gradle init`으로 기본 변환(의존성/소스세트 반영)
 2. BOM → `platform(...)` 또는 버전 카탈로그로 치환
 3. Maven profile → Gradle **플래그/프로퍼티/전역 조건**로 매핑
 4. 멀티모듈은 `settings.gradle.kts` + convention plugin으로 공통화
 5. CI에서 캐시/병렬/Configuration Cache 활성화
 
-### 10.2 Gradle → Maven
+### Gradle → Maven
+
 1. 의존성/버전/플러그인을 POM으로 반영 (`dependencyManagement`로 버전 중앙화)
 2. 커스텀 Task 로직은 Maven 플러그인/스크립트(또는 Exec 플러그인)로 전환
 3. 프로필 기반 빌드 조건 설정
 
 ---
 
-## 11. Android·Spring Boot·Kotlin·Annotation Processing
+## Android·Spring Boot·Kotlin·Annotation Processing
 
 - **Android**: Gradle 표준. Android Gradle Plugin(AGP) 사용.
 - **Spring Boot**: Maven/Gradle 모두 원활. Gradle의 `bootRun`/`bootJar`가 생산적.
@@ -505,7 +526,7 @@ dependencies {
 
 ---
 
-## 12. 트러블슈팅 매트릭스
+## 트러블슈팅 매트릭스
 
 | 증상 | Maven 원인/해결 | Gradle 원인/해결 |
 |---|---|---|
@@ -517,7 +538,7 @@ dependencies {
 
 ---
 
-## 13. 보안·정책·라이선스
+## 보안·정책·라이선스
 
 - **Checksum 검증**: 사내 리포지토리 프록시(Nexus/Artifactory)에서 검증/미러링
 - **서명**: Maven `maven-gpg-plugin`, Gradle `signing`
@@ -525,7 +546,7 @@ dependencies {
 
 ---
 
-## 14. 의사결정 체크리스트
+## 의사결정 체크리스트
 
 1. 팀의 기존 경험/온보딩 속도는? → Maven 유리
 2. 빌드 시간/대규모 멀티모듈? → Gradle 유리
@@ -535,7 +556,7 @@ dependencies {
 
 ---
 
-## 15. 명령어 치트시트
+## 명령어 치트시트
 
 **Maven**
 ```bash
@@ -560,16 +581,19 @@ gradle -v
 Wrapper 생성:
 ```bash
 # Maven
+
 mvn -N io.takari:maven:wrapper
 # Gradle
+
 gradle wrapper
 ```
 
 ---
 
-## 16. 실전 템플릿 — 최소/가벼운 멀티모듈
+## 실전 템플릿 — 최소/가벼운 멀티모듈
 
-### 16.1 Maven Parent + Modules
+### Maven Parent + Modules
+
 ```xml
 <!-- parent/pom.xml -->
 <project>
@@ -600,7 +624,8 @@ gradle wrapper
 </project>
 ```
 
-### 16.2 Gradle Root + Subprojects
+### Gradle Root + Subprojects
+
 ```kotlin
 // settings.gradle.kts
 rootProject.name = "demo"

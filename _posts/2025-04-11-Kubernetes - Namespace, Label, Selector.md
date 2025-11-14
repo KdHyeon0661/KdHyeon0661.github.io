@@ -18,12 +18,14 @@ category: Kubernetes
 
 ## ✅ 1. Namespace — 클러스터 리소스의 논리적 격리
 
-### 1.1 목적과 효과
+### 목적과 효과
+
 - **멀티팀/멀티프로젝트**: 권한·리소스·네트워크 정책을 **네임스페이스 단위**로 분리.
 - **리소스 가드레일**: `ResourceQuota`, `LimitRange`로 과소/과대 사용 방지.
 - **이름 충돌 방지**: `dev/mypod`와 `prod/mypod`는 **서로 다른 객체**.
 
-### 1.2 기본 네임스페이스
+### 기본 네임스페이스
+
 | 이름 | 설명 |
 |---|---|
 | `default` | 기본 작업 공간 |
@@ -31,7 +33,8 @@ category: Kubernetes
 | `kube-public` | 공개 읽기 가능한 정보(클러스터 정보 등) |
 | `kube-node-lease` | 노드 하트비트(lease)용 |
 
-### 1.3 생성/사용
+### 생성/사용
+
 ```bash
 kubectl create namespace dev
 kubectl get ns
@@ -51,11 +54,13 @@ spec:
     image: nginx:1.27-alpine
 ```
 
-### 1.4 네임스페이스 단위 가드레일
+### 네임스페이스 단위 가드레일
+
 **ResourceQuota**(총량 상한) + **LimitRange**(Pod/컨테이너 기본 request/limit).
 
 ```yaml
 # ResourceQuota 예: dev NS에서 총 코어/메모리/객체 수 제한
+
 apiVersion: v1
 kind: ResourceQuota
 metadata:
@@ -71,6 +76,7 @@ spec:
     services: "50"
 ---
 # LimitRange 예: 기본 request/limit 자동 부여
+
 apiVersion: v1
 kind: LimitRange
 metadata:
@@ -87,7 +93,8 @@ spec:
       memory: 256Mi
 ```
 
-### 1.5 네임스페이스와 DNS/Service 검색
+### 네임스페이스와 DNS/Service 검색
+
 - Pod에서 `svc명` → 동일 NS의 Service를 우선 조회.
 - FQDN: `svc명.네임스페이스.svc.cluster.local`.
 - 다른 NS 접근 시 FQDN을 쓰거나 `-n`을 명시한 `kubectl port-forward/service` 사용.
@@ -96,15 +103,18 @@ spec:
 
 ## ✅ 2. Label — key/value 메타데이터로 의미를 부여
 
-### 2.1 목적
+### 목적
+
 - **그룹핑/선택**의 최소 단위. Service, ReplicaSet, Deployment, NetworkPolicy 등 **거의 모든 선택 로직의 근간**.
 - 운영 메타정보(팀, 환경, 릴리스, 버전, 역할)를 객체에 **가볍게** 부착.
 
-### 2.2 문법/제약(요약)
+### 문법/제약(요약)
+
 - key는 `prefix(optional)/name` 형태. 일반적으로 `app.kubernetes.io/name`처럼 **도메인 접두사** 권장.
 - value는 짧은 ASCII(영숫자, `-`, `_`, `.`), 길이 제한(일반적으로 63자 내).
 
-### 2.3 표준 라벨 권장 세트
+### 표준 라벨 권장 세트
+
 공식 권고 키(검색/도구 연계에 유리):
 
 | Key | 예시 | 의미 |
@@ -129,7 +139,8 @@ metadata:
     zone: ap-northeast-2a
 ```
 
-### 2.4 명령으로 라벨 조작
+### 명령으로 라벨 조작
+
 ```bash
 kubectl label pod mypod team=platform
 kubectl label pod mypod team-         # 라벨 제거
@@ -142,7 +153,8 @@ kubectl get pods -l app=payment-api -o wide
 
 ## ✅ 3. Selector — 라벨 기반의 정확한 선택
 
-### 3.1 두 가지 스타일
+### 두 가지 스타일
+
 | 유형 | 예시 | 설명 |
 |---|---|---|
 | **Equality** | `app=web`, `tier!=db` | 동등/부정 비교 |
@@ -153,7 +165,8 @@ CLI에서도 동일:
 kubectl get pods -l 'env in (dev,qa),tier=backend'
 ```
 
-### 3.2 컨트롤러별 Selector와 불변성
+### 컨트롤러별 Selector와 불변성
+
 | 리소스 | selector 불변성 | 비고 |
 |---|---|---|
 | **ReplicaSet** | **불변** | 생성 후 변경 불가. Pod 집합 정의의 핵심. |
@@ -168,7 +181,8 @@ kubectl get pods -l 'env in (dev,qa),tier=backend'
 
 ## ✅ 4. 실습: Namespace + Label + Selector 한 번에
 
-### 4.1 라벨이 붙은 Pod/Deployment
+### 라벨이 붙은 Pod/Deployment
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -196,7 +210,8 @@ spec:
         ports: [{ containerPort: 80 }]
 ```
 
-### 4.2 해당 라벨을 고르는 Service
+### 해당 라벨을 고르는 Service
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -213,21 +228,27 @@ spec:
     targetPort: 80
 ```
 
-### 4.3 검증 루틴
+### 검증 루틴
+
 ```bash
 # dev NS로 컨텍스트 고정
+
 kubectl config set-context --current --namespace=dev
 
 # 라벨 확인
+
 kubectl get deploy,pod -l app.kubernetes.io/name=web -o wide
 
 # Service→Endpoints 연결 확인 (가장 중요한 검증)
+
 kubectl get endpoints web -o yaml
 
 # 일시적으로 selector를 바꿔보면(주의: 실제 운영 금지) 즉시 Endpoints 변동
+
 kubectl patch svc web -p '{"spec":{"selector":{"app.kubernetes.io/name":"not-exist"}}}'
 kubectl get endpoints web                 # 비어있는지 확인
 # 원복
+
 kubectl patch svc web -p '{"spec":{"selector":{"app.kubernetes.io/name":"web","tier":"frontend"}}}'
 ```
 
@@ -235,7 +256,8 @@ kubectl patch svc web -p '{"spec":{"selector":{"app.kubernetes.io/name":"web","t
 
 ## ✅ 5. 라벨이 좌우하는 스케줄링/분산/정책
 
-### 5.1 Affinity/Anti-Affinity — 라벨로 배치 제어
+### Affinity/Anti-Affinity — 라벨로 배치 제어
+
 ```yaml
 spec:
   template:
@@ -253,7 +275,8 @@ spec:
 - **동일 노드**에 `web`이 몰리지 않게 **분산**(Anti-Affinity).
 - `requiredDuring...`는 하드, `preferred...`는 소프트 제약.
 
-### 5.2 Topology Spread Constraints — 균등 분산
+### Topology Spread Constraints — 균등 분산
+
 ```yaml
 spec:
   template:
@@ -268,7 +291,8 @@ spec:
 ```
 - 라벨 집합(`web`)의 **존 단위 균등 분산**.
 
-### 5.3 NetworkPolicy — 네임스페이스/라벨 조합
+### NetworkPolicy — 네임스페이스/라벨 조합
+
 ```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -298,12 +322,15 @@ spec:
 
 ```bash
 # Set-based 다중 조건
+
 kubectl get pods -l 'env in (dev,qa),tier=backend' -o wide
 
 # JSONPath로 이름과 라벨 key만 추리기
+
 kubectl get svc -l app.kubernetes.io/name=web -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.metadata.labels.env}{"\n"}{end}'
 
 # 라벨 키만 있는 리소스 찾기(값 무시)
+
 kubectl get pods -l 'team'
 ```
 
@@ -345,7 +372,8 @@ kubectl get pods -l 'team'
 
 ## ✅ 9. 패턴 모음(운영 템플릿)
 
-### 9.1 팀/환경 매트릭스
+### 팀/환경 매트릭스
+
 ```yaml
 metadata:
   labels:
@@ -356,20 +384,24 @@ metadata:
     tier: backend
 ```
 
-### 9.2 서비스 라벨과 셀렉터의 교과서적 정합
+### 서비스 라벨과 셀렉터의 교과서적 정합
+
 ```yaml
 spec:
   selector:
     app.kubernetes.io/name: checkout
     tier: backend
 # 아래 Pod 템플릿에도 동일하게!
+
 ```
 
-### 9.3 네임스페이스 라벨 → 정책에 활용
+### 네임스페이스 라벨 → 정책에 활용
+
 ```bash
 kubectl label namespace prod env=prod
 kubectl label namespace dev  env=dev
 # NetworkPolicy, Gatekeeper/OPA, ArgoCD Project 범위 등에 재사용
+
 ```
 
 ---

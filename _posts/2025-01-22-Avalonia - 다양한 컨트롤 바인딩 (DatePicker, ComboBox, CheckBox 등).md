@@ -6,7 +6,7 @@ category: Avalonia
 ---
 # Avalonia MVVM: 다양한 컨트롤 바인딩
 
-## 0. 예제 프로젝트 스캐폴드
+## 예제 프로젝트 스캐폴드
 
 ```
 MyAvaloniaApp/
@@ -32,9 +32,9 @@ MyAvaloniaApp/
 
 ---
 
-## 1. DatePicker — 날짜 선택 바인딩 (기본형 → 실전형)
+## DatePicker — 날짜 선택 바인딩 (기본형 → 실전형)
 
-### 1.1 기본형
+### 기본형
 
 ```xml
 <!-- Views/ControlsDemoView.axaml (발췌) -->
@@ -69,7 +69,7 @@ public class ControlsDemoViewModel : ReactiveObject
 - `null` 허용 → 초기 미선택 처리 가능.
 - 문자열 포맷은 `StringFormat` 혹은 `IValueConverter`로 수행.
 
-### 1.2 포맷/빈값 처리 — Converter 활용
+### 포맷/빈값 처리 — Converter 활용
 
 ```csharp
 // Converters/DateTimeOffsetFormatConverter.cs
@@ -115,7 +115,7 @@ public sealed class DateTimeOffsetFormatConverter : IValueConverter
   Text="{Binding SelectedDate, Converter={StaticResource DateFmt}}"/>
 ```
 
-### 1.3 최소/최대 범위(가드), 적용 버튼 활성화
+### 최소/최대 범위(가드), 적용 버튼 활성화
 
 ```csharp
 // ViewModels/ControlsDemoViewModel.cs (발췌)
@@ -165,9 +165,9 @@ public class ControlsDemoViewModel : ReactiveObject
 
 ---
 
-## 2. ComboBox — 문자열/객체/Enum/Id 바인딩
+## ComboBox — 문자열/객체/Enum/Id 바인딩
 
-### 2.1 문자열 컬렉션 선택
+### 문자열 컬렉션 선택
 
 ```xml
 <StackPanel Spacing="8">
@@ -193,7 +193,7 @@ public partial class ControlsDemoViewModel : ReactiveObject
 }
 ```
 
-### 2.2 객체 컬렉션(표시/값 분리)
+### 객체 컬렉션(표시/값 분리)
 
 ```csharp
 // Models/User.cs
@@ -236,7 +236,7 @@ public int? SelectedUserId
 
 > Avalonia는 WPF의 `SelectedValuePath`와 완전히 동일하진 않다. 실전에서는 **`SelectedItem`로 객체를 바인딩**하고, ViewModel에서 **파생 속성**(예: `SelectedUserId`)을 노출하는 패턴이 가장 예측 가능하고 테스트하기 쉽다.
 
-### 2.3 DataTemplate로 표시 커스터마이징
+### DataTemplate로 표시 커스터마이징
 
 ```xml
 <ComboBox Items="{Binding Users}"
@@ -253,7 +253,7 @@ public int? SelectedUserId
 </ComboBox>
 ```
 
-### 2.4 Enum 바인딩
+### Enum 바인딩
 
 ```csharp
 public enum Priority { Low, Normal, High }
@@ -276,9 +276,9 @@ public Priority SelectedPriority
 
 ---
 
-## 3. CheckBox — bool/nullable/마스터-디테일 패턴
+## CheckBox — bool/nullable/마스터-디테일 패턴
 
-### 3.1 단일 체크
+### 단일 체크
 
 ```xml
 <StackPanel Spacing="8">
@@ -298,7 +298,7 @@ public bool IsAccepted
 }
 ```
 
-### 3.2 삼상 체크(bool?)와 마스터 체크
+### 삼상 체크(bool?)와 마스터 체크
 
 - 모든 항목이 체크 → `true`
 - 아무 항목도 체크 아님 → `false`
@@ -378,9 +378,9 @@ private void UpdateMasterCheck()
 
 ---
 
-## 4. 라디오 버튼 · 토글 스위치 · 슬라이더/프로그레스
+## 라디오 버튼 · 토글 스위치 · 슬라이더/프로그레스
 
-### 4.1 RadioButton — 단일 선택(그룹)
+### RadioButton — 단일 선택(그룹)
 
 ```csharp
 public string[] PaymentMethods { get; } = { "카드", "계좌이체", "포인트" };
@@ -424,7 +424,7 @@ public sealed class StringEqualsConverter : IValueConverter
 }
 ```
 
-### 4.2 ToggleSwitch — On/Off 설정
+### ToggleSwitch — On/Off 설정
 
 ```csharp
 private bool _darkMode;
@@ -439,7 +439,7 @@ public bool DarkMode
 <ToggleSwitch IsChecked="{Binding DarkMode}" Content="다크 모드"/>
 ```
 
-### 4.3 Slider/ProgressBar — 숫자 바인딩
+### Slider/ProgressBar — 숫자 바인딩
 
 ```csharp
 private double _progress;
@@ -457,7 +457,7 @@ public double Progress
 
 ---
 
-## 5. 종합 ViewModel — 파생 상태 · 명령 활성화
+## 종합 ViewModel — 파생 상태 · 명령 활성화
 
 ```csharp
 // ViewModels/ControlsDemoViewModel.cs (전체형 예시)
@@ -556,7 +556,7 @@ public partial class ControlsDemoViewModel : ReactiveObject
 
 ---
 
-## 6. 종합 View — 컨트롤 배치/템플릿/포맷
+## 종합 View — 컨트롤 배치/템플릿/포맷
 
 ```xml
 <!-- Views/ControlsDemoView.axaml -->
@@ -622,9 +622,9 @@ public partial class ControlsDemoViewModel : ReactiveObject
 
 ---
 
-## 7. 검증(Validation)과 커맨드 활성화
+## 검증(Validation)과 커맨드 활성화
 
-### 7.1 DataAnnotations (간단)
+### DataAnnotations (간단)
 
 ```csharp
 using System.ComponentModel.DataAnnotations;
@@ -682,7 +682,7 @@ private void Submit()
 
 ---
 
-## 8. Converter 모음(실무 유용)
+## Converter 모음(실무 유용)
 
 ```csharp
 // Converters/BoolToTextConverter.cs
@@ -718,7 +718,7 @@ public sealed class BoolToTextConverter : IValueConverter
 
 ---
 
-## 9. 저장/복원(간단 JSON 스토리지)
+## 저장/복원(간단 JSON 스토리지)
 
 ```csharp
 // Services/JsonStorageService.cs
@@ -781,7 +781,7 @@ private async void Load()
 
 ---
 
-## 10. 성능/유지보수 팁
+## 성능/유지보수 팁
 
 - **바인딩 경로 단순화**: `SelectedItem` → 파생 속성(Id/Name)을 VM에서 노출.
 - **DataTemplate** 정적 선언: 런타임 탐색 줄이고 유지보수 가시성 향상.
@@ -792,7 +792,7 @@ private async void Load()
 
 ---
 
-## 11. 통합 미니 과제
+## 통합 미니 과제
 
 요구
 
@@ -809,7 +809,7 @@ private async void Load()
 
 ---
 
-## 12. 결론
+## 결론
 
 - **DatePicker/ComboBox/CheckBox**는 MVVM에서 **값·객체·상태**를 표현하는 기본 축이다.
 - 단순 바인딩에서 출발하되, **DataTemplate/Converter/Validation/Command**를 조합하면 현업의 대부분 요구(표시/검증/저장/복원/조건 활성화)에 충분히 대응한다.

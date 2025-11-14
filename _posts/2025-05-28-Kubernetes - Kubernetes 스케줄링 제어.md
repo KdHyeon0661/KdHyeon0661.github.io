@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Kubernetes 스케줄링 제어: Pod Affinity & Node Affinity
 
-## 0. 큰 그림: “필터링 → 점수화 → 할당”
+## 큰 그림: “필터링 → 점수화 → 할당”
 
 스케줄러는 크게 **필터링(노드 후보군)** → **점수화(우선순위)** → **바인딩(선정)** 순서로 동작합니다.
 - **Node Affinity**/**(Anti-)Pod Affinity**는 *필터*와 *점수화*에 모두 관여합니다.
@@ -17,11 +17,11 @@ category: Kubernetes
 
 ---
 
-## 1. Node Affinity — “어떤 노드로 갈 수 있는가”
+## Node Affinity — “어떤 노드로 갈 수 있는가”
 
 노드 라벨을 기준으로 Pod 배치 허용/선호를 제어합니다. 라벨은 운영팀이 **노드 특성(역할/하드웨어/영역)**을 코딩하는 수단입니다.
 
-### 1.1 기본 구문 & 연산자
+### 기본 구문 & 연산자
 
 ```yaml
 spec:
@@ -45,18 +45,20 @@ spec:
 - **required** 블록의 어떤 `nodeSelectorTerms` 하나라도 만족해야 스케줄 가능(OR).
 - 각 `matchExpressions`는 AND 결합.
 
-### 1.2 운영 라벨링 패턴 예시
+### 운영 라벨링 패턴 예시
 
 ```bash
 # 하드웨어/역할/조닝 라벨 예
+
 kubectl label node ip-10-0-1-23 disktype=ssd tier=frontend arch=amd64
 
 # 클라우드 표준 토폴로지 라벨(노드에 자동 부여되는 경우가 많음)
 # topology.kubernetes.io/zone=ap-northeast-2a
 # topology.kubernetes.io/region=ap-northeast-2
+
 ```
 
-### 1.3 시나리오: “가능하면 SSD, 불가하면 일반 노드라도”
+### 시나리오: “가능하면 SSD, 불가하면 일반 노드라도”
 
 ```yaml
 spec:
@@ -76,7 +78,7 @@ spec:
 
 ---
 
-## 2. Pod Affinity — “이 Pod과 **가깝게**(같은 노드/존)”
+## Pod Affinity — “이 Pod과 **가깝게**(같은 노드/존)”
 
 서로 붙여야 하는 워크로드(예: **웹→사이드캐시**, **API→사이드카**, **분산 스토리지의 피어 근접**)에 사용합니다.
 
@@ -92,7 +94,7 @@ spec:
 
 - `topologyKey`에 따라 **노드/존/리전** 레벨 근접성을 지정합니다.
 
-### 2.1 네임스페이스 선택(크로스-NS 인접)
+### 네임스페이스 선택(크로스-NS 인접)
 
 ```yaml
 spec:
@@ -109,7 +111,7 @@ spec:
 
 ---
 
-## 3. Pod **Anti**-Affinity — “이 Pod과 **멀리**(노드/존 분산)”
+## Pod **Anti**-Affinity — “이 Pod과 **멀리**(노드/존 분산)”
 
 **HA 필수**인 스테이트리스 레플리카는 **서로 다른 장애 도메인(노드/존)**으로 퍼뜨려야 합니다.
 
@@ -135,7 +137,7 @@ spec:
 
 ---
 
-## 4. `topologyKey` 선택 가이드
+## `topologyKey` 선택 가이드
 
 | topologyKey | 의미 | 용도 |
 |---|---|---|
@@ -145,7 +147,7 @@ spec:
 
 ---
 
-## 5. 실전 컴바인: “SSD 선호 + 같은 존 근접 + 동일 앱 간 노드 분산”
+## 실전 컴바인: “SSD 선호 + 같은 존 근접 + 동일 앱 간 노드 분산”
 
 ```yaml
 apiVersion: apps/v1
@@ -187,7 +189,7 @@ spec:
 
 ---
 
-## 6. Affinity vs **Taints/Tolerations** — “끌림” vs “거부”
+## Affinity vs **Taints/Tolerations** — “끌림” vs “거부”
 
 | 항목 | Affinity | Taints/Tolerations |
 |---|---|---|
@@ -199,11 +201,13 @@ spec:
 
 ```bash
 # 노드에 Taint 설정 (GPU 전용)
+
 kubectl taint nodes gpu-node accelerator=nvidia:NoSchedule
 ```
 
 ```yaml
 # GPU 워크로드 Pod에 Tolerations 추가
+
 spec:
   tolerations:
   - key: "accelerator"
@@ -224,7 +228,7 @@ spec:
 
 ---
 
-## 7. **Topology Spread Constraints**(현대적 분산 방법) — Anti-Affinity의 대안/보완
+## **Topology Spread Constraints**(현대적 분산 방법) — Anti-Affinity의 대안/보완
 
 대규모에서 `podAntiAffinity`는 스케줄러 비용이 커질 수 있습니다. **균등 분산**에는 `topologySpreadConstraints`가 더 **확정적이고 스케일 친화적**입니다.
 
@@ -245,7 +249,7 @@ spec:
 
 ---
 
-## 8. 수학적 직관 — 가중 선호 점수
+## 수학적 직관 — 가중 선호 점수
 
 여러 `preferred`가 있을 때 스케줄러는 내부적으로 각 노드에 가중 점수를 합산합니다. 단순화하면:
 
@@ -260,7 +264,7 @@ $$
 
 ---
 
-## 9. 동시 배포 함정 & 롤링 업데이트 전략
+## 동시 배포 함정 & 롤링 업데이트 전략
 
 - `podAffinity`는 “이미 존재하는 Pod”를 기준으로 매칭합니다. **동시에 0→N 배포** 시 첫 파드가 없어서 매칭 실패 가능.
 - 해결:
@@ -270,9 +274,10 @@ $$
 
 ---
 
-## 10. 관찰·진단·트러블슈팅
+## 관찰·진단·트러블슈팅
 
-### 10.1 Pending 원인 보기
+### Pending 원인 보기
+
 ```bash
 kubectl describe pod <name> | sed -n '/Events:/,$p'
 kubectl get events --sort-by=.lastTimestamp -A | tail
@@ -281,13 +286,15 @@ kubectl get events --sort-by=.lastTimestamp -A | tail
 - “pod didn't match pod anti-affinity rules …”
 - “Insufficient cpu/memory …”
 
-### 10.2 후보 노드 라벨 확인
+### 후보 노드 라벨 확인
+
 ```bash
 kubectl get nodes --show-labels | cut -c -180
 kubectl get node <node> --show-labels
 ```
 
-### 10.3 시뮬레이션(드라이런) & 점검
+### 시뮬레이션(드라이런) & 점검
+
 ```bash
 kubectl apply -f pod.yaml --dry-run=server
 kubectl scheduler extenders/플러그인 사용 시 로깅 확인
@@ -295,9 +302,10 @@ kubectl scheduler extenders/플러그인 사용 시 로깅 확인
 
 ---
 
-## 11. 실전 시나리오 모음
+## 실전 시나리오 모음
 
-### 11.1 프론트엔드 **서로 다른 노드 분산** + API와 **같은 존**
+### 프론트엔드 **서로 다른 노드 분산** + API와 **같은 존**
+
 ```yaml
 spec:
   affinity:
@@ -313,7 +321,8 @@ spec:
           topologyKey: topology.kubernetes.io/zone
 ```
 
-### 11.2 스토리지 노드로 **강제**(필터) + GPU 노드 **거부**
+### 스토리지 노드로 **강제**(필터) + GPU 노드 **거부**
+
 ```yaml
 spec:
   affinity:
@@ -329,7 +338,8 @@ spec:
             operator: DoesNotExist
 ```
 
-### 11.3 동일 앱 **존 균등 분산**(권장 현대식)
+### 동일 앱 **존 균등 분산**(권장 현대식)
+
 ```yaml
 spec:
   topologySpreadConstraints:
@@ -342,7 +352,7 @@ spec:
 
 ---
 
-## 12. 운영 체크리스트
+## 운영 체크리스트
 
 - [ ] **라벨 표준** 수립: `tier`, `role`, `disktype`, `accelerator`, `zone/region`
 - [ ] **required**를 남발하지 않기(스케줄 실패 위험↑). 선호+Spread로 먼저 설계.
@@ -356,7 +366,7 @@ spec:
 
 ---
 
-## 13. 테스트용 최소 재현 매니페스트(한꺼번에 실습)
+## 테스트용 최소 재현 매니페스트(한꺼번에 실습)
 
 ```yaml
 apiVersion: v1
@@ -416,7 +426,7 @@ spec:
 
 ---
 
-## 14. 자주 하는 실수 & 해결
+## 자주 하는 실수 & 해결
 
 | 증상 | 원인 | 대응 |
 |---|---|---|
@@ -428,7 +438,7 @@ spec:
 
 ---
 
-## 15. 마무리 요약
+## 마무리 요약
 
 | 기능 | 핵심 | 주 사용처 |
 |---|---|---|
@@ -444,6 +454,7 @@ spec:
 ---
 
 ## 참고
+
 - Node Affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
 - Pod (Anti-)Affinity: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
 - Topology Spread: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/

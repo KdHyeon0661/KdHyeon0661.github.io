@@ -6,7 +6,7 @@ category: Docker
 ---
 # Docker 이미지 생성 및 커스터마이징
 
-## 0. 빠른 개요(핵심 복습)
+## 빠른 개요(핵심 복습)
 
 - **이미지(Image)**: 컨테이너 실행을 위한 **읽기 전용 템플릿**. 여러 **레이어**의 스택이며 내용 해시로 관리됩니다.
 - **Dockerfile**: 이미지를 어떻게 만들지 지시하는 **명령어 모음 파일**.
@@ -15,9 +15,10 @@ category: Docker
 
 ---
 
-# 1. Dockerfile 기본
+# Dockerfile 기본
 
-### 1.1 디렉터리 레이아웃(예)
+### 디렉터리 레이아웃(예)
+
 ```
 my-app/
 ├── Dockerfile
@@ -25,26 +26,33 @@ my-app/
 └── requirements.txt
 ```
 
-### 1.2 가장 단순한 Flask 예제(기본 버전)
+### 가장 단순한 Flask 예제(기본 버전)
+
 ```Dockerfile
-# 1. 베이스 이미지
+# 베이스 이미지
+
 FROM python:3.10-slim
 
-# 2. 작업 디렉토리
+# 작업 디렉토리
+
 WORKDIR /app
 
-# 3. 의존성 설치 (캐시 최대화: 먼저 requirements만 복사)
+# 의존성 설치 (캐시 최대화: 먼저 requirements만 복사)
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. 앱 코드 복사
+# 앱 코드 복사
+
 COPY . .
 
-# 5. 실행 명령
+# 실행 명령
+
 CMD ["python", "app.py"]
 ```
 
-### 1.3 이미지 빌드 및 실행
+### 이미지 빌드 및 실행
+
 ```bash
 docker build -t my-flask-app .
 docker run -d -p 5000:5000 --name my-flask-app my-flask-app
@@ -54,7 +62,7 @@ docker run -d -p 5000:5000 --name my-flask-app my-flask-app
 
 ---
 
-# 2. 레이어와 캐시를 이해하고 이기는 설계
+# 레이어와 캐시를 이해하고 이기는 설계
 
 Dockerfile의 각 명령은 **상위에 레이어**를 하나 추가합니다. **입력(파일/환경변수/명령문)이 동일**하면 해당 레이어는 **캐시 히트**로 다시 만들지 않습니다.
 
@@ -70,9 +78,10 @@ $$
 
 ---
 
-# 3. `.dockerignore` — 컨텍스트 다이어트
+# `.dockerignore` — 컨텍스트 다이어트
 
-### 3.1 예시
+### 예시
+
 ```dockerignore
 __pycache__/
 *.pyc
@@ -88,47 +97,57 @@ build/
 
 ---
 
-# 4. 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 가볍게”
+# 멀티스테이지 빌드 — “빌드는 무겁게, 런타임은 가볍게”
 
 런타임 이미지에서 **컴파일러/툴체인**을 제거하고, **산출물만** 가져옵니다.
 
-## 4.1 Python(Flask) + Gunicorn 멀티스테이지
+## Python(Flask) + Gunicorn 멀티스테이지
+
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
 
 ########## build stage ##########
+
 FROM python:3.12-alpine AS build
 WORKDIR /app
 
 # 빌드시 필요한 툴/헤더 (wheel 빌드용)
+
 RUN apk add --no-cache build-base libffi-dev
 
 COPY requirements.txt .
 # BuildKit 캐시를 활용하면 의존성 설치가 빨라짐(선택)
+
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip wheel --no-cache-dir --no-deps -r requirements.txt -w /wheels
 
 COPY . .
 
 ########## runtime stage ##########
+
 FROM python:3.12-alpine
 WORKDIR /app
 
 # 보안: 비루트 사용자 생성
+
 RUN addgroup -S app && adduser -S app -G app
 USER app
 
 # 휠만 설치 → 빠르고 캐시친화적
+
 COPY --from=build /wheels /wheels
 RUN pip install --no-cache-dir /wheels/*
 
 # 앱 복사
+
 COPY --from=build /app /app
 
 # 문서용 포트 선언(실제 노출은 -p 필요)
+
 EXPOSE 5000
 
 # Gunicorn으로 프로덕션 실행 (싱글 워커 예시)
+
 ENTRYPOINT ["gunicorn"]
 CMD ["-w","1","-b","0.0.0.0:5000","app:app"]
 ```
@@ -136,9 +155,11 @@ CMD ["-w","1","-b","0.0.0.0:5000","app:app"]
 - **장점**: 런타임 이미지가 **작고 안전**(컴파일러/헤더 無), 레이어 캐시 효율 ↑
 - **비루트 사용자**로 실행: 컨테이너 탈출 시 리스크 억제
 
-## 4.2 Go(정적 바이너리) 초슬림 예
+## Go(정적 바이너리) 초슬림 예
+
 ```Dockerfile
 # build
+
 FROM golang:1.22-alpine AS build
 WORKDIR /src
 COPY go.mod go.sum ./
@@ -148,6 +169,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 go build -o /out/app ./cmd/app
 
 # runtime (distroless scratch)
+
 FROM scratch
 COPY --from=build /out/app /app
 ENTRYPOINT ["/app"]
@@ -155,9 +177,11 @@ ENTRYPOINT ["/app"]
 - `FROM scratch` 로 **수 MB 이하** 런타임 가능
 - 단, CA 인증서가 필요한 HTTP 클라이언트라면 **추가 처리** 필요(예: `ca-certificates` 번들)
 
-## 4.3 Node.js (Build → Nginx serve) 예
+## Node.js (Build → Nginx serve) 예
+
 ```Dockerfile
 # build stage
+
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
@@ -167,13 +191,14 @@ COPY . .
 RUN npm run build  # dist/
 
 # runtime stage
+
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
 ```
 
 ---
 
-# 5. ENTRYPOINT vs CMD — 정확히 알고 쓰기
+# ENTRYPOINT vs CMD — 정확히 알고 쓰기
 
 - **ENTRYPOINT**: “항상 실행되는 고정 바이너리/스크립트” 지정
 - **CMD**: 기본 인자(또는 셸 커맨드) 지정. `docker run ... <override>` 로 덮을 수 있음
@@ -181,29 +206,34 @@ COPY --from=build /app/dist /usr/share/nginx/html
   - **ENTRYPOINT는 exec form**(JSON 배열)으로, **PID 1**에 올릴 것
   - **신호 전달/종료 처리**가 필요한 애플리케이션은 PID 1에서 **SIGTERM 처리** 확인
 
-### 5.1 안전한 exec form 예
+### 안전한 exec form 예
+
 ```Dockerfile
 ENTRYPOINT ["gunicorn"]
 CMD ["-w","1","-b","0.0.0.0:5000","app:app"]
 ```
 
-### 5.2 쉘 form는 신호 전달 문제 가능
+### 쉘 form는 신호 전달 문제 가능
+
 ```Dockerfile
 # 권장하지 않음(쉘 경유)
+
 ENTRYPOINT gunicorn -w 1 -b 0.0.0.0:5000 app:app
 ```
 
 ---
 
-# 6. 환경 변수/ARG/Label/헬스체크
+# 환경 변수/ARG/Label/헬스체크
 
-## 6.1 ENV & ARG
+## ENV & ARG
+
 ```Dockerfile
 ARG BUILD_DATE
 ARG VCS_REF
 ENV APP_ENV=prod
 
 # Label(메타데이터)
+
 LABEL org.opencontainers.image.created=$BUILD_DATE \
       org.opencontainers.image.revision=$VCS_REF \
       org.opencontainers.image.source="https://example.com/repo"
@@ -211,7 +241,8 @@ LABEL org.opencontainers.image.created=$BUILD_DATE \
 - `ARG` 는 **빌드 시점** 변수(이미지 내부에 남지 않음)
 - `ENV` 는 **런타임 환경 변수**
 
-## 6.2 HEALTHCHECK
+## HEALTHCHECK
+
 ```Dockerfile
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
   CMD curl -fsS http://localhost:5000/health || exit 1
@@ -220,7 +251,7 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 
 ---
 
-# 7. 보안·권한·파일시스템 — 기본 방어선
+# 보안·권한·파일시스템 — 기본 방어선
 
 - **비루트(USER)**: root 대신 **일반 사용자** 실행
 - **읽기 전용 루트FS**: `--read-only` + 필요한 경로는 `--tmpfs /tmp` 등
@@ -228,7 +259,8 @@ HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
 - **no-new-privileges**: SUID 승격 차단
 - **비밀(Secrets)**: 환경변수보다 **런타임 시크릿**(Swarm/K8s/BuildKit Secret mount)
 
-### 7.1 실행 예(기본 방어 조합)
+### 실행 예(기본 방어 조합)
+
 ```bash
 docker run --rm \
   --read-only \
@@ -241,9 +273,10 @@ docker run --rm \
 
 ---
 
-# 8. 네트워크/포트·볼륨/영속화 — 빠른 실습
+# 네트워크/포트·볼륨/영속화 — 빠른 실습
 
-## 8.1 정적 파일 서빙(Nginx 커스터마이징)
+## 정적 파일 서빙(Nginx 커스터마이징)
+
 ```Dockerfile
 FROM nginx:alpine
 COPY ./html /usr/share/nginx/html
@@ -254,7 +287,8 @@ docker run -d -p 8080:80 --name web custom-nginx
 curl http://localhost:8080
 ```
 
-## 8.2 데이터 영속화(예: Postgres)
+## 데이터 영속화(예: Postgres)
+
 ```bash
 docker volume create pgdata
 docker run -d --name pg \
@@ -265,7 +299,7 @@ docker run -d --name pg \
 
 ---
 
-# 9. 재현성·배포: 태그 vs 다이제스트, 저장/로드
+# 재현성·배포: 태그 vs 다이제스트, 저장/로드
 
 - **tag**: 사람이 읽기 쉬움(가변)
 - **digest(sha256)**: 내용 기준(불변). 재현 가능 배포에 **권장**
@@ -275,6 +309,7 @@ docker run -d --name pg \
 docker pull nginx:alpine
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 예: nginx@sha256:abcd...
+
 docker run --rm -p 8080:80 nginx@sha256:abcd...
 ```
 {% endraw %}
@@ -283,21 +318,24 @@ docker run --rm -p 8080:80 nginx@sha256:abcd...
 ```bash
 docker save -o custom-nginx.tar custom-nginx
 # 원격지에서
+
 docker load -i custom-nginx.tar
 ```
 
 ---
 
-# 10. BuildKit — 캐시/시크릿/SSH/병렬 빌드
+# BuildKit — 캐시/시크릿/SSH/병렬 빌드
 
 환경 변수로 켜기:
 ```bash
 export DOCKER_BUILDKIT=1
 ```
 
-## 10.1 시크릿 주입(빌드 시간)
+## 시크릿 주입(빌드 시간)
+
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM alpine
 RUN --mount=type=secret,id=npmrc cat /run/secrets/npmrc >/dev/null || true
 ```
@@ -305,19 +343,23 @@ RUN --mount=type=secret,id=npmrc cat /run/secrets/npmrc >/dev/null || true
 docker build --secret id=npmrc,src=$HOME/.npmrc -t app:secret .
 ```
 
-## 10.2 언어별 캐시 마운트
+## 언어별 캐시 마운트
+
 ```Dockerfile
 # Go 예: /go/pkg/mod
+
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 ```
 
 ---
 
-# 11. `.env` / Compose로 개발자 경험(DX) 개선
+# `.env` / Compose로 개발자 경험(DX) 개선
 
-## 11.1 Compose 예시(Flask + Nginx)
+## Compose 예시(Flask + Nginx)
+
 ```yaml
 # docker-compose.yaml
+
 services:
   api:
     build: ./api
@@ -343,7 +385,7 @@ docker compose down -v
 
 ---
 
-# 12. 트러블슈팅 — 원인별 빠른 표
+# 트러블슈팅 — 원인별 빠른 표
 
 | 증상/오류 | 가능 원인 | 해결 |
 |---|---|---|
@@ -357,9 +399,10 @@ docker compose down -v
 
 ---
 
-# 13. 언어별 Dockerfile “좋은 습관” 스니펫
+# 언어별 Dockerfile “좋은 습관” 스니펫
 
-## 13.1 Python
+## Python
+
 ```Dockerfile
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -372,7 +415,8 @@ USER 65532:65532
 CMD ["python","app.py"]
 ```
 
-## 13.2 Node.js
+## Node.js
+
 ```Dockerfile
 FROM node:20-alpine
 WORKDIR /app
@@ -384,7 +428,8 @@ USER node
 CMD ["npm","start"]
 ```
 
-## 13.3 Java (JAR 런)
+## Java (JAR 런)
+
 ```Dockerfile
 FROM eclipse-temurin:21-jre
 WORKDIR /app
@@ -394,7 +439,7 @@ ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app/app.jar"]
 
 ---
 
-# 14. 이미지 크기 줄이기 — 체크리스트
+# 이미지 크기 줄이기 — 체크리스트
 
 - `alpine`/`slim` 베이스 고려(호환성 이슈 확인)
 - 패키지 설치 후 **캐시 삭제**(apk/apt의 캐시 디렉터리)
@@ -405,10 +450,11 @@ ENTRYPOINT ["java","-XX:+UseZGC","-jar","/app/app.jar"]
 
 ---
 
-# 15. 실습: Flask 프로덕션 템플릿(보안/헬스체크 포함)
+# 실습: Flask 프로덕션 템플릿(보안/헬스체크 포함)
 
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
+
 FROM python:3.12-alpine AS base
 WORKDIR /app
 RUN addgroup -S app && adduser -S app -G app
@@ -426,6 +472,7 @@ USER app
 EXPOSE 5000
 
 # 헬스엔드포인트가 /health 라고 가정
+
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
   CMD python - <<'PY' || exit 1
 import urllib.request
@@ -440,9 +487,10 @@ ENTRYPOINT ["python","app.py"]
 
 ---
 
-# 16. 실습: Nginx 커스터마이징(확장)
+# 실습: Nginx 커스터마이징(확장)
 
-### 16.1 사용자 정의 conf 포함
+### 사용자 정의 conf 포함
+
 ```Dockerfile
 FROM nginx:alpine
 COPY ./html /usr/share/nginx/html
@@ -451,6 +499,7 @@ COPY ./nginx.conf /etc/nginx/nginx.conf
 
 ```nginx
 # ./nginx.conf (간단 예)
+
 events {}
 http {
   server {
@@ -469,17 +518,20 @@ curl http://localhost:8080/health
 
 ---
 
-# 17. 이미지 업데이트 & 롤링 재배포(수동 프로세스)
+# 이미지 업데이트 & 롤링 재배포(수동 프로세스)
 
 ```bash
-# 1. 코드/ Dockerfile 변경 → 재빌드
+# 코드/ Dockerfile 변경 → 재빌드
+
 docker build -t my-flask-app:2 .
 
-# 2. 구버전 정지/삭제
+# 구버전 정지/삭제
+
 docker stop my-flask-app || true
 docker rm my-flask-app || true
 
-# 3. 신버전 실행
+# 신버전 실행
+
 docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 ```
 
@@ -487,7 +539,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-# 18. 고급 팁 — 레지스트리/메타데이터/서명/스캔
+# 고급 팁 — 레지스트리/메타데이터/서명/스캔
 
 - 레지스트리 로그인/푸시:
   ```bash
@@ -499,7 +551,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-# 19. 문제해결 레시피(원인→진단→처방)
+# 문제해결 레시피(원인→진단→처방)
 
 | 상황 | 진단 명령 | 처방 |
 |---|---|---|
@@ -512,7 +564,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-# 20. 요약
+# 요약
 
 1. **레이어/캐시** 원리를 이해하고 **.dockerignore + 레이어 순서**로 빌드를 빠르게.
 2. **멀티스테이지**로 런타임을 **작고 안전하게**.
@@ -527,24 +579,29 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 {% raw %}
 ```bash
 # 빌드/실행
+
 docker build -t app:1 .
 docker run -d --name app -p 8080:8080 app:1
 
 # 내부접속/로그/상태
+
 docker exec -it app sh
 docker logs -f app
 docker inspect app | jq '.[0].State'
 
 # 정리
+
 docker stop app && docker rm app
 docker rmi app:1
 docker system prune -f   # 주의
 
 # 재현성
+
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 docker run --rm nginx@sha256:...
 
 # 저장/로드
+
 docker save -o app.tar app:1
 docker load -i app.tar
 ```
@@ -554,6 +611,7 @@ docker load -i app.tar
 
 ```Dockerfile
 # poetry/uv/pip-tools 등으로 잠금 파일 생성 후 사용 권장
+
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r requirements.txt

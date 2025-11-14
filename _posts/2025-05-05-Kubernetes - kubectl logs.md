@@ -6,11 +6,12 @@ category: Kubernetes
 ---
 # Kubernetes 로그 확인: `kubectl logs`
 
-## 1. 기본 사용
+## 기본 사용
 
 ```bash
 kubectl logs <pod-name>
 # 예
+
 kubectl logs my-nginx-74b46bcf5b-wbp5d
 ```
 
@@ -23,13 +24,14 @@ kubectl logs -n prod my-nginx-74b46bcf5b-wbp5d
 
 ---
 
-## 2. 멀티 컨테이너 Pod
+## 멀티 컨테이너 Pod
 
 컨테이너가 2개 이상이면 `-c/--container`로 명시한다.
 
 ```bash
 kubectl logs <pod> -c <container>
 # 예
+
 kubectl logs my-app-pod -c main
 kubectl logs my-app-pod -c sidecar
 ```
@@ -45,6 +47,7 @@ kubectl get pod my-app-pod -o jsonpath='{.spec.containers[*].name}'
 ```bash
 kubectl logs <pod> --all-containers
 # prefix를 붙여 구분
+
 kubectl logs <pod> --all-containers --prefix
 ```
 
@@ -56,19 +59,20 @@ kubectl logs <pod> -c <init-container-name>
 
 ---
 
-## 3. 이전 인스턴스 로그(재시작 후)
+## 이전 인스턴스 로그(재시작 후)
 
 CrashLoopBackOff 등으로 컨테이너가 재시작됐다면 **이전 컨테이너**의 로그가 중요하다.
 
 ```bash
 kubectl logs <pod> --previous
 # 특정 컨테이너의 이전 로그
+
 kubectl logs <pod> -c <container> --previous
 ```
 
 ---
 
-## 4. 실시간 스트리밍
+## 실시간 스트리밍
 
 ```bash
 kubectl logs -f <pod>
@@ -80,34 +84,39 @@ kubectl logs -f <pod> -c <container>
 
 ---
 
-## 5. 시간/줄/바이트 기반 제한
+## 시간/줄/바이트 기반 제한
 
 배포 자동화/디버깅에서 **로그 절제 출력**이 필요할 수 있다.
 
 ```bash
 # 최근 N줄
+
 kubectl logs <pod> --tail=100
 
 # 특정 시점 이후
+
 kubectl logs <pod> --since=10m          # 10분 이내
 kubectl logs <pod> --since=2h           # 2시간 이내
 kubectl logs <pod> --since-time="2025-11-09T06:00:00Z"
 
 # 타임스탬프 포함
+
 kubectl logs <pod> --timestamps
 
 # 바이트 제한(긴 로그 차단; K8s 버전에 따라 제한적)
+
 kubectl logs <pod> --limit-bytes=1048576
 ```
 
 ---
 
-## 6. 여러 Pod 동시 조회(레이블/컨트롤러)
+## 여러 Pod 동시 조회(레이블/컨트롤러)
 
-### 6.1 레이블 셀렉터
+### 레이블 셀렉터
 
 ```bash
 # 같은 라벨을 가진 Pod들의 로그를 병렬로 요청
+
 kubectl logs -l app=my-api --all-containers --tail=200 \
   --max-log-requests=5
 ```
@@ -119,7 +128,7 @@ kubectl logs -l app=my-api --all-containers --tail=200 \
 kubectl logs -l app=my-api --all-containers --prefix --tail=50
 ```
 
-### 6.2 컨트롤러(Deployment/StatefulSet/Job) 대상
+### 컨트롤러(Deployment/StatefulSet/Job) 대상
 
 ```bash
 kubectl logs deployment/my-api -c app --tail=100
@@ -131,19 +140,23 @@ kubectl logs job/batch-etl --all-containers --tail=500
 
 ---
 
-## 7. 파일로 저장/가공
+## 파일로 저장/가공
 
 ```bash
 # 파일 저장
+
 kubectl logs <pod> > app.log
 
 # 스트리밍 저장
+
 kubectl logs -f <pod> | tee -a app-follow.log
 
 # 에러 행만 추출
+
 kubectl logs <pod> | grep -E "ERROR|FATAL|SEVERE" > errors.log
 
 # JSON 로그라면 jq 활용
+
 kubectl logs <pod> | jq -r 'select(.level=="error") | .message'
 ```
 
@@ -157,9 +170,9 @@ kubectl get pods -l app=my-api -o name \
 
 ---
 
-## 8. 운영 시나리오별 스니펫
+## 운영 시나리오별 스니펫
 
-### 8.1 CrashLoopBackOff 디버깅 원샷
+### CrashLoopBackOff 디버깅 원샷
 
 ```bash
 pod=$(kubectl get pods -l app=myapp --sort-by=.status.startTime | tail -n1 | awk '{print $1}')
@@ -167,7 +180,7 @@ kubectl describe pod "$pod"
 kubectl logs "$pod" --previous --all-containers --tail=200
 ```
 
-### 8.2 Readiness/Liveness 실패 시 엔드포인트 검증
+### Readiness/Liveness 실패 시 엔드포인트 검증
 
 ```bash
 pod=$(kubectl get pods -l app=web --field-selector=status.phase=Running -o name | head -n1)
@@ -179,15 +192,16 @@ curl -i http://localhost:8080/health || true
 kill %1
 ```
 
-### 8.3 특정 기간 경고 행 추출
+### 특정 기간 경고 행 추출
 
 ```bash
 # 지난 15분
+
 kubectl logs <pod> --since=15m --timestamps \
 | awk '$0 ~ /WARN|ERROR|FATAL/'
 ```
 
-### 8.4 사이드카/프록시와 앱 로그 동시 감시
+### 사이드카/프록시와 앱 로그 동시 감시
 
 ```bash
 kubectl logs -f <pod> --all-containers --prefix --tail=20
@@ -195,15 +209,17 @@ kubectl logs -f <pod> --all-containers --prefix --tail=20
 
 ---
 
-## 9. Job/CronJob 로그
+## Job/CronJob 로그
 
 Job은 여러 Pod(재시도 포함)를 만들 수 있어 **컨트롤러 대상 조회**가 편리하다.
 
 ```bash
 # 최근 N줄씩, 모든 컨테이너
+
 kubectl logs job/my-job --all-containers --tail=200
 
 # 실패한 Pod의 이전 로그(재시도 직전)
+
 for p in $(kubectl get pods -l job-name=my-job -o name); do
   echo "=== $p (previous) ==="
   kubectl logs "$p" --previous --all-containers --tail=100 || true
@@ -219,13 +235,15 @@ kubectl logs job/<that-job> --tail=200
 
 ---
 
-## 10. 네임스페이스/컨텍스트/권한
+## 네임스페이스/컨텍스트/권한
 
 ```bash
 # 네임스페이스 전환
+
 kubectl logs -n staging <pod>
 
 # kubeconfig 컨텍스트를 바꿔서 다른 클러스터 조회
+
 kubectl config use-context my-eks
 kubectl logs -n prod <pod>
 ```
@@ -244,7 +262,7 @@ rules:
 
 ---
 
-## 11. 로그가 보이지 않을 때(한눈에 보는 원인/해결)
+## 로그가 보이지 않을 때(한눈에 보는 원인/해결)
 
 | 증상 | 원인 | 확인 | 해결 |
 |---|---|---|---|
@@ -258,7 +276,7 @@ rules:
 
 ---
 
-## 12. `kubectl logs` 동작 이해(요점)
+## `kubectl logs` 동작 이해(요점)
 
 - 컨테이너 런타임(containerd 등)은 **컨테이너 stdout/stderr**을 파일로 기록한다.
   일반 경로: `/var/log/containers/*.log` → `/var/log/pods/` → 런타임 내부 경로.
@@ -267,41 +285,45 @@ rules:
 
 ---
 
-## 13. 구조화 로그와 필터링(추천)
+## 구조화 로그와 필터링(추천)
 
 애플리케이션 로그를 JSON으로 구조화하면 CLI에서 즉시 필터링/집계가 가능하다.
 
 ```bash
 # 예: level=error만, message 필드 출력
+
 kubectl logs <pod> | jq -r 'select(.level=="error") | .message'
 
 # 5xx 응답만 추출
+
 kubectl logs <pod> | jq -c 'select(.status>=500) | {ts, path, status}'
 ```
 
 ---
 
-## 14. 팀 운영을 위한 표준 스크립트 예제
+## 팀 운영을 위한 표준 스크립트 예제
 
-### 14.1 최근 배포된 Revision의 모든 Pod 로그 묶기
+### 최근 배포된 Revision의 모든 Pod 로그 묶기
 
 ```bash
 ns=prod
 deploy=my-api
 
 # 최신 ReplicaSet 파악
+
 rs=$(kubectl get rs -n "$ns" \
   --selector=app=$deploy \
   --sort-by=.metadata.creationTimestamp \
   -o jsonpath='{.items[-1:].metadata.name}')
 
 # 해당 RS의 Pod 로그 수집
+
 kubectl get pods -n "$ns" -l "app=$deploy,replica-set=$rs" -o name \
 | xargs -I {} sh -c 'echo "=== {} ==="; kubectl logs -n '"$ns"' {} --all-containers --tail=200 --prefix' \
 > logs-${deploy}-latest.txt
 ```
 
-### 14.2 “지난 10분 ERROR” 대시보드용 파이프
+### “지난 10분 ERROR” 대시보드용 파이프
 
 ```bash
 kubectl logs -l app=checkout --since=10m --timestamps --all-containers \
@@ -312,7 +334,7 @@ kubectl logs -l app=checkout --since=10m --timestamps --all-containers \
 
 ---
 
-## 15. 모범 사례
+## 모범 사례
 
 - **stdout/stderr**에 로그를 남긴다. 파일만 쓰면 `kubectl logs`와 수집기가 못 본다.
 - **구조화(JSON) 로깅**을 권장한다. 필터링/집계가 쉬워진다.
@@ -323,45 +345,55 @@ kubectl logs -l app=checkout --since=10m --timestamps --all-containers \
 
 ---
 
-## 16. 빠른 레퍼런스(치트시트)
+## 빠른 레퍼런스(치트시트)
 
 ```bash
 # 단일 컨테이너
+
 kubectl logs <pod>
 
 # 특정 컨테이너
+
 kubectl logs <pod> -c <container>
 
 # 이전 인스턴스(재시작 전)
+
 kubectl logs <pod> --previous
 
 # 실시간 스트림
+
 kubectl logs -f <pod>
 
 # 최근 50줄 / 10분 이내
+
 kubectl logs <pod> --tail=50
 kubectl logs <pod> --since=10m
 
 # 모든 컨테이너 + 접두어
+
 kubectl logs <pod> --all-containers --prefix
 
 # 레이블 셀렉터(여러 Pod)
+
 kubectl logs -l app=my-api --tail=200 --all-containers
 
 # 컨트롤러 대상
+
 kubectl logs deployment/my-api -c app --tail=100
 kubectl logs job/nightly-etl --all-containers --tail=500
 
 # 타임스탬프, 바이트 제한
+
 kubectl logs <pod> --timestamps --limit-bytes=1048576
 
 # 파일 저장
+
 kubectl logs <pod> > pod.log
 ```
 
 ---
 
-## 17. 결론
+## 결론
 
 `kubectl logs`는 **가장 빠르고 가벼운 1차 진단 도구**다.
 레이블/컨트롤러 기반 조회, 시간/줄 제한, 이전 인스턴스 조회, 실시간 스트리밍을 조합하면

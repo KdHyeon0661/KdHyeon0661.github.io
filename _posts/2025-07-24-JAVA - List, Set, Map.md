@@ -6,7 +6,7 @@ category: Java
 ---
 # Java 컬렉션 프레임워크 개요: List, Set, Map
 
-## 0. 컬렉션 프레임워크 한눈에 보기
+## 컬렉션 프레임워크 한눈에 보기
 
 - **List**: 순서 유지, **중복 허용**, 인덱스 접근
   구현체: `ArrayList`, `LinkedList`, (`Vector`, `Stack` 레거시)
@@ -19,9 +19,9 @@ category: Java
 
 ---
 
-## 1. List — 순서·중복·인덱스
+## List — 순서·중복·인덱스
 
-### 1.1 주요 구현체와 특성
+### 주요 구현체와 특성
 
 | 구현체 | 내부 구조 | 인덱스 접근 | 중간 삽입/삭제 | 메모리 | 비고 |
 |---|---|---:|---:|---:|---|
@@ -30,7 +30,8 @@ category: Java
 | `Vector` | 동기화 배열 | O(1) | O(n) | 낮음 | 레거시(불필요한 동기화) |
 | `Stack` | `Vector` 상속 | O(1) | O(1)/O(n) | 낮음 | 레거시, 대신 `ArrayDeque` 권장 |
 
-### 1.2 예제 — 기본 조작
+### 예제 — 기본 조작
+
 ```java
 import java.util.*;
 
@@ -51,7 +52,7 @@ public class ListExample {
 }
 ```
 
-### 1.3 시간복잡도 요약(List)
+### 시간복잡도 요약(List)
 
 | 연산 | ArrayList | LinkedList |
 |---|---:|---:|
@@ -64,9 +65,9 @@ public class ListExample {
 
 ---
 
-## 2. Set — 중복 금지·동치 규약
+## Set — 중복 금지·동치 규약
 
-### 2.1 주요 구현체와 특성
+### 주요 구현체와 특성
 
 | 구현체 | 내부 구조 | 순서 | null | 요구 조건 |
 |---|---|---|---|---|
@@ -74,7 +75,8 @@ public class ListExample {
 | `LinkedHashSet` | 해시 + 이중 연결리스트 | **입력 순서 유지** | 1개 허용 | 동치 동일 |
 | `TreeSet` | Red-Black Tree | **정렬**(자연 or 비교자) | 불가 | `compareTo/Comparator` 일관 |
 
-### 2.2 해시 기반 Set의 핵심 — 동치 규약
+### 해시 기반 Set의 핵심 — 동치 규약
+
 사용자 타입을 Set에 넣을 때는 반드시 **동치 규약**을 지켜야 합니다.
 
 - **규약**: `a.equals(b) == true` → 반드시 `a.hashCode() == b.hashCode()`
@@ -94,7 +96,8 @@ final class User {
 }
 ```
 
-### 2.3 정렬 기반 Set의 핵심 — 비교 일관성
+### 정렬 기반 Set의 핵심 — 비교 일관성
+
 - `TreeSet`은 `compareTo`/`Comparator`로 **정렬 기준**을 잡습니다.
 - **주의**: `compareTo(a,b)==0`인 두 객체는 **같은 원소로 간주**되어 **하나만** 저장됩니다.
   `equals`와의 **일관성**이 깨지지 않도록 설계하세요.
@@ -109,9 +112,9 @@ Set<Product> set = new TreeSet<>(Comparator.comparing(Product::name));
 
 ---
 
-## 3. Map — 키/값·탐색·정렬
+## Map — 키/값·탐색·정렬
 
-### 3.1 주요 구현체와 특성
+### 주요 구현체와 특성
 
 | 구현체 | 내부 구조 | 순서 | 키 null | 값 null | 평균 복잡도 |
 |---|---|---|---|---|---|
@@ -120,7 +123,8 @@ Set<Product> set = new TreeSet<>(Comparator.comparing(Product::name));
 | `TreeMap` | Red-Black Tree | **키 정렬** | 불가 | 허용 | O(log n) |
 | `Hashtable` | 동기화 해시 | 버킷 순 | 불가 | 불가 | 레거시(불필요한 동기화) |
 
-### 3.2 기본 조작과 엔트리 순회
+### 기본 조작과 엔트리 순회
+
 ```java
 import java.util.*;
 
@@ -140,7 +144,8 @@ public class MapExample {
 }
 ```
 
-### 3.3 LRU 캐시 — `LinkedHashMap(accessOrder=true)`
+### LRU 캐시 — `LinkedHashMap(accessOrder=true)`
+
 ```java
 import java.util.*;
 
@@ -155,9 +160,10 @@ class LRUCache<K,V> extends LinkedHashMap<K,V> {
 
 ---
 
-## 4. 반복·삭제·정렬 — 실무 핵심 패턴
+## 반복·삭제·정렬 — 실무 핵심 패턴
 
-### 4.1 안전한 삭제 (CME 방지)
+### 안전한 삭제 (CME 방지)
+
 ```java
 // 1) Iterator.remove
 for (var it = list.iterator(); it.hasNext();) {
@@ -171,20 +177,22 @@ list.removeIf(MyClass::shouldDelete);
 for (int i = list.size()-1; i >= 0; --i) if (bad(list.get(i))) list.remove(i);
 ```
 
-### 4.2 정렬 출력 (Map → 키 기준)
+### 정렬 출력 (Map → 키 기준)
+
 ```java
 map.entrySet().stream()
    .sorted(Map.Entry.comparingByKey())
    .forEach(e -> System.out.println(e.getKey() + "=" + e.getValue()));
 ```
 
-### 4.3 foreach vs Iterator 요약
+### foreach vs Iterator 요약
+
 - **읽기 전용**: foreach 간결
 - **순회하며 삭제/치환/삽입**: `Iterator.remove` / `ListIterator` 사용
 
 ---
 
-## 5. 시간복잡도 총정리
+## 시간복잡도 총정리
 
 | 분류 | 연산 | `ArrayList` | `LinkedList` | `HashSet`/`HashMap` | `LinkedHash*` | `TreeSet`/`TreeMap` |
 |---|---|---:|---:|---:|---:|---:|
@@ -198,9 +206,10 @@ map.entrySet().stream()
 
 ---
 
-## 6. 불변/수정불가 컬렉션 — `List.of`, `Set.of`, `Map.of`
+## 불변/수정불가 컬렉션 — `List.of`, `Set.of`, `Map.of`
 
-### 6.1 불변 팩토리(Java 9+)
+### 불변 팩토리(Java 9+)
+
 ```java
 var ilist = List.of("a","b","c");          // 불변
 var iset  = Set.of("a","b","c");           // 중복 전달 시 예외
@@ -209,7 +218,8 @@ var imap  = Map.of("a",1,"b",2,"c",3);     // 불변
 - 크기/내용 변경 메서드 호출 시 `UnsupportedOperationException`.
 - **스레드 안전성** 측면에서 유리, 공유에 적합.
 
-### 6.2 `Collections.unmodifiable*` vs 진짜 불변
+### `Collections.unmodifiable*` vs 진짜 불변
+
 ```java
 var base = new ArrayList<>(List.of(1,2,3));
 var view = Collections.unmodifiableList(base); // 수정불가 "뷰"
@@ -219,7 +229,7 @@ base.add(4); // view에도 4가 보임(기저 컬렉션 변경 반영)
 
 ---
 
-## 7. 동시성 컬렉션 — CME 없는 약한 일관성
+## 동시성 컬렉션 — CME 없는 약한 일관성
 
 | 컬렉션 | 특징 |
 |---|---|
@@ -239,7 +249,7 @@ for (int v : set) { /* CME 없음, 약한 일관성 */ }
 
 ---
 
-## 8. 정렬·비교 — `Comparator` 활용
+## 정렬·비교 — `Comparator` 활용
 
 ```java
 record Person(String name, int age) {}
@@ -261,7 +271,7 @@ System.out.println(people);
 
 ---
 
-## 9. 튜닝 포인트 — 초기 용량·로드 팩터·배열 크기
+## 튜닝 포인트 — 초기 용량·로드 팩터·배열 크기
 
 ```java
 var list = new ArrayList<String>(10_000); // 재할당 최소화
@@ -273,9 +283,10 @@ list.ensureCapacity(20_000);
 
 ---
 
-## 10. 실전 레시피
+## 실전 레시피
 
-### 10.1 빈도수 세기(토큰 카운팅)
+### 빈도수 세기(토큰 카운팅)
+
 ```java
 import java.util.*;
 
@@ -286,13 +297,15 @@ for (String t : List.of("a","b","a")) {
 System.out.println(freq); // {a=2, b=1}
 ```
 
-### 10.2 중복 제거 + 입력 순서 보존
+### 중복 제거 + 입력 순서 보존
+
 ```java
 var input = List.of("b","a","b","c","a");
 var dedup = new LinkedHashSet<>(input); // [b, a, c]
 ```
 
-### 10.3 맵 정렬된 뷰
+### 맵 정렬된 뷰
+
 ```java
 var sorted = new TreeMap<>(Map.of("b",2,"a",1,"c",3));
 System.out.println(sorted); // {a=1, b=2, c=3}
@@ -300,7 +313,7 @@ System.out.println(sorted); // {a=1, b=2, c=3}
 
 ---
 
-## 11. 선택 가이드 — 무엇을 언제 쓰나?
+## 선택 가이드 — 무엇을 언제 쓰나?
 
 | 요구 | 추천 |
 |---|---|
@@ -316,7 +329,7 @@ System.out.println(sorted); // {a=1, b=2, c=3}
 
 ---
 
-## 12. 흔한 함정과 베스트 프랙티스
+## 흔한 함정과 베스트 프랙티스
 
 1) **사용자 타입을 Set/Map 키로 사용** → `equals`/`hashCode`(해시) 또는 `compareTo`/`Comparator`(정렬) **반드시 재정의/제공**.
 2) **foreach 중 삭제** → `Iterator.remove`/`removeIf` 사용(§4).
@@ -326,7 +339,7 @@ System.out.println(sorted); // {a=1, b=2, c=3}
 
 ---
 
-## 13. 종합 예제 — List/Set/Map 한 번에
+## 종합 예제 — List/Set/Map 한 번에
 
 ```java
 import java.util.*;

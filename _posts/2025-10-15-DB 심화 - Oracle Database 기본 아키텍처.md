@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 0. 전체 개요 — “인스턴스(메모리+프로세스) ↔ 데이터베이스(파일)”
+## 전체 개요 — “인스턴스(메모리+프로세스) ↔ 데이터베이스(파일)”
 
 오라클은 **인스턴스(Instance)** 와 **데이터베이스(Database)** 로 분리된 **논리 모델**을 갖습니다.
 
@@ -31,9 +31,9 @@ category: DB 심화
 
 ---
 
-## 1. 프로세스 아키텍처 — 백그라운드/서버/리스너
+## 프로세스 아키텍처 — 백그라운드/서버/리스너
 
-### 1.1 프로세스 유형
+### 프로세스 유형
 
 - **서버 프로세스(Server Process)**
   - **전용(Dedicated)**: 클라이언트 세션당 서버 프로세스 1:1. 단순하고 예측 가능.
@@ -57,7 +57,7 @@ category: DB 심화
 
 > RAC/ASM 환경에서는 **LMON/LMDn/LMSn/LCKn**(글로벌 캐시/락) 및 **RBAL/ARBx**(ASM 리밸런스) 등 추가 프로세스가 존재합니다.
 
-### 1.2 리스너와 접속 흐름(Oracle Net)
+### 리스너와 접속 흐름(Oracle Net)
 
 - **리스너(listener.ora)** 는 특정 포트(기본 1521)에서 대기하며, 접속 요청을 받아 **서버 프로세스**를 붙여줍니다.
 - 전용 서버 모드에선 클라이언트가 곧바로 서버 프로세스와 세션을 형성합니다.
@@ -65,17 +65,19 @@ category: DB 심화
 
 ```bash
 # 리스너 상태 확인
+
 lsnrctl status
 
 # 데이터베이스 서비스가 리스너에 동적 등록되었는지 확인
+
 lsnrctl services
 ```
 
 ---
 
-## 2. 메모리 아키텍처 — SGA / PGA / (옵션) In-Memory
+## 메모리 아키텍처 — SGA / PGA / (옵션) In-Memory
 
-### 2.1 SGA(System Global Area) 구성
+### SGA(System Global Area) 구성
 
 - **Shared Pool**
   - **Library Cache**: 파싱된 SQL, 실행계획(커서) 캐시.
@@ -106,7 +108,7 @@ ORDER BY pool, name;
 SHOW PARAMETER log_buffer;
 ```
 
-### 2.2 PGA(Process Global Area)
+### PGA(Process Global Area)
 
 - **서버 프로세스별** 사설 메모리. 정렬(sort), 해시 조인, 세션 변수 등 작업 공간.
 - 파라미터 `pga_aggregate_target`(수동/자동), `pga_aggregate_limit`(상한).
@@ -122,7 +124,7 @@ FROM v$sesstat s JOIN v$statname n ON s.statistic#=n.statistic#
 WHERE n.name LIKE 'session pga memory%';
 ```
 
-### 2.3 메모리 파라미터(AMM/A-SGA)
+### 메모리 파라미터(AMM/A-SGA)
 
 - **MEMORY_TARGET / SGA_TARGET / PGA_AGGREGATE_TARGET**
   - AMM(메모리 타깃 기반) 또는 ASMM(SGA 자동 관리) 구성에 따라 동적 조절.
@@ -136,9 +138,9 @@ SHOW PARAMETER memory_target;
 
 ---
 
-## 3. 저장소 아키텍처 — 데이터/컨트롤/리두/아카이브/임시/UNDO
+## 저장소 아키텍처 — 데이터/컨트롤/리두/아카이브/임시/UNDO
 
-### 3.1 컨트롤 파일(Control Files)
+### 컨트롤 파일(Control Files)
 
 - **데이터베이스 메타데이터** (DB 이름/ID, 체크포인트 SCN, 데이터파일/리두로그 목록 등).
 - 보통 **다중화**(복수 경로)에 배치.
@@ -147,7 +149,7 @@ SELECT name FROM v$controlfile;
 SELECT * FROM v$database;     -- DBID, ARCHIVELOG 모드 등
 ```
 
-### 3.2 데이터 파일(Data Files) & 테이블스페이스(TS)
+### 데이터 파일(Data Files) & 테이블스페이스(TS)
 
 - **테이블스페이스**는 논리 단위; 그 안에 **세그먼트(테이블, 인덱스)** 들이 저장.
 - **데이터 파일**은 실제 OS 파일. 각 TS는 하나 이상의 데이터 파일 보유.
@@ -161,7 +163,7 @@ SELECT tablespace_name, file_name, bytes/1024/1024 AS mb
 FROM dba_temp_files;
 ```
 
-### 3.3 온라인 리두 로그(Online Redo Logs) & 아카이브
+### 온라인 리두 로그(Online Redo Logs) & 아카이브
 
 - **LGWR**가 **Redo Log Buffer → 온라인 리두로그 파일**에 순차 기록.
 - **리두 로그 그룹/멤버**로 구성(다중화 권장). **로그 스위치** 시 다음 그룹으로 전환.
@@ -176,7 +178,7 @@ SELECT group#, member FROM v$logfile ORDER BY group#, member;
 ARCHIVE LOG LIST;  -- 아카이브 모드/대상 경로 확인
 ```
 
-### 3.4 UNDO/임시(작업공간)
+### UNDO/임시(작업공간)
 
 - **UNDO 테이블스페이스**: 일관 읽기/롤백/플래시백 쿼리의 기반(Undo 세그먼트/레코드 저장).
 - **TEMP 테이블스페이스**: 정렬/해시 등 PGA 초과 작업 시 **Temp Spill** 용.
@@ -190,7 +192,7 @@ SELECT tablespace_name, status FROM dba_tablespaces WHERE contents='UNDO';
 SELECT * FROM v$tempseg_usage;
 ```
 
-### 3.5 파라미터 파일/패스워드 파일/ADR
+### 파라미터 파일/패스워드 파일/ADR
 
 - **spfile**(바이너리) / **pfile**(텍스트). spfile 권장(동적 변경/퍼시스트).
 - **orapwd** 로 **패스워드 파일** 생성(SYSDBA 원격 인증).
@@ -207,14 +209,14 @@ CREATE SPFILE FROM PFILE='/tmp/initORCL.ora';
 
 ---
 
-## 4. 일관성/SCN/Redo/Undo — 읽기/쓰기의 핵심 메커니즘
+## 일관성/SCN/Redo/Undo — 읽기/쓰기의 핵심 메커니즘
 
-### 4.1 SCN(System Change Number)
+### SCN(System Change Number)
 
 - DB 전역의 **논리적 시계**. 커밋/체크포인트 등 **일관성 경계**를 표시.
 - **일관 읽기(Read Consistency)**: 쿼리 시작 시점의 SCN을 기준으로, Undo로부터 **CR(Consistent Read) 블록**을 재구성.
 
-### 4.2 DML 흐름(핵심)
+### DML 흐름(핵심)
 
 1. 서버 프로세스가 **Buffer Cache** 에서 대상 블록을 핀(pin)·래치 후 변경.
 2. 변경 전(after/before) 정보에 기반해 **Redo**(재현 로그) 생성 → **Redo Log Buffer** 에 기록.
@@ -241,7 +243,7 @@ COMMIT;
 SELECT name, value FROM v$sysstat WHERE name = 'redo size';
 ```
 
-### 4.3 Undo 기반 일관 읽기
+### Undo 기반 일관 읽기
 
 - 쿼리 시작 시 **쿼리 SCN** 을 확보. 읽어온 블록의 변경 SCN이 더 크면, **Undo 레코드**를 따라가 **CR 블록**을 만들어 반환.
 - **Undo 보관 기간**(`undo_retention`)이 짧거나 급격한 DML로 Undo가 재사용되면, **ORA-01555(snapshot too old)** 발생.
@@ -256,9 +258,9 @@ WHERE name LIKE 'table scan rows gotten' OR name LIKE 'consistent gets';
 
 ---
 
-## 5. 체크포인트 & 리커버리 — 장애/재시작 시나리오
+## 체크포인트 & 리커버리 — 장애/재시작 시나리오
 
-### 5.1 체크포인트(Checkpoint)
+### 체크포인트(Checkpoint)
 
 - 특정 시점의 **SCN을 데이터파일 헤더/컨트롤 파일**에 기록하여 **복구 경계** 설정.
 - **목적**: 크래시 후 재생해야 할 리두(REDO) 범위를 단축 → **인스턴스 리커버리 시간 축소**.
@@ -270,13 +272,13 @@ SELECT checkpoint_change# FROM v$database;
 SELECT * FROM v$instance_recovery;
 ```
 
-### 5.2 인스턴스 리커버리(Instance/Crash Recovery)
+### 인스턴스 리커버리(Instance/Crash Recovery)
 
 - **전제**: ARCHIVELOG 여부와 무관. 인스턴스가 **비정상 종료**되면 **SMON** 이 자동 수행.
 - **REDO Roll Forward**: 종료 시점까지의 리두 재생.
 - **Undo Rollback**: 커밋되지 않은 트랜잭션을 되돌림.
 
-### 5.3 미디어 리커버리(Media Recovery)
+### 미디어 리커버리(Media Recovery)
 
 - **데이터 파일 손상/유실** 시, **백업 + 아카이브 로그** 로 **시점복구(PITR)** 등 수행.
 - **ARCHIVELOG 모드**가 필수(무정지 백업, PITR, Data Guard 등 전제).
@@ -292,9 +294,9 @@ SHOW PARAMETER db_recovery_file_dest_size;
 
 ---
 
-## 6. 동시성 제어 — 래치/뮤텍스/엔큐/트랜잭션 락
+## 동시성 제어 — 래치/뮤텍스/엔큐/트랜잭션 락
 
-### 6.1 래치(Latch) & 뮤텍스(Mutex)
+### 래치(Latch) & 뮤텍스(Mutex)
 
 - **초단기, 매우 경량**의 **스핀락** 계열. **라이브러리 캐시/버퍼 헤더** 등 **핫 구조체** 보호.
 - 11g+ 부터 라이브러리 캐시 보호에 **뮤텍스** 도입.
@@ -306,7 +308,7 @@ FROM v$latch
 ORDER BY misses DESC FETCH FIRST 20 ROWS ONLY;
 ```
 
-### 6.2 엔큐(Enqueue) & TM/TX 락
+### 엔큐(Enqueue) & TM/TX 락
 
 - 엔큐는 **좀 더 오래 지속**될 수 있는 **큐형 락**.
 - **TM**: 오브젝트(테이블) 레벨 락. **DDL/DML 충돌** 조정.
@@ -329,7 +331,7 @@ WHERE state <> 'WAITED SHORT TIME';
 
 ---
 
-## 7. 옵티마이저/실행계획/버퍼 캐시 동작(아키텍처 관점 요약)
+## 옵티마이저/실행계획/버퍼 캐시 동작(아키텍처 관점 요약)
 
 - **코스트 기반 옵티마이저(CBO)**: 통계(카디널리티/히스토그램/NDV)와 시스템 상태를 기반으로 액세스/조인 전략 선택.
 - **버퍼 캐시**:
@@ -351,9 +353,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
 ---
 
-## 8. 인스턴스 라이프사이클 — STARTUP/SHUTDOWN & NOMOUNT/MOUNT/OPEN
+## 인스턴스 라이프사이클 — STARTUP/SHUTDOWN & NOMOUNT/MOUNT/OPEN
 
-### 8.1 단계
+### 단계
 
 1. **STARTUP NOMOUNT**
    - 파라미터 파일 읽고 **SGA/PGA/백그라운드** 초기화. **컨트롤 파일은 아직 미개방**.
@@ -373,7 +375,7 @@ SHUTDOWN IMMEDIATE;  -- 일반적 권장
 -- SHUTDOWN TRANSACTIONAL / ABORT 등도 상황에 따라 사용
 ```
 
-### 8.2 파라미터/서비스 등록/로그 스위치
+### 파라미터/서비스 등록/로그 스위치
 
 ```sql
 -- 주요 파라미터 조회
@@ -388,7 +390,7 @@ ALTER SYSTEM SWITCH LOGFILE;
 
 ---
 
-## 9. 네트워킹/서비스/리스너 — 다중 서비스와 로드밸런싱(개요)
+## 네트워킹/서비스/리스너 — 다중 서비스와 로드밸런싱(개요)
 
 - **서비스(Service)** 개념: 하나의 DB에서 여러 개 **서비스 명**을 노출. 워크로드 분리/로드 밸런싱/Failover 정책에 활용.
 - **TNS** 이름 → **서비스명** 매핑. 클라이언트에서 **EZCONNECT**(`host:port/service`) 도 흔히 사용.
@@ -405,7 +407,7 @@ WHERE username IS NOT NULL;
 
 ---
 
-## 10. RAC/ASM/메타 아키텍처(개요)
+## RAC/ASM/메타 아키텍처(개요)
 
 - **RAC**(Real Application Clusters): 여러 인스턴스가 **하나의 데이터베이스**(공유 스토리지)를 **동시에** 오픈.
   - **GCS/GES**(Global Cache/Enqueue Service)로 버퍼/락 일관성 유지.
@@ -417,9 +419,9 @@ WHERE username IS NOT NULL;
 
 ---
 
-## 11. 모니터링/진단 — 동시성, I/O, 리두, Undo, 메모리
+## 모니터링/진단 — 동시성, I/O, 리두, Undo, 메모리
 
-### 11.1 시스템 지표 훑어보기
+### 시스템 지표 훑어보기
 
 ```sql
 -- 시스템 통계 상위
@@ -437,7 +439,7 @@ SELECT * FROM (
 ) WHERE ROWNUM <= 20;
 ```
 
-### 11.2 버퍼 캐시/리두/아카이브 관측
+### 버퍼 캐시/리두/아카이브 관측
 
 ```sql
 -- 버퍼 캐시 블록 상태
@@ -456,7 +458,7 @@ FROM v$archived_log
 ORDER BY sequence# DESC FETCH FIRST 10 ROWS ONLY;
 ```
 
-### 11.3 PGA/Temp 사용
+### PGA/Temp 사용
 
 ```sql
 -- PGA 사용 추이
@@ -473,9 +475,9 @@ ORDER BY mb_used DESC;
 
 ---
 
-## 12. 실습 시나리오 — “작게 만들어 보고 아키텍처 관측하기”
+## 실습 시나리오 — “작게 만들어 보고 아키텍처 관측하기”
 
-### 12.1 준비: 샘플 스키마/테이블 생성
+### 준비: 샘플 스키마/테이블 생성
 
 ```sql
 -- 샘플 테이블/인덱스 생성
@@ -506,7 +508,7 @@ END;
 /
 ```
 
-### 12.2 DML/커밋과 리두 관측
+### DML/커밋과 리두 관측
 
 ```sql
 -- 현재 리두 사이즈
@@ -522,7 +524,7 @@ SELECT name, value FROM v$sysstat WHERE name = 'redo size';
 
 **개념 체크**: `UPDATE` 로 인해 **Redo Log Buffer** 에 변경 내역이 기록되고, **COMMIT** 시 **LGWR** 가 플러시. 데이터파일 반영(DBWn)은 나중에 일어날 수 있습니다.
 
-### 12.3 읽기 일관성과 Undo
+### 읽기 일관성과 Undo
 
 ```sql
 -- 긴 쿼리 세션 A (예: 전체 집계)
@@ -536,7 +538,7 @@ GROUP BY channel;
 
 **핵심**: 세션 A는 쿼리 시작 시점의 **SCN** 기준으로 읽기 때문에, 세션 B가 데이터를 바꾸더라도 **Undo** 를 따라가 **CR 블록**을 재구성합니다. Undo 보관이 부족하면 **snapshot too old**.
 
-### 12.4 체크포인트/로그 스위치 관찰
+### 체크포인트/로그 스위치 관찰
 
 ```sql
 -- 로그 스위치 강제
@@ -556,7 +558,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 13. 성능·용량 감각을 위한 간단 수식(개념적 가이드)
+## 성능·용량 감각을 위한 간단 수식(개념적 가이드)
 
 > **주의**: 아래 수식들은 “감각 형성”을 위한 개념적 지표입니다. 실전 튜닝은 **대기 이벤트/프로파일링/실측** 중심으로 하세요.
 
@@ -572,7 +574,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 14. 운영 팁 — 기본 아키텍처를 살리는 설정/관행
+## 운영 팁 — 기본 아키텍처를 살리는 설정/관행
 
 1. **ARCHIVELOG + 적절한 FRA**: 무정지 백업/PITR/Data Guard 가능성 확보.
 2. **리두 로그 크기/개수 설계**: 너무 잦은 로그 스위치는 체크포인트 빈발/아카이브 부하.
@@ -586,7 +588,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 15. 체크리스트 — “기본 아키텍처 점검 10선”
+## 체크리스트 — “기본 아키텍처 점검 10선”
 
 1. `ARCHIVELOG` 모드 여부/아카이브 대상/FRA 용량.
 2. 온라인 리두 로그 **그룹 수/크기/IOPS** 적정성.
@@ -601,7 +603,7 @@ ORDER BY sequence# DESC FETCH FIRST 5 ROWS ONLY;
 
 ---
 
-## 16. 부록 — 자주 보는 뷰(빠른 탐색)
+## 부록 — 자주 보는 뷰(빠른 탐색)
 
 ```sql
 -- 인스턴스/DB
@@ -637,7 +639,7 @@ SELECT * FROM dba_tab_statistics WHERE table_name='SALES_DEMO';
 
 ---
 
-## 17. 마무리 요약
+## 마무리 요약
 
 - 오라클의 **기본 아키텍처**는 “**인스턴스(메모리+프로세스)** 가 **데이터베이스(파일)** 를 관리”하는 구조입니다.
 - **Redo/Undo/SCN** 삼각 구도가 **원자성/일관성/내구성**을 구현합니다.

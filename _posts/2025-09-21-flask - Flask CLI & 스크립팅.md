@@ -64,14 +64,17 @@ def create_app(config_name="production"):
 ### A.3.1 실행 방법
 
 ```bash
-# 1. 환경변수 이용
+# 환경변수 이용
+
 export FLASK_APP="app:create_app('production')"
 flask --help
 
-# 2. --app 인자
+# --app 인자
+
 flask --app "app:create_app('production')" --debug shell
 
-# 3. Docker 컨테이너 내부
+# Docker 컨테이너 내부
+
 docker exec -it myapp-web flask --app app:create_app
 ```
 
@@ -81,6 +84,7 @@ docker exec -it myapp-web flask --app app:create_app
 
 ```python
 # app/cli/__init__.py
+
 from flask import current_app
 from click import group
 from .db import db_cli
@@ -109,6 +113,7 @@ def register_cli(app):
 
 ```python
 # app/cli/ops.py
+
 import click
 from flask import current_app
 from app.extensions import db
@@ -189,18 +194,23 @@ def recompute_scores():
 
 ```bash
 # 설치
+
 pip install Flask-Migrate
 
 # 초기 생성(이미 존재한다면 생략)
+
 flask db init
 
 # 모델 변경 → 자동 마이그레이션 스크립트
+
 flask db migrate -m "add user.active index"
 
 # DB에 반영
+
 flask db upgrade
 
 # 되돌리기
+
 flask db downgrade -1
 ```
 
@@ -226,6 +236,7 @@ migrate = Migrate()
 
 ```python
 # migrations/versions/xxxx_add_index_concurrently.py
+
 from alembic import op
 
 def upgrade():
@@ -251,6 +262,7 @@ def downgrade():
 
 ```python
 # app/cli/db.py
+
 import click
 from flask import current_app
 from app.extensions import db
@@ -361,6 +373,7 @@ spec:
 
 ```python
 # app/celery_app.py
+
 from celery import Celery
 celery = Celery(__name__, broker="redis://cache:6379/0")
 celery.conf.beat_schedule = {
@@ -373,6 +386,7 @@ celery.conf.beat_schedule = {
 
 ```python
 # app/tasks.py
+
 from .celery_app import celery
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=2, max_retries=5)
 def sync_stats(self):
@@ -391,6 +405,7 @@ celery -A app.celery_app.celery beat -l INFO
 
 ```python
 # app/cli/cron.py
+
 import click
 from apscheduler.schedulers.blocking import BlockingScheduler
 from flask import current_app
@@ -429,6 +444,7 @@ def run(job):
 
 ```
 # /etc/systemd/system/myapp-cron.service
+
 [Unit]
 Description=MyApp CLI cron
 
@@ -442,6 +458,7 @@ Group=myapp
 
 ```
 # /etc/systemd/system/myapp-cron.timer
+
 [Unit]
 Description=MyApp CLI cron timer
 
@@ -461,6 +478,7 @@ WantedBy=timers.target
 
 ```python
 # app/cli/common.py
+
 import click, logging, sys, uuid
 @click.group("ops")
 @click.option("--verbose", is_flag=True, help="자세한 로그")
@@ -592,6 +610,7 @@ def restore(file):
 
 ```python
 # tests/test_cli_ops.py
+
 def test_hello(runner):
     result = runner.invoke(args=["ops","hello","--name","Bob"])
     assert result.exit_code == 0
@@ -628,6 +647,7 @@ def test_seed_idempotent(runner, db):
 {% raw %}
 ```yaml
 # .github/workflows/nightly.yml
+
 name: nightly
 on:
   schedule:

@@ -6,7 +6,7 @@ category: AWS
 ---
 # Kinesis Data Firehose → S3 연동
 
-## 0. 한눈에 보는 아키텍처
+## 한눈에 보는 아키텍처
 
 ```
 [Producers: App/Agent/IoT/KDS] --(PutRecord/Batched)-->
@@ -29,7 +29,7 @@ category: AWS
 
 ---
 
-## 1. 소스 옵션(Direct PUT vs Kinesis Data Streams)
+## 소스 옵션(Direct PUT vs Kinesis Data Streams)
 
 | 소스 | 특징 | 권장 상황 |
 |---|---|---|
@@ -40,9 +40,9 @@ category: AWS
 
 ---
 
-## 2. S3 대상 설계(폴더 구조·프리픽스·압축·포맷)
+## S3 대상 설계(폴더 구조·프리픽스·압축·포맷)
 
-### 2.1 S3 Prefix(폴더) 설계
+### S3 Prefix(폴더) 설계
 
 - **시간 파티션 + 도메인 키**를 조합한 프리픽스가 운영/분석 모두에 유리:
 ```
@@ -56,7 +56,7 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 
 > 동적 파티셔닝과 템플릿은 **쿼리 파티션 프리뷰**(미리보기)로 검증 권장.
 
-### 2.2 압축·포맷 선택
+### 압축·포맷 선택
 
 | 포맷 | 장점 | 단점 | 권장 |
 |---|---|---|---|
@@ -67,9 +67,9 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 
 ---
 
-## 3. IAM·S3 정책(필수 권한 템플릿)
+## IAM·S3 정책(필수 권한 템플릿)
 
-### 3.1 Firehose 전송 역할(IAM Role)
+### Firehose 전송 역할(IAM Role)
 
 - 신뢰 정책(Trust): `firehose.amazonaws.com`
 - S3 PutObject, GetBucketLocation, ListBucket 등 최소 권한
@@ -98,7 +98,7 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 }
 ```
 
-### 3.2 S3 버킷 정책(전달 역할 허용)
+### S3 버킷 정책(전달 역할 허용)
 
 ```json
 {
@@ -122,7 +122,7 @@ app=!{partitionKeyFromQuery:app}/region=!{partitionKeyFromQuery:region}/yyyymmdd
 
 ---
 
-## 4. 버퍼링·전달 파라미터(튜닝 전략)
+## 버퍼링·전달 파라미터(튜닝 전략)
 
 - **Buffer Size**: 1~128MiB (기본 5MiB)
 - **Buffer Interval**: 60~900초 (기본 300초)
@@ -138,14 +138,14 @@ $$
 
 ---
 
-## 5. Lambda 변환(ETL) — PII 마스킹·정규화
+## Lambda 변환(ETL) — PII 마스킹·정규화
 
-### 5.1 입력·출력 계약
+### 입력·출력 계약
 
 - 입력: `event.records[]` (Base64 인코딩 데이터, ID, 파티션키 등)
 - 출력: 각 레코드별 `recordId`, `result`(`Ok`/`Dropped`/`ProcessingFailed`), `data`
 
-### 5.2 예제: 이메일·카드번호 마스킹 + 파티션키 추출
+### 예제: 이메일·카드번호 마스킹 + 파티션키 추출
 
 ```python
 import base64, json, re
@@ -186,7 +186,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 6. Parquet 변환 + Glue 스키마 레지스트리
+## Parquet 변환 + Glue 스키마 레지스트리
 
 - 콘솔/CLI에서 **Record format conversion** 활성화 → 출력 포맷 Parquet/ORC 지정
 - **Glue Schemas**에서 **JSON→Avro→Parquet** 변환 파이프라인을 자동화
@@ -210,7 +210,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 7. 동적 파티셔닝(Dynamic Partitioning)
+## 동적 파티셔닝(Dynamic Partitioning)
 
 - 레코드 내 키(예: `app`, `region`)를 파티션 키로 사용하여 S3 프리픽스 분배
 - **장점**: 파티션 프루닝으로 Athena·Spark 비용/속도 개선
@@ -222,9 +222,9 @@ def lambda_handler(event, context):
 
 ---
 
-## 8. CLI로 빠른 실습(Direct PUT)
+## CLI로 빠른 실습(Direct PUT)
 
-### 8.1 전달 스트림 생성(JSON→GZIP→S3)
+### 전달 스트림 생성(JSON→GZIP→S3)
 
 ```bash
 aws firehose create-delivery-stream \
@@ -242,7 +242,7 @@ aws firehose create-delivery-stream \
   }'
 ```
 
-### 8.2 테스트 전송
+### 테스트 전송
 
 ```bash
 aws firehose put-record \
@@ -254,7 +254,7 @@ aws firehose put-record \
 
 ---
 
-## 9. 모니터링·알람(CloudWatch)
+## 모니터링·알람(CloudWatch)
 
 **주요 메트릭**
 - `DeliveryToS3.Records`, `DeliveryToS3.DataFreshness`, `DeliveryToS3.Success`, `DeliveryToS3.Failures`
@@ -279,9 +279,9 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 10. 분석: Athena DDL & CTAS
+## 분석: Athena DDL & CTAS
 
-### 10.1 Hive 스타일 파티션 테이블(JSON)
+### Hive 스타일 파티션 테이블(JSON)
 
 ```sql
 CREATE EXTERNAL TABLE IF NOT EXISTS dlf.web_logs_json (
@@ -301,7 +301,7 @@ LOCATION 's3://data-lake/landing/app=web/';
 MSCK REPAIR TABLE dlf.web_logs_json;
 ```
 
-### 10.2 Parquet 변환(CTAS)
+### Parquet 변환(CTAS)
 
 ```sql
 CREATE TABLE dlf.web_logs_pq
@@ -317,9 +317,9 @@ WHERE yyyymmdd='2025-11-10';
 
 ---
 
-## 11. IaC 모음
+## IaC 모음
 
-### 11.1 Terraform(핵심만)
+### Terraform(핵심만)
 
 ```hcl
 resource "aws_kinesis_firehose_delivery_stream" "web_logs" {
@@ -344,7 +344,7 @@ resource "aws_kinesis_firehose_delivery_stream" "web_logs" {
 }
 ```
 
-### 11.2 AWS SAM(Parquet 변환 + Lambda ETL)
+### AWS SAM(Parquet 변환 + Lambda ETL)
 
 ```yaml
 Transform: AWS::Serverless-2016-10-31
@@ -388,7 +388,7 @@ Resources:
                   ParameterValue: !GetAtt TransformFn.Arn
 ```
 
-### 11.3 CDK(Python, 요약)
+### CDK(Python, 요약)
 
 ```python
 from aws_cdk import aws_s3 as s3, aws_iam as iam, aws_kinesisfirehose as fh, Stack
@@ -415,7 +415,7 @@ class FirehoseStack(Stack):
         )
 ```
 
-### 11.4 CloudFormation(요약)
+### CloudFormation(요약)
 
 ```yaml
 Resources:
@@ -433,9 +433,9 @@ Resources:
 
 ---
 
-## 12. 에이전트·수집기(Fluent Bit/Kinesis Agent)
+## 에이전트·수집기(Fluent Bit/Kinesis Agent)
 
-### 12.1 Fluent Bit → Firehose(HTTP)
+### Fluent Bit → Firehose(HTTP)
 
 ```ini
 [INPUT]
@@ -456,7 +456,7 @@ Resources:
 
 ---
 
-## 13. 백업·에러 경로·재처리
+## 백업·에러 경로·재처리
 
 - **ErrorOutputPrefix** 하위에 Firehose가 실패 유형별 폴더 생성(예: 변환 실패/대상 실패)
 - 재처리 파이프라인:
@@ -465,7 +465,7 @@ Resources:
 
 ---
 
-## 14. 보안·네트워킹
+## 보안·네트워킹
 
 - **SSE-KMS**: S3·Firehose 모두 KMS 키 사용, **키 정책**에 Firehose Role 허용
 - **VPC 엔드포인트(Interface/Gateway)**: S3·Firehose PrivateLink → 인터넷 없이 전송
@@ -474,7 +474,7 @@ Resources:
 
 ---
 
-## 15. 비용 모델 & 계산 감각
+## 비용 모델 & 계산 감각
 
 - Firehose **수집/전송 요금**: GB당
 - **변환 비용**: Parquet/ORC 변환 사용 시 추가 과금
@@ -489,7 +489,7 @@ $$
 
 ---
 
-## 16. 성능·운영 베스트 프랙티스
+## 성능·운영 베스트 프랙티스
 
 - **소파일 문제**: 버퍼 사이즈↑, Interval↑, 다운스트림 **Compact Job(CTAS)** 주기화
 - **스키마 진화**: 필드 추가 중심, 중대한 변경은 **새 경로/테이블**
@@ -499,7 +499,7 @@ $$
 
 ---
 
-## 17. 트러블슈팅 체크리스트
+## 트러블슈팅 체크리스트
 
 - [ ] S3 권한 오류: 버킷/오브젝트 ARN, 역할 Principal, KMS 키 정책 점검
 - [ ] 변환 실패 급증: Lambda 타임아웃/메모리/로그, 레코드 크기·인코딩 확인
@@ -509,7 +509,7 @@ $$
 
 ---
 
-## 18. 엔드투엔드 실전 시나리오(요약)
+## 엔드투엔드 실전 시나리오(요약)
 
 **목표**: 웹 액세스 로그 → Firehose → S3(Parquet, 파티션) → Athena 분석
 
@@ -527,7 +527,7 @@ $$
 
 ---
 
-## 19. 참고 쿼리(Athena)
+## 참고 쿼리(Athena)
 
 **시간대별 요청 수**
 ```sql
@@ -549,7 +549,7 @@ ORDER BY c DESC;
 
 ---
 
-## 20. 마무리 요약
+## 마무리 요약
 
 | 영역 | 핵심 |
 |---|---|

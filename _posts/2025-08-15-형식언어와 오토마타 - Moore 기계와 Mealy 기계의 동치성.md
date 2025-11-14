@@ -11,7 +11,7 @@ Moore와 Mealy는 **유한 상태 변환기(FST)** 의 두 대표 모델이다.
 
 ---
 
-## 0. 표기와 실행 의미
+## 표기와 실행 의미
 
 - **Mealy**
   $$
@@ -28,12 +28,13 @@ Moore와 Mealy는 **유한 상태 변환기(FST)** 의 두 대표 모델이다.
   $p\xrightarrow{a}p'$ 로 이동한 **다음 상태**의 출력 $\rho(p')$ 방출. (관례) **초기 출력** $\rho(p_0)$ 포함.
 
 ### 출력 스트림의 길이
+
 - Mealy(전통 1:1): 입력 길이 $n$ 이면 **출력도 $n$**.
 - Moore(초기 출력 포함 관례): **출력 길이 $n+1$**. 비교 시 초기 출력 처리(§4)가 중요.
 
 ---
 
-## 1. 동치의 의미 — 엄밀 vs 지연(shift) 동치
+## 동치의 의미 — 엄밀 vs 지연(shift) 동치
 
 입력 $x=a_1\cdots a_n$ 에 대해 Mealy 출력 $y_M\in\Gamma^n$, Moore 출력 $y_N\in\Gamma^{n+1}$.
 
@@ -48,11 +49,12 @@ Moore와 Mealy는 **유한 상태 변환기(FST)** 의 두 대표 모델이다.
 
 ---
 
-## 2. **Moore → Mealy** 변환 — 즉시 반응형으로 (상태 수 보존)
+## **Moore → Mealy** 변환 — 즉시 반응형으로 (상태 수 보존)
 
 **핵심 아이디어**: Mealy 전이 출력은 “도착 상태의 출력”과 동일하게 두면 된다.
 
 ### 공식
+
 $$
 \begin{aligned}
 Q&:=P,\quad q_0:=p_0,\\
@@ -65,6 +67,7 @@ $$
 - **상태 수**: 그대로. **시간/공간**: 전이 수만큼 상수 작업 → $O(|Q||\Sigma|)$.
 
 ### 정확성(식)
+
 $$
 \forall x=a_1\cdots a_n:\;
 \underbrace{\lambda(q_0,a_1)\cdots\lambda(q_{n-1},a_n)}_{\text{Mealy}}
@@ -75,12 +78,13 @@ $$
 
 ---
 
-## 3. **Mealy → Moore** 변환 — 안정 출력형으로 (상태 세분화 필요)
+## **Mealy → Moore** 변환 — 안정 출력형으로 (상태 세분화 필요)
 
 **도전점**: Mealy의 출력은 $(\text{상태},\text{입력})$에 의존. Moore는 **상태만**으로 출력이 정해져야 한다.
 따라서 “**다음에 내보낼 출력**”을 상태에 **흡수**한다.
 
 ### 표준 구성
+
 새 상태 집합
 $$
 P:=\{(q,y)\mid q\in Q,\ y\in\Gamma\}\quad\text{(도달 쌍만 생성)}
@@ -95,6 +99,7 @@ $$
 - **정확성**: Mealy의 $i$번째 출력 $\lambda(q_{i-1},a_i)$ 가, Moore의 도착 상태 $(q_i,\lambda(q_{i-1},a_i))$ 의 $\rho$ 와 일치.
 
 ### 의사코드
+
 ```text
 queue := [(q0, ⊥)]; mark ρ(q0,⊥)=⊥
 while queue not empty:
@@ -104,27 +109,30 @@ while queue not empty:
     add transition ( (q,y) --a--> (q',y') ), and set ρ(q',y') = y'
     if (q',y') unseen: push((q',y'))
 # (초기 출력 ⊥는 지연 동치 관례상 비교에서 버리거나, 상수 프리엠블로 처리)
+
 ```
 
 ---
 
-## 4. 지연(shift) 정렬 — 출력 길이·시점 맞추기
+## 지연(shift) 정렬 — 출력 길이·시점 맞추기
 
-### 4.1 정렬 함수
+### 정렬 함수
+
 $$
 \mathrm{Shift}_{+1}(b_0 b_1\cdots b_n)=b_1\cdots b_n,\quad
 \mathrm{Shift}_{-1}(c_1\cdots c_n)=\_\,c_1\cdots c_n
 $$
 (필요 시 더미 기호 $\_$).
 
-### 4.2 비교 규칙(권장)
+### 비교 규칙(권장)
+
 - **Moore vs Mealy**: Moore의 **초기 출력 제거**(= $\mathrm{Shift}_{+1}$) 후 비교.
 - **Moore vs Moore**: 두 쪽 모두 같은 초기 출력 관례를 쓰거나, 둘 다 **초기 제거**.
 - **Mealy vs Mealy**: 엄밀(shift 0) 비교.
 
 ---
 
-## 5. 상태 수 **경계**(상·하한)와 의미
+## 상태 수 **경계**(상·하한)와 의미
 
 - **Moore→Mealy**: **상태 수 보존**. (일반적으로는 **최소 상태 수가 같거나 더 작아질 수** 있다 — 출력 다양성을 전이로 이동)
 - **Mealy→Moore**: **최대 $|Q|\cdot|\Gamma|$**.
@@ -134,9 +142,10 @@ $$
 
 ---
 
-## 6. 작동 예시(소형 케이스 2종)
+## 작동 예시(소형 케이스 2종)
 
-### 6.1 Moore → Mealy: 패리티 발생기
+### Moore → Mealy: 패리티 발생기
+
 ```text
 Moore
 Σ=Γ={0,1}
@@ -145,16 +154,18 @@ Moore
 ```
 - 변환: Mealy의 λ(q,a)=ρ(δ'(q,a)) → **초기 출력(0)** 을 버리면 스트림 동일.
 
-### 6.2 Mealy → Moore: '01' 검출기
+### Mealy → Moore: '01' 검출기
+
 - **Mealy**: 직전이 0이고 현재 1이면 **바로** 1 출력.
 - **Moore**: “다음에 낼 출력”을 상태에 담아 **한 스텝 뒤**에 1 출력(지연 +1).
 - 상태는 $(\text{원상태},\text{직전 출력})$ 형태로 세분 → 보통 2~3배 이내, 최악 $|\Gamma|$ 배.
 
 ---
 
-## 7. 동치성(Equivalence) 판정 — 제품 기계 + 반례 산출
+## 동치성(Equivalence) 판정 — 제품 기계 + 반례 산출
 
-### 7.1 알고리즘(지연 동치 버전)
+### 알고리즘(지연 동치 버전)
+
 1) **정렬**: Moore 쪽에서 **초기 출력 제거**(또는 Mealy에 더미 프리엠블 추가).
 2) **제품 상태** $(p,q)$ 위에서 같은 입력을 동시에 주입.
 3) 매 스텝 도착 시점에 **출력 비교**. 다르면 **최단 반례 입력**을 보고.
@@ -162,14 +173,15 @@ Moore
 
 - 시간/공간: 결정적·총기계 기준 **선형**(상태·전이 수에 비례).
 
-### 7.2 최소화와의 연결
+### 최소화와의 연결
+
 - **Mealy 최소화**: 출력이 **전이**에 붙으므로, 같은 전이를 취해도 출력이 다르면 **그 전이 라벨**만 다르고 상태는 동일할 수 있다.
 - **Moore 최소화**: 출력이 **상태**에 붙으므로, “같은 목적 상태이지만 서로 다른 출력”을 위해 **상태를 세분화**해야 한다.
 → 바로 이 차이가 Mealy→Moore 시 상태 수 급증의 원인.
 
 ---
 
-## 8. 파이썬 구현 — 모델, 변환, 동치(shift), 최소화(요약)
+## 파이썬 구현 — 모델, 변환, 동치(shift), 최소화(요약)
 
 > 교육·검증용 간결 구현. 부분 기계는 **Sink** 로 총기계화 권장. (초기 출력 포함 관례)
 
@@ -180,6 +192,7 @@ from typing import Dict, Tuple, Set, Hashable, List, Optional
 State = Hashable; Sym = Hashable; Out = Hashable
 
 # ---------- Moore ----------
+
 class DMoore:
     def __init__(self, Q:Set[State], Σ:Set[Sym], Γ:Set[Out],
                  δ:Dict[Tuple[State,Sym], State],
@@ -242,6 +255,7 @@ class DMoore:
         return DMoore(set(range(len(blocks))), set(Σ), set(ρm.values()), δm, ρm, rep[self.q0])
 
 # ---------- Mealy ----------
+
 class DMealy:
     def __init__(self, Q:Set[State], Σ:Set[Sym], Γ:Set[Out],
                  δ:Dict[Tuple[State,Sym], State],
@@ -250,6 +264,7 @@ class DMealy:
         self.δ, self.λ, self.q0 = dict(δ), dict(λ), q0
 
 # ---------- Conversions ----------
+
 def moore_to_mealy(N:DMoore) -> DMealy:
     δ, λ = {}, {}
     for (q,a), nq in N.δ.items():
@@ -274,6 +289,7 @@ def mealy_to_moore(M:DMealy, init_out:Out=("<init>",)) -> DMoore:
     return DMoore(Qp, set(Σ), set(ρp.values()), δp, ρp, (M.q0, init_out))
 
 # ---------- Equivalence with shift ----------
+
 def equal_moore_vs_mealy(N:DMoore, M:DMealy, shift:int=+1):
     """
     shift=+1: Moore 초기 출력 제거 후 Mealy와 비교(권장).
@@ -303,8 +319,10 @@ def equal_moore_vs_mealy(N:DMoore, M:DMealy, shift:int=+1):
 ```
 
 ### 사용 예 (간단 스모크 테스트)
+
 ```python
-# 1. 패리티 Moore → Mealy → 동치(shift=+1)
+# 패리티 Moore → Mealy → 동치(shift=+1)
+
 Σ={"0","1"}; Γ={"0","1"}
 Q={"E","O"}; ρ={"E":"0","O":"1"}
 δ={("E","0"):"E",("E","1"):"O",("O","0"):"O",("O","1"):"E"}
@@ -313,7 +331,8 @@ Me = moore_to_mealy(Mo)
 ok, cex = equal_moore_vs_mealy(Mo, Me, shift=+1)
 assert ok
 
-# 2. '01' Mealy → Moore → 동치(shift=+1)
+# '01' Mealy → Moore → 동치(shift=+1)
+
 Q={"S","Z"}; Σ={"0","1"}; Γ={"0","1"}
 δm={("S","0"):"Z",("S","1"):"S",("Z","0"):"Z",("Z","1"):"S"}
 λm={("S","0"):"0",("S","1"):"0",("Z","0"):"0",("Z","1"):"1"}
@@ -325,7 +344,7 @@ assert ok
 
 ---
 
-## 9. 최소화 관점 — 언제 누가 더 작아지나?
+## 최소화 관점 — 언제 누가 더 작아지나?
 
 - **Moore→Mealy**: 보통 **상태 수가 줄거나 동일**.
   - 이유: Moore에서 “출력 다양성” 때문에 쪼개야 했던 상태를 Mealy는 **전이 라벨 차이만으로** 처리 가능.
@@ -336,7 +355,7 @@ assert ok
 
 ---
 
-## 10. 실전 체크리스트 — 변환·검증·설계
+## 실전 체크리스트 — 변환·검증·설계
 
 ```text
 [동치/정렬]
@@ -361,7 +380,7 @@ assert ok
 
 ---
 
-## 11. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. Moore 초기 출력은 꼭 넣어야 하나?**
 A. 문헌마다 다르다. **비교·검증** 단계에서 **둘 다 초기 출력 제거**로 정렬하면 혼란이 없다.
@@ -377,7 +396,7 @@ A. 동치/변환의 코어는 동일하나, 검증 대상이 “출력 스트림
 
 ---
 
-## 12. 한 페이지 요약
+## 한 페이지 요약
 
 - **표현력**: Moore·Mealy는 **동기(길이-보존) 변환**에 대해 **동등**.
 - **변환**:
@@ -389,7 +408,7 @@ A. 동치/변환의 코어는 동일하나, 검증 대상이 “출력 스트림
 
 ---
 
-## 13. 부록 — 더 큰 예제(상태 폭증을 눈으로 확인)
+## 부록 — 더 큰 예제(상태 폭증을 눈으로 확인)
 
 ### Mealy(출력 다양성 큰 경우)
 
@@ -411,6 +430,7 @@ q2 --a/Z--> q1   q2 --b/X--> q2
 ---
 ```python
 # 빠른 실험 스니펫 (학습/블로그 독자용)
+
 Me_Q = {"q0","q1","q2"}; Σ={"a","b"}; Γ={"X","Y","Z"}
 δm = {("q0","a"):"q1",("q0","b"):"q2",
       ("q1","a"):"q1",("q1","b"):"q2",

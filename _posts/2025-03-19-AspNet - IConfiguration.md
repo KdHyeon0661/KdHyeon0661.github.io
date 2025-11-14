@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core에서 구성 객체 `IConfiguration`
 
-## 1. `IConfiguration` 개요와 키 원리
+## `IConfiguration` 개요와 키 원리
 
 - **계층형 키**: `:`(JSON/명령줄) 또는 `__`(환경 변수) 구분자 사용
 - **소스 병합**: 여러 소스에서 읽은 값을 **우선순위**에 따라 병합(뒤에서 추가된 공급자가 우선)
@@ -35,9 +35,10 @@ public class IndexModel : PageModel
 
 ---
 
-## 2. 기본 JSON 구성과 환경별 파일
+## 기본 JSON 구성과 환경별 파일
 
-### 2.1 `appsettings.json`
+### `appsettings.json`
+
 ```json
 {
   "AppSettings": {
@@ -53,7 +54,8 @@ public class IndexModel : PageModel
 }
 ```
 
-### 2.2 환경별 파일
+### 환경별 파일
+
 `appsettings.Development.json`, `appsettings.Production.json` 등을 사용하며 **환경 변수 `ASPNETCORE_ENVIRONMENT`** 에 의해 선택된다.
 
 ```json
@@ -79,15 +81,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 ---
 
-## 3. 문자열 키 접근 vs 바인딩(타입 안전)
+## 문자열 키 접근 vs 바인딩(타입 안전)
 
-### 3.1 Key 접근
+### Key 접근
+
 ```csharp
 var name = config["AppSettings:SiteName"];
 var max = config.GetValue<int>("AppSettings:MaxItems");
 ```
 
-### 3.2 POCO 바인딩(권장)
+### POCO 바인딩(권장)
+
 ```csharp
 public class AppSettings
 {
@@ -133,9 +137,9 @@ public class HomeController : Controller
 
 ---
 
-## 4. Options 고급: Snapshot/Monitor/Validation/Named
+## Options 고급: Snapshot/Monitor/Validation/Named
 
-### 4.1 `IOptions<T>` / `IOptionsSnapshot<T>` / `IOptionsMonitor<T>`
+### `IOptions<T>` / `IOptionsSnapshot<T>` / `IOptionsMonitor<T>`
 
 | 인터페이스 | 라이프사이클 | 용도 |
 |---|---|---|
@@ -164,7 +168,8 @@ public class BannerService
 }
 ```
 
-### 4.2 데이터 주석 기반 유효성 검사(Validation)
+### 데이터 주석 기반 유효성 검사(Validation)
+
 ```csharp
 public class AppSettings
 {
@@ -183,7 +188,8 @@ builder.Services.AddOptions<AppSettings>()
     .Validate(o => o.MaxItems % 2 == 0, "MaxItems must be even.");
 ```
 
-### 4.3 Named Options(복수 설정 변형)
+### Named Options(복수 설정 변형)
+
 ```csharp
 builder.Services.AddOptions<CacheOptions>("Memory")
     .Bind(builder.Configuration.GetSection("Caches:Memory"));
@@ -199,7 +205,8 @@ public class CacheFactory
 }
 ```
 
-### 4.4 PostConfigure / ConfigureOptions 클래스로 모듈화
+### PostConfigure / ConfigureOptions 클래스로 모듈화
+
 ```csharp
 builder.Services.PostConfigure<AppSettings>(opt =>
 {
@@ -219,16 +226,19 @@ builder.Services.AddSingleton<IConfigureOptions<AppSettings>, ConfigureMyFeature
 
 ---
 
-## 5. 환경 변수/명령줄/시크릿(비밀) — 우선순위·키 규칙
+## 환경 변수/명령줄/시크릿(비밀) — 우선순위·키 규칙
 
-### 5.1 환경 변수
+### 환경 변수
+
 - `__`(더블 언더스코어)로 **계층 표현**
 ```bash
 # Linux/macOS
+
 export AppSettings__SiteName="EnvApp"
 export ConnectionStrings__DefaultConnection="Server=.;Database=EnvDb;Trusted_Connection=True;"
 
 # Windows PowerShell
+
 $env:AppSettings__SiteName="EnvApp"
 ```
 
@@ -237,13 +247,15 @@ $env:AppSettings__SiteName="EnvApp"
 var name = config["AppSettings:SiteName"]; // "EnvApp"
 ```
 
-### 5.2 명령줄
+### 명령줄
+
 ```bash
 dotnet run --AppSettings:SiteName="CLIName" --AppSettings:MaxItems=42
 ```
 - 템플릿은 기본적으로 `AddCommandLine(args)` 포함 → **가장 높은 우선순위**
 
-### 5.3 User Secrets(개발용 비밀)
+### User Secrets(개발용 비밀)
+
 ```bash
 dotnet user-secrets init
 dotnet user-secrets set "ApiKeys:Stripe" "sk_test_..."
@@ -259,7 +271,7 @@ var stripe = config["ApiKeys:Stripe"];
 
 ---
 
-## 6. 배열/컬렉션 바인딩
+## 배열/컬렉션 바인딩
 
 JSON:
 ```json
@@ -291,7 +303,7 @@ public class Endpoint { public string Name { get; set; } = ""; public string Url
 
 ---
 
-## 7. 최소호스트/Minimal API에서의 구성 사용
+## 최소호스트/Minimal API에서의 구성 사용
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -316,7 +328,7 @@ app.Run();
 
 ---
 
-## 8. 실시간 재로딩(reloadOnChange)와 파일 감시
+## 실시간 재로딩(reloadOnChange)와 파일 감시
 
 ```csharp
 builder.Configuration
@@ -332,7 +344,7 @@ builder.Configuration
 
 ---
 
-## 9. 로깅과 구성의 연동
+## 로깅과 구성의 연동
 
 `appsettings.json`에서 로깅 레벨 제어:
 ```json
@@ -357,9 +369,10 @@ logger.LogInformation("SiteName={Site}", builder.Configuration["AppSettings:Site
 
 ---
 
-## 10. 사용자 지정 구성 공급자(파일/DB/외부 API)
+## 사용자 지정 구성 공급자(파일/DB/외부 API)
 
-### 10.1 간단한 INI/CSV 등 커스텀 Provider
+### 간단한 INI/CSV 등 커스텀 Provider
+
 ```csharp
 public sealed class SimpleTextConfigurationSource : IConfigurationSource
 {
@@ -410,21 +423,24 @@ public static class SimpleTextConfigurationExtensions
 builder.Configuration.AddSimpleText("custom.config", optional: true);
 ```
 
-### 10.2 클라우드 예시
+### 클라우드 예시
+
 - **Azure App Configuration** / **Azure Key Vault**
 - AWS AppConfig / Parameter Store, GCP Secret Manager 등
 → 공식/커뮤니티 제공 패키지로 `IConfiguration`에 통합
 
 ---
 
-## 11. 컨테이너·쿠버네티스에서의 구성
+## 컨테이너·쿠버네티스에서의 구성
 
-### 11.1 Docker 환경 변수 주입
+### Docker 환경 변수 주입
+
 ```dockerfile
 ENV AppSettings__SiteName="ContainerApp"
 ```
 
-### 11.2 Kubernetes ConfigMap/Secret
+### Kubernetes ConfigMap/Secret
+
 - ConfigMap을 파일 또는 환경 변수로 마운트
 - Secret은 민감값(연결 문자열, API 키)에 사용
 
@@ -434,7 +450,7 @@ ENV AppSettings__SiteName="ContainerApp"
 
 ---
 
-## 12. 연결 문자열과 `IConfiguration`
+## 연결 문자열과 `IConfiguration`
 
 관례적으로 `ConnectionStrings` 섹션:
 ```json
@@ -453,7 +469,7 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(cs));
 
 ---
 
-## 13. 국제화/문화권과 바인딩 주의
+## 국제화/문화권과 바인딩 주의
 
 - 숫자/날짜 파싱은 현재 문화권의 포맷 영향을 받는다.
 - 배포 환경에서 문화권이 달라질 수 있으므로 숫자에는 `GetValue<int>`처럼 타입 지정 바인딩을 권장.
@@ -461,7 +477,7 @@ builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(cs));
 
 ---
 
-## 14. 구성 유효성 검증과 실패 전략
+## 구성 유효성 검증과 실패 전략
 
 **부팅 시 치명 설정 검증**:
 ```csharp
@@ -476,9 +492,10 @@ builder.Services.AddOptions<AppSettings>()
 
 ---
 
-## 15. 테스트에서의 구성 주입
+## 테스트에서의 구성 주입
 
-### 15.1 단위 테스트(가짜 구성)
+### 단위 테스트(가짜 구성)
+
 ```csharp
 var dict = new Dictionary<string, string?>
 {
@@ -491,7 +508,8 @@ IConfiguration config = new ConfigurationBuilder()
     .Build();
 ```
 
-### 15.2 통합 테스트(WebApplicationFactory)
+### 통합 테스트(WebApplicationFactory)
+
 ```csharp
 public class MyFactory : WebApplicationFactory<Program>
 {
@@ -510,7 +528,7 @@ public class MyFactory : WebApplicationFactory<Program>
 
 ---
 
-## 16. 보안 모범 사례
+## 보안 모범 사례
 
 - 비밀은 `user-secrets`(개발) 또는 **보안 비밀 관리 서비스**(운영)에 저장
 - 로그에 구성 값(특히 비밀/토큰) 출력 금지
@@ -519,9 +537,10 @@ public class MyFactory : WebApplicationFactory<Program>
 
 ---
 
-## 17. 실전 예제: Razor Pages + OptionsSnapshot + TempData 메시지
+## 실전 예제: Razor Pages + OptionsSnapshot + TempData 메시지
 
-### 17.1 `appsettings.json`
+### `appsettings.json`
+
 ```json
 {
   "AppSettings": {
@@ -532,14 +551,16 @@ public class MyFactory : WebApplicationFactory<Program>
 }
 ```
 
-### 17.2 등록
+### 등록
+
 ```csharp
 builder.Services.AddOptions<AppSettings>()
     .Bind(builder.Configuration.GetSection("AppSettings"))
     .ValidateDataAnnotations();
 ```
 
-### 17.3 PageModel
+### PageModel
+
 ```csharp
 using Microsoft.Extensions.Options;
 
@@ -561,7 +582,8 @@ public class SettingsModel : PageModel
 }
 ```
 
-### 17.4 View
+### View
+
 ```razor
 @page
 @model SettingsModel
@@ -578,9 +600,10 @@ public class SettingsModel : PageModel
 
 ---
 
-## 18. 실전 예제: Named HttpClient + Named Options
+## 실전 예제: Named HttpClient + Named Options
 
-### 18.1 JSON
+### JSON
+
 ```json
 {
   "HttpClients": {
@@ -590,7 +613,8 @@ public class SettingsModel : PageModel
 }
 ```
 
-### 18.2 Options/등록
+### Options/등록
+
 ```csharp
 public class HttpClientOptions
 {
@@ -638,9 +662,10 @@ public class ApiService
 
 ---
 
-## 19. 구성 탐색/디버깅 유틸
+## 구성 탐색/디버깅 유틸
 
-### 19.1 트리 전개
+### 트리 전개
+
 ```csharp
 void Dump(IConfiguration config, string path = "")
 {
@@ -654,7 +679,8 @@ void Dump(IConfiguration config, string path = "")
 }
 ```
 
-### 19.2 전체 키-값 열람
+### 전체 키-값 열람
+
 ```csharp
 foreach (var kv in builder.Configuration.AsEnumerable(makePathsRelative: false))
 {
@@ -664,7 +690,7 @@ foreach (var kv in builder.Configuration.AsEnumerable(makePathsRelative: false))
 
 ---
 
-## 20. 수학적 관점의 우선순위 모델(직관)
+## 수학적 관점의 우선순위 모델(직관)
 
 각 공급자(provider)를 $$ P_1, P_2, \dots, P_n $$라 하고,
 이들이 같은 키 $$ k $$에 대해 값을 제공하면 **뒤에서 추가된** 공급자 $$ P_n $$의 값이 최종값이다.
@@ -677,7 +703,7 @@ $$
 
 ---
 
-## 21. 체크리스트와 모범 사례
+## 체크리스트와 모범 사례
 
 - [ ] 비밀은 절대 `appsettings.json`에 하드코딩하지 말 것(Secrets/Key Vault 등)
 - [ ] `reloadOnChange` + `IOptionsMonitor`로 동적 구성을 설계
@@ -690,7 +716,7 @@ $$
 
 ---
 
-## 22. 요약
+## 요약
 
 | 주제 | 핵심 포인트 |
 |---|---|
@@ -705,7 +731,7 @@ $$
 
 ---
 
-## 23. 부록: 전체 샘플(Program.cs)
+## 부록: 전체 샘플(Program.cs)
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -772,6 +798,7 @@ public class HttpClientOptions
 ---
 
 # 다음 추천 주제
+
 - `IOptionsMonitor`로 다중 소스 핫리로드 패턴(Azure App Configuration/Consul)
 - 사용자 지정 `IConfigurationProvider` 고급(폴더 감시, 암호화 값 자동 해독)
 - 다국어/테넌트별 설정 분리(폴더/프리픽스/Named Options 전략)

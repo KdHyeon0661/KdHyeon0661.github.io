@@ -6,7 +6,7 @@ category: Data Structure
 ---
 # Skip List (스킵 리스트)
 
-## 1. Skip List란?
+## Skip List란?
 
 **Skip List**는 정렬된 단일 연결 리스트에 **다층 레벨**을 덧대어, 상위 레벨일수록 **멀리 점프**할 수 있게 만든 자료구조다.
 무작위 높이(레벨)를 부여하여 **평균적으로 균형**을 유지하므로, 탐색/삽입/삭제가 모두 평균 $$O(\log n)$$에 동작한다.
@@ -17,7 +17,7 @@ category: Data Structure
 
 ---
 
-## 2. 핵심 개념 정리
+## 핵심 개념 정리
 
 - 각 노드는 `forward[level]` 포인터들을 가진다. `level`이 클수록 더 긴 도약을 담당.
 - 노드의 높이는 확률 $$P$$(보통 1/2)로 **동전 던지기**하며 정한다.
@@ -28,7 +28,7 @@ category: Data Structure
 
 ---
 
-## 3. 수학적 스냅샷(확률 분석 스케치)
+## 수학적 스냅샷(확률 분석 스케치)
 
 - 각 노드가 레벨 $$\ell$$ 이상일 확률은 $$P^\ell$$.
 - 레벨 $$\ell$$의 기대 노드 수는 $$n P^\ell$$.
@@ -40,7 +40,7 @@ category: Data Structure
 
 ---
 
-## 4. 기본 구조 (템플릿 + 정렬 Key/Value)
+## 기본 구조 (템플릿 + 정렬 Key/Value)
 
 - 비교 가능한 키 `Key`, 값 `T`(맵 형태) 혹은 `void`(셋 형태)를 지원하도록 **템플릿 일반화**.
 - 간단성을 위해 **원시 포인터**를 사용하되, **명확한 소멸자**에서 해제한다.
@@ -165,7 +165,7 @@ private:
 
 ---
 
-## 5. 삽입/탐색/삭제/경계탐색 구현
+## 삽입/탐색/삭제/경계탐색 구현
 
 ```cpp
 // skip_list_impl.hpp
@@ -360,12 +360,13 @@ void skip_list<Key,T,Compare>::print_levels(std::ostream& os) const {
 
 ---
 
-## 6. 사용 예제(셋/맵)
+## 사용 예제(셋/맵)
 
 ```cpp
 // main_set.cpp  (셋 형태: T=void)
 #include "skip_list_impl.hpp"
 #include <iostream>
+
 int main(){
     skip_list<int> s; // set<int>
     s.insert(10); s.insert(1); s.insert(7); s.insert(20); s.insert(15);
@@ -391,6 +392,7 @@ int main(){
 // main_map.cpp  (맵 형태: T=std::string)
 #include "skip_list_impl.hpp"
 #include <iostream>
+
 int main(){
     skip_list<int, std::string> mp; // map<int,string>
     mp.insert(2, "two");
@@ -415,7 +417,7 @@ int main(){
 
 ---
 
-## 7. 삭제 알고리즘 상세(예외/코너케이스)
+## 삭제 알고리즘 상세(예외/코너케이스)
 
 - 경로(`update[]`)를 찾은 뒤, 목표 노드 `x`가 존재하면 **모든 레벨에서 `x`를 건너뛰도록** 포인터를 갱신.
 - 그 다음 `x`를 `delete`.
@@ -428,7 +430,7 @@ int main(){
 
 ---
 
-## 8. 경계 탐색(`lower_bound`/`upper_bound`)와 범위 질의
+## 경계 탐색(`lower_bound`/`upper_bound`)와 범위 질의
 
 - **`lower_bound(k)`**: $$\ge k$$인 첫 노드
 - **`upper_bound(k)`**: $$> k$$인 첫 노드
@@ -447,7 +449,7 @@ for (auto nd = s.lower_bound_node(L);
 
 ---
 
-## 9. 확장 1: 인덱스 가능한 Skip List(순서통계)
+## 확장 1: 인덱스 가능한 Skip List(순서통계)
 
 일부 구현은 각 레벨의 간격 길이( `span[i]` )를 보관하여
 
@@ -476,7 +478,7 @@ struct idx_node {
 
 ---
 
-## 10. 확장 2: 동시성(참고 개요)
+## 확장 2: 동시성(참고 개요)
 
 - 다중 스레드 환경에서는 **락 기반** 레벨별 락 또는 **락-프리(skip list-based concurrent set)** 기법을 사용한다.
 - ABA 문제/메모리 회수(Hazard pointers, epoch) 등을 다뤄야 하므로 범위가 크다.
@@ -484,7 +486,7 @@ struct idx_node {
 
 ---
 
-## 11. 메모리·파라미터 선택
+## 메모리·파라미터 선택
 
 - **P (승격 확률)**: 0.5가 보편적.
   $$E[\text{level}] \approx \log_{1/P}(n)$$,
@@ -495,9 +497,9 @@ struct idx_node {
 
 ---
 
-## 12. 테스트: 퍼징/정확성 검증
+## 테스트: 퍼징/정확성 검증
 
-### 12.1 간단 퍼징(셋 vs `std::set` 비교)
+### 간단 퍼징(셋 vs `std::set` 비교)
 
 ```cpp
 // test_fuzz.cpp
@@ -505,6 +507,7 @@ struct idx_node {
 #include <set>
 #include <random>
 #include <cassert>
+
 int main(){
     skip_list<int> s;
     std::set<int>   g;
@@ -540,7 +543,7 @@ int main(){
 
 ---
 
-## 13. 성능 팁
+## 성능 팁
 
 - 비교 함수는 **빠르고 순수**해야 한다.
 - 대량 삽입 전 **시드 고정**으로 재현성 있는 벤치 수행.
@@ -548,7 +551,7 @@ int main(){
 
 ---
 
-## 14. 복잡도 요약
+## 복잡도 요약
 
 | 연산 | 평균 시간 | 최악 시간(희박) | 공간 |
 |---|---|---|---|
@@ -561,7 +564,7 @@ int main(){
 
 ---
 
-## 15. 수학 스케치(조금 더)
+## 수학 스케치(조금 더)
 
 - 레벨 $$\ell$$에 있는 노드 수의 기대값은 $$nP^\ell$$.
 - 최상위 비공허 레벨 $$L$$은 $$nP^L \approx 1 \Rightarrow L \approx \log_{1/P}n$$.
@@ -569,7 +572,7 @@ int main(){
 
 ---
 
-## 16. 참고 구현 선택지
+## 참고 구현 선택지
 
 - **전통 구현**: `std::vector<node*> forward`. 단순·명확.
 - **성능 지향**: 고정 최대 레벨 배열(소형 최적화) + 커스텀 `allocator`(풀/아레나).
@@ -577,7 +580,7 @@ int main(){
 
 ---
 
-## 17. 전체 빌드
+## 전체 빌드
 
 ```bash
 g++ -std=c++17 -O2 -Wall -Wextra main_set.cpp   -o set_demo
@@ -587,7 +590,7 @@ g++ -std=c++17 -O2 -Wall -Wextra test_fuzz.cpp  -o fuzz && ./fuzz
 
 ---
 
-## 18. 마무리
+## 마무리
 
 이 글은 초안(간단 구조/삽입/탐색)을 **완성형 스킵 리스트**로 끌어올려,
 - **삭제/경계 탐색/반복자**

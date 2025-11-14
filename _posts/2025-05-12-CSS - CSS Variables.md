@@ -6,7 +6,7 @@ category: CSS
 ---
 # CSS 커스텀 속성(CSS Variables)
 
-## 1. 핵심 요약 (한 장)
+## 핵심 요약 (한 장)
 
 - **선언**: `--token-name: value;` (접두사 `--` 필수)
 - **사용**: `var(--token-name, fallback)` (두 번째 인자는 **폴백**)
@@ -17,7 +17,7 @@ category: CSS
 
 ---
 
-## 2. 기본 문법 & 스코프/상속
+## 기본 문법 & 스코프/상속
 
 ```css
 /* 전역(문서 루트) 설계 토큰 */
@@ -43,9 +43,10 @@ category: CSS
 
 ---
 
-## 3. 계산 규칙 & 폴백 & 에러(Invalid at computed value time)
+## 계산 규칙 & 폴백 & 에러(Invalid at computed value time)
 
-### 3.1 `var()`는 **computed 단계**에서 치환
+### `var()`는 **computed 단계**에서 치환
+
 - `var(--a)`가 해석 불가하면 해당 **선언 전체가 무효**(shorthand 포함).
 - **폴백 제공**: `var(--a, 10px)` → `--a` 미정의 시 `10px` 사용.
 
@@ -59,7 +60,8 @@ category: CSS
 }
 ```
 
-### 3.2 수학 함수와 혼용
+### 수학 함수와 혼용
+
 모든 **길이/수치형** 컨텍스트에서 사용 가능. `calc()`/`clamp()`/`min()`/`max()`와 조합 권장.
 
 ```css
@@ -77,9 +79,9 @@ category: CSS
 
 ---
 
-## 4. 설계 토큰(Design Tokens)로 체계화
+## 설계 토큰(Design Tokens)로 체계화
 
-### 4.1 원천 토큰(primitive) → 의미 토큰(semantic) 구분
+### 원천 토큰(primitive) → 의미 토큰(semantic) 구분
 
 ```css
 /* Primitive tokens */
@@ -102,7 +104,7 @@ category: CSS
 
 > **원천 토큰**은 팔레트/스케일, **의미 토큰**은 역할/컴포넌트 맵핑. 교체가 쉬움.
 
-### 4.2 반응형 토큰(미디어쿼리에서 변수만 바꾸기)
+### 반응형 토큰(미디어쿼리에서 변수만 바꾸기)
 
 ```css
 :root {
@@ -123,9 +125,9 @@ category: CSS
 
 ---
 
-## 5. 테마 관리(라이트/다크/브랜드) & 사용자 프리퍼런스
+## 테마 관리(라이트/다크/브랜드) & 사용자 프리퍼런스
 
-### 5.1 Attribute/클래스로 테마 스왑
+### Attribute/클래스로 테마 스왑
 
 ```css
 :root[data-theme="light"] {
@@ -148,7 +150,7 @@ const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
 root.setAttribute('data-theme', next);
 ```
 
-### 5.2 OS 설정 연동 (prefers-color-scheme)
+### OS 설정 연동 (prefers-color-scheme)
 
 ```css
 /* 기본 라이트 */
@@ -159,7 +161,7 @@ root.setAttribute('data-theme', next);
 }
 ```
 
-### 5.3 하이 콘트라스트/감소된 모션
+### 하이 콘트라스트/감소된 모션
 
 ```css
 @media (prefers-contrast: more) {
@@ -173,9 +175,9 @@ root.setAttribute('data-theme', next);
 
 ---
 
-## 6. 타이포그래피/레이아웃/컴포넌트 실전 패턴
+## 타이포그래피/레이아웃/컴포넌트 실전 패턴
 
-### 6.1 유동 타이포(미디어쿼리 없이)
+### 유동 타이포(미디어쿼리 없이)
 
 ```css
 :root { --fs-fluid: clamp(1rem, 0.9rem + 0.6vw, 1.25rem); }
@@ -189,7 +191,7 @@ h1    { font-size: clamp(1.5rem, 1.1rem + 3vw, 3rem); }
 f(w) = \mathrm{clamp}\big(f_{\min}, a \cdot w + b, f_{\max}\big)
 \]
 
-### 6.2 안전 영역(safe area) & 모바일 뷰포트
+### 안전 영역(safe area) & 모바일 뷰포트
 
 ```css
 :root {
@@ -206,7 +208,7 @@ f(w) = \mathrm{clamp}\big(f_{\min}, a \cdot w + b, f_{\max}\big)
 }
 ```
 
-### 6.3 Grid 레이아웃 + 토큰
+### Grid 레이아웃 + 토큰
 
 ```css
 :root { --gap: clamp(.75rem, 1vw, 1.25rem); --w-min: 18rem; }
@@ -218,7 +220,7 @@ f(w) = \mathrm{clamp}\big(f_{\min}, a \cdot w + b, f_{\max}\big)
 .card { padding: var(--gap); border-radius: 12px; background: var(--surface, #fff); }
 ```
 
-### 6.4 버튼/카드의 상태/테마 대응
+### 버튼/카드의 상태/테마 대응
 
 ```css
 :root { --elev: 0 8px 24px rgba(0,0,0,.12); }
@@ -245,7 +247,7 @@ f(w) = \mathrm{clamp}\big(f_{\min}, a \cdot w + b, f_{\max}\big)
 
 ---
 
-## 7. JavaScript 연동 (읽기/쓰기/테마 저장)
+## JavaScript 연동 (읽기/쓰기/테마 저장)
 
 ```js
 const root = document.documentElement;
@@ -268,19 +270,19 @@ if (saved) root.dataset.theme = saved;
 
 ---
 
-## 8. 애니메이션/전환과 커스텀 속성
+## 애니메이션/전환과 커스텀 속성
 
 - **변수가 바뀌면** 이를 **참조**하는 속성(`background`, `transform`, `opacity` 등)이 **변경**되어 **그 속성에 `transition`이 걸려 있으면** 부드럽게 전환됨.
 - 커스텀 속성 **자체를 애니메이션**하려면 **CSS Properties and Values API**의 `@property`로 **타입 등록** 필요.
 
-### 8.1 단순 전환(참조 속성에 transition)
+### 단순 전환(참조 속성에 transition)
 
 ```css
 .card { background: var(--surface, #fff); transition: background 160ms ease; }
 :root[data-theme="dark"] { --surface: #141518; }
 ```
 
-### 8.2 `@property`로 숫자형 변수 등록 → 직접 transition
+### `@property`로 숫자형 변수 등록 → 직접 transition
 
 ```css
 /* 커스텀 속성 타입 선언(길이로 지정) */
@@ -304,9 +306,9 @@ if (saved) root.dataset.theme = saved;
 
 ---
 
-## 9. Cascade Layers, 컨테이너/미디어/지원쿼리와의 결합
+## Cascade Layers, 컨테이너/미디어/지원쿼리와의 결합
 
-### 9.1 Cascade Layers로 우선순위 체계화
+### Cascade Layers로 우선순위 체계화
 
 ```css
 @layer reset, tokens, base, components, utilities;
@@ -322,7 +324,7 @@ if (saved) root.dataset.theme = saved;
 }
 ```
 
-### 9.2 @media / @supports / @container 안에서 변수만 바꾸기
+### @media / @supports / @container 안에서 변수만 바꾸기
 
 ```css
 @supports (backdrop-filter: blur(8px)) {
@@ -338,7 +340,7 @@ if (saved) root.dataset.theme = saved;
 
 ---
 
-## 10. Shadow DOM(웹 컴포넌트)와 커스텀 속성
+## Shadow DOM(웹 컴포넌트)와 커스텀 속성
 
 - **커스텀 속성은 Shadow 경계도 통과**(상속) → 호스트에서 테마/토큰 주입 가능.
 
@@ -355,7 +357,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 11. 성능/안정성/팀 협업 규칙
+## 성능/안정성/팀 협업 규칙
 
 - **네이밍**: `--scope-role-state`(예: `--btn-bg-hover`) / **프리픽스**로 도메인 구분(`--app-*`).
 - **중첩 계산**을 줄이고, **토큰 분해**(원천/의미/컴포넌트 단위).
@@ -364,7 +366,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 12. 디버깅 체크리스트
+## 디버깅 체크리스트
 
 - [ ] `var(--x, fallback)`의 **폴백**이 실제로 유효한 타입/단위인가?
 - [ ] shorthand 속성에서 `var()` 실패 시 **선언 전체 무효** → longhand로 분리?
@@ -375,7 +377,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 13. 완성 예제 — “테마 가능한 대시보드 카드”
+## 완성 예제 — “테마 가능한 대시보드 카드”
 
 ```html
 <main class="wrap">
@@ -484,7 +486,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 14. 브라우저 지원 & 폴백
+## 브라우저 지원 & 폴백
 
 | 기능                         | Chrome/Edge | Firefox | Safari | IE11 |
 |------------------------------|-------------|---------|--------|------|
@@ -497,7 +499,7 @@ my-badge { --badge-bg: #111; --badge-fg: #fff; }
 
 ---
 
-## 15. 참고/도구
+## 참고/도구
 
 - MDN: *Using CSS Custom Properties*, *@property*, *color-mix()*
 - CSS-Tricks: *A Complete Guide to Custom Properties*

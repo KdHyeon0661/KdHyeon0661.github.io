@@ -6,7 +6,7 @@ category: 디자인패턴
 ---
 # GoF(Gang of Four) 디자인 패턴
 
-## 1. GoF 디자인 패턴이란?
+## GoF 디자인 패턴이란?
 
 - 1994년 고전 『Design Patterns: Elements of Reusable Object-Oriented Software』에서 정리된 **객체지향 설계 패턴 23개**를 말한다.
 - 저자: **Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides**(일명 GoF).
@@ -19,7 +19,7 @@ category: 디자인패턴
 
 ---
 
-## 2. GoF 23개 패턴 분류(요약표)
+## GoF 23개 패턴 분류(요약표)
 
 | 분류 | 패턴 |
 |---|---|
@@ -29,7 +29,7 @@ category: 디자인패턴
 
 ---
 
-## 3. 학습·적용 가이드(빠른 나침반)
+## 학습·적용 가이드(빠른 나침반)
 
 - **생성 복잡/다양?** → Builder(단계 분리), Factory Method(타입별), Abstract Factory(제품군)
 - **호환 안 되는 인터페이스?** → Adapter
@@ -53,7 +53,7 @@ category: 디자인패턴
 
 ---
 
-## 4. SOLID ↔ 패턴 맵(실전 감각)
+## SOLID ↔ 패턴 맵(실전 감각)
 
 - **SRP**: Facade(한 책임으로 단순화), Builder(생성과 표현 분리)
 - **OCP**: Strategy/Decorator/Factory Method(확장으로 수용)
@@ -63,9 +63,10 @@ category: 디자인패턴
 
 ---
 
-## 5. 생성 패턴(Creational)
+## 생성 패턴(Creational)
 
-### 5.1 Singleton — 인스턴스 1개 보장
+### Singleton — 인스턴스 1개 보장
+
 **의도**: **단일 인스턴스**와 전역 접근점 보장
 **구조**
 ```
@@ -94,7 +95,8 @@ public sealed class Config {
 
 ---
 
-### 5.2 Factory Method — 하위가 생성 책임
+### Factory Method — 하위가 생성 책임
+
 **의도**: 생성 책임을 **서브클래스**에 위임, 클라이언트는 추상에 의존
 **구조(제공 도식과 동일 형태)**
 ```
@@ -133,7 +135,8 @@ Dialog().render_window()  # 추상은 직접 사용하지 않고, 구체 Creator
 
 ---
 
-### 5.3 Abstract Factory — 제품군 일관 생성
+### Abstract Factory — 제품군 일관 생성
+
 **의도**: 관련된 **제품군**을 일관되게 생성
 **구조**
 ```
@@ -158,7 +161,8 @@ class DarkFactory : IWidgetFactory {
 
 ---
 
-### 5.4 Builder — 복잡 생성 단계 분리
+### Builder — 복잡 생성 단계 분리
+
 **의도**: 복잡한 객체의 **구성 단계를 분리**해 다양한 표현
 **Python**
 ```python
@@ -173,7 +177,8 @@ q = SqlBuilder().where("age>=18").order("name").build()
 
 ---
 
-### 5.5 Prototype — 복제로 생성
+### Prototype — 복제로 생성
+
 **의도**: 기존 객체를 **복제**해 새 객체 생성
 **Python**
 ```python
@@ -186,9 +191,10 @@ class Node:
 
 ---
 
-## 6. 구조 패턴(Structural)
+## 구조 패턴(Structural)
 
-### 6.1 Adapter — 인터페이스 변환
+### Adapter — 인터페이스 변환
+
 **의도**: 호환되지 않는 인터페이스 연결
 **구조**
 ```
@@ -210,7 +216,8 @@ class PaymentAdapter : INewPay {
 
 ---
 
-### 6.2 Bridge — 추상과 구현 분리
+### Bridge — 추상과 구현 분리
+
 **의도**: 추상(Abstraction)과 구현(Implementor) **독립 변화**
 **구조**
 ```
@@ -228,7 +235,8 @@ class Circle : Shape { float x,y,r; public Circle(IRenderer r,float x,float y,fl
 
 ---
 
-### 6.3 Composite — 전체/부분 동일 취급
+### Composite — 전체/부분 동일 취급
+
 **의도**: 트리 구조에서 Leaf와 Composite를 **동일 인터페이스**로
 **구조**
 ```
@@ -251,7 +259,8 @@ class Composite(Component):
 
 ---
 
-### 6.4 Decorator — 동적 기능 추가
+### Decorator — 동적 기능 추가
+
 **의도**: **상속 대신 합성**으로 기능을 런타임에 덧입힘
 **구조**
 ```
@@ -269,7 +278,8 @@ var svc = new Caching(new Logging(new Core()));
 
 ---
 
-### 6.5 Facade — 단순한 진입점
+### Facade — 단순한 진입점
+
 **의도**: 복잡한 서브시스템에 **간단한 인터페이스** 제공
 **구조**
 ```
@@ -285,7 +295,8 @@ class MediaFacade:
 
 ---
 
-### 6.6 Flyweight — 공유로 메모리 절약
+### Flyweight — 공유로 메모리 절약
+
 **의도**: **내재 상태**를 공유해 대량 객체 메모리 절감
 **Python**
 ```python
@@ -300,7 +311,8 @@ class IconFactory:
 
 ---
 
-### 6.7 Proxy — 대리 접근/지연/원격
+### Proxy — 대리 접근/지연/원격
+
 **의도**: 접근 제어, 지연 로딩, 원격 호출
 **구조**
 ```
@@ -316,9 +328,10 @@ class LazyImage : IImage {
 
 ---
 
-## 7. 행위 패턴(Behavioral)
+## 행위 패턴(Behavioral)
 
-### 7.1 Strategy — 알고리즘 교체 가능
+### Strategy — 알고리즘 교체 가능
+
 **의도**: 알고리즘 군을 인터페이스로 **캡슐화**해 교체
 **C#**
 ```csharp
@@ -337,7 +350,8 @@ class Archiver {
 
 ---
 
-### 7.2 Observer — 상태 변화 통지
+### Observer — 상태 변화 통지
+
 **의도**: 발행자 상태 변화 → 구독자에 자동 통지(느슨한 결합)
 **C#**
 ```csharp
@@ -352,7 +366,8 @@ class Subscriber { public void OnChanged(int v){ /* ... */ } }
 
 ---
 
-### 7.3 Command — 요청을 객체로 캡슐화
+### Command — 요청을 객체로 캡슐화
+
 **의도**: 요청을 객체화하여 큐잉/로그/Undo 지원
 **Python**
 ```python
@@ -371,7 +386,8 @@ hist.pop().undo()
 
 ---
 
-### 7.4 State — 상태에 따른 행위 변경
+### State — 상태에 따른 행위 변경
+
 **의도**: 분기 폭발을 **상태 객체**로 치환
 **Python**
 ```python
@@ -388,7 +404,8 @@ class Order:
 
 ---
 
-### 7.5 Template Method — 알고리즘 골격 고정
+### Template Method — 알고리즘 골격 고정
+
 **의도**: 알고리즘 **뼈대**를 상위가 정의, **세부 단계**는 하위가 결정
 **C#**
 ```csharp
@@ -400,7 +417,8 @@ abstract class Pipeline {
 
 ---
 
-### 7.6 Iterator — 내부구조 은닉 순회
+### Iterator — 내부구조 은닉 순회
+
 **Python**
 ```python
 class Range:
@@ -411,7 +429,8 @@ class Range:
 
 ---
 
-### 7.7 Mediator — 상호작용 중재
+### Mediator — 상호작용 중재
+
 **의도**: 객체 간 상호참조/의존을 **중앙 중재자**로 흡수
 **Python**
 ```python
@@ -423,7 +442,8 @@ class Bus:
 
 ---
 
-### 7.8 Chain of Responsibility — 연쇄 처리
+### Chain of Responsibility — 연쇄 처리
+
 **의도**: 요청을 **연결된 처리자**에 전달
 **C#**
 ```csharp
@@ -437,7 +457,8 @@ abstract class Handler {
 
 ---
 
-### 7.9 Visitor — 구조 고정, 새 연산 추가
+### Visitor — 구조 고정, 새 연산 추가
+
 **의도**: 자료 구조는 그대로, **연산을 외부로 추가**
 **Java(개요)**
 ```java
@@ -450,13 +471,15 @@ class Bar implements Node { public void accept(Visitor v){ v.visit(this);} }
 
 ---
 
-### 7.10 Memento — 스냅샷/복원
+### Memento — 스냅샷/복원
+
 **의도**: 캡슐화 유지한 채 **상태 저장·복원**
 **주의**: 스냅샷 비용/빈도 관리, 보안상 민감 필드 암호화 고려.
 
 ---
 
-### 7.11 Interpreter — 작은 언어 해석
+### Interpreter — 작은 언어 해석
+
 **의도**: 도메인 전용 미니 언어의 문법·해석기 구현
 **Python(주의: 실전은 안전 파서 필요)**
 ```python
@@ -466,7 +489,7 @@ def calc(expr: str) -> int:
 
 ---
 
-## 8. 비교표(핵심 차이 빠르게 보기)
+## 비교표(핵심 차이 빠르게 보기)
 
 | 구분 | Factory Method | Abstract Factory | Builder | Strategy | Decorator | Facade |
 |---|---|---|---|---|---|---|
@@ -476,7 +499,7 @@ def calc(expr: str) -> int:
 
 ---
 
-## 9. 테스트 전략 요약
+## 테스트 전략 요약
 
 - **Factory/Abstract Factory**: 새 구현 추가 시 **계약 테스트** 재사용
 - **Strategy/State/Command**: 동일 입력→일관 결과, Undo/Redo 가드
@@ -487,7 +510,7 @@ def calc(expr: str) -> int:
 
 ---
 
-## 10. 리팩토링 레시피(냄새 → 패턴)
+## 리팩토링 레시피(냄새 → 패턴)
 
 - 거대한 생성 `switch` → **Factory Method**
 - 생성자 매개변수 과다/순서 의존 → **Builder**
@@ -500,7 +523,7 @@ def calc(expr: str) -> int:
 
 ---
 
-## 11. 성능·동시성·보안 노트
+## 성능·동시성·보안 노트
 
 - **Flyweight**: 공유 캐시의 수명·경합·메모리 상한
 - **Proxy**: 원격 호출 재시도/백오프/서킷브레이커(Decorator로 결합)
@@ -510,20 +533,23 @@ def calc(expr: str) -> int:
 
 ---
 
-## 12. 실전 시나리오 3개
+## 실전 시나리오 3개
 
-### 12.1 API 클라이언트 SDK
+### API 클라이언트 SDK
+
 - 설계: **Facade(ApiClient)** + **Decorator(로깅/리트라이/캐시)** + **Strategy(서명/인증)** + **Factory Method(전송층 선택)**
 
-### 12.2 데이터 수집 파이프라인
+### 데이터 수집 파이프라인
+
 - 설계: **Factory Method(리더 선택)** + **Template Method(파이프라인 골격)** + **Chain(필터)** + **Observer(이벤트)**
 
-### 12.3 에디터 Undo/Redo
+### 에디터 Undo/Redo
+
 - 설계: **Command(명령 캡슐화)** + **Memento(스냅샷)** + **Composite(문서 트리)**
 
 ---
 
-## 13. 자주 하는 질문(FAQ)
+## 자주 하는 질문(FAQ)
 
 - **항상 패턴을 써야 하나?** 아니오. 단순한 곳엔 단순한 해법이 최선.
 - **여러 패턴을 섞어도 되나?** 가능. 단, **역할 경계**를 명확히 하고 테스트로 검증.
@@ -531,9 +557,10 @@ def calc(expr: str) -> int:
 
 ---
 
-## 14. 연습 과제(스켈레톤 제공)
+## 연습 과제(스켈레톤 제공)
 
 ### 과제 A: 이미지 인코더 선택기(Factory Method)
+
 ```python
 class Encoder:
     def encode(self, img, **opts): raise NotImplementedError
@@ -557,6 +584,7 @@ class MySaver(Saver):
 ```
 
 ### 과제 B: 전송 미들웨어 체인(Decorator + Chain)
+
 ```csharp
 interface IHandler { Task<Response> HandleAsync(Request r); }
 class CoreHandler : IHandler { public Task<Response> HandleAsync(Request r){ /* ... */ return Task.FromResult(new Response()); } }
@@ -566,7 +594,7 @@ class Retry : IHandler { /* ... 재시도 후 _n 호출 ... */ }
 
 ---
 
-## 15. 패턴별 미니 체크리스트
+## 패턴별 미니 체크리스트
 
 - **Factory Method**: 새 타입 추가 시 기존 코드 수정 최소?
 - **Abstract Factory**: 제품군 일관성이 중요한가?
@@ -578,7 +606,7 @@ class Retry : IHandler { /* ... 재시도 후 _n 호출 ... */ }
 
 ---
 
-## 16. 보완: 23개 전 패턴 한 줄 요약과 예
+## 보완: 23개 전 패턴 한 줄 요약과 예
 
 - **Singleton**: 전역 구성·캐시
 - **Factory Method**: 타입별 객체 생성
@@ -606,7 +634,7 @@ class Retry : IHandler { /* ... 재시도 후 _n 호출 ... */ }
 
 ---
 
-## 17. 마무리
+## 마무리
 
 **GoF 디자인 패턴**은 “코드 트릭”이 아닌 **협력 구조의 어휘**다.
 현재 문제의 본질을 먼저 명확히 하고, **가장 단순한 해법**으로 풀 수 없다면 그때 패턴을 선택하라. 패턴 간 조합은 강력하지만, **역할 경계·테스트 가능성·수명/동시성·보안**을 항상 함께 고려해야 한다.

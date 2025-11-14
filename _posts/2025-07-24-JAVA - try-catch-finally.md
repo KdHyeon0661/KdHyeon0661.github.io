@@ -5,11 +5,13 @@ date: 2025-07-24 23:20:23 +0900
 category: Java
 ---
 # 자바 `try-catch-finally`/`try-with-resources`
+
 ---
 
-## 1. 예외 모델과 `try-catch-finally`의 기본
+## 예외 모델과 `try-catch-finally`의 기본
 
-### 1.1 예외 계층과 분류
+### 예외 계층과 분류
+
 | 분류 | 대표 타입 | 의미/권장 사용 |
 |---|---|---|
 | **Error** | `OutOfMemoryError`, `StackOverflowError` | JVM 레벨 치명 오류. **catch하지 말 것**(복구 불가). |
@@ -18,7 +20,8 @@ category: Java
 
 > 규칙: **복구 가능성**이 있는 경우 → *checked*, **버그/계약 위반** → *unchecked*.
 
-### 1.2 기본 문법(복습)
+### 기본 문법(복습)
+
 ```java
 try {
     // 예외가 발생할 수 있는 코드
@@ -29,16 +32,18 @@ try {
 }
 ```
 
-### 1.3 제어 흐름 요약
+### 제어 흐름 요약
+
 - `try`에서 예외 발생 → **가장 가까운 호환 `catch`**로 이동 → 처리 후 `finally` 실행 → 다음 문장.
 - `try`에서 예외 없음 → `catch` 건너뜀 → **`finally` 실행** → 다음 문장.
 - `try`/`catch`에서 `return`/`throw`가 있어도 → **`finally`는 실행**(일부 예외적 상황은 §7.4).
 
 ---
 
-## 2. `catch` 설계 — 멀티-캐치, 순서, 재던지기
+## `catch` 설계 — 멀티-캐치, 순서, 재던지기
 
-### 2.1 캐치 순서(상위 타입은 아래)
+### 캐치 순서(상위 타입은 아래)
+
 ```java
 try {
     // ...
@@ -47,7 +52,8 @@ try {
 ```
 - 상속 관계에서 **하위 → 상위** 순으로. 그렇지 않으면 도달 불가(컴파일 에러).
 
-### 2.2 멀티-캐치(Java 7+)
+### 멀티-캐치(Java 7+)
+
 ```java
 try {
     // ...
@@ -56,7 +62,8 @@ try {
 }
 ```
 
-### 2.3 정확 재던지기(Precise Rethrow, Java 7+)
+### 정확 재던지기(Precise Rethrow, Java 7+)
+
 - `catch (Exception e)`로 받아도, **조건부로 더 구체적 타입을 다시 던지는** 것이 가능.
 ```java
 static void rethrowing() throws IOException, SQLException {
@@ -68,7 +75,8 @@ static void rethrowing() throws IOException, SQLException {
 }
 ```
 
-### 2.4 예외 번역(translation) & 래핑(wrapping)
+### 예외 번역(translation) & 래핑(wrapping)
+
 - **레이어 경계**에서 내부 예외를 **도메인 고수준 예외로 변환**.
 ```java
 class UserRepository {
@@ -89,9 +97,10 @@ class DataAccessException extends RuntimeException {
 
 ---
 
-## 3. `finally` — 자원 해제와 함정
+## `finally` — 자원 해제와 함정
 
-### 3.1 자원 해제의 정석
+### 자원 해제의 정석
+
 ```java
 BufferedReader br = null;
 try {
@@ -104,7 +113,8 @@ try {
 }
 ```
 
-### 3.2 `finally`에서의 **금기**
+### `finally`에서의 **금기**
+
 1) **`return`/`throw`/`break` 사용 금지**: 원래 예외/반환값을 **가려버림**.
 ```java
 static int bad() {
@@ -114,14 +124,16 @@ static int bad() {
 ```
 2) **상태 변경/비즈니스 로직 수행** 금지: 해제 외 로직은 다른 곳으로.
 
-### 3.3 항상 실행되지 않는 경우(드묾)
+### 항상 실행되지 않는 경우(드묾)
+
 - `System.exit`, `Runtime.halt`, JVM 강제 종료/크래시, 무한 루프/전원 차단, **`Error`**로 인한 비정상 중단.
 
 ---
 
-## 4. `try-with-resources` — 자동 자원 해제(Java 7+)
+## `try-with-resources` — 자동 자원 해제(Java 7+)
 
-### 4.1 기본 사용과 close 순서
+### 기본 사용과 close 순서
+
 ```java
 try (BufferedReader br = new BufferedReader(new FileReader("a.txt"))) {
   System.out.println(br.readLine());
@@ -136,7 +148,8 @@ try (InputStream in = new FileInputStream("in");
 }
 ```
 
-### 4.2 Java 9: 사전 선언 자원의 TWR
+### Java 9: 사전 선언 자원의 TWR
+
 ```java
 BufferedReader br = new BufferedReader(new FileReader("a.txt"));
 try (br) {                    // br이 effectively final 이면 가능
@@ -144,7 +157,8 @@ try (br) {                    // br이 effectively final 이면 가능
 }
 ```
 
-### 4.3 **Suppressed 예외**와 진짜 원인 보존
+### **Suppressed 예외**와 진짜 원인 보존
+
 - 본문에서 예외 A 발생, `close()`에서 예외 B 발생 → **A가 주 예외**, B는 **suppressed**로 부착.
 ```java
 try (MyRes r = new MyRes()) {
@@ -162,7 +176,8 @@ static class MyRes implements AutoCloseable {
 - 출력: `body`가 main 예외, `close`가 suppressed.
 - 수동 추가: `e.addSuppressed(suppressedThrowable)`.
 
-### 4.4 `AutoCloseable` vs `Closeable`
+### `AutoCloseable` vs `Closeable`
+
 | 항목 | `AutoCloseable` | `Closeable` |
 |---|---|---|
 | 선언 | `void close() throws Exception` | `void close() throws IOException` |
@@ -171,9 +186,10 @@ static class MyRes implements AutoCloseable {
 
 ---
 
-## 5. 동시성과 예외 — 락 해제, 인터럽트
+## 동시성과 예외 — 락 해제, 인터럽트
 
-### 5.1 `ReentrantLock`은 **반드시 finally에서 unlock**
+### `ReentrantLock`은 **반드시 finally에서 unlock**
+
 ```java
 Lock lock = new ReentrantLock();
 lock.lock();
@@ -184,7 +200,8 @@ try {
 }
 ```
 
-### 5.2 인터럽트 보존 패턴
+### 인터럽트 보존 패턴
+
 ```java
 try {
   Thread.sleep(1000);
@@ -196,16 +213,18 @@ try {
 
 ---
 
-## 6. 체크 vs 언체크 — API 설계 원칙
+## 체크 vs 언체크 — API 설계 원칙
 
-### 6.1 선택 기준
+### 선택 기준
+
 | 질문 | 체크 | 언체크 |
 |---|---|---|
 | 호출자가 **합리적으로 복구** 가능한가? | ✔ |  |
 | **프로그래밍 오류** 또는 **사전조건 위반**인가? |  | ✔ |
 | 외부 시스템/환경 의존(I/O, 네트워크, DB)? | ✔ |  |
 
-### 6.2 권장 관례
+### 권장 관례
+
 - **입력 검증 실패** → `IllegalArgumentException`
 - **상태 위반** → `IllegalStateException`
 - **옵션 부재**(API 호출 결과 없음) → `Optional<T>` 반환을 고려
@@ -213,13 +232,15 @@ try {
 
 ---
 
-## 7. 고급 패턴과 함정
+## 고급 패턴과 함정
 
-### 7.1 “예외로 제어 흐름” 사용 금지
+### “예외로 제어 흐름” 사용 금지
+
 - 핫패스에서 예외를 **정상 흐름 대체**로 쓰면 성능 저하(스택트레이스 비용 큼).
 - 조건/옵셔널/결과 타입으로 처리.
 
-### 7.2 로깅 가이드(중복 로그 금지)
+### 로깅 가이드(중복 로그 금지)
+
 - **한 번만** 로깅. 보통 **경계 레이어**(컨트롤러/진입점)에서 로깅하고 내부는 **번역/전파만**.
 ```java
 try {
@@ -230,7 +251,8 @@ try {
 }
 ```
 
-### 7.3 `finally`의 return/throw가 **원인 덮어쓰기**
+### `finally`의 return/throw가 **원인 덮어쓰기**
+
 ```java
 static void badFinally() {
   try {
@@ -242,14 +264,16 @@ static void badFinally() {
 ```
 - **절대 금지**. 해제만 수행.
 
-### 7.4 `System.exit`/`Error`/프로세스 중단 시 finally 미실행 가능
+### `System.exit`/`Error`/프로세스 중단 시 finally 미실행 가능
+
 - 종료 훅/자원 정리는 OS/JVM 종료경로를 별도 설계.
 
 ---
 
-## 8. 테스트·디버깅·성능
+## 테스트·디버깅·성능
 
-### 8.1 테스트: JUnit의 `assertThrows`
+### 테스트: JUnit의 `assertThrows`
+
 ```java
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -261,7 +285,8 @@ void throwsOnBadInput() {
 }
 ```
 
-### 8.2 스택 트레이스 단서
+### 스택 트레이스 단서
+
 ```java
 try {
   foo();
@@ -271,14 +296,16 @@ try {
 }
 ```
 
-### 8.3 비용 상식
+### 비용 상식
+
 - 예외 **생성/스택 캡처** 비용 큼. 드문 에러 경로엔 OK, **정상 경로엔 금지**.
 
 ---
 
-## 9. 종합 예제 모음
+## 종합 예제 모음
 
-### 9.1 파일 복사 — `try-with-resources` + 번역 + suppressed 관찰
+### 파일 복사 — `try-with-resources` + 번역 + suppressed 관찰
+
 ```java
 import java.io.*;
 import java.nio.file.*;
@@ -310,7 +337,8 @@ public class CopyExample {
 }
 ```
 
-### 9.2 리소스 3개 — 닫힘 순서 역순 & suppressed
+### 리소스 3개 — 닫힘 순서 역순 & suppressed
+
 ```java
 try (R r1 = new R("r1"); R r2 = new R("r2"); R r3 = new R("r3")) {
   throw new RuntimeException("body");
@@ -327,7 +355,8 @@ static class R implements AutoCloseable {
 ```
 - 출력: main 예외 `body`, suppressed: `close r3`, `close r2`, `close r1` (역순).
 
-### 9.3 동시성 — 락과 인터럽트 보존
+### 동시성 — 락과 인터럽트 보존
+
 ```java
 import java.util.concurrent.locks.*;
 class Counter {
@@ -354,7 +383,8 @@ class Counter {
 }
 ```
 
-### 9.4 입력 검증 — 언체크 예외
+### 입력 검증 — 언체크 예외
+
 ```java
 static int parseAge(String s) {
   if (s == null) throw new IllegalArgumentException("age null");
@@ -366,7 +396,7 @@ static int parseAge(String s) {
 
 ---
 
-## 10. FAQ — 자주 묻는 함정/세부 규칙
+## FAQ — 자주 묻는 함정/세부 규칙
 
 1) **멀티-캐치에서 `e`는 effectively final** → `e = new ...` 불가.
 2) **`try-with-resources`의 close 순서**: 선언 **역순**.
@@ -377,7 +407,7 @@ static int parseAge(String s) {
 
 ---
 
-## 11. 베스트 프랙티스 체크리스트
+## 베스트 프랙티스 체크리스트
 
 - [ ] **가장 좁은 범위**의 `try`로 감싸라(오염 방지).
 - [ ] `catch`는 **정확한 타입**과 **정확한 대응**만(빈 `catch` 금지).
@@ -392,7 +422,7 @@ static int parseAge(String s) {
 
 ---
 
-## 12. 미니 요약표
+## 미니 요약표
 
 | 주제 | 핵심 |
 |---|---|
@@ -407,7 +437,7 @@ static int parseAge(String s) {
 
 ---
 
-## 13. 연습 문제(간단)
+## 연습 문제(간단)
 
 1) 파일 두 개를 읽어 **한 줄씩 병합 출력**하되, **모든 스트림은 TWR**로 열고, **본문/close 동시 예외**를 로그로 구분해 보세요.
 2) DB 호출 코드에서 `SQLException`을 `RepositoryException`(언체크)으로 **번역**하되, 상위 서비스 계층에서 **한 번만 로깅**하도록 구성해 보세요.
@@ -415,7 +445,7 @@ static int parseAge(String s) {
 
 ---
 
-## 14. 부록 — 최소 예제(통합)
+## 부록 — 최소 예제(통합)
 
 ```java
 import java.io.*;
@@ -472,5 +502,6 @@ public class TryCatchFinallyGuide {
 ---
 
 ### 마무리
+
 - `try-catch-finally`는 **안전한 종료/자원 회수**의 기본 골격, `try-with-resources`는 **현대적 기본값**입니다.
 - 예외는 **계약**이자 **문서화된 제어 흐름**입니다. **정확한 타입**, **명확한 메시지**, **원인 보존**, **적절한 레이어에서의 번역/로깅**이 견고한 코드의 핵심입니다.

@@ -5,6 +5,7 @@ date: 2025-09-07 15:25:23 +0900
 category: WPF
 ---
 # 🧩 WPF에서 **UserControl vs CustomControl** 완전 정복
+
 *(예제 중심 · 누락 없이 최대한 자세하게 · 실전 선택 기준 + 제작 체크리스트 포함)*
 
 > WPF에서 “컴포넌트화”를 할 때 가장 먼저 부딪히는 질문:
@@ -14,7 +15,7 @@ category: WPF
 
 ---
 
-## 0. 한눈에 보는 차이
+## 한눈에 보는 차이
 
 | 항목 | **UserControl** | **CustomControl** |
 |---|---|---|
@@ -35,7 +36,7 @@ category: WPF
 
 ---
 
-## 1. 언제 어떤 걸 써야 하나 — 결정 트리
+## 언제 어떤 걸 써야 하나 — 결정 트리
 
 1) **외형을 소비자가 자유롭게 바꿔야 하나?**
    - 예: 회사별 브랜딩, 다크/라이트/고대비 테마, 둥근/각진 버튼 등
@@ -53,14 +54,16 @@ category: WPF
 
 ---
 
-## 2. UserControl 깊게 이해하기
+## UserControl 깊게 이해하기
 
-### 2.1 특징
+### 특징
+
 - **XAML 합성**으로 내부 UI가 **고정**되어 있습니다.
 - 외부에 노출되는 건 보통 `public` CLR 속성·`DependencyProperty`·이벤트.
 - **템플릿 교체가 목적이 아닌** 화면 파편을 재사용하기에 적합.
 
-### 2.2 기본 예제 — `ProfileCard`
+### 기본 예제 — `ProfileCard`
+
 ```xml
 <!-- ProfileCard.xaml -->
 <UserControl x:Class="Demo.Controls.ProfileCard"
@@ -105,20 +108,23 @@ public partial class ProfileCard : UserControl
 - 내부 레이아웃(둥근 사진/StackPanel)을 **외부에서 스킨 교체**할 수 없습니다.
 - 버튼이나 색상 변경 같은 **세부 외형은 코드 수정**이 필요합니다.
 
-### 2.3 장단점
+### 장단점
+
 - ✅ 장점: 제작이 **빠름**, 로직이 **단순**, 디자이너/미리보기 편함
 - ⚠️ 단점: 외형 커스터마이즈 **한계**, 대규모 스타일·테마 체계에 **부적합**
 
 ---
 
-## 3. CustomControl 깊게 이해하기
+## CustomControl 깊게 이해하기
 
-### 3.1 구조 핵심
+### 구조 핵심
+
 - **`public class MyControl : Control`** 로 시작 (또는 `ButtonBase`/`ItemsControl` 등).
 - **`Themes/Generic.xaml`** 에 **기본 스타일/템플릿**을 제공.
 - **속성은 DP**, 외형은 **ControlTemplate**, 내부 파츠는 **`PART_*` 계약**.
 
-### 3.2 최소 구현 스켈레톤
+### 최소 구현 스켈레톤
+
 ```
 MyControlLibrary/
   Controls/
@@ -204,22 +210,25 @@ public class Gauge : Control
 - 소비자는 **Style/Template만 바꿔서** 완전히 다른 외형을 만들 수 있습니다.
 - 라이브러리 관점에서 **확장성·테마화**가 뛰어납니다.
 
-### 3.3 `PART_*` 파트 계약
+### `PART_*` 파트 계약
+
 - 템플릿이 바뀌어도 **필수 요소를 찾을 수 있게** 관례적으로 `PART_` 접두사를 사용.
 - 문서화: “템플릿에는 `PART_Needle`이 있어야 합니다.”
 - `OnApplyTemplate()`에서 `GetTemplateChild("PART_Needle")`로 조회.
 
-### 3.4 VisualStateManager(VSM)
+### VisualStateManager(VSM)
+
 - `CommonStates`(Normal/Disabled), `FocusStates` 등 상태를 템플릿에서 정의.
 - **스타일/트리거 남발 대신 상태 전환**으로 관리해 가독성↑.
 
 ---
 
-## 4. **같은 기능**을 UserControl ↔ CustomControl로 구현 비교
+## **같은 기능**을 UserControl ↔ CustomControl로 구현 비교
 
 ### 요구: “Avatar + Name + Busy 상태 표시” 컨트롤
 
-#### 4.1 UserControl 버전(빠른 합성)
+#### UserControl 버전(빠른 합성)
+
 ```xml
 <UserControl ... x:Class="Demo.Controls.UserAvatar">
   <Grid>
@@ -249,7 +258,8 @@ public partial class UserAvatar : UserControl
 
 - 외형을 둥근 대신 **사각형**으로 하고 싶다면? → **컨트롤 XAML 수정 필요**.
 
-#### 4.2 CustomControl 버전(템플릿 교체 가능)
+#### CustomControl 버전(템플릿 교체 가능)
+
 ```csharp
 public class Avatar : Control
 {
@@ -300,7 +310,7 @@ public class Avatar : Control
 
 ---
 
-## 5. 의존성 속성(DP)·라우티드 이벤트(RE)·명령(Command) 차이
+## 의존성 속성(DP)·라우티드 이벤트(RE)·명령(Command) 차이
 
 | 항목 | UserControl | CustomControl |
 |---|---|---|
@@ -308,7 +318,8 @@ public class Avatar : Control
 | **RoutedEvent** | 필요 시 사용 | **자주 사용**(템플릿 내부 이벤트를 외부로 승격, `AddOwner` 등) |
 | **ICommand/RoutedCommand** | 내부 버튼에 직접 바인딩 | **CommandBinding**·키 제스처·InputBindings와 자연스럽게 결합 |
 
-### 5.1 DP 고급 옵션(메타데이터)
+### DP 고급 옵션(메타데이터)
+
 ```csharp
 FrameworkPropertyMetadata meta = new(
     defaultValue: 0.0,
@@ -321,7 +332,7 @@ FrameworkPropertyMetadata meta = new(
 
 ---
 
-## 6. 테마/다크모드·리소스 구조
+## 테마/다크모드·리소스 구조
 
 - **UserControl**: 컨트롤 내부 색·여백을 **직접 바꿔야** 함 → 대규모 테마 전환이 힘듦.
 - **CustomControl**: **DynamicResource + MergedDictionaries** 로 테마 스와핑.
@@ -339,7 +350,7 @@ Application.Current.Resources.MergedDictionaries[0] = new ResourceDictionary { S
 
 ---
 
-## 7. 성능 관점
+## 성능 관점
 
 - **UserControl**: 내부 시각 트리가 고정 → 작은 합성에 **경량**.
 - **CustomControl**: 템플릿/트리거/VSM/바인딩 많아질수록 **유연성 대가**가 듦.
@@ -351,7 +362,7 @@ Application.Current.Resources.MergedDictionaries[0] = new ResourceDictionary { S
 
 ---
 
-## 8. 디자인-타임(Design-time) 지원
+## 디자인-타임(Design-time) 지원
 
 - **UserControl**: 바로 미리보기 OK.
 - **CustomControl**:
@@ -366,7 +377,7 @@ Application.Current.Resources.MergedDictionaries[0] = new ResourceDictionary { S
 
 ---
 
-## 9. 접근성(A11y)·자동화(UIA)
+## 접근성(A11y)·자동화(UIA)
 
 - **CustomControl** 제작 시 **`AutomationPeer`** 를 제공하면 스크린리더·UI 테스트 자동화 대응이 좋습니다.
 - **UserControl** 은 내부 기본 컨트롤들의 Automation을 **상속**.
@@ -378,7 +389,7 @@ protected override AutomationPeer OnCreateAutomationPeer()
 
 ---
 
-## 10. 단위 테스트/리그레션
+## 단위 테스트/리그레션
 
 - **UserControl**: ViewModel과 분리해 **UI 없는 단위 테스트**는 쉽지 않음(대개 상호작용 테스트는 UI 자동화 도구).
 - **CustomControl**: **DP/상태/코어 로직**을 별도 클래스로 분리하면 **순수 단위 테스트** 가능.
@@ -386,14 +397,14 @@ protected override AutomationPeer OnCreateAutomationPeer()
 
 ---
 
-## 11. 배포·재사용
+## 배포·재사용
 
 - **UserControl**: 보통 **앱 프로젝트 내부**에서만 사용. 다른 앱으로 복사/붙여넣기.
 - **CustomControl**: **별도 어셈블리**(NuGet 배포)에 최적, 테마/로컬라이제이션/리소스 포함.
 
 ---
 
-## 12. 실무 선택 가이드(요약)
+## 실무 선택 가이드(요약)
 
 - **빠르게 합성하고 팀 내부에서만** 쓰는 **화면 조각** → **UserControl**
 - **브랜딩/테마/리디자인** 요구가 있고 **외부에도 배포**할 **재사용 가능한 컨트롤** → **CustomControl**
@@ -401,9 +412,10 @@ protected override AutomationPeer OnCreateAutomationPeer()
 
 ---
 
-## 13. 마이그레이션: UserControl → CustomControl
+## 마이그레이션: UserControl → CustomControl
 
-### 13.1 리팩터링 전략
+### 리팩터링 전략
+
 1) UserControl의 **public DP/이벤트** 목록 정리
 2) 내부 XAML에서 **“외형”만 Template로 이식**
 3) **`Control` 파생** 클래스로 속성/로직 이동
@@ -412,7 +424,8 @@ protected override AutomationPeer OnCreateAutomationPeer()
 6) 외부 사용처는 `<local:OldUserControl .../>` → `<lib:NewCustomControl .../>` 로 교체
 7) 테마/스타일 문서화
 
-### 13.2 간단 예
+### 간단 예
+
 - `ProfileCard`(UserControl) → `Profile`(CustomControl)로 바꾸면서 템플릿 교체 가능하도록.
 
 ```csharp
@@ -466,7 +479,7 @@ public class Profile : Control
 
 ---
 
-## 14. 흔한 함정·트러블슈팅
+## 흔한 함정·트러블슈팅
 
 1) **Generic.xaml 누락** → CustomControl가 흰 사각형만 보임
    - `Themes/Generic.xaml` 파일명/빌드 액션(Resource) 확인, `DefaultStyleKey` 메타데이터 확인.
@@ -485,14 +498,16 @@ public class Profile : Control
 
 ---
 
-## 15. 제작 체크리스트(현업용)
+## 제작 체크리스트(현업용)
 
 ### UserControl
+
 - [ ] 외형 고정으로 충분한가? (브랜딩 요구 없음)
 - [ ] 공개 DP/이벤트만으로 조작 가능한가?
 - [ ] 내부에서 다른 컨트롤/뷰모델 합성이 핵심인가?
 
 ### CustomControl
+
 - [ ] `Control` 파생 + `DefaultStyleKey` 메타데이터
 - [ ] **Generic.xaml** 기본 Style/Template
 - [ ] **DP**: AffectsMeasure/Render/Arrange, Coerce/Validate
@@ -505,7 +520,7 @@ public class Profile : Control
 
 ---
 
-## 16. FAQ
+## FAQ
 
 **Q. CustomControl이 항상 더 “좋은”가요?**
 A. 목적이 다릅니다. **빠른 화면 합성/내부 재사용**은 UserControl이 생산적입니다.
@@ -522,7 +537,7 @@ A. UserControl이 더 단순하지만, CustomControl도 샘플 템플릿/디자�
 
 ---
 
-## 17. 결론
+## 결론
 
 - **UserControl**: “**합성 View**” — 빠르고 직관적. 내부 UI가 바뀌지 않는 **사내 화면 조각**에 최적.
 - **CustomControl**: “**스킨 가능한 컨트롤**” — 템플릿/스타일/테마/브랜딩/배포에 최적.

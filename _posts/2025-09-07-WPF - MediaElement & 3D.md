@@ -5,6 +5,7 @@ date: 2025-09-07 18:25:23 +0900
 category: WPF
 ---
 # 🎬 WPF **MediaElement & 3D (Viewport3D)** 완전 정복
+
 *(예제 중심 · 누락 없는 설명 · 실전 성능/트러블슈팅 포함)*
 
 이 문서는 WPF에서 **미디어(오디오/비디오) 재생**과 **3D 렌더링**을 다루는 핵심 구성요소를 “처음부터 끝까지” 상세히 정리합니다.
@@ -22,7 +23,7 @@ category: WPF
 
 ---
 
-## 0. 한눈에 보는 미디어/3D 구성요소
+## 한눈에 보는 미디어/3D 구성요소
 
 | 영역 | 클래스 | 용도 | 특징 |
 |---|---|---|---|
@@ -37,9 +38,10 @@ category: WPF
 
 ---
 
-# 1. MediaElement 완전 정복
+# MediaElement 완전 정복
 
-## 1.1 가장 단순한 재생
+## 가장 단순한 재생
+
 ```xml
 <Grid>
   <MediaElement x:Name="Player"
@@ -61,6 +63,7 @@ private void Stop_Click(object s, RoutedEventArgs e) => Player.Stop();
 ```
 
 ### 속성 요약
+
 - `Source` : 재생할 미디어 URI(로컬, pack, http/https)
 - `LoadedBehavior`/`UnloadedBehavior` : `Play/Pause/Manual/Stop`
 - `Volume`(0~1), `IsMuted`, `SpeedRatio`(재생 속도), `Position`(seek)
@@ -68,6 +71,7 @@ private void Stop_Click(object s, RoutedEventArgs e) => Player.Stop();
 - `Stretch` : 영상 비율 채우기 모드 (`Uniform` 권장)
 
 ### 주요 이벤트
+
 - `MediaOpened` : 메타데이터 읽힘(영상 크기, 길이 등 접근 가능)
 - `MediaEnded` : 끝 도달 (Loop 시 다시 Play)
 - `MediaFailed` : 코덱/파일 문제 등
@@ -85,21 +89,24 @@ private void Player_MediaFailed(object? sender, ExceptionRoutedEventArgs e) => M
 
 ---
 
-## 1.2 파일 경로와 **pack URI** / 스트리밍
+## 파일 경로와 **pack URI** / 스트리밍
 
 ### 로컬/상대/절대 경로
+
 ```xml
 <MediaElement Source="media/video.mp4"/>
 <MediaElement Source="C:\Videos\clip.mp4"/>
 ```
 
 ### **pack URI로 리소스 임베드**
+
 - `video.mp4`를 프로젝트에 추가 → Build Action = Resource
 ```xml
 <MediaElement Source="pack://application:,,,/media/video.mp4"/>
 ```
 
 ### 스트리밍(HTTP/HTTPS)
+
 ```xml
 <MediaElement Source="https://example.com/video.mp4" LoadedBehavior="Manual"/>
 ```
@@ -108,7 +115,7 @@ private void Player_MediaFailed(object? sender, ExceptionRoutedEventArgs e) => M
 
 ---
 
-## 1.3 재생 컨트롤(시크바/볼륨/속도)
+## 재생 컨트롤(시크바/볼륨/속도)
 
 ```xml
 <Grid>
@@ -154,7 +161,8 @@ private void Speed_SelectionChanged(object s, SelectionChangedEventArgs e)
 
 ---
 
-## 1.4 오디오만 재생(백그라운드 음악)
+## 오디오만 재생(백그라운드 음악)
+
 ```xml
 <MediaElement x:Name="Bgm" Source="loop.mp3" LoadedBehavior="Manual" UnloadedBehavior="Stop" Visibility="Collapsed" MediaEnded="Bgm_MediaEnded"/>
 ```
@@ -164,7 +172,7 @@ private void Bgm_MediaEnded(object s, RoutedEventArgs e) { Bgm.Position = TimeSp
 
 ---
 
-## 1.5 **MediaPlayer + VideoDrawing** (코드 지향 / 시각 요소 분리)
+## **MediaPlayer + VideoDrawing** (코드 지향 / 시각 요소 분리)
 
 ```xml
 <DrawingBrush x:Key="VideoBrush">
@@ -196,7 +204,7 @@ public MainWindow()
 
 ---
 
-## 1.6 **MediaTimeline/MediaClock** (타임라인 기반 반복/동기화)
+## **MediaTimeline/MediaClock** (타임라인 기반 반복/동기화)
 
 ```xml
 <Grid>
@@ -212,7 +220,7 @@ public MainWindow()
 
 ---
 
-## 1.7 Video를 **Brush**로 써서 컨트롤/3D 텍스처링
+## Video를 **Brush**로 써서 컨트롤/3D 텍스처링
 
 ```xml
 <Grid>
@@ -232,14 +240,16 @@ public MainWindow()
 
 ---
 
-## 1.8 자막/오디오 트랙에 대하여 (간단 언급)
+## 자막/오디오 트랙에 대하여 (간단 언급)
+
 - WPF **순정 MediaElement**는 **내장 자막/트랙 전환**을 자동 처리하지 않습니다.
   보통 **외부 자막(SRT)** 을 로딩해 별도의 `TextBlock`/Overlay로 동기화하거나,
   다른 미디어 스택(예: Media Foundation 직접, 서드파티 엔진)과 연계합니다.
 
 ---
 
-## 1.9 MediaElement 트러블슈팅
+## MediaElement 트러블슈팅
+
 - **검은 화면/소리만**: 코덱 미지원 가능 → 컨테이너/코덱 확인
 - **프레임 드롭**: Stretch/레이아웃 변환 최소화, 하드웨어 가속 확인, 다른 애니메이션 과다 회피
 - **메모리 증가**: Stop/Close, 참조 해제, MediaPlayer 재사용 정책 점검
@@ -247,9 +257,10 @@ public MainWindow()
 
 ---
 
-# 2. WPF 3D(Viewport3D) 완전 정복
+# WPF 3D(Viewport3D) 완전 정복
 
-## 2.1 최소 구성 예: 카메라 + 조명 + 메시
+## 최소 구성 예: 카메라 + 조명 + 메시
+
 ```xml
 <Viewport3D x:Name="View" ClipToBounds="True">
   <!-- 카메라 -->
@@ -295,7 +306,8 @@ public MainWindow()
 
 ---
 
-## 2.2 **정육면체** 만들기(Positions/Indices)
+## **정육면체** 만들기(Positions/Indices)
+
 ```xml
 <MeshGeometry3D x:Key="CubeMesh"
   Positions="
@@ -355,7 +367,7 @@ public MainWindow()
 
 ---
 
-## 2.3 3D 표면에 **비디오 텍스처** 입히기 (MediaElement + VisualBrush)
+## 3D 표면에 **비디오 텍스처** 입히기 (MediaElement + VisualBrush)
 
 ```xml
 <Grid>
@@ -400,7 +412,7 @@ public MainWindow()
 
 ---
 
-## 2.4 카메라 조작(마우스 회전/줌/팬)
+## 카메라 조작(마우스 회전/줌/팬)
 
 ```csharp
 // MainWindow.xaml.cs
@@ -448,7 +460,7 @@ private void View_MouseWheel(object s, MouseWheelEventArgs e) => _dist = Math.Cl
 
 ---
 
-## 2.5 3D **히트테스트**(모델 클릭/선택)
+## 3D **히트테스트**(모델 클릭/선택)
 
 ```csharp
 private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -475,7 +487,7 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 
 ---
 
-## 2.6 3D 애니메이션(회전/이동/스케일)
+## 3D 애니메이션(회전/이동/스케일)
 
 ```xml
 <GeometryModel3D x:Name="Obj" Geometry="{StaticResource CubeMesh}">
@@ -508,7 +520,7 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 
 ---
 
-## 2.7 2D UI를 3D에 투영(빌보드/대시보드)
+## 2D UI를 3D에 투영(빌보드/대시보드)
 
 ```xml
 <Grid>
@@ -549,7 +561,7 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 
 ---
 
-## 2.8 성능 튜닝(필수 체크리스트)
+## 성능 튜닝(필수 체크리스트)
 
 - **Freezable Freeze**: 변하지 않는 `Brush/Geometry/Transform`는 `Freeze()`(XAML은 내부적으로 Freeze 최적화 수행)
 - **모델 병합**: 너무 많은 `GeometryModel3D`는 드로우콜 증가 → 적절히 병합
@@ -561,14 +573,15 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 
 ---
 
-# 3. Media & 3D **통합 사례** — “3D TV 벽 + 컨트롤 오버레이”
+# Media & 3D **통합 사례** — “3D TV 벽 + 컨트롤 오버레이”
 
 **요구**
 - 뒤쪽 3D 벽에는 **여러 TV 패널**에 서로 다른 동영상 재생
 - 앞쪽 오버레이 카드에는 **현재 선택 비디오 정보** 표시
 - 마우스로 TV 패널을 클릭하면 해당 패널 **강조/확대**
 
-### 3.1 비디오 브러시 리소스
+### 비디오 브러시 리소스
+
 ```xml
 <Grid.Resources>
   <VisualBrush x:Key="Vid1">
@@ -584,7 +597,8 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 </Grid.Resources>
 ```
 
-### 3.2 3D 패널 메시/머티리얼
+### 3D 패널 메시/머티리얼
+
 ```xml
 <Viewport3D x:Name="View" MouseLeftButtonDown="View_MouseLeftButtonDown">
   <Viewport3D.Camera>
@@ -623,7 +637,8 @@ private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 </Viewport3D>
 ```
 
-### 3.3 클릭 시 강조/확대
+### 클릭 시 강조/확대
+
 ```csharp
 private GeometryModel3D? _selected;
 private void View_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
@@ -652,23 +667,27 @@ private void ResetHighlight(GeometryModel3D m)
 
 ---
 
-# 4. 자주 묻는 질문(FAQ)
+# 자주 묻는 질문(FAQ)
 
 ### Q1. MediaElement로 **H.265/HEVC**가 재생이 안 돼요.
+
 A. OS/코덱 지원 범위를 따릅니다. Windows에 해당 코덱이 없으면 실패합니다. 일반적으로 **H.264(AAC)** 컨테이너(MP4)가 호환성이 높습니다.
 
 ### Q2. 자막(SRT)을 **미디어 위에 표시**하려면?
+
 A. 타이머로 `Position`을 읽어 SRT 파싱 결과에서 현재 줄을 찾아 **Overlay TextBlock**에 표시하세요. 자막 렌더/스타일은 XAML로 자유롭게.
 
 ### Q3. 3D에서 **스펙큘러 하이라이트**를 더 강하게?
+
 A. `SpecularMaterial`의 `Brush`(밝기)와 `SpecularPower`를 조정하세요. `MaterialGroup`으로 `Diffuse + Specular` 혼합.
 
 ### Q4. **퍼포먼스 튜닝** 우선순위는?
+
 A. (1) 애니메이션/모델 수 줄이기 (2) 텍스처/브러시 Freeze/공유 관리 (3) RenderTransform 우선 (4) 히트테스트 최소화 (5) 레이아웃 변화 억제.
 
 ---
 
-# 5. 체크리스트(현업용 요약)
+# 체크리스트(현업용 요약)
 
 - **MediaElement**
   - [ ] `LoadedBehavior="Manual"` + Play/Pause/Stop 제어
@@ -687,7 +706,7 @@ A. (1) 애니메이션/모델 수 줄이기 (2) 텍스처/브러시 Freeze/공�
 
 ---
 
-## 6. 마무리
+## 마무리
 
 이 문서는 WPF에서 **미디어 재생**과 **3D 렌더링**을 안정적으로 구축하는 **실전 가이드**입니다.
 여기 있는 스니펫만 조합해도 **비디오 플레이어**, **3D 대시보드/갤러리**, **미디어 파사드** 등 다양한 UI를 빠르게 만들 수 있습니다.

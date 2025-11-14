@@ -18,9 +18,10 @@ category: DB 심화
 
 ---
 
-## 1. 정의: user call vs recursive call
+## 정의: user call vs recursive call
 
-### 1.1 user call (사용자 호출)
+### user call (사용자 호출)
+
 - **무엇?** 클라이언트가 서버로 보내는 **OCI/드라이버 레벨 호출** 수.
   - 예) `OCIPrepare`, `OCIExecute`, `OCIDefineByPos`/Fetch, Logon/Logoff, Describe 등
 - **대표 지표**
@@ -28,7 +29,8 @@ category: DB 심화
 - **주 용도**
   - 애플리케이션의 **채팅성 왕복**(chattiness) 진단: 너무 잦은 소량 페치, 불필요한 prepare/execute, 커밋 남발
 
-### 1.2 recursive call (재귀 호출)
+### recursive call (재귀 호출)
+
 - **무엇?** 한 문장을 처리하는 과정에서 **오라클 엔진 내부가 추가로 실행한 SQL** 호출.
 - **왜 필요? (대표 사례)**
   1) **데이터 딕셔너리/메타데이터 조회**: Synonym/권한/뷰 확장/파티션 정보 확인
@@ -46,7 +48,7 @@ category: DB 심화
 
 ---
 
-## 2. 실습을 위한 준비 스키마
+## 실습을 위한 준비 스키마
 
 ```sql
 -- 실험 테이블
@@ -92,7 +94,7 @@ END;
 
 ---
 
-## 3. 빠른 관측 도구: 세션 통계 스냅샷 함수
+## 빠른 관측 도구: 세션 통계 스냅샷 함수
 
 ```sql
 -- 간단 스냅샷: 특정 통계만 추출
@@ -114,9 +116,10 @@ SELECT * FROM s;
 
 ---
 
-## 4. TKPROF/SQL Trace에서 보이는 “User vs Recursive”
+## TKPROF/SQL Trace에서 보이는 “User vs Recursive”
 
-### 4.1 트레이스 켜기/끄기
+### 트레이스 켜기/끄기
+
 ```sql
 ALTER SESSION SET statistics_level=ALL;
 ALTER SESSION SET events '10046 trace name context forever, level 8';
@@ -124,7 +127,8 @@ ALTER SESSION SET events '10046 trace name context forever, level 8';
 ALTER SESSION SET events '10046 trace name context off';
 ```
 
-### 4.2 TKPROF 결과(예시)
+### TKPROF 결과(예시)
+
 TKPROF 상단에 종종 다음과 같은 **요약**이 나옵니다:
 
 ```
@@ -153,9 +157,9 @@ user  calls: 23
 
 ---
 
-## 5. 케이스 스터디 — 원인별 재현과 해석
+## 케이스 스터디 — 원인별 재현과 해석
 
-### 5.1 케이스 A: **단순 SELECT** (user call 중심)
+### 케이스 A: **단순 SELECT** (user call 중심)
 
 ```sql
 VAR r VARCHAR2(10); EXEC :r := 'APAC';
@@ -175,7 +179,7 @@ AND    dte <  TRUNC(SYSDATE);
 - **페치 사이즈를 일부러 작게** 하면? `user calls` 크게 증가(왕복 증가)
   - 해결: JDBC `setFetchSize`, ODP.NET `FetchSize`, Python `cursor.arraysize` 확대로 감소
 
-### 5.2 케이스 B: **INSERT with Sequence + Trigger** (recursive call 상승)
+### 케이스 B: **INSERT with Sequence + Trigger** (recursive call 상승)
 
 ```sql
 BEGIN
@@ -197,7 +201,7 @@ END;
   - 시퀀스 `CACHE` 사이즈 충분히 크게(예: `CACHE 1000`) → 캐시 보충 빈도↓ → 재귀 호출↓
   - 벌크 바인드/배치 INSERT 사용(PL/SQL FORALL, JDBC batch)
 
-### 5.3 케이스 C: **DDL/메타데이터 접근** (recursive call 급증)
+### 케이스 C: **DDL/메타데이터 접근** (recursive call 급증)
 
 ```sql
 -- 인덱스 생성/삭제 같은 DDL은 내부적으로 딕셔너리 테이블 다수 갱신
@@ -213,7 +217,7 @@ CREATE INDEX ix_demo_call_status ON demo_call(c_status);
   - **전용 GTT/임시 테이블** 사용(DDL 대체)
   - **딕셔너리 캐시(Shared Pool) 적정화**: 캐시 미스로 매번 메타데이터 조회하지 않도록
 
-### 5.4 케이스 D: **공간(Extent) 관리** (대량 DML/세그먼트 확장 시)
+### 케이스 D: **공간(Extent) 관리** (대량 DML/세그먼트 확장 시)
 
 ```sql
 -- ASSM/LMT라도 대량 INSERT로 익스텐트 확장 → 내부 재귀
@@ -228,7 +232,7 @@ COMMIT;
   - **적절한 익스텐트 크기/autoallocate**, 대량 적재는 **사전 공간 확보**
   - 잦은 작은 익스텐트 확장 방지
 
-### 5.5 케이스 E: **뷰/동의어/권한** (딕셔너리 접근 경로)
+### 케이스 E: **뷰/동의어/권한** (딕셔너리 접근 경로)
 
 ```sql
 -- Public Synonym 경유, Grant/Role 복잡
@@ -244,15 +248,17 @@ SELECT COUNT(*) FROM v_demo WHERE c_region='APAC';
 
 ---
 
-## 6. AWR/ASH에서 어떻게 보이나?
+## AWR/ASH에서 어떻게 보이나?
 
-### 6.1 AWR Report (DB Time/AAS 하위)
+### AWR Report (DB Time/AAS 하위)
+
 - **“Load Profile”**: `User calls per sec`
 - **“Instance Efficiency Percentages”**: Dictionary/Library Cache 관련 히트율
 - **“SQL ordered by … Recursive CPU Time”**: **재귀 SQL** 중 CPU 소비가 큰 것 나열
   - 여기서 나오는 SQL은 사용자가 직접 던진 게 아니라 **내부 재귀 SQL**일 수 있음
 
-### 6.2 ASH
+### ASH
+
 ```sql
 -- 최근 15분간 'recursive' 관련 상위 SQL (내부 SQL 포함)
 SELECT sql_id, COUNT(*) samples
@@ -266,7 +272,7 @@ ORDER  BY samples DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 7. 원인→해법 맵 (Checklist)
+## 원인→해법 맵 (Checklist)
 
 | 증상/지표 | 추정 원인 | 처방 |
 |---|---|---|
@@ -280,9 +286,10 @@ ORDER  BY samples DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## 8. 드라이버 관점 튜닝(사용자 호출 줄이기)
+## 드라이버 관점 튜닝(사용자 호출 줄이기)
 
-### 8.1 JDBC
+### JDBC
+
 ```java
 try (PreparedStatement ps = conn.prepareStatement(SQL)) {
   ps.setFetchSize(1000);        // 페치 왕복 감소 → user calls 감소
@@ -294,13 +301,15 @@ try (PreparedStatement ps = conn.prepareStatement(SQL)) {
 ```
 - **Statement Cache** 활성(Oracle JDBC implicit/explicit), 바인드 사용 → **Parse user calls** 감소
 
-### 8.2 ODP.NET
+### ODP.NET
+
 ```csharp
 cmd.FetchSize = 8 * 1024 * 1024;  // 8MB 등
 cmd.ArrayBindCount = ids.Length;   // 벌크 바인드로 execute 호출 수 절감
 ```
 
-### 8.3 Python (oracledb)
+### Python (oracledb)
+
 ```python
 cur.arraysize = 1000           # fetch 왕복 감소
 cur.executemany(sql, params)   # 벌크 DML → user calls 감소
@@ -308,7 +317,7 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 
 ---
 
-## 9. “숫자로 보는” 판단 기준
+## “숫자로 보는” 판단 기준
 
 간단한 비율/휴리스틱으로도 상황을 가늠할 수 있습니다.
 
@@ -328,9 +337,10 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 
 ---
 
-## 10. End-to-End 실습: 전/후 비교
+## End-to-End 실습: 전/후 비교
 
-### 10.1 Before: 나쁜 패턴
+### Before: 나쁜 패턴
+
 - SELECT를 **작은 fetchSize(=10)** 로 수천 번 호출
 - 트리거 + 시퀀스 `CACHE 20` 상태에서 대량 INSERT
 
@@ -338,7 +348,8 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 - `user calls`: 매우 높음(수천~수만)
 - `recursive calls`: INSERT 구간에서 눈에 띄게 상승(시퀀스 보충/트리거 내부 SQL)
 
-### 10.2 After: 개선
+### After: 개선
+
 - fetchSize=1000, 배열 바인드/벌크 DML, 시퀀스 `CACHE 1000`
 
 **관찰(예시)**
@@ -347,7 +358,7 @@ cur.executemany(sql, params)   # 벌크 DML → user calls 감소
 
 ---
 
-## 11. 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 **Q1. recursive call은 나쁜 건가요?**
 A. **필수**입니다. 오라클이 일을 하려면 내부 질의가 필요합니다. “높다”가 문제라기보다, **평시 기준 대비 비정상적 증가**가 문제입니다.
@@ -366,7 +377,7 @@ A. 사용 패턴에 따라: **시퀀스 CACHE 증가**, **DDL 런타임 금지**
 
 ---
 
-## 12. 최종 체크리스트
+## 최종 체크리스트
 
 - [ ] **user call** 모니터링: 왕복/배열/배치/커밋 빈도
 - [ ] **recursive call** 모니터링: 시퀀스/DDL/공간/사전/트리거
@@ -378,7 +389,7 @@ A. 사용 패턴에 따라: **시퀀스 CACHE 증가**, **DDL 런타임 금지**
 
 ---
 
-## 13. 결론
+## 결론
 
 - **user call**은 “클라이언트↔서버 왕복 양”, **recursive call**은 “서버 내부 처리 양”입니다.
 - 느린 시스템은 대개 **둘 중 하나**가 비정상:

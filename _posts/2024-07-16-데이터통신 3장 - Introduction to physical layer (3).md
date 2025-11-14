@@ -4,13 +4,13 @@ title: 데이터 통신 3장 - Introduction to Physical Layer (3)
 date: 2024-07-16 19:20:23 +0900
 category: DataCommunication
 ---
-# 3.5 Data Rate Limits (데이터 전송률 한계)
+# Data Rate Limits (데이터 전송률 한계)
 
 데이터 전송률을 결정하는 핵심 요소는 **대역폭(B)**, **신호 레벨 수( \(L\) )**, **채널 품질(SNR)** 입니다. 이상/현실 채널 각각에 대해 **나이퀴스트**와 **섀넌**이 주는 상한을 이해하고, **두 식을 함께 써서** 실무적인 목표치를 정하는 것이 기본 절차입니다.
 
 ---
 
-## 3.5.1 Noiseless Channel: Nyquist Bit Rate (무잡음 채널)
+## Noiseless Channel: Nyquist Bit Rate (무잡음 채널)
 
 > **가정**: 잡음이 없고, 기저대역(low-pass) 채널에서 \(L\)개 레벨의 신호를 사용.
 
@@ -28,7 +28,7 @@ $$
 
 ---
 
-## 3.5.2 Noisy Channel: Shannon Capacity (잡음 채널)
+## Noisy Channel: Shannon Capacity (잡음 채널)
 
 > **가정**: 가우시안 잡음 등 현실적 잡음 존재. 채널의 **이론적 용량 상한**.
 
@@ -48,11 +48,12 @@ $$
 
 ---
 
-## 3.5.3 Using Both Limits (두 한계를 함께 쓰기)
+## Using Both Limits (두 한계를 함께 쓰기)
 
 > **절차**: (1) 섀넌으로 **절대 상한** 확인 → (2) 목표 처리율 \(R\) 설정 → (3) 나이퀴스트로 필요한 **레벨 수 \(L\)** / **심볼율** 산출.
 
 ### 예제) B = 1 MHz, SNR = 63 (≈ 18 dB)
+
 1) **Shannon 상한**
 $$
 C \;=\; 10^6 \log_2(1+63) \;=\; 10^6 \log_2 64 \;=\; 6\times 10^6\ \text{bps} \ (\approx 6\ \text{Mbps})
@@ -104,13 +105,13 @@ print("Required levels L ≈", round(L), "(bits/symbol≈", round(bpsym,2), ")")
 
 ---
 
-# 3.6 Performance (네트워크 성능)
+# Performance (네트워크 성능)
 
 성능 평가는 **대역폭(bandwidth)**, **처리율(throughput)**, **지연(latency)**, **대역폭-지연곱(BDP)**, **지터(jitter)** 등 **상호 연관된 지표**로 이뤄집니다.
 
 ---
 
-## 3.6.1 Bandwidth (대역폭)
+## Bandwidth (대역폭)
 
 - **Hz 단위 대역폭**: 합성 신호의 **주파수 범위** 혹은 채널이 **통과시키는 스펙트럼 폭**.
 - **bps 단위 “대역폭”**: 관용적으로 **전송 속도/용량**을 지칭(정확히는 **bit rate**/**link rate**).
@@ -118,7 +119,7 @@ print("Required levels L ≈", round(L), "(bits/symbol≈", round(bpsym,2), ")")
 
 ---
 
-## 3.6.2 Throughput (처리율)
+## Throughput (처리율)
 
 - **정의**: 관측 지점을 **단위 시간** 동안 **실제로 통과한 비트 수**.
   $$
@@ -140,7 +141,7 @@ print("Required levels L ≈", round(L), "(bits/symbol≈", round(bpsym,2), ")")
 
 ---
 
-## 3.6.3 Latency (지연)
+## Latency (지연)
 
 - **정의**: 송신 측이 **첫 비트**를 내보낸 순간부터, **전체 메시지**가 수신 측에 **도착 완료**될 때까지의 시간.
 
@@ -149,6 +150,7 @@ $$
 $$
 
 ### 구성 항목
+
 - **Propagation time**(전파 지연):
   $$
   t_p \;=\; \frac{\text{Distance}}{\text{Propagation speed}}
@@ -168,7 +170,7 @@ $$
 
 ---
 
-## 3.6.4 Bandwidth–Delay Product (BDP)
+## Bandwidth–Delay Product (BDP)
 
 **링크가 가득 차 있을 때, “파이프 안에 동시에 떠 있는 비트 수”**
 $$
@@ -192,18 +194,20 @@ print("BDP @1Gbps, 40ms =", bdp_bytes(1_000_000_000, 40), "bytes")
 
 ---
 
-## 3.6.5 Jitter (지터, 지연 변동)
+## Jitter (지터, 지연 변동)
 
 - **정의**: 패킷(또는 프레임) **도착 간격/지연**의 **변동성**.
   실시간 음성/영상·산업 제어 등에서 **지터 억제**가 중요(버퍼링·플레이아웃 제어).
 
 ### 간단한 계산 예
+
 - 패킷 \(i\)의 **관측 간격** \(\Delta_i = t^\text{rx}_i - t^\text{rx}_{i-1}\),
   **이상적 간격**(발신) \(\delta = t^\text{tx}_i - t^\text{tx}_{i-1}\).
 - **지터 표본** \(J_i = |\Delta_i - \delta|\).
   여러 표본 평균/백분위(95p) 등으로 지표화.
 
 ### RTP(Jacobson) 지터 근사(개념 참고)
+
 - 지터를 지수평활로 추정:
   $$
   J \leftarrow J + \frac{|D(i-1,i)| - J}{16}
@@ -222,6 +226,7 @@ def simple_jitter(tx_times, rx_times):
     return jitter_samples.mean(), np.percentile(jitter_samples, 95)
 
 # 예시 데이터로 테스트해보면 평균/95퍼센타일 지터를 얻을 수 있음.
+
 ```
 
 ---

@@ -326,9 +326,11 @@ kubectl get svc | egrep 'mysql|pg'
 
 ```bash
 # MySQL
+
 kubectl exec -it sts/mysql -- sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "select version();"'
 
 # PostgreSQL
+
 kubectl exec -it sts/postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "select version();"'
 ```
 
@@ -338,12 +340,15 @@ kubectl exec -it sts/postgres -- sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_D
 
 ```bash
 # 테이블과 데이터 생성
+
 kubectl exec -it mysql-0 -- sh -c 'mysql -uroot -p$MYSQL_ROOT_PASSWORD -e "create table if not exists mydb.t(t int); insert into mydb.t values(1); select * from mydb.t;"'
 
 # Pod 삭제 후 재생성
+
 kubectl delete pod mysql-0
 
 # 데이터 확인
+
 kubectl exec -it mysql-0 -- sh -c 'mysql -uroot -p$MYSQL_ROOT_PASSWORD -e "select * from mydb.t;"'
 ```
 
@@ -354,19 +359,23 @@ PVC가 유지되므로 데이터가 남아 있어야 한다.
 ## 운영 필수 옵션
 
 ### 리소스 요청/제한
+
 - I/O 지연을 방지하기 위해 최소 **메모리 요청**을 충분히 준다.
 - DB는 OOM에 민감하므로 `limits.memory`와 엔진 설정(버퍼/워크 메모리)을 함께 조정한다.
 
 ### 보안 컨텍스트
+
 - `runAsUser`/`fsGroup`/`runAsNonRoot` 사용. 퍼미션 오류가 잦다.
 - Secret에는 DB 비밀번호, 인증서 등 민감 정보를 담고 RBAC로 제한한다.
 
 ### 프로브
+
 - `readinessProbe`: 트래픽 수신 가능 상태 확인
 - `livenessProbe`: 적절히 보수적으로, 복구 루프 방지
 - DB 부팅 시간이 길 수 있으니 초기 지연/실패 임계치를 충분히 높인다.
 
 ### PDB(PodDisruptionBudget)
+
 강제 축출 시 최소 가용성을 보장한다.
 
 ```yaml
@@ -381,6 +390,7 @@ spec:
 ```
 
 ### 안티어피니티/토폴로지 분산
+
 복제본 운용 시 노드/존 간 분산을 강제한다.
 
 ```yaml
@@ -397,6 +407,7 @@ affinity:
 ## 백업·복구 전략
 
 ### 스토리지 스냅샷
+
 CSI 스냅샷 CRDs가 있다면 정지점 확보가 쉽다.
 
 ```yaml
@@ -434,11 +445,13 @@ spec:
 ```
 
 ### MySQL: binlog + 논리/물리 백업
+
 - `sync_binlog=1`, `innodb_flush_log_at_trx_commit=1`로 크래시 안전성 향상.
 - 증분 복구를 위해 **binlog 보관** 또는 Percona XtraBackup 등을 고려.
 - 주기적 `mysqldump`는 긴 락/성능 저하 가능성(규모에 따라 물리 백업 권장).
 
 ### PostgreSQL: WAL 아카이브 + 베이스백업
+
 - `archive_mode=on`, `archive_command`로 외부 스토리지에 WAL 보관.
 - `pg_basebackup`로 베이스백업 + WAL 재생으로 시점 복구.
 
@@ -447,12 +460,14 @@ spec:
 ## 스케일과 고가용성
 
 ### 수평 확장
+
 단일 인스턴스 RDBMS는 일반적으로 **읽기 복제본**으로 수평 확장한다(쓰기 스케일은 샤딩/분할 필요).
 
 - MySQL: `mysqld` Primary/Replica 구성을 스크립트 또는 오퍼레이터로 관리
 - PostgreSQL: 스트리밍 리플리케이션(복제 슬롯/타임라인 관리)
 
 ### 오퍼레이터 활용
+
 프로비저닝·페일오버 자동화·백업 스케줄링이 필요하면 데이터베이스 오퍼레이터(예: MySQL/PG 전용 오퍼레이터, 또는 헬름 차트)를 검토한다. 자체 구현 대비 운영 복잡도를 크게 줄인다.
 
 ---
@@ -461,16 +476,20 @@ spec:
 
 ```bash
 # 노드 축출 시 DB 가용성 관찰
+
 kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
 
 # Pod 강제 재시작
+
 kubectl delete pod mysql-0
 
 # PVC 바인딩 및 이벤트 확인
+
 kubectl describe pvc data-mysql-0 | sed -n '/Events/,$p'
 kubectl get events --sort-by=.lastTimestamp | tail -n 30
 
 # 파일시스템/퍼미션 점검
+
 kubectl exec -it mysql-0 -- sh -c 'id; df -h; ls -al /var/lib/mysql'
 ```
 

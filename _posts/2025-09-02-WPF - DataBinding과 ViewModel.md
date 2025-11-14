@@ -11,7 +11,7 @@ WPF에서 **DataBinding**은 View(XAML)와 ViewModel(C#)을 **느슨하게 결�
 
 ---
 
-## 1. DataContext란? (바인딩의 출발점)
+## DataContext란? (바인딩의 출발점)
 
 - **DataContext**는 해당 요소와 그 **자식 트리**가 바인딩할 **기본 데이터 원본**입니다.
 - 어느 컨트롤에도 `DataContext`를 지정하지 않으면 **부모의 DataContext를 상속**받습니다.
@@ -41,7 +41,7 @@ WPF에서 **DataBinding**은 View(XAML)와 ViewModel(C#)을 **느슨하게 결�
 
 ---
 
-## 2. ViewModel 기본 골격
+## ViewModel 기본 골격
 
 ViewModel은 **프레젠테이션 상태**와 **동작**(ICommand)을 노출합니다.
 
@@ -92,9 +92,10 @@ public class Order { public string Id { get; set; } = ""; public decimal Total {
 
 ---
 
-## 3. View와 ViewModel 연결 방법
+## View와 ViewModel 연결 방법
 
-### 3.1 XAML에서 직접 생성 (가장 간단)
+### XAML에서 직접 생성 (가장 간단)
+
 ```xml
 <Window ...>
   <Window.DataContext>
@@ -104,7 +105,8 @@ public class Order { public string Id { get; set; } = ""; public decimal Total {
 </Window>
 ```
 
-### 3.2 코드비하인드에서 주입/설정
+### 코드비하인드에서 주입/설정
+
 ```csharp
 public partial class MainWindow : Window
 {
@@ -116,7 +118,8 @@ public partial class MainWindow : Window
 }
 ```
 
-### 3.3 DI(Generic Host)로 구성(실무 추천)
+### DI(Generic Host)로 구성(실무 추천)
+
 ```csharp
 // App.xaml.cs
 using Microsoft.Extensions.DependencyInjection;
@@ -141,7 +144,8 @@ public partial class App : Application
 }
 ```
 
-### 3.4 ViewModel-First (DataTemplate 매핑)
+### ViewModel-First (DataTemplate 매핑)
+
 뷰는 생성하지 않고 **뷰모델만 Content**로 바인딩하면 **DataTemplate**이 알맞은 뷰를 자동 매핑합니다.
 ```xml
 <!-- App.xaml 전역 DataTemplate -->
@@ -158,9 +162,10 @@ public partial class App : Application
 
 ---
 
-## 4. 바인딩 핵심 구문 & 옵션
+## 바인딩 핵심 구문 & 옵션
 
-### 4.1 기본
+### 기본
+
 ```xml
 <TextBox Text="{Binding UserName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 <TextBlock Text="{Binding Total, StringFormat='총액 {0:C}'}" />
@@ -169,7 +174,8 @@ public partial class App : Application
 - **UpdateSourceTrigger**: PropertyChanged / LostFocus / Explicit
 - **StringFormat**: 표시 형식 지정
 
-### 4.2 Fallback/Null 처리 & 지연 업데이트
+### Fallback/Null 처리 & 지연 업데이트
+
 ```xml
 <TextBlock Text="{Binding Title, TargetNullValue='(제목 없음)', FallbackValue='(로딩 중)'}"/>
 <TextBox Text="{Binding Query, UpdateSourceTrigger=PropertyChanged, Delay=300}" />
@@ -178,7 +184,8 @@ public partial class App : Application
 - **TargetNullValue**: 결과가 null일 때만 대체
 - **Delay**: 값 전파를 ms 단위로 지연(타이핑 필터 UX 개선)
 
-### 4.3 다른 요소/조상 참조
+### 다른 요소/조상 참조
+
 ```xml
 <!-- 형제 요소 값 바인딩 -->
 <TextBox x:Name="Input"/>
@@ -189,7 +196,8 @@ public partial class App : Application
   RelativeSource={RelativeSource AncestorType=Window}}"/>
 ```
 
-### 4.4 Converter / MultiBinding
+### Converter / MultiBinding
+
 ```xml
 <Window.Resources>
   <local:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
@@ -207,7 +215,8 @@ public partial class App : Application
 </TextBlock>
 ```
 
-### 4.5 Command와 파라미터
+### Command와 파라미터
+
 ```xml
 <Button Content="삭제"
         Command="{Binding DeleteCommand}"
@@ -218,7 +227,7 @@ public partial class App : Application
 
 ---
 
-## 5. ItemsControl / DataTemplate 안에서의 “컨텍스트 전환”
+## ItemsControl / DataTemplate 안에서의 “컨텍스트 전환”
 
 - `ItemsControl` 내부의 `DataTemplate` **DataContext는 각 아이템**입니다.
 - **상위 뷰모델 커맨드**를 호출하려면 **AncestorType** 또는 **x:Reference**를 사용합니다.
@@ -241,7 +250,7 @@ public partial class App : Application
 
 ---
 
-## 6. 유효성 검사(Validation)와 바인딩
+## 유효성 검사(Validation)와 바인딩
 
 ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하면, XAML에서 검증 UI를 쉽게 붙일 수 있습니다.
 
@@ -265,7 +274,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 7. 디자인 타임 데이터 (미리보기 개선)
+## 디자인 타임 데이터 (미리보기 개선)
 
 디자이너에서 보기 좋게:
 ```xml
@@ -285,7 +294,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 8. 디버깅 & 성능 팁
+## 디버깅 & 성능 팁
 
 - **바인딩 오류**는 출력 창에 기록됩니다. 빠르게 찾으려면:
 ```xml
@@ -297,7 +306,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 9. 흔한 문제 & 체크리스트
+## 흔한 문제 & 체크리스트
 
 - (문제) 컨트롤 안에서 바인딩이 동작하지 않음
   → (확인) 그 위치의 **DataContext가 무엇인지** Live Visual Tree로 확인
@@ -310,7 +319,7 @@ ViewModel에서 **IDataErrorInfo** 또는 **INotifyDataErrorInfo**를 구현하�
 
 ---
 
-## 10. 최소 예제(요약)
+## 최소 예제(요약)
 
 **MainViewModel.cs**
 ```csharp
@@ -372,6 +381,7 @@ public class Order { public string Id { get; set; }=""; public decimal Total { g
 ---
 
 ### 정리
+
 - **DataContext**로 뷰와 뷰모델을 연결하고,
 - **INPC / ObservableCollection / ICommand**로 변경·컬렉션·동작을 노출하며,
 - **Binding 옵션/Converter/RelativeSource**로 복잡한 UI 요구사항을 선언형으로 해결하세요.

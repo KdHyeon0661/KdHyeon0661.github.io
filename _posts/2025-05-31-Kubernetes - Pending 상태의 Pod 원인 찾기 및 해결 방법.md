@@ -11,7 +11,7 @@ category: Kubernetes
 
 ---
 
-## 0. Pending의 정확한 의미: 흐름 상의 위치
+## Pending의 정확한 의미: 흐름 상의 위치
 
 > **Pending = 스케줄링 또는 준비 단계에서 멈춘 상태**
 > (이미 Node에 할당된 뒤 컨테이너 이미지를 풀거나, 볼륨을 attach/마운트하는 과정에서도 Pending으로 보일 수 있음)
@@ -28,7 +28,7 @@ category: Kubernetes
 
 ---
 
-## 1. 5분 런북: 가장 빠른 진단 절차
+## 5분 런북: 가장 빠른 진단 절차
 
 | 단계 | 명령 | 확인 포인트 |
 |---|---|---|
@@ -43,11 +43,11 @@ category: Kubernetes
 
 ---
 
-## 2. 빈 패턴별 원인 → 재현 예제 → 해결책
+## 빈 패턴별 원인 → 재현 예제 → 해결책
 
 아래는 **실제에서 가장 흔한 Pending 원인**을 “증상 → 예제 YAML → 수정안” 형태로 정리했습니다.
 
-### 2.1 리소스 부족(Insufficient CPU/Memory/EphemeralStorage)
+### 리소스 부족(Insufficient CPU/Memory/EphemeralStorage)
 
 **증상(Event 예시)**
 ```
@@ -98,7 +98,7 @@ Event: `Insufficient ephemeral-storage`
 
 ---
 
-### 2.2 PVC 미바인딩(볼륨 대기)
+### PVC 미바인딩(볼륨 대기)
 
 **증상(Event 예시)**
 ```
@@ -145,7 +145,7 @@ spec:
 
 ---
 
-### 2.3 Node Taint → Toleration 누락
+### Node Taint → Toleration 누락
 
 **증상(Event 예시)**
 ```
@@ -174,7 +174,7 @@ kubectl taint node <node> dedicated=gpu:NoSchedule-
 
 ---
 
-### 2.4 NodeSelector/NodeAffinity 조건 불만족
+### NodeSelector/NodeAffinity 조건 불만족
 
 **증상(Event 예시)**
 ```
@@ -197,7 +197,7 @@ spec:
 
 ---
 
-### 2.5 Pod(안티)어피니티/Topology Spread 제약
+### Pod(안티)어피니티/Topology Spread 제약
 
 **증상(Event 예시)**
 ```
@@ -222,7 +222,7 @@ spec:
 
 ---
 
-### 2.6 ResourceQuota/LimitRange 초과
+### ResourceQuota/LimitRange 초과
 
 **증상(Event 예시)**
 ```
@@ -259,7 +259,7 @@ spec:
 
 ---
 
-### 2.7 이미지 풀 문제(ImagePullBackOff 전 단계)
+### 이미지 풀 문제(ImagePullBackOff 전 단계)
 
 **증상**
 - `Pending` 또는 `ContainerCreating`에 머물다 `ImagePullBackOff`로 전환
@@ -268,6 +268,7 @@ spec:
 ```bash
 kubectl describe pod <pod> | sed -n '/Events/,$p'
 # Failed to pull image / back-off pulling image ...
+
 ```
 
 **해결**
@@ -281,7 +282,7 @@ spec:
 
 ---
 
-### 2.8 GPU 요청/드라이버/RuntimeClass 불일치
+### GPU 요청/드라이버/RuntimeClass 불일치
 
 **증상**
 ```
@@ -306,7 +307,7 @@ spec:
 
 ---
 
-### 2.9 PSA/OPA/Gatekeeper/Kyverno 등 정책 위반
+### PSA/OPA/Gatekeeper/Kyverno 등 정책 위반
 
 **증상**
 - `Forbidden` 또는 Admission webhook 거부
@@ -318,7 +319,7 @@ spec:
 
 ---
 
-### 2.10 Cluster Autoscaler와의 상호작용
+### Cluster Autoscaler와의 상호작용
 
 **특징**
 - 스케줄 불가 상태가 지속되면 **CA가 새 노드 증설**
@@ -329,12 +330,13 @@ spec:
 
 ---
 
-## 3. 자동 진단 스니펫 모음
+## 자동 진단 스니펫 모음
 
-### 3.1 Pending 원인 퀵리포트(쉘)
+### Pending 원인 퀵리포트(쉘)
 
 ```bash
 #!/usr/bin/env bash
+
 NS=${1:-default}
 echo "== Pending pods in ns:${NS} =="
 kubectl get pods -n "$NS" --field-selector=status.phase=Pending -o name | while read -r P; do
@@ -344,13 +346,13 @@ kubectl get pods -n "$NS" --field-selector=status.phase=Pending -o name | while 
 done
 ```
 
-### 3.2 PVC 상태 일괄 점검
+### PVC 상태 일괄 점검
 
 ```bash
 kubectl get pvc -A -o custom-columns=NS:.metadata.namespace,NAME:.metadata.name,STATUS:.status.phase,SC:.spec.storageClassName,SIZE:.spec.resources.requests.storage
 ```
 
-### 3.3 노드 가용 리소스 요약
+### 노드 가용 리소스 요약
 
 ```bash
 kubectl get nodes -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.allocatable.cpu}{"\t"}{.status.allocatable.memory}{"\n"}{end}'
@@ -358,43 +360,50 @@ kubectl get nodes -o=jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.a
 
 ---
 
-## 4. “원인→수정” 시나리오 7선
+## “원인→수정” 시나리오 7선
 
 ### 시나리오 A: 과도한 requests로 스케줄 실패
+
 - **원인**: `requests.cpu=4`인데 2코어 노드만 존재
 - **수정**: `requests.cpu=500m`로 조정 또는 4코어 노드풀 추가
 
 ### 시나리오 B: PVC Pending
+
 - **원인**: StorageClass 오타
 - **수정**: 올바른 SC로 변경, 필요 시 PV 수동 생성
 
 ### 시나리오 C: Taint로 격리된 노드
+
 - **원인**: `NoSchedule` Taint, Toleration 누락
 - **수정**: Pod에 `tolerations` 추가 또는 Taint 제거
 
 ### 시나리오 D: Anti-Affinity가 너무 강함
+
 - **원인**: 모든 노드에 대상 라벨 Pod 배치 → 완전 금지
 - **수정**: `required`→`preferred`, topology 범위 조정
 
 ### 시나리오 E: Quota 초과
+
 - **원인**: `requests.memory` Oversubscription
 - **수정**: 오래된 워크로드 제거, Quota 상향, requests 조정
 
 ### 시나리오 F: Ephemeral Storage 부족
+
 - **원인**: 로그 폭증 / 큰 임시파일
 - **수정**: `ephemeral-storage` requests/limits 지정, 로그 로테이션, 사이드카로 분리
 
 ### 시나리오 G: GPU 요청
+
 - **원인**: device plugin 미배포
 - **수정**: NVIDIA plugin 설치, MIG/타입 일치 확인, `runtimeClassName` 세팅
 
 ---
 
-## 5. 재현 가능한 데모: 4가지 실패와 해결
+## 재현 가능한 데모: 4가지 실패와 해결
 
 > 아래는 하나씩 켰다 껐다 해보며 Pending→해결까지 체험하는 **학습용 세트**입니다.
 
-### 5.1 PVC 미바인딩 데모
+### PVC 미바인딩 데모
 
 ```yaml
 apiVersion: v1
@@ -424,7 +433,7 @@ spec:
 
 ---
 
-### 5.2 Taint 미허용 데모
+### Taint 미허용 데모
 
 1) 노드에 Taint 추가:
 ```bash
@@ -455,7 +464,7 @@ spec:
 
 ---
 
-### 5.3 NodeSelector 불일치 데모
+### NodeSelector 불일치 데모
 
 ```yaml
 apiVersion: v1
@@ -476,7 +485,7 @@ kubectl label node <node> env=prod
 
 ---
 
-### 5.4 Quota 초과 데모
+### Quota 초과 데모
 
 **Quota**
 ```yaml
@@ -509,13 +518,14 @@ spec:
 
 ---
 
-## 6. 운영 자동화: “Pending 알람 → 원인 요약 → 제안”
+## 운영 자동화: “Pending 알람 → 원인 요약 → 제안”
 
 프로메테우스 + 알러팅(예: Alertmanager)으로 **`kube_pod_status_phase{phase="Pending"}`** 비율 임계 초과 시 알림 →
 아래 스크립트로 **이벤트 요약** 후 Slack에 첨부.
 
 ```bash
 #!/usr/bin/env bash
+
 NS=${1:-default}
 OUT=/tmp/pending_report.txt
 echo "[Pending Report - $(date)]" > "$OUT"
@@ -525,11 +535,12 @@ for P in $(kubectl get pods -n $NS --field-selector=status.phase=Pending -o json
 done
 cat "$OUT"
 # curl -X POST <SLACK_WEBHOOK> -H 'Content-type: text/plain' --data-binary @"$OUT"
+
 ```
 
 ---
 
-## 7. 체크리스트(현장용)
+## 체크리스트(현장용)
 
 - [ ] `describe pod` Events에서 **문장형 원인** 확인
 - [ ] PVC/PV/SC/CSI 상태 점검 (Zone/AccessModes 일치)
@@ -545,9 +556,10 @@ cat "$OUT"
 
 ---
 
-## 8. 부록: 예제 Manifest(수정 전/후)
+## 부록: 예제 Manifest(수정 전/후)
 
-### 8.1 수정 전(문제)
+### 수정 전(문제)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -580,7 +592,8 @@ spec:
 - 프라이빗 이미지 pull 시크릿 없음
 - PVC 준비 상태 미검증
 
-### 8.2 수정 후(해결)
+### 수정 후(해결)
+
 ```yaml
 apiVersion: apps/v1
 kind: Deployment

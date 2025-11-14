@@ -6,7 +6,7 @@ category: HTML
 ---
 # Bootstrap(부트스트랩)
 
-## 0. Bootstrap 한눈에 보기
+## Bootstrap 한눈에 보기
 
 - **정의**: 반응형 UI를 빠르게 구성하는 CSS·JS 프레임워크
 - **철학**: 모바일 우선, 일관된 디자인 시스템, 컴포넌트 기반
@@ -46,9 +46,9 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 
 ---
 
-## 1. 그리드 시스템 (Grid) — 레이아웃의 뼈대
+## 그리드 시스템 (Grid) — 레이아웃의 뼈대
 
-### 1.1 컨테이너와 행/열
+### 컨테이너와 행/열
 
 ```html
 <div class="container">            <!-- 고정 폭 (반응형 max-width) -->
@@ -67,7 +67,7 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 - `.row`는 **gutter(패딩)**를 통해 컬럼 간 간격 제공
 - `.col-{breakpoint}-{n}`: 12 그리드 기반
 
-### 1.2 브레이크포인트
+### 브레이크포인트
 
 | 접두 | 기준 |
 |---|---|
@@ -78,14 +78,14 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 | xl | ≥1200px |
 | xxl | ≥1400px |
 
-### 1.3 Gutter(간격) 제어
+### Gutter(간격) 제어
 
 ```html
 <div class="row g-0"> ... </div>         <!-- 간격 0 -->
 <div class="row gx-3 gy-5"> ... </div>   <!-- x축/ y축 분리 제어 -->
 ```
 
-### 1.4 Offset/Order/Auto Layout
+### Offset/Order/Auto Layout
 
 ```html
 <div class="row">
@@ -94,15 +94,15 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 </div>
 ```
 
-### 1.5 CSS Grid(선택 사항)
+### CSS Grid(선택 사항)
 
 Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공됩니다. 레이아웃 복잡도가 높다면 CSS Grid 유틸을 병행하세요.
 
 ---
 
-## 2. 유틸리티(Utilities) — “CSS 없이” 빠르게 스타일링
+## 유틸리티(Utilities) — “CSS 없이” 빠르게 스타일링
 
-### 2.1 여백·정렬·디스플레이
+### 여백·정렬·디스플레이
 
 ```html
 <div class="p-3 m-2 border rounded">패딩/마진/테두리</div>
@@ -114,7 +114,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 - `d-flex`, `d-grid`, `justify-content-*`, `align-items-*`
 - `text-center`, `fw-bold`, `fst-italic`, `lh-lg`
 
-### 2.2 색상/타이포/가시성
+### 색상/타이포/가시성
 
 ```html
 <p class="text-primary bg-light">색상</p>
@@ -122,7 +122,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 <p class="visually-hidden">스크린리더만</p>
 ```
 
-### 2.3 Responsive utilities
+### Responsive utilities
 
 ```html
 <div class="d-none d-lg-block">큰 화면에서만</div>
@@ -130,9 +130,9 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 3. 폼(Form) — 입력 UI와 검증
+## 폼(Form) — 입력 UI와 검증
 
-### 3.1 기본 폼과 그리드 조합
+### 기본 폼과 그리드 조합
 
 ```html
 <form class="row g-3">
@@ -150,7 +150,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 </form>
 ```
 
-### 3.2 체크/라디오/스위치/파일
+### 체크/라디오/스위치/파일
 
 ```html
 <div class="form-check">
@@ -166,7 +166,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 <input class="form-control" type="file" />
 ```
 
-### 3.3 Floating label
+### Floating label
 
 ```html
 <div class="form-floating">
@@ -175,7 +175,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 </div>
 ```
 
-### 3.4 HTML5 검증 + 시각적 피드백
+### HTML5 검증 + 시각적 피드백
 
 ```html
 <form class="needs-validation" novalidate>
@@ -199,9 +199,9 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 4. 컴포넌트(Component) — 생산성의 핵심
+## 컴포넌트(Component) — 생산성의 핵심
 
-### 4.1 버튼/버튼 그룹
+### 버튼/버튼 그룹
 
 ```html
 <button class="btn btn-primary">Primary</button>
@@ -211,7 +211,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 </div>
 ```
 
-### 4.2 카드(Card)
+### 카드(Card)
 
 ```html
 <div class="card" style="max-width: 22rem;">
@@ -224,7 +224,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 </div>
 ```
 
-### 4.3 네비게이션바(Navbar)
+### 네비게이션바(Navbar)
 
 ```html
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
@@ -243,7 +243,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 </nav>
 ```
 
-### 4.4 드롭다운/드롭다운 내 메뉴
+### 드롭다운/드롭다운 내 메뉴
 
 ```html
 <div class="dropdown">
@@ -258,7 +258,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 > 드롭다운·툴팁·팝오버는 Popper.js가 번들에 포함된 `bootstrap.bundle.js` 필요.
 
-### 4.5 모달(Modal)
+### 모달(Modal)
 
 ```html
 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">열기</button>
@@ -286,7 +286,7 @@ const modal = new Modal('#exampleModal');
 modal.show();
 ```
 
-### 4.6 오프캔버스(Offcanvas)
+### 오프캔버스(Offcanvas)
 
 ```html
 <button class="btn btn-outline-primary" data-bs-toggle="offcanvas" data-bs-target="#side">
@@ -301,7 +301,7 @@ modal.show();
 </div>
 ```
 
-### 4.7 탭/아코디언/토스트/스피너
+### 탭/아코디언/토스트/스피너
 
 ```html
 <ul class="nav nav-tabs">
@@ -343,9 +343,9 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 5. 테이블/이미지/미디어
+## 테이블/이미지/미디어
 
-### 5.1 반응형 테이블
+### 반응형 테이블
 
 ```html
 <div class="table-responsive">
@@ -359,7 +359,7 @@ new Toast(document.getElementById('t')).show();
 </div>
 ```
 
-### 5.2 이미지/Ratio(비율박스)
+### 이미지/Ratio(비율박스)
 
 ```html
 <img src="..." class="img-fluid rounded" alt="">
@@ -368,7 +368,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 6. 아이콘과 브랜딩
+## 아이콘과 브랜딩
 
 - **Bootstrap Icons**(별도 패키지): `https://icons.getbootstrap.com/`
 - SVG inline 또는 아이콘 폰트 사용 가능
@@ -380,7 +380,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 7. 접근성(A11y) — 시맨틱 + ARIA + 포커스
+## 접근성(A11y) — 시맨틱 + ARIA + 포커스
 
 - 컴포넌트는 기본적으로 **ARIA 속성**과 키보드 탐색을 지원
 - **스크린 리더 텍스트**: `.visually-hidden`
@@ -397,9 +397,9 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 8. 성능/번들/빌드 — 필요한 것만, 빠르게
+## 성능/번들/빌드 — 필요한 것만, 빠르게
 
-### 8.1 개별 JS 임포트
+### 개별 JS 임포트
 
 ```js
 import Collapse from 'bootstrap/js/dist/collapse';
@@ -409,24 +409,24 @@ import Dropdown from 'bootstrap/js/dist/dropdown';
 - 사용하지 않는 컴포넌트는 제외 → 번들 크기↓
 - Vite/webpack/Rollup으로 트리셰이킹
 
-### 8.2 CSS 최적화
+### CSS 최적화
 
 - **Sass 빌드**(아래 커스터마이징과 함께) 후 **Purge/Content-aware 제거**(예: `@fullhuman/postcss-purgecss`, Tailwind JIT 유사 도구 등)
 - 정적 사이트는 빌드시 사용 클래스만 남기는 전략으로 크기↓
   단, **동적 클래스명**은 safelist에 추가 필요
 
-### 8.3 HTTP/캐싱
+### HTTP/캐싱
 
 - CDN 사용 + SRI + 긴 `max-age`/`immutable`
 - 앱 CSS/JS는 해시 기반 파일명으로 캐싱 전략 수립
 
 ---
 
-## 9. Sass 커스터마이징 — 디자인 시스템 내 것으로
+## Sass 커스터마이징 — 디자인 시스템 내 것으로
 
 > Bootstrap 5는 Dart Sass 기준의 `@use` 문법 권장.
 
-### 9.1 변수 오버라이드 → Bootstrap 로드
+### 변수 오버라이드 → Bootstrap 로드
 
 ```scss
 // styles.scss
@@ -440,7 +440,7 @@ $enable-rounded: true;
 @use "bootstrap/scss/bootstrap";
 ```
 
-### 9.2 부분 임포트(선택 로딩)
+### 부분 임포트(선택 로딩)
 
 ```scss
 // 필요한 파트만
@@ -458,7 +458,7 @@ $enable-rounded: true;
 // ... 필요한 컴포넌트만 추가
 ```
 
-### 9.3 유틸리티 API로 커스텀 유틸 만들기
+### 유틸리티 API로 커스텀 유틸 만들기
 
 ```scss
 @use "bootstrap/scss/bootstrap" with (
@@ -480,14 +480,14 @@ $enable-rounded: true;
 <div class="rotate-90">회전된 박스</div>
 ```
 
-### 9.4 CSS Custom Properties 활용
+### CSS Custom Properties 활용
 
 - 일부 색상/스페이싱은 런타임에도 CSS 변수로 조정 가능
 - 다크모드 전환 시 루트 변수만 교체하는 테크닉 활용
 
 ---
 
-## 10. 다크 모드/테마 토글(실전)
+## 다크 모드/테마 토글(실전)
 
 ```html
 <button id="themeToggle" class="btn btn-sm btn-outline-secondary">Theme</button>
@@ -511,9 +511,9 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 11. 실전 레이아웃 패턴
+## 실전 레이아웃 패턴
 
-### 11.1 대시보드(고정 사이드바 + 컨텐츠)
+### 대시보드(고정 사이드바 + 컨텐츠)
 
 ```html
 <div class="d-flex">
@@ -550,7 +550,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 </div>
 ```
 
-### 11.2 랜딩 페이지 히어로
+### 랜딩 페이지 히어로
 
 ```html
 <header class="bg-light py-5">
@@ -565,7 +565,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 12. 프레임워크와 결합
+## 프레임워크와 결합
 
 - **React**: React-Bootstrap, Reactstrap 또는 기본 Bootstrap + data-bs-* / 직접 JS
 - **Vue**: BootstrapVueNext(Community), 기본 적용
@@ -574,7 +574,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 13. 마이그레이션(v4 → v5) 요약
+## 마이그레이션(v4 → v5) 요약
 
 - jQuery 의존성 제거 → `data-bs-*` 속성명으로 변경
 - `.form-group` → **공백 유틸리티**로 대체, 폼 구조 단순화
@@ -584,7 +584,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 14. 테스트/디버깅/접근성 검증
+## 테스트/디버깅/접근성 검증
 
 - DevTools **Rendering** 패널로 모바일/색 약/모션 감소 체크
 - Lighthouse/axe-core로 접근성 자동 점검
@@ -593,7 +593,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 15. 자주 겪는 문제와 해결
+## 자주 겪는 문제와 해결
 
 | 문제 | 원인/대응 |
 |---|---|
@@ -605,7 +605,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 16. 보안/정책/엔터프라이즈 운영
+## 보안/정책/엔터프라이즈 운영
 
 - CDN 사용 시 **SRI + crossorigin** 지정
 - 사내망은 사설 NPM/사내 CDN 구성
@@ -614,7 +614,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 17. 체크리스트: 실전 프로젝트 시작 전
+## 체크리스트: 실전 프로젝트 시작 전
 
 - 디자인 토큰(색/타이포/간격/둥글기) → Sass 변수 정의
 - **Utilities API**로 팀 표준 헬퍼 세트 정의
@@ -625,7 +625,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 18. 최소 템플릿(실행 가능한 스타터)
+## 최소 템플릿(실행 가능한 스타터)
 
 ```html
 <!doctype html>
@@ -713,7 +713,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 19. 결론
+## 결론
 
 - **빠른 프로토타이핑**과 **안정적인 디자인 시스템** 구축에 탁월
 - v5의 **jQuery 제거/유틸리티 API/Sass 변수/다크모드/RTL**로 **현대적 요구** 충족

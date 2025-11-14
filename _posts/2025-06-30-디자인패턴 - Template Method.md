@@ -6,7 +6,7 @@ category: 디자인패턴
 ---
 # Template Method (템플릿 메서드 패턴)
 
-## 1. 핵심 아이디어와 용어
+## 핵심 아이디어와 용어
 
 - 템플릿 메서드(Template Method): 알고리즘의 전체 흐름과 각 단계의 호출 순서를 **하나의 메서드로 고정**한다.
 - 기본 단계(Primitive Operation): 하위 클래스가 재정의해야 하는 단계(추상 또는 기본 제공 후 재정의 가능).
@@ -16,7 +16,7 @@ category: 디자인패턴
 
 ---
 
-## 2. 언제 쓰나 — 동기와 코드 스멜
+## 언제 쓰나 — 동기와 코드 스멜
 
 다음과 같은 상황에서 템플릿 메서드가 유리하다.
 
@@ -29,7 +29,7 @@ category: 디자인패턴
 
 ---
 
-## 3. 구조와 역할 (UML/ASCII)
+## 구조와 역할 (UML/ASCII)
 
 ```
 ┌──────────────────────────┐
@@ -51,7 +51,7 @@ category: 디자인패턴
 
 ---
 
-## 4. 수학 메모 — 중복 제거 효과의 직관
+## 수학 메모 — 중복 제거 효과의 직관
 
 유사 알고리즘을 가진 변형이 n개 있고, 알고리즘 절차 길이가 m이며 공통부가 k(0<k≤m)일 때, 공통부를 템플릿으로 올리지 않으면 중복 LOC는 대략
 $$
@@ -61,9 +61,9 @@ $$
 
 ---
 
-## 5. 구현 가이드 (Python)
+## 구현 가이드 (Python)
 
-### 5.1 기본 형태 — 데이터 임포터 예시
+### 기본 형태 — 데이터 임포터 예시
 
 ```python
 from abc import ABC, abstractmethod
@@ -124,7 +124,7 @@ class JSONImporter(DataImporter):
         pass  # 다른 저장 전략
 ```
 
-### 5.2 훅으로 조건적 단계 수행
+### 훅으로 조건적 단계 수행
 
 ```python
 from abc import ABC, abstractmethod
@@ -160,7 +160,7 @@ class Latte(CaffeineBeverage):
     def add_condiments(self): print("Adding steamed milk")
 ```
 
-### 5.3 테스트 스케치(PyTest)
+### 테스트 스케치(PyTest)
 
 ```python
 def test_template_calls_order(monkeypatch, capsys):
@@ -176,7 +176,7 @@ def test_template_calls_order(monkeypatch, capsys):
 
 ---
 
-## 6. Java 구현 — 템플릿 final, 단계 protected
+## Java 구현 — 템플릿 final, 단계 protected
 
 ```java
 abstract class FileProcessor {
@@ -217,7 +217,7 @@ class CsvProcessor extends FileProcessor {
 
 ---
 
-## 7. C# 구현 — sealed 템플릿, async 변형
+## C# 구현 — sealed 템플릿, async 변형
 
 ```csharp
 public abstract class Pipeline<TIn, TOut>
@@ -265,7 +265,7 @@ public sealed class ImageIngestPipeline : Pipeline<string, byte[]>
 
 ---
 
-## 8. TypeScript 구현 — 템플릿과 훅
+## TypeScript 구현 — 템플릿과 훅
 
 ```ts
 abstract class Renderer<T> {
@@ -295,7 +295,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 9. 실전 시나리오
+## 실전 시나리오
 
 1) ETL/배치
 - 템플릿: 로드 → 파싱 → 검증 → 변환 → 저장 → 보고
@@ -319,7 +319,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 10. Template Method와의 조합
+## Template Method와의 조합
 
 - Template Method + Factory Method: 템플릿의 특정 단계에서 제품 생성을 **팩토리 메서드**로 위임하여 서브타입을 분리.
 - Template Method + Hook + Strategy: 알고리즘의 큰 틀은 템플릿, 일부 정책은 **전략 객체**로 주입하여 상속의 단점을 보완.
@@ -327,7 +327,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 11. 유사/대조 패턴 비교
+## 유사/대조 패턴 비교
 
 | 항목 | Template Method | Strategy | Chain of Responsibility | Builder |
 |---|---|---|---|---|
@@ -338,7 +338,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 12. 안티패턴과 주의점
+## 안티패턴과 주의점
 
 - 취약한 기반 클래스(Fragile Base Class): 상위 수정이 모든 하위에 파급. → 공통부를 작게 유지하고 테스트로 보호.
 - 오버라이드 폭발: 단계가 너무 많아 서브클래스가 과도해짐. → 훅 최소화, 공통 단계는 합치기, Strategy 주입 병행.
@@ -348,7 +348,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 13. 품질 체크리스트
+## 품질 체크리스트
 
 - [ ] 템플릿 메서드가 **알고리즘 순서를 명확히** 고정하고 있는가(한 눈에 읽힌다)?
 - [ ] 각 단계의 책임이 **단일**하고 이름이 행위를 잘 설명하는가?
@@ -360,7 +360,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 14. 리팩터링 절차(중복 절차 → 템플릿)
+## 리팩터링 절차(중복 절차 → 템플릿)
 
 1) 유사 절차를 가진 클래스 N개에서 **공통 순서**를 식별한다.
 2) 상위 클래스를 만들고 템플릿 메서드를 도입한다(공통 순서만 포함).
@@ -372,7 +372,7 @@ class MarkdownRenderer extends Renderer<{title:string, items:string[]}> {
 
 ---
 
-## 15. 예외 처리·트랜잭션·리소스 관리
+## 예외 처리·트랜잭션·리소스 관리
 
 - 템플릿에서 try/finally로 전역 리소스 해제 보장(파일, 커넥션).
 - 단계별 예외를 템플릿에서 공통 포맷으로 변환(도메인 예외).
@@ -398,7 +398,7 @@ def run(self, src: str):
 
 ---
 
-## 16. 요약
+## 요약
 
 - 템플릿 메서드는 **절차의 순서를 상위에서 고정**하고, **세부 구현을 하위로 위임**해 중복을 제거하고 일관성을 높인다.
 - 훅과 기본 구현으로 **유연성**을 확보하되, 순서 변경은 금지하여 **예측 가능성**을 유지한다.

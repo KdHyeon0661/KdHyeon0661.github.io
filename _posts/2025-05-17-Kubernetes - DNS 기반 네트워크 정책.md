@@ -15,7 +15,7 @@ Kubernetes 기본 `NetworkPolicy`는 **Pod/Namespace/IP** 기준의 L3/L4 제어
 
 ---
 
-## 0. 요구사항 정리 & 베이스라인
+## 요구사항 정리 & 베이스라인
 
 - **요구:** 특정 워크로드가 **허용된 외부 도메인만** 나가게 하라(Allowlist).
 - **제약:** 외부 서비스의 **IP 변경**을 자동 추적해야 함.
@@ -28,13 +28,14 @@ Kubernetes 기본 `NetworkPolicy`는 **Pod/Namespace/IP** 기준의 L3/L4 제어
 kubectl create ns fqdn-lab
 kubectl -n fqdn-lab run tbox --image=curlimages/curl -it --rm -- bash
 # 셸 예시: curl -sI https://www.google.com | head -n1
+
 ```
 
 > 이후 예제는 `fqdn-lab` 네임스페이스를 기준으로 한다.
 
 ---
 
-## 1. 동작 원리(공통)
+## 동작 원리(공통)
 
 FQDN 정책의 핵심은 **“DNS 해석 결과(IP) 캐시”** 를 정책 평가에 활용하는 것이다.
 
@@ -47,13 +48,14 @@ FQDN 정책의 핵심은 **“DNS 해석 결과(IP) 캐시”** 를 정책 평�
 
 ---
 
-## 2. 반드시 먼저: DNS(코어DNS) 통신 허용
+## 반드시 먼저: DNS(코어DNS) 통신 허용
 
 FQDN 정책을 적용하면 **기본 Egress가 막히는** 상황이 흔하다. DNS가 막히면 FQDN 해석 자체가 안 된다.
 다음은 Calico 기준의 예시(네임스페이스 한정). Cilium도 유사한 개념으로 53 포트를 허용해야 한다.
 
 ```yaml
 # 02-dns-egress-allow.yaml (Calico NetworkPolicy 예시)
+
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
@@ -80,15 +82,16 @@ spec:
 
 ---
 
-## 3. Calico로 FQDN 제어
+## Calico로 FQDN 제어
 
 Calico는 **FQDN 기반 egress** 를 **NetworkPolicy** 또는 **GlobalNetworkPolicy** 로 지원한다.
 (버전에 따라 **와일드카드(\*.example.com)** 지원 범위가 다를 수 있으므로 **배포 버전 릴리스 노트로 확인** 권장. 안전하게는 **정확한 FQDN 매칭**을 우선 사용하라.)
 
-### 3.1 네임스페이스 한정: 특정 도메인만 허용 + 그 외 차단
+### 네임스페이스 한정: 특정 도메인만 허용 + 그 외 차단
 
 ```yaml
 # 03-calico-fqdn-allowlist.yaml
+
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
@@ -122,19 +125,22 @@ spec:
 
 ```bash
 # 허용
+
 curl -sI https://www.google.com | head -n1
 curl -sI https://api.github.com | head -n1
 
 # 차단
+
 curl -sI https://www.naver.com
 ```
 
-### 3.2 클러스터 전역: GlobalNetworkPolicy
+### 클러스터 전역: GlobalNetworkPolicy
 
 여러 네임스페이스에 동일 정책을 깔끔히 적용하려면 글로벌로:
 
 ```yaml
 # 03b-calico-global-fqdn-allow-google.yaml
+
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -157,22 +163,23 @@ spec:
           - ::/0
 ```
 
-### 3.3 패턴/와일드카드 주의
+### 패턴/와일드카드 주의
 
 - 버전에 따라 `*.example.com` 과 같은 **와일드카드** 또는 `suffix` 형식 지원이 **제한**될 수 있다.
 - CDN·다중 레코드 환경에서 **IPv4/IPv6** 혼재 여부도 고려하라. 필요 시 `::/0` 차단과 별도 IPv6 허용을 명시.
 
 ---
 
-## 4. Cilium로 FQDN 제어
+## Cilium로 FQDN 제어
 
 Cilium은 `CiliumNetworkPolicy` 의 `toFQDNs` (및 `matchName`, `matchPattern`) 로 풍부한 도메인 매칭을 제공한다.
 또한 eBPF를 활용하여 DNS 관찰/캐시를 효율적으로 처리한다.
 
-### 4.1 필수: DNS 허용(Cilium)
+### 필수: DNS 허용(Cilium)
 
 ```yaml
 # 04-cilium-allow-dns.yaml
+
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -195,10 +202,11 @@ spec:
 
 > CoreDNS 라벨은 환경마다 다르다. `kubectl -n kube-system get svc kube-dns -o yaml` 로 라벨을 확인하고 `matchLabels` 를 맞춰라.
 
-### 4.2 FQDN 허용(정확 매칭)
+### FQDN 허용(정확 매칭)
 
 ```yaml
 # 04b-cilium-fqdn-allow.yaml
+
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -216,10 +224,11 @@ spec:
               protocol: TCP
 ```
 
-### 4.3 와일드카드/패턴 허용
+### 와일드카드/패턴 허용
 
 ```yaml
 # 04c-cilium-fqdn-wildcard.yaml
+
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -240,7 +249,7 @@ spec:
 
 ---
 
-## 5. **베이스라인 Deny** + **정책 레이어링** (권장)
+## **베이스라인 Deny** + **정책 레이어링** (권장)
 
 **원칙:** “기본 차단(Default Deny) → 필요한 것만 허용(Allowlist)”.
 
@@ -248,6 +257,7 @@ Calico 예:
 
 ```yaml
 # 05-calico-default-deny-egress.yaml
+
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
@@ -267,6 +277,7 @@ Cilium 예:
 
 ```yaml
 # 05b-cilium-default-deny.yaml
+
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -282,9 +293,9 @@ spec:
 
 ---
 
-## 6. 실전 시나리오 레시피
+## 실전 시나리오 레시피
 
-### 6.1 SaaS 3곳만 허용
+### SaaS 3곳만 허용
 
 - GitHub API, Stripe API, Slack만 허용. 나머지 인터넷 차단.
 
@@ -339,7 +350,7 @@ spec:
               protocol: TCP
 ```
 
-### 6.2 와일드카드: 특정 조직의 서브도메인 전체 허용(Cilium)
+### 와일드카드: 특정 조직의 서브도메인 전체 허용(Cilium)
 
 ```yaml
 apiVersion: cilium.io/v2
@@ -358,29 +369,31 @@ spec:
               protocol: TCP
 ```
 
-### 6.3 도메인 + 특정 HTTP 경로 제한(대안)
+### 도메인 + 특정 HTTP 경로 제한(대안)
 
 FQDN 정책만으로는 **HTTP 경로/메서드** 까지 통제하기 어렵다.
 **Service Mesh(Istio/Envoy)** 나 **Calico L7(HTTP) 정책**을 병행하여 **SNI·Host+Path 수준**으로 좁혀라.
 
 ---
 
-## 7. 테스트·검증·관측
+## 테스트·검증·관측
 
-### 7.1 빠른 검증 명령
+### 빠른 검증 명령
 
 ```bash
 # 정상/차단 확인
+
 curl -sI https://www.google.com | head -n1
 curl -sI https://api.github.com | head -n1
 curl -sI https://www.naver.com | head -n1
 
 # DNS 확인
+
 apt-get update && apt-get install -y dnsutils 2>/dev/null || true
 dig +short api.github.com
 ```
 
-### 7.2 패킷 관측(필요 시)
+### 패킷 관측(필요 시)
 
 노드/Pod에서 `tcpdump` 로 53/443 흐름을 본다. (컨테이너 런타임·권한에 주의)
 
@@ -389,13 +402,14 @@ tcpdump -i any port 53 -nn
 tcpdump -i any host 140.82.112.5 and port 443 -nn
 ```
 
-### 7.3 정책 히트/미스 가시화
+### 정책 히트/미스 가시화
 
 - **Calico:** Felix/typha 로그, 정책 엔트리 카운터(엔터프라이즈는 GUI·메트릭 강화).
 - **Cilium:** `cilium monitor`, Hubble(가시성)로 정책 매치/드롭 이벤트를 시각화.
 
 ```bash
 # Cilium
+
 cilium status
 cilium monitor --type drop
 hubble observe --from-pod fqdn-lab/tbox --http
@@ -403,28 +417,28 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 8. 운영 팁(성능·신뢰·안전)
+## 운영 팁(성능·신뢰·안전)
 
-### 8.1 DNS 캐시 & TTL
+### DNS 캐시 & TTL
 
 - CoreDNS `cache` 플러그인 TTL, CNI의 FQDN 캐시 TTL이 **너무 짧으면 빈번한 갱신으로 오버헤드**.
 - 반대로 너무 길면 **IP 변경 추적 지연**. 서비스 특성에 맞춰 균형점을 찾자.
 
-### 8.2 장기 커넥션
+### 장기 커넥션
 
 - 도메인 IP가 바뀌어도 **이미 맺은 TCP 세션은 살아있을 수 있다**.
 - 민감 트래픽은 **짧은 keep-alive**, **주기적 재연결**, **L7 프록시(메쉬/프록시) 경유**로 안전하게.
 
-### 8.3 IPv6·Dual Stack
+### IPv6·Dual Stack
 
 - 정책에 `::/0` 차단을 넣지 않으면 **IPv6로 우회 허용**될 수 있다. 듀얼스택 환경에서는 **v4/v6 모두 고려**하라.
 
-### 8.4 와일드카드 범위 최소화
+### 와일드카드 범위 최소화
 
 - `*.example.com` 은 자칫 **예상치 못한 하위 도메인**까지 허용한다.
 - 가능하면 **정확 FQDN 목록**으로 관리하고, 불가피하면 패턴을 최소화해라.
 
-### 8.5 감사·컴플라이언스
+### 감사·컴플라이언스
 
 - 네임스페이스/팀별로 **정책 리포지토리(values/Helm/Kustomize)** 를 분리.
 - **GitOps(Argo CD/Flux)** 로 리뷰/승인을 거쳐 변경 이력을 남긴다.
@@ -432,7 +446,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 9. 자주 만나는 오류 & 트러블슈팅
+## 자주 만나는 오류 & 트러블슈팅
 
 | 증상 | 원인 | 해결 |
 |---|---|---|
@@ -444,7 +458,7 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 10. 대안·보완 아키텍처
+## 대안·보완 아키텍처
 
 - **Egress Gateway(서비스 메쉬) 경유:** Istio EgressGateway/Envoy로 **SNI/Host** 기준 제어 + 중앙 IP 고정(NAT) + 로깅 일원화.
 - **HTTP L7 정책:** Calico Application Layer(HTTP)나 EnvoyFilter로 **메서드/경로/헤더** 기반 통제.
@@ -452,13 +466,14 @@ hubble observe --from-pod fqdn-lab/tbox --http
 
 ---
 
-## 11. Helm·GitOps로 구성 관리(샘플)
+## Helm·GitOps로 구성 관리(샘플)
 
-### 11.1 Cilium FQDN Chart 템플릿 스니펫
+### Cilium FQDN Chart 템플릿 스니펫
 
 {% raw %}
 ```yaml
 # templates/fqdn.yaml
+
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -480,6 +495,7 @@ spec:
 
 ```yaml
 # values.yaml
+
 namespace: fqdn-lab
 selector:
   matchLabels:
@@ -490,10 +506,11 @@ allowedDomains:
   - slack.com
 ```
 
-### 11.2 Calico Global 정책 Kustomize 오버레이
+### Calico Global 정책 Kustomize 오버레이
 
 ```yaml
 # base/gnp.yaml
+
 apiVersion: projectcalico.org/v3
 kind: GlobalNetworkPolicy
 metadata:
@@ -517,6 +534,7 @@ spec:
 
 ```yaml
 # overlays/prod/kustomization.yaml
+
 resources:
   - ../../base/gnp.yaml
 patches:
@@ -531,7 +549,7 @@ patches:
 
 ---
 
-## 12. 요약(치트시트)
+## 요약(치트시트)
 
 - **필수:** 먼저 **DNS 허용** → 그 다음 **FQDN Allowlist** → 마지막 **기본 차단**.
 - **Calico:** `dns.names`/`domains`(버전별 차이). **와일드카드 가용성은 버전 확인**.
@@ -546,6 +564,7 @@ patches:
 
 ```yaml
 # 99-bundle-calico.yaml (Calico)
+
 apiVersion: projectcalico.org/v3
 kind: NetworkPolicy
 metadata:
@@ -601,6 +620,7 @@ spec:
 
 ```yaml
 # 99-bundle-cilium.yaml (Cilium)
+
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
