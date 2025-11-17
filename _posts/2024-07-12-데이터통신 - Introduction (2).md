@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 데이터 통신 1장 - Introduction (2)
+title: 데이터 통신 - Introduction (2)
 date: 2024-07-12 19:20:23 +0900
 category: DataCommunication
 ---

@@ -1,7 +1,7 @@
 ---
 layout: post
-title: 데이터 통신 7장 - Transmission Media (2)
-date: 2024-07-27 19:20:23 +0900
+title: 데이터 통신 - Transmission Media (2)
+date: 2024-07-26 20:20:23 +0900
 category: DataCommunication
 ---
 # Unguided Media: Wireless

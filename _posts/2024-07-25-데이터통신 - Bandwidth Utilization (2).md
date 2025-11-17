@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 데이터 통신 6장 - Bandwidth Utilization (2)
+title: 데이터 통신 - Bandwidth Utilization (2)
 date: 2024-07-25 19:20:23 +0900
 category: DataCommunication
 ---

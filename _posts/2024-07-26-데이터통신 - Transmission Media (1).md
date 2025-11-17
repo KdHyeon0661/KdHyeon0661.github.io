@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 데이터 통신 7장 - Transmission Media (1)
+title: 데이터 통신 - Transmission Media (1)
 date: 2024-07-26 19:20:23 +0900
 category: DataCommunication
 ---

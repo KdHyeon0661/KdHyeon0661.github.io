@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 데이터 통신 4장 - Digital Transmission (1)
+title: 데이터 통신 - Digital Transmission (1)
 date: 2024-07-17 19:20:23 +0900
 category: DataCommunication
 ---

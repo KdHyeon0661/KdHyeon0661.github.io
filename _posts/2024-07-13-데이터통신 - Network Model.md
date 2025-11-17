@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 데이터 통신 2장 - Network Model
+title: 데이터 통신 - Network Model
 date: 2024-07-13 19:20:23 +0900
 category: DataCommunication
 ---

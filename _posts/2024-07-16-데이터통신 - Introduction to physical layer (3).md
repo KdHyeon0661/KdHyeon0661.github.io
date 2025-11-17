@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 데이터 통신 3장 - Introduction to Physical Layer (3)
+title: 데이터 통신 - Introduction to Physical Layer (3)
 date: 2024-07-16 19:20:23 +0900
 category: DataCommunication
 ---
