@@ -607,6 +607,7 @@ end
 
 운영 가능한 앱이라면, 관찰 가능한 앱이어야 한다.
 
+{% raw %}
 ```elixir
 defmodule Seq.Server do
   use GenServer
@@ -622,6 +623,7 @@ defmodule Seq.Server do
   end
 end
 ```
+{% endraw %}
 
 핸들러 예시:
 

@@ -259,6 +259,7 @@ end
 
 `lib/duper/index.ex`:
 
+{% raw %}
 ```elixir
 defmodule Duper.Index do
   use GenServer
@@ -323,6 +324,7 @@ defmodule Duper.Index do
   end
 end
 ```
+{% endraw %}
 
 설명:
 

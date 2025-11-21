@@ -466,6 +466,7 @@ end
 
 #### 페치 + 파싱 태스크
 
+{% raw %}
 ```elixir
 defmodule App.Fetcher do
   @timeout 4_000
@@ -504,6 +505,7 @@ defmodule App.Fetcher do
   end
 end
 ```
+{% endraw %}
 
 #### 동시 실행 — Task.Supervisor + async_stream
 

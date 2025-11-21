@@ -1173,6 +1173,7 @@ end
 
 ### Transform.Server 구현
 
+{% raw %}
 ```elixir
 defmodule Transform.Server do
   use GenServer
@@ -1232,6 +1233,7 @@ defmodule Transform.Server do
   end
 end
 ```
+{% endraw %}
 
 ### 사용 예
 
