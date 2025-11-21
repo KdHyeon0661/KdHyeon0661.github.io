@@ -4,18 +4,18 @@ title: 데이터 통신 - Network Management (1)
 date: 2024-09-09 23:20:23 +0900
 category: DataCommunication
 ---
-# 27. Network Management — FCAPS 관점의 개념과 실전 예제
+# Network Management — FCAPS 관점의 개념과 실전 예제
 
-이 장은 네트워크 관리의 고전적인 **FCAPS 모델**(Fault, Configuration, Accounting, Performance, Security)을 기준으로,  
-실제 운영 환경에서 어떻게 적용되는지 정리한 것이다. 이 중 27.1에서는 FCAPS의 다섯 영역을 먼저 소개한다.   
+이 장은 네트워크 관리의 고전적인 **FCAPS 모델**(Fault, Configuration, Accounting, Performance, Security)을 기준으로,
+실제 운영 환경에서 어떻게 적용되는지 정리한 것이다. 이 중 27.1에서는 FCAPS의 다섯 영역을 먼저 소개한다.
 
 ---
 
-## 27.1 Introduction — Network Management와 FCAPS
+## Introduction — Network Management와 FCAPS
 
-### 27.1.1 FCAPS 개요
+### FCAPS 개요
 
-ISO TMN(전송망 관리)·OSI 네트워크 관리 모델에서 네트워크 관리 기능은 보통 **다섯 영역**으로 나눈다.   
+ISO TMN(전송망 관리)·OSI 네트워크 관리 모델에서 네트워크 관리 기능은 보통 **다섯 영역**으로 나눈다.
 
 | 영역 | 역할(요약) |
 |------|-----------|
@@ -29,12 +29,12 @@ ISO TMN(전송망 관리)·OSI 네트워크 관리 모델에서 네트워크 관
 
 ---
 
-## 27.1.2 Configuration Management
+## Configuration Management
 
 ### 1) 정의와 목적
 
-NIST는 **구성 관리(Configuration Management)** 를  
-“시스템 개발 생명주기 전체에 걸쳐, 초기화·변경·모니터링 과정을 통제하여 정보시스템의 무결성을 유지하는 활동 집합”으로 정의한다.   
+NIST는 **구성 관리(Configuration Management)** 를
+“시스템 개발 생명주기 전체에 걸쳐, 초기화·변경·모니터링 과정을 통제하여 정보시스템의 무결성을 유지하는 활동 집합”으로 정의한다.
 
 네트워크 관점에서 구성 관리는 다음을 포함한다.
 
@@ -47,20 +47,20 @@ NIST는 **구성 관리(Configuration Management)** 를
 
 ### 2) 핵심 기능
 
-1. **인벤토리 관리(Inventory)**  
+1. **인벤토리 관리(Inventory)**
    - 장비 모델, 직렬번호, 위치(랙·RU), OS 버전 등 메타데이터 관리
-2. **버전 관리(Versioning)**  
+2. **버전 관리(Versioning)**
    - 각 장비 설정을 Git 같은 VCS에 저장해 **diff/rollback** 가능하게
-3. **변경 관리(Change Management)**  
+3. **변경 관리(Change Management)**
    - 변경 요청 → 검토/승인 → 테스트 → 배포 → 검증의 워크플로
-4. **표준 설정(Baseline)**  
+4. **표준 설정(Baseline)**
    - “운영 표준 설정 템플릿”을 정의하고 이를 벗어나는 값은 **drift**로 탐지
-5. **자동화(IaC/Automation)**  
+5. **자동화(IaC/Automation)**
    - Ansible, NETCONF/YANG, RESTCONF, 벤더 API 등으로 대량 설정 배포
 
 ### 3) 예제 시나리오: 데이터센터 VLAN 변경
 
-**상황**  
+**상황**
 - 데이터센터에 스위치 200대, 서버 4,000대
 - 신규 서비스 때문에 `VLAN 310`, `VLAN 311`을 모든 ToR 스위치에 추가해야 함
 - 동시에 관련 ACL, QoS 정책도 함께 반영해야 한다
@@ -102,38 +102,38 @@ NIST는 **구성 관리(Configuration Management)** 를
         with_items: "{{ vlans }}"
 ```
 
-이런 도구를 쓰면 “설정 그 자체”를 코드로 관리(Infrastructure as Code)할 수 있고,  
+이런 도구를 쓰면 “설정 그 자체”를 코드로 관리(Infrastructure as Code)할 수 있고,
 구성 관리는 Git·CI 파이프라인과 결합되어 **자동 검증 + 롤백**까지 가능하다.
 
 ### 5) 구성 관리 품질 지표 예
 
 구성 관리 역시 측정 가능한 지표로 관리할 수 있다.
 
-- **구성 드리프트율(Configuration Drift Rate)**  
+- **구성 드리프트율(Configuration Drift Rate)**
 
-  $$ 
+  $$
   \text{Drift Rate} = \frac{\text{표준에서 벗어난 장비 수}}{\text{전체 장비 수}}
   $$
 
-- **변경 성공률(Change Success Rate)**  
+- **변경 성공률(Change Success Rate)**
 
   $$
   \text{Success Rate} = 1 - \frac{\text{변경 후 장애 건수}}{\text{총 변경 건수}}
   $$
 
-- **평균 변경 리드타임(Change Lead Time)**  
+- **평균 변경 리드타임(Change Lead Time)**
   요청 생성부터 실제 적용까지 걸린 평균 시간
 
 운영 조직은 보통 “드리프트율 0% 유지”, “중요 변경은 리드타임 3일 이내” 같은 SLO를 세우고 관리한다.
 
 ---
 
-## 27.1.3 Fault Management
+## Fault Management
 
 ### 1) 개념
 
-Fault Management는 **장애를 빠르게 발견·격리·복구**하고,  
-향후 재발을 막기 위해 분석·보고하는 활동을 말한다.   
+Fault Management는 **장애를 빠르게 발견·격리·복구**하고,
+향후 재발을 막기 위해 분석·보고하는 활동을 말한다.
 
 구체적으로는:
 
@@ -147,24 +147,24 @@ Fault Management는 **장애를 빠르게 발견·격리·복구**하고,
 
 Fault Management에서 자주 쓰는 기준 지표는 다음과 같다.
 
-- **MTBF(Mean Time Between Failures)** — 평균 고장 간격  
-- **MTTR(Mean Time To Repair)** — 평균 복구 시간  
+- **MTBF(Mean Time Between Failures)** — 평균 고장 간격
+- **MTTR(Mean Time To Repair)** — 평균 복구 시간
 - **가용성(Availability)**
 
 $$
-\text{Availability} = \frac{\text{서비스 가동 시간}}{\text{총 시간}} 
+\text{Availability} = \frac{\text{서비스 가동 시간}}{\text{총 시간}}
 = \frac{\text{MTBF}}{\text{MTBF} + \text{MTTR}}
 $$
 
 **예제 계산**
 
-- 어떤 코어 스위치의 MTBF = 2000시간  
+- 어떤 코어 스위치의 MTBF = 2000시간
 - MTTR = 1시간 이라고 하자.
 
 $$
-\text{Availability} 
-= \frac{2000}{2000 + 1} 
-\approx 0.9995 
+\text{Availability}
+= \frac{2000}{2000 + 1}
+\approx 0.9995
 = 99.95\%
 $$
 
@@ -187,7 +187,7 @@ $$
 - ISP 코어망에 있는 라우터 R1–R4 중,
   R3–R4 사이의 광 링크가 광 모듈 불량으로 다운
 - OSPF/IS-IS 라우팅은 대체 경로를 통해 즉시 수렴했지만,
-  전체 경로에 지연이 약간 늘어나고,  
+  전체 경로에 지연이 약간 늘어나고,
   일부 VPN 고객은 짧은 시간 패킷 손실 경험
 
 **Fault Management 흐름**
@@ -217,7 +217,7 @@ targets = ["192.0.2.1", "192.0.2.2", "192.0.2.3"]
 
 def is_alive(ip):
     result = subprocess.run(
-        ["ping", "-c", "2", "-W", "1", ip], 
+        ["ping", "-c", "2", "-W", "1", ip],
         stdout=subprocess.DEVNULL
     )
     return result.returncode == 0
@@ -230,25 +230,25 @@ while True:
     time.sleep(30)
 ```
 
-실제 상용 NMS는 이런 단순 핑을 넘어서,  
+실제 상용 NMS는 이런 단순 핑을 넘어서,
 SNMP/스트리밍 텔레메트리, BFD, 장비 자체 health 상태까지 종합적으로 모니터링한다.
 
 ---
 
-## 27.1.4 Performance Management
+## Performance Management
 
 ### 1) 지연·손실·지터·대역폭
 
-성능 관리의 목표는 **서비스 수준(SLA)에 맞게 네트워크 품질을 유지**하는 것이다.  
-ITU-T는 IP 네트워크 품질 측정을 위해 지연, 지터, 패킷 손실률, 가용성 등을 정의하고, 측정·목표치 프레임워크를 제공한다.   
+성능 관리의 목표는 **서비스 수준(SLA)에 맞게 네트워크 품질을 유지**하는 것이다.
+ITU-T는 IP 네트워크 품질 측정을 위해 지연, 지터, 패킷 손실률, 가용성 등을 정의하고, 측정·목표치 프레임워크를 제공한다.
 
 주요 지표:
 
-- **One-Way Delay (편도 지연)**  
-- **Round Trip Time (RTT)**  
-- **Packet Delay Variation (PDV, 지터)**  
-- **Packet Loss Ratio (PLR)**  
-- **Throughput / Goodput**  
+- **One-Way Delay (편도 지연)**
+- **Round Trip Time (RTT)**
+- **Packet Delay Variation (PDV, 지터)**
+- **Packet Loss Ratio (PLR)**
+- **Throughput / Goodput**
 - **Availability, Path Unavailability**
 
 예를 들어 ITU-T Y.1541, Y.1731 등에서는 이런 값들을 측정하고, 서비스 종류(음성, 비디오, 데이터)에 따라 허용 범위를 제안한다.
@@ -257,12 +257,12 @@ ITU-T는 IP 네트워크 품질 측정을 위해 지연, 지터, 패킷 손실�
 
 인터페이스의 수신·송신 바이트 카운터를 이용해 이용률을 계산한다.
 
-- 측정 간격: $$\Delta t$$ 초  
-- 이전/현재 바이트 카운터: $$C_{\text{prev}}, C_{\text{curr}}$$  
+- 측정 간격: $$\Delta t$$ 초
+- 이전/현재 바이트 카운터: $$C_{\text{prev}}, C_{\text{curr}}$$
 - 링크 속도: $$R$$ (bps)
 
 $$
-\text{Utilization} = 
+\text{Utilization} =
 \frac{(C_{\text{curr}} - C_{\text{prev}}) \times 8}{R \times \Delta t}
 $$
 
@@ -272,7 +272,7 @@ $$
 - 링크 속도: 1 Gbps
 
 $$
-\text{Utilization} = 
+\text{Utilization} =
 \frac{1{,}200{,}000{,}000 \times 8}{1{,}000{,}000{,}000 \times 300}
 = \frac{9{,}600{,}000{,}000}{300{,}000{,}000{,}000}
 \approx 0.032 = 3.2\%
@@ -284,7 +284,7 @@ $$
 
 **상황**
 
-- 클라우드 사업자가 고객에게 L3 VPN 서비스를 제공  
+- 클라우드 사업자가 고객에게 L3 VPN 서비스를 제공
 - SLA: “한 달 기준, **지연 평균 20ms 이하**, **패킷 손실률 0.1% 이하**, **가용성 99.95% 이상**”
 
 **Performance Management 활동**
@@ -294,20 +294,21 @@ $$
    - 정기적으로 유니캐스트·멀티캐스트 트래픽을 송신하여 RTT, PLR 측정
 2. **메트릭 수집 및 저장**
    - 1분 단위 측정 → TSDB(time-series DB)에 저장
-   - Y.1731 OAM 프레임이나 TWAMP 같은 프로토콜을 사용하면  
-     표준화된 형식으로 측정 가능   
+   - Y.1731 OAM 프레임이나 TWAMP 같은 프로토콜을 사용하면
+     표준화된 형식으로 측정 가능
 3. **알람 및 보고**
    - 지연/손실이 임계값을 초과하면 NOC에 경고
    - 고객에게 월간 SLA 리포트 제공
 4. **역방향 분석**
    - 특정 시간대에만 지연이 높다면,
-     그 시간대의 플로우 기록(NetFlow/IPFIX)을 분석해  
+     그 시간대의 플로우 기록(NetFlow/IPFIX)을 분석해
      특정 애플리케이션이나 DDoS 트래픽이 원인인지 파악
 
 ### 4) 코드 예: SNMP 카운터 기반 이용률 계산(개념)
 
 ```python
 # 실제 SNMP 라이브러리 대신, 카운터 값이 있다고 가정한 간단 예제
+
 import time
 
 if_octets_prev = 1000000000  # 이전 읽어온 바이트
@@ -319,16 +320,16 @@ utilization = (if_octets_curr - if_octets_prev) * 8 / (link_speed * delta_t)
 print(f"Utilization: {utilization * 100:.2f}%")
 ```
 
-실제 환경에서는 `pysnmp` 등으로 `ifHCInOctets`/`ifHCOutOctets`를 읽어오고,  
+실제 환경에서는 `pysnmp` 등으로 `ifHCInOctets`/`ifHCOutOctets`를 읽어오고,
 TSDB에 저장해 대시보드(Grafana 등)로 시각화한다.
 
 ---
 
-## 27.1.5 Security Management
+## Security Management
 
 ### 1) 개념과 역할
 
-Security Management는 네트워크와 그 위에서 동작하는 서비스가  
+Security Management는 네트워크와 그 위에서 동작하는 서비스가
 **기밀성(Confidentiality), 무결성(Integrity), 가용성(Availability)** 을 유지하도록 관리하는 영역이다.
 
 주요 기능:
@@ -338,14 +339,14 @@ Security Management는 네트워크와 그 위에서 동작하는 서비스가
 - 취약점 관리, 패치 관리
 - 로그·이벤트 상관분석(SIEM), 침해사고 대응
 
-NIST SP 800-137은 이런 활동을 **정보보안 지속 모니터링(ISCM)** 으로 묶어,  
-조직이 위협·취약점·통제 효과성을 지속적으로 파악하도록 가이드한다.   
+NIST SP 800-137은 이런 활동을 **정보보안 지속 모니터링(ISCM)** 으로 묶어,
+조직이 위협·취약점·통제 효과성을 지속적으로 파악하도록 가이드한다.
 
-또한 NIST SP 800-128은 구성 관리와 보안을 결합한  
-**Security-focused Configuration Management(SecCM)** 를 다룬다.   
+또한 NIST SP 800-128은 구성 관리와 보안을 결합한
+**Security-focused Configuration Management(SecCM)** 를 다룬다.
 
-최근에는 “Security Configuration Management”라는 이름으로  
-**지속적 구성 검사·drift 탐지·자동 교정**을 강조하는 연구·제품도 많다.   
+최근에는 “Security Configuration Management”라는 이름으로
+**지속적 구성 검사·drift 탐지·자동 교정**을 강조하는 연구·제품도 많다.
 
 ### 2) 예제 시나리오: NAC 기반 접속 제어
 
@@ -358,30 +359,30 @@ NIST SP 800-137은 이런 활동을 **정보보안 지속 모니터링(ISCM)** �
 
 1. **인증 및 장비 프로파일링**
    - 802.1X/EAP + RADIUS 서버를 통해 사용자/디바이스 인증
-   - NAC(Network Access Control) 시스템이  
+   - NAC(Network Access Control) 시스템이
      OS 버전, 패치 수준, 안티바이러스 상태 등을 점검
 2. **정책**
    - 정책 예:
      - “사내 관리가 안 된 개인 장비는 인터넷 전용 VLAN으로만”
      - “패치가 일정 이상 오래된 장비는 격리망으로”
 3. **모니터링**
-   - NAC 로그를 SIEM으로 보내,  
+   - NAC 로그를 SIEM으로 보내,
      특정 사용자 계정에서 비정상 접속 시도를 탐지
 4. **조치**
    - 이상 징후 발생 시 자동으로 포트 차단 또는 격리 VLAN으로 이동
 
-이 전체 파이프라인을 구성 관리(802.1X 설정, RADIUS 정책)·fault/performance 관리와 연결해야  
+이 전체 파이프라인을 구성 관리(802.1X 설정, RADIUS 정책)·fault/performance 관리와 연결해야
 잘못된 정책으로 전체 직원이 인터넷을 못 쓰는 “보안 장애”를 막을 수 있다.
 
 ### 3) 보안 관리 지표 예
 
-- **Mean Time To Detect (MTTD)**  
+- **Mean Time To Detect (MTTD)**
   보안 이벤트 발생부터 탐지까지 걸리는 평균 시간
-- **Mean Time To Respond (MTTR, 보안 관점)**  
+- **Mean Time To Respond (MTTR, 보안 관점)**
   탐지부터 효과적인 대응(차단, 패치 완료)까지 걸리는 시간
-- **취약점 잔존 수(Outstanding Vulnerabilities)**  
+- **취약점 잔존 수(Outstanding Vulnerabilities)**
   CVSS 기준 High/CRITICAL 취약점 수
-- **정책 위반 세션 비율**  
+- **정책 위반 세션 비율**
 
   $$
   \text{Policy Violation Rate} =
@@ -390,12 +391,12 @@ NIST SP 800-137은 이런 활동을 **정보보안 지속 모니터링(ISCM)** �
 
 ---
 
-## 27.1.6 Accounting Management
+## Accounting Management
 
 ### 1) 개념
 
-Accounting Management는 네트워크 자원의 사용량을 측정·기록하고,  
-**과금(billing)·쇼백(showback)·차지백(chargeback)**, 그리고 용량 계획에 활용하는 영역이다.   
+Accounting Management는 네트워크 자원의 사용량을 측정·기록하고,
+**과금(billing)·쇼백(showback)·차지백(chargeback)**, 그리고 용량 계획에 활용하는 영역이다.
 
 전통 통신사에서는:
 
@@ -413,9 +414,9 @@ Accounting Management는 네트워크 자원의 사용량을 측정·기록하�
 
 Accounting을 위해 수집할 수 있는 데이터는 많다.
 
-- **RADIUS Accounting**  
+- **RADIUS Accounting**
   - 사용자가 VPN 또는 Wi-Fi에 접속/종료할 때 세션 시간, 전송 바이트 수 등을 RADIUS 서버에 기록
-- **NetFlow/IPFIX/sFlow**  
+- **NetFlow/IPFIX/sFlow**
   - 플로우 단위(5-tuple)로 바이트/패킷 수를 기록
   - 애플리케이션별, 목적지별, 사용자별 트래픽 분석
 - **방화벽·프록시 로그**
@@ -434,22 +435,22 @@ Accounting을 위해 수집할 수 있는 데이터는 많다.
 
 **Accounting Management 구현**
 
-1. 모든 코어라우터에서 NetFlow/IPFIX를 활성화해,  
+1. 모든 코어라우터에서 NetFlow/IPFIX를 활성화해,
    각 VRF/VLAN별 트래픽 플로우를 수집
-2. 수집 서버에서 플로우 데이터를  
+2. 수집 서버에서 플로우 데이터를
    **부서 코드**와 매핑하여 월별 집계
 3. 각 부서별로 “월간 평균 대역폭 사용량, 피크 사용률, 총 전송 바이트”를 리포트
 4. 회계 시스템과 연동해, 네트워크 비용을 부분적으로 차지백
 
 ### 4) 95th Percentile Billing 예
 
-통신사·데이터센터에서 자주 쓰는 과금 방식은  
+통신사·데이터센터에서 자주 쓰는 과금 방식은
 “**5분 단위 트래픽 측정 → 한 달간 측정값 중 상위 5% 제거 → 나머지 중 최대값으로 과금**” 이다.
 
 측정값이 $$x_1, x_2, \dots, x_n$$ (Mbps)라고 할 때:
 
-- 오름차순 정렬하여 $$x_{(1)} \le x_{(2)} \le \dots \le x_{(n)}$$  
-- 상위 5% 값은 제외 → 인덱스 $$k = \lfloor 0.95 \times n \rfloor$$  
+- 오름차순 정렬하여 $$x_{(1)} \le x_{(2)} \le \dots \le x_{(n)}$$
+- 상위 5% 값은 제외 → 인덱스 $$k = \lfloor 0.95 \times n \rfloor$$
 - 95th percentile:
 
 $$
@@ -471,20 +472,20 @@ values = [100, 120, 80, 90, 200, 300, 150, 400]  # Mbps 예시
 print("95th percentile:", percentile95(values), "Mbps")
 ```
 
-실제 환경에서는 수천·수만 개의 샘플이 있고,  
+실제 환경에서는 수천·수만 개의 샘플이 있고,
 각데이터는 5분 또는 1분 단위 인터페이스 이용률이다.
 
 ---
 
-## 27.1.7 정리
+## 정리
 
 27.1에서는 FCAPS 모델을 따라 **구성·장애·성능·보안·회계** 다섯 영역을 개념·지표·예제로 살펴봤다.
 
-- **Configuration Management**: 장비·설정·변경을 표준화·자동화하여  
+- **Configuration Management**: 장비·설정·변경을 표준화·자동화하여
   안정된 네트워크를 유지하는 기반
 - **Fault Management**: 장애를 빠르게 발견·격리·복구해 SLA를 보장
-- **Performance Management**: 지연·손실·대역폭을 상시 모니터링해  
+- **Performance Management**: 지연·손실·대역폭을 상시 모니터링해
   용량·품질을 최적화
-- **Security Management**: AAA·정책·취약점·로그를 관리하여  
+- **Security Management**: AAA·정책·취약점·로그를 관리하여
   네트워크를 안전하게 유지
 - **Accounting Management**: 사용량을 측정해 과금·비용 배분·용량계획에 활용

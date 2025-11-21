@@ -12,21 +12,21 @@ category: DataCommunication
 - 16.2: **셀룰러 통신 (1G → 5G)** – 음성에서 초고속/초저지연/대량 IoT까지의 진화
 - 16.3: **위성 네트워크 (GEO / MEO / LEO)** – 전 지구 커버리지와 위도·경도·시간 동기 제공
 
-각 섹션에서 **서비스, 표준, 계층 구조, 동작 방식**을 정리하고,  
+각 섹션에서 **서비스, 표준, 계층 구조, 동작 방식**을 정리하고,
 **수식/예제/코드**까지 포함해 시험·실무에 바로 쓸 수 있는 수준으로 정리합니다.
 
 ---
 
-## 16.1 WiMAX (IEEE 802.16)
+## WiMAX (IEEE 802.16)
 
-WiMAX(Worldwide Interoperability for Microwave Access)는 **IEEE 802.16 계열 표준**에 기반한 **광대역 무선 접속(BWA: Broadband Wireless Access)** 기술입니다.  
-초기에는 “고정 무선 DSL/케이블 대체”로, 이후 802.16e/m에서는 “모바일 브로드밴드, 4G(IMT-Advanced) 후보”로 발전했습니다.  
+WiMAX(Worldwide Interoperability for Microwave Access)는 **IEEE 802.16 계열 표준**에 기반한 **광대역 무선 접속(BWA: Broadband Wireless Access)** 기술입니다.
+초기에는 “고정 무선 DSL/케이블 대체”로, 이후 802.16e/m에서는 “모바일 브로드밴드, 4G(IMT-Advanced) 후보”로 발전했습니다.
 
-### 16.1.1 WiMAX Services
+### WiMAX Services
 
 #### 1) 서비스 범위 개요
 
-ETSI·ITU·IEEE 문서 기준으로 WiMAX가 목표로 했던 서비스는 크게 다음과 같습니다.  
+ETSI·ITU·IEEE 문서 기준으로 WiMAX가 목표로 했던 서비스는 크게 다음과 같습니다.
 
 1. **고정 무선 접속(Fixed Wireless Access, FWA)**
    - 주거·소규모 사업장에 **DSL/케이블 대체**로 수십 Mbps급 인터넷 제공
@@ -38,11 +38,11 @@ ETSI·ITU·IEEE 문서 기준으로 WiMAX가 목표로 했던 서비스는 크�
    - 캠퍼스/공장/시청 등을 잇는 **무선 백홀**
    - 긴 거리 점대점 링크로 지사 간 연결, IP VPN, VoIP, 영상회의
 4. **공공 안전·재난 통신**
-   - 802.16m 요구사항 문서는 **공공안전/응급 통신** 지원을 명시적으로 요구  
-     (우선순위 부여, 미션 크리티컬 트래픽, 멀티미디어 서비스 등)  
+   - 802.16m 요구사항 문서는 **공공안전/응급 통신** 지원을 명시적으로 요구
+     (우선순위 부여, 미션 크리티컬 트래픽, 멀티미디어 서비스 등)
 5. **4G(IMT-Advanced)급 모바일 광대역 후보**
-   - 802.16m은 ITU-R IMT-Advanced 요구사항에 부합하는 4G 시스템 후보로 제출되었고,  
-     LTE-Advanced와 함께 4G로 분류됨.  
+   - 802.16m은 ITU-R IMT-Advanced 요구사항에 부합하는 4G 시스템 후보로 제출되었고,
+     LTE-Advanced와 함께 4G로 분류됨.
 
 #### 2) 실무 예제: “농촌 ISP” 시나리오
 
@@ -58,16 +58,16 @@ ETSI·ITU·IEEE 문서 기준으로 WiMAX가 목표로 했던 서비스는 크�
 - **VoIP**(SIP) – UGS(고정 대역) 또는 rtPS 서비스 클래스
 - **VPN** – nrtPS 또는 BE 클래스
 
-WiMAX MAC은 각 가입자에게 **서비스 플로우(service flow)** 단위로 QoS를 보장해,  
-동일 무선 자원을 효율적으로 나누는 것이 핵심입니다.  
+WiMAX MAC은 각 가입자에게 **서비스 플로우(service flow)** 단위로 QoS를 보장해,
+동일 무선 자원을 효율적으로 나누는 것이 핵심입니다.
 
 ---
 
-### 16.1.2 IEEE Project 802.16
+### IEEE Project 802.16
 
 #### 1) 표준 진화
 
-IEEE와 ETSI 문서를 바탕으로 802.16의 주요 버전/확장을 정리하면:  
+IEEE와 ETSI 문서를 바탕으로 802.16의 주요 버전/확장을 정리하면:
 
 | 표준 | 주요 내용 | 특징 |
 |------|----------|------|
@@ -77,24 +77,24 @@ IEEE와 ETSI 문서를 바탕으로 802.16의 주요 버전/확장을 정리하�
 | 802.16j-2009 | 멀티홉 릴레이 지원 | 커버리지 확장, 릴레이 BS |
 | 802.16m | IMT-Advanced 후보, 고급 에어인터페이스 | MIMO·Beamforming·고속기능, 4G급 |
 
-IEEE 802.16e 소개 페이지에 따르면, 802.16e-2005는  
-“**fixed와 mobile 광대역 무선 접속을 동시에 지원**하며, 차량 수준 이동성(vehicular speed)을 지원하고, BS 간 핸드오버 기능을 제공한다”라고 설명되어 있습니다.  
+IEEE 802.16e 소개 페이지에 따르면, 802.16e-2005는
+“**fixed와 mobile 광대역 무선 접속을 동시에 지원**하며, 차량 수준 이동성(vehicular speed)을 지원하고, BS 간 핸드오버 기능을 제공한다”라고 설명되어 있습니다.
 
-802.16m 문서는 기존 16e 서비스를 더 효율적으로 지원하고, **IMT-Advanced(4G) 서비스**에 맞춰 성능·MIMO·QoS를 크게 확장하는 요구를 제시합니다.  
+802.16m 문서는 기존 16e 서비스를 더 효율적으로 지원하고, **IMT-Advanced(4G) 서비스**에 맞춰 성능·MIMO·QoS를 크게 확장하는 요구를 제시합니다.
 
 #### 2) IEEE 802.16과 IMT/3GPP의 관계
 
 - ITU-R는 **IMT-2000(3G), IMT-Advanced(4G), IMT-2020(5G)** 등 글로벌 모바일 표준 가족을 정의.
-- 802.16e/16m 기반 WiMAX는 **IMT-2000 / IMT-Advanced 무선 액세스 기술 중 하나**로 포함되며,  
-  3GPP의 **UMTS/LTE 계열**과 함께 IMT 패밀리로 분류됩니다.  
+- 802.16e/16m 기반 WiMAX는 **IMT-2000 / IMT-Advanced 무선 액세스 기술 중 하나**로 포함되며,
+  3GPP의 **UMTS/LTE 계열**과 함께 IMT 패밀리로 분류됩니다.
 
 실제 상용화에서는 LTE가 주도적이 되었지만, WiMAX는 여전히 일부 지역 시스템·백홀·특수망에서 사용되거나 과거 네트워크의 레거시로 존재합니다.
 
 ---
 
-### 16.1.3 Layers in Project 802.16
+### Layers in Project 802.16
 
-802.16은 **레이어 1(물리) + 레이어 2(MAC) + 상위 서비스 매핑을 담당하는 Convergence Sublayer(CS)** 구조를 가집니다.  
+802.16은 **레이어 1(물리) + 레이어 2(MAC) + 상위 서비스 매핑을 담당하는 Convergence Sublayer(CS)** 구조를 가집니다.
 
 #### 1) 전체 계층 구조
 
@@ -119,7 +119,7 @@ IEEE 802.16e 소개 페이지에 따르면, 802.16e-2005는
 #### 2) PHY: OFDM / OFDMA, 프레임 구조
 
 - 초기 802.16: 256 서브캐리어 OFDM, 10–66 GHz (LOS)
-- 802.16e/m: **OFDMA 기반**, 다수의 서브채널을 사용자별로 할당, MIMO·beamforming 지원.  
+- 802.16e/m: **OFDMA 기반**, 다수의 서브채널을 사용자별로 할당, MIMO·beamforming 지원.
 
 대표적인 특징:
 
@@ -169,11 +169,11 @@ if __name__ == "__main__":
 ```
 
 - 이 값은 실제 설계(사용자 수, QoS 클래스, 채널 품질)에 따라 달라지며,
-- ETSI/IEEE 문서에서는 실제 셀 당 수십 Mbps 수준의 유효 용량을 목표로 했습니다.  
+- ETSI/IEEE 문서에서는 실제 셀 당 수십 Mbps 수준의 유효 용량을 목표로 했습니다.
 
 #### 3) MAC: 연결 기반, 서비스 플로우, QoS
 
-WiMAX MAC은 **“connection-oriented”** 설계입니다.  
+WiMAX MAC은 **“connection-oriented”** 설계입니다.
 
 - 각 단말은 BS와 **연결(connection)**을 맺고, 그 안에 하나 이상의 **서비스 플로우(service flow)**를 가짐.
 - 서비스 플로우는 **QoS 파라미터(최소/최대 대역폭, 지연, 우선순위, ARQ 여부)**를 포함.
@@ -192,7 +192,7 @@ BS의 스케줄러는 프레임마다 각 서비스 플로우에 자원을 할�
 
 ---
 
-## 16.2 Cellular Telephony (1G ~ 5G)
+## Cellular Telephony (1G ~ 5G)
 
 셀룰러 시스템은 ITU-IMT/3GPP 계열의 **광역 이동통신** 기술입니다.
 
@@ -202,13 +202,13 @@ BS의 스케줄러는 프레임마다 각 서비스 플로우에 자원을 할�
 - **4G**: LTE/WiMAX, 전 IP, 수백 Mbps~1 Gbps
 - **5G**: NR, eMBB/URLLC/mMTC, Gbps급, 저지연, 네트워크 슬라이싱
 
-ITU-R 문서는 3G/4G/5G를 각각 **IMT-2000, IMT-Advanced, IMT-2020**으로 정의합니다.  
+ITU-R 문서는 3G/4G/5G를 각각 **IMT-2000, IMT-Advanced, IMT-2020**으로 정의합니다.
 
-### 16.2.1 Operation — 셀룰러 시스템의 기본 동작
+### Operation — 셀룰러 시스템의 기본 동작
 
 #### 1) 셀 구조와 주파수 재사용
 
-셀룰러 네트워크는 지리적 영역을 **셀(cell)**로 나누고, 각 셀마다 **기지국(BS, eNB, gNB)**를 둡니다.  
+셀룰러 네트워크는 지리적 영역을 **셀(cell)**로 나누고, 각 셀마다 **기지국(BS, eNB, gNB)**를 둡니다.
 
 - 각 셀은 하나 이상의 주파수 블록을 할당받음.
 - 인접 셀에는 다른 블록을 주어 **간섭을 줄이고**, 떨어진 셀 사이에는 블록을 재사용 → **주파수 재사용(frequency reuse)**.
@@ -224,7 +224,7 @@ ITU-R 문서는 3G/4G/5G를 각각 **IMT-2000, IMT-Advanced, IMT-2020**으로 �
 
 #### 2) 이동성과 위치 관리
 
-셀룰러 시스템은 사용자의 **위치 등록/갱신, 페이징, 핸드오버**를 통해 항상 가까운 기지국과 연결을 유지합니다.  
+셀룰러 시스템은 사용자의 **위치 등록/갱신, 페이징, 핸드오버**를 통해 항상 가까운 기지국과 연결을 유지합니다.
 
 - **Location Update / Registration**
   - 단말이 새로운 위치 영역(Location Area / Tracking Area)에 들어가면, 코어 네트워크(HLR/HSS/UDM)에 자신의 위치를 등록.
@@ -250,15 +250,15 @@ def should_handover(rssi_serving, rssi_neighbor, threshold=3, hysteresis=2):
     return False
 ```
 
-실제 3GPP 표준에서는 훨씬 복잡한 **Event A3, A4, A5** 기반 측정 보고와  
+실제 3GPP 표준에서는 훨씬 복잡한 **Event A3, A4, A5** 기반 측정 보고와
 RRC 핸드오버 절차를 사용하지만, 기본 아이디어는 “이웃 셀이 더 좋으면 핸드오버”입니다.
 
 ---
 
-### 16.2.2 1G — Analog Cellular
+### 1G — Analog Cellular
 
 - 시기: 1980년대~1990년대 초
-- 대표 시스템: AMPS(미국), TACS(유럽), NMT(북유럽) 등  
+- 대표 시스템: AMPS(미국), TACS(유럽), NMT(북유럽) 등
 - 기술적 특징:
   - 아날로그 **FM 음성**
   - 주로 **FDMA** – 30 kHz 또는 유사한 좁은 채널
@@ -268,10 +268,10 @@ RRC 핸드오버 절차를 사용하지만, 기본 아이디어는 “이웃 셀
 
 ---
 
-### 16.2.3 2G — Digital Cellular (GSM, CDMA)
+### 2G — Digital Cellular (GSM, CDMA)
 
 - 시기: 1990년대~2000년대 초
-- ITU/3GPP 자료 기준, 주요 기술:  
+- ITU/3GPP 자료 기준, 주요 기술:
 
 | 표준 | 접속 방식 | 특징 |
 |------|-----------|------|
@@ -286,9 +286,9 @@ RRC 핸드오버 절차를 사용하지만, 기본 아이디어는 “이웃 셀
 
 ---
 
-### 16.2.4 3G — IMT-2000
+### 3G — IMT-2000
 
-ITU는 3G를 **IMT-2000**으로 표준화했습니다. 대표 기술:  
+ITU는 3G를 **IMT-2000**으로 표준화했습니다. 대표 기술:
 
 - WCDMA/UMTS (3GPP)
 - CDMA2000 (3GPP2)
@@ -302,9 +302,9 @@ ITU는 3G를 **IMT-2000**으로 표준화했습니다. 대표 기술:
 
 ---
 
-### 16.2.5 4G — IMT-Advanced (LTE, WiMAX)
+### 4G — IMT-Advanced (LTE, WiMAX)
 
-ITU-R는 4G를 **IMT-Advanced**로 정의하며, 대표 기술로 LTE-Advanced, 802.16m 기반 WiMAX를 포함합니다.  
+ITU-R는 4G를 **IMT-Advanced**로 정의하며, 대표 기술로 LTE-Advanced, 802.16m 기반 WiMAX를 포함합니다.
 
 공통 특징:
 
@@ -319,17 +319,17 @@ LTE-Advanced 요구사항 예시:
 
 ---
 
-### 16.2.6 5G — IMT-2020
+### 5G — IMT-2020
 
-ITU-R는 5G를 **IMT-2020**으로 규정하며, 3GPP의 NR(New Radio)이 대표 기술입니다.  
+ITU-R는 5G를 **IMT-2020**으로 규정하며, 3GPP의 NR(New Radio)이 대표 기술입니다.
 
 5G의 세 가지 대표 서비스 카테고리:
 
-1. **eMBB (enhanced Mobile Broadband)**  
+1. **eMBB (enhanced Mobile Broadband)**
    - Gbps급 모바일 브로드밴드
-2. **URLLC (Ultra-Reliable Low Latency Communications)**  
+2. **URLLC (Ultra-Reliable Low Latency Communications)**
    - ms 단위 지연과 99.999% 수준 가용성
-3. **mMTC (massive Machine Type Communications)**  
+3. **mMTC (massive Machine Type Communications)**
    - km²당 수십만 단말의 저속 IoT 연결
 
 전파/표준 특징:
@@ -357,11 +357,11 @@ for gen, info in generations.items():
     print(f"{gen}: 최고 약 {info['peak_mbps']} Mbps, 기술 = {info['tech']}")
 ```
 
-여기서 peak 값은 ITU/3GPP의 이론적 목표값에 가깝고, 실제 상용망에서의 측정치는 환경에 따라 훨씬 낮습니다.  
+여기서 peak 값은 ITU/3GPP의 이론적 목표값에 가깝고, 실제 상용망에서의 측정치는 환경에 따라 훨씬 낮습니다.
 
 ---
 
-## 16.3 Satellite Networks
+## Satellite Networks
 
 위성 네트워크는 **지상과 우주를 연결하는 무선 링크**입니다.
 
@@ -369,9 +369,9 @@ for gen, info in generations.items():
 - **MEO (중궤도)**: 약 8,000–20,000 km, GNSS(GPS, Galileo 등)에 사용
 - **LEO (저궤도)**: 약 500–2,000 km, 인터넷(Starlink 등)에 사용
 
-미국 FCC/ITU/NASA 문서 기준으로, 이 궤도들은 위성통신·위치·시간동기(PNT) 서비스에 사용됩니다.  
+미국 FCC/ITU/NASA 문서 기준으로, 이 궤도들은 위성통신·위치·시간동기(PNT) 서비스에 사용됩니다.
 
-### 16.3.1 Operation — 위성 네트워크의 기본 동작
+### Operation — 위성 네트워크의 기본 동작
 
 #### 1) 기본 구성
 
@@ -388,7 +388,7 @@ for gen, info in generations.items():
 사용자 단말 → (업링크) → 위성 → (다운링크) → 게이트웨이 → 인터넷
 ```
 
-형태이며, 일부 LEO 시스템은 **위성 간 링크(ISL)**로 우주에서 패킷을 라우팅하기도 합니다.  
+형태이며, 일부 LEO 시스템은 **위성 간 링크(ISL)**로 우주에서 패킷을 라우팅하기도 합니다.
 
 #### 2) 지연과 경로손실
 
@@ -404,14 +404,14 @@ $$
 **GEO**의 경우:
 
 - 지상–위성 거리 약 36,000 km
-- 지구–위성–지구 왕복 거리 ≈ 72,000 km  
+- 지구–위성–지구 왕복 거리 ≈ 72,000 km
   ⇒ **한 번 위성까지 갔다 오는 데만** 약
 
 $$
 T_{\text{RT}} \approx \frac{72{,}000\,\text{km}}{3\times10^5\,\text{km/s}} \approx 0.24\ \text{s} = 240\ \text{ms}
 $$
 
-여기에 지상 라우팅·처리 지연이 더해져, 실제 GEO 위성 회선의 왕복 지연은 500 ms 수준이 흔합니다.  
+여기에 지상 라우팅·처리 지연이 더해져, 실제 GEO 위성 회선의 왕복 지연은 500 ms 수준이 흔합니다.
 
 **자유공간 경로손실(FSPL)**은
 
@@ -419,7 +419,7 @@ $$
 \text{FSPL(dB)} = 20\log_{10}(d) + 20\log_{10}(f) + 32.44
 $$
 
-(여기서 \(d\)는 km, \(f\)는 MHz). 쿄도(수만 km)와 고주파수(Ku/Ka 대역) 때문에, 매우 높은 이득을 가진 안테나와 저잡음 증폭기(LNA)가 필요합니다.  
+(여기서 \(d\)는 km, \(f\)는 MHz). 쿄도(수만 km)와 고주파수(Ku/Ka 대역) 때문에, 매우 높은 이득을 가진 안테나와 저잡음 증폭기(LNA)가 필요합니다.
 
 ##### 코드 예제: 궤도 고도별 대략적인 왕복지연 추정
 
@@ -442,17 +442,17 @@ for alt in [600, 20000, 35786]:
     print(f"높이 {alt} km 위성 대략 RTT: {rtt_ms:.1f} ms (지상-위성-지상만)")
 ```
 
-이 근사는 매우 단순하지만, **LEO가 GEO보다 지연이 훨씬 낮다**는 점을 직관적으로 보여줍니다.  
-실제 지연은 궤도 기하·지상망·위성 간 링크 등으로 달라집니다.  
+이 근사는 매우 단순하지만, **LEO가 GEO보다 지연이 훨씬 낮다**는 점을 직관적으로 보여줍니다.
+실제 지연은 궤도 기하·지상망·위성 간 링크 등으로 달라집니다.
 
 ---
 
-### 16.3.2 GEO Satellite
+### GEO Satellite
 
 #### 1) 특성
 
-FCC 문서에 따르면, 정지궤도 위성은 **지구 적도 상공 약 22,300 마일(≈35,786 km)** 높이에서  
-하루(24시간)와 동일한 주기로 지구를 공전해, 지상에서 보면 **하늘에 고정**되어 보입니다.  
+FCC 문서에 따르면, 정지궤도 위성은 **지구 적도 상공 약 22,300 마일(≈35,786 km)** 높이에서
+하루(24시간)와 동일한 주기로 지구를 공전해, 지상에서 보면 **하늘에 고정**되어 보입니다.
 
 특징:
 
@@ -487,14 +487,14 @@ GEO 위성 링크에서는 **윈도 크기·TCP 튜닝·가속기**가 매우 �
 
 ---
 
-### 16.3.3 MEO Satellite
+### MEO Satellite
 
 #### 1) 특성
 
-ITU·FCC·ESA 문서 기준으로, MEO는 대략 **8,000~20,000 km** 범위의 궤도입니다.  
+ITU·FCC·ESA 문서 기준으로, MEO는 대략 **8,000~20,000 km** 범위의 궤도입니다.
 
 - 대표 예:
-  - **GNSS 위성**: GPS(미국), Galileo(유럽), GLONASS, BeiDou 등  
+  - **GNSS 위성**: GPS(미국), Galileo(유럽), GLONASS, BeiDou 등
     (일반적으로 20,000 km 근처)
 - 특징:
   - GEO보다 **지연이 낮고**, LEO보다 **커버리지 넓음**
@@ -515,16 +515,16 @@ $$
 T \approx \frac{d}{c} \approx \frac{26{,}571\times10^3}{3\times10^8} \approx 0.089\ \text{s} \approx 89\ \text{ms}
 $$
 
-실제 GNSS 수신기에서는 이 지연과 도플러 효과, 이온층·대류권 오차 등을 보정해 위치를 계산합니다.  
+실제 GNSS 수신기에서는 이 지연과 도플러 효과, 이온층·대류권 오차 등을 보정해 위치를 계산합니다.
 
 ---
 
-### 16.3.4 LEO Satellite
+### LEO Satellite
 
 #### 1) 특성
 
-FCC·기술 자문 문서에서는 LEO를 대략 **500~2,000 km 고도**의 비지구정지 궤도로 정의하며,  
-NGSO(Non-Geostationary Orbit) 위성 시스템의 대표 사례로 듭니다.  
+FCC·기술 자문 문서에서는 LEO를 대략 **500~2,000 km 고도**의 비지구정지 궤도로 정의하며,
+NGSO(Non-Geostationary Orbit) 위성 시스템의 대표 사례로 듭니다.
 
 특징:
 
@@ -536,7 +536,7 @@ NGSO(Non-Geostationary Orbit) 위성 시스템의 대표 사례로 듭니다.
 
 #### 2) 예제: LEO 기반 위성 인터넷
 
-LEO 인터넷 시스템(예: 여러 미국/유럽 사업자)은 다음과 같은 구조를 가집니다.  
+LEO 인터넷 시스템(예: 여러 미국/유럽 사업자)은 다음과 같은 구조를 가집니다.
 
 - 사용자 터미널 ↔ LEO 위성 ↔ (위성 간 링크) ↔ 게이트웨이 ↔ 인터넷
 - 고도 550 km, 왕복 지연 수십 ms
@@ -576,5 +576,5 @@ for name, rtt_ms in [("LEO", 40), ("GEO", 550)]:
 - **셀룰러(1G~5G)**: 아날로그 음성(1G) → 디지털(2G) → 모바일 데이터(3G) → IP 기반 광대역(4G) → 초고속·초저지연·대량 IoT(5G)로 진화.
 - **위성 네트워크**: GEO의 광범위 커버리지와 높은 지연, MEO의 PNT 중심 역할, LEO의 저지연·대규모 별자리 구조가 상호 보완적으로 쓰임.
 
-앞서 다룬 **무선 LAN/블루투스**와 함께, 이들 기술을 계층/서비스/주파수/지연 관점에서 비교하면  
+앞서 다룬 **무선 LAN/블루투스**와 함께, 이들 기술을 계층/서비스/주파수/지연 관점에서 비교하면
 실제 네트워크 설계(예: “농촌 지역에 광대역을 어떻게 넣을까?”, “항공기·선박 인터넷은 무엇을 쓸까?”)에서 어떤 조합이 적절한지 판단하는 데 큰 도움이 됩니다.

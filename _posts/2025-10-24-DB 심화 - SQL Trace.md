@@ -292,7 +292,7 @@ tkprof input.trc output.prf sys=no sort=exeela,fchela
 | 서비스/모듈/액션 | `DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE` | `EXEC …(service,module,action,TRUE,TRUE);` |
 | 클라이언트 ID | `DBMS_MONITOR.CLIENT_ID_TRACE_ENABLE` | `EXEC …('TENANT#ACME',TRUE,FALSE);` |
 
-### 10046 레벨
+### 레벨
 
 | Level | 의미 |
 |---|---|

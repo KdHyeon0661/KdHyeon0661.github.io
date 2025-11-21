@@ -20,7 +20,7 @@ category: DataCommunication
 
 ---
 
-## 1. 왜 NETCONF/YANG·스트리밍 텔레메트리가 필요했는가?
+## 왜 NETCONF/YANG·스트리밍 텔레메트리가 필요했는가?
 
 SNMP는 지금도 모니터링에 널리 쓰이지만, 다음 한계가 명확했다.
 
@@ -39,17 +39,17 @@ SNMP는 지금도 모니터링에 널리 쓰이지만, 다음 한계가 명확�
 
 이에 대해 IETF는
 
-- **NETCONF** — XML 기반 **구성 관리 프로토콜**(RPC·트랜잭션·락 지원)   
-- **YANG** — NETCONF/RESTCONF 등에서 사용할 **정형 데이터 모델 언어**(구성·상태·RPC·알림)   
+- **NETCONF** — XML 기반 **구성 관리 프로토콜**(RPC·트랜잭션·락 지원)
+- **YANG** — NETCONF/RESTCONF 등에서 사용할 **정형 데이터 모델 언어**(구성·상태·RPC·알림)
 
-을 정의했고, 이후 **YANG-Push·데이터스토어 텔레메트리**가 등장했다.   
-또한 업계에서는 OpenConfig의 **gNMI 기반 스트리밍 텔레메트리**가 사실상의 표준으로 자리 잡아가고 있다.   
+을 정의했고, 이후 **YANG-Push·데이터스토어 텔레메트리**가 등장했다.
+또한 업계에서는 OpenConfig의 **gNMI 기반 스트리밍 텔레메트리**가 사실상의 표준으로 자리 잡아가고 있다.
 
 ---
 
-## 2. NETCONF — XML/RPC 기반 구성·운영 프로토콜
+## NETCONF — XML/RPC 기반 구성·운영 프로토콜
 
-### 2.1 NETCONF 개요
+### NETCONF 개요
 
 **NETCONF(Network Configuration Protocol)** 는
 
@@ -57,11 +57,11 @@ SNMP는 지금도 모니터링에 널리 쓰이지만, 다음 한계가 명확�
 - **상태(state)** 를 조회하며
 - **알림(notification)** 을 주고받기 위한
 
-네트워크 관리 프로토콜이다. RFC 6241은 NETCONF를 XML 기반 데이터 인코딩과 RPC 연산을 사용하는 구성 프로토콜로 정의한다.   
+네트워크 관리 프로토콜이다. RFC 6241은 NETCONF를 XML 기반 데이터 인코딩과 RPC 연산을 사용하는 구성 프로토콜로 정의한다.
 
 핵심 특징:
 
-- **RPC 스타일**  
+- **RPC 스타일**
   - `get-config`, `edit-config`, `lock`, `commit` 같은 연산을 RPC로 정의.
 - **트랜잭션적 구성 변경**
   - 단일 RPC로 여러 설정을 하나의 트랜잭션처럼 처리.
@@ -69,12 +69,12 @@ SNMP는 지금도 모니터링에 널리 쓰이지만, 다음 한계가 명확�
   - `running`, `candidate`, `startup` 등 논리적 데이터스토어 개념.
 - **보안 전제**
   - 일반적으로 **SSH 위에서 동작** (또는 TLS 등).
-- **데이터 모델 독립**  
-  - 프로토콜 자체는 모델 독립적이지만, **YANG 사용을 권장**.   
+- **데이터 모델 독립**
+  - 프로토콜 자체는 모델 독립적이지만, **YANG 사용을 권장**.
 
-### 2.2 NETCONF 계층 구조
+### NETCONF 계층 구조
 
-RFC 6241과 IETF NETCONF WG 문서는 NETCONF를 다음 네 계층으로 바라본다.   
+RFC 6241과 IETF NETCONF WG 문서는 NETCONF를 다음 네 계층으로 바라본다.
 
 1. **내용(Content) 계층**
    - 실제 **구성/상태/알림 데이터** (대부분 YANG 모델로 정의)
@@ -85,7 +85,7 @@ RFC 6241과 IETF NETCONF WG 문서는 NETCONF를 다음 네 계층으로 바라�
 4. **보안(SSH/TLS) 운반 계층**
    - SSH, TLS 등 보안 전송 프로토콜 위에서 동작
 
-### 2.3 주요 NETCONF 연산(RPC)
+### 주요 NETCONF 연산(RPC)
 
 대표적인 연산들:
 
@@ -120,9 +120,9 @@ RFC 6241과 IETF NETCONF WG 문서는 NETCONF를 다음 네 계층으로 바라�
 
 위 XML은 NETCONF 클라이언트가 장비에 보내는 RPC의 구조만 보여준다. 실제 장비 CLI 대신, **정형 모델(YANG) + NETCONF RPC**로 구성 변경을 수행하는 방식이다.
 
-### 2.4 데이터스토어 개념
+### 데이터스토어 개념
 
-NETCONF는 구성을 하나의 덩어리가 아닌 **여러 데이터스토어**로 구분한다.   
+NETCONF는 구성을 하나의 덩어리가 아닌 **여러 데이터스토어**로 구분한다.
 
 - `running` — 현재 활성 구성
 - `candidate` — 커밋 전 임시 작업 영역
@@ -135,31 +135,31 @@ NETCONF는 구성을 하나의 덩어리가 아닌 **여러 데이터스토어**
 3. 문제가 없으면 `commit`
 4. 문제가 있으면 `discard-changes`
 
-이로써 “대규모 설정 변경 후 장애 시 롤백” 같은 시나리오를  
+이로써 “대규모 설정 변경 후 장애 시 롤백” 같은 시나리오를
 장비 자체의 트랜잭션으로 처리할 수 있다.
 
 ---
 
-## 3. YANG — NETCONF/RESTCONF를 위한 데이터 모델 언어
+## YANG — NETCONF/RESTCONF를 위한 데이터 모델 언어
 
-### 3.1 YANG 개요
+### YANG 개요
 
-**YANG(Yet Another Next Generation)** 은 네트워크 설정·상태 데이터, RPC, 알림을 모델링하는 데이터 모델 언어이다. RFC 7950은 YANG 1.1을 정의하면서, YANG이 구성/상태 데이터, RPC, 알림을 모델링하고, NETCONF/RESTCONF와 함께 사용된다고 설명한다.   
+**YANG(Yet Another Next Generation)** 은 네트워크 설정·상태 데이터, RPC, 알림을 모델링하는 데이터 모델 언어이다. RFC 7950은 YANG 1.1을 정의하면서, YANG이 구성/상태 데이터, RPC, 알림을 모델링하고, NETCONF/RESTCONF와 함께 사용된다고 설명한다.
 
 핵심 특징:
 
-- **트리 구조**  
+- **트리 구조**
   - 컨테이너, 리스트, 리프(leaf), 선택(choice) 등으로 구성.
-- **타입 시스템**  
+- **타입 시스템**
   - `string`, `uint32`, `enumeration`, `leafref`, `union`, `identityref` 등 풍부한 타입.
-- **제약(Constraints)**  
+- **제약(Constraints)**
   - `must`, `when`, `pattern` 등으로 값과 구조에 제약.
 - **RPC·알림 지원**
   - 특정 작업을 RPC로 정의하고, 알림(notifications)을 모델링.
 - **모듈·서브모듈 구조**
   - 재사용 가능한 모듈 시스템.
 
-### 3.2 YANG 모듈 구조 예 (개념)
+### YANG 모듈 구조 예 (개념)
 
 간단한 YANG 모듈 예시:
 
@@ -200,12 +200,12 @@ module example-interfaces {
 
 를 정의한다. NETCONF `edit-config`는 이 모델에 맞춰 XML을 보낸다.
 
-### 3.3 YANG으로 무엇을 모델링하는가?
+### YANG으로 무엇을 모델링하는가?
 
 IETF와 운영자 커뮤니티는 다음과 같은 범위의 YANG 모델을 정의해왔다.
 
 - **코어 프로토콜 모델**
-  - TCP, NTP, MPLS LDP 등. 예를 들어 RFC 9648은 TCP를 위한 최소 YANG 데이터 모델을 정의한다.   
+  - TCP, NTP, MPLS LDP 등. 예를 들어 RFC 9648은 TCP를 위한 최소 YANG 데이터 모델을 정의한다.
 - **장비·서비스 모델**
   - 인터페이스(ietf-interfaces)
   - 라우팅(ietf-routing)
@@ -215,9 +215,9 @@ YANG 모델들은 장비·서비스의 구성을 **표준화된 스키마**로 �
 
 ---
 
-## 4. NETCONF + YANG 기반 구성 자동화 워크플로
+## NETCONF + YANG 기반 구성 자동화 워크플로
 
-### 4.1 SNMP vs NETCONF/YANG 구성 방식 비교
+### SNMP vs NETCONF/YANG 구성 방식 비교
 
 | 관점 | SNMP | NETCONF + YANG |
 |------|------|----------------|
@@ -226,7 +226,7 @@ YANG 모델들은 장비·서비스의 구성을 **표준화된 스키마**로 �
 | 검증 | 제한적 | `validate`, `must/when` 제약 조건, 스키마 검증 |
 | 사용 패턴 | 주로 모니터링 | 구성 + 모니터링 (운영 데이터 조회) |
 
-### 4.2 실제 사용 시나리오
+### 실제 사용 시나리오
 
 **시나리오: ISP의 L3 코어 라우터 50대에 BGP 피어 구성을 자동 배포**
 
@@ -240,16 +240,16 @@ YANG 모델들은 장비·서비스의 구성을 **표준화된 스키마**로 �
 
 ---
 
-## 5. 스트리밍 텔레메트리 — 폴링에서 Pub/Sub로
+## 스트리밍 텔레메트리 — 폴링에서 Pub/Sub로
 
-### 5.1 개념
+### 개념
 
 **스트리밍 텔레메트리(Streaming Telemetry)** 는
 
 - 애플리케이션이 **“구독(subscription)”** 을 만들고
 - 장비가 조건에 따라 **실시간/주기적으로 데이터를 푸시**하는 모델이다.
 
-IETF 문서는 이를 YANG 데이터스토어를 대상으로 한 **pub/sub 서비스**라고 묘사한다.   
+IETF 문서는 이를 YANG 데이터스토어를 대상으로 한 **pub/sub 서비스**라고 묘사한다.
 
 장점:
 
@@ -260,22 +260,22 @@ IETF 문서는 이를 YANG 데이터스토어를 대상으로 한 **pub/sub 서�
 - **정형 구조 유지**
   - YANG 모델 기반 경로를 그대로 사용.
 
-### 5.2 대표 구현 라인
+### 대표 구현 라인
 
 1. **IETF YANG-Push / Subscribed Notifications**
-   - YANG 데이터스토어에 대한 구독·푸시를 RFC 8639 등에서 정의.   
+   - YANG 데이터스토어에 대한 구독·푸시를 RFC 8639 등에서 정의.
    - NETCONF/RESTCONF 기반.
 2. **OpenConfig gNMI Telemetry**
-   - gRPC 기반 프로토콜로, 구성+상태 조회+스트리밍 텔레메트리를 모두 커버.   
+   - gRPC 기반 프로토콜로, 구성+상태 조회+스트리밍 텔레메트리를 모두 커버.
 
 ---
 
-## 6. IETF YANG-Push 계열 텔레메트리
+## IETF YANG-Push 계열 텔레메트리
 
-### 6.1 Subscribed Notifications / YANG-Push 개요
+### Subscribed Notifications / YANG-Push 개요
 
 - **RFC 7923**: YANG 데이터스토어 구독 요구사항
-- **RFC 8639, 8640, 8641**: Subscribed Notifications 및 YANG-Push 메커니즘 정의   
+- **RFC 8639, 8640, 8641**: Subscribed Notifications 및 YANG-Push 메커니즘 정의
 
 핵심 아이디어:
 
@@ -287,9 +287,9 @@ IETF 문서는 이를 YANG 데이터스토어를 대상으로 한 **pub/sub 서�
   를 포함
 - 장비는 구독 조건에 맞춰 데이터를 푸시한다.
 
-### 6.2 구독 유형
+### 구독 유형
 
-YANG-Push 관련 문서와 이후 작업(draft, YANG Push Lite 등)은 대략 다음 세 가지 유형을 다룬다.   
+YANG-Push 관련 문서와 이후 작업(draft, YANG Push Lite 등)은 대략 다음 세 가지 유형을 다룬다.
 
 1. **주기(PERIODIC)**
    - 일정 주기로 전체 데이터를 푸시
@@ -298,10 +298,10 @@ YANG-Push 관련 문서와 이후 작업(draft, YANG Push Lite 등)은 대략 �
 3. **혼합/최적화 모드**
    - 최초 full 상태 + 이후 변경 이벤트
 
-예를 들어, 인터페이스 카운터는 `PERIODIC`(1초 간격),  
+예를 들어, 인터페이스 카운터는 `PERIODIC`(1초 간격),
 BGP 세션 상태는 `ON-CHANGE` 로 받는 식이다.
 
-### 6.3 NETCONF/RESTCONF를 통한 동작
+### NETCONF/RESTCONF를 통한 동작
 
 - NETCONF: `establish-subscription`, `modify-subscription`, `delete-subscription` 같은 RPC로 구독을 관리.
 - RESTCONF: HTTP 기반으로 동일한 구독 모델 구현.
@@ -324,10 +324,10 @@ BGP 세션 상태는 `ON-CHANGE` 로 받는 식이다.
 
 이후 장비는 `notification` 메시지 형태로 주기마다 인터페이스 카운터를 푸시한다.
 
-### 6.4 YANG Push Lite / Observability 작업
+### YANG Push Lite / Observability 작업
 
-최근 IETF는 **YANG Push Lite** 와 Observability 향상 초안을 통해  
-YANG 데이터스토어 텔레메트리의 경량화·확장성을 논의하고 있다.   
+최근 IETF는 **YANG Push Lite** 와 Observability 향상 초안을 통해
+YANG 데이터스토어 텔레메트리의 경량화·확장성을 논의하고 있다.
 
 - 목적: 초저지연·대량 데이터 환경에서의 효율적 운영데이터 관측
 - 메시지 포맷, 메타데이터 구조, 분산 수집기 연동 등을 다룸
@@ -336,14 +336,14 @@ YANG 데이터스토어 텔레메트리의 경량화·확장성을 논의하고 
 
 ---
 
-## 7. OpenConfig gNMI 기반 스트리밍 텔레메트리
+## OpenConfig gNMI 기반 스트리밍 텔레메트리
 
-### 7.1 gNMI란?
+### gNMI란?
 
-**gNMI(gRPC Network Management Interface)** 는 OpenConfig 커뮤니티가 정의한  
+**gNMI(gRPC Network Management Interface)** 는 OpenConfig 커뮤니티가 정의한
 gRPC 기반 관리 프로토콜이다. 문서와 초안은:
 
-- OpenConfig gNMI 스펙: gRPC와 YANG 트리 기반 구성·상태 조회·텔레메트리용 서비스 정의   
+- OpenConfig gNMI 스펙: gRPC와 YANG 트리 기반 구성·상태 조회·텔레메트리용 서비스 정의
 
 특징:
 
@@ -355,9 +355,9 @@ gRPC 기반 관리 프로토콜이다. 문서와 초안은:
   를 모두 제공
 - 데이터 모델로 **OpenConfig YANG** 또는 IETF YANG 사용
 
-### 7.2 gNMI 주요 RPC
+### gNMI 주요 RPC
 
-gNMI 스펙은 대략 다음 RPC들을 정의한다.   
+gNMI 스펙은 대략 다음 RPC들을 정의한다.
 
 - `Get` — 현재 상태/구성 읽기
 - `Set` — 구성 변경(Replace, Update, Delete)
@@ -367,12 +367,12 @@ Subscribe 요청에는 다음 요소가 포함된다.
 
 - 하나 이상의 **Subscription**
   - 경로(Path): YANG 트리 경로
-  - 모드: SAMPLE, ON_CHANGE, TARGET_DEFINED 등   
+  - 모드: SAMPLE, ON_CHANGE, TARGET_DEFINED 등
   - 간격(sample_interval) 등
 
-### 7.3 구독 모드 예시
+### 구독 모드 예시
 
-벤더 문서(NVIDIA NVOS, Juniper 등)는 gNMI 스트리밍 모드를 다음처럼 설명한다.   
+벤더 문서(NVIDIA NVOS, Juniper 등)는 gNMI 스트리밍 모드를 다음처럼 설명한다.
 
 1. **SAMPLE**
    - 설정한 간격마다 샘플 데이터 전송
@@ -383,7 +383,7 @@ Subscribe 요청에는 다음 요소가 포함된다.
 3. **TARGET_DEFINED**
    - 장비가 최적 모드를 자체 결정
 
-### 7.4 gNMI Subscribe 예(개념적 코드)
+### gNMI Subscribe 예(개념적 코드)
 
 아래는 Python/gRPC 스타일의 **개념 코드**로, 실제 라이브러리 호출 방식은 다를 수 있다.
 
@@ -396,6 +396,7 @@ channel = grpc.secure_channel('router1.example.net:9339', creds)
 stub = gnmi_pb2_grpc.gNMIStub(channel)
 
 # 인터페이스 카운터 10초 간격 샘플링
+
 subscription = gnmi_pb2.Subscription(
     path=gnmi_pb2.Path(elem=[
         gnmi_pb2.PathElem(name='interfaces'),
@@ -421,10 +422,10 @@ for response in stub.Subscribe(request):
 
 실제 구현에서는 인증(TLS), 재연결, 버퍼링, 백프레셔, 메트릭 전송 등을 추가해야 한다.
 
-### 7.5 OpenConfig 텔레메트리 아키텍처 예
+### OpenConfig 텔레메트리 아키텍처 예
 
-OpenConfig·넷플릭스 등은 gNMI 텔레메트리를 기반으로 한  
-게이트웨이/수집기 아키텍처를 소개한다.   
+OpenConfig·넷플릭스 등은 gNMI 텔레메트리를 기반으로 한
+게이트웨이/수집기 아키텍처를 소개한다.
 
 ```text
    +--------------------+
@@ -453,9 +454,9 @@ OpenConfig·넷플릭스 등은 gNMI 텔레메트리를 기반으로 한
 
 ---
 
-## 8. NETCONF/YANG vs 스트리밍 텔레메트리 vs SNMP — 정리
+## NETCONF/YANG vs 스트리밍 텔레메트리 vs SNMP — 정리
 
-### 8.1 역할 분담
+### 역할 분담
 
 | 항목 | SNMP | NETCONF/YANG | 스트리밍 텔레메트리(YANG-Push, gNMI 등) |
 |------|------|--------------|------------------------------------------|
@@ -473,12 +474,12 @@ OpenConfig·넷플릭스 등은 gNMI 텔레메트리를 기반으로 한
 
 ---
 
-## 9. 실전 시나리오 정리
+## 실전 시나리오 정리
 
-마지막으로, **하나의 운영 시나리오** 안에  
+마지막으로, **하나의 운영 시나리오** 안에
 NETCONF/YANG과 스트리밍 텔레메트리를 함께 사용하는 모습을 정리해보자.
 
-### 9.1 시나리오: 데이터센터 패브릭 구축 및 운영
+### 시나리오: 데이터센터 패브릭 구축 및 운영
 
 **환경**
 
@@ -516,12 +517,12 @@ NETCONF/YANG과 스트리밍 텔레메트리를 함께 사용하는 모습을 �
   - 상태 조회(NETCONF/gNMI Get)
   - 텔레메트리(YANG-Push/gNMI Subscribe)
   를 모두 같은 “데이터 스키마”로 다룰 수 있다.
-- 운영 자동화·검증·리포팅·분석 파이프라인까지  
+- 운영 자동화·검증·리포팅·분석 파이프라인까지
   하나의 공통 데이터 모델에 수렴하게 된다.
 
 ---
 
-이 글에서는 **NETCONF/YANG**과 **스트리밍 텔레메트리(YANG-Push, gNMI)** 를  
+이 글에서는 **NETCONF/YANG**과 **스트리밍 텔레메트리(YANG-Push, gNMI)** 를
 SNMP 이후의 **현대 네트워크 관리 스택의 핵심**으로 묶어 살펴보았다.
 
 실제 구현으로 들어가려면:
@@ -530,6 +531,6 @@ SNMP 이후의 **현대 네트워크 관리 스택의 핵심**으로 묶어 살�
 - OpenConfig vs IETF YANG 모델 선택
 - gNMI Collector/게이트웨이 도입 (예: gnmi-gateway, 자체 collector)
 
-같은 현실적인 결정을 해야 한다.  
-그러나 큰 그림에서는 **“모델 기반 + API 기반 + 스트리밍 기반”** 이라는 흐름이 명확하며,  
+같은 현실적인 결정을 해야 한다.
+그러나 큰 그림에서는 **“모델 기반 + API 기반 + 스트리밍 기반”** 이라는 흐름이 명확하며,
 앞으로의 네트워크 자동화/관측성(Observability)의 기본 축이 된다.

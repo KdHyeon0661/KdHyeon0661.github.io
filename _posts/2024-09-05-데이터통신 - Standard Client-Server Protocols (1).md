@@ -6,29 +6,29 @@ category: DataCommunication
 ---
 # Chapter 26.1 World Wide Web and HTTP — 구조, 동작, 예제까지
 
-이 장에서는 **표준 클라이언트–서버 프로토콜** 중 가장 핵심인  
+이 장에서는 **표준 클라이언트–서버 프로토콜** 중 가장 핵심인
 **World Wide Web(WWW)** 과 **HTTP(Hypertext Transfer Protocol)** 을 다룬다.
 
 앞에서 이미
-- **전송 계층(TCP/UDP)**  
-- **소켓 프로그래밍, 클라이언트–서버 모델**  
+- **전송 계층(TCP/UDP)**
+- **소켓 프로그래밍, 클라이언트–서버 모델**
 
-을 공부했으므로, 여기서는 그 위에 올라가는 **애플리케이션 계층 프로토콜** 관점에서  
+을 공부했으므로, 여기서는 그 위에 올라가는 **애플리케이션 계층 프로토콜** 관점에서
 **웹이 실제로 어떻게 동작하는지**를 “실제 트래픽” 수준까지 내려가서 보게 된다.
 
 ---
 
-## 26.1.1 World Wide Web (WWW)
+## World Wide Web (WWW)
 
 ### 1) WWW의 개념 — 인터넷 vs 웹
 
 먼저 용어부터 정리하자.
 
-- **Internet(인터넷)**  
-  - 전 세계의 라우터·링크·호스트로 구성된 **패킷 교환 네트워크** 그 자체  
+- **Internet(인터넷)**
+  - 전 세계의 라우터·링크·호스트로 구성된 **패킷 교환 네트워크** 그 자체
   - IP, 라우팅, BGP, AS 등 네트워크 인프라 수준의 개념
-- **World Wide Web(WWW, 웹)**   
-  - 인터넷 위에서 동작하는 **하이퍼텍스트/hypermedia 시스템**  
+- **World Wide Web(WWW, 웹)**
+  - 인터넷 위에서 동작하는 **하이퍼텍스트/hypermedia 시스템**
   - “브라우저 + 웹 서버 + HTTP + URI + HTML 등”이 만드는 논리적 서비스 계층
 
 즉:
@@ -37,30 +37,30 @@ category: DataCommunication
 
 #### WWW의 핵심 구성 요소
 
-1. **웹 클라이언트(브라우저)**  
-   - Chrome, Firefox, Edge, Safari 등  
+1. **웹 클라이언트(브라우저)**
+   - Chrome, Firefox, Edge, Safari 등
    - 사용자가 URL 입력 → HTTP 요청 생성 → 서버에서 온 응답을 해석/렌더링
 
-2. **웹 서버**  
-   - Apache, Nginx, IIS, Node.js 기반 서버 등  
+2. **웹 서버**
+   - Apache, Nginx, IIS, Node.js 기반 서버 등
    - HTTP 요청을 받아 HTML, CSS, JS, 이미지, JSON, 동영상 등 **리소스(resource)** 반환
 
-3. **리소스(Resource) & URI/URL**  
-   - 리소스:  
-     - 정적: `.html`, `.css`, `.js`, `.png`, `.jpg`, `.mp4`, `.pdf` …  
+3. **리소스(Resource) & URI/URL**
+   - 리소스:
+     - 정적: `.html`, `.css`, `.js`, `.png`, `.jpg`, `.mp4`, `.pdf` …
      - 동적: `/api/user/42`, `/search?q=http` 등 서버 코드가 실행되어 생성되는 응답
-   - URI(Uniform Resource Identifier), URL(Uniform Resource Locator):  
+   - URI(Uniform Resource Identifier), URL(Uniform Resource Locator):
      - 웹에서 리소스를 **식별**하고 **위치**를 지정하기 위한 표준 문자열
 
-4. **전송 프로토콜: HTTP/HTTPS**  
-   - 애플리케이션 계층에서 브라우저와 서버가 통신하는 프로토콜  
+4. **전송 프로토콜: HTTP/HTTPS**
+   - 애플리케이션 계층에서 브라우저와 서버가 통신하는 프로토콜
    - 오늘날 HTTP/1.1, HTTP/2, HTTP/3가 공존
 
-5. **DNS**  
+5. **DNS**
    - `www.example.com` → IP 주소 변환
 
-6. **캐시/프록시/CDN**  
-   - 웹 캐시, 프록시 서버, CDN이 HTTP 요청/응답을 **중간에서 최적화**한다.   
+6. **캐시/프록시/CDN**
+   - 웹 캐시, 프록시 서버, CDN이 HTTP 요청/응답을 **중간에서 최적화**한다.
 
 ---
 
@@ -107,7 +107,7 @@ scheme://user:pass@host:port/path?query#fragment
 - `query`: `?key=value&key2=value2` 형태의 추가 파라미터
 - `fragment`: 문서 내부 위치 (`#section3`)
 
-HTTP/1.1 스펙은 `http`/`https` URI 스킴과 URL의 세부 구문을 정의한다.   
+HTTP/1.1 스펙은 `http`/`https` URI 스킴과 URL의 세부 구문을 정의한다.
 
 ---
 
@@ -122,11 +122,11 @@ HTTP/1.1 스펙은 `http`/`https` URI 스킴과 URL의 세부 구문을 정의�
    - OS의 DNS 리졸버를 통해 `www.example.com` 의 IP를 얻는다 (예: `93.184.216.34`).
 
 3. **TCP/QUIC 연결 수립**
-   - HTTP/1.1 또는 HTTP/2라면:  
-     - 브라우저는 IP `93.184.216.34`, 포트 443으로 **TCP 3-way handshake** 수행 후  
+   - HTTP/1.1 또는 HTTP/2라면:
+     - 브라우저는 IP `93.184.216.34`, 포트 443으로 **TCP 3-way handshake** 수행 후
        TLS 핸드셰이크(HTTPS) 진행.
    - HTTP/3라면:
-     - TCP 대신 **QUIC(UDP 기반)** 연결을 수립하고 그 위에 HTTP/3를 올린다.   
+     - TCP 대신 **QUIC(UDP 기반)** 연결을 수립하고 그 위에 HTTP/3를 올린다.
 
 4. **HTTP 요청 전송 (예: GET)**
 
@@ -166,19 +166,19 @@ HTTP/1.1 스펙은 `http`/`https` URI 스킴과 URL의 세부 구문을 정의�
 
 7. **브라우저 렌더링**
    - HTML 파싱 → DOM 트리 생성
-   - `<link>`, `<script>`, `<img>` 등 추가 리소스 발견 시,  
+   - `<link>`, `<script>`, `<img>` 등 추가 리소스 발견 시,
      각 리소스에 대해 추가 HTTP 요청 전송 (동일 서버 또는 다른 서버)
    - CSSOM, JS 실행, 레이아웃, 페인팅 단계를 거쳐 화면에 렌더링
 
 8. **추가 최적화**
-   - 브라우저 캐시, HTTP 캐시 헤더, 쿠키, LocalStorage 등을 사용해  
-     이후 방문 시 성능을 개선한다.   
+   - 브라우저 캐시, HTTP 캐시 헤더, 쿠키, LocalStorage 등을 사용해
+     이후 방문 시 성능을 개선한다.
 
 이 전체 과정이 대부분 **수백 ms ~ 수초** 안에 일어난다.
 
 ---
 
-## 26.1.2 HTTP (Hypertext Transfer Protocol)
+## HTTP (Hypertext Transfer Protocol)
 
 ### 1) HTTP 개요 — 의미와 위치
 
@@ -188,7 +188,7 @@ HTTP는 IETF/W3C에 의해 정의된
 
 > “분산·협업·하이퍼텍스트 정보 시스템을 위한 **애플리케이션 계층**의, **stateless**한 프로토콜”
 
-이다.   
+이다.
 
 - **애플리케이션 계층**: TCP/UDP 위에서 동작한다 (HTTP/1.1, HTTP/2는 TCP / HTTP/3는 QUIC).
 - **stateless**:
@@ -208,7 +208,7 @@ HTTP는 IETF/W3C에 의해 정의된
 
 ### 2) HTTP의 발전 — HTTP/0.9 → 1.0 → 1.1 → 2 → 3
 
-HTTP는 1990년대 초 이후 크게 발전해 왔다.   
+HTTP는 1990년대 초 이후 크게 발전해 왔다.
 
 | 버전 | 시대 | 특징 요약 |
 |------|------|----------|
@@ -218,17 +218,17 @@ HTTP는 1990년대 초 이후 크게 발전해 왔다.
 | HTTP/2 | 2015 | **바이너리 프레이밍**, 스트림 멀티플렉싱, 헤더 압축(HPACK), 서버 푸시 |
 | HTTP/3 | 2022 | 전송 계층을 **QUIC(UDP 기반)** 으로 변경, HOL blocking 완화, 1-RTT 핸드셰이크 등 |
 
-- 2024년 기준, 주요 브라우저의 HTTP/3 지원율은 95% 이상이며,  
-  상위 1천만 웹사이트 중 약 30% 이상이 HTTP/3를 사용 중이라는 분석도 있다.   
+- 2024년 기준, 주요 브라우저의 HTTP/3 지원율은 95% 이상이며,
+  상위 1천만 웹사이트 중 약 30% 이상이 HTTP/3를 사용 중이라는 분석도 있다.
 
-HTTP/3는 **HTTP의 “의미적 계층”(method, status code, header의 의미)** 는 유지하면서  
-“전송 계층 매핑”만 QUIC으로 바꾼 것이라고 이해하면 된다.   
+HTTP/3는 **HTTP의 “의미적 계층”(method, status code, header의 의미)** 는 유지하면서
+“전송 계층 매핑”만 QUIC으로 바꾼 것이라고 이해하면 된다.
 
 ---
 
 ### 3) HTTP 메시지 구조 — Request / Response
 
-HTTP는 **텍스트 기반**(HTTP/1.x 기준) 요청/응답 메시지로 동작한다.   
+HTTP는 **텍스트 기반**(HTTP/1.x 기준) 요청/응답 메시지로 동작한다.
 
 #### (1) 요청(Request) 메시지 형식
 
@@ -315,7 +315,7 @@ Content-Type: application/json
 
 #### (2) 상태 코드
 
-상태 코드는 **세 자리 숫자**이며, 첫 자리로 클래스를 나타낸다.   
+상태 코드는 **세 자리 숫자**이며, 첫 자리로 클래스를 나타낸다.
 
 - 1xx: 정보 (예: 100 Continue)
 - 2xx: 성공 (200 OK, 201 Created, 204 No Content)
@@ -339,7 +339,7 @@ Content-Type: text/html; charset=UTF-8
 
 ### 5) HTTP 헤더 — 메타데이터와 제어 정보
 
-HTTP 헤더는 요청·응답 모두에서 사용되며, **키:값** 쌍이다.   
+HTTP 헤더는 요청·응답 모두에서 사용되며, **키:값** 쌍이다.
 
 #### (1) 대표적인 헤더 예시
 
@@ -361,13 +361,13 @@ HTTP 헤더는 요청·응답 모두에서 사용되며, **키:값** 쌍이다.
 
 ### 6) HTTP의 상태 없음(stateless)과 상태 유지 — 쿠키, 세션
 
-HTTP 자체는 **stateless** 하므로, 기본적으로 서버는 요청 간의 상태를 유지하지 않는다.   
+HTTP 자체는 **stateless** 하므로, 기본적으로 서버는 요청 간의 상태를 유지하지 않는다.
 
-하지만 웹 애플리케이션은 로그인 상태, 장바구니, 사용자 설정 등 **상태**를 필요로 하기 때문에  
-보통 다음을 조합한다:   
+하지만 웹 애플리케이션은 로그인 상태, 장바구니, 사용자 설정 등 **상태**를 필요로 하기 때문에
+보통 다음을 조합한다:
 
-1. **쿠키(Cookie)**  
-   - 서버가 `Set-Cookie` 헤더로 브라우저에 작은 텍스트 블록을 저장시키고,  
+1. **쿠키(Cookie)**
+   - 서버가 `Set-Cookie` 헤더로 브라우저에 작은 텍스트 블록을 저장시키고,
      이후 해당 사이트에 대한 요청마다 브라우저가 `Cookie` 헤더로 다시 보낸다.
    - 예:
 
@@ -384,19 +384,19 @@ HTTP 자체는 **stateless** 하므로, 기본적으로 서버는 요청 간의 
      Cookie: session_id=abc123
      ```
 
-2. **서버 세션 저장소**  
+2. **서버 세션 저장소**
    - `session_id` → 실제 상태(로그인 사용자 id, 장바구니 내용 등)를 서버 메모리/Redis/DB에 저장
    - HTTP 요청은 여전히 stateless 이지만, **쿠키+세션** 조합으로 상태처럼 보이게 만든다.
 
-3. **토큰 기반 인증(JWT 등)**  
+3. **토큰 기반 인증(JWT 등)**
    - 쿠키 대신 Authorization 헤더에 토큰을 넣는 방식도 널리 사용된다.
 
 ---
 
 ### 7) 연결 관리 — HTTP/1.1 vs HTTP/2 vs HTTP/3
 
-HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 계층(TCP/QUIC)이 담당한다.  
-버전에 따라 연결 관리 방식이 크게 달라졌다.   
+HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 계층(TCP/QUIC)이 담당한다.
+버전에 따라 연결 관리 방식이 크게 달라졌다.
 
 #### (1) HTTP/1.0 — 비지속 연결(Non-persistent)
 
@@ -417,7 +417,7 @@ HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 �
 
 #### (3) HTTP/2 — 멀티플렉싱과 헤더 압축
 
-- 하나의 TCP 연결 위에 여러 **스트림(stream)** 을 논리적으로 나누어,  
+- 하나의 TCP 연결 위에 여러 **스트림(stream)** 을 논리적으로 나누어,
   각 요청/응답을 독립적인 스트림으로 처리 (바이너리 프레이밍).
 - 장점:
   - 멀티플렉싱으로 HOL-blocking 완화 (전송 계층 수준의 HOL은 여전히 존재).
@@ -426,10 +426,10 @@ HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 �
 #### (4) HTTP/3 — QUIC 위의 HTTP
 
 - 전송 계층을 TCP → QUIC으로 변경.
-- QUIC은 **UDP 기반**의 새로운 전송 프로토콜로,  
-  유저 공간 구현, 연결 ID, 스트림 단위의 독립적인 손실 복구 등을 제공한다.   
+- QUIC은 **UDP 기반**의 새로운 전송 프로토콜로,
+  유저 공간 구현, 연결 ID, 스트림 단위의 독립적인 손실 복구 등을 제공한다.
 - 효과:
-  - 손실된 패킷이 하나의 스트림에만 영향을 미치므로,  
+  - 손실된 패킷이 하나의 스트림에만 영향을 미치므로,
     HTTP/2에서 TCP HOL-blocking 때문에 발생하던 지연을 크게 줄일 수 있음.
   - 0-RTT/1-RTT 핸드셰이크로 연결 수립 지연 감소.
 
@@ -452,7 +452,7 @@ $$
 
 ### 8) HTTP 캐싱 — 브라우저와 중간 캐시의 동작
 
-HTTP는 캐싱 메커니즘을 매우 정교하게 정의한다.   
+HTTP는 캐싱 메커니즘을 매우 정교하게 정의한다.
 
 #### (1) 캐시 계층
 
@@ -501,13 +501,14 @@ HTTP는 캐싱 메커니즘을 매우 정교하게 정의한다.
 
 ### 9) HTTP 예제 — 간단한 서버/클라이언트 코드
 
-여기서는 HTTP **프로토콜**에 집중하므로,  
+여기서는 HTTP **프로토콜**에 집중하므로,
 코드는 “HTTP 메시지가 실제로 어떤 식으로 오가는지”를 보이기 위한 최소 예제만 다룬다.
 
 #### (1) Python으로 만드는 초간단 HTTP 서버 (학습용)
 
 ```python
 # simple_http_server.py
+
 import socket
 
 HOST = "0.0.0.0"
@@ -540,7 +541,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             conn.sendall(response.encode("utf-8"))
 ```
 
-실행 후 브라우저에서 `http://localhost:8080/` 으로 접속하면  
+실행 후 브라우저에서 `http://localhost:8080/` 으로 접속하면
 위에서 설명한 구조 그대로 HTTP 요청/응답이 오가는 것을 볼 수 있다.
 
 #### (2) `curl`로 직접 HTTP 메시지 보기
@@ -589,5 +590,5 @@ curl -v http://example.com/
    - HTTP/3: QUIC 위에서 동작, HOL-blocking 완화, 낮은 지연
 
 4. **실습 예제**를 통해:
-   - C/Java/TCP/UDP 기반 클라이언트–서버 코드 위에  
+   - C/Java/TCP/UDP 기반 클라이언트–서버 코드 위에
      HTTP 메시지를 올려서 실제로 동작시키는 과정을 체험할 수 있다.

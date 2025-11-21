@@ -6,13 +6,13 @@ category: DataCommunication
 ---
 # Chapter 15. Wireless LANs (IEEE 802.11)
 
-이전 장에서 **유선 LAN(Ethernet)**, **유선 백본(SONET/ATM 등)**을 봤다면, 이번 장은 그 위에서 단말을 무선으로 붙이는 **무선 LAN(Wireless LAN, WLAN)**, 특히 **IEEE 802.11 기반 Wi-Fi**에 대한 정리입니다. 오늘날 집·회사·캠퍼스·카페 대부분이 이 표준을 사용하므로, 시험/실무 둘 다에서 핵심입니다.:contentReference[oaicite:0]{index=0}  
+이전 장에서 **유선 LAN(Ethernet)**, **유선 백본(SONET/ATM 등)**을 봤다면, 이번 장은 그 위에서 단말을 무선으로 붙이는 **무선 LAN(Wireless LAN, WLAN)**, 특히 **IEEE 802.11 기반 Wi-Fi**에 대한 정리입니다. 오늘날 집·회사·캠퍼스·카페 대부분이 이 표준을 사용하므로, 시험/실무 둘 다에서 핵심입니다.
 
 ---
 
-## 15.1 Introduction
+## Introduction
 
-### 15.1.1 Architectural Comparison
+### Architectural Comparison
 
 #### 1) 유선 LAN vs 무선 LAN vs 셀룰러
 
@@ -55,13 +55,13 @@ category: DataCommunication
 ```
 
 - **AP(Access Point)**는 한쪽은 802.11, 다른 쪽은 802.3을 말하는 **브리지/포털**.
-- 데이터는 보통 “STA ↔ AP (802.11) ↔ 스위치/라우터 (802.3) ↔ 인터넷” 경로로 흐릅니다.:contentReference[oaicite:1]{index=1}  
+- 데이터는 보통 “STA ↔ AP (802.11) ↔ 스위치/라우터 (802.3) ↔ 인터넷” 경로로 흐릅니다.
 
 이 구조를 알고 있으면, 나중에 **802.11 주소 필드 4개**를 이해할 때 훨씬 수월합니다.
 
 ---
 
-### 15.1.2 Characteristics of WLANs
+### Characteristics of WLANs
 
 유선과 달리 무선 LAN은 물리적인 특성이 다르므로, **설계·튜닝·보안**이 달라집니다.
 
@@ -69,7 +69,7 @@ category: DataCommunication
 
 - Wi-Fi는 **한 채널에서 한 번에 한 쪽만 송신**할 수 있습니다(반이중).
 - 여러 STA/AP가 같은 채널을 사용하므로, 실제 **사용 가능한 시간(airtime)을 쪼개 씀**.
-- 유선 스위치처럼 “각 포트 1 Gbps”가 아니라, **채널당 N 명이 나눠 쓰는 구조**입니다.:contentReference[oaicite:2]{index=2}  
+- 유선 스위치처럼 “각 포트 1 Gbps”가 아니라, **채널당 N 명이 나눠 쓰는 구조**입니다.
 
 그래서 **동시 사용자 수·프레임 크기·관리 프레임 비율**이 성능에 크게 영향을 줍니다.
 
@@ -96,11 +96,11 @@ N_{\text{streams}}
 \times \frac{N_{\text{subcarriers}}}{T_{\text{symbol}}}
 $$
 
-형태를 가집니다(실제 802.11n/ac/ax 공식은 더 복잡).:contentReference[oaicite:3]{index=3}  
+형태를 가집니다(실제 802.11n/ac/ax 공식은 더 복잡).
 
 #### 3) 세대별(802.11n/ac/ax/be) 특징과 최신 속도
 
-최근 미국·유럽 문서 기준으로 **이론 최대 PHY 속도**는 대략 다음과 같습니다.:contentReference[oaicite:4]{index=4}  
+최근 미국·유럽 문서 기준으로 **이론 최대 PHY 속도**는 대략 다음과 같습니다.
 
 | 세대(마케팅) | 표준 | 주파수 | 이론 최대 속도(대략) |
 |--------------|------|--------|----------------------|
@@ -109,23 +109,23 @@ $$
 | Wi-Fi 6 / 6E | 802.11ax | 2.4/5/6 GHz | 최대 약 9.6 Gbps (8×8, 160 MHz) |
 | Wi-Fi 7 | 802.11be (초안) | 2.4/5/6 GHz | 이론적으로 20~40+ Gbps (320 MHz, 4096-QAM, 16×16 등) |
 
-하지만 **실측 속도는 이론 대비 20~30% 수준**인 경우가 많습니다. 미국 NIST의 11ax 측정에서도 9.6 Gbps 이론에 대해 **평균 1.2 Gbps 정도(약 25%)**만 달성된 예가 보고되어 있습니다.:contentReference[oaicite:5]{index=5}  
+하지만 **실측 속도는 이론 대비 20~30% 수준**인 경우가 많습니다. 미국 NIST의 11ax 측정에서도 9.6 Gbps 이론에 대해 **평균 1.2 Gbps 정도(약 25%)**만 달성된 예가 보고되어 있습니다.
 
 #### 4) 채널과 규제 (2.4/5/6 GHz, FCC·EU)
 
-- **2.4 GHz**: 전 세계적으로 허가 없는 ISM 대역. 채널 폭 20 MHz 기준 비중첩 3개(1, 6, 11).  
-- **5 GHz**: 더 많은 채널(U-NII 대역), 일부 채널은 **DFS(레이더 회피)** 필요.  
+- **2.4 GHz**: 전 세계적으로 허가 없는 ISM 대역. 채널 폭 20 MHz 기준 비중첩 3개(1, 6, 11).
+- **5 GHz**: 더 많은 채널(U-NII 대역), 일부 채널은 **DFS(레이더 회피)** 필요.
 - **6 GHz (Wi-Fi 6E)**:
-  - 미국 FCC: 2020년에 **5.925–7.125 GHz, 1200 MHz**를 비면허용으로 개방.:contentReference[oaicite:6]{index=6}  
-  - 유럽: 현재 약 **480 MHz(5.945–6.425 GHz)** 정도를 개방하는 방향으로 진행.:contentReference[oaicite:7]{index=7}  
+  - 미국 FCC: 2020년에 **5.925–7.125 GHz, 1200 MHz**를 비면허용으로 개방.
+  - 유럽: 현재 약 **480 MHz(5.945–6.425 GHz)** 정도를 개방하는 방향으로 진행.
 
-6 GHz는 기존 2.4/5 GHz와 달리 **Wi-Fi 6E/7 전용**이라 간섭이 적고, **7개의 160 MHz 채널** 같은 넓은 채널 구성이 가능해 고밀도 환경에 유리합니다.  
+6 GHz는 기존 2.4/5 GHz와 달리 **Wi-Fi 6E/7 전용**이라 간섭이 적고, **7개의 160 MHz 채널** 같은 넓은 채널 구성이 가능해 고밀도 환경에 유리합니다.
 
 ---
 
-### 15.1.3 Access Control (CSMA/CA)
+### Access Control (CSMA/CA)
 
-유선 Ethernet은 예전에 **CSMA/CD(충돌 탐지)**를 썼지만, 무선에서는 **충돌 자체를 감지하기 어렵기 때문에**, IEEE 802.11은 **CSMA/CA(충돌 회피)**를 사용합니다.:contentReference[oaicite:9]{index=9}  
+유선 Ethernet은 예전에 **CSMA/CD(충돌 탐지)**를 썼지만, 무선에서는 **충돌 자체를 감지하기 어렵기 때문에**, IEEE 802.11은 **CSMA/CA(충돌 회피)**를 사용합니다.
 
 #### 1) 왜 CSMA/CD가 안 되는가?
 
@@ -135,8 +135,8 @@ $$
 
 대신:
 
-- 미리 **매체 상태를 잘 듣고**,  
-- 충분히 조용할 때만 보내며,  
+- 미리 **매체 상태를 잘 듣고**,
+- 충분히 조용할 때만 보내며,
 - 누가 먼저 보낼지 **무작위(backoff)**로 조정.
 
 #### 2) DCF(Distributed Coordination Function) 알고리즘
@@ -187,7 +187,7 @@ def transmit_frame():
 2. **백오프**: 여러 STA가 동시에 전송하려는 상황을 피하려 랜덤 대기.
 3. **충돌/손실**: ACK를 받지 못하면 “충돌로 간주”하고 **이중 지수 백오프**.
 
-Arista, IEEE 튜토리얼 등에 매우 유사한 설명이 나옵니다.:contentReference[oaicite:10]{index=10}  
+Arista, IEEE 튜토리얼 등에 매우 유사한 설명이 나옵니다.
 
 #### 3) Interframe Space (IFS) 계층
 
@@ -201,11 +201,11 @@ SIFS < PIFS < DIFS 순서라, SIFS를 사용하는 **ACK/CTS가 항상 일반 �
 
 #### 4) Hidden / Exposed Terminal 문제와 RTS/CTS
 
-- **Hidden Terminal**: A와 C가 서로를 듣지 못하지만, 둘 다 B로 전송할 수 있는 상황.  
+- **Hidden Terminal**: A와 C가 서로를 듣지 못하지만, 둘 다 B로 전송할 수 있는 상황.
   - A와 C는 “채널이 비어 있다”고 판단하고 동시에 전송 → B에서 충돌.
 - **Exposed Terminal**: B→A 전송 중인데, C→D 전송은 사실 B/A에 영향을 주지 않지만, C가 “채널 busy”로 오인해 불필요하게 기다리는 상황.
 
-802.11은 **RTS(Request To Send) / CTS(Clear To Send)** 제어 프레임으로 이를 완화합니다.:contentReference[oaicite:11]{index=11}  
+802.11은 **RTS(Request To Send) / CTS(Clear To Send)** 제어 프레임으로 이를 완화합니다.
 
 단순한 시퀀스:
 
@@ -225,21 +225,21 @@ RTS/CTS는 **큰 프레임**에만 적용하는 것이 보통이며, 작은 프�
 
 #### 5) QoS: EDCA/HCF 개념
 
-802.11e 이후, 실무 Wi-Fi(특히 Wi-Fi 5/6)는 **EDCA**를 통한 우선순위 기반 MAC을 사용합니다.:contentReference[oaicite:12]{index=12}  
+802.11e 이후, 실무 Wi-Fi(특히 Wi-Fi 5/6)는 **EDCA**를 통한 우선순위 기반 MAC을 사용합니다.
 
-- 트래픽을 4개 Access Category(AC_VO, AC_VI, AC_BE, AC_BK)로 나눠  
-- 각 카테고리마다 **다른 AIFS, CWmin/max**를 부여  
+- 트래픽을 4개 Access Category(AC_VO, AC_VI, AC_BE, AC_BK)로 나눠
+- 각 카테고리마다 **다른 AIFS, CWmin/max**를 부여
   → 음성/영상은 더 짧은 backoff로 **우선 접근**.
 
 또한 AP는 **TXOP(Transmission Opportunity)**로 한 번 매체를 잡은 뒤 연속 프레임을 보낼 수 있어, 고속 PHY를 효율적으로 활용하도록 합니다.
 
 ---
 
-## 15.2 IEEE 802.11 Project
+## IEEE 802.11 Project
 
-### 15.2.1 Architecture
+### Architecture
 
-IEEE 802.11의 아키텍처는 용어가 많아 헷갈리기 쉬운데, 그림으로 정리하면 단순합니다.:contentReference[oaicite:13]{index=13}  
+IEEE 802.11의 아키텍처는 용어가 많아 헷갈리기 쉬운데, 그림으로 정리하면 단순합니다.
 
 #### 1) 기본 용어
 
@@ -308,9 +308,9 @@ Server/Internet
 
 ---
 
-### 15.2.2 MAC Sublayer
+### MAC Sublayer
 
-MAC 서브레이어는 **프레임 포맷, 프레임 종류, 재전송, 순서 제어, 전력 관리** 등을 담당합니다.:contentReference[oaicite:14]{index=14}  
+MAC 서브레이어는 **프레임 포맷, 프레임 종류, 재전송, 순서 제어, 전력 관리** 등을 담당합니다.
 
 #### 1) MAC 프레임의 큰 틀
 
@@ -331,7 +331,7 @@ MAC 서브레이어는 **프레임 포맷, 프레임 종류, 재전송, 순서 �
 
 #### 2) 프레임 종류
 
-IEEE 802.11은 MAC 프레임을 크게 네 가지 타입으로 나눕니다.:contentReference[oaicite:15]{index=15}  
+IEEE 802.11은 MAC 프레임을 크게 네 가지 타입으로 나눕니다.
 
 1. **관리(Management)**: Beacon, Probe Request/Response, Authentication, Association Request/Response, Reassociation, Disassociation, Deauthentication 등.
 2. **제어(Control)**: RTS, CTS, ACK, Block ACK, PS-Poll, CF-End 등.
@@ -347,7 +347,7 @@ IEEE 802.11은 MAC 프레임을 크게 네 가지 타입으로 나눕니다.:con
 
 #### 3) 신뢰성: ACK, 시퀀스 번호, 재전송
 
-802.11은 **링크 계층 수준 신뢰성**을 자체적으로 제공합니다.:contentReference[oaicite:16]{index=16}  
+802.11은 **링크 계층 수준 신뢰성**을 자체적으로 제공합니다.
 
 - 각 유니캐스트 데이터 프레임은 **ACK 프레임**으로 확인.
 - 송신자는 ACK를 기다리다가 타임아웃 시 재전송 + 백오프.
@@ -381,13 +381,13 @@ def send_reliable(dst, payload):
 
 - AP는 Beacon에 **TIM(트래픽 지시자 맵)**를 넣어, “어떤 STA에게 버퍼링된 프레임이 있는지” 광고.
 - STA는 주기적으로만 깨어나 Beacon을 듣고, 자신 비트가 세트되어 있으면 **PS-Poll** 또는 QoS Null 등을 보내 **버퍼링된 데이터**를 요구.
-- 802.11ax에서는 **TWT(Target Wake Time)**로 더 정교하게 “언제 깨어날지” 협상해 IoT·배터리 수명을 크게 늘립니다.:contentReference[oaicite:17]{index=17}  
+- 802.11ax에서는 **TWT(Target Wake Time)**로 더 정교하게 “언제 깨어날지” 협상해 IoT·배터리 수명을 크게 늘립니다.
 
 ---
 
-### 15.2.3 Addressing Mechanism
+### Addressing Mechanism
 
-802.3 Ethernet은 **Source, Destination 두 MAC 주소**만 있지만, 802.11은 **최대 4개의 주소 필드**를 가집니다. 이는 무선-유선 브리징, WDS 등 다양한 시나리오를 지원하기 위함입니다.:contentReference[oaicite:18]{index=18}  
+802.3 Ethernet은 **Source, Destination 두 MAC 주소**만 있지만, 802.11은 **최대 4개의 주소 필드**를 가집니다. 이는 무선-유선 브리징, WDS 등 다양한 시나리오를 지원하기 위함입니다.
 
 #### 1) ToDS / FromDS 비트
 
@@ -400,7 +400,7 @@ Frame Control의 두 비트가 프레임의 방향을 나타냅니다.
 
 #### 2) 주소 필드의 의미
 
-NetworkAcademy·IEEE 튜토리얼을 참고하면, 주소 필드 의미는 대략 다음과 같습니다.:contentReference[oaicite:19]{index=19}  
+NetworkAcademy·IEEE 튜토리얼을 참고하면, 주소 필드 의미는 대략 다음과 같습니다.
 
 | 경우 | ToDS | FromDS | Addr1 | Addr2 | Addr3 | Addr4 |
 |------|------|--------|-------|-------|-------|-------|
@@ -420,14 +420,14 @@ NetworkAcademy·IEEE 튜토리얼을 참고하면, 주소 필드 의미는 대�
 - 유선 게이트웨이(라우터) MAC: **GW = 00:CC:CC:CC:CC:CC**
 - 인터넷 서버 MAC: (바깥이므로 직접 보이지 않음)
 
-1. **STA → AP (무선 구간)**  
-   - ToDS=1, FromDS=0  
-   - Addr1 = BSSID = AP  
-   - Addr2 = SA = STA  
+1. **STA → AP (무선 구간)**
+   - ToDS=1, FromDS=0
+   - Addr1 = BSSID = AP
+   - Addr2 = SA = STA
    - Addr3 = DA = GW (게이트웨이 MAC; 라우터가 ARP로 알려줌)
 
-2. **AP → 게이트웨이 (유선)**  
-   - 일반 802.3 프레임  
+2. **AP → 게이트웨이 (유선)**
+   - 일반 802.3 프레임
    - Dest = GW, Src = AP(혹은 AP의 유선 MAC)
 
 반대 방향도 비슷하게 Address1/2/3의 역할이 달라집니다.
@@ -450,9 +450,9 @@ NetworkAcademy·IEEE 튜토리얼을 참고하면, 주소 필드 의미는 대�
 
 ---
 
-### 15.2.4 Physical Layer
+### Physical Layer
 
-마지막으로, 802.11 PHY 계층의 발전과 주요 개념을 정리합니다.:contentReference[oaicite:20]{index=20}  
+마지막으로, 802.11 PHY 계층의 발전과 주요 개념을 정리합니다.
 
 #### 1) 세대별 PHY 개요
 
@@ -466,7 +466,7 @@ NetworkAcademy·IEEE 튜토리얼을 참고하면, 주소 필드 의미는 대�
 | 802.11ax (Wi-Fi 6/6E) | 2.4/5/6 | OFDMA + MU-MIMO | 9.6 Gbps | BSS coloring, TWT, 1024-QAM |
 | 802.11be (Wi-Fi 7, 초안) | 2.4/5/6 | EHT, 4096-QAM | 20~40+ Gbps | 320 MHz, 멀티링크, 16×16 MU-MIMO |
 
-Wi-Fi 6의 9.6 Gbps 이론값은 **8×8 MIMO, 160 MHz 채널**을 가정한 것입니다.:contentReference[oaicite:21]{index=21}  
+Wi-Fi 6의 9.6 Gbps 이론값은 **8×8 MIMO, 160 MHz 채널**을 가정한 것입니다.
 
 #### 2) OFDM과 서브캐리어
 
@@ -491,7 +491,7 @@ $$
 
 #### 3) 802.11ax (Wi-Fi 6/6E)의 핵심 PHY 기능
 
-미국 NIST, 여러 벤더 백서 기준으로 Wi-Fi 6의 핵심 포인트는 다음과 같습니다.:contentReference[oaicite:22]{index=22}  
+미국 NIST, 여러 벤더 백서 기준으로 Wi-Fi 6의 핵심 포인트는 다음과 같습니다.
 
 - **OFDMA**: 하나의 채널을 작은 **Resource Unit(RU)**로 쪼개 여러 STA에 동시에 배정.
 - **UL/DL MU-MIMO**: 업링크/다운링크 모두 다중 사용자 MIMO 지원.
@@ -501,7 +501,7 @@ $$
 
 #### 4) 6 GHz 대역과 채널화
 
-앞서 봤듯 미국 FCC, 유럽 규제기관은 6 GHz 대역을 Wi-Fi에 열었습니다.:contentReference[oaicite:23]{index=23}  
+앞서 봤듯 미국 FCC, 유럽 규제기관은 6 GHz 대역을 Wi-Fi에 열었습니다.
 
 - 미국: 5.925–7.125 GHz 전체 1200 MHz (저전력 실내 / AFC 기반 표준 전력)
 - 유럽: 약 5.945–6.425 GHz, 480 MHz
@@ -520,6 +520,7 @@ Wi-Fi 6E/7 설계 시에는 **160 MHz 이상의 넓은 채널을 몇 개나 쓸 
 
 ```python
 # 단순 예시: 실제 802.11ax 공식과 약간 다를 수 있음
+
 N_streams = 2
 N_data_subcarriers = 980   # 예: 80 MHz에서 대략적인 데이터 서브캐리어 수
 bits_per_symbol = 10       # 1024-QAM
@@ -530,7 +531,7 @@ R_phy = N_streams * N_data_subcarriers * bits_per_symbol * code_rate / T_symbol
 print("대략적인 PHY 속도:", R_phy / 1e9, "Gbps")
 ```
 
-실제 표준과 제조사 스펙을 보면 80 MHz, 2×2 MIMO에서 약 1.2 Gbps 정도의 PHY 속도가 흔히 나옵니다.:contentReference[oaicite:24]{index=24}  
+실제 표준과 제조사 스펙을 보면 80 MHz, 2×2 MIMO에서 약 1.2 Gbps 정도의 PHY 속도가 흔히 나옵니다.
 
 #### 6) 실제 Goodput과 효율
 
@@ -543,7 +544,7 @@ $$
 즉, **페이로드 전송 시간 대비 총 전송 시간 비율**이 효율입니다.
 
 - VoIP처럼 작은 패킷(예: 80바이트)을 자주 보내면, **헤더/ACK 비율이 커져 효율이 낮음**.
-- 대용량 파일 전송처럼 큰 프레임을 보내면, **헤더·백오프를 여러 바이트에 나눠 먹으므로 효율↑**.:contentReference[oaicite:25]{index=25}  
+- 대용량 파일 전송처럼 큰 프레임을 보내면, **헤더·백오프를 여러 바이트에 나눠 먹으므로 효율↑**.
 
 NIST·연구 결과를 보면, 고급 AP라도 실제 환경에서 **이론 대비 20–40% 수준**의 goodput이 흔합니다.
 

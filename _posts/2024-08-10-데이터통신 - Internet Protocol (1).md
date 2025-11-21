@@ -6,18 +6,18 @@ category: DataCommunication
 ---
 # Chapter 19.1 Internet Protocol — IPv4 Datagram Format, Fragmentation, Options, Security
 
-> 앞 장(18장)에서 **IPv4 주소, 포워딩, 라우터 동작**을 봤다면, 이제는 “실제로 전선 위를 흐르는 IPv4 데이터그램이 정확히 어떻게 생겼는지”와 “어디서 잘리고(fragmentation), 어떤 옵션이 있으며, 보안 측면에서 어떤 문제가 있는지”를 파는 단계다.  
-> 이 장은 RFC 791(Internet Protocol)과 이후 확장(RFC 2474, RFC 3168, RFC 6274 등)을 기본 레퍼런스로 삼는다.  
+> 앞 장(18장)에서 **IPv4 주소, 포워딩, 라우터 동작**을 봤다면, 이제는 “실제로 전선 위를 흐르는 IPv4 데이터그램이 정확히 어떻게 생겼는지”와 “어디서 잘리고(fragmentation), 어떤 옵션이 있으며, 보안 측면에서 어떤 문제가 있는지”를 파는 단계다.
+> 이 장은 RFC 791(Internet Protocol)과 이후 확장(RFC 2474, RFC 3168, RFC 6274 등)을 기본 레퍼런스로 삼는다.
 
 ---
 
-## 1. IPv4 Datagram Format
+## IPv4 Datagram Format
 
-### 1.1 전체 IPv4 헤더 구조
+### 전체 IPv4 헤더 구조
 
 IPv4 데이터그램은 크게 **헤더(Header)**와 **데이터(payload)**로 나뉜다.
 
-아주 기본적인(옵션 없는) IPv4 헤더는 **20바이트** 길이를 갖고, 필요하면 옵션 필드를 통해 60바이트까지 늘릴 수 있다. RFC 791에서 정의한 포맷은 아래와 같다.  
+아주 기본적인(옵션 없는) IPv4 헤더는 **20바이트** 길이를 갖고, 필요하면 옵션 필드를 통해 60바이트까지 늘릴 수 있다. RFC 791에서 정의한 포맷은 아래와 같다.
 
 ```text
   0                   1                   2                   3
@@ -59,15 +59,15 @@ IPv4 데이터그램은 크게 **헤더(Header)**와 **데이터(payload)**로 �
 
 ---
 
-### 1.2 Version과 IHL
+### Version과 IHL
 
-- **Version**  
+- **Version**
   - 4bit, 현재 IPv4 데이터그램이라면 항상 `4`.
   - IPv6는 별도의 헤더 구조를 가지며, Version=6.
 
-- **IHL (Internet Header Length)**  
+- **IHL (Internet Header Length)**
   - “헤더의 길이(4바이트 단위)”를 나타냄.
-  - 최소값: 5 (5 × 4 = 20바이트, 옵션 없음)  
+  - 최소값: 5 (5 × 4 = 20바이트, 옵션 없음)
   - 최대값: 15 (15 × 4 = 60바이트)
 
 수식으로 쓰면:
@@ -83,16 +83,16 @@ $$
 
 ---
 
-### 1.3 DS 필드(DSCP + ECN)
+### DS 필드(DSCP + ECN)
 
-과거 IPv4 헤더의 8비트는 **Type of Service(ToS)** 로 정의되었지만, 현대 인터넷에서는 **Differentiated Services(DS) 필드**로 재정의되었다.  
+과거 IPv4 헤더의 8비트는 **Type of Service(ToS)** 로 정의되었지만, 현대 인터넷에서는 **Differentiated Services(DS) 필드**로 재정의되었다.
 
-- 상위 6비트: **DSCP(Differentiated Services Code Point)**  
-  - 트래픽 클래스(예: EF, AFxy, CSx)를 표현  
-  - IANA의 DSCP registry에 공식 코드포인트가 정의되어 있음.  
-- 하위 2비트: **ECN(Explicit Congestion Notification)**  
-  - 혼잡 발생 시 패킷을 드롭하는 대신 “마킹”하는 용도로 사용  
-  - `00`: Not-ECT, `10`/`01`: ECT(0/1), `11`: CE(혼잡 경험)  
+- 상위 6비트: **DSCP(Differentiated Services Code Point)**
+  - 트래픽 클래스(예: EF, AFxy, CSx)를 표현
+  - IANA의 DSCP registry에 공식 코드포인트가 정의되어 있음.
+- 하위 2비트: **ECN(Explicit Congestion Notification)**
+  - 혼잡 발생 시 패킷을 드롭하는 대신 “마킹”하는 용도로 사용
+  - `00`: Not-ECT, `10`/`01`: ECT(0/1), `11`: CE(혼잡 경험)
 
 실무 예:
 
@@ -101,7 +101,7 @@ $$
 
 ---
 
-### 1.4 Total Length
+### Total Length
 
 - 헤더 + 데이터 전체 길이(바이트)
 - 16비트 → 최대 값은 \(2^{16}-1 = 65\,535\) 바이트
@@ -110,7 +110,7 @@ $$
 20 \le \text{Total Length} \le 65,\!535
 $$
 
-이 필드 덕분에 수신 측은 **IP 계층에서 데이터그램의 끝을 정확히 알고**,  
+이 필드 덕분에 수신 측은 **IP 계층에서 데이터그램의 끝을 정확히 알고**,
 그 뒤에 오는 다른 프레임/패킷과 구분할 수 있다.
 
 예: MTU 1500 이더넷 환경에서
@@ -120,15 +120,15 @@ $$
 
 ---
 
-### 1.5 Identification, Flags, Fragment Offset
+### Identification, Flags, Fragment Offset
 
 이 세 필드는 **단편화(fragmentation)/재조립(reassembly)**를 위해 함께 사용된다.
 
-- **Identification(16비트)**  
+- **Identification(16비트)**
   - 같은 원본 데이터그램에서 나온 조각들이 **같은 값**을 가짐.
   - 수신 측은 `(Source IP, Destination IP, Protocol, Identification)` 조합으로 어떤 조각이 어떤 원본 데이터그램에 속하는지 구분한다.
 
-- **Flags(3비트)** — RFC 791에서 정의된 의미  
+- **Flags(3비트)** — RFC 791에서 정의된 의미
 
   - 비트 0: 예약(항상 0이어야 함)
   - 비트 1: DF(Don’t Fragment)
@@ -138,7 +138,7 @@ $$
     - 0: 마지막 조각
     - 1: 뒤에 더 많은 조각이 있음
 
-- **Fragment Offset(13비트)**  
+- **Fragment Offset(13비트)**
   - 조각의 위치를 **8바이트 단위**로 나타낸다.
   - 즉, 실제 바이트 offset은 `FragmentOffset × 8`.
 
@@ -150,41 +150,41 @@ $$
 
 ---
 
-### 1.6 TTL, Protocol, Header Checksum
+### TTL, Protocol, Header Checksum
 
-- **TTL(Time to Live)**  
+- **TTL(Time to Live)**
   - 패킷이 라우터를 지날 때마다 1씩 감소.
   - 0이 되면 해당 패킷은 폐기되고, 보통 ICMP Time Exceeded 메시지가 출발지로 간다.
   - 라우팅 루프 방지 기능.
 
-- **Protocol**  
+- **Protocol**
   - 상위 계층(transport or others)을 식별하는 번호.
-  - 예: TCP=6, UDP=17, ICMP=1, OSPF=89 등  
-  - IANA의 Protocol Numbers registry에 공식 번호가 정의되어 있다.  
+  - 예: TCP=6, UDP=17, ICMP=1, OSPF=89 등
+  - IANA의 Protocol Numbers registry에 공식 번호가 정의되어 있다.
 
-- **Header Checksum**  
+- **Header Checksum**
   - IPv4 헤더에 대한 16비트 1의 보수(ones-complement) 체크섬.
   - 라우터가 TTL을 줄일 때마다 헤더가 바뀌므로, 그때마다 checksum을 다시 계산하거나 “보정”해야 한다.
   - 페이로드는 보호하지 않아, **보안용 보호 수단은 전혀 아니다** (단순 오류 검출용).
 
 ---
 
-### 1.7 소스/목적지 주소, Options
+### 소스/목적지 주소, Options
 
-- **Source Address, Destination Address**  
+- **Source Address, Destination Address**
   - 32비트 IPv4 주소.
   - 앞 장에서 본 CIDR, DHCP, ARP를 통해 할당·해석되는 값.
 
-- **Options + Padding**  
-  - 다양한 목적(경로 기록, 시간 측정, source route, router alert 등)으로 사용.  
-  - 실무 인터넷에서는 **옵션을 포함한 패킷이 성능/보안 이슈 때문에 거의 사용되지 않으며**, 일부 옵션은 사실상 사용 금지 수준으로 취급된다.  
+- **Options + Padding**
+  - 다양한 목적(경로 기록, 시간 측정, source route, router alert 등)으로 사용.
+  - 실무 인터넷에서는 **옵션을 포함한 패킷이 성능/보안 이슈 때문에 거의 사용되지 않으며**, 일부 옵션은 사실상 사용 금지 수준으로 취급된다.
   - 뒤의 3장에서 Options를 따로 상세히 다룬다.
 
 ---
 
-### 1.8 간단한 헤더 파서 예제 (파이썬)
+### 간단한 헤더 파서 예제 (파이썬)
 
-리눅스에서 RAW 소켓으로 읽어온 데이터가 IPv4 패킷이라고 가정하고,  
+리눅스에서 RAW 소켓으로 읽어온 데이터가 IPv4 패킷이라고 가정하고,
 헤더의 기본 필드들을 파싱해 보는 코드:
 
 ```python
@@ -234,9 +234,9 @@ def parse_ipv4_header(data: bytes):
 
 ---
 
-## 2. Fragmentation (단편화)
+## Fragmentation (단편화)
 
-### 2.1 왜 단편화가 필요한가
+### 왜 단편화가 필요한가
 
 네트워크에는 각 링크마다 **MTU(Maximum Transmission Unit)**가 있다.
 
@@ -245,20 +245,20 @@ def parse_ipv4_header(data: bytes):
 - 일부 VPN 터널: 1400바이트 근처
 - 점대점 전용 회선 등: 다양
 
-IPv4 데이터그램의 `Total Length`가 **경로 상 링크의 MTU보다 크면**,  
+IPv4 데이터그램의 `Total Length`가 **경로 상 링크의 MTU보다 크면**,
 해당 링크에선 그대로 보낼 수 없다. 이때 가능한 전략은 두 가지:
 
-1. **라우터가 데이터그램을 잘게 쪼갬(fragmentation)**  
+1. **라우터가 데이터그램을 잘게 쪼갬(fragmentation)**
    - DF=0인 경우(단편화 허용)
-2. **단편화하지 않고, ICMP “Fragmentation Needed”를 돌려보내 출발지가 Path MTU를 줄이도록 함**  
+2. **단편화하지 않고, ICMP “Fragmentation Needed”를 돌려보내 출발지가 Path MTU를 줄이도록 함**
    - DF=1인 경우 (Path MTU Discovery에 사용)
 
-IPv6는 라우터 단편화를 금지하고, **오직 출발지에서만 단편화**할 수 있게 바뀌었다.  
-이는 IPv4 단편화로 인한 성능·보안 문제를 줄이기 위한 설계다.  
+IPv6는 라우터 단편화를 금지하고, **오직 출발지에서만 단편화**할 수 있게 바뀌었다.
+이는 IPv4 단편화로 인한 성능·보안 문제를 줄이기 위한 설계다.
 
 ---
 
-### 2.2 단편화 동작 방식
+### 단편화 동작 방식
 
 단편화 발생 시, 라우터는:
 
@@ -270,7 +270,7 @@ IPv6는 라우터 단편화를 금지하고, **오직 출발지에서만 단편�
 
 ---
 
-### 2.3 예제: 4000바이트 데이터그램을 MTU 1500 링크로 전송
+### 예제: 4000바이트 데이터그램을 MTU 1500 링크로 전송
 
 가정:
 
@@ -330,7 +330,7 @@ $$
 
 ---
 
-### 2.4 단편화 시뮬레이션 코드 예제 (파이썬)
+### 단편화 시뮬레이션 코드 예제 (파이썬)
 
 ```python
 def fragment_ipv4(total_len, header_len, mtu):
@@ -375,52 +375,52 @@ for i, f in enumerate(frags, 1):
 
 ---
 
-### 2.5 Fragmentation이 가져오는 문제점
+### Fragmentation이 가져오는 문제점
 
 1. **성능 문제**
    - 각 fragment마다 헤더가 붙어 오버헤드 증가.
    - 손실 시 재전송 비용 증가: fragment 중 하나만 유실되어도, 상위 계층 입장에선 “원본 세그먼트 전체를 다시 보내야” 할 수 있음.
    - 라우터/호스트의 reassembly 버퍼 부담.
 
-2. **보안 문제 (상세는 4장에서)**  
+2. **보안 문제 (상세는 4장에서)**
    - **중첩(overlapping) fragment**를 이용해 침입 탐지/방화벽을 우회하는 공격.
    - **tiny fragment**로 헤더를 여러 조각으로 쪼개, 필터링을 우회하려는 시도.
-   - RFC 6274는 이러한 공격 벡터와 방어 권고사항을 자세히 정리하고 있다.  
+   - RFC 6274는 이러한 공격 벡터와 방어 권고사항을 자세히 정리하고 있다.
 
 3. **Path MTU Discovery와의 상호작용**
    - PMTUD는 DF=1로 보내고, 단편화가 필요하면 라우터가 ICMP “Fragmentation Needed”를 보내도록 하는 메커니즘.
    - 방화벽/중간 장비가 ICMP를 막아버리면 PMTUD가 깨지고, “블랙홀” 문제가 발생.
 
-실무에서는 **가급적 IPv4 단편화를 피하고**,  
+실무에서는 **가급적 IPv4 단편화를 피하고**,
 MSS 조정이나 터널 MTU 조정으로 Path MTU에 맞춰 송신하는 것이 권장된다.
 
 ---
 
-## 3. IPv4 Options
+## IPv4 Options
 
-### 3.1 옵션 필드의 구조
+### 옵션 필드의 구조
 
-옵션은 “필요한 패킷만” 추가 정보를 실을 수 있도록 만든 확장 메커니즘이다.  
-하지만 많은 라우터가 **옵션이 있는 패킷을 slow path로 보내거나 아예 드롭**하기 때문에,  
-실제 인터넷 트래픽에서는 거의 사용되지 않는다.  
+옵션은 “필요한 패킷만” 추가 정보를 실을 수 있도록 만든 확장 메커니즘이다.
+하지만 많은 라우터가 **옵션이 있는 패킷을 slow path로 보내거나 아예 드롭**하기 때문에,
+실제 인터넷 트래픽에서는 거의 사용되지 않는다.
 
 옵션의 기본 형식은 다음과 같다 (RFC 791):
 
 - **단일 바이트 옵션** (예: EOL, NOP)
   - 8bit: Option Type
-- **가변 길이 옵션**  
-  - Option Type (1바이트)  
-  - Option Length (1바이트, 전체 길이)  
+- **가변 길이 옵션**
+  - Option Type (1바이트)
+  - Option Length (1바이트, 전체 길이)
   - Option Data (가변 길이)
 
-옵션 리스트 끝은 항상 **붙임을 맞추기 위한 Padding**을 포함해  
+옵션 리스트 끝은 항상 **붙임을 맞추기 위한 Padding**을 포함해
 헤더 전체가 32bit(4바이트) 배수가 되도록 맞춘다.
 
 ---
 
-### 3.2 주요 옵션 타입
+### 주요 옵션 타입
 
-아래 표는 대표적인 IPv4 옵션들이다. (번호는 RFC에서 정의된 Type 값의 십진수 표현)  
+아래 표는 대표적인 IPv4 옵션들이다. (번호는 RFC에서 정의된 Type 값의 십진수 표현)
 
 | 이름                 | 타입 | 설명 |
 |----------------------|------|------|
@@ -432,12 +432,12 @@ MSS 조정이나 터널 MTU 조정으로 Path MTU에 맞춰 송신하는 것이 
 | Strict Source Route  | 137  | “엄격한” source routing (정확한 다음 홉 목록) |
 | Router Alert         | 148  | 라우터가 이 패킷을 특별히 주목해야 함 (예: IGMP, RSVP) |
 
-특히, **Loose/Strict Source Route**는 보안상 위험성이 커서  
-대부분의 운영자들이 **완전히 차단**하거나 사용하지 않는다.  
+특히, **Loose/Strict Source Route**는 보안상 위험성이 커서
+대부분의 운영자들이 **완전히 차단**하거나 사용하지 않는다.
 
 ---
 
-### 3.3 Record Route & Timestamp 예
+### Record Route & Timestamp 예
 
 #### (1) Record Route
 
@@ -458,18 +458,18 @@ MSS 조정이나 터널 MTU 조정으로 Path MTU에 맞춰 송신하는 것이 
 
 ---
 
-### 3.4 Router Alert 옵션
+### Router Alert 옵션
 
-**Router Alert(옵션 타입 148)**은 “이 패킷은 라우터에서 특별히 처리해야 함”을 표시하는 옵션이다. 예를 들어 IGMP, RSVP 메시지가 이런 옵션을 사용할 수 있다.  
+**Router Alert(옵션 타입 148)**은 “이 패킷은 라우터에서 특별히 처리해야 함”을 표시하는 옵션이다. 예를 들어 IGMP, RSVP 메시지가 이런 옵션을 사용할 수 있다.
 
-- 라우터는 이 옵션이 있으면 패킷을 그냥 포워딩만 하는 것이 아니라  
+- 라우터는 이 옵션이 있으면 패킷을 그냥 포워딩만 하는 것이 아니라
   **제어 플레인으로도 전달**해 추가 처리를 할 수 있다.
-- 하지만 옵션 자체가 slow path를 유발하므로,  
+- 하지만 옵션 자체가 slow path를 유발하므로,
   대부분의 트래픽은 이 옵션 없이 운영되는 것이 일반적이다.
 
 ---
 
-### 3.5 옵션 파싱 예제 코드
+### 옵션 파싱 예제 코드
 
 단순화된 IPv4 옵션 파서(모든 옵션을 다 지원하는 건 아니고, 구조 이해용):
 
@@ -508,24 +508,24 @@ def parse_ipv4_options(header: bytes):
     return opts
 ```
 
-이 코드는 옵션이 실제로 무엇을 의미하는지는 해석하지 않지만,  
+이 코드는 옵션이 실제로 무엇을 의미하는지는 해석하지 않지만,
 “옵션 헤더가 어떻게 구성되어 있는지”를 보여주는 데 충분하다.
 
 ---
 
-## 4. Security of IPv4 Datagram
+## Security of IPv4 Datagram
 
-IPv4는 1981년에 설계되었고, 당시에는 **보안 위협 모델이 매우 단순**했다.  
-RFC 6274는 “이 오래된 설계가 현대 인터넷에서 어떤 보안 문제를 갖는지”를 종합적으로 분석하고 있다.  
+IPv4는 1981년에 설계되었고, 당시에는 **보안 위협 모델이 매우 단순**했다.
+RFC 6274는 “이 오래된 설계가 현대 인터넷에서 어떤 보안 문제를 갖는지”를 종합적으로 분석하고 있다.
 
 여기서는 **데이터그램 자체와 관련된 대표적인 보안 이슈**를 정리한다.
 
 ---
 
-### 4.1 헤더 체크섬의 한계
+### 헤더 체크섬의 한계
 
 - IPv4 **Header Checksum**은 단순히 전송 중 우발적인 비트 오류를 잡기 위한 용도다.
-- 공격자는 패킷을 변조한 다음, **체크섬을 새로 계산해 넣으면 끝**이기 때문에  
+- 공격자는 패킷을 변조한 다음, **체크섬을 새로 계산해 넣으면 끝**이기 때문에
   **무결성·인증 보장은 전혀 제공하지 않는다.**
 - 페이로드(데이터)에는 아예 checksum도 걸려 있지 않다(상위 계층이 책임).
 
@@ -536,32 +536,32 @@ RFC 6274는 “이 오래된 설계가 현대 인터넷에서 어떤 보안 문�
 
 ---
 
-### 4.2 주소 스푸핑(Source Address Spoofing)과 BCP 38
+### 주소 스푸핑(Source Address Spoofing)과 BCP 38
 
-IPv4 헤더의 Source Address는 **송신자가 임의의 값을 넣을 수 있다**.  
+IPv4 헤더의 Source Address는 **송신자가 임의의 값을 넣을 수 있다**.
 라우터는 기본적으로 이 값을 검증하지 않기 때문에,
 
 - 공격자가 출발지 주소를 “임의의 다른 사람 주소”로 바꿔 넣는 **스푸핑(spoofing)**이 가능하다.
 - 그 결과:
   - **DDoS 공격**에서 공격 원점을 숨길 수 있음.
-  - 반사(reflection)·증폭(amplification) 공격에서 출발지 IP를 피해자 주소로 바꾸어,  
+  - 반사(reflection)·증폭(amplification) 공격에서 출발지 IP를 피해자 주소로 바꾸어,
     응답 트래픽이 피해자에게 폭주하도록 만들 수 있음.
 
-이를 막기 위해 IETF는 **BCP 38 (Network Ingress Filtering)**을 권고한다.  
+이를 막기 위해 IETF는 **BCP 38 (Network Ingress Filtering)**을 권고한다.
 
-- ISP/조직 경계 라우터는 “자기 네트워크 쪽에서 나오는 패킷의 Source IP가  
+- ISP/조직 경계 라우터는 “자기 네트워크 쪽에서 나오는 패킷의 Source IP가
   **자기 네트워크에 할당된 주소인지** 검사”해야 한다.
 - 맞지 않으면 해당 패킷은 드롭 → 스푸핑된 패킷이 인터넷으로 나가지 못하게 함.
 
-실무에서는 여전히 BCP 38을 적용하지 않은 네트워크가 남아 있어,  
-스푸핑 기반 DDoS가 완전히 사라지지는 않았다. 하지만 **주요 북미·유럽 ISP**들은  
+실무에서는 여전히 BCP 38을 적용하지 않은 네트워크가 남아 있어,
+스푸핑 기반 DDoS가 완전히 사라지지는 않았다. 하지만 **주요 북미·유럽 ISP**들은
 이 원칙을 점점 더 적극적으로 적용하고 있다.
 
 ---
 
-### 4.3 Fragmentation 관련 공격
+### Fragmentation 관련 공격
 
-RFC 6274는 IPv4 단편이 **어떻게 악용될 수 있는지**에 대해 자세히 기술한다.  
+RFC 6274는 IPv4 단편이 **어떻게 악용될 수 있는지**에 대해 자세히 기술한다.
 
 대표적인 공격 아이디어:
 
@@ -574,7 +574,7 @@ RFC 6274는 IPv4 단편이 **어떻게 악용될 수 있는지**에 대해 자�
 
 2. **Tiny Fragment Attack**
    - IP 헤더나 TCP 헤더를 **여러 작은 fragment로 쪼갠다.**
-   - 방화벽이 “첫 fragment 헤더만 보고 필터링”하는 경우,  
+   - 방화벽이 “첫 fragment 헤더만 보고 필터링”하는 경우,
      나머지 fragment에 숨겨진 정보를 보고 차단하지 못할 수 있다.
    - 예: TCP 포트 번호를 두 번째 fragment에 넣어 우회.
 
@@ -585,41 +585,41 @@ RFC 6274는 IPv4 단편이 **어떻게 악용될 수 있는지**에 대해 자�
 
 - overlapping fragment가 들어오면 **재조립 과정에서 오류로 간주하고 폐기**.
 - fragment 크기가 너무 작거나, 비정상적인 패턴이면 필터링.
-- 방화벽/IDS는 reassembly 로직을 엄격히 RFC 기준에 맞추거나,  
+- 방화벽/IDS는 reassembly 로직을 엄격히 RFC 기준에 맞추거나,
   아예 “이상한 fragment는 모두 드롭”하는 정책을 선택.
 
 ---
 
-### 4.4 Options 기반 공격과 정책
+### Options 기반 공격과 정책
 
-IPv4 옵션은 그 자체로 **slow path**를 유발하고,  
+IPv4 옵션은 그 자체로 **slow path**를 유발하고,
 일부 옵션은 보안상 위험하다.
 
 1. **Source Routing 옵션 (Loose/Strict Source Route)**
-   - 송신자가 경로를 직접 지정할 수 있어,  
+   - 송신자가 경로를 직접 지정할 수 있어,
      **보안 장비를 우회하거나 특정 경로를 강제**하는 데 악용될 수 있다.
-   - RFC 6274는 이 옵션을 **기본적으로 비활성화하거나 드롭**할 것을 강력 권고한다.  
+   - RFC 6274는 이 옵션을 **기본적으로 비활성화하거나 드롭**할 것을 강력 권고한다.
 
 2. **Record Route/Timestamp**
-   - 자체가 공격은 아니지만, **네트워크 토폴로지·라우터 주소·지연 정보**를 노출해  
+   - 자체가 공격은 아니지만, **네트워크 토폴로지·라우터 주소·지연 정보**를 노출해
      공격자가 정찰(reconnaissance)에 사용할 수 있음.
    - 많은 ISP가 이 옵션들을 무시하거나 필터링한다.
 
 3. **Router Alert**
-   - 제어 트래픽(IGMP, RSVP 등)을 위해 필요한 경우가 있으나,  
+   - 제어 트래픽(IGMP, RSVP 등)을 위해 필요한 경우가 있으나,
      임의의 패킷이 Router Alert를 사용해 라우터 CPU에 부담을 줄 수 있다.
    - 따라서 특정 프로토콜에 대해서만 허용하고, 나머지는 방화벽으로 차단하는 식의 정책이 사용된다.
 
 현대 운영 가이드라인에서는 대체로:
 
 - **일반 인터넷에서는 IPv4 옵션 사용을 최소화**하고,
-- **Source Route 옵션은 반드시 차단**,  
-- **Record Route/Timestamp는 내부 디버깅용 정도로만 제한**  
-하는 것을 권장한다.  
+- **Source Route 옵션은 반드시 차단**,
+- **Record Route/Timestamp는 내부 디버깅용 정도로만 제한**
+하는 것을 권장한다.
 
 ---
 
-### 4.5 ICMP, Path MTU, 라우팅 공격
+### ICMP, Path MTU, 라우팅 공격
 
 IPv4 데이터그램은 ICMP와 함께 동작한다.
 
@@ -628,7 +628,7 @@ IPv4 데이터그램은 ICMP와 함께 동작한다.
 
 보안 측면:
 
-- 공격자가 **위조된 ICMP 메시지**를 보내 호스트의 라우팅 캐시를 왜곡하거나,  
+- 공격자가 **위조된 ICMP 메시지**를 보내 호스트의 라우팅 캐시를 왜곡하거나,
   Path MTU를 잘못 추정하게 만들어 **MTU blackhole**을 유발할 수 있다.
 - 방화벽/라우터는 ICMP를 완전히 막기보다는,
   - “내부에서 외부로 나가는 요청에 대한 정상적인 응답(ICMP error)”은 허용하고,
@@ -636,14 +636,14 @@ IPv4 데이터그램은 ICMP와 함께 동작한다.
 
 ---
 
-### 4.6 IPv4 보안 강화를 위한 일반적인 조치
+### IPv4 보안 강화를 위한 일반적인 조치
 
-IPv4 데이터그램 자체가 제공하는 보안 기능은 매우 제한적이므로,  
+IPv4 데이터그램 자체가 제공하는 보안 기능은 매우 제한적이므로,
 실무에서는 다음과 같은 레이어에서 보안을 보강한다.
 
 1. **네트워크 경계에서의 필터링**
    - BCP 38 ingress filtering으로 스푸핑 방지.
-   - 비정상적인 fragment, 위험한 옵션, 이상한 TTL 등을 필터링.  
+   - 비정상적인 fragment, 위험한 옵션, 이상한 TTL 등을 필터링.
 
 2. **IPsec**
    - AH/ESP를 사용해 IP 레벨에서 **무결성(Integrity)·기밀성(Confidentiality)** 제공.
@@ -656,7 +656,7 @@ IPv4 데이터그램 자체가 제공하는 보안 기능은 매우 제한적이
 4. **라우팅 보안**
    - BGPsec/RPKI 등으로 라우팅 정보 자체의 위변조를 방지.
 
-IPv4 자체는 “암호화나 인증을 제공하지 않는 단순한 패킷 전달 메커니즘”이라는 점을 명확히 이해하고,  
+IPv4 자체는 “암호화나 인증을 제공하지 않는 단순한 패킷 전달 메커니즘”이라는 점을 명확히 이해하고,
 위 레이어에서 적절한 보안 대책을 결합해야 한다.
 
 ---

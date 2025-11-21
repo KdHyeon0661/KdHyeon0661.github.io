@@ -6,26 +6,26 @@ category: DataCommunication
 ---
 # Chapter 24.3 Transmission Control Protocol (TCP)
 
-## 24.3.1 TCP Services
+## TCP Services
 
 ### 1) TCP가 제공하는 서비스 개요
 
-TCP는 오늘날 인터넷에서 **대부분의 중요 애플리케이션**이 사용하는 전송 계층 프로토콜이다.  
+TCP는 오늘날 인터넷에서 **대부분의 중요 애플리케이션**이 사용하는 전송 계층 프로토콜이다.
 핵심 서비스는 다음과 같다.
 
-1. **신뢰적인 데이터 전송(Reliable Data Transfer)**  
+1. **신뢰적인 데이터 전송(Reliable Data Transfer)**
    - 손실 없는 전달(가능한 한): 재전송, 순서 제어, 오류 검출/복구.
-2. **순서 보장(Ordered Delivery)**  
+2. **순서 보장(Ordered Delivery)**
    - 바이트 스트림의 순서를 보내는 쪽과 동일하게 맞춤.
-3. **중복 제거(Duplicate Suppression)**  
+3. **중복 제거(Duplicate Suppression)**
    - 중복 세그먼트는 수신 측에서 제거.
-4. **흐름 제어(Flow Control)**  
+4. **흐름 제어(Flow Control)**
    - 수신자가 감당할 수 있을 만큼만 보내도록 송신 측 속도 조절.
-5. **혼잡 제어(Congestion Control)**  
+5. **혼잡 제어(Congestion Control)**
    - 네트워크 전체의 혼잡을 감안해서 송신 윈도우 크기 조절.
-6. **전이중 통신(Full-duplex)**  
+6. **전이중 통신(Full-duplex)**
    - 양 방향으로 동시에 데이터 전송 가능.
-7. **연결 지향(Connection-Oriented)**  
+7. **연결 지향(Connection-Oriented)**
    - 3-way handshake로 **연결 설정 → 데이터 전송 → 연결 종료**.
 
 이 서비스들은 OS 소켓 API로 사용될 때 다음과 같이 느껴진다.
@@ -62,16 +62,16 @@ TCP를 선택하는 순간, 애플리케이션은 **“신뢰성과 순서, 혼�
 
 ---
 
-## 24.3.2 TCP Features
+## TCP Features
 
-TCP가 위 서비스를 구현하기 위해 사용하는 메커니즘을 정리해보자.  
-아래 내용은 RFC 9293에서 정리된 “TCP 동작”을 기반으로 정리한 것이다.  
+TCP가 위 서비스를 구현하기 위해 사용하는 메커니즘을 정리해보자.
+아래 내용은 RFC 9293에서 정리된 “TCP 동작”을 기반으로 정리한 것이다.
 
 ### 1) 시퀀스 번호와 ACK
 
-- **Sequence Number (32비트)**  
+- **Sequence Number (32비트)**
   - 바이트 단위 번호. 특정 세그먼트의 **첫 번째 바이트 번호**를 나타낸다.
-- **Acknowledgment Number (32비트)**  
+- **Acknowledgment Number (32비트)**
   - 수신자가 “다음에 받고 싶은 바이트의 번호”를 넣어서 보낸다.
   - 즉, `ACK = N`은 “0~(N-1)번 바이트까지 잘 받았어” 라는 의미.
 
@@ -89,7 +89,7 @@ TCP는 **슬라이딩 윈도우(sliding window)** 를 사용한다.
 
 - 송신자는 “확인(ACK)이 오지 않았지만 보낼 수 있는 바이트 범위”를 **송신 윈도우**로 관리한다.
 - 수신자는 자신의 버퍼 여유를 `Window` 필드에 넣어 송신자에게 알려준다 (수신 윈도우).
-- 실제 송신 가능 범위는 **min(송신측 윈도우, 수신측 윈도우)** 로 결정된다.  
+- 실제 송신 가능 범위는 **min(송신측 윈도우, 수신측 윈도우)** 로 결정된다.
 
 수학적으로 간단히 쓰면, 시점 \(t\)에서 송신 가능한 바이트 수는
 
@@ -104,13 +104,13 @@ $$
 
 ### 3) 혼잡 제어 (AIMD, Slow Start 등)
 
-전통적인 TCP 혼잡 제어는 다음 개념으로 설명된다.  
+전통적인 TCP 혼잡 제어는 다음 개념으로 설명된다.
 
 1. **슬로우 스타트(Slow Start)**
-   - 최초 연결 또는 타임아웃 후에는 네트워크 상황을 모르므로,  
+   - 최초 연결 또는 타임아웃 후에는 네트워크 상황을 모르므로,
      작은 윈도우(예: 1 MSS)에서 시작해 ACK 하나마다 윈도우를 1 MSS씩 증가 → RTT마다 대략 두 배씩 (지수 증가).
 2. **혼잡 회피(Congestion Avoidance)**
-   - 어느 순간부터는 네트워크가 포화에 가까운 것으로 보고,  
+   - 어느 순간부터는 네트워크가 포화에 가까운 것으로 보고,
      RTT마다 1 MSS씩만 증가 (선형 증가).
 3. **빠른 재전송(Fast Retransmit) / 빠른 회복(Fast Recovery)**
    - 중복 ACK가 여러 번 오면 (예: 3중복 ACK), 타임아웃까지 기다리지 않고 빠르게 재전송.
@@ -145,7 +145,7 @@ $$
 SRTT \leftarrow (1 - \alpha) \cdot SRTT + \alpha \cdot RTT_{\text{sample}}
 $$
 
-또한 편차를 고려한 RTO(Retransmission Timeout) 설정을 위해  
+또한 편차를 고려한 RTO(Retransmission Timeout) 설정을 위해
 Jacobson/Karels 알고리즘(편차 기반)도 쓰인다.
 
 ### 5) 기타 중요한 기능들
@@ -159,11 +159,11 @@ Jacobson/Karels 알고리즘(편차 기반)도 쓰인다.
    - Window Scale
    - SACK Permitted / SACK
    - Timestamps
-   - ECN(Explicit Congestion Notification) 관련 플래그(반은 IP, 반은 TCP) 등.  
+   - ECN(Explicit Congestion Notification) 관련 플래그(반은 IP, 반은 TCP) 등.
 
 ---
 
-## 24.3.3 TCP Segment
+## TCP Segment
 
 ### 1) 세그먼트의 개념
 
@@ -171,11 +171,11 @@ Jacobson/Karels 알고리즘(편차 기반)도 쓰인다.
 - 각 세그먼트는
   - **TCP 헤더 (20~60바이트)** +
   - **Payload(데이터)**
-  로 구성되고, IP 데이터그램 안에 캡슐화된다.  
+  로 구성되고, IP 데이터그램 안에 캡슐화된다.
 
 ### 2) TCP 헤더 구조
 
-RFC 9293에 정리된 TCP 헤더는 아래와 같은 필드들로 구성된다. (기본 20바이트)  
+RFC 9293에 정리된 TCP 헤더는 아래와 같은 필드들로 구성된다. (기본 20바이트)
 
 ```text
   0      7 8     15 16    23 24    31  (비트 인덱스)
@@ -205,7 +205,7 @@ RFC 9293에 정리된 TCP 헤더는 아래와 같은 필드들로 구성된다. 
 - **Acknowledgment Number (32bit)**: 다음에 받고 싶은 바이트 번호 (ACK 플래그가 1일 때 유효).
 - **Data Offset (4bit)**: 헤더 길이 (32비트 워드 단위). 최소값 5 → 5×4 = 20바이트.
 - **Reserved (3bit)**: 미래용, 항상 0.
-- **Control Flags (9bit)**: URG, ACK, PSH, RST, SYN, FIN 등. RFC 9293에서는 이전 RFC 대비 플래그 비트에 대한 정리가 업데이트되었다.  
+- **Control Flags (9bit)**: URG, ACK, PSH, RST, SYN, FIN 등. RFC 9293에서는 이전 RFC 대비 플래그 비트에 대한 정리가 업데이트되었다.
 - **Window (16bit)**: 수신자 윈도우 크기(바이트). 윈도우 스케일 옵션과 함께 확장 가능.
 - **Checksum (16bit)**: 헤더 + 데이터 + IP pseudo-header에 대한 체크섬.
 - **Urgent Pointer (16bit)**: URG 플래그가 1일 때, 긴급 데이터의 끝 위치.
@@ -251,11 +251,11 @@ Options: NOP, NOP, Timestamps
 
 ---
 
-## 24.3.4 A TCP Connection
+## A TCP Connection
 
 ### 1) 연결의 식별 — 4-튜플
 
-TCP 연결은 다음 4가지 값으로 식별된다.  
+TCP 연결은 다음 4가지 값으로 식별된다.
 
 $$
 (\text{Source IP}, \text{Source Port}, \text{Destination IP}, \text{Destination Port})
@@ -272,17 +272,17 @@ $$
 
 ### 2) 3-Way Handshake (연결 설정)
 
-고전적인 3-way handshake는 다음 순서로 진행된다. RFC 9293에서도 이 기본 개념을 유지한다.  
+고전적인 3-way handshake는 다음 순서로 진행된다. RFC 9293에서도 이 기본 개념을 유지한다.
 
-1. **SYN (클라이언트 → 서버)**  
+1. **SYN (클라이언트 → 서버)**
    - 클라이언트가 임의의 ISN(Initial Sequence Number) = `x`를 선택.
    - `SEQ = x`, `SYN = 1`, `ACK = 0`.
 
-2. **SYN+ACK (서버 → 클라이언트)**  
+2. **SYN+ACK (서버 → 클라이언트)**
    - 서버도 자신의 ISN = `y`를 선택.
    - `SEQ = y`, `ACK = x+1`, `SYN = 1`, `ACK = 1`.
 
-3. **ACK (클라이언트 → 서버)**  
+3. **ACK (클라이언트 → 서버)**
    - `SEQ = x+1`, `ACK = y+1`, `ACK = 1`.
    - 이 시점 이후, 연결은 양쪽 모두 ESTABLISHED 상태가 된다.
 
@@ -318,10 +318,10 @@ TCP 연결 종료는 Half-close를 허용하기 때문에 보통 **양방향 각
 
 ---
 
-## 24.3.5 TCP State Transition Diagram
+## TCP State Transition Diagram
 
-TCP의 동작을 정확히 이해하려면 **상태(state)** 개념이 중요하다.  
-RFC 793와 9293에는 유명한 **TCP 상태 전이 다이어그램**이 등장한다.  
+TCP의 동작을 정확히 이해하려면 **상태(state)** 개념이 중요하다.
+RFC 793와 9293에는 유명한 **TCP 상태 전이 다이어그램**이 등장한다.
 
 ### 1) 주요 상태 목록
 
@@ -373,7 +373,7 @@ RFC 793의 기본 다이어그램을 텍스트로 단순화하면 다음과 같�
                     CLOSED
 ```
 
-실제 RFC의 다이어그램은 더 많은 세부 전이를 포함하지만, 큰 흐름은 위와 같다.  
+실제 RFC의 다이어그램은 더 많은 세부 전이를 포함하지만, 큰 흐름은 위와 같다.
 
 ### 3) 상태 전이 예제: 클라이언트-서버 통신
 
@@ -397,7 +397,7 @@ RFC 793의 기본 다이어그램을 텍스트로 단순화하면 다음과 같�
 
 여기서 **TIME-WAIT** 상태는 아주 중요하다.
 
-- 마지막 ACK가 손실될 경우를 대비해,  
+- 마지막 ACK가 손실될 경우를 대비해,
   **상대방이 FIN을 다시 보내면 확인 ACK를 다시 보내줄 수 있는 기간**.
 - 동시에, 같은 4-튜플을 가진 옛 패킷이 네트워크에서 완전히 사라질 때까지 기다리는 역할도 한다.
 
@@ -469,8 +469,8 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
    - 3-way handshake로 설정되고, 4-way handshake(또는 변형)로 종료된다.
    - 연결은 (Src IP, Src Port, Dst IP, Dst Port) 4-튜플로 식별된다.
 5. **상태 전이 다이어그램**
-   - LISTEN, SYN-SENT, SYN-RECEIVED, ESTABLISHED, FIN-WAIT-1/2, CLOSE-WAIT, CLOSING, LAST-ACK, TIME-WAIT, CLOSED 등 상태들 사이를  
+   - LISTEN, SYN-SENT, SYN-RECEIVED, ESTABLISHED, FIN-WAIT-1/2, CLOSE-WAIT, CLOSING, LAST-ACK, TIME-WAIT, CLOSED 등 상태들 사이를
      SYN/ACK/FIN 패킷과 애플리케이션 호출(OPEN, CLOSE)에 따라 이동한다.
 
-다음 절에서는 이 TCP 위에서 동작하는 고수준의 애플리케이션 프로토콜(HTTP, TLS 등)을 비롯해,  
+다음 절에서는 이 TCP 위에서 동작하는 고수준의 애플리케이션 프로토콜(HTTP, TLS 등)을 비롯해,
 TCP 성능 튜닝과 실제 운영에서 고려해야 할 이슈들을 더 깊게 살펴볼 수 있다.

@@ -6,12 +6,12 @@ category: DataCommunication
 ---
 # 원격 로그인과 보안의 진화
 
-## 26.4 Telnet — Local vs Remote Login
+## Telnet — Local vs Remote Login
 
-### 26.4.1 Telnet의 목적과 역사
+### Telnet의 목적과 역사
 
-**Telnet**은 ARPANET 시절부터 존재했던 **원격 터미널 접속 프로토콜**이다.  
-RFC 854(1983)에서 정의되며, “터미널 지향 프로세스와 터미널 장치를 표준 방식으로 연결하기 위한 양방향 8비트 바이트 스트림”을 제공하는 것이 목적이라고 설명한다.   
+**Telnet**은 ARPANET 시절부터 존재했던 **원격 터미널 접속 프로토콜**이다.
+RFC 854(1983)에서 정의되며, “터미널 지향 프로세스와 터미널 장치를 표준 방식으로 연결하기 위한 양방향 8비트 바이트 스트림”을 제공하는 것이 목적이라고 설명한다.
 
 핵심 아이디어:
 
@@ -19,14 +19,14 @@ RFC 854(1983)에서 정의되며, “터미널 지향 프로세스와 터미널 
 - **멀리 떨어진 호스트에 로그인(login)** 하고
 - 마치 로컬 터미널처럼 쉘을 사용할 수 있게 하는 것
 
-과거에는 유닉스 서버, 메인프레임 등에 로그인할 때 Telnet이 사실상 표준이었다. 오늘날에는 **암호화가 되지 않아 보안상 심각한 문제**가 있기 때문에  
-미국 CISA, NSA, 캐나다 사이버 보안 센터 등에서 **Telnet 사용 금지 또는 비활성화, SSH 전환**을 강력히 권고한다.   
+과거에는 유닉스 서버, 메인프레임 등에 로그인할 때 Telnet이 사실상 표준이었다. 오늘날에는 **암호화가 되지 않아 보안상 심각한 문제**가 있기 때문에
+미국 CISA, NSA, 캐나다 사이버 보안 센터 등에서 **Telnet 사용 금지 또는 비활성화, SSH 전환**을 강력히 권고한다.
 
 ---
 
-### 26.4.2 Telnet 프로토콜 개요
+### Telnet 프로토콜 개요
 
-Telnet은 응용 계층 프로토콜로, **TCP 23번 포트**를 기본으로 사용한다.   
+Telnet은 응용 계층 프로토콜로, **TCP 23번 포트**를 기본으로 사용한다.
 
 - **전송 계층**: TCP
 - **기본 포트**: 23/TCP
@@ -35,7 +35,7 @@ Telnet은 응용 계층 프로토콜로, **TCP 23번 포트**를 기본으로 �
 
 #### NVT(Network Virtual Terminal)
 
-RFC 854에서 Telnet은 **NVT**라는 추상적인 텍스트 터미널 모델을 정의한다.   
+RFC 854에서 Telnet은 **NVT**라는 추상적인 텍스트 터미널 모델을 정의한다.
 
 - 클라이언트와 서버는 모두 NVT 문자 집합(ASCII 기반)을 이해한다고 가정
 - 실제 클라이언트 터미널이 VT100이든 콘솔이든, Telnet은 이를 NVT로 변환해서 보낸다
@@ -48,12 +48,12 @@ Telnet은 **데이터와 제어 명령이 같은 스트림**으로 흘러간다.
 - 특수 바이트 `IAC (Interpret As Command) = 255` 등장 시 뒤에 오는 바이트들을 **Telnet 명령**으로 해석
 - 예: `IAC DO <option>`, `IAC WILL <option>` 형식으로 옵션 협상
 
-실제 옵션들(에코 방식, 터미널 타입 등)은 대부분 역사적 중요성이 크지만,  
+실제 옵션들(에코 방식, 터미널 타입 등)은 대부분 역사적 중요성이 크지만,
 실무에서는 Telnet을 더 이상 쓰지 않기에 깊이 파고들 필요는 적다.
 
 ---
 
-### 26.4.3 Local Login vs Remote Login (Telnet 관점)
+### Local Login vs Remote Login (Telnet 관점)
 
 교과서에서 “local versus remote login”을 Telnet 문맥에서 이야기할 때, 핵심은 다음이다.
 
@@ -87,7 +87,7 @@ Telnet은 **데이터와 제어 명령이 같은 스트림**으로 흘러간다.
 데이터 흐름:
 
 ```text
-[키보드] 
+[키보드]
    |
    v
 [Telnet Client] --TCP/IP--> [Telnet Server] --> [쉘/bash on remote host]
@@ -99,7 +99,7 @@ Telnet은 **데이터와 제어 명령이 같은 스트림**으로 흘러간다.
 이때, **로컬 로그인과의 핵심 차이**는:
 
 1. **입출력이 네트워크를 통해 전달**된다는 점
-2. 입력/출력 모두 **평문(plaintext)** 으로 흐르기 때문에,  
+2. 입력/출력 모두 **평문(plaintext)** 으로 흐르기 때문에,
    중간의 공격자가 패킷을 캡처하면 **ID/비밀번호, 명령, 결과를 전부 볼 수 있다**는 점
 
 #### 3) 예제: 로컬 vs Telnet 원격 로그인 시나리오 비교
@@ -131,25 +131,27 @@ C: s e c r e t 1 2 3
 ...
 ```
 
-암호화가 없기 때문에 **와이어샤크(Wireshark) 같은 도구로 쉽게 ID/비밀번호 탈취**가 가능하다.  
-이 점 때문에 최신 보안 가이드에서는 **Telnet 사용을 취약점으로 간주**하고 있다.   
+암호화가 없기 때문에 **와이어샤크(Wireshark) 같은 도구로 쉽게 ID/비밀번호 탈취**가 가능하다.
+이 점 때문에 최신 보안 가이드에서는 **Telnet 사용을 취약점으로 간주**하고 있다.
 
 ---
 
-### 26.4.4 Telnet 세션 실습 예 (교육용)
+### Telnet 세션 실습 예 (교육용)
 
 ※ 실제 인터넷에서는 보안상 사용하지 않고, **실습용으로만** 로컬 네트워크에서 사용해야 한다.
 
 #### 1) 간단한 에코 서버에 Telnet으로 접속
 
-리눅스에서 테스트용 TCP 에코 서버를 열고 Telnet 클라이언트로 접속해볼 수 있다.  
+리눅스에서 테스트용 TCP 에코 서버를 열고 Telnet 클라이언트로 접속해볼 수 있다.
 (예: `nc`를 이용한 간단한 서버)
 
 ```bash
 # 서버 쪽 (포트 9000에 에코 서버)
+
 nc -l -p 9000
 
 # 클라이언트 쪽
+
 telnet 192.0.2.10 9000
 Trying 192.0.2.10...
 Connected to 192.0.2.10.
@@ -183,27 +185,27 @@ Connection closed by foreign host.
 
 ---
 
-### 26.4.5 Telnet의 보안 문제와 현대 가이드라인
+### Telnet의 보안 문제와 현대 가이드라인
 
 현대 보안 가이드는 공통적으로 다음을 권고한다:
 
 1. **Telnet 서비스 비활성화**
-   - CISA의 BOD 23-02 및 네트워크 인프라 보안 가이드에서,  
-     인터넷에 노출된 관리 인터페이스에서 Telnet을 제거/비활성화 하고 SSH 등을 사용할 것을 요구한다.   
+   - CISA의 BOD 23-02 및 네트워크 인프라 보안 가이드에서,
+     인터넷에 노출된 관리 인터페이스에서 Telnet을 제거/비활성화 하고 SSH 등을 사용할 것을 요구한다.
 2. **관리용으로 SSH 사용**
-   - Cisco, Juniper 등 주요 벤더 구성 예제에서도 Telnet 대신 SSH만 허용하는 설정을 제공한다.   
+   - Cisco, Juniper 등 주요 벤더 구성 예제에서도 Telnet 대신 SSH만 허용하는 설정을 제공한다.
 3. **레거시 시스템 처리**
    - 만약 어쩔 수 없이 Telnet을 사용해야 하는 장비가 있다면,
      - 관리 네트워크를 분리(VPN 내부에서만 허용)
      - 방화벽 ACL로 접근 제어
      - 가능한 빨리 SSH 지원 장비로 교체
 
-즉, Telnet은 **네트워크 프로토콜 역사 공부**와 **보안 교육**에는 유용하지만,  
+즉, Telnet은 **네트워크 프로토콜 역사 공부**와 **보안 교육**에는 유용하지만,
 현업에서는 “사용하면 안 되는 프로토콜”로 보는 것이 맞다.
 
 ---
 
-### 26.4.6 Local vs Remote Login, Telnet vs SSH 요약 표
+### Local vs Remote Login, Telnet vs SSH 요약 표
 
 | 구분 | Local Login | Telnet 원격 로그인 | SSH 원격 로그인 |
 |------|------------|--------------------|-----------------|
@@ -218,11 +220,11 @@ Connection closed by foreign host.
 
 ---
 
-## 26.5 SSH — Secure Shell
+## SSH — Secure Shell
 
-### 26.5.1 SSH 개요
+### SSH 개요
 
-**SSH(Secure Shell)** 는 “보안이 없는 원격 로그인 프로토콜(Telnet, rlogin, rsh 등)”을 대체하기 위해 설계된 **보안 원격 로그인 및 보안 네트워크 서비스 프로토콜**이다.   
+**SSH(Secure Shell)** 는 “보안이 없는 원격 로그인 프로토콜(Telnet, rlogin, rsh 등)”을 대체하기 위해 설계된 **보안 원격 로그인 및 보안 네트워크 서비스 프로토콜**이다.
 
 - **설계 목표**:
   - 암호화된 채널(기밀성)
@@ -231,21 +233,21 @@ Connection closed by foreign host.
   - 여러 논리 채널(Session, TCP 포워딩 등)을 하나의 암호화된 연결 안에서 다중화
 - **기본 포트**: 22/TCP
 
-RFC 4251에 따르면, SSH는 **3개의 주요 컴포넌트**로 구성된다.   
+RFC 4251에 따르면, SSH는 **3개의 주요 컴포넌트**로 구성된다.
 
-1. Transport Layer Protocol  
-2. User Authentication Protocol  
-3. Connection Protocol  
+1. Transport Layer Protocol
+2. User Authentication Protocol
+3. Connection Protocol
 
 이 세 부분을 이해하면 SSH를 깊이 있게 파악할 수 있다.
 
 ---
 
-### 26.5.2 SSH Components — 세 가지 계층 구조
+### SSH Components — 세 가지 계층 구조
 
 #### 1) SSH Transport Layer Protocol
 
-**전송 계층 프로토콜**은 다음을 책임진다.   
+**전송 계층 프로토콜**은 다음을 책임진다.
 
 - 서버 호스트 인증(서버가 진짜인지 확인)
 - 키 교환(Key Exchange) 및 세션 키 생성
@@ -261,16 +263,16 @@ RFC 4251에 따르면, SSH는 **3개의 주요 컴포넌트**로 구성된다.
 4. 서버 호스트 키 확인(known_hosts와 대조)
 5. 세션 키 생성 → 이후의 모든 트래픽은 암호화됨
 
-NSA와 유럽 보안 기관들은 SSH 사용할 때 **SSHv2만 허용**하고,  
-강력한 암호 스위트(AES-GCM, ChaCha20-Poly1305 등)를 사용할 것을 권고한다.   
+NSA와 유럽 보안 기관들은 SSH 사용할 때 **SSHv2만 허용**하고,
+강력한 암호 스위트(AES-GCM, ChaCha20-Poly1305 등)를 사용할 것을 권고한다.
 
 #### 2) SSH User Authentication Protocol
 
-Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.   
+Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.
 
 지원 방식:
 
-- **패스워드 인증**: 암호는 암호화된 채널로 전달되지만,  
+- **패스워드 인증**: 암호는 암호화된 채널로 전달되지만,
   브루트포스·피싱 위험이 있으므로 보안 가이드에서 점차 비권장
 - **공개키 인증(public key)**:
   - 사용자는 개인키를 로컬에 보관
@@ -285,7 +287,7 @@ Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.
 
 #### 3) SSH Connection Protocol
 
-**Connection Protocol**은 암호화된 SSH 연결 안에 **다수의 논리 채널**을 다중화한다.   
+**Connection Protocol**은 암호화된 SSH 연결 안에 **다수의 논리 채널**을 다중화한다.
 
 대표 채널 타입:
 
@@ -304,13 +306,13 @@ Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.
 - `scp` 파일 전송
 - 포트 포워딩
 
-을 동시에 사용할 수 있다. 이 구조 덕분에 SSH는 단순한 “원격 로그인”을 넘어 **범용 보안 터널링 메커니즘**으로 쓰인다.   
+을 동시에 사용할 수 있다. 이 구조 덕분에 SSH는 단순한 “원격 로그인”을 넘어 **범용 보안 터널링 메커니즘**으로 쓰인다.
 
 ---
 
-### 26.5.3 SSH 기본 사용 예제
+### SSH 기본 사용 예제
 
-여기서는 **OpenSSH 클라이언트** 기준으로 볼 수 있는 실제 예제를 살펴본다.   
+여기서는 **OpenSSH 클라이언트** 기준으로 볼 수 있는 실제 예제를 살펴본다.
 
 #### 1) 기본 원격 로그인
 
@@ -334,10 +336,12 @@ ssh alice@server.example.com
 
 ```bash
 # 키 생성 (Ed25519 예시)
+
 ssh-keygen -t ed25519 -C "alice@example.com"
 # 기본 위치: ~/.ssh/id_ed25519, ~/.ssh/id_ed25519.pub
 
 # 공개키를 서버로 복사
+
 ssh-copy-id alice@server.example.com
 ```
 
@@ -363,11 +367,11 @@ ssh -L 8080:127.0.0.1:5432 alice@db.example.com
 ssh -R 9000:127.0.0.1:3000 alice@bastion.example.com
 ```
 
-이런 포워딩 기능은 편리하지만, CISA 등은 *“무분별한 SSH 포워딩은 내부로의 백도어”*가 될 수 있다며 주의할 것을 경고한다.   
+이런 포워딩 기능은 편리하지만, CISA 등은 *“무분별한 SSH 포워딩은 내부로의 백도어”*가 될 수 있다며 주의할 것을 경고한다.
 
 ---
 
-### 26.5.4 SSH Applications — 주요 활용 사례
+### SSH Applications — 주요 활용 사례
 
 SSH는 “보안 원격 로그인”을 넘어 다양한 용도로 쓰인다.
 
@@ -386,11 +390,11 @@ ssh dev@web01.internal
   - 로그 확인
   - 서비스 재시작 등
 
-NSA, CISA 등은 네트워크 인프라 장비 관리 시 Telnet, HTTP 대신 **SSH와 HTTPS만 허용**하도록 하라고 안내한다.   
+NSA, CISA 등은 네트워크 인프라 장비 관리 시 Telnet, HTTP 대신 **SSH와 HTTPS만 허용**하도록 하라고 안내한다.
 
 #### 2) 파일 전송 — SCP, SFTP
 
-SSH 위에서 동작하는 대표적 파일 전송 도구:   
+SSH 위에서 동작하는 대표적 파일 전송 도구:
 
 - `scp`: 간단한 파일 복사
 - `sftp`: 대화형 파일 전송, 디렉터리 탐색 등
@@ -399,12 +403,15 @@ SSH 위에서 동작하는 대표적 파일 전송 도구:
 
 ```bash
 # scp: 로컬→원격
+
 scp backup.tar.gz alice@server.example.com:/data/backup/
 
 # scp: 원격→로컬
+
 scp alice@server.example.com:/var/log/syslog ./syslog
 
 # sftp: 대화형 모드
+
 sftp alice@server.example.com
 sftp> ls
 sftp> put report.pdf
@@ -412,9 +419,9 @@ sftp> get /var/log/auth.log
 sftp> exit
 ```
 
-프랑스 ANSSI의 OpenSSH 보안 사용 권고에 따르면,  
-SCP/SFTP는 기존 FTP/FTPS보다 방화벽 설정, 정책 일관성 측면에서 장점이 있으며,  
-가능하면 SSH 기반 파일 전송을 표준으로 삼으라고 권고한다.   
+프랑스 ANSSI의 OpenSSH 보안 사용 권고에 따르면,
+SCP/SFTP는 기존 FTP/FTPS보다 방화벽 설정, 정책 일관성 측면에서 장점이 있으며,
+가능하면 SSH 기반 파일 전송을 표준으로 삼으라고 권고한다.
 
 #### 3) 터널링과 프록시 — SSH Tunneling
 
@@ -424,15 +431,17 @@ SSH는 **TCP 터널링**을 제공하여:
 - 제한된 서비스(내부 대시보드 등)를 일시적으로 외부에서 접근
 - SOCKS 프록시로 트래픽 중계
 
-등에 활용할 수 있다. 하지만 잘못 사용하면 **조직 외부로 백도어를 여는 행위**가 될 수 있다는 점에서, CISO 레벨의 가이드에서 엄격한 정책·감사가 요구된다.   
+등에 활용할 수 있다. 하지만 잘못 사용하면 **조직 외부로 백도어를 여는 행위**가 될 수 있다는 점에서, CISO 레벨의 가이드에서 엄격한 정책·감사가 요구된다.
 
 예: 로컬에서 내부 네트워크로 트래픽 터널링
 
 ```bash
 # 회사 내부망에만 열려 있는 10.0.0.10:5601(Kibana)에
 # 외부에서 접근하기 위해 bastion을 통해 터널 생성
+
 ssh -L 5601:10.0.0.10:5601 bastion.corp.example
 # 이후 브라우저에서 http://localhost:5601 로 접속
+
 ```
 
 #### 4) 자동화·배포·CI/CD
@@ -450,9 +459,9 @@ SSH는 다음과 같은 자동화 시나리오에서도 핵심 역할:
 
 ---
 
-### 26.5.5 SSH 보안 설정 모범 사례 (요약)
+### SSH 보안 설정 모범 사례 (요약)
 
-미국 NSA, CISA, 캐나다·EU 보안 기관의 권고를 종합하면, 실무에서 SSH를 사용할 때 다음을 지키는 것이 좋다.   
+미국 NSA, CISA, 캐나다·EU 보안 기관의 권고를 종합하면, 실무에서 SSH를 사용할 때 다음을 지키는 것이 좋다.
 
 1. **SSH 버전**
    - SSHv1 비활성화, **SSHv2만 허용**
@@ -479,10 +488,10 @@ SSH는 다음과 같은 자동화 시나리오에서도 핵심 역할:
 
 ## 정리
 
-- **Telnet**은 초기 인터넷에서 표준 원격 로그인 프로토콜이었으나,  
+- **Telnet**은 초기 인터넷에서 표준 원격 로그인 프로토콜이었으나,
   암호화·인증 부재로 인해 오늘날에는 **보안상 사용이 금지 수준**인 레거시 기술이다.
   - Local vs Remote login을 이해하면서 “네트워크를 누가 볼 수 있는지” 관점으로 보면 Telnet의 위험성이 직관적으로 보인다.
 - **SSH**는 이러한 문제를 해결하기 위해 탄생한 **보안 원격 접속 및 터널링 플랫폼**이다.
-  - RFC 4251에서 정의한 **Transport / User Authentication / Connection** 세 계층을 이해하면,  
+  - RFC 4251에서 정의한 **Transport / User Authentication / Connection** 세 계층을 이해하면,
     SSH가 왜 단순 로그인 도구를 넘어 **범용 보안 채널**로 쓰이는지 자연스럽게 보인다.
   - 현대 보안 가이드는 “Telnet 비활성화, SSHv2만 허용, 강한 암호·키·정책 적용”을 공통적으로 권고한다.

@@ -6,13 +6,13 @@ category: DataCommunication
 ---
 # Chapter 28. Multimedia
 
-## 28.1 Compression
+## Compression
 
-### 28.1.1 Lossless Compression
+### Lossless Compression
 
 #### 1) 개념과 수학적 정의
 
-**Lossless 압축**은 압축 → 해제 후에 **원본과 한 비트도 다르지 않은** 데이터를 복원할 수 있는 압축이다. 대부분의 실제 데이터가 갖고 있는 **통계적 중복(statistical redundancy)** 을 제거함으로써 가능하다.  
+**Lossless 압축**은 압축 → 해제 후에 **원본과 한 비트도 다르지 않은** 데이터를 복원할 수 있는 압축이다. 대부분의 실제 데이터가 갖고 있는 **통계적 중복(statistical redundancy)** 을 제거함으로써 가능하다.
 
 전형적인 평가는 **압축 비율**(compression ratio)로 한다:
 
@@ -24,11 +24,11 @@ $$
 또는 퍼센트 감소량:
 
 $$
-\text{size reduction(\%)} = 
+\text{size reduction(\%)} =
 \left(1 - \frac{\text{compressed size}}{\text{original size}}\right)\times 100
 $$
 
-예: 100 MB 로그 파일이 20 MB로 줄었다면  
+예: 100 MB 로그 파일이 20 MB로 줄었다면
 압축 비율은 $$\frac{100}{20} = 5:1$$, 사이즈 감소는 $$80\%$$.
 
 **Entropy** 관점에서 보면, 이상적인 압축은 **Shannon entropy**에 가까운 평균 비트수를 사용한다:
@@ -49,8 +49,8 @@ $$
 2. **Dictionary-based** (LZ77/78, LZW, DEFLATE, LZMA, Zstd 등)
 3. **Run-Length / 변환 기반** (RLE, Burrows–Wheeler Transform + Move-to-front 등)
 
-최근 유럽계 연구에서 Huffman, LZW, Arithmetic 세 가지 entropy 코딩을 비교한 결과,  
-압축률·인코딩/디코딩 시간 관점에서 Huffman과 LZW가 여전히 좋은 trade-off를 보여준다는 분석도 있다.  
+최근 유럽계 연구에서 Huffman, LZW, Arithmetic 세 가지 entropy 코딩을 비교한 결과,
+압축률·인코딩/디코딩 시간 관점에서 Huffman과 LZW가 여전히 좋은 trade-off를 보여준다는 분석도 있다.
 
 ##### (a) 엔트로피 코딩
 
@@ -90,9 +90,9 @@ $$
   - UTF-8 텍스트, JSON, XML 등은 공백·반복 구조가 많아 gzip, zstd 등으로 3~10배 이상 압축 가능
 - **이미지**
   - PNG(무손실, DEFLATE 기반), 무손실 WebP, JPEG XL의 lossless 모드 등은 스크린샷, UI 아이콘, 그래픽에서 많이 사용된다.
-  - 최근 연구에서 PNG/JPEG/WebP/AVIF를 비교해 보면, 무손실·고품질 설정에서 WebP·AVIF가 JPEG 대비 더 작은 크기를 제공하는 사례가 다수 보고된다.  
+  - 최근 연구에서 PNG/JPEG/WebP/AVIF를 비교해 보면, 무손실·고품질 설정에서 WebP·AVIF가 JPEG 대비 더 작은 크기를 제공하는 사례가 다수 보고된다.
 - **오디오**
-  - FLAC, ALAC와 같은 무손실 오디오 코덱은 CD 품질 PCM(44.1 kHz, 16bit)을 대략 30–60% 정도로 줄이면서 완전히 복원 가능하다.  
+  - FLAC, ALAC와 같은 무손실 오디오 코덱은 CD 품질 PCM(44.1 kHz, 16bit)을 대략 30–60% 정도로 줄이면서 완전히 복원 가능하다.
 
 ---
 
@@ -145,11 +145,11 @@ print(f"Original={len(data)}, Compressed={len(compressed)}")
 
 ---
 
-### 28.1.2 Lossy Compression
+### Lossy Compression
 
 #### 1) 개념과 Rate–Distortion 관점
 
-**Lossy 압축**은 압축 과정에서 **사람이 거의 구분하지 못하는 정보**를 의도적으로 버리는 방식이다. 압축 해제 후 데이터는 원본과 다르지만, 사람 눈·귀에는 충분히 비슷하게 느껴진다.  
+**Lossy 압축**은 압축 과정에서 **사람이 거의 구분하지 못하는 정보**를 의도적으로 버리는 방식이다. 압축 해제 후 데이터는 원본과 다르지만, 사람 눈·귀에는 충분히 비슷하게 느껴진다.
 
 주로 이미지, 오디오, 비디오 같은 **멀티미디어**에 사용한다.
 
@@ -168,7 +168,7 @@ $$
 
 #### 2) 이미지 Lossy 압축
 
-대표적인 파이프라인(예: JPEG, AVIF, JPEG XL 등)은 아래 단계를 공유한다.  
+대표적인 파이프라인(예: JPEG, AVIF, JPEG XL 등)은 아래 단계를 공유한다.
 
 1. 컬러 공간 변환 (RGB → YCbCr, 혹은 다른 perceptual space)
 2. 공간 도메인 → 주파수 도메인 변환 (DCT, DWT 등)
@@ -177,8 +177,8 @@ $$
 
 최근 연구들 요약:
 
-- 전통 JPEG 대비, **WebP·AVIF**는 같은 시각적 품질에서 평균 15–25% 정도 더 작은 파일 크기를 보이는 경향.  
-- **JPEG XL**은 기존 JPEG/PNG 대비 20~50% 수준의 추가 절감 + 무손실 JPEG 재압축 기능을 제공하도록 설계되었다.  
+- 전통 JPEG 대비, **WebP·AVIF**는 같은 시각적 품질에서 평균 15–25% 정도 더 작은 파일 크기를 보이는 경향.
+- **JPEG XL**은 기존 JPEG/PNG 대비 20~50% 수준의 추가 절감 + 무손실 JPEG 재압축 기능을 제공하도록 설계되었다.
 
 ##### 예시: 웹 썸네일 이미지
 
@@ -187,13 +187,13 @@ $$
 - WebP(품질 80): 800 KB
 - AVIF(품질 40 정도): 600 KB
 
-브라우저·코덱에 따라 수치는 달라지지만, 전통 JPEG 대비 최신 코덱이 확실히 이득이 있다는 것이 여러 유럽 연구들에서 확인된다.  
+브라우저·코덱에 따라 수치는 달라지지만, 전통 JPEG 대비 최신 코덱이 확실히 이득이 있다는 것이 여러 유럽 연구들에서 확인된다.
 
 ---
 
 #### 3) 오디오 Lossy 압축
 
-Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성을 이용한다.  
+Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성을 이용한다.
 
 핵심 아이디어:
 
@@ -207,17 +207,17 @@ Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성
 - **AAC(Advanced Audio Coding)**:
   - MP3보다 더 정교한 psychoacoustic 모델 사용
   - 같은 품질에서 30~50% 정도 비트레이트 절감 가능
-  - 대형 스트리밍 서비스(YouTube, Apple 등)에서 사실상 표준.  
+  - 대형 스트리밍 서비스(YouTube, Apple 등)에서 사실상 표준.
 - **Opus**:
   - IETF 표준, 완전 오픈·로열티 프리
   - 음성부터 음악까지 모두 커버, 저지연 특화
-  - WebRTC·게임·VoIP 등에 널리 사용.  
+  - WebRTC·게임·VoIP 등에 널리 사용.
 
 ---
 
 #### 4) 비디오 Lossy 압축
 
-비디오는 **시간 축이 있는 이미지 + 오디오**로 볼 수 있다. 현대 비디오 코덱(H.264, H.265, VP9, AV1, VVC 등)은 각각의 프레임이 아니라, **예측 + 잔차(residual)** 를 전송한다.  
+비디오는 **시간 축이 있는 이미지 + 오디오**로 볼 수 있다. 현대 비디오 코덱(H.264, H.265, VP9, AV1, VVC 등)은 각각의 프레임이 아니라, **예측 + 잔차(residual)** 를 전송한다.
 
 구조 개요:
 
@@ -225,7 +225,7 @@ Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성
 - P/B-frame: 이전/이후 프레임으로부터 **motion compensation** 을 통해 예측, 예측 오차만 압축
 - GOP(Group of Pictures): I + P/B 프레임의 그룹
 
-최근 4K/8K 비디오에서의 비교 연구들에 따르면:  
+최근 4K/8K 비디오에서의 비교 연구들에 따르면:
 
 | 코덱 | 기준 대비 비트레이트 절감(대략) | 비고 |
 |------|--------------------------------|------|
@@ -274,9 +274,9 @@ export_image_variants("photo.png")
 
 ---
 
-## 28.2 Multimedia Data
+## Multimedia Data
 
-### 28.2.1 Text
+### Text
 
 #### 1) 구조와 특성
 
@@ -313,6 +313,7 @@ def read_compressed_json(path: str):
             yield json.loads(line)
 
 # 사용 예시
+
 records = [{"user": i, "event": "login"} for i in range(100000)]
 write_compressed_json("logs.json.gz", records)
 
@@ -324,7 +325,7 @@ print(sum(1 for _ in read_compressed_json("logs.json.gz")))
 
 ---
 
-### 28.2.2 Image
+### Image
 
 #### 1) 구조: 비트맵 vs 벡터, 색 공간
 
@@ -346,7 +347,7 @@ print(sum(1 for _ in read_compressed_json("logs.json.gz")))
 
 #### 2) 주요 이미지 포맷과 압축
 
-최근 유럽/북미권 연구에서 자주 다루는 포맷들은 다음과 같다.  
+최근 유럽/북미권 연구에서 자주 다루는 포맷들은 다음과 같다.
 
 | 포맷 | 압축 | 특징(요약) |
 |------|------|-----------|
@@ -356,8 +357,8 @@ print(sum(1 for _ in read_compressed_json("logs.json.gz")))
 | AVIF | 손실/무손실 | AV1 기반, 매우 높은 압축 효율, 인코딩 느림 |
 | JPEG XL | 손실/무손실 | JPEG·PNG 대비 20~50% 추가 절감, 무손실 JPEG 재압축 지원 |
 
-웹 트래픽 분석 결과, 여전히 JPEG/PNG가 대부분을 차지하지만,  
-WebP와 AVIF가 점점 점유율을 늘리면서 페이지 로딩 시간을 15–21% 정도 줄이는 사례가 보고된다.  
+웹 트래픽 분석 결과, 여전히 JPEG/PNG가 대부분을 차지하지만,
+WebP와 AVIF가 점점 점유율을 늘리면서 페이지 로딩 시간을 15–21% 정도 줄이는 사례가 보고된다.
 
 #### 3) 파이썬 Cookbook — 웹 이미지 파이프라인 뼈대
 
@@ -401,7 +402,7 @@ def make_web_images(src_path: str, max_width=1280):
 
 ---
 
-### 28.2.3 Video
+### Video
 
 #### 1) 비디오 데이터 구조
 
@@ -425,7 +426,7 @@ def make_web_images(src_path: str, max_width=1280):
 - 컨테이너: MP4, MKV, WebM 등
 - 코덱: H.264/AVC, H.265/HEVC, VP9, AV1, VVC/H.266 등
 
-최근 4K·8K 환경에서의 코덱 성능 비교 연구에 따르면:  
+최근 4K·8K 환경에서의 코덱 성능 비교 연구에 따르면:
 
 - H.265/HEVC: H.264 대비 약 30–50% 비트레이트 절감
 - AV1: VP9 대비 대략 30% 추가 절감
@@ -465,7 +466,7 @@ transcode_to_hevc("input_h264.mp4")
 
 ---
 
-### 28.2.4 Audio
+### Audio
 
 #### 1) 기본 개념: 샘플링, 양자화, 비트레이트
 
@@ -484,7 +485,7 @@ $$
 \text{bitrate} = 44{,}100 \times 16 \times 2 \approx 1.41 \text{ Mbit/s}
 $$
 
-압축되지 않은 WAV는 대략 1.4 Mbit/s.  
+압축되지 않은 WAV는 대략 1.4 Mbit/s.
 Lossy 코덱을 사용하면 같은 체감 품질에서 128~256 kbit/s 정도까지 줄일 수 있다.
 
 #### 2) Lossless vs Lossy 오디오 코덱
@@ -494,7 +495,7 @@ Lossy 코덱을 사용하면 같은 체감 품질에서 128~256 kbit/s 정도까
   - CD 리핑·아카이브·마스터링에 사용
 - **Lossy**: MP3, AAC, Opus 등
   - 스트리밍·다운로드 음악·게임/VoIP에 사용
-  - 효율 차이는 코덱, 프로파일, 비트레이트에 따라 큼  
+  - 효율 차이는 코덱, 프로파일, 비트레이트에 따라 큼
 
 #### 3) 파이썬 Cookbook — WAV → FLAC/AAC/Opus 변환 자동화
 
@@ -539,12 +540,12 @@ encode_audio_variants("input.wav")
 
 ---
 
-## 28.2 전체 정리
+## 전체 정리
 
 1. **Lossless 압축**은 텍스트, 소스코드, 데이터베이스 덤프, 일부 이미지(스크린샷, UI 그래픽) 등에 필수적이다.
-   - Huffman, LZ 계열, Zstd, PNG, FLAC 같은 기술로 구현된다.  
+   - Huffman, LZ 계열, Zstd, PNG, FLAC 같은 기술로 구현된다.
 2. **Lossy 압축**은 이미지·비디오·오디오에서 사람의 인지 특성을 이용해 매우 높은 압축률을 제공한다.
-   - JPEG/WebP/AVIF/JPEG XL, AAC/Opus, H.264/HEVC/AV1/VVC 등의 현대 코덱이 대표적이다.  
+   - JPEG/WebP/AVIF/JPEG XL, AAC/Opus, H.264/HEVC/AV1/VVC 등의 현대 코덱이 대표적이다.
 3. **텍스트/이미지/비디오/오디오** 각각은 데이터 구조와 인간의 지각 특성이 다르기 때문에, **서로 다른 압축 전략**이 적용된다.
 4. 파이썬 Cookbook 관점에서:
    - `gzip`, `zlib`으로 텍스트·로그 압축

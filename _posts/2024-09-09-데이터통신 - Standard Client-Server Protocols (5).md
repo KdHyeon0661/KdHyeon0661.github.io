@@ -4,18 +4,18 @@ title: 데이터 통신 - Standard Client-Server Protocols (5)
 date: 2024-09-09 22:20:23 +0900
 category: DataCommunication
 ---
-# 26.6 Domain Name System (DNS)
+# Domain Name System (DNS)
 
-DNS는 **도메인 이름 ↔ IP 주소**를 매핑하는, 인터넷 전체가 공유하는 **분산 데이터베이스 + 프로토콜**이다.  
+DNS는 **도메인 이름 ↔ IP 주소**를 매핑하는, 인터넷 전체가 공유하는 **분산 데이터베이스 + 프로토콜**이다.
 이 절에서는 교과서적 구조(네임스페이스, RR, 메시지 형식 등)에 더해, **오늘날 운영 환경(루트 존 규모, 동적 업데이트, DNS 보안)**까지 포함해 정리한다.
 
 ---
 
-## 26.6.1 Name Space
+## Name Space
 
 ### 1) 계층적 네임스페이스 개념
 
-DNS 이름 공간은 **역트리(inverted tree)** 구조를 갖는다. 가장 위는 **루트(root, “.”)** 이고, 그 아래에 `.com`, `.org`, `.de` 같은 **TLD(Top-Level Domain)** 가 있으며, 그 아래에 `example.com`, `mit.edu` 같은 **2차 도메인**, 그 아래에는 `www.example.com` 같은 **호스트/서비스 이름**이 온다. 이 구조와 RR 형식은 RFC 1034/1035에 정의되어 있다.   
+DNS 이름 공간은 **역트리(inverted tree)** 구조를 갖는다. 가장 위는 **루트(root, “.”)** 이고, 그 아래에 `.com`, `.org`, `.de` 같은 **TLD(Top-Level Domain)** 가 있으며, 그 아래에 `example.com`, `mit.edu` 같은 **2차 도메인**, 그 아래에는 `www.example.com` 같은 **호스트/서비스 이름**이 온다. 이 구조와 RR 형식은 RFC 1034/1035에 정의되어 있다.
 
 예: `www.cs.mit.edu.`
 
@@ -27,12 +27,12 @@ DNS 이름 공간은 **역트리(inverted tree)** 구조를 갖는다. 가장 �
 | `cs` | 서브도메인 (컴퓨터 과학 학과 등) |
 | `www` | 호스트/서비스 이름 |
 
-FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이름**을 뜻한다.  
+FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이름**을 뜻한다.
 일반적으로 클라이언트는 `www.example.com`처럼 마지막 점을 생략하지만, 내부적으로는 `www.example.com.`으로 취급된다.
 
 ### 2) 도메인 vs 존(Zone)
 
-- **도메인(domain)**: 네임스페이스 상의 논리적 서브트리  
+- **도메인(domain)**: 네임스페이스 상의 논리적 서브트리
 - **존(zone)**: 특정 네임 서버 집합이 **권한(authority)** 을 갖는, 한 도메인(또는 그 일부)의 데이터 집합
 
 예:
@@ -45,43 +45,43 @@ FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이�
 
 ---
 
-## 26.6.2 DNS in the Internet
+## DNS in the Internet
 
 ### 1) 계층과 역할
 
-인터넷 전체 관점에서 DNS는 대략 네 가지 역할로 나뉜다.   
+인터넷 전체 관점에서 DNS는 대략 네 가지 역할로 나뉜다.
 
-1. **루트 서버(root servers)**  
-   - 루트 존(`.`)에 대한 권한 보유  
-   - 각 TLD(`.com`, `.org`, `.fr`, ...)에 대한 NS 레코드 제공  
-   - 실제 물리 서버는 전 세계에 분산되고, 12개 독립 조직이 루트 서버 인스턴스를 운영한다.   
+1. **루트 서버(root servers)**
+   - 루트 존(`.`)에 대한 권한 보유
+   - 각 TLD(`.com`, `.org`, `.fr`, ...)에 대한 NS 레코드 제공
+   - 실제 물리 서버는 전 세계에 분산되고, 12개 독립 조직이 루트 서버 인스턴스를 운영한다.
 
-2. **TLD 서버(TLD name servers)**  
-   - `.com`, `.net`, `.org`, `.de` 등 각 TLD 존에 대한 권한  
+2. **TLD 서버(TLD name servers)**
+   - `.com`, `.net`, `.org`, `.de` 등 각 TLD 존에 대한 권한
    - 2차 도메인의 NS 레코드를 제공(예: `example.com`에 대한 NS)
 
-3. **권한(authoritative) 네임 서버**  
-   - `example.com`, `university.edu` 같은 개별 도메인/존을 실제로 관리  
-   - A/AAAA, MX, TXT, CNAME, SOA 등의 레코드 저장  
+3. **권한(authoritative) 네임 서버**
+   - `example.com`, `university.edu` 같은 개별 도메인/존을 실제로 관리
+   - A/AAAA, MX, TXT, CNAME, SOA 등의 레코드 저장
    - 조직(기업, 대학 등)이나 호스팅 업체가 운영
 
-4. **재귀(Recursive) 리졸버**  
-   - **클라이언트를 대신해 전체 질의 체인을 수행**  
-   - ISP, 기업, 공용 리졸버(예: 9.9.9.9, 1.1.1.1 등)가 제공하는 “DNS 서버”가 여기에 해당  
+4. **재귀(Recursive) 리졸버**
+   - **클라이언트를 대신해 전체 질의 체인을 수행**
+   - ISP, 기업, 공용 리졸버(예: 9.9.9.9, 1.1.1.1 등)가 제공하는 “DNS 서버”가 여기에 해당
    - 클라이언트(Stub Resolver)는 보통 재귀 리졸버에게만 질의를 보내고, 나머지 계층은 리졸버가 처리
 
 ### 2) 루트 존과 TLD 현황 (2024–2025 기준 개략)
 
-- 루트 존에는 `.com`, `.org`, `.uk`, 신규 gTLD들(`.app`, `.dev`, `.bank` 등)을 포함해 **약 1450개 수준의 TLD**가 등록되어 있다(2024년 말 기준, ISC와 ICANN 자료 기준).   
+- 루트 존에는 `.com`, `.org`, `.uk`, 신규 gTLD들(`.app`, `.dev`, `.bank` 등)을 포함해 **약 1450개 수준의 TLD**가 등록되어 있다(2024년 말 기준, ISC와 ICANN 자료 기준).
 - 각 TLD는 **레지스트리(Registry)** 가 운영하며, 해당 TLD의 존 파일과 NS 인프라를 관리한다.
 
 ---
 
-## 26.6.3 Resolution (이름 해석 과정)
+## Resolution (이름 해석 과정)
 
 ### 1) Stub Resolver ↔ Recursive Resolver ↔ Authoritative
 
-일반 PC/스마트폰에서 DNS 해석 흐름은 다음과 같다.   
+일반 PC/스마트폰에서 DNS 해석 흐름은 다음과 같다.
 
 1. **애플리케이션**(브라우저 등)이 `getaddrinfo("www.example.com")` 호출
 2. **Stub Resolver** (OS 내 라이브러리)가 로컬 캐시 확인 후, 재귀 리졸버(예: 192.0.2.53)에 질의 전송
@@ -99,9 +99,9 @@ Client (Stub) → Recursive → Root → .com → ns1.example.com → Recursive 
 
 ### 2) 재귀(Recursive) vs 반복(Iterative)
 
-- Stub Resolver ↔ Recursive Resolver: 보통 **재귀 질의(recursive)**  
-  - 클라이언트는 “최종 답을 달라”고 요청  
-- Recursive Resolver ↔ 상위 네임 서버: 보통 **반복 질의(iterative)**  
+- Stub Resolver ↔ Recursive Resolver: 보통 **재귀 질의(recursive)**
+  - 클라이언트는 “최종 답을 달라”고 요청
+- Recursive Resolver ↔ 상위 네임 서버: 보통 **반복 질의(iterative)**
   - 루트 서버는 “내가 모르는 이름이니 이 TLD 서버에 물어봐라”라고 **참조(referral)** 를 줌
 
 ---
@@ -112,7 +112,7 @@ Client (Stub) → Recursive → Root → .com → ns1.example.com → Recursive 
 dig +trace www.ietf.org
 ```
 
-- `+trace` 옵션은 재귀 리졸버처럼 루트→TLD→권한 서버 순서로 질의를 수행하면서,  
+- `+trace` 옵션은 재귀 리졸버처럼 루트→TLD→권한 서버 순서로 질의를 수행하면서,
   각 단계의 응답을 보여준다.
 - 출력에는:
   - 루트 NS 목록
@@ -123,17 +123,17 @@ dig +trace www.ietf.org
 
 ---
 
-## 26.6.4 Caching
+## Caching
 
 ### 1) TTL(Time To Live)
 
-각 RR에는 **TTL(Time To Live)** 값이 있고, 이는 캐시에 해당 레코드를 **얼마 동안 유지할 수 있는지**를 지정한다.   
+각 RR에는 **TTL(Time To Live)** 값이 있고, 이는 캐시에 해당 레코드를 **얼마 동안 유지할 수 있는지**를 지정한다.
 
 - 단위: 초(Seconds)
 - 예: `3600` → 1시간 동안 유효
 - 캐시는 TTL이 0이 될 때까지 재사용하고, 0이 되면 새로 질의한다.
 
-단순하게, 요청 도착률을 $$\lambda$$ (초당 요청 수), TTL을 $$T$$라고 할 때,  
+단순하게, 요청 도착률을 $$\lambda$$ (초당 요청 수), TTL을 $$T$$라고 할 때,
 Poisson 도착을 가정하면 **캐시 히트 확률**의 근사값은:
 
 $$
@@ -146,7 +146,7 @@ $$
 
 존에는 **해당 이름이 존재하지 않음(NXDOMAIN)** 또는 **타입이 없음(NODATA)** 이라는 정보도 포함된다.
 
-- SOA 레코드의 `MINIMUM` 필드와 별도의 네거티브 TTL 설정에 따라  
+- SOA 레코드의 `MINIMUM` 필드와 별도의 네거티브 TTL 설정에 따라
   “없는 이름”에 대한 결과도 일정 시간 캐시된다.
 - 효과:
   - 반복적인 오타 요청으로 인한 부하 감소
@@ -160,14 +160,14 @@ $$
   - 재귀 리졸버와 권한 서버 트래픽 증가
 - 대형 서비스(예: CDN, 대형 웹 서비스)는
   - Top-level NS, SOA에는 상대적으로 긴 TTL
-  - A/AAAA(특히 로드밸런싱용)에는 짧은 TTL(수십~수백 초)  
+  - A/AAAA(특히 로드밸런싱용)에는 짧은 TTL(수십~수백 초)
   를 혼합하여 사용한다.
 
 ---
 
-## 26.6.5 Resource Records (RR)
+## Resource Records (RR)
 
-RFC 1035는 RR 포맷을 다음처럼 정의한다.   
+RFC 1035는 RR 포맷을 다음처럼 정의한다.
 
 ```text
 NAME   TYPE   CLASS   TTL   RDLENGTH   RDATA
@@ -217,10 +217,10 @@ mail    IN A     203.0.113.20
 
 ---
 
-## 26.6.6 DNS Messages
+## DNS Messages
 
-DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 섹션** 구조를 따른다.  
-주요 운영체제 문서(예: Windows Server DNS 문서)에서도 동일 구조를 설명한다.   
+DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 섹션** 구조를 따른다.
+주요 운영체제 문서(예: Windows Server DNS 문서)에서도 동일 구조를 설명한다.
 
 ### 1) 전반적인 구조
 
@@ -238,12 +238,12 @@ DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 �
 +---------------------+
 ```
 
-헤더에는 **ID, 플래그, 섹션별 RR 개수**가 들어 있고,  
+헤더에는 **ID, 플래그, 섹션별 RR 개수**가 들어 있고,
 각 섹션은 RR 형식(Question만 TYPE/CLASS까지)으로 구성된다.
 
 ### 2) 헤더 필드
 
-헤더(12 bytes)는 다음 비트 필드를 가진다.   
+헤더(12 bytes)는 다음 비트 필드를 가진다.
 
 - **ID (16비트)**: 질의/응답 매칭용 식별자
 - **Flags (16비트)**:
@@ -265,8 +265,8 @@ DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 �
 - **Question**: NAME, TYPE, CLASS (실제 RDATA 없음)
 - **Answer**: 질문에 대한 정답 RR들
 - **Authority**: 해당 존에 대한 NS, SOA 등 “권한 정보”
-- **Additional**: 질의와 관련 있지만 **직접적인 답은 아닌** RR들  
-  (예: NS 레코드에 대응하는 A/AAAA 기록)   
+- **Additional**: 질의와 관련 있지만 **직접적인 답은 아닌** RR들
+  (예: NS 레코드에 대응하는 A/AAAA 기록)
 
 #### 예: `dig www.ietf.org` 요약
 
@@ -289,26 +289,26 @@ ns1.amsl.com.   172800  IN  A   64.170.98.32
 
 ---
 
-## 26.6.7 Registrars
+## Registrars
 
-DNS에서 **도메인 이름 등록 구조**는 다음 네 주체를 중심으로 돌아간다.   
+DNS에서 **도메인 이름 등록 구조**는 다음 네 주체를 중심으로 돌아간다.
 
-1. **ICANN (Internet Corporation for Assigned Names and Numbers)**  
-   - 글로벌 정책 조정  
+1. **ICANN (Internet Corporation for Assigned Names and Numbers)**
+   - 글로벌 정책 조정
    - gTLD 계약 관리, 레지스트리/레지스트라 승인 등
 
-2. **Registry(레지스트리)**  
-   - 각 TLD(예: `.com`, `.org`)의 “제조사” 역할  
-   - 예: `.com` 레지스트리는 VeriSign  
+2. **Registry(레지스트리)**
+   - 각 TLD(예: `.com`, `.org`)의 “제조사” 역할
+   - 예: `.com` 레지스트리는 VeriSign
    - TLD **존 파일**과 TLD 네임 서버를 운영
 
-3. **Registrar(레지스트라)**  
-   - 도메인 판매 “대리점”  
-   - ICANN 및 레지스트리로부터 승인 받은 사업자  
-   - 예: Cloudflare, GoDaddy, Network Solutions, 여러 유럽/미국 기반 업체들  
+3. **Registrar(레지스트라)**
+   - 도메인 판매 “대리점”
+   - ICANN 및 레지스트리로부터 승인 받은 사업자
+   - 예: Cloudflare, GoDaddy, Network Solutions, 여러 유럽/미국 기반 업체들
    - 사용자의 도메인 등록/연장/이전, WHOIS/등록 정보 관리, 네임 서버 설정 인터페이스 제공
 
-4. **Registrant(등록자)**  
+4. **Registrant(등록자)**
    - 실제 도메인 이름을 사용하는 개인/기업/기관
 
 ### 1) 도메인 등록 흐름 예
@@ -322,35 +322,35 @@ DNS에서 **도메인 이름 등록 구조**는 다음 네 주체를 중심으�
    - Alice가 연락처/결제 정보 입력
    - 레지스트라가 레지스트리에 “새 도메인 등록” 요청
 4. 레지스트리는:
-   - `example.com`을 **zone 데이터베이스**에 추가  
+   - `example.com`을 **zone 데이터베이스**에 추가
    - 해당 도메인의 **권한 네임 서버(NS)** 를 기록
    - `.com` TLD 존이 업데이트 → 루트 존에서 `.com` NS를 통해 전 세계에 전파
 5. Alice는 레지스트라(또는 직접 운영하는 NS)를 통해 A/AAAA, MX 등 RR을 구성
 
-이 과정에서 DNS 프로토콜 자체는 **네임 해석**에만 관여하고,  
+이 과정에서 DNS 프로토콜 자체는 **네임 해석**에만 관여하고,
 등록/결제/소유권 관리 등은 **레지스트리·레지스트라 비즈니스 레이어**에서 처리된다.
 
 ---
 
-## 26.6.8 DDNS (Dynamic DNS)
+## DDNS (Dynamic DNS)
 
-“Dynamic DNS”는 크게 두 가지 의미로 쓰인다.   
+“Dynamic DNS”는 크게 두 가지 의미로 쓰인다.
 
-1. **RFC 2136 기반 동적 업데이트(DNS Update)**  
+1. **RFC 2136 기반 동적 업데이트(DNS Update)**
    - 전통적 존을 **프로그램적으로 업데이트** (예: BIND, Windows DNS 서버)
-2. **상용 DDNS 서비스**  
+2. **상용 DDNS 서비스**
    - 가정용/소규모 네트워크에서 **변하는 공용 IP**를 특정 도메인 이름에 매핑해주는 서비스
 
 ### 1) RFC 2136 Dynamic Update
 
-RFC 2136은 DNS UPDATE 메시지 유형을 정의해,  
-존 파일을 수동 편집하지 않고도 **RR 집합을 동적으로 추가/삭제/변경**할 수 있게 한다.   
+RFC 2136은 DNS UPDATE 메시지 유형을 정의해,
+존 파일을 수동 편집하지 않고도 **RR 집합을 동적으로 추가/삭제/변경**할 수 있게 한다.
 
 UPDATE 메시지 구조:
 
 - **Header**: 이 메시지가 UPDATE임을 나타냄
 - **Zone Section**: 어느 존을 업데이트할지 지정
-- **Prerequisite Section**: “현재 존이 어떤 상태여야 한다”는 전제 조건  
+- **Prerequisite Section**: “현재 존이 어떤 상태여야 한다”는 전제 조건
   (예: 이 레코드가 이미 존재해야 한다 / 존재하면 안 된다)
 - **Update Section**: 실제 추가/삭제할 RR 정보
 - **Additional Section**: 필요시 추가 데이터
@@ -366,8 +366,8 @@ Update: delete host123.example.com A
         add host123.example.com A 203.0.113.55
 ```
 
-Windows Server DNS나 BIND는 DHCP 서버와 연동해  
-클라이언트 IP가 바뀔 때 자동으로 A/AAAA 및 PTR 레코드를 업데이트한다.   
+Windows Server DNS나 BIND는 DHCP 서버와 연동해
+클라이언트 IP가 바뀔 때 자동으로 A/AAAA 및 PTR 레코드를 업데이트한다.
 
 ### 2) 상용/경량 DDNS 서비스
 
@@ -376,7 +376,7 @@ Windows Server DNS나 BIND는 DHCP 서버와 연동해
 - 가정용 인터넷 회선(동적 IP)
 - 소형 지점 사무실
 
-**DDNS 제공업체**는 다음과 같이 동작한다.   
+**DDNS 제공업체**는 다음과 같이 동작한다.
 
 1. 사용자는 `myhome.example-ddns.net` 같은 도메인을 발급
 2. 공유기/클라이언트가 주기적으로:
@@ -384,52 +384,52 @@ Windows Server DNS나 BIND는 DHCP 서버와 연동해
 3. DDNS 서버는 해당 이름의 A/AAAA 레코드를 갱신
 4. 외부에서 `myhome.example-ddns.net`으로 접속하면 항상 최신 IP로 연결
 
-이 방식은 RFC 2136을 내부적으로 사용할 수도 있고,  
+이 방식은 RFC 2136을 내부적으로 사용할 수도 있고,
 자체 API·데이터베이스를 사용할 수도 있다.
 
 ---
 
-## 26.6.9 Security of DNS
+## Security of DNS
 
-DNS는 본질적으로 **평문, 인증·무결성 없는 질의/응답**으로 설계되었다.   
+DNS는 본질적으로 **평문, 인증·무결성 없는 질의/응답**으로 설계되었다.
 오늘날에는 다양한 공격과 이에 대한 방어 기술이 중요하다.
 
 ### 1) 주요 위협
 
-1. **스푸핑 및 캐시 포이즈닝(Cache Poisoning)**  
-   - 공격자가 재귀 리졸버에게 **위조 응답**을 먼저 도착시키면,  
+1. **스푸핑 및 캐시 포이즈닝(Cache Poisoning)**
+   - 공격자가 재귀 리졸버에게 **위조 응답**을 먼저 도착시키면,
      리졸버의 캐시에 **가짜 IP**가 저장될 수 있다.
    - 유명한 사례로 Kaminsky 공격(2008)이 있고, 이후 소스 포트 랜덤화, 0x20 인코딩 등이 도입되었다.
 
-2. **DNS 리플렉션·앰플리피케이션 DDoS**  
-   - 공격자가 출발지 IP를 피해자 IP로 위조한 DNS 질의를  
-     **오픈 리졸버**나 권한 서버 여러 곳에 뿌리고,  
-     응답 크기가 질의보다 훨씬 커지는 특성을 이용해 대량 트래픽을 증폭시킨다.   
+2. **DNS 리플렉션·앰플리피케이션 DDoS**
+   - 공격자가 출발지 IP를 피해자 IP로 위조한 DNS 질의를
+     **오픈 리졸버**나 권한 서버 여러 곳에 뿌리고,
+     응답 크기가 질의보다 훨씬 커지는 특성을 이용해 대량 트래픽을 증폭시킨다.
 
-3. **프라이버시 침해**  
+3. **프라이버시 침해**
    - DNS 질의는 사용자가 어떤 사이트/서비스를 사용하는지 그대로 드러낸다.
-   - 일부 규제 기관은 DNS 로그를 개인정보로 간주하고 보호 지침을 제시한다.   
+   - 일부 규제 기관은 DNS 로그를 개인정보로 간주하고 보호 지침을 제시한다.
 
-4. **존 전송(AXFR) 오남용**  
+4. **존 전송(AXFR) 오남용**
    - 잘못 구성된 권한 서버가 전체 존을 AXFR로 누구에게나 내주면,
      내부 호스트명, 네트워크 구조 등이 노출된다.
 
 ### 2) DNSSEC (DNS Security Extensions)
 
-DNSSEC는 **DNS 데이터에 대한 무결성과 출처 인증**을 제공한다.   
+DNSSEC는 **DNS 데이터에 대한 무결성과 출처 인증**을 제공한다.
 
 핵심 아이디어:
 
-- 각 존은 자체 공개키/비밀키 쌍을 가지고,  
+- 각 존은 자체 공개키/비밀키 쌍을 가지고,
   RRset에 대해 **디지털 서명(RRSIG)** 을 생성
-- 상위 존은 하위 존 키의 요약(DS 레코드)을 저장  
+- 상위 존은 하위 존 키의 요약(DS 레코드)을 저장
   → 루트에서 시작해 **신뢰 사슬(chain of trust)** 형성
 - 검증하는 리졸버는:
   - 루트의 신뢰점(trust anchor)을 알고 있고
-  - 하위로 내려가며 DS, DNSKEY, RRSIG를 검증하여  
+  - 하위로 내려가며 DS, DNSKEY, RRSIG를 검증하여
     응답이 변조되지 않았음을 확인
 
-2010년대부터 루트 존과 대부분의 주요 TLD(.com, .org 등)에서 DNSSEC 서명이 활성화되었고, 2024년 ICANN은 루트 존 DNSSEC 알고리즘 롤오버에 관한 연구 보고서를 발표하며 운영 현황을 분석하고 있다.   
+2010년대부터 루트 존과 대부분의 주요 TLD(.com, .org 등)에서 DNSSEC 서명이 활성화되었고, 2024년 ICANN은 루트 존 DNSSEC 알고리즘 롤오버에 관한 연구 보고서를 발표하며 운영 현황을 분석하고 있다.
 
 예: DNSSEC 결과 보기
 
@@ -446,45 +446,45 @@ www.nic.cz.  300  IN  RRSIG  A 13 3 300 ...
 
 ### 3) 전송 계층 암호화 — DoT, DoH
 
-DNSSEC는 데이터의 무결성과 출처를 보호하지만,  
-**질의 내용이 평문으로 보인다는 사실**은 변하지 않는다.  
-이를 보완하기 위해 IETF는 **DNS-over-TLS(DoT)** 와 **DNS-over-HTTPS(DoH)** 를 표준화했다.   
+DNSSEC는 데이터의 무결성과 출처를 보호하지만,
+**질의 내용이 평문으로 보인다는 사실**은 변하지 않는다.
+이를 보완하기 위해 IETF는 **DNS-over-TLS(DoT)** 와 **DNS-over-HTTPS(DoH)** 를 표준화했다.
 
-1. **DNS-over-TLS (DoT, RFC 7858)**  
-   - TCP 853 포트에서 TLS로 DNS를 캡슐화  
-   - 일반 HTTPS 트래픽과 구분 가능(전용 포트 사용)  
-   - 많은 리졸버 소프트웨어에서 옵션으로 DoT 서버/클라이언트 지원   
+1. **DNS-over-TLS (DoT, RFC 7858)**
+   - TCP 853 포트에서 TLS로 DNS를 캡슐화
+   - 일반 HTTPS 트래픽과 구분 가능(전용 포트 사용)
+   - 많은 리졸버 소프트웨어에서 옵션으로 DoT 서버/클라이언트 지원
 
-2. **DNS-over-HTTPS (DoH, RFC 8484)**  
-   - DNS 질의를 HTTPS 요청(HTTP/2/3)으로 전송  
-   - 웹 트래픽과 동일 포트(443)를 사용, 방화벽·프록시가 DNS를 구분하기 어려움  
-   - 브라우저가 자체적으로 DoH 리졸버를 선택하는 경우(예: 특정 공용 리졸버) 프라이버시·중앙 집중화 논의가 활발하다.   
+2. **DNS-over-HTTPS (DoH, RFC 8484)**
+   - DNS 질의를 HTTPS 요청(HTTP/2/3)으로 전송
+   - 웹 트래픽과 동일 포트(443)를 사용, 방화벽·프록시가 DNS를 구분하기 어려움
+   - 브라우저가 자체적으로 DoH 리졸버를 선택하는 경우(예: 특정 공용 리졸버) 프라이버시·중앙 집중화 논의가 활발하다.
 
-3. **DNS-over-QUIC (DoQ)**  
+3. **DNS-over-QUIC (DoQ)**
    - UDP 기반 QUIC 위에서 DNS를 전송
    - 지연 감소와 연결 복구에 유리
 
-이들 프로토콜은 **전송 경로 상의 도청/변조**를 어렵게 만들어,  
+이들 프로토콜은 **전송 경로 상의 도청/변조**를 어렵게 만들어,
 ISP나 중간자에 의한 질의 내용 노출을 줄인다.
 
 ### 4) 기타 보안 메커니즘
 
-- **QNAME Minimization**  
-  - 리졸버가 상위 서버에 **필요 최소한의 이름 정보만** 보내도록 하여,  
+- **QNAME Minimization**
+  - 리졸버가 상위 서버에 **필요 최소한의 이름 정보만** 보내도록 하여,
     예를 들어 `.com` TLD에 `www.example.com` 전체가 아니라 `example.com`만 전달
-- **DNS Cookies (RFC 7873)**  
-  - 클라이언트/서버 간 “쿠키”를 사용해 응답이 예상된 출처에서 온 것인지 확인,  
+- **DNS Cookies (RFC 7873)**
+  - 클라이언트/서버 간 “쿠키”를 사용해 응답이 예상된 출처에서 온 것인지 확인,
     일부 스푸핑·앰플리피케이션 공격을 줄이는 데 기여
-- **Response Rate Limiting (RRL)**  
-  - 권한 서버에서 동일 쿼리/목적지에 대한 응답 속도를 제한해  
+- **Response Rate Limiting (RRL)**
+  - 권한 서버에서 동일 쿼리/목적지에 대한 응답 속도를 제한해
     앰플리피케이션 공격에서 악용되는 것을 완화
 
-유럽 및 북미의 데이터 보호 기관들은,  
-IoT 기기·엔드 유저 단말의 DNS 구현 시 **최소한의 로깅, 암호화 채널, 신뢰할 수 있는 리졸버 선택** 등을 권고하는 기술 가이드를 내고 있다.   
+유럽 및 북미의 데이터 보호 기관들은,
+IoT 기기·엔드 유저 단말의 DNS 구현 시 **최소한의 로깅, 암호화 채널, 신뢰할 수 있는 리졸버 선택** 등을 권고하는 기술 가이드를 내고 있다.
 
 ---
 
-## 26.6.10 간단 실습 예제 요약
+## 간단 실습 예제 요약
 
 마지막으로, 이 절에서 설명한 개념을 직접 체험해볼 수 있는 간단 실습들을 모아 두면 블로그 연재의 “실습 섹션”으로 재사용하기 좋다.
 
@@ -492,9 +492,11 @@ IoT 기기·엔드 유저 단말의 DNS 구현 시 **최소한의 로깅, 암호
 
 ```bash
 # 특정 이름의 AUTHORITY / ADDITIONAL 섹션 보기
+
 dig www.example.com
 
 # 루트부터 전체 추적
+
 dig +trace www.ietf.org
 ```
 
@@ -502,6 +504,7 @@ dig +trace www.ietf.org
 
 ```bash
 # A, AAAA, MX, NS, TXT 등 개별 타입 조회
+
 dig A www.example.com
 dig AAAA www.example.com
 dig MX example.com
@@ -511,14 +514,15 @@ dig TXT example.com
 
 ### 3) 캐시 확인(리졸버 수준 실험)
 
-1. 로컬 리졸버를 BIND/Unbound 등으로 구성  
-2. TTL이 짧은 테스트 레코드 생성(ex: 30초)  
+1. 로컬 리졸버를 BIND/Unbound 등으로 구성
+2. TTL이 짧은 테스트 레코드 생성(ex: 30초)
 3. 몇 초 간격으로 반복 질의하며 **응답의 TTL 감소**를 관찰
 
 ### 4) 동적 업데이트(DNS Update) 실험 (테스트 존에서만)
 
 ```bash
 # 예: nsupdate 도구 사용 (BIND)
+
 nsupdate
 > server ns1.example.com
 > zone example.com
@@ -526,14 +530,14 @@ nsupdate
 > send
 ```
 
-- 이후 `dig host123.example.com`으로 결과 확인  
+- 이후 `dig host123.example.com`으로 결과 확인
 - 실제 환경에서는 TSIG 키 기반 인증 필수
 
 ### 5) DNSSEC/DoT/DoH 관찰
 
 - `dig +dnssec`로 RRSIG/DS/DNSKEY 확인
 - DoT/DoH 지원 리졸버에 대해:
-  - `kdig @dns.example.net +tls`  
+  - `kdig @dns.example.net +tls`
   - 브라우저의 DoH 설정 활성화 후 패킷 캡처에서 평문 DNS가 사라지는지 확인
 
 ---

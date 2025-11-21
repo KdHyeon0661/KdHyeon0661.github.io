@@ -6,7 +6,7 @@ category: DataCommunication
 ---
 # Chapter 20. Unicast Routing — General Idea, Least-Cost Routing, Distance Vector · Link State · Path Vector
 
-## 20.1 Introduction
+## Introduction
 
 ### General idea — 유니캐스트 라우팅이란?
 
@@ -18,9 +18,9 @@ category: DataCommunication
   - 알고리즘: 최단 경로, 메트릭 합 최소화
   - 프로토콜: 라우터끼리 라우팅 정보 교환 (RIP, OSPF, IS-IS, BGP 등)
 
-Cisco의 최신 문서 표현을 빌리면, L3 유니캐스트 라우팅은 항상 두 가지 작업으로 요약된다.  
+Cisco의 최신 문서 표현을 빌리면, L3 유니캐스트 라우팅은 항상 두 가지 작업으로 요약된다.
 
-1. **최적 경로 결정 (optimal path selection)**  
+1. **최적 경로 결정 (optimal path selection)**
 2. **패킷 스위칭(packet switching)** — 포워딩 테이블을 보고 실제 패킷을 내보내는 작업
 
 대부분의 교재가 다루는 내용은 ①에 해당하는 **경로 계산**과 ②를 위한 **라우팅 테이블 구축**이다.
@@ -58,11 +58,11 @@ D --------- E ----+
 
 가능한 경로:
 
-1. A–B–C  
+1. A–B–C
    - 비용: \(2 + 1 = 3\)
-2. A–D–E–C  
+2. A–D–E–C
    - 비용: \(5 + 1 + 4 = 10\)
-3. A–B–E–C  
+3. A–B–E–C
    - 비용: \(2 + 2 + 4 = 8\)
 
 **최소 비용 경로**는 A–B–C (비용 3)이다.
@@ -73,7 +73,7 @@ D --------- E ----+
 
 유니캐스트 라우팅의 일반적인 목표는:
 
-> “**각 목적지에 대해 비용 합이 최소가 되는 경로를 찾고,  
+> “**각 목적지에 대해 비용 합이 최소가 되는 경로를 찾고,
 > 그 경로를 따르는 포워딩 테이블을 만들자**”
 
 그래프 이론으로 쓰면:
@@ -113,9 +113,9 @@ $$
 | IS-IS    | Link State    | 링크 비용 (정수 메트릭) |
 | BGP      | Path Vector   | AS-PATH 길이, Local Pref, MED 등 “정책 기반” |
 
-- RIP은 매우 단순하게 “**홉 수**”만 센다.  
-- OSPF/IS-IS는 링크 상태 DB를 전체적으로 보고 Dijkstra SPF 알고리즘으로 **최단 비용 경로**를 계산한다.  
-- BGP는 비용보다는 **정책(policy)**가 우선이라, “최단 AS-PATH”는 여러 기준 중 하나일 뿐이다.  
+- RIP은 매우 단순하게 “**홉 수**”만 센다.
+- OSPF/IS-IS는 링크 상태 DB를 전체적으로 보고 Dijkstra SPF 알고리즘으로 **최단 비용 경로**를 계산한다.
+- BGP는 비용보다는 **정책(policy)**가 우선이라, “최단 AS-PATH”는 여러 기준 중 하나일 뿐이다.
 
 ---
 
@@ -173,27 +173,27 @@ print(reconstruct_path(prev, "C"))  # A에서 C까지 경로
 
 이제 이 “최단 경로” 계산에 어떤 방식으로 정보를 공유하느냐에 따라:
 
-- **Distance Vector**  
-- **Link State**  
-- **Path Vector**  
+- **Distance Vector**
+- **Link State**
+- **Path Vector**
 
 세 가지 알고리즘이 구분된다.
 
 ---
 
-## 20.2 Routing Algorithms — Distance Vector, Link State, Path Vector
+## Routing Algorithms — Distance Vector, Link State, Path Vector
 
-### 20.2.1 Distance Vector Routing
+### Distance Vector Routing
 
 #### 개념
 
 **Distance Vector(DV)** 알고리즘의 핵심 아이디어:
 
-> “각 라우터는 **모든 목적지까지의 거리(distance)와 다음 홉(next hop)**을 테이블로 갖고 있고,  
-> 이 테이블을 **이웃(neighbor)**에게 주기적으로 광고한다.  
+> “각 라우터는 **모든 목적지까지의 거리(distance)와 다음 홉(next hop)**을 테이블로 갖고 있고,
+> 이 테이블을 **이웃(neighbor)**에게 주기적으로 광고한다.
 > 이웃의 distance vector를 보고 자신의 테이블을 갱신한다.”
 
-RIP(Routing Information Protocol)은 DV 알고리즘(Bellman-Ford)에 기반한 대표적인 IGP다.  
+RIP(Routing Information Protocol)은 DV 알고리즘(Bellman-Ford)에 기반한 대표적인 IGP다.
 
 #### 수식 — Bellman-Ford 식
 
@@ -209,7 +209,7 @@ $$
 D_i(d) = \min_{j \in N(i)} \left\{ c(i,j) + D_j(d) \right\}
 $$
 
-- 라우터 i는 **이웃 j들의 distance vector**를 받아서 위 식을 계산,  
+- 라우터 i는 **이웃 j들의 distance vector**를 받아서 위 식을 계산,
   더 작은 값이 나오면 자신의 테이블을 갱신.
 
 ---
@@ -273,17 +273,20 @@ $$
 INF = 10**9
 
 # 그래프: cost[u][v] = 링크 비용 (없으면 INF)
+
 nodes = ["A", "B", "C", "D"]
 cost = {u: {v: INF for v in nodes} for u in nodes}
 for u in nodes:
     cost[u][u] = 0
 
 # 링크 설정
+
 cost["A"]["B"] = cost["B"]["A"] = 1
 cost["B"]["C"] = cost["C"]["B"] = 1
 cost["B"]["D"] = cost["D"]["B"] = 1
 
 # 초기 distance vectors: 자기 자신만 0
+
 dist = {u: {v: INF for v in nodes} for u in nodes}
 for u in nodes:
     dist[u][u] = 0
@@ -312,6 +315,7 @@ def distance_vector_step():
     return new_dist, updated
 
 # 반복하면서 수렴할 때까지
+
 for it in range(10):
     dist, changed = distance_vector_step()
     print(f"Iteration {it}, dist from A:", dist["A"])
@@ -321,14 +325,14 @@ for it in range(10):
 
 이 코드를 실행하면 몇 번의 반복 후 다음과 같은 값으로 수렴한다:
 
-- `dist["A"]["C"] = 2`  
+- `dist["A"]["C"] = 2`
 - `dist["A"]["D"] = 2`
 
 ---
 
 #### Distance Vector의 문제점 — Count to Infinity
 
-**Count to infinity** 문제는 DV 알고리즘의 대표적인 단점이다.  
+**Count to infinity** 문제는 DV 알고리즘의 대표적인 단점이다.
 
 간단한 시나리오:
 
@@ -336,15 +340,15 @@ for it in range(10):
 A ---1--- B ---1--- C
 ```
 
-1. 초기에는 각 노드가 서로까지의 홉 수를 알고 있고,  
+1. 초기에는 각 노드가 서로까지의 홉 수를 알고 있고,
    A→C, B→C 등 모든 경로가 정상.
-2. C와 B 사이 링크가 끊어진다면,  
+2. C와 B 사이 링크가 끊어진다면,
    B는 “C까지 갈 수 없다(∞)”라고 업데이트해야 한다.
 3. 하지만 A는 여전히 “B를 통해 C까지 2 홉에 갈 수 있다”고 믿고 있을 수 있다.
-4. B는 A의 정보를 보고  
+4. B는 A의 정보를 보고
    “A를 통해 C까지 3 홉이네?”라고 생각하면서 **자신의 거리**를 3으로 설정.
-5. A는 다시 “B가 C까지 3 홉이라니, 그럼 나는 4 홉이네?”라고 갱신…  
-   이렇게 서로 “조금씩 더 나빠진 거리”를 교환하며 **거리 값이 점점 커지다가**  
+5. A는 다시 “B가 C까지 3 홉이라니, 그럼 나는 4 홉이네?”라고 갱신…
+   이렇게 서로 “조금씩 더 나빠진 거리”를 교환하며 **거리 값이 점점 커지다가**
    결국 무한대(예: 16) 도달 시 “도달 불가”로 취급하는 상황.
 
 대응 기법:
@@ -353,24 +357,24 @@ A ---1--- B ---1--- C
 - **Split Horizon with Poisoned Reverse**
 - **Triggered Update**, **Holddown Timer** 등
 
-RIP 표준은 이런 기법들을 적절히 조합해, convergence 속도와 안정성을 맞추고 있다.  
+RIP 표준은 이런 기법들을 적절히 조합해, convergence 속도와 안정성을 맞추고 있다.
 
 ---
 
-### 20.2.2 Link State Routing
+### Link State Routing
 
 #### 개념
 
 **Link State(LS)** 알고리즘의 핵심 아이디어:
 
-> “각 라우터는 **자신과 직접 연결된 링크 상태(link state)**를 전체 네트워크에 **플러딩(flooding)**하고,  
-> 모든 라우터가 **동일한 링크 상태 데이터베이스(LSDB)**를 갖도록 한다.  
+> “각 라우터는 **자신과 직접 연결된 링크 상태(link state)**를 전체 네트워크에 **플러딩(flooding)**하고,
+> 모든 라우터가 **동일한 링크 상태 데이터베이스(LSDB)**를 갖도록 한다.
 > 그 뒤 각 라우터가 **자신 로컬에서 Dijkstra SPF 알고리즘**으로 최단 경로 트리를 계산한다.”
 
 대표적인 프로토콜:
 
-- **OSPF (Open Shortest Path First)** — 인터넷에서 가장 널리 쓰이는 IGP  
-- **IS-IS (Intermediate System to Intermediate System)** — 대형 ISP/백본망에서 많이 사용  
+- **OSPF (Open Shortest Path First)** — 인터넷에서 가장 널리 쓰이는 IGP
+- **IS-IS (Intermediate System to Intermediate System)** — 대형 ISP/백본망에서 많이 사용
 
 Link-state 프로토콜의 공통 특징:
 
@@ -386,7 +390,7 @@ Link-state 프로토콜의 공통 특징:
 1. **이웃 탐색 & Link-state 생성**
    - 각 라우터는 직접 연결된 인터페이스와 그 비용을 정리해 **Link State Advertisement(LSA)** 또는 **Link State PDU(LSP)**를 만든다.
 2. **플러딩**
-   - 이웃에게 보낸 LSA는 다시 그 이웃의 이웃들에게 전달…  
+   - 이웃에게 보낸 LSA는 다시 그 이웃의 이웃들에게 전달…
      이렇게 **네트워크 전체로 전파**된다.
 3. **LSDB 구축**
    - 모든 라우터는 자신이 받은 LSAs를 모아 **동일한 LSDB(Topology Map)**를 가진다.
@@ -395,7 +399,7 @@ Link-state 프로토콜의 공통 특징:
 5. **라우팅 테이블 생성**
    - 최단 경로 트리에서 각 목적지로 가는 첫 번째 링크를 추려 **포워딩 테이블**을 만든다.
 
-Cisco/Juniper 문서 모두 “OSPF/IS-IS는 링크 상태를 플러딩하고 SPF 알고리즘을 사용한다”고 명시하고 있다.  
+Cisco/Juniper 문서 모두 “OSPF/IS-IS는 링크 상태를 플러딩하고 SPF 알고리즘을 사용한다”고 명시하고 있다.
 
 ---
 
@@ -557,11 +561,11 @@ print("Forwarding table at A:", fwdA)
 | 수렴 속도        | 느릴 수 있음                     | 일반적으로 빠름                             |
 | 규모/확장성      | 소규모/단순 네트워크              | 대규모/복잡 네트워크, area/level 지원       |
 
-Cisco NX-OS 가이드도 “링크 상태 프로토콜(OSPF)이 일반적으로 거리 벡터보다 더 확장성이 좋다”고 요약한다.  
+Cisco NX-OS 가이드도 “링크 상태 프로토콜(OSPF)이 일반적으로 거리 벡터보다 더 확장성이 좋다”고 요약한다.
 
 ---
 
-### 20.2.3 Path Vector Routing
+### Path Vector Routing
 
 #### 개념
 
@@ -569,10 +573,10 @@ Cisco NX-OS 가이드도 “링크 상태 프로토콜(OSPF)이 일반적으로 
 
 아이디어:
 
-> “각 라우터는 목적지까지의 **경로 전체(AS들의 시퀀스)**를 저장/광고한다.  
+> “각 라우터는 목적지까지의 **경로 전체(AS들의 시퀀스)**를 저장/광고한다.
 > 거리는 단순 숫자(메트릭)가 아니라, **경로(path) 벡터**다.”
 
-BGP는 공식 Cisco 문서 표현 그대로 **“distance-vector + AS-PATH loop detection을 결합한 path-vector 알고리즘”**을 사용한다.  
+BGP는 공식 Cisco 문서 표현 그대로 **“distance-vector + AS-PATH loop detection을 결합한 path-vector 알고리즘”**을 사용한다.
 
 - DV처럼 이웃과 경로 정보를 교환하지만,
 - **경로 전체(예: AS1-AS3-AS5)**를 알려 주기 때문에
@@ -606,7 +610,7 @@ BGP는 공식 Cisco 문서 표현 그대로 **“distance-vector + AS-PATH loop 
 - 65001은 다시:
   - "Path: [65001, 65002, 65003]" 형태로 다른 피어들에게 광고.
 
-이 때 각 AS는 BGP의 **경로 선택 규칙**에 따라 여러 경로 중 하나를 고른다.  
+이 때 각 AS는 BGP의 **경로 선택 규칙**에 따라 여러 경로 중 하나를 고른다.
 (보통 Local Pref → AS-PATH 길이 → ORIGIN → MED → eBGP/iBGP 등 순서)
 
 ---
@@ -646,12 +650,12 @@ class BGPSpeaker:
                 peer.recv_update(prefix, new_path)
 ```
 
-실제 BGP는 훨씬 많은 정책/속성을 고려하지만,  
+실제 BGP는 훨씬 많은 정책/속성을 고려하지만,
 핵심 아이디어는:
 
 - **경로 전체를 벡터로 가지고**
-- **자신이 이미 포함된 경로는 버림(AS-PATH loop prevention)**  
-이라는 점이다.  
+- **자신이 이미 포함된 경로는 버림(AS-PATH loop prevention)**
+이라는 점이다.
 
 ---
 
@@ -665,7 +669,7 @@ class BGPSpeaker:
 | 최적화 기준      | 숫자 메트릭(비용 최소)        | 숫자+정책(Local Pref, MED, Community 등 복합 기준)       |
 | 수렴 속도/안정성 | 네트워크 크기 증가 시 문제    | 폴리시 복잡성 때문에 수렴이 느릴 수 있으나 루프는 확실히 방지 |
 
-현대 인터넷에서 **전 세계 AS 간 유니캐스트 라우팅**은 사실상 **BGP(path vector)**에 의해 이루어진다.  
+현대 인터넷에서 **전 세계 AS 간 유니캐스트 라우팅**은 사실상 **BGP(path vector)**에 의해 이루어진다.
 
 ---
 
@@ -674,26 +678,26 @@ class BGPSpeaker:
 이 장에서는 **유니캐스트 라우팅**의 개념과 세 가지 대표 알고리즘을 정리했다.
 
 1. **Introduction / Least-cost routing**
-   - 라우팅은 “**최적 경로 선택 + 패킷 스위칭**”의 결합이다.  
-   - 네트워크를 그래프와 비용 함수로 모델링하고,  
+   - 라우팅은 “**최적 경로 선택 + 패킷 스위칭**”의 결합이다.
+   - 네트워크를 그래프와 비용 함수로 모델링하고,
      각 목적지에 대해 **비용 합이 최소인 경로**를 찾는 것이 기본 목표.
    - 비용은 홉 수, 지연, 대역폭, 관리 거리, 정책 등 여러 형태가 될 수 있다.
 
 2. **Distance Vector Routing**
    - 각 라우터는 목적지까지의 **거리(vector)**를 이웃과 교환.
-   - Bellman-Ford 식  
-     $$D_i(d) = \min_{j \in N(i)} \{ c(i,j) + D_j(d) \}$$  
+   - Bellman-Ford 식
+     $$D_i(d) = \min_{j \in N(i)} \{ c(i,j) + D_j(d) \}$$
      를 반복 적용해 수렴.
    - RIP는 DV 알고리즘 기반 IGP로, “홉 수”를 메트릭으로 사용.
-   - Count-to-infinity, 루프, 느린 수렴 문제를 **split horizon, poisoned reverse, triggered updates** 등으로 완화한다.  
+   - Count-to-infinity, 루프, 느린 수렴 문제를 **split horizon, poisoned reverse, triggered updates** 등으로 완화한다.
 
 3. **Link State Routing**
-   - 각 라우터가 **자신의 링크 상태**를 전체 네트워크에 플러딩 →  
+   - 각 라우터가 **자신의 링크 상태**를 전체 네트워크에 플러딩 →
      모든 라우터가 동일한 **LSDB(톱올로지 맵)** 보유.
    - 이후 각자 **Dijkstra SPF 알고리즘**으로 최단 경로 트리를 계산해 라우팅 테이블 생성.
-   - OSPF, IS-IS가 대표적인 링크 상태 IGP이며, 대규모 네트워크에서 RIP보다 훨씬 잘 확장된다.  
+   - OSPF, IS-IS가 대표적인 링크 상태 IGP이며, 대규모 네트워크에서 RIP보다 훨씬 잘 확장된다.
 
 4. **Path Vector Routing**
    - BGP가 사용하는 알고리즘으로, **거리 대신 전체 경로(AS-PATH)**를 벡터로 광고.
    - 루프 방지는 단순: AS-PATH에 자기 AS가 보이면 그 경로는 폐기.
-   - 비용보다 **정책(Local Pref, MED, Community 등)**이 우선이며, 전 인터넷 규모의 AS 간 유니캐스트 라우팅을 담당한다.  
+   - 비용보다 **정책(Local Pref, MED, Community 등)**이 우선이며, 전 인터넷 규모의 AS 간 유니캐스트 라우팅을 담당한다.

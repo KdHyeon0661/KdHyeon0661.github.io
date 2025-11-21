@@ -6,27 +6,27 @@ category: DataCommunication
 ---
 # Chapter 14. Other Wired Networks — Telephone & Cable Networks (PSTN, DSL, Cable, HFC, DOCSIS)
 
-이 글은 **유선 네트워크 중 “전화망(PSTN)”과 “케이블 TV/인터넷(HFC, DOCSIS)”**을 정리하는 장입니다.  
+이 글은 **유선 네트워크 중 “전화망(PSTN)”과 “케이블 TV/인터넷(HFC, DOCSIS)”**을 정리하는 장입니다.
 고전적인 아날로그 전화망에서 시작해서, 오늘날 미국·유럽에서 실제 쓰이는 **DSL, 케이블 모뎀, HFC, DOCSIS 3.1/4.0**까지 한 흐름으로 연결해서 설명합니다.
 
 ---
 
-## 14.1 Telephone Networks
+## Telephone Networks
 
 ### Major Components
 
-전화망은 보통 **PSTN(Public Switched Telephone Network)** 이라고 부릅니다.  
+전화망은 보통 **PSTN(Public Switched Telephone Network)** 이라고 부릅니다.
 핵심 개념은 아주 단순합니다.
 
 > “각 가입자 집까지는 **전용 구리선(local loop)**, 그 뒤로는 교환국들 사이를 연결하는 **고속 트렁크(trunk)**, 그리고 전화 연결을 만들어 주는 **교환기(switch)**들의 계층 구조”
 
-현대 PSTN은 구리선·광섬유·마이크로파·해저케이블·이동통신망을 모두 포함한 거대한 통합망입니다.:contentReference[oaicite:0]{index=0}  
+현대 PSTN은 구리선·광섬유·마이크로파·해저케이블·이동통신망을 모두 포함한 거대한 통합망입니다.
 
 #### 1) 가입자선(Local Loop)
 
-- **정의**  
-  - 가입자의 집/사무실에 있는 전화기 ~ 근처 **지역 교환국(Local Exchange / Central Office)** 까지 이어지는 **전용 2선 구리 회선**  
-  - 보통 수 km 정도 길이이며, 과거에는 **순수 아날로그(음성 0.3~3.4 kHz)**, 지금은 **xDSL, VoIP용 신호**도 여기에 실립니다.:contentReference[oaicite:1]{index=1}  
+- **정의**
+  - 가입자의 집/사무실에 있는 전화기 ~ 근처 **지역 교환국(Local Exchange / Central Office)** 까지 이어지는 **전용 2선 구리 회선**
+  - 보통 수 km 정도 길이이며, 과거에는 **순수 아날로그(음성 0.3~3.4 kHz)**, 지금은 **xDSL, VoIP용 신호**도 여기에 실립니다.
 
 - **특징**
   - 각 가입자마다 별도의 물리 회선 → 교환국 입장에서는 **스타 토폴로지**처럼 보임.
@@ -49,10 +49,10 @@ category: DataCommunication
 
 #### 3) 트렁크(Trunk)와 교환 계층
 
-전통적인 PSTN은 대략 다음과 같은 계층 구조를 가졌습니다.:contentReference[oaicite:2]{index=2}  
+전통적인 PSTN은 대략 다음과 같은 계층 구조를 가졌습니다.
 
-1. **지역(Local) 교환국**: 각 도시·구/군 단위  
-2. **타국(Tandem / Toll) 교환국**: 같은 지역 내 교환국들을 묶어 줌  
+1. **지역(Local) 교환국**: 각 도시·구/군 단위
+2. **타국(Tandem / Toll) 교환국**: 같은 지역 내 교환국들을 묶어 줌
 3. **국가·국제 게이트웨이**: 국가 간 통신
 
 도식:
@@ -68,11 +68,11 @@ category: DataCommunication
 #### 4) 전송 매체
 
 - 구리선(가입자선, 일부 트렁크)
-- **광섬유(대부분의 장거리 트렁크)**  
-- 무선 마이크로파 링크  
+- **광섬유(대부분의 장거리 트렁크)**
+- 무선 마이크로파 링크
 - 해저 광케이블(국제 통신)
 
-유럽·미국 기준으로 오늘날 장거리 PSTN/코어망은 거의 전부 광섬유로 대체되어 있고, 구리는 **집/건물 내부 혹은 짧은 구간(DSL 등)**에만 남아 있는 경우가 많습니다.:contentReference[oaicite:3]{index=3}  
+유럽·미국 기준으로 오늘날 장거리 PSTN/코어망은 거의 전부 광섬유로 대체되어 있고, 구리는 **집/건물 내부 혹은 짧은 구간(DSL 등)**에만 남아 있는 경우가 많습니다.
 
 ---
 
@@ -82,9 +82,9 @@ category: DataCommunication
 
 #### 1) LATA 정의
 
-- **LATA(Local Access and Transport Area)**  
-  - 미국의 반독점 규제(AT&T 분할) 이후 도입된 개념으로, **전화 서비스 제공 구역을 나눈 지리적 단위**:contentReference[oaicite:4]{index=4}  
-  - 각 LATA 내부는 지역 통신사(Local Exchange Carrier, LEC)가 처리  
+- **LATA(Local Access and Transport Area)**
+  - 미국의 반독점 규제(AT&T 분할) 이후 도입된 개념으로, **전화 서비스 제공 구역을 나눈 지리적 단위**
+  - 각 LATA 내부는 지역 통신사(Local Exchange Carrier, LEC)가 처리
   - LATA 간 통화는 장거리 통신사(Interexchange Carrier, IXC)가 처리
 
 간단히 표현하면:
@@ -99,15 +99,15 @@ category: DataCommunication
 
 #### 2) 통화 유형과 요금 구분
 
-미국 FCC 기준으로 통화는 크게 **세 가지**로 구분됩니다.:contentReference[oaicite:5]{index=5}  
+미국 FCC 기준으로 통화는 크게 **세 가지**로 구분됩니다.
 
-1. **Local Call**  
+1. **Local Call**
    - 같은 교환 지역 내 통화
-2. **Local Toll (IntraLATA Toll)**  
-   - 같은 LATA 안이지만 Local 범위를 넘어서는 통화  
+2. **Local Toll (IntraLATA Toll)**
+   - 같은 LATA 안이지만 Local 범위를 넘어서는 통화
    - “지역 장거리”로도 불립니다.
-3. **Long Distance (InterLATA)**  
-   - 서로 다른 LATA 또는 주(State)를 넘는 통화  
+3. **Long Distance (InterLATA)**
+   - 서로 다른 LATA 또는 주(State)를 넘는 통화
    - 과거에는 AT&T, MCI 등 IXC가 담당.
 
 예를 들어,
@@ -136,17 +136,17 @@ category: DataCommunication
 
 현대 PSTN:
 
-- **Out-of-band Common Channel Signaling(CCS)**  
+- **Out-of-band Common Channel Signaling(CCS)**
   - **음성/데이터 채널과 분리된 전용 신호 링크**를 통해 신호를 교환
   - 대표적인 것이 **SS7(Signaling System No.7)**
 
 #### 2) SS7(Signaling System No.7)
 
-- ITU-T에서 표준화한 **신호 프로토콜 스택**으로, 오늘날 PSTN·2G/3G 이동통신망에서 통화 설정, 번호 질의, SMS, 로밍 등에 널리 사용됩니다.:contentReference[oaicite:6]{index=6}  
+- ITU-T에서 표준화한 **신호 프로토콜 스택**으로, 오늘날 PSTN·2G/3G 이동통신망에서 통화 설정, 번호 질의, SMS, 로밍 등에 널리 사용됩니다.
 
 핵심 특징:
 
-1. **공통 신호 채널(Common Channel)**  
+1. **공통 신호 채널(Common Channel)**
    - 56 or 64 kbps 디지털 채널을 이용해 신호 메시지를 교환
    - 음성/데이터 채널과 분리되어 있어 **더 빠르고 신뢰성 높은 콜 셋업** 가능
 2. **계층 구조**
@@ -179,26 +179,26 @@ A가 B(다른 LATA/다른 사업자)에게 전화를 거는 시나리오:
 
 전통적인 PSTN이 제공한 서비스는 다음과 같습니다.
 
-1. **POTS (Plain Old Telephone Service)**  
-   - **아날로그 음성 통화**  
-   - DC 전원과 벨 신호 공급, 2선 구리선, 0.3~3.4 kHz 음성대역  
-   - 미국에서는 전통적인 POTS/ISDN 서비스가 2020년대에 들어 단계적으로 종료되었고, 2022년을 기점으로 규제상 POTS/ISDN 의무 제공이 끝났습니다.  
+1. **POTS (Plain Old Telephone Service)**
+   - **아날로그 음성 통화**
+   - DC 전원과 벨 신호 공급, 2선 구리선, 0.3~3.4 kHz 음성대역
+   - 미국에서는 전통적인 POTS/ISDN 서비스가 2020년대에 들어 단계적으로 종료되었고, 2022년을 기점으로 규제상 POTS/ISDN 의무 제공이 끝났습니다.
    - 하지만 “POTSlike” 서비스는 **VoIP + ATA(아날로그 전화 어댑터)** 형태로 계속 제공.
 
-2. **ISDN (Integrated Services Digital Network)**  
-   - 구리선을 통해 **디지털 채널(64 kbps B 채널) + 신호 채널(D 채널)**을 제공하는 서비스.:contentReference[oaicite:8]{index=8}  
-   - BRI: 2B + D(2×64 kbps + 16 kbps)  
+2. **ISDN (Integrated Services Digital Network)**
+   - 구리선을 통해 **디지털 채널(64 kbps B 채널) + 신호 채널(D 채널)**을 제공하는 서비스.
+   - BRI: 2B + D(2×64 kbps + 16 kbps)
    - PRI: 미국 T1(23B+1D), 유럽 E1(30B+1D)
    - 음성/팩스/데이터/영상 회의 등 다양한 서비스를 통합하기 위한 시도였지만, 이후 DSL/케이블/광에 밀려 점차 축소.
 
-3. **전용회선(Leased Line)**  
+3. **전용회선(Leased Line)**
    - 기업용으로 특정 두 지점을 고정 대역폭으로 연결하는 회선 (T1/E1, n×64 kbps, SDH/SONET)
 
 4. **Dial-up 인터넷 접근** (다음 소제목에서 상세 설명)
 
 5. **DSL 기반 브로드밴드** (ADSL, VDSL 등 — 뒤에서 상세 설명)
 
-현대 미국·유럽에서 **고정 인터넷 접속**은 크게 **케이블, DSL, 광(FTTH)** 였고, 최근 보고서들에 따르면 **DSL 비중은 감소, 케이블·광이 대부분을 차지하는 추세**입니다.:contentReference[oaicite:9]{index=9}  
+현대 미국·유럽에서 **고정 인터넷 접속**은 크게 **케이블, DSL, 광(FTTH)** 였고, 최근 보고서들에 따르면 **DSL 비중은 감소, 케이블·광이 대부분을 차지하는 추세**입니다.
 
 ---
 
@@ -219,7 +219,7 @@ Dial-up 인터넷은 **PSTN의 아날로그 음성 채널을 이용해서 모뎀
 
 #### 2) 속도와 한계
 
-- 보통 **56 kbps 이론 최고 속도**, 실제로는 **40~50 kbps 수준**이 많았습니다.:contentReference[oaicite:10]{index=10}  
+- 보통 **56 kbps 이론 최고 속도**, 실제로는 **40~50 kbps 수준**이 많았습니다.
 - 이유:
   - 전화망이 원래 음성 0.3~3.4 kHz에 최적화
   - 라인 노이즈·감쇠·에코 등으로 인해 고속 변조가 어렵고 에러율 증가
@@ -257,8 +257,8 @@ DSL은 **기존 구리 가입자선(local loop)** 위에 **음성보다 훨씬 �
 
 - **다운로드 속도 > 업로드 속도**인 비대칭 구조
 - 미국 FCC 안내 기준:
-  - ADSL은 일반적으로 **다운스트림이 업스트림보다 빠른 비대칭형 브로드밴드**를 제공하며,  
-    전화와 동시에 사용 가능하도록 설계됩니다.:contentReference[oaicite:11]{index=11}  
+  - ADSL은 일반적으로 **다운스트림이 업스트림보다 빠른 비대칭형 브로드밴드**를 제공하며,
+    전화와 동시에 사용 가능하도록 설계됩니다.
 - ADSL2+, VDSL 이전 세대에서 미국·유럽 가정용 고정 인터넷의 상당 부분을 담당
 
 대역 분할(개념도):
@@ -275,15 +275,15 @@ DSL은 **기존 구리 가입자선(local loop)** 위에 **음성보다 훨씬 �
 VDSL/VDSL2는 ADSL보다 훨씬 넓은 주파수 대역(최대 30 MHz)을 사용해서 **더 높은 속도**를 제공하는 DSL입니다.
 
 - 상용 장비 기준:
-  - VDSL: 최대 약 52 Mbps 다운 / 16 Mbps 업  
-  - VDSL2: 표준상 **최대 200 Mbps (100/100)**까지 가능, 실제 서비스는 **100/50 Mbps, 100/100 Mbps**급이 일반적입니다.  
+  - VDSL: 최대 약 52 Mbps 다운 / 16 Mbps 업
+  - VDSL2: 표준상 **최대 200 Mbps (100/100)**까지 가능, 실제 서비스는 **100/50 Mbps, 100/100 Mbps**급이 일반적입니다.
 - 단, **라인 길이가 짧을수록 속도가 빠름**:
   - 수백 m: 수십~100 Mbps
   - 수 km: 속도 급감
 
 #### 3) G.fast (최신 고급 DSL)
 
-G.fast는 **500 m 이하** 짧은 구리 구간을 대상으로 **100 Mbps~1 Gbps 이상**을 목표로 설계된 최신 DSL 표준입니다.  
+G.fast는 **500 m 이하** 짧은 구리 구간을 대상으로 **100 Mbps~1 Gbps 이상**을 목표로 설계된 최신 DSL 표준입니다.
 
 - FTTB/FTTdp(건물/문 앞까지 광, 나머지 짧은 거리만 구리) 환경에서,
 - 구리를 완전히 걷어내지 않고도 **기가비트급** 서비스를 제공하기 위한 기술.
@@ -349,15 +349,15 @@ for name, bw, snr in profiles:
 
 ---
 
-## 14.2 Cable Networks
+## Cable Networks
 
-케이블 네트워크는 **원래 TV 방송을 전달하기 위한 동축(coaxial) 기반 브로드캐스트망**이었지만, 이후 **HFC + DOCSIS** 구조로 진화하면서 오늘날 미국·유럽 고정 인터넷의 큰 비중을 담당하고 있습니다.:contentReference[oaicite:14]{index=14}  
+케이블 네트워크는 **원래 TV 방송을 전달하기 위한 동축(coaxial) 기반 브로드캐스트망**이었지만, 이후 **HFC + DOCSIS** 구조로 진화하면서 오늘날 미국·유럽 고정 인터넷의 큰 비중을 담당하고 있습니다.
 
 ### Traditional Cable Networks
 
 #### 1) Community Antenna TV (CATV)의 시작
 
-전통적인 케이블 TV 네트워크는 **수신이 잘 안 되는 지역(산골, 도심 협곡 등)**에게 TV를 공급하기 위해 시작되었습니다.  
+전통적인 케이블 TV 네트워크는 **수신이 잘 안 되는 지역(산골, 도심 협곡 등)**에게 TV를 공급하기 위해 시작되었습니다.
 
 - 높은 곳(언덕, 빌딩 옥상)에 **커다란 공동 안테나** 설치
 - 그곳에서 수신한 **방송국 RF 신호**를 **동축 케이블**을 통해 여러 가정에 분배
@@ -375,7 +375,7 @@ for name, bw, snr in profiles:
 
 #### 2) Tree-and-Branch 동축 구조
 
-전통적인 케이블 네트워크는 **나무 가지(Tree-and-Branch)** 구조를 사용합니다.  
+전통적인 케이블 네트워크는 **나무 가지(Tree-and-Branch)** 구조를 사용합니다.
 
 - **루트**: Headend(케이블 TV 국사)
 - **줄기**: 메인 동축 trunk
@@ -394,7 +394,7 @@ for name, bw, snr in profiles:
 
 ### Hybrid Fiber-Coaxial Network (HFC)
 
-전통적인 “모두 동축” 네트워크는 확장성과 양방향성에 한계가 있어서, 오늘날 케이블 사업자들은 거의 모두 **HFC(Hybrid Fiber-Coaxial)** 구조를 사용합니다.  
+전통적인 “모두 동축” 네트워크는 확장성과 양방향성에 한계가 있어서, 오늘날 케이블 사업자들은 거의 모두 **HFC(Hybrid Fiber-Coaxial)** 구조를 사용합니다.
 
 #### 1) HFC 개념
 
@@ -415,31 +415,31 @@ for name, bw, snr in profiles:
 - **Optical Node**: 광 → RF(동축) 변환, 그 반대 방향도 지원
 - **Coax Plant**: 동네 단위의 다수 가입자가 공유하는 동축 세그먼트
 
-오늘날 HFC에서는 **서비스 그룹(service group)**마다 수십~수백 가구가 하나의 RF 채널 세트를 공유합니다.  
+오늘날 HFC에서는 **서비스 그룹(service group)**마다 수십~수백 가구가 하나의 RF 채널 세트를 공유합니다.
 
 #### 2) HFC의 장점
 
 - **높은 다운로드 속도**
-  - DOCSIS 3.1 기준: 최대 수 Gbps급 다운스트림  
-  - DOCSIS 4.0: 설계상 10 Gbps 대역, 실제 시험에서 16 Gbps까지 달성:contentReference[oaicite:19]{index=19}  
+  - DOCSIS 3.1 기준: 최대 수 Gbps급 다운스트림
+  - DOCSIS 4.0: 설계상 10 Gbps 대역, 실제 시험에서 16 Gbps까지 달성
 - **기존 동축 인프라 재사용 → FTTH보다 저렴**
 - **다중 서비스**: TV, VoD, VoIP, 인터넷을 동시에 제공
 - **노드 분할(Node Split)**로 서비스 그룹 크기를 줄여 성능·품질 향상
 
 #### 3) HFC의 단점
 
-- **공유 매체**  
+- **공유 매체**
   - 같은 세그먼트의 가입자들이 RF 채널을 공유 → 피크 시간대에 속도 저하 가능
-- **노이즈 집적**  
+- **노이즈 집적**
   - 가입자 한 명의 문제(열린 포트, 나쁜 커넥터 등)가 세그먼트 전체 노이즈에 영향을 줄 수 있음
-- **복잡한 업그레이드**  
+- **복잡한 업그레이드**
   - DOCSIS 버전 업, 노드 분할, RF 스펙트럼 확장(1.2 GHz, 1.8 GHz 등) 등 지속적인 설비투자가 필요
 
 ---
 
 ### Cable TV for Data Transfer (DOCSIS & Cable Modems)
 
-케이블 네트워크를 **인터넷 접속에 활용**하게 만든 핵심 표준이 **DOCSIS(Data Over Cable Service Interface Specifications)** 입니다.:contentReference[oaicite:20]{index=20}  
+케이블 네트워크를 **인터넷 접속에 활용**하게 만든 핵심 표준이 **DOCSIS(Data Over Cable Service Interface Specifications)** 입니다.
 
 #### 1) DOCSIS 개요
 
@@ -458,7 +458,7 @@ for name, bw, snr in profiles:
 | DOCSIS 3.1   | 2013~            | OFDM, 최대 10 Gbps 다운 / 1~2 Gbps 업 링크 설계 |
 | DOCSIS 4.0   | 2020s            | 대칭 10 Gbps급, DOCSIS 4.0 시험에서 16 Gbps 달성 |
 
-실제 상용 서비스에서 미국·유럽 케이블 사업자들은 DOCSIS 3.1 기반으로 **1 Gbps~몇 Gbps급 상품**을, DOCSIS 4.0 시범망에서는 **여러 vendor 조합에서 16 Gbps 다운스트림**까지 시험 성공한 바 있습니다.:contentReference[oaicite:21]{index=21}  
+실제 상용 서비스에서 미국·유럽 케이블 사업자들은 DOCSIS 3.1 기반으로 **1 Gbps~몇 Gbps급 상품**을, DOCSIS 4.0 시범망에서는 **여러 vendor 조합에서 16 Gbps 다운스트림**까지 시험 성공한 바 있습니다.
 
 #### 2) 케이블 모뎀 접속 구조
 
@@ -497,23 +497,23 @@ print(f"업스트림 평균: {avg_up:.1f} Mbps/가구")
 - 통계적 다중 접속(Statistical Multiplexing)을 활용해
   - 개별 상품 속도(예: 300 Mbps) 제공이 가능합니다.
 
-사업자는 **서비스 그룹 분할(Node Split)**, **RF 스펙트럼 확장**, **DOCSIS 4.0 업그레이드** 등을 통해 혼잡을 완화합니다.  
+사업자는 **서비스 그룹 분할(Node Split)**, **RF 스펙트럼 확장**, **DOCSIS 4.0 업그레이드** 등을 통해 혼잡을 완화합니다.
 
 #### 4) 케이블 vs DSL vs FTTH 비교 (2020s 미국·유럽)
 
 요약하면:
 
-- **DSL(ADSL/VDSL)**:  
+- **DSL(ADSL/VDSL)**:
   - 기존 전화선 기반, 구간 길이와 품질에 민감, 수십~수백 Mbps
   - G.fast 등으로 1 Gbps에 근접 가능하지만 짧은 구리 구간에 한정
-- **케이블(HFC, DOCSIS)**:  
+- **케이블(HFC, DOCSIS)**:
   - 기존 동축 기반, 공유 매체지만 멀티 Gbps급까지 확장
   - DOCSIS 3.1/4.0로 10 Gbps급 설계, 16 Gbps 시험 달성
 - **광(FTTH, PON)**:
   - 전용 혹은 거의 전용에 가까운 광섬유, 가장 높은 용량과 미래 확장성
   - 구축비가 가장 크지만, 장기적으로는 운영 효율이 높음
 
-미국 FCC·유럽 통계들을 보면, 최근 수년간 **DSL 가입자는 감소, 케이블·FTTH는 증가**하는 추세이며, 특히 **케이블 HFC + DOCSIS 3.1/4.0**과 **FTTH(PON)**가 고정 브로드밴드 성장을 주도하고 있습니다.:contentReference[oaicite:23]{index=23}  
+미국 FCC·유럽 통계들을 보면, 최근 수년간 **DSL 가입자는 감소, 케이블·FTTH는 증가**하는 추세이며, 특히 **케이블 HFC + DOCSIS 3.1/4.0**과 **FTTH(PON)**가 고정 브로드밴드 성장을 주도하고 있습니다.
 
 ---
 

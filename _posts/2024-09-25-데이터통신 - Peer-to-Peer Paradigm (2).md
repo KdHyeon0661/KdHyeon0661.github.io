@@ -6,28 +6,28 @@ category: DataCommunication
 ---
 # Chapter 29 — Peer-to-Peer Overlays: Pastry, Kademlia, BitTorrent
 
-Pastry·Kademlia는 각각 **prefix 기반 / XOR 기반** DHT 설계의 대표 사례이고,  
-BitTorrent는 **파일 배포 P2P + DHT(트래커리스 확장)** 의 사실상 표준이다.  
+Pastry·Kademlia는 각각 **prefix 기반 / XOR 기반** DHT 설계의 대표 사례이고,
+BitTorrent는 **파일 배포 P2P + DHT(트래커리스 확장)** 의 사실상 표준이다.
 
 ---
 
-## 29.3 Pastry
+## Pastry
 
-Pastry는 Rowstron & Druschel(Microsoft Research, 2001)이 제안한 **대규모 P2P 오버레이 라우팅·객체 위치 서비스**이다.  
+Pastry는 Rowstron & Druschel(Microsoft Research, 2001)이 제안한 **대규모 P2P 오버레이 라우팅·객체 위치 서비스**이다.
 핵심은 다음 세 가지다.
 
 - 모든 노드와 키는 **같은 식별자 공간(identifier space)** 을 공유한다.
 - **prefix 기반 라우팅**으로, 각 홉에서 **공통 prefix 길이를 1자리씩 늘려가며** 목적지에 접근한다.
 - **Leaf set, Routing table, Neighborhood set**의 세 구조로 **효율·근접성·탄력성**을 동시에 얻는다.
 
-### 29.3.1 Identifier Space
+### Identifier Space
 
-Pastry의 식별자 공간은 보통 **128비트 혹은 160비트** 크기의 **순환 공간(ring)** 으로 본다.  
-각 노드에는 **nodeId**, 각 객체(키)에는 **keyId** 가 할당되고, 두 값 모두 **같은 공간**에서 뽑힌다.  
+Pastry의 식별자 공간은 보통 **128비트 혹은 160비트** 크기의 **순환 공간(ring)** 으로 본다.
+각 노드에는 **nodeId**, 각 객체(키)에는 **keyId** 가 할당되고, 두 값 모두 **같은 공간**에서 뽑힌다.
 
 - 보통 **SHA-1, SHA-256의 일부**와 같은 해시 함수를 사용해:
   - 노드의 IP:Port → nodeId
-  - 객체 이름(파일 해시 등) → keyId  
+  - 객체 이름(파일 해시 등) → keyId
 - 이 공간은 **0 ~ 2^b − 1** 사이의 정수로 볼 수 있다.
 
 예를 들어, b = 16이고, 우리는 **base 4**(2비트씩)로 표현한다고 하자.
@@ -41,7 +41,7 @@ Pastry는 일반적으로 **base 2^b**(예: b = 4 → base 16)에서 digit을 �
 
 #### Leaf set, Routing table, Neighborhood set
 
-각 노드는 다음 세 가지 구조를 유지한다.  
+각 노드는 다음 세 가지 구조를 유지한다.
 
 1. **Leaf set L**
    - nodeId 기준으로 **양 옆에 있는 L/2개 노드** 목록.
@@ -68,9 +68,9 @@ Pastry는 일반적으로 **base 2^b**(예: b = 4 → base 16)에서 digit을 �
 
 이 과정을 반복하면, 각 hop마다 **공통 prefix 길이가 +1**이 되어, 최대 $$\log_{16}(N)$$ 단계에서 목적지에 도달한다.
 
-### 29.3.2 Routing: Prefix 기반 라우팅
+### Routing: Prefix 기반 라우팅
 
-Pastry 라우팅 알고리즘의 골자는 다음과 같다.  
+Pastry 라우팅 알고리즘의 골자는 다음과 같다.
 
 1. **목적 keyId k** 가 도착하면, 현재 노드 n은:
    - k가 자신의 leaf set 범위 안에 있는지 확인.
@@ -122,13 +122,13 @@ def pastry_route(current, key_id):
 #### 복잡도
 
 - 이상적으로, 각 hop마다 **공통 prefix 길이가 1 증가**하므로,
-  - base B, 노드 수 N일 때, 평균 홉 수는  
+  - base B, 노드 수 N일 때, 평균 홉 수는
     $$O(\log_B N)$$
 - leaf set이 충분히 크고, 노드 입·탈퇴(churn)에 대응하는 유지 작업이 잘 되어 있다면, **경로 길이는 안정적으로 log 스케일**에 머무른다.
 
-### 29.3.3 Pastry의 응용
+### Pastry의 응용
 
-Pastry는 “P2P 공용 라이브러리”처럼 사용될 수 있는 **기반 라우팅 계층**이다. 위에 여러 응용이 올라간다.  
+Pastry는 “P2P 공용 라이브러리”처럼 사용될 수 있는 **기반 라우팅 계층**이다. 위에 여러 응용이 올라간다.
 
 대표 예:
 
@@ -140,7 +140,7 @@ Pastry는 “P2P 공용 라이브러리”처럼 사용될 수 있는 **기반 �
 2. **Scribe**: 분산 pub/sub 시스템
    - 각 “topic”에 대해 keyId를 부여한다.
    - topic tree의 루트는 keyId에 가장 가까운 노드.
-   - 구독자는 Pastry 라우팅으로 topic의 루트 노드를 찾아가 join 하고,  
+   - 구독자는 Pastry 라우팅으로 topic의 루트 노드를 찾아가 join 하고,
      발행자는 루트로 메시지를 보내면 트리가 따라 내려가며 multicast.
 
 3. **분산 인덱스·검색**
@@ -171,10 +171,10 @@ def get(key):
 
 ---
 
-## 29.4 Kademlia
+## Kademlia
 
-Kademlia는 Maymounkov & Mazieres(NYU, 2002)가 제안한 DHT로,  
-오늘날 **가장 널리 쓰이는 DHT 알고리즘**이다(예: BitTorrent DHT, eMule Kad 등).  
+Kademlia는 Maymounkov & Mazieres(NYU, 2002)가 제안한 DHT로,
+오늘날 **가장 널리 쓰이는 DHT 알고리즘**이다(예: BitTorrent DHT, eMule Kad 등).
 
 핵심 아이디어:
 
@@ -185,7 +185,7 @@ Kademlia는 Maymounkov & Mazieres(NYU, 2002)가 제안한 DHT로,
 - XOR 거리를 이용하면, **대칭(symmetric)** 이고 계산이 빠른 메트릭을 형성하며,
   라우팅 테이블 관리 및 탐색 알고리즘이 간결해진다.
 
-### 29.4.1 Identifier Space와 XOR 메트릭
+### Identifier Space와 XOR 메트릭
 
 식별자 ID는 보통 **SHA-1 출력(160비트)** 를 사용한다.
 
@@ -198,9 +198,9 @@ $$
 d(x, y) = x \oplus y
 $$
 
-XOR 결과를 정수로 해석해 “거리”처럼 쓰는데, 다음 성질을 가진다.  
+XOR 결과를 정수로 해석해 “거리”처럼 쓰는데, 다음 성질을 가진다.
 
-1. $$d(x, x) = 0$$  
+1. $$d(x, x) = 0$$
 2. $$d(x, y) = d(y, x)$$ (대칭)
 3. 두 점이 같지 않으면 거리 > 0
 4. 트라이(trie) 구조와 잘 맞고, prefix 기반 분할 전략을 자연스럽게 지원
@@ -208,7 +208,7 @@ XOR 결과를 정수로 해석해 “거리”처럼 쓰는데, 다음 성질을
 예:
 
 - x = 0b101100
-- y = 0b001000  
+- y = 0b001000
 
 $$
 x \oplus y = 100100_2
@@ -216,11 +216,11 @@ $$
 
 거리의 상위 비트 위치는 **두 노드가 어느 “범위”에 속하는지** 를 나타낸다.
 
-### 29.4.2 Routing Table: k-Buckets
+### Routing Table: k-Buckets
 
-Kademlia 라우팅 테이블은 **k-bucket** 이라는 구조로 이루어진다.  
+Kademlia 라우팅 테이블은 **k-bucket** 이라는 구조로 이루어진다.
 
-- 각 노드는 ID 공간을 **거리 범위별로 log 스케일**로 나누고,  
+- 각 노드는 ID 공간을 **거리 범위별로 log 스케일**로 나누고,
   각 범위마다 **최대 k개의 노드**를 기억한다.
 - 예를 들어 160비트 ID 공간에서:
   - bucket 0: 거리 [1, 2¹)
@@ -237,7 +237,7 @@ Kademlia 라우팅 테이블은 **k-bucket** 이라는 구조로 이루어진다
 - **가까운 노드보다 먼 노드를 더 많이 저장**하는 경향.
   - 이는 **fault tolerance** 와 **탐색 다양성**에 도움이 된다.
 - 각 버킷에는 최대 `k`개의 노드가 들어간다.
-  - k는 보통 8, 16 같은 작은 수 (BitTorrent DHT에서는 8인 경우가 많다).  
+  - k는 보통 8, 16 같은 작은 수 (BitTorrent DHT에서는 8인 경우가 많다).
 
 #### K-Bucket 관리 정책 (LRU 기반)
 
@@ -255,10 +255,10 @@ Kademlia 라우팅 테이블은 **k-bucket** 이라는 구조로 이루어진다
 
 ---
 
-### 29.4.3 Lookup 알고리즘과 예제
+### Lookup 알고리즘과 예제
 
-Kademlia의 핵심 연산은 “주어진 키 k에 대해 **가장 가까운 노드들**을 찾는 것”이다.  
-기본 절차는 다음과 같다.  
+Kademlia의 핵심 연산은 “주어진 키 k에 대해 **가장 가까운 노드들**을 찾는 것”이다.
+기본 절차는 다음과 같다.
 
 1. **시작 노드**는 자신의 라우팅 테이블에서 k에 대해 가장 가까운 노드 α개(동시 요청 수)를 찾는다.
 2. 이 α개에 대해 `FIND_NODE(k)` 요청을 보낸다.
@@ -307,15 +307,15 @@ def kademlia_lookup(self, key_id, alpha=3, k=8):
 
 ---
 
-### 29.4.4 Kademlia 기반 응용
+### Kademlia 기반 응용
 
-Kademlia는 이후 수많은 시스템에 채택되어, 오늘날 **사실상 DHT의 표준 알고리즘**이 되었다.  
+Kademlia는 이후 수많은 시스템에 채택되어, 오늘날 **사실상 DHT의 표준 알고리즘**이 되었다.
 
 대표 사례:
 
-- **BitTorrent Mainline DHT**:  
+- **BitTorrent Mainline DHT**:
   - trackerless BitTorrent에서, infohash → peers 매핑을 저장.
-  - BEP 5 사양에 따르면, BitTorrent DHT는 Kademlia 기반의 “sloppy DHT”를 사용한다.  
+  - BEP 5 사양에 따르면, BitTorrent DHT는 Kademlia 기반의 “sloppy DHT”를 사용한다.
 - **eMule Kad 네트워크**
 - 기타 연구용/상용 P2P 시스템 다수
 
@@ -327,14 +327,14 @@ Kademlia는 이후 수많은 시스템에 채택되어, 오늘날 **사실상 DH
 
 ---
 
-## 29.5 BitTorrent — Tracker 기반 / Trackerless
+## BitTorrent — Tracker 기반 / Trackerless
 
-BitTorrent는 **대용량 파일을 효율적으로 배포**하기 위해 설계된 프로토콜이다.  
-핵심 개념은 **swarm**(같은 파일을 공유하는 peer 집합)과 **piece 단위 교환**, 그리고 **협력적 choke/unchoke 알고리즘**이다.  
+BitTorrent는 **대용량 파일을 효율적으로 배포**하기 위해 설계된 프로토콜이다.
+핵심 개념은 **swarm**(같은 파일을 공유하는 peer 집합)과 **piece 단위 교환**, 그리고 **협력적 choke/unchoke 알고리즘**이다.
 
-초기 BitTorrent는 **중앙 Tracker**에 의존했지만, 이후 **DHT 기반 trackerless 모드**가 도입되었다.  
+초기 BitTorrent는 **중앙 Tracker**에 의존했지만, 이후 **DHT 기반 trackerless 모드**가 도입되었다.
 
-### 29.5.1 BitTorrent 개요
+### BitTorrent 개요
 
 - 파일은 여러 **piece**로 나뉜다.
 - 각 piece는 다시 여러 **block** 으로 분할되어 전송.
@@ -343,18 +343,18 @@ BitTorrent는 **대용량 파일을 효율적으로 배포**하기 위해 설계
 
 단순화된 구성 요소:
 
-- **torrent 메타파일(.torrent)**  
+- **torrent 메타파일(.torrent)**
   - 파일 정보, piece 크기, 각 piece 해시, tracker URL 등 포함.
-- **tracker** (초기 방식)  
+- **tracker** (초기 방식)
   - swarm에 참여한 peer 목록을 제공.
-- **DHT** (trackerless 확장)  
+- **DHT** (trackerless 확장)
   - infohash → peers 매핑을 분산 저장.
 
 ---
 
-### 29.5.2 BitTorrent with a Tracker
+### BitTorrent with a Tracker
 
-초기 BitTorrent 설계에서는, **tracker** 가 swarm의 중심 역할을 했다.  
+초기 BitTorrent 설계에서는, **tracker** 가 swarm의 중심 역할을 했다.
 
 #### 동작 흐름
 
@@ -398,10 +398,10 @@ BitTorrent는 **대용량 파일을 효율적으로 배포**하기 위해 설계
 
 ---
 
-### 29.5.3 Trackerless BitTorrent — DHT 기반
+### Trackerless BitTorrent — DHT 기반
 
-Trackerless BitTorrent는 **DHT를 이용해 peers를 찾는 방식**이다.  
-BEP 5 문서에 따르면, BitTorrent DHT는 **Kademlia 기반 distributed sloppy hash table** 을 사용한다.  
+Trackerless BitTorrent는 **DHT를 이용해 peers를 찾는 방식**이다.
+BEP 5 문서에 따르면, BitTorrent DHT는 **Kademlia 기반 distributed sloppy hash table** 을 사용한다.
 
 #### 기본 개념
 
@@ -450,7 +450,7 @@ def get_peers(self, infohash):
 
 #### “sloppy” DHT
 
-BitTorrent DHT는 엄밀한 의미의 DHT라기보다는 **sloppy DHT** 라고 불린다.  
+BitTorrent DHT는 엄밀한 의미의 DHT라기보다는 **sloppy DHT** 라고 불린다.
 
 - 각 노드가 **정확히 key에 가장 가까운** 노드만 가져가는 것이 아니라,
 - 일정 범위 내의 여러 노드들이 `(infohash → peers)` 를 중복 저장한다.
@@ -465,11 +465,11 @@ BitTorrent DHT는 엄밀한 의미의 DHT라기보다는 **sloppy DHT** 라고 �
 
 - 단점:
   - DHT 트래픽과 복잡성이 추가된다.
-  - DHT 자체의 보안 문제(크롤링을 통한 프라이버시 침해, DHT 공격 등)가 등장한다.  
+  - DHT 자체의 보안 문제(크롤링을 통한 프라이버시 침해, DHT 공격 등)가 등장한다.
 
 ---
 
-### 29.5.4 BitTorrent with Tracker vs Trackerless — 비교
+### BitTorrent with Tracker vs Trackerless — 비교
 
 | 항목 | Tracker 기반 | Trackerless(DHT) |
 |------|--------------|------------------|
@@ -479,16 +479,16 @@ BitTorrent DHT는 엄밀한 의미의 DHT라기보다는 **sloppy DHT** 라고 �
 | 차단 가능성 | 중앙 서버 차단으로 전체 영향 | 완전 차단이 매우 어려움 |
 | 프라이버시 | tracker 로그에 의존 | DHT 크롤링으로 전체 swarm 추적 가능성 |
 
-현대 BitTorrent 클라이언트 대부분은 **tracker + DHT + peer exchange(PEX)** 를 함께 사용해서  
-탐색 효율성과 탄력성을 동시에 추구한다.  
+현대 BitTorrent 클라이언트 대부분은 **tracker + DHT + peer exchange(PEX)** 를 함께 사용해서
+탐색 효율성과 탄력성을 동시에 추구한다.
 
 ---
 
 ## 정리
 
-- **Pastry**: prefix 기반 라우팅과 leaf set / routing table / neighborhood set 구조를 이용해  
+- **Pastry**: prefix 기반 라우팅과 leaf set / routing table / neighborhood set 구조를 이용해
   $$O(\log N)$$ 홉의 효율적인 객체 위치 서비스를 제공하는 오버레이.
-- **Kademlia**: XOR 거리와 k-bucket을 이용해, 간결하면서도 fault-tolerant한 DHT를 구현.  
+- **Kademlia**: XOR 거리와 k-bucket을 이용해, 간결하면서도 fault-tolerant한 DHT를 구현.
   오늘날 가장 널리 쓰이는 DHT 설계.
 - **BitTorrent**:
   - 초창기에는 중앙 tracker에 의존해서 peer discovery를 수행.
