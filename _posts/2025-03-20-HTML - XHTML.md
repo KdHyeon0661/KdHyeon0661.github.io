@@ -71,13 +71,13 @@ category: HTML
 | **정확한 중첩** | 교차 중첩 금지 | `<b><i>x</b></i>` ❌ |
 | **불린 속성 값 명시** | 속성 존재=참 패턴 금지 | `checked` ❌ → `checked="checked"` ✅ |
 
-### 빈(Empty) 요소 목록 예
+### 요소 목록 예
 
 `<br />`, `<hr />`, `<img />`, `<meta />`, `<link />`, `<input />`, `<base />`, `<col />`, `<param />`, `<area />`, `<source />`, `<track />` …
 
 > **주의:** `script`/`style`은 **빈 요소가 아니다**. `<script />`처럼 self-closing 하면 **내용이 없는 스크립트**가 된다.
 
-### 엔티티(Entities) 주의
+### 주의
 
 - 순수 XML에는 **사전정의 5종**만 존재: `&lt;`, `&gt;`, `&amp;`, `&quot;`, `&apos;`.
 - XHTML 1.x에서는 DTD로 HTML 엔티티 집합을 가져오지만, **네트워크에서 DTD를 못 가져오면 이름 엔티티가 실패**할 수 있다.

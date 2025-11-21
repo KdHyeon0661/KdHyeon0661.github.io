@@ -17,7 +17,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 공통 스키마(한 번만 실행)
+## 실습 공통 스키마(한 번만 실행)
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -97,7 +97,7 @@ END;
 
 ---
 
-# 1) PQ_DISTRIBUTE 힌트의 **용도**
+# PQ_DISTRIBUTE 힌트의 **용도**
 
 병렬 실행에서 오퍼레이터(특히 **조인/집계**) 사이에 **데이터가 어떻게 분배/전송**되는지는 성능을 **좌우**합니다.
 옵티마이저는 **기본 규칙**(통계/카디널리티/오브젝트 크기)에 따라 **HASH 재분배, BROADCAST 복제, PARTITION-WISE** 등을 선택하는데,
@@ -113,7 +113,7 @@ END;
 
 ---
 
-# 2) **구문** 이해하기
+# **구문** 이해하기
 
 ```sql
 /*+ PQ_DISTRIBUTE( table_alias  method_in  method_out ) */
@@ -134,7 +134,7 @@ END;
 
 ---
 
-# 3) **분배 방식** 지정(지원 조합)
+# **분배 방식** 지정(지원 조합)
 
 일반적으로 다음 **네 가지**를 사용합니다.
 
@@ -149,7 +149,7 @@ END;
 
 ---
 
-# 4) **예제로 배우는** PQ_DISTRIBUTE
+# **예제로 배우는** PQ_DISTRIBUTE
 
 ## 대형↔대형: **해시-해시**
 
@@ -265,9 +265,9 @@ FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE +ALIAS'));
 
 ---
 
-# 5) 튜닝 사례(현장형)
+# 튜닝 사례(현장형)
 
-## 사례 1) 해시-해시 vs 브로드캐스트 선택
+## 해시-해시 vs 브로드캐스트 선택
 
 **문제**: 차원 테이블이 **작아 보이지만** 통계가 엉켜 옵티마이저가 **HASH-HASH**를 선택 → 네트워크/큐잉 폭증
 **해결**
@@ -286,7 +286,7 @@ WHERE  d.active_yn = 'Y';
 
 ---
 
-## 사례 2) 스큐 키(편중)로 인한 슬레이브 과부하
+## 스큐 키(편중)로 인한 슬레이브 과부하
 
 **증상**: `PX Deq Credit: send blkd`가 상위 1위, `v$pq_tqstat`에서 **num_rows 편차**가 매우 큼
 **해결(두 단계 집계 예시)**
@@ -313,7 +313,7 @@ GROUP  BY cust_id;
 
 ---
 
-## 사례 3) RAC에서 GC 대기 급증
+## RAC에서 GC 대기 급증
 
 **증상**: 병렬 조인 시 `gc cr request`, `gc current request` 대기 많음
 **전략**: **Full Partition-Wise Join + 서비스-파티션 affinity**
@@ -333,7 +333,7 @@ FROM fact_sales s JOIN fact_clicks c ON c.cust_id = s.cust_id;
 
 ---
 
-## 사례 4) Partial PWJ에서 비파티션 쪽 반복 스캔
+## Partial PWJ에서 비파티션 쪽 반복 스캔
 
 **증상**: 파티션 쪽은 빠르지만, 비파티션 큰 테이블이 **모든 파티션과 반복 조인**되어 I/O 과다
 **해결(선결 조건 필터 → 브로드캐스트 전환)**
@@ -357,7 +357,7 @@ GROUP  BY s.cust_id;
 
 ---
 
-## 사례 5) ORDER BY/ROLLUP 동반 쿼리에서 정렬 대기
+## ORDER BY/ROLLUP 동반 쿼리에서 정렬 대기
 
 정렬/집계가 큰 경우 `direct path write/read temp` 증가. **분배 전략 + Top-N/Pushdown** 병행.
 ```sql
@@ -375,7 +375,7 @@ ORDER  BY amt DESC FETCH FIRST 100 ROWS ONLY;  -- Top-N으로 Temp 부담 축소
 
 ---
 
-# 6) **실행계획/동작** 검증 루틴
+# **실행계획/동작** 검증 루틴
 
 ## 플랜에서 꼭 볼 것
 
@@ -387,7 +387,7 @@ FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +ALIAS +PREDICAT
 - **`IN-OUT`**: `P->P`(재분배), `P->S`(QC로 반환), `PCWP/PCWC`(동일 슬레이브 집합 결합)
 - **NOTE**: *partition-wise join* 표기 등
 
-## TQ(테이블 큐) 분배/스큐 확인
+## 분배/스큐 확인
 
 ```sql
 SELECT dfo_number, tq_id, server_type, inst_id, process,
@@ -413,7 +413,7 @@ ORDER  BY samples DESC;
 
 ---
 
-# 7) **주의/함정** 체크리스트
+# **주의/함정** 체크리스트
 
 1. **통계가 틀리면** 잘못된 분배를 강제할 수 있다
    - 브로드캐스트 대상이 실제로 **크면** 복제 비용이 폭증
@@ -431,7 +431,7 @@ ORDER  BY samples DESC;
 
 ---
 
-# 8) 요약 표 — 언제 무엇을 강제할까?
+# 요약 표 — 언제 무엇을 강제할까?
 
 | 상황 | 힌트(예) | 기대 효과 |
 |---|---|---|

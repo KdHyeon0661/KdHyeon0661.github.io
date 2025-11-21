@@ -15,7 +15,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 스키마 (요약)
+## 실습 스키마 (요약)
 
 ```sql
 -- 차원/사실 구조
@@ -50,7 +50,7 @@ CREATE INDEX ix_prod_cat_br ON d_product(category, brand, prod_id);
 
 ---
 
-# 1) View Merging이란?
+# View Merging이란?
 
 **정의**: 옵티마이저가 실행계획 생성 전에 **쿼리 변환(Query Transformation)** 단계에서 **인라인 뷰를 상위 쿼리에 통합**하여 **조인 그래프를 평탄화**(Flatten) 하는 것.
 - **효과**
@@ -66,7 +66,7 @@ CREATE INDEX ix_prod_cat_br ON d_product(category, brand, prod_id);
 
 ---
 
-# 2) 단수(Simple) View Merging
+# 단수(Simple) View Merging
 
 단일 테이블 기반, 단순 프로젝션/필터/조인만 포함하는 뷰의 병합.
 
@@ -138,11 +138,11 @@ WHERE s.sales_dt BETWEEN :d1 AND :d2;
 
 ---
 
-# 3) 복합(Complex) View Merging
+# 복합(Complex) View Merging
 
 **집계/Distinct/Union All** 등 “무거운” 인라인 뷰를 병합해 **집계 푸시다운**/**조인 재배치**를 가능하게 하는 고급 변환.
 
-## 집계 푸시다운(Pre-aggregation) — 핵심 사례
+## — 핵심 사례
 
 ```sql
 -- 원형: 3월 기간 고객별 매출합을 사전 집계 후 고객과 조인
@@ -224,7 +224,7 @@ ON v.prod_id = s.prod_id;
 
 ---
 
-# 4) 비용기반 쿼리 변환(CQT)의 필요성
+# 비용기반 쿼리 변환(CQT)의 필요성
 
 **왜 항상 병합하지 않을까?**
 - 병합은 **탐색공간 확장**이지만, **항상 이득이 아니다**. **데이터 분포**/**카디널리티** 오판 시
@@ -268,7 +268,7 @@ GROUP  BY c.cust_id;
 
 ---
 
-# 5) 머징되지 않는(View가 병합 불가) 경우의 처리
+# 머징되지 않는(View가 병합 불가) 경우의 처리
 
 병합이 **의미상 불가**하거나 **옵티마이저가 회피**하는 패턴이 있다.
 
@@ -300,7 +300,7 @@ GROUP  BY c.cust_id;
 
 ---
 
-# 6) 실전 시나리오 & 실행계획 비교
+# 실전 시나리오 & 실행계획 비교
 
 ## “머징으로 프루닝 촉진” (집계 뷰 → 병합)
 
@@ -381,7 +381,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
 
 ---
 
-# 7) 디버깅/진단 방법
+# 디버깅/진단 방법
 
 ```sql
 -- 실측 실행계획(변환 노트/프레디킷 이동 확인)
@@ -395,7 +395,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-# 8) 베스트프랙티스 체크리스트
+# 베스트프랙티스 체크리스트
 
 - [ ] **단순 뷰**는 기본적으로 **병합 허용** (`NO_MERGE` 남발 금지)
 - [ ] **복합 뷰**(집계/Distinct/Union All)는 **의미 보존** 되는 범위에서 **집계 위치 최적화**

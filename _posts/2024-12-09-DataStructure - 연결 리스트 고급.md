@@ -226,7 +226,7 @@ void push_front(Node*& head, int v){
 
 ---
 
-## 센티넬(Sentinel) 노드를 가진 연결 리스트
+## 노드를 가진 연결 리스트
 
 ### 아이디어
 
@@ -418,7 +418,7 @@ Node* cycle_entry(Node* head){
 
 ---
 
-## (보너스) Intrusive Linked List 한 줄 개념
+## Intrusive Linked List 한 줄 개념
 
 - **intrusive**: 데이터 객체 자체가 `prev/next`를 **내장**하여 별도 노드 할당이 없다.
 - 장점: **할당/해제 비용 제거**, 캐시 친화

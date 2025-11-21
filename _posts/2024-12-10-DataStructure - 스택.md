@@ -326,7 +326,7 @@ int evalRPN(const std::vector<std::string>& toks){
 
 ---
 
-## 확장 스택: `MinStack` (O(1) 최소값 조회)
+## 최소값 조회)
 
 보조 스택에 **최소값 누적** 저장.
 
@@ -358,7 +358,7 @@ public:
 
 ---
 
-## 모노토닉 스택(Monotonic Stack) — 실전 핵심
+## — 실전 핵심
 
 ### 다음 큰 원소(Next Greater Element)
 

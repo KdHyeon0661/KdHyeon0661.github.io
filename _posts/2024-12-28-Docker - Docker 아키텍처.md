@@ -317,7 +317,7 @@ netstat -ano | findstr :80
 
 # 운영/개발 실전 시나리오
 
-## 로컬 풀스택(Compose) — 이미지·컨테이너·네트워크·볼륨 종합
+## — 이미지·컨테이너·네트워크·볼륨 종합
 
 ```yaml
 # docker-compose.yaml
@@ -353,7 +353,7 @@ curl http://localhost:8081/health
 docker compose down -v
 ```
 
-## 레지스트리 고정(digest pinning) 배포
+## 배포
 
 ```bash
 IMG="nginx@sha256:xxxxxxxx"
@@ -361,7 +361,7 @@ docker pull "$IMG"
 docker run -d -p 8080:80 --name w "$IMG"
 ```
 
-## 오프라인(Air-gapped) 전달
+## 전달
 
 ```bash
 docker pull ghcr.io/user/app:1.0
@@ -491,7 +491,7 @@ docker logs -f <NAME>
 
 # 실전 연습: 아키텍처 체감 미션
 
-## 미션 1) 캐시 최적화 체감
+## 캐시 최적화 체감
 
 1. `COPY package*.json` → `npm ci` → `COPY .` 순서로 Dockerfile 구성
 2. 소스만 미세 수정 후 빌드 시간을 비교
@@ -503,12 +503,12 @@ time docker build -t app:1 .
 time docker build -t app:2 .
 ```
 
-## 미션 2) digest 고정 배포
+## digest 고정 배포
 
 1. `docker inspect` 로 RepoDigest 추출
 2. Compose/K8s 매니페스트에 digest로 이미지 지정 → 재현성 확보
 
-## 미션 3) 보안 옵션 적용
+## 보안 옵션 적용
 
 - `--read-only`, `--cap-drop ALL`, `--pids-limit` 조합의 동작 확인
 

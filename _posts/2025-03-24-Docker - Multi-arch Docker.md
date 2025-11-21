@@ -182,7 +182,7 @@ WORKDIR /src
 COPY . .
 RUN ./gradlew clean build -x test
 
-# (선택) JLink로 custom JRE 생성
+# JLink로 custom JRE 생성
 
 RUN jlink --add-modules java.base,java.logging \
           --strip-debug --compress=2 --no-header-files --no-man-pages \
@@ -277,7 +277,7 @@ docker buildx build \
 
 ---
 
-## CI 파이프라인 (확장) — GitHub / GitLab / Jenkins
+## — GitHub / GitLab / Jenkins
 
 ### GitHub Actions (multi-arch + 캐시 + 서명/리포트 예시)
 
@@ -420,7 +420,7 @@ $$
 
 ---
 
-## 보안·무결성 — 서명(Cosign) & SBOM
+## & SBOM
 
 ### Cosign 서명(요약)
 
@@ -537,7 +537,7 @@ docker buildx build --platform linux/amd64,linux/arm64 \
 
 ---
 
-## 부록 — 로컬 전용(단일 아키) 빌드/검증
+## 빌드/검증
 
 ```bash
 # 현재 호스트 아키만 빌드해 로컬로 적재

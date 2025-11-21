@@ -508,7 +508,7 @@ int main(int argc, char** argv) {
 
 ---
 
-### (보너스) IOCP + UDP 한눈에
+### IOCP + UDP 한눈에
 
 - UDP도 IOCP로 처리 가능: `WSARecvFrom`/`WSASendTo`를 Overlapped로 올려두고 완료 수거.
 - **메시지 경계 보존**(UDP 특성). 필요한 만큼 **버퍼를 넉넉히** 두고, 짧으면 잘라 쓰기/길면 폐기 정책.

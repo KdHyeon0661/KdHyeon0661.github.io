@@ -4,7 +4,7 @@ title: Git - Git LFS
 date: 2025-02-19 21:20:23 +0900
 category: Git
 ---
-# Git LFS (Large File Storage) 완전 정리
+# 완전 정리
 
 ## Git LFS란?
 
@@ -93,7 +93,7 @@ size 48293021
 
 ---
 
-## LFS 포인터/필터(클린·스머지) 메커니즘 심화
+## 메커니즘 심화
 
 - **clean 필터**: `git add` 시 원본 바이너리를 포인터 파일로 바꾸어 저장소에 기록, 실제 바이너리는 LFS 스토리지로 업로드.
 - **smudge 필터**: `git checkout/clone/pull` 시 포인터를 감지하면 **원본 바이너리**를 LFS 서버에서 내려받아 작업 디렉터리에 복원.
@@ -302,7 +302,7 @@ done
 
 ## 자주 만나는 오류 & 해결
 
-### “Encountered N file(s) that should have been pointers, but were not”
+### that should have been pointers, but were not”
 
 - LFS 추적 대상인데 **포인터가 아닌 원본**이 커밋됨.
 - 해결:

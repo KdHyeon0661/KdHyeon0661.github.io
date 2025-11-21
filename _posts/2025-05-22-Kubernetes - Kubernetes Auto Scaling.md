@@ -38,7 +38,7 @@ category: Kubernetes
 
 ---
 
-## HPA (Horizontal Pod Autoscaler) — 수평 확장
+## — 수평 확장
 
 ### 기본 흐름과 핵심 개념
 
@@ -223,7 +223,7 @@ spec:
 
 ---
 
-## VPA (Vertical Pod Autoscaler) — 수직 확장
+## — 수직 확장
 
 ### 개념/전략
 
@@ -422,7 +422,7 @@ kubectl run -it --rm load --image=busybox --restart=Never -- /bin/sh -c \
 
 ## 수학/알고리즘 디테일
 
-### 리소스 메트릭(평균 활용률) 공식
+### 공식
 
 $$
 U_{\text{avg}} = \frac{\sum_{i=1}^{N} \text{usage}_i}{\sum_{i=1}^{N} \text{request}_i} \times 100
@@ -430,7 +430,7 @@ U_{\text{avg}} = \frac{\sum_{i=1}^{N} \text{usage}_i}{\sum_{i=1}^{N} \text{reque
 R_{\text{desired}} = R_{\text{current}} \times \frac{U_{\text{avg}}}{U_{\text{target}}}
 $$
 
-### 외부 메트릭(평균 값) 공식
+### 공식
 
 외부 메트릭 목표가 `AverageValue = V_target` 일 때:
 
@@ -559,7 +559,7 @@ spec:
       maxAllowed: { cpu: "6", memory: "12Gi" }
 ```
 
-### KEDA HTTP(게이트웨이) 스케일 아웃(예시)
+### 스케일 아웃(예시)
 
 ```yaml
 apiVersion: keda.sh/v1alpha1

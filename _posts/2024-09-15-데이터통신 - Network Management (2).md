@@ -21,7 +21,7 @@ SNMP는 여전히 IETF의 **Internet Standard Management Framework**의 핵심�
 
 ## Managers and Agents
 
-### 1) SNMP Manager란?
+### SNMP Manager란?
 
 **SNMP Manager**(관리가, NMS: Network Management Station)는
 관리자가 앉아 있는 콘솔 혹은 그 콘솔이 사용하는 서버/소프트웨어를 의미한다.
@@ -43,7 +43,7 @@ RFC 3411/STD 62는 “하나 이상의 **SNMP entity**가 command generator, not
 - 상용 NMS: SolarWinds, Nagios, Zabbix, Cisco Prime, Juniper Junos Space 등
 - 직접 구현: Python + Net-SNMP 라이브러리를 사용해 특정 MIB 값만 수집하는 내부 도구
 
-### 2) SNMP Agent란?
+### SNMP Agent란?
 
 **SNMP Agent**는 라우터·스위치·방화벽·서버·프린터 등 **관리 대상 장비**에 올라가는 프로세스/모듈이다.
 
@@ -60,7 +60,7 @@ SNMP 아키텍처 문서는 “하나 이상의 command responder 및 notificati
 - Cisco IOS/IOS-XE/IOS-XR, Junos OS, Linux net-snmp 데몬 등은 모두 SNMP 에이전트를 내장
 - Cisco MDS SNMP 에이전트는 스위치 내부 장비 상태를 CISCO-MIB 계열로 노출한다.
 
-### 3) Manager–Agent 상호작용 개요
+### Manager–Agent 상호작용 개요
 
 간단한 구조는 다음과 같다.
 
@@ -83,7 +83,7 @@ SNMP 아키텍처 문서는 “하나 이상의 command responder 및 notificati
 - Manager는 여러 Agent에게 주기적으로 `Get`/`GetBulk`를 보내 Pull 모니터링
 - Agent는 중요 이벤트 발생 시 `Trap`/`Inform`으로 Push 알림
 
-### 4) 간단 시나리오
+### 간단 시나리오
 
 **상황**: 운영팀이 “모든 코어 라우터의 CPU 사용률·인터페이스 트래픽·메모리 사용량”을 1분 주기로 수집해 NOC 대시보드를 구성하고자 한다.
 
@@ -99,7 +99,7 @@ SNMP 아키텍처 문서는 “하나 이상의 command responder 및 notificati
 
 RFC 3411/STD 62는 SNMP Management Framework를 구성하는 **주요 컴포넌트**를 다음과 같이 정리한다.
 
-### 1) 구성 요소 목록
+### 구성 요소 목록
 
 | 구성 요소 | 설명 |
 |----------|------|
@@ -110,7 +110,7 @@ RFC 3411/STD 62는 SNMP Management Framework를 구성하는 **주요 컴포넌�
 | SNMP Protocol / Engine | 메시지 포맷, PDU, 처리 로직(SNMP 엔진) |
 | Security / Access Control | USM, VACM 등 SNMPv3 보안·접근 통제 모델 |
 
-### 2) SNMP 엔진 구조 (RFC 3411)
+### SNMP 엔진 구조 (RFC 3411)
 
 SNMPv3 아키텍처에서 **SNMP 엔진(SNMP engine)** 은 다음 서브시스템으로 구성된다.
 
@@ -151,7 +151,7 @@ SNMPv3 아키텍처에서 **SNMP 엔진(SNMP engine)** 은 다음 서브시스�
 
 ## SNMP Overview — 동작 개요
 
-### 1) SNMP의 기본 역할
+### SNMP의 기본 역할
 
 SNMP는 크게 두 가지 목적에 쓰인다.
 
@@ -163,7 +163,7 @@ SNMP는 크게 두 가지 목적에 쓰인다.
    - 장비 설정값을 읽고(`Get`), 변경(`Set`)
    - RFC 3512는 SNMP를 이용한 구성 관리 시 “일괄 변경 시 주의할 점, 롤백 전략” 등을 제시한다.
 
-### 2) 주요 PDU 타입
+### 주요 PDU 타입
 
 RFC 3416은 SNMP 프로토콜이 사용하는 **PDU 타입**을 정의한다.
 
@@ -178,7 +178,7 @@ RFC 3416은 SNMP 프로토콜이 사용하는 **PDU 타입**을 정의한다.
 | Inform | A ↔ M | 확인 가능한 알림(응답 받음) |
 | Report | v3 전용 | 보안/엔진 에러 정보 교환 등 |
 
-### 3) 메시지 구조 (SNMPv3 기준)
+### 메시지 구조 (SNMPv3 기준)
 
 SNMPv3 메시지는 대략 다음과 같은 계층 구조를 가진다.
 
@@ -206,7 +206,7 @@ ScopedPDU:
 - `ScopedPDU`는 “어떤 엔진ID/컨텍스트의 MIB”를 대상으로 하는지를 함께 포함해,
   프록시나 멀티 컨텍스트 장비 환경에서 유연하게 관리할 수 있게 한다.
 
-### 4) Get/Response 흐름 예
+### Get/Response 흐름 예
 
 ```text
 Manager                             Agent
@@ -226,7 +226,7 @@ Manager                             Agent
 
 ## SMI (Structure of Management Information)
 
-### 1) SMI의 역할
+### SMI의 역할
 
 **SMI(Structure of Management Information)** 는 “MIB를 어떤 규칙으로 정의할 것인지”를 명시한 메타 규격이다.
 
@@ -236,7 +236,7 @@ Manager                             Agent
 
 현재 표준은 **SMIv2**, RFC 2578/STD 58로 정의된다.
 
-### 2) SMIv2의 핵심 특징
+### SMIv2의 핵심 특징
 
 1. **기본 데이터 타입**
 
@@ -264,7 +264,7 @@ Manager                             Agent
    - `INDEX` — 테이블의 인덱스(행 식별자)
    - OID — 트리에서의 고유 위치
 
-### 3) OID 트리 구조 예
+### OID 트리 구조 예
 
 SMI는 전체 MIB 공간을 **OID(Object Identifier) 트리**로 표현한다.
 
@@ -286,7 +286,7 @@ iso(1)
 - 표준 MIB-II는 `1.3.6.1.2.1` (`iso.org.dod.internet.mgmt.mib-2`)에 위치
 - 각 벤더는 `1.3.6.1.4.1` 이하에서 자신만의 enterprise OID를 할당받는다.
 
-### 4) 간단한 OBJECT-TYPE 정의 예 (개념)
+### 간단한 OBJECT-TYPE 정의 예 (개념)
 
 아래는 “장비의 가상 CPU 사용률”을 표현하는 새 MIB 객체를 정의한다고 가정한 예시이다.
 
@@ -306,7 +306,7 @@ myCpuUsage OBJECT-TYPE
 
 ## MIB (Management Information Base)
 
-### 1) MIB의 의미
+### MIB의 의미
 
 **MIB**는 “네트워크 장비의 관리 정보를 객체 집합으로 정의한 **가상 데이터베이스**”라고 볼 수 있다.
 
@@ -318,7 +318,7 @@ myCpuUsage OBJECT-TYPE
 Cisco의 SNMP 문서는 “MIB는 SNMP 네트워크 요소를 데이터 객체 목록으로 표현한 구조이며,
 Manager는 각 장비 타입의 MIB 파일을 컴파일해야 해당 장비를 모니터링할 수 있다”고 설명한다.
 
-### 2) 표준 MIB-II 예
+### 표준 MIB-II 예
 
 대표적인 표준 MIB-II에는 다음 같은 그룹들이 포함된다.
 
@@ -336,7 +336,7 @@ Manager는 각 장비 타입의 MIB 파일을 컴파일해야 해당 장비를 �
 - 의미: 장비가 부팅된 후 경과한 시간(1/100초 단위 `TimeTicks`)
 - Manager는 이 값을 주기적으로 읽어, 부팅/리로드 여부를 감지할 수 있다.
 
-### 3) Enterprise MIB 예
+### Enterprise MIB 예
 
 벤더별로 **확장 MIB**를 정의한다.
 
@@ -345,7 +345,7 @@ Manager는 각 장비 타입의 MIB 파일을 컴파일해야 해당 장비를 �
 
 예를 들어 Cisco CVP SNMP 에이전트는 `CISCO-CVP-MIB`를 통해 장비 등록 상태, IP 주소, 모델 타입 등을 노출한다.
 
-### 4) 테이블형 MIB 예: ifTable
+### 테이블형 MIB 예: ifTable
 
 `ifTable`은 인터페이스별 속성을 행(row) 단위로 가지는 대표적인 테이블이다.
 
@@ -366,7 +366,7 @@ Manager는 각 장비 타입의 MIB 파일을 컴파일해야 해당 장비를 �
 
 ## SNMP — 프로토콜 동작과 버전
 
-### 1) SNMP 버전별 특징
+### SNMP 버전별 특징
 
 | 버전 | 요약 | 특징 |
 |------|------|------|
@@ -380,7 +380,7 @@ Manager는 각 장비 타입의 MIB 파일을 컴파일해야 해당 장비를 �
 실무에서는 **읽기 전용 모니터링**은 여전히 v2c를 쓰는 곳도 많지만,
 새로운 설계에서는 가능한 한 **v3(authPriv)** 를 기본으로 한다.
 
-### 2) SNMPv3 보안 모델 개요
+### SNMPv3 보안 모델 개요
 
 - **USM (User-based Security Model)**
   - 사용자 ID 기반
@@ -392,7 +392,7 @@ Manager는 각 장비 타입의 MIB 파일을 컴파일해야 해당 장비를 �
   - 예: 운영팀 계정은 모든 인터페이스 통계 read-only,
     보안팀 계정은 방화벽 정책 MIB read/write 등
 
-### 3) PDU별 동작 예 — GetBulk
+### PDU별 동작 예 — GetBulk
 
 **상황**: Manager가 `ifTable` 전체를 한 번에 가져오고 싶다.
 
@@ -419,7 +419,7 @@ Manager                           Agent
 
 이 절은 이해를 돕기 위한 예제 코드와 시나리오를 보여준다. 실제 운영 환경에서는 보안 설정(SNMPv3 사용자, 암호, 뷰 등)을 더 엄격히 구성해야 한다.
 
-### 1) 예제 1 — Python으로 SNMPv3 `Get` 수행 (개념)
+### 예제 1 — Python으로 SNMPv3 `Get` 수행 (개념)
 
 ```python
 from pysnmp.hlapi import *
@@ -455,7 +455,7 @@ print("sysUpTime:", result)
 - `ObjectIdentity`에 MIB 이름을 사용할 수도 있다(`SNMPv2-MIB`, `sysUpTime.0` 형태)
 - 실제 코드는 재시도, 예외처리, 로그 등을 더 강화해야 한다.
 
-### 2) 예제 2 — 인터페이스 이용률 계산 시나리오
+### 예제 2 — 인터페이스 이용률 계산 시나리오
 
 **목표**: 1분 간격으로 `ifInOctets`/`ifOutOctets`를 읽어 인터페이스 이용률을 계산하고, 80% 이상이면 경고.
 
@@ -499,7 +499,7 @@ if util > 0.8:
 
 실제 운영에서는 **64-bit 카운터(`ifHCInOctets`) 사용**, 카운터 wrap-around 처리, SNMP 타임아웃, 에러 처리 등을 고려해야 한다.
 
-### 3) 예제 3 — Trap 기반 장애 알림 시나리오
+### 예제 3 — Trap 기반 장애 알림 시나리오
 
 **상황**
 

@@ -73,7 +73,7 @@ wget -qO- http://backend.demo.svc.cluster.local/get
 
 ---
 
-## Calico Enterprise: 정석 L7(HTTP) 정책
+## 정책
 
 Calico Enterprise에서는 **HTTP 인식 정책**을 `GlobalNetworkPolicy`의 `http:` 섹션 혹은 **전용** `HTTPPolicy`(정책 객체 형태)로 선언한다. 아래는 **두 방식 중 하나**를 택해도 된다. 대부분은 `GlobalNetworkPolicy` 한 파일에 L3/L4/L7을 함께 선언하는 패턴이 운영에 편하다.
 
@@ -217,7 +217,7 @@ spec:
 
 ---
 
-## 우선순위와 기본 거부(Deny) 전략
+## 전략
 
 Calico는 정책 평가에 **order**(숫자가 **낮을수록 우선**)가 관여한다.
 운영 권장 패턴:
@@ -343,7 +343,7 @@ spec:
 
 ---
 
-## 전체 예제(엔터프라이즈 경로) — 한 번에 적용하는 묶음
+## — 한 번에 적용하는 묶음
 
 ```yaml
 # 데모 네임스페이스(이미 생성했다면 생략)

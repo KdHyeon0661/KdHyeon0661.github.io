@@ -318,7 +318,7 @@ throw new MyFastException("msg", null, true, false); // 스택 비활성화(매�
 
 ## 예제 모음
 
-### 검증(Validation) 가드
+### 가드
 
 ```java
 public static void requireNonEmpty(String s) {
@@ -403,7 +403,7 @@ try {
 
 ---
 
-## 부록) 미세 팁
+## 미세 팁
 
 - `initCause`는 **한 번만** 가능(이미 cause가 있으면 `IllegalStateException`).
 - 예외는 `Serializable` — 분산/원격 호출에서 전송됨(필드 주의).

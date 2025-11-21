@@ -22,7 +22,7 @@ category: DataCommunication
 
 현대 PSTN은 구리선·광섬유·마이크로파·해저케이블·이동통신망을 모두 포함한 거대한 통합망입니다.
 
-#### 1) 가입자선(Local Loop)
+#### 가입자선(Local Loop)
 
 - **정의**
   - 가입자의 집/사무실에 있는 전화기 ~ 근처 **지역 교환국(Local Exchange / Central Office)** 까지 이어지는 **전용 2선 구리 회선**
@@ -38,7 +38,7 @@ category: DataCommunication
 [집 전화기/모뎀] ==(2-wire copper local loop)==> [지역 교환국(CO)]
 ```
 
-#### 2) 지역 교환국(Local Exchange / Central Office)
+#### 지역 교환국(Local Exchange / Central Office)
 
 - 각 지역의 가입자선이 모이는 곳.
 - 기능:
@@ -47,7 +47,7 @@ category: DataCommunication
   - 신호 변환: 아날로그 ↔ 디지털(PCM 64 kbps 채널, TDM 다중화 등)
   - 상위 **트렁크 교환국, 국제 게이트웨이**와 연결
 
-#### 3) 트렁크(Trunk)와 교환 계층
+#### 트렁크(Trunk)와 교환 계층
 
 전통적인 PSTN은 대략 다음과 같은 계층 구조를 가졌습니다.
 
@@ -65,7 +65,7 @@ category: DataCommunication
 
 오늘날에는 **TDM 기반 교환기**에서 **소프트스위치 + IP 백본(VoIP)** 구조로 많이 바뀌었지만, “가입자선 – 지역 교환 – 트렁크 – 상위 교환”이라는 계층 구조 개념은 그대로 유지됩니다.
 
-#### 4) 전송 매체
+#### 전송 매체
 
 - 구리선(가입자선, 일부 트렁크)
 - **광섬유(대부분의 장거리 트렁크)**
@@ -80,7 +80,7 @@ category: DataCommunication
 
 **LATA**는 미국 전화망의 독특한 개념이라서, 교과서에서 별도로 다룹니다.
 
-#### 1) LATA 정의
+#### LATA 정의
 
 - **LATA(Local Access and Transport Area)**
   - 미국의 반독점 규제(AT&T 분할) 이후 도입된 개념으로, **전화 서비스 제공 구역을 나눈 지리적 단위**
@@ -97,7 +97,7 @@ category: DataCommunication
 
 각 LATA 안에는 다수의 **지역 교환국**이 있고, LATA 간은 별도의 장거리 네트워크로 연결됩니다.
 
-#### 2) 통화 유형과 요금 구분
+#### 통화 유형과 요금 구분
 
 미국 FCC 기준으로 통화는 크게 **세 가지**로 구분됩니다.
 
@@ -124,7 +124,7 @@ category: DataCommunication
 
 전화망에서 **Signaling(신호)**은 “**사용자 음성/데이터와는 별도로, 전화망이 통화를 설정·해제·과금하기 위해 주고받는 제어 정보**”를 의미합니다.
 
-#### 1) In-band vs Out-of-band Signaling
+#### In-band vs Out-of-band Signaling
 
 초기의 아날로그 전화망:
 
@@ -140,7 +140,7 @@ category: DataCommunication
   - **음성/데이터 채널과 분리된 전용 신호 링크**를 통해 신호를 교환
   - 대표적인 것이 **SS7(Signaling System No.7)**
 
-#### 2) SS7(Signaling System No.7)
+#### SS7(Signaling System No.7)
 
 - ITU-T에서 표준화한 **신호 프로토콜 스택**으로, 오늘날 PSTN·2G/3G 이동통신망에서 통화 설정, 번호 질의, SMS, 로밍 등에 널리 사용됩니다.
 
@@ -159,7 +159,7 @@ category: DataCommunication
    - 프리미엄 요금 서비스
    - 이동통신 가입자 위치/인증(MAP, CAP)
 
-#### 3) 콜 설정 흐름 예제
+#### 콜 설정 흐름 예제
 
 A가 B(다른 LATA/다른 사업자)에게 전화를 거는 시나리오:
 
@@ -206,7 +206,7 @@ A가 B(다른 LATA/다른 사업자)에게 전화를 거는 시나리오:
 
 Dial-up 인터넷은 **PSTN의 아날로그 음성 채널을 이용해서 모뎀으로 데이터를 전송**하는 방식입니다.
 
-#### 1) 구조
+#### 구조
 
 ```text
 [PC] --[모뎀]--(아날로그)--> [PSTN] --(아날로그)--> [모뎀 풀 / RAS] --[ISP 라우터]--> [Internet]
@@ -217,7 +217,7 @@ Dial-up 인터넷은 **PSTN의 아날로그 음성 채널을 이용해서 모뎀
 - 양쪽 모뎀 사이에 **V.90/V.92** 등의 모뎀 프로토콜로 데이터 전송
 - 링크 계층은 보통 **PPP(Point-to-Point Protocol)**
 
-#### 2) 속도와 한계
+#### 속도와 한계
 
 - 보통 **56 kbps 이론 최고 속도**, 실제로는 **40~50 kbps 수준**이 많았습니다.
 - 이유:
@@ -227,7 +227,7 @@ Dial-up 인터넷은 **PSTN의 아날로그 음성 채널을 이용해서 모뎀
   - 웹 페이지 한 장 로딩에도 수 초~수십 초
   - 대용량 파일은 사실상 불가능
 
-#### 3) Dial-up 시나리오 예제
+#### Dial-up 시나리오 예제
 
 **상황**: 1990년대 말, 미국 중서부의 한 가정
 
@@ -253,7 +253,7 @@ DSL은 **기존 구리 가입자선(local loop)** 위에 **음성보다 훨씬 �
 
 이에 따라 **전화와 인터넷을 동시에 사용**할 수 있습니다.
 
-#### 1) ADSL(Asymmetric DSL)
+#### ADSL(Asymmetric DSL)
 
 - **다운로드 속도 > 업로드 속도**인 비대칭 구조
 - 미국 FCC 안내 기준:
@@ -270,7 +270,7 @@ DSL은 **기존 구리 가입자선(local loop)** 위에 **음성보다 훨씬 �
  음성    가드밴드        DSL (다운/업)
 ```
 
-#### 2) VDSL / VDSL2
+#### VDSL / VDSL2
 
 VDSL/VDSL2는 ADSL보다 훨씬 넓은 주파수 대역(최대 30 MHz)을 사용해서 **더 높은 속도**를 제공하는 DSL입니다.
 
@@ -281,14 +281,14 @@ VDSL/VDSL2는 ADSL보다 훨씬 넓은 주파수 대역(최대 30 MHz)을 사용
   - 수백 m: 수십~100 Mbps
   - 수 km: 속도 급감
 
-#### 3) G.fast (최신 고급 DSL)
+#### G.fast (최신 고급 DSL)
 
 G.fast는 **500 m 이하** 짧은 구리 구간을 대상으로 **100 Mbps~1 Gbps 이상**을 목표로 설계된 최신 DSL 표준입니다.
 
 - FTTB/FTTdp(건물/문 앞까지 광, 나머지 짧은 거리만 구리) 환경에서,
 - 구리를 완전히 걷어내지 않고도 **기가비트급** 서비스를 제공하기 위한 기술.
 
-#### 4) DSL 용량(대략적인 수학)
+#### DSL 용량(대략적인 수학)
 
 DSL의 이론적인 채널 용량은 **Shannon 용량 공식**으로 근사할 수 있습니다.
 
@@ -307,7 +307,7 @@ $$
 
 실제 DSL은 여러 톤(서브캐리어)마다 다른 SNR을 가지므로, 각 톤의 bit loading을 최적화하여 총 용량을 결정합니다.
 
-#### 5) DSL 속도·거리 예제
+#### DSL 속도·거리 예제
 
 아주 단순화된 예를 파이썬으로 계산해 보면:
 
@@ -337,7 +337,7 @@ for name, bw, snr in profiles:
 - 인터리빙/에러정정부호
 등으로 인해 이론값보다 낮습니다. 하지만 이 정도 계산만으로도 “**왜 짧은 구리, 넓은 대역폭, 높은 SNR이 중요**한지” 직관을 가질 수 있습니다.
 
-#### 6) Dial-up vs DSL 비교 예시
+#### Dial-up vs DSL 비교 예시
 
 | 항목                  | Dial-up (V.90/V.92)         | ADSL/VDSL (대표)                     |
 |-----------------------|-----------------------------|--------------------------------------|
@@ -355,7 +355,7 @@ for name, bw, snr in profiles:
 
 ### Traditional Cable Networks
 
-#### 1) Community Antenna TV (CATV)의 시작
+#### Community Antenna TV (CATV)의 시작
 
 전통적인 케이블 TV 네트워크는 **수신이 잘 안 되는 지역(산골, 도심 협곡 등)**에게 TV를 공급하기 위해 시작되었습니다.
 
@@ -373,7 +373,7 @@ for name, bw, snr in profiles:
                             [증폭기]---[증폭기]---...---[가정 TV]
 ```
 
-#### 2) Tree-and-Branch 동축 구조
+#### Tree-and-Branch 동축 구조
 
 전통적인 케이블 네트워크는 **나무 가지(Tree-and-Branch)** 구조를 사용합니다.
 
@@ -396,7 +396,7 @@ for name, bw, snr in profiles:
 
 전통적인 “모두 동축” 네트워크는 확장성과 양방향성에 한계가 있어서, 오늘날 케이블 사업자들은 거의 모두 **HFC(Hybrid Fiber-Coaxial)** 구조를 사용합니다.
 
-#### 1) HFC 개념
+#### HFC 개념
 
 > “**헤드엔드~동네 허브/노드까지는 광섬유**, 그 이후 **마지막 수백 m~수 km는 동축**을 사용하는 하이브리드 구조”
 
@@ -417,7 +417,7 @@ for name, bw, snr in profiles:
 
 오늘날 HFC에서는 **서비스 그룹(service group)**마다 수십~수백 가구가 하나의 RF 채널 세트를 공유합니다.
 
-#### 2) HFC의 장점
+#### HFC의 장점
 
 - **높은 다운로드 속도**
   - DOCSIS 3.1 기준: 최대 수 Gbps급 다운스트림
@@ -426,7 +426,7 @@ for name, bw, snr in profiles:
 - **다중 서비스**: TV, VoD, VoIP, 인터넷을 동시에 제공
 - **노드 분할(Node Split)**로 서비스 그룹 크기를 줄여 성능·품질 향상
 
-#### 3) HFC의 단점
+#### HFC의 단점
 
 - **공유 매체**
   - 같은 세그먼트의 가입자들이 RF 채널을 공유 → 피크 시간대에 속도 저하 가능
@@ -441,7 +441,7 @@ for name, bw, snr in profiles:
 
 케이블 네트워크를 **인터넷 접속에 활용**하게 만든 핵심 표준이 **DOCSIS(Data Over Cable Service Interface Specifications)** 입니다.
 
-#### 1) DOCSIS 개요
+#### DOCSIS 개요
 
 - **국제 표준**: 케이블 모뎀과 케이블 헤드엔드 장비(CMTS/CCAP)가 상호 운용되도록 정의
 - **대역**:
@@ -460,7 +460,7 @@ for name, bw, snr in profiles:
 
 실제 상용 서비스에서 미국·유럽 케이블 사업자들은 DOCSIS 3.1 기반으로 **1 Gbps~몇 Gbps급 상품**을, DOCSIS 4.0 시범망에서는 **여러 vendor 조합에서 16 Gbps 다운스트림**까지 시험 성공한 바 있습니다.
 
-#### 2) 케이블 모뎀 접속 구조
+#### 케이블 모뎀 접속 구조
 
 ```text
 [PC/라우터] --(Ethernet/Wi-Fi)--> [케이블 모뎀] --(동축)--> [Optical Node] --(광)--> [CMTS/CCAP] --(IP 백본)--> [Internet]
@@ -470,7 +470,7 @@ for name, bw, snr in profiles:
 - **DOCSIS MAC**을 통해 CMTS와 통신
 - CMTS는 각 모뎀에게 **업스트림 타임 슬롯, 다운스트림 채널**을 할당
 
-#### 3) HFC 공유 대역폭 간단 계산 예제
+#### HFC 공유 대역폭 간단 계산 예제
 
 예를 들어,
 
@@ -499,7 +499,7 @@ print(f"업스트림 평균: {avg_up:.1f} Mbps/가구")
 
 사업자는 **서비스 그룹 분할(Node Split)**, **RF 스펙트럼 확장**, **DOCSIS 4.0 업그레이드** 등을 통해 혼잡을 완화합니다.
 
-#### 4) 케이블 vs DSL vs FTTH 비교 (2020s 미국·유럽)
+#### 케이블 vs DSL vs FTTH 비교 (2020s 미국·유럽)
 
 요약하면:
 

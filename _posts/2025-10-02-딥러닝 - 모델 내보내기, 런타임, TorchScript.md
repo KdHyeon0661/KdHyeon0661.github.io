@@ -58,7 +58,7 @@ torch.onnx.export(
 )
 ```
 
-### **동적 크기**(배치/H/W) 지원 — `dynamic_axes`
+### 지원 — `dynamic_axes`
 
 ```python
 torch.onnx.export(
@@ -114,7 +114,7 @@ m = shape_inference.infer_shapes(m)
 onnx.save(m, "smallcnn_dynamic_shaped.onnx")
 ```
 
-### (심화) 새 API: `torch.onnx.dynamo_export` 개념
+### 새 API: `torch.onnx.dynamo_export` 개념
 
 - PyTorch 2.x의 **Dynamo 기반 exporter**는 트레이싱 덜 민감, 더 많은 동적 패턴 지원(환경별 가용성 확인).
 - 기본 아이디어는 동일: **예시 입력**에서 그래프 캡처 → ONNX 변환.
@@ -280,7 +280,7 @@ print(y.shape)  # (8, 10)
 - **저장**: `model_jit = torch.jit.script(model)` 또는 `torch.jit.trace` → `model_jit.save("m.pt")`
 - **로드**: Python(`torch.jit.load`) 또는 **C++(libtorch)** 에서 로드/실행.
 
-### `script`(스크립팅) vs `trace`(트레이싱)
+### vs `trace`(트레이싱)
 
 - **`script`**: 함수/모듈을 **해석**하여 TorchScript로 변환 → **데이터 의존 분기/루프** 지원.
   - 제약: **타입 주석**, 일부 Python API 불가(파일 I/O, `.numpy()` 등), Tensor 연산만 허용.
@@ -328,7 +328,7 @@ m_trace.save("m_trace.pt")
 > **주의**: 입력 크기나 제어 흐름에 따라 경로가 바뀌는 모델은 **`trace` 부적합**.
 > `torch.jit.trace(..., check_inputs=[...])` 로 몇 가지 입력을 더 넣어 **검증**을 추가.
 
-### C++ (Libtorch) 추론 예시
+### 추론 예시
 
 ```cpp
 // infer.cpp (컴파일 시 -ltorch_cpu -lc10 등 링크 필요)
@@ -346,7 +346,7 @@ int main() {
 }
 ```
 
-### 모바일(Lite Interpreter) 개관
+### 개관
 
 - TorchScript를 **Lite Interpreter** 포맷으로 줄여 **모바일 앱**에 포함.
 - `torch.utils.mobile_optimizer` 로 최적화 후 `torch.jit.save`(lite 모드).
@@ -458,7 +458,7 @@ A. **QAT**(학습 시 FakeQuant) 경로가 가장 안전합니다. PTQ면 **대�
 
 ## 덤: 실전 성능 측정 스니펫
 
-### ONNXRuntime(배치별) 시간
+### 시간
 
 ```python
 import time, numpy as np, onnxruntime as ort
@@ -471,7 +471,7 @@ for bs in [1,2,4,8]:
     print(f"ORT bs={bs}: {(time.time()-t0)/30*1000:.2f} ms")
 ```
 
-### TensorRT(배치별) 시간
+### 시간
 
 ```python
 def bench_trt(engine_path, shapes=[(1,224,224),(8,224,224),(16,384,384)], iters=50):

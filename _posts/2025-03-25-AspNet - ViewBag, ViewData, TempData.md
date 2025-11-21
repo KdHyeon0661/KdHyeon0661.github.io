@@ -105,7 +105,7 @@ public IActionResult Index()
   - **`Peek()`**: 읽고 **유지**
   - **`Keep()`**: 특정 키(혹은 전체)를 **다음 요청까지 연장**
 
-### PRG(Post-Redirect-Get) 패턴 예제
+### 패턴 예제
 
 ```csharp
 [HttpPost]
@@ -184,7 +184,7 @@ public IActionResult Index()
 
 ## TempData Provider/Session 구성
 
-### 기본(CookieTempDataProvider) — 별도 구성 없음
+### — 별도 구성 없음
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -331,7 +331,7 @@ public class IndexModel : PageModel
 
 ---
 
-## 플래시 메시지 시스템(토스트/Alert) 통합 — 실전 템플릿
+## 통합 — 실전 템플릿
 
 ### 필터로 TempData → ViewData 브리지(선택 패턴)
 

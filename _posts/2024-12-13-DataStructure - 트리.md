@@ -296,7 +296,7 @@ struct PreorderIter {
 
 ## 트리 알고리즘: 필수 루틴
 
-### 트리 지름(Diameter) — 임의 루트 DFS 2회
+### — 임의 루트 DFS 2회
 
 > 지름: 두 노드 사이의 **최장 경로** 길이(간선 수).
 > 1) 임의 루트에서 가장 먼 A, 2) A에서 가장 먼 B, 3) dist(A,B)가 지름.
@@ -348,7 +348,7 @@ int treeDiameter(const NodeV* root, int n){
 ```
 ```
 
-### Euler Tour(전위/후위 타임스탬프) — 서브트리 질의 기반
+### — 서브트리 질의 기반
 
 ```cpp
 ```cpp

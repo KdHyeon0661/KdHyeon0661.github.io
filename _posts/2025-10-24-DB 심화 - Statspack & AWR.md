@@ -159,7 +159,7 @@ ORDER  BY snap_id;
 
 ### 핵심 섹션 해석(요약 샘플)
 
-#### (1) Load Profile (요지)
+#### Load Profile (요지)
 
 ```
 Per Second
@@ -176,7 +176,7 @@ Per Second
 - **DB Time > DB CPU** 큰 격차 → **대기 비중 높음**
 - Executes/sec ↑ , Parses/sec 적당, Hard parses 낮음(좋음)
 
-#### (2) Top Timed Events / Time Model
+#### Top Timed Events / Time Model
 
 ```
 Top Timed Events
@@ -193,7 +193,7 @@ Time Model Statistics
 ```
 - **Temp 읽기(정렬/해시 스필)** 1위, 랜덤 I/O 2위, 커밋 지연 3위 → **정렬/해시 과다 + 랜덤 I/O 많음 + 커밋 빈도/지연** 혼합.
 
-#### (3) SQL ordered by Elapsed Time
+#### SQL ordered by Elapsed Time
 
 ```
 SQL ID       Elapsed(s)  Executions  Elap/Exec  CPU(s)  Buffer Gets  Disk Reads
@@ -203,7 +203,7 @@ SQL ID       Elapsed(s)  Executions  Elap/Exec  CPU(s)  Buffer Gets  Disk Reads
 ```
 - **9pqs1m..** 상위 1 SQL이 **총 응답시간의 20%** 기여. 선순위 타겟.
 
-#### (4) Segment Statistics (logical/physical/ITL/buffer busy 상위)
+#### Segment Statistics (logical/physical/ITL/buffer busy 상위)
 
 ```
 Top Segments by Logical Reads
@@ -218,7 +218,7 @@ Top Segments by Physical Reads
 ```
 - Temp 스필 많음(예상 일치). `ORDERS_IDX1`/`ORDERS` 핫.
 
-#### (5) I/O Stats / Temp
+#### I/O Stats / Temp
 
 ```
 IOStat by Filetype Summary
@@ -385,7 +385,7 @@ HOST echo Generating AWR report for &&bsn to &&esn ...
 -- 프롬프트에서 bsn/esn 사용
 ```
 
-### 특정 서비스/모듈의 SQL Top-N(ASH) — 보조
+### — 보조
 
 ```sql
 SELECT sql_id,

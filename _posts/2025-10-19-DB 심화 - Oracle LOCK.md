@@ -26,7 +26,7 @@ category: DB 심화
 
 ---
 
-## Enqueue(엔큐) Lock 핵심
+## Lock 핵심
 
 ### 구조·이름·모드
 
@@ -122,7 +122,7 @@ ALTER INDEX pk_t_tx REBUILD INITRANS 8;
 -- 키 분산(Reverse Key, Hash 파티션, 샤딩)으로 '같은 블록' 집중 완화
 ```
 
-### **인덱스 분할(Index Split) & 핫블록**
+### & 핫블록**
 
 - 증가형 키(시퀀스)로 **우측 리프** 집중 → **분할 잦음** + **버퍼 경합**(`buffer busy waits`) → DML 지연
 - 지연 동안 **TX Lock 보유시간**이 늘어나 **연쇄 대기** 확대.
@@ -132,7 +132,7 @@ ALTER INDEX pk_t_tx REBUILD INITRANS 8;
 
 ---
 
-## 기타 트랜잭션 Lock & **TM(Table) Lock** — DML/DDL 충돌의 교차점
+## Lock** — DML/DDL 충돌의 교차점
 
 ### DML이 잡는 Table Lock(TM)
 

@@ -209,7 +209,7 @@ def qam_passband(syms, fc=20e3, fs=400e3, Rs=10e3, alpha=0.25):
 
 ---
 
-## 5.1.z 성능(이상 채널) 요약
+## 요약
 
 - **BPSK/QPSK (coherent)**:
   $$ P_b = Q\!\Big(\sqrt{2\,E_b/N_0}\Big) $$
@@ -245,7 +245,7 @@ def qam_passband(syms, fc=20e3, fs=400e3, Rs=10e3, alpha=0.25):
 
 ---
 
-## 실습 미니 모뎀 (BPSK/QPSK/16-QAM) — 베이스밴드 AWGN
+## — 베이스밴드 AWGN
 
 ```python
 import numpy as np

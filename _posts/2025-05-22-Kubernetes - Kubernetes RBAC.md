@@ -113,7 +113,7 @@ roleRef:
 
 ---
 
-## ServiceAccount(워크로드 아이덴티티) 권한 부여
+## 권한 부여
 
 ### SA 생성 + RoleBinding
 
@@ -264,7 +264,7 @@ rules:
 
 ---
 
-## 비자원 URL(nonResourceURLs) — 헬스/메트릭 엔드포인트
+## — 헬스/메트릭 엔드포인트
 
 클러스터 전역의 API 경로(예: `/healthz`, `/metrics`):
 
@@ -332,7 +332,7 @@ kubectl get clusterrolebinding -o json | jq '.items[] | select(.subjects[]?.name
 kubectl get rolebinding -A -o json | jq '.items[] | select(.subjects[]?.kind=="ServiceAccount" and .subjects[]?.name=="app-sa" and .subjects[]?.namespace=="app") | .metadata.namespace + "/" + .metadata.name'
 ```
 
-### 감사 로깅(Audit) 포인트
+### 포인트
 
 - **승인된/거부된** 요청 기록(누가/언제/무엇/어디서).
 - 민감 리소스(`secrets`, `configmaps`, RBAC 오브젝트) 접근은 **고레벨**로.

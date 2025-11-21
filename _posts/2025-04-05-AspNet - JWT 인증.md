@@ -305,7 +305,7 @@ public class OrdersController : ControllerBase
 
 ## Refresh Token 설계(로테이션/재사용 탐지/블랙리스트)
 
-### 교환(rotate) 엔드포인트
+### 엔드포인트
 
 ```csharp
 public record RefreshRequest(string refresh_token);
@@ -414,7 +414,7 @@ app.UseCors("Spa");
 
 ---
 
-## 이벤트 훅(JwtBearerEvents) — 에러/로그/헤더
+## — 에러/로그/헤더
 
 ```csharp
 .AddJwtBearer("Bearer", options =>
@@ -457,7 +457,7 @@ app.UseCors("Spa");
 
 ---
 
-## 멀티 스킴 — Cookies(웹) + Bearer(API), Minimal API
+## + Bearer(API), Minimal API
 
 ```csharp
 builder.Services
@@ -544,7 +544,7 @@ public async Task Protected_Endpoint_Requires_Valid_Token()
 
 ---
 
-## 부록 A) Minimal API — 전체 샘플(요지)
+## Minimal API — 전체 샘플(요지)
 
 ```csharp
 // Program.cs
@@ -569,7 +569,7 @@ app.Run();
 
 ---
 
-## 부록 B) RS256 발급(요지)
+## RS256 발급(요지)
 
 ```csharp
 var rsa = RSA.Create();

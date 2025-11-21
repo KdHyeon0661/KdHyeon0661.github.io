@@ -276,7 +276,7 @@ public class MeterBar : FrameworkElement
 
 ---
 
-## UI 스레드 → 컴포지터(milcore) 스레드: DUCE 채널
+## 스레드: DUCE 채널
 
 ### 왜 채널이 필요한가
 
@@ -646,7 +646,7 @@ public partial class MainWindow : Window
 
 ---
 
-### 부록 A) `InitializeComponent()` 디버깅 팁
+### `InitializeComponent()` 디버깅 팁
 
 - **출력 창**의 바인딩 에러 확인
 - `PresentationTraceSources.TraceLevel=High`로 바인딩 추적
@@ -659,7 +659,7 @@ public partial class MainWindow : Window
 
 ---
 
-### 부록 B) 텍스트 선명도 체크 스니펫
+### 텍스트 선명도 체크 스니펫
 
 ```csharp
 var dpi = VisualTreeHelper.GetDpi(this);
@@ -668,7 +668,7 @@ Debug.WriteLine($"DPI: {dpi.PixelsPerDip}, Scale: {dpi.DpiScaleX}x{dpi.DpiScaleY
 
 ---
 
-### 부록 C) Frame-Sync 루프에서의 주의
+### Frame-Sync 루프에서의 주의
 
 ```csharp
 CompositionTarget.Rendering += (_, __) =>
@@ -681,7 +681,7 @@ CompositionTarget.Rendering += (_, __) =>
 
 ---
 
-### 부록 D) 값 우선순위 데모
+### 값 우선순위 데모
 
 ```csharp
 // Local value vs Animation vs Style

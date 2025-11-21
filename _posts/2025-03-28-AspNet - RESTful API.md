@@ -518,7 +518,7 @@ public bool TryApplyMergePatch(int id, JsonElement patch, string? ifMatch, out s
 
 ---
 
-## 부록 A) 표준 헤더 예시 모음
+## 표준 헤더 예시 모음
 
 - **Location**: 새로 생성된 리소스 경로, 작업 조회 경로
 - **ETag**: 엔터티 태그(버전), 강/약 식별자(`W/`)
@@ -529,7 +529,7 @@ public bool TryApplyMergePatch(int id, JsonElement patch, string? ifMatch, out s
 
 ---
 
-## 부록 B) 설계 원칙 요약 체크리스트
+## 설계 원칙 요약 체크리스트
 
 - [ ] **URI**: 명사·복수형·계층 간결성 유지, 동사 금지
 - [ ] **메서드语义**: GET/POST/PUT/PATCH/DELETE의 의미를 지키기

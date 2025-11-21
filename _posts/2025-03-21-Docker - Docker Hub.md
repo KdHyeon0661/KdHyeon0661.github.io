@@ -31,7 +31,7 @@ docker login
 - 최초 로그인 시 `~/.docker/config.json`에 **Base64 인코딩된 자격**이 저장된다.
 - **권장**: 비밀번호 대신 **Personal Access Token(PAT)** 을 생성해 사용.
 
-### PAT(개인 액세스 토큰) 사용
+### 사용
 
 1) Hub 웹 → Settings → Security → New Access Token
 2) CI/CD나 서버에서는 다음처럼 사용:
@@ -136,7 +136,7 @@ docker push $APP:latest
 
 ---
 
-## 멀티 아키텍처(amd64/arm64) 이미지 푸시
+## 이미지 푸시
 
 ### buildx 활성화
 

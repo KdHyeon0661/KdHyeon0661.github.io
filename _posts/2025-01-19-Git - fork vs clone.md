@@ -185,7 +185,7 @@ Closes #<id>
 
 ---
 
-## 다중 원격 시나리오: origin(내 포크) + upstream(원본) + 또 다른 remote
+## + upstream(원본) + 또 다른 remote
 
 ```bash
 # 현재 원격 확인

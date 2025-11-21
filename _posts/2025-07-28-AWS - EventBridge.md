@@ -261,7 +261,7 @@ for i in range(3):
     time.sleep(0.1)
 ```
 
-#### Lambda 타겟(결제) — 타입 안정 처리(스키마 반영 가정)
+#### — 타입 안정 처리(스키마 반영 가정)
 
 ```python
 def handler(event, context):
@@ -503,7 +503,7 @@ export async function publishOrderCreated(order) {
 }
 ```
 
-### 컨슈머(Lambda, Python) — InputTransformer로 정규화된 입력 가정
+### — InputTransformer로 정규화된 입력 가정
 
 ```python
 def handler(event, context):
@@ -543,7 +543,7 @@ aws events start-replay \
 
 ---
 
-## 부록 A) 수학으로 보는 백오프 + 지터
+## 수학으로 보는 백오프 + 지터
 
 - **Exponential Backoff with Jitter**(추천):
   $$
@@ -553,7 +553,7 @@ aws events start-replay \
 
 ---
 
-## 부록 B) CloudFormation(리소스 최소 샘플)
+## CloudFormation(리소스 최소 샘플)
 
 ```yaml
 Resources:

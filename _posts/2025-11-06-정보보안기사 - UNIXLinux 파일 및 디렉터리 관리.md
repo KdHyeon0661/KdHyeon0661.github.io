@@ -300,7 +300,7 @@ getfattr -d /srv/web/README.txt
 
 ---
 
-## 링크/TOCTOU(레이스) 방어 — sysctl + 안전한 생성
+## 방어 — sysctl + 안전한 생성
 
 ### sysctl 보호(커널 레벨)
 
@@ -531,7 +531,7 @@ xfs_quota -x -c 'limit -p bhard=100g proj1' /
 
 ---
 
-## 미니 랩 C — “협업 디렉터리(프로젝트) 권한 드리프트 제거”
+## 권한 드리프트 제거”
 
 1) `/srv/project`에 `chmod 2770`, **기본 ACL** 설정.
 2) 서로 다른 사용자가 생성해도 그룹/권한이 일정한지 확인.

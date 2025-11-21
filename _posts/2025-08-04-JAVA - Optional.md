@@ -78,7 +78,7 @@ opt.ifPresentOrElse(
 Optional<Integer> len = opt.map(String::length);
 ```
 
-### `flatMap` (T→Optional<U>) — 중첩 제거
+### — 중첩 제거
 
 ```java
 Optional<User> u = repo.findById(id);          // Optional<User>
@@ -234,7 +234,7 @@ Optional<User> ou = userRepo.findById(id);
 User user = ou.orElseThrow(() -> new NotFound("user " + id));
 ```
 
-### 구성(설정) 조회 + 캐스팅
+### 조회 + 캐스팅
 
 ```java
 String host = props.get("service.host")              // Map<String,Object>
@@ -256,7 +256,7 @@ OptionalInt page = Optional.ofNullable(req.getParameter("page"))
     .orElse(OptionalInt.empty());
 ```
 
-### 파서(검증) 체인
+### 체인
 
 ```java
 record Price(int cents){}

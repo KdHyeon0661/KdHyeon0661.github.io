@@ -10,7 +10,7 @@ category: DataCommunication
 
 ### P2P Networks
 
-#### 1) P2P의 기본 아이디어
+#### P2P의 기본 아이디어
 
 **클라이언트–서버 모델**과 **P2P 모델**을 비교해 보자.
 
@@ -37,7 +37,7 @@ category: DataCommunication
 - **블록체인/분산 원장**
 등 다양한 형태로 쓰이고 있다.
 
-#### 2) 구조에 따른 분류 — Unstructured vs Structured vs Hybrid
+#### 구조에 따른 분류 — Unstructured vs Structured vs Hybrid
 
 P2P 네트워크는 통상 다음과 같이 나눈다.
 
@@ -49,7 +49,7 @@ P2P 네트워크는 통상 다음과 같이 나눈다.
 
 ---
 
-#### 3) P2P 네트워크에서 공통적으로 필요한 기능
+#### P2P 네트워크에서 공통적으로 필요한 기능
 
 P2P 시스템은 보통 다음 기본 기능을 제공해야 한다.
 
@@ -80,7 +80,7 @@ P2P 시스템은 보통 다음 기본 기능을 제공해야 한다.
 
 ### Distributed Hash Table (DHT)
 
-#### 1) 일반적인 Hash Table 복습
+#### 일반적인 Hash Table 복습
 
 전통적인 해시 테이블은:
 
@@ -100,7 +100,7 @@ P2P 시스템은 보통 다음 기본 기능을 제공해야 한다.
 
 ---
 
-#### 2) DHT의 기본 개념
+#### DHT의 기본 개념
 
 **Distributed Hash Table**은 다음을 만족하는 분산 데이터 구조이다.
 
@@ -124,7 +124,7 @@ DHT 시스템(Chord, Kademlia 등)은
 
 ---
 
-#### 3) DHT와 Unstructured P2P의 차이 예제
+#### DHT와 Unstructured P2P의 차이 예제
 
 - **Unstructured**
   - 예: Flooding 기반 검색
@@ -146,7 +146,7 @@ DHT 시스템(Chord, Kademlia 등)은
 
 ---
 
-#### 4) 실제 DHT 적용 사례
+#### 실제 DHT 적용 사례
 
 - **Chord, Pastry, CAN, Tapestry**
   → 초기 연구용/프로토타입 P2P 시스템들
@@ -162,7 +162,7 @@ DHT 시스템(Chord, Kademlia 등)은
 
 ### Identifier Space
 
-#### 1) Chord의 핵심 아이디어
+#### Chord의 핵심 아이디어
 
 **문제 정의**:
 “키 $$k$$가 주어졌을 때, 이 키를 담당하는 노드가 누구인지 찾아라.”
@@ -178,7 +178,7 @@ Chord는 MIT에서 2001년에 제안되었고,
 
 ---
 
-#### 2) Identifier 공간 정의
+#### Identifier 공간 정의
 
 - $$m$$비트 identifier 공간 사용
 - 가능한 identifier는
@@ -198,7 +198,7 @@ Chord 원 논문에서는 SHA-1 기반 160비트 공간을 사용한다.
 
 ---
 
-#### 3) 원형 링 구조와 Successor/Predecessor
+#### 원형 링 구조와 Successor/Predecessor
 
 identifier 공간을 **모듈러 $$2^m$$** 원형으로 생각하면:
 
@@ -221,7 +221,7 @@ identifier 공간을 **모듈러 $$2^m$$** 원형으로 생각하면:
 
 ---
 
-#### 4) 작은 예제: m = 4, N = 8
+#### 작은 예제: m = 4, N = 8
 
 간단히 $$m = 4$$ (identifier 0~15)인 상황을 생각해 보자.
 
@@ -254,7 +254,7 @@ Chord는 단순히 successor 포인터만 쓰면
 그래서 각 노드는 **finger table**이라는
 “멀리 있는 노드들을 가리키는 점프 포인터 집합”을 유지한다.
 
-#### 1) Finger table 정의
+#### Finger table 정의
 
 노드 $$n$$의 finger table은 $$m$$개의 엔트리를 가진다.
 
@@ -270,7 +270,7 @@ Chord는 단순히 successor 포인터만 쓰면
 
 ---
 
-#### 2) 예제: m = 4, 노드 1의 finger table
+#### 예제: m = 4, 노드 1의 finger table
 
 다시 $$m = 4$$, 노드 {1,4,8,11,14} 예제를 사용해 보자.
 
@@ -298,7 +298,7 @@ Chord는 단순히 successor 포인터만 쓰면
 
 ---
 
-#### 3) Finger table을 이용한 lookup 절차 예제
+#### Finger table을 이용한 lookup 절차 예제
 
 **목표**: 노드 1에서 키 id=14의 담당 노드를 찾고 싶다.
 
@@ -334,7 +334,7 @@ finger table에서 $$id$$보다 작은 노드 중
 Chord 프로토콜이 외부에 제공하는 인터페이스는
 “논리적으로” 매우 단순하다.
 
-#### 1) 외부에서 보는 인터페이스
+#### 외부에서 보는 인터페이스
 
 - **`lookup(key)` / `find_successor(id)`**
   - 특정 키에 대한 담당 노드를 찾는다.
@@ -351,7 +351,7 @@ P2P 라우팅과 재구성은 Chord 구현체가 책임진다.
 
 ---
 
-#### 2) Join 예제 시나리오
+#### Join 예제 시나리오
 
 예를 들어 기존에 노드 id = {1, 4, 8, 11, 14}가 있고,
 새로운 노드 id=6이 Chord 링에 합류한다고 하자.
@@ -372,7 +372,7 @@ finger table과 successor 정보를 점차 정확히 보정한다.
 
 ---
 
-#### 3) 안정화(stabilization) 및 장애 처리
+#### 안정화(stabilization) 및 장애 처리
 
 Chord는 노드 churn을 가정하기 때문에
 **백그라운드에서 주기적으로** 다음과 같은 작업을 수행한다.
@@ -390,7 +390,7 @@ Chord는 노드 churn을 가정하기 때문에
 
 ---
 
-#### 4) 간단한 Python 유사 코드 예시
+#### 간단한 Python 유사 코드 예시
 
 아래는 Chord의 핵심을 간단히 모사한 Python 스타일 의사코드이다
 (실제 네트워크 RPC 구현은 생략).
@@ -468,7 +468,7 @@ Chord는 기본적으로 **“scalable lookup service”** 이다.
 즉, 응용은 “`lookup(key)` → node”만 믿고
 나머지 데이터 저장/복제 로직만 구현하면 된다.
 
-#### 1) 분산 key-value 저장소 예제
+#### 분산 key-value 저장소 예제
 
 - 키: 파일의 해시, 문서 ID, 사용자 ID 등
 - 값: 실제 데이터 or 다른 위치 정보
@@ -484,7 +484,7 @@ Chord는 기본적으로 **“scalable lookup service”** 이다.
 이 경우 중앙 디렉터리 서버 없이도
 대규모 분산 key-value 저장소가 만들어진다.
 
-#### 2) 분산 파일 시스템 / 콘텐츠 주소 스토리지
+#### 분산 파일 시스템 / 콘텐츠 주소 스토리지
 
 - 파일 내용 전체를 해시한 값이 키가 된다:
   $$k = H(\text{file contents})$$
@@ -500,7 +500,7 @@ Chord는 기본적으로 **“scalable lookup service”** 이다.
 
 ---
 
-#### 3) 예제 시나리오: 분산 로그 인덱스 서비스
+#### 예제 시나리오: 분산 로그 인덱스 서비스
 
 **상황**
 여러 데이터센터에 분산된 서버들이 있고,
@@ -525,7 +525,7 @@ Chord는 기본적으로 **“scalable lookup service”** 이다.
 
 ---
 
-#### 4) 다른 DHT와의 비교 – 개념 확장
+#### 다른 DHT와의 비교 – 개념 확장
 
 - **Kademlia**
   - 거리 개념으로 XOR metric 사용
@@ -545,7 +545,7 @@ Chord를 이해하면,
 
 ---
 
-#### 5) 간단한 실험 아이디어
+#### 간단한 실험 아이디어
 
 블로그/포트폴리오용으로는,
 전체 분산 구현 대신 **로컬에서 동작하는 작은 Chord 시뮬레이터**를 만들어 볼 수 있다.

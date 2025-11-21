@@ -70,9 +70,9 @@ curl -si 'https://es.staging.example.com/my-index/_search?q=anything' | head -n1
 
 ---
 
-# Node.js(Express) + Mongo(Mongoose/PyMongo 유사) — **차단/정규화 미들웨어**
+# + Mongo(Mongoose/PyMongo 유사) — **차단/정규화 미들웨어**
 
-## “연산자/점(.) 키” 재귀 필터
+## 키” 재귀 필터
 
 ```js
 // src/security/mongo-sanitize.js
@@ -220,7 +220,7 @@ app.get("/users", async (req,res) => {
 
 ---
 
-# Python(FastAPI/Flask) + PyMongo — 동일 원칙
+# + PyMongo — 동일 원칙
 
 ```python
 # security/mongo_sanitize.py
@@ -471,7 +471,7 @@ index=app event=reject_filter reason IN ("operator_key","dot_key","bad_field")
 # OpenAPI + JSON Schema 검증 (언어 무관 패턴)
 
 ```yaml
-# openapi.yaml (일부) — /users 검색
+# — /users 검색
 
 paths:
   /users:

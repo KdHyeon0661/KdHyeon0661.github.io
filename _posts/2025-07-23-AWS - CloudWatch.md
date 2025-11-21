@@ -40,7 +40,7 @@ category: AWS
 ### 커스텀 메트릭 전송(기본/고해상도)
 
 ```bash
-# 기본(60s) 커스텀 메트릭
+# 커스텀 메트릭
 
 aws cloudwatch put-metric-data \
   --namespace MyApp \
@@ -49,7 +49,7 @@ aws cloudwatch put-metric-data \
   --unit Count \
   --dimensions Service=web,Stage=prod
 
-# 고해상도(1초) 커스텀 메트릭
+# 커스텀 메트릭
 
 aws cloudwatch put-metric-data \
   --namespace MyApp \
@@ -174,7 +174,7 @@ aws logs put-subscription-filter \
 
 ---
 
-## 알람(Alarm) — 단일/합성·이상탐지·액션
+## — 단일/합성·이상탐지·액션
 
 ### 단일 알람(예: EC2 CPU)
 
@@ -210,7 +210,7 @@ aws cloudwatch put-metric-alarm \
   --alarm-actions arn:aws:sns:ap-northeast-2:111122223333:MyAlarmTopic
 ```
 
-### 합성(Composite) 알람
+### 알람
 
 - 여러 알람을 **AND/OR**로 묶어 **노이즈 감소**.
 ```bash
@@ -227,7 +227,7 @@ aws cloudwatch put-composite-alarm \
 
 ---
 
-## 대시보드(Dashboard) — JSON · IaC
+## — JSON · IaC
 
 ### 단일 위젯 예
 
@@ -263,7 +263,7 @@ aws cloudwatch put-dashboard \
 
 ---
 
-## EventBridge(구 CloudWatch Events) — 이벤트 자동화
+## — 이벤트 자동화
 
 ### 스케줄러(크론/레이트)
 
@@ -351,7 +351,7 @@ $$
 
 ---
 
-## 런북(운영 절차) 예시
+## 예시
 
 ### 알람: API 5xx 급증
 

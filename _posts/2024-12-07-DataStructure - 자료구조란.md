@@ -350,7 +350,7 @@ Node* insert(Node* n,int key){
 
 ---
 
-### 힙(Heap) & 우선순위 큐
+### & 우선순위 큐
 
 - **배열 기반 완전 이진 트리**.
 - Heapify: $$O(n)$$, push/pop: $$O(\log n)$$.

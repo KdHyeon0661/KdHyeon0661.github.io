@@ -19,7 +19,7 @@ category: 시스템보안
 
 ## 준비: 랩 토폴로지 & 정책
 
-### A) 최소 구성
+### 최소 구성
 
 - **DC/KDC**: Windows Server(AD DS) 1대
 - **앱 서버**: IIS 또는 파일 서버 1대(서비스 계정으로 구동)
@@ -29,7 +29,7 @@ category: 시스템보안
   - 멤버서버: Security 4624/4672, Sysmon(선택)
   - SIEM: Splunk/Elastic/Sentinel 중 택1
 
-### B) 권장 보안 기본선(초기부터)
+### 권장 보안 기본선(초기부터)
 
 - **Kerberos AES-only**(RC4 비활성), TGT/TGS 수명 단축
 - **서비스 계정 gMSA**(가능하면) 또는 **긴 랜덤 암호+주기 회전**
@@ -47,7 +47,7 @@ category: 시스템보안
 - Kerberoast는 **SPN 보유 서비스 계정**의 **TGS**를 가져다가 **오프라인**에서 키 크래킹을 시도하는 공격군입니다.
 - 실습에서는 **정상 TGS 요청**만 유도해 **DC 보안 로그**에서 **암호화 타입/요청량/분포**를 관찰하고, **정책 개선점**을 도출합니다.
 
-### (PowerShell) SPN·암호화 타입 인벤토리(읽기 전용)
+### SPN·암호화 타입 인벤토리(읽기 전용)
 
 ```powershell
 Import-Module ActiveDirectory
@@ -82,7 +82,7 @@ Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4769; StartTime=$since} |
 - **EncType=0x17(RC4)** 비율이 의미 있게 존재 → **AES-only**로 전환 필요
 - 특정 시간대/사용자에서 **TGS 급증** → 의심 패턴(대량 SPN 조회/접근) 검토
 
-### (KQL 예시) TGS 급증 탐지(모델)
+### TGS 급증 탐지(모델)
 
 ```kusto
 SecurityEvent
@@ -100,7 +100,7 @@ SecurityEvent
 - AD 객체의 DACL에 **WriteDACL/GenericAll/Owner/ExtendedRight**가 부여되면, **간접 권한 상승 경로**가 생성됩니다.
 - 실습에서는 **권한 변경 없이** 현재 AD의 **위험 ACL** 존재 여부만 **리포트** 합니다.
 
-### (PowerShell) 위험 ACL 스캐너(읽기 전용 스케치)
+### 위험 ACL 스캐너(읽기 전용 스케치)
 
 ```powershell
 Import-Module ActiveDirectory
@@ -148,7 +148,7 @@ $rbcd = Get-ADComputer -Filter * -Properties 'msDS-AllowedToActOnBehalfOfOtherId
 
 ---
 
-## 단계 3 — “Kerberoast(시그널) + ACL Misconfig(그래프)” 결합 경로 시각화
+## + ACL Misconfig(그래프)” 결합 경로 시각화
 
 > 실제 권한 상승을 하지 않고, **경로가 존재하는지**만 **그래프적**으로 파악합니다.
 
@@ -169,7 +169,7 @@ $rbcd = Get-ADComputer -Filter * -Properties 'msDS-AllowedToActOnBehalfOfOtherId
 
 ---
 
-## 단계 4 — 교정(하드닝) 실행 계획 수립(안전)
+## 실행 계획 수립(안전)
 
 **우선순위 예시**
 1) **SPN 계정 AES-only** 강제, **암호 회전/주기화**(가능하면 **gMSA 전환**)
@@ -182,7 +182,7 @@ $rbcd = Get-ADComputer -Filter * -Properties 'msDS-AllowedToActOnBehalfOfOtherId
 
 # 방어: **Tiering 모델, PAW, gMSA, LDAP/Signed SMB, LSA 보호**
 
-## Tiering 모델(계층화) & 세션 격리
+## & 세션 격리
 
 ### 개념
 
@@ -222,7 +222,7 @@ Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\Microsoft\Windows\D
 
 ---
 
-## gMSA(그룹 관리 서비스 계정) — 서비스 비밀번호 자동 관리
+## — 서비스 비밀번호 자동 관리
 
 ### 장점
 
@@ -231,7 +231,7 @@ Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root\Microsoft\Windows\D
 ### 생성/배포 예시(안전)
 
 ```powershell
-# KDS 루트 키(포리스트 최초 1회) — 랩임을 가정
+# — 랩임을 가정
 
 Add-KdsRootKey -EffectiveImmediately
 
@@ -288,7 +288,7 @@ Get-SmbServerConfiguration | Select EnableSMB1Protocol,RequireSecuritySignature,
 
 ---
 
-## LSA 보호(PPL) & Credential Guard
+## & Credential Guard
 
 ### LSA PPL
 

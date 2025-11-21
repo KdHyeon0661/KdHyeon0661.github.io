@@ -63,7 +63,7 @@ upstream prematurely closed connection
 
 ---
 
-# 안전한 재현용(승인된 랩 환경) 테스트
+# 테스트
 
 > 다음은 **자신의 연구/스테이징** 환경에서, **차단이 올바르게 작동**하는지 확인하기 위한 **방어 검증** 테스트입니다.
 > 실제 시스템에 대한 공격으로 사용하지 마십시오.
@@ -141,7 +141,7 @@ HELLO`;
 
 ---
 
-## Nginx(리버스 프록시) 예시
+## 예시
 
 ```nginx
 # ① 요청 버퍼링으로 백엔드에 단일 Content-Length만 전달
@@ -149,7 +149,7 @@ HELLO`;
 proxy_request_buffering on;     # 기본 on (명시)
 proxy_http_version 1.1;         # 업스트림과 H1 고정(환경에 맞게)
 
-# ② TE 제거(모순 방지) — map/if 조합으로 방어
+# — map/if 조합으로 방어
 
 map $http_transfer_encoding $te_bad {
   default         1;
@@ -267,7 +267,7 @@ static_resources:
 
 ---
 
-## Apache httpd(리버스) 포인트
+## 포인트
 
 ```apache
 # 엄격 모드
@@ -284,7 +284,7 @@ RequestReadTimeout header=20-40,MinRate=500 body=20,MinRate=500
 LimitRequestFieldSize 16384
 LimitRequestFields 100
 
-# (환경에 맞게) TE 헤더 제거
+# TE 헤더 제거
 
 RequestHeader unset Transfer-Encoding early
 ```

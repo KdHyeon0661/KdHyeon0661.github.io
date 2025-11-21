@@ -120,7 +120,7 @@ category: HTML
 ```
 - **제안**일 뿐 강제 선택 아님(자유 입력 가능).
 
-### `autocomplete` (자동완성) — **토큰 기반 제어**
+### — **토큰 기반 제어**
 
 ```html
 <!-- 폼 수준 전체 끄기 -->
@@ -176,7 +176,7 @@ category: HTML
 
 ## `<form>` 연계 속성 (폼 외부·버튼별 제어)
 
-### `form` (연결) — 폼 밖의 필드/버튼을 특정 폼에 연결
+### — 폼 밖의 필드/버튼을 특정 폼에 연결
 
 ```html
 <form id="reg" action="/register" method="post"></form>
@@ -241,7 +241,7 @@ category: HTML
 
 ---
 
-## 유효성 검사(Constraint Validation) — HTML만으로도 강력
+## — HTML만으로도 강력
 
 ### 기본 흐름
 
@@ -296,7 +296,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 접근성(a11y) & 국제화(i18n)
+## & 국제화(i18n)
 
 ### 라벨 연결(필수)
 
@@ -326,7 +326,7 @@ input:required:valid   { border-color: #43a047; }
 
 ---
 
-## 보안(Security) — 클라이언트 검증은 **보조**일 뿐
+## — 클라이언트 검증은 **보조**일 뿐
 
 | 위험 | 요약 | 대응 |
 |---|---|---|

@@ -376,7 +376,7 @@ spec:
 
 ---
 
-## 디플로이 기본 템플릿(테넌트 킷) — Helm/Kustomize
+## — Helm/Kustomize
 
 ### Helm 값으로 테넌트 변수화 예시
 

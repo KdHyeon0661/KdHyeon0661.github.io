@@ -57,7 +57,7 @@ Telnet은 **데이터와 제어 명령이 같은 스트림**으로 흘러간다.
 
 교과서에서 “local versus remote login”을 Telnet 문맥에서 이야기할 때, 핵심은 다음이다.
 
-#### 1) Local Login
+#### Local Login
 
 **로컬 로그인**은 말 그대로 **사용자와 OS가 같은 머신**에 있는 경우다.
 
@@ -75,7 +75,7 @@ Telnet은 **데이터와 제어 명령이 같은 스트림**으로 흘러간다.
 
 네트워크는 전혀 개입하지 않는다.
 
-#### 2) Remote Login (Telnet)
+#### Remote Login (Telnet)
 
 **원격 로그인**은 사용자가 **네트워크를 통해 다른 호스트**에 로그인하는 것:
 
@@ -102,7 +102,7 @@ Telnet은 **데이터와 제어 명령이 같은 스트림**으로 흘러간다.
 2. 입력/출력 모두 **평문(plaintext)** 으로 흐르기 때문에,
    중간의 공격자가 패킷을 캡처하면 **ID/비밀번호, 명령, 결과를 전부 볼 수 있다**는 점
 
-#### 3) 예제: 로컬 vs Telnet 원격 로그인 시나리오 비교
+#### 예제: 로컬 vs Telnet 원격 로그인 시나리오 비교
 
 예를 들어, 사무실에서 리눅스 서버에 접속하는 경우를 보자.
 
@@ -140,7 +140,7 @@ C: s e c r e t 1 2 3
 
 ※ 실제 인터넷에서는 보안상 사용하지 않고, **실습용으로만** 로컬 네트워크에서 사용해야 한다.
 
-#### 1) 간단한 에코 서버에 Telnet으로 접속
+#### 간단한 에코 서버에 Telnet으로 접속
 
 리눅스에서 테스트용 TCP 에코 서버를 열고 Telnet 클라이언트로 접속해볼 수 있다.
 (예: `nc`를 이용한 간단한 서버)
@@ -163,7 +163,7 @@ Hello over Telnet
 - 클라이언트에서 입력한 문자열이 그대로 에코 서버에 도달하고, 다시 돌아온다.
 - 이 과정에서 **암호화는 전혀 없다**.
 
-#### 2) SMTP 서버에 Telnet으로 접속 (헤더만 관찰)
+#### SMTP 서버에 Telnet으로 접속 (헤더만 관찰)
 
 과거에는 SMTP 서버 디버깅을 위해 Telnet으로 25번 포트에 접속해 직접 명령을 보내기도 했다.
 
@@ -245,7 +245,7 @@ RFC 4251에 따르면, SSH는 **3개의 주요 컴포넌트**로 구성된다.
 
 ### SSH Components — 세 가지 계층 구조
 
-#### 1) SSH Transport Layer Protocol
+#### SSH Transport Layer Protocol
 
 **전송 계층 프로토콜**은 다음을 책임진다.
 
@@ -266,7 +266,7 @@ RFC 4251에 따르면, SSH는 **3개의 주요 컴포넌트**로 구성된다.
 NSA와 유럽 보안 기관들은 SSH 사용할 때 **SSHv2만 허용**하고,
 강력한 암호 스위트(AES-GCM, ChaCha20-Poly1305 등)를 사용할 것을 권고한다.
 
-#### 2) SSH User Authentication Protocol
+#### SSH User Authentication Protocol
 
 Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.
 
@@ -285,7 +285,7 @@ Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.
 
 실무에서는 **공개키 인증 + MFA**(예: SSH 키 + FIDO2) 조합이 권장된다.
 
-#### 3) SSH Connection Protocol
+#### SSH Connection Protocol
 
 **Connection Protocol**은 암호화된 SSH 연결 안에 **다수의 논리 채널**을 다중화한다.
 
@@ -314,7 +314,7 @@ Transport Layer 위에서 동작하는 **사용자 인증 프로토콜**이다.
 
 여기서는 **OpenSSH 클라이언트** 기준으로 볼 수 있는 실제 예제를 살펴본다.
 
-#### 1) 기본 원격 로그인
+#### 기본 원격 로그인
 
 ```bash
 ssh alice@server.example.com
@@ -332,7 +332,7 @@ ssh alice@server.example.com
 
 - 그다음부터는 호스트 키가 변경되지 않는 한 경고 없이 접속
 
-#### 2) 공개키 생성 및 등록
+#### 공개키 생성 및 등록
 
 ```bash
 # 키 생성 (Ed25519 예시)
@@ -353,7 +353,7 @@ ssh alice@server.example.com
 
 입력 시 패스워드 대신 키 기반 인증으로 로그인할 수 있다.
 
-#### 3) 포트 포워딩 예제
+#### 포트 포워딩 예제
 
 - **로컬 포트 포워딩**: 로컬 8080 → 원격 DB 5432
 
@@ -375,7 +375,7 @@ ssh -R 9000:127.0.0.1:3000 alice@bastion.example.com
 
 SSH는 “보안 원격 로그인”을 넘어 다양한 용도로 쓰인다.
 
-#### 1) 원격 서버 관리(Remote Login)
+#### 원격 서버 관리(Remote Login)
 
 가장 대표적인 활용:
 
@@ -392,7 +392,7 @@ ssh dev@web01.internal
 
 NSA, CISA 등은 네트워크 인프라 장비 관리 시 Telnet, HTTP 대신 **SSH와 HTTPS만 허용**하도록 하라고 안내한다.
 
-#### 2) 파일 전송 — SCP, SFTP
+#### 파일 전송 — SCP, SFTP
 
 SSH 위에서 동작하는 대표적 파일 전송 도구:
 
@@ -423,7 +423,7 @@ sftp> exit
 SCP/SFTP는 기존 FTP/FTPS보다 방화벽 설정, 정책 일관성 측면에서 장점이 있으며,
 가능하면 SSH 기반 파일 전송을 표준으로 삼으라고 권고한다.
 
-#### 3) 터널링과 프록시 — SSH Tunneling
+#### 터널링과 프록시 — SSH Tunneling
 
 SSH는 **TCP 터널링**을 제공하여:
 
@@ -444,7 +444,7 @@ ssh -L 5601:10.0.0.10:5601 bastion.corp.example
 
 ```
 
-#### 4) 자동화·배포·CI/CD
+#### 자동화·배포·CI/CD
 
 SSH는 다음과 같은 자동화 시나리오에서도 핵심 역할:
 

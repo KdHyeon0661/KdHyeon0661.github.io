@@ -122,7 +122,7 @@ LOCATION 's3://my-bucket/datalake/fact_sales_pq/dt=2025-11-01/region=KR/';
 > Glue **Crawler** 로 파티션을 자동 동기화하거나, 주기적으로 **ALTER TABLE ADD PARTITION** 수행.
 > **파트션 프로젝션**(아래 6.4절)을 쓰면 **메타스토어에 실제 파티션 등록 없이** 프루닝이 가능(운영 편의↑).
 
-### JSON/로그(Serde) 예시
+### 예시
 
 ```sql
 CREATE EXTERNAL TABLE spectrum_sales.events_json (
@@ -281,7 +281,7 @@ s3://my-bucket/datalake/fact_sales_pq/
   dt=2025-11-02/region=KR/part-0003.parquet
 ```
 
-### Glue 크롤러(선택) 또는 파티션 프로젝션
+### 또는 파티션 프로젝션
 
 - 크롤러: 스키마/파티션 자동 수집(주기 실행)
 - 프로젝션: 위 6.4 설정으로 ALTER 없이 프루닝
@@ -421,7 +421,7 @@ resource "aws_iam_role_policy" "spectrum_policy" {
 
 ---
 
-## 부록 A) 실습 전체 SQL 묶음
+## 실습 전체 SQL 묶음
 
 ```sql
 -- 1) 외부 스키마
@@ -477,7 +477,7 @@ ORDER BY revenue DESC;
 
 ---
 
-## 부록 B) 스캔 바이트·비용 추정 예시(수식)
+## 스캔 바이트·비용 추정 예시(수식)
 
 - 평균 파일 압축 해제 크기: \(S\) (GB)
 - 선택 컬럼 비율: \(c\) (0~1)

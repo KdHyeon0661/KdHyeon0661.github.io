@@ -74,7 +74,7 @@ Warning  FailedScheduling  default-scheduler
 
 ---
 
-## 리소스 부족(Insufficient CPU/Memory) — 해법 설계
+## — 해법 설계
 
 ### 핵심 개념 복습
 
@@ -171,7 +171,7 @@ spec:
 
 ```bash
 kubectl describe node <node> | grep -i Taints
-# 예) Taints: dedicated=infra:NoSchedule
+# Taints: dedicated=infra:NoSchedule
 
 ```
 

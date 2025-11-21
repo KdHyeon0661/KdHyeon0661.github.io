@@ -40,7 +40,7 @@ public class IteratorExample {
 
 ---
 
-## foreach (향상된 for) — 문법은 간결, 내부는 Iterator
+## — 문법은 간결, 내부는 Iterator
 
 ### 문법과 대상
 

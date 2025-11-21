@@ -186,7 +186,7 @@ dotnet publish -c Release -r win-x64 \
 > **주의**: Trim은 리플렉션/다이내믹 로드 코드에서 누락 위험.
 > 문제 영역에 `DynamicDependency`/`TrimmerRootDescriptor`/`ILLink` 설정으로 보정.
 
-### AOT(네이티브) 시나리오 스케치
+### 시나리오 스케치
 
 ```bash
 dotnet publish -c Release -r linux-x64 \

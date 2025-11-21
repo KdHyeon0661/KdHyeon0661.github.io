@@ -85,7 +85,7 @@ behaviour와 프로토콜은 둘 다 “계약”이지만, **다형성의 축�
 
 ### 내장 타입에 대한 구현 (초안 포함)
 
-#### (A) 리스트
+#### 리스트
 
 ```elixir
 defimpl Size, for: List do
@@ -93,7 +93,7 @@ defimpl Size, for: List do
 end
 ```
 
-#### (B) 맵(plain map)
+#### 맵(plain map)
 
 ```elixir
 defimpl Size, for: Map do
@@ -101,7 +101,7 @@ defimpl Size, for: Map do
 end
 ```
 
-#### (C) 비트스트링(예: 바이너리)
+#### 비트스트링(예: 바이너리)
 
 ```elixir
 defimpl Size, for: BitString do
@@ -111,7 +111,7 @@ defimpl Size, for: BitString do
 end
 ```
 
-#### (D) 튜플
+#### 튜플
 
 ```elixir
 defimpl Size, for: Tuple do
@@ -119,7 +119,7 @@ defimpl Size, for: Tuple do
 end
 ```
 
-#### (E) Any 폴백
+#### Any 폴백
 
 ```elixir
 defimpl Size, for: Any do
@@ -147,7 +147,7 @@ Size.size(:foo)           # 1 (Any 폴백)
 
 이번엔 간단한 **도형** 구조체를 만들어 `Area` 프로토콜로 **넓이**를 구해보자.
 
-#### (A) 프로토콜 정의
+#### 프로토콜 정의
 
 ```elixir
 defprotocol Area do
@@ -157,7 +157,7 @@ defprotocol Area do
 end
 ```
 
-#### (B) 구조체 정의
+#### 구조체 정의
 
 ```elixir
 defmodule Rect do
@@ -171,7 +171,7 @@ defmodule Circle do
 end
 ```
 
-#### (C) 구현
+#### 구현
 
 ```elixir
 defimpl Area, for: Rect do
@@ -473,7 +473,7 @@ Inspect는 단순 문자열이 아니라 **Algebra 문서**를 이용해
 
 ---
 
-## _24.4 프로토콜 컨솔리데이션(Consolidation) — 성능과 운영의 핵_
+## — 성능과 운영의 핵_
 
 프로토콜은 런타임에도 동적으로 보일 수 있지만, 실제로는 **컴파일 타임 최적화**가 매우 크다.
 

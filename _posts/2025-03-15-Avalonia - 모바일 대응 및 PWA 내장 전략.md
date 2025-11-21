@@ -21,7 +21,7 @@ category: Avalonia
 
 ---
 
-## 솔루션 구조(멀티 타겟) 예시
+## 예시
 
 ```
 MySuite/
@@ -57,7 +57,7 @@ public class DashboardViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 데스크톱: WebView 하이브리드(내장 웹앱) 설계
+## 설계
 
 > 정식 Web(PWA) 실행은 아직 이르므로, **데스크톱 앱 안에 WebView**를 넣고 로컬에 번들링한 웹앱을 **파일 또는 커스텀 스킴**으로 로드하는 접근이 가장 실용적이다.
 
@@ -303,7 +303,7 @@ this.AttachedToVisualTree += (_,__) =>
 
 ---
 
-## 모바일(실험) 타겟팅: 빌드와 조건부 컴파일
+## 타겟팅: 빌드와 조건부 컴파일
 
 > Avalonia.Mobile 흐름은 실험적이다. 빌드 파이프라인을 시도하고, UI/입력 시나리오를 작은 화면에서 검증하는 수준으로 접근한다.
 

@@ -51,7 +51,7 @@ category: Docker
 
 ## 멀티스테이지 빌드 기본 패턴
 
-### Python (alpine → alpine) — 컴파일러만 분리
+### — 컴파일러만 분리
 
 ```dockerfile
 # 빌더: 네이티브 확장 빌드
@@ -75,7 +75,7 @@ COPY . .
 CMD ["python", "app.py"]
 ```
 
-### Python (slim → distroless) — 호환성 + 초경량 런타임
+### — 호환성 + 초경량 런타임
 
 ```dockerfile
 # 빌더 (glibc, 호환성↑)
@@ -138,7 +138,7 @@ RUN npm ci --omit=dev  # 프로덕션 의존성만
 COPY . .
 RUN npm run build      # 예: React/Vite/Next SSG 산출물
 
-# 런타임(정적) → Nginx
+# → Nginx
 
 FROM nginx:alpine
 COPY --from=build /w/dist /usr/share/nginx/html
@@ -158,7 +158,7 @@ ENV CGO_ENABLED=0 GOOS=linux
 RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath -ldflags="-s -w" -o app .
 
-# 런타임(scratch) — 주의: CA, tzdata 직접 포함 필요
+# — 주의: CA, tzdata 직접 포함 필요
 
 FROM scratch
 WORKDIR /
@@ -237,7 +237,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 ```
 - `--mount=type=cache`로 **의존성 캐시**. CI·CD에서 Buildx + GHA 캐시와 조합.
 
-### 비밀(토큰/키) 전달
+### 전달
 
 ```dockerfile
 RUN --mount=type=secret,id=pip_token \

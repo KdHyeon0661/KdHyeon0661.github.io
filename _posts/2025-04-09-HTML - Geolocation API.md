@@ -179,7 +179,7 @@ async function getCurrentPositionWithHardTimeout(ms, options) {
 
 ---
 
-## 거리 계산(두 좌표 간) — Haversine
+## — Haversine
 
 두 위경도 \((\varphi_1,\lambda_1),(\varphi_2,\lambda_2)\) 사이의 대권거리 \(d\) (반지름 \(R\)):
 
@@ -205,7 +205,7 @@ function haversineDistance(lat1, lon1, lat2, lon2, radius = 6371000) {
 
 ---
 
-## 지도 라이브러리 연동 — Leaflet(오픈소스) 예
+## 예
 
 ```html
 <link
@@ -454,7 +454,7 @@ export async function currentCoords(): Promise<Coords> {
 
 ## 예제 모음 — 상황별 스니펫
 
-### 정확도 원(Accuracy Circle) + 마지막 업데이트 UI
+### + 마지막 업데이트 UI
 
 ```html
 <div id="status">-</div>
@@ -471,7 +471,7 @@ navigator.geolocation.watchPosition(pos => {
 </script>
 ```
 
-### 주소(역지오코딩) 입력 대체 UX
+### 입력 대체 UX
 
 ```html
 <input id="manual" placeholder="구/동이나 주소를 입력">

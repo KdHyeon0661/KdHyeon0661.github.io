@@ -236,7 +236,7 @@ public IActionResult OnGet()
 
 ---
 
-## 반환 결과 패턴: Page(), RedirectToPage(), NotFound(), File(), Forbid() 등
+## 등
 
 핸들러에서 자주 쓰는 결과:
 ```csharp

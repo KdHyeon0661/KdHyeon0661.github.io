@@ -635,7 +635,7 @@ private async void OnScroll(object s, ScrollChangedEventArgs e)
 
 ---
 
-## 인증(Access/Refresh) 흐름
+## 흐름
 
 - `AuthHeaderHandler` 에서 `401` 감지 → **Refresh 흐름** 트리거
 - Refresh 성공 → 원 요청 재시도

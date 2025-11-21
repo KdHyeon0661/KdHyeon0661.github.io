@@ -13,7 +13,7 @@ category: 시스템보안
 
 ## “SYSTEM이 되는” 서비스 오구성, 어디서 생기나?
 
-### A) 경로 문제(공백 + 따옴표 없음, Unquoted Service Path)
+### 경로 문제(공백 + 따옴표 없음, Unquoted Service Path)
 
 - **징후**: `ImagePath`가 `"C:\Program Files\Vendor App\bin\app.exe"`가 아니라
   `C:\Program Files\Vendor App\bin\app.exe -k arg`처럼 **따옴표 없이 공백 포함**.
@@ -22,24 +22,24 @@ category: 시스템보안
   1) **항상** 이중 따옴표로 감싸기
   2) 실행 파일/상위 디렉터리 **일반 사용자 쓰기 금지**
 
-### B) 쓰기 가능한 경로(Executable/Directory writable)
+### 쓰기 가능한 경로(Executable/Directory writable)
 
 - 서비스 바이너리나 상위 디렉터리가 `Users/Everyone` 등에 **Write/Modify** 허용 → **코드 주입 가능 지점**.
 - 방어: **소유자=Administrators 또는 SYSTEM**, `Users/Everyone`의 **쓰기 권한 제거**.
 
-### C) 느슨한 서비스 DACL(서비스 객체 권한)
+### 느슨한 서비스 DACL(서비스 객체 권한)
 
 - 서비스 자체의 보안 서술자(SDDL)가 느슨하여 **CONFIG/START/STOP/CHANGE**를 일반 사용자가 수행 가능.
 - 방어: **SCM 보안**(서비스 DACL)을 표준 템플릿으로 재설정.
 
-### D) UAC(승격 흐름) 우회 패턴(개념)
+### UAC(승격 흐름) 우회 패턴(개념)
 
 - 잘못된 **자동 상승 경로**(예: 일부 autoElevate COM/작업 스케줄러/설치 정책)와 **사용자 쓰기 경로** 결합.
 - 방어: **승격 트리거의 실행 파일·경로·스크립트**를 모두 **서명/경로 보호/정책(AppLocker/WDAC)**로 고정.
 
 ---
 
-## 랩 감사 스크립트(안전) — 서비스/작업/레지스트리 빠른 헬스체크
+## — 서비스/작업/레지스트리 빠른 헬스체크
 
 > 출력은 **징후**입니다. 발견 즉시 **화이트리스트**(정상 벤더·경로)를 구성하고, 나머지를 **개선 티켓**으로 전환하세요.
 
@@ -139,11 +139,11 @@ foreach($k in $keys){
 
 ---
 
-## 수정(하드닝) 실습 — 안전하게 고치기
+## 실습 — 안전하게 고치기
 
 > **주의**: 아래 수정은 **벤더 지원 범위**를 확인하고, 변경 전 **백업** 및 **변경 이력**을 남기세요.
 
-### A) 경로를 항상 이중 따옴표로
+### 경로를 항상 이중 따옴표로
 
 ```powershell
 # 예: ImagePath가 C:\Program Files\Vendor App\bin\app.exe -k start 인 서비스
@@ -159,7 +159,7 @@ Set-ItemProperty $svcKey -Name ImagePath -Value '"C:\Program Files\Vendor App\bi
 Restart-Service -Name "VendorApp" -Force
 ```
 
-### B) 실행 파일/디렉터리 ACL 고정(Users/Everyone 쓰기 제거)
+### 실행 파일/디렉터리 ACL 고정(Users/Everyone 쓰기 제거)
 
 ```powershell
 $exe = "C:\Program Files\Vendor App\bin\app.exe"
@@ -180,7 +180,7 @@ icacls $exe /grant:r "SYSTEM:(F)" "Administrators:(M)"
 icacls $exe /remove:g "Users" "Authenticated Users" "Everyone"
 ```
 
-### C) 서비스 DACL 표준화 (SDDL)
+### 서비스 DACL 표준화 (SDDL)
 
 - **목표**: 일반 사용자의 `SERVICE_CHANGE_CONFIG/WRITE_DAC/START/STOP` 등 **과도 권한 제거**.
 - **방법**: `sc sdshow <svc>`로 현재 DACL 확인 → 벤더/조직 표준 SDDL로 `sc sdset <svc>` 적용.
@@ -196,7 +196,7 @@ sc.exe sdshow "VendorApp"
 sc.exe sdset "VendorApp" "D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)"
 ```
 
-### D) 작업 스케줄러 하드닝
+### 작업 스케줄러 하드닝
 
 ```powershell
 # SYSTEM으로 도는 작업의 실행 파일 디렉터리 쓰기 차단
@@ -213,7 +213,7 @@ Get-ScheduledTask | Where-Object { $_.Principal.UserId -match 'SYSTEM' } | ForEa
 }
 ```
 
-### E) UAC 취약 정책 제거
+### UAC 취약 정책 제거
 
 ```powershell
 # AlwaysInstallElevated 끄기 (HKLM/HKCU 모두)
@@ -232,7 +232,7 @@ foreach($k in $keys){
 
 ## UAC bypass 패턴 “이해하고 막기”(재현 대신 방어 설명)
 
-### 패턴 1) **자동 상승 경로(autoElevate) + 경로/구성 취약**
+### **자동 상승 경로(autoElevate) + 경로/구성 취약**
 
 - 일부 시스템 컴포넌트는 **서명/정책** 하에 자동 상승.
 - 만약 이들이 참조하는 실행 파일/스크립트/COM 서버 경로가 **사용자 쓰기 가능**이면 **우회 여지**.
@@ -241,7 +241,7 @@ foreach($k in $keys){
   - autoElevate 체인에 등장하는 경로를 **Program Files, System32** 등 보호 디렉터리로 고정
   - **LoadLibrary/COM 등록 경로**는 **절대경로 + 서명** 전제
 
-### 패턴 2) **COM/MMC/WMI 초기화 타이밍 악용**
+### **COM/MMC/WMI 초기화 타이밍 악용**
 
 - 레거시 등록/바인딩 과정에서 **검색 순서**나 **권한 위임**이 빈틈을 보일 수 있음.
 - **방어**:
@@ -249,7 +249,7 @@ foreach($k in $keys){
   - **COM 서버 경로 보호 + WDAC 규칙**
   - **WMI 영구 구독** 정기 점검(root\subscription)
 
-### 패턴 3) **설치 정책/작업 스케줄러 조합**
+### **설치 정책/작업 스케줄러 조합**
 
 - AlwaysInstallElevated, 잘못된 작업 정의, PATH 오염이 결합.
 - **방어**: 위 하드닝 절차 + **EDR/Sysmon**으로 등록/실행 이벤트 모니터
@@ -275,7 +275,7 @@ foreach($k in $keys){
 # 레지스트리 설정: 재부팅 필요
 
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPL" -Value 1 -PropertyType DWord -Force
-# 부팅 초기에도 보호: (선택) RunAsPPLBoot=1
+# RunAsPPLBoot=1
 
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa" -Name "RunAsPPLBoot" -Value 1 -PropertyType DWord -Force
 ```
@@ -336,11 +336,11 @@ systeminfo | findstr /i "Virtualization Guard Credential"
 
 - **규칙 만들기(간단)**
 ```powershell
-# 기본 규칙 생성(관리자/Program Files/Windows 허용) + 감사 모드
+# + 감사 모드
 
 New-AppLockerPolicy -DefaultRule -RuleType EXE,Script,MSI,AppX -User 'Everyone' -XMLPolicy C:\applocker_default.xml
 Set-AppLockerPolicy -XMLPolicy C:\applocker_default.xml -Merge
-# 감사 모드 권장 → Event Viewer(Microsoft-Windows-AppLocker/EXE and DLL) 확인 후 엄격 모드 전환
+# 확인 후 엄격 모드 전환
 
 ```
 
@@ -374,7 +374,7 @@ Set-RuleOption -FilePath $Out -Option 3  # 3: Audit Mode
 
 ---
 
-## Attack Surface Reduction(ASR) — 즉효 수비
+## — 즉효 수비
 
 > Microsoft Defender의 **ASR 규칙**은 자주 악용되는 **Living-off-the-Land** 경로를 차단합니다.
 > (Defender가 아니라면 유사 기능을 가진 EDR의 정책 사용)

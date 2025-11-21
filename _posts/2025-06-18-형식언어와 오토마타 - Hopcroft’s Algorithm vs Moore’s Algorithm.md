@@ -391,7 +391,7 @@ print("두 결과 DFA 동등성:", ok, "| 반례:", witness or "(없음)")
 
 ---
 
-## (부록) 표 채움(Table-Filling) 스케치
+## 표 채움(Table-Filling) 스케치
 
 - **아이디어**: 상태쌍 \((p,q)\)가 **구별 가능(distinguishable)**한지 표로 표시
   1) 한쪽은 수용, 한쪽은 비수용이면 **표시**

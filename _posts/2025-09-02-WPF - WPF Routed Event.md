@@ -4,7 +4,7 @@ title: WPF - WPF Routed Event
 date: 2025-09-02 20:25:23 +0900
 category: WPF
 ---
-# WPF Routed Event 완전 정복 — 터널링(Preview*) / 버블링(*Without Preview)
+# / 버블링(*Without Preview)
 
 ## 한눈 개념: Routed Event란?
 
@@ -295,7 +295,7 @@ public class HyperLabel : Label
 
 ---
 
-## 명령(Command) 라우팅과의 관계
+## 라우팅과의 관계
 
 - `ICommand`/`RoutedCommand`는 내부적으로 **Input(키/마우스) RoutedEvent**와 결합됩니다.
 - 예: `Button` 클릭 → `Click`(RoutedEvent) → `Command` 실행
@@ -678,7 +678,7 @@ WPF의 **표현력 있는 상호작용**을 가능케 하는 핵심입니다.
 안정적이고 예측 가능한 입력/명령 시스템을 설계해 보세요. 🚀
 
 ---
-### 부록 A) 전체 예제 코드(요약)
+### 전체 예제 코드(요약)
 
 > 본문 예제를 하나의 프로젝트에 모은 버전(핵심 부분만).
 > 필요하시면 **완전 실행 가능한 솔루션** 형태로도 정리해 드릴게요.

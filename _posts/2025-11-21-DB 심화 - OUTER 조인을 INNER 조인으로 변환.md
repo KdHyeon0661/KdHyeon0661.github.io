@@ -19,7 +19,7 @@ category: DB 심화
 
 ---
 
-## 0) 개념 정리 — NULL 보존과 NULL-배제 프레디킷
+## 개념 정리 — NULL 보존과 NULL-배제 프레디킷
 
 - **LEFT OUTER JOIN**: 왼쪽 테이블 `L`의 각 행은 결과에 **항상 1회 이상** 나타납니다. 오른쪽 `R`에 매칭이 없으면 **`R.*`가 모두 NULL**로 채워집니다.
 - **NULL-배제(null-rejecting) 프레디킷**: 피연산자에 **NULL이 끼면 거짓**이 되는 조건.
@@ -33,7 +33,7 @@ $$
 
 ---
 
-## 1) 실습 스키마 (간단)
+## 실습 스키마 (간단)
 
 ```sql
 CREATE TABLE d_customer (
@@ -76,7 +76,7 @@ COMMIT;
 
 ---
 
-## 2) 규칙 #1 — WHERE절의 **NULL-배제 프레디킷**이 있으면 INNER와 동치
+## 규칙 #1 — WHERE절의 **NULL-배제 프레디킷**이 있으면 INNER와 동치
 
 ### 가장 흔한 패턴
 
@@ -133,7 +133,7 @@ WHERE  p.category = 'ELEC';
 
 ---
 
-## 3) 규칙 #2 — **무결성으로 매칭이 항상 보장**되는 경우
+## 규칙 #2 — **무결성으로 매칭이 항상 보장**되는 경우
 
 ### FK **ENABLE VALIDATE** + FK 컬럼 **NOT NULL** + 오른쪽 **PK/Unique**
 
@@ -177,9 +177,9 @@ JOIN   d_customer c
 
 ---
 
-## 4) 규칙 #3 — **존재성만 확인**하는 패턴
+## 규칙 #3 — **존재성만 확인**하는 패턴
 
-### `COUNT(r.col) > 0` / `EXISTS` 관계
+### > 0` / `EXISTS` 관계
 
 ```sql
 -- (원형) LEFT 후 집계로 존재성만 확인
@@ -200,7 +200,7 @@ FROM   d_customer c;
 
 ---
 
-## 5) 안전하지 않은 변환(주의/반례)
+## 안전하지 않은 변환(주의/반례)
 
 ### OUTER 의미가 필요한데 WHERE에 오른쪽 조건을 둔 경우
 
@@ -223,7 +223,7 @@ LEFT  JOIN f_sales s
 
 ---
 
-## 6) 변환이 성능에 주는 이점
+## 변환이 성능에 주는 이점
 
 - **조인 순서 자유도 증가**: OUTER는 **보존측** 제약으로 인해 옵티마이저의 재배치를 제한합니다. INNER로 바뀌면 **LEADING/USE_NL/USE_HASH** 등 전략 선택 폭이 커짐.
 - **프레디킷 푸시다운**: INNER에서는 오른쪽 조건을 더 일찍/더 깊게 **푸시**하여 **읽기량 감소**.
@@ -237,7 +237,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-## 7) 케이스 스터디
+## 케이스 스터디
 
 ### WHERE의 오른쪽 조건으로 인한 자동 변환
 
@@ -256,7 +256,7 @@ WHERE  s.sales_dt >= DATE '2025-02-01';
 ```
 - OUTER 결과의 NULL 확장 행은 `s.sales_dt >= ...`에서 **걸러짐**.
 
-### 자식→부모 OUTER 제거(=INNER) + 더 나아가 조인 제거
+### + 더 나아가 조인 제거
 
 ```sql
 -- 부모 컬럼 미참조 + 무결성 보장 시
@@ -287,7 +287,7 @@ LEFT  JOIN f_sales s
 
 ---
 
-## 8) 변환 템플릿(치트시트)
+## 변환 템플릿(치트시트)
 
 | 패턴(LEFT 기준) | 변환 |
 |---|---|
@@ -302,7 +302,7 @@ LEFT  JOIN f_sales s
 
 ---
 
-## 9) 테스트 & 검증 쿼리
+## 테스트 & 검증 쿼리
 
 ```sql
 -- 전/후 행수 확인
@@ -326,7 +326,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-## 10) 자주 나오는 Q&A
+## 자주 나오는 Q&A
 
 **Q1. WHERE에 `NVL(r.col, 'X') = 'X'`는 OUTER를 INNER로 바꾸나요?**
 - 이 조건은 **NULL을 ‘X’로 치환**해 **참**이 되므로 **NULL-배제가 아닙니다**. 즉, OUTER 의미를 보존합니다.
@@ -341,7 +341,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-## 11) 마무리 체크리스트
+## 마무리 체크리스트
 
 - [ ] WHERE에 **오른쪽 컬럼**의 **NULL-배제** 조건이 있는가? → **INNER 변환 가능**
 - [ ] 변환 후 **의미(행수/NULL 보존)** 가 동일한가? → **샘플/테스트**로 검증
@@ -351,7 +351,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-## 12) 추가 실전 예제 모음
+## 추가 실전 예제 모음
 
 ### 보고서: “매출 있으면 ELEC만, 없으면 NULL”
 
@@ -386,7 +386,7 @@ SELECT c.cust_id,
 FROM   d_customer c;
 ```
 
-### Oracle (+) 스타일 변환 예
+### 스타일 변환 예
 
 ```sql
 -- Before (LEFT OUTER 의미지만 WHERE가 INNER화)

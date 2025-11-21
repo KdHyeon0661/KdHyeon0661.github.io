@@ -4,7 +4,7 @@ title: 정보통신기사 - OSI vs TCP/IP, 흐름/오류제어
 date: 2025-08-22 12:25:23 +0900
 category: 정보통신기사
 ---
-# OSI vs TCP/IP, 흐름/오류제어(ARQ/윈도우) 총정리
+# 총정리
 
 ## 큰 그림 한 장
 
@@ -188,30 +188,30 @@ $$
 
 ## 수치 예제
 
-### 예제 1) Stop-and-Wait 효율
+### Stop-and-Wait 효율
 
 - 링크 10 Mb/s, 프레임 10 kB, 거리 왕복 전파 40 ms(=RTT), ACK 40 B 무시.
 - $T_\text{tx} = 10\,\text{kB} \times 8 / (10\,\text{Mb/s}) = 8\,\text{ms}$
 - $U \approx \frac{8}{8+40} = \mathbf{0.167}$ (≈16.7%). → **비효율**, 슬라이딩 윈도우 필요.
 
-### 예제 2) GBN 윈도우로 파이프 채우기
+### GBN 윈도우로 파이프 채우기
 
 - 위 링크에서 $a=T_p/T_{tx}=20/8=2.5$, $1+2a=6$.
 - **$W \ge 6$**이면 **U→1**(무오류 근사). 실제는 ACK/헤더/손실 고려해 약간↓.
 
-### 예제 3) BDP로 TCP 윈도우 요구량
+### BDP로 TCP 윈도우 요구량
 
 - 1 Gb/s, RTT 30 ms, MSS 1448 B
   - BDP = $1\mathrm{e}9\times 0.03 = 30\,\mathrm{Mb} = 3.75\,\mathrm{MB}$
   - 세그먼트 수 ≈ $3.75\text{MB}/1448 \approx 2666$ → **윈도우스케일 필요**(`wscale`로 2^n 배 확장).
 
-### 예제 4) 손실이 있는 SW 처리량
+### 손실이 있는 SW 처리량
 
 - 손실확률 $p=0.01$, 예제1의 분모 동일:
   $\text{Throughput}=(1-p)\cdot L /(T_\text{cycle})=0.99\cdot 80\,\text{kbit}/48\,\text{ms}\approx \mathbf{1.65\,Mb/s}$.
   (무손실 1.67 Mb/s 대비 소폭 감소)
 
-### 예제 5) TCP cwnd 성장(개념)
+### TCP cwnd 성장(개념)
 
 - 초기 `cwnd=1 MSS`, RTT마다 2배(ACK마다 +1 MSS) → 몇 RTT 안에 BDP 근처 도달.
 - 도달 후 **선형 증가**(혼잡회피), 손실 시 **감소**.

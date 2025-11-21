@@ -4,7 +4,7 @@ title: 논리회로설계 - 다단 게이트 회로 · NAND, NOR 회로 · NAND,
 date: 2025-09-03 15:25:23 +0900
 category: 논리회로설계
 ---
-# 다단 게이트 회로 · NAND/NOR 회로 · NAND/NOR로 구현하는 2단(2-level) 회로 설계 — 완전 정리
+# 회로 설계 — 완전 정리
 
 > 표기: \(+\)=OR, \(\cdot\) 또는 생략=AND, \(\overline{X}\)=NOT \(X\), \(\oplus\)=XOR.
 > 목표: (1) **다단 게이트 회로**의 개념·지연·부하 특성, (2) **NAND/NOR**의 트랜지스터/논리 관점과 보편성, (3) **SOP→NAND–NAND**, **POS→NOR–NOR** 매핑 규칙과 **버블 푸시(bubble pushing)**까지 포함한 **2단 회로** 설계를 단계별로 설명한다.
@@ -41,7 +41,7 @@ t_{pd} \approx \sum_{g\in\text{경로}} t_{pd}(g) + t_{\text{배선}}
 - **팬인↑ → 지연↑**: CMOS에서 NOR는 **pMOS 직렬**로 상승지연이 커지므로 큰 팬인은 불리.
 - 길고 얇은 배선은 RC가 커져 **배선 지연** 우세.
 
-### 논리적 노력(Logical Effort) 관점(요지)
+### 관점(요지)
 
 - **기준 인버터**의 논리적 노력 \(g=1\), 기생 \(p\approx1\).
 - 대략적 경향(공정·셀에 따라 다소 상이):
@@ -142,7 +142,7 @@ F=\overline{(A+B)' + (A+\overline{C})' + (B+D)'}
 - 큰 OR(예: 8입력)은 **NAND–NAND**에서 **1단 NAND**의 팬인이 커짐 →
   **균형 트리**(예: 2→4→8)로 분해하면 각 게이트 부하·기생이 감소.
 
-### AOI/OAI(복합 게이트) 활용
+### 활용
 
 - 표준셀에 **AOI21/22, OAI21/22**가 있다면, SOP/POS 일부를 **직접 1단**으로 매핑해 지연을 줄인다.
   - 예: \(Y=\overline{AB+C}\)는 **AOI21** 1개.
@@ -150,7 +150,7 @@ F=\overline{(A+B)' + (A+\overline{C})' + (B+D)'}
 
 ---
 
-## 해저드(글리치) — 분석과 완화
+## — 분석과 완화
 
 ### 정적-1/0 해저드
 
@@ -174,7 +174,7 @@ K-map 최소화 결과:
 F=\overline{A}\,\overline{B}C + \overline{A}BC + A\overline{B}C
 \]
 
-#### (1) 게이트 수준 설계
+#### 게이트 수준 설계
 
 - 1단 NAND:
   - \(N_1=\text{NAND}(\overline{A},\overline{B},C)\)
@@ -182,7 +182,7 @@ F=\overline{A}\,\overline{B}C + \overline{A}BC + A\overline{B}C
   - \(N_3=\text{NAND}(A,\overline{B},C)\)
 - 2단 NAND: \(F=\text{NAND}(N_1,N_2,N_3)\)
 
-#### (2) Verilog(구조적 스케치)
+#### Verilog(구조적 스케치)
 
 ```verilog
 module nand2level(
@@ -198,7 +198,7 @@ module nand2level(
 endmodule
 ```
 
-#### (3) Python 검증(진리표 등가성)
+#### Python 검증(진리표 등가성)
 
 ```python
 from itertools import product

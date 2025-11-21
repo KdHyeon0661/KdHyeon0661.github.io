@@ -128,7 +128,7 @@ kubectl drain NODE \
 
 ## 노드 작업: OS/커널/런타임/Kubelet
 
-### 런타임(containerd) & kubelet 버전 정합
+### & kubelet 버전 정합
 
 - **kubelet ≤ Control-Plane**(마이너 버전 차이 1 이내)
 - 런타임(containerd/CRI-O) 지원 매트릭스 확인
@@ -161,7 +161,7 @@ sudo reboot
 
 ---
 
-## 복귀(uncordon) 전 검증 포인트
+## 전 검증 포인트
 
 ```bash
 # 노드 Ready & 조건

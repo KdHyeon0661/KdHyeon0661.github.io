@@ -55,7 +55,7 @@ category: 웹해킹
 
 ---
 
-# “안전 재현”(막혀야 정상) 테스트 아이디어
+# 테스트 아이디어
 
 > 공격 절차가 아니라 **차단이 잘 되는지 확인**하는 **무해한** 방법입니다.
 
@@ -82,9 +82,9 @@ category: 웹해킹
 
 # 방어 전략(전층)
 
-## 애플리케이션(내부 서비스) 레벨
+## 레벨
 
-### A) **Host 헤더 화이트리스트**
+### **Host 헤더 화이트리스트**
 
 - **원칙**: **정확히** 허용된 호스트만 200, 나머지는 400/421.
 - 공격 페이지의 요청은 항상 `Host: evil.tld` 이므로 **즉시 차단**됩니다.
@@ -149,7 +149,7 @@ public class HostGuardFilter extends OncePerRequestFilter {
 }
 ```
 
-### B) **강한 인증(쿠키/세션·mTLS·기기 바인딩) + CSRF**
+### **강한 인증(쿠키/세션·mTLS·기기 바인딩) + CSRF**
 
 - 내부 UI라도 **로그인/세션** 필수.
 - 상태 변경은 **CSRF 토큰 + SameSite=Lax/Strict**. (DNS Rebinding은 **같은 도메인**이지만, 내부 서비스의 세션은 보통 **없어야** 안전합니다. **있다면** CSRF까지 고려.)
@@ -159,7 +159,7 @@ public class HostGuardFilter extends OncePerRequestFilter {
 Set-Cookie: sid=...; Path=/; Secure; HttpOnly; SameSite=Lax
 ```
 
-### C) **메서드·콘텐츠 제한**
+### **메서드·콘텐츠 제한**
 
 - 위험 동작은 **POST/PUT/DELETE + Origin 확인** + **JSON/전용 MIME** 강제 → 단순 GET 폼/이미지 요청으로는 수행 불가.
 - WebSocket은 **Origin 헤더 화이트리스트** 필수.
@@ -176,10 +176,10 @@ wss.on('connection', (ws, req) => {
 
 ## 프록시/웹서버 레벨
 
-### A) **Nginx: server_name 엄격 + 디폴트 거부**
+### **Nginx: server_name 엄격 + 디폴트 거부**
 
 ```nginx
-# 기본(미매칭) 서버: 모든 예상치 못한 Host 차단
+# 서버: 모든 예상치 못한 Host 차단
 
 server {
   listen 80 default_server;
@@ -205,7 +205,7 @@ server {
 }
 ```
 
-### B) **Apache**
+### **Apache**
 
 ```apache
 <VirtualHost *:80>
@@ -219,7 +219,7 @@ server {
 </VirtualHost>
 ```
 
-### C) **Kubernetes Ingress(NGINX)**
+### **Kubernetes Ingress(NGINX)**
 
 ```yaml
 apiVersion: networking.k8s.io/v1

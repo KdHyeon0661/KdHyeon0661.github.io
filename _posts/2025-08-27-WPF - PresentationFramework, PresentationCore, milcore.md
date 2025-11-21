@@ -127,7 +127,7 @@ WPF는 **보는 것(프레임워크)**과 **그리는 것(코어/미디어)**을
 <Button Command="ApplicationCommands.Copy" Content="Copy"/>
 ```
 
-### 문서(FlowDocument) & Navigation
+### & Navigation
 
 - `FlowDocument`는 리플로우 가능한 문서 레이아웃
 - NavigationWindow/Frame은 XAML 페이지 기반 **네비게이션 앱** 구성 허용
@@ -246,7 +246,7 @@ dc.DrawText(ft, new Point(8, 8));
 
 ## **milcore** — “합성과 렌더의 심장”
 
-### 컴포지터(Composition) 스레드
+### 스레드
 
 - **UI 스레드**: 트리/속성 변경 → **DUCE 채널**로 **렌더 명령 배치**
 - **컴포지터 스레드**(milcore): 채널 읽어 **장면 그래프(컴포지션 트리)**를 업데이트 후 **D3D**로 합성
@@ -503,7 +503,7 @@ CompositionTarget.Rendering += (s, e) =>
 
 ---
 
-## 이미지 처리 & `WriteableBitmap`(CPU) / ShaderEffect(GPU)
+## / ShaderEffect(GPU)
 
 - CPU로 픽셀 조작: `WriteableBitmap`
 - GPU로 픽셀 이펙트: `ShaderEffect`(픽셀 셰이더 HLSL)

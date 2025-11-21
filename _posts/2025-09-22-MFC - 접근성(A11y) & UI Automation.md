@@ -4,7 +4,7 @@ title: MFC - 접근성(A11y) & UI Automation
 date: 2025-09-22 15:25:23 +0900
 category: MFC
 ---
-# 접근성(A11y) & UI Automation 실전 가이드
+# & UI Automation 실전 가이드
 
 **UIA 패턴 노출 · High-Contrast/컬러 필터 대응 · 키보드 내비 · 스크린리더(내레이터) 호환 체크리스트**
 
@@ -92,12 +92,12 @@ LRESULT WndProc(HWND h, UINT m, WPARAM w, LPARAM l) {
 - 색상은 **시스템 색상**을 사용: `GetSysColor(COLOR_WINDOW)`, `GetSysColor(COLOR_HIGHLIGHT)`, `GetSysColor(COLOR_WINDOWTEXT)` 등.
 - 커스텀 다크/라이트 테마라도, High-Contrast일 땐 **시스템 팔레트 우선**.
 
-### 컬러 필터(Win+Ctrl+C) 고려
+### 고려
 
 - 앱이 직접 감지/제어할 API는 제한적. **색 구분에만 의존하지 말 것** (아이콘/패턴/텍스트 보조).
 - 정보전달은 **색 + 텍스트/아이콘/패턴**으로 **冗長성** 확보.
 
-### 대비(Contrast) 권장
+### 권장
 
 - 최소 **4.5:1**(WCAG AA) 권장. 시스템 팔레트를 따르면 대체로 충족.
 - 임의 색 하드코딩은 **고대비 모드에서 보이지 않을 수 있음** → 시스템 색 기반 브러시/펜/문자색.
@@ -277,7 +277,7 @@ class MyEditProvider :
 
 ---
 
-## 텍스트(에디터/뷰어) 고급: TextPattern
+## 고급: TextPattern
 
 - `ITextProvider`/`ITextRangeProvider` 를 구현하면 **스크린리더의 읽기/선택/이동**이 정확해집니다.
 - **HitTest**: 좌표→문자 범위, **Range 이동**: 단어/문장/행 경계, **속성**: 굵게/밑줄/링크.
@@ -314,7 +314,7 @@ UiaRaiseAutomationPropertyChangedEvent(provider, UIA_NamePropertyId, oldVar, new
 
 ---
 
-## 가상화(Virtualization) & 수천/수만 항목
+## & 수천/수만 항목
 
 - **VirtualizedItemPattern**: 실제 HWND나 실체를 만들지 않고도 항목을 **논리적으로 노출**.
 - 사용자(스크린리더)가 항목에 접근하려 할 때 `Realize()`(또는 `ScrollIntoView`)에서 **행을 생성/데이터 바인딩**.

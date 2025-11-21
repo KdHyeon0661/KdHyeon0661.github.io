@@ -22,7 +22,7 @@ category: DataCommunication
 
 ## Two Connections — FTP만의 독특한 “이중 연결” 구조
 
-### 1) 왜 굳이 연결을 두 개나 쓸까?
+### 왜 굳이 연결을 두 개나 쓸까?
 
 FTP는 RFC 959에서 처음 표준화된, **가장 오래된 응용계층 프로토콜** 중 하나다.
 
@@ -39,7 +39,7 @@ FTP 설계자들이 중요하게 본 것은:
 
 을 **별도의 TCP 연결**로 분리하는 구조를 택했다.
 
-### 2) FTP 세션의 큰 흐름
+### FTP 세션의 큰 흐름
 
 가장 기본적인 FTP 세션을 순서대로 적어 보면:
 
@@ -72,7 +72,7 @@ FTP 설계자들이 중요하게 본 것은:
 
 즉, **제어 연결은 긴 생명주기**, 데이터 연결은 **짧은 생명주기**를 갖는다.
 
-### 3) 실제 텍스트 세션 예제
+### 실제 텍스트 세션 예제
 
 리눅스/유닉스에서 예전 방식대로 `telnet` 으로 FTP 서버에 직접 붙어보면 이 구조가 그대로 드러난다
 (요즘은 보안상 실제로 이렇게 쓰면 안 되고, 학습용으로만 사용).
@@ -119,7 +119,7 @@ Connection closed by foreign host.
 
 ## Control Connection — 명령과 응답이 오가는 “대화 채널”
 
-### 1) 특성 요약
+### 특성 요약
 
 **제어 연결(control connection)** 은 다음과 같은 특징을 가진다.
 
@@ -128,7 +128,7 @@ Connection closed by foreign host.
 - 명령과 응답은 **ASCII 텍스트 줄 단위**로 오간다.
 - 파일/데이터는 이 연결로 전송되지 않는다.
 
-### 2) 명령/응답 구조
+### 명령/응답 구조
 
 각 FTP 명령은 한 줄의 텍스트로 전송된다:
 
@@ -165,7 +165,7 @@ RETR file.iso
 | 4xx | Transient Negative Completion (일시적 실패) |
 | 5xx | Permanent Negative Completion (영구적 실패) |
 
-### 3) 상태 유지(Stateful)한 프로토콜
+### 상태 유지(Stateful)한 프로토콜
 
 HTTP와 달리 FTP는 제어 연결이 **강하게 상태를 유지**한다:
 
@@ -187,7 +187,7 @@ QUIT
 
 중간의 설정(CWD, TYPE)이 **세션 전체에 유지**된다.
 
-### 4) 예제: 간단한 Python으로 제어 연결만 훔쳐보기
+### 예제: 간단한 Python으로 제어 연결만 훔쳐보기
 
 실제 파일 전송까지 하지 않고, **제어 연결의 명령/응답만** 확인해볼 수 있다.
 
@@ -221,7 +221,7 @@ with socket.create_connection((host, port), timeout=5) as sock:
 
 ## Data Connection — 실제 파일/목록이 흐르는 채널 (Active/Passive)
 
-### 1) 개요: 왜 별도 데이터 연결인가?
+### 개요: 왜 별도 데이터 연결인가?
 
 제어 연결은 “대화용”이므로 오버헤드가 작고, 상태를 유지하기 좋다. 반면
 
@@ -236,7 +236,7 @@ FTP는 여기서 두 가지 모드를 제공한다:
 - **Active 모드**
 - **Passive 모드**
 
-### 2) Active 모드 (PORT 명령)
+### Active 모드 (PORT 명령)
 
 Active 모드는 **고전적인 기본 모드**다.
 
@@ -270,7 +270,7 @@ $$\text{포트} = 195 \times 256 + 80 = 50000$$
 
 이 때문에, 실제 인터넷 환경에서는 **Passive 모드**가 훨씬 더 많이 쓰인다.
 
-### 3) Passive 모드 (PASV/EXTENDED PASV)
+### Passive 모드 (PASV/EXTENDED PASV)
 
 Passive 모드는 제어/데이터 연결 방향을 반대로 돌린다:
 
@@ -301,7 +301,7 @@ Passive 모드의 장점:
 오늘날 브라우저 내장 FTP 클라이언트나 GUI FTP 클라이언트(예: FileZilla 등)는
 기본 설정을 Passive 모드로 두는 것이 일반적이다.
 
-### 4) 데이터 연결 위에서는 무엇이 오가는가?
+### 데이터 연결 위에서는 무엇이 오가는가?
 
 데이터 연결에서는 다음과 같은 “페이로드”가 오갈 수 있다:
 
@@ -313,7 +313,7 @@ Passive 모드의 장점:
 RFC 959는 데이터 표현 모드로 **ASCII, EBCDIC, Image(=binary)** 등을 정의한다.
 실무에서는 거의 항상 **바이너리(Image) 모드**가 사용된다.
 
-### 5) 예제: Python `ftplib` 으로 데이터 연결 사용
+### 예제: Python `ftplib` 으로 데이터 연결 사용
 
 ```python
 from ftplib import FTP
@@ -349,7 +349,7 @@ ftp.quit()
 
 이제 가장 중요한 현실적인 부분, **보안(Security)** 을 보자.
 
-### 1) 전통적인 FTP의 보안 문제
+### 전통적인 FTP의 보안 문제
 
 전통적인 FTP(RFC 959 기준)는 **암호화를 전혀 사용하지 않는다**.
 
@@ -371,7 +371,7 @@ ftp.quit()
 - **암호화·인증을 제공하지 않는 설계**이기 때문에
   오늘날 인터넷 환경에서는 **보안 수준이 사실상 0에 가깝다**는 평가를 받는다.
 
-### 2) FTP Security Extensions — RFC 2228
+### FTP Security Extensions — RFC 2228
 
 이 문제를 보완하기 위해 IETF는 **FTP Security Extensions (RFC 2228)** 을 정의했다.
 
@@ -391,7 +391,7 @@ RFC 2228은 다음과 같은 새로운 명령/응답을 추가하여:
 - `CCC` : 암호화된 제어 채널을 다시 평문으로 되돌리는 옵션
 - `MIC`, `CONF`, `ENC` : 메시지 무결성·기밀성 보장 관련
 
-### 3) FTPS — “FTP over TLS”
+### FTPS — “FTP over TLS”
 
 RFC 2228의 확장과 TLS(RFC 2246 등)를 조합한 것이 **FTPS** 이다.
 이를 정식으로 규정한 문서가 RFC 4217 “Securing FTP with TLS”이다.
@@ -432,7 +432,7 @@ Server:  227 Entering Passive Mode (...)
 IETF는 TLS 1.0/1.1을 2021년 RFC 8996으로 정식 폐기(deprecate)했다.
 따라서 오늘날 FTPS 서버는 TLS 1.2 이상(가능하면 1.3)을 사용해야 한다.
 
-### 4) SFTP vs FTPS vs FTP — 오늘날의 권장 사항
+### SFTP vs FTPS vs FTP — 오늘날의 권장 사항
 
 실무에서는 “FTP 보안”을 얘기할 때 **두 가지 다른 프로토콜**이 혼용되곤 한다:
 
@@ -454,7 +454,7 @@ IETF는 TLS 1.0/1.1을 2021년 RFC 8996으로 정식 폐기(deprecate)했다.
 
 을 권고한다.
 
-### 5) 예제: Python `ftplib` + TLS (FTPS)
+### 예제: Python `ftplib` + TLS (FTPS)
 
 Python의 `ftplib` 는 `FTP_TLS` 클래스를 통해 FTPS를 지원한다.
 
@@ -482,7 +482,7 @@ ftps.quit()
 - `PBSZ 0`, `PROT P` → 데이터 채널까지 암호화
 - 이후 모든 USER/PASS/RETR/STOR 등 명령/데이터가 TLS로 보호된다.
 
-### 6) 보안 설계 체크리스트 (2025년 기준)
+### 보안 설계 체크리스트 (2025년 기준)
 
 FTP/FTPS 관련 시스템을 설계하거나 리뷰할 때, 최소한 아래 항목은 점검해야 한다:
 

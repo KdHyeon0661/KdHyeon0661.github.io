@@ -10,7 +10,7 @@ category: DataCommunication
 
 ### Lossless Compression
 
-#### 1) 개념과 수학적 정의
+#### 개념과 수학적 정의
 
 **Lossless 압축**은 압축 → 해제 후에 **원본과 한 비트도 다르지 않은** 데이터를 복원할 수 있는 압축이다. 대부분의 실제 데이터가 갖고 있는 **통계적 중복(statistical redundancy)** 을 제거함으로써 가능하다.
 
@@ -41,7 +41,7 @@ $$
 
 ---
 
-#### 2) 대표적인 Lossless 알고리즘 계열
+#### 대표적인 Lossless 알고리즘 계열
 
 현대 시스템에서 자주 쓰이는 lossless 알고리즘은 대략 세 계열로 나뉜다:
 
@@ -52,7 +52,7 @@ $$
 최근 유럽계 연구에서 Huffman, LZW, Arithmetic 세 가지 entropy 코딩을 비교한 결과,
 압축률·인코딩/디코딩 시간 관점에서 Huffman과 LZW가 여전히 좋은 trade-off를 보여준다는 분석도 있다.
 
-##### (a) 엔트로피 코딩
+##### 엔트로피 코딩
 
 - **Huffman coding**
   - 자주 나오는 심볼에 짧은 비트열, 드문 심볼에 긴 비트열 할당
@@ -64,7 +64,7 @@ $$
   - 이론적으로 entropy에 더 가깝게 근접 가능
   - 특허·복잡도 문제 때문에 실무에서는 Huffman보다 덜 보급됐지만, 최신 코덱 내부에는 변형된 형태로 많이 들어간다
 
-##### (b) 사전 기반 코딩(LZ 계열)
+##### 사전 기반 코딩(LZ 계열)
 
 - **LZ77 / LZ78 / LZW**
   - 데이터 안에서 이미 나온 패턴을 “사전(dictionary)”에 등록하고, 다음에는 “사전의 인덱스”만 보내는 방식
@@ -75,7 +75,7 @@ $$
   - LZ 계열을 더 공격적으로 확장 + 엔트로피 코딩
   - Git, 패키지 매니저, 백업 등 고압축이 중요한 곳에서 많이 사용
 
-##### (c) Run-length와 변환 기반
+##### Run-length와 변환 기반
 
 - **RLE (Run-Length Encoding)**: 같은 심볼이 연속될 때 `심볼+반복길이`로 압축
 - **BWT(Burrows–Wheeler Transform)**:
@@ -84,7 +84,7 @@ $$
 
 ---
 
-#### 3) Lossless 압축의 사용 사례
+#### Lossless 압축의 사용 사례
 
 - **텍스트 / 소스코드 / 로그**
   - UTF-8 텍스트, JSON, XML 등은 공백·반복 구조가 많아 gzip, zstd 등으로 3~10배 이상 압축 가능
@@ -96,7 +96,7 @@ $$
 
 ---
 
-#### 4) 파이썬 Cookbook — 텍스트/로그 무손실 압축
+#### 파이썬 Cookbook — 텍스트/로그 무손실 압축
 
 **상황 예시**
 
@@ -147,7 +147,7 @@ print(f"Original={len(data)}, Compressed={len(compressed)}")
 
 ### Lossy Compression
 
-#### 1) 개념과 Rate–Distortion 관점
+#### 개념과 Rate–Distortion 관점
 
 **Lossy 압축**은 압축 과정에서 **사람이 거의 구분하지 못하는 정보**를 의도적으로 버리는 방식이다. 압축 해제 후 데이터는 원본과 다르지만, 사람 눈·귀에는 충분히 비슷하게 느껴진다.
 
@@ -166,7 +166,7 @@ $$
 
 ---
 
-#### 2) 이미지 Lossy 압축
+#### 이미지 Lossy 압축
 
 대표적인 파이프라인(예: JPEG, AVIF, JPEG XL 등)은 아래 단계를 공유한다.
 
@@ -191,7 +191,7 @@ $$
 
 ---
 
-#### 3) 오디오 Lossy 압축
+#### 오디오 Lossy 압축
 
 Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성을 이용한다.
 
@@ -215,7 +215,7 @@ Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성
 
 ---
 
-#### 4) 비디오 Lossy 압축
+#### 비디오 Lossy 압축
 
 비디오는 **시간 축이 있는 이미지 + 오디오**로 볼 수 있다. 현대 비디오 코덱(H.264, H.265, VP9, AV1, VVC 등)은 각각의 프레임이 아니라, **예측 + 잔차(residual)** 를 전송한다.
 
@@ -237,7 +237,7 @@ Lossy 오디오는 **인간 청각 시스템(Human Auditory System)** 의 특성
 
 ---
 
-#### 5) 파이썬 Cookbook — 이미지 Lossy 압축 실험
+#### 파이썬 Cookbook — 이미지 Lossy 압축 실험
 
 **상황 예시**
 
@@ -278,7 +278,7 @@ export_image_variants("photo.png")
 
 ### Text
 
-#### 1) 구조와 특성
+#### 구조와 특성
 
 텍스트는 보통 **문자열 + 인코딩**(UTF-8 등)으로 표현된다.
 
@@ -292,7 +292,7 @@ export_image_variants("photo.png")
 - 균등 분포 가정 시 entropy는 \( \log_2(60) \approx 5.9\) 비트/문자
 - 실제 영어는 더 불균형(‘e’, ‘space’가 훨씬 자주 등장)해서 1~2비트/문자까지 근접 가능하다는 실험도 있다.
 
-#### 2) 파이썬 Cookbook — JSON 로그 압축/해제
+#### 파이썬 Cookbook — JSON 로그 압축/해제
 
 ```python
 import gzip
@@ -327,7 +327,7 @@ print(sum(1 for _ in read_compressed_json("logs.json.gz")))
 
 ### Image
 
-#### 1) 구조: 비트맵 vs 벡터, 색 공간
+#### 구조: 비트맵 vs 벡터, 색 공간
 
 **비트맵 이미지(raster)**
 
@@ -345,7 +345,7 @@ print(sum(1 for _ in read_compressed_json("logs.json.gz")))
 - 도형, 곡선, 텍스트 등의 수학적 정의
 - 확대해도 깨지지 않지만, 사진 같은 데이터에는 적합하지 않다.
 
-#### 2) 주요 이미지 포맷과 압축
+#### 주요 이미지 포맷과 압축
 
 최근 유럽/북미권 연구에서 자주 다루는 포맷들은 다음과 같다.
 
@@ -360,7 +360,7 @@ print(sum(1 for _ in read_compressed_json("logs.json.gz")))
 웹 트래픽 분석 결과, 여전히 JPEG/PNG가 대부분을 차지하지만,
 WebP와 AVIF가 점점 점유율을 늘리면서 페이지 로딩 시간을 15–21% 정도 줄이는 사례가 보고된다.
 
-#### 3) 파이썬 Cookbook — 웹 이미지 파이프라인 뼈대
+#### 파이썬 Cookbook — 웹 이미지 파이프라인 뼈대
 
 **상황 예시**
 
@@ -404,7 +404,7 @@ def make_web_images(src_path: str, max_width=1280):
 
 ### Video
 
-#### 1) 비디오 데이터 구조
+#### 비디오 데이터 구조
 
 비디오는 **시간 축을 가진 이미지 시퀀스 + 오디오**다.
 
@@ -421,7 +421,7 @@ def make_web_images(src_path: str, max_width=1280):
 
 실제 스트리밍에서는 이걸 **수십~수백 배** 줄여야 한다.
 
-#### 2) 비디오 코덱과 컨테이너
+#### 비디오 코덱과 컨테이너
 
 - 컨테이너: MP4, MKV, WebM 등
 - 코덱: H.264/AVC, H.265/HEVC, VP9, AV1, VVC/H.266 등
@@ -432,7 +432,7 @@ def make_web_images(src_path: str, max_width=1280):
 - AV1: VP9 대비 대략 30% 추가 절감
 - H.266/VVC: HEVC 대비 30–50% 절감 가능하지만, 인코딩 복잡도와 특허 문제 등으로 아직 도입 속도는 제한적
 
-#### 3) 파이썬 Cookbook — FFmpeg로 비디오 트랜스코딩 호출
+#### 파이썬 Cookbook — FFmpeg로 비디오 트랜스코딩 호출
 
 **상황 예시**
 
@@ -468,7 +468,7 @@ transcode_to_hevc("input_h264.mp4")
 
 ### Audio
 
-#### 1) 기본 개념: 샘플링, 양자화, 비트레이트
+#### 기본 개념: 샘플링, 양자화, 비트레이트
 
 아날로그 오디오를 디지털로 변환할 때는:
 
@@ -488,7 +488,7 @@ $$
 압축되지 않은 WAV는 대략 1.4 Mbit/s.
 Lossy 코덱을 사용하면 같은 체감 품질에서 128~256 kbit/s 정도까지 줄일 수 있다.
 
-#### 2) Lossless vs Lossy 오디오 코덱
+#### Lossless vs Lossy 오디오 코덱
 
 - **Lossless**: FLAC, ALAC
   - 복원 시 원본 비트스트림과 완전히 동일
@@ -497,7 +497,7 @@ Lossy 코덱을 사용하면 같은 체감 품질에서 128~256 kbit/s 정도까
   - 스트리밍·다운로드 음악·게임/VoIP에 사용
   - 효율 차이는 코덱, 프로파일, 비트레이트에 따라 큼
 
-#### 3) 파이썬 Cookbook — WAV → FLAC/AAC/Opus 변환 자동화
+#### 파이썬 Cookbook — WAV → FLAC/AAC/Opus 변환 자동화
 
 실제 인코딩은 보통 FFmpeg나 외부 도구를 호출한다.
 

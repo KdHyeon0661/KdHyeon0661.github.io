@@ -37,14 +37,14 @@ category: 딥러닝
 > - 로컬/Colab/Notebook 어느 환경이든 Python 실행 가능.
 
 ```python
-# (선택) Colab/로컬 패키지 설치
+# Colab/로컬 패키지 설치
 # !pip install -q earthengine-api folium matplotlib
 
 import ee, folium, math, time
 import matplotlib.pyplot as plt
 
-# (최초 1회) 인증
-# ee.Authenticate()  # 대화형 브라우저 인증 팝업 (주석 해제 후 1회 실행)
+# 인증
+# # 대화형 브라우저 인증 팝업 (주석 해제 후 1회 실행)
 
 # 세션 초기화
 
@@ -62,7 +62,7 @@ print("GEE initialized:", ee.Number(1).getInfo())
 - **센서**: `COPERNICUS/S2_SR` (Sentinel-2 Surface Reflectance)
 
 ```python
-# ROI(관심영역) — 간단한 사각형(경도, 위도 순서)
+# — 간단한 사각형(경도, 위도 순서)
 
 roi = ee.Geometry.Rectangle([126.70, 37.35, 127.30, 37.75])  # (minLon, minLat, maxLon, maxLat)
 
@@ -190,7 +190,7 @@ m
 
 ---
 
-## 월별 NDVI 타임시리즈(ROI 평균) + Matplotlib 차트
+## + Matplotlib 차트
 
 > ROI 전체 평균 NDVI의 월별 시계열을 만들고, 2019 vs 2024를 비교합니다.
 
@@ -303,7 +303,7 @@ task = ee.batch.Export.image.toDrive(
 task.start()
 print("Export started:", task.id)
 
-# (선택) 간단 폴링으로 상태 확인
+# 간단 폴링으로 상태 확인
 
 while task.active():
     print("  Task state:", task.status().get("state"))
@@ -392,7 +392,7 @@ display(folium_map(roi, ref_img, curr_img, ndvi_ref, ndvi_curr, ndvi_diff))
 
 ---
 
-## (옵션) 포인트/구역별 드릴다운
+## 포인트/구역별 드릴다운
 
 > 지도에서 관심 지점을 찍어 **해당 지점의 NDVI 시계열**과 **ΔNDVI 값**을 보고 싶다면:
 
@@ -406,7 +406,7 @@ pt = ee.Geometry.Point([126.988, 37.551])
 val = ndvi_diff.sample(pt, scale=10).first().get("NDVI_DIFF").getInfo()
 print("Point ΔNDVI (2024-2019):", val)
 
-# 포인트 주변 버퍼(100m) 평균 NDVI 타임시리즈(2019/2024 각각)
+# 평균 NDVI 타임시리즈(2019/2024 각각)
 
 buf = pt.buffer(100)
 def series(start, end):
@@ -477,7 +477,7 @@ plt.show()
 
 ---
 
-## 전체 코드(요약본) — 한 번에 실행 가능한 최소 예제
+## — 한 번에 실행 가능한 최소 예제
 
 ```python
 import ee, folium, time, matplotlib.pyplot as plt

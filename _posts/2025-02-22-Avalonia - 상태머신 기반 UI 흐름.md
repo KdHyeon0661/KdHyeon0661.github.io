@@ -906,7 +906,7 @@ Shell에서는 `Submit` 클릭 시 먼저 `CanSubmitLocal` 확인 → 실패면 
 
 ---
 
-## 부록 A) 최소 동작 샘플(조립)
+## 최소 동작 샘플(조립)
 
 DI 예시:
 
@@ -924,7 +924,7 @@ var view = new SignupFlowView { DataContext = vm };
 
 ---
 
-## 부록 B) 상태 차트(간단)
+## 상태 차트(간단)
 
 ```
 [Step1_Email] --Next(이메일 형식/중복 OK)--> [Step2_Password]
@@ -935,7 +935,7 @@ var view = new SignupFlowView { DataContext = vm };
 
 ---
 
-## 부록 C) 확장 아이디어
+## 확장 아이디어
 
 - 모듈형 플러그인: 외부 모듈이 **자신의 상태/전이**를 등록해 Wizard 확장
 - 다국어(i18n): 가드 실패 메시지를 리소스 키로 정의 → `LocalizationService`로 조회

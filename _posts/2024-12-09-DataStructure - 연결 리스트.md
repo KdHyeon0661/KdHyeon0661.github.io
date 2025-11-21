@@ -74,7 +74,7 @@ void clear(SNode*& head) {
 
 ### 고급 연산
 
-#### (1) 역순 뒤집기 — 반복
+#### 역순 뒤집기 — 반복
 
 ```cpp
 SNode* reverse_iter(SNode* head) {
@@ -88,7 +88,7 @@ SNode* reverse_iter(SNode* head) {
 }
 ```
 
-#### (2) 중간 노드 찾기 — runner(토끼/거북)
+#### 중간 노드 찾기 — runner(토끼/거북)
 
 ```cpp
 SNode* middle(SNode* head){
@@ -98,7 +98,7 @@ SNode* middle(SNode* head){
 }
 ```
 
-#### (3) 뒤에서 k번째
+#### 뒤에서 k번째
 
 ```cpp
 SNode* kth_from_end(SNode* head, int k){
@@ -110,7 +110,7 @@ SNode* kth_from_end(SNode* head, int k){
 }
 ```
 
-#### (4) 사이클 검출 — Floyd
+#### 사이클 검출 — Floyd
 
 ```cpp
 bool has_cycle(SNode* head){
@@ -357,7 +357,7 @@ int main(){
 
 ## 원형 연결 리스트 (Circular Linked List)
 
-### 단일 원형 — tail 포인터만으로 O(1) 끝삽입
+### 끝삽입
 
 ```cpp
 struct CNode {

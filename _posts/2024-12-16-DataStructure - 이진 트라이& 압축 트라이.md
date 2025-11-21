@@ -4,7 +4,7 @@ title: Data Structure - 트라이
 date: 2024-12-16 20:20:23 +0900
 category: Data Structure
 ---
-# 고급 Trie 구조 — 이진 Trie(Bitwise) & 압축 Trie(Radix/Compressed)
+# & 압축 Trie(Radix/Compressed)
 
 ## 개요와 비교
 

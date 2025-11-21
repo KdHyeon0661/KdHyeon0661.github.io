@@ -217,7 +217,7 @@ struct Base : std::enable_shared_from_this<Base> {
 
 ---
 
-## 별칭(aliased) `shared_ptr`와 결합 — “부분 뷰”를 안전하게
+## `shared_ptr`와 결합 — “부분 뷰”를 안전하게
 
 **같은 컨트롤 블록**을 공유하되, **다른 포인터**를 가리키는 `shared_ptr`를 만들 수 있다.
 
@@ -252,7 +252,7 @@ struct Service : std::enable_shared_from_this<Service> {
 };
 ```
 
-### 옵저버(리스너) 관리
+### 관리
 
 ```cpp
 struct Observer { virtual void on_event() = 0; virtual ~Observer() = default; };

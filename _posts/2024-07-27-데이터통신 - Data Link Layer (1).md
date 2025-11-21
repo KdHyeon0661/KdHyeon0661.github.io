@@ -25,20 +25,20 @@ category: DataCommunication
 
 ## Nodes and Links — 노드와 링크
 
-### 1) 노드(Node)의 범주
+### 노드(Node)의 범주
 
 - **호스트**: 엔드 시스템(서버/PC/임베디드/IoT)
 - **스위치/브리지**: MAC 학습/포워딩, 브로드캐스트 도메인 관리, VLAN/스패닝트리/EVPN-VXLAN 게이트웨이 등
 - **AP(무선 액세스 포인트)**: 무선 MAC(EDCA/OFDM/OFDMA, 블록 ACK) 담당, L2 브리지 역할 연계
 - **모뎀/ONU/기타 L2 장치**: PON, DOCSIS 등 매체 종속 링크 제공
 
-### 2) 링크(Link)의 범주
+### 링크(Link)의 범주
 
 - **유선**: 트위스티드 페어(구리), 광(싱글/멀티모드), 백플레인(데이터센터/통신 장비)
 - **무선**: Wi-Fi(802.11 a/b/g/n/ac/ax/be), 전용 마이크로웨이브/밀리미터파 메쉬 등
 - **P2P vs 멀티액세스**: P2P(전용선·직결), 멀티액세스(여러 노드가 하나의 매체 공유)
 
-### 3) 링크 성능 구성 요소
+### 링크 성능 구성 요소
 
 총 지연:
 \[
@@ -52,7 +52,7 @@ D_{\text{total}} = D_{\text{proc}} + D_{\text{queue}} + D_{\text{trans}} + D_{\t
 
 ## Service — L2가 L3/상위에 제공하는 서비스
 
-### 1) 서비스 유형(고전 분류를 현대 관점으로 정리)
+### 서비스 유형(고전 분류를 현대 관점으로 정리)
 
 | 서비스 | 연결 | 신뢰성 | 사용 사례 |
 |---|---|---|---|
@@ -62,18 +62,18 @@ D_{\text{total}} = D_{\text{proc}} + D_{\text{queue}} + D_{\text{trans}} + D_{\t
 
 > 오늘날 IP 위주의 LAN은 **Unacknowledged Connectionless**가 일반적이다. **무선**은 프레임 손실율/간섭이 커서 **링크 레벨 ARQ**를 흔히 사용한다.
 
-### 2) 서비스 프리미티브(개념적)
+### 서비스 프리미티브(개념적)
 
 - **REQUEST / INDICATION / RESPONSE / CONFIRM**
   예: 상위가 **DATA.request**(송신) → 피어에 **DATA.indication**(수신). 연결형은 **CONNECT.\***, **DISCONNECT.\*** 프리미티브 포함.
 
-### 3) 품질/우선순위 서비스
+### 품질/우선순위 서비스
 
 - **802.1p PCP(3bit, 0–7)**: 우선순위/클래스(Voice/Video/BE/Background 등)
 - **무선 EDCA**: Voice/Video/Best-Effort/Background 큐로 분리
 - **TSN(802.1Qbv, 802.1AS 등)**: 시간 분할 게이팅·정밀 동기(µs급)로 **결정적 지연** 제공(산업/자동차)
 
-### 4) 보안 서비스
+### 보안 서비스
 
 - **MACsec(802.1AE)**: 포트 간 프레임 무결성/암호화
 - **802.1X**: 포트 기반 접근 제어(EAP 상호작용)
@@ -85,7 +85,7 @@ D_{\text{total}} = D_{\text{proc}} + D_{\text{queue}} + D_{\text{trans}} + D_{\t
 
 > 관점에 따라 다양한 분류가 있으나, 데이터링크 교과서·표준에서 실무적으로 가장 중요한 두 범주는 **Point-to-Point** 와 **Broadcast/Multiple-Access** 이다.
 
-### 1) Point-to-Point Link (P2P)
+### Point-to-Point Link (P2P)
 
 - **정의**: 두 노드만 접속. **풀듀플렉스**가 일반(동시 송수신, 충돌 개념 무의미).
 - **프레이밍**: 길이 필드/플래그 기반(HDLC/PPP), CRC-FCS.
@@ -98,7 +98,7 @@ D_{\text{total}} = D_{\text{proc}} + D_{\text{queue}} + D_{\text{trans}} + D_{\t
 \]
 RTT가 크면 효율 급락 → 고속/장거리 P2P는 **슬라이딩 윈도우** 또는 상위 계층(TCP) 윈도우가 필수.
 
-### 2) Broadcast / Multiple-Access Link
+### Broadcast / Multiple-Access Link
 
 - **정의**: 여러 노드가 하나의 매체를 **공유**. 유선(허브/버스)은 역사적; 현대는 **무선**(WLAN), **세그먼트 내 브로드캐스트 도메인**의 개념이 중요.
 - **접근 제어**:
@@ -112,7 +112,7 @@ RTT가 크면 효율 급락 → 고속/장거리 P2P는 **슬라이딩 윈도우
 
 IEEE 802 아키텍처에서 L2는 **LLC(Logical Link Control)** 와 **MAC(Medium Access Control)** **두 서브레이어**로 나뉜다.
 
-### 1) MAC Sublayer
+### MAC Sublayer
 
 **역할**: 프레임 **주소/접근제어/프레이밍/오류검출**의 핵심. 매체 특성(유선/무선)에 강하게 종속.
 
@@ -144,7 +144,7 @@ IEEE 802 아키텍처에서 L2는 **LLC(Logical Link Control)** 와 **MAC(Medium
   - **MACsec(802.1AE)**: L2 프레임 암호화/무결성(장비 간 hop-by-hop 보안)
   - 포트 인증 **802.1X**: 사용자/디바이스 식별 후 VLAN/ACL 부여
 
-### 2) LLC Sublayer
+### LLC Sublayer
 
 **역할**: 상위(네트워크/L3)에 **일관된 서비스 인터페이스** 제공. 오늘날 IP 위주 환경에서는 상대적으로 얕게 쓰이지만, **SAP(서비스 액세스 포인트), DSAP/SSAP** 개념, **신뢰성/흐름제어 옵션(Type 1/2/3)** 을 정의한다.
 
@@ -158,14 +158,14 @@ LLC는 **매체 종속 세부(무선/유선 MAC)를 상위에 추상화**하는 
 
 ## Framing & Error Control — 프레이밍과 오류 제어(세부)
 
-### 1) 프레이밍 방식
+### 프레이밍 방식
 
 - **길이-필드 기반**: Ethernet
 - **플래그/코드 스터핑**: HDLC/PPP
   - **비트 스터핑**: 플래그 패턴(예: 01111110)과 구분하기 위해 1이 5번 연속되면 0 삽입
   - **바이트 스터핑**: 특수 바이트 앞에 이스케이프(0x7D 등) 삽입
 
-### 2) 오류 검출 — CRC의 핵심
+### 오류 검출 — CRC의 핵심
 
 - 프레임을 다항식 \(M(x)\)로 보고 **생성다항식 \(G(x)\)** 로 나눈 나머지 \(R(x)\)가 **FCS**
 - 수신 측은 \((M(x)\cdot x^r + R(x)) \bmod G(x) = 0\)인지 검사
@@ -176,7 +176,7 @@ LLC는 **매체 종속 세부(무선/유선 MAC)를 상위에 추상화**하는 
 G(x) = x^{32} + x^{26} + x^{23} + \dots + 1\quad (\text{표준 다항식})
 \]
 
-### 3) 링크-레벨 ARQ(무선 등)
+### 링크-레벨 ARQ(무선 등)
 
 - **Stop-and-Wait**: 간단하지만 RTT가 길면 비효율
 - **체인 ARQ/블록-ACK(802.11)**: 여러 프레임을 묶어 효율 향상

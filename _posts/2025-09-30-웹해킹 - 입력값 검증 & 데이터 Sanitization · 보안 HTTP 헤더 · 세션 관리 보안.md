@@ -4,7 +4,7 @@ title: 웹해킹 - 입력값 검증 & 데이터 Sanitization · 보안 HTTP 헤�
 date: 2025-09-30 15:25:23 +0900
 category: 웹해킹
 ---
-# 🛡️ 입력값 검증 & 데이터 Sanitization · 보안 HTTP 헤더(CSP·XFO·HSTS 등) · 세션 관리 보안(쿠키 Secure/HttpOnly/SameSite)
+# · 세션 관리 보안(쿠키 Secure/HttpOnly/SameSite)
 
 > ⚠️ **합법·윤리 고지**
 > 본 문서는 **자신의 시스템**과 **허가된 환경**에서 **방어·강화 목적**으로 사용하세요.
@@ -41,7 +41,7 @@ category: 웹해킹
 
 ### 검증 레이어 — 언어별 예제
 
-#### Node.js(Express) — zod 또는 Joi
+#### — zod 또는 Joi
 
 ```javascript
 // validation/user.js
@@ -69,7 +69,7 @@ app.post("/register", async (req, res) => {
 });
 ```
 
-#### Python(Flask/FastAPI) — Pydantic
+#### — Pydantic
 
 ```python
 from pydantic import BaseModel, EmailStr, constr
@@ -86,7 +86,7 @@ def register():
     return "", 201
 ```
 
-#### Java(Spring Boot) — Bean Validation
+#### — Bean Validation
 
 ```java
 class RegisterDto {
@@ -101,7 +101,7 @@ public ResponseEntity<?> register(@Valid @RequestBody RegisterDto dto){ … }
 
 ---
 
-### Sanitization(콘텐츠 무해화) — 언제·어떻게?
+### — 언제·어떻게?
 
 - **텍스트 데이터**: 단순 출력이면 **출력 인코딩**(HTML 엔티티)만으로 충분.
 - **HTML/Markdown 입력을 “제한적 허용”**해야 한다면, **화이트리스트 Sanitizer** 필수.
@@ -178,7 +178,7 @@ String safeHtml = POLICY.sanitize(userHtml);
 
 > **핵심**: CSP(콘텐츠 보안 정책)를 중심으로 **X-Frame-Options·HSTS·nosniff·Referrer-Policy** 등과 **세트**로 설정.
 
-### CSP(Content-Security-Policy) — 전략
+### — 전략
 
 - **목표**: XSS·리소스 하이재킹을 브라우저 레벨에서 차단.
 - **패턴 1: Nonce 기반 엄격 CSP(권장)**
@@ -188,7 +188,7 @@ String safeHtml = POLICY.sanitize(userHtml);
   - `script-src 'self' cdn1.example cdn2.example` … (인라인 금지)
 - **도입 단계**: **Report-Only** 모드로 먼저 배포 → 위반 리포트 수집 → 본 모드 전환.
 
-#### Express(Helmet) + Nonce 예제
+#### + Nonce 예제
 
 ```javascript
 import crypto from "node:crypto";
@@ -229,7 +229,7 @@ app.get("/", (req, res) => {
 });
 ```
 
-#### Nginx에서 CSP(정적) — 간단형
+#### — 간단형
 
 ```nginx
 add_header Content-Security-Policy "default-src 'none'; base-uri 'none'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'self'; form-action 'self'" always;
@@ -275,7 +275,7 @@ add_header X-Content-Type-Options "nosniff" always;
 
 add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-# 권한(센서/카메라 등) 최소화
+# 최소화
 
 add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
 
@@ -541,7 +541,7 @@ app.listen(3000, ()=>console.log("https://localhost:3000"));
 
 ---
 
-## 리버스 프록시(Nginx) 스니펫
+## 스니펫
 
 ```nginx
 server {

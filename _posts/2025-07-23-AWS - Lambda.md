@@ -123,7 +123,7 @@ public class Handler implements RequestHandler<Map<String,Object>, Map<String,Ob
 
 ---
 
-## 이벤트 소스(폴링) 상세: SQS / Kinesis / DDB Streams
+## 상세: SQS / Kinesis / DDB Streams
 
 ### SQS 소비자 (배치·부분실패)
 
@@ -474,7 +474,7 @@ const notFound = () => ({ statusCode: 404, body: "not found" });
 const error = (e) => ({ statusCode: 500, body: JSON.stringify({ error: e.message }) });
 ```
 
-### API GW(HTTP API) 라우팅
+### 라우팅
 
 - `GET /items`, `GET /items/{id}`, `POST /items`, `DELETE /items/{id}` → 단일 Lambda(프록시 통합).
 

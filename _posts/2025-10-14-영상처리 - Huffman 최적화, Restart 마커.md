@@ -218,7 +218,7 @@ void Encode_NetworkRobust(const IppDib& img, int quality, JpegChroma cs,
 }
 ```
 
-### (대안) `restart_interval`(MCU 개수 직접 지정)
+### `restart_interval`(MCU 개수 직접 지정)
 
 - 특정 **바이트 목표 세그먼트 길이**를 추정해 직접 MCU 수로 넣고 싶다면:
 ```cpp

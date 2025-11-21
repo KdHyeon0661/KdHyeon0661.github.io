@@ -91,7 +91,7 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 
 ---
 
-## 802.11ax(HE, Wi-Fi 6/6E) 핵심
+## 핵심
 
 - **OFDMA**: RU(Resource Unit) 단위로 **다수 STA 동시** UL/DL 전송 → **에어타임 효율↑**(작은 패킷/IoT 유리).
 - **MU-MIMO UL/DL**: 공간 다중화 극대화(채널 상태 정보 필요).
@@ -101,7 +101,7 @@ Preamble/PLCP(물리계층 헤더)는 PHY가 붙임(속도·길이 등 포함)
 
 ---
 
-## 처리량(Throughput)과 에어타임(Airtime) 계산
+## 계산
 
 ### 기본 아이디어
 

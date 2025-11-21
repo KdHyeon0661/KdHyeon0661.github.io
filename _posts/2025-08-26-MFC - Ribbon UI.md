@@ -156,7 +156,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT cs)
 
 ---
 
-## 갤러리(Gallery) 구축 — 미리보기/라이브 프리뷰 패턴
+## 구축 — 미리보기/라이브 프리뷰 패턴
 
 ### 2-1. 아이콘 세트 준비
 
@@ -259,7 +259,7 @@ void CMainFrame::OnThemeSelected()
 
 ---
 
-## Quick Access Toolbar(QAT) — 기본/사용자 커스터마이징/영구 저장
+## — 기본/사용자 커스터마이징/영구 저장
 
 ### 3-1. 기본 항목 추가
 
@@ -304,7 +304,7 @@ void CMainFrame::OnRibbonCustomize()
 
 ---
 
-## 애플리케이션 메뉴(파일 메뉴) / Backstage 접근
+## / Backstage 접근
 
 ### 4-1. 기본 애플리케이션 메뉴(리본 방식)
 
@@ -511,7 +511,7 @@ void CMainFrame::ApplyAppTheme(AppTheme t)
 }
 ```
 
-### 8-3. 사용자 팔레트(다크/라이트) 설계
+### 설계
 
 ```cpp
 struct AppPalette {
@@ -569,7 +569,7 @@ void CMyApp::LoadCustomState()
 
 ---
 
-## 종합 예제: “홈” 탭(클립보드/스타일/테마) + 갤러리 라이브 프리뷰 + QAT + 다크 토글
+## + 갤러리 라이브 프리뷰 + QAT + 다크 토글
 
 ### 11-1. 리본 구성
 
@@ -693,7 +693,7 @@ void CMainFrame::OnToggleDark() {
 
 ---
 
-## 부록 A) 리소스 제안
+## 리소스 제안
 
 - `IDB_APPBTN_32`: 32×32 PNG
 - `IDB_HOME_16`, `IDB_HOME_32`: 16/32 아이콘 스트립
@@ -701,7 +701,7 @@ void CMainFrame::OnToggleDark() {
 - `IDB_GALLERY_16`, `IDB_GALLERY_32` (가로 스트립)
 - 각 스트립은 동일 크기 타일로 구성(배경 투명)
 
-## 부록 B) 커맨드 ID 예시
+## 커맨드 ID 예시
 
 ```cpp
 #define ID_EDIT_CUT         32771
@@ -715,7 +715,7 @@ void CMainFrame::OnToggleDark() {
 
 ```
 
-## 부록 C) 다크 팔레트 적용 예시(리스트/트리 커스텀 드로우 연계)
+## 다크 팔레트 적용 예시(리스트/트리 커스텀 드로우 연계)
 
 ```cpp
 // 리스트/트리 커스텀 드로우에서 g_Pal 사용

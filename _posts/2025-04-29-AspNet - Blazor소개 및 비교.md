@@ -180,7 +180,7 @@ await builder.Build().RunAsync();
 }
 ```
 
-### 상태 컨테이너(서비스) 패턴
+### 패턴
 
 ```csharp
 public class AppState
@@ -208,7 +208,7 @@ builder.Services.AddSingleton<AppState>();
 }
 ```
 
-### Fluxor(Flux/Redux 스타일) 스니펫
+### 스니펫
 
 ```bash
 dotnet add package Fluxor.Blazor.Web
@@ -425,7 +425,7 @@ window.callDotNet = async () => {
 }
 ```
 
-### 브라우저 저장소(로컬/세션) 사용 예 (WASM)
+### 사용 예 (WASM)
 
 ```bash
 dotnet add package Blazored.LocalStorage
@@ -534,7 +534,7 @@ public class CounterTests : TestContext
 
 ---
 
-## 부록 A) 간단 United 스타일 구성 예시(.NET 8)
+## 간단 United 스타일 구성 예시(.NET 8)
 
 **Program.cs**
 ```csharp
@@ -566,7 +566,7 @@ app.Run();
 
 ---
 
-## 부록 B) 간단 수식: WASM 다운로드 비용 추정
+## 간단 수식: WASM 다운로드 비용 추정
 
 초기 다운로드 크기 \( S \) (압축 후), 네트워크 대역폭 \( B \), 초기 파싱/로드 시간 \( T_p \)가 있을 때,
 초기 지연 \( T \)는 근사적으로

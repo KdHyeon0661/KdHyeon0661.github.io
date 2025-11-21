@@ -4,7 +4,7 @@ title: Data Structure - 그래프
 date: 2024-12-26 19:20:23 +0900
 category: Data Structure
 ---
-# 그래프(Graph) 자료구조
+# 자료구조
 
 ## 그래프란?
 
@@ -453,7 +453,7 @@ int scc_kosaraju(const Graph& g, vector<int>& comp){
 
 ---
 
-## 브리지(단절간선) & 단절점 (무방향, Tarjan)
+## & 단절점 (무방향, Tarjan)
 
 ```cpp
 void bridgesAP(const Graph& g, vector<pair<int,int>>& bridges, vector<int>& art){

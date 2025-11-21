@@ -706,7 +706,7 @@ public class LoginViewModelTests
 
 ---
 
-## 부록 A) AES-256 GCM 서비스(요지)
+## AES-256 GCM 서비스(요지)
 
 ```csharp
 // Services/AesCryptoService.cs
@@ -750,7 +750,7 @@ public sealed class AesCryptoService
 
 ---
 
-## 부록 B) 간단 수식(만료 전 갱신 정책)
+## 간단 수식(만료 전 갱신 정책)
 
 만료시각을 \( T_\text{exp} \), 현재시각을 \( t \), 스큐 여유를 \( \delta \)라 하면,
 **갱신 조건**은 다음과 같이 둘 수 있다:

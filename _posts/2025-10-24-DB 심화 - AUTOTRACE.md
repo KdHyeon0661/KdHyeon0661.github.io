@@ -369,7 +369,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 
 ---
 
-## (참고) SQLcl / SQL Developer에서의 Autotrace
+## SQLcl / SQL Developer에서의 Autotrace
 
 - **SQLcl**: `SET AUTOTRACE` 동일, 출력이 `DBMS_XPLAN` 기반으로 다소 **가독성 향상**.
 - **SQL Developer**: **Autotrace 탭** 제공(실행 후 Plan/Statistics), GUI에서 **실행 결과 숨기기** 옵션 존재.

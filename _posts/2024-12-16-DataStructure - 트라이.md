@@ -4,7 +4,7 @@ title: Data Structure - 트라이
 date: 2024-12-16 19:20:23 +0900
 category: Data Structure
 ---
-# Trie(트라이) 자료구조
+# 자료구조
 
 ## 빠른 리마인드 — Trie란?
 
@@ -16,7 +16,7 @@ category: Data Structure
 
 ## 노드 설계와 문자 집합
 
-### 알파벳 소문자 26개(‘a’~‘z’) 전용 — 고정 배열 방식
+### 전용 — 고정 배열 방식
 
 ```cpp
 struct TrieNode {
@@ -29,7 +29,7 @@ struct TrieNode {
 - `pass`는 “접두사 개수(count of words with this prefix)”, `end`는 “정확히 이 단어 개수”.
 - **장점**: 매우 빠른 인덱싱(상수 시간). **단점**: 희소한 경우 포인터 낭비.
 
-### 임의 문자(ASCII/유니코드) — 해시/맵 방식
+### — 해시/맵 방식
 
 ```cpp
 struct TrieNodeX {
@@ -153,7 +153,7 @@ struct Trie {
 
 ---
 
-## 자동완성(Autocomplete) — 접두사 기반 제안
+## — 접두사 기반 제안
 
 - 절차: **(1) 접두사 노드까지 이동 → (2) DFS/BFS로 후보 수집 → (3) 필요 시 k개 제한/정렬**.
 
@@ -421,7 +421,7 @@ int main(){
 
 ---
 
-## 단일 파일 예시(요지) — 삽입/검색/삭제/자동완성/K번째
+## — 삽입/검색/삭제/자동완성/K번째
 
 ```cpp
 #include <bits/stdc++.h>

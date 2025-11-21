@@ -281,7 +281,7 @@ ip route
 resolvectl status 2>/dev/null || cat /etc/resolv.conf
 ```
 
-### Netplan(Ubuntu) 예
+### 예
 
 `/etc/netplan/01-prod.yaml`:
 ```yaml
@@ -299,7 +299,7 @@ network:
 netplan apply
 ```
 
-### nmcli(RHEL) 예
+### 예
 
 ```bash
 nmcli con add type ethernet ifname eth0 con-name prod ip4 10.0.0.20/24 gw4 10.0.0.1

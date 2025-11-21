@@ -14,7 +14,7 @@ category: Django
 
 ## 0-1. Django란? — 역사·철학(MTV)·Django 5.x 관점 핵심
 
-### (1) Django의 탄생 배경과 철학
+### Django의 탄생 배경과 철학
 
 - **신문사 콘텐츠 CMS**에서 출발(빠른 개발 속도에 초점)
 - **“배터리 포함(batteries-included)”**: 인증, 관리자, ORM, 국제화, 보안 프레임워크 등 **웹 서비스 필수 기능**을 광범위하게 기본 제공
@@ -31,7 +31,7 @@ category: Django
   - 백오피스/관리도구·데이터 포털
   - API 백엔드(DRF 추가 시)
 
-### (2) MTV 아키텍처(= Django의 MVC 해석)
+### MTV 아키텍처(= Django의 MVC 해석)
 
 - **M(Model)**: 데이터/도메인 규칙 → Django ORM의 `models.Model`
 - **T(Template)**: 프론트 표현 → DTL(Django Template Language)
@@ -44,7 +44,7 @@ category: Django
 3. **Template** 렌더링(HTML) 또는 **JSON 응답** 반환
 4. **Middleware**는 요청/응답의 전후 훅에서 횡단 관심사 처리(보안 헤더, 로깅 등)
 
-### (3) Django 5.x 관점(핵심 포인트 위주)
+### Django 5.x 관점(핵심 포인트 위주)
 
 - **ASGI(비동기) 서포트 성숙**: `async def` 뷰, 일부 ORM I/O 최적화 지향(단, ORM은 전면 async 완성 전환이 아닌, 제한적/선택적 활용이 일반적이었음)
 - **Form/템플릿/유틸리티** 등 점진 개선, 오래된 API 정리·폐기 가속(장기 지원 정책에 따라 주기적 디프리케이션)
@@ -55,7 +55,7 @@ category: Django
 
 ## 0-2. 개발 환경 설정 — Python/venv/Poetry, VS Code, 프로젝트 구조
 
-### (1) 파이썬 설치 & 가상 환경(venv)
+### 파이썬 설치 & 가상 환경(venv)
 
 - **권장 버전**: Django 5.x 라인과 호환되는 최신 안정 파이썬(3.10+ 권장)
 - **venv 생성/활성화**
@@ -75,7 +75,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip wheel setuptools
 ```
 
-### (2) Poetry로 의존성/빌드 관리(선택)
+### Poetry로 의존성/빌드 관리(선택)
 
 - **Poetry 설치**
 ```bash
@@ -136,7 +136,7 @@ line-length = 100
 select = ["E", "F", "I"]
 ```
 
-### (3) VS Code 설정 포인트
+### VS Code 설정 포인트
 
 - **익스텐션**: Python, Pylance, Django Template, GitLens, dotenv
 - **Interpreter 선택**: `Ctrl/Cmd + Shift + P` → *Python: Select Interpreter* → `.venv`
@@ -169,7 +169,7 @@ select = ["E", "F", "I"]
 }
 ```
 
-### (4) 디렉터리 구조 베스트프랙티스
+### 디렉터리 구조 베스트프랙티스
 
 - **권장 구조(단일 레포 내 다중 앱)**
 ```
@@ -210,7 +210,7 @@ myproject/
 
 ## 0-3. 첫 프로젝트/앱 생성 — `django-admin` vs `manage.py`, 설정 분리(dev/prod)
 
-### (1) django-admin과 manage.py의 차이
+### django-admin과 manage.py의 차이
 
 - `django-admin`: **글로벌 진입점**(가상환경 PATH에 노출). 어떤 프로젝트 맥락 없이도 명령 실행 가능
 - `manage.py`: **프로젝트 로컬 진입점**. 내부에서 `DJANGO_SETTINGS_MODULE`을 지정해 **해당 프로젝트 설정**을 자동 로드
@@ -229,14 +229,14 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-### (2) 프로젝트 생성 & 기본 기동
+### 프로젝트 생성 & 기본 기동
 
 ```bash
 # 작업 루트 생성
 
 mkdir myproject && cd myproject
 
-# 가상환경(venv) 또는 poetry shell 활성화 후
+# 또는 poetry shell 활성화 후
 
 pip install "django>=5.0,<6.0" django-environ
 
@@ -261,7 +261,7 @@ myproject/
    └─ wsgi.py
 ```
 
-### (3) 앱 생성 & URL 연결
+### 앱 생성 & URL 연결
 
 ```bash
 python manage.py startapp core  # apps/core 생성
@@ -313,7 +313,7 @@ INSTALLED_APPS = [
 
 브라우저 `http://127.0.0.1:8000/` → “Hello, Django!” 표시.
 
-### (4) 템플릿(DTL)로 전환
+### 템플릿(DTL)로 전환
 
 `apps/core/templates/core/home.html`:
 {% raw %}
@@ -366,7 +366,7 @@ TEMPLATES = [
 ```
 > 팁: 규모가 커지면 `templates/`를 최상위에 만들고 각 앱에서 **네임스페이스(폴더명)**로 분리해 충돌을 방지한다.
 
-### (5) 정적 파일 셋업(개발 기본)
+### 정적 파일 셋업(개발 기본)
 
 `config/settings.py`:
 ```python
@@ -377,7 +377,7 @@ STATICFILES_DIRS = [
 ```
 개발 중에는 `runserver`가 자동 서빙. 운영에서는 Nginx 등 별도 서빙 권장.
 
-### (6) 데이터베이스 & 마이그레이션 기본
+### 데이터베이스 & 마이그레이션 기본
 
 - 기본 SQLite 사용(시작에 충분)
 - 모델 작성 → `makemigrations` → `migrate`
@@ -424,15 +424,15 @@ python manage.py createsuperuser
 
 ---
 
-## 0-4. 설정 분리(dev/prod) — django-environ + 다중 설정 모듈
+## — django-environ + 다중 설정 모듈
 
-### (1) 왜 분리하나?
+### 왜 분리하나?
 
 - **12-Factor** 원칙: 코드와 설정 분리, 환경변수로 비밀/환경값 관리
 - 개발/운영 **동일 코드**로 **환경만 바꿔** 배포
 - 실수 방지: 디버그, 로깅 레벨, DB/캐시/도메인 등 **환경별 차이**를 명시적으로 분기
 
-### (2) django-environ으로 .env 읽기
+### django-environ으로 .env 읽기
 
 설치:
 ```bash
@@ -455,7 +455,7 @@ DJANGO_ALLOWED_HOSTS=
 DJANGO_DB_URL=
 ```
 
-### (3) settings 디렉터리 분리
+### settings 디렉터리 분리
 
 ```
 config/settings/
@@ -644,7 +644,7 @@ if __name__ == "__main__":
 
 ## 0-5. 개발 품질 기본 세팅(선택 강추)
 
-### (1) pre-commit 훅으로 포맷/린트
+### pre-commit 훅으로 포맷/린트
 
 `.pre-commit-config.yaml`:
 ```yaml
@@ -668,7 +668,7 @@ pip install pre-commit
 pre-commit install
 ```
 
-### (2) pytest/pytest-django 기본
+### pytest/pytest-django 기본
 
 `pytest.ini`:
 ```ini

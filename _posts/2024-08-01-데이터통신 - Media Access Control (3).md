@@ -33,7 +33,7 @@ category: DataCommunication
 
 ## Channelization 개념
 
-### 1) Multiplexing vs Multiple Access
+### Multiplexing vs Multiple Access
 
 헷갈리기 쉬운 두 용어:
 
@@ -51,7 +51,7 @@ category: DataCommunication
 
 ---
 
-### 2) 세 가지 기본 축
+### 세 가지 기본 축
 
 자원을 나누는 축은 크게 세 가지:
 
@@ -83,7 +83,7 @@ CDMA:  같은 f, 같은 t 을 쓰되 각 사용자마다 다른 코드 사용
 
 ## FDMA (Frequency Division Multiple Access)
 
-### 1) 개념
+### 개념
 
 **FDMA** 는 전체 주파수 대역을 여러 **좁은 채널**로 나누고,
 각 사용자에게 **서로 다른 주파수 슬롯**을 할당하는 방식이다.
@@ -115,7 +115,7 @@ $$
 
 ---
 
-### 2) 실제 예: 1G AMPS 셀룰러
+### 실제 예: 1G AMPS 셀룰러
 
 고전 **AMPS(Advanced Mobile Phone System)** 는 1세대 아날로그 셀룰러로, **FDMA** 를 사용했다.
 
@@ -142,7 +142,7 @@ $$
 
 ---
 
-### 3) 장점 / 단점
+### 장점 / 단점
 
 장점:
 
@@ -162,7 +162,7 @@ $$
 
 ---
 
-### 4) FDMA 간단 수치 예제
+### FDMA 간단 수치 예제
 
 예제 상황:
 
@@ -189,7 +189,7 @@ $$
 
 ---
 
-### 5) FDMA 간단 계산 코드 예제
+### FDMA 간단 계산 코드 예제
 
 ```python
 def fdma_num_channels(B_total_hz, B_ch_hz, B_guard_hz):
@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
 ## TDMA (Time Division Multiple Access)
 
-### 1) 개념
+### 개념
 
 **TDMA** 는 하나의 주파수 채널을 시간 축으로 나누어,
 서로 다른 사용자가 **서로 다른 시간 슬롯(time slot)** 에서 번갈아 송수신하는 방법이다.
@@ -252,7 +252,7 @@ $$
 
 ---
 
-### 2) 대표 예: GSM 2G 셀룰러
+### 대표 예: GSM 2G 셀룰러
 
 GSM(2G)는 **FDMA + TDMA** 를 조합한다.
 
@@ -275,7 +275,7 @@ GSM(2G)는 **FDMA + TDMA** 를 조합한다.
 
 ---
 
-### 3) TDMA 프레임/슬롯 구조 예시
+### TDMA 프레임/슬롯 구조 예시
 
 개념적으로 GSM downlink 한 캐리어에 대해:
 
@@ -302,7 +302,7 @@ GSM(2G)는 **FDMA + TDMA** 를 조합한다.
 
 ---
 
-### 4) 사용자 체감 비트율 계산 예시
+### 사용자 체감 비트율 계산 예시
 
 예제:
 
@@ -329,7 +329,7 @@ GSM에서 한 timeslot의 물리 비트율은 약 270.833 kbps이지만,
 
 ---
 
-### 5) TDMA의 장단점
+### TDMA의 장단점
 
 장점:
 
@@ -347,7 +347,7 @@ GSM에서 한 timeslot의 물리 비트율은 약 270.833 kbps이지만,
 
 ---
 
-### 6) TDMA 자원 할당 예제
+### TDMA 자원 할당 예제
 
 상황:
 
@@ -374,7 +374,7 @@ GSM에서 한 timeslot의 물리 비트율은 약 270.833 kbps이지만,
 
 ---
 
-### 7) 간단 TDMA 시뮬레이션 코드
+### 간단 TDMA 시뮬레이션 코드
 
 파이썬으로 아주 단순 화된 TDMA 스케줄러를 만들어 볼 수 있다.
 
@@ -432,7 +432,7 @@ if __name__ == "__main__":
 
 ## CDMA (Code Division Multiple Access)
 
-### 1) 직관적 개념
+### 직관적 개념
 
 **CDMA** 는 주파수, 시간 모두 동시에 공유하면서,
 각 사용자를 **서로 다른 코드(확산 시퀀스)** 로 구분하는 방식이다.
@@ -451,7 +451,7 @@ if __name__ == "__main__":
 
 ---
 
-### 2) Direct Sequence Spread Spectrum (DS-CDMA) 원리
+### Direct Sequence Spread Spectrum (DS-CDMA) 원리
 
 가장 널리 알려진 CDMA는 **DS-CDMA (직접 직렬 확산)** 방식이다.
 
@@ -484,7 +484,7 @@ $$G_p$$ 가 클수록:
 
 ---
 
-### 3) 다중 사용자 CDMA 수식
+### 다중 사용자 CDMA 수식
 
 동기 DS-CDMA의 간단한 베이스밴드 모델:
 
@@ -512,7 +512,7 @@ $$
 
 ---
 
-### 4) 작은 예제: 2 사용자 CDMA
+### 작은 예제: 2 사용자 CDMA
 
 정수 계열로 아주 단순한 예를 만들어 보자.
 
@@ -564,7 +564,7 @@ $$
 
 ---
 
-### 5) CDMA의 장단점
+### CDMA의 장단점
 
 장점:
 
@@ -588,7 +588,7 @@ $$
 
 ---
 
-### 6) CDMA의 처리 이득(Processing Gain) 예제
+### CDMA의 처리 이득(Processing Gain) 예제
 
 예제:
 
@@ -614,7 +614,7 @@ $$
 
 ---
 
-### 7) 간단 CDMA 합성/복원 코드 예제
+### 간단 CDMA 합성/복원 코드 예제
 
 아주 단순한 **DS-CDMA 2 사용자** 예제를 파이썬으로 흉내내 보자.
 
@@ -684,7 +684,7 @@ if __name__ == "__main__":
 
 ---
 
-### 8) CDMA의 실제 적용 (2G/3G, 이후)
+### CDMA의 실제 적용 (2G/3G, 이후)
 
 간단한 역사:
 

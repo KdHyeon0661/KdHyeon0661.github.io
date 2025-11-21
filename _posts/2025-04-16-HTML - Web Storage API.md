@@ -142,7 +142,7 @@ function migrate() {
 migrate();
 ```
 
-### TTL(만료) 지원 래퍼
+### 지원 래퍼
 
 ```js
 const ttlStore = {
@@ -238,7 +238,7 @@ window.addEventListener('storage', (e) => {
 
 ## 패턴 모음
 
-### 사용자 설정(테마/언어) 유지
+### 유지
 
 ```js
 const PFX = 'settings:';
@@ -297,7 +297,7 @@ async function getWithCache(url, ttlMs) {
 }
 ```
 
-### LRU(최근 미사용) 삭제로 쿼터 극복
+### 삭제로 쿼터 극복
 
 간단 구현: 저장 시 접근 시간 업데이트, 용량 초과 시 **가장 오래된** 키 제거.
 
@@ -338,7 +338,7 @@ lruEvictIfNeeded(() => {
 });
 ```
 
-### 타입 안전(TypeScript) 래퍼
+### 래퍼
 
 ```ts
 type StoreValue = string | number | boolean | null | object;

@@ -20,7 +20,7 @@ category: DataCommunication
 
 ## World Wide Web (WWW)
 
-### 1) WWW의 개념 — 인터넷 vs 웹
+### WWW의 개념 — 인터넷 vs 웹
 
 먼저 용어부터 정리하자.
 
@@ -64,9 +64,9 @@ category: DataCommunication
 
 ---
 
-### 2) WWW 아키텍처 — 클라이언트–서버 + 리소스 기반
+### WWW 아키텍처 — 클라이언트–서버 + 리소스 기반
 
-#### (1) 기본 구조
+#### 기본 구조
 
 텍스트로 그린 간단한 구조:
 
@@ -91,7 +91,7 @@ category: DataCommunication
 - 브라우저는 DNS, TLS(HTTPS일 때), HTTP 요청을 거쳐 서버와 통신
 - 중간에 프록시·캐시·CDN이 개입할 수 있다.
 
-#### (2) URL 구조
+#### URL 구조
 
 일반적인 URL 형식:
 
@@ -111,7 +111,7 @@ HTTP/1.1 스펙은 `http`/`https` URI 스킴과 URL의 세부 구문을 정의�
 
 ---
 
-### 3) WWW 동작 과정 예제 — “브라우저 주소창에 URL을 입력했을 때”
+### WWW 동작 과정 예제 — “브라우저 주소창에 URL을 입력했을 때”
 
 **시나리오:** 사용자가 브라우저 주소창에 `https://www.example.com/` 을 입력하고 Enter를 눌렀다.
 
@@ -180,9 +180,9 @@ HTTP/1.1 스펙은 `http`/`https` URI 스킴과 URL의 세부 구문을 정의�
 
 ## HTTP (Hypertext Transfer Protocol)
 
-### 1) HTTP 개요 — 의미와 위치
+### HTTP 개요 — 의미와 위치
 
-#### (1) HTTP의 정의
+#### HTTP의 정의
 
 HTTP는 IETF/W3C에 의해 정의된
 
@@ -195,7 +195,7 @@ HTTP는 IETF/W3C에 의해 정의된
   - 각 요청은 **독립적**이며 서버는 기본적으로 이전 요청의 상태를 기억하지 않는다.
   - 필요한 상태(로그인 정보 등)는 쿠키, 세션 ID, 토큰 등으로 구현.
 
-#### (2) HTTP의 역할
+#### HTTP의 역할
 
 - 리소스(HTML, JSON, 이미지, 동영상 등) **전송** (요청/응답)
 - 메시지 **메타데이터** 전달:
@@ -206,7 +206,7 @@ HTTP는 IETF/W3C에 의해 정의된
 
 ---
 
-### 2) HTTP의 발전 — HTTP/0.9 → 1.0 → 1.1 → 2 → 3
+### HTTP의 발전 — HTTP/0.9 → 1.0 → 1.1 → 2 → 3
 
 HTTP는 1990년대 초 이후 크게 발전해 왔다.
 
@@ -226,11 +226,11 @@ HTTP/3는 **HTTP의 “의미적 계층”(method, status code, header의 의미
 
 ---
 
-### 3) HTTP 메시지 구조 — Request / Response
+### HTTP 메시지 구조 — Request / Response
 
 HTTP는 **텍스트 기반**(HTTP/1.x 기준) 요청/응답 메시지로 동작한다.
 
-#### (1) 요청(Request) 메시지 형식
+#### 요청(Request) 메시지 형식
 
 ```http
 <메서드> <요청-대상> <버전>
@@ -252,7 +252,7 @@ Accept: text/html
 
 ```
 
-#### (2) 응답(Response) 메시지 형식
+#### 응답(Response) 메시지 형식
 
 ```http
 <버전> <상태 코드> <사유 구문>
@@ -278,9 +278,9 @@ Content-Length: 512
 
 ---
 
-### 4) HTTP 메서드와 상태 코드
+### HTTP 메서드와 상태 코드
 
-#### (1) 주요 메서드
+#### 주요 메서드
 
 | 메서드 | 용도 |
 |--------|------|
@@ -313,7 +313,7 @@ Content-Type: application/json
 {"id": 42, "name": "Kim", "email": "kim@example.org"}
 ```
 
-#### (2) 상태 코드
+#### 상태 코드
 
 상태 코드는 **세 자리 숫자**이며, 첫 자리로 클래스를 나타낸다.
 
@@ -337,11 +337,11 @@ Content-Type: text/html; charset=UTF-8
 
 ---
 
-### 5) HTTP 헤더 — 메타데이터와 제어 정보
+### HTTP 헤더 — 메타데이터와 제어 정보
 
 HTTP 헤더는 요청·응답 모두에서 사용되며, **키:값** 쌍이다.
 
-#### (1) 대표적인 헤더 예시
+#### 대표적인 헤더 예시
 
 | 범주 | 헤더 | 예 | 의미 |
 |------|------|----|------|
@@ -359,7 +359,7 @@ HTTP 헤더는 요청·응답 모두에서 사용되며, **키:값** 쌍이다.
 
 ---
 
-### 6) HTTP의 상태 없음(stateless)과 상태 유지 — 쿠키, 세션
+### HTTP의 상태 없음(stateless)과 상태 유지 — 쿠키, 세션
 
 HTTP 자체는 **stateless** 하므로, 기본적으로 서버는 요청 간의 상태를 유지하지 않는다.
 
@@ -393,18 +393,18 @@ HTTP 자체는 **stateless** 하므로, 기본적으로 서버는 요청 간의 
 
 ---
 
-### 7) 연결 관리 — HTTP/1.1 vs HTTP/2 vs HTTP/3
+### 연결 관리 — HTTP/1.1 vs HTTP/2 vs HTTP/3
 
 HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 계층(TCP/QUIC)이 담당한다.
 버전에 따라 연결 관리 방식이 크게 달라졌다.
 
-#### (1) HTTP/1.0 — 비지속 연결(Non-persistent)
+#### HTTP/1.0 — 비지속 연결(Non-persistent)
 
 - 기본적으로 **요청 1개당 TCP 연결 1개**:
   - 리소스 10개를 받으려면 최소 10번의 TCP 핸드셰이크(3-way handshake)가 필요.
 - 성능 문제가 심각해짐.
 
-#### (2) HTTP/1.1 — Persistent Connection(keep-alive)
+#### HTTP/1.1 — Persistent Connection(keep-alive)
 
 - 기본은 연결 **재사용**:
   - `Connection: keep-alive` (명시적 혹은 기본 정책)
@@ -415,7 +415,7 @@ HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 �
 - 단점:
   - 여러 요청을 직렬로 보내면, 앞 요청이 느리면 뒤 요청이 막히는 **HOL(Head-of-line) blocking** 발생.
 
-#### (3) HTTP/2 — 멀티플렉싱과 헤더 압축
+#### HTTP/2 — 멀티플렉싱과 헤더 압축
 
 - 하나의 TCP 연결 위에 여러 **스트림(stream)** 을 논리적으로 나누어,
   각 요청/응답을 독립적인 스트림으로 처리 (바이너리 프레이밍).
@@ -423,7 +423,7 @@ HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 �
   - 멀티플렉싱으로 HOL-blocking 완화 (전송 계층 수준의 HOL은 여전히 존재).
   - 헤더 압축(HPACK)으로 중복 헤더 오버헤드 감소.
 
-#### (4) HTTP/3 — QUIC 위의 HTTP
+#### HTTP/3 — QUIC 위의 HTTP
 
 - 전송 계층을 TCP → QUIC으로 변경.
 - QUIC은 **UDP 기반**의 새로운 전송 프로토콜로,
@@ -433,7 +433,7 @@ HTTP는 **애플리케이션 계층**이고, 실제 바이트 전송은 전송 �
     HTTP/2에서 TCP HOL-blocking 때문에 발생하던 지연을 크게 줄일 수 있음.
   - 0-RTT/1-RTT 핸드셰이크로 연결 수립 지연 감소.
 
-#### (5) 단순 지연 시간 모델 예시
+#### 단순 지연 시간 모델 예시
 
 아주 단순화해서, 특정 리소스를 받기까지의 시간을
 
@@ -450,24 +450,24 @@ $$
 
 ---
 
-### 8) HTTP 캐싱 — 브라우저와 중간 캐시의 동작
+### HTTP 캐싱 — 브라우저와 중간 캐시의 동작
 
 HTTP는 캐싱 메커니즘을 매우 정교하게 정의한다.
 
-#### (1) 캐시 계층
+#### 캐시 계층
 
 1. 브라우저 캐시
 2. 프록시 캐시(사내 프록시, ISP 캐시)
 3. CDN 캐시(Cloudflare, Akamai 등)
 
-#### (2) 주요 헤더
+#### 주요 헤더
 
 - `Cache-Control`: `max-age=3600`, `no-cache`, `no-store`, `public`, `private` 등
 - `ETag`: 리소스 버전 식별자
 - `Last-Modified`: 최종 수정 시각
 - `If-None-Match`, `If-Modified-Since`: 조건부 요청(Conditional Request)에 사용
 
-#### (3) 예제: 이미지 캐싱
+#### 예제: 이미지 캐싱
 
 1. 첫 요청
 
@@ -499,12 +499,12 @@ HTTP는 캐싱 메커니즘을 매우 정교하게 정의한다.
 
 ---
 
-### 9) HTTP 예제 — 간단한 서버/클라이언트 코드
+### HTTP 예제 — 간단한 서버/클라이언트 코드
 
 여기서는 HTTP **프로토콜**에 집중하므로,
 코드는 “HTTP 메시지가 실제로 어떤 식으로 오가는지”를 보이기 위한 최소 예제만 다룬다.
 
-#### (1) Python으로 만드는 초간단 HTTP 서버 (학습용)
+#### Python으로 만드는 초간단 HTTP 서버 (학습용)
 
 ```python
 # simple_http_server.py
@@ -544,7 +544,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 실행 후 브라우저에서 `http://localhost:8080/` 으로 접속하면
 위에서 설명한 구조 그대로 HTTP 요청/응답이 오가는 것을 볼 수 있다.
 
-#### (2) `curl`로 직접 HTTP 메시지 보기
+#### `curl`로 직접 HTTP 메시지 보기
 
 터미널에서:
 

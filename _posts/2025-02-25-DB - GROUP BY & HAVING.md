@@ -337,7 +337,7 @@ HAVING SUM(total_amount) >= 500
 ORDER BY total DESC;
 ```
 
-### 월별/상태별 매출(조건부 집계) + 월 버킷팅
+### + 월 버킷팅
 
 ```sql
 -- SQL Server
@@ -386,7 +386,7 @@ GROUP BY GROUPING SETS (
 );
 ```
 
-### DAU/WAU/MAU(일/주/월 활성 사용자) — DISTINCT + 버킷팅
+### — DISTINCT + 버킷팅
 
 ```sql
 -- MySQL 예시: 월별 활성 사용자
@@ -481,7 +481,7 @@ WHERE total_amt >= 10000; -- 예: VIP 기준
 
 ---
 
-## 부록) 추가 예제 모음
+## 추가 예제 모음
 
 ### A. 집계 결과에 별칭 사용 (ORDER BY, HAVING)
 

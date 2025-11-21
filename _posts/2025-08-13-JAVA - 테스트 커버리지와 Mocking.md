@@ -175,7 +175,7 @@ $$
 
 ---
 
-## 뮤테이션 테스트(PIT) — 테스트 ‘힘’ 점검
+## — 테스트 ‘힘’ 점검
 
 일반 커버리지는 “실행” 여부만 알려준다. **PIT**는 산술/조건 연산자 등을 변형해 **테스트가 실패를 일으키는지**로 *질*을 측정한다.
 
@@ -302,7 +302,7 @@ assertEquals("bob@ex.com", to.getValue());
 assertTrue(body.getValue().contains("bob"));
 ```
 
-### Spy(부분 모킹) — 안전 패턴
+### — 안전 패턴
 
 ```java
 List<String> real = new ArrayList<>();

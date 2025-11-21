@@ -4,7 +4,7 @@ title: Java - Stream의 개념, InputStream, OutputStream
 date: 2025-07-29 16:20:23 +0900
 category: Java
 ---
-# 스트림(Stream) 개념과 `InputStream`/`OutputStream`
+# 개념과 `InputStream`/`OutputStream`
 
 ## 스트림 기본 개념
 
@@ -15,7 +15,7 @@ category: Java
   - **출력 스트림**: 프로그램 → 싱크/목적지 (`OutputStream`)
 - **순차 접근**이 기본: 임의 접근(시크)은 `RandomAccessFile` 또는 NIO의 `SeekableByteChannel`/`FileChannel` 사용.
 
-### 추상화 계층과 데코레이터(필터) 패턴
+### 패턴
 
 - 기반 자원: 파일, 소켓, 메모리, 파이프, 압축 파일 등.
 - **데코레이터 체인**으로 기능을 합성:

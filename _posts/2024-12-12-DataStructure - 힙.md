@@ -4,7 +4,7 @@ title: Data Structure - 힙
 date: 2024-12-12 19:20:23 +0900
 category: Data Structure
 ---
-# 힙(Heap) — 우선순위를 다루는 강력한 트리 구조
+# — 우선순위를 다루는 강력한 트리 구조
 
 기존 초안의 핵심(정의·종류·배열 인덱싱·간단 MaxHeap/MinHeap·`priority_queue`·힙정렬·응용)을 유지하면서 다음을 대폭 확장한다.
 
@@ -219,7 +219,7 @@ std::priority_queue<int, std::vector<int>, std::greater<int>> minpq; // 최소 �
 
 ---
 
-## d-ary 힙(특히 4-ary 힙) — 팬아웃으로 상수 줄이기
+## — 팬아웃으로 상수 줄이기
 
 - 이진 힙의 자식 2개 → **d개**로 확장
 - **장점**: 트리 높이 감소 → `sift_down` 비교 단계 수 감소
@@ -326,7 +326,7 @@ public:
 
 ---
 
-## 힙 정렬(Heap Sort) — 불안정, In-place \(O(n \log n)\)
+## — 불안정, In-place \(O(n \log n)\)
 
 ### `std::make_heap`/`sort_heap` 활용(in-place)
 
@@ -363,7 +363,7 @@ void heap_sort2(std::vector<int>& arr){
 
 ## 실전 응용 레시피
 
-### 스트리밍 Top-K(최대값 K개 유지) — 최소 힙 크기 K
+### — 최소 힙 크기 K
 
 ```cpp
 ```cpp
@@ -384,7 +384,7 @@ std::vector<int> topK(const std::vector<int>& a, int K){
 ```
 ```
 
-### 스트리밍 중간값(Running Median) — 두 힙
+### — 두 힙
 
 - **max-heap**(왼쪽 절반), **min-heap**(오른쪽 절반) 유지
 - 균형을 맞춰 두 힙 사이 크기 차가 1 이하가 되도록
@@ -519,7 +519,7 @@ $$
 
 ---
 
-## 퍼징(간단 검증) — 힙 vs `priority_queue`
+## — 힙 vs `priority_queue`
 
 ```cpp
 ```cpp

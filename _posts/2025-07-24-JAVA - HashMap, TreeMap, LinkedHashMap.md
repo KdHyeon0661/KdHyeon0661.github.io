@@ -88,7 +88,7 @@ $$
 
 ### 실전 레시피
 
-#### A) 빈도수 계산(가독성/성능 우수)
+#### 빈도수 계산(가독성/성능 우수)
 
 ```java
 import java.util.*;
@@ -103,7 +103,7 @@ public class Freq {
 }
 ```
 
-#### B) 다중값 맵(리스트 누적)
+#### 다중값 맵(리스트 누적)
 
 ```java
 Map<String, List<Integer>> idx = new HashMap<>();
@@ -112,7 +112,7 @@ idx.computeIfAbsent("k", k -> new ArrayList<>()).add(2);
 System.out.println(idx.get("k")); // [1,2]
 ```
 
-#### C) 초기 용량 최적화(대량 put)
+#### 초기 용량 최적화(대량 put)
 
 ```java
 int expected = 1_000_000;
@@ -377,7 +377,7 @@ public class MapLandscape {
 
 ---
 
-## 부록) ASCII 도식
+## ASCII 도식
 
 ### HashMap (버킷/체이닝/트리화)
 

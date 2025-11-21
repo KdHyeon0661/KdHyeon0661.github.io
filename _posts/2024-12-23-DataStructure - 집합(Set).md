@@ -168,7 +168,7 @@ ci.insert("ALPHA"); ci.insert("alpha"); // 중복 취급 → 하나만 저장
 
 ---
 
-## 투명 비교자 — 이형(heterogeneous) 조회 최적화
+## 조회 최적화
 
 복사 없이 `string_view`로 검색하려면 **투명 비교자**:
 

@@ -358,7 +358,7 @@ CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
 
 ---
 
-## UDF(사용자 정의 함수) — 성능·보안·가이드
+## — 성능·보안·가이드
 
 ### 유형
 
@@ -441,7 +441,7 @@ GROUP BY ym_first
 ORDER BY ym_first;
 ```
 
-### “이동 7일 합(윈도) + 주말 제외(조건부)”
+### + 주말 제외(조건부)”
 
 ```sql
 -- MySQL: 주말 제외는 CASE로 0 처리
@@ -501,7 +501,7 @@ FROM dbo.order_items
 GROUP BY product_id;
 ```
 
-### “정규식 치환(이메일 도메인 표준화) — MySQL”
+### — MySQL”
 
 ```sql
 -- MySQL 8.0: REGEXP_REPLACE
@@ -545,7 +545,7 @@ ORDER BY dt DESC, id DESC;
 
 ---
 
-## 부록 A) 빠른 참조 테이블
+## 빠른 참조 테이블
 
 ### A.1 문자열 핵심
 
@@ -578,7 +578,7 @@ SELECT ISNULL(1.0 * num / NULLIF(den,0), 0);
 
 ---
 
-## 부록 B) 샘플 스키마(공통)
+## 샘플 스키마(공통)
 
 ```sql
 -- MySQL

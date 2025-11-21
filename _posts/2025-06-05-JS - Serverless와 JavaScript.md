@@ -189,7 +189,7 @@ export const handler = async (event) => {
 
 ---
 
-### Webhook 수신(Stripe 예시) + 서명 검증 (Vercel Edge)
+### + 서명 검증 (Vercel Edge)
 
 ```js
 // app/api/stripe/route.js (Next 13+ Route Handler, Edge)

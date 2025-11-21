@@ -274,7 +274,7 @@ Got permission denied while trying to connect to the Docker daemon socket...
 ```
 대응:
 ```bash
-# (리눅스) 유저를 docker 그룹에 추가 후 재로그인
+# 유저를 docker 그룹에 추가 후 재로그인
 
 sudo usermod -aG docker $USER
 ```

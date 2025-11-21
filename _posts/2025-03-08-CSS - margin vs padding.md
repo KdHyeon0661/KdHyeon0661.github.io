@@ -87,7 +87,7 @@ category: CSS
 
 ---
 
-## margin collapse(마진 겹침) — 반드시 알아야 할 규칙
+## — 반드시 알아야 할 규칙
 
 **상하 방향 블록 마진**끼리는 종종 **겹쳐서 하나로** 계산됩니다. 대표 규칙:
 
@@ -188,7 +188,7 @@ p { margin: 20px 0; }
 
 ---
 
-## 안전 영역(iOS Notch) — env()와 padding
+## — env()와 padding
 
 모바일 브라우저 상단 노치/하단 홈 인디케이터를 피하려면 **padding + safe area**:
 

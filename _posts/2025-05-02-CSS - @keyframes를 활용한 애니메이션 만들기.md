@@ -158,7 +158,7 @@ el.addEventListener('animationend', () => console.log('done'));
 }
 ```
 
-### 직렬(순차) — `animation-delay` 활용
+### — `animation-delay` 활용
 
 ```css
 .item:nth-child(1) { animation-delay: 0ms; }

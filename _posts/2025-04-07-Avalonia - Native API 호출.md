@@ -177,7 +177,7 @@ Bluetooth는 **플랫폼별 스택이 완전히 다르므로** P/Invoke만으로
 - **InTheHand.Bluetooth(32feet)**, 일부 시나리오에서 BLE 스캔/연결을 공통 API로 다룰 수 있습니다.
 - 또는 Xamarin/MAUI 바인딩처럼 **플랫폼별 래퍼**를 만든 뒤 **공통 인터페이스**로 감쌉니다.
 
-#### 예) InTheHand.Bluetooth 사용 스케치
+#### InTheHand.Bluetooth 사용 스케치
 
 ```csharp
 // Install-Package InTheHand.BluetoothLE
@@ -215,7 +215,7 @@ public sealed class CrossPlatformBleService : IBluetoothService
   데스크톱에서 UWP/WinRT API 호출은 **권한/매니페스트 구성**이 필요.
 - 실무에선 InTheHand 같은 래퍼가 초기 생산성을 크게 올립니다.
 
-### Linux(BlueZ) — DBus 접근
+### — DBus 접근
 
 - `org.bluez.Adapter1`, `org.bluez.Device1`, `org.bluez.GattCharacteristic1`를 DBus로 호출
 - .NET에선 `Tmds.DBus` 같은 라이브러리 사용

@@ -120,7 +120,7 @@ az aks get-credentials -g rg-aks -n demo
 kubectl get nodes
 ```
 
-#### AGIC(앱 게이트웨이) 인그레스(개념)
+#### 인그레스(개념)
 
 ```bash
 # App Gateway 생성 후 AGIC 애드온 활성화(az aks enable-addons --addons ingress-appgw ...)
@@ -331,7 +331,7 @@ $$
 
 ---
 
-## 데모 매니페스트(공통) — 웹+HPA+PVC
+## — 웹+HPA+PVC
 
 ```yaml
 apiVersion: apps/v1

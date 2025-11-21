@@ -39,7 +39,7 @@ category: 웹해킹
 
 ---
 
-# 안전한 재현(테스트 전용) — **우리 앱이 Host를 신뢰하는지** 확인
+# — **우리 앱이 Host를 신뢰하는지** 확인
 
 > **반드시 사내 스테이징/개인 랩**에서만. 운영/외부 타 시스템 금지.
 
@@ -157,7 +157,7 @@ route_config:
     routes:
       - match: { prefix: "/" }
         route: { cluster: app }
-# (추가) header-to-add/delete 로 XFH 제거 가능
+# header-to-add/delete 로 XFH 제거 가능
 
 ```
 
@@ -228,7 +228,7 @@ app.post("/api/v1/reset/start", async (req, res) => {
 });
 ```
 
-### (선택) 다테넌트 — **명시적 매핑**만 허용
+### 다테넌트 — **명시적 매핑**만 허용
 
 ```js
 // 예: tenant.example.com → tenantId

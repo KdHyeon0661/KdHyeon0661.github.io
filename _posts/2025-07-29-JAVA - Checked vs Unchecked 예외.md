@@ -76,7 +76,7 @@ try (var br = new java.io.BufferedReader(new java.io.FileReader("in.txt"))) {
 
 ---
 
-## 억제(Suppressed) 예외 — try-with-resources의 숨은 핵심
+## 예외 — try-with-resources의 숨은 핵심
 
 자원 닫기(`close`) 중 발생한 예외는 **억제(suppressed)** 되어 **주 예외**에 연결됩니다.
 

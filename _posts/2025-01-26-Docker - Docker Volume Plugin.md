@@ -183,12 +183,12 @@ docker run -d --mount type=volume,source=gpd-1,target=/data busybox sleep 3600
 
 ---
 
-## 오브젝트 스토리지(S3/MinIO) — FUSE로 “마운트처럼” 쓰기
+## — FUSE로 “마운트처럼” 쓰기
 
 > 오브젝트 스토리지는 **디렉터리/원자성/락/퍼미션**이 파일시스템과 다릅니다.
 > DB/트랜잭션/빈번한 작은 쓰기에는 부적합. 정적 파일/백업/로그 적합.
 
-### s3fs (FUSE) 설치/자격증명
+### 설치/자격증명
 
 ```bash
 sudo apt update && sudo apt install -y s3fs
@@ -450,7 +450,7 @@ docker run --mount type=bind,source=/host/path,target=/path image
 
 ---
 
-## 부록) 비용/성능 직관 수식
+## 비용/성능 직관 수식
 
 스토리지 선택 시 단순화된 의사결정:
 $$

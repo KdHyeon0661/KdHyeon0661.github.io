@@ -131,17 +131,17 @@ nginx-service    NodePort   10.96.22.121   <none>        80:30080/TCP   1m
 
 ## 외부에서 접근 테스트
 
-### 방법 1) Minikube
+### Minikube
 
 ```bash
 minikube service nginx-service
 ```
 → 브라우저에서 Nginx 환영 페이지가 열린다.
 
-### 방법 2) NodePort 직접 접근
+### NodePort 직접 접근
 
 ```bash
-# 클러스터 노드(또는 Minikube IP) 조회
+# 조회
 
 kubectl get nodes -o wide
 minikube ip   # Minikube일 때

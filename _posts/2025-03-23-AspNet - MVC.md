@@ -419,7 +419,7 @@ public class ProductsController : Controller
 
 ---
 
-## 라우팅: 전통/특성(Attribute) 라우팅
+## 라우팅
 
 ### 전통 라우팅(Program.cs)
 
@@ -683,7 +683,7 @@ public async Task Details_NotFound_WhenMissing()
 
 ---
 
-## 부록) 간단 수식으로 보는 페이지네이션 비용 직관
+## 간단 수식으로 보는 페이지네이션 비용 직관
 
 페이지 크기 \( k \), 총 레코드 \( N \), 원하는 페이지 \( p \)에서
 `Skip((p-1) * k).Take(k)`의 **논리적 건너뛰기 비용**은 대략

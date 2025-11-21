@@ -155,7 +155,7 @@ FROM   v$sql_shared_cursor
 WHERE  sql_id = :sql_id;
 ```
 
-### Child Cursor(버전) 분기 — 왜 늘어나는가?
+### 분기 — 왜 늘어나는가?
 
 - **바인드 타입/길이 상이**, **NLS 설정 차이**, **환경 파라미터 차이**
 - **Bind Peeking** → **Adaptive Cursor Sharing(ACS)** 로 **바인드 값 분포** 따라 다른 플랜
@@ -265,7 +265,7 @@ WHERE  sql_id = :sql_id;
 
 ---
 
-## Invalidation(무효화) — 언제/왜 생기나?
+## — 언제/왜 생기나?
 
 - **DDL**(테이블 구조 변경, 인덱스 생성/삭제)
 - **통계 갱신**(표본/히스토그램)으로 선택도 변동

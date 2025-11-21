@@ -141,7 +141,7 @@ GROUP  BY s.status;
 
 ---
 
-## 테이블 프리페치(Table Prefetch) — Batched Table Access
+## — Batched Table Access
 
 ### 개념
 
@@ -195,7 +195,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PEEKED_BINDS'))
 
 ## 인덱스·테이블 프리페치 **시나리오별** 실전 예
 
-### 목록(Top-N) + 상세 혼합 흐름
+### + 상세 혼합 흐름
 
 **목록(Top-N) — 인덱스 프리페치가 핵심**
 

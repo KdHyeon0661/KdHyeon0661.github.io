@@ -179,7 +179,7 @@ end
 
 ### `init/1` + `handle_continue/2` — 부트스트랩과 무거운 초기화 분리
 
-#### 1) `init/1`의 책임
+#### `init/1`의 책임
 
 - 최초 상태(state) 생성
 - ETS/Agent/하위 프로세스 등 **필수 의존성** 초기화
@@ -205,7 +205,7 @@ end
 - 초기 상태는 `%{table: table, last_ping: nil}`.
 - 그리고 `{:continue, :warmup}`를 통해 **추가 초기화 단계**를 예약한다.
 
-#### 2) `handle_continue/2` — 초기화의 2단계
+#### `handle_continue/2` — 초기화의 2단계
 
 ```elixir
 @impl true

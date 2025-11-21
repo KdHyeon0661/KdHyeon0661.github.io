@@ -124,7 +124,7 @@ dotnet watch
 
 ---
 
-## Live Preview(Previewer) 극대화
+## 극대화
 
 ### XAML 미리보기 패널
 

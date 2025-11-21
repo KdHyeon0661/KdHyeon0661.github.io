@@ -32,7 +32,7 @@ category: DataCommunication
 
 ### DVMRP (Distance Vector Multicast Routing Protocol)
 
-#### 1) 개요
+#### 개요
 
 DVMRP는 이름 그대로 **distance-vector 스타일 멀티캐스트 라우팅 프로토콜**이다.
 RFC 1075에서 정의되었고, 초창기 Internet 멀티캐스트 백본(Mbone)에서 쓰였다.
@@ -44,7 +44,7 @@ RFC 1075에서 정의되었고, 초창기 Internet 멀티캐스트 백본(Mbone)
   즉 RPF 기반 **flood & prune** 방식으로 전달
 - **Intradomain** 용도 (IGP 같은 역할), 도메인 사이에는 부적합하다고 명시
 
-#### 2) DVMRP의 라우팅/포워딩 구조
+#### DVMRP의 라우팅/포워딩 구조
 
 DVMRP 라우터는 크게 두 표를 가진다고 보면 된다.
 
@@ -61,7 +61,7 @@ DVMRP 라우터는 크게 두 표를 가진다고 보면 된다.
 - 수신자가 없는 쪽은 **Prune 메시지**로 가지를 잘라냄
 - 토폴로지 변화나 Prune 타이머 만료 시 다시 flood
 
-#### 3) Flood & Prune 알고리즘 (RPM)
+#### Flood & Prune 알고리즘 (RPM)
 
 간단한 예시 토폴로지를 보자.
 
@@ -102,7 +102,7 @@ DVMRP 라우터는 크게 두 표를 가진다고 보면 된다.
 
 ---
 
-#### 4) 예제: 단순 DVMRP 상태 표
+#### 예제: 단순 DVMRP 상태 표
 
 아주 단순화된 forwarding cache 예시(각 라우터에서):
 
@@ -118,7 +118,7 @@ DVMRP 라우터는 크게 두 표를 가진다고 보면 된다.
 
 ---
 
-#### 5) 장점 / 단점
+#### 장점 / 단점
 
 장점:
 
@@ -137,7 +137,7 @@ DVMRP 라우터는 크게 두 표를 가진다고 보면 된다.
 
 ### MOSPF (Multicast OSPF)
 
-#### 1) 개요
+#### 개요
 
 MOSPF(Multicast Open Shortest Path First)는 RFC 1584에서 정의된,
 **OSPF 링크 상태 라우팅 프로토콜에 멀티캐스트 라우팅을 추가한 확장 세트**다.
@@ -153,7 +153,7 @@ MOSPF(Multicast Open Shortest Path First)는 RFC 1584에서 정의된,
 > IGMP로 수집한 그룹 멤버 정보를 LSDB에 얹어서
 > 최단 경로 멀티캐스트 트리를 바로 계산하자.”
 
-#### 2) MOSPF 데이터 구조
+#### MOSPF 데이터 구조
 
 MOSPF 라우터는 기본적으로 OSPF 라우터와 동일한 구성에 다음이 추가된다.
 
@@ -168,7 +168,7 @@ MOSPF 라우터는 기본적으로 OSPF 라우터와 동일한 구성에 다음�
 
 ---
 
-#### 3) 멀티캐스트 트리 계산
+#### 멀티캐스트 트리 계산
 
 MOSPF는 패킷이 처음 들어왔을 때, **그룹 G에 대한 (S,G) SPT를 on-demand로 계산**하는 방식을 사용한다.
 
@@ -182,7 +182,7 @@ MOSPF는 패킷이 처음 들어왔을 때, **그룹 G에 대한 (S,G) SPT를 on
 - MOSPF는 **그룹마다** 또는 **(S,G)마다** 이 계산을 수행
   → 그룹/소스 수가 많으면 CPU 부담이 커진다.
 
-#### 4) 예제: 간단한 MOSPF 영역
+#### 예제: 간단한 MOSPF 영역
 
 ```text
 Area 0
@@ -209,7 +209,7 @@ Area 0
 
 ---
 
-#### 5) MOSPF의 한계와 현재 위치
+#### MOSPF의 한계와 현재 위치
 
 장점:
 
@@ -230,7 +230,7 @@ Area 0
 
 ### PIM (Protocol Independent Multicast)
 
-#### 1) 개요
+#### 개요
 
 PIM(Protocol Independent Multicast)은 이름 그대로
 **특정 unicast 라우팅 프로토콜에 종속되지 않는 멀티캐스트 라우팅 패밀리**이다.
@@ -248,7 +248,7 @@ PIM(Protocol Independent Multicast)은 이름 그대로
 
 ---
 
-#### 2) 공통 개념 – PIM이 “Protocol Independent”인 이유
+#### 공통 개념 – PIM이 “Protocol Independent”인 이유
 
 PIM은 “멀티캐스트 전용” 라우팅 테이블을 갖지 않는다.
 
@@ -263,7 +263,7 @@ PIM은 “멀티캐스트 전용” 라우팅 테이블을 갖지 않는다.
 
 ---
 
-#### 3) PIM-Dense Mode (PIM-DM)
+#### PIM-Dense Mode (PIM-DM)
 
 PIM-DM은 DVMRP와 유사한 **flood & prune, dense-mode** 프로토콜이다.
 
@@ -305,7 +305,7 @@ PIM-DM은 DVMRP와 유사한 **flood & prune, dense-mode** 프로토콜이다.
 
 ---
 
-#### 4) PIM-Sparse Mode (PIM-SM)
+#### PIM-Sparse Mode (PIM-SM)
 
 PIM-SM은 2020년대 실무에서 가장 널리 쓰이는 멀티캐스트 라우팅 프로토콜이다.
 
@@ -373,7 +373,7 @@ PIM-SM은 2020년대 실무에서 가장 널리 쓰이는 멀티캐스트 라우
 
 ---
 
-#### 5) PIM-SSM / Bidirectional PIM 한줄 정리
+#### PIM-SSM / Bidirectional PIM 한줄 정리
 
 **PIM-SSM (Source-Specific Multicast)**
 
@@ -390,7 +390,7 @@ PIM-SM은 2020년대 실무에서 가장 널리 쓰이는 멀티캐스트 라우
 
 ---
 
-#### 6) Intradomain에서의 프로토콜 선택
+#### Intradomain에서의 프로토콜 선택
 
 정리하면, 하나의 AS 내부(Intradomain)에서 멀티캐스트를 설계할 때:
 
@@ -466,7 +466,7 @@ BGP-4는 원래 Unicast 용도였지만,
 
 ### MSDP (Multicast Source Discovery Protocol)
 
-#### 1) 개요
+#### 개요
 
 MSDP는 **여러 개의 PIM-SM 도메인(각자 독립적인 RP를 가진 도메인)** 을
 서로 연결하기 위한 프로토콜이다.
@@ -476,7 +476,7 @@ MSDP는 **여러 개의 PIM-SM 도메인(각자 독립적인 RP를 가진 도메
 - IPv4 ASM(Any-Source Multicast) 환경에서 사실상 표준처럼 쓰였다.
 - TCP 포트 639 위에서 동작, **각 도메인의 RP들끼리 peer 관계**를 맺는다.
 
-#### 2) 동작 개념
+#### 동작 개념
 
 PIM-SM 환경을 생각해보자.
 
@@ -493,7 +493,7 @@ MSDP는 다음 구조를 사용한다.
   - “우리 도메인에 이 그룹 G 수신자가 있나?” 확인
   - 있다면, PIM-SM Join(S,G)를 소스 도메인 쪽으로 보내 SPT를 형성
 
-#### 3) 예제: 두 PIM-SM 도메인 연결
+#### 예제: 두 PIM-SM 도메인 연결
 
 ```text
 Domain A (AS 65001)         Domain B (AS 65002)
@@ -515,7 +515,7 @@ Group G = 239.1.1.1
      - S_A 도메인까지 SPT를 형성
 4. 이제 S_A → R_B 트래픽이 interdomain으로 흐르게 된다.
 
-#### 4) MSDP의 한계와 현대 설계
+#### MSDP의 한계와 현대 설계
 
 장점:
 
@@ -532,7 +532,7 @@ Group G = 239.1.1.1
 
 ---
 
-### SSM( Source-Specific Multicast ) 기반 Interdomain
+### 기반 Interdomain
 
 SSM 모델에서는 수신자가 **(S,G) 채널을 명시적으로 구독**한다.
 
@@ -573,7 +573,7 @@ Interdomain 관점에서:
 
 ---
 
-### Multicast VPN (MVPN) 및 프로바이더 네트워크
+### 및 프로바이더 네트워크
 
 대형 서비스 제공자(Provider)는 하나의 MPLS/IP 백본 위에서
 다수 고객(Enterprise)에게 **L3VPN** 서비스를 제공한다.

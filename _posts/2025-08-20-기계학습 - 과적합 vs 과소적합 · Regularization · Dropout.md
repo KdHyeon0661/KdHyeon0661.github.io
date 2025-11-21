@@ -6,7 +6,7 @@ category: 기계학습
 ---
 # 과적합 vs 과소적합 · Regularization · Dropout
 
-## 과적합(Overfitting) vs 과소적합(Underfitting)
+## vs 과소적합(Underfitting)
 
 ### 개념 요약
 
@@ -43,7 +43,7 @@ $$
 
 ---
 
-## Regularization(정규화) — 수학·직관·레시피
+## — 수학·직관·레시피
 
 ### 목적 함수(일반형)
 
@@ -61,7 +61,7 @@ $$
 - 큰 가중치 억제 → **매끄러운 함수** 선호, 과적합 완화
 - **베이지안 해석**: \(w\sim \mathcal N(0,\tau^2 I)\) 사전과 동치
 
-### L1 (Lasso) — 희소성
+### — 희소성
 
 $$
 \Omega(\theta)=\|w\|_1=\sum_j |w_j|
@@ -132,7 +132,7 @@ $$
 
 ---
 
-## 데이터 증강(Data Augmentation) 레시피
+## 레시피
 
 ### Computer Vision
 
@@ -222,7 +222,7 @@ for name, pipe in pipelines.items():
     print(classification_report(y, yhat, digits=3))
 ```
 
-### PyTorch — AdamW(Decoupled WD) + Dropout + EarlyStopping + MixUp/LabelSmoothing
+### + Dropout + EarlyStopping + MixUp/LabelSmoothing
 
 ```python
 import torch, torch.nn as nn, torch.optim as optim
@@ -395,7 +395,7 @@ def plot_curves(history):
     plt.show()
 ```
 
-### 정규화 경로(λ에 따른 계수 크기) — 개념 스케치
+### — 개념 스케치
 
 - L1: \(\lambda\uparrow\) → **계수 0**로 수축(희소)
 - L2: \(\lambda\uparrow\) → **연속적 수축**, 0은 드뭄

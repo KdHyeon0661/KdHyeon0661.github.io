@@ -222,7 +222,7 @@ void RenderWithLayout() {
 
 ---
 
-## 컬러 폰트(이모지) & 폰트 폴백
+## & 폰트 폴백
 
 ### 6-1. 컬러 폰트 활성화 포인트
 
@@ -286,7 +286,7 @@ layout2->SetTypography(typo.Get(), rng);
 
 ---
 
-## 복합 스크립트(Complex Script) & BiDi
+## & BiDi
 
 ### 8-1. 언어/로케일 설정
 

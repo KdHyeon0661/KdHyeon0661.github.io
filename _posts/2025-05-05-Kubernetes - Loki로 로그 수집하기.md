@@ -172,7 +172,7 @@ helm upgrade --install loki grafana/loki-stack \
   -n loki-stack -f values-loki.yaml
 ```
 
-### 오브젝트 스토리지(S3) 사용(중·대규모 권장)
+### 사용(중·대규모 권장)
 
 ```yaml
 loki:
@@ -238,7 +238,7 @@ pipeline_stages:
 - `output`로 메시지 본문을 치환.
 - 민감 정보 마스킹 예시 포함.
 
-### 멀티라인(Go/Java 스택트레이스) 묶기
+### 묶기
 
 ```yaml
 pipeline_stages:
@@ -351,7 +351,7 @@ sum by (method) (count_over_time({app="web"}[1m]))
 
 테이블 변환, 필드 강조(Highlighter), 라벨 표시 여부를 조정한다.
 
-### 로그 기반 지표화(Log-to-metrics) 패턴
+### 패턴
 
 - `count_over_time`/`rate`로 수치화
 - Graph 패널에 Time series로 표시

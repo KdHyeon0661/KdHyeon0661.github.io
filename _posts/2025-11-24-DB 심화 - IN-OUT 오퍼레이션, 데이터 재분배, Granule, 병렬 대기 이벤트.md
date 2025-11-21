@@ -10,7 +10,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 공통 스키마 & 데이터
+## 실습 공통 스키마 & 데이터
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -73,7 +73,7 @@ END;
 
 ---
 
-# 1) **IN-OUT 오퍼레이션**: 실행계획의 `IN-OUT` 열 해석
+# **IN-OUT 오퍼레이션**: 실행계획의 `IN-OUT` 열 해석
 
 `DBMS_XPLAN.DISPLAY[_CURSOR]`에 `+PARALLEL`을 붙이면, 각 오퍼레이터의 **데이터 흐름 방향**이 `IN-OUT` 컬럼으로 나온다.
 
@@ -122,7 +122,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +PARTITION +ALIAS +NO
 
 ---
 
-# 2) **데이터 재분배(Distribution)**: `PX SEND/RECEIVE`와 `TQ`
+# **데이터 재분배(Distribution)**: `PX SEND/RECEIVE`와 `TQ`
 
 병렬 조인/집계는 **키 균형**을 맞추려고 **데이터를 섞는다**. 실행계획에는 `PX SEND XXX` / `PX RECEIVE`와 함께 `TQ####`가 표시된다.
 
@@ -165,7 +165,7 @@ JOIN   fact_sales  f
 > - **대-대** 조인: **HASH-HASH** 기본, 스큐 있으면 **SALT**·**복합 키**·**파티션 정렬** 고려
 > - **파티션 정렬** 가능: **PARTITION-WISE**로 최고 효율
 
-## 스큐(TQ 불균형) 감지
+## 감지
 
 ```sql
 -- 각 TQ(테이블 큐)의 송수신 로우/바이트 분포 확인
@@ -184,7 +184,7 @@ ORDER  BY qcsid, server_set, server#;
 
 ---
 
-# 3) **Granule(그라뉼)**: PX가 나눠서 먹는 **작업 조각**
+# **Granule(그라뉼)**: PX가 나눠서 먹는 **작업 조각**
 
 병렬 스캔/집계는 데이터를 **Granule** 단위로 나누어 **PX 서버에 동적 할당**한다.
 
@@ -223,7 +223,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARTITION +PARALLEL'));
 
 ---
 
-# 4) 병렬 처리 과정에서 발생하는 **대기 이벤트**
+# 병렬 처리 과정에서 발생하는 **대기 이벤트**
 
 병렬 실행은 **두 종류**의 대기를 주로 본다:
 1) **메시징/큐잉(PX Deq 계열, Admission Queue)**
@@ -249,7 +249,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARTITION +PARALLEL'));
 - **`enq: PS - contention`**
   - 병렬 문장(enqueue) 자원 경합. **병렬 서버 부족** 등.
 
-## I/O(Direct Path) & Temp
+## & Temp
 
 - **`direct path read` / `direct path read temp`**
   - 병렬 스캔/소트/해시에서 **버퍼 캐시 우회** **직접 I/O**.
@@ -266,7 +266,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARTITION +PARALLEL'));
 
 ---
 
-# 5) 종합 실습: 플랜/통계로 흐름 읽기
+# 종합 실습: 플랜/통계로 흐름 읽기
 
 ## 조인 + 재분배 패턴 비교
 
@@ -320,7 +320,7 @@ ORDER  BY qcsid, server_set, server#;
 
 ---
 
-# 6) 병목 원인별 **해결 전략**
+# 병목 원인별 **해결 전략**
 
 ## `PX Deq Credit: send blkd`(Producer 막힘)
 
@@ -355,7 +355,7 @@ ORDER  BY qcsid, server_set, server#;
 
 ---
 
-# 7) 설계 팁: **IN-OUT**/재분배를 줄이는 방향
+# 설계 팁: **IN-OUT**/재분배를 줄이는 방향
 
 - **Partition-wise Join**: 테이블을 **같은 파티션키/경계**로 설계 → `P->P` **최소화**
 - **로컬 인덱스(Prefixed/Non-Prefixed)**로 **프루닝+리딩컬럼**을 동시에 잡는다
@@ -365,7 +365,7 @@ ORDER  BY qcsid, server_set, server#;
 
 ---
 
-# 8) 미니 랩: 스큐 유발 → 개선 비교
+# 미니 랩: 스큐 유발 → 개선 비교
 
 ```sql
 -- 1) 스큐 유발: cust_id=202 비중이 매우 큰 상태라고 가정
@@ -390,7 +390,7 @@ FROM fact_sales f JOIN dim_customer c ON c.cust_id=f.cust_id;
 
 ---
 
-# 9) 부록: 유용한 뷰/힌트 리스트
+# 부록: 유용한 뷰/힌트 리스트
 
 - **뷰**
   - `V$PQ_TQSTAT` : TQ별 송수신 로우/바이트(스큐 확인)
@@ -404,7 +404,7 @@ FROM fact_sales f JOIN dim_customer c ON c.cust_id=f.cust_id;
 
 ---
 
-## 10) 한눈 요약
+## 한눈 요약
 
 - **IN-OUT**: `S->P / P->P / P->S / PCWC/PCWP` → **데이터 흐름**과 **TQ 유무**를 읽는 창
 - **재분배**: `PX SEND {HASH|BROADCAST|RANGE|ROUND-ROBIN|PARTITION}`

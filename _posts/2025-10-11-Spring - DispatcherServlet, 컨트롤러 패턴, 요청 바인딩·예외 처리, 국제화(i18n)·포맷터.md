@@ -29,7 +29,7 @@ category: Spring
 
 ---
 
-### A-2. Content-Negotiation(콘텐츠 협상) 핵심
+### 핵심
 
 - 기본은 `Accept` 헤더로 결정(JSON이 일반적).
 - 확장자 기반 협상은 비권장(`.json`, `.xml` URI).
@@ -295,7 +295,7 @@ ApiError duplicate(DuplicateEmailException ex) {
 
 ---
 
-## D. 국제화(i18n) & 포맷터/메시지 — `MessageSource`, Locale, Formatter
+## & 포맷터/메시지 — `MessageSource`, Locale, Formatter
 
 ### D-1. MessageSource 설정(부트 기본)
 

@@ -46,7 +46,7 @@ category: Docker
 
 ---
 
-## 공식 Docker Registry(경량) — 빠른 시작
+## — 빠른 시작
 
 ### 가장 단순한 실행
 
@@ -77,7 +77,7 @@ docker pull localhost:5000/my-ubuntu
 
 ---
 
-## TLS(HTTPS) 구성
+## 구성
 
 ### 자체 서명(테스트)
 
@@ -112,7 +112,7 @@ sudo cp certs/domain.crt /etc/docker/certs.d/registry.example.com:443/ca.crt
 
 ---
 
-## Basic Auth(아이디/비번) — registry:2
+## — registry:2
 
 ### htpasswd 생성
 
@@ -216,7 +216,7 @@ docker start registry
 
 ---
 
-## Reverse Proxy(Nginx) 앞단 구성(선택)
+## 앞단 구성(선택)
 
 ### 이유
 
@@ -247,7 +247,7 @@ server {
 
 ---
 
-## Harbor(풀스택) 설치
+## 설치
 
 ### 요구
 
@@ -276,7 +276,7 @@ sudo ./install.sh
 - 접속: `https://registry.example.com`
 - 기본 관리자: `admin / Harbor12345`(설치 직후 **즉시 변경**)
 
-### Helm(Kubernetes) 배포 개요
+### 배포 개요
 
 - `helm repo add harbor https://helm.goharbor.io`
 - `values.yaml`에 Ingress/TLS/스토리지/DB/Redis/Trivy/Notary/OIDC/RBAC 설정 후 배포:
@@ -477,7 +477,7 @@ GC 시에는 **실행 중인 설정과 동일한 파일**을 사용해야 한다
 
 ---
 
-## 부록 B. Harbor values.yaml(Helm) 핵심 발췌
+## 핵심 발췌
 
 ```yaml
 expose:

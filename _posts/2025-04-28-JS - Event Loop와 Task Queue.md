@@ -112,7 +112,7 @@ console.log("4");
 
 ---
 
-## Node.js 이벤트 루프(libuv) 개요
+## 개요
 
 ### phases 순서(간단화)
 

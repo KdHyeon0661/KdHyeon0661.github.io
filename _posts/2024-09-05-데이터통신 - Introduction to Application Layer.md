@@ -91,7 +91,7 @@ category: DataCommunication
 2. **피어-투-피어(Peer-to-Peer, P2P)**
 3. **하이브리드(Hybrid: Client–Server + P2P + CDN 등)**
 
-#### (1) Client–Server
+#### Client–Server
 
 가장 전통적인 구조:
 
@@ -105,7 +105,7 @@ category: DataCommunication
 - 서버가 과부하되면 병목(Bottleneck)
 - 확장: 수평 확장(로드 밸런서), 수직 확장(더 좋은 서버)
 
-#### (2) Peer-to-Peer (P2P)
+#### Peer-to-Peer (P2P)
 
 P2P에서는 각 노드를 **동시에 클라이언트이자 서버(peer)** 로 본다.
 
@@ -119,7 +119,7 @@ P2P에서는 각 노드를 **동시에 클라이언트이자 서버(peer)** 로 
 - 관리 난이도: 노드가 항상 출입·변경되므로, **라우팅, 검색, 신뢰성**이 복잡
 - IETF의 여러 P2P 관련 RFC에서 overlay 설계, 구조화/비구조화 P2P 분류 등을 정리하고 있다.
 
-#### (3) 하이브리드 구조 — CDN·P2P·에지 컴퓨팅의 혼합
+#### 하이브리드 구조 — CDN·P2P·에지 컴퓨팅의 혼합
 
 최근 대규모 서비스는 순수 Client–Server, 순수 P2P보다는 **혼합형 구조**를 많이 쓴다:
 

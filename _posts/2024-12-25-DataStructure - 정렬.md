@@ -4,7 +4,7 @@ title: Data Structure - 정렬
 date: 2024-12-25 19:20:23 +0900
 category: Data Structure
 ---
-# 정렬(Sorting) 알고리즘
+# 알고리즘
 
 ## 정렬이 왜 중요한가 — 하한선과 문제 정의
 
@@ -37,9 +37,9 @@ category: Data Structure
 
 ---
 
-## O(n²) 기초 정렬 — 학습용 + 소규모 최적화
+## 기초 정렬 — 학습용 + 소규모 최적화
 
-### 선택 정렬 (Selection Sort) — 스왑 최소
+### — 스왑 최소
 
 ```cpp
 #include <vector>
@@ -57,7 +57,7 @@ void selectionSort(std::vector<int>& a){
 - 비교 \( \Theta(n^2) \), 스왑 \( \le n-1 \)
 - **안정성 X**, **제자리 O**
 
-### 버블 정렬 (Bubble) — 조기 종료 최적화
+### — 조기 종료 최적화
 
 ```cpp
 #include <vector>
@@ -78,7 +78,7 @@ void bubbleSort(std::vector<int>& a){
 - 최선 \(O(n)\) (이미 정렬), 평균/최악 \(O(n^2)\)
 - **안정성 O**, **제자리 O**
 
-### 삽입 정렬 (Insertion) — 작거나 거의 정렬된 입력에 강함
+### — 작거나 거의 정렬된 입력에 강함
 
 ```cpp
 #include <vector>
@@ -94,7 +94,7 @@ void insertionSort(std::vector<int>& a){
 - 최선 \(O(n)\): 거의 정렬
 - **안정성 O**, **제자리 O**
 
-#### (옵션) 이진 삽입 정렬 — 비교 수 감소
+#### 이진 삽입 정렬 — 비교 수 감소
 
 ```cpp
 #include <vector>
@@ -116,7 +116,7 @@ void binaryInsertionSort(std::vector<int>& a){
 }
 ```
 
-### 셸 정렬 (Shell Sort) — O(n^1.2~1.5) 실전 성능
+### — O(n^1.2~1.5) 실전 성능
 
 ```cpp
 #include <vector>
@@ -139,9 +139,9 @@ void shellSort(std::vector<int>& a){
 
 ---
 
-## O(n log n) 정렬 — 실전 주력군
+## 정렬 — 실전 주력군
 
-### 병합 정렬 (Merge Sort) — 안정 + 외부정렬 친화
+### — 안정 + 외부정렬 친화
 
 **Top-Down (재귀)**
 ```cpp
@@ -189,7 +189,7 @@ void mergeBottomUp(std::vector<T>& a){
 }
 ```
 
-### 힙 정렬 (Heap Sort) — 제자리, 최악도 \(O(n\log n)\)
+### — 제자리, 최악도 \(O(n\log n)\)
 
 ```cpp
 #include <vector>
@@ -214,7 +214,7 @@ void heapSort(std::vector<int>& a){
 ```
 - **안정성 X**, **제자리 O**, **브랜치 예측에 다소 불리**
 
-### 퀵 정렬(Three-Way + Tail Call) — 평균 최강, 나쁜 피벗 방지
+### — 평균 최강, 나쁜 피벗 방지
 
 ```cpp
 #include <vector>
@@ -257,7 +257,7 @@ void quickSort3(std::vector<int>& a, int l, int r){
 ```
 - 평균 \(O(n\log n)\), 최악 \(O(n^2)\) → **인트로소트**로 보강
 
-### 인트로소트(IntroSort) — `std::sort`의 핵심 아이디어
+### — `std::sort`의 핵심 아이디어
 
 - 시작은 **퀵정렬**, 재귀 깊이가 \(2\lfloor \log_2 n\rfloor\) 를 넘으면 **힙정렬**로 전환 (최악 \(O(n\log n)\) 보장)
 - 소구간은 **삽입정렬**로 마무리 → 실전 최강 하이브리드
@@ -334,7 +334,7 @@ void introSort(std::vector<int>& a){
 
 ## 비교 기반이 아닌 정렬 — 선형 시간까지
 
-### 카운팅 정렬 (Counting Sort) — 작은 키 범위 정수
+### — 작은 키 범위 정수
 
 ```cpp
 #include <vector>
@@ -352,7 +352,7 @@ std::vector<int> countingSort(const std::vector<int>& a, int K /*max value*/){
 ```
 - 시간 \(O(n+K)\), 공간 \(O(n+K)\), **안정 O**
 
-### 기수 정렬 (Radix Sort) — 정수·고정길이 키
+### — 정수·고정길이 키
 
 **LSD(하위 자릿수부터)** — 32-bit 비음수 정수 예:
 ```cpp
@@ -378,7 +378,7 @@ std::vector<uint32_t> radixLSD(std::vector<uint32_t> a){
 - 시간 \(O(d\cdot (n + B))\) (d=자릿수), **안정 O**, 비교 없음
 - **부호 있는 정수**는 **바이트 순서를 부호 비트 기준으로 조정**(최상위 바이트에서 `xor 0x80` 등)하여 자연 순서 보장
 
-### 버킷 정렬 (Bucket Sort) — [0,1) 균일 분포 실수 등
+### — [0,1) 균일 분포 실수 등
 
 ```cpp
 #include <vector>
@@ -405,7 +405,7 @@ std::vector<double> bucketSort(std::vector<double> a){
 
 ## C++에서 **정렬을 올바르게** 쓰는 법
 
-### 비교자(Comparator) — 올바른 정의가 먼저
+### — 올바른 정의가 먼저
 
 {% raw %}
 ```cpp
@@ -489,7 +489,7 @@ int main(){
 
 ---
 
-## 외부 정렬(External Sort) — 메모리 초과 데이터
+## — 메모리 초과 데이터
 
 ### 전략
 

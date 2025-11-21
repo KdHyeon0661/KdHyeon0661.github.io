@@ -181,7 +181,7 @@ git pull --rebase
 git checkout -b feature/my-work
 
 # 의존성/도구 설치 (언어·프로젝트별)
-# 예) Node
+# Node
 
 npm ci
 npm test

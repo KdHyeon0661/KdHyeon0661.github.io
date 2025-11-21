@@ -317,7 +317,7 @@ es.addEventListener('jobs', (e) => updateJobs(JSON.parse(e.data)));
 
 ## 다양한 서버 구현
 
-### Node.js (Express) — CORS/Heartbeat/Retry
+### — CORS/Heartbeat/Retry
 
 ```js
 import express from 'express';
@@ -350,7 +350,7 @@ app.get('/events', (req, res) => {
 app.listen(3000);
 ```
 
-### Python — FastAPI(ASGI) / StreamingResponse
+### / StreamingResponse
 
 ```python
 # pip install fastapi uvicorn

@@ -86,19 +86,19 @@ IPv6 고정 헤더는 항상 40바이트(320비트)이며, 필드는 다음과 �
 
 ### 각 필드 상세 설명
 
-#### (1) Version (4비트)
+#### Version (4비트)
 
 - 항상 값 **6** (IPv6).
 - IPv4(버전 4)와 구분하기 위한 필드.
 
-#### (2) Traffic Class (8비트)
+#### Traffic Class (8비트)
 
 - IPv4의 **TOS/DSCP** 역할과 유사. QoS, 우선순위 정책을 적용할 때 사용.
 - 상위 6비트: DSCP (Differentiated Services Code Point)
 - 하위 2비트: ECN (Explicit Congestion Notification) 용도로 사용 가능.
 - 예: VoIP 같은 실시간 트래픽에 높은 우선순위 DSCP 부여.
 
-#### (3) Flow Label (20비트)
+#### Flow Label (20비트)
 
 - 같은 송신자에서 나오는 **하나의 흐름(flow)** 에 속한 패킷을 식별하기 위해 사용.
 - 라우터는 Flow Label + Source Address 등을 이용해,
@@ -111,7 +111,7 @@ IPv6 고정 헤더는 항상 40바이트(320비트)이며, 필드는 다음과 �
   - 동일한 TCP 연결에 속한 패킷에는 모두 같은 Flow Label 값 사용
   - 라우터는 Flow Label을 이용해 같은 경로로 패킷을 라우팅 → 패킷 순서 보존에 도움
 
-#### (4) Payload Length (16비트)
+#### Payload Length (16비트)
 
 - **IPv6 고정 헤더를 제외한 나머지 전체 길이** (바이트).
   - 확장 헤더 + 상위 계층 헤더 + 데이터 = Payload.
@@ -119,7 +119,7 @@ IPv6 고정 헤더는 항상 40바이트(320비트)이며, 필드는 다음과 �
 - 값이 **0**인 경우:
   - “Jumbogram”을 의미하며, 실제 길이는 Hop-by-Hop 옵션 header 안의 `Jumbo Payload` 옵션(32비트)에 들어 있다. 대용량 데이터(예: 초고속 네트워크에서 64KB 초과 MTU)를 위한 기능.
 
-#### (5) Next Header (8비트)
+#### Next Header (8비트)
 
 - **이 헤더 다음에 오는 헤더의 프로토콜 번호**.
 - 다음 중 하나를 가리킬 수 있다.
@@ -139,13 +139,13 @@ IPv6 고정 헤더는 항상 40바이트(320비트)이며, 필드는 다음과 �
 
 - 이 필드는 IPv4의 “Protocol” 필드 & 옵션과 확장 헤더 체인을 모두 통합하는 역할을 한다.
 
-#### (6) Hop Limit (8비트)
+#### Hop Limit (8비트)
 
 - IPv4의 **TTL(Time To Live)** 에 해당.
 - 패킷이 라우터를 하나 지날 때마다 1씩 감소, 0이 되면 폐기.
 - 루프 방지 및 너무 오래된 패킷 제거.
 
-#### (7) Source Address / Destination Address (각 128비트)
+#### Source Address / Destination Address (각 128비트)
 
 - 출발지/목적지 IPv6 주소.
 - 앞 절(22.1)에서 설명한 글로벌 유니캐스트/링크-로컬/유니크 로컬 등의 규칙을 모두 따름.
@@ -499,7 +499,7 @@ $$
 
 각 조각에는 동일한 Identification과 서로 다른 Fragment Offset, M flag가 설정된다.
 
-### AH (51), ESP(50) — IPsec 확장 헤더
+### — IPsec 확장 헤더
 
 #### AH (Authentication Header)
 
@@ -530,7 +530,7 @@ $$
 from scapy.all import IPv6, IPv6ExtHdrHopByHop, IPv6ExtHdrDestOpt, IPv6ExtHdrFragment
 from scapy.all import TCP, send
 
-# 1) IPv6 기본 헤더
+# IPv6 기본 헤더
 
 ip = IPv6(
     src="2001:db8:1000:1010::10",
@@ -540,15 +540,15 @@ ip = IPv6(
     hlim=64           # Hop Limit
 )
 
-# 2) Hop-by-Hop 확장 헤더 (간단히 빈 옵션)
+# Hop-by-Hop 확장 헤더 (간단히 빈 옵션)
 
 hbh = IPv6ExtHdrHopByHop()
 
-# 3) Destination Options 확장 헤더
+# Destination Options 확장 헤더
 
 dest_opt = IPv6ExtHdrDestOpt()
 
-# 4) TCP 헤더
+# TCP 헤더
 
 tcp = TCP(
     sport=50000,

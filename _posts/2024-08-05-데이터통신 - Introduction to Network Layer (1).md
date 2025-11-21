@@ -38,7 +38,7 @@ Internet Protocol(IP)는 **패킷 교환(packet switching)** 기반의 네트워
 
 ## Packetizing
 
-### 1) Packetizing이란?
+### Packetizing이란?
 
 전송 계층(예: TCP, UDP)은 애플리케이션 데이터를 **세그먼트(segment)**나 **데이터그램** 단위로 다룬다.
 네트워크 계층 IP 모듈은 이를 받아 **IP 헤더를 붙여 “인터넷 데이터그램(Internet datagram)”**을 만든다.
@@ -59,7 +59,7 @@ $$
 
 ---
 
-### 2) 캡슐화·역캡슐화 과정
+### 캡슐화·역캡슐화 과정
 
 예를 들어, 웹 브라우저가 HTTP 요청을 보낼 때의 흐름을 단계별로 보면:
 
@@ -87,7 +87,7 @@ ASCII “레이어 캡슐화” 그림:
 
 ---
 
-### 3) MTU와 조각화(Fragmentation)
+### MTU와 조각화(Fragmentation)
 
 각 링크에는 **MTU(Maximum Transmission Unit)**가 있다.
 
@@ -128,7 +128,7 @@ $$
 
 ---
 
-### 4) 간단 Packetizing 의사코드 예제
+### 간단 Packetizing 의사코드 예제
 
 IPv4에서 “너무 큰” 세그먼트를 받아 조각하는 느낌의 의사코드를 파이썬으로 적어보면:
 
@@ -180,9 +180,9 @@ for h, c in fragments:
 
 ---
 
-### 1) Routing: 제어 평면
+### Routing: 제어 평면
 
-#### (1) 정적 라우팅 vs 동적 라우팅
+#### 정적 라우팅 vs 동적 라우팅
 
 - **정적 라우팅(Static)**: 관리자가 직접 “목적지 prefix → next hop”을 입력.
 - **동적 라우팅(Dynamic)**: 라우팅 프로토콜(OSPF, IS-IS, BGP 등)이
@@ -205,7 +205,7 @@ $$
 이다. 링크 상태 라우팅 프로토콜은 각 라우터가 전체 그래프를 알고 있다고 가정하고,
 Dijkstra 알고리즘으로 위 최소 비용을 계산한다.
 
-#### (2) 간단 라우팅 계산 예 (Python)
+#### 간단 라우팅 계산 예 (Python)
 
 작은 그래프에서 최단 경로를 구하는 Dijkstra 예제를 보자:
 
@@ -244,11 +244,11 @@ print(dijkstra("R1"))
 
 ---
 
-### 2) Forwarding: 데이터 평면
+### Forwarding: 데이터 평면
 
 라우팅 테이블이 준비되면, 이제 실제 패킷이 들어올 때 수행하는 것은 **단순한 lookup**이다.
 
-#### (1) Longest Prefix Match
+#### Longest Prefix Match
 
 IPv4/IPv6 라우팅에서 가장 중요한 규칙은 **최장 접두사 매칭(longest prefix match)**이다.
 
@@ -270,7 +270,7 @@ $$
 \text{route}(d) = \arg\max_{i: d \in p_i} \text{prefixlen}(p_i)
 $$
 
-#### (2) Forwarding 의사코드
+#### Forwarding 의사코드
 
 ```python
 import ipaddress
@@ -304,7 +304,7 @@ for addr in ["10.1.1.42", "10.1.2.5", "8.8.8.8"]:
 
 ---
 
-### 3) Delay 관점에서 본 라우팅/포워딩
+### Delay 관점에서 본 라우팅/포워딩
 
 네트워크 계층에서 보통 한 패킷의 end-to-end 지연은
 
@@ -326,7 +326,7 @@ $$
 
 네트워크 계층은 패킷화·라우팅·포워딩 외에도 다양한 기능을 제공한다.
 
-### 1) Addressing (IPv4 / IPv6)
+### Addressing (IPv4 / IPv6)
 
 - **IPv4 주소 (32비트)**: `a.b.c.d` 형태, 예: 192.0.2.10
 - **IPv6 주소 (128비트)**: `xxxx:xxxx:...` 형태, 예: 2001:db8::1
@@ -343,7 +343,7 @@ IP 헤더의 출발지/목적지 주소 필드 길이:
 
 ---
 
-### 2) 오류 보고·진단 (ICMP)
+### 오류 보고·진단 (ICMP)
 
 IP 자체는 “Best effort”라서 패킷 손실·중복·순서 변경이 자연스럽게 발생할 수 있다.
 
@@ -360,7 +360,7 @@ IP 자체는 “Best effort”라서 패킷 손실·중복·순서 변경이 자
 
 ---
 
-### 3) Congestion Control & QoS (DiffServ, ECN 등)
+### Congestion Control & QoS (DiffServ, ECN 등)
 
 네트워크 계층은 패킷 헤더에 **우선순위/서비스 클래스**를 표시함으로써
 라우터/스위치가 **트래픽을 분류·우선 처리**할 수 있도록 돕는다.
@@ -382,7 +382,7 @@ IP 자체는 “Best effort”라서 패킷 손실·중복·순서 변경이 자
 
 ---
 
-### 4) 보안(Security): IPsec
+### 보안(Security): IPsec
 
 네트워크 계층에서 동작하는 대표적인 보안 기술이 **IPsec**이다.
 
@@ -395,7 +395,7 @@ IPsec은 IP 패킷을 다시 감싸서 터널링하는 형태도 가능하며,
 
 ---
 
-### 5) 멀티캐스트, Anycast
+### 멀티캐스트, Anycast
 
 네트워크 계층은 Unicast(1:1) 외에도:
 
@@ -424,7 +424,7 @@ DNS 루트 서버들, CDN 엣지 노드들이 Anycast를 많이 활용한다.
 
 ## Datagram Approach: Connectionless Service
 
-### 1) 개념 요약
+### 개념 요약
 
 Datagram 방식의 핵심 특징:
 
@@ -441,7 +441,7 @@ RFC 791/STD 5에서는 **“인터넷 프로토콜은 각 데이터그램을 서
 
 ---
 
-### 2) 예제 토폴로지와 패킷 경로
+### 예제 토폴로지와 패킷 경로
 
 간단한 네트워크를 가정하자.
 
@@ -472,7 +472,7 @@ Host A가 B에게 순서대로 3개의 패킷을 보낸다고 하자.
 
 ---
 
-### 3) Datagram Forwarding 의사코드 예제
+### Datagram Forwarding 의사코드 예제
 
 간단한 datagram 라우터를 파이썬으로 흉내 내면:
 
@@ -539,7 +539,7 @@ for i in range(1, 4):
 
 ---
 
-### 4) Datagram 서비스의 장단점
+### Datagram 서비스의 장단점
 
 **장점**
 
@@ -574,7 +574,7 @@ Datagram과 달리, **Virtual Circuit(VC)** 기반 패킷 교환은
 
 ---
 
-### 1) Virtual Circuit의 기본 아이디어
+### Virtual Circuit의 기본 아이디어
 
 특징:
 
@@ -595,7 +595,7 @@ ITU와 IETF 문서에서는 MPLS-TP 같은 기술을
 
 ---
 
-### 2) VC Switch에서의 상태 테이블
+### VC Switch에서의 상태 테이블
 
 각 VC 기반 스위치/라우터는 **입력 인터페이스 + 입력 VC ID → 출력 인터페이스 + 출력 VC ID** 매핑 테이블을 가진다.
 
@@ -617,7 +617,7 @@ ITU와 IETF 문서에서는 MPLS-TP 같은 기술을
 
 ---
 
-### 3) VC 설정·전송·해제 예제
+### VC 설정·전송·해제 예제
 
 간단한 4노드 네트워크:
 
@@ -638,7 +638,7 @@ Host A -- R1 -- R2 -- R3 -- Host B
 
 ---
 
-### 4) 간단 VC 스위칭 의사코드 예제
+### 간단 VC 스위칭 의사코드 예제
 
 ```python
 class VCSwitch:
@@ -699,7 +699,7 @@ r1.forward(0, 5, "Hello VC")  # in_if=0, VC=5, payload="Hello VC"
 
 ---
 
-### 5) Virtual Circuit의 장단점
+### Virtual Circuit의 장단점
 
 **장점**
 
@@ -736,7 +736,7 @@ $$
 
 ---
 
-### 6) Datagram vs Virtual Circuit 요약 비교
+### Datagram vs Virtual Circuit 요약 비교
 
 | 항목 | Datagram | Virtual Circuit |
 |------|----------|-----------------|

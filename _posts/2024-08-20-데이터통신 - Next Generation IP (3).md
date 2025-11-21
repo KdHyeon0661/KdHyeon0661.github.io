@@ -263,7 +263,7 @@ Informationals는 “에러는 아니지만, **상태 조회 / 제어 / 관리**
 이 절에서는 먼저 **순수 정보 메시지(Echo 등)** 를 보고,
 이후 절에서 ND와 MLD를 별도로 자세히 다룬다.
 
-### Echo Request (Type 128) / Echo Reply (Type 129)
+### / Echo Reply (Type 129)
 
 #### 용도
 
@@ -408,7 +408,7 @@ Options...
 
 ---
 
-### Neighbor Solicitation (Type 135) / Neighbor Advertisement (Type 136)
+### / Neighbor Advertisement (Type 136)
 
 이 둘은 **ARP의 IPv6 버전**이라 볼 수 있다.
 
@@ -668,12 +668,12 @@ IPv6의 실제 동작(주소 자동 설정, 이웃 탐색, 멀티캐스트)이 �
 ```python
 from scapy.all import IPv6, ICMPv6EchoRequest, ICMPv6ND_NS, send
 
-# 1) 단순 Echo Request (ping)
+# 단순 Echo Request (ping)
 
 echo_pkt = IPv6(src="2001:db8:1::10", dst="2001:db8:1::20") / ICMPv6EchoRequest()
 send(echo_pkt)
 
-# 2) Neighbor Solicitation (이웃 MAC 주소 알아내기)
+# Neighbor Solicitation (이웃 MAC 주소 알아내기)
 
 ns_pkt = IPv6(src="fe80::a", dst="ff02::1:ff00:20") / ICMPv6ND_NS(
     tgt="2001:db8:1::20"

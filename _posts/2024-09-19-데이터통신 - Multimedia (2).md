@@ -180,7 +180,7 @@ $$
 
 ---
 
-### 적응형 비트레이트(ABR) 로직 예시
+### 로직 예시
 
 실제 DASH/HLS 플레이어는 **ABR(Adaptive Bitrate) 알고리즘**을 사용한다. 최근 연구와 실무 경험에서는 **지연·버퍼 기반 알고리즘**이 QoE 측면에서 유리하다고 보고된다.
 
@@ -271,7 +271,7 @@ def select_profile(throughput_history, buffer_seconds):
                               [클라이언트(플레이어)]
 ```
 
-#### 인제스트(ingest) 프로토콜
+#### 프로토콜
 
 1. **RTMP (Real-Time Messaging Protocol)**
    - 오랫동안 라이브 인제스트 표준처럼 쓰였던 프로토콜.

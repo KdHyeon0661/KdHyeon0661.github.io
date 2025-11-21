@@ -522,7 +522,7 @@ class Listener {
 
 ---
 
-## 부록 A) JPA로 Repository 교체 예 (선택)
+## JPA로 Repository 교체 예 (선택)
 
 ```java
 import jakarta.persistence.*;
@@ -557,7 +557,7 @@ class JpaProductAdapter implements ProductRepository {
 
 ---
 
-## 부록 B) 커스텀 합성 애너테이션(메타 애너테이션)
+## 커스텀 합성 애너테이션(메타 애너테이션)
 
 ```java
 @Target(ElementType.TYPE)
@@ -573,7 +573,7 @@ class ReportService { /* 모든 public 메서드는 기본 readOnly */ }
 
 ---
 
-## 부록 C) Boot 애플리케이션 최소 뼈대
+## Boot 애플리케이션 최소 뼈대
 
 ```java
 @SpringBootApplication

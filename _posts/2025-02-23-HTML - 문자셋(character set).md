@@ -28,7 +28,7 @@ category: HTML
 
 ---
 
-## HTML에서의 지정 — 메타/순서/낚시줄(혼합 인코딩) 주의
+## 주의
 
 ### 권장 메타 태그
 
@@ -253,7 +253,7 @@ nfc = unicodedata.normalize('NFC', s)
 
 ---
 
-## BOM(Byte Order Mark) — UTF-8 with BOM의 함정
+## — UTF-8 with BOM의 함정
 
 - UTF-8은 바이트 순서가 고정이라 **BOM이 불필요**.
 - 일부 편집기는 `UTF-8 with BOM`으로 저장 → **서버 사이드 파서/CLI 스크립트/JSON 파서**가 **선행 바이트를 내용으로 오인**.

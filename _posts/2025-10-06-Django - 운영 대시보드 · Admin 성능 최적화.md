@@ -4,11 +4,11 @@ title: Django - 운영 대시보드 · Admin 성능 최적화
 date: 2025-10-06 17:25:23 +0900
 category: Django
 ---
-# 운영 대시보드 · Admin 성능 최적화(비동기 대량 액션) · 멀티테넌트 Admin 분리
+# · 멀티테넌트 Admin 분리
 
 ## 운영 대시보드
 
-### 1-1. 데이터 모델(요약) — KPI · 감사 로그
+### — KPI · 감사 로그
 
 ```python
 # apps/ops/models.py
@@ -106,7 +106,7 @@ def admin_update_product(request, pk):
 
 ---
 
-### 1-2. 접근 제어 — RBAC(역할 기반) & 오브젝트 레벨
+### & 오브젝트 레벨
 
 ```python
 # apps/ops/roles.py
@@ -164,7 +164,7 @@ def role_required(role: str):
 
 ---
 
-### 1-3. 운영 대시보드 뷰(TemplateView) — 카드, 테이블, 필터
+### — 카드, 테이블, 필터
 
 ```python
 # apps/ops/views.py

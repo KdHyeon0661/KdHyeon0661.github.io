@@ -142,7 +142,7 @@ spec:
 
 ---
 
-## 서비스(Service) 노출
+## 노출
 
 ```yaml
 # myapp-service.yaml
@@ -535,7 +535,7 @@ kubectl apply -k k8s/overlays/prod
 
 ---
 
-## 실습: Flask 앱(간단) → K8s
+## → K8s
 
 ### Dockerfile
 
@@ -641,7 +641,7 @@ $$
 
 ---
 
-## 배포 자동화(선택) — GitOps/Helm/Kustomize
+## — GitOps/Helm/Kustomize
 
 - **GitOps(Argo CD/Flux)**: 매니페스트/차트를 Git에 선언 → 클러스터가 Pull로 동기화
 - **Helm**: 값 파일 프로모션(dev→staging→prod), 릴리스 이력/롤백 쉬움

@@ -261,7 +261,7 @@ SubmitCommand = ReactiveCommand.CreateFromTask<string, Result>(async text =>
 
 ---
 
-## 검증(Validation) — Live Validation, 폼 유효성
+## — Live Validation, 폼 유효성
 
 ### 간단한 수제 검증
 

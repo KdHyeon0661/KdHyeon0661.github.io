@@ -208,7 +208,7 @@ spec:
 
 ---
 
-## RBAC(최소 권한) 예시
+## 예시
 
 ```yaml
 apiVersion: v1

@@ -168,7 +168,7 @@ public sealed class InMemoryTokenStore : ITokenStore
 }
 ```
 
-### DPAPI(Windows) 예시(요점만)
+### 예시(요점만)
 
 ```csharp
 // Services/DpapiTokenStore.cs (Windows 전용)
@@ -748,7 +748,7 @@ public sealed class ShellViewModel : ReactiveUI.ReactiveObject
 
 ---
 
-## 권한 기반(UI) 제어 — ClaimsAwareViewModel
+## 제어 — ClaimsAwareViewModel
 
 - 서버가 발급한 토큰의 `scope`·`roles`를 UI 힌트로 활용.
 - 중요한 접근 제어는 **반드시 서버**가 한다(403).
@@ -878,7 +878,7 @@ public async Task Should_Refresh_And_Retry_On_401()
 
 ---
 
-## 수학적 모델(토큰 잔여시간/선제갱신) — 간단 식
+## — 간단 식
 
 만료시각을 \( T_{\text{exp}} \), 현재시각을 \( t \), 선제갱신 여유를 \( \Delta \)라 하자.
 선제 갱신 조건은 다음과 같다.

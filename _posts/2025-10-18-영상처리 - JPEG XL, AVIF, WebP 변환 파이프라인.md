@@ -65,14 +65,14 @@ category: 영상처리
 ### AVIF (libavif, aom/rav1e/SVT 선택)
 
 ```bash
-# 사진(4:2:0) — 품질/속도 밸런스
+# — 품질/속도 밸런스
 
 avifenc input.png out.avif \
   --speed 6 --min 0 --max 63 --cq-level 28 \
   --yuv 420 --depth 10 --jobs 8 \
   --icc input.icc --exif input.exif --xmp input.xmp
 
-# UI/문서(4:4:4) — 엣지 보존
+# — 엣지 보존
 
 avifenc input.png out_ui.avif \
   --speed 6 --cq-level 20 --yuv 444 --depth 10 --jobs 8
@@ -87,11 +87,11 @@ avifenc input.png out_ui.avif \
 ### JPEG XL (cjxl)
 
 ```bash
-# 일반 사진 (거리 기반 d: 낮을수록 고화질) + 노력도
+# + 노력도
 
 cjxl input.png out.jxl -d 1.2 --effort=7 --num_threads=8
 
-# (매우 중요) JPEG 무손실 래핑: JPEG 원본 → JXL 컨테이너 (복원 가능)
+# JPEG 무손실 래핑: JPEG 원본 → JXL 컨테이너 (복원 가능)
 
 cjxl input.jpg out_lossless_wrap.jxl --lossless_jpeg=1
 ```
@@ -107,7 +107,7 @@ cjxl input.jpg out_lossless_wrap.jxl --lossless_jpeg=1
 
 cwebp -q 80 -m 4 -mt -metadata all input.jpg -o out.webp
 
-# UI/문서(444) — 선명 유지
+# — 선명 유지
 
 cwebp -q 88 -m 4 -mt -alpha_q 100 -metadata all -af -sns 0 -sharpness 3 \
       -o out_ui.webp input.png
@@ -126,7 +126,7 @@ cwebp -lossless -m 6 -mt -metadata all input.png -o out_ll.webp
 
 ## **C++ 라이브러리** 직접 호출 (핵심 스니펫)
 
-### libavif — RGB(A) → AVIF
+### → AVIF
 
 ```cpp
 #include <avif/avif.h>
@@ -300,7 +300,7 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 
 ---
 
-## **메타데이터/색관리**(ICC/EXIF/XMP) 보존
+## 보존
 
 - **AVIF**: `--icc/--exif/--xmp` 로 명시 부착 권장(소스에서 추출 후 주입).
 - **JXL**: 기본 보존 경향이나, 파이프라인 일관성을 위해 **명시 정책**(보존/익명화) 도입, 필요 시 `--strip`(툴 기준) 옵션.
@@ -337,7 +337,7 @@ double PSNR_RGB(const uint8_t* a, const uint8_t* b, int w, int h, int strideA, i
 > 서버/클라이언트 지원 상황에 맞게 **우선순위**를 정합니다.
 > 서버는 **Accept 헤더**(`image/avif`, `image/webp`)를 참조해 리라이트/변형 응답 가능.
 
-### Nginx(예) — Accept 기반 제공
+### — Accept 기반 제공
 
 ```nginx
 map $http_accept $img_ext {

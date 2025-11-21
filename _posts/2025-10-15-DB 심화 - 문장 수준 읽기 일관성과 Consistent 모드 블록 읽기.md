@@ -202,7 +202,7 @@ SELECT COUNT(*) FROM t_cr WHERE grp = 0 FOR UPDATE;   -- 행 잠금 + current re
 
 ---
 
-## ORA-01555(snapshot too old) — 왜 터지나?
+## — 왜 터지나?
 
 ### 원인
 

@@ -8,7 +8,7 @@ category: Java
 
 ## 배경 — 클래스패스의 구조적 한계와 Jigsaw의 필요
 
-### 클래스패스(Classpath) 한계
+### 한계
 
 - **충돌(=Classpath Hell)**: 동일 FQCN이 여러 JAR에 존재 → 로딩 순서 의존.
 - **의존성 비가시성**: *필요 JAR 목록*을 타입 시스템 차원에서 표현할 수 없음.
@@ -44,7 +44,7 @@ module com.example.app {
 }
 ```
 
-### 읽기(Readability) vs 접근성(Accessibility)
+### vs 접근성(Accessibility)
 
 - **읽기**: A 모듈이 B 모듈을 `requires`로 **읽을 수 있는가**(타입 사용 가능).
 - **접근성**: 읽을 수 있어도, 대상 **패키지가 `exports` 되었는가**가 별개.
@@ -78,7 +78,7 @@ jdk.crypto.ec    # JDK 구현 모듈(elliptic curves)
 java --list-modules
 ```
 
-### 특정 JAR(또는 모듈) 분석
+### 분석
 
 ```bash
 jar --describe-module --file libs/some-lib.jar
@@ -217,7 +217,7 @@ jmod describe mods/com.example.core.jmod
 
 ---
 
-## 실전 예 — 코어/API/앱/플러그인(서비스) 구성
+## 구성
 
 ### 모듈 레이아웃
 
@@ -312,7 +312,7 @@ java -p mods -m com.example.app/com.example.app.Main
 
 ## 리플렉션·프레임워크·테스트 — `opens`와 런처 플래그
 
-### 프레임워크(Jackson/Hibernate) 매핑
+### 매핑
 
 ```java
 module com.example.app {
@@ -347,7 +347,7 @@ Maven Surefire 예(선택):
 
 ---
 
-## 빌드 도구 통합(요약) — Maven/Gradle
+## — Maven/Gradle
 
 ### Maven (핵심만)
 

@@ -332,7 +332,7 @@ public class CartSummaryViewComponent : ViewComponent
 
 ---
 
-## 지시문(Directives) 핵심 모음
+## 핵심 모음
 
 | 지시문 | 설명 | 예시 |
 |---|---|---|
@@ -368,7 +368,7 @@ public abstract class MyBaseView<T> : RazorPage<T>
 
 ---
 
-## 라우팅(Razor Pages) — `@page`
+## — `@page`
 
 ```razor
 @page "{id:int?}"
@@ -565,7 +565,7 @@ else
 
 ---
 
-### 부록) 간단한 수식 포맷(블로그 표기용)
+### 간단한 수식 포맷(블로그 표기용)
 
 - Razor 자체는 수식을 렌더링하지 않지만, 블로그에 수학을 적을 경우 MathJax 등과 함께 다음처럼 마크업할 수 있다:
 ```

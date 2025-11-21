@@ -164,7 +164,7 @@ RUN echo "runtime=$RUNTIME, version=$APP_VERSION"
 
 ---
 
-## 멀티 환경(dev/stage/prod) 운영 패턴
+## 운영 패턴
 
 ### `.env.*` + `--env-file`
 

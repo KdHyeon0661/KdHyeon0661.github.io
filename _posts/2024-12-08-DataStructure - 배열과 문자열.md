@@ -81,7 +81,7 @@ int lower_bound_index(const std::vector<int>& v, int key){
 
 ### 배열 변형 패턴
 
-#### (1) 회전(rotate) — 세 번 뒤집기
+#### 회전(rotate) — 세 번 뒤집기
 
 ```cpp
 void reverse(int* a, int l, int r){ // [l, r] inclusive
@@ -95,7 +95,7 @@ void rotate_right(int* a, int n, int k){
 }
 ```
 
-#### (2) 중복 제거(정렬 배열, in-place)
+#### 중복 제거(정렬 배열, in-place)
 
 ```cpp
 int unique_inplace(std::vector<int>& v){
@@ -108,7 +108,7 @@ int unique_inplace(std::vector<int>& v){
 }
 ```
 
-#### (3) 파티션(quickselect/퀵정렬 핵심)
+#### 파티션(quickselect/퀵정렬 핵심)
 
 ```cpp
 int partition(std::vector<int>& a, int l, int r){
@@ -135,7 +135,7 @@ std::vector<long long> prefix(const std::vector<int>& a){
 
 ### 투 포인터 / 슬라이딩 윈도우
 
-#### (1) 고유 원소 최대 길이 부분배열
+#### 고유 원소 최대 길이 부분배열
 
 ```cpp
 #include <unordered_map>
@@ -152,7 +152,7 @@ int longest_distinct(const std::vector<int>& a){
 }
 ```
 
-#### (2) 합이 S 이하인 최대 길이(양수 배열)
+#### 합이 S 이하인 최대 길이(양수 배열)
 
 ```cpp
 int max_len_leq_sum(const std::vector<int>& a, long long S){
@@ -222,7 +222,7 @@ void log_line(std::string_view sv){
 
 ### 회문(팰린드롬)
 
-#### (1) 투 포인터
+#### 투 포인터
 
 ```cpp
 bool is_pal(const std::string& s){
@@ -232,7 +232,7 @@ bool is_pal(const std::string& s){
 }
 ```
 
-#### (2) 중심 확장으로 최장 회문 부분문자열 길이
+#### 중심 확장으로 최장 회문 부분문자열 길이
 
 ```cpp
 int expand(const std::string& s,int L,int R){

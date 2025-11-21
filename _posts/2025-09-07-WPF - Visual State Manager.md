@@ -94,7 +94,7 @@ category: WPF
 
 ---
 
-## 상태 전환(VisualTransition) 세밀 제어
+## 세밀 제어
 
 ### `VisualTransition`로 상태 간 공통 전환 지정
 
@@ -184,7 +184,7 @@ private async void LoadDataAsync()
 
 WPF 기본만으로는 **상태 이름 직접 바인딩**은 지원하지 않습니다. 흔한 해법은 두 가지:
 
-### **Behaviors** (Microsoft.Xaml.Behaviors.Wpf) 사용
+### 사용
 
 ```xml
 <!-- 패키지: Microsoft.Xaml.Behaviors.Wpf -->

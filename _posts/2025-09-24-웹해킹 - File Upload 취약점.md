@@ -47,7 +47,7 @@ category: 웹해킹
 
 ## 취약 코드 → 안전 코드 (언어별 레시피)
 
-### Node.js(Express + Multer) — 이미지 업로드
+### — 이미지 업로드
 
 **❌ 취약 예시**: 확장자/`content-type`만 믿고, 웹 루트에 저장
 ```javascript
@@ -150,7 +150,7 @@ echo json_encode(["id" => $safe]);
 ```
 - **팁**: PHP-FPM/Apache 실행과 **물리적으로 분리된 디렉터리**를 쓰고, **.htaccess로 실행 차단**을 병행하세요(아래 서버 설정 참조).
 
-### Spring Boot(Java) — `MultipartFile` + Tika/libmagic 검증
+### — `MultipartFile` + Tika/libmagic 검증
 
 ```java
 @PostMapping("/upload")
@@ -203,7 +203,7 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 ```
 - **`X-Content-Type-Options: nosniff`**로 브라우저의 MIME 추정을 막고, **`Content-Disposition: attachment`**로 업로드 파일을 **브라우저 내 렌더 대신 다운로드**하게 만들어 XSS/콘텐츠 하이재킹 위험을 낮춥니다.
 
-### Apache(.htaccess/가상호스트) — 실행 금지
+### — 실행 금지
 
 ```apache
 # /uploads/ 이하에서 PHP 등 스크립트 직접 실행 금지
@@ -235,13 +235,13 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 - 업로드 이미지는 **재인코딩(라스터화)**해서 **EXIF/메타**와 숨겨진 페이로드를 제거.
 - ImageMagick 사용 시 **정책 파일**로 위험 delegate 차단(과거 **ImageTragick**) 및 최신 버전 유지.
 
-### 문서(PDF/Office) — **CDR(Content Disarm & Reconstruction)**
+### — **CDR(Content Disarm & Reconstruction)**
 
 - AV는 **서명 기반**이라 우회가 가능. **CDR**은 “**실행 가능한 부분 제거 → 안전한 규격으로 재조립**” 접근으로 **제로데이 위험**을 낮춥니다(문서형 업로드에 특히 유용).
 
 ---
 
-## 악성 여부 스캔(AV) 파이프라인
+## 파이프라인
 
 - **ClamAV** 같은 서버측 AV로 업로드 직후 **동기/비동기 스캔**을 수행하고 **격리/차단** 플로우를 둡니다. (예: `clamdscan`/REST)
 - 규모가 크면 **큐 기반(업로드 → 임시저장 → 스캔 → 정식저장)**으로 구성. 상용/오픈소스 모두 실무 적용사례 다수.
@@ -288,7 +288,7 @@ location ~* ^/uploads/.*\.(php|phtml|phar)$ {
 
 ---
 
-## 테스트 벤치(보안/QA용) — “막혀야 정상”
+## — “막혀야 정상”
 
 1) **이중 확장자**: `test.jpg.php` 업로드 → 저장/접근이 **거부**되어야 함.
 2) **널 바이트**: `file.php%00.jpg` → **거부** 또는 **정상화**되어야 함.

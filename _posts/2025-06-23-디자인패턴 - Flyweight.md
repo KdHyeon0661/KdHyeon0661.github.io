@@ -68,7 +68,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Tuple
 
-# Flyweight (내부 상태: 이름/색상/텍스처) — 불변 객체
+# — 불변 객체
 
 @dataclass(frozen=True)
 class TreeType:

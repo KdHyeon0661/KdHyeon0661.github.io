@@ -190,7 +190,7 @@ private:
 };
 ```
 
-### 2-5. View(MFC Dialog) — 바인딩만
+### — 바인딩만
 
 ```cpp
 // SettingsDlg.h
@@ -471,7 +471,7 @@ public:
 };
 ```
 
-### 5-3. View( `CListCtrl` ) 어댑터
+### 어댑터
 
 ```cpp
 class ListCtrlAdapter {
@@ -633,7 +633,7 @@ BOOL CMyApp::InitInstance() {
 
 ---
 
-## 기존 코드(레거시) **단계적 치환** 전략
+## **단계적 치환** 전략
 
 1. **가장 자주 쓰는 대화상자 한 개**를 선택해 VM/P 모델로 변환.
 2. 컨트롤 1~2개에만 **바인딩**을 적용해 ROI를 확인.

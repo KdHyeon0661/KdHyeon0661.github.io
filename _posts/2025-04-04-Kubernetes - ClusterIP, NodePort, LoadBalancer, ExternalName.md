@@ -292,7 +292,7 @@ curl -I http://<node-ip>:30080
 
 ---
 
-## 실습: LoadBalancer(MetalLB or 클라우드) + 소스 IP 보존
+## + 소스 IP 보존
 
 ### Service (source IP 보존)
 
@@ -408,7 +408,7 @@ kubectl -n kube-system logs ds/kube-proxy --tail=200
 
 ---
 
-## 문제 해결(트러블슈팅) 테이블
+## 테이블
 
 | 증상 | 가능 원인 | 점검 | 해결 |
 |---|---|---|---|

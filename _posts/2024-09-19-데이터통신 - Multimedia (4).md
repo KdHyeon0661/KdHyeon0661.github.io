@@ -316,7 +316,7 @@ RTCP에는 여러 타입의 패킷이 있습니다.
 
 ---
 
-## Session Initiation Protocol (SIP) — Session Initialization Protocol
+## — Session Initialization Protocol
 
 ### 개요와 역할
 

@@ -143,7 +143,7 @@ git clean -fd
 
 ---
 
-## 부분 리셋(pathspec) — `git reset` 으로 특정 파일만 Index 동기화
+## — `git reset` 으로 특정 파일만 Index 동기화
 
 ```bash
 # 특정 파일만 스테이징을 “과거 커밋(C)” 스냅샷으로 되돌림(파일 내용은 그대로)

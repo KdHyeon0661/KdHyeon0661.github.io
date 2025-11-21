@@ -59,7 +59,7 @@ dotnet new --install "MyTemplate::1.0.0"
 dotnet new --uninstall MyTemplate
 ```
 
-### 템플릿 팩(.nupkg/.zip) 구조 한눈에 보기
+### 구조 한눈에 보기
 
 ```
 template-pack.nupkg
@@ -205,7 +205,7 @@ dotnet nuget push ./nupkg/*.nupkg \
 
 ---
 
-## 전역/로컬 도구(Global/Local Tools) — `dotnet tool *`
+## — `dotnet tool *`
 
 사용자 제공 항목에 **로컬 매니페스트/복원/실행/버전 고정**을 확장합니다.
 
@@ -379,7 +379,7 @@ dotnet publish -c Release -r win-x64 -p:PublishAot=true -o out/aot
 
 ## 고급 시나리오 예제
 
-### 모노레포: Web + API + Lib + Tools(로컬 툴) 일관 빌드
+### 일관 빌드
 
 ```bash
 mkdir -p mono/src/{Web,Api,Lib} mono/tests/Lib.Tests

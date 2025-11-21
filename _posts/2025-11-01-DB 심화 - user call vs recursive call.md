@@ -217,7 +217,7 @@ CREATE INDEX ix_demo_call_status ON demo_call(c_status);
   - **전용 GTT/임시 테이블** 사용(DDL 대체)
   - **딕셔너리 캐시(Shared Pool) 적정화**: 캐시 미스로 매번 메타데이터 조회하지 않도록
 
-### 케이스 D: **공간(Extent) 관리** (대량 DML/세그먼트 확장 시)
+### 관리** (대량 DML/세그먼트 확장 시)
 
 ```sql
 -- ASSM/LMT라도 대량 INSERT로 익스텐트 확장 → 내부 재귀

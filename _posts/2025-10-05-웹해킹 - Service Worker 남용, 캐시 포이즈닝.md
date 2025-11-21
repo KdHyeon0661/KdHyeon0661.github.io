@@ -56,7 +56,7 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' });
 
 ---
 
-# “안전 재현” 점검(스테이징) — **막혀야 정상 ✅**
+# — **막혀야 정상 ✅**
 
 1) **루트 스코프 등록 거절**
    ```js
@@ -78,7 +78,7 @@ navigator.serviceWorker.register('/sw.js', { scope: '/' });
 
 ---
 
-# 클라이언트(앱) — 안전한 등록/해제 패턴
+# — 안전한 등록/해제 패턴
 
 ## 등록 시 스코프 최소화 + 출처 고정
 
@@ -159,7 +159,7 @@ location = /sw.js { return 403; }       # 루트 sw.js는 차단
 add_header Content-Security-Policy "worker-src 'none'" always;
 ```
 
-## Express(서버) — MIME 고정 + nosniff
+## — MIME 고정 + nosniff
 
 ```js
 app.get('/app/sw.js', (req,res)=>{
@@ -355,7 +355,7 @@ Clear-Site-Data: "cache", "cookies", "storage"
 
 ---
 
-## 미니 E2E(Playwright) “막혀야 정상” 테스트
+## “막혀야 정상” 테스트
 
 ```ts
 test('루트 스코프 등록 차단', async ({ page }) => {

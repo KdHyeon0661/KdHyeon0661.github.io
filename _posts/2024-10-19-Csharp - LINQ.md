@@ -31,7 +31,7 @@ var result2 = from x in list where x > 10 select x * 2;           // Query 문�
 
 ---
 
-## 지연 실행(Deferred Execution) & 즉시 평가(Materialization)
+## & 즉시 평가(Materialization)
 
 - `Where/Select/GroupBy/OrderBy` 등은 **열거할 때 실행**됩니다.
 - 즉시 결과가 필요하면 **`ToList()`/`ToArray()`/`ToDictionary()`** 등으로 materialize.
@@ -188,7 +188,7 @@ var q = orders.Join(customers,
     (o, c) => new { o.Id, CustomerName = c.Name, o.Total });
 ```
 
-### 그룹 조인(GroupJoin) — 1:N
+### — 1:N
 
 ```csharp
 var q =
@@ -237,7 +237,7 @@ var byDept = people.GroupBy(p => p.Department)
 
 ---
 
-## 고급 집계: Aggregate / Scan(누적) / MaxBy-MinBy
+## / MaxBy-MinBy
 
 ```csharp
 var factorial = Enumerable.Range(1, 5).Aggregate((acc, x) => acc * x); // 120
@@ -296,7 +296,7 @@ var b = materialized.Sum();
 
 ---
 
-## 클로저(Closure) 캡처 함정
+## 캡처 함정
 
 ```csharp
 var actions = new List<Action>();
@@ -358,7 +358,7 @@ $$
 
 ---
 
-## PLINQ(병렬 LINQ) — CPU 바운드 시 가속
+## — CPU 바운드 시 가속
 
 ```csharp
 using System.Linq;

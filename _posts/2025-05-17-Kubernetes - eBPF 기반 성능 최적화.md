@@ -80,7 +80,7 @@ sudo bpftrace -e 'profile:hz:99 { @[kstack] = count(); }' | head
 sudo bpftrace -e 'tracepoint:block:block_rq_complete { @lat[args->dev] = hist(args->nr_sector); }'
 ```
 
-### read() 지연 분포
+### 지연 분포
 
 ```bash
 sudo bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@start[tid]/ { @d = hist((nsecs-@start[tid])/1000000); delete(@start[tid]); }'
@@ -386,7 +386,7 @@ tracepoint:sched:sched_switch /@ts[prev->pid]/ {
 
 ## libbpf CO-RE 최소 예제(프로세스 fork 카운트)
 
-### BPF(C) — `fork_count.bpf.c`
+### — `fork_count.bpf.c`
 
 ```c
 // fork_count.bpf.c
@@ -413,7 +413,7 @@ int TP_fork(struct trace_event_raw_sched_process_fork *ctx) {
 char LICENSE[] SEC("license") = "GPL";
 ```
 
-### 유저(C) — `fork_count.c`
+### — `fork_count.c`
 
 ```c
 // fork_count.c

@@ -434,7 +434,7 @@ class Program
 
 ---
 
-## 오버로드 해석(Overload Resolution) 미세 규칙 요약
+## 미세 규칙 요약
 
 1. **정확 일치**가 최우선.
 2. **암시적 수치 변환**(int→long, float→double 등)은 가능하나, 모호하면 오류.

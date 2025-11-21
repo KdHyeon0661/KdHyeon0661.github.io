@@ -6,7 +6,7 @@ category: DataCommunication
 ---
 # Analog-to-Digital Conversion
 
-## Pulse Code Modulation (PCM, 펄스 부호 변조) 개요
+## 개요
 
 PCM은 **아날로그 파형을 디지털 비트열로 바꾸는 정석 파이프라인**입니다. 단계는 다음 3가지입니다.
 
@@ -244,7 +244,7 @@ L=2^n,\quad \Delta=\frac{V_\max-V_\min}{L},\quad \mathbb{E}[e_q^2]=\frac{\Delta^
 C = B\log_2(1+\mathrm{SNR})
 \]
 
-### 나이퀴스트(레벨 \(L\) 사용 저역통과 채널의 이론 최대 비트율)
+### 사용 저역통과 채널의 이론 최대 비트율)
 
 \[
 N_{\max} = 2B \log_2 L

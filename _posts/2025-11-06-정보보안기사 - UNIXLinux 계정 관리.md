@@ -359,7 +359,7 @@ done
 
 ---
 
-## 감사(auditd) 규칙(계정·권한 변경 가시화)
+## 규칙(계정·권한 변경 가시화)
 
 ```bash
 apt install -y auditd audispd-plugins || dnf install -y audit

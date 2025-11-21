@@ -181,7 +181,7 @@ synchronized (lock) {
 
 ---
 
-## 실전 예제 — 유한 버퍼(배열 기반) 생산자/소비자
+## 생산자/소비자
 
 ```java
 import java.util.Arrays;

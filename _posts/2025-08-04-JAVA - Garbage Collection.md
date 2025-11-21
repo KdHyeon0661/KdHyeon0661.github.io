@@ -351,7 +351,7 @@ $$
 
 -XX:+UseZGC
 -XX:SoftMaxHeapSize=8g
-# (필요 시) Generational 모드/관련 옵션은 JDK 버전에 맞춰 확인
+# Generational 모드/관련 옵션은 JDK 버전에 맞춰 확인
 
 # Shenandoah
 

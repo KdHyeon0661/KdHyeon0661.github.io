@@ -30,7 +30,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
   - 서비스 계층에서 `@Transactional(readOnly = true)` 권장(성능 힌트·플러시 방지).
   - 변경은 서비스 계층 `@Transactional`에서 수행.
 
-### A-3. 단위 테스트(슬라이스) 기본
+### 기본
 
 ```java
 @DataJpaTest
@@ -176,7 +176,7 @@ repo.findByTeamId(1L, MemberView.class);
 
 ---
 
-## E. 페이징(Page) / 슬라이싱(Slice) / 정렬(Sort)
+## / 슬라이싱(Slice) / 정렬(Sort)
 
 ### E-1. API 개요
 

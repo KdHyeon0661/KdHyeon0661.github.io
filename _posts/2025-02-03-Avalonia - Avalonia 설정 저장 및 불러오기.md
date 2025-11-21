@@ -856,7 +856,7 @@ public sealed class SettingsTests
 
 ---
 
-## 부록 A) DI 예시(App.axaml.cs)
+## DI 예시(App.axaml.cs)
 
 ```csharp
 private void ConfigureServices(IServiceCollection services)
@@ -881,7 +881,7 @@ private void ConfigureServices(IServiceCollection services)
 
 ---
 
-## 부록 B) 수학적 표기(버전 정책의 간단한 모델)
+## 수학적 표기(버전 정책의 간단한 모델)
 
 스키마 버전의 업데이트를 **그래프**로 생각하면, 각 노드는 버전, 간선은 마이그레이션 함수이다:
 

@@ -4,7 +4,7 @@ title: 데이터 통신 - Transmission Control Protocol (5)
 date: 2024-08-30 22:20:23 +0900
 category: DataCommunication
 ---
-# SCTP(Stream Control Transmission Protocol) — 서비스, 특징, 패킷 포맷 완전 정리
+# — 서비스, 특징, 패킷 포맷 완전 정리
 
 TCP/UDP에 이어 IETF가 설계한 **세 번째 전송 계층 프로토콜**이 바로 **SCTP**다.
 원래는 **PSTN(전화망) 시그널링을 IP 위로 운반(SIGTRAN)** 하기 위해 설계되었지만,

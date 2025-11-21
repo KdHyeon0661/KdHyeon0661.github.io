@@ -4,7 +4,7 @@ title: DB 심화 - sort area 사용 최소화
 date: 2025-11-24 14:25:23 +0900
 category: DB 심화
 ---
-# sort area(정렬 작업영역, PGA/TEMP) 사용을 **최소화**하는 SQL 작성법
+# 사용을 **최소화**하는 SQL 작성법
 
 **주제**:
 1) **“소트를 완료하고 나서 데이터 가공하기” Top-N 쿼리** — 정렬 대상을 **가볍게** 만들고, **STOPKEY**로 **부분 정렬**만 수행한 뒤, 이후에 **상세 가공/조인**
@@ -18,7 +18,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 스키마 & 준비
+## 실습 스키마 & 준비
 
 ```sql
 -- 제품/매출 샘플(간단)
@@ -69,7 +69,7 @@ WHERE  sn.name IN ('sorts (memory)','sorts (disk)',
 
 ---
 
-# 1) “**소트를 끝내고 나서 가공**”하는 **Top-N** 패턴
+# “**소트를 끝내고 나서 가공**”하는 **Top-N** 패턴
 
 > 목적: **정렬 대상**을 **정렬 키 + 식별자**만으로 **극단적으로 얇게** 만든 다음, **STOPKEY**로 상위 N건만 뽑고, **그 뒤에**(밖에서) **무거운 컬럼/조인**을 수행한다. → **sort area 최소화**
 
@@ -163,7 +163,7 @@ WHERE  p.category = 'ELEC';
 
 ---
 
-# 2) **분석함수에서의 Top-N** — 정렬 최소화·회피 전략
+# **분석함수에서의 Top-N** — 정렬 최소화·회피 전략
 
 분석함수 Top-N의 대표 형태:
 
@@ -198,9 +198,9 @@ WHERE  ROWNUM <= 100;
 
 ---
 
-## 그룹별 Top-N (예: 상품별 Top-3) — 3가지 패턴 비교
+## — 3가지 패턴 비교
 
-### 패턴 A) 분석함수 표준 패턴 (단순/가독성 ↑, 정렬 비용 高)
+### 분석함수 표준 패턴 (단순/가독성 ↑, 정렬 비용 高)
 
 ```sql
 -- (표준) 각 prod_id별 amount 내림차순 Top-3
@@ -225,7 +225,7 @@ WHERE x.rn <= 3;
 >   ```
 >   옵티마이저가 순서를 신뢰하면 `WINDOW SORT`가 최소화/생략될 수 있다(버전/통계 의존 → XPLAN 확인).
 
-### 패턴 B) **상관 서브쿼리 + STOPKEY** (정렬 최소, NL 스케일 패턴)
+### **상관 서브쿼리 + STOPKEY** (정렬 최소, NL 스케일 패턴)
 
 ```sql
 -- 각 상품(prod_id)별 Top-3: LATERAL/CROSS APPLY (12c+)
@@ -263,7 +263,7 @@ WHERE  p.category = 'ELEC';
 -- )
 ```
 
-### 패턴 C) **Top-1이라면** `KEEP(DENSE_RANK FIRST/LAST)` 또는 `MIN/MAX` 응용
+### **Top-1이라면** `KEEP(DENSE_RANK FIRST/LAST)` 또는 `MIN/MAX` 응용
 
 ```sql
 -- 각 상품별 최댓값(Top-1)만 필요할 때
@@ -290,7 +290,7 @@ WHERE  s.sales_dt = (
 
 ## “전역 Top-N + 추가 가공” — 분석함수 vs 인덱스 방식 비교
 
-### (1) 분석함수 방식
+### 분석함수 방식
 
 ```sql
 WITH ranked AS (
@@ -308,7 +308,7 @@ WHERE  r.rn <= 100;
 - **WINDOW SORT** 발생 가능 → 데이터 많으면 sort area 소비
 - 장점: 명료, Top-N 정의가 SQL 하나로 끝남
 
-### (2) 인덱스 + ROWNUM + 사후 가공(권장)
+### 인덱스 + ROWNUM + 사후 가공(권장)
 
 ```sql
 -- 인덱스 (amount DESC) 활용
@@ -329,7 +329,7 @@ JOIN   d_product p ON p.prod_id = t.prod_id;
 
 ---
 
-# 3) 추가 테크닉 — sort area 줄이는 세부 요령
+# 추가 테크닉 — sort area 줄이는 세부 요령
 
 ## “정렬 전” 투영 최소화: **정렬키 + 식별자(PK/ROWID)** 만
 
@@ -364,7 +364,7 @@ JOIN   f_sales s ON s.ROWID = t.rid;
 
 ---
 
-# 4) 성능 측정 & 검증(전/후)
+# 성능 측정 & 검증(전/후)
 
 ```sql
 -- (1) 대상 SQL 실행 전 지표
@@ -395,7 +395,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICATE +NOTE
 
 ---
 
-# 5) 안티패턴 → 리팩터링 요약표
+# 안티패턴 → 리팩터링 요약표
 
 | 항목 | 안티패턴 | 리팩터링(Top-N/분석함수) | 기대효과 |
 |---|---|---|---|
@@ -407,7 +407,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICATE +NOTE
 
 ---
 
-# 6) 종합 예제 — **sort area 최소화** 설계 끝판왕
+# 종합 예제 — **sort area 최소화** 설계 끝판왕
 
 ## 요구
 
@@ -459,7 +459,7 @@ JOIN   d_product p ON p.prod_id  = s.prod_id;
 
 ---
 
-# 7) 체크리스트 (Top-N & 분석함수로 sort area 줄이기)
+# 체크리스트 (Top-N & 분석함수로 sort area 줄이기)
 
 1. **정렬 전 투영 최소화**: 정렬키 + PK/ROWID만. (CLOB/긴 문자열 절대 금지)
 2. **인덱스가 정렬 제공**: `(정렬키, …)`+**DESC/ASC 일치**, 가능하면 **INDEX DESC** 사용.

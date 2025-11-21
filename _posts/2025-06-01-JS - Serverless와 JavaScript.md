@@ -80,7 +80,7 @@ sam local start-api
 
 ---
 
-### Vercel Functions (Node.js) — 파일 기반 라우팅
+### — 파일 기반 라우팅
 
 /**`api/sendMail.js`**/
 ```js
@@ -135,7 +135,7 @@ export default {
 
 ## 서버리스 “필수” 아키텍처 패턴
 
-### 입력 검증(Validation) — *Zod 등 스키마 기반*
+### — *Zod 등 스키마 기반*
 
 ```js
 import { z } from 'zod';
@@ -170,7 +170,7 @@ const badRequest = (err) => ({ statusCode: 400, body: JSON.stringify({ ok: false
 const fail = (e) => ({ statusCode: 500, body: JSON.stringify({ ok: false, error: 'internal' }) });
 ```
 
-### 인증(JWT/세션) — 에지 선필터 → 리저널 백엔드
+### — 에지 선필터 → 리저널 백엔드
 
 - **Edge**에서 쿠키/헤더 검사, 빠른 401/302 처리
 - 통과 시 **백엔드 함수**로 전달하여 DB 등 무거운 연산 수행
@@ -327,7 +327,7 @@ export const handler = async (event) => {
 > S3 `ObjectCreated` 트리거로 리사이즈 Lambda → 썸네일 버킷에 저장.
 > 에지(CloudFront Functions/Workers)에서 이미지 URL 라우팅/캐시.
 
-### 크론 잡(스케줄) 예 — Cloudflare Workers
+### 예 — Cloudflare Workers
 
 /**`src/cron.js`**/
 ```js
@@ -418,7 +418,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 
 ## 빠른 시작 “템플릿” 3종
 
-### A) **Vercel Node 함수 + Zod + CORS 헤더**
+### **Vercel Node 함수 + Zod + CORS 헤더**
 
 ```js
 // api/hello.js
@@ -433,7 +433,7 @@ export default function handler(req, res) {
 }
 ```
 
-### B) **Lambda + API Gateway + 에러 안전 래퍼**
+### **Lambda + API Gateway + 에러 안전 래퍼**
 
 ```js
 const wrap = (fn) => async (event) => {
@@ -447,7 +447,7 @@ export const handler = wrap(async (event) => {
 });
 ```
 
-### C) **Cloudflare Worker 에지 캐시 프록시**
+### **Cloudflare Worker 에지 캐시 프록시**
 
 ```js
 export default {

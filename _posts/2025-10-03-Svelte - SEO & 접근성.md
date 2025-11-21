@@ -400,7 +400,7 @@ export const GET: RequestHandler = ({ url }) => {
 
 ---
 
-## A11y(접근성) **기본 원칙**
+## **기본 원칙**
 
 1) **의미론적 HTML**: 가능한 `<button>`, `<a>`, `<label>`, `<fieldset>`, `<legend>`, `<nav>` 등 사용
 2) **포커스 가능/순서**: 키보드(Tab/Shift+Tab)로 모든 인터랙션 가능

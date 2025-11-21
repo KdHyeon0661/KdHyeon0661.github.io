@@ -320,14 +320,14 @@ category: HTML
 
 ## 공통 속성/검증/UX 향상
 
-### A) 필수/범위/정규식
+### 필수/범위/정규식
 
 ```html
 <input type="number" required min="0" max="100" step="10" />
 <input type="text" required pattern="^[a-zA-Z0-9_]{4,16}$" title="영문/숫자/언더스코어 4~16자" />
 ```
 
-### B) 자동완성(autocomplete) 토큰(발췌)
+### 자동완성(autocomplete) 토큰(발췌)
 
 - `name`, `email`, `username`, `new-password`, `current-password`,
   `tel`, `tel-national`, `one-time-code`,
@@ -339,7 +339,7 @@ category: HTML
 <input type="password" name="password" autocomplete="current-password" />
 ```
 
-### C) 모바일 최적화
+### 모바일 최적화
 
 - `inputmode` : `numeric`, `decimal`, `tel`, `email`, `url`, `search`
 - `enterkeyhint` : `search`, `go`, `done`, `next`, `send`, …
@@ -348,7 +348,7 @@ category: HTML
 <input type="text" inputmode="numeric" enterkeyhint="next" />
 ```
 
-### D) 접근성(a11y)
+### 접근성(a11y)
 
 - `label for` ↔ `id` 연결은 **기본 중 기본**.
 - 동적 결과는 `aria-live="polite"` 등으로 공지.
@@ -360,7 +360,7 @@ category: HTML
 <small id="zip-help" class="hint">5자리 숫자</small>
 ```
 
-### E) 클라이언트-서버 검증 협업
+### 클라이언트-서버 검증 협업
 
 - **클라:** 즉시 피드백(형식/범위) 제공.
 - **서버:** 모든 값 재검증(권한/비즈니스 규칙/중복/위조).

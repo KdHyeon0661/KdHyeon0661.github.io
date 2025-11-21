@@ -62,7 +62,7 @@ Layer 1: FROM ubuntu:20.04
 
 ---
 
-## OverlayFS와 Copy-on-Write(COW) 간단 메커니즘
+## 간단 메커니즘
 
 Linux에서 도커는 보통 **OverlayFS**를 사용합니다(환경에 따라 달라질 수 있음).
 
@@ -420,7 +420,7 @@ docker inspect <컨테이너> | jq '.[0].State, .[0].Mounts'
 
 ---
 
-## 부록 A) 실전형 Python 슬림 Dockerfile(요약)
+## 실전형 Python 슬림 Dockerfile(요약)
 
 ```Dockerfile
 FROM python:3.12-slim
@@ -436,7 +436,7 @@ EXPOSE 5000
 CMD ["python","app.py"]
 ```
 
-## 부록 B) Node.js 캐시 최적화 스니펫
+## Node.js 캐시 최적화 스니펫
 
 ```Dockerfile
 FROM node:20-alpine
@@ -447,7 +447,7 @@ COPY . .
 CMD ["npm","start"]
 ```
 
-## 부록 C) 수식 메모(캐시 적중 직관)
+## 수식 메모(캐시 적중 직관)
 
 레이어별 캐시 적중률을 \(p_i\), 빌드비용을 \(c_i\) 라 하면,
 $$

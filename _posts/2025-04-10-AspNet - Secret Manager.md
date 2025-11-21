@@ -4,7 +4,7 @@ title: AspNet - Secret Manager
 date: 2025-04-10 21:20:23 +0900
 category: AspNet
 ---
-# ASP.NET Core 시크릿 매니저(Secret Manager) 사용법
+# 사용법
 
 ## Secret Manager란? — “개발 시 로컬에서 비밀을 소스코드 밖에 두는 도구”
 
@@ -353,7 +353,7 @@ builder.Services.AddHttpClient("openai", (sp, http) =>
 
 ---
 
-## 실무 운영 전환(Production) 권장 패턴
+## 권장 패턴
 
 - **개발**: Secret Manager
 - **스테이징/운영**:

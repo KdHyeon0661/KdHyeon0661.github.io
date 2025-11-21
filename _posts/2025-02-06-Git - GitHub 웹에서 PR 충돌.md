@@ -4,7 +4,7 @@ title: Git - GitHub 웹에서 PR 충돌 해결
 date: 2025-02-06 19:20:23 +0900
 category: Git
 ---
-# GitHub 웹에서 **PR( Pull Request ) 충돌 해결**
+# 충돌 해결**
 
 ## 기본 개념 정리(복습)
 
@@ -161,13 +161,13 @@ git push --force-with-lease
 - **주의**: rebase는 해시 재작성 → 원격에는 **강제 푸시** 필요.
 - PR이 **fork에서 온 경우**에도 동일. 단, 팀 정책/권한에 따라 rebase가 금지될 수 있음.
 
-### 부분 채택(ours / theirs) 단축 키
+### 단축 키
 
 ```bash
-# 현재 브랜치(ours) 버전 채택
+# 버전 채택
 
 git checkout --ours   path/to/file
-# 가져오는 쪽(theirs) 버전 채택
+# 버전 채택
 
 git checkout --theirs path/to/file
 git add path/to/file
@@ -190,23 +190,23 @@ git config --global rerere.enabled true
 
 ## 다양한 충돌 유형 예시와 해결 전략
 
-### 내용(content) 충돌
+### 충돌
 
 - 동일 파일 동일/겹치는 줄 충돌
 - 해결: **라인 단위** 수동 통합 → 마커 삭제 → add → 커밋
 
-### 리네임(rename) + 수정 충돌
+### + 수정 충돌
 
 - 한쪽에서 파일명 변경, 다른 쪽에서 같은 파일을 수정
 - 웹에서는 맥락 파악이 힘들 수 있어 **로컬 권장**
 - 전략: 최종 파일명 선택 → 내용 합치기 → **이력 검증**
 
-### 삭제-수정(delete/modify) 충돌
+### 충돌
 
 - 한쪽은 파일 삭제, 다른 쪽은 수정
 - 유지 여부 결정 후 `--ours/--theirs` 또는 수동 복원
 
-### 바이너리(binary) 충돌
+### 충돌
 
 - 이미지/모델/디자인 등은 라인 병합 불가
 - 선택지: ours 혹은 theirs로 **전체 파일 단위** 채택 → 팀 재합의
@@ -216,7 +216,7 @@ git config --global rerere.enabled true
   *.png binary
   ```
 
-### 서브모듈(submodule) 포인터 충돌
+### 포인터 충돌
 
 - 상위 리포에서 서브모듈 폴더가 가리키는 커밋 포인터를 **명시적으로 갱신** 후 커밋
 
@@ -268,7 +268,7 @@ git commit -am "feat: home v2"
 #    웹에서 Resolve conflicts(라인 통합)를 할 수도 있고,
 #    로컬에서 아래처럼 해결할 수도 있음.
 
-# --- 로컬 해결(merge 기반) ---
+# ---
 
 git checkout feature/header-update
 git merge main || true     # 충돌 유발
@@ -335,7 +335,7 @@ git pull origin main
 
 git checkout feature-branch
 
-# A) merge 기반
+# merge 기반
 
 git merge main
 # 충돌 해결 → 파일수정 → 마커 삭제
@@ -344,7 +344,7 @@ git add <files>
 git commit
 git push
 
-# B) rebase 기반(선형 이력)
+# rebase 기반(선형 이력)
 
 git fetch origin
 git rebase origin/main

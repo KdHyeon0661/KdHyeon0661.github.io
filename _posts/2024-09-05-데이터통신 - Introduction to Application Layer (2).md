@@ -33,7 +33,7 @@ category: DataCommunication
 
 C로 소켓 프로그래밍을 할 때는 다음 공통 이슈들을 먼저 짚고 넘어가야 한다.
 
-#### 1) 주소 구조와 IPv4/IPv6
+#### 주소 구조와 IPv4/IPv6
 
 - IPv4: `struct sockaddr_in` (AF_INET)
 - IPv6: `struct sockaddr_in6` (AF_INET6)
@@ -55,7 +55,7 @@ addr.sin_addr.s_addr = htonl(INADDR_ANY); // 0.0.0.0
 IPv6까지 확장하려면 대신 `getaddrinfo()`를 사용하여
 주소 해석과 구조체 세팅을 한 번에 처리하는 것이 좋다.
 
-#### 2) blocking I/O와 iterative 서버
+#### blocking I/O와 iterative 서버
 
 우리가 만들 iterative 서버는 **blocking 소켓**을 사용한다.
 
@@ -64,7 +64,7 @@ IPv6까지 확장하려면 대신 `getaddrinfo()`를 사용하여
   - 하나의 요청을 처리하는 동안 다른 클라이언트는 대기하게 되지만,
   - 코드 구조가 직관적이다.
 
-#### 3) 오류 처리
+#### 오류 처리
 
 C에서는 모든 시스템 호출에 대해 **반환값 검사**가 필수다.
 
@@ -83,7 +83,7 @@ if (fd < 0) {
 
 실서비스에서는 오류 종류에 따라 재시도, 로그, graceful shutdown 등을 세분화해야 한다.
 
-#### 4) 메시지 경계 vs 바이트 스트림
+#### 메시지 경계 vs 바이트 스트림
 
 - UDP: **데이터그램 단위**가 유지된다. 한 번 `sendto()` 한 것이 `recvfrom()` 한 번에 대응.
 - TCP: **바이트 스트림**이다.

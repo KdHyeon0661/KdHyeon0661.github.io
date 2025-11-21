@@ -238,7 +238,7 @@ sudo cat /sys/fs/cgroup/memory/.../memory.max
 ```
 **해결**: 메모리 limit 상향/튜닝, 누수 진단, CPU requests/limits 재조정(HPA/VPA 고려).
 
-### 네트워크 플러그인(CNI) 실패
+### 실패
 
 ```
 Failed to create pod sandbox: failed to set up sandbox container "..." network for pod "...": plugin returned error

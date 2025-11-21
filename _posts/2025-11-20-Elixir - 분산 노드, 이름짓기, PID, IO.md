@@ -70,7 +70,7 @@ iex --name b@host2.example.com -S mix
 
 ---
 
-### 쿠키(cookie) — 인증 키
+### — 인증 키
 
 분산 노드끼리 마음대로 연결되면 위험하므로,
 얼랭/엘릭서는 **쿠키(cookie)** 라는 공유 비밀 키를 사용한다.
@@ -112,7 +112,7 @@ iex --sname b --cookie APP2 -S mix
 
 이제 실제로 노드를 연결해보고, **RPC(Remote Procedure Call)** 을 해보자.
 
-#### 1) 노드 연결
+#### 노드 연결
 
 ```elixir
 # a 노드 셸에서
@@ -124,7 +124,7 @@ Node.list()                 # [:"b@<host>"] 혹은 []
 - 성공 시 `true`, 실패 시 `false`.
 - `Node.list/0` 는 현재 노드가 **연결된 노드 목록**을 반환한다.
 
-#### 2) 단일 RPC 호출
+#### 단일 RPC 호출
 
 ```elixir
 # a 노드에서 b 노드의 Enum.sum 실행
@@ -148,7 +148,7 @@ Node.list()                 # [:"b@<host>"] 혹은 []
 
 ```
 
-#### 3) 멀티 노드 브로드캐스트
+#### 멀티 노드 브로드캐스트
 
 ```elixir
 :rpc.multi_call(Node.list(), Enum, :count, [[1, 2, 3]])
@@ -650,7 +650,7 @@ end)
 
 원격 노드에 프로세스를 띄우는 방법은 여러 가지가 있다.
 
-#### 1) `Node.spawn/2`
+#### `Node.spawn/2`
 
 ```elixir
 pid =
@@ -663,7 +663,7 @@ pid =
   - 지정된 노드에서 `fun`을 실행하는 프로세스를 생성한다.
 - 이때 group leader는 **그 노드의 셸**이 된다.
 
-#### 2) `Task.Supervisor` 를 통한 원격 태스크
+#### `Task.Supervisor` 를 통한 원격 태스크
 
 원격 작업을 관리하려면 `Task.Supervisor` 가 편리하다.
 
@@ -898,7 +898,7 @@ Dist.Client.get("user:42")  # "kim"
 
 ---
 
-### 장애/분할 네트워크(넷스플릿) 대비
+### 대비
 
 분산 시스템에서 피할 수 없는 문제:
 
@@ -982,7 +982,7 @@ Dist.Client.get("user:42")  # "kim"
 
 ### 부록: 실습 레시피 모음
 
-#### A) 빠른 로컬 클러스터 실습
+#### 빠른 로컬 클러스터 실습
 
 ```bash
 # 터미널 1
@@ -1003,7 +1003,7 @@ Node.list()
 :rpc.call(:"b@#{:net_adm.localhost()}", IO, :puts, ["hello from a"])
 ```
 
-#### B) 원격 태스크 + 출력 리다이렉션
+#### 원격 태스크 + 출력 리다이렉션
 
 ```elixir
 # a 노드
@@ -1020,7 +1020,7 @@ t =
 Task.await(t)
 ```
 
-#### C) 원격 GenServer 생성/호출
+#### 원격 GenServer 생성/호출
 
 ```elixir
 # b 노드에 MyServer를 띄우기

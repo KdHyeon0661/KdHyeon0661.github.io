@@ -121,7 +121,7 @@ customElements.define('x-hello', XHello);
 
 ---
 
-## 속성(attributes) vs 프로퍼티(properties) 동기화
+## vs 프로퍼티(properties) 동기화
 
 - **속성(HTML 문자열)**: `<x-todo done="true">`
 - **프로퍼티(JS 값)**: `el.done = true`
@@ -457,7 +457,7 @@ this.shadowRoot.adoptedStyleSheets = [sheet];
 
 ---
 
-## 폼-연동(Form-Associated) 심화
+## 심화
 
 - `static formAssociated = true` + `const internals = this.attachInternals()`
 - `internals.setFormValue(value, state?)` 로 제출 값 설정
@@ -471,7 +471,7 @@ else this.#internals.setValidity({});
 
 ---
 
-## 접근성(A11y) 체크리스트
+## 체크리스트
 
 - **문서 구조 역할/이름/상태**: `role`, `aria-*`, `aria-live`
 - **키보드 내비게이션**: Tab 순서, Arrow/Space/Enter 대응
@@ -552,7 +552,7 @@ class XLazy extends HTMLElement {
 customElements.define('x-lazy', XLazy);
 ```
 
-### 16-2. 토스트(알림) 관리자
+### 관리자
 
 ```js
 class XToastHost extends HTMLElement {

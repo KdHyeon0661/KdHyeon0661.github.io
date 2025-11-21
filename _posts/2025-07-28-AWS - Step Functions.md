@@ -16,7 +16,7 @@ category: AWS
 
 ---
 
-## Amazon States Language(ASL) 핵심 문법
+## 핵심 문법
 
 ### 최소 예제
 
@@ -433,7 +433,7 @@ $$
 
 ## IaC: CDK / SAM / CloudFormation
 
-### AWS CDK (TypeScript) 예시
+### 예시
 
 ```ts
 import * as cdk from "aws-cdk-lib";
@@ -524,7 +524,7 @@ Resources:
 
 ---
 
-## 확장 예제: **Kinesis → Step Functions(익스프레스) → Lambda → Firehose/S3**
+## → Lambda → Firehose/S3**
 
 - Kinesis 레코드 배치 → Express State Machine(Map with concurrency) → 변환 → Firehose PutRecordBatch
 - 수식상 **GB-초**가 저렴, 대량 이벤트 오케스트레이션에 적합
@@ -567,7 +567,7 @@ Resources:
 
 ---
 
-## 부록 A) 주문 처리 예제 ― 전체 ASL 샘플
+## 주문 처리 예제 ― 전체 ASL 샘플
 
 ```json
 {
@@ -657,7 +657,7 @@ Resources:
 
 ---
 
-## 부록 B) Lambda 핸들러(예시: Node.js)
+## Lambda 핸들러(예시: Node.js)
 
 ```js
 // ValidateOrder
@@ -679,7 +679,7 @@ exports.handler = async (event) => {
 
 ---
 
-## 부록 C) 비용 튜닝 체크
+## 비용 튜닝 체크
 
 - **표준**: 상태 수(특히 Map 내부 상태) 최소화, 공통 변환은 `Pass`/`Parameters`로 합치기
 - **익스프레스**: 실행 시간/메모리 최소화, 불필요한 대기/외부 호출 제거

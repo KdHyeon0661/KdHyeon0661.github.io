@@ -130,7 +130,7 @@ void levelOrder(Node* root){
 }
 ```
 
-### **Morris 중위 순회**(O(1) 보조 메모리)
+### 보조 메모리)
 
 임시 스레딩을 이용해 스택/재귀 없이 중위 순회:
 
@@ -208,7 +208,7 @@ Node* predecessor(Node* root, int k){
 }
 ```
 
-### 삭제(재귀) — 후속자 교체
+### — 후속자 교체
 
 ```cpp
 Node* deleteNode(Node* root, int val){
@@ -231,7 +231,7 @@ Node* deleteNode(Node* root, int val){
 
 > **선행자 교체** 버전은 `findMax(root->left)` 를 써서 동일하게 구현 가능.
 
-### 삭제(반복) — 스택 없이
+### — 스택 없이
 
 ```cpp
 Node* deleteIter(Node* root, int val){

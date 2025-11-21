@@ -20,7 +20,7 @@ category: Docker
 
 ---
 
-## 디렉터리 구조(Flask 기준) — 최소 구성
+## — 최소 구성
 
 ```plaintext
 community-app/
@@ -107,7 +107,7 @@ COPY . .
 
 RUN chmod +x docker/wait-for-db.sh
 
-# 기본 포트(Flask dev) — 운영에서는 Gunicorn 사용
+# — 운영에서는 Gunicorn 사용
 
 EXPOSE 5000
 
@@ -512,7 +512,7 @@ DJANGO_ALLOWED_HOSTS=yourdomain.com,localhost
 
 ## 마이그레이션·초기화 절차
 
-### Flask(SQLAlchemy) — 간단 초기화
+### — 간단 초기화
 
 ```bash
 docker compose run --rm web python -c \
@@ -697,7 +697,7 @@ curl http://localhost:5000/
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.prod up -d --build
-# (Django라면) 최초 배포시
+# 최초 배포시
 
 docker compose exec web bash -lc "python manage.py migrate && python manage.py collectstatic --noinput"
 ```

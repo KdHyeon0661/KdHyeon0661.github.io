@@ -275,7 +275,7 @@ public class KdaFlinkApp {
 - KDA 콘솔에서 **병렬도**, **Autoscaling**, **Checkpoint interval**, **State backend**를 설정
 - 롤링 배포: **Savepoint** 생성 → 새 버전으로 **Restore** (무중단/데이터 무손실)
 
-### CEP(Complex Event Processing) 예
+### 예
 
 ```java
 // 클릭 후 10분 내 구매 패턴
@@ -287,7 +287,7 @@ Pattern<Event, ?> pattern = Pattern.<Event>begin("click")
 
 ---
 
-## 출력(싱크) 전략
+## 전략
 
 ### S3 (Parquet)로 적재 — 배치/마이크로배치
 
@@ -395,7 +395,7 @@ $$
 - 입력: `app-events` (JSON)
 - 출력: `analytics-agg` (Kinesis) + Firehose→S3 (Parquet)
 
-#### (A) SQL 애플리케이션 정의
+#### SQL 애플리케이션 정의
 
 ```sql
 -- 1) 결과 스트림들
@@ -421,7 +421,7 @@ GROUP BY country, action;
 
 > 콘솔에서 `s_cnt_1m`, `s_trend_5m`를 **Output**으로 등록(하나는 Kinesis, 하나는 Firehose→S3).
 
-#### (B) Firehose → S3 (Parquet) 설정 포인트
+#### Firehose → S3 (Parquet) 설정 포인트
 
 - **Buffer Size/Interval**: 64–128MiB / 60–300s
 - **Parquet + Snappy**, Glue Schema Registry(선택)
@@ -548,7 +548,7 @@ Resources:
 
 ---
 
-## 부록 A) SQL 참조 — 세션 윈도우
+## SQL 참조 — 세션 윈도우
 
 ```sql
 CREATE OR REPLACE STREAM "s_session" (user_id VARCHAR(64), clicks BIGINT);
@@ -562,7 +562,7 @@ WINDOWED BY SESSION (INTERVAL '10' MINUTE)
 GROUP BY user_id;
 ```
 
-## 부록 B) Flink — 파케이 싱크 스니펫(파일 롤링)
+## Flink — 파케이 싱크 스니펫(파일 롤링)
 
 ```java
 final FileSink<String> sink = FileSink
@@ -575,7 +575,7 @@ final FileSink<String> sink = FileSink
 events.map(Event::toJson).sinkTo(sink);
 ```
 
-## 부록 C) 간단 비용 산식
+## 간단 비용 산식
 
 $$
 \text{KDA Cost} \approx \text{vCPU Hours} \times \text{Unit Price} \quad (+ \text{Memory Premium if any})

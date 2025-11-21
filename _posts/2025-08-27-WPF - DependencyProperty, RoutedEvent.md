@@ -387,7 +387,7 @@ public class MeterBar : FrameworkElement
 
 ---
 
-## **터널링(Preview) vs 버블링** 실전 이해
+## vs 버블링** 실전 이해
 
 예: `PreviewMouseDown`(터널링)에서 상위 컨테이너가 **해당 입력을 차단**하면, 하위 버튼의 `Click`까지 **막을 수 있음**.
 
@@ -402,7 +402,7 @@ this.PreviewMouseDown += (s, e) =>
 
 ---
 
-## RoutedEvent와 **명령(ICommand) 라우팅**
+## 라우팅**
 
 - `Button.Command` 등 **Command 바인딩**은 내부적으로 **라우팅**과 결합.
 - `CommandBinding`을 **상위 컨테이너**에 걸어두면 하위 컨트롤에서 발생한 명령도 처리 가능.
@@ -872,7 +872,7 @@ root.AddHandler(BadgeButton.BadgeClickedEvent, new RoutedEventHandler((s, e) =>
 
 ---
 
-### 부록 A) **Get/SetCurrentValue**: Local Value를 덮지 않고 값 갱신
+### **Get/SetCurrentValue**: Local Value를 덮지 않고 값 갱신
 
 `SetCurrentValue`는 **로컬 값 우선순위를 깨지 않고** 현재 유효값만 갱신.
 
@@ -883,7 +883,7 @@ myControl.SetCurrentValue(Control.BackgroundProperty, Brushes.LightYellow);
 
 ---
 
-### 부록 B) **ClearValue**와 `ReadLocalValue`
+### **ClearValue**와 `ReadLocalValue`
 
 ```csharp
 // 로컬 값 제거 → 우선순위 아래(스타일/상속/기본값)로 복귀
@@ -897,7 +897,7 @@ if (lv != DependencyProperty.UnsetValue)
 
 ---
 
-### 부록 C) 템플릿 경계에서 `Source` 보정
+### 템플릿 경계에서 `Source` 보정
 
 `OriginalSource`는 템플릿 내부 요소일 수 있으므로, **항목 컨테이너**를 역추적:
 
@@ -912,7 +912,7 @@ DependencyObject FindContainer(ItemsControl ic, DependencyObject start)
 
 ---
 
-### 부록 D) XAML에서 **Attached Event** (RE의 부착 버전)
+### XAML에서 **Attached Event** (RE의 부착 버전)
 
 ```xml
 <Grid Mouse.MouseDown="OnAnyMouseDown"/>
@@ -927,7 +927,7 @@ private void OnAnyMouseDown(object sender, MouseButtonEventArgs e)
 
 ---
 
-### 부록 E) 스타일 기반 EventSetter의 “클래스 핸들러 대용”
+### 스타일 기반 EventSetter의 “클래스 핸들러 대용”
 
 ```xml
 <Style TargetType="TextBox">

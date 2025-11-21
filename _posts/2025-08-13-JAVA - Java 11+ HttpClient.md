@@ -52,7 +52,7 @@ HttpClient client = HttpClient.newBuilder()
 
 ---
 
-## 요청(Request) 구성 — GET/POST/헤더/타임아웃/쿼리
+## 구성 — GET/POST/헤더/타임아웃/쿼리
 
 ### GET (쿼리 인코딩·헤더·요청별 타임아웃)
 
@@ -80,7 +80,7 @@ System.out.println(res.body());
 
 > **주의**: `URLEncoder`는 **쿼리 파라미터** 전용이다. **경로 세그먼트** 인코딩은 별도 유틸(예: RFC 3986 안전 문자만 허용)로 처리하라.
 
-### POST(JSON) — Jackson 직렬화
+### — Jackson 직렬화
 
 ```java
 // Gradle (Kotlin)
@@ -128,7 +128,7 @@ HttpRequest req = HttpRequest.newBuilder(URI.create("https://upload.example.com"
 
 ---
 
-## 응답(BodyHandler) — 문자열/바이트/스트림/파일
+## — 문자열/바이트/스트림/파일
 
 | 핸들러 | 설명 | 용도 |
 |---|---|---|
@@ -150,7 +150,7 @@ try (java.io.InputStream is = r.body();
 
 ---
 
-## 비동기(CompletableFuture) — 팬아웃·합류·예외
+## — 팬아웃·합류·예외
 
 ```java
 HttpRequest req = HttpRequest.newBuilder(URI.create("https://httpbin.org/delay/1"))

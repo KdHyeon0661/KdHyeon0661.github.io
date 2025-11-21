@@ -35,7 +35,7 @@ data:
 - `tls.key`: **PEM** 포맷 비공개키. 절대로 유출 금지.
 - Secret 데이터는 **base64 인코딩**입니다.
 
-### OpenSSL로 self-signed(테스트용) 발급 → Secret 생성
+### 발급 → Secret 생성
 
 ```bash
 # 키/인증서 생성 (SAN 포함, 1년)
@@ -188,9 +188,9 @@ helm install cert-manager jetstack/cert-manager \
 kubectl get pods -n cert-manager
 ```
 
-### ACME(렌츠/공인CA) — HTTP-01(간편) / DNS-01(와일드카드)
+### — HTTP-01(간편) / DNS-01(와일드카드)
 
-#### (A) ClusterIssuer (Let’s Encrypt: 프로덕션)
+#### ClusterIssuer (Let’s Encrypt: 프로덕션)
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -212,7 +212,7 @@ spec:
 - HTTP-01: `/.well-known/acme-challenge/*` 경로를 Ingress가 처리 가능한 환경에서 간편.
 - 도메인 DNS가 Ingress의 외부 주소로 **정확히** 향해야 합니다.
 
-#### (B) DNS-01 (와일드카드 `*.example.com` 필요 시)
+#### DNS-01 (와일드카드 `*.example.com` 필요 시)
 
 Route53 예시:
 
@@ -241,7 +241,7 @@ spec:
 > DNS-01은 DNS 제공자(CloudDNS/Route53/Cloudflare 등) 자격증명이 필요.
 > **와일드카드** 인증서가 반드시 필요할 때 선택.
 
-#### (C) Certificate 리소스로 실제 발급
+#### Certificate 리소스로 실제 발급
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -287,7 +287,7 @@ spec:
 
 > cert-manager가 Ingress를 감지해 `Certificate`를 생성하고, 검증/발급/갱신까지 자동 처리.
 
-### 내부 CA(사설 PKI) 연동
+### 연동
 
 - 사내 CA의 루트/중간 CA로 서명하는 Issuer 구성(예: `Issuer` + `ca` 설정).
 - 또는 `Vault Issuer` 플러그인으로 HashiCorp Vault의 PKI 엔진 사용.
@@ -305,7 +305,7 @@ spec:
 
 ---
 
-## mTLS(서버/클라이언트 양방향 인증) — Ingress NGINX 예제
+## — Ingress NGINX 예제
 
 ### 클라이언트 인증서 요구(서버 입장)
 
@@ -525,7 +525,7 @@ spec:
         backend: { service: { name: web, port: { number: 80 } } }
 ```
 
-### 내부 CA + mTLS(서버/클라이언트) 혼합
+### 혼합
 
 - 서버 인증서는 `corp-ca` Issuer로 발급.
 - 클라이언트 CA 번들은 별도 Secret.

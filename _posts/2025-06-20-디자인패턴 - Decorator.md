@@ -57,7 +57,7 @@ category: 디자인패턴
 
 ---
 
-## 기본 구현 예시 (Python) — 커피 가격
+## — 커피 가격
 
 > 사용자 예시를 살리되, **타입힌트와 확장 포인트**를 추가했다.
 
@@ -106,7 +106,7 @@ print(coffee.description(), coffee.cost())  # Basic Coffee + Milk + Whip + Caram
 
 ---
 
-## 실전 파이프라인 예시 (Python) — Repository에 로깅·리트라이·캐시 조합
+## — Repository에 로깅·리트라이·캐시 조합
 
 > **순서 의존성**과 **예외 전파**를 보여준다.
 

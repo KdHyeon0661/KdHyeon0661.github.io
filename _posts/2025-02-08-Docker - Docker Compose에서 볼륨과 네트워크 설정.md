@@ -152,7 +152,7 @@ services:
 
 ---
 
-### tmpfs (메모리) 마운트
+### 마운트
 
 ```yaml
 services:

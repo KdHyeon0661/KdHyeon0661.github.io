@@ -105,7 +105,7 @@ ZIP 내부 항목 이름: `../../../../tomcat/webapps/ROOT/ROOT.jsp` → **웹�
 
 ## 취약 → 안전: 언어/프레임워크별 레시피
 
-### Node.js(Express) — 안전한 파일 다운로드
+### — 안전한 파일 다운로드
 
 **✅ 권장 1: ID 매핑**
 ```javascript
@@ -177,7 +177,7 @@ def logs():
 
 ---
 
-### Java(Spring Boot) — Java NIO `normalize/resolve`
+### — Java NIO `normalize/resolve`
 
 **✅ 안전(디렉터리 고정 + 정규화 + startsWith)**
 ```java
@@ -225,7 +225,7 @@ readfile($full);
 
 ---
 
-## Zip Slip(아카이브 해제) 안전 해법
+## 안전 해법
 
 **✅ Java 예시**
 ```java

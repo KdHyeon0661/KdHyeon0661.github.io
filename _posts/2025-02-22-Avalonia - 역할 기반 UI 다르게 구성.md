@@ -4,7 +4,7 @@ title: Avalonia - 역할 기반 UI 다르게 구성
 date: 2025-02-22 19:20:23 +0900
 category: Avalonia
 ---
-# Avalonia MVVM — 로그인 후 역할(Role) 기반 UI 구성 완전 가이드
+# 기반 UI 구성 완전 가이드
 
 핵심은 다음과 같다.
 

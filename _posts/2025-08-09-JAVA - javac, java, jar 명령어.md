@@ -231,11 +231,11 @@ jar --create --file app.jar --manifest MANIFEST.MF -C bin .
 > 참고: **일반 `jar`는 여러 JAR을 하나로 합쳐주지 않습니다.**
 > 의존 JAR까지 한 덩어리로 만들려면 **Maven Shade** / **Gradle Shadow** 같은 **쉐이더**를 사용하세요.
 
-### 멀티릴리스 JAR(MRJAR) 예 (JDK9+)
+### 예 (JDK9+)
 
 JDK별 구현을 동봉:
 ```bash
-# 공통 클래스(최소 타겟) 컴파일
+# 컴파일
 
 javac --release 8 -d out/common $(find src/common -name "*.java")
 
@@ -393,7 +393,7 @@ java --enable-preview -cp bin com.example.app.Main
 
 ---
 
-## 트러블슈팅(빈출 에러) — 원인·해결 표
+## — 원인·해결 표
 
 | 에러/증상 | 전형적 원인 | 해결 가이드 |
 |---|---|---|

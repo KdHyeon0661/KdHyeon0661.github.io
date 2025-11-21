@@ -50,7 +50,7 @@ WHERE LOWER(name) LIKE '%consistent gets%' OR LOWER(name) LIKE '%parse count%';
 
 ## 수집 원칙: **누적 → 델타 → 단위 시간 보정** (핵심 템플릿 제공)
 
-### 스냅샷 테이블(임시) 만들기
+### 만들기
 
 ```sql
 -- 1) 샘플 저장용 GTT(세션 단위 유지)
@@ -94,7 +94,7 @@ ORDER  BY 2 DESC;
 
 ## Ratio 라이브러리(수식 + SQL)
 
-### Buffer Cache Hit Ratio (BCHR) — (주의: 과신 금물)
+### — (주의: 과신 금물)
 
 **아이디어**: 논리읽기 중 물리읽기가 차지하는 비율.
 가볍게는 다음 근사 사용:

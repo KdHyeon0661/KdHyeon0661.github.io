@@ -116,7 +116,7 @@ wpr -stop trace.etl
 - Profiles: **General** + **GPU** + **File I/O** + **Memory(Heap)** 선택, *Stack* 체크
 - **Scenario** 탭: **“Start”** → 앱 조작 → **“Save”**
 
-### WPRP (커스텀 프로필) 일부
+### 일부
 
 ```xml
 <!-- MyPerf.wprp -->
@@ -160,7 +160,7 @@ wpr -stop trace.etl
 
 ---
 
-## WPA(Windows Performance Analyzer) 분석 루틴
+## 분석 루틴
 
 ### 타임라인 슬라이싱(시나리오 마커로 범위 고정)
 
@@ -185,7 +185,7 @@ wpr -stop trace.etl
 
 > **DirectX 앱**이라면 **PresentMon**(ETW 기반)으로 **프레임타임/여러 큐 상태**를 별도 보기 굿.
 
-### 할당(“GC는 없지만, 할당은 있다”) — Heap 히트맵/누수
+### — Heap 히트맵/누수
 
 - **Memory** → **Heap Allocations (with stacks)**
   - **By: Process, Call stack**

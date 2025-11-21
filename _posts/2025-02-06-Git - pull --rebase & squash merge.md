@@ -41,7 +41,7 @@ git pull --rebase origin main
 
 ## 실전 옵션 — 모드, 자동 스태시, 반복 충돌 학습
 
-### A) `--rebase`의 모드
+### `--rebase`의 모드
 
 ```bash
 git pull --rebase=merges        # merge 토폴로지를 보존하며 rebase
@@ -51,7 +51,7 @@ git pull --rebase=false         # 평소처럼 merge
 ```
 - 팀에 **선형 이력** 규칙이 있다면 `true` 또는 `merges`를 조직 표준으로.
 
-### B) 변경 보관: `--autostash` / 자동 설정
+### 변경 보관: `--autostash` / 자동 설정
 
 ```bash
 git pull --rebase --autostash
@@ -59,7 +59,7 @@ git config --global rebase.autoStash true
 ```
 - 워킹 디렉터리에 미커밋 변경이 있을 때 자동으로 stash/복원.
 
-### C) 반복 충돌 자동 해결 힌트: `rerere`
+### 반복 충돌 자동 해결 힌트: `rerere`
 
 ```bash
 git config --global rerere.enabled true
@@ -73,7 +73,7 @@ git config --global rerere.enabled true
 ```bash
 git pull --rebase
 # 충돌 발생 시:
-# 파일 열어 충돌 마커(<<<<<<<, =======, >>>>>>>) 해결
+# 해결
 
 git add <수정파일>
 git rebase --continue

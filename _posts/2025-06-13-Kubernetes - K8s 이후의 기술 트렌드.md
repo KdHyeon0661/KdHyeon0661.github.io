@@ -71,7 +71,7 @@ export K3S_TOKEN=<SERVER_NODE_TOKEN>
 curl -sfL https://get.k3s.io | K3S_URL=$K3S_URL K3S_TOKEN=$K3S_TOKEN sh -
 ```
 
-### 외부 etcd(HA) 구성 요약
+### 구성 요약
 
 - 외부 etcd 3노드 구성 → `--datastore-endpoint="https://etcd1:2379,..."`
 - 인증서 지정: `--datastore-cafile/--datastore-certfile/--datastore-keyfile`

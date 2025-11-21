@@ -137,7 +137,7 @@ Alert.send_alert(EmailNotifier, "a@b.com", "disk full")
 
 ### 콜백 정의의 세 가지 도구
 
-#### (1) `@callback`
+#### `@callback`
 
 가장 일반적인 함수 계약.
 
@@ -145,7 +145,7 @@ Alert.send_alert(EmailNotifier, "a@b.com", "disk full")
 @callback charge(map()) :: {:ok, map()} | {:error, term()}
 ```
 
-#### (2) `@macrocallback`
+#### `@macrocallback`
 
 “구현자가 **매크로를 제공해야 하는 계약**”을 만들고 싶을 때.
 
@@ -158,7 +158,7 @@ end
 - DSL 프레임워크(라우팅/스키마 정의 등)에서 사용 가능.
 - 구현자는 `defmacro`로 해당 이름을 제공해야 한다.
 
-#### (3) `@optional_callbacks`
+#### `@optional_callbacks`
 
 “있으면 쓰고, 없어도 되는” 선택 계약.
 
@@ -279,7 +279,7 @@ Elixir의 `use GenServer`가 **behaviour + 보일러 주입**을 한 번에 해�
 
 ### Behaviour 기반 테스트 패턴 3가지
 
-#### (1) “가짜 구현 모듈” 직접 만들기
+#### “가짜 구현 모듈” 직접 만들기
 
 가장 단순하고 외부 라이브러리 없이 가능.
 
@@ -291,7 +291,7 @@ defmodule FakeNotifier do
 end
 ```
 
-#### (2) 실행 시점 DI(모듈 주입)
+#### 실행 시점 DI(모듈 주입)
 
 서비스 함수에 “모듈”을 인자로 전달.
 
@@ -301,7 +301,7 @@ def send_alert(notifier_mod, to, msg) do
 end
 ```
 
-#### (3) 애플리케이션 환경으로 모듈 바꾸기
+#### 애플리케이션 환경으로 모듈 바꾸기
 
 구성에서 구현 교체.
 
@@ -543,7 +543,7 @@ defmodule PipeStep do
 end
 ```
 
-### Base(use) 제공
+### 제공
 
 ```elixir
 defmodule StepBase do

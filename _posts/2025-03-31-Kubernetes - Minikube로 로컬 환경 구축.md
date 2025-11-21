@@ -167,7 +167,7 @@ docker build -t demo/web:dev .
 
 ---
 
-## 애드온(addons) — Ingress·Metrics Server 등
+## — Ingress·Metrics Server 등
 
 ### 목록/활성화
 
@@ -239,7 +239,7 @@ spec:
 
 echo "$(minikube ip) web.local" | sudo tee -a /etc/hosts
 
-# Windows (관리자) - C:\Windows\System32\drivers\etc\hosts 파일에 추가
+# - C:\Windows\System32\drivers\etc\hosts 파일에 추가
 # <MINIKUBE_IP> web.local
 
 ```
@@ -290,7 +290,7 @@ kubectl get hpa
 
 ---
 
-## 퍼시스턴트 볼륨(PV/PVC) — 로컬 개발 데이터 보존
+## — 로컬 개발 데이터 보존
 
 Minikube 기본 StorageClass(운영체제/드라이버에 따라 상이)를 활용해 PVC 바인딩:
 
@@ -338,7 +338,7 @@ minikube profile list
 minikube delete -p team-b
 ```
 
-### (실험) 멀티 노드
+### 멀티 노드
 
 ```bash
 minikube start --nodes=2 --driver=docker

@@ -9,7 +9,7 @@ category: Docker
 ## 실행/검증 기본 명령(요약)
 
 ```bash
-# (신규) Compose V2: 'docker compose'  ← 권장
+# Compose V2: 'docker compose'  ← 권장
 
 docker compose up -d           # 백그라운드 실행
 docker compose down            # 중지 + 네트워크/컨테이너 제거
@@ -19,11 +19,11 @@ docker compose exec app sh     # 셸
 docker compose restart app     # 재시작
 docker compose stop app        # 정지
 
-# (중요) 정합성/머지 결과 확인
+# 정합성/머지 결과 확인
 
 docker compose config          # 병합·확장·env 적용된 최종 YAML 출력
 
-# 구버전 바이너리: docker-compose (하이픈 포함) — 기능 유사
+# — 기능 유사
 
 ```
 
@@ -216,7 +216,7 @@ networks:
   backnet: {}
 ```
 
-### 외부(이미 있는) 네트워크 사용
+### 네트워크 사용
 
 ```yaml
 networks:

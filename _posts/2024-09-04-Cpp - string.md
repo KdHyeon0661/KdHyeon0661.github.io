@@ -361,7 +361,7 @@ for (const auto& piece : pieces) out += piece;
 
 ---
 
-## 안전(수명) 체크리스트 — 댕글링/무효화/참조
+## 체크리스트 — 댕글링/무효화/참조
 
 - [ ] **string_view 보관 금지**(원본 재할당·소멸 시 치명적)
 - [ ] `std::string`에 `push_back`/`append`로 재할당되면 **이전의 `char*`/참조/이터레이터 무효화**
@@ -386,7 +386,7 @@ bool replace_first(std::string& s, std::string_view from, std::string_view to) {
 }
 ```
 
-### 트림(trim) — 공백 제거
+### — 공백 제거
 
 ```cpp
 #include <string>
@@ -403,7 +403,7 @@ std::string trim(std::string s) {
 }
 ```
 
-### 조인(join) — 간단 구현
+### — 간단 구현
 
 ```cpp
 #include <string>
@@ -572,7 +572,7 @@ int main(){
 
 ---
 
-## 부록 A) 자주 하는 실수와 교정
+## 자주 하는 실수와 교정
 
 1) `string_view`로 반환하고 원본을 바로 파괴
 ```cpp
@@ -599,7 +599,7 @@ try { int x = std::stoi(s); } catch(...) { /* 처리 */ }
 
 ---
 
-## 부록 B) 빠른 레퍼런스
+## 빠른 레퍼런스
 
 - 생성/대입: 기본/복사/이동/리터럴(suffix `s`)
 - 접근: `size()`, `empty()`, `operator[]`, `at()`, `front()`, `back()`, `c_str()`, `data()`

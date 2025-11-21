@@ -96,14 +96,14 @@ Mobile IPv4에서는 두 가지 형태가 있다.
 - Mobile Node의 Home Address: `198.51.100.42`
 - 외부(카페) 네트워크: `203.0.113.0/24`, Foreign Agent: `203.0.113.1`
 
-#### (1) 집에 있을 때
+#### 집에 있을 때
 
 - MN은 Home 네트워크에 직접 연결되어 있고, 주소도 `198.51.100.42`.
 - 패킷 경로:
   - CN(예: `203.0.113.10`) → … → `198.51.100.42` (MN)
     일반 IP 라우팅과 동일, Mobile IP 필요 없음.
 
-#### (2) 카페로 이동해서 FA CoA 사용
+#### 카페로 이동해서 FA CoA 사용
 
 - MN이 카페 Wi-Fi에 접속.
 - 카페의 Foreign Agent(FA)가 “여기가 Mobile IP Foreign Network”라는 내용을 광고하고,
@@ -382,7 +382,7 @@ class HomeAgent:
 등록이 끝나면, 이제부터 Home Agent는 **MN의 위치(CoA)를 알고** 있게 된다.
 이 때 Mobile IP의 가장 중요한 동작이 **터널링(tunneling)**과 **간접 라우팅(indirect routing)**이다.
 
-#### CN → MN (Downlink) — Indirect Routing
+#### — Indirect Routing
 
 1. Correspondent Node(CN)는 여전히 MN의 **Home Address**(예: `198.51.100.42`)로 패킷을 보낸다.
 2. 라우팅 시스템은 이 주소를 보고 패킷을 Home Network, 즉 Home Agent에게 전달.
@@ -401,7 +401,7 @@ $$
 \text{InnerIP}: (s = \text{CN}, d = \text{HoA})
 $$
 
-#### MN → CN (Uplink) — Direct Routing
+#### — Direct Routing
 
 기본 Mobile IPv4에서는:
 

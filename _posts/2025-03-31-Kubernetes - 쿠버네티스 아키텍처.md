@@ -296,7 +296,7 @@ metadata:
 
 OPA Gatekeeper/Kyverno로 이미지 서명/루트 권한 금지/호스트 네트 금지 등 정책 강제.
 
-## 관측(Observability) — 이벤트/메트릭/로그/트레이스
+## — 이벤트/메트릭/로그/트레이스
 
 - **이벤트**: `kubectl get events -A --sort-by=.lastTimestamp`
 - **메트릭**: metrics-server/Prometheus(+ kube-state-metrics)/Alertmanager
@@ -315,7 +315,7 @@ spec:
     interval: 30s
 ```
 
-## 고가용성(HA) Control Plane
+## Control Plane
 
 ### 토폴로지
 
@@ -350,7 +350,7 @@ rules:
   verbs: ["create","update","patch","delete"]
 ```
 
-## 스토리지/CSI와 상태풀(Stateful) 워크로드
+## 워크로드
 
 - **CSI** 드라이버 표준, **StatefulSet**: 안정 ID/스토리지 바인딩.
 
@@ -380,7 +380,7 @@ spec:
 
 ## 실전 운영 시나리오
 
-### 노드 유지보수(커널 업데이트) — 드레이닝/언코드론
+### — 드레이닝/언코드론
 
 ```bash
 kubectl cordon <node>

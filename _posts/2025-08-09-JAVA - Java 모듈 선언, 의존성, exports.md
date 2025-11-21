@@ -145,7 +145,7 @@ open module com.example.app {  // 모듈 내 모든 패키지를 리플렉션에
 
 ---
 
-## 서비스(플러그인) — `uses` + `provides ... with` + `ServiceLoader`
+## — `uses` + `provides ... with` + `ServiceLoader`
 
 ### API 모듈
 

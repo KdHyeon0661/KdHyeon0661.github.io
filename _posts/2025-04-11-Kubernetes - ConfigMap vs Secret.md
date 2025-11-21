@@ -203,7 +203,7 @@ volumes:
       path: app/app.conf
 ```
 
-### 서브패스(subPath) 마운트(단일 파일만)
+### 마운트(단일 파일만)
 
 ```yaml
 volumeMounts:

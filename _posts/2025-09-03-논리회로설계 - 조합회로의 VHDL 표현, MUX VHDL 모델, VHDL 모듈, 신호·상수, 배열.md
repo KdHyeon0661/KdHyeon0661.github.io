@@ -4,7 +4,7 @@ title: 논리회로설계 - 조합회로의 VHDL 표현, MUX VHDL 모델, VHDL �
 date: 2025-09-03 21:25:23 +0900
 category: 논리회로설계
 ---
-# VHDL 소개 — **조합회로의 VHDL 표현**, **멀티플렉서(MUX) VHDL 모델**, **VHDL 모듈(Entity/Architecture)**, **신호·상수**, **배열(Array)**
+# VHDL 모델**, **VHDL 모듈(Entity/Architecture)**, **신호·상수**, **배열(Array)**
 
 > 권장 라이브러리(표준, 합성/시뮬 공통)
 > ```vhdl
@@ -18,7 +18,7 @@ category: 논리회로설계
 
 ## 조합회로의 VHDL 표현
 
-### 동시문(Concurrent Statements) 3형식 요약
+### 3형식 요약
 
 동시문은 **회로의 지속적 구동**을 의미합니다(=배선/게이트에 항상 걸려 있는 드라이버).
 
@@ -45,7 +45,7 @@ with sel select
 
 ---
 
-### 조합 프로세스(Combinational Process) 정석 패턴
+### 정석 패턴
 
 - **민감도 목록**: VHDL-2008의 `process(all)` 권장(누락 방지).
 - **완전할당**: 모든 출력에 기본값 또는 모든 분기에서 값 할당 → **래치 방지**.
@@ -89,7 +89,7 @@ f <= (a and b) or ((not a) and c);
 
 ---
 
-## 멀티플렉서(MUX) VHDL 모델
+## VHDL 모델
 
 ### 2:1 MUX — 3가지 스타일
 
@@ -239,7 +239,7 @@ begin
 end;
 ```
 
-### 직접 인스턴스(현대 권장) vs 컴포넌트 선언
+### vs 컴포넌트 선언
 
 ```vhdl
 -- 직접 인스턴스(권장, 간결/안전)
@@ -344,7 +344,7 @@ lt <= '1' when signed(a) < signed(b) else '0';
 
 ---
 
-## 배열(Array) — **std_logic_vector**, 사용자 정의 배열, ROM/LUT
+## — **std_logic_vector**, 사용자 정의 배열, ROM/LUT
 
 ### 기본 `std_logic_vector`
 

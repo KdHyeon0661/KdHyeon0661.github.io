@@ -152,7 +152,7 @@ print("VSWR for ZL=75Ω on 50Ω line:", round(vswr(75,50),3))
 - **Cladding(클래드)**: 굴절률 \(n_2<n_1\)
 - **Coating/Jacket/Strength Members**: 보호/인장 보강.
 
-#### 수치개구(NA) & 임계각
+#### & 임계각
 
 - 전반사 조건(입사각 \(\theta\), 임계각 \(\theta_c\)):
   $$

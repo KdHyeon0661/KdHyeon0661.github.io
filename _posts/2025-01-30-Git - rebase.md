@@ -99,7 +99,7 @@ git config --global rerere.enabled true
 
 ---
 
-## 인터랙티브 Rebase(-i) — 정리·스쿼시·메시지·순서
+## — 정리·스쿼시·메시지·순서
 
 ```bash
 # 최근 5개 커밋 정리

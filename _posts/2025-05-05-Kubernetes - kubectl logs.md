@@ -128,7 +128,7 @@ kubectl logs -l app=my-api --all-containers --tail=200 \
 kubectl logs -l app=my-api --all-containers --prefix --tail=50
 ```
 
-### 컨트롤러(Deployment/StatefulSet/Job) 대상
+### 대상
 
 ```bash
 kubectl logs deployment/my-api -c app --tail=100

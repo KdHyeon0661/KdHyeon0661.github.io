@@ -129,7 +129,7 @@ kubectl get nodes -o wide
 
 ---
 
-## Ingress(ingress-nginx) 설치와 외부 접속
+## 설치와 외부 접속
 
 ### Ingress 컨트롤러 설치
 
@@ -520,7 +520,7 @@ spec:
 
 실행 순서:
 ```bash
-# 클러스터는 extraPortMappings(80/443) 포함 구성으로 생성되어 있다고 가정
+# 포함 구성으로 생성되어 있다고 가정
 
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 kubectl apply -f mini-stack.yaml

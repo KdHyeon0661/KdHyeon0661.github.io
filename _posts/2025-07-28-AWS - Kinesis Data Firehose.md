@@ -29,7 +29,7 @@ Destinations:
 
 ## Firehose 핵심 개념 정리
 
-### 소스(Source) 유형
+### 유형
 
 - **Direct PUT**: 애플리케이션에서 Firehose API로 직접 전송
 - **Kinesis Data Streams → Firehose**: Streams를 소스로 연결(샤드 스케일링을 Streams에서)

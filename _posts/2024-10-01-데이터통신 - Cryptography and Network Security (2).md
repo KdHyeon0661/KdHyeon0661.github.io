@@ -465,7 +465,7 @@ NIST는 일반적인 보안 요구 수준에서는 **AES-128** 이상, 고보안
   - 키 교환(DH/ECDH)
   - 디지털 서명(RSA/ECDSA/EdDSA)
 
-#### 세션 키(Session Key) vs 장기 키(Long-term Key)
+#### vs 장기 키(Long-term Key)
 
 - **세션 키**
   - 특정 연결/세션에만 사용 (예: TLS 연결 하나).

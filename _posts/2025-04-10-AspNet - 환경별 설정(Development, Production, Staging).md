@@ -6,7 +6,7 @@ category: AspNet
 ---
 # ASP.NET Core 환경별 설정 적용 완전 정리 (`Development`, `Staging`, `Production`)
 
-## 환경(Environment) 개념과 표준 이름
+## 개념과 표준 이름
 
 ASP.NET Core는 실행 환경을 문자열로 구분한다. 대표 값은 다음과 같다.
 
@@ -164,7 +164,7 @@ app.MapRazorPages();
 
 ---
 
-## 환경별 DI(의존성 주입) — 서비스 구현 바꾸기
+## — 서비스 구현 바꾸기
 
 ```csharp
 if (builder.Environment.IsDevelopment())

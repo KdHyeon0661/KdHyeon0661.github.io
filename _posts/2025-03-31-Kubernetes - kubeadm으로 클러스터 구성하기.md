@@ -181,7 +181,7 @@ kubectl get nodes
 
 ---
 
-## 네트워크 플러그인(CNI) 설치
+## 설치
 
 ### Calico (예)
 
@@ -246,7 +246,7 @@ systemctl status kubelet
 sudo systemctl enable --now kubelet
 ```
 
-### CRI 도구(crictl) 유용 명령
+### 유용 명령
 
 ```bash
 sudo apt install -y cri-tools

@@ -314,7 +314,7 @@ String msg = ReusableBuilder.build(sb -> sb.append("id=").append(10));
 
 ---
 
-## 부록 A) 간단 실습: JSON 유사 문자열 빠르게 만들기
+## 간단 실습: JSON 유사 문자열 빠르게 만들기
 
 ```java
 public class Jsonish {
@@ -335,7 +335,7 @@ public class Jsonish {
 
 ---
 
-## 부록 B) 코드포인트 안전 슬라이싱/대문자화(국제화 예시)
+## 코드포인트 안전 슬라이싱/대문자화(국제화 예시)
 
 ```java
 // 첫 N 코드포인트를 upper-case로 변환 후 반환

@@ -96,7 +96,7 @@ curl "https://<api-id>.execute-api.<region>.amazonaws.com/hello?name=Kim"
 
 ---
 
-## 실습 B: REST API(클래식) + 매핑 템플릿 + 캐시
+## + 매핑 템플릿 + 캐시
 
 ### 람다 (Node)
 
@@ -259,7 +259,7 @@ Access-Control-Allow-Headers: Content-Type,Authorization
 
 ---
 
-## 파일 업로드(대용량) 패턴
+## 패턴
 
 - **API Gateway 직접 업로드**는 비효율.
 - **S3 Pre-signed URL** 발급 API → 클라이언트가 **S3로 직접 업/다운로드**.

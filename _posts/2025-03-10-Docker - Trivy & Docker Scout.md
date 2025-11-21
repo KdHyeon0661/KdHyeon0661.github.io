@@ -374,7 +374,7 @@ A. 슬림/멀티스테이지로 크기 자체를 줄이고, **정밀 스캔은 �
 
 trivy image --severity HIGH,CRITICAL --exit-code 1 my/app:tag
 
-# Trivy: IaC(Dockerfile/K8s/Terraform) 점검
+# 점검
 
 trivy config .
 

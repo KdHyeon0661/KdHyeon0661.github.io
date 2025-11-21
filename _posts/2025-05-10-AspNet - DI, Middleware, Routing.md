@@ -16,9 +16,9 @@ category: AspNet
 
 ---
 
-## DI(Dependency Injection) — 기본에서 고급까지
+## — 기본에서 고급까지
 
-### 기본 등록 & 수명(Lifetime) 복습
+### 복습
 
 ```csharp
 builder.Services.AddTransient<IMyService, MyService>();   // 매 호출마다 새 인스턴스
@@ -37,7 +37,7 @@ builder.Services.AddSingleton<ILogger, ConsoleLogger>();  // 앱 전체 1개
 
 ---
 
-### 생성자 주입(권장) & 기타 주입
+### & 기타 주입
 
 ```csharp
 public class HomeController : Controller
@@ -222,7 +222,7 @@ app.UseWhen(ctx => ctx.Request.Path.StartsWithSegments("/api"), branch =>
 
 ---
 
-### Minimal API Filters(.NET 7+) & Endpoint Filters(.NET 8)
+### & Endpoint Filters(.NET 8)
 
 ```csharp
 app.MapPost("/orders", (OrderDto dto) => Results.Ok())

@@ -85,7 +85,7 @@ inline uint16_t pack_rgb565(uint8_t r8, uint8_t g8, uint8_t b8) {
 
 ---
 
-## **Ordered Dithering** (8×8 Bayer) — 빠르고 간단, 패턴 일정
+## — 빠르고 간단, 패턴 일정
 
 ### 원리
 
@@ -328,7 +328,7 @@ void BlitRGB565(HDC hdc, int dx, int dy, int w, int h, const void* bits, int pit
 
 ---
 
-## (선택) **선형광 기반 디더링**으로 더 정확히
+## **선형광 기반 디더링**으로 더 정확히
 
 - 디더링을 **선형광**에서 하면 밝기 보존이 더 좋다. 절차:
   1) sRGB(0..1) → **Linear**(0..1)

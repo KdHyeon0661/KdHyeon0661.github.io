@@ -48,7 +48,7 @@ helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update
 ```
 
-### values-internal.yaml (권장) — 최소 구성
+### — 최소 구성
 
 ```yaml
 replicaCount: 1
@@ -283,7 +283,7 @@ kubectl logs deploy/kafka-consumer -f
 
 ---
 
-## 외부 접속(클러스터 밖에서) — NodePort/LoadBalancer
+## — NodePort/LoadBalancer
 
 Kafka는 **클라이언트가 브로커에 재접속**하기 때문에 `advertised.listeners`를 **외부 IP/도메인**으로 맞춰야 합니다.
 

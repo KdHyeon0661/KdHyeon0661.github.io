@@ -129,7 +129,7 @@ dist
 
 ---
 
-## Inline Cache & 원격 캐시(Registry/GHA/Local) — CI에서 진짜 빨라지는 법
+## — CI에서 진짜 빨라지는 법
 
 ### Inline Cache (단일 레포에서 간단히)
 
@@ -236,7 +236,7 @@ RUN --mount=type=cache,target=/root/.npm \
 
 ---
 
-## 멀티 플랫폼(amd64/arm64) + 캐시 — 빠르고, 어디서나
+## + 캐시 — 빠르고, 어디서나
 
 ```bash
 docker buildx create --use --name mybuilder
@@ -318,7 +318,7 @@ CMD ["java","-jar","/app/app.jar"]
 
 ---
 
-## CI/CD 통합 (GitHub/GitLab/Jenkins) — 캐시를 파이프라인의 “첫급유소”로
+## — 캐시를 파이프라인의 “첫급유소”로
 
 ### GitHub Actions (레지스트리 캐시)
 
@@ -430,7 +430,7 @@ $$
 
 ---
 
-## 재현성/결정성(Determinism) 팁
+## 팁
 
 - **버전 고정**: `package-lock.json`/`poetry.lock`/`go.mod` 등 lock 파일 사용
 - **시간 영향 최소화**: 빌드 타임스탬프 삽입 시 `LABEL` 등 별도 레이어 또는 빌드 아규먼트로 제어

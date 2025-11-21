@@ -23,7 +23,7 @@ category: AWS
 
 ## 공통 토대: 컨테이너 아키텍처 핵심
 
-### 네트워킹(VPC) 설계 기본
+### 설계 기본
 
 - **퍼블릭 서브넷**: ALB/NLB, NAT GW 등 외부 노출 리소스
 - **프라이빗 서브넷**: 서비스(타스크/파드), RDS/ElastiCache 등 데이터 계층
@@ -106,7 +106,7 @@ Git → Build(gha/CodeBuild) → ECR Push → IaC(CDK/CFn/Terraform) → ECS/EKS
 }
 ```
 
-### 서비스+ALB(Fargate) 배포 CLI
+### 배포 CLI
 
 ```bash
 # 클러스터

@@ -196,7 +196,7 @@ mount -a
 
 find / -xdev -perm -4000 -o -perm -2000 -type f -print 2>/dev/null | sort
 
-# 세계 쓰기 디렉터리(Sticky 없는 경우 포함) 조사
+# 조사
 
 find / -xdev -type d -perm -0002 ! -perm -1000 -print 2>/dev/null
 ```
@@ -342,7 +342,7 @@ grep -E 'segfault|denied|permission' /var/log/syslog 2>/dev/null | tail
 
 ---
 
-## 감사(auditd) 규칙과 탐지
+## 규칙과 탐지
 
 핵심 파일/권한 변경/영속성 탐지:
 ```bash
@@ -399,7 +399,7 @@ aide --check | tee /var/log/aide/latest.txt
 
 ---
 
-## SELinux/AppArmor(LSM) 적용
+## 적용
 
 ### SELinux(RHEL/Alma/Rocky)
 

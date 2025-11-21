@@ -474,7 +474,7 @@ export function useWorker(url, { module = true } = {}) {
 // workerRef.current?.postMessage(...)
 ```
 
-### Comlink(메시지 RPC 추상화) 아이디어
+### 아이디어
 
 메시지 구조를 직접 관리하기 번거롭다면 RPC 스타일 라이브러리를 활용(개념만 언급).
 

@@ -104,7 +104,7 @@ category: 영상처리
 
 ### A. 새 프로젝트 만들기
 
-#### Win32 API 빈 프로젝트(“Windows 데스크톱 애플리케이션”) 생성
+#### 생성
 
 1. **파일 → 새로 만들기 → 프로젝트**
 2. 템플릿 검색: “*Windows Desktop Application*” 또는 “*Win32 Project*”
@@ -163,7 +163,7 @@ category: 영상처리
 
 ### C. Visual Studio 구조 — 솔루션/프로젝트/필터
 
-#### 솔루션(.sln) & 프로젝트(.vcxproj)
+#### & 프로젝트(.vcxproj)
 
 - **솔루션**: 여러 프로젝트 묶음(예: 앱 + 라이브러리 + 테스트)
 - **프로젝트**: 빌드 단위(소스/헤더/리소스/설정 포함)
@@ -216,7 +216,7 @@ category: 영상처리
 
 ---
 
-### E. (예제 1) Win32 API + DIB로 그라데이션 버퍼 그리기
+### Win32 API + DIB로 그라데이션 버퍼 그리기
 
 > 목적: **영상 버퍼(2D 배열)**를 만들어 창에 **StretchDIBits**로 출력합니다.
 > 포인트: **stride(패딩)**, **BITMAPINFO**, **WM_PAINT** 처리.
@@ -386,7 +386,7 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE, LPWSTR, int nCmdShow) {
 
 ---
 
-### F. (예제 2) MFC SDI — 뷰에서 픽셀 렌더링
+### MFC SDI — 뷰에서 픽셀 렌더링
 
 > 마법사로 **SDI** 프로젝트를 생성한 뒤, **뷰 클래스**(`CYourProjectView`)의 `OnDraw` 또는 `OnPaint`에서 DIB 출력 패턴을 적용합니다.
 > 여기서는 **뷰의 OnDraw**에서 24-bit BGR 버퍼를 그리는 간단 예를 보입니다.

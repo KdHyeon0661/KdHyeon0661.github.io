@@ -144,7 +144,7 @@ JSON-LD는 구조가 자유롭고 **@graph**, **@id** 링크, **sameAs** 등 확
 </script>
 ```
 
-### `BreadcrumbList`(빵크럼) — 탐색 컨텍스트 강화
+### — 탐색 컨텍스트 강화
 
 ```html
 <script type="application/ld+json">

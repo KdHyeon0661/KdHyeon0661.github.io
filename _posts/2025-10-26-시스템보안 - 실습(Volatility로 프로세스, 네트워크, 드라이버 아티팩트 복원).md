@@ -41,7 +41,7 @@ sha256sum /mnt/usb/LIN-01_2025-11-01.lime > /mnt/usb/LIN-01_2025-11-01.lime.sha2
 > 표준 명령 패턴: `vol -f <dump> <plugin> [옵션]`
 > 심볼 자동 다운로드가 어려우면 `--offline` 대신 심볼 캐시 준비.
 
-### A) 프로세스 복원(실행 트리·명령줄·환경)
+### 프로세스 복원(실행 트리·명령줄·환경)
 
 ```bash
 # 핵심 인덱스
@@ -65,7 +65,7 @@ vol -f WS-001.raw windows.psscan | grep -i "powershell\|wscript\|rundll32\|mshta
 - 사용자 세션 시간대 vs 업무 시간대
 - 경로 위장(`C:\Users\Public\` 하위 실행) / 서명 부재
 
-### B) 이미지·모듈·주입 흔적
+### 이미지·모듈·주입 흔적
 
 ```bash
 # 프로세스 모듈 목록(로드 타임·경로·InMemory)
@@ -90,10 +90,10 @@ rule Suspicious_PowerShell_EncodedCommand {
 }
 ```
 
-### C) 핸들·토큰·권한
+### 핸들·토큰·권한
 
 ```bash
-# 프로세스 핸들(파일/Mutant/Key/Section) — 잠금/은닉 힌트
+# — 잠금/은닉 힌트
 
 vol -f WS-001.raw windows.handles --pid <PID> | head -n 80
 
@@ -102,7 +102,7 @@ vol -f WS-001.raw windows.handles --pid <PID> | head -n 80
 vol -f WS-001.raw windows.getsids --pid <PID> | head -n 40
 ```
 
-### D) 네트워크 아티팩트 (세션·포트·DNS)
+### 네트워크 아티팩트 (세션·포트·DNS)
 
 ```bash
 # TCP/UDP (지원 OS/빌드에 따라 플러그인 가용성 상이)
@@ -118,7 +118,7 @@ vol -f WS-001.raw windows.netscan | grep -i ESTAB | head -n 30
 - CLI(명령줄) 시점 vs 연결 시점 상관(타임라인)
 - egress(외부) IP/호스트의 희귀도 / 지리 / ASN (추후 위협 인텔 상관)
 
-### E) 드라이버·커널(루트킷 탐지의 “관측” 단계)
+### 드라이버·커널(루트킷 탐지의 “관측” 단계)
 
 ```bash
 # 로드된 드라이버/이미지
@@ -399,7 +399,7 @@ SecurityEvent
 
 ---
 
-## 보존 주기(레텐션) & 법·비용 균형
+## & 법·비용 균형
 
 **권장 범위(예시, 조직·규정 따라 조정)**
 - **핵심 보안 이벤트**: 180~365일 온라인 (빠른 검색)

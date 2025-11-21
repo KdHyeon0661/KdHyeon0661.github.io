@@ -428,7 +428,7 @@ urlpatterns[1:1] = [
 
 ---
 
-## 문서화(OpenAPI) — Swagger UI & Redoc
+## — Swagger UI & Redoc
 
 - `drf-spectacular` 가 **APIView/ViewSet/Serializer** 를 스캔해 OpenAPI 스키마를 생성
 - `/api/docs/` (Swagger UI), `/api/redoc/` (Redoc) 자동 제공
@@ -487,7 +487,7 @@ def custom_exception_handler(exc, context):
 
 ---
 
-## 업로드(파일) 예시 (간단)
+## 예시 (간단)
 
 ```python
 # projects/models.py (추가)
@@ -729,7 +729,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
 COPY pyproject.toml poetry.lock* requirements.txt* ./
-# (pip 또는 poetry 중 하나 선택) 여기선 pip:
+# 여기선 pip:
 
 RUN pip install --no-cache-dir -r requirements.txt
 

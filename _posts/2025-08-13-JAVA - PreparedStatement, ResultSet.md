@@ -82,7 +82,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 
 > **TIP**: 원시형 `getXxx`는 NULL 구분이 어려우니, 읽을 때는 **래퍼/`getObject`**를 적절히 활용한다(2.1 참고).
 
-### 배치(Batch) — 대량 DML 가속
+### — 대량 DML 가속
 
 ```java
 String sql = "INSERT INTO users(name, email, status) VALUES(?, ?, ?)";
@@ -149,7 +149,7 @@ try (PreparedStatement ps = conn.prepareStatement(built.sql)) {
 }
 ```
 
-### (선택) 특수 타입 매핑 힌트
+### 특수 타입 매핑 힌트
 
 - **PostgreSQL 배열**: `ps.setArray(idx, conn.createArrayOf("text", arr))`
 - **JSON**(PG): `ps.setObject(idx, "{\"k\":\"v\"}", java.sql.Types.OTHER)`
@@ -464,7 +464,7 @@ public final class UserService {
 
 ---
 
-## 커넥션 풀(DataSource) 스니펫 (HikariCP 예)
+## 스니펫 (HikariCP 예)
 
 ```java
 import com.zaxxer.hikari.HikariConfig;
@@ -510,7 +510,7 @@ DataSource ds = new HikariDataSource(cfg);
 
 ---
 
-## (부록) 문제 재현/테스트 팁
+## 문제 재현/테스트 팁
 
 - **단위 테스트**: JDBC 호출을 인터페이스로 추상화 후 **Fake/Mock** 주입
 - **통합 테스트**: Testcontainers로 DB 띄우고 실제 JDBC 실행

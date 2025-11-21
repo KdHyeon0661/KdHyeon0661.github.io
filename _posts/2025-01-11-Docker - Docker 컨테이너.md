@@ -67,7 +67,7 @@ pause → [paused] → unpause → [running]
 
 ---
 
-## 수명주기(Lifecycle) 명령 실습
+## 명령 실습
 
 ```bash
 # 실행 없이 생성만
@@ -92,7 +92,7 @@ docker unpause demo
 # 정상 정지(TERM → grace 후 KILL)
 
 docker stop demo     # 기본 10초 타임아웃
-# 5-1) 즉시 강제 종료
+# 즉시 강제 종료
 
 docker kill demo
 
@@ -312,7 +312,7 @@ docker run -d --name svc \
 
 ---
 
-## 컨테이너와 PID 1(Init) 이슈
+## 이슈
 
 컨테이너의 첫 프로세스(PID 1)는 **신호 처리/좀비 reaping** 책임이 있습니다.
 일부 런타임/언어는 PID 1에서 **신호 전파가 누락**될 수 있으므로, **init 래퍼** 사용을 권장:
@@ -439,7 +439,7 @@ docker network rm appnet
 
 ---
 
-## 부록 A) 간단 수식(가용성 직관)
+## 간단 수식(가용성 직관)
 
 컨테이너 단일 인스턴스의 근사 가용성:
 $$
@@ -447,7 +447,7 @@ $$
 $$
 `--restart` 정책, 헬스체크, 빠른 롤백/재배포로 **MTTR**을 줄이면 가용성이 높아집니다.
 
-## 부록 B) 치트시트
+## 치트시트
 
 ```bash
 # 생성/시작/정지/삭제

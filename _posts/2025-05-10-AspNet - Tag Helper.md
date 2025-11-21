@@ -307,7 +307,7 @@ public class UploadModel
 
 ---
 
-## 접근성(A11y) & SEO에 유용한 태그 상호작용
+## & SEO에 유용한 태그 상호작용
 
 - `<label asp-for="...">`는 해당 `input`의 `id`와 자동 연결 → 스크린리더 친화.
 - `Validation` Tag Helpers는 오류 요약을 마크업으로 출력 → 보조공학 접근성 향상.

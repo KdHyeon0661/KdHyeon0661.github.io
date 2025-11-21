@@ -31,7 +31,7 @@ category: 웹해킹
 
 ### 취약 예제 → 안전 예제로 고치기
 
-#### (A) Node.js (Express)
+#### Node.js (Express)
 
 **❌ 취약**
 ```javascript
@@ -76,7 +76,7 @@ app.get("/go", (req, res) => {
 });
 ```
 
-#### (B) Python (Flask)
+#### Python (Flask)
 
 **❌ 취약**
 ```python
@@ -107,7 +107,7 @@ def go():
     return redirect(nxt)
 ```
 
-#### (C) Spring Boot
+#### Spring Boot
 
 **❌ 취약**
 ```java
@@ -159,7 +159,7 @@ public String go(@RequestParam(required=false) String next){
 
 ### 취약 예제 → 안전 예제로 고치기
 
-#### (A) Node.js
+#### Node.js
 
 **❌ 취약**
 ```javascript
@@ -193,7 +193,7 @@ app.post("/resize", (req, res) => {
 });
 ```
 
-#### (B) Python
+#### Python
 
 **❌ 취약**
 ```python
@@ -216,7 +216,7 @@ def safe_ping(host: str):
     return out.stdout if out.returncode == 0 else ""
 ```
 
-#### (C) PHP
+#### PHP
 
 **❌ 취약**
 ```php
@@ -241,7 +241,7 @@ $zip->close();
 echo "ok";
 ```
 
-#### (D) Java
+#### Java
 
 **❌ 취약**
 ```java
@@ -290,7 +290,7 @@ Process p = pb.start(); // 쉘 미사용
 
 ### 취약 예제 → 안전 예제로 고치기
 
-#### (A) Location 헤더에 사용자 입력
+#### Location 헤더에 사용자 입력
 
 **❌ 취약 (Node.js)**
 ```javascript
@@ -319,7 +319,7 @@ app.get("/jump", (req, res) => {
 ```
 > **참고**: 최신 런타임/프레임워크는 헤더에 `\r\n`이 들어가면 예외를 던지는 경우가 많지만, **프록시/레거시/서드파티**가 끼면 여전히 위험. **항상** CR/LF 금지 + 리디렉트 방어를 병행.
 
-#### (B) Content-Disposition filename 인젝션
+#### Content-Disposition filename 인젝션
 
 **❌ 취약**
 ```javascript
@@ -353,11 +353,11 @@ app.get("/download", (req, res) => {
 });
 ```
 
-#### (C) Host Header 주입(절대 URL 생성)
+#### Host Header 주입(절대 URL 생성)
 
 **❌ 취약 (비밀번호 재설정 링크)**
 ```python
-# ex) https://app.example/reset?token=...
+# https://app.example/reset?token=...
 # 프록시 뒤에서 Host 헤더를 그대로 신뢰
 
 def make_reset_url(req, token):

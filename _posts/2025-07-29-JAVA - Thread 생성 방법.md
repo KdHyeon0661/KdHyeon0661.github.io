@@ -149,7 +149,7 @@ t2.join(1000); // 최대 1초만 대기
 
 ---
 
-## 인터럽트(Interrupt) — 안전한 종료의 표준
+## — 안전한 종료의 표준
 
 ### 핵심 규칙
 
@@ -177,7 +177,7 @@ public void run() {
 
 ---
 
-## 데몬(daemon) vs 사용자(user) 스레드
+## vs 사용자(user) 스레드
 
 ```java
 Thread daemon = new Thread(() -> { /* 백그라운드 */ }, "daemon");
@@ -198,7 +198,7 @@ daemon.start();
 
 ### 해결 옵션
 
-#### A) `synchronized` (내장 락)
+#### `synchronized` (내장 락)
 
 ```java
 class SafeCounter {
@@ -209,21 +209,21 @@ class SafeCounter {
 ```
 - **진입/이탈**이 **happens-before**를 형성 → **가시성** 보장.
 
-#### B) `AtomicInteger` (무잠금 CAS)
+#### `AtomicInteger` (무잠금 CAS)
 
 ```java
 AtomicInteger n = new AtomicInteger();
 n.incrementAndGet();
 ```
 
-#### C) `volatile` (가시성 전용)
+#### `volatile` (가시성 전용)
 
 ```java
 volatile boolean running = true; // 플래그 변경이 즉시 보임
 ```
 - **원자성 보장 X**. 카운터 등엔 부적합.
 
-#### D) `Lock` (`ReentrantLock`) — 고급 기능
+#### `Lock` (`ReentrantLock`) — 고급 기능
 
 ```java
 Lock lock = new ReentrantLock();
@@ -321,7 +321,7 @@ pool.shutdown();
 
 ---
 
-## (선택) Virtual Thread — Java 21+ 가벼운 스레드
+## Virtual Thread — Java 21+ 가벼운 스레드
 
 > **개념**: OS 스레드보다 **훨씬 가벼운** JVM 스케줄 스레드. **블로킹 동작을 가독성 그대로** 유지하며 대규모 동시성 구현.
 

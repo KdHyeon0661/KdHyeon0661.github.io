@@ -282,7 +282,7 @@ protected override void OnPreviewKeyDown(KeyEventArgs e)
 
 ---
 
-## 커스텀 제스처(InputGesture) 만들기
+## 만들기
 
 ### 예: 더블클릭을 명령으로
 
@@ -606,7 +606,7 @@ public class EditorViewModel
 
 ---
 
-## 실전 템플릿(요약) — 프로젝트에 바로 붙여 쓰는 코드
+## — 프로젝트에 바로 붙여 쓰는 코드
 
 ### 공통 명령 정의
 

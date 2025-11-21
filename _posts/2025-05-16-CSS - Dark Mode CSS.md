@@ -96,7 +96,7 @@ document.body.classList.add(localStorage.getItem('theme') || 'light');
 
 ## CSS 변수 + JS — 추천 아키텍처 (확장성/성능/유지보수 우수)
 
-### 디자인 토큰(변수) 정의
+### 정의
 
 ```css
 /* 공통 토큰 */
@@ -197,7 +197,7 @@ mq.addEventListener?.('change', e=>{
 
 ## 접근성(A11y)·명도 대비·모션·강제 색상
 
-### 명도 대비(AA/AAA) 체크
+### 체크
 
 웹 콘텐츠 접근성 가이드라인(WS 2.1) 대비비는 다음과 같습니다:
 
@@ -267,7 +267,7 @@ a:focus-visible, button:focus-visible {
 .icon { color: var(--text); } /* 테마 색 자동 동기화 */
 ```
 
-### 배경 이미지(일러스트) 전환
+### 전환
 
 ```css
 .hero {
@@ -318,7 +318,7 @@ html, body, .card, .button {
 
 ---
 
-## FOUC(테마 깜빡임) 완전 방지 전략
+## 완전 방지 전략
 
 1) **head 최상단 인라인 스니펫**으로 `data-theme` 즉시 설정(§3.3).
 2) CSS 번들 상단에 토큰 정의.

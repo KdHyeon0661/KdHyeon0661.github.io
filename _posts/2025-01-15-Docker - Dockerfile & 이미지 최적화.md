@@ -17,7 +17,7 @@ category: Docker
 
 ---
 
-## 캐시(Cache) 제대로 활용하기
+## 제대로 활용하기
 
 ### 원칙
 
@@ -450,7 +450,7 @@ docker run -d --name api -p 5000:5000 \
 
 ---
 
-## 예제: 프런트엔드(React/Vite) → Nginx 배포
+## → Nginx 배포
 
 ```Dockerfile
 FROM node:20-slim AS build

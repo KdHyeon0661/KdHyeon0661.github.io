@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 0) 공통 실습 스키마 & 데이터(한 번 실행)
+## 공통 실습 스키마 & 데이터(한 번 실행)
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -63,7 +63,7 @@ END;
 
 ---
 
-# 1) 병렬 **ORDER BY**: 2단계(로컬 정렬 → 글로벌 병합/정렬)
+# 병렬 **ORDER BY**: 2단계(로컬 정렬 → 글로벌 병합/정렬)
 
 ## 작동 원리(플랜에서 읽는 포인트)
 
@@ -99,7 +99,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +ALIAS +PARTITION +PR
 - 전역 순서를 맞추려면 **정렬키 범위를 분할**해 **각 PX가 disjoint한 구간**을 담당 →
   최종 단계는 **단순 병합**(run merge)만 수행 가능 → **Temp I/O 절감**.
 
-## Top-N 정렬(Stopkey) → 병렬 최적화
+## → 병렬 최적화
 
 ```sql
 EXPLAIN PLAN FOR
@@ -152,7 +152,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE')
 
 ---
 
-# 2) 병렬 **GROUP BY**: 2단계(부분 집계 → 최종 집계)
+# 병렬 **GROUP BY**: 2단계(부분 집계 → 최종 집계)
 
 ## 작동 원리(핵심)
 
@@ -222,7 +222,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE')
 - 해시 집계 가능 구간은 부분적으로 사용, 상위 레벨 계산 시 **추가 Sort**가 등장할 수 있음
 - 대용량이면 **TEMP I/O**가 증가 → **PGA/TEMP/프루닝** 신경쓰기
 
-## DISTINCT(= 그룹바이) 병렬화
+## 병렬화
 
 ```sql
 EXPLAIN PLAN FOR
@@ -245,7 +245,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE')
 
 ---
 
-# 3) Granule & 분배가 정렬/집계에 미치는 영향
+# Granule & 분배가 정렬/집계에 미치는 영향
 
 ## Granule
 
@@ -260,7 +260,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE')
 
 ---
 
-# 4) 모니터링: 플랜/통계/대기
+# 모니터링: 플랜/통계/대기
 
 ## 플랜과 TQ(테이블 큐)
 
@@ -292,7 +292,7 @@ ORDER  BY samples DESC;
 
 ---
 
-# 5) 성능 최적화 체크리스트
+# 성능 최적화 체크리스트
 
 ## ORDER BY
 
@@ -310,7 +310,7 @@ ORDER  BY samples DESC;
 
 ---
 
-# 6) 손에 잡히는 실습 시나리오
+# 손에 잡히는 실습 시나리오
 
 ## 병렬 ORDER BY vs Top-N
 
@@ -331,7 +331,7 @@ FETCH  FIRST 100 ROWS ONLY;
 -- 실행 후 두 쿼리의 DBMS_XPLAN, V$PQ_TQSTAT, TEMP/대기 비교
 ```
 
-## 병렬 GROUP BY(해시) vs 스큐 완화
+## vs 스큐 완화
 
 ```sql
 -- (A) 기본 병렬 해시 집계
@@ -352,7 +352,7 @@ GROUP  BY cust_id;
 
 ---
 
-# 7) 운영 파라미터/힌트 베스트 프랙티스(요약)
+# 운영 파라미터/힌트 베스트 프랙티스(요약)
 
 - `WORKAREA_SIZE_POLICY=AUTO`, `PGA_AGGREGATE_TARGET`(또는 `PGA_AGGREGATE_LIMIT`) 적정화
 - 힌트:

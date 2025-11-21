@@ -128,7 +128,7 @@ wsl --install -d Ubuntu
 #### 동작 확인
 
 ```bash
-# WSL(Ubuntu) 터미널
+# 터미널
 
 docker run --rm hello-world
 
@@ -381,7 +381,7 @@ sudo systemctl restart docker
 ### 사설 레지스트리(인증서)
 
 ```bash
-# 예) registry.internal:5000 이 사설 CA를 사용한다면
+# registry.internal:5000 이 사설 CA를 사용한다면
 
 sudo mkdir -p /etc/docker/certs.d/registry.internal:5000
 sudo cp rootCA.crt /etc/docker/certs.d/registry.internal:5000/ca.crt
@@ -548,7 +548,7 @@ docker run -e HTTP_PROXY=http://proxy.local:3128 -e HTTPS_PROXY=http://proxy.loc
 - Windows: Docker Desktop 신뢰 저장소 또는 WSL 배포판에 CA 추가
 - Linux: `/usr/local/share/ca-certificates/*.crt` 배치 후 `update-ca-certificates`
 
-## 오프라인(air-gapped) 설치 시나리오
+## 설치 시나리오
 
 1. 외부망에서 필요한 **패키지/이미지** 미리 다운로드
 2. 오프라인 환경으로 옮겨 설치

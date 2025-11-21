@@ -435,7 +435,7 @@ app.MapPost("/api/upload/stream", async (HttpContext ctx, IWebHostEnvironment en
 
 ---
 
-## 조각(Resumable) 업로드(간단 버전)
+## 업로드(간단 버전)
 
 1) 클라이언트가 업로드 세션 생성 요청 → 서버가 `uploadId` 반환
 2) 각 조각(chunkIndex, totalChunks)로 전송 → 서버는 임시 디렉터리에 저장
@@ -512,7 +512,7 @@ public class FilesController : ControllerBase
 }
 ```
 
-### 서명 URL(짧은 TTL) 발급 패턴
+### 발급 패턴
 
 - 다운로드 URL에 `token=HMAC(fileId, expires)` 추가
 - 미들웨어에서 토큰/만료 검증 후 통과
@@ -528,7 +528,7 @@ public static string Sign(string input, string secret)
 
 ---
 
-## 클라우드 스토리지(Blob/S3) 연동
+## 연동
 
 ### Azure Blob 기본 업로드
 

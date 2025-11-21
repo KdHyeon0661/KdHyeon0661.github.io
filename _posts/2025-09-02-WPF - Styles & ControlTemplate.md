@@ -24,7 +24,7 @@ category: WPF
 
 ## 스타일의 기본: Setter / TargetType / 암시적 스타일
 
-### 암시적 스타일(Implicit) — 해당 범위의 **모든 버튼**에 적용
+### — 해당 범위의 **모든 버튼**에 적용
 
 ```xml
 <Window.Resources>
@@ -250,7 +250,7 @@ private void OnLogButtonClicked(object sender, RoutedEventArgs e)
 
 ---
 
-## VisualStateManager(VSM) — 상태 기반 템플릿
+## — 상태 기반 템플릿
 
 WPF 4.0+에서 **VSM**를 이용해 상태 전환을 관리할 수 있습니다.
 대표 그룹: **CommonStates**(Normal/MouseOver/Pressed/Disabled), **FocusStates**(Focused/Unfocused)
@@ -561,7 +561,7 @@ public class TagChip : Control
 
 ---
 
-## 실전: **토글 스위치**(CheckBox → 스위치 UI) 템플릿
+## 템플릿
 
 ```xml
 <Style TargetType="CheckBox" x:Key="ToggleSwitch">
@@ -795,7 +795,7 @@ public class TagChip : Control
 
 ---
 
-## 부록 A) 통합 샘플 — 버튼 디자인 시스템 (라이트/다크 지원)
+## 통합 샘플 — 버튼 디자인 시스템 (라이트/다크 지원)
 
 ```xml
 <!-- Colors.xaml -->
@@ -875,7 +875,7 @@ public class TagChip : Control
 
 ---
 
-## 부록 B) 코드로 테마 전환(런타임 교체 예)
+## 코드로 테마 전환(런타임 교체 예)
 
 ```csharp
 void ApplyTheme(Uri themeUri)
@@ -894,7 +894,7 @@ ApplyTheme(new Uri("Themes/Colors.Dark.xaml", UriKind.Relative));
 
 ---
 
-## 부록 C) 스타일/템플릿 체크리스트 (현업용)
+## 스타일/템플릿 체크리스트 (현업용)
 
 - [ ] **암시적 기본 스타일** 정의(타입별 디자인 토대)
 - [ ] 역할/상태 별 **서브 스타일**(Primary/Danger/Outline/Link…)

@@ -447,7 +447,7 @@ ReadOnlySpan<byte> written = writer.WrittenSpan;
 
 ---
 
-## 부록 A) 주요 API 한눈 요약
+## 주요 API 한눈 요약
 
 | 범주 | API | 요약 |
 |---|---|---|
@@ -464,7 +464,7 @@ ReadOnlySpan<byte> written = writer.WrittenSpan;
 
 ---
 
-## 부록 B) 안전성 주의
+## 안전성 주의
 
 - `Span<T>`는 **ref struct** → **필드/박싱/비동기** 금지
 - `MemoryMarshal`/`Unsafe`는 **전제(레이아웃/정렬/엔디언)**가 틀리면 **UB**

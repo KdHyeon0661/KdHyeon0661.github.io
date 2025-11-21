@@ -330,7 +330,7 @@ metadata:
 
 ---
 
-## TLS(HTTPS) 설정
+## 설정
 
 ### 수동 Secret
 

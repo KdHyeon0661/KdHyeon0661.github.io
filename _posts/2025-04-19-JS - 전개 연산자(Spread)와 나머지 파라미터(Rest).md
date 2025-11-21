@@ -59,7 +59,7 @@ function* g(){ yield 10; yield 20; }
 [...g()];                // [10,20]
 ```
 
-### 희소 배열(holes) 처리
+### 처리
 
 ```js
 const a = [, 2, , 4];   // length=4, 홀(비어있는 슬롯) 포함
@@ -115,7 +115,7 @@ console.log(dst.x);    // 7
 
 ---
 
-## 함수 인자 — Rest(수집) vs Spread(펼침)
+## vs Spread(펼침)
 
 ### Rest 파라미터(선언부에서 수집)
 

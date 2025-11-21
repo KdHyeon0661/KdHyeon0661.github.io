@@ -58,7 +58,7 @@ ORDER  BY cnt DESC;
 
 > RAC에선 **gc current/cr** 상태와 **GCS** 통신이 추가됩니다(§7).
 
-### 버퍼 헤더(Buffer Header) — 무엇을 들고 있나?
+### — 무엇을 들고 있나?
 
 - (파일#, 블록#), **SCN/버전**, **Dirty 여부**, **핀 카운트**(고정 중이면 제거 금지), **Touch Count(tch)**, **체인 포인터** 등.
 - **버퍼 헤더**는 **해시 버킷 체인**에 연결되며, **LRU 체인**에도 링크로 연결됩니다.
@@ -76,7 +76,7 @@ ORDER  BY tch DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## Cache Buffer Chains(CBC) — 해시 버킷과 래치 경합
+## — 해시 버킷과 래치 경합
 
 ### CBC 동작 원리
 

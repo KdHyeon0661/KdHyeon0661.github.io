@@ -80,7 +80,7 @@ _logger.LogInformation("사용자 {UserId}가 {Action}을 수행", userId, actio
 
 - Serilog/NLog 등 **구조화 가능한 프로바이더**에서 `{UserId}`, `{Action}`이 **필드**로 저장되어 조회·쿼리 가능.
 
-### 스코프(`BeginScope`) — 요청/트랜잭션 상관관계
+### — 요청/트랜잭션 상관관계
 
 ```csharp
 using (_logger.BeginScope(new Dictionary<string, object?>
@@ -161,7 +161,7 @@ var app = builder.Build();
 app.Run();
 ```
 
-### JSON 기반 구성(appsettings) + 자동 재로드
+### + 자동 재로드
 
 ```json
 {
@@ -335,7 +335,7 @@ app.Use(async (ctx, next) =>
 });
 ```
 
-### OpenTelemetry(OTel) 로깅/트레이싱
+### 로깅/트레이싱
 
 ```bash
 dotnet add package OpenTelemetry.Extensions.Hosting

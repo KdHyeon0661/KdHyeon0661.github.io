@@ -127,7 +127,7 @@ WHERE  rco.TYPE = 'Result';
 
 > **무효화 규칙**: 예를 들어 `orders` 에서 **INSERT/UPDATE/DELETE** 가 발생하면 **해당 결과가 INVALID로 표기되고 재사용되지 않음**(개별 결과 단위 무효화).
 
-### 리모트(데이터베이스 링크) 결과 TTL
+### 결과 TTL
 
 ```sql
 ALTER SYSTEM SET RESULT_CACHE_REMOTE_EXPIRATION = 10; -- 10분 TTL

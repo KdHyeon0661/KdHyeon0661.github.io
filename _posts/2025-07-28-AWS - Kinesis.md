@@ -78,7 +78,7 @@ $$
 
 ---
 
-## 생산자(Producer) 구현
+## 구현
 
 ### CLI(학습용)
 
@@ -93,7 +93,7 @@ aws kinesis put-record \
 aws kinesis describe-stream-summary --stream-name my-stream
 ```
 
-### Python (boto3) – 단건/배치
+### – 단건/배치
 
 ```python
 import boto3, json, time, random, os
@@ -117,7 +117,7 @@ for i in range(10):
 put_batch(500)  # 최대 500/요청, 5MB/요청
 ```
 
-### KPL(Kinesis Producer Library) – 고TPS 팁
+### – 고TPS 팁
 
 - 장점: 자동 **집계/압축/재시도**, 네트워크 효율 최적화 → **PUT 요금 절감**.
 - 고려: 소비 측 **Deaggregation** 필요(KCL/SDK 지원).
@@ -125,7 +125,7 @@ put_batch(500)  # 최대 500/요청, 5MB/요청
 
 ---
 
-## 소비자(Consumer) 구현
+## 구현
 
 ### CLI(Shard Iterator)
 
@@ -173,7 +173,7 @@ def lambda_handler(event, context):
 - 실패 시 **bisect on function error** / **DLQ(SQS/SNS)**로 재처리 라인 유지.
 - 샤드당 동시성/배치 설정으로 처리량·지연 균형 맞추기.
 
-### KCL(Kinesis Client Library) – 프로덕션 등뼈
+### – 프로덕션 등뼈
 
 - 기능: **샤드 할당/리밸런싱/체크포인팅/리샤딩 대응** 자동화.
 - 체크포인트 저장: DynamoDB(자동 생성 테이블).
@@ -181,7 +181,7 @@ def lambda_handler(event, context):
 
 ---
 
-## 리샤딩(Resharding) & On-Demand
+## & On-Demand
 
 ### 수동 Resharding
 
@@ -313,12 +313,12 @@ On-Demand는 **GB 처리량**과 **스트림 시간**을 가중.
 
 ## 패턴별 아키텍처 예시
 
-### KDS → Lambda → (SQS DLQ) → DynamoDB
+### → DynamoDB
 
 - 단순 이벤트 처리/Enrichment/알림.
 - DLQ로 **데이터 손실 0** 설계.
 
-### KDS → KDA(Flink/SQL) → Firehose → S3/Redshift
+### → Firehose → S3/Redshift
 
 - 실시간 집계/세션 윈도/CEP → 저비용 장기 저장/BI.
 
@@ -328,7 +328,7 @@ On-Demand는 **GB 처리량**과 **스트림 시간**을 가중.
 
 ---
 
-## IaC(예: Terraform) 스캐폴딩
+## 스캐폴딩
 
 ```hcl
 resource "aws_kinesis_stream" "main" {
@@ -398,7 +398,7 @@ A. Firehose는 **목적지 전송 중심(ETL/버퍼/압축/포맷)**, KDS는 **�
 
 ---
 
-## 부록 A) 스트레스 로더 & 관측(테스트 코드)
+## 스트레스 로더 & 관측(테스트 코드)
 
 ```python
 # PutRecords 압박 테스트 (관측: IncomingBytes/IteratorAge)
@@ -427,7 +427,7 @@ if __name__ == "__main__":
 
 ---
 
-## 부록 B) 수식 모음
+## 수식 모음
 
 ### B.1 샤드 산정 요약
 

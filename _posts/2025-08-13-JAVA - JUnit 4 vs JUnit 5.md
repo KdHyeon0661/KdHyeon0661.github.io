@@ -396,7 +396,7 @@ junit.vintage.execution.parallel.enabled=false
 
 ---
 
-## (중요) 2025-11 최신 동향 요약
+## 2025-11 최신 동향 요약
 
 - **JUnit 6.0.1 GA(2025-10-31)**: JDK **17+** 요구. Jupiter/Platform 체계 유지, CLI/빌드/특성 개선. (기존 Jupiter 테스트 대부분 **그대로 동작**)
 - 문서/가이드/설정 키는 **공식 User Guide**를 우선 참조. (5/6 모두 동일 섹션 구조)

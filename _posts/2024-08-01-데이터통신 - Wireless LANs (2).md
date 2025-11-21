@@ -13,7 +13,7 @@ category: DataCommunication
 
 ## Architecture
 
-### 1) 설계 목표와 기본 특성
+### 설계 목표와 기본 특성
 
 Bluetooth의 핵심 설계 목표는 다음과 같이 요약할 수 있습니다.
 
@@ -29,18 +29,18 @@ Bluetooth의 핵심 설계 목표는 다음과 같이 요약할 수 있습니다
 5. **버전 업으로 점진적 확장**
    - BR/EDR → BLE → 5.x에서 속도/거리/방송용량 확장 → 5.2~6.0에서 LE Audio, 방향 탐지, 이소크로너스 채널 등 추가
 
-### 2) 주파수 대역과 채널 구조
+### 주파수 대역과 채널 구조
 
 Bluetooth는 모두 **2.4 GHz ISM 대역**을 사용하지만, **클래식 vs BLE**에서 채널 구조가 다릅니다.
 
-#### (1) Classic Bluetooth (BR/EDR)
+#### Classic Bluetooth (BR/EDR)
 
 - 대역: 약 **2402 ~ 2480 MHz**
 - **79개 RF 채널**, 채널 폭 **1 MHz**, 각 채널마다 중심 주파수 1 MHz 간격.
 - 기본 변조: **GFSK** (1 Mbps)
 - EDR(Enhanced Data Rate)에서는 **π/4-DQPSK, 8-DPSK**로 2~3 Mbps 수준까지 증가.
 
-#### (2) Bluetooth Low Energy (BLE)
+#### Bluetooth Low Energy (BLE)
 
 - 동일한 2.4 GHz 대역에 대해, **40개 채널 × 2 MHz**로 분할
   - 대역: **2402 ~ 2480 MHz**, 각 채널 2 MHz 폭
@@ -60,7 +60,7 @@ Bluetooth는 모두 **2.4 GHz ISM 대역**을 사용하지만, **클래식 vs BL
 | Classic BR/EDR | 79 × 1 MHz | GFSK(+DQPSK/DPSK) | 오디오, SPP 등 |
 | BLE | 40 × 2 MHz | GFSK | 센서/IoT, 비콘, LE Audio |
 
-#### (3) 주파수 도약(FHSS)과 AFH
+#### 주파수 도약(FHSS)과 AFH
 
 Bluetooth는 **주파수 도약 스펙트럼 확산(FHSS)**을 사용합니다.
 
@@ -77,11 +77,11 @@ $$
 
 이고, AFH는 채널 선택 알고리즘에서 이 \(N_{\text{good}}\)만 사용해 도약 시퀀스를 구성합니다.
 
-### 3) 네트워크 토폴로지: Piconet과 Scatternet
+### 네트워크 토폴로지: Piconet과 Scatternet
 
 클래식 Bluetooth의 기본 토폴로지는 **마스터–슬레이브 기반 piconet**입니다.
 
-#### (1) Piconet
+#### Piconet
 
 - 하나의 **마스터(master)** + 최대 **7개의 active slave**, 추가로 parked slave까지 포함 가능.
 - 모든 장치는 마스터의 **시계(clock)**와 도약 시퀀스를 공유.
@@ -97,7 +97,7 @@ $$
 
 현대 문서에서는 master/slave 대신 **primary/secondary** 또는 **central/peripheral** 같은 용어를 더 권장하지만, 많은 교과서와 표준에는 여전히 master/slave가 등장합니다.
 
-#### (2) Scatternet
+#### Scatternet
 
 - 여러 piconet이 겹쳐 **Scatternet**을 형성할 수 있음.
 - 어떤 노드는 한 piconet에서 master, 다른 piconet에서 slave 역할을 동시에 수행 가능.
@@ -112,7 +112,7 @@ Piconet B:  MB ─ S3 ─ S4
 
 이 구조로 **멀티홉·다중 piconet** 구성이 가능하지만, 표준화된 라우팅 프로토콜은 없고, 연구/특수 시스템에서 주로 논의됩니다.
 
-#### (3) BLE 토폴로지
+#### BLE 토폴로지
 
 BLE는 **역할(role)** 중심으로 설명합니다.
 
@@ -122,7 +122,7 @@ BLE는 **역할(role)** 중심으로 설명합니다.
 
 BLE는 논리적으로는 여전히 master–slave형이지만, **central/peripheral 용어**를 쓰고, 한 central이 많은 peripheral과 **동시에 연결**될 수 있도록 설계되었습니다.
 
-### 4) Bluetooth Classic vs BLE vs LE Audio/5.x
+### Bluetooth Classic vs BLE vs LE Audio/5.x
 
 버전과 용도 관점에서 정리하면:
 
@@ -151,7 +151,7 @@ BLE는 논리적으로는 여전히 master–slave형이지만, **central/periph
 Bluetooth 스택은 보통 **Controller vs Host**로 나누어 설명하고,
 그 위에 **프로파일(profiles)**이 올라가는 구조입니다.
 
-### 1) 전체 계층 개요
+### 전체 계층 개요
 
 대부분의 문서에서는 다음과 같은 형태로 Bluetooth (LE 기준) 스택을 그립니다:
 
@@ -175,15 +175,15 @@ Bluetooth 스택은 보통 **Controller vs Host**로 나누어 설명하고,
 
 ---
 
-### 2) PHY / Radio Layer
+### PHY / Radio Layer
 
-#### (1) Classic vs LE 공통
+#### Classic vs LE 공통
 
 - **2.4 GHz ISM 대역**
 - FHSS 기반 채널 도약
 - 인증 시험 규격(NI, Bluetooth SIG 문서)에 명시된 **송신 전력, 주파수 오차, EVM, BER 한계** 등을 만족해야 함.
 
-#### (2) BLE PHY 상세
+#### BLE PHY 상세
 
 앞에서 언급했듯이 BLE는 40 채널, 2 MHz 간격, **GFSK 변조**를 사용하고, 여러 PHY를 지원합니다.
 
@@ -204,9 +204,9 @@ $$
 
 ---
 
-### 3) Baseband / Link Layer (Classic & LE)
+### Baseband / Link Layer (Classic & LE)
 
-#### (1) Classic Baseband + Link Manager
+#### Classic Baseband + Link Manager
 
 클래식 Bluetooth에서 **Baseband + Link Manager Protocol (LMP)**는 다음을 담당합니다.
 
@@ -220,7 +220,7 @@ $$
 - **QoS**
   - 슬롯 예약, 패킷 타입 선택, 재전송 정책
 
-#### (2) BLE Link Layer
+#### BLE Link Layer
 
 BLE에서 **Link Layer(LL)**는 비슷한 역할을 하지만, 상태 머신이 다소 단순화되어 있습니다.
 
@@ -238,7 +238,7 @@ $$
 
 ---
 
-### 4) HCI (Host Controller Interface)
+### HCI (Host Controller Interface)
 
 **HCI**는 Host와 Controller 사이의 표준 인터페이스입니다.
 
@@ -270,7 +270,7 @@ if __name__ == "__main__":
 
 ---
 
-### 5) L2CAP (Logical Link Control and Adaptation Protocol)
+### L2CAP (Logical Link Control and Adaptation Protocol)
 
 **L2CAP**는 Bluetooth의 “논리 링크 계층/적응 계층”입니다. 클래식과 LE 모두에서 사용됩니다.
 
@@ -298,7 +298,7 @@ BLE에서 L2CAP 위에는 보통 다음과 같은 채널이 올라갑니다.
 
 ---
 
-### 6) Classic 상위 프로토콜: RFCOMM, SDP, AVDTP/AVCTP …
+### Classic 상위 프로토콜: RFCOMM, SDP, AVDTP/AVCTP …
 
 클래식 Bluetooth(브로드밴드/오디오)는 다양한 상위 프로토콜을 사용합니다.
 
@@ -336,16 +336,16 @@ RF (2.4 GHz)
 
 ---
 
-### 7) BLE 상위 프로토콜: ATT, GATT, GAP, SMP
+### BLE 상위 프로토콜: ATT, GATT, GAP, SMP
 
 BLE의 핵심은 **“GATT 기반 서비스 모델”**입니다.
 
-#### (1) GAP (Generic Access Profile)
+#### GAP (Generic Access Profile)
 
 - 장치 발견, 광고, 스캔, 연결 수락/요청, 이름 노출 등 **기본 동작 정의**.
 - GAP 역할: Broadcaster, Observer, Peripheral, Central.
 
-#### (2) ATT (Attribute Protocol) & GATT (Generic Attribute Profile)
+#### ATT (Attribute Protocol) & GATT (Generic Attribute Profile)
 
 - ATT: **속성(attribute)** 단위의 간단한 요청/응답 프로토콜.
   - 각 attribute는 Handle, Type(UUID), Value를 가짐.
@@ -367,7 +367,7 @@ Service "Battery Service" (UUID 0x180F)
 3. READ 요청으로 현재 배터리 값 읽기.
 4. NOTIFY 활성화로 향후 변화 시 알림 수신.
 
-#### (3) SMP (Security Manager Protocol)
+#### SMP (Security Manager Protocol)
 
 - BLE 보안: 페어링, 인증, 키 교환(장기 키, 세션 키, 확인 값) 담당.
 - 페어링 모드: Just Works, Passkey, Numeric Comparison 등.
@@ -406,7 +406,7 @@ async def read_battery(addr):
 
 ---
 
-### 8) LE Audio와 Isochronous Channels (5.2~6.0)
+### LE Audio와 Isochronous Channels (5.2~6.0)
 
 Bluetooth 5.2에서 **LE Isochronous Channels(ISOC)**가 도입되면서, BLE 위에서 **LE Audio**가 가능해졌습니다.
 

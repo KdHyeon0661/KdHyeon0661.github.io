@@ -62,7 +62,7 @@ main:    A---B---C---D'---E'
 3. **Confirm rebase and merge** 클릭
 4. 성공 시 base 브랜치(main)에 **merge commit 없이** 커밋들이 선형으로 반영
 
-## GitHub CLI(gh) 예
+## 예
 
 ```bash
 # PR 123을 rebase 방식으로 병합
@@ -125,13 +125,13 @@ git commit -am "feat(main): x"
 ## 로컬에서 충돌 해결 절차
 
 ```bash
-# 최신 base(main) 반영
+# 반영
 
 git fetch origin
 git checkout feature/my-pr
 git rebase origin/main
 
-# 충돌 시 파일 열어 마커(<<<<<<<, =======, >>>>>>>) 해결
+# 해결
 
 git add <파일들>
 

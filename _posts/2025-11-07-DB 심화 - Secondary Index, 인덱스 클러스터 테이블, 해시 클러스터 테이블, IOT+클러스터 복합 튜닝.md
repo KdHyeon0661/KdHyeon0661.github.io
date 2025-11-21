@@ -15,7 +15,7 @@ ALTER SESSION SET statistics_level = ALL; -- ALLSTATS LAST 보기
 
 ---
 
-# Secondary Index(보조 인덱스) — Heap vs IOT의 의미 차이
+# — Heap vs IOT의 의미 차이
 
 ## Secondary Index란?
 
@@ -279,7 +279,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 
 ## 스키마 구성
 
-### A) 계정(마스터): IOT
+### 계정(마스터): IOT
 
 ```sql
 DROP TABLE iot_account PURGE;
@@ -297,7 +297,7 @@ CREATE TABLE iot_account (
 -- PCTTHRESHOLD/INCLUDING/OVERFLOW 옵션을 상황에 맞게 설정
 ```
 
-### B) 동일 키 종속 테이블: 인덱스 클러스터
+### 동일 키 종속 테이블: 인덱스 클러스터
 
 ```sql
 DROP CLUSTER c_acct PURGE;
@@ -322,7 +322,7 @@ CREATE TABLE c_settings (
 ) CLUSTER c_acct(acct_id);
 ```
 
-### C) 키=값 포인트 조회 전용: 해시 클러스터
+### 키=값 포인트 조회 전용: 해시 클러스터
 
 ```sql
 DROP CLUSTER hc_token PURGE;
@@ -387,7 +387,7 @@ END;
 
 ## 접근 패턴별 성능 포인트
 
-### (1) 계정 타임라인/최신순 Top-N: **IOT로 PK 범위 + Stopkey**
+### 계정 타임라인/최신순 Top-N: **IOT로 PK 범위 + Stopkey**
 
 ```sql
 -- 계정 생성일 기준 최신 20건 조회(정렬 제거 + Stopkey)
@@ -401,7 +401,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - **TABLE BY ROWID 단계가 없거나 최소** → 랜덤 I/O 급감.
 - IOT는 **PK가 곧 테이블**이므로 최신/Top-N에 특히 강함.
 
-### (2) 동일 키 조인(프로필/세팅): **인덱스 클러스터로 랜덤 I/O 최소화**
+### 동일 키 조인(프로필/세팅): **인덱스 클러스터로 랜덤 I/O 최소화**
 
 ```sql
 -- 단일 계정 상세 조회(프로필/세팅 조인)
@@ -416,7 +416,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 ```
 - `p`와 `s`가 **같은 클러스터 블록 근처**에 있어 **블록 재사용률↑**.
 
-### (3) 토큰→계정 매핑: **해시 클러스터 포인트 조회**
+### 토큰→계정 매핑: **해시 클러스터 포인트 조회**
 
 ```sql
 -- 토큰으로 계정 찾기(키=값 단건 조회 최적)
@@ -429,7 +429,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST'));
 - 인덱스 탐색 없이 **해시로 곧바로 블록 접근**.
 - 토큰 기반 인증/세션 매핑 등에서 초저지연 목표 달성.
 
-### (4) 앱 API 종단 간 — 세 경로 결합
+### 앱 API 종단 간 — 세 경로 결합
 
 ```sql
 -- 1) token→acct_id (해시 클러스터)

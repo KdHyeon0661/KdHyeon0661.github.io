@@ -141,7 +141,7 @@ public class UseArrayDeque {
 
 ---
 
-## 실패-안전(Fail-Fast) 반복자 & 동시수정
+## 반복자 & 동시수정
 
 - 두 구현 모두 **modCount** 기반 **fail-fast iterator**: 반복 중 구조가 바뀌면 `ConcurrentModificationException`.
 - 해결:
@@ -377,7 +377,7 @@ for (int i = 0; i < n; i++) a.add(i);
 
 ---
 
-## 부록 A) 흔한 인터뷰 질문 정리
+## 흔한 인터뷰 질문 정리
 
 1. **LinkedList 중간 삽입 O(1)인가요?**
    → **그 지점의 노드 참조를 이미 갖고 있으면** O(1). 보통은 **탐색 O(n)+O(1)**로 **O(n)**.
@@ -393,7 +393,7 @@ for (int i = 0; i < n; i++) a.add(i);
 
 ---
 
-## 부록 B) 단위 테스트/벤치마크 권장
+## 단위 테스트/벤치마크 권장
 
 - 정밀 성능 측정: **JMH** 사용(워밍업, 포크, 스레딩, GC 제어).
 - 기능 검증: **Iterator.remove**, **subList 동작**, **fail-fast** 예외까지 테스트.

@@ -46,7 +46,7 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 
 ---
 
-## 그리드 시스템 (Grid) — 레이아웃의 뼈대
+## — 레이아웃의 뼈대
 
 ### 컨테이너와 행/열
 
@@ -78,7 +78,7 @@ import 'bootstrap'; // 개별 사용 시: import 'bootstrap/js/dist/modal';
 | xl | ≥1200px |
 | xxl | ≥1400px |
 
-### Gutter(간격) 제어
+### 제어
 
 ```html
 <div class="row g-0"> ... </div>         <!-- 간격 0 -->
@@ -100,7 +100,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 유틸리티(Utilities) — “CSS 없이” 빠르게 스타일링
+## — “CSS 없이” 빠르게 스타일링
 
 ### 여백·정렬·디스플레이
 
@@ -130,7 +130,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 폼(Form) — 입력 UI와 검증
+## — 입력 UI와 검증
 
 ### 기본 폼과 그리드 조합
 
@@ -199,7 +199,7 @@ Bootstrap v5는 Flex 기반이 기본이나 **CSS Grid 유틸리티**도 제공�
 
 ---
 
-## 컴포넌트(Component) — 생산성의 핵심
+## — 생산성의 핵심
 
 ### 버튼/버튼 그룹
 
@@ -380,7 +380,7 @@ new Toast(document.getElementById('t')).show();
 
 ---
 
-## 접근성(A11y) — 시맨틱 + ARIA + 포커스
+## — 시맨틱 + ARIA + 포커스
 
 - 컴포넌트는 기본적으로 **ARIA 속성**과 키보드 탐색을 지원
 - **스크린 리더 텍스트**: `.visually-hidden`
@@ -574,7 +574,7 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 
 ---
 
-## 마이그레이션(v4 → v5) 요약
+## 요약
 
 - jQuery 의존성 제거 → `data-bs-*` 속성명으로 변경
 - `.form-group` → **공백 유틸리티**로 대체, 폼 구조 단순화

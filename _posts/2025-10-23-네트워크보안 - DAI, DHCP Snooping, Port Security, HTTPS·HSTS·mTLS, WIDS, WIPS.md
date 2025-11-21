@@ -11,9 +11,9 @@ category: 네트워크보안
 
 ---
 
-## L2 보호: DHCP Snooping → DAI(ARP Inspection) → Port Security
+## → Port Security
 
-### (1) DHCP Snooping — “누가 DHCP 서버인지 정한다”
+### DHCP Snooping — “누가 DHCP 서버인지 정한다”
 
 - **효과**: 신뢰 포트(Trusted)에서 온 DHCP Offer/ACK만 허용, 나머지는 차단.
 - **부가효과**: 클라이언트 **IP–MAC–VLAN–Port 바인딩 테이블**을 유지 → **DAI가 이 테이블을 신뢰**.
@@ -27,7 +27,7 @@ ip dhcp snooping
 
 ip dhcp snooping vlan 10
 
-# 업링크(진짜 DHCP 서버가 있는 방향) 포트만 "trusted"
+# 포트만 "trusted"
 
 interface Gi1/0/48
   ip dhcp snooping trust
@@ -47,7 +47,7 @@ interface Gi1/0/1
 
 ---
 
-### (2) DAI (Dynamic ARP Inspection) — “게이트웨이 ARP 위조 차단”
+### DAI (Dynamic ARP Inspection) — “게이트웨이 ARP 위조 차단”
 
 - **효과**: ARP 요청/응답을 **DHCP Snooping 바인딩**과 대조, 불일치 ARP를 드롭.
 - **추가**: ARP rate limit, 로그.
@@ -71,7 +71,7 @@ interface Gi1/0/1
 
 ---
 
-### (3) Port Security — “한 포트에 붙을 수 있는 MAC을 제한”
+### Port Security — “한 포트에 붙을 수 있는 MAC을 제한”
 
 - **효과**: 포트당 MAC 수 제한, 특정 MAC만 허용, 위반 시 shutdown/restrict.
 - **활용**: **MAC 플러딩/스니핑 시도**의 부작용(다중 MAC 유입)을 **초기에 차단**.
@@ -93,7 +93,7 @@ interface Gi1/0/1
 
 ## L7 암호화: HTTPS·HSTS·mTLS
 
-### (1) HTTPS + HSTS — 평문 제거의 기본
+### HTTPS + HSTS — 평문 제거의 기본
 
 - **HSTS**: 브라우저가 **항상 HTTPS만** 사용하도록 강제(HTTP→HTTPS 리다이렉트도 HSTS 없이는 첫 요청은 평문일 수 있음).
 - **프리로드**: hstspreload.org 등록(요건 충족 시) → 브라우저 내장 목록으로 초회도 안전.
@@ -134,7 +134,7 @@ server {
 
 ---
 
-### (2) 내부/서버간 mTLS — “서버/클라이언트 모두 인증”
+### 내부/서버간 mTLS — “서버/클라이언트 모두 인증”
 
 - **효과**: 내부 API/관리자 콘솔에 **클라이언트 인증서** 없이는 접근 불가.
 - **장점**: 쿠키·토큰 탈취만으로는 접근 어려움(스니핑 난이도 급상승).
@@ -209,7 +209,7 @@ openssl pkcs12 -export -inkey cli.key -in cli.crt -certfile ca.crt -out cli.p12 
 
 ## Suricata 예시 룰(EVE JSON 기반 운영)
 
-### (1) ARP Reply 비정상 빈도(폭증)
+### ARP Reply 비정상 빈도(폭증)
 
 ```conf
 # 간단 예시: 짧은 시간 한 소스에서 과도한 ARP Reply
@@ -221,7 +221,7 @@ alert ether any any -> any any (msg:"L2 ARP Reply storm suspected";
   sid:4202001; rev:1;)
 ```
 
-### (2) 게이트웨이 MAC 변동 감지(개념)
+### 게이트웨이 MAC 변동 감지(개념)
 
 > Suricata 룰만으로 “MAC 변경” 상태를 기억하기 어렵다 → **로그 후단(파이프라인)**에서 **스테이트풀 비교** 추천.
 아래는 “게이트웨이 IP에서 오는 ARP Reply”를 태깅 → 후단에서 MAC change diff.
@@ -243,7 +243,7 @@ alert ether any any -> any any (msg:"ARP Reply from gateway IP";
 
 ## Zeek 스크립트(ARP/DHCP/TLS 메타)
 
-### (1) ARP 게이트웨이 MAC 변경 감지(개요)
+### ARP 게이트웨이 MAC 변경 감지(개요)
 
 ```zeek
 # file: arp_gateway_watch.zeek
@@ -267,7 +267,7 @@ event arp_reply(c: connection, spa: addr, sha: string, tpa: addr, tha: string) {
 }
 ```
 
-### (2) DHCP 다중 서버 관찰(개요)
+### DHCP 다중 서버 관찰(개요)
 
 ```zeek
 # file: dhcp_multi_server_watch.zeek
@@ -284,7 +284,7 @@ event dhcp_offer(c: connection, msg: dhcp_msg, yiaddr: addr, siaddr: addr, subne
 }
 ```
 
-### (3) TLS 메타(예: JA3 상위·비정상 도메인 패턴)
+### TLS 메타(예: JA3 상위·비정상 도메인 패턴)
 
 Zeek는 기본적으로 TLS 이벤트를 레코드화. SIEM에서 **도메인 평판/SNI 패턴**과 결합하면 효과적.
 
@@ -335,7 +335,7 @@ level: high
 
 ## 랩 토폴로지(로컬 네임스페이스 또는 Docker)
 
-### (A) 네임스페이스 미니 랩(요약)
+### 네임스페이스 미니 랩(요약)
 
 ```
 [ns-client]──veth-c  \
@@ -346,7 +346,7 @@ level: high
 - `ns-gw`: 라우터 역할(필요 시 NAT)
 - `ns-client`: 트래픽 발생
 
-### (B) Docker Compose 랩(요약)
+### Docker Compose 랩(요약)
 
 - `client` / `server` / `observer(tcpdump|zeek|suricata)`
 - `observer`는 `pcap` 볼륨에 저장, 후단 도구가 읽어 분석
@@ -418,7 +418,7 @@ networks: { labnet: { driver: bridge } }
 
 ---
 
-## 시나리오 3 — “탐지 룰 제작 & 회귀(Regression) 테스트”
+## 테스트”
 
 > 탐지 체인을 **CI 처럼** 돌려서, 룰 업데이트가 **기존 탐지 품질**을 깨지 않는지 확인.
 
@@ -430,7 +430,7 @@ networks: { labnet: { driver: bridge } }
 
 **TShark 자동 채점 예시**
 ```bash
-# ARP Reply 카운트(윈도 내) 기준
+# 기준
 
 tshark -r pcap/arp_churn_ok.pcap -Y "arp.opcode == 2" | wc -l
 

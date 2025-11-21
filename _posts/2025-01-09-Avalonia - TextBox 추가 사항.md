@@ -98,7 +98,7 @@ public class AdvancedBindingViewModel : ReactiveObject
 
 ---
 
-## 입력 포맷 제어: 숫자·대문자·마스킹(전화번호) — 3가지 전략
+## — 3가지 전략
 
 입력 제어는 보통 ① 변환기(Converter), ② 검증(Validation), ③ 동작(Behavior/이벤트) 중 **목적**에 맞게 고른다.
 
@@ -142,7 +142,7 @@ XAML:
 </UserControl>
 ```
 
-### Behavior/이벤트로 **마스킹**(전화번호 등) — UX 친화적
+### — UX 친화적
 
 - 장점: 사용자가 입력할 때 즉시 포맷이 **자연스럽게 적용**
 - 단점: IME(조합 입력)·Caret 이동 처리 등 세심한 구현 필요
@@ -206,7 +206,7 @@ XAML:
 </UserControl>
 ```
 
-### 숫자 전용(하드 제한) — 간단 Behavior
+### — 간단 Behavior
 
 ```csharp
 // Views/Behaviors/NumericOnlyBehavior.cs

@@ -416,7 +416,7 @@ docker compose exec wordpress wp core version --allow-root
 
 ---
 
-## Compose 파일(최소/기본/전체) 비교
+## 비교
 
 ### 최소 구성(학습/로컬)
 
@@ -462,7 +462,7 @@ volumes: {wordpress_data:, db_data:}
 
 ---
 
-## 부록 A) 초기 SQL 예시(`init/*.sql`)
+## 초기 SQL 예시(`init/*.sql`)
 
 ```sql
 -- 01-create-db.sql
@@ -478,7 +478,7 @@ FLUSH PRIVILEGES;
 
 ---
 
-## 부록 B) 운영 체크스크립트(예)
+## 운영 체크스크립트(예)
 
 ```bash
 #!/usr/bin/env bash

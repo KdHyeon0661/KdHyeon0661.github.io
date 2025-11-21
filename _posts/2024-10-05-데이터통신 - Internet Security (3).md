@@ -179,19 +179,19 @@ PGP의 가장 중요한 특징은 **중앙 CA 없이도 신뢰를 구축**한다
 #### 간단 GnuPG 명령 예시
 
 ```bash
-# 1) 키 생성
+# 키 생성
 
 gpg --full-generate-key
 
-# 2) 상대 공개키 가져오기 (파일로 받은 경우)
+# 상대 공개키 가져오기 (파일로 받은 경우)
 
 gpg --import bob_public.asc
 
-# 3) 상대 키에 서명 (지문 직접 확인 후)
+# 상대 키에 서명 (지문 직접 확인 후)
 
 gpg --sign-key bob@example.com
 
-# 4) 파일을 서명 + 암호화해서 전송
+# 파일을 서명 + 암호화해서 전송
 
 gpg --encrypt --sign --armor -r bob@example.com patch.diff
 

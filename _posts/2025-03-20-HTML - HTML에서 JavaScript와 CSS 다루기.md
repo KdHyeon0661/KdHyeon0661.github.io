@@ -35,7 +35,7 @@ category: HTML
 
 ---
 
-### 외부 스타일(External) — 권장
+### — 권장
 
 ```html
 <!-- head 내부 -->
@@ -77,7 +77,7 @@ h1 { color: var(--brand); }
 
 ## JavaScript — HTML에 “동작”을 더하는 3가지 방법
 
-### 인라인 스크립트(이벤트 속성) — 비권장
+### — 비권장
 
 ```html
 <button onclick="alert('클릭!')">클릭</button>
@@ -100,7 +100,7 @@ h1 { color: var(--brand); }
 
 ---
 
-### 외부 스크립트(External) — 권장
+### — 권장
 
 ```html
 <script src="/assets/main.js" defer></script>
@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ## CSS 실전 토픽 — 선택자·특이성·레이어·변수
 
-### 특이성(Specificity) 요약
+### 요약
 
 - 인라인 > ID > 클래스/속성/가상 > 태그/가상요소.
 - 무분별한 `!important`는 피하고, **레이어(@layer)**와 **구조적 네이밍(BEM)** 으로 관리.
@@ -324,7 +324,7 @@ document.body.addEventListener('click', (e) => {
 
 ## 보안 — CSP, SRI, 교차 출처
 
-### CSP(Content-Security-Policy) 기본
+### 기본
 
 ```http
 Content-Security-Policy:
@@ -336,7 +336,7 @@ Content-Security-Policy:
 - 인라인 스크립트는 **차단**이 기본. 필요한 경우 **nonce** 또는 **해시**를 사용.
 - 프레임 삽입 방지: `frame-ancestors 'self';`
 
-### 스크립트 무결성(SRI) + CORS
+### + CORS
 
 ```html
 <script src="https://cdn.example/lib.min.js"

@@ -4,7 +4,7 @@ title: MFC - DPI-Aware, 다국어·현지화, 배포
 date: 2025-09-11 17:25:23 +0900
 category: MFC
 ---
-# DPI-Aware / 다국어·현지화(리소스 전환 전략) · 배포(재배포 패키지, 매니페스트/UAC, 코드 서명, WiX/Inno 팁) 완전 정리
+# · 배포(재배포 패키지, 매니페스트/UAC, 코드 서명, WiX/Inno 팁) 완전 정리
 
 **대상**: Win32/MFC(Feature Pack 포함), x64, Windows 10/11
 **목표**:
@@ -177,7 +177,7 @@ CRect DluToPx(CWnd* dlg, int x, int y, int w, int h) {
 
 ---
 
-### 2-2. 위성 DLL(리소스 전용) 구조
+### 구조
 
 ```
 App.exe                 // 중립(영문) 리소스 포함해도 OK

@@ -50,7 +50,7 @@ Elastic Beanstalk(이하 EB)은 **PaaS 성향의 관리형 배포 프레임워�
 
 ### 애플리케이션 폴더 구조 예시
 
-#### (A) Python Flask
+#### Python Flask
 
 ```text
 my-flask-app/
@@ -80,7 +80,7 @@ def hello():
     return 'hello beanstalk'
 ```
 
-#### (B) Node.js Express
+#### Node.js Express
 
 ```text
 my-node-app/
@@ -99,7 +99,7 @@ app.get('/', (_, res) => res.send('hello beanstalk'));
 app.listen(process.env.PORT || 8080);
 ```
 
-#### (C) Docker(Single Container)
+#### Docker(Single Container)
 
 ```text
 my-docker-app/
@@ -437,7 +437,7 @@ cron:
 
 ---
 
-## 예제: EB + Flask + RDS(Secrets) + HTTPS 리다이렉트
+## + HTTPS 리다이렉트
 
 ### Flask (간략)
 
@@ -519,7 +519,7 @@ Resources:
           Value: /health
 ```
 
-### CDK(Cfn 레벨) 예시(TypeScript)
+### 예시(TypeScript)
 
 ```ts
 import * as cdk from 'aws-cdk-lib';
@@ -577,7 +577,7 @@ export class EbStack extends cdk.Stack {
 
 ---
 
-## 부록 A) 자주 쓰는 EB CLI 명령 요약
+## 자주 쓰는 EB CLI 명령 요약
 
 ```bash
 eb init                         # 앱 초기화
@@ -594,7 +594,7 @@ eb terminate <env>              # 환경 종료
 
 ---
 
-## 부록 B) 샘플 .ebextensions 모음
+## 샘플 .ebextensions 모음
 
 ### B.1 CloudWatch Logs 보존 기간
 
@@ -626,7 +626,7 @@ option_settings:
 
 ---
 
-## 부록 C) 성능·용량 산식 예시
+## 성능·용량 산식 예시
 
 1) 요청 처리량 기반 인스턴스 수:
 $$

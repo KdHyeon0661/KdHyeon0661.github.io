@@ -341,7 +341,7 @@ setfacl -m d:g:devs:rwx /srv/project
 
 sudo visudo -f /etc/sudoers.d/deploy
 # 내용:
-# %devs ALL=(root) NOPASSWD:/usr/local/bin/deploy_myapp
+# NOPASSWD:/usr/local/bin/deploy_myapp
 
 ```
 

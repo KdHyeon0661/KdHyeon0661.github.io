@@ -4,7 +4,7 @@ title: 디자인패턴 - Gang of Four
 date: 2025-06-09 20:20:23 +0900
 category: 디자인패턴
 ---
-# GoF(Gang of Four) 디자인 패턴
+# 디자인 패턴
 
 ## GoF 디자인 패턴이란?
 

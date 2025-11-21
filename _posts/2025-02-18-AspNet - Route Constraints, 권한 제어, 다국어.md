@@ -20,7 +20,7 @@ category: AspNet
 
 ---
 
-## Route Constraints(라우트 제약 조건) — 카탈로그와 조합 규칙
+## — 카탈로그와 조합 규칙
 
 ### 기본 사용
 
@@ -191,7 +191,7 @@ app.MapControllerRoute(
 
 ---
 
-## 라우트 기반 Localization(다국어 URL) — 문화권을 경로에 담기
+## — 문화권을 경로에 담기
 
 URL에 문화권을 포함:
 ```
@@ -255,7 +255,7 @@ builder.Services.AddRazorPages(options =>
 });
 ```
 
-### 문화권 제약(정규식) — 잘못된 코드 차단
+### — 잘못된 코드 차단
 
 두 글자 언어 코드만 허용(간략화):
 ```csharp
@@ -400,7 +400,7 @@ public class HomeController : Controller
 }
 ```
 
-### Razor Pages — 제품 상세(숫자 ID) + 문화권 + SEO 별칭
+### + 문화권 + SEO 별칭
 
 Program.cs(별칭 라우트):
 ```csharp

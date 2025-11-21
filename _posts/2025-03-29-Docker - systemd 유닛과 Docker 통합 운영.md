@@ -250,7 +250,7 @@ sudo systemctl enable --now app@8082.service
 
 ---
 
-## Watchdog/StartLimit로 플래핑(무한 재시작) 제어
+## 제어
 
 ```ini
 [Service]

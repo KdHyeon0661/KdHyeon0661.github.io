@@ -586,13 +586,13 @@ def stripe_webhook(request):
 
 > Stripe는 **서명 헤더 검증**을 제공; 반드시 사용하세요. 또한, **idempotency-key** (요청 측)와 별개로 **웹훅 이벤트 id**를 사용한 **멱등 처리**가 필요합니다.
 
-#### 아임포트(IMP) 개념 흐름
+#### 개념 흐름
 
 - 결제 완료 콜백에서 **imp_uid** 수신 → **REST API로 영수증 검증**(금액/상태 일치 확인) → 주문 확정
 - **서버 사이드 검증** 필수, 프런트만 믿지 마세요
 
 ```python
-# (간략) 아임포트 검증 스케치
+# 아임포트 검증 스케치
 
 import requests
 IMP_HOST = "https://api.iamport.kr"
@@ -788,7 +788,7 @@ router.register("orders", OrderViewSet, basename="order")
 urlpatterns = router.urls
 ```
 
-### D-2. 결제 진행(프런트) → Stripe PaymentIntent 생성(API) → 결제 완료 웹훅에서 확정
+### → Stripe PaymentIntent 생성(API) → 결제 완료 웹훅에서 확정
 
 ```python
 # apps/payments/api.py

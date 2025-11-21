@@ -342,7 +342,7 @@ public class FxInSwing {
 
 ---
 
-## 프로젝트 설정 (Maven/Gradle) & 모듈(JPMS)
+## & 모듈(JPMS)
 
 ### JavaFX 의존성 (JDK 11+ OpenJFX 분리)
 

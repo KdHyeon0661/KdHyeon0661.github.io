@@ -226,7 +226,7 @@ builder.Services.AddSingleton<IConfigureOptions<AppSettings>, ConfigureMyFeature
 
 ---
 
-## 환경 변수/명령줄/시크릿(비밀) — 우선순위·키 규칙
+## — 우선순위·키 규칙
 
 ### 환경 변수
 

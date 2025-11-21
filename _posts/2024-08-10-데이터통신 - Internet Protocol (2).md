@@ -85,7 +85,7 @@ IANA는 이 타입·코드를 **공식 레지스트리**에서 지속적으로 �
 
 ### 대표 에러 메시지와 시나리오
 
-#### 1) Destination Unreachable (Type 3)
+#### Destination Unreachable (Type 3)
 
 **상황:**
 
@@ -121,7 +121,7 @@ Unused (0)
 
 ---
 
-#### 2) Time Exceeded (Type 11)
+#### Time Exceeded (Type 11)
 
 **상황:**
 
@@ -143,7 +143,7 @@ Unused (0)
 
 ---
 
-#### 3) Parameter Problem (Type 12)
+#### Parameter Problem (Type 12)
 
 **상황:** IPv4 헤더 자체가 잘못되어 있는 경우:
 
@@ -163,7 +163,7 @@ Pointer (문제 바이트의 위치)
 
 ---
 
-#### 4) Redirect (Type 5)
+#### Redirect (Type 5)
 
 **상황:**
 
@@ -177,7 +177,7 @@ Pointer (문제 바이트의 위치)
 
 ---
 
-#### 5) Source Quench (Type 4, Deprecated)
+#### Source Quench (Type 4, Deprecated)
 
 - 원래는 혼잡 시 송신자에게 “속도 줄여라”라는 신호를 보내는 용도였으나,
   연구 결과 **혼잡 제어에 비효율적이고, 악용 가능성이 크다**는 이유로,
@@ -192,7 +192,7 @@ Pointer (문제 바이트의 위치)
 
 ### 대표 정보 메시지
 
-#### 1) Echo Request (Type 8) / Echo Reply (Type 0)
+#### Echo Request (Type 8) / Echo Reply (Type 0)
 
 - `ping`의 기반.
 - 구조(공통):
@@ -206,7 +206,7 @@ Data (임의의 바이트들)
 - Identifier/Sequence Number로 요청·응답 매칭.
 - RTT 측정을 위해 송신자가 Data에 타임스탬프를 넣기도 한다.
 
-#### 2) Timestamp Request/Reply (Type 13/14)
+#### Timestamp Request/Reply (Type 13/14)
 
 - 밀리초 단위 타임스탬프를 교환해 **시간 동기**나 **지연 측정**에 사용하도록 설계.
 - NTP 같은 더 세련된 프로토콜이 등장하면서 거의 사용되지 않지만, 구조를 이해해 두면 시간 관련 설계를 할 때 도움이 된다.

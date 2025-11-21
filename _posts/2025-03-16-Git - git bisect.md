@@ -168,7 +168,7 @@ exit 0               # 성공 → good
 - bisect 중 체크아웃 시 충돌이 발생할 수 있다. 수동 해결이 어렵다면 `git bisect skip`으로 넘긴다.
 - 충돌이 많다면 **범위 축소**(경로 제한, ancestry path)로 접근하는 편이 낫다.
 
-### 플래키(flaky) 테스트
+### 테스트
 
 - 불안정 테스트는 오탐을 만든다. 자동 스크립트에서 **재시도**를 통해 안정시킨다.
 
@@ -274,7 +274,7 @@ git log --graph --oneline --decorate <good>..HEAD
 git bisect terms
 # good bad 출력
 
-# (Git의 향후/특정 버전에서) 용어 변경 기능이 제공될 수 있으나
+# 용어 변경 기능이 제공될 수 있으나
 # 일반적 실무에선 good/bad를 그대로 사용하는 것을 권장
 
 ```

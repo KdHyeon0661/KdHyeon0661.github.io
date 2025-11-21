@@ -18,7 +18,7 @@ category: DB
 
 ---
 
-## DDL(데이터 정의) — 구조 설계·변경의 성능/가용성 이슈까지
+## — 구조 설계·변경의 성능/가용성 이슈까지
 
 ### 핵심 명령과 공통 개념
 
@@ -53,7 +53,7 @@ RENAME TABLE ...;   -- 또는 ALTER ... RENAME TO ...
 
 ### 확장 DDL 실무 패턴
 
-#### (A) 제약조건(무결성) 설계
+#### 제약조건(무결성) 설계
 
 ```sql
 -- PostgreSQL 예
@@ -69,7 +69,7 @@ CREATE TABLE employee (
 - **CHECK**로 도메인 제약을 DB 레벨에서 보장(앱 로직과 중복하되 DB가 최종 방어선).
 - **FK ON DELETE/UPDATE**: CASCADE/SET NULL/RESTRICT의 의미를 비즈니스 규칙과 일치시킬 것.
 
-#### (B) 파티셔닝/파티션 프루닝
+#### 파티셔닝/파티션 프루닝
 
 ```sql
 -- Postgres 범위 파티셔닝
@@ -87,7 +87,7 @@ SELECT count(*) FROM logs WHERE ts >= '2024-06-01' AND ts < '2024-07-01';
 ```
 - 대용량 테이블에서 **프루닝**은 핵심 성능 요소. **로테이션/아카이브 DDL**을 자동화한다.
 
-#### (C) 가상/생성(Generated) 컬럼, 가시성 제어
+#### 가상/생성(Generated) 컬럼, 가시성 제어
 
 ```sql
 -- MySQL 8.0: 생성 컬럼 + 인덱스
@@ -98,7 +98,7 @@ CREATE INDEX ix_orders_month ON orders(order_month);
 ```
 - 보고서/필터 공통식은 **생성 컬럼 + 인덱스**로 CPU·I/O를 절감.
 
-#### (D) 인덱스 전략(커버링, 파셜/필터드, 함수형)
+#### 인덱스 전략(커버링, 파셜/필터드, 함수형)
 
 ```sql
 -- Postgres: 파셜 인덱스
@@ -117,7 +117,7 @@ CREATE INDEX ix_users_email_norm ON users ((lower(email)));
 
 ---
 
-## DML(데이터 조작) — 트랜잭션, 격리수준, 벌크·머지, UPSERT
+## — 트랜잭션, 격리수준, 벌크·머지, UPSERT
 
 ### 기본과 트랜잭션 제어
 
@@ -196,7 +196,7 @@ LIMIT 50;
 
 ---
 
-## DCL(접근 제어) — 롤 기반 설계, 최소권한, RLS
+## — 롤 기반 설계, 최소권한, RLS
 
 ### 기본 권한
 
@@ -248,7 +248,7 @@ REVOKE GRANT OPTION FOR SELECT ON employee FROM analyst; -- 위임능력 회수
 
 ---
 
-## TCL(트랜잭션 제어) — 세이브포인트, 예외 복구, 배포 전략
+## — 세이브포인트, 예외 복구, 배포 전략
 
 ```sql
 BEGIN;
@@ -323,7 +323,7 @@ CREATE INDEX ix_order_customer_time ON "order"(customer_id, ordered_at DESC);
 CREATE INDEX ix_item_product ON order_item(product_id);
 ```
 
-### DML: 멱등 주문 생성(UPSERT) + 재고 차감
+### + 재고 차감
 
 ```sql
 -- 멱등키 도입
@@ -440,7 +440,7 @@ CREATE TABLE employee (
 CREATE INDEX ix_emp_dept_hired ON employee(dept_id, hired_at DESC);
 ```
 
-### 데이터 조작(DML) + 트랜잭션(TCL)
+### + 트랜잭션(TCL)
 
 ```sql
 BEGIN;

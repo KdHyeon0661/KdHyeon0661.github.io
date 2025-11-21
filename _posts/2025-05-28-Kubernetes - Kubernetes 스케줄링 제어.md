@@ -228,7 +228,7 @@ spec:
 
 ---
 
-## **Topology Spread Constraints**(현대적 분산 방법) — Anti-Affinity의 대안/보완
+## — Anti-Affinity의 대안/보완
 
 대규모에서 `podAntiAffinity`는 스케줄러 비용이 커질 수 있습니다. **균등 분산**에는 `topologySpreadConstraints`가 더 **확정적이고 스케일 친화적**입니다.
 
@@ -293,7 +293,7 @@ kubectl get nodes --show-labels | cut -c -180
 kubectl get node <node> --show-labels
 ```
 
-### 시뮬레이션(드라이런) & 점검
+### & 점검
 
 ```bash
 kubectl apply -f pod.yaml --dry-run=server
@@ -321,7 +321,7 @@ spec:
           topologyKey: topology.kubernetes.io/zone
 ```
 
-### 스토리지 노드로 **강제**(필터) + GPU 노드 **거부**
+### + GPU 노드 **거부**
 
 ```yaml
 spec:

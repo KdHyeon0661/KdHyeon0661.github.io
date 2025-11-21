@@ -17,7 +17,7 @@ category: Kubernetes
 
 ---
 
-## 설치(요약) & 초기 로그인
+## & 초기 로그인
 
 ```bash
 kubectl create ns argocd
@@ -198,7 +198,7 @@ syncPolicy:
 - **PruneLast**: 삭제는 마지막에
 - **ApplyOutOfSyncOnly**: 변경된 리소스만 적용
 
-### 웨이브(우선순위) — 리소스 주석
+### — 리소스 주석
 
 ```yaml
 metadata:
@@ -208,7 +208,7 @@ metadata:
 
 예: CRD(−1) → 네임스페이스(0) → Config(1) → Deployment(2) → Ingress(3)
 
-### 훅(Hook) — Job/Workflow를 Sync 시점에 삽입
+### — Job/Workflow를 Sync 시점에 삽입
 
 ```yaml
 metadata:
@@ -262,7 +262,7 @@ spec:
 
 ## Secret 전략 — SOPS·SealedSecrets·Vault
 
-### Mozilla SOPS(+age/GPG) 예
+### 예
 
 Git에는 **암호화된 YAML**만 저장, 컨트롤러/플러그인으로 복호화 적용.
 

@@ -30,7 +30,7 @@ HDLC의 핵심:
 
 HDLC에서는 먼저 **스테이션의 종류**와 **링크 구성**을 정의하고, 그 위에 전송 모드(Transmission Mode)를 올린다.
 
-#### 1) 스테이션 타입
+#### 스테이션 타입
 
 HDLC에서 한 “스테이션(station)”은 하나의 통신 노드(라우터, 단말 등)를 의미한다.
 
@@ -43,7 +43,7 @@ HDLC에서 한 “스테이션(station)”은 하나의 통신 노드(라우터,
 - Primary/Secondary 구조는 **마스터–슬레이브** 느낌이고,
 - Combined는 **대칭적인 점대점(peer-to-peer)** 구조에 가깝다.
 
-#### 2) 링크 구성(Link Configurations)
+#### 링크 구성(Link Configurations)
 
 HDLC는 크게 두 가지 구성을 정의한다.
 
@@ -76,7 +76,7 @@ ASCII로 표현하면:
 
 ---
 
-#### 3) 전송 모드(Transfer Modes)
+#### 전송 모드(Transfer Modes)
 
 링크 구성 위에서 HDLC는 세 가지 전송 모드를 정의한다.
 
@@ -86,7 +86,7 @@ ASCII로 표현하면:
 | ARM (Asynchronous Response Mode) | Unbalanced | 여전히 Primary/Secondary 구조이지만, Secondary도 임의 시점에 전송 가능. |
 | ABM (Asynchronous Balanced Mode) | Balanced | 두 Combined station 모두 언제든지 전송/제어 가능. 현대 HDLC에서 가장 많이 쓰이는 모드. |
 
-##### (1) NRM — Normal Response Mode
+##### NRM — Normal Response Mode
 
 - **전형적인 멀티드롭 환경**을 위한 모드.
 - 흐름:
@@ -117,7 +117,7 @@ S2: <------------------------ DATA(S2 → P)
 
 ---
 
-##### (2) ARM — Asynchronous Response Mode
+##### ARM — Asynchronous Response Mode
 
 - 여전히 Primary/Secondary 구성이지만, Secondary가 **언제든지 응답 없이 전송 가능**.
 - 다만 여전히 Primary가
@@ -130,7 +130,7 @@ S2: <------------------------ DATA(S2 → P)
 
 ---
 
-##### (3) ABM — Asynchronous Balanced Mode
+##### ABM — Asynchronous Balanced Mode
 
 - **Balanced configuration** 에서 사용하는 모드.
 - 두 스테이션 모두 Combined → Primary/Secondary 구분이 없다.
@@ -143,7 +143,7 @@ S2: <------------------------ DATA(S2 → P)
 
 ---
 
-#### 4) 예제 상황: 옛날 멀티드롭 vs 현대 라우터 간 링크
+#### 예제 상황: 옛날 멀티드롭 vs 현대 라우터 간 링크
 
 1) **과거 멀티드롭 X.25/전용선** (NRM)
 
@@ -184,7 +184,7 @@ ASCII 형식으로:
 
 ---
 
-#### 1) 프레임 타입: I / S / U 프레임
+#### 프레임 타입: I / S / U 프레임
 
 HDLC의 Control 필드 구조는 프레임 타입에 따라 다르다.
 
@@ -194,7 +194,7 @@ HDLC의 Control 필드 구조는 프레임 타입에 따라 다르다.
 | S-frame | Supervisory frame | 순수 흐름/오류 제어 (RR, RNR, REJ, SREJ 등) |
 | U-frame | Unnumbered frame | 링크 관리, 모드 설정(SABM, DISC, UA, DM, FRMR…), 일부 데이터 전송(UI) |
 
-##### (1) I-frame (Information)
+##### I-frame (Information)
 
 Control 필드(3비트 번호 사용 시):
 
@@ -211,7 +211,7 @@ bit: 7 6 5  4   3  2 1 0
 
 - **데이터 전송 + ACK 정보(piggyback)** 를 동시에 얹는다.
 
-##### (2) S-frame (Supervisory)
+##### S-frame (Supervisory)
 
 흔한 S-frame 종류:
 
@@ -229,7 +229,7 @@ bit: 7 6 5 4  3  2 1 0
 
 여기서 (S1, S0) 조합으로 RR/RNR/REJ/SREJ 구분.
 
-##### (3) U-frame (Unnumbered)
+##### U-frame (Unnumbered)
 
 링크 관리와 기타 기능 제공:
 
@@ -244,7 +244,7 @@ Control 필드 비트 패턴은 다양하며, 모드 설정/에러 보고 등에
 
 ---
 
-#### 2) HDLC 비트 스터핑(Bit Stuffing)과 투명성
+#### HDLC 비트 스터핑(Bit Stuffing)과 투명성
 
 HDLC의 Flag는 항상 **`01111110` (0x7E)** 이다.
 데이터 내부에 같은 패턴이 나오면 프레임 경계가 깨지므로, **비트 스터핑(bit stuffing)** 을 사용한다.
@@ -285,7 +285,7 @@ HDLC의 Flag는 항상 **`01111110` (0x7E)** 이다.
 
 ---
 
-#### 3) FCS(Frame Check Sequence) — CRC
+#### FCS(Frame Check Sequence) — CRC
 
 FCS는 Address, Control, Information 필드를 대상으로 계산되는 **CRC-16 또는 CRC-32** 값이다.
 
@@ -302,7 +302,7 @@ FCS는 Address, Control, Information 필드를 대상으로 계산되는 **CRC-1
 
 ---
 
-#### 4) 예제: HDLC I-frame 분석
+#### 예제: HDLC I-frame 분석
 
 가정:
 
@@ -332,7 +332,7 @@ FCS는 전체 Address+Control+Information에 대한 CRC-16/32로 계산된다.
 
 ---
 
-#### 5) 간단 코드 예: HDLC 비트 스터핑/언스터핑 (개념용)
+#### 간단 코드 예: HDLC 비트 스터핑/언스터핑 (개념용)
 
 아래는 **비트 문자열**을 입력으로 받아 HDLC 스타일의 bit stuffing/unstuffing을 수행하는 파이썬 예제다.
 (실제 구현에서는 바이트 배열·비트연산을 사용하지만, 개념 이해를 위해 문자열로 단순화했다.)
@@ -418,7 +418,7 @@ PPP가 제공하는 서비스는 크게 다음과 같이 정리할 수 있다.
 4. **에러 검출 및 품질 모니터링(Quality monitoring)**
 5. **선택적 압축/암호화/멀티링크(Multilink)**
 
-#### 1) 다중 프로토콜 캡슐화
+#### 다중 프로토콜 캡슐화
 
 PPP는 하나의 포인트투포인트 링크 위에서 **여러 네트워크 계층 프로토콜을 동시에 운용**하도록 설계되었다.
 
@@ -433,7 +433,7 @@ PPP 프레임 헤더의 **Protocol 필드**로 어떤 프로토콜의 데이터�
 
 ---
 
-#### 2) LCP (Link Control Protocol) — 링크 자동 설정
+#### LCP (Link Control Protocol) — 링크 자동 설정
 
 LCP는 PPP 링크가 **동작 가능한 상태가 되도록 협상**하는 프로토콜이다.
 
@@ -459,7 +459,7 @@ LCP는 다음과 같은 메시지를 사용한다.
 
 ---
 
-#### 3) 인증(Authentication)
+#### 인증(Authentication)
 
 PPP는 링크 계층 수준에서 다음과 같은 인증 메커니즘을 제공한다.
 
@@ -476,7 +476,7 @@ PPP는 링크 계층 수준에서 다음과 같은 인증 메커니즘을 제공
 
 ---
 
-#### 4) 에러 검출과 품질 모니터링
+#### 에러 검출과 품질 모니터링
 
 PPP는 HDLC와 비슷한 방식으로 **FCS(CRC 기반)** 필드를 사용해 프레임 단위 에러를 검출한다.
 
@@ -490,7 +490,7 @@ PPP는 HDLC와 비슷한 방식으로 **FCS(CRC 기반)** 필드를 사용해 �
 
 ---
 
-#### 5) 선택적 기능: 압축, 암호화, Multilink
+#### 선택적 기능: 압축, 암호화, Multilink
 
 PPP는 base 프로토콜 외에도 다양한 선택적 기능을 포함하는 확장 RFC들이 존재한다.
 
@@ -533,7 +533,7 @@ PPP의 특징:
 
 ---
 
-#### 1) Protocol 필드 예시
+#### Protocol 필드 예시
 
 일부 대표적인 PPP Protocol 값:
 
@@ -549,7 +549,7 @@ PPP의 특징:
 
 ---
 
-#### 2) 투명성(Transparency): Byte Stuffing & ACCM
+#### 투명성(Transparency): Byte Stuffing & ACCM
 
 PPP는 **비트 지향이라기보다는 “옥텟(바이트) 지향”** 이다.
 비동기 RS-232 같은 환경에서 다음 2가지 문제를 해결해야 한다.
@@ -574,7 +574,7 @@ PPP는 **비트 지향이라기보다는 “옥텟(바이트) 지향”** 이다
 
 ---
 
-#### 3) PPP 프레임 예제
+#### PPP 프레임 예제
 
 가상의 IPv4 패킷(헤더 20바이트 + 데이터 32바이트)을 PPP로 전송한다고 하자.
 비동기 링크, 16비트 FCS 사용, Byte stuffing 결과는 단순화한다.
@@ -599,7 +599,7 @@ PPP는 **비트 지향이라기보다는 “옥텟(바이트) 지향”** 이다
 
 ---
 
-#### 4) 효율 계산 간단 예
+#### 효율 계산 간단 예
 
 PPP 프레임의 오버헤드는 대략:
 
@@ -665,7 +665,7 @@ PPP 링크는 **여러 단계(Phase)를 지나는 상태 머신**으로 모델�
 
 ---
 
-#### 1) Link Dead
+#### Link Dead
 
 - 물리 계층이 아직 준비되지 않았거나,
   이전 세션이 종료되어 **링크가 비활성화된 상태**.
@@ -673,7 +673,7 @@ PPP 링크는 **여러 단계(Phase)를 지나는 상태 머신**으로 모델�
 
 ---
 
-#### 2) Link Establishment Phase (LCP)
+#### Link Establishment Phase (LCP)
 
 - LCP가 **Configure-Request/ Ack/Nak/Reject** 메시지를 교환하며:
   - MRU, ACCM, Magic Number, 인증 옵션 등 협상.
@@ -689,7 +689,7 @@ PPP 링크는 **여러 단계(Phase)를 지나는 상태 머신**으로 모델�
 
 ---
 
-#### 3) Authentication Phase (선택적)
+#### Authentication Phase (선택적)
 
 - LCP에서 “인증 필요”로 설정된 경우,
   - PAP, CHAP, EAP 등으로 상대를 인증한다.
@@ -706,7 +706,7 @@ PPP 링크는 **여러 단계(Phase)를 지나는 상태 머신**으로 모델�
 
 ---
 
-#### 4) Network-Layer Protocol Phase (NCP)
+#### Network-Layer Protocol Phase (NCP)
 
 - 각 네트워크 계층 프로토콜(IP, IPv6 등)에 대해 **NCP 메시지** 교환.
 - 예: IPCP(IPv4용 NCP)에서 하는 일:
@@ -720,7 +720,7 @@ PPP 링크는 **여러 단계(Phase)를 지나는 상태 머신**으로 모델�
 
 ---
 
-#### 5) Link Termination Phase
+#### Link Termination Phase
 
 - 다음과 같은 경우에 발생:
   - 사용자가 접속 종료
@@ -733,7 +733,7 @@ PPP 링크는 **여러 단계(Phase)를 지나는 상태 머신**으로 모델�
 
 ---
 
-#### 6) 예제: 가정용 PPPoE 세션의 실제 흐름 (개념)
+#### 예제: 가정용 PPPoE 세션의 실제 흐름 (개념)
 
 단순화된 타임라인:
 
@@ -758,7 +758,7 @@ PPP의 “Multiplexing”은 크게 두 가지 차원에서 이해할 수 있다
 1. **하나의 PPP 링크 위에 여러 네트워크 계층 프로토콜 동시 운용 (Protocol multiplexing)**
 2. **여러 물리 링크를 하나로 묶는 Multilink PPP (Link aggregation)**
 
-#### 1) Protocol Multiplexing (NCP 기반)
+#### Protocol Multiplexing (NCP 기반)
 
 PPP는 단일 포인트-투-포인트 링크를 만들고, 그 위에 **여러 네트워크 계층 프로토콜을 동시에 얹는다.**
 
@@ -784,7 +784,7 @@ PPP는 단일 포인트-투-포인트 링크를 만들고, 그 위에 **여러 �
 
 ---
 
-#### 2) Multilink PPP (MLPPP)
+#### Multilink PPP (MLPPP)
 
 Multilink PPP(MLPPP)는 **여러 물리 링크(예: 두 개의 56kbps 모뎀, 여러 T1/E1 회선)를 하나의 논리 PPP 링크처럼 사용하는** 링크 집합(link aggregation) 기술이다.
 
@@ -805,7 +805,7 @@ Multilink PPP(MLPPP)는 **여러 물리 링크(예: 두 개의 56kbps 모뎀, �
 
 ---
 
-#### 3) Multiclass PPP
+#### Multiclass PPP
 
 Multiclass PPP는 **여러 “트래픽 클래스”마다 별도의 시퀀스 공간과 재조립 버퍼**를 두는 확장이다.
 
@@ -827,7 +827,7 @@ Multiclass PPP는 **여러 “트래픽 클래스”마다 별도의 시퀀스 �
 ```python
 import struct
 
-# PPP 헤더: Flag(1) + Address(1) + Control(1) + Protocol(2)
+# + Address(1) + Control(1) + Protocol(2)
 # 여기서는 이미 Flag, FCS가 제거된 상태라고 가정하고, Address~Protocol만 파싱한다.
 
 PPP_HEADER_FMT = "!BBBH"  # Address(1), Control(1), Protocol(2) - Network(big-endian)

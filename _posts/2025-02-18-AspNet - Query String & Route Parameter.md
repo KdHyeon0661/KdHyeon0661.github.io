@@ -149,7 +149,7 @@ public class GridModel : PageModel
 
 ---
 
-## 함께 쓰기 — 카테고리(Route) + 검색/페이지(Query)
+## + 검색/페이지(Query)
 
 **Pages/Search/Index.cshtml**
 ```cshtml
@@ -331,7 +331,7 @@ public class FilterModel : PageModel
 /?brands=1&brands=2
 ```
 
-### 복합 타입(`FilterDto`) — 키 접두사로 하위 매핑
+### — 키 접두사로 하위 매핑
 
 ```cshtml
 <input name="filter.minPrice" />
@@ -426,7 +426,7 @@ return RedirectToPage("./Index", merged);
 
 ---
 
-## 실전 예제 — 제품 목록: 카테고리(Route) + 필터(Query) + PRG
+## + 필터(Query) + PRG
 
 **Pages/Products/Index.cshtml**
 ```cshtml

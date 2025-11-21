@@ -36,7 +36,7 @@ category: DataCommunication
 
 ## Periodic Analog Signals
 
-### Sine Wave(사인파) — \(A\), \(f\), \(\phi\)
+### — \(A\), \(f\), \(\phi\)
 
 사인파는 **진폭 \(A\)**, **주파수 \(f\)**, **위상 \(\phi\)** 로 정의됩니다.
 
@@ -60,7 +60,7 @@ $$
 - 예) **한 사이클의 \(\frac{1}{6}\)** 만큼 앞서면:
   $$ \phi = \frac{1}{6}\times 360^\circ = 60^\circ = \frac{\pi}{3} \text{ rad} $$
 
-### Wavelength(파장) — **오류 교정 포함**
+### — **오류 교정 포함**
 
 - **파장 \(\lambda\)**: 공간에서 파형이 한 주기마다 반복되는 길이.
   $$ \lambda = v \cdot T = \frac{v}{f} $$
@@ -84,7 +84,7 @@ $$ \lambda = \frac{3.0\times10^8}{2.0\times10^{14}}=1.5\times10^{-6}\,\text{m}=1
 - **Frequency Domain**: \(X(f)\) vs \(f\), 각 주파수 성분의 **진폭/위상**.
   - 순수 사인파는 \(f_0\)에서 **스파이크**(델타) 하나로 표현.
 
-### Composite Signals(합성 신호) & Fourier
+### & Fourier
 
 - **Fourier 분석**: 임의의 신호를 **서로 다른 \(f,A,\phi\)** 를 갖는 사인파들의 **합**으로 분해.
   - **주기 신호**: **푸리에 급수** — 이산 주파수 성분.
@@ -197,7 +197,7 @@ print("Top peaks (Hz, magnitude):")
 for f, m in peaks:
     print(f"{f:.1f} Hz -> {m:.3f}")
 
-# 실효 대역폭(예: 에너지 99% 포함 구간) 근사
+# 근사
 
 power = mag**2
 cum = np.cumsum(np.sort(power))

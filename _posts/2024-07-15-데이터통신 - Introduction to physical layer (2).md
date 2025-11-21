@@ -16,7 +16,7 @@ category: DataCommunication
 - **정의**: 단위 시간(초)당 전송되는 **비트 수**
   $$ \text{bit rate } R \;[\text{bps}] = \frac{\text{전송 비트 수}}{\text{초}} $$
 
-### 예시 1) “100페이지 책” 전송량과 비트율 구분
+### “100페이지 책” 전송량과 비트율 구분
 
 - 가정(초안 보정):
   - 한 페이지에 **문장 24개**, 각 문장 **문자 80개**, 문자 1개 **8비트**(ASCII)
@@ -27,7 +27,7 @@ category: DataCommunication
   - 예) 1.536 Mb를 **1초**에 보냈다면 **1.536 Mbps**
   - 예) 0.5초에 보냈다면 **3.072 Mbps**
 
-### 예시 2) “HDTV 비트레이트”
+### “HDTV 비트레이트”
 
 - 가정(원시 비압축 RGB):
   - 해상도 \(1920\times1080\), 프레임 레이트 \(30\ \text{fps}\), 픽셀당 24비트(RGB 8:8:8)
@@ -140,7 +140,7 @@ print("BW (approx) for NRZ @R=1 Gbps:", baseband_bw_nrz(1.0e9)/1e6, "MHz")
 - 매체 저항·누설 등으로 **전력 손실** 발생 → 거리 ↑, 주파수 ↑에서 심화.
 - **대응**: **증폭기(Amplifier)** 또는 **리피터(디지털 재생)** 를 적절 간격으로 배치.
 
-### 데시벨(dB) 표기
+### 표기
 
 - 전력 기준:
   $$ \text{dB} = 10\log_{10}\!\left(\frac{P_2}{P_1}\right) $$
@@ -225,7 +225,7 @@ print("Capacity @B=5MHz,SNR=10dB:", round(shannon_capacity_bps(5e6,10)/1e6,2),"M
 
 ---
 
-## 3.4.x (추가) Noise → BER 감각
+## Noise → BER 감각
 
 - 변조/부호에 따라 **BER vs \(E_b/N_0\)**(비트당 에너지 대비 잡음밀도) 곡선이 정해짐.
 - 예: BPSK의 AWGN 채널 BER 근사

@@ -51,7 +51,7 @@ npm i -D eslint-config-prettier eslint-plugin-prettier
 
 ### ESLint 설정 — 두 가지 방식
 
-#### (A) 신형: **Flat Config** (`eslint.config.js`)
+#### 신형: **Flat Config** (`eslint.config.js`)
 
 ```js
 // eslint.config.js (Flat Config)
@@ -90,7 +90,7 @@ export default [
 ];
 ```
 
-#### (B) 구형: `.eslintrc.json`
+#### 구형: `.eslintrc.json`
 
 ```json
 {
@@ -240,7 +240,7 @@ export default [
 
 ---
 
-## Node 라이브러리(ESM/CJS) 및 테스트
+## 및 테스트
 
 ### Node 전용 규칙
 
@@ -445,7 +445,7 @@ export default [
 ];
 ```
 
-### Node 라이브러리(ESM) + Prettier(Flat Config)
+### + Prettier(Flat Config)
 
 ```js
 // eslint.config.js

@@ -152,7 +152,7 @@ _Layout.cshtml        ← 사이트 공통 마스터(헤더/푸터/네비/푸터
 @* @foreach (var p in Model) { @await Html.PartialAsync("_ProductCard", p) } *@
 ```
 
-### Partial에 추가 데이터(ViewData) 전달
+### 전달
 
 ```cshtml
 @{
@@ -410,7 +410,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 메뉴 활성화(Active) — 현재 라우트 반영
+## — 현재 라우트 반영
 
 ```cshtml
 @* Views/Shared/_Navbar.cshtml *@
@@ -447,7 +447,7 @@ HTML 표준상 **폼 안에 폼**은 허용되지 않는다.
 
 ---
 
-## 다국어(Localization) — 뷰/레이아웃에서 문자열
+## — 뷰/레이아웃에서 문자열
 
 ```cshtml
 @* _Layout.cshtml *@

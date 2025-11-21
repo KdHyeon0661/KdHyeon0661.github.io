@@ -49,7 +49,7 @@ category: Spring
 
 ---
 
-### A-3. 에러 모델(Problem Details) 표준화
+### 표준화
 
 **모델**
 ```java
@@ -287,7 +287,7 @@ public record OrderModel(Long id, String status, long total, List<Link> links) {
 
 ---
 
-## D. 문서화 — OpenAPI(Swagger) & Spring REST Docs
+## & Spring REST Docs
 
 ### D-1. OpenAPI (springdoc-openapi)
 
@@ -456,7 +456,7 @@ public ResponseEntity<Resource> download(@PathVariable String id) {
 
 ---
 
-### E-3. 범위 요청(Resume) — HTTP Range
+### — HTTP Range
 
 **구현 개요**
 - 요청 헤더: `Range: bytes=START-END`
@@ -589,7 +589,7 @@ public ResponseEntity<ProductView> replace(@PathVariable long id,
 }
 ```
 
-### G-3. 문제 응답(Problem+JSON) 샘플
+### 샘플
 
 ```json
 {

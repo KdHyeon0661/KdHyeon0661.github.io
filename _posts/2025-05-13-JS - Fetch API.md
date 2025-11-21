@@ -175,7 +175,7 @@ if (!res.ok) throw new Error(`HTTP ${res.status}`);
 - DNS 실패/네트워크 끊김/요청 취소/브라우저 보안 차단 → **Promise reject**.
 - CORS 위반 시 **opaque**/reject/에러 메시지 제약.
 
-### 재시도(Backoff) — **멱등 메서드 우선**
+### — **멱등 메서드 우선**
 
 ```js
 async function fetchWithRetry(url, init = {}, { retries = 3, backoff = 300 } = {}) {
@@ -247,7 +247,7 @@ await withLimit(5, urls.map(u => () => fetch(u)));
 
 ---
 
-## 스트리밍(ReadableStream) — 대용량/점진 처리
+## — 대용량/점진 처리
 
 ### 텍스트 스트림 읽기(진행률)
 

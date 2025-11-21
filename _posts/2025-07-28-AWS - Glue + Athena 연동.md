@@ -131,7 +131,7 @@ aws glue create-crawler \
 
 ## Glue ETL(Job/Studio): 정제·포맷 변환
 
-### PySpark(Glue 4.0) 예제: 원천→정제(Parquet) + 파티션 작성
+### 예제: 원천→정제(Parquet) + 파티션 작성
 
 ```python
 import sys
@@ -490,7 +490,7 @@ $$
 
 ---
 
-## 부록 A) Athena JSON 테이블(원천)
+## Athena JSON 테이블(원천)
 
 ```sql
 CREATE EXTERNAL TABLE IF NOT EXISTS db_raw.access_logs_json (
@@ -503,7 +503,7 @@ LOCATION 's3://datalake/raw/access_logs/'
 TBLPROPERTIES ('has_encrypted_data'='false');
 ```
 
-## 부록 B) Glue Job 북마크(증분 처리)
+## Glue Job 북마크(증분 처리)
 
 ```python
 datasource0 = glueContext.create_dynamic_frame.from_options(
@@ -515,7 +515,7 @@ datasource0 = glueContext.create_dynamic_frame.from_options(
 
 ```
 
-## 부록 C) Athena WorkGroup 예(가드레일)
+## Athena WorkGroup 예(가드레일)
 
 ```bash
 aws athena create-work-group \

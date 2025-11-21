@@ -36,7 +36,7 @@ category: 시스템보안
 
 ---
 
-### 로컬 프리훅(pre-commit) — 첫 방어선
+### — 첫 방어선
 
 **.pre-commit-config.yaml (발췌)**
 - 포맷터/린터 + 비밀 스캔 + 기본 Semgrep
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
 ---
 
-### DAST (OWASP ZAP Baseline) + API 스캔 힌트
+### + API 스캔 힌트
 
 **Docker 명령**
 ```bash
@@ -345,7 +345,7 @@ cosign verify-attestation --type cyclonedx ghcr.io/org/app:TAG
 FROM gcr.io/distroless/python3-debian12@sha256:...
 # 또는 python:3.11-slim + multi-stage
 
-# (멀티스테이지) 빌드 단계
+# 빌드 단계
 
 FROM python:3.11-slim AS build
 WORKDIR /app
@@ -376,7 +376,7 @@ CMD ["app"]
 
 ---
 
-### 이미지 스캔(Trivy/Grype) — CI와 레지스트리 훅
+### — CI와 레지스트리 훅
 
 **CI**: 위 17.1.3 참조 (Fail on HIGH/CRITICAL)
 **레지스트리 훅**: Harbor/ACR/ECR 이미지 취약점 스캔 결과를 **정책 게이트**에 반영(예: Gatekeeper가 어노테이션/라벨 기반으로 허용/거부)
@@ -469,7 +469,7 @@ spec:
 
 ---
 
-### 이미지만 허용(서명·프로비넌스) — OPA 정책
+### — OPA 정책
 
 **(A) 이미지 서명 검증 (예: cosign 어노테이션 요구)**
 - Admission 시 이미지 메타데이터 또는 **증명 어노테이션** 존재 여부 확인(실전에서는 **policy-controller**/cosign-policy-controller 고려).
@@ -582,7 +582,7 @@ spec:
 
 ---
 
-## (옵션) 예제 저장소 구조 제안
+## 예제 저장소 구조 제안
 
 ```
 repo/

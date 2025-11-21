@@ -83,7 +83,7 @@ git cherry-pick -m 1 <merge-commit-sha>   # 첫 부모를 기준으로
 git cherry-pick <commit>
 # 충돌 발생 시
 #   CONFLICT (content): ...
-# 파일 열어 수동 수정 → 충돌 마커(<<<<<<< ======= >>>>>>>) 해결
+# 해결
 
 git add <fixed-files>
 git cherry-pick --continue
@@ -174,7 +174,7 @@ git rebase origin/main
 - 특정 커밋 건너뛰기: `git rebase --skip`
 - 되돌리기 비상키: 작업 직전 **ORIG_HEAD**, 그리고 `git reflog`
 
-### `--onto` (선택적 커밋 구간만 옮기기) — 강력 필수
+### — 강력 필수
 
 ```bash
 # topic 브랜치에서 A..B 구간을 "newbase" 위로 옮긴다
@@ -184,7 +184,7 @@ git rebase --onto newbase A B
 - “A 이후부터 B까지”를 통째로 새 베이스로 이동
 - 브랜치 재배치/분기 재정렬/히스토리 다이어트에 매우 유용
 
-### Interactive rebase(-i) — 정리/스쿼시/메시지 편집
+### — 정리/스쿼시/메시지 편집
 
 ```bash
 git rebase -i origin/main

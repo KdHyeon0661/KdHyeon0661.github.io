@@ -169,7 +169,7 @@ class Switch:
 
 sw = Switch()
 ports = [1,2,3,4]
-# A(MAC AA) 가 포트1에서 B(MAC BB) 로 전송한다고 가정
+# 가 포트1에서 B(MAC BB) 로 전송한다고 가정
 
 sw.learn("AA:AA:AA:AA:AA:AA", 1)
 print("to unknown BB -> flood:", sw.forward("BB:BB:BB:BB:BB:BB", 1, ports))

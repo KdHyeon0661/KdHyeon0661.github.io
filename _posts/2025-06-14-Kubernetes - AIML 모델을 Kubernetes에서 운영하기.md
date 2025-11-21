@@ -378,7 +378,7 @@ curl -X POST http://ml.local/predict \
 
 ---
 
-## 📈 6. 오토스케일링 — HPA(기본) + KEDA(이벤트)
+## + KEDA(이벤트)
 
 ### HPA(CPU 기반)
 
@@ -418,7 +418,7 @@ spec:
 
 ---
 
-## 📊 7. 관측(Observability) — Prometheus, Grafana, OpenTelemetry
+## — Prometheus, Grafana, OpenTelemetry
 
 - **/metrics** 엔드포인트로 Prometheus 스크랩 (위 Flask 예제 포함)
 - Grafana로 대시보드(Pod QPS, p95 지연, Error rate) 구성

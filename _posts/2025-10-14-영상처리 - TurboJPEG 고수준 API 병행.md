@@ -141,7 +141,7 @@ bool TJ_DecodeToBGRA(const std::wstring& path, const TJDecodeOpts& opts, IppDib&
 
 ---
 
-## 인코드: **BGRA(IppDib) → JPEG**
+## → JPEG**
 
 ```cpp
 struct TJEncodeOpts {
@@ -191,7 +191,7 @@ bool TJ_EncodeFromBGRA(const IppDib& img, const TJEncodeOpts& o,
 
 ---
 
-## (옵션) **타깃 사이즈** 맞추기 — TurboJPEG로도 “이진 탐색” 간단
+## **타깃 사이즈** 맞추기 — TurboJPEG로도 “이진 탐색” 간단
 
 ```cpp
 bool TJ_Encode_ToTarget(const IppDib& img, size_t targetBytes, size_t tol,

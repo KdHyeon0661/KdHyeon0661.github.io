@@ -295,7 +295,7 @@ data:
 
 ---
 
-## 값 스키마(검증) — `values.schema.json`
+## — `values.schema.json`
 
 차트 루트에 JSONSchema를 두면 `helm install/upgrade` 시 값 검증이 가능하다.
 
@@ -343,7 +343,7 @@ helm template myrel ./mychart -f values-dev.yaml | tee rendered.yaml
 
 helm lint ./mychart
 
-# (권장) kubeconform 등으로 스키마 검증
+# kubeconform 등으로 스키마 검증
 
 helm template myrel ./mychart -f values-dev.yaml | kubeconform -strict -
 ```
@@ -516,7 +516,7 @@ helm upgrade --install myapp ./mychart \
 
 ---
 
-## HPA/PDB/보건검진(Probe) 연계
+## 연계
 
 ### HPA 활성화(예시)
 
@@ -555,7 +555,7 @@ readinessProbe:
 
 ---
 
-## 고급: Library Chart(공통 템플릿) 분리
+## 분리
 
 여러 서비스에서 동일한 템플릿을 재사용하려면 **type=library** 차트를 별도로 만들고, 앱 차트에서 `include`로 호출한다.
 대규모 조직에서 네이밍/라벨/리소스/Sidecar 패턴을 통일할 때 유용.

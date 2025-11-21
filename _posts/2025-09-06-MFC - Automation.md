@@ -4,7 +4,7 @@ title: MFC - Automation
 date: 2025-09-06 21:25:23 +0900
 category: MFC
 ---
-# Automation(Dispatch) 개요와 스크립팅 통합 아이디어
+# 개요와 스크립팅 통합 아이디어
 
 (MFC/Win32/ATL 기준: `IDispatch` 늦은 바인딩, Type Library, 이벤트 싱크, Active Scripting/PowerShell/Python 연동까지)
 
@@ -47,7 +47,7 @@ struct ComInit {
 };
 ```
 
-### 1-2. #import 기반(조기 바인딩/래퍼 생성) — Excel 예제
+### — Excel 예제
 
 `#import`는 Type Library로부터 **스마트 포인터**와 **래퍼**를 생성합니다.
 
@@ -77,7 +77,7 @@ void AutomateExcelEarlyBinding() {
 
 장점: 타입 안전/인텔리센스/간결. 단점: **타입/버전 의존성**이 있고 배포 시 typelib 접근이 필요.
 
-### 1-3. 늦은 바인딩(IDispatch 직접 호출) — Excel 예제
+### — Excel 예제
 
 모든 스크립팅 언어와 동일한 경로. **버전 변화에 강함**.
 
@@ -151,7 +151,7 @@ HRESULT AutoExcelLateBinding() {
 - 인수 배열은 **오른쪽→왼쪽** 순서로 배치
 - 문자열은 **`BSTR`**( `_bstr_t` 사용 권장 ), 수치/논리는 **`VARIANT`**로 포장
 
-### 1-4. SAFEARRAY(배열) 전달 예
+### 전달 예
 
 ```cpp
 // 2x2 배열을 Excel Range.Value2에 한 번에 대입
@@ -174,7 +174,7 @@ VARIANT arr; VariantInit(&arr); arr.vt = VT_ARRAY|VT_VARIANT; arr.parray = psa;
 
 ## 서버(Provider)로 노출: 우리 앱을 자동화 가능하게 만들기
 
-### 2-1. MFC OLE Automation(레거시) 빠른 길
+### 빠른 길
 
 - `AfxOleInit()`, `DECLARE_DISPATCH_MAP`, `BEGIN_DISPATCH_MAP` 매크로 기반
 - `COleDispatchDriver`/`CCmdTarget` 파생으로 **메서드/프로퍼티**를 스크립트에 노출
@@ -206,7 +206,7 @@ void CMyAuto::DoWork(LPCTSTR path, long flags) { /* ... */ }
 
 - **IDL(Type Library)** 기반으로 명확한 계약 제공 → IntelliSense/문서화/상호 운용성 ↑
 
-#### (A) IDL 정의 (샘플)
+#### IDL 정의 (샘플)
 
 ```idl
 // MyApp.idl
@@ -233,7 +233,7 @@ library MyAppLib {
 };
 ```
 
-#### (B) C++ 클래스(ATL)
+#### C++ 클래스(ATL)
 
 ```cpp
 class ATL_NO_VTABLE CApp :
@@ -264,7 +264,7 @@ OBJECT_ENTRY_AUTO(__uuidof(App), CApp)
 - **레지스트레이션**: MSI/`regsvr32`/RGS로 CLSID/ProgID/TypeLib 등록
 - **ThreadingModel=Apartment** 지정(STA)
 
-### 2-3. 이벤트(Outbound) — Connection Point / `IDispatch` 이벤트 싱크
+### — Connection Point / `IDispatch` 이벤트 싱크
 
 서버가 **이벤트**를 내보내면(예: 진행률, 완료), 스크립트가 핸들링 가능.
 
@@ -337,7 +337,7 @@ $stats = $app.GetStats()
 $stats
 ```
 
-#### Python(pywin32) 예
+#### 예
 
 ```python
 import win32com.client as win32
@@ -446,7 +446,7 @@ dispinterface IDocuments {
 
 ---
 
-## 이벤트/콜백(스크립트→앱, 앱→스크립트) 활용 아이디어
+## 활용 아이디어
 
 - **진행률 이벤트**: 긴 작업 중 `OnProgress(pct)` 발행 → 스크립트에서 UI/로그로 반영
 - **취소 토큰**: 스크립트가 `App.Cancel` 호출 → 앱에서 작업 중단
@@ -475,7 +475,7 @@ dispinterface IDocuments {
 
 ## “양방향 샘플” — 우리 앱을 노출하고 PowerShell에서 자동화
 
-### 10-1. 서버(IDL/ATL) — 핵심만
+### — 핵심만
 
 ```idl
 dispinterface IApp {

@@ -442,7 +442,7 @@ App.Supervisor
 
 ### 구현 (초안 포함)
 
-#### (1) 인덱스(Agent)
+#### 인덱스(Agent)
 
 ```elixir
 defmodule App.Index do
@@ -464,7 +464,7 @@ defmodule App.Index do
 end
 ```
 
-#### (2) 페치 + 파싱 태스크
+#### 페치 + 파싱 태스크
 
 ```elixir
 defmodule App.Fetcher do
@@ -505,7 +505,7 @@ defmodule App.Fetcher do
 end
 ```
 
-#### (3) 동시 실행 — Task.Supervisor + async_stream
+#### 동시 실행 — Task.Supervisor + async_stream
 
 ```elixir
 defmodule App.Runner do
@@ -520,7 +520,7 @@ defmodule App.Runner do
 end
 ```
 
-#### (4) 애플리케이션/슈퍼바이저
+#### 애플리케이션/슈퍼바이저
 
 ```elixir
 defmodule App.Supervisor do
@@ -543,7 +543,7 @@ defmodule App.Application do
 end
 ```
 
-#### (5) IEx에서 실행
+#### IEx에서 실행
 
 ```elixir
 # iex -S mix
@@ -556,7 +556,7 @@ App.Runner.run(urls, 8)
 
 ### 확장 포인트를 실제로 코드로 보강하기
 
-#### (A) 일시적 실패 재시도 + 지수 백오프
+#### 일시적 실패 재시도 + 지수 백오프
 
 ```elixir
 defmodule App.Retry do
@@ -588,7 +588,7 @@ def fetch_and_tokenize(url) do
 end
 ```
 
-#### (B) Telemetry로 지연/성공률 내보내기
+#### Telemetry로 지연/성공률 내보내기
 
 ```elixir
 def fetch_and_tokenize(url) do

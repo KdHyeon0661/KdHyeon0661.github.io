@@ -305,7 +305,7 @@ private void SearchTextChanged(object s, TextChangedEventArgs e)
 
 ---
 
-## 교착(Deadlock) 회피 패턴
+## 회피 패턴
 
 **문제 시나리오**
 - UI 스레드가 **동기 `Invoke`** 로 백그라운드 작업 결과를 기다림
@@ -348,7 +348,7 @@ TaskScheduler.UnobservedTaskException += (s, e) =>
 
 ---
 
-## 다중 UI 스레드(보조 Dispatcher) 만들기
+## 만들기
 
 - WPF 창은 **여러 UI 스레드**로 분산 가능(고급 시나리오).
 - 보조 UI 스레드에서 `Window`를 만들고 `Dispatcher.Run()`으로 메시지 루프 시작.

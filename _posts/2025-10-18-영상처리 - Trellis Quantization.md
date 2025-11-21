@@ -113,7 +113,7 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
 
 ---
 
-## (고급) **mozjpeg 라이브러리** 직접 사용 스케치
+## **mozjpeg 라이브러리** 직접 사용 스케치
 
 모든 배포가 동일 API를 제공하진 않습니다. 일부 버전에선
 `jpeg_c_set_bool_param / jpeg_c_set_int_param / jpeg_c_set_float_param` 과 같은 “확장 파라미터”로 trellis를 켭니다.
@@ -140,7 +140,7 @@ bool EncodeWithMozJpeg(const std::wstring& cjpegExe,
 
 ---
 
-## (교육용) **블록 단위 Trellis** 미니 구현
+## **블록 단위 Trellis** 미니 구현
 
 > **목표**: 한 8×8 블록에 대해, **표준 허프만** 길이 근사와 **작은 후보 집합**(예: {0, q0, q0±1})으로
 > \(J=D+\lambda R\) 최소화 경로를 찾아 **정수 양자화 계수 q[k]** 를 산출.

@@ -230,7 +230,7 @@ Multipoint (Shared Bus/Medium)
 
 ### Physical Topology (물리적 토폴로지)
 
-#### (1) Mesh Topology (그물망형)
+#### Mesh Topology (그물망형)
 
 - 각 노드가 다수의 노드와 직접 연결(완전/부분 메쉬).
 - **연결 수(완전연결)**:
@@ -240,25 +240,25 @@ Multipoint (Shared Bus/Medium)
 
 **현업 예시**: 데이터센터 Spine-Leaf는 **부분 메쉬**(풀매시 아님). ECMP로 다경로 부하분산.
 
-#### (2) Star Topology (성형)
+#### Star Topology (성형)
 
 - 중앙 **허브/스위치**를 통해 통신.
 - **장점**: 관리 용이, 확장/장애 격리 쉬움.
 - **단점**: **중앙 장비 단일 장애점**(HA 필요: 스택/MLAG/VRRP).
 
-#### (3) Bus Topology (버스형)
+#### Bus Topology (버스형)
 
 - 하나의 공통 매체(동축/공유버스)에 여러 노드 연결.
 - **장점**: 배선 단순, 장치 추가 쉬움.
 - **단점**: 충돌(CSMA/CD), 대역폭 공유로 확장성 제한.
 
-#### (4) Ring Topology (링형)
+#### Ring Topology (링형)
 
 - 인접 노드 간 고리 구조. 토큰링/SONET/SDH 등.
 - **장점**: 일정한 경로, **보호 절체**(링 보호 스위칭).
 - **단점**: 삽입/제거 작업 난이도, 한 구간 장애 시 우회 필요.
 
-#### (5) Tree / Hybrid / Wireless
+#### Tree / Hybrid / Wireless
 
 - **Tree**: 스타의 계층화(캠퍼스/엔터프라이즈 코어-디스트리뷰션-엑세스).
 - **Hybrid**: 스타+링 혼합, 이중화 경로.
@@ -285,7 +285,7 @@ Multipoint (Shared Bus/Medium)
 - **CRC**: 다항식 기반 강력 검출(이더넷 FCS).
 - **해밍 코드**: 단일 비트 **정정**(SEC), 이중 비트 **검출**(DED).
 
-### 해밍(7,4) 간단 예제
+### 간단 예제
 
 $$
 d_1d_2d_3d_4 \rightarrow c_1c_2d_1c_3d_2d_3d_4
@@ -294,7 +294,7 @@ $$
 오류 위치를 패리티 검사로 탐지, 단일 비트 뒤집어 복구.
 
 ```python
-# 간단한 패리티(짝수) 예제
+# 예제
 
 def add_parity(bits):
     p = sum(bits) % 2
@@ -311,7 +311,7 @@ rx[1] ^= 1  # 전송 중 1비트 오류 유발
 print("valid?", check_parity(rx))  # False -> 재전송(ARQ)
 ```
 
-## 흐름 제어(Flow Control) & 혼잡 제어(Congestion Control)
+## & 혼잡 제어(Congestion Control)
 
 - **흐름 제어**: 송신 속도 ≤ 수신 처리능력(버퍼 오버런 방지).
   - Stop-and-Wait, 슬라이딩 윈도우

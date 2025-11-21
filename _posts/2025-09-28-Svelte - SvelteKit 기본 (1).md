@@ -263,7 +263,7 @@ export const load: PageLoad = async ({ fetch, url, depends }) => {
 
 ---
 
-## 렌더링 모드 — SSR · SPA(CSR) · SSG
+## · SSG
 
 SvelteKit은 **페이지/레이아웃 단위**로 렌더링 모드를 설정할 수 있다.
 
@@ -289,7 +289,7 @@ export const csr = true;    // CSR 전환 허용(기본값 true)
 export const ssr = false;   // 이 구간 이하 SSR 끄기
 ```
 
-### SSG (정적 사이트 생성) / 프리렌더링
+### / 프리렌더링
 
 - 빌드 시 HTML을 **파일로 생성**해 CDN에서 서빙.
 - **변하지 않거나, revalidate로 느슨하게 변하는** 페이지에 적합.
@@ -367,7 +367,7 @@ export const load = async ({ fetch, setHeaders }) => {
 
 ## 예제로 보는 모드 조합
 
-### “마케팅(SSG) + 앱(SSR/CSR)”
+### + 앱(SSR/CSR)”
 
 ```
 routes/
@@ -395,7 +395,7 @@ export const ssr = false; // 앱은 CSR 전용 (로그인 후 대시보드 등)
 
 - `/`와 `/pricing`은 **정적 HTML**로 배포, `/app/*`은 **CSR**.
 
-### “블로그(SSG) + 검색(SSR)”
+### + 검색(SSR)”
 
 ```ts
 // src/routes/blog/+layout.ts
@@ -410,7 +410,7 @@ export const ssr = true;
 
 ---
 
-## 실습: **동적 블로그**(리스트 SSG, 상세 SSR) + 공통 사용자 세션
+## + 공통 사용자 세션
 
 ### API 라우트(목록/상세)
 

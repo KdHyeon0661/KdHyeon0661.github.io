@@ -105,7 +105,7 @@ IIS 관리자 → **사이트 추가**
 - IIS → 사이트 → 바인딩 → **https 추가**
 - 인증서(서버 인증) 선택, SNI 사용(다중도메인 시)
 
-### 응용 프로그램 풀(App Pool) 설정 팁
+### 설정 팁
 
 - .NET CLR 버전: **무관**(in-process)
 - 고급 설정:
@@ -399,7 +399,7 @@ jobs:
         package: ./publish
 ```
 
-### 슬롯(Slot) 무중단 배포
+### 무중단 배포
 
 - **Staging → Production** 스왑
 - 설정 스티키(슬롯 고정)로 비밀키/연결문자열 분리
@@ -501,7 +501,7 @@ builder.Host.UseSerilog();
 
 ---
 
-## 보너스: Windows 서비스(Worker) 배포
+## 배포
 
 웹이 아닌 백그라운드 서비스:
 
@@ -559,7 +559,7 @@ app.MapHealthChecks("/health");
 app.Run();
 ```
 
-### Nginx(프로덕션) 최소 설정
+### 최소 설정
 
 ```nginx
 server { listen 80; server_name example.com; return 301 https://$host$request_uri; }

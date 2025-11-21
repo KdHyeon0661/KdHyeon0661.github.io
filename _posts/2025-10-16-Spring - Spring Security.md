@@ -11,7 +11,7 @@ category: Spring
 
 ---
 
-## A. 요구사항 모델링 — 인증(Authentication) vs 인가(Authorization)
+## vs 인가(Authorization)
 
 ### A-1. 핵심 개념 요약
 

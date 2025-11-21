@@ -50,7 +50,7 @@ Styles/
     └── HighContrast.xaml
 ```
 
-### Colors.xaml — 역할(role) 기반 팔레트
+### 기반 팔레트
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui">
@@ -141,7 +141,7 @@ Styles/
 
 ## 기본 스타일 선언 & 적용 — 선택자와 변형(variant)
 
-### Button 변형(variant) 스타일
+### 스타일
 
 ```xml
 <!-- Buttons.xaml -->

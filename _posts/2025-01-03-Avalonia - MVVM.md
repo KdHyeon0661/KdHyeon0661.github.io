@@ -199,7 +199,7 @@ namespace MyApp.Views
 
 ---
 
-## 명령(ICommand) 설계 — ReactiveUI vs CommunityToolkit
+## 설계 — ReactiveUI vs CommunityToolkit
 
 ### ReactiveUI `ReactiveCommand`
 
@@ -353,7 +353,7 @@ ViewModel만 바꾸면 View가 자동으로 교체된다.
 
 ---
 
-## 검증(Validation) — DataAnnotations/커스텀
+## — DataAnnotations/커스텀
 
 ### CommunityToolkit `ObservableValidator`
 
@@ -389,9 +389,9 @@ XAML(간단한 에러 표시 예):
 
 ---
 
-## 네비게이션(Navigation) — 셸 + 서비스
+## — 셸 + 서비스
 
-### 셸(MainWindow) + CurrentViewModel 패턴
+### + CurrentViewModel 패턴
 
 ```csharp
 // ViewModels/MainWindowViewModel.cs
@@ -469,7 +469,7 @@ public sealed class NavigationService : INavigationService
 
 ---
 
-## 다이얼로그(Dialog) — 서비스 추상화
+## — 서비스 추상화
 
 ViewModel이 `Window`를 직접 생성하지 않도록 **IDialogService**를 둔다.
 
@@ -506,7 +506,7 @@ ViewModel은 인터페이스에만 의존하므로 테스트가 쉬워진다.
 
 ---
 
-## DI(의존성 주입) — Microsoft.Extensions.DependencyInjection
+## — Microsoft.Extensions.DependencyInjection
 
 ```csharp
 // App.axaml.cs
@@ -652,7 +652,7 @@ public ObservableCollection<Person> People { get; } = new();
 
 ---
 
-## 테스트(단위/통합) — ViewModel 중심
+## — ViewModel 중심
 
 ### xUnit 테스트 프로젝트 생성
 

@@ -59,7 +59,7 @@ ClientHello
 - (EC)DHE로 **전진기밀성**.
 - PSK(재개) 사용 시도라도 **(EC)DHE + PSK**(하이브리드)가 권장.
 
-### 0-RTT(Zero-RTT) 데이터 — 속도 vs 위험
+### 데이터 — 속도 vs 위험
 
 **장점**: 세션 재개 시 **클라이언트가 0-RTT로 앱 데이터 전송** 가능(왕복 절감).
 **위험(핵심 두 가지)**:
@@ -89,7 +89,7 @@ curl --tlsv1.3 --ciphers TLS_AES_256_GCM_SHA384 https://example.com/
 ```nginx
 ssl_protocols TLSv1.3;
 ssl_ciphers TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256;
-# 0-RTT(early data) 비활성화 권장 (필요시 앱 레벨 멱등성 검사)
+# 비활성화 권장 (필요시 앱 레벨 멱등성 검사)
 
 ssl_early_data off;
 ```
@@ -335,7 +335,7 @@ openssl s_client -connect www.example:443 -tls1_3 -alpn h2 -servername www.examp
 # 현재 에이전트에 등록된 키 확인
 
 ssh-add -l
-# 세션 한정 키(잠금 프롬프트) 추가
+# 추가
 
 ssh-add -t 3600 ~/.ssh/id_ed25519
 ```

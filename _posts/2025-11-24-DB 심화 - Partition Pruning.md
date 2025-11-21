@@ -18,7 +18,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습용 스키마(공통)
+## 실습용 스키마(공통)
 
 ```sql
 ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
@@ -86,7 +86,7 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER, 'DIM_CALENDAR');
 
 ---
 
-# 1) 기본(정적) 파티션 프루닝
+# 기본(정적) 파티션 프루닝
 
 ### 상수/바인드 기반 프루닝 (RANGE)
 
@@ -137,7 +137,7 @@ AND    sales_dt <  :d2;
 
 ---
 
-# 2) **서브쿼리 프루닝**(Dynamic Subquery Pruning)
+# **서브쿼리 프루닝**(Dynamic Subquery Pruning)
 
 > **개념**: 파티션 키의 **범위/값**을 **서브쿼리**가 결정하는 경우, 옵티마이저가 서브쿼리를 **선평가**하거나 실행 중 결과를 이용해 **PSTART/PSTOP=KEY** 형태로 **동적 프루닝**한다.
 > - 단일값/상수화(SCALAR SUBQUERY, MIN/MAX)일수록 유리
@@ -187,7 +187,7 @@ PSTART/PSTOP: KEY(INLIST) 형태가 보이면, 서브쿼리로 결정된 IN-LIST
 
 ---
 
-# 3) **조인 필터 프루닝**(Join Filter / Bloom-Based Pruning)
+# **조인 필터 프루닝**(Join Filter / Bloom-Based Pruning)
 
 > **개념**: **조인하는 다른 테이블**에서 얻은 키 집합을 **조인 필터**(블룸 필터)로 만들어, **사실상 “해당 키가 포함되지 않는 파티션은 건너뛰는”** 런타임 프루닝.
 > - **Parallel Query(PQ)**에서 강력, 최근 버전은 **직렬**에서도 일부 동작.
@@ -251,7 +251,7 @@ PSTART/PSTOP: KEY(INLIST) 또는 KEY 로 표시될 수 있음.
 
 ---
 
-# 4) SQL 조건절 작성 시 **주의사항(체크리스트)**
+# SQL 조건절 작성 시 **주의사항(체크리스트)**
 
 ## **SARGable**하게 쓰기 (프루닝/인덱스 모두에 유익)
 
@@ -307,7 +307,7 @@ ALTER TABLE accounts ADD (branch_code GENERATED ALWAYS AS (SUBSTR(account_id,1,3
 
 ---
 
-# 5) 프루닝 **검증 절차** (플랜/실행에서 확인)
+# 프루닝 **검증 절차** (플랜/실행에서 확인)
 
 ### DBMS_XPLAN으로 PSTART/PSTOP, Join Filter 확인
 
@@ -343,7 +343,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'BASIC +ALIAS +PARTITION +NOT
 
 ---
 
-# 6) 심화: Composite/서브파티션까지 프루닝
+# 심화: Composite/서브파티션까지 프루닝
 
 > Composite(RANGE-HASH, RANGE-LIST 등)에서는 **상위 파티션 프루닝** 후,
 > 하위 **서브파티션 프루닝**까지 일어나야 진짜 I/O 절감이 크다.
@@ -358,7 +358,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'BASIC +ALIAS +PARTITION +NOT
 
 ---
 
-# 7) 미니 벤치 시나리오(아이디어)
+# 미니 벤치 시나리오(아이디어)
 
 1. **정적 vs 동적 프루닝 비교**
    - 같은 범위를 **상수**로 줄 때와 **서브쿼리 MIN/MAX**로 줄 때 **PSTART/PSTOP** 차이를 확인.
@@ -371,7 +371,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL, 'BASIC +ALIAS +PARTITION +NOT
 
 ---
 
-## 8) 요약
+## 요약
 
 - **기본 프루닝**: **상수/바인드**로 파티션 키를 직접 제한(함수/형변환 금지, `>= AND <` 권장).
 - **서브쿼리 프루닝**: **서브쿼리 결과**(SCALAR/IN-LIST)가 키가 되어 **`KEY`/`KEY(INLIST)`**로 표시.

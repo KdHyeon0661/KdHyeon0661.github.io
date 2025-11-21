@@ -802,7 +802,7 @@ public sealed class MainViewModel : ReactiveObject
 
 ---
 
-## 수명 주기(Lifetime) 선택과 “유사 Scoped”
+## 선택과 “유사 Scoped”
 
 | 등록 | 권장 사용 |
 |---|---|
@@ -877,7 +877,7 @@ public sealed class SettingsViewModel : ReactiveObject
 }
 ```
 
-### 사용자 설정(런타임) 저장
+### 저장
 
 서비스(`IJsonStore`)로 AppData 경로에 저장/불러오기:
 

@@ -228,7 +228,7 @@ spec:
     kube_pod_container_resource_requests{resource="cpu", unit="core"}
 ```
 
-### Loki(로그) + Promtail
+### + Promtail
 
 ```yaml
 scrape_configs:

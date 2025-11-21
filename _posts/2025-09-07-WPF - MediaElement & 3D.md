@@ -257,7 +257,7 @@ public MainWindow()
 
 ---
 
-# WPF 3D(Viewport3D) 완전 정복
+# 완전 정복
 
 ## 최소 구성 예: 카메라 + 조명 + 메시
 

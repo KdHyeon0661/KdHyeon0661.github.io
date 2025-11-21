@@ -22,7 +22,7 @@ Kubernetes(이하 K8s)는 컨테이너 오케스트레이션의 표준이지만,
 
 ---
 
-## WASM(WebAssembly) — 컨테이너 이후의 실행 단위
+## — 컨테이너 이후의 실행 단위
 
 ### 핵심 개념
 
@@ -131,7 +131,7 @@ K8s 배포(예: Spin Operator 사용) 시, Pod 없이도 **WASM 함수형 배포
 ### bpftrace로 특정 컨테이너 sys_open 추적
 
 ```bash
-# 컨테이너 cgroup id(혹은 container id) 얻은 뒤:
+# 얻은 뒤:
 
 bpftrace -e 'tracepoint:syscalls:sys_enter_openat /cgroup == C/12345/ / { printf("%s %s\n", comm, str(args->filename)); }'
 ```
@@ -195,17 +195,17 @@ hubble observe --from-pod default/web-xxx --protocol http
 
 ## WASM + eBPF를 함께 쓰는 운영 패턴
 
-### 패턴 A) 서버리스 API는 WASM, 네트워크·보안은 eBPF
+### 서버리스 API는 WASM, 네트워크·보안은 eBPF
 
 - **WASM(Spin/Knative WASM 런타임/wasmtime)** 으로 API 함수 구성 → 빠른 콜드스타트
 - **Cilium** 으로 north-south LB/L7 정책, **Hubble** 로 플로우 관측
 
-### 패턴 B) 사이드카 없는 메시·관측
+### 사이드카 없는 메시·관측
 
 - 사이드카 대신 **Cilium + Hubble** 로 L7 관측/정책
 - 트래픽 조절/카나리는 K8s 네이티브(Deployment/Ingress) 혹은 Gateway API 사용
 
-### 패턴 C) 엣지·이질 아키텍처 혼합
+### 엣지·이질 아키텍처 혼합
 
 - ARM/x86 혼재 환경에서 애플리케이션을 **WASM** 으로 통일
 - eBPF로 엣지 노드의 네트워크·보안·관측 일관성 보장

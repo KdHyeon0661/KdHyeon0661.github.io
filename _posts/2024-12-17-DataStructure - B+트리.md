@@ -87,7 +87,7 @@ category: Data Structure
 
 ---
 
-## 삽입(Insert) — Top-down split
+## — Top-down split
 
 **핵심**: 내려가기 전에 **넘칠(child overflow) 가능성이 있으면 미리 분할**하여 공간 확보.
 
@@ -103,7 +103,7 @@ category: Data Structure
 
 ---
 
-## 삭제(Delete) — Borrow / Merge (Top-down fix)
+## — Borrow / Merge (Top-down fix)
 
 **Top-down**으로 내려가며, 다음을 유지: **내려갈 자식이 최소치 미만이 되지 않게 보정**.
 
@@ -522,7 +522,7 @@ Name: A   B   C    D    E    F    G    H
 
 ---
 
-## 벌크 로드(Bulk Load) — O(n)
+## — O(n)
 
 정렬된 (key,RID) 입력이 주어진다면:
 1. 리프 페이지를 **꽉 차게** 순서대로 채우고, `next`를 연결

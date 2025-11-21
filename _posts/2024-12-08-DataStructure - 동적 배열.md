@@ -4,7 +4,7 @@ title: Data Structure - 동적 배열
 date: 2024-12-08 20:20:23 +0900
 category: Data Structure
 ---
-# 직접 구현하는 동적 배열 (Dynamic Array) in C++
+# in C++
 ## 동적 배열이란?
 
 정적 배열과 달리, **요소 수에 맞춰 자동 확장/축소 가능**한 **연속 메모리** 기반 컨테이너입니다.

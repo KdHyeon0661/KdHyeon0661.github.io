@@ -140,7 +140,7 @@ login()
 
 ---
 
-# Promise 조합기(Combinators) — 병렬/경쟁/종료 대기
+# — 병렬/경쟁/종료 대기
 
 ## `Promise.all(iterable)`
 
@@ -193,14 +193,14 @@ Promise.any([tryPrimary(), trySecondary()])
 
 # 직렬/병렬/동시성 제어 패턴
 
-## 직렬(순차) 실행
+## 실행
 
 ```js
 const tasks = [t1, t2, t3]; // () => Promise
 tasks.reduce((p, task) => p.then(task), Promise.resolve());
 ```
 
-## 제한된 동시성(concurrency) — 간단한 세마포어
+## — 간단한 세마포어
 
 ```js
 function withLimit(limit, tasks) {
@@ -445,7 +445,7 @@ fetchConfig()
   .catch(log);
 ```
 
-## 캐싱(메모이즈) Promise
+## Promise
 
 ```js
 const loadOnce = (() => {

@@ -289,7 +289,7 @@ Outputs:
 
 ---
 
-## 애플리케이션 계층 예시 — ALB + ASG(LaunchTemplate) + UserData + 신호
+## + UserData + 신호
 
 **권장 패턴:** `CreationPolicy` + **`cfn-signal`**로 **정상 구동을 확인**하고 AutoRollback.
 
@@ -640,7 +640,7 @@ Outputs:
 
 ---
 
-## 문제 해결(트러블슈팅) 모음
+## 모음
 
 - **CREATE_FAILED**: 이벤트 탭에서 원인 리소스 확인 → **DependsOn** 또는 IAM 권한/서브넷/SG 상호 참조 검토
 - **UPDATE_ROLLBACK_FAILED**: 리커버리 가이드에 따라 수동 정리 후 `continue-update-rollback`

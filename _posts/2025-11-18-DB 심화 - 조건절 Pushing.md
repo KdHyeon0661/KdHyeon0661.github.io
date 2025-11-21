@@ -13,7 +13,7 @@ category: DB 심화
 
 ---
 
-## 0) 샘플 스키마(요약)
+## 샘플 스키마(요약)
 
 ```sql
 -- 차원/사실 모델
@@ -54,7 +54,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-# 1) Predicate Pushdown — 개념과 이득
+# Predicate Pushdown — 개념과 이득
 ### 정의
 
 - **Pushdown**: WHERE/HAVING/ON의 조건을 **가능한 한 데이터 원천 가까이** 이동.
@@ -74,7 +74,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-# 2) Pushdown 기본 예제 (인라인 뷰)
+# Pushdown 기본 예제 (인라인 뷰)
 ### 병합 없이 뷰에 조건 남김 (덜 좋은 패턴)
 
 ```sql
@@ -106,7 +106,7 @@ WHERE  s.sales_dt BETWEEN :d1 AND :d2;
 
 ---
 
-# 3) Subquery Pushdown (PUSH_SUBQ) vs Unnesting
+# Subquery Pushdown (PUSH_SUBQ) vs Unnesting
 ### PUSH_SUBQ — “먼저 좁혀라”
 
 ```sql
@@ -132,7 +132,7 @@ AND    s.sales_dt BETWEEN :d1 AND :d2;
 
 ---
 
-# 4) Join Predicate Pushdown (전이성/조인 필터/블룸)
+# Join Predicate Pushdown (전이성/조인 필터/블룸)
 ### 전이성(Transitivity)으로 상호 전파
 
 ```sql
@@ -149,7 +149,7 @@ AND    s.sales_dt BETWEEN :d1 AND :d2;
 - 플랜의 Predicate에 `access("S"."CUST_ID" BETWEEN 100 AND 200)`가 보이면 **푸시 성공**.
 - 이로써 s의 **인덱스 범위**가 좁아지고 **파티션 프루닝**이 유발될 수 있습니다.
 
-### Join Filter(Bloom) — 해시 조인에서의 스캔 차단
+### — 해시 조인에서의 스캔 차단
 
 ```sql
 -- 해시 조인 빌드 입력의 키 집합으로 Bloom Filter 생성 → 프로브 테이블 스캔 중 조기 차단
@@ -165,7 +165,7 @@ WHERE  p.category='ELEC';
 
 ---
 
-# 5) Pullup(호이스트) — 언제, 왜 끌어올리나
+# Pullup(호이스트) — 언제, 왜 끌어올리나
 ### Pullup의 의의
 
 - Pushdown이 항상 정답은 아님. 어떤 조건은 상위에서 처리해야 **의미 보존/조인 재배치**가 쉬움.
@@ -215,7 +215,7 @@ AND    a.sum_amt > 0;
 
 ---
 
-# 6) Pushdown의 수준들(어디까지 내려가나)
+# Pushdown의 수준들(어디까지 내려가나)
 
 1) **뷰 내부**: 인라인 뷰/CTE 안쪽으로 이동 (`PUSH_PRED`, `MERGE`)
 2) **베이스 테이블 접근 직전**: 인덱스/테이블 액세스 **access predicate**로 전환
@@ -225,7 +225,7 @@ AND    a.sum_amt > 0;
 
 ---
 
-# 7) Pushdown이 막히는 경우 (제약 & 주의)
+# Pushdown이 막히는 경우 (제약 & 주의)
 
 - **외부조인 NULL 보존**: 내부쪽 필터를 WHERE에 두면 의미 변질 → **ON절**로 이동/재배치 필요
 - **분석함수/ROWNUM/CONNECT BY**: **순서/상태 의존** → 푸시 제한
@@ -237,7 +237,7 @@ AND    a.sum_amt > 0;
 
 ---
 
-# 8) 실전 튜닝 시나리오
+# 실전 튜닝 시나리오
 
 ## 파티션 프루닝을 노린 푸시
 
@@ -296,7 +296,7 @@ WHERE  (s.prod_id IN (SELECT p.prod_id FROM d_product p WHERE p.brand='B0'))
 
 ---
 
-# 9) Pullup이 유리할 때 (재배치로 의미·비용 보호)
+# Pullup이 유리할 때 (재배치로 의미·비용 보호)
 
 - 외부조인에서 **WHERE의 내부 필터**를 **ON절**로 되돌리기(LEFT→INNER 변질 방지)
 - 뷰 내부 필터가 조인 순서를 망가뜨리면, 상위에서 처리하도록 **끌어올려** 재배치
@@ -319,7 +319,7 @@ AND    s.amount > 0;
 
 ---
 
-# 10) 관찰·검증 루틴
+# 관찰·검증 루틴
 
 ```sql
 -- 실행 전후 세션 통계 체크(예: logical/physical reads)
@@ -339,7 +339,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-# 11) 체크리스트
+# 체크리스트
 
 - [ ] 가능한 한 **SARGABLE**하게 작성(컬럼 가공 금지, 범위는 컬럼 좌측)
 - [ ] 인라인 뷰/서브쿼리는 **`MERGE` + `PUSH_PRED`/`PUSH_SUBQ`**로 **앞에서 축소**

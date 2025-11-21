@@ -4,7 +4,7 @@ title: 웹해킹 - Idempotency-Key + 유니크 제약
 date: 2025-10-15 14:25:23 +0900
 category: 웹해킹
 ---
-# Idempotency-Key(결제/주문) + 유니크 제약
+# + 유니크 제약
 
 **— 문제정의 · 설계 원칙 · API 계약 · DB/캐시 스키마 · 트랜잭션/잠금 전략 · 다중 스택 예제(Express/Node + Postgres, Django/DRF + Postgres, Spring Boot + JPA) · Redis/Lua 원자화 · 실패/복구 · 테스트 시나리오 · 운영 체크리스트**
 
@@ -439,7 +439,7 @@ public class OrderService {
 
 ---
 
-## Redis + Lua(원자 선점) 패턴
+## 패턴
 
 > DB 대신 분산 KV를 쓸 때, **Lua 스크립트**로 “키 선점/검증/TTL 설정”을 **원자**로 처리.
 

@@ -153,7 +153,7 @@ networks:
 
 ## 애플리케이션 코드 패턴
 
-### Python(Flask) 예
+### 예
 
 ```python
 from pathlib import Path
@@ -178,7 +178,7 @@ const dbPassword = fs.readFileSync(SECRET_PATH, 'utf8').trim();
 // DB client 구성 시 dbPassword 사용
 ```
 
-### Java(Spring) 예
+### 예
 
 ```java
 String path = System.getenv().getOrDefault("DB_PASSWORD_FILE", "/run/secrets/db_password");
@@ -343,7 +343,7 @@ Vault를 쓰더라도, **컨테이너 내부 경로/권한/로그 노출 금지*
 
 ---
 
-## 종합 예제: API + PostgreSQL + Nginx(TLS) 스택
+## 스택
 
 ### 디렉터리
 
@@ -356,7 +356,7 @@ stack/
     └── tls.key
 ```
 
-### Compose(스택) 파일
+### 파일
 
 ```yaml
 version: "3.9"

@@ -505,7 +505,7 @@ kubectl exec -it mysql-0 -- sh -c 'id; df -h; ls -al /var/lib/mysql'
 
 ---
 
-## 전천후 템플릿: Primary(쓰기) + Replica(읽기) 토폴로지(개요)
+## + Replica(읽기) 토폴로지(개요)
 
 상세 구현은 DB 엔진/오퍼레이터별로 상이하므로 개념 템플릿만 요약한다.
 

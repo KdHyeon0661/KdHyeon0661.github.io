@@ -13,7 +13,7 @@ category: DB 심화
 
 ---
 
-## 0) 준비 스키마(요약)
+## 준비 스키마(요약)
 
 ```sql
 -- 고객(1) : 매출(M)
@@ -46,7 +46,7 @@ CREATE INDEX ix_prod_cat_brand ON d_product(category, brand, prod_id);
 
 ---
 
-# 1) Anti Join: “없음을” 가장 싸게 증명하기
+# Anti Join: “없음을” 가장 싸게 증명하기
 
 **정의**: “A에는 있지만 B에는 **없는** 행만” 뽑는 조인.
 Oracle 실행계획 용어로 `… JOIN ANTI`(Hash/Nested Loops/Merge)가 나타난다.
@@ -131,7 +131,7 @@ WHERE  NOT EXISTS (SELECT 1
 
 ---
 
-# 2) Aggregate Subquery Elimination (상관 집계 서브쿼리 제거)
+# Aggregate Subquery Elimination (상관 집계 서브쿼리 제거)
 
 **문제 유형**: SELECT-list 또는 WHERE 절의 **상관 집계**(예: `SUM/COUNT/MAX/MIN`) 때문에 **행마다** 집계를 수행 → CPU/I/O 과다.
 **해법**: “집계를 **한 번만** 계산”하는 **사전 집계 + 조인**으로 바꾼다(= 서브쿼리 언네스트 + 집계 풀기).
@@ -227,7 +227,7 @@ JOIN   agg ON agg.cust_id=c.cust_id;
 
 ---
 
-# 3) Subquery Pushing: `PUSH_SUBQ`로 “먼저 좁히고” 조인하기
+# Subquery Pushing: `PUSH_SUBQ`로 “먼저 좁히고” 조인하기
 
 **아이디어**: 큰 테이블 `T`에 대해 `T.key IN (SELECT ... FROM S WHERE ...)` 등의 **서브쿼리 결과를 먼저 계산**하여
 **작은 집합**(키 리스트)로 만든 뒤, 이걸 기준으로 **조인**하게 유도한다. 즉 **필터를 앞당겨** I/O를 줄인다.
@@ -300,7 +300,7 @@ AND    s.sales_dt BETWEEN :d1 AND :d2;
 
 ---
 
-# 4) 세 가지를 한 번에: Anti Join + 집계 제거 + Push
+# 세 가지를 한 번에: Anti Join + 집계 제거 + Push
 ### 시나리오: “3월 동안 **구매 이력이 전혀 없는** ELEC/B0 고객”
 
 ```sql
@@ -340,7 +340,7 @@ AND    NOT EXISTS (
 
 ---
 
-# 5) 실행계획·진단 포인트
+# 실행계획·진단 포인트
 
 ```sql
 -- 실측 계획 + 프레디킷 이동/노트 확인
@@ -354,7 +354,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-# 6) 체크리스트(실무)
+# 체크리스트(실무)
 
 - [ ] **부재 판정**은 `NOT EXISTS`(→ **ANTI JOIN**)로. `NOT IN`은 NULL 주의.
 - [ ] **COUNT(*)=0/ >0** 패턴은 **집계 서브쿼리 제거**로 변환.
@@ -369,7 +369,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ## 부록 A. 미니 실습 스니펫
 
-### A-1) Anti Join 강제/비교
+### Anti Join 강제/비교
 
 ```sql
 -- 1) Hash Anti
@@ -393,7 +393,7 @@ WHERE  NOT EXISTS (SELECT 1 FROM f_sales s
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ```
 
-### A-2) 집계 서브쿼리 제거(SELECT-list)
+### 집계 서브쿼리 제거(SELECT-list)
 
 ```sql
 EXPLAIN PLAN FOR
@@ -411,7 +411,7 @@ WHERE p.category='ELEC';
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ```
 
-### A-3) Subquery Pushing
+### Subquery Pushing
 
 ```sql
 EXPLAIN PLAN FOR

@@ -54,7 +54,7 @@ category: AWS
 - 트래픽 급증 시 연속/점진 확장, 감소 시 일정 지연 후 축소
 
 ```bash
-# (개념) 서버리스 v2 클러스터 파라미터 예시
+# 서버리스 v2 클러스터 파라미터 예시
 
 aws rds create-db-cluster \
   --db-cluster-identifier aurora-slv2-demo \
@@ -134,7 +134,7 @@ aws rds create-db-proxy \
 
 ---
 
-## 장애 복구(Failover) 테스트 (게임데이 Runbook 포함)
+## 테스트 (게임데이 Runbook 포함)
 
 ### 장애 시 처리 흐름 (초안 정리 + 보강)
 

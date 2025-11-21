@@ -526,7 +526,7 @@ public async Task Controller_Uses_Service_Exactly_Once()
 public class DbCollection : ICollectionFixture<DbFixture> { }
 ```
 
-### 카테고리(트레이트) & 필터
+### & 필터
 
 ```csharp
 public class TraitAttribute : Attribute
@@ -637,7 +637,7 @@ jobs:
 
 ---
 
-## 부록 A) FluentAssertions 빠른 예시
+## FluentAssertions 빠른 예시
 
 ```csharp
 var list = new[] {1,2,3};
@@ -650,7 +650,7 @@ await FluentActions
 
 ---
 
-## 부록 B) ModelState/검증 테스트(컨트롤러)
+## ModelState/검증 테스트(컨트롤러)
 
 모델:
 

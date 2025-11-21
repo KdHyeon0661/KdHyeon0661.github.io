@@ -66,7 +66,7 @@ CMD ["app/main.py"]
 - 최종 런타임은 `distroless`로 **공격 표면 최소화**.
 - CI에서 buildx와 `cache-from/cache-to`로 레이어 재사용.
 
-### 멀티아키(amd64/arm64) 빌드 매개변수
+### 빌드 매개변수
 
 - buildx: `platform=linux/amd64,linux/arm64`
 - QEMU 에뮬레이션 자동 세팅(액션/에이전트 제공).
@@ -190,7 +190,7 @@ jobs:
 ```
 {% endraw %}
 
-### 배포(단일 서버/Compose) — SSH 액션
+### — SSH 액션
 
 {% raw %}
 ```yaml
@@ -210,7 +210,7 @@ jobs:
 ```
 {% endraw %}
 
-### 배포(Kubernetes) — kubectl/Helm/ArgoCD
+### — kubectl/Helm/ArgoCD
 
 {% raw %}
 ```yaml

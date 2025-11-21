@@ -388,7 +388,7 @@ System.out.println(Integer.bitCount(0b101010));   // 3
 
 ---
 
-## 부록 A) 비교/캐싱 데모
+## 비교/캐싱 데모
 
 ```java
 public class CacheDemo {
@@ -404,7 +404,7 @@ public class CacheDemo {
 
 ---
 
-## 부록 B) 안전 합계(박싱 회피)
+## 안전 합계(박싱 회피)
 
 ```java
 long sum1 = java.util.stream.IntStream.rangeClosed(1, 1_000_000)

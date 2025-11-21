@@ -66,7 +66,7 @@ public class MathBasics {
 int r = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 ```
 
-### 금고급(정밀) 주의: 금융/화폐는?
+### 주의: 금융/화폐는?
 
 - 부동소수점 **이진 표현** 오차 → **`BigDecimal`** 사용 권장
 ```java
@@ -318,7 +318,7 @@ Arrays.parallelPrefix(big, Integer::sum); // 누적합
 
 ---
 
-## 부록) 실습 문제(간단)
+## 실습 문제(간단)
 
 1) 실수 배열에서 평균과 표준편차를 `Math`/`Arrays.stream`으로 계산하라.
 2) 문자열 배열에서 **대소문자 무시** 정렬 후 **이진 탐색**으로 `"korea"` 위치를 찾되, **동일 Comparator**를 사용하라.

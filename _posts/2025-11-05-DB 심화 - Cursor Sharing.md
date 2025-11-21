@@ -200,7 +200,7 @@ AND    st.sid = SYS_CONTEXT('USERENV','SID');
 
 ---
 
-## Child Cursor 폭증(Versioning) — 원인과 해법
+## — 원인과 해법
 
 ### 원인(일부)
 

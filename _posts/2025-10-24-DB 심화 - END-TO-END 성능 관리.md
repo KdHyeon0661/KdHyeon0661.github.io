@@ -72,7 +72,7 @@ $$ T_{\text{db}} = T_{\text{CPU}} + \sum_k T_{\text{wait},k} $$
 
 ## 계측 전략: **Trace/Metric/Log** 삼각 관측
 
-### 상관키(Correlation ID) 설계
+### 설계
 
 - **W3C Trace Context**: `traceparent`, `tracestate` 헤더를 전 구간 전파
 - **업무 태그**: `tenant_id`, `user_id`, `order_id` 등(PII 주의)
@@ -197,7 +197,7 @@ export default function () {
 - **진단**: 히트율, key 분포, 핫키, TTL 정책, 일관성 요구도
 - **처방**: 읽기-스루/쓰기-비하인드, 캐시 계층화(L1 JVM + L2 Redis), negative caching, key 샤딩
 
-### DB(Oracle) — **AWR/ASH/Plan 라인**으로 닫기
+### — **AWR/ASH/Plan 라인**으로 닫기
 
 - **진단 루틴**
   1) AWR/ASH로 Top Wait Class/Event/SQL

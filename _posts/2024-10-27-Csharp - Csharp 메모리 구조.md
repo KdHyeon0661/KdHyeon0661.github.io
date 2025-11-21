@@ -74,7 +74,7 @@ Console.WriteLine(b1.V); // 2000
 
 ---
 
-## 박싱(Boxing) & 언박싱(Unboxing)
+## & 언박싱(Unboxing)
 
 - **박싱**: 값 타입을 **`object`** 또는 인터페이스로 취급하기 위해 **힙에 새 객체로 감싸는 것**.
 - **언박싱**: 박싱된 객체를 **원래 값 타입으로 꺼내는 것**(캐스트 필요).
@@ -173,7 +173,7 @@ finally { handle.Free(); }
 
 ---
 
-## Finalizer(소멸자) vs Dispose vs SafeHandle
+## vs Dispose vs SafeHandle
 
 - **Finalizer**(`~TypeName()`): GC가 객체를 회수할 때 한 번 호출(언제일지 모름). **OS 자원**을 여기서 해제하면 **비결정적/늦음**.
 - **Dispose**(`IDisposable`): **명시적** 자원 해제(파일 핸들/소켓/DB 연결 등).
@@ -410,7 +410,7 @@ long Use(in Big big) // in: 읽기 전용 참조 전달 → 복사 회피
 
 ---
 
-## 부록 A) 미니 퀴즈
+## 미니 퀴즈
 
 1) 아래 코드에서 할당(힙) 발생 지점을 모두 고르시오.
 ```csharp
@@ -429,7 +429,7 @@ string s = "hi";
 
 ---
 
-## 부록 B) 참고 코드 모음
+## 참고 코드 모음
 
 ### B.1 스레드별 할당량 측정
 

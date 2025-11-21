@@ -115,7 +115,7 @@ curl -sI https://cdn.staging.example.com/account/.css
 
 # 프록시/Nginx — “키 명시 + 변칙 헤더 정규화 + 민감 BYPASS”
 
-## Nginx(리버스 프록시 + 내부 캐시) 기본 템플릿
+## 기본 템플릿
 
 ```nginx
 # 캐시 저장소 및 키(명시: Scheme + Host + Path + Query)
@@ -192,7 +192,7 @@ server {
 
 ---
 
-# Varnish(VCL) — 캐시 키·정규화
+# — 캐시 키·정규화
 
 ```vcl
 vcl 4.1;
@@ -244,7 +244,7 @@ sub vcl_deliver {
 
 ---
 
-# CDN(CloudFront/Cloudflare/Fastly) 설계 포인트
+# 설계 포인트
 
 - **Cache Policy**:
   - **QueryString**: “모두 전달/모두 키 포함”은 위험. **화이트리스트**(필요한 키만) 권장.
@@ -402,7 +402,7 @@ app.get(/^\/account\/.+\.(css|js|png)$/, (_req, res) => res.sendStatus(404));
 app.listen(8080, () => console.log("app on 8080"));
 ```
 
-## Nginx 프록시(요약) — §3 템플릿 적용
+## — §3 템플릿 적용
 
 - `proxy_cache_key` = `$scheme$host$request_uri`
 - `X-Forwarded-Host`/`X-Original-URL` 제거

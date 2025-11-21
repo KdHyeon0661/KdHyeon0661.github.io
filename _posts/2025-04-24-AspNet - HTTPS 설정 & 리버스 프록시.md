@@ -537,7 +537,7 @@ app.Run();
 
 ## 부록: 각종 스니펫 모음
 
-### A) Nginx 보안 헤더 예
+### Nginx 보안 헤더 예
 
 ```nginx
 add_header X-Content-Type-Options nosniff always;
@@ -549,7 +549,7 @@ add_header Permissions-Policy "geolocation=(), microphone=()" always;
 
 ```
 
-### B) Apache 보안 헤더 예
+### Apache 보안 헤더 예
 
 ```apache
 <IfModule mod_headers.c>
@@ -560,7 +560,7 @@ Header always set Strict-Transport-Security "max-age=15552000; includeSubDomains
 </IfModule>
 ```
 
-### C) ASP.NET Core 보안 헤더(간단)
+### ASP.NET Core 보안 헤더(간단)
 
 ```csharp
 app.Use(async (ctx, next) =>

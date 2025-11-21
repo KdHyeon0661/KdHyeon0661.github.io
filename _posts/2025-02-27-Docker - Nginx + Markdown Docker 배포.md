@@ -4,7 +4,7 @@ title: Docker - Nginx + Markdown Docker 배포
 date: 2025-02-27 20:20:23 +0900
 category: Docker
 ---
-# 정적 블로그(Nginx + Markdown) Docker 배포 가이드
+# Docker 배포 가이드
 
 ## 목표와 아키텍처
 
@@ -90,7 +90,7 @@ enableRobotsTXT = true
 ### 단일 스테이지(단순/빠른 시작)
 
 ```Dockerfile
-# Hugo Extended(처리기 포함) 이미지
+# 이미지
 
 FROM klakegg/hugo:0.126.1-ext-alpine
 
@@ -212,7 +212,7 @@ services:
 
 - 개발 중엔 `content/` 수정 후 `docker compose up --build` 혹은 **Hugo 개발 서버** 사용 권장.
 
-### Live Reload(선택) — Hugo 개발 서버
+### — Hugo 개발 서버
 
 정적 파일 재생성 없이 바로 미리보기.
 
@@ -293,7 +293,7 @@ node_modules
 
 ---
 
-## 수식(MathJax)과 다이어그램(Mermaid) 포함
+## 포함
 
 ### MathJax
 
@@ -357,7 +357,7 @@ location = /old-path {
 
 ---
 
-## HTTPS(선택) — Nginx + Certbot 컨테이너
+## — Nginx + Certbot 컨테이너
 
 간단히 dockerized certbot을 붙이는 패턴(운영 서버에서 DNS/방화벽 개방 필요).
 프로덕션에서는 Nginx-proxy/Traefik 또는 Cloudflare의 TLS 종단도 고려.

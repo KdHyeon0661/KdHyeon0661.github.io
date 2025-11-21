@@ -21,7 +21,7 @@ $$
 
 ---
 
-## 스코프(Scope) — 범위의 종류와 해석 규칙
+## — 범위의 종류와 해석 규칙
 
 ### 스코프의 종류
 
@@ -100,7 +100,7 @@ TDZ 범위는 **해당 선언이 평가되어 초기화되기 전까지**다.
 
 ---
 
-## 클로저(Closure) — 정의, 동작, 메모리
+## — 정의, 동작, 메모리
 
 > “클로저는 **함수가 생성될 때의 렉시컬 환경을 기억**하여, 함수가 살아있는 동안 그 환경의 식별자에 접근할 수 있게 해주는 기능”이다.
 
@@ -249,7 +249,7 @@ f();
 
 ---
 
-## TDZ(Temporal Dead Zone) — 선언 전 접근 금지
+## — 선언 전 접근 금지
 
 ```js
 {
@@ -317,7 +317,7 @@ const add10 = add(10);
 console.log(add10(5)); // 15
 ```
 
-### 모듈 패턴(IIFE) — 레거시 환경
+### — 레거시 환경
 
 ```js
 const CounterModule = (function () {
@@ -454,7 +454,7 @@ const offs = [...document.querySelectorAll("button")].map(attachCounter);
 // 나중에 필요 없으면: offs.forEach(off => off());
 ```
 
-### 요청 취소(AbortController) + 클로저로 상태 보관
+### + 클로저로 상태 보관
 
 ```js
 function makeFetchOnce(url) {

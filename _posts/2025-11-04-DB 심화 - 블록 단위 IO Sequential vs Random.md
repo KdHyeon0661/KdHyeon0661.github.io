@@ -76,7 +76,7 @@ END;
 
 ## 블록 단위 I/O 개요 — **Sequential vs Random**
 
-### Sequential(순차) I/O
+### I/O
 
 - **특징**: **연속된 블록**을 **멀티블록**으로 읽음 → **처리량↑**
 - **대표 연산**:
@@ -86,7 +86,7 @@ END;
   - **Partition Full Scan**(Pruning이 되면 “작은 전체”를 순차 읽기)
 - **대기 이벤트(개념)**: (버전에 따라 명칭 차이 있지만) `db file scattered read`(Full Scan), `direct path read` 등
 
-### Random(랜덤) I/O
+### I/O
 
 - **특징**: **비연속 블록**을 **한 블록씩** 읽음 → **지연↑**
 - **대표 연산**:
@@ -107,7 +107,7 @@ END;
 
 ## Sequential vs Random — 실행계획 관점 비교
 
-### 대량 범위 조건: 해시 조인 + Full Scan(순차) vs 중첩 루프(랜덤)
+### vs 중첩 루프(랜덤)
 
 **(A) 나쁜 패턴 — NL 조인으로 inner 테이블 랜덤 접근 폭증**
 ```sql
@@ -470,7 +470,7 @@ ORDER  BY o.order_dt DESC, o.order_id DESC
 FETCH FIRST :take ROWS ONLY;
 ```
 
-### Range Scan 품질(클러스터링) 개선
+### 개선
 
 **개선 전**
 ```sql

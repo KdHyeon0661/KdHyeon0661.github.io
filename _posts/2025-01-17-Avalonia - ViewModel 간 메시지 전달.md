@@ -174,7 +174,7 @@ MessageBus.Current.Listen<QueryUserDetail>()
 장점: 간단, 스트림 조합 용이.
 주의: `ReplyTo`를 반드시 `OnCompleted`로 닫아 수명 누수 방지.
 
-### CorrelationId(상관관계 ID) + 단일 응답 버스
+### + 단일 응답 버스
 
 ```csharp
 public sealed record Request<TResponse>(Guid CorrelationId, object Payload);
@@ -253,7 +253,7 @@ MessageBus.Current.SendMessage(new AuthStateChanged(true, userId));
 MessageBus.Current.SendMessage(new AuthStateChanged(false, null));
 ```
 
-### 진행률(Progress) 브로드캐스트
+### 브로드캐스트
 
 ```csharp
 public sealed record TaskProgress(string TaskId, double Percent, string Stage);
@@ -313,7 +313,7 @@ MessageBus.Current.Listen<UserNameChangedMessage>()
 
 ---
 
-## EventAggregator(경량) 패턴의 안전한 구현
+## 패턴의 안전한 구현
 
 초안의 단순 이벤트는 누수 위험이 있다. **약한 참조(WeakReference)** 또는 **구독 해제 API**를 제공하자.
 

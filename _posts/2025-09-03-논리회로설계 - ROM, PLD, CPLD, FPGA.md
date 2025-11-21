@@ -4,7 +4,7 @@ title: 논리회로설계 - ROM, PLD, CPLD, FPGA
 date: 2025-09-03 20:25:23 +0900
 category: 논리회로설계
 ---
-# 읽기 전용 메모리(ROM) · 프로그래머블 논리소자(PLD) · 복합 프로그래머블 논리소자(CPLD) · 필드 프로그래머블 게이트어레이(FPGA) — 완전 정리
+# · 프로그래머블 논리소자(PLD) · 복합 프로그래머블 논리소자(CPLD) · 필드 프로그래머블 게이트어레이(FPGA) — 완전 정리
 
 > 표기: \(+\)=OR, \(\cdot\) 또는 생략=AND, \(\overline{X}\)=NOT \(X\).
 > 목표: **개념·구조·동작**, **프로그래밍(구성) 기술**, **지연·전력·해저드·보안**, **설계 흐름**과 **실전 예**까지 생략 없이 정리한다.
@@ -72,7 +72,7 @@ endmodule
 
 ---
 
-## PLD(Programmable Logic Device) — PLA/PAL/GAL
+## — PLA/PAL/GAL
 
 > 핵심: **AND-OR 배열**로 SOP(곱의 합) 논리를 재구성.
 > 입력과 그 보수(\(X, \overline{X}\))가 AND 어레이로 들어가 **제품항**을 만들고, OR 어레이가 이를 합산.
@@ -118,7 +118,7 @@ endmodule
 
 ---
 
-## CPLD(Complex PLD) — “큰 PAL 여러 개 + 전역 매트릭스”
+## — “큰 PAL 여러 개 + 전역 매트릭스”
 
 ### 구조 요약
 
@@ -231,7 +231,7 @@ Y_1 = AB + \overline{A}C,\qquad
 Y_2 = (A \oplus B)C + D
 \]
 
-#### (a) ROM 방식 (동기)
+#### ROM 방식 (동기)
 
 ```verilog
 module rom_dual(
@@ -254,7 +254,7 @@ module rom_dual(
 endmodule
 ```
 
-#### (b) PLD/CPLD 스타일(제품항 공유)
+#### PLD/CPLD 스타일(제품항 공유)
 
 ```verilog
 module pterms_dual(input logic A,B,C,D, output logic Y1,Y2);
@@ -266,7 +266,7 @@ module pterms_dual(input logic A,B,C,D, output logic Y1,Y2);
 endmodule
 ```
 
-#### (c) FPGA LUT 친화(파이프라인)
+#### FPGA LUT 친화(파이프라인)
 
 ```verilog
 module fpga_lutpipe(

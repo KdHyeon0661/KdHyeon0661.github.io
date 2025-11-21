@@ -14,7 +14,7 @@ category: DB 심화
 
 ---
 
-## 0) 실습 스키마(요약)
+## 실습 스키마(요약)
 
 ```sql
 -- 고객/제품 차원 + 매출 사실
@@ -60,7 +60,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 
 ---
 
-# 1) OR Expansion 기본
+# OR Expansion 기본
 
 ## 개념과 재작성
 
@@ -109,13 +109,13 @@ WHERE  cond_A OR cond_B;
 
 ---
 
-# 2) 브랜치별 조인 순서 최적화
+# 브랜치별 조인 순서 최적화
 
 ## 예제: 차원-사실 조합에서 분기별 다른 드라이빙
 
 **요구**: 2025-02월 매출 중, **(고객 등급 VIP) OR (제품 카테고리 ELEC)** 를 만족하는 매출 합계.
 
-### (A) 원본(OR 그대로)
+### 원본(OR 그대로)
 
 ```sql
 SELECT SUM(s.amount)
@@ -129,7 +129,7 @@ AND    (c.tier = 'VIP' OR p.category = 'ELEC');
 - OR 때문에 CBO가 **하나의 조인순서**와 **하나의 접근 경로**만 선택 →
   둘 다 만족시키려면 **광범위 스캔** 위험.
 
-### (B) OR expansion + 브랜치별 최적화
+### OR expansion + 브랜치별 최적화
 
 ```sql
 -- 분기1: 고객 VIP로 먼저 좁히고 → 사실 → 제품
@@ -162,11 +162,11 @@ AND    p.category = 'ELEC';
 
 ---
 
-# 3) 같은 컬럼에 대한 OR expansion
+# 같은 컬럼에 대한 OR expansion
 
 ## `status='A' OR status='B'`
 
-### (A) IN-LIST로 묶기(단순·가독성·플랜 안정)
+### IN-LIST로 묶기(단순·가독성·플랜 안정)
 
 ```sql
 SELECT *
@@ -177,7 +177,7 @@ WHERE  status IN ('A','B');
 - 오라클은 인덱스에서 **`INLIST ITERATOR`** 로 **각 값별 인덱스 탐색**을 순회(= OR 확장과 유사 효과).
 - **두 값의 선택도/분포**가 비슷하고, **같은 인덱스**로 접근 가능하면 가장 간결.
 
-### (B) 분기별 전략이 달라야 한다면 OR expansion
+### 분기별 전략이 달라야 한다면 OR expansion
 
 ```sql
 -- 가정: 'A'는 극도로 선택적(인덱스 스캔 유리), 'B'는 상대적으로 광범위(Full 또는 다른 경로 유리)
@@ -215,7 +215,7 @@ AND    NOT(price < 100);  -- 상호배타화
 
 ---
 
-# 4) NVL/DECODE 조건식에 대한 OR expansion
+# NVL/DECODE 조건식에 대한 OR expansion
 
 실무에서 **선택적 조건** 처리를 위해 흔히 쓰는 패턴:
 
@@ -231,7 +231,7 @@ WHERE  NVL(:p_tier, tier) = tier;
 
 - 옵티마이저 입장에서는 **컬럼 가공** → 인덱스 사용/푸시/프루닝이 어려움.
 
-### (개선) OR로 명시화 + OR expansion
+### OR로 명시화 + OR expansion
 
 ```sql
 -- 의미를 OR로 다시 표현
@@ -267,7 +267,7 @@ AND    ( :hi IS NULL OR s.sales_dt <  :hi );
 
 - 이대로 두면 OR 두 개가 섞여 **복합 OR** → 접근 경로가 **흐려짐**.
 
-### (개선) 경우의 수로 OR expansion
+### 경우의 수로 OR expansion
 
 경우의 수:
 1) `:lo`와 `:hi` **둘 다 NULL** → 날짜 필터 **없음**
@@ -313,7 +313,7 @@ FROM   d_product p
 WHERE  DECODE(:p_category, NULL, 1, CASE WHEN p.category = :p_category THEN 1 END) = 1;
 ```
 
-### (개선) OR 명시 + OR expansion
+### OR 명시 + OR expansion
 
 ```sql
 SELECT /*+ USE_CONCAT */ *
@@ -330,7 +330,7 @@ AND    :p_category IS NOT NULL;  -- 상호배타화
 
 ---
 
-# 5) 성능 포인트 — 프루닝/인덱스/조인
+# 성능 포인트 — 프루닝/인덱스/조인
 
 ## 파티션 프루닝 & 전이성
 
@@ -355,7 +355,7 @@ WHERE  ( p.category='ELEC' AND s.sales_dt BETWEEN DATE '2025-02-01' AND DATE '20
 
 ---
 
-# 6) 중복(Overlap) 처리 전략
+# 중복(Overlap) 처리 전략
 
 OR을 `UNION ALL`로 나누면, **양쪽 조건을 모두 만족**하는 행이 **중복**됩니다.
 
@@ -384,7 +384,7 @@ SELECT /* B */ * FROM T WHERE cond_B;
 
 ---
 
-# 7) 종합 실습: Before vs After
+# 종합 실습: Before vs After
 
 ## 데이터 준비(요약)
 
@@ -414,7 +414,7 @@ AND    s.sales_dt BETWEEN DATE '2025-02-01' AND DATE '2025-02-28';
 
 - 플랜: 한 가지 조인순서/접근 경로만 → **광범위 스캔** 위험
 
-## OR expansion(After) + 브랜치별 최적화
+## + 브랜치별 최적화
 
 ```sql
 -- A: VIP 우선
@@ -449,7 +449,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 
 ---
 
-# 8) 체크리스트 & 팁
+# 체크리스트 & 팁
 
 - [ ] **`USE_CONCAT`** 로 OR expansion 유도(자동 변환이 불안정할 때)
 - [ ] **상호배타화**(AND NOT …) 또는 **`UNION`** 로 중복 제거

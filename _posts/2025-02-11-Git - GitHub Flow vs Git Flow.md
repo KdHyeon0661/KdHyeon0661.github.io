@@ -111,7 +111,7 @@ git checkout -b feature/login main
 
 git commit -m "feat(login): basic form and api integration"
 git push -u origin feature/login
-# GitHub → PR(target=main) → 리뷰/CI → Approve → Squash or Rebase and merge
+# → 리뷰/CI → Approve → Squash or Rebase and merge
 # 병합 후 브랜치 삭제
 
 ```

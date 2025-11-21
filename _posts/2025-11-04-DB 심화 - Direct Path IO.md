@@ -330,7 +330,7 @@ ORDER  BY samples DESC;
   - 무차별 `"_serial_direct_read"=TRUE` 금물
   - **정렬 일치 인덱스 + Stopkey**, **커버링 인덱스**로 **읽을 양 자체 감소**
 
-### TEMP(정렬/해시) 측면
+### 측면
 
 - **PGA 여유**와 **AUTO Workarea**로 스필 최소화 → `direct path read/write temp` 감소
 - 쿼리 구조 변경: **사전 집계/조기 필터/윈도우 범위 축소**
@@ -346,7 +346,7 @@ ORDER  BY samples DESC;
 
 ## BEFORE → AFTER 시나리오
 
-### (보고) 최근 분기 집계 보고서
+### 최근 분기 집계 보고서
 
 **Before (버퍼드 + 랜덤 혼재)**
 ```sql
@@ -373,7 +373,7 @@ GROUP  BY 'APAC';
 - **`direct path read` 비중↑**, 호출 수↓, 총 시간 단축
 - TEMP 스필 줄이려면 Top-N/사전 필터 추가
 
-### (적재) 하루치 증분 적재
+### 하루치 증분 적재
 
 **Before**
 ```sql
@@ -391,7 +391,7 @@ COMMIT;
 - **`direct path write`** 관찰, **연속 공간**에 쓰기로 **I/O 호출 효율↑**, **버퍼 캐시 오염↓**
 - 필요 시 **NOLOGGING** + 백업 전략 병행
 
-### (정렬/해시) TEMP 스필 줄이기
+### TEMP 스필 줄이기
 
 **Before (스필 과다)**
 ```sql

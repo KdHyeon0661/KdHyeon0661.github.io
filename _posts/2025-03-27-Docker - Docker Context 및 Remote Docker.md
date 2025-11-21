@@ -97,7 +97,7 @@ docker run -d --name myapp -p 8080:80 myapp:remote
 ```
 - **빌드 컨텍스트(소스)** 는 CLI가 SSH 터널로 **원격 데몬에 업로드**한다. 대용량일수록 네트워크 대역폭의 영향을 받는다(아래 성능 섹션 참조).
 
-### SSH 고급: 점프호스트(베스천) 경유
+### 경유
 
 `~/.ssh/config`:
 ```sshconfig
@@ -123,7 +123,7 @@ docker context create dc-a \
 
 > **절대 무방비로 2375(plain TCP)를 열지 말 것.** **2376/TLS** + **양방향 인증(mTLS)** 필수.
 
-### 서버 측(cert 준비 후) dockerd 설정
+### dockerd 설정
 
 systemd drop-in 예시: `/etc/systemd/system/docker.service.d/10-tls-remote.conf`
 ```ini

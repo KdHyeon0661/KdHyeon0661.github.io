@@ -11,7 +11,7 @@ category: DB 심화
 
 ---
 
-## 전체 개요 — “인스턴스(메모리+프로세스) ↔ 데이터베이스(파일)”
+## ↔ 데이터베이스(파일)”
 
 오라클은 **인스턴스(Instance)** 와 **데이터베이스(Database)** 로 분리된 **논리 모델**을 갖습니다.
 
@@ -75,9 +75,9 @@ lsnrctl services
 
 ---
 
-## 메모리 아키텍처 — SGA / PGA / (옵션) In-Memory
+## In-Memory
 
-### SGA(System Global Area) 구성
+### 구성
 
 - **Shared Pool**
   - **Library Cache**: 파싱된 SQL, 실행계획(커서) 캐시.
@@ -149,7 +149,7 @@ SELECT name FROM v$controlfile;
 SELECT * FROM v$database;     -- DBID, ARCHIVELOG 모드 등
 ```
 
-### 데이터 파일(Data Files) & 테이블스페이스(TS)
+### & 테이블스페이스(TS)
 
 - **테이블스페이스**는 논리 단위; 그 안에 **세그먼트(테이블, 인덱스)** 들이 저장.
 - **데이터 파일**은 실제 OS 파일. 각 TS는 하나 이상의 데이터 파일 보유.
@@ -163,7 +163,7 @@ SELECT tablespace_name, file_name, bytes/1024/1024 AS mb
 FROM dba_temp_files;
 ```
 
-### 온라인 리두 로그(Online Redo Logs) & 아카이브
+### & 아카이브
 
 - **LGWR**가 **Redo Log Buffer → 온라인 리두로그 파일**에 순차 기록.
 - **리두 로그 그룹/멤버**로 구성(다중화 권장). **로그 스위치** 시 다음 그룹으로 전환.
@@ -296,7 +296,7 @@ SHOW PARAMETER db_recovery_file_dest_size;
 
 ## 동시성 제어 — 래치/뮤텍스/엔큐/트랜잭션 락
 
-### 래치(Latch) & 뮤텍스(Mutex)
+### & 뮤텍스(Mutex)
 
 - **초단기, 매우 경량**의 **스핀락** 계열. **라이브러리 캐시/버퍼 헤더** 등 **핫 구조체** 보호.
 - 11g+ 부터 라이브러리 캐시 보호에 **뮤텍스** 도입.
@@ -308,7 +308,7 @@ FROM v$latch
 ORDER BY misses DESC FETCH FIRST 20 ROWS ONLY;
 ```
 
-### 엔큐(Enqueue) & TM/TX 락
+### & TM/TX 락
 
 - 엔큐는 **좀 더 오래 지속**될 수 있는 **큐형 락**.
 - **TM**: 오브젝트(테이블) 레벨 락. **DDL/DML 충돌** 조정.

@@ -38,7 +38,7 @@ category: 웹해킹
 
 ---
 
-## Nonce(난수) 설계 & 회전(재사용 금지)
+## 설계 & 회전(재사용 금지)
 
 ### 생성 규칙
 
@@ -176,7 +176,7 @@ add_header Content-Security-Policy "default-src 'self'; object-src 'none';" alwa
 
 ---
 
-### Spring Security(Java) — **필터로 Nonce 생성 & 헤더**
+### — **필터로 Nonce 생성 & 헤더**
 
 ```java
 // NonceFilter.java
@@ -393,7 +393,7 @@ Content-Security-Policy:
 
 ---
 
-## 롤아웃(Report-Only → Enforce) & 리포팅
+## & 리포팅
 
 ### 단계적 적용
 

@@ -186,7 +186,7 @@ spec: {replicas: 2, template: {metadata: {labels:{track: canary}}}}
 
 ---
 
-## Blue/Green(무중단 스위치) — Service 전환
+## — Service 전환
 
 **두 환경(Blue=현재, Green=신규)**를 병렬 운영 후 **한 번에 스위치**. 다운타임 없이 전환이 가능하고 **즉시 롤백이 간단**.
 
@@ -420,7 +420,7 @@ strategy:
 
 ---
 
-## 부록 A) Recreate 전략(완전 재시작)
+## Recreate 전략(완전 재시작)
 
 ```yaml
 strategy:
@@ -431,7 +431,7 @@ strategy:
 
 ---
 
-## 부록 B) 배포 검증용 Job/Probe 패턴
+## 배포 검증용 Job/Probe 패턴
 
 새 버전이 뜬 뒤 **사내 Synthetic 테스트**를 자동 수행:
 

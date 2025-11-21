@@ -263,7 +263,7 @@ $$
 
 여기서 \(\mathrm{Enc}\), \(\mathrm{Dec}\) 는 ESP에서 사용하는 블록 암호/모드를 의미한다.
 
-### 무결성(Integrity) 및 출처 인증(Data Origin Authentication)
+### 및 출처 인증(Data Origin Authentication)
 
 HMAC-SHA-256 같은 MAC을 사용하거나, AES-GCM과 같은 AEAD 모드에서
 **Tag(인증 태그)** 로 무결성과 출처를 확인한다.
@@ -421,7 +421,7 @@ conn vpn
 
 ---
 
-## Virtual Private Network (VPN) — IPsec의 대표 응용
+## — IPsec의 대표 응용
 
 IPsec의 대표적인 활용이 바로 **VPN(Virtual Private Network)** 이다.
 NIST SP 800-77 Rev.1은 IPsec 기반 VPN 설계와 운영에 대한

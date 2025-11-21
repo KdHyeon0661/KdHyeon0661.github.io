@@ -16,7 +16,7 @@ category: AspNet
 
 ---
 
-## 모델 클래스(Entity) 정의
+## 정의
 
 초안의 `Blog`를 확장해 **제약/탐색 속성/인덱스 후보**를 포함한다.
 
@@ -162,7 +162,7 @@ app.Run();
 
 ---
 
-## 마이그레이션(Migration) 총정리
+## 총정리
 
 ### dotnet-ef 도구 설치 (최초 1회)
 
@@ -189,7 +189,7 @@ dotnet ef database update
 ### 모델 변경 → 새 마이그레이션 → 업데이트
 
 ```bash
-# 예) Post에 Summary 속성 추가
+# Post에 Summary 속성 추가
 
 dotnet ef migrations add AddSummaryToPost
 dotnet ef database update

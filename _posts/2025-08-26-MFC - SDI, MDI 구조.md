@@ -443,7 +443,7 @@ BEGIN_MESSAGE_MAP(CMyApp, CWinAppEx)
 END_MESSAGE_MAP()
 ```
 
-### 12-3. 가속기(단축키) 등록
+### 등록
 
 ```cpp
 // 리소스에서 IDR_MAINFRAME에 Accelerator 정의

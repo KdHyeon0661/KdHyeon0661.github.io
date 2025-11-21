@@ -531,7 +531,7 @@ steps:
 
 ---
 
-## GitHub Actions ↔ GitOps(Argo CD) 조합
+## 조합
 
 - **CI는 이미지 빌드/스캔/서명**까지
 - **CD는 Argo CD**가 **Git 상태를 기준으로** 자동 동기화
@@ -614,7 +614,7 @@ steps:
 
 ---
 
-## 수학적(개념) 메트릭 목표식(옵션)
+## 메트릭 목표식(옵션)
 
 배포 실패율 \(p_f\), 평균 복구시간 MTTR \(T_r\), 배포 빈도 \(f_d\)일 때 안정성 효용 \(U\) (개념 모델):
 
@@ -639,7 +639,7 @@ $$
 
 ## 부록: 최소 동작 예제(빠른 적용용)
 
-### A) `.github/workflows/deploy-min.yml`
+### `.github/workflows/deploy-min.yml`
 
 {% raw %}
 ```yaml
@@ -679,7 +679,7 @@ jobs:
 ```
 {% endraw %}
 
-### B) `k8s/base/deployment.yaml` (필수 값만)
+### `k8s/base/deployment.yaml` (필수 값만)
 
 ```yaml
 apiVersion: apps/v1

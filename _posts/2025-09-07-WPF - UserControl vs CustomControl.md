@@ -310,7 +310,7 @@ public class Avatar : Control
 
 ---
 
-## 의존성 속성(DP)·라우티드 이벤트(RE)·명령(Command) 차이
+## 차이
 
 | 항목 | UserControl | CustomControl |
 |---|---|---|
@@ -362,7 +362,7 @@ Application.Current.Resources.MergedDictionaries[0] = new ResourceDictionary { S
 
 ---
 
-## 디자인-타임(Design-time) 지원
+## 지원
 
 - **UserControl**: 바로 미리보기 OK.
 - **CustomControl**:

@@ -92,7 +92,7 @@ button.primary { color: #2563eb; } /* icon도 함께 파란색으로 */
 ```
 - 아이콘 색상을 **글자색과 동기화** → 테마/상태 변화에 자동 추종.
 
-### 외곽선(스트로크) 아이콘: `mask-image`(SVG/PNG) + `background-color`
+### 아이콘: `mask-image`(SVG/PNG) + `background-color`
 
 ```html
 <span class="mask-icon" aria-hidden="true"></span> 북마크
@@ -113,7 +113,7 @@ button.primary { color: #2563eb; } /* icon도 함께 파란색으로 */
 
 ---
 
-## 아이콘 전략 — CSS vs SVG vs 폰트(FA) 비교
+## 비교
 
 | 방식 | 장점 | 단점 | 추천 용도 |
 |---|---|---|---|
@@ -316,7 +316,7 @@ html { color: #111; background:#fff; }
 
 ---
 
-## 실전: “설정” 토글(태양/달) 아이콘 — Font Awesome + 상태 싱크
+## 아이콘 — Font Awesome + 상태 싱크
 
 ```html
 <button class="theme-toggle" aria-pressed="false" aria-label="다크 모드 전환">
@@ -403,7 +403,7 @@ export function Icon({ name, style="solid", className="", label }) {
 
 ---
 
-## 점 3개(케밥/엘립시스) 메뉴 — CSS 아이콘
+## 메뉴 — CSS 아이콘
 
 ```html
 <button class="dots" aria-label="메뉴 열기"></button>

@@ -39,7 +39,7 @@ chmod 400 MyKey.pem
 ssh -i MyKey.pem ec2-user@<퍼블릭-IP-또는-퍼블릭DNS>
 ```
 
-### Windows(PuTTY) 참고
+### 참고
 
 - .pem → .ppk 변환(PuTTYgen)
 - 또는 Windows Terminal + OpenSSH 사용 시 Linux/macOS와 동일
@@ -94,7 +94,7 @@ active (running)이면 실행 중이다.
 
 ---
 
-## 보안 그룹(인바운드) 확인
+## 확인
 
 콘솔:
 1) EC2 → 인스턴스 선택 → 보안 탭 → 보안 그룹

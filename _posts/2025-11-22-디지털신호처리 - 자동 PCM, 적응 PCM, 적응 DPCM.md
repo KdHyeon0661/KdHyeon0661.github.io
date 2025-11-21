@@ -6,7 +6,7 @@ category: 디지털신호처리
 ---
 # 자동 PCM(APCM), 적응 PCM, 적응 DPCM(ADPCM)
 
-## 0) 예비사항 — PCM 계열 부호화의 공통 목표
+## 예비사항 — PCM 계열 부호화의 공통 목표
 
 PCM 계열의 목표는 간단하다.
 
@@ -27,7 +27,7 @@ PCM 계열의 목표는 간단하다.
 
 ---
 
-## 1) 표준 PCM(Uniform / Companded) 복습
+## 표준 PCM(Uniform / Companded) 복습
 
 ### 균일 PCM
 
@@ -58,7 +58,7 @@ $$
 
 ---
 
-## 2) 자동 PCM = APCM(Adaptive PCM)의 개념
+## 자동 PCM = APCM(Adaptive PCM)의 개념
 
 문헌에서 **Automatic PCM**은 보통 **APCM(Adaptive Pulse Code Modulation)** 을 의미한다.
 즉, **예측 없이** PCM 양자화기의 **스케일/스텝을 신호 통계에 맞춰 적응**시키는 계열이다.
@@ -78,7 +78,7 @@ APCM은 크게 두 형태가 있다.
 
 ---
 
-## 3) 블록 자동 PCM(Block APCM) 구조와 수식
+## 블록 자동 PCM(Block APCM) 구조와 수식
 
 ### 구조
 
@@ -148,7 +148,7 @@ $$
 
 ---
 
-## 4) GNU Octave: 블록 APCM 구현/검증
+## GNU Octave: 블록 APCM 구현/검증
 
 아래 실험은 “에너지가 블록마다 변하는 신호(예: 음성의 유성/무성 구간)”에서
 표준 PCM과 APCM의 차이를 보여준다.
@@ -246,7 +246,7 @@ plot(x_apcm); title("block APCM output");
 
 ---
 
-## 5) 적응 PCM의 즉시/음절(Instantaneous/Syllabic) 적응
+## 적응 PCM의 즉시/음절(Instantaneous/Syllabic) 적응
 
 블록 적응이 “천천히 따라가는” 방식이라면,
 즉시/음절 적응은 **스텝을 매 샘플 또는 짧은 시간 상수로 계속 조절**한다.
@@ -267,7 +267,7 @@ plot(x_apcm); title("block APCM output");
 
 ---
 
-## 6) DPCM 복습 — 예측으로 상관 제거
+## DPCM 복습 — 예측으로 상관 제거
 
 ### 기본 수식
 
@@ -291,7 +291,7 @@ $$
 
 ---
 
-## 7) 적응 DPCM = ADPCM의 개념과 표준 구조
+## 적응 DPCM = ADPCM의 개념과 표준 구조
 
 ADPCM은
 
@@ -333,7 +333,7 @@ ITU-T G.726 같은 표준 ADPCM은
 
 ---
 
-## 8) ADPCM 스텝 적응(대표 규칙)
+## ADPCM 스텝 적응(대표 규칙)
 
 ### Jayant형 지수 스텝 적응
 
@@ -366,7 +366,7 @@ DPCM에서 오차가 갑자기 커지면
 
 ---
 
-## 9) GNU Octave: 간단 4-bit ADPCM(IMA 스타일) 구현
+## GNU Octave: 간단 4-bit ADPCM(IMA 스타일) 구현
 
 아래는 널리 쓰이는 “4-bit ADPCM”의 단순 버전이다.
 (원리는 G.726과 동일한 **적응 오차 양자화**이며, 실습용으로 최소화했다.)
@@ -453,7 +453,7 @@ subplot(2,1,2); plot(x_adpcm); title("ADPCM reconstructed");
 
 ---
 
-## 10) PCM vs APCM vs DPCM vs ADPCM 비교
+## PCM vs APCM vs DPCM vs ADPCM 비교
 
 | 구분 | 예측 사용 | 적응 사용 | 장점 | 단점/주의 | 대표 용도 |
 |---|---:|---:|---|---|---|
@@ -464,7 +464,7 @@ subplot(2,1,2); plot(x_adpcm); title("ADPCM reconstructed");
 
 ---
 
-## 11) 실무 설계 체크리스트
+## 실무 설계 체크리스트
 
 1. **입력 통계 파악**
    - 비정상성(에너지 변동) 크면 APCM/ADPCM 우선
@@ -489,7 +489,7 @@ subplot(2,1,2); plot(x_adpcm); title("ADPCM reconstructed");
 
 ---
 
-## 12) 정리
+## 정리
 
 - **Automatic PCM = APCM**:
   예측 없이 **양자화 스케일/스텝을 자동 조절**해 비정상 진폭에 대응한다.

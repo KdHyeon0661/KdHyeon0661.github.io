@@ -101,7 +101,7 @@ build/
 
 런타임 이미지에서 **컴파일러/툴체인**을 제거하고, **산출물만** 가져옵니다.
 
-## Python(Flask) + Gunicorn 멀티스테이지
+## + Gunicorn 멀티스테이지
 
 ```Dockerfile
 # syntax=docker/dockerfile:1.7
@@ -155,7 +155,7 @@ CMD ["-w","1","-b","0.0.0.0:5000","app:app"]
 - **장점**: 런타임 이미지가 **작고 안전**(컴파일러/헤더 無), 레이어 캐시 효율 ↑
 - **비루트 사용자**로 실행: 컨테이너 탈출 시 리스크 억제
 
-## Go(정적 바이너리) 초슬림 예
+## 초슬림 예
 
 ```Dockerfile
 # build
@@ -177,7 +177,7 @@ ENTRYPOINT ["/app"]
 - `FROM scratch` 로 **수 MB 이하** 런타임 가능
 - 단, CA 인증서가 필요한 HTTP 클라이언트라면 **추가 처리** 필요(예: `ca-certificates` 번들)
 
-## Node.js (Build → Nginx serve) 예
+## 예
 
 ```Dockerfile
 # build stage
@@ -353,7 +353,7 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 
 ---
 
-# `.env` / Compose로 개발자 경험(DX) 개선
+# 개선
 
 ## Compose 예시(Flask + Nginx)
 
@@ -574,7 +574,7 @@ docker run -d --name my-flask-app -p 5000:5000 my-flask-app:2
 
 ---
 
-## 부록 A) 빠른 치트시트
+## 빠른 치트시트
 
 {% raw %}
 ```bash
@@ -607,7 +607,7 @@ docker load -i app.tar
 ```
 {% endraw %}
 
-## 부록 B) Python requirements 잠금/최적화 팁
+## Python requirements 잠금/최적화 팁
 
 ```Dockerfile
 # poetry/uv/pip-tools 등으로 잠금 파일 생성 후 사용 권장
@@ -617,7 +617,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     pip install --no-cache-dir -r requirements.txt
 ```
 
-## 부록 C) Windows/WSL2 팁(요약)
+## Windows/WSL2 팁(요약)
 
 - 프로젝트를 **WSL2 내부 경로**에 두고 마운트하면 I/O가 훨씬 빠름.
 - 포트 충돌 진단:

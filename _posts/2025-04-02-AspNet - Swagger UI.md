@@ -301,7 +301,7 @@ app.UseSwaggerUI(ui =>
 
 ---
 
-## 예제 페이로드/응답 스니펫(Example) 넣기
+## 넣기
 
 ### Swashbuckle.Filters 사용(간결)
 
@@ -387,7 +387,7 @@ c.SchemaFilter<EnumSchemaFilter>();
 c.SupportNonNullableReferenceTypes(); // 참조형 nullability 반영
 ```
 
-### Polymorphism(oneOf/allOf) 표현
+### 표현
 
 ```csharp
 // 예: Base -> Photo/Article
@@ -425,7 +425,7 @@ c.OperationFilter<PolymorphismOperationFilter>();
 
 ## Operation 커스터마이징(헤더/필터/상태코드 표준화)
 
-### 공통 헤더(예: X-Request-Id) 추가
+### 추가
 
 ```csharp
 public class CorrelationIdOperationFilter : IOperationFilter

@@ -342,7 +342,7 @@ public sealed class UserForm : INotifyPropertyChanged, INotifyDataErrorInfo
 
 ---
 
-## View — 오류 시각화(스타일) + 메시지 바인딩
+## + 메시지 바인딩
 
 ### 공통 리소스 (컨버터)
 
@@ -527,7 +527,7 @@ this.ValidationRule(vm => vm.To,
     "종료일은 시작일 이후여야 합니다.");
 ```
 
-### 서버 사이드 검증(비동기) + 디바운스
+### + 디바운스
 
 앞서 `UserName`에서 구현한 패턴처럼,
 `WhenAnyValue(...).Throttle(...).SelectMany(async ...)` 형태로 비동기 호출을 연결한다.

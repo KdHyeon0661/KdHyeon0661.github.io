@@ -148,7 +148,7 @@ category: 웹해킹
 
 ---
 
-## `document.foo`/`window.bar`로 요소 접근(레거시 관용) → 조작 취약
+## → 조작 취약
 
 **취약 코드(레거시)**
 ```html
@@ -343,7 +343,7 @@ function PayForm() {
 })();
 ```
 
-## E2E(Playwright/Cypress) — “막혀야 정상”
+## — “막혀야 정상”
 
 - **시나리오**: 사용자 콘텐츠 영역에 `<input name="submit">` 삽입 후 결제 버튼 클릭 →
   **네이티브 submit 경로**가 여전히 성공해야 테스트 통과.

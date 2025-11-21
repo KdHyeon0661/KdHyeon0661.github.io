@@ -553,7 +553,7 @@ jobs:
 
 ---
 
-## 부록 A) 단일 파일 예시(ci-cd.yml, Azure Web App 배포)
+## 단일 파일 예시(ci-cd.yml, Azure Web App 배포)
 
 {% raw %}
 ```yaml
@@ -600,7 +600,7 @@ jobs:
 
 ---
 
-## 부록 B) Docker 빌드 후 쿠버네티스 롤링 업데이트 예시
+## Docker 빌드 후 쿠버네티스 롤링 업데이트 예시
 
 {% raw %}
 ```yaml

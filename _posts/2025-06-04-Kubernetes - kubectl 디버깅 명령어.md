@@ -212,7 +212,7 @@ kubectl diff -f myapp.yaml
 
 kubectl run debugbox --rm -it --image=busybox -- /bin/sh
 
-# (옵션) 기능 풍부한 도구
+# 기능 풍부한 도구
 
 kubectl run netshoot --rm -it --image=nicolaka/netshoot -- bash
 ```
@@ -446,7 +446,7 @@ kerr () {
 
 ---
 
-## krew(플러그인 매니저) — kubectl 확장
+## — kubectl 확장
 
 ```bash
 # 설치(공식 문서 참고)

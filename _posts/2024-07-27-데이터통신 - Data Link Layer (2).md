@@ -6,7 +6,7 @@ category: DataCommunication
 ---
 # Link-Layer Addressing
 
-## 1) Three Types of Link-Layer Addresses (Unicast / Broadcast / Multicast)
+## Three Types of Link-Layer Addresses (Unicast / Broadcast / Multicast)
 
 ### 주소가 필요한 이유
 
@@ -41,7 +41,7 @@ category: DataCommunication
 
 ---
 
-## 2) Address Resolution Protocol (ARP) — IPv4의 주소 해석
+## Address Resolution Protocol (ARP) — IPv4의 주소 해석
 
 ### 문제 정의
 
@@ -80,7 +80,7 @@ SHA=Sender MAC | SPA=Sender IPv4 | THA=0 | TPA=Target IPv4
 
 ---
 
-## 3) An Example of Communication — 단계별 통신 시나리오
+## An Example of Communication — 단계별 통신 시나리오
 
 아래 예제는 **소스코드 없이** 상태/타임라인/프레임 관점으로 상세히 전개한다.
 
@@ -155,7 +155,7 @@ A                             Switch                          B
 
 ---
 
-## 4) 운영·보안·트러블슈팅 포인트
+## 운영·보안·트러블슈팅 포인트
 
 ### ARP 캐시/타이머/스케일
 
@@ -173,7 +173,7 @@ A                             Switch                          B
 - **오버레이(VXLAN/GENEVE)**: 엔드 호스트 간 L2를 L3 터널로 확장. **ARP 요청/응답이 VNI** 위에서 캡슐화되어 전송.
 - **ARP抑制(Proxy/Responder)**: 컨트롤 플레인(EVPN 등)로 MAC/IP 매핑을 학습해 **L2 브로드캐스트 감소**.
 
-### 무선(802.11) 유의점
+### 유의점
 
 - ARP는 **브로드캐스트** → 무선에서는 공중 비용이 큼.
 - AP는 **프록시/캐시** 또는 **멀티캐스트-투-유니캐스트 변환** 등 최적화로 무선 효율 개선.
@@ -188,7 +188,7 @@ T_{\text{first\_tx}} \approx T_{\text{ARP\_req}} + T_{\text{switch\_flood}} + T_
 
 ---
 
-## 5) 표/요약 도해
+## 표/요약 도해
 
 ### 주소 유형 요약
 
@@ -216,7 +216,7 @@ T_{\text{first\_tx}} \approx T_{\text{ARP\_req}} + T_{\text{switch\_flood}} + T_
 
 ---
 
-## 6) 실전 체크리스트
+## 실전 체크리스트
 
 - **브로드캐스트 도메인** 크기 관리(VLAN/L3 경계)로 ARP 폭주 억제.
 - **DAI + DHCP 스누핑**으로 ARP 스푸핑 방지.
@@ -227,7 +227,7 @@ T_{\text{first\_tx}} \approx T_{\text{ARP\_req}} + T_{\text{switch\_flood}} + T_
 
 ---
 
-## 7) 결론
+## 결론
 
 - **세 가지 L2 주소**(Unicast/Broadcast/Multicast)는 스위치 기반 이더넷과 무선 LAN의 **기본 전달 규칙**을 규정한다.
 - **ARP**는 IPv4에서 **필수 주소 해석 메커니즘**이며, 캐시·보안(DAI)·오버레이 최적화와 결합되어 현대 대규모 네트워크에서도 효율적으로 동작한다.

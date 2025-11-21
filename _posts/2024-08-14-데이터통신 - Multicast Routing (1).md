@@ -289,7 +289,7 @@ for n in [1, 5, 50, 500]:
 
 둘 다 **호스트–인접 라우터 사이에서 그룹 멤버십을 관리**하는 프로토콜이다.
 
-### IGMP(IPv4) 기본 동작
+### 기본 동작
 
 - **호스트 → 라우터**
   - “나 이 그룹 G를 받고 싶다/더 이상 받고 싶지 않다”를 보고
@@ -326,7 +326,7 @@ Host H --- Router R --- (멀티캐스트 네트워크)
 
 ---
 
-### MLD(IPv6) 개요
+### 개요
 
 IPv6에서는 **MLD (ICMPv6 확장)** 가 IGMP와 같은 역할을 한다.
 
@@ -462,7 +462,7 @@ on multicast_packet_received(packet, in_if):
 
 ---
 
-### 1) Source-based Tree
+### Source-based Tree
 
 **각 소스 S마다, 각 그룹 G에 대해 별도의 트리**를 만드는 방식.
 
@@ -491,7 +491,7 @@ Source-based tree일 때, 이론적으로는 최대:
 
 ---
 
-### 2) Group-shared Tree
+### Group-shared Tree
 
 **그룹 G당 하나의 트리**만 만든다. (소스와 관계 없이)
 

@@ -197,7 +197,7 @@ if __name__ == "__main__":
 
 ---
 
-## IaC(예: Terraform) — 리소스·DNS 동수명(Lifecycle) 설계
+## — 리소스·DNS 동수명(Lifecycle) 설계
 
 ### AWS S3 Static + CloudFront(권장: 직접 S3 Website CNAME 지양)
 
@@ -310,7 +310,7 @@ for sub in ["dev.example.com", "legacy.example.com"]:
 
 ---
 
-## SaaS(커스텀 도메인) — 안전한 연결 원칙
+## — 안전한 연결 원칙
 
 - **반드시 TXT 검증**(도메인 소유권 토큰) 후에만 연결 승인.
 - **CNAME만으로 연결 허용 금지**(사내 표준).

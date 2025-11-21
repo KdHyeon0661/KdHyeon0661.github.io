@@ -61,7 +61,7 @@ category: Java
 
 ---
 
-## 인코딩(Encoding) — 문제의 8할은 여기서
+## — 문제의 8할은 여기서
 
 - 항상 **`StandardCharsets.UTF_8`**을 **명시**하세요.
 - `FileReader`/`FileWriter`는 **OS 기본 문자셋**을 사용 → 이식성/재현성 낮음.
@@ -424,7 +424,7 @@ try (FileChannel ch = FileChannel.open(Path.of("shared.txt"), StandardOpenOption
 
 ---
 
-## 코드 포인트(이모지 등) 주의
+## 주의
 
 - `char`는 16비트(UTF-16 코드 유닛). 이모지 등 **보조 평면 문자**는 **2개 `char`**가 필요.
 - 코드포인트 안전 순회:

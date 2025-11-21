@@ -25,7 +25,7 @@ MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 �
 
 ---
 
-## 메뉴(Menu) (A)
+## (A)
 
 ### 1-1. 리소스 에디터에서 만드는 법
 
@@ -65,7 +65,7 @@ MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 �
 ---
 
 ### ▶ 실전 예제: SDI 메뉴 리소스 & 문자열 테이블 (B)
-## 예시 A) SDI 앱: 메뉴/툴바/상태바 + 단축키 + 업데이트 UI
+## SDI 앱: 메뉴/툴바/상태바 + 단축키 + 업데이트 UI
 
 ### `resource.h` (ID 정의)
 
@@ -86,7 +86,7 @@ MFC에서는 **하나의 명령 ID**(예: `ID_FILE_OPEN`)가 아래 **4개의 �
 
 ```
 
-### 메뉴 리소스(`.rc`) — 상태바 힌트(문자열 리소스와 연동)
+### — 상태바 힌트(문자열 리소스와 연동)
 
 ```rc
 IDR_MAINMENU MENU
@@ -118,7 +118,7 @@ END
 
 ---
 
-## 툴바(Toolbar) (A)
+## (A)
 
 ### 2-1. 고전 `CToolBar` vs Feature Pack `CMFCToolBar`
 
@@ -168,7 +168,7 @@ BEGIN
 END
 ```
 
-### 메인 프레임(`MainFrm.h/.cpp`) — 툴바/상태바 생성, 토글 + 업데이트 UI
+### — 툴바/상태바 생성, 토글 + 업데이트 UI
 
 ```cpp
 // MainFrm.h
@@ -288,7 +288,7 @@ void CMainFrame::OnUpdateViewStatusBar(CCmdUI* pCmdUI)
 
 ---
 
-## 상태바(Status Bar) (A)
+## (A)
 
 ### 3-1. 구조와 “인디케이터” 개념
 
@@ -303,7 +303,7 @@ void CMainFrame::OnUpdateViewStatusBar(CCmdUI* pCmdUI)
 - 그 외 상황에서는 `SetPaneText`로 특정 Pane의 텍스트를 갱신합니다.
 - 장시간 표시가 필요 없는 **일시 메시지**는 타이머로 **초 뒤 초기화**하는 패턴이 깔끔합니다.
 
-### 3-3. 사용자 경험(UX) 팁
+### 팁
 
 - **오버플로** 방지: 긴 텍스트는 줄임표 처리하고 핵심 정보만 남기기.
 - **접근성**: 색/아이콘만으로 상태 전달을 피하고 **텍스트** 또는 **툴팁**을 병행.
@@ -349,7 +349,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 ---
 
-## 단축키(Accelerator, ACCEL) (A)
+## (A)
 
 ### 4-1. 작동 원리(메시지 루프)
 
@@ -376,8 +376,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 ---
 
-### ▶ 실전 예제: 가속기 리소스 (SDI) & 다이얼로그에서 TranslateAccelerator (B)
-### 가속기(Accelerator) 리소스(`.rc`)
+### & 다이얼로그에서 TranslateAccelerator (B)
+### 리소스(`.rc`)
 
 ```rc
 IDR_MAINFRAME ACCELERATORS
@@ -502,8 +502,8 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-### ▶ 실전 예제: SDI(문서 수정 여부로 Save 활성) + Dialog(UpdateDialogControls 트리거) (B)
-### 문서 클래스(`MyDoc.h/.cpp`) — **저장 가능 상태**에 따라 `Save` 버튼 활성화
+### + Dialog(UpdateDialogControls 트리거) (B)
+### — **저장 가능 상태**에 따라 `Save` 버튼 활성화
 
 ```cpp
 // MyDoc.h
@@ -556,7 +556,7 @@ void CMyDoc::OnUpdateFileSave(CCmdUI* pCmdUI)
 }
 ```
 
-## 예시 B) 대화상자 기반: 메뉴 + 단축키 + 대화상자에서의 `ON_UPDATE_COMMAND_UI`
+## 대화상자 기반: 메뉴 + 단축키 + 대화상자에서의 `ON_UPDATE_COMMAND_UI`
 
 대화상자 앱은 프레임 기반 자동 업데이트가 약하므로, **`UpdateDialogControls(this, FALSE)`를 직접 호출**해 UI를 갱신합니다.
 
@@ -710,7 +710,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 부록: 전체 예제 모음(B) — 한 곳에서 보기
+## — 한 곳에서 보기
 # 메뉴 / 툴바 / 상태바 예시 모음 (SDI & Dialog 기반)
 
 아래는 **실전에서 바로 붙여 넣어 빌드**할 수 있도록 준비한 예시들입니다.
@@ -719,7 +719,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ---
 
-## 예시 A) SDI 앱: 메뉴/툴바/상태바 + 단축키 + 업데이트 UI
+## SDI 앱: 메뉴/툴바/상태바 + 단축키 + 업데이트 UI
 
 ### `resource.h` (ID 정의)
 
@@ -740,7 +740,7 @@ void CMainDlg::OnUpdateFileSave(CCmdUI* pCmdUI)
 
 ```
 
-### 메뉴 리소스(`.rc`) — 상태바 힌트(문자열 리소스와 연동)
+### — 상태바 힌트(문자열 리소스와 연동)
 
 ```rc
 IDR_MAINMENU MENU
@@ -786,7 +786,7 @@ BEGIN
 END
 ```
 
-### 가속기(Accelerator) 리소스(`.rc`)
+### 리소스(`.rc`)
 
 ```rc
 IDR_MAINFRAME ACCELERATORS
@@ -818,7 +818,7 @@ BEGIN
 END
 ```
 
-### 메인 프레임(`MainFrm.h/.cpp`) — 툴바/상태바 생성, 토글 + 업데이트 UI
+### — 툴바/상태바 생성, 토글 + 업데이트 UI
 
 ```cpp
 // MainFrm.h
@@ -936,7 +936,7 @@ void CMainFrame::OnUpdateViewStatusBar(CCmdUI* pCmdUI)
 }
 ```
 
-### 문서 클래스(`MyDoc.h/.cpp`) — **저장 가능 상태**에 따라 `Save` 버튼 활성화
+### — **저장 가능 상태**에 따라 `Save` 버튼 활성화
 
 ```cpp
 // MyDoc.h
@@ -989,7 +989,7 @@ void CMyDoc::OnUpdateFileSave(CCmdUI* pCmdUI)
 }
 ```
 
-### 뷰 클래스(`MyView.cpp`) — **상태바 텍스트 갱신** & 편의 예시
+### — **상태바 텍스트 갱신** & 편의 예시
 
 ```cpp
 // 마우스 클릭 위치를 상태바에 표시하는 간단 예
@@ -1014,7 +1014,7 @@ void CMyView::OnLButtonDown(UINT nFlags, CPoint point)
 
 ---
 
-## 예시 B) 대화상자 기반: 메뉴 + 단축키 + 대화상자에서의 `ON_UPDATE_COMMAND_UI`
+## 대화상자 기반: 메뉴 + 단축키 + 대화상자에서의 `ON_UPDATE_COMMAND_UI`
 
 대화상자 앱은 프레임 기반 자동 업데이트가 약하므로, **`UpdateDialogControls(this, FALSE)`를 직접 호출**해 UI를 갱신합니다.
 

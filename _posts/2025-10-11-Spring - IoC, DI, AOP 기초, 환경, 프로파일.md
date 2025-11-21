@@ -214,7 +214,7 @@ class TimingBeanPostProcessor implements BeanPostProcessor {
 
 ---
 
-### B-2. 포인트컷(Pointcut) 표현식 핵심
+### 표현식 핵심
 
 - `execution(modifiers-pattern? ret-type-pattern declaring-type-pattern? name-pattern(param-pattern) throws-pattern?)`
 - 자주 쓰는 예:

@@ -13,7 +13,7 @@ category: CSS
 
 모바일 브라우저는 메타 태그가 없으면 **데스크탑 폭 가정(≈980px)** 으로 축소 렌더링합니다.
 
-### 1-1) HTML 메타 뷰포트(필수)
+### HTML 메타 뷰포트(필수)
 
 ```html
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,7 +26,7 @@ category: CSS
 
 > **주의**: 접근성을 위해 `user-scalable=no`나 `maximum-scale=1`로 **줌을 막지 마세요**.
 
-### 1-2) iOS 안전영역(노치) & 전체화면
+### iOS 안전영역(노치) & 전체화면
 
 노치/라운드 코너가 있는 기기에서 **상하단 안전 여백**을 고려합니다.
 
@@ -83,7 +83,7 @@ category: CSS
 
 ## Media Query란? (문법·논리·타입)
 
-### 3-1) 기본 문법
+### 기본 문법
 
 ```css
 @media (조건) {
@@ -105,9 +105,9 @@ category: CSS
 
 ---
 
-## 자주 쓰는 미디어 특성(Features) — 기본부터 고급까지
+## — 기본부터 고급까지
 
-### 4-1) 크기 기반
+### 크기 기반
 
 ```css
 @media (min-width: 768px) { ... }     /* 모바일 퍼스트 */
@@ -120,7 +120,7 @@ category: CSS
 > $$ \text{aspectRatio} = \frac{\text{width}}{\text{height}} $$
 > `aspect-ratio: 16/9`는 위 비를 만족하는 뷰포트에만 적용됩니다.
 
-### 4-2) 입력/상호작용
+### 입력/상호작용
 
 ```css
 /* 마우스 포인터 존재 & 정밀한 호버 가능 */
@@ -134,7 +134,7 @@ category: CSS
 }
 ```
 
-### 4-3) 접근성/환경 선호
+### 접근성/환경 선호
 
 ```css
 /* 모션 최소화 선호: 애니메이션 끔/완화 */
@@ -160,7 +160,7 @@ category: CSS
 }
 ```
 
-### 4-4) 색역/해상도
+### 색역/해상도
 
 ```css
 /* 광색역 디스플레이 */
@@ -234,7 +234,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ## 실전 예제 모음
 
-### 7-1) 반응형 헤더/내비 + 햄버거
+### 반응형 헤더/내비 + 햄버거
 
 ```html
 <header class="site-header">
@@ -270,7 +270,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 > 햄버거 클릭 토글은 JS로 `aria-expanded`와 `.nav-menu` 표시를 토글하세요.
 
-### 7-2) 고해상도(레티나) 이미지/아이콘
+### 고해상도(레티나) 이미지/아이콘
 
 ```css
 .logo { background: url(logo.png) no-repeat center / contain; width: 180px; height: 40px; }
@@ -290,7 +290,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
   alt="썸네일">
 ```
 
-### 7-3) 프린트 스타일
+### 프린트 스타일
 
 ```css
 @media print {
@@ -301,7 +301,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 }
 ```
 
-### 7-4) 입력기기 차별화(터치 vs 마우스)
+### 입력기기 차별화(터치 vs 마우스)
 
 ```css
 /* 터치: 탭 타겟 키우기 */
@@ -315,7 +315,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 }
 ```
 
-### 7-5) 안전영역 고려 고정 푸터
+### 안전영역 고려 고정 푸터
 
 ```css
 .footer-fixed {
@@ -368,7 +368,7 @@ h2   { font-size: var(--fs-h2); margin: var(--space-4) 0; }
 
 ---
 
-## 부록) Sass 믹스인 예시 (선택)
+## Sass 믹스인 예시 (선택)
 
 ```scss
 $bp-sm: 600px;

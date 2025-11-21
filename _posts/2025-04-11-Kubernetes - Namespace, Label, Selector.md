@@ -243,7 +243,7 @@ kubectl get deploy,pod -l app.kubernetes.io/name=web -o wide
 
 kubectl get endpoints web -o yaml
 
-# 일시적으로 selector를 바꿔보면(주의: 실제 운영 금지) 즉시 Endpoints 변동
+# 즉시 Endpoints 변동
 
 kubectl patch svc web -p '{"spec":{"selector":{"app.kubernetes.io/name":"not-exist"}}}'
 kubectl get endpoints web                 # 비어있는지 확인

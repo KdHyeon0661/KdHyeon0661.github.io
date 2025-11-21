@@ -75,7 +75,7 @@ app.Run();
 
 ---
 
-## 리소스(.resx) 구성 — 규칙/패턴
+## 구성 — 규칙/패턴
 
 ### 폴더 구조(권장)
 
@@ -288,7 +288,7 @@ NameLength = 이름은 2자 이상 30자 이하여야 합니다.
 <p>@(1234.5m.ToString("C", CultureInfo.CurrentCulture))</p>
 ```
 
-### 커스텀 모델바인더(문화 고정 필드) — 선택
+### — 선택
 
 - 특정 필드를 “항상 en-US 서식”으로 파싱하고 싶다면 전용 ModelBinder를 붙인다(금융/내부API 수치 등).
 
@@ -360,7 +360,7 @@ ItemsCount_Other=항목이 {0}개 있습니다.
 
 ---
 
-## 동적 번역(데이터베이스/JSON) — 커스텀 Localizer
+## — 커스텀 Localizer
 
 > 운영 중 자주 바뀌는 문구를 **DB**에서 관리하고 싶을 때
 
@@ -437,7 +437,7 @@ builder.Services.AddSingleton<IStringLocalizerFactory, DbStringLocalizerFactory>
 
 ---
 
-## 테스트(단위/통합) 시 문화 고정
+## 시 문화 고정
 
 ### 단위 테스트에서 Culture 스코프
 
@@ -540,7 +540,7 @@ public class SignupModel
 }
 ```
 
-### Razor (View/Pages) — 공용 + 페이지 로컬라이저
+### — 공용 + 페이지 로컬라이저
 
 ```razor
 @page

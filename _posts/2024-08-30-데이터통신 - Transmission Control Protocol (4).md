@@ -73,7 +73,7 @@ TCP는 기본적으로 **AIMD (Additive Increase / Multiplicative Decrease)** �
 - `rwnd` : 수신 윈도우
 - `RTO` : 재전송 타이머 값
 
-#### (1) 연결 초기에: Slow Start
+#### 연결 초기에: Slow Start
 
 연결을 새로 맺으면 송신자는 네트워크 상태를 모른다.
 그래서 아주 작은 윈도우에서 시작해 **지수적으로 증가**시키며 탐색한다.
@@ -88,7 +88,7 @@ TCP는 기본적으로 **AIMD (Additive Increase / Multiplicative Decrease)** �
 예를 들어 초기 `cwnd=1 MSS`라면 RTT마다 `1, 2, 4, 8, 16, 32, ...` 식으로 증가한다.
 `cwnd`가 `ssthresh`에 도달하면 **혼잡 회피(congestion avoidance)** 상태로 전환한다.
 
-#### (2) 혼잡 회피(Congestion Avoidance)
+#### 혼잡 회피(Congestion Avoidance)
 
 slow start에서 어느 정도 윈도우가 커지면 더는 지수 성장하면 위험하므로,
 이제는 **선형으로 조금씩 증가**시킨다.
@@ -107,7 +107,7 @@ $$
 
 즉 **RTT마다 MSS 하나만큼** 증가하는 셈이다.
 
-#### (3) 손실 반응: 타임아웃 vs 중복 ACK
+#### 손실 반응: 타임아웃 vs 중복 ACK
 
 TCP는 손실을 두 가지 방식으로 감지한다.
 
@@ -481,7 +481,7 @@ TCP가 대역폭을 충분히 활용할 수 있다.
 
 ---
 
-### SACK (Selective Acknowledgment) 옵션
+### 옵션
 
 고전 TCP는 **누적 ACK(cumulative ACK)** 만 제공한다.
 

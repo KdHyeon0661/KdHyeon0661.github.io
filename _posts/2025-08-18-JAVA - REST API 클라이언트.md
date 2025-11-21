@@ -148,7 +148,7 @@ if (res.statusCode() / 100 == 2) {
 }
 ```
 
-### POST(JSON) — idempotency-key/추적 헤더
+### — idempotency-key/추적 헤더
 
 ```java
 String body = Jsons.MAPPER.writeValueAsString(new Post(0, 1, "Hello", "World"));
@@ -390,7 +390,7 @@ Flux<String> lines = wc.get().uri("/stream")
 
 ---
 
-## 에러 매핑(예외 계층) — 실무 패턴
+## — 실무 패턴
 
 ```java
 sealed interface HttpProblem extends RuntimeException permits BadRequest, Unauthorized, TooManyRequests, ServerError { }
@@ -498,7 +498,7 @@ final class HttpPostsClient implements PostsClient {
 
 ## **Resilience** — 재시도/백오프/서킷브레이커
 
-### 간단 재시도(상단 4.4 참고) + Retry-After 존중
+### + Retry-After 존중
 ### Resilience4j로 데코레이터(선택)
 
 ```java

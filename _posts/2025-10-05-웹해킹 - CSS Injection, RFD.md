@@ -156,7 +156,7 @@ app.get("/echo", (req,res)=>{
 
 ---
 
-# RFD(Reflected File Download) — 원리와 위험
+# — 원리와 위험
 
 ### 무엇이 문제인가
 

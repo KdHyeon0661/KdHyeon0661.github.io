@@ -44,7 +44,7 @@ K8s는 **리소스 기술 방식**으로 Pod QoS를 결정합니다.
 
 ---
 
-## 스케줄링과 노드 할당 가능량(Allocatable) 계산
+## 계산
 
 노드 자원은 `capacity`에서 kubelet/system-reserved/eviction-reserved가 빠진 **allocatable**만 스케줄됩니다.
 
@@ -365,7 +365,7 @@ $$
 
 ---
 
-## 팀 템플릿(Helm/베이스 YAML) 제안
+## 제안
 
 ```yaml
 resources:

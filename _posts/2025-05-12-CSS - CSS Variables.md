@@ -81,7 +81,7 @@ category: CSS
 
 ## 설계 토큰(Design Tokens)로 체계화
 
-### 원천 토큰(primitive) → 의미 토큰(semantic) 구분
+### → 의미 토큰(semantic) 구분
 
 ```css
 /* Primitive tokens */
@@ -125,7 +125,7 @@ category: CSS
 
 ---
 
-## 테마 관리(라이트/다크/브랜드) & 사용자 프리퍼런스
+## & 사용자 프리퍼런스
 
 ### Attribute/클래스로 테마 스왑
 
@@ -191,7 +191,7 @@ h1    { font-size: clamp(1.5rem, 1.1rem + 3vw, 3rem); }
 f(w) = \mathrm{clamp}\big(f_{\min}, a \cdot w + b, f_{\max}\big)
 \]
 
-### 안전 영역(safe area) & 모바일 뷰포트
+### & 모바일 뷰포트
 
 ```css
 :root {

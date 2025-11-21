@@ -286,7 +286,7 @@ protocols {
    광고: 203.0.113.0/24
 ```
 
-### R2(업스트림) – 기본 보안 정책
+### – 기본 보안 정책
 
 ```text
 router bgp 64501
@@ -317,7 +317,7 @@ router bgp 64501
 
 - 의미: **고객이 광고 가능한 프리픽스만 화이트리스트**, **Invalid ROA는 Drop**, **Max-Prefix** 경고.
 
-### R1(자사) – Export 衛生 & RTBH
+### – Export 衛生 & RTBH
 
 ```text
 router bgp 65010

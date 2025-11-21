@@ -13,7 +13,7 @@ DNS는 **도메인 이름 ↔ IP 주소**를 매핑하는, 인터넷 전체가 �
 
 ## Name Space
 
-### 1) 계층적 네임스페이스 개념
+### 계층적 네임스페이스 개념
 
 DNS 이름 공간은 **역트리(inverted tree)** 구조를 갖는다. 가장 위는 **루트(root, “.”)** 이고, 그 아래에 `.com`, `.org`, `.de` 같은 **TLD(Top-Level Domain)** 가 있으며, 그 아래에 `example.com`, `mit.edu` 같은 **2차 도메인**, 그 아래에는 `www.example.com` 같은 **호스트/서비스 이름**이 온다. 이 구조와 RR 형식은 RFC 1034/1035에 정의되어 있다.
 
@@ -30,7 +30,7 @@ DNS 이름 공간은 **역트리(inverted tree)** 구조를 갖는다. 가장 �
 FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이름**을 뜻한다.
 일반적으로 클라이언트는 `www.example.com`처럼 마지막 점을 생략하지만, 내부적으로는 `www.example.com.`으로 취급된다.
 
-### 2) 도메인 vs 존(Zone)
+### 도메인 vs 존(Zone)
 
 - **도메인(domain)**: 네임스페이스 상의 논리적 서브트리
 - **존(zone)**: 특정 네임 서버 집합이 **권한(authority)** 을 갖는, 한 도메인(또는 그 일부)의 데이터 집합
@@ -47,7 +47,7 @@ FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이�
 
 ## DNS in the Internet
 
-### 1) 계층과 역할
+### 계층과 역할
 
 인터넷 전체 관점에서 DNS는 대략 네 가지 역할로 나뉜다.
 
@@ -70,7 +70,7 @@ FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이�
    - ISP, 기업, 공용 리졸버(예: 9.9.9.9, 1.1.1.1 등)가 제공하는 “DNS 서버”가 여기에 해당
    - 클라이언트(Stub Resolver)는 보통 재귀 리졸버에게만 질의를 보내고, 나머지 계층은 리졸버가 처리
 
-### 2) 루트 존과 TLD 현황 (2024–2025 기준 개략)
+### 루트 존과 TLD 현황 (2024–2025 기준 개략)
 
 - 루트 존에는 `.com`, `.org`, `.uk`, 신규 gTLD들(`.app`, `.dev`, `.bank` 등)을 포함해 **약 1450개 수준의 TLD**가 등록되어 있다(2024년 말 기준, ISC와 ICANN 자료 기준).
 - 각 TLD는 **레지스트리(Registry)** 가 운영하며, 해당 TLD의 존 파일과 NS 인프라를 관리한다.
@@ -79,7 +79,7 @@ FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이�
 
 ## Resolution (이름 해석 과정)
 
-### 1) Stub Resolver ↔ Recursive Resolver ↔ Authoritative
+### Stub Resolver ↔ Recursive Resolver ↔ Authoritative
 
 일반 PC/스마트폰에서 DNS 해석 흐름은 다음과 같다.
 
@@ -97,7 +97,7 @@ FQDN(Fully Qualified Domain Name)은 마지막에 점(.)이 붙은 **절대 이�
 Client (Stub) → Recursive → Root → .com → ns1.example.com → Recursive → Client
 ```
 
-### 2) 재귀(Recursive) vs 반복(Iterative)
+### 재귀(Recursive) vs 반복(Iterative)
 
 - Stub Resolver ↔ Recursive Resolver: 보통 **재귀 질의(recursive)**
   - 클라이언트는 “최종 답을 달라”고 요청
@@ -106,7 +106,7 @@ Client (Stub) → Recursive → Root → .com → ns1.example.com → Recursive 
 
 ---
 
-### 3) 예제: `dig`로 전체 해석 경로 보기
+### 예제: `dig`로 전체 해석 경로 보기
 
 ```bash
 dig +trace www.ietf.org
@@ -125,7 +125,7 @@ dig +trace www.ietf.org
 
 ## Caching
 
-### 1) TTL(Time To Live)
+### TTL(Time To Live)
 
 각 RR에는 **TTL(Time To Live)** 값이 있고, 이는 캐시에 해당 레코드를 **얼마 동안 유지할 수 있는지**를 지정한다.
 
@@ -142,7 +142,7 @@ $$
 
 (요청 간 간격이 TTL보다 짧을수록 히트 확률이 높아진다는 감각적 설명용이다.)
 
-### 2) 네거티브 캐싱(Negative Caching)
+### 네거티브 캐싱(Negative Caching)
 
 존에는 **해당 이름이 존재하지 않음(NXDOMAIN)** 또는 **타입이 없음(NODATA)** 이라는 정보도 포함된다.
 
@@ -152,7 +152,7 @@ $$
   - 반복적인 오타 요청으로 인한 부하 감소
   - 공격자가 존재하지 않는 이름으로 대량 질의를 보내는 경우에도 일정 완충
 
-### 3) 캐시 일관성과 운영 이슈
+### 캐시 일관성과 운영 이슈
 
 - TTL을 너무 크게 잡으면:
   - 변경(예: IP 변경, 장애 조치)이 늦게 반영 → 운영 리스크
@@ -180,7 +180,7 @@ NAME   TYPE   CLASS   TTL   RDLENGTH   RDATA
 - **RDLENGTH**: RDATA 길이(바이트)
 - **RDATA**: 타입별 실제 데이터(IP, 텍스트, 우선순위 등)
 
-### 1) 대표 RR 타입과 예
+### 대표 RR 타입과 예
 
 | 타입 | 용도 | 예시 |
 |------|------|------|
@@ -222,7 +222,7 @@ mail    IN A     203.0.113.20
 DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 섹션** 구조를 따른다.
 주요 운영체제 문서(예: Windows Server DNS 문서)에서도 동일 구조를 설명한다.
 
-### 1) 전반적인 구조
+### 전반적인 구조
 
 ```text
 +---------------------+
@@ -241,7 +241,7 @@ DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 �
 헤더에는 **ID, 플래그, 섹션별 RR 개수**가 들어 있고,
 각 섹션은 RR 형식(Question만 TYPE/CLASS까지)으로 구성된다.
 
-### 2) 헤더 필드
+### 헤더 필드
 
 헤더(12 bytes)는 다음 비트 필드를 가진다.
 
@@ -260,7 +260,7 @@ DNS 메시지 포맷은 RFC 1035의 **고정 12바이트 헤더 + 최대 4개 �
 - **NSCOUNT**: Authority RR 수
 - **ARCOUNT**: Additional RR 수
 
-### 3) Question / Answer / Authority / Additional
+### Question / Answer / Authority / Additional
 
 - **Question**: NAME, TYPE, CLASS (실제 RDATA 없음)
 - **Answer**: 질문에 대한 정답 RR들
@@ -311,7 +311,7 @@ DNS에서 **도메인 이름 등록 구조**는 다음 네 주체를 중심으�
 4. **Registrant(등록자)**
    - 실제 도메인 이름을 사용하는 개인/기업/기관
 
-### 1) 도메인 등록 흐름 예
+### 도메인 등록 흐름 예
 
 “alice”가 `example.com` 도메인을 구입하는 과정을 단계별로 보면:
 
@@ -341,7 +341,7 @@ DNS에서 **도메인 이름 등록 구조**는 다음 네 주체를 중심으�
 2. **상용 DDNS 서비스**
    - 가정용/소규모 네트워크에서 **변하는 공용 IP**를 특정 도메인 이름에 매핑해주는 서비스
 
-### 1) RFC 2136 Dynamic Update
+### RFC 2136 Dynamic Update
 
 RFC 2136은 DNS UPDATE 메시지 유형을 정의해,
 존 파일을 수동 편집하지 않고도 **RR 집합을 동적으로 추가/삭제/변경**할 수 있게 한다.
@@ -369,7 +369,7 @@ Update: delete host123.example.com A
 Windows Server DNS나 BIND는 DHCP 서버와 연동해
 클라이언트 IP가 바뀔 때 자동으로 A/AAAA 및 PTR 레코드를 업데이트한다.
 
-### 2) 상용/경량 DDNS 서비스
+### 상용/경량 DDNS 서비스
 
 소규모 네트워크에서 공용 IP가 계속 변하는 경우, 예를 들어:
 
@@ -394,7 +394,7 @@ Windows Server DNS나 BIND는 DHCP 서버와 연동해
 DNS는 본질적으로 **평문, 인증·무결성 없는 질의/응답**으로 설계되었다.
 오늘날에는 다양한 공격과 이에 대한 방어 기술이 중요하다.
 
-### 1) 주요 위협
+### 주요 위협
 
 1. **스푸핑 및 캐시 포이즈닝(Cache Poisoning)**
    - 공격자가 재귀 리졸버에게 **위조 응답**을 먼저 도착시키면,
@@ -414,7 +414,7 @@ DNS는 본질적으로 **평문, 인증·무결성 없는 질의/응답**으로 
    - 잘못 구성된 권한 서버가 전체 존을 AXFR로 누구에게나 내주면,
      내부 호스트명, 네트워크 구조 등이 노출된다.
 
-### 2) DNSSEC (DNS Security Extensions)
+### DNSSEC (DNS Security Extensions)
 
 DNSSEC는 **DNS 데이터에 대한 무결성과 출처 인증**을 제공한다.
 
@@ -444,7 +444,7 @@ www.nic.cz.  300  IN  RRSIG  A 13 3 300 ...
 - `RRSIG` 레코드는 A 레코드에 대한 서명
 - 검증 가능한 리졸버라면, 변조된 응답에 대해 `SERVFAIL` 등을 반환
 
-### 3) 전송 계층 암호화 — DoT, DoH
+### 전송 계층 암호화 — DoT, DoH
 
 DNSSEC는 데이터의 무결성과 출처를 보호하지만,
 **질의 내용이 평문으로 보인다는 사실**은 변하지 않는다.
@@ -467,7 +467,7 @@ DNSSEC는 데이터의 무결성과 출처를 보호하지만,
 이들 프로토콜은 **전송 경로 상의 도청/변조**를 어렵게 만들어,
 ISP나 중간자에 의한 질의 내용 노출을 줄인다.
 
-### 4) 기타 보안 메커니즘
+### 기타 보안 메커니즘
 
 - **QNAME Minimization**
   - 리졸버가 상위 서버에 **필요 최소한의 이름 정보만** 보내도록 하여,
@@ -488,7 +488,7 @@ IoT 기기·엔드 유저 단말의 DNS 구현 시 **최소한의 로깅, 암호
 
 마지막으로, 이 절에서 설명한 개념을 직접 체험해볼 수 있는 간단 실습들을 모아 두면 블로그 연재의 “실습 섹션”으로 재사용하기 좋다.
 
-### 1) 도메인 구조/네임스페이스 관찰
+### 도메인 구조/네임스페이스 관찰
 
 ```bash
 # 특정 이름의 AUTHORITY / ADDITIONAL 섹션 보기
@@ -500,7 +500,7 @@ dig www.example.com
 dig +trace www.ietf.org
 ```
 
-### 2) 리소스 레코드 관찰
+### 리소스 레코드 관찰
 
 ```bash
 # A, AAAA, MX, NS, TXT 등 개별 타입 조회
@@ -512,13 +512,13 @@ dig NS example.com
 dig TXT example.com
 ```
 
-### 3) 캐시 확인(리졸버 수준 실험)
+### 캐시 확인(리졸버 수준 실험)
 
 1. 로컬 리졸버를 BIND/Unbound 등으로 구성
 2. TTL이 짧은 테스트 레코드 생성(ex: 30초)
 3. 몇 초 간격으로 반복 질의하며 **응답의 TTL 감소**를 관찰
 
-### 4) 동적 업데이트(DNS Update) 실험 (테스트 존에서만)
+### 동적 업데이트(DNS Update) 실험 (테스트 존에서만)
 
 ```bash
 # 예: nsupdate 도구 사용 (BIND)
@@ -533,7 +533,7 @@ nsupdate
 - 이후 `dig host123.example.com`으로 결과 확인
 - 실제 환경에서는 TSIG 키 기반 인증 필수
 
-### 5) DNSSEC/DoT/DoH 관찰
+### DNSSEC/DoT/DoH 관찰
 
 - `dig +dnssec`로 RRSIG/DS/DNSKEY 확인
 - DoT/DoH 지원 리졸버에 대해:

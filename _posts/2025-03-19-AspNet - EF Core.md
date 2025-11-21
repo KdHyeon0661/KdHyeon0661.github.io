@@ -4,7 +4,7 @@ title: AspNet - EF Core
 date: 2025-03-19 20:20:23 +0900
 category: AspNet
 ---
-# Entity Framework Core (EF Core) 소개 및 설치
+# 소개 및 설치
 
 ## EF Core란?
 
@@ -436,7 +436,7 @@ var rows = await _db.Database
 
 ---
 
-## 시드(Seed) 데이터
+## 데이터
 
 ### Fluent API 기반(마이그레이션 포함)
 

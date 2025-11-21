@@ -4,7 +4,7 @@ title: DB 심화 - Fetch Call 최소화
 date: 2025-11-01 20:25:23 +0900
 category: DB 심화
 ---
-# Fetch Call 최소화 — **부분범위처리(Stopkey) × Array Fetch**로 왕복·I/O·대기를 줄이는 방법
+# × Array Fetch**로 왕복·I/O·대기를 줄이는 방법
 
 > **핵심 요약**
 > - **Fetch call**은 SELECT 결과를 클라이언트로 가져오는 **왕복(round-trip)** 이다.
@@ -70,7 +70,7 @@ $$
 
 ---
 
-## 부분범위처리(PRP; Stopkey) 원리
+## 원리
 
 ### 개념
 
@@ -109,7 +109,7 @@ FETCH FIRST 20 ROWS ONLY;  -- STOPKEY
 > - `STOPKEY` (Fetch First 20)
 > - 필요 컬럼이 인덱스에 있지 않으면 `TABLE ACCESS BY ROWID` 로 보강
 
-### (반례) PRP가 깨지는 경우
+### PRP가 깨지는 경우
 
 ```sql
 -- 나쁜 예: 정렬이 인덱스로 해결되지 않음 → 전체 정렬 후 상위 N
@@ -140,7 +140,7 @@ OLTP는 **짧은 쿼리**가 **매우 자주** 발생한다. PRP는 아래 효�
 
 ---
 
-## ArraySize 조정에 의한 Fetch call 감소 및 (간접) I/O 효과
+## I/O 효과
 
 ### Fetch call 수 감소 공식
 
@@ -248,7 +248,7 @@ const result = await connection.execute(
 
 ## PRP를 위한 **SQL 패턴**과 인덱스 설계
 
-### TOP-N(최신 N) 리스트
+### 리스트
 
 ```sql
 SELECT /*+ index(o ix_orders_cust_dt) */
@@ -318,7 +318,7 @@ tkprof your.trc out_b.tkprof sys=no sort=prsela,exeela,fchela
 
 ---
 
-## (중요) 안티 패턴과 교정
+## 안티 패턴과 교정
 
 | 안티 패턴 | 문제 | 교정 |
 |---|---|---|

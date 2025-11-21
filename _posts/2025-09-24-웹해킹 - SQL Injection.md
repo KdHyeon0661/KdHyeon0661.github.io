@@ -4,7 +4,7 @@ title: 웹해킹 - SQL Injection
 date: 2025-09-24 15:25:23 +0900
 category: 웹해킹
 ---
-# SQL Injection (SQL 삽입) — 기법과 방어 (Prepared Statement, ORM 중심 완전 가이드)
+# — 기법과 방어 (Prepared Statement, ORM 중심 완전 가이드)
 
 ## 한눈에 보는 핵심
 
@@ -86,7 +86,7 @@ category: 웹해킹
 
 - **흐름**: ① 프로필 “닉네임”을 저장(정상) → ② 나중에 **관리자 검색 기능**이 `... WHERE name = '입력값'`을 문자열 결합해 실행 → ③ 저장된 값이 **그때** 코드로 작동. (진단/개념은 PortSwigger/Oracle 튜토리얼 참고)
 
-### 시나리오 E — OOB (DNS) 블라인드
+### 블라인드
 
 - SQL Server의 특정 확장 프로시저(예: `xp_dirtree`) 호출 유도 등으로 **DNS 쿼리** 발생 → 공격자 도메인에서 수신해 값 추출. (연구/랩 자료 다수)
 
@@ -100,7 +100,7 @@ category: 웹해킹
 
 ### DB/언어별 “정석” 예제
 
-#### (A) **MySQL** — 서버측 Prepared Statements
+#### **MySQL** — 서버측 Prepared Statements
 
 ```sql
 -- 서버 측: PREPARE / EXECUTE / DEALLOCATE
@@ -111,7 +111,7 @@ DEALLOCATE PREPARE s;
 ```
 - MySQL 공식 문서: PREPARE/EXECUTE/DEALLOCATE 구조와 장점 명시.
 
-#### (B) **PostgreSQL** — PREPARE/EXECUTE, 드라이버 자동 파라미터화
+#### **PostgreSQL** — PREPARE/EXECUTE, 드라이버 자동 파라미터화
 
 ```sql
 PREPARE get_user(text, text) AS
@@ -120,7 +120,7 @@ EXECUTE get_user('a@b.c', '...hash...');
 ```
 - 개념·동작은 공식 문서의 PREPARE 설명 참고.
 
-#### (C) **Java (JDBC)** — `PreparedStatement`
+#### **Java (JDBC)** — `PreparedStatement`
 
 ```java
 String sql = "SELECT id, role FROM users WHERE email = ? AND pwd_hash = ?";
@@ -134,7 +134,7 @@ try (PreparedStatement ps = conn.prepareStatement(sql)) {
 ```
 - `PreparedStatement` 는 **사전 컴파일된 SQL**로 다회 실행/보안성 이점. (오라클/자바 공식)
 
-#### (D) **Python (psycopg)** — 자리표시자
+#### **Python (psycopg)** — 자리표시자
 
 ```python
 cur.execute(
@@ -144,7 +144,7 @@ cur.execute(
 ```
 - 파라미터는 SQL과 **분리해서** 전송. (psycopg3 문서의 파라미터 전송 설명)
 
-#### (E) **C# / ADO.NET**
+#### **C# / ADO.NET**
 
 ```csharp
 using var cmd = new SqlCommand(
@@ -155,7 +155,7 @@ using var reader = cmd.ExecuteReader();
 ```
 - `SqlCommand.Parameters` 사용이 정석. (MS Docs)
 
-#### (F) **PHP PDO**
+#### **PHP PDO**
 
 ```php
 $stmt = $pdo->prepare("SELECT id FROM users WHERE email=? AND pwd_hash=?");
@@ -274,7 +274,7 @@ var r = ctx.Users
   ```
   - ESCAPE/백슬래시 동작은 DB별 차이가 있으니 공식 문서 확인.
 
-### **다중 문장(스택드 쿼리) 금지**
+### 금지**
 
 - Node `mysql/mysql2` 등은 **기본 비활성화**(권장). 활성화 시 공격 면이 커짐. 가능하면 **항상 비활성** 유지. (옵션/경고 참고)
 
@@ -300,7 +300,7 @@ var r = ctx.Users
 
 ---
 
-## **수정 가이드(레거시 코드 → 안전 코드) — 언어별 패치**
+## — 언어별 패치**
 
 ### Node.js (mysql2 / node-postgres)
 

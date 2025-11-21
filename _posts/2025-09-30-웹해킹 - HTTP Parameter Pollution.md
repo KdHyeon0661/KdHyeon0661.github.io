@@ -60,7 +60,7 @@ category: 웹해킹
 
 ---
 
-# 안전한 재현(스테이징 전용) — “막혀야 정상” 스모크
+# — “막혀야 정상” 스모크
 
 > 목적: **우리가 중복 파라미터를 금지/정규화**하는지 자동 점검.
 
@@ -103,7 +103,7 @@ for (const c of cases) { /* eslint-disable no-await-in-loop */
 
 ---
 
-# 백엔드(애플리케이션) 레이어 방어
+# 레이어 방어
 
 ## 정책 결정: **첫 값/마지막 값/배열** 중 **하나**로 고정
 
@@ -112,7 +112,7 @@ for (const c of cases) { /* eslint-disable no-await-in-loop */
   - **배열이 필요한 엔드포인트만** 명시적으로 허용(예: `ids[]=1&ids[]=2`).
   - 불가피하다면 “첫 값만” 또는 “마지막 값만”을 **전 계층에서 동일**하게 채택.
 
-## Node.js(Express) — **중복 금지 + 배열 화이트리스트**
+## — **중복 금지 + 배열 화이트리스트**
 
 ```js
 // security/hpp.js
@@ -342,7 +342,7 @@ if ($query_string ~* ";") { return 400; }
 > 정규식만으로 **모든 키의 중복**을 일반화하기는 어렵습니다.
 > **권장**: OpenResty(ngx_lua)나 게이트웨이(예: Kong, APIM)에서 **파싱 후 검사**.
 
-### OpenResty(Lua) — 정확한 파싱 후 차단
+### — 정확한 파싱 후 차단
 
 ```nginx
 location / {
@@ -402,7 +402,7 @@ function buildQuery(params) {
 
 ---
 
-# “세미콜론(;) 분리자”, “이중 디코딩” 이슈
+# 분리자”, “이중 디코딩” 이슈
 
 - 일부 서버/프록시는 `;`를 **파라미터 분리자**로 해석할 수 있습니다. 정책적으로 **금지**하거나, **정규화 시 모두 `&`로 통일**하세요.
 - **이중 디코딩(Double-decoding)**으로 `a=1%26a%3D2` 같은 값이 **나중 단계에서 다시 분리**되지 않도록, **한 번만 디코딩**하고 **값으로 취급**해야 합니다.
@@ -433,7 +433,7 @@ test("ids[] 배열만 허용", async () => {
 ## 파이프라인 가드(간단 grep 룰)
 
 ```bash
-# 위험 API 사용(혼합 getter) 탐지
+# 탐지
 
 grep -R --line-number -E "req\.param\(" src/ && \
   echo "::error title=HPP risk::Do not use req.param()" && exit 1

@@ -6,7 +6,7 @@ category: Java
 ---
 # java.util.concurrent 패키지
 
-## 왜 `java.util.concurrent`(JUC) 인가?
+## 인가?
 
 - `synchronized` + `wait/notify`만으로는 **락 경합·스레드 폭주·자원 누수·깨지기 쉬운 코드**가 되기 쉽다.
 - JUC는 **표준화된 스레드 풀/락/동시성 컬렉션/원자 연산/비동기 조합**을 제공:
@@ -373,7 +373,7 @@ int n = java.util.concurrent.ThreadLocalRandom.current().nextInt(100);
 
 ---
 
-## 자바 메모리 모델(JMM) — 가시성과 순서 보장 핵심
+## — 가시성과 순서 보장 핵심
 
 **happens-before** 주요 규칙(요점):
 - **락 언락 → 같은 락의 이후 락 획득** 사이의 쓰기/읽기 가시성

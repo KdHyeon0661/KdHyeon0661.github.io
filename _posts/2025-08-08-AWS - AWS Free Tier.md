@@ -148,7 +148,7 @@ for id in $INSTANCE_IDS; do
 done
 ```
 
-### S3 정리(Lifecycle) — 실습 로그 7일 보관 후 삭제
+### — 실습 로그 7일 보관 후 삭제
 
 ```yaml
 # bucket-lifecycle.yaml (S3 Lifecycle Rule)
@@ -175,7 +175,7 @@ Rules:
 
 - 저/중소량 트래픽의 학습/PoC 용도로 **Always Free 범위**에서 동작하도록 설계.
 
-### CDK(TypeScript) 템플릿
+### 템플릿
 
 ```ts
 import * as cdk from 'aws-cdk-lib';

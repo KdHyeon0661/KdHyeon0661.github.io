@@ -222,7 +222,7 @@ IAM 예시(자기 소유 데이터만 접근):
 
 ---
 
-## DAX(Accelerator) & 캐시 전략
+## & 캐시 전략
 
 - **DAX**: DynamoDB 전용 인메모리 캐시. **서브-ms 읽기**. 쓰기 스루 방식.
 - 읽기 집중/핫키 시 레이턴시 낮추고 RCU 절감.
@@ -282,7 +282,7 @@ GSI 투영 속성: 쿼리에 필요한 필드만 **Projected**(ALL/KEYS_ONLY/INC
 
 ## SDK/CLI/PartiQL 예제
 
-### Node.js(DocumentClient) CRUD + 조건식
+### CRUD + 조건식
 
 ```js
 const AWS = require('aws-sdk');
@@ -318,7 +318,7 @@ const r = await dc.query({
 }).promise();
 ```
 
-### Python(boto3) 트랜잭션 예
+### 트랜잭션 예
 
 ```python
 import boto3

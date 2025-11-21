@@ -275,7 +275,7 @@ docker run -d --read-only \
 
 ---
 
-## tmpfs(메모리 기반) 마운트
+## 마운트
 
 - 민감 데이터/캐시/임시파일을 디스크에 남기지 않도록 메모리에 마운트:
 ```bash
@@ -325,7 +325,7 @@ docker run -d \
 
 ## 실습: 같은 구조를 Volume/Bind Mount로 번갈아 실행
 
-### 앱(예: Nginx) + 데이터 폴더
+### + 데이터 폴더
 
 #### Volume
 

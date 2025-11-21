@@ -4,7 +4,7 @@ title: CSS - DevTools
 date: 2025-05-20 19:20:23 +0900
 category: CSS
 ---
-# 디버깅을 위한 DevTools(개발자 도구) 활용 가이드
+# 활용 가이드
 
 ## DevTools 빠르게 열기 & 환경 준비
 

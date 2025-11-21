@@ -488,7 +488,7 @@ public IActionResult OnPost(string handler)
 
 ---
 
-## PRG(Post-Redirect-Get) 패턴
+## 패턴
 
 폼 재제출 방지, 새로고침 안전, URL 공유 안전:
 

@@ -344,7 +344,7 @@ register_callback(_callback);
 
 > 델리게이트가 **GC에 수거되면** 네이티브가 콜백 호출 시 크래시. **루트 보관 필수**.
 
-### 함수 포인터(.NET 5+) + Reverse P/Invoke
+### + Reverse P/Invoke
 
 ```csharp
 using System.Runtime.InteropServices;
@@ -556,7 +556,7 @@ public static bool TryTransform(ReadOnlySpan<byte> src, Span<byte> dst, out int 
 
 ---
 
-## (보너스) 비용 모델 직관
+## 비용 모델 직관
 
 네이티브 호출은 일반 메서드 호출보다 **상수 오버헤드**가 큽니다. 대략:
 

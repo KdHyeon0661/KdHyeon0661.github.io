@@ -178,7 +178,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ## 실습: 활성/비활성 비교
 
-### (A) **강제 비활성화** 후 실행
+### **강제 비활성화** 후 실행
 
 ```sql
 SELECT /*+ LEADING(o) USE_NL(i)
@@ -197,7 +197,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 - Inner에 **`TABLE ACCESS BY INDEX ROWID`** (BATCHED가 **아님**)이어야 합니다.
 - I/O 통계(특히 Buffers/Reads)를 메모해 둡니다.
 
-### (B) **강제 활성화** 후 실행
+### **강제 활성화** 후 실행
 
 ```sql
 SELECT /*+ LEADING(o) USE_NL(i)
@@ -260,7 +260,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 
 ---
 
-# **Buffer Pinning** (버퍼 핀ning) — 왜 Batched가 더 유리한가
+# — 왜 Batched가 더 유리한가
 
 ## 개념
 
@@ -301,7 +301,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'ALLSTATS LAST +PREDICAT
 /*+ NO_BATCH_TABLE_ACCESS_BY_ROWID(i) */  -- 비활성(비교용)
 ```
 
-## NLJ Batching(배치 I/O) 관점
+## 관점
 
 - 버전/옵티마이저에 따라 **자동** 적용되며, 별도 표시가 없을 수 있습니다.
 - 핵심은 **Outer를 한꺼번에 조금 더 많이 뽑아**(Stopkey를 넉넉히/부분범위처리와 균형)

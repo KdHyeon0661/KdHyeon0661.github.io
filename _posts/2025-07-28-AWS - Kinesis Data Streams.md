@@ -69,7 +69,7 @@ aws kinesis put-record \
 - `--data`는 **base64** 인코딩(단, SDK는 바이트 직접 전달이 일반적)
 - **Partition Key**는 샤드 매핑(해시)을 위한 핵심 값
 
-### Python (boto3) 단건/배치 전송
+### 단건/배치 전송
 
 ```python
 import boto3, json, time, os, random
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
 ## Consumer: 3가지 접근법
 
-### CLI(Shard Iterator 기반) – 학습용
+### – 학습용
 
 ```bash
 aws kinesis describe-stream --stream-name my-data-stream
@@ -350,7 +350,7 @@ $$
 
 ---
 
-## 고급: Enhanced Fan-Out(EFO) & KDA/Flink
+## & KDA/Flink
 
 ### EFO
 
@@ -373,7 +373,7 @@ events
 
 ## 실전 시나리오 (End-to-End)
 
-### 생산자(웹/모바일) → KDS
+### → KDS
 
 ```javascript
 // 브라우저 예: API Gateway→Lambda→KDS 프록시(서명/보안)

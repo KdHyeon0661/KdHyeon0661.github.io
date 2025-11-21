@@ -110,7 +110,7 @@ x                y
 
 ---
 
-## 삽입(Insert) — BST 삽입 → Fix-up
+## — BST 삽입 → Fix-up
 
 1) **BST 규칙**으로 RED 노드 삽입
 2) **부모가 RED**면 R4 위반 → **삼촌 색**에 따라 **재색칠/회전**
@@ -199,7 +199,7 @@ C3: rotateRight(gp); 색 재조정 (새 root 후보 black)
 
 ---
 
-## 삭제(Delete) — BST 삭제 → Double-Black Fix-up
+## — BST 삭제 → Double-Black Fix-up
 
 ### 개요
 
@@ -907,7 +907,7 @@ int main(){
 
 ---
 
-## 부록 A) 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 - **Q. 삽입 Fix-up에서 왜 루트는 마지막에 BLACK으로?**
   A. Case 1 전파로 `z`가 루트까지 올라갈 수 있다. 루트는 R2로 반드시 BLACK이어야 하므로 마지막에 색을 고정한다.
@@ -920,7 +920,7 @@ int main(){
 
 ---
 
-## 부록 B) 더 읽을거리(키워드)
+## 더 읽을거리(키워드)
 
 - “J. S. Tarjan”의 균형 BST 노트, CLRS(레드-블랙 장)
 - Order-Statistic Tree(레드-블랙에 `size` 보강), Interval Tree

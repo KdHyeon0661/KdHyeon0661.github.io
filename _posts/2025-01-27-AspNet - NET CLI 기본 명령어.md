@@ -354,7 +354,7 @@ ConnectionStrings__Default="Server=...;" dotnet run
 
 ---
 
-## 도구(툴) — `dotnet tool`
+## — `dotnet tool`
 
 ### 전역/로컬 설치
 

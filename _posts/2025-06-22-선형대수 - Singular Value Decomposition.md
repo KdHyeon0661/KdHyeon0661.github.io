@@ -85,7 +85,7 @@ category: 선형대수
 - $$A^+=V\,\Sigma^+\,U^\top,\quad \Sigma^+=\operatorname{diag}(\sigma_1^{-1},\ldots,\sigma_r^{-1})$$
 - **최소제곱 해** $$\vec{x}_\star=A^+\vec{b}$$ (해가 없을 때 잔차 최소)
 
-### Tikhonov(릿지) 정규화의 SVD 표현
+### 정규화의 SVD 표현
 
 - $$\vec{x}_\lambda=(A^\top A+\lambda I)^{-1}A^\top \vec{b}
 =V\,\operatorname{diag}\!\Big(\frac{\sigma_i}{\sigma_i^2+\lambda}\Big)U^\top \vec{b}$$

@@ -53,7 +53,7 @@ while (전송할 프레임이 있을 때) {
 
 ## ALOHA — Pure & Slotted
 
-### 1) 역사와 기본 아이디어
+### 역사와 기본 아이디어
 
 - 1970년대 초, **하와이대학**에서 개발된 ALOHAnet에서 등장.
   무선 패킷 라디오 네트워크를 위해 설계된 **최초의 Random Access MAC** 중 하나.
@@ -71,7 +71,7 @@ while (전송할 프레임이 있을 때) {
 
 ---
 
-### 2) ALOHA 시스템 모델
+### ALOHA 시스템 모델
 
 공통 가정:
 
@@ -89,9 +89,9 @@ ALOHA에서 관심 있는 값:
 
 ---
 
-### 3) Pure ALOHA
+### Pure ALOHA
 
-#### (1) 작동 방식
+#### 작동 방식
 
 각 노드:
 
@@ -110,7 +110,7 @@ ALOHA에서 관심 있는 값:
 
 ---
 
-#### (2) Throughput 분석
+#### Throughput 분석
 
 프레임 당 offered load = $$G$$ (프레임 시간당 평균 전송 시도 수).
 
@@ -144,7 +144,7 @@ $$
 
 ---
 
-#### (3) 최대 효율
+#### 최대 효율
 
 $$
 S(G) = G e^{-2G}
@@ -172,14 +172,14 @@ $$
 
 ---
 
-### 4) Slotted ALOHA
+### Slotted ALOHA
 
 Pure ALOHA의 큰 약점: **충돌 취약 구간이 2 frame time** 이다.
 이를 줄이기 위해 나온 아이디어:
 
 > 시간축을 **슬롯(slot)** 으로 나누고, **각 슬롯 시작에서만 프레임 전송 시작**을 허용하자.
 
-#### (1) 작동 방식
+#### 작동 방식
 
 - 모든 노드는 **공통 시계(clock)** 를 공유(슬롯 동기).
 - 프레임 길이 = 슬롯 길이 (1 frame time).
@@ -196,7 +196,7 @@ Pure ALOHA의 큰 약점: **충돌 취약 구간이 2 frame time** 이다.
 
 ---
 
-#### (2) Throughput 분석
+#### Throughput 분석
 
 슬롯당 전송 시도 수의 평균 = $$G$$ (포아송 근사).
 
@@ -219,7 +219,7 @@ $$
 
 ---
 
-#### (3) 최대 효율
+#### 최대 효율
 
 도함수:
 
@@ -239,7 +239,7 @@ Pure ALOHA의 약 2배 효율.
 
 ---
 
-### 5) 예제 시나리오 & 타임라인
+### 예제 시나리오 & 타임라인
 
 #### 예제 1: Pure ALOHA 충돌
 
@@ -286,7 +286,7 @@ Pure ALOHA보다 **충돌 확률이 낮다**.
 
 ---
 
-### 6) ALOHA 간단 시뮬레이션 코드 (Slotted ALOHA)
+### ALOHA 간단 시뮬레이션 코드 (Slotted ALOHA)
 
 아래는 매우 단순화된 **Slotted ALOHA 시뮬레이터** 예시이다.
 여기서 각 슬롯마다 노드 수 $$N$$, 각 노드의 전송 확률 $$p$$ 를 사용해 시도 수를 결정한다.
@@ -347,7 +347,7 @@ CSMA의 아이디어:
 > “말하기 전에 주변이 조용한지 먼저 들어보자.”
 > (Carrier Sense = 매체에 신호가 흐르는지 감지)
 
-### 1) 기본 규칙
+### 기본 규칙
 
 모든 노드는 다음과 같이 동작한다.
 
@@ -367,11 +367,11 @@ CSMA의 아이디어:
 
 ---
 
-### 2) CSMA의 변종: 1-persistent, non-persistent, p-persistent
+### CSMA의 변종: 1-persistent, non-persistent, p-persistent
 
 일반적으로 다음 세 가지 전략을 구분한다.
 
-#### (1) 1-persistent CSMA
+#### 1-persistent CSMA
 
 규칙:
 
@@ -400,7 +400,7 @@ while True:
 
 ---
 
-#### (2) Non-persistent CSMA
+#### Non-persistent CSMA
 
 규칙:
 
@@ -428,7 +428,7 @@ while True:
 
 ---
 
-#### (3) p-persistent CSMA (슬롯 기반)
+#### p-persistent CSMA (슬롯 기반)
 
 주로 **슬롯형 LAN**(예: slotted CSMA)에서 사용.
 
@@ -463,7 +463,7 @@ while True:
 
 ---
 
-### 3) CSMA의 취약 구간과 한계
+### CSMA의 취약 구간과 한계
 
 ALOHA에 비해 충돌 확률이 훨씬 줄어들지만,
 CSMA도 여전히 **전파 지연 때문에 완전한 충돌 제거는 불가능**하다.
@@ -490,7 +490,7 @@ CSMA도 여전히 **전파 지연 때문에 완전한 충돌 제거는 불가능
 
 ## CSMA/CD — 유선 이더넷의 충돌 검출
 
-### 1) 개념과 배경
+### 개념과 배경
 
 **CSMA/CD(Carrier Sense Multiple Access with Collision Detection)** 는
 초기 **공유 버스형 이더넷(IEEE 802.3)** 에서 사용된 MAC이다.
@@ -508,7 +508,7 @@ CSMA도 여전히 **전파 지연 때문에 완전한 충돌 제거는 불가능
 
 ---
 
-### 2) 동작 절차(고전 버스형 이더넷 기준)
+### 동작 절차(고전 버스형 이더넷 기준)
 
 한 노드가 프레임을 전송하는 과정:
 
@@ -537,7 +537,7 @@ CSMA도 여전히 **전파 지연 때문에 완전한 충돌 제거는 불가능
 
 ---
 
-### 3) 최소 프레임 길이와 슬롯 시간
+### 최소 프레임 길이와 슬롯 시간
 
 **CSMA/CD가 제대로 동작**하려면:
 
@@ -560,7 +560,7 @@ Fast Ethernet/Gigabit Ethernet에서도 호환을 위해 slot time과 관련 파
 
 ---
 
-### 4) 동작 예시: 두 노드 A/B 간 충돌
+### 동작 예시: 두 노드 A/B 간 충돌
 
 상황:
 
@@ -583,7 +583,7 @@ t=1.5τ: B도 동일하게 충돌 감지
 
 ---
 
-### 5) CSMA/CD 전송 절차 의사코드
+### CSMA/CD 전송 절차 의사코드
 
 아래 코드는 **개념적인 수준**의 CSMA/CD 송신 동작을 보여준다.
 
@@ -642,7 +642,7 @@ def transmit_frame(frame):
 
 ---
 
-### 6) 현대 이더넷에서 CSMA/CD의 위치
+### 현대 이더넷에서 CSMA/CD의 위치
 
 - **Hub 기반 공유 미디어(버스/리피터)** 환경이 사실상 사라짐.
 - 오늘날 대부분의 이더넷 링크는:
@@ -661,7 +661,7 @@ def transmit_frame(frame):
 
 ## CSMA/CA — 무선 LAN(Wi-Fi)의 충돌 회피
 
-### 1) 왜 무선에서는 CSMA/CD가 안 되는가?
+### 왜 무선에서는 CSMA/CD가 안 되는가?
 
 유선에서는 송신 노드가 **송신 신호 vs 수신 신호**를 비교해
 충돌(왜곡)을 직접 감지할 수 있다(CD).
@@ -680,7 +680,7 @@ def transmit_frame(frame):
 
 ---
 
-### 2) CSMA/CA의 기본 원칙
+### CSMA/CA의 기본 원칙
 
 요약:
 
@@ -703,7 +703,7 @@ def transmit_frame(frame):
 
 ---
 
-### 3) 802.11 DCF(Distributed Coordination Function)의 CSMA/CA 절차
+### 802.11 DCF(Distributed Coordination Function)의 CSMA/CA 절차
 
 802.11의 기본 MAC은 DCF로, CSMA/CA를 기반으로 한다. (단순화 버전)
 
@@ -740,7 +740,7 @@ def transmit_frame(frame):
 
 ---
 
-### 4) RTS/CTS 메커니즘 (옵션)
+### RTS/CTS 메커니즘 (옵션)
 
 **Hidden Node 문제**를 줄이기 위한 선택적 기능.
 
@@ -772,7 +772,7 @@ Hidden Node C의 관점:
 
 ---
 
-### 5) CSMA/CD vs CSMA/CA 비교
+### CSMA/CD vs CSMA/CA 비교
 
 | 항목 | CSMA/CD | CSMA/CA |
 |------|---------|---------|
@@ -785,7 +785,7 @@ Hidden Node C의 관점:
 
 ---
 
-### 6) 간단 CSMA/CA 백오프 시뮬레이션 코드 (개념)
+### 간단 CSMA/CA 백오프 시뮬레이션 코드 (개념)
 
 아주 단순화된 DCF의 백오프 부분만 파이썬으로 표현해 보자.
 

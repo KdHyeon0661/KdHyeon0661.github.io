@@ -402,7 +402,7 @@ services:
 
 ---
 
-## 부록 A) 미니 실습 — 60초 설정 검증 스크립트
+## 미니 실습 — 60초 설정 검증 스크립트
 
 ```bash
 #!/usr/bin/env bash
@@ -427,7 +427,7 @@ echo "[OK] Validation passed."
 
 ---
 
-## 부록 B) `.gitignore` 템플릿
+## `.gitignore` 템플릿
 
 ```gitignore
 # env & secrets

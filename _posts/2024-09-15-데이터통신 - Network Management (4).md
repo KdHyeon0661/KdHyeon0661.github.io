@@ -4,7 +4,7 @@ title: 데이터 통신 - Network Management (4)
 date: 2024-09-15 23:20:23 +0900
 category: DataCommunication
 ---
-# ASN.1(Abstract Syntax Notation One) — 언어 기초, 데이터 타입, 인코딩(ASN.1, BER/DER/PER/XER/JER)
+# — 언어 기초, 데이터 타입, 인코딩(ASN.1, BER/DER/PER/XER/JER)
 
 이 장은 27장 Network Management(특히 SNMP, X.509, 기타 관리 프로토콜)의 “ASN.1” 부분을 블로그용으로 재구성·확장한 것이다.
 SNMP MIB, X.509 인증서, 많은 텔코 프로토콜이 **ASN.1로 데이터 구조를 정의하고, X.690 계열 인코딩 규칙**으로 전송한다.

@@ -302,7 +302,7 @@ mix test test/my_app/calc_test.exs:12
 - `mix test path:line`
   - 특정 테스트만 빠르게 실행할 때 유용.
 
-#### 단언(Assertion) 패턴 확장
+#### 패턴 확장
 
 ```elixir
 assert result == 10
@@ -921,7 +921,7 @@ checks: [
 - `ExUnit` 으로 성공/실패 케이스 테스트
 - `mix format` 으로 스타일 유지
 
-### 1) 구현
+### 구현
 
 ```elixir
 defmodule MyApp.Report do
@@ -978,7 +978,7 @@ end
 
 ---
 
-### 2) Telemetry 핸들러
+### Telemetry 핸들러
 
 ```elixir
 :telemetry.attach(
@@ -1004,7 +1004,7 @@ end
 
 ---
 
-### 3) 테스트(예외/성공/로그 캡처)
+### 테스트(예외/성공/로그 캡처)
 
 ```elixir
 defmodule MyApp.ReportTest do

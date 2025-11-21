@@ -75,11 +75,11 @@ category: Kubernetes
 > 최소 예시(개념 흐름):
 ```bash
 # 두 클러스터 컨텍스트 준비: kctx a, kctx b 가정
-# (1) operator 설치
+# operator 설치
 
 kctx a && kubectl apply -f https://get.submariner.io/operator.yaml
 kctx b && kubectl apply -f https://get.submariner.io/operator.yaml
-# (2) broker 생성/참여(간단 흐름; 실제는 join 명령/토큰 사용)
+# broker 생성/참여(간단 흐름; 실제는 join 명령/토큰 사용)
 # 참조: 공식 문서 워크플로에 따라 broker -> join 적용
 
 ```
@@ -102,7 +102,7 @@ metadata:
 
 ---
 
-## L7 기반(서비스 메쉬) — Istio 예제
+## — Istio 예제
 
 ### 토폴로지
 
@@ -390,7 +390,7 @@ $$
 
 ## 실습: “Cluster-A에서 Cluster-B API 호출” 3가지 경로
 
-### ExternalName(+TLS) — 최소 구성
+### — 최소 구성
 
 ```yaml
 apiVersion: v1

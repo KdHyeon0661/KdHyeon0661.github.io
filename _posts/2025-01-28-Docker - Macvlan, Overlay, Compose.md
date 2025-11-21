@@ -88,7 +88,7 @@ ip link add macvlan0 link eth0 type macvlan mode bridge
 ip addr add 192.168.1.240/24 dev macvlan0
 ip link set macvlan0 up
 
-# 이제 호스트 192.168.1.240 과 macvlan 컨테이너(예: 192.168.1.50) 간 통신 가능
+# 간 통신 가능
 
 ping -c1 192.168.1.50
 ```
@@ -191,7 +191,7 @@ docker network create -d overlay --attachable --opt encrypted secure-ovl
 
 - 데이터 플레인 암호화(노드 간 링크 보호). CPU 오버헤드 고려.
 
-### Stack(Compose for Swarm) 예제
+### 예제
 
 Swarm에서는 `docker stack deploy` 를 통해 Compose 유사 문법으로 배포합니다.
 
@@ -444,7 +444,7 @@ docker compose config
 
 ## 전체 예제 세트
 
-### A) Macvlan + Compose(외부 네트워크 참조)
+### Macvlan + Compose(외부 네트워크 참조)
 
 ```yaml
 version: "3.9"
@@ -468,7 +468,7 @@ docker network create -d macvlan \
   -o parent=eth0 lan
 ```
 
-### B) Overlay + Stack(스웜)
+### Overlay + Stack(스웜)
 
 ```yaml
 # stack.yml
@@ -507,7 +507,7 @@ docker swarm init
 docker stack deploy -c stack.yml app
 ```
 
-### C) Bridge(내부) + Front 공개, Back 보호
+### Bridge(내부) + Front 공개, Back 보호
 
 ```yaml
 version: "3.9"

@@ -4,7 +4,7 @@ title: Kubernetes - Metrics Server 설치 및 HPA 설정
 date: 2025-05-05 23:20:23 +0900
 category: Kubernetes
 ---
-# Metrics Server 설치 및 HPA(Horizontal Pod Autoscaler) 설정하기
+# 설정하기
 
 Kubernetes에서 **수요에 따라 Pod 수를 자동 조절**하려면 **실시간 리소스 사용량**이 필요하다.
 이를 담당하는 구성 요소가 다음 두 가지다.
@@ -153,7 +153,7 @@ while true; do wget -q -O- http://cpu-demo.default.svc.cluster.local > /dev/null
 
 ## HPA 생성
 
-### CLI(v1) 간단 생성 (CPU 기준, 50% 목표)
+### 간단 생성 (CPU 기준, 50% 목표)
 
 ```bash
 kubectl autoscale deployment cpu-demo \
@@ -169,7 +169,7 @@ kubectl get hpa
 kubectl describe hpa cpu-demo
 ```
 
-### YAML(v2) — CPU + 메모리 동시
+### — CPU + 메모리 동시
 
 ```yaml
 apiVersion: autoscaling/v2
@@ -350,7 +350,7 @@ kubectl describe hpa cpu-demo-behavior
 
 ## 예제 모음
 
-### v2 — 다중 메트릭 + OR(최대값) 스케일
+### 스케일
 
 ```yaml
 apiVersion: autoscaling/v2

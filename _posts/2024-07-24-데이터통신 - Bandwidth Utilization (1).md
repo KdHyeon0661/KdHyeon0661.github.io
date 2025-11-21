@@ -141,7 +141,7 @@ $$
 
 ---
 
-### DS (Digital Signal) 계층 & T/E-Line 감각
+### 계층 & T/E-Line 감각
 
 **미국식 DS 계층(역사적 표준)**:
 - **DS-0**: 64 kbps (8 kHz 샘플 × 8비트 PCM)

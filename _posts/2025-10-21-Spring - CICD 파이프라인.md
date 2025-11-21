@@ -248,7 +248,7 @@ jobs:
 
 ## D. GitOps — Argo CD로 CD 구성
 
-### D-1. Argo CD App(단일 앱) 또는 ApplicationSet(환경별)
+### 또는 ApplicationSet(환경별)
 
 `deploy/charts/acme-api/Chart.yaml`
 ```yaml

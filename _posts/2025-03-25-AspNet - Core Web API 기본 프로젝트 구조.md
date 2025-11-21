@@ -480,13 +480,13 @@ public class ExceptionHandlingMiddleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 ```
 
-### 검증 실패(400) 자동 응답
+### 자동 응답
 
 `[ApiController]`가 활성화되면 ModelState 실패 시 자동으로 RFC 7807 형식의 `ValidationProblemDetails`가 반환된다.
 
 ---
 
-## Swagger(OpenAPI) — 문서화/테스트
+## — 문서화/테스트
 
 ```csharp
 builder.Services.AddEndpointsApiExplorer();

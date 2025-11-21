@@ -28,7 +28,7 @@ category: MFC
 
 ---
 
-## Owner-Draw (ListBox/Combo) — 기본과 고급
+## — 기본과 고급
 
 ### 1-1. 스타일/흐름
 
@@ -126,7 +126,7 @@ public:
 
 ---
 
-## Custom-Draw (ListView=`CListCtrl`) — 단계/기법 총정리
+## — 단계/기법 총정리
 
 ### 2-1. 단계(DWORD `dwDrawStage`)
 
@@ -144,7 +144,7 @@ BEGIN_MESSAGE_MAP(CMyDlg, CDialogEx)
 END_MESSAGE_MAP()
 ```
 
-### 2-3. 대표 시나리오: **지브라(홀짝 줄무늬) + 선택/핫트래킹 + 특정 열 색상**
+### + 선택/핫트래킹 + 특정 열 색상**
 
 ```cpp
 void CMyDlg::OnListCustomDraw(NMHDR* pNMHDR, LRESULT* pResult)
@@ -200,7 +200,7 @@ m_list.SetExtendedStyle(m_list.GetExtendedStyle() | LVS_EX_DOUBLEBUFFER | LVS_EX
 
 ### 2-4. “진짜 그리기”가 필요한 경우(텍스트 대신 커스텀 요소)
 
-#### (A) 진행 막대/게이지를 서브아이템에 직접 렌더
+#### 진행 막대/게이지를 서브아이템에 직접 렌더
 
 ```cpp
 void DrawProgress(CDC& dc, const CRect& cell, int percent) {
@@ -232,7 +232,7 @@ case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
 }
 ```
 
-#### (B) 체크박스/상태 아이콘 직접 렌더
+#### 체크박스/상태 아이콘 직접 렌더
 
 - 기본 체크박스(`LVS_EX_CHECKBOXES`) 대신 **상태이미지** 또는 사용자 지정 그래픽을 쓰려면 `CDRF_SKIPDEFAULT` 후 직접 그리기.
 
@@ -293,7 +293,7 @@ void CMyDlg::OnGetDispInfo(NMHDR* n, LRESULT* r) {
 
 ---
 
-## Custom-Draw (TreeView=`CTreeCtrl`) — 전체 행/노드 스타일링
+## — 전체 행/노드 스타일링
 
 ### 3-1. 필수 스타일/확장 스타일
 

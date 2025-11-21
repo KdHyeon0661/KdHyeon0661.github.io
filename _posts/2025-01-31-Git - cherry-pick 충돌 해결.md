@@ -209,12 +209,12 @@ git cherry-pick --skip
 
 ## 충돌 유형별 정밀 대응
 
-### 내용(content) 충돌
+### 충돌
 
 - 동일 파일 동일(혹은 겹치는) 범위 충돌 → **가장 흔함**
 - 해결: 파일 열어 수동 통합 → `git add` → `continue`
 
-### 리네임(rename) 충돌
+### 충돌
 
 - 한쪽 브랜치가 파일명을 변경, 다른 쪽이 동일 파일을 수정한 경우
 - 전략:
@@ -227,7 +227,7 @@ git cherry-pick --skip
   git mergetool
   ```
 
-### 삭제-수정(delete/modify) 충돌
+### 충돌
 
 - 한쪽은 파일 삭제, 다른 쪽은 수정
 - 전략:
@@ -242,14 +242,14 @@ git cherry-pick --skip
   git add path/to/file
   ```
 
-### 디렉터리-파일(directory/file) 충돌
+### 충돌
 
 - 한쪽은 `path/foo` 파일, 다른 쪽은 `path/`를 디렉터리로 변경(혹은 반대)
 - 전략:
   - 구조를 일관되게 정하고 이름을 재배열(예: 파일을 `path/index.html`로 이동)
   - 수동으로 파일/폴더 재조정 후 add
 
-### 바이너리(binary) 충돌
+### 충돌
 
 - 이미지/디자인 등 자동 머지 불가
 - 선택지:
@@ -265,7 +265,7 @@ git cherry-pick --skip
   *.png binary
   ```
 
-### 서브모듈(submodule) 충돌
+### 충돌
 
 - 서로 다른 커밋 포인터를 가리킴
 - 절차:
@@ -307,11 +307,11 @@ git config --global rerere.enabled true
 충돌 파일을 전체적으로 한쪽 버전으로 빠르게 선택:
 
 ```bash
-# 현재 브랜치(ours) 선택
+# 선택
 
 git checkout --ours path/to/file
 
-# 적용 중인 커밋(theirs) 선택
+# 선택
 
 git checkout --theirs path/to/file
 

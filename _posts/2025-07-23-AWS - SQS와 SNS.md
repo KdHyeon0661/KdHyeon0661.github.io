@@ -41,7 +41,7 @@ category: AWS
 
 ## SQS 심화 — 표준 vs FIFO, 동작·튜닝·패턴
 
-### 표준(Standard) vs FIFO
+### vs FIFO
 
 | 항목 | Standard | FIFO |
 |---|---|---|
@@ -275,7 +275,7 @@ aws sqs receive-message --queue-url $URL --wait-time-seconds 20 --max-number-of-
 aws sqs delete-message --queue-url $URL --receipt-handle $HANDLE
 ```
 
-### Python(boto3) 소비자 — 부분실패 보고(Lambda 통합과 동일 패턴)
+### 소비자 — 부분실패 보고(Lambda 통합과 동일 패턴)
 
 ```python
 import json, boto3

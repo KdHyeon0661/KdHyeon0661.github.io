@@ -54,7 +54,7 @@ kubectl get deploy,svc,cm,secret,pod
 
 ---
 
-## 커스터마이징(값 오버라이드) 세 가지 방식
+## 세 가지 방식
 
 ### CLI로 즉시 오버라이드
 

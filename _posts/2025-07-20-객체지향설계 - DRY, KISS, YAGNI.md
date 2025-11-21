@@ -205,7 +205,7 @@ class OrderService {
 }
 ```
 
-### 공통화 시점(DRY + Strategy) — “세 번째 규칙 등장”
+### — “세 번째 규칙 등장”
 
 ```java
 interface DiscountRule { boolean applicable(Context c); int apply(Context c); }

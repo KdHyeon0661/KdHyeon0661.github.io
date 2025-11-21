@@ -27,7 +27,7 @@ category: 디자인패턴
 
 ---
 
-## 구조(Structure) — 제공한 그림을 보존
+## — 제공한 그림을 보존
 
 ```
           ┌─────────────────────────┐
@@ -212,7 +212,7 @@ public class DarkFactory implements GuiFactory {
 
 ## 변형(Variants)·구현 기법
 
-### 등록(Registry) 기반 추상 팩토리
+### 기반 추상 팩토리
 
 런타임에 **키→팩토리**를 등록/선택(플러그인 친화).
 

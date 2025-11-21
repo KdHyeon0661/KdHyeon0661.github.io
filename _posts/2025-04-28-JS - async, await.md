@@ -159,7 +159,7 @@ async function withLock(task) {
 
 ---
 
-## 동시성(병렬) 패턴
+## 패턴
 
 ### 직렬 vs 병렬
 

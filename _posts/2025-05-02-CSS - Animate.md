@@ -67,7 +67,7 @@ npm install animate.css --save
 
 ---
 
-## 유틸(옵션) 클래스 & CSS 변수로 미세 제어
+## 클래스 & CSS 변수로 미세 제어
 
 ### 속도/지연/반복 (미리 정의된 유틸)
 
@@ -232,7 +232,7 @@ AOS는 자체 `data-aos` 속성을 사용합니다. Animate.css와 **함께 쓸 
 
 ## 재실행/한정 실행/상태 제어 패턴
 
-### (재실행) `animationend`로 클래스 제거
+### `animationend`로 클래스 제거
 
 ```js
 function playAnim(el, name){
@@ -250,7 +250,7 @@ function playAnim(el, name){
 playAnim(document.querySelector('.badge'), 'animate__tada');
 ```
 
-### (한정 실행) 최초 1회만
+### 최초 1회만
 
 ```js
 const once = document.querySelectorAll('.once');
@@ -260,7 +260,7 @@ once.forEach(el => {
 });
 ```
 
-### (상태 토글) “열기/닫기”에 서로 다른 애니메이션
+### “열기/닫기”에 서로 다른 애니메이션
 
 ```js
 function openDrawer(el){

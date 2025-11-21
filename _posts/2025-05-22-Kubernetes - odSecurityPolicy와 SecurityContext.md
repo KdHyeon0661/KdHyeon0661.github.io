@@ -98,7 +98,7 @@ spec:
 
 ---
 
-## PodSecurityPolicy(PSP) — 제거 배경과 교훈
+## — 제거 배경과 교훈
 
 - PSP는 **Admission Controller**로, 파드 생성 시 보안 조건을 검사/거부.
 - **v1.25에서 제거(Deprecated→Removed)**: UX 복잡성·권한 모델 혼란·운영 난이도.
@@ -110,7 +110,7 @@ spec:
 
 ---
 
-## PodSecurity Admission(PSA) — PSP의 내장 대체
+## — PSP의 내장 대체
 
 **네임스페이스 라벨**로 정책 수준을 지정합니다.
 
@@ -208,7 +208,7 @@ spec:
 
 ---
 
-## Gatekeeper(OPA) / Kyverno — PSA로 부족한 “세밀 제어” 채우기
+## / Kyverno — PSA로 부족한 “세밀 제어” 채우기
 
 ### Gatekeeper (ConstraintTemplate + Constraint)
 

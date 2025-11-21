@@ -107,7 +107,7 @@ public:
 
 ---
 
-## 동적 원형 배열 기반 Deque(템플릿) — 실전형
+## — 실전형
 
 **front, back 인덱스**를 원형으로 굴리고, 가득 차면 **2배 확장** + **front부터 연속 복사**.
 
@@ -255,7 +255,7 @@ std::vector<int> zero_one_bfs(int n, const std::vector<std::vector<Edge>>& g, in
 > 일반 큐는 FIFO, **우선순위 큐**는 비교 기준에 따라 **가장 높은 우선순위**가 먼저 나온다.
 > 실전은 대부분 **힙(Heap)** 기반.
 
-## 이진 힙(Binary Heap) — 핵심만 단단하게
+## — 핵심만 단단하게
 
 - **완전 이진 트리**를 **배열**로 저장 (루트 index 0)
 - `push`: 말단 삽입 → **상향 힙화**(heapify-up)
@@ -451,7 +451,7 @@ public:
 
 ## 응용 레시피
 
-### Top-K(스트리밍) — 최소 힙 K 유지
+### — 최소 힙 K 유지
 
 ```cpp
 #include <queue>

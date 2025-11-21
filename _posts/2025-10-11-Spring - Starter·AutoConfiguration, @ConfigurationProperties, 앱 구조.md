@@ -332,7 +332,7 @@ com.example.myapp
 
 ---
 
-### C-2. 계층(헥사고널/클린) 관점의 책임 분리
+### 관점의 책임 분리
 
 - **API/Controller**: HTTP 입출력, DTO 변환, 인증/인가 관점.
 - **Application/UseCase**: **트랜잭션 경계**, 시나리오 실행 순서, 도메인 서비스 호출, 외부 포트 호출.

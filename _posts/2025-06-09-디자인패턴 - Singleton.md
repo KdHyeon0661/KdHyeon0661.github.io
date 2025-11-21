@@ -21,7 +21,7 @@ category: 디자인패턴
 
 ---
 
-## 구조(UML) — 제공 그림 보존
+## — 제공 그림 보존
 
 ```
 ┌─────────────────────┐
@@ -38,7 +38,7 @@ category: 디자인패턴
 
 ---
 
-## 최소 구현(파이썬) — 게으른 초기화
+## — 게으른 초기화
 
 ```python
 class Singleton:
@@ -349,7 +349,7 @@ assert fake.buf == ["hello"]
 
 ## 실전 예제
 
-### 설정(핫 리로드 지원) — 파이썬
+### — 파이썬
 
 ```python
 import json, threading, os, time

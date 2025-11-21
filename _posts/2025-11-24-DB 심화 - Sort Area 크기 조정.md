@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # Sort Area 크기 조정 : PGA 메모리 관리 방식 & AUTO 모드의 크기 결정 원리
 
-## 0) 핵심 요약(먼저 큰 그림)
+## 핵심 요약(먼저 큰 그림)
 
 - **정렬/해시 작업영역(workarea)** 는 PGA에서 **동적으로** 배정된다.
 - `WORKAREA_SIZE_POLICY=AUTO`(권장)일 때 **개별 workarea**가 받는 메모리 =
@@ -20,9 +20,9 @@ category: DB 심화
 
 ---
 
-## 1) PGA 메모리 관리 방식 선택
+## PGA 메모리 관리 방식 선택
 
-### 수동(MANUAL) vs 자동(AUTO) vs AMM(메모리 타깃 기반)
+### vs 자동(AUTO) vs AMM(메모리 타깃 기반)
 
 - **MANUAL**
   - 파라미터: `WORKAREA_SIZE_POLICY=MANUAL`
@@ -56,7 +56,7 @@ ALTER SYSTEM SET hash_area_size = 128M;
 
 ---
 
-## 2) AUTO 모드에서 크기 결정 원리(“준-공식”)
+## AUTO 모드에서 크기 결정 원리(“준-공식”)
 
 ### 개념 모델(실무 친화적 수식)
 
@@ -125,7 +125,7 @@ WHERE  sn.name IN ('workarea executions - optimal',
 
 ---
 
-## 3) 실습 시나리오 — 정렬 한 번으로 One-pass ↔ Optimal 만들기
+## 실습 시나리오 — 정렬 한 번으로 One-pass ↔ Optimal 만들기
 
 > **아이디어**: `PGA_AGGREGATE_TARGET`을 다르게 설정하고 같은 **대형 정렬**을 실행,
 > `V$PGASTAT.global memory bound`와 `V$SQL_WORKAREA_ACTIVE`의 **EXPECTED\_*** 대비 **실제 배정(last\_memory\_used)** 를 비교한다.
@@ -228,7 +228,7 @@ WHERE  sn.name IN ('workarea executions - optimal','workarea executions - onepas
 
 ---
 
-## 4) 자동 PGA 메모리 관리 하에서의 “결정 공식”을 실무 언어로
+## 자동 PGA 메모리 관리 하에서의 “결정 공식”을 실무 언어로
 
 정렬/해시 **workarea**가 배정받는 크기는 다음과 같이 **결정**된다.
 
@@ -255,7 +255,7 @@ WHERE  sn.name IN ('workarea executions - optimal','workarea executions - onepas
 
 ---
 
-## 5) 튜닝 절차(체크리스트)
+## 튜닝 절차(체크리스트)
 
 1. **현재 상태 진단**
    - `V$SQL_WORKAREA[_ACTIVE]`에서 **SORT/HASH 작업의 Optimal/One/Multi 비율** 확인
@@ -276,7 +276,7 @@ WHERE  sn.name IN ('workarea executions - optimal','workarea executions - onepas
 
 ---
 
-## 6) 예제: 같은 쿼리, 다른 결과(옵션 조합)
+## 예제: 같은 쿼리, 다른 결과(옵션 조합)
 
 ### “정렬 자체”를 줄여 메모리 의존도를 낮추기(권장)
 
@@ -315,7 +315,7 @@ WHERE name IN ('global memory bound','pga aggregate target','total PGA allocated
 
 ---
 
-## 7) 병렬 실행(PX) 주의
+## 병렬 실행(PX) 주의
 
 - PX 환경에선 **슬레이브마다 별도 workarea**가 생긴다.
 - 같은 쿼리라도 DOP가 높으면 **활성 workarea 수가 폭증** → **GMB 하락** → One/Multi 증가
@@ -323,7 +323,7 @@ WHERE name IN ('global memory bound','pga aggregate target','total PGA allocated
 
 ---
 
-## 8) 자주 묻는 질문(FAQ)
+## 자주 묻는 질문(FAQ)
 
 - **Q. AUTO에서 특정 세션/쿼리만 크게 주고 싶다?**
   A. 원칙적으론 **전역 알고리즘**이 공정하게 나눔. 개별적으로 조정하긴 어렵고,
@@ -339,7 +339,7 @@ WHERE name IN ('global memory bound','pga aggregate target','total PGA allocated
 
 ---
 
-## 9) 최종 체크리스트
+## 최종 체크리스트
 
 - [ ] `WORKAREA_SIZE_POLICY=AUTO` 사용 중인가?
 - [ ] `V$PGASTAT.global memory bound`가 **너무 낮지 않은가**?
@@ -352,7 +352,7 @@ WHERE name IN ('global memory bound','pga aggregate target','total PGA allocated
 
 ---
 
-## 10) 결론
+## 결론
 
 - AUTO 모드에서 **workarea 배정**은 “**필요한 최적 크기**”와 “**시스템 전역 상한(GMB)**” 중 **작은 값**으로 결정된다.
 - 공식은 비공개지만, **관측 가능한 지표**(GMB, EXPECTED\_*, One/Multi 비율)로 **동작을 추정**하고,

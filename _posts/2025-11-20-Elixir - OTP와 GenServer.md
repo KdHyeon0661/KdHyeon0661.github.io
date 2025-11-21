@@ -31,7 +31,7 @@ OTP(Open Telecom Platform)는 원래 **통신 시스템**을 위해 만들어진
 
 ---
 
-### 행위(Behaviours) — “콜백만 구현하면 된다”
+### — “콜백만 구현하면 된다”
 
 행위(behaviour)는 **콜백 기반 프레임워크**다.
 패턴은 항상 같다:
@@ -71,7 +71,7 @@ GenServer를 예로 들면:
 
 ---
 
-### 배치/부트스트랩(Application) — “앱의 수명주기를 정의”
+### — “앱의 수명주기를 정의”
 
 `mix new my_app --sup` 을 하면 기본으로 **OTP Application 템플릿**이 만들어진다.
 
@@ -126,7 +126,7 @@ end
 
 ---
 
-### 슈퍼비전(Supervision) — 실패 격리 및 자동 복구
+### — 실패 격리 및 자동 복구
 
 OTP의 설계 철학은 자주 인용되는 문장으로 요약된다.
 
@@ -170,7 +170,7 @@ MyApp.Supervisor
 
 ---
 
-### 관찰(Observability) — Logger, Telemetry, 모니터링
+### — Logger, Telemetry, 모니터링
 
 OTP/Elixir는 **관찰 가능한 시스템**을 만드는 걸 강하게 밀어붙인다.
 
@@ -364,7 +364,7 @@ end
 1. **서버 타임아웃** — 비활성/주기 작업
 2. **클라이언트 타임아웃** — 응답 제한
 
-#### 1) 서버 비활성 타임아웃: `{:noreply, state, timeout}`
+#### 서버 비활성 타임아웃: `{:noreply, state, timeout}`
 
 초안의 패턴:
 
@@ -391,7 +391,7 @@ end
   - **배치 flush**,
   - idle 상태에서 **자기 종료** 등을 구현할 수 있다.
 
-#### 2) 클라이언트 call 타임아웃: `GenServer.call/3`
+#### 클라이언트 call 타임아웃: `GenServer.call/3`
 
 ```elixir
 GenServer.call(pid, :ping, 2_000)
@@ -473,7 +473,7 @@ end
 - `call`은 **요청자 블록**으로 **자연스러운 역압**을 만든다.
 - `cast`/`send`는 무한히 쌓일 수 있다.
 
-#### 1) 큐 한도 전략
+#### 큐 한도 전략
 
 ```elixir
 @max_q 2_000
@@ -504,7 +504,7 @@ end
   - 메시지를 **무시**, **모니터링 시스템에 경고**,
     **별도 알람 프로세스에 통지** 등 정책을 택할 수 있다.
 
-#### 2) 직관적인 큐 모델
+#### 직관적인 큐 모델
 
 간단한 M/M/1 큐로 직관을 잡으면:
 
@@ -530,7 +530,7 @@ end
 
 ### 이름 붙이기: 로컬, 글로벌, `:via`(Registry)
 
-##### 1) 로컬 이름
+##### 로컬 이름
 
 ```elixir
 {:ok, _} = KV.Server.start_link(name: KV.Server)
@@ -539,7 +539,7 @@ GenServer.call(KV.Server, {:put, :a, 1})
 
 - 단일 노드 환경 혹은 **“이 서버는 한 노드에 하나”**일 때 편하다.
 
-##### 2) 글로벌 이름
+##### 글로벌 이름
 
 ```elixir
 {:ok, _} =
@@ -551,7 +551,7 @@ GenServer.call({:global, :kv}, {:put, :a, 1})
 - 클러스터 전체에서 유일한 이름이 된다.
 - 전역 합의/락이 필요하므로, **빈번한 등록/해제**에는 적합하지 않다.
 
-##### 3) Registry + `:via`
+##### Registry + `:via`
 
 ```elixir
 children = [

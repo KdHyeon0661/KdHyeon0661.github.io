@@ -357,7 +357,7 @@ git submodule sync --recursive
 
 ---
 
-## 서브모듈 vs 서브트리(Subtree) — 실전 비교
+## — 실전 비교
 
 | 항목 | Submodule | Subtree |
 |---|---|---|

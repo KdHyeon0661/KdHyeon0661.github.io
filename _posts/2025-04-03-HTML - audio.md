@@ -197,7 +197,7 @@ document.querySelectorAll('button').forEach(b=>{
 
 ---
 
-## 커스텀 컨트롤(UI) 만들기
+## 만들기
 
 네이티브 `controls`는 일관성이 높지만 스타일 제어가 제한. 직접 UI를 만들 수 있다.
 
@@ -245,7 +245,7 @@ toggle.addEventListener('click', async () => {
 - **대체 수단**: 자막/가사 파일(WebVTT)이나 **텍스트 대본** 링크 제공.
 - 키보드 접근(탭/스페이스/엔터)으로 조작 가능하게 구성.
 
-### WebVTT 캡션(가사) 예시
+### 예시
 
 ```html
 <audio controls>
@@ -357,7 +357,7 @@ document.addEventListener('click', () => { if (ctx.state !== 'running') ctx.resu
 
 ---
 
-## 스트리밍(라이브/롱폼) 개요: HLS/DASH
+## 개요: HLS/DASH
 
 긴 오디오/라이브 라디오/팟캐스트에는 **적응형 스트리밍**이 유리:
 - HLS (`.m3u8`), DASH (`.mpd`)

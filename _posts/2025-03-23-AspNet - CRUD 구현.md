@@ -102,7 +102,7 @@ Pages/
 
 ---
 
-## 목록(Read) — 검색/정렬/페이징(서버 사이드)
+## — 검색/정렬/페이징(서버 사이드)
 
 ### ViewModel 정의
 
@@ -272,7 +272,7 @@ public class IndexModel : PageModel
 
 ---
 
-## Create(생성) — 오버포스팅 방지 + PRG + TempData 알림
+## — 오버포스팅 방지 + PRG + TempData 알림
 
 ### DTO(입력 전용)로 오버포스팅 방지
 
@@ -370,7 +370,7 @@ public class CreateModel : PageModel
 
 ---
 
-## Details(상세) — 비동기 + NotFound 처리
+## — 비동기 + NotFound 처리
 
 ### Details.cshtml.cs
 
@@ -416,9 +416,9 @@ public class DetailsModel : PageModel
 
 ---
 
-## Edit(수정) — 낙관적 동시성 제어 (RowVersion)
+## — 낙관적 동시성 제어 (RowVersion)
 
-### DTO(수정 전용) + RowVersion 포함
+### + RowVersion 포함
 
 ```csharp
 public class BlogEditDto
@@ -551,7 +551,7 @@ public class EditModel : PageModel
 
 ---
 
-## Delete(삭제) — 소프트 삭제 + 확인 페이지
+## — 소프트 삭제 + 확인 페이지
 
 ### Delete.cshtml.cs
 
@@ -614,7 +614,7 @@ public class DeleteModel : PageModel
 
 ---
 
-## 알림 Partial(TempData) — `_StatusMessage.cshtml`
+## — `_StatusMessage.cshtml`
 
 ```razor
 @* Pages/Shared/_StatusMessage.cshtml *@

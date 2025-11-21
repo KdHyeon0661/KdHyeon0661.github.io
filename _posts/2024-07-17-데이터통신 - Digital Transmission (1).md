@@ -92,7 +92,7 @@ category: DataCommunication
 
 ## 4.1.1.B 코드별 동작/예제/대역폭 감각
 
-### (1) NRZ-L / NRZ-I (Polar)
+### NRZ-L / NRZ-I (Polar)
 
 - **NRZ-L**: 1 ↔ \(+V\), 0 ↔ \(-V\) (혹은 반대로)
 - **NRZ-I**: **1에서만 전이**(토글), 0은 유지
@@ -119,14 +119,14 @@ def nrzi_encode(bits, V=1):
 
 ---
 
-### (2) RZ (Return-to-Zero)
+### RZ (Return-to-Zero)
 
 - 각 비트 기간 **중간에 0**으로 복귀 → **전이 밀도↑**로 CDR 용이
 - 단점: 대역폭 증가, 전력↑
 
 ---
 
-### (3) Manchester / Differential Manchester (Biphase)
+### Manchester / Differential Manchester (Biphase)
 
 - **Manchester**: 한 비트 **중간 전이**(클럭 포함). `0`은 하강, `1`은 상승(또는 반대)
 - **Diff-Manchester**: 비트 **시작 전이**로 클럭, `0`일 때 **중간 전이** 추가
@@ -148,7 +148,7 @@ def manchester(bits, V=1):
 
 ---
 
-### (4) AMI / Pseudoternary (Bipolar)
+### AMI / Pseudoternary (Bipolar)
 
 - **AMI**: `0`은 0V, `1`은 +V/−V **교번**
   - 평균 0 → **DC 성분 억제**, **위반(두 번 연속 같은 극성)**은 에러 힌트
@@ -171,7 +171,7 @@ def ami(bits, V=1):
 
 ---
 
-### (5) MLT-3 (Multilevel 3)
+### MLT-3 (Multilevel 3)
 
 - 상태 순환: `0 → +V → 0 → −V → 0 → ...` (데이터 ‘1’일 때만 다음 상태로 진전)
 - 고주파수 성분 감소(**EMI 저감**)
@@ -265,12 +265,12 @@ def lfsr_scramble(bits, poly=(7,4), seed=0b1111111):
 
 ## 예제 — 코드 선택·대역폭·전이밀도
 
-### 예제 1) 100 Mbps 링크, Manchester vs NRZ
+### 100 Mbps 링크, Manchester vs NRZ
 
 - **Manchester**: \(r=1,\; S\approx N=100\ \text{MBd}\) → 대역폭 요구 큼, **CDR 매우 안정**
 - **NRZ**: \(S\approx N/2=50\ \text{MBd}\) → 대역폭 절감, **런 길이 위험**(추가 대책 필요)
 
-### 예제 2) 125 Mbps 링크, 4B/5B + NRZ-I + MLT-3 (100BASE-TX)
+### 125 Mbps 링크, 4B/5B + NRZ-I + MLT-3 (100BASE-TX)
 
 - 4B/5B로 bit rate가 **1.25×**: 125 Mbps → 5/4 오버헤드
 - NRZ-I로 부호화 후 MLT-3로 전이 주파수 저감 → UTP에서 EMI·대역 요구 완화
@@ -353,7 +353,7 @@ w_m    = manchester_samples(bits)
 print("NRZ-L transitions:", transitions(w_nrz))
 print("NRZ-I transitions:", transitions(w_nrzi))
 print("Manchester transitions:", transitions(w_m))
-# 전이 수 ~ 신호 전송률에 비례 → 대역폭 감각(대략) 비교 가능
+# 비교 가능
 
 ```
 
@@ -361,19 +361,19 @@ print("Manchester transitions:", transitions(w_m))
 
 ## 계산 예제 모음
 
-### 예제 A) NRZ-L로 200 Mbps 달성 시 신호율·대역폭
+### NRZ-L로 200 Mbps 달성 시 신호율·대역폭
 
 - \(r=1\), 평균 \(S\approx N/2 = 100\ \text{MBd}\)
 - 근사 대역폭 \(B\sim \kappa \cdot 100\ \text{MHz}\)
 - 전이 밀도 데이터 의존 → CDR 안정 위해 **블록코딩/스크램블러** 고려
 
-### 예제 B) Manchester로 200 Mbps 달성
+### Manchester로 200 Mbps 달성
 
 - \(S\approx N = 200\ \text{MBd}\)
 - 대역폭 요구 ↑, 대신 **CDR 최강/폴라리티 변화 견고**
 - 케이블 짧고 클럭회로 간단히 하고 싶을 때 유리
 
-### 예제 C) 1 Gbps UTP 설계 감각
+### 1 Gbps UTP 설계 감각
 
 - 순수 NRZ는 EMI/스펙트럼·런 길이 문제가 큼
 - **RLL+블록(8b/10b or 4B/5B)** + **MLT-3/스크램블**로

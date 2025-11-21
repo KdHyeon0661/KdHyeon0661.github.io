@@ -48,7 +48,7 @@ category: 디자인패턴
 
 ---
 
-## 기본 구현 예시 (Python) — 그래픽 씬 트리
+## — 그래픽 씬 트리
 
 ```python
 from abc import ABC, abstractmethod
@@ -120,7 +120,7 @@ for node in scene.iter():
 
 ---
 
-## 설계 변형: “투명(Transparent) vs 안전(Safe) 컴포지트”
+## vs 안전(Safe) 컴포지트”
 
 - **투명 컴포지트**: `Component`에 `add/remove` 포함 → Leaf도 노출하지만 Leaf에서는 예외 발생.
   장점: 클라이언트 코드가 **완전히 동일한 인터페이스** 사용.
@@ -136,7 +136,7 @@ for node in scene.iter():
 
 ---
 
-## 순회(Traversal)·집계(Fold) 패턴
+## 패턴
 
 트리 연산의 다수는 **“자식들의 결과를 결합(집계)”**하는 형태다.
 예: 도형 개수, 총 길이/면적, 파일 크기 합, UI의 레이아웃 측정 등.

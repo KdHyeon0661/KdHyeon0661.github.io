@@ -27,7 +27,7 @@ category: Data Structure
 
 ---
 
-## ART(Adaptive Radix Tree) 자세히 보기
+## 자세히 보기
 
 ### 핵심 구조
 

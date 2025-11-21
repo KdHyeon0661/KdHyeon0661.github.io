@@ -318,7 +318,7 @@ for p in (8080, 9090):
 ## 패킷 캡처 필터
 
 ```bash
-# TCP 443(HTTPS) 트래픽 캡처
+# 트래픽 캡처
 
 sudo tcpdump -i eth0 -n -vv 'tcp port 443' -w tls.pcap
 ```

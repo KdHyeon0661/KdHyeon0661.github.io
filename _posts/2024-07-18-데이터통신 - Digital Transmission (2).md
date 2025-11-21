@@ -164,7 +164,7 @@ def ami(bits, V=1.0):
 
 ---
 
-## Multilevel (다준위) — 2B1Q / 8B6T / 4D-PAM5
+## — 2B1Q / 8B6T / 4D-PAM5
 
 ### 매핑 조건과 여분 패턴 활용
 

@@ -230,7 +230,7 @@ function appendLine(text) {
 
 ---
 
-## DM(1:1)과 방(그룹) — 실제 현업 패턴
+## — 실제 현업 패턴
 
 ### UserIdentifier 매핑 (커스텀 사용자 키)
 
@@ -289,7 +289,7 @@ await connection.invoke('SendDirect', 'alice', 'DM hi!');
 
 ---
 
-## Presence(접속/상태) 추적
+## 추적
 
 ### In-Memory 트래커(단일 인스턴스)
 
@@ -406,7 +406,7 @@ const connection = new signalR.HubConnectionBuilder()
 
 ---
 
-## 메시지 영속화(EF Core) & 최근 메시지 로드
+## & 최근 메시지 로드
 
 ### 모델 & DbContext
 
@@ -479,7 +479,7 @@ history.forEach(m => appendLine(`[${new Date(m.utc).toLocaleTimeString()}] ${m.f
 
 ---
 
-## 스트리밍 & 바이너리(대용량) 전송
+## 전송
 
 ### 서버→클라이언트 스트리밍
 
@@ -614,7 +614,7 @@ public async Task SafeSend(string message)
 
 ---
 
-## 리버스 프록시(Nginx) 설정
+## 설정
 
 WebSocket 업그레이드 헤더 필수:
 
@@ -744,7 +744,7 @@ public Task KickUser(string userId) =>
 
 ---
 
-## 부록 A) .NET 콘솔 클라이언트
+## .NET 콘솔 클라이언트
 
 ```csharp
 // src/MyChatApp.Client.Console/Program.cs
@@ -776,7 +776,7 @@ while (true)
 
 ---
 
-## 부록 B) 클라이언트 권장 옵션 요약(JS)
+## 클라이언트 권장 옵션 요약(JS)
 
 ```javascript
 const connection = new signalR.HubConnectionBuilder()

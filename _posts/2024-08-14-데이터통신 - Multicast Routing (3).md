@@ -21,7 +21,7 @@ category: DataCommunication
 
 ## IGMP 개요 및 버전 정리
 
-### 1) IGMP의 역할
+### IGMP의 역할
 
 - 프로토콜 번호: **IP Protocol 2** (ICMP=1, TCP=6, UDP=17)
 - 범위: **IPv4 전용** (IPv6는 MLD 사용)
@@ -30,7 +30,7 @@ category: DataCommunication
   - 라우터: “**이 서브넷에 아직 G를 받는 사람 있냐?**”를 **Query**로 확인
   - 라우터: IGMP 정보 + 멀티캐스트 라우팅 프로토콜(PIM 등)을 결합해 **트리 구축**
 
-### 2) IGMP 버전별 큰 차이
+### IGMP 버전별 큰 차이
 
 RFC 기준으로 정리하면:
 

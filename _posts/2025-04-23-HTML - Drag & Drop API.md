@@ -191,7 +191,7 @@ area.addEventListener('drop', async (e) => {
 
 ---
 
-## 카드 정렬(재배치) — Sortable UI를 순수 DnD로 구현
+## — Sortable UI를 순수 DnD로 구현
 
 ```html
 <style>

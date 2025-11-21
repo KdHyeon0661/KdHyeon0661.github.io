@@ -109,7 +109,7 @@ ORDER  BY disk_reads DESC FETCH FIRST 30 ROWS ONLY;
 
 ## 튜닝 전략: “메모리 승격” + “물리 I/O 품질 개선”
 
-### 메모리 승격(히트율↑) 전략
+### 전략
 
 1) **워크로드 축소**:
    - **부분범위처리(Stopkey)**, **Keyset 페이지**로 **읽을 양 자체를 줄임**
@@ -144,7 +144,7 @@ WHERE  order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -3);
 
 ---
 
-## 네트워크 파일시스템(NFS/NAS) 캐시가 I/O 효율에 미치는 영향
+## 캐시가 I/O 효율에 미치는 영향
 
 ### 레이어별 캐시
 

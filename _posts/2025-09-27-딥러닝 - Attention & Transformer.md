@@ -241,7 +241,7 @@ def rope_rotate(x, base=10000):
 
 ---
 
-## G. Transformer 블록(Pre-LN) 구현
+## 구현
 
 ### G-1. Feed-Forward (FFN)
 

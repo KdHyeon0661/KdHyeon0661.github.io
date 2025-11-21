@@ -234,7 +234,7 @@ EXEC DBMS_MONITOR.SERV_MOD_ACT_TRACE_ENABLE(
 4) 종료 후 **OFF**
 5) 파일을 **TKPROF** 로 묶어 주요 SQL/대기 요약
 
-### 특정 사용자 화면 느림 — Service 단위(짧게) 트레이스
+### 트레이스
 
 **상황**: 사용자 불특정, 특정 서비스(웹) 레이어 전체에서 간헐적 느림
 

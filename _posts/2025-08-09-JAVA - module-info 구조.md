@@ -78,7 +78,7 @@ com.example.app      → requires transitive com.example.api, requires com.examp
 
 API는 폭넓게 `exports`, 구현은 최대한 은닉(필요 시 `exports … to`).
 
-### 직렬화/바인딩(리플렉션) 최소 개방
+### 최소 개방
 
 ```java
 module com.example.bind {

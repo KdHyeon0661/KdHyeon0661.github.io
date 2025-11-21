@@ -207,7 +207,7 @@ public class CodeTableService
 }
 ```
 
-### 쏠림 방지(Thundering Herd) — Single Flight
+### — Single Flight
 
 ```csharp
 // 키별 단일 진입 보호
@@ -331,7 +331,7 @@ public IActionResult GetArticle([FromQuery]string lang = "ko")
 
 ---
 
-## Output Caching(.NET 8+) — 라우트/정책 기반 서버 캐시
+## — 라우트/정책 기반 서버 캐시
 
 ### 기본 사용
 
@@ -454,7 +454,7 @@ app.MapGet("/api/products/{id:int}", async (int id, HttpContext ctx, AppDbContex
 
 ---
 
-## Rate Limiting(.NET 8) — 남용 방지로 안정성 향상
+## — 남용 방지로 안정성 향상
 
 ```csharp
 builder.Services.AddRateLimiter(_ => _.AddFixedWindowLimiter("api", opt =>
@@ -557,7 +557,7 @@ var data = await policy.ExecuteAsync(() => LoadFromOriginAsync());
 
 ---
 
-## 부록 A) 간단 성능 실험 템플릿(BenchmarkDotNet)
+## 간단 성능 실험 템플릿(BenchmarkDotNet)
 
 ```csharp
 [MemoryDiagnoser]
@@ -580,7 +580,7 @@ dotnet run -c Release
 
 ---
 
-## 부록 B) 미세 팁
+## 미세 팁
 
 - `IOptionsSnapshot`는 요청마다 바인딩 → **고빈도 경로**에선 **IOptionsMonitor** 사용.
 - 로그는 **Information 이하**를 프로덕션에서 줄이고, **구조화 로깅**만 남기기.

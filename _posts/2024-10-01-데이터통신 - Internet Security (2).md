@@ -4,7 +4,7 @@ title: 데이터 통신 - Internet Security (2)
 date: 2024-10-01 23:20:23 +0900
 category: DataCommunication
 ---
-# 전송 계층 보안 (TLS/SSL) — 아키텍처와 네 개의 프로토콜
+# — 아키텍처와 네 개의 프로토콜
 
 ## SSL/TLS의 위치와 기본 개념
 
@@ -87,7 +87,7 @@ Application Protocols   →  HTTP, SMTP, IMAP, ...
         TCP
 ```
 
-### 세션(Session) vs 연결(Connection)
+### vs 연결(Connection)
 
 교과서에서 자주 강조하는 개념:
 

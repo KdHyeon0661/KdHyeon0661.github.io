@@ -4,7 +4,7 @@ title: Data Structure - 펜윅 트리
 date: 2024-12-20 19:20:23 +0900
 category: Data Structure
 ---
-# 스플레이 트리 (Splay Tree) — 자가 조정 BST 완전 정리
+# — 자가 조정 BST 완전 정리
 
 ## 개요와 동기
 
@@ -268,7 +268,7 @@ static void eraseRange(Node*& root, int lo, int hi){
 
 ---
 
-## 순서 통계(k-th) & 순위(rank)
+## & 순위(rank)
 
 서브트리 크기 `sz` 로 **k-th(1-기반)**, **rank**(작은 원소 개수) 지원이 간단하다.
 
@@ -303,7 +303,7 @@ static int rankOf(Node*& root, int key){
 
 ---
 
-## 하향식(Top-Down) 스플레이 스니펫
+## 스플레이 스니펫
 
 탐색하면서 세 개의 체인을 유지한다. 구현이 간결하고 꼬리 작업이 적다.
 

@@ -6,7 +6,7 @@ category: DB 심화
 ---
 # 서브쿼리 **Unnesting** 완전 가이드
 
-## 0) 왜 “서브쿼리 Unnesting”인가?
+## 왜 “서브쿼리 Unnesting”인가?
 
 - **정의:** 옵티마이저가 **실행계획 생성 전에**, 상관(또는 비상관) **서브쿼리를 조인 형태로 재작성**하는 **쿼리 변환(Query Transformation)** 기법.
 - **핵심 효과:**
@@ -16,9 +16,9 @@ category: DB 심화
 
 ---
 
-## 1) 서브쿼리의 **분류**
+## 서브쿼리의 **분류**
 
-### 상관성(correlation) 기준
+### 기준
 
 - **상관 서브쿼리**(Correlated): 내부가 **바깥 쿼리의 컬럼**을 참조
   ```sql
@@ -53,7 +53,7 @@ category: DB 심화
 
 ---
 
-## 2) **Unnesting**의 의미 & 이점
+## **Unnesting**의 의미 & 이점
 
 ### 의미
 
@@ -68,7 +68,7 @@ category: DB 심화
 
 ---
 
-## 3) **준비 테이블**(예시용)
+## **준비 테이블**(예시용)
 
 > 이미 이전 글에서 사용한 스키마가 있다면 **재생성 불필요**합니다. 이하 예제는 `D_CUSTOMER`, `D_PRODUCT`, `F_SALES`를 가정합니다.
 
@@ -81,7 +81,7 @@ CREATE INDEX ix_fs_prod_dt     ON f_sales(prod_id, sales_dt);
 
 ---
 
-## 4) **기본 예시**로 이해하는 Unnesting
+## **기본 예시**로 이해하는 Unnesting
 
 ### `EXISTS` → **SEMI JOIN** (가장 고전적)
 
@@ -156,7 +156,7 @@ WHERE  p.prod_id IN (SELECT s.prod_id
 
 ---
 
-### **스칼라 서브쿼리**(SELECT-list) → **조인 + 그룹 집계**
+### → **조인 + 그룹 집계**
 
 **원형(느린 패턴)**
 ```sql
@@ -203,7 +203,7 @@ WHERE  p.prod_id > ALL (SELECT s.prod_id FROM f_sales s WHERE s.sales_dt >= :d);
 
 ---
 
-## 5) 언네스트 **적용/제한** 요약
+## 언네스트 **적용/제한** 요약
 
 - **잘 되는 경우**
   - `EXISTS/IN/NOT EXISTS` 기반의 **필터** 서브쿼리
@@ -223,7 +223,7 @@ WHERE  p.prod_id > ALL (SELECT s.prod_id FROM f_sales s WHERE s.sales_dt >= :d);
 
 ---
 
-## 6) **언네스트된 쿼리의 조인 순서 조정** (핵심 실전)
+## **언네스트된 쿼리의 조인 순서 조정** (핵심 실전)
 
 언네스트 후에는 “서브쿼리”가 **하나의 테이블(또는 집합)**처럼 **JOIN 트리**에 들어옵니다. 이때 **조인 순서/방법**은 일반 조인과 똑같이 **비용 기반**으로 결정됩니다. 필요하면 힌트로 조정하세요.
 
@@ -289,7 +289,7 @@ WHERE p.category = 'ELEC';
 
 ---
 
-## 7) **고급 케이스**
+## **고급 케이스**
 
 ### OR 조건과 언네스트의 **연쇄 변환**
 
@@ -348,7 +348,7 @@ WHERE  NOT EXISTS (SELECT 1 FROM f_sales s WHERE s.prod_id = p.prod_id);
 
 ---
 
-## 8) **관찰/진단** 방법
+## **관찰/진단** 방법
 
 ```sql
 -- 실측 실행계획 + 변환 노트/프레디킷 이동 확인
@@ -363,7 +363,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-## 9) 성능 체감 **시나리오**(OLTP/리포트)
+## 성능 체감 **시나리오**(OLTP/리포트)
 
 ### OLTP: 스칼라 다건 호출 → 조인
 
@@ -377,7 +377,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-## 10) **체크리스트**
+## **체크리스트**
 
 - [ ] `EXISTS/IN/NOT EXISTS`는 **언네스트**로 **SEMI/ANTI** 유도
 - [ ] `NOT IN` 금지(또는 **NULL 제거**) → `NOT EXISTS` 선호
@@ -391,7 +391,7 @@ FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ## 부록 A. **미니 실습 모음**
 
-### A-1) EXISTS → SEMI JOIN + 조인 순서 지정
+### EXISTS → SEMI JOIN + 조인 순서 지정
 
 ```sql
 EXPLAIN PLAN FOR
@@ -406,7 +406,7 @@ WHERE  EXISTS (
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ```
 
-### A-2) 스칼라 언네스트(집계→조인) + 해시조인 유도
+### 스칼라 언네스트(집계→조인) + 해시조인 유도
 
 ```sql
 EXPLAIN PLAN FOR
@@ -423,7 +423,7 @@ WHERE p.category = 'ELEC';
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ```
 
-### A-3) OR-EXPAND + 언네스트
+### OR-EXPAND + 언네스트
 
 ```sql
 EXPLAIN PLAN FOR
@@ -434,7 +434,7 @@ WHERE  EXISTS (SELECT 1 FROM d_product  p WHERE p.prod_id=s.prod_id AND p.brand=
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ```
 
-### A-4) NOT IN → NOT EXISTS로 교체
+### NOT IN → NOT EXISTS로 교체
 
 ```sql
 -- 나쁜 예(서브쿼리에 NULL 있으면 거의 공집합)

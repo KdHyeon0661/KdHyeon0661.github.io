@@ -16,7 +16,7 @@ category: DataCommunication
 
 ## Architecture — 인터넷 메일 시스템의 구성 요소와 동작
 
-### 1) 기본 컴포넌트와 역할
+### 기본 컴포넌트와 역할
 
 IETF의 *Internet Mail Architecture* 문서와 NIST 가이드에 따르면, 현대 이메일 시스템은 **역할(role)** 기반으로 나누어 설명하는 것이 일반적이다.
 
@@ -35,18 +35,18 @@ IETF의 *Internet Mail Architecture* 문서와 NIST 가이드에 따르면, 현�
 - **SMTP (Simple Mail Transfer Protocol)**: 메일을 *보낼 때* 사용 (MUA→MSA, MSA→MTA, MTA→MTA, MTA→MDA)
 - **POP3/IMAP**: 메일을 *읽을 때* 사용 (MUA→MAA)
 
-### 2) 기본 흐름: Alice가 Bob에게 메일을 보낼 때
+### 기본 흐름: Alice가 Bob에게 메일을 보낼 때
 
 `alice@example.com` 이 `bob@univ.edu`로 메일을 보내는 상황을 보자.
 
-#### (1) 사용자 단계: MUA
+#### 사용자 단계: MUA
 
 1. Alice는 MUA(예: Thunderbird)에서 새 메일 작성
 2. MUA는 사용자가 `보내기`를 누르는 순간, 메일을 **SMTP 클라이언트** 형태로 변환:
    - 헤더(From, To, Subject, Date…) + 본문(텍스트/HTML)
    - 첨부 파일은 MIME 인코딩(base64 등)으로 포함
 
-#### (2) 송신 도메인 내부: MSA/MTA
+#### 송신 도메인 내부: MSA/MTA
 
 3. MUA → 송신 서버(MSA)로 SMTP 제출
    - 보통 포트 **587/TCP (submission)** + TLS(STARTTLS 또는 직접 TLS)
@@ -55,7 +55,7 @@ IETF의 *Internet Mail Architecture* 문서와 NIST 가이드에 따르면, 현�
    - 해당 도메인의 수신 MTA IP를 찾음
 6. 송신 MTA → 수신 MTA로 SMTP 전송 (보통 25/TCP, 점점 TLS 사용이 증가하는 추세)
 
-#### (3) 수신 도메인 내부: MDA/MAA
+#### 수신 도메인 내부: MDA/MAA
 
 7. 수신 MTA는 **수신 정책, 스팸 필터, 바이러스 검사** 등 수행
 8. 최종 승인되면 **MDA**가 Bob의 메일박스(예: `/var/mail/bob` 또는 DB)에 저장
@@ -79,7 +79,7 @@ IETF의 *Internet Mail Architecture* 문서와 NIST 가이드에 따르면, 현�
 [ Bob(MUA) ]
 ```
 
-### 3) 메일 주소, DNS, MX
+### 메일 주소, DNS, MX
 
 **메일 주소**: `local-part@domain`
 
@@ -100,7 +100,7 @@ mx2.example.com.  IN A     203.0.113.20
 - 송신 MTA는 우선순위 10, 20을 고려해 서버를 선택한다.
 - 다수의 MX를 둠으로써 **장애 내성**을 확보한다.
 
-### 4) 메시지 포맷: RFC 5322, MIME
+### 메시지 포맷: RFC 5322, MIME
 
 인터넷 이메일 메시지는 크게 두 부분으로 구성된다:
 
@@ -131,7 +131,7 @@ Alice
 - 본문: 텍스트 또는 MIME 구조
 - 첨부 파일, HTML 본문, 다국어 등은 모두 **MIME 확장**으로 제공된다.
 
-### 5) SMTP 세션 예제 (단순 형태)
+### SMTP 세션 예제 (단순 형태)
 
 테스트용으로 로컬 MTA에 직접 SMTP를 던져볼 수 있다. (실제 인터넷에서는 인증·TLS를 반드시 사용해야 한다.)
 
@@ -170,7 +170,7 @@ QUIT
 
 이제 데스크톱 MUA 대신 **브라우저**에서 Gmail/Outlook.com 같은 웹 메일을 쓸 때 구조가 어떻게 달라지는지 보자.
 
-### 1) 전통적인 MUA vs 웹 메일
+### 전통적인 MUA vs 웹 메일
 
 | 항목 | 전통 MUA (Outlook, Thunderbird 등) | 웹 메일 (Gmail, Outlook.com 등) |
 |------|------------------------------------|----------------------------------|
@@ -182,7 +182,7 @@ QUIT
 내부적으로는 웹 메일도 **백엔드에서 SMTP/IMAP 계열 프로토콜**이나 유사한 메일 저장소 프로토콜을 사용하지만,
 사용자 입장에서는 **HTTP/HTTPS API**만 보게 된다.
 
-### 2) 웹 메일 아키텍처
+### 웹 메일 아키텍처
 
 개념적으로 다음과 같이 볼 수 있다:
 
@@ -209,7 +209,7 @@ QUIT
   - 스팸 필터, 바이러스 검사, 정책 엔진
   - SMTP/IMAP 게이트웨이 등
 
-### 3) 웹 메일에서 메일 보내기: 예시 시나리오
+### 웹 메일에서 메일 보내기: 예시 시나리오
 
 `alice@gmail.com` 이 브라우저에서 웹 메일로 메일을 보낼 때:
 
@@ -235,7 +235,7 @@ QUIT
 즉, **사용자–서버 구간은 HTTP(S)**,
 **서버–서버 구간은 여전히 SMTP**라는 점이 중요하다.
 
-### 4) 웹 메일에서 메일 읽기
+### 웹 메일에서 메일 읽기
 
 메일 읽기 역시 REST/GraphQL 스타일 API를 통해 이루어질 수 있다:
 
@@ -260,7 +260,7 @@ Authorization: Bearer <token>
 
 와 같이 메시지 전체를 가져와 화면에 표시한다.
 
-### 5) 푸시, 알림, 오프라인
+### 푸시, 알림, 오프라인
 
 현대 웹 메일은 다음과 같은 추가 기능을 제공한다:
 
@@ -307,7 +307,7 @@ Authorization: Bearer <token>
 
 ### 전송 구간 암호화 — TLS, STARTTLS, MTA-STS, DANE
 
-#### 1) TLS와 STARTTLS
+#### TLS와 STARTTLS
 
 **TLS(Transport Layer Security)** 는 HTTP뿐 아니라 SMTP, IMAP, POP3 등에도 적용되는 **전송 계층 암호화 프로토콜**이다.
 
@@ -338,7 +338,7 @@ S: 250-SIZE 35882577
 하지만 **기본 SMTP는 “암호화 필수”가 아니라 “있으면 사용”** 모델이라,
 중간자 공격으로 STARTTLS를 다운그레이드시키는 공격이 가능하다는 점이 발견되었다.
 
-#### 2) MTA-STS (Mail Transfer Agent – Strict Transport Security)
+#### MTA-STS (Mail Transfer Agent – Strict Transport Security)
 
 **MTA-STS(RFC 8461)** 는 도메인 소유자가
 
@@ -371,7 +371,7 @@ max_age: 86400
   - TLS가 필수
 - 중간자 공격으로 암호화를 제거하거나, MX를 다른 곳으로 바꾸려 해도 차단 가능
 
-#### 3) DANE for SMTP
+#### DANE for SMTP
 
 **DANE(DNS-based Authentication of Named Entities)** 는 DNSSEC을 이용해
 SMTP 서버의 TLS 인증서를 **DNS에 직접 게시**하는 방식이다.
@@ -391,7 +391,7 @@ DNSSEC 도입이 어렵다는 현실적 문제가 있다고 평가한다.
 
 이제 **스푸핑/피싱** 문제를 다루는 핵심 스택: **SPF, DKIM, DMARC**를 보자.
 
-#### 1) SPF (Sender Policy Framework)
+#### SPF (Sender Policy Framework)
 
 **문제**: 아무나 `From: alice@example.com` 으로 이메일을 보낼 수 있다.
 
@@ -418,7 +418,7 @@ example.com.  IN TXT  "v=spf1 ip4:203.0.113.10 ip4:203.0.113.11 include:_spf.mai
 3. 실제 발신 IP가 해당 레코드에 포함되어 있는지 검사
 4. pass / fail / softfail / neutral 등의 결과를 바탕으로 스팸 점수에 반영
 
-#### 2) DKIM (DomainKeys Identified Mail)
+#### DKIM (DomainKeys Identified Mail)
 
 DKIM은 **도메인 기반 디지털 서명**이다.
 
@@ -445,7 +445,7 @@ mail._domainkey.example.com. IN TXT "v=DKIM1; k=rsa; p=MIIBIjANBgkq..."
 - 메시지가 **발송 후 위조되지 않았는지** 검증
 - 발신 도메인(`example.com`)이 실제로 이 메시지를 **승인**했는지 증명
 
-#### 3) DMARC (Domain-based Message Authentication, Reporting and Conformance)
+#### DMARC (Domain-based Message Authentication, Reporting and Conformance)
 
 DMARC는 SPF·DKIM을 **‘조합’해서 정책과 리포팅을 제공**하는 프레임워크다.
 
@@ -488,7 +488,7 @@ EU의 2024년 분석 결과에서도 SPF, DKIM, DMARC는 대부분의 주요 도
 이를 보완하는 개념이 **End-to-End Encryption(E2EE)** 으로,
 대표적인 기술이 **S/MIME**와 **OpenPGP**다.
 
-#### 1) S/MIME (Secure/Multipurpose Internet Mail Extensions)
+#### S/MIME (Secure/Multipurpose Internet Mail Extensions)
 
 - X.509 인증서를 사용하는 **PKI 기반** 암호화/서명 표준
 - Outlook, Apple Mail 등 기업 환경에서 널리 지원
@@ -517,7 +517,7 @@ Content-Transfer-Encoding: base64
 - 인증서 발급·갱신 관리 부담
 - 개인 사용자 환경에서 설정이 어렵다는 usability 문제 (연구에서도 반복적으로 지적).
 
-#### 2) OpenPGP (PGP/GPG 메일 암호화)
+#### OpenPGP (PGP/GPG 메일 암호화)
 
 - PGP 철학 기반의 **Web-of-Trust** 모델
 - GnuPG(GPG) 클라이언트와 연동되는 다양한 MUA 플러그인 존재

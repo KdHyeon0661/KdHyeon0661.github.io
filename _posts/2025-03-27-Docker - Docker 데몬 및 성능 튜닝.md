@@ -357,7 +357,7 @@ du -sh /var/lib/docker/* 2>/dev/null
 }
 ```
 
-### 데이터/분석(브라우저/ML) 노드
+### 노드
 
 ```json
 {

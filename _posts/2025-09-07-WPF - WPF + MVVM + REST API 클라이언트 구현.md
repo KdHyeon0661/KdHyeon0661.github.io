@@ -56,7 +56,7 @@ dotnet add TodoDemo.App package Microsoft.Extensions.DependencyInjection
 dotnet add TodoDemo.ApiClient package Microsoft.Extensions.Http
 dotnet add TodoDemo.ApiClient package Polly.Extensions.Http
 
-# (선택) 매핑/검증
+# 매핑/검증
 
 dotnet add TodoDemo.Domain package FluentValidation
 dotnet add TodoDemo.App package CommunityToolkit.Mvvm

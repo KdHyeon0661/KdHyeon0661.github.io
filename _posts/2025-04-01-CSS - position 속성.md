@@ -131,7 +131,7 @@ inset: 0;              /* top/right/bottom/left 모두 0 */
 
 ---
 
-## `fixed` — 뷰포트(또는 특수 조상) 기준 고정
+## 기준 고정
 
 ```html
 <div class="toast">Saved</div>

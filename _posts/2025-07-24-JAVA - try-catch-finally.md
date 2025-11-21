@@ -75,7 +75,7 @@ static void rethrowing() throws IOException, SQLException {
 }
 ```
 
-### 예외 번역(translation) & 래핑(wrapping)
+### & 래핑(wrapping)
 
 - **레이어 경계**에서 내부 예외를 **도메인 고수준 예외로 변환**.
 ```java

@@ -533,7 +533,7 @@ export const DELETE: RequestHandler = async ({ request }) => {
 };
 ```
 
-### 7.C.2 페이지: 목록 로딩(`load`) + 액션 정의
+### + 액션 정의
 
 ```ts
 // src/routes/todos/+page.ts (universal)

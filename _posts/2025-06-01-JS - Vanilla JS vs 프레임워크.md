@@ -139,7 +139,7 @@ export default function Mirror() {
 
 ---
 
-### B. Todo(추가·토글·삭제·영속화) — 구조 차이 체감
+### — 구조 차이 체감
 
 **Vanilla(컴포넌트 흉내 + 이벤트 위임 + Store)**
 ```html
@@ -300,7 +300,7 @@ export default function App(){
 
 ## 8️⃣ Vanilla의 “컴포넌트화” 패턴(프레임워크 없이도 구조 잡기)
 
-### (1) 템플릿 렌더 + 이벤트 위임
+### 템플릿 렌더 + 이벤트 위임
 
 ```js
 function h(strings, ...vals){ // 템플릿 헬퍼(옵션)
@@ -319,7 +319,7 @@ function mount($root, items){
 }
 ```
 
-### (2) Proxy/Signals로 반응성 흉내
+### Proxy/Signals로 반응성 흉내
 
 ```js
 function signal(value){
@@ -335,7 +335,7 @@ count.subscribe(v => document.getElementById('out').textContent = v);
 document.getElementById('inc').addEventListener('click', () => count.set(count.get()+1));
 ```
 
-### (3) 경량 라우팅(History API)
+### 경량 라우팅(History API)
 
 ```js
 const routes = {

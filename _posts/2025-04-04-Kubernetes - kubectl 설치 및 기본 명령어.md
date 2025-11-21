@@ -115,7 +115,7 @@ kubectl config set-context --current --namespace=default
 
 ---
 
-## 조회(get) — 출력 고급화
+## — 출력 고급화
 
 ### 기본/와이드/YAML/JSON
 
@@ -153,7 +153,7 @@ kubectl get svc web -o go-template='{{.spec.clusterIP}}{{"\n"}}'
 
 ---
 
-## 상세(Describe) & 이벤트
+## & 이벤트
 
 ```bash
 kubectl describe pod <POD>
@@ -310,7 +310,7 @@ kubectl delete pods -l app=web
 
 ---
 
-## 노드운영(주의) — cordon/uncordon/drain
+## — cordon/uncordon/drain
 
 > **운영 주의**: 드레인은 중단을 유발할 수 있다. PDB/중단허용설계 필수.
 
