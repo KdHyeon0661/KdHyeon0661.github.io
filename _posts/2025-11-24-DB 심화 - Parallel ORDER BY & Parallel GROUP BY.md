@@ -4,78 +4,71 @@ title: DB 심화 - Parallel ORDER BY & Parallel GROUP BY
 date: 2025-11-24 23:25:23 +0900
 category: DB 심화
 ---
-# Oracle 병렬 실행: **Parallel ORDER BY** & **Parallel GROUP BY** 완전 정리
+# Oracle 병렬 실행: Parallel ORDER BY & Parallel GROUP BY
 
-**목표**: 대용량 정렬/집계를 병렬로 처리할 때 **어떤 단계에서 무엇이 일어나는지**(IN-OUT, PX SEND/RECEIVE, TQ, Granule), **어떤 대기 이벤트가 터지는지**, **어떻게 힌트/통계/메모리/분배전략으로 개선하는지**를 실습 가능한 예제와 함께 끝까지 설명합니다.
-기준 버전: 11g 이상(12c+ 용어 일부 포함). 스토리지/Temp/PGA는 기본값 가정.
+## 0) 왜 Parallel ORDER BY / GROUP BY가 까다로운가
 
----
+병렬(PQ)은 “똑같은 일을 N명이 나눠 하는 것”처럼 보이지만, **정렬·집계는 ‘전역 결과’가 필요**하다는 점에서 단순 분할이 끝이 아니다.
 
-## 공통 실습 스키마 & 데이터(한 번 실행)
+- **ORDER BY**  
+  전역 순서를 맞추려면 “각자 정렬 → 다시 모아서 순서 재조정”이 필수다.  
+  즉 **로컬 정렬(Local Sort)** 과 **전역 병합(Global Merge/Sort)** 을 거치며, 중간에 **재분배(PX SEND/RECEIVE + TQ)** 가 들어간다.
+- **GROUP BY**  
+  각 PX가 부분적으로 집계(Partial)한 뒤, **같은 그룹 키끼리 한 곳으로 모으는 재분배(PX SEND HASH)** 가 필요하고,  
+  그 다음 **최종 집계(Final)** 로 마무리한다.
 
-```sql
-ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
-
--- ① 시계열 RANGE 파티션 팩트
-DROP TABLE fact_sales PURGE;
-CREATE TABLE fact_sales (
-  sales_id   NUMBER       NOT NULL,
-  sales_dt   DATE         NOT NULL,
-  cust_id    NUMBER       NOT NULL,
-  region_cd  VARCHAR2(6)  NOT NULL,
-  amount     NUMBER(12,2) NOT NULL,
-  CONSTRAINT pk_fact_sales PRIMARY KEY (sales_id)
-)
-PARTITION BY RANGE (sales_dt) (
-  PARTITION p2025m01 VALUES LESS THAN (DATE '2025-02-01'),
-  PARTITION p2025m02 VALUES LESS THAN (DATE '2025-03-01'),
-  PARTITION p2025m03 VALUES LESS THAN (DATE '2025-04-01'),
-  PARTITION pmax     VALUES LESS THAN (MAXVALUE)
-);
-
--- ② 고객 차원
-DROP TABLE dim_customer PURGE;
-CREATE TABLE dim_customer (
-  cust_id      NUMBER PRIMARY KEY,
-  region_group VARCHAR2(10),
-  grade        VARCHAR2(10),
-  active_yn    CHAR(1)
-);
-
--- 샘플
-INSERT INTO dim_customer VALUES (101,'APAC','GOLD','Y');
-INSERT INTO dim_customer VALUES (202,'AMER','SILVER','Y');
-INSERT INTO dim_customer VALUES (303,'EMEA','BRONZE','N');
-
-INSERT INTO fact_sales VALUES (1, DATE '2025-02-10', 101, 'KR', 100.00);
-INSERT INTO fact_sales VALUES (2, DATE '2025-02-11', 202, 'US', 170.00);
-INSERT INTO fact_sales VALUES (3, DATE '2025-03-01', 202, 'US', 250.00);
-COMMIT;
-
-BEGIN
-  DBMS_STATS.GATHER_TABLE_STATS(USER,'FACT_SALES');
-  DBMS_STATS.GATHER_TABLE_STATS(USER,'DIM_CUSTOMER');
-END;
-/
-```
-
-> **Tip**: 실제 벤치 시엔 `INSERT /*+ APPEND */ SELECT`로 수백만~수천만 로우를 채우고, `PGA_AGGREGATE_TARGET`, TEMP 용량을 충분히 확보하세요.
+정리하면:
+- PQ는 **스캔 병렬화(쉽다)** 보다  
+  **리오더링(ORDER BY) / 동일키 수렴(GROUP BY)** 에서 **네트워크·메모리·스큐**가 성능을 좌우한다.
 
 ---
 
-# 병렬 **ORDER BY**: 2단계(로컬 정렬 → 글로벌 병합/정렬)
+## 1) Parallel Execution 빠른 리캡 (플랜을 ‘읽을 수 있는 언어’로 만들기)
 
-## 작동 원리(플랜에서 읽는 포인트)
+### 1.1 QC, PX 서버, DFO, TQ
 
-- **로컬 단계(Local Sort)**: 각 PX 서버가 자신에게 배정된 **granule**(BRG/PG)을 스캔하고 **부분 정렬** 수행
-- **재분배/병합(Global)**:
-  - **전역 순서를 유지**하려면 보통 **`PX SEND RANGE` → `PX RECEIVE`**가 끼고,
-    **`SORT ORDER BY`**(또는 **`MERGE SORT`**)가 상위 단계에서 **전역 병합**을 수행
-  - **Top-N**이면 각 PX가 **부분 Top-N 유지**(메모리 절약) 후 최종 단계에서 **STOPKEY**로 빠르게 종료
-- **IN-OUT** 열: `P->P`(PX↔PX 재분배)와 `P->S`(PX→QC) 흐름 확인
-- **대기 이벤트**: `direct path read/write temp`, `PX Deq Credit: send blkd` 등
+- **QC(Query Coordinator)**: SQL을 파싱/최적화하고, PX 서버들을 지휘하며 최종 결과를 조립.
+- **PX Servers(Slaves)**: 실제 스캔/조인/정렬/집계 작업 수행.
+- **DFO(Data Flow Operation)**: 병렬 실행의 “작업 단계 파이프라인”.  
+  DFO 사이를 연결하는 통로가 **TQ(Table Queue)**.
+- **TQ(Table Queue)**: PX ↔ PX 또는 PX ↔ QC 사이에 레코드를 흘리는 큐.  
+  플랜에서 `PX SEND ...` / `PX RECEIVE`가 TQ 경계다. :contentReference[oaicite:0]{index=0}
 
-## 기본 예제: 월 범위 **전역 정렬**
+### 1.2 IN-OUT 컬럼 해석
+
+- `P->P`: PX 서버끼리 레코드 재분배(네트워크 이동 필수)
+- `P->S`: PX → QC로 최종 전달
+- `PCWP/PCWC`: 같은 집합 중에서 Consume/Produce 관계를 표현.
+
+**핵심**:  
+`P->P`가 많아질수록 **재분배(네트워크, TQ 스큐, PX Deq 대기)** 가 성능을 결정한다.
+
+### 1.3 Granule (BRG/PG/SPG)
+
+- **BRG(Block Range Granule)**: PX 서버가 테이블을 블록 범위로 잘라 가져가는 기본 방식. **로드밸런싱(동적 배분)**에 강함.
+- **PG(Partition Granule)**: 파티션 단위로 작업 배정.  
+  파티션-wise 조인/집계에서 중요.
+- **SPG(Subpartition Granule)**: 서브파티션 단위.
+
+---
+
+## 2) Parallel ORDER BY — “2단계 정렬 + RANGE 재분배 + 전역 병합”
+
+### 2.1 전형적인 플랜 구조
+
+병렬 ORDER BY는 거의 항상 다음 패턴이 보인다.
+
+1) **스캔/필터 단계 (PX BLOCK ITERATOR 등)**  
+2) **로컬 정렬(Local Sort)**  
+3) **정렬키 기반 RANGE 재분배**: `PX SEND RANGE` → `PX RECEIVE`  
+4) **전역 병합/정렬(Global)**: `SORT ORDER BY` 또는 `MERGE SORT`  
+5) QC로 `P->S`
+
+Oracle 문서/사례에서도 “ORDER BY는 정렬키 범위를 나눠 RANGE 분배 후 병합”이 병렬 표준 패턴으로 설명된다. :contentReference[oaicite:1]{index=1}
+
+---
+
+### 2.2 기본 예제: 전역 정렬 (당신 초안 확장)
 
 ```sql
 EXPLAIN PLAN FOR
@@ -86,20 +79,30 @@ WHERE  f.sales_dt BETWEEN DATE '2025-02-01' AND DATE '2025-03-01'
 ORDER  BY f.amount DESC;
 
 SELECT *
-FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +ALIAS +PARTITION +PREDICATE +NOTE'));
+FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,
+         'BASIC +PARALLEL +ALIAS +PARTITION +PREDICATE +NOTE'));
 ```
-**플랜 해석 가이드**
-- `PX BLOCK ITERATOR`/`PX PARTITION RANGE SINGLE` : granule 타입
-- 중간 `PX SEND RANGE` / `PX RECEIVE` : **정렬키 기준 범위 분배**
-- 상단 `SORT ORDER BY` : 글로벌 병합/정렬
-- `IN-OUT` 열: 스캔은 `PCWP/PCWC`(동일 집합 결합), 중간은 `P->P`, 마지막 `P->S`
 
-### 왜 RANGE 분배인가?
+#### 플랜에서 꼭 찾아야 할 줄
 
-- 전역 순서를 맞추려면 **정렬키 범위를 분할**해 **각 PX가 disjoint한 구간**을 담당 →
-  최종 단계는 **단순 병합**(run merge)만 수행 가능 → **Temp I/O 절감**.
+- `PX BLOCK ITERATOR` / `PX PARTITION RANGE SINGLE`  
+  → **Granule 단위 스캔**
+- `PX SEND RANGE` / `PX RECEIVE`  
+  → **정렬키(amount) 기준 RANGE 재분배**
+- 상단 `SORT ORDER BY`  
+  → **전역 병합(최종 순서 맞추기)**
 
-## → 병렬 최적화
+#### 왜 RANGE 분배인가?
+
+전역 ORDER BY는 “정렬키가 disjoint한 구간으로 나뉘어야” 전역 순서를 유지할 수 있다.
+
+- PX1이 “amount 상위 10%”, PX2가 “다음 10%”…처럼 구간이 안 겹치면  
+  최종 단계는 **단순 병합(run merge)** 만으로 끝난다.
+- 따라서 Oracle은 ORDER BY에서 **`PX SEND RANGE`** 를 주로 사용한다. :contentReference[oaicite:2]{index=2}
+
+---
+
+### 2.3 Top-N이 들어가면 무엇이 달라지나? (STOPKEY)
 
 ```sql
 EXPLAIN PLAN FOR
@@ -111,59 +114,122 @@ ORDER  BY f.amount DESC
 FETCH  FIRST 100 ROWS ONLY;
 
 SELECT *
-FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +NOTE +OUTLINE'));
+FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +NOTE'));
 ```
-**기대 포인트**
-- `SORT ORDER BY STOPKEY` 표기(최상단 또는 QC 인근)
-- 각 PX가 **Top-N heap**을 유지하며 상위만 전달 → **메모리/네트워크/Temp 감소**
-- 상위 병합 단계에서 **100개 충족 즉시 종료** → 응답시간↓(OLAP 대시보드에 유리)
 
-> **주의**: Top-N의 **전역 순서 보장**을 위해서도 보통 `PX SEND RANGE`가 필요.
-> 다만 각 PX의 **부분 Top-N 유지**가 전체 데이터 이동량을 크게 줄여줍니다.
+Top-N이면 플랜에 다음이 보인다.
 
-## ORDER BY + 조인(차원 선행, 브로드캐스트 vs 해시)
+- `SORT ORDER BY STOPKEY`
+- 여전히 `PX SEND RANGE` → `PX RECEIVE`가 있을 가능성이 높음
+- 다만 각 PX 서버가 **부분 Top-N 힙**을 유지  
+  → **전달되는 row 수가 급감**  
+  → TQ 네트워크/Temp I/O가 크게 줄어듦
 
-```sql
--- 소형 차원 → 브로드캐스트 → 사실집합만 크게 스캔/정렬
-EXPLAIN PLAN FOR
-SELECT /*+ leading(c) use_hash(f) parallel(f 8) parallel(c 8)
-           pq_distribute(c BROADCAST NONE) monitor */
-       f.cust_id, SUM(f.amount) amt
-FROM   dim_customer c
-JOIN   fact_sales  f
-  ON   f.cust_id = c.cust_id
-WHERE  c.grade IN ('GOLD','SILVER')
-GROUP  BY f.cust_id
-ORDER  BY amt DESC;
+즉 Top-N 병렬의 본질은:
 
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE'));
-```
-- **브로드캐스트**: 작은 집합만 복제 → **재분배 비용↓**, 정렬 단계 집중
-- 대형↔대형이면 **HASH-HASH** 분배가 일반적(`PX SEND HASH`) → 정렬키가 집계 결과에 종속이면 **최종 단계 정렬**로 귀결
-
-## ORDER BY 병목과 대기 이벤트
-
-- **`direct path write temp` / `read temp`**: SORT가 메모리 초과로 TEMP 사용
-  - **대책**: `PGA_AGGREGATE_TARGET`/`WORKAREA_SIZE_POLICY=AUTO` 확대, **Top-N**/프루닝/선행필터
-- **`PX Deq Credit: send blkd`**: Consumer가 느려 Producer가 큐 크레딧을 못 받음
-  - **대책**: **RANGE 분배 구간** 조정(스큐 완화), DOP 적정화, 브로드캐스트/해시 전략 재검토
-- **Admission Queue**(`PX Queuing: statement queue`): 동시 병렬 한도 초과
-  - **대책**: 작업 창 분산, 리소스 매니저 우선순위
+> **각 PX가 “자기 로컬 상위 N’만” 들고 있다가,  
+> 최종 병합 단계에서 전역 상위 N을 확정하며 STOPKEY로 조기 종료.**
 
 ---
 
-# 병렬 **GROUP BY**: 2단계(부분 집계 → 최종 집계)
+### 2.4 ORDER BY에서 터지는 대표 병목/대기 이벤트
 
-## 작동 원리(핵심)
+#### (1) TEMP spill
 
-- **Partial Aggregation(로컬)**: 각 PX가 자신에게 온 레코드에서 **그룹별 부분 집계** 수행
-  - **Hash Group By**가 기본(메모리 적합), 부족하면 **one-pass/multi-pass**로 TEMP 사용
-- **재분배(키 기준)**: `PX SEND HASH`로 **그룹키 해시** 기준 재분배 → 동일 키는 **같은 PX**로 수렴
-- **Final Aggregation(글로벌)**: 각 PX가 받은 동일 키 묶음을 **최종 집계**하여 QC에 전달
+- `direct path write temp` / `direct path read temp`  
+  로컬 또는 전역 정렬이 PGA를 초과하면 TEMP로 spill.  
+  병렬이면 spill이 **PX 개수만큼 동시에** 발생한다.
 
-> 플랜에는 보통 **두 번의 집계 오퍼레이터**(PARTIAL / FINAL)와 **한 번의 PX SEND HASH**가 등장합니다.
+**해결 축**  
+- 정렬 입력을 줄인다(Top-N, 기간 축소, 프루닝).
+- 정렬 대상 행폭을 줄인다(정렬키+PK만 먼저 정렬).
+- PGA/WORKAREA를 합리적으로 확장한다(AUTO 전제).
 
-## 기본 예제: 고객별 합계(병렬 해시 집계)
+#### (2) TQ/네트워크 병목
+
+- `PX Deq Credit: send blkd`  
+  Producer(PX SEND 측)가 Consumer가 느려 **TQ 크레딧을 못 받고 대기**.
+
+**원인**
+- RANGE 분배 구간이 비대칭(= **정렬키 스큐**)
+- QC 또는 상위 DFO가 느림
+- 너무 큰 DOP로 TQ가 과밀
+
+**대책**
+- 정렬키 스큐 완화(분배 버킷 증가 / 정렬키 설계 개선)
+- DOP 현실화
+- Top-N으로 이동량 자체를 줄임
+
+#### (3) Admission/Queue
+
+- `PX Queuing: statement queue`  
+  동시 병렬 한도 초과 시 대기.
+
+**대책**
+- Resource Manager로 PQ 허용량/우선순위 조절
+- 배치 윈도우 분리
+
+---
+
+### 2.5 ORDER BY 실전 튜닝 패턴
+
+#### 패턴 A) “정렬 전에 얇게 만들고 Top-N 확정 후 확장”
+
+정렬 비용은 **행 수 × 행 폭**에 비례한다.  
+따라서:
+
+1) 정렬키 + 식별자(ROWID/PK)만 정렬해 얇게 만든다.
+2) Top-N 확정 후 상세를 조인/가공한다.
+
+```sql
+WITH topn AS (
+  SELECT /*+ parallel(f 8) index_desc(f ix_sales_amount_desc) */
+         sales_id, amount
+  FROM   f_sales f
+  WHERE  sales_dt >= :d1 AND sales_dt < :d2
+  FETCH FIRST 100 ROWS ONLY
+)
+SELECT /*+ parallel(s 8) */
+       s.sales_id, s.prod_id, s.sales_dt, s.qty, s.amount, s.big_note
+FROM   topn t
+JOIN   f_sales s ON s.sales_id = t.sales_id;
+```
+
+**효과**
+- Local/Global sort에 들어가는 row width가 최소화 → PGA/TEMP 대폭 감소.
+- PQ에서 특히 체감이 큼.
+
+#### 패턴 B) 인덱스 순서로 “정렬 자체 제거/축소”
+
+- `(sales_dt, amount DESC)` 같은 인덱스가 있으면  
+  **RANGE 스캔 자체가 정렬 순서를 제공**한다.
+- 병렬이라도 입력이 거의 정렬 상태면 전역 단계가 단순 병합이 되어 spill이 줄어든다.
+
+#### 패턴 C) 파티션-wise ORDER BY
+
+- 테이블이 파티션되어 있고 “파티션 내부 순서만 필요”하거나  
+  “파티션별 Top-N 후 병합”이 비즈니스적으로 허용되면
+
+> **각 파티션에서 STOPKEY로 N’개만 뽑고 → 작은 집합만 최종 병합**
+
+---
+
+## 3) Parallel GROUP BY — “Partial 집계 → HASH 재분배 → Final 집계”
+
+### 3.1 전형적인 플랜 구조
+
+GROUP BY는 대부분 다음 2-Stage Aggregation 패턴:
+
+1) **로컬 부분 집계(Partial Hash Group By)**  
+2) **그룹키 기준 재분배**: `PX SEND HASH` → `PX RECEIVE`  
+3) **최종 집계(Final Hash Group By)**  
+4) QC로 `P->S`
+
+Oracle 실행계획 예제에서도 `HASH GROUP BY (PARTIAL)` 아래에 `PX SEND HASH`가 나타나는 것이 표준 흐름이다. :contentReference[oaicite:3]{index=3}
+
+---
+
+### 3.2 기본 예제: 고객별 합계
 
 ```sql
 EXPLAIN PLAN FOR
@@ -176,197 +242,239 @@ GROUP  BY f.cust_id;
 SELECT *
 FROM   TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +ALIAS +PARTITION +NOTE'));
 ```
-**플랜 해석 가이드**
-- 하위: `HASH GROUP BY (PARTIAL)` 또는 `GROUP BY (PUSHED DOWN)`
-- 중간: `PX SEND HASH` / `PX RECEIVE` (**P->P**)
-- 상위: `HASH GROUP BY`(FINAL) → `P->S`로 QC 전달
 
-**장점**
-- **중간 단계에서 데이터 감소**(부분 집계) → 네트워크/TQ 부하 절감
-- 키 스큐만 없다면 **균형적으로** 분산되어 **대기 이벤트** 감소
+#### 플랜 관찰 포인트
 
-## 분배전략 강제: `PQ_DISTRIBUTE`
+- 하위 `HASH GROUP BY (PARTIAL)`  
+  → 각 PX가 자기 granule에서 그룹별 부분 합계를 만듦.
+- 중간 `PX SEND HASH` / `PX RECEIVE`  
+  → `cust_id` 해시 기준 재분배 → 같은 cust_id는 같은 PX로 수렴.
+- 상위 `HASH GROUP BY`(FINAL)  
+  → 수렴된 그룹끼리 최종 합산.
+
+**효과**
+- Partial 단계에서 row 수가 확 줄어든다.  
+  즉 네트워크로 보내야 할 데이터가 대폭 감소한다.
+
+---
+
+### 3.3 GROUP BY에서의 주요 병목/대기
+
+#### (1) Hash spill → TEMP
+
+- `direct path write temp` / `read temp`  
+  해시 테이블이 PGA를 초과하면 spill.
+
+**대책**
+- PGA/WORKAREA_SIZE_POLICY=AUTO에서 target 보정
+- 불필요 row/컬럼을 사전 제거
+
+#### (2) 그룹키 스큐 (가장 악명 높은 병목)
+
+스큐가 있으면:
+
+- 한 PX가 “거의 모든 동일 키”를 받아  
+  Final 단계가 그 PX에 몰림
+- 나머지 PX는 놀고, 느린 PX를 기다리며  
+  `PX Deq Credit: send blkd` 상승
+
+**스큐의 정량 감각**
+- 재분배 후 각 PX가 받는 row가 고르게 분산되는 게 이상적.
+- `v$pq_tqstat`에서 `num_rows`의 max/min 차이가 크면 스큐. (뒤에서 쿼리 제공)
+
+#### (3) RAC 환경(있다면)
+
+- `gc cr/current request`가 늘면  
+  Partition-wise 설계를 고려.
+
+---
+
+### 3.4 GROUP BY 실전 튜닝 패턴
+
+#### 패턴 A) Partial 집계를 “소스 가까이”에서
+
+가능하면 Partial을 최대한 아래로 내린다.
+
+- **조인 후 집계**보다
+- **필터/프루닝 후 집계**가 먼저
+
+즉 **집계 입력 자체를 줄여** spill/네트워크를 축소한다.
+
+#### 패턴 B) 키 스큐 완화(SALTING)
+
+특정 키가 압도적으로 많을 때:
+
+1) “키 + salt”로 먼저 분산 집계
+2) 바깥에서 salt 제거 후 재집계
 
 ```sql
--- 대형↔대형 집계: 해시-해시(기본)
-SELECT /*+ parallel(f 16) pq_distribute(f HASH HASH) monitor */
-       cust_id, SUM(amount)
-FROM   fact_sales f
-GROUP  BY cust_id;
+SELECT /*+ parallel(f 16) monitor */ cust_id, SUM(amt) amt
+FROM (
+  SELECT f.cust_id,
+         f.amount amt,
+         MOD(ORA_HASH(f.cust_id), 8) salt
+  FROM   fact_sales f
+)
+GROUP BY cust_id;
+```
 
--- 소형 차원을 조인 후 집계하는 경우: 브로드캐스트로 작은쪽 복제
+보다 명확한 2단계 버전:
+
+```sql
+WITH salted AS (
+  SELECT /*+ parallel(f 16) */
+         cust_id,
+         MOD(ORA_HASH(cust_id), 8) salt,
+         SUM(amount) amt
+  FROM   fact_sales f
+  GROUP  BY cust_id, MOD(ORA_HASH(cust_id), 8)
+)
+SELECT cust_id, SUM(amt) amt
+FROM   salted
+GROUP  BY cust_id;
+```
+
+#### 패턴 C) 소형 차원은 BROADCAST
+
+```sql
 SELECT /*+ leading(c) use_hash(f) parallel(f 16) parallel(c 16)
            pq_distribute(c BROADCAST NONE) monitor */
        f.region_cd, SUM(f.amount)
 FROM   dim_customer c
-JOIN   fact_sales  f
-  ON   f.cust_id = c.cust_id
+JOIN   fact_sales  f ON f.cust_id = c.cust_id
 GROUP  BY f.region_cd;
 ```
-- **HASH-HASH**: 일반적인 그룹키 기반 재분배
-- **BROADCAST**: 작은 집합을 복제해 **재분배 비용↓**(집계 대상이 큰 사실 테이블일 때 유리)
 
-## ROLLUP/CUBE/GROUPING SETS 병렬화
+- 작은 집합을 복제하는 게  
+  해시 재분배보다 싸다.
 
-```sql
-EXPLAIN PLAN FOR
-SELECT /*+ parallel(f 8) monitor */
-       f.region_cd, f.cust_id, SUM(f.amount) amt
-FROM   fact_sales f
-GROUP  BY ROLLUP (f.region_cd, f.cust_id);
+#### 패턴 D) ROLLUP/CUBE는 “정렬 기반이 섞인다”를 전제로 설계
 
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE'));
-```
-**포인트**
-- **ROLLUP/CUBE**는 **계층적 집계**를 생성 → **정렬 기반**(Sort Group By) 필요성이 커질 수 있음
-- 해시 집계 가능 구간은 부분적으로 사용, 상위 레벨 계산 시 **추가 Sort**가 등장할 수 있음
-- 대용량이면 **TEMP I/O**가 증가 → **PGA/TEMP/프루닝** 신경쓰기
-
-## 병렬화
-
-```sql
-EXPLAIN PLAN FOR
-SELECT /*+ parallel(f 8) monitor */ DISTINCT f.cust_id
-FROM   fact_sales f
-WHERE  f.sales_dt >= DATE '2025-02-01' AND f.sales_dt < DATE '2025-04-01';
-
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE'));
-```
-- 내부적으로 **GROUP BY**로 구현되는 경우가 많다 → 상동의 2단계(부분→최종) 흐름
-- 키 스큐가 크면 `PX Deq Credit: send blkd`(재분배 병목) 증가
-
-## GROUP BY 병목과 대기 이벤트
-
-- **`direct path write/read temp`**: 해시 테이블이 **메모리 초과** → TEMP spill
-  - **대책**: PGA/WORKAREA 확대, **부분 집계 위치**를 소스 가까이에(가능하면 **GBY pushdown**), 불필요 레코드 사전 필터
-- **`PX Deq Credit: send blkd`**: 한 PX가 특정 키에 몰려 느림(**스큐**)
-  - **대책**: 키 **SALT 컬럼** 추가/복합키 해시, DOP 조절, **브로드캐스트**로 전환(조건 충족 시)
-- **RAC**: `gc cr/current request` 증가 시 **Partition-wise** 집계 설계(파티션키 정렬)
+- ROLLUP/CUBE는 계층 집계를 만들기 때문에  
+  내부적으로 Sort Group By가 나타날 가능성이 높다.
+- 입력량·행폭을 반드시 줄여야 한다.
 
 ---
 
-# Granule & 분배가 정렬/집계에 미치는 영향
+## 4) 병렬 정렬/집계 모니터링: 무엇을 어떻게 보나
 
-## Granule
-
-- **BRG**(Block Range Granule): Full Scan 정렬/집계의 **기본**. **동적 로드밸런싱**에 유리
-- **PG/SPG**(Partition/Subpartition Granule): 파티션 단위 처리. **Partition-wise 집계**시 필수
-
-## 분배(Distribution)
-
-- **ORDER BY**: 전역 순서 필요 → 보통 **`PX SEND RANGE`**
-- **GROUP BY**: 동일 키 수렴 → **`PX SEND HASH`**
-- **소형 차원**: **BROADCAST**가 해시 재분배보다 유리(네트워크/정렬 부담↓)
-
----
-
-# 모니터링: 플랜/통계/대기
-
-## 플랜과 TQ(테이블 큐)
+### 4.1 DBMS_XPLAN
 
 ```sql
--- 실제 실행 후 플랜
+ALTER SESSION SET statistics_level = ALL;
+
+SELECT /*+ monitor parallel(f 16) */
+       cust_id, SUM(amount)
+FROM   fact_sales f
+GROUP  BY cust_id;
+
 SELECT *
-FROM   TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +ALIAS +PREDICATE +NOTE'));
-
--- TQ 분포/스큐 확인
-SELECT dfo_number, tq_id, server_type, inst_id, process, num_rows, bytes
-FROM   v$pq_tqstat
-ORDER  BY dfo_number, tq_id, server_type, inst_id, process;
+FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
+     'BASIC +PARALLEL +ALIAS +PARTITION +PREDICATE +NOTE'));
 ```
-- `PX SEND RANGE/HASH` 라인과 `P->P` 흐름: **재분배 유무/종류**
-- `v$pq_tqstat`에서 num_rows **최대/최소 차이**가 크면 **스큐**
 
-## 대기 이벤트 샘플(ASH/Monitor)
+**필독 포인트**
+- `PX SEND RANGE`(ORDER BY), `PX SEND HASH`(GROUP BY)
+- `SORT ORDER BY STOPKEY`(Top-N)
+- `HASH GROUP BY (PARTIAL)`/`FINAL`
+- `IN-OUT` 흐름
+
+### 4.2 TQ 스큐/분배 확인: v$pq_tqstat
 
 ```sql
--- 최근 세션의 병렬 관련 대기 추이(개념적 예시)
+SELECT dfo_number, tq_id, server_type,
+       process, num_rows, bytes
+FROM   v$pq_tqstat
+ORDER  BY dfo_number, tq_id, server_type, process;
+```
+
+- 같은 TQ에서 **process별 num_rows가 비슷해야** 이상적.
+- max/min이 크게 벌어지면 스큐 → salting/분배전략/키 설계 점검.
+
+### 4.3 Workarea / PGA / TEMP
+
+```sql
+-- 활성 workarea(정렬/해시)
+SELECT sid, operation_type, policy,
+       expected_optimal_size/1024/1024 exp_opt_mb,
+       last_memory_used/1024/1024 last_mb,
+       active_time/100 active_sec
+FROM   v$sql_workarea_active
+ORDER  BY active_time DESC;
+
+-- TEMP 사용
+SELECT tablespace, SUM(blocks)*8192/1024/1024 temp_mb
+FROM   v$tempseg_usage
+GROUP  BY tablespace;
+```
+
+### 4.4 병렬 관련 대기(ASH)
+
+```sql
 SELECT event, COUNT(*) samples
 FROM   v$active_session_history
-WHERE  session_type = 'FOREGROUND'
-AND    sample_time > SYSDATE - 1/288
-AND    (event LIKE 'PX Deq%' OR event LIKE 'direct path%' OR event LIKE 'gc %')
+WHERE  sample_time > SYSDATE - 1/288
+AND    (event LIKE 'PX Deq%' OR event LIKE 'direct path%')
 GROUP  BY event
 ORDER  BY samples DESC;
 ```
 
 ---
 
-# 성능 최적화 체크리스트
+## 5) 파라미터/메모리/분배전략의 균형
 
-## ORDER BY
+### 5.1 DOP와 메모리의 곱셈 효과
 
-- **Top-N**로 줄일 수 있으면 반드시 `FETCH FIRST n ROWS ONLY` 적용
-- 전역 순서가 꼭 필요하지 않다면 **소트 자체를 제거**(인덱스 정렬 대체, 클러스터링 팩터 개선)
-- **RANGE 분배 구간**이 **심하게 비대칭**이면 스큐 완화(버킷 늘리기/정렬키 설계 재검토)
-- **PGA/TEMP/DOP** 밸런스: 너무 큰 DOP는 Temp 경합만 키울 수 있음
+병렬 환경에서 정렬/해시 영역은 **대략 DOP에 비례해 곱으로 커진다.**
 
-## GROUP BY
+$$
+\text{총 Workarea 요구량} \approx \text{Workarea/Slave} \times \text{DOP} \times \text{동시 Workarea 개수}
+$$
 
-- **Partial → Final** 2단계를 **최대한 효과적으로**: 소스 가까이에서 **부분 집계**
-- 키 **스큐** 완화: **SALT**(예: `cust_id*1000+mod(hash(sales_dt),10)`), **복합키** 해시
-- **소형 차원 브로드캐스트** 적극 활용
-- **ROLLUP/CUBE**는 정렬 기반이 섞일 수 있으므로 **메모리/Temp/프루닝**을 우선 설계
+- DOP=16, 동시에 Sort 2개라면  
+  한 쿼리만으로도 32배가 된다.
+- 따라서 “DOP만 크게”는 대부분 TEMP/PGA 병목으로 귀결.
 
----
+### 5.2 WORKAREA_SIZE_POLICY=AUTO 전제 베스트
 
-# 손에 잡히는 실습 시나리오
-
-## 병렬 ORDER BY vs Top-N
-
-```sql
--- (A) 전체 정렬
-SELECT /*+ parallel(f 8) monitor */ *
-FROM   fact_sales f
-WHERE  f.sales_dt BETWEEN DATE '2025-02-01' AND DATE '2025-03-01'
-ORDER  BY f.amount DESC;
-
--- (B) Top-100
-SELECT /*+ parallel(f 8) monitor */ *
-FROM   fact_sales f
-WHERE  f.sales_dt BETWEEN DATE '2025-02-01' AND DATE '2025-03-01'
-ORDER  BY f.amount DESC
-FETCH  FIRST 100 ROWS ONLY;
-
--- 실행 후 두 쿼리의 DBMS_XPLAN, V$PQ_TQSTAT, TEMP/대기 비교
-```
-
-## vs 스큐 완화
-
-```sql
--- (A) 기본 병렬 해시 집계
-SELECT /*+ parallel(f 16) monitor */ cust_id, SUM(amount)
-FROM   fact_sales f
-GROUP  BY cust_id;
-
--- (B) 키 스큐 완화(예시: salt 8-way)
-SELECT /*+ parallel(f 16) monitor */ cust_id, SUM(amt)
-FROM (
-  SELECT f.cust_id, f.amount amt, MOD(ORA_HASH(f.cust_id), 8) salt
-  FROM   fact_sales f
-)
-GROUP  BY cust_id;
--- 또는 GROUP BY cust_id, salt 한 뒤 밖에서 다시 GROUP BY cust_id로 SUM
-```
-- (B)는 내부 분배 균형을 맞춘 뒤 **외부에서 한 번 더 집계**하여 정확한 결과를 만든다.
+- PQ 환경에서는 AUTO가 **전역 상한(Global Memory Bound)** 을 계산해  
+  spill/메모리 폭주를 자동으로 완충한다.
+- ORDER BY / GROUP BY가 잦다면 PGA 타깃을 **관측 기반으로 증감**해 최적점을 찾는다.
 
 ---
 
-# 운영 파라미터/힌트 베스트 프랙티스(요약)
+## 6) 현업 체크리스트(ORDER BY & GROUP BY 공통)
 
-- `WORKAREA_SIZE_POLICY=AUTO`, `PGA_AGGREGATE_TARGET`(또는 `PGA_AGGREGATE_LIMIT`) 적정화
-- 힌트:
-  - `PARALLEL(t, DOP)` / `MONITOR`
-  - `PQ_DISTRIBUTE(alias HASH HASH | BROADCAST NONE | RANGE RANGE)`
-  - `USE_HASH`, `LEADING`(조인 순서)
-  - `PX_JOIN_FILTER(alias)`(재분배 전 필터링 강화)
-- 파티션/서브파티션 설계로 **Partition-wise** 처리 기회 극대화
+1. **플랜에서 PX SEND 종류를 확인**
+   - ORDER BY → RANGE
+   - GROUP BY → HASH
+2. **Top-N이면 반드시 STOPKEY**
+3. **정렬/집계 입력량을 먼저 줄여라**
+   - 프루닝, 선필터, 투영 최소화
+4. **스큐는 v$pq_tqstat로 눈으로 확인**
+5. **DOP·PGA·TEMP는 한 덩어리로 튜닝**
+   - DOP↑ 하면 PGA/TEMP/네트워크 요구도 같이 ↑
+6. **소형 차원은 BROADCAST, 대형은 HASH**
+7. **ROLLUP/CUBE는 정렬 비용이 섞임을 가정**
+8. **실증**
+   - XPLAN + TQSTAT + Workarea + ASH  
+     네 가지를 같이 봐야 원인이 보인다.
 
 ---
 
-## 한 줄 결론
+## 7) 요약
 
-- **ORDER BY**는 **RANGE 분배 + 병합/STOPKEY**가 핵심,
-- **GROUP BY**는 **Partial→Hash 재분배→Final**이 핵심입니다.
-- 플랜의 **`PX SEND/RECEIVE`**, **`IN-OUT`**, **`V$PQ_TQSTAT` 스큐**만 정확히 읽고
-  **PGA/Temp/DOP/분배전략**을 맞추면, 대부분의 **병렬 정렬/집계 병목**은 깔끔하게 정리됩니다.
+- **Parallel ORDER BY**
+  - **Local Sort → PX SEND RANGE → Global Merge/Sort**
+  - Top-N은 **STOPKEY + 부분 Top-N 유지**가 승부.
+  - 병목은 주로 **TEMP spill**과 **RANGE 스큐**.
+
+- **Parallel GROUP BY**
+  - **Partial Hash GBY → PX SEND HASH → Final GBY**
+  - 병목은 **그룹키 스큐**와 **해시 spill**.
+  - **salting/partial pushdown/broadcast**가 핵심 무기.
+
+한 줄 결론:  
+**PX SEND/RECEIVE와 TQ 스큐만 정확히 읽고,  
+정렬·집계 입력(행수×행폭)과 DOP·PGA·TEMP를 동시에 맞추면  
+병렬 ORDER BY/GROUP BY의 성능 문제는 대부분 구조적으로 해결된다.**

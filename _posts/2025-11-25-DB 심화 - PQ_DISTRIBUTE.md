@@ -6,152 +6,200 @@ category: DB 심화
 ---
 # Oracle **PQ_DISTRIBUTE** 힌트
 
-**주제**
-1) PQ_DISTRIBUTE 힌트의 **용도(왜 쓰는가)**
-2) **구문**과 의미 정확히 이해하기
-3) 지원되는 **분배 방식 지정법**과 조합
-4) **튜닝 사례**: 브로드캐스트/해시/파티션-와이즈 강제, 스큐 완화, RAC 대기 절감 등
-
-> 기준: Oracle 11g 이상(12c/19c에서도 그대로 통함).
-> 목표: 실행계획의 `PX SEND/RECEIVE`, `IN-OUT`, `TQ####`를 **읽고**, 힌트로 **원하는 데이터 흐름**을 **재현/강제**해 성능을 안정화한다.
+**주제**  
+1) PQ_DISTRIBUTE 힌트의 **용도(왜 쓰는가)**  
+2) **구문**과 의미를 실행계획 관점에서 정확히 이해  
+3) 지원되는 **분배 방식 키워드**와 조합/패턴  
+4) **튜닝 사례**: 브로드캐스트/해시/파티션-와이즈 강제, 스큐 완화, RAC 대기 절감  
 
 ---
 
-## 실습 공통 스키마(한 번만 실행)
+## 0) 들어가며 — “병렬 성능의 절반은 데이터 분배가 결정한다”
 
-```sql
-ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
-ALTER SESSION SET statistics_level = ALL;  -- DBMS_XPLAN.DISPLAY_CURSOR 통계 풍부
+병렬(PQ)은 “여러 PX 슬레이브가 일을 나눠 한다”는 사실만으로 빨라지지 않습니다.  
+**PX끼리 데이터를 어떻게 나누고(Distribute), 어떻게 모으느냐(Join/Aggregate)**가 스루풋과 대기 이벤트를 좌우합니다.
 
--- 사실 테이블 2개: 해시 파티셔닝(고객 기준) → Full Partition-Wise Join 시연
-DROP TABLE fact_sales PURGE;
-CREATE TABLE fact_sales (
-  sales_id   NUMBER       NOT NULL,
-  cust_id    NUMBER       NOT NULL,
-  sales_dt   DATE         NOT NULL,
-  region_cd  VARCHAR2(6)  NOT NULL,
-  amount     NUMBER(12,2) NOT NULL,
-  CONSTRAINT pk_fact_sales PRIMARY KEY (sales_id)
-)
-PARTITION BY HASH (cust_id)
-PARTITIONS 8;
+옵티마이저는 통계·카디널리티·파티션 구조·조인 형태(outer/inner) 등을 근거로  
+- **HASH 재분배**(키 해시로 양쪽을 같은 PX에 모으기),  
+- **BROADCAST 복제**(작은 쪽을 모든 PX로 뿌리기),  
+- **PARTITION-WISE JOIN**(파티션 맞춤으로 재분배 생략),  
+- 그 외 **RANGE/ROUND-ROBIN** 등  
+중 하나를 선택합니다.  
 
-DROP TABLE fact_clicks PURGE;
-CREATE TABLE fact_clicks (
-  click_id   NUMBER       NOT NULL,
-  cust_id    NUMBER       NOT NULL,
-  click_dt   DATE         NOT NULL,
-  source_cd  VARCHAR2(10) NOT NULL,
-  cost       NUMBER(12,2) NOT NULL,
-  CONSTRAINT pk_fact_clicks PRIMARY KEY (click_id)
-)
-PARTITION BY HASH (cust_id)
-PARTITIONS 8;
-
--- 비파티션 큰 테이블(Partial/Dynamic 용)
-DROP TABLE orders_np PURGE;
-CREATE TABLE orders_np (
-  order_id   NUMBER       NOT NULL,
-  cust_id    NUMBER       NOT NULL,
-  order_dt   DATE         NOT NULL,
-  amt        NUMBER(12,2) NOT NULL,
-  CONSTRAINT pk_orders_np PRIMARY KEY (order_id)
-);
-
--- 소형 차원(브로드캐스트 용)
-DROP TABLE dim_customer PURGE;
-CREATE TABLE dim_customer (
-  cust_id      NUMBER PRIMARY KEY,
-  region_group VARCHAR2(10),
-  grade        VARCHAR2(10),
-  active_yn    CHAR(1)
-);
-
--- 샘플 데이터(요약). 실제 벤치는 APPEND로 대량 적재 권장
-INSERT INTO dim_customer VALUES (101,'APAC','GOLD','Y');
-INSERT INTO dim_customer VALUES (202,'AMER','SILVER','Y');
-INSERT INTO dim_customer VALUES (303,'EMEA','BRONZE','N');
-
-INSERT INTO fact_sales  VALUES (1,101, DATE '2025-02-10','KR',100);
-INSERT INTO fact_sales  VALUES (2,202, DATE '2025-02-11','US',170);
-INSERT INTO fact_sales  VALUES (3,202, DATE '2025-03-01','US',250);
-
-INSERT INTO fact_clicks VALUES (1,101, DATE '2025-02-10','AD', 1.2);
-INSERT INTO fact_clicks VALUES (2,202, DATE '2025-02-11','SEO',0.7);
-INSERT INTO fact_clicks VALUES (3,202, DATE '2025-03-01','AD', 1.1);
-
-INSERT INTO orders_np   VALUES (10,101, DATE '2025-02-10', 300);
-INSERT INTO orders_np   VALUES (20,202, DATE '2025-02-11', 500);
-INSERT INTO orders_np   VALUES (30,202, DATE '2025-03-01', 700);
-
-COMMIT;
-
-BEGIN
-  DBMS_STATS.GATHER_TABLE_STATS(USER,'FACT_SALES');
-  DBMS_STATS.GATHER_TABLE_STATS(USER,'FACT_CLICKS');
-  DBMS_STATS.GATHER_TABLE_STATS(USER,'ORDERS_NP');
-  DBMS_STATS.GATHER_TABLE_STATS(USER,'DIM_CUSTOMER');
-END;
-/
-```
+하지만 **통계 오류, 키 스큐, 설계 제약, RAC 인터커넥트 상황** 때문에  
+옵티마이저의 기본 선택이 **현실에서 최적이 아닐 때**가 많습니다.  
+이때 **PQ_DISTRIBUTE**로 “PX SEND 방식”을 **의도대로 고정**해 성능을 안정화합니다. :contentReference[oaicite:0]{index=0}
 
 ---
 
-# PQ_DISTRIBUTE 힌트의 **용도**
+## 1) 병렬 조인의 데이터 흐름 복습(이걸 알아야 힌트를 읽는다)
 
-병렬 실행에서 오퍼레이터(특히 **조인/집계**) 사이에 **데이터가 어떻게 분배/전송**되는지는 성능을 **좌우**합니다.
-옵티마이저는 **기본 규칙**(통계/카디널리티/오브젝트 크기)에 따라 **HASH 재분배, BROADCAST 복제, PARTITION-WISE** 등을 선택하는데,
+### 1.1 DFO / TQ / QC / PX의 역할
 
-- 통계 부정확/스큐/설계 제약 등으로 **비효율적인 분배**가 선택되면
-  → `PX Deq Credit: send blkd`(메시지 큐 역압), `direct path write/read temp`(해시/소트 Temp 스필), RAC의 `gc cr/current request` 등이 크게 늘어납니다.
+- **QC(Query Coordinator)**: SQL을 시작/끝내고 결과를 최종 소비하는 조정자.
+- **PX 슬레이브**: QC가 만든 실행 계획을 병렬로 실제 수행하는 워커.
+- **DFO(Data Flow Operation)**: 병렬 파이프라인의 큰 단위. “한 덩어리 병렬 작업”.
+- **TQ(Table Queue)**: DFO 사이에서 **데이터가 이동하는 큐**. 실행계획에 `TQ10000`, `TQ10001`처럼 찍힘.
+- **PX SEND / PX RECEIVE**: TQ를 통해 **전송/수신**하는 오퍼레이터.  
+  → **어떤 SEND가 찍히는지**가 곧 **분배 방식**입니다.
 
-**PQ_DISTRIBUTE**는 이런 **데이터 분배 전략을 강제**하여,
-- **작은 쪽 브로드캐스트**(작을 때 진리)
-- **대형↔대형 해시-해시**(키 기준 균등 분배)
-- **파티션-와이즈 조인**(재분배 최소화)
-로 유도할 수 있게 해줍니다.
+### 1.2 IN-OUT이 말해주는 것
+
+`DBMS_XPLAN.DISPLAY_CURSOR`에서 **IN-OUT 컬럼**은 row source가 병렬 파이프라인에서  
+**어디서 어디로 흐르는지**를 짧게 요약합니다.
+
+- `S->P`: Serial 생산물을 Parallel로 분해(예: QC가 만든 작은 집합을 PX로 뿌림).
+- `P->S`: PX가 만든 결과를 QC로 회수.
+- `P->P`: PX끼리 **재분배(send/receive)** 후 다음 병렬 단계로 전달.
+- `PCWP / PCWC`: “Parent/Child parallel-wise” 결합.  
+  **같은 PX 집합이 연속 연산**을 수행해 **TQ와 메시징을 생략**하는 최적화.
+
+### 1.3 PX SEND 타입(분배 방식의 언어)
+
+실행계획에서 가장 중요한 라인:
+
+- `PX SEND HASH`
+- `PX SEND BROADCAST`
+- `PX SEND PARTITION (RANGE/HASH)`
+- `PX SEND ROUND-ROBIN` …  
+
+**PQ_DISTRIBUTE는 바로 이 SEND 타입을 강제**하기 위한 힌트입니다. :contentReference[oaicite:1]{index=1}
 
 ---
 
-# **구문** 이해하기
+## 2) PQ_DISTRIBUTE 힌트란 무엇인가(정의와 작동 지점)
+
+### 2.1 정의
+
+`PQ_DISTRIBUTE`는 **병렬 조인/집계 등에서 특정 row source가 다른 row source와 만날 때,  
+어떤 방식으로 PX에 분배될지(=PX SEND 방법)를 지정**하는 옵티마이저 힌트입니다. :contentReference[oaicite:2]{index=2}
+
+즉, “**이 테이블(또는 뷰)의 로우를 해시로 나눌지, 복제할지, 파티션-와이즈로 맞출지**”를 명령합니다.
+
+### 2.2 힌트가 영향을 주는 시점
+
+- **해시 조인 / 소트 머지 조인 / 그룹바이 / DISTINCT / 윈도우 집계** 등  
+  “**다수 PX가 같은 키를 기준으로 만나야 하는 연산**”에서 분배가 생깁니다.
+- NL 조인은 주로 “드라이빙 로우를 PX에 나눠 인덱스로 탐색”하는 구조라  
+  PQ_DISTRIBUTE의 직접적 영향이 제한적일 수 있습니다(다만 NL의 드라이빙 집합을 S->P로 나누는 데 간접 영향).
+
+---
+
+## 3) 구문 — **method_in / method_out의 정확한 의미**
 
 ```sql
 /*+ PQ_DISTRIBUTE( table_alias  method_in  method_out ) */
 ```
-- `table_alias` : 힌트를 **적용할 테이블/뷰의 별칭**. (반드시 별칭 사용 권장)
-- `method_in`, `method_out` : 이 **row source**가 병렬 파이프라인에서 **다른 집합과 상호작용**할 때의 **분배 전략**을 지정.
-  관행적으로 다음과 같이 사용합니다.
-  - **해시-해시**: `PQ_DISTRIBUTE(t HASH HASH)`
-    → 조인 키 기준으로 **양 입력**을 해시 재분배하여 **동일 키를 같은 PX**에 모읍니다.
-  - **브로드캐스트**: `PQ_DISTRIBUTE(dim BROADCAST NONE)`
-    → `dim`을 **모든 PX로 복제**, 반대편 큰 집합은 **재분배 없이 로컬 처리**.
-  - **파티션-와이즈**: `PQ_DISTRIBUTE(a PARTITION PARTITION)`
-    → 조인 키가 파티션 키이고 **동일한 파티션 방식/경계**일 때 **Full Partition-Wise Join** 지향.
-  - **NONE**: 재분배를 **하지 않음**(가능한 경우에 한함). 보통 브로드캐스트의 **반대편**이나, 파티션-와이즈에서 사용.
 
-> 실무 팁: 문법상 두 토큰을 모두 적지만, 한쪽만 **핵심 지정**하고 반대쪽은 **NONE**으로 명시하는 패턴이 가장 읽기 쉽고 안전합니다.
-> (예: 브로드캐스트는 **복제 대상**에만 `BROADCAST NONE`을 주고, 큰쪽은 생략/기본 유지)
+- `table_alias`  
+  힌트를 적용할 **테이블/뷰의 별칭**.  
+  **별칭을 정확히 써야** 하며, 조인 순서·뷰 병합 여부에 따라 대상이 달라질 수 있습니다.
 
----
+- `method_in`, `method_out`  
+  이 row source가 **파이프라인에서 “들어올 때(in)”**와  
+  **다른 row source와 결합해 “나갈 때(out)”** 어떤 분배 전략을 쓰는지 지정합니다.
 
-# **분배 방식** 지정(지원 조합)
-
-일반적으로 다음 **네 가지**를 사용합니다.
-
-| 키워드 | 의미 | 사용 맥락 |
-|---|---|---|
-| `HASH` | 조인키 **해시**로 **균등 재분배** | 대형↔대형(사실↔사실), DISTINCT/GROUP BY의 키 분산 |
-| `BROADCAST` | 작은 집합을 **모든 PX에 복제** | 스타/스노우플레이크 차원, 작을 때 강력 |
-| `PARTITION` | **파티션-와이즈**(같은 파티션 방식/경계/키) | Full/Partial PWJ 강제 |
-| `NONE` | **재분배 없음**(가능한 경우에 한해) | 브로드캐스트 반대편, 파티션-와이즈 |
-
-> 참고: 내부적으로 `RANGE/ROUND-ROBIN` 등의 분배도 존재하지만, **조인 튜닝**에서 명시적으로 쓰는 힌트 키워드는 **위 네 가지**가 실전 표준입니다.
+실무적으로는 “**조인에 투입되는 방향(in)과, 조인 후 다음 단계로 넘어가는 방향(out)**에 대한 분배 정책”으로 이해하면 안전합니다.  
+대부분의 조인 튜닝에선 **in/out을 같은 값으로 주거나**,  
+**한쪽만 강조하고 반대쪽은 NONE**으로 둡니다. :contentReference[oaicite:3]{index=3}
 
 ---
 
-# **예제로 배우는** PQ_DISTRIBUTE
+## 4) 지원되는 분배 키워드와 “현장 표준 조합”
 
-## 대형↔대형: **해시-해시**
+조인 튜닝에서 **명시적으로 쓰는 표준 키워드**는 아래 네 가지입니다. :contentReference[oaicite:4]{index=4}
+
+| 키워드 | 의미 | 데이터 흐름(플랜에서) | 추천 상황 |
+|---|---|---|---|
+| `HASH` | 조인 키 해시로 균등 재분배 | `PX SEND HASH` + `P->P` | 대형↔대형, 키 균등 |
+| `BROADCAST` | 소형 집합을 모든 PX에 복제 | `PX SEND BROADCAST` | 소형 차원 vs 대형 사실 |
+| `PARTITION` | 파티션-와이즈 정렬/조인 지향 | `PX PARTITION ...` / SEND 최소 | Full/Partial PWJ 가능 |
+| `NONE` | 재분배 없음(로컬 처리) | SEND 없음 또는 상대편만 SEND | 브로드캐스트 반대편, PWJ |
+
+### 4.1 현장 표준 조합 4종
+
+1) **대형-대형 해시 조인**  
+```sql
+pq_distribute(a HASH HASH)
+pq_distribute(b HASH HASH)
+```
+→ 양쪽을 **같은 키 해시로 재분배**해서 **동일 키가 같은 PX에서 만나게** 함.
+
+2) **소형-대형 브로드캐스트**  
+```sql
+pq_distribute(dim BROADCAST NONE)
+```
+→ **dim만 복제**, 사실(fact)은 재분배 없이 로컬 처리.
+
+3) **Full Partition-Wise Join(동일 파티션)**  
+```sql
+pq_distribute(a PARTITION PARTITION)
+pq_distribute(b PARTITION PARTITION)
+```
+→ 두 테이블이 **조인 키로 “동일한 방식/경계/개수”로 파티셔닝**돼 있을 때  
+**재분배를 거의 제거**하고 파티션끼리 조인.  
+Full PWJ는 두 테이블이 **조인키 기준으로 equi-partition**일 때만 가능. :contentReference[oaicite:5]{index=5}
+
+4) **Partial PWJ / Dynamic 보정(비파티션 정렬)**  
+```sql
+pq_distribute(np HASH HASH)
+```
+→ 비파티션 큰 테이블을 조인 키 기준으로 재분배해 **파티션 테이블과 “가상 정렬”**.  
+오라클은 이런 형태를 **partial / dynamic partition-wise**로 구현합니다. :contentReference[oaicite:6]{index=6}
+
+---
+
+## 5) 실행계획에서 “힌트가 먹었는지” 확인하는 법
+
+### 5.1 가장 확실한 출력
+
+```sql
+SELECT *
+FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
+       NULL, NULL,
+       'BASIC +PARALLEL +ALIAS +PREDICATE +NOTE'));
+```
+
+확인 포인트:
+
+1) **`PX SEND ...` 라인**  
+   - HASH / BROADCAST / PARTITION 중 **정확히 원하는 타입이 찍혔는가**
+
+2) **`IN-OUT` 컬럼**  
+   - HASH/BROADCAST면 대개 `P->P`  
+   - PWJ면 `P->P`가 줄고 PARTITION row source가 앞단에서 나타남
+
+3) **`NOTE` 섹션**  
+   - 힌트 사용/무시 이유가 적히고,  
+   - PWJ가 성립하면 partition-wise 관련 NOTE가 등장할 수 있습니다. :contentReference[oaicite:7]{index=7}
+
+4) **버퍼링 여부**  
+   - 해시 조인에서 `BUFFERED`가 찍히면 **재분배 결과를 임시 버퍼링**하는 경우(메모리/Temp 영향).  
+     분배 방식 자체를 바꾸거나 PGA 여유를 늘려야 할 때가 많습니다. :contentReference[oaicite:8]{index=8}
+
+### 5.2 스큐/바이트는 V$PQ_TQSTAT로
+
+```sql
+SELECT dfo_number, tq_id, server_type, inst_id, process,
+       num_rows, bytes
+FROM   v$pq_tqstat
+ORDER  BY dfo_number, tq_id, server_type, inst_id, process;
+```
+
+- **슬레이브별 num_rows 편차**가 크면 **키 스큐**.  
+- HASH/HASH일 때 편차가 크면 `PX Deq Credit: send blkd`가 치솟기 쉽습니다.
+
+---
+
+## 6) 예제로 배우는 PQ_DISTRIBUTE (확장판)
+
+이 절의 예제는 사용자가 준 공통 스키마를 그대로 씁니다.
+
+---
+
+### 6.1 대형↔대형: **HASH-HASH 강제**
+
+#### 6.1.1 기본형
 
 ```sql
 EXPLAIN PLAN FOR
@@ -163,21 +211,74 @@ SELECT /*+ leading(s) use_hash(c)
        s.cust_id, SUM(s.amount) amt, SUM(c.cost) cost
 FROM   fact_sales s
 JOIN   fact_clicks c
-   ON  c.cust_id = s.cust_id
+  ON   c.cust_id = s.cust_id
 GROUP  BY s.cust_id;
 
 SELECT *
-FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +ALIAS +NOTE'));
+FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,
+     'BASIC +PARALLEL +ALIAS +NOTE'));
 ```
-**해석 포인트**
-- 플랜 중간에 `PX SEND HASH` / `PX RECEIVE`( `IN-OUT = P->P` )가 나타나며, **양쪽**에서 해시 재분배를 수행.
-- 동일 키가 한 PX로 **수렴** → 해시빌드/프로브 **지역화**.
-- **주의**: 키 스큐가 심하면 `PX Deq Credit: send blkd` 및 어느 한 슬레이브 과부하.
-  → **SALT 컬럼**(예: `MOD(ORA_HASH(cust_id), 8)`)로 분산도 보정, 또는 브로드캐스트 전환 고려.
+
+#### 6.1.2 계획 해석
+
+- `PX SEND HASH`가 **양쪽에 각각 1회 이상** 나타나는지 확인.
+- `IN-OUT = P->P`가 조인 바로 위/아래에 찍히는 게 일반적.
+
+#### 6.1.3 언제 최고인가
+
+- 두 집합이 모두 커서 **브로드캐스트가 불가능**하고,
+- 조인 키가 **비교적 균등**할 때.
+
+#### 6.1.4 스큐가 있으면 어떻게 망가지는가
+
+- 특정 키가 전체의 상당 부분을 차지하면  
+  → 그 키를 담당한 PX 한두 개만 과부하  
+  → 다른 PX는 놀고, 과부하 PX의 전송 큐가 막혀  
+  → `PX Deq Credit: send blkd` / `PX Deq Credit: need buffer`가 급증.
+
+**해시-해시의 최대 약점은 스큐**입니다.
+
+#### 6.1.5 스큐 완화(실전형 SALT + 2단계 집계)
+
+```sql
+WITH S AS (
+  SELECT /*+ parallel(16) */
+         cust_id,
+         amount,
+         MOD(ORA_HASH(cust_id), 8) AS salt
+  FROM fact_sales
+),
+C AS (
+  SELECT /*+ parallel(16) */
+         cust_id,
+         cost,
+         MOD(ORA_HASH(cust_id), 8) AS salt
+  FROM fact_clicks
+)
+SELECT /*+ leading(S) use_hash(C)
+           parallel(16)
+           pq_distribute(S HASH HASH)
+           pq_distribute(C HASH HASH)
+           monitor */
+       S.cust_id,
+       SUM(S.amount) amt,
+       SUM(C.cost)   cost
+FROM   S
+JOIN   C
+  ON   C.cust_id = S.cust_id
+ AND   C.salt    = S.salt
+GROUP  BY S.cust_id;
+```
+
+- 내부 분배는 `(cust_id, salt)`로 **강제 균등화**  
+- 최종 결과는 `cust_id`로 다시 합산.  
+- 스큐가 심한 DW에서 **가장 보편적인 해시-기반 스큐 완화 패턴**입니다.
 
 ---
 
-## 소형↔대형: **브로드캐스트**
+### 6.2 소형↔대형: **BROADCAST 강제**
+
+#### 6.2.1 기본형
 
 ```sql
 EXPLAIN PLAN FOR
@@ -188,22 +289,67 @@ SELECT /*+ leading(d) use_hash(s)
        s.cust_id, SUM(s.amount) amt
 FROM   dim_customer d
 JOIN   fact_sales   s
-   ON  s.cust_id = d.cust_id
+  ON   s.cust_id = d.cust_id
 WHERE  d.grade IN ('GOLD','SILVER')
 GROUP  BY s.cust_id;
 
 SELECT *
-FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE'));
+FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,
+     'BASIC +PARALLEL +ALIAS +NOTE'));
 ```
-**효과**
-- `dim_customer`가 `PX SEND BROADCAST`로 **복제**, `fact_sales`는 **재분배 없이** 로컬 병렬 스캔→조인.
-- **네트워크/큐잉**이 크지 않고, 해시 재분배를 피할 수 있어 **응답/스루풋↑**.
-- **조건**: 복제 대상이 **충분히 작아야** 함(환경에 따라 수십~수백 MB 내).
-  - 통계가 틀려서 **작지 않은데 브로드캐스트** 되면 오히려 **폭증** → 통계 정합/필터 선적용 중요.
+
+#### 6.2.2 계획 해석
+
+- dim 쪽에서 `PX SEND BROADCAST`가 찍히는지 확인.
+- fact 쪽은 **재분배 SEND가 최소**(또는 없음).
+
+#### 6.2.3 왜 빠른가
+
+큰 fact를 해시로 재분배하면  
+**fact 전체가 네트워크를 타고 흔들립니다.**
+
+브로드캐스트는  
+**작은 dim만 네트워크를 타고 복제**되고  
+fact는 **각 PX가 자기 스캔 구간을 그대로 해시조인**하니  
+**네트워크·큐잉 대기가 획기적으로 줄어듭니다.** :contentReference[oaicite:9]{index=9}
+
+#### 6.2.4 브로드캐스트의 한계
+
+- dim이 “작다고 생각했는데” 실제로는 크면  
+  → 모든 PX에 복제되는 바이트가 **DOP 배수로 커짐**  
+  → 오히려 역효과.  
+
+따라서 **브로드캐스트 대상은 먼저 필터·프루닝으로 소형화**하는 것이 핵심입니다.
+
+#### 6.2.5 소형화 + 브로드캐스트(현장 패턴)
+
+```sql
+WITH D AS (
+  SELECT /*+ materialize */
+         cust_id, grade, active_yn
+  FROM dim_customer
+  WHERE active_yn = 'Y'
+    AND grade IN ('GOLD','SILVER')
+)
+SELECT /*+ leading(D) use_hash(s)
+           parallel(D 4) parallel(s 16)
+           pq_distribute(D BROADCAST NONE)
+           monitor */
+       s.cust_id, SUM(s.amount)
+FROM   D
+JOIN   fact_sales s
+  ON   s.cust_id = D.cust_id
+GROUP  BY s.cust_id;
+```
+
+- `materialize`는 **필터된 결과를 먼저 만들고**  
+  그 작은 결과를 브로드캐스트하도록 유도하는 흔한 테크닉.
 
 ---
 
-## Full Partition-Wise Join: **PARTITION PARTITION**
+### 6.3 Full Partition-Wise Join: **PARTITION PARTITION 강제**
+
+#### 6.3.1 기본형
 
 ```sql
 EXPLAIN PLAN FOR
@@ -212,28 +358,47 @@ SELECT /*+ leading(s) use_hash(c)
            pq_distribute(s PARTITION PARTITION)
            pq_distribute(c PARTITION PARTITION)
            monitor */
-       s.cust_id, SUM(s.amount + c.cost) sum_amt
+       s.cust_id, SUM(s.amount) amt, SUM(c.cost) ad_cost
 FROM   fact_sales  s
 JOIN   fact_clicks c
-   ON  c.cust_id = s.cust_id
+  ON   c.cust_id = s.cust_id
 GROUP  BY s.cust_id;
 
 SELECT *
-FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'BASIC +PARALLEL +NOTE +PARTITION'));
+FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,
+     'BASIC +PARALLEL +ALIAS +NOTE +PARTITION'));
 ```
-**전제**
-- **조인 키 = 파티션 키**, **동일 방식/개수/경계** (여기선 둘 다 `PARTITION BY HASH(cust_id) PARTITIONS 8`)
-**효과**
-- `PX SEND` **최소/없음**, 파티션별 **지역 조인** → 네트워크/큐잉/RAC GC 대기 **극소화**.
-- **RAC**에선 파티션-서비스 **affinity**까지 잡으면 **scalability 최고**.
+
+#### 6.3.2 Full PWJ 요건(정확히)
+
+Full PWJ는  
+- **조인 키가 파티션 키와 같고**,  
+- **양쪽이 동일한 파티션 방식/경계/개수(equi-partition)로 구성**돼야 합니다. :contentReference[oaicite:10]{index=10}
+
+#### 6.3.3 계획 해석
+
+- `PX PARTITION HASH` 같은 partition row source가  
+  **조인(FULL PWJ) 앞에 나타나면** PWJ 성립. :contentReference[oaicite:11]{index=11}
+- `PX SEND HASH/BROADCAST`가 **사라지거나 아주 약해지는지** 확인.
+
+#### 6.3.4 왜 선형 확장성이 최고인가
+
+- **재분배(PX SEND) 자체가 줄어** 네트워크 바이트와 큐잉이 작고,
+- 각 파티션이 고유 PX에 고정되어  
+  **지역성(locality)**이 극대화됩니다.
+
+특히 RAC에서  
+파티션-서비스 affinity가 맞으면  
+인터커넥트 `gc cr/current request`도 크게 줄어  
+PWJ는 **RAC-친화적 최고 패턴**이 됩니다. :contentReference[oaicite:12]{index=12}
 
 ---
 
-## Partial PWJ + 동적 재분배(비파티션 보정)
+### 6.4 Partial PWJ / Dynamic 보정: **비파티션을 HASH로 맞추기**
 
-비파티션 `orders_np`와 파티션 `fact_sales`를 조인.
+#### 6.4.1 기본(Partial)
+
 ```sql
--- (A) 기본: 옵티마이저 판단에 맡김 → 때로는 비효율 분배
 EXPLAIN PLAN FOR
 SELECT /*+ leading(s) use_hash(o)
            parallel(s 16) parallel(o 16)
@@ -243,8 +408,15 @@ FROM   fact_sales s
 JOIN   orders_np  o
   ON   o.cust_id = s.cust_id
 GROUP  BY s.cust_id;
+```
 
--- (B) 비파티션을 조인키 해시로 재분배하여 파티션쪽으로 "맞춘다"
+- fact_sales는 파티션 키가 조인 키라 **파티션 단위 병렬 스캔**이 유리.
+- 하지만 orders_np는 비파티션이라  
+  옵티마이저가 HASH-재분배를 선택해도 **교차 통신이 남는** 경우가 많습니다. :contentReference[oaicite:13]{index=13}
+
+#### 6.4.2 비파티션 보정(동적 정렬)
+
+```sql
 EXPLAIN PLAN FOR
 SELECT /*+ leading(s) use_hash(o)
            parallel(s 16) parallel(o 16)
@@ -257,196 +429,139 @@ JOIN   orders_np  o
 GROUP  BY s.cust_id;
 
 SELECT *
-FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +NOTE +ALIAS'));
+FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
+     'BASIC +PARALLEL +ALIAS +NOTE'));
 ```
-**핵심**
-- (B)는 `orders_np`를 **해시 재분배**해 `fact_sales`의 **파티션과 유사한 구간**으로 맞춰 **교차 통신**을 줄입니다.
-- **스큐**가 있으면 여전히 불균형 → **SALT/복합키**로 분산도 개선.
+
+- orders_np를 **cust_id 해시로 재분배**해  
+  fact_sales의 해시-파티션과 **“가상으로 맞춘다”**는 발상.
+- 실행계획에서 orders_np 쪽 `PX SEND HASH`가 찍히는지 확인.
+
+#### 6.4.3 언제 유리한가
+
+- 비파티션 쪽이 충분히 크고(브로드캐스트 불가),
+- 조인 키가 비교적 균등하며,
+- fact의 물리 파티션 이점을 살리고 싶을 때.
 
 ---
 
-# 튜닝 사례(현장형)
+## 7) 실전 튜닝 케이스(현장형 확장)
 
-## 해시-해시 vs 브로드캐스트 선택
+### 7.1 해시-해시 vs 브로드캐스트 “결정 트리”
 
-**문제**: 차원 테이블이 **작아 보이지만** 통계가 엉켜 옵티마이저가 **HASH-HASH**를 선택 → 네트워크/큐잉 폭증
-**해결**
-```sql
-SELECT /*+ leading(d) use_hash(f)
-           parallel(d 8) parallel(f 16)
-           pq_distribute(d BROADCAST NONE) monitor */
-       SUM(f.amount)
-FROM   dim_customer d
-JOIN   fact_sales   f
-  ON   f.cust_id = d.cust_id
-WHERE  d.active_yn = 'Y';
-```
-- `dim_customer`를 **브로드캐스트**로 강제하여, `fact_sales`는 **재분배 없이** 지역 조인.
-- 이후 `V$PQ_TQSTAT`에서 `PX SEND BROADCAST` 바이트가 **작고**, `PX Deq Credit: send blkd`가 **감소**했는지 확인.
+1) **작은 쪽이 진짜 작다**  
+   - 필터/프루닝 후 크기 확인  
+   → **BROADCAST**가 1순위.
 
----
+2) **둘 다 크다**  
+   - 키 균등  
+   → **HASH-HASH**.
 
-## 스큐 키(편중)로 인한 슬레이브 과부하
+3) **키 스큐가 크다**  
+   - HASH-HASH 유지 시 SALT/부분집계  
+   - 또는 **작은 쪽이면 BROADCAST로 회피**.
 
-**증상**: `PX Deq Credit: send blkd`가 상위 1위, `v$pq_tqstat`에서 **num_rows 편차**가 매우 큼
-**해결(두 단계 집계 예시)**
-```sql
--- ① 해시 분산용 SALT 칼럼을 만들어 내부 분배 균등화
-WITH S AS (
-  SELECT cust_id,
-         amount,
-         MOD(ORA_HASH(cust_id), 8) salt  -- 8-way salt
-  FROM   fact_sales
-)
-SELECT /*+ parallel(16) monitor */
-       cust_id, SUM(amount)
-FROM (
-  SELECT /* partial aggregation by (cust_id, salt) */
-         cust_id, salt, SUM(amount) amount
-  FROM   S
-  GROUP  BY cust_id, salt
-)
-GROUP  BY cust_id;
-```
-- **PX 재분배 → 부분 집계 → 최종 집계**로 바이트/큐잉을 안정화.
-- 조인에서도 동일 아이디어 적용 가능(내부에서 `cust_id, salt`로 분산 후 바깥에서 다시 합산).
+4) **동일 파티션 가능**  
+   → **PARTITION-WISE(최우선)**.
+
+### 7.2 조인 순서와의 결합
+
+PQ_DISTRIBUTE는 “**그 row source가 어떤 입력 위치에 서느냐**”에 따라 효과가 달라집니다.
+
+따라서  
+- `LEADING`, `USE_HASH`, `SWAP_JOIN_INPUTS` 등으로  
+  **드라이빙/빌드/프로브 순서를 고정**한 뒤  
+- PQ_DISTRIBUTE로 **분배까지 고정**하는 게 가장 안전합니다. :contentReference[oaicite:14]{index=14}
+
+### 7.3 분배 비용은 플랜에 잘 드러나지 않는다
+
+실행계획의 cost는  
+**PX 분배 네트워크 비용을 충분히 외부화하지 못하는 한계**가 있어  
+“플랜만 보면 좋아 보이는데 실제는 느린” 일이 자주 생깁니다.  
+이 때문에 실무에서 PQ_DISTRIBUTE로 **분배를 실측 기반으로 고정**합니다. :contentReference[oaicite:15]{index=15}
 
 ---
 
-## RAC에서 GC 대기 급증
+## 8) 힌트가 무시되는 대표 원인(함정)
 
-**증상**: 병렬 조인 시 `gc cr request`, `gc current request` 대기 많음
-**전략**: **Full Partition-Wise Join + 서비스-파티션 affinity**
-```sql
--- 둘 다 HASH(cust_id) 동일 파티션 → PARTITION PARTITION
-SELECT /*+ leading(s) use_hash(c)
-           parallel(s 16) parallel(c 16)
-           pq_distribute(s PARTITION PARTITION)
-           pq_distribute(c PARTITION PARTITION) monitor */
-       COUNT(*)
-FROM fact_sales s JOIN fact_clicks c ON c.cust_id = s.cust_id;
+1) **별칭 불일치 / 뷰 병합**  
+   - 힌트 대상 alias가 플랜에서 사라지면 힌트도 사라짐.  
+   - 뷰는 `MERGE/NO_MERGE`, `INLINE/MATERIALIZE`를 함께 고려.
 
--- RAC: 서비스(Instance)별로 파티션(또는 서브파티션) 범위를 배치
--- 세션을 서비스 X로 붙이고, 그 서비스가 담당하는 파티션 범위만 읽도록 WHERE 절/파티션 프루닝 설계
-```
-- **재분배 최소화**로 **인스턴스 간 블록 이동↓** → GC 대기 급감.
+2) **힌트 상충**  
+   - 예: `USE_HASH`와 `USE_NL`, 또는 분배 힌트끼리 충돌.  
+   - `DISPLAY_CURSOR ... +NOTE`에서 “why not used”를 확인. :contentReference[oaicite:16]{index=16}
 
----
+3) **PWJ 전제 불충족**  
+   - PARTITION 힌트를 줘도  
+     파티션 키/경계가 다르면 Full PWJ 불가. :contentReference[oaicite:17]{index=17}
 
-## Partial PWJ에서 비파티션 쪽 반복 스캔
+4) **브로드캐스트 대상이 크다**  
+   - 통계가 틀려 “작다고 착각”하면 대참사.  
+   - **필터 선적용 → 통계 갱신 → 브로드캐스트** 순서가 정석.
 
-**증상**: 파티션 쪽은 빠르지만, 비파티션 큰 테이블이 **모든 파티션과 반복 조인**되어 I/O 과다
-**해결(선결 조건 필터 → 브로드캐스트 전환)**
-```sql
--- 비파티션 orders_np에 강한 필터(최근 한 달 등)를 먼저 적용해 충분히 소형화
-WITH O AS (
-  SELECT /*+ materialize */ *
-  FROM   orders_np
-  WHERE  order_dt >= ADD_MONTHS(TRUNC(SYSDATE,'MM'), -1)
-)
-SELECT /*+ leading(O) use_hash(s)
-           parallel(s 16) parallel(O 8)
-           pq_distribute(O BROADCAST NONE) monitor */
-       s.cust_id, SUM(s.amount), SUM(O.amt)
-FROM   O
-JOIN   fact_sales s
-  ON   s.cust_id = O.cust_id
-GROUP  BY s.cust_id;
-```
-- **소형화된** 비파티션 집합을 **브로드캐스트**로 전환 → 반복 조인/재분배 비용 제거.
+5) **과대 DOP**  
+   - 분배 전략이 맞아도 DOP가 과하면  
+     큐잉/Temp/메모리 경합이 성능을 무너뜨림.
 
 ---
 
-## ORDER BY/ROLLUP 동반 쿼리에서 정렬 대기
-
-정렬/집계가 큰 경우 `direct path write/read temp` 증가. **분배 전략 + Top-N/Pushdown** 병행.
-```sql
--- 조인 후 집계 + 정렬: 작은 쪽 브로드캐스트로 재분배 비용 제거
-SELECT /*+ leading(d) use_hash(f)
-           parallel(d 8) parallel(f 16)
-           pq_distribute(d BROADCAST NONE) monitor */
-       f.cust_id, SUM(f.amount) amt
-FROM   dim_customer d JOIN fact_sales f
-  ON   f.cust_id = d.cust_id
-WHERE  d.active_yn = 'Y'
-GROUP  BY f.cust_id
-ORDER  BY amt DESC FETCH FIRST 100 ROWS ONLY;  -- Top-N으로 Temp 부담 축소
-```
-
----
-
-# **실행계획/동작** 검증 루틴
-
-## 플랜에서 꼭 볼 것
+## 9) 모니터링 루틴(고정 템플릿)
 
 ```sql
+-- 1) 실제 실행 플랜
 SELECT *
-FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'BASIC +PARALLEL +ALIAS +PREDICATE +NOTE'));
-```
-- **`PX SEND`** 라인: `HASH`/`BROADCAST`/`PARTITION`가 **정말 선택**됐는지
-- **`IN-OUT`**: `P->P`(재분배), `P->S`(QC로 반환), `PCWP/PCWC`(동일 슬레이브 집합 결합)
-- **NOTE**: *partition-wise join* 표기 등
+FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
+     NULL, NULL,
+     'BASIC +PARALLEL +ALIAS +PREDICATE +NOTE'));
 
-## 분배/스큐 확인
-
-```sql
+-- 2) TQ 분배/스큐
 SELECT dfo_number, tq_id, server_type, inst_id, process,
        num_rows, bytes
 FROM   v$pq_tqstat
 ORDER  BY dfo_number, tq_id, server_type, inst_id, process;
-```
-- **최대/최소 `num_rows` 편차**가 크면 **스큐**.
-- 브로드캐스트는 **작은 바이트**로 고르게 복제되는지 확인.
 
-## 대기 이벤트 요약(ASH 예시)
-
-```sql
+-- 3) 병렬 관련 대기 이벤트(ASH)
 SELECT event, COUNT(*) samples
 FROM   v$active_session_history
-WHERE  sample_time > SYSDATE - 1/288   -- 최근 5분
+WHERE  sample_time > SYSDATE - 1/288
 AND    session_type = 'FOREGROUND'
-AND    (event LIKE 'PX Deq%' OR event LIKE 'direct path%' OR event LIKE 'gc %')
+AND    (event LIKE 'PX Deq%'
+        OR event LIKE 'direct path%'
+        OR event LIKE 'gc %')
 GROUP  BY event
 ORDER  BY samples DESC;
 ```
-- `PX Deq Credit: send blkd`(역압), `direct path write/read temp`(Temp), `gc %`(RAC) 추적.
+
+- `PX Deq Credit: send blkd`  
+  → 해시 재분배 스큐/역압 대표 신호.  
+- `direct path write/read temp`  
+  → 해시 조인/정렬이 PGA 부족으로 Temp 스필 중.  
+- `gc cr/current request`  
+  → RAC 인터커넥트 병목(분배 최소화/PWJ/affinity 고려).
 
 ---
 
-# **주의/함정** 체크리스트
+## 10) 의사결정 표(실전 한 장 요약)
 
-1. **통계가 틀리면** 잘못된 분배를 강제할 수 있다
-   - 브로드캐스트 대상이 실제로 **크면** 복제 비용이 폭증
-   - 먼저 **필터/프루닝**으로 실제 전송량을 줄이고, 통계를 **갱신**
-2. **스큐 키**
-   - 해시-해시에서 **편중**은 **한 PX**를 멈춘다 → `SALT`/복합키로 분산도 확보
-3. **파티션-와이즈 전제**
-   - **동일 파티션 방식/경계/키**가 아니면 효과 없음(Partial/Dynamic으로 절충)
-4. **조인 순서**
-   - `LEADING`, `USE_HASH/USE_MERGE` 등으로 **조인 순서**가 원하는 분배 전략과 **맞물리게**
-5. **DOP 과대**
-   - DOP가 과도하면 Temp/네트워크/큐잉 경합 ↑. 스토리지/CPU/네트워크 **밸런스** 맞추기
-6. **RAC**
-   - PWJ + **서비스-파티션 affinity** 없으면 GC 대기가 되살아남
-
----
-
-# 요약 표 — 언제 무엇을 강제할까?
-
-| 상황 | 힌트(예) | 기대 효과 |
+| 상황 | PQ_DISTRIBUTE 추천 | 이유 |
 |---|---|---|
-| 소형 차원 vs 대형 사실 | `pq_distribute(dim BROADCAST NONE)` | 해시 재분배 제거, 네트워크/큐잉↓ |
-| 대형↔대형(균등 분배) | `pq_distribute(a HASH HASH)` + `pq_distribute(b HASH HASH)` | 동일 키 수렴, 스루풋↑ |
-| Full PWJ 가능(동일 파티션) | `pq_distribute(t PARTITION PARTITION)`(양쪽) | 재분배 최소, RAC GC↓, 선형 확장 |
-| Partial PWJ + 보정 | `pq_distribute(np HASH HASH)` | 비파티션을 키 해시로 정렬, 교차 통신↓ |
-| 스큐 심함 | (해시 전략 유지 +) SALT/복합키 + 부분집계 | 슬레이브 과부하 해소 |
-| 정렬/Top-N 대시보드 | (조인 브로드캐스트) + `FETCH FIRST n` | Temp/네트워크 절감, 응답 빠름 |
+| 소형 차원 vs 대형 사실 | `dim BROADCAST NONE` | fact 재분배 제거 |
+| 대형↔대형, 키 균등 | 양쪽 `HASH HASH` | 동일 키 수렴, 지역 해시 조인 |
+| Full PWJ 전제 성립 | 양쪽 `PARTITION PARTITION` | 재분배 최소, RAC-friendly |
+| Partial PWJ, 비파티션 큼 | 비파티션 `HASH HASH` | 런타임 가상 정렬 |
+| 스큐 심함 | SALT + 부분집계(해시 유지) | 슬레이브 불균형 해소 |
+| 브로드캐스트 대상이 실제 큼 | HASH로 전환 | 복제 바이트 폭증 방지 |
 
 ---
 
-## 결론
+## 11) 결론
 
-- **PQ_DISTRIBUTE**는 병렬 실행에서 **데이터가 어디로 어떻게 이동**하는지 **직접 조종**하는 힌트입니다.
-- 네 가지 키워드( **HASH / BROADCAST / PARTITION / NONE** )만 정확히 써도,
-  **대형↔대형**, **소형↔대형**, **RAC**, **스큐**, **Partial/Dynamic** 등 **대부분의 현장 케이스**를 **의도한 흐름**으로 안정화할 수 있습니다.
-- 항상 **실행계획(`PX SEND/RECEIVE`, `IN-OUT`) + V$PQ_TQSTAT 스큐 + 대기 이벤트**를 함께 확인하세요. 그게 곧 정답입니다.
+- **PQ_DISTRIBUTE = 병렬 쿼리에서 “데이터가 어디로 어떻게 이동할지”를 지휘하는 스위치**입니다.  
+- 실전에서 쓰는 키워드는 사실상 네 개( **HASH / BROADCAST / PARTITION / NONE** )면 충분합니다.
+- 항상  
+  1) **플랜의 PX SEND 타입**,  
+  2) **IN-OUT 흐름**,  
+  3) **V$PQ_TQSTAT 스큐**,  
+  4) **ASH 대기 이벤트**  
+  를 한 세트로 읽어야 “힌트를 주고 끝”이 아니라 **원인-처방-검증까지 닫힌 튜닝**이 됩니다.
