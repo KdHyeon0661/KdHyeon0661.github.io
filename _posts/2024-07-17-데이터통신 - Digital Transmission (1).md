@@ -265,12 +265,12 @@ def lfsr_scramble(bits, poly=(7,4), seed=0b1111111):
 
 ## 예제 — 코드 선택·대역폭·전이밀도
 
-### 100 Mbps 링크, Manchester vs NRZ
+### Mbps 링크, Manchester vs NRZ
 
 - **Manchester**: \(r=1,\; S\approx N=100\ \text{MBd}\) → 대역폭 요구 큼, **CDR 매우 안정**
 - **NRZ**: \(S\approx N/2=50\ \text{MBd}\) → 대역폭 절감, **런 길이 위험**(추가 대책 필요)
 
-### 125 Mbps 링크, 4B/5B + NRZ-I + MLT-3 (100BASE-TX)
+### Mbps 링크, 4B/5B + NRZ-I + MLT-3 (100BASE-TX)
 
 - 4B/5B로 bit rate가 **1.25×**: 125 Mbps → 5/4 오버헤드
 - NRZ-I로 부호화 후 MLT-3로 전이 주파수 저감 → UTP에서 EMI·대역 요구 완화
@@ -373,7 +373,7 @@ print("Manchester transitions:", transitions(w_m))
 - 대역폭 요구 ↑, 대신 **CDR 최강/폴라리티 변화 견고**
 - 케이블 짧고 클럭회로 간단히 하고 싶을 때 유리
 
-### 1 Gbps UTP 설계 감각
+### Gbps UTP 설계 감각
 
 - 순수 NRZ는 EMI/스펙트럼·런 길이 문제가 큼
 - **RLL+블록(8b/10b or 4B/5B)** + **MLT-3/스크램블**로

@@ -6,21 +6,21 @@ category: DB 심화
 ---
 # Anti Join · 집계 서브쿼리 제거 · Subquery Pushing
 
-**목표**  
-이 글은 실행계획에서 **“무엇이 실제로 일어났는지”**를 기준으로,  
-1) **Anti Join**(부재 증명),  
-2) **상관 집계 서브쿼리 제거(Aggregate Subquery Elimination)**,  
-3) **Subquery Pushing(PUSH_SUBQ)**  
+**목표**
+이 글은 실행계획에서 **“무엇이 실제로 일어났는지”**를 기준으로,
+1) **Anti Join**(부재 증명),
+2) **상관 집계 서브쿼리 제거(Aggregate Subquery Elimination)**,
+3) **Subquery Pushing(PUSH_SUBQ)**
 를 **논리 의미 → 옵티마이저 변환 → 실행계획 판독 → 힌트/재작성 → 반례/함정** 순서로 끝까지 정리한다.
 
-> 전제  
-> - Oracle의 CBO는 **의미 보존(semantic correctness)**이 증명될 때만 변환을 수행한다.  
-> - 변환이 실패/회피되면 플랜은 **FILTER / SORT / 반복 스칼라 서브쿼리** 형태로 남아 “느린 계획”이 된다.  
+> 전제
+> - Oracle의 CBO는 **의미 보존(semantic correctness)**이 증명될 때만 변환을 수행한다.
+> - 변환이 실패/회피되면 플랜은 **FILTER / SORT / 반복 스칼라 서브쿼리** 형태로 남아 “느린 계획”이 된다.
 > - 이 글의 모든 튜닝은 **DBMS_XPLAN 실측(ALLSTATS LAST)**을 기준으로 검증한다.
 
 ---
 
-## 0. 준비 스키마 & 데이터(확장 버전)
+## 준비 스키마 & 데이터(확장 버전)
 
 아래는 Anti/Semi/집계 제거 실습에 쓰기 좋은 “차원(작음)–사실(큼)” 구조다.
 
@@ -91,23 +91,23 @@ FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
 
 ---
 
-## 1. Anti Join — “없음을” 가장 싸게 증명하는 방법
+## Anti Join — “없음을” 가장 싸게 증명하는 방법
 
-### 1.1 Anti Join의 논리 의미
+### Anti Join의 논리 의미
 
-Anti Join은 “A에는 있지만 B에는 없는 행”을 반환하는 연산이다.  
+Anti Join은 “A에는 있지만 B에는 없는 행”을 반환하는 연산이다.
 SQL 관점에서는 `NOT EXISTS`, `NOT IN`(주의), `MINUS`, 혹은 `LEFT JOIN … IS NULL` 형태로 표현된다.
 
 관계대수 관점(직관):
 
-- **Anti-Semi Join**  
+- **Anti-Semi Join**
   $$A \ \text{ANTI-JOIN}\ B = \{a \in A\ |\ \nexists b \in B,\ a.key=b.key\}$$
 
 즉, **B에서 “존재하지 않음”을 증명**하는 비용을 가장 싸게 만들면 곧 Anti Join 튜닝이다.
 
 ---
 
-### 1.2 SQL 표현식별 의미 차이(특히 NULL)
+### SQL 표현식별 의미 차이(특히 NULL)
 
 ```sql
 -- (1) NOT EXISTS : NULL 안전, 실무 표준
@@ -142,54 +142,54 @@ LEFT JOIN f_sales s
 WHERE s.cust_id IS NULL;
 ```
 
-**핵심**  
-- `NOT EXISTS`는 **서브쿼리 집합에 NULL이 있어도 의미가 변하지 않는다**.  
-- `NOT IN`은 **IN 집합에 NULL이 하나라도 있으면 전체가 UNKNOWN**이 되어 결과가 비정상적으로 줄어들 수 있다. :contentReference[oaicite:0]{index=0}  
+**핵심**
+- `NOT EXISTS`는 **서브쿼리 집합에 NULL이 있어도 의미가 변하지 않는다**.
+- `NOT IN`은 **IN 집합에 NULL이 하나라도 있으면 전체가 UNKNOWN**이 되어 결과가 비정상적으로 줄어들 수 있다.
 - 따라서 실무에서 Anti Join은 **무조건 `NOT EXISTS`를 기준으로 작성**하는 습관이 안전하다.
 
 ---
 
-### 1.3 Null-Aware Anti Join(NA-AJ) — NOT IN을 안전하게 변환하는 내부 장치
+### Null-Aware Anti Join(NA-AJ) — NOT IN을 안전하게 변환하는 내부 장치
 
-Oracle은 `NOT IN`/`!= ALL` 같은 NULL 민감 표현을 Anti Join으로 변환할 때,  
-의미 보존을 위해 **Null-Aware Anti Join**을 사용한다.  
+Oracle은 `NOT IN`/`!= ALL` 같은 NULL 민감 표현을 Anti Join으로 변환할 때,
+의미 보존을 위해 **Null-Aware Anti Join**을 사용한다.
 
-- 변환 요지  
-  - 일반 Anti Join은 “키가 같은 row가 없으면 통과”인데,  
-  - NULL이 섞이면 “없음”의 의미가 애매해져서 **추가 NULL 체크 로직을 결합한 Anti Join**으로 실행한다.  
-- 실행계획 특징  
-  - `HASH JOIN ANTI` 또는 `MERGE JOIN ANTI` 라인에  
-    **NULL 보존 목적의 연산이 결합된 형태**로 나타난다. :contentReference[oaicite:1]{index=1}  
+- 변환 요지
+  - 일반 Anti Join은 “키가 같은 row가 없으면 통과”인데,
+  - NULL이 섞이면 “없음”의 의미가 애매해져서 **추가 NULL 체크 로직을 결합한 Anti Join**으로 실행한다.
+- 실행계획 특징
+  - `HASH JOIN ANTI` 또는 `MERGE JOIN ANTI` 라인에
+    **NULL 보존 목적의 연산이 결합된 형태**로 나타난다.
 
-**튜닝 실무 결론**  
-- `NOT IN`을 써야만 하는 상황이 아니라면,  
+**튜닝 실무 결론**
+- `NOT IN`을 써야만 하는 상황이 아니라면,
   **처음부터 `NOT EXISTS`로 명시하는 것이 플랜·의미·성능 모두 안정적**이다.
 
 ---
 
-### 1.4 Anti Join 실행계획 형태
+### Anti Join 실행계획 형태
 
 Anti Join으로 변환이 성공하면 오퍼레이터 이름이 명확히 드러난다.
 
-- `HASH JOIN ANTI`  
-  - 내부(Build) 입력에서 키 집합을 해시 테이블로 구성한 뒤,  
-    외부(Probe) 입력을 스캔하며 **매칭이 없음을 빠르게 거른다**.  
+- `HASH JOIN ANTI`
+  - 내부(Build) 입력에서 키 집합을 해시 테이블로 구성한 뒤,
+    외부(Probe) 입력을 스캔하며 **매칭이 없음을 빠르게 거른다**.
   - DW/대량 범위 스캔에서 표준 선택.
-- `NESTED LOOPS ANTI`  
-  - 바깥 소량, 안쪽 인덱스 고선택도일 때 유리.  
+- `NESTED LOOPS ANTI`
+  - 바깥 소량, 안쪽 인덱스 고선택도일 때 유리.
   - “바깥 row마다 안쪽 존재성만 확인”하고 바로 다음 row로 넘어간다.
-- `MERGE JOIN ANTI`  
-  - 양쪽이 조인키 순서로 공급될 때 후보.  
+- `MERGE JOIN ANTI`
+  - 양쪽이 조인키 순서로 공급될 때 후보.
   - 정렬(또는 인덱스 순서)이 이미 있다면 비용이 매우 낮다.
 
-**변환 실패 시**  
-- 플랜에 `FILTER` 라인이 남고  
-- 바깥 row마다 안쪽 서브쿼리가 반복 실행된다.  
+**변환 실패 시**
+- 플랜에 `FILTER` 라인이 남고
+- 바깥 row마다 안쪽 서브쿼리가 반복 실행된다.
 이는 **Anti Join 실패의 가장 명확한 신호**다.
 
 ---
 
-### 1.5 어떤 Anti Join이 선택되는가? (비용 요인)
+### 어떤 Anti Join이 선택되는가? (비용 요인)
 
 CBO는 아래 요인으로 Anti Join 방식을 택한다.
 
@@ -202,7 +202,7 @@ CBO는 아래 요인으로 Anti Join 방식을 택한다.
 
 ---
 
-### 1.6 힌트로 Anti Join 제어
+### 힌트로 Anti Join 제어
 
 ```sql
 -- Hash Anti 유도
@@ -232,44 +232,44 @@ WHERE NOT EXISTS (
 );
 ```
 
-**특히 중요**  
-- Anti 변환 자체를 **풀어 조인으로 재작성**하려면 `UNNEST`, 막으려면 `NO_UNNEST`. :contentReference[oaicite:2]{index=2}  
+**특히 중요**
+- Anti 변환 자체를 **풀어 조인으로 재작성**하려면 `UNNEST`, 막으려면 `NO_UNNEST`.
 - 변환 전체를 막아 의미/플랜을 고정하려면 `NO_QUERY_TRANSFORMATION`.
 
 ---
 
-### 1.7 Hash Anti + Join Filter(Bloom) 결합
+### Hash Anti + Join Filter(Bloom) 결합
 
-Hash 계열 Anti Join에서는 내부 Build 입력으로 **Bloom Filter(Join Filter)**를 만들고,  
+Hash 계열 Anti Join에서는 내부 Build 입력으로 **Bloom Filter(Join Filter)**를 만들고,
 Probe 테이블 스캔 단계에서 **조기 차단**할 수 있다.
 
 플랜 신호:
-- `JOIN FILTER CREATE` (Build 쪽)  
-- `JOIN FILTER USE` (Probe 스캔 쪽) :contentReference[oaicite:3]{index=3}  
+- `JOIN FILTER CREATE` (Build 쪽)
+- `JOIN FILTER USE` (Probe 스캔 쪽)
 
 특히 병렬 해시 조인/안티 조인에서 이 조기 차단 효과가 크다.
 
 ---
 
-### 1.8 Anti Join의 대표 반례/함정
+### Anti Join의 대표 반례/함정
 
-1) **NOT IN + NULL 문제**  
-   - 결과 자체가 바뀐다 → 의미/성능 모두 위험.  
-   - 실무 표준은 `NOT EXISTS`.  
+1) **NOT IN + NULL 문제**
+   - 결과 자체가 바뀐다 → 의미/성능 모두 위험.
+   - 실무 표준은 `NOT EXISTS`.
 
-2) **외부조인과 결합된 부재 판정**  
-   - NULL 보존 의미가 변형될 수 있어 Oracle이 Anti 변환을 회피할 수 있다.  
+2) **외부조인과 결합된 부재 판정**
+   - NULL 보존 의미가 변형될 수 있어 Oracle이 Anti 변환을 회피할 수 있다.
    - 필요 시 수동으로 `LEFT JOIN … IS NULL`로 형태를 고정하거나, QB 단위로 변환을 막는다.
 
-3) **조인키 가공/형변환**  
-   - 등가 증명이 실패 → Anti 변환 실패(FILTER로 남음).  
+3) **조인키 가공/형변환**
+   - 등가 증명이 실패 → Anti 변환 실패(FILTER로 남음).
    - 조인키는 **순수 컬럼 동등**으로 두고, 필요한 가공은 **가상 컬럼/FBI**로 옮긴다.
 
 ---
 
-## 2. Aggregate Subquery Elimination — 상관 집계 반복을 “한 번의 집계 + 조인”으로
+## Aggregate Subquery Elimination — 상관 집계 반복을 “한 번의 집계 + 조인”으로
 
-### 2.1 왜 느린가?
+### 왜 느린가?
 
 상관 집계 서브쿼리는 “바깥 row마다 집계를 다시 수행”한다.
 
@@ -285,14 +285,14 @@ WHERE p.category = 'ELEC';
 ```
 
 CBO가 제거/언네스트를 못하면 플랜에:
-- `SCALAR SUBQUERY`  
-- 또는 `FILTER`  
-가 남고, **A-Rows(바깥 반복)** 만큼 집계가 실행된다.  
-Jonathan Lewis가 정리한 스칼라 서브쿼리 반복·캐싱·언네스트 조건이 이 문제의 핵심이다. :contentReference[oaicite:4]{index=4}
+- `SCALAR SUBQUERY`
+- 또는 `FILTER`
+가 남고, **A-Rows(바깥 반복)** 만큼 집계가 실행된다.
+Jonathan Lewis가 정리한 스칼라 서브쿼리 반복·캐싱·언네스트 조건이 이 문제의 핵심이다.
 
 ---
 
-### 2.2 제거의 목표: 사전 집계 + 조인
+### 제거의 목표: 사전 집계 + 조인
 
 ```sql
 -- 개선: 사전 집계(한 번) + 조인
@@ -316,7 +316,7 @@ WHERE p.category='ELEC';
 
 ---
 
-### 2.3 WHERE 절 상관 집계 제거
+### WHERE 절 상관 집계 제거
 
 ```sql
 -- 느림: 고객마다 SUM 호출 후 비교
@@ -341,15 +341,15 @@ JOIN agg ON agg.cust_id = c.cust_id;
 ```
 
 **패턴 분류**
-- `COUNT(*) = 0 / > 0`  
-  → 존재/비존재의 문제다.  
+- `COUNT(*) = 0 / > 0`
+  → 존재/비존재의 문제다.
   → **(NOT) EXISTS → SEMI/ANTI JOIN**으로 푸는 게 더 자연스럽다.
-- `SUM/MAX/MIN/AVG` 비교  
+- `SUM/MAX/MIN/AVG` 비교
   → 사전 집계 + 조인(또는 APPLY)로 풀어야 한다.
 
 ---
 
-### 2.4 COUNT(DISTINCT) 상관 집계 제거
+### COUNT(DISTINCT) 상관 집계 제거
 
 ```sql
 -- 느림: row마다 DISTINCT 집계
@@ -377,12 +377,12 @@ FROM d_customer c
 JOIN agg ON agg.cust_id = c.cust_id;
 ```
 
-**의도**  
+**의도**
 - `DISTINCT`의 위치를 바꿔 **집계 입력을 최소화**한다.
 
 ---
 
-### 2.5 자동 제거가 “막히는” 전형적 조건
+### 자동 제거가 “막히는” 전형적 조건
 
 | 차단 요인 | 왜 막히나 | 해결 |
 |---|---|---|
@@ -394,29 +394,29 @@ JOIN agg ON agg.cust_id = c.cust_id;
 
 ---
 
-### 2.6 집계 제거 관련 핵심 힌트
+### 집계 제거 관련 핵심 힌트
 
-- `UNNEST` / `NO_UNNEST` : 상관 서브쿼리의 조인 형태 변환을 허용/차단 :contentReference[oaicite:5]{index=5}  
-- `PUSH_SUBQ` : 서브쿼리를 **먼저 계산해 작은 집합으로 만든 뒤 조인**하도록 우선순위 부여 :contentReference[oaicite:6]{index=6}  
-- `MATERIALIZE` / `INLINE` : WITH/인라인뷰를 중간 결과로 고정하거나 병합  
+- `UNNEST` / `NO_UNNEST` : 상관 서브쿼리의 조인 형태 변환을 허용/차단
+- `PUSH_SUBQ` : 서브쿼리를 **먼저 계산해 작은 집합으로 만든 뒤 조인**하도록 우선순위 부여
+- `MATERIALIZE` / `INLINE` : WITH/인라인뷰를 중간 결과로 고정하거나 병합
 - `NO_QUERY_TRANSFORMATION` : QB 단위로 변환 전체 차단(플랜 고정용)
 
 ---
 
-## 3. Subquery Pushing — `PUSH_SUBQ`로 “먼저 좁혀서” 조인하기
+## Subquery Pushing — `PUSH_SUBQ`로 “먼저 좁혀서” 조인하기
 
-### 3.1 Push의 의미
+### Push의 의미
 
-`PUSH_SUBQ`는 **“서브쿼리를 더 먼저 평가해라”**는 옵티마이저 힌트다.  
+`PUSH_SUBQ`는 **“서브쿼리를 더 먼저 평가해라”**는 옵티마이저 힌트다.
 보통 `IN/EXISTS` 서브쿼리를:
 
-1) 조인으로 풀어내고(`UNNEST`)  
-2) 그 결과를 기반으로 큰 테이블을 탐색하게 하거나  
-3) Hash Semi/Anti + Bloom Filter로 **스캔부터 줄이도록** 유도한다. :contentReference[oaicite:7]{index=7}  
+1) 조인으로 풀어내고(`UNNEST`)
+2) 그 결과를 기반으로 큰 테이블을 탐색하게 하거나
+3) Hash Semi/Anti + Bloom Filter로 **스캔부터 줄이도록** 유도한다.
 
 ---
 
-### 3.2 기본 예제: IN 서브쿼리의 조기 평가
+### 기본 예제: IN 서브쿼리의 조기 평가
 
 ```sql
 -- 원형
@@ -444,18 +444,18 @@ AND s.sales_dt BETWEEN DATE '2024-03-01' AND DATE '2024-03-31';
 ```
 
 기대 플랜:
-- `HASH JOIN SEMI`  
+- `HASH JOIN SEMI`
 - `JOIN FILTER CREATE/USE`가 붙으면 **스캔 단계까지 푸시가 내려간 것**.
 
 ---
 
-### 3.3 FILTER vs SEMI JOIN — Push 성공/실패 판독
+### FILTER vs SEMI JOIN — Push 성공/실패 판독
 
-- **실패 플랜**  
-  - `FILTER`  
+- **실패 플랜**
+  - `FILTER`
   - 바깥 row만큼 서브쿼리 반복
-- **성공 플랜**  
-  - `HASH JOIN SEMI` 또는 `NESTED LOOPS SEMI`  
+- **성공 플랜**
+  - `HASH JOIN SEMI` 또는 `NESTED LOOPS SEMI`
   - 서브쿼리 라인이 사라짐(Join으로 평탄화)
 
 그래서 Push 튜닝은 결국:
@@ -466,11 +466,11 @@ AND s.sales_dt BETWEEN DATE '2024-03-01' AND DATE '2024-03-31';
 
 ---
 
-### 3.4 NO_PUSH_SUBQ가 왜 필요한가?
+### NO_PUSH_SUBQ가 왜 필요한가?
 
 모든 Push가 항상 이득은 아니다. 특히:
 
-- 서브쿼리 결과가 **너무 크거나 변동 폭이 크면**  
+- 서브쿼리 결과가 **너무 크거나 변동 폭이 크면**
   “먼저 만들기 비용”이 오히려 손해일 수 있다.
 - Push 이후 큰 테이블이 **비효율적 탐색 경로**로 고정될 위험이 있다.
 
@@ -485,9 +485,9 @@ SELECT /*+ NO_PUSH_SUBQ NO_UNNEST */
 
 ---
 
-## 4. 세 기법의 결합: Anti + 집계 제거 + Push
+## 세 기법의 결합: Anti + 집계 제거 + Push
 
-### 4.1 시나리오
+### 시나리오
 
 “2024년 3월에 **ELEC/B0 제품을 전혀 사지 않은 VIP 고객**”
 
@@ -508,13 +508,13 @@ WHERE c.tier='VIP'
 ```
 
 문제:
-- VIP 고객 수만큼 `COUNT(*)` 상관집계가 반복  
-- 그 안에서 다시 `IN (subquery)`가 반복  
+- VIP 고객 수만큼 `COUNT(*)` 상관집계가 반복
+- 그 안에서 다시 `IN (subquery)`가 반복
 - 결과적으로 **중첩 FILTER + 스칼라 집계 호출**이 된다.
 
 ---
 
-### 4.2 최적 재작성
+### 최적 재작성
 
 ```sql
 SELECT /*+ PUSH_SUBQ UNNEST USE_HASH(p) LEADING(p c) */
@@ -534,38 +534,38 @@ WHERE c.tier='VIP'
 ```
 
 **변화 요약**
-1) `COUNT(*)=0` → `NOT EXISTS`  
-   - 상관 집계 제거  
+1) `COUNT(*)=0` → `NOT EXISTS`
+   - 상관 집계 제거
    - Anti Join으로 변환 가능
-2) 제품 조건을 미리 축소(`PUSH_SUBQ`)  
+2) 제품 조건을 미리 축소(`PUSH_SUBQ`)
    - 작은 prod_id 집합으로 먼저 최적화
-3) Hash Anti + Bloom Filter 가능  
+3) Hash Anti + Bloom Filter 가능
    - 사실 테이블 스캔량 급감
 
 ---
 
-### 4.3 플랜 판독 체크리스트
+### 플랜 판독 체크리스트
 
-- Anti 변환 성공  
+- Anti 변환 성공
   - `HASH JOIN ANTI` / `NL ANTI` / `MERGE ANTI`
-- 집계 제거 성공  
-  - `SCALAR SUBQUERY` 라인 없음  
+- 집계 제거 성공
+  - `SCALAR SUBQUERY` 라인 없음
   - 사전 집계(`HASH GROUP BY`) + 조인
-- Push 성공  
-  - `HASH JOIN SEMI/ANTI`  
-  - `FILTER` 없음  
+- Push 성공
+  - `HASH JOIN SEMI/ANTI`
+  - `FILTER` 없음
   - `JOIN FILTER CREATE/USE` 존재 시 최상
 
 ---
 
-## 5. 운영 튜닝 체크리스트(실무)
+## 운영 튜닝 체크리스트(실무)
 
-- [ ] **부재 판정은 `NOT EXISTS`**로 작성한다. (`NOT IN`은 NULL 위험)  
-- [ ] `COUNT(*)=0` / `COUNT(*)>0` 패턴은 **Anti/Semi Join으로 변환**한다.  
-- [ ] SELECT-list/WHERE 상관 집계는 **사전 집계 + 조인**으로 바꾼다.  
-- [ ] 서브쿼리 결과가 작아질 수 있으면 `PUSH_SUBQ(+UNNEST)`로 **먼저 축소 후 조인**한다.  
-- [ ] 플랜에 `FILTER`가 남아있다면 “변환 실패”를 의심하고 재작성/힌트를 검토한다.  
-- [ ] 최종 검증은 **DBMS_XPLAN 실측(ALLSTATS LAST)**과 `A-Rows`, 세션 통계로 한다.  
+- [ ] **부재 판정은 `NOT EXISTS`**로 작성한다. (`NOT IN`은 NULL 위험)
+- [ ] `COUNT(*)=0` / `COUNT(*)>0` 패턴은 **Anti/Semi Join으로 변환**한다.
+- [ ] SELECT-list/WHERE 상관 집계는 **사전 집계 + 조인**으로 바꾼다.
+- [ ] 서브쿼리 결과가 작아질 수 있으면 `PUSH_SUBQ(+UNNEST)`로 **먼저 축소 후 조인**한다.
+- [ ] 플랜에 `FILTER`가 남아있다면 “변환 실패”를 의심하고 재작성/힌트를 검토한다.
+- [ ] 최종 검증은 **DBMS_XPLAN 실측(ALLSTATS LAST)**과 `A-Rows`, 세션 통계로 한다.
 
 ---
 
@@ -630,7 +630,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 
 ## 맺음말
 
-- **Anti Join**은 “없음”을 증명하는 최단 경로다. `NOT EXISTS`를 쓰면 의미가 안전하고 CBO 변환도 안정적이다.  
-- **Aggregate Subquery Elimination**은 상관 집계의 **행단위 반복 호출을 제거**해 “한 번의 집계 + 조인”으로 끝낸다.  
-- **Subquery Pushing**은 작은 키 집합을 **먼저 만들고**, 그걸 기반으로 큰 테이블을 **세미/안티/일반 조인**으로 빠르게 탐색하게 한다.  
+- **Anti Join**은 “없음”을 증명하는 최단 경로다. `NOT EXISTS`를 쓰면 의미가 안전하고 CBO 변환도 안정적이다.
+- **Aggregate Subquery Elimination**은 상관 집계의 **행단위 반복 호출을 제거**해 “한 번의 집계 + 조인”으로 끝낸다.
+- **Subquery Pushing**은 작은 키 집합을 **먼저 만들고**, 그걸 기반으로 큰 테이블을 **세미/안티/일반 조인**으로 빠르게 탐색하게 한다.
 - 최종 정답은 항상 **실측 계획과 통계**다. 플랜에서 `FILTER`가 사라지고 `SEMI/ANTI + 사전집계`가 보이면, 튜닝은 성공한 것이다.

@@ -264,7 +264,7 @@ def link_budget_dbm(Pt_dbm, Gt_dbi, Gr_dbi, d_km, f_mhz, misc_loss_db=0.0):
 
 print("FSPL(5.8GHz,2km) =", round(fspl_db(2, 5800), 2), "dB")
 
-# 5.8 GHz, 4 km
+# GHz, 4 km
 
 print("Fresnel r1 mid(5.8GHz,4km) =", round(fresnel_r1_mid(5.8e9, 4000), 2), "m")
 

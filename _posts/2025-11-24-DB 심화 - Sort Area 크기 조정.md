@@ -6,9 +6,9 @@ category: DB 심화
 ---
 # Sort Area 크기 조정 — Oracle PGA 메모리 관리 방식 & AUTO 모드의 크기 결정 원리
 
-> 목표  
-> - Oracle의 **정렬(SORT)·해시(HASH) 작업영역(workarea)** 이 PGA에서 **어떻게 배정·회수·스필(spill)** 되는지 “실무에서 관측 가능한 모델”로 정리한다.  
-> - `WORKAREA_SIZE_POLICY=AUTO`에서 **Global Memory Bound(GMB)** 가 어떻게 변하고(동시성·PX·AMM 영향), 각 workarea가 **ExpectedOptimal / ExpectedOnePass** 대비 어느 등급(Optimal/One-pass/Multi-pass)으로 수행되는지 **실측으로 판단**할 수 있게 한다.  
+> 목표
+> - Oracle의 **정렬(SORT)·해시(HASH) 작업영역(workarea)** 이 PGA에서 **어떻게 배정·회수·스필(spill)** 되는지 “실무에서 관측 가능한 모델”로 정리한다.
+> - `WORKAREA_SIZE_POLICY=AUTO`에서 **Global Memory Bound(GMB)** 가 어떻게 변하고(동시성·PX·AMM 영향), 각 workarea가 **ExpectedOptimal / ExpectedOnePass** 대비 어느 등급(Optimal/One-pass/Multi-pass)으로 수행되는지 **실측으로 판단**할 수 있게 한다.
 > - **정렬 자체를 회피/축소하는 SQL 재작성**과, 불가피할 때의 **PGA 타깃 조정/병렬·동시성 제어** 순서로 튜닝하는 “정석 절차”를 제공한다.
 
 ---
@@ -30,17 +30,17 @@ category: DB 심화
   ELSE                                 → Multi-pass (여러 번 스필/리로드)
   ```
 
-- GMB의 **정확한 내부 공식은 비공개**이며 버전·부하·히든 파라미터에 따라 달라진다.  
-  실무에서는  
-  1) `V$PGASTAT.global memory bound`로 **현재 GMB를 관측**하고  
-  2) `V$SQL_WORKAREA_ACTIVE`에서 **EXPECTED_* vs LAST_MEMORY_USED**를 비교해  
+- GMB의 **정확한 내부 공식은 비공개**이며 버전·부하·히든 파라미터에 따라 달라진다.
+  실무에서는
+  1) `V$PGASTAT.global memory bound`로 **현재 GMB를 관측**하고
+  2) `V$SQL_WORKAREA_ACTIVE`에서 **EXPECTED_* vs LAST_MEMORY_USED**를 비교해
   **One-pass/Multi-pass 위험을 증거 기반으로 판단**한다.
 
 ---
 
 ## 1) 작업영역(workarea)과 Sort Area의 정체
 
-### 1.1 workarea가 쓰이는 연산들
+### workarea가 쓰이는 연산들
 
 workarea는 “정렬 메모리”라는 좁은 의미를 넘어 **PGA 기반의 모든 대형 중간 연산 버퍼**다. 대표적으로:
 
@@ -59,7 +59,7 @@ workarea는 “정렬 메모리”라는 좁은 의미를 넘어 **PGA 기반의
 
 ---
 
-### 1.2 정렬/해시 관점의 3단계 처리 모델
+### 정렬/해시 관점의 3단계 처리 모델
 
 Oracle은 Workarea 크기에 따라 **입력 데이터의 처리 단계가 바뀐다.**
 
@@ -79,7 +79,7 @@ Oracle은 Workarea 크기에 따라 **입력 데이터의 처리 단계가 바�
 
 ## 2) PGA 메모리 관리 방식: MANUAL vs AUTO vs AMM
 
-### 2.1 MANUAL
+### MANUAL
 
 - 파라미터
   ```sql
@@ -95,7 +95,7 @@ Oracle은 Workarea 크기에 따라 **입력 데이터의 처리 단계가 바�
 
 ---
 
-### 2.2 AUTO (권장 표준)
+### AUTO (권장 표준)
 
 - 파라미터
   ```sql
@@ -104,15 +104,15 @@ Oracle은 Workarea 크기에 따라 **입력 데이터의 처리 단계가 바�
   PGA_AGGREGATE_LIMIT
   ```
 - Oracle이
-  1) **현재 동시 활성 workarea 수**를 추적하고  
-  2) PGA 예산을 고려해 **GMB를 산출**하고  
+  1) **현재 동시 활성 workarea 수**를 추적하고
+  2) PGA 예산을 고려해 **GMB를 산출**하고
   3) 각 workarea에 `Grant = min(EOS, GMB)` 를 배정한다.
-- **동시성에 따라 GMB가 계속 변한다.**  
+- **동시성에 따라 GMB가 계속 변한다.**
   그래서 “같은 SQL도 시간대/부하에 따라 One-pass로 떨어질 수 있음”을 항상 염두에 둬야 한다.
 
 ---
 
-### 2.3 AMM(Automatic Memory Management)
+### AMM(Automatic Memory Management)
 
 - 파라미터
   ```sql
@@ -129,7 +129,7 @@ Oracle은 Workarea 크기에 따라 **입력 데이터의 처리 단계가 바�
 
 ---
 
-### 2.4 권장 설정 예
+### 권장 설정 예
 
 ```sql
 -- 권장 표준
@@ -147,7 +147,7 @@ ALTER SYSTEM SET hash_area_size = 128M;
 
 ## 3) AUTO 모드에서 크기 결정 원리 — “준-공식”과 실측 모델
 
-### 3.1 전역 상한(Global Memory Bound, GMB)의 의미
+### 전역 상한(Global Memory Bound, GMB)의 의미
 
 GMB는 “**workarea 1개가 가질 수 있는 현재 최대 허용치**”다.
 
@@ -158,34 +158,34 @@ GMB는 “**workarea 1개가 가질 수 있는 현재 최대 허용치**”다.
 
 $$ \text{GMB} \approx \min\Big(\text{PerWorkareaCap},\ \frac{\text{AvailablePGA}}{\text{ActiveWorkareas}}\Big) $$
 
-- **PerWorkareaCap**: 버전/플랫폼이 정한 1개 workarea 상한  
+- **PerWorkareaCap**: 버전/플랫폼이 정한 1개 workarea 상한
   (히든 파라미터, 내부 safeguard)
-- **AvailablePGA**: 타깃 주변에서 **실제로 가용한 PGA**  
+- **AvailablePGA**: 타깃 주변에서 **실제로 가용한 PGA**
   (`PGA_AGGREGATE_TARGET`, 최근 사용량, Limit, 압박 신호를 반영)
 - **ActiveWorkareas**: 현재 동시 활성 정렬/해시 작업 영역의 개수
 
-> 내부 로직은 더 복잡하지만, 이 모델만으로도  
+> 내부 로직은 더 복잡하지만, 이 모델만으로도
 > **“왜 지금 One-pass가 늘었는가?”** 를 사실상 설명할 수 있다.
 
 ---
 
-### 3.2 개별 workarea Grant의 결정
+### 개별 workarea Grant의 결정
 
 다시 한 번 핵심 공식:
 
 $$ \textbf{Grant}=\min(\textit{ExpectedOptimalSize},\ \textit{GlobalMemoryBound}) $$
 
 - EOS는 연산 유형별로 계산 방식이 다르다.
-  - **SORT**: 입력행 수 × 행폭 × 정렬 키 구조 × 계수  
-  - **HASH JOIN**: 빌드 입력의 행 수·행폭·해시 버킷 추정  
+  - **SORT**: 입력행 수 × 행폭 × 정렬 키 구조 × 계수
+  - **HASH JOIN**: 빌드 입력의 행 수·행폭·해시 버킷 추정
   - **HASH GROUP BY**: 그룹 NDV 추정·엔트리 크기 × 계수
 - GMB보다 EOS가 크면 EOS가 **잘려서(Clamp)** One/Multi 위험이 생김.
 
 ---
 
-### 3.3 ExpectedOnePassSize(E1S)란?
+### ExpectedOnePassSize(E1S)란?
 
-EOS는 “완전 메모리 처리” 임계치지만, Oracle은  
+EOS는 “완전 메모리 처리” 임계치지만, Oracle은
 **“최소 One-pass로 끝낼 수 있는 크기(E1S)”**도 별도로 계산한다.
 
 - `Grant >= E1S` 이면 **One-pass 보장 가능성↑**
@@ -198,7 +198,7 @@ EOS는 “완전 메모리 처리” 임계치지만, Oracle은
 
 ---
 
-### 3.4 관측 포인트(증거 기반 튜닝)
+### 관측 포인트(증거 기반 튜닝)
 
 다음 뷰/통계는 “Oracle이 내부에서 계산한 값 + 실제 배정 결과”를 전부 노출한다.
 
@@ -207,7 +207,7 @@ EOS는 “완전 메모리 처리” 임계치지만, Oracle은
   - `total PGA allocated / inuse`
   - `over allocation count` 등
 - `V$SQL_WORKAREA_ACTIVE`
-  - 현재 돌고 있는 workarea별  
+  - 현재 돌고 있는 workarea별
     `EXPECTED_OPTIMAL_SIZE`, `EXPECTED_ONEPASS_SIZE`, `LAST_MEMORY_USED`
 - `V$SQL_WORKAREA`
   - 완료된 작업의 과거 실행 결과(Optimal/One/Multi 카운트)
@@ -219,7 +219,7 @@ EOS는 “완전 메모리 처리” 임계치지만, Oracle은
 
 ---
 
-### 3.5 실측 SQL 모음
+### 실측 SQL 모음
 
 ```sql
 -- (1) 전역상태: GMB 및 PGA 압박 확인
@@ -268,9 +268,9 @@ WHERE  sn.name IN (
 
 ## 4) 실습 1 — 큰 SORT로 One-pass ↔ Optimal 전환 관측
 
-### 4.1 준비: 큰 정렬 대상 테이블
+### 준비: 큰 정렬 대상 테이블
 
-> 환경에 따라 행 수를 조절한다.  
+> 환경에 따라 행 수를 조절한다.
 > 핵심은 **정렬 키가 충분히 커서 EOS/E1S가 의미 있게 나오도록** 만드는 것.
 
 ```sql
@@ -288,7 +288,7 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER, 'T_BIG');
 
 ---
 
-### 4.2 케이스 A: 낮은 PGA 타깃 → One-pass/Multi 유발
+### 케이스 A: 낮은 PGA 타깃 → One-pass/Multi 유발
 
 ```sql
 ALTER SYSTEM SET workarea_size_policy = AUTO;
@@ -343,7 +343,7 @@ WHERE  sn.name IN (
 
 ---
 
-### 4.3 케이스 B: 높은 PGA 타깃 → Optimal 유도
+### 케이스 B: 높은 PGA 타깃 → Optimal 유도
 
 ```sql
 ALTER SYSTEM SET pga_aggregate_target = 4G;
@@ -376,7 +376,7 @@ ORDER  BY last_memory_used DESC;
 
 정렬만이 아니라 해시에서도 동일 원리가 적용된다.
 
-### 5.1 준비: 큰 조인 대상
+### 준비: 큰 조인 대상
 
 ```sql
 DROP TABLE t_build PURGE;
@@ -400,7 +400,7 @@ EXEC DBMS_STATS.GATHER_TABLE_STATS(USER, 'T_PROBE');
 
 ---
 
-### 5.2 낮은 PGA에서 해시 One/Multi 발생
+### 낮은 PGA에서 해시 One/Multi 발생
 
 ```sql
 ALTER SYSTEM SET pga_aggregate_target = 512M;
@@ -421,12 +421,12 @@ ORDER BY last_memory_used DESC;
 ```
 
 **관측 논리**
-- 해시 빌드가 EOS에 못 미치면 One/Multi 스필  
+- 해시 빌드가 EOS에 못 미치면 One/Multi 스필
 - TEMP 사용량이 늘고, CPU 대비 I/O 비중이 급상승한다.
 
 ---
 
-### 5.3 높은 PGA에서 Optimal 유도
+### 높은 PGA에서 Optimal 유도
 
 ```sql
 ALTER SYSTEM SET pga_aggregate_target = 4G;
@@ -446,13 +446,13 @@ WHERE  operation_type LIKE 'HASH%';
 
 ## 6) 동시성이 GMB를 깎는 방식 — “왜 밤엔 빠른데 낮엔 느린가?”
 
-### 6.1 GMB는 동시 활성 workarea에 반비례한다
+### GMB는 동시 활성 workarea에 반비례한다
 
 **동일 PGA 타깃이라도**, 아래 상황에서는 곧바로 GMB가 떨어진다.
 
-- 대시보드/리포트가 동시에 몰림  
-- 배치가 낮 시간에 겹침  
-- 병렬 PX가 늘어 workarea 개수가 폭증  
+- 대시보드/리포트가 동시에 몰림
+- 배치가 낮 시간에 겹침
+- 병렬 PX가 늘어 workarea 개수가 폭증
 - AMM이 SGA로 메모리를 가져감
 
 즉:
@@ -461,7 +461,7 @@ $$ \text{ActiveWorkareas} \uparrow \Rightarrow \text{GMB} \downarrow \Rightarrow
 
 ---
 
-### 6.2 실습: 두 세션 동시 정렬로 GMB 하락 관측
+### 실습: 두 세션 동시 정렬로 GMB 하락 관측
 
 **세션 1**
 
@@ -507,10 +507,10 @@ ORDER BY last_memory_used DESC;
 
 ## 7) 병렬(PX)과 workarea — “DOP는 메모리를 곱하기로 먹는다”
 
-### 7.1 PX는 workarea를 세션 수만큼 복제한다
+### PX는 workarea를 세션 수만큼 복제한다
 
 예를 들어:
-- DOP=8인 해시 조인은  
+- DOP=8인 해시 조인은
   **빌드 해시 테이블이 8개로 분산**될 수 있으며
 - 정렬도 각 슬레이브별로 **로컬 sort run을 만든 뒤 merge**한다.
 
@@ -523,7 +523,7 @@ $$ \text{ActiveWorkareas} \approx \text{DOP} \times \text{연산 수} $$
 
 ---
 
-### 7.2 PX에서의 실무적 처방
+### PX에서의 실무적 처방
 
 - DOP를 무작정 키우지 말고 **workarea 스필 여부를 먼저 확인**
 - PX가 필요하면
@@ -535,11 +535,11 @@ $$ \text{ActiveWorkareas} \approx \text{DOP} \times \text{연산 수} $$
 
 ## 8) “메모리로 해결하기 전에” 정렬/해시 자체를 줄이는 SQL 재작성
 
-### 8.1 정렬 회피가 최고의 튜닝
+### 정렬 회피가 최고의 튜닝
 
 정렬 I/O를 줄이는 방법은 “메모리 확대”보다 **항상 우선**이다.
 
-#### 8.1.1 인덱스로 ORDER BY 제거
+#### 인덱스로 ORDER BY 제거
 
 ```sql
 -- amount DESC 정렬을 인덱스가 대체
@@ -557,7 +557,7 @@ FETCH FIRST 200 ROWS ONLY;  -- Stopkey
 
 ---
 
-#### 8.1.2 “정렬 후 가공” 대신 “가공 후 정렬”
+#### “정렬 후 가공” 대신 “가공 후 정렬”
 
 행폭을 줄이면 EOS가 줄어든다.
 
@@ -578,7 +578,7 @@ ORDER  BY key_col;
 
 ---
 
-#### 8.1.3 GROUP BY에서 SORT 대신 HASH 유도
+#### GROUP BY에서 SORT 대신 HASH 유도
 
 ```sql
 SELECT /*+ USE_HASH_AGGREGATION */
@@ -592,7 +592,7 @@ GROUP  BY k;
 
 ---
 
-### 8.2 해시 조인 빌드 입력을 줄여 스필 제거
+### 해시 조인 빌드 입력을 줄여 스필 제거
 
 해시 조인의 EOS는 **빌드 입력 크기**에 선형 비례한다.
 
@@ -613,20 +613,20 @@ WHERE  small.flag = 'Y';
 
 ## 9) PGA 타깃 산정/증설의 실무 절차
 
-### 9.1 먼저 “스필이 실제로 병목인지” 확인
+### 먼저 “스필이 실제로 병목인지” 확인
 
 - One-pass가 약간 있다고 해서 무조건 늘릴 필요는 없다.
 - Multi-pass가 **지속적/대량**이면 거의 확실히 PGA 병목.
 
 확인 순서:
 
-1) `V$SQL_WORKAREA`에서 One/Multi 비율 확인  
-2) `TEMP` I/O 증가(`sorts (disk)`, AWR TEMP read/write) 확인  
+1) `V$SQL_WORKAREA`에서 One/Multi 비율 확인
+2) `TEMP` I/O 증가(`sorts (disk)`, AWR TEMP read/write) 확인
 3) SQL 응답시간과 TEMP burst가 상관되는지 확인
 
 ---
 
-### 9.2 `V$PGA_TARGET_ADVICE`로 증설 효과 예측
+### `V$PGA_TARGET_ADVICE`로 증설 효과 예측
 
 ```sql
 SELECT pga_target_for_estimate/1024/1024 AS target_mb,
@@ -639,12 +639,12 @@ ORDER  BY target_mb;
 해석:
 
 - **hit_pct가 깔끔히 올라가고 extra_io가 줄어드는 구간**이 증설의 “효과 구간”
-- hit_pct가 거의 안 오르면  
+- hit_pct가 거의 안 오르면
   → SQL 재작성/카디널리티 개선이 먼저
 
 ---
 
-### 9.3 타깃과 리밋을 함께 설계
+### 타깃과 리밋을 함께 설계
 
 - `PGA_AGGREGATE_TARGET` = **평상시 운영 타깃**
 - `PGA_AGGREGATE_LIMIT` = **폭주 시 보호선**
@@ -663,7 +663,7 @@ ORDER  BY target_mb;
 
 - 레거시 버전/특정 버그로 Auto PGA가 비정상 동작
 - 배치 전용 인스턴스에서 **항상 동일한 정렬/해시 부하**가 재현되는 경우
-- 시스템 정책상 PGA 타깃을 크게 키우기 곤란한데,  
+- 시스템 정책상 PGA 타깃을 크게 키우기 곤란한데,
   특정 세션만 sort/hashing이 반드시 Optimal이어야 하는 경우
 
 이 때도 원칙은:
@@ -700,15 +700,15 @@ ORDER  BY target_mb;
 
 ## 결론
 
-- AUTO 모드에서 workarea 메모리는  
+- AUTO 모드에서 workarea 메모리는
   **“필요한 이상적 크기(EOS)”와 “시스템 전역 상한(GMB)”의 최소값**으로 배정된다.
-- GMB는 **동시성·PX·총 PGA 가용량**에 의해 **실시간으로 변한다.**  
+- GMB는 **동시성·PX·총 PGA 가용량**에 의해 **실시간으로 변한다.**
   그래서 “하드웨어만큼이나 운영 패턴(동시 실행 구조)이 성능을 결정한다.”
 - 튜닝의 정석은
 
-  1) **정렬/해시 자체를 줄이는 SQL 재작성**  
-  2) **빌드 입력·행폭·조인 순서 개선**  
-  3) 그래도 Multi-pass가 남으면 **PGA 타깃 증설 + 동시성/PX 제어**  
+  1) **정렬/해시 자체를 줄이는 SQL 재작성**
+  2) **빌드 입력·행폭·조인 순서 개선**
+  3) 그래도 Multi-pass가 남으면 **PGA 타깃 증설 + 동시성/PX 제어**
   4) `ALLSTATS + IOSTATS + MEMSTATS`와 `WORKAREA` 뷰로 **팩트 기반 검증**
 
 이 순서를 지키면 Sort Area/PGA 튜닝은 “감(感)”이 아니라 **증거 기반 엔지니어링**이 된다.

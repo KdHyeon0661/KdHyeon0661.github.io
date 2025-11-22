@@ -703,7 +703,7 @@ def transmit_frame(frame):
 
 ---
 
-### 802.11 DCF(Distributed Coordination Function)의 CSMA/CA 절차
+### DCF(Distributed Coordination Function)의 CSMA/CA 절차
 
 802.11의 기본 MAC은 DCF로, CSMA/CA를 기반으로 한다. (단순화 버전)
 
