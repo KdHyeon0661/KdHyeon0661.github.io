@@ -6,8 +6,6 @@ category: 웹해킹
 ---
 # CSP `strict-dynamic` + Nonce 회전
 
-**— 개념·동작 원리 · 위협 모델 · 실무 설계(Nonce 생성/회전/캐싱 고려) · 프레임워크별 설정(Express/Nginx/Spring/Django/Flask) · 안전한 동적 로더 패턴 · 마이그레이션(인라인 이벤트 제거) · 롤아웃/모니터링(Report-Only/Reporting API) · 테스트/체크리스트**
-
 ## 한눈에 보기 (Executive Summary)
 
 - **효과**

@@ -4,7 +4,7 @@ title: 웹해킹 - Nginx alias, try_files 경로 혼동
 date: 2025-10-05 14:25:23 +0900
 category: 웹해킹
 ---
-# 🧱 8. Nginx `alias` / `try_files` 경로 혼동
+# 8. Nginx `alias` / `try_files` 경로 혼동
 
 ## 핵심 요약 (Executive Summary)
 

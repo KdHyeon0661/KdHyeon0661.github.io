@@ -6,8 +6,6 @@ category: 딥러닝
 ---
 # 모델 내보내기(ONNX), 런타임(TensorRT 개론), TorchScript 개념
 
-**PyTorch 모델을 배포-가속하기 위한 3가지 경로: ONNX → (ONNXRuntime/TensorRT), TorchScript(Libtorch/모바일)**
-
 ## 큰 그림과 선택 가이드
 
 | 경로 | 장점 | 단점/유의 | 언제 쓰나 |

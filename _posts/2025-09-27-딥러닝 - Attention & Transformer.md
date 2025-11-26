@@ -6,8 +6,6 @@ category: 딥러닝
 ---
 # Attention & Transformer 핵심
 
-**쿼리/키/값 · 멀티헤드 · 포지셔널 인코딩 · 마스킹(causal/패딩) · 디코딩 전략(그리디/빔/샘플링)**
-
 ## A. Scaled Dot-Product Attention
 
 ### A-1. 핵심 직관

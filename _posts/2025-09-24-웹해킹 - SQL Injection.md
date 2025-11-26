@@ -4,7 +4,7 @@ title: 웹해킹 - SQL Injection
 date: 2025-09-24 15:25:23 +0900
 category: 웹해킹
 ---
-# — 기법과 방어 (Prepared Statement, ORM 중심 완전 가이드)
+# SQL Injection - 기법과 방어
 
 ## 한눈에 보는 핵심
 

@@ -6,12 +6,6 @@ category: Django
 ---
 # REST 백엔드 — **DRF + JWT**, 문서화(Swagger/Redoc), 배포까지 (Django 5.x 기준)
 
-> 이 문서는 **Django REST Framework(DRF)** 와 **JWT 인증(simplejwt)** 으로 **프로덕션급 REST API** 를 구축하고,
-> **OpenAPI 기반 문서화(스웨거/레닥)** 및 **배포(도커/NGINX/Gunicorn/Uvicorn, CI/CD)** 까지 **끝까지** 다룹니다.
-> 모든 소스 코드는 ``` 로 감싸고, 수학 표기는 없습니다.
-
----
-
 ## 개요 & 목표
 
 - **도메인**: 간단한 “프로젝트 & 작업(ToDo)” API

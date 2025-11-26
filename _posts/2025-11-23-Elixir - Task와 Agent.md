@@ -74,6 +74,7 @@ Task.await(t)
 
 이게 부담스럽다면 `async_nolink` 계열을 쓰거나, `try/catch`로 EXIT를 받아 변환하라.
 
+{% raw %}
 ```elixir
 t = Task.async(fn -> raise "boom" end)
 
@@ -86,8 +87,8 @@ result =
 
 result
 # => {:error, {%RuntimeError{message: "boom"}, _stack}}
-
 ```
+{% endraw %}
 
 > **규율**: `Task.async`를 썼으면 **반드시 await/yield/shutdown으로 수거**해야 한다.
 > 수거하지 않으면 태스크 메시지가 메일박스에 남고, GC/메모리를 오염시킨다.

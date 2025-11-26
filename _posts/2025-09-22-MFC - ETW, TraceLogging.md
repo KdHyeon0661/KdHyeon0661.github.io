@@ -6,13 +6,6 @@ category: MFC
 ---
 # ETW/TraceLogging 성능 분석 완전 가이드
 
-**사용자 시나리오 트레이스 → WPA 분석, 프레임타임/할당(“GC 없는 C++”) 히트맵, I/O 큐 병목 찾기**
-
-> 목표: “**실사용 시나리오를 정확히 재현해 한 번의 .etl로 전체 병목을 잡는다**”
-> 도구: **ETW(Event Tracing for Windows)**, **TraceLogging**(경량 계측), **WPR/WPA**, (선택) **xperf**, **PresentMon**(DX 프레임 참고)
-
----
-
 ## 설계 개요 (파이프라인)
 
 1. **앱 계측**: TraceLogging(경량)으로 **시나리오 경계(START/STOP)**, **세부 태스크(활동)**, **핵심 파라미터**를 로깅

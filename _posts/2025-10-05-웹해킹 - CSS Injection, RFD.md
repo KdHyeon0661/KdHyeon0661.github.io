@@ -6,14 +6,6 @@ category: 웹해킹
 ---
 # CSS Injection / RFD(Reflected File Download)
 
-**— 개념 · 위험 벡터 · 안전 재현(차단이 정상) · 코드로 구현하는 방어(콘텐츠 타입 고정·`nosniff`·첨부 강제·CSP·Sanitize)**
-
-> ⚠️ **법·윤리 고지**
-> 본 문서는 **자신/조직 소유 자산**에서 **방어·점검**을 목적으로 합니다.
-> 공격 기법을 상세 재현하는 대신, “**어디가 위험하고 어떻게 막는지**”와 “막혀야 정상인 안전 재현”에 초점을 둡니다.
-
----
-
 ## 한눈에 보기 (Executive Summary)
 
 - **CSS Injection**
