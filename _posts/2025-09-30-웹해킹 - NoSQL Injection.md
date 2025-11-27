@@ -123,7 +123,9 @@ Elasticsearch는 HTTP API를 통해 JSON DSL을 받는다. 주요 위험 지점�
 
 - `script_score` 등에서 `script` 값을 사용자가 직접 제어하면,
   - 점수 계산 외의 목적으로 스크립트가 악용될 수 있다.
+{% raw %}
 - Mustache 템플릿 기반 서치 템플릿에서 `{{{user_input}}}` 같은 **비인코딩 자리표시자**를 쓰면,
+{% endraw %}
   - 사용자가 DSL 구조를 깨고 자신의 조건·스크립트를 넣을 수 있다.
 
 ---
@@ -665,7 +667,11 @@ location ~ ^/.+/_search$ {
 - `script`, `script_score`는
   - **서버 쪽에서 고정된 스크립트** + **바인딩 파라미터만** 사용.
 - 템플릿(Mustache 등)에선
-  - `{{{user_input}}}`(raw) 대신 `{{user_input}}`(escape) 사용.
+
+{% raw %}
+  - `{{{user_input}}}` (raw) 대신 `{{{user_input}}}` (escape) 사용.
+{% endraw %}
+
 - 가능하면 스크립트·템플릿은:
   - 내부 전용 관리 API에서만 쓰고,
   - 일반 검색 API에는 노출하지 않는다.
