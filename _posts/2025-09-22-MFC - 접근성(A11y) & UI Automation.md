@@ -6,9 +6,6 @@ category: MFC
 ---
 # & UI Automation 실전 가이드
 
-**UIA 패턴 노출 · High-Contrast/컬러 필터 대응 · 키보드 내비 · 스크린리더(내레이터) 호환 체크리스트**
-
-
 ## 큰 그림: “표준 컨트롤 + 올바른 이름 + 키보드 + 시스템 색상”이 80%를 만든다
 
 - **표준/공용 컨트롤 사용**: `BUTTON`, `EDIT`, `STATIC`, `LISTVIEW`, `TREEVIEW`, `REBAR`, `RIBBON(MFC Feature Pack)` 등은 OS가 **IAccessible/UIA Provider**를 내장합니다.
