@@ -14,7 +14,7 @@ Elixir는 **비알파벳 기호들의 조합**으로 된 **이항/단항 연산�
 
 #### `~>`: 함수형 “스레딩/파이프 with 변형” 연산자
 
-```elixir
+```text
 defmodule Op do
   @moduledoc "연산자 예제: left ~> fun or {mod, fun}"
   # 사용 전: require Op
@@ -47,7 +47,7 @@ require Op
 
 #### `<~>`: “Map-like transform” (키-값 변환 DSL)
 
-```elixir
+```text
 defmodule Mx do
   @moduledoc "map <~> {src_key, dst_key, transform}"
   defmacro map <~> {src, dst, fun} do
@@ -72,14 +72,14 @@ m2 = (m <~> {:a, :b, &(&1 + 41)})  # => %{a: 1, b: 42}
 Elixir에서 “연산자”는 파서가 특별 취급하는 **문자열 이름**일 뿐이고, 실제 정의는 **매크로/함수 정의와 동일한 규칙**을 따른다.
 
 - 이항 연산자 매크로:
-  ```elixir
+  ```text
   defmacro left <op> right do
     ...
   end
   ```
 
 - 단항 연산자 매크로:
-  ```elixir
+  ```text
   defmacro <op>(x) do
     ...
   end
@@ -103,7 +103,7 @@ Elixir에서 “연산자”는 파서가 특별 취급하는 **문자열 이름
 
 실전 패턴:
 
-```elixir
+```text
 defmodule MyOps do
   defmacro left ~~>> right do
     quote do
@@ -130,7 +130,7 @@ end
 연산자는 “예쁘게 읽히는 얇은 매크로”지만, 매크로인 이상 **겹평가/부작용 위험은 동일**하다.
 따라서 내부에서 인자를 여러 번 쓰면 반드시 `bind_quoted`로 보호한다.
 
-```elixir
+```text
 defmodule SafeOp do
   # x <+> y : 두 값을 모두 한 번씩만 평가한 후 더한다
   defmacro left <+> right do
@@ -151,7 +151,7 @@ end
 1) **항상 괄호로 명시**: 애매하면 `(a ~> &f/1) + 1`처럼 괄호로 의도를 고정.
 2) **AST로 확인**: `quote` 후 `Macro.to_string/1`으로 파싱 결과를 눈으로 본다.
 
-```elixir
+```text
 ast = quote(do: 1 + 2 ~> &(&1 * 3))
 IO.puts Macro.to_string(ast)
 # ~> (& &1 * 3) " 형태인지 확인하고, 필요하면 괄호 보강
@@ -187,7 +187,7 @@ Elixir는 연산자를 **우선순위 그룹**으로 분류한다. 커스텀 연
 
 연산자가 좌결합/우결합인지에 따라 AST가 달라진다.
 
-```elixir
+```text
 ast1 = quote(do: a <~> b <~> c)
 IO.puts Macro.to_string(ast1)
 ```
@@ -203,7 +203,7 @@ IO.puts Macro.to_string(ast1)
 
 예: 커스텀 단항 “부정” 만들기(학습용)
 
-```elixir
+```text
 defmodule Uop do
   # !!x 같은 중복 부정 연습
   defmacro !~(x) do
@@ -241,7 +241,7 @@ Uop.!~(1)     # false
 **가드 절에서 사용할 수 있는** 매크로를 만들려면 `defguard`를 쓴다.
 가드가 허용하는 **제한된 표현만** 사용 가능해야 한다.
 
-```elixir
+```text
 defmodule G do
   import Kernel, except: [abs: 1]  # 예시로 가드 안전 abs 만들기
   defguard is_pos_int(x) when is_integer(x) and x > 0
@@ -291,7 +291,7 @@ end
 - **호출부 식을 한 번만 평가**하려면 `bind_quoted`.
 - **호출부 변수 그 자체**를 건드릴 땐 `var!(name)`.
 
-```elixir
+```text
 defmodule DeepHyg do
   defmacro once(expr) do
     quote bind_quoted: [v: expr] do
@@ -315,7 +315,7 @@ end
 
 매크로가 **어떻게 치환되는지**는 테스트에서 **확장 결과를 문자열로 비교**하면 좋다.
 
-```elixir
+```text
 defmodule ExpandTest do
   use ExUnit.Case
 
@@ -342,7 +342,7 @@ end
 - 파일/라인, alias/import, 현재 모듈 등을 **컴파일 타임**에 읽을 수 있다.
 - **호출자 상대 경로** 처리, 자동 네이밍 등에 활용.
 
-```elixir
+```text
 defmodule Banner do
   defmacro note(msg) do
     env = __CALLER__
@@ -370,7 +370,7 @@ end
 
 DSL/프레임워크에서 **보일러플레이트를 모아서** 한 번에 생성한다.
 
-```elixir
+```text
 defmodule Routes do
   defmacro __using__(_opts) do
     quote do
@@ -444,7 +444,7 @@ $$
 
 “성공이면 다음 단계 실행, 실패면 그대로 통과”는 파이프라인에서 가장 흔하다.
 
-```elixir
+```text
 defmodule ResultPipe do
   @moduledoc "Result-aware pipe: {:ok, v} ~|> fun  ;  {:error, r}는 그대로"
   defmacro left ~|> right do
@@ -473,7 +473,7 @@ end
 
 `<~>` 예시를 확장하면, “작은 보일러 제거”에 탁월하다.
 
-```elixir
+```text
 defmodule MapDSL do
   # map <~~> {:src, :dst}  => dst에 src값 복사
   defmacro map <~~> {src, dst} do
@@ -493,7 +493,7 @@ end
 
 조건이 함수 헤드에 반복될 때 defguard가 빛난다.
 
-```elixir
+```text
 defmodule GuardDSL do
   defguard is_user_id(x) when is_integer(x) and x > 0 and x < 10_000_000
 end
@@ -513,7 +513,7 @@ end
 
 가끔은 도메인에서 반복되는 변환을 “문장 형태”로 읽히게 만들고 싶다.
 
-```elixir
+```text
 defmodule TransformOp do
   # x ~~> f : x를 f에 넣은 결과를 반환
   defmacro left ~~> right do
@@ -533,7 +533,7 @@ end
 
 복잡한 case/with 패턴을 한 줄로 접어 표현할 수 있다.
 
-```elixir
+```text
 defmodule MatchOp do
   # value =~? pattern : 패턴 매치 성공 여부만 반환
   defmacro value =~? pattern do
@@ -556,7 +556,7 @@ end
 
 성능 계측을 “표현식처럼” 읽히게 만들어, 코드의 소음을 줄인다.
 
-```elixir
+```text
 defmodule Timed do
   defmacro expr <@> label do
     quote bind_quoted: [e: expr, l: label] do
