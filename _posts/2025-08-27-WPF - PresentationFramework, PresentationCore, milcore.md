@@ -4,12 +4,7 @@ title: WPF - PresentationFramework, PresentationCore, milcore
 date: 2025-08-27 16:25:23 +0900
 category: WPF
 ---
-# WPF 내부 구조 큰 그림: **PresentationFramework / PresentationCore / milcore**
-
-> 이 글은 WPF의 상·하위 계층 구조를 **`PresentationFramework` → `PresentationCore` → `milcore`(Media Integration Layer Core)** 축으로 정리합니다.
-> “어떤 네임스페이스/어셈블리에서 무엇을 하고, 어떤 스레드와 채널을 통해 어디까지 내려가며, 최종적으로 화면 픽셀은 어떻게 찍히는가?”를 **예제 중심**으로 설명합니다. 코드 블록은 ` ``` `로 감싸고, 텍스트 전체를 블로그 포맷에 맞춰 정리했습니다.
-
----
+# WPF 내부 구조 큰 그림: PresentationFramework / PresentationCore / milcore
 
 ## TL;DR — 한 장 요약
 

@@ -4,7 +4,7 @@ title: AWS - AWS Free Tier
 date: 2025-08-08 15:20:23 +0900
 category: AWS
 ---
-# AWS Free Tier 이해와 **실전 활용** 끝장 가이드 (2025 업데이트 반영)
+# AWS Free Tier 이해와 **실전 활용**
 
 ## 빠른 요약
 

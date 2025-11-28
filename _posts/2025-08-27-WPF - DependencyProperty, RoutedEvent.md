@@ -6,11 +6,6 @@ category: WPF
 ---
 # WPF 핵심: **DependencyProperty**와 **RoutedEvent** 완전 이해
 
-> 이 글은 WPF의 두 축인 **의존 속성(DependencyProperty)**과 **라우티드 이벤트(RoutedEvent)**를 “왜 존재하는지→어떻게 동작하는지→어떻게 직접 정의하고 쓰는지→성능·디버깅·모범 사례” 순서로, 실용 예제와 함께 **끝까지** 파고듭니다.
-> 코드 블록은 모두 \`\`\` 로 감싸고, 전체 본문은 블로그 포맷에 맞춰 \~~~markdown 으로 감쌌습니다.
-
----
-
 ## 한 장 요약 (TL;DR)
 
 - **DependencyProperty(DP)**:

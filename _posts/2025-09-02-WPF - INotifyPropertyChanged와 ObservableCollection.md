@@ -28,7 +28,7 @@ public interface INotifyPropertyChanged
 }
 ```
 
-### ⚡ 구현 방법
+### 구현 방법
 
 - `PropertyChanged` 이벤트를 호출해 UI에 알립니다.
 - 보통 ViewModel의 속성 Setter에서 `OnPropertyChanged()`를 호출합니다.
