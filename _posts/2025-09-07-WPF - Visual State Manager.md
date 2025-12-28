@@ -4,158 +4,151 @@ title: WPF - Visual State Manager
 date: 2025-09-07 19:25:23 +0900
 category: WPF
 ---
-# 🎛️ WPF **Visual State Manager(VSM)** 완전 정복
+# WPF Visual State Manager (VSM) 완전 가이드
 
-*(개념 → 문법 → 컨트롤 템플릿 → 코드 제어 → MVVM 패턴 → 사용자 지정 VSM → 성능/트러블슈팅까지, 예제 중심으로 “빠짐없이” 정리)*
+WPF의 Visual State Manager는 컨트롤의 다양한 상태를 선언적으로 정의하고 상태 간 전환을 애니메이션으로 구현할 수 있는 강력한 시스템입니다. 복잡한 트리거 대신 깔끔한 상태 기반 UI를 구성할 수 있게 해줍니다.
 
-> VSM은 컨트롤의 **상태(State)** 를 선언적으로 정의하고, **상태 전환(Transition)** 을 애니메이션으로 기술해
-> **복잡한 Trigger 난립 없이** 일관된 UI를 만들게 해 줍니다.
-> WPF 4.0+에서 본격 지원되며, `ControlTemplate` 안에서 가장 빛을 발합니다.
+## VSM의 기본 개념 이해하기
 
----
+Visual State Manager의 핵심 구성 요소는 다음과 같습니다:
 
-## 한눈에 보는 핵심
+- **VisualState**: 특정 UI 상태와 그 상태에서 실행될 애니메이션을 정의합니다
+- **VisualStateGroup**: 관련된 상태들을 그룹으로 묶습니다 (예: CommonStates, FocusStates)
+- **VisualTransition**: 상태 간 전환 시 적용될 애니메이션과 타이밍을 정의합니다
 
-- **VisualState** = “상태 이름 + Storyboard(선택)”.
-- **VisualStateGroup** = 관련 상태 묶음(예: `CommonStates`: `Normal` / `MouseOver` / `Pressed` / `Disabled`).
-- **한 그룹 내에 동시에 하나의 상태만 활성**. 그룹이 여러 개면 각 그룹에서 하나씩 활성.
-- **전환**: `VisualTransition` 로 상태 간 애니메이션/시간/완화(Easing) 지정.
-- **코드 전환**: `VisualStateManager.GoToState(control, "StateName", useTransitions)`
-- **MVVM**: Behavior/AttachedProperty로 상태를 바인딩하거나, ViewModel 이벤트→상태 전환 연결.
-- **CustomVisualStateManager**: 전환 로직을 커스터마이즈 가능(고급).
+중요한 원칙은 **한 그룹 내에서는 동시에 하나의 상태만 활성화될 수 있다**는 점입니다. 여러 그룹이 있다면 각 그룹에서 하나씩 상태가 활성화될 수 있습니다.
 
----
+## 기본적인 VSM 사용법
 
-## 기본 문법: 상태/그룹/전환
-
-### Button 템플릿에서 `CommonStates` 정의
+가장 간단한 VSM 예제로 Button 컨트롤 템플릿을 살펴보겠습니다:
 
 ```xml
-<Style TargetType="Button" x:Key="VsmButton">
-  <Setter Property="Template">
-    <Setter.Value>
-      <ControlTemplate TargetType="Button">
-        <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
-          <Border x:Name="Chrome"
-                  Background="{TemplateBinding Background}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="1.5"
-                  CornerRadius="10"/>
-          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Margin="{TemplateBinding Padding}"/>
-          <Grid.RenderTransform>
-            <ScaleTransform ScaleX="1" ScaleY="1"/>
-          </Grid.RenderTransform>
-        </Grid>
-
-        <!-- VSM 구간 -->
-        <VisualStateManager.VisualStateGroups>
-          <VisualStateGroup x:Name="CommonStates">
-            <VisualState x:Name="Normal"/>
-            <VisualState x:Name="MouseOver">
-              <Storyboard>
-                <DoubleAnimation Storyboard.TargetName="Chrome"
-                                 Storyboard.TargetProperty="Opacity"
-                                 To="0.95" Duration="0:0:0.08"/>
-              </Storyboard>
-            </VisualState>
-            <VisualState x:Name="Pressed">
-              <Storyboard>
-                <DoubleAnimation Storyboard.TargetName="Root"
-                                 Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                 To="0.98" Duration="0:0:0.06"/>
-              </Storyboard>
-            </VisualState>
-            <VisualState x:Name="Disabled">
-              <Storyboard>
-                <DoubleAnimation Storyboard.TargetName="Root"
-                                 Storyboard.TargetProperty="Opacity"
-                                 To="0.55" Duration="0:0:0"/>
-              </Storyboard>
-            </VisualState>
-          </VisualStateGroup>
-        </VisualStateManager.VisualStateGroups>
-
-        <!-- (선택) 보조 Trigger: 초기 Transform 세팅 등 -->
-        <ControlTemplate.Triggers>
-          <Trigger Property="IsDefaulted" Value="True">
-            <Setter TargetName="Chrome" Property="BorderBrush" Value="#60A5FA"/>
-          </Trigger>
-        </ControlTemplate.Triggers>
-      </ControlTemplate>
-    </Setter.Value>
-  </Setter>
+<Style TargetType="Button" x:Key="ModernButtonStyle">
+    <Setter Property="Template">
+        <Setter.Value>
+            <ControlTemplate TargetType="Button">
+                <Grid x:Name="Root">
+                    <Border x:Name="BackgroundBorder"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="2"
+                            CornerRadius="8"/>
+                    
+                    <ContentPresenter HorizontalAlignment="Center" 
+                                      VerticalAlignment="Center"
+                                      Margin="{TemplateBinding Padding}"/>
+                </Grid>
+                
+                <ControlTemplate.Triggers>
+                    <!-- VSM 상태 정의 -->
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup x:Name="CommonStates">
+                            <!-- Normal 상태 (기본) -->
+                            <VisualState x:Name="Normal"/>
+                            
+                            <!-- MouseOver 상태 -->
+                            <VisualState x:Name="MouseOver">
+                                <Storyboard>
+                                    <ColorAnimation Storyboard.TargetName="BackgroundBorder"
+                                                    Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                    To="LightBlue" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </VisualState>
+                            
+                            <!-- Pressed 상태 -->
+                            <VisualState x:Name="Pressed">
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="BackgroundBorder"
+                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)"
+                                                     To="0.95" Duration="0:0:0.1"/>
+                                    <DoubleAnimation Storyboard.TargetName="BackgroundBorder"
+                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
+                                                     To="0.95" Duration="0:0:0.1"/>
+                                </Storyboard>
+                            </VisualState>
+                            
+                            <!-- Disabled 상태 -->
+                            <VisualState x:Name="Disabled">
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="Root"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.5" Duration="0:0:0"/>
+                                </Storyboard>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
+    </Setter>
 </Style>
 ```
 
-> **포인트**
-> - VSM은 템플릿 내부의 **이름 있는 요소(TargetName)** 에 애니메이션을 적용합니다.
-> - 상태 이름은 관례적으로 `CommonStates`, `FocusStates`, `ValidationStates`, `SelectionStates` 등 그룹으로 나뉩니다.
+## 상태 전환 애니메이션 세밀하게 제어하기
 
----
-
-## 세밀 제어
-
-### `VisualTransition`로 상태 간 공통 전환 지정
+VisualTransition을 사용하면 상태 간 전환을 더욱 세밀하게 제어할 수 있습니다:
 
 ```xml
 <VisualStateManager.VisualStateGroups>
-  <VisualStateGroup x:Name="CommonStates">
-    <VisualStateGroup.Transitions>
-      <!-- 모든 상태 전환에 기본 120ms Ease 적용 -->
-      <VisualTransition GeneratedDuration="0:0:0.12">
-        <VisualTransition.EasingFunction>
-          <SineEase EasingMode="EaseOut"/>
-        </VisualTransition.EasingFunction>
-      </VisualTransition>
-
-      <!-- Pressed -> Normal로 돌아갈 때만 더 빠르게 -->
-      <VisualTransition From="Pressed" To="Normal" GeneratedDuration="0:0:0.06"/>
-    </VisualStateGroup.Transitions>
-
-    <VisualState x:Name="Normal"/>
-    <VisualState x:Name="MouseOver">
-      <Storyboard>
-        <DoubleAnimation Storyboard.TargetName="Chrome" Storyboard.TargetProperty="Opacity"
-                         To="0.96" Duration="0:0:0"/>
-      </Storyboard>
-    </VisualState>
-    <VisualState x:Name="Pressed">
-      <Storyboard>
-        <DoubleAnimation Storyboard.TargetName="Root"
-                         Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                         To="0.98" Duration="0:0:0"/>
-      </Storyboard>
-    </VisualState>
-    <VisualState x:Name="Disabled">
-      <Storyboard>
-        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity"
-                         To="0.55" Duration="0:0:0"/>
-      </Storyboard>
-    </VisualState>
-  </VisualStateGroup>
+    <VisualStateGroup x:Name="CommonStates">
+        <!-- 상태 전환 설정 -->
+        <VisualStateGroup.Transitions>
+            <!-- 모든 전환에 기본 0.2초 애니메이션 적용 -->
+            <VisualTransition GeneratedDuration="0:0:0.2">
+                <VisualTransition.EasingFunction>
+                    <CubicEase EasingMode="EaseInOut"/>
+                </VisualTransition.EasingFunction>
+            </VisualTransition>
+            
+            <!-- Pressed에서 Normal로 돌아올 때는 더 빠르게 -->
+            <VisualTransition From="Pressed" To="Normal" GeneratedDuration="0:0:0.1"/>
+            
+            <!-- Disabled 상태로 전환할 때는 애니메이션 없이 -->
+            <VisualTransition To="Disabled" GeneratedDuration="0:0:0"/>
+        </VisualStateGroup.Transitions>
+        
+        <!-- 상태 정의 -->
+        <VisualState x:Name="Normal"/>
+        <VisualState x:Name="MouseOver">
+            <Storyboard>
+                <ColorAnimation Storyboard.TargetName="BackgroundBorder"
+                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                To="Blue" Duration="0:0:0"/>
+            </Storyboard>
+        </VisualState>
+        
+        <!-- 나머지 상태들... -->
+    </VisualStateGroup>
 </VisualStateManager.VisualStateGroups>
 ```
 
-> **GeneratedDuration**: 상태 Storyboard에 지정된 Duration이 없어도 **그룹 전환 기본 시간**으로 부드럽게 전환.
-> **From/To** 로 특정 쌍 전환만 별도 시간/이징을 지정.
+## 코드에서 상태 전환하기
 
----
-
-## 코드에서 상태 전환: `GoToState`
-
-### `OnApplyTemplate`에서 초기 상태 진입
+코드 비하인드에서 Visual State를 제어하려면 `VisualStateManager.GoToState` 메서드를 사용합니다:
 
 ```csharp
-public class PillButton : Button
+public class CustomButton : Button
 {
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
-        // 템플릿이 적용된 후에만 상태 전환 가능
+        
+        // 템플릿이 적용된 후 초기 상태 설정
         VisualStateManager.GoToState(this, IsEnabled ? "Normal" : "Disabled", false);
     }
-
+    
+    protected override void OnMouseEnter(MouseEventArgs e)
+    {
+        base.OnMouseEnter(e);
+        VisualStateManager.GoToState(this, "MouseOver", true);
+    }
+    
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        VisualStateManager.GoToState(this, "Normal", true);
+    }
+    
     protected override void OnIsEnabledChanged(DependencyPropertyChangedEventArgs e)
     {
         base.OnIsEnabledChanged(e);
@@ -164,47 +157,11 @@ public class PillButton : Button
 }
 ```
 
-### 외부 이벤트로 전환
+## MVVM 패턴과 VSM 통합하기
 
-```csharp
-// 예: 로딩 완료 시 "LoadedState"로 전환
-private async void LoadDataAsync()
-{
-    VisualStateManager.GoToState(this, "Loading", true);
-    await Task.Delay(600);
-    VisualStateManager.GoToState(this, "LoadedState", true);
-}
-```
+MVVM 패턴에서 VSM을 사용하려면 몇 가지 접근 방법이 있습니다:
 
-> **주의**: `GoToState` 는 **템플릿 루트가 해당 상태를 정의**한 경우에만 성공합니다. 상태 이름 오타/그룹 누락을 조심하세요.
-
----
-
-## MVVM 친화: XAML에서 상태를 바인딩처럼 쓰는 법
-
-WPF 기본만으로는 **상태 이름 직접 바인딩**은 지원하지 않습니다. 흔한 해법은 두 가지:
-
-### 사용
-
-```xml
-<!-- 패키지: Microsoft.Xaml.Behaviors.Wpf -->
-<Window xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:ei="http://schemas.microsoft.com/expression/2010/interactions">
-  <Grid x:Name="Root">
-    <i:Interaction.Triggers>
-      <!-- ViewModel에서 bool 속성이 True가 되면 상태 전환 -->
-      <ei:DataTrigger Binding="{Binding IsBusy}" Value="True">
-        <ei:GoToStateAction StateName="Busy" UseTransitions="True"/>
-      </ei:DataTrigger>
-      <ei:DataTrigger Binding="{Binding IsBusy}" Value="False">
-        <ei:GoToStateAction StateName="Idle" UseTransitions="True"/>
-      </ei:DataTrigger>
-    </i:Interaction.Triggers>
-  </Grid>
-</Window>
-```
-
-### **AttachedProperty** 로 래핑
+### Attached Property를 활용한 방법
 
 ```csharp
 public static class VisualStateHelper
@@ -218,45 +175,47 @@ public static class VisualStateHelper
 
     private static void OnStateChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is FrameworkElement fe && e.NewValue is string s && fe.IsLoaded)
-            VisualStateManager.GoToState(fe, s, true);
-        else if (d is FrameworkElement fe2)
-            fe2.Loaded += (s2, _) => VisualStateManager.GoToState(fe2, (string)e.NewValue, false);
+        if (d is FrameworkElement element && e.NewValue is string stateName)
+        {
+            if (element.IsLoaded)
+            {
+                VisualStateManager.GoToState(element, stateName, true);
+            }
+            else
+            {
+                element.Loaded += (sender, args) => 
+                    VisualStateManager.GoToState(element, stateName, true);
+            }
+        }
     }
 }
 ```
 
+XAML에서 사용:
 ```xml
 <Grid local:VisualStateHelper.State="{Binding CurrentState}">
-  <VisualStateManager.VisualStateGroups>
-    <VisualStateGroup x:Name="LoadingStates">
-      <VisualState x:Name="Idle"/>
-      <VisualState x:Name="Busy">
-        <Storyboard>
-          <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0.5" Duration="0:0:0.1"/>
-        </Storyboard>
-      </VisualState>
-    </VisualStateGroup>
-  </VisualStateManager.VisualStateGroups>
+    <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup x:Name="AppStates">
+            <VisualState x:Name="Loading"/>
+            <VisualState x:Name="Loaded"/>
+            <VisualState x:Name="Error"/>
+        </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
 </Grid>
 ```
 
-> 이렇게 하면 ViewModel의 문자열 속성(`CurrentState`)을 바꿔 **상태 전환을 MVVM스럽게** 제어할 수 있습니다.
+## 실전 예제: 토글 스위치 컨트롤 만들기
 
----
+커스텀 컨트롤과 VSM을 함께 사용하는 완전한 예제입니다:
 
-## 템플릿 정석: **Generic.xaml** + 커스텀 컨트롤
-
-### 커스텀 토글 스위치 예제 (상태: `On`/`Off`/`Disabled`)
-
-**Controls/ToggleSwitch.cs**
+### ToggleSwitch.cs
 ```csharp
 public class ToggleSwitch : Control
 {
     static ToggleSwitch()
     {
         DefaultStyleKeyProperty.OverrideMetadata(typeof(ToggleSwitch),
-          new FrameworkPropertyMetadata(typeof(ToggleSwitch)));
+            new FrameworkPropertyMetadata(typeof(ToggleSwitch)));
     }
 
     public bool IsOn
@@ -264,379 +223,235 @@ public class ToggleSwitch : Control
         get => (bool)GetValue(IsOnProperty);
         set => SetValue(IsOnProperty, value);
     }
+    
     public static readonly DependencyProperty IsOnProperty =
         DependencyProperty.Register(nameof(IsOn), typeof(bool), typeof(ToggleSwitch),
             new FrameworkPropertyMetadata(false, OnIsOnChanged));
 
     private static void OnIsOnChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        var t = (ToggleSwitch)d;
-        t.UpdateState(true);
+        var toggleSwitch = (ToggleSwitch)d;
+        toggleSwitch.UpdateVisualState(true);
     }
 
     public override void OnApplyTemplate()
     {
         base.OnApplyTemplate();
-        UpdateState(false);
-        if (GetTemplateChild("PART_Track") is UIElement track)
-            track.MouseLeftButtonUp += (_, __) => IsOn = !IsOn;
+        
+        // 템플릿 요소에 이벤트 연결
+        if (GetTemplateChild("PART_Track") is FrameworkElement track)
+        {
+            track.MouseLeftButtonDown += (sender, e) => IsOn = !IsOn;
+        }
+        
+        // 초기 상태 설정
+        UpdateVisualState(false);
     }
 
-    private void UpdateState(bool useTransitions)
+    private void UpdateVisualState(bool useTransitions)
     {
-        var state = IsEnabled ? (IsOn ? "On" : "Off") : "Disabled";
-        VisualStateManager.GoToState(this, state, useTransitions);
+        string stateName = IsEnabled ? (IsOn ? "On" : "Off") : "Disabled";
+        VisualStateManager.GoToState(this, stateName, useTransitions);
     }
 }
 ```
 
-**Themes/Generic.xaml**
+### Generic.xaml
 ```xml
-<ResourceDictionary
-  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-  xmlns:local="clr-namespace:MyControls">
-
-  <Style TargetType="{x:Type local:ToggleSwitch}">
-    <Setter Property="Width" Value="56"/>
-    <Setter Property="Height" Value="32"/>
+<Style TargetType="{x:Type local:ToggleSwitch}">
+    <Setter Property="Width" Value="60"/>
+    <Setter Property="Height" Value="34"/>
     <Setter Property="Template">
-      <Setter.Value>
-        <ControlTemplate TargetType="{x:Type local:ToggleSwitch}">
-          <Grid x:Name="Root">
-            <Border x:Name="PART_Track" Background="#CBD5E1" CornerRadius="16"/>
-            <Border x:Name="Thumb" Width="28" Height="28" Background="White" CornerRadius="14" Margin="2"
-                    HorizontalAlignment="Left"/>
-          </Grid>
-
-          <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup x:Name="ToggleStates">
-              <VisualStateGroup.Transitions>
-                <VisualTransition GeneratedDuration="0:0:0.12">
-                  <VisualTransition.EasingFunction>
-                    <CubicEase EasingMode="EaseInOut"/>
-                  </VisualTransition.EasingFunction>
-                </VisualTransition>
-              </VisualStateGroup.Transitions>
-
-              <VisualState x:Name="Off">
-                <Storyboard>
-                  <DoubleAnimation Storyboard.TargetName="Thumb"
-                                   Storyboard.TargetProperty="(FrameworkElement.Margin).(Thickness.Left)"
-                                   To="2" Duration="0:0:0"/>
-                  <ColorAnimation Storyboard.TargetName="PART_Track"
-                                  Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                  To="#CBD5E1" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-
-              <VisualState x:Name="On">
-                <Storyboard>
-                  <DoubleAnimation Storyboard.TargetName="Thumb"
-                                   Storyboard.TargetProperty="(FrameworkElement.Margin).(Thickness.Left)"
-                                   To="26" Duration="0:0:0"/>
-                  <ColorAnimation Storyboard.TargetName="PART_Track"
-                                  Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
-                                  To="#22C55E" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-
-              <VisualState x:Name="Disabled">
-                <Storyboard>
-                  <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity"
-                                   To="0.55" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-            </VisualStateGroup>
-          </VisualStateManager.VisualStateGroups>
-        </ControlTemplate>
-      </Setter.Value>
+        <Setter.Value>
+            <ControlTemplate TargetType="{x:Type local:ToggleSwitch}">
+                <Grid x:Name="Root">
+                    <!-- 배경 트랙 -->
+                    <Border x:Name="PART_Track" 
+                            Background="#E5E7EB" 
+                            CornerRadius="17"
+                            Width="60" Height="34"/>
+                    
+                    <!-- 토글 버튼 -->
+                    <Ellipse x:Name="Thumb" 
+                             Width="26" Height="26" 
+                             Fill="White" 
+                             HorizontalAlignment="Left"
+                             Margin="4"/>
+                </Grid>
+                
+                <ControlTemplate.Triggers>
+                    <VisualStateManager.VisualStateGroups>
+                        <VisualStateGroup x:Name="ToggleStates">
+                            <!-- 상태 전환 애니메이션 -->
+                            <VisualStateGroup.Transitions>
+                                <VisualTransition GeneratedDuration="0:0:0.2">
+                                    <VisualTransition.EasingFunction>
+                                        <CubicEase EasingMode="EaseOut"/>
+                                    </VisualTransition.EasingFunction>
+                                </VisualTransition>
+                            </VisualStateGroup.Transitions>
+                            
+                            <!-- Off 상태 -->
+                            <VisualState x:Name="Off">
+                                <Storyboard>
+                                    <ThicknessAnimation Storyboard.TargetName="Thumb"
+                                                       Storyboard.TargetProperty="Margin"
+                                                       To="4,4,30,4" Duration="0:0:0"/>
+                                </Storyboard>
+                            </VisualState>
+                            
+                            <!-- On 상태 -->
+                            <VisualState x:Name="On">
+                                <Storyboard>
+                                    <ThicknessAnimation Storyboard.TargetName="Thumb"
+                                                       Storyboard.TargetProperty="Margin"
+                                                       To="30,4,4,4" Duration="0:0:0"/>
+                                    <ColorAnimation Storyboard.TargetName="PART_Track"
+                                                   Storyboard.TargetProperty="(Border.Background).(SolidColorBrush.Color)"
+                                                   To="#10B981" Duration="0:0:0"/>
+                                </Storyboard>
+                            </VisualState>
+                            
+                            <!-- Disabled 상태 -->
+                            <VisualState x:Name="Disabled">
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="Root"
+                                                   Storyboard.TargetProperty="Opacity"
+                                                   To="0.5" Duration="0:0:0"/>
+                                </Storyboard>
+                            </VisualState>
+                        </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                </ControlTemplate.Triggers>
+            </ControlTemplate>
+        </Setter.Value>
     </Setter>
-  </Style>
-</ResourceDictionary>
-```
-
-> `UpdateState` 에서 **현재 속성(IsOn/IsEnabled)** 기반으로 상태 이름을 만들고 `GoToState` 호출 → **상태-기반 템플릿** 완성.
-
----
-
-## 폼/검증/선택 등 **여러 그룹** 동시 사용
-
-한 컨트롤 템플릿에 **여러 그룹**을 넣어 각각 독립 상태를 운용할 수 있습니다.
-
-```xml
-<VisualStateManager.VisualStateGroups>
-  <!-- 상호작용 공통 상태 -->
-  <VisualStateGroup x:Name="CommonStates">
-    <VisualState x:Name="Normal"/>
-    <VisualState x:Name="MouseOver"/>
-    <VisualState x:Name="Pressed"/>
-    <VisualState x:Name="Disabled"/>
-  </VisualStateGroup>
-
-  <!-- 포커스 상태 -->
-  <VisualStateGroup x:Name="FocusStates">
-    <VisualState x:Name="Unfocused"/>
-    <VisualState x:Name="Focused">
-      <Storyboard>
-        <ColorAnimation Storyboard.TargetName="Chrome"
-                        Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                        To="#60A5FA" Duration="0:0:0"/>
-      </Storyboard>
-    </VisualState>
-  </VisualStateGroup>
-
-  <!-- 검증 상태 -->
-  <VisualStateGroup x:Name="ValidationStates">
-    <VisualState x:Name="Valid"/>
-    <VisualState x:Name="Invalid">
-      <Storyboard>
-        <ColorAnimation Storyboard.TargetName="Chrome"
-                        Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                        To="#EF4444" Duration="0:0:0"/>
-      </Storyboard>
-    </VisualState>
-  </VisualStateGroup>
-</VisualStateManager.VisualStateGroups>
-```
-
-> 마우스/포커스/검증 상태가 **동시에** 달라질 수 있으므로, 그룹을 나눠 **독립적으로** 상태를 유지하세요.
-
----
-
-## VSM vs Triggers: 언제 무엇을?
-
-| 항목 | **VSM** | **(Style/Template) Trigger** |
-|---|---|---|
-| 선언 위치 | 주로 `ControlTemplate` 안 `VisualStateGroups` | Style/Template 내 Triggers 섹션 |
-| 목적 | **상태의 집합**과 **전환**을 구조화 | **단일 조건**에 따른 Setter/Storyboard 실행 |
-| 애니메이션 | `VisualTransition`/`Storyboard` 내장 | `BeginStoryboard`/`Enter/ExitActions` |
-| 복잡도 | 상태가 많아질수록 **가독성 ↑** | 상태 폭증 시 **난립/충돌** 우려 |
-| MVVM | `GoToState`/Behavior/AttachedProperty로 용이 | DataTrigger 등 간단 바인딩은 쉬움 |
-
-> 컨트롤 수준(버튼/입력 등)에서는 **VSM 권장**. 단순한 속성 반응만 필요하면 Trigger도 OK.
-
----
-
-## 고급: **CustomVisualStateManager** 로 전환 로직 커스터마이즈
-
-특정 상태 전환을 **특수 규칙**으로 처리하고 싶을 때 VSM을 상속해 사용합니다.
-
-```csharp
-public class InstantPressStateManager : VisualStateManager
-{
-    protected override bool GoToStateCore(FrameworkElement control, FrameworkElement templateRoot,
-        string stateName, VisualStateGroup group, VisualState state, bool useTransitions)
-    {
-        // Pressed로 갈 때는 전환 무시(즉시 반응), 그 외는 기본 처리
-        if (group.Name == "CommonStates" && stateName == "Pressed")
-            return base.GoToStateCore(control, templateRoot, stateName, group, state, false);
-
-        return base.GoToStateCore(control, templateRoot, stateName, group, state, useTransitions);
-    }
-}
-```
-
-템플릿에서 **CustomVisualStateManager** 지정:
-```xml
-<ControlTemplate TargetType="Button">
-  <VisualStateManager.CustomVisualStateManager>
-    <local:InstantPressStateManager/>
-  </VisualStateManager.CustomVisualStateManager>
-
-  <!-- VisualStateGroups ... -->
-</ControlTemplate>
-```
-
-> 드물지만 “특정 전환만 시간 없이”, “다른 그룹 전환과 동기화” 같은 특수 규칙이 필요한 경우 유용합니다.
-
----
-
-## 페이지 전환/레이아웃 상태에도 VSM 적용
-
-> 단일 컨트롤이 아니라 **페이지/뷰 자체**에 상태를 정의하고 전환에 활용할 수 있습니다.
-
-```xml
-<Grid x:Name="Root">
-  <VisualStateManager.VisualStateGroups>
-    <VisualStateGroup x:Name="PageStates">
-      <VisualState x:Name="List">
-        <Storyboard>
-          <DoubleAnimation Storyboard.TargetName="DetailPanel" Storyboard.TargetProperty="Opacity"
-                           To="0" Duration="0:0:0.15"/>
-        </Storyboard>
-      </VisualState>
-      <VisualState x:Name="Detail">
-        <Storyboard>
-          <DoubleAnimation Storyboard.TargetName="DetailPanel" Storyboard.TargetProperty="Opacity"
-                           To="1" Duration="0:0:0.18"/>
-          <DoubleAnimation Storyboard.TargetName="DetailPanel"
-                           Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                           From="20" To="0" Duration="0:0:0.18"/>
-        </Storyboard>
-      </VisualState>
-    </VisualStateGroup>
-  </VisualStateManager.VisualStateGroups>
-
-  <Grid x:Name="DetailPanel" Opacity="0">
-    <Grid.RenderTransform><TranslateTransform X="20"/></Grid.RenderTransform>
-    <!-- 상세 뷰 -->
-  </Grid>
-</Grid>
-```
-
-코드 또는 Behavior로:
-```csharp
-VisualStateManager.GoToState(this, "Detail", true);
-```
-
----
-
-## 상태 이름 컨벤션(권장)
-
-- **CommonStates**: `Normal`, `MouseOver`, `Pressed`, `Disabled`
-- **FocusStates**: `Focused`, `Unfocused`
-- **SelectionStates**: `Selected`, `Unselected`
-- **ValidationStates**: `Valid`, `InvalidFocused`, `InvalidUnfocused`
-- **ExpansionStates**: `Expanded`, `Collapsed`
-- **CheckStates**: `Checked`, `Unchecked`, `Indeterminate`
-- **OrientationStates**: `Horizontal`, `Vertical`
-- **ActiveStates**: `Active`, `Inactive`
-- **LoadingStates**: `Idle`, `Busy`, `Loaded`
-
-> 컨트롤 라이브러리를 배포한다면 **문서화**하세요(어떤 그룹/상태가 있는지, 언제 전환되는지).
-
----
-
-## 성능/안정성 체크리스트
-
-- [ ] **Storyboard 최소화**: 상태별 Storyboard는 짧고 단순하게, **RenderTransform 우선**(LayoutTransform 지양)
-- [ ] **공유 Brush 애니메이션 금지**: 리소스 Brush는 Freeze/공유됨 → **로컬 Brush** 또는 `x:Shared="False"`
-- [ ] **GeneratedDuration** 로 공통 전환시간 정의 → 개별 Storyboard Duration 생략 가능
-- [ ] **상태 충돌 방지**: 같은 속성을 여러 그룹에서 동시에 애니메이션하지 않도록 설계
-- [ ] **초기 상태 확정**: `OnApplyTemplate` 후 `GoToState(..., false)`로 초기 상태 강제
-- [ ] **대규모 리스트**: 각 항목 템플릿의 상태 애니메이션을 **짧게**(가상화 영향 최소화)
-
----
-
-## 트러블슈팅
-
-**Q1. `GoToState` 가 항상 `false` 를 반환합니다.**
-- 템플릿 안에 해당 **상태 이름이 존재**하는지, 그룹/이름 오타 여부 확인.
-- `OnApplyTemplate` 이전 호출인지 확인(템플릿 미적용이면 실패).
-
-**Q2. 전환 애니메이션이 일부만 적용됩니다.**
-- 다른 그룹/Trigger가 **같은 속성**을 동시에 조작하고 있는지 점검.
-- **FillBehavior**/`HoldEnd` vs 다른 애니메이션이 값을 덮어쓰는지 확인.
-
-**Q3. 마우스 상태 전환이 느리거나 튑니다.**
-- `GeneratedDuration` 을 더 짧게, **Pressed→Normal** 등 빠른 복귀 전환 별도 지정.
-- RenderTransform 사용으로 레이아웃 재계산 최소화.
-
-**Q4. MVVM에서 상태 관리가 번거롭습니다.**
-- Behavior(`GoToStateAction`) 또는 AttachedProperty를 사용해 바인딩처럼 추상화.
-
----
-
-## “붙여 넣어 바로 쓰는” 스니펫
-
-### 공용 버튼 템플릿 (라이트/다크 팔레트와 조합 가정)
-
-```xml
-<Style TargetType="Button" x:Key="DsButton">
-  <Setter Property="Padding" Value="12,7"/>
-  <Setter Property="Background" Value="{DynamicResource Palette.Accent}"/>
-  <Setter Property="BorderBrush" Value="{DynamicResource Palette.Border}"/>
-  <Setter Property="Foreground" Value="{DynamicResource Palette.Background}"/>
-  <Setter Property="Template">
-    <Setter.Value>
-      <ControlTemplate TargetType="Button">
-        <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
-          <Border x:Name="Chrome" CornerRadius="10"
-                  Background="{TemplateBinding Background}"
-                  BorderBrush="{TemplateBinding BorderBrush}"
-                  BorderThickness="1.4"/>
-          <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Margin="{TemplateBinding Padding}"/>
-          <Grid.RenderTransform><ScaleTransform/></Grid.RenderTransform>
-
-          <VisualStateManager.VisualStateGroups>
-            <VisualStateGroup x:Name="CommonStates">
-              <VisualStateGroup.Transitions>
-                <VisualTransition GeneratedDuration="0:0:0.12">
-                  <VisualTransition.EasingFunction>
-                    <CubicEase EasingMode="EaseOut"/>
-                  </VisualTransition.EasingFunction>
-                </VisualTransition>
-                <VisualTransition From="Pressed" To="Normal" GeneratedDuration="0:0:0.07"/>
-              </VisualStateGroup.Transitions>
-
-              <VisualState x:Name="Normal"/>
-              <VisualState x:Name="MouseOver">
-                <Storyboard>
-                  <DoubleAnimation Storyboard.TargetName="Chrome"
-                                   Storyboard.TargetProperty="Opacity"
-                                   To="0.95" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-              <VisualState x:Name="Pressed">
-                <Storyboard>
-                  <DoubleAnimation Storyboard.TargetName="Root"
-                                   Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)"
-                                   To="0.98" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-              <VisualState x:Name="Disabled">
-                <Storyboard>
-                  <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity"
-                                   To="0.55" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-            </VisualStateGroup>
-
-            <VisualStateGroup x:Name="FocusStates">
-              <VisualState x:Name="Unfocused"/>
-              <VisualState x:Name="Focused">
-                <Storyboard>
-                  <ColorAnimation Storyboard.TargetName="Chrome"
-                                  Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
-                                  To="#93C5FD" Duration="0:0:0"/>
-                </Storyboard>
-              </VisualState>
-            </VisualStateGroup>
-          </VisualStateManager.VisualStateGroups>
-        </Grid>
-      </ControlTemplate>
-    </Setter.Value>
-  </Setter>
 </Style>
 ```
 
-### 페이지 상태 전환 Behavior 없이 바인딩 (AttachedProperty)
+## 여러 상태 그룹을 함께 사용하기
+
+복잡한 컨트롤에서는 여러 상태 그룹을 함께 사용할 수 있습니다:
 
 ```xml
-<Grid local:VisualStateHelper.State="{Binding IsDetailVisible, Converter={StaticResource BoolToState}, ConverterParameter='Detail|List'}">
-  <VisualStateManager.VisualStateGroups>
-    <VisualStateGroup x:Name="PageStates">
-      <VisualState x:Name="List"/>
-      <VisualState x:Name="Detail">
-        <Storyboard>
-          <DoubleAnimation Storyboard.TargetName="DetailPanel" Storyboard.TargetProperty="Opacity"
-                           To="1" Duration="0:0:0.2"/>
-        </Storyboard>
-      </VisualState>
+<VisualStateManager.VisualStateGroups>
+    <!-- 상호작용 상태 -->
+    <VisualStateGroup x:Name="CommonStates">
+        <VisualState x:Name="Normal"/>
+        <VisualState x:Name="MouseOver"/>
+        <VisualState x:Name="Pressed"/>
+        <VisualState x:Name="Disabled"/>
     </VisualStateGroup>
-  </VisualStateManager.VisualStateGroups>
-  <Grid x:Name="DetailPanel" Opacity="0"/>
+    
+    <!-- 포커스 상태 -->
+    <VisualStateGroup x:Name="FocusStates">
+        <VisualState x:Name="Unfocused"/>
+        <VisualState x:Name="Focused">
+            <Storyboard>
+                <DoubleAnimation Storyboard.TargetName="FocusVisual"
+                                 Storyboard.TargetProperty="Opacity"
+                                 To="1" Duration="0:0:0.1"/>
+            </Storyboard>
+        </VisualState>
+    </VisualStateGroup>
+    
+    <!-- 검증 상태 -->
+    <VisualStateGroup x:Name="ValidationStates">
+        <VisualState x:Name="Valid"/>
+        <VisualState x:Name="Invalid">
+            <Storyboard>
+                <ColorAnimation Storyboard.TargetName="Border"
+                                Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Color)"
+                                To="#EF4444" Duration="0:0:0.1"/>
+            </Storyboard>
+        </VisualState>
+    </VisualStateGroup>
+</VisualStateManager.VisualStateGroups>
+```
+
+## 페이지 레벨에서 VSM 사용하기
+
+VSM은 컨트롤 뿐만 아니라 페이지나 사용자 정의 뷰에서도 유용하게 사용할 수 있습니다:
+
+```xml
+<Grid x:Name="MainGrid">
+    <VisualStateManager.VisualStateGroups>
+        <VisualStateGroup x:Name="ViewStates">
+            <VisualState x:Name="List">
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="DetailView"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="0" Duration="0:0:0.2"/>
+                    <DoubleAnimation Storyboard.TargetName="ListView"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="1" Duration="0:0:0.2"/>
+                </Storyboard>
+            </VisualState>
+            
+            <VisualState x:Name="Detail">
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetName="DetailView"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="1" Duration="0:0:0.2"/>
+                    <DoubleAnimation Storyboard.TargetName="ListView"
+                                     Storyboard.TargetProperty="Opacity"
+                                     To="0" Duration="0:0:0.2"/>
+                </Storyboard>
+            </VisualState>
+        </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+    
+    <!-- 리스트 뷰 -->
+    <Grid x:Name="ListView" Opacity="1">
+        <!-- 리스트 콘텐츠 -->
+    </Grid>
+    
+    <!-- 상세 뷰 -->
+    <Grid x:Name="DetailView" Opacity="0">
+        <!-- 상세 콘텐츠 -->
+    </Grid>
 </Grid>
 ```
 
----
+코드에서 상태 전환:
+```csharp
+// 리스트 뷰로 전환
+VisualStateManager.GoToState(MainGrid, "List", true);
 
-## 요약
+// 상세 뷰로 전환
+VisualStateManager.GoToState(MainGrid, "Detail", true);
+```
 
-- **VSM는 “상태-중심 설계”**: 상태 이름과 전환만 정리하면, 복잡한 트리거 덩어리 대신 **읽기 쉬운 템플릿**이 됩니다.
-- **`VisualTransition`** 으로 공통 전환 시간을 지정해 **부드럽고 일관된** 모션을 확보하세요.
-- **코드/MVVM와의 연결**은 `GoToState`, Behavior, AttachedProperty 등으로 유연합니다.
-- **성능**은 RenderTransform·간단한 Storyboard·충돌 없는 속성 지배로 확보하시고,
-- 필요 시 **CustomVisualStateManager**로 전환 규칙을 커스터마이즈하세요.
+## 성능 최적화를 위한 팁
+
+1. **RenderTransform 사용**: LayoutTransform 대신 RenderTransform을 사용하여 레이아웃 재계산을 피하세요
+2. **애니메이션 최적화**: 불필요한 애니메이션을 피하고, 짧은 지속시간을 사용하세요
+3. **상태 그룹 분리**: 서로 관련 없는 상태는 별도의 그룹으로 분리하세요
+4. **초기 상태 설정**: OnApplyTemplate에서 초기 상태를 명시적으로 설정하세요
+5. **공유 리소스 주의**: 애니메이션 대상이 되는 Brush는 공유하지 마세요
+
+## 일반적인 문제 해결
+
+### 문제 1: 상태 전환이 작동하지 않음
+**원인**: 상태 이름 오타, 템플릿이 적용되지 않음
+**해결**: 상태 이름 확인, OnApplyTemplate 이후에 GoToState 호출
+
+### 문제 2: 애니메이션이 부드럽지 않음
+**원인**: 너무 짧은 지속시간, 적절하지 않은 EasingFunction
+**해결**: 지속시간 조정, 적절한 EasingFunction 사용
+
+### 문제 3: 여러 애니메이션이 충돌
+**원인**: 같은 속성을 여러 상태에서 애니메이션
+**해결**: 상태 그룹을 적절히 분리하거나 애니메이션 대상 변경
+
+## 결론
+
+WPF의 Visual State Manager는 상태 기반 UI를 구성하는 강력하고 유연한 도구입니다. 복잡한 트리거 대신 직관적인 상태 정의를 통해 가독성 높은 XAML 코드를 작성할 수 있으며, 상태 전환 애니메이션을 통해 풍부한 사용자 경험을 제공할 수 있습니다.
+
+VSM을 효과적으로 사용하기 위해서는:
+1. 상태와 상태 그룹을 논리적으로 구성하기
+2. VisualTransition을 활용하여 부드러운 상태 전환 구현하기
+3. 코드 비하인드나 MVVM 패턴과의 적절한 통합 방법 선택하기
+4. 성능을 고려한 애니메이션 설계하기
+
+이러한 원칙들을 준수하면 일관되고 반응성이 뛰어난 WPF 애플리케이션을 개발할 수 있습니다. VSM은 특히 커스텀 컨트롤 개발이나 복잡한 UI 상태 관리가 필요한 프로젝트에서 그 진가를 발휘합니다.

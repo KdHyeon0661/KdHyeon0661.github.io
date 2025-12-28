@@ -1,720 +1,770 @@
 ---
 layout: post
-title: WPF - Entity Framework Core + SQLite + REST API 연동
-date: 2025-09-07 20:25:23 +0900
+title: WPF - WPF + MVVM + REST API 클라이언트 구현
+date: 2025-09-07 21:25:23 +0900
 category: WPF
 ---
-# 🧩 WPF에서 **Entity Framework Core + SQLite + REST API 연동** 완전 정복
+# WPF + MVVM + REST API 클라이언트 구현 완전 정복
 
-*(예제 중심 · 누락 없이 자세하게 · MVVM/DI/동기화/오프라인/성능/테스트까지 한 번에)*
+> 실전 목표: WPF (MVVM) 애플리케이션에서 REST API를 안정적이고 확장 가능하게 호출하고, 응답 바인딩, 오류 처리, 토큰 관리, 요청 취소, 재시도, 페이징, 검색, 상태 표시를 갖춘 완성된 아키텍처를 구현합니다. .NET 7/8 WPF 기준이며, .NET 6 또는 .NET Framework 4.8도 기본 구조는 동일하게 적용할 수 있습니다.
 
-> 목표: **로컬 SQLite**를 **EF Core**로 다루고, **원격 REST API**와 동기화되는 **WPF(MVVM)** 앱을 만든다.
-> .NET 7/8 WPF 기준이며 .NET 6/Framework 4.8도 큰 틀은 동일합니다.
+## 데모 시나리오
+*   리소스: Products (목록/단건/검색/페이징/정렬)
+*   API 엔드포인트 예시:
+    *   GET    /products?page={p}&size={s}&q={query}&sort={name|price}
+    *   GET    /products/{id}
+    *   POST   /products
+    *   PUT    /products/{id}
+    *   DELETE /products/{id}
+*   인증: Bearer Token (Access/Refresh)
+*   UI 구성: 목록, 검색, 페이징, 정렬, 상세, 생성, 수정, 삭제, 에러/진행/오프라인 상태 표시
+*   구현 패턴: MVVM + 의존성 주입 (Generic Host) + HttpClientFactory + Polly + 취소 토큰 + 진행률 표시 + 낙관적 업데이트 + 테스트 가능한 설계
 
----
-
-## 데모 시나리오 (끝까지 이어질 예시)
-
-- **도메인**: Todo(할 일)
-- **로컬 저장소**: `SQLite` (파일: `%LOCALAPPDATA%\TodoDemo\todo.db`)
-- **ORM**: `EF Core` (변경 추적/마이그레이션/동시성/관계/쿼리)
-- **API**: `https://api.example.com/todos` (CRUD + 페이지네이션 + 변경 감지(ETag))
-- **앱 특성**: 오프라인에서도 편집 → 온라인 복구 시 **양방향 동기화**, 충돌 해결
-
----
-
-## 프로젝트 구조
-
+## 솔루션 구조
 ```
-TodoDemo/
-  TodoDemo.App/                 # WPF UI (Views, ViewModels)
-  TodoDemo.Domain/              # 엔티티/규칙/DTO/계약
-  TodoDemo.Data/                # EF Core DbContext/마이그레이션/리포지토리
-  TodoDemo.ApiClient/           # REST 클라이언트 (HttpClientFactory/Polly/DTO 매핑)
-  TodoDemo.Sync/                # 동기화 서비스(오프라인/충돌/스케줄)
-  TodoDemo.Tests/               # 단위/통합 테스트
+Shop/
+  Shop.App/               # WPF 애플리케이션 (Views, ViewModels, 부트스트래핑)
+  Shop.Domain/            # DTO, 계약, 유효성 검사, 매퍼
+  Shop.ApiClient/         # REST 클라이언트 (HttpClientFactory/핸들러/Polly)
+  Shop.Core/              # 인프라: 추상화, 유틸리티 (Result, IClock, IDispatcher)
+  Shop.Tests/             # 단위 테스트 + 통합 테스트 (모의 HttpMessageHandler)
 ```
 
----
-
-## 패키지 설치
-
+## 핵심 패키지
 ```bash
-# EF Core + SQLite
+# WPF 애플리케이션
+dotnet add Shop.App package Microsoft.Extensions.Hosting
+dotnet add Shop.App package Microsoft.Extensions.DependencyInjection
+dotnet add Shop.App package CommunityToolkit.Mvvm
 
-dotnet add TodoDemo.Data package Microsoft.EntityFrameworkCore
-dotnet add TodoDemo.Data package Microsoft.EntityFrameworkCore.Sqlite
-dotnet add TodoDemo.Data package Microsoft.EntityFrameworkCore.Design
+# API 클라이언트
+dotnet add Shop.ApiClient package Microsoft.Extensions.Http
+dotnet add Shop.ApiClient package Polly.Extensions.Http
+dotnet add Shop.ApiClient package System.Text.Json
 
-# DI/호스팅 (WPF에서도 Generic Host 사용 권장)
-
-dotnet add TodoDemo.App package Microsoft.Extensions.Hosting
-dotnet add TodoDemo.App package Microsoft.Extensions.DependencyInjection
-
-# Http + Polly(재시도/서킷브레이커)
-
-dotnet add TodoDemo.ApiClient package Microsoft.Extensions.Http
-dotnet add TodoDemo.ApiClient package Polly.Extensions.Http
-
-# 매핑/검증
-
-dotnet add TodoDemo.Domain package FluentValidation
-dotnet add TodoDemo.App package CommunityToolkit.Mvvm
+# 테스트
+dotnet add Shop.Tests package FluentAssertions
+dotnet add Shop.Tests package NSubstitute
 ```
 
----
-
-## 도메인/엔티티 설계
-
-### 엔티티 (동기화/동시성 필드 포함)
+## 도메인 계층: DTO, 결과 객체, 유효성 검사
 
 ```csharp
-// TodoDemo.Domain/Entities/Todo.cs
-public class Todo
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string Title { get; set; } = "";
-    public bool IsDone { get; set; }
-    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
-    public DateTimeOffset? UpdatedAt { get; set; }
+// Shop.Domain/Products/ProductDto.cs
+public sealed record ProductDto(
+    Guid Id,
+    string Name,
+    decimal Price,
+    string? Description,
+    DateTimeOffset UpdatedAt);
 
-    // 동기화/충돌 해결용
-    public DateTimeOffset LastModifiedUtc { get; set; } = DateTimeOffset.UtcNow;
-    public string? ETag { get; set; }                 // 서버 리소스 버전
-    public bool IsDirty { get; set; }                 // 로컬 변경 여부
-    public bool IsDeleted { get; set; }               // 소프트 삭제(동기화 시 전파)
+// Shop.Domain/Common/Result.cs
+public readonly struct Result<T>
+{
+    public bool Ok { get; }
+    public T? Value { get; }
+    public string? Error { get; }
+    public int? StatusCode { get; }
+    private Result(bool ok, T? value, string? error, int? status)
+        => (Ok, Value, Error, StatusCode) = (ok, value, error, status);
+    public static Result<T> Success(T value) => new(true, value, null, null);
+    public static Result<T> Fail(string message, int? status = null) => new(false, default, message, status);
 }
 ```
 
----
+## API 클라이언트 설계
 
-## DbContext 구성
-
+### 1. 인터페이스 정의
 ```csharp
-// TodoDemo.Data/AppDbContext.cs
-using Microsoft.EntityFrameworkCore;
-using TodoDemo.Domain.Entities;
-
-public class AppDbContext : DbContext
+// Shop.ApiClient/IProductsApi.cs
+public interface IProductsApi
 {
-    public DbSet<Todo> Todos => Set<Todo>();
+    Task<Result<(IReadOnlyList<ProductDto> items, int total)>> GetAsync(
+        int page, int size, string? query, string? sort, CancellationToken ct);
 
-    public string DbPath { get; }
-
-    public AppDbContext(DbContextOptions<AppDbContext> options)
-        : base(options) { }
-
-    protected override void OnModelCreating(ModelBuilder b)
-    {
-        b.Entity<Todo>(e =>
-        {
-            e.HasKey(x => x.Id);
-            e.Property(x => x.Title).IsRequired().HasMaxLength(200);
-            e.Property(x => x.ETag).HasMaxLength(64);
-            e.HasIndex(x => x.IsDirty);
-            e.HasIndex(x => x.LastModifiedUtc);
-            e.HasQueryFilter(x => !x.IsDeleted); // 소프트 삭제 글로벌 필터
-        });
-    }
+    Task<Result<ProductDto>> GetByIdAsync(Guid id, CancellationToken ct);
+    Task<Result<ProductDto>> CreateAsync(ProductDto create, CancellationToken ct);
+    Task<Result<ProductDto>> UpdateAsync(Guid id, ProductDto update, string? ifMatch, CancellationToken ct);
+    Task<Result<bool>> DeleteAsync(Guid id, string? ifMatch, CancellationToken ct);
 }
 ```
 
-### SQLite 연결 문자열 & 폴더 준비
-
+### 2. 의존성 주입 (DI) + HttpClientFactory + Polly 설정
 ```csharp
-// TodoDemo.App/App.xaml.cs (또는 Program.cs: WPF에 Generic Host 구성)
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
-public partial class App : Application
-{
-    public static IHost HostApp { get; } = Microsoft.Extensions.Hosting.Host
-        .CreateDefaultBuilder()
-        .ConfigureServices((ctx, services) =>
-        {
-            string dbDir = Path.Combine(Environment.GetFolderPath(
-                Environment.SpecialFolder.LocalApplicationData), "TodoDemo");
-            Directory.CreateDirectory(dbDir);
-            string dbPath = Path.Combine(dbDir, "todo.db");
-
-            services.AddDbContext<AppDbContext>(opt =>
-            {
-                opt.UseSqlite($"Data Source={dbPath}");
-                opt.EnableSensitiveDataLogging(false);
-            });
-
-            // 기타 서비스 등록 (아래 섹션들에서 채움)
-        })
-        .Build();
-
-    protected override void OnStartup(StartupEventArgs e)
-    {
-        HostApp.Start();
-        // 마이그레이션 자동 적용 (초기 실행/업데이트)
-        using var scope = HostApp.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        db.Database.Migrate();
-
-        base.OnStartup(e);
-        new MainWindow { DataContext = HostApp.Services.GetRequiredService<MainViewModel>() }.Show();
-    }
-
-    protected override void OnExit(ExitEventArgs e)
-    {
-        HostApp.Dispose();
-        base.OnExit(e);
-    }
-}
-```
-
----
-
-## 마이그레이션
-
-```bash
-dotnet ef migrations add InitialCreate --project TodoDemo.Data --startup-project TodoDemo.App
-dotnet ef database update --project TodoDemo.Data --startup-project TodoDemo.App
-```
-
-> **SQLite 제약**: 일부 `ALTER COLUMN`이 제한적. 스키마 변경은 **새 컬럼 추가 → 데이터 마이그레이션 → 구 컬럼 삭제** 패턴 사용.
-
----
-
-## 리포지토리/유닛오브워크 (선택)
-
-EF Core 자체가 UoW를 제공하지만, 테스트 용이성과 API 인터페이스화를 위해 래핑해 봅니다.
-
-```csharp
-// TodoDemo.Data/ITodoRepository.cs
-using System.Linq.Expressions;
-public interface ITodoRepository
-{
-    Task<Todo?> GetAsync(Guid id, CancellationToken ct = default);
-    Task<List<Todo>> GetAllAsync(Expression<Func<Todo, bool>>? pred = null, CancellationToken ct = default);
-    Task AddAsync(Todo entity, CancellationToken ct = default);
-    Task UpdateAsync(Todo entity, CancellationToken ct = default);
-    Task SoftDeleteAsync(Guid id, CancellationToken ct = default);
-    Task<int> SaveChangesAsync(CancellationToken ct = default);
-}
-```
-
-```csharp
-// TodoDemo.Data/TodoRepository.cs
-public class TodoRepository : ITodoRepository
-{
-    private readonly AppDbContext _db;
-    public TodoRepository(AppDbContext db) => _db = db;
-
-    public Task<Todo?> GetAsync(Guid id, CancellationToken ct = default)
-        => _db.Todos.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, ct);
-
-    public async Task<List<Todo>> GetAllAsync(Expression<Func<Todo, bool>>? pred = null, CancellationToken ct = default)
-    {
-        var q = _db.Todos.AsNoTracking();
-        if (pred != null) q = q.Where(pred);
-        return await q.OrderByDescending(x => x.LastModifiedUtc).ToListAsync(ct);
-    }
-
-    public async Task AddAsync(Todo e, CancellationToken ct = default)
-    {
-        e.IsDirty = true; e.LastModifiedUtc = DateTimeOffset.UtcNow;
-        await _db.Todos.AddAsync(e, ct);
-    }
-
-    public Task UpdateAsync(Todo e, CancellationToken ct = default)
-    {
-        e.IsDirty = true; e.LastModifiedUtc = DateTimeOffset.UtcNow;
-        _db.Todos.Update(e);
-        return Task.CompletedTask;
-    }
-
-    public async Task SoftDeleteAsync(Guid id, CancellationToken ct = default)
-    {
-        var entity = await _db.Todos.FirstOrDefaultAsync(x => x.Id == id, ct);
-        if (entity is null) return;
-        entity.IsDeleted = true; entity.IsDirty = true; entity.LastModifiedUtc = DateTimeOffset.UtcNow;
-    }
-
-    public Task<int> SaveChangesAsync(CancellationToken ct = default)
-        => _db.SaveChangesAsync(ct);
-}
-```
-
-DI 등록:
-```csharp
-services.AddScoped<ITodoRepository, TodoRepository>();
-```
-
----
-
-## WPF(MVVM)와 EF Core 바인딩
-
-### ViewModel 기본 (CommunityToolkit.Mvvm)
-
-```csharp
-// TodoDemo.App/ViewModels/MainViewModel.cs
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using System.Collections.ObjectModel;
-
-public partial class MainViewModel : ObservableObject
-{
-    private readonly ITodoRepository _repo;
-
-    public ObservableCollection<Todo> Items { get; } = new();
-
-    [ObservableProperty] private string newTitle = "";
-
-    public MainViewModel(ITodoRepository repo) => _repo = repo;
-
-    [RelayCommand]
-    private async Task LoadAsync()
-    {
-        Items.Clear();
-        foreach (var t in await _repo.GetAllAsync())
-            Items.Add(t);
-    }
-
-    [RelayCommand]
-    private async Task AddAsync()
-    {
-        if (string.IsNullOrWhiteSpace(NewTitle)) return;
-        var todo = new Todo { Title = NewTitle };
-        await _repo.AddAsync(todo);
-        await _repo.SaveChangesAsync();
-        Items.Insert(0, todo);
-        NewTitle = "";
-    }
-
-    [RelayCommand]
-    private async Task ToggleDoneAsync(Todo item)
-    {
-        item.IsDone = !item.IsDone;
-        await _repo.UpdateAsync(item);
-        await _repo.SaveChangesAsync();
-        // ObservableCollection에 같은 참조가 있으므로 UI가 갱신됨 (필요 시 OnPropertyChanged 호출)
-    }
-}
-```
-
-DI:
-```csharp
-services.AddSingleton<MainViewModel>();
-```
-
-### View
-
-```xml
-<!-- TodoDemo.App/Views/MainWindow.xaml -->
-<Window x:Class="TodoDemo.App.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
-        Title="Todo" Width="560" Height="420">
-  <DockPanel Margin="16">
-    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="8">
-      <TextBox Width="320" Text="{Binding NewTitle, UpdateSourceTrigger=PropertyChanged}" />
-      <Button Content="추가" Command="{Binding AddCommand}"/>
-      <Button Content="새로고침" Command="{Binding LoadCommand}"/>
-    </StackPanel>
-
-    <ListView ItemsSource="{Binding Items}">
-      <ListView.ItemTemplate>
-        <DataTemplate DataType="{x:Type domain:Todo}">
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <CheckBox IsChecked="{Binding IsDone}" Command="{Binding DataContext.ToggleDoneCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
-            <TextBlock Text="{Binding Title}" TextDecorations="{Binding IsDone, Converter={StaticResource BoolToStrikeConverter}}"/>
-            <TextBlock Foreground="#888" Text="{Binding LastModifiedUtc}"/>
-          </StackPanel>
-        </DataTemplate>
-      </ListView.ItemTemplate>
-    </ListView>
-  </DockPanel>
-</Window>
-```
-
-> **팁**: 대량 목록 가상화 유지(`VirtualizingStackPanel.IsVirtualizing="True"`). EF 추적된 엔티티를 직접 바인딩할 때는 **변경 추적 범위** 관리(AsNoTracking로 조회 후 편집 시 Attach/Update).
-
----
-
-## REST API 클라이언트
-
-### DTO & 매퍼
-
-```csharp
-// TodoDemo.Domain/Dto/TodoDto.cs
-public record TodoDto(Guid Id, string Title, bool IsDone, DateTimeOffset LastModifiedUtc, bool IsDeleted);
-
-// 매핑 (간단 수동)
-public static class TodoMapper
-{
-    public static TodoDto ToDto(Todo e) => new(e.Id, e.Title, e.IsDone, e.LastModifiedUtc, e.IsDeleted);
-    public static void Apply(Todo e, TodoDto dto)
-    {
-        e.Title = dto.Title;
-        e.IsDone = dto.IsDone;
-        e.LastModifiedUtc = dto.LastModifiedUtc;
-        e.IsDeleted = dto.IsDeleted;
-    }
-}
-```
-
-### HttpClientFactory + Polly
-
-```csharp
-// TodoDemo.ApiClient/ServiceCollectionExtensions.cs
+// Shop.ApiClient/ServiceCollectionExtensions.cs
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
 using System.Net;
 using System.Net.Http.Headers;
 
-public static class ApiClientRegistration
+public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddTodoApi(this IServiceCollection services, string baseAddress)
+    public static IServiceCollection AddApiClients(this IServiceCollection services, Uri baseAddress)
     {
-        services.AddHttpClient<ITodoApi, TodoApiClient>(c =>
+        services.AddTransient<AuthHeaderHandler>(); // 아래 정의된 토큰 자동 주입 핸들러
+
+        services.AddHttpClient<IProductsApi, ProductsApi>(client =>
         {
-            c.BaseAddress = new Uri(baseAddress);
-            c.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            // 인증 토큰이 있다면 Authorization 헤더 추가
+            client.BaseAddress = baseAddress;
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         })
+        .AddHttpMessageHandler<AuthHeaderHandler>()
         .AddPolicyHandler(GetRetryPolicy())
         .AddPolicyHandler(GetCircuitBreaker());
 
         return services;
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
-        => HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
-            .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(200 * retryAttempt));
+    static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        => HttpPolicyExtensions.HandleTransientHttpError()
+           .OrResult(response => response.StatusCode == HttpStatusCode.TooManyRequests)
+           .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromMilliseconds(200 * retryAttempt));
 
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreaker()
-        => HttpPolicyExtensions
-            .HandleTransientHttpError()
-            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(20));
+    static IAsyncPolicy<HttpResponseMessage> GetCircuitBreaker()
+        => HttpPolicyExtensions.HandleTransientHttpError()
+           .CircuitBreakerAsync(5, TimeSpan.FromSeconds(15));
 }
 ```
 
+### 3. 인증 메시지 핸들러 (토큰 자동 주입 + 401 처리)
 ```csharp
-// TodoDemo.ApiClient/ITodoApi.cs
-public interface ITodoApi
+// Shop.ApiClient/AuthHeaderHandler.cs
+using System.Net.Http.Headers;
+using System.Threading;
+using System.Threading.Tasks;
+
+public interface ITokenProvider
 {
-    Task<(IReadOnlyList<TodoDto> Items, string? ETag)> GetPageAsync(int page, int size, string? ifNoneMatch = null, CancellationToken ct = default);
-    Task<(TodoDto Item, string? ETag)> UpsertAsync(TodoDto dto, string? ifMatch, CancellationToken ct = default);
-    Task DeleteAsync(Guid id, string? ifMatch, CancellationToken ct = default);
+    ValueTask<string?> GetAccessTokenAsync(CancellationToken ct);
+    // 필요 시 Refresh 토큰 로직 지원
+}
+
+public sealed class AuthHeaderHandler : DelegatingHandler
+{
+    private readonly ITokenProvider _tokenProvider;
+    public AuthHeaderHandler(ITokenProvider tokenProvider) => _tokenProvider = tokenProvider;
+
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+    {
+        var token = await _tokenProvider.GetAccessTokenAsync(ct);
+        if (!string.IsNullOrWhiteSpace(token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        
+        var response = await base.SendAsync(request, ct);
+
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+        {
+            // Refresh 토큰 시도, 로그아웃, 재인증 UI 트리거 등의 로직 구현
+        }
+        return response;
+    }
 }
 ```
 
+### 4. API 클라이언트 구현 (직렬화 옵션 + ETag/If-Match 지원)
 ```csharp
-// TodoDemo.ApiClient/TodoApiClient.cs
+// Shop.ApiClient/ProductsApi.cs
+using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 
-public class TodoApiClient : ITodoApi
+public sealed class ProductsApi : IProductsApi
 {
-    private readonly HttpClient _http;
-    public TodoApiClient(HttpClient http) => _http = http;
-
-    public async Task<(IReadOnlyList<TodoDto>, string?)> GetPageAsync(int page, int size, string? ifNoneMatch = null, CancellationToken ct = default)
+    private readonly HttpClient _httpClient;
+    private static readonly JsonSerializerOptions JsonOptions = new()
     {
-        var req = new HttpRequestMessage(HttpMethod.Get, $"/todos?page={page}&size={size}");
-        if (!string.IsNullOrEmpty(ifNoneMatch)) req.Headers.IfNoneMatch.ParseAdd(ifNoneMatch);
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
-        var res = await _http.SendAsync(req, ct);
-        if (res.StatusCode == System.Net.HttpStatusCode.NotModified)
-            return (Array.Empty<TodoDto>(), res.Headers.ETag?.Tag);
+    public ProductsApi(HttpClient httpClient) => _httpClient = httpClient;
 
-        res.EnsureSuccessStatusCode();
-        var list = await res.Content.ReadFromJsonAsync<List<TodoDto>>(cancellationToken: ct) ?? new();
-        return (list, res.Headers.ETag?.Tag);
+    public async Task<Result<(IReadOnlyList<ProductDto>, int)>> GetAsync(
+        int page, int size, string? query, string? sort, CancellationToken ct)
+    {
+        var url = $"/products?page={page}&size={size}";
+        if (!string.IsNullOrWhiteSpace(query)) url += $"&q={Uri.EscapeDataString(query)}";
+        if (!string.IsNullOrWhiteSpace(sort)) url += $"&sort={sort}";
+
+        var response = await _httpClient.GetAsync(url, ct);
+        if (!response.IsSuccessStatusCode)
+            return Result<(IReadOnlyList<ProductDto>, int)>.Fail(
+                $"GET 실패: {(int)response.StatusCode}", (int)response.StatusCode);
+
+        var items = await response.Content.ReadFromJsonAsync<List<ProductDto>>(JsonOptions, ct) ?? new List<ProductDto>();
+        int total = 0;
+        if (response.Headers.TryGetValues("X-Total-Count", out var values) && int.TryParse(values.FirstOrDefault(), out var parsedTotal))
+            total = parsedTotal;
+
+        return Result<(IReadOnlyList<ProductDto>, int)>.Success((items, total));
     }
 
-    public async Task<(TodoDto, string?)> UpsertAsync(TodoDto dto, string? ifMatch, CancellationToken ct = default)
+    public async Task<Result<ProductDto>> GetByIdAsync(Guid id, CancellationToken ct)
     {
-        var req = new HttpRequestMessage(HttpMethod.Put, $"/todos/{dto.Id}")
-        {
-            Content = JsonContent.Create(dto)
-        };
-        if (!string.IsNullOrWhiteSpace(ifMatch))
-            req.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+        var response = await _httpClient.GetAsync($"/products/{id}", ct);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return Result<ProductDto>.Fail("찾을 수 없음", 404);
+        if (!response.IsSuccessStatusCode)
+            return Result<ProductDto>.Fail($"GET 실패: {(int)response.StatusCode}", (int)response.StatusCode);
 
-        var res = await _http.SendAsync(req, ct);
-        res.EnsureSuccessStatusCode();
-        var body = await res.Content.ReadFromJsonAsync<TodoDto>(cancellationToken: ct) ?? dto;
-        return (body, res.Headers.ETag?.Tag);
+        var dto = await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions, ct);
+        return dto is null
+            ? Result<ProductDto>.Fail("잘못된 응답 형식")
+            : Result<ProductDto>.Success(dto);
     }
 
-    public async Task DeleteAsync(Guid id, string? ifMatch, CancellationToken ct = default)
+    public async Task<Result<ProductDto>> CreateAsync(ProductDto create, CancellationToken ct)
     {
-        var req = new HttpRequestMessage(HttpMethod.Delete, $"/todos/{id}");
-        if (!string.IsNullOrWhiteSpace(ifMatch))
-            req.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+        var response = await _httpClient.PostAsJsonAsync("/products", create, JsonOptions, ct);
+        if (!response.IsSuccessStatusCode)
+            return Result<ProductDto>.Fail($"POST 실패: {(int)response.StatusCode}", (int)response.StatusCode);
 
-        var res = await _http.SendAsync(req, ct);
-        res.EnsureSuccessStatusCode();
+        var dto = await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions, ct);
+        return dto is null ? Result<ProductDto>.Fail("잘못된 응답 형식") : Result<ProductDto>.Success(dto);
+    }
+
+    public async Task<Result<ProductDto>> UpdateAsync(Guid id, ProductDto update, string? ifMatch, CancellationToken ct)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Put, $"/products/{id}")
+        { Content = JsonContent.Create(update, options: JsonOptions) };
+        if (!string.IsNullOrWhiteSpace(ifMatch))
+            request.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+
+        var response = await _httpClient.SendAsync(request, ct);
+        if (response.StatusCode == HttpStatusCode.PreconditionFailed)
+            return Result<ProductDto>.Fail("전제 조건 실패 (ETag 불일치)", 412);
+        if (!response.IsSuccessStatusCode)
+            return Result<ProductDto>.Fail($"PUT 실패: {(int)response.StatusCode}", (int)response.StatusCode);
+
+        var dto = await response.Content.ReadFromJsonAsync<ProductDto>(JsonOptions, ct);
+        return dto is null ? Result<ProductDto>.Fail("잘못된 응답 형식") : Result<ProductDto>.Success(dto);
+    }
+
+    public async Task<Result<bool>> DeleteAsync(Guid id, string? ifMatch, CancellationToken ct)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/products/{id}");
+        if (!string.IsNullOrWhiteSpace(ifMatch))
+            request.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+
+        var response = await _httpClient.SendAsync(request, ct);
+        if (response.StatusCode == HttpStatusCode.PreconditionFailed)
+            return Result<bool>.Fail("전제 조건 실패 (ETag 불일치)", 412);
+        if (response.StatusCode == HttpStatusCode.NotFound)
+            return Result<bool>.Fail("찾을 수 없음", 404);
+        if (!response.IsSuccessStatusCode)
+            return Result<bool>.Fail($"DELETE 실패: {(int)response.StatusCode}", (int)response.StatusCode);
+
+        return Result<bool>.Success(true);
     }
 }
 ```
 
-DI:
+## WPF 애플리케이션 부트스트랩 (Generic Host 사용)
+
 ```csharp
-services.AddTodoApi("https://api.example.com");  // 앱 구성에서 BaseAddress 가져오기
+// Shop.App/App.xaml.cs
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+public partial class App : Application
+{
+    public static IHost HostApplication { get; } = Host.CreateDefaultBuilder()
+        .ConfigureServices((context, services) =>
+        {
+            var apiBaseAddress = new Uri("https://api.example.com");
+            services.AddSingleton<ITokenProvider, MemoryTokenProvider>(); // 데모용 구현
+            services.AddApiClients(apiBaseAddress);
+            services.AddSingleton<MainViewModel>();
+        })
+        .Build();
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        HostApplication.Start();
+        base.OnStartup(e);
+        var mainViewModel = HostApplication.Services.GetRequiredService<MainViewModel>();
+        new MainWindow { DataContext = mainViewModel }.Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        HostApplication.Dispose();
+        base.OnExit(e);
+    }
+}
+
+public sealed class MemoryTokenProvider : ITokenProvider
+{
+    public ValueTask<string?> GetAccessTokenAsync(CancellationToken ct) => new("demo-access-token");
+}
 ```
 
----
-
-## 오프라인·동기화 서비스
-
-### Sync 전략(핵심 아이디어)
-
-1) **푸시**: 로컬 `IsDirty==true` 항목 → 서버 Upsert/Delete (If-Match: ETag)
-2) **풀**: 서버 변경분 페이지 조회 (If-None-Match: ETag) → 로컬 병합
-3) **충돌**: 서버 ETag 불일치(412 Precondition Failed) → **정책**:
-   - *서버 우선*: 서버 버전을 받아 로컬에 덮어쓰기
-   - *클라이언트 우선*: 로컬 버전 재시도(Force) 또는 별도 충돌 컬렉션으로 사용자에게 선택 유도
-4) **삭제**: 소프트 삭제를 우선(복구 용이), 최종 정리 배치에서 하드 삭제
-
-### 구현
+## MVVM: 메인 ViewModel (목록/검색/페이징/정렬/상태/에러/취소)
 
 ```csharp
-// TodoDemo.Sync/SyncService.cs
-public class SyncService
+// Shop.App/ViewModels/MainViewModel.cs
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using System.Collections.ObjectModel;
+
+public partial class MainViewModel : ObservableObject
 {
-    private readonly ITodoRepository _repo;
-    private readonly ITodoApi _api;
+    private readonly IProductsApi _api;
+    private CancellationTokenSource? _currentCancellationTokenSource;
 
-    public SyncService(ITodoRepository repo, ITodoApi api)
-    {
-        _repo = repo; _api = api;
-    }
+    public ObservableCollection<ProductDto> Items { get; } = new ObservableCollection<ProductDto>();
 
-    public async Task PushAsync(CancellationToken ct = default)
+    [ObservableProperty]
+    private int _page = 1;
+    [ObservableProperty]
+    private int _size = 20;
+    [ObservableProperty]
+    private string? _query;
+    [ObservableProperty]
+    private string? _sort; // "name" | "price"
+    [ObservableProperty]
+    private int _total;
+    [ObservableProperty]
+    private bool _isBusy;
+    [ObservableProperty]
+    private string? _error;
+
+    public MainViewModel(IProductsApi api) => _api = api;
+
+    [RelayCommand]
+    private async Task LoadAsync()
     {
-        var dirty = await _repo.GetAllAsync(x => x.IsDirty || x.IsDeleted, ct);
-        foreach (var e in dirty)
+        CancelPendingRequest();
+        _currentCancellationTokenSource = new CancellationTokenSource();
+        try
         {
-            try
+            IsBusy = true;
+            Error = null;
+            var result = await _api.GetAsync(Page, Size, Query, Sort, _currentCancellationTokenSource.Token);
+            if (!result.Ok)
             {
-                if (e.IsDeleted)
-                {
-                    await _api.DeleteAsync(e.Id, e.ETag, ct);
-                    // 로컬에서도 완전 삭제(옵션) 또는 Tombstone 유지
-                }
-                else
-                {
-                    var (remote, etag) = await _api.UpsertAsync(TodoMapper.ToDto(e), e.ETag, ct);
-                    TodoMapper.Apply(e, remote);
-                    e.ETag = etag;
-                    e.IsDirty = false;
-                }
+                Error = result.Error;
+                return;
             }
-            catch (HttpRequestException) { throw; }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                // 412 등 충돌 처리 정책
-                // 간단: 서버 우선
-                // 실제로는 에러 유형별로 분기
-            }
-        }
-        await _repo.SaveChangesAsync(ct);
-    }
 
-    public async Task PullAsync(CancellationToken ct = default)
-    {
-        string? etag = null; // 앱 설정/로컬에 마지막 ETag 저장
-        int page = 1, size = 100;
-        while (true)
+            Items.Clear();
+            foreach (var product in result.Value.items)
+                Items.Add(product);
+            Total = result.Value.total;
+        }
+        catch (OperationCanceledException)
         {
-            var (items, newTag) = await _api.GetPageAsync(page, size, etag, ct);
-            if (items.Count == 0) { /* NotModified or end */ break; }
-
-            foreach (var dto in items)
-            {
-                var local = await _repo.GetAsync(dto.Id, ct);
-                if (local is null)
-                {
-                    local = new Todo { Id = dto.Id };
-                    TodoMapper.Apply(local, dto);
-                    local.ETag = newTag ?? local.ETag;
-                    local.IsDirty = false;
-                    await _repo.AddAsync(local, ct);
-                }
-                else
-                {
-                    // 로컬이 Dirty면 충돌 정책 필요. 여기서는 서버 우선 덮어쓰기
-                    if (!local.IsDirty || dto.LastModifiedUtc >= local.LastModifiedUtc)
-                    {
-                        TodoMapper.Apply(local, dto);
-                        local.ETag = newTag ?? local.ETag;
-                        local.IsDirty = false;
-                        await _repo.UpdateAsync(local, ct);
-                    }
-                }
-            }
-            await _repo.SaveChangesAsync(ct);
-            page++;
-            etag = newTag ?? etag;
+            // 취소된 작업은 무시
         }
-        // etag 저장 (사용자 설정, 로컬 파일 등)
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
-    public async Task SyncAllAsync(CancellationToken ct = default)
+    [RelayCommand]
+    private async Task NextPageAsync()
     {
-        await PushAsync(ct);
-        await PullAsync(ct);
+        if (Page * Size >= Total) return;
+        Page++;
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task PrevPageAsync()
+    {
+        if (Page <= 1) return;
+        Page--;
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task SearchAsync()
+    {
+        Page = 1; // 검색 시 첫 페이지로 이동
+        await LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task RefreshAsync() => await LoadAsync();
+
+    [RelayCommand]
+    private void Cancel() => CancelPendingRequest();
+
+    private void CancelPendingRequest()
+    {
+        try
+        {
+            _currentCancellationTokenSource?.Cancel();
+        }
+        catch { }
+        _currentCancellationTokenSource?.Dispose();
+        _currentCancellationTokenSource = null;
     }
 }
 ```
 
-DI:
-```csharp
-services.AddScoped<SyncService>();
+## View: 상태/진행/에러/검색/페이징 바인딩
+
+```xml
+<!-- Shop.App/MainWindow.xaml -->
+<Window x:Class="Shop.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Products" Width="820" Height="540"
+        Loaded="{Binding LoadCommand}">
+  <DockPanel Margin="12">
+    <!-- 상단 도구 모음 -->
+    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="8">
+      <TextBox Width="240" x:Name="SearchBox" Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}" />
+      <ComboBox Width="120" SelectedItem="{Binding Sort}" >
+        <ComboBoxItem Content="이름"/>
+        <ComboBoxItem Content="가격"/>
+      </ComboBox>
+      <Button Content="검색" Command="{Binding SearchCommand}"/>
+      <Button Content="새로고침" Command="{Binding RefreshCommand}"/>
+      <Button Content="취소" Command="{Binding CancelCommand}" IsEnabled="{Binding IsBusy}"/>
+      <TextBlock Margin="16,0,0,0">
+        <Run Text="총 "/><Run Text="{Binding Total}"/><Run Text=" 개"/>
+      </TextBlock>
+      <ProgressBar Width="120" Height="8" IsIndeterminate="True" 
+                   Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}"/>
+    </StackPanel>
+
+    <!-- 제품 목록 -->
+    <DataGrid ItemsSource="{Binding Items}" AutoGenerateColumns="False" IsReadOnly="True">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="ID" Binding="{Binding Id}"/>
+        <DataGridTextColumn Header="이름" Binding="{Binding Name}"/>
+        <DataGridTextColumn Header="가격" Binding="{Binding Price, StringFormat={}{0:C}}"/>
+        <DataGridTextColumn Header="수정일" Binding="{Binding UpdatedAt}"/>
+      </DataGrid.Columns>
+    </DataGrid>
+
+    <!-- 하단 페이징 -->
+    <StackPanel Orientation="Horizontal" DockPanel.Dock="Bottom" HorizontalAlignment="Center" Margin="0,8,0,0">
+      <Button Content="이전" Command="{Binding PrevPageCommand}"/>
+      <TextBlock Margin="8,0" VerticalAlignment="Center">
+        <Run Text="{Binding Page}"/><Run Text=" / "/>
+        <Run Text="{Binding Total, Converter={StaticResource TotalToPages}, ConverterParameter={Binding Size}}"/>
+      </TextBlock>
+      <Button Content="다음" Command="{Binding NextPageCommand}"/>
+    </StackPanel>
+
+    <!-- 오류 메시지 표시 -->
+    <Border DockPanel.Dock="Bottom" Background="#FFEF4444" CornerRadius="6" Padding="8"
+            Visibility="{Binding Error, Converter={StaticResource NullToCollapsed}}">
+      <TextBlock Foreground="White" Text="{Binding Error}"/>
+    </Border>
+  </DockPanel>
+</Window>
 ```
 
-> **주기 동기화**: `System.Threading.PeriodicTimer`로 30~60초마다, 또는 “온라인 전환/앱 포커스 복귀/수동 버튼”에 트리거.
-
----
-
-## 동시성/트랜잭션
-
-- **EF Core**: `DbContext`는 **단일 스레드/스코프 단위** 사용.
-- 여러 저장 작업을 **하나의 트랜잭션**에 묶기:
+보조 값 변환기 (간단한 구현 예시):
 ```csharp
-using var tx = await _db.Database.BeginTransactionAsync(ct);
-await _repo.AddAsync(todo1, ct);
-await _repo.AddAsync(todo2, ct);
-await _repo.SaveChangesAsync(ct);
-await tx.CommitAsync(ct);
+public class BoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => (value is bool b && b) ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+public class NullToCollapsedConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        => value is null ? Visibility.Collapsed : Visibility.Visible;
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
+
+public class TotalToPagesConverter : IValueConverter
+{
+    public object Convert(object total, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (total is int totalCount && parameter is BindingExpression be && be.DataItem is MainViewModel vm)
+            return Math.Max(1, (int)Math.Ceiling((double)totalCount / vm.Size));
+        return 1;
+    }
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+}
 ```
 
-- **낙관적 동시성**: 서버 API는 ETag/If-Match로 보호. 로컬 SQLite에서도 `RowVersion(BLOB)` 컬럼을 둘 수 있으나 SQLite는 rowversion 타입이 없으므로 **수동 관리**(LastModifiedUtc 비교/해시 사용).
-
----
-
-## 성능 최적화 체크리스트
-
-- **쿼리**: 필요한 컬럼만(ProjectTo DTO) / `AsNoTracking` 활용
-- **배치**: 대량 삽입/업데이트 시 `SaveChanges` 호출 횟수 최소화
-- **인덱스**: 자주 필터링되는 칼럼(`IsDirty`, `LastModifiedUtc`) 인덱스
-- **WAL 모드**: 쓰기 병행성 향상
-```csharp
-await _db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+성능 팁: 대량의 데이터를 표시할 때는 가상화를 활성화하세요.
+```xml
+<DataGrid VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" />
 ```
-- **가상화**: `ListView`/`DataGrid` 가상화 켜기
-- **UI 스레드**: 디스크/네트워크 IO는 `await` + `ConfigureAwait(false)`(라이브러리) / UI 업데이트는 `Dispatcher`를 통해 최소화
 
----
+## 상세/등록/수정/삭제 with 낙관적 업데이트
 
-## 오류/네트워크 회복력
+```csharp
+public partial class MainViewModel : ObservableObject
+{
+    [ObservableProperty]
+    private ProductDto? _selectedProduct;
 
-- **Polly** 재시도(지수 백오프), 429/5xx 처리
-- **타임아웃**: HttpClient.Timeout / 개별 요청 `CancellationToken`
-- **오프라인 판별**: 네트워크 체크(핑/소켓/Connect), 실패 시 로컬만 사용하고 **IsDirty** 플래그 유지
-- **사용자 피드백**: 상태 바(온라인/오프라인/동기화 중), 충돌 알림 UI
+    [RelayCommand]
+    private async Task CreateAsync()
+    {
+        var draft = new ProductDto(Guid.NewGuid(), "새 제품", 0m, null, DateTimeOffset.UtcNow);
+        IsBusy = true;
+        Error = null;
+        try
+        {
+            var result = await _api.CreateAsync(draft, CancellationToken.None);
+            if (!result.Ok)
+            {
+                Error = result.Error;
+                return;
+            }
+            Items.Insert(0, result.Value);
+            Total++;
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
----
+    [RelayCommand(CanExecute = nameof(CanEdit))]
+    private async Task SaveAsync()
+    {
+        if (SelectedProduct is null) return;
+        IsBusy = true;
+        Error = null;
+        try
+        {
+            // 낙관적 업데이트: UI를 먼저 반영 (실패 시 롤백)
+            var index = Items.IndexOf(SelectedProduct);
+            var original = Items[index];
 
-## 보안/토큰 관리
+            var updated = SelectedProduct with { UpdatedAt = DateTimeOffset.UtcNow };
+            Items[index] = updated;
 
-- **Auth**: Bearer Token(Access/Refresh), HttpClientFactory에서 메시지 핸들러로 자동 주입
-- **보존**: Windows DPAPI/ProtectedData, MSAL(기업 환경), 또는 OS 보안 저장소
-- **전송**: HTTPS 필수, 인증 실패 시 `401` → 재인증 UI
+            var result = await _api.UpdateAsync(updated.Id, updated, ifMatch: null, CancellationToken.None);
+            if (!result.Ok)
+            {
+                Error = result.Error;
+                Items[index] = original; // 롤백
+                return;
+            }
+            Items[index] = result.Value;
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
----
+    [RelayCommand(CanExecute = nameof(CanEdit))]
+    private async Task DeleteAsync()
+    {
+        if (SelectedProduct is null) return;
+        IsBusy = true;
+        Error = null;
+        try
+        {
+            var index = Items.IndexOf(SelectedProduct);
+            var itemToRemove = SelectedProduct;
+            Items.RemoveAt(index); // 낙관적 삭제
+
+            var result = await _api.DeleteAsync(itemToRemove.Id, ifMatch: null, CancellationToken.None);
+            if (!result.Ok)
+            {
+                Error = result.Error;
+                Items.Insert(index, itemToRemove); // 롤백
+                return;
+            }
+            Total--;
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private bool CanEdit() => SelectedProduct is not null && !IsBusy;
+}
+```
+
+실제 운영 환경에서는 **ETag/If-Match**를 사용한 동시성 제어를 적용하세요. 서버에서 ETag를 제공하고, 뷰모델에 저장한 후 수정/삭제 시 해당 값을 헤더로 반환해야 합니다.
+
+## 고급 UX 기능 구현
+
+### 디바운스 검색
+TextBox의 `TextChanged` 이벤트에서 연속 입력을 300ms 후에 처리하도록 구현:
+```csharp
+private CancellationTokenSource? _searchCancellationTokenSource;
+
+partial void OnQueryChanged(string? value)
+{
+    _searchCancellationTokenSource?.Cancel();
+    _searchCancellationTokenSource?.Dispose();
+    _searchCancellationTokenSource = new CancellationTokenSource();
+    var token = _searchCancellationTokenSource.Token;
+    
+    _ = Task.Run(async () =>
+    {
+        try
+        {
+            await Task.Delay(300, token);
+            if (!token.IsCancellationRequested)
+                await Application.Current.Dispatcher.InvokeAsync(async () => await SearchAsync());
+        }
+        catch { }
+    });
+}
+```
+
+### 무한 스크롤
+`ScrollViewer.ScrollChanged` 이벤트에서 스크롤이 끝에 근접하면 다음 페이지를 로드:
+```csharp
+// XAML: ScrollViewer.CanContentScroll="True" ScrollChanged="OnScrollChanged"
+private async void OnScrollChanged(object sender, ScrollChangedEventArgs e)
+{
+    if (e.VerticalOffset + e.ViewportHeight >= e.ExtentHeight - 48)
+        await (DataContext as MainViewModel).NextPageAsync();
+}
+```
+
+### 다운로드/업로드 진행률
+`HttpClient` 전송 시 `ProgressMessageHandler`를 사용하거나 스트림 복사를 통해 진행률을 추적할 수 있습니다.
+
+## 에러 처리 및 표시 패턴
+*   **서버 오류 (4xx/5xx)**: `Result.Fail(status, message)`로 ViewModel에 전달
+*   **네트워크 오류**: Polly 재시도 후 실패 시 사용자 친화적인 메시지 표시
+*   **작업 취소**: `OperationCanceledException`은 무시
+*   **UI 표시**: 상단 또는 하단에 Alert Bar 또는 Toast 메시지로 표시
+
+공통 에러 메시지 포맷터와 로거를 도입하여 일관된 에러 처리를 유지하세요.
+
+## 인증 흐름 관리
+*   `AuthHeaderHandler`에서 `401` 상태 코드 감지 시 Refresh 흐름 트리거
+*   Refresh 성공 시 원래 요청 재시도
+*   Refresh 실패 시 로그아웃 또는 재인증 UI로 전환
+
+토큰 저장/로드:
+*   Windows DPAPI(`ProtectedData`) 또는 OS 보안 저장소 활용
+*   애플리케이션 시작 시 `TokenProvider`가 메모리에 로드
+
+## 오프라인/작업 큐잉 (선택 사항)
+*   요청(Create/Update/Delete)을 명령 큐에 저장
+*   네트워크 연결 상태 확인
+*   온라인 상태로 전환 시 큐 처리
+*   실패 또는 충돌 발생 시 사용자에게 알리고 수동 해결 옵션 제공
+
+간단한 큐 인터페이스 예시:
+```csharp
+public interface IOutbox
+{
+    Task EnqueueAsync(HttpRequestMessage request, CancellationToken ct);
+    Task FlushAsync(CancellationToken ct);
+}
+```
+
+## 로깅 및 추적
+*   `HttpClientFactory` 로깅 (핸들러에 `ILogger` 주입)
+*   ViewModel에서 핵심 상태 변화 로깅
+*   에러 및 성능 이벤트 수집 (진단 및 분석용)
 
 ## 테스트 전략
 
-- **도메인**: 순수 단위 테스트(로직/밸리데이션)
-- **데이터**: **SQLite In-Memory**(주의: 관계/제약 반영)로 통합 테스트
+### HttpMessageHandler 모의 객체를 사용한 API 테스트
 ```csharp
-var conn = new SqliteConnection("DataSource=:memory:");
-await conn.OpenAsync();
-var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(conn).Options;
-using var db = new AppDbContext(options);
-db.Database.EnsureCreated();
-// 테스트 진행
-```
-- EFCore.InMemory는 실제 SQLite와 동작 차이가 있으므로 **스키마/제약 검증에는 SQLite In-Memory 추천**
-- **API 클라이언트**: `HttpMessageHandler` 스텁으로 응답 시뮬레이션
-- **동기화**: 푸시/풀/충돌 케이스별 시나리오 테스트
-
----
-
-## 실제 운영 팁
-
-- **마이그레이션 버전 관리**: 앱 시작 시 자동 적용하되, 실패 시 백업/롤백 전략
-- **DB 백업**: 앱 종료 시/주기적으로 `.db` 백업(파일 잠금 주의)
-- **로깅**: EF `LogTo`, HttpClient `LoggingHandler`, Sync 이벤트 로그
-- **데이터 정리**: tombstone(삭제표시) 주기 정리/아카이빙
-- **국제화**: 서버/로컬 모두 **UTC** 저장, 표시 시 로컬 타임존 변환
-
----
-
-## 끝까지 이어지는 **전체 흐름 요약**
-
-1. **App 시작** → Db 폴더 생성 → **Migrate**
-2. **MainViewModel.Load** → 로컬 DB에서 목록 로드
-3. **사용자 조작**(추가/수정/삭제) → 엔티티에 `IsDirty=true` & 저장
-4. **SyncService** 트리거(주기/버튼/온라인 전환)
-   - **Push**(Dirty/Tombstone → API) → 성공 시 `IsDirty=false`, `ETag` 갱신
-   - **Pull**(ETag 기반 변경분 페치) → 로컬 병합(정책 적용)
-5. **UI**는 `ObservableCollection<Todo>` 바인딩 → 자동 업데이트
-6. **오프라인** 시에도 로컬 작업 계속 → 온라인 시 **자동 동기화**
-
----
-
-## 추가 코드 조각 (필요할 때 가져다 쓰기)
-
-### ValueConverter: 완료 시 취소선
-
-```csharp
-public class BoolToStrikeConverter : IValueConverter
+// Shop.Tests/HttpTestHandler.cs
+public sealed class HttpTestHandler : HttpMessageHandler
 {
-    public object Convert(object value, Type t, object p, CultureInfo c)
-        => (value is bool b && b) ? TextDecorations.Strikethrough : null!;
-    public object ConvertBack(object v, Type t, object p, CultureInfo c) => Binding.DoNothing;
+    public Func<HttpRequestMessage, HttpResponseMessage>? Responder { get; set; }
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        => Task.FromResult(Responder?.Invoke(request)
+           ?? new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
+}
+
+// Shop.Tests/ProductsApiTests.cs
+[Fact]
+public async Task GetAsync_Returns_List_And_Total()
+{
+    var handler = new HttpTestHandler
+    {
+        Responder = request =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK);
+            response.Content = JsonContent.Create(new[]
+            {
+                new ProductDto(Guid.NewGuid(), "제품 A", 10m, null, DateTimeOffset.UtcNow)
+            });
+            response.Headers.Add("X-Total-Count", "42");
+            return response;
+        }
+    };
+    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://fake-api/") };
+    var api = new ProductsApi(httpClient);
+
+    var result = await api.GetAsync(1, 20, null, null, CancellationToken.None);
+
+    result.Ok.Should().BeTrue();
+    result.Value.total.Should().Be(42);
+    result.Value.items.Should().HaveCount(1);
 }
 ```
 
-### Dispatcher 안전 업데이트
-
+### ViewModel 테스트
 ```csharp
-Application.Current.Dispatcher.Invoke(() => Items.Insert(0, entity));
+[Fact]
+public async Task Load_Sets_Items_And_Total()
+{
+    var mockApi = Substitute.For<IProductsApi>();
+    mockApi.GetAsync(1, 20, null, null, Arg.Any<CancellationToken>())
+           .Returns(Result<(IReadOnlyList<ProductDto>, int)>.Success(
+               (new List<ProductDto>{ new(Guid.NewGuid(), "테스트 제품", 5m, null, DateTimeOffset.UtcNow) }, 10)));
+
+    var viewModel = new MainViewModel(mockApi);
+    await viewModel.LoadAsync();
+
+    viewModel.Items.Should().HaveCount(1);
+    viewModel.Total.Should().Be(10);
+    viewModel.Error.Should().BeNull();
+}
 ```
 
-### EF Core 변경 감지 최적화
+## 성능 및 안정성 고려사항
+*   **비동기 프로그래밍 규칙**: 모든 I/O 작업은 `async/await` 사용, UI 업데이트는 Dispatcher 통해 실행
+*   **취소 토큰 전파**: 시간이 오래 걸리는 호출마다 `CancellationToken` 지원
+*   **UI 가상화**: 리스트/그리드 컨트롤에 Virtualization 활성화
+*   **적절한 페이지 크기**: 20~50개 항목이 적정, 서버 측 정렬/필터링 활용
+*   **Polly 정책 설정**: 과도한 재시도 방지 (백오프 적용), 429(Too Many Requests) 응답 처리
+*   **메모리 관리**: 이미지/대용량 페이로드는 스트리밍 방식으로 처리 고려
+*   **예외 처리**: 예외가 무음 처리되지 않도록 로깅 및 사용자 친화적 메시지 제공
 
-```csharp
-_db.ChangeTracker.AutoDetectChangesEnabled = false;
-// 대량 작업 전/후에만 DetectChanges 호출
-```
+## 부가 기능: 다크모드/접근성/국제화
+*   **다크모드**: 리소스 토큰화 + `DynamicResource` 사용 (테마 팔레트 교체)
+*   **접근성**: 키보드 탐색, 스크린리더 친화적 텍스트, `AutomationProperties` 설정
+*   **국제화**: 서버/클라이언트 모두 UTC 시간 저장, 표시 시 지역화 및 문자열 리소스 활용
 
 ---
 
-## 자주 묻는 질문(FAQ)
+## 결론: 실전 적용을 위한 핵심 원칙
 
-**Q. EF Core 추적 엔티티를 그대로 바인딩해도 되나요?**
-A. 소규모는 OK. 대규모 목록에서는 `AsNoTracking`으로 DTO를 뷰에 바인딩 → 편집 시 선택 항목만 Attach/Update를 권장.
+이 구현은 WPF 애플리케이션에서 MVVM 패턴을 준수하면서 RESTful API와 통신하는 견고한 클라이언트 아키텍처를 제공합니다. 핵심은 다음과 같습니다:
 
-**Q. SQLite에서 동시 쓰기 충돌은?**
-A. WAL 모드/짧은 트랜잭션/재시도 전략. UI에서 대량 쓰기를 분할.
+1.  **관심사 분리**: 네트워킹, 비즈니스 로직, UI 렌더링을 명확한 계층으로 분리하여 유지보수성을 높입니다.
+2.  **회복력 있는 통신**: `HttpClientFactory`와 `Polly`를 통해 일시적 네트워크 오류, 타임아웃, 서버 과부하에 대한 표준화된 대응 체계를 구축합니다.
+3.  **반응형 UI 상태 관리**: `IsBusy`, `Error`와 같은 중앙 집중식 상태 속성을 정의하고 이를 기준으로 UI(로딩 표시기, 에러 메시지, 컨트롤 비활성화)가 반응하도록 설계하여 사용자 경험을 개선합니다.
+4.  **테스트 가능성**: 의존성 주입을 철저히 적용하고 외부 의존성(특히 `HttpClient`)을 인터페이스 뒤에 숨겨 단위 테스트를 통한 코드 신뢰도를 보장합니다.
+5.  **현대적 .NET 생태계 활용**: WPF 프로젝트에서도 `.NET 6/7/8`을 타겟팅하고, `Generic Host`, `CommunityToolkit.Mvvm` 같은 현대적 라이브러리를 활용하여 생산성을 높입니다.
 
-**Q. 마이그레이션이 잦을 때 운영 배포는?**
-A. 앱 시작 시 자동 마이그레이션 + 실패 시 백업 복구. 스키마 변경은 호환성 고려(새 컬럼 추가 → 데이터 이전 → 구 컬럼 제거).
-
-**Q. API 충돌 정책을 다르게 하고 싶습니다.**
-A. SyncService에서 412/409 응답을 분기하여 “서버 우선/클라 우선/사용자 선택”을 구현하고, 충돌 레코드를 별도 테이블로 보존하여 UI에 표기하세요.
-
----
-
-## 결론
-
-- **EF Core + SQLite**로 **오프라인 친화적인 로컬 저장소**를 만들고,
-- **HttpClientFactory + Polly**로 **회복력 있는 API 연동**을 구성하며,
-- **ETag/IsDirty/LastModifiedUtc**를 이용한 **안전한 동기화**로 실전 품질을 확보할 수 있습니다.
-- MVVM + DI + Generic Host를 활용하면 **테스트 가능한 구조**와 **장기 유지보수성**이 크게 향상됩니다.
+이 구조는 단순한 데이터 조회를 넘어 **페이징, 검색, 정렬, 낙관적 업데이트, 오류 처리, 작업 취소** 등 현실적인 요구사항을 아우르는 확장 가능한 기반을 마련합니다.
