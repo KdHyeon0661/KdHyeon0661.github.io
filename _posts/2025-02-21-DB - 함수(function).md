@@ -4,622 +4,413 @@ title: DB - 함수(Function)
 date: 2025-02-21 20:20:23 +0900
 category: DB
 ---
-# SQL 함수(Function)
+# SQL 함수(Function) 완전 정리
 
-## 함수 분류와 3값 논리
+## 함수의 분류와 기본 개념
 
-### 함수 분류(재정의)
+SQL 함수는 그 동작과 반환 값에 따라 네 가지 주요 범주로 구분할 수 있습니다.
 
 | 분류 | 설명 | 예시 |
 |---|---|---|
-| 단일 행 함수(Scalar) | 행마다 **하나의 값**을 반환 | `LOWER(email)`, `ROUND(price, 2)` |
-| 집계 함수(Aggregate) | 여러 행 → **단일 값** 집계 | `SUM(amount)`, `AVG(score)` |
-| 윈도 함수(Analytic) | 여러 행 → **행별** 집계/순위/누계 | `SUM(amount) OVER(...)`, `ROW_NUMBER()` |
-| JSON/형변환/기타 | JSON·형변환·보안·유틸 | `JSON_EXTRACT`, `TRY_CONVERT`, `HASHBYTES` |
+| **단일 행 함수** | 각 행마다 하나의 결과 값을 반환합니다. | `UPPER(name)`, `ROUND(price, 2)` |
+| **집계 함수** | 여러 행의 값을 그룹화하여 단일 결과 값을 반환합니다. | `SUM(sales)`, `AVG(score)` |
+| **윈도 함수** | 행마다 계산을 수행하지만, 결과 집합의 다른 행을 참조할 수 있습니다. | `ROW_NUMBER()`, `SUM(amount) OVER(...)` |
+| **전문 함수** | JSON 처리, 형변환, 보안 등 특수한 작업을 수행합니다. | `JSON_EXTRACT()`, `TRY_CAST()` |
 
-> 윈도 함수는 **GROUP BY로는 표현하기 어려운 “행별 집계”**를 제공한다.
+윈도 함수는 GROUP BY로 표현하기 어려운 "행별 집계"나 "순위 계산"을 가능하게 해주는 강력한 도구입니다.
 
-### SQL의 3값 논리(Three-Valued Logic)
-
-- 비교 결과는 `TRUE / FALSE / UNKNOWN(NULL)` 중 하나.
-- `NULL = NULL`은 `TRUE`가 아니라 **UNKNOWN**.
-- WHERE 절에서 `UNKNOWN`은 필터링되어 **제외**된다.
-- NULL 비교는 **`IS NULL`/`IS NOT NULL`**을 사용.
+### NULL과 3값 논리
+SQL에서는 비교 연산의 결과가 `TRUE`, `FALSE`, 그리고 `UNKNOWN`(NULL) 세 가지 중 하나일 수 있습니다. 이는 중요한 함의를 가집니다.
+- `NULL = NULL`은 `TRUE`가 아니라 `UNKNOWN`입니다.
+- WHERE 절에서 `UNKNOWN`은 `FALSE`로 처리되어 결과에서 제외됩니다.
+- NULL 값과의 비교는 항상 `IS NULL` 또는 `IS NOT NULL` 연산자를 사용해야 합니다.
 
 ---
 
-## 문자열 함수 — MySQL vs SQL Server
+## 문자열 함수: MySQL vs SQL Server 비교
 
-### 길이와 바이트: `LENGTH` vs `CHAR_LENGTH` vs `LEN` vs `DATALENGTH`
+### 문자열 길이 측정
+문자 수와 바이트 수는 다를 수 있으며, 이는 데이터베이스마다 다른 함수로 측정합니다.
 
-| DB | 문자 길이 | 바이트 길이 | 주의 |
-|---|---|---|---|
-| MySQL | `CHAR_LENGTH(s)` | `LENGTH(s)` | UTF8에서 한글은 3바이트(utf8mb4 3~4) |
-| SQL Server | `LEN(s)` | `DATALENGTH(s)` | `LEN`은 **후행 공백 미포함** |
+```sql
+-- MySQL: 문자 수 vs 바이트 수
+SELECT CHAR_LENGTH('가'), LENGTH('가');  -- 결과: 1, 3 (UTF-8에서 한글은 3바이트)
 
+-- SQL Server: 문자 수 vs 바이트 수 (후행 공백 주의)
+SELECT LEN('abc  '), DATALENGTH('abc  ');  -- 결과: 3, 5
+SELECT LEN(N'abc  '), DATALENGTH(N'abc  ');  -- 결과: 3, 10 (NVARCHAR는 유니코드)
+```
+
+SQL Server의 `LEN()` 함수는 문자열의 후행 공백을 제거한 후의 길이를 반환하므로 주의가 필요합니다.
+
+### 대소문자 변환과 공백 제거
+```sql
+-- MySQL: 다양한 TRIM 옵션
+SELECT TRIM(BOTH '/' FROM '/path/to/file/');  -- 결과: 'path/to/file'
+
+-- SQL Server: TRIM 함수 (2017 이후)
+SELECT TRIM('  Hello  ');  -- 결과: 'Hello'
+-- 이전 버전에서는 LTRIM(RTRIM('  Hello  ')) 사용
+```
+
+### 부분 문자열 추출과 검색
+```sql
+-- MySQL: 구분자로 문자열 분할
+SELECT SUBSTRING_INDEX('a/b/c/d', '/', 2);  -- 결과: 'a/b'
+
+-- SQL Server: 문자열 분할 (2016 이후)
+SELECT value FROM STRING_SPLIT('apple,banana,cherry', ',');
+```
+
+### 성능 고려사항
+문자열 패턴 매칭에서 `LIKE` 연산자를 사용할 때:
+- `'abc%'` (전방 고정): 인덱스를 효과적으로 사용할 수 있습니다.
+- `'%abc'` (후방 와일드카드): 인덱스 사용이 어렵고 성능이 저하될 수 있습니다.
+- `'%abc%'` (양방향 와일드카드): 일반적으로 풀 테이블 스캔이 필요합니다.
+
+---
+
+## 숫자 함수: 정확한 계산을 위한 도구
+
+### 반올림과 절삭
 ```sql
 -- MySQL
-SELECT CHAR_LENGTH('가'), LENGTH('가');  -- 1, 3 (utf8) 또는 4(utf8mb4)
+SELECT ROUND(123.456, 2);    -- 결과: 123.46
+SELECT TRUNCATE(123.456, 2); -- 결과: 123.45
+
 -- SQL Server
-SELECT LEN(N'abc  '), DATALENGTH(N'abc  ');  -- 3, 10 (NVARCHAR는 2바이트/문자)
+SELECT ROUND(123.456, 2);       -- 결과: 123.460
+SELECT ROUND(123.456, 2, 1);    -- 결과: 123.450 (세 번째 매개변수 1은 절삭)
 ```
 
-### 대/소문자, 트림/패딩/치환
-
-| 기능 | MySQL | SQL Server | 예시 |
-|---|---|---|---|
-| 대문자 | `UPPER(s)` | `UPPER(s)` | `UPPER('kim') → 'KIM'` |
-| 소문자 | `LOWER(s)` | `LOWER(s)` |  |
-| 트림 | `TRIM([LEADING|TRAILING|BOTH] x FROM s)` / `TRIM(s)` | `LTRIM`/`RTRIM`/`TRIM`(2017+) |  |
-| 패딩 | `LPAD(s,n,p)`/`RPAD(s,n,p)` | 직접 조합(STRING_AGG/REPLICATE) |  |
-| 치환 | `REPLACE(s,from,to)` | `REPLACE(s,from,to)` |  |
-
-```sql
--- MySQL: 공백/특정 문자 제거
-SELECT TRIM(BOTH '/' FROM '/a/b/');  -- 'a/b'
--- SQL Server: 공백 제거
-SELECT TRIM('  abc  '), LTRIM(RTRIM('  abc  '));  -- 'abc'
-```
-
-### 부분 문자열, 검색, 위치
-
-| 기능 | MySQL | SQL Server |
-|---|---|---|
-| 부분 | `SUBSTRING(s,pos,len)` | `SUBSTRING(s,pos,len)` |
-| 찾기 | `INSTR(s,substr)` / `LOCATE(substr, s)` | `CHARINDEX(substr, s)` |
-| 분할 | `SUBSTRING_INDEX(s, delim, count)` | `STRING_SPLIT(s, delim)`(2016+, 옵션) |
-
-```sql
--- MySQL: 2번째 슬래시까지 왼쪽
-SELECT SUBSTRING_INDEX('a/b/c', '/', 2);  -- 'a/b'
--- SQL Server: 분할 후 집계
-SELECT value FROM STRING_SPLIT('a,b,c', ',');
-```
-
-### 패턴/정규식
-
-- MySQL: `LIKE`(전방 고정 인덱스 가능), `REGEXP_LIKE/REGEXP_REPLACE`(8.0+).
-- SQL Server: 정규식 내장 X → CLR/외부/LIKE 조합, 또는 `TRANSLATE`, `REPLACE` 조합.
-
-> **성능**: `%abc`(전방 와일드)는 인덱스 사용 곤란. **전방 고정** `abc%`는 유리.
-
----
-
-## 숫자/수학 함수 — 반올림·절삭·안전 계산
-
-| 기능 | MySQL | SQL Server | 메모 |
-|---|---|---|---|
-| 반올림 | `ROUND(x, n)` | `ROUND(x, n)` | SQL Server `ROUND(x, n, 1)` = **내림** 모드 |
-| 절삭 | `TRUNCATE(x, n)` | 없지만 `ROUND(x, n, 1)`/수식 |  |
-| 올림/내림 | `CEIL/CEILING`, `FLOOR` | `CEILING`, `FLOOR` |  |
-| 나머지 | `MOD(x,y)`/`x % y` | `%` |  |
-| 절댓값 | `ABS(x)` | `ABS(x)` |  |
-
-```sql
--- MySQL: 소수 1자리 절삭
-SELECT TRUNCATE(123.456, 1);  -- 123.4
-
--- SQL Server: 내림 대체
-SELECT ROUND(123.456, 1, 1);  -- 123.4
-```
-
-**안전 나눗셈(0 나누기 방지)**
-
+### 안전한 나눗셈 (0으로 나누기 방지)
 ```sql
 -- MySQL
-SELECT IFNULL(numerator / NULLIF(denominator, 0), 0);
+SELECT COALESCE(amount / NULLIF(quantity, 0), 0) AS unit_price FROM products;
+
 -- SQL Server
-SELECT ISNULL(1.0 * numerator / NULLIF(denominator, 0), 0);
+SELECT ISNULL(amount * 1.0 / NULLIF(quantity, 0), 0) AS unit_price FROM products;
 ```
 
-부동소수 오차를 줄이려면 **DECIMAL** 사용(가격/금액).
+금액이나 가격 계산에는 부동소수점 오차를 피하기 위해 `DECIMAL` 또는 `NUMERIC` 데이터 타입을 사용하는 것이 좋습니다.
 
 ---
 
-## 날짜/시간 함수 — 경계, 타임존, 리포트
+## 날짜와 시간 함수
 
-| 기능 | MySQL | SQL Server |
-|---|---|---|
-| 현재 | `NOW()` | `GETDATE()` |
-| 날짜만 | `CURDATE()`/`DATE(dt)` | `CAST(GETDATE() AS DATE)` |
-| 더하기 | `DATE_ADD(d, INTERVAL n X)` | `DATEADD(X, n, d)` |
-| 차이 | `TIMESTAMPDIFF(unit, d1,d2)`/`DATEDIFF(d1,d2)`(MySQL은 d1-d2) | `DATEDIFF(unit, d1,d2)`(경계 카운트 방식) |
-| 포맷 | `DATE_FORMAT(dt, fmt)` | `FORMAT(dt, fmt, culture)`(주의: 느림) |
-
-> **경계**: **반열림 구간** `>= start AND < next_start` 권장(중복/누락 방지).
-
-```sql
--- 최근 월별 합계 (MySQL)
-SELECT DATE_FORMAT(order_dt, '%Y-%m') AS ym, SUM(amount)
-FROM orders
-WHERE order_dt >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-GROUP BY ym
-ORDER BY ym;
-
--- 월 경계(반열림, SQL Server)
-WHERE order_dt >= DATEFROMPARTS(2025, 01, 01)
-  AND order_dt <  DATEFROMPARTS(2025, 02, 01);
-```
-
-**윈도: 이동 7일 합(후술 6절 참고)**
-
----
-
-## NULL/조건/집계 — 조건부 집계의 정석
-
-### NULL 처리를 통일
-
-| 목적 | MySQL | SQL Server |
-|---|---|---|
-| 첫 번째 비NULL | `COALESCE(a,b,...)` | `COALESCE(a,b,...)` |
-| 단항 대체 | `IFNULL(expr, alt)` | `ISNULL(expr, alt)` |
-| 안전 나눗셈 | `NULLIF(den,0)` | `NULLIF(den,0)` |
-
-> **집계**: `COUNT(col)`은 NULL 제외, `COUNT(*)`는 NULL 포함.
-
-### 조건부 집계(보고서 핵심)
-
-```sql
--- 월별 상태별 건수(양 테이블 동일)
-SELECT
-  DATE_FORMAT(order_dt, '%Y-%m') AS ym,
-  SUM(CASE WHEN status = 'PAID'    THEN 1 ELSE 0 END) AS cnt_paid,
-  SUM(CASE WHEN status = 'REFUND'  THEN 1 ELSE 0 END) AS cnt_refund,
-  COUNT(*) AS cnt_total
-FROM orders
-GROUP BY ym
-ORDER BY ym;
-
--- SQL Server 날짜 포맷(권장: 변환 대신 그룹 키 별도)
-SELECT
-  CONVERT(char(7), order_dt, 126) AS ym,  -- 'YYYY-MM'
-  SUM(CASE WHEN status = 'PAID'   THEN 1 ELSE 0 END) AS cnt_paid,
-  SUM(CASE WHEN status = 'REFUND' THEN 1 ELSE 0 END) AS cnt_refund,
-  COUNT(*) AS cnt_total
-FROM dbo.orders
-GROUP BY CONVERT(char(7), order_dt, 126)
-ORDER BY ym;
-```
-
-### 안전 평균/비율
-
-```sql
--- 비율 = 분자 / 분모, 0 나눗셈 방지
-SELECT
-  100.0 * SUM(CASE WHEN status='PAID' THEN 1 ELSE 0 END)
-  / NULLIF(COUNT(*), 0) AS rate_paid
-FROM orders;
-```
-
----
-
-## 윈도 함수 — 누계/이동 집계/그룹 Top-N
-
-> MySQL 8.0+, SQL Server 2012+ 지원
-
-### 누계/이동합
-
-```sql
--- MySQL: 최근 90일, 일자별 매출과 이동 7일 합
-SELECT
-  sale_date,
-  SUM(amount) AS daily_amount,
-  SUM(SUM(amount)) OVER (
-    ORDER BY sale_date
-    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
-  ) AS rolling_7d_amount
-FROM sales
-WHERE sale_date >= CURDATE() - INTERVAL 90 DAY
-GROUP BY sale_date
-ORDER BY sale_date;
-
--- SQL Server: 동일
-SELECT
-  sale_date,
-  SUM(amount) AS daily_amount,
-  SUM(SUM(amount)) OVER (
-    ORDER BY sale_date
-    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
-  ) AS rolling_7d_amount
-FROM dbo.sales
-WHERE sale_date >= DATEADD(DAY, -90, CAST(GETDATE() AS DATE))
-GROUP BY sale_date
-ORDER BY sale_date;
-```
-
-### 파티션별 순위 / Top-N per group
-
-```sql
--- 카테고리별 매출 Top 3 상품
-SELECT *
-FROM (
-  SELECT
-    category_id, product_id, SUM(amount) AS amt,
-    ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY SUM(amount) DESC) AS rn
-  FROM order_items
-  GROUP BY category_id, product_id
-) t
-WHERE rn <= 3
-ORDER BY category_id, rn;
-```
-
-### 누적/비율
-
-```sql
--- 카테고리 내 누적 점유율
-SELECT
-  category_id, product_id, amt,
-  SUM(amt) OVER (PARTITION BY category_id ORDER BY amt DESC) AS cum_amt,
-  SUM(amt) OVER (PARTITION BY category_id) AS total_amt,
-  1.0 * SUM(amt) OVER (PARTITION BY category_id ORDER BY amt DESC)
-      / NULLIF(SUM(amt) OVER (PARTITION BY category_id),0) AS cum_ratio
-FROM (
-  SELECT category_id, product_id, SUM(amount) AS amt
-  FROM order_items
-  GROUP BY category_id, product_id
-) s
-ORDER BY category_id, cum_amt DESC;
-```
-
----
-
-## 형변환·타입 검사 — 안전 변환과 성능
-
-| 기능 | MySQL | SQL Server | 메모 |
-|---|---|---|---|
-| 캐스팅 | `CAST(x AS TYPE)`/`CONVERT(TYPE, x)` | `CAST(x AS TYPE)`/`CONVERT(TYPE, x)` |  |
-| 실패-무해 변환 | `CAST` 실패 시 에러(엄격 모드) | `TRY_CONVERT(TYPE, x)`/`TRY_PARSE` | 실패 시 NULL |
-| 숫자화 | `CAST(JSON_UNQUOTE(...) AS DECIMAL)` | `TRY_CONVERT(NUMERIC, JSON_VALUE(...))` |  |
-
-```sql
--- SQL Server: TRY_CONVERT로 실패 시 NULL
-SELECT TRY_CONVERT(INT, '123'), TRY_CONVERT(INT, '12A');  -- 123, NULL
-```
-
----
-
-## JSON 함수 — 반정규화/스키마 유연성 대처
-
-### MySQL
-
-- 추출: `JSON_EXTRACT(doc, '$.a.b')` 또는 `doc->'$.a.b'`
-- 스칼라화: `JSON_UNQUOTE(JSON_EXTRACT(...))`
-- 수정: `JSON_SET`, `JSON_REPLACE`, `JSON_REMOVE`
-- 검색: **가급적 “가상 컬럼 + 인덱스”**(8.0+)로 SARGable
-
-```sql
--- 가상 컬럼 + 함수기반 인덱스
-ALTER TABLE events
-  ADD item_id VARCHAR(32) GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(payload, '$.itemId'))) STORED,
-  ADD INDEX ix_events_item_id (item_id);
-
-SELECT * FROM events WHERE item_id = 'A001';
-```
-
-### SQL Server
-
-- 추출: `JSON_VALUE(doc, '$.a')`(스칼라) / `JSON_QUERY(doc, '$.arr')`(JSON)
-- 펼치기: `OPENJSON(doc)` (CROSS APPLY)
-- 인덱스: **계산 열(PERSISTED) + 인덱스** 권장
-
-```sql
--- 계산 열 + 인덱스
-ALTER TABLE dbo.events
-ADD item_id AS JSON_VALUE(payload, '$.itemId') PERSISTED;
-
-CREATE INDEX ix_events_item_id ON dbo.events(item_id);
-
-SELECT * FROM dbo.events WHERE item_id = 'A001';
-```
-
----
-
-## 보안·암호화·마스킹(간단 정리)
-
-- MySQL: `AES_ENCRYPT/AES_DECRYPT`(주의: 키 관리), `SHA2`, `MD5`(비권장).
-- SQL Server: `HASHBYTES`, `ENCRYPTBYKEY/DECRYPTBYKEY`, 동적 데이터 마스킹(Dynamic Data Masking), Always Encrypted.
-- **권한/키 관리/컴플라이언스**는 DB 함수보다 **플랫폼 설계** 이슈임을 명시.
-
----
-
-## 인덱스와 함수 — SARGability 핵심
-
-### 함수가 인덱스를 막는 경우
-
-- **컬럼을 함수/연산으로 감싸면** B-tree 인덱스 활용이 어려워짐.
-
-```sql
--- 비권장: 인덱스 무력화 가능
-WHERE DATE(order_dt) = CURDATE();        -- MySQL
-WHERE CAST(order_dt AS DATE) = CAST(GETDATE() AS DATE); -- SQL Server
-
--- 권장: 반열림 구간
-WHERE order_dt >= CURDATE() AND order_dt < CURDATE() + INTERVAL 1 DAY;
-WHERE order_dt >= CAST(GETDATE() AS DATE) AND order_dt < DATEADD(DAY, 1, CAST(GETDATE() AS DATE));
-```
-
-### 함수 기반 인덱스 / 계산 열
-
-- **MySQL 8.0**: 함수 기반 인덱스 지원.
-
-```sql
-CREATE INDEX ix_user_lower_email ON users ((LOWER(email)));
-SELECT * FROM users WHERE LOWER(email) = 'alpha@example.com';
-```
-
-- **SQL Server**: 계산 열 + PERSISTED + 인덱스.
-
-```sql
-ALTER TABLE dbo.users ADD email_lower AS LOWER(email) PERSISTED;
-CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
-```
-
-> **원칙**: “함수는 인덱스로 끌어내리고, WHERE는 컬럼 원형 비교”가 SARGable.
-
----
-
-## — 성능·보안·가이드
-
-### 유형
-
-| DB | 스칼라 UDF | 테이블 반환 UDF |
-|---|---|---|
-| MySQL | Stored Function | (주로 Stored Procedure/뷰/테이블로 대체) |
-| SQL Server | `CREATE FUNCTION ... RETURNS scalar` | Inline TVF(권장)/Multi-Statement TVF(주의) |
-
-### 성능
-
-- SQL Server **스칼라 UDF**는 **행 단위 호출**로 느릴 수 있음.
-  2019+의 **UDF 인라이닝**(제약 조건하에)으로 대폭 개선 가능.
-- **Inline TVF**는 옵티마이저가 조인/필터링 최적화에 유리 → **선호**.
-- MySQL Stored Function은 트랜잭션/결정성/보안 고려 필요.
-
-### 결정성/인덱스
-
-- 계산 열 인덱스(PERSISTED)에는 **결정적(Deterministic)** 함수만 허용(SQL Server).
-- MySQL 함수 기반 인덱스는 표현식이 인덱싱 가능해야 한다.
-
-### 보안/권한
-
-- 권한 에스컬레이션, 임의 파일/네트워크 접근 금지(서버 설정).
-- SQL Server는 `SCHEMABINDING`/권한 최소화 원칙.
-
----
-
-## 실전 시나리오 8종
-
-### “Gmail 사용자만, 이메일 소문자 매칭 + 인덱스”
-
-```sql
--- MySQL: 가상 컬럼 + 인덱스(성능)
-ALTER TABLE users
-  ADD email_lower VARCHAR(255) GENERATED ALWAYS AS (LOWER(email)) STORED,
-  ADD INDEX ix_users_email_lower (email_lower);
-
-SELECT id, email
-FROM users
-WHERE email_lower LIKE '%@gmail.com';
-
--- SQL Server: 계산 열 + 인덱스
-ALTER TABLE dbo.users
-ADD email_lower AS LOWER(email) PERSISTED;
-CREATE INDEX ix_users_email_lower ON dbo.users(email_lower);
-
-SELECT id, email
-FROM dbo.users
-WHERE email_lower LIKE '%@gmail.com';
-```
-
-### “월별·상태별 매출 리포트 — 조건부 집계 + 날짜 경계”
-
+### 현재 시간과 날짜 조작
 ```sql
 -- MySQL
-SELECT DATE_FORMAT(order_dt, '%Y-%m') AS ym,
-       SUM(CASE WHEN status='PAID'   THEN amount ELSE 0 END) AS amt_paid,
-       SUM(CASE WHEN status='REFUND' THEN amount ELSE 0 END) AS amt_refund,
-       SUM(amount) AS amt_total
-FROM orders
-WHERE order_dt >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 11 MONTH)
-GROUP BY ym
-ORDER BY ym;
+SELECT NOW();                              -- 현재 날짜와 시간
+SELECT DATE_ADD(NOW(), INTERVAL 7 DAY);    -- 7일 후
+SELECT DATEDIFF('2024-12-31', '2024-01-01'); -- 일수 차이
 
 -- SQL Server
-WITH base AS (
-  SELECT
-    CAST(EOMONTH(order_dt, 0) - (DAY(EOMONTH(order_dt, 0)) - 1) AS DATE) AS ym_first, -- 월 1일
-    status, amount
-  FROM dbo.orders
-  WHERE order_dt >= DATEADD(MONTH, -11, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))
-)
-SELECT
-  CONVERT(char(7), ym_first, 126) AS ym,
-  SUM(CASE WHEN status='PAID'   THEN amount ELSE 0 END) AS amt_paid,
-  SUM(CASE WHEN status='REFUND' THEN amount ELSE 0 END) AS amt_refund,
-  SUM(amount) AS amt_total
-FROM base
-GROUP BY ym_first
-ORDER BY ym_first;
+SELECT GETDATE();                          -- 현재 날짜와 시간
+SELECT DATEADD(DAY, 7, GETDATE());         -- 7일 후
+SELECT DATEDIFF(DAY, '2024-01-01', '2024-12-31'); -- 일수 차이
 ```
 
-### + 주말 제외(조건부)”
+### 날짜 범위 쿼리: 반열림 구간 패턴
+날짜 범위를 쿼리할 때는 "반열림 구간" 패턴을 사용하는 것이 안전합니다. 이는 경계 값의 중복이나 누락을 방지합니다.
 
 ```sql
--- MySQL: 주말 제외는 CASE로 0 처리
-SELECT dt,
-       SUM(CASE WHEN DAYOFWEEK(dt) IN (1,7) THEN 0 ELSE amount END) AS amt_wd,
-       SUM(SUM(CASE WHEN DAYOFWEEK(dt) IN (1,7) THEN 0 ELSE amount END))
-       OVER (ORDER BY dt ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS rolling_7d
+-- 2024년 1월 데이터 조회 (잘못된 방법)
+SELECT * FROM orders WHERE MONTH(order_date) = 1 AND YEAR(order_date) = 2024;
+
+-- 2024년 1월 데이터 조회 (권장 방법 - 반열림 구간)
+SELECT * FROM orders 
+WHERE order_date >= '2024-01-01' 
+  AND order_date < '2024-02-01';
+```
+
+두 번째 방법은 인덱스를 효과적으로 사용할 수 있고, 1월 31일 23:59:59.999 같은 경계 값 문제를 피할 수 있습니다.
+
+---
+
+## NULL 처리와 조건부 집계
+
+### NULL 값 다루기
+```sql
+-- COALESCE: 첫 번째 NULL이 아닌 값 반환
+SELECT COALESCE(middle_name, 'N/A') AS display_name FROM users;
+
+-- NULLIF: 두 값이 같으면 NULL 반환 (0으로 나누기 방지에 유용)
+SELECT amount / NULLIF(quantity, 0) FROM sales;
+```
+
+### 조건부 집계: 다차원 보고서 작성
+조건부 집계는 단일 쿼리로 여러 차원의 통계를 생성할 수 있는 강력한 기법입니다.
+
+```sql
+-- 월별, 상태별 주문 통계
+SELECT 
+    DATE_FORMAT(order_date, '%Y-%m') AS month,
+    -- 조건부 카운트
+    SUM(CASE WHEN status = 'COMPLETED' THEN 1 ELSE 0 END) AS completed_orders,
+    SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelled_orders,
+    
+    -- 조건부 금액 합계
+    SUM(CASE WHEN status = 'COMPLETED' THEN amount ELSE 0 END) AS completed_amount,
+    SUM(CASE WHEN status = 'CANCELLED' THEN amount ELSE 0 END) AS cancelled_amount,
+    
+    -- 총계
+    COUNT(*) AS total_orders,
+    SUM(amount) AS total_amount
+    
+FROM orders
+GROUP BY DATE_FORMAT(order_date, '%Y-%m')
+ORDER BY month;
+```
+
+---
+
+## 윈도 함수: 고급 분석을 위한 도구
+
+### 이동 평균과 누계 계산
+```sql
+-- 7일 이동 평균 계산
+SELECT 
+    sale_date,
+    daily_sales,
+    AVG(daily_sales) OVER (
+        ORDER BY sale_date 
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) AS moving_avg_7d,
+    SUM(daily_sales) OVER (
+        ORDER BY sale_date 
+        ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    ) AS running_total
 FROM daily_sales
-WHERE dt >= CURDATE() - INTERVAL 60 DAY
-GROUP BY dt
-ORDER BY dt;
-
--- SQL Server: DATEPART(WEEKDAY, ...)
-SELECT dt,
-       SUM(CASE WHEN DATEPART(WEEKDAY, dt) IN (1,7) THEN 0 ELSE amount END) AS amt_wd,
-       SUM(SUM(CASE WHEN DATEPART(WEEKDAY, dt) IN (1,7) THEN 0 ELSE amount END))
-       OVER (ORDER BY dt ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS rolling_7d
-FROM dbo.daily_sales
-WHERE dt >= DATEADD(DAY, -60, CAST(GETDATE() AS DATE))
-GROUP BY dt
-ORDER BY dt;
+ORDER BY sale_date;
 ```
 
-### “그룹별 Top-N — ROW_NUMBER”
-
+### 그룹 내 순위 매기기
 ```sql
--- 카테고리별 판매 상위 3개 상품
-WITH ranker AS (
-  SELECT category_id, product_id, SUM(amount) AS amt,
-         ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY SUM(amount) DESC) AS rn
-  FROM order_items
-  GROUP BY category_id, product_id
+-- 부서별 급여 순위
+SELECT 
+    department_id,
+    employee_name,
+    salary,
+    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) AS rank_in_dept,
+    DENSE_RANK() OVER (PARTITION BY department_id ORDER BY salary DESC) AS dense_rank_in_dept
+FROM employees
+ORDER BY department_id, salary DESC;
+```
+
+### 누적 비율 계산 (파레토 분석)
+```sql
+-- 제품별 매출 누적 비율
+WITH product_sales AS (
+    SELECT 
+        product_id,
+        SUM(amount) AS total_sales
+    FROM order_items
+    GROUP BY product_id
 )
-SELECT *
-FROM ranker
-WHERE rn <= 3
-ORDER BY category_id, rn;
+SELECT 
+    product_id,
+    total_sales,
+    SUM(total_sales) OVER (ORDER BY total_sales DESC) AS running_total,
+    100.0 * SUM(total_sales) OVER (ORDER BY total_sales DESC) 
+        / SUM(total_sales) OVER () AS cumulative_percentage
+FROM product_sales
+ORDER BY total_sales DESC;
 ```
 
-### “JSON 속성 인덱싱 — 가상/계산 열”
+---
 
-(8절 예시 참고 — 반복 생략)
+## 형변환과 타입 안전성
 
-### “안전한 평균단가 — 0 나눗셈 방지 + 반올림”
+### 안전한 형변환
+```sql
+-- SQL Server: 변환 실패 시 NULL 반환
+SELECT TRY_CAST('123' AS INT);      -- 결과: 123
+SELECT TRY_CAST('ABC' AS INT);      -- 결과: NULL (에러 대신 NULL 반환)
 
+-- MySQL: 엄격 모드에서 변환 실패 시 에러 발생
+SELECT CAST('123' AS UNSIGNED);     -- 결과: 123
+```
+
+### 암시적 형변환 피하기
+암시적 형변환은 성능 저하와 예기치 않은 결과를 초래할 수 있습니다.
+
+```sql
+-- 비효율적: 인덱스 사용 불가
+SELECT * FROM users WHERE CAST(created_at AS DATE) = '2024-01-01';
+
+-- 효율적: 인덱스 사용 가능
+SELECT * FROM users 
+WHERE created_at >= '2024-01-01' 
+  AND created_at < '2024-01-02';
+```
+
+---
+
+## JSON 데이터 다루기
+
+### JSON 값 추출과 검색
 ```sql
 -- MySQL
-SELECT product_id,
-       ROUND(SUM(amount) / NULLIF(SUM(qty), 0), 2) AS avg_price
-FROM order_items
-GROUP BY product_id;
+SELECT 
+    JSON_EXTRACT(user_data, '$.address.city') AS city,
+    JSON_UNQUOTE(JSON_EXTRACT(user_data, '$.name')) AS user_name
+FROM users
+WHERE JSON_EXTRACT(user_data, '$.active') = 'true';
 
 -- SQL Server
-SELECT product_id,
-       ROUND(1.0 * SUM(amount) / NULLIF(SUM(qty), 0), 2) AS avg_price
-FROM dbo.order_items
-GROUP BY product_id;
+SELECT 
+    JSON_VALUE(user_data, '$.address.city') AS city,
+    JSON_QUERY(user_data, '$.preferences') AS preferences
+FROM users
+WHERE JSON_VALUE(user_data, '$.active') = 'true';
 ```
 
-### — MySQL”
+### JSON 데이터에 인덱스 생성하기
+JSON 필드를 자주 검색한다면, 가상 컬럼(MySQL) 또는 계산 열(SQL Server)을 생성하고 인덱스를 추가하는 것이 성능에 도움이 됩니다.
 
 ```sql
--- MySQL 8.0: REGEXP_REPLACE
-UPDATE users
-SET email = CONCAT(SUBSTRING_INDEX(email, '@', 1), '@', LOWER(SUBSTRING_INDEX(email, '@', -1)));
-```
+-- MySQL: 가상 컬럼과 인덱스
+ALTER TABLE products
+ADD COLUMN category_name VARCHAR(100)
+GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(specs, '$.category'))) STORED;
 
-(SQL Server는 정규식 미지원 → 분해/REPLACE로 조합 또는 CLR)
+CREATE INDEX idx_products_category ON products(category_name);
 
-### “기간 페이징 — 키셋 페이징”
+-- SQL Server: 계산 열과 인덱스
+ALTER TABLE products
+ADD category_name AS JSON_VALUE(specs, '$.category') PERSISTED;
 
-```sql
--- 마지막 (dt, id)을 알고 있을 때 다음 페이지
-SELECT id, dt, amount
-FROM payments
-WHERE (dt, id) < ( :last_dt, :last_id )
-ORDER BY dt DESC, id DESC
-LIMIT 100;
-
--- SQL Server는 튜플 비교 대신 논리식
-SELECT TOP (100) id, dt, amount
-FROM dbo.payments
-WHERE (dt < @last_dt) OR (dt = @last_dt AND id < @last_id)
-ORDER BY dt DESC, id DESC;
+CREATE INDEX idx_products_category ON products(category_name);
 ```
 
 ---
 
-## 체크리스트(요약·실무 가드)
+## 성능 최적화: SARGable 쿼리 작성
 
-- **NULL**: `= NULL` 금지 → `IS NULL`. `NOT IN` + NULL 함정 피하고 `NOT EXISTS` 사용.
-- **SARGability**: 컬럼을 함수/연산으로 감싸지 말고, **함수는 인덱스로 끌어내리기**(계산 열/함수 인덱스).
-- **날짜 경계**: **반열림 구간** `>= start AND < next` 습관화.
-- **문자 길이**: SQL Server `LEN`은 후행 공백 미포함, `DATALENGTH`는 바이트.
-- **안전 나눗셈**: `NULLIF(den,0)`로 0 나눗셈 방지.
-- **조건부 집계**: `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` 패턴 정석.
-- **윈도 함수**: 이동합/누계/Top-N per group 문제를 GROUP BY 없이 해결.
-- **JSON**: 추출 후 스칼라화·가상/계산 열 + 인덱스.
-- **UDF**: SQL Server는 **Inline TVF 우선**, 스칼라 UDF는 2019+ 인라이닝 활용.
-- **성능 모니터링**: 실행계획/통계 최신화, 리라이트(OR → UNION ALL, NOT → 긍정 범위).
+SARGable(Search ARGument ABLE) 쿼리는 인덱스를 효과적으로 사용할 수 있는 쿼리를 의미합니다.
 
----
+### SARGable하지 않은 패턴과 개선 방법
+```sql
+-- 비SARGable: 컬럼을 함수로 감싸면 인덱스 사용 불가
+SELECT * FROM orders WHERE YEAR(order_date) = 2024 AND MONTH(order_date) = 1;
 
-## 빠른 참조 테이블
+-- SARGable: 인덱스 사용 가능
+SELECT * FROM orders 
+WHERE order_date >= '2024-01-01' 
+  AND order_date < '2024-02-01';
 
-### A.1 문자열 핵심
+-- 비SARGable: 계산식에 컬럼 사용
+SELECT * FROM products WHERE price * 1.1 > 100;
 
-| 목적 | MySQL | SQL Server |
-|---|---|---|
-| 대/소문자 | `LOWER/UPPER` | `LOWER/UPPER` |
-| 길이(문자/바이트) | `CHAR_LENGTH` / `LENGTH` | `LEN` / `DATALENGTH` |
-| 공백 제거 | `TRIM` | `TRIM`(2017+)/`LTRIM`/`RTRIM` |
-| 분할/위치 | `SUBSTRING_INDEX`/`LOCATE` | `STRING_SPLIT`/`CHARINDEX` |
-| 정규식 | `REGEXP_LIKE/REPLACE` | (내장 X, CLR/LIKE 조합) |
+-- SARGable: 계산식을 재정렬
+SELECT * FROM products WHERE price > 100 / 1.1;
+```
 
-### A.2 날짜 핵심
-
-| 목적 | MySQL | SQL Server |
-|---|---|---|
-| 현재 | `NOW()` | `GETDATE()` |
-| 더하기 | `DATE_ADD(dt, INTERVAL n X)` | `DATEADD(X, n, dt)` |
-| 차이 | `TIMESTAMPDIFF(...)` | `DATEDIFF(unit, d1,d2)` |
-| 포맷 | `DATE_FORMAT` | `FORMAT`(주의: 느림) |
-
-### A.3 안전 계산
+### 함수 기반 인덱스 활용
+자주 사용하는 함수 표현식에 인덱스를 생성할 수 있습니다.
 
 ```sql
--- MySQL
-SELECT IFNULL(num / NULLIF(den,0), 0);
+-- MySQL: 함수 기반 인덱스
+CREATE INDEX idx_users_email_lower ON users((LOWER(email)));
 
--- SQL Server
-SELECT ISNULL(1.0 * num / NULLIF(den,0), 0);
+-- 이제 이 쿼리는 인덱스를 사용할 수 있습니다
+SELECT * FROM users WHERE LOWER(email) = 'user@example.com';
 ```
 
 ---
 
-## 샘플 스키마(공통)
+## 실무 적용 예제
 
+### 예제 1: 이메일 도메인별 사용자 통계
 ```sql
--- MySQL
-CREATE TABLE orders (
-  id BIGINT PRIMARY KEY,
-  customer_id BIGINT NOT NULL,
-  order_dt DATETIME NOT NULL,
-  status ENUM('PENDING','PAID','SHIPPED','REFUND','CANCELLED') NOT NULL,
-  amount DECIMAL(12,2) NOT NULL
-);
+-- 이메일에서 도메인 추출 및 통계
+SELECT 
+    SUBSTRING_INDEX(email, '@', -1) AS email_domain,
+    COUNT(*) AS user_count,
+    AVG(TIMESTAMPDIFF(YEAR, birth_date, CURDATE())) AS avg_age,
+    SUM(CASE WHEN active = 1 THEN 1 ELSE 0 END) AS active_users
+FROM users
+WHERE email LIKE '%@%'
+GROUP BY SUBSTRING_INDEX(email, '@', -1)
+ORDER BY user_count DESC;
+```
 
-CREATE TABLE order_items (
-  order_id BIGINT NOT NULL,
-  product_id BIGINT NOT NULL,
-  qty INT NOT NULL,
-  price DECIMAL(12,2) NOT NULL,
-  PRIMARY KEY(order_id, product_id)
-);
+### 예제 2: 계층형 데이터 순회 (재귀 쿼리)
+```sql
+-- 조직도 조회 (SQL Server)
+WITH OrgHierarchy AS (
+    -- 기준점: 최상위 관리자
+    SELECT 
+        employee_id,
+        employee_name,
+        manager_id,
+        1 AS level,
+        CAST(employee_name AS VARCHAR(1000)) AS hierarchy_path
+    FROM employees
+    WHERE manager_id IS NULL
+    
+    UNION ALL
+    
+    -- 재귀적으로 하위 직원 추가
+    SELECT 
+        e.employee_id,
+        e.employee_name,
+        e.manager_id,
+        oh.level + 1,
+        CAST(oh.hierarchy_path + ' > ' + e.employee_name AS VARCHAR(1000))
+    FROM employees e
+    INNER JOIN OrgHierarchy oh ON e.manager_id = oh.employee_id
+)
+SELECT 
+    employee_id,
+    employee_name,
+    level,
+    hierarchy_path
+FROM OrgHierarchy
+ORDER BY hierarchy_path;
+```
 
--- SQL Server
-CREATE TABLE dbo.orders (
-  id BIGINT PRIMARY KEY,
-  customer_id BIGINT NOT NULL,
-  order_dt DATETIME2 NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  amount DECIMAL(12,2) NOT NULL
-);
-
-CREATE TABLE dbo.order_items (
-  order_id BIGINT NOT NULL,
-  product_id BIGINT NOT NULL,
-  qty INT NOT NULL,
-  price DECIMAL(12,2) NOT NULL,
-  CONSTRAINT PK_order_items PRIMARY KEY (order_id, product_id)
-);
+### 예제 3: 간격 찾기 (Gaps and Islands)
+```sql
+-- 연속된 날짜 구간 찾기
+WITH DateGroups AS (
+    SELECT 
+        event_date,
+        event_date - INTERVAL (ROW_NUMBER() OVER (ORDER BY event_date)) DAY AS grp
+    FROM events
+    GROUP BY event_date
+)
+SELECT 
+    MIN(event_date) AS range_start,
+    MAX(event_date) AS range_end,
+    COUNT(*) AS consecutive_days
+FROM DateGroups
+GROUP BY grp
+HAVING COUNT(*) >= 3  -- 3일 이상 연속된 구간만
+ORDER BY range_start;
 ```
 
 ---
 
-# 마무리
+## 결론
 
-- **함수는 강력하지만 성능을 해칠 수도 있다**: 인덱스와 잘 결합되도록 **SARGable 쿼리**를 우선하며, 필요한 경우 **계산 열/함수 기반 인덱스**로 인덱스 측으로 “끌어내려라”.
-- **윈도 함수**로 리포트/대시보드 요구사항을 간결·고성능으로 해결하고, **조건부 집계**로 다차원 지표를 한 번에 만든다.
-- **JSON/형변환/보안**은 “작동”보다 “운영 가능성(성능·가시성·컴플라이언스)”이 중요하다.
+SQL 함수는 데이터 처리와 분석을 위한 강력한 도구이지만, 올바르게 사용하지 않으면 성능 문제를 초래할 수 있습니다. 효과적인 SQL 함수 사용을 위한 핵심 원칙은 다음과 같습니다.
+
+1. **NULL 이해하기**: SQL의 3값 논리를 이해하고, NULL 값은 항상 `IS NULL` 또는 `IS NOT NULL`로 비교하세요.
+
+2. **SARGable 쿼리 작성**: 가능한 한 컬럼을 함수나 연산으로 감싸지 말고, 인덱스를 활용할 수 있는 형태로 쿼리를 작성하세요. 필요한 경우 함수 기반 인덱스나 계산 열을 활용하세요.
+
+3. **윈도 함수 활용**: 복잡한 분석 요구사항이 있다면 윈도 함수를 고려하세요. 이동 평균, 누계, 순위 계산 등을 간결하게 표현할 수 있습니다.
+
+4. **안전한 형변환**: 데이터 타입 변환이 필요할 때는 암시적 변환에 의존하기보다 명시적 변환 함수를 사용하세요. SQL Server의 `TRY_CAST`나 `TRY_CONVERT`처럼 실패 시 NULL을 반환하는 안전한 함수를 활용하세요.
+
+5. **날짜 범위는 반열림 구간으로**: 날짜 범위를 쿼리할 때는 `>= 시작일 AND < 다음일` 패턴을 사용하여 경계 값 문제를 피하세요.
+
+6. **조건부 집계로 다차원 리포트 작성**: `SUM(CASE WHEN ... THEN ... END)` 패턴을 활용하여 단일 쿼리로 다양한 차원의 통계를 생성하세요.
+
+7. **JSON 데이터는 인덱스와 함께**: JSON 필드를 자주 검색한다면 가상 컬럼이나 계산 열을 생성하고 인덱스를 추가하여 성능을 개선하세요.
+
+8. **데이터베이스별 차이 이해하기**: MySQL과 SQL Server는 비슷한 기능을 다른 함수 이름으로 제공할 수 있습니다. 프로젝트의 데이터베이스에 맞는 함수를 사용하세요.
+
+함수의 힘은 데이터를 변환하고 분석하는 능력에 있지만, 그 힘은 성능 고려사항과 결합되어야 합니다. 올바른 함수 사용은 데이터 작업을 단순화하고, 복잡한 비즈니스 로직을 명확하게 표현하며, 시스템 성능을 유지하는 데 도움이 됩니다.

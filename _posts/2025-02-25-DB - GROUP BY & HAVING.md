@@ -6,530 +6,536 @@ category: DB
 ---
 # GROUP BY & HAVING
 
-## 빠른 로드맵
+## 개념과 실행 순서: SQL의 논리적 처리 파이프라인
 
-1. 개념·실행 순서(논리적 단계)
-2. GROUP BY 핵심 규칙(함정 포함)
-3. HAVING 핵심 규칙(행 vs 그룹, 재필터링)
-4. NULL·DISTINCT·조건부 집계 패턴
-5. 다중 컬럼·표현식 그룹핑과 날짜 버킷팅(분/시/일/월/주)
-6. 고급 집계: ROLLUP, CUBE, GROUPING SETS, GROUPING_ID
-7. 집계 + 윈도 함수 경계(언제 무엇을 쓰는가)
-8. 성능 최적화: 인덱스/프리카드·카디널리티/Pushdown/Partial Aggregation
-9. 실전 시나리오 10선(코드 완비)
-10. 다이얼렉트(MySQL/SQL Server/PostgreSQL/Oracle) 차이 요약
-11. 체크리스트
+**GROUP BY**는 동일한 값을 가진 행을 하나의 그룹으로 묶어 **집계 함수**를 적용합니다. **HAVING**은 그룹화된 결과를 대상으로 조건을 적용하여 필터링합니다.
 
----
+SQL 쿼리의 **논리적 실행 순서**는 다음과 같습니다:
 
-## 개념과 실행 순서(논리적 파이프라인)
+1. **FROM 및 JOIN**: 테이블에서 데이터를 읽고 조인을 수행
+2. **WHERE**: 개별 행을 필터링
+3. **GROUP BY**: 행을 그룹으로 묶음
+4. **집계 함수 계산**: 각 그룹에 대해 SUM, AVG, COUNT 등의 집계를 수행
+5. **HAVING**: 그룹 수준에서 결과를 필터링
+6. **SELECT**: 컬럼과 표현식을 계산하고 별칭을 생성
+7. **ORDER BY**: 결과를 정렬
+8. **LIMIT/OFFSET**: 페이지네이션 적용
 
-**GROUP BY**는 동일 키를 가진 행을 묶어 **집계 함수**(`SUM/AVG/COUNT/MIN/MAX/STDDEV/VARIANCE …`)를 계산한다.
-**HAVING**은 **그룹** 단위로 **집계 결과**를 필터링한다.
-
-SQL의 **논리적 실행 순서(개념적)**
-
-1. `FROM` … `JOIN`
-2. `WHERE` (행 필터)
-3. `GROUP BY` (그룹 생성)
-4. 집계 함수 계산
-5. `HAVING` (그룹 필터)
-6. `SELECT` (표현식 산출, 별칭 생성)
-7. `ORDER BY` (정렬)
-8. `LIMIT/OFFSET` (페이지)
-
-> **핵심**: `WHERE`은 그룹 이전에 **행을 줄이는 필터**, `HAVING`은 그룹 이후에 **집계 결과로 필터**.
+**핵심 원칙**: `WHERE`은 그룹화 이전에 **개별 행을 필터링**하고, `HAVING`은 그룹화 이후에 **집계 결과를 기준으로 필터링**합니다.
 
 ---
 
 ## GROUP BY 핵심 규칙과 흔한 함정
 
-### 비집계 컬럼 규칙
+### 비집계 컬럼 규칙: SELECT에 나온 모든 비집계 컬럼은 GROUP BY에 포함되어야 함
 
-- ANSI SQL에서 **`SELECT`에 나오는 비집계 컬럼은 전부 `GROUP BY`에 포함**되어야 한다.
+ANSI SQL 표준에 따르면, `SELECT` 절에 나열된 모든 비집계 컬럼은 반드시 `GROUP BY` 절에도 포함되어야 합니다.
 
 ```sql
--- 올바른 예
-SELECT dept_id, AVG(salary)
-FROM Employee
-GROUP BY dept_id;
+-- 올바른 예: SELECT에 나온 모든 비집계 컬럼이 GROUP BY에 포함됨
+SELECT department_id, AVG(salary) as avg_salary
+FROM employees
+GROUP BY department_id;
 ```
 
-- 일부 DB(옛 MySQL의 ONLY_FULL_GROUP_BY 비활성)는 비집계 컬럼이 GROUP BY에 없어도 **임의 값**을 반환할 수 있어 **위험**.
-  → **항상** `ONLY_FULL_GROUP_BY` 활성(또는 표준 준수).
+일부 데이터베이스(특히 MySQL의 특정 설정)에서는 이 규칙이 완화되어 비집계 컬럼이 GROUP BY에 없어도 임의의 값을 반환할 수 있습니다. 이는 **데이터 무결성 문제**를 초래할 수 있으므로 피해야 합니다.
 
 ```sql
--- 권장 세팅(MySQL)
+-- MySQL에서 안전한 설정 (항상 활성화 권장)
 SET sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ENGINE_SUBSTITUTION';
 ```
 
-### 집계 없는 GROUP BY는 불가
+### GROUP BY만 사용하는 의미
 
-- **집계 함수 없이** `GROUP BY`만 쓰면 보통 의미가 없거나 오류.
-  (PostgreSQL은 `GROUP BY`만으로도 “중복 제거 + 정렬된 유사 효과”가 나지만 **집계가 목적**이 아니라면 `DISTINCT`가 더 명확.)
-
-```sql
--- 중복 제거 목적이면 DISTINCT를 쓰는 편이 명시적
-SELECT DISTINCT dept_id FROM Employee;
-```
-
-### 표현식으로 그룹핑 가능
-
-- `GROUP BY`에는 **컬럼만**이 아니라 **표현식**도 올 수 있다(다이얼렉트별 제한 약간).
+집계 함수 없이 `GROUP BY`만 사용하는 것은 일반적으로 의미가 없거나 오류를 발생시킵니다. 단순히 중복을 제거하고 싶다면 `DISTINCT`를 사용하는 것이 더 명확합니다.
 
 ```sql
-SELECT DATE(order_dt) AS d, COUNT(*)
-FROM Orders
-GROUP BY DATE(order_dt)
-ORDER BY d;
+-- 중복 제거 목적이라면 DISTINCT 사용이 더 명시적입니다
+SELECT DISTINCT department_id FROM employees;
 ```
 
-> **성능 주의**: 인덱스 컬럼을 함수로 감싸면 인덱스를 못 타는 경우가 많다.
-> 날짜 버킷팅은 **반열림 구간**이나 **계산 열/함수 기반 인덱스**로 인덱스 친화적으로 바꾸는 게 정석(8장 참조).
+### 표현식으로 그룹핑하기
+
+`GROUP BY`에는 단순한 컬럼 이름뿐만 아니라 계산된 표현식도 사용할 수 있습니다.
+
+```sql
+-- 날짜 부분만으로 그룹핑
+SELECT DATE(order_date) as order_day, COUNT(*) as order_count
+FROM orders
+GROUP BY DATE(order_date)
+ORDER BY order_day;
+```
+
+**성능 주의사항**: 컬럼을 함수로 감싸면 인덱스를 사용하지 못할 수 있습니다. 성능이 중요한 경우에는 계산된 컬럼을 미리 생성하고 인덱스를 걸어두는 것이 좋습니다.
 
 ---
 
-## HAVING 핵심 규칙 — 행 vs 그룹
+## HAVING 핵심 규칙: 행 필터링과 그룹 필터링의 차이
 
-- `WHERE`은 **개별 행 조건**. 집계 함수 사용 불가.
-- `HAVING`은 **그룹 조건**. 집계 함수 사용 가능.
+- **WHERE**: 개별 행을 필터링합니다. 집계 함수를 사용할 수 없습니다.
+- **HAVING**: 그룹 수준에서 결과를 필터링합니다. 집계 함수를 사용할 수 있습니다.
 
 ```sql
--- 예: 부서별 평균 급여가 300 이상인 부서
-SELECT dept_id, AVG(salary) AS avg_salary
-FROM Employee
-GROUP BY dept_id
+-- 부서별 평균 급여가 300 이상인 부서만 조회
+SELECT department_id, AVG(salary) as avg_salary
+FROM employees
+GROUP BY department_id
 HAVING AVG(salary) >= 300;
 ```
 
-**재필터링 패턴**
-- 우선 `WHERE`로 **행 수를 줄이고**, 이후 `HAVING`으로 그룹을 **다시 줄이는** 것이 일반적 성능 패턴.
+**성능 최적화 패턴**: 가능한 많은 조건을 `WHERE` 절로 이동시켜 그룹화 전에 행 수를 줄이는 것이 성능에 좋습니다. `HAVING`은 그룹화 이후에 최종적으로 그룹을 필터링할 때만 사용하세요.
 
 ---
 
-## NULL, DISTINCT, 조건부 집계
+## NULL 처리, DISTINCT, 조건부 집계 패턴
 
-### NULL과 COUNT의 차이
+### NULL과 COUNT의 미묘한 차이
 
-- `COUNT(*)` : NULL 포함 **전체 행수**
-- `COUNT(col)` : **NULL 제외** 카운트
+- `COUNT(*)`: NULL 값을 포함한 **모든 행의 수**를 셉니다.
+- `COUNT(column)`: 해당 컬럼에서 **NULL이 아닌 값의 수**를 셉니다.
 
 ```sql
-SELECT COUNT(*) AS rows_all,
-       COUNT(email) AS rows_with_email
-FROM Customer;
+SELECT 
+    COUNT(*) as total_rows,
+    COUNT(email) as rows_with_email,
+    COUNT(*) - COUNT(email) as rows_without_email
+FROM customers;
 ```
 
-### DISTINCT와 집계
+### DISTINCT와 집계 함수 조합
 
-- `COUNT(DISTINCT col)` : 고유 값 개수
-- 다중 컬럼 고유 개수: `COUNT(DISTINCT col1, col2)`(MySQL),
-  SQL Server/PostgreSQL은 `COUNT(DISTINCT CONCAT(...))` 또는 구조에 따라 `COUNT(*)` + `DISTINCT` 서브쿼리.
+- `COUNT(DISTINCT column)`: 컬럼의 고유한 값 개수를 셉니다.
+- 다중 컬럼의 고유 조합 개수를 세는 방법은 데이터베이스마다 다릅니다.
 
 ```sql
--- MySQL: 복합 고유 수
-SELECT COUNT(DISTINCT customer_id, product_id)
-FROM Orders;
+-- MySQL: 직접적인 다중 컬럼 DISTINCT 지원
+SELECT COUNT(DISTINCT customer_id, product_id) as unique_combinations
+FROM orders;
 
--- SQL Server/PostgreSQL: 서브쿼리
-SELECT COUNT(*) FROM (
-  SELECT DISTINCT customer_id, product_id
-  FROM Orders
-) d;
+-- 다른 데이터베이스: 서브쿼리 사용
+SELECT COUNT(*) as unique_combinations FROM (
+    SELECT DISTINCT customer_id, product_id
+    FROM orders
+) as distinct_combinations;
 ```
 
-### 조건부 집계(리포트의 기본)
+### 조건부 집계: 한 번의 스캔으로 여러 통계 계산하기
 
 ```sql
--- 상태별 카운트/금액 합을 한 번에
+-- 주문 상태별 통계를 한 번에 계산
 SELECT
-  SUM(CASE WHEN status = 'PAID'   THEN 1 ELSE 0 END) AS cnt_paid,
-  SUM(CASE WHEN status = 'REFUND' THEN 1 ELSE 0 END) AS cnt_refund,
-  SUM(amount) AS amt_total
-FROM Orders;
+    SUM(CASE WHEN status = 'PAID' THEN amount ELSE 0 END) as total_paid,
+    SUM(CASE WHEN status = 'PENDING' THEN amount ELSE 0 END) as total_pending,
+    SUM(CASE WHEN status = 'REFUNDED' THEN amount ELSE 0 END) as total_refunded,
+    COUNT(CASE WHEN status = 'PAID' THEN 1 END) as count_paid,
+    COUNT(CASE WHEN status = 'PENDING' THEN 1 END) as count_pending
+FROM orders;
 ```
 
 ---
 
-## 다중 컬럼·표현식 그룹핑 & 날짜 버킷팅
+## 다중 컬럼·표현식 그룹핑과 날짜 버킷팅
 
 ### 다중 컬럼 그룹핑
 
 ```sql
--- 부서+직무 별 인원
-SELECT dept_id, job, COUNT(*) AS emp_count
-FROM Employee
-GROUP BY dept_id, job;
+-- 부서와 직무별 직원 수 계산
+SELECT department_id, job_title, COUNT(*) as employee_count
+FROM employees
+GROUP BY department_id, job_title
+ORDER BY department_id, job_title;
 ```
 
-### 날짜 버킷팅(일/주/월)
+### 날짜 버킷팅 (일/주/월/분기/년)
 
-> **권장 패턴**: “**반열림 구간**” 범위 조건 + **원본 컬럼**으로 그룹 키를 만들어 **인덱스 타기**.
+날짜를 기준으로 그룹화하는 것은 실무에서 매우 흔한 패턴입니다. 성능을 위해 **반열림 구간**을 사용하고 원본 컬럼을 그대로 사용하여 인덱스를 활용할 수 있도록 하는 것이 중요합니다.
 
-**일별**
+**일별 집계**:
 ```sql
 -- MySQL
-SELECT DATE(order_dt) AS d, COUNT(*) AS cnt
-FROM Orders
-WHERE order_dt >= '2025-10-01'
-  AND order_dt <  '2025-11-01'
-GROUP BY DATE(order_dt)
-ORDER BY d;
+SELECT DATE(order_date) as order_day, COUNT(*) as daily_orders
+FROM orders
+WHERE order_date >= '2025-01-01'
+  AND order_date < '2025-02-01'
+GROUP BY DATE(order_date)
+ORDER BY order_day;
 ```
 
-**월별(반열림)**
+**월별 집계 (성능 최적화)**:
 ```sql
--- SQL Server (반열림 구간)
+-- 인덱스 친화적인 월별 집계 (SQL Server)
 SELECT
-  FORMAT(order_dt, 'yyyy-MM') AS ym,  -- 주의: FORMAT은 느림(보고서 한정)
-  COUNT(*) AS cnt
-FROM dbo.Orders
-WHERE order_dt >= DATEFROMPARTS(2025, 10, 01)
-  AND order_dt <  DATEFROMPARTS(2025, 11, 01)
-GROUP BY FORMAT(order_dt, 'yyyy-MM')
-ORDER BY ym;
+    YEAR(order_date) as order_year,
+    MONTH(order_date) as order_month,
+    COUNT(*) as monthly_orders,
+    SUM(amount) as monthly_revenue
+FROM orders
+WHERE order_date >= '2025-01-01'
+  AND order_date < '2026-01-01'
+GROUP BY YEAR(order_date), MONTH(order_date)
+ORDER BY order_year, order_month;
 ```
 
-> **고성능 대안**: 계산 열(예: `ym_first` = 월 첫날) + 인덱스, 또는 미리 **달력 차원 테이블**을 조인(데이터 웨어하우스 표준).
-
----
-
-## 고급 집계 — ROLLUP, CUBE, GROUPING SETS
-
-### ROLLUP (계층 소계 + 총계)
+**성능 팁**: 빈번한 날짜 기반 집계가 필요하다면, 미리 계산된 월 첫날 컬럼을 추가하고 인덱스를 생성하는 것이 좋습니다.
 
 ```sql
--- 부서/직무별 인원 + 부서 소계 + 전체 합계
-SELECT dept_id, job, COUNT(*) AS emp_count
-FROM Employee
-GROUP BY ROLLUP (dept_id, job);
-```
-- (dept_id, job) → (dept_id, NULL) → (NULL, NULL) 순으로 소계/합계 행이 추가.
+-- SQL Server: 계산된 컬럼과 인덱스
+ALTER TABLE orders
+ADD month_start AS DATEFROMPARTS(YEAR(order_date), MONTH(order_date), 1) PERSISTED;
 
-### CUBE (모든 조합의 소계)
-
-```sql
--- (부서), (직무), (부서+직무), (전체) 소계/합계 모두
-SELECT dept_id, job, COUNT(*) AS emp_count
-FROM Employee
-GROUP BY CUBE (dept_id, job);
-```
-
-### GROUPING SETS (원하는 조합만)
-
-```sql
--- 부서 소계와 전체 합계만 원할 때
-SELECT dept_id, COUNT(*) AS emp_count
-FROM Employee
-GROUP BY GROUPING SETS ((dept_id), ());
-```
-
-### GROUPING / GROUPING_ID로 “소계 행” 식별
-
-```sql
--- SQL Server/PostgreSQL/Oracle: GROUPING, GROUPING_ID 지원
-SELECT
-  dept_id, job,
-  COUNT(*) AS emp_count,
-  GROUPING(dept_id) AS g_dept,
-  GROUPING(job)     AS g_job,
-  GROUPING_ID(dept_id, job) AS gid
-FROM Employee
-GROUP BY ROLLUP (dept_id, job)
-ORDER BY dept_id, job;
-```
-
-- `GROUPING(col)=1` 이면 그 컬럼은 **소계/합계 레벨**에서 **NULL을 의미하는 자리 표시자**.
-
----
-
-## 집계 vs 윈도 함수 — 언제 무엇을 쓰나
-
-| 요구 | 사용 |
-|---|---|
-| **그룹당 1행**으로 요약(부서별 합계 등) | `GROUP BY` + 집계 |
-| 요약값을 **행별로** 보존(누계/이동합/그룹 내 순위) | **윈도 함수** `SUM() OVER(...)`, `ROW_NUMBER()` |
-| 그룹 요약 + 원본 행 동시 표시 | 서브쿼리/CTE 또는 윈도 집계 |
-
-```sql
--- 윈도: 카테고리별 누계
-SELECT
-  category,
-  product,
-  amount,
-  SUM(amount) OVER (PARTITION BY category ORDER BY amount DESC) AS cum_amt
-FROM sales_by_product;
+CREATE INDEX ix_orders_month_start ON orders(month_start);
 ```
 
 ---
 
-## 성능 최적화 핵심
+## 고급 집계 기능: ROLLUP, CUBE, GROUPING SETS
 
-### WHERE로 먼저 줄여라
-
-- `HAVING` 대신 **가능한 조건은 `WHERE`**로 내려 **행 수 줄이기**.
+### ROLLUP: 계층적 소계와 총계 생성
 
 ```sql
--- 비권장: HAVING에 행 조건(날짜) 넣으면 전체 스캔 후 그룹
-SELECT customer_id, SUM(amount) AS s
-FROM Orders
-GROUP BY customer_id
-HAVING MIN(order_dt) >= '2025-10-01';
+-- 부서와 직무별 인원 수에 부서 소계와 전체 총계 추가
+SELECT 
+    department_id,
+    job_title,
+    COUNT(*) as employee_count,
+    SUM(salary) as total_salary
+FROM employees
+GROUP BY ROLLUP (department_id, job_title)
+ORDER BY department_id, job_title;
+```
+- 결과에는 `(부서, 직무)` 상세 데이터, `(부서, NULL)` 부서별 소계, `(NULL, NULL)` 전체 총계가 포함됩니다.
 
--- 권장: WHERE로 먼저 필터
-SELECT customer_id, SUM(amount) AS s
-FROM Orders
-WHERE order_dt >= '2025-10-01'
-GROUP BY customer_id;
+### CUBE: 모든 조합의 소계 생성
+
+```sql
+-- 모든 가능한 그룹 조합에 대한 소계 생성
+SELECT 
+    department_id,
+    job_title,
+    gender,
+    COUNT(*) as employee_count
+FROM employees
+GROUP BY CUBE (department_id, job_title, gender);
 ```
 
-### 인덱스와 집계
-
-- **그룹 키(=GROUP BY 컬럼)**에 **인덱스**가 있으면 **정렬/해시 작업 감소** 가능.
-- MySQL InnoDB는 **인덱스 순회 + 조기 집계**가 이득인 경우가 많다(핵심: **선택도/카디널리티**).
+### GROUPING SETS: 원하는 조합만 지정
 
 ```sql
--- 예: (customer_id, order_dt) 복합 인덱스는 고객/기간 집계에 유리
-CREATE INDEX ix_orders_customer_dt ON Orders (customer_id, order_dt);
-```
-
-### DISTINCT vs GROUP BY 비용
-
-- “고유 목록”만 필요하면 `SELECT DISTINCT`가 명시적.
-- 다만 인덱스 유무/옵티마이저 계획에 따라 비용 차이가 있으므로 **실행계획 확인**.
-
-### 계산 열/함수 기반 인덱스
-
-- 날짜 버킷팅 키(월/주/일)와 같이 **표현식 그룹핑**이 잦다면,
-  **계산 열(또는 생성 열) + 인덱스**로 **SARGable**하게.
-
-```sql
--- SQL Server: 월첫날 계산 열 + 인덱스
-ALTER TABLE dbo.Orders
-ADD ym_first AS DATEFROMPARTS(YEAR(order_dt), MONTH(order_dt), 1) PERSISTED;
-CREATE INDEX ix_orders_ym_first ON dbo.Orders(ym_first);
-```
-
----
-
-## 실전 시나리오 10선
-
-### 부서별 평균 급여 + 평균 300 이상만 (기본기)
-
-```sql
-SELECT dept_id, AVG(salary) AS avg_salary
-FROM Employee
-GROUP BY dept_id
-HAVING AVG(salary) >= 300
-ORDER BY avg_salary DESC;
-```
-
-### 최근 6개월, 고객별 총액 500 이상 (반열림 + 재필터)
-
-```sql
--- MySQL
-SELECT customer_id, SUM(total_amount) AS total
-FROM Orders
-WHERE order_date >= DATE_SUB(DATE_FORMAT(CURDATE(), '%Y-%m-01'), INTERVAL 6 MONTH)
-  AND order_date <  DATE_FORMAT(CURDATE(), '%Y-%m-01')
-GROUP BY customer_id
-HAVING SUM(total_amount) >= 500
-ORDER BY total DESC;
-```
-
-### + 월 버킷팅
-
-```sql
--- SQL Server
-WITH base AS (
-  SELECT
-    order_dt,
-    status,
-    amount,
-    DATEFROMPARTS(YEAR(order_dt), MONTH(order_dt), 1) AS ym_first
-  FROM dbo.Orders
-  WHERE order_dt >= DATEADD(MONTH, -12, DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1))
-)
-SELECT
-  CONVERT(char(7), ym_first, 126) AS ym,
-  SUM(CASE WHEN status='PAID'   THEN amount ELSE 0 END) AS amt_paid,
-  SUM(CASE WHEN status='REFUND' THEN amount ELSE 0 END) AS amt_refund,
-  SUM(amount) AS amt_total
-FROM base
-GROUP BY ym_first
-ORDER BY ym_first;
-```
-
-### 상품·지역 이중 축 집계 + ROLLUP (소계/합계)
-
-```sql
-SELECT region, product, SUM(amount) AS amt
-FROM Sales
-GROUP BY ROLLUP (region, product)
-ORDER BY region, product;
-```
-
-### 원하는 소계만 — GROUPING SETS
-
-```sql
--- 상품 소계 + 지역 소계 + 전체 합계
-SELECT
-  region,
-  product,
-  SUM(amount) AS amt
-FROM Sales
+-- 특정 그룹 조합만 필요한 경우
+SELECT 
+    department_id,
+    job_title,
+    COUNT(*) as employee_count
+FROM employees
 GROUP BY GROUPING SETS (
-  (region, product), -- 상세
-  (region),          -- 지역 소계
-  (product),         -- 상품 소계
-  ()                 -- 전체 합계
+    (department_id, job_title),  -- 부서-직무 상세
+    (department_id),             -- 부서별 소계
+    ()                           -- 전체 총계
 );
 ```
 
-### — DISTINCT + 버킷팅
+### GROUPING 및 GROUPING_ID 함수: 소계 행 식별
 
 ```sql
--- MySQL 예시: 월별 활성 사용자
-SELECT DATE_FORMAT(event_dt, '%Y-%m') AS ym,
-       COUNT(DISTINCT user_id) AS mau
-FROM user_events
-WHERE event_dt >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-GROUP BY DATE_FORMAT(event_dt, '%Y-%m')
-ORDER BY ym;
-```
-
-### 반품 비율 — 안전 나눗셈
-
-```sql
--- 반품수/전체주문수
+-- 소계 행을 식별하기 위한 함수 사용
 SELECT
-  100.0 * SUM(CASE WHEN status='REFUND' THEN 1 ELSE 0 END)
-         / NULLIF(COUNT(*), 0) AS refund_rate_pct
-FROM Orders;
-```
-
-### 키셋 페이징용 그룹 집계(Stable sort)
-
-```sql
--- 월별 합계를 구하고, 마지막 ym 이후 다음 페이지 가져오기
-SELECT ym, amt
-FROM monthly_sales
-WHERE ym < :last_ym
-ORDER BY ym DESC
-LIMIT 50;
-```
-
-### JSON 속성별 집계(가상/계산 열)
-
-```sql
--- MySQL: 생성 열 + 인덱스
-ALTER TABLE events
-  ADD category VARCHAR(20)
-    GENERATED ALWAYS AS (JSON_UNQUOTE(JSON_EXTRACT(payload, '$.category'))) STORED,
-  ADD INDEX ix_events_category (category);
-
-SELECT category, COUNT(*) AS cnt
-FROM events
-GROUP BY category
-HAVING COUNT(*) >= 100;
-```
-
-### 고액 고객 상위 3등급만 — GROUP BY + 서브쿼리
-
-```sql
--- 고객별 총액 산출 후 상위 등급 필터
-WITH agg AS (
-  SELECT customer_id, SUM(amount) AS total_amt
-  FROM Orders
-  WHERE order_dt >= '2025-01-01'
-  GROUP BY customer_id
-)
-SELECT *
-FROM agg
-WHERE total_amt >= 10000; -- 예: VIP 기준
+    department_id,
+    job_title,
+    COUNT(*) as employee_count,
+    GROUPING(department_id) as is_department_subtotal,  -- 1이면 소계 행
+    GROUPING(job_title) as is_job_subtotal,            -- 1이면 소계 행
+    GROUPING_ID(department_id, job_title) as grouping_level
+FROM employees
+GROUP BY ROLLUP (department_id, job_title)
+ORDER BY department_id, job_title;
 ```
 
 ---
 
-## 다이얼렉트 차이 요약
+## 집계 함수 vs 윈도 함수: 언제 무엇을 사용해야 할까?
 
-| 항목 | MySQL | SQL Server | PostgreSQL | Oracle |
-|---|---|---|---|---|
-| ONLY_FULL_GROUP_BY | 모드로 제어 | 표준 준수 | 표준 준수 | 표준 준수 |
-| 날짜 버킷 | `DATE_FORMAT`, 함수 기반 인덱스 | 계산 열(PERSISTED) | `date_trunc('month', ts)` | `TRUNC(dt, 'MM')` |
-| 다중 DISTINCT | `COUNT(DISTINCT a,b)` 지원 | 서브쿼리 필요 | 서브쿼리/표현식 | 서브쿼리/표현식 |
-| ROLLUP/CUBE/GROUPING SETS | 지원(8.0+) | 전부 지원 | 전부 지원 | 전부 지원 |
-| GROUPING_ID | 일부제공(버전 주의) | 지원 | 지원 | 지원 |
-
-> **PostgreSQL**의 `date_trunc`, **Oracle**의 `TRUNC(date, 'MM')`는 날짜 버킷팅이 간결하고 빠르다.
-> **MySQL/SQL Server**는 **계산(생성) 열 + 인덱스** 패턴을 적극 활용.
-
----
-
-## 체크리스트
-
-- [ ] **비집계 컬럼 = 전부 GROUP BY** (표준 준수)
-- [ ] 행 필터는 **WHERE**, 그룹 필터는 **HAVING**
-- [ ] **조건부 집계**: `SUM(CASE WHEN ...)` 패턴 숙지
-- [ ] **NULL 의미** 숙지: `COUNT(*)` vs `COUNT(col)`
-- [ ] 날짜 집계는 **반열림 구간** + **계산 열/함수 인덱스**
-- [ ] 다차원 소계는 **ROLLUP/CUBE/GROUPING SETS**
-- [ ] **윈도 함수**는 “행별 누계/순위/이동합”, GROUP BY는 “그룹당 1행”
-- [ ] **WHERE로 먼저 줄이고** HAVING으로 재필터
-- [ ] **인덱스**: 그룹 키/프리카드 고려, 필요 시 함수 기반/계산 열
-- [ ] 실행계획으로 **정렬/해시/스트림 집계** 비용 확인
-
----
-
-## 추가 예제 모음
-
-### A. 집계 결과에 별칭 사용 (ORDER BY, HAVING)
+| 요구사항 | 적합한 기능 | 예시 |
+|---------|------------|------|
+| 그룹당 하나의 요약 행 생성 | **GROUP BY + 집계 함수** | 부서별 평균 급여 |
+| 각 행에 그룹 요약값을 표시 | **윈도 함수** | 각 직원에 부서 평균 급여 표시 |
+| 그룹 내 순위 또는 누적 합계 | **윈도 함수** | 부서 내 급여 순위, 월별 누계 매출 |
+| 복잡한 그룹화와 개별 데이터 모두 필요 | **서브쿼리/CTE + JOIN** | 상세 데이터와 집계 데이터를 함께 표시 |
 
 ```sql
--- 대부분 DB에서 SELECT 별칭은 ORDER BY에서 사용 가능
-SELECT dept_id, AVG(salary) AS avg_salary
-FROM Employee
-GROUP BY dept_id
-HAVING AVG(salary) > 500
+-- 윈도 함수 예시: 부서별 급여 순위와 부서 평균 표시
+SELECT
+    employee_id,
+    department_id,
+    salary,
+    ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC) as dept_rank,
+    AVG(salary) OVER (PARTITION BY department_id) as dept_avg_salary
+FROM employees;
+```
+
+---
+
+## 성능 최적화 핵심 전략
+
+### 1. WHERE 절로 먼저 데이터 양 줄이기
+
+가능한 모든 필터링 조건을 `WHERE` 절에 배치하여 그룹화하기 전에 데이터 양을 최소화하세요.
+
+```sql
+-- 비효율적: 전체 데이터를 그룹화한 후 HAVING으로 필터링
+SELECT customer_id, SUM(amount) as total_spent
+FROM orders
+GROUP BY customer_id
+HAVING MIN(order_date) >= '2025-01-01';
+
+-- 효율적: 먼저 WHERE로 데이터를 필터링한 후 그룹화
+SELECT customer_id, SUM(amount) as total_spent
+FROM orders
+WHERE order_date >= '2025-01-01'
+GROUP BY customer_id;
+```
+
+### 2. 적절한 인덱스 활용
+
+GROUP BY에 사용되는 컬럼에 인덱스를 생성하면 정렬이나 해시 작업의 부하를 줄일 수 있습니다.
+
+```sql
+-- GROUP BY에 자주 사용되는 컬럼 조합에 인덱스 생성
+CREATE INDEX ix_orders_customer_date ON orders(customer_id, order_date);
+```
+
+### 3. 계산된 컬럼과 함수 기반 인덱스
+
+자주 사용하는 그룹핑 표현식에 대해 미리 계산된 컬럼을 만들고 인덱스를 생성하세요.
+
+```sql
+-- PostgreSQL: 함수 기반 인덱스
+CREATE INDEX idx_orders_year_month ON orders(EXTRACT(YEAR FROM order_date), EXTRACT(MONTH FROM order_date));
+
+-- MySQL: 생성 컬럼과 인덱스
+ALTER TABLE orders
+ADD COLUMN order_year_month VARCHAR(7) AS (DATE_FORMAT(order_date, '%Y-%m')) STORED,
+ADD INDEX idx_order_year_month (order_year_month);
+```
+
+### 4. 카디널리티 고려
+
+- **높은 카디널리티** 컬럼(고유 값이 많은 경우): 해시 집계가 효율적
+- **낮은 카디널리티** 컬럼(고유 값이 적은 경우): 정렬 기반 집계가 효율적
+
+---
+
+## 실전 시나리오 10가지
+
+### 1. 기본적인 그룹화와 필터링
+```sql
+-- 부서별 평균 급여가 50000 이상인 부서 조회
+SELECT department_id, AVG(salary) as avg_salary
+FROM employees
+WHERE hire_date >= '2020-01-01'  -- 신입 직원만
+GROUP BY department_id
+HAVING AVG(salary) >= 50000
 ORDER BY avg_salary DESC;
 ```
 
-### B. 조건부 평균(0 나눗셈 방지)
-
+### 2. 시간 기반 그룹화 (최근 6개월)
 ```sql
+-- 최근 6개월 간 월별 매출 집계
 SELECT
-  1.0 * SUM(CASE WHEN status='PAID' THEN amount ELSE 0 END)
-  / NULLIF(SUM(CASE WHEN status='PAID' THEN 1 ELSE 0 END), 0) AS avg_paid_amount
-FROM Orders;
+    DATE_TRUNC('month', order_date) as month,
+    COUNT(*) as order_count,
+    SUM(amount) as total_revenue,
+    AVG(amount) as avg_order_value
+FROM orders
+WHERE order_date >= CURRENT_DATE - INTERVAL '6 months'
+GROUP BY DATE_TRUNC('month', order_date)
+ORDER BY month DESC;
 ```
 
-### C. 상위 N 그룹 (서브쿼리로 두 단계)
-
+### 3. 다중 조건 집계 (한 번의 스캔으로 여러 통계)
 ```sql
--- 월별 합계 중 상위 5개월
-WITH m AS (
-  SELECT DATE_FORMAT(order_dt, '%Y-%m') AS ym, SUM(amount) AS amt
-  FROM Orders
-  GROUP BY DATE_FORMAT(order_dt, '%Y-%m')
-)
-SELECT *
-FROM m
-ORDER BY amt DESC
-LIMIT 5;
+-- 제품 카테고리별 다양한 통계 계산
+SELECT
+    category,
+    COUNT(*) as total_products,
+    SUM(CASE WHEN price > 100 THEN 1 ELSE 0 END) as premium_count,
+    AVG(price) as avg_price,
+    MIN(price) as min_price,
+    MAX(price) as max_price,
+    SUM(stock_quantity) as total_stock
+FROM products
+GROUP BY category
+ORDER BY total_products DESC;
 ```
 
-### D. 근사 고유 수(빅데이터)
+### 4. 계층적 보고서 (ROLLUP 활용)
+```sql
+-- 지역-도시별 매출에 지역 소계와 전체 총계 포함
+SELECT
+    COALESCE(region, '전체') as region,
+    COALESCE(city, CASE WHEN region IS NULL THEN '전체' ELSE '지역 소계' END) as city,
+    COUNT(*) as order_count,
+    SUM(amount) as total_amount
+FROM sales
+GROUP BY ROLLUP (region, city)
+ORDER BY region, city;
+```
 
-- **MySQL**: HyperLogLog 내장 없음 → 앱/ETL에서 계산 또는 ClickHouse/Redis HLL 활용
-- **PostgreSQL/BigQuery/ClickHouse**: `approx_count_distinct`류 제공
-- 대용량 N:M 고유 집계는 **近似**를 고려(대시보드·랭킹 등).
+### 5. 고유 사용자 기반 집계
+```sql
+-- 일별 활성 사용자 수 (DAU)
+SELECT
+    DATE(login_time) as login_date,
+    COUNT(DISTINCT user_id) as daily_active_users
+FROM user_sessions
+WHERE login_time >= CURRENT_DATE - INTERVAL '30 days'
+GROUP BY DATE(login_time)
+ORDER BY login_date DESC;
+```
+
+### 6. 비율 계산 (0으로 나누기 방지)
+```sql
+-- 제품별 환불률 계산
+SELECT
+    product_id,
+    COUNT(*) as total_orders,
+    SUM(CASE WHEN status = 'REFUNDED' THEN 1 ELSE 0 END) as refunded_orders,
+    ROUND(
+        100.0 * SUM(CASE WHEN status = 'REFUNDED' THEN 1 ELSE 0 END) 
+        / NULLIF(COUNT(*), 0), 2
+    ) as refund_rate_percent
+FROM orders
+GROUP BY product_id
+HAVING COUNT(*) >= 10  -- 통계적 유의성을 위한 최소 주문 수
+ORDER BY refund_rate_percent DESC;
+```
+
+### 7. 이동 평균 계산 (윈도 함수와의 조합)
+```sql
+-- 7일 이동 평균 매출 계산
+WITH daily_sales AS (
+    SELECT
+        DATE(order_date) as sale_date,
+        SUM(amount) as daily_total
+    FROM orders
+    GROUP BY DATE(order_date)
+)
+SELECT
+    sale_date,
+    daily_total,
+    AVG(daily_total) OVER (
+        ORDER BY sale_date 
+        ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+    ) as moving_avg_7d
+FROM daily_sales
+ORDER BY sale_date;
+```
+
+### 8. 상위 N개 그룹 식별
+```sql
+-- 매출 상위 10개 고객 식별
+SELECT
+    customer_id,
+    customer_name,
+    COUNT(*) as order_count,
+    SUM(amount) as total_spent
+FROM orders
+JOIN customers USING (customer_id)
+WHERE order_date >= '2025-01-01'
+GROUP BY customer_id, customer_name
+ORDER BY total_spent DESC
+LIMIT 10;
+```
+
+### 9. 여러 그룹화 수준을 동시에 보고 (GROUPING SETS)
+```sql
+-- 다양한 그룹화 수준으로 매출 분석
+SELECT
+    COALESCE(CAST(year AS VARCHAR), 'All Years') as year_group,
+    COALESCE(CAST(quarter AS VARCHAR), 'All Quarters') as quarter_group,
+    COUNT(*) as order_count,
+    SUM(amount) as total_amount
+FROM (
+    SELECT 
+        EXTRACT(YEAR FROM order_date) as year,
+        EXTRACT(QUARTER FROM order_date) as quarter,
+        amount
+    FROM orders
+    WHERE order_date >= '2024-01-01'
+) as subquery
+GROUP BY GROUPING SETS (
+    (year, quarter),  -- 연도-분기 상세
+    (year),           -- 연도별 소계
+    ()                -- 전체 총계
+)
+ORDER BY year_group, quarter_group;
+```
+
+### 10. 성능 최적화된 대량 데이터 집계
+```sql
+-- 대량 데이터를 효율적으로 집계하기 위한 전략
+WITH filtered_data AS (
+    -- 먼저 필요한 데이터만 필터링
+    SELECT customer_id, amount, order_date
+    FROM orders
+    WHERE order_date >= '2025-01-01'
+      AND status = 'COMPLETED'
+),
+aggregated AS (
+    -- 필터링된 데이터로 집계 수행
+    SELECT
+        customer_id,
+        COUNT(*) as order_count,
+        SUM(amount) as total_spent,
+        MAX(order_date) as last_order_date
+    FROM filtered_data
+    GROUP BY customer_id
+)
+-- 최종 결과만 선택
+SELECT *
+FROM aggregated
+WHERE total_spent >= 1000
+ORDER BY total_spent DESC;
+```
 
 ---
 
-# 결론
+## 데이터베이스별 구현 차이 요약
 
-- `GROUP BY`/`HAVING`은 **정확한 통계·대시보드·요약 리포트**의 중심이다.
-- **WHERE로 행을 줄이고 → GROUP BY로 요약 → HAVING으로 재필터**가 성능 골든루트.
-- 날짜 버킷팅·조건부 집계·다중 축 소계(ROLLUP/CUBE/GROUPING SETS)·윈도 함수와의 경계까지 익히면 **대부분의 분석성 쿼리**를 고성능으로 구현할 수 있다.
-- 마지막으로, **인덱스/계산 열/함수 기반 인덱스**와 **실행계획 확인**을 습관화하라.
-  그 한 줄이 **수십 배 성능 차이**를 만든다.
+| 기능 | MySQL | PostgreSQL | SQL Server | Oracle |
+|------|-------|------------|------------|--------|
+| **ONLY_FULL_GROUP_BY** | sql_mode로 제어 | 기본 적용 | 기본 적용 | 기본 적용 |
+| **다중 컬럼 DISTINCT** | `COUNT(DISTINCT a,b)` 지원 | 서브쿼리 필요 | 서브쿼리 필요 | 서브쿼리 필요 |
+| **날짜 버킷팅** | `DATE_FORMAT()`, `YEAR()`, `MONTH()` | `date_trunc()`, `EXTRACT()` | `DATEPART()`, `FORMAT()` | `TRUNC()`, `EXTRACT()` |
+| **ROLLUP/CUBE** | 8.0+ 지원 | 지원 | 지원 | 지원 |
+| **GROUPING SETS** | 8.0+ 지원 | 지원 | 지원 | 지원 |
+| **함수 기반 인덱스** | 생성 컬럼(STORED)으로 시뮬레이션 | 직접 지원 | 계산된 컬럼(PERSISTED) | 함수 기반 인덱스 |
+| **근사 집계** | 기본 제공 안됨 | `approx_count_distinct()` | `APPROX_COUNT_DISTINCT()` | `APPROX_COUNT_DISTINCT()` |
+
+---
+
+## 결론: GROUP BY와 HAVING의 효과적인 활용
+
+1. **명확한 설계 원칙**: 
+   - `WHERE`은 개별 행 필터링, `HAVING`은 그룹 결과 필터링
+   - SELECT의 모든 비집계 컬럼은 GROUP BY에 포함해야 함
+
+2. **성능 최적화 전략**:
+   - 가능한 많은 필터링을 WHERE로 선처리하여 데이터 양 최소화
+   - GROUP BY 컬럼에 적절한 인덱스 활용
+   - 자주 사용하는 그룹핑 표현식은 계산된 컬럼으로 미리 생성
+
+3. **적절한 도구 선택**:
+   - 단순 그룹 요약: GROUP BY + 집계 함수
+   - 행별 그룹 정보 표시: 윈도 함수
+   - 계층적 보고서: ROLLUP, CUBE, GROUPING SETS
+
+4. **실무 패턴 숙지**:
+   - 날짜 버킷팅은 반열림 구간 사용
+   - 조건부 집계로 한 번의 스캔으로 여러 통계 계산
+   - NULL 처리와 0 나누기 방지를 위한 방어적 코딩
+
+5. **데이터베이스 특성 이해**:
+   - 사용 중인 데이터베이스의 GROUP BY 구현 특성 이해
+   - 데이터베이스별 최적화 기법 적용
+
+GROUP BY와 HAVING은 데이터 분석과 비즈니스 인텔리전스의 핵심 도구입니다. 기본 원칙을 이해하고 적절한 최적화 기법을 적용하면 대규모 데이터에서도 효율적으로 통계와 인사이트를 도출할 수 있습니다. 가장 중요한 것은 실제 데이터와 쿼리 패턴을 분석하여 상황에 맞는 최적의 접근 방식을 선택하는 것입니다.
