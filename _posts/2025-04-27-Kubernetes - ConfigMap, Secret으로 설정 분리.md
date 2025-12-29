@@ -4,327 +4,164 @@ title: Kubernetes - ConfigMap, Secret으로 설정 분리
 date: 2025-04-27 19:20:23 +0900
 category: Kubernetes
 ---
-# Kubernetes에서 ConfigMap / Secret으로 설정 분리하기
+# Kubernetes에서 ConfigMap과 Secret으로 설정 분리하기
 
-## 왜 설정을 분리해야 하나?
+## 설정 분리의 중요성
 
-| 이유 | 설명 |
-|---|---|
-| 환경별 분리 | 동일 이미지를 `dev/stage/prod`에 배포하되, 설정은 환경마다 다르게 주입 |
-| 보안 경계 | 비밀(자격증명, 토큰)은 코드/이미지 이외 경로로 관리 |
-| 운영 민첩성 | 설정만 바꿔도 롤링 없이(또는 최소 롤링) 동작 변경 가능 |
-| 선언적 관리 | YAML로 이력 추적, 리뷰/승인, 재현 가능한 배포(GitOps) |
+애플리케이션 설정을 컨테이너 이미지와 분리하는 것은 현대적인 클라우드 네이티브 운영의 핵심 원칙입니다. 이는 다음과 같은 여러 이점을 제공합니다:
 
----
+- **환경별 배포**: 동일한 애플리케이션 이미지를 개발, 스테이징, 프로덕션 등 다양한 환경에 배포하면서 각 환경에 맞는 설정값(예: 데이터베이스 엔드포인트, 기능 플래그)만 변경하여 적용할 수 있습니다.
+- **보안 강화**: 데이터베이스 비밀번호, API 토큰과 같은 민감 정보를 소스 코드나 이미지 레이어에 포함시키지 않고, 보안이 강화된 별도의 메커니즘을 통해 관리할 수 있습니다.
+- **운영 유연성**: 애플리케이션을 재배포하지 않고도 설정값을 변경할 수 있어, 운영 중인 서비스에 대한 변경이 더 빠르고 안전해집니다.
+- **선언적 관리**: 모든 설정을 YAML 파일로 정의하고 버전 관리 시스템(Git)에 저장함으로써 변경 이력을 추적하고, 재현 가능한 배포를 구현할 수 있습니다.
 
-## 오브젝트 개요 — ConfigMap vs Secret
+쿠버네티스는 이러한 요구사항을 충족시키기 위해 **ConfigMap**과 **Secret**이라는 두 가지 핵심 리소스를 제공합니다.
 
-- **ConfigMap**: 평문 구성값(비민감). 텍스트 설정, 플래그, 엔드포인트, 기능 토글 등.
-- **Secret**: 민감정보. 기본적으로 **base64 인코딩** 저장(암호화 아님). etcd **암호화 설정**으로 저장 시 암호화 가능.
-
-요약 비교:
+## ConfigMap vs Secret: 기본 비교
 
 | 항목 | ConfigMap | Secret |
-|---|---|---|
-| 용도 | 일반 설정 | 자격증명/키/토큰/인증서 |
-| 저장 포맷 | 평문 | base64 인코딩(`data`), 평문 입력(`stringData`) |
-| kubectl 출력 | 마스킹 없음 | 기본 마스킹(일부 출력 제한) |
-| etcd 암호화 | 별도 설정 필요 | 동일하나 보안상 **반드시** 권장 |
-| 주입 방식 | env, volume, args | env, volume, args |
-| 크기 제한 | 오브젝트 최대 ~1MiB 권고(에티시디/아피서버 오버헤드 고려) | 동일 |
+|------|-----------|---------|
+| **주요 용도** | 비밀번호, 토큰, 키가 **아닌** 일반 애플리케이션 설정 관리 | 패스워드, OAuth 토큰, SSH 키, TLS 인증서 등 **민감 정보** 관리 |
+| **데이터 저장 방식** | 평문 텍스트로 저장 | 기본적으로 Base64로 인코딩된 텍스트로 저장 (`stringData`로 평문 입력 가능) |
+| **CLI 출력 시** | 값이 평문으로 표시됨 | 값이 마스킹되거나 `****`로 표시됨 |
+| **보안 고려사항** | etcd 암호화 권장 | **etcd 저장소 암호화 필수**, RBAC를 통한 엄격한 접근 제어 권장 |
+| **데이터 주입 방법** | 환경변수, 파일 마운트, 커맨드라인 인자 | 환경변수, 파일 마운트, 커맨드라인 인자 (파일 마운트가 더 안전) |
+| **크기 제한** | 오브젝트당 대략 1MiB 이내 권장 (성능 고려) | 오브젝트당 대략 1MiB 이내 권장 (성능 고려) |
 
----
+> **핵심 차이**: ConfigMap은 **설정(configuration)** 을, Secret은 **비밀(secret)** 정보를 위한 것입니다. Secret의 Base64 인코딩은 단순한 인코딩이지 암호화가 아니므로, **etcd 저장소 암호화를 반드시 활성화**해야 합니다.
 
-## 기본 예제(보강)
+## 기본 사용법 예제
 
-### ConfigMap (일반 설정)
+### ConfigMap 생성 예시
 
 ```yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: app-config
-  labels:
-    app.kubernetes.io/name: sample
 data:
-  APP_MODE: "production"
+  # 단순 키-값 쌍
+  APP_ENVIRONMENT: "production"
   LOG_LEVEL: "info"
-  FEATURE_X_ENABLED: "true"
-  # 파일 형태로 투하할 수도 있다(멀티라인)
+  MAX_CONNECTIONS: "100"
+  
+  # 파일 형태의 멀티라인 구성 (예: 속성 파일, YAML, JSON)
   application.properties: |
-    http.port=8080
-    cache.size=1024
+    server.port=8080
+    cache.enabled=true
+    feature.new-ui=false
 ```
 
-### Secret (민감 정보)
+### Secret 생성 예시
+
+`stringData` 필드를 사용하면 Base64 변환 없이 평문으로 작성할 수 있습니다. 쿠버네티스가 자동으로 인코딩합니다.
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
-  name: db-secret
-type: Opaque
+  name: database-credentials
+type: Opaque  # 사용자 정의 데이터 타입
 stringData:
-  DB_USER: admin
-  DB_PASSWORD: s3cr3tpass
-  # PEM, JSON 등 바이너리는 base64 사용
-  # data:
-  #   tls.crt: <base64>
-  #   tls.key: <base64>
+  DB_USERNAME: "app_user"
+  DB_PASSWORD: "VeryS3cur3P@ssw0rd!"
+  API_KEY: "sk_live_abc123def456"
 ```
 
-> 참고: `stringData`는 커밋 시 평문이므로 **레포 보안**(SOPS/Sealed Secrets 등)과 분리 저장 전략을 반드시 고려한다.
+## Pod에 설정 주입하는 주요 방법
 
----
+### 1. 환경변수로 일괄 주입 (`envFrom`)
 
-## Pod에 주입하는 3가지 경로
-
-### 환경 변수 일괄 주입(envFrom)
+ConfigMap이나 Secret의 모든 키-값 쌍을 환경변수로 변환하여 Pod에 주입합니다.
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: demo-envfrom
+  name: app-pod
 spec:
   containers:
-  - name: app
-    image: ghcr.io/example/app:1.0.0
+  - name: app-container
+    image: myapp:latest
     envFrom:
     - configMapRef:
-        name: app-config
+        name: app-config      # app-config의 모든 키가 환경변수가 됨
     - secretRef:
-        name: db-secret
+        name: database-credentials  # Secret의 모든 키도 환경변수가 됨
 ```
 
-- **충돌 규칙**: 동일 키가 중복되면 **뒤에 나오는 항목이 덮어쓰지 않는다.**(컨테이너 시작 실패) → 키 네이밍 규칙으로 방지.
-- 프로세스에서 `APP_MODE`, `DB_USER` 등으로 사용.
+### 2. 개별 키를 환경변수로 주입 (`env`)
 
-### 개별 키 매핑(env)
+특정 키만 선택적으로 환경변수로 매핑할 수 있습니다.
 
 ```yaml
-env:
-- name: APP_MODE
-  valueFrom:
-    configMapKeyRef:
-      name: app-config
-      key: APP_MODE
-- name: DB_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: db-secret
-      key: DB_PASSWORD
+    env:
+    - name: DATABASE_PASSWORD  # Pod 내부에서 사용할 환경변수명
+      valueFrom:
+        secretKeyRef:
+          name: database-credentials  # 참조할 Secret 이름
+          key: DB_PASSWORD            # Secret 내의 특정 키
+          optional: true              # 키가 없어도 Pod 시작 실패하지 않음
+    - name: LOG_LEVEL
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: LOG_LEVEL
 ```
 
-- 미존재 키 시 `optional: true`를 활용해 유연성 확보 가능.
+### 3. 파일로 마운트 (가장 유연한 방식)
 
-### 볼륨으로 파일 마운트
+ConfigMap이나 Secret의 데이터를 컨테이너의 파일 시스템 경로에 파일로 마운트합니다.
 
 ```yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: demo-files
+  name: app-pod
 spec:
   containers:
-  - name: app
-    image: ghcr.io/example/app:1.0.0
+  - name: app-container
+    image: myapp:latest
     volumeMounts:
-    - name: cfg
-      mountPath: /etc/config
-    - name: sec
-      mountPath: /etc/secret
-      readOnly: true
+    - name: config-volume
+      mountPath: /etc/app/config
+    - name: secret-volume
+      mountPath: /etc/app/secrets
+      readOnly: true  # Secret은 읽기 전용으로 마운트 권장
+      
   volumes:
-  - name: cfg
+  - name: config-volume
     configMap:
       name: app-config
-      # 선택 키만 파일로 투하
-      items:
+      items:  # 특정 키만 파일로 생성
       - key: application.properties
-        path: app.properties
-  - name: sec
+        path: application.properties
+  - name: secret-volume
     secret:
-      secretName: db-secret
+      secretName: database-credentials
+      defaultMode: 0400  # 파일 권한 설정 (소유자만 읽기)
 ```
 
-- 디렉터리 내 파일 이름=키, 파일 내용=값.
+## 설정 변경과 롤아웃 전략
 
----
+ConfigMap이나 Secret의 내용이 변경되었을 때, 이를 실행 중인 애플리케이션에 어떻게 적용할지 결정해야 합니다.
 
-## 변경 전파와 롤링/핫 리로드
+### 환경변수 방식의 제한 사항
 
-### env 주입의 특성
+**중요**: 환경변수로 주입된 값은 **Pod이 재시작되기 전까지 업데이트되지 않습니다.** 설정을 변경하려면 Pod를 재생성해야 하며, 이는 일반적으로 Deployment의 롤링 업데이트를 의미합니다.
 
-- **환경변수는 컨테이너 시작 시에만** 주입됨 → **ConfigMap/Secret 변경 ≠ 자동 적용**.
-- 재시작/롤링이 필요.
+### 파일 마운트 방식의 동적 업데이트
 
-#### 패턴 A: 애노테이션 해시를 템플릿에 삽입(권장)
+파일로 마운트된 ConfigMap/Secret은 **kubelet에 의해 주기적으로 동기화**됩니다. 변경 사항은 수초에서 수십 초 내에 컨테이너의 파일 시스템에 반영됩니다. 그러나 애플리케이션이 이를 인지하고 새 설정을 적용하려면 추가 작업이 필요합니다:
 
-Helm/Kustomize에서 ConfigMap/Secret의 해시를 Pod 템플릿 애노테이션에 주입하여 **값이 바뀌면 자동 롤링**.
+1.  **애플리케이션 자체 리로드 기능**: 애플리케이션이 설정 파일 변경을 감지(`inotify` 등)하거나 주기적으로 파일을 다시 읽어서 설정을 갱신하도록 구현되어 있어야 합니다.
+2.  **외부 시그널 전송**: `SIGHUP` 시그널을 보내거나 애플리케이션의 `/reload` HTTP 엔드포인트를 호출하여 설정을 다시 로드하도록 할 수 있습니다. (주의: 구현 복잡성 증가)
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web
-spec:
-  replicas: 3
-  selector:
-    matchLabels: { app: web }
-  template:
-    metadata:
-      labels: { app: web }
-      annotations:
-        # 예: Kustomize의 configMapGenerator/secretGenerator가 생성한 해시
-        checksum/config: "d2f9e9b4..."
-        checksum/secret: "a1b2c3d4..."
-    spec:
-      containers:
-      - name: web
-        image: ghcr.io/example/web:2.1.0
-        envFrom:
-        - configMapRef: { name: app-config }
-        - secretRef: { name: db-secret }
-```
+### 권장 패턴: 설정 변경 시 자동 롤링 업데이트
 
-### 파일 마운트의 특성
+실제 운영에서는 설정 변경 시 자동으로 Pod를 재시작하여 새로운 설정을 적용하는 방식을 선호합니다. 이는 **Helm**이나 **Kustomize**와 같은 도구를 사용해 쉽게 구현할 수 있습니다.
 
-- **볼륨으로 마운트된 파일은 값 변경 시 kubelet이 파일을 갱신**(수 초 지연).
-- 애플리케이션이 해당 파일을 **감시(inotify)** 하거나 주기적 재로딩 로직이 있으면 **무중단 핫 리로드** 가능.
-
-#### 패턴 B: SIGHUP/HTTP 핫 리로드 엔드포인트
-
-- 컨테이너 내 사이드카(예: reloader) 또는 `ConfigMap` 변경 감지 → 앱에 SIGHUP/HTTP `/reload` 호출.
-
-```yaml
-lifecycle:
-  postStart:
-    exec:
-      command: ["sh","-c","inotifywait -m /etc/config -e modify | while read; do curl -sf http://127.0.0.1:8080/reload || true; done"]
-```
-
-> 주의: 도구 설치/권한, 안정성 고려. 운영환경에서는 검증된 사이드카(예: stakater/Reloader)나 애플리케이션 자체 리로드 기능이 더 안전하다.
-
----
-
-## 값 형식과 제약
-
-- 모든 값은 문자열로 간주. 정수/불리언은 앱에서 파싱.
-- **크기**: 오브젝트당 수백 KB–1MiB 내를 권장(과대하면 apiserver/etcd 성능 저하).
-- **바이너리**: `Secret.data`에 base64. ConfigMap은 `binaryData`도 지원.
-- **불변화(immutability)**: 잦은 변경이 필요 없는 설정은 `immutable: true`로 실수 방지 및 APIServer 부하 감소.
-
-```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: stable-config
-immutable: true
-data:
-  TOGGLE: "off"
-```
-
----
-
-## 보안 심화 — Secret 안전하게 쓰기
-
-### 최소 권한(RBAC)
-
-- Secret 읽기 권한을 **네임스페이스/리소스 단위로 최소화**.
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: read-db-secret
-  namespace: prod
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  resourceNames: ["db-secret"]
-  verbs: ["get"]
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: app-binds-db-secret
-  namespace: prod
-subjects:
-- kind: ServiceAccount
-  name: app-sa
-  namespace: prod
-roleRef:
-  kind: Role
-  name: read-db-secret
-  apiGroup: rbac.authorization.k8s.io
-```
-
-- 워크로드에 **전용 ServiceAccount**를 부여하고 필요한 Secret만 허용.
-
-### etcd 저장 암호화(서버사이드)
-
-- kube-apiserver의 `EncryptionConfiguration`으로 Secret을 **저장 시 암호화**.
-
-예시(클러스터 관리 영역):
-```yaml
-apiVersion: apiserver.config.k8s.io/v1
-kind: EncryptionConfiguration
-resources:
-- resources: ["secrets"]
-  providers:
-  - aescbc:
-      keys:
-      - name: key1
-        secret: <base64-encoded-32-byte-key>
-  - identity: {}
-```
-
-> 운영환경에서는 **반드시** 활성화. 키 로테이션/백업 정책 포함.
-
-### 노출면 최소화
-
-- Secret을 **환경변수**로 노출하면 프로세스 크래시 덤프/프로파일에서 유출 가능. 가능하면 **파일 마운트**가 더 안전.
-- 컨테이너 로그에 비밀을 출력하지 말 것.
-- `kubectl describe`/`get -o yaml` 권한을 제한.
-
-### 외부 비밀 소스 연계(CSI Driver)
-
-- 클라우드 KMS/Secrets Manager(AWS/GCP/Azure)와 동기화하려면 **Secrets Store CSI Driver** 사용.
-- 장점: Secret을 etcd에 저장하지 않거나, 동기화 주기를 제어 가능.
-
-간단한 예(개념):
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: csi-secrets-demo
-spec:
-  serviceAccountName: app-sa
-  volumes:
-  - name: secrets-store-inline
-    csi:
-      driver: secrets-store.csi.k8s.io
-      readOnly: true
-      volumeAttributes:
-        secretProviderClass: aws-sm-example
-  containers:
-  - name: app
-    image: ghcr.io/example/app:1.0.0
-    volumeMounts:
-    - name: secrets-store-inline
-      mountPath: "/mnt/secrets-store"
-      readOnly: true
-```
-
----
-
-## 실전 운영 패턴
-
-### Kustomize(해시 유도 롤아웃)
-
-`kustomization.yaml`:
+**Kustomize 예시 (`kustomization.yaml`)**:
 ```yaml
 resources:
 - deployment.yaml
@@ -332,242 +169,87 @@ resources:
 configMapGenerator:
 - name: app-config
   literals:
-  - APP_MODE=prod
   - LOG_LEVEL=info
-  behavior: create
+  - APP_ENV=production
 
 secretGenerator:
-- name: db-secret
+- name: app-secrets
   literals:
-  - DB_USER=admin
-  - DB_PASSWORD=s3cr3t
-  behavior: create
+  - DB_PASSWORD=secret123
 
 generatorOptions:
-  disableNameSuffixHash: false   # 이름 뒤 해시를 붙여 롤아웃 유도
+  disableNameSuffixHash: false  # ConfigMap/Secret 이름 뒤에 해시를 붙임
 ```
+Kustomize는 ConfigMap/Secret 내용이 변경될 때마다 새로운 해시를 생성하여 오브젝트 이름(예: `app-config-abc123`)을 변경합니다. Deployment가 이 이름을 참조하므로, 설정이 바뀌면 참조하는 오브젝트 이름도 바뀌어 Pod 템플릿이 변경된 것으로 인식되어 자동 롤링 업데이트가 트리거됩니다.
 
-- 생성된 이름(`app-config-<hash>`)이 바뀌면 Deployment 템플릿의 참조도 바뀌며 **자동 롤링**.
+## 고급 보안 관행
 
-### Helm(템플릿 값 → CM/Secret)
+### 1. 최소 권한 원칙 (RBAC)
+Secret에 접근해야 하는 Pod에만 필요한 최소한의 권한을 부여하세요. 이를 위해 전용 ServiceAccount를 생성하고, 해당 ServiceAccount에 특정 Secret에 대한 `get` 권한만 부여하는 Role과 RoleBinding을 구성합니다.
 
-`values.yaml`:
 ```yaml
-config:
-  appMode: prod
-  logLevel: info
-secret:
-  dbUser: admin
-  dbPassword: s3cr3t
-```
-
-템플릿에서 주입 후, `.Values` 변경 시 checksum 애노테이션을 통해 롤아웃.
-
-{% raw %}
-```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
 metadata:
-  annotations:
-    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-    checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
-```
-{% endraw %}
-
-### GitOps(SOPS/Sealed Secrets)
-
-- 레포에 비밀을 평문으로 두지 않기 위해 **SOPS**(KMS/PGP 기반 파일 암호화) 또는 **Sealed Secrets**(클러스터 퍼블릭 키로 암호화) 사용.
-- 파이프라인에서 복호화/적용.
-
----
-
-## 네임스페이스/레이블/셀렉터와의 결합
-
-- 환경별 네임스페이스(`dev`,`stage`,`prod`)로 Secret/ConfigMap을 분리.
-- `app`, `env`, `component` 레이블을 통일하여 **정책/검색/감사** 용이화.
-
-```yaml
-metadata:
-  labels:
-    app.kubernetes.io/name: sample
-    app.kubernetes.io/instance: sample-prod
-    app.kubernetes.io/component: web
-    app.kubernetes.io/part-of: sample-suite
-    app.kubernetes.io/version: "2.1.0"
+  name: read-db-secret
+  namespace: production
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames: ["database-credentials"]  # 이 특정 Secret만
+  verbs: ["get"]  # 읽기 권한만
 ```
 
----
+### 2. etcd 저장 암호화 활성화
+민감 정보가 평문으로 etcd에 저장되는 것을 방지하기 위해, 클러스터 수준에서 **etcd 암호화**를 구성해야 합니다. 이는 `EncryptionConfiguration` 파일을 통해 kube-apiserver에 설정합니다.
 
-## 트러블슈팅
+### 3. 외부 비밀 관리 도구와 연동
+대규모 또는 엔터프라이즈 환경에서는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager와 같은 전문 비밀 관리 도구를 쿠버네티스와 연동하는 것을 고려하세요. **Secrets Store CSI Driver**나 **External Secrets Operator**와 같은 도구가 이 연동을 도와줍니다.
 
-| 증상 | 원인 | 해결 |
-|---|---|---|
-| 설정을 바꿨는데 앱이 그대로 | env 주입은 런타임 재주입 안 됨 | 롤링 유도(해시 애노테이션) 또는 파일 마운트 + 핫리로드 |
-| 컨테이너 시작 실패 “not found key” | 누락된 키 | `optional: true` 혹은 값 기본치 제공, 배포 순서 검증 |
-| 예상치 못한 값 충돌 | envFrom 키 충돌 | 키 네이밍 규칙, env 개별 매핑, 정적 스키마 도입 |
-| 성능 저하/에러 “etcd large object” | 과도한 크기 | 설정 분할/압축/외부 저장소(오브젝트 스토리지)로 이전 |
-| 비밀 노출 | 권한 과다, 로그 누출 | RBAC 최소화, 로깅 필터링, 감사(audit) 활성화 |
+**장점**:
+- 중앙 집중식 비밀 관리 및 로테이션
+- etcd에 민감 정보 저장 방지
+- 세분화된 접근 정책과 감사 로그
 
-확인 명령:
-```bash
-kubectl get cm,secret
-kubectl describe cm app-config
-kubectl describe secret db-secret
-kubectl exec -it deploy/web -- env | grep -E 'APP_MODE|DB_'
-kubectl exec -it deploy/web -- ls -l /etc/config /etc/secret
-```
+## 모범 사례 요약
 
----
+1.  **명확한 분리**: ConfigMap은 **일반 설정**, Secret은 **모든 민감 정보**용으로 엄격히 구분하여 사용하세요.
+2.  **주입 방법 선택**: 동적 업데이트가 필요하거나 보안이 우선이라면 **파일 마운트** 방식을, 간단한 설정은 환경변수 방식을 사용하세요. Secret은 가능하면 파일로 마운트하세요.
+3.  **변경 관리 자동화**: 설정 변경 시 자동 롤아웃을 위해 Helm이나 Kustomize의 해시 기반 네이밍 기능을 활용하세요.
+4.  **보안 강화**: Secret 사용 시 RBAC로 접근을 제한하고, etcd 암호화를 활성화하며, 가능하다면 외부 비밀 관리 도구를 도입하세요.
+5.  **설정 검증**: 애플리케이션 시작 시 설정값의 유효성을 검증하고, 문제가 있을 경우 `readinessProbe`를 실패 처리하여 잘못된 설정의 Pod가 트래픽을 받지 않도록 하세요.
 
-## 고급 주제
-
-### Projected Volume로 한 디렉터리에 합치기
-
-ConfigMap/Secret/DownwardAPI/ServiceAccount 토큰을 한 디렉터리에 투영.
-
-```yaml
-volumes:
-- name: projected
-  projected:
-    sources:
-    - configMap:
-        name: app-config
-    - secret:
-        name: db-secret
-```
-
-### subPath로 파일만 선택 마운트
-
-```yaml
-volumeMounts:
-- name: cfg
-  mountPath: /app/config/app.properties
-  subPath: app.properties
-```
-
-### 컨피그 스키마 검증
-
-- 애플리케이션 기동 시 스키마 검증 실패 → `readiness=false`로 유지해 **잘못된 설정이 트래픽에 노출되지 않도록**.
-
----
-
-## 실전 통합 예시(Deployment + CM/Secret + 롤링)
-
-```yaml
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: web-config
-data:
-  APP_MODE: "prod"
-  LOG_LEVEL: "info"
-  application.yaml: |
-    server:
-      port: 8080
-    feature:
-      x: true
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: web-secret
-type: Opaque
-stringData:
-  DB_USER: "admin"
-  DB_PASSWORD: "s3cr3t"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web
-spec:
-  replicas: 3
-  selector:
-    matchLabels: { app: web }
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-  template:
-    metadata:
-      labels: { app: web }
-      annotations:
-        checksum/config: "d2f9e9b4..."   # 템플릿 도구에서 주입
-        checksum/secret: "a1b2c3d4..."
-    spec:
-      serviceAccountName: web-sa
-      containers:
-      - name: web
-        image: ghcr.io/example/web:2.1.0
-        ports:
-        - containerPort: 8080
-        envFrom:
-        - configMapRef: { name: web-config }
-        - secretRef:    { name: web-secret }
-        volumeMounts:
-        - name: cfg
-          mountPath: /etc/web
-        - name: sec
-          mountPath: /etc/secret
-          readOnly: true
-        readinessProbe:
-          httpGet: { path: /readyz, port: 8080 }
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          failureThreshold: 3
-        livenessProbe:
-          httpGet: { path: /livez, port: 8080 }
-          initialDelaySeconds: 20
-          periodSeconds: 10
-          failureThreshold: 3
-      volumes:
-      - name: cfg
-        configMap:
-          name: web-config
-          items:
-          - key: application.yaml
-            path: app.yaml
-      - name: sec
-        secret:
-          secretName: web-secret
-```
-
----
-
-## 명령어 실습(요약)
+## 문제 해결 명령어
 
 ```bash
-# 생성
+# ConfigMap과 Secret 목록 조회
+kubectl get configmaps
+kubectl get secrets
 
-kubectl create configmap app-config \
-  --from-literal=APP_MODE=dev \
-  --from-literal=LOG_LEVEL=debug
+# 특정 ConfigMap/Secret의 상세 내용 확인 (Secret 값은 마스킹됨)
+kubectl describe configmap app-config
+kubectl describe secret database-credentials
 
-kubectl create secret generic db-secret \
-  --from-literal=DB_USER=admin \
-  --from-literal=DB_PASSWORD=mysecret
+# Secret의 Base64 인코딩된 값 디코딩 (주의: 민감 정보 노출)
+kubectl get secret database-credentials -o jsonpath='{.data.DB_PASSWORD}' | base64 -d
 
-# 조회
+# Pod의 환경변수 확인
+kubectl exec <pod-name> -- env | grep DB_
 
-kubectl get cm app-config -o yaml
-kubectl get secret db-secret -o yaml
-echo c2VjcmV0 | base64 -d
+# Pod에 마운트된 설정 파일 확인
+kubectl exec <pod-name> -- ls -la /etc/app/config/
+kubectl exec <pod-name> -- cat /etc/app/config/application.properties
 
-# 적용/롤링
-
-kubectl apply -f deployment.yaml
-kubectl rollout status deploy/web
-
-# 변경 후 롤링 유도(해시 미사용 시)
-
-kubectl rollout restart deploy/web
+# 설정 변경 후 Deployment 롤링 재시작 (해시 기반 자동화가 없을 때)
+kubectl rollout restart deployment/<deployment-name>
 ```
-
----
 
 ## 결론
 
-- **ConfigMap**은 일반 설정, **Secret**은 민감 데이터를 다룬다.
-- **env 주입은 재시작 필요**, **파일 마운트는 실시간 갱신 + 핫리로드 패턴**으로 무중단 적용이 가능하다.
-- 대규모/협업 환경에서는 **RBAC 최소권한, etcd 암호화, GitOps(Helm/Kustomize + 해시 기반 롤아웃), 외부 비밀 연계(CSI/SOPS/Sealed)** 를 조합해 **보안과 가용성**을 동시에 달성하라.
-- 설정 검증과 Ready 게이트를 통해 **잘못된 설정이 프로덕션 트래픽에 영향을 주지 않도록** 하는 것이 마지막 안전망이다.
+ConfigMap과 Secret은 쿠버네티스 애플리케이션의 구성 관리를 근본적으로 변화시킨 강력한 도구입니다. 올바르게 사용하면 다음과 같은 이점을 얻을 수 있습니다:
+
+- **일관성과 재현성**: 모든 환경에서 동일한 이미지를 사용하면서 환경별 차이는 설정으로 관리합니다.
+- **보안 강화**: 민감 정보를 코드베이스에서 분리하고, 암호화와 접근 제어를 통해 보호합니다.
+- **운영 효율성**: 설정 변경에 대한 빠르고 안전한 배포 주기를 구현합니다.
+
+이러한 이점을 완전히 실현하기 위해서는 단순히 ConfigMap과 Secret을 사용하는 것을 넘어, **RBAC를 통한 접근 제어, etcd 암호화, GitOps를 통한 선언적 관리, 그리고 외부 비밀 관리 도구와의 연동**까지 종합적인 보안 및 운영 전략을 수립하고 적용하는 것이 중요합니다. 설정 관리가 단순한 기술 선택이 아닌, 애플리케이션의 안정성, 보안성, 그리고 운영 효율성의 핵심 기반이 될 수 있도록 체계적으로 접근하시기 바랍니다.

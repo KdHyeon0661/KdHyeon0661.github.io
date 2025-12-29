@@ -12,7 +12,7 @@ category: Kubernetes
 helm create mychart
 ```
 
-생성 구조:
+생성된 차트 구조:
 
 ```
 mychart/
@@ -29,16 +29,17 @@ mychart/
 └── .helmignore
 ```
 
-- `Chart.yaml`: 차트 메타데이터(이름, 버전 등)
-- `values.yaml`: 기본 설정값(환경별 오버라이드 대상)
-- `templates/`: Kubernetes 매니페스트 템플릿(Go 템플릿)
-- `charts/`: 서브차트(의존 차트)
-- `_helpers.tpl`: 네이밍/라벨 등 공통 템플릿 함수
-- `NOTES.txt`: 설치 후 안내 메시지
+각 파일의 역할:
+- `Chart.yaml`: 차트의 이름, 버전, 의존성 등 메타데이터 정의
+- `values.yaml`: 템플릿에 주입할 기본 구성값으로 환경별로 오버라이드 가능
+- `templates/`: Go 템플릿 문법으로 작성된 쿠버네티스 매니페스트
+- `charts/`: 서브차트(의존성) 저장 디렉터리
+- `_helpers.tpl`: 차트 전반에서 재사용할 네이밍 및 라벨 함수 정의
+- `NOTES.txt`: 설치 완료 후 사용자에게 표시할 안내 메시지
 
 ---
 
-## values.yaml 설계 — “환경 독립 이미지 + 환경 종속 설정” 분리
+## values.yaml 설계 — 환경별 구성 분리
 
 ```yaml
 replicaCount: 2
@@ -76,15 +77,16 @@ tolerations: []
 affinity: {}
 ```
 
-핵심 관점:
-- **이미지 태그는 명시적으로 고정**(latest 지양) → 재현성
-- env/리소스/Ingress 등은 **환경별 파일**로 오버라이드
+설계 원칙:
+- **이미지 태그는 명시적으로 고정**하여 동일한 버전의 재현 가능한 배포 보장
+- 환경별 차이(로그 레벨, 리소스, Ingress 설정 등)는 별도의 values 파일로 관리
+- 기본값은 개발 환경에 적합하도록 설정하고, 운영 환경에서는 오버라이드
 
 ---
 
 ## 템플릿 커스터마이징: Deployment
 
-`templates/deployment.yaml` (핵심 부분만 발췌)
+`templates/deployment.yaml`의 핵심 부분:
 
 {% raw %}
 ```yaml
@@ -135,10 +137,11 @@ spec:
 ```
 {% endraw %}
 
-템플릿 포인트:
-- `include`로 헬퍼 호출, `toYaml|nindent`로 들여쓰기·가독성 유지
-- `required`로 필수 값 검증 실패 시 렌더 단계에서 에러
-- `default`, `quote` 등 함수로 안전한 값 처리
+템플릿 작성 시 유의사항:
+- `include` 함수로 헬퍼 템플릿 호출하여 일관된 네이밍 유지
+- `toYaml`과 `nindent` 조합으로 가독성 있는 YAML 출력
+- `required` 함수로 필수 값 검증 실패 시 조기에 오류 발생
+- `default`, `quote` 등의 함수로 안전한 값 처리
 
 ---
 
@@ -165,7 +168,7 @@ spec:
 
 ---
 
-## Ingress(옵션)
+## Ingress 템플릿 (선택적)
 
 {% raw %}
 ```yaml
@@ -207,7 +210,7 @@ spec:
 
 ---
 
-## _helpers.tpl — 네이밍/라벨 표준화
+## _helpers.tpl — 네이밍 및 라벨 표준화
 
 {% raw %}
 ```yaml
@@ -238,20 +241,20 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 ```
 {% endraw %}
 
-- **app.kubernetes.io/\*** 표준 라벨을 일관되게 사용 → 운영·모니터링·셀렉터에 유리
-- 길이 제한(63) 고려해 `trunc` 사용
+- `app.kubernetes.io/*` 표준 라벨 채택: 쿠버네티스 에코시스템과의 호환성 향상
+- 리소스 이름 길이 제한(63자) 준수를 위해 `trunc` 함수 사용
+- 일관된 라벀링으로 모니터링, 로깅, 서비스 디스커버리 용이
 
 ---
 
-## 다양한 템플릿 기법 모음
+## 유용한 템플릿 기법
 
-### 조건/반복/기본값
+### 조건문과 반복문 활용
 
 {% raw %}
 ```yaml
 {{- if .Values.metrics.enabled }}
-# ServiceMonitor 혹은 PodMonitor 등 CRD 사용 시
-
+# 메트릭스 수집 관련 리소스 생성
 {{- end }}
 
 env:
@@ -262,9 +265,9 @@ env:
 ```
 {% endraw %}
 
-### `tpl`로 동적 렌더링
+### `tpl` 함수를 이용한 동적 템플릿 렌더링
 
-values에 템플릿 문자열이 들어온 경우 해석:
+values에 저장된 템플릿 문자열을 실행 시점에 해석:
 
 {% raw %}
 ```yaml
@@ -272,7 +275,7 @@ values에 템플릿 문자열이 들어온 경우 해석:
 ```
 {% endraw %}
 
-### 파일 삽입
+### 파일 내용 직접 삽입
 
 {% raw %}
 ```yaml
@@ -282,7 +285,7 @@ data:
 ```
 {% endraw %}
 
-### `required`, `default`, `quote`, `b64enc`
+### 필수 값 검증과 기본값 처리
 
 {% raw %}
 ```yaml
@@ -295,9 +298,9 @@ data:
 
 ---
 
-## — `values.schema.json`
+## values.schema.json — 구성값 검증
 
-차트 루트에 JSONSchema를 두면 `helm install/upgrade` 시 값 검증이 가능하다.
+차트 루트에 JSON 스키마를 추가하면 `helm install` 또는 `helm upgrade` 명령 실행 시 값의 유효성을 검증할 수 있습니다.
 
 ```json
 {
@@ -326,29 +329,26 @@ data:
 }
 ```
 
-장점
-- 파이프라인 초기에 **오타·형식 오류** 차단
-- 런타임 장애를 릴리즈 이전에 예방
+스키마 검증의 장점:
+- 오타나 형식 오류를 배포 전 조기에 발견
+- 런타임 장애 예방 및 안정성 향상
 
 ---
 
 ## 설치 전 검증 루틴
 
 ```bash
-# 렌더 결과 미리보기
-
+# 템플릿 렌더링 결과 미리보기
 helm template myrel ./mychart -f values-dev.yaml | tee rendered.yaml
 
-# 차트 린트
-
+# 차트 문법 및 구조 검사
 helm lint ./mychart
 
-# kubeconform 등으로 스키마 검증
-
+# 쿠버네티스 매니페스트 스키마 검증 (kubeconform 사용)
 helm template myrel ./mychart -f values-dev.yaml | kubeconform -strict -
 ```
 
-변경 전후 비교(helm-diff 플러그인):
+변경 사항 비교 (helm-diff 플러그인):
 
 ```bash
 helm plugin install https://github.com/databus23/helm-diff
@@ -357,7 +357,7 @@ helm diff upgrade myrel ./mychart -f values-prod.yaml
 
 ---
 
-## 설치/업그레이드 — 안전 옵션
+## 안전한 설치 및 업그레이드
 
 ```bash
 helm upgrade --install myapp ./mychart \
@@ -366,10 +366,10 @@ helm upgrade --install myapp ./mychart \
 ```
 
 - `--atomic`: 실패 시 자동 롤백
-- `--wait`: Ready까지 대기
-- `--timeout`: 상한 지정
+- `--wait`: 모든 리소스가 준비 상태가 될 때까지 대기
+- `--timeout`: 작업 시간 상한 지정
 
-릴리즈 상태/이력/롤백:
+릴리스 상태 확인 및 관리:
 
 ```bash
 helm status myapp
@@ -379,9 +379,9 @@ helm rollback myapp 2
 
 ---
 
-## Hook & Test — 배포 전후 작업/검증 자동화
+## Hook과 Test를 이용한 배포 자동화
 
-### 마이그레이션 Hook(Job)
+### 데이터베이스 마이그레이션 Hook (Job)
 
 {% raw %}
 ```yaml
@@ -404,7 +404,7 @@ spec:
 ```
 {% endraw %}
 
-### 설치 검증 테스트(helm test)
+### 설치 검증 테스트 (helm test)
 
 {% raw %}
 ```yaml
@@ -423,36 +423,34 @@ spec:
 ```
 {% endraw %}
 
-실행:
+테스트 실행:
 
 ```bash
 helm test myapp
 ```
 
-### NOTES.txt — 설치 후 안내
-
-`templates/NOTES.txt` 예시:
+### NOTES.txt — 설치 후 사용자 안내
 
 {% raw %}
 ```
-1) Service:
+1) Service 확인:
    kubectl get svc {{ include "mychart.fullname" . }}
 
-2) Port-forward:
+2) 로컬에서 접근하기 (포트 포워딩):
    kubectl port-forward svc/{{ include "mychart.fullname" . }} {{ .Values.service.port }}:{{ .Values.service.port }}
 
-3) Ingress:
+3) Ingress 접근:
 {{- if .Values.ingress.enabled }}
    https://{{ (index .Values.ingress.hosts 0).host }}
 {{- else }}
-   (ingress disabled)
+   (Ingress 비활성화됨)
 {{- end }}
 ```
 {% endraw %}
 
 ---
 
-## 서브차트/의존성 — charts/ & 글로벌 값
+## 서브차트와 의존성 관리
 
 `Chart.yaml`에 의존성 선언:
 
@@ -473,7 +471,7 @@ dependencies:
 helm dependency update ./mychart
 ```
 
-서브차트 값 주입:
+서브차트 값 구성:
 
 ```yaml
 # values.yaml
@@ -485,7 +483,7 @@ redis:
     password: "supersecret"
 ```
 
-모든 서브차트에 공통 적용하고 싶으면 **global** 키 사용:
+모든 서브차트에 공통으로 적용할 값은 `global` 키 사용:
 
 ```yaml
 global:
@@ -495,34 +493,34 @@ global:
 
 ---
 
-## 보안/비밀 관리 — 운영 체크리스트
+## 보안 및 비밀 정보 관리
 
-- Secret은 **base64 인코딩일 뿐 암호화 아님** → **etcd 암호화**, RBAC 최소 권한
-- 값 파일에 비밀번호 평문 저장 금지 → 다음 중 택일/혼용
-  - SOPS + helm-secrets 플러그인
-  - Sealed Secrets(클러스터에서 복호화)
-  - External Secrets Operator(클라우드 비밀 관리자 연동)
+Helm은 기본적으로 Secret을 암호화하지 않습니다. 운영 환경에서는 다음 방법 중 하나를 선택하여 비밀 정보를 안전하게 관리하는 것이 좋습니다.
 
-예: helm-secrets
+1. **SOPS + helm-secrets 플러그인**: 파일 기반 암호화
+2. **Sealed Secrets**: 클러스터 내에서만 복호화 가능
+3. **External Secrets Operator**: 클라우드 비밀 관리 서비스와 연동
+
+예: helm-secrets 사용
 
 ```bash
 helm plugin install https://github.com/jkroepke/helm-secrets
-# secrets-prod.yaml 을 sops 로 암호화
-
+# secrets-prod.yaml 파일 암호화
 helm secrets enc secrets-prod.yaml
+
+# 암호화된 파일로 배포
 helm upgrade --install myapp ./mychart \
   -f values-prod.yaml -f secrets-prod.yaml
 ```
 
 ---
 
-## 연계
+## 고급 기능 연동
 
-### HPA 활성화(예시)
+### HPA (Horizontal Pod Autoscaler)
 
 ```yaml
 # values.yaml
-
 autoscaling:
   enabled: true
   minReplicas: 2
@@ -530,55 +528,68 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
 ```
 
-`templates/hpa.yaml`에서 `autoscaling.enabled` 조건으로 렌더.
+`templates/hpa.yaml`에서 `autoscaling.enabled` 조건으로 HPA 리소스 생성.
 
-### PDB(중단 예산)
+### PDB (Pod Disruption Budget)
 
 ```yaml
 # values.yaml
-
 pdb:
   enabled: true
   minAvailable: "50%"
 ```
 
-### Probe
+### 헬스체크 프로브
 
 ```yaml
 livenessProbe:
-  httpGet: { path: /livez, port: http }
+  httpGet:
+    path: /livez
+    port: http
   initialDelaySeconds: 10
 readinessProbe:
-  httpGet: { path: /readyz, port: http }
+  httpGet:
+    path: /readyz
+    port: http
   initialDelaySeconds: 5
 ```
 
 ---
 
-## 분리
+## 라이브러리 차트를 통한 템플릿 재사용
 
-여러 서비스에서 동일한 템플릿을 재사용하려면 **type=library** 차트를 별도로 만들고, 앱 차트에서 `include`로 호출한다.
-대규모 조직에서 네이밍/라벨/리소스/Sidecar 패턴을 통일할 때 유용.
+여러 서비스에서 공통으로 사용하는 템플릿은 별도의 라이브러리 차트로 분리할 수 있습니다.
 
 `Chart.yaml`:
 
 ```yaml
+apiVersion: v2
+name: common-templates
+version: 1.0.0
 type: library
 ```
 
+애플리케이션 차트에서는 `include` 함수로 라이브러리 차트의 템플릿을 호출합니다. 이 방식은 대규모 조직에서 네이밍, 라벨, 리소스 패턴을 통일하는 데 유용합니다.
+
 ---
 
-## OCI 레지스트리로 차트 배포
+## OCI 레지스트리를 이용한 차트 배포
 
-컨테이너 레지스트리에 차트를 저장/배포(감사·권한·캐시 장점)
+컨테이너 레지스트리에 Helm 차트를 저장하고 배포할 수 있습니다.
 
 ```bash
 export HELM_EXPERIMENTAL_OCI=1
 
+# 차트 패키징
 helm package ./mychart
+
+# 레지스트리 로그인
 helm registry login ghcr.io
+
+# 차트 업로드
 helm push mychart-1.2.0.tgz oci://ghcr.io/acme/helm
 
+# 차트 다운로드
 helm pull oci://ghcr.io/acme/helm/mychart --version 1.2.0
 ```
 
@@ -586,40 +597,49 @@ helm pull oci://ghcr.io/acme/helm/mychart --version 1.2.0
 
 ## GitOps/CI 파이프라인 통합
 
-- **Argo CD/Flux**로 리포지터리 선언적 동기화 (values 파일 레이어링)
-- PR 기반 변경 → 렌더/린트/스키마 검증 → diff → 자동 배포
-- 샘플 CI 단계:
+Argo CD나 Flux와 같은 GitOps 도구를 사용하면 Git 저장소의 차트와 values 변경사항을 클러스터에 자동으로 동기화할 수 있습니다.
+
+CI/CD 파이프라인 예시:
 
 ```bash
+# 차트 문법 검사
 helm lint ./mychart
+
+# 템플릿 렌더링 및 스키마 검증
 helm template myrel ./mychart -f values-prod.yaml | kubeconform -strict -
+
+# 변경사항 비교
 helm diff upgrade myrel ./mychart -f values-prod.yaml
+
+# 안전한 배포
 helm upgrade --install myrel ./mychart -f values-prod.yaml --atomic --wait --timeout 10m
+
+# 테스트 실행
 helm test myrel
 ```
 
 ---
 
-## 운영 트러블슈팅 체크리스트
+## 운영 문제 해결 가이드
 
-1. 렌더 미리보기: `helm template --debug --dry-run`
-2. 차이 보기: `helm diff upgrade ...`
-3. 대기/원자성: `--wait --atomic --timeout`
-4. 네임스페이스 일치: `-n` 옵션 일관 유지
-5. 이미지 풀 실패: `imagePullSecrets`, 레지스트리 권한
-6. CRD 존재 여부: 차트 요구 API/CRD 사전 설치
-7. 스토리지: StorageClass/PVC 바인딩, 퍼미션
-8. Ingress: 클래스/어노테이션/호스트/TLS Secret 확인
-9. 자원: Requests/Limits 과소/과대 및 HPA 임계치
-10. 파드 이벤트/로그: `kubectl describe`, `kubectl logs`
+1. **렌더링 결과 확인**: `helm template --debug --dry-run`
+2. **변경사항 비교**: `helm diff upgrade` 명령으로 예상 변경 확인
+3. **대기 및 롤백**: `--wait --atomic --timeout` 옵션으로 안전한 배포
+4. **네임스페이스 확인**: `-n` 옵션을 일관되게 사용
+5. **이미지 풀 오류**: `imagePullSecrets` 및 레지스트리 권한 확인
+6. **CRD 확인**: 차트에서 요구하는 Custom Resource Definition 사전 설치
+7. **스토리지 문제**: StorageClass 및 PVC 바인딩 확인
+8. **Ingress 설정**: Ingress 클래스, 어노테이션, 호스트, TLS Secret 확인
+9. **리소스 제한**: Requests/Limits 및 HPA 임계값 적절성 검토
+10. **이벤트 및 로그**: `kubectl describe`와 `kubectl logs`로 문제 진단
 
 ---
 
-## 환경별 values 예시(개발/운영)
+## 환경별 values 파일 예시
+
+### 개발 환경 (values-dev.yaml)
 
 ```yaml
-# values-dev.yaml
-
 replicaCount: 1
 image:
   tag: "dev-2025-11-01"
@@ -633,9 +653,9 @@ ingress:
   enabled: false
 ```
 
-```yaml
-# values-prod.yaml
+### 운영 환경 (values-prod.yaml)
 
+```yaml
 replicaCount: 4
 image:
   tag: "1.4.0"
@@ -657,43 +677,49 @@ ingress:
     - hosts: [app.example.com]
       secretName: app-tls
 resources:
-  requests: { cpu: 300m, memory: 512Mi }
-  limits:   { cpu: 800m, memory: 1Gi }
+  requests:
+    cpu: 300m
+    memory: 512Mi
+  limits:
+    cpu: 800m
+    memory: 1Gi
 pdb:
   enabled: true
   minAvailable: "50%"
 ```
 
-설치:
+환경별 배포:
 
 ```bash
-helm upgrade --install myapp ./mychart -f values-dev.yaml     # 개발
-helm upgrade --install myapp ./mychart -f values-prod.yaml    # 운영
+# 개발 환경
+helm upgrade --install myapp ./mychart -f values-dev.yaml
+
+# 운영 환경
+helm upgrade --install myapp ./mychart -f values-prod.yaml
 ```
 
 ---
 
-## 빠른 점검 명령 모음
+## Helm 명령어 참고 사항
 
-| 목적 | 명령 |
-|---|---|
-| 리포 추가/업데이트 | `helm repo add <n> <url>`, `helm repo update` |
-| 검색/기본값 보기 | `helm search repo <kw>`, `helm show values <chart>` |
-| 렌더/린트/디프 | `helm template`, `helm lint`, `helm diff upgrade` |
-| 설치/업그레이드 | `helm upgrade --install <rel> ./mychart -f ... --atomic --wait` |
-| 상태/이력/롤백 | `helm status`, `helm history`, `helm rollback` |
-| 테스트 | `helm test <rel>` |
+- **리포지터리 관리**: `helm repo add <name> <url>`, `helm repo update`
+- **차트 검색 및 정보 확인**: `helm search repo <keyword>`, `helm show values <chart>`
+- **렌더링 및 검증**: `helm template`, `helm lint`, `helm diff upgrade`
+- **배포 및 관리**: `helm upgrade --install`, `helm status`, `helm history`, `helm rollback`
+- **테스트**: `helm test <release>`
 
 ---
 
 ## 결론
 
-**자체 Helm 차트**를 만들면 다음을 얻는다.
+자체 Helm 차트를 개발하면 다음과 같은 이점을 얻을 수 있습니다:
 
-- 모든 매니페스트를 **템플릿화**하여 **중복 제거**·**환경별 값 분리**·**재현 가능한 배포**
-- 스키마 검증/Hook/Test/이력·롤백/OCI/GitOps·CI로 **운영 안전성** 대폭 향상
-- 조직 표준(라벨/네이밍/리소스/보안)과 패턴(HPA/PDB/Ingress/Secrets)을 **헬퍼·라이브러리 차트**로 일원화
+1. **표준화 및 재사용성**: 모든 쿠버네티스 매니페스트를 템플릿화하여 중복을 제거하고, 환경별 구성값을 체계적으로 분리할 수 있습니다.
 
-처음에는 `helm create`의 기본 골격에서 시작하되,
-**values 스키마, 헬퍼 표준, Hook/Test, 보안(비밀 관리), 검증 파이프라인**을 더해
-프로덕션에서도 견고하게 돌아가는 **팀의 표준 차트**로 발전시켜라.
+2. **운영 안정성**: 스키마 검증, Hook, 테스트, 이력 관리, 롤백 기능을 통해 배포 프로세스의 안정성을 크게 향상시킬 수 있습니다.
+
+3. **조직 표준화**: 헬퍼 템플릿과 라이브러리 차트를 통해 네이밍 규칙, 라벨 체계, 리소스 패턴을 조직 전체에 일관되게 적용할 수 있습니다.
+
+4. **보안 강화**: 비밀 정보 관리 도구와의 통합을 통해 민감한 데이터를 안전하게 처리할 수 있습니다.
+
+차트 개발은 `helm create`로 생성한 기본 구조에서 시작하여, 점진적으로 values 스키마 검증, 표준화된 헬퍼 함수, Hook 및 테스트, 보안 메커니즘을 추가해 나가는 것이 좋습니다. 이를 통해 팀의 표준이 되고 프로덕션 환경에서도 신뢰할 수 있는 차트로 발전시킬 수 있습니다.

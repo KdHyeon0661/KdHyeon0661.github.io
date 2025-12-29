@@ -4,111 +4,116 @@ title: Docker - Kubernetes 클러스터에 Docker 이미지 배포
 date: 2025-03-24 20:20:23 +0900
 category: Docker
 ---
-# Kubernetes 클러스터에 Docker 이미지 배포하기
+# Kubernetes 클러스터에 Docker 이미지 배포: 실전 가이드
 
-- 이미지 버전 고정(다이제스트), 프라이빗 레지스트리 인증, 멀티 컨테이너/사이드카
-- Readiness/Liveness/Startup Probe, 리소스 요청/제한, HPA/VPA, PDB
-- ConfigMap/Secret, RBAC/ServiceAccount, NetworkPolicy
-- Service 타입별(ClusterIP/NodePort/LoadBalancer), Ingress + TLS
-- Blue-Green/Canary 롤아웃, 롤백/이력, 배포 전략 파라미터
-- Helm/Kustomize, 네임스페이스 전략, 운영/장애 대응 체크리스트
+Docker 이미지를 Kubernetes 클러스터에 배포하는 과정은 단순한 컨테이너 실행을 넘어서는 여러 고려사항을 포함합니다. 이 가이드는 이미지 버전 관리, 프라이빗 레지스트리 인증, 멀티 컨테이너 구성, 헬스 체크, 리소스 관리, 네트워킹, 보안, 배포 전략 등 실무에서 필요한 모든 요소를 다룹니다.
 
 ---
 
-## 핵심 흐름 복습
+## 배포 흐름 개요
 
-1) Docker 이미지 빌드
-2) 레지스트리에 Push(Docker Hub/Harbor/ECR/GHCR 등)
-3) Kubernetes 리소스 정의(Deployment/Service/Ingress/ConfigMap/Secret/SA 등)
-4) `kubectl`로 적용 또는 Helm/Kustomize로 배포
-5) 노출/스케일/보안/관측/롤백 운영
+Kubernetes에 애플리케이션을 배포하는 일반적인 흐름은 다음과 같습니다:
+
+1. **Docker 이미지 빌드**: 애플리케이션을 컨테이너 이미지로 패키징
+2. **레지스트리에 푸시**: Docker Hub, Harbor, ECR, GHCR 등의 레지스트리에 이미지 업로드
+3. **Kubernetes 리소스 정의**: Deployment, Service, ConfigMap, Secret 등의 매니페스트 작성
+4. **클러스터에 적용**: kubectl 명령어나 Helm/Kustomize를 통해 배포
+5. **운영 관리**: 노출, 스케일링, 모니터링, 롤백 등의 운영 작업 수행
 
 ---
 
-## Docker 이미지 빌드 & Push
+## Docker 이미지 준비 및 레지스트리 업로드
+
+### 기본 이미지 빌드 및 푸시 과정
 
 ```bash
 # 이미지 빌드
-
 docker build -t yourname/myapp:1.0.0 .
 
-# 로그인(Docker Hub 예시)
-
+# Docker Hub 로그인
 docker login
 
-# 태그 추가(가독 태그 + 불변 태그)
-
+# 추가 태그 생성
 docker tag yourname/myapp:1.0.0 yourname/myapp:latest
 
-# 푸시
-
+# 레지스트리에 푸시
 docker push yourname/myapp:1.0.0
 docker push yourname/myapp:latest
 ```
 
-### 다이제스트 고정 이미지(권장)
+### 재현성 보장을 위한 다이제스트 사용
 
-K8s 매니페스트에는 태그 대신 **다이제스트**를 고정 사용하면 재현성이 좋아진다.
+운영 환경에서는 태그 대신 다이제스트를 사용하여 특정 이미지 버전을 고정하는 것이 좋습니다. 이렇게 하면 동일한 코드가 항상 동일한 이미지를 참조하도록 보장할 수 있습니다.
 
 {% raw %}
 ```bash
-# 다이제스트 조회
-
+# 이미지 다이제스트 확인
 docker pull yourname/myapp:1.0.0
 docker inspect --format='{{index .RepoDigests 0}}' yourname/myapp:1.0.0
 # 출력 예: yourname/myapp@sha256:abcdef...
-
 ```
 {% endraw %}
 
-배포 시:
+Kubernetes 매니페스트에서 다이제스트 사용:
 ```yaml
-image: yourname/myapp@sha256:abcdef...   # 태그 대신 다이제스트
+image: yourname/myapp@sha256:abcdef...   # 태그 대신 다이제스트 사용
 ```
 
 ---
 
-## 네임스페이스 & 기본 권장 설정
+## Kubernetes 환경 설정
+
+### 네임스페이스 생성 및 컨텍스트 설정
 
 ```bash
+# 프로덕션 네임스페이스 생성
 kubectl create namespace prod
+
+# 현재 컨텍스트의 네임스페이스 설정
 kubectl config set-context --current --namespace=prod
 ```
 
-권장 애드온/설정:
-- Admission(예: OPA/Gatekeeper/Kyverno)로 **이미지 서명/다이제스트/리소스 제한** 정책 게이트
-- Metrics Server(HPA), Ingress Controller(NGINX/Contour/Traefik), Cert-Manager(TLS 자동화)
+### 권장 애드온 설치
+
+효율적인 클러스터 운영을 위해 다음 애드온을 고려하세요:
+- **Admission 컨트롤러**: OPA/Gatekeeper/Kyverno를 사용하여 이미지 서명, 다이제스트 필수 사용, 리소스 제한 등의 정책 강제
+- **Metrics Server**: Horizontal Pod Autoscaler(HPA) 동작을 위한 리소스 메트릭 수집
+- **Ingress Controller**: NGINX, Contour, Traefik 등을 통한 L7 로드 밸런싱
+- **Cert-Manager**: TLS 인증서 자동 발급 및 갱신 관리
 
 ---
 
-## 기초 Deployment 매니페스트
+## Deployment 매니페스트 작성
+
+다음은 프로덕션 환경을 고려한 기본 Deployment 매니페스트 예시입니다:
 
 ```yaml
-# myapp-deployment.yaml
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: myapp
-  labels: { app: myapp }
+  labels: 
+    app: myapp
 spec:
   replicas: 2
-  revisionHistoryLimit: 10
+  revisionHistoryLimit: 10  # 롤백을 위해 이전 리비전 유지
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1           # 추가 생성 허용
-      maxUnavailable: 0     # 가용성 유지
+      maxSurge: 1           # 업데이트 중 추가로 생성할 수 있는 파드 수
+      maxUnavailable: 0     # 업데이트 중 사용 불가능한 파드 수 (무중단 배포 보장)
   selector:
-    matchLabels: { app: myapp }
+    matchLabels: 
+      app: myapp
   template:
     metadata:
-      labels: { app: myapp }
+      labels: 
+        app: myapp
     spec:
       containers:
         - name: myapp
-          image: yourname/myapp:1.0.0   # 또는 다이제스트 권장
-          imagePullPolicy: IfNotPresent  # 또는 Always(태그 최신 갱신 시)
+          image: yourname/myapp:1.0.0   # 다이제스트 사용 권장
+          imagePullPolicy: IfNotPresent  # 또는 Always (최신 태그 사용 시)
           ports:
             - containerPort: 80
           env:
@@ -122,69 +127,77 @@ spec:
               cpu: "500m"
               memory: "512Mi"
           readinessProbe:
-            httpGet: { path: /healthz, port: 80 }
+            httpGet: 
+              path: /healthz
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 2
             failureThreshold: 3
           livenessProbe:
-            httpGet: { path: /livez, port: 80 }
+            httpGet: 
+              path: /livez
+              port: 80
             initialDelaySeconds: 10
             periodSeconds: 10
           startupProbe:
-            httpGet: { path: /startupz, port: 80 }
+            httpGet: 
+              path: /startupz
+              port: 80
             failureThreshold: 30
             periodSeconds: 3
-      terminationGracePeriodSeconds: 30
+      terminationGracePeriodSeconds: 30  # 정상 종료 대기 시간
 ```
 
-> **Probes**: 레디니스는 트래픽 수신 가능 상태, 라이브니스는 프로세스 생존 확인, 스타트업은 초기 부팅 안정화.
+**헬스 체크(Probes) 설명**:
+- **Readiness Probe**: 애플리케이션이 트래픽을 처리할 준비가 되었는지 확인
+- **Liveness Probe**: 애플리케이션 프로세스가 정상적으로 실행 중인지 확인
+- **Startup Probe**: 애플리케이션 초기 시작 시 장시간 부팅이 필요한 경우 사용
 
 ---
 
-## 노출
+## 서비스 노출 전략
+
+### 기본 ClusterIP 서비스
 
 ```yaml
-# myapp-service.yaml
-
 apiVersion: v1
 kind: Service
 metadata:
   name: myapp
 spec:
-  selector: { app: myapp }
+  selector: 
+    app: myapp
   ports:
     - name: http
-      port: 80         # 클러스터 내부 포트
-      targetPort: 80   # 컨테이너 포트
-  type: ClusterIP      # 내부 통신(default)
+      port: 80         # 클러스터 내부에서 접근하는 포트
+      targetPort: 80   # 컨테이너에서 노출하는 포트
+  type: ClusterIP      # 기본값, 클러스터 내부 통신용
 ```
 
-외부 노출 옵션:
-- **NodePort**: 디버그/온프레미스 간단 노출
-- **LoadBalancer**: 클라우드 L4 LB 할당
-- **Ingress**: L7 라우팅(도메인/경로/TLS)
+### 외부 노출 옵션
 
+- **NodePort**: 디버깅이나 온프레미스 환경에서 간단한 외부 노출에 사용
+- **LoadBalancer**: 클라우드 환경에서 외부 로드 밸런서 자동 생성
+- **Ingress**: L7 라우팅, 도메인 기반 라우팅, TLS 종료 등 고급 기능 제공
+
+NodePort 서비스 예시:
 ```yaml
-# NodePort 예시
-
 spec:
   type: NodePort
   ports:
     - port: 80
       targetPort: 80
-      nodePort: 30080   # 30000-32767
+      nodePort: 30080   # 30000-32767 범위 내 지정
 ```
 
 ---
 
-## Ingress + TLS(권장)
+## Ingress 및 TLS 구성
 
-Ingress Controller(NGINX 등) 설치 후:
+Ingress Controller 설치 후 다음과 같이 Ingress 리소스를 정의할 수 있습니다:
 
 ```yaml
-# myapp-ingress.yaml
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -193,8 +206,9 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   tls:
-    - hosts: [ myapp.example.com ]
-      secretName: myapp-tls
+    - hosts: 
+        - myapp.example.com
+      secretName: myapp-tls  # TLS 인증서가 저장된 Secret 이름
   rules:
     - host: myapp.example.com
       http:
@@ -204,16 +218,18 @@ spec:
             backend:
               service:
                 name: myapp
-                port: { number: 80 }
+                port: 
+                  number: 80
 ```
 
-**Cert-Manager** 자동 TLS 예시(요약):
-- ClusterIssuer(ACME/Let’s Encrypt) 생성
-- Ingress의 `cert-manager.io/cluster-issuer: letsencrypt` 주석 추가
+**Cert-Manager를 통한 자동 TLS 관리**:
+Cert-Manager를 사용하면 Let's Encrypt와 같은 ACME 인증서 발급자를 통해 TLS 인증서를 자동으로 발급하고 갱신할 수 있습니다. Ingress에 `cert-manager.io/cluster-issuer: letsencrypt` 어노테이션을 추가하면 됩니다.
 
 ---
 
-## 프라이빗 레지스트리 이미지 Pull
+## 프라이빗 레지스트리 인증 설정
+
+### 이미지 풀 시크릿 생성
 
 ```bash
 kubectl create secret docker-registry regcred \
@@ -223,7 +239,7 @@ kubectl create secret docker-registry regcred \
   --namespace=prod
 ```
 
-Deployment에:
+### Deployment에서 시크릿 사용
 
 ```yaml
 spec:
@@ -231,7 +247,9 @@ spec:
     - name: regcred
 ```
 
-또는 ServiceAccount에 부여(모든 Pod에 상속):
+### ServiceAccount에 시크릿 연결 (권장)
+
+여러 파드에서 동일한 시크릿을 사용할 경우 ServiceAccount에 연결하는 것이 효율적입니다:
 
 ```yaml
 apiVersion: v1
@@ -243,49 +261,53 @@ imagePullSecrets:
 ---
 apiVersion: apps/v1
 kind: Deployment
-# ...
-
 spec:
   template:
     spec:
-      serviceAccountName: app-sa
+      serviceAccountName: app-sa  # ServiceAccount 지정
 ```
 
 ---
 
-## 구성/비밀 — ConfigMap & Secret
+## 구성 관리: ConfigMap과 Secret
+
+### ConfigMap 정의
 
 ```yaml
-# config
-
 apiVersion: v1
 kind: ConfigMap
-metadata: { name: myapp-config }
+metadata:
+  name: myapp-config
 data:
   APP_MODE: production
   APP_REGION: ap-northeast-2
----
-# secret (base64 인코딩 but k8s 저장소는 평문에 가까움 → KMS/SealedSecret/Vault 고려)
+```
 
+### Secret 정의
+
+```yaml
 apiVersion: v1
 kind: Secret
-metadata: { name: myapp-secret }
+metadata:
+  name: myapp-secret
 type: Opaque
 data:
-  DB_PASSWORD: c2VjdXJlX3Bhc3M=   # echo -n 'secure_pass' | base64
+  DB_PASSWORD: c2VjdXJlX3Bhc3M=   # 'secure_pass'를 base64 인코딩
 ```
 
-컨테이너에 주입:
+**주의**: Kubernetes Secret은 기본적으로 base64로 인코딩되지만 평문에 가깝습니다. 프로덕션 환경에서는 Vault, SealedSecret, 또는 클라우드 제공자의 KMS를 통한 추가 암호화를 고려하세요.
+
+### 컨테이너에 구성 주입
 
 ```yaml
+# 환경 변수로 주입
 envFrom:
-  - configMapRef: { name: myapp-config }
-  - secretRef: { name: myapp-secret }
-```
+  - configMapRef: 
+      name: myapp-config
+  - secretRef: 
+      name: myapp-secret
 
-또는 파일 마운트:
-
-```yaml
+# 파일로 마운트
 volumeMounts:
   - name: app-config
     mountPath: /etc/myapp
@@ -300,16 +322,17 @@ volumes:
 
 ---
 
-## 리소스/스케일 — HPA/VPA/PDB
+## 스케일링 및 가용성 관리
 
-### HPA(수평 오토스케일)
+### Horizontal Pod Autoscaler (HPA)
 
-Metrics Server 필요.
+Metrics Server가 설치되어 있어야 HPA를 사용할 수 있습니다.
 
 ```yaml
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
-metadata: { name: myapp-hpa }
+metadata:
+  name: myapp-hpa
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -326,48 +349,57 @@ spec:
           averageUtilization: 60
 ```
 
-### PDB(중단 예산)
+### Pod Disruption Budget (PDB)
 
-노드 업그레이드 등 동안 최소 가용성 보장.
+노드 업그레이드나 유지보수 시 최소한의 가용성을 보장합니다.
 
 ```yaml
 apiVersion: policy/v1
 kind: PodDisruptionBudget
-metadata: { name: myapp-pdb }
+metadata:
+  name: myapp-pdb
 spec:
-  minAvailable: 1
+  minAvailable: 1  # 최소 1개의 파드가 항상 실행 중이어야 함
   selector:
-    matchLabels: { app: myapp }
+    matchLabels: 
+      app: myapp
 ```
 
-### 대략 용량 산정(간이)
+### 용량 계획 수립
 
-요청 기준으로 노드 수 산정:
+클러스터 용량을 계획할 때는 다음과 같은 공식을 참고할 수 있습니다:
+
+요청 기준으로 필요한 노드 수 계산:
 $$
-\text{노드수} \approx \left\lceil \frac{\sum_{i=1}^{N} \text{pod}_i\_\text{cpu\_request}}{\text{노드당 vCPU}} \cdot \frac{1}{\alpha} \right\rceil
+\text{노드 수} \approx \left\lceil \frac{\sum_{i=1}^{N} \text{pod}_i\_\text{cpu\_request}}{\text{노드당 vCPU}} \cdot \frac{1}{\alpha} \right\rceil
 $$
-- \(\alpha\): 여유율(예: 0.7). 메모리도 동일 방식으로 별도 산출하여 큰 값 채택.
+
+여기서 \(\alpha\)는 여유율(일반적으로 0.7)을 나타냅니다. 메모리 요구사항도 별도로 계산하여 더 큰 값을 채택합니다.
 
 ---
 
-## 네트워크/보안 — RBAC/SA/NetworkPolicy/SecContext
+## 보안 구성
 
-### RBAC + ServiceAccount
+### RBAC 및 ServiceAccount
 
-필요 최소 권한 부여.
+최소 권한 원칙에 따라 필요한 권한만 부여합니다.
 
 ```yaml
+# Role 정의
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
-metadata: { name: config-reader }
+metadata:
+  name: config-reader
 rules:
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get","list"]
----
+    verbs: ["get", "list"]
+
+# RoleBinding 정의
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
-metadata: { name: config-reader-bind }
+metadata:
+  name: config-reader-bind
 subjects:
   - kind: ServiceAccount
     name: app-sa
@@ -377,165 +409,193 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
 ```
 
-### NetworkPolicy(기본 거부 + 화이트리스트)
+### NetworkPolicy
+
+네트워크 트래픽을 세밀하게 제어합니다.
 
 ```yaml
-# 같은 네임스페이스 내 myapp로 향하는 80/tcp만 허용
-
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: { name: myapp-allow-frontend }
+metadata:
+  name: myapp-allow-frontend
 spec:
-  podSelector: { matchLabels: { app: myapp } }
+  podSelector:
+    matchLabels: 
+      app: myapp
   policyTypes: ["Ingress"]
   ingress:
     - from:
-        - podSelector: { matchLabels: { role: frontend } }
+        - podSelector:
+            matchLabels: 
+              role: frontend
       ports:
         - protocol: TCP
           port: 80
 ```
 
-### SecurityContext(비루트/읽기전용 fs/드롭 Cap)
+### SecurityContext
+
+컨테이너 보안 설정을 강화합니다.
 
 ```yaml
 securityContext:
-  runAsNonRoot: true
-  runAsUser: 1000
-  readOnlyRootFilesystem: true
-  allowPrivilegeEscalation: false
+  runAsNonRoot: true        # root 사용자로 실행 금지
+  runAsUser: 1000           # 특정 사용자 ID로 실행
+  readOnlyRootFilesystem: true  # 루트 파일 시스템 읽기 전용
+  allowPrivilegeEscalation: false  # 권한 상승 방지
   capabilities:
-    drop: ["ALL"]
+    drop: ["ALL"]           # 모든 Linux capabilities 제거
 ```
 
 ---
 
-## 멀티 컨테이너/사이드카 패턴(예: Reverse Proxy, 로그 셰퍼)
+## 멀티 컨테이너 패턴
+
+사이드카 패턴을 사용하여 로깅, 프록시, 모니터링 등의 기능을 추가할 수 있습니다.
 
 ```yaml
 spec:
   containers:
     - name: app
       image: yourname/myapp:1.0.0
-      ports: [{containerPort: 8080}]
+      ports: 
+        - containerPort: 8080
     - name: envoy
       image: envoyproxy/envoy:v1.30-latest
-      ports: [{containerPort: 80}]
-      args: ["-c","/etc/envoy/envoy.yaml"]
+      ports: 
+        - containerPort: 80
+      args: ["-c", "/etc/envoy/envoy.yaml"]
       volumeMounts:
         - name: envoy-config
           mountPath: /etc/envoy
   volumes:
     - name: envoy-config
-      configMap: { name: envoy-config }
+      configMap:
+        name: envoy-config
 ```
 
 ---
 
-## Blue-Green/Canary 배포
+## 배포 전략
 
-### Blue-Green(서비스 스위치)
+### Blue-Green 배포
 
-- `myapp-blue`, `myapp-green` 두 Deployment
-- `Service.selector`를 원하는 색으로 전환 → 무중단 릴리스/롤백
+두 개의 독립된 환경(Blue와 Green)을 유지하며 트래픽을 전환하는 방식입니다.
 
 ```yaml
-# Service selector만 바꾸면 트래픽 전환
-
+# Service의 selector만 변경하여 트래픽 전환
 spec:
-  selector: { app: myapp, color: blue }  # → green 으로 교체 시 전환
+  selector: 
+    app: myapp
+    color: blue  # green으로 변경 시 신규 버전으로 트래픽 전환
 ```
 
-### Canary(NGINX Ingress 가중치)
+### Canary 배포
 
-- canary 어노테이션으로 일부 비율만 신버전에 라우팅
+NGINX Ingress Controller의 Canary 기능을 활용하여 점진적으로 신규 버전에 트래픽을 전환합니다.
 
 ```yaml
 metadata:
   annotations:
     nginx.ingress.kubernetes.io/canary: "true"
-    nginx.ingress.kubernetes.io/canary-weight: "10"
+    nginx.ingress.kubernetes.io/canary-weight: "10"  # 10% 트래픽만 신규 버전으로
 ```
 
 ---
 
-## 롤아웃/이력/롤백
+## 배포 관리 및 롤백
+
+### 배포 상태 모니터링
 
 ```bash
-# 진행 상황
-
+# 배포 진행 상태 확인
 kubectl rollout status deploy/myapp
 
-# 이력
-
+# 배포 히스토리 확인
 kubectl rollout history deploy/myapp
 
-# 특정 리비전 상세
-
+# 특정 리비전 상세 정보 확인
 kubectl rollout history deploy/myapp --revision=3
 
-# 롤백
-
+# 이전 버전으로 롤백
 kubectl rollout undo deploy/myapp --to-revision=3
 ```
 
-문제 발생 시 즉시 이전 리비전으로 복귀 가능.
+문제 발생 시 즉시 이전 안정적인 버전으로 롤백할 수 있어야 합니다.
 
 ---
 
-## 관측성 — 로그/지표/트레이싱 핸드북
+## 모니터링 및 관측성
 
-### 빠른 명령어
+### 기본 명령어
 
 ```bash
+# 파드 상태 확인
 kubectl get pods -o wide
-kubectl describe pod <pod>
-kubectl logs -f deploy/myapp      # 모든 파드 스트리밍
-kubectl top pod                   # CPU/메모리 사용(메트릭 서버 필요)
+
+# 파드 상세 정보
+kubectl describe pod <pod-name>
+
+# 로그 확인
+kubectl logs -f deploy/myapp
+
+# 리소스 사용량 확인 (Metrics Server 필요)
+kubectl top pod
 ```
 
-### 애플리케이션 레벨
+### 애플리케이션 레벨 관측성
 
-- /healthz, /livez, /metrics(Prometheus) 노출
-- 로깅: JSON 구조화 → Loki/ELK
-- 트레이싱: OpenTelemetry SDK → Collector → Jaeger/Tempo
+  - **헬스 엔드포인트**: `/healthz`, `/livez`, `/readyz` 제공
+  - **메트릭스 엔드포인트**: Prometheus 형식의 `/metrics` 노출
+  - **구조화된 로깅**: JSON 형식 로그 출력 (Loki/ELK와 통합)
+  - **분산 추적**: OpenTelemetry SDK를 통한 트레이스 생성 (Jaeger/Tempo와 통합)
 
 ---
 
-## Helm으로 배포(차트화)
+## 패키지 관리 도구 활용
+
+### Helm을 통한 배포
+
+Helm은 Kubernetes 애플리케이션을 패키징하고 배포하기 위한 차트 관리 도구입니다.
 
 ```bash
+# Helm 차트 생성
 helm create myapp
-# values.yaml 수정(이미지/replica/probes/env/resources 등)
 
+# values.yaml 파일 수정 (이미지, 레플리카, 환경변수 등)
+# 차트 설치
 helm install myapp ./myapp -n prod
+
+# 차트 업그레이드
 helm upgrade myapp ./myapp -f values-prod.yaml
+
+# 롤백
 helm rollback myapp 3
 ```
 
-Helm 값만 바꿔 환경(dev/stage/prod) 별 커스터마이징.
+### Kustomize를 통한 환경별 구성 관리
 
----
+Kustomize는 오버레이를 통해 환경별 구성을 관리하는 도구입니다.
 
-## Kustomize(오버레이로 환경 분리)
-
+디렉토리 구조 예시:
 ```
 k8s/
 ├─ base/           # 공통 리소스
 │  ├─ deployment.yaml
 │  └─ kustomization.yaml
 └─ overlays/
-   ├─ dev/kustomization.yaml
-   └─ prod/kustomization.yaml
+   ├─ dev/kustomization.yaml  # 개발 환경 구성
+   └─ prod/kustomization.yaml # 프로덕션 환경 구성
 ```
 
+적용 방법:
 ```bash
 kubectl apply -k k8s/overlays/prod
 ```
 
 ---
 
-## → K8s
+## 실전 예제: Flask 애플리케이션 배포
 
 ### Dockerfile
 
@@ -545,129 +605,177 @@ WORKDIR /app
 COPY app.py .
 RUN pip install --no-cache-dir flask
 EXPOSE 80
-CMD ["python","app.py"]
+CMD ["python", "app.py"]
 ```
 
-### 앱
+### 애플리케이션 코드 (app.py)
 
 ```python
-# app.py
-
 from flask import Flask
 app = Flask(__name__)
+
 @app.get("/")
 def root():
     return "Hello from Kubernetes!"
+
 @app.get("/healthz")
 def healthz():
     return "ok"
+
 @app.get("/livez")
 def livez():
     return "alive"
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=80)
 ```
 
-### 배포 리소스
+### Kubernetes 배포 매니페스트
 
 ```yaml
-# flask.yaml
-
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: flask-app, labels: { app: flask-app } }
+metadata:
+  name: flask-app
+  labels:
+    app: flask-app
 spec:
   replicas: 2
-  selector: { matchLabels: { app: flask-app } }
+  selector:
+    matchLabels:
+      app: flask-app
   template:
-    metadata: { labels: { app: flask-app } }
+    metadata:
+      labels:
+        app: flask-app
     spec:
       containers:
         - name: flask
           image: yourname/flask-app:1.0.0
-          ports: [{containerPort: 80}]
-          readinessProbe: { httpGet: { path: /healthz, port: 80 }, initialDelaySeconds: 5 }
-          livenessProbe:  { httpGet: { path: /livez,   port: 80 }, initialDelaySeconds: 10 }
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /livez
+              port: 80
+            initialDelaySeconds: 10
 ---
 apiVersion: v1
 kind: Service
-metadata: { name: flask-svc }
+metadata:
+  name: flask-svc
 spec:
-  selector: { app: flask-app }
-  ports: [{ port: 80, targetPort: 80 }]
+  selector:
+    app: flask-app
+  ports:
+    - port: 80
+      targetPort: 80
   type: NodePort
 ```
 
-```bash
-kubectl apply -f flask.yaml
-kubectl get svc flask-svc -o wide
-# http://<노드IP>:<NodePort> 로 접속
+### 배포 및 접속 테스트
 
+```bash
+# 배포 적용
+kubectl apply -f flask.yaml
+
+# 서비스 정보 확인
+kubectl get svc flask-svc -o wide
+
+# http://<노드IP>:<NodePort> 로 접속 테스트
 ```
 
 ---
 
-## 운영 팁/트러블슈팅
+## 운영 트러블슈팅 가이드
 
-| 증상 | 원인/대응 |
+| 증상 | 가능한 원인 및 해결 방안 |
 |---|---|
-| `ImagePullBackOff` | 레지스트리 인증 누락(imagePullSecrets), 이미지 경로/태그 오타 |
-| `CrashLoopBackOff` | 프로세스 종료(환경변수/포트/DB연결), liveness probe가 너무 공격적 |
-| `Readiness probe failed` | 앱 부팅 지연 → startupProbe/initialDelaySeconds 조정 |
-| 외부 접속 불가 | Ingress 컨트롤러 미설치/잘못된 host/TLS, Service selector 오타 |
-| HPA 작동 X | Metrics Server 미설치/권한 문제 |
-| 롤링 무중단 실패 | readiness 설정 누락, maxUnavailable>0, DB migrations로 장기 lock |
+| `ImagePullBackOff` | 레지스트리 인증 누락(imagePullSecrets 확인), 이미지 경로 또는 태그 오타 |
+| `CrashLoopBackOff` | 애플리케이션 프로세스 즉시 종료 (환경변수, 포트 충돌, DB 연결 문제 점검) |
+| `Readiness probe failed` | 애플리케이션 시작 지연 (startupProbe 추가 또는 initialDelaySeconds 조정) |
+| 외부 접속 불가 | Ingress 컨트롤러 미설치, Ingress host 설정 오류, TLS 인증서 문제 |
+| HPA 작동 안 함 | Metrics Server 미설치, 메트릭 수집 권한 문제 |
+| 롤링 업데이트 실패 | readinessProbe 미설정, maxUnavailable 값 과도, DB 마이그레이션 록 |
 
 ---
 
-## 보안/거버넌스 요약
+## 보안 모범 사례 요약
 
-- **이미지**: 최소 베이스(슬림/알파인/디스트로리스), Trivy 스캔, Cosign 서명, 다이제스트 배포
-- **Pod 보안**: 비루트, readOnlyRootFilesystem, drop ALL caps, AppArmor/SELinux, seccomp
-- **네트워크**: NetworkPolicy로 제어면/데이터면 분리, egress 제한
-- **비밀**: Secret은 KMS/SealedSecret/Vault로 암호화 관리
-- **정책**: Gatekeeper/Kyverno로 강제(리소스 제한/프로브/SA/서명검증)
-- **RBAC**: 최소 권한 원칙(서비스 계정 별도 발급, Role/Binding 세분화)
+1. **이미지 보안**
+   - 최소한의 베이스 이미지 사용 (slim, alpine, distroless)
+   - 정기적 취약점 스캔 (Trivy 등)
+   - 이미지 서명 및 검증 (Cosign)
+   - 다이제스트를 통한 버전 고정
+
+2. **파드 보안**
+   - 비루트 사용자로 실행
+   - 읽기 전용 루트 파일 시스템
+   - 불필요한 Linux capabilities 제거
+   - AppArmor/SELinux 프로필 적용
+
+3. **네트워크 보안**
+   - NetworkPolicy를 통한 트래픽 제어
+   - 네트워크 영역 분리 (제어면/데이터면)
+   - 아웃바운드 트래픽 제한
+
+4. **비밀 정보 관리**
+   - Secret의 기본 암호화 한계 인지
+   - Vault, SealedSecret, KMS 등을 통한 추가 암호화
+
+5. **정책 관리**
+   - Gatekeeper/Kyverno를 통한 정책 강제
+   - 리소스 제한, 프로브 필수, 서비스 계정 제한 등
+
+6. **권한 관리**
+   - 최소 권한 원칙 적용
+   - 서비스 계정 별도 생성 및 권한 부여
+   - Role과 RoleBinding 세분화
 
 ---
 
-## 간단 용량/비용 감 잡기
+## 용량 계획 및 비용 관리
 
-- 평균 요청당 CPU 시간 \(c\), 초당 요청 \(r\), 포드당 CPU 할당 \(C\)일 때 필요한 포드 수 \(k\)의 근사:
+애플리케이션 용량을 계획할 때는 다음 공식을 참고할 수 있습니다:
+
+평균 요청당 CPU 시간 \(c\), 초당 요청 수 \(r\), 파드당 CPU 할당량 \(C\)일 때 필요한 파드 수 \(k\)의 근사값:
 $$
 k \approx \left\lceil \frac{c \cdot r}{C \cdot \beta} \right\rceil
 $$
-- \(\beta\): 안전률(예: 0.6–0.7). 메모리 제약도 별도로 체크해 큰 값을 채택.
+
+여기서 \(\beta\)는 안전률(일반적으로 0.6-0.7)입니다. 메모리 제약 조건도 별도로 평가하여 더 큰 값을 채택합니다.
 
 ---
 
-## — GitOps/Helm/Kustomize
+## GitOps 및 배포 자동화
 
-- **GitOps(Argo CD/Flux)**: 매니페스트/차트를 Git에 선언 → 클러스터가 Pull로 동기화
-- **Helm**: 값 파일 프로모션(dev→staging→prod), 릴리스 이력/롤백 쉬움
-- **Kustomize**: 오버레이로 환경 차이 최소 diff
-
----
-
-## 최종 체크리스트
-
-- [ ] 이미지: 보안 스캔/서명, 다이제스트 고정
-- [ ] 리소스: requests/limits 정의, HPA/PDB 설정
-- [ ] 안정성: readiness/liveness/startup probe 설정
-- [ ] 보안: 비루트/RO FS/Capabilities drop/NetworkPolicy/RBAC
-- [ ] 노출: Ingress + TLS, 올바른 Service selector
-- [ ] 운영: 로그/지표/트레이싱, 경보, 롤아웃 이력/롤백
-- [ ] 문서화: 런북/장애 시나리오/백업·복구 절차
+- **GitOps (Argo CD/Flux)**: 매니페스트와 차트를 Git 저장소에 선언적으로 관리하고, 클러스터가 이를 주기적으로 동기화
+- **Helm**: 값 파일을 통해 환경별 구성 관리, 릴리스 이력 및 롤백 기능 제공
+- **Kustomize**: 오버레이를 통한 환경별 차이점 최소화, GitOps와의 자연스러운 통합
 
 ---
 
-## 참고 자료
+## 결론: 성공적인 Kubernetes 배포를 위한 핵심 원칙
 
-- Kubernetes Concepts & API Reference: https://kubernetes.io/docs/home/
-- kubectl 명령어: https://kubernetes.io/docs/reference/kubectl/
-- Ingress-NGINX: https://kubernetes.github.io/ingress-nginx/
-- Cert-Manager: https://cert-manager.io/
-- HPA: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
-- NetworkPolicy: https://kubernetes.io/docs/concepts/services-networking/network-policies/
-- Helm: https://helm.sh/docs/
-- Kustomize: https://kubectl.docs.kubernetes.io/installation/kustomize/
+Kubernetes에 Docker 이미지를 배포하는 과정은 기술적 세부사항을 넘어서 체계적인 접근 방식이 필요합니다. 다음 원칙들을 준수하면 더 안정적이고 안전하며 효율적인 배포 환경을 구축할 수 있습니다:
+
+1. **재현성 보장**: 태그 대신 다이제스트를 사용하여 동일한 코드가 항상 동일한 이미지를 참조하도록 합니다. 이는 운영 환경의 예측 가능성을 높이고 장애 조치를 단순화합니다.
+
+2. **보안 우선**: 컨테이너 수준에서 네트워크 수준까지 다층적 보안 방어 체계를 구축합니다. 최소 권한 원칙을 적용하고, 정기적인 취약점 스캔과 이미지 서명을 통해 공급망 보안을 강화합니다.
+
+3. **탄력성 설계**: 헬스 체크, 리소스 제한, 자동 스케일링, 파드 중단 예산 등을 활용하여 시스템이 장애에 견고하게 대응할 수 있도록 합니다.
+
+4. **관측성 내재화**: 로깅, 메트릭스, 추적을 애플리케이션 설계 단계부터 고려합니다. 문제 발생 시 빠른 진단과 해결을 가능하게 하는 모니터링 체계를 구축합니다.
+
+5. **자동화 철학**: 수동 작업을 최소화하고 CI/CD 파이프라인, GitOps, 정책 자동화를 통해 일관되고 감사 가능한 배포 프로세스를 확립합니다.
+
+6. **점진적 개선**: 모든 것을 완벽하게 구현하려는 압박보다는, 핵심 기능부터 시작하여 지속적으로 개선해 나가는 접근 방식을 채택합니다. 각 배포에서 하나의 보안이나 안정성 측면을 개선하는 것부터 시작하세요.
+
+7. **문서화 및 지식 공유**: 배포 절차, 트러블슈팅 가이드, 장애 대응 절차를 문서화하고 팀 내에서 지속적으로 공유합니다. 이는 팀의 운영 역량을 강화하고 새로운 멤버의 온보딩을 용이하게 합니다.
+
+Kubernetes 생태계는 빠르게 발전하고 있지만, 이러한 기본 원칙들은 변하지 않습니다. 도구와 기술이 변화하더라도 재현성, 보안, 탄력성, 관측성, 자동화에 대한 집중은 지속적인 성공을 위한 토대가 될 것입니다.

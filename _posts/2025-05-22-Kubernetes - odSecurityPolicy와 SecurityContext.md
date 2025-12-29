@@ -4,32 +4,33 @@ title: Kubernetes - PodSecurityPolicy와 SecurityContext
 date: 2025-05-22 20:20:23 +0900
 category: Kubernetes
 ---
-# PodSecurityPolicy와 SecurityContext로 보안 강화하기
+# PodSecurityPolicy와 SecurityContext로 Kubernetes 보안 강화하기
 
-## 큰 그림: “정책”과 “실행 프로파일”의 역할 분리
+## 보안 정책과 런타임 설정의 역할 구분
 
-- **정책(Policy)**: *허용 경계*를 정의하고, 위반 시 **거부/경고/감사**. (PSA, Gatekeeper, Kyverno)
-- **실행 프로파일(SecurityContext)**: 파드/컨테이너 **실제 런타임 속성**(사용자/권한/커널 인터페이스)을 명시.
+Kubernetes 환경에서의 효과적인 보안 강화는 두 가지 수준에서 이루어집니다:
+
+- **정책(Policy)**: 허용 가능한 보안 경계를 정의하고, 이를 위반할 경우 거부, 경고, 감사하는 규칙입니다. PodSecurity Admission(PSA), Gatekeeper, Kyverno 등이 이에 해당합니다.
+- **실행 프로파일(SecurityContext)**: 실제 파드와 컨테이너의 런타임 속성(사용자 ID, 권한, 커널 인터페이스 접근 등)을 명시적으로 설정합니다.
 
 ```
-[Dev/CI] ── 생성된 Pod/Deployment ──► [Admission: PSA/Gatekeeper/Kyverno]
-                                              │ (enforce/audit/warn)
+[개발/CI] ── 생성된 Pod/Deployment ──► [어드미션 컨트롤러: PSA/Gatekeeper/Kyverno]
+                                              │ (enforce/audit/warn 모드 적용)
                                               ▼
-                                       [API Server 저장]
+                                       [API 서버 저장]
                                               ▼
                                        [Kubelet 실행]
                                               │
-                               [SecurityContext / seccomp / AppArmor / SELinux]
+                               [SecurityContext / seccomp / AppArmor / SELinux 적용]
 ```
 
 ---
 
-## SecurityContext — 런타임 보안 설정의 핵심
+## SecurityContext: 런타임 보안 설정의 핵심
 
-`Pod.spec.securityContext` (파드 수준)와 `Pod.spec.containers[*].securityContext` (컨테이너 수준) 두 레벨에서 설정합니다.
-컨테이너 수준이 **보다 구체적**이며, 파드 수준 기본값을 **오버라이드**합니다.
+SecurityContext는 파드 수준(`Pod.spec.securityContext`)과 컨테이너 수준(`Pod.spec.containers[*].securityContext`)에서 설정할 수 있습니다. 컨테이너 수준 설정이 더 구체적이며, 파드 수준의 기본값을 오버라이드합니다.
 
-### 컨테이너 수준 예제 (권장 최소권한 템플릿)
+### 컨테이너 수준 SecurityContext 예제 (최소 권한 원칙 적용)
 
 ```yaml
 apiVersion: v1
@@ -47,14 +48,14 @@ spec:
       allowPrivilegeEscalation: false
       privileged: false
       capabilities:
-        drop: ["ALL"]         # 필요 시 add에 최소 권한만 추가
-        # add: ["NET_BIND_SERVICE"]  # 예: 1024 미만 포트 바인딩 필요 시
+        drop: ["ALL"]         # 모든 권한 제거 후 필요한 것만 추가
+        # add: ["NET_BIND_SERVICE"]  # 특수 권한이 필요한 경우만 추가
       readOnlyRootFilesystem: true
       seccompProfile:
         type: RuntimeDefault  # 또는 Localhost (커스텀 프로파일)
 ```
 
-### 파드 수준 공통 값 (fsGroup, supplementalGroups, sysctls)
+### 파드 수준 SecurityContext 설정 (공통 값 관리)
 
 ```yaml
 apiVersion: v1
@@ -67,7 +68,7 @@ spec:
     fsGroupChangePolicy: "OnRootMismatch"
     supplementalGroups: [2001, 2002]
     seLinuxOptions:
-      type: "spc_t"           # 환경에 맞게 조정(일반적으로 PSA-restricted에선 RunAsAny가 아님)
+      type: "spc_t"           # 환경에 맞게 조정 필요
     sysctls:
     - name: net.ipv4.ip_unprivileged_port_start
       value: "0"
@@ -81,62 +82,74 @@ spec:
       readOnlyRootFilesystem: true
 ```
 
-> **필드별 의의**
-> - `runAsNonRoot` + `runAsUser`: 루트(UID 0) 금지.
-> - `allowPrivilegeEscalation: false`: `setuid`/`sudo` 경로 차단.
-> - `privileged: false`: 호스트 커널에 거의 무제한 접근을 막음.
-> - `capabilities.drop: ["ALL"]`: 리눅스 capability 기본 제거, 필요한 것만 `add`로 부여.
-> - `readOnlyRootFilesystem: true`: 루트 FS를 읽기 전용으로 하여 파일 변조/랜섬 행위 방지.
-> - `seccompProfile`: 시스템 콜 표면 최소화. **`RuntimeDefault`** 권장.
+### 주요 SecurityContext 필드의 보안 의미
 
-### 볼륨·호스트 관련 위험 옵션
-
-- `hostNetwork: false`, `hostPID: false`, `hostIPC: false` 유지.
-- `hostPath` 볼륨 사용 금지(정말 필요한 경우 **경로 제한** 및 PSA/Gatekeeper로 통제).
-- `privileged` 컨테이너 금지.
-- `procMount: Default` 유지(커스텀은 위험).
-
----
-
-## — 제거 배경과 교훈
-
-- PSP는 **Admission Controller**로, 파드 생성 시 보안 조건을 검사/거부.
-- **v1.25에서 제거(Deprecated→Removed)**: UX 복잡성·권한 모델 혼란·운영 난이도.
-- **교훈**: 정책은 *간명한 기본 가드레일* + *고급 시나리오는 외부 정책엔진*으로.
-
-> **대체**:
-> - 기본선은 **PodSecurity Admission(PSA)** (Kubernetes 내장)
-> - 세밀/커스터마이징은 **OPA Gatekeeper** 또는 **Kyverno**
-
----
-
-## — PSP의 내장 대체
-
-**네임스페이스 라벨**로 정책 수준을 지정합니다.
-
-### 정책 레벨
-
-| 레벨 | 의도 | 대략적 특성 |
+| 필드 | 보안 의미 | 권장값 |
 |---|---|---|
-| `privileged` | 거의 모든 것 허용 | 테스트/특수 목적 |
-| `baseline` | 일반적 워크로드 최소 보호 | 일부 위험 기능 제한 |
-| `restricted` | 가장 엄격(권장) | 루트 금지, 권한상승 금지, 호스트 접근 차단 등 |
+| `runAsNonRoot` + `runAsUser` | 루트(UID 0) 권한 실행 방지 | `runAsNonRoot: true`, 비루트 UID 지정 |
+| `allowPrivilegeEscalation` | 권한 상승 경로 차단 | `false` |
+| `privileged` | 호스트 커널 무제한 접근 방지 | `false` |
+| `capabilities.drop` | 리눅스 capability 기본 제거 | `["ALL"]` |
+| `readOnlyRootFilesystem` | 루트 파일 시스템 변조 방지 | `true` |
+| `seccompProfile` | 시스템 콜 접근 최소화 | `RuntimeDefault` |
 
-### 세 가지 모드(라벨 키)
+### 위험한 볼륨 및 호스트 관련 옵션 관리
 
-- **enforce**: 위반 시 **거부**
-- **audit**: 승인하되 **감사 로그** 기록
-- **warn**: 승인하되 **CLI 경고** 출력
+- `hostNetwork`, `hostPID`, `hostIPC`는 가능하면 `false`로 유지
+- `hostPath` 볼륨 사용은 최소화하고, 필요한 경우 PSA나 Gatekeeper를 통해 엄격히 제한
+- `privileged` 컨테이너는 가능한 한 사용하지 않음
+- `procMount`는 기본값(`Default`) 유지
+
+---
+
+## PodSecurityPolicy(PSP)의 역사와 교훈
+
+### PSP의 역할과 제거 배경
+
+PSP는 어드미션 컨트롤러로, 파드 생성 시 보안 조건을 검사하고 위반 시 거부하는 역할을 했습니다. 그러나 v1.25에서 완전히 제거되었는데, 그 이유는 다음과 같습니다:
+
+- **사용자 경험의 복잡성**: PSP는 복잡한 권한 모델과 구성으로 인해 운영이 어려웠습니다.
+- **권한 모델의 혼란**: 사용자와 PSP 간의 관계가 직관적이지 않았습니다.
+- **운영 난이도**: 실제 환경에서의 적용과 관리가 복잡했습니다.
+
+### PSP 대체 솔루션
+
+이제 PSP 대신 다음과 같은 솔루션들을 사용해야 합니다:
+
+- **기본 정책**: PodSecurity Admission(PSA) - Kubernetes 내장 기능
+- **고급/세밀한 정책**: OPA Gatekeeper 또는 Kyverno
+
+---
+
+## PodSecurity Admission(PSA): PSP의 내장 대체 솔루션
+
+PSA는 네임스페이스 라벨을 통해 정책 수준을 지정하는 간단하면서도 효과적인 접근 방식을 제공합니다.
+
+### PSA 정책 레벨
+
+| 레벨 | 목적 | 주요 특징 |
+|---|---|---|
+| `privileged` | 모든 권한 허용 | 테스트 또는 특수 목적용 |
+| `baseline` | 일반 워크로드 기본 보호 | 일부 위험 기능 제한 |
+| `restricted` | 가장 엄격한 보안 (권장) | 루트 실행 금지, 권한 상승 차단, 호스트 접근 제한 등 |
+
+### PSA 적용 모드
+
+| 모드 | 동작 | 용도 |
+|---|---|---|
+| **enforce** | 위반 시 **거부** | 프로덕션 환경 보안 강제 |
+| **audit** | 승인하되 **감사 로그** 기록 | 보안 위반 모니터링 |
+| **warn** | 승인하되 **CLI 경고** 출력 | 개발/테스트 환경 경고 |
+
+### PSA 라벨 설정 예시
 
 ```bash
-# prod 네임스페이스에 restricted 강제(거부)
-
+# 프로덕션 네임스페이스에 restricted 정책 강제 적용
 kubectl label namespace prod \
   pod-security.kubernetes.io/enforce=restricted \
   pod-security.kubernetes.io/enforce-version=v1.27
 
-# 동일 네임스페이스에서 baseline 위반은 경고, privileged 위반은 감사만
-
+# 동일 네임스페이스에서 다양한 정책 레벨 적용
 kubectl label namespace prod \
   pod-security.kubernetes.io/warn=baseline \
   pod-security.kubernetes.io/warn-version=v1.27 \
@@ -144,23 +157,22 @@ kubectl label namespace prod \
   pod-security.kubernetes.io/audit-version=v1.27
 ```
 
-> **버전 라벨**(`*-version`)은 **정책 스키마** 버전을 고정해,
-> 클러스터 업그레이드 시 **예상치 못한 정책 변화**를 방지합니다.
+> **버전 라벨 중요성**: `*-version` 라벨을 통해 정책 스키마 버전을 고정하면, 클러스터 업그레이드 시 예상치 못한 정책 변화를 방지할 수 있습니다.
 
-### PSA로 막히는 대표 케이스(Restricted)
+### PSA restricted 레벨에서 차단되는 주요 사항
 
 - `runAsUser: 0` 또는 `runAsNonRoot: false`
 - `privileged: true`
-- `hostNetwork/hostPID/hostIPC: true`
-- 위험한 `hostPath` 볼륨 (허용 목록 밖)
+- `hostNetwork`, `hostPID`, `hostIPC: true`
+- 제한되지 않은 `hostPath` 볼륨 사용
 - `allowPrivilegeEscalation: true`
-- seccomp/AppArmor 누락(버전에 따라 요구 수준 상이)
+- seccomp 또는 AppArmor 프로파일 누락 (버전에 따라 다름)
 
 ---
 
-## 실패/성공 예제로 이해하는 PSA + SecurityContext
+## PSA와 SecurityContext 실전 예제
 
-### 실패 예 — restricted 네임스페이스에서 루트/권한상승 시도
+### PSA 위반 예제 (restricted 네임스페이스)
 
 ```yaml
 apiVersion: v1
@@ -173,14 +185,14 @@ spec:
   - name: app
     image: nginx
     securityContext:
-      runAsNonRoot: false       # ❌
-      allowPrivilegeEscalation: true  # ❌
-      privileged: true          # ❌
+      runAsNonRoot: false       # PSA 위반
+      allowPrivilegeEscalation: true  # PSA 위반
+      privileged: true          # PSA 위반
 ```
 
-**결과:** Admission 단계에서 **거부**. (kubectl에 에러 및 PSA 위반 항목 출력)
+**결과**: 어드미션 단계에서 거부되며, kubectl 명령어에 PSA 위반 항목이 출력됩니다.
 
-### 성공 예 — 최소권한 + 읽기전용 루트
+### PSA 준수 예제 (최소 권한 원칙 적용)
 
 ```yaml
 apiVersion: v1
@@ -208,15 +220,40 @@ spec:
 
 ---
 
-## / Kyverno — PSA로 부족한 “세밀 제어” 채우기
+## 고급 정책 제어: Kyverno와 Gatekeeper
 
-### Gatekeeper (ConstraintTemplate + Constraint)
+PSA로 부족한 세밀한 제어가 필요할 때는 Kyverno나 Gatekeeper와 같은 외부 정책 엔진을 사용할 수 있습니다.
 
-**정책(레고 블록)을 코딩**해 재사용·버전관리. 예: `hostPath` 경로 화이트리스트만 허용.
+### Kyverno 예제: 모든 컨테이너에 runAsNonRoot 강제 적용
+
+Kyverno는 YAML 기반 정책 정의와 변이(mutate) 기능에 강점이 있습니다.
 
 ```yaml
-# ConstraintTemplate: hostPath 경로 제한
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-nonroot
+spec:
+  rules:
+  - name: set-runAsNonRoot
+    match:
+      resources:
+        kinds: ["Pod"]
+    mutate:
+      patchStrategicMerge:
+        spec:
+          containers:
+          - (name): "*"
+            securityContext:
+              +(runAsNonRoot): true
+```
 
+### Gatekeeper 예제: hostPath 경로 제한
+
+Gatekeeper는 Rego 언어를 사용하여 복잡한 정책을 코드로 표현할 수 있습니다.
+
+```yaml
+# ConstraintTemplate: hostPath 경로 제한 정책 정의
 apiVersion: templates.gatekeeper.sh/v1
 kind: ConstraintTemplate
 metadata:
@@ -249,7 +286,6 @@ spec:
       }
 ---
 # Constraint: 실제 정책 적용
-
 apiVersion: constraints.gatekeeper.sh/v1beta1
 kind: K8sAllowedHostPaths
 metadata:
@@ -264,51 +300,24 @@ spec:
     - "/var/log/"
 ```
 
-### Kyverno (정책을 YAML로 선언)
-
-예: 모든 컨테이너에 `runAsNonRoot: true` 강제하고 없으면 **자동 패치**(mutate).
-
-```yaml
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
-metadata:
-  name: enforce-nonroot
-spec:
-  rules:
-  - name: set-runAsNonRoot
-    match:
-      resources:
-        kinds: ["Pod"]
-    mutate:
-      patchStrategicMerge:
-        spec:
-          containers:
-          - (name): "*"
-            securityContext:
-              +(runAsNonRoot): true
-```
-
-> Gatekeeper는 **검증 중심**, Kyverno는 **검증+변이**에 강함.
-> PSA(기본선) + Kyverno/Gatekeeper(세밀/변이) 조합이 실무에서 흔합니다.
+> **선택 가이드**: PSA로 기본 보안을 확보한 후, 추가적인 검증이 필요하면 Gatekeeper, 변이 기능이 필요하면 Kyverno를 고려하세요.
 
 ---
 
-## seccomp / AppArmor / SELinux — 커널 인터페이스 최소화
+## 커널 수준 보안: seccomp, AppArmor, SELinux
 
-### seccomp
+컨테이너의 커널 인터페이스를 최소화하는 것은 중요한 보안 전략입니다.
 
-- **`RuntimeDefault`**: 컨테이너 런타임 기본 보안 프로파일 사용(권장).
-- `Localhost`로 커스텀 JSON 프로파일을 노드에 배치 후 참조 가능.
+### seccomp (시스템 콜 필터링)
 
 ```yaml
 securityContext:
   seccompProfile:
-    type: RuntimeDefault
-# 또는
+    type: RuntimeDefault  # 컨테이너 런타임 기본 프로파일 사용
+# 또는 커스텀 프로파일 사용
 # seccompProfile:
 #   type: Localhost
 #   localhostProfile: profiles/myapp-seccomp.json
-
 ```
 
 ### AppArmor (노드 지원 필요)
@@ -319,7 +328,7 @@ metadata:
     container.apparmor.security.beta.kubernetes.io/app: runtime/default
 ```
 
-### SELinux (플랫폼 따라 상이)
+### SELinux (플랫폼에 따라 다름)
 
 ```yaml
 securityContext:
@@ -330,64 +339,62 @@ securityContext:
     level: "s0"
 ```
 
-> PSA restricted 레벨에선 특정 SELinux/ seccomp 요건이 있을 수 있으니 **정책 버전**에 맞추세요.
+> PSA restricted 레벨에서는 특정 SELinux나 seccomp 요구사항이 있을 수 있으므로 정책 버전에 맞는 설정을 확인하세요.
 
 ---
 
-## 위험한 볼륨/옵션 식별과 대체 전략
+## 위험한 설정 식별과 대체 전략
 
-| 항목 | 위험 | 대체/완화 |
+| 위험 항목 | 보안 위협 | 대체/완화 방안 |
 |---|---|---|
-| `hostPath` | 호스트 파일시스템 직접 접근 | CSI(PVC) 사용, Gatekeeper/Kyverno로 경로 제한 |
-| `privileged: true` | 커널 직접 접근 | 필요한 cap만 `add`, eBPF/NET_ADMIN 등 최소화 |
-| `hostNetwork/hostPID/hostIPC` | 네임스페이스 격리 우회 | 가능한 `false` 유지, 정말 필요시 별도 네임스페이스/노드풀로 격리 |
-| `allowPrivilegeEscalation: true` | setuid 등으로 권한 상승 | `false`로 고정 |
-| `capabilities add: ["ALL"]` | 과도한 권한 | `drop: ["ALL"]`, 필요한 소수 cap만 추가 |
+| `hostPath` | 호스트 파일 시스템 직접 접근 | CSI/PVC 사용, Gatekeeper/Kyverno로 경로 제한 |
+| `privileged: true` | 커널에 대한 무제한 접근 | 필요한 capability만 추가, 최소 권한 원칙 적용 |
+| `hostNetwork/hostPID/hostIPC` | 네임스페이스 격리 우회 | 가능하면 `false` 유지, 필요한 경우 별도 네임스페이스/노드 풀로 격리 |
+| `allowPrivilegeEscalation: true` | setuid 등을 통한 권한 상승 | `false`로 고정 |
+| `capabilities add: ["ALL"]` | 과도한 권한 부여 | `drop: ["ALL"]` 적용 후 필요한 최소한의 capability만 추가 |
 
 ---
 
-## PSA 전환 전략 (PSP → PSA 마이그레이션)
+## PSP에서 PSA로의 전환 전략
 
-1. **현황 수집**: 기존 파드 스펙에서 위험 옵션 사용 조사(`jq`/`kubectl`/폴리시 스캐너).
-2. **샌드박스**: `warn=`/`audit=`부터 적용하여 영향 범위 확인.
-3. **수정**: 워크로드 템플릿(Helm/Kustomize)에서 `securityContext` 보강.
-4. **강제(enforce=baseline→restricted)**: 단계적 상향.
-5. **세밀 정책**: Gatekeeper/Kyverno로 예외/추가 규칙 관리.
-6. **지속 검증**: PR 게이트(정적 스캔) + 런타임 감사(PSA audit, Audit Log, Falco 등).
+1. **현황 분석**: 기존 파드 스펙에서 위험한 옵션 사용 현황 조사
+2. **샌드박스 테스트**: `warn`/`audit` 모드로 시작하여 영향 범위 확인
+3. **워크로드 수정**: Helm/Kustomize 템플릿에 SecurityContext 보강 적용
+4. **단계적 강화**: `baseline` → `restricted`로 점진적 정책 강화
+5. **예외 관리**: Gatekeeper/Kyverno로 조직별 예외 규칙 관리
+6. **지속적 검증**: PR 단계 정적 분석과 런타임 감사 로그 모니터링
 
 ---
 
-## 운영 점검/디버깅 레시피
+## 운영 점검과 디버깅
 
-### 빠른 스캔(예시)
+### 보안 구성 스캔 예제
 
 ```bash
 # privileged 컨테이너 탐지
-
 kubectl get pods -A -o json \
 | jq -r '.items[]
   | select(.spec.containers[]?.securityContext?.privileged==true)
   | [.metadata.namespace,.metadata.name] | @tsv'
 
 # hostPath 볼륨 사용 탐지
-
 kubectl get pods -A -o json \
 | jq -r '.items[]
   | select(any(.spec.volumes[]?; has("hostPath")))
   | [.metadata.namespace,.metadata.name] | @tsv'
 ```
 
-### PSA 위반 원인 파악
+### PSA 위반 문제 해결
 
-- **거부 메시지**에 구체 항목이 나옵니다(예: `hostNetwork` 금지, `runAsNonRoot` 필요 등).
-- `kubectl describe ns <ns>`로 PSA 라벨 확인.
-- `warn`/`audit` 모드 활성화해 **사전 탐지**.
+- 거부 메시지에서 구체적인 위반 항목 확인 (예: `hostNetwork` 금지, `runAsNonRoot` 필요)
+- `kubectl describe ns <네임스페이스>`로 PSA 라벨 확인
+- `warn`/`audit` 모드를 활용하여 사전에 문제 탐지
 
 ---
 
-## “안전한 기본 템플릿” 3종 (복붙용)
+## 안전한 기본 템플릿 모음
 
-### API 서버 뒤 단순 웹앱 (Restricted 호환)
+### 일반 웹 애플리케이션 (Restricted 호환)
 
 ```yaml
 apiVersion: apps/v1
@@ -421,10 +428,10 @@ spec:
           mountPath: /app/data
       volumes:
       - name: data
-        emptyDir: {}   # 상태 필요시 PVC로 교체
+        emptyDir: {}   # 영구 저장이 필요한 경우 PVC로 교체
 ```
 
-### 네트워크 유틸 필요(1024 미만 포트 바인딩)
+### 네트워크 유틸리티 (1024 미만 포트 바인딩 필요)
 
 ```yaml
 securityContext:
@@ -432,10 +439,10 @@ securityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop: ["ALL"]
-    add: ["NET_BIND_SERVICE"]
+    add: ["NET_BIND_SERVICE"]  # 1024 미만 포트 바인딩을 위한 최소 권한
 ```
 
-### 로그 사이드카(읽기전용 루트 + 임시 쓰기 경로만)
+### 로그 수집 사이드카 (읽기 전용 루트 파일 시스템)
 
 ```yaml
 containers:
@@ -457,37 +464,31 @@ volumes:
 
 ---
 
-## 체크리스트 요약
+## 자주 묻는 질문
 
-- [ ] 네임스페이스에 **PSA 라벨** 설정: `enforce=restricted`(운영), `warn/audit` 병행.
-- [ ] 모든 워크로드에 **`runAsNonRoot: true`** + **비루트 UID/GID** 명시.
-- [ ] **`allowPrivilegeEscalation: false`**, **`privileged: false`**.
-- [ ] **`capabilities.drop: ["ALL"]`**, 필요한 최소 cap만 `add`.
-- [ ] **`readOnlyRootFilesystem: true`**, 쓰기 필요 경로는 **emptyDir/PVC**로 분리.
-- [ ] **seccompProfile: RuntimeDefault**(가능하면 전면 적용).
-- [ ] `hostNetwork/hostPID/hostIPC` 금지, `hostPath` 금지 또는 엄격 제한.
-- [ ] 예외/세밀 규칙은 **Gatekeeper/Kyverno**로 캡슐화(코드 리뷰/PR 게이트).
-- [ ] 정기 스캔과 **Audit/경고**로 지속 검증.
+**Q. PSA만으로 충분한 보안을 확보할 수 있나요?**
+A. 기본적인 보안 요구사항은 PSA로 충분히 관리할 수 있습니다. 그러나 조직별 특수 요구사항이나 자동 패치 기능이 필요하다면 Kyverno를, 복잡한 검증 규칙이 필요하다면 Gatekeeper를 추가로 사용하는 것이 좋습니다.
 
----
+**Q. seccomp나 AppArmor를 꼭 사용해야 하나요?**
+A. 네, 강력히 권장합니다. 시스템 콜과 프로세스 격리 수준을 제한함으로써 잠재적인 취약점 악용 가능성을 크게 줄일 수 있습니다.
 
-## FAQ
-
-**Q. PSA만으로 충분한가요?**
-A. 기본선엔 충분하지만, 조직별/앱별 예외와 변이(자동 패치)가 필요하면 **Kyverno**, 검증 규칙의 코드화가 필요하면 **Gatekeeper**를 병행하세요.
-
-**Q. seccomp/AppArmor는 꼭 써야 하나요?**
-A. **예(권장)**. 시스템 콜/프로세스 격리 표면을 줄여 **취약점 악용 가능성**을 크게 낮춥니다.
-
-**Q. 루트 권한이 필요한 드문 워크로드는요?**
-A. 별도 네임스페이스/노드풀로 격리, PSA는 `baseline` 또는 제한적 예외, Gatekeeper/Kyverno로 **명시적 화이트리스트**를 사용하세요.
+**Q. 루트 권한이 정말 필요한 워크로드는 어떻게 처리하나요?**
+A. 이러한 워크로드는 별도의 네임스페이스나 노드 풀로 격리하고, PSA를 `baseline`으로 설정하거나 Gatekeeper/Kyverno를 통해 명시적인 화이트리스트로 관리하는 것이 좋습니다.
 
 ---
 
-## 참고
+## 결론
 
-- SecurityContext: <https://kubernetes.io/docs/tasks/configure-pod-container/security-context/>
-- PodSecurity Admission: <https://kubernetes.io/docs/concepts/security/pod-security-admission/>
-- PSP (Deprecated): <https://kubernetes.io/docs/concepts/policy/pod-security-policy/>
-- OPA Gatekeeper: <https://open-policy-agent.github.io/gatekeeper/>
-- Kyverno: <https://kyverno.io/>
+Kubernetes 환경에서 효과적인 보안 강화를 위해서는 다음과 같은 다층적 접근 방식을 적용해야 합니다:
+
+1. **기본 보안 정책 수립**: PSA를 통해 네임스페이스 수준에서 기본적인 보안 정책을 강제하세요. `restricted` 레벨을 프로덕션 환경의 기본값으로 설정하는 것이 좋습니다.
+
+2. **워크로드별 보안 설정**: 모든 파드와 컨테이너에 적절한 SecurityContext를 적용하여 최소 권한 원칙을 구현하세요. `runAsNonRoot`, `readOnlyRootFilesystem`, `seccompProfile` 같은 핵심 설정을 기본 템플릿에 포함시키세요.
+
+3. **고급 정책 관리**: PSA로 부족한 세밀한 제어가 필요할 경우 Kyverno나 Gatekeeper를 도입하여 조직별 정책을 구현하세요. 특히 변이 기능이 필요하면 Kyverno, 복잡한 검증 로직이 필요하면 Gatekeeper를 선택하세요.
+
+4. **지속적 모니터링과 개선**: 보안 설정을 일회성 작업이 아닌 지속적인 과정으로 관리하세요. 정기적인 보안 스캔, 감사 로그 분석, 위반 사항 모니터링을 통해 보안 상태를 지속적으로 개선하세요.
+
+5. **점진적 적용 전략**: 기존 환경을 보호하면서 새로운 보안 정책을 도입하려면 점진적인 접근이 필요합니다. 먼저 `warn`과 `audit` 모드로 시작하여 영향도를 파악한 후, 단계적으로 `enforce` 모드로 전환하세요.
+
+이러한 종합적인 접근 방식을 통해 Kubernetes 워크로드의 보안성을 크게 향상시키고, 컨테이너 환경에서의 공격 표면을 최소화할 수 있습니다. 보안은 단일 솔루션이 아닌 여러 계층의 방어 체계로 접근할 때 가장 효과적입니다.

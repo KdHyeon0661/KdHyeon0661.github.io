@@ -4,565 +4,754 @@ title: Docker - 환경변수와 `.env` 파일 관리
 date: 2025-02-08 19:20:23 +0900
 category: Docker
 ---
-# Docker Compose의 환경변수와 `.env` 파일 관리
+# Docker Compose 환경변수와 .env 파일 관리 완벽 가이드
 
-## 한눈에 보는 개념 맵
+Docker Compose에서 환경변수를 효과적으로 관리하는 것은 애플리케이션 구성의 핵심입니다. 이 가이드에서는 `.env` 파일, `environment`, `env_file`, 빌드 인자 등 다양한 환경변수 관리 방식을 깊이 있게 다루고, 실무에서 바로 적용할 수 있는 패턴을 제공합니다.
 
-- **`.env`**: Compose가 **파일을 읽어 변수 치환**(substitution)에 사용. (파일 자체가 컨테이너 안으로 들어가진 않음)
-- **`environment:`**: **컨테이너 런타임 환경변수** 설정.
-- **`env_file:`**: 지정한 파일의 **키=값**을 컨테이너에 주입.
-- **빌드 인자(`build.args`)**: **이미지 빌드 시점**에만 쓰이는 변수. Dockerfile의 `ARG`와 매칭.
-- **치환 대상**: `image`, `build`, `ports`, `volumes`, `command`, `labels`, `deploy` 등 Compose YAML 안 대부분의 문자열 필드.
+## 핵심 개념 이해
+
+Docker Compose에서 환경변수는 여러 수준에서 관리될 수 있습니다:
+
+1. **`.env` 파일**: Compose 파일 내에서 변수 치환(substitution)에 사용
+2. **`environment:`**: 컨테이너 런타임 환경변수 설정
+3. **`env_file:`**: 외부 파일의 키-값을 컨테이너 환경변수로 주입
+4. **`build.args`**: 이미지 빌드 시점에 사용되는 변수
+
+이러한 각각의 방법은 서로 다른 목적과 사용 시점을 가지고 있습니다.
 
 ---
 
-## `.env` 파일 — 구조, 위치, 로딩
+## 1. `.env` 파일: 변수 치환의 핵심
 
-### 기본 규칙
+### 기본 개념과 사용법
 
-- 위치: **`docker-compose.yml`와 같은 디렉터리** (기본값).
-- 자동 로드: `docker compose up` 시 자동 읽음.
-- 형식: **dotenv 포맷**(줄별 `KEY=VALUE`, `#` 주석).
+`.env` 파일은 Docker Compose가 YAML 파일을 파싱할 때 변수 치환에 사용하는 파일입니다. 이 파일 자체는 컨테이너 내부로 전달되지 않습니다.
 
+**기본 규칙**:
+- 파일 위치: `docker-compose.yml`과 같은 디렉터리 (기본값)
+- 자동 로드: `docker compose up` 실행 시 자동으로 읽힘
+- 파일 형식: dotenv 포맷 (줄마다 `KEY=VALUE`)
+
+### 예제 `.env` 파일
 ```env
-# .env
+# 데이터베이스 설정
+DB_HOST=database
+DB_PORT=5432
+DB_NAME=mydatabase
+DB_USER=myuser
+DB_PASSWORD=securepassword123
 
-MYSQL_ROOT_PASSWORD=root_pass
-MYSQL_DATABASE=mydb
-MYSQL_USER=myuser
-MYSQL_PASSWORD=mypass
-WEB_PORT=8080
+# 애플리케이션 설정
+APP_PORT=8080
+APP_ENVIRONMENT=development
+LOG_LEVEL=info
+
+# 네트워크 설정
+WEB_PORT=80
+API_PORT=3000
 ```
 
-> 공백이 포함되면 `"값"` 같이 **따옴표를 사용**하세요.
-> CRLF(Windows)·BOM은 문제를 유발할 수 있으니 **UTF-8 / LF** 권장.
+### 특수한 값 처리
+```env
+# 공백이 포함된 값은 따옴표로 감싸기
+APP_NAME="My Application"
 
-### CLI로 다른 파일 지정
+# 특수문자 포함
+SECRET_KEY=abc123!@#$%^
 
-- v2에서는 `--env-file` 지원:
+# 여러 줄 값 (Docker Compose 2.x 이상)
+MULTILINE_VALUE="line1\nline2\nline3"
+```
+
+### 다른 `.env` 파일 지정하기
 ```bash
-docker compose --env-file .env.prod up -d
+# 특정 환경 파일 사용
+docker compose --env-file .env.production up -d
+
+# 테스트 환경
+docker compose --env-file .env.test up -d
+
+# 개발 환경 (기본값)
+docker compose --env-file .env.development up -d
 ```
-- **여러 파일 동시 지정은 불가**. 필요하면 쉘에서 미리 `export`하거나 Makefile로 조합.
 
 ---
 
-## Compose 파일에서 환경변수 쓰는 법(치환)
+## 2. Compose 파일에서 환경변수 사용하기
 
-### `${VAR}` 치환(Variable Substitution)
+### 변수 치환 문법
+
+Compose YAML 파일에서 환경변수를 사용하는 기본 문법은 `${VARIABLE_NAME}`입니다.
 
 ```yaml
 version: '3.9'
+
 services:
-  web:
-    image: wordpress
+  database:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "${API_PORT}:3000"
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@database:5432/${DB_NAME}
+      NODE_ENV: ${APP_ENVIRONMENT}
+    depends_on:
+      - database
+
+  frontend:
+    image: nginx:alpine
     ports:
       - "${WEB_PORT}:80"
-    environment:
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
-      WORDPRESS_DB_USER: ${MYSQL_USER}
-      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-      WORDPRESS_DB_HOST: db:3306
-
-  db:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./frontend:/usr/share/nginx/html
 ```
 
-- `${VAR}`는 **쉘 환경변수** 또는 **`.env`**에서 읽어 치환됩니다.
+### 기본값 설정
+변수가 정의되지 않았을 때 기본값을 제공할 수 있습니다.
 
-### 기본값/필수값 문법
-
-- 기본값:
-```yaml
-environment:
-  DB_HOST: ${MYSQL_HOST:-localhost}
-  DB_PORT: ${MYSQL_PORT:-3306}
-```
-- 필수값(없으면 에러):
-```yaml
-image: my/app:${APP_VERSION?APP_VERSION가 필요합니다}
-```
-
-### 달러문자 이스케이프
-
-- 리터럴 `${...}`가 필요하면 `$$` 사용:
-```yaml
-command: ["sh", "-lc", "echo $$HOME && echo \${NOT_EXPANDED}"]
-```
-
----
-
-## `environment:` vs `env_file:` vs `.env` — 역할과 차이
-
-| 구분 | 목적 | 어디에 쓰이나 | 치환 처리 | 우선순위(컨테이너에 주입될 때) |
-|---|---|---|---|---|
-| `.env` | **Compose YAML 변수 치환** | Compose 파서 레벨 | O | (치환용) |
-| `environment:` | **컨테이너 런타임 환경변수** | 컨테이너 내부 | O(Compose 파서가 미리 치환) | **environment > env_file > Dockerfile `ENV`** |
-| `env_file:` | 외부 파일의 키=값을 **컨테이너에 주입** | 컨테이너 내부 | **X**(파일 내용 그대로) | environment가 덮어씀 |
-
-예시:
 ```yaml
 services:
   app:
-    build: .
-    env_file:
-      - .env.runtime        # 이 파일의 내용은 컨테이너로 "그대로" 주입
+    image: myapp:latest
     environment:
-      APP_ENV: ${APP_ENV:-dev}  # 치환됨
+      # DB_HOST가 정의되지 않았으면 localhost 사용
+      DB_HOST: ${DB_HOST:-localhost}
+      
+      # DB_PORT가 정의되지 않았으면 5432 사용
+      DB_PORT: ${DB_PORT:-5432}
+      
+      # LOG_LEVEL이 정의되지 않았으면 info 사용
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      
+      # REQUIRED_VAR가 정의되지 않았으면 오류 발생
+      REQUIRED_VAR: ${REQUIRED_VAR?REQUIRED_VAR 변수가 필요합니다}
+```
+
+### 변수 치환의 다양한 활용
+```yaml
+services:
+  app:
+    # 이미지 태그에 변수 사용
+    image: myregistry.com/myapp:${APP_VERSION:-latest}
+    
+    # 빌드 컨텍스트에 변수 사용
+    build:
+      context: ./${APP_DIR:-app}
+      args:
+        BUILD_VERSION: ${BUILD_VERSION}
+    
+    # 포트 번호에 변수 사용
+    ports:
+      - "${HOST_PORT:-8080}:${CONTAINER_PORT:-80}"
+    
+    # 볼륨 경로에 변수 사용
+    volumes:
+      - "${LOG_PATH:-./logs}:/app/logs"
+    
+    # 레이블에 변수 사용
+    labels:
+      - "com.example.version=${APP_VERSION}"
+      - "com.example.environment=${ENVIRONMENT}"
 ```
 
 ---
 
-## 빌드 인자(`build.args`)와 Dockerfile `ARG/ENV`
+## 3. `environment:` vs `env_file:` 비교
 
-### 이미지 빌드 시점 변수
-
+### `environment:` 직접 정의
 ```yaml
 services:
-  api:
+  app:
+    image: myapp:latest
+    environment:
+      # 직접 값 정의
+      APP_NAME: "My Application"
+      DEBUG: "false"
+      
+      # 환경변수에서 값 가져오기
+      API_KEY: ${API_KEY}
+      
+      # 기본값 설정
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+```
+
+### `env_file:` 외부 파일 사용
+```yaml
+services:
+  app:
+    image: myapp:latest
+    env_file:
+      # 단일 파일
+      - .env.app
+      
+      # 여러 파일 (나중 파일이 우선순위)
+      - .env.common
+      - .env.secrets
+      
+      # 경로 지정
+      - ./config/env/production.env
+```
+
+### `env_file` 예제
+```env
+# .env.app
+APP_NAME=My Application
+APP_VERSION=1.0.0
+DEBUG=false
+LOG_LEVEL=info
+
+# .env.secrets
+API_KEY=sk_test_1234567890abcdef
+DATABASE_URL=postgresql://user:pass@host:5432/db
+```
+
+### 주요 차이점 요약
+
+| 특성 | `environment:` | `env_file:` |
+|------|---------------|-------------|
+| **정의 방식** | YAML 파일 내 직접 정의 | 외부 파일에서 로드 |
+| **변수 치환** | 지원 (${VAR} 사용 가능) | 지원 안 함 (원본 그대로) |
+| **우선순위** | 높음 (env_file을 덮어씀) | 낮음 |
+| **관리 편의성** | 소규모 설정에 적합 | 대규모 설정에 적합 |
+| **보안** | YAML 파일에 노출 | 분리된 파일로 관리 가능 |
+
+### 혼합 사용 예제
+```yaml
+services:
+  app:
+    image: myapp:latest
+    env_file:
+      - .env.common      # 공통 설정
+      - .env.secrets     # 비밀 정보
+    environment:
+      # env_file의 값을 덮어씀
+      DEBUG: ${DEBUG_OVERRIDE:-false}
+      
+      # 추가 설정
+      EXTRA_CONFIG: "value"
+```
+
+---
+
+## 4. 빌드 인자와 Dockerfile 연동
+
+### 빌드 인자 정의
+```yaml
+services:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        RUNTIME: "cpython"
+        # 기본값 없는 빌드 인자
+        NODE_ENV: ${BUILD_NODE_ENV}
+        
+        # 기본값 있는 빌드 인자
         APP_VERSION: ${APP_VERSION:-1.0.0}
+        
+        # 직접 값 지정
+        BUILD_TIMESTAMP: "2024-01-01"
 ```
 
-```Dockerfile
+### Dockerfile에서 사용
+```dockerfile
 # Dockerfile
-
-ARG RUNTIME
+ARG NODE_ENV
 ARG APP_VERSION=0.0.0
+ARG BUILD_TIMESTAMP
+
+# 빌드 인자를 환경변수로 전환
+ENV NODE_ENV=${NODE_ENV}
 ENV APP_VERSION=${APP_VERSION}
-RUN echo "runtime=$RUNTIME, version=$APP_VERSION"
-```
+ENV BUILD_TIMESTAMP=${BUILD_TIMESTAMP}
 
-- `ARG`는 **빌드 시에만** 존재.
-- `ENV`는 **이미지/컨테이너 런타임에도** 남음.
-- `build.args`는 Compose 치환 규칙을 그대로 적용(즉, `.env` 영향 받음).
+# 빌드 중 사용
+RUN echo "Building version ${APP_VERSION} for ${NODE_ENV} environment"
+```
 
 ---
 
-## 우선순위와 전파(Precedence)
+## 5. 환경별 구성 관리 패턴
 
-### Compose YAML 치환 우선순위(파일을 해석할 때)
-
-1) **쉘 환경변수**(실행한 터미널/CI에서 `export VAR=value`)
-2) `--env-file`
-3) `.env`
-4) 없으면 기본값(`:-`) 또는 에러(`?msg`)
-
-### 컨테이너 런타임 환경변수 우선순위
-
-- `environment:` **>** `env_file:` **>** Dockerfile의 `ENV`
-- `env_file`의 동일 키는 `environment`가 **덮어씀**.
-
----
-
-## 운영 패턴
-
-### `.env.*` + `--env-file`
-
+### 패턴 1: 환경별 `.env` 파일
 ```
-.env.dev
-.env.stage
-.env.prod
+project/
+├── .env.development
+├── .env.staging
+├── .env.production
+└── docker-compose.yml
 ```
+
 ```bash
-docker compose --env-file .env.stage up -d
+# 개발 환경
+docker compose --env-file .env.development up -d
+
+# 스테이징 환경  
+docker compose --env-file .env.staging up -d
+
+# 프로덕션 환경
+docker compose --env-file .env.production up -d
 ```
 
-### `docker-compose.override.yml` 자동 병합
-
-- `docker-compose.yml`(공통) + `docker-compose.override.yml`(개발용 Overwrite)
-
-`docker-compose.yml`:
-```yaml
-services:
-  web:
-    image: my/web:${APP_VERSION:-1.0.0}
-    ports: ["${WEB_PORT:-8080}:80"]
+### 패턴 2: Compose 오버레이 파일
+```
+project/
+├── docker-compose.yml
+├── docker-compose.override.yml
+├── docker-compose.prod.yml
+└── .env
 ```
 
-`docker-compose.override.yml`:
+**기본 구성 (docker-compose.yml)**:
+```yaml
+version: '3.9'
+
+services:
+  app:
+    image: ${APP_IMAGE:-myapp}:${APP_VERSION:-latest}
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+```
+
+**개발 오버레이 (docker-compose.override.yml)**:
 ```yaml
 services:
-  web:
+  app:
     build: .
     volumes:
-      - ./src:/app
+      - ./src:/app/src
     environment:
-      APP_ENV: dev
+      DEBUG: "true"
+      HOT_RELOAD: "true"
 ```
 
-운영에서는 override 없이:
-```bash
-docker compose up -d
-```
-
-### 프로파일(Profiles)
-
-- `COMPOSE_PROFILES=debug` 환경변수 또는 `--profile dev` 사용:
-
+**프로덕션 오버레이 (docker-compose.prod.yml)**:
 ```yaml
 services:
-  api:
-    image: my/api
-    profiles: ["default"]
+  app:
+    image: myregistry.com/myapp:${APP_VERSION}
+    environment:
+      NODE_ENV: production
+      DEBUG: "false"
+    deploy:
+      replicas: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+```
 
-  jaeger:
-    image: jaegertracing/all-in-one
-    profiles: ["debug"]
+### 패턴 3: 프로파일 사용
+```yaml
+version: '3.9'
+
+services:
+  app:
+    image: myapp:latest
+    profiles: ["default", "app"]
+    
+  database:
+    image: postgres:15
+    profiles: ["default", "database"]
+    
+  redis:
+    image: redis:alpine
+    profiles: ["cache"]
+    
+  monitoring:
+    image: grafana/grafana
+    profiles: ["monitoring"]
 ```
 
 ```bash
-# 디폴트만
-
+# 기본 서비스만 실행
 docker compose up -d
-# 디버그 서비스 추가
 
-docker compose --profile debug up -d
+# 캐시 서비스 추가
+docker compose --profile cache up -d
+
+# 모든 서비스 실행
+docker compose --profile cache --profile monitoring up -d
 ```
 
 ---
 
-## 보안/비밀값 관리 전략
+## 6. 보안 모범 사례
 
-| 항목 | 권장 |
-|---|---|
-| `.env` Git 업로드 | **금지**, `.gitignore`에 추가 |
-| 공개 레포 공유 | `/.env.example` 템플릿 제공만 |
-| 운영 비밀값 | CI/CD Secret Store, Vault, SSM Parameter Store 등 외부 비밀관리 연동 |
-| 파일로 전달 | 민감값은 **파일로 마운트** 후 경로만 환경변수로 전달 (`ENV_FILE_PATH=/run/secrets/xxx`) |
-| 로그 노출 | `docker inspect`로 env가 노출될 수 있음 → 민감값은 가능한 파일/볼륨로 전달 |
-
-예시(파일 마운트):
+### 민감 정보 관리
 ```yaml
-services:
-  api:
-    image: my/api
-    environment:
-      DB_PASSWORD_FILE: /run/secret/dbpass
-    volumes:
-      - ./secrets/dbpass:/run/secret/dbpass:ro
+# 안전하지 않은 방법 (비추천)
+environment:
+  DB_PASSWORD: "supersecret123"
+  API_KEY: "sk_test_abcdef123456"
+
+# 안전한 방법 1: env_file 사용
+env_file:
+  - .secrets.env  # .gitignore에 추가
+
+# 안전한 방법 2: Docker Secrets 사용 (Swarm 모드)
+secrets:
+  db_password:
+    external: true
+  api_key:
+    file: ./secrets/api_key.txt
 ```
 
-컨테이너 코드:
-```python
-import os, pathlib
-p = os.getenv("DB_PASSWORD_FILE", "/run/secret/dbpass")
-DB_PASSWORD = pathlib.Path(p).read_text().strip()
+### `.env` 파일 보안
+```bash
+# .gitignore에 추가
+/.env
+/.env.*
+/secrets/
+*.secret
 ```
-
----
-
-## 실전 예제 — WordPress + MySQL(확장판)
-
-### `.env`
 
 ```env
-WEB_PORT=8080
-MYSQL_ROOT_PASSWORD=strong_root
-MYSQL_DATABASE=blog
-MYSQL_USER=wpuser
-MYSQL_PASSWORD=strong_pass
+# .env.example (템플릿 파일)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=your_database
+DB_USER=your_username
+DB_PASSWORD=your_password
+API_KEY=your_api_key
+```
+
+### 파일 기반 비밀 관리
+```yaml
+services:
+  app:
+    image: myapp:latest
+    environment:
+      # 비밀 파일 경로만 환경변수로 전달
+      DB_PASSWORD_FILE: /run/secrets/db_password
+      API_KEY_FILE: /run/secrets/api_key
+    volumes:
+      # 읽기 전용으로 마운트
+      - ./secrets/db_password:/run/secrets/db_password:ro
+      - ./secrets/api_key:/run/secrets/api_key:ro
+```
+
+애플리케이션 코드에서 파일 읽기:
+```python
+import os
+
+def read_secret(file_path_env_var):
+    file_path = os.getenv(file_path_env_var)
+    if file_path and os.path.exists(file_path):
+        with open(file_path, 'r') as f:
+            return f.read().strip()
+    return None
+
+db_password = read_secret('DB_PASSWORD_FILE')
+api_key = read_secret('API_KEY_FILE')
+```
+
+---
+
+## 7. 실전 예제: 완전한 애플리케이션 스택
+
+### 프로젝트 구조
+```
+myapp/
+├── .env
+├── .env.production
+├── docker-compose.yml
+├── docker-compose.prod.yml
+├── backend/
+│   ├── Dockerfile
+│   └── src/
+├── frontend/
+│   └── build/
+└── secrets/
+    ├── db_password
+    └── api_key
+```
+
+### `.env` (개발용)
+```env
+# 애플리케이션 설정
+APP_NAME=MyApp
+APP_ENV=development
+APP_VERSION=1.0.0-dev
+
+# 데이터베이스 설정
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=mydb_development
+DB_USER=devuser
+
+# 서비스 포트
+BACKEND_PORT=3000
+FRONTEND_PORT=8080
+DATABASE_PORT=5432
+
+# 기능 플래그
+ENABLE_FEATURE_X=true
+ENABLE_FEATURE_Y=false
+```
+
+### `.env.production` (프로덕션용)
+```env
+# 애플리케이션 설정
+APP_NAME=MyApp
+APP_ENV=production
 APP_VERSION=1.2.3
+
+# 데이터베이스 설정
+DB_HOST=production-db
+DB_PORT=5432
+DB_NAME=mydb_production
+DB_USER=produser
+
+# 서비스 포트
+BACKEND_PORT=3000
+FRONTEND_PORT=80
+DATABASE_PORT=5432
+
+# 기능 플래그
+ENABLE_FEATURE_X=false
+ENABLE_FEATURE_Y=true
 ```
 
 ### `docker-compose.yml`
-
 ```yaml
 version: '3.9'
 
 services:
-  db:
-    image: mysql:8.0
+  # 데이터베이스 서비스
+  database:
+    image: postgres:15-alpine
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - db-data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD} --silent"]
-      interval: 5s
-      retries: 20
-
-  wordpress:
-    image: wordpress:php8.2-apache
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
     ports:
-      - "${WEB_PORT:-8080}:80"
-    environment:
-      WORDPRESS_DB_HOST: db:3306
-      WORDPRESS_DB_NAME: ${MYSQL_DATABASE}
-      WORDPRESS_DB_USER: ${MYSQL_USER}
-      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-      APP_VERSION: ${APP_VERSION:-dev}
-    depends_on:
-      db:
-        condition: service_healthy
-
-volumes:
-  db-data:
-```
-
-### 실행·검증
-
-```bash
-docker compose up -d
-docker compose ps
-curl -I http://localhost:${WEB_PORT}
-```
-
----
-
-## 자주 묻는 질문(FAQ)과 함정
-
-### Q1. `.env`와 `env_file`의 차이?
-
-- `.env`는 **Compose 파일 변수 치환용**.
-- `env_file`은 **컨테이너 환경변수 주입용**.
-- 둘 다 쓰되, **치환은 `.env`**가, **주입은 `env_file`**이 담당.
-
-### Q2. 왜 `${VAR}`가 안 치환되나?
-
-- 현재 쉘의 `export`/`--env-file`/`.env` 어디에도 값이 없는 경우.
-- 오타/대소문자, `--env-file` 경로, 실행 디렉터리 확인.
-- 필요한 경우 기본값(`:-`)이나 필수값(`?`) 문법 사용.
-
-### Q3. `env_file` 안의 `${VAR}`는 치환되나?
-
-- **아니오.** `env_file`은 **그대로** 컨테이너에 전달됩니다.
-- 치환이 필요하면 Compose YAML의 `environment:`에서 처리하세요.
-
-### Q4. Windows에서 값이 이상하게 들어간다?
-
-- 줄 끝 CRLF, 인코딩, PowerShell 변수 확장 규칙 차이 확인.
-- `.env`는 **UTF-8/LF** 권장.
-- PowerShell에서 `${VAR}`는 일반 문자열로 남겨두고 Compose가 치환합니다.
-
-### Q5. 민감값이 `docker inspect`에서 보인다?
-
-- 네. 런타임 env는 메타데이터로 노출될 수 있습니다. **파일 마운트/외부 비밀관리**로 전환을 검토하세요.
-
----
-
-## 고급 패턴
-
-### 서비스별 `.env` 분리(런타임 주입 전용)
-
-```
-.env             # 치환용 공통 (포트, 버전 등)
-.env.db          # DB 컨테이너 런타임 변수
-.env.web         # 웹 컨테이너 런타임 변수
-```
-```yaml
-services:
-  db:
-    image: mysql:8
-    env_file: [.env.db]
-  web:
-    image: my/web:${APP_VERSION}
-    env_file: [.env.web]
-```
-
-### 빌드·런 분리
-
-```yaml
-services:
-  api:
-    build:
-      context: .
-      args:
-        BUILD_MODE: ${BUILD_MODE:-release}   # 빌드 전용
-    environment:
-      RUNTIME_ENV: ${RUNTIME_ENV:-prod}      # 런타임 전용
-```
-
-### 여러 Compose 파일 오버레이
-
-```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-```
-- `prod.yml`에서 `image` 태그나 `environment`를 재정의.
-
-### 프로젝트 이름 고정
-
-```bash
-export COMPOSE_PROJECT_NAME=myblog
-docker compose up -d
-```
-- 네트워크/볼륨 접두사가 고정되어 **자원명이 예측 가능**.
-
----
-
-## 트러블슈팅 가이드
-
-| 증상 | 점검 포인트 | 해결 |
-|---|---|---|
-| `${PORT}`가 글자 그대로 보임 | 현재 쉘 `export`, `--env-file`, `.env` 경로, 실행 디렉터리 | `.env`를 compose 파일과 같은 폴더에 두고 다시 실행 |
-| `env_file` 안의 `${VAR}`가 확장됨 | 오해 | `env_file`은 literal. 치환은 `environment:`에서 처리 |
-| 민감값 Git 유출 | `.gitignore` | `.env` 차단, `.env.example`만 제공 |
-| 값에 공백/특수문자 | 인용부호/이스케이프 | `.env`에서 `"값"` 또는 `\` 사용, YAML에선 `'값'` |
-| macOS I/O 느림 | Desktop 동기화 | `:cached`/`:delegated` 힌트, Bind Mount 최소화 |
-| Windows 경로 문제 | 슬래시/드라이브/CRLF | `C:\path\to\file` 또는 `./path`; LF 권장 |
-
-유용 명령:
-```bash
-# Compose 레벨에서 어떻게 치환됐는지 보기
-
-docker compose config
-
-# 컨테이너에 실제로 들어간 환경변수 확인
-
-docker compose exec <svc> env | sort
-```
-
----
-
-## 완전 예제 — FastAPI + PostgreSQL (프로파일·오버레이·빌드인자 포함)
-
-### `.env`
-
-```env
-APP_VERSION=2.0.0
-HTTP_PORT=8088
-POSTGRES_PASSWORD=secret
-POSTGRES_DB=appdb
-POSTGRES_USER=appuser
-```
-
-### `docker-compose.yml`(공통)
-
-```yaml
-version: '3.9'
-
-services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
+      - "${DATABASE_PORT}:5432"
     volumes:
-      - db-data:/var/lib/postgresql/data
-    networks: [ backend ]
+      - postgres-data:/var/lib/postgresql/data
+      - ./secrets/db_password:/run/secrets/db_password:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
-      retries: 20
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  api:
+  # 백엔드 API 서비스
+  backend:
     build:
-      context: ./api
+      context: ./backend
+      dockerfile: Dockerfile
       args:
+        NODE_ENV: ${APP_ENV}
         APP_VERSION: ${APP_VERSION}
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
-      APP_VERSION: ${APP_VERSION}
     ports:
-      - "${HTTP_PORT:-8080}:8080"
-    networks: [ frontend, backend ]
+      - "${BACKEND_PORT}:3000"
+    environment:
+      NODE_ENV: ${APP_ENV}
+      DATABASE_URL: postgresql://${DB_USER}@database:5432/${DB_NAME}
+      DATABASE_PASSWORD_FILE: /run/secrets/db_password
+      API_KEY_FILE: /run/secrets/api_key
+      APP_NAME: ${APP_NAME}
+      APP_VERSION: ${APP_VERSION}
+      ENABLE_FEATURE_X: ${ENABLE_FEATURE_X}
+      ENABLE_FEATURE_Y: ${ENABLE_FEATURE_Y}
+    volumes:
+      - ./secrets/db_password:/run/secrets/db_password:ro
+      - ./secrets/api_key:/run/secrets/api_key:ro
+      - backend-logs:/app/logs
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+
+  # 프론트엔드 서비스
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "${FRONTEND_PORT}:80"
+    volumes:
+      - ./frontend/build:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:3000
 
 networks:
-  frontend:
-  backend:
+  default:
+    name: ${APP_NAME:-myapp}_network
 
 volumes:
-  db-data:
+  postgres-data:
+  backend-logs:
 ```
 
-### `docker-compose.override.yml`(개발용)
-
+### `docker-compose.prod.yml` (프로덕션 오버레이)
 ```yaml
 services:
-  api:
-    volumes:
-      - ./api/src:/app
-    environment:
-      APP_ENV: dev
-    profiles: ["default", "debug"]
+  backend:
+    image: myregistry.com/myapp-backend:${APP_VERSION}
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  db:
-    profiles: ["default"]
-```
-
-### `api/Dockerfile`
-
-```Dockerfile
-FROM python:3.12-slim
-ARG APP_VERSION=0.0.0
-ENV APP_VERSION=${APP_VERSION}
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY src/ .
-CMD ["uvicorn", "main:app", "--host=0.0.0.0", "--port=8080"]
-```
-
-### 실행
-
-```bash
-# 개발(override 자동 병합)
-
-docker compose up -d
-
-# 운영 (override 제외, 또는 prod 파일 오버레이)
-
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+  frontend:
+    deploy:
+      replicas: 2
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 ```
 
 ---
 
-## 요약 표
+## 8. 문제 해결과 디버깅
 
-### 무엇을 어디에?
+### 일반적인 문제 해결
 
-| 목적 | 권장 위치 |
-|---|---|
-| Compose YAML 치환 | `.env` / `--env-file` |
-| 런타임 환경변수 | `environment:` (필요 시 `env_file:` 병행) |
-| 빌드 시간 변수 | `build.args` + Dockerfile `ARG` |
-| 민감값 | 파일 마운트/비밀관리(Secrets/SSM/Vault), `.env`는 Git 제외 |
-| 다중 환경 | `.env.*` + `--env-file`, override, profiles |
-
-### 우선순위 핵심
-
-- **치환**: Shell 환경 > `--env-file` > `.env`
-- **런타임 주입**: `environment:` > `env_file:` > Dockerfile `ENV`
-
----
-
-## 참고/검증 도구
-
+#### 문제 1: 환경변수가 치환되지 않음
 ```bash
-# 최종 해석된 Compose 출력(치환 결과 확인)
+# 현재 환경변수 확인
+printenv | grep -i "변수명"
 
+# Compose 구성 확인
 docker compose config
 
-# 컨테이너 내부 환경변수 리스트
+# .env 파일 확인
+cat .env
 
-docker compose exec <service> env | sort
+# 특정 서비스 환경변수 확인
+docker compose exec [서비스명] env
+```
 
-# 특정 변수만 대조
+#### 문제 2: 변수 충돌
+```yaml
+# 명시적 우선순위 설정
+environment:
+  # env_file의 값을 명시적으로 덮어씀
+  LOG_LEVEL: ${LOG_LEVEL_OVERRIDE:-${LOG_LEVEL:-info}}
+```
 
-docker compose exec <service> sh -lc 'echo "$APP_VERSION"'
+#### 문제 3: 빌드 인자 전달 실패
+```bash
+# 빌드 인자 확인
+docker compose build --no-cache --progress=plain
+
+# Dockerfile 디버깅
+docker build --build-arg NODE_ENV=production -t test .
+```
+
+### 디버깅 명령어 모음
+```bash
+# 최종 Compose 구성 확인
+docker compose config
+
+# 환경변수 치환 결과 확인
+docker compose config | grep -A5 -B5 "변수명"
+
+# 컨테이너 환경변수 목록
+docker compose exec [서비스명] printenv
+
+# 특정 환경변수 값 확인
+docker compose exec [サービス名] sh -c 'echo $변수명'
+
+# 빌드 인자 확인
+docker inspect [이미지명] | jq '.[0].Config.Labels'
 ```
 
 ---
 
-## 마무리
+## 9. 고급 패턴과 팁
 
-- `.env`는 **치환**, `env_file`은 **주입**이라는 역할 분담을 항상 기억하세요.
-- **빌드/런**의 생명주기 차이를 명확히 나눠 변수 사용을 설계하세요.
-- 보안은 **노출면(ports/env/log/inspect)**을 줄이고, 비밀은 파일/외부 비밀관리로 이관하세요.
-- `docker compose config`로 **치환 결과**를 늘 점검하면 배포 사고를 크게 줄일 수 있습니다.
+### 동적 변수 생성
+```yaml
+services:
+  app:
+    image: myapp:latest
+    environment:
+      # 타임스탬프 생성
+      BUILD_TIMESTAMP: ${BUILD_TIMESTAMP:-$(date -u +"%Y-%m-%dT%H:%M:%SZ")}
+      
+      # 호스트명 포함
+      INSTANCE_ID: ${HOSTNAME:-unknown}_${RANDOM}
+```
+
+### 조건부 변수 설정
+```yaml
+services:
+  app:
+    image: myapp:latest
+    environment:
+      # APP_ENV가 production이면 특정 값 사용
+      DEBUG: ${DEBUG:-$([ "${APP_ENV}" = "production" ] && echo "false" || echo "true")}
+      
+      # 다른 변수 기반 값 설정
+      LOG_LEVEL: ${LOG_LEVEL:-$([ "${APP_ENV}" = "development" ] && echo "debug" || echo "info")}
+```
+
+### 변수 체이닝
+```yaml
+services:
+  app:
+    image: myapp:latest
+    environment:
+      BASE_URL: https://${DOMAIN:-example.com}
+      API_URL: ${BASE_URL}/api
+      GRAPHQL_URL: ${API_URL}/graphql
+      WS_URL: ws://${DOMAIN:-example.com}/ws
+```
+
+---
+
+## 결론
+
+Docker Compose에서 환경변수를 효과적으로 관리하는 것은 안정적이고 유지보수 가능한 애플리케이션 배포의 핵심입니다. 올바른 환경변수 관리 전략을 수립하면 다음과 같은 이점을 얻을 수 있습니다:
+
+1. **환경 간 일관성**: 개발, 스테이징, 프로덕션 환경을 동일한 Compose 파일로 관리
+2. **보안 강화**: 민감 정보를 코드베이스에서 분리
+3. **유연성**: 환경별 구성을 쉽게 변경 가능
+4. **재사용성**: 동일한 인프라를 다양한 환경에 적용 가능
+
+### 핵심 원칙 요약
+
+1. **역할 분리**: `.env`는 치환용, `env_file`은 주입용으로 명확히 구분하세요.
+2. **보안 우선**: 민감 정보는 파일이나 외부 비밀 관리 시스템으로 관리하세요.
+3. **환경 분리**: 환경별 `.env` 파일과 Compose 오버레이를 활용하세요.
+4. **검증 습관**: 배포 전 `docker compose config`로 구성을 항상 확인하세요.
+5. **문서화**: `.env.example` 파일을 제공하여 필요한 환경변수를 문서화하세요.
+
+### 시작점 제안
+
+초기 프로젝트에서는 간단하게 시작하세요:
+
+1. 기본 `.env` 파일로 시작
+2. `environment:`를 사용해 직접 변수 정의
+3. 프로젝트 성장에 따라 `env_file:`과 환경별 구성 도입
+4. 프로덕션 환경에서는 보안 강화 패턴 적용
+
+환경변수 관리는 한 번에 완벽하게 구현하기보다는 점진적으로 개선해 나가는 것이 중요합니다. 프로젝트의 요구사항과 팀의 워크플로우에 맞게 적절한 패턴을 선택하고, 지속적으로 개선해 나가시기 바랍니다.

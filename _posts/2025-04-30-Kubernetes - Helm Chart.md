@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Helm Chart 구조
 
-## 기본 디렉터리 구조와 생성
+## 기본 디렉터리 구조
 
 ```bash
 helm create mychart
@@ -15,31 +15,31 @@ tree mychart
 
 ```text
 mychart/
-├── Chart.yaml            # 차트 메타데이터(필수)
-├── values.yaml           # 기본 값(환경별 오버라이드 가능)
-├── values.schema.json    # 값 스키마(선택: JSONSchema)
-├── charts/               # 서브차트(.tgz 또는 디렉터리)
-├── templates/            # 리소스 템플릿(YAML+Go 템플릿)
-│   ├── _helpers.tpl      # 공통 템플릿 함수/네이밍 규칙
+├── Chart.yaml
+├── values.yaml
+├── values.schema.json
+├── charts/
+├── templates/
+│   ├── _helpers.tpl
 │   ├── deployment.yaml
 │   ├── service.yaml
 │   ├── ingress.yaml
 │   ├── hpa.yaml
-│   ├── NOTES.txt         # 설치 후 안내 메시지
-│   └── tests/            # helm test용 Job
-├── crds/                 # CRD 매니페스트(컨트롤러 리소스)
-└── .helmignore           # 패키징 제외 목록
+│   ├── NOTES.txt
+│   └── tests/
+├── crds/
+└── .helmignore
 ```
 
-핵심 파일:
+### 핵심 파일 설명
 
-- **Chart.yaml**: 차트 이름/버전/의존성 메타데이터
-- **values.yaml**: 템플릿에 주입될 기본 값
-- **templates/**: 실제 쿠버네티스 리소스 템플릿(Go 템플릿 문법)
-- **_helpers.tpl**: 공통 네이밍/라벨 함수 정의
-- **values.schema.json**: 값 검증(미스매치를 설치 전에 잡는다)
-- **crds/**: CRD는 **일반 템플릿과 별도**로 처리된다(삭제/업데이트 주의)
-- **charts/**: 서브차트(의존성) 보관
+- **Chart.yaml**: 차트의 이름, 버전, 의존성 등 메타데이터를 정의합니다.
+- **values.yaml**: 템플릿에 주입될 기본 구성값을 정의합니다. 환경별로 오버라이드 가능합니다.
+- **templates/**: 실제 쿠버네티스 리소스를 생성하는 Go 템플릿 파일들이 위치합니다.
+- **_helpers.tpl**: 차트 전반에서 사용되는 공통 네이밍 규칙과 라벨 함수를 정의합니다.
+- **values.schema.json**: 값의 타입과 필수성을 검증하여 설치 전 오류를 방지합니다.
+- **crds/**: Custom Resource Definition 매니페스트를 별도로 관리합니다.
+- **charts/**: 서브차트(의존성)를 보관합니다.
 
 ---
 
@@ -49,24 +49,24 @@ mychart/
 apiVersion: v2
 name: mychart
 description: A sample Helm chart for Kubernetes
-type: application           # or library
-version: 1.2.0              # 차트 버전(semver)
-appVersion: "1.25.3"        # 앱 버전(정보용)
-kubeVersion: ">=1.25.0-0"   # 호환 K8s 버전(선택)
+type: application
+version: 1.2.0
+appVersion: "1.25.3"
+kubeVersion: ">=1.25.0-0"
 dependencies:
   - name: redis
     version: 18.6.2
     repository: https://charts.bitnami.com/bitnami
-    alias: cache            # 하위 차트 접근명 변경(선택)
+    alias: cache
     condition: cache.enabled
 ```
 
-- **type: library** 를 사용하면 리소스 생성 없이 템플릿 재사용 전용 차트를 만들 수 있다.
-- **dependencies**는 `helm dependency update`로 `charts/`에 가져온다.
+- `type: library`로 설정하면 리소스를 생성하지 않는 템플릿 재사용 전용 차트를 만들 수 있습니다.
+- `dependencies`는 `helm dependency update` 명령어로 charts/ 디렉터리에 다운로드됩니다.
 
 ---
 
-## values.yaml — 기본 값과 환경 오버라이드
+## values.yaml — 구성값 관리
 
 ```yaml
 replicaCount: 3
@@ -88,7 +88,7 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-  tls: []                   # [{ hosts: [...], secretName: ... }]
+  tls: []
 
 resources:
   limits:
@@ -106,23 +106,23 @@ nodeSelector: {}
 tolerations: []
 affinity: {}
 
-fullnameOverride: ""         # 강제 이름 지정
-nameOverride: ""             # 베이스 이름만 오버라이드
+fullnameOverride: ""
+nameOverride: ""
 
-global:                      # 서브차트까지 전파되는 글로벌 키
+global:
   imagePullSecrets: []
 ```
 
-- 환경별 파일(예: `values-prod.yaml`)로 오버라이드:
-  ```bash
-  helm upgrade --install web ./mychart -f values-prod.yaml
-  ```
+환경별 구성 파일(예: `values-prod.yaml`)을 사용하여 기본값을 오버라이드할 수 있습니다.
+```bash
+helm upgrade --install web ./mychart -f values-prod.yaml
+```
 
 ---
 
-## 템플릿 핵심 문법(Go 템플릿 + Sprig)
+## 템플릿 핵심 문법 (Go 템플릿 + Sprig)
 
-템플릿은 **Go 템플릿**이며 Sprig 함수가 포함된다.
+템플릿은 Go 템플릿을 기반으로 하며 Sprig 유틸리티 함수를 사용할 수 있습니다.
 
 - **내장 객체**: `.Values`, `.Release`, `.Chart`, `.Capabilities`, `.Release.Namespace`
 - **흐름 제어**: `if`, `with`, `range`
@@ -168,7 +168,7 @@ spec:
 ```
 {% endraw %}
 
-### Service 템플릿(조건부 생성)
+### Service 템플릿 (조건부 생성)
 
 {% raw %}
 ```yaml
@@ -191,7 +191,7 @@ spec:
 ```
 {% endraw %}
 
-### Ingress 템플릿(활성화 시에만)
+### Ingress 템플릿 (활성화 시에만 생성)
 
 {% raw %}
 ```yaml
@@ -229,7 +229,7 @@ spec:
 
 ---
 
-## _helpers.tpl — 네이밍/라벨 표준화
+## _helpers.tpl — 공통 템플릿 함수
 
 {% raw %}
 ```tpl
@@ -258,13 +258,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 ```
 {% endraw %}
 
-- **표준 라벨**(app.kubernetes.io/*)을 통일하면 추적성과 선택자가 쉬워진다.
+`app.kubernetes.io/*` 형식의 표준 라벨을 사용하면 리소스의 추적성과 선택기 사용이 용이해집니다.
 
 ---
 
-## values.schema.json — 값 검증(권장)
+## values.schema.json — 값 검증
 
-설치 전에 **값의 타입·필수성** 오류를 차단한다.
+설치 전에 구성값의 타입과 필수성을 검증하여 오류를 사전에 방지합니다.
 
 ```json
 {
@@ -293,13 +293,13 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 }
 ```
 
-검증 실행은 `helm install/upgrade` 시 자동 수행된다.
+`helm install` 또는 `helm upgrade` 실행 시 자동으로 검증이 수행됩니다.
 
 ---
 
-## NOTES.txt — 설치 후 안내 출력
+## NOTES.txt — 설치 후 안내 메시지
 
-`templates/NOTES.txt`는 사용자에게 **접속 방법/다음 단계**를 알려준다.
+`templates/NOTES.txt`는 사용자에게 애플리케이션 접근 방법이나 다음 단계를 안내합니다.
 
 {% raw %}
 ```tpl
@@ -316,9 +316,9 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 ---
 
-## Hooks — 설치/업그레이드 수명주기 제어
+## Hooks — 릴리스 수명주기 제어
 
-Job/ConfigMap 등에 **훅 애노테이션**을 달아 특정 타이밍에 실행할 수 있다.
+Job이나 ConfigMap에 훅 애노테이션을 추가하여 설치, 업그레이드 등의 특정 시점에 작업을 실행할 수 있습니다.
 
 {% raw %}
 ```yaml
@@ -341,14 +341,14 @@ spec:
 ```
 {% endraw %}
 
-- **hook 순서/가중치**로 여러 훅의 실행 순서를 관리한다.
-- **delete-policy**로 훅 리소스 수거 정책을 정한다.
+- `hook-weight`를 사용하여 여러 훅의 실행 순서를 제어할 수 있습니다.
+- `hook-delete-policy`로 훅 리소스의 삭제 시점을 관리합니다.
 
 ---
 
-## Tests — 설치 검증(helm test)
+## Tests — 설치 검증
 
-`templates/tests/` 디렉터리의 Job은 `helm test RELEASE`로 실행된다.
+`templates/tests/` 디렉터리의 Job 매니페스트는 `helm test RELEASE` 명령어로 실행되어 릴리스의 정상 동작을 검증합니다.
 
 {% raw %}
 ```yaml
@@ -369,22 +369,22 @@ spec:
 
 ---
 
-## CRDs — 컨트롤러 리소스 배포
+## CRDs — Custom Resource Definition 관리
 
-- **crds/** 디렉터리에 두면 Helm이 **선/후** 순서로 처리하며 기본적으로 **관리/삭제가 보수적**이다.
-- CRD 변경은 **가급적 수동 관리**(호환성/마이그레이션 확인). 운영 차트에서는 CRD를 별도 차트로 분리하기도 한다.
+- `crds/` 디렉터리에 위치한 CRD 파일은 일반 템플릿과 별도로 선행 설치됩니다.
+- CRD의 변경은 호환성 문제를 일으킬 수 있으므로 주의가 필요하며, 운영 환경에서는 차트와 별도로 관리하거나 분리된 차트로 배포하는 것이 일반적입니다.
 
 ---
 
-## 서브차트·글로벌 값·의존성
+## 서브차트와 의존성 관리
 
-### 의존성 설치/업데이트
+### 의존성 설치
 
 ```bash
 helm dependency update mychart
 ```
 
-### 하위 차트 값 주입
+### 서브차트 값 구성
 
 ```yaml
 # values.yaml
@@ -400,31 +400,29 @@ global:
     - name: regcred
 ```
 
-- **`.Values.global`** 은 모든 서브차트에 전파된다.
-- 하위 차트 이름(또는 `alias`)으로 네임스페이스처럼 값을 구분한다.
+- `global` 키 아래의 값은 모든 서브차트에 전파됩니다.
+- 서브차트는 해당 차트의 이름(또는 alias)으로 네임스페이스처럼 값을 구분하여 참조합니다.
 
 ---
 
 ## 고급 템플릿 패턴
 
-### `tpl` — 값 안의 템플릿도 렌더링
+### `tpl` 함수 — 값 내부의 템플릿 렌더링
 
 {% raw %}
 ```yaml
 # values.yaml
-
 config:
   welcome: "Hello {{ .Release.Name }}"
 
-# ConfigMap
-
+# ConfigMap 템플릿
 data:
   message: |-
     {{ tpl .Values.config.welcome . }}
 ```
 {% endraw %}
 
-### `lookup` — 클러스터 조회(주의)
+### `lookup` 함수 — 클러스터 내 기존 리소스 조회
 
 {% raw %}
 ```yaml
@@ -435,71 +433,51 @@ dataFromCluster: {{ $cm.data | toYaml | nindent 2 }}
 ```
 {% endraw %}
 
-- 재현성/테스트성을 해칠 수 있어 **가급적 선언형**으로 유지하되, 마이그레이션/참조 시 신중히 사용.
-
-### 조건부 리소스 생성
-
-{% raw %}
-```yaml
-{{- if .Values.hpa.enabled }}
-# hpa.yaml …
-
-{{- end }}
-```
-{% endraw %}
+`lookup` 함수는 선언적 특성을 해칠 수 있으므로, 마이그레이션 등의 특별한 경우에만 신중하게 사용하는 것이 좋습니다.
 
 ---
 
-## 설치·업그레이드·검증 명령어
+## 주요 Helm 명령어
 
 ```bash
-# 드라이런 + 렌더 결과 확인(클러스터에 적용 X)
-
+# 템플릿 렌더링 결과 확인 (실제 적용 없음)
 helm template web ./mychart -f values-prod.yaml
 
-# 문법/스키마/베스트 프랙티스 점검
-
+# 차트 문법 및 구조 검사
 helm lint ./mychart
 
-# 설치 또는 업그레이드(존재하면 upgrade, 없으면 install)
-
+# 설치 또는 업그레이드
 helm upgrade --install web ./mychart -n app --create-namespace -f values-prod.yaml
 
-# 변경점 비교(diff 플러그인)
-
+# 변경점 비교 (helm-diff 플러그인)
 helm plugin install https://github.com/databus23/helm-diff
 helm diff upgrade web ./mychart -f values-prod.yaml
 
-# 되돌리기
-
+# 릴리스 이력 확인 및 롤백
 helm history web
 helm rollback web 2
 
-# 테스트
-
+# 테스트 실행
 helm test web
 
-# 패키징/배포
-
+# 차트 패키징
 helm package mychart
-helm repo index .
 ```
 
 ---
 
-## 보안/설정 분리 — Secret/문자열 렌더링
+## 보안 및 구성 분리
 
-Helm 자체는 Secret 암호화를 제공하지 않는다. 일반적으로는:
+Helm 자체는 Secret 암호화를 제공하지 않습니다. 일반적으로 다음과 같은 외부 도구와 연계하여 비밀 정보를 관리합니다.
 
-- **Sealed Secrets**, **External Secrets Operator**, **SOPS+Helm(helm-secrets 플러그인)** 등과 연계
-- 값 파일에 민감 정보를 두지 말고, 외부 시크릿 매커니즘으로 주입
+- **Sealed Secrets**
+- **External Secrets Operator**
+- **SOPS** (helm-secrets 플러그인과 함께)
 
-예: External Secrets Operator 값 연동(개요)
+예를 들어, External Secrets Operator를 사용하는 경우:
 
 {% raw %}
 ```yaml
-# templates/external-secret.yaml
-
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -517,37 +495,22 @@ spec:
 
 ---
 
-## 릴리스 전략 — Canary/Blue-Green 예시(간단)
+## 릴리스 전략 예시 (Blue-Green)
 
-Ingress 애노테이션/두 릴리스 병행으로 Canary를 구현하거나, **네임스페이스/이름 분리**로 Blue-Green을 구성한다.
+네임스페이스 또는 릴리스 이름을 분리하여 Blue-Green 배포를 구현할 수 있습니다.
 
 ```bash
-helm upgrade --install web-blue  ./mychart -n app -f values-blue.yaml
+# Blue 버전 배포
+helm upgrade --install web-blue ./mychart -n app -f values-blue.yaml
+# Green 버전 배포
 helm upgrade --install web-green ./mychart -n app -f values-green.yaml
-# LB/Ingress 백엔드 전환 후 검증 → Blue 삭제
-
+# 트래픽을 Green으로 전환 및 검증 후 Blue 삭제
+helm uninstall web-blue -n app
 ```
 
 ---
 
-## 베스트 프랙티스 요약
-
-- **이름/라벨 규격화**: `_helpers.tpl`에 표준 네이밍/라벨 정의
-- **스키마 검증 활성화**: `values.schema.json`으로 타입/필수값 보장
-- **조건부 리소스**: `.Values.*.enabled`로 선택적 생성
-- **템플릿 가독성**: `toYaml | nindent`로 들여쓰기/멀티라인 정리
-- **환경별 values 파일**: `values-dev.yaml`, `values-prod.yaml` 등
-- **설치 전 렌더/리트(템플릿/스키마/린트)**: `helm template`, `helm lint`
-- **릴리스 자동화**: `--atomic`, `--wait`, `--timeout`으로 실패 시 롤백
-  ```bash
-  helm upgrade --install web ./mychart --atomic --wait --timeout 5m
-  ```
-- **CRD 분리 배포**: 차트와 수명주기를 분리해 안전하게 관리
-- **비밀 관리 외부화**: Sealed/External Secrets 또는 SOPS
-
----
-
-## 실전 미니 차트 — 단일 포트 웹앱
+## 실전 예제: 단일 포트 웹 애플리케이션 차트
 
 ### values.yaml
 
@@ -568,8 +531,12 @@ ingress:
         - path: /
           pathType: Prefix
 resources:
-  requests: { cpu: 100m, memory: 128Mi }
-  limits:   { cpu: 200m, memory: 256Mi }
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
 ```
 
 ### templates/deployment.yaml
@@ -580,14 +547,17 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "mychart.fullname" . }}
-  labels: {{- include "mychart.labels" . | nindent 4 }}
+  labels:
+    {{- include "mychart.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
-    matchLabels: {{- include "mychart.selectorLabels" . | nindent 6 }}
+    matchLabels:
+      {{- include "mychart.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      labels: {{- include "mychart.selectorLabels" . | nindent 8 }}
+      labels:
+        {{- include "mychart.selectorLabels" . | nindent 8 }}
     spec:
       containers:
         - name: app
@@ -595,10 +565,15 @@ spec:
           ports:
             - containerPort: 8080
           readinessProbe:
-            httpGet: { path: /readyz, port: 8080 }
+            httpGet:
+              path: /readyz
+              port: 8080
           livenessProbe:
-            httpGet: { path: /livez,  port: 8080 }
-          resources: {{- toYaml .Values.resources | nindent 12 }}
+            httpGet:
+              path: /livez
+              port: 8080
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
 ```
 {% endraw %}
 
@@ -612,7 +587,8 @@ metadata:
   name: {{ include "mychart.fullname" . }}
 spec:
   type: {{ .Values.service.type }}
-  selector: {{- include "mychart.selectorLabels" . | nindent 4 }}
+  selector:
+    {{- include "mychart.selectorLabels" . | nindent 4 }}
   ports:
     - name: http
       port: {{ .Values.service.port }}
@@ -632,33 +608,30 @@ metadata:
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   rules:
-  {{- range .Values.ingress.hosts }}
+    {{- range .Values.ingress.hosts }}
     - host: {{ .host }}
       http:
         paths:
-        {{- range .paths }}
+          {{- range .paths }}
           - path: {{ .path }}
             pathType: {{ .pathType }}
             backend:
               service:
                 name: {{ include "mychart.fullname" $ }}
-                port: { number: {{ $.Values.service.port }} }
-        {{- end }}
-  {{- end }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
 {{- end }}
 ```
 {% endraw %}
-
-설치/검증:
-
-```bash
-helm upgrade --install web ./mychart -n app --create-namespace
-helm get manifest web -n app | less
-kubectl -n app get all
-```
 
 ---
 
 ## 결론
 
-Helm Chart는 **템플릿(templates/)** 과 **값(values.yaml)** 을 조합해 Kubernetes 리소스를 일관되게 생성한다. 여기에 **스키마 검증(values.schema.json)**, **네이밍/라벨 표준(_helpers.tpl)**, **훅/테스트**, **서브차트/글로벌 값**, **CRD 취급**, **운영 명령어와 릴리스 전략**을 더하면 **재현 가능하고 신뢰도 높은 배포 파이프라인**을 구현할 수 있다. 실제 팀/프로덕션에서는 본문 패턴을 기본 골격으로 삼아, **환경별 values, 비밀 관리 외부화, 릴리스 안전장치(atomic/wait/timeout), 관측/롤백 전략**을 체계화하길 권한다.
+Helm Chart는 Go 템플릿을 통해 쿠버네티스 매니페스트를 생성하는 표준화된 패키징 시스템입니다. 기본적인 `templates/`와 `values.yaml` 조합에서 출발하여, `_helpers.tpl`을 통한 일관된 네이밍, `values.schema.json`을 이용한 구성 검증, 훅과 테스트를 통한 수명주기 관리, 서브차트를 활용한 모듈화 등을 점진적으로 도입할 수 있습니다.
+
+운영 환경에서는 환경별 values 파일을 체계적으로 관리하고, 비밀 정보는 외부 시스템에 위임하며, `--atomic` 및 `--wait` 플래그를 활용한 안전한 배포 자동화를 구축하는 것이 중요합니다. 또한 CRD와 같은 민감한 리소스는 차트의 수명주기와 분리하여 관리함으로써 시스템의 안정성을 높일 수 있습니다.
+
+이 문서에 소개된 구조와 패턴은 재현 가능하고 유지보수성이 높은 배포 파이프라인을 구축하는 데 유용한 기반이 될 것입니다.

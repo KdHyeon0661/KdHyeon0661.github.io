@@ -4,564 +4,531 @@ title: Kubernetes - Cloud Native Landscape
 date: 2025-06-04 22:20:23 +0900
 category: Kubernetes
 ---
-# Cloud Native Landscape 이해하기
+# Cloud Native Landscape 이해하기: 현대적 클라우드 운영을 위한 종합 가이드
 
-클라우드 네이티브는 **컨테이너 + 선언형 구성 + 자동화 + 관측성 + 회복력**으로 대표되는 운영 패러다임입니다.
-CNCF(Cloud Native Computing Foundation)는 방대한 생태계를 **Landscape**로 체계화했고, 우리는 이 지도를 통해 **문제→영역→도구**를 신속히 대응할 수 있습니다.
+## 서론: 클라우드 네이티브의 본질
 
----
+클라우드 네이티브는 단순한 기술 스택을 넘어서 현대적 애플리케이션 개발과 운영을 위한 철학적 접근법입니다. 이 패러다임은 컨테이너화, 선언적 구성, 자동화, 관측성, 회복력 등의 핵심 개념을 통해 조직이 빠르게 변화하는 비즈니스 요구에 민첩하게 대응할 수 있도록 지원합니다.
 
-## Cloud Native란 무엇인가 — 운영 관점 재정의
-
-> **정의**: 불변(Immutable) 아티팩트와 선언형(Declarative) 스펙으로 시스템을 구성하고, 자동화된 파이프라인과 컨트롤루프(Reconciler)로 **원하는 상태(Desired State)** 를 일관되게 유지/복구하는 접근.
-
-핵심 속성
-- **컨테이너화**: 환경 의존성 제거, 일관된 배포 단위
-- **마이크로서비스**: 작은 단위의 독립 배포/스케일링
-- **GitOps/DevOps**: 변경 이력·검증·롤백 표준화
-- **관측성**: 메트릭/로그/트레이스로 가시성 확보
-- **보안 내재화**: 시프트레프트(코드·이미지·런타임 전 과정)
-
-> **가용성 추정(연간 가용성)**
-> 서비스 서브시스템 가용성 \(A_i\)가 독립이라고 가정하면 전체 가용성 \(A\)는
-> $$ A = \prod_{i=1}^{n} A_i $$
-> 예) 3구성 요소가 각각 99.95%라면 전체 가용성은 \(0.9995^3 \approx 99.85\%\). 병목을 찾고 상위 SLO를 역산하는 데 유용합니다.
+CNCF(Cloud Native Computing Foundation)는 이 방대한 생태계를 Cloud Native Landscape라는 지도로 체계화하여, 조직이 특정 문제에 적합한 도구를 신속하게 찾고 평가할 수 있도록 돕습니다. 이 가이드는 이 지도를 효과적으로 활용하는 방법과 클라우드 네이티브 여정을 시작하는 실용적인 접근법을 제공합니다.
 
 ---
 
-## CNCF Landscape 한 장으로 보기
+## 클라우드 네이티브 재정의: 운영 관점에서의 이해
 
-주요 카테고리
-1. **Provisioning & Infrastructure**: IaC, 클러스터 부트스트랩
-2. **Orchestration & Management**: Kubernetes, 스케줄링/운영
-3. **Runtime**: containerd/CRI-O, Wasm
-4. **Networking**: CNI, API Gateway, Service Discovery
-5. **Storage**: CSI, 분산 스토리지, 백업/복구
-6. **Observability & Analysis**: 모니터링/로그/트레이스/프로파일링
-7. **Security & Compliance**: 이미지/런타임/정책/비밀관리
-8. **App Definition & DevOps**: Helm·Kustomize·GitOps·CI/CD
-9. **Chaos/Testing**: Chaos Mesh, Litmus
+클라우드 네이티브 접근법의 핵심은 "불변 인프라"와 "선언적 구성"의 개념에 기반합니다. 이는 시스템을 구성 요소의 집합으로 보고, 코드로 정의된 원하는 상태를 자동화된 메커니즘을 통해 지속적으로 유지하고 복구하는 운영 모델을 의미합니다.
 
-**프로젝트 등급**
-- **Graduated**: Kubernetes, Prometheus, Envoy, Linkerd, etc.
-- **Incubating**: Argo, OpenTelemetry, Cilium, Flux 등
-- **Sandbox**: 초기 실험/성장 단계 프로젝트
+### 핵심 속성
+- **컨테이너화**: 애플리케이션과 모든 의존성을 함께 패키징하여 환경 간 일관성 보장
+- **마이크로서비스 아키텍처**: 독립적으로 배포하고 확장할 수 있는 작은 서비스 구성 요소
+- **자동화된 운영**: CI/CD 파이프라인과 GitOps를 통한 지속적인 배포 및 관리
+- **종합적 관측성**: 메트릭, 로그, 분산 추적을 통한 시스템 상태의 완전한 가시성
+- **보안 내재화**: 개발 초기 단계부터 보안 고려사항 통합
+
+### 가용성 수학적 이해
+복잡한 시스템의 전체 가용성을 이해하는 것은 중요합니다. 독립적인 구성 요소로 이루어진 시스템의 전체 가용성은 각 구성 요소 가용성의 곱으로 계산됩니다:
+
+```
+전체 가용성 = 구성 요소1 가용성 × 구성 요소2 가용성 × ... × 구성 요소N 가용성
+```
+
+예를 들어, 세 가지 주요 구성 요소가 각각 99.95%의 가용성을 가진다면, 시스템 전체 가용성은 약 99.85%가 됩니다. 이러한 이해는 서비스 수준 목표(SLO) 설정과 시스템 병목 지점 식별에 필수적입니다.
 
 ---
 
-## Provisioning & Infrastructure — IaC로 시작과 끝을 관리
+## CNCF Landscape: 클라우드 네이티브 생태계 지도
 
-### Terraform로 EKS 예시(핵심만)
+CNCF Landscape는 클라우드 네이티브 기술을 9개 주요 카테고리로 분류하여 체계적인 이해를 돕습니다:
 
+### 1. 프로비저닝 및 인프라 (Provisioning & Infrastructure)
+인프라스트럭처를 코드로 관리하는 도구들로, Terraform, Pulumi, Crossplane 등이 포함됩니다. 이 카테고리는 클라우드 리소스와 쿠버네티스 클러스터의 생성 및 관리를 다룹니다.
+
+### 2. 오케스트레이션 및 관리 (Orchestration & Management)
+쿠버네티스와 관련된 오케스트레이션 도구들을 포함하며, 클러스터 운영, 애플리케이션 배포, 서비스 메시 등을 다룹니다.
+
+### 3. 런타임 (Runtime)
+컨테이너 런타임과 관련된 기술로, containerd, CRI-O, 그리고 WebAssembly(Wasm) 런타임 등을 포함합니다.
+
+### 4. 네트워킹 (Networking)
+컨테이너 네트워킹 인터페이스(CNI), 서비스 메시, API 게이트웨이, 로드 밸런싱 등을 다루는 네트워킹 솔루션들입니다.
+
+### 5. 스토리지 (Storage)
+컨테이너 스토리지 인터페이스(CSI) 호환 솔루션과 분산 스토리지 시스템, 백업 및 복구 도구들을 포함합니다.
+
+### 6. 관측성 및 분석 (Observability & Analysis)
+모니터링, 로깅, 추적, 프로파일링 도구들로, 시스템의 건강 상태와 성능을 이해하는 데 필수적입니다.
+
+### 7. 보안 및 규정 준수 (Security & Compliance)
+이미지 스캐닝, 정책 시행, 비밀 관리, 런타임 보안 등 보안 전반을 다루는 도구들입니다.
+
+### 8. 애플리케이션 정의 및 개발 (App Definition & Development)
+애플리케이션 패키징, CI/CD, GitOps 등을 포함한 개발자 도구들입니다.
+
+### 9. 카오스 엔지니어링 및 테스트 (Chaos Engineering & Testing)
+시스템 복원력을 테스트하고 검증하는 도구들입니다.
+
+### 프로젝트 성숙도 등급
+CNCF는 프로젝트를 세 가지 성숙도 등급으로 분류합니다:
+- **졸업(Graduated)**: 프로덕션 사용에 안정적이고 검증된 프로젝트 (예: Kubernetes, Prometheus, Envoy)
+- **인큐베이팅(Incubating)**: 활발히 개발 중이며 상당한 채택을 보이는 프로젝트 (예: Argo, OpenTelemetry, Cilium)
+- **샌드박스(Sandbox)**: 초기 단계의 혁신적인 프로젝트들
+
+---
+
+## 핵심 영역별 실무 패턴과 도구 선택
+
+### 인프라스트럭처 프로비저닝
+Terraform을 사용한 AWS EKS 클러스터 생성 예시:
 ```hcl
-provider "aws" { region = "ap-northeast-2" }
+provider "aws" {
+  region = "ap-northeast-2"
+}
 
 module "eks" {
   source          = "terraform-aws-modules/eks/aws"
-  cluster_name    = "demo-eks"
+  cluster_name    = "production-eks"
   cluster_version = "1.29"
-  vpc_id          = var.vpc_id
-  subnet_ids      = var.subnet_ids
+  
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnet_ids
+  
   eks_managed_node_groups = {
-    default = {
-      desired_size = 3
+    general = {
+      desired_size   = 3
       instance_types = ["m6i.large"]
+      capacity_type  = "ON_DEMAND"
+    }
+    
+    spot = {
+      desired_size   = 2
+      instance_types = ["m6i.large", "m5.large", "m5n.large"]
+      capacity_type  = "SPOT"
     }
   }
 }
 ```
-- **원칙**: 모든 인프라(클러스터/노드/보안그룹/Route53)를 코드화.
-- **Pulumi**(TS/Python/Go)도 동일 기능, 언어 친화적인 IaC 선호 시 고려.
 
-### Kubeadm/Kubespray
+**운영 원칙**: 모든 인프라스트럭처를 코드로 정의하고 버전 관리하세요. 이는 재현성, 협업, 감사 추적을 보장합니다.
 
-- 온프렘/자체 VM에서 제어성↑. **프로덕션**은 HA control-plane 설계(다중 etcd) 필수.
-
----
-
-## Orchestration & Management — Kubernetes 운영 패턴
-
-### 기본 배포 매니페스트(검증 지향)
-
+### 쿠버네티스 애플리케이션 배포
+안정적인 배포를 위한 매니페스트 설계:
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api
-  labels: {app: api}
+  name: api-service
+  labels:
+    app: api-service
+    version: "1.4.7"
 spec:
   replicas: 3
   strategy:
     type: RollingUpdate
-    rollingUpdate: {maxSurge: 1, maxUnavailable: 0}
-  selector: {matchLabels: {app: api}}
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  selector:
+    matchLabels:
+      app: api-service
+  
   template:
-    metadata: {labels: {app: api}}
+    metadata:
+      labels:
+        app: api-service
+        version: "1.4.7"
+    
     spec:
       containers:
       - name: api
         image: ghcr.io/acme/api:1.4.7
         resources:
-          requests: {cpu: 200m, memory: 256Mi}
-          limits:   {cpu: "1",  memory: 512Mi}
-        ports: [{containerPort: 8080}]
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        
+        ports:
+        - containerPort: 8080
+        
         readinessProbe:
-          httpGet: {path: /healthz/ready, port: 8080}
+          httpGet:
+            path: /health/ready
+            port: 8080
           initialDelaySeconds: 10
           periodSeconds: 5
+        
         livenessProbe:
-          httpGet: {path: /healthz/live, port: 8080}
-          initialDelaySeconds: 20
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30
           periodSeconds: 10
-      nodeSelector: {workload: general}
+      
+      nodeSelector:
+        workload-type: "general"
 ```
 
-### 스케줄링 제약(요약)
+**주요 고려사항**:
+- **스케줄링 전략**: Node Affinity/Anti-Affinity와 topologySpreadConstraints를 활용하여 고가용성과 비용 효율성의 균형을 맞추세요.
+- **자동 확장**: HPA, VPA, Cluster Autoscaler의 상호작용을 고려하여 리소스 요청을 설정하세요.
+- **상태 검사**: readinessProbe와 livenessProbe를 정확하게 구성하여 애플리케이션 건강 상태를 정확하게 반영하세요.
 
-- **Node Affinity/Anti-Affinity**, **topologySpreadConstraints**, **Taint/Toleration**로 **HA + 비용** 균형 설계.
-- **HPA/VPA/Cluster Autoscaler**의 상호작용을 고려(요청치 기반).
+### 네트워킹 아키텍처
+현대적인 네트워킹 접근법:
 
----
+**CNI 선택 가이드**:
+- **Cilium**: eBPF 기반 고성능 네트워킹, L7 정책 지원, Hubble을 통한 네트워크 관측성 제공
+- **Calico**: 성숙하고 안정적이며 풍부한 네트워크 정책 기능 제공
+- **Flannel**: 간단한 설정과 운영이 필요한 소규모 환경에 적합
 
-## Runtime — 컨테이너 런타임 & Wasm
-
-- **containerd**(권장), **CRI-O**: Kubernetes 친화적인 경량 런타임.
-- **Wasm**(WasmEdge/Wasmtime): 콜드스타트·보안 장점. **게이트웨이 플러그인/필터**나 **경량 함수형 워크로드**에서 파일럿 도입.
-
----
-
-## Networking — CNI, Ingress, Gateway API, Mesh
-
-### CNI 예시: Cilium (eBPF)
-
-- **장점**: 고성능 데이터패스, L3-L7 정책, Hubble로 **흐름 관측**.
-- **대안**: Calico(성숙/정책풍부), Flannel(간단·소규모).
-
-### Gateway API (차세대 Ingress)
-
+**Gateway API** (차세대 Ingress 표준):
 ```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
-metadata: {name: api-route}
+metadata:
+  name: api-route
 spec:
-  parentRefs: [{name: public-gw}]
+  parentRefs:
+  - name: public-gateway
+  
   rules:
-  - matches: [{path: {type: PathPrefix, value: "/api"}}]
-    backendRefs: [{name: api, port: 8080}]
-```
-- Ingress의 한계를 보완한 **표준화된 확장 모델**.
-
-### Service Mesh(실전 기본)
-
-- **Linkerd**(Graduated): 경량/단순 mTLS/헬스.
-- **Istio**: 트래픽 관리/정책/멀티클러스터까지 포괄.
-
-**Istio AuthorizationPolicy 예시**
-```yaml
-apiVersion: security.istio.io/v1
-kind: AuthorizationPolicy
-metadata: {name: api-authz, namespace: default}
-spec:
-  selector: {matchLabels: {app: api}}
-  rules:
-  - from:
-    - source:
-        principals: ["cluster.local/ns/frontend/sa/web-sa"]
-    to:
-    - operation:
-        methods: ["GET"]
-        paths: ["/v1/*"]
+  - matches:
+    - path:
+        type: PathPrefix
+        value: "/api"
+    
+    backendRefs:
+    - name: api-service
+      port: 8080
 ```
 
----
+**서비스 메시 선택**:
+- **Linkerd**: 단순성과 경량성을 중시하는 경우, 기본적인 mTLS와 서비스 메시 기능 필요 시
+- **Istio**: 풍부한 트래픽 관리, 보안 정책, 관측성 기능이 필요한 복잡한 환경에서
 
-## Storage — CSI, 분산 스토리지, 백업/복구
-
-### PVC + StorageClass
-
+### 스토리지 전략
+프로덕션 환경을 위한 스토리지 구성:
 ```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
-metadata: {name: fast-gp3}
+metadata:
+  name: fast-ssd
 provisioner: ebs.csi.aws.com
-parameters: {type: gp3, iops: "3000", throughput: "125"}
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
-```
-- **WaitForFirstConsumer**: Pod 스케줄 후 **Zone 일치**로 올바른 볼륨 프로비저닝.
-
-### 분산 스토리지: Rook/Ceph, Longhorn
-
-- **Ceph**: 대규모/다양한 프로토콜.
-- **Longhorn**: 경량·K8s 네이티브, 온프렘/엣지 친화.
-
-### 백업/DR: Velero
-
-```bash
-velero backup create daily-$(date +%F) --include-namespaces prod --wait
+reclaimPolicy: Retain
 ```
 
----
+**스토리지 솔루션 선택**:
+- **클라우드 네이티브 스토리지**: 각 클라우드 제공업체의 관리형 스토리지 서비스 활용
+- **분산 스토리지**: Rook/Ceph (대규모 환경), Longhorn (경량 쿠버네티스 네이티브 솔루션)
+- **백업 및 재해 복구**: Velero를 통한 정기적인 백업 및 크로스 리전 복구
 
-## Observability — Prometheus/Loki/Tempo/OTel/Grafana
+### 관측성 스택 구축
+종합적인 관측성을 위한 모던 스택:
 
-### Prometheus + Alertmanager
-
-**간단 ServiceMonitor (prometheus-operator)**
+**Prometheus를 활용한 메트릭 수집**:
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
-metadata: {name: api-sm, labels: {release: prom}}
+metadata:
+  name: api-service-monitor
+  labels:
+    release: prometheus
 spec:
-  selector: {matchLabels: {app: api}}
+  selector:
+    matchLabels:
+      app: api-service
+  
   endpoints:
   - port: http
     interval: 15s
+    path: /metrics
 ```
 
-**PromQL 예시**
-```promql
-# CPU 사용률(%)
-
-100 * rate(container_cpu_usage_seconds_total{container!="",pod=~"api-.*"}[5m])
-  / on(pod) group_left
-    kube_pod_container_resource_requests{resource="cpu", unit="core"}
-```
-
-### + Promtail
-
-```yaml
-scrape_configs:
-- job_name: kubernetes-pods
-  kubernetes_sd_configs: [{role: pod}]
-  pipeline_stages:
-  - docker: {}
-```
-
-### OpenTelemetry(표준화된 SDK/Collector)
-
-**OTel Collector to Prometheus + Tempo**
+**OpenTelemetry를 통한 표준화된 관측성**:
 ```yaml
 receivers:
-  otlp: {protocols: {http: {}, grpc: {}}}
-exporters:
-  prometheus: {endpoint: "0.0.0.0:9464"}
   otlp:
-    endpoint: tempo:4317
+    protocols:
+      grpc:
+      http:
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:9464"
+  
+  otlp:
+    endpoint: "tempo:4317"
+    tls:
+      insecure: true
+
 service:
   pipelines:
-    metrics: {receivers: [otlp], exporters: [prometheus]}
-    traces:  {receivers: [otlp], exporters: [otlp]}
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+    
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
 ```
 
----
+**로그 관리**: Loki와 Promtail을 활용한 중앙화된 로그 수집 및 쿼리
 
-## Security & Compliance — Shift Left + Runtime
+### 보안 및 규정 준수
+다층적 보안 전략 구현:
 
-### 이미지 스캔: Trivy
-
+**이미지 보안**:
 ```bash
-trivy image ghcr.io/acme/api:1.4.7 --severity CRITICAL,HIGH
+# Trivy를 활용한 취약점 스캐닝
+trivy image ghcr.io/acme/api:1.4.7 \
+  --severity CRITICAL,HIGH \
+  --format table \
+  --exit-code 1
 ```
 
-### 정책: OPA Gatekeeper / Kyverno
-
-**Gatekeeper ConstraintTemplate + Constraint**
-```yaml
-apiVersion: templates.gatekeeper.sh/v1
-kind: ConstraintTemplate
-metadata: {name: k8srequiredlabels}
-spec:
-  crd:
-    spec:
-      names:
-        kind: K8sRequiredLabels
-  targets:
-  - target: admission.k8s.gatekeeper.sh
-    rego: |
-      package k8srequiredlabels
-      violation[{"msg": msg}] {
-        required := {"owner", "team"}
-        provided := {k | input.review.object.metadata.labels[k]}
-        missing := required - provided
-        count(missing) > 0
-        msg := sprintf("missing required labels: %v", [missing])
-      }
----
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: K8sRequiredLabels
-metadata: {name: must-have-owner-team}
-spec:
-  match:
-    kinds: [{apiGroups: [""], kinds: ["Namespace"]}]
-```
-
-**Kyverno(예: root 금지)**
+**정책 시행** (Kyverno 예시):
 ```yaml
 apiVersion: kyverno.io/v1
 kind: ClusterPolicy
-metadata: {name: disallow-root}
+metadata:
+  name: require-resource-limits
 spec:
   validationFailureAction: enforce
   rules:
-  - name: runAsNonRoot
+  - name: check-resource-limits
     match:
-      resources: {kinds: ["Pod"]}
+      resources:
+        kinds:
+        - Pod
     validate:
-      message: "Containers must not run as root."
+      message: "CPU and memory limits are required"
       pattern:
         spec:
-          securityContext:
-            runAsNonRoot: true
+          containers:
+          - resources:
+              limits:
+                memory: "?*"
+                cpu: "?*"
 ```
 
-### 런타임 보안: Falco
+**런타임 보안**: Falco를 통한 이상 행위 탐지 및 경고
 
-- 커널 이벤트 기반 **행동 탐지**(eBPF). 무단 쉘/민감파일 접근 규칙으로 경보.
-
-### 인증서·신뢰: cert-manager / SPIFFE/SPIRE
-
-- **내부 mTLS**, 서비스 아이덴티티 자동화.
-
----
-
-## App Definition & DevOps — Helm/Kustomize/GitOps/CI
-
-### Helm 차트 베이스(템플릿 추상화)
-
+### 애플리케이션 배포 및 GitOps
+**Helm을 활용한 애플리케이션 패키징**:
 ```yaml
 # values.yaml
-
 image:
   repository: ghcr.io/acme/api
   tag: "1.4.7"
+  pullPolicy: IfNotPresent
+
 replicaCount: 3
+
 resources:
-  requests: {cpu: 200m, memory: 256Mi}
-  limits:   {cpu: "1",  memory: 512Mi}
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+  limits:
+    cpu: "1"
+    memory: "512Mi"
+
+service:
+  type: ClusterIP
+  port: 80
 ```
 
-{% raw %}
-```yaml
-# templates/deployment.yaml (발췌)
-
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ include "api.fullname" . }}
-spec:
-  replicas: {{ .Values.replicaCount }}
-  template:
-    spec:
-      containers:
-      - name: api
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        resources: {{- toYaml .Values.resources | nindent 10 }}
-```
-{% endraw %}
-
-### Kustomize 오버레이
-
-```
-base/ (deployment.yaml, service.yaml)
-overlays/
-  dev/kustomization.yaml      # namePrefix: dev-
-  prod/kustomization.yaml     # replicas/리소스 상향, 주석 주입 등
-```
-
-### GitOps: Argo CD(ApplicationSet 포함)
-
+**Argo CD를 활용한 GitOps 구현**:
 ```yaml
 apiVersion: argoproj.io/v1alpha1
 kind: Application
-metadata: {name: api, namespace: argocd}
+metadata:
+  name: api-production
+  namespace: argocd
 spec:
+  project: default
+  
   source:
-    repoURL: https://github.com/acme/infra
-    path: helm/api
+    repoURL: https://github.com/acme/infrastructure.git
     targetRevision: main
+    path: charts/api
     helm:
-      valueFiles: ["values-prod.yaml"]
+      valueFiles:
+      - values-production.yaml
+  
   destination:
     server: https://kubernetes.default.svc
-    namespace: prod
+    namespace: production
+  
   syncPolicy:
-    automated: {prune: true, selfHeal: true}
-    syncOptions: ["CreateNamespace=true"]
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - PruneLast=true
 ```
 
-**ApplicationSet(다중 환경 생성)**
-{% raw %}
-```yaml
-apiVersion: argoproj.io/v1alpha1
-kind: ApplicationSet
-metadata: {name: apps}
-spec:
-  generators:
-  - list:
-      elements:
-      - {name: api-dev,  namespace: dev,  values: values-dev.yaml}
-      - {name: api-prod, namespace: prod, values: values-prod.yaml}
-  template:
-    metadata:
-      name: "{{name}}"
-      namespace: argocd
-    spec:
-      source:
-        repoURL: https://github.com/acme/infra
-        path: helm/api
-        targetRevision: main
-        helm: {valueFiles: ["{{values}}"]}
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: "{{namespace}}"
-      syncPolicy: {automated: {prune: true, selfHeal: true}}
-```
-{% endraw %}
-
-### CI(예: GitHub Actions → 이미지 빌드/푸시)
-
-{% raw %}
-```yaml
-name: ci
-on: {push: {branches: [main]}}
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - uses: docker/setup-buildx-action@v3
-    - uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    - name: Build & Push
-      run: |
-        docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} .
-        docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
-```
-{% endraw %}
-
----
-
-## Chaos/Resilience — Litmus / Chaos Mesh
-
-- 장애 주입으로 **SLO·오토스케일·헬스 체크** 유효성 검증.
+### 카오스 엔지니어링
+시스템 복원력 검증을 위한 체계적 접근:
 ```yaml
 apiVersion: litmuschaos.io/v1alpha1
 kind: ChaosEngine
-metadata: {name: pod-kill, namespace: chaos}
+metadata:
+  name: api-chaos-test
+  namespace: chaos-testing
 spec:
-  appinfo: {appns: prod, applabel: "app=api", appkind: deployment}
+  appinfo:
+    appns: production
+    applabel: "app=api-service"
+    appkind: deployment
+  
+  annotationCheck: "false"
+  
+  engineState: "active"
+  
   experiments:
   - name: pod-delete
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: "60"
+        
+        - name: CHAOS_INTERVAL
+          value: "10"
+        
+        - name: FORCE
+          value: "false"
 ```
 
 ---
 
-## 선택 가이드 — 상황별 추천 조합
+## 조직 규모와 요구사항에 따른 기술 선택 가이드
 
-| 요구/규모 | 네트워킹 | 배포 | 관측 | 보안 | 스토리지 |
-|---|---|---|---|---|---|
-| 소규모/단일 AZ | Flannel/Calico | Helm + ArgoCD(단일) | Prometheus+Grafana+Loki | Trivy+Kyverno(basic) | EBS/PD + Velero |
-| 중규모/멀티 AZ | Calico/Cilium | Helm + ArgoCD(ApplicationSet) | + Tempo/OTel | Falco+Gatekeeper | EBS/PD + Rook/Ceph |
-| 대규모/멀티 리전 | Cilium + Mesh | GitOps(멀티클러스터) | Thanos/Cortex | SPIRE+mTLS+OPA/PSA | Regional DR + Velero |
+### 소규모/시작 단계
+- **네트워킹**: Flannel 또는 Calico
+- **배포**: Helm + 단일 Argo CD 인스턴스
+- **관측성**: Prometheus + Grafana + Loki 기본 구성
+- **보안**: Trivy + 기본 Kyverno 정책
+- **스토리지**: 클라우드 제공업체의 관리형 블록 스토리지
 
-**서비스 메시 선택**
-- 단순 mTLS/헬스/레이트리밋: **Linkerd**
-- 복합 라우팅/멀티클러스터/정책 풍부: **Istio**
+### 중규모/성장 단계
+- **네트워킹**: Calico 또는 Cilium
+- **배포**: Helm + Argo CD ApplicationSet (다중 환경 관리)
+- **관측성**: Prometheus + Loki + Tempo + OpenTelemetry Collector
+- **보안**: Falco + Gatekeeper/OPA + cert-manager
+- **스토리지**: 클라우드 스토리지 + Rook/Ceph (필요 시)
 
----
-
-## 비용·성능·안정성 최적화 체크리스트
-
-- **Requests/Limits 적정화**: HPA 기준·Throttling/OOM 방지
-- **노드 풀 분리**: CPU/GPU/메모리 최적, 스팟 혼용(비핵심)
-- **스토리지**: RWO/RWX·IOPS/Throughput 맞춤
-- **eBPF(Cilium)**: L7 정책·가시성으로 문제 시간 단축
-- **SLO→SLA 역산**: 상단의 가용성 곱셈식으로 약점 찾기
-- **릴리즈 전략**: Canary/Blue-Green + 자동 롤백(에러·라틴시 기준)
-- **보안**: 이미지 서명(COSIGN), Supply Chain(SLSA) 단계적 도입
-
----
-
-## 레퍼런스 아키텍처(요약 다이어그램 텍스트)
-
-```
-[Dev] --(Git Push)--> [CI: Actions/Tekton] --(Image)--> [Registry]
-         \                                            /
-          \--(Infra IaC)--> [Cloud/VPC/Cluster by Terraform]
-[Argo CD] --(GitOps Sync)--> [Kubernetes Cluster]
-   |-- Helm/Kustomize
-   |-- AppSet (multi env/cluster)
-[Networking] CNI(Cilium) + Gateway API + (optional) Istio/Linkerd
-[Observability] Prom + Loki + Tempo + OTel + Grafana
-[Security] Trivy + OPA/Kyverno + cert-manager + Falco
-[Storage] CSI(EBS/PD) + (Rook/Ceph) + Velero
-```
+### 대규모/엔터프라이즈 단계
+- **네트워킹**: Cilium + 서비스 메시 (Istio/Linkerd)
+- **배포**: 멀티 클러스터 GitOps 아키텍처
+- **관측성**: Thanos/Cortex + Grafana Mimir + Tempo
+- **보안**: SPIRE/SPIFFE + 포괄적 정책 시행 + 런타임 보안
+- **스토리지**: 지역 간 재해 복구를 고려한 다층 스토리지 전략
 
 ---
 
-## 실전 운영 런북(핵심 절차)
+## 비용, 성능, 안정성 최적화를 위한 핵심 원칙
 
-1) **문제 인입**(지연/오류율): SLO 대시보드 확인 → 영향 범위
-2) **서비스 경로 추적**: Gateway/Route/Mesh → 대상 워크로드 식별
-3) **Pod 상태**: `kubectl describe`/이벤트/Probe/HPA
-4) **리소스**: CPU/메모리/ephemeral-storage/네트워크/디스크
-5) **릴리즈/환경차**: GitOps Diff/Helm Diff
-6) **정책/보안**: PSA/Gatekeeper/Kyverno 로그
-7) **회복**: 라우팅 롤백/Canary 중단/Autoscaler 상향
-8) **사후분석**: 트레이스(Tempo/Jaeger), 로그(Loki), 근본원인 문서화
+### 리소스 효율성
+- **적절한 요청/제한 설정**: 실제 사용 패턴에 기반한 리소스 할당으로 비용 최적화 및 성능 보장
+- **노드 풀 전략**: 워크로드 특성에 맞는 전용 노드 풀 구성 (CPU 집약형, 메모리 집약형, GPU 등)
+- **스팟 인스턴스 활용**: 내결함성이 있는 워크로드에 스팟 인스턴스 활용으로 비용 절감
+
+### 성능 최적화
+- **eBPF 활용**: Cilium과 같은 eBPF 기반 솔루션으로 네트워크 성능 향상
+- **적절한 스토리지 선택**: 워크로드의 I/O 패턴에 맞는 스토리지 클래스 선택
+- **캐싱 전략**: 적절한 캐싱 계층 구현으로 애플리케이션 응답 시간 개선
+
+### 안정성 보장
+- **서비스 수준 목표(SLO) 기반 운영**: 비즈니스 요구사항에 기반한 명확한 SLO 정의 및 모니터링
+- **점진적 배포 전략**: 카나리 배포, 블루-그린 배포를 통한 위험 최소화
+- **자동화된 복구**: 자동 롤백 및 자가 치유 메커니즘 구현
+
+### 보안 강화
+- **공급망 보안**: 이미지 서명(Cosign) 및 SBOM 생성으로 공급망 무결성 보장
+- **정책 기반 거버넌스**: OPA/Gatekeeper/Kyverno를 통한 일관된 정책 시행
+- **지속적인 컴플라이언스**: 규정 준수 요구사항을 코드로 표현하고 자동화
 
 ---
 
-## 안티패턴 경계
+## 일반적인 안티패턴과 회피 전략
 
-- `latest` 태그 남용(재현 불가/롤백 불가)
-- Requests 미설정(스케줄 편향/HPA 오작동)
-- 단일 AZ/노드 집중(장애 도메인 과밀)
-- 무분별한 ClusterRoleBinding(cluster-admin)
-- 중앙관측 부재(사건 추적 불가)
-- Git 밖 수동 kubectl 패치(드리프트·재발)
+### 재현 불가능한 배포
+- **안티패턴**: `latest` 태그 사용, 수동 환경 구성
+- **해결책**: 명시적 버전 태그 사용, 모든 환경 구성 코드화
+
+### 리소스 관리 부재
+- **안티패턴**: 리소스 요청/제한 미설정, 단일 가용 영역 의존
+- **해결책**: 실제 사용량 기반 리소스 설정, 다중 가용 영역 배포
+
+### 보안 취약점
+- **안티패턴**: 과도한 권한 부여, 평문 비밀 정보 저장
+- **해결책**: 최소 권한 원칙 적용, 안전한 비밀 관리 도구 활용
+
+### 관측성 부재
+- **안티패턴**: 로그와 메트릭 수집 체계 미구축
+- **해결책**: 종합적 관측성 스택 도입, 비즈니스 메트릭 정의
+
+### 구성 드리프트
+- **안티패턴**: Git 외부에서의 수동 변경
+- **해결책**: GitOps 접근법 채택, 모든 변경사항의 버전 관리
+
+---
+
+## 실전 운영을 위한 체크리스트
+
+### 배포 전 검증
+1. [ ] 이미지 취약점 스캔 완료 및 임계값 이내
+2. [ ] 리소스 요청/제한이 실제 사용 패턴에 맞게 설정됨
+3. [ ] 모든 구성이 버전 관리되고 코드화됨
+4. [ ] 롤백 계획이 명확히 정의됨
+5. [ ] 종속 서비스의 호환성이 확인됨
+
+### 모니터링 및 경고
+1. [ ] 비즈니스 SLO에 기반한 메트릭 정의
+2. [ ] 핵심 경로의 종단 간 모니터링 구성
+3. [ ] 적절한 경고 임계값 설정 및 담당자 할당
+4. [ ] 대시보드를 통한 실시간 가시성 확보
+
+### 보안 및 규정 준수
+1. [ ] 모든 이미지 서명 및 검증
+2. [ ] 네트워크 정책으로 필요한 통신만 허용
+3. [ ] 정책 시행을 통한 구성 표준 준수
+4. [ ] 정기적인 보안 감사 및 취약점 평가
+
+### 재해 복구
+1. [ ] 정기적인 백업 및 복구 테스트
+2. [ ] 크로스 리전/클라우드 복구 계획
+3. [ ] 장애 조치 절차 문서화 및 훈련
+4. [ ] 데이터 무결성 검증 프로세스
 
 ---
 
 ## 결론
 
-- **Cloud Native**는 도구 나열이 아니라 **운영 철학**입니다.
-- CNCF Landscape의 각 퍼즐(네트워킹/스토리지/관측/보안/배포)을 **문제 지향**으로 조립하세요.
-- 본문 예제(Helm/Kustomize/ArgoCD/OPA/PromQL/Velocity)로 **즉시 적용 가능한 기준선**을 잡고,
-  조직 상황(규모/규제/비용/경험)에 맞춰 **단계적 심화**(Mesh/OTel/Policy/DR)를 진행하면 됩니다.
+클라우드 네이티브 여정은 단일 도구나 기술의 채택이 아니라 조직의 문화, 프로세스, 기술 스택의 종합적 변혁입니다. CNCF Landscape는 이 방대한 생태계를 항해하는 데 유용한 지도이지만, 진정한 성공은 조직의 고유한 요구사항과 제약 조건에 맞는 올바른 도구 선택과 구현에 있습니다.
 
----
+효과적인 클라우드 네이티브 전환을 위해 다음 원칙을 따르는 것이 좋습니다:
 
-## 부록: 빠른 실습 번들(리스트)
+1. **점진적 접근**: 작게 시작하여 성공을 증명하고 점진적으로 확장하세요.
+2. **문제 중심 선택**: 기술 자체보다 해결해야 할 비즈니스 문제에 초점을 맞추세요.
+3. **표준과 호환성**: 업계 표준과 널리 채택된 기술을 우선적으로 고려하세요.
+4. **관측성 우선**: 운영 가시성 없이는 안정성을 보장할 수 없습니다.
+5. **보안 내재화**: 보안을 사후 고려사항이 아닌 설계의 핵심 요소로 통합하세요.
+6. **지속적 학습**: 빠르게 진화하는 생태계에서 지속적인 학습은 필수적입니다.
 
-- IaC: Terraform EKS 모듈
-- 배포: Helm 차트 + ArgoCD Application
-- 관측: kube-prometheus-stack + Loki + Tempo + OTel Collector
-- 보안: Trivy 스캔, Kyverno/Gatekeeper 한 가지 정책
-- 네트워크: Cilium + Gateway API(또는 NGINX Ingress)
-- 백업: Velero **하루 1회 스케줄** 추가
+이 가이드에 제시된 패턴과 모범 사례는 클라우드 네이티브 여정을 시작하는 견고한 기반을 제공합니다. 각 조직은 고유한 여정을 가지고 있으며, 성공의 핵심은 유연성, 학습 능력, 그리고 비즈니스 가치에 대한 지속적인 집중에 있습니다.
 
-```bash
-# Velero 스케줄 예시
-
-velero schedule create daily --schedule="0 2 * * *" --include-namespaces prod
-```
-
----
-
-## 참고 링크
-
-- CNCF: https://www.cncf.io/
-- CNCF Landscape: https://landscape.cncf.io/
-- Kubernetes Docs: https://kubernetes.io/
-- Prometheus/Alerting: https://prometheus.io/
-- OpenTelemetry: https://opentelemetry.io/
-- Argo CD: https://argo-cd.readthedocs.io/
-- Cilium: https://cilium.io/
-- Kyverno: https://kyverno.io/
-- Gatekeeper/OPA: https://open-policy-agent.github.io/gatekeeper/
-- Velero: https://velero.io/
+클라우드 네이티브는 목적지가 아닌 지속적인 개선과 혁신의 여정입니다. 이 지도와 원칙들을 활용하여 조직의 특정 상황에 맞는 최적의 경로를 찾아 나가시기 바랍니다.

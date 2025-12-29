@@ -4,62 +4,65 @@ title: Docker - GitHub Actions를 이용한 Docker 배포 자동화
 date: 2025-03-03 20:20:23 +0900
 category: Docker
 ---
-# GitHub Actions를 이용한 Docker 배포 자동화
+# GitHub Actions를 이용한 Docker 배포 자동화 가이드
 
-## 목표/흐름/디렉터리
+## 개요
 
-### 목표
+이 가이드는 GitHub Actions를 사용하여 Docker 애플리케이션의 CI/CD 파이프라인을 구축하는 방법을 설명합니다. 코드 변경 시 자동으로 Docker 이미지를 빌드하고, 보안 검사를 수행하며, 컨테이너 레지스트리에 푸시하고, 원격 서버에 배포하는 완전한 워크플로우를 구성할 수 있습니다.
 
-- 푸시/릴리스 시 **자동 빌드·푸시·배포**
-- **재현 가능한** 멀티스테이지 빌드와 **빠른 캐시**
-- 태그/레이블/라벨 메타데이터 자동화
-- **보안 스캔(SBOM/취약점)·서명** 도입
-- **승인 기반(prod) 배포**, 실패 시 **즉시 롤백**
+## 시스템 아키텍처와 워크플로우
 
-### 기본 흐름
+### 기본 워크플로우 흐름
 
 ```
-[코드 Push/Release] → [Actions Runner]
-  → (QEMU/Buildx) Docker Build
-  → (metadata/cosign/trivy/syft)
-  → Registry Push (Docker Hub or GHCR)
-  → (옵션) SSH/웹훅/Compose/K8s 배포
+[코드 Push 또는 Release 생성]
+        │
+        ▼
+[GitHub Actions Runner 시작]
+        │
+        ▼
+[Docker 이미지 빌드 (Buildx + QEMU)]
+        │
+        ▼
+[보안 검사 (SBOM 생성, 취약점 스캔, 서명)]
+        │
+        ▼
+[컨테이너 레지스트리 푸시 (Docker Hub 또는 GHCR)]
+        │
+        ▼
+[원격 서버 배포 (SSH, Webhook, 또는 K8s)]
 ```
 
-### 디렉터리 예시
+### 프로젝트 구조 예시
 
 ```plaintext
-my-app/
-├── app/
+my-application/
+├── app/                    # 애플리케이션 소스 코드
 │   └── main.py
-├── Dockerfile
-├── docker-compose.yml
+├── Dockerfile             # 멀티스테이지 Dockerfile
+├── docker-compose.yml     # 배포 구성
+├── .dockerignore          # 빌드 컨텍스트 제외 파일
 └── .github/
-    └── workflows/
-        ├── docker-publish.yml
-        ├── deploy-ssh.yml
-        └── rollback.yml
+    └── workflows/         # GitHub Actions 워크플로우
+        ├── docker-build-push.yml
+        └── deploy-production.yml
 ```
 
----
+## Dockerfile 구성
 
-## Dockerfile — 멀티스테이지 + 런타임 경량화
+효율적이고 안전한 Docker 이미지를 위해 멀티스테이지 빌드를 사용합니다:
 
 ```dockerfile
 # syntax=docker/dockerfile:1.7
 
 # 빌드 스테이지
-
 FROM python:3.11-slim AS builder
 WORKDIR /app
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 PIP_NO_CACHE_DIR=1
-COPY app/ ./app/
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip \
- && pip install --prefix=/install -r requirements.txt
+RUN pip install --prefix=/install -r requirements.txt
 
-# 런타임 스테이지(경량)
-
+# 런타임 스테이지 (경량화)
 FROM gcr.io/distroless/python3-debian12:nonroot
 WORKDIR /app
 ENV PYTHONUNBUFFERED=1
@@ -70,30 +73,25 @@ EXPOSE 8080
 CMD ["app/main.py"]
 ```
 
-핵심:
-- **멀티스테이지**로 최종 이미지 최소화
-- **distroless**로 공격면 축소(쉘 없음)
-- `USER nonroot`로 기본 권한 최소화
+**주요 특징**:
+- 멀티스테이지 빌드로 최종 이미지 크기 최소화
+- Distroless 베이스 이미지로 공격 표면적 감소
+- 비루트(nonroot) 사용자로 실행하여 보안 강화
 
----
+## GitHub Actions 워크플로우
 
-## 기본 CI — Docker Hub 로그인/빌드/푸시
-
-### 사전 준비(Secrets)
-
-- `DOCKER_USERNAME`, `DOCKER_PASSWORD` (Docker Hub 토큰 권장)
-- (옵션) `IMAGE_NAME` = `yourname/my-app`
-
-### `.github/workflows/docker-publish.yml`
+### 기본 Docker 빌드 및 푸시 워크플로우
 
 {% raw %}
 ```yaml
-name: docker-publish
+name: Docker Build and Push
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  # 수동 실행 허용
 
 jobs:
   build-and-push:
@@ -103,22 +101,23 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout
+      # 1. 코드 체크아웃
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up QEMU (multi-arch)
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Buildx
+      # 2. Docker Buildx 설정
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # 3. Docker Hub 로그인
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Extract metadata (tags, labels)
+      # 4. 메타데이터 추출 (태그, 라벨 자동 생성)
+      - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -128,123 +127,122 @@ jobs:
             type=sha
             type=ref,event=branch
             type=semver,pattern={{version}}
-          labels: |
-            org.opencontainers.image.source=${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
 
-      - name: Build and push (multi-arch)
+      # 5. Docker 이미지 빌드 및 푸시
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
           push: true
-          labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 ```
 {% endraw %}
 
-포인트:
-- **metadata-action**으로 태그/레이블 자동 생성(커밋 SHA, 브랜치, semver)
-- **buildx + qemu**로 `amd64/arm64` 동시 빌드
-- **GHA 캐시**로 빌드 시간 단축
+### GitHub Container Registry (GHCR) 사용
 
----
-
-## GHCR로 푸시(조직/프라이빗 운영에 적합)
-
-GHCR는 기본으로 `GITHUB_TOKEN`으로 로그인 가능.
+GitHub Packages의 컨테이너 레지스트리를 사용하는 경우:
 
 {% raw %}
 ```yaml
-      - name: Login to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+- name: Login to GitHub Container Registry
+  uses: docker/login-action@v3
+  with:
+    registry: ghcr.io
+    username: ${{ github.actor }}
+    password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/${{ github.repository }}/my-app
-          tags: |
-            type=raw,value=latest
-            type=sha
-            type=ref,event=branch
+- name: Extract metadata for GHCR
+  id: meta
+  uses: docker/metadata-action@v5
+  with:
+    images: ghcr.io/${{ github.repository }}/my-app
+    tags: |
+      type=raw,value=latest
+      type=sha
+      type=ref,event=branch
 ```
 {% endraw %}
 
-이미지 참조: `ghcr.io/<owner>/<repo>/my-app:latest`
+### 멀티 아키텍처 빌드 지원
 
----
-
-## 보안·신뢰도: SBOM/취약점 스캔/서명
-
-### SBOM 생성(Syft)
+여러 CPU 아키텍처를 지원하는 이미지를 빌드하려면:
 
 {% raw %}
 ```yaml
-      - name: Generate SBOM (Syft)
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ steps.meta.outputs.tags }}
-          format: spdx-json
-          output-file: sbom.spdx.json
+- name: Set up QEMU for multi-architecture builds
+  uses: docker/setup-qemu-action@v3
 
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.spdx.json
+- name: Build and push multi-arch images
+  uses: docker/build-push-action@v6
+  with:
+    context: .
+    platforms: linux/amd64,linux/arm64
+    push: true
+    tags: ${{ steps.meta.outputs.tags }}
 ```
 {% endraw %}
 
-### 취약점 스캔(Trivy)
+## 보안 강화 워크플로우
+
+### Software Bill of Materials (SBOM) 생성
 
 {% raw %}
 ```yaml
-      - name: Scan image (Trivy)
-        uses: aquasecurity/trivy-action@0.22.0
-        with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/my-app:latest
-          format: table
-          severity: CRITICAL,HIGH
-          ignore-unfixed: true
+- name: Generate SBOM with Syft
+  uses: anchore/sbom-action@v0
+  with:
+    image: ${{ steps.meta.outputs.tags }}
+    format: spdx-json
+    output-file: sbom.spdx.json
+
+- name: Upload SBOM as artifact
+  uses: actions/upload-artifact@v4
+  with:
+    name: sbom
+    path: sbom.spdx.json
 ```
 {% endraw %}
 
-### 컨테이너 이미지 서명(Cosign)
+### 취약점 스캔
 
 {% raw %}
 ```yaml
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.6.0
-
-      - name: Cosign sign (keyless OIDC)
-        run: |
-          cosign sign --yes ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+- name: Scan for vulnerabilities with Trivy
+  uses: aquasecurity/trivy-action@0.22.0
+  with:
+    image-ref: ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+    format: table
+    severity: CRITICAL,HIGH
+    ignore-unfixed: true
 ```
 {% endraw %}
 
-> OIDC 기반 **keyless** 서명을 쓰면 별도 키 보관 없이 서명 가능(레지스트리/정책과 연계해 배포 신뢰성 강화).
-
----
-
-## 배포 — 원격 서버에 SSH로 롤링 교체
-
-### 사전 준비(Secrets)
-
-- `REMOTE_HOST`, `REMOTE_USER`, `REMOTE_SSH_KEY`(private key)
-- 서버에 Docker 설치 및 레지스트리 접근 가능해야 함.
-
-`.github/workflows/deploy-ssh.yml`:
+### 컨테이너 이미지 서명
 
 {% raw %}
 ```yaml
-name: deploy-ssh
+- name: Install Cosign
+  uses: sigstore/cosign-installer@v3.6.0
+
+- name: Sign container image with Cosign
+  run: |
+    cosign sign --yes ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+```
+{% endraw %}
+
+## 배포 자동화
+
+### SSH를 통한 원격 서버 배포
+
+원격 서버에 SSH로 접속하여 Docker Compose를 사용해 배포하는 예시:
+
+{% raw %}
+```yaml
+name: Deploy to Production
+
 on:
   workflow_dispatch:
   push:
@@ -253,16 +251,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production    # 환경 승인 사용 시
+    environment: production  # 환경 보호 규칙 적용
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -270,17 +260,25 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           key: ${{ secrets.REMOTE_SSH_KEY }}
           script: |
-            set -e
+            # 최신 이미지 풀
             docker pull ${{ secrets.DOCKER_USERNAME }}/my-app:latest
-            docker compose -f /srv/my-app/docker-compose.yml down || true
+            
+            # 기존 컨테이너 중지
+            docker compose -f /srv/my-app/docker-compose.yml down
+            
+            # 새 컨테이너 시작
             docker compose -f /srv/my-app/docker-compose.yml up -d
+            
+            # 오래된 이미지 정리
             docker image prune -af --filter "until=168h"
 ```
 {% endraw %}
 
-서버 측 `docker-compose.yml`(예시):
+### 원격 서버 Docker Compose 파일 예시
 
 ```yaml
+version: '3.9'
+
 services:
   app:
     image: yourname/my-app:latest
@@ -290,134 +288,34 @@ services:
     environment:
       APP_ENV: production
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
       interval: 30s
       timeout: 3s
       retries: 3
 ```
 
-> `environment: production`을 사용하면 GitHub 환경 보호 규칙을 통해 **배포 승인(Approvals)**을 강제할 수 있다.
+## 고급 배포 전략
 
----
+### 롤백 워크플로우
 
-## Watchtower/Portainer/Webhook 기반 자동 재배포
-
-### Watchtower로 최신 태그 자동 갱신
-
-서버에서 워치타워 실행:
-
-```bash
-docker run -d \
-  --name watchtower \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  containrrr/watchtower --cleanup --interval 30
-```
-
-**Actions에서 웹훅 호출**(예: 사내 엔드포인트):
-
-```yaml
-- name: Notify deploy webhook
-  run: curl -fsS -X POST https://yourserver.example.com/deploy-hook
-```
-
-워치타워는 최신 이미지 감지 시 자동 재시작.
-
-### Portainer Webhook
-
-Portainer에서 Stack에 Webhook URL 발급 → Actions에서 `curl` 호출로 업데이트 트리거.
-
----
-
-## 태깅 전략 — latest + semver + sha
-
-권장:
-- `latest`는 최신 안정 배포용
-- `vX.Y.Z`는 릴리스(Release) 트리거에서만
-- 커밋 트레이스 용도로 `sha` 태그
-
-릴리스 트리거 예시:
-
-```yaml
-on:
-  release:
-    types: [published]
-
-# metadata-action에서 type=semver 활성화
-
-```
-
----
-
-## 성능 최적화 — 빌드 캐시/레이어 관리/.dockerignore
-
-### 캐시
-
-- `cache-from: type=gha` / `cache-to: type=gha,mode=max`
-- 빈번 변경 파일(앱 코드)은 **Dockerfile 하단**에 COPY → 캐시 활용
-
-### .dockerignore
-
-```
-.git
-.github
-.env
-**/__pycache__
-*.log
-node_modules
-public
-```
-
-### 멀티스테이지
-
-- 런타임에 **필요한 산출물만** COPY
-- **distroless/alpine** 기반 런타임으로 용량/공격면 최소화
-
----
-
-## 보호/가시성 — 환경 승인/병행 제어/아티팩트
-
-### 환경 승인(Approvals)
-
-- `jobs.<job>.environment: production` → 환경 보호 규칙에서 승인자 지정
-
-### 병행 제어(동시 배포 방지)
-
-```yaml
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
-```
-
-### 빌드 산출물/로그 보관
-
-```yaml
-- uses: actions/upload-artifact@v4
-  with:
-    name: build-logs
-    path: /tmp/build-logs/*
-```
-
----
-
-## 롤백 전략 — 이전 태그로 빠르게 복귀
-
-`.github/workflows/rollback.yml`:
+문제 발생 시 이전 버전으로 롤백하는 워크플로우:
 
 {% raw %}
 ```yaml
-name: rollback
+name: Rollback Deployment
+
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Rollback to tag (e.g., v1.2.3 or sha)"
+        description: "Rollback to tag (e.g., v1.2.3 or commit SHA)"
         required: true
 
 jobs:
   rollback:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH rollback
+      - name: Rollback via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.REMOTE_HOST }}
@@ -426,61 +324,120 @@ jobs:
           script: |
             set -e
             IMG="${{ secrets.DOCKER_USERNAME }}/my-app:${{ github.event.inputs.tag }}"
+            
+            # 지정된 태그의 이미지 풀
             docker pull $IMG
-            docker compose -f /srv/my-app/docker-compose.yml down || true
-            sed -i "s#image: .*#image: $IMG#g" /srv/my-app/docker-compose.yml
+            
+            # Docker Compose 파일에서 이미지 태그 변경
+            sed -i "s|image: .*|image: $IMG|g" /srv/my-app/docker-compose.yml
+            
+            # 컨테이너 재시작
+            docker compose -f /srv/my-app/docker-compose.yml down
             docker compose -f /srv/my-app/docker-compose.yml up -d
 ```
 {% endraw %}
 
----
+### 자동화된 재배포 도구 통합
 
-## 블루-그린/카나리(Compose로 단순화)
+#### Watchtower를 이용한 자동 업데이트
 
-### 블루-그린
+서버에서 Watchtower를 실행하면 새 이미지를 자동으로 감지하고 컨테이너를 업데이트합니다:
 
-- `app-blue`, `app-green` 두 서비스를 올리고 **Nginx 프록시**에서 업스트림 전환
-- 전환 전 **헬스체크/사전 트래픽 테스트**
-
-Nginx 업스트림 예시:
-
-```nginx
-upstream app {
-  server app-blue:8080 backup;
-  server app-green:8080;
-}
+```bash
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  containrrr/watchtower --cleanup --interval 30
 ```
 
-### 카나리
+#### Portainer 웹훅을 통한 배포
 
-- `latest`와 `sha` 태그 이미지를 **서로 다른 서비스**로 띄우고 라우팅 비율 조정
-
----
-
-## 개발/스테이징/운영 분리
-
-- 브랜치/태그 규칙:
-  - `feat/*` → 임시 이미지 `pr-<num>` 태그
-  - `develop` → `dev` 환경 자동 배포
-  - `main` → `staging` 자동, 승인 후 `production`
-
-예) 이벤트 조건 분기:
-
-```yaml
-on:
-  push:
-    branches: [ "develop", "main" ]
-```
-
-`if: github.ref == 'refs/heads/main'` 조건으로 prod 단계 분리.
-
----
-
-## 종합 예제 — 확장형 워크플로(요약)
+Portainer에서 웹훅을 생성하고 GitHub Actions에서 트리거할 수 있습니다:
 
 {% raw %}
 ```yaml
-name: ci-cd
+- name: Trigger Portainer webhook
+  run: |
+    curl -X POST https://portainer.example.com/api/webhooks/<webhook-id>
+```
+{% endraw %}
+
+## 태깅 전략
+
+효과적인 이미지 관리를 위한 태깅 전략:
+
+1. **latest**: 최신 안정 버전 (기본 브랜치 푸시 시)
+2. **커밋 SHA**: 특정 커밋에 대한 정확한 버전 (모든 푸시 시)
+3. **브랜치 이름**: 개발 중인 기능 버전 (특정 브랜치 푸시 시)
+4. **Semantic Version (vX.Y.Z)**: 공식 릴리스 (GitHub Release 생성 시)
+
+## 성능 최적화
+
+### 빌드 캐시 활용
+
+GitHub Actions 캐시를 활용하여 빌드 시간을 단축합니다:
+
+{% raw %}
+```yaml
+- name: Build with cache optimization
+  uses: docker/build-push-action@v6
+  with:
+    context: .
+    push: true
+    tags: ${{ steps.meta.outputs.tags }}
+    cache-from: type=gha
+    cache-to: type=gha,mode=max
+```
+{% endraw %}
+
+### .dockerignore 파일
+
+불필요한 파일을 빌드 컨텍스트에서 제외하여 빌드 속도를 향상시킵니다:
+
+```gitignore
+.git/
+.github/
+.env
+**/__pycache__/
+*.log
+node_modules/
+dist/
+build/
+*.pyc
+```
+
+## 환경별 배포 전략
+
+### 개발, 스테이징, 프로덕션 분리
+
+```yaml
+name: Multi-Environment Deployment
+
+on:
+  push:
+    branches:
+      - develop    # 스테이징 환경
+      - main       # 프로덕션 환경
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        environment: 
+          - ${{ github.ref == 'refs/heads/develop' && 'staging' || 'production' }}
+    steps:
+      - name: Deploy to ${{ matrix.environment }}
+        run: |
+          echo "Deploying to ${{ matrix.environment }} environment"
+          # 환경별 배포 로직
+```
+
+## 종합 워크플로우 예시
+
+{% raw %}
+```yaml
+name: Complete CI/CD Pipeline
 
 on:
   push:
@@ -489,30 +446,24 @@ on:
     types: [ published ]
   workflow_dispatch:
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  build-push:
+  build-and-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write   # cosign keyless
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-
-      - name: Login GHCR
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - id: meta
+      
+      - name: Extract metadata
+        id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}/my-app
@@ -521,8 +472,8 @@ jobs:
             type=ref,event=branch
             type=sha
             type=semver,pattern={{version}}
-
-      - name: Build & Push
+      
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -532,115 +483,88 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: SBOM
-        uses: anchore/sbom-action@v0
-        with:
-          image: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
-          format: spdx-json
-          output-file: sbom.spdx.json
-
-      - name: Upload SBOM
-        uses: actions/upload-artifact@v4
-        with:
-          name: sbom
-          path: sbom.spdx.json
-
-      - name: Trivy scan
+      
+      - name: Security scan
         uses: aquasecurity/trivy-action@0.22.0
         with:
           image-ref: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
           ignore-unfixed: true
           severity: CRITICAL,HIGH
 
-      - name: Cosign
-        uses: sigstore/cosign-installer@v3.6.0
-      - run: cosign sign --yes ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
+  deploy-staging:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment"
+          # 스테이징 배포 로직
 
-  deploy-prod:
-    needs: [build-push]
+  deploy-production:
+    needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Deploy via SSH
+      - name: Deploy to production
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.REMOTE_HOST }}
-          username: ${{ secrets.REMOTE_USER }}
-          key: ${{ secrets.REMOTE_SSH_KEY }}
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
           script: |
             docker pull ghcr.io/${{ github.repository }}/my-app:latest
             docker compose -f /srv/my-app/docker-compose.yml up -d
 ```
 {% endraw %}
 
----
+## 보안 모범 사례
 
-## 운영 팁 요약
+1. **비밀 정보 관리**: Docker 자격 증명, SSH 키, API 토큰은 GitHub Secrets에 저장
+2. **최소 권한 원칙**: 서비스 계정에 필요한 최소한의 권한만 부여
+3. **정기적인 보안 검사**: 취약점 스캔을 정기적으로 실행
+4. **이미지 서명**: 배포된 이미지의 무결성 검증
+5. **환경 보호**: 프로덕션 배포 시 승인 요구사항 설정
 
-| 항목 | 권장 사항 |
-|---|---|
-| 이미지 크기/속도 | 멀티스테이지 + distroless + 캐시 GHA |
-| 보안 | nonroot, SBOM, Trivy, Cosign |
-| 태그 | latest + semver + sha |
-| 배포 | SSH/Watchtower/Portainer/K8s(Argo CD·Flux) |
-| 승인 | Environments + 보호 규칙 |
-| 롤백 | `workflow_dispatch` 입력으로 태그 핀 고정 |
-| 비용/속도 | matrix 단일화, 캐시 TTL 관리, 불필요 아키텍처 빼기 |
+## 문제 해결
 
----
+### 일반적인 문제 및 해결 방법
 
-## 검증/문서화 체크리스트
+| 문제 | 원인 | 해결 방법 |
+|------|------|-----------|
+| Docker Hub 로그인 실패 | 잘못된 자격 증명 | GitHub Secrets 값 확인 및 업데이트 |
+| 빌드 시간 과다 | 캐시 미사용 | Buildx 캐시 설정 확인 |
+| 배포 실패 | SSH 연결 문제 | SSH 키 권한 및 서버 접근 확인 |
+| 메모리 부족 | 빌드 리소스 부족 | 더 큰 GitHub Actions Runner 사용 |
+| 취약점 검출 | 이미지에 취약한 패키지 포함 | 베이스 이미지 업데이트 또는 패키지 교체 |
 
-- 빌드 로그와 SBOM 아티팩트 보관
-- 취약점 임계값 정책 세우기(예: CRITICAL 발견 시 실패)
-- 릴리스 노트 자동 생성/첨부(옵션)
-- `.dockerignore`/`compose`의 민감정보 누락 확인
-- **비밀 정보는 반드시 Secrets** 사용(절대 커밋 금지)
+### 디버깅 명령어
 
----
-
-## 빠른 시작(최소 버전)
+워크플로우 실행 중 문제를 진단하기 위해:
 
 {% raw %}
 ```yaml
-# .github/workflows/docker-publish.yml
-
-name: docker-publish
-on: { push: { branches: [ "main" ] } }
-
-jobs:
-  build-push:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: docker/build-push-action@v6
-        with:
-          push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/my-app:latest
+- name: Debug information
+  run: |
+    echo "Branch: ${{ github.ref }}"
+    echo "SHA: ${{ github.sha }}"
+    echo "Runner OS: ${{ runner.os }}"
+    echo "Image tags: ${{ steps.meta.outputs.tags }}"
 ```
 {% endraw %}
 
----
-
-## 참고 액션/문서 모음
-
-- `actions/checkout`, `docker/login-action`, `docker/build-push-action`, `docker/metadata-action`
-- `docker/setup-qemu-action`, `docker/setup-buildx-action`
-- `anchore/sbom-action`, `aquasecurity/trivy-action`, `sigstore/cosign-installer`
-- GitHub Actions: https://docs.github.com/actions
-- Docker Hub: https://hub.docker.com/
-- GHCR: https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-container-registry
-- Watchtower: https://containrrr.dev/watchtower
-
----
-
 ## 결론
 
-초안에서 제시한 **Docker Hub 로그인 → 빌드 → 푸시 → 서버 배포** 흐름을, 위와 같이 **멀티 아키텍처, 메타데이터/태깅 자동화, 캐시 최적화, SBOM/취약점/서명, 승인 기반 배포, 롤백**까지 확장하면, **재현 가능한 안전한 파이프라인**으로 성장시킬 수 있다. 작은 프로젝트는 최소 워크플로로 시작하고, 운영에서 요구되는 요소를 **단계적으로** 추가해 나가면 됩니다.
+GitHub Actions를 활용한 Docker CI/CD 파이프라인 구축은 개발부터 배포까지의 전체 프로세스를 자동화하고 표준화하는 강력한 방법입니다. 이 가이드에서 제시한 워크플로우는 다음과 같은 이점을 제공합니다:
+
+1. **자동화된 빌드 및 배포**: 코드 변경 시 자동으로 이미지 빌드 및 배포
+2. **멀티 아키텍처 지원**: 다양한 플랫폼에서 동작하는 이미지 생성
+3. **보안 강화**: SBOM 생성, 취약점 스캔, 이미지 서명을 통한 보안 검증
+4. **롤백 기능**: 문제 발생 시 이전 버전으로 빠르게 복구
+5. **환경 분리**: 개발, 스테이징, 프로덕션 환경을 명확히 분리
+
+이 구성을 시작점으로 삼아 조직의 특정 요구사항에 맞게 워크플로우를 조정하고 확장할 수 있습니다. 지속적인 통합과 지속적인 배포는 소프트웨어 개발 생명주기의 품질과 안정성을 크게 향상시킵니다. 초기에는 단순한 워크플로우로 시작하고, 필요에 따라 점진적으로 고급 기능을 추가해 나가는 접근 방식을 권장합니다.
+
+GitHub Actions의 강력한 에코시스템과 Docker의 유연한 컨테이너 기술을 결합하면 효율적이고 안정적인 CI/CD 파이프라인을 구축할 수 있습니다.

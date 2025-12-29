@@ -6,28 +6,30 @@ category: Kubernetes
 ---
 # eBPF 기반 성능 최적화
 
-## 요약: 언제 eBPF를 쓰면 이득인가?
+## eBPF를 활용해야 하는 상황
 
-- **네트워크**: iptables 규칙 폭증/Conntrack 병목 → eBPF로 L3/L4 처리(XDP/tc), **Cilium**로 CNI 가속
-- **관측/프로파일링**: CPU 핫스팟, 스케줄 지연, I/O 지연 → **bpftrace/libbpf-tools** 로 실시간 관측, **오버헤드 낮음**
-- **보안**: 시스템콜/프로세스 행동 정책, CAP 최소화 → **LSM(eBPF)** 기반 정책, 프로세스 원천 추적
-- **Kubernetes**: **Hubble**로 흐름 시각화, L7 정책, egress 가속, 대규모 노드 확장성
+eBPF(Extended Berkeley Packet Filter)는 커널 수준에서 안전하게 프로그램을 실행할 수 있는 기술로, 시스템 성능 최적화에 효과적으로 활용할 수 있습니다. 다음과 같은 상황에서 eBPF를 사용하면 큰 이점을 얻을 수 있습니다.
+
+- **네트워크 성능**: iptables 규칙이 과도하게 증가하거나 Conntrack 병목이 발생하는 경우 → eBPF를 사용하여 L3/L4 패킷 처리(XDP/tc)를 최적화하고, **Cilium**으로 CNI 가속화
+- **관측 및 프로파일링**: CPU 핫스팟, 스케줄링 지연, I/O 지연 문제 해결 → **bpftrace/libbpf-tools**를 사용한 실시간 관측으로 **낮은 오버헤드** 유지
+- **보안 강화**: 시스템 콜/프로세스 동작 정책 적용, 권한(CAP) 최소화 → **LSM(eBPF)** 기반 정책 구현, 프로세스 동작 추적
+- **Kubernetes 환경**: **Hubble**을 통한 네트워크 흐름 시각화, L7 정책 적용, egress 트래픽 가속화, 대규모 노드 확장성 확보
 
 ---
 
-## eBPF 핵심 이해
+## eBPF 핵심 개념 이해
 
 ### 실행 모델
 
-- **프로그램 타입**: XDP, tc, kprobe/kretprobe, tracepoint, uprobe/uretprobe, perf_event, cgroup/lsm 등
-- **맵 타입**: `hash`, `array`, **per-CPU hash/array**, LRU map, ring/perf buffer, stack/map-of-maps, LPM trie
-- **로드/검증**: 바이트코드를 `verifier`가 **메모리 안전성·루프 한정성** 검증 → JIT로 네이티브 변환
-- **상호작용**: 커널 helper, BPF map을 통한 유저스페이스 통신, perf/ring buffer 이벤트 스트림
+- **프로그램 유형**: XDP, tc, kprobe/kretprobe, tracepoint, uprobe/uretprobe, perf_event, cgroup/lsm 등
+- **맵(Maps) 유형**: `hash`, `array`, **per-CPU hash/array**, LRU map, ring/perf buffer, stack/map-of-maps, LPM trie
+- **로드 및 검증**: 바이트코드를 `verifier`가 **메모리 안전성과 루프 한정성**을 검증한 후 JIT 컴파일러로 네이티브 코드로 변환
+- **상호작용**: 커널 헬퍼 함수, BPF 맵을 통한 사용자 공간 통신, perf/ring buffer 이벤트 스트림
 
 ### CO-RE(BPF Compile-Once, Run-Everywhere)
 
-- **libbpf + BTF** 기반으로 커널 심볼/필드 변화를 런타임에 **재매칭** → 바이너리 하나로 **여러 커널** 호환
-- 장점: **패키징/배포 간소화**, **컨테이너**에서의 이식성 향상
+- **libbpf + BTF** 기반으로 커널 심볼과 필드 변화를 런타임에 **재매칭** → 단일 바이너리로 **다양한 커널 버전** 호환
+- 장점: **패키징과 배포 간소화**, **컨테이너 환경**에서의 이식성 향상
 
 ---
 
@@ -35,58 +37,56 @@ category: Kubernetes
 
 | 목적 | 권장 도구 | 비고 |
 |---|---|---|
-| 원인 추적·탐색(수분) | **bpftrace** | 원라이너·DSL, 빠른 가설 검증 |
-| 저오버헤드 상시 관측 | **libbpf-tools** | CO-RE, 생산 환경 상주 에이전트 |
-| 교육·시작 | **BCC**(bpfcc-tools) | Python 래퍼, 배포/의존성 무거움 |
-| 정책/네트워킹 | **Cilium** | eBPF CNI, Hubble 관측 |
-| 빌드/디버깅 | **bpftool** | map/pin/verify/dump, 필수 만능툴 |
+| 원인 분석 및 탐색(수분 내) | **bpftrace** | 원라이너 및 DSL 지원, 빠른 가설 검증에 적합 |
+| 저오버헤드 상시 관측 | **libbpf-tools** | CO-RE 지원, 생산 환경 상주 에이전트용 |
+| 학습 및 시작용 | **BCC**(bpfcc-tools) | Python 래퍼 제공, 배포 및 의존성이 다소 무거움 |
+| 정책/네트워킹 | **Cilium** | eBPF 기반 CNI, Hubble 관측 기능 제공 |
+| 빌드 및 디버깅 | **bpftool** | 맵/프로그램 핀닝/검증/덤프, 필수 유틸리티 |
 
-> 새로 시작한다면 **bpftrace + libbpf-tools + bpftool** 조합이 가장 실전적이다.
+> 처음 시작한다면 **bpftrace + libbpf-tools + bpftool** 조합이 가장 실용적입니다.
 
 ---
 
 ## 환경 준비
 
-### 커널·패키지
+### 커널 및 패키지 요구사항
 
-- 권장 커널: **5.x 이상** (4.18+ 가능, 기능 차이 존재)
-- 배포판 패키지:
+- 권장 커널 버전: **5.x 이상** (4.18+도 가능하나 기능 차이 존재)
+- 배포판 패키지 설치 예시 (Ubuntu):
 ```bash
-# Ubuntu 예시
-
 sudo apt-get update
 sudo apt-get install -y linux-headers-$(uname -r) \
   bpfcc-tools bpftrace bpftool clang llvm libbpf-dev libelf-dev zlib1g-dev
 ```
 
-### 권한
+### 권한 설정
 
-- root 권장. 컨테이너에서는 CAP_BPF, CAP_PERFMON, CAP_SYS_ADMIN 등이 요구될 수 있다.
+- root 권한 권장. 컨테이너 환경에서는 CAP_BPF, CAP_PERFMON, CAP_SYS_ADMIN 등의 권한이 필요할 수 있습니다.
 
 ---
 
-## 즉시 써먹는 관측 원라이너 (bpftrace)
+## 즉시 활용 가능한 관측 원라이너 (bpftrace)
 
-### CPU 핫스팟(함수 레벨)
+### CPU 핫스팟 분석(함수 레벨)
 
 ```bash
 sudo bpftrace -e 'profile:hz:99 { @[kstack] = count(); }' | head
 ```
-- 99Hz 주기로 커널 스택을 샘플링 → 상위 스택으로 히트맵.
+- 99Hz 주기로 커널 스택을 샘플링하여 상위 호출 스택 히트맵 생성.
 
-### 디스크 I/O 지연
+### 디스크 I/O 지연 분석
 
 ```bash
 sudo bpftrace -e 'tracepoint:block:block_rq_complete { @lat[args->dev] = hist(args->nr_sector); }'
 ```
 
-### 지연 분포
+### 파일 읽기 지연 분포 분석
 
 ```bash
 sudo bpftrace -e 'kprobe:vfs_read { @start[tid] = nsecs; } kretprobe:vfs_read /@start[tid]/ { @d = hist((nsecs-@start[tid])/1000000); delete(@start[tid]); }'
 ```
 
-### TCP RTT/재전송 관찰
+### TCP 재전송 관찰
 
 ```bash
 sudo bpftrace -e 'tracepoint:tcp:tcp_retransmit_skb { @retx[comm] = count(); }'
@@ -94,9 +94,9 @@ sudo bpftrace -e 'tracepoint:tcp:tcp_retransmit_skb { @retx[comm] = count(); }'
 
 ---
 
-## libbpf-tools로 상시 관측 (저오버헤드)
+## libbpf-tools를 이용한 상시 관측 (저오버헤드)
 
-### 설치(소스)
+### 설치 방법(소스 기반)
 
 ```bash
 git clone https://github.com/iovisor/bcc --depth 1
@@ -105,19 +105,19 @@ git clone https://github.com/iovisor/bpf-perf-tools --depth 1
 git clone https://github.com/iovisor/bcc/libbpf-tools --depth 1
 ```
 
-> 배포 패키지에 포함된 경우 `apt install bpftrace bpfcc-tools` 만으로도 충분.
+> 배포판 패키지에 포함된 경우 `apt install bpftrace bpfcc-tools` 명령으로도 충분히 설치할 수 있습니다.
 
-### 대표 툴
+### 주요 도구 소개
 
-| 툴 | 목적 |
+| 도구 | 목적 |
 |---|---|
-| `runqlat` | 스케줄 큐 대기 지연(latency) |
-| `biolatency` | 블록 I/O 지연 히스토그램 |
-| `tcptop` | TCP 송수신 상위 프로세스 |
-| `softirqs` | 소프트IRQ 시간 분해 |
+| `runqlat` | 스케줄 큐 대기 지연 분석 |
+| `biolatency` | 블록 I/O 지연 히스토그램 생성 |
+| `tcptop` | TCP 송수신 상위 프로세스 확인 |
+| `softirqs` | 소프트IRQ 시간 분해 분석 |
 | `memleak` | 잠재적 메모리 누수 추적(실험적) |
 
-예시:
+사용 예시:
 ```bash
 sudo /usr/share/bcc/tools/biolatency -m 1
 sudo /usr/share/bcc/tools/tcptop -C 1 10
@@ -125,17 +125,17 @@ sudo /usr/share/bcc/tools/tcptop -C 1 10
 
 ---
 
-## 네트워킹 가속: XDP & tc-BPF
+## 네트워킹 가속화: XDP & tc-BPF
 
-### XDP로 드롭/리다이렉트
+### XDP를 통한 패킷 드롭/리다이렉트
 
-- **NIC 드라이버** 단계에서 BPF 실행 → **패킷을 가장 빠른 경로에서 처리**
-- 사용: DDoS 방어, L3/L4 LB, 빠른 드롭/리다이렉트
+- **NIC 드라이버** 단계에서 BPF 프로그램 실행 → **패킷을 가장 빠른 경로에서 처리**
+- 사용 사례: DDoS 방어, L3/L4 로드 밸런싱, 빠른 패킷 드롭/리다이렉트
 
-#### 최소 XDP 드롭 예제(C)
+#### 기본 XDP 드롭 프로그램 예제(C 언어)
 
 ```c
-// xdp_drop.c (CO-RE 전용 아님: 데모용)
+// xdp_drop.c (CO-RE 전용은 아님: 데모용)
 #include <linux/bpf.h>
 #include <bpf/bpf_helpers.h>
 
@@ -145,18 +145,18 @@ int xdp_drop_all(struct xdp_md *ctx) {
 }
 char LICENSE[] SEC("license") = "GPL";
 ```
-빌드/적용:
+빌드 및 적용:
 ```bash
 clang -O2 -target bpf -c xdp_drop.c -o xdp_drop.o
-# 인터페이스에 부착
+# 네트워크 인터페이스에 프로그램 부착
 
 sudo ip link set dev eth0 xdp obj xdp_drop.o sec xdp
-# 제거
+# 프로그램 제거
 
 sudo ip link set dev eth0 xdp off
 ```
 
-#### 조건부 드롭(예: 특정 포트 차단)
+#### 조건부 패킷 드롭(특정 포트 차단)
 
 ```c
 // xdp_block_port.c
@@ -190,10 +190,10 @@ char LICENSE[] SEC("license") = "GPL";
 
 ### tc egress/ingress BPF
 
-- L2 이후, qdisc 레이어에서 TC BPF로 **정교한 분류/리라이트** 가능
-- **XDP→tc** 파이프라인을 조합해 단계적 처리
+- L2 처리 이후, qdisc 레이어에서 TC BPF를 사용한 **정교한 패킷 분류 및 리라이트** 가능
+- **XDP → tc** 파이프라인 구성으로 단계적 패킷 처리 구현
 
-적용 예:
+적용 예시:
 ```bash
 # tc qdisc 준비
 
@@ -205,69 +205,69 @@ sudo tc filter add dev eth0 ingress bpf obj tc_prog.o sec cls_main
 
 ---
 
-## 시스템콜/스택 관측: kprobe/tracepoint/uprobes
+## 시스템 콜/스택 관측: kprobe/tracepoint/uprobes
 
-### kprobe
+### kprobe 활용
 
-커널 함수 진입/복귀 시점 후킹:
+커널 함수 진입 및 복귀 시점 후킹:
 ```bash
 sudo bpftrace -e 'kprobe:__x64_sys_openat { printf("%s %s\n", comm, str(arg1)); }'
 ```
 
-### tracepoint
+### tracepoint 활용
 
-ABI가 안정적인 커널 이벤트:
+안정적인 ABI를 가진 커널 이벤트 추적:
 ```bash
 sudo bpftrace -e 'tracepoint:sched:sched_switch { @[prev_comm, next_comm] = count(); }'
 ```
 
-### uprobes
+### uprobes 활용
 
-유저 공간 바이너리의 함수 진입/복귀 후킹:
+사용자 공간 바이너리의 함수 진입 및 복귀 후킹:
 ```bash
 sudo bpftrace -e 'uprobe:/usr/bin/nginx:ngx_http_process_request_line { @[comm] = count(); }'
 ```
 
-> 프로덕션에서는 **심볼 해석/ASLR 고려**가 필요. `nm`, `objdump`, `readelf`로 오프셋 확인.
+> 프로덕션 환경에서는 **심볼 해석 및 ASLR 고려**가 필요합니다. `nm`, `objdump`, `readelf` 도구를 사용하여 오프셋을 확인하세요.
 
 ---
 
-## 맵·버퍼·성능 고려
+## 맵, 버퍼 및 성능 고려사항
 
-### per-CPU 맵
+### per-CPU 맵 활용
 
-- 글로벌 락 경합 없이 CPU별 슬롯을 사용 → **통계 수집에 탁월**
-- 유저스페이스에서 합산
+- 글로벌 락 경합 없이 CPU별 슬롯을 사용 → **통계 수집에 매우 효율적**
+- 사용자 공간에서 결과를 합산하여 처리
 
 ### perf buffer vs ring buffer
 
-- perf buffer: 성숙, 다양한 예제 존재
-- ring buffer: **낮은 오버헤드**, CO-RE 환경에서 선호
+- perf buffer: 성숙한 기술, 다양한 예제 존재
+- ring buffer: **낮은 오버헤드**, CO-RE 환경에서 선호되는 선택지
 
-### Tail calls
+### Tail calls 활용
 
 - 프로그램 체이닝으로 **복잡한 로직 분기** 구현, 인라인 한계 우회
-- `BPF_MAP_TYPE_PROG_ARRAY` 이용
+- `BPF_MAP_TYPE_PROG_ARRAY` 맵 타입 활용
 
 ---
 
-## bpftool로 내부 들여다보기
+## bpftool을 통한 내부 구조 분석
 
 ```bash
-# 로드된 프로그램/맵
+# 로드된 프로그램 및 맵 확인
 
 sudo bpftool prog show
 sudo bpftool map show
 
-# 특정 프로그램 disasm
+# 특정 프로그램 디스어셈블
 
 sudo bpftool prog dump xlated id <ID> | less
 
-# 맵 내용
+# 맵 내용 확인
 
 sudo bpftool map dump id <MAP_ID>
 
-# bpffs 고정(pinning)
+# bpffs에 프로그램 고정(pinning)
 
 sudo mount -t bpf bpf /sys/fs/bpf/
 sudo bpftool prog pin id <ID> /sys/fs/bpf/myprog
@@ -275,15 +275,15 @@ sudo bpftool prog pin id <ID> /sys/fs/bpf/myprog
 
 ---
 
-## Kubernetes에서 eBPF: Cilium/Hubble
+## Kubernetes에서의 eBPF 활용: Cilium/Hubble
 
-### Cilium을 쓰는 이유
+### Cilium을 선택하는 이유
 
-- **iptables 대체** 수준의 L3/L4 처리 + **L7 인식**
-- 대규모 환경에서 **규칙 포크폭** 없이 선형 확장
-- **Hubble**: 플로우/정책 이력, 레이턴시 관찰
+- **iptables 대체** 수준의 L3/L4 처리 능력 + **L7 인식** 기능
+- 대규모 환경에서 **규칙 폭증 없이** 선형적 확장 가능
+- **Hubble**: 네트워크 흐름 및 정책 이력, 레이턴시 관찰 기능 제공
 
-### Minikube 빠른 실습
+### Minikube를 활용한 빠른 실습
 
 ```bash
 minikube start --network-plugin=cni --cni=false
@@ -293,65 +293,65 @@ cilium hubble enable
 cilium hubble ui &
 ```
 
-- **네트워크 정책** 적용 후 Hubble로 허용/거부를 시각화 → 정책 안전성 향상
-- **eBPF LB** 경로로 **SNAT/Conntrack 병목 완화**, CPU 절감
+- **네트워크 정책** 적용 후 Hubble을 통해 허용/거별된 트래픽 시각화 → 정책 안전성 향상
+- **eBPF 로드 밸런싱** 경로로 **SNAT/Conntrack 병목 완화**, CPU 사용량 절감
 
 ---
 
-## 성능 최적화 워크플로우(현업 레시피)
+## 성능 최적화 워크플로우(실무 레시피)
 
-1) **증상 정의**: 지연/타임아웃/CPU 고사용/패킷 드롭 지표 확인(기존 APM/노드 Exporter)
+1) **증상 정의**: 지연/타임아웃/CPU 고사용/패킷 드롭 지표 확인(기존 APM/노드 Exporter 활용)
 2) **저오버헤드 스캔**:
-   - CPU: `profile`(bpftrace) → 핫스택
+   - CPU: `profile`(bpftrace) → 핫스택 식별
    - I/O: `biolatency`, `fileslower`
-   - 네트워크: `tcptop`, `softirqs`, XDP-drop 카운트
-3) **가설 수립**: 커널/네트워크/애플리케이션 층 어디서 병목?
-4) **미세 관측**: kprobe/tracepoint로 함수/경로별 분포 수집
+   - 네트워크: `tcptop`, `softirqs`, XDP-drop 카운트 확인
+3) **가설 수립**: 커널/네트워크/애플리케이션 계층 중 어디에서 병목이 발생하는지 분석
+4) **상세 관측**: kprobe/tracepoint를 사용한 함수/경로별 분포 데이터 수집
 5) **개선 시도**:
-   - 네트워크: XDP/tc에서 **얼리 드롭/리다이렉트**, Cilium LB 경로
-   - 스케줄: 배치/IRQ CPU affinity, `sysctl` 튜닝
-   - 앱: syscalls/lock 경합 완화, 비효율 I/O 배치
+   - 네트워크: XDP/tc에서 **조기 패킷 드롭/리다이렉트**, Cilium LB 경로 최적화
+   - 스케줄링: 배치/IRQ CPU affinity, `sysctl` 튜닝
+   - 애플리케이션: 시스템 콜/락 경합 완화, 비효율적 I/O 배치 개선
 6) **회귀 테스트**: before/after **동일 부하** 재현, 분포 비교
-7) **상시 관측**: libbpf-tool 측정기를 데몬화, 슬랙/알람 연동
+7) **상시 관측**: libbpf-tool 측정기를 데몬화, 슬랙/알림 시스템과 연동
 
 ---
 
-## 실제 튜닝 예시 시나리오
+## 실제 튜닝 시나리오 예시
 
-### 고QPS API 서버의 짧은 타임아웃
+### 고QPS API 서버의 짧은 타임아웃 문제
 
-- 현상: P99 지연 폭증, 재전송 증가
+- 현상: P99 지연 급증, 재전송 증가
 - 진단:
-  - `tcptop` 으로 소켓 단위 상위 커넥션 확인
-  - `softirqs` 로 NET_RX softirq 타임비용 급증
-  - XDP 카운터/드롭 없음 → 커널 상단 아님
-  - `runqlat` 에서 런큐 지연↑ → CPU 부족 + IRQ 편중
+  - `tcptop`으로 소켓 단위 상위 연결 확인
+  - `softirqs`로 NET_RX softirq 시간 비용 급증 확인
+  - XDP 카운터/드롭 없음 → 커널 상단 문제 아님
+  - `runqlat`에서 런큐 지연 증가 → CPU 부족 + IRQ 편중
 - 조치:
   - **RPS/RFS** 튜닝, IRQ affinity 재분배
-  - Cilium **DSR or Maglev LB** 경로 확인
-  - 애플리케이션 **Nagle/알고리즘 옵션** 및 타임아웃 재조정
+  - Cilium **DSR 또는 Maglev LB** 경로 확인
+  - 애플리케이션 **Nagle 알고리즘/옵션** 및 타임아웃 재조정
 - 결과: P95/99 **30~45% 단축**, 재전송 **50% 감소**
 
-### 파일 서버의 꼬리 지연
+### 파일 서버의 꼬리 지연 문제
 
-- `biolatency` → 꼬리만 길다(헤드 OK)
-- `fileslower` → 특정 경로/워크로드 집중
-- 조치: IO 스케줄러/배치 크기, readahead 조정 → tail **40% 감소**
-
----
-
-## 안전성 & 보안
-
-- **Verifier 제약**: 무한루프 불가, 경계검사 필수 → 프로그램은 **짧고 결정적**이어야 한다.
-- **권한 관리**: BPF CAP 최소화, 컨테이너에서 BPF 사용은 보안 모델 검토
-- **LSM(eBPF)**: 보안 정책을 eBPF로 구성 시, **정책 검증/롤백** 전략 필수
-- **커널 호환성**: CO-RE 전제하되, **CI에 커널 매트릭스 테스트** 도입 권장
+- `biolatency` → 꼬리 지연만 길게 나타남(헤드는 정상)
+- `fileslower` → 특정 경로/워크로드에 집중된 문제 확인
+- 조치: I/O 스케줄러/배치 크기, readahead 설정 조정 → 꼬리 지연 **40% 감소**
 
 ---
 
-## 실습: bpftrace 스크립트 3종
+## 안전성 및 보안 고려사항
 
-### 특정 바이너리의 디스크 읽기 지연
+- **검증기(Verifier) 제약**: 무한 루프 불가, 경계 검사 필수 → 프로그램은 **짧고 결정적**이어야 합니다.
+- **권한 관리**: BPF CAP 최소화, 컨테이너 환경에서 BPF 사용 시 보안 모델 검토 필수
+- **LSM(eBPF)**: eBPF 기반 보안 정책 구성 시, **정책 검증 및 롤백** 전략 필수
+- **커널 호환성**: CO-RE 기반으로 구축하되, **CI 파이프라인에 커널 매트릭스 테스트** 도입 권장
+
+---
+
+## 실습: bpftrace 스크립트 예시
+
+### 특정 프로세스의 디스크 읽기 지연 분석
 
 ```bash
 sudo bpftrace -e '
@@ -363,14 +363,14 @@ kretprobe:vfs_read /@start[tid]/ {
 }'
 ```
 
-### TCP 연결 수 상위 프로세스
+### TCP 연결 수 상위 프로세스 확인
 
 ```bash
 sudo bpftrace -e '
 tracepoint:inet:inet_sock_set_state /args->newstate == 1/ { @[comm] = count(); }'
 ```
 
-### 스케줄 지연 히스토그램
+### 스케줄링 지연 히스토그램 생성
 
 ```bash
 sudo bpftrace -e '
@@ -384,7 +384,7 @@ tracepoint:sched:sched_switch /@ts[prev->pid]/ {
 
 ---
 
-## libbpf CO-RE 최소 예제(프로세스 fork 카운트)
+## libbpf CO-RE 최소 예제 (프로세스 fork 카운트)
 
 ### — `fork_count.bpf.c`
 
@@ -445,7 +445,7 @@ int main() {
     printf("Collecting... Ctrl-C to stop\n");
     while (!exiting) sleep(1);
 
-    // 맵 덤프(간단 표시)
+    // 맵 데이터 덤프(간단한 표시)
     struct bpf_map *map = bpf_object__find_map_by_name(obj, "counts");
     int map_fd = bpf_map__fd(map);
     u32 key = 0, next_key; u64 val;
@@ -459,7 +459,7 @@ int main() {
 }
 ```
 
-### 빌드
+### 빌드 및 실행
 
 ```bash
 clang -O2 -g -target bpf -c fork_count.bpf.c -o fork_count.bpf.o
@@ -467,63 +467,64 @@ clang -O2 -g fork_count.c -o fork_count -lelf -lz -lbpf
 sudo ./fork_count
 ```
 
-> 실제 배포 시에는 `bpftool gen skeleton`, `libbpf-bootstrap` 템플릿을 활용해 스켈레톤 코드를 자동 생성하는 방식을 추천.
+> 실제 배포 환경에서는 `bpftool gen skeleton`, `libbpf-bootstrap` 템플릿을 활용하여 스켈레톤 코드를 자동 생성하는 방식을 권장합니다.
 
 ---
 
 ## 수학적 관점: 꼬리 지연 관리
 
-성능 최적화 목표는 평균이 아니라 **꼬리(Tail) 지연**이다. P99를 $$T_{99}$$ 라고 할 때,
+성능 최적화의 주요 목표는 평균이 아닌 **꼬리(Tail) 지연** 관리입니다. P99 지연 시간을 $$T_{99}$$ 라고 할 때, 다음과 같은 구성 요소로 분해할 수 있습니다.
 $$
 T_{99} \approx T_{net} + T_{sched} + T_{io} + T_{app}
 $$
-각 항의 분해 관측을 eBPF로 수행하고, **최대 항**을 우선 줄인다.
-- `T_net`: XDP/tc 드롭·리다이렉트, IRQ 분배
-- `T_sched`: run-queue, CPU 핫스팟 제거
-- `T_io`: I/O path 지연, readahead/queue 깊이
-- `T_app`: syscalls/lock 경합, 블로킹 외부 호출
+각 구성 요소의 분해 관측을 eBPF로 수행하고, **가장 큰 영향을 미치는 요소**부터 우선적으로 줄이는 것이 효과적입니다.
+- `T_net`: XDP/tc 패킷 드롭·리다이렉트, IRQ 분배 최적화
+- `T_sched`: 런큐(run-queue), CPU 핫스팟 제거
+- `T_io`: I/O 경로 지연, readahead/큐 깊이 최적화
+- `T_app`: 시스템 콜/락 경합, 블로킹 외부 호출 최소화
 
 ---
 
-## 운영 팁 & 베스트프랙티스
+## 운영 팁 및 모범 사례
 
-- **한 번에 하나의 가설**만 검증: 관측→변경→검증 사이클 짧게
-- **오버헤드 측정**: 관측 도구 자체의 CPU·메모리·latency 비용 검토
-- **코드 리뷰/정책**: eBPF는 커널 권한에 준한다. **리뷰/서명/롤백 플랜** 필수
-- **Helm/Ansible**로 배포 자동화, **GitOps**로 이력 관리
-- **커널/도구 버전 매트릭스 테스트**: CI에서 CO-RE 호환성 확보
-- **SLO 기반**: P95/99/99.9 타깃을 명시하고, 대시보드·알람과 연결
-
----
-
-## Kubernetes와의 결합: Cilium Playbook
-
-1) Cilium + Hubble로 **흐름/정책** 가시화
-2) eBPF LB 경로 활성화(기본) → **iptables 경합 제거**
-3) **L7 정책**(HTTP/gRPC)로 외부 호출 제어
-4) Hubble 지표로 **실제 서비스 경로** 기준 최적화(핫스팟 네임스페이스/서비스 식별)
-5) Node/Pod별 **softirq, runqlat** 관측으로 핀포인트 튜닝
+- **한 번에 하나의 가설만 검증**: 관측 → 변경 → 검증 사이클을 짧게 유지
+- **오버헤드 측정**: 관측 도구 자체의 CPU·메모리·지연 비용 검토
+- **코드 리뷰 및 정책**: eBPF는 커널 권한에 준하므로 **코드 리뷰/서명/롤백 계획** 필수
+- **Helm/Ansible을 통한 배포 자동화**, **GitOps를 통한 이력 관리**
+- **커널 및 도구 버전 매트릭스 테스트**: CI 파이프라인에서 CO-RE 호환성 보장
+- **SLO 기반 접근**: P95/99/99.9 목표치를 명시하고, 대시보드 및 알림 시스템과 연동
 
 ---
 
-## 자주 겪는 문제와 해결
+## Kubernetes와의 통합: Cilium 운영 가이드
 
-| 문제 | 원인 | 해결 |
+1) Cilium + Hubble로 **네트워크 흐름 및 정책** 가시화
+2) eBPF 로드 밸런싱 경로 활성화(기본값) → **iptables 경합 제거**
+3) **L7 정책**(HTTP/gRPC)으로 외부 호출 제어
+4) Hubble 메트릭을 활용한 **실제 서비스 경로 기반 최적화**(핫스팟 네임스페이스/서비스 식별)
+5) Node/Pod별 **softirq, runqlat** 관측으로 정밀 튜닝
+
+---
+
+## 자주 발생하는 문제 및 해결 방법
+
+| 문제 | 원인 | 해결 방법 |
 |---|---|---|
-| eBPF 로드 실패 `permission denied` | CAP 부족/LSM 제한 | root/CAP_BPF, seccomp/AppArmor 예외 |
-| verifier reject | 경계 검사 불충분/루프 | 포인터 체이닝 검증, loop bound 명시 |
-| 성능 저하 | 과도한 이벤트/버퍼 백프레셔 | 샘플링률 낮추기, ring buffer 크기 조정 |
-| 커널 버전 호환 | 심볼/필드 차이 | CO-RE로 빌드, BTF 유효성 체크, 커널 매트릭스 CI |
+| eBPF 로드 실패 `permission denied` | 권한(CAP) 부족/LSM 제한 | root/CAP_BPF 권한 부여, seccomp/AppArmor 예외 추가 |
+| 검증기(verifier) 거부 | 경계 검사 불충분/루프 문제 | 포인터 체이닝 검증 강화, loop bound 명시적 설정 |
+| 성능 저하 | 과도한 이벤트/버퍼 백프레셔 | 샘플링율 낮추기, ring buffer 크기 조정 |
+| 커널 버전 호환 문제 | 심볼/필드 차이 | CO-RE 기반 빌드, BTF 유효성 확인, 커널 매트릭스 CI 구축 |
 | XDP 부착 실패 | 드라이버 미지원 | generic/native 모드 전환, 드라이버 업데이트 |
 
 ---
 
-## 마무리
+## 결론
 
-- eBPF는 **모니터링 도구**를 넘어 **네트워크/보안/관측/정책**을 **저오버헤드로 커널 경로에 직접 적용**하게 한다.
-- **bpftrace**로 빠르게 가설을 검증하고, **libbpf-tools/CO-RE**로 상시 관측을 구축하라.
-- **XDP/tc**로 불필요 패킷을 빨리 걸러내고, **Cilium**으로 Kubernetes 네트워크를 선형 확장하라.
-- 안전성(Verifier), 운영(권한/롤백/관측)을 체계화하면, **평균이 아닌 꼬리 지연**을 실질적으로 줄일 수 있다.
+eBPF는 단순한 **모니터링 도구**를 넘어 **네트워크, 보안, 관측, 정책**을 **낮은 오버헤드로 커널 경로에 직접 적용**할 수 있는 강력한 기술입니다.
+
+**bpftrace**를 활용하여 빠르게 가설을 검증하고, **libbpf-tools/CO-RE**를 통해 상시 관측 시스템을 구축하세요. **XDP/tc**를 사용하여 불필요한 패킷을 조기에 필터링하고, **Cilium**을 통해 Kubernetes 네트워크를 선형적으로 확장할 수 있습니다.
+
+안전성(검증기), 운영(권한/롤백/관측)을 체계적으로 관리하면, **평균이 아닌 꼬리 지연**을 실질적으로 줄일 수 있으며, 이는 최종 사용자 경험과 시스템 안정성에 직접적인 영향을 미칩니다.
 
 ---
 
@@ -535,19 +536,19 @@ $$
 sudo bpftrace -l 'tracepoint:*' | head
 sudo bpftrace -e 'profile:hz:99 { @[kstack] = count(); }'
 
-# BCC: 상용구 툴
+# BCC: 표준 도구 활용
 
 sudo /usr/share/bcc/tools/biolatency -m 1
 sudo /usr/share/bcc/tools/tcptop -C 1 10
 sudo /usr/share/bcc/tools/runqlat 1 5
 
-# bpftool: 내부 들여다보기
+# bpftool: 내부 구조 분석
 
 sudo bpftool prog show
 sudo bpftool map show
 sudo bpftool prog dump xlated id <ID> | less
 
-# XDP: 드롭 예제 장착/해제
+# XDP: 드롭 프로그램 장착/제거
 
 sudo ip link set dev eth0 xdp obj xdp_drop.o sec xdp
 sudo ip link set dev eth0 xdp off
@@ -558,15 +559,3 @@ cilium status
 cilium hubble enable
 hubble observe --from-pod ns/app
 ```
-
----
-
-## 참고 링크
-
-- eBPF: https://ebpf.io
-- bpftrace: https://bpftrace.org
-- BCC: https://github.com/iovisor/bcc
-- libbpf-bootstrap: https://github.com/libbpf/libbpf-bootstrap
-- bpftool: https://www.kernel.org/doc/html/latest/bpf/bpftool.html
-- Cilium: https://cilium.io
-- Hubble: https://docs.cilium.io/en/stable/gettingstarted/hubble/

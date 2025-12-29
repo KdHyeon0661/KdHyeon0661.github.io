@@ -6,375 +6,446 @@ category: Docker
 ---
 # Docker 네트워크 비교: Host Network vs Bridge Network
 
-## Docker 네트워크 드라이버 개관(정교화)
+Docker에서 컨테이너의 네트워킹 방식을 선택할 때 가장 많이 고려되는 두 가지 옵션은 Host Network와 Bridge Network입니다. 각각의 방식은 고유한 특징과 장단점을 가지고 있으며, 애플리케이션의 요구사항과 운영 환경에 따라 적절한 선택이 필요합니다.
 
-- **bridge**: 기본값. 호스트 내 가상 브리지(일반적으로 `docker0`)를 중심으로, 컨테이너들이 **프라이빗 IP**(예: `172.17.0.0/16`)를 받아 통신. 외부 접근은 **포트 매핑** 또는 라우팅/프록시로 노출.
-- **host**: 컨테이너가 호스트와 **동일 네트워크 네임스페이스**를 공유. 컨테이너의 IP 공간이 따로 없고 호스트의 IP/포트 테이블을 그대로 사용.
-- **none**: 네트워크 비활성(완전 격리). 사이드카/보안 격리 실험 등 특별한 경우.
-- **overlay**: Swarm(또는 K8s CNI와 유사)의 **다중 호스트 간 가상 네트워크**.
-- **macvlan**: 컨테이너에 **개별 MAC**을 부여, L2 레벨에서 호스트와 분리된 엔티티처럼 보이게.
+## Docker 네트워크 드라이버 개요
 
-이 글은 **host vs bridge**를 중심으로 실무 차이를 파고듭니다.
+Docker는 다양한 네트워크 드라이버를 제공하여 컨테이너의 네트워킹 방식을 유연하게 구성할 수 있습니다:
+
+- **bridge**: 기본값으로, 가상 네트워크 브리지를 통해 컨테이너 간 통신을 제공합니다.
+- **host**: 컨테이너가 호스트의 네트워크 스택을 직접 사용합니다.
+- **none**: 네트워크를 완전히 비활성화합니다.
+- **overlay**: 다중 호스트 환경에서 컨테이너 간 통신을 가능하게 합니다.
+- **macvlan**: 컨테이너에 실제 MAC 주소를 할당하여 물리적 네트워크에 직접 연결합니다.
+
+이 글에서는 가장 일반적으로 사용되는 **bridge**와 **host** 네트워크 모드의 차이점을 심층적으로 분석합니다.
 
 ---
 
-## Bridge Network: 내부 동작 원리와 실전
+## Bridge Network: 격리된 가상 네트워크
 
-### 구조와 흐름
+### 작동 원리와 구조
+
+Bridge 네트워크는 Docker의 기본 네트워크 모드로, 각 컨테이너에 가상 네트워크 인터페이스를 제공합니다. 구조는 다음과 같습니다:
 
 ```
-(컨테이너) eth0 —— vethX ===[ docker0(브리지) ]=== 호스트 nic(eth0) —— 외부
-                        │
-                   iptables(NAT, DNAT/PREROUTING, MASQUERADE)
+[컨테이너] eth0 ←→ vethX ←→ [docker0 브리지] ←→ 호스트 NIC ←→ 외부 네트워크
+                ↑
+         NAT/포트 포워딩(iptables)
 ```
 
-- 컨테이너마다 `veth` 페어가 생성되어 `docker0`에 붙습니다.
-- 컨테이너 ↔ 외부 인터넷은 **SNAT(MASQUERADE)**, 외부 ↔ 컨테이너는 **DNAT(포트 매핑)** 로 중개.
-- 같은 브리지 내 컨테이너끼리는 **L2 스위칭**으로 직접 통신.
+### 주요 특징
 
-### 핵심 특징(확장)
+1. **네트워크 격리**: 각 컨테이너는 독립된 IP 주소를 가지며, 기본적으로 외부에서 직접 접근할 수 없습니다.
+2. **포트 매핑 필요**: 컨테이너 서비스를 외부에 노출하려면 `-p` 옵션으로 명시적 포트 매핑이 필요합니다.
+3. **내부 DNS**: 사용자 정의 브리지 네트워크에서는 컨테이너 이름으로 서로 통신할 수 있습니다.
+4. **보안**: 기본적으로 격리되어 있어 보안성이 상대적으로 높습니다.
 
-- **격리**: 기본적으로 외부에서 컨테이너 IP로 직접 유입 불가. `-p`로 명시적 노출만 허용 → 안전한 디폴트.
-- **서비스 디스커버리**: 사용자 정의 브리지에서 **컨테이너 이름으로 DNS**(내장 DNS 127.0.0.11) 해결.
-- **헤어핀 NAT**: 호스트에서 `localhost:포트`로 접근 시 DNAT 경로를 타며, 같은 브리지 내에서 **자신의 퍼블릭 포트로 자기 자신 접근**은 설정에 따라 헤어핀 동작이 필요할 수 있음.
-
-### 빠른 예제
+### 실무 사용 예제
 
 ```bash
-# 기본 브리지 모드로 웹 노출
+# 기본 브리지 네트워크로 컨테이너 실행
+docker run -d --name web-server -p 8080:80 nginx:alpine
 
-docker run -d --name web1 -p 8080:80 nginx
+# 사용자 정의 브리지 네트워크 생성
+docker network create app-network
 
-# 사용자 정의 브리지 생성(권장 패턴)
+# 동일 네트워크의 컨테이너들은 이름으로 서로 접근 가능
+docker run -d --name api --network app-network my-api:latest
+docker run -d --name frontend --network app-network -p 3000:3000 my-frontend:latest
 
-docker network create --driver bridge appnet
-
-# 같은 네트워크로 2개 서비스 배치
-
-docker run -d --name api --network appnet nginx
-docker run -d --name fe  --network appnet nginx
-
-# 컨테이너 간 이름으로 접근(내부 DNS)
-
-docker exec -it fe sh -lc "apk add --no-cache curl; curl -s http://api"
+# API 컨테이너에서 frontend 컨테이너 접근 테스트
+docker exec api curl http://frontend:3000
 ```
 
-### 고정 IP/서브넷 지정(테스트/특정 라우팅 용)
+### 네트워크 구성 커스터마이징
 
 ```bash
+# 서브넷과 게이트웨이를 지정한 네트워크 생성
 docker network create \
   --driver bridge \
-  --subnet 172.30.0.0/24 \
-  --gateway 172.30.0.1 \
-  appnet30
+  --subnet 192.168.100.0/24 \
+  --gateway 192.168.100.1 \
+  custom-network
 
-docker run -d --name db \
-  --network appnet30 \
-  --ip 172.30.0.10 \
-  postgres:16
+# 고정 IP로 컨테이너 실행
+docker run -d --name database \
+  --network custom-network \
+  --ip 192.168.100.10 \
+  postgres:latest
 ```
 
-> 운영에서는 **IP 고정보다 이름 기반 디스커버리**를 권장.
-
-### 관찰·디버깅
+### 모니터링과 디버깅
 
 ```bash
+# 네트워크 정보 확인
 docker network inspect bridge
-ip addr show docker0
-iptables -t nat -S | grep -E 'DOCKER|MASQUERADE'
-```
 
-패킷 캡처(브리지 관찰):
-```bash
+# Docker 브리지 인터페이스 확인
+ip addr show docker0
+
+# NAT 규칙 확인
+sudo iptables -t nat -L -n
+
+# 네트워크 트래픽 모니터링
 sudo tcpdump -i docker0 -n 'tcp port 80'
 ```
 
 ---
 
-## Host Network: 내부 동작 원리와 실전
+## Host Network: 호스트 네트워크 공유
 
-### 구조와 흐름
+### 작동 원리와 구조
+
+Host 네트워크 모드에서는 컨테이너가 호스트의 네트워크 스택을 직접 사용합니다. 이 방식은 추가적인 네트워크 계층 없이 직접 통신합니다:
 
 ```
-(컨테이너 프로세스)   ——[ 호스트 네트워크 네임스페이스 공유 ]——  호스트 nic(eth0) —— 외부
-(별도 veth/브리지/NAT 없음, 포트 매핑 무의미)
+[컨테이너 프로세스] ←→ [호스트 네트워크 스택 공유] ←→ 호스트 NIC ←→ 외부 네트워크
 ```
 
-- 컨테이너가 호스트와 **동일 네트워크 네임스페이스**를 사용 → 별도 IP 부여 없음, **호스트 IP/포트 그대로**.
-- NAT/포트포워딩 우회 → **오버헤드 최소**.
+### 주요 특징
 
-### 핵심 특징(확장)
+1. **직접적인 네트워크 접근**: 컨테이너는 호스트의 IP 주소와 포트를 직접 사용합니다.
+2. **포트 충돌 가능성**: 동일한 포트를 사용하는 다른 프로세스와 충돌할 수 있습니다.
+3. **성능 최적화**: NAT 오버헤드가 없어 네트워크 성능이 향상됩니다.
+4. **보안 고려사항**: 네트워크 격리가 없으므로 보안 설정에 주의가 필요합니다.
 
-- **포트 충돌**: 동일 포트를 쓰는 다른 프로세스(다른 컨테이너 포함)가 있으면 **실행 실패**.
-- **성능**: NAT/브리지 우회를 통한 **낮은 지연**. 프록시/패킷 캡처/로드밸런서에 유리.
-- **격리**: 네트워크 격리가 사실상 사라짐. **호스트 방화벽/보안 정책**과 충돌 가능성, 관찰성 낮아질 수 있음.
-
-### 빠른 예제
+### 실무 사용 예제
 
 ```bash
-# host 네트워크로 바로 공개(포트 매핑 옵션은 무시됨)
+# Host 네트워크로 컨테이너 실행
+docker run -d --name proxy --network host nginx:alpine
 
-docker run -d --name edge --network host nginx
+# 호스트에서 직접 접근 (포트 매핑 없음)
+curl http://localhost:80
 
-# 테스트: 호스트에서 바로 접근
-
-curl -s http://127.0.0.1:80 | head
+# 포트 충돌 예시 (이미 80포트 사용 중일 경우)
+docker run -d --name web2 --network host nginx:alpine  # 실패 가능성 있음
 ```
 
-> 이미 호스트에서 80 포트를 쓰는 프로세스가 있다면 실패.
+### Host 네트워크의 모니터링
 
-### 관찰·디버깅
+```bash
+# 호스트의 모든 네트워크 연결 확인
+ss -lntp
 
-- 일반 프로세스와 동일하게 `ss -lntp`, `netstat`, `lsof -i`로 포트 점유 확인.
-- iptables는 **호스트 정책**을 그대로 따름. 컨테이너 단위 룰 분리는 어려움.
+# 특정 포트 사용 프로세스 확인
+sudo lsof -i :80
 
----
-
-## Host vs Bridge — 차이와 선택 기준(현업 관점)
-
-| 항목 | **Bridge** | **Host** |
-|---|---|---|
-| IP/포트 공간 | 컨테이너 전용 프라이빗 IP, 포트 매핑 필요 | 호스트와 동일 IP/포트, 매핑 불필요(무시) |
-| 성능 경로 | veth/브리지/NAT 경유 | 직접(네이티브) 경로 |
-| 격리/보안 | 높음(기본 차단, 명시적 공개) | 낮음(호스트와 동일 경계) |
-| 운용 난이도 | 포트 설계/매핑/브리지 관리 | 포트 충돌/관찰성, 호스트 보안 의존 |
-| 서비스 디스커버리 | 이름 기반(DNS) 용이(사용자 정의 브리지) | 동일 호스트 내 다른 컨테이너와 이름 접근 불편 |
-| 관찰/트레이스 | docker0 / iptables로 구간 추적 가능 | 시스템 전역으로 섞여 추적 더 어려움 |
-| 주사용처 | 일반 웹/백엔드/DB, 마이크로서비스 | 고성능 프록시/IDS/테스터/특수 네트워킹 |
-
-**실무 가이드**
-- 기본은 **bridge**.
-- **패킷 경로 단순화/저지연**이 절대적으로 중요하고 **포트/보안 통제가 가능**한 경우에만 **host**.
+# 호스트의 네트워크 인터페이스 확인
+ip addr show
+```
 
 ---
 
-## Compose로 비교(운영 패턴)
+## Host Network vs Bridge Network: 비교 분석
 
+### 성능 측면
+
+| 항목 | Bridge Network | Host Network |
+|------|---------------|--------------|
+| **네트워크 오버헤드** | NAT와 브리징으로 인한 약간의 오버헤드 | 최소한의 오버헤드 |
+| **처리량** | 일반적으로 충분하나 약간의 감소 가능 | 최대 처리량 가능 |
+| **지연 시간** | 약간 증가 | 최소 지연 시간 |
+
+### 보안과 격리
+
+| 항목 | Bridge Network | Host Network |
+|------|---------------|--------------|
+| **네트워크 격리** | 우수 (기본적으로 격리) | 없음 (호스트와 공유) |
+| **포트 노출** | 명시적 포트 매핑 필요 | 모든 포트 자동 노출 |
+| **보안 정책 적용** | 컨테이너별 정책 적용 가능 | 호스트 수준 정책만 적용 |
+
+### 운영과 관리
+
+| 항목 | Bridge Network | Host Network |
+|------|---------------|--------------|
+| **포트 관리** | 포트 매핑으로 유연한 관리 | 포트 충돌 관리 필요 |
+| **서비스 디스커버리** | 내장 DNS로 컨테이너 이름 기반 접근 | 직접 IP/호스트 이름 사용 |
+| **모니터링** | Docker 네트워크 명령어로 관리 | 호스트 네트워크 도구 사용 |
+| **이식성** | 높음 (호스트 독립적) | 낮음 (호스트 환경 의존) |
+
+### 성능 테스트 비교
+
+```bash
+# Bridge 네트워크 테스트
+docker run -d --name web-bridge -p 8080:80 nginx:alpine
+ab -n 10000 -c 100 http://localhost:8080/
+
+# Host 네트워크 테스트
+docker run -d --name web-host --network host nginx:alpine
+ab -n 10000 -c 100 http://localhost:80/
+```
+
+---
+
+## 실무 선택 가이드: 언제 무엇을 사용할까?
+
+### Bridge Network를 선택해야 하는 경우
+
+1. **웹 애플리케이션 서비스**: 대부분의 웹 서비스에 적합합니다.
+2. **마이크로서비스 아키텍처**: 서비스 간 통신이 필요한 환경.
+3. **다중 컨테이너 환경**: 여러 컨테이너가 협업하는 시스템.
+4. **보안이 중요한 환경**: 네트워크 격리가 필요한 경우.
+5. **개발 및 테스트 환경**: 포트 충돌을 피하고 격리된 환경이 필요할 때.
+
+```bash
+# 일반적인 웹 서비스 배포 패턴
+docker network create web-network
+
+# 데이터베이스
+docker run -d --name db --network web-network \
+  -v postgres-data:/var/lib/postgresql/data \
+  postgres:latest
+
+# 백엔드 API
+docker run -d --name api --network web-network \
+  -p 3000:3000 \
+  my-backend:latest
+
+# 프론트엔드
+docker run -d --name frontend --network web-network \
+  -p 80:80 \
+  nginx:alpine
+```
+
+### Host Network를 선택해야 하는 경우
+
+1. **고성능 네트워킹 요구**: 네트워크 성능이 가장 중요한 경우.
+2. **네트워크 모니터링 도구**: 패킷 분석이나 네트워크 모니터링 도구.
+3. **특정 포트 번호 필수**: 특정 포트 번호를 반드시 사용해야 하는 경우.
+4. **단일 서비스 배포**: 단일 컨테이너만 실행하는 간단한 환경.
+
+```bash
+# 고성능 프록시 서버
+docker run -d --name haproxy --network host \
+  -v /etc/haproxy:/usr/local/etc/haproxy:ro \
+  haproxy:alpine
+
+# 네트워크 모니터링 도구
+docker run -d --name packet-capture --network host \
+  -v /captures:/captures \
+  nicolaka/netshoot \
+  tcpdump -i any -w /captures/capture.pcap
+```
+
+### 보안 모범 사례
+
+#### Bridge Network 보안 강화
+```bash
+docker run -d --name secure-app \
+  --cap-drop ALL \                      # 불필요한 권한 제거
+  --read-only \                         # 루트 파일시스템 읽기 전용
+  --tmpfs /tmp \                        # 임시 파일시스템
+  --user 1000:1000 \                    # 비권한 사용자로 실행
+  -p 8080:80 \
+  nginx:alpine
+```
+
+#### Host Network 보안 고려사항
+```bash
+# 호스트 방화벽 설정 (iptables 예시)
+sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+sudo iptables -A INPUT -j DROP  # 명시적 허용 외 차단
+
+# 호스트에서 실행 중인 서비스 확인
+sudo netstat -tlnp
+```
+
+---
+
+## Docker Compose를 활용한 네트워크 구성
+
+### Bridge 네트워크를 사용한 구성
 ```yaml
-version: "3.9"
+version: '3.8'
 
 services:
-  api_bridge:
-    image: nginx:alpine
-    ports:
-      - "8080:80"        # bridge: 외부 8080 → 컨테이너 80
+  database:
+    image: postgres:latest
     networks:
-      - appnet
+      - app-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: securepassword
 
-  edge_host:
-    image: nginx:alpine
-    network_mode: host   # host: 포트 매핑 불필요, 호스트 80 직접 점유
+  backend:
+    build: ./backend
+    networks:
+      - app-network
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database
+
+  frontend:
+    build: ./frontend
+    networks:
+      - app-network
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
 networks:
-  appnet:
+  app-network:
     driver: bridge
+
+volumes:
+  postgres-data:
+```
+
+### Host 네트워크를 사용한 구성
+```yaml
+version: '3.8'
+
+services:
+  proxy:
+    image: nginx:alpine
+    network_mode: host  # Host 네트워크 사용
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    # ports:  # Host 네트워크에서는 포트 매핑 무시됨
+
+  monitor:
+    image: prom/node-exporter
+    network_mode: host  # 호스트 메트릭 수집
 ```
 
 ---
 
-## 성능·튜닝
+## 문제 해결 가이드
 
-### 간단 부하 예시(비교 절차)
+### 일반적인 문제와 해결 방법
 
+#### 문제 1: 포트 충돌
+**증상**: `Bind for 0.0.0.0:80 failed: port is already allocated`
+**해결**:
 ```bash
-# bridge
+# 사용 중인 포트 확인
+sudo lsof -i :80
+sudo ss -lntp | grep :80
 
-docker run -d --name bweb -p 8080:80 nginx
-# host
-
-docker run -d --name hweb --network host nginx
-
-# ApacheBench 예: 지연/처리량 대조
-
-ab -n 10000 -c 200 http://127.0.0.1:8080/      # bridge
-ab -n 10000 -c 200 http://127.0.0.1:80/        # host
-```
-> 환경에 따라 **host가 낮은 지연**, **bridge는 약간의 NAT 오버헤드**가 보일 수 있음.
-
-### Bridge 고급 튜닝
-
-- 사용자 브리지로 **IP/MTU/서브넷** 명시, 충돌 회피.
-- 대량 연결 서버는 호스트 **sysctl** 조정(예):
-```bash
-sudo sysctl -w net.ipv4.ip_local_port_range="1024 65000"
-sudo sysctl -w net.ipv4.tcp_fin_timeout=30
-sudo sysctl -w net.core.somaxconn=1024
+# 충돌하는 프로세스 중지 또는 다른 포트 사용
 ```
 
----
-
-## 보안·격리·권한
-
-### Bridge 모드 권장 수칙
-
-- 외부 노출은 **필요 포트만 -p**로 최소화.
-- 컨테이너는 **비루트 USER** + 루트FS **read-only** + **cap-drop**:
+#### 문제 2: 컨테이너 간 통신 실패
+**증상**: 컨테이너가 서로 통신할 수 없음
+**해결**:
 ```bash
-docker run -d \
-  --cap-drop ALL \
-  --read-only \
-  --tmpfs /tmp \
-  --user 65532:65532 \
-  -p 8080:80 nginx:alpine
+# 네트워크 연결 확인
+docker network inspect [네트워크이름]
+
+# 동일 네트워크에 컨테이너 연결
+docker network connect [네트워크이름] [컨테이너이름]
+
+# DNS 확인
+docker exec [컨테이너] nslookup [다른컨테이너]
 ```
 
-### Host 모드 주의
-
-- 네트워크 경계가 흐려짐 → **호스트 방화벽/IDS 룰** 정비 필수.
-- 포트 충돌 방지. 의도치 않은 **서비스 노출** 가능성 점검.
-
----
-
-## 실전 테스트·디버깅 레시피
-
-### 포트 충돌 재현(Host)
-
+#### 문제 3: 외부에서 컨테이너 접근 불가
+**증상**: 호스트에서는 접근 가능하지만 외부에서는 불가능
+**해결**:
 ```bash
-docker run -d --network host --name webA nginx
-docker run -d --network host --name webB nginx  # (대개 실패: 80 충돌)
+# 방화벽 규칙 확인
+sudo iptables -L -n
+
+# Docker NAT 규칙 확인
+sudo iptables -t nat -L -n
+
+# 호스트 라우팅 확인
+ip route show
 ```
 
-### iptables/NAT 확인(Bridge)
-
+#### 문제 4: 네트워크 성능 저하
+**증상**: 네트워크 성능이 예상보다 느림
+**해결**:
 ```bash
-iptables -t nat -L -n -v | sed -n '1,120p'
+# 네트워크 인터페이스 통계 확인
+ip -s link show docker0
+
+# 패킷 드롭 확인
+netstat -s | grep -i drop
+
+# MTU 설정 확인
+ip link show docker0 | grep mtu
 ```
 
-### tcpdump로 흐름 보기
+### 디버깅 도구 활용
 
 ```bash
-sudo tcpdump -i docker0 -n 'tcp port 80'
-sudo tcpdump -i any -n 'tcp port 8080'
-```
+# 네트워크 연결 테스트
+docker run --rm -it --network app-network alpine ping api
 
-### 컨테이너 내부 라우팅/ARP
+# HTTP 연결 테스트
+docker run --rm --network app-network curlimages/curl http://api:3000/health
 
-```bash
-docker exec -it bweb sh -lc "ip route; ip neigh"
+# 네트워크 라우팅 확인
+docker exec container-name ip route show
+
+# DNS 해석 테스트
+docker exec container-name nslookup google.com
 ```
 
 ---
 
-## DNS·서비스 디스커버리·헤어핀 NAT
+## 고급 네트워크 구성
 
-- **사용자 정의 브리지**에서 **컨테이너 이름으로 DNS 조회** 가능 (`/etc/resolv.conf`의 127.0.0.11).
-- **기본 bridge**는 이름 해석 제약이 있으므로, 서비스간 통신은 **사용자 정의 브리지**를 권장.
-- **헤어핀 NAT**: 같은 노드에서 자기 퍼블릭 포트로 접속 시 동작이 환경별로 다름. 가장 간단한 해법은 **동일 네트워크 이름 주소로 직접 접근**.
-
----
-
-## Docker Desktop / WSL2 / IPv6 특성
-
-- **Docker Desktop(macOS/Windows)**: 내부적으로 **VM**. 바인드/포트가 하이퍼바이저 경로를 지나 **I/O 지연**이 커질 수 있음 → 대량 개발 작업은 **볼륨/캐시** 전략 병행.
-- **WSL2**: `host.docker.internal`이 동작하며, WSL 네트워크 ↔ Windows 호스트 간 NAT/포트포워딩 규칙 체크.
-- **IPv6**: `daemon.json`에서 활성화 후 사용자정의 브리지에 프리픽스 지정:
-```json
+### IPv6 지원 활성화
+```bash
+# Docker 데몬 설정 수정
+sudo tee /etc/docker/daemon.json << EOF
 {
   "ipv6": true,
-  "fixed-cidr-v6": "2001:db8:1::/64",
-  "experimental": false
+  "fixed-cidr-v6": "2001:db8:1::/64"
 }
+EOF
+
+# Docker 재시작
+sudo systemctl restart docker
+
+# IPv6 네트워크 생성
+docker network create --ipv6 --subnet=2001:db8:1::/64 ipv6-network
 ```
-이후 네트워크 생성 시 IPv6 라우팅/방화벽 정책 재검토.
 
----
-
-## 트러블슈팅 표
-
-| 증상 | 가능 원인 | 진단 | 해결 |
-|---|---|---|---|
-| host 모드 포트 바인딩 실패 | 포트 충돌 | `ss -lntp`, `lsof -i` | 포트 변경/프로세스 정리 |
-| bridge 노출 안됨 | `-p` 미지정 / 방화벽 | `docker ps`, `iptables -t nat -S` | `-p` 지정, 방화벽 허용 |
-| 컨테이너 간 통신 불가 | 서로 다른 네트워크 | `docker network inspect` | 동일 사용자 브리지 연결 |
-| DNS 이름 해석 실패 | 기본 bridge 사용 | `/etc/resolv.conf` | 사용자 정의 브리지로 이전 |
-| 성능 저하 | NAT/가상화/MTU | `ab`, `iperf3`, `ip -d link` | host 모드/MTU 조정/직접 LB |
-| 헤어핀 실패 | NAT 규칙 부재 | iptables nat 테이블 | 내부 DNS/서비스 이름 사용 |
-
----
-
-## 체크리스트(선택 가이드)
-
-- [ ] 기본은 **bridge**. 공개는 필요한 포트만 `-p`.
-- [ ] 컨테이너 간 통신 필요 → **사용자 정의 브리지** + 이름 기반.
-- [ ] 초저지연/프록시/패킷 도구 → **host**, 단 보안/충돌/관찰성 각오.
-- [ ] Docker Desktop/WSL2 → I/O/포트포워딩 경로 이해 후 설계.
-- [ ] IPv6 사용 시 데몬/네트워크/보안 정책 **동시 구성**.
-- [ ] 성능/장애 조사: `tcpdump`, `iptables`, `ss`, `docker network inspect`.
-
----
-
-## 추가 실습: Nginx + 앱 2단 구성(Bridge vs Host)
-
-### Bridge(권장)
-
+### 네트워크 대역폭 제한
 ```bash
-docker network create appnet
-
-docker run -d --name app --network appnet hashicorp/http-echo \
-  -text="hello from app"
-
-docker run -d --name fe --network appnet -p 8080:80 nginx:alpine
-# 프록시 설정 주입(간단 예)
-
-docker exec -it fe sh -lc 'printf "server { listen 80;
-  location / { proxy_pass http://app:5678; } }" > /etc/nginx/conf.d/default.conf && nginx -s reload'
-
-curl -s localhost:8080
-```
-
-### Host(고성능 경로)
-
-```bash
-# app는 host 포트 5678 사용
-
-docker run -d --name apph --network host hashicorp/http-echo -text="hello host" -listen=:5678
-
-# fe도 host, 80 사용(충돌 유의)
-
-docker run -d --name feh --network host nginx:alpine
-docker exec -it feh sh -lc 'printf "server { listen 80;
-  location / { proxy_pass http://127.0.0.1:5678; } }" > /etc/nginx/conf.d/default.conf && nginx -s reload'
-
-curl -s http://127.0.0.1/
+# 네트워크 대역폭 제한이 있는 네트워크 생성
+docker network create \
+  --driver bridge \
+  --opt com.docker.network.bridge.name=mybridge \
+  --opt com.docker.network.bridge.enable_icc=true \
+  --opt com.docker.network.bridge.enable_ip_masquerade=true \
+  --opt com.docker.network.bridge.host_binding_ipv4=0.0.0.0 \
+  limited-network
 ```
 
 ---
 
-## 수식으로 보는 의사결정(직관)
+## 결론
 
-네트워크 모드 선택 효용 \(U\)를 **성능 \(P\)**, **보안/격리 \(S\)**, **운영성 \(O\)**의 가중합으로 단순화:
-$$
-U = \alpha P + \beta S + \gamma O
-$$
-- 마이크로서비스/일반 웹: \( \beta,\gamma \) 비중 ↑ → **bridge**
-- L4 프록시/패킷 수집: \( \alpha \) 비중 ↑ → **host**
+Docker 네트워크 모드 선택은 애플리케이션의 요구사항, 성능 요구치, 보안 정책, 운영 환경을 종합적으로 고려해야 합니다.
 
----
+### Bridge Network가 적합한 경우
+- 대부분의 웹 애플리케이션과 마이크로서비스
+- 다중 컨테이너 환경에서의 서비스 간 통신
+- 네트워크 격리와 보안이 중요한 환경
+- 개발 및 테스트 환경
 
-## 요약
+### Host Network가 적합한 경우
+- 네트워크 성능이 가장 중요한 고성능 애플리케이션
+- 네트워크 모니터링 및 패킷 분석 도구
+- 특정 포트 번호를 반드시 사용해야 하는 경우
+- 단일 서비스로 구성된 간단한 환경
 
-- **Bridge**: 격리·명시적 공개·내장 DNS·운영 친화. 대부분 워크로드의 기본값.
-- **Host**: NAT/브리지 우회로 저지연. 포트 충돌/보안 경계/관찰성에 주의.
-- 실무에서는 **사용자 정의 브리지 + 이름 기반 통신 + 필요한 포트만 공개**가 표준.
-- 성능이 가장 핵심이면 **host**를 고려하되, **포트/보안/관찰성**을 먼저 설계.
+### 실무 권장 사항
 
----
-```bash
-# 핵심 명령 요약
+1. **기본적으로 Bridge Network 사용**: 대부분의 경우 Bridge 네트워크가 최적의 선택입니다.
+2. **사용자 정의 네트워크 활용**: 프로덕션 환경에서는 항상 사용자 정의 브리지 네트워크를 생성하고 사용하세요.
+3. **보안 강화**: 컨테이너는 최소한의 권한으로 실행하고, 필요한 포트만 노출하세요.
+4. **성능 테스트**: 고성능 요구사항이 있는 경우 실제 환경에서 두 모드를 테스트해보세요.
+5. **모니터링과 로깅**: 네트워크 문제를 진단할 수 있는 모니터링 도구를 설정하세요.
 
-# 브리지 노출
-
-docker run -d -p 8080:80 nginx
-
-# 사용자 정의 브리지
-
-docker network create --driver bridge appnet
-docker run -d --network appnet --name s1 nginx
-docker run -it --network appnet --rm alpine sh -lc "apk add curl; curl -s http://s1"
-
-# 호스트 네트워크
-
-docker run -d --network host nginx
-# 포트 매핑 옵션(-p)은 host에서 무시됨
-
-```
+최종적으로, 네트워크 구성은 애플리케이션의 특성과 팀의 운영 역량에 맞게 결정되어야 합니다. 시작은 Bridge 네트워크로 시작하고, 성능이나 특수 요구사항이 발생할 때 Host 네트워크로의 전환을 고려하는 접근법이 현명한 선택일 수 있습니다.

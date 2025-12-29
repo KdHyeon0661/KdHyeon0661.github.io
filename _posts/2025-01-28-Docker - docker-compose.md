@@ -4,572 +4,683 @@ title: Docker - exec vs attach
 date: 2025-01-28 21:20:23 +0900
 category: Docker
 ---
-# `docker-compose.yml` 문법
+# Docker Compose 문법 완벽 가이드
 
-## 실행/검증 기본 명령(요약)
+Docker Compose는 다중 컨테이너 애플리케이션을 정의하고 실행하기 위한 도구입니다. 이 가이드에서는 Compose 파일의 문법을 심층적으로 살펴보고, 실무에서 바로 적용할 수 있는 패턴과 모범 사례를 제공합니다.
+
+## 기본 명령어 요약
 
 ```bash
-# Compose V2: 'docker compose'  ← 권장
-
+# Compose V2 사용 권장 (docker compose)
 docker compose up -d           # 백그라운드 실행
-docker compose down            # 중지 + 네트워크/컨테이너 제거
-docker compose ps              # 상태
-docker compose logs -f app     # 로그 스트리밍
-docker compose exec app sh     # 셸
-docker compose restart app     # 재시작
-docker compose stop app        # 정지
+docker compose down            # 중지 및 리소스 정리
+docker compose ps              # 서비스 상태 확인
+docker compose logs -f [서비스명] # 로그 실시간 확인
+docker compose exec [서비스명] sh  # 컨테이너 내부 접속
+docker compose restart [서비스명] # 서비스 재시작
+docker compose stop [서비스명]    # 서비스 정지
 
-# 정합성/머지 결과 확인
-
-docker compose config          # 병합·확장·env 적용된 최종 YAML 출력
-
-# — 기능 유사
-
+# 구성 검증
+docker compose config          # 최종 YAML 구성 확인
 ```
 
 ---
 
-## YAML 기본 골격: services / networks / volumes / (secrets, configs)
+## Compose 파일 구조 이해하기
+
+### 기본 템플릿
 
 ```yaml
-version: "3.9"        # Compose 파일 포맷. 최신 Compose(V2)는 version 생략도 허용.
+version: "3.9"  # Compose 파일 형식 버전
+
 services:
-  web:                # 서비스(컨테이너) 정의
+  # 서비스 정의들
+  web:
     image: nginx:alpine
-    ports: ["8080:80"]
-    networks: ["frontnet"]
-    depends_on: ["api"]
+    ports:
+      - "8080:80"
+    networks:
+      - frontend
 
   api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-      target: runtime               # 멀티스테이지 타겟
-      args:
-        APP_ENV: production
-    environment:
-      DB_HOST: db
-      DB_USER: app
-      DB_PASS_FILE: /run/secrets/dbpass
-    secrets: ["dbpass"]
-    networks: ["backnet"]
+    build: ./api
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      - database
 
-  db:
+  database:
     image: postgres:15
     volumes:
-      - dbdata:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/dbpass
-    secrets: ["dbpass"]
-    networks: ["backnet"]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
-      interval: 5s
-      timeout: 2s
-      retries: 12
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - backend
 
 networks:
-  frontnet:
-    driver: bridge
-  backnet:
-    driver: bridge
+  frontend:
+  backend:
 
 volumes:
-  dbdata:
-
-secrets:
-  dbpass:
-    file: ./secrets/db.password
+  postgres-data:
 ```
 
-**핵심 포인트**
-- `services` = 컨테이너 집합. 이름이 곧 DNS 호스트네임(같은 네트워크에서).
-- **네트워크를 명시적으로 분리**해 외부/내부 경계를 강제.
-- **secrets**/**configs**(아래 확장절 참조)로 민감정보·환경설정 분리.
+### 핵심 구성 요소
+
+1. **services**: 실행할 컨테이너들 정의
+2. **networks**: 서비스 간 통신을 위한 네트워크 정의
+3. **volumes**: 데이터 영속성을 위한 볼륨 정의
+4. **secrets/configs**: 민감 정보와 설정 파일 관리
 
 ---
 
-## 필수 키워드 정리(심화)
+## 서비스 정의 상세 분석
 
-### `image` / `build`
+### 이미지와 빌드
 
 ```yaml
 services:
-  app:
-    image: myorg/app:1.2.3       # 레지스트리에서 풀
-# 또는
+  # 레지스트리에서 이미지 사용
+  web:
+    image: nginx:alpine
+    image: myregistry.com/app:1.0.0  # 사설 레지스트리에서도 가능
 
-  app:
+  # 로컬에서 빌드
+  api:
     build:
-      context: ./app
-      dockerfile: Dockerfile.prod
-      target: runtime            # 멀티 스테이지 빌드 타겟
+      context: ./api  # 빌드 컨텍스트 디렉터리
+      dockerfile: Dockerfile.prod  # Dockerfile 지정
+      target: runtime  # 멀티스테이지 빌드에서 특정 스테이지 선택
       args:
         NODE_ENV: production
+        BUILD_NUMBER: ${BUILD_NUMBER}
       cache_from:
         - type=registry,ref=myorg/app:buildcache
       labels:
-        org.opencontainers.image.source: "https://github.com/myorg/app"
+        maintainer: "devops@company.com"
 ```
-- **이미지 vs 빌드**: 빌드가 있으면 `docker compose build` 로 이미지 생성 후 올림.
-- `target`으로 멀티 스테이지의 특정 스테이지만 채택 → **경량 런타임** 확보.
 
-### `ports`(포트 매핑)
+### 포트 매핑
 
 ```yaml
 ports:
-  - "127.0.0.1:8080:80"  # 로컬에만 바인딩
-  - "8443:443/tcp"       # 프로토콜 지정
-  - "8081:8081/udp"
+  - "8080:80"                # 기본 TCP
+  - "8443:443/tcp"           # 프로토콜 명시적 지정
+  - "8081:8081/udp"          # UDP 포트
+  - "127.0.0.1:8082:80"      # 특정 IP에만 바인딩
+  - "9000-9010:9000-9010"    # 포트 범위 매핑
 ```
-- **외부 공개 최소화**: 필요 포트만 바인딩. 내부 통신은 네트워크 이름 사용.
 
-### `environment` / `env_file` / 환경변수 치환
+**모범 사례**: 필요한 포트만 최소한으로 노출하고, 내부 통신은 네트워크 이름을 사용하세요.
+
+### 환경 변수 관리
 
 ```yaml
 environment:
-  REDIS_HOST: redis
-  FEATURE_FLAG: "${FEATURE_FLAG:-off}"
+  NODE_ENV: production
+  DB_HOST: database
+  LOG_LEVEL: ${LOG_LEVEL:-info}  # 기본값 설정
+  API_KEY: ${API_KEY}            # 외부 변수 사용
+
 env_file:
-  - .env
+  - .env                         # 환경 변수 파일
+  - .env.production              # 여러 파일 지정 가능
 ```
-- `${VAR}` 치환 가능. 기본값은 `${VAR:-default}`.
-- *민감정보는 `secrets`사용 권장.*
 
-### `volumes`(마운트)
+**주의**: 민감한 정보는 `secrets`를 사용하는 것이 더 안전합니다.
+
+### 볼륨 마운트
 
 ```yaml
-# 서비스 측
-
 volumes:
-  - "./logs:/var/log/app:rw"     # bind mount (개발용)
-  - "namedcache:/cache:rw"       # named volume (운영/공유)
-  - "tmpfs:/tmp"                 # tmpfs(메모리) 볼륨
-
-# 루트의 정의
-
-volumes:
-  namedcache:
-  tmpfs:
-    driver: local
+  # 바인드 마운트 (개발용)
+  - "./src:/app/src:ro"          # 읽기 전용
+  - "./logs:/var/log/app:rw"     # 읽기/쓰기
+  
+  # 명명된 볼륨 (운영용)
+  - "app-data:/data"
+  
+  # 익명 볼륨
+  - "/cache"
+  
+  # tmpfs (메모리 파일시스템)
+  - type: tmpfs
+    target: /tmp
+    tmpfs:
+      size: 100000000  # 100MB
 ```
-- 개발은 **bind mount**로 핫리로드, 운영은 **named volume**로 이식성/관리성.
 
-### `depends_on`(기동 순서)
+### 서비스 의존성과 시작 순서
 
 ```yaml
-services:
-  app:
-    depends_on:
-      db:
-        condition: service_healthy   # Compose V2에서 지원(healthcheck 필요)
-```
-- 단순 문자열 배열도 가능하지만, **건강상태 기반**이 실무적.
+depends_on:
+  database:
+    condition: service_healthy  # 건강 상태 확인 후 시작
+  redis:
+    condition: service_started  # 시작 후 기다림
 
-### `healthcheck`
+# 또는 간단한 형식
+depends_on:
+  - database
+  - redis
+```
+
+### 헬스 체크
 
 ```yaml
 healthcheck:
-  test: ["CMD", "curl", "-fsS", "http://localhost/healthz"]
-  interval: 10s
-  timeout: 2s
-  retries: 6
-  start_period: 20s
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  interval: 30s          # 체크 간격
+  timeout: 10s           # 응답 대기 시간
+  retries: 3             # 재시도 횟수
+  start_period: 40s      # 시작 후 초기 대기 시간
+  start_interval: 5s     # 시작 기간 내 체크 간격
 ```
 
-### `command` / `entrypoint`
+### 리소스 제한
 
 ```yaml
-command: ["gunicorn", "-w", "4", "app:app"]
-entrypoint: ["/docker-entrypoint.sh"]
-```
-- `entrypoint`는 “고정 진입점”, `command`는 인자/기본명령.
+deploy:  # Swarm 모드에서만 동작
+  resources:
+    limits:
+      cpus: '0.50'
+      memory: 512M
+    reservations:
+      cpus: '0.25'
+      memory: 256M
 
-### `restart`
-
-```yaml
-restart: "unless-stopped"   # always / on-failure / unless-stopped
+# 단일 호스트에서는 runtime 옵션 사용
+mem_limit: 512m
+mem_reservation: 256m
+cpus: 0.5
 ```
 
 ---
 
-## 네트워크 심화: 이름 통신·멀티 네트워크·외부 네트워크
+## 네트워킹 구성
 
-### 이름 통신
-
-- 같은 네트워크에서는 `db:5432`처럼 **서비스명**으로 접근.
-- 내장 DNS(127.0.0.11)가 서비스 이름을 IP로 해석.
-
-### 멀티 네트워크로 노출 통제
+### 다중 네트워크를 활용한 서비스 분리
 
 ```yaml
 services:
-  fe:
+  frontend:
     image: nginx:alpine
-    ports: ["8080:80"]
-    networks: [frontnet, backnet]  # 프런트는 외부·백엔드는 내부
-  api:
-    build: ./api
-    networks: [backnet]
+    ports:
+      - "80:80"
+    networks:
+      - public-network
+      - internal-network
+
+  backend:
+    build: ./backend
+    networks:
+      - internal-network
+
+  database:
+    image: postgres:15
+    networks:
+      - database-network
+
 networks:
-  frontnet: {}
-  backnet: {}
+  public-network:
+    driver: bridge
+    # ipam:
+    #   config:
+    #     - subnet: 172.20.0.0/16
+
+  internal-network:
+    driver: bridge
+    internal: true  # 외부 접근 차단
+
+  database-network:
+    driver: bridge
+    internal: true
 ```
 
-### 네트워크 사용
+### 외부 네트워크 사용
 
 ```yaml
 networks:
-  corpnet:
+  default:
     external: true
+    name: my-existing-network
 ```
 
 ---
 
-## 보안/리소스/런타임 고급 옵션
+## 보안 강화 설정
 
 ```yaml
 services:
-  app:
-    image: myorg/app:1.0
-    user: "65532:65532"             # 비루트 UID/GID
-    read_only: true                 # 루트FS 읽기전용
+  secure-app:
+    image: myapp:latest
+    user: "1000:1000"           # 비루트 사용자로 실행
+    read_only: true             # 루트 파일시스템 읽기 전용
     tmpfs:
-      - /tmp
+      - /tmp                    # 필요한 쓰기 권한 경로
+      - /run
+    
     cap_drop:
-      - ALL
+      - ALL                     # 모든 권한 제거
+    
+    cap_add:
+      - CHOWN                   # 필요한 권한만 추가
+      - SETGID
+      - SETUID
+    
     security_opt:
-      - no-new-privileges:true
-    ulimits:
-      nofile: 65536
+      - no-new-privileges:true  # 새 권한 획득 방지
+      - seccomp:unconfined
+    
     sysctls:
-      net.core.somaxconn: "4096"
-    stop_signal: SIGTERM
-    stop_grace_period: 20s
+      net.core.somaxconn: "1024"
+    
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 20000
+        hard: 40000
 ```
-
-**요점**
-- 컨테이너를 **비루트**로, 루트FS는 **read-only**, 필요한 **tmpfs**만.
-- **capabilities 최소화**(cap_drop), **no-new-privileges**로 권한 상승 차단.
 
 ---
 
-## Compose로 “빌드 최적화 + 런타임 경량화”(멀티 스테이지)
+## Secrets와 Configs로 민감 정보 관리
 
-### Node.js 프런트엔드(정적 배포)
+### Secrets (비밀 정보)
+
+```yaml
+services:
+  database:
+    image: postgres:15
+    secrets:
+      - db-password
+      - ssl-certificate
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db-password
+
+secrets:
+  db-password:
+    file: ./secrets/db_password.txt
+  
+  ssl-certificate:
+    external: true  # 외부에서 생성된 시크릿 사용
+```
+
+### Configs (설정 파일)
+
+```yaml
+services:
+  web-server:
+    image: nginx:alpine
+    configs:
+      - source: nginx-config
+        target: /etc/nginx/nginx.conf
+        mode: 0440  # 파일 권한 설정
+
+configs:
+  nginx-config:
+    file: ./configs/nginx.conf
+  
+  app-settings:
+    content: |
+      debug: false
+      log_level: info
+```
+
+---
+
+## 프로파일을 활용한 환경별 구성
 
 ```yaml
 services:
   web:
-    build:
-      context: ./frontend
-      target: builder         # 1단계: 빌더
-    image: myorg/frontend:build
-  fe:
     image: nginx:alpine
-    depends_on: [web]
-    volumes:
-      - type: bind
-        source: ./frontend/dist
-        target: /usr/share/nginx/html
-    ports: ["8080:80"]
-```
+    profiles: ["web", "production"]
 
-**대안**: `COPY --from=builder` 방식으로 최종 런타임 이미지에 **정적 산출물만** 패키징(더 권장).
+  api:
+    build: ./api
+    profiles: ["api"]
 
----
+  database:
+    image: postgres:15
+    profiles: ["database", "production"]
 
-## Secrets / Configs — 민감정보·설정 분리
+  redis:
+    image: redis:alpine
+    profiles: ["cache"]
 
-### secrets
-
-```yaml
-services:
-  db:
-    image: mysql:8
-    secrets: [dbpass]
-    environment:
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/dbpass
-
-secrets:
-  dbpass:
-    file: ./secrets/db.password
-```
-- 컨테이너에서 `/run/secrets/<name>`로 **파일 형태** 접근(환경변수보다 안전).
-
-### configs (비밀은 아니지만 변경 가능한 설정)
-
-```yaml
-services:
-  fe:
-    image: nginx:alpine
-    configs:
-      - source: nginx_conf
-        target: /etc/nginx/conf.d/default.conf
-
-configs:
-  nginx_conf:
-    file: ./ops/nginx.default.conf
-```
-
----
-
-## Profiles — 상황별 부분 기동
-
-```yaml
-services:
-  grafana:
+  monitoring:
     image: grafana/grafana
     profiles: ["monitoring"]
-
-# 실행 시 지정
-
-docker compose --profile monitoring up -d
 ```
 
-- 로컬 디버깅만 필요한 서비스, 배치성 잡 등 **상황별 on/off**.
+사용 방법:
+```bash
+# 특정 프로파일만 실행
+docker compose --profile monitoring up -d
+
+# 여러 프로파일 조합
+docker compose --profile web --profile api up -d
+```
 
 ---
 
-## Anchors & Extension Fields — 중복 줄이기
+## YAML 재사용을 위한 앵커와 별칭
 
 ```yaml
-x-base: &base
+# 공통 설정 정의
+x-common: &common
   restart: unless-stopped
-  networks: [backnet]
+  networks:
+    - app-network
   logging:
     driver: json-file
     options:
       max-size: "10m"
       max-file: "3"
 
+x-database: &database
+  <<: *common
+  volumes:
+    - /data
+  environment:
+    MAX_CONNECTIONS: 100
+
+# 서비스 정의에서 재사용
 services:
   api:
-    <<: *base
-    image: myorg/api:1.0
-  worker:
-    <<: *base
-    image: myorg/worker:1.0
+    <<: *common
+    image: myapp/api:latest
+    depends_on:
+      - postgres
+      - redis
+
+  postgres:
+    <<: *database
+    image: postgres:15
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+
+  redis:
+    <<: *common
+    image: redis:alpine
+    command: redis-server --appendonly yes
+```
+
+---
+
+## 환경별 구성 파일 오버레이
+
+파일 구조:
+```
+docker-compose.yml      # 기본 구성
+docker-compose.override.yml  # 개발 환경 오버레이
+docker-compose.prod.yml      # 프로덕션 환경 오버레이
+```
+
+### 기본 구성 (docker-compose.yml)
+```yaml
+version: "3.9"
+
+services:
+  app:
+    image: myapp:${TAG:-latest}
+    networks:
+      - app-network
 
 networks:
-  backnet: {}
+  app-network:
 ```
 
-- YAML 앵커로 **공통 템플릿**을 재사용.
-
----
-
-## Compose 파일 오버레이(환경별 구성)
-
+### 개발 오버레이 (docker-compose.override.yml)
+```yaml
+services:
+  app:
+    build: .
+    volumes:
+      - ./src:/app/src
+    environment:
+      NODE_ENV: development
+      DEBUG: "true"
+    ports:
+      - "3000:3000"
 ```
-compose.yaml
-compose.prod.yaml
-compose.dev.yaml
+
+### 프로덕션 오버레이 (docker-compose.prod.yml)
+```yaml
+services:
+  app:
+    image: myregistry.com/myapp:${BUILD_NUMBER}
+    environment:
+      NODE_ENV: production
+    deploy:
+      replicas: 3
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
 ```
 
+사용 방법:
 ```bash
-# prod + 공통 머지
+# 개발 환경 (기본 + 오버레이)
+docker compose up -d
 
-docker compose -f compose.yaml -f compose.prod.yaml up -d
+# 프로덕션 환경
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# dev + 공통
-
-docker compose -f compose.yaml -f compose.dev.yaml up -d
-
-# 머지 결과 검사
-
-docker compose -f compose.yaml -f compose.prod.yaml config
-```
-
-- **나중 파일이 앞의 키를 덮어씀**(정의 병합 규칙 숙지).
-
----
-
-## 포트·네트워크 트러블슈팅(체크리스트)
-
-| 증상 | 진단 | 해결 |
-|---|---|---|
-| `localhost:8080` 접속 불가 | `docker compose ps`, `docker compose logs web` | `ports` 매핑 확인, 서비스 정상기동 확인 |
-| 컨테이너 간 접속 실패 | `docker compose exec web getent hosts api` | **같은 네트워크**에 연결, 서비스명으로 접근 |
-| 이름해석 불가 | `/etc/resolv.conf`, `nslookup api 127.0.0.11` | 사용자 정의 브리지 사용 권장 |
-| 로컬에서만 보이고 외부에서 안 보임 | `ports`에 바인딩 IP 확인 | `0.0.0.0:8080:80`로 확장 |
-| 헬스체크 실패 | `docker compose ps`, `health` 상세 | `healthcheck` 조건 수정, 대기시간 늘림 |
-| 권한 오류(마운트) | `id -u`, `id -g`, volume 퍼미션 | `user` 지정/권한 동기화, `:delegated`(Mac) |
-
-**관찰 명령**
-```bash
-docker compose ps
-docker compose logs -f web
-docker compose config
-docker network ls
-docker network inspect <proj>_default
-docker compose exec web sh -lc "ip addr; ip route; getent hosts api"
+# 구성 확인
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config
 ```
 
 ---
 
-## 실전 예제 1 — 3계층: Nginx(프록시)/API/Postgres
+## 실전 예제: 완전한 3계층 애플리케이션
 
 ```yaml
 version: "3.9"
-networks:
-  frontnet: {}
-  backnet: {}
-
-volumes:
-  pgdata: {}
-
-secrets:
-  dbpass:
-    file: ./secrets/db.password
 
 services:
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_PASSWORD_FILE: /run/secrets/dbpass
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    secrets: [dbpass]
-    networks: [backnet]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
-      interval: 5s
-      timeout: 2s
-      retries: 12
-
-  api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-      target: runtime
-    environment:
-      DB_HOST: db
-      DB_USER: postgres
-      DB_PASS_FILE: /run/secrets/dbpass
-      PORT: "8080"
-    secrets: [dbpass]
-    depends_on:
-      db:
-        condition: service_healthy
-    networks: [backnet]
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/healthz"]
-      interval: 10s
-      timeout: 2s
-      retries: 6
-      start_period: 20s
-
-  fe:
+  # 프론트엔드 레이어
+  nginx:
     image: nginx:alpine
     ports:
-      - "8080:80"
+      - "80:80"
+      - "443:443"
     volumes:
-      - ./ops/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - static-files:/var/www/static
+    networks:
+      - frontend-network
     depends_on:
-      - api
-    networks: [frontnet, backnet]
-```
+      - web-app
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
 
-`./ops/nginx.conf` (간단 프록시)
-```nginx
-server {
-  listen 80;
-  location / {
-    proxy_pass http://api:8080;
-  }
-}
-```
-
----
-
-## 실전 예제 2 — 로컬 개발(핫리로드), 운영(세이프)
-
-**dev**
-```yaml
-services:
-  api:
-    build: ./api
-    volumes:
-      - ./api:/app:delegated
+  # 애플리케이션 레이어
+  web-app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+      target: production
     environment:
-      APP_ENV: dev
+      NODE_ENV: production
+      DATABASE_URL: postgresql://appuser:${DB_PASSWORD}@postgres/appdb
+      REDIS_URL: redis://redis:6379
+    volumes:
+      - app-logs:/app/logs
+    networks:
+      - frontend-network
+      - backend-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+
+  # 데이터 레이어
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+
+  # 모니터링 레이어 (선택적)
+  prometheus:
+    image: prom/prometheus:latest
+    profiles: ["monitoring"]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - monitoring-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+networks:
+  frontend-network:
+  backend-network:
+    internal: true
+  monitoring-network:
+
+volumes:
+  postgres-data:
+  redis-data:
+  app-logs:
+  static-files:
+  prometheus-data:
 ```
 
-**prod**
-```yaml
-services:
-  api:
-    image: myorg/api:1.2.3
-    read_only: true
-    tmpfs: ["/tmp"]
-    user: "65532:65532"
-    cap_drop: [ "ALL" ]
-```
-
-- dev는 **bind mount로 즉시 반영**,
-- prod는 **이미지 고정·비루트·read_only**로 안전.
-
 ---
 
-## 수식 직관: 공개 포트 최소화의 위험 감소
+## 문제 해결 가이드
 
-공격면 \(A\)를 공개 포트 수 \(k\)와 각 포트의 위협 가중치 \(w_i\)로 단순 모델링:
-$$
-A \approx \sum_{i=1}^{k} w_i
-$$
-- Compose에서 `ports`를 **정말 필요한 서비스**에만 선언 → \(k\) 최소화 → \(A\) 감소.
+### 일반적인 문제와 해결 방법
 
----
-
-## 베스트 프랙티스(요약)
-
-1. **사용자 정의 브리지 네트워크**로 서비스 분리(프런트/백).
-2. **secrets/configs**로 민감정보/설정 분리, 환경변수 과다 노출 금지.
-3. **멀티 스테이지** + `target`으로 런타임 경량화.
-4. **비루트 + read_only + tmpfs + cap_drop**로 실행 표준화.
-5. `depends_on.condition = service_healthy`로 **현실적인 의존**.
-6. `docker compose config`로 **최종 구성 검증** 후 배포.
-7. dev는 **bind mount**, prod는 **named volume**.
-8. **profiles/오버레이 파일**로 환경별 구성 관리.
-9. 컨테이너 간 통신은 **이름 기반**으로, 외부는 **필요 포트만** 공개.
-10. 문제 시 **관찰 순서**: ps → logs → config → network inspect → 컨테이너 내 DNS/라우팅 확인.
-
----
-
-## 빠른 참고 치트시트
-
+#### 포트 충돌
 ```bash
-# 올리고 내리고 보기
+# 사용 중인 포트 확인
+sudo lsof -i :8080
+sudo ss -lntp | grep :8080
 
-docker compose up -d
+# 다른 포트 사용
 docker compose down
-docker compose ps
-docker compose logs -f api
+# compose.yml에서 포트 번호 수정 후
+docker compose up -d
+```
 
-# 셸/명령 실행
+#### 컨테이너 간 통신 문제
+```bash
+# 네트워크 확인
+docker network ls
+docker network inspect [프로젝트명]_default
 
-docker compose exec api sh
-docker compose run --rm api pytest
+# DNS 확인
+docker compose exec [서비스명] nslookup [다른서비스명]
+docker compose exec [서비스명] cat /etc/resolv.conf
+```
 
-# 스케일(수평확장; stateless 전제)
+#### 볼륨 권한 문제
+```bash
+# 호스트 디렉토리 권한 확인
+ls -la ./data
 
-docker compose up -d --scale api=3
+# 컨테이너 내부 사용자 확인
+docker compose exec [서비스명] id
 
-# 구성 검증/머지 결과
+# 볼륨 소유자 변경
+sudo chown -R 1000:1000 ./data
+```
 
+#### 로그 분석
+```bash
+# 모든 서비스 로그 확인
+docker compose logs
+
+# 특정 서비스 로그
+docker compose logs [서비스명]
+
+# 실시간 로그 모니터링
+docker compose logs -f [서비스명]
+
+# 로그 필터링
+docker compose logs [서비스명] | grep -i error
+```
+
+### 디버깅 명령어 모음
+```bash
+# 구성 확인
 docker compose config
 
-# 특정 서비스만 재빌드/재시작
+# 서비스 상태
+docker compose ps
+docker compose top
 
-docker compose build api
-docker compose up -d api
+# 네트워크 연결 테스트
+docker compose run --rm curlimages/curl http://web:80
+
+# 컨테이너 내부 진입
+docker compose exec [서비스명] sh
+docker compose exec [서비스명] bash
+
+# 일시적 테스트 컨테이너 실행
+docker compose run --rm [서비스명] [명령어]
 ```
 
 ---
 
-## 참고 링크
+## 모범 사례 요약
 
-- 공식 Compose 사양(파일 리퍼런스): https://docs.docker.com/compose/compose-file/
-- Compose CLI: https://docs.docker.com/compose/
-- YAML 문법: https://yaml.org/spec/
+1. **의미 있는 네트워크 분리**: 프론트엔드, 백엔드, 데이터베이스를 별도의 네트워크로 분리하세요.
+2. **비밀 정보 관리**: 환경 변수 대신 Docker Secrets를 사용하세요.
+3. **헬스 체크 구현**: 모든 서비스에 적절한 헬스 체크를 추가하세요.
+4. **리소스 제한 설정**: 메모리와 CPU 사용량을 제한하여 호스트 시스템을 보호하세요.
+5. **볼륨 전략**: 개발 환경에서는 바인드 마운트, 프로덕션 환경에서는 명명된 볼륨을 사용하세요.
+6. **로그 관리**: JSON 파일 드라이버를 사용하여 로그 회전을 설정하세요.
+7. **보안 강화**: 비루트 사용자로 실행하고, 불필요한 권한을 제거하세요.
+8. **의존성 관리**: `depends_on`에 `condition: service_healthy`를 사용하세요.
+9. **구성 검증**: 배포 전 `docker compose config`로 구성 파일을 검증하세요.
+10. **환경 분리**: 프로파일이나 오버레이 파일을 사용하여 환경별 구성을 관리하세요.
+
+---
+
+## 결론
+
+Docker Compose는 다중 컨테이너 애플리케이션을 효과적으로 관리하기 위한 강력한 도구입니다. 올바르게 사용하면 개발, 테스트, 프로덕션 환경을 일관되게 유지하면서도 각 환경의 특수한 요구사항을 충족할 수 있습니다.
+
+가장 중요한 것은 Compose 파일을 단순한 설정 파일이 아니라 애플리케이션 인프라의 코드화된 표현으로 여기는 것입니다. 버전 관리 시스템에 Compose 파일을 포함시키고, 코드 리뷰 과정에서 인프라 구성도 함께 검토하는 습관을 들이세요.
+
+초기에는 간단한 구성으로 시작하여 점진적으로 고급 기능을 추가하는 것이 좋습니다. 각 옵션이 왜 필요한지 이해하고, 팀의 워크플로우와 운영 요구사항에 맞게 조정하세요. 잘 구성된 Compose 파일은 애플리케이션의 신뢰성, 보안성, 유지보수성을 크게 향상시킬 수 있습니다.
+
+마지막으로, Docker Compose는 지속적으로 발전하는 도구입니다. 새로운 기능과 모범 사례를 계속 학습하고, 자신의 프로젝트에 적용해 보는 것이 중요합니다.

@@ -6,7 +6,7 @@ category: Kubernetes
 ---
 # Pod 상태 및 이벤트 모니터링: `kubectl describe` 완전 정리
 
-애플리케이션을 배포했는데 다음과 같은 문제가 생길 때가 많다.
+애플리케이션을 배포했을 때 자주 마주치는 문제들이 있습니다.
 
 - Pod가 **Pending** 상태에서 멈춤
 - **CrashLoopBackOff**로 반복 재시작
@@ -14,7 +14,7 @@ category: Kubernetes
 - PVC 바인딩/마운트 실패
 - Service로 연결이 안 됨
 
-단순 로그(`kubectl logs`)만으로는 부족하다. 이때 가장 먼저 쓰는 도구가 **`kubectl describe`**다. 특정 리소스(특히 Pod)의 **현재 스냅샷 상태와 이벤트 타임라인**을 한눈에 보여 주기 때문이다.
+단순 로그(`kubectl logs`)만으로는 원인 파악에 한계가 있습니다. 이때 가장 먼저 사용하는 도구가 **`kubectl describe`**입니다. 특정 리소스(특히 Pod)의 **현재 상태 스냅샷과 이벤트 타임라인**을 한눈에 보여주기 때문입니다.
 
 ---
 
@@ -24,12 +24,11 @@ category: Kubernetes
 
 ```bash
 kubectl describe pod <pod-name>
-# 예
-
+# 예시
 kubectl describe pod myapp-79c6dbcf7c-sntbz
 ```
 
-### 출력 구조 훑어보기
+### 출력 구조 이해하기
 
 ```
 Name:           myapp-79c6dbcf7c-sntbz
@@ -89,23 +88,23 @@ Events:
   Normal   Started             59s   kubelet            Started container myapp
 ```
 
-### 핵심 필드 표
+### 핵심 필드 요약
 
 | 구역 | 확인 포인트 |
 |---|---|
-| `Status` | Pod 전반 상태(Pending/Running/Succeeded/Failed/Unknown) |
-| `Node` | 스케줄된 노드. **스케줄 실패/노드 문제**를 유추 |
-| `Containers[].State` | `Running/Waiting/Terminated`, `Reason`, `ExitCode`, `Signal` |
-| `Restart Count` | 반복 재시작 감지(CrashLoopBackOff와 세트) |
-| `Conditions` | `Ready/PodScheduled/ContainersReady/Initialized` 전이 시간 |
+| `Status` | Pod의 전반 상태(Pending/Running/Succeeded/Failed/Unknown) |
+| `Node` | 스케줄된 노드. **스케줄 실패나 노드 문제**를 유추하는 단서 |
+| `Containers[].State` | 컨테이너 상태(`Running`/`Waiting`/`Terminated`)와 `Reason`, `ExitCode`, `Signal` |
+| `Restart Count` | 컨테이너 재시작 횟수(CrashLoopBackOff와 함께 확인) |
+| `Conditions` | `Ready`, `PodScheduled`, `ContainersReady`, `Initialized`의 전이 시간과 상태 |
 | `Volumes` | PVC 바인딩/마운트 대상 확인 |
-| `Events` | 스케줄링→이미지 Pull→컨테이너 시작/종료→프로브 실패 등 **원인 타임라인** |
+| `Events` | 스케줄링, 이미지 Pull, 컨테이너 시작/종료, 프로브 실패 등 **원인을 추적하는 타임라인** |
 
 ---
 
-## 상황별 진단 절차(레시피)
+## 상황별 진단 절차
 
-아래 절차는 **describe → 보조 명령** 순으로 빠르게 원인을 좁힌다.
+아래 절차는 `describe` 명령으로 현상을 파악한 후 보조 명령으로 원인을 구체화하는 방식으로 진행합니다.
 
 ### Pod이 Pending 상태로 멈춤
 
@@ -113,39 +112,36 @@ Events:
 kubectl describe pod myapp
 ```
 
-**확인 항목**
+**주요 확인 사항**
 
-- Events의 `FailedScheduling`:
+- Events 항목에 `FailedScheduling`이 있는지 확인합니다.
   - `0/3 nodes are available: 3 Insufficient cpu.` → **리소스 부족**
-  - `node(s) had taints ...` → **Taint/Toleration 미매칭**
+  - `node(s) had taints ...` → **Taint/Toleration이 매칭되지 않음**
   - `node(s) didn't match node selector` → **NodeSelector/NodeAffinity 불일치**
-  - `persistentvolumeclaim "my-pvc" not found` → **PVC 부재**
-  - `persistentvolumeclaim "my-pvc" is not bound` → **PVC 미바인딩**
+  - `persistentvolumeclaim "my-pvc" not found` → **PVC가 존재하지 않음**
+  - `persistentvolumeclaim "my-pvc" is not bound` → **PVC가 바인딩되지 않음**
 
-**보조 명령**
+**추가 진단 명령어**
 
 ```bash
-# 스케줄링 이벤트를 시간순으로
-
+# 시간 순으로 스케줄링 이벤트 확인
 kubectl get events --sort-by=.lastTimestamp
 
-# 노드 리소스/테인트 점검
-
+# 노드 리소스와 테인트 점검
 kubectl describe node <node-name>
 kubectl get node <node-name> -o jsonpath='{.spec.taints}'
 
-# PVC 상태
-
+# PVC 상태 확인
 kubectl describe pvc my-pvc
 kubectl get pvc my-pvc -o yaml
 ```
 
-**해결 가이드**
+**해결 방안**
 
-- **리소스 부족**: Deployment의 requests/limits 조정, 노드 증설, HPA/스케일아웃.
-- **Taints**: 워크로드에 tolerations 추가.
-- **Affinity/Selector**: 라벨과 선택자 일치 여부 재검토.
-- **PVC**: StorageClass/AccessMode/용량 일치 확인, PV 존재/동적 프로비저닝 점검.
+- **리소스 부족**: Pod의 `requests`/`limits` 조정, 클러스터 노드 증설, HPA 설정, 스케일아웃.
+- **Taints/Tolerations**: Pod의 `tolerations`에 해당 테인트를 추가.
+- **Affinity/Selector**: Pod과 Node의 라벨 및 선택자 일치 여부 재확인.
+- **PVC 문제**: `StorageClass`, `accessModes`, 용량이 PV와 일치하는지 확인, 동적 프로비저닝 상태 점검.
 
 ---
 
@@ -155,37 +151,36 @@ kubectl get pvc my-pvc -o yaml
 kubectl describe pod <pod>
 ```
 
-**확인 항목**
+**주요 확인 사항**
 
-- `Containers[].State: Waiting (Reason: CrashLoopBackOff)`
-- `Last State: Terminated (ExitCode: <code>, Reason: OOMKilled | Error | Signal)`
-- Events: `Back-off restarting failed container`
+- `Containers[].State: Waiting (Reason: CrashLoopBackOff)` 확인
+- `Last State: Terminated (ExitCode: <code>, Reason: OOMKilled | Error | Signal)` 확인
+- Events에 `Back-off restarting failed container` 메시지 확인
 
-**보조 명령**
+**추가 진단 명령어**
 
 ```bash
-# 이전 컨테이너 인스턴스의 로그(크래시 직전)
-
+# 이전 컨테이너 인스턴스의 로그(크래시 직전 상황)
 kubectl logs <pod> -c <container> --previous
-# 현재 인스턴스
 
+# 현재 실행 중인(또는 재시도 중인) 인스턴스 로그
 kubectl logs <pod> -c <container>
 ```
 
-**원인별 팁**
+**원인별 진단 팁**
 
-- **ExitCode≠0**: 시작 스크립트/엔트리포인트/환경변수/DB 연결 오류.
-- **OOMKilled**: 메모리 제한 상향, GC 튜닝, 캐시 축소, 리퀘스트/리밋 균형 조정.
-- **Signal (e.g., SIGSEGV/SIGKILL)**: 네이티브 크래시/커널 OOM 시그널, cgroup 제한.
+- **ExitCode가 0이 아닌 경우**: 애플리케이션 시작 스크립트, 엔트리포인트, 환경변수, 외부 서비스(예: DB) 연결 오류를 의심.
+- **OOMKilled**: 컨테이너 메모리 제한(`limit`) 상향, 애플리케이션 메모리 사용량(Garbage Collection 튜닝, 캐시 크기 조정) 최적화, `request`와 `limit`의 균형 재조정.
+- **Signal (예: SIGSEGV, SIGKILL)**: 네이티브 라이브러리/코드 오류, 커널 레벨의 OOM killer에 의한 종료, cgroup 제한 초과를 확인.
 
-**참고: 백오프 계산(개념)**
-Backoff 지수 증가를 단순화하면,
+**참고: 백오프 지연 계산**
+Kubernetes는 컨테이너 재시작 실패 시 지수 백오프를 적용합니다. 간단히 표현하면 다음 공식과 같이 지연 시간이 증가하다가 일정 상한에 도달합니다.
 
-$$
-\text{next\_delay} = \min(\text{base} \times 2^{\text{retries}}, \text{cap})
-$$
+```
+next_delay = min(base_delay * 2^(retry_count), max_cap)
+```
 
-일정 횟수 후 cap(예: 5분)까지 증가한다. 크래시 반복 시 **초기 지연을 기다려야** 다시 시작 시도가 된다.
+초기 지연(예: 10초)부터 시작해 최대 지연(예: 5분)까지 증가합니다. CrashLoopBackOff 상태에서는 이 지연 시간을 기다린 후 다시 시작을 시도합니다.
 
 ---
 
@@ -197,25 +192,26 @@ kubectl describe pod <pod>
 
 **Events 예시**
 
-- `Failed to pull image "myorg/myapp:v1": image not found` → 태그/리포지토리 오타
-- `pull access denied` → 프라이빗 레지스트리 인증 실패(ImagePullSecret 필요)
-- `x509: certificate signed by unknown authority` → 사설 CA/인증서 체인 문제
+- `Failed to pull image "myorg/myapp:v1": image not found` → 태그 오타 또는 리포지토리 경로 오류
+- `pull access denied` → 프라이빗 레지스트리 인증 실패(`ImagePullSecret` 필요)
+- `x509: certificate signed by unknown authority` → 사설 CA 또는 인증서 체인 문제
 
-**해결 가이드**
+**해결 방안**
 
-- 이미지 주소/태그 정확도 재확인.
-- Secret 생성 및 ServiceAccount 연결:
+- 이미지 주소와 태그의 철자를 정확히 확인.
+- 프라이빗 레지스트리용 Secret 생성 및 Pod/ServiceAccount에 연결:
 
 ```bash
 kubectl create secret docker-registry regcred \
-  --docker-server=<REGISTRY> --docker-username=<USER> \
-  --docker-password=<PASS> --docker-email=<EMAIL>
+  --docker-server=<REGISTRY> \
+  --docker-username=<USER> \
+  --docker-password=<PASS> \
+  --docker-email=<EMAIL>
 
-# ServiceAccount에 imagePullSecrets 연결 후 Pod/Deployment에 사용
-
+# 생성된 Secret을 Pod의 spec.imagePullSecrets 또는 ServiceAccount에 추가
 ```
 
-- 프록시/사설 CA 환경은 노드 레벨 신뢰체계/CRI 설정을 점검.
+- 프록시 또는 사설 인증서 환경인 경우, 노드의 도커/컨테이너 런타임 신뢰 체계 설정을 점검.
 
 ---
 
@@ -229,22 +225,23 @@ kubectl describe pod <pod>
 
 - `Readiness probe failed: HTTP probe failed with statuscode: 500`
 - `Liveness probe failed: dial tcp ... i/o timeout`
-- `Startup probe failed` (초기화 오래 걸리는 앱)
+- `Startup probe failed` (초기화 시간이 긴 애플리케이션에서 발생)
 
-**보조 명령**
+**추가 진단 명령어**
 
 ```bash
+# Pod의 애플리케이션 포트에 직접 접근하여 응답 확인
 kubectl port-forward pod/<pod> 8080:8080
 curl -i http://localhost:8080/ready
 curl -i http://localhost:8080/health
 ```
 
-**해결 가이드**
+**해결 방안**
 
-- `initialDelaySeconds`, `timeoutSeconds`, `periodSeconds`, `failureThreshold` 재조정.
-- 서버 기동 시간 길면 **Startup Probe** 추가로 Liveness 지연.
-- 프로브 경로가 인증/리디렉트/캐시 없이 200 OK를 반환하도록 구현.
-- TCP/exec 프로브 선택을 상황에 맞게 적용.
+- 프로브 설정(`initialDelaySeconds`, `timeoutSeconds`, `periodSeconds`, `failureThreshold`)을 애플리케이션 특성에 맞게 재조정.
+- 서버 기동 시간이 매우 길다면 **Startup Probe**를 추가하여 Liveness Probe의 시작을 지연시킴.
+- 프로브 경로(`path`)가 인증, 리디렉트, 캐시 없이 정상 상태(예: 200 OK)를 반환하도록 구현.
+- HTTP 대신 `tcpSocket` 또는 `exec` 프로브를 상황에 맞게 선택.
 
 ---
 
@@ -253,21 +250,22 @@ curl -i http://localhost:8080/health
 ```bash
 kubectl describe pod <pod>
 kubectl describe pvc <pvc>
-kubectl describe pv  <pv>   # 바인딩된 PV가 있다면
+# 바인딩된 PV가 있다면
+kubectl describe pv  <pv>
 ```
 
-**자주 보는 메세지**
+**자주 보이는 에러 메시지**
 
 - `persistentvolumeclaim "my-data" not found`
 - `persistentvolumeclaim "my-data" is not bound`
 - `MountVolume.SetUp failed for volume "my-pvc": rpc error: ...`
-- `Multi-Attach error for volume` (RWO를 여러 노드에서 동시에 마운트 시도)
+- `Multi-Attach error for volume` (RWO 볼륨을 여러 노드의 Pod에서 동시에 마운트하려 할 때)
 
-**체크리스트**
+**진단 포인트**
 
-- PVC의 `storageClassName` / `accessModes` / `requests.storage` 가 StorageClass/PV와 매칭되는가.
-- ReadWriteOnce(RWO) 볼륨을 여러 Pod가 서로 다른 노드에서 쓰지 않는가.
-- CSI 드라이버 로그(node-plugin/controller-plugin) 확인.
+- PVC의 `storageClassName`, `accessModes`, `requests.storage`가 클러스터의 StorageClass 또는 기존 PV와 정확히 매칭되는지 확인.
+- `ReadWriteOnce(RWO)` 볼륨을 서로 다른 노드에 스케줄된 여러 Pod가 동시에 사용하려 하지 않는지 확인.
+- CSI 드라이버의 로그(`node-plugin`, `controller-plugin`)를 확인하여 드라이버 자체 오류 여부 파악.
 
 ---
 
@@ -278,56 +276,54 @@ kubectl describe pod <client-pod>
 kubectl describe svc <backend-svc>
 ```
 
-**확인 항목**
+**주요 확인 사항**
 
-- Service `selector` 라벨이 Pod 라벨과 일치하는가.
-- `kubectl get endpoints <svc>` 에 엔드포인트가 채워지는가.
-- Pod `readiness`가 false면 엔드포인트에서 제외된다.
+- Service의 `selector` 라벨이 실제 백엔드 Pod의 라벨과 정확히 일치하는지 확인.
+- `kubectl get endpoints <svc>` 명령으로 해당 Service의 엔드포인트 목록이 채워져 있는지 확인. (Pod의 `readiness`가 `false`면 엔드포인트에서 제외됨)
 
-**보조 명령**
+**추가 진단 명령어**
 
 ```bash
+# Pod 내부에서 서비스 이름으로 DNS 조회 테스트
 kubectl exec -it <client-pod> -- sh -c 'nslookup my-svc.default.svc.cluster.local'
+
+# 서비스 엔드포인트 상세 확인
 kubectl get ep my-svc -o wide
 ```
 
 ---
 
-## describe를 더 잘 쓰는 실전 패턴
+## 실전 활용 패턴
 
-### 네임스페이스/라벨로 대상을 좁혀 가장 최신 Pod 확인
+### 네임스페이스와 라벨로 특정 Pod를 빠르게 찾아 Describe
 
 ```bash
-# 가장 최근 생성된 Pod 1개 describe
-
+# 특정 라벨을 가진 Pod 중 가장 최근 생성된 1개를 Describe
 kubectl get pods -n prod -l app=myapp --sort-by=.metadata.creationTimestamp \
   | tail -n 1 \
   | awk '{print $1}' \
   | xargs -I{} kubectl describe pod {} -n prod
 ```
 
-### Events만 빠르게 추출
+### Events 섹션만 빠르게 확인
 
 ```bash
 kubectl describe pod <pod> | sed -n '/^Events:/,$p'
-# 또는
-
-kubectl get events --sort-by=.lastTimestamp | tail -n 50
+# 또는 모든 네임스페이스의 최근 이벤트 확인
+kubectl get events --all-namespaces --sort-by=.lastTimestamp | tail -n 50
 ```
 
-### JSONPath / wide 보기
+### JSONPath를 이용한 특정 정보 추출
 
 ```bash
-# 컨테이너 상태와 재시작 횟수
-
+# 모든 컨테이너의 이름, 상태, 재시작 횟수 출력
 kubectl get pod <pod> -o jsonpath='{range .status.containerStatuses[*]}{.name}{" "}{.state}{" restarts="}{.restartCount}{"\n"}{end}'
 
-# Pod → Node 매핑
-
+# Pod와 그 Pod가 할당된 Node 매핑 확인 (wide 출력)
 kubectl get pod -o wide
 ```
 
-### RBAC로 describe 권한 열기(읽기 전용)
+### RBAC을 통한 읽기 전용 Describe 권한 부여
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -341,66 +337,54 @@ rules:
 - apiGroups: ["apps"]
   resources: ["deployments","replicasets","statefulsets","daemonsets"]
   verbs: ["get","list","watch"]
-- apiGroups: [""]
-  resources: ["events"]
-  verbs: ["watch","list"]
 ```
 
 ---
 
-## 문제 유형별 “원인 → 증상 → 확인 → 해결” 표
+## 문제 유형별 진단 요약표
 
-| 유형 | 대표 증상(`describe`/Events) | 확인 포인트 | 해결 |
+| 문제 유형 | 대표 증상(`describe`/Events) | 주요 확인 포인트 | 해결 방향 |
 |---|---|---|---|
-| 스케줄 실패 | `FailedScheduling` | 노드 리소스, 테인트, 어피니티 | 리소스/라벨/어피니티 조정, 노드 증설 |
-| 이미지 풀 실패 | `ErrImagePull`, `ImagePullBackOff` | 이미지 주소/태그/인증 | ImagePullSecret, 주소 교정, CA/프록시 |
-| 크래시 루프 | `CrashLoopBackOff` / `Back-off restarting` | `ExitCode`, 이전 로그 | 코드/ENV/포트 충돌 수정, 메모리/리밋 조정 |
-| 프로브 실패 | `Readiness/Liveness/Startup probe failed` | 엔드포인트 응답/지연 | 프로브 파라미터 수정, Startup Probe 도입 |
-| PVC 바인딩 | `is not bound` | PVC/PV/SC 매칭 | StorageClass/용량/AccessMode 정합 |
-| 볼륨 마운트 | `MountVolume.SetUp failed` | CSI 로그/권한 | 드라이버/권한/경로 재확인 |
-| 엔드포인트 없음 | Service 엔드포인트 비어 있음 | selector/라벨/Ready | selector 정합, Readiness 성공 유도 |
-| OOM | `Terminated: OOMKilled` | 메모리 사용량/리밋 | 리밋 상향, 메모리 최적화 |
+| 스케줄 실패 | `FailedScheduling` | 노드 리소스, 테인트, 어피니티/셀렉터 | 리소스/라벨/어피니티 조정, 노드 증설 |
+| 이미지 풀 실패 | `ErrImagePull`, `ImagePullBackOff` | 이미지 주소, 태그, 레지스트리 인증 | ImagePullSecret 생성, 이미지 주소 정정, CA/프록시 설정 |
+| 크래시 루프 | `CrashLoopBackOff`, `Back-off restarting` | `ExitCode`, `Signal`, `--previous` 로그 | 애플리케이션 코드/환경 오류 수정, 메모리 제한 조정 |
+| 프로브 실패 | `Readiness/Liveness/Startup probe failed` | 프로브 엔드포인트 응답, 네트워크 지연 | 프로브 파라미터 수정, Startup Probe 도입 |
+| PVC 바인딩 실패 | `is not bound` | PVC/PV/StorageClass 매칭 상태 | StorageClass, 용량, AccessMode 정합성 확인 |
+| 볼륨 마운트 실패 | `MountVolume.SetUp failed` | CSI 드라이버 로그, 권한 | 드라이버 설치/권한/마운트 경로 점검 |
+| 서비스 연결 불가 | Service 엔드포인트가 비어 있음 | Service Selector, Pod 라벨 및 Readiness 상태 | Selector 정합성 확인, Pod가 Ready 상태가 되도록 유도 |
+| OOM 종료 | `Terminated: OOMKilled` | 컨테이너 메모리 사용량 및 `limits` | 메모리 `limit` 상향, 애플리케이션 메모리 최적화 |
 
 ---
 
-## `kubectl describe`와 함께 쓰는 필수 명령 세트
+## `kubectl describe`와 함께 쓰는 보조 명령어 세트
 
 ```bash
-# 리소스 스냅샷
-
+# 클러스터 리소스 현황 스냅샷
 kubectl get pods -o wide
 kubectl top pods
 kubectl top nodes
 
-# 이벤트 타임라인
+# 이벤트 타임라인 정렬 확인
+kubectl get events --all-namespaces --sort-by=.lastTimestamp
 
-kubectl get events --sort-by=.lastTimestamp
-
-# 엔드포인트/서비스
-
+# 서비스 및 엔드포인트 상세 정보
 kubectl get svc <name> -o yaml
 kubectl get ep  <name> -o wide
 
-# 스케줄러 관점에서 보기(스케줄 실패시)
-
-kubectl get pod <pod> -o yaml | sed -n '/schedulerName/p;/tolerations:/,/^$/{p}'
-
-# 노드 상태/테인트
-
+# 노드 상태 및 테인트 정보
 kubectl describe node <node>
 kubectl get node <node> -o jsonpath='{.spec.taints}'
 
-# 스토리지
-
+# 스토리지 리소스 상태
 kubectl get pvc,pv -o wide
 kubectl describe pvc <name>
 ```
 
 ---
 
-## 재현용 샘플 — 일부러 실패나 경보를 만들어 보자
+## 재현용 샘플 매니페스트
 
-### 이미지 오타로 ImagePullBackOff 유발
+### 이미지 태그 오류로 인한 ImagePullBackOff 유발
 
 ```yaml
 apiVersion: apps/v1
@@ -426,7 +410,7 @@ kubectl apply -f bad-image.yaml
 kubectl describe pod -l app=bad-image
 ```
 
-### Readiness 실패 유발(잘못된 경로)
+### 잘못된 경로로 인한 Readiness Probe 실패 유발
 
 ```yaml
 apiVersion: v1
@@ -439,7 +423,7 @@ spec:
     image: nginx:1.25
     ports: [{containerPort: 80}]
     readinessProbe:
-      httpGet: { path: /readyz, port: 80 }   # nginx는 404
+      httpGet: { path: /readyz, port: 80 }   # Nginx 기본 설정에는 없는 경로
       initialDelaySeconds: 3
       periodSeconds: 5
 ```
@@ -447,10 +431,11 @@ spec:
 ```bash
 kubectl apply -f bad-ready.yaml
 kubectl describe pod bad-ready
-kubectl get endpoints # 서비스에 연결 안 됨 확인에 활용
+# 엔드포인트가 비어있는지 확인
+kubectl get endpoints
 ```
 
-### PVC 미바인딩 유발(없는 StorageClass)
+### 존재하지 않는 StorageClass를 지정한 PVC 바인딩 실패 유발
 
 ```yaml
 apiVersion: v1
@@ -472,34 +457,35 @@ kubectl describe pvc pvc-missing-sc
 
 ---
 
-## 추가 고급 주제
+## 고급 주제
 
-### Init Containers와 스타트업 경로
+### Init Containers와 애플리케이션 시작
 
-`Init Containers`가 실패하면 애플리케이션 컨테이너는 시작되지 않는다. `describe`에서 **Init 컨테이너의 State/ExitCode**를 확인한다.
+`Init Containers`가 실패하면 메인 애플리케이션 컨테이너는 시작되지 않습니다. `describe` 출력의 **Init Containers** 섹션에서 State와 ExitCode를 확인해야 합니다.
 
-### SecurityContext/권한 문제
+### SecurityContext 및 권한 문제
 
-`permission denied`, `read-only file system` 류는 보통 다음을 확인:
+`permission denied`, `read-only file system` 오류는 다음과 같은 점을 확인하세요.
 
-- `securityContext.runAsUser`, `runAsGroup`, `fsGroup`
-- 마운트 경로 권한/SELinux/AppArmor
-- rootless 이미지 사용 여부
+- Pod/Container의 `securityContext` (`runAsUser`, `runAsGroup`, `fsGroup`)
+- 볼륨 마운트 경로의 파일 시스템 권한
+- SELinux 또는 AppArmor 프로필
+- rootless 컨테이너 이미지 사용 여부
 
-### 네트워크 정책
+### NetworkPolicy 영향
 
-`NetworkPolicy`로 인해 통신이 차단될 수 있다. `describe`만으로는 직접 보이지 않으므로 네임스페이스의 네트폴을 점검:
+`NetworkPolicy`로 인해 Pod 간 통신이 차단될 수 있습니다. `describe`로는 직접 확인이 어려우므로 관련 네트워크 정책을 점검하세요.
 
 ```bash
 kubectl get networkpolicy -A
-kubectl describe networkpolicy <np> -n <ns>
+kubectl describe networkpolicy <np-name> -n <namespace>
 ```
 
 ---
 
-## 운영 자동화 스니펫 모음
+## 운영 자동화 스니펫
 
-### 최근 10분간 Warning 이벤트
+### 최근 10분간 발생한 Warning 이벤트 모니터링
 
 ```bash
 since="$(date -u -d '-10 min' +%Y-%m-%dT%H:%M:%SZ)"
@@ -508,7 +494,7 @@ kubectl get events --all-namespaces --field-selector type=Warning \
   | tail -n 100
 ```
 
-### 특정 네임스페이스에서 CrashLoopBackOff Pod 나열
+### 특정 네임스페이스에서 CrashLoopBackOff 상태인 Pod 찾기
 
 ```bash
 kubectl get pods -n prod \
@@ -517,7 +503,7 @@ kubectl get pods -n prod \
 | awk '/CrashLoopBackOff/'
 ```
 
-### describe + logs 원샷(가장 최근 Pod)
+### Describe와 Logs를 한 번에 확인 (가장 최근 Pod 대상)
 
 ```bash
 ns=default; app=myapp
@@ -528,14 +514,8 @@ kubectl logs "$pod" -n "$ns" --all-containers --tail=200
 
 ---
 
-## 요약 결론
+## 결론
 
-- `kubectl describe`는 **현재 상태와 이벤트 타임라인을 한 화면**에 제공한다.
-- **Pending**은 스케줄링/리소스/PVC/어피니티/테인트를 먼저 의심한다.
-- **CrashLoopBackOff**는 `ExitCode/Signal`과 `--previous` 로그로 원인을 특정한다.
-- **ImagePullBackOff**는 이미지 주소/인증/CA/프록시를 확인한다.
-- **Readiness/Liveness/Startup** 실패는 프로브 파라미터/엔드포인트/기동 시간을 조정한다.
-- **PVC/PV** 이슈는 StorageClass/AccessMode/용량/CSI 드라이버를 점검한다.
-- describe와 함께 `get events / get endpoints / describe node / logs`를 병행하여 **빠르게 가설을 세우고 검증**하라.
+`kubectl describe`는 Kubernetes 리소스, 특히 Pod의 상태를 진단하는 데 있어 가장 강력하고 근본적인 도구입니다. 단순한 로그 확인을 넘어 **리소스의 현재 상태 스냅샷과 시간 순으로 정리된 이벤트 히스토리를 한눈에 제공**함으로써 문제의 근본 원인을 체계적으로 추적할 수 있게 합니다.
 
-이 문서의 절차/스니펫을 그대로 적용하면, 대부분의 초기 장애는 **분 단위로 원인**을 좁힐 수 있다.
+주요 장애 시나리오별로 `describe`의 출력에서 집중해야 할 포인트를 숙지하고, 필요에 따라 `kubectl logs`, `kubectl get events`, `kubectl get endpoints` 등의 보조 명령어와 연계하여 사용한다면, 복잡해 보이는 클러스터 장애도 신속하게 해결의 실마리를 찾을 수 있을 것입니다. 이 문서의 절차와 패턴을 참고하여 체계적인 문제 해결 습관을 기르시기 바랍니다.
