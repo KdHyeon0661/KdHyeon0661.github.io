@@ -393,6 +393,7 @@ RUN apt-get update \
 
 ### 이미지 크기 분석
 
+{% raw %}
 ```bash
 # 이미지 크기 비교
 docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep myapp
@@ -406,6 +407,7 @@ docker run --rm -it myapp:latest du -sh /* 2>/dev/null | sort -hr
 # 두 이미지 비교
 container-diff diff daemon://myapp:slim daemon://myapp:alpine --type=size --type=file
 ```
+{% endraw %}
 
 ### 런타임 검증
 

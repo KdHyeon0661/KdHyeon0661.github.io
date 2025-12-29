@@ -4,381 +4,264 @@ title: Git - GitHub 웹에서 PR 충돌 해결
 date: 2025-02-06 19:20:23 +0900
 category: Git
 ---
-# 충돌 해결**
+# Git 충돌 해결 가이드
 
-## 기본 개념 정리(복습)
+## 충돌이란 무엇인가?
 
-- **PR 충돌(merge conflict)**: PR의 **base(기준)** 브랜치와 **compare(비교)** 브랜치가 **같은 파일의 같은/겹치는 영역**을 서로 다르게 수정한 경우 자동 병합이 불가능한 상태.
-- GitHub는 PR 상단에 다음과 같은 경고를 표시합니다:
+Git에서 충돌은 두 개 이상의 브랜치가 동일한 파일의 동일한 부분을 서로 다르게 수정했을 때 발생합니다. 이 경우 Git은 어떤 변경사항을 선택해야 할지 판단할 수 없으므로, 사용자가 직접 해결해야 합니다.
 
+GitHub에서 Pull Request를 생성할 때 충돌이 있으면 다음과 같은 메시지를 볼 수 있습니다:
 ```
 This branch has conflicts that must be resolved
 ```
 
-- 이때 **Merge pull request** 버튼이 비활성화되며, **Resolve conflicts** 버튼 또는 **Update branch** 버튼(설정/권한/정책에 따라 다름)이 노출될 수 있습니다.
+이 상태에서는 자동 병합이 불가능하며, 사용자가 충돌을 해결해야만 PR을 병합할 수 있습니다.
 
 ---
 
-## 권한과 정책(중요)
+## GitHub 웹사이트에서 충돌 해결하기
 
-웹에서 충돌을 해결하려면 다음 중 하나가 필요합니다.
+GitHub의 웹 인터페이스를 사용하면 간단한 충돌을 쉽게 해결할 수 있습니다.
 
-1. **PR 브랜치에 쓰기 권한**
-   - 같은 저장소 내 브랜치인 경우: 보통 **Write** 권한이 있으면 웹에서 **Resolve conflicts** 가능.
-   - **fork에서 온 PR**: PR 창 우측 사이드바의 **Allow edits by maintainers** 체크가 활성화되어 있어야, 저장소 유지보수자(Maintainer)가 웹에서 해당 브랜치를 편집 가능.
+### 단계별 해결 과정
 
-2. **보호 브랜치 규칙(Protect Branch Rules)**
-   - base 브랜치가 보호되는 경우(예: `main`):
-     - Required reviews, Required status checks, Linear history(rules), Force-push 금지 등으로 인해 **웹에서 바로 병합/수정이 제한**될 수 있음.
-     - 이때는 **로컬에서 충돌 해결 → 푸시 → 상태체크 통과 → PR 병합** 순서로 진행하거나, 정책에 맞춰 **Update branch**(merge commit) 또는 **rebase and merge** 전략을 택해야 함.
+1. **PR 페이지 접속**: 충돌이 발생한 Pull Request 페이지로 이동합니다.
 
-3. **필요 권한이 없다면**
-   - 본인이 PR 작성자라면 **Allow edits by maintainers** 체크.
-   - 아니면 **로컬에서 자신의 fork 브랜치**를 고쳐 다시 푸시(권한 = 자기 fork 에 대한 push).
+2. **충돌 확인**: 상단에 "This branch has conflicts that must be resolved" 메시지가 표시됩니다. **Resolve conflicts** 버튼을 클릭합니다.
 
----
+3. **충돌 파일 편집**:
+   충돌이 발생한 파일은 다음과 같은 마커로 표시됩니다:
+   ```html
+   <<<<<<< HEAD
+   <!-- 메인 브랜치의 내용 -->
+   =======
+   <!-- PR 브랜치의 내용 -->
+   >>>>>>> feature/header-update
+   ```
 
-## GitHub 웹에서 충돌 해결 — 단계별 절차(확장)
+4. **수동으로 해결**:
+   원하는 코드로 수정하고 모든 충돌 마커(`<<<<<<<`, `=======`, `>>>>>>>`)를 삭제합니다.
 
-### Step 1. PR 페이지 접속
+   예시:
+   ```html
+   <!-- 수정 전 -->
+   <<<<<<< HEAD
+   <h1>Welcome to Home Page</h1>
+   =======
+   <h1>Welcome to Our Service</h1>
+   >>>>>>> feature/header-update
+   
+   <!-- 수정 후 -->
+   <h1>Welcome to Our Home Page</h1>
+   ```
 
-- 저장소 → **Pull requests** 탭 → 충돌 표시된 PR 클릭.
+5. **변경사항 저장**:
+   - **Mark as resolved** 버튼을 클릭합니다.
+   - 커밋 메시지를 확인하고 **Commit merge** 버튼을 클릭합니다.
 
-### Step 2. 충돌 메시지 확인
+6. **병합 완료**:
+   충돌이 해결되면 PR을 병합할 수 있는 상태가 됩니다.
 
-- 상단 배너: `This branch has conflicts that must be resolved`
-- 폴더별/파일별 충돌 목록 확인
-- 버튼:
-  - **Resolve conflicts**: 웹 에디터를 열어 라인 충돌 해결.
-  - **Update branch**: GitHub가 base를 compare에 **자동 merge commit**으로 가져와 업데이트(설정/권한/정책에 따라 표시·비표시).
-
-### Step 3. 충돌 파일 웹 편집기로 열기
-
-- **Resolve conflicts** 클릭 → GitHub 가 충돌난 파일을 “마커” 포함 상태로 엽니다.
-- 충돌 마커 구문:
-
-```text
-<<<<<<< HEAD
-# base(현재 기준)의 내용
-
-=======
-# compare(PR 브랜치)의 내용
-
->>>>>>> feature/header-update
-```
-
-HTML 예시:
-
-```html
-<<<<<<< HEAD
-<h1>Welcome to Home Page</h1>
-=======
-<h1>Welcome to Our Service</h1>
->>>>>>> feature/header-update
-```
-
-### Step 4. 수동 통합(마커 제거 필수)
-
-- 원하는 최종 결과로 **수정**하고, 모든 충돌 마커(`<<<<<<<`, `=======`, `>>>>>>>`)를 **삭제**해야 합니다.
-- 통합 예시:
-
-```html
-<h1>Welcome to Our Home Page</h1>
-```
-
-### Step 5. 변경 저장·해결 표시
-
-- 페이지 하단 커밋 창에서 메시지를 확인/수정(기본: `Resolve merge conflict`)
-- **Mark as resolved** 클릭
-- **Commit merge** 버튼 클릭
-
-> **주의**: 보호 브랜치 규칙(Required status checks 등)으로 인해 커밋 후에도 **즉시 병합 불가**일 수 있습니다. CI 통과, 리뷰 승인 등 정책을 충족해야 합니다.
-
-### Step 6. Merge 가능 상태 확인
-
-- PR 화면으로 돌아오면 충돌 배너가 사라지고,
-  - `This branch has no conflicts`
-  - **Merge pull request** 버튼 활성화
-- 팀 정책에 맞는 병합 전략(merge commit / squash and merge / rebase and merge)을 선택해 병합합니다.
+### 권한 주의사항
+- PR 브랜치에 쓰기 권한이 있어야 웹에서 충돌을 해결할 수 있습니다.
+- fork에서 온 PR의 경우, **Allow edits by maintainers** 옵션이 활성화되어 있어야 저장소 관리자가 충돌을 해결할 수 있습니다.
 
 ---
 
-## 웹 편집기의 **한계**와 대안
+## 로컬에서 충돌 해결하기
 
-웹으로 바로 해결하기 곤란한 상황:
+복잡한 충돌이나 대량의 충돌 파일이 있는 경우 로컬에서 해결하는 것이 더 효율적입니다.
 
-- **리네임(Rename) + 내용 변경**이 얽힌 복합 충돌
-- **대량 파일** 충돌(스크롤·편집 어려움)
-- **바이너리(이미지/디자인/문서)** 충돌: 라인 병합 불가
-- **서브모듈** 포인터 충돌: 상위 리포에서 포인터 커밋을 업데이트해야 함
-- **보호 브랜치 정책**으로 웹에서 해결/커밋이 차단되는 경우
-
-이때는 **로컬에서 충돌 해결 후 푸시**가 권장됩니다(다음 장 참조).
-
----
-
-## 로컬에서 충돌 해결 후 푸시(대안 절차 강화)
-
-### merge-기반 업데이트(가장 단순)
+### 기본 해결 방법 (Merge 방식)
 
 ```bash
-# 기준 브랜치 업데이트
-
+# 메인 브랜치를 최신 상태로 업데이트
 git checkout main
 git pull origin main
 
-# PR 브랜치로 전환
-
+# 작업 브랜치로 전환
 git checkout feature/header-update
 
-# 기준 브랜치를 merge하여 충돌 확인
-
+# 메인 브랜치를 병합 (충돌 발생)
 git merge main
 
-# 충돌 파일 수정 → 마커 삭제
+# 충돌이 발생한 파일을 편집기로 열어 수정
+# <<<<<<< HEAD ... >>>>>>> main 마커 사이의 내용을 적절히 통합
 
-git add <수정파일들>
-git commit
-
-# PR 브랜치로 푸시
-
-git push
+# 수정 완료 후
+git add 수정한파일.html
+git commit -m "resolve: 헤더 충돌 해결"
+git push origin feature/header-update
 ```
 
-- GitHub PR 화면에서 자동으로 “conflict resolved” 상태가 반영됩니다.
-
-### rebase-기반 업데이트(선형 이력 선호 시)
+### Rebase 방식으로 해결하기 (선형 히스토리 유지)
 
 ```bash
+# 작업 브랜치로 전환
 git checkout feature/header-update
+
+# 메인 브랜치 기준으로 리베이스
 git fetch origin
 git rebase origin/main
-# 충돌 시 파일 수정 → git add → git rebase --continue 반복
 
-git push --force-with-lease
+# 충돌 발생 시 각 커밋별로 해결
+# 충돌 파일 수정 → git add → git rebase --continue
+# 반복...
+
+# 원격 저장소에 푸시 (강제 푸시 필요)
+git push --force-with-lease origin feature/header-update
 ```
 
-- **주의**: rebase는 해시 재작성 → 원격에는 **강제 푸시** 필요.
-- PR이 **fork에서 온 경우**에도 동일. 단, 팀 정책/권한에 따라 rebase가 금지될 수 있음.
+**주의**: 리베이스는 커밋 히스토리를 재작성하므로, 이미 다른 사람이 가져간 브랜치에서는 사용을 피해야 합니다.
 
-### 단축 키
-
-```bash
-# 버전 채택
-
-git checkout --ours   path/to/file
-# 버전 채택
-
-git checkout --theirs path/to/file
-git add path/to/file
-```
-
-### 시각 편집 도구(mergetool)
+### 유용한 도구와 명령어
 
 ```bash
-git config --global merge.tool meld     # 예: meld
+# 충돌 상태 확인
+git status
+
+# 한쪽 버전 선택하기
+git checkout --ours 파일명    # 현재 브랜치 버전 선택
+git checkout --theirs 파일명  # 병합 대상 브랜치 버전 선택
+
+# 시각적 병합 도구 사용
 git mergetool
+
+# 병합 중단하기
+git merge --abort
+git rebase --abort
 ```
 
-### 반복 충돌 자동 학습(rerere)
+---
 
+## 다양한 충돌 유형과 해결 전략
+
+### 1. 일반 텍스트 파일 충돌
+가장 흔한 유형으로, 동일한 파일의 동일한 줄을 수정했을 때 발생합니다.
+**해결**: 수동으로 코드를 통합하고 충돌 마커를 삭제합니다.
+
+### 2. 파일 이름 변경 충돌
+한 브랜치에서는 파일 이름을 변경하고, 다른 브랜치에서는 같은 파일을 수정했을 때 발생합니다.
+**해결**: 최종 파일명을 결정하고 내용을 통합합니다. 로컬에서 해결하는 것이 더 쉽습니다.
+
+### 3. 바이너리 파일 충돌
+이미지, PDF, 컴파일된 파일 등의 충돌은 자동 해결이 불가능합니다.
+**해결**: 한쪽 버전을 선택하거나, 새로운 버전의 파일을 생성합니다.
 ```bash
-git config --global rerere.enabled true
+# 한쪽 버전 선택
+git checkout --ours image.png
+# 또는
+git checkout --theirs image.png
+```
+
+### 4. 삭제-수정 충돌
+한 브랜치에서는 파일을 삭제하고, 다른 브랜치에서는 같은 파일을 수정했을 때 발생합니다.
+**해결**: 파일을 유지할지 삭제할지 결정합니다.
+```bash
+# 파일 유지 (수정된 내용을 채택)
+git checkout --theirs 파일명
+git add 파일명
+
+# 파일 삭제
+git rm 파일명
 ```
 
 ---
 
-## 다양한 충돌 유형 예시와 해결 전략
+## 실전 연습: 로컬에서 충돌 시뮬레이션
 
-### 충돌
-
-- 동일 파일 동일/겹치는 줄 충돌
-- 해결: **라인 단위** 수동 통합 → 마커 삭제 → add → 커밋
-
-### + 수정 충돌
-
-- 한쪽에서 파일명 변경, 다른 쪽에서 같은 파일을 수정
-- 웹에서는 맥락 파악이 힘들 수 있어 **로컬 권장**
-- 전략: 최종 파일명 선택 → 내용 합치기 → **이력 검증**
-
-### 충돌
-
-- 한쪽은 파일 삭제, 다른 쪽은 수정
-- 유지 여부 결정 후 `--ours/--theirs` 또는 수동 복원
-
-### 충돌
-
-- 이미지/모델/디자인 등은 라인 병합 불가
-- 선택지: ours 혹은 theirs로 **전체 파일 단위** 채택 → 팀 재합의
-- `.gitattributes`로 병합/비교 정책 명시:
-  ```
-  *.psd -merge -diff
-  *.png binary
-  ```
-
-### 포인터 충돌
-
-- 상위 리포에서 서브모듈 폴더가 가리키는 커밋 포인터를 **명시적으로 갱신** 후 커밋
-
----
-
-## 조직/팀 설정과 “Update branch”
-
-- **Update branch** 버튼은 GitHub가 **자동으로 base를 compare에 merge**하여 업데이트하는 기능입니다(merge commit 생성).
-- 저장소/조직 정책(Linear history, Required status checks)에 따라:
-  - 버튼이 **노출되지 않거나**,
-  - 클릭 시 특정 정책 위반으로 **거부**될 수 있습니다.
-- 선형 이력 강제(Require linear history) 환경에서는 **merge commit 금지** → 로컬에서 **rebase 후 푸시**가 필요.
-
----
-
-## 완전 재현 가능한 **로컬 시뮬레이션**(학습용)
-
-아래 스크립트는 로컬에서 “PR 충돌” 상황을 **모사**하고, 웹/로컬 해결 과정을 **연습**하기 위한 것입니다(실제 GitHub PR은 gh나 웹으로 생성).
+로컬에서 충돌 상황을 재현해보며 실습할 수 있습니다.
 
 ```bash
-# 깨끗한 디렉터리
-
-rm -rf pr-conflict-lab && mkdir pr-conflict-lab && cd pr-conflict-lab
+# 새로운 디렉토리 생성 및 Git 초기화
+mkdir conflict-practice
+cd conflict-practice
 git init
-git config user.name  "lab"
-git config user.email "lab@example.com"
 git branch -M main
 
-# 초기 파일
+# 초기 파일 생성
+echo "첫 번째 줄" > test.txt
+echo "두 번째 줄" >> test.txt
+git add test.txt
+git commit -m "초기 파일 생성"
 
-mkdir src
-echo '<h1>Welcome to Home Page</h1>' > src/header.html
-echo '<p>© 2025 MyCompany</p>'        > src/footer.html
-git add . && git commit -m "init: header/home, footer/company"
+# 기능 브랜치 생성 및 수정
+git checkout -b feature-branch
+echo "수정된 첫 번째 줄 (기능)" > test.txt
+echo "두 번째 줄" >> test.txt
+git commit -am "기능 브랜치에서 수정"
 
-# feature 브랜치 생성 및 변경
-
-git checkout -b feature/header-update
-echo '<h1>Welcome to Our Service</h1>' > src/header.html
-git commit -am "feat: service heading"
-
-# main에서도 같은 라인을 바꿔 충돌 유발
-
+# 메인 브랜치에서 다른 수정
 git checkout main
-echo '<h1>Welcome to Home Page v2</h1>' > src/header.html
-git commit -am "feat: home v2"
+echo "수정된 첫 번째 줄 (메인)" > test.txt
+echo "두 번째 줄" >> test.txt
+git commit -am "메인 브랜치에서 수정"
 
-# PR을 올렸다고 가정하고(웹에서), 이제 충돌을 해결해야 하는 상황
-#    웹에서 Resolve conflicts(라인 통합)를 할 수도 있고,
-#    로컬에서 아래처럼 해결할 수도 있음.
+# 충돌 발생 (병합 시도)
+git merge feature-branch
 
-# ---
+# 충돌 해결
+# test.txt 파일을 열어 충돌을 수동으로 해결
+# <<<<<<< HEAD ... >>>>>>> feature-branch 사이의 내용 통합
 
-git checkout feature/header-update
-git merge main || true     # 충돌 유발
-git status                 # 충돌 파일 확인
-# src/header.html 열어 수동 통합 후:
-# <h1>Welcome to Our Home Page</h1> 같이 합의한 문구로 수정
-
-git add src/header.html
-git commit -m "resolve: header conflict"
-git log --oneline --graph --decorate --all
-# git push (원격이 있다고 가정)
-
-# --- 또는 rebase 기반 ---
-
-git checkout feature/header-update
-git rebase main || true
-# 파일 수정 → add → rebase --continue
-
-git push --force-with-lease
+# 해결 완료
+git add test.txt
+git commit -m "충돌 해결 완료"
 ```
 
-> 실제 GitHub PR까지 자동화하려면 **GitHub CLI(gh)** 를 사용합니다:
-> ```bash
-> gh repo create <owner>/<repo> --public --source=. --push
-> gh pr create --fill --base main --head feature/header-update
-> ```
-
 ---
 
-## 트러블슈팅
+## 문제 해결 팁
 
-| 증상 | 원인 | 해결 |
-|---|---|---|
-| Resolve conflicts 버튼이 안 보임 | 쓰기 권한 없음 / fork PR에서 maintainer edit 허용 안됨 | PR 사이드바에서 **Allow edits by maintainers** 체크 또는 로컬에서 해결 후 푸시 |
-| Commit merge 클릭 후에도 병합 불가 | 보호 브랜치 정책(리뷰/체크 미통과/선형 이력 강제) | 리뷰 통과/체크 통과 대기, rebase 후 `--force-with-lease`, 정책에 맞는 병합 전략 사용 |
-| Update branch 버튼 없음 | 저장소 설정/정책상 merge 업데이트 비허용 | 로컬에서 merge/rebase 후 푸시 |
-| 대량/복합 충돌로 웹 편집기에서 힘듦 | 리네임/바이너리/서브모듈/수십 파일 충돌 | 로컬에서 mergetool·ours/theirs·rerere 활용 |
-| rebase 후 push 거부 | 해시 재작성으로 원격과 불일치 | `git push --force-with-lease` |
-| 해결했는데도 CI가 실패 | 포맷터/테스트/린트 자동체크 실패 | 로컬에서 빌드/테스트/포맷 확인 후 수정 재푸시 |
+### 자주 발생하는 문제들
 
----
+1. **"Resolve conflicts" 버튼이 보이지 않음**
+   - 원인: PR 브랜치에 대한 쓰기 권한이 없음
+   - 해결: 저장소 관리자에게 권한 요청 또는 로컬에서 해결
 
-## 체크리스트
+2. **충돌 해결 후에도 병합이 안 됨**
+   - 원인: 브랜치 보호 규칙(필수 리뷰, 상태 검사) 미충족
+   - 해결: 필요한 리뷰를 받고 CI 테스트가 통과되도록 함
 
-- [ ] 라인 충돌 해결 후 **마커**(`<<<<<<<`, `=======`, `>>>>>>>`)는 반드시 제거
-- [ ] **보호 브랜치 정책** 확인(필수 리뷰/체크/선형 이력/force-push 금지)
-- [ ] fork PR이면 **Allow edits by maintainers** 사용 여부 확인
-- [ ] 대량/바이너리/리네임 충돌은 **로컬**에서 mergetool·ours/theirs로 해결
-- [ ] rebase 후 푸시는 **`--force-with-lease`** 사용(동료 커밋 보호)
-- [ ] 반복 충돌은 **`rerere.enabled=true`** 로 시간 절약
-- [ ] 병합 직전, CI/테스트/포맷 상태 확인
+3. **복잡한 충돌로 웹 편집이 어려움**
+   - 원인: 여러 파일의 충돌 또는 바이너리 파일 충돌
+   - 해결: 로컬에서 mergetool 등의 도구를 사용
 
----
+4. **리베이스 후 푸시가 거부됨**
+   - 원인: 히스토리 재작성으로 원격과 불일치
+   - 해결: `git push --force-with-lease` 사용
 
-## 로컬 절차 요약(명령어 모음)
+### 생산성 향상을 위한 팁
 
 ```bash
-# 기준 업데이트
-
-git checkout main
-git pull origin main
-
-# PR 브랜치 전환
-
-git checkout feature-branch
-
-# merge 기반
-
-git merge main
-# 충돌 해결 → 파일수정 → 마커 삭제
-
-git add <files>
-git commit
-git push
-
-# rebase 기반(선형 이력)
-
-git fetch origin
-git rebase origin/main
-# 충돌 해결 루틴
-
-git add <files>
-git rebase --continue
-git push --force-with-lease
-
-# 도우미
-
-git status
-git diff --name-status
-git checkout --ours   <path>
-git checkout --theirs <path>
-git mergetool
+# 반복되는 충돌 해결을 자동화
 git config --global rerere.enabled true
+
+# 선호하는 병합 도구 설정
+git config --global merge.tool vscode
+git config --global mergetool.vscode.cmd 'code --wait $MERGED'
+
+# 충돌 해결 도움말 보기
+git help merge
+git help mergetool
 ```
 
 ---
 
-## 결론
+## 마무리
 
-- GitHub **웹 편집기**만으로도 단순 라인 충돌은 빠르게 해결할 수 있지만,
-  **리네임·바이너리·대량 충돌·보호 브랜치 정책**이 얽히면 **로컬에서 해결 후 푸시**가 안정적입니다.
-- 팀 정책(Required reviews, Status checks, Linear history)을 미리 숙지하고, 필요 시 **Update branch** / **rebase** 전략을 적절히 선택하세요.
-- 실수 방지를 위해 `--force-with-lease`, `mergetool`, `rerere`, 체크리스트를 습관화하면 PR 충돌 처리 속도와 안정성이 크게 향상됩니다.
+Git 충돌은 협업 개발에서 피할 수 없는 부분이지만, 올바른 방법으로 접근하면 두려울 필요가 없습니다. 충돌을 효과적으로 관리하려면 다음 원칙을 기억하세요:
 
----
+**핵심 원칙**
 
-## 참고
+1. **작은 단위로 자주 병합하세요**: 큰 변경사항보다 작은 변경사항을 자주 병합하면 충돌 규모와 해결 난이도가 줄어듭니다.
 
-- GitHub 공식: Addressing merge conflicts in a pull request
-  https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/addressing-merge-conflicts/about-merge-conflicts
+2. **팀 규칙을 정하세요**: 어떤 상황에서 merge를 사용하고, 어떤 상황에서 rebase를 사용할지 팀원들과 합의하세요.
 
-- Git(merge) — 충돌 표현
-  https://git-scm.com/docs/git-merge#_how_conflicts_are_presented
+3. **커뮤니케이션이 중요합니다**: 충돌이 발생했을 때 관련 팀원들과 소통하며 해결 방안을 논의하세요.
+
+4. **도구를 활용하세요**: 웹 인터페이스는 간단한 충돌에, 로컬 도구(mergetool)는 복잡한 충돌에 적합합니다.
+
+5. **연습이 완벽을 만듭니다**: 충돌 해결에 익숙해지려면 실제로 경험해보는 것이 가장 좋습니다. 연습용 저장소를 만들어 다양한 충돌 시나리오를 경험해보세요.
+
+충돌은 실수가 아니라, 팀원들이 각자 열심히 작업하고 있다는 증거입니다. 적절한 도구와 명확한 프로세스를 통해 충돌을 효율적으로 관리하면, 개발 팀의 생산성과 코드 품질을 동시에 향상시킬 수 있습니다.

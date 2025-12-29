@@ -4,686 +4,159 @@ title: Git - Monorepo
 date: 2025-03-16 20:20:23 +0900
 category: Git
 ---
-# Monorepo 전략 완벽 정리 (with Git 도구)
+# 모노레포(MonoRepo) 전략과 도구 활용 가이드
 
-> 사용자가 제공한 초안을 바탕으로, 실제 팀에 바로 적용 가능한 **구조 설계 → Git 최적화(sparse-checkout 등) → 패키지/서비스 관리(Lerna/Nx/Turborepo/pnpm) → CI/CD 가속 → 버전·릴리스 전략(Changesets/semver) → 거버넌스(CODEOWNERS/브랜치 보호)**까지 단계별로 확장 정리한다.
+모노레포는 여러 프로젝트(예: 웹앱, API 서버, 공용 라이브러리)를 **하나의 저장소**에서 관리하는 방식입니다. 이 방식은 코드 공유, 툴링 일관성 유지, 단일화된 CI/CD 파이프라인 구축에 강점이 있지만, 저장소 크기와 빌드 속도 관리가 핵심 과제입니다.
 
----
+## 모노레포의 구조와 장단점
 
-## Monorepo 한 줄 정의와 사용 맥락
-
-- **정의**: 여러 앱·라이브러리·도구를 **하나의 Git 저장소**에서 관리하는 전략.
-- **목표**: 코드 공유·일관 툴링·단일 CI를 통해 **개발/검증/배포 파이프라인의 중복을 제거**.
-- **핵심 난점**: 저장소·빌드가 커지면서 성능과 권한/거버넌스 이슈가 함께 커진다. 이를 **Git 기능(Partial/Sparse) + 빌드 캐시 + 변경 영향도 기반 실행**으로 해결한다.
-
----
-
-## 대표 구조 패턴
-
-### 기본 구조
-
+### 표준 구조
+일반적으로 다음과 같은 구조를 따릅니다.
 ```
-📁 my-org-repo/
-├── apps/                     # 배포 단위(웹/앱/서비스)
-│   ├── web/
-│   └── admin/
-├── packages/                 # 공유 라이브러리(도메인 SDK/UI/유틸 등)
-│   ├── auth/
-│   ├── ui/
-│   └── utils/
-├── tools/                    # 스크립트/코드젠/CI 헬퍼
-│   └── scripts/
-├── package.json              # workspace 루트
-├── pnpm-workspace.yaml       # 또는 yarn/pnpm workspace
-└── nx.json / turbo.json      # Nx 또는 Turborepo 설정
+my-org-repo/
+├── apps/          # 배포 가능한 애플리케이션 (웹, 모바일, API)
+├── packages/      # 내부 공유 라이브러리 및 컴포넌트
+├── tools/         # 빌드, 코드 생성 등 개발 도구
+└── 구성 파일 (package.json, turbo.json 등)
 ```
 
-### 언어별 변형 예
+### 장단점 요약
+**장점**:
+*   **원자적 변경(Atomic Changes)**: 하나의 커밋으로 여러 패키지에 걸친 변경사항을 관리할 수 있습니다.
+*   **코드 공유 용이**: 패키지 간 의존성을 `workspace:*` 같은 링크로 쉽게 설정할 수 있습니다.
+*   **통일된 툴링과 검증**: 저장소 루트 하나에 린트, 테스트, 빌드 규칙을 일관되게 적용할 수 있습니다.
 
-- **Node/TS**: npm/pnpm/yarn workspace + Lerna/Nx/Turborepo
-- **Go**: 루트 `go.work` + 각 모듈 `go.mod`
-- **Python**: `pyproject.toml` 여러 개 + Hatch/Poetry/PDM
-- **Java**: 멀티 모듈 Gradle (`settings.gradle`) 또는 Maven Aggregator
-- **Polyglot**: Nx/Turborepo로 툴링 통합 + 언어별 러너(executor) 연결
+**단점과 해결 방향**:
+*   **저장소 크기 증가**: Git의 `partial clone`과 `sparse-checkout` 기능으로 필요한 부분만 내려받습니다.
+*   **빌드 시간 증가**: Turborepo나 Nx 같은 도구의 **캐싱**과 **변경 영향도 분석(Affected Build)** 을 활용합니다.
+*   **권한 관리 복잡**: GitHub의 `CODEOWNERS` 파일과 브랜치 보호 규칙으로 디렉터리별 코드 오너를 지정할 수 있습니다.
 
----
+## 핵심 Git 최적화 기술
 
-## 장단점 확장
+대규모 모노레포에서 개발자 경험을 보존하려면 Git 최적화가 필수적입니다.
 
-### 장점
-
-| 장점 | 설명 | 보완책 |
-|------|------|--------|
-| 코드 공유 용이 | 내부 패키지를 로컬 링크로 신속 반영 | workspace/implicit linking |
-| 변경 추적 통일 | 단일 PR/커밋에서 시스템 전반 변화 추적 | Conventional Commits + Changesets |
-| 일관된 툴링 | 하나의 ESLint/Prettier/Test/Build 설정 | 루트 config + 패키지별 오버라이드 |
-| 단일 CI 파이프라인 | 파이프라인 중복 제거, 공통 캐시 | Affected Only, paths-filter, 캐시 |
-
-### 단점과 대응
-
-| 단점 | 상세 | 대응 |
-|------|------|------|
-| 저장소 비대 | clone/pull 느림 | Git **partial clone + sparse-checkout** |
-| 빌드 느림 | 전체 빌드 과다 | **변경 영향도(affected)** + **원격 캐시** |
-| 권한 분리 난이도 | 디렉터리 단위 접근 제어 부재 | **CODEOWNERS**, 브랜치 보호, CI 게이트 |
-| 릴리스 복잡 | 버전·체인지로그 난해 | **Changesets** 또는 Lerna publish 전략 |
-
----
-
-## Git 최적화: Partial Clone, Sparse Checkout, Worktree
-
-### Partial Clone + Sparse Checkout
-
-대규모 저장소에서 **필요 디렉터리만** 빠르게 내려받는다.
-
+### 1. Sparse Checkout (희소 체크아웃)
+워킹 디렉터리에 필요한 파일과 디렉터리만 체크아웃합니다. Git 공식 문서에 따르면, 이 명령은 추적된 파일의 하위 집합만 워킹 트리에 존재하도록 만듭니다.
 ```bash
-# 히스토리/Blob 최소화
-
-git clone --filter=blob:none --no-checkout https://github.com/your-org/monorepo.git
-cd monorepo
-
-# sparse 모드 활성화
-
+# 저장소 클론 후 희소 체크아웃 모드 초기화
+git clone <repo-url>
+cd <repo-name>
 git sparse-checkout init --cone
-
-# 필요한 디렉터리만
-
+# apps/web과 packages/ui 디렉터리만 워킹 트리에 가져오기
 git sparse-checkout set apps/web packages/ui
-
-# 필요한 시점에만 다른 경로 추가
-
-git sparse-checkout add packages/auth
 ```
+`--cone` 모드는 성능을 최적화하며, 지정한 디렉터리와 그 하위 모든 파일을 포함합니다.
 
-- `--filter=blob:none`은 **partial clone**(서버를 promisor로) 하여 blob 지연 다운로드.
-- `--cone` 패턴은 트리 성능 최적화.
+### 2. Partial Clone (부분 복제)
+히스토리나 파일 블롭(blob)을 처음부터 모두 다운로드하지 않습니다.
+```bash
+# 파일 내용(blob)은 필요할 때 가져오고, 나머지 데이터만 먼저 복제
+git clone --filter=blob:none --no-checkout <repo-url>
+cd <repo-name>
+# 이후 sparse-checkout을 설정하면 필요한 blob만 내려받음
+```
+이 방식은 초기 클론 속도를 획기적으로 높여줍니다.
 
-### 부분 히스토리만 받기(shallow)
-
+### 3. Shallow Fetch (얕은 가져오기)
+CI 환경 등에서 최신 커밋만 필요할 때 사용합니다.
 ```bash
 git fetch --depth=1 origin main
-git checkout main
 ```
 
-- 빌드/테스트만 필요한 CI에서 유용.
+## 모노레포 빌드 및 작업 관리 도구
 
-### Worktree로 병렬 개발
-
-하나의 저장소에 **여러 작업 트리**를 연결해 브랜치별 코드를 동시에 열 수 있다.
-
-```bash
-git worktree add ../feature-login feature/login
-git worktree list
-```
-
-- 여러 앱/패키지를 동시에 수정해야 할 때 유용.
-
----
-
-## JavaScript/TypeScript Monorepo 도구
-
-### npm/pnpm/yarn workspaces
-
-- 루트에서 의존성 설치/호이스팅 및 패키지 간 **로컬 링크** 자동.
-
-`pnpm-workspace.yaml` 예:
-
-```yaml
-packages:
-  - "apps/*"
-  - "packages/*"
-```
-
-루트 `package.json`:
-
-```json
-{
-  "private": true,
-  "packageManager": "pnpm@9.12.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test"
-  }
-}
-```
+각 도구는 다른 철학과 장점을 가지고 있습니다. 프로젝트 규모와 요구사항에 따라 선택할 수 있습니다.
 
 ### Lerna
-
-설치 및 초기화:
-
-```bash
-npm i -D lerna
-npx lerna init
-```
-
-핵심 명령:
-
-```bash
-npx lerna bootstrap         # 패키지 설치+링크
-npx lerna run build         # 전 패키지 빌드
-npx lerna changed           # 변경 패키지만
-npx lerna publish           # 버전/배포 (independent/fixed)
-```
-
-`lerna.json` 예:
-
-```json
-{
-  "version": "independent",
-  "npmClient": "pnpm",
-  "packages": ["packages/*", "apps/*"],
-  "command": {
-    "publish": {
-      "conventionalCommits": true
-    }
-  }
-}
-```
-
-- `version: "independent"`: 패키지별 버전을 독립 관리.
-- `conventionalCommits`: 커밋 메시지에서 자동 버전 결정 가능.
+JavaScript 모노레포를 위한 오래되고 검증된 도구로, **패키지 버전 관리와 배포(Publish)** 에 강점이 있습니다. Lerna 공식 문서에서는 자신을 “여러 JavaScript/TypeScript 패키지를 동일 저장소에서 관리하고 배포하기 위한 빠르고 현대적인 빌드 시스템”으로 소개합니다.
 
 ### Nx
-
-의존성 그래프, 영향도 기반 실행, 캐시.
-
-설치:
-
-```bash
-npx create-nx-workspace@latest
-```
-
-대표 명령:
-
-```bash
-nx graph            # 의존성 시각화
-nx affected:test    # 변경 영향 패키지만 테스트
-nx run-many --target=build --all
-```
-
-캐시 저장소(Remote Cache) 연결(예: Nx Cloud)로 CI 속도 향상.
+**스마트한 빌드 시스템과 고급 CI 기능**이 핵심입니다. Nx 공식 사이트는 “고급 CI 기능을 갖춘 빌드 시스템”으로 소개하며, 다음과 같은 기능을 강조합니다.
+*   **의존성 그래프(Dependency Graph)**: 코드베이스의 관계를 시각화하고 분석합니다.
+*   **변경 영향도 기반 실행(Affected Commands)**: 변경된 부분만 빌드하거나 테스트합니다.
+*   **분산형 캐시(Distributed Caching)**: 로컬 및 원격 캐시로 빌드를 가속화합니다.
+*   **코드 생성 및 자동화**: 일관된 구조의 코드를 생성하는 데 도움을 줍니다.
 
 ### Turborepo
+**초고속 빌드 실행**에 특화된 도구입니다. Turborepo 공식 문서는 “JavaScript 및 TypeScript 코드베이스를 위한 고성능 빌드 시스템”이라 정의하며, 다음과 같은 원리로 작동합니다.
+1. **파이프라인 정의**: `turbo.json` 파일에 `build`, `test`, `lint` 같은 작업과 그 의존 관계를 선언합니다.
+2. **최대 병렬화**: 서로 의존하지 않는 작업은 동시에 실행합니다.
+3. **지능형 캐싱**: 작업의 입력(파일, 환경 변수 등)을 해시화하여, 동일한 입력에 대해서는 캐시된 결과를 재사용합니다. 이 **원격 캐시(Remote Cache)** 기능은 팀 전체와 CI 환경의 빌드 속도를 혁신적으로 줄여줍니다.
 
-파이프라인 선언형 + 캐시/병렬 최적화.
+Turborepo의 설정 스키마(`turbo.build/schema.json`)는 `pipeline`을 필수 요소로 정의하며, 각 작업에서 `dependsOn`, `outputs`, `cache` 등을 구성할 수 있도록 합니다.
 
-`turbo.json` 예:
+### 패키지 매니저 Workspace (pnpm / yarn / npm)
+위의 빌드 도구들은 대부분 패키지 매니저의 **워크스페이스(Workspace)** 기능과 결합되어 사용됩니다. 이 기능은 루트에서 의존성을 한 번에 설치하고(`pnpm i`), 패키지 간 로컬 링크를 자동으로 관리합니다.
 
-```json
-{
-  "$schema": "https://turbo.build/schema.json",
-  "pipeline": {
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
-    },
-    "test": {
-      "dependsOn": ["build"],
-      "outputs": []
-    },
-    "lint": {
-      "outputs": []
-    }
-  }
-}
-```
+## CI/CD 파이프라인 최적화
 
-실행:
+모든 패키지를 매번 빌드하는 것은 비효율적입니다. 변경사항이 발생한 영역만 지능적으로 처리해야 합니다.
 
-```bash
-pnpm dlx turbo run build test lint --filter=...
-```
-
-- 상위 의존 빌드를 선행(`^build`)
-- 캐시가 동일 입력/환경에서 **결과 재사용**
-
-### pnpm workspace
-
-의존성 저장 방식이 효율적(중복 제거). **대형 Monorepo**에서 디스크 절약.
-
-명령:
-
-```bash
-pnpm -r build            # 모든 패키지
-pnpm --filter ./apps/web build
-pnpm --filter "@org/ui" build
-```
-
----
-
-## CI/CD 최적화 (GitHub Actions 예시)
-
-### 변경 경로 기반 실행(paths-filter)
-
-변경된 영역만 테스트/빌드:
-
-{% raw %}
+### 변경 경로 기반 실행 (Paths Filter)
+GitHub Actions에서 `dorny/paths-filter` 액션 등을 사용하여 특정 디렉터리가 변경되었을 때만 해당 작업을 실행하도록 할 수 있습니다.
 ```yaml
-# .github/workflows/ci-monorepo.yml
-
-name: CI Monorepo
-
-on:
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      api: ${{ steps.filter.outputs.api }}
-      web: ${{ steps.filter.outputs.web }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            api:
-              - 'apps/api/**'
-              - 'packages/**'
-            web:
-              - 'apps/web/**'
-              - 'packages/**'
-
-  test-api:
-    needs: changes
-    if: needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pnpm i --frozen-lockfile
-      - run: pnpm --filter ./apps/api test
-
-  test-web:
-    needs: changes
-    if: needs.changes.outputs.web == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pnpm i --frozen-lockfile
-      - run: pnpm --filter ./apps/web test
-```
-{% endraw %}
-
-### Nx/Turbo 기반 Affected Only
-
-Nx:
-
-```yaml
-- run: pnpm i --frozen-lockfile
-- run: npx nx affected --target=test --parallel=3
-```
-
-Turborepo:
-
-```yaml
-- run: pnpm dlx turbo run test --filter=...[HEAD^1]
-```
-
-### Git 최적화 활용
-
-```yaml
-- uses: actions/checkout@v4
+- name: Filter changed paths
+  uses: dorny/paths-filter@v3
   with:
-    fetch-depth: 0                   # Nx/Turbo 영향도 분석 시 필요
-    sparse-checkout: |
-      apps/web
-      packages/ui
+    filters: |
+      web:
+        - 'apps/web/**'
+        - 'packages/ui/**'
+      api:
+        - 'apps/api/**'
+        - 'packages/utils/**'
+
+- name: Build Web App
+  if: steps.filter.outputs.web == 'true'
+  run: pnpm --filter ./apps/web build
 ```
 
-### 캐시
-
-{% raw %}
-```yaml
-- uses: actions/setup-node@v4
-  with:
-    node-version: 20
-    cache: pnpm
-
-- uses: actions/cache@v4
-  with:
-    path: |
-      .turbo
-      node_modules/.cache/nx
-    key: ${{ runner.os }}-mono-${{ hashFiles('**/pnpm-lock.yaml', '**/turbo.json', '**/nx.json') }}
-```
-{% endraw %}
-
----
-
-## 버전·릴리스 전략
-
-### 전략 옵션
-
-| 전략 | 설명 | 장단점 |
-|------|------|--------|
-| Fixed | 모든 패키지 동일 버전 | 관리 단순 vs 변경 작은 패키지도 강제 상승 |
-| Independent | 패키지별 버전 | 현실적/정확 vs 관리 복잡 |
-| 앱은 태그, 라이브러리는 패키지 버전 | 배포 단위에 맞춤 | 이중 전략 관리 필요 |
-
-### Changesets로 체인지로그·버전 자동화
-
-설치:
-
+### 영향도 기반 실행 (Affected Commands)
+Nx나 Turborepo는 Git 히스토리를 분석하여 변경사항의 영향을 받는 프로젝트만 식별하는 내장 명령어를 제공합니다.
 ```bash
-pnpm add -D @changesets/cli
-pnpm changeset init
+# Nx: 마지막 커밋 대비 변경된 프로젝트만 빌드
+npx nx affected --target=build
+
+# Turborepo: main 브랜치 대비 변경된 프로젝트의 테스트 실행
+pnpm dlx turbo run test --filter=...[origin/main]
 ```
 
-PR에서 변경 소개:
+## 버전 관리 및 릴리스 전략
 
-```bash
-pnpm changeset                  # 마법사로 변경 요약 입력
-pnpm changeset version          # 버전/체인지로그 반영
-pnpm changeset publish          # 레지스트리로 배포
-```
+여러 패키지의 버전을 관리하는 방법은 크게 두 가지입니다.
 
-CI 자동화 예(태그 푸시 시):
+| 전략 | 설명 | 적합한 경우 |
+| :--- | :--- | :--- |
+| **고정 버전 (Fixed)** | 모든 패키지가 동일한 버전 번호를 사용합니다. | 강하게 결합된 패키지군, 단일 제품. |
+| **독립 버전 (Independent)** | 각 패키지가 자신의 버전 번호를 독립적으로 관리합니다. | 느슨하게 결합된 라이브러리, 다양한 배포 주기. |
 
-{% raw %}
-```yaml
-- name: Version packages
-  run: pnpm changeset version
-- name: Publish
-  run: pnpm changeset publish
-  env:
-    NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
-{% endraw %}
+**Changesets** 같은 도구는 독립 버전 전략을 구현하는 데 도움을 줍니다. 개발자는 `pnpm changeset` 명령으로 변경 내용을 설명하는 마크다운 파일을 생성하고, CI 단계에서 이 파일들을 모아 버전 업그레이드와 CHANGELOG 생성을 자동화할 수 있습니다.
 
-### Conventional Commits + 자동 버전
+## 거버넌스: 권한 및 협업 규칙
 
-`feat:`, `fix:`, `chore:` 규칙으로 릴리스 판단. Lerna `conventionalCommits` 사용 또는 semantic-release.
+모노레포는 여러 팀이 함께 작업하기 때문에 명확한 규칙이 필요합니다.
 
----
+*   **CODEOWNERS 파일**: `.github/CODEOWNERS` 파일에 디렉터리별 담당 팀이나 개인을 지정하면, PR이 생성될 때 자동으로 해당 리뷰어가 할당됩니다.
+    ```
+    /apps/web/          @frontend-team
+    /apps/api/          @backend-team
+    /packages/ui/       @design-system-team
+    ```
+*   **브랜치 보호 규칙 (Branch Protection)**: 메인 브랜치에 대해 필수 리뷰, 상태 검사(CI 통과) 통과, 선형 히스토리 등을 요구하여 코드 베이스의 안정성을 유지할 수 있습니다.
 
-## 거버넌스: CODEOWNERS, 브랜치 보호, 경로 제한
+## 마무리: 모노레포 도입 판단 가이드
 
-### CODEOWNERS
+모노레포는 만능 해결사가 아닙니다. 다음 질문에 “예”가 많다면 모노레포를 고려해볼 만합니다.
 
-`.github/CODEOWNERS`:
+*   여러 프로젝트가 **동일한 공용 컴포넌트나 유틸리티 라이브러리**를 빈번히 공유하나요?
+*   **단일 기능을 구현하는 데 여러 저장소를 넘나드는 변경**이 자주 발생하나요?
+*   린트, 포맷, 빌드, 테스트 실행과 같은 **개발 환경과 규칙을 통일**하고 싶나요?
+*   **Atomic Commit** (관련된 모든 변경을 하나의 커밋으로)으로 배포하는 것이 중요한가요?
 
-```
-/apps/web/          @web-team
-/apps/admin/        @admin-team
-/packages/ui/       @design-team
-/tools/             @devexp-team
-```
+반면, 다음에 해당한다면 여러 저장소(Polyrepo)를 유지하는 것이 나을 수 있습니다.
 
-- PR 생성 시 자동 리뷰어 지정.
-- 브랜치 보호에서 **Require review from Code Owners** 활성화.
+*   프로젝트 간 **기술 스택이나 개발 주기가 완전히 다르고** 공유할 코드가 거의 없습니다.
+*   **보안상이나 규제상으로 프로젝트를 반드시 격리**해야 합니다.
+*   기존 저장소 구조가 너무 크고 복잡하여 마이그레이션 비용이 예상보다 매우 큽니다.
 
-### 브랜치 보호
-
-- Require status checks to pass
-- Require pull request reviews
-- Require linear history (선택)
-- Restrict who can push(필요 시)
-
-### 경로 기반 정책
-
-- GitHub는 **디렉터리 권한**을 직접 제공하지 않으므로, **CI에서 경로 검증**하여 정책 위반 PR 실패 처리.
-- 예: `apps/banking/**`는 특정 팀만 수정 허용 → CI에서 작성자/팀 검증.
-
----
-
-## Submodule vs Subtree vs Monorepo
-
-| 항목 | Submodule | Subtree | Monorepo |
-|------|-----------|---------|----------|
-| 저장 형태 | 외부 저장소를 링크 | 외부 저장소를 통합 병합 | 단일 저장소 |
-| 업데이트 | 수동(커밋 고정) | 병합/동기화 필요 | 내부 패키지 링크 |
-| 협업 난이도 | 높음 | 중간 | 낮음(내부 공유 용이) |
-| 대규모 개발 | 불편 | 관리 복잡 | 권장(도구 적합) |
-
-- Submodule/Subtree는 외부 종속을 **엄격히 고정**하고 싶을 때만 고려.
-
----
-
-## 언어별 모듈·빌드 특이점
-
-### Go
-
-루트 `go.work`:
-
-```
-go 1.22
-
-use (
-  ./apps/api
-  ./packages/sdk
-)
-```
-
-- 각 디렉터리 `go.mod`에서 모듈 선언. `go work sync`로 go.work 반영.
-- 변경 영향도 기반 빌드: `go list -deps` + CI paths-filter.
-
-### Python
-
-- `pyproject.toml` 기반. Poetry/Hatch로 관리.
-- 공통 툴링(ruff/black/pytest) 루트 설정 + 패키지별 env 관리.
-- wheel 생성 및 내부 index(예: Nexus/PyPI private)로 배포.
-
-### Java
-
-- Gradle 멀티 모듈: 루트 `settings.gradle`에서 포함 프로젝트 선언.
-- 빌드 캐시, configuration cache로 속도 개선.
-
----
-
-## 마이그레이션 로드맵(Polyrepo → Monorepo)
-
-1) **목록 정리**: 서비스/라이브러리/공통 구성요소 인벤토리
-2) **합치는 순서**: 공통 라이브러리 → 소비 앱 순으로
-3) **패키지 이름/버전 정책 확정**: scope(`@org/*`), semver
-4) **워크스페이스 도입**: pnpm/yarn workspace 설정
-5) **빌드/테스트 통합**: Nx/Turbo/Lerna로 공통 스크립트
-6) **CI 전환**: paths-filter → affected only, 캐시
-7) **거버넌스**: CODEOWNERS, 브랜치 보호, 리뷰 규칙
-8) **릴리스 자동화**: Changesets/semantic-release
-9) **문서화**: 기여 가이드(CONTRIBUTING.md), 린트/포맷 규칙, 브랜치 전략
-
----
-
-## 실전 레시피 모음
-
-### 루트 스크립트 예
-
-`package.json`:
-
-```json
-{
-  "scripts": {
-    "lint": "eslint . --ext .ts,.tsx,.js",
-    "typecheck": "tsc -b",
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "affected:test": "nx affected --target=test",
-    "affected:build": "nx affected --target=build"
-  }
-}
-```
-
-### Apps/Web 빌드 스크립트 예
-
-`apps/web/package.json`:
-
-```json
-{
-  "name": "web",
-  "scripts": {
-    "build": "vite build",
-    "test": "vitest run",
-    "lint": "eslint src --ext .ts,.tsx"
-  },
-  "dependencies": {
-    "@org/ui": "workspace:*",
-    "@org/auth": "workspace:*"
-  }
-}
-```
-
-### Turborepo 파이프라인 예
-
-`turbo.json`:
-
-```json
-{
-  "pipeline": {
-    "typecheck": {
-      "outputs": []
-    },
-    "build": {
-      "dependsOn": ["^build", "typecheck"],
-      "outputs": ["dist/**"]
-    },
-    "test": {
-      "dependsOn": ["build"],
-      "outputs": []
-    }
-  }
-}
-```
-
-### GitHub Actions 전체 예시(변경 영향 + 캐시 + 릴리스)
-
-{% raw %}
-```yaml
-# .github/workflows/ci.yml
-
-name: Monorepo CI
-
-on:
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  detect:
-    runs-on: ubuntu-latest
-    outputs:
-      api: ${{ steps.filter.outputs.api }}
-      web: ${{ steps.filter.outputs.web }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            api:
-              - "apps/api/**"
-              - "packages/**"
-            web:
-              - "apps/web/**"
-              - "packages/**"
-
-  build-web:
-    needs: detect
-    if: needs.detect.outputs.web == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm i --frozen-lockfile
-      - run: pnpm --filter ./apps/web build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: web-dist
-          path: apps/web/dist
-
-  build-api:
-    needs: detect
-    if: needs.detect.outputs.api == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm i --frozen-lockfile
-      - run: pnpm --filter ./apps/api build
-
-  release:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [build-web, build-api]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: pnpm i --frozen-lockfile
-      - run: pnpm changeset version
-      - run: pnpm changeset publish
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-```
-{% endraw %}
-
----
-
-## 운영 체크리스트
-
-- Git
-  - partial clone `--filter=blob:none`, sparse-checkout로 필요한 디렉터리만
-  - worktree로 병렬 브랜치 작업
-- 빌드
-  - Nx/Turbo/Lerna + workspace
-  - Affected Only, 원격 캐시
-- CI
-  - paths-filter, 캐시, concurrency cancel, timeout
-  - 실패 로그·리포트 아티팩트 업로드
-- 릴리스
-  - Changesets/semantic-release, semver 표준
-  - 태그/릴리스 노트 자동화
-- 보안/거버넌스
-  - CODEOWNERS, 브랜치 보호, Required reviews/status checks
-  - 환경 보호(승인자), 최소 권한 `permissions`
-- 문서화
-  - CONTRIBUTING.md, 패키지 네이밍/버전 규칙, PR 템플릿, 커밋 규칙
-
----
-
-## 도입 여부 판단 가이드
-
-- 다음에 해당하면 Monorepo를 고려
-  - 공통 코드/디자인 시스템을 여러 앱이 공유
-  - 린트/테스트/빌드/릴리스 규칙을 일원화하고 싶다
-  - 팀 간 PR 동기화를 쉽게 하고 싶다
-- 다음에 해당하면 Polyrepo가 더 적합
-  - 강력한 권한 격리가 필수(규제 준수, 비밀 소스)
-  - 각 서비스의 릴리스 주기가 완전히 독립
-  - 레거시 도메인 간 결합이 크고 이동 비용이 과다
-
----
-
-## 참고 링크
-
-- Git sparse-checkout: https://git-scm.com/docs/git-sparse-checkout
-- Lerna: https://lerna.js.org/
-- Nx: https://nx.dev/
-- Turborepo: https://turbo.build/repo
-- pnpm Workspaces: https://pnpm.io/workspaces
-- Changesets: https://github.com/changesets/changesets
+성공적인 모노레포 운영은 **적절한 도구 선택**, **철저한 CI/CD 최적화**, 그리고 **팀 간의 명확한 협업 규칙**에 달려 있습니다. 처음부터 모든 것을 완벽하게 구현하기보다, 핵심 가치를 제공하는 부분부터 점진적으로 도입하고 발전시키는 접근법이 현명합니다.

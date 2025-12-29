@@ -4,36 +4,47 @@ title: Git - GitHub Actions 기반 CI/CD 자동화
 date: 2025-03-02 20:20:23 +0900
 category: Git
 ---
-# GitHub Actions 기반 CI/CD 자동화
+# GitHub Actions CI/CD 완전 가이드
 
-## Actions 용어·디렉터리 구조 상기
+## GitHub Actions 기본 개념 이해하기
 
-- 워크플로(Workflow): `.github/workflows/*.yml`
-- 잡(Job): 워크플로 내부의 병렬/순차 실행 단위
-- 스텝(Step): 잡 내부에서 `uses:` 또는 `run:`으로 실행되는 단계
-- 러너(Runner): 잡을 실제로 실행하는 머신. GitHub-Hosted(ubuntu-latest 등) 또는 Self-hosted.
+### 핵심 구성 요소
+GitHub Actions는 자동화 워크플로를 구축하기 위한 강력한 플랫폼입니다. 기본적인 구성 요소들을 이해하는 것이 중요합니다:
 
-프로젝트의 기본 구조 예:
+**워크플로 (Workflow)**
+- 자동화된 프로세스를 정의하는 YAML 파일
+- `.github/workflows/` 디렉토리에 저장
+- 다양한 이벤트(푸시, PR, 스케줄 등)에 의해 트리거됨
 
+**잡 (Job)**
+- 워크플로 내의 실행 단위
+- 병렬 또는 순차적으로 실행 가능
+- 각 잡은 독립된 러너 환경에서 실행됨
+
+**스텝 (Step)**
+- 잡 내부의 개별 작업 단위
+- 액션 사용(`uses:`) 또는 스크립트 실행(`run:`)으로 구성
+
+**러너 (Runner)**
+- 잡을 실행하는 머신
+- GitHub 호스팅(ubuntu-latest 등) 또는 셀프 호스팅
+
+### 프로젝트 구조 예시
 ```
-📁 .github/
-  └─📁 workflows/
-      ├─ ci.yml                 # PR/Push CI
-      ├─ deploy.yml             # 배포
-      ├─ nightly.yml            # 스케줄 작업
-      └─ reusable-test.yml      # 재사용 워크플로
+.github/
+└── workflows/
+    ├── ci.yml            # 지속적 통합
+    ├── deploy.yml        # 배포 자동화
+    ├── nightly.yml       # 정기 작업
+    └── security.yml      # 보안 검사
 ```
 
 ---
 
-## 최소 CI — Node.js 테스트 (초안 확장)
+## 기본 CI 설정: Node.js 프로젝트
 
-기본 예제에 캐시와 타 버전 테스트를 더하면 다음과 같다.
-
-{% raw %}
+### 최소한의 CI 워크플로
 ```yaml
-# .github/workflows/ci.yml
-
 name: CI
 
 on:
@@ -44,133 +55,159 @@ on:
 
 jobs:
   test:
-    name: Node ${{ matrix.node }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        node: [16, 18, 20]
-
+    runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          cache: npm
-
-      - name: Install
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint --if-present
-
-      - name: Test
-        run: npm test -- --reporter junit --reporter-options "output=reports/junit.xml"
-
-      - name: Upload JUnit Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: junit-${{ matrix.node }}
-          path: reports/junit.xml
-          retention-days: 7
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linter
+      run: npm run lint --if-present
+    
+    - name: Run tests
+      run: npm test
 ```
-{% endraw %}
 
-핵심 포인트
-- `strategy.matrix`로 **멀티 런타임** 테스트
-- `setup-node`의 `cache: npm`으로 **의존성 캐시**
-- 테스트 결과를 `upload-artifact`로 업로드하여 **PR에서 다운로드 가능**
+### 고급 CI: 매트릭스 테스트 및 보고서
 
----
-
-## Python·Java 예제(멀티 언어 저장소/모노레포 대비)
-
-### Python(pytest + 캐시)
-
+{% raw %}
 ```yaml
-# .github/workflows/ci-python.yml
-
-name: CI (Python)
+name: Advanced CI
 
 on:
   pull_request:
-    paths:
-      - "pyapp/**"
-      - ".github/workflows/ci-python.yml"
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Test on Node ${{ matrix.node-version }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18, 20, 22]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests with coverage
+      run: |
+        npm test
+        npm run test:coverage --if-present
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.node-version }}
+        path: |
+          coverage/
+          test-results/
+        retention-days: 7
+```
+{% endraw %}
+
+---
+
+## 다양한 프로그래밍 언어 지원
+
+### Python 프로젝트 CI
+```yaml
+name: Python CI
+
+on:
+  pull_request:
+    branches: [ main ]
   push:
     branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: pyapp
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-      - run: pip install -r requirements.txt
-      - run: pytest -q --junitxml=reports/pytest.xml
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: pytest-report
-          path: pyapp/reports/pytest.xml
-          retention-days: 7
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    
+    - name: Run tests
+      run: pytest --junitxml=junit.xml
+    
+    - name: Upload test report
+      uses: actions/upload-artifact@v4
+      with:
+        name: pytest-report
+        path: junit.xml
 ```
 
-### Java(Gradle 캐시 + 테스트)
-
+### Java/Gradle 프로젝트 CI
 ```yaml
-# .github/workflows/ci-java.yml
-
-name: CI (Java)
+name: Java CI
 
 on:
   pull_request:
-    paths:
-      - "java-app/**"
-      - ".github/workflows/ci-java.yml"
+    branches: [ main ]
   push:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: java-app
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Temurin JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "temurin"
-          cache: "gradle"
-      - name: Build & Test
-        run: ./gradlew clean test
-      - name: Publish Test Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: junit-java
-          path: java-app/build/test-results/test/*.xml
+    - uses: actions/checkout@v4
+    
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '21'
+        cache: 'gradle'
+    
+    - name: Build and test
+      run: ./gradlew build test
+    
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: build/libs/*.jar
 ```
 
 ---
 
-## 캐시 전략 심화 — actions/cache, Docker Layer Cache
+## 캐시 전략 최적화
 
-### Node/PNPM/Yarn 등 수동 캐시 키 제어
+### npm/yarn 캐시 설정
 
 {% raw %}
 ```yaml
@@ -178,20 +215,19 @@ jobs:
   uses: actions/cache@v4
   with:
     path: |
+      ~/.npm
       **/node_modules
-    key: ${{ runner.os }}-modules-${{ hashFiles('**/package-lock.json') }}
+    key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
     restore-keys: |
-      ${{ runner.os }}-modules-
+      ${{ runner.os }}-node-
 ```
 {% endraw %}
 
-### Docker Buildx + 레이어 캐시
+### Docker 빌드 캐시
 
 {% raw %}
 ```yaml
-# .github/workflows/docker-build.yml
-
-name: Docker Build
+name: Docker Build with Cache
 
 on:
   push:
@@ -201,344 +237,247 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
-
+    
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ghcr.io/${{ github.repository }}:latest
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository }}:latest
+          ghcr.io/${{ github.repository }}:${{ github.sha }}
+        cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
+        cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
 ```
 {% endraw %}
 
 ---
 
-## 아티팩트·커버리지·주석(Annotations)
+## 코드 품질 및 보안 검사
 
-### 커버리지 업로드(예: Codecov)
-
-{% raw %}
+### 정적 분석 및 보안 검사
 ```yaml
-- name: Run tests with coverage
-  run: npm run test:coverage
+name: Code Quality and Security
 
-- name: Upload coverage to Codecov
-  uses: codecov/codecov-action@v4
-  with:
-    token: ${{ secrets.CODECOV_TOKEN }} # 조직 설정에 따라 불필요할 수 있음
-    files: ./coverage/lcov.info
-```
-{% endraw %}
+on:
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * 1'  # 매주 월요일 02:00 UTC
 
-### 실패 라인에 주석 달기(ESLint 결과 Annotations)
-
-{% raw %}
-```yaml
-- name: ESLint
-  run: npm run lint:ci
-  continue-on-error: true
-
-- name: Annotate ESLint result
-  if: failure()
-  uses: ataylorme/eslint-annotate-action@v3
-  with:
-    repo-token: ${{ secrets.GITHUB_TOKEN }}
-    report-json: "./reports/eslint.json"
-```
-{% endraw %}
-
----
-
-## 보호
-
-### 브랜치 보호(요지)
-
-- Settings → Branches → Add rule
-- Require pull request reviews
-- Require status checks to pass → 체크 이름은 워크플로 잡 이름(예: `CI / test`)
-- Require linear history(선택)
-
-### 환경 보호(승인자·비밀 분리·URL)
-
-- Settings → Environments → `production` 생성
-- Required reviewers 지정 → 배포 직전 승인 필요
-- Secrets를 환경 단위로 분리(`secrets.PROD_*`)
-
-배포 잡에서:
-
-```yaml
-environment:
-  name: production
-  url: https://example.com
-```
-
----
-
-## GitHub Secrets/Variables/Permissions — 보안 기본기
-
-### 최소 권한(Principle of Least Privilege)
-
-워크플로 최상단:
-
-```yaml
-permissions:
-  contents: read
-```
-
-배포 잡에서만 필요한 권한을 확장:
-
-```yaml
 jobs:
-  deploy:
+  security-scan:
+    runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write   # OIDC에 필요
-      packages: write   # 레지스트리 푸시 등
-```
+      security-events: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: CodeQL Analysis
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript, python
+    
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+    
+    - name: Run SAST tools
+      run: |
+        npm audit --audit-level=high
+        # 또는 언어별 보안 도구 실행
 
-### 환경 변수 계층
-
-- `env:` (워크플로/잡/스텝)
-- `secrets.*` (민감 정보)
-- `vars.*` (민감하지 않은 상수)
-
-예:
-
-```yaml
-env:
-  APP_ENV: ci
-  API_BASE: https://api.example.com
-
-- run: echo "Using $APP_ENV with $API_BASE"
+  quality:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run linter
+      run: npm run lint
+    
+    - name: Check code formatting
+      run: npm run format:check
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage/lcov.info
 ```
 
 ---
 
-## — 키 없는 배포
+## 배포 자동화 전략
 
-### AWS IAM 역할 구성(개요)
-
-- GitHub OIDC Provider 등록(Organization/Repository level)
-- 역할 트러스트 정책에 `sub` 조건으로 워크플로 제약
-  - 예: `repo:org/repo:ref:refs/heads/main`
-
-### AWS 로그인 + 배포 예시(S3/CloudFront)
-
+### AWS에 OIDC를 이용한 안전한 배포
 ```yaml
-# .github/workflows/deploy-aws.yml
-
-name: Deploy AWS (OIDC)
+name: Deploy to AWS
 
 on:
   push:
-    tags: [ 'v*.*.*' ]
-
-permissions:
-  contents: read
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
     permissions:
-      id-token: write       # 필수
+      id-token: write
       contents: read
-
+    
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
-          aws-region: ap-northeast-2
-
-      - name: Build
-        run: |
-          npm ci
-          npm run build
-
-      - name: Sync to S3
-        run: aws s3 sync dist/ s3://my-bucket --delete
-
-      - name: Invalidate CloudFront
-        run: aws cloudfront create-invalidation --distribution-id ABCDEFGHIJ --paths "/*"
+    - uses: actions/checkout@v4
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::123456789012:role/github-actions-role
+        aws-region: ap-northeast-2
+    
+    - name: Build application
+      run: |
+        npm ci
+        npm run build
+    
+    - name: Deploy to S3
+      run: |
+        aws s3 sync dist/ s3://my-website-bucket/ --delete
+    
+    - name: Invalidate CloudFront cache
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ABC123DEF456 \
+          --paths "/*"
 ```
 
-장점
-- **AWS 키를 Secrets에 넣지 않음**
-- 역할 기반의 단기 토큰(STS) 사용 → 노출 위험 감소
-
----
-
-## Netlify/Firebase 배포(초안 확장)
-
-### Netlify
-
-{% raw %}
+### Firebase 배포
 ```yaml
-- name: Deploy to Netlify
-  uses: nwtgck/actions-netlify@v2
-  with:
-    publish-dir: './dist'
-    production-branch: 'main'
-    netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-    site-id: ${{ secrets.NETLIFY_SITE_ID }}
-```
-{% endraw %}
-
-### Firebase Hosting
-
-{% raw %}
-```yaml
-- name: Setup Node
-  uses: actions/setup-node@v4
-  with:
-    node-version: 20
-
-- name: Install Firebase CLI
-  run: npm i -g firebase-tools
-
-- name: Deploy to Firebase
-  run: firebase deploy --only hosting
-  env:
-    FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-```
-{% endraw %}
-
----
-
-## Kubernetes 배포(kubectl), Helm
-
-{% raw %}
-```yaml
-# .github/workflows/deploy-k8s.yml
-
-name: Deploy to Kubernetes
+name: Deploy to Firebase
 
 on:
-  workflow_dispatch:
-    inputs:
-      imageTag:
-        description: "Image tag to deploy"
-        required: true
-        default: "latest"
+  push:
+    branches: [ main ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
+    
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'v1.30.2'
-
-      - name: Kubeconfig from secret
-        run: |
-          mkdir -p ~/.kube
-          echo "${KUBECONFIG_B64}" | base64 -d > ~/.kube/config
-        env:
-          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_B64 }}
-
-      - name: Set image
-        run: |
-          kubectl set image deployment/web web=ghcr.io/${{ github.repository }}:${{ inputs.imageTag }} -n prod
-
-      - name: Rollout status
-        run: kubectl rollout status deployment/web -n prod
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    
+    - name: Install Firebase CLI
+      run: npm install -g firebase-tools
+    
+    - name: Deploy to Firebase
+      run: firebase deploy --only hosting
+      env:
+        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 ```
-{% endaw %}
-
-Helm 이용시:
-
-{% raw %}
-```yaml
-- name: Helm Upgrade
-  run: |
-    helm upgrade web charts/web \
-      --install \
-      --namespace prod \
-      --set image.tag=${{ inputs.imageTag }}
-```
-{% endraw %}
 
 ---
 
-## 모노레포 최적화 — paths-filter로 변경 영역만 실행
+## 모노레포 프로젝트 최적화
+
+### 변경된 부분만 테스트하기
 
 {% raw %}
 ```yaml
-# .github/workflows/ci-monorepo.yml
-
-name: CI Monorepo
+name: Monorepo CI
 
 on:
   pull_request:
     branches: [ main ]
 
 jobs:
-  changes:
+  detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      api: ${{ steps.filter.outputs.api }}
-      web: ${{ steps.filter.outputs.web }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      shared: ${{ steps.filter.outputs.shared }}
+    
     steps:
-      - uses: actions/checkout@v4
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            api:
-              - 'services/api/**'
-            web:
-              - 'apps/web/**'
+    - uses: actions/checkout@v4
+    
+    - name: Detect changed paths
+      id: filter
+      uses: dorny/paths-filter@v3
+      with:
+        filters: |
+          frontend:
+            - 'packages/frontend/**'
+            - 'shared/**'
+          backend:
+            - 'packages/backend/**'
+            - 'shared/**'
+          shared:
+            - 'shared/**'
 
-  api:
-    needs: changes
-    if: needs.changes.outputs.api == 'true'
+  test-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Run API tests only"
+    - uses: actions/checkout@v4
+    - run: echo "Testing frontend..."
+    # 실제 테스트 스텝 구현
 
-  web:
-    needs: changes
-    if: needs.changes.outputs.web == 'true'
+  test-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Run Web tests only"
+    - uses: actions/checkout@v4
+    - run: echo "Testing backend..."
+    # 실제 테스트 스텝 구현
 ```
 {% endraw %}
 
 ---
 
-## 동시성·취소·타임아웃 — 불필요한 실행 줄이기
+## 고급 기능 활용
+
+### 동시성 제어 및 자동 취소
 
 {% raw %}
 ```yaml
+name: CI with Concurrency Control
+
+on:
+  pull_request:
+    branches: [ main ]
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -546,452 +485,406 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    
     steps:
-      - uses: actions/checkout@v4
-      - run: npm ci && npm test
+    - uses: actions/checkout@v4
+    - run: npm ci && npm test
 ```
 {% endraw %}
 
----
-
-## 재사용 워크플로(organization-wide 표준화)
-
-### 호출 당하는 워크플로
+### 재사용 가능한 워크플로
 
 {% raw %}
 ```yaml
-# .github/workflows/reusable-test.yml (in org/reusable repo)
-
-name: Reusable Test
+# .github/workflows/reusable-test.yml
+name: Reusable Test Workflow
 
 on:
   workflow_call:
     inputs:
-      node:
+      node-version:
         required: true
         type: string
+      working-directory:
+        required: false
+        type: string
+        default: '.'
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ inputs.node }}
-      - run: npm ci
-      - run: npm test
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+      working-directory: ${{ inputs.working-directory }}
+    
+    - name: Run tests
+      run: npm test
+      working-directory: ${{ inputs.working-directory }}
 ```
-{% endraw %}
+{% raw %}
 
-### 호출하는 쪽
-
-```yaml
-# .github/workflows/ci.yml
-
-name: CI
-
-on: [pull_request]
-
-jobs:
-  call-reusable:
-    uses: org/reusable/.github/workflows/reusable-test.yml@v1
-    with:
-      node: "20"
-```
-
----
-
-## + 입력 파라미터·승인
+### 수동 트리거 및 입력 파라미터
 
 {% raw %}
 ```yaml
+name: Manual Deployment
+
 on:
   workflow_dispatch:
     inputs:
-      env:
-        description: "Environment"
+      environment:
+        description: 'Deployment environment'
         required: true
-        default: "staging"
+        default: 'staging'
         type: choice
-        options: [staging, production]
+        options:
+          - staging
+          - production
+      version:
+        description: 'Application version'
+        required: false
+        type: string
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.env }}
+    environment: ${{ inputs.environment }}
+    
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "Deploying to ${{ inputs.env }} ..."
-```
-{% endraw %}
-
-- `environment`가 `production`이면 환경 보호 규칙(승인자)로 배포 전 승인 절차 수행.
-
----
-
-## — 야간 빌드·보건 점검
-
-```yaml
-on:
-  schedule:
-    - cron: "0 18 * * *"  # 매일 03:00 KST 기준에 맞춰 조정(UTC 기준)
-
-jobs:
-  nightly:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: npm run e2e:headless
-```
-
----
-
-## 실패 알림 — Slack/Discord/Webhook
-
-Slack 예:
-
-{% raw %}
-```yaml
-- name: Notify Slack (on failure)
-  if: failure()
-  uses: slackapi/slack-github-action@v1
-  with:
-    payload: |
-      {
-        "text": "CI failed on ${{ github.ref }} for ${{ github.sha }}"
-      }
-  env:
-    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to ${{ inputs.environment }}
+      run: |
+        echo "Deploying version ${{ inputs.version || 'latest' }} to ${{ inputs.environment }}"
+        # 실제 배포 로직
 ```
 {% endraw %}
 
 ---
 
-## PR 크기·라벨·자동 병합
+## 알림 및 모니터링
 
-### PR 라벨링(크기별)
-
-{% raw %}
-```yaml
-- uses: actions/labeler@v5
-  with:
-    repo-token: ${{ secrets.GITHUB_TOKEN }}
-```
-{% endaw %}
-
-`.github/labeler.yml` 예:
-
-```yaml
-size/XS:
-  - changed-files:
-      - any-glob-to-any-file: '**'
-      - max-lines-changed: 20
-size/S:
-  - changed-files:
-      - any-glob-to-any-file: '**'
-      - min-lines-changed: 21
-      - max-lines-changed: 100
-```
-
-### Dependabot 자동 병합(조건부)
+### 실패 알림 설정
 
 {% raw %}
 ```yaml
-# .github/workflows/auto-merge.yml
-
-name: Auto-merge dependabot
+name: CI with Notifications
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
-  automerge:
-    if: github.actor == 'dependabot[bot]'
+  test:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: fastify/github-action-merge-dependabot@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v4
+    - run: npm ci && npm test
+
+  notify-on-failure:
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Send Slack notification
+      uses: slackapi/slack-github-action@v2.0.0
+      with:
+        channel-id: 'C12345678'
+        slack-message: |
+          CI failed for ${{ github.repository }}:
+          - Workflow: ${{ github.workflow }}
+          - Branch: ${{ github.ref }}
+          - Commit: ${{ github.sha }}
+          - Run: ${{ github.run_id }}
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 ```
 {% endraw %}
 
 ---
 
-## Self-hosted Runner — GPU/사내망/프라이빗 네트워크
+## 셀프 호스팅 러너 설정
 
-- 대규모 빌드·특수 하드웨어(GPU)·내부망 접근이 필요한 경우 Self-hosted Runner 사용
-- 보안 수칙
-  - 독립 VPC/서브넷, 고정 이미지(불변), 최소 권한 토큰
-  - 실행 후 러너 **자동 정리(에페멀)**, 로그/비밀 유출 감시
-- 태그 기반 라우팅:
-  ```yaml
-  runs-on: [self-hosted, linux, gpu]
-  ```
+### 셀프 호스팅 러너 사용
 
----
-
-## 워크플로 간 데이터 전달 — Artifacts·Outputs
-
-### 스텝/잡 Output
-
-{% raw %}
 ```yaml
-- name: Compute version
-  id: ver
-  run: echo "VERSION=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+name: Build on Self-hosted Runner
 
-- name: Use version
-  run: echo "Version is ${{ steps.ver.outputs.VERSION }}"
-```
-{% endraw %}
+on:
+  push:
+    branches: [ main ]
 
-### 잡 Output → 다음 잡
-
-{% raw %}
-```yaml
 jobs:
   build:
-    outputs:
-      version: ${{ steps.ver.outputs.VERSION }}
+    runs-on: [self-hosted, linux, x64]
+    
     steps:
-      - id: ver
-        run: echo "VERSION=1.2.3" >> "$GITHUB_OUTPUT"
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo "Rel version ${{ needs.build.outputs.version }}"
-```
-{% endraw %}
-
----
-
-## 릴리스·태깅·체인지로그 자동화
-
-```yaml
-# .github/workflows/release.yml
-
-name: Release
-
-on:
-  push:
-    tags: [ 'v*.*.*' ]
-
-jobs:
-  gh-release:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          files: |
-            dist/**.zip
+    - uses: actions/checkout@v4
+    
+    - name: Build with custom hardware
+      run: |
+        # 특수 하드웨어(GPU 등) 활용
+        nvidia-smi
+        make build
 ```
 
-태그 생성 파이프라인(버전 증가)을 별도 워크플로에서 수행하고, 방금 예제를 통해 릴리스 노트를 자동 생성할 수 있다.
+**셀프 호스팅 러너 보안 권장사항:**
+- 독립된 네트워크 환경 구성
+- 정기적인 보안 패치 적용
+- 최소 권한 원칙 준수
+- 작업 완료 후 환경 자동 정리
 
 ---
 
-## 품질·보안 내재화: CodeQL, Secret Scanning, 권한
-
-### CodeQL
-
-```yaml
-# .github/workflows/codeql.yml
-
-name: CodeQL
-
-on:
-  schedule:
-    - cron: '0 2 * * 1'
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
-
-jobs:
-  analyze:
-    permissions:
-      contents: read
-      security-events: write
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
-        with:
-          languages: 'javascript,python'
-      - uses: github/codeql-action/analyze@v3
-```
-
-### Secret Scanning
-
-- GitHub Advanced Security가 켜져 있으면 자동 검사
-- 서드파티 CI 로그·아티팩트에 **비밀이 노출되지 않게** `::add-mask::` 또는 `secrets` 사용.
-
----
-
-## 운영 팁 모음 — 현업에서 가장 자주 겪는 이슈
-
-1) **러너 시간 절약**: paths-filter로 변경 없는 영역 CI 생략, `concurrency`로 중복 취소
-2) **긴 잡 분해**: “빌드 → 테스트 → 린트”를 병렬 잡으로 쪼개 전체 시간을 단축
-3) **PR 드리프트 방지**: `pull_request` + `merge_group`(대규모 저장소) 사용
-4) **환경별 동행**: `staging`은 자동, `production`은 환경 보호(승인자)
-5) **속도 병목**: Docker 캐시, 언어별 캐시, shallow fetch (`fetch-depth: 0` 필요한 경우만)
-6) **로그 가독성**: step 이름을 의미 있게, 실패시 아티팩트로 리포트/스크린샷 첨부
-7) **권한 최소화**: 워크플로 루트 `permissions: contents: read`, 필요한 잡에서만 확장
-8) **태그/릴리스 표준**: SemVer + 릴리스 노트 자동 생성, 배포 아티팩트 첨부
-9) **러너 안정성**: Self-hosted라면 자동 패치·이미지 롤링·격리 네트워크·비밀 주입 표준화
-10) **문제 재현**: 실패 잡의 아티팩트/캐시 키/환경 변수를 기록해 로컬 재현 스크립트 제공
-
----
-
-## 끝에서 정리 — 실무형 체크리스트
-
-- 트리거: `pull_request`, `push(main)`, `workflow_dispatch`, `schedule`, `release`
-- 품질: Lint, Test(JUnit/coverage), CodeQL, Secret Scanning
-- 속도: matrix, cache(actions/setup-*/cache), docker buildx cache
-- 결과물: artifacts(리포트), GHCR 이미지, 릴리스
-- 정책: Branch Protection(Status checks), Environments(승인자)
-- 보안: 최소 권한 `permissions`, OIDC(id-token: write), Secrets 분리
-- 운영: concurrency cancel, timeout, paths-filter, reusable workflows
-- 배포: Netlify/Firebase/AWS(OIDC)/K8s(Helm/kubectl)
-
----
-
-## 하나로 묶은 “PR → CI → 배포(스테이징) → 릴리스” 샘플
+## 종합적인 CI/CD 파이프라인 예제
 
 {% raw %}
 ```yaml
-# .github/workflows/full-pipeline.yml
-
-name: Full Pipeline
+name: Complete CI/CD Pipeline
 
 on:
   pull_request:
     branches: [ main ]
   push:
+    branches: [ main ]
     tags: [ 'v*.*.*' ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: 20
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  ci:
-    name: CI(Lint/Test)
+  quality-checks:
+    name: Quality Checks
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Lint
+      run: npm run lint
+    
+    - name: Test with coverage
+      run: npm run test:coverage
+    
+    - name: Upload coverage
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage/lcov.info
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-
-      - run: npm ci
-      - run: npm run lint --if-present
-      - run: npm test -- --reporter junit --reporter-options "output=reports/junit.xml"
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: junit
-          path: reports/junit.xml
-
-  build-image:
-    name: Build & Push Image (GHCR)
-    needs: ci
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+  security-scan:
+    name: Security Scan
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      security-events: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+    
+    - name: Analyze
+      uses: github/codeql-action/analyze@v3
+
+  build-and-push:
+    name: Build and Push Container
+    needs: [quality-checks, security-scan]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
       packages: write
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache
-          cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha,prefix={{branch}}-
+    
+    - name: Build and push
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+        cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
   deploy-staging:
-    name: Deploy Staging (Netlify)
-    needs: [ci]
-    if: github.event_name == 'pull_request'
+    name: Deploy to Staging
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment:
-      name: staging
-      url: ${{ steps.deploy.outputs.deploy-url }}
+    environment: staging
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-      - run: npm ci && npm run build
-      - name: Deploy to Netlify
-        id: deploy
-        uses: nwtgck/actions-netlify@v2
-        with:
-          publish-dir: './dist'
-          production-branch: 'main'
-          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          site-id: ${{ secrets.NETLIFY_SITE_ID }}
+    - name: Deploy to Staging
+      run: |
+        echo "Deploying to staging environment..."
+        # 실제 배포 스크립트
 
-  release:
-    name: Create GitHub Release
-    needs: [build-image]
-    if: startsWith(github.ref, 'refs/tags/')
+  deploy-production:
+    name: Deploy to Production
+    needs: deploy-staging
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    environment: production
+    
     steps:
-      - uses: actions/checkout@v4
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          files: |
-            dist/**.zip
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        generate_release_notes: true
+    
+    - name: Deploy to Production
+      run: |
+        echo "Deploying version ${{ github.ref_name }} to production..."
+        # 실제 배포 스크립트
 ```
 {% endraw %}
 
 ---
 
-## 참고 링크
+## 모범 사례 및 운영 팁
 
-- GitHub Actions 공식 문서: https://docs.github.com/en/actions
-- actions/checkout: https://github.com/actions/checkout
-- actions/setup-node: https://github.com/actions/setup-node
-- actions/cache: https://github.com/actions/cache
-- docker/build-push-action: https://github.com/docker/build-push-action
-- Netlify Action: https://github.com/nwtgck/actions-netlify
-- Codecov Action: https://github.com/codecov/codecov-action
-- Branch protection rules: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches
+### 1. 성능 최적화
+- **캐시 활용**: 의존성, Docker 레이어, 빌드 아티팩트 캐시
+- **병렬 실행**: 독립적인 작업은 병렬로 실행
+- **선택적 실행**: 변경된 부분만 테스트(모노레포)
+- **얕은 체크아웃**: 필요시만 전체 히스토리 다운로드
+
+### 2. 보안 강화
+- **최소 권한 원칙**: 필요한 권한만 부여
+- **시크릿 관리**: 환경별 시크릿 분리
+- **OIDC 사용**: 장기 인증 키 대신 임시 자격 증명
+- **코드 스캔**: 정적 분석 도구 통합
+
+### 3. 유지보수성
+- **재사용 가능 워크플로**: 공통 로직 추상화
+- **명확한 네이밍**: 작업과 스텝 이름을 의미 있게
+- **문서화**: 워크플로 목적과 사용법 주석 추가
+- **버전 고정**: 액션 버전 명시적 지정
+
+### 4. 모니터링 및 디버깅
+- **상세 로그**: 중요한 정보 로깅
+- **아티팩트 저장**: 테스트 결과, 로그, 빌드 산출물
+- **알림 설정**: 실패 시 즉시 알림
+- **메트릭 수집**: 실행 시간, 성공률 모니터링
+
+### 5. 비용 관리
+- **셀프 호스팅 러너**: 대규모 빌드에 경제적
+- **캐시 전략**: 반복 작업 비용 절감
+- **타임아웃 설정**: 무한 루프 방지
+- **리소스 최적화**: 필요 이상의 리소스 사용 방지
+
+---
+
+## 문제 해결 가이드
+
+### 일반적인 문제 및 해결책
+
+**문제 1: 워크플로가 너무 느림**
+- **해결**: 캐시 구현, 병렬 실행, 불필요한 단계 제거
+
+**문제 2: 권한 오류**
+- **해결**: `permissions` 설정 확인, 필요한 권한 추가
+
+**문제 3: 시크릿 노출**
+- **해결**: 로그 마스킹, 적절한 시크릿 관리
+
+**문제 4: 환경 차이로 인한 실패**
+- **해결**: 컨테이너 사용, 환경 변수 명시적 설정
+
+**문제 5: 플랫킹 현상**
+- **해결**: 동시성 제어, 작업 취소 설정
+
+### 디버깅 도구 및 기법
+
+{% raw %}
+```yaml
+- name: Debug information
+  run: |
+    echo "Event: ${{ github.event_name }}"
+    echo "Ref: ${{ github.ref }}"
+    echo "SHA: ${{ github.sha }}"
+    echo "Runner OS: ${{ runner.os }}"
+    ls -la
+```
+{% endraw %}
+
+---
+
+## 결론
+
+GitHub Actions는 현대적인 소프트웨어 개발 라이프사이클을 자동화하는 강력한 도구입니다. 효과적인 CI/CD 파이프라인을 구축하기 위해서는 몇 가지 핵심 원칙을 이해하고 적용하는 것이 중요합니다.
+
+### 성공적인 CI/CD 구현을 위한 핵심 원칙
+
+1. **점진적 개선**: 완벽한 파이프라인을 한 번에 구축하려 하지 말고, 작은 단계부터 시작하여 점진적으로 개선하세요.
+
+2. **팀 협업**: CI/CD는 개인의 작업이 아닌 팀의 워크플로우입니다. 팀원들과 협력하여 표준과 모범 사례를 정립하세요.
+
+3. **보안 우선**: 자동화의 편리함이 보안을 희생시키지 않도록 하세요. 최소 권한 원칙을 준수하고, 민감 정보를 안전하게 관리하세요.
+
+4. **모니터링과 피드백**: 파이프라인을 구축한 후 방치하지 마세요. 지속적으로 모니터링하고, 문제점을 개선하며, 팀의 피드백을 반영하세요.
+
+5. **유연성 유지**: 프로젝트의 성장과 변화에 따라 파이프라인도 진화해야 합니다. 과도하게 복잡한 설정은 유지보수를 어렵게 만듭니다.
+
+### 마지막 조언
+
+GitHub Actions를 효과적으로 사용하는 비결은 단순함과 일관성에 있습니다. 처음부터 모든 고급 기능을 구현하려 하지 말고, 프로젝트의 실제 필요에 맞는 최소한의 기능부터 시작하세요. 시간이 지나면서 프로젝트가 성장하고 팀의 요구사항이 변화함에 따라 파이프라인도 함께 발전시켜 나가면 됩니다.
+
+기억하세요, 가장 좋은 CI/CD 파이프라인은 팀의 생산성을 높이고, 코드 품질을 보장하며, 배포 과정을 신뢰할 수 있게 만드는 파이프라인입니다. 기술적 완벽함보다 실제 비즈니스 가치를 창출하는 데 집중하세요.
+
+GitHub Actions는 단순한 자동화 도구를 넘어 팀의 개발 문화와 프로세스를 개선하는 기회입니다. 이 기회를 활용하여 더 나은 소프트웨어를 더 빠르고 안전하게 제공하는 여정을 시작해 보세요.

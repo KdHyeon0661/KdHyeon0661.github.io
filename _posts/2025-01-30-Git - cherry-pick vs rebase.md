@@ -4,404 +4,394 @@ title: Git - cherry-pick vs rebase
 date: 2025-01-30 20:20:23 +0900
 category: Git
 ---
-# Git **cherry-pick vs rebase**
+# Git Cherry-pick vs Rebase
 
-## 한눈에 요약
+## 핵심 개념 비교
 
-- **cherry-pick**: “저 브랜치의 **특정 커밋 몇 개만** 지금 브랜치에 **복사**(새 커밋으로 재생성)해서 붙이자.”
-- **rebase**: “내 브랜치의 **전체(또는 연속 구간) 커밋**을 **다른 베이스 위로 재배치**해 선형 이력을 만들자.”
+**Cherry-pick**과 **Rebase**는 Git에서 커밋을 관리하는 두 가지 강력한 도구입니다. 각각의 특징과 적절한 사용 시기를 이해하면 작업 효율성을 크게 높일 수 있습니다.
 
-**선택 가이드**
-- 특정 수정(버그 픽스 등)만 골라서 반영 → **cherry-pick**
-- 기능 브랜치 이력을 깔끔히 정리/선형화 후 병합 → **rebase**
+### 간단 정의
+- **Cherry-pick**: 특정 브랜치의 개별 커밋(또는 연속된 몇 개의 커밋)을 현재 브랜치로 복사하여 적용
+- **Rebase**: 현재 브랜치의 전체 커밋(또는 특정 범위)을 다른 베이스 커밋 위로 재배치하여 선형적인 히스토리 생성
+
+### 선택 가이드라인
+- **버그 수정이나 특정 기능만 다른 브랜치에 적용** → Cherry-pick
+- **개인 브랜치의 히스토리를 깔끔하게 정리** → Rebase
+- **릴리스 브랜치에 핫픽스 백포트** → Cherry-pick
+- **리뷰 전에 커밋 히스토리 정리** → Rebase
 
 ---
 
-## `git cherry-pick`이란?
+## Git Cherry-pick 상세 설명
 
-**특정 커밋만 선택**해서 현재 브랜치에 **새 커밋**으로 적용합니다.
-- 장점: 필요한 것만 골라서 반영(불필요한 변경 유입 방지)
-- 단점: 커밋이 “복사”되므로 **해시가 달라짐**(중복 관리 필요), 많이 사용하면 “포크된 이력”이 산개
+### 기본 개념
+Cherry-pick은 다른 브랜치의 특정 커밋을 선택적으로 현재 브랜치에 적용하는 명령입니다. 원본 커밋을 복사하여 새로운 커밋을 생성하므로 커밋 해시는 변경됩니다.
 
-### 기본 명령
-
+### 기본 사용법
 ```bash
-# 현재 브랜치로 <commit> 들을 순서대로 적용
+# 단일 커밋 적용
+git cherry-pick abc1234
 
-git cherry-pick <commit>
-git cherry-pick <commit1> <commit2> <commit3>
-git cherry-pick <start>^..<end>   # 연속 범위(주의: 아래 설명)
+# 여러 커밋 적용 (순서대로 적용됨)
+git cherry-pick abc1234 def5678 ghi9012
+
+# 커밋 범위 적용 (주의: 아래 범위 표기법 참고)
+git cherry-pick start-commit^..end-commit
 ```
 
-#### 범위 표기 주의(A..B vs A^..B)
+### 범위 표기법 주의사항
+Git에서 범위 표기법은 혼동하기 쉽습니다:
+- `A..B`: 커밋 B에는 있지만 A에는 없는 변경사항 (그래프 차이)
+- `A^..B`: 커밋 A의 직전 커밋부터 B까지의 연속된 커밋들
 
-- `A..B` 는 “B에서 A를 뺀 차집합”의 의미(보통 **그래프 차이**에서 쓰임)
-- `A^..B` 는 “A의 **바로 이전**부터 B까지 **연속 커밋**”이라는 관용적 표기
-  - 실수 방지를 위해, **연속 범위**는 보통 `^` 를 붙여 명시하거나 **`git log A..B --oneline`** 으로 먼저 **검증 후** pick 하세요.
-
----
-
-## cherry-pick 실전 옵션(필수)
-
+**실무 팁**: 적용할 범위를 먼저 확인하세요:
 ```bash
-# 메시지에 원본 커밋 해시 흔적을 남김: (cherry picked from commit <sha>)
+# 적용할 커밋 범위 확인
+git log start-commit..end-commit --oneline
 
-git cherry-pick -x <commit>
-
-# 커밋 메시지 편집 열기
-
-git cherry-pick -e <commit>
-
-# 여러 커밋을 연속 적용하지만, 하나로 묶어 나중에 직접 커밋
-
-git cherry-pick -n <commit1> <commit2> ...
-git commit -m "squashed fixes from hotfixes"
-
-# DCO/서명 라인 추가
-
-git cherry-pick -s <commit>
-
-# GPG/SSH 서명(서명 커밋 정책일 때)
-
-git cherry-pick -S <commit>
-
-# 병합 커밋을 pick(다중 부모 중 어느 쪽을 기준으로 할지 지정)
-
-git cherry-pick -m 1 <merge-commit-sha>   # 첫 부모를 기준으로
+# 확인 후 cherry-pick 실행
+git cherry-pick start-commit^..end-commit
 ```
 
-**추천 실무 습관**
-- 조직에서 “추적성” 중요 → `-x` 기본 사용
-- 정책상 Signed-off-by 필요 → `-s`
-- 서명 강제 → `-S`(사전 `git config`로 서명키 설정)
+### 실용적인 옵션들
+```bash
+# 원본 커밋 해시를 메시지에 기록 (추적성 향상)
+git cherry-pick -x abc1234
+
+# 커밋 메시지 편집기 열기
+git cherry-pick -e abc1234
+
+# 변경사항만 스테이징하고 커밋은 하지 않음
+git cherry-pick -n abc1234
+# 이후 git commit 으로 직접 커밋
+
+# 서명 커밋 생성
+git cherry-pick -S abc1234
+
+# Signed-off-by 라인 추가
+git cherry-pick -s abc1234
+```
+
+### 조직별 추천 설정
+- **추적성 중요**: 항상 `-x` 옵션 사용
+- **법적 준수 필요**: `-s` 옵션으로 Signed-off-by 추가
+- **보안 정책**: `-S` 옵션으로 서명 커밋 생성
 
 ---
 
-## cherry-pick 충돌 처리(강화)
+## Cherry-pick 충돌 처리
 
+### 충돌 발생 시 작업 흐름
 ```bash
-git cherry-pick <commit>
-# 충돌 발생 시
-#   CONFLICT (content): ...
-# 해결
+# cherry-pick 실행
+git cherry-pick abc1234
 
-git add <fixed-files>
+# 충돌 발생 시 파일 수정
+# CONFLICT (content): Merge conflict in filename
+
+# 충돌 해결 후
+git add filename
 git cherry-pick --continue
-# 포기
 
+# 작업 취소
 git cherry-pick --abort
-# 이번 커밋만 건너뛰고 계속
 
+# 현재 커밋 건너뛰기
 git cherry-pick --skip
 ```
 
-### 반복 충돌 최소화: rerere
-
-과거에 했던 충돌 해결을 **학습해서 재사용**:
+### 반복 충돌 최소화
+동일한 충돌 패턴이 반복될 경우:
 ```bash
+# rerere 기능 활성화
 git config --global rerere.enabled true
 ```
-- 같은 유형 충돌이 반복될 때 자동 적용(검토 후 커밋)
 
-### 빈 커밋/중복 처리
-
-- 이미 동일 변경이 적용된 경우 **“The previous cherry-pick is now empty”** 경고
-  - 유지할 필요 없으면 `git cherry-pick --skip`
-  - 메시지만 남기고 싶다면 `--allow-empty` 로 명시적 생성
+이 기능은 이전에 해결한 충돌 패턴을 기억하여 자동으로 적용해줍니다.
 
 ---
 
-## cherry-pick 예제(추가 시나리오)
+## Git Rebase 상세 설명
 
-### `hotfix` 의 특정 수정만 `main`에 반영
+### 기본 개념
+Rebase는 현재 브랜치의 커밋들을 다른 베이스 커밋 위로 재배치하는 명령입니다. 커밋들이 재작성되어 새로운 해시를 가지며, 결과적으로 선형적인 히스토리가 만들어집니다.
 
+### 기본 사용법
 ```bash
-git checkout main
-git cherry-pick -x abc1234  # hotfix 커밋
-git push
-```
+# 현재 브랜치를 main 브랜치 기준으로 rebase
+git checkout feature-branch
+git rebase main
 
-### 여러 커밋을 하나의 커밋으로 묶어 반영
-
-```bash
-git checkout main
-git cherry-pick -n fix1 fix2 fix3
-# 필요 시 파일 더 수정
-
-git commit -S -m "fix(core): backport critical fixes (squashed)"
-```
-
-### 병합 커밋(cherry-pick -m)
-
-```bash
-# merge 커밋을 특정 부모 기준으로 재적용
-
-git cherry-pick -m 1 <merge-commit-sha>
-```
-- **주의**: 실제 병합 상황/맥락이 복잡하면 충돌이 더 잦음. 가능하면 **원인 커밋들**을 개별 pick 하는 게 수월할 때가 많습니다.
-
----
-
-## cherry-pick 되돌리기/복구
-
-- pick 직후 전체 취소: `git cherry-pick --abort` (진행 중인 시퀀스)
-- 이미 커밋됨 → **되돌리는 커밋** 생성:
-  ```bash
-  git revert <picked-commit-sha>
-  ```
-- 복구(큰 수술 전 보험):
-  - pick 전후의 안전 지점 확인: `git reflog`
-  - 위험 작업 전 `git tag temp/pre-pick` 또는 `git branch backup/pick-<ts>`로 스냅샷
-
----
-
-## `git rebase`란? (비교의 기준 마련)
-
-**브랜치의 커밋들을 다른 베이스 위로 옮겨 붙이며 새 커밋으로 재작성**하여 **선형 이력**을 만듭니다.
-
-### 기본형
-
-```bash
-# 현재 브랜치를 origin/main 최신 위로 재배치
-
+# 원격 브랜치 기준으로 rebase
 git fetch origin
 git rebase origin/main
 ```
 
-- 이력 “재작성”이므로 **해시가 모두 바뀜**
-- 충돌 발생 시 각 커밋 지점마다 해결 → `git rebase --continue`
-- 포기: `git rebase --abort`
-- 특정 커밋 건너뛰기: `git rebase --skip`
-- 되돌리기 비상키: 작업 직전 **ORIG_HEAD**, 그리고 `git reflog`
-
-### — 강력 필수
-
+### 충돌 처리
 ```bash
-# topic 브랜치에서 A..B 구간을 "newbase" 위로 옮긴다
+# rebase 중 충돌 발생 시
+# 1. 충돌 파일 수정
+# 2. 수정된 파일 스테이징
+git add filename
+# 3. rebase 계속
+git rebase --continue
 
+# rebase 취소
+git rebase --abort
+
+# 현재 커밋 건너뛰기
+git rebase --skip
+```
+
+---
+
+## 고급 기능 비교
+
+### Cherry-pick의 고급 기능
+
+#### 병합 커밋 처리
+```bash
+# 병합 커밋을 cherry-pick (첫 번째 부모 기준)
+git cherry-pick -m 1 merge-commit-sha
+```
+
+#### 여러 커밋을 하나로 묶기
+```bash
+# 변경사항만 스테이징
+git cherry-pick -n commit1 commit2 commit3
+
+# 필요한 추가 수정 후
+git commit -m "Squashed fixes: 설명"
+```
+
+### Rebase의 고급 기능
+
+#### 특정 커밋 범위 이동 (`--onto`)
+```bash
+# A 커밋 이후부터 B 커밋까지를 newbase 위로 이동
 git rebase --onto newbase A B
 ```
-- “A 이후부터 B까지”를 통째로 새 베이스로 이동
-- 브랜치 재배치/분기 재정렬/히스토리 다이어트에 매우 유용
 
-### — 정리/스쿼시/메시지 편집
-
+#### 인터랙티브 Rebase (`-i`)
 ```bash
-git rebase -i origin/main
-# 편집창에서 pick/squash/fixup/reword/edit 등 조작
-
+# 최근 5개 커밋 정리
+git rebase -i HEAD~5
 ```
-- `--autosquash` 와 `fixup!`/`squash!` 커밋 메시지를 활용하면 자동 정렬:
-  ```bash
-  git rebase -i --autosquash origin/main
-  ```
 
-### 병합 유지: `--rebase-merges`
+편집기에서 사용 가능한 액션:
+- `pick`: 커밋 유지
+- `reword`: 커밋 메시지 수정
+- `edit`: 커밋 내용 수정
+- `squash`: 이전 커밋과 합치기
+- `fixup`: 이전 커밋과 합치기 (메시지 무시)
+- `drop`: 커밋 삭제
 
-- 병합 구조를 보존하며 rebase(복잡한 토폴로지 유지)
+#### 자동 스쿼시 (`--autosquash`)
 ```bash
+# fixup! 또는 squash!로 시작하는 커밋 자동 정렬
+git rebase -i --autosquash origin/main
+```
+
+#### 병합 구조 보존 (`--rebase-merges`)
+```bash
+# 병합 커밋 구조를 유지하면서 rebase
 git rebase --rebase-merges origin/main
 ```
 
 ---
 
-## cherry-pick vs rebase — 확장 비교
+## 비교 테이블: Cherry-pick vs Rebase
 
-| 항목 | cherry-pick | rebase |
-|---|---|---|
-| 목적 | **특정 커밋만 선택적으로** 반영 | 브랜치 전체(또는 구간)를 **다른 베이스로 재배치** |
-| 결과 | 선택한 커밋이 **현재 브랜치 끝에 복사**됨 | 대상 커밋들이 **새 해시**로 재작성되어 **선형화** |
-| 충돌 | pick한 커밋 지점에서만 | 각 커밋마다(여러 번 발생 가능) |
-| 히스토리 | 필요한 변경만 최소 반영(분산/중복 가능) | 깔끔·선형(맥락 보존은 약해질 수 있음) |
-| 협업 안정성 | 비교적 안전(선택적 반영, 공유 브랜치에도 OK) | **공유 브랜치 rebase 금지**(이력 재작성) |
-| 기록 추적성 | `-x` 로 원본 해시 흔적 남기기 권장 | ORIG_HEAD/reflog 기반 복구 가능 |
-| 사용 예 | 버그 픽스 백포트, 외부 리포의 좋은 커밋만 반영 | 리뷰 전 개인 브랜치 정리, 노이즈 커밋 스쿼시 |
-
----
-
-## 선택 기준(확장)
-
-- **이 커밋 몇 개만 가져오면 끝** → **cherry-pick**
-- **이 브랜치를 최신 main 위에서 깔끔히 만들고 합치자** → **rebase**
-- 공용 원격에 올린 브랜치 → **rebase 지양**(필요 시 팀 합의 및 `--force-with-lease`)
-- 백포트/긴급 패치/릴리스 브랜치 유지보수 → **cherry-pick** 선호
+| 항목 | Cherry-pick | Rebase |
+|------|------------|--------|
+| **목적** | 특정 커밋 선택적 적용 | 브랜치 전체 재배치 |
+| **결과** | 선택한 커밋이 복사됨 | 모든 커밋이 재작성됨 |
+| **히스토리** | 필요한 변경만 적용 | 선형적이고 깔끔한 히스토리 |
+| **충돌 처리** | 각 cherry-pick 시점에서 | 각 재배치 커밋에서 |
+| **협업 안전성** | 비교적 안전 | 공유 브랜치에서 위험 |
+| **사용 예시** | 버그 수정 백포트 | 리뷰 전 히스토리 정리 |
+| **기록 추적** | `-x` 옵션으로 원본 추적 | reflog로 복구 가능 |
 
 ---
 
-## 실무 시나리오 모음
+## 실무 시나리오
 
-### 릴리스 브랜치에 버그 픽스 백포트
-
+### 시나리오 1: 릴리스 브랜치에 핫픽스 적용
 ```bash
-# fix 커밋은 main에서 이미 통과됨
-
-git checkout release/1.2
-git cherry-pick -x <fix-sha>
-git push
-```
-
-### 기능 브랜치 선형화 후 FF 병합
-
-```bash
-git fetch origin
-git checkout feature/pay
-git rebase origin/main
-# 충돌 해결 → --continue
-
+# main 브랜치에서 버그 수정
 git checkout main
-git merge --ff-only feature/pay
+# ... 버그 수정 작업 ...
+git commit -m "fix: critical bug resolved"
+
+# 릴리스 브랜치에 해당 수정만 적용
+git checkout release/1.2
+git cherry-pick -x abc1234  # main의 수정 커밋
+git push origin release/1.2
 ```
 
-### 대규모 브랜치 일부만 새 위치로 옮기기(--onto)
-
+### 시나리오 2: 개인 브랜치 정리 및 병합
 ```bash
-# 토픽에서 A..B만 떼어 newbase 위로
+# 최신 main 상태 동기화
+git fetch origin
 
-git rebase --onto newbase A B
-```
+# 기능 브랜치 정리
+git checkout feature/login
+git rebase origin/main
 
-### 이미 pick한 커밋을 또 pick(중복 감지)
-
-```bash
-git cherry-pick <sha>
-# empty/duplicate 메시지 → --skip 또는 --allow-empty 판단
-
-```
-
-### 인터랙티브 정리 + autosquash
-
-```bash
-# 'fixup! <message>' 형태 커밋이 있다면 자동 정렬
-
-git rebase -i --autosquash origin/main
-```
-
----
-
-## 복구·되돌리기 안전 가이드
-
-### cherry-pick 시퀀스 중
-
-```bash
-git cherry-pick --abort
-git cherry-pick --continue
-git cherry-pick --skip
-```
-
-### rebase 중
-
-```bash
-git rebase --abort
+# 충돌 해결 후
+git add .
 git rebase --continue
-git rebase --skip
+
+# Fast-forward 병합
+git checkout main
+git merge --ff-only feature/login
 ```
 
-### 큰 작업 전 스냅샷
-
+### 시나리오 3: 특정 커밋 범위 이동
 ```bash
-git branch backup/pre-op-$(date +%Y%m%d-%H%M)
-# 또는
-
-git tag pre-op
+# topic 브랜치의 특정 범위를 새로운 베이스로 이동
+git rebase --onto new-base start-commit end-commit
 ```
 
-### 사고 이후 복구
-
+### 시나리오 4: 여러 브랜치의 수정사항 통합
 ```bash
-git reflog
-git reset --hard ORIG_HEAD          # 직전 위험 작업 이전으로
-# 또는
-
-git switch -c rescue <reflog-entry>
+# 다른 브랜치의 여러 핵심 수정사항만 현재 브랜치에 적용
+git cherry-pick -x abc123 def456 ghi789
 ```
 
 ---
 
-## 협업 안전 수칙
+## 안전한 작업을 위한 팁
 
-- **공유 브랜치(release/main/hotfix)** 에는 rebase 금지(정책화)
-- rebase 후 푸시는 `git push --force-with-lease`(동료 작업 보호)
-- cherry-pick은 추적성 확보를 위해 **`-x` 강력 권장**
-- PR 기준으로 squash/rebase/merge 정책을 팀 문서화(리뷰/CI 체크와 연계)
-
----
-
-## 명령어 치트시트(확장)
-
+### 작업 전 백업
 ```bash
-# cherry-pick
+# 중요한 작업 전에 백업 브랜치 생성
+git branch backup/$(date +%Y%m%d-%H%M)
+# 또는 태그 사용
+git tag before-operation
+```
 
-git cherry-pick <sha>
-git cherry-pick <sha1> <sha2> ...
-git cherry-pick <start>^..<end>   # 연속 범위
-git cherry-pick -x -e -S <sha>    # 원본 해시 흔적+메시지 편집+서명
-git cherry-pick -n <...> && git commit   # 여러 개 모아 한 번에 커밋
-git cherry-pick --continue | --abort | --skip
-git cherry-pick -m 1 <merge-sha>  # 병합 커밋 pick
-
-# rebase
-
-git rebase <upstream>             # 내 브랜치 커밋을 upstream 위로
-git rebase --onto <newbase> <A> <B>
-git rebase -i [--autosquash] <upstream>
-git rebase --rebase-merges <upstream>
-git rebase --continue | --abort | --skip
-
-# 복구
-
+### 복구 방법
+```bash
+# 작업 기록 확인
 git reflog
+
+# 직전 작업 상태로 복구
 git reset --hard ORIG_HEAD
-git switch -c rescue <sha_or_HEAD@{n}>
+
+# 특정 시점으로 새 브랜치 생성
+git switch -c rescued-branch HEAD@{3}
+```
+
+### 협업 규칙
+1. **공유 브랜치 rebase 금지**: main, release 등 공유 브랜치는 rebase하지 않음
+2. **강제 푸시 주의**: rebase 후 푸시 시 `--force-with-lease` 사용
+3. **커뮤니케이션**: 팀원과의 작업 조율 필수
+4. **문서화**: 팀 내 Git 워크플로우 명확히 정의
+
+---
+
+## 문제 해결 가이드
+
+### 일반적인 문제들
+
+**문제 1**: Cherry-pick 충돌 반복 발생
+- **해결**: `git config --global rerere.enabled true` 설정
+
+**문제 2**: 이미 적용된 변경사항 다시 cherry-pick
+- **해결**: `git cherry-pick --skip` 또는 `--allow-empty` 옵션 사용
+
+**문제 3**: Rebase 후 푸시 거부
+- **해결**: `git push --force-with-lease` 사용
+
+**문제 4**: 잘못된 범위 cherry-pick
+- **해결**: `git cherry-pick --abort` 후 올바른 범위로 재시도
+
+### 디버깅 도구
+```bash
+# 상세한 실행 로그 확인
+GIT_TRACE=1 git cherry-pick abc1234
+
+# 변경사항 미리보기
+git show abc1234
+git diff start-commit..end-commit
 ```
 
 ---
 
-## 최소 실습 세트(로컬에서 재현)
+## 모범 사례
+
+### Cherry-pick 모범 사례
+1. **추적성 유지**: 항상 `-x` 옵션 사용하여 원본 커밋 추적
+2. **범위 확인**: 적용 전 `git log`로 커밋 범위 확인
+3. **테스트**: cherry-pick 후 기능 테스트 필수
+4. **문서화**: 왜 해당 커밋을 선택했는지 기록
+
+### Rebase 모범 사례
+1. **개인 브랜치 한정**: 공유되지 않은 브랜치에서만 사용
+2. **최신 상태 동기화**: rebase 전 `git fetch` 실행
+3. **작은 단위 작업**: 많은 커밋을 한 번에 rebase하기보다 분할
+4. **백업 습관**: 중요한 rebase 전에 백업 브랜치 생성
+
+### 공통 모범 사례
+1. **충돌 해결 능력**: 충돌 해결에 익숙해지기
+2. **팀 정책 준수**: 조직의 Git 정책 이해 및 준수
+3. **도구 활용**: GUI 도구로 복잡한 작업 시각화
+4. **지속적 학습**: 새로운 Git 기능과 모범 사례 학습
+
+---
+
+## 학습을 위한 실습 예제
 
 ```bash
-# 준비
-
-mkdir cp-vs-rb && cd cp-vs-rb
+# 실습 환경 설정
+mkdir git-practice && cd git-practice
 git init
-echo v1 > app.txt
-git add . && git commit -m "init: v1"
+
+# 기본 파일 생성
+echo "Initial content" > file.txt
+git add file.txt
+git commit -m "Initial commit"
 git branch -M main
 
-# feature 브랜치
+# 기능 브랜치 생성
+git checkout -b feature/add-header
+echo "Header section" >> file.txt
+git commit -am "Add header"
+echo "Improved header" >> file.txt
+git commit -am "Improve header styling"
 
-git checkout -b feature/ui
-echo "ui=1" >> app.txt
-git commit -am "feat(ui): v1"
-echo "ui=2" >> app.txt
-git commit -am "feat(ui): v2"
+# 다른 기능 브랜치 생성
+git checkout -b feature/add-footer main
+echo "Footer section" >> file.txt
+git commit -am "Add footer"
 
-# main에서 ui의 v2만 cherry-pick
-
+# Cherry-pick 실습
 git checkout main
-git cherry-pick -x HEAD@{1}   # (예: 위에서 v2 sha 지정)
+# feature/add-header의 첫 번째 커밋만 적용
+git cherry-pick feature/add-header~1
 
-# 다시 feature/ui를 main 위로 rebase
-
-git checkout feature/ui
+# Rebase 실습
+git checkout feature/add-footer
 git rebase main
-# 충돌 시 해결 -> add -> rebase --continue
-
-# reflog 확인/복구 체험
-
-git reflog
+# 충돌 발생 시 해결 과정 연습
 ```
 
 ---
 
 ## 결론
 
-- **cherry-pick**은 **정밀 선택**이 장점: 필요한 커밋만 빠르게 백포트/반영. `-x`로 추적성 보강.
-- **rebase**는 **이력 선형화**가 장점: 리뷰와 bisect가 쉬워짐. 다만 공유 브랜치에는 신중.
-- 두 도구를 **목적에 맞게** 쓰되, 항상 **복구 전략(reflog/ORIG_HEAD/백업 브랜치)** 를 염두에 두면 실전 안정성이 크게 올라갑니다.
+Git의 cherry-pick과 rebase는 각각 고유한 강점을 가진 강력한 도구입니다. 이들을 효과적으로 사용하려면 각 도구의 특징, 장단점, 적절한 사용 시기를 이해하는 것이 중요합니다.
 
----
+### 핵심 요약
+1. **Cherry-pick**은 정밀한 선택이 필요할 때, **Rebase**는 전체적인 정리가 필요할 때 사용하세요.
+2. **안전성**을 고려하여 공유 브랜치에서는 cherry-pick을, 개인 브랜치에서는 rebase를 선호하세요.
+3. **복구 전략**을 항상 마련해두고, 중요한 작업 전에는 백업을 생성하세요.
+4. **팀 협업**을 위해 Git 워크플로우와 정책을 명확히 정의하고 준수하세요.
 
-## 참고
+### 최종 조언
+두 도구 모두 마스터하기 위해 꾸준한 실습이 필요합니다. 처음에는 작은 프로젝트나 실습 환경에서 시작하여 점차 복잡한 시나리오로 확장해나가세요. 각 도구의 미묘한 차이와 함정을 이해하면 실제 프로젝트에서 더 자신감 있게 사용할 수 있습니다.
 
-- Git cherry-pick: https://git-scm.com/docs/git-cherry-pick
-- Git rebase: https://git-scm.com/docs/git-rebase
+가장 중요한 것은 상황에 맞는 도구 선택입니다. 때로는 cherry-pick이 더 적합하고, 때로는 rebase가 더 나은 선택일 수 있습니다. 프로젝트의 요구사항, 팀의 워크플로우, 개인의 선호도를 종합적으로 고려하여 최적의 결정을 내리세요.
+
+Git은 강력한 도구이지만, 그 힘은 올바른 사용법을 아는 데서 비롯됩니다. cherry-pick과 rebase를 효과적으로 활용하면 더 깔끔한 코드 히스토리와 효율적인 협업 환경을 만들 수 있습니다.

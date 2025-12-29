@@ -356,6 +356,7 @@ jobs:
           docker push $IMAGE:latest
 ```
 {% endraw %}
+
 - 사설 CA 인증서는 GitHub Secrets에 PEM 문자열 형태로 저장합니다.
 
 ---

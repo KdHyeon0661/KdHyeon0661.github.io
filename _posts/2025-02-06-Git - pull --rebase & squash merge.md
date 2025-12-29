@@ -4,402 +4,240 @@ title: Git - pull --rebase & squash merge
 date: 2025-02-06 19:20:23 +0900
 category: Git
 ---
-# `git pull --rebase` 완벽 가이드 + GitHub `Squash and merge` 심화
+# `git pull --rebase`와 GitHub `Squash and merge` 완벽 가이드
 
-## 빠른 개요
+## 두 기능의 공통점: 깔끔한 히스토리
 
-- **`git pull --rebase`**: 원격의 최신 커밋을 가져온 뒤, **내 로컬 커밋들을 ‘꺼냈다가’ 최신 위로 다시 재생성**해 **선형 이력**을 만든다.
-- **GitHub `Squash and merge`**: PR 내 **여러 커밋을 하나의 커밋**으로 압축(squash)하여 병합한다.
-- 공통 목표: **히스토리 단순화**. 단, **디버깅/리그레션 추적의 단서가 줄어드는 대가**가 있다.
+`git pull --rebase`와 GitHub의 `Squash and merge`는 모두 Git 히스토리를 정리하고 단순화하는 데 사용됩니다. 각각 다른 상황에서 활용되지만, 목표는 동일합니다: 복잡한 브랜치 구조를 정리하여 프로젝트의 변경 이력을 이해하기 쉽게 만드는 것입니다.
 
 ---
 
-# `git pull --rebase`: 깔끔한 로컬 병합
+# Part 1: `git pull --rebase` 상세 가이드
 
-## 개념 복습
+## 기본 개념
+
+`git pull --rebase`는 원격 저장소의 최신 변경사항을 가져온 후, 로컬에서 작성한 커밋을 그 위에 "재배치"하는 방식으로 동작합니다. 이는 일반적인 `git pull`(merge 방식)과 다른 접근법을 제공합니다.
 
 ```bash
 git pull --rebase origin main
 ```
 
-동작 순서:
-1. 원격 `origin/main` 최신 커밋을 가져온다(fetch).
-2. 내 로컬 커밋을 **임시로 분리**한다.
-3. 원격 최신 커밋 위에 **내 커밋을 순서대로 재적용**한다.
-4. 충돌이 없으면 **선형(linear) 이력**이 된다.
+**작동 원리**:
+1. 원격 저장소(`origin/main`)에서 최신 커밋을 가져옵니다(fetch).
+2. 로컬의 커밋들을 일시적으로 제거합니다.
+3. 가져온 최신 커밋 위에 로컬 커밋들을 순서대로 다시 적용합니다.
+4. 충돌이 없으면 선형적인 히스토리가 생성됩니다.
 
-### 일반 `pull` vs `pull --rebase` 비교
+## 일반 pull vs pull --rebase 비교
 
-| 항목 | `git pull`(merge) | `git pull --rebase` |
-|---|---|---|
-| 병합 방식 | merge 커밋 생성 | rebase로 재배치 |
-| 히스토리 | 분기/병합 흔적 유지 | 선형으로 간결 |
-| 충돌 빈도 | 한 지점 | 커밋 단위로 반복 가능 |
-| 협업 난이도 | 낮음 | 주의 필요(해시 재작성) |
+| 특징 | `git pull` (Merge 방식) | `git pull --rebase` |
+|------|------------------------|---------------------|
+| **히스토리 형태** | 분기와 병합이 표시됨 | 선형적이고 깔끔함 |
+| **병합 커밋** | 생성됨 | 생성되지 않음 |
+| **충돌 처리** | 한 번에 처리 | 각 커밋별로 처리 가능 |
+| **협업 영향** | 안전함 | 주의 필요(커밋 해시 변경) |
 
----
+## 실전 사용법
 
-## 실전 옵션 — 모드, 자동 스태시, 반복 충돌 학습
-
-### `--rebase`의 모드
-
+### 기본 설정 (매번 옵션 입력 방지)
 ```bash
-git pull --rebase=merges        # merge 토폴로지를 보존하며 rebase
-git pull --rebase=interactive   # 대화형(reword/squash/fixup 등)
-git pull --rebase               # true와 동일(선형 이력 목적)
-git pull --rebase=false         # 평소처럼 merge
-```
-- 팀에 **선형 이력** 규칙이 있다면 `true` 또는 `merges`를 조직 표준으로.
+# pull 기본 동작을 rebase로 설정
+git config --global pull.rebase true
 
-### 변경 보관: `--autostash` / 자동 설정
-
-```bash
-git pull --rebase --autostash
+# rebase 시 자동으로 변경사항 임시 저장
 git config --global rebase.autoStash true
-```
-- 워킹 디렉터리에 미커밋 변경이 있을 때 자동으로 stash/복원.
 
-### 반복 충돌 자동 해결 힌트: `rerere`
-
-```bash
+# 반복되는 충돌 해결 자동화
 git config --global rerere.enabled true
 ```
-- 이전에 해결한 **동일 패턴의 충돌**을 학습하여 재적용(검토 후 커밋).
 
----
-
-## 충돌 처리 루틴(필수 루프)
-
+### 충돌 해결 과정
+rebase 도중 충돌이 발생하면 다음과 같이 처리합니다:
 ```bash
+# 충돌 발생 시
 git pull --rebase
-# 충돌 발생 시:
-# 해결
 
-git add <수정파일>
+# 충돌이 발생한 파일을 편집하여 해결
+# 파일 수정 후...
+git add 수정한파일.txt
+
+# rebase 계속 진행
 git rebase --continue
 
 # 현재 커밋 건너뛰기
+# git rebase --skip
 
-git rebase --skip
-
-# 전체 중단(시작 전으로 복귀)
-
-git rebase --abort
+# rebase 중단 (원래 상태로 복구)
+# git rebase --abort
 ```
 
-### 파일 단위 빠른 선택(전체 채택)
-
+### 빠른 해결 옵션
 ```bash
-git checkout --ours   path/to/file   # 현재 브랜치 쪽 선택
-git checkout --theirs path/to/file   # 원격(적용 대상) 쪽 선택
-git add path/to/file
-```
+# 현재 브랜치의 버전 선택
+git checkout --ours 파일명
 
-> GUI 선호 시:
-> ```bash
-> git config --global merge.tool meld   # 또는 kdiff3, vscode 등
-> git mergetool
-> ```
+# 원격 브랜치의 버전 선택
+git checkout --theirs 파일명
 
----
-
-## 재현 가능한 실습(로컬에서 그대로 따라하기)
-
-```bash
-# 실습 레포 초기화
-
-rm -rf pull-rebase-lab && mkdir pull-rebase-lab && cd pull-rebase-lab
-git init
-git config user.name  "lab"
-git config user.email "lab@example.com"
-git branch -M main
-
-echo "line 1" > app.txt
-git add . && git commit -m "init: line 1"
-git remote add origin https://example.com/your/repo.git    # 예시 URL(실사용 시 교체)
-
-# 원격 시뮬레이션 없이도 체험:
-# main에서 커밋 추가(원격 최신이라고 가정)
-
-git checkout -b temp
-echo "upstream 2" >> app.txt
-git commit -am "feat: upstream 2"
-git checkout main
-git merge --ff-only temp
-
-# 로컬에서 작업 커밋 만들어 충돌 유도
-
-git checkout -b feature/line
-echo "local 2" >> app.txt
-git commit -am "feat: local 2"
-
-# 이제 "원격 최신(main)" 위로 내 커밋 재배치
-
-git checkout feature/line
-git rebase main   # 충돌이 나도록 일부러 같은 줄을 수정해도 됨
-# 충돌 해결 → add → rebase --continue
-
-```
-
----
-
-## 기본/전역 설정(매번 타이핑 방지)
-
-```bash
-# pull 기본을 rebase로
-
-git config --global pull.rebase true
-
-# pull 시 자동 스태시
-
-git config --global rebase.autoStash true
-
-# 브랜치 생성 시 자동 추적+rebase
-
-git config --global branch.autosetuprebase always
-```
-
-> 팀/레포 단위 설정은 `--global` 대신 **레포 로컬**에서 동일 명령을 실행.
-
----
-
-## CI·보호 브랜치·협업 규칙과의 상호작용
-
-- **보호 브랜치(Protected Branch)**: Required status checks(테스트/린트/빌드), Required reviews, Linear history 등이 설정되어 있으면 **rebase 후 강제 푸시가 제한**될 수 있음.
-- PR 워크플로우:
-  - 선형 이력을 강제하는 팀: 로컬에서 `git pull --rebase` → 충돌 해결 → push
-  - rebase 후 원격에 올릴 때는 **`git push --force-with-lease`** 사용(동료 커밋 보호).
-- CI 실패 시: 로컬에서 테스트/포맷 확인 후 재푸시.
-
----
-
-## 장단점·리스크·회피법
-
-| 항목 | 장점 | 단점/리스크 | 회피/보완 |
-|---|---|---|---|
-| 이력 | 선형/간결 | 맥락(분기 흔적) 약화 | PR 설명·range-diff로 보완 |
-| 협업 | 로컬 정리 유리 | 공유 브랜치 rebase 위험 | **개인 브랜치**에서만 rebase |
-| 충돌 | 반복 해결에 유리(rerere) | 커밋마다 충돌 가능 | rerere/mergetool/ours-theirs |
-| 복구 | reflog/ORIG_HEAD | 실수 시 손상 가능 | 백업 태그/브랜치, `--abort` 습관 |
-
-복구 비상키:
-```bash
-git reflog
-git reset --hard ORIG_HEAD
-git switch -c rescue HEAD@{2}
-```
-
----
-
-# GitHub `Squash and merge` 심화
-
-## 개념 복습
-
-- PR의 **모든 커밋을 단 하나의 커밋으로 압축**해 base 브랜치에 병합.
-- 결과: **히스토리 단순화**(기능 단위 1커밋).
-- 대가: **세부 커밋의 추적성**은 줄어듦(디버깅 시 granularity 감소).
-
----
-
-## 실전 흐름
-
-1) PR에서 **Squash and merge** 선택
-2) GitHub가 **커밋 메시지 편집 창**을 제공
-3) 메시지를 기능 단위로 정리
-4) **Confirm squash and merge** 클릭 → base에 **단일 커밋** 생성
-
-예시(정리 전):
-
-```
-feat: 로그인 폼 생성
-fix: 버튼 스타일 수정
-refactor: 네이밍 변경
-```
-
-정리 후(최종 커밋 메시지):
-
-```
-feat(auth): 로그인 화면 구현
-- 로그인 폼 생성
-- 버튼 스타일 조정
-- 필드 네이밍 정리
-```
-
----
-
-## 메시지 규칙·트레일러(Co-authored-by, Signed-off-by)
-
-- 다수 기여자를 **Co-authored-by** 트레일러로 유지:
-```
-Co-authored-by: Alice <alice@example.com>
-Co-authored-by: Bob <bob@example.com>
-```
-
-- DCO 정책 사용 시 **Signed-off-by** 유지:
-```
-Signed-off-by: Your Name <you@example.com>
-```
-
-- 컨벤션(Conventional Commits) 예:
-```
-feat(ui): add login page
-
-- email/password fields
-- validation and tests
-
-Co-authored-by: Alice <alice@example.com>
-Signed-off-by: You <you@example.com>
-```
-
-> PR 템플릿/CI 체크로 메시지 포맷을 표준화하면 품질이 올라간다.
-
----
-
-## 장단점·선택 기준
-
-| 항목 | 장점 | 단점 |
-|---|---|---|
-| 히스토리 | 매우 깔끔 | 세부 커밋의 맥락 손실 |
-| 코드리뷰 | 기능 단위로 병합 | bisect·세밀 회귀 추적 어려움 |
-| 기여도 | Co-authored-by로 보존 가능 | 커밋 단위의 구분 사라짐 |
-
-**권장 상황**
-- 개인/작은 팀, 기능 단위 릴리즈가 중요한 저장소
-- 오픈소스에서 PR을 기능 단위로 관리하고 싶은 경우
-- 리뷰 과정에서 잔 커밋(fixup, nit)을 정리하고 싶은 경우
-
-**피하는 편이 좋은 상황**
-- **bisect**로 세밀 추적이 빈번한 핵심 저장소
-- 규정상 커밋 단위 증적이 필요한 조직
-
----
-
-## 충돌과 보호 브랜치 정책
-
-- Squash and merge 전에 **PR 충돌이 없어야** 병합 버튼이 활성화된다.
-- 보호 브랜치의 **Required status checks**, **Required reviews**, **Linear history** 등에 따라 병합이 **보류/거부**될 수 있다.
-- 충돌이 있으면 웹 Resolve conflicts 또는 **로컬에서 해결 후 푸시**(PR 업데이트) → 체크 통과 후 squash.
-
----
-
-## CLI/자동화(옵션)
-
-- GitHub CLI:
-```bash
-# Squash merge
-
-gh pr merge <PR_NUMBER> --squash --admin
-# 메시지를 자동 생성/편집하려면 --body 옵션 병행
-
-```
-
-- 병합 전략 제어는 저장소 설정에서 허용/차단 가능
-  (Create a merge commit / Squash and merge / Rebase and merge).
-
----
-
-## 재현 가능한 PR 시뮬레이션(로컬 → GitHub)
-
-```bash
-# 로컬 새 레포
-
-rm -rf squash-lab && mkdir squash-lab && cd squash-lab
-git init
-git config user.name  "lab"
-git config user.email "lab@example.com"
-git branch -M main
-echo "v1" > README.md
-git add . && git commit -m "chore: init"
-
-# 기능 브랜치 커밋 여러 개
-
-git checkout -b feature/login
-echo "- login form" >> README.md
-git commit -am "feat: login form"
-echo "- button style" >> README.md
-git commit -am "fix: button style"
-echo "- rename vars" >> README.md
-git commit -am "refactor: rename vars"
-
-# 원격 생성 및 푸시(실제 사용 시 본인 리포로 교체)
-#   gh repo create <owner>/<name> --public --source=. --push
-#   gh pr create --fill --base main --head feature/login
-
-# PR 화면에서 Squash and merge 선택 →
-#    최종 메시지 정리 → Confirm.
-
-```
-
----
-
-# 종합 체크리스트
-
-### A. `git pull --rebase`
-
-- [ ] 개인 브랜치에서만 사용(공유 브랜치 rebase 금지)
-- [ ] `pull.rebase=true`, `rebase.autoStash=true` 설정
-- [ ] 충돌 시 `edit → add → rebase --continue`
-- [ ] 반복 충돌은 `rerere.enabled=true`
-- [ ] 문제 발생 시 `reflog`, `ORIG_HEAD` 로 복구
-- [ ] 푸시는 `--force-with-lease`
-
-### B. `Squash and merge`
-
-- [ ] 메시지 정리(Conventional Commits 권장)
-- [ ] Co-authored-by, Signed-off-by 트레일러 유지
-- [ ] 보호 브랜치 정책/CI 체크 통과 확인
-- [ ] 충돌은 웹/로컬에서 해소 후 병합
-- [ ] bisect/세밀 추적 필요 저장소라면 신중히
-
----
-
-# 명령어 요약
-
-```bash
-# pull --rebase 기본
-
-git pull --rebase
-git pull --rebase=merges
-git pull --rebase=interactive
-git pull --rebase --autostash
-
-# 설정
-
-git config --global pull.rebase true
-git config --global rebase.autoStash true
-git config --global rerere.enabled true
-git config --global branch.autosetuprebase always
-
-# 충돌 루틴
-
-git status
-git checkout --ours   <path>
-git checkout --theirs <path>
+# 시각적 병합 도구 사용
 git mergetool
-git add <path>
-git rebase --continue | --skip | --abort
+```
 
-# 복구 비상키
+## 주의사항과 모범 사례
 
-git reflog
-git reset --hard ORIG_HEAD
-git switch -c rescue HEAD@{N}
+### 언제 사용해야 할까요?
+- **개인 작업 브랜치**에서 메인 브랜치와 동기화할 때
+- 깔끔한 선형 히스토리를 유지하고 싶을 때
+- 불필요한 병합 커밋을 피하고 싶을 때
+
+### 피해야 할 상황
+- **공유 브랜치**에서는 사용하지 마세요 (다른 사람의 작업에 영향을 줄 수 있음)
+- 이미 원격에 푸시된 커밋을 rebase하면 다른 협업자에게 문제를 일으킬 수 있습니다
+
+### 안전한 사용을 위한 팁
+```bash
+# 강제 푸시 시 다른 사람의 작업을 보호
+git push --force-with-lease
+
+# 실수했을 때 복구 방법
+git reflog  # 작업 기록 확인
+git reset --hard ORIG_HEAD  # rebase 이전 상태로 복구
 ```
 
 ---
 
-## 결론
+# Part 2: GitHub `Squash and merge` 심화 가이드
 
-- **`git pull --rebase`** 는 로컬 협업의 마찰을 줄이고 **선형 이력**을 만든다.
-- **`Squash and merge`** 는 PR을 **기능 단위 1커밋**으로 정리해 읽기 쉬운 히스토리를 만든다.
-- 두 전략 모두 “깔끔한 히스토리”라는 공통 목표를 가지지만, **세부 추적성 감소**라는 대가가 있다.
-- 팀의 **보호 브랜치 정책/CI/리뷰 문화**와 맞춰, 언제 **rebase**를 쓰고 언제 **squash**를 쓰는지 **명확한 기준**을 문서화하면 가장 강력하다.
+## 기본 개념
+
+GitHub의 `Squash and merge` 기능은 Pull Request의 모든 커밋을 하나의 커밋으로 압축하여 메인 브랜치에 병합합니다. 이는 기능 개발 과정에서 생성된 여러 개의 작은 커밋을 논리적인 단위로 통합하는 데 유용합니다.
+
+## 사용 방법
+
+1. GitHub에서 Pull Request 페이지로 이동합니다.
+2. **Squash and merge** 버튼을 클릭합니다.
+3. GitHub가 모든 커밋 메시지를 하나로 합친 편집창을 보여줍니다.
+4. 최종 커밋 메시지를 적절히 정리합니다.
+5. **Confirm squash and merge**를 클릭하여 병합을 완료합니다.
+
+### 커밋 메시지 작성 예시
+
+**병합 전 개별 커밋**:
+```
+feat: 로그인 폼 UI 구현
+fix: 버튼 색상 오류 수정
+refactor: 컴포넌트 구조 개선
+```
+
+**Squash 후 최종 메시지**:
+```
+feat(auth): 로그인 화면 구현 완료
+
+- 기본 로그인 폼 UI 구현
+- 버튼 색상 오류 수정
+- 컴포넌트 구조 리팩토링
+
+Co-authored-by: 동료이름 <email@example.com>
+```
+
+### 중요한 메타데이터 유지
+
+Squash and merge 시에도 중요한 정보는 유지할 수 있습니다:
+- **Co-authored-by**: 여러 사람이 함께 작업한 경우
+- **Signed-off-by**: DCO(Developer Certificate of Origin) 정책이 있는 경우
+- **Issue 참조**: `Closes #123` 같은 이슈 링크
+
+## 장단점 분석
+
+### 장점
+- **히스토리 단순화**: 기능 단위로 명확한 커밋 히스토리 유지
+- **가독성 향상**: 메인 브랜치의 히스토리가 깔끔해짐
+- **리뷰 단위 명확화**: 하나의 PR이 하나의 논리적 변경으로 표시
+
+### 단점
+- **세부 이력 손실**: 개별 커밋의 맥락이 사라짐
+- **디버깅 어려움**: `git bisect` 등으로 특정 변경을 추적하기 어려울 수 있음
+- **기여도 추적**: 개별 커밋별 기여도 파악이 어려움
+
+## 실무 적용 가이드
+
+### 적합한 상황
+- 기능 개발 단위가 명확한 프로젝트
+- 오픈소스 프로젝트에서 외부 기여자 PR 처리
+- 작은 규모의 팀이나 프로젝트
+
+### 부적합한 상황
+- 디버깅과 회귀 테스트가 빈번한 프로젝트
+- 규제 준수를 위해 모든 변경 사항을 추적해야 하는 경우
+- 대규모 엔터프라이즈 프로젝트
 
 ---
 
-## 참고
+# Part 3: 두 기능의 통합 활용 전략
 
-- Git Docs — `git pull` (`--rebase`)
-  https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---rebase
-- GitHub Docs — Merge a PR (Squash and merge)
-  https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/merging-a-pull-request#squash-and-merge
+## 로컬 개발 워크플로우 예시
+
+개발자가 로컬에서 작업할 때의 이상적인 워크플로우는 다음과 같을 수 있습니다:
+
+```bash
+# 1. 메인 브랜치에서 시작
+git checkout main
+git pull --rebase origin main
+
+# 2. 기능 브랜치 생성
+git checkout -b feature/new-login
+
+# 3. 여러 커밋으로 작업
+# ... 작업 중 ...
+git commit -m "feat: 로그인 폼 기본 구조"
+git commit -m "fix: 입력 유효성 검사"
+git commit -m "style: 반응형 디자인 개선"
+
+# 4. PR 생성 전 메인 브랜치와 동기화
+git pull --rebase origin main
+
+# 5. GitHub에 PR 생성
+git push origin feature/new-login
+```
+
+## GitHub에서의 처리
+
+PR 리뷰가 완료되면:
+1. 팀원들이 코드 리뷰를 완료합니다.
+2. 모든 CI 테스트가 통과합니다.
+3. **Squash and merge**를 선택하여 기능을 통합합니다.
+4. 깔끔한 단일 커밋으로 메인 브랜치에 병합됩니다.
+
+## 팀 정책 수립
+
+효과적인 협업을 위해 팀 단위의 정책을 수립하는 것이 중요합니다:
+
+### 권장 정책
+1. **개인 브랜치에서는 `pull --rebase` 사용**: 로컬 히스토리 정리
+2. **공유 브랜치에서는 일반 `pull` 사용**: 안정성 유지
+3. **PR 병합 전략 통일**: 팀 합의하에 Squash or Merge 결정
+4. **커밋 메시지 컨벤션**: Conventional Commits 등 표준 채택
+
+### GitHub 설정
+저장소 설정에서 다음을 구성할 수 있습니다:
+- 허용할 병합 방법 선택
+- 기본 병합 방법 설정
+- 브랜치 보호 규칙 설정
+
+---
+
+# 마무리
+
+`git pull --rebase`와 GitHub의 `Squash and merge`는 현대적인 Git 워크플로우의 핵심 도구입니다. 이 둘을 적절히 활용하면 프로젝트의 히스토리를 깔끔하게 유지하면서도 효율적인 협업을 이어갈 수 있습니다.
+
+## 핵심 요약
+
+1. **`git pull --rebase`**는 로컬 작업 흐름을 개선하는 도구입니다. 개인 브랜치에서 사용하면 선형적이고 이해하기 쉬운 히스토리를 만들 수 있습니다.
+
+2. **GitHub `Squash and merge`**는 팀 협업을 개선하는 도구입니다. PR 단위로 논리적인 변경을 기록하여 메인 브랜치의 가독성을 높입니다.
+
+3. **적절한 균형**이 중요합니다. 히스토리의 깔끔함과 디버깅을 위한 세부 정보 사이에서 팀의 요구에 맞는 균형점을 찾으세요.
+
+4. **팀 합의**가 필수입니다. 어떤 상황에서 어떤 도구를 사용할지 팀원들과 논의하고 문서화하세요.
+
+이 도구들을 마스터하는 것은 단순한 기술 습득 이상의 의미가 있습니다. 이는 더 나은 협업 문화, 더 명확한 코드 히스토리, 그리고 궁극적으로 더 높은 코드 품질로 이어집니다. 처음에는 조금 복잡하게 느껴질 수 있지만, 일단 익숙해지면 개발 워크플로우의 효율성을 크게 향상시킬 수 있는 강력한 도구가 됩니다.

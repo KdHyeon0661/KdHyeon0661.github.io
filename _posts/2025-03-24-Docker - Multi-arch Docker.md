@@ -285,6 +285,7 @@ docker buildx build \
 
 ### 매니페스트 검증
 
+{% raw %}
 ```bash
 # 태그에 포함된 모든 아키텍처 확인
 docker buildx imagetools inspect yourusername/app:1.0.0
@@ -293,6 +294,7 @@ docker buildx imagetools inspect yourusername/app:1.0.0
 docker buildx imagetools inspect yourusername/app:1.0.0 \
   --format "{{ json . }}"
 ```
+{% endraw %}
 
 ---
 
@@ -616,6 +618,7 @@ docker buildx bake --set app.tags=yourusername/app:2.0.0 --push
 
 ### 모니터링과 알림
 
+{% raw %}
 ```bash
 # 이미지 업데이트 확인
 docker buildx imagetools inspect yourusername/app:latest
@@ -624,6 +627,7 @@ docker buildx imagetools inspect yourusername/app:latest
 docker buildx imagetools inspect yourusername/app:latest \
   --format '{{range .Manifests}}{{.Digest}} {{.Platform}} {{.Size}} bytes{{"\n"}}{{end}}'
 ```
+{% endraw %}
 
 ### 재현 가능한 빌드
 

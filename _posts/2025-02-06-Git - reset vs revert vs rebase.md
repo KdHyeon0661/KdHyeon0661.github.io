@@ -4,531 +4,489 @@ title: Git - reset vs revert vs rebase
 date: 2025-02-06 19:20:23 +0900
 category: Git
 ---
-# Git: `reset` vs `revert` vs `rebase`
+# Git: Reset, Revert, Rebase 비교 가이드
 
-## 기초 복습 — Git의 3가지 “상태”
+## Git의 세 가지 상태 이해
 
-- **HEAD**: 현재 체크아웃한 커밋(정확히는 브랜치 참조 또는 detached HEAD의 커밋)을 가리키는 포인터
-- **Index(= Staging area)**: 다음 커밋을 만들기 위해 모아둔 스냅샷
-- **Working tree**: 실제 파일이 있는 작업 디렉터리
+Git 작업을 효과적으로 관리하려면 다음 세 가지 상태를 이해하는 것이 중요합니다:
 
-명령어들은 주로 이 세 영역을 어떻게 “옮기고/맞추는지”로 구분할 수 있습니다.
+1. **HEAD**: 현재 체크아웃된 커밋을 가리키는 포인터 (현재 작업 위치)
+2. **Index (Staging Area)**: 다음 커밋에 포함될 변경사항들이 모이는 공간
+3. **Working Tree**: 실제 파일들이 존재하는 작업 디렉토리
+
+이 세 도구(reset, revert, rebase)는 각각 이 상태들을 다르게 조작합니다.
 
 ---
 
-# `git reset` — 과거로 포인터를 되돌리는 강력하고 위험한 도구
+## Git Reset: 히스토리 포인터 재설정
 
-## 개념(복습 강화)
+### 기본 개념
+`git reset`은 브랜치 포인터(HEAD)를 과거의 특정 커밋으로 이동시키고, 선택한 옵션에 따라 Index와 Working Tree의 상태를 조정합니다.
 
-`reset`은 **브랜치 포인터(HEAD)** 를 과거의 커밋로 이동시키고, 옵션에 따라 **Index / Working tree**를 그 상태로 **맞춥니다**.
+### 세 가지 주요 모드
 
-- **--soft**: HEAD(브랜치)만 이동. Index와 Working tree 는 **그대로** 유지
-- **--mixed**(기본): HEAD + Index 초기화(해당 범위 변경이 unstaged 로). Working tree 는 유지
-- **--hard**: HEAD + Index + Working tree 를 **모두** 지정 커밋 상태로 **초기화**(변경 삭제)
-
-## 시각적 이해
-
-```
-A---B---C---D   (main, HEAD)
-
-# reset --soft B
-
-B   (main, HEAD)
- \__ [C,D의 변경은 Index에 남아있음: 재커밋 가능]
-
-# reset --mixed B
-
-B   (main, HEAD)
- \__ [C,D의 변경은 Working tree에만 남음: untracked 변경처럼 보임]
-
-# reset --hard B
-
-B   (main, HEAD)            # C,D에서 변경된 파일은 Working tree에서도 사라짐
-```
-
-## 사용 예제(요청 내용 확장)
-
-최근 커밋을 되돌리고 다시 커밋하고 싶을 때:
+#### 1. `--soft` (가장 안전)
 ```bash
-# 마지막 커밋을 취소하고, 변경은 그대로 유지(Index에 남김)
-
 git reset --soft HEAD~1
-git commit -m "메시지 수정 후 다시 커밋"
+```
+- **동작**: HEAD만 이전 커밋으로 이동
+- **영향**: Index와 Working Tree는 변경되지 않음
+- **사용처**: 최근 커밋 메시지 수정, 커밋 분할을 위한 준비
 
-# 마지막 커밋 취소 + 스테이징 해제(Working tree에는 변경 유지)
-
+#### 2. `--mixed` (기본값)
+```bash
 git reset --mixed HEAD~1
-git add -p
-git commit -m "부분만 다시 선택해 커밋"
+```
+- **동작**: HEAD와 Index를 이전 커밋 상태로 재설정
+- **영향**: 변경사항은 Working Tree에 남아 있음 (unstaged 상태)
+- **사용처**: 커밋을 재구성하거나 부분적으로 다시 커밋할 때
 
-# 모든 변경 완전 폐기(주의)
-
+#### 3. `--hard` (가장 위험)
+```bash
 git reset --hard HEAD~1
 ```
+- **동작**: HEAD, Index, Working Tree 모두를 이전 커밋 상태로 재설정
+- **영향**: 모든 변경사항이 완전히 삭제됨
+- **사용처**: 실험적인 변경사항 완전히 폐기
 
-## 위험도와 협업상의 금기
+### 시각적 이해
+```
+초기 상태:
+A---B---C---D (main, HEAD)
 
-- 공개/공유 브랜치(동료가 pull 해 가는 브랜치)에서 **reset으로 히스토리를 바꾸면** 동료의 이력이 꼬입니다.
-- 특히 `--hard`는 Working tree 변경까지 삭제하므로 **돌이키기 매우 어려운 실수**가 될 수 있습니다.
+--soft 사용 후:
+A---B---C (main, HEAD)
+         \
+          D (변경사항은 Index에 남음)
 
-## 실수 복구(필수)
+--mixed 사용 후:
+A---B---C (main, HEAD)
+         \
+          D (변경사항은 Working Tree에만 남음)
 
+--hard 사용 후:
+A---B---C (main, HEAD)  # D의 모든 변경사항 완전 삭제
+```
+
+### 실용적 예제
+
+**커밋 메시지 수정하기:**
 ```bash
-# 최근 이동/변경의 기록(로컬 참조 기록)
+# 최근 커밋 취소 (변경사항 유지)
+git reset --soft HEAD~1
 
+# 새 메시지로 커밋
+git commit -m "수정된 커밋 메시지"
+```
+
+**커밋을 여러 개로 분할하기:**
+```bash
+# 최근 커밋을 unstaged 상태로 분해
+git reset --mixed HEAD~1
+
+# 변경사항을 선택적으로 스테이징
+git add -p
+
+# 각 부분을 별도로 커밋
+git commit -m "첫 번째 부분"
+git commit -m "두 번째 부분"
+```
+
+### 위험성과 주의사항
+- **공유 브랜치 금지**: 이미 푸시된 브랜치에서 reset을 사용하면 협업자들의 히스토리가 손상됩니다.
+- **복구 가능성**: `--hard`는 Working Tree 변경까지 삭제하므로 복구가 어려울 수 있습니다.
+- **백업 습관**: 중요한 작업 전에는 항상 백업 브랜치를 생성하세요.
+
+### 실수 복구 방법
+```bash
+# 최근 작업 기록 확인
 git reflog
 
-# reset 직전 상태로 복구(ORIG_HEAD는 일부 작업에서 이전 HEAD를 가리킴)
-
+# 직전 상태로 복구
 git reset --hard ORIG_HEAD
 
-# 또는 reflog에서 원하는 시점으로 복귀
+# 특정 시점으로 복구
+git reset --hard HEAD@{3}
 
-git reset --hard HEAD@{2}
-
-# 안전하게 별도 브랜치 만들어 백업
-
-git switch -c rescue HEAD@{2}
+# 안전한 복구 (새 브랜치 생성)
+git switch -c rescued-branch HEAD@{2}
 ```
 
 ---
 
-# `git revert` — 기존 커밋은 보존하고 “반대 동작 커밋”을 쌓는 방법
+## Git Revert: 안전한 변경 취소
 
-## 개념(복습 강화)
+### 기본 개념
+`git revert`는 특정 커밋의 변경사항을 반대로 적용하는 새로운 커밋을 생성합니다. 기존 히스토리는 그대로 유지되므로 협업 환경에서 가장 안전한 방법입니다.
 
-`revert`는 지정 커밋의 변경을 **반대로 적용하는 새 커밋**을 생성합니다.
-즉, **히스토리는 보존**하면서도 “취소했다”는 기록이 남습니다. 협업·감사 추적에 **가장 안전**합니다.
-
-## 기본 예제
-
+### 기본 사용법
 ```bash
-# 1개 커밋 취소
+# 단일 커밋 취소
+git revert abc1234
 
-git revert 9fceb02
-
-# 범위 되돌리기(HEAD 포함 최근 3개)
-
+# 여러 커밋 범위 취소
 git revert HEAD~3..HEAD
 ```
 
-## Merge 커밋을 되돌릴 때(중요)
-
-Merge 커밋을 revert 하려면 **어느 부모를 기준으로 반전할지** 지정해야 합니다.
+### 병합 커밋 되돌리기
+병합 커밋을 되돌릴 때는 어느 부모 브랜치를 기준으로 할지 지정해야 합니다:
 ```bash
-# -m 1: 첫 번째 부모(main 쪽)를 기준으로 revert
-
-git revert -m 1 <merge-commit-id>
+# 첫 번째 부모(main 브랜치) 기준으로 revert
+git revert -m 1 merge-commit-id
 ```
-- 잘못 지정하면 원치 않는 대량 변경이 반영될 수 있으니, **실험 브랜치에서 먼저 검증**하세요.
 
-## 충돌 처리
+**중요**: 복잡한 병합 상황에서는 테스트 브랜치에서 먼저 시도해보는 것이 좋습니다.
 
-`revert`도 내부적으로 patch를 적용하므로 충돌이 날 수 있습니다.
+### 충돌 처리
 ```bash
-# 충돌 시:
-# 파일 수정 → 마커 제거 → add
-
-git add <files>
+# revert 실행 중 충돌 발생 시
+# 1. 충돌 파일 수정
+# 2. 수정사항 스테이징
+git add filename
+# 3. revert 계속 진행
 git revert --continue
 
-# 중단
-
+# revert 취소
 git revert --abort
 ```
 
-## 되돌린 커밋을 다시 되돌리기(“revert of revert”)
-
+### Revert 되돌리기
+revert 커밋 자체를 되돌려 원래 변경사항을 복원할 수 있습니다:
 ```bash
-git revert <revert-commit-id>
+git revert revert-commit-id
 ```
-- 원래 변경이 복원됩니다(상황에 따라 충돌/검토 필요).
 
 ---
 
-# `git rebase` — 커밋을 다른 기반 위로 “재생성”하여 히스토리를 정렬
+## Git Rebase: 히스토리 재배치
 
-## 개념(복습 강화)
+### 기본 개념
+`git rebase`는 현재 브랜치의 커밋들을 다른 브랜치의 최신 커밋 위로 재배치합니다. 이를 통해 병합 커밋 없이 선형적인 히스토리를 만들 수 있습니다.
 
-`rebase`는 **현재 브랜치의 커밋들을 다른 브랜치의 끝으로 재배치**합니다.
-장점: 병합 커밋 없이 **선형 이력**을 만들 수 있음
-단점: 커밋이 **재작성**되므로 해시가 바뀌고, 공유 브랜치에서는 혼란의 원인이 됨
-
-## 기본 예제
-
+### 기본 사용법
 ```bash
-git checkout feature
+# 현재 브랜치를 main 브랜치 기준으로 rebase
+git checkout feature-branch
 git rebase main
 ```
-- `feature` 위 커밋들이 `main` 끝으로 순서대로 재적용됩니다.
 
-## 인터랙티브 rebase로 “정리”
-
+### 인터랙티브 Rebase
+히스토리를 정리하는 강력한 방법:
 ```bash
+# 최근 5개 커밋 정리
 git rebase -i HEAD~5
-# pick, reword, edit, squash, fixup, drop 등을 통해 커밋 정리
-
 ```
 
-### squash / fixup 자동화(추천)
+편집기에서 사용 가능한 명령어:
+- `pick`: 커밋 유지
+- `reword`: 커밋 메시지 수정
+- `edit`: 커밋 내용 수정
+- `squash`: 이전 커밋과 합치기
+- `fixup`: 이전 커밋과 합치기 (메시지 무시)
+- `drop`: 커밋 삭제
 
+### 자동 스쿼시
 ```bash
-# 커밋 메시지에 fixup!/squash! 프리픽스 사용 후
-
+# fixup! 또는 squash! 접두사가 있는 커밋 자동 정렬
 git rebase -i --autosquash HEAD~10
 ```
 
-## 병합 토폴로지를 살리며 rebase(고급)
+### 고급 기능
 
+#### 특정 커밋 범위 이동
 ```bash
+# A 커밋 이후부터 B 커밋까지를 new-base 위로 이동
+git rebase --onto new-base A B
+```
+
+#### 병합 구조 보존
+```bash
+# 병합 커밋 구조를 유지하면서 rebase
 git rebase --rebase-merges main
 ```
-- 단순 선형화가 아니라 서브토픽 브랜치의 구조적 관계를 보존하며 재배치
 
-## pull.rebase 설정
-
+### Pull 시 Rebase 설정
 ```bash
+# pull 시 항상 rebase 사용
 git config --global pull.rebase true
+
+# 또는 수동 실행
 git pull --rebase
 ```
-- 팀에서 **선형 히스토리**를 선호한다면 기본으로 설정해두면 편리합니다.
 
-## 충돌 처리 루틴
-
+### 충돌 처리
 ```bash
-git rebase main
-# 충돌 → 파일 수정 → add
-
+# rebase 중 충돌 발생 시
+# 1. 충돌 파일 수정
+# 2. 수정사항 스테이징
+git add filename
+# 3. rebase 계속 진행
 git rebase --continue
 
-# 현재 커밋 건너뛰기
-
-git rebase --skip
-
-# 전체 중단
-
+# rebase 취소
 git rebase --abort
+
+# 현재 커밋 건너뛰기
+git rebase --skip
 ```
 
 ---
 
-# reset vs revert vs rebase — 본질적 차이와 안전 지침
+## 세 도구 비교 분석
 
-## 목적/영향/안전성(강화 표)
+### 목적과 특징
 
-| 항목 | `reset` | `revert` | `rebase` |
-|---|---|---|---|
-| 목표 | 과거로 포인터 이동(히스토리 되돌림) | 지정 커밋을 “반대로” 적용하는 새 커밋 | 커밋을 다른 기반 위로 재배치(히스토리 정리) |
-| 히스토리 변경 | O(참조 재작성) | X(보존) | O(재작성: 해시 변경) |
-| 안전성(협업) | 낮음(로컬/개인 브랜치 권장) | 높음(공유 브랜치 권장) | 중간(공유 브랜치 지양) |
-| Working tree 영향 | 옵션에 따라 변경 삭제 가능 | 변경 없음(새 커밋만 추가) | 파일 재적용 과정에서 충돌 가능 |
-| 사용 예 | 최근 커밋 취소/분해/재커밋 | 운영에서 문제된 커밋 빠르게 되돌리기 | 기능 브랜치 정리, 선형 히스토리 유지 |
-| 복구 난이도 | 높음(잘못하면 손실 위험) | 낮음(기록 남음) | 중간(충돌/강제푸시 동반) |
+| 항목 | Reset | Revert | Rebase |
+|------|-------|--------|--------|
+| **주요 목적** | 히스토리 포인터 재설정 | 변경사항 반전 커밋 생성 | 커밋 재배치 및 히스토리 정리 |
+| **히스토리 변경** | 예 (포인터 이동) | 아니오 (새 커밋 추가) | 예 (커밋 재작성) |
+| **협업 안전성** | 낮음 (로컬 전용) | 높음 (공유 브랜치 적합) | 중간 (공유 브랜치 주의) |
+| **변경 영향** | 옵션에 따라 다양 | Working Tree 영향 없음 | 파일 재적용 과정 필요 |
+| **사용 예시** | 로컬 커밋 수정 | 운영 중 문제 커밋 취소 | PR 전 히스토리 정리 |
 
-## 추천 시나리오(요청 표 확장)
+### 상황별 추천 도구
 
-| 상황 | 추천 |
-|---|---|
-| 최근 커밋 메시지만 바꾸고 싶다 | `git reset --soft HEAD~1` → 다시 커밋 |
-| 최근 커밋을 나눠서 부분만 재커밋 | `git reset --mixed HEAD~1` → `git add -p` |
-| 협업 중 실수 커밋을 취소 | `git revert <커밋>` |
-| 기능 브랜치 정리 후 깔끔히 머지 | `git rebase -i` 또는 GitHub `Rebase and merge` |
-| 팀 정책상 병합 커밋 금지(선형 이력) | `git pull --rebase`, 보호 브랜치 `Require linear history` |
+| 상황 | 추천 도구 | 이유 |
+|------|-----------|------|
+| **로컬 커밋 메시지 수정** | `reset --soft` | 변경사항 유지하면서 메시지만 수정 |
+| **커밋을 여러 부분으로 분할** | `reset --mixed` | 변경사항을 선택적으로 재커밋 가능 |
+| **실험적 변경 완전 폐기** | `reset --hard` | 모든 변경사항 완전 삭제 |
+| **공유 브랜치의 문제 커밋 취소** | `revert` | 히스토리 보존하며 안전하게 취소 |
+| **개인 브랜치 히스토리 정리** | `rebase -i` | 커밋 정리 및 선형 히스토리 생성 |
+| **기능 브랜치 최신 상태 유지** | `rebase` | main 브랜치 변경사항 반영 |
+| **복잡한 병합 커밋 취소** | `revert -m 1` | 특정 부모 기준으로 안전하게 취소 |
 
 ---
 
-# 충돌/실수 복구 — 현장에서 가장 중요한 부분
+## 충돌 해결 모범 사례
 
-## 충돌 마커와 해결 절차
-
-충돌 시 파일에는 다음 마커가 들어갑니다.
-```text
-<<<<<<< ours
-# 내 버전
-
+### 충돌 마커 이해
+충돌이 발생한 파일에는 다음과 같은 마커가 포함됩니다:
+```
+<<<<<<< HEAD
+현재 브랜치의 내용
 =======
-# 버전
-
->>>>>>> theirs
-```
-해결 후 마커는 반드시 삭제 → `git add` → `continue` (rebase/revert/merge에 따라 명령 달라짐)
-
-## 빠른 전체 선택(파일 단위)
-
-```bash
-git checkout --ours   path/to/file
-git checkout --theirs path/to/file
-git add path/to/file
+다른 브랜치의 내용
+>>>>>>> branch-name
 ```
 
-## rerere(반복 충돌 자동 학습)
+### 충돌 해결 절차
+1. 충돌 파일 열기 및 내용 검토
+2. 적절한 내용으로 통합 (마커 제거)
+3. 수정사항 스테이징: `git add filename`
+4. 작업 계속: 상황에 따라 `--continue`, `--abort`, `--skip`
 
+### 빠른 해결 옵션
 ```bash
+# 현재 브랜치 버전으로 덮어쓰기
+git checkout --ours filename
+
+# 다른 브랜치 버전으로 덮어쓰기
+git checkout --theirs filename
+
+# 병합 도구 사용
+git mergetool
+```
+
+### 반복 충돌 방지
+```bash
+# rerere 기능 활성화
 git config --global rerere.enabled true
 ```
-과거에 동일 패턴으로 해결한 충돌을 재적용합니다(그래도 눈으로 재확인 후 커밋하세요).
-
-## reflog/ORIG_HEAD로 구조적 복구
-
-```bash
-git reflog                   # 과거 HEAD 이동 이력 확인
-git reset --hard ORIG_HEAD   # 직전 위험 작업 전으로 복귀
-git switch -c rescue HEAD@{2}  # 안전 브랜치 확보
-```
 
 ---
 
-# 협업 정책/보호 브랜치/서명과의 상호작용
+## 협업 환경 고려사항
 
-## 보호 브랜치(Branch protection rules)
+### 보호 브랜치 규칙
+많은 조직에서는 보호 브랜치 규칙을 설정합니다:
+- **리뷰 요구사항**: PR 승인 필요
+- **상태 체크**: CI/CD 테스트 통과 필수
+- **선형 히스토리**: 병합 커밋 금지
+- **서명 커밋**: GPG 서명 필수
+- **강제 푸시 제한**: 히스토리 재작성 방지
 
-- Require pull request reviews
-- Require status checks to pass
-- Require linear history(merge commit 금지 → rebase/squash만 허용)
-- Require signed commits(GPG 서명 필수)
-- Force-push 제한 등
+이러한 규칙은 `reset`과 `rebase` 사용에 제약을 줄 수 있습니다.
 
-이 규칙은 `reset`/`rebase` 기반 강제푸시와 **충돌**할 수 있습니다. 공개 브랜치에서는 **revert** 기반으로 처리하는 것이 안전합니다.
-
-## 서명/GPG/DCO
-
-- rebase(재작성) 시 커밋 해시가 바뀌며, **서명이 파손**될 수 있습니다.
-- 조직이 **Require signed commits** 나 **DCO**를 쓰는 경우, PR 커밋들이 정책을 준수하도록 미리 세팅하세요.
+### 서명 커밋과의 상호작용
 ```bash
-git config --global user.signingkey <KEYID>
+# GPG 서명 설정
+git config --global user.signingkey KEYID
 git config --global commit.gpgsign true
 ```
 
+**중요**: `rebase`는 커밋을 재작성하므로 서명이 무효화될 수 있습니다. 조직 정책을 확인하세요.
+
 ---
 
-# 대규모 히스토리 정리 실전 팁
+## 고급 작업 시나리오
 
-- **rebase -i + autosquash** 로 잔 커밋을 `fixup!/squash!` 패턴으로 자동 압축
-- **rebase --rebase-merges** 로 서브토픽 구조를 보존하며 정리
-- 정리 전에 **백업 태그/브랜치** 생성 권장:
+### PR 전 히스토리 정리
 ```bash
-git tag before-rewrite
-# 또는
+# 원격 최신 상태 동기화
+git fetch origin
 
-git switch -c backup/2025-11-06
+# 기능 브랜치 정리
+git rebase origin/main
+git rebase -i HEAD~10 --autosquash
+
+# 안전하게 푸시
+git push --force-with-lease
 ```
-- 팀 합의 없이 공개 브랜치 전체를 rebase 하지 말 것
 
----
-
-# — 로컬에서 바로 실습
-
-## reset 실습
-
+### 복잡한 변경 재구성
 ```bash
-rm -rf git-reset-lab && mkdir git-reset-lab && cd git-reset-lab
-git init
-git config user.name  "lab"
-git config user.email "lab@example.com"
-
-echo "v1" > f.txt
-git add . && git commit -m "v1"
-echo "v2" >> f.txt
-git commit -am "v2"
-echo "v3" >> f.txt
-git commit -am "v3"
-
-git log --oneline
-
-# soft: 브랜치만 이동, Index/Working 유지
-
-git reset --soft HEAD~1
-git status        # staged 상태 확인
-git commit -m "v3(rewrite by soft)"
-
-# mixed: 브랜치 이동 + Index 초기화
-
+# 최근 커밋을 작업 상태로 분해
 git reset --mixed HEAD~1
-git status        # 변경은 워킹에 남음
+
+# 변경사항 선택적 커밋
 git add -p
-git commit -m "v3(partial re-commit)"
+git commit -m "주요 기능"
+git add -p
+git commit -m "보조 수정"
 
-# hard: 모두 롤백(주의: 워킹도 되돌림)
+# 히스토리 최종 정리
+git rebase -i HEAD~3
+```
 
+---
+
+## 모범 사례 요약
+
+### 안전 작업 원칙
+1. **공유 브랜치 주의**: 이미 푸시된 브랜치에서는 `revert`를 우선 고려
+2. **백업 습관**: 중요한 변경 전에 태그나 백업 브랜치 생성
+3. **점진적 접근**: 큰 변경을 한 번에 하지 말고 작은 단위로 나누기
+4. **테스트**: 변경 후 기능 테스트 필수
+5. **커뮤니케이션**: 팀원과의 작업 조율
+
+### 도구별 권장 사항
+- **Reset**: 로컬 작업, 개인 브랜치, 실험적 변경에 사용
+- **Revert**: 공유 브랜치, 운영 환경, 감사 추적 필요 시 사용
+- **Rebase**: 개인 브랜치 정리, 선형 히스토리 유지, PR 준비 시 사용
+
+### 복구 전략
+1. **Reflog 활용**: `git reflog`로 작업 기록 확인
+2. **ORIG_HEAD**: 위험 작업 후 즉시 복구 가능
+3. **백업 브랜치**: 중요한 작업 전에 생성
+4. **원격 백업**: 로컬 실수 대비 원격 브랜치 유지
+
+---
+
+## 학습을 위한 실습 예제
+
+### Reset 실습
+```bash
+# 실습 환경 설정
+mkdir git-reset-practice && cd git-reset-practice
+git init
+echo "Version 1" > file.txt
+git add file.txt && git commit -m "Initial commit"
+
+# 여러 커밋 생성
+echo "Version 2" >> file.txt
+git commit -am "Add feature A"
+echo "Version 3" >> file.txt
+git commit -am "Add feature B"
+
+# 다양한 reset 옵션 실습
+git reset --soft HEAD~1
+git status  # 변경사항 확인
+git reset --mixed HEAD~1
+git status  # unstaged 상태 확인
 git reset --hard HEAD~1
-git log --oneline
-
-# 복구(실수 시)
-
-git reflog
-git reset --hard ORIG_HEAD
+git status  # 변경사항 완전 삭제 확인
 ```
 
-## revert 실습
-
+### Revert 실습
 ```bash
-rm -rf git-revert-lab && mkdir git-revert-lab && cd git-revert-lab
+# 실습 환경 설정
+mkdir git-revert-practice && cd git-revert-practice
 git init
-git config user.name  "lab"
-git config user.email "lab@example.com"
+echo "Line 1" > document.txt
+git add document.txt && git commit -m "Add line 1"
 
-echo "A" > a.txt
-git add . && git commit -m "A"
-echo "B" >> a.txt
-git commit -am "B"
-git log --oneline
+# 문제가 될 수 있는 변경사항 추가
+echo "Problematic line" >> document.txt
+git commit -am "Add problematic line"
 
-# B 커밋 취소
-
-B=$(git rev-parse --short HEAD)
-git revert $B
-git log --oneline
-cat a.txt      # B가 반전되어 A상태로 돌아감(새 커밋 추가됨)
-
-# 범위 revert
-
-echo "C" >> a.txt && git commit -am "C"
-echo "D" >> a.txt && git commit -am "D"
-git log --oneline
-
-git revert HEAD~1..HEAD   # C,D 되돌림
-git log --oneline
+# Revert로 안전하게 취소
+git revert HEAD
+cat document.txt  # 문제 라인 제거 확인
 ```
 
-## rebase 실습(충돌 포함)
-
+### Rebase 실습
 ```bash
-rm -rf git-rebase-lab && mkdir git-rebase-lab && cd git-rebase-lab
+# 실습 환경 설정
+mkdir git-rebase-practice && cd git-rebase-practice
 git init
-git config user.name  "lab"
-git config user.email "lab@example.com"
+echo "Base content" > app.js
+git add app.js && git commit -m "Initial app"
 git branch -M main
 
-echo "base" > app.txt
-git add . && git commit -m "base"
+# 기능 브랜치 생성
+git checkout -b feature/login
+echo "Login function" >> app.js
+git commit -am "Add login"
+echo "Auth check" >> app.js
+git commit -am "Add auth"
 
-git switch -c feature
-echo "f1" >> app.txt
-git commit -am "feat: f1"
-echo "f2" >> app.txt
-git commit -am "feat: f2"
+# 메인 브랜치 업데이트
+git checkout main
+echo "Header" >> app.js
+git commit -am "Add header"
 
-git switch main
-echo "m1" >> app.txt
-git commit -am "feat: m1"
-
-git switch feature
-git rebase main || true      # 일부러 충돌나면 수동 해결
-# 파일 열어 해결 → add
-
-git rebase --continue
-
-# 정리 완료 후 확인
-
-git log --oneline --graph --decorate --all
+# Rebase 실행
+git checkout feature/login
+git rebase main
+git log --oneline --graph  # 선형 히스토리 확인
 ```
 
 ---
 
-# 고급: reset과 rebase의 혼합 시나리오
+## 자주 묻는 질문 (FAQ)
 
-## 최근 커밋을 분해해서 메시지/내용 재구성
+**Q: 이미 푸시한 커밋을 수정해야 할 때 무엇을 사용해야 하나요?**
+A: 공유 브랜치에서는 `git revert`를 사용하세요. 이는 기존 히스토리를 보존하면서 변경사항을 취소하는 새로운 커밋을 생성합니다.
 
-```bash
-# 최근 커밋을 index/working으로 풀어헤침
+**Q: Reset과 Revert 중 어떤 것이 더 안전한가요?**
+A: 협업 환경에서는 `revert`가 더 안전합니다. `reset`은 히스토리를 변경하여 다른 협업자들에게 문제를 일으킬 수 있습니다.
 
-git reset --mixed HEAD~1
+**Q: Rebase 중 충돌이 너무 많아요. 어떻게 해결하나요?**
+A: 충돌이 많은 경우 `git rebase --abort`로 중단한 후, 작은 단위로 나누어 작업하거나, merge를 고려해보세요.
 
-# 변경 중 일부만 선택 커밋
+**Q: 개인 브랜치에서는 어떤 도구를 주로 사용하나요?**
+A: 개인 브랜치에서는 `rebase`를 사용하여 히스토리를 깔끔하게 유지하는 것이 좋습니다. PR 전에 인터랙티브 rebase로 정리하면 리뷰어들이 변경사항을 이해하기 쉽습니다.
 
-git add -p
-git commit -m "부분1"
-git add -p
-git commit -m "부분2"
-
-# 마지막에 인터랙티브 rebase 로 메시지 정리
-
-git rebase -i HEAD~2
-```
-
-## PR 직전 “깨끗한” 이력 만들기
-
-```bash
-git fetch origin
-git rebase origin/main        # 최신 기준 위로 재배치
-git rebase -i HEAD~10 --autosquash
-git push --force-with-lease
-```
-- 팀이 선형 이력을 강제한다면 필수적. 단, 공개 브랜치의 재작성은 팀 컨벤션을 따를 것.
+**Q: 실수로 `reset --hard`를 사용했어요. 복구할 수 있나요?**
+A: 네, `git reflog`를 사용하여 이전 상태를 찾고 `git reset --hard HEAD@{번호}`로 복구할 수 있습니다. 다만, 변경사항이 아직 스테이징되지 않았다면 복구가 어려울 수 있습니다.
 
 ---
 
-# FAQ — 실무에서 자주 받는 질문
+## 결론
 
-**Q1. 이미 push한 커밋을 reset으로 지워도 되나?**
-A. 공개 브랜치에서는 지양. 동료 이력에 충돌을 유발. revert가 안전.
+Git의 `reset`, `revert`, `rebase`는 각각 고유한 목적과 사용 시나리오를 가진 강력한 도구들입니다. 이들을 효과적으로 활용하려면 각 도구의 특징과 적절한 사용 상황을 이해하는 것이 중요합니다.
 
-**Q2. revert로 되돌렸는데, 나중에 다시 적용하고 싶다?**
-A. “revert 커밋”을 다시 revert 하거나, 해당 변경을 포함한 새 커밋을 만들면 된다.
+### 핵심 포인트 정리
 
-**Q3. rebase 중 꼬였을 때 가장 먼저 뭘 보나?**
-A. `git status`, `git rebase --abort`, `git reflog` 순서로 상황 파악/복구.
+1. **적절한 도구 선택**: 상황과 목적에 맞는 도구를 선택하세요.
+   - 로컬 작업 정리 → `reset`
+   - 공유 브랜치 변경 취소 → `revert`
+   - 히스토리 정리 및 재배치 → `rebase`
 
-**Q4. rebase와 merge 중 무엇이 더 좋은가?**
-A. 절대적 답은 없음. 팀 정책/리뷰 문화/CI 파이프라인에 맞춰 선택.
-   선형 이력을 원하면 rebase, 토폴로지 보존/기록을 원하면 merge.
+2. **안전성 우선**: 협업 환경에서는 항상 안전성을 고려하세요.
+   - 공유 브랜치에서는 히스토리 변경을 최소화
+   - 중요한 작업 전에는 백업 생성
+   - 팀 정책과 워크플로우 준수
 
-**Q5. revert와 squash의 관계?**
-A. Squash는 여러 커밋을 1개로 압축하는 병합 방식이고, revert는 특정 커밋의 반대 동작을 “새 커밋으로” 추가한다. 목적이 다르다.
+3. **점진적 학습**: 처음에는 작은 프로젝트에서 각 도구를 실습해보세요.
+   - 실수해도 괜찮은 환경에서 연습
+   - 각 옵션의 효과를 직접 확인
+   - 충돌 해결 경험 축적
 
----
+4. **팀 협업**: 팀의 Git 워크플로우와 정책을 이해하고 준수하세요.
+   - 코드 리뷰 문화와 조화
+   - CI/CD 파이프라인과의 통합
+   - 문서화된 워크플로우 따르기
 
-# 명령어/옵션 치트시트
-
-```bash
-# reset
-
-git reset --soft  <rev>   # HEAD만
-git reset --mixed <rev>   # HEAD+Index(기본)
-git reset --hard  <rev>   # HEAD+Index+Working (주의)
-git reflog                # 이전 HEAD 이력 확인
-git reset --hard ORIG_HEAD
-
-# revert
-
-git revert <rev>          # 1개 취소(새 커밋)
-git revert <A>..<B>       # 범위 취소(B 포함)
-git revert -m 1 <merge>   # Merge 커밋 취소(부모 선택)
-git revert --continue | --abort
-
-# rebase
-
-git rebase <upstream>
-git rebase -i HEAD~N
-git rebase --rebase-merges <upstream>
-git rebase --continue | --skip | --abort
-git config --global pull.rebase true
-git pull --rebase
-git push --force-with-lease
-
-# 충돌 해결
-
-git status
-git checkout --ours   <path>
-git checkout --theirs <path>
-git add <path>
-git mergetool
-git config --global rerere.enabled true
-```
-
----
-
-# 결론
-
-- **reset**: 강력하지만 위험. 로컬 정리/최근 실수 바로잡기에만 사용. 공개 브랜치에는 부적절.
-- **revert**: 협업 친화. 히스토리를 보존하며 “취소” 사실을 기록. 운영 중 “빠른 복구”에 최적.
-- **rebase**: 선형 이력과 깔끔한 커밋을 위한 도구. 공유 브랜치에서의 무분별한 사용은 금물.
-- 팀 정책(보호 브랜치/서명/CI)과 맞물려 올바른 도구를 고르면, **추적 가능한 기록 + 생산적인 협업**을 동시에 달성할 수 있다.
-
----
-
-## 참고
-
-- git reset: https://git-scm.com/docs/git-reset
-- git revert: https://git-scm.com/docs/git-revert
-- git rebase: https://git-scm.com/docs/git-rebase
+이 세 도구를 마스터하면 Git을 더 효율적으로 사용할 수 있을 뿐만 아니라, 더 깔끔한 코드 히스토리와 원활한 팀 협업을 이끌어낼 수 있습니다. 각 도구의 강점을 이해하고 상황에 맞게 적용하는 것이 전문 개발자로서의 중요한 역량입니다.

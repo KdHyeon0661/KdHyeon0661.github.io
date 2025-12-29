@@ -625,6 +625,7 @@ docker compose restart api
 
 ### 태그 전략
 
+{% raw %}
 ```bash
 # 버전 태그
 docker build -t myapp:1.0.0 .
@@ -636,13 +637,12 @@ docker build -t myapp:production .
 
 # 다이제스트 고정 (재현성 보장)
 docker pull nginx:alpine
-{% raw %}
 docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 출력: nginx@sha256:abcdef123456...
-{% endraw %}
 
 docker run --rm nginx@sha256:abcdef123456...
 ```
+{% endraw %}
 
 ### 이미지 저장 및 전송
 

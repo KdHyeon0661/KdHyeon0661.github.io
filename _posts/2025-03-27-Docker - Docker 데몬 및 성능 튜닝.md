@@ -446,6 +446,8 @@ du -sh /var/lib/docker/* 2>/dev/null | sort -hr
 **증상**: 디스크 사용량이 100%에 도달하여 새로운 컨테이너 생성 실패
 
 **긴급 조치**:
+
+{% raw %}
 ```bash
 # 문제 컨테이너의 로그 파일 확인
 docker inspect <container_id> --format '{{.LogPath}}'
@@ -453,6 +455,7 @@ docker inspect <container_id> --format '{{.LogPath}}'
 # 로그 파일 내용 비우기
 sudo truncate -s 0 /var/lib/docker/containers/<container_id>/<container_id>-json.log
 ```
+{% endraw %}
 
 **장기적 해결**:
 1. `daemon.json`에 적절한 로그 회전 정책 설정

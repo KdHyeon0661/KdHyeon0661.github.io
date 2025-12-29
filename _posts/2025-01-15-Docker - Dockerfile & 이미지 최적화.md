@@ -250,6 +250,8 @@ ENTRYPOINT ["python", "app.py"]
 ## 이미지 분석과 측정
 
 ### 이미지 크기와 레이어 분석
+
+{% raw %}
 ```bash
 # 이미지 목록과 크기 확인
 docker images
@@ -272,7 +274,7 @@ docker inspect --format='{{index .RepoDigests 0}}' nginx:alpine
 # 다이제스트로 컨테이너 실행 (항상 동일한 이미지 보장)
 docker run --rm nginx@sha256:abc123...
 ```
-
+{% endraw %}
 ---
 
 ## 일반적인 문제와 해결 방법
