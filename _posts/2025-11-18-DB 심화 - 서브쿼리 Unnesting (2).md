@@ -4,440 +4,666 @@ title: DB 심화 - 서브쿼리 Unnesting (2)
 date: 2025-11-18 17:25:23 +0900
 category: DB 심화
 ---
-# 서브쿼리 Unnesting (심화)
+# 서브쿼리 언네스팅 심층 분석: FILTER vs SEMI JOIN의 본질적 차이
 
-## 배경 요약 — 왜 “m쪽 & non-unique 인덱스”가 핵심인가?
+## 서브쿼리 최적화의 핵심 도전
 
-- 대부분의 실무 스키마는 `고객(1) : 매출(M)`, `상품(1) : 판매(M)` 같은 **1:M 관계**가 기본.
-- 이때 M테이블(사실 테이블)은 **동일 키 값이 다수** → 관련 인덱스는 **non-unique**가 정상.
-- **EXISTS/IN** 계열 서브쿼리에선 **“한 건만 존재하면 된다(존재성)”**가 많으므로,
-  - 비-언네스트(FILTER)는 **상관 서브쿼리**를 “행마다” 평가(캐시가 도와주긴 하지만 한계).
-  - 언네스트(SEMI JOIN)는 **첫 매칭에서 즉시 중단(early-out)** + **해시/블룸/전용 탐색**으로 훨씬 유리.
+데이터베이스의 가장 일반적인 관계 패턴은 1:M(일대다) 관계입니다. 고객과 주문, 제품과 판매 기록, 부서와 직원과 같은 관계에서 "다(M)" 측 테이블은 동일한 키 값이 반복되는 구조를 가집니다. 이러한 환경에서 EXISTS나 IN을 사용한 서브쿼리의 성능 최적화는 데이터베이스 엔진에게 특별한 도전을 제기합니다.
 
----
-
-## 준비 스키마 (간단 데이터)
+## 실습 환경 구성
 
 ```sql
--- 고객(1) : 매출(M)
-CREATE TABLE d_customer(
-  cust_id NUMBER PRIMARY KEY,
-  region  VARCHAR2(8) NOT NULL,
-  tier    VARCHAR2(8) NOT NULL
+-- 환경 설정
+ALTER SESSION SET nls_date_format = 'YYYY-MM-DD';
+ALTER SESSION SET statistics_level = ALL;
+
+-- 차원 테이블: 고객 정보
+CREATE TABLE customers (
+    customer_id NUMBER PRIMARY KEY,
+    region      VARCHAR2(20) NOT NULL,
+    tier        VARCHAR2(20) NOT NULL,
+    join_date   DATE NOT NULL
 );
 
-CREATE TABLE f_sales(
-  sales_id NUMBER PRIMARY KEY,
-  cust_id  NUMBER NOT NULL,
-  prod_id  NUMBER NOT NULL,
-  sales_dt DATE   NOT NULL,
-  qty      NUMBER NOT NULL,
-  amount   NUMBER(12,2) NOT NULL
+-- 팩트 테이블: 판매 기록 (M측)
+CREATE TABLE sales (
+    sale_id     NUMBER PRIMARY KEY,
+    customer_id NUMBER NOT NULL,
+    product_id  NUMBER NOT NULL,
+    sale_date   DATE NOT NULL,
+    quantity    NUMBER NOT NULL,
+    amount      NUMBER(10,2) NOT NULL
 );
 
--- m쪽(사실) 테이블용 non-unique 인덱스
-CREATE INDEX ix_fs_cust_dt ON f_sales(cust_id, sales_dt);   -- non-unique
-CREATE INDEX ix_fs_cust_only ON f_sales(cust_id);            -- non-unique(의도적으로)
+-- 비고유 인덱스 생성 (실제 M측 테이블의 전형적인 구조)
+CREATE INDEX idx_sales_customer_date ON sales(customer_id, sale_date);
+CREATE INDEX idx_sales_customer ON sales(customer_id);
 
--- 예시 데이터(요약)
+-- 샘플 데이터 생성
+DECLARE
+    v_customer_count CONSTANT NUMBER := 10000;
+    v_sale_count     CONSTANT NUMBER := 500000;
+    v_date_range     CONSTANT NUMBER := 365;
 BEGIN
-  FOR i IN 1..50000 LOOP
-    INSERT INTO d_customer VALUES (i,
-      CASE MOD(i,5) WHEN 0 THEN 'KOR' WHEN 1 THEN 'APAC' WHEN 2 THEN 'EMEA' WHEN 3 THEN 'AMER' ELSE 'JPN' END,
-      CASE MOD(i,4) WHEN 0 THEN 'VIP' WHEN 1 THEN 'GOLD' WHEN 2 THEN 'SILVER' ELSE 'GEN' END);
-  END LOOP;
+    -- 고객 데이터 생성
+    FOR i IN 1..v_customer_count LOOP
+        INSERT INTO customers VALUES (
+            i,
+            CASE MOD(i, 8)
+                WHEN 0 THEN '서울' WHEN 1 THEN '경기' 
+                WHEN 2 THEN '부산' WHEN 3 THEN '대구'
+                WHEN 4 THEN '인천' WHEN 5 THEN '광주'
+                WHEN 6 THEN '대전' ELSE '울산'
+            END,
+            CASE MOD(i, 100)
+                WHEN 0 THEN 'VIP'
+                WHEN 1 THEN 'GOLD'
+                WHEN 2 THEN 'SILVER'
+                ELSE 'STANDARD'
+            END,
+            DATE '2020-01-01' + MOD(i, 1000)
+        );
+    END LOOP;
+    
+    -- 판매 데이터 생성 (M측: 한 고객당 여러 판매 기록)
+    FOR i IN 1..v_sale_count LOOP
+        INSERT INTO sales VALUES (
+            i,
+            MOD(i, v_customer_count) + 1,  -- 고객 ID (반복됨)
+            MOD(i, 5000) + 1,              -- 제품 ID
+            DATE '2024-01-01' + MOD(i, v_date_range),  -- 판매일
+            1 + MOD(i, 10),                -- 수량
+            ROUND(DBMS_RANDOM.VALUE(1000, 100000), 2)  -- 금액
+        );
+    END LOOP;
+    
+    COMMIT;
+    DBMS_OUTPUT.PUT_LINE('데이터 생성 완료: 고객 ' || v_customer_count || '명, 판매 ' || v_sale_count || '건');
+END;
+/
 
-  FOR s IN 1..800000 LOOP
-    INSERT INTO f_sales VALUES (
-      s,
-      MOD(s,50000)+1,
-      MOD(s,20000)+1,
-      DATE '2024-03-01' + MOD(s,20),
-      1 + MOD(s,3),
-      ROUND(DBMS_RANDOM.VALUE(10,500),2)
+-- 통계 수집
+BEGIN
+    DBMS_STATS.GATHER_TABLE_STATS(USER, 'CUSTOMERS', cascade => TRUE);
+    DBMS_STATS.GATHER_TABLE_STATS(
+        USER, 'SALES', 
+        estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE,
+        method_opt => 'FOR ALL COLUMNS SIZE AUTO',
+        cascade => TRUE
     );
-  END LOOP;
-  COMMIT;
 END;
 /
 ```
 
----
+## FILTER 연산의 작동 메커니즘과 한계
 
-## 문제 정의 — “3월에 거래가 ‘존재’하는 고객만”
+### FILTER의 기본 동작 방식
 
-같은 의미의 질의를 두 가지 방식으로 작성:
-
-### — 상관 서브쿼리
+FILTER 연산은 서브쿼리를 조인으로 변환하지 않고, 외부 쿼리의 각 행에 대해 서브쿼리를 개별적으로 평가합니다. 이는 상관 서브쿼리가 "행 단위"로 처리되는 전통적인 방식을 따릅니다.
 
 ```sql
--- Q1: FILTER(비-언네스트) 버전
-SELECT /*+ qb_name(main) */ c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1
-  FROM   f_sales s
-  WHERE  s.cust_id  = c.cust_id
-  AND    s.sales_dt >= DATE '2024-03-01'
-  AND    s.sales_dt <  DATE '2024-04-01'
-);
-```
-- 전형적인 **FILTER 오퍼레이션**이 플랜에 등장(비-언네스트).
-- 동작: C의 각 행에 대해 **상관 조건(c.cust_id)**를 바인드로 s를 탐색.
-- **서브쿼리 캐싱**(값-결과 캐시)이 **있을 수** 있으나, **중복 키가 많고 분포가 넓으면** 캐시 효율이 떨어짐.
-- 인덱스는 **non-unique** → **같은 cust_id에 대한 다수 엔트리**를 찾아가며 **첫 매칭**에서 반환.
-  - 그러나 FILTER는 “C의 많은 행 × (반복적인 s조회)” 형태가 됨 → **Probe 횟수**가 많아지기 쉽다.
-
-### — 조인으로 재작성
-
-```sql
--- Q2: Unnesting → SEMI JOIN
-SELECT /*+ UNNEST qb_name(main) */
-       c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1
-  FROM   f_sales s
-  WHERE  s.cust_id  = c.cust_id
-  AND    s.sales_dt >= DATE '2024-03-01'
-  AND    s.sales_dt <  DATE '2024-04-01'
-);
-```
-- 옵티마이저가 **SEMI JOIN**으로 변환 (NESTED LOOPS SEMI 또는 HASH JOIN SEMI).
-- 장점: **존재성** 판정은 첫 매칭에서 **즉시 중단(early-out)**, 내부적으로는
-  - **NL SEMI**: 바깥 키마다 인덱스 탐색하지만 *첫 행에서 stop* (random I/O 줄어듦).
-  - **HASH SEMI**: s의 **조인키(=cust_id) 집합**을 해시 구조로 구축 → **멤버십 테스트**는 O(1) 평균,
-    더 나아가 **Join Filter(Bloom)**가 생성되면 **바깥 스캔 단계에서 조기 필터링**까지 가능.
-
----
-
-## FILTER(비-언네스트)의 작동 & 캐싱 메커니즘
-
-### FILTER 오퍼레이션의 의미
-
-- 실행계획에 `FILTER` 노드가 보이면, 옵티마이저가 서브쿼리를 **조인으로 풀지 않고**
-  **바깥 행마다 조건을 평가**한다는 뜻(일반적으로 “상관 서브쿼리” 패턴).
-
-### FILTER의 “서브쿼리 캐싱”
-
-- Oracle은 상관 서브쿼리 평가 시, **최근 평가한 상관 값(key)과 결과(true/false 혹은 소수의 결과 값)**를
-  내부적으로 **캐시**하여 **같은 key가 반복되면 재조회 없이 재사용**하기도 한다.
-- 하지만 이 캐시는
-  - **값 영역이 매우 넓거나**(cust_id 다양),
-  - 바깥 집합에서 **동일 key 반복 빈도**가 낮으면,
-  - **캐시 히트율이 낮아** 성능 향상 폭이 제한된다.
-- 즉, **m쪽/분산 큰 키**에서는 FILTER의 캐시만으론 근본적 이득이 작다.
-
-### FILTER + non-unique 인덱스의 비용상상
-
-- non-unique 인덱스는 **동일 키**의 **리프 체인이 길 수** 있다.
-- 상관 바인드로 인덱스 *range*를 잡아도, **첫 행**을 찾기까지 **여러 리프를 더듬는 비용**이 반복된다.
-- 키 분포가 넓으면 **블록 캐시 지역성**도 낮아져 **버퍼 미스**/랜덤 I/O가 많아진다.
-
-> 결론: **FILTER 자체는 나쁜 게 아니다.** 소량·중복키 다수·인덱스 적중이 매우 좋은 상황에선
-> 간단하고 충분히 빠를 수 있다. 하지만 **대량(M측)/비고유/분산 넓음**이면 **SEMI JOIN 변환**이 보통 우월하다.
-
----
-
-## SEMI JOIN(언네스트)의 “캐싱/얼리-아웃” 효과
-
-### NL SEMI의 *early-out*
-
-- NL SEMI는 바깥 행마다 인덱스 탐색을 하지만, **첫 매칭을 찾는 순간 종료**한다.
-- non-unique 인덱스라도 “첫 리프 매칭”에 도달하기만 하면 **추가 탐색이 불필요**.
-- 즉, FILTER와 비교하면 **같은 인덱스 경로라도 “불필요 후속 탐색”을 다수 제거**한다.
-
-### HASH SEMI의 “해시 캐시”
-
-- HASH SEMI는 내부적으로 **Build Input(s)**의 **조인 키 집합**을 해시에 저장 →
-  바깥 행은 **멤버십 테스트**만 하면 된다(평균 O(1)).
-- s가 매우 큰 M집합이어도, **집합 자체를 해싱**해두면 **반복 Probe 비용**을 상수로 묶는다.
-- 여기에 **Join Filter(Bloom)**가 활성화되면, 바깥 스캔 중 **가능성이 낮은 키를 초기에 drop**하여
-  **프로브 자체를 줄이는**(I/O 절감) 효과가 추가된다.
-  - 실행계획에 `JOIN FILTER CREATE/USE`가 보일 수 있다(버전/상황 의존).
-
-> 실무 감각: **존재성 판정** + **M측 non-unique** + **대량**이면, *HASH SEMI(+Join Filter)*가
-> 대체로 가장 안전하고 빠른 “캐시-기반” 전략이다.
-
----
-
-## 실험 예제 — FILTER vs SEMI JOIN
-
-### 강제
-
-```sql
+-- FILTER 연산이 사용되는 전형적인 패턴
 EXPLAIN PLAN FOR
-SELECT /*+ NO_UNNEST qb_name(main) */
-       c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1
-  FROM   f_sales s
-  WHERE  s.cust_id  = c.cust_id
-  AND    s.sales_dt >= DATE '2024-03-01'
-  AND    s.sales_dt <  DATE '2024-04-01'
+SELECT /*+ NO_UNNEST */ 
+       c.customer_id,
+       c.region
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-03-01' AND DATE '2024-03-31'
 );
+
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
 ```
-**예상 플랜(개념):**
-```
-FILTER
-  TABLE ACCESS FULL D_CUSTOMER
-  INDEX RANGE SCAN IX_FS_CUST_DT
-  TABLE ACCESS BY INDEX ROWID F_SALES
-```
-- `FILTER` 아래에 s 접근이 붙는다.
-- 바깥 C의 각 행마다 상관바인드로 s를 “평가”.
 
-### + 해시 유도
+**FILTER 연산의 실행 계획 예시:**
+```
+OPERATION           | OPTIONS       | OBJECT_NAME
+-------------------|---------------|-------------
+SELECT STATEMENT   |               |
+ FILTER            |               |
+  TABLE ACCESS     | FULL          | CUSTOMERS
+  INDEX            | RANGE SCAN    | IDX_SALES_CUSTOMER_DATE
+   TABLE ACCESS    | BY INDEX ROWID| SALES
+```
+
+### 서브쿼리 캐싱의 제한적 효과
+
+Oracle은 FILTER 연산에서 일정 수준의 캐싱을 수행하지만, 이는 제한적인 효율성만 제공합니다:
 
 ```sql
-EXPLAIN PLAN FOR
-SELECT /*+ UNNEST USE_HASH(s) LEADING(s c) */
-       c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1
-  FROM   f_sales s
-  WHERE  s.cust_id  = c.cust_id
-  AND    s.sales_dt >= DATE '2024-03-01'
-  AND    s.sales_dt <  DATE '2024-04-01'
-);
-SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
-```
-**예상 플랜(개념):**
-```
-HASH JOIN SEMI
-  VIEW (혹은 PARTITION RANGE ... ) on F_SALES subset
-    TABLE/INDEX ACCESS on F_SALES (조건으로 3월만 프루닝/범위)
-    JOIN FILTER CREATE (있을 수 있음)
-  TABLE ACCESS FULL D_CUSTOMER
-    JOIN FILTER USE (있을 수 있음)
-```
-- **HASH JOIN SEMI**로 바뀌고, (버전에 따라) **JOIN FILTER**가 동반될 수 있다.
-- 의미: s의 3월 cust_id 집합을 **해시 캐시**로 만들고, C 스캔 중에 **멤버십만 검사**.
-
-### 측정 팁 (세션 지표)
-
-```sql
--- 1) 실행 전 지표 스냅샷
-SELECT sn.name, ms.value
-FROM   v$mystat ms JOIN v$statname sn ON ms.stat#=sn.stat#
-WHERE  sn.name IN ('session logical reads','physical reads','consistent gets');
-
--- 2) 쿼리 실행(각각 FILTER/SEMI 버전)
-
--- 3) 실행 후 동일 지표 비교 → FILTER보다 SEMI에서
---    logical/physical reads가 유의미하게 줄어드는지를 관찰.
-```
-
----
-
-## 스칼라 서브쿼리(SELECT-list) — “서브쿼리 캐시” vs “조인+집계 캐시”
-
-### — 캐시가 있긴 하다
-
-```sql
--- 각 고객의 3월 매출 합(스칼라)
-SELECT c.cust_id,
-       (SELECT SUM(s.amount)
-        FROM   f_sales s
-        WHERE  s.cust_id  = c.cust_id
-        AND    s.sales_dt BETWEEN DATE '2024-03-01' AND DATE '2024-03-31') AS m_sum
-FROM   d_customer c
-WHERE  c.region = 'KOR';
-```
-- Oracle은 스칼라 서브쿼리에 대해 **subquery cache**를 두어,
-  **같은 cust_id가 반복**되면 재사용한다(버전/상황 의존).
-- 하지만 `cust_id` **분산이 넓고 중복이 적으면** 캐시 히트율이 낮아 **Probe 폭증**.
-
-### — 집합으로 “한 번” 계산
-
-```sql
--- 사전 집계 → 조인 (언네스트 기대)
-SELECT /*+ UNNEST */ c.cust_id, ss.m_sum
-FROM   d_customer c
-LEFT JOIN (
-  SELECT s.cust_id, SUM(s.amount) m_sum
-  FROM   f_sales s
-  WHERE  s.sales_dt BETWEEN DATE '2024-03-01' AND DATE '2024-03-31'
-  GROUP  BY s.cust_id
-) ss
-ON ss.cust_id = c.cust_id
-WHERE  c.region = 'KOR';
-```
-- 내부에서 **한 번만 집계**하고 **조인**.
-- 결과 캐싱이 아닌 **구조적 캐시(해시/배열)**로 set-based 처리 → **대량 호출 제거**.
-
----
-
-## m쪽/non-unique 인덱스에서의 **조인 방법 선택 가이드**
-
-### NL SEMI가 유리한 경우
-
-- **바깥 집합이 매우 작고**, 해당 키가 s에서 **매우 높은 선택도**(= 적은 매칭)라면
-  - 인덱스 탐색 → **첫 매칭에서 stop** → 빠르다.
-- 인덱스 **선두 컬럼**이 상관키와 정확히 맞고, **범위 조건**까지 잘 붙는다면 유리.
-
-### HASH SEMI(+Join Filter)가 유리한 경우
-
-- 바깥 집합이 **크거나 전수 스캔**에 가깝고, s가 **매우 크며 분포 넓음**.
-- **멤버십 테스트**를 해시에 전가 + **Join Filter**로 바깥 단계에서 **조기 제거**.
-- s의 **부분 프루닝**(예: 파티션 by month)이 가능하면 더 강력.
-
-### FILTER(비-언네스트)를 남길 수도 있는 경우
-
-- 바깥 집합이 **극소량**이고, 상관키 **중복이 매우 높아** *subquery cache* 히트율이 탁월한 경우.
-- 의미 보존/외부조인 규칙 등으로 **언네스트가 위험할 때**(NULL 보존 등).
-
----
-
-## “같은 키 반복”을 만들고 **캐시 체감**하기(실험 트릭)
-
-```sql
--- 바깥에서 같은 cust_id를 강제로 여러 번 만들자
-WITH base AS (
-  SELECT c.cust_id
-  FROM   d_customer c
-  WHERE  c.region='KOR'
-),
-rep10 AS ( -- 동일 집합을 10배로 증폭 (키 반복)
-  SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b2.cust_id FROM base b1 JOIN base b2 ON b2.cust_id=b1.cust_id WHERE ROWNUM<=0 -- no-op
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
-  UNION ALL SELECT b1.cust_id FROM base b1
+-- 서브쿼리 캐싱 효과 관찰을 위한 쿼리
+WITH customer_sample AS (
+    SELECT customer_id FROM customers 
+    WHERE region = '서울'
+    AND ROWNUM <= 1000
 )
-SELECT /*+ NO_UNNEST */
-       r.cust_id
-FROM   rep10 r
-WHERE  EXISTS (
-  SELECT 1 FROM f_sales s
-  WHERE  s.cust_id=r.cust_id
-  AND    s.sales_dt>=DATE '2024-03-01' AND s.sales_dt<DATE '2024-04-01'
-);
-```
-- 위처럼 **키 반복**을 만들면 FILTER의 **subquery cache**가 히트해 “그나마” 빨라질 수 있다.
-- 하지만 **언네스트 + HASH SEMI(+Join Filter)**가 가능하면, 대개 그보다 더 안정적으로 빠르다.
-
----
-
-## 비-언네스트 ↔ 언네스트 **전환/제어** 힌트 요약
-
-- 강제 언네스트: `UNNEST`
-- 금지: `NO_UNNEST`
-- 조인 순서: `LEADING(...)`, `ORDERED`
-- 조인 방식: `USE_NL(t)`, `USE_HASH(t)`, `USE_MERGE(t)`
-- (옵션) `SWAP_JOIN_INPUTS(t)` : 해시 빌드/프로브 전환으로 메모리/카디널리티 균형
-
----
-
-## 케이스 스터디 — “같은 의미, 다른 비용”
-
-### FILTER가 비싸지는 상황
-
-```sql
--- 조건이 완만(3월 전수에 가까움) + cust_id 분포 넓음
-SELECT /*+ NO_UNNEST */ c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (SELECT 1 FROM f_sales s
-               WHERE s.cust_id=c.cust_id
-                 AND s.sales_dt>=DATE '2024-03-01' AND s.sales_dt<DATE '2024-04-01');
-```
-- **Probe 횟수 = 바깥 행 수**(≈ 고객 수).
-- **non-unique 인덱스**에서 **첫 매칭** 찾을 때까지 **리프 체인 탐색** 반복 → 버퍼 미스 ↑.
-
-### HASH SEMI(+Join Filter)로 전환
-
-```sql
-SELECT /*+ UNNEST USE_HASH(s) LEADING(s c) */
-       c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1 FROM f_sales s
-  WHERE  s.cust_id=c.cust_id
-    AND  s.sales_dt>=DATE '2024-03-01' AND s.sales_dt<DATE '2024-04-01'
-);
-```
-- s(3월분)에서 **cust_id 집합**을 **해시-캐시**로 만들고,
-- C 스캔 시 **멤버십 테스트**만 수행(필요 시 **JOIN FILTER USE**로 조기 컷).
-- 보통 **session logical reads/physical reads**가 크게 준다.
-
----
-
-## 튜닝 체크리스트 (m쪽/비고유 인덱스 전제)
-
-- [ ] **언네스트 가능성** 확인 → `DBMS_XPLAN.DISPLAY_CURSOR('ALLSTATS LAST +NOTE +PREDICATE')`
-  - `FILTER`가 보이면 비-언네스트, `... SEMI/ANTI`가 보이면 언네스트 성공.
-- [ ] **조인 방식** 유도
-  - 소량/고선택도: `USE_NL(s)` + **early-out** 기대
-  - 대량/분포 넓음: `USE_HASH(s)` + **해시 캐시/Join Filter**
-- [ ] **파티션 프루닝**(월/일 파티션이면 필수)로 **Build 입력 축소**
-- [ ] **인덱스 선두 컬럼**이 상관키와 정렬 → NL의 탐색 비용 최소화
-- [ ] **히스토그램/통계** 정밀 → 비용 오판 방지(특히 s.sales_dt, s.cust_id, c.region 등)
-- [ ] FILTER를 남겨야 한다면, **키 반복률**을 높여 **subquery cache**가 먹히게(가능한 경우에 한함)
-
----
-
-## 현업 Q&A
-
-**Q1. FILTER와 NL SEMI, 무엇이 근본적으로 다르죠?**
-- FILTER는 “바깥 행마다 **서브쿼리 평가**” 모델. 캐시가 있더라도 **Probe 자체**는 일어난다.
-- NL SEMI는 “**조인**으로 풀고 **첫 매칭에서 stop**”하는 모델. 같은 non-unique 인덱스라도 **후속 스캔**을 줄인다.
-
-**Q2. HASH SEMI의 캐싱이란?**
-- Build 입력(s)의 **키 집합**을 **해시 테이블**에 담아 **멤버십 테스트**를 상수 시간으로 만든다.
-- 추가로 **JOIN FILTER**(Bloom)가 있으면 바깥 탐색 단계에서 **프로브 전**에 많은 키를 **차단**(오탐 약간 허용)한다.
-
-**Q3. FILTER의 서브쿼리 캐싱으로 충분할 때는?**
-- 바깥에서 **같은 상관키가 자주 반복**될 때(예: 해시/소트로 우연히 같은 키가 뭉쳐진 스캔).
-- 그 외엔 언네스트/SEMI가 보통 더 안정적으로 빠르다.
-
----
-
-## 마무리 — “존재성 판정은 조인이 유리하다”
-
-- **m쪽/비고유 인덱스**에서 **존재성(EXISTS/IN)** 판정은,
-  대개 **SEMI JOIN(특히 HASH SEMI + Join Filter)**가 **FILTER**보다 **I/O·CPU** 측면에서 우월하다.
-- FILTER의 **subquery cache**는 “좋을 때만 좋은” 최적화다.
-- **언네스트 → 조인 방식/순서**를 의도적으로 설계하면, 같은 의미의 쿼리로 **수배~수십배** 개선이 가능하다.
-
----
-### 부록: 실무용 미니 템플릿
-
-```sql
--- 1) 언네스트 + 해시 세미 기본형
-SELECT /*+ UNNEST USE_HASH(s) LEADING(s c) */
-       c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1 FROM f_sales s
-  WHERE  s.cust_id=c.cust_id
-    AND  s.sales_dt BETWEEN :d1 AND :d2
+SELECT /*+ NO_UNNEST */ 
+       cs.customer_id
+FROM customer_sample cs
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = cs.customer_id
+    AND s.sale_date >= DATE '2024-03-01'
 );
 
--- 2) 언네스트 + NL 세미 (바깥 소량/내부 고선택도)
+-- 캐시 히트율이 낮은 경우의 성능 문제
+SELECT /*+ NO_UNNEST */ 
+       c.customer_id
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.amount > 50000
+);
+```
+
+**FILTER의 주요 제한사항:**
+1. **캐시 크기 제한**: 서브쿼리 캐시는 제한된 크기를 가지며, 많은 고유 키 값이 있는 경우 효율이 급격히 떨어집니다.
+2. **비고유 인덱스 오버헤드**: M측 테이블의 비고유 인덱스는 동일 키 값에 대한 여러 엔트리를 가지며, FILTER는 매번 첫 번째 매칭을 찾기 위해 인덱스 체인을 탐색해야 합니다.
+3. **반복적 평가**: 외부 테이블의 각 행에 대해 서브쿼리를 재평가하므로, 대량 데이터 처리 시 비효율적입니다.
+
+## SEMI JOIN: 언네스팅의 성능 혁신
+
+### SEMI JOIN의 기본 개념
+
+SEMI JOIN은 서브쿼리를 조인으로 변환하여, "존재 여부"를 집합 단위로 효율적으로 확인합니다. 이 변환은 서브쿼리 언네스팅(Subquery Unnesting)의 핵심 기법입니다.
+
+```sql
+-- SEMI JOIN으로 변환된 쿼리
+EXPLAIN PLAN FOR
+SELECT /*+ UNNEST */ 
+       c.customer_id,
+       c.region
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-03-01' AND DATE '2024-03-31'
+);
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+```
+
+**SEMI JOIN의 실행 계획 예시:**
+```
+OPERATION           | OPTIONS       | OBJECT_NAME
+-------------------|---------------|-------------
+SELECT STATEMENT   |               |
+ HASH JOIN         | SEMI          |
+  TABLE ACCESS     | FULL          | CUSTOMERS
+  TABLE ACCESS     | FULL          | SALES
+   INDEX           | RANGE SCAN    | IDX_SALES_CUSTOMER_DATE
+```
+
+### NL SEMI JOIN: 조기 종료 최적화
+
+Nested Loops SEMI JOIN은 첫 번째 매칭을 발견하면 즉시 다음 외부 행으로 이동하는 "조기 종료(Early-out)" 메커니즘을 사용합니다.
+
+```sql
+-- NL SEMI JOIN 유도
 SELECT /*+ UNNEST USE_NL(s) LEADING(c s) */
-       c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (
-  SELECT 1 FROM f_sales s
-  WHERE  s.cust_id=c.cust_id
-    AND  s.sales_dt BETWEEN :d1 AND :d2
-);
-
--- 3) 비-언네스트(FILTER) 비교 실험
-SELECT /*+ NO_UNNEST */ c.cust_id
-FROM   d_customer c
-WHERE  EXISTS (SELECT 1 FROM f_sales s
-               WHERE s.cust_id=c.cust_id
-                 AND s.sales_dt BETWEEN :d1 AND :d2);
+       c.customer_id,
+       c.tier
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-01-01'
+    AND s.quantity > 5
+)
+AND c.region = '서울';
 ```
 
-> 마지막으로, 항상 **실측 플랜(DBMS_XPLAN.DISPLAY_CURSOR … ALLSTATS LAST)**과
-> **E-Rows vs A-Rows**를 확인해, **진짜 I/O/CPU**가 줄었는지 검증하세요. 그것이 정답입니다.
+**NL SEMI JOIN의 장점:**
+- **조기 종료**: 첫 매칭 발견 시 즉시 중단하여 불필요한 검색 제거
+- **인덱스 효율**: 비고유 인덱스에서도 첫 매칭만 찾으면 되므로 효율적
+- **소량 데이터에 적합**: 외부 테이블이 작을 때 유리
+
+### HASH SEMI JOIN: 집합 기반 최적화
+
+Hash SEMI JOIN은 내부 테이블의 고유 키 값을 해시 테이블에 저장하여 멤버십 테스트를 수행합니다.
+
+```sql
+-- HASH SEMI JOIN 유도
+SELECT /*+ UNNEST USE_HASH(s) LEADING(s c) */
+       c.customer_id,
+       c.region
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-01-01' AND DATE '2024-03-31'
+    AND s.amount > 100000
+);
+```
+
+**HASH SEMI JOIN의 고급 기능:**
+
+```sql
+-- JOIN FILTER(Bloom Filter) 활용
+SELECT /*+ UNNEST USE_HASH(s) OPT_PARAM('_bloom_filter_enabled', 'true') */
+       c.customer_id,
+       COUNT(*) as sales_count
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-01-01'
+)
+GROUP BY c.customer_id
+HAVING COUNT(*) > 10;
+```
+
+**HASH SEMI JOIN의 장점:**
+1. **해시 캐시**: 내부 테이블의 키 집합을 해시 테이블에 캐싱
+2. **상수 시간 검색**: 멤버십 테스트가 O(1) 시간 복잡도
+3. **JOIN FILTER**: Bloom Filter를 사용한 조기 필터링으로 I/O 감소
+4. **대량 데이터 적합**: 외부 테이블이 클 때 효율적
+
+## 성능 비교 실험
+
+### 실험 1: FILTER vs SEMI JOIN 직접 비교
+
+```sql
+-- 성능 측정을 위한 준비
+SET TIMING ON
+SET AUTOTRACE TRACEONLY STATISTICS
+
+-- 테스트 1: FILTER 연산 (언네스팅 금지)
+SELECT /*+ NO_UNNEST GATHER_PLAN_STATISTICS */ 
+       COUNT(*) as customer_count
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-03-01' AND DATE '2024-03-31'
+    AND s.amount > 50000
+);
+
+-- 테스트 2: SEMI JOIN (언네스팅 허용)
+SELECT /*+ UNNEST GATHER_PLAN_STATISTICS */ 
+       COUNT(*) as customer_count
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-03-01' AND DATE '2024-03-31'
+    AND s.amount > 50000
+);
+
+-- 통계 비교
+SELECT 
+    'FILTER' as operation_type,
+    sql_id,
+    executions,
+    elapsed_time,
+    buffer_gets,
+    disk_reads,
+    cpu_time
+FROM v$sql
+WHERE sql_text LIKE '%NO_UNNEST%'
+AND sql_text LIKE '%customer_count%'
+UNION ALL
+SELECT 
+    'SEMI_JOIN' as operation_type,
+    sql_id,
+    executions,
+    elapsed_time,
+    buffer_gets,
+    disk_reads,
+    cpu_time
+FROM v$sql
+WHERE sql_text LIKE '%UNNEST%'
+AND sql_text NOT LIKE '%NO_UNNEST%'
+AND sql_text LIKE '%customer_count%';
+```
+
+### 실험 2: 다양한 시나리오별 성능 분석
+
+```sql
+-- 시나리오 A: 고선택도 조건 (소수 고객만 매칭)
+SELECT /*+ UNNEST USE_NL(s) LEADING(c s) */
+       c.customer_id,
+       c.tier,
+       (SELECT MAX(s.amount) 
+        FROM sales s 
+        WHERE s.customer_id = c.customer_id) as max_amount
+FROM customers c
+WHERE c.region = '서울'
+AND c.tier = 'VIP'
+AND EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.amount > 900000  -- 매우 높은 금액
+);
+
+-- 시나리오 B: 저선택도 조건 (많은 고객 매칭)
+SELECT /*+ UNNEST USE_HASH(s) LEADING(s c) */
+       c.region,
+       COUNT(DISTINCT c.customer_id) as active_customers
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-01-01'  -- 광범위한 기간
+)
+GROUP BY c.region
+ORDER BY active_customers DESC;
+
+-- 시나리오 C: 복합 조건
+SELECT /*+ UNNEST */ 
+       c.customer_id,
+       c.region,
+       c.tier
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-01-01'
+    AND (s.amount > 50000 OR s.quantity > 10)
+)
+AND c.join_date >= DATE '2023-01-01';
+```
+
+## 스칼라 서브쿼리의 최적화 전략
+
+### 스칼라 서브쿼리의 캐싱 메커니즘
+
+```sql
+-- 전통적 스칼라 서브쿼리 (행 단위 평가)
+SELECT 
+    c.customer_id,
+    c.region,
+    (SELECT SUM(s.amount)
+     FROM sales s
+     WHERE s.customer_id = c.customer_id
+     AND s.sale_date BETWEEN DATE '2024-01-01' AND DATE '2024-03-31') as q1_sales,
+    (SELECT COUNT(*)
+     FROM sales s
+     WHERE s.customer_id = c.customer_id
+     AND s.sale_date BETWEEN DATE '2024-01-01' AND DATE '2024-03-31') as q1_count
+FROM customers c
+WHERE c.region = '서울';
+
+-- 최적화된 버전: 사전 집계 + 조인
+WITH sales_agg AS (
+    SELECT 
+        customer_id,
+        SUM(amount) as total_sales,
+        COUNT(*) as sale_count
+    FROM sales
+    WHERE sale_date BETWEEN DATE '2024-01-01' AND DATE '2024-03-31'
+    GROUP BY customer_id
+)
+SELECT 
+    c.customer_id,
+    c.region,
+    COALESCE(sa.total_sales, 0) as q1_sales,
+    COALESCE(sa.sale_count, 0) as q1_count
+FROM customers c
+LEFT JOIN sales_agg sa ON sa.customer_id = c.customer_id
+WHERE c.region = '서울';
+```
+
+### 스칼라 서브쿼리 캐시의 효율성 분석
+
+```sql
+-- 캐시 히트율 실험
+DECLARE
+    TYPE number_array IS TABLE OF NUMBER;
+    v_customer_ids number_array;
+    v_hit_count NUMBER := 0;
+    v_total_count NUMBER := 0;
+    v_start_time NUMBER;
+    v_end_time NUMBER;
+BEGIN
+    -- 고객 ID 샘플링 (반복 패턴 생성)
+    SELECT customer_id 
+    BULK COLLECT INTO v_customer_ids
+    FROM (
+        SELECT customer_id FROM customers 
+        WHERE region = '서울'
+        ORDER BY DBMS_RANDOM.VALUE
+    ) WHERE ROWNUM <= 1000;
+    
+    -- 같은 ID를 반복하여 캐시 효과 극대화
+    v_start_time := DBMS_UTILITY.GET_TIME;
+    
+    FOR i IN 1..10 LOOP  -- 10번 반복
+        FOR j IN 1..v_customer_ids.COUNT LOOP
+            FOR rec IN (
+                SELECT SUM(amount) as total
+                FROM sales
+                WHERE customer_id = v_customer_ids(j)
+                AND sale_date >= DATE '2024-01-01'
+            ) LOOP
+                v_total_count := v_total_count + 1;
+                -- 캐시 히트 카운팅 로직 (개념적)
+                IF j <= 100 THEN  -- 처음 100개 ID는 반복적으로 사용
+                    v_hit_count := v_hit_count + 1;
+                END IF;
+            END LOOP;
+        END LOOP;
+    END LOOP;
+    
+    v_end_time := DBMS_UTILITY.GET_TIME;
+    
+    DBMS_OUTPUT.PUT_LINE('실행 시간: ' || (v_end_time - v_start_time)/100 || '초');
+    DBMS_OUTPUT.PUT_LINE('캐시 히트율(추정): ' || 
+                         ROUND(v_hit_count/NULLIF(v_total_count, 0) * 100, 2) || '%');
+END;
+/
+```
+
+## 실무 적용 가이드라인
+
+### 상황별 최적 전략 선택
+
+```sql
+-- 1. 소량 외부 테이블 + 고선택도 조건: NL SEMI JOIN
+SELECT /*+ UNNEST USE_NL(s) LEADING(c s) INDEX(s IDX_SALES_CUSTOMER_DATE) */
+       c.customer_id,
+       c.tier
+FROM customers c
+WHERE c.region = '서울'
+AND c.tier = 'VIP'
+AND EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-03-01'
+    AND s.amount > 800000
+);
+
+-- 2. 대량 외부 테이블 + 저선택도 조건: HASH SEMI JOIN
+SELECT /*+ UNNEST USE_HASH(s) LEADING(s c) FULL(s) */
+       c.region,
+       COUNT(*) as customer_count
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-01-01'
+)
+GROUP BY c.region;
+
+-- 3. 복잡한 비즈니스 로직: 서브쿼리 팩토링
+WITH recent_customers AS (
+    SELECT DISTINCT customer_id
+    FROM sales
+    WHERE sale_date >= DATE '2024-01-01'
+    GROUP BY customer_id
+    HAVING SUM(amount) > 1000000
+),
+high_value_sales AS (
+    SELECT customer_id, SUM(amount) as total_amount
+    FROM sales
+    WHERE sale_date >= DATE '2024-03-01'
+    GROUP BY customer_id
+)
+SELECT 
+    c.customer_id,
+    c.region,
+    c.tier,
+    COALESCE(hvs.total_amount, 0) as recent_sales
+FROM customers c
+INNER JOIN recent_customers rc ON rc.customer_id = c.customer_id
+LEFT JOIN high_value_sales hvs ON hvs.customer_id = c.customer_id
+WHERE c.join_date >= DATE '2023-01-01';
+```
+
+### 성능 모니터링과 튜닝 프레임워크
+
+```sql
+-- 서브쿼리 성능 모니터링 대시보드
+SELECT 
+    sql_id,
+    plan_hash_value,
+    executions,
+    ROUND(elapsed_time/1000000, 2) as elapsed_sec,
+    buffer_gets,
+    disk_reads,
+    rows_processed,
+    SUBSTR(sql_text, 1, 100) as sql_snippet,
+    CASE 
+        WHEN INSTR(sql_text, 'NO_UNNEST') > 0 THEN 'FILTER'
+        WHEN INSTR(sql_text, 'UNNEST') > 0 THEN 'SEMI_JOIN'
+        ELSE 'AUTO'
+    END as subquery_type
+FROM v$sql
+WHERE sql_text LIKE '%EXISTS%'
+   OR sql_text LIKE '%IN (SELECT%'
+   OR sql_text LIKE '%SELECT.*SELECT%'
+AND executions > 0
+AND last_active_time > SYSDATE - 1
+ORDER BY elapsed_time DESC
+FETCH FIRST 20 ROWS ONLY;
+
+-- 실행 계획 상세 분석
+SELECT 
+    operation,
+    options,
+    object_name,
+    cardinality,
+    bytes,
+    cost,
+    access_predicates,
+    filter_predicates,
+    time
+FROM v$sql_plan
+WHERE sql_id = :target_sql_id
+AND (operation LIKE '%JOIN%' OR operation = 'FILTER')
+ORDER BY id;
+```
+
+## 고급 최적화 기법
+
+### 파티션 프루닝과의 연동
+
+```sql
+-- 월별 파티션된 sales 테이블 가정
+SELECT /*+ UNNEST USE_HASH(s) */
+       c.customer_id,
+       c.region,
+       COUNT(*) as monthly_sales_count
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales_partitioned s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-01-01' AND DATE '2024-03-31'
+    AND s.amount > 50000
+)
+GROUP BY c.customer_id, c.region
+HAVING COUNT(*) >= 3;
+
+-- 파티션 프루닝 확인
+EXPLAIN PLAN FOR
+SELECT /*+ UNNEST */ 
+       c.customer_id
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales_partitioned s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date BETWEEN DATE '2024-02-01' AND DATE '2024-02-28'
+);
+
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY);
+```
+
+### 적응형 쿼리 최적화
+
+```sql
+-- 적응형 조인 방법 활용
+SELECT /*+ UNNEST ADAPTIVE */ 
+       c.customer_id,
+       c.tier,
+       (SELECT MAX(s.amount) 
+        FROM sales s 
+        WHERE s.customer_id = c.customer_id
+        AND s.sale_date >= DATE '2024-01-01') as max_sale_2024
+FROM customers c
+WHERE c.region = '서울'
+AND EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= DATE '2024-03-01'
+);
+
+-- 동적 샘플링과의 조합
+SELECT /*+ UNNEST DYNAMIC_SAMPLING(4) */ 
+       c.customer_id,
+       c.region
+FROM customers c
+WHERE EXISTS (
+    SELECT 1
+    FROM sales s
+    WHERE s.customer_id = c.customer_id
+    AND s.sale_date >= ADD_MONTHS(SYSDATE, -6)
+);
+```
+
+## 결론: 현명한 서브쿼리 최적화 전략
+
+서브쿼리 언네스팅은 Oracle 데이터베이스의 핵심 최적화 기술 중 하나로, FILTER 연산의 행 단위 처리 한계를 극복하고 집합 기반의 효율적인 처리로 전환합니다. 이 기술의 성공적 적용을 위한 핵심 원칙은 다음과 같습니다:
+
+### 1. 패턴 인식과 전략 선택
+- **소량-고선택도**: NL SEMI JOIN으로 조기 종료 이점 활용
+- **대량-저선택도**: HASH SEMI JOIN으로 해시 캐싱 효과 극대화
+- **복잡한 비즈니스 로직**: 서브쿼리 팩토링과 CTE 활용
+
+### 2. 데이터 특성 이해
+- M측 테이블의 비고유 인덱스 특성을 고려한 접근법 선택
+- 데이터 분포 편향과 카디널리티에 따른 최적화 전략 수립
+- 파티션 구조를 활용한 프루닝 효과 확보
+
+### 3. 측정 기반 결정
+- 추상적 이론보다 실제 실행 통계에 의존
+- FILTER vs SEMI JOIN의 실제 성능 차이 측정
+- 다양한 시나리오에서의 성능 패턴 분석
+
+### 4. 점진적 최적화
+- 자동 언네스팅에 의존하면서도 필요 시 힌트로 세부 조정
+- 성능 모니터링을 통한 지속적 개선
+- 비즈니스 요구사항과 성능 목표의 균형 유지
+
+서브쿼리 최적화는 단순한 기술 적용이 아니라 데이터 패턴, 쿼리 특성, 시스템 환경을 종합적으로 이해하는 과정입니다. FILTER와 SEMI JOIN의 근본적 차이를 이해하고, 상황에 맞는 최적의 전략을 선택할 때, 복잡한 비즈니스 요구사항을 효율적으로 처리하는 강력한 데이터베이스 시스템을 구축할 수 있습니다.
+
+최종적으로 모든 최적화 결정은 실제 성능 측정으로 검증되어야 합니다. 실행 계획 분석, 자원 사용량 모니터링, 응답 시간 측정을 통해 데이터 기반의 튜닝 결정을 내리는 것이 장기적인 성능 안정성을 보장하는 핵심입니다.

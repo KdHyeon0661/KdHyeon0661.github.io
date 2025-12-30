@@ -17,7 +17,7 @@ category: DB 심화
 | 비교/베이스라인 | 수동 | **베이스라인 생성/고정/관리** API |
 | 권장 | **SE/비DIAG** 환경, 과거 시스템 | **표준**(가능하면 AWR 권장) |
 
-> 본 문서는 **둘 다** 다룬다. **기법/해석은 동일**하며, AWR이 **더 풍부**하다.
+본 문서는 **둘 다** 다룹니다. **기법/해석은 동일**하며, AWR이 **더 풍부**한 정보를 제공합니다.
 
 ---
 
@@ -109,7 +109,7 @@ EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 
 ## 리포트 읽는 순서(탑다운 루틴)
 
-> **핵심**: “**느리다**”를 **시간**으로 해체 → **CPU vs WAIT** → **어떤 WAIT?** → **누가 발생? (SQL/세그먼트/파일/라인)**
+**핵심**: "**느리다**"를 **시간**으로 해체 → **CPU vs WAIT** → **어떤 WAIT?** → **누가 발생? (SQL/세그먼트/파일/라인)**
 
 1) **Report Summary / Time Period** 확인
    - 구간 길이, 스냅샷 시각, 인스턴스, RAC 여부.
@@ -135,7 +135,7 @@ EXEC DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT();
 
 ## 예제 시나리오 & 리포트 읽기
 
-> 아래 예제는 “월말 보고서가 **느려진 피크 30분**” 구간을 AWR로 분석한다는 가정. (Statspack도 거의 동일)
+아래 예제는 "월말 보고서가 **느려진 피크 30분**" 구간을 AWR로 분석한다는 가정. (Statspack도 거의 동일)
 
 ### 구간 선택(스냅샷 범위)
 
@@ -245,23 +245,23 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 3) **PGA↑/workarea policy** 검토(스필 줄이기)
 4) 조인전략 전환(해시→NL, 소량 먼저), 파티션 프루닝 강화
 
-**Before/After 확인**: 동일 구간 AWR 또는 `awrdiff.sql`로 비교(§6).
+**Before/After 확인**: 동일 구간 AWR 또는 `awrdiff.sql`로 비교.
 
 ---
 
 ## Statspack 리포트 분석(동일 루틴 적용)
 
-`spreport.sql` 결과의 핵심 섹션도 **Top 5 Timed Events**, **Load Profile**, **SQL ordered by…**, **Instance Activity** 등 **유사**하다.
+`spreport.sql` 결과의 핵심 섹션도 **Top 5 Timed Events**, **Load Profile**, **SQL ordered by…**, **Instance Activity** 등 **유사**합니다.
 
 - **Top 5 Timed Events**에서 `db file scattered read`↑ → FTS/범위 과다 → **Plan에서 FTS 라인** 확인
 - **SQL ordered by Gets/Reads** 상위 SQL의 **실행계획**을 `DBMS_XPLAN.DISPLAY_CURSOR`로 검증(Statspack만 쓴다 해도 SQL은 캐시에 존재)
 - **Buffer busy/ITL waits** 세그먼트가 보이면 인덱스 편향/INITRANS/키분산 대책 검토
 
-> 차이: Statspack은 **Time Model/Advisory**가 제한적. **해석 원칙**은 동일.
+차이: Statspack은 **Time Model/Advisory**가 제한적. **해석 원칙**은 동일.
 
 ---
 
-## **비교 리포트**로 “튜닝 효과/회귀” 증명
+## **비교 리포트**로 "튜닝 효과/회귀" 증명
 
 ### AWR Diff Report
 
@@ -283,7 +283,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ---
 
-## **베이스라인**(AWR)으로 “좋을 때 상태” 고정
+## **베이스라인**(AWR)으로 "좋을 때 상태" 고정
 
 ### 베이스라인 생성/관리
 
@@ -324,7 +324,7 @@ END;
 /
 ```
 
-> **사용법**: 문제 상황을 “좋을 때 베이스라인”과 비교하여 **회귀**를 신속히 검출.
+**사용법**: 문제 상황을 "좋을 때 베이스라인"과 비교하여 **회귀**를 신속히 검출.
 
 ---
 
@@ -350,18 +350,18 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('&&SQL_ID', NULL,
 
 ---
 
-## **리포트 해석 체크리스트**(암기 카드)
+## **리포트 해석 가이드라인**
 
-1) **구간 고정**: 피크 30분 등 **일관된** 범위
-2) **DB Time vs DB CPU**: 대기 비중 판단
-3) **Top Events**: User I/O? Concurrency? Commit? Cluster? Library?
-4) **Top SQL**: Elapsed/CPU/Reads/Execs별 상위 **3~5개** 선정
-5) **I/O/Temp**: 파일/TS/오브젝트 누가 I/O/Temp를 잡아먹나
-6) **Segments**: 핫 인덱스/테이블, buffer busy/ITL waits 대상
-7) **Plan 라인**: `ALLSTATS LAST`로 **시간/Temp/버퍼** 큰 라인
-8) **조치**: 인덱스/카디널리티/조인/정렬 회피/PGA/커밋/키분산/로컬리티
-9) **비교 보고**: `awrdiff.sql`로 **효과** 수치화
-10) **재발 방지**: 베이스라인/모니터링 임계치 구성
+1) **구간 고정**: 피크 30분 등 **일관된** 범위를 선택하여 진짜 병목이 희석되지 않도록 합니다.
+2) **DB Time vs DB CPU**: 대기 비중을 판단하여 I/O, 락, 네트워크 등의 근본 원인을 가립니다.
+3) **Top Events**: 어떤 Wait Class(User I/O/Concurrency/Commit/Cluster)가 지배적인지 확인합니다.
+4) **Top SQL**: Elapsed/CPU/Reads/Execs별 상위 **3~5개** SQL을 선정하여 집중 분석합니다.
+5) **I/O/Temp**: 파일/테이블스페이스/오브젝트 누가 I/O/Temp를 잡아먹는지 확인합니다.
+6) **Segments**: 핫 인덱스/테이블, buffer busy/ITL waits 대상 세그먼트를 식별합니다.
+7) **Plan 라인**: `ALLSTATS LAST`로 **시간/Temp/버퍼**가 큰 라인을 찾아 집중합니다.
+8) **조치**: 인덱스/카디널리티/조인/정렬 회피/PGA/커밋/키분산/로컬리티 등 적절한 조치를 계획합니다.
+9) **비교 보고**: `awrdiff.sql`로 **효과**를 수치화하여 증명합니다.
+10) **재발 방지**: 베이스라인/모니터링 임계치를 구성하여 시스템 회귀를 조기에 탐지합니다.
 
 ---
 
@@ -385,7 +385,7 @@ HOST echo Generating AWR report for &&bsn to &&esn ...
 -- 프롬프트에서 bsn/esn 사용
 ```
 
-### — 보조
+### — 보조 ASH 쿼리(실시간 대기 샘플링)
 
 ```sql
 SELECT sql_id,
@@ -399,22 +399,41 @@ GROUP  BY sql_id
 ORDER  BY samples DESC FETCH FIRST 10 ROWS ONLY;
 ```
 
+### AWR 데이터 추출(사용자 정의 분석)
+
+```sql
+-- 특정 기간 동안의 Top SQL 추출
+SELECT sql_id,
+       SUM(elapsed_time_delta)/1e6 AS elapsed_sec,
+       SUM(cpu_time_delta)/1e6 AS cpu_sec,
+       SUM(disk_reads_delta) AS disk_reads,
+       SUM(buffer_gets_delta) AS buffer_gets,
+       SUM(executions_delta) AS executions
+FROM   dba_hist_sqlstat s
+JOIN   dba_hist_snapshot snap ON s.snap_id = snap.snap_id
+WHERE  snap.begin_interval_time BETWEEN SYSDATE - 7 AND SYSDATE
+GROUP  BY sql_id
+ORDER  BY elapsed_sec DESC
+FETCH FIRST 20 ROWS ONLY;
+```
+
 ---
 
 ## 일반 함정 & 베스트 프랙티스
 
 **함정**
-- 스냅샷 **구간 길이**가 너무 길면 스파이크가 **희석**된다. 너무 짧으면 **노이즈**. (보통 15~30분 추천)
-- Top SQL이 **총 DB Time의 5% 미만**이면 **시스템 현상**(락/로그/클러스터)일 수 있다.
-- “BCHR 99%”만 보고 결론 금지 → **Temp/Commit/Concurrency**가 지배할 수 있음.
-- RAC에서 인스턴스별 **부하/서비스 라우팅**을 무시하면 오판.
+- 스냅샷 **구간 길이**가 너무 길면 스파이크가 **희석**됩니다. 너무 짧으면 **노이즈**가 많습니다. (보통 15~30분 추천)
+- Top SQL이 **총 DB Time의 5% 미만**이면 **시스템 현상**(락/로그/클러스터)일 수 있습니다.
+- "BCHR 99%"만 보고 결론 금지 → **Temp/Commit/Concurrency**가 지배적일 수 있습니다.
+- RAC에서 인스턴스별 **부하/서비스 라우팅**을 무시하면 오판합니다.
 
 **베스트 프랙티스**
-1) **Top Events → Top SQL → Plan 라인** 3단 점프
-2) **전/후 비교**로 수치 증명(awrdiff)
-3) **베이스라인**으로 “정상 상태” 고정 → 회귀 탐지
-4) **Advisory**는 방향성으로만 사용(정답 아님)
-5) AWR + **ASH**(타임라인/상관) + **SQL Monitor**(장수행/라인 시간) **병행**
+1) **Top Events → Top SQL → Plan 라인** 3단 점프로 원인을 추적합니다.
+2) **전/후 비교**로 수치를 증명합니다(awrdiff 활용).
+3) **베이스라인**으로 "정상 상태"를 고정하여 회귀를 탐지합니다.
+4) **Advisory**는 방향성으로만 사용합니다(절대적 정답이 아닙니다).
+5) AWR + **ASH**(타임라인/상관) + **SQL Monitor**(장수행/라인 시간)를 **병행**하여 다각도로 분석합니다.
+6) **정기적인 리뷰**: 중요한 애플리케이션 변경, 인프라 변경, 계절적 부하 변화 후에는 반드시 AWR 리포트를 확인합니다.
 
 ---
 
@@ -453,11 +472,12 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR('9pqs1m..', NULL,
 
 ## 결론
 
-- **Statspack/AWR**는 **시계열 성능 DNA**를 남기는 표준 도구다.
-- 리포트는 **Top Events → Top SQL → Plan 라인 → 세그먼트/I/O** 순서로 읽는다.
-- **비교 리포트**로 전/후를 수치로 증명하고, **베이스라인**으로 정상 상태를 고정하라.
-- 문제의 **이름표(대기 이벤트)** 를 찾고, **좌표(Plan 라인)** 를 확인하고, **작고 정확한 변경**으로 해결하라.
+Oracle Statspack과 AWR은 데이터베이스 성능 문제를 체계적으로 진단하고 해결하기 위한 필수적인 도구입니다. 이 두 도구는 시간이 지남에 따라 시스템이 어떻게 동작했는지에 대한 객관적인 역사 기록을 제공하며, 단순히 현재 상태를 진단하는 것을 넘어서 성능 추세를 분석하고 문제를 사전에 예측하는 데까지 활용될 수 있습니다.
 
-> 한 줄 정리
-> **AWR/Statspack**은 “문제의 시간과 장소”를 알려준다.
-> 그 지도를 따라 **Plan 라인**까지 내려가면, **튜닝의 답**이 거기에 있다.
+AWR이 더 풍부한 기능과 자동화된 수집을 제공하지만, Statspack 역시 무료로 사용 가능한 강력한 도구로서 여전히 많은 환경에서 가치를 발휘합니다. 성능 분석의 핵심은 데이터를 체계적으로 읽고 해석하는 논리적 프레임워크에 있으며, 이는 두 도구 모두에 동일하게 적용됩니다.
+
+효과적인 분석을 위해서는 "탑다운" 접근법을 따르는 것이 중요합니다. 시스템 전반의 부하 프로필과 Top 대기 이벤트를 먼저 파악한 후, 이를 가장 크게 기여하는 SQL로 좁혀가고, 마지막으로 해당 SQL의 실행 계획 라인별 상세 통계까지 추적해야 합니다. 이러한 체계적 접근 없이 개별 지표에만 집중하면 근본 원인을 놓치기 쉽습니다.
+
+성능 튜닝은 단일 분석으로 끝나는 것이 아니라 지속적인 프로세스입니다. AWR의 베이스라인 기능과 비교 리포트를 활용하여 튜닝의 효과를 정량적으로 평가하고, 시스템의 정상 상태를 정의하여 향후 성능 회귀를 조기에 감지할 수 있습니다. 또한 AWR 데이터는 용량 계획, 하드웨어 업그레이드 결정, 애플리케이션 아키텍처 개선 등 장기적인 의사 결정을 지원하는 데에도 귀중한 인사이트를 제공합니다.
+
+궁극적으로 Statspack과 AWR은 단순한 데이터 수집 도구가 아니라, 데이터베이스 운영의 가시성을 높이고 성능 문제를 예측 가능하고 체계적으로 해결할 수 있도록 하는 핵심 인프라입니다. 이 도구들을 숙달하고 체계적인 분석 프로세스를 구축하는 것은 모든 Oracle DBA와 성능 엔지니어에게 필수적인 역량입니다.

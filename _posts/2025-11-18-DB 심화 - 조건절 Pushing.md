@@ -6,24 +6,28 @@ category: DB 심화
 ---
 # 조건절 Pushing 완전 가이드
 
-**주제**
-- **Predicate Pushdown(조건절 푸시다운)**: 필터를 **더 아래 단계(데이터 원천 가까이)**로 밀어 넣어 읽는 데이터·연산량을 최소화
-- **Predicate Pullup(조건절 풀업/호이스트)**: 안전할 때 조건을 **위로 끌어올려** 조인 재배치·변환 공간을 넓힘
-- **Join Predicate Pushdown(조인 조건 푸시다운)**: 조인 동등조건/전이성으로 **상대 테이블에 필터를 전파**하거나, **Join Filter(Bloom)**로 스캔 단계에서 조기 차단
+## 주제와 핵심 개념
 
-> 핵심 직관
-> **CBO는 “의미 보존이 확실한 범위에서, 비용이 줄어드는 방향으로”** 조건을 위아래로 움직인다.
-> - Pushdown은 **I/O↓·행수↓**가 목적
-> - Pullup은 **의미 보호·변환 자유도↑**가 목적
-> - Join Predicate Pushdown은 **상대편/스토리지까지 필터를 전파**하는 상위 최적화 축
+이 가이드에서는 조건절(Predicate)의 위치를 옵티마이저가 어떻게 재배치하는지, 그 세 가지 주요 메커니즘을 다룹니다.
+
+*   **Predicate Pushdown(조건절 푸시다운)**: 필터 조건을 **가능한 한 데이터 원천(테이블, 인덱스)에 가깝게 아래로 밀어 넣어**, 읽어야 하는 데이터 양과 처리해야 할 연산량을 최소화합니다.
+*   **Predicate Pullup(조건절 풀업/호이스트)**: 쿼리의 의미를 훼손하지 않는 안전한 범위에서 조건을 **위로 끌어올려**, 조인 순서 변경이나 뷰 병합(View Merging) 같은 다른 최적화 변환이 적용될 수 있는 공간을 확보합니다.
+*   **Join Predicate Pushdown(조인 조건 푸시다운)**: 조인 조건의 동등성이나 전이성(Transitivity)을 이용하여 **필터를 조인의 반대편 테이블로 전파**하거나, **Join Filter(Bloom Filter)**를 생성하여 프로브(Probe) 측 테이블 스캔 시 조기에 불필요한 데이터를 차단합니다.
+
+**핵심 직관**
+옵티마이저(CBO)는 **"쿼리의 원래 의미가 보장되는 범위 내에서, 전체 실행 비용을 가장 많이 줄일 수 있는 방향으로"** 조건절을 위아래로 이동시킵니다.
+*   **Pushdown**의 목표는 **I/O와 중간 결과 집합의 크기를 줄이는 것**입니다.
+*   **Pullup**의 목표는 **쿼리 의미를 보호하고, 더 넓은 범위의 최적화 변환을 가능하게 하는 것**입니다.
+*   **Join Predicate Pushdown**은 필터 효과를 **조인 상대편 테이블이나 심지어 스토리지 스캔 단계까지 확장**시키는 고급 최적화입니다.
 
 ---
 
-## 공통 스키마/관찰 루틴
+## 실습 환경 설정 및 관찰 방법
 
-아래 스키마는 “차원-사실”의 전형적인 튜닝 실습용이다. (필요하면 로우를 수백만 단위로 늘려 실측)
+다음은 전형적인 차원-사실 모델 기반의 실습용 스키마입니다.
 
 ```sql
+-- 차원 테이블
 CREATE TABLE d_customer (
   cust_id NUMBER PRIMARY KEY,
   region  VARCHAR2(8) NOT NULL,
@@ -36,6 +40,7 @@ CREATE TABLE d_product (
   brand    VARCHAR2(16) NOT NULL
 );
 
+-- 사실 테이블
 CREATE TABLE f_sales (
   sales_id NUMBER PRIMARY KEY,
   cust_id  NUMBER NOT NULL,
@@ -45,11 +50,12 @@ CREATE TABLE f_sales (
   amount   NUMBER(12,2) NOT NULL
 );
 
--- 인덱스 예시
+-- 인덱스 생성
 CREATE INDEX ix_fs_cust_dt  ON f_sales(cust_id, sales_dt);
 CREATE INDEX ix_fs_prod_dt  ON f_sales(prod_id, sales_dt);
 CREATE INDEX ix_prod_cat_br ON d_product(category, brand, prod_id);
 
+-- 기본 통계 수집
 BEGIN
   DBMS_STATS.GATHER_TABLE_STATS(USER,'D_CUSTOMER');
   DBMS_STATS.GATHER_TABLE_STATS(USER,'D_PRODUCT');
@@ -58,54 +64,48 @@ END;
 /
 ```
 
-**관찰은 항상 “실측 플랜”으로**:
+**실행 계획 분석 루틴**
+조건절 이동의 효과를 확인하려면 항상 아래 방법으로 상세 실행 계획을 확인하세요.
 
 ```sql
 SELECT *
 FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(
   NULL, NULL,
-  'ALLSTATS LAST +PREDICATE +ALIAS +NOTE +PROJECTION'));
+  'ALLSTATS LAST +PREDICATE +ALIAS +NOTE +PROJECTION'
+));
 ```
 
-- `Predicate Information`에서
-  - **access predicate**(인덱스/스캔 입력 단계)
-  - **filter predicate**(상위에서 걸러지는 단계)
-  - **pushed predicate**(푸시된 조건)
-  이 어떻게 배치됐는지를 읽는다.
-- `Notes`에는 **Predicate Move-Around / pushdown / unnest / view merge**의 흔적이 종종 남는다.
+분석 포인트:
+*   **`Predicate Information` 섹션**: 조건이 `access`(스캔 입력 단계에서 사용)로 적용되었는지, `filter`(읽은 후 상위에서 걸러짐)로 적용되었는지, 혹은 `pushed`(푸시다운됨)로 표시되는지 확인합니다.
+*   **`Notes` 섹션**: `view merging`, `predicate moved`, `join filter` 등 옵티마이저의 변환 결정에 대한 힌트를 제공합니다.
 
 ---
 
-## Predicate Pushdown의 본질
+## Predicate Pushdown의 본질과 이점
 
 ### 정의
+Predicate Pushdown은 필터 조건을 실행 계획 트리에서 **더 아래쪽, 즉 데이터를 읽는 오퍼레이터에 더 가깝게 옮기는 변환**입니다. 이 변환은 주로 다음 위치로 조건을 이동시킵니다.
+1.  **인라인 뷰 또는 CTE(Common Table Expression) 내부**
+2.  **서브쿼리(주로 `IN`, `EXISTS`와 사용) 내부**
+3.  **베이스 테이블이나 인덱스를 액세스하는 바로 앞 단계**
+4.  **파티션 프루닝(Partition Pruning)이 발생하는 지점**
+5.  **해시 조인에서 생성되는 Join Filter(Bloom Filter)로**
 
-- **Pushdown**은 “필터를 **더 아래(데이터에 가까운) 오퍼레이터**로 옮겨”
-  **읽는 행/블록을 먼저 줄이는 변환**이다.
-- 대상 위치:
-  1) **인라인 뷰/CTE 내부**
-  2) **서브쿼리(세미조인) 내부**
-  3) **베이스 테이블 액세스 앞(access predicate)**
-  4) **파티션 프루닝 지점**
-  5) **해시 조인의 Join Filter(Bloom)**
-     → 스캔 중에 “어차피 매칭 불가”를 조기 차단
-
-### 왜 이득인가
-
-- **I/O 감소**: 불필요한 블록을 읽기 전에 배제
-- **카디널리티 감소**: 이후 조인/집계/정렬의 입력이 줄어듦
-- **인덱스/파티션 프루닝 촉진**: 조건이 access predicate가 되면 인덱스 범위/파티션 범위를 직접 좁힘
-- **Bloom Join Filter와 결합**: 해시 조인 빌드 집합에서 만든 키 집합으로
-  프로브 테이블 스캔을 파티션/블록 단위로 제거
+### Pushdown의 주요 이점
+*   **I/O 감소**: 조건에 맞지 않는 데이터 블록을 아예 읽지 않게 되어 디스크 또는 버퍼 캐시 I/O가 줄어듭니다.
+*   **중간 결과 집합 축소**: 조인, 정렬, 집계와 같은 후속 작업에 입력되는 행의 수가 줄어들어 CPU 및 메모리 사용량이 감소합니다.
+*   **인덱스 활용도 향상**: 조건이 인덱스 액세스 단계로 내려가면(`access predicate`), 인덱스 범위 스캔이 더 효율적으로 작동합니다.
+*   **파티션 프루닝 유도**: 파티션 키에 대한 조건이 명확해지면 관련 없는 파티션 전체를 스캔에서 제외할 수 있습니다.
+*   **Join Filter 효율**: 해시 조인 시 빌드(Build) 측의 키로 생성된 Bloom Filter를 프로브(Probe) 측 스캔에 사용하여, 조인에 성공할 수 없는 행을 아주 초기 단계에서 걸러낼 수 있습니다.
 
 ---
 
-## Pushdown이 일어나는 “수준(Level)” 커리큘럼
+## Pushdown이 적용되는 다양한 수준과 패턴
 
-### Level A — 뷰/인라인뷰 내부로의 Pushdown
+### 레벨 1: 뷰/인라인 뷰 내부로의 Pushdown
+인라인 뷰를 사용할 때, 외부 쿼리의 조건이 뷰 내부로 푸시다운되지 않으면 비효율이 발생할 수 있습니다.
 
-#### (A) 비머지·비푸시: 조건이 위에 남는 나쁜 패턴
-
+**비효율적인 패턴 (병합 및 푸시다운 차단)**
 ```sql
 SELECT s.sales_id, s.amount
 FROM   f_sales s
@@ -115,14 +115,12 @@ JOIN  (SELECT p.prod_id
 ON     v.prod_id = s.prod_id
 WHERE  s.sales_dt BETWEEN :d1 AND :d2;
 ```
+*   `NO_MERGE`가 암시적일 경우, `VIEW v` 연산자가 실행 계획에 남습니다.
+*   외부 조건(`s.sales_dt`)이 뷰 `v` 내부로 푸시다운되지 않아, `v`의 결과 집합 전체와 `s`를 조인한 후에야 날짜 필터가 적용될 수 있습니다.
 
-- 뷰가 병합되지 않으면 `VIEW v` 노드가 남고
-  `v`의 필터가 `s`의 접근 전에 충분히 활용되지 못할 수 있음.
-
-#### (B) 머지+푸시를 유도: 좋은 패턴
-
+**효율적인 패턴 (병합 및 푸시다운 유도)**
 ```sql
-SELECT /*+ MERGE(v) PUSH_PRED(v) USE_HASH(v) LEADING(v s) */
+SELECT /*+ MERGE(v) PUSH_PRED(v) */
        s.sales_id, s.amount
 FROM   f_sales s
 JOIN  (SELECT p.prod_id
@@ -131,28 +129,15 @@ JOIN  (SELECT p.prod_id
 ON     v.prod_id = s.prod_id
 WHERE  s.sales_dt BETWEEN :d1 AND :d2;
 ```
+*   `MERGE(v)`: 인라인 뷰 `v`를 외부 쿼리와 평탄화하여 하나의 Query Block으로 만듭니다.
+*   `PUSH_PRED(v)`: 조건절을 가능한 한 아래로 푸시다운하도록 옵티마이저에 힌트를 줍니다.
+*   **기대 효과**: `d_product`의 필터와 `f_sales`의 날짜 조건이 함께 고려되어, 최적의 인덱스(`ix_fs_prod_dt`)를 사용한 조인 계획이 세워질 가능성이 높아집니다.
 
-- `MERGE(v)`: 인라인 뷰를 **평탄화(view merging)**
-- `PUSH_PRED(v)`: v의 조건이 **가능한 아래로 들어가도록 선호**
-  (이 계열 힌트의 의미는 오래 전부터 동일)
-
-**성공 신호**
-- `VIEW` 노드가 사라지거나 단순화됨
-- `Predicate Information`에서 `pushed predicate`가 더 아래 라인에 보임
-- 해시 조인이라면 `JOIN FILTER CREATE/USE`가 생성될 수 있음
-
----
-
-### Level B — 서브쿼리 Pushdown(PUSH_SUBQ)과 Unnesting
-
-#### 왜 “서브쿼리를 먼저 줄이는가”
-
-`IN/EXISTS` 서브쿼리는 **세미조인(SEMijoin)**으로 바뀌며,
-CBO는 “서브쿼리 결과를 먼저 축소할수록 좋다”고 판단하면
-그 평가를 앞으로 당긴다. `PUSH_SUBQ`는 그 결정을 **강화**한다.
+### 레벨 2: 서브쿼리 Pushdown (`PUSH_SUBQ`)
+`IN` 또는 `EXISTS` 서브쿼리는 세미조인(Semijoin)으로 변환될 수 있습니다. 서브쿼리의 결과 집합을 먼저 축소하는 것이 유리하다고 판단되면 옵티마이저는 그 평가를 앞당깁니다(`PUSH_SUBQ`).
 
 ```sql
-SELECT /*+ PUSH_SUBQ UNNEST USE_HASH(p) LEADING(p s) */
+SELECT /*+ PUSH_SUBQ UNNEST */
        SUM(s.amount)
 FROM   f_sales s
 WHERE  s.prod_id IN (
@@ -162,386 +147,234 @@ WHERE  s.prod_id IN (
 )
 AND    s.sales_dt BETWEEN :d1 AND :d2;
 ```
+*   `UNNEST`: 서브쿼리를 일반 조인 형태로 풀어냅니다.
+*   `PUSH_SUBQ`: 풀어낸 서브쿼리(세미조인)를 가능한 한 먼저 실행하여 결과 집합을 축소하도록 유도합니다.
+*   **성공 신호**: 실행 계획에 `HASH JOIN SEMI` 또는 `NESTED LOOPS SEMI`가 나타나고, `d_product` 테이블이 먼저 처리되는 드라이빙 테이블이 됩니다.
 
-- `UNNEST`: 서브쿼리를 **조인 형태로 재작성**
-- `PUSH_SUBQ`: 그 조인을 **먼저 계산/축소**하는 방향으로 힌팅
+### 레벨 3: 베이스 테이블 Access Predicate로의 Pushdown
+조건이 인덱스 컬럼을 가공 없이 참조할 때(`SARGABLE`), 옵티마이저는 이를 `access predicate`로 만들어 인덱스 스캔 범위를 직접 제한합니다.
 
-**성공 신호**
-- `HASH JOIN SEMI` 또는 `NESTED LOOPS SEMI`
-- `d_product`가 **드라이빙(build)**이 되고 `f_sales`가 **프로브(probe)**로 내려감
-- `JOIN FILTER`가 생기면 더 강력한 pushdown
-
----
-
-### Level C — 베이스 테이블 Access Predicate Pushdown
-
-#### access vs filter
-
-- **access predicate**: 인덱스 범위, 파티션 프루닝, 스캔 입력을 **직접 제한**
-- **filter predicate**: 이미 읽은 후에 위에서 거르는 조건
-
-CBO는 조건이 인덱스/파티션 키에 “알맞게” 놓일수록 access로 바꿔 아래로 내린다.
-
-**나쁜 예(컬럼 가공으로 푸시 불가)**
+**비SARGABLE 쿼리 (푸시다운 실패)**
 ```sql
 SELECT COUNT(*)
 FROM f_sales s
-WHERE TO_CHAR(s.sales_dt,'YYYY')='2024';
+WHERE TO_CHAR(s.sales_dt,'YYYY')='2024'; -- 컬럼 가공
 ```
+*   `sales_dt` 컬럼에 함수가 적용되어 인덱스 범위 스캔을 사용할 수 없습니다. 풀 테이블 스캔 후 모든 행에 대해 필터링이 발생합니다.
 
-**좋은 예(SARGABLE → access predicate 가능)**
+**SARGABLE 쿼리 (푸시다운 성공)**
 ```sql
 SELECT COUNT(*)
 FROM f_sales s
 WHERE s.sales_dt >= DATE '2024-01-01'
   AND s.sales_dt <  DATE '2025-01-01';
 ```
+*   컬럼이 가공되지 않았으므로, `ix_fs_cust_dt` 인덱스의 선두 컬럼이 `sales_dt`가 아니라면 사용되지 않을 수 있지만, `sales_dt`만의 인덱스가 있다면 범위 스캔으로 푸시다운됩니다.
 
-- 타입 변환/함수 가공이 사라지면 인덱스 범위/파티션 프루닝으로 내려갈 가능성이 열린다.
-
----
-
-### Level D — 파티션 프루닝으로의 Pushdown
-
-`f_sales`가 `sales_dt`로 RANGE 파티션이라 가정하자.
+### 레벨 4: 파티션 프루닝으로의 Pushdown
+대용량 파티션 테이블에서 조건을 파티션 키 컬럼으로 푸시다운하면, 관련 없는 파티션 전체를 접근에서 제외할 수 있습니다.
 
 ```sql
-SELECT /*+ MERGE(v) PUSH_PRED(v) */
+-- f_sales가 sales_dt 기준 RANGE 파티션 테이블이라고 가정
+SELECT /*+ MERGE(v) */
        COUNT(*)
 FROM   f_sales s
 JOIN  (SELECT p.prod_id FROM d_product p WHERE p.brand='B0') v
 ON     v.prod_id = s.prod_id
-WHERE  s.sales_dt BETWEEN :d1 AND :d2;
+WHERE  s.sales_dt BETWEEN :d1 AND :d2; -- 파티션 키 조건
 ```
+*   `MERGE(v)`로 뷰가 평탄화되면, `sales_dt` 조건이 `f_sales` 테이블 액세스 단계로 명확히 내려갑니다.
+*   **성공 신호**: 실행 계획의 `PARTITION RANGE` 오퍼레이터 아래에 `PSTART`와 `PSTOP`이 특정 파티션 번호로 한정되어 나타납니다.
 
-- `MERGE+PUSH_PRED`는 뷰 조건을 풀어서 `s` 접근 단계로 밀어넣고,
-- `sales_dt` 기간 조건은 파티션 프루닝을 만들어
-  **PSTART/PSTOP**이 좁아져야 한다.
-
-**성공 신호**
-- 플랜의 `PARTITION RANGE`에서 `PSTART/PSTOP`이 상수/범위로 좁혀짐
-- `Predicate Information`에 기간 조건이 `access`로 내려감
-
----
-
-### Level E — Join Filter(Bloom)까지 내려가는 Pushdown
-
-해시 조인에서는 빌드 입력으로 **Bloom Filter(Join Filter)**를 만들고
-프로브 입력을 스캔할 때 “매칭 불가능한 블록/파티션”을 제거한다.
-플랜에 `JOIN FILTER CREATE/USE`가 뜨면 “스캔 레벨 pushdown”이다.
+### 레벨 5: Join Filter(Bloom Filter) 생성
+해시 조인에서 작은 빌드(Build) 테이블의 조인 키를 기반으로 Bloom Filter를 생성하면, 큰 프로브(Probe) 테이블을 스캔할 때 이 필터를 사용하여 조인에 실패할 행을 아주 초기에 걸러낼 수 있습니다.
 
 ```sql
 SELECT /*+ USE_HASH(p) LEADING(p s) */
        SUM(s.amount)
 FROM   f_sales s
-JOIN   d_product p
-  ON   p.prod_id = s.prod_id
+JOIN   d_product p ON p.prod_id = s.prod_id
 WHERE  p.category='ELEC'
 AND    s.sales_dt BETWEEN :d1 AND :d2;
 ```
-
-**해석**
-- `p`(작은 집합)에서 해시 테이블을 만들면서 Join Filter 생성
-- `s`(큰 집합) 스캔 중 `SYS_OP_BLOOM_FILTER`가 평가되어 조기 차단
-
-**실전 팁**
-- 빌드 집합이 충분히 작고 키 선택도가 높을수록 Bloom이 강하게 작동
-- 통계가 틀리면 CBO가 Bloom을 **과소/과대 사용**할 수 있으므로 정확한 통계가 필수
+*   `d_product`(빌드 측)에서 `category='ELEC'`인 행들의 `prod_id`로 해시 테이블과 Bloom Filter가 생성됩니다.
+*   `f_sales`(프로브 측)를 스캔할 때 각 행의 `prod_id`가 Bloom Filter를 통과하지 못하면 즉시 버려집니다.
+*   **성공 신호**: 실행 계획에 `JOIN FILTER CREATE` 및 `JOIN FILTER USE` 오퍼레이터가 나타나고, `Predicate Information`에 `SYS_OP_BLOOM_FILTER` 조건이 추가됩니다.
 
 ---
 
-## Join Predicate Pushdown(전이성/전파)
+## Join Predicate Pushdown: 전이성과 필터 전파
 
-### 전이성(Transitivity)의 푸시
+조인 조건의 동등성(=)을 이용하면, 한 테이블에 적용된 필터를 조인 상대편 테이블로 전파(푸시다운)할 수 있습니다. 이를 **전이성(Transitivity)** 최적화라고 합니다.
 
 ```sql
 SELECT /*+ USE_NL(s) LEADING(c s) */
        COUNT(*)
 FROM   d_customer c
-JOIN   f_sales s
-  ON   s.cust_id = c.cust_id
-WHERE  c.cust_id BETWEEN :lo AND :hi
+JOIN   f_sales s ON s.cust_id = c.cust_id
+WHERE  c.cust_id BETWEEN :lo AND :hi -- 이 조건이
 AND    s.sales_dt BETWEEN :d1 AND :d2;
 ```
+*   `c.cust_id BETWEEN :lo AND :hi` 조건은 조인 조건(`s.cust_id = c.cust_id`)을 통해 `s.cust_id BETWEEN :lo AND :hi`로 **전이**될 수 있습니다.
+*   **성공 신호**: `Predicate Information`에서 `s` 테이블에 `access("S"."CUST_ID" BETWEEN :LO AND :HI)`라는 조건이 추가됩니다. 이로 인해 `ix_fs_cust_dt` 인덱스를 효율적으로 범위 스캔할 수 있게 됩니다.
 
-- `c.cust_id BETWEEN :lo AND :hi`가 **s.cust_id에도 전파**되어
-  `ix_fs_cust_dt`의 범위가 줄어드는 것이 목표.
-- `Predicate Information`에서
-  `access("S"."CUST_ID" BETWEEN :LO AND :HI)`가 보이면 성공.
-
-**전이성 푸시가 잘 되는 조건**
-- **등치 조인**(=)
-- 양쪽 키의 **타입이 동일**
-- 한쪽에 **상수/좁은 범위 조건**
-- 통계가 전제와 맞음(카디널리티 과대평가면 전파가 억제될 수 있음)
-
-### 인덱스 컬럼 구성에 따른 푸시 성공/실패
-
-전이성/푸시가 **인덱스 선두 컬럼 구성**에 의해 갈리는 케이스가 있다.
-예를 들어 조건이 인덱스에 포함되지 않으면 푸시가 늦어질 수 있다.
-
-```sql
--- 인덱스가 (a, b)일 때 b 조건만으로는 access로 못 내려갈 수 있음.
--- 해결: (b, a) 또는 (b) 인덱스를 별도로 두면 전이성/푸시 효과가 커짐.
-```
-
-즉, **“푸시다운이 곧 인덱스 설계”**로 이어진다.
+**전이성 푸시다운이 효과적이기 위한 조건**
+*   조인 조건이 **등치 조건**(=)이어야 합니다.
+*   양쪽 컬럼의 데이터 타입이 동일해야 합니다.
+*   통계 정보가 정확해야 합니다. 카디널리티를 과대평가하면 옵티마이저가 전이성 푸시다운의 이점을 과소평가하여 적용하지 않을 수 있습니다.
 
 ---
 
-## Predicate Pullup(호이스트) — 왜 위로 끌어올리나
+## Predicate Pullup: 때로는 조건을 위로 올리는 것이 최선이다
 
-### Pullup의 역할
+### Pullup의 역할과 필요성
+모든 조건을 아래로만 밀어넣는 것이 최선은 아닙니다. 옵티마이저는 다음과 같은 이유로 조건을 일부 위로 끌어올릴(Pullup) 때가 있습니다.
+1.  **의미 보존, 특히 외부 조인에서**: 외부 조인에서 내부 테이블에 대한 필터를 WHERE 절에 두면 외부 조인의 의미가 내부 조인으로 바뀝니다. 이를 방지하기 위해 조건을 ON 절 쪽으로 "올리는" 재배치가 필요할 수 있습니다.
+2.  **다른 최적화 변환의 공간 확보**: 조건이 특정 위치에 있으면 뷰 병합(View Merging)이나 조인 순서 재배치 같은 더 중요한 변환이 방해받을 수 있습니다. 조건을 일시적으로 위로 올려 이러한 변환이 먼저 일어날 수 있도록 합니다.
 
-- Pushdown이 “항상 정답”이면 CBO는 늘 아래로만 내릴 것이다.
-  하지만 실제로는
-  1) **의미 보존(특히 외부조인)**
-  2) **다른 변환(뷰 병합, 조인 재배치, 집계 푸시)**의 공간 확보
-  때문에 조건을 **일부 위로 끌어올리는 것이 더 안전/유리할 때가 있다**.
+옵티마이저의 이러한 전체적인 조건 재배치 활동을 **Predicate Move-Around**라고 합니다.
 
-이 전체적인 움직임을 Oracle은 **Predicate Move-Around**라고 부른다.
-`PUSH_PRED / NO_PUSH_PRED` 등은 이 과정의 선호를 바꾸는 힌트다.
-
-### 외부조인에서 Pullup이 필요한 이유
-
-**안전한 패턴(내부측 필터는 ON절)**
+### 외부 조인에서의 주의사항
 ```sql
+-- 안전한 패턴: 내부 테이블 필터를 ON 절에 명시
 SELECT c.cust_id, s.amount
 FROM   d_customer c
 LEFT JOIN f_sales s
   ON   s.cust_id = c.cust_id
- AND  s.sales_dt BETWEEN :d1 AND :d2
+ AND   s.sales_dt BETWEEN :d1 AND :d2 -- ON 절에 필터
 WHERE  c.region='USA';
-```
 
-**위험한 패턴(내부측 필터를 WHERE에 둠)**
-```sql
+-- 위험한 패턴: 내부 테이블 필터를 WHERE 절에 둠 (LEFT JOIN 의미 손상)
 SELECT c.cust_id, s.amount
 FROM   d_customer c
-LEFT JOIN f_sales s
-  ON   s.cust_id = c.cust_id
+LEFT JOIN f_sales s ON s.cust_id = c.cust_id
 WHERE  c.region='USA'
-  AND  s.amount > 100;  -- NULL 보존이 깨지며 LEFT→INNER 의미가 됨
+  AND  s.amount > 100; -- WHERE 절 필터는 NULL인 행을 제거하여 LEFT JOIN을 INNER JOIN으로 만듦
 ```
-
-- CBO는 이 조건을 **아래로 푸시하면 의미가 깨지는지**를 먼저 본다.
-- 깨질 위험이 있으면 **Pullup/재배치로 안전한 위치를 찾거나**
-  변환 자체를 포기한다.
+옵티마이저는 `WHERE s.amount > 100` 조건을 `s` 테이블 액세스 단계로 푸시다운하면 쿼리 의미가 바뀌므로, 이를 방지하기 위해 조건의 위치를 조정(Pullup 또는 재배치)하거나 변환을 포기합니다.
 
 ---
 
-## Pushdown을 막는 “대표적인 장벽”과 해법
+## Pushdown을 방해하는 장벽과 해결책
 
-| 장벽 | 왜 막히나 | 해법 |
-|---|---|---|
-| 외부조인 NULL 보존 | 내부측 필터 푸시가 LEFT 의미를 깨뜨림 | 내부측 조건은 ON로 이동 |
-| 분석함수/ROWNUM/CONNECT BY | 순서·상태 의존이라 “미리 필터”가 위험 | 수동 재작성, 단계 분리 |
-| 비결정적/부작용 함수 | 실행 시점에 따라 값이 바뀌어 의미 보존 어려움 | 함수 제거/사전 계산 |
-| 컬럼 가공/형변환 | access predicate로 바뀌지 못해 늦게 필터 | SARGABLE로 변환 |
-| OR 조건 | 한 분기가 못 내려가면 전체가 못 내려감 | `USE_CONCAT`로 OR-EXPAND |
-| DISTINCT/UNION/집계 | 중복/집계 의미 때문에 “안전한 범위만” 푸시 | 뷰 병합·사전집계 설계 |
+| 장벽 | 원인 | 해결 방안 |
+| :--- | :--- | :--- |
+| **외부 조인 NULL 보존** | 내부 테이블 필터 푸시다운이 LEFT JOIN 의미를 훼손 | 내부 테이블 조건은 ON 절에 작성 |
+| **비결정적 함수** | `SYSDATE`, `ROWNUM`, 사용자 함수 등 실행 시점마다 결과가 달라 의미 보존 어려움 | 함수 제거 또는 사전 계산된 값 사용 |
+| **컬럼 가공/형변환** | `WHERE UPPER(name)='A'` 형태로 인덱스 액세스 불가 | 가공 없이 컬럼 참조(SARGABLE)하도록 재작성, 함수 기반 인덱스 고려 |
+| **복잡한 OR 조건** | OR 조건의 한쪽이 푸시다운 불가하면 전체가 차단 | `USE_CONCAT` 힌트로 OR-Expansion 유도, 각 분기별 최적화 |
+| **집계/윈도우 함수** | `GROUP BY`, `DISTINCT`, 분석 함수는 연산 순서 변경 어려움 | 뷰 병합 또는 사전 집계 설계 검토 |
 
-### OR-EXPAND로 Pushdown 회복
-
+**OR-EXPAND를 통한 회복 예시**
 ```sql
+-- OR로 인해 푸시다운이 제한될 수 있음
+SELECT s.*
+FROM   f_sales s
+WHERE  (s.prod_id IN (SELECT p.prod_id FROM d_product p WHERE p.brand='B0'))
+   OR  (s.cust_id IN (SELECT c.cust_id FROM d_customer c WHERE c.tier='VIP'));
+
+-- USE_CONCAT 힌트로 OR 분기 확장
 SELECT /*+ USE_CONCAT */
        s.*
 FROM   f_sales s
-WHERE  (s.prod_id IN (SELECT p.prod_id
-                      FROM d_product p WHERE p.brand='B0'))
-   OR  (s.cust_id IN (SELECT c.cust_id
-                      FROM d_customer c WHERE c.tier='VIP'));
+WHERE  (s.prod_id IN (SELECT p.prod_id FROM d_product p WHERE p.brand='B0'))
+   OR  (s.cust_id IN (SELECT c.cust_id FROM d_customer c WHERE c.tier='VIP'));
 ```
-
-- `USE_CONCAT`는 OR을 **UNION ALL 분기**로 풀어
-  **각 분기에서 독립적 pushdown**이 발생하도록 만든다.
+`USE_CONCAT` 힌트는 OR 조건을 `UNION ALL` 형태의 분기로 풀어, 각 분기 내에서 독립적인 Pushdown 최적화가 발생하도록 합니다.
 
 ---
 
-## 힌트로 제어하는 Push/Pull 전략
+## 힌트를 이용한 세밀한 제어
 
-Oracle은 전통적으로 다음 힌트로 predicate move-around의 방향을 바꾼다.
-(힌트 의미 자체는 버전이 올라가도 안정적으로 유지된다.)
+옵티마이저의 조건 재배치 방향을 조정하는 주요 힌트는 다음과 같습니다. 이 힌트들의 의미는 오랜 기간 안정적으로 유지되어 왔습니다.
 
-### 핵심 힌트 세트
+### 핵심 제어 힌트
+| 힌트 | 목적 |
+| :--- | :--- |
+| `PUSH_PRED(qb)` | 지정된 Query Block(인라인 뷰) 내부로 조건을 푸시다운하도록 **선호**합니다. |
+| `NO_PUSH_PRED(qb)` | 지정된 Query Block 내부로 조건을 푸시다운하는 것을 **억제**합니다. |
+| `MERGE(qb)` | 인라인 뷰를 외부 쿼리와 병합(View Merging)하도록 합니다. 병합은 푸시다운의 전제 조건이 될 수 있습니다. |
+| `NO_MERGE(qb)` | 인라인 뷰 병합을 방지합니다. |
+| `PUSH_SUBQ` | 서브쿼리를 가능한 한 빨리 실행하여 결과를 축소하도록 합니다. |
+| `NO_PUSH_SUBQ` | 서브쿼리의 실행을 늦추도록 합니다. |
+| `PX_JOIN_FILTER(alias)` | (병렬 쿼리에서) 지정된 테이블에 대해 Join Filter(Bloom Filter) 생성을 **강제**합니다. |
 
-- `PUSH_PRED(qb)` / `NO_PUSH_PRED(qb)`
-  : **인라인 뷰/서브쿼리 내부**로 필터를 밀어 넣을지 선호/억제
-- `MERGE(qb)` / `NO_MERGE(qb)`
-  : **View Merging(평탄화)** 허용/금지
-  → 병합되면 푸시 공간이 커진다.
-- `PUSH_SUBQ` / `NO_PUSH_SUBQ`
-  : 서브쿼리를 **먼저 평가(축소)**하도록 선호/억제
-- `PUSH_JOIN_PRED` / `NO_PUSH_JOIN_PRED`
-  : **조인 조건·전이성 푸시** 선호/억제
-- (병렬/해시) `PX_JOIN_FILTER(alias)`
-  : Join Filter(Bloom) 생성을 **강제**하는 계열
-
-### 힌트 조합의 실전 패턴
-
-#### (A) “차원 먼저 축소 → 사실 스캔 최소화”
-
-```sql
-SELECT /*+ PUSH_SUBQ UNNEST LEADING(p s) USE_HASH(p) */
-       SUM(s.amount)
-FROM   f_sales s
-WHERE  s.prod_id IN (
-  SELECT p.prod_id
-  FROM d_product p
-  WHERE p.category='ELEC'
-)
-AND    s.sales_dt BETWEEN :d1 AND :d2;
-```
-
-#### (B) “뷰 평탄화 후, 조건을 더 아래로”
-
-```sql
-SELECT /*+ MERGE(v) PUSH_PRED(v) */
-       COUNT(*)
-FROM   f_sales s
-JOIN  (SELECT prod_id
-       FROM d_product
-       WHERE brand='B0') v
-ON v.prod_id = s.prod_id
-WHERE s.sales_dt BETWEEN :d1 AND :d2;
-```
-
-#### (C) “전이성을 적극 활용해 인덱스 범위를 줄이기”
-
-```sql
-SELECT /*+ PUSH_JOIN_PRED USE_NL(s) LEADING(c s) */
-       COUNT(*)
-FROM   d_customer c
-JOIN   f_sales s ON s.cust_id = c.cust_id
-WHERE  c.cust_id BETWEEN :lo AND :hi
-AND    s.sales_dt BETWEEN :d1 AND :d2;
-```
+**사용 팁**: 힌트는 정확한 대상을 지정하기 위해 `qb_name()` 힌트와 함께 사용하는 것이 좋습니다. `NO_MERGE`를 QB 이름 없이 사용하면 의도치 않게 다른 뷰까지 병합이 막힐 수 있습니다.
 
 ---
 
-## 실전 시나리오로 끝까지 읽기
+## 실전 시나리오 분석
 
-### 시나리오 1 — 뷰 푸시다운 유/무 비교
-
+### 시나리오 1: 뷰 병합과 푸시다운의 시너지 효과 비교
 ```sql
--- (1) NO_MERGE/NO_PUSH
+-- Case 1: 병합과 푸시다운을 모두 방지
 SELECT /*+ NO_MERGE(v) NO_PUSH_PRED(v) */
        COUNT(*)
 FROM   f_sales s
-JOIN  (SELECT p.prod_id
-       FROM d_product p
-       WHERE p.category='ELEC' AND p.brand='B0') v
+JOIN  (SELECT p.prod_id FROM d_product p WHERE p.category='ELEC') v
 ON v.prod_id = s.prod_id
 WHERE s.sales_dt BETWEEN :d1 AND :d2;
 
--- (2) MERGE/PUSH
+-- Case 2: 병합과 푸시다운을 모두 유도
 SELECT /*+ MERGE(v) PUSH_PRED(v) */
        COUNT(*)
 FROM   f_sales s
-JOIN  (SELECT p.prod_id
-       FROM d_product p
-       WHERE p.category='ELEC' AND p.brand='B0') v
+JOIN  (SELECT p.prod_id FROM d_product p WHERE p.category='ELEC') v
 ON v.prod_id = s.prod_id
 WHERE s.sales_dt BETWEEN :d1 AND :d2;
 ```
+**분석 포인트**:
+*   두 실행 계획에서 `VIEW` 오퍼레이터의 유무를 확인합니다.
+*   `Predicate Information`에서 조건(`sales_dt`, `category`)이 어느 단계(`access`/`filter`)에 적용되었는지 비교합니다.
+*   `A-Rows`(실제 행수)와 `Buffers`(버퍼 읽기 수)를 확인하여 I/O 및 처리량 감소 효과를 측정합니다.
 
-**판독 체크**
-- (2)에서 `VIEW v`가 단순화/소거되는지
-- pushed predicate가 해시 조인 build/probe 단계로 더 내려갔는지
-- A-Rows/버퍼 읽기/물리 읽기가 감소했는지
-
----
-
-### 시나리오 2 — Join Filter로 스캔 조기 차단
-
+### 시나리오 2: Join Filter의 성능 영향 평가
 ```sql
 SELECT /*+ LEADING(p s) USE_HASH(p) */
        COUNT(*)
 FROM   f_sales s
-JOIN   d_product p ON p.prod_id=s.prod_id
+JOIN   d_product p ON p.prod_id = s.prod_id
 WHERE  p.category='ELEC';
 ```
-
-**판독 체크**
-- `JOIN FILTER CREATE` / `JOIN FILTER USE` 등장 여부
-- `Predicate Information`에 `SYS_OP_BLOOM_FILTER`가 보이는지
-- 파티션 테이블이면 `PX PARTITION HASH JOIN-FILTER`처럼
-  **Bloom 기반 프루닝이 추가로 내려가는지**
+**분석 포인트**:
+*   실행 계획에 `JOIN FILTER CREATE` (빌드 측)와 `JOIN FILTER USE` (프로브 측)가 나타나는지 확인합니다.
+*   `f_sales` 테이블 스캔 시 `A-Rows`가 Bloom Filter에 의해 얼마나 줄어드는지 관찰합니다.
+*   대용량 파티션 테이블인 경우, `PX PARTITION HASH JOIN-FILTER`와 같은 형태로 파티션 단위 프루닝까지 발생하는지 확인합니다.
 
 ---
 
-### 시나리오 3 — OR-EXPAND로 푸시 회복
+## 통계 정보의 중요성: 모든 결정의 근간
+
+옵티마이저의 Pushdown/Pullup 결정은 궁극적으로 **조건 적용 후 남을 행의 수(카디널리티)에 대한 비용 추정**에 기반합니다. 따라서 통계 정보가 부정확하면 옵티마이저는 잘못된 결정을 내릴 수 있습니다.
+
+**반드시 점검해야 할 통계 항목**:
+*   **기본 테이블 통계**: 행수, 블록 수 등
+*   **히스토그램**: `region`, `category` 같이 데이터 분포가 균일하지 않은(편향된) 컬럼의 선택도 추정 정확도를 높입니다.
+*   **확장 통계**: `(cust_id, sales_dt)` 처럼 함께 자주 사용되어 상관관계가 높은 컬럼들의 결합 선택도를 정확히 추정합니다.
 
 ```sql
--- OR 때문에 푸시가 막힐 수 있음
-SELECT COUNT(*)
-FROM f_sales s
-WHERE (s.prod_id IN (SELECT prod_id FROM d_product WHERE brand='B0'))
-   OR (s.cust_id IN (SELECT cust_id FROM d_customer WHERE tier='VIP'));
-
--- OR-EXPAND
-SELECT /*+ USE_CONCAT */
-       COUNT(*)
-FROM f_sales s
-WHERE (s.prod_id IN (SELECT prod_id FROM d_product WHERE brand='B0'))
-   OR (s.cust_id IN (SELECT cust_id FROM d_customer WHERE tier='VIP'));
-```
-
-- OR-EXPAND 후 각 분기에서 `PUSH_SUBQ/UNNEST/전이성`이 개별로 작동하는지 확인.
-
----
-
-## 카디널리티가 Push/Pull을 결정한다
-
-CBO는 “얼마나 줄어드는가?”를 추정해 움직인다.
-그래서 **통계가 틀리면 Pushdown도 틀린다.**
-
-### 꼭 점검할 통계
-
-- 기본 테이블 통계
-- **히스토그램(스큐 컬럼)**
-- **확장 통계(조합 상관관계)**
-- 필요하면 `dynamic_sampling`의 개입 여부
-
-```sql
--- 히스토그램/확장 통계 예
+-- 히스토그램 및 확장 통계 수집 예시
 BEGIN
   DBMS_STATS.GATHER_TABLE_STATS(
     USER, 'F_SALES',
-    METHOD_OPT => 'FOR ALL COLUMNS SIZE AUTO'
+    METHOD_OPT => 'FOR ALL COLUMNS SIZE AUTO' -- 히스토그램 자동 생성
   );
   DBMS_STATS.CREATE_EXTENDED_STATS(
-    USER, 'F_SALES', '(cust_id, sales_dt)'
+    USER, 'F_SALES', '(cust_id, sales_dt)' -- 확장 통계 생성
   );
 END;
 /
 ```
-
-**진짜 핵심**
-- Pushdown은 **비용 기반**이므로
-  “**카디널리티 추정이 정확해질수록 Pushdown 품질도 좋아진다**.”
+**핵심 원리**: **카디널리티 추정이 정확할수록, 옵티마이저의 조건 재배치 결정도 더욱 최적화에 가까워집니다.**
 
 ---
 
-## 요약 체크리스트
+## 결론
 
-- [ ] 조건은 **SARGABLE**하게(컬럼 가공·형변환 금지)
-- [ ] 인라인 뷰/CTE는 **MERGE + PUSH_PRED**로 평탄화/푸시 공간 확보
-- [ ] 서브쿼리는 **UNNEST + PUSH_SUBQ**로 “먼저 축소”
-- [ ] 전이성(Join Predicate Pushdown)이 **상대편 access predicate로 내려가는지** 확인
-- [ ] 해시 조인에서 `JOIN FILTER CREATE/USE` 등장 여부 관찰
-- [ ] 외부조인의 내부 필터는 **ON절**에 둬 의미를 지킨다(필요시 Pullup)
-- [ ] OR은 `USE_CONCAT`로 분기해 푸시 회복
-- [ ] 통계(히스토그램/확장 통계)로 **카디널리티 오판**을 줄인다
-- [ ] 모든 판단은 **실측 플랜 + A-Rows + 세션 통계**로 검증
+조건절 Pushdown, Pullup, 그리고 Join Predicate Pushdown은 Oracle 옵티마이저가 쿼리 성능을 극대화하기 위해 사용하는 근본적이고 강력한 최적화 도구들입니다.
 
----
+*   **Predicate Pushdown**은 **"데이터를 읽기 전에 가능한 한 많이 줄여라"**는 최적화의 첫 번째 원칙을 구현합니다. I/O와 CPU 부하를 근본적으로 감소시키는 가장 효과적인 방법 중 하나입니다.
+*   **Predicate Pullup**은 이 원칙에 대한 **현명한 예외**를 제공합니다. 쿼리의 정확한 의미를 지키고, 뷰 병합이나 조인 재배치 같은 더 큰 최적화의 문을 열기 위해 조건의 위치를 유연하게 조정합니다.
+*   **Join Predicate Pushdown** (전이성, Join Filter)은 Pushdown의 효과를 **조인 관계와 스토리지 액세스 레벨까지 확장**시킵니다. 한 테이블의 필터가 조인을 타고 반대편 테이블의 스캔 범위를 좁히거나, Bloom Filter를 통해 블록/파티션 단위의 불필요한 I/O를 제거합니다.
 
-## 맺음말
-
-- Predicate Pushdown은 **“읽기 전에 줄이는”** 가장 강력한 1차 최적화다.
-- Predicate Pullup은 **“의미를 지키고 변환 자유도를 확보하는”** 안전장치이자 보완축이다.
-- Join Predicate Pushdown(전이성/Join Filter)은 필터를 **조인 상대/스토리지까지 전파**해
-  스캔 비용 자체를 크게 줄인다.
-- 결국 튜닝의 핵은 하나:
-  **“조건이 어디까지 내려갔는지, 왜 그 위치가 선택됐는지”를 DBMS_XPLAN에서 끝까지 읽는 것.**
+이 모든 메커니즘의 효과는 궁극적으로 **정확한 통계 정보**와 **옵티마이저가 제공하는 실행 계획 정보를 정확히 해석하는 능력**에 달려 있습니다. `DBMS_XPLAN`을 통해 조건이 어디에 어떻게 적용되었는지(`Predicate Information`), 어떤 변환이 일어났는지(`Notes`)를 꼼꼼히 읽고 분석하는 습관이, 복잡한 SQL의 성능을 진단하고 튜닝하는 데 있어 가장 중요한 실무 역량이 될 것입니다.

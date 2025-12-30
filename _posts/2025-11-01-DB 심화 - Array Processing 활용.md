@@ -6,18 +6,18 @@ category: DB 심화
 ---
 # Array Processing 활용
 
-> **핵심 요약**
-> Array Processing(배열 처리)은 **“여러 행을 한 번에”** 보내거나 받는 기법이다.
-> - **DML**: `FORALL`, 드라이버 **배열 바인드/배치 실행**으로 **Execute 호출 수**를 급감 → `user calls` 감소, `log file sync`·네트워크 오버헤드↓
-> - **SELECT**: `BULK COLLECT`/드라이버 **배열 페치**로 **Fetch 호출 수**를 감소 → 왕복/CPU↓, 응답시간↓
-> - **부가 기능**: `RETURNING BULK COLLECT`, `SAVE EXCEPTIONS`, 배열 바인드 **IN-list**, 파티셔닝/인덱스 설계와 결합 시 최대 효과.
+> **핵심 요약**  
+> Array Processing은 여러 행을 한 번에 처리하는 기법으로, **왕복 횟수를 획기적으로 줄여 성능을 극대화**한다.
+> - **SELECT**: `BULK COLLECT` 또는 드라이버의 **배열 페치(Fetch Array)**를 사용해 Fetch 호출 횟수를 줄인다.
+> - **DML**: `FORALL` 또는 드라이버의 **배열 바인드/배치 실행**을 사용해 Execute 호출 횟수를 줄인다.
+> - **결과**: 네트워크 왕복 감소, `user calls` 감소, `log file sync` 대기 이벤트 및 CPU 사용량 감소로 이어진다.
 
 ---
 
-## 실습 공통 스키마 & 데이터
+## 실습 환경 구성
 
 ```sql
--- 대용량 테이블
+-- 대용량 테이블 생성
 DROP TABLE t_sale PURGE;
 CREATE TABLE t_sale (
   sale_id     NUMBER PRIMARY KEY,
@@ -28,7 +28,7 @@ CREATE TABLE t_sale (
   amount      NUMBER(12,2)
 );
 
--- 더미 데이터(200만 행)
+-- 샘플 데이터 200만 행 삽입
 INSERT /*+ APPEND */ INTO t_sale
 SELECT level,
        MOD(level, 100000)+1,
@@ -39,6 +39,7 @@ SELECT level,
 FROM dual CONNECT BY level <= 2000000;
 COMMIT;
 
+-- 인덱스 생성 및 통계 수집
 CREATE INDEX ix_sale_region_dt ON t_sale(region, order_dt);
 CREATE INDEX ix_sale_cust      ON t_sale(cust_id);
 BEGIN
@@ -50,120 +51,122 @@ END;
 
 ---
 
-## 왜 Array Processing인가? — **성능 모델**
+## 성능 모델: 왜 Array Processing인가?
 
-**왕복 기반 응답시간 근사**
+데이터베이스 응답 시간은 단순히 서버 내부의 처리 시간만이 아니라 **네트워크 왕복(Round Trip Time, RTT)에 의한 지연이 크게 기여**합니다.
+
 $$
-\text{RT} \approx \underbrace{\text{RTT} \times N_{\text{calls}}}_{\text{네트워크 왕복}}
-+ \underbrace{\text{CPU} + \text{Waits}}_{\text{서버 내부 작업}}
+\text{응답 시간(RT)} \approx \underbrace{\text{RTT} \times N_{\text{calls}}}_{\text{네트워크 왕복 지연}} + \underbrace{\text{CPU} + \text{Waits}}_{\text{서버 내부 처리}}
 $$
 
-- **Row-by-Row**: `N_calls`가 **행 수**에 비례.
-- **Array Processing**: `N_calls \approx \frac{\text{행 수}}{\text{배열 크기}}` → **선형 감소**.
-- 동일 작업량이라도 **왕복 감소**만으로 **RT**가 크게 줄어든다.
+- **행 단위 처리(Row-by-Row)**: `N_calls`(호출 횟수)가 처리하는 행의 수에 비례하여 증가합니다. 10만 행을 처리하면 최소 10만 번의 네트워크 왕복이 발생합니다.
+- **배열 처리(Array Processing)**: `N_calls`가 `행 수 / 배열 크기`로 감소합니다. 배열 크기를 1000으로 설정하면 10만 행 처리 시 왕복은 약 100번으로 급감합니다.
+- **결론**: 서버에서 수행하는 실제 작업량은 동일하더라도, **네트워크 왕복 횟수를 줄이는 것만으로도 전체 응답 시간을 획기적으로 개선**할 수 있습니다.
 
 ---
 
-## PL/SQL — **BULK COLLECT / FORALL** 기본 패턴
+## PL/SQL에서의 Array Processing
 
-### Array SELECT: `BULK COLLECT` (+ LIMIT)
-
-```plsql
-DECLARE
-  TYPE t_sale_rec IS RECORD(
-    sale_id  t_sale.sale_id%TYPE,
-    cust_id  t_sale.cust_id%TYPE,
-    amount   t_sale.amount%TYPE
-  );
-  TYPE t_sale_tab IS TABLE OF t_sale_rec;
-  v_tab t_sale_tab;
-BEGIN
-  -- LIMIT: PGA 메모리 사용과 왕복 균형 (예: 10k)
-  FOR cur IN (
-    SELECT sale_id, cust_id, amount
-    FROM   t_sale
-    WHERE  region='APAC'
-    AND    order_dt >= TRUNC(SYSDATE)-90
-  ) LOOP NULL; END LOOP;  -- (비교용: row-by-row)
-
-  v_tab := t_sale_tab();
-
-  FOR i IN 1..100 LOOP
-    SELECT /*+ no_merge */ sale_id, cust_id, amount
-    BULK COLLECT INTO v_tab
-    FROM t_sale
-    WHERE region='APAC'
-      AND order_dt BETWEEN TRUNC(SYSDATE)-90 AND TRUNC(SYSDATE)
-      AND ROWNUM <= 10000; -- 예제 단위
-    EXIT WHEN v_tab.COUNT=0;
-    -- v_tab 처리 (파일 쓰기, 네트워크 송신 등)
-    v_tab.DELETE;
-  END LOOP;
-END;
-/
-```
-
-- **포인트**
-  - `LIMIT` 미지정은 대량 데이터에서 **PGA 폭증** 위험.
-  - 일반적으로 **1k~20k** 사이에서 실측으로 최적점 찾기.
-
-### Array DML: `FORALL` (+ `SAVE EXCEPTIONS`)
+### 1. BULK COLLECT를 이용한 배열 조회
+`BULK COLLECT`는 한 번의 Fetch로 여러 행을 PL/SQL 컬렉션에 담아옵니다. `LIMIT` 절을 활용하면 PGA 메모리 사용량을 제어하면서 최적의 성능을 낼 수 있습니다.
 
 ```plsql
 DECLARE
-  TYPE t_amt IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
-  TYPE t_id  IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
-  v_ids  t_id;
-  v_amts t_amt;
-  l_errs EXCEPTION;
-  PRAGMA EXCEPTION_INIT(l_errs, -24381); -- SAVE EXCEPTIONS 집계 오류
+  TYPE t_sale_tab IS TABLE OF t_sale%ROWTYPE;
+  l_sales t_sale_tab;
+  CURSOR cur_sales IS
+    SELECT * FROM t_sale WHERE region = 'APAC';
 BEGIN
-  -- 바꿀 값 준비 (예: 배치 50,000행)
-  FOR i IN 1..50000 LOOP
-    v_ids(i)  := i;
-    v_amts(i) := 999.99;
-  END LOOP;
+  OPEN cur_sales;
+  LOOP
+    -- 1000행씩 배열로 페치
+    FETCH cur_sales BULK COLLECT INTO l_sales LIMIT 1000;
+    EXIT WHEN l_sales.COUNT = 0;
 
-  BEGIN
-    FORALL i IN INDICES OF v_ids SAVE EXCEPTIONS
-      UPDATE t_sale
-      SET    amount = v_amts(i)
-      WHERE  sale_id = v_ids(i);
-
-  EXCEPTION WHEN l_errs THEN
-    FOR j IN 1..SQL%BULK_EXCEPTIONS.COUNT LOOP
-      DBMS_OUTPUT.PUT_LINE('ERR IDX='||SQL%BULK_EXCEPTIONS(j).ERROR_INDEX||
-                           ' CODE='||SQL%BULK_EXCEPTIONS(j).ERROR_CODE);
+    -- 배열 내 데이터 처리 (예: 로깅, 계산, 외부 전송)
+    FOR i IN 1 .. l_sales.COUNT LOOP
+      -- 개별 행 처리 로직
+      NULL;
     END LOOP;
-  END;
+  END LOOP;
+  CLOSE cur_sales;
+END;
+/
+```
+**핵심**: `LIMIT` 없이 대량 데이터를 `BULK COLLECT`하면 PGA 메모리를 과도하게 사용할 수 있습니다. 일반적으로 1,000에서 10,000 사이의 값으로 성능 테스트를 통해 최적의 크기를 찾아야 합니다.
 
+### 2. FORALL을 이용한 배열 DML
+`FORALL`은 단일 SQL 문을 재사용하면서 컬렉션에 담긴 모든 값에 대해 배열 바인드를 수행합니다. Execute 호출은 단 한 번만 발생합니다.
+
+```plsql
+DECLARE
+  TYPE t_id_tab IS TABLE OF t_sale.sale_id%TYPE;
+  TYPE t_amt_tab IS TABLE OF t_sale.amount%TYPE;
+  l_ids t_id_tab;
+  l_amts t_amt_tab;
+BEGIN
+  -- 업데이트할 데이터를 컬렉션에 채움 (예: 5만 행)
+  SELECT sale_id, amount * 1.1 -- 10% 인상
+  BULK COLLECT INTO l_ids, l_amts
+  FROM t_sale
+  WHERE region = 'APAC' AND ROWNUM <= 50000;
+
+  -- FORALL로 일괄 업데이트
+  FORALL i IN 1 .. l_ids.COUNT
+    UPDATE t_sale
+    SET amount = l_amts(i)
+    WHERE sale_id = l_ids(i);
+
+  DBMS_OUTPUT.PUT_LINE('Updated ' || SQL%ROWCOUNT || ' rows.');
   COMMIT;
 END;
 /
 ```
 
-- **포인트**
-  - `FORALL`은 **SQL 1번 파싱, 바인드만 배열** → Execute 왕복 수 **급감**.
-  - `SAVE EXCEPTIONS`로 **문제 행만 분리**(대부분 성공 → 성능 유지).
-  - 대량 DML은 **주기적 COMMIT**(예: 5k~20k 묶음)로 `log file sync` 부하를 균형화.
-
-### `RETURNING BULK COLLECT` — 생성 키 일괄 회수
+### 3. SAVE EXCEPTIONS으로 부분 실패 처리
+대량 업데이트 중 일부 행에서 제약 조건 위반 등의 오류가 발생하더라도 전체 작업이 중단되지 않도록 합니다.
 
 ```plsql
 DECLARE
-  TYPE t_id  IS TABLE OF NUMBER;
-  TYPE t_rid IS TABLE OF UROWID;
-  v_ids  t_id  := t_id();
-  v_rids t_rid := t_rid();
+  TYPE t_id_tab IS TABLE OF t_sale.sale_id%TYPE;
+  l_ids t_id_tab := t_id_tab(1, 2, 999999); -- 존재하지 않는 ID 포함
+  l_err_count NUMBER;
 BEGIN
-  FOR i IN 1..10000 LOOP v_ids.EXTEND; v_ids(i):=1000000+i; END LOOP;
+  FORALL i IN INDICES OF l_ids SAVE EXCEPTIONS
+    DELETE FROM t_sale WHERE sale_id = l_ids(i);
 
-  FORALL i IN 1..v_ids.COUNT
-    INSERT INTO t_sale(sale_id, cust_id, region, order_dt, status, amount)
-    VALUES (v_ids(i), MOD(v_ids(i),100000)+1, 'APAC', SYSDATE, 'OK', 1)
-    RETURNING ROWID BULK COLLECT INTO v_rids;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    l_err_count := SQL%BULK_EXCEPTIONS.COUNT;
+    DBMS_OUTPUT.PUT_LINE('Number of errors: ' || l_err_count);
+    FOR j IN 1 .. l_err_count LOOP
+      DBMS_OUTPUT.PUT_LINE('Error ' || j || ': Index ' ||
+        SQL%BULK_EXCEPTIONS(j).ERROR_INDEX || ', Code ' ||
+        SQL%BULK_EXCEPTIONS(j).ERROR_CODE);
+    END LOOP;
+    -- 성공한 행은 커밋되었으며, 오류가 발생한 행은 별도로 처리 가능
+END;
+/
+```
 
-  DBMS_OUTPUT.PUT_LINE('Inserted='||v_rids.COUNT);
+### 4. RETURNING BULK COLLECT로 생성된 데이터 회수
+INSERT, UPDATE, DELETE 후 영향 받은 행의 정보(예: 새로 생성된 시퀀스 값, ROWID)를 배열로 한 번에 가져올 수 있습니다.
+
+```plsql
+DECLARE
+  TYPE t_id_tab IS TABLE OF t_sale.sale_id%TYPE;
+  TYPE t_rid_tab IS TABLE OF ROWID;
+  l_new_ids t_id_tab;
+  l_rowids t_rid_tab;
+BEGIN
+  -- 여러 행 INSERT
+  FORALL i IN 1..1000
+    INSERT INTO t_sale (sale_id, cust_id, region, order_dt, status, amount)
+    VALUES (3000000 + i, MOD(i, 100000)+1, 'APAC', SYSDATE, 'OK', 100)
+    RETURNING sale_id, ROWID BULK COLLECT INTO l_new_ids, l_rowids;
+
+  DBMS_OUTPUT.PUT_LINE('Inserted ' || l_new_ids.COUNT || ' rows.');
   COMMIT;
 END;
 /
@@ -171,308 +174,168 @@ END;
 
 ---
 
-## 클라이언트 드라이버 — **배열 바인드/배치 & 배열 페치**
+## 애플리케이션(드라이버) 레벨에서의 Array Processing
 
 ### JDBC
-
-#### 대량 SELECT: `setFetchSize`
-
+**배열 페치 (Fetch Array)**
 ```java
-String sql = """
-  SELECT /* array-fetch */ sale_id, amount
-  FROM t_sale
-  WHERE region=? AND order_dt BETWEEN ? AND ?
-""";
-try (PreparedStatement ps = conn.prepareStatement(sql)) {
-  ps.setString(1, "APAC");
-  ps.setDate(2, Date.valueOf("2025-09-01"));
-  ps.setDate(3, Date.valueOf("2025-11-01"));
-  ps.setFetchSize(1000); // 권장: 500~2000 (행당 크기 고려)
-  try (ResultSet rs = ps.executeQuery()) {
-    while (rs.next()) { /* consume */ }
-  }
-}
-```
-
-#### 대량 DML: `addBatch/executeBatch`
-
-```java
-String ins = "INSERT INTO t_sale(sale_id,cust_id,region,order_dt,status,amount) VALUES (?,?,?,?,?,?)";
-try (PreparedStatement ps = conn.prepareStatement(ins)) {
-  int batch = 0;
-  for (int i=1;i<=100000;i++) {
-    ps.setInt(1, 3000000+i);
-    ps.setInt(2, i % 100000 + 1);
-    ps.setString(3, "APAC");
-    ps.setDate(4, new Date(System.currentTimeMillis()));
-    ps.setString(5, "OK");
-    ps.setBigDecimal(6, new BigDecimal("12.34"));
-    ps.addBatch();
-    if (++batch % 1000 == 0) {
-      ps.executeBatch();  // 1,000행씩 한 번 호출
-      conn.commit();      // 주기적 커밋
+String sql = "SELECT sale_id, amount FROM t_sale WHERE region = ?";
+try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+  pstmt.setString(1, "APAC");
+  // 한 번의 네트워크 왕복으로 가져올 행 수 설정
+  pstmt.setFetchSize(1000);
+  try (ResultSet rs = pstmt.executeQuery()) {
+    while (rs.next()) {
+      // 결과 소비
     }
   }
-  ps.executeBatch();
-  conn.commit();
 }
 ```
 
-- **튜닝 팁**
-  - Statement Cache(Implicit/Explicit) 활성 → Parse 감소
-  - Auto-commit OFF → per-row COMMIT 금지
-  - 네트워크 RTT 큰 환경일수록 Batch/Fetch 효과 큼
+**배치 실행 (Batch Execution)**
+```java
+String sql = "UPDATE t_sale SET amount = ? WHERE sale_id = ?";
+try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+  conn.setAutoCommit(false); // Auto-commit 비활성화 필수
+  for (int i = 1; i <= 10000; i++) {
+    pstmt.setBigDecimal(1, new BigDecimal("150.00"));
+    pstmt.setInt(2, i);
+    pstmt.addBatch(); // 배치에 작업 추가
 
-### ODP.NET (C#)
-
-```csharp
-// 배열 바인드 DML
-using var cmd = new OracleCommand("INSERT INTO t_sale(sale_id, amount) VALUES (:1,:2)", conn);
-cmd.ArrayBindCount = ids.Length;
-cmd.Parameters.Add(":1", OracleDbType.Int32, ids, ParameterDirection.Input);
-cmd.Parameters.Add(":2", OracleDbType.Decimal, amts, ParameterDirection.Input);
-cmd.ExecuteNonQuery(); // 1회 호출로 N행 처리
-conn.Commit();
-```
-
-```csharp
-// 배열 페치
-using var cmd = new OracleCommand(@"
-  SELECT sale_id, amount FROM t_sale
-  WHERE region=:r AND order_dt BETWEEN :d1 AND :d2", conn);
-cmd.Parameters.Add(":r", OracleDbType.Varchar2).Value = "APAC";
-cmd.Parameters.Add(":d1", OracleDbType.Date).Value = new DateTime(2025,9,1);
-cmd.Parameters.Add(":d2", OracleDbType.Date).Value = new DateTime(2025,11,1);
-cmd.FetchSize = 8 * 1024 * 1024; // 바이트 기준 (행당 크기×행수만큼)
-using var rdr = cmd.ExecuteReader();
-while (rdr.Read()) { /* consume */ }
+    if (i % 1000 == 0) {
+      pstmt.executeBatch(); // 1000개 단위로 실행
+      conn.commit(); // 주기적 커밋
+    }
+  }
+  pstmt.executeBatch(); // 나머지 실행
+  conn.commit();
+}
 ```
 
 ### Python (oracledb)
-
+**배열 페치**
 ```python
-# 배열 페치
+import oracledb
+connection = oracledb.connect(user="scott", password="tiger", dsn="localhost/orclpdb")
+cursor = connection.cursor()
 
-cur.arraysize = 1000
-cur.execute("""
-  SELECT sale_id, amount FROM t_sale
-  WHERE region=:r AND order_dt BETWEEN :d1 AND :d2
-""", r='APAC', d1=date(2025,9,1), d2=date(2025,11,1))
-for row in cur:
+cursor.arraysize = 1000  # 배열 페치 크기 설정
+cursor.execute("""
+    SELECT sale_id, amount
+    FROM t_sale
+    WHERE region = :region
+""", region="APAC")
+
+for row in cursor:
+    # 행 처리
     pass
 ```
 
+**배치 실행**
 ```python
-# 배열 바인드 DML
-
-rows = [(3000000+i, Decimal('12.34')) for i in range(1, 100000+1)]
-cur.executemany("INSERT INTO t_sale(sale_id, amount) VALUES (:1,:2)", rows)
-conn.commit()
+data_to_insert = [
+    (4000001, 50001, 'EMEA', datetime.date(2025, 10, 1), 'OK', 200.00),
+    (4000002, 50002, 'EMEA', datetime.date(2025, 10, 2), 'OK', 250.00),
+    # ... 더 많은 데이터
+]
+cursor.executemany("""
+    INSERT INTO t_sale (sale_id, cust_id, region, order_dt, status, amount)
+    VALUES (:1, :2, :3, :4, :5, :6)
+""", data_to_insert)
+connection.commit()
 ```
-
-- **팁**: `batcherrors=True` 옵션으로 부분 오류 수집 가능(버전별 기능 확인).
 
 ---
 
-## 고급: **배열 바인드로 IN-list** 처리(정적 SQL 유지)
+## 고급 기법: 배열 바인드를 활용한 IN-List 처리
 
-### 스키마 타입 + TABLE 연산자
+동적으로 수백, 수천 개의 값을 가진 IN-list를 처리할 때 SQL 문을 문자열 조합으로 생성하면 하드 파싱이 심각하게 증가합니다. 배열 바인드를 사용하면 이를 해결할 수 있습니다.
 
+### 1. 스키마 수준 컬렉션 타입 활용
 ```sql
-CREATE OR REPLACE TYPE t_num_list AS TABLE OF NUMBER;
+CREATE OR REPLACE TYPE num_list_t AS TABLE OF NUMBER;
+/
 ```
-
-```sql
--- 정적 SQL: 텍스트 고정, 커서 공유 유지
-SELECT /* array-inlist */ sale_id, amount
-FROM   t_sale
-WHERE  cust_id IN (SELECT COLUMN_VALUE FROM TABLE(:cust_ids))
-AND    order_dt BETWEEN :d1 AND :d2;
-```
-
-- **드라이버 바인딩**: `:cust_ids`에 숫자 배열을 바인드
-- **장점**: 대량 IN도 동적 문자열 없이 처리, Parse 폭증 방지
-- **주의**: 실행 계획은 **HASH JOIN** 경향 → 통계/인덱스/카디널리티 점검
-
-### GTT 조인(초대량 키)
-
-```sql
-CREATE GLOBAL TEMPORARY TABLE t_filter(id NUMBER) ON COMMIT DELETE ROWS;
--- 앱에서 벌크 Insert 후
-SELECT s.*
-FROM   t_sale s
-JOIN   t_filter f ON f.id = s.cust_id
-WHERE  s.order_dt BETWEEN :d1 AND :d2;
-```
-
----
-
-## 오류 처리 — **배치와 부분 실패**
-
-### PL/SQL: `SAVE EXCEPTIONS` + `SQL%BULK_EXCEPTIONS`
-
-- 이미 예제 제시. 문제 행만 로깅/분리 처리 → **대부분 성공 유지**.
-
-### JDBC Batch
-
-```java
-try {
-  ps.executeBatch();
-  conn.commit();
-} catch (BatchUpdateException e) {
-  int[] counts = e.getUpdateCounts(); // 성공/실패 행 식별
-  // 실패 행만 재시도/로깅
-}
-```
-
-### Python `executemany` + batcherrors(버전 기능)
-
-- 드라이버 옵션으로 **부분 오류 수집** 후 재처리.
-
----
-
-## Array 크기 결정 — **메모리 vs 왕복의 균형**
-
-- **SELECT**: `fetchSize/arraysize`를 **행당 평균 크기 × N** 이 **수 MB~수십 MB** 정도가 되도록.
-  - 예) 행당 200B × 1000행 ≈ 200KB (작다) → 5000~10000으로 키우기.
-  - 너무 크면 **PGA/클라이언트 메모리** 부담 + GC/직렬화 비용 증가.
-
-- **DML**: Batch/ArrayBind 크기를 **1k~10k** 범위에서 실측.
-  - 너무 작으면 왕복 많음, 너무 크면 `log file sync`·락 경쟁·Undo/Redo 압박.
-
-- **경험 법칙**:
-  1) RTT 큰 환경(지리적 분산) → **큰 배열**이 유리.
-  2) 로우당 LOB/큰 컬럼多 → **중간 크기**로 타협.
-  3) 트리거/제약 검증多 → **중간 크기 + SAVE EXCEPTIONS**.
-
----
-
-## 검증: SQL Trace/TKPROF로 **전/후 비교**
-
-### 트레이스 켜기
-
-```sql
-ALTER SESSION SET statistics_level=ALL;
-ALTER SESSION SET events '10046 trace name context forever, level 8';
--- 케이스 A) fetchSize=50
--- 케이스 B) fetchSize=1000
-ALTER SESSION SET events '10046 trace name context off';
-```
-
-### TKPROF 지표 포인트
-
-- `call` 표에서 **Fetch count**(SELECT), **Execute count**(DML) 급감 확인
-- `bytes sent/received via SQL*Net` 단위당 행수 증가(효율↑)
-- 동일 rows 대비 **elapsed** 감소
-
----
-
-## 시나리오 별 **설계 레시피**
-
-### 대량 마이그레이션/적재
-
-- `INSERT /*+ APPEND */` + **배치 커밋** + **인덱스/트리거 최소화**
-- 대상 인덱스는 적재 후 생성(병렬 빌드) or **무효화→재빌드**
-- `FORALL`/JDBC Batch로 1만~10만 행 단위 처리
-- AWR 상위 이벤트: `direct path write temp` / `DB CPU` → 정상
-
-### 실시간 API 다량 읽기
-
-- **Keyset Pagination** + **배열 페치**(큰 fetchSize)
-- 열 최소화(필요 컬럼만), SARG 가능한 WHERE
-- 네트워크 RTT 크면 **배열 크기↑**로 왕복 최소화
-
-### 이벤트 로그/트래킹 수집
-
-- **배열 바인드 INSERT** + `COMMIT` 주기화(예: 5k)
-- 시퀀스 `CACHE` 크게(1000 이상) → 재귀 호출 감소
-- 파티션 테이블(일/시간)로 **세그먼트 경합 분산**
-
-### 리포트/집계 배치
-
-- **집계는 가급적 SQL 한 방**(윈도우 함수/집계) → 불필요 페치 제거
-- 불가피하면 `BULK COLLECT LIMIT` + 외부 시스템 전송
-- 임시 결과는 **GTT/임시 테이블**로 합리화
-
----
-
-## 자주 하는 실수 & 교정
-
-1) **Auto-commit ON**으로 배치 무력화 → **OFF**로 전환, 주기 커밋
-2) IN-list 문자열 조립(동적 SQL 폭증) → **스키마 타입 배열 바인드**/GTT
-3) `BULK COLLECT` 무제한 → PGA 폭증 → **LIMIT** 필수
-4) 대량 DML에 row-by-row 트리거/복잡한 FK → **배치 크기 축소**·**로직 슬림화**
-5) fetchSize만 키우고 **네트워크/ORM 변환** 병목 방치 → DTO/직렬화 최적화 병행
-
----
-
-## 미니 벤치(요약 스크립트): Row-by-Row vs Array
 
 ```plsql
--- Row-by-Row
 DECLARE
-  v_cnt NUMBER:=0;
+  l_cust_ids num_list_t := num_list_t(101, 205, 307, 409);
 BEGIN
-  FOR r IN (SELECT sale_id FROM t_sale WHERE region='APAC' AND ROWNUM<=100000) LOOP
-    v_cnt:=v_cnt+1;
+  FOR rec IN (
+    SELECT * FROM t_sale
+    WHERE cust_id IN (SELECT COLUMN_VALUE FROM TABLE(:ids))
+  ) LOOP
+    DBMS_OUTPUT.PUT_LINE(rec.sale_id);
   END LOOP;
-  DBMS_OUTPUT.PUT_LINE('row-by-row='||v_cnt);
 END;
 /
-
--- Array (BULK COLLECT LIMIT 5000)
-DECLARE
-  TYPE t_ids IS TABLE OF NUMBER;
-  v_ids t_ids;
-  v_cnt NUMBER:=0;
-BEGIN
-  LOOP
-    SELECT sale_id BULK COLLECT INTO v_ids
-    FROM   t_sale
-    WHERE  region='APAC' AND ROWNUM<=5000;
-    EXIT WHEN v_ids.COUNT=0;
-    v_cnt:=v_cnt+v_ids.COUNT;
-    v_ids.DELETE;
-  END LOOP;
-  DBMS_OUTPUT.PUT_LINE('array='||v_cnt);
-END;
-/
+-- 애플리케이션에서는 :ids 바인드 변수에 배열을 전달
 ```
 
-> TKPROF에서 **Fetch count**, `elapsed` 비교: Array 방식이 왕복/시간 모두 우세.
+### 2. 임시 테이블 활용 (매우 큰 리스트)
+```sql
+CREATE GLOBAL TEMPORARY TABLE temp_ids (id NUMBER) ON COMMIT DELETE ROWS;
+```
+애플리케이션에서 `temp_ids` 테이블에 ID 목록을 벌크 인서트한 후, 이 테이블과 조인하여 원본 데이터를 조회합니다. 이 방법은 최적화기가 통계 정보를 활용해 더 나은 실행 계획을 수립할 수 있는 장점이 있습니다.
 
 ---
 
-## 보안·무결성·락 관점 주의
+## 성능 검증: SQL 트레이스 분석
 
-- 대량 DML은 **락 유지 시간**이 길어질 수 있음 → **배치 크기 조절**
-- FK/Unique 제약 위반은 **SAVE EXCEPTIONS**로 분기 처리
-- 트리거·감사 로직이 **행당 실행**되면 Array 이득이 줄어듦 → 로직 슬림화/비동기화
+Array Processing 적용 전후의 성능 차이는 SQL 트레이스를 통해 명확하게 확인할 수 있습니다.
+
+```sql
+-- 트레이스 활성화
+ALTER SESSION SET statistics_level = ALL;
+ALTER SESSION SET events '10046 trace name context forever, level 8'; -- 바인드 값 포함
+
+-- 테스트 쿼리 실행 (예: fetchSize=1 vs fetchSize=1000)
+SELECT sale_id FROM t_sale WHERE region = 'APAC';
+
+-- 트레이스 종료
+ALTER SESSION SET events '10046 trace name context off';
+```
+생성된 트레이스 파일을 `tkprof` 유틸리티로 분석하면 다음 지표를 중점적으로 비교하십시오.
+- **Fetch Calls**: SELECT 시 Fetch 횟수가 배열 크기에 반비례하여 감소해야 합니다.
+- **Execute Calls**: DML 시 Execute 횟수가 1에 가까워져야 합니다.
+- **Elapsed Time**: 총 소요 시간이 크게 단축되어야 합니다.
+- **Network Traffic**: `SQL*Net message to client`, `SQL*Net message from client` 대기 이벤트가 줄어들어야 합니다.
 
 ---
 
-## 체크리스트 (운영 투입 전)
+## 시나리오별 최적화 가이드라인
 
-- [ ] SELECT: **배열 페치 크기** 실측 튜닝(네트워크/메모리 밸런스)
-- [ ] DML: **Batch/Array 크기**·**커밋 주기** 설정, `SAVE EXCEPTIONS` 적용
-- [ ] 시퀀스 `CACHE` 확대, Auto-commit OFF
-- [ ] IN-list는 **배열 바인드/GTT**, 동적 문자열 금지
-- [ ] TKPROF/AWR로 **전/후 CALL 통계** 비교: Fetch/Execute **count↓**, elapsed↓
-- [ ] 에러 수집/재처리 파이프라인 준비 (BatchUpdateException, SQL%BULK_EXCEPTIONS 등)
+### 데이터 마이그레이션/대량 적재
+- **INSERT** 시 `/*+ APPEND */` 힌트와 `NOLOGGING` 모드를 고려하세요.
+- 인덱스와 트리거는 가능하면 비활성화하고, 작업 완료 후 재생성하세요.
+- `FORALL` 또는 드라이버 배치를 사용하고, 10,000행 내외 단위로 커밋하여 Undo 부하와 `log file sync` 대기를 균형 있게 관리하세요.
+
+### 실시간 대량 조회 API
+- 페이지네이션 시 **Keyset Pagination**(마지막 조회 값 기준)을 사용하세요. OFFSET은 성능에 불리합니다.
+- 조회 컬럼을 필요한 최소한으로 제한하고, `WHERE` 절은 인덱스를 탈 수 있도록 설계하세요.
+- 네트워크 지연이 큰 환경(예: 다른 리전의 DB 접속)에서는 배열 페치 크기를 더 크게 설정하는 것이 유리합니다.
+
+### 트랜잭션 로그 적재
+- 배열 바인드를 이용한 INSERT를 사용하세요.
+- 시퀀스를 사용한다면 `CACHE` 크기를 충분히(예: 1000 이상) 늘리세요.
+- 테이블을 일별/시간별 파티셔닝하여 핫 블록 경합을 분산시키세요.
+
+---
+
+## 주의사항과 자주 하는 실수
+
+1.  **PGA 메모리 고려**: `BULK COLLECT`를 무제한으로 사용하면 PGA 메모리가 고갈될 수 있습니다. 항상 `LIMIT`과 함께 사용하세요.
+2.  **트랜잭션 크기 관리**: 너무 큰 배치 크기로 한 번에 커밋하면 롤백 세그먼트 부족(`ORA-01555`)이나 장시간 로크 유지로 인한 경합이 발생할 수 있습니다. 적절한 배치 크기(예: 5,000 - 20,000)를 유지하세요.
+3.  **Auto-Commit 비활성화**: 애플리케이션 레벨 배치 실행 시 Auto-Commit 모드를 반드시 끄고, 명시적인 주기적 커밋을 구현하세요. 행마다 커밋하면 배치 실행의 이점이 사라집니다.
+4.  **예외 처리 설계**: `SAVE EXCEPTIONS`나 드라이버의 배치 예외 처리 기능을 활용하여 일부 행의 실패가 전체 작업을 중단시키지 않도록 하세요. 오류 난 행은 별도 로깅 후 재처리하도록 합니다.
+5.  **실행 계획 변화**: 배열 바인드를 이용한 IN-list 처리 등 새로운 방식은 때로는 다른 실행 계획을 유도할 수 있습니다. 변경 후 반드시 실행 계획과 성능을 검증하세요.
 
 ---
 
 ## 결론
 
-Array Processing은 **“적게, 크게, 한 번에”**의 구현 기술이다.
-- **적게**: 호출 수(user calls)를 줄이고,
-- **크게**: 한 번에 다량의 행을 처리하며,
-- **한 번에**: 커서 재사용·배치 커밋으로 서버/네트워크 모두 효율화한다.
+Array Processing은 데이터베이스 연산의 효율성을 높이는 **근본적이고 강력한 패러다임**입니다. 핵심 원리는 간단합니다. **네트워크 왕복이라는 가장 비싼 비용을 줄이는 것**입니다.
 
-PL/SQL의 `BULK COLLECT/FORALL`, 드라이버의 **배열 페치/배열 바인드/배치 실행**을 표준으로 삼으면
-**응답시간·처리량·DB 부하**가 동시에 좋아진다. 항상 **SQL Trace/TKPROF**로 수치 검증하며,
-배열/배치 크기는 **실측**으로 최적화하라 — 그러면 “느린 시스템”은 눈에 띄게 빨라진다.
+PL/SQL의 `BULK COLLECT`와 `FORALL`, 그리고 각 언어 드라이버가 제공하는 배열 페치와 배치 실행 기능은 이 원리를 구현하는 표준 도구입니다. 이러한 기법을 적용하면 동일한 비즈니스 로직을 수행하더라도 애플리케이션의 응답 속도가 빨라지고, 데이터베이스 서버의 CPU 및 I/O 부하가 감소하며, 결과적으로 시스템 전체의 확장성이 향상됩니다.
 
-> **한 줄 요약**
-> **왕복을 줄이고(배열 페치/배치 DML), 실패는 예외 저장으로 분리, IN-list는 배열 바인드.**
-> 이것이 Oracle에서 Array Processing을 제대로 쓰는 방법이다.
+새로운 기능을 개발하거나 기존 성능 개선 작업을 할 때, "이 작업을 한 번에 더 많은 행을 처리할 수는 없을까?"라고 항상 질문하십시오. 작은 습관이 쌓여 결국 견고하고 빠른 시스템을 구축하는 토대가 될 것입니다.

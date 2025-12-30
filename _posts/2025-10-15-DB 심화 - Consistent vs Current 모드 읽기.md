@@ -23,7 +23,7 @@ category: DB 심화
   - DML(UPDATE/DELETE/INSERT) 시 **수정 대상 블록/행**에 대해 **Current** 로 잡고 **행 락(TX enqueue)** + **버퍼 pin** 후 변경.
   - 통계: `db block gets` 증가.
 
-> 오라클의 일반 DML 경로는 **“Consistent로 후보행을 찾고 → Current로 바꾼다**” 이다.
+오라클의 일반 DML 경로는 **“Consistent로 후보행을 찾고 → Current로 바꾼다”** 이다.
 
 ---
 
@@ -49,10 +49,10 @@ category: DB 심화
 
 ## “Consistent로 갱신 대상을 식별하고, Current로 갱신” — 표준 DML 경로
 
-> UPDATE/DELETE 는 두 단계로 이해하면 쉽다.
->
-> 1) **읽기 단계(Consistent)**: WHERE 조건으로 **대상 행을 찾는다**
-> 2) **쓰기 단계(Current)**: **대상 행을 현재 버전으로 재확인**하고 **락 후 변경**한다
+UPDATE/DELETE 는 두 단계로 이해하면 쉽다.
+
+1) **읽기 단계(Consistent)**: WHERE 조건으로 **대상 행을 찾는다**
+2) **쓰기 단계(Current)**: **대상 행을 현재 버전으로 재확인**하고 **락 후 변경**한다
 
 ### 단계별 내부 흐름(요약)
 
@@ -64,17 +64,15 @@ category: DB 심화
    - (필요 시) **칸 충돌/변경감지**(Serializable 등) 후 **실제 칼럼 업데이트** → **Dirty**.
 3. **커밋**: LGWR가 **Redo** 를 온라인 리두 로그에 동기 flush → **Durability 보장**. DBWn은 나중에 데이터파일에 기록.
 
-> 이때 “읽기 단계”와 “쓰기 단계” 사이에 **다른 세션**이 동일 행을 **먼저 변경/커밋**했으면…
-> - 기본 **Read Committed**에서는 **최신(Current) 행**을 기준으로 계속 진행한다(필요 시 **재평가**로 인해 **선택 행이 줄거나 늘 수 있음**).
-> - **Serializable**에선 **ORA-08177**(can’t serialize)로 실패할 수 있다.
+이때 “읽기 단계”와 “쓰기 단계” 사이에 **다른 세션**이 동일 행을 **먼저 변경/커밋**했으면…
+- 기본 **Read Committed**에서는 **최신(Current) 행**을 기준으로 계속 진행한다(필요 시 **재평가**로 인해 **선택 행이 줄거나 늘 수 있음**).
+- **Serializable**에선 **ORA-08177**(can’t serialize)로 실패할 수 있다.
 
 ---
 
 ## “Consistent로 갱신할 때 생기는 현상”은?
 
-> **정확히 말해 ‘Consistent로 갱신’이라는 동작은 없다.**
-> Consistent 모드는 **읽기에서만** 사용된다.
-> 다만 DML 구문도 내부적으로 **읽기 단계(Consistent)** 를 수행해 **대상 행을 식별**한다.
+**정확히 말해 ‘Consistent로 갱신’이라는 동작은 없다.** Consistent 모드는 **읽기에서만** 사용된다. 다만 DML 구문도 내부적으로 **읽기 단계(Consistent)** 를 수행해 **대상 행을 식별**한다.
 
 **그럼 “Consistent로 갱신할 때 생기는 현상”의 의도는?**
 → **DML의 “읽기 단계”가 Consistent이기 때문에 생기는 현상**을 뜻한다고 해석한다:
@@ -82,7 +80,7 @@ category: DB 심화
 - **READ COMMITTED**:
   - UPDATE/DELETE의 **WHERE 평가**가 **Consistent(문장 시작 시점)** 이다.
   - 그러나 **실제 갱신은 Current로** 하므로, **갱신 시점에 행이 바뀌었거나 사라졌으면** 재확인 결과 **해당 행이 갱신 대상에서 빠질 수 있다**.
-  - 즉, “WHERE로 걸렸던 것 같은데 마지막에 갱신 카운트가 줄었다”가 가능. (아래 예제 참고)
+  - 즉, “WHERE로 걸렸던 것 같은데 마지막에 갱신 카운트가 줄었다”가 가능.
 - **SERIALIZABLE**:
   - 트랜잭션 전체에 대해 **스냅샷 일관성**을 유지하려 하므로,
   - **읽기 단계 이후 행이 바뀐 사실**을 감지하면 **ORA-08177**(serialization failure)이 발생해서 “재시도”가 필요할 수 있다.
@@ -151,13 +149,13 @@ COMMIT;
   - 혹은 **재확인 결과** 최종 갱신 대상에서 빠져 **A의 영향 행 수가 줄어든다**(마지막 결과 카운트가 예상보다 작을 수 있음).
 - READ COMMITTED에선 **이런 “최종 영향 행 수 변동”이 정상 동작**이다(문장 중 Consistent, 갱신은 Current).
 
-> 요약: **RC에서 UPDATE/DELETE는 “읽기는 Consistent, 쓰기는 Current”이므로, 사이에 다른 커밋이 끼면 최종 갱신 결과가 변한다.**
+**요약**: **RC에서 UPDATE/DELETE는 “읽기는 Consistent, 쓰기는 Current”이므로, 사이에 다른 커밋이 끼면 최종 갱신 결과가 변한다.**
 
 ---
 
-## — “잃어버린 갱신(Lost Update)” 가능?
+## “잃어버린 갱신(Lost Update)” 가능?
 
-> **Lost Update** 정의: 두 세션이 **같은 행의 “옛 값”을 읽고** 그 값을 바탕으로 **서로 덮어쓴다** → **먼저 쓴 값이 마지막 커밋에 의해 사라짐**.
+**Lost Update** 정의: 두 세션이 **같은 행의 “옛 값”을 읽고** 그 값을 바탕으로 **서로 덮어쓴다** → **먼저 쓴 값이 마지막 커밋에 의해 사라짐**.
 
 Oracle의 **READ COMMITTED** 에서는 **Lost Update가 가능**하다(기본적으로 방지하지 않음).
 방지하려면 **`SELECT ... FOR UPDATE`**, **버전 칼럼(낙관적 잠금)**, **체크 제약/트리거** 등 별도 장치가 필요.
@@ -194,6 +192,7 @@ COMMIT;
   ```
 
 **결과**: 최종 `val = 1` 이다. 세션 B의 변경(10)이 **유실**되었다.
+
 **해결**:
 - **`SELECT ... FOR UPDATE`** 로 행 락을 잡고 시작
 - **버전 칼럼(예: `ver` 증가)** 또는 **ORA_ROWSCN/해시 등**을 WHERE에 포함해 **동시 수정 감지**
@@ -258,7 +257,7 @@ COMMIT;
   - 불만족 → 스킵(최종 영향 행 수 감소).
 - 모든 ROWID 처리 후 **COMMIT** → **LGWR flush**.
 
-> 이 재확인/충돌 처리에서 발생하는 대기/거절이 **read committed와 serializable에서 다르게 표정**으로 나타난다(앞의 사례들).
+이 재확인/충돌 처리에서 발생하는 대기/거절이 **read committed와 serializable에서 다르게 표정**으로 나타난다.
 
 ---
 
@@ -372,50 +371,26 @@ ORDER  BY seconds_in_wait DESC;
 
 ---
 
-## 체크리스트 — 설계/코드에서 무엇을 선택할 것인가?
+## 설계 및 선택 시 고려사항
 
-1. **Lost Update 방지**가 필요한가?
-   - 예/금액/포인트 등 누적형 → `SELECT ... FOR UPDATE` / 버전 컬럼(낙관적 잠금) / MQ 단일 처리
-2. **전역 제약(Write Skew 위험)** 이 있는가?
-   - 스냅샷/Serializable에서도 어긋날 수 있음 → **DB 제약**(유니크/참조무결성/트리거/락 테이블)로 **강제**
-3. **일관성의 범위**
-   - 문장 수준으로 충분? 트랜잭션 전체 스냅샷 필요? → READ COMMITTED vs SERIALIZABLE 선택
-4. **성능 트레이드오프**
-   - `FOR UPDATE`는 **락 경합**과 **db block gets** 증가를 동반
-   - 낙관적 잠금은 **충돌 시 재시도 비용** 증가
-5. **재현 불가/비결정성 업데이트** 금지
-   - ROWNUM 기반 임의 업데이트, DBMS_RANDOM, 병렬 무질서 업데이트 → **안정된 ORDER BY + 키 기반 처리**로 통제
-
----
-
-## 수학적 감각(개념식)
-
-- **가시성 규칙(문장 수준)**
-  $$ \text{Visible(row)} \iff \text{row.commit\_scn} \le S $$
-  - 그렇지 않으면 **Undo** 로 **CR(row, S)** 재구성
-- **RC에서 UPDATE 효과**
-  - 읽기(Consistent, S 고정) → 쓰기(Current) 사이에 **다른 커밋**이 끼면
-  $$ \text{Final Target} \subseteq \text{Initial Candidate} $$
-  (최종 갱신 행 수가 줄 수 있음)
-- **Serializable 실패 규칙(개념)**
-  - 읽은 스냅샷과 **충돌하는 현재 변경**이 감지되면
-  $$ \text{Commit} \to \text{ORA-08177} $$
+1.  **Lost Update 방지**가 필요한가?
+    - 예/금액/포인트 등 누적형 → `SELECT ... FOR UPDATE` / 버전 컬럼(낙관적 잠금) / MQ 단일 처리
+2.  **전역 제약(Write Skew 위험)** 이 있는가?
+    - 스냅샷/Serializable에서도 어긋날 수 있음 → **DB 제약**(유니크/참조무결성/트리거/락 테이블)로 **강제**
+3.  **일관성의 범위**
+    - 문장 수준으로 충분? 트랜잭션 전체 스냅샷 필요? → READ COMMITTED vs SERIALIZABLE 선택
+4.  **성능 트레이드오프**
+    - `FOR UPDATE`는 **락 경합**과 **db block gets** 증가를 동반
+    - 낙관적 잠금은 **충돌 시 재시도 비용** 증가
+5.  **재현 불가/비결정성 업데이트** 금지
+    - ROWNUM 기반 임의 업데이트, DBMS_RANDOM, 병렬 무질서 업데이트 → **안정된 ORDER BY + 키 기반 처리**로 통제
 
 ---
 
-## 정리
+## 결론
 
-- **Consistent**: **읽기 일관성**을 위한 모드(Undo 기반 CR). 문장 시작 시점의 스냅샷을 끝까지 지킨다.
-- **Current**: **수정/락**을 위한 모드(현재 버전). DML/`FOR UPDATE` 시 사용한다.
-- **일반 DML의 표준 흐름**은 **Consistent로 대상 식별 → Current로 갱신**.
-  - **RC**에선 두 단계 사이 **다른 커밋**에 의해 **최종 영향 행 수 변동** 가능(정상).
-  - **Serializable**에선 **ORA-08177** 로 재시도가 필요할 수 있다.
-- **일관성 없이 보이는 갱신**(업데이트 anomaly)
-  - **Lost Update**(RC) — 방지책 필요
-  - **Write Skew**(스냅샷 계열) — 전역 제약을 DB에서 강제
-  - **비결정성 업데이트** — 실행마다 결과 편차, 주의
-- **도구/대응**: `SELECT ... FOR UPDATE`, 버전 컬럼/해시, 제약/트리거, 안정된 처리 순서, 재시도 정책.
+오라클에서 데이터를 읽고 갱신하는 과정은 **Consistent 모드**와 **Current 모드**라는 두 개의 축으로 명확히 구분됩니다. Consistent Read는 문장 수준의 일관된 읽기를 보장하기 위해 Undo를 활용한 과거 버전 재구성을 수행하며, Current Read는 실제 데이터 변경을 위한 현재 버전 접근과 락 획득을 담당합니다.
 
-> 한 줄 결론:
-> **오라클의 갱신은 “읽기는 과거(Consistent), 쓰기는 현재(Current)”로 이루어진다.**
-> 이 사이의 시간/경쟁이 바로 우리가 다뤄야 할 **갱신 이상과 동시성 설계의 본질**이다.
+표준 DML 경로인 **“Consistent로 대상 식별 → Current로 갱신”** 은 강력한 일관성 모델의 기초이지만, 두 단계 사이에 발생할 수 있는 경쟁 상태는 다양한 갱신 이상(Update Anomaly)을 초래합니다. **Read Committed**에서는 Lost Update가, **Serializable**(스냅샷 격리)에서는 Write Skew가 발생할 가능성이 있으며, 각각 `SELECT FOR UPDATE`, 버전 컬럼, 데이터베이스 수준의 강한 제약 조건 등을 통해 방지할 수 있습니다.
+
+결국 오라클의 동시성 제어는 **“읽기는 과거(Consistent), 쓰기는 현재(Current)”** 라는 원칙 아래, 개발자가 트랜잭션 격리 수준과 적절한 잠금 기법을 이해하고 설계에 반영할 때 그 위력을 발휘합니다. 동시성 문제를 해결하는 핵심은 이 두 모드의 동작 차이와 그 사이에서 벌어지는 경쟁의 본질을 정확히 아는 데 있습니다.

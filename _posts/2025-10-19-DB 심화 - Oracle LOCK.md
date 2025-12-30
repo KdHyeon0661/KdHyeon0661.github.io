@@ -4,186 +4,192 @@ title: DB 심화 - Oracle LOCK
 date: 2025-10-19 21:25:23 +0900
 category: DB 심화
 ---
-# Oracle **LOCK** 완전 가이드
-
-— **Enqueue(엔큐) Lock**, **TX Lock**(무결성 제약·비트맵 인덱스 갱신·ITL 부족·인덱스 분할), **기타 트랜잭션 락**, **DML Row Lock / Table Lock**, 그리고 **락을 푸는 열쇠 = COMMIT**
+# Oracle **LOCK**
 
 > 목표
-> - Oracle의 **락 레이어**(Row/TX, Table/TM, 기타 Enqueue)를 개념부터 동작까지 정확히 설명
-> - **TX 락**이 왜, 언제, 어떻게 잡히는지 — 특히 **무결성 제약 위배 가능성**, **비트맵 인덱스 엔트리 갱신**, **ITL 슬롯 부족**, **인덱스 분할** 상황을 실무 관점에서 해부
-> - **DML Row Lock / Table Lock**의 상호작용과 모드 호환성, **데드락**과 진단, **해결(커밋/롤백)** 을 예제와 함께 제시
-> - `V$LOCK`, `V$SESSION`, `DBA_BLOCKERS/WAITERS`, `V$TRANSACTION` 등 **진단 SQL**과 **튜닝 체크리스트** 제공
+> - Oracle의 **락 레이어**(Row/TX, Table/TM, 기타 Enqueue)를 개념부터 동작까지 정확히 설명합니다.
+> - **TX 락**이 왜, 언제, 어떻게 잡히는지 — 특히 **무결성 제약 위배 가능성**, **비트맵 인덱스 엔트리 갱신**, **ITL 슬롯 부족**, **인덱스 분할** 상황을 실무 관점에서 해부합니다.
+> - **DML Row Lock / Table Lock**의 상호작용과 모드 호환성, **데드락**과 진단, **해결(커밋/롤백)** 을 예제와 함께 제시합니다.
+> - `V$LOCK`, `V$SESSION`, `DBA_BLOCKERS/WAITERS`, `V$TRANSACTION` 등 **진단 SQL**과 **튜닝 가이드라인**을 제공합니다.
 
 ---
 
 ## 큰 그림 — Oracle 락 레이어 맵
 
-- **Row-Level Lock**: 개별 행에 대한 잠금(비가시적 구조) — *세션은 실제론 **TX enqueue**를 통해 보유*.
-- **TX Enqueue**: 트랜잭션(세그먼트 헤더/UNDO)에 대한 락. **행 변경의 소유권**을 표현, **행 충돌 시 대기 이벤트**는 보통 `enq: TX - row lock contention`.
-- **TM Enqueue**: **테이블(오브젝트)** 레벨. DML/DDL 충돌을 제어(모드: RS/RX/SSX/… → 호환성 표 참조).
-- **그 외 Enqueue**: `HW`(High Water Mark), `SQ`(Sequence), `ST`(Space Transaction), `CF`(Control File) 등.
-- **래치/뮤텍스**는 **SGA 보호**용(동시성 제어)으로, **엔큐(사용자 데이터 보호)** 와 다른 레이어.
+Oracle의 동시성 제어는 여러 계층(Layer)의 락(Lock) 메커니즘이 협력하여 이루어집니다. 이해를 돕기 위해 주요 락의 계층을 살펴보겠습니다.
+
+- **Row-Level Lock**: 개별 행에 대한 잠금입니다. 이는 물리적으로 데이터 블록의 ITL 슬롯과 행 헤더의 Lock Byte로 구현되지만, 논리적으로는 다음 계층의 **TX Enqueue**로 표현되어 관리됩니다.
+- **TX Enqueue**: 트랜잭션 자체에 대한 락입니다. 특정 트랜잭션이 변경 중인 행에 대한 소유권을 나타내며, **행 충돌 시 관찰되는 대기 이벤트**는 주로 `enq: TX - row lock contention` 입니다.
+- **TM Enqueue**: **테이블(또는 다른 오브젝트)** 레벨의 락입니다. DML과 DDL 작업 간의 충돌을 제어합니다. (예: RS/RX/SSX/X 등의 모드)
+- **기타 Enqueue**: `HW`(High Water Mark 할당), `SQ`(시퀀스 캐시), `ST`(공간 트랜잭션), `CF`(컨트롤 파일) 등 특수한 목적의 락들이 있습니다.
+- **래치(Latch) / 뮤텍스(Mutex)**: **SGA 내 공유 메모리 구조체를 보호**하는 초단기 락입니다. 사용자 데이터 보호를 위한 **엔큐(Enqueue)** 와는 목적과 수명이 다른 별도의 레이어입니다.
 
 ---
 
-## Lock 핵심
+## 락의 핵심 개념: 구조, 이름, 모드
 
-### 구조·이름·모드
+### 유형(Type)과 모드(Mode)
 
-- `V$LOCK.TYPE` 예: **TX, TM, UL, HW, SQ, ST, CF…**
-- **모드(MODE)** 값(정수) — 일반적으로:
-  - **0**: None, **1**: Null, **2**: Row-S(=SS), **3**: Row-X(=SX), **4**: S, **5**: S/Row-X, **6**: X
-  - 제품 버전에 따라 표기가 다를 수 있으나 **호환성 매트릭스**는 동일 개념.
+- `V$LOCK` 뷰의 `TYPE` 컬럼은 락의 유형을 나타냅니다. (예: **TX**(트랜잭션), **TM**(테이블), **UL**(사용자 정의), **HW**, **SQ** 등)
+- **모드(MODE)** 는 락의 강도(또는 목적)를 정수로 표현합니다. 일반적인 매핑은 다음과 같습니다(버전별 세부 명칭은 다를 수 있음).
+  - **0**: None
+  - **1**: Null
+  - **2**: Row-S (SS)
+  - **3**: Row-X (SX 또는 RX)
+  - **4**: Share (S)
+  - **5**: Share/Row-X (SSX)
+  - **6**: Exclusive (X)
 
-### 호환성 개념(요지)
+### 호환성의 기본 개념
 
-- **X** vs **X**: 비호환 → 한쪽 대기
-- **S** vs **S**: 호환
-- **SX(=RX)**: S와는 부분 호환, X와는 비호환 … (**TM 호환성 표**는 §4.2)
+락 모드 간의 호환성은 동시 작업 가능 여부를 결정합니다. 기본 원칙은 다음과 같습니다.
+- **Exclusive(X)** 와 **Exclusive(X)** 는 서로 **비호환**합니다. 한쪽이 대기해야 합니다.
+- **Share(S)** 와 **Share(S)** 는 일반적으로 **호환**합니다. 여러 세션이 동시에 읽을 수 있습니다.
+- **Row-X(RX)** 는 Share(S) 모드와 **부분적으로 호환**할 수 있지만, Exclusive(X) 모드와는 **비호환**합니다.
+- 구체적인 **TM 락 호환성 매트릭스**는 별도의 표로 정리됩니다.
 
-### 관측·진단 기본
+### 기본적인 관측과 진단 쿼리
 
 ```sql
--- 세션/락
+-- 현재 세션과 연결된 락 정보 확인
 SELECT s.sid, s.serial#, s.username, l.type, l.id1, l.id2, l.lmode, l.request, l.block
 FROM   v$lock l JOIN v$session s ON s.sid = l.sid
 ORDER  BY s.sid;
 
--- 블로커/웨이터
+-- 블로킹 체인을 쉽게 확인 (DBA_BLOCKERS/WAITERS 뷰 활용)
 SELECT * FROM dba_blockers;
 SELECT * FROM dba_waiters;
 
--- 트랜잭션 핸들
+-- 활성 트랜잭션과 연결된 세션 정보
 SELECT s.sid, t.xidusn, t.xidslot, t.xidsqn, t.status
 FROM   v$transaction t JOIN v$session s ON s.taddr = t.addr;
 ```
 
 ---
 
-## **TX Lock** — 행 변경의 주연 배우
+## **TX Lock** — 행 변경의 핵심 락
 
-> **핵심**: 모든 DML(UPDATE/DELETE/INSERT)은 **행 레벨 락**을 잡고, 그 소유권이 **TX Enqueue**로 표현된다.
-> 다른 세션이 **같은 행**을 바꾸려 하면 **TX 락 충돌**로 대기(`enq: TX - row lock contention`).
+> **핵심 원리**: 모든 DML 작업(UPDATE, DELETE, INSERT, SELECT FOR UPDATE)은 대상 **행에 대한 락(Row-Level Lock)** 을 획득하며, 이 락의 소유권은 논리적으로 **TX Enqueue**로 표현됩니다.
+> 다른 세션이 **이미 락이 걸린 동일한 행**을 변경하려고 시도하면 **TX 락 충돌**이 발생하며, 이때 `enq: TX - row lock contention` 대기 이벤트를 보게 됩니다.
 
-### 기본 시나리오 — 행 락 충돌
+### 기본적인 행 락 충돌 시나리오
 
 ```sql
--- 준비
+-- 테스트 환경 준비
 DROP TABLE t_tx PURGE;
 CREATE TABLE t_tx(id NUMBER PRIMARY KEY, v NUMBER);
 INSERT INTO t_tx SELECT LEVEL, 0 FROM dual CONNECT BY LEVEL <= 10;
 COMMIT;
 
--- 세션 A: 행 잠금
+-- 세션 A: 특정 행에 대한 락 획득
 UPDATE t_tx SET v = v+1 WHERE id=1;
+-- 아직 COMMIT하지 않은 상태
 
--- 세션 B: 같은 행 변경 시도 → A 커밋까지 대기
+-- 세션 B: 동일한 행 변경 시도 → 세션 A의 커밋/롤백까지 대기
 UPDATE t_tx SET v = v+10 WHERE id=1;
--- B는 'enq: TX - row lock contention'
+-- 세션 B는 'enq: TX - row lock contention' 이벤트를 대기하게 됩니다.
 ```
 
-**해결**: **A가 COMMIT/ROLLBACK** 하면 B가 진행 → **락을 푸는 열쇠는 커밋**(§7).
+**해결 방법**: **세션 A가 COMMIT 또는 ROLLBACK을 수행**하면 해당 행에 대한 락이 해제되고, 대기 중이던 세션 B의 작업이 진행됩니다. 락을 푸는 유일한 방법은 트랜잭션을 종료하는 것입니다.
 
 ---
 
-## TX Lock이 “예상 밖”으로 길어지는 4가지 대표 원인
+## TX Lock 보유 시간이 길어지는 4가지 주요 원인
 
-### **무결성 제약 위배 가능성**(FK 미인덱스 등)
+TX 락이 예상보다 오래 유지되면, 그만큼 다른 세션들의 대기 시간이 길어져 전체 시스템 성능에 영향을 미칩니다. 다음은 보유 시간을 증가시키는 대표적인 원인들입니다.
 
-- **외래키(FK)** 가 **인덱스 없음** 상태에서 **부모 삭제/수정** 시:
-  - Oracle은 **자식 테이블 전체 범위를 확인**해야 하므로 **자식 테이블 TM/TX 잠금**이 **광범위/장시간** 발생.
-  - 동시에 다른 세션이 자식에 DML → **교착/대기** 증가.
+### **원인 1: 무결성 제약 위배 가능성 (특히, 인덱스 없는 외래키)**
 
-**해결 가이드**
-- **모든 FK 컬럼에 인덱스** 생성 (정합성 + 동시성 필수 교양).
+- **상황**: 부모-자식 관계에서 **부모 테이블의 행을 삭제하거나 기본키를 수정**할 때, 자식 테이블의 외래키(FK) 컬럼에 **인덱스가 존재하지 않는 경우**.
+- **문제점**: Oracle은 자식 테이블에 해당 부모 키를 참조하는 행이 있는지 확인하기 위해 **자식 테이블 전체를 스캔**해야 할 수 있습니다. 이 과정에서 자식 테이블에 대한 광범위한 **TM(테이블) 락**과 **TX 락**이 발생하며, 이로 인해 동시에 실행되는 다른 자식 테이블 DML 작업들이 장시간 대기할 수 있습니다.
+- **해결 지침**: **모든 외래키(FK) 컬럼에 인덱스를 생성**하는 것은 동시성과 성능을 위한 필수 사항입니다.
 ```sql
-CREATE INDEX ix_child_fk ON child(parent_id);
+-- 자식 테이블의 FK 컬럼에 인덱스 생성
+CREATE INDEX ix_child_parent_id ON child_table(parent_id);
 ```
 
-### **비트맵 인덱스 엔트리 갱신**
+### **원인 2: 비트맵 인덱스 엔트리 갱신**
 
-- **Bitmap Index** 는 **값 하나당 다수 행**을 한 비트맵으로 관리.
-- 특정 값 업데이트/삽입은 **넓은 범위의 행 잠금**(또는 인덱스 엔트리 잠금)을 유발 → **TX 대기** 커짐.
-- **OLTP/높은 동시성 DML**엔 부적합. **카디널리티 낮은 컬럼이라도** 갱신이 잦으면 **B*Tree** 권장.
+- **상황**: **비트맵 인덱스(Bitmap Index)** 는 하나의 인덱스 엔트리가 **동일한 값을 가진 여러 행**을 가리킵니다.
+- **문제점**: 특정 값을 가진 한 행을 갱신하거나 삽입하면, Oracle은 해당 비트맵 인덱스 엔트리(및 관련된 다른 엔트리)를 잠가야 합니다. 이는 **논리적으로 광범위한 행들에 대한 락**을 효과적으로 걸게 만들며, 높은 동시성 DML 환경에서 심각한 경합을 유발합니다.
+- **해결 지침**: **OLTP 환경**이나 **갱신이 빈번한 테이블**에서는 비트맵 인덱스를 사용하지 않는 것이 좋습니다. 비트맵 인덱스는 **주로 읽기 전용 또는 배치성 보고서 쿼리**에 적합합니다.
 
-**해결 가이드**
-- 갱신 빈도가 높은 테이블은 **비트맵 인덱스 지양**. 보고서/집계 전용(읽기 위주)에만 사용.
+### **원인 3: ITL 슬롯 부족**
 
-### **ITL 슬롯 부족(Interested Transaction List)**
-
-- 동시 갱신이 **같은 블록**에 몰리면, 블록 헤더의 **ITL 슬롯**이 모자라서 **추가 TX가 기다림**
-  - 대기 이벤트 예: `enq: TX - allocate ITL entry`
-- **원인**: `INITRANS` 너무 낮음, `PCTFREE` 낮아 헤더 확장 여지 없음, **핫 블록 설계**.
-
-**해결 가이드**
+- **상황**: `INITRANS` 값이 너무 낮거나 `PCTFREE`가 부족하여 블록 헤더 공간이 모자라면, 동일한 블록을 동시에 변경하려는 여러 트랜잭션이 **ITL(Interested Transaction List) 슬롯을 할당받지 못할** 수 있습니다.
+- **문제점**: ITL 슬롯을 할당받지 못한 트랜잭션은 `enq: TX - allocate ITL entry` 이벤트를 대기하게 되며, 이는 결국 행 락 획득의 지연으로 이어집니다.
+- **해결 지침**:
 ```sql
-ALTER TABLE t_tx MOVE INITRANS 8 PCTFREE 20; -- 블록 헤더 여유↑
+-- 테이블의 INITRANS를 늘리고 헤더 확장 공간(PCTFREE)을 확보
+ALTER TABLE t_tx MOVE INITRANS 8 PCTFREE 20;
+-- 관련 인덱스도 함께 조정
 ALTER INDEX pk_t_tx REBUILD INITRANS 8;
--- 키 분산(Reverse Key, Hash 파티션, 샤딩)으로 '같은 블록' 집중 완화
+-- 근본적으로는 파티셔닝, Reverse Key, 해시 함수 등을 이용해 '핫 블록'을 분산시킵니다.
 ```
 
-### & 핫블록**
+### **원인 4: 인덱스 리프 블록 경합 (핫블록)**
 
-- 증가형 키(시퀀스)로 **우측 리프** 집중 → **분할 잦음** + **버퍼 경합**(`buffer busy waits`) → DML 지연
-- 지연 동안 **TX Lock 보유시간**이 늘어나 **연쇄 대기** 확대.
-
-**해결 가이드**
-- **Reverse Key Index**(범위 스캔 없다면), **Hash 파티셔닝**, **Hi/Lo**(랜덤화)로 **삽입 분산**.
+- **상황**: 순차적으로 증가하는 값(시퀀스 등)을 기본키로 사용하는 테이블에서, 모든 삽입이 **인덱스 트리의 가장 오른쪽 리프 블록**으로 집중됩니다.
+- **문제점**: 이로 인해 해당 리프 블록에서 빈번한 **분할(split)** 이 발생하고, `buffer busy waits` 경합이 심화됩니다. 이러한 물리적 경합은 DML 작업 자체를 지연시키고, 결과적으로 **TX 락의 보유 시간을 증가**시켜 연쇄 대기를 유발합니다.
+- **해결 지침**: **Reverse Key 인덱스**(범위 스캔이 없는 경우), **해시 파티셔닝**, **Hi-Lo 알고리즘**을 통한 키 값 랜덤화 등을 통해 삽입 작업을 여러 블록에 분산시킵니다.
 
 ---
 
-## Lock** — DML/DDL 충돌의 교차점
+## **TM Lock** — DML과 DDL의 충돌 관리자
 
-### DML이 잡는 Table Lock(TM)
+### DML 작업이 걸는 테이블 락(TM)
 
-- DML(INSERT/UPDATE/DELETE)은 대상 테이블에 보통 **TM=RX(Row-Exclusive)** 를 건다.
-- SELECT … FOR UPDATE도 대상 테이블 **TM=RX**.
-- DDL은 **TM** 을 더 강한 모드로 요구 → DML과 충돌.
+- 일반적인 DML 작업(INSERT, UPDATE, DELETE)은 대상 테이블에 **TM 모드 RX(Row-Exclusive)** 락을 겁니다.
+- `SELECT ... FOR UPDATE` 문도 마찬가지로 **TM 모드 RX** 락을 겁니다.
+- DDL 작업(예: `ALTER TABLE`)은 일반적으로 더 강한 모드(예: **X, Exclusive**)의 TM 락을 요구합니다. 이는 진행 중인 DML 작업과 충돌하여 DDL이 대기하거나, DML이 DDL을 기다리게 만들 수 있습니다.
 
-### TM 호환성(요지표)
+### TM 락 호환성 요약
 
-| 요청 | 보유 중 |
-|---|---|
-| **DDL(Exclusive)** vs DML(RX/RS/SSX) → **비호환** |
-| **DML(RX)** vs **DML(RX)** → **호환**(대부분) |
-| **LOCK TABLE … SHARE** 등은 그에 맞는 호환성 매트릭스 고려 |
+| 요청 모드 \ 보유 모드 | RX (Row-X) | S (Share) | X (Exclusive) |
+| :--- | :--- | :--- | :--- |
+| **RX (Row-X)** | **호환** | **호환** | **비호환** |
+| **S (Share)** | **호환** | **호환** | **비호환** |
+| **X (Exclusive)** | **비호환** | **비호환** | **비호환** |
 
-> 실무 감각
-> - “**왜 ALTER TABLE이 안 되지?**” → 동시에 DML이 테이블을 만지고 **TM 충돌**.
-> - “**왜 DML이 멈추지?**” → 누군가 `LOCK TABLE …` 이나 DDL을 잡은 경우.
+> **실무 감각**
+> - **"ALTER TABLE이 왜 안 끝나지?"** → 해당 테이블을 대상으로 하는 DML 트랜잭션이 아직 완료되지 않아 **TM 락 충돌**이 발생한 경우입니다.
+> - **"갑자기 DML이 매우 느려졌다."** → 다른 세션이 `LOCK TABLE ... IN EXCLUSIVE MODE` 명령을 수행했거나, DDL 작업이 진행 중일 수 있습니다.
 
-### 진단 예시
+### TM 락 진단 예시
 
 ```sql
--- TM를 보는 간단 예
-SELECT s.sid, o.owner, o.object_name, l.type, l.lmode, l.request
+-- 현재 특정 테이블을 잠그고 있는 TM 락 확인
+SELECT s.sid, s.serial#, o.owner, o.object_name, l.lmode, l.request
 FROM   v$lock l
 JOIN   v$session s ON s.sid = l.sid
 JOIN   dba_objects o ON o.object_id = l.id1
-WHERE  l.type = 'TM';
+WHERE  l.type = 'TM' AND o.object_name = 'YOUR_TABLE_NAME';
 
--- 현재 블로킹 체인
+-- 현재 발생 중인 블로킹 체인 확인
 SELECT * FROM dba_waiters;
 SELECT * FROM dba_blockers;
 ```
 
 ---
 
-## **DML Row Lock** — 실제 충돌은 여기서 발생
+## **DML Row Lock**과 애플리케이션 제어
 
-- **행 락 자체**는 데이터 블록의 **ITL/Lock Byte** 등 **로우 헤더**로 표현(물리적)되지만,
-  애플리케이션/진단 레벨에선 **TX 락**으로 관측·대기 관리.
+- **행 수준 락**은 물리적으로 데이터 블록에 구현되지만, 애플리케이션 개발 및 문제 진단 측면에서는 **TX 락**을 통해 그 상태를 파악하고 제어할 수 있습니다.
 
-### NOWAIT / WAIT / SKIP LOCKED
+### NOWAIT / WAIT / SKIP LOCKED 옵션 활용
+
+애플리케이션 설계에 따라 락 대기 방식을 세밀하게 제어할 수 있습니다.
 
 ```sql
--- 즉시 실패(UX 빠른 피드백)
-SELECT * FROM t_tx WHERE id = 1 FOR UPDATE NOWAIT;   -- ORA-00054
+-- 1. NOWAIT: 락을 즉시 획득할 수 없으면 오류(ORA-00054)를 발생시킵니다.
+--    빠른 실패(Fail-fast)가 필요한 UI 요청에 적합합니다.
+SELECT * FROM t_tx WHERE id = 1 FOR UPDATE NOWAIT;
 
--- 제한 대기
+-- 2. WAIT N: 지정된 시간(초) 동안 락 획득을 시도합니다. 시간 내 실패하면 오류를 발생시킵니다.
 SELECT * FROM t_tx WHERE id = 1 FOR UPDATE WAIT 5;
 
--- 잠긴 행은 건너뛰고 즉시 반환(큐/병렬 워커)
+-- 3. SKIP LOCKED: 이미 잠긴 행은 무시하고, 잠금 가능한 행들만 즉시 반환합니다.
+--    다중 워커(Multiple Workers)가 작업 큐(Queue)에서 태스크를 가져갈 때 유용합니다.
 SELECT id FROM jobs WHERE status='READY'
 FOR UPDATE SKIP LOCKED
 FETCH FIRST 100 ROWS ONLY;
@@ -191,208 +197,200 @@ FETCH FIRST 100 ROWS ONLY;
 
 ---
 
-## 데드락(ORA-00060)과 “무한 대기” 구분
+## 데드락(Deadlock)과 장시간 대기 구분하기
 
-### 교착 상황 예
+### 교착 상태(Deadlock)의 발생과 처리
+
+데드락은 두 개 이상의 트랜잭션이 서로가 가진 리소스의 락을 기다리며 무한정 대기하는 상태를 말합니다. Oracle은 **데드락 감지기(Deadlock Detector)** 가 주기적으로 이를 탐지하고, 한 트랜잭션을 강제로 롤백시켜(`ORA-00060`) 다른 트랜잭션이 진행될 수 있도록 합니다.
 
 ```sql
 -- 세션 A
-UPDATE t_tx SET v=v+1 WHERE id=1;  -- A holds row 1
+UPDATE t_tx SET v=v+1 WHERE id=1; -- 행(id=1)에 대한 락 획득
 -- 세션 B
-UPDATE t_tx SET v=v+1 WHERE id=2;  -- B holds row 2
+UPDATE t_tx SET v=v+1 WHERE id=2; -- 행(id=2)에 대한 락 획득
 
--- A가 id=2를, B가 id=1을 추가로 갱신 시도하면
--- Wait-For Graph 사이클 → Oracle이 한쪽을 ORA-00060으로 강제 종료
+-- 이 상태에서:
+-- 세션 A가 행(id=2)을 변경하려고 시도 → 세션 B의 커밋을 대기
+-- 세션 B가 행(id=1)을 변경하려고 시도 → 세션 A의 커밋을 대기
+-- → Wait-For Graph에서 사이클 발생 → Oracle이 한 세션(예: 세션 B)을 ORA-00060으로 종료
 ```
 
-**대응**
-- **항상 같은 순서**로 다중 자원 잠금
-- **트랜잭션 짧게**(락 보유시간 최소)
-- **오류 핸들링**: 00060 발생 시 **재시도** 로직
+**예방 및 대응 방안**:
+- **리소스 잠금 순서 표준화**: 여러 테이블이나 행을 잠가야 한다면, 모든 트랜잭션에서 **동일한 순서**로 잠금을 요청하도록 설계합니다.
+- **트랜잭션 길이 최소화**: 불필요하게 긴 트랜잭션은 데드락 가능성을 높입니다.
+- **애플리케이션 오류 처리**: `ORA-00060` 오류가 발생하면 트랜잭션을 롤백하고 사용자에게 알리거나, 안전하게 작업을 **재시도(Retry)** 하는 로직을 구현합니다.
 
-### 무한 대기? 실제로는 “상대가 오래 걸리는 것”
+### 장시간 대기(Long Waits)와의 차이
 
-- 상대 트랜잭션이 **긴 작업/분할/ITL 확장 실패/Redo flush 지연** → **대기가 길어짐**
-- 모니터링: `V$SESSION`(EVENT/SECONDS_IN_WAIT), `ASH/AWR` 로 상대 세션의 **현재 작업** 파악.
+`enq: TX - row lock contention` 이벤트로 장시간 대기하는 것이 항상 데드락은 아닙니다. 단순히 **상대방 트랜잭션이 아주 오래 실행 중**이기 때문에 대기 시간이 길어질 뿐일 수 있습니다. 이 경우 `V$SESSION` 뷰의 `SECONDS_IN_WAIT` 컬럼이나 ASH/AWR 리포트를 통해 **블로킹 세션이 실제로 무엇을 하고 있는지**를 조사해야 합니다.
 
 ---
 
-## **락을 푸는 열쇠 = COMMIT** (+ ROLLBACK)
+## **락을 해제하는 유일한 열쇠: COMMIT과 ROLLBACK**
 
-- **TX 락/행 락**은 **해당 트랜잭션의 COMMIT/ROLLBACK 순간**에 해제.
-- **TM 락**은 DML/DDL 구간 종료 시 해제(트랜잭션 경계와 일치하는 경우가 많음).
-- **주의**: `SELECT … FOR UPDATE` 로 잡은 행 잠금도 **커밋/롤백**으로만 해제.
+- **TX 락(행 락)** 은 해당 락을 획득한 **트랜잭션이 COMMIT 또는 ROLLBACK으로 종료되는 순간**에만 해제됩니다.
+- **TM 락** 은 해당 DML/DDL 작업 구간이 끝날 때 해제됩니다. 일반적인 DML의 경우 트랜잭션 종료 시점과 일치합니다.
+- **주의사항**: `SELECT ... FOR UPDATE` 로 명시적으로 획득한 행 락도 마찬가지로 **COMMIT/ROLLBACK 전까지 유지**됩니다.
 
 ```sql
 -- 세션 A
-SELECT * FROM t_tx WHERE id=1 FOR UPDATE;
--- 잠금 유지 중 …
+SELECT * FROM t_tx WHERE id=1 FOR UPDATE; -- 행(id=1)에 락 설정
+-- ... (락을 유지한 채 다른 작업 수행) ...
 
-COMMIT;  -- 이 순간 잠금 해제 → 대기 중인 세션이 진행
+COMMIT; -- 이 명령이 실행되는 순간 행(id=1)에 대한 락이 해제됩니다.
+-- 이를 기다리던 다른 세션들의 작업이 이제 진행될 수 있습니다.
 ```
 
-> **수학적 감각(개념)**
-> $$ \text{Blocked\ Time} \approx \sum \text{Hold\ Time(TX/TM)} + \text{I/O/Latch\ Delays} $$
-> **Hold Time** 을 줄이는 가장 큰 지렛대는 **COMMIT 타이밍**과 **트랜잭션 길이**.
+> **개념적 이해**
+> $$ \text{대기 시간(Blocked Time)} \approx \sum \text{락 보유 시간(Hold Time)} + \text{I/O 및 래치 지연 시간} $$
+> 성능 튜닝의 핵심은 **락 보유 시간(Hold Time)** 을 줄이는 것이며, 이에 가장 큰 영향을 미치는 요소는 **트랜잭션의 길이**와 **COMMIT의 타이밍**입니다.
 
 ---
 
-## “특수” TX 상황 — 사례별 자세한 해설
+## 특수 TX 락 상황에 대한 상세 분석
 
-### **무결성 제약 위배 가능성**
+### **무결성 제약 위배 가능성 심화 분석**
 
-- **상황**: 부모/자식 관계에서 **부모 변경**(DELETE/UPDATE PK), 자식 FK에 **인덱스 없음**.
-- **동작**: Oracle은 자식의 FK 검사 위해 **테이블 스캔/잠금** → **TM/RX 확대** + **TX 대기 증가**.
-- **징후**: 부모 DML 느림, 자식 테이블에 **TM 잠금 다수**, 대기 이벤트 `enq: TM - contention`.
-- **해결**: FK 인덱스 생성, 외래키 정합성 검사 비용을 **지점화**.
+- **메커니즘**: 자식 테이블에 FK 인덱스가 없을 때 부모 행을 삭제하면, Oracle은 자식 테이블을 **전체 테이블 스캔(FTS) 또는 풀 인덱스 스캔**하여 참조 무결성을 검증합니다. 이 검증 과정에서 자식 테이블에 **높은 수준의 TM 락**이 걸리게 되어, 동시에 실행되는 다른 자식 테이블 DML 작업들과의 충돌 가능성이 크게 증가합니다.
+- **징후**: 부모 테이블의 단순 삭제 작업이 예상보다 오래 걸리고, 동시에 자식 테이블을 사용하는 세션들에서 `enq: TM - contention` 대기 이벤트가 관찰됩니다.
+- **근본 해결**: **FK 컬럼에 반드시 인덱스를 생성**하여, 무결성 검증을 "전체 스캔"에서 "인덱스 범위 스캔"으로 변경합니다.
 
-### **비트맵 인덱스 엔트리 갱신**
+### **비트맵 인덱스 갱신 문제 심화 분석**
 
-- **상황**: 값 하나에 **여러 행** 연결(비트맵). UPDATE/INSERT가 많으면 **광범위 동시성 저하**.
-- **징후**: TX 대기 증가, 인덱스 블록 경합, DML TPS 하락.
-- **해결**: **B*Tree로 전환**, 비트맵은 **읽기 중심** 환경에 한정.
+- **메커니즘**: 비트맵 인덱스는 하나의 비트맵 엔트리가 많은 행을 대표하므로, 한 행을 갱신해도 해당 비트맵 세그먼트에 배타적 락이 필요합니다. 이는 OLTP 환경에서 동일 인덱스 키 값을 갱신하려는 다수 트랜잭션 간의 심각한 직렬화(Serialization)를 초래합니다.
+- **징후**: DML 성능(TPS)이 저하되고, `enq: TX - row lock contention`과 함께 인덱스 블록 관련 `buffer busy waits`가 증가합니다.
+- **근본 해결**: 갱신이 빈번한 컬럼에는 **B*Tree 인덱스**를 사용합니다. 비트맵 인덱스는 데이터 웨어하우스처럼 **갱신이 거의 없는 읽기 중심 환경**에만 제한적으로 적용합니다.
 
-### **ITL 슬롯 부족**
+### **ITL 슬롯 부족 문제 심화 분석**
 
-- **상황**: 동일 블록에 동시 갱신(핫 블록), `INITRANS` 낮음.
-- **징후**: `enq: TX - allocate ITL entry`, `buffer busy waits`, 세그먼트 통계 **ITL waits** 상승.
-- **해결**: `INITRANS/PCTFREE` 확대, 키/파티션 설계로 핫블록 분산.
+- **메커니즘**: 각 데이터 블록 헤더에는 동시에 해당 블록을 변경할 수 있는 트랜잭션 수를 제한하는 ITL 슬롯이 있습니다. `INITRANS`는 초기 슬롯 수를, `PCTFREE`는 슬롯이 확장될 수 있는 헤더 공간을 결정합니다. 슬롯이 부족하면 새로운 트랜잭션은 블록 변경을 시작조차 할 수 없어 대기합니다.
+- **징후**: `enq: TX - allocate ITL entry` 대기 이벤트가 빈번히 발생하며, `V$SEGMENT_STATISTICS` 뷰에서 해당 오브젝트의 "ITL waits" 통계가 높게 나타납니다.
+- **근본 해결**: `INITRANS`와 `PCTFREE`를 적절히 상향 조정하고, 파티셔닝 등을 통해 워크로드를 여러 블록에 분산시킵니다.
 
-### **인덱스 분할(leaf split)**
+### **인덱스 리프 블록 분할 경합 심화 분석**
 
-- **상황**: 증가형 키 우측 집중.
-- **징후**: User I/O/Concurrency 대기 동반, TX 보유시간 증가.
-- **해결**: Reverse Key, Hash 파티션, Hi/Lo(랜덤화), RAC에선 파티션-서비스 로컬리티.
+- **메커니즘**: 시퀀스 등으로 생성된 단조 증가(Monotonically Increasing) 값을 PK로 사용하면, 모든 새 행이 인덱스의 "가장 오른쪽" 리프 블록에 삽입됩니다. 이 블록이 가득 차면 분할(Split)이 발생하는데, 이 작업 자체가 락을 필요로 하여 동시 삽입들을 일시적으로 직렬화합니다.
+- **징후**: 삽입 성능이 저하되고, `buffer busy waits`, `read by other session` 등의 이벤트와 함께 인덱스 분할 관련 대기가 관찰됩니다.
+- **근본 해결**: **Reverse Key 인덱스**를 사용하거나(단, 범위 스캔이 불가능해짐), **해시 파티셔닝**을 도입하여 삽입 부하를 여러 인덱스 구조에 분산시킵니다.
 
 ---
 
-## 실습 세트 — 락 관측·차단·해소
+## 실습 세트 — 락 관측, 차단 확인, 문제 해소
 
-### 블로킹 체인 보기
+### 현재 시스템의 블로킹 체인 조회
 
 ```sql
--- 지금 막힌 세션/막고 있는 세션
+-- DBA_WAITERS와 DBA_BLOCKERS 뷰를 조인하여 명확한 블로킹 관계 확인
 SELECT w.waiting_session   AS waiter,
        h.holding_session   AS blocker,
        w.lock_type, w.lock_id1, w.lock_id2
 FROM   dba_waiters w JOIN dba_blockers h
      ON w.lock_id1=h.lock_id1 AND w.lock_id2=h.lock_id2;
 
--- 현재 대기 이벤트
+-- 대기 중인 세션들의 상세 정보 (블로킹 세션 ID 포함)
 SELECT sid, event, state, seconds_in_wait, blocking_session
 FROM   v$session
 WHERE  state = 'WAITING'
 ORDER  BY seconds_in_wait DESC;
 ```
 
-### 특정 객체의 TM 락
+### 강제 세션 종료 (최후의 수단)
 
 ```sql
-SELECT s.sid, s.serial#, o.owner, o.object_name, l.lmode, l.request
-FROM   v$lock l
-JOIN   v$session s ON s.sid = l.sid
-JOIN   dba_objects o ON o.object_id = l.id1
-WHERE  l.type='TM' AND o.object_name = UPPER(:obj);
-```
-
-### “강제 해소”는 최후수단
-
-```sql
--- 매우 주의! 트랜잭션 날아감
+-- 특정 세션을 강제로 종료합니다. 해당 세션의 진행 중인 트랜잭션은 롤백됩니다.
+-- 운영 환경에서 사용 시 각별한 주의가 필요합니다.
 ALTER SYSTEM KILL SESSION '<sid,serial#>' IMMEDIATE;
 ```
-- **권장**: 먼저 **상대 세션과 커뮤니케이션**, 또는 **타임아웃/에러 핸들링**으로 자연 해소.
+**권장 사항**: 강제 종료는 문제의 원인을 해결하지 않습니다. 가능하다면 **해당 세션의 사용자와 소통**하여 정상적으로 커밋/롤백을 유도하거나, 애플리케이션 레벨에서 **타임아웃과 오류 처리** 로직을 강화하는 것이 바람직합니다.
 
 ---
 
-## 설계·튜닝 체크리스트
+## 설계 및 운영을 위한 핵심 가이드라인
 
-1) **트랜잭션 짧게**: UI 대기/외부 콜동안 트랜잭션 열지 말 것(“출력-커밋-입력-커밋”).
-2) **커밋 정책**: 너무 잦은 커밋은 `log file sync`↑, 너무 드문 커밋은 **락 보유시간↑** — 업무별 최적화.
-3) **FK 인덱스 전수 점검**: 자식 FK에 **반드시 인덱스**.
-4) **인덱스 전략**: 증가키 핫스팟 완화(Reverse/Hash/파티션/HiLo).
-5) **ITL 여유**: 동시 갱신 테이블/인덱스는 `INITRANS/PCTFREE` 상향.
-6) **비트맵 인덱스 사용처**: 읽기 전용/배치 전용. OLTP 갱신 테이블에 사용 금지.
-7) **NOWAIT/WAIT/SKIP LOCKED**: UX/배치 특성에 맞게 대기 정책 명시.
-8) **데드락 회피**: **잠금 순서 표준화**, 다중 리소스는 **항상 동일 순서**로 접근.
-9) **모니터링**: `DBA_BLOCKERS/WAITERS`, `V$LOCK`, 세그먼트 통계 **ITL waits/buffer busy waits**, AWR/ASH로 상위 이벤트 확인.
-10) **DDL 윈도우**: DDL은 비혼잡 시간, **세션 롱런 DML**과 충돌하지 않게 운영.
+1.  **트랜잭션 설계**: 트랜잭션은 필요한 최소 시간만 유지하도록 설계합니다. 사용자 입력 대기나 외부 API 호출과 같은 장시간 작업은 트랜잭션 외부에서 처리하도록 합니다.
+2.  **커밋 정책 최적화**: 너무 잦은 커밋은 `log file sync` 대기를 증가시키고, 너무 드문 커밋은 락 보유 시간을 늘립니다. 업무 특성(OLTP vs 배치)에 맞는 적절한 커밋 단위를 찾습니다.
+3.  **외래키 인덱스 필수화**: 모든 외래키 제약 조건이 걸린 컬럼에는 성능과 동시성을 위해 반드시 인덱스를 생성합니다.
+4.  **인덱스 전략 수립**: 순차 증가 키로 인한 핫스팟을 완화하기 위해 Reverse Key, 해시 파티셔닝, Hi-Lo 알고리즘 등을 적절히 활용합니다.
+5.  **ITL 슬롯 용량 계획**: 동시 갱신이 많은 테이블과 인덱스는 `INITRANS`와 `PCTFREE` 값을 충분히 높게 설정합니다.
+6.  **비트맵 인덱스 사용 제한**: 비트맵 인덱스는 갱신이 거의 없는 데이터 웨어하우스 환경에 한정하여 사용합니다. OLTP 테이블에는 적용을 지양합니다.
+7.  **명시적 락 대기 정책 활용**: 애플리케이션 요구사항에 따라 `FOR UPDATE NOWAIT/WAIT/SKIP LOCKED` 옵션을 적극 사용합니다.
+8.  **데드락 예방 설계**: 여러 리소스를 잠가야 하는 로직에서는 항상 **동일한 순서**로 잠금을 요청하도록 표준을 정합니다.
+9.  **체계적 모니터링**: `DBA_BLOCKERS`, `V$LOCK`, `V$SEGMENT_STATISTICS` 의 "ITL waits", "buffer busy waits" 통계를 정기적으로 점검하고, AWR/ASH 리포트를 통해 상위 대기 이벤트를 분석합니다.
+10. **DDL 작업 관리**: 주요 DDL 작업은 사용자 트래픽이 적은 시간대(메인터넌스 윈도우)에 수행하며, 장시간 실행되는 DML 트랜잭션과의 충돌 가능성을 사전에 검토합니다.
 
 ---
 
-## 예제 모음 — 실전 패턴
+## 실전 패턴 예제
 
-### FK 미인덱스로 인한 TM/TX 대기
+### 패턴 1: FK 미인덱스로 인한 광역 락 대기
 
 ```sql
--- 부모/자식 준비
-DROP TABLE c PURGE; DROP TABLE p PURGE;
-CREATE TABLE p(id NUMBER PRIMARY KEY);
-CREATE TABLE c(id NUMBER PRIMARY KEY, p_id NUMBER,
-               CONSTRAINT fk_c_p FOREIGN KEY (p_id) REFERENCES p(id));
--- FK 인덱스는 만들지 않는다(의도)
-INSERT INTO p SELECT LEVEL FROM dual CONNECT BY LEVEL <= 1000;
-INSERT INTO c SELECT LEVEL, MOD(LEVEL,1000) FROM dual CONNECT BY LEVEL <= 100000;
+-- 테스트 환경 구성
+DROP TABLE child PURGE; DROP TABLE parent PURGE;
+CREATE TABLE parent(id NUMBER PRIMARY KEY);
+CREATE TABLE child(id NUMBER PRIMARY KEY, parent_id NUMBER,
+                   CONSTRAINT fk_child_parent FOREIGN KEY (parent_id) REFERENCES parent(id));
+-- FK 컬럼(parent_id)에 인덱스를 의도적으로 생성하지 않음
+INSERT INTO parent SELECT LEVEL FROM dual CONNECT BY LEVEL <= 1000;
+INSERT INTO child SELECT LEVEL, MOD(LEVEL,1000) FROM dual CONNECT BY LEVEL <= 100000;
 COMMIT;
 
--- 세션 A: 부모 삭제
-DELETE FROM p WHERE id = 1; -- 자식 검사로 장시간
+-- 세션 A: 부모 테이블에서 한 행 삭제 (자식 테이블 전체 스캔 발생)
+DELETE FROM parent WHERE id = 1; -- 이 작업은 시간이 걸림
 
--- 세션 B: 자식 삽입/갱신 → TM/TX 대기 폭증
-INSERT INTO c VALUES(999999, 1);
+-- 세션 B: 자식 테이블에 새로운 행 삽입 시도 → TM/TX 락 충돌로 대기
+INSERT INTO child VALUES(999999, 1);
 ```
-**개선**:
+**개선 조치**:
 ```sql
-CREATE INDEX ix_c_fk ON c(p_id);
+-- 자식 테이블의 FK 컬럼에 인덱스 생성
+CREATE INDEX ix_child_parent_id ON child(parent_id);
 ```
 
-### ITL 부족 재현(개념)
+### 패턴 2: ITL 슬롯 부족 재현
 
 ```sql
-CREATE TABLE t_itl(id NUMBER, g NUMBER, pad VARCHAR2(100))
-INITRANS 1 PCTFREE 0;
-INSERT /*+ append */ INTO t_itl
+-- ITL 슬롯을 제한하기 위한 테이블 생성
+CREATE TABLE t_itl_test(id NUMBER, grp NUMBER, pad VARCHAR2(100))
+INITRANS 1 PCTFREE 0; -- 매우 낮은 설정
+
+INSERT /*+ append */ INTO t_itl_test
 SELECT LEVEL, MOD(LEVEL,5), rpad('x',100,'x')
 FROM dual CONNECT BY LEVEL <= 100000;
 COMMIT;
 
--- 여러 세션이 같은 g(=0) 범위를 UPDATE → ITL 부족 대기
-UPDATE t_itl SET pad='y' WHERE g=0;  -- 병렬로 실행
--- 관측: 'enq: TX - allocate ITL entry'
+-- 여러 세션에서 동일한 그룹(grp=0)의 데이터를 동시에 갱신
+-- 세션 A, B, C... 에서 동시 실행:
+UPDATE t_itl_test SET pad='y' WHERE grp=0;
+-- `enq: TX - allocate ITL entry` 대기 이벤트 관찰 가능
 
--- 개선
-ALTER TABLE t_itl MOVE INITRANS 8 PCTFREE 20;
+-- 개선: INITRANS와 PCTFREE 상향 조정
+ALTER TABLE t_itl_test MOVE INITRANS 8 PCTFREE 20;
 ```
 
-### 증가키 인덱스 분할/핫스팟
+### 패턴 3: 순차 증가 키 핫스팟
 
 ```sql
-DROP TABLE t_ins PURGE;
-CREATE TABLE t_ins(id NUMBER PRIMARY KEY, payload VARCHAR2(50));
--- 기본 인덱스: 우측 리프 집중
+DROP TABLE t_hot_insert PURGE;
+CREATE TABLE t_hot_insert(id NUMBER PRIMARY KEY, payload VARCHAR2(50));
+-- 기본 PK 인덱스는 우측 리프 블록에 삽입이 집중됨
 
--- 대량 동시 삽입 → 분할/경합
-INSERT INTO t_ins VALUES(seq.NEXTVAL, 'x'); -- 병렬 워커
+-- 다중 세션/애플리케이션에서 동시 삽입 수행 시 핫블록 경합 발생
+INSERT INTO t_hot_insert VALUES(some_sequence.NEXTVAL, 'data');
 
--- 개선: Reverse Key (범위 스캔 없다면)
-CREATE INDEX pk_t_ins_rev ON t_ins(id) REVERSE;
+-- 개선: Reverse Key 인덱스 적용 (단, 범위 스캔 불가)
+DROP INDEX SYS_C0012345; -- 기존 PK 인덱스 삭제
+CREATE UNIQUE INDEX pk_t_hot_insert_rev ON t_hot_insert(id) REVERSE;
+ALTER TABLE t_hot_insert ADD CONSTRAINT pk_t_hot_insert PRIMARY KEY (id) USING INDEX pk_t_hot_insert_rev;
 ```
 
 ---
 
-## 요약
+## 결론
 
-- **TX Lock** 은 **행 변경 충돌**의 실질 주체이며, **커밋/롤백**으로만 해제된다.
-- **TM Lock** 은 **테이블 레벨**의 DML/DDL 충돌을 조정한다.
-- **TX 보유가 길어지는 4대 요인**:
-  1) **무결성 제약 검사 비용(특히 FK 미인덱스)**
-  2) **비트맵 인덱스 갱신**(OLTP엔 부적합)
-  3) **ITL 슬롯 부족**(INITRANS/PCTFREE/핫블록)
-  4) **인덱스 분할·핫스팟**(증가키 → Reverse/Hash/파티션)
-- **락을 푸는 진짜 열쇠는 COMMIT**. 트랜잭션을 **짧게**, **커밋 타이밍**을 현명하게.
-- **진단**은 `V$LOCK/SESSION`, `DBA_BLOCKERS/WAITERS`, 세그먼트 통계, AWR/ASH로 **탑다운**으로 접근.
-- **설계·운영**으로 충돌 자체를 줄이면(인덱스/파티션/키분산/ITL여유/대기정책) 락 문제의 80%가 사라진다.
+오라클 데이터베이스의 락 메커니즘은 데이터의 정확성과 일관성을 유지하면서도 높은 동시성을 달성하기 위한 정교한 시스템입니다. **TX 락**은 행 수준의 변경 충돌을 관리하는 실질적인 주체이며, **TM 락**은 오브젝트 레벨에서 DML과 DDL 작업의 조화를 맞춥니다. 성능 문제로 나타나는 `enq: TX - row lock contention`은 단순한 증상일 뿐, 그 이면에는 **FK 인덱스 부재, 비트맵 인덱스 남용, ITL 슬롯 부족, 인덱스 핫스팟**과 같은 구조적 원인이 자리 잡고 있는 경우가 많습니다.
 
-> 한 줄 결론
-> **락은 문제의 원인이 아니라 “문제가 드러난 증상”**이다.
-> **TX/TM 레이어**를 분해해서 **왜 오래 잡고 있었는지**를 찾고, **커밋·인덱스·ITL·키 분산**으로 **원인을 치료**하라.
+따라서 락 문제를 해결하는 근본적인 접근법은 락 자체를 조작하는 것이 아니라, **락이 오래 보유되게 만드는 조건을 제거**하는 데 있습니다. 트랜잭션을 짧게 유지하고, 적시에 커밋하며, 인덱스 전략을 합리적으로 수립하고, 테이블과 인덱스의 물리적 저장 속성을 워크로드에 맞게 설계하는 것이 모든 것의 시작입니다. 체계적인 모니터링을 통해 문제를 조기에 발견하고, 본 가이드에서 제시한 실전 패턴과 해결 지침을 참고하여 안정적이고 성능良好的인 데이터베이스 환경을 구축하시기 바랍니다.
+
+> **한 줄 요약**
+> **락은 원인이 아니라 결과적인 증상입니다.** `TX/TM` 락의 표면을 벗겨내어 **"왜 이 락이 오래 잡혀 있는가?"** 라는 근본 질문에 답을 찾고, **커밋 전략, 인덱스 설계, ITL 관리, 키 값 분산**이라는 네 가지 축에서 해결책을 모색하세요.

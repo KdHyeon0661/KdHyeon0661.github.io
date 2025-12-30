@@ -4,9 +4,7 @@ title: DB 심화 - EXPLAIN PLAN
 date: 2025-10-19 23:25:23 +0900
 category: DB 심화
 ---
-# Oracle `EXPLAIN PLAN` 완전 가이드
-
-— **PLAN_TABLE**부터 `DBMS_XPLAN`, 카디널리티·코스트 해석, 바인드 피킹/적응 계획, 조인전략 비교, DML/병렬/파티션/힌트 분석까지 (19c 기준)
+# Oracle `EXPLAIN PLAN` (19c 기준)
 
 > 목표
 > - `EXPLAIN PLAN`이 **무엇을** 보여주고(“**예상** 계획”), **무엇은 아닌지**(**실제 실행**이 아님)를 정확히 이해.
@@ -55,9 +53,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL, NULL, 'BASIC +ALIAS'));
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY()); -- plan_table에서 최신 캡처
 ```
 
-> `DISPLAY`의 세 번째 인자는 **옵션 문자열**:
-> - `BASIC`, `SERIAL`, `TYPICAL`, `ALL`
-> - `+PREDICATE`(필터/액세스), `+PROJECTION`, `+ALIAS`, `+OUTLINE`, `+NOTE`, `+PARALLEL` 등
+`DISPLAY`의 세 번째 인자는 **옵션 문자열**:
+- `BASIC`, `SERIAL`, `TYPICAL`, `ALL`
+- `+PREDICATE`(필터/액세스), `+PROJECTION`, `+ALIAS`, `+OUTLINE`, `+NOTE`, `+PARALLEL` 등
 
 ---
 
@@ -128,7 +126,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS +PROJECT
   - **filter**: 접근 후 필터링(추가 조건)
 - **Note**: 동적 샘플링/카디널리티 피드백/적응 통계 등의 힌트
 
-> **중요**: `Rows`는 **추정**이며 실제와 다를 수 있음. 실제 행수는 `ALLSTATS LAST`에서 **A-Rows**로 확인.
+**중요**: `Rows`는 **추정**이며 실제와 다를 수 있음. 실제 행수는 `ALLSTATS LAST`에서 **A-Rows**로 확인.
 
 ### 자주 보는 Operation
 
@@ -170,9 +168,9 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL, NULL,
 - **Cardinality(카디널리티)**: 추정 행수 \(= \text{Table Rows} \times \text{Selectivity}\)
 - **Cost**: IO/CPU/네트워크 등 내부 가중 합(단위는 상대치)
 
-> 개념 수식
-> $$ \text{Cardinality} \approx N \times \prod_k \text{Selectivity}(Predicate_k) $$
-> 히스토그램·조인 카디널리티·상관관계 보정이 들어가면서 실제는 더 복잡.
+개념 수식
+$$ \text{Cardinality} \approx N \times \prod_k \text{Selectivity}(Predicate_k) $$
+히스토그램·조인 카디널리티·상관관계 보정이 들어가면서 실제는 더 복잡.
 
 ### 히스토그램·바인드 영향
 
@@ -329,7 +327,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY(NULL,NULL,'ALL +PREDICATE +ALIAS'));
 1) **문제 SQL/상황 정의**: 요구/입력 범위/슬로우 지표
 2) **EXPLAIN PLAN**으로 **예상 경로** 파악, `+PREDICATE/+NOTE`로 **프루닝/힌트/동적샘플링** 확인
 3) **실행 후 `DISPLAY_CURSOR ALLSTATS LAST`** 로 **실행 라인별 A-Rows/Time/Temp/Buffer** 확인
-4) **차이 분석**: `Rows(추정)` vs `A-Rows(실제)` 큰乂 → 통계/히스토그램/바인드/조인 순서 재검토
+4) **차이 분석**: `Rows(추정)` vs `A-Rows(실제)` 큰 차이 → 통계/히스토그램/바인드/조인 순서 재검토
 5) **개선안**: 인덱스/통계/히스토그램/조인순서/힌트(임시)
 6) **재검증**: 동일 데이터에서 Before/After **플랜/실행통계** 비교
 7) **회귀 방지**: 베이스라인/프로파일/테스트케이스
@@ -430,14 +428,10 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,'TYPICAL +PARALLEL +NOTE
 
 ---
 
-## 마무리
+## 결론
 
-- `EXPLAIN PLAN`은 **예상**이다. **실행**의 진실은 `DISPLAY_CURSOR(ALLSTATS LAST)`와 **SQL Monitor**가 말해 준다.
-- 분석은 **(1) 예상 → (2) 실제 → (3) 차이 원인(통계/히스토그램/바인드/조인순서/프루닝)** 의 3단 고정 루틴으로.
-- 작은 팁: `+PREDICATE +OUTLINE +NOTE` 를 항상 켜서 **옵티마이저의 의도**와 **숨은 변환**을 드러내라.
-- 결국 튜닝의 본질은 **카디널리티를 맞추고**, **올바른 접근경로**로, **필요한 것만** 읽게 만드는 일이다.
+Oracle의 `EXPLAIN PLAN`은 데이터베이스 옵티마이저가 선택한 **예상 실행 계획**을 들여다볼 수 있는 가장 기본적이고 핵심적인 도구입니다. 이는 쿼리의 논리적 실행 경로, 조인 순서, 인덱스 사용 여부, 비용 추정치 등 옵티마이저의 결정을 이해하는 출발점입니다. 그러나 이 계획은 통계와 특정 조건에 기반한 **예측**에 불과하며, 실제 런타임 환경에서의 바인드 변수, 적응적 실행 전략, 리소스 경합 등의 요소는 반영하지 못합니다.
 
-> 한 줄 결론
-> **EXPLAIN PLAN**은 **지도를 보여준다**. 길을 걸었는지는 **ALLSTATS LAST**가,
-> 어디서 막혔는지는 **SQL Monitor/ASH**가 알려준다.
-> **세 장의 사진**을 겹쳐 보고, **원인**을 고쳐라.
+따라서 성능 분석의 완성도를 높이려면 `EXPLAIN PLAN`의 **예상 계획**, `DBMS_XPLAN.DISPLAY_CURSOR`의 **실제 실행 통계**, 그리고 `SQL Monitor Report`의 **실시간 상세 리소스 사용 정보**를 삼위일체로 종합적으로 바라봐야 합니다. 특히, 추정 행수(`Rows`)와 실제 행수(`A-Rows`)의 차이는 옵티마이저의 판단이 틀렸음을 나타내는 가장 명확한 지표로서, 통계의 정확성, 히스토그램의 필요성, 바인드 변수의 영향을 진단하는 중요한 단서가 됩니다.
+
+실제 튜닝 작업에서는 인덱스 설계나 힌트 적용과 같은 직접적인 해결책에 앞서, 이러한 지표 차이를 발생시키는 근본 원인—부정확한 통계, 데이터 분포의 편향성, 비효율적인 스키마 설계—을 먼저 해결하는 접근이 장기적으로 더 안정적이고 유지보수 가능한 시스템을 만드는 지름길입니다. `EXPLAIN PLAN`은 이 여정의 첫 번째이자 가장 중요한 디버깅 지도로서, 그 한계를 정확히 인지하고 다른 도구들과 조화롭게 활용할 때 그 진가를 발휘합니다.

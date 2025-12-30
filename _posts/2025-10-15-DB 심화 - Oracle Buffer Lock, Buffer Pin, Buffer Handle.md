@@ -7,16 +7,16 @@ category: DB 심화
 # Oracle Buffer Lock / Buffer Pin / Buffer Handle — 개념·내부 동작·실습·튜닝 총정리 (19c 기준)
 
 > 목표
-> - “**버퍼 락(buffer lock)**”이라는 **비공식적** 표현이 실제로는 어떤 **내부 동기화 메커니즘**(pin, latch/mutex, enqueue)과 **블록 단위 동작**을 가리키는지 정확히 정리
+> - "**버퍼 락(buffer lock)**"이라는 **비공식적** 표현이 실제로는 어떤 **내부 동기화 메커니즘**(pin, latch/mutex, enqueue)과 **블록 단위 동작**을 가리키는지 정확히 정리
 > - **Buffer Handle(= Buffer Header/X$BH 엔트리)**, **Pinning(고정)** 의 필요성과 작동 방식
 > - **대기 이벤트**(`buffer busy waits`, `read by other session`, `write complete waits`, `latch: cache buffers chains` 등)와의 연결
-> - **실습 시나리오**와 **튜닝 패턴**으로 “현장에서 보이는 현상 ↔ 내부 구조”를 대응
+> - **실습 시나리오**와 **튜닝 패턴**으로 "현장에서 보이는 현상 ↔ 내부 구조"를 대응
 
 ---
 
-## 용어 정리 — “락(lock)”, “래치(latch)/뮤텍스(mutex)”, “핀(pin)”, “엔큐(enqueue)”
+## 용어 정리 — "락(lock)", "래치(latch)/뮤텍스(mutex)", "핀(pin)", "엔큐(enqueue)"
 
-Oracle에서 **동시성 제어**는 서로 다른 레벨의 원자성을 가진 여러 메커니즘이 겹쳐 작동합니다. “버퍼 락”이라는 표현은 주로 **버퍼 블록을 보호/고정**하는 내부 동작을 통칭하는 **관용적 표현**입니다. 정확히는 아래처럼 구분합니다.
+Oracle에서 **동시성 제어**는 서로 다른 레벨의 원자성을 가진 여러 메커니즘이 겹쳐 작동합니다. "버퍼 락"이라는 표현은 주로 **버퍼 블록을 보호/고정**하는 내부 동작을 통칭하는 **관용적 표현**입니다. 정확히는 아래처럼 구분합니다.
 
 - **엔큐(Enqueue, 잠금; TX/TM 등)**: 비교적 **장수명**의 대기 가능 잠금. 트랜잭션(row-level: TX), 오브젝트(테이블: TM) 등에 사용.
 - **래치(Latch)**/**뮤텍스(Mutex)**: **극단적으로 짧은** 임계구역 보호(스핀락 계열). 예:
@@ -25,16 +25,15 @@ Oracle에서 **동시성 제어**는 서로 다른 레벨의 원자성을 가진
   - 라이브러리 캐시 뮤텍스: 파싱/커서 보호 등
 - **버퍼 핀(Buffer Pin)** / **핀 카운트(refcount)**:
   - **특정 버퍼 프레임(= 한 DB 블록)** 을 **대체(evict)·쓰기** 못 하도록 그 순간 **고정**하는 내부 메커니즘.
-  - **다중 세션이 동시에 같은 블록을 읽는 동안** 각자 **공유 pin**을 들고 있을 수 있고, **갱신 시점**엔 **배타 pin**이 필요합니다(실제 내부 구현은 버전에 따라 다르지만, 개념적으로 “동시에 건드리면 안 되는 상태를 pin으로 지킨다”로 이해).
+  - **다중 세션이 동시에 같은 블록을 읽는 동안** 각자 **공유 pin**을 들고 있을 수 있고, **갱신 시점**엔 **배타 pin**이 필요합니다(실제 내부 구현은 버전에 따라 다르지만, 개념적으로 "동시에 건드리면 안 되는 상태를 pin으로 지킨다"로 이해).
 
-> 즉, “**버퍼 락**”이라는 표현은 보통 **버퍼에 대한 핀(pin)** 또는 이를 얻기 위한 **래치/뮤텍스 대기**와 **연계된 상태**를 가리키는 말로 쓰입니다.
-> 엄밀히는 **락(enqueue)** 과 **버퍼 pin**은 **다른 레이어**입니다.
+�, "**버퍼 락**"이라는 표현은 보통 **버퍼에 대한 핀(pin)** 또는 이를 얻기 위한 **래치/뮤텍스 대기**와 **연계된 상태**를 가리키는 말로 쓰입니다. 엄밀히는 **락(enqueue)** 과 **버퍼 pin**은 **다른 레이어**입니다.
 
 ---
 
-## — 무엇이고 어디에 있나?
+## 버퍼 핀(Buffer Pin) — 무엇이고 어디에 있나?
 
-**버퍼 캐시**는 “**버퍼 프레임**(8KB 등 블록 1개를 담는 메모리) + **버퍼 헤더**”로 구성됩니다. 이 **버퍼 헤더**(내부적으로 **Buffer Handle**로 불리기도 함)는 다음 메타를 가집니다.
+**버퍼 캐시**는 "**버퍼 프레임**(8KB 등 블록 1개를 담는 메모리) + **버퍼 헤더**"로 구성됩니다. 이 **버퍼 헤더**(내부적으로 **Buffer Handle**로 불리기도 함)는 다음 메타를 가집니다.
 
 - (파일#, 블록#) 식별자
 - **상태**: xcur/scur/cr/free/read 등 (현재 또는 일관 버전)
@@ -59,17 +58,17 @@ GROUP  BY status, class
 ORDER  BY cnt DESC;
 ```
 
-> 실무 의미: **tch** 가 비정상적으로 높은 블록은 **핫 블록** 후보 → **CBC 래치 경합**이나 **buffer busy waits** 관측과 함께 조사.
+실무 의미: **tch** 가 비정상적으로 높은 블록은 **핫 블록** 후보 → **CBC 래치 경합**이나 **buffer busy waits** 관측과 함께 조사.
 
 ---
 
-## — 왜 필요한가? (필요성 · 의미 · 수명)
+## 버퍼 핀(Buffer Pin) — 왜 필요한가? (필요성 · 의미 · 수명)
 
 ### 필요성
 
 - **동일 블록**에 대해 **동시에 여러 세션이 접근**할 수 있습니다.
 - 누군가 블록을 **읽는 동안** 또는 **갱신 중**인데, 다른 스레드가 그 블록을 **LRU로 내보내거나** **동시에 바꿔버리면** **일관성이 깨짐**.
-- 따라서 접근하는 동안 **버퍼를 pin** 해서 “**나 이 블록 쓰고 있음, 내보내지 마/겹쳐 쓰지 마**”를 보장합니다.
+- 따라서 접근하는 동안 **버퍼를 pin** 해서 "**나 이 블록 쓰고 있음, 내보내지 마/겹쳐 쓰지 마**"를 보장합니다.
 
 ### 수명과 형태(개념적)
 
@@ -77,7 +76,7 @@ ORDER  BY cnt DESC;
 - **배타 pin(갱신)**: **현재 버전(current)** 블록에 **변경을 반영**하려면 다른 공유 pin과 충돌 조정이 필요(대기 발생 가능).
 - **CR 버전 핀**: Undo로 재조립된 **Consistent Read 버퍼**도 **일시적으로 pin** 됩니다(쿼리 결과 반환 동안).
 
-> 내부 구현 디테일은 버전별로 조금씩 다를 수 있으나, **“읽는 동안 고정, 쓰는 동안 더 강하게 고정”**이라는 직관은 변하지 않습니다.
+내부 구현 디테일은 버전별로 조금씩 다를 수 있으나, **"읽는 동안 고정, 쓰는 동안 더 강하게 고정"**이라는 직관은 변하지 않습니다.
 
 ### Pin과 다른 동기화의 관계
 
@@ -87,9 +86,9 @@ ORDER  BY cnt DESC;
 
 ---
 
-## “버퍼 락”과 대표 대기 이벤트
+## "버퍼 락"과 대표 대기 이벤트
 
-실전에서 “버퍼 락 걸렸다”라고 말할 때 보통 아래 **대기 이벤트**들이 등장합니다.
+실전에서 "버퍼 락 걸렸다"라고 말할 때 보통 아래 **대기 이벤트**들이 등장합니다.
 
 - **`buffer busy waits`**
   - **같은 블록**을 **다른 세션이 사용 중**이라 당장 접근/변경할 수없는 상태.
@@ -131,13 +130,13 @@ ORDER  BY misses DESC;
 
 ## 블록 레벨에서 무슨 일이? — Current vs CR, 핀/변경/대체
 
-### 버전: 쓰기 전용 보호
+### 쓰기 전용 보호
 
 - **DML(INSERT/UPDATE/DELETE)** 이 **Current 버전 버퍼**를 수정 → **Dirty** 플래그 세팅
 - 이때 **배타적 성격의 pin** 이 필요(다른 세션의 동시 변경 금지)
 - 커밋 시점에 **Redo flush(LGWR)** 로 **내구성** 확보, 이후 적절한 타이밍에 **DBWn** 이 **데이터파일로 기록**
 
-### 버전: 읽기 일관성
+### 읽기 일관성
 
 - SELECT가 **쿼리 시작 SCN** 기준으로 읽어야 할 때, 해당 블록이 더 신규라면 **Undo** 로 **CR 버전**을 **재조립**
 - **CR 버퍼**도 **pin** 되지만 **일시적**이며 **LRU 콜드 측**에서 쉽게 밀려날 수 있음
@@ -150,7 +149,7 @@ ORDER  BY misses DESC;
 
 ---
 
-## 실습 시나리오 — “버퍼 pin/락 대기를 직접 만들어 보고 완화하기”
+## 실습 시나리오 — "버퍼 pin/락 대기를 직접 만들어 보고 완화하기"
 
 > 아래 실습은 **테스트 환경**에서만 실행하세요. (권한: 일반적으로 DBA 권한 필요)
 
@@ -179,7 +178,7 @@ END;
 CREATE INDEX ix_t_hot_k ON t_hot(k);
 ```
 
-### “같은 블록/행에 대한 경합” 유발
+### "같은 블록/행에 대한 경합" 유발
 
 두 개 이상의 세션에서 동시에 다음을 반복합니다.
 
@@ -261,7 +260,7 @@ WHERE  tch >= 64
 ORDER  BY tch DESC;
 ```
 
-### 완화 2 — “단일 카운터” 패턴을 샤딩
+### 완화 2 — "단일 카운터" 패턴을 샤딩
 
 ```sql
 -- 나쁜 예시: 단일 카운터(한 블록/한 행 과열)
@@ -311,7 +310,7 @@ AND    id BETWEEN 10000 AND 12000;
 
 ---
 
-## “버퍼 핀”과 “행 락(TX)”의 차이 — 헷갈리기 쉬운 포인트
+## "버퍼 핀"과 "행 락(TX)"의 차이 — 헷갈리기 쉬운 포인트
 
 - **버퍼 핀**: **블록 프레임 자체**를 고정(대체·동시 변경 방지). **내부 메커니즘**, **래치/뮤텍스**와 결합.
 - **TX(Row-level) 락**: **특정 행**의 논리적 동시 업데이트 방지. **엔큐** 기반, 커밋/롤백까지 지속.
@@ -337,7 +336,7 @@ ORDER  BY buf_busy DESC FETCH FIRST 20 ROWS ONLY;
 
 ---
 
-## ITL 부족과 버퍼 대기 — “버퍼 락처럼 보이는” 전형적 사례
+## ITL 부족과 버퍼 대기 — "버퍼 락처럼 보이는" 전형적 사례
 
 **ITL(Interested Transaction List)** 은 **블록 헤더** 안에 있는 **트랜잭션 슬롯**입니다. 동시에 여러 트랜잭션이 하나의 블록을 갱신하려면 **충분한 ITL** 이 필요합니다.
 
@@ -379,7 +378,7 @@ SELECT * FROM v$instance_recovery;
 
 ---
 
-## RAC에서의 “버퍼 락” 체감 — 글로벌 캐시(GCS)와 핫 블록
+## RAC에서의 "버퍼 락" 체감 — 글로벌 캐시(GCS)와 핫 블록
 
 - RAC는 **블록 소유권/버전**을 인스턴스 간 교환.
 - 동일 블록에 접근이 집중되면 **gc 관련 대기**(`gc buffer busy`, `gc current request`, `gc cr request`)가 다발.
@@ -390,7 +389,7 @@ SELECT * FROM v$instance_recovery;
 ## 관측·진단 SQL 모음(현업 단축키)
 
 ```sql
--- 10.1 상위 이벤트/세션
+-- 상위 이벤트/세션
 SELECT * FROM (
   SELECT event, total_waits, time_waited_micro/1e6 sec
   FROM   v$system_event
@@ -403,14 +402,14 @@ WHERE  username IS NOT NULL
 AND    state <> 'WAITED SHORT TIME'
 ORDER  BY seconds_in_wait DESC;
 
--- 10.2 래치(CBC) 경합
+-- 래치(CBC) 경합
 SELECT name, gets, misses, sleeps,
        ROUND(misses/NULLIF(gets,0),6) AS miss_ratio
 FROM   v$latch
 WHERE  LOWER(name) LIKE '%cache buffers chain%'
 ORDER  BY misses DESC;
 
--- 10.3 세그먼트 단위 버퍼 관련 대기
+-- 세그먼트 단위 버퍼 관련 대기
 SELECT o.owner, o.object_name, o.object_type,
        SUM(CASE WHEN s.statistic_name='buffer busy waits' THEN s.value ELSE 0 END) AS buf_busy,
        SUM(CASE WHEN s.statistic_name='read by other session' THEN s.value ELSE 0 END) AS read_other
@@ -419,13 +418,13 @@ JOIN   dba_objects o ON o.owner=s.owner AND o.object_name=s.object_name
 GROUP  BY o.owner, o.object_name, o.object_type
 ORDER  BY buf_busy DESC FETCH FIRST 15 ROWS ONLY;
 
--- 10.4 버퍼 헤더 상태 요약
+-- 버퍼 헤더 상태 요약
 SELECT status, class, COUNT(*) cnt
 FROM   v$bh
 GROUP  BY status, class
 ORDER  BY cnt DESC;
 
--- 10.5 핫 블록(x$bh.tch 상위)  ※SYS 권한
+-- 핫 블록(x$bh.tch 상위)  ※SYS 권한
 SELECT file#, dbablk, tch
 FROM   x$bh
 WHERE  tch >= 64
@@ -434,22 +433,20 @@ ORDER  BY tch DESC FETCH FIRST 30 ROWS ONLY;
 
 ---
 
-## 튜닝 체크리스트 — “버퍼 락/핀 병목”을 볼 때 무엇을 바꿀 것인가?
+## 실전 튜닝 전략 — "버퍼 락/핀 병목"을 볼 때 무엇을 바꿀 것인가?
 
-1. **핫 블록 패턴** 탐지: `x$bh.tch` 상위, `v$segment_statistics`(`buffer busy waits`) 상위
-2. **CBC 래치** 경합 유무: `latch: cache buffers chains` 미스/슬립 비정상 증가?
-3. **접근 분산 설계**: Reverse Key / Hash 파티셔닝 / 단일 카운터 → 샤딩 카운터 / 시퀀스 캐시+증가폭
-4. **커버링 인덱스**: 동일 블록 테이블 액세스 줄여 `read by other session`/`buffer busy` 완화
-5. **INITRANS/ITL**: 업데이트 동시성 높으면 ITL 부족 체크(`enq: TX - allocate ITL entry`)
-6. **db_cache_size / db_keep_cache_size / db_recycle_cache_size**: LRU 압박/오염 완화
-7. **DBWn/스토리지 쓰기 성능**: `free buffer waits`/`write complete waits` 감시
-8. **배치 DML 패턴 조정**: 대량 업데이트를 **파티션·키 범위별**로 분산, 커밋 간격 튜닝
-9. **RAC**: 서비스/파티션으로 **인스턴스 로컬리티** 유지, gc 대기 완화
-10. **AWR/ASH**: 상위 SQL·대기·시간대별 추세로 **정량** 판별(감 아닌 데이터)
+"버퍼 락" 현상을 진단하고 완화하기 위한 전략적 접근법은 다음과 같습니다.
+
+1.  **핵심 패턴 파악**: 먼저 대기 이벤트와 `v$segment_statistics`를 통해 병목이 발생하는 정확한 오브젝트(테이블, 인덱스)를 식별합니다. `x$bh.tch`로 실제 핫 블록을 확인하면 설계적 문제점을 더 명확히 볼 수 있습니다.
+2.  **접근 구조 개선**: 핫 블록이 확인되면, **Reverse Key Index**, **Hash 파티셔닝**, **시퀀스 캐시 증가** 등을 통해 물리적 블록에 대한 접근을 분산시키는 것이 근본 해결책입니다. 단일 카운터 패턴은 반드시 샤딩 카운터로 변경합니다.
+3.  **불필요한 경합 제거**: `read by other session`이 주로 발생하는 읽기 위주의 쿼리에는 **커버링 인덱스**를 적용하여 테이블 블록 접근 자체를 제거합니다. 자주 접근되는 참조 테이블은 **KEEP 풀**에 상주시켜 물리적 경합 가능성을 줄입니다.
+4.  **블록 내부 구조 조정**: 동시 업데이트가 많은 세그먼트에서는 **INITRANS**를 높여 ITL 슬롯을 충분히 확보하고, `PCTFREE`를 조정하여 블록 내 공간 경합을 완화합니다.
+5.  **시스템 자원 최적화**: `free buffer waits`나 `write complete waits`가 나타난다면, 이는 버퍼 캐시 크기(`db_cache_size`)가 부족하거나 DBWn 프로세스/스토리지의 쓰기 성능에 문제가 있음을 시사합니다. 해당 병목 지점을 해소합니다.
+6.  **정량적 모니터링**: 모든 변경 전후의 성능 비교는 **AWR/ASH 리포트**를 통해 대기 시간, 로직럴/피지컬 I/O, 래치 미스율 등의 정량적 지표로 평가해야 합니다. 단순한 캐시 히트율이 아닌, 실제 응답 시간과 병목 이벤트의 감소에 초점을 맞춥니다.
 
 ---
 
-## 미니 실전 예제 — “버퍼 핀 줄이기로 보고서 가속”
+## 미니 실전 예제 — "버퍼 핀 줄이기로 보고서 가속"
 
 ### 상황
 
@@ -484,9 +481,9 @@ GROUP  BY dp.product_code, dp.product_name, dp.category;
 
 ---
 
-## — “핀/경합의 간접 신호”
+## 핀/경합의 간접 신호
 
-> 지표는 어디까지나 **참고용**입니다. 결론은 **AWR/ASH의 대기/SQL 근거**로 내리세요.
+지표는 어디까지나 **참고용**입니다. 결론은 **AWR/ASH의 대기/SQL 근거**로 내리세요.
 
 - **논리/물리 읽기 대비 경합 비율**
   $$ \text{Contention Ratio} \approx \frac{\text{buffer busy waits (time or count)}}{\text{consistent gets} + \text{db block gets}} $$
@@ -499,11 +496,8 @@ GROUP  BY dp.product_code, dp.product_name, dp.category;
 
 ---
 
-## 요약
+## 결론
 
-- “**버퍼 락**”은 정확히는 **버퍼 pin(고정)** 과 이를 둘러싼 **래치/뮤텍스/엔큐** 상호작용을 **관용적으로 묶어 부르는 말**입니다.
-- **Buffer Handle(=Buffer Header/X$BH)** 는 각 **버퍼 프레임**의 메타(상태/핀카운트/링크/tch 등)를 보유하며, **Cache Buffer Chains**(해시 버킷)과 **LRU 체인**에 연결됩니다.
-- **Pinning** 은 **읽기/쓰기 시 블록 대체·경합을 방지**하기 위한 핵심 메커니즘.
-- 현업 병목은 `buffer busy waits`, `read by other session`, `write complete waits`, `latch: cache buffers chains` 등으로 표출됩니다.
-- **접근 분산(Reverse/Hash/파티셔닝/샤딩)**, **커버링 인덱스/선택 컬럼**, **ITL/INITRANS 조정**, **KEEP/RECYCLE/캐시 크기/DBWn 성능** 등으로 완화합니다.
-- 결론은 항상 **AWR/ASH/v$**로 **정량 진단 → 설계/쿼리/파라미터**를 함께 조정하는 방향이어야 합니다.
+"**버퍼 락**"은 정확히는 **버퍼 핀(pin)** 과 이를 보호하는 **래치/뮤텍스**의 상호작용을 포괄하는 실무적 표현입니다. 핵심은 특정 버퍼 블록이 동시 접근 중 대체되거나 훼손되는 것을 방지하는 **고정(Pinning) 메커니즘**에 있습니다. 이로 인해 `buffer busy waits`, `read by other session`, `latch: cache buffers chains` 같은 대기 이벤트가 발생하며, 이는 단순한 지연이 아닌 **애플리케이션의 데이터 접근 패턴과 데이터베이스 내부 구조가 충돌하는 지점**을 나타냅니다.
+
+따라서 효과적인 튜닝은 단순한 파라미터 조정을 넘어, **핫 블록을 유발하는 SQL과 데이터 구조를 재설계**하는 데 있습니다. Reverse/Hash 키, 파티셔닝, 샤딩을 통한 접근 분산, 커버링 인덱스 활용, ITL 설정 최적화가 핵심 해법입니다. 모든 변경은 AWR/ASH, `v$` 뷰를 통한 정량적 데이터로 근거를 마련하고 효과를 측정해야 합니다. 결국 버퍼 락 문제는 데이터베이스의 동시성 메커니즘을 이해하고, 애플리케이션의 요구사항에 맞춰 데이터 배치와 접근 경로를 스마트하게 재배치하는 과정입니다.

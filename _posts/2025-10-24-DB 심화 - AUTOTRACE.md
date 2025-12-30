@@ -21,7 +21,7 @@ category: DB 심화
   을 **요약**해 보여주는 **경량 분석 도구**입니다.
 - **장점**: 가볍고 빠르며, **쿼리 결과를 감추고 통계만** 볼 수 있음(`TRACEONLY`).
 - **한계**:
-  - **계획은 “예상”**(EXPLAIN)이지 **실제 실행 라인 통계가 아님**
+  - **계획은 "예상"**(EXPLAIN)이지 **실제 실행 라인 통계가 아님**
   - **라인별 A-Rows/버퍼/Temp**를 **표시하지 않음**
   - **적응계획/병렬/스필**의 런타임 전환은 **반영 한계**
 - **권장 조합**: AUTOTRACE로 **빠른 스크리닝** → 필요 시 **`DBMS_XPLAN.DISPLAY_CURSOR('ALLSTATS LAST')`** / **SQL Monitor**로 **정밀 분석**.
@@ -39,7 +39,7 @@ category: DB 심화
 
 ### PLUSTRACE 역할(세션 통계 접근 권한)
 
-> AUTOTRACE의 “Statistics” 출력에 필요(세션이 v$sesstat 등의 조회 권한).
+AUTOTRACE의 "Statistics" 출력에 필요(세션이 v$sesstat 등의 조회 권한).
 
 ```sql
 -- SYS로 접속하여 1회 설치
@@ -77,9 +77,9 @@ SET AUTOTRACE TRACEONLY STATISTICS;  -- 실행은 하고 통계만(결과 미표
 SET AUTOTRACE OFF;
 ```
 
-> **팁**
-> - `TRACEONLY`는 **대량 결과를 화면에 쏟지 않고** 통계만 보기에 유용(네트워크 전송 영향 제거에 도움).
-> - `EXPLAIN`은 **실행하지 않음**: 데이터/통계 최신성, 바인드 값에 따라 **실행시 실제 경로**는 달라질 수 있음.
+**팁**
+- `TRACEONLY`는 **대량 결과를 화면에 쏟지 않고** 통계만 보기에 유용(네트워크 전송 영향 제거에 도움).
+- `EXPLAIN`은 **실행하지 않음**: 데이터/통계 최신성, 바인드 값에 따라 **실행시 실제 경로**는 달라질 수 있음.
 
 ---
 
@@ -97,7 +97,7 @@ AUTOTRACE는 보통 **두 블록**을 보여줍니다.
    - `rows processed`
    - … 등
 
-> **중요**: Statistics는 **쿼리 실행으로 증가한 세션 통계의 차분**에 해당합니다(출력 형식/항목은 버전/클라이언트에 따라 조금씩 다름).
+**중요**: Statistics는 **쿼리 실행으로 증가한 세션 통계의 차분**에 해당합니다(출력 형식/항목은 버전/클라이언트에 따라 조금씩 다름).
 
 ---
 
@@ -189,7 +189,7 @@ AND    o.order_date BETWEEN :d1 AND :d2;
 - **Plan**: `TABLE ACCESS FULL ORDERS`
 - **Statistics**: `consistent gets`/`physical reads` 증가, `sorts` 없이도 I/O 비용 상승
 
-> **요지**: AUTOTRACE로 **전략 차이**가 **세션 통계**에 미치는 영향을 빠르게 비교 가능.
+**요지**: AUTOTRACE로 **전략 차이**가 **세션 통계**에 미치는 영향을 빠르게 비교 가능.
 
 ---
 
@@ -290,13 +290,13 @@ SELECT * FROM orders WHERE customer_id = :cid;
 | 적응 플랜/병렬 | 반영 한계 큼 | 반영(실행 결과 그대로) |
 | 가벼움 | **매우 가벼움** | 상대적으로 무거움(하지만 일반적) |
 
-> **권장 루틴**:
-> - **빠른 스크리닝**: `SET AUTOTRACE TRACEONLY`
-> - **정밀 분석**: 실행 후
->   ```sql
->   SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
->     'ALLSTATS LAST +PEEKED_BINDS +OUTLINE +PROJECTION +ALIAS +NOTE'));
->   ```
+**권장 루틴**:
+- **빠른 스크리닝**: `SET AUTOTRACE TRACEONLY`
+- **정밀 분석**: 실행 후
+  ```sql
+  SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
+    'ALLSTATS LAST +PEEKED_BINDS +OUTLINE +PROJECTION +ALIAS +NOTE'));
+  ```
 
 ---
 
@@ -381,7 +381,7 @@ SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY_CURSOR(NULL,NULL,
 **Q1. AUTOTRACE의 Plan이 실제와 달라 보여요.**
 A. 정상입니다. AUTOTRACE Plan은 **EXPLAIN** 기반입니다. **실제는 `DISPLAY_CURSOR(ALLSTATS LAST)`** 로 보세요.
 
-**Q2. Statistics에서 ‘rows processed’가 기대와 달라요.**
+**Q2. Statistics에서 'rows processed'가 기대와 달라요.**
 A. SELECT의 경우 **페치된 행 수** 영향이 있으며, 일부 클라이언트 설정/배열 페치 크기에 따라 달라질 수 있습니다.
 
 **Q3. 권한 오류(세션 통계 표시가 안 됨)가 납니다.**
@@ -392,14 +392,12 @@ A. `SET AUTOTRACE TRACEONLY` 로 **결과 출력**을 생략하세요. 네트워
 
 ---
 
-## 핵심 정리
+## 결론
 
-- **AUTOTRACE** = **빠른 스크리닝 도구**:
-  - **예상 계획**(EXPLAIN) + **세션 통계 요약**으로 **쿼리 성격**을 즉시 파악
-  - 결과 출력이 방해되면 `TRACEONLY`로 **통계만**
-- **정밀 분석**은 **실제 실행**을 반영하는 **`DISPLAY_CURSOR('ALLSTATS LAST')`/SQL Monitor** 로 연결
-- **튜닝 루틴**: AUTOTRACE로 대략 → 실행/라인통계로 정확 → 인덱스/통계/조인/정렬/파티션/메모리 조정 → 재확인
+Oracle AUTOTRACE는 개발자와 DBA에게 즉각적인 SQL 성능 분석을 가능하게 하는 강력하면서도 가벼운 도구입니다. SQL*Plus나 SQLcl에서 `SET AUTOTRACE` 명령어를 통해 실행 계획과 세션 통계를 손쉽게 확인할 수 있어, 쿼리의 전반적인 비용과 실행 패턴을 빠르게 파악하는 데 이상적입니다.
 
-> 한 줄 결론
-> **AUTOTRACE로 “크게” 보고**, **DBMS_XPLAN/Monitor로 “정밀”하게 조인다.**
-> 빠른 감은 AUTOTRACE가 주고, 결론은 **실제 실행 통계**가 말해준다.
+그러나 AUTOTRACE가 제공하는 실행 계획은 **예상 계획(EXPLAIN PLAN)** 에 기반하며, 실제 런타임에 옵티마이저가 선택한 경로와 다를 수 있습니다. 또한, 세션 통계는 쿼리 전체의 집계값을 보여주지만, 실행 계획의 **라인별 상세 통계(A-Rows, 버퍼 I/O, 시간, Temp 사용량 등)** 는 제공하지 않습니다. 이러한 한계로 인해 AUTOTRACE는 **초기 스크리닝과 빠른 감잡기**에 최적화된 도구라고 할 수 있습니다.
+
+따라서 심층적인 성능 분석과 튜닝을 위해서는 AUTOTRACE의 결과를 **실제 실행 계획 도구와 연계**해야 합니다. `DBMS_XPLAN.DISPLAY_CURSOR` 함수를 `'ALLSTATS LAST'` 옵션과 함께 사용하면, 해당 SQL의 실제 실행 경로와 라인별 상세 성능 통계를 확인할 수 있습니다. 더 나아가, SQL Monitor 리포트나 10046 트레이스를 활용하면 실행 중 발생한 대기 이벤트와 리소스 사용 패턴까지도 종합적으로 분석할 수 있습니다.
+
+실무에서의 효과적인 워크플로는 AUTOTRACE를 통해 문제가 의심되는 SQL을 빠르게 걸러내고, 이후 더 정밀한 도구들을 통해 근본 원인을 규명하고 최적화 방안을 도출하는 것입니다. 이렇게 계층화된 접근 방식을 통해, 단순한 스크리닝부터 심층적인 튜닝까지 효율적으로 수행할 수 있습니다. AUTOTRACE는 단독으로 완벽한 해법이 아니라, Oracle 성능 분석 도구 체인에서 빠르고 가벼운 첫 번째 연결고리로 이해하고 활용하는 것이 중요합니다.
