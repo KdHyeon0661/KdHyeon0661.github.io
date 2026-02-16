@@ -148,6 +148,59 @@ Console.WriteLine($"{dog.Name} ({dog.Breed})"); // "바둑이 (진돗개)"
 
 **실행 순서**: 부모 생성자 → 자식 생성자의 순서로 실행됩니다. 이는 부모 클래스의 초기화가 완료된 후에 자식 클래스의 초기화가 이루어져야 하기 때문입니다.
 
+### ⚠️ 생성자에서 virtual 메서드 호출의 위험성 (면접 단골 질문!)
+
+**생성자 내에서 `virtual` 메서드를 호출하면 매우 위험합니다.** 파생 클래스에서 이 메서드를 오버라이드한 경우, 파생 클래스의 생성자가 아직 완전히 실행되지 않은 상태에서 오버라이드된 메서드가 호출될 수 있습니다. 결과적으로 초기화되지 않은 필드에 접근하는 등 예측 불가능한 동작이 발생합니다.
+
+```csharp
+public class Base
+{
+    protected int value;
+    
+    public Base()
+    {
+        Console.WriteLine("Base 생성자 시작");
+        DoSomething();  // 🔴 위험: virtual 메서드 호출!
+        Console.WriteLine("Base 생성자 종료");
+    }
+    
+    protected virtual void DoSomething()
+    {
+        Console.WriteLine($"Base.DoSomething: {value}");
+    }
+}
+
+public class Derived : Base
+{
+    private int number;
+    
+    public Derived(int number)
+    {
+        Console.WriteLine("Derived 생성자 시작");
+        this.number = number;
+        Console.WriteLine("Derived 생성자 종료");
+    }
+    
+    protected override void DoSomething()
+    {
+        // 이 시점에서 Derived의 생성자는 아직 실행되지 않음!
+        // number 필드는 아직 초기화되지 않음 (0 또는 쓰레기 값)
+        Console.WriteLine($"Derived.DoSomething: {number}");
+    }
+}
+
+// 실행 결과:
+Derived obj = new Derived(42);
+// 출력:
+// Base 생성자 시작
+// Derived.DoSomething: 0   ← 예상과 다른 결과!
+// Base 생성자 종료
+// Derived 생성자 시작
+// Derived 생성자 종료
+```
+
+**결론**: 생성자에서는 `virtual`/`abstract` 메서드를 호출하지 마세요. 파생 클래스가 완전히 초기화되지 않은 상태에서 예상치 못한 메서드가 실행될 수 있습니다. 만약 반드시 필요한 경우, 설계 자체를 재고하거나 팩토리 메서드 패턴 등의 대안을 고려하세요.
+
 ### 정적 생성자(Static Constructor)
 
 정적 생성자는 클래스가 처음 사용되기 전에 한 번만 실행되어 정적 필드를 초기화합니다.
@@ -169,6 +222,52 @@ public class Configuration
 
 // Configuration 클래스에 처음 접근할 때 정적 생성자가 실행됨
 Console.WriteLine(Configuration.AppName);
+```
+
+#### 📌 정적 생성자의 핵심 특징
+
+- **명시적으로 호출할 수 없습니다.** 런타임(CLR)이 적절한 시점에 자동 호출합니다.
+- **매개변수를 가질 수 없습니다.**
+- **정확히 한 번만 실행됩니다.** (스레드 안전성이 보장됨)
+- **실행 시점은 CLR이 보장하지만, 정확한 타이밍은 개발자가 제어할 수 없습니다.**
+
+```csharp
+public class DatabaseConnection
+{
+    public static readonly string ConnectionString;
+    
+    static DatabaseConnection()
+    {
+        // 이 코드는 앱 도메인당 한 번만 실행됨
+        ConnectionString = LoadConnectionStringFromConfig();
+        
+        // 만약 여기서 예외가 발생하면?
+        if (string.IsNullOrEmpty(ConnectionString))
+            throw new InvalidOperationException("연결 문자열이 없습니다.");
+    }
+    
+    private static string LoadConnectionStringFromConfig()
+    {
+        // 설정 로드 시뮬레이션
+        return ConfigurationManager.AppSettings["DbConnection"];
+    }
+}
+```
+
+#### ⚠️ 정적 생성자의 예외 처리
+
+정적 생성자에서 예외가 발생하면 **`TypeInitializationException`** 으로 래핑되어 던져집니다. 이 예외가 발생하면 해당 타입은 현재 애플리케이션 도메인에서 사용할 수 없게 됩니다.
+
+```csharp
+try
+{
+    var conn = DatabaseConnection.ConnectionString;
+}
+catch (TypeInitializationException ex)
+{
+    Console.WriteLine($"타입 초기화 실패: {ex.InnerException?.Message}");
+    // 이 시점 이후로 DatabaseConnection 타입은 사용 불가
+}
 ```
 
 ---
@@ -314,6 +413,46 @@ public class DerivedClass : BaseClass
 }
 ```
 
+### 📌 base 키워드의 자동 호출 규칙
+
+파생 클래스 생성자에서 명시적으로 `base(...)`를 호출하지 않으면, 컴파일러는 자동으로 **부모 클래스의 매개변수 없는 생성자(기본 생성자)**를 호출합니다.
+
+```csharp
+public class Parent
+{
+    public Parent()
+    {
+        Console.WriteLine("Parent 기본 생성자");
+    }
+    
+    public Parent(string message)
+    {
+        Console.WriteLine($"Parent: {message}");
+    }
+}
+
+public class Child : Parent
+{
+    public Child()
+    {
+        // 명시적으로 base()를 호출하지 않았지만,
+        // 컴파일러가 자동으로 base()를 삽입함
+        Console.WriteLine("Child 생성자");
+    }
+    
+    public Child(string message) : base(message) // 명시적 호출
+    {
+        Console.WriteLine($"Child: {message}");
+    }
+}
+
+// 실행
+Child c1 = new Child();          // Parent 기본 생성자 → Child 생성자
+Child c2 = new Child("안녕");    // Parent: 안녕 → Child: 안녕
+```
+
+**주의**: 만약 부모 클래스에 매개변수 없는 기본 생성자가 없다면, 파생 클래스에서 반드시 `base(...)`를 명시적으로 호출해야 합니다.
+
 ---
 
 ## 4. 메서드 오버로딩(Method Overloading): 다양한 입력 처리
@@ -380,48 +519,48 @@ public void Process(ref int x) { }
 public void Process(out int x) { x = 0; } // 가능: ref와 out은 다른 시그니처
 ```
 
-4. **컴파일러는 가장 구체적인(적합한) 오버로드를 선택합니다.**
+### ⚠️ 오버로딩의 함정: 암시적 형변환과 모호성
+
+컴파일러는 가장 적합한(구체적인) 오버로드를 선택하려고 합니다. 하지만 때로는 모호성이 발생할 수 있습니다.
 
 ```csharp
-public class Example
+public class OverloadTest
 {
-    public void Print(int x) => Console.WriteLine($"int: {x}");
-    public void Print(long x) => Console.WriteLine($"long: {x}");
-    public void Print(double x) => Console.WriteLine($"double: {x}");
-}
-
-var ex = new Example();
-ex.Print(5);    // "int: 5" (가장 구체적인 int 버전 선택)
-ex.Print(5L);   // "long: 5" (long 리터럴)
-ex.Print(5.0);  // "double: 5" (double 리터럴)
-```
-
-### 선택적 매개변수와 오버로딩
-
-```csharp
-public class MessageService
-{
-    // 기본값을 가진 매개변수
-    public void Send(string message, string priority = "Normal")
+    public void Print(double x)
     {
-        Console.WriteLine($"[{priority}] {message}");
+        Console.WriteLine($"double: {x}");
     }
     
-    // 오버로드된 버전
-    public void Send(string message, int retryCount)
+    public void Print(decimal x)
     {
-        for (int i = 0; i < retryCount; i++)
-        {
-            Console.WriteLine($"시도 {i + 1}: {message}");
-        }
+        Console.WriteLine($"decimal: {x}");
     }
 }
 
-var service = new MessageService();
-service.Send("Hello");               // [Normal] Hello
-service.Send("Hello", "High");       // [High] Hello
-service.Send("Hello", 3);            // 시도 1: Hello \n 시도 2: Hello \n 시도 3: Hello
+var test = new OverloadTest();
+// test.Print(5); // 컴파일 오류! 모호성 발생
+// 5는 int 리터럴이며, double과 decimal 모두 암시적 변환 가능
 ```
+
+**컴파일러의 선택 규칙:**
+- 정수 리터럴(예: 5)은 `int` → `long` → `double` → `decimal` 순으로 변환을 시도합니다.
+- 컴파일러는 **가장 구체적인(적은 변환 과정을 거치는) 오버로드**를 선택합니다.
+
+```csharp
+public class MoreTests
+{
+    public void M(object o) => Console.WriteLine("object");
+    public void M(string s) => Console.WriteLine("string");
+}
+
+MoreTests t = new MoreTests();
+t.M(null); // 출력: "string" (null은 string으로 더 구체적)
+```
+
+**왜 "string"이 선택될까요?**  
+`null`은 모든 참조 타입에 할당 가능하지만, 컴파일러는 **가장 구체적인(파생된) 타입**을 우선 선택합니다. `string`은 `object`보다 구체적이므로 `M(string)`이 호출됩니다.
+
+이러한 규칙을 이해하면 API 설계 시 사용자가 예상하는 대로 동작하도록 오버로드를 구성할 수 있습니다.
 
 ---
 
@@ -507,6 +646,21 @@ foreach (var shape in shapes)
 // 반지름 2.5인 원 - 면적: 19.63
 ```
 
+### 🔍 오버라이딩의 내부 동작: Virtual Table (vtable)
+
+C#에서 `override`가 가능한 이유는 **가상 메서드 테이블(vtable)** 때문입니다. 
+
+- 클래스에 가상 메서드(`virtual` 또는 `abstract`)가 하나라도 있으면, 해당 클래스의 메서드 테이블 내에 **vtable**이 생성됩니다.
+- vtable은 메서드 포인터들의 배열로, 런타임에 어떤 메서드를 호출할지 결정하는 데 사용됩니다. 
+- 파생 클래스에서 `override`하면, vtable의 해당 슬롯이 파생 클래스의 메서드 주소로 **덮어쓰기(교체)** 됩니다. 
+- 결과적으로 부모 타입의 변수로 자식 객체를 참조해도, vtable을 통해 **실제 객체 타입의 메서드**가 호출됩니다. 
+
+```csharp
+// 개념적 설명
+A obj = new B();
+obj.Run1(); // vtable 조회 → B.Run1() 실행
+```
+
 ### `abstract` 메서드와 `sealed` 오버라이드
 
 ```csharp
@@ -564,9 +718,9 @@ public class PersianCat : Cat
 }
 ```
 
-### `new` 키워드: 메서드 숨기기
+### ⚠️ `new` 키워드: 메서드 숨기기와 설계 실패 신호
 
-`new` 키워드는 메서드를 재정의하는 것이 아니라, 부모 클래스의 메서드를 **숨기는** 역할을 합니다. 이는 다형성과는 다른 동작을 합니다.
+`new` 키워드는 메서드를 재정의하는 것이 아니라, 부모 클래스의 메서드를 **숨기는** 역할을 합니다. 이는 다형성과는 다른 동작을 합니다. 
 
 ```csharp
 public class BaseClass
@@ -593,9 +747,23 @@ DerivedClass obj2 = new DerivedClass();
 obj2.Show();  // "DerivedClass.Show()"
 ```
 
-**`override` vs `new`**:
-- `override`: 동적 바인딩(런타임에 실제 객체 타입에 따라 메서드 호출)
-- `new`: 정적 바인딩(컴파일 타임에 변수 타입에 따라 메서드 호출)
+**`override` vs `new`의 핵심 차이**:
+
+| 구분 | `override` | `new` |
+|------|------------|-------|
+| **의미** | 부모의 가상 메서드를 **재정의** | 부모의 메서드를 **숨김** |
+| **다형성** | 지원함 (vtable 슬롯 교체) | 지원하지 않음 (새로운 슬롯 생성)  |
+| **호출 결정** | 런타임에 실제 객체 타입 기준 | 컴파일 타임에 변수 타입 기준 |
+| **vtable 영향** | 기존 슬롯의 주소를 교체 | 새로운 슬롯을 추가(부모 슬롯과 별개)  |
+
+#### 🔥 면접 질문: "왜 new 키워드는 권장되지 않나요?"
+
+1. **다형성 깨짐**: `new`로 숨긴 메서드는 부모 타입으로 참조할 때 호출되지 않아, 객체 지향의 다형성을 활용할 수 없습니다. 
+2. **예측 불가능한 동작**: 개발자가 실제 객체 타입과 변수 타입을 혼동하면 의도치 않은 메서드가 호출될 수 있습니다.
+3. **유지보수 어려움**: 상속 계층이 복잡해질수록 어떤 메서드가 호출될지 추적하기 어려워집니다.
+4. **경고 발생**: `new`를 명시하지 않으면 컴파일러 경고(CS0108)가 발생하며, 이는 대개 설계 문제를 암시합니다.
+
+**결론**: `new` 키워드는 정말 특별한 경우(예: 레거시 코드와의 호환성)가 아니라면 사용을 피해야 합니다. 만약 메서드를 숨겨야 한다면, 상속 대신 포함(composition) 관계로 설계를 재고하는 것이 더 나은 선택일 수 있습니다.
 
 ---
 
@@ -626,6 +794,9 @@ public abstract class Account
         AccountNumber = accountNumber;
         OwnerName = ownerName;
         Balance = initialBalance;
+        
+        // ⚠️ 주의: 생성자에서 virtual 메서드 호출 금지!
+        // DisplayInfo(); // 위험! 파생 클래스에서 오버라이드 시 문제 발생
     }
     
     // 입금 메서드 (오버로딩 예정)
@@ -802,14 +973,14 @@ class Program
 
 생성자, `this`/`base` 키워드, 메서드 오버로딩과 오버라이딩은 C#의 객체 지향 기능을 완전히 활용하기 위한 필수 도구입니다. 각 개념은 특정한 목적과 상황에 맞게 사용되어야 합니다:
 
-1. **생성자**는 객체의 **유효한 초기 상태를 보장**하는 책임을 가집니다. 생성자 오버로딩과 체이닝을 활용하여 다양한 초기화 옵션을 제공하면서도 검증 로직을 중앙화하세요.
+1. **생성자**는 객체의 **유효한 초기 상태를 보장**하는 책임을 가집니다. 생성자 오버로딩과 체이닝을 활용하여 다양한 초기화 옵션을 제공하면서도 검증 로직을 중앙화하세요. **생성자에서 virtual 메서드 호출은 절대 금물**이며, 정적 생성자의 예외 처리와 특징(TypeInitializationException, 자동 호출 등)도 반드시 기억해야 합니다.
 
 2. **`this` 키워드**는 현재 객체를 명시적으로 참조할 때, 특히 이름 충돌을 해결하거나 생성자 체이닝을 구현할 때 사용됩니다.
 
-3. **`base` 키워드**는 상속 계층에서 부모 클래스의 기능을 재사용하거나 확장할 때 필수적입니다. 부모의 구현을 호출하여 중복을 피하고 일관성을 유지하세요.
+3. **`base` 키워드**는 상속 계층에서 부모 클래스의 기능을 재사용하거나 확장할 때 필수적입니다. 명시적으로 `base(...)`를 호출하지 않으면 **부모의 기본 생성자가 자동 호출**된다는 규칙도 중요합니다.
 
-4. **메서드 오버로딩**은 **편의성과 API 일관성**을 제공합니다. 같은 개념의 작업에 대해 다양한 입력 형식을 지원할 때 사용하되, 사용자가 혼란스러워하지 않도록 주의하세요.
+4. **메서드 오버로딩**은 **편의성과 API 일관성**을 제공합니다. 같은 개념의 작업에 대해 다양한 입력 형식을 지원할 때 사용하되, **암시적 형변환으로 인한 모호성**을 방지하도록 주의하세요.
 
-5. **메서드 오버라이딩**은 **다형성과 확장성**의 핵심입니다. 부모 클래스에서 `virtual`이나 `abstract`로 확장 지점을 명확히 표시하고, 자식 클래스에서 `override`로 구체적인 동작을 구현하세요. `new` 키워드는 일반적으로 피해야 하며, 명시적인 설계 결정이 필요할 때만 사용하세요.
+5. **메서드 오버라이딩**은 **다형성과 확장성**의 핵심입니다. 부모 클래스에서 `virtual`이나 `abstract`로 확장 지점을 명확히 표시하고, 자식 클래스에서 `override`로 구체적인 동작을 구현하세요. 내부적으로는 **vtable 기반 동적 디스패치**가 동작합니다. `new` 키워드는 일반적으로 피해야 하며, 명시적인 설계 결정이 필요할 때만 사용하세요. 
 
 이러한 개념들을 적절히 조합하면 유연하면서도 견고한 클래스 계층 구조를 설계할 수 있습니다. 객체가 올바르게 생성되고, 명확하게 행동하며, 필요에 따라 확장될 수 있는 시스템을 구축하는 데 이 지식이 핵심이 될 것입니다.
