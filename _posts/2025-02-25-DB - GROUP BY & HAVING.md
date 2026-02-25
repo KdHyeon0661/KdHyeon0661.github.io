@@ -203,6 +203,7 @@ FROM employees
 GROUP BY ROLLUP (department_id, job_title)
 ORDER BY department_id, job_title;
 ```
+
 - 결과에는 `(부서, 직무)` 상세 데이터, `(부서, NULL)` 부서별 소계, `(NULL, NULL)` 전체 총계가 포함됩니다.
 
 ### CUBE: 모든 조합의 소계 생성
@@ -327,6 +328,7 @@ ADD INDEX idx_order_year_month (order_year_month);
 ## 실전 시나리오 10가지
 
 ### 1. 기본적인 그룹화와 필터링
+
 ```sql
 -- 부서별 평균 급여가 50000 이상인 부서 조회
 SELECT department_id, AVG(salary) as avg_salary
@@ -338,6 +340,7 @@ ORDER BY avg_salary DESC;
 ```
 
 ### 2. 시간 기반 그룹화 (최근 6개월)
+
 ```sql
 -- 최근 6개월 간 월별 매출 집계
 SELECT
@@ -352,6 +355,7 @@ ORDER BY month DESC;
 ```
 
 ### 3. 다중 조건 집계 (한 번의 스캔으로 여러 통계)
+
 ```sql
 -- 제품 카테고리별 다양한 통계 계산
 SELECT
@@ -368,6 +372,7 @@ ORDER BY total_products DESC;
 ```
 
 ### 4. 계층적 보고서 (ROLLUP 활용)
+
 ```sql
 -- 지역-도시별 매출에 지역 소계와 전체 총계 포함
 SELECT
@@ -381,6 +386,7 @@ ORDER BY region, city;
 ```
 
 ### 5. 고유 사용자 기반 집계
+
 ```sql
 -- 일별 활성 사용자 수 (DAU)
 SELECT
@@ -393,6 +399,7 @@ ORDER BY login_date DESC;
 ```
 
 ### 6. 비율 계산 (0으로 나누기 방지)
+
 ```sql
 -- 제품별 환불률 계산
 SELECT
@@ -410,6 +417,7 @@ ORDER BY refund_rate_percent DESC;
 ```
 
 ### 7. 이동 평균 계산 (윈도 함수와의 조합)
+
 ```sql
 -- 7일 이동 평균 매출 계산
 WITH daily_sales AS (
@@ -431,6 +439,7 @@ ORDER BY sale_date;
 ```
 
 ### 8. 상위 N개 그룹 식별
+
 ```sql
 -- 매출 상위 10개 고객 식별
 SELECT
@@ -447,6 +456,7 @@ LIMIT 10;
 ```
 
 ### 9. 여러 그룹화 수준을 동시에 보고 (GROUPING SETS)
+
 ```sql
 -- 다양한 그룹화 수준으로 매출 분석
 SELECT
@@ -471,6 +481,7 @@ ORDER BY year_group, quarter_group;
 ```
 
 ### 10. 성능 최적화된 대량 데이터 집계
+
 ```sql
 -- 대량 데이터를 효율적으로 집계하기 위한 전략
 WITH filtered_data AS (
