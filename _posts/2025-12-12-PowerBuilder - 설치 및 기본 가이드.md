@@ -2,7 +2,7 @@
 layout: post
 title: PowerBuilder - 설치 및 기본 가이드
 date: 2025-12-12 14:30:23 +0900
-category: 영상처리
+category: PowerBuilder
 ---
 # PowerBuilder 설치 및 기본 설정 가이드
 
@@ -15,7 +15,7 @@ category: 영상처리
 ### 1. 설치 파일 다운로드
 
 PowerBuilder는 현재 **Appeon(아피온)** 사에서 독점적으로 개발 및 배포하고 있습니다.  
-공식 웹사이트([https://www.appeon.com/products/powerbuilder](https://www.appeon.com/products/powerbuilder))에서 평가판 또는 라이선스 버전을 다운로드할 수 있습니다.  
+공식 웹사이트([https://www.appeon.com/products/powerbuilder](https://www.appeon.com/products/powerbuilder))에서 평가판 또는 라이선스 버전을 다운로드할 수 있습니다.
 Appeon 계정이 필요하며, 기업 사용자는 Appeon 고객 포털을 통해서도 다운로드 가능합니다.
 
 > **주의**: PowerBuilder 2017 이후 버전(2022 포함)은 더 이상 SAP 사이트에서 제공되지 않습니다. 반드시 Appeon 공식 사이트를 이용하세요.
@@ -202,9 +202,4 @@ Application Object 속성에서 **Library Search Path**에 추가 PBL 파일을 
 
 ## 마치며
 
-이상으로 PowerBuilder 설치부터 간단한 애플리케이션 실행까지의 기본 설정을 알아보았습니다. 처음에는 낯선 용어와 인터페이스일 수 있지만, DataWindow의 강력함과 직관적인 Painter 도구에 익숙해지면 빠른 개발이 가능합니다. 다음 글에서는 본격적인 DataWindow 생성과 데이터 처리 방법을 다루어 보겠습니다.
-
----
-
-이 글에서 설명한 설치 및 설정 과정은 PowerBuilder 2022 기준이며, 버전에 따라 일부 화면이나 옵션이 다를 수 있습니다.  
-**Appeon 공식 문서**(https://docs.appeon.com)나 **PowerBuilder 커뮤니티 포럼**을 참고하면 더 자세한 정보를 얻을 수 있습니다.
+이상으로 PowerBuilder 설치부터 간단한 애플리케이션 실행까지의 기본 설정을 알아보았습니다. 처음에는 낯선 용어와 인터페이스일 수 있지만, DataWindow의 강력함과 직관적인 Painter 도구에 익숙해지면 빠른 개발이 가능합니다.
