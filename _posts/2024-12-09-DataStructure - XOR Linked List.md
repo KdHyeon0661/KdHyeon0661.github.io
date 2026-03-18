@@ -4,179 +4,234 @@ title: Data Structure - XOR Linked List
 date: 2024-12-09 21:20:23 +0900
 category: Data Structure
 ---
-# XOR Linked List
+# XOR Linked List (XOR 연결 리스트)
 
-## XOR Linked List란?
+## XOR 연결 리스트란?
 
-**XOR 연결 리스트**는 이중 연결 리스트의 `prev`/`next` 두 포인터를 **단 하나의 필드**로 합친다.
+XOR 연결 리스트는 **이중 연결 리스트**의 메모리 사용량을 줄이기 위한 기법입니다.  
+이중 연결 리스트는 각 노드가 `prev`(이전 노드)와 `next`(다음 노드) 두 개의 포인터를 가집니다.  
+XOR 연결 리스트는 이 두 포인터를 **하나의 포인터 필드**로 합칩니다.
 
-- 노드가 가진 포인터:
+- 각 노드는 `npx`라는 하나의 포인터만 저장합니다.
+- `npx`는 **이전 노드 주소**와 **다음 노드 주소**를 XOR(배타적 논리합)한 값입니다.
   \[
   \text{npx} = \text{prev} \oplus \text{next}
   \]
-  여기서 \(\oplus\)는 비트 XOR.
+  (여기서 \(\oplus\)는 비트 단위 XOR)
 
-- **공간 절약**: 64비트 환경에서 이중 리스트는 포인터 2개(16B), XOR 리스트는 1개(8B)로, **노드당 8B 절약**.
-- **탐색**: 다음 노드를 얻으려면 **이전 노드를 알고 있어야** 한다.
+- 다음 노드 주소는 이전 노드 주소를 알고 있을 때 계산할 수 있습니다.
   \[
   \text{next} = \text{npx} \oplus \text{prev}
   \]
+- 마찬가지로 이전 노드 주소는 다음 노드 주소를 알고 있을 때 계산할 수 있습니다.
+  \[
+  \text{prev} = \text{npx} \oplus \text{next}
+  \]
 
-> 평균 시간 복잡도는 이중 리스트와 동일하다(단일 스텝 전진/후진은 \(O(1)\), 임의 위치 검색은 \(O(n)\)).
+### 장점과 단점
 
----
+- **장점**:  
+  - 포인터 하나만 저장하므로 메모리 사용량이 이중 연결 리스트의 절반입니다.  
+    (64비트 시스템에서 포인터 8바이트 → 노드당 8바이트 절약)
+  - 기본 연산(앞/뒤 삽입, 삭제)은 여전히 \(O(1)\)입니다.
 
-## 구조 개념 복습
+- **단점**:  
+  - 코드가 복잡하고 이해하기 어렵습니다.  
+  - 디버깅이 매우 까다롭습니다.  
+  - 포인터 값을 직접 조작하므로 실수하기 쉽고, 실수로 인한 오류를 찾기 어렵습니다.  
+  - 가비지 컬렉션이 있는 언어나 주소가 변경되는 환경(예: 압축 포인터)에서는 사용할 수 없습니다.  
+  - 멀티스레드 환경에서 안전하게 사용하기 매우 어렵습니다.  
+  - 실제로 메모리 절약 효과는 노드의 다른 필드나 메모리 할당 오버헤드 때문에 체감하기 어려울 수 있습니다.
 
-### 이중 리스트
-
-```
-[prev] <- Node -> [next]
-```
-
-### XOR 리스트
-
-```
-[npx = prev ⊕ next]
-```
-
-- 헤드에서의 전진: `prev = nullptr`로 시작하여 `next = XOR(prev, cur->npx)`.
-- 테일부터 역방향도 동일(대칭).
-
----
-
-## 안전성·이식성 경고(매우 중요)
-
-- C/C++ 이외 언어(특히 **이동/압축 GC**)에서는 **주소가 바뀌면 XOR 값이 무효** → 금지.
-- **AddressSanitizer(ASan)**, **HWASan** 등 도구가 붙은 환경에서는 포인터 태깅/레드존으로 인해 **예상치 못한 동작**을 유발 가능.
-- 메모리 덮어쓰기 버그가 나면 **디버깅 난이도 급상승** (정상 포인터와 달리 체인 복원이 어렵다).
-- 멀티스레드에선 **원자적 갱신**/메모리 모델을 세심히 설계해야 한다(본 글은 단일 스레드 가정).
-
-> 학습/문제풀이/임베디드 특수 상황 외에는 **일반 이중 연결 리스트**가 훨씬 안전하고 유지보수성이 높다.
+> **결론**: XOR 연결 리스트는 흥미로운 아이디어이지만, 실무에서는 거의 사용되지 않습니다. 학습 목적으로 포인터 연산을 이해하는 데 도움이 될 수 있습니다.
 
 ---
 
-## 기초 도우미와 노드 정의
+## 구조 이해하기
+
+### 이중 연결 리스트
+
+일반적인 이중 연결 리스트의 노드 구조:
+
+```
+[prev] <-> Node <-> [next]
+```
+
+- `prev`: 이전 노드 주소
+- `next`: 다음 노드 주소
+
+### XOR 연결 리스트
+
+XOR 연결 리스트의 노드 구조:
+
+```
+[npx = prev XOR next]
+```
+
+- `npx`만 저장합니다.
+
+#### 예시
+
+노드 A, B, C가 순서대로 연결되어 있다고 가정합시다.
+
+- A의 `npx` = `NULL XOR B` = B (이전 없음, 다음은 B)
+- B의 `npx` = `A XOR C`
+- C의 `npx` = `B XOR NULL` = B
+
+이제 A에서 B로 이동하려면:  
+A의 이전 노드는 NULL이므로, B = A->npx XOR NULL = A->npx.
+
+B에서 C로 이동하려면:  
+B의 이전 노드는 A이므로, C = B->npx XOR A = (A XOR C) XOR A = C.
+
+C에서 B로 역방향 이동하려면:  
+C의 다음 노드는 NULL이므로, B = C->npx XOR NULL = C->npx.
+
+이처럼 **현재 노드**와 **이전(또는 다음) 노드**를 알고 있으면 다음 노드를 계산할 수 있습니다.
+
+---
+
+## 주의사항 (반드시 읽어보세요)
+
+- XOR 연결 리스트는 **C/C++** 같은 저수준 언어에서만 가능합니다. (포인터를 정수로 변환하여 XOR 연산해야 하므로)
+- 포인터를 정수로 변환할 때는 `uintptr_t` 타입을 사용해야 합니다. (표준에서 보장)
+- 메모리 오류 탐지 도구(예: AddressSanitizer)는 포인터를 변조하는 것을 감지하지 못할 수 있으며, 오히려 오탐을 일으킬 수 있습니다.
+- 이 코드를 디버깅할 때는 포인터 값 자체를 출력해보기 어렵기 때문에, **연결 상태를 검증하는 함수**를 함께 작성하는 것이 좋습니다.
+- **멀티스레드 환경에서는 절대 사용하지 마세요.** 원자적 연산으로도 안전성을 보장하기 어렵습니다.
+
+---
+
+## C++ 구현 (기초 도우미와 노드)
+
+먼저 포인터 XOR 연산을 도와줄 유틸리티 함수를 만듭니다.
 
 ```cpp
-// xor_list.hpp
-#pragma once
-#include <cstdint>
+#include <cstdint>  // uintptr_t
 #include <iostream>
 #include <stdexcept>
-#include <utility>
 
-namespace xorll {
-
+// 두 포인터를 XOR한 결과를 void*로 반환
 inline void* xor_ptr(void* a, void* b) noexcept {
     return reinterpret_cast<void*>(
         reinterpret_cast<std::uintptr_t>(a) ^
         reinterpret_cast<std::uintptr_t>(b)
     );
 }
-template <class T> inline T* xor_ptr(T* a, T* b) noexcept {
-    return reinterpret_cast<T*>( xor_ptr(static_cast<void*>(a), static_cast<void*>(b)) );
-}
 
-template <class T>
-struct Node {
-    T      data;
-    Node*  npx;  // prev ^ next
-    template <class... Args>
-    explicit Node(Args&&... args)
-      : data(std::forward<Args>(args)...), npx(nullptr) {}
-};
-} // namespace xorll
+// 타입이 있는 포인터 버전 (편의용)
+template <typename T>
+inline T* xor_ptr(T* a, T* b) noexcept {
+    return static_cast<T*>(xor_ptr(static_cast<void*>(a), static_cast<void*>(b)));
+}
 ```
 
-- 포인터 XOR은 반드시 **`uintptr_t`**를 경유해야 정의된 동작.
-- 노드는 `data`와 `npx`만 가진다.
+노드 구조체는 데이터와 `npx` 하나만 가집니다.
+
+```cpp
+template <typename T>
+struct Node {
+    T data;
+    Node* npx;  // prev XOR next
+
+    template <typename... Args>
+    explicit Node(Args&&... args)
+        : data(std::forward<Args>(args)...), npx(nullptr) {}
+};
+```
 
 ---
 
-## 컨테이너 설계(양끝·사이즈·반복자)
+## XOR 연결 리스트 클래스 설계
 
-- `head_`, `tail_`을 들고 있으면 **양방향 순회/삽입/삭제**가 편해진다.
-- 반복자는 **(prev, cur, next)** 3튜플을 유지하면 `++/--`를 안전하게 구현할 수 있다.
-- `end()` 반복자는 **`cur=nullptr`**로 표현하고, **`prev=tail_`**를 들고 있게 하면 `--end()`가 자연스럽다.
+리스트 클래스는 `head`(첫 노드)와 `tail`(마지막 노드), 그리고 크기를 관리합니다.  
+또한 양방향 순회를 지원하기 위해 **반복자(iterator)**를 제공합니다.
 
 ```cpp
-// xor_list.hpp (계속)
-namespace xorll {
-
-template <class T>
+template <typename T>
 class XorList {
-    using NodeT = Node<T>;
+    using Node = Node<T>;
 
-    NodeT* head_ = nullptr;
-    NodeT* tail_ = nullptr;
-    std::size_t size_ = 0;
+    Node* head_ = nullptr;
+    Node* tail_ = nullptr;
+    size_t size_ = 0;
 
 public:
     XorList() = default;
     ~XorList() { clear(); }
 
+    // 복사는 금지 (간단히 하기 위해)
     XorList(const XorList&) = delete;
     XorList& operator=(const XorList&) = delete;
 
-    bool empty() const noexcept { return size_==0; }
-    std::size_t size() const noexcept { return size_; }
+    bool empty() const { return size_ == 0; }
+    size_t size() const { return size_; }
 
-    T& front() { if(empty()) throw std::out_of_range("empty"); return head_->data; }
-    T& back()  { if(empty()) throw std::out_of_range("empty"); return tail_->data; }
-    const T& front() const { if(empty()) throw std::out_of_range("empty"); return head_->data; }
-    const T& back()  const { if(empty()) throw std::out_of_range("empty"); return tail_->data; }
+    T& front() {
+        if (empty()) throw std::out_of_range("empty");
+        return head_->data;
+    }
+    T& back() {
+        if (empty()) throw std::out_of_range("empty");
+        return tail_->data;
+    }
 
     // 기본 연산
-    void push_front(const T& v) { emplace_front(v); }
-    void push_back (const T& v) { emplace_back (v); }
+    void push_front(const T& value) { emplace_front(value); }
+    void push_back(const T& value)  { emplace_back(value); }
 
-    template <class... Args> void emplace_front(Args&&... args);
-    template <class... Args> void emplace_back (Args&&... args);
+    template <typename... Args>
+    void emplace_front(Args&&... args);
+
+    template <typename... Args>
+    void emplace_back(Args&&... args);
 
     void pop_front();
     void pop_back();
-    void clear() noexcept;
 
-    // 반복자
+    void clear();
+
+    // 반복자 (간단한 양방향 반복자)
     class iterator {
-        NodeT* prev_ = nullptr;
-        NodeT* cur_  = nullptr;
-        NodeT* next_ = nullptr;
-        const XorList* owner_ = nullptr;
+        Node* prev_ = nullptr;
+        Node* cur_  = nullptr;
+        Node* next_ = nullptr;
+
     public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = T;
-        using reference = T&;
-        using pointer = T*;
         using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = T;
+        using difference_type = std::ptrdiff_t;
+        using pointer = T*;
+        using reference = T&;
 
         iterator() = default;
-        iterator(const XorList* o, NodeT* p, NodeT* c, NodeT* n)
-            : prev_(p), cur_(c), next_(n), owner_(o) {}
+        iterator(Node* p, Node* c, Node* n) : prev_(p), cur_(c), next_(n) {}
 
-        reference operator*()  const { return cur_->data; }
-        pointer   operator->() const { return &cur_->data; }
+        reference operator*() const { return cur_->data; }
+        pointer operator->() const { return &cur_->data; }
 
-        bool operator==(const iterator& o) const { return cur_==o.cur_ && owner_==o.owner_; }
-        bool operator!=(const iterator& o) const { return !(*this==o); }
+        bool operator==(const iterator& other) const { return cur_ == other.cur_; }
+        bool operator!=(const iterator& other) const { return cur_ != other.cur_; }
 
-        iterator& operator++(){ // forward
+        // 전진 (++it)
+        iterator& operator++() {
             if (!cur_) throw std::out_of_range("increment end()");
             prev_ = cur_;
             cur_  = next_;
             next_ = (cur_ ? xor_ptr(prev_, cur_->npx) : nullptr);
             return *this;
         }
-        iterator operator++(int){ auto t=*this; ++*this; return t; }
+        iterator operator++(int) {
+            auto tmp = *this;
+            ++*this;
+            return tmp;
+        }
 
-        iterator& operator--(){ // backward
-            // if at end(), step to tail
-            if (!cur_) {
-                cur_  = prev_;            // prev_ holds tail at end()
+        // 후진 (--it)
+        iterator& operator--() {
+            if (!cur_) { // end()인 경우 tail로 이동
+                cur_  = prev_;   // prev_에 tail을 저장해둠 (end 생성 시)
                 if (!cur_) throw std::out_of_range("decrement begin()");
                 next_ = nullptr;
-                // recompute prev_ from tail
                 prev_ = xor_ptr(next_, cur_->npx);
                 return *this;
             }
@@ -185,406 +240,341 @@ public:
             prev_ = (cur_ ? xor_ptr(next_, cur_->npx) : nullptr);
             return *this;
         }
-        iterator operator--(int){ auto t=*this; --*this; return t; }
+        iterator operator--(int) {
+            auto tmp = *this;
+            --*this;
+            return tmp;
+        }
 
         friend class XorList;
     };
 
-    iterator begin() const {
+    iterator begin() {
         if (!head_) return end();
-        NodeT* next = xor_ptr<NodeT>(nullptr, head_->npx);
-        return iterator(this, nullptr, head_, next);
+        Node* next = xor_ptr<Node>(nullptr, head_->npx);
+        return iterator(nullptr, head_, next);
     }
-    iterator end() const { // past-the-end: cur=nullptr, prev=tail
-        return iterator(this, tail_, nullptr, nullptr);
+    iterator end() {
+        // end는 cur_=nullptr, prev_=tail_ 로 설정하여 --end()가 tail을 가리키게 함
+        return iterator(tail_, nullptr, nullptr);
     }
 
-    // 삽입/삭제(반복자 기반)
-    iterator insert(iterator pos, const T& v) { return emplace(pos, v); }
-    template <class... Args> iterator emplace(iterator pos, Args&&... args);
+    // 삽입/삭제 (반복자 위치)
+    iterator insert(iterator pos, const T& value) {
+        return emplace(pos, value);
+    }
+    template <typename... Args>
+    iterator emplace(iterator pos, Args&&... args);
+
     iterator erase(iterator pos);
 };
-
-} // namespace xorll
 ```
 
 ---
 
 ## 핵심 연산 구현
 
-### 양끝 삽입/삭제
+### 앞/뒤 삽입 (`emplace_front`, `emplace_back`)
 
 ```cpp
-// xor_list_impl.hpp
-#pragma once
-#include "xor_list.hpp"
+template <typename T>
+template <typename... Args>
+void XorList<T>::emplace_front(Args&&... args) {
+    Node* newNode = new Node(std::forward<Args>(args)...);
+    newNode->npx = xor_ptr<Node>(nullptr, head_);
 
-namespace xorll {
-
-template <class T>
-template <class... Args>
-void XorList<T>::emplace_front(Args&&... args){
-    NodeT* n = new NodeT(std::forward<Args>(args)...);
-    n->npx = xor_ptr<NodeT>(nullptr, head_);
     if (!head_) {
-        head_ = tail_ = n;
+        // 빈 리스트
+        head_ = tail_ = newNode;
     } else {
-        // head_->npx originally = prev(nullptr) ^ next(head_next)
-        NodeT* head_next = xor_ptr<NodeT>(nullptr, head_->npx);
-        head_->npx = xor_ptr<NodeT>(n, head_next);
-        head_ = n;
+        // 기존 head의 npx는 (nullptr ^ next)였음. 새 노드가 앞에 오므로
+        // 기존 head의 npx = newNode ^ next
+        Node* headNext = xor_ptr<Node>(nullptr, head_->npx);
+        head_->npx = xor_ptr<Node>(newNode, headNext);
+        head_ = newNode;
     }
     ++size_;
 }
 
-template <class T>
-template <class... Args>
-void XorList<T>::emplace_back(Args&&... args){
-    NodeT* n = new NodeT(std::forward<Args>(args)...);
-    n->npx = xor_ptr<NodeT>(tail_, nullptr);
+template <typename T>
+template <typename... Args>
+void XorList<T>::emplace_back(Args&&... args) {
+    Node* newNode = new Node(std::forward<Args>(args)...);
+    newNode->npx = xor_ptr<Node>(tail_, nullptr);
+
     if (!tail_) {
-        head_ = tail_ = n;
+        head_ = tail_ = newNode;
     } else {
-        NodeT* tail_prev = xor_ptr<NodeT>(tail_->npx, nullptr);
-        tail_->npx = xor_ptr<NodeT>(tail_prev, n);
-        tail_ = n;
+        Node* tailPrev = xor_ptr<Node>(tail_->npx, nullptr);
+        tail_->npx = xor_ptr<Node>(tailPrev, newNode);
+        tail_ = newNode;
     }
     ++size_;
 }
+```
 
-template <class T>
-void XorList<T>::pop_front(){
+### 앞/뒤 삭제 (`pop_front`, `pop_back`)
+
+```cpp
+template <typename T>
+void XorList<T>::pop_front() {
     if (empty()) throw std::out_of_range("pop_front on empty");
-    NodeT* old = head_;
-    NodeT* next = xor_ptr<NodeT>(nullptr, head_->npx);
+
+    Node* oldHead = head_;
+    Node* next = xor_ptr<Node>(nullptr, head_->npx);
+
     if (!next) {
+        // 노드가 하나뿐
         head_ = tail_ = nullptr;
     } else {
-        NodeT* nextnext = xor_ptr<NodeT>(head_, next->npx);
-        // new head is next; its prev becomes nullptr
-        next->npx = xor_ptr<NodeT>(nullptr, nextnext);
+        Node* nextNext = xor_ptr<Node>(oldHead, next->npx);
+        next->npx = xor_ptr<Node>(nullptr, nextNext);
         head_ = next;
     }
-    delete old; --size_;
+    delete oldHead;
+    --size_;
 }
 
-template <class T>
-void XorList<T>::pop_back(){
+template <typename T>
+void XorList<T>::pop_back() {
     if (empty()) throw std::out_of_range("pop_back on empty");
-    NodeT* old = tail_;
-    NodeT* prev = xor_ptr<NodeT>(tail_->npx, nullptr);
+
+    Node* oldTail = tail_;
+    Node* prev = xor_ptr<Node>(tail_->npx, nullptr);
+
     if (!prev) {
         head_ = tail_ = nullptr;
     } else {
-        NodeT* prevprev = xor_ptr<NodeT>(prev->npx, tail_);
-        prev->npx = xor_ptr<NodeT>(prevprev, nullptr);
+        Node* prevPrev = xor_ptr<Node>(prev->npx, oldTail);
+        prev->npx = xor_ptr<Node>(prevPrev, nullptr);
         tail_ = prev;
     }
-    delete old; --size_;
+    delete oldTail;
+    --size_;
 }
+```
 
-template <class T>
-void XorList<T>::clear() noexcept {
-    NodeT* prev = nullptr;
-    NodeT* cur  = head_;
+### 리스트 비우기 (`clear`)
+
+```cpp
+template <typename T>
+void XorList<T>::clear() {
+    Node* prev = nullptr;
+    Node* cur  = head_;
     while (cur) {
-        NodeT* next = xor_ptr<NodeT>(prev, cur->npx);
-        prev = cur;
+        Node* next = xor_ptr(prev, cur->npx);
         delete cur;
-        cur = next;
+        prev = cur;
+        cur  = next;
     }
     head_ = tail_ = nullptr;
     size_ = 0;
 }
-
-} // namespace xorll
 ```
 
-### 반복자 기반 `emplace/insert`(pos 앞에 삽입)
+### 반복자 위치에 삽입 (`emplace`)
 
-- 표준 `std::list::insert(pos, v)`와 동일하게 **`pos` 앞**에 들어간다고 가정한다.
-- `pos`가 `begin()`이면 `emplace_front`, `end()`면 `emplace_back`.
+`std::list::insert`와 동일하게 **`pos` 앞에** 삽입합니다.
 
 ```cpp
-// xor_list_impl.hpp (계속)
-namespace xorll {
-
-template <class T>
-template <class... Args>
+template <typename T>
+template <typename... Args>
 typename XorList<T>::iterator
-XorList<T>::emplace(iterator pos, Args&&... args){
-    if (pos.owner_ != this) throw std::runtime_error("iterator mismatch");
-    if (pos.cur_ == head_) { // 맨 앞
+XorList<T>::emplace(iterator pos, Args&&... args) {
+    // pos가 begin()이면 앞에 삽입
+    if (pos.cur_ == head_) {
         emplace_front(std::forward<Args>(args)...);
         return begin();
     }
-    if (!pos.cur_) { // end() 앞 = 맨 뒤
-        std::size_t oldsz = size_;
+    // pos가 end()이면 뒤에 삽입 (end 앞 = 마지막 뒤)
+    if (!pos.cur_) {
         emplace_back(std::forward<Args>(args)...);
-        auto it = end(); --it; // 새 tail
-        (void)oldsz;
+        auto it = end();
+        --it;  // 방금 추가된 노드로 이동
         return it;
     }
 
-    NodeT* next = pos.cur_;
-    NodeT* prev = pos.prev_; // pos는 prev/cur/next를 보유
-    // 새 노드
-    NodeT* n = new NodeT(std::forward<Args>(args)...);
-    // 링크: prev - n - next
-    // prev 업데이트
+    Node* next = pos.cur_;
+    Node* prev = pos.prev_;  // pos가 알고 있는 이전 노드
+
+    // 새 노드 생성
+    Node* newNode = new Node(std::forward<Args>(args)...);
+    newNode->npx = xor_ptr(prev, next);
+
+    // prev 갱신
     if (prev) {
-        NodeT* prevprev = xor_ptr<NodeT>(prev->npx, next);
-        prev->npx = xor_ptr<NodeT>(prevprev, n);
+        Node* prevPrev = xor_ptr(prev->npx, next);
+        prev->npx = xor_ptr(prevPrev, newNode);
     } else {
-        // prev==nullptr면 head 앞에 삽입이므로 head 갱신
-        n->npx = xor_ptr<NodeT>(nullptr, next);
-        NodeT* nextnext = xor_ptr<NodeT>(nullptr, next->npx);
-        next->npx = xor_ptr<NodeT>(n, nextnext);
-        head_ = n;
-        ++size_;
-        return iterator(this, nullptr, n, next);
+        // prev가 nullptr인 경우는 없음 (위에서 begin 케이스 처리)
     }
-    // next 업데이트
-    NodeT* nextnext = xor_ptr<NodeT>(next->npx, prev);
-    next->npx = xor_ptr<NodeT>(n, nextnext);
-    // n 설정
-    n->npx = xor_ptr<NodeT>(prev, next);
+
+    // next 갱신
+    Node* nextNext = xor_ptr(next->npx, prev);
+    next->npx = xor_ptr(newNode, nextNext);
 
     ++size_;
-    // 삽입된 노드에 대한 반복자 반환
-    NodeT* new_prev = prev ? xor_ptr<NodeT>(next, prev->npx) : nullptr; // 의미 없음, 재계산
-    (void)new_prev;
-    return iterator(this, prev, n, next);
+    return iterator(prev, newNode, next);
 }
-
-template <class T>
-typename XorList<T>::iterator
-XorList<T>::erase(iterator pos){
-    if (pos.owner_ != this) throw std::runtime_error("iterator mismatch");
-    if (!pos.cur_) throw std::out_of_range("erase end()");
-    NodeT* cur  = pos.cur_;
-    NodeT* prev = pos.prev_;
-    NodeT* next = pos.next_;
-
-    // 경계 처리
-    if (!prev && !next) {
-        // single node
-        delete cur; head_=tail_=nullptr; size_=0;
-        return end();
-    }
-    if (!prev) {
-        // 제거 노드가 head
-        NodeT* nextnext = xor_ptr<NodeT>(cur, next->npx);
-        next->npx = xor_ptr<NodeT>(nullptr, nextnext);
-        head_ = next;
-        delete cur; --size_;
-        return iterator(this, nullptr, head_, xor_ptr<NodeT>(nullptr, head_->npx));
-    }
-    if (!next) {
-        // 제거 노드가 tail
-        NodeT* prevprev = xor_ptr<NodeT>(prev->npx, cur);
-        prev->npx = xor_ptr<NodeT>(prevprev, nullptr);
-        tail_ = prev;
-        delete cur; --size_;
-        return end(); // tail 뒤
-    }
-
-    // 일반 케이스: prev - cur - next
-    NodeT* prevprev = xor_ptr<NodeT>(prev->npx, cur);
-    NodeT* nextnext = xor_ptr<NodeT>(next->npx, cur);
-    prev->npx = xor_ptr<NodeT>(prevprev, next);
-    next->npx = xor_ptr<NodeT>(prev,     nextnext);
-
-    delete cur; --size_;
-    // cur 자리에 next가 오므로, 새 반복자는 (prev, next, nextnext)
-    return iterator(this, prev, next, nextnext);
-}
-
-} // namespace xorll
 ```
 
-> 연결 갱신의 핵심 패턴
-> **기존**: `X->npx = A ^ B`
-> **중간 노드 C 제거 후** `X->npx = (A ^ C) ^ C ^ D = A ^ D` 로 바꾸기 →
-> 구현에서는 `xor_ptr(x->npx, C)`로 C를 제거하고, 이어서 새 이웃을 XOR한다.
+### 반복자 위치 삭제 (`erase`)
+
+```cpp
+template <typename T>
+typename XorList<T>::iterator
+XorList<T>::erase(iterator pos) {
+    if (!pos.cur_) throw std::out_of_range("erase end()");
+
+    Node* cur  = pos.cur_;
+    Node* prev = pos.prev_;
+    Node* next = pos.next_;
+
+    // 단일 노드
+    if (!prev && !next) {
+        delete cur;
+        head_ = tail_ = nullptr;
+        size_ = 0;
+        return end();
+    }
+
+    // head 삭제
+    if (!prev) {
+        Node* nextNext = xor_ptr(cur, next->npx);
+        next->npx = xor_ptr(nullptr, nextNext);
+        head_ = next;
+        delete cur;
+        --size_;
+        return iterator(nullptr, head_, xor_ptr(nullptr, head_->npx));
+    }
+
+    // tail 삭제
+    if (!next) {
+        Node* prevPrev = xor_ptr(prev->npx, cur);
+        prev->npx = xor_ptr(prevPrev, nullptr);
+        tail_ = prev;
+        delete cur;
+        --size_;
+        return end();
+    }
+
+    // 중간 삭제
+    Node* prevPrev = xor_ptr(prev->npx, cur);
+    Node* nextNext = xor_ptr(next->npx, cur);
+    prev->npx = xor_ptr(prevPrev, next);
+    next->npx = xor_ptr(prev,     nextNext);
+
+    delete cur;
+    --size_;
+    return iterator(prev, next, nextNext);
+}
+```
 
 ---
 
 ## 사용 예제
 
-### 기본 동작
-
 ```cpp
-// main_basic.cpp
-#include "xor_list_impl.hpp"
+#include <iostream>
+#include "xor_list.hpp"  // 위 코드를 모은 헤더
 
-using namespace xorll;
+int main() {
+    XorList<int> list;
 
-int main(){
-    XorList<int> xs;
-    xs.push_front(30);  // [30]
-    xs.push_front(20);  // [20,30]
-    xs.push_front(10);  // [10,20,30]
-    xs.push_back(40);   // [10,20,30,40]
+    list.push_front(30);   // [30]
+    list.push_front(20);   // [20,30]
+    list.push_front(10);   // [10,20,30]
+    list.push_back(40);    // [10,20,30,40]
+    list.push_back(50);    // [10,20,30,40,50]
 
-    // 순회
-    for (auto it=xs.begin(); it!=xs.end(); ++it) {
+    // 순방향 출력
+    std::cout << "순방향: ";
+    for (auto it = list.begin(); it != list.end(); ++it) {
         std::cout << *it << " ";
     }
-    std::cout << "\n"; // 10 20 30 40
+    std::cout << std::endl;
 
-    // 뒤에서 앞으로
-    auto it = xs.end();
+    // 역방향 출력 (--end()로 tail로 이동)
+    std::cout << "역방향: ";
+    auto it = list.end();
     while (true) {
-        try { --it; std::cout << *it << " "; }
-        catch (...) { break; }
-    }
-    std::cout << "\n"; // 40 30 20 10
-
-    // 중간 삽입: 25를 30 앞에
-    for (auto it=xs.begin(); it!=xs.end(); ++it){
-        if (*it==30){ xs.insert(it, 25); break; }
-    }
-    // 지우기: 20
-    for (auto it=xs.begin(); it!=xs.end(); ++it){
-        if (*it==20){ xs.erase(it); break; }
-    }
-
-    for (auto v: xs) std::cout << v << " ";
-    std::cout << "\n"; // 10 25 30 40
-}
-```
-
-### 예외 테스트(경계)
-
-```cpp
-// main_edge.cpp
-#include "xor_list_impl.hpp"
-
-using namespace xorll;
-
-int main(){
-    XorList<int> xs;
-    try { xs.pop_front(); } catch(const std::exception& e){ std::cout << e.what() << "\n"; }
-    xs.push_back(1);
-    xs.pop_back(); // empty
-    std::cout << xs.size() << "\n"; // 0
-
-    xs.push_back(5);
-    xs.push_back(6);
-    auto it = xs.begin(); // points to 5
-    xs.erase(it);         // erase head
-    std::cout << xs.front() << "\n"; // 6
-}
-```
-
----
-
-## 복잡도·메모리·수학 스냅샷
-
-- **시간**
-  - 전/후진 1스텝: $$O(1)$$
-  - 맨앞/맨뒤 삽입/삭제: $$O(1)$$
-  - 중간 위치 반복자 기반 `insert/erase`: 이웃만 갱신 → $$O(1)$$
-    (단, 그 위치까지 가는 비용은 순회이므로 평균 $$O(n)$$)
-- **공간**
-  - 이중 리스트: 노드당 포인터 2개 → \(2 \cdot \text{ptr\_size}\)
-  - XOR 리스트: 포인터 1개 → \(\text{ptr\_size}\)
-  - **절감률**(64비트 가정):
-    \[
-    \frac{2-1}{2} = 50\%
-    \]
-  - 실제로는 **할당자 메타데이터/정렬 패딩**으로 인해 체감 절감률은 더 낮을 수 있다.
-
----
-
-## 디버깅·테스트 전략
-
-1. **일관성 체크**: 순방향으로 수집한 시퀀스와 역방향 시퀀스가 서로 역순인지 비교.
-2. **브루트 대조**: 동일 연산 시퀀스를 `std::list`와 동시 실행 후 결과 비교.
-3. **퍼징**: 랜덤 `insert/erase/pop`/순회 후 불변식 확인.
-
-```cpp
-// test_fuzz.cpp
-#include "xor_list_impl.hpp"
-#include <list>
-#include <random>
-#include <cassert>
-
-using namespace xorll;
-
-int main(){
-    XorList<int> xs;
-    std::list<int> ys;
-
-    std::mt19937 rng(1234);
-    std::uniform_int_distribution<int> op(0,4), val(0,1000);
-
-    for (int t=0;t<20000;++t){
-        int o = op(rng);
-        if (o==0){ // push_front
-            int x=val(rng); xs.push_front(x); ys.push_front(x);
-        } else if (o==1){ // push_back
-            int x=val(rng); xs.push_back(x); ys.push_back(x);
-        } else if (o==2 && !ys.empty()){ // pop_front
-            xs.pop_front(); ys.pop_front();
-        } else if (o==3 && !ys.empty()){ // pop_back
-            xs.pop_back(); ys.pop_back();
-        } else if (o==4 && !ys.empty()){ // erase random
-            int k = val(rng) % (int)ys.size();
-            auto itx = xs.begin();
-            auto ity = ys.begin();
-            for (int i=0;i<k;++i){ ++itx; ++ity; }
-            xs.erase(itx); ys.erase(ity);
+        try {
+            --it;
+            std::cout << *it << " ";
+        } catch (...) {
+            break;
         }
-        // compare
-        auto itx = xs.begin(); auto ity = ys.begin();
-        for(; itx!=xs.end() && ity!=ys.end(); ++itx, ++ity) assert(*itx==*ity);
-        assert(itx==xs.end() && ity==ys.end());
     }
+    std::cout << std::endl;
+
+    // 중간 삽입 (25를 30 앞에)
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        if (*it == 30) {
+            list.insert(it, 25);
+            break;
+        }
+    }
+
+    // 20 삭제
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        if (*it == 20) {
+            list.erase(it);
+            break;
+        }
+    }
+
+    std::cout << "수정 후: ";
+    for (int x : list) {  // 범위 기반 for 문 (begin/end 필요)
+        std::cout << x << " ";
+    }
+    std::cout << std::endl;
+
+    return 0;
 }
 ```
 
----
-
-## 왜 실무에서 거의 안 쓰일까?
-
-- **가독성/유지보수성**: 포인터 XOR은 직관적이지 않아 협업 난이도↑.
-- **디버깅 지옥**: 중간 상태를 디버거로 보기 어려움. 크래시 시 체인 복원이 힘듦.
-- **도구 호환성**: ASan/Valgrind/검증기와 상호작용이 나쁠 수 있음.
-- **메모리 절감의 한계**: 실제 시스템에선 노드 내부 다른 필드, 할당자 메타데이터, 캐시 라인 정렬 등으로 **실제 절약률이 작음**.
-- **대안 풍부**: 공간이 정말 문제면 **압축 포인터**, **풀 할당자**, **SoA(Structure of Arrays)**, **컨테이너 재설계**가 보통 더 낫다.
-
----
-
-## 추가 팁/변형
-
-- **정렬 유지 리스트**: 삽입 시 순회 비용은 동일. XOR의 이점은 **포인터 1개**뿐.
-- **스레드 안전**: 단일 원자 갱신만으로 충분하지 않다. **락/RCU/해저드 포인터** 설계가 필요.
-- **포인터 태깅(tagging)**: 하위 비트를 플래그로 사용하는 트릭과 결합 가능하지만, 정렬 보장/UB 위험이 크다.
-
----
-
-## 전체 빌드
-
-```bash
-g++ -std=c++17 -O2 -Wall -Wextra -pedantic main_basic.cpp -o basic
-./basic
-
-g++ -std=c++17 -O2 -Wall -Wextra -pedantic main_edge.cpp  -o edge
-./edge
-
-g++ -std=c++17 -O2 -fsanitize=address,undefined -g test_fuzz.cpp -o fuzz
-./fuzz
+**예상 출력:**
+```
+순방향: 10 20 30 40 50 
+역방향: 50 40 30 20 10 
+수정 후: 10 25 30 40 50
 ```
 
-> 주의: ASan/UBSan 환경에서도 본 구현은 정의된 동작을 지키지만, **도구가 주입하는 포인터 변형/레드존**이 있는 플랫폼에서는 false positive/성능 저하가 있을 수 있다.
+---
+
+## 복잡도 및 메모리
+
+- **시간 복잡도**:
+  - 앞/뒤 삽입/삭제: \(O(1)\)
+  - 반복자 위치 삽입/삭제: \(O(1)\) (이미 위치를 알고 있을 때)
+  - 탐색: \(O(n)\) (임의 접근 불가)
+
+- **공간 복잡도**:
+  - 이중 연결 리스트: 노드당 포인터 2개
+  - XOR 리스트: 노드당 포인터 1개 → **50% 절약**
+  - 하지만 노드의 데이터 필드 크기가 작거나, 메모리 할당 오버헤드가 큰 경우 실제 절감 효과는 미미할 수 있습니다.
 
 ---
 
-## 요약
+## 왜 실무에서 거의 사용되지 않을까?
 
-- XOR 리스트는 **이중 리스트의 공간을 절반으로 줄이는** 고전 테크닉이다.
-- 구현은 간단해 보이나, **연결 갱신/반복자/예외/디버깅**에서 난이도가 높다.
-- 실전 대안: **일반 이중 리스트 + 맞춤 할당자/메모리 풀**이 대부분 더 낫다.
-- 학습 관점에선 **포인터 연산/메모리 모델** 감각을 키우는 훌륭한 연습 주제다.
+1. **가독성과 유지보수성**: 코드를 이해하기 어렵고, 새로운 개발자가 바로 투입되기 힘듭니다.
+2. **디버깅의 어려움**: 연결 상태를 파악하기 위해 항상 XOR을 풀어야 하므로 디버거에서 값 확인이 불편합니다.
+3. **도구 호환성**: AddressSanitizer 같은 메모리 검사 도구가 포인터 변조를 오탐할 수 있습니다.
+4. **실질적 절약 효과 미미**: 현대 시스템에서 메모리는 비교적 저렴하고, 노드당 8바이트 절약보다 코드 복잡성이 더 큰 비용입니다.
+5. **안전한 대안**: 대부분의 상황에서는 `std::list`(이중 연결 리스트)를 그대로 사용하는 것이 좋습니다.
+
+---
+
+## 결론
+
+XOR 연결 리스트는 **포인터 연산의 묘미**를 보여주는 흥미로운 주제입니다.  
+메모리가 매우 제한된 임베디드 시스템이나 특수한 환경이 아니라면 실제로 사용할 일은 거의 없지만,  
+C++의 포인터와 비트 연산을 깊이 이해하는 데 도움이 될 수 있습니다.
+
+**학습 목표**:
+- 포인터를 정수로 변환하여 연산하는 방법
+- XOR의 성질을 이용한 데이터 구조 설계
+- 반복자와 예외 처리의 실제 구현 경험
+
+만약 실제 프로젝트에서 이중 연결 리스트가 필요하다면, 그냥 `std::list`를 사용하세요.

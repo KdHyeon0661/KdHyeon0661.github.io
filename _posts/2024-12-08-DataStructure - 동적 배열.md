@@ -4,817 +4,284 @@ title: Data Structure - 동적 배열
 date: 2024-12-08 20:20:23 +0900
 category: Data Structure
 ---
-# in C++
+# 동적 배열
+
 ## 동적 배열이란?
 
-정적 배열과 달리, **요소 수에 맞춰 자동 확장/축소 가능**한 **연속 메모리** 기반 컨테이너입니다.
+**동적 배열(dynamic array)**은 실행 시간 동안 크기가 변할 수 있는 배열입니다.  
+일반 배열(정적 배열)은 선언할 때 크기를 고정해야 하지만, 동적 배열은 필요에 따라 자동으로 크기가 늘어나거나 줄어듭니다.
 
-### 핵심 특성
-
-- **랜덤 접근 O(1)** (`operator[]`, `data()`로 인덱싱)
-- **끝 삽입 amortized O(1)** (재할당 발생 시 O(n))
-- **중간 삽입/삭제 O(n)** (시프트 비용)
-- **연속 메모리**로 캐시 친화적(실행시간 상수항이 작음)
-
----
-
-## 수학적 배경: 상환분석(Amortized Analysis)
-
-용량을 매번 2배로 늘리는 정책에서, n번의 `push_back`에 대한 총 이동 비용은
-
-$$
-\sum_{i=0}^{\lfloor\log_2 n\rfloor} \frac{n}{2^i} \le 2n = O(n)
-$$
-
-이므로 **평균 1회 삽입 비용은 상수 시간**입니다:
-
-$$
-\text{amortized } O(1).
-$$
-
-> 성장 비율을 1.5로 줄이면 **메모리 오버헤드는 감소**하지만 **재할당 빈도**가 늘어 평균 상수항이 커질 수 있습니다. 반대로 2배는 재할당 빈도는 적으나 순간 피크 메모리가 더 큽니다.
-
----
-
-## 우리가 만들 클래스의 외형(요구사항 확장)
-
-초안의 인터페이스를 **일반 템플릿 + 안전한 메모리 관리 + 반복자**로 확장합니다.
+### 정적 배열 vs 동적 배열
 
 ```cpp
-// mini_vector.hpp
-#pragma once
-#include <memory>
-#include <iterator>
-#include <stdexcept>
-#include <algorithm>
-#include <initializer_list>
-#include <type_traits>
-#include <utility>
+// 정적 배열 (크기 고정)
+int arr[5] = {1, 2, 3, 4, 5};  // 항상 5칸만 사용 가능
 
-template <class T, class Alloc = std::allocator<T>>
-class mini_vector {
-public:
-    using value_type             = T;
-    using allocator_type         = Alloc;
-    using size_type              = std::size_t;
-    using difference_type        = std::ptrdiff_t;
-    using reference              = value_type&;
-    using const_reference        = const value_type&;
-    using pointer                = typename std::allocator_traits<Alloc>::pointer;
-    using const_pointer          = typename std::allocator_traits<Alloc>::const_pointer;
-    using iterator               = value_type*;              // contiguous
-    using const_iterator         = const value_type*;
-    using reverse_iterator       = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-
-private:
-    allocator_type alloc_;
-    pointer data_ = nullptr;     // [data_, data_ + size_) : constructed
-    size_type size_ = 0;
-    size_type cap_  = 0;
-
-public:
-    // 3.1 생성/소멸
-    mini_vector() noexcept(std::is_nothrow_default_constructible<Alloc>::value) = default;
-    explicit mini_vector(size_type n, const T& val = T(), const Alloc& a = Alloc());
-    explicit mini_vector(const Alloc& a) noexcept;
-    mini_vector(std::initializer_list<T> il, const Alloc& a = Alloc());
-
-    mini_vector(const mini_vector& other);
-    mini_vector(const mini_vector& other, const Alloc& a);
-
-    mini_vector(mini_vector&& other) noexcept;
-    mini_vector(mini_vector&& other, const Alloc& a);
-
-    ~mini_vector();
-
-    // 3.2 대입/스왑
-    mini_vector& operator=(const mini_vector& rhs);
-    mini_vector& operator=(mini_vector&& rhs) noexcept(
-        std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value ||
-        std::is_nothrow_move_assignable<T>::value);
-    mini_vector& operator=(std::initializer_list<T> il);
-    void swap(mini_vector& other) noexcept;
-
-    // 3.3 용량
-    size_type size() const noexcept { return size_; }
-    size_type capacity() const noexcept { return cap_; }
-    bool empty() const noexcept { return size_ == 0; }
-    void reserve(size_type new_cap);
-    void shrink_to_fit() noexcept; // best-effort
-    void clear() noexcept;
-
-    // 3.4 접근
-    reference operator[](size_type i) noexcept { return data_[i]; }
-    const_reference operator[](size_type i) const noexcept { return data_[i]; }
-    reference at(size_type i);
-    const_reference at(size_type i) const;
-    reference front() { return data_[0]; }
-    const_reference front() const { return data_[0]; }
-    reference back() { return data_[size_-1]; }
-    const_reference back() const { return data_[size_-1]; }
-    pointer data() noexcept { return data_; }
-    const_pointer data() const noexcept { return data_; }
-
-    // 3.5 반복자
-    iterator begin() noexcept { return data_; }
-    const_iterator begin() const noexcept { return data_; }
-    const_iterator cbegin() const noexcept { return data_; }
-    iterator end() noexcept { return data_ + size_; }
-    const_iterator end() const noexcept { return data_ + size_; }
-    const_iterator cend() const noexcept { return data_ + size_; }
-    reverse_iterator rbegin() noexcept { return reverse_iterator(end()); }
-    const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
-    reverse_iterator rend() noexcept { return reverse_iterator(begin()); }
-    const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
-
-    // 3.6 수정자
-    void push_back(const T& v);
-    void push_back(T&& v);
-    template <class... Args> reference emplace_back(Args&&... args);
-
-    void pop_back();
-
-    iterator insert(const_iterator pos, const T& v);
-    iterator insert(const_iterator pos, T&& v);
-    template <class... Args> iterator emplace(const_iterator pos, Args&&... args);
-
-    iterator erase(const_iterator pos);
-    iterator erase(const_iterator first, const_iterator last);
-
-    void resize(size_type new_size);
-    void resize(size_type new_size, const T& value);
-
-private:
-    // 내부 유틸
-    void reallocate_strong(size_type new_cap);
-    void destroy_range(pointer first, pointer last) noexcept;
-    void deallocate_storage() noexcept;
-    static size_type grow_capacity(size_type current, size_type need);
-};
+// 동적 배열 (std::vector 사용)
+#include <vector>
+std::vector<int> vec;           // 처음에는 비어 있음
+vec.push_back(10);               // 크기가 1로 증가
+vec.push_back(20);               // 크기가 2로 증가
 ```
 
-> **노트**
-> - 반복자는 포인터여서 `std::vector`처럼 **contiguous iterator**를 가집니다.
-> - `grow_capacity`에서 성장 정책(예: 2x, 혹은 1.5x)을 통일적으로 적용합니다.
-> - `reallocate_strong`은 **강한 예외 안전 보장**을 제공하기 위해 새 버퍼에 **이동/복사-구성** 후 교체합니다.
+- **정적 배열**: 메모리가 스택에 할당되고, 크기를 바꿀 수 없습니다.
+- **동적 배열**: 메모리가 힙에 할당되고, 요소 추가 시 자동으로 공간을 확보합니다.
 
 ---
 
-## 구현: 생성/소멸/대입/스왑
+## C++의 동적 배열: `std::vector`
+
+C++ 표준 라이브러리는 `std::vector`라는 템플릿 클래스를 제공합니다.  
+가장 많이 사용하는 컨테이너 중 하나이며, 성능과 편의성 모두 뛰어납니다.
+
+### `std::vector` 기본 사용법
+
+#### 헤더 포함
 
 ```cpp
-// mini_vector_impl.hpp
-#pragma once
-#include "mini_vector.hpp"
+#include <vector>
+```
 
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(size_type n, const T& val, const Alloc& a)
-: alloc_(a), data_(nullptr), size_(0), cap_(0)
-{
-    if (n == 0) return;
-    data_ = std::allocator_traits<Alloc>::allocate(alloc_, n);
-    cap_ = n;
-    pointer cur = data_;
-    try {
-        for (; size_ < n; ++size_, ++cur)
-            std::allocator_traits<Alloc>::construct(alloc_, cur, val);
-    } catch (...) {
-        destroy_range(data_, cur);
-        std::allocator_traits<Alloc>::deallocate(alloc_, data_, cap_);
-        data_ = nullptr; size_ = cap_ = 0;
-        throw;
-    }
+#### 생성
+
+```cpp
+std::vector<int> v1;                // 빈 벡터
+std::vector<int> v2(10);            // 10개의 0으로 초기화된 벡터
+std::vector<int> v3(5, 100);        // 5개의 100으로 채워진 벡터
+std::vector<int> v4 = {1, 2, 3, 4}; // 초기화 리스트
+```
+
+#### 요소 추가 (끝에 삽입)
+
+```cpp
+std::vector<int> v;
+v.push_back(10);    // v: [10]
+v.push_back(20);    // v: [10, 20]
+v.push_back(30);    // v: [10, 20, 30]
+```
+
+#### 요소 접근
+
+```cpp
+int x = v[1];           // 20 (범위 검사 없음)
+int y = v.at(1);        // 20 (범위 검사 있음, 예외 발생 가능)
+int first = v.front();  // 첫 요소 (10)
+int last = v.back();    // 마지막 요소 (30)
+```
+
+#### 요소 삭제
+
+```cpp
+v.pop_back();           // 마지막 요소 제거 → [10, 20]
+v.clear();              // 모든 요소 제거 → []
+```
+
+#### 크기와 용량
+
+- `size()` : 현재 저장된 요소의 개수
+- `capacity()` : 현재 할당된 메모리 공간이 저장할 수 있는 요소의 최대 개수 (재할당 없이)
+
+```cpp
+std::vector<int> v;
+std::cout << v.size() << ", " << v.capacity(); // 0, 0
+
+v.push_back(1);
+std::cout << v.size() << ", " << v.capacity(); // 1, 1 (컴파일러마다 다를 수 있음)
+
+v.push_back(2);
+// size:2, capacity:2 (또는 3, 구현에 따라 다름)
+```
+
+#### 미리 공간 예약하기
+
+```cpp
+std::vector<int> v;
+v.reserve(100);         // 최소 100개의 공간을 미리 확보
+std::cout << v.capacity(); // 100 (또는 그 이상)
+```
+
+`reserve`를 사용하면 잦은 재할당을 피할 수 있습니다.
+
+#### 불필요한 용량 줄이기
+
+```cpp
+std::vector<int> v(100);   // size=100, capacity>=100
+v.clear();                 // size=0, capacity는 그대로
+v.shrink_to_fit();         // capacity를 size에 맞춤 (요청)
+```
+
+---
+
+## 용량과 재할당
+
+`std::vector`는 내부적으로 연속된 메모리 블록을 사용합니다.  
+새 요소를 추가할 때 현재 용량이 부족하면 더 큰 메모리 블록을 새로 할당하고, 기존 요소를 모두 옮깁니다. 이 과정을 **재할당(reallocation)**이라고 합니다.
+
+재할당은 비용이 큰 작업이므로, `vector`는 한 번에 많은 공간을 추가로 할당하여 재할당 횟수를 줄입니다. 일반적으로 현재 용량의 **1.5배 또는 2배**를 새 용량으로 삼습니다.
+
+### 상환 분석 (Amortized Analysis)
+
+재할당 비용을 모든 삽입에 분산시키면, 한 번의 삽입 평균 비용은 **상수 시간**이 됩니다.
+
+예를 들어, 용량을 2배씩 늘리는 정책에서 n번의 `push_back`에 드는 총 요소 이동 횟수는 대략
+
+$$
+\sum_{i=0}^{\lfloor \log_2 n \rfloor} \frac{n}{2^i} \le 2n = O(n)
+$$
+
+입니다. 따라서 **평균적으로 1회 삽입당 O(1)**의 시간이 걸린다고 말합니다.
+
+---
+
+## 반복자 (Iterator)
+
+`vector`는 반복자를 제공하여 요소들을 순회할 수 있습니다.
+
+```cpp
+std::vector<int> v = {10, 20, 30};
+
+// begin()은 첫 요소를 가리키는 반복자, end()는 마지막 다음을 가리킴
+for (auto it = v.begin(); it != v.end(); ++it) {
+    std::cout << *it << " ";   // 10 20 30
 }
 
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(const Alloc& a) noexcept
-: alloc_(a) {}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(std::initializer_list<T> il, const Alloc& a)
-: alloc_(a)
-{
-    reserve(il.size());
-    for (const auto& x : il) push_back(x);
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(const mini_vector& other)
-: alloc_(std::allocator_traits<Alloc>::
-         select_on_container_copy_construction(other.alloc_))
-{
-    if (other.size_ == 0) return;
-    data_ = std::allocator_traits<Alloc>::allocate(alloc_, other.size_);
-    cap_ = other.size_;
-    pointer cur = data_;
-    try {
-        for (; size_ < other.size_; ++size_, ++cur)
-            std::allocator_traits<Alloc>::construct(alloc_, cur, other.data_[size_]);
-    } catch (...) {
-        destroy_range(data_, cur);
-        std::allocator_traits<Alloc>::deallocate(alloc_, data_, cap_);
-        data_ = nullptr; size_ = cap_ = 0;
-        throw;
-    }
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(const mini_vector& other, const Alloc& a)
-: alloc_(a)
-{
-    if (other.size_ == 0) return;
-    data_ = std::allocator_traits<Alloc>::allocate(alloc_, other.size_);
-    cap_ = other.size_;
-    pointer cur = data_;
-    try {
-        for (; size_ < other.size_; ++size_, ++cur)
-            std::allocator_traits<Alloc>::construct(alloc_, cur, other.data_[size_]);
-    } catch (...) {
-        destroy_range(data_, cur);
-        std::allocator_traits<Alloc>::deallocate(alloc_, data_, cap_);
-        data_ = nullptr; size_ = cap_ = 0;
-        throw;
-    }
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(mini_vector&& other) noexcept
-: alloc_(std::move(other.alloc_)), data_(other.data_), size_(other.size_), cap_(other.cap_)
-{
-    other.data_ = nullptr; other.size_ = other.cap_ = 0;
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>::mini_vector(mini_vector&& other, const Alloc& a)
-: alloc_(a)
-{
-    // allocator-propagation 정책 고려
-    if (alloc_ == other.alloc_) {
-        data_ = other.data_; size_ = other.size_; cap_ = other.cap_;
-        other.data_ = nullptr; other.size_ = other.cap_ = 0;
-    } else {
-        // 다른 allocator면 move-construct
-        reserve(other.size_);
-        for (size_type i = 0; i < other.size_; ++i) push_back(std::move(other.data_[i]));
-        other.clear();
-    }
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>::~mini_vector() {
-    deallocate_storage();
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>& mini_vector<T,Alloc>::operator=(const mini_vector& rhs) {
-    if (this == &rhs) return *this;
-    if constexpr (std::allocator_traits<Alloc>::propagate_on_container_copy_assignment::value) {
-        if (alloc_ != rhs.alloc_) {
-            deallocate_storage();
-            alloc_ = rhs.alloc_;
-        }
-    }
-    if (rhs.size_ > cap_) {
-        mini_vector tmp(rhs, alloc_);
-        swap(tmp);
-    } else {
-        // 재사용: 크기 조정
-        size_type i = 0;
-        // 공통 prefix 복사
-        for (; i < std::min(size_, rhs.size_); ++i) data_[i] = rhs.data_[i];
-        // 부족분 생성
-        for (; i < rhs.size_; ++i)
-            std::allocator_traits<Alloc>::construct(alloc_, data_ + i, rhs.data_[i]);
-        // 초과분 파괴
-        for (; i < size_; ++i)
-            std::allocator_traits<Alloc>::destroy(alloc_, data_ + i);
-        size_ = rhs.size_;
-    }
-    return *this;
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>& mini_vector<T,Alloc>::operator=(mini_vector&& rhs) noexcept(
-    std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value ||
-    std::is_nothrow_move_assignable<T>::value)
-{
-    if (this == &rhs) return *this;
-    if constexpr (std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value) {
-        deallocate_storage();
-        alloc_ = std::move(rhs.alloc_);
-        data_ = rhs.data_; size_ = rhs.size_; cap_ = rhs.cap_;
-        rhs.data_ = nullptr; rhs.size_ = rhs.cap_ = 0;
-    } else {
-        if (alloc_ == rhs.alloc_) {
-            deallocate_storage();
-            data_ = rhs.data_; size_ = rhs.size_; cap_ = rhs.cap_;
-            rhs.data_ = nullptr; rhs.size_ = rhs.cap_ = 0;
-        } else {
-            // 다른 allocator면 move-assign by element
-            clear();
-            reserve(rhs.size_);
-            for (size_type i=0; i<rhs.size_; ++i) push_back(std::move(rhs.data_[i]));
-            rhs.clear();
-        }
-    }
-    return *this;
-}
-
-template <class T, class Alloc>
-mini_vector<T,Alloc>& mini_vector<T,Alloc>::operator=(std::initializer_list<T> il) {
-    clear(); reserve(il.size());
-    for (const auto& x : il) push_back(x);
-    return *this;
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::swap(mini_vector& other) noexcept {
-    using std::swap;
-    if constexpr (std::allocator_traits<Alloc>::propagate_on_container_swap::value) {
-        swap(alloc_, other.alloc_);
-    }
-    swap(data_, other.data_);
-    swap(size_, other.size_);
-    swap(cap_,  other.cap_);
+// 범위 기반 for 문 (C++11)
+for (int x : v) {
+    std::cout << x << " ";
 }
 ```
 
 ---
 
-## 접근/용량/수정자 구현
+## 실전 예제
+
+### 예제 1: 학생 점수 관리
 
 ```cpp
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::reference
-mini_vector<T,Alloc>::at(size_type i) {
-    if (i >= size_) throw std::out_of_range("mini_vector::at");
-    return data_[i];
-}
-
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::const_reference
-mini_vector<T,Alloc>::at(size_type i) const {
-    if (i >= size_) throw std::out_of_range("mini_vector::at");
-    return data_[i];
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::reserve(size_type new_cap) {
-    if (new_cap <= cap_) return;
-    reallocate_strong(new_cap);
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::shrink_to_fit() noexcept {
-    if (size_ == cap_) return;
-    try {
-        reallocate_strong(size_);
-    } catch (...) {
-        // best-effort: 실패해도 상태 보존
-    }
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::clear() noexcept {
-    destroy_range(data_, data_ + size_);
-    size_ = 0;
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::push_back(const T& v) {
-    if (size_ == cap_) reserve(grow_capacity(cap_, size_ + 1));
-    std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, v);
-    ++size_;
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::push_back(T&& v) {
-    if (size_ == cap_) reserve(grow_capacity(cap_, size_ + 1));
-    std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::move(v));
-    ++size_;
-}
-
-template <class T, class Alloc>
-template <class... Args>
-typename mini_vector<T,Alloc>::reference
-mini_vector<T,Alloc>::emplace_back(Args&&... args) {
-    if (size_ == cap_) reserve(grow_capacity(cap_, size_ + 1));
-    std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::forward<Args>(args)...);
-    ++size_;
-    return back();
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::pop_back() {
-    if (size_ == 0) throw std::out_of_range("mini_vector::pop_back");
-    --size_;
-    std::allocator_traits<Alloc>::destroy(alloc_, data_ + size_);
-    // 축소 정책: 여기서는 자동 축소는 하지 않음(힙 스래싱 방지)
-}
-
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::iterator
-mini_vector<T,Alloc>::insert(const_iterator pos, const T& v) {
-    auto idx = static_cast<size_type>(pos - cbegin());
-    if (size_ == cap_) reserve(grow_capacity(cap_, size_ + 1));
-    // 뒤에서부터 한 칸씩 민 후 자리 생성
-    if (idx < size_) {
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::move(data_[size_-1]));
-        for (size_type i = size_-1; i > idx; --i) data_[i] = std::move(data_[i-1]);
-        data_[idx] = v;
-    } else {
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, v);
-    }
-    ++size_;
-    return begin() + idx;
-}
-
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::iterator
-mini_vector<T,Alloc>::insert(const_iterator pos, T&& v) {
-    auto idx = static_cast<size_type>(pos - cbegin());
-    if (size_ == cap_) reserve(grow_capacity(cap_, size_ + 1));
-    if (idx < size_) {
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::move(data_[size_-1]));
-        for (size_type i = size_-1; i > idx; --i) data_[i] = std::move(data_[i-1]);
-        data_[idx] = std::move(v);
-    } else {
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::move(v));
-    }
-    ++size_;
-    return begin() + idx;
-}
-
-template <class T, class Alloc>
-template <class... Args>
-typename mini_vector<T,Alloc>::iterator
-mini_vector<T,Alloc>::emplace(const_iterator pos, Args&&... args) {
-    auto idx = static_cast<size_type>(pos - cbegin());
-    if (size_ == cap_) reserve(grow_capacity(cap_, size_ + 1));
-    if (idx < size_) {
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::move(data_[size_-1]));
-        for (size_type i=size_-1; i>idx; --i) data_[i] = std::move(data_[i-1]);
-        data_[idx].~T();
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + idx, std::forward<Args>(args)...);
-    } else {
-        std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, std::forward<Args>(args)...);
-    }
-    ++size_;
-    return begin() + idx;
-}
-
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::iterator
-mini_vector<T,Alloc>::erase(const_iterator pos) {
-    auto idx = static_cast<size_type>(pos - cbegin());
-    if (idx >= size_) return end();
-    std::allocator_traits<Alloc>::destroy(alloc_, data_ + idx);
-    for (size_type i = idx; i + 1 < size_; ++i) data_[i] = std::move(data_[i+1]);
-    --size_;
-    std::allocator_traits<Alloc>::destroy(alloc_, data_ + size_);
-    return begin() + idx;
-}
-
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::iterator
-mini_vector<T,Alloc>::erase(const_iterator first, const_iterator last) {
-    auto f = static_cast<size_type>(first - cbegin());
-    auto l = static_cast<size_type>(last  - cbegin());
-    if (f >= l || f >= size_) return begin() + std::min(f, size_);
-    l = std::min(l, size_);
-
-    // 파괴
-    for (size_type i=f; i<l; ++i) std::allocator_traits<Alloc>::destroy(alloc_, data_ + i);
-    // 앞으로 당김
-    size_type cnt = l - f;
-    for (size_type i=l; i<size_; ++i) data_[i - cnt] = std::move(data_[i]);
-
-    // 뒤 꼬리 파괴
-    for (size_type i=size_-cnt; i<size_; ++i)
-        std::allocator_traits<Alloc>::destroy(alloc_, data_ + i);
-    size_ -= cnt;
-    return begin() + f;
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::resize(size_type new_size) {
-    if (new_size < size_) {
-        for (size_type i=new_size; i<size_; ++i)
-            std::allocator_traits<Alloc>::destroy(alloc_, data_ + i);
-        size_ = new_size;
-    } else if (new_size > size_) {
-        reserve(new_size);
-        for (; size_ < new_size; ++size_)
-            std::allocator_traits<Alloc>::construct(alloc_, data_ + size_);
-    }
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::resize(size_type new_size, const T& value) {
-    if (new_size < size_) {
-        for (size_type i=new_size; i<size_; ++i)
-            std::allocator_traits<Alloc>::destroy(alloc_, data_ + i);
-        size_ = new_size;
-    } else if (new_size > size_) {
-        reserve(new_size);
-        for (; size_ < new_size; ++size_)
-            std::allocator_traits<Alloc>::construct(alloc_, data_ + size_, value);
-    }
-}
-```
-
----
-
-## 내부 유틸: 재할당(강한 보장), 파괴/해제, 성장 정책
-
-```cpp
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::reallocate_strong(size_type new_cap) {
-    pointer new_data = std::allocator_traits<Alloc>::allocate(alloc_, new_cap);
-    size_type i = 0;
-    try {
-        for (; i < size_; ++i)
-            std::allocator_traits<Alloc>::construct(
-                alloc_, new_data + i, std::move_if_noexcept(data_[i]));
-    } catch (...) {
-        // 성공한 만큼만 파괴 후 새 버퍼 해제
-        for (size_type j = 0; j < i; ++j)
-            std::allocator_traits<Alloc>::destroy(alloc_, new_data + j);
-        std::allocator_traits<Alloc>::deallocate(alloc_, new_data, new_cap);
-        throw;
-    }
-    // 기존 파괴/해제
-    destroy_range(data_, data_ + size_);
-    if (data_) std::allocator_traits<Alloc>::deallocate(alloc_, data_, cap_);
-    data_ = new_data; cap_ = new_cap;
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::destroy_range(pointer first, pointer last) noexcept {
-    for (; first != last; ++first)
-        std::allocator_traits<Alloc>::destroy(alloc_, first);
-}
-
-template <class T, class Alloc>
-void mini_vector<T,Alloc>::deallocate_storage() noexcept {
-    destroy_range(data_, data_ + size_);
-    if (data_) std::allocator_traits<Alloc>::deallocate(alloc_, data_, cap_);
-    data_ = nullptr; size_ = cap_ = 0;
-}
-
-template <class T, class Alloc>
-typename mini_vector<T,Alloc>::size_type
-mini_vector<T,Alloc>::grow_capacity(size_type current, size_type need) {
-    // 정책: max(need, max(2*current, 8))  (초기 최소 cap 8)
-    size_type doubled = current ? current * 2 : size_type(8);
-    if (doubled < need) doubled = need;
-    return doubled;
-}
-```
-
----
-
-## 사용 예제 (기본 동작 확인)
-
-```cpp
-// main_basic.cpp
 #include <iostream>
-#include "mini_vector.hpp"
-#include "mini_vector_impl.hpp"
+#include <vector>
+#include <numeric>   // accumulate
 
 int main() {
-    mini_vector<int> v;
-    for (int i=1;i<=5;i++) v.push_back(i*10); // 10 20 30 40 50
-    auto it = v.insert(v.begin()+2, 25);      // 10 20 25 30 40 50
-    v.erase(it+2);                            // 10 20 25 40 50
-    v.emplace_back(60);                       // 10 20 25 40 50 60
-    v.pop_back();                             // 10 20 25 40 50
+    std::vector<int> scores;
 
-    std::cout << "size=" << v.size()
-              << " cap=" << v.capacity() << "\n";
-    for (auto x: v) std::cout << x << " ";
-    std::cout << "\n";
+    // 점수 입력
+    scores.push_back(85);
+    scores.push_back(92);
+    scores.push_back(78);
+    scores.push_back(94);
+    scores.push_back(88);
 
-    v.shrink_to_fit();
-    std::cout << "after shrink cap=" << v.capacity() << "\n";
-
-    try {
-        std::cout << v.at(100) << "\n"; // 예외 테스트
-    } catch (const std::exception& e) {
-        std::cout << "ex: " << e.what() << "\n";
+    // 총점 계산
+    int sum = 0;
+    for (int s : scores) {
+        sum += s;
     }
+    double average = static_cast<double>(sum) / scores.size();
+    std::cout << "평균: " << average << std::endl;
+
+    // 90점 이상인 학생 수
+    int cnt = 0;
+    for (int s : scores) {
+        if (s >= 90) ++cnt;
+    }
+    std::cout << "90점 이상: " << cnt << "명" << std::endl;
+
+    return 0;
 }
 ```
 
----
-
-## 예외 안전 보장(Strong vs Basic)
-
-- `reallocate_strong`은 **새 버퍼에 먼저 성공적으로 구성**(construct) 후, **교체**하므로 **강한 보장**: 실패 시 **원래 컨테이너 불변**.
-- `insert`/`erase`는 시프트 중 예외가 날 수 있으므로, 위처럼 **뒤에서 하나 구성 후 앞으로 move**하는 패턴을 사용해 **기본 보장** 또는 조건부 **강한 보장**을 근접하게 달성합니다.
-- `push_back`/`emplace_back`은 재할당 시 `reallocate_strong`을 경유하여 **강한 보장**.
-
----
-
-## 반복자 무효화 규칙
-
-- **재할당 발생 시**: 모든 반복자/참조/포인터 **무효화**.
-- **중간 삽입/삭제**: 삽입 지점 이후의 반복자 **무효화** 가능.
-- **끝 삽입(재할당 없음)**: `end()`만 변하고 기존 요소 참조는 유효.
-
-> 실제 `std::vector`와 동일한 직관을 갖도록 설계했습니다.
-
----
-
-## 성능/캐시/성장 정책 논의
-
-- **연속 메모리**는 연결 리스트보다 **캐시 지역성**이 훨씬 좋습니다. 단순한 `for` 루프 순회가 매우 빠릅니다.
-- **성장 비율**: 2x는 재할당 빈도를 낮추고 상수항이 작아지지만 **메모리 오버헤드** 증가. 1.5x는 메모리 효율이 좋으나 재할당 빈도 증가.
-  실무에서는 **작업 부하**(삽입 패턴, 최대 용량 예상, 메모리 한계)에 따라 선택합니다.
-- **축소 정책**: `pop_back` 때마다 바로 `shrink`하면 **힙 스래싱**.
-  대개 **명시적 `shrink_to_fit()`** 또는 **재할당 기준(1/4 이하)**을 신중 적용.
-
----
-
-## 고급: 사용자 정의 타입/Move/Noexcept
-
-다음 타입을 삽입해 **move 경로**와 **예외 발생 시 롤백**을 실험할 수 있습니다.
+### 예제 2: 짝수만 남기기
 
 ```cpp
-// types.hpp
-#pragma once
-#include <iostream>
-#include <stdexcept>
-
-struct Loud {
-    int v;
-    explicit Loud(int x=0) : v(x) { std::cout << "ctor " << v << "\n"; }
-    Loud(const Loud& o) : v(o.v) { std::cout << "copy " << v << "\n"; }
-    Loud(Loud&& o) noexcept : v(o.v) { std::cout << "move " << v << "\n"; o.v=0; }
-    Loud& operator=(const Loud& o) { v=o.v; std::cout << "copy= " << v << "\n"; return *this; }
-    Loud& operator=(Loud&& o) noexcept { v=o.v; o.v=0; std::cout << "move= " << v << "\n"; return *this; }
-    ~Loud(){ std::cout << "dtor " << v << "\n"; }
-};
-
-struct ThrowOnCopy {
-    int v;
-    explicit ThrowOnCopy(int x=0) : v(x) {}
-    ThrowOnCopy(const ThrowOnCopy&) { throw std::runtime_error("copy fail"); }
-    ThrowOnCopy(ThrowOnCopy&&) noexcept = default;
-    ThrowOnCopy& operator=(const ThrowOnCopy&) = delete;
-    ThrowOnCopy& operator=(ThrowOnCopy&&) noexcept = default;
-};
-```
-
-테스트:
-
-```cpp
-// main_move.cpp
-#include "mini_vector.hpp"
-#include "mini_vector_impl.hpp"
-#include "types.hpp"
-
-int main(){
-    mini_vector<Loud> mv;
-    mv.emplace_back(1);
-    mv.emplace_back(2);
-    mv.emplace_back(3);
-
-    // 재할당 트리거
-    mv.reserve(100);
-    mv.emplace_back(4);
-
-    mini_vector<ThrowOnCopy> tv;
-    tv.emplace_back(1);
-    tv.emplace_back(2);
-    // 강한 보장 확인: 재할당 중 copy 생성자 대신 move 사용
-    tv.reserve(64);
-}
-```
-
----
-
-## 단위 테스트 & 퍼징(경계/랜덤)
-
-간단한 **브루트포스 대조**: 표준 `std::vector`와 결과 동일성 검증.
-
-```cpp
-// test_fuzz.cpp
 #include <vector>
-#include <random>
-#include <cassert>
-#include "mini_vector.hpp"
-#include "mini_vector_impl.hpp"
+#include <iostream>
 
-int main(){
-    std::mt19937 rng(1234);
-    std::uniform_int_distribution<int> op(0,4), val(0,1000);
+int main() {
+    std::vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    mini_vector<int> mv;
-    std::vector<int>  sv;
-
-    for (int t=0; t<100000; ++t) {
-        int o = op(rng);
-        if (o==0) { // push_back
-            int x = val(rng);
-            mv.push_back(x); sv.push_back(x);
-        } else if (o==1 && !sv.empty()) { // pop_back
-            mv.pop_back(); sv.pop_back();
-        } else if (o==2) { // insert at random pos
-            int x = val(rng);
-            size_t p = sv.empty()?0: std::uniform_int_distribution<size_t>(0, sv.size())(rng);
-            mv.insert(mv.begin()+p, x);
-            sv.insert(sv.begin()+p, x);
-        } else if (o==3 && !sv.empty()) { // erase one
-            size_t p = std::uniform_int_distribution<size_t>(0, sv.size()-1)(rng);
-            mv.erase(mv.begin()+p);
-            sv.erase(sv.begin()+p);
-        } else { // reserve/reshrink
-            size_t nc = std::uniform_int_distribution<size_t>(0, 1000)(rng);
-            mv.reserve(nc);
-            // sv에는 동등 동작 없음, 스킵
+    // 짝수만 남기고 홀수는 제거 (뒤에서부터 순회하며 erase)
+    for (auto it = v.begin(); it != v.end(); ) {
+        if (*it % 2 != 0) {
+            it = v.erase(it);   // erase는 다음 요소 반복자를 반환
+        } else {
+            ++it;
         }
-        // 동등성 체크
-        assert(mv.size() == sv.size());
-        for (size_t i=0;i<sv.size();++i) assert(mv[i] == sv[i]);
     }
+
+    for (int x : v) {
+        std::cout << x << " ";   // 2 4 6 8 10
+    }
+    return 0;
+}
+```
+
+### 예제 3: 동적 배열을 함수에 전달
+
+```cpp
+#include <vector>
+#include <iostream>
+
+// 값 복사 (벡터 전체가 복사됨)
+void print_vector(std::vector<int> v) {
+    for (int x : v) std::cout << x << " ";
+    std::cout << std::endl;
+}
+
+// 참조 전달 (복사 없음)
+void add_one(std::vector<int>& v) {
+    for (int& x : v) ++x;
+}
+
+int main() {
+    std::vector<int> data = {1, 2, 3};
+    add_one(data);
+    print_vector(data);   // 2 3 4
+    return 0;
 }
 ```
 
 ---
 
-## 복잡도 요약
+## 주의할 점
 
-| 연산 | 평균/상환 시간복잡도 | 최악 | 비고 |
-|---|---|---|---|
-| `operator[]`, `at` | $$O(1)$$ | $$O(1)$$ | 연속 메모리 |
-| `push_back` | amortized $$O(1)$$ | $$O(n)$$ | 재할당 시 전체 move/copy |
-| `pop_back` | $$O(1)$$ | $$O(1)$$ | 파괴만 수행 |
-| `insert(pos,v)` | $$O(n)$$ | $$O(n)$$ | 시프트 비용 |
-| `erase(pos)` | $$O(n)$$ | $$O(n)$$ | 시프트 비용 |
-| `reserve(k)` | $$O(n)$$ | $$O(n)$$ | 재할당+이동 |
-| `shrink_to_fit()` | $$O(n)$$ | $$O(n)$$ | best-effort |
+### 반복자 무효화 (Iterator Invalidation)
 
----
+`vector`에 요소를 추가하거나 제거하면, 기존에 가지고 있던 반복자, 포인터, 참조가 무효화될 수 있습니다.
 
-## 실무 체크리스트
+- 재할당이 일어나면 모든 반복자가 무효화됩니다.
+- 중간에 삽입/삭제가 일어나면 그 위치 이후의 반복자가 무효화됩니다.
 
-1. **예외 안전**: 새 버퍼에서 먼저 **성공적 구성** → 실패 시 롤백.
-2. **성장 정책**: 1.5x vs 2x — 작업 부하와 메모리 한도를 보고 결정.
-3. **축소 정책**: 자동 축소는 신중. 일반적으론 명시적 `shrink_to_fit()`.
-4. **반복자 무효화**: 재할당/삽입/삭제 시의 규칙을 문서화.
-5. **move/noexcept**: 요소 타입이 `noexcept move`일수록 재할당 비용 ↓.
-6. **테스트**: 경계·랜덤 퍼징·ASan/UBSan로 미검증 오류 제거.
-7. **프로파일**: 캐시미스, 분기예측, 성장 비율별 상수항 비교.
-
----
-
-## 확장 과제
-
-- **범위 삽입/삭제**(iterator 범위 인자)
-- **SBO(Small Buffer Optimization)**: 작은 N에서 heap-free 최적화(문자열에서 흔함)
-- **커스텀 Allocator**(풀/arena) 적용
-- **동기화 래퍼**: 생산자 단일, 소비자 단일 등의 제한 하에 락 경량화
-- **C++20**: `std::span`/`std::ranges` 친화 API
-
----
-
-## 결론
-
-초안의 “단일형 `int` 동적 배열”을 **일반 템플릿 컨테이너**로 확장하여,
-- 연속 메모리/상환분석,
-- 예외 안전과 move,
-- 반복자 모델과 무효화 규칙,
-- 성장/축소 정책과 실무 트레이드오프
-까지 **std::vector의 본질**을 바닥부터 재현했습니다.
-
-이제 이 `mini_vector`로 각종 타입/워크로드에서 **재할당 빈도/시간/메모리**를 **실측**해보면,
-표준 컨테이너 선택과 튜닝의 감각이 훨씬 빨라집니다.
-
----
-
-## 부록: 전체 빌드 스크립트 & 실행
-
-```bash
-g++ -std=c++17 -O2 -Wall -Wextra -pedantic main_basic.cpp -o basic
-./basic
-
-g++ -std=c++17 -O2 -Wall -Wextra -pedantic main_move.cpp -o move
-./move
-
-g++ -std=c++17 -O2 -fsanitize=address,undefined -g test_fuzz.cpp -o fuzz
-./fuzz
+```cpp
+std::vector<int> v = {1, 2, 3, 4};
+auto it = v.begin() + 2;  // 3을 가리킴
+v.push_back(5);            // 재할당 가능성 → it 무효화 위험
+// *it 를 사용하면 미정의 동작!
 ```
 
-- 실패/경계 상황에서의 동작을 **ASan/UBSan**으로 점검하세요.
+안전하게 사용하려면 삽입/삭제 후 반복자를 다시 얻어야 합니다.
+
+### 인덱스 범위
+
+`operator[]`는 범위를 검사하지 않으므로, 유효하지 않은 인덱스 접근은 미정의 동작을 일으킵니다.  
+범위를 벗어날 위험이 있다면 `at()` 멤버 함수를 사용하세요.
+
+```cpp
+std::vector<int> v(10);
+int x = v[20];   // 위험! (미정의 동작)
+int y = v.at(20); // std::out_of_range 예외 발생
+```
 
 ---
 
-## 요약 표 (핵심 규칙)
+## 요약
 
-- **재할당은 강한 보장**으로 설계하라(새 버퍼 성공 → 교체).
-- **성장 정책은 한 곳**(`grow_capacity`)에서 통제하라.
-- **연속 메모리**는 생각보다 상수항 이득이 크다(캐시).
-- **반복자 무효화**는 반드시 문서화/주석화하라.
-- **테스트는 브루트포스 + 퍼징**으로: “실제로 깨먹어 보자”.
+- `std::vector`는 크기가 변할 수 있는 연속 메모리 컨테이너입니다.
+- **랜덤 접근**: 인덱스로 요소에 $$O(1)$$에 접근할 수 있습니다.
+- **끝 삽입/삭제**: 평균적으로 $$O(1)$$ (상환 분석).
+- **중간 삽입/삭제**: $$O(n)$$ (이동 비용).
+- `size()`는 현재 요소 수, `capacity()`는 현재 할당된 메모리 크기입니다.
+- `reserve()`로 재할당 횟수를 줄일 수 있습니다.
+- 반복자 무효화에 주의해야 합니다.
+
+동적 배열은 프로그래밍에서 가장 널리 쓰이는 자료구조 중 하나이며, C++의 `std::vector`는 그 강력하고 안전한 구현체입니다. 기본 사용법을 익히고, 필요에 따라 고급 기능(예: 사용자 정의 할당자, 이동 의미론)을 학습해 나가면 됩니다.

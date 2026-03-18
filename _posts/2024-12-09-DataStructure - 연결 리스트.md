@@ -6,143 +6,122 @@ category: Data Structure
 ---
 # 연결 리스트 (Linked List)
 
-기존 초안의 **핵심(정의·기본 구조·시간 복잡도·간단 구현)**을 바탕으로, 본 글은 **실전 구현과 확장**을 모두 다룬다:
+연결 리스트는 **노드(node)**들이 **포인터**로 연결된 자료구조입니다.  
+각 노드는 데이터를 저장하고, 다음(혹은 이전) 노드를 가리키는 포인터를 가지고 있습니다.
 
-- 단일/이중/원형 리스트의 **클래스형 템플릿 구현**
-- **센티넬 노드**(dummy head/tail)로 경계 단순화
-- **반복자 설계**(전/양방향), 예외 안전, 리소스 관리(RAII)
-- 고급 연산: `splice`(노드 재연결), `reverse`, `remove_if`, `unique`, `merge`(정렬), 사이클 검출(Floyd), 중간/뒤에서 k번째
-- **LRU 캐시**(이중 리스트 + 해시) 예제
-- 원형 리스트의 tail 포인터 기법
-- **복잡도·캐시 지역성**·반복자 무효화 규칙·테스트 전략
+배열과 달리 **연속된 메모리**를 사용하지 않기 때문에, 중간에 데이터를 삽입하거나 삭제할 때 **데이터를 이동시킬 필요 없이 포인터만 변경**하면 됩니다.  
+하지만 **임의 접근(random access)**이 불가능하고, 특정 위치에 접근하려면 처음부터 순서대로 따라가야 합니다.
 
 ---
 
-## 왜 배열 대신 연결 리스트인가?
+## 왜 배열 대신 연결 리스트를 쓸까?
 
-- **장점**: 중간 삽입/삭제가 **포인터 재배선만으로 O(1)** (해당 지점까지 가는 비용은 O(n))
-- **단점**: 랜덤 접근이 **O(n)**, 데이터가 **비연속** → **캐시 비우호**, 상수항이 큼
-- **정리**: “중간 조작이 아주 잦다 + 큰 객체의 이동/복사가 비싼” 상황에 적합. 그 외엔 `vector`/`deque`가 대개 더 빠름.
+| 특징 | 배열 | 연결 리스트 |
+|------|------|-------------|
+| **메모리 구조** | 연속된 공간 | 불연속, 노드 단위로 흩어짐 |
+| **임의 접근** | $$O(1)$$ (인덱스로 즉시 접근) | $$O(n)$$ (순차 탐색 필요) |
+| **중간 삽입/삭제** | $$O(n)$$ (뒤로 밀거나 당겨야 함) | **위치를 알고 있으면** $$O(1)$$ (포인터만 변경) |
+| **캐시 효율** | 좋음 (연속 메모리) | 나쁨 (노드가 여기저기 흩어짐) |
+
+**결론**:  
+- 데이터를 **자주 중간에 넣거나 빼야 하고**,  
+- 데이터 크기가 커서 **복사 비용이 클 때**  
+연결 리스트가 유리합니다.  
+그 외에는 대부분 배열(또는 `std::vector`)이 더 빠릅니다.
 
 ---
 
 ## 단일 연결 리스트 (Singly Linked List)
 
-### 핵심 구조
+가장 단순한 형태로, 각 노드는 **데이터**와 **다음 노드 포인터(`next`)**만 가집니다.
 
-```cpp
-struct SNode {
-    int data;
-    SNode* next;
-};
+```
+[data | next] -> [data | next] -> [data | next] -> null
 ```
 
-- 임의 노드 **앞에 삽입**은 해당 노드의 **직전 노드를 알아야** O(1).
-- 헤드 삽입/삭제는 O(1).
+- **헤드(head)** : 첫 번째 노드를 가리키는 포인터.
+- **끝 노드**의 `next`는 `nullptr`.
 
-### 안전한 도우미 (C++17)
+### 기본 구현 (C++)
 
 ```cpp
 #include <iostream>
-#include <functional>
-#include <stdexcept>
 
-struct SNode {
+struct Node {
     int data;
-    SNode* next;
-    explicit SNode(int v, SNode* n=nullptr) : data(v), next(n) {}
+    Node* next;
+
+    explicit Node(int val, Node* nxt = nullptr)
+        : data(val), next(nxt) {}
 };
 
-void push_front(SNode*& head, int v) {
-    head = new SNode(v, head);
+// 앞에 삽입
+void push_front(Node*& head, int value) {
+    head = new Node(value, head);
 }
 
-void pop_front(SNode*& head) {
-    if (!head) throw std::out_of_range("pop_front on empty");
-    SNode* old = head; head = head->next; delete old;
+// 앞에서 삭제
+void pop_front(Node*& head) {
+    if (!head) return;                 // 빈 리스트
+    Node* temp = head;
+    head = head->next;
+    delete temp;
 }
 
-void print(SNode* head) {
-    for (SNode* cur = head; cur; cur = cur->next) std::cout << cur->data << " -> ";
-    std::cout << "NULL\n";
+// 출력
+void print(Node* head) {
+    for (Node* cur = head; cur; cur = cur->next)
+        std::cout << cur->data << " -> ";
+    std::cout << "null\n";
 }
 
-void clear(SNode*& head) {
-    while (head) { SNode* t = head; head = head->next; delete t; }
-}
-```
-
-### 고급 연산
-
-#### 역순 뒤집기 — 반복
-
-```cpp
-SNode* reverse_iter(SNode* head) {
-    SNode* prev=nullptr; SNode* cur=head;
-    while (cur) {
-        SNode* nxt = cur->next;
-        cur->next  = prev;
-        prev = cur; cur = nxt;
+// 전체 메모리 해제
+void clear(Node*& head) {
+    while (head) {
+        Node* temp = head;
+        head = head->next;
+        delete temp;
     }
-    return prev;
 }
 ```
 
-#### 중간 노드 찾기 — runner(토끼/거북)
+**주의**: 위 코드는 간단한 예시로, 실제로는 클래스로 감싸서 RAII(생성/소멸 관리)를 적용하는 것이 좋습니다.
 
-```cpp
-SNode* middle(SNode* head){
-    SNode* slow=head; SNode* fast=head;
-    while (fast && fast->next) { slow=slow->next; fast=fast->next->next; }
-    return slow;
-}
-```
+### 단일 연결 리스트의 연산별 시간 복잡도
 
-#### 뒤에서 k번째
-
-```cpp
-SNode* kth_from_end(SNode* head, int k){
-    SNode* a=head; SNode* b=head;
-    while (k-- && b) b=b->next;
-    if (k>=0) return nullptr; // 길이 부족
-    while (b){ a=a->next; b=b->next; }
-    return a;
-}
-```
-
-#### 사이클 검출 — Floyd
-
-```cpp
-bool has_cycle(SNode* head){
-    SNode* slow=head; SNode* fast=head;
-    while (fast && fast->next){
-        slow=slow->next; fast=fast->next->next;
-        if (slow==fast) return true;
-    }
-    return false;
-}
-```
+| 연산 | 시간 복잡도 |
+|------|------------|
+| 머리(head)에 삽입/삭제 | $$O(1)$$ |
+| 꼬리(tail)에 삽입 | tail 포인터를 유지하면 $$O(1)$$, 아니면 $$O(n)$$ |
+| 중간 삽입/삭제 (해당 노드의 **직전 노드를 알고 있을 때**) | $$O(1)$$ |
+| 특정 값을 가진 노드 탐색 | $$O(n)$$ |
+| 인덱스로 접근 | $$O(n)$$ |
 
 ---
 
 ## 이중 연결 리스트 (Doubly Linked List)
 
-### 구조 & 장점
+각 노드가 **이전 노드 포인터(`prev`)**와 **다음 노드 포인터(`next`)**를 모두 가집니다.
 
-```cpp
-struct DNode {
-    int data;
-    DNode* prev;
-    DNode* next;
-};
+```
+null <- [prev | data | next] <-> [prev | data | next] <-> [prev | data | next] -> null
 ```
 
-- 양방향 이동 가능. **삭제가 O(1)** (자기 포인터만 있으면 직전 탐색 불필요)
-- 단점: 포인터 2개 → 더 많은 메모리
+- 장점: **양방향 탐색** 가능, **임의의 노드 삭제**가 더 쉽다(직전 노드를 몰라도 됨).
+- 단점: 포인터를 2개 저장하므로 메모리를 더 사용합니다.
 
-### 센티넬 기반 템플릿 구현 (RAII)
+### 센티넬(sentinel) 노드를 이용한 구현
 
-센티넬(더미) 노드 두 개(head/tail)을 두면 **경계 처리가 단순**해진다.
+센티넬(더미 노드)을 사용하면 **경계 조건**을 단순화할 수 있습니다.  
+`head`와 `tail`을 각각 더미 노드로 만들고, 실제 데이터는 그 사이에 위치시킵니다.
+
+```
+head(더미) <-> [data] <-> [data] <-> ... <-> tail(더미)
+```
+
+이렇게 하면 빈 리스트도 `head`와 `tail`이 서로 연결되어 있어, 항상 같은 코드로 삽입/삭제를 처리할 수 있습니다.
+
+#### 템플릿을 사용한 이중 연결 리스트 클래스
 
 ```cpp
 // dlist.hpp
@@ -151,205 +130,176 @@ struct DNode {
 #include <iterator>
 #include <stdexcept>
 #include <utility>
-#include <functional>
 
-template <class T>
+template <typename T>
 class dlist {
-    struct node {
-        T     data;
-        node* prev;
-        node* next;
-        template <class... Args>
-        explicit node(Args&&... args) : data(std::forward<Args>(args)...), prev(nullptr), next(nullptr) {}
+private:
+    struct Node {
+        T data;
+        Node* prev;
+        Node* next;
+
+        template <typename... Args>
+        explicit Node(Args&&... args)
+            : data(std::forward<Args>(args)...), prev(nullptr), next(nullptr) {}
     };
-    node* head_; // sentinel head
-    node* tail_; // sentinel tail
-    std::size_t sz_{};
+
+    Node* head_;   // 더미 헤드 (데이터 없음)
+    Node* tail_;   // 더미 테일 (데이터 없음)
+    size_t size_;  // 실제 노드 개수
 
 public:
-    dlist() {
-        head_ = new node(); tail_ = new node();
-        head_->next = tail_; tail_->prev = head_;
+    // 생성자: head와 tail을 만들고 서로 연결
+    dlist() : head_(new Node()), tail_(new Node()), size_(0) {
+        head_->next = tail_;
+        tail_->prev = head_;
     }
-    ~dlist(){ clear(); delete head_; delete tail_; }
 
+    // 소멸자: 모든 노드 삭제
+    ~dlist() {
+        clear();
+        delete head_;
+        delete tail_;
+    }
+
+    // 복사 생성자와 대입 연산자는 일단 금지 (간단하게)
     dlist(const dlist&) = delete;
     dlist& operator=(const dlist&) = delete;
 
-    bool empty() const noexcept { return sz_==0; }
-    std::size_t size() const noexcept { return sz_; }
+    bool empty() const { return size_ == 0; }
+    size_t size() const { return size_; }
 
-    T& front(){ if(empty()) throw std::out_of_range("empty"); return head_->next->data; }
-    T& back (){ if(empty()) throw std::out_of_range("empty"); return tail_->prev->data; }
-    const T& front() const { if(empty()) throw std::out_of_range("empty"); return head_->next->data; }
-    const T& back () const { if(empty()) throw std::out_of_range("empty"); return tail_->prev->data; }
+    // 맨 앞/뒤 원소 접근
+    T& front() {
+        if (empty()) throw std::out_of_range("list is empty");
+        return head_->next->data;
+    }
+    const T& front() const {
+        if (empty()) throw std::out_of_range("list is empty");
+        return head_->next->data;
+    }
+    T& back() {
+        if (empty()) throw std::out_of_range("list is empty");
+        return tail_->prev->data;
+    }
+    const T& back() const {
+        if (empty()) throw std::out_of_range("list is empty");
+        return tail_->prev->data;
+    }
 
-    // 반복자 (양방향)
+    // 반복자 (양방향 반복자)
     class iterator {
-        node* n_=nullptr;
+    private:
+        Node* node_;
     public:
-        using difference_type = std::ptrdiff_t;
-        using value_type = T;
-        using reference = T&;
-        using pointer = T*;
         using iterator_category = std::bidirectional_iterator_tag;
+        using value_type        = T;
+        using difference_type   = std::ptrdiff_t;
+        using pointer           = T*;
+        using reference         = T&;
 
-        iterator()=default; explicit iterator(node* n):n_(n){}
-        reference operator*() const { return n_->data; }
-        pointer   operator->() const { return &n_->data; }
-        iterator& operator++(){ n_=n_->next; return *this; }
-        iterator  operator++(int){ auto t=*this; ++*this; return t; }
-        iterator& operator--(){ n_=n_->prev; return *this; }
-        iterator  operator--(int){ auto t=*this; --*this; return t; }
-        bool operator==(const iterator& o) const { return n_==o.n_; }
-        bool operator!=(const iterator& o) const { return !(*this==o); }
+        iterator(Node* n = nullptr) : node_(n) {}
+
+        reference operator*() const { return node_->data; }
+        pointer   operator->() const { return &node_->data; }
+
+        iterator& operator++() { node_ = node_->next; return *this; }
+        iterator  operator++(int) { iterator tmp = *this; ++(*this); return tmp; }
+        iterator& operator--() { node_ = node_->prev; return *this; }
+        iterator  operator--(int) { iterator tmp = *this; --(*this); return tmp; }
+
+        bool operator==(const iterator& other) const { return node_ == other.node_; }
+        bool operator!=(const iterator& other) const { return !(*this == other); }
+
         friend class dlist;
     };
 
-    iterator begin() const { return iterator(head_->next); }
-    iterator end()   const { return iterator(tail_); }
+    iterator begin() { return iterator(head_->next); }
+    iterator end()   { return iterator(tail_); }
 
-    // 기본 조작
-    template <class... Args> iterator emplace(iterator pos, Args&&... args){
-        node* p = pos.n_;
-        node* x = new node(std::forward<Args>(args)...);
-        node* a = p->prev;
-        a->next = x; x->prev = a;
-        x->next = p; p->prev = x;
-        ++sz_; return iterator(x);
-    }
-    template <class... Args> void emplace_front(Args&&... args){ emplace(begin(), std::forward<Args>(args)...); }
-    template <class... Args> void emplace_back (Args&&... args){ emplace(end(),   std::forward<Args>(args)...);  }
+    // 삽입: pos 위치 앞에 새 노드를 삽입하고, 삽입된 노드의 반복자 반환
+    template <typename... Args>
+    iterator emplace(iterator pos, Args&&... args) {
+        Node* p = pos.node_;               // 삽입 위치 다음 노드
+        Node* prev = p->prev;               // 삽입 위치 앞 노드
 
-    void push_front(const T& v){ emplace_front(v); }
-    void push_back (const T& v){ emplace_back (v); }
+        Node* newNode = new Node(std::forward<Args>(args)...);
+        // 앞 노드와 새 노드 연결
+        prev->next = newNode;
+        newNode->prev = prev;
+        // 새 노드와 다음 노드 연결
+        newNode->next = p;
+        p->prev = newNode;
 
-    iterator erase(iterator pos){
-        node* p = pos.n_;
-        if (p==head_ || p==tail_) throw std::out_of_range("erase sentinel");
-        node* a = p->prev; node* b = p->next;
-        a->next = b; b->prev = a;
-        delete p; --sz_;
-        return iterator(b);
+        ++size_;
+        return iterator(newNode);
     }
 
-    void pop_front(){ if(empty()) throw std::out_of_range("empty"); erase(begin()); }
-    void pop_back (){ if(empty()) throw std::out_of_range("empty"); auto it=end(); --it; erase(it); }
+    void push_front(const T& v) { emplace(begin(), v); }
+    void push_back(const T& v)  { emplace(end(), v); }
 
-    void clear() noexcept {
-        node* cur = head_->next;
-        while (cur != tail_) { node* nx=cur->next; delete cur; cur=nx; }
-        head_->next = tail_; tail_->prev = head_; sz_=0;
+    // 삭제: pos가 가리키는 노드 삭제, 다음 노드의 반복자 반환
+    iterator erase(iterator pos) {
+        Node* p = pos.node_;
+        if (p == head_ || p == tail_)  // 더미 노드는 삭제 불가
+            throw std::out_of_range("cannot erase sentinel");
+
+        Node* prev = p->prev;
+        Node* next = p->next;
+
+        prev->next = next;
+        next->prev = prev;
+
+        delete p;
+        --size_;
+        return iterator(next);
     }
 
-    // 유틸 연산
-    void reverse(){
-        if (sz_<2) return;
-        node* cur = head_;
-        while (cur){
-            std::swap(cur->prev, cur->next);
-            cur = cur->prev; // 기존 next
+    void pop_front() { erase(begin()); }
+    void pop_back()  { erase(--end()); }
+
+    void clear() {
+        Node* cur = head_->next;
+        while (cur != tail_) {
+            Node* next = cur->next;
+            delete cur;
+            cur = next;
         }
-        std::swap(head_, tail_);
-    }
-
-    template <class Pred>
-    void remove_if(Pred pred){
-        for(auto it=begin(); it!=end(); ){
-            if (pred(*it)) it=erase(it);
-            else ++it;
-        }
-    }
-
-    void unique(){ // 인접 중복 제거(정렬 가정)
-        if (sz_<2) return;
-        auto it=begin(); auto jt=it; ++jt;
-        while (jt!=end()){
-            if (*it==*jt) jt=erase(jt);
-            else { it=jt; ++jt; }
-        }
-    }
-
-    // 정렬된 두 리스트 병합 (자기 안으로 흡수)
-    template <class Less=std::less<T>>
-    void merge(dlist& other, Less less = Less()){
-        if (&other==this || other.empty()) return;
-        auto a=begin(), ae=end();
-        auto b=other.begin(), be=other.end();
-        while (b!=be){
-            while (a!=ae && !less(*b,*a)) ++a;
-            // b를 *a 앞에 splice 1개 이동
-            node* bn = b.n_;
-            ++b;
-            // other에서 제거
-            bn->prev->next = bn->next;
-            bn->next->prev = bn->prev;
-            --other.sz_;
-            // this에 삽입 (a 앞)
-            node* ap = a.n_;
-            node* ap_prev = ap->prev;
-            ap_prev->next = bn; bn->prev = ap_prev;
-            bn->next  = ap;    ap->prev = bn;
-            ++sz_;
-        }
-    }
-
-    // 구간 이동(splice): [first,last) 를 pos 앞에 이동 (동일 컨테이너/타 컨테이너 지원)
-    void splice(iterator pos, dlist& from, iterator first, iterator last){
-        if (first==last) return;
-        // 구간 크기 계산
-        std::size_t moved=0; for(auto it=first; it!=last; ++it) ++moved;
-
-        // from에서 잘라내기
-        node* A = first.n_; node* B = last.n_->prev; // [A..B]
-        node* ap = A->prev; node* bn = B->next;
-        ap->next = bn; bn->prev = ap;
-        from.sz_ -= moved;
-
-        // this에 연결: pos 앞
-        node* P = pos.n_; node* pp = P->prev;
-        pp->next = A; A->prev = pp;
-        B->next  = P; P->prev = B;
-        sz_ += moved;
+        head_->next = tail_;
+        tail_->prev = head_;
+        size_ = 0;
     }
 };
 ```
 
-**포인트**
+**주요 포인트**:
 
-- 센티넬로 `head_`와 `tail_` 사이만 **실데이터**. 빈 리스트/양끝 처리 코드가 단순해짐.
-- `splice`/`merge`는 **노드 재연결만** 수행하므로 **각 노드의 이동이 O(1)**, 전체 O(k).
-- 반복자 무효화 규칙:
-  - 특정 노드가 **삭제/이동**되면 그 노드에 대한 반복자는 무효.
-  - 그 외 노드들의 반복자는 유지(연결만 바뀌므로).
+- `emplace`는 생성자 인자를 직접 받아 노드를 **생성**하고, 적절한 위치에 삽입합니다. (perfect forwarding 사용)
+- `erase`는 노드 삭제 후 다음 노드의 반복자를 반환하여, 반복문에서 안전하게 사용할 수 있습니다.
+- 모든 연산에서 **경계 조건**(맨 앞/맨 뒤)을 센티넬 덕분에 별도 분기 없이 처리합니다.
 
-### 사용 예
+### 사용 예시
 
 ```cpp
 #include "dlist.hpp"
 #include <iostream>
 
-int main(){
-    dlist<int> a, b;
-    a.push_back(1); a.push_back(3); a.push_back(5);
-    b.push_back(2); b.push_back(4); b.push_back(6);
+int main() {
+    dlist<int> list;
+    list.push_back(10);
+    list.push_back(20);
+    list.push_front(5);
 
-    // 정렬 병합
-    a.merge(b); // a: 1 2 3 4 5 6, b: empty
-    for(auto x: a) std::cout<<x<<" "; std::cout<<"\n";
+    for (auto it = list.begin(); it != list.end(); ++it) {
+        std::cout << *it << " ";   // 5 10 20
+    }
+    std::cout << "\n";
 
-    // 부분 스플라이스: 뒤 3개를 앞으로
-    auto it=a.begin(); ++it; ++it; // 3 가리킴
-    auto it_end=a.end();
-    a.splice(a.begin(), a, it, it_end); // [3..6]을 맨 앞으로
-    for(auto x: a) std::cout<<x<<" "; std::cout<<"\n";
+    list.pop_front();              // 10 20
+    list.pop_back();               // 10
 
-    // unique 테스트(연속 중복 제거)
-    dlist<int> c;
-    c.push_back(1); c.push_back(1); c.push_back(1);
-    c.push_back(2); c.push_back(2); c.push_back(3);
-    c.unique();
-    for(auto x: c) std::cout<<x<<" "; std::cout<<"\n";
+    std::cout << "front: " << list.front() << "\n"; // 10
+    return 0;
 }
 ```
 
@@ -357,263 +307,348 @@ int main(){
 
 ## 원형 연결 리스트 (Circular Linked List)
 
-### 끝삽입
+마지막 노드의 `next`가 첫 노드를 가리키는 형태입니다.  
+단일 원형, 이중 원형 모두 가능합니다.
+
+- 장점: **tail에서 head로 바로 이동**할 수 있어, **라운드 로빈 스케줄러**나 **플레이리스트**에 유용합니다.
+- 단점: 무한 루프를 조심해야 하며, 종료 조건을 잘 처리해야 합니다.
+
+### 단일 원형 리스트 구현 (tail 포인터 사용)
 
 ```cpp
 struct CNode {
     int data;
     CNode* next;
-    explicit CNode(int v): data(v), next(this) {} // 자기 자신
+    explicit CNode(int val) : data(val), next(this) {} // 처음엔 자기 자신
 };
 
-void push_back(CNode*& tail, int v){
-    CNode* n = new CNode(v);
-    if (!tail) { tail = n; return; }
-    n->next = tail->next;   // head
-    tail->next = n;
-    tail = n;               // 새 tail
+// tail을 전달받아, 뒤에 새 노드 추가
+void push_back(CNode*& tail, int val) {
+    CNode* newNode = new CNode(val);
+    if (!tail) {
+        tail = newNode;
+        return;
+    }
+    newNode->next = tail->next;  // 새 노드의 next를 head로
+    tail->next = newNode;         // 기존 tail이 새 노드를 가리킴
+    tail = newNode;                // 새 노드가 새로운 tail
 }
 
-void print_c(CNode* tail){
-    if (!tail) { std::cout<<"(empty)\n"; return; }
-    CNode* cur = tail->next; // head
-    do { std::cout<<cur->data<<" -> "; cur=cur->next; } while(cur!=tail->next);
-    std::cout<<"(head)\n";
+// 출력 (head부터 시작)
+void print(CNode* tail) {
+    if (!tail) {
+        std::cout << "(empty)\n";
+        return;
+    }
+    CNode* head = tail->next;
+    CNode* cur = head;
+    do {
+        std::cout << cur->data << " -> ";
+        cur = cur->next;
+    } while (cur != head);
+    std::cout << "(head)\n";
 }
 
-void clear_c(CNode*& tail){
+// 메모리 해제
+void clear(CNode*& tail) {
     if (!tail) return;
-    CNode* head = tail->next; CNode* cur=head;
-    do{ CNode* t=cur; cur=cur->next; delete t; } while(cur!=head);
-    tail=nullptr;
+    CNode* head = tail->next;
+    CNode* cur = head;
+    do {
+        CNode* temp = cur;
+        cur = cur->next;
+        delete temp;
+    } while (cur != head);
+    tail = nullptr;
 }
 ```
 
-- 장점: `tail`만 알면 `push_back`이 **O(1)**.
-- 순회 종료 조건을 `cur == head`로 둔다(무한 루프 주의).
+---
 
-### 이중 원형 + 센티넬 = `std::list`의 전형
+## 고급 연산 (이중 연결 리스트 기준)
 
-- `head_`만 센티넬로 두고, `head_.next`부터 `head_`로 돌아오면 종료.
-- `reverse`/`splice`/`merge` 모두 **포인터 교환**만으로 처리 가능.
+### 1. 리스트 뒤집기 (reverse)
+
+각 노드의 `prev`와 `next`를 맞바꾸고, head와 tail도 교체합니다.  
+센티넬이 있으면 더 간단합니다.
+
+```cpp
+void reverse() {
+    if (size_ < 2) return;
+    Node* cur = head_;
+    while (cur) {
+        std::swap(cur->prev, cur->next);
+        cur = cur->prev;  // 원래 next였던 곳으로 이동 (swap 후 prev가 원래 next)
+    }
+    std::swap(head_, tail_); // head와 tail 센티넬 교환
+}
+```
+
+### 2. 조건에 맞는 원소 제거 (remove_if)
+
+```cpp
+template <typename Pred>
+void remove_if(Pred pred) {
+    for (auto it = begin(); it != end(); ) {
+        if (pred(*it))
+            it = erase(it);
+        else
+            ++it;
+    }
+}
+```
+
+### 3. 인접한 중복 제거 (unique)
+
+리스트가 정렬되어 있다고 가정하고, 연속된 중복 값을 하나만 남깁니다.
+
+```cpp
+void unique() {
+    if (size_ < 2) return;
+    auto it = begin();
+    auto jt = it; ++jt;
+    while (jt != end()) {
+        if (*it == *jt)
+            jt = erase(jt);
+        else {
+            it = jt;
+            ++jt;
+        }
+    }
+}
+```
+
+### 4. 정렬된 두 리스트 병합 (merge)
+
+두 리스트가 모두 정렬되어 있다고 가정하고, 하나로 합칩니다.  
+`std::list::merge`와 유사하게, **상대 리스트는 비게 됩니다**.
+
+```cpp
+template <typename Less = std::less<T>>
+void merge(dlist& other, Less less = Less()) {
+    if (this == &other || other.empty()) return;
+
+    auto a = begin();
+    auto b = other.begin();
+    while (b != other.end()) {
+        // a가 가리키는 값보다 b가 크거나 같을 때까지 a 이동
+        while (a != end() && !less(*b, *a))
+            ++a;
+        // b를 a 앞에 삽입 (즉, splice)
+        Node* bn = b.node_;           // other의 현재 노드
+        ++b;                           // 다음으로 이동
+        // other에서 bn 분리
+        bn->prev->next = bn->next;
+        bn->next->prev = bn->prev;
+        --other.size_;
+
+        // this에 bn 삽입 (a 앞)
+        Node* ap = a.node_;            // a가 가리키는 노드
+        Node* ap_prev = ap->prev;
+        ap_prev->next = bn;
+        bn->prev = ap_prev;
+        bn->next = ap;
+        ap->prev = bn;
+        ++size_;
+    }
+}
+```
+
+### 5. 구간 이동 (splice)
+
+한 리스트의 노드 구간 `[first, last)`를 잘라내어 다른 리스트의 `pos` 앞에 붙입니다.
+
+```cpp
+void splice(iterator pos, dlist& from, iterator first, iterator last) {
+    if (first == last) return;
+
+    // 구간의 크기 계산 (first부터 last 직전까지)
+    size_t moved = 0;
+    for (auto it = first; it != last; ++it) ++moved;
+
+    // from에서 구간 분리
+    Node* A = first.node_;
+    Node* B = last.node_->prev;  // 구간의 마지막 노드
+    Node* ap = A->prev;
+    Node* bn = B->next;
+
+    ap->next = bn;
+    bn->prev = ap;
+    from.size_ -= moved;
+
+    // this에 연결 (pos 앞)
+    Node* P = pos.node_;
+    Node* pp = P->prev;
+    pp->next = A;
+    A->prev = pp;
+    B->next = P;
+    P->prev = B;
+    size_ += moved;
+}
+```
+
+`splice`는 노드를 **복사하지 않고** 포인터만 조작하므로 매우 빠릅니다.
 
 ---
 
-## 실전: LRU 캐시(이중 리스트 + 해시)
+## 실전 예제: LRU 캐시 (Least Recently Used)
 
-- 규칙:
-  - 조회/삽입 시 노드를 **맨 앞으로 이동**(가장 최근).
-  - 용량 초과 시 **맨 뒤**(가장 오래된) 제거.
-- 자료구조:
-  - **이중 리스트**: 사용 순서 유지
-  - **해시**: 키 → 노드 반복자(또는 포인터)로 O(1) 조회
+LRU 캐시는 **가장 최근에 사용된 항목**을 유지하고, 용량이 초과되면 **가장 오래된 항목**을 제거합니다.
+
+- **이중 연결 리스트**: 사용 순서를 유지 (맨 앞이 MRU, 맨 뒤가 LRU)
+- **해시 테이블** (`unordered_map`): 키로 노드의 반복자를 빠르게 찾음
 
 ```cpp
 #include <unordered_map>
 #include <optional>
 #include "dlist.hpp"
 
-template <class Key, class Val, class Hash=std::hash<Key>, class Eq=std::equal_to<Key>>
-class LRU {
-    using Pair = std::pair<Key, Val>;
-    dlist<Pair> list_; // front: MRU, back: LRU
-    std::unordered_map<Key, typename dlist<Pair>::iterator, Hash, Eq> map_;
-    std::size_t cap_;
+template <typename Key, typename Value>
+class LRUCache {
+    using List = dlist<std::pair<Key, Value>>;
+    using Iterator = typename List::iterator;
+
+    List list_;
+    std::unordered_map<Key, Iterator> map_;
+    size_t capacity_;
 
 public:
-    explicit LRU(std::size_t cap): cap_(cap) {}
+    LRUCache(size_t cap) : capacity_(cap) {}
 
-    std::optional<Val> get(const Key& k){
-        auto it = map_.find(k);
-        if (it==map_.end()) return std::nullopt;
-        // to front (splice 1개 노드)
-        auto node = it->second;
-        list_.splice(list_.begin(), list_, node, std::next(node));
-        return node->second;
+    std::optional<Value> get(const Key& key) {
+        auto it = map_.find(key);
+        if (it == map_.end())
+            return std::nullopt;
+
+        // 해당 노드를 맨 앞으로 이동 (splice)
+        list_.splice(list_.begin(), list_, it->second, std::next(it->second));
+        return it->second->second;
     }
 
-    void put(const Key& k, Val v){
-        auto it = map_.find(k);
-        if (it!=map_.end()){
-            // 업데이트 + 이동
-            it->second->second = std::move(v);
+    void put(const Key& key, const Value& value) {
+        auto it = map_.find(key);
+        if (it != map_.end()) {
+            // 이미 존재하면 값 갱신하고 맨 앞으로 이동
+            it->second->second = value;
             list_.splice(list_.begin(), list_, it->second, std::next(it->second));
             return;
         }
-        // 신규
-        list_.emplace_front(k, std::move(v));
-        map_[k] = list_.begin();
-        if (map_.size() > cap_){
-            // remove LRU (back)
-            auto tail_it = list_.end(); --tail_it;
-            map_.erase(tail_it->first);
+
+        // 새 항목 삽입 (맨 앞)
+        list_.emplace_front(key, value);
+        map_[key] = list_.begin();
+
+        if (map_.size() > capacity_) {
+            // 가장 오래된 항목(맨 뒤) 제거
+            auto last = --list_.end();
+            map_.erase(last->first);
             list_.pop_back();
         }
     }
 };
 ```
 
-테스트:
+사용 예:
 
 ```cpp
 #include <iostream>
 
-int main(){
-    LRU<int, std::string> cache(2);
+int main() {
+    LRUCache<int, std::string> cache(2);
     cache.put(1, "one");
     cache.put(2, "two");
-    std::cout << cache.get(1).value_or("-") << "\n"; // use 1 -> (1,2)
-    cache.put(3,"three"); // evict 2
-    std::cout << cache.get(2).value_or("-") << "\n"; // -
+    std::cout << cache.get(1).value_or("-") << "\n"; // one (1이 최근이 됨)
+    cache.put(3, "three");                            // 2는 가장 오래됐으므로 제거
+    std::cout << cache.get(2).value_or("-") << "\n"; // - (없음)
     std::cout << cache.get(3).value_or("-") << "\n"; // three
+    return 0;
 }
 ```
 
 ---
 
-## 알고리즘 팁 & 패턴 모음
+## 성능 및 캐시 고려사항
 
-### 리스트 반 나누기 + 병합 정렬(O(n log n), 안정)
-
-- 단일 리스트에서도 포인터만으로 정렬 가능(추가 배열 불필요)
-- **중간 찾기** + **두 반 병합** 반복
-
-```cpp
-SNode* merge_sorted(SNode* a, SNode* b){
-    SNode dummy(0), *t=&dummy;
-    while (a && b){
-        if (a->data <= b->data){ t->next=a; a=a->next; }
-        else { t->next=b; b=b->next; }
-        t=t->next;
-    }
-    t->next = a?a:b; return dummy.next;
-}
-
-SNode* merge_sort(SNode* h){
-    if (!h || !h->next) return h;
-    // split
-    SNode* slow=h; SNode* fast=h->next;
-    while (fast && fast->next){ slow=slow->next; fast=fast->next->next; }
-    SNode* mid = slow->next; slow->next=nullptr;
-    return merge_sorted(merge_sort(h), merge_sort(mid));
-}
-```
-
-### 노드 삭제 without prev (단일 리스트 트릭)
-
-- **삭제할 노드 포인터만 있고 prev가 없을 때**: 다음 노드의 데이터를 복사해 덮고, 다음 노드를 제거
-  (단, **마지막 노드에는 불가**)
-
-```cpp
-bool erase_without_prev(SNode* x){
-    if (!x || !x->next) return false;
-    SNode* n = x->next;
-    x->data  = n->data;
-    x->next  = n->next;
-    delete n;
-    return true;
-}
-```
+- **캐시 지역성**: 연결 리스트의 노드는 메모리 여기저기 흩어져 있어, 순회할 때마다 캐시 미스가 발생합니다. 따라서 **순회 속도**는 배열보다 훨씬 느립니다.
+- **메모리 오버헤드**: 각 노드마다 포인터(들)를 저장해야 하므로, 작은 데이터를 많이 저장할수록 오버헤드가 커집니다.
+- **적합한 상황**:
+  - 대량의 삽입/삭제가 빈번하고, 그 위치를 이미 알고 있을 때.
+  - 데이터 크기가 커서 복사 비용이 매우 클 때 (예: 큰 문자열, 객체).
+  - 안정적인 반복자 유지가 중요할 때 (리스트는 삽입/삭제 시 다른 노드의 반복자는 무효화되지 않음).
 
 ---
 
-## 성능·복잡도·캐시
+## 반복자 무효화 규칙
 
-### 시간 복잡도
-
-| 연산 | 단일 | 이중 | 원형 |
-|---|---|---|---|
-| head 삽입/삭제 | O(1) | O(1) | O(1) |
-| tail 삽입 | O(n)\* | O(1)\*\* | O(1) (tail 보유) |
-| 중간 삽입/삭제 (노드 지점 제공) | O(1) | O(1) | O(1) |
-| 임의 접근 | O(n) | O(n) | O(n) |
-
-- \* 단일에서 tail 포인터를 유지하면 tail 삽입도 O(1).
-- \*\* 이중은 tail 포인터가 자연스럽게 존재(센티넬의 prev).
-
-### 캐시/상수항
-
-- 연결 리스트는 **노드가 흩어져** 있어 **캐시 미스 빈번** → **상수항이 큼**.
-- 같은 O(n)이라도 `vector` 순차순회가 훨씬 빠를 수 있음.
-- 큰 객체를 **이동 없이 연결**시키고 싶을 때 여전히 가치가 있다(예: 거대한 트리 노드의 리스트 유지).
-
----
-
-## 메모리·안전성·반복자 규칙
-
-- 모든 `new`는 정확히 대응되는 `delete` 필요(RAII 권장).
-- **예외 안전**: 삽입 시 노드 생성 성공 이후에만 연결 업데이트. 실패 시 원복.
-- 반복자 무효화:
-  - `erase`된 노드의 반복자만 무효. 나머지는 유효(트리/벡터와 비교되는 장점).
-  - `splice`로 **다른 컨테이너로 옮겨진 노드**의 기존 반복자는 **원 컨테이너**에 대해 무효, **새 컨테이너**에 대해 유효(반복자가 노드 주소를 가리키므로).
+연결 리스트의 반복자는 **노드의 주소**를 직접 가리키므로, 해당 노드가 삭제되거나 다른 리스트로 이동(`splice`)되면 무효화됩니다.  
+하지만 **삽입**은 기존 노드에 영향을 주지 않으므로, 삽입 전에 얻은 반복자도 계속 유효합니다. (단, `begin()`이나 `end()`는 삽입 후 변경될 수 있습니다.)
 
 ---
 
 ## 테스트 전략
 
-1. **브루트 대조**: 동일 시나리오를 `std::list`/`std::forward_list`와 동시 실행 & 결과 비교.
-2. **경계**: 빈 컨테이너, 단일 노드, 양 끝에서의 삽입/삭제, self-splice 금지.
-3. **퍼징**: 랜덤 연산 시퀀스(삽입/삭제/스플라이스/머지) 후 불변식 검사(크기, 양방향 일치).
-4. **ASan/UBSan**: 런타임 메모리 오류 조기 발견.
+1. **기능 테스트**: 각 연산(삽입, 삭제, 역순, 병합 등)이 예상대로 동작하는지 확인.
+2. **경계 조건 테스트**: 빈 리스트, 노드가 하나만 있는 경우, 맨 앞/뒤 조작 등.
+3. **퍼징 테스트**: 무작위 연산을 반복하며 표준 컨테이너(`std::list`)와 결과를 비교.
 
-간단 퍼저:
+퍼징 예시 (앞서 본 `dlist` 클래스에 대해):
 
 ```cpp
-#include "dlist.hpp"
 #include <list>
 #include <random>
 #include <cassert>
 
-int main(){
-    dlist<int> my; std::list<int> ref;
+void test_dlist() {
+    dlist<int> my;
+    std::list<int> ref;
     std::mt19937 rng(123);
-    std::uniform_int_distribution<int> op(0,5), val(0,1000);
+    std::uniform_int_distribution<int> op(0, 5), val(0, 1000);
 
-    for (int t=0;t<50000;++t){
-        int o=op(rng);
-        if (o==0){ int x=val(rng); my.push_front(x); ref.push_front(x); }
-        else if (o==1){ int x=val(rng); my.push_back(x); ref.push_back(x); }
-        else if (o==2 && !ref.empty()){ my.pop_front(); ref.pop_front(); }
-        else if (o==3 && !ref.empty()){ my.pop_back();  ref.pop_back();  }
-        else if (o==4 && !ref.empty()){ // erase random
-            int k = val(rng) % (int)ref.size();
-            auto it=my.begin(); auto jt=ref.begin();
-            while(k--){ ++it; ++jt; }
-            my.erase(it); ref.erase(jt);
-        } else if (o==5){ my.reverse(); ref.reverse(); }
+    for (int t = 0; t < 100000; ++t) {
+        int o = op(rng);
+        if (o == 0) { // push_front
+            int x = val(rng);
+            my.push_front(x);
+            ref.push_front(x);
+        } else if (o == 1) { // push_back
+            int x = val(rng);
+            my.push_back(x);
+            ref.push_back(x);
+        } else if (o == 2 && !ref.empty()) { // pop_front
+            my.pop_front();
+            ref.pop_front();
+        } else if (o == 3 && !ref.empty()) { // pop_back
+            my.pop_back();
+            ref.pop_back();
+        } else if (o == 4 && !ref.empty()) { // erase random
+            size_t k = val(rng) % ref.size();
+            auto it = my.begin(); auto jt = ref.begin();
+            for (size_t i = 0; i < k; ++i) { ++it; ++jt; }
+            my.erase(it);
+            ref.erase(jt);
+        } else if (o == 5) { // reverse
+            my.reverse();
+            ref.reverse();
+        }
 
-        // compare
-        auto it=my.begin(); auto jt=ref.begin();
-        for(; it!=my.end() && jt!=ref.end(); ++it, ++jt) assert(*it==*jt);
-        assert(it==my.end() && jt==ref.end());
+        // 두 컨테이너의 내용이 같은지 확인
+        assert(my.size() == ref.size());
+        auto it1 = my.begin();
+        auto it2 = ref.begin();
+        for (; it1 != my.end() && it2 != ref.end(); ++it1, ++it2)
+            assert(*it1 == *it2);
+        assert(it1 == my.end() && it2 == ref.end());
     }
 }
 ```
 
 ---
 
-## 자주 하는 질문(FAQ)
-
-- **Q. 리스트가 항상 느린가요?**
-  랜덤 접근·순차 스캔 위주면 `vector`가 유리. **노드 이동/병합/스플라이스** 같은 **연결 재배선**이 많으면 리스트가 강함.
-
-- **Q. 왜 센티넬이 좋나요?**
-  빈/양끝 케이스 분기가 줄어 코드가 **짧고 견고**해진다. 특히 `splice/merge/reverse` 구현이 깔끔.
-
-- **Q. 단일 vs 이중 선택?**
-  삭제에 **직전 노드**가 필요 없게 만드는 이중이 실전에서 더 편하고 안전. 메모리 여유가 있다면 이중 추천.
-
-- **Q. 원형의 장점은?**
-  tail→head로 **순환**이 자연스러워 **라운드 로빈 스케줄러**, **플레이리스트** 등에서 편리. 종료 조건 주의.
-
----
-
 ## 마무리
 
-연결 리스트는 **포인터만으로 자료를 엮는** 가장 단순한 동적 구조다.
-센티넬·양방향 반복자·스플라이스·머지·LRU 등 실전 패턴을 익히면, “언제 리스트가 이기는지”를 명확히 판단할 수 있다.
+연결 리스트는 포인터를 직접 다루는 가장 기초적인 동적 자료구조입니다.  
+단일/이중/원형 리스트의 구현을 익히고, 고급 연산(병합, 뒤집기, 스플라이스)을 추가하면 **자료구조의 동작 원리**를 깊이 이해할 수 있습니다.
 
-다음 단계 제안:
-- `dlist<T>`에 **정렬(merge sort)**, **stable_partition** 추가
-- **intrusive list**(노드가 데이터 안에 prev/next를 내장)로 할당 비용 제거
-- **lock-free singly list**의 기본(ABA/hazard pointers) 맛보기
+실무에서는 `std::forward_list`(단일)나 `std::list`(이중)를 사용하는 것이 일반적이지만, 내부 동작을 이해하면 더 효율적인 코드를 작성하는 데 도움이 됩니다.
+
+다음 단계로는 **intrusive list**(노드 구조체 안에 포인터를 두는 방식)나 **lock-free 리스트** 등을 공부해보세요.
