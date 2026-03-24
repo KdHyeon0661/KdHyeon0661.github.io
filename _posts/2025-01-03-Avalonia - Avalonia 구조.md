@@ -4,18 +4,9 @@ title: Avalonia - Avalonia 구조
 date: 2025-01-03 19:20:23 +0900
 category: Avalonia
 ---
-# Avalonia 기본 템플릿 구조 분석 및 확장 방법
+# Avalonia 구조와 확장 전략
 
-- 템플릿별 차이(reactive/mvvm 옵션)와 `ViewModelBase`의 정체
-- `Program.cs`의 부트스트랩 옵션, Lifetime 구분, 환경 분기
-- `App.axaml`의 전역 리소스/스타일/머지 전략과 DataTemplate 네임스페이스 설정
-- `MainWindow`를 루트 셸로 삼아 **ContentControl + DataTemplate**로 화면 전환
-- **ReactiveUI** 기준 예제(`RaiseAndSetIfChanged`, `ReactiveCommand`)와 **CommunityToolkit.Mvvm** 대안
-- DI(의존성 주입), 네비게이션 서비스, 다이얼로그 서비스 설계
-- 단위 테스트 구도(ViewModel 중심), 폴더 구조 리팩터링, 배포/성능 팁
-- 자주 겪는 오류와 해결(네임스페이스, DataTemplate, 바인딩 실패 등)
-
-코드는 모두 ```로 감싸고, 수학이 있으면 반드시 $$...$$로 감싼다(본 글은 수식을 사용하지 않는다).
+Avalonia는 .NET용 크로스 플랫폼 UI 프레임워크로, 데스크톱(Windows, Linux, macOS)부터 모바일, 웹 어셈블리까지 지원합니다. 이 글은 공식 템플릿(`dotnet new avalonia.app`)으로 생성한 프로젝트를 시작점으로 삼아, 초중급 수준에서 Avalonia 앱의 구조를 이해하고 실제 프로젝트에서 활용할 수 있는 확장 방법을 설명합니다.
 
 ---
 
@@ -26,15 +17,7 @@ dotnet new avalonia.app -o MyAvaloniaApp
 cd MyAvaloniaApp
 ```
 
-- `avalonia.app` 템플릿은 **데스크톱(Windows/Linux/macOS)** 대상의 최소 앱 골격을 만든다.
-- 템플릿에는 옵션이 존재할 수 있다. 예: `--mvvm`(CommunityToolkit 기반) 또는 `--reactive`(ReactiveUI 기반) 등.
-  설치된 템플릿 버전에 따라 스캐폴딩 결과가 다를 수 있으므로 `dotnet new --list`로 확인한다.
-
----
-
-## 기본 프로젝트 구조
-
-초안에서 제시된 구조는 다음과 유사하다(템플릿/옵션에 따라 달라질 수 있음):
+생성된 프로젝트의 기본 구조는 다음과 같습니다.
 
 ```
 MyAvaloniaApp/
@@ -46,24 +29,18 @@ MyAvaloniaApp/
 ├── ViewModels/
 │   └── MainWindowViewModel.cs
 ├── Views/
-│   └── MainWindow.axaml          (템플릿에 따라 View 분리될 수 있음)
+│   └── MainWindow.axaml
 ├── MyAvaloniaApp.csproj
-├── obj/
-└── bin/
+└── ...
 ```
 
-핵심 포인트(확장 설명 포함):
-- **Program.cs**: 앱 진입점. `AppBuilder`를 구성하고 플랫폼별 초기화를 수행한다.
-- **App.axaml / App.axaml.cs**: 전역 리소스/스타일/테마/시작 윈도우 설정. DataTemplate, 리소스 병합 포인트.
-- **MainWindow**: 시작 화면이자 셸(루트 컨테이너). `ContentControl`로 내부 화면 교체 추천.
-- **ViewModels**: MVVM의 중심. 상태/명령/네비게이션/검증/서비스 주입의 핵심 레이어.
-- **Views**: XAML 기반 화면. 로직은 최소화하고 바인딩에 집중.
+이 구조는 MVVM 패턴을 따르며, 간단한 바인딩 예제를 포함하고 있습니다. 앞으로 이 구조를 점진적으로 확장해 나갑니다.
 
 ---
 
-## Program.cs — 부트스트랩, Lifetime, 환경 분기
+## Program.cs – 부트스트랩과 라이프타임
 
-초안의 코드:
+`Program.cs`는 앱의 진입점입니다. 기본 코드는 다음과 같습니다.
 
 ```csharp
 public static class Program
@@ -78,51 +55,38 @@ public static class Program
 }
 ```
 
-**확장 포인트**:
+`UsePlatformDetect()`는 현재 실행 중인 운영체제에 맞는 백엔드(윈도우, X11, macOS 등)를 자동으로 설정합니다. `StartWithClassicDesktopLifetime`은 마지막 창이 닫힐 때 애플리케이션을 종료하는 전형적인 데스크톱 수명 주기를 제공합니다.
 
-- `UsePlatformDetect()`
-  OS/디스플레이/입력 백엔드를 자동 세팅한다. 데스크톱 타깃에서 일반적으로 사용.
-- `StartWithClassicDesktopLifetime(args)`
-  창을 닫으면 프로세스를 종료하는 **클래식 데스크톱** 수명 모델.
-  모바일/싱글뷰 앱일 때는 `SingleViewApplicationLifetime`을 사용한다.
-- 환경별 분기(예: 개발/운영 빌드에 따른 로깅 레벨, 다크 테마 기본값 등):
+### 환경 분기
+
+개발 환경과 운영 환경에서 로깅 레벨을 다르게 설정하거나, 디버그용 코드를 포함시킬 수 있습니다.
 
 ```csharp
-using Avalonia;
-
-public static class Program
+public static AppBuilder BuildAvaloniaApp()
 {
-    [STAThread]
-    public static void Main(string[] args)
-        => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+    var builder = AppBuilder.Configure<App>().UsePlatformDetect();
 
-    public static AppBuilder BuildAvaloniaApp()
-    {
 #if DEBUG
-
-        var builder = AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .LogToTrace(); // 디버그 환경 로깅 강화
-#else
-
-        var builder = AppBuilder.Configure<App>()
-            .UsePlatformDetect();
+    builder.LogToTrace();  // 개발 중에는 콘솔에 로그 출력
 #endif
 
-        return builder;
-    }
+    return builder;
 }
 ```
 
+> **팁**: `StartWithClassicDesktopLifetime` 대신 `SingleViewApplicationLifetime`을 사용하면 모바일이나 싱글뷰 앱에 적합한 수명 주기를 적용할 수 있습니다.
+
 ---
 
-## App.axaml / App.axaml.cs — 전역 리소스, 스타일, 시작 윈도우
+## App.axaml – 전역 리소스와 데이터 템플릿
 
-초안의 XAML:
+`App.axaml`은 애플리케이션 전체에 적용될 리소스(색상, 브러시, 스타일)와 데이터 템플릿을 정의합니다.
+
+### 기본 구조
 
 ```xml
 <Application xmlns="https://github.com/avaloniaui"
-             ...
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MyAvaloniaApp.App">
     <Application.Styles>
         <FluentTheme Mode="Light"/>
@@ -130,287 +94,199 @@ public static class Program
 </Application>
 ```
 
-**확장 포인트**:
+### 리소스 병합
 
-1) 전역 리소스 병합(브러시/두께/문자열/스타일 분리)을 권장한다.
+규모가 커지면 리소스를 별도 파일로 분리하는 것이 좋습니다.
 
 ```xml
-<Application
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    x:Class="MyAvaloniaApp.App">
-
-  <Application.Resources>
+<Application.Resources>
     <ResourceDictionary>
-      <ResourceDictionary.MergedDictionaries>
-        <ResourceInclude Source="avares://MyAvaloniaApp/Resources/Colors.axaml" />
-        <ResourceInclude Source="avares://MyAvaloniaApp/Resources/Spacing.axaml" />
-        <ResourceInclude Source="avares://MyAvaloniaApp/Resources/Styles.axaml" />
-      </ResourceDictionary.MergedDictionaries>
-      <!-- 전역 문자열/브러시 등 -->
-      <SolidColorBrush x:Key="BrandBrush" Color="#3B82F6"/>
+        <ResourceDictionary.MergedDictionaries>
+            <ResourceInclude Source="avares://MyAvaloniaApp/Resources/Colors.axaml" />
+            <ResourceInclude Source="avares://MyAvaloniaApp/Resources/Styles.axaml" />
+        </ResourceDictionary.MergedDictionaries>
+        <SolidColorBrush x:Key="PrimaryBrush" Color="#3B82F6"/>
     </ResourceDictionary>
-  </Application.Resources>
+</Application.Resources>
+```
 
-  <Application.Styles>
-    <FluentTheme Mode="Light"/>
-  </Application.Styles>
+### 데이터 템플릿과 네임스페이스
+
+`Application.DataTemplates`는 ViewModel 타입과 View를 연결하는 데 사용됩니다. 네임스페이스 선언이 정확해야 합니다.
+
+```xml
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyAvaloniaApp.ViewModels"
+             xmlns:views="using:MyAvaloniaApp.Views"
+             x:Class="MyAvaloniaApp.App">
+    <Application.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:MainWindowViewModel}">
+            <views:MainWindowView/>
+        </DataTemplate>
+    </Application.DataTemplates>
 </Application>
 ```
 
-2) DataTemplate 네임스페이스 설정과 등록(아래 §7에서 상세).
+### 시작 윈도우 설정 (`App.axaml.cs`)
 
-3) 시작 윈도우 설정(`App.axaml.cs`):
+`OnFrameworkInitializationCompleted`에서 시작 윈도우를 지정합니다.
 
 ```csharp
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
-
-namespace MyAvaloniaApp;
-
-public partial class App : Application
+public override void OnFrameworkInitializationCompleted()
 {
-    public override void OnFrameworkInitializationCompleted()
+    if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
     {
-        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        desktop.MainWindow = new MainWindow
         {
-            desktop.MainWindow = new MainWindow
-            {
-                DataContext = new ViewModels.MainWindowViewModel()
-            };
-        }
-        base.OnFrameworkInitializationCompleted();
+            DataContext = new ViewModels.MainWindowViewModel()
+        };
     }
+    base.OnFrameworkInitializationCompleted();
 }
 ```
 
-- 대규모 앱에서는 여기서 DI 컨테이너를 구성해 ViewModel/서비스를 주입한다(§8 참조).
-
 ---
 
-## MainWindow — 셸로서의 역할과 레이아웃
+## MainWindow – 셸(Shell)로서의 역할
 
-초안의 단순 바인딩:
+초기 템플릿의 `MainWindow`는 단순히 `TextBlock` 하나를 포함하고 있습니다. 하지만 실제 애플리케이션에서는 `MainWindow`를 전체 화면을 관리하는 **셸**로 사용합니다.
 
-```xml
-<Window ...>
-    <StackPanel>
-        <TextBlock Text="{Binding Greeting}" />
-    </StackPanel>
-</Window>
-```
-
-**확장 설계**: `MainWindow`를 **루트 셸**로 삼아 내부 콘텐츠를 `ContentControl`로 교체한다.
+### 셸 구조
 
 ```xml
-<!-- Views/MainWindow.axaml (또는 루트 Window) -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:vm="using:MyAvaloniaApp.ViewModels"
-        xmlns:views="using:MyAvaloniaApp.Views"
         x:Class="MyAvaloniaApp.MainWindow"
-        Width="960" Height="640"
-        Title="My Avalonia App">
-
-  <DockPanel>
-    <!-- 상단 바 -->
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8" Spacing="8">
-      <Button Content="홈" Command="{Binding NavigateHomeCommand}"/>
-      <Button Content="설정" Command="{Binding NavigateSettingsCommand}"/>
-    </StackPanel>
-
-    <!-- 본문: ViewModel에 따라 View가 DataTemplate로 연결되어 표시 -->
-    <ContentControl Content="{Binding CurrentViewModel}" Margin="12"/>
-  </DockPanel>
+        Width="960" Height="640" Title="My App">
+    <DockPanel>
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8">
+            <Button Command="{Binding NavigateHomeCommand}" Content="홈"/>
+            <Button Command="{Binding NavigateSettingsCommand}" Content="설정"/>
+        </StackPanel>
+        <ContentControl Content="{Binding CurrentViewModel}" Margin="12"/>
+    </DockPanel>
 </Window>
 ```
+
+`ContentControl`의 `Content`는 현재 활성화된 ViewModel에 바인딩됩니다. `DataTemplate`이 ViewModel 타입을 적절한 View로 변환해 줍니다.
 
 ---
 
 ## ViewModelBase와 바인딩 기초
 
-템플릿에 따라 `ViewModelBase`는 다음 중 하나일 수 있다:
+템플릿에 따라 `ViewModelBase`는 `ReactiveObject`(ReactiveUI) 또는 `ObservableObject`(CommunityToolkit.Mvvm)를 상속합니다. 두 방식 모두 `INotifyPropertyChanged`를 구현하며, 바인딩 가능한 속성을 쉽게 만들 수 있습니다.
 
-- **ReactiveUI 기반**: `ViewModelBase : ReactiveObject`
-  - `RaiseAndSetIfChanged(ref field, value)` 제공
-  - `ReactiveCommand.Create(...)`
-- **CommunityToolkit.Mvvm 기반**: `ViewModelBase : ObservableObject`
-  - `[ObservableProperty]` 소스생성기, `RelayCommand` 제공
-
-초안에 등장한 `RaiseAndSetIfChanged`는 **ReactiveUI** 문법이다. 이하 기본 예제는 ReactiveUI를 기준으로 하고, 바로 뒤에 Toolkit 대안을 함께 제시한다.
-
-### ReactiveUI 기반 ViewModelBase
+### ReactiveUI 예제
 
 ```csharp
-// ViewModels/ViewModelBase.cs
 using ReactiveUI;
-
-namespace MyAvaloniaApp.ViewModels;
 
 public class ViewModelBase : ReactiveObject
 {
 }
-```
-
-### 간단 ViewModel 예시
-
-```csharp
-// ViewModels/MainWindowViewModel.cs
-using ReactiveUI;
-
-namespace MyAvaloniaApp.ViewModels;
-
-public class MainWindowViewModel : ViewModelBase
-{
-    private string _greeting = "Welcome to Avalonia!";
-    public string Greeting
-    {
-        get => _greeting;
-        set => this.RaiseAndSetIfChanged(ref _greeting, value);
-    }
-}
-```
-
-**CommunityToolkit.Mvvm 대안**:
-
-```csharp
-// ViewModels/ViewModelBase.cs
-using CommunityToolkit.Mvvm.ComponentModel;
-
-namespace MyAvaloniaApp.ViewModels;
-
-public class ViewModelBase : ObservableObject
-{
-}
-
-// ViewModels/MainWindowViewModel.cs
-using CommunityToolkit.Mvvm.ComponentModel;
-
-public partial class MainWindowViewModel : ViewModelBase
-{
-    [ObservableProperty]
-    private string greeting = "Welcome to Avalonia!";
-}
-```
-
----
-
-## 화면 추가와 화면 전환 — DataTemplate + ContentControl
-
-초안의 방향(새로운 View/VM 추가 → DataTemplate → `ContentControl`)을 **완성형 패턴**으로 제시한다.
-
-### 폴더 정리
-
-```
-Views/
-  MainView.axaml
-  SettingsView.axaml
-ViewModels/
-  MainViewModel.cs
-  SettingsViewModel.cs
-```
-
-### View 정의
-
-```xml
-<!-- Views/MainView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="MyAvaloniaApp.Views.MainView">
-  <StackPanel Margin="12" Spacing="8">
-    <TextBlock Text="메인 화면" FontSize="18"/>
-    <TextBlock Text="{Binding Greeting}" />
-  </StackPanel>
-</UserControl>
-```
-
-```xml
-<!-- Views/SettingsView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="MyAvaloniaApp.Views.SettingsView">
-  <StackPanel Margin="12" Spacing="8">
-    <TextBlock Text="설정 화면" FontSize="18"/>
-    <TextBox Text="{Binding Title}" Watermark="설정 제목" Width="240"/>
-  </StackPanel>
-</UserControl>
-```
-
-### ViewModel 정의(reactive)
-
-```csharp
-// ViewModels/MainViewModel.cs
-using ReactiveUI;
-
-namespace MyAvaloniaApp.ViewModels;
 
 public class MainViewModel : ViewModelBase
 {
-    private string _greeting = "메인 화면에 오신 것을 환영합니다.";
+    private string _greeting = "Welcome!";
     public string Greeting
     {
         get => _greeting;
         set => this.RaiseAndSetIfChanged(ref _greeting, value);
     }
-}
-```
 
-```csharp
-// ViewModels/SettingsViewModel.cs
-using ReactiveUI;
-
-namespace MyAvaloniaApp.ViewModels;
-
-public class SettingsViewModel : ViewModelBase
-{
-    private string _title = "설정";
-    public string Title
+    private bool _isLoading;
+    public bool IsLoading
     {
-        get => _title;
-        set => this.RaiseAndSetIfChanged(ref _title, value);
+        get => _isLoading;
+        set => this.RaiseAndSetIfChanged(ref _isLoading, value);
     }
 }
 ```
 
-### App.axaml에 DataTemplate 등록
+### CommunityToolkit.Mvvm 예제
 
-**중요**: 네임스페이스 매핑이 정확해야 한다.
+```csharp
+using CommunityToolkit.Mvvm.ComponentModel;
+
+public partial class ViewModelBase : ObservableObject
+{
+}
+
+public partial class MainViewModel : ViewModelBase
+{
+    [ObservableProperty]
+    private string greeting = "Welcome!";
+
+    [ObservableProperty]
+    private bool isLoading;
+}
+```
+
+`[ObservableProperty]` 소스 생성기가 `Greeting` 속성을 자동으로 생성하고 `OnGreetingChanged` 부분 메서드도 만들어 줍니다.
+
+---
+
+## 화면 전환 – ContentControl + DataTemplate
+
+여러 화면을 전환하려면 각 화면에 대한 View/ViewModel 쌍을 만들고, `App.axaml`에 `DataTemplate`을 등록한 후, 셸 ViewModel에서 현재 ViewModel을 교체합니다.
+
+### 1. View와 ViewModel 생성
+
+`Views/HomeView.axaml`
 
 ```xml
-<!-- App.axaml -->
-<Application
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="using:MyAvaloniaApp.ViewModels"
-    xmlns:views="using:MyAvaloniaApp.Views"
-    x:Class="MyAvaloniaApp.App">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="MyAvaloniaApp.Views.HomeView">
+    <StackPanel>
+        <TextBlock Text="{Binding WelcomeText}" FontSize="20"/>
+    </StackPanel>
+</UserControl>
+```
 
-  <Application.DataTemplates>
-    <!-- ViewModel 타입 → View로 변환 -->
-    <DataTemplate DataType="{x:Type vm:MainViewModel}">
-      <views:MainView/>
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-      <views:SettingsView/>
-    </DataTemplate>
-  </Application.DataTemplates>
+`ViewModels/HomeViewModel.cs`
 
-  <Application.Styles>
-    <FluentTheme Mode="Light"/>
-  </Application.Styles>
+```csharp
+public class HomeViewModel : ViewModelBase
+{
+    private string _welcomeText = "홈 화면입니다.";
+    public string WelcomeText
+    {
+        get => _welcomeText;
+        set => this.RaiseAndSetIfChanged(ref _welcomeText, value);
+    }
+}
+```
+
+같은 방식으로 `SettingsView` / `SettingsViewModel`을 만듭니다.
+
+### 2. DataTemplate 등록
+
+`App.axaml`에 네임스페이스와 데이터 템플릿을 추가합니다.
+
+```xml
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:MyAvaloniaApp.ViewModels"
+             xmlns:views="using:MyAvaloniaApp.Views"
+             x:Class="MyAvaloniaApp.App">
+    <Application.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:HomeViewModel}">
+            <views:HomeView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView/>
+        </DataTemplate>
+    </Application.DataTemplates>
 </Application>
 ```
 
-### MainWindowViewModel에서 전환 로직
+### 3. 셸 ViewModel에서 전환
+
+`MainWindowViewModel`이 현재 화면의 ViewModel을 보유하고, 전환 명령을 제공합니다.
 
 ```csharp
-// ViewModels/MainWindowViewModel.cs  (네비게이션 허브)
-using ReactiveUI;
-using System;
-using System.Reactive;
-
-namespace MyAvaloniaApp.ViewModels;
-
 public class MainWindowViewModel : ViewModelBase
 {
     private ViewModelBase _currentViewModel;
@@ -425,153 +301,99 @@ public class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel()
     {
-        _currentViewModel = new MainViewModel();
-        NavigateHomeCommand = ReactiveCommand.Create(() => CurrentViewModel = new MainViewModel());
+        _currentViewModel = new HomeViewModel();
+        NavigateHomeCommand = ReactiveCommand.Create(() => CurrentViewModel = new HomeViewModel());
         NavigateSettingsCommand = ReactiveCommand.Create(() => CurrentViewModel = new SettingsViewModel());
     }
 }
 ```
 
-**CommunityToolkit.Mvvm 대안**:
-
-```csharp
-// ViewModels/MainWindowViewModel.cs (Toolkit)
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-
-public partial class MainWindowViewModel : ViewModelBase
-{
-    [ObservableProperty]
-    private ViewModelBase currentViewModel = new MainViewModel();
-
-    [RelayCommand]
-    private void NavigateHome() => CurrentViewModel = new MainViewModel();
-
-    [RelayCommand]
-    private void NavigateSettings() => CurrentViewModel = new SettingsViewModel();
-}
-```
-
-### MainWindow에 버튼 + ContentControl
-
-```xml
-<!-- Views/MainWindow.axaml -->
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="MyAvaloniaApp.MainWindow"
-        Width="960" Height="640" Title="My Avalonia App">
-
-  <DockPanel>
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8" Spacing="8">
-      <Button Content="홈" Command="{Binding NavigateHomeCommand}"/>
-      <Button Content="설정" Command="{Binding NavigateSettingsCommand}"/>
-    </StackPanel>
-
-    <ContentControl Content="{Binding CurrentViewModel}" Margin="12"/>
-  </DockPanel>
-</Window>
-```
+`MainWindow` XAML은 이미 `ContentControl`을 `CurrentViewModel`에 바인딩했으므로, 버튼을 누르면 화면이 전환됩니다.
 
 ---
 
 ## DI(의존성 주입)와 서비스 계층
 
-규모가 커지면 ViewModel 생성/수명 관리를 DI 컨테이너로 맡기는 것이 좋다.
+애플리케이션이 커지면 ViewModel 생성, 네비게이션, 다이얼로그 등에 DI 컨테이너를 도입하는 것이 좋습니다. `Microsoft.Extensions.DependencyInjection`을 사용해 봅시다.
 
-### Microsoft.Extensions.DependencyInjection 사용
+### 1. 패키지 추가
+
+```bash
+dotnet add package Microsoft.Extensions.DependencyInjection
+```
+
+### 2. App.axaml.cs에서 컨테이너 구성
 
 ```csharp
-// App.axaml.cs
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
 using Microsoft.Extensions.DependencyInjection;
-using MyAvaloniaApp.ViewModels;
-
-namespace MyAvaloniaApp;
 
 public partial class App : Application
 {
-    public static ServiceProvider Services { get; private set; } = default!;
+    public static IServiceProvider Services { get; private set; } = default!;
 
     public override void OnFrameworkInitializationCompleted()
     {
-        var sc = new ServiceCollection();
+        var services = new ServiceCollection();
 
-        // 서비스/리포지토리 등록
-        sc.AddSingleton<INavigationService, NavigationService>(); // 예시
-        sc.AddSingleton<MainWindowViewModel>();
-        sc.AddTransient<MainViewModel>();
-        sc.AddTransient<SettingsViewModel>();
+        // 서비스 등록
+        services.AddSingleton<INavigationService, NavigationService>();
+        services.AddSingleton<IDialogService, DialogService>();
 
-        Services = sc.BuildServiceProvider();
+        // ViewModel 등록 (Transient 또는 Scoped)
+        services.AddTransient<HomeViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddSingleton<MainWindowViewModel>();
+
+        Services = services.BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var shell = Services.GetRequiredService<MainWindowViewModel>();
-            desktop.MainWindow = new MainWindow { DataContext = shell };
+            var mainViewModel = Services.GetRequiredService<MainWindowViewModel>();
+            desktop.MainWindow = new MainWindow { DataContext = mainViewModel };
         }
         base.OnFrameworkInitializationCompleted();
     }
 }
 ```
 
-### 간단 네비게이션 서비스
+### 3. 간단한 네비게이션 서비스
 
 ```csharp
-// Services/INavigationService.cs
-using MyAvaloniaApp.ViewModels;
-
 public interface INavigationService
 {
     ViewModelBase Current { get; }
-    void NavigateTo<TViewModel>() where TViewModel : ViewModelBase;
+    void NavigateTo<T>() where T : ViewModelBase;
 }
-```
-
-```csharp
-// Services/NavigationService.cs
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using MyAvaloniaApp.ViewModels;
 
 public class NavigationService : INavigationService
 {
-    private readonly IServiceProvider _provider;
+    private readonly IServiceProvider _serviceProvider;
     public ViewModelBase Current { get; private set; }
 
-    public NavigationService(IServiceProvider provider)
+    public NavigationService(IServiceProvider serviceProvider)
     {
-        _provider = provider;
-        Current = _provider.GetRequiredService<MainViewModel>();
+        _serviceProvider = serviceProvider;
+        Current = _serviceProvider.GetRequiredService<HomeViewModel>();
     }
 
-    public void NavigateTo<TViewModel>() where TViewModel : ViewModelBase
-        => Current = _provider.GetRequiredService<TViewModel>();
+    public void NavigateTo<T>() where T : ViewModelBase
+    {
+        Current = _serviceProvider.GetRequiredService<T>();
+    }
 }
 ```
 
-`MainWindowViewModel`에서 이 서비스를 사용해 `CurrentViewModel`에 반영하면, 화면 전환 로직이 단일 책임으로 정리된다.
+`MainWindowViewModel`은 `INavigationService`를 주입받아 `Current`를 관찰하거나 직접 교체할 수 있습니다.
 
----
+### 4. 다이얼로그 서비스
 
-## 다이얼로그 서비스 패턴(권장)
-
-ViewModel이 직접 `Window`를 생성하지 않도록 **IDialogService**를 둔다.
+ViewModel에서 직접 윈도우를 생성하지 않도록 추상화합니다.
 
 ```csharp
-// Services/IDialogService.cs
-using System.Threading.Tasks;
-
 public interface IDialogService
 {
-    Task<string?> ShowInputAsync(string title, string prompt);
+    Task<string?> ShowInputDialogAsync(string title, string prompt);
 }
-```
-
-```csharp
-// Services/DialogService.cs (간단 예)
-using Avalonia.Controls;
-using System.Threading.Tasks;
 
 public class DialogService : IDialogService
 {
@@ -579,159 +401,70 @@ public class DialogService : IDialogService
 
     public DialogService(Window owner) => _owner = owner;
 
-    public async Task<string?> ShowInputAsync(string title, string prompt)
+    public async Task<string?> ShowInputDialogAsync(string title, string prompt)
     {
-        var dlg = new Window { Title = title, Width = 360, Height = 160 };
-        // XAML 다이얼로그를 만들어 붙여도 되고, 간단히 구성해도 된다.
-        return await dlg.ShowDialog<string?>(_owner);
+        var dialog = new Window
+        {
+            Title = title,
+            Width = 400,
+            Height = 200,
+            Content = new TextBox { Watermark = prompt }
+        };
+        return await dialog.ShowDialog<string?>(_owner);
     }
 }
 ```
 
-실전에서는 XAML 다이얼로그를 만들고, DI로 ViewModel에서 호출하도록 구성한다.
-
 ---
 
-## 스타일/리소스/테마 — 분리와 상태 스타일
+## 스타일과 리소스 분리
 
-### 리소스 딕셔너리 분리
+### 리소스 파일 예제
 
-```
-Resources/
-  Colors.axaml
-  Spacing.axaml
-  Styles.axaml
-```
-
-`Colors.axaml`:
+`Resources/Colors.axaml`
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <SolidColorBrush x:Key="BrandBrush" Color="#3B82F6"/>
+    <SolidColorBrush x:Key="PrimaryColor" Color="#3498db"/>
+    <SolidColorBrush x:Key="SecondaryColor" Color="#2ecc71"/>
 </ResourceDictionary>
 ```
 
-`Styles.axaml`:
+`Resources/Styles.axaml`
 
 ```xml
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Style Selector="Button.confirm">
-    <Setter Property="Background" Value="{StaticResource BrandBrush}"/>
-    <Setter Property="Foreground" Value="White"/>
-  </Style>
+    <Style Selector="Button.primary">
+        <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
+        <Setter Property="Foreground" Value="White"/>
+    </Style>
 </ResourceDictionary>
 ```
 
-사용:
+이 파일들을 `App.axaml`에서 병합합니다.
 
-```xml
-<Button Classes="confirm" Content="저장"/>
-```
-
-### 상태 스타일
+### 상태 스타일 (호버, 클릭 등)
 
 ```xml
 <Style Selector="Button:pointerover">
-  <Setter Property="Opacity" Value="0.9"/>
+    <Setter Property="Opacity" Value="0.8"/>
 </Style>
-
 <Style Selector="Button:pressed">
-  <Setter Property="RenderTransform">
-    <Setter.Value>
-      <ScaleTransform ScaleX="0.98" ScaleY="0.98"/>
-    </Setter.Value>
-  </Setter>
+    <Setter Property="RenderTransform">
+        <Setter.Value>
+            <ScaleTransform ScaleX="0.97" ScaleY="0.97"/>
+        </Setter.Value>
+    </Setter>
 </Style>
 ```
 
 ---
 
-## 검증/컨버터/템플릿
+## 단위 테스트
 
-### IValueConverter
-
-```csharp
-// Converters/BoolToTextConverter.cs
-using System;
-using Avalonia.Data.Converters;
-using System.Globalization;
-
-public class BoolToTextConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is bool b && b ? "완료" : "진행 중";
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => (value as string) == "완료";
-}
-```
-
-XAML 등록/사용:
-
-```xml
-<Window xmlns:conv="using:MyAvaloniaApp.Converters">
-  <Window.Resources>
-    <conv:BoolToTextConverter x:Key="BoolToText"/>
-  </Window.Resources>
-  <TextBlock Text="{Binding IsDone, Converter={StaticResource BoolToText}}"/>
-</Window>
-```
-
-### 검증(CommunityToolkit 예)
-
-```csharp
-using CommunityToolkit.Mvvm.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-
-public partial class AccountViewModel : ObservableValidator
-{
-    [ObservableProperty]
-    [Required(ErrorMessage = "사용자 이름은 필수입니다.")]
-    private string? userName;
-
-    partial void OnUserNameChanged(string? value) => ValidateAllProperties();
-}
-```
-
----
-
-## 리스트/그리드 — ItemsControl, ListBox, DataGrid
-
-### ListBox 선택 바인딩
-
-```xml
-<ListBox Items="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}">
-  <ListBox.ItemTemplate>
-    <DataTemplate>
-      <StackPanel Orientation="Horizontal" Spacing="8">
-        <CheckBox IsChecked="{Binding IsDone}"/>
-        <TextBlock Text="{Binding Title}"/>
-      </StackPanel>
-    </DataTemplate>
-  </ListBox.ItemTemplate>
-</ListBox>
-```
-
-### DataGrid
-
-```bash
-dotnet add package Avalonia.Controls.DataGrid
-```
-
-```xml
-<DataGrid Items="{Binding Items}" AutoGenerateColumns="False">
-  <DataGrid.Columns>
-    <DataGridTextColumn Header="제목" Binding="{Binding Title}" />
-    <DataGridCheckBoxColumn Header="완료" Binding="{Binding IsDone}" />
-  </DataGrid.Columns>
-</DataGrid>
-```
-
----
-
-## 단위 테스트 — ViewModel 중심
+ViewModel은 순수 C# 클래스이므로 xUnit 등으로 쉽게 테스트할 수 있습니다.
 
 ```bash
 dotnet new xunit -o MyAvaloniaApp.Tests
@@ -743,206 +476,88 @@ dotnet add reference ../MyAvaloniaApp/MyAvaloniaApp.csproj
 using Xunit;
 using MyAvaloniaApp.ViewModels;
 
-public class MainViewModelTests
+public class HomeViewModelTests
 {
     [Fact]
-    public void Greeting_DefaultValue()
+    public void WelcomeText_Should_Be_NotNull()
     {
-        var vm = new MainViewModel();
-        Assert.False(string.IsNullOrWhiteSpace(vm.Greeting));
+        var vm = new HomeViewModel();
+        Assert.NotNull(vm.WelcomeText);
+    }
+
+    [Fact]
+    public void RaiseAndSetIfChanged_Works()
+    {
+        var vm = new HomeViewModel();
+        bool changed = false;
+        vm.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(HomeViewModel.WelcomeText)) changed = true; };
+        vm.WelcomeText = "New text";
+        Assert.True(changed);
+        Assert.Equal("New text", vm.WelcomeText);
     }
 }
 ```
 
 ---
 
-## 빌드/실행/핫 리로드/배포
+## 배포 및 성능 팁
 
-### 개발
-
-```bash
-dotnet run
-dotnet watch   # 핫 리로드/자동 빌드
-```
-
-### 배포(self-contained, 단일 파일 선택)
+### 자체 포함(Self-Contained) 배포
 
 ```bash
 # Windows
-
-dotnet publish -c Release -r win-x64 --self-contained true
+dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
 
 # Linux
-
-dotnet publish -c Release -r linux-x64 --self-contained true
+dotnet publish -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true
 
 # macOS
-
-dotnet publish -c Release -r osx-x64 --self-contained true
-
-# 단일 파일 (선택)
-
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+dotnet publish -c Release -r osx-x64 --self-contained true -p:PublishSingleFile=true
 ```
 
-운영체제별 서명/권한 문제가 있을 수 있으므로 배포 타깃 환경에서 실행 검증 필수.
+### 성능 고려사항
 
----
-
-## 성능/구조/운영 팁
-
-- `ContentControl + DataTemplate`는 화면 교체의 표준 패턴. View 이름 규칙과 `ViewLocator`를 도입하면 매핑 자동화 가능.
-- 바인딩 에러는 반드시 로그에서 확인. 속성명/INPC 여부/네임스페이스 철자 점검.
-- 대량 데이터 UI는 가상화되는 컨트롤 사용(DataGrid 등)과 배치 갱신 고려.
-- 이미지/대용량 리소스는 지연 로딩, 비동기 I/O, CancellationToken 처리.
-- 설정/환경 분리: 개발/스테이징/운영에 따라 로깅/서버 엔드포인트 분기.
-- 접근성: 키보드 탐색, 포커스 스타일, 콘트라스트, 스크린 리더 고려.
-
----
-
-## 예제 묶음: Settings 화면 추가 및 전환(완결)
-
-### View/VM 생성
-
-```bash
-mkdir -p Views ViewModels
-```
-
-```csharp
-// ViewModels/SettingsViewModel.cs (Reactive)
-using ReactiveUI;
-
-namespace MyAvaloniaApp.ViewModels;
-
-public class SettingsViewModel : ViewModelBase
-{
-    private string _title = "설정";
-    public string Title
-    {
-        get => _title;
-        set => this.RaiseAndSetIfChanged(ref _title, value);
-    }
-}
-```
-
-```xml
-<!-- Views/SettingsView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="MyAvaloniaApp.Views.SettingsView">
-  <StackPanel Margin="12" Spacing="8">
-    <TextBlock Text="설정 화면" FontSize="18"/>
-    <TextBox Text="{Binding Title}" Watermark="설정 제목" Width="240"/>
-  </StackPanel>
-</UserControl>
-```
-
-### App.axaml DataTemplate
-
-```xml
-<Application.DataTemplates xmlns:vm="using:MyAvaloniaApp.ViewModels"
-                           xmlns:views="using:MyAvaloniaApp.Views">
-  <DataTemplate DataType="{x:Type vm:MainViewModel}">
-    <views:MainView/>
-  </DataTemplate>
-  <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-    <views:SettingsView/>
-  </DataTemplate>
-</Application.DataTemplates>
-```
-
-### Shell ViewModel(전환 커맨드)
-
-```csharp
-// ViewModels/MainWindowViewModel.cs
-using ReactiveUI;
-using System.Reactive;
-
-namespace MyAvaloniaApp.ViewModels;
-
-public class MainWindowViewModel : ViewModelBase
-{
-    private ViewModelBase _currentViewModel = new MainViewModel();
-    public ViewModelBase CurrentViewModel
-    {
-        get => _currentViewModel;
-        set => this.RaiseAndSetIfChanged(ref _currentViewModel, value);
-    }
-
-    public ReactiveCommand<Unit, Unit> NavigateHomeCommand { get; }
-    public ReactiveCommand<Unit, Unit> NavigateSettingsCommand { get; }
-
-    public MainWindowViewModel()
-    {
-        NavigateHomeCommand = ReactiveCommand.Create(() => CurrentViewModel = new MainViewModel());
-        NavigateSettingsCommand = ReactiveCommand.Create(() => CurrentViewModel = new SettingsViewModel());
-    }
-}
-```
-
-### MainWindow에서 연결
-
-```xml
-<!-- Views/MainWindow.axaml -->
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="MyAvaloniaApp.MainWindow"
-        Width="960" Height="640" Title="My Avalonia App">
-  <DockPanel>
-    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="8" Spacing="8">
-      <Button Content="홈" Command="{Binding NavigateHomeCommand}"/>
-      <Button Content="설정" Command="{Binding NavigateSettingsCommand}"/>
-    </StackPanel>
-    <ContentControl Content="{Binding CurrentViewModel}" Margin="12"/>
-  </DockPanel>
-</Window>
-```
+- **가상화**: `ListBox`, `DataGrid` 등은 대량 데이터에서 가상화가 기본으로 활성화되어 있습니다.
+- **이미지 로딩**: `Bitmap`은 비동기로 로드하고, 필요하면 캐시를 사용하세요.
+- **바인딩**: `OneWay` 바인딩을 기본으로 하고, 양방향이 꼭 필요한 경우에만 `TwoWay`를 사용합니다.
+- **컴파일 바인딩**: `x:DataType`을 사용하면 컴파일 타임에 바인딩을 검증하고 성능을 향상시킬 수 있습니다.
 
 ---
 
 ## 자주 겪는 오류와 해결
 
-- **DataTemplate가 적용되지 않음**
-  - `App.axaml`에서 `xmlns:vm="using:...ViewModels"` / `xmlns:views="using:...Views"` 정확히 지정
-  - `DataType="{x:Type vm:FooViewModel}"`에서 타입명, 네임스페이스 확인
-- **바인딩 실패**
-  - 출력 로그에서 바인딩 에러 확인
-  - 프로퍼티 이름 오타, `INotifyPropertyChanged` 구현 여부 점검
-  - DataContext가 의도한 ViewModel인지 확인(디자인 타임/런타임)
-- **명령이 비활성**
-  - ReactiveCommand/RelayCommand 생성 위치, `CanExecute` 조건 확인
-- **네임스페이스 충돌/불일치**
-  - 프로젝트 루트 네임스페이스와 폴더 구조 간섭에 주의
-  - `x:Class`의 풀네임이 실제 cs 파일 네임스페이스와 일치해야 함
+| 오류 현상 | 원인 | 해결 |
+|-----------|------|------|
+| DataTemplate이 적용되지 않음 | 네임스페이스(`xmlns:vm`)가 없거나 오타 | App.axaml에 올바른 네임스페이스 선언과 `DataType` 확인 |
+| 바인딩 경로를 찾을 수 없음 | 프로퍼티 이름 오타, INPC 미구현 | 출력 창의 바인딩 로그 확인, 속성명과 `RaiseAndSetIfChanged` 점검 |
+| 명령이 실행되지 않음 | `CanExecute` 조건이 false | `CanExecute` 관찰 가능 상태 확인, 또는 `ReactiveCommand`의 `CanExecute` 인자 확인 |
+| `x:Class` 네임스페이스 불일치 | XAML의 `x:Class`와 코드 파일의 네임스페이스가 다름 | 두 파일의 네임스페이스와 클래스명을 일치시킴 |
+| 리소스(`StaticResource`)를 찾을 수 없음 | 리소스 키 오타 또는 병합 순서 문제 | 리소스 사전 병합 순서 확인, 키 철자 점검 |
 
 ---
 
-## 요약 표
+## 요약
 
-| 구성 요소 | 핵심 역할 | 확장 포인트 |
-|-----------|-----------|-------------|
-| `Program.cs` | 앱 부트스트랩, Lifetime | 환경 분기, 로깅, 플랫폼 설정 |
-| `App.axaml` | 전역 스타일/리소스/DataTemplate | 리소스 병합, 테마, ViewModel→View 매핑 |
-| `MainWindow` | 셸(루트 컨테이너) | `ContentControl`로 내부 화면 교체 |
-| `ViewModelBase` | 공통 ViewModel 기능 | ReactiveUI 또는 Toolkit 선택 |
-| `MainWindowViewModel` | 네비게이션 허브 | 서비스 주입, 명령, 상태 |
-| `Views/*` | 화면(XAML) | 바인딩 중심, 로직 최소화 |
-| Services | 네비게이션/다이얼로그/데이터 | DI로 수명/의존성 관리 |
-| Tests | ViewModel 단위 테스트 | CI 포함, 회귀 방지 |
+| 구성 요소 | 주요 역할 | 확장/관리 방법 |
+|-----------|-----------|----------------|
+| Program.cs | 앱 부트스트랩, 플랫폼 설정 | 환경 분기, 로깅 수준 조정 |
+| App.axaml | 전역 스타일, 리소스, 데이터 템플릿 | 리소스 분리, DataTemplate으로 View-ViewModel 연결 |
+| MainWindow | 셸(루트 윈도우) | ContentControl + CurrentViewModel로 화면 전환 |
+| ViewModelBase | 바인딩 가능 속성 기반 | ReactiveUI 또는 CommunityToolkit 선택 |
+| MainWindowViewModel | 네비게이션 상태 관리 | DI로 서비스 주입, 화면 전환 명령 제공 |
+| Services 계층 | 네비게이션, 다이얼로그 등 | DI 컨테이너로 관리, 인터페이스 분리 |
+| Tests | ViewModel 단위 테스트 | xUnit, NUnit 등으로 ViewModel 로직 검증 |
 
 ---
 
 ## 다음 단계
 
-- 사용자 정의 컨트롤/템플릿 확장(Attached Property, Behaviors)
-- 복잡한 네비게이션(스택/백버튼, 모달/시트, 영역 분할)
-- 설정/로깅/국제화/접근성 체계화
-- 배포 파이프라인(서명, 자동 업데이트, 다중 OS)
-- 성능 측정/프로파일링(대량 데이터, 이미지, 애니메이션)
+이 글에서 다룬 내용을 바탕으로 다음과 같은 고급 주제로 확장할 수 있습니다.
 
----
+- 사용자 정의 컨트롤 제작 및 템플릿 활용
+- 복잡한 네비게이션(스택, 모달, 탭) 구조
+- 국제화(i18n)와 접근성 지원
+- 성능 프로파일링 및 최적화
+- CI/CD 파이프라인에 테스트와 배포 포함
 
-## 결론
-
-초안의 흐름(템플릿 생성→구조→각 파일 설명→확장)을 유지하면서, **DataTemplate 기반 화면 전환을 중심으로 한 셸 구조**, **ReactiveUI/Toolkit 양방향 ViewModel 패턴**, **DI/서비스화**, **리소스/스타일 분리**, **테스트/배포/운영 팁**까지 실전에 필요한 내용을 확장했다.
-이 구조를 기반으로 모듈을 추가하고 서비스를 주입해 나가면, 중형 이상 규모의 Avalonia 앱도 **체계적이고 장기적으로 유지보수 가능한 형태**로 성장시킬 수 있다.
+Avalonia는 WPF 개발자에게 익숙한 패턴을 제공하면서도 크로스 플랫폼을 지원합니다. 이 글에서 제시한 구조를 기본으로 프로젝트를 구성하면, 유지보수성과 확장성을 갖춘 애플리케이션을 개발할 수 있습니다.

@@ -6,44 +6,24 @@ category: Avalonia
 ---
 # Avalonia MVVM: ViewModel 간 메시지 전달
 
-## 왜 ViewModel 간 통신이 필요한가?
+## 왜 ViewModel 간 통신이 필요한가
 
-MVVM에서 ViewModel끼리는 **직접 참조를 피해야** 한다. 그러나 다음 상황에서는 간접 통신이 필요하다.
+MVVM 패턴에서는 ViewModel 간 **직접 참조**를 피하는 것이 원칙이다. 하지만 여러 화면이 서로 영향을 주어야 하는 상황은 자주 발생한다.
 
-- 화면 A에서 갱신한 설정/입력값을 화면 B에 반영
-- 공통 상태(로그인, 테마, 권한, 네트워크 상태)를 다수 VM이 구독
-- 포그라운드/백그라운드 작업의 진행률, 알림 브로드캐스트
-- 느슨한 결합의 **플러그인성/확장성** 확보
+- 설정 화면에서 변경한 사용자 이름을 대시보드 화면에 반영
+- 로그인 상태 변경을 여러 ViewModel이 알아야 함
+- 백그라운드 작업의 진행률을 알림 영역에 표시
 
-이를 위해 ReactiveUI의 **MessageBus** 또는 경량 **EventAggregator** 패턴을 사용한다.
+이러한 요구를 해결하려면 ViewModel들이 **느슨하게 통신**할 수 있는 메커니즘이 필요하다. ReactiveUI가 제공하는 **MessageBus**는 이런 용도에 적합한 도구다.
 
----
-
-## 선택지 비교: Event vs MessageBus
-
-| 항목 | Event / EventAggregator | ReactiveUI MessageBus |
-|------|-------------------------|------------------------|
-| 결합도 | 비교적 높음(서브스크립션 수동 연결) | 낮음(타입·계약 기반 라우팅) |
-| 규모 확장 | 이벤트 수 증가 시 관리 어려움 | 타입/계약 체계화로 확장 용이 |
-| 스레딩 | 직접 처리 필요 | ObserveOn/SubscribeOn으로 명시적 제어 |
-| 메모리 안전 | 이벤트 해제 누락 시 누수 위험 | `CompositeDisposable` 기반 해제 용이 |
-| 테스트 | 목 객체 필요 | 인터페이스/계약 기반으로 테스트 용이 |
-
-규모와 복잡도가 올라갈수록 MessageBus가 유리하다.
-
----
-
-## ReactiveUI MessageBus 빠른 시작
-
-### 패키지
-
-```bash
-dotnet add package ReactiveUI
-```
+## MessageBus 기본 사용법
 
 ### 메시지 타입 정의
 
+먼저 주고받을 메시지의 형태를 클래스로 정의한다. 데이터를 담는 용도이므로 불변(immutable) 객체로 만드는 것이 좋다.
+
 ```csharp
+// 사용자 이름 변경 알림 메시지
 public sealed class UserNameChangedMessage
 {
     public string NewUserName { get; }
@@ -51,19 +31,15 @@ public sealed class UserNameChangedMessage
 }
 ```
 
-> 권장: 메시지는 **불변(immutable)** 으로 정의한다. record도 적합하다.
+### 메시지 발송 (Sender)
 
-```csharp
-public sealed record ThemeChangedMessage(bool IsDark);
-```
-
-### 발송자(SettingsViewModel)
+메시지를 보내는 ViewModel은 `MessageBus.Current.SendMessage`를 호출한다.
 
 ```csharp
 using ReactiveUI;
 using System.Reactive;
 
-public sealed class SettingsViewModel : ReactiveObject
+public class SettingsViewModel : ReactiveObject
 {
     private string _userName = "";
     public string UserName
@@ -78,22 +54,25 @@ public sealed class SettingsViewModel : ReactiveObject
     {
         ApplyCommand = ReactiveCommand.Create(() =>
         {
+            // 변경된 사용자 이름을 메시지로 발송
             MessageBus.Current.SendMessage(new UserNameChangedMessage(UserName));
         });
     }
 }
 ```
 
-### 수신자(DashboardViewModel)
+### 메시지 수신 (Receiver)
+
+메시지를 받는 ViewModel은 `MessageBus.Current.Listen<T>`로 구독한다. 구독은 ViewModel이 활성화된 동안만 유지하는 것이 안전하다. ReactiveUI의 `WhenActivated`를 사용하면 수명 관리를 쉽게 할 수 있다.
 
 ```csharp
 using ReactiveUI;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 
-public sealed class DashboardViewModel : ReactiveObject, IActivatableViewModel
+public class DashboardViewModel : ReactiveObject, IActivatableViewModel
 {
-    private string _displayUserName = "기본 사용자";
+    private string _displayUserName = "게스트";
     public string DisplayUserName
     {
         get => _displayUserName;
@@ -108,23 +87,27 @@ public sealed class DashboardViewModel : ReactiveObject, IActivatableViewModel
         {
             MessageBus.Current
                 .Listen<UserNameChangedMessage>()
-                .ObserveOn(RxApp.MainThreadScheduler)   // UI 쓰레드 보장
-                .Subscribe(msg => DisplayUserName = $"사용자: {msg.NewUserName}")
-                .DisposeWith(disposables);
+                .ObserveOn(RxApp.MainThreadScheduler)   // UI 스레드에서 처리
+                .Subscribe(msg =>
+                {
+                    DisplayUserName = msg.NewUserName;
+                })
+                .DisposeWith(disposables);              // ViewModel 해제 시 구독 해제
         });
     }
 }
 ```
 
-> 핵심: `WhenActivated` + `DisposeWith`로 **수명 관리**와 **누수 방지**, `ObserveOn(MainThread)`로 **UI 스레드 안전**을 동시에 달성한다.
+## 구독 해제의 중요성
 
----
+구독을 해제하지 않으면 ViewModel이 메모리에서 사라져도 계속 메시지를 받아 **메모리 누수**가 발생할 수 있다. 위 예제처럼 `DisposeWith(disposables)`를 사용하면 `WhenActivated` 블록이 종료될 때 자동으로 구독이 해제된다.
 
-## 계약(Contract)으로 채널 분리하기
+## 채널 분리 (Contract)
 
-MessageBus는 **타입 + 계약 문자열**(선택)로 구분한다. 동일 타입을 **기능별로 분리**할 때 유용하다.
+같은 타입의 메시지를 서로 다른 목적으로 사용해야 할 때가 있다. 예를 들어 `UserNameChangedMessage`를 프로필 설정용과 보안 설정용으로 분리하고 싶다면 계약(contract) 문자열을 추가할 수 있다.
 
 ```csharp
+// 계약 상수 정의
 public static class BusContracts
 {
     public const string Profile = "profile";
@@ -132,403 +115,112 @@ public static class BusContracts
 }
 
 // 발송
-MessageBus.Current.SendMessage(new UserNameChangedMessage(user), BusContracts.Profile);
+MessageBus.Current.SendMessage(new UserNameChangedMessage(userName), BusContracts.Profile);
 
 // 수신
 MessageBus.Current.Listen<UserNameChangedMessage>(BusContracts.Profile)
     .Subscribe(...);
 ```
 
-> 장점: 타입 충돌 없이 **모듈 단위 채널화** 가능.
-> 규칙을 문서화해 팀 내 일관성 유지.
+## 실전 예제: 테마 변경 동기화
 
----
+여러 화면에서 동시에 테마를 변경해야 하는 상황을 생각해보자.
 
-## 요청/응답 패턴 구현
-
-단방향 알림만이 아니라 **질의/응답**이 필요할 때가 있다. 두 가지 접근을 제공한다.
-
-### 코리드 메시지로 응답 스트림 전달
-
-```csharp
-public sealed record QueryUserDetail(string UserId, IObserver<UserDetail> ReplyTo);
-public sealed record UserDetail(string Id, string Name, string Email);
-
-// 요청자
-var reply = new ReplaySubject<UserDetail>(1);
-MessageBus.Current.SendMessage(new QueryUserDetail("U-001", reply));
-reply.Subscribe(detail => ...);
-
-// 응답자
-MessageBus.Current.Listen<QueryUserDetail>()
-    .SelectMany(async q =>
-    {
-        var detail = await _repo.FetchAsync(q.UserId);
-        q.ReplyTo.OnNext(detail);
-        q.ReplyTo.OnCompleted();
-        return Unit.Default;
-    })
-    .Subscribe();
-```
-
-장점: 간단, 스트림 조합 용이.
-주의: `ReplyTo`를 반드시 `OnCompleted`로 닫아 수명 누수 방지.
-
-### + 단일 응답 버스
-
-```csharp
-public sealed record Request<TResponse>(Guid CorrelationId, object Payload);
-public sealed record Response<TResponse>(Guid CorrelationId, TResponse Data);
-
-// 요청
-var id = Guid.NewGuid();
-MessageBus.Current.SendMessage(new Request<UserDetail>(id, "U-001"));
-MessageBus.Current.Listen<Response<UserDetail>>()
-    .Where(r => r.CorrelationId == id)
-    .Take(1)
-    .Subscribe(r => ...);
-
-// 응답
-MessageBus.Current.Listen<Request<UserDetail>>()
-    .SelectMany(async req =>
-    {
-        var userId = (string)req.Payload;
-        var data = await _repo.FetchAsync(userId);
-        MessageBus.Current.SendMessage(new Response<UserDetail>(req.CorrelationId, data));
-        return Unit.Default;
-    })
-    .Subscribe();
-```
-
-장점: 메시지 타입의 **일관적 패턴화**, 멀티 요청 동시 처리 용이.
-
----
-
-## 스레딩·디스패처 정석
-
-- **Listen**은 기본적으로 구독 스레드에서 콜백 실행
-- UI 업데이트는 반드시 `ObserveOn(RxApp.MainThreadScheduler)`
-- 비동기 IO/CPU 바운드 작업 시작은 `SubscribeOn(TaskPoolScheduler.Default)` 권장
-
-예:
-
-```csharp
-MessageBus.Current.Listen<ThemeChangedMessage>()
-    .SubscribeOn(RxApp.TaskpoolScheduler)
-    .SelectMany(async msg =>
-    {
-        await _theme.ApplyAsync(msg.IsDark);
-        return msg;
-    })
-    .ObserveOn(RxApp.MainThreadScheduler)
-    .Subscribe(_ => CurrentThemeName = msg.IsDark ? "Dark" : "Light");
-```
-
----
-
-## 실전 패턴 모음
-
-### 테마 브로드캐스트
-
+**메시지 정의**
 ```csharp
 public sealed record ThemeChangedMessage(bool IsDark);
-
-// 발송: 토글 뷰모델
-MessageBus.Current.SendMessage(new ThemeChangedMessage(IsDark));
-
-// 수신: 여러 뷰모델
-MessageBus.Current.Listen<ThemeChangedMessage>()
-    .ObserveOn(RxApp.MainThreadScheduler)
-    .Subscribe(m => IsDarkUi = m.IsDark);
 ```
 
-### 로그인 상태 공유
-
+**테마 설정 ViewModel**
 ```csharp
-public sealed record AuthStateChanged(bool IsAuthenticated, string? UserId);
-
-// 로그인 성공 시
-MessageBus.Current.SendMessage(new AuthStateChanged(true, userId));
-// 로그아웃 시
-MessageBus.Current.SendMessage(new AuthStateChanged(false, null));
-```
-
-### 브로드캐스트
-
-```csharp
-public sealed record TaskProgress(string TaskId, double Percent, string Stage);
-
-MessageBus.Current.SendMessage(new TaskProgress(taskId, 0.3, "Downloading"));
-```
-
-UI:
-
-```csharp
-MessageBus.Current.Listen<TaskProgress>()
-    .Where(p => p.TaskId == _boundTask)
-    .ObserveOn(RxApp.MainThreadScheduler)
-    .Subscribe(p => { Progress = p.Percent; Stage = p.Stage; });
-```
-
-### 탭/네비게이션 동기화
-
-```csharp
-public sealed record NavigateTo(string Route, object? Parameter = null);
-MessageBus.Current.SendMessage(new NavigateTo("Settings", null));
-```
-
-여러 화면에서 동일 메시지를 수신하여 **라우팅 서비스**를 호출하도록 설계.
-
----
-
-## 메모리/수명 관리 — 누수 없이 운영하기
-
-- 항상 `WhenActivated` + `DisposeWith` 사용(뷰모델 또는 뷰)
-- 장시간 구독은 `IHostedService` 성격의 **앱 스코프 싱글톤**에서 운영
-- 파일/네트워크/타이머 결합 시 `CancellationToken`을 메시지에 포함하여 **중단 가능성** 제공
-
-예:
-
-```csharp
-public sealed record StartLongJob(Guid JobId, CancellationToken Token);
-```
-
----
-
-## 장애·품질 — 재시도·시간제한·버퍼링
-
-Reactive 스트림 연산자를 결합해 품질을 높인다.
-
-```csharp
-MessageBus.Current.Listen<UserNameChangedMessage>()
-    .Throttle(TimeSpan.FromMilliseconds(200))      // 타자 입력 폭주 억제
-    .DistinctUntilChanged(m => m.NewUserName)
-    .SelectMany(m => Observable.FromAsync(() => _repo.SaveAsync(m.NewUserName))
-                               .Timeout(TimeSpan.FromSeconds(3))
-                               .Retry(2)
-                               .Catch<Unit, Exception>(ex => { Log(ex); return Observable.Return(Unit.Default); }))
-    .ObserveOn(RxApp.MainThreadScheduler)
-    .Subscribe(_ => Saved = true);
-```
-
----
-
-## 패턴의 안전한 구현
-
-초안의 단순 이벤트는 누수 위험이 있다. **약한 참조(WeakReference)** 또는 **구독 해제 API**를 제공하자.
-
-```csharp
-public interface IEventAggregator
+public class ThemeSettingsViewModel : ReactiveObject
 {
-    IDisposable Subscribe<T>(Action<T> handler);
-    void Publish<T>(T evt);
-}
-
-public sealed class EventAggregator : IEventAggregator
-{
-    private readonly Dictionary<Type, List<Delegate>> _handlers = new();
-
-    public IDisposable Subscribe<T>(Action<T> handler)
+    private bool _isDark;
+    public bool IsDark
     {
-        var t = typeof(T);
-        if (!_handlers.TryGetValue(t, out var list))
-            _handlers[t] = list = new();
-        list.Add(handler);
-        return Disposable.Create(() => list.Remove(handler));
+        get => _isDark;
+        set => this.RaiseAndSetIfChanged(ref _isDark, value);
     }
 
-    public void Publish<T>(T evt)
+    public ReactiveCommand<Unit, Unit> ApplyThemeCommand { get; }
+
+    public ThemeSettingsViewModel()
     {
-        if (_handlers.TryGetValue(typeof(T), out var list))
-            foreach (var d in list.ToArray())
-                ((Action<T>)d).Invoke(evt);
+        ApplyThemeCommand = ReactiveCommand.Create(() =>
+        {
+            MessageBus.Current.SendMessage(new ThemeChangedMessage(IsDark));
+        });
     }
 }
 ```
 
-사용:
-
+**여러 ViewModel에서 수신**
 ```csharp
-var sub = aggregator.Subscribe<UserNameChangedMessage>(m => ...);
-// 뷰/VM 해제 시
-sub.Dispose();
+// HeaderViewModel, DashboardViewModel 등
+this.WhenActivated(disposables =>
+{
+    MessageBus.Current.Listen<ThemeChangedMessage>()
+        .ObserveOn(RxApp.MainThreadScheduler)
+        .Subscribe(msg =>
+        {
+            // 테마 변경에 따른 UI 상태 업데이트
+            IsDarkMode = msg.IsDark;
+        })
+        .DisposeWith(disposables);
+});
 ```
 
----
+## DI와 테스트
 
-## DI(의존성 주입)와 테스트
-
-MessageBus는 전역 `MessageBus.Current`를 써도 되지만, **인터페이스로 주입**하면 테스트가 쉬워진다.
+MessageBus는 전역 싱글톤(`MessageBus.Current`)으로 사용해도 되지만, 의존성 주입(DI)을 통해 인터페이스로 감싸면 테스트가 훨씬 쉬워진다.
 
 ```csharp
-public interface IMessageBusFacade
+public interface IMessageBus
 {
     void Send<T>(T message, string? contract = null);
     IObservable<T> Listen<T>(string? contract = null);
 }
 
-public sealed class MessageBusFacade : IMessageBusFacade
+public class ReactiveUIMessageBus : IMessageBus
 {
-    public void Send<T>(T message, string? contract = null)
-        => MessageBus.Current.SendMessage(message, contract);
+    public void Send<T>(T message, string? contract = null) =>
+        MessageBus.Current.SendMessage(message, contract);
 
-    public IObservable<T> Listen<T>(string? contract = null)
-        => MessageBus.Current.Listen<T>(contract);
+    public IObservable<T> Listen<T>(string? contract = null) =>
+        MessageBus.Current.Listen<T>(contract);
 }
 ```
 
-ViewModel에서:
+테스트용으로 가짜 버스를 만들어 사용할 수 있다.
 
 ```csharp
-public sealed class SettingsViewModel : ReactiveObject
-{
-    private readonly IMessageBusFacade _bus;
-    public SettingsViewModel(IMessageBusFacade bus) => _bus = bus;
-
-    public void Apply(string name) => _bus.Send(new UserNameChangedMessage(name));
-}
-```
-
-테스트:
-
-```csharp
-public sealed class TestBus : IMessageBusFacade
+public class TestMessageBus : IMessageBus
 {
     private readonly Subject<object> _subject = new();
-    public void Send<T>(T message, string? contract = null) => _subject.OnNext(message);
-    public IObservable<T> Listen<T>(string? contract = null) => _subject.OfType<T>();
-}
 
-[Fact]
-public void Settings_Apply_Publishes_UserName()
-{
-    var bus = new TestBus();
-    var vm  = new SettingsViewModel(bus);
-    string? received = null;
+    public void Send<T>(T message, string? contract = null) =>
+        _subject.OnNext(message!);
 
-    bus.Listen<UserNameChangedMessage>().Subscribe(m => received = m.NewUserName);
-    vm.Apply("Alice");
-
-    Assert.Equal("Alice", received);
+    public IObservable<T> Listen<T>(string? contract = null) =>
+        _subject.OfType<T>();
 }
 ```
 
----
+## 주의사항 및 팁
 
-## 스코프 분리: 모듈/대화상자/문서별 버스
+| 문제 | 해결 방법 |
+|------|-----------|
+| UI 업데이트가 안 됨 | `ObserveOn(RxApp.MainThreadScheduler)`로 UI 스레드 지정 |
+| 메모리 누수 | `WhenActivated` + `DisposeWith`로 구독 해제 |
+| 같은 타입 메시지 충돌 | 계약(contract) 문자열로 채널 분리 |
+| 메시지 폭주 | `Throttle` / `DistinctUntilChanged` 등으로 빈도 제어 |
 
-대규모 앱에서는 `MessageBus.Current` 단일 전역 대신 **스코프별 Bus**가 유용하다.
+## 간단한 요약
 
-- 앱 전역: 인증/테마/환경
-- 모듈 스코프: 특정 기능군(예: 리포트 편집기)
-- 문서/탭 스코프: 동일 타입 메시지를 문서 인스턴스별로 분리
+- **MessageBus**는 ViewModel 간 느슨한 결합을 가능하게 한다.
+- 메시지 클래스를 정의하고 `SendMessage`로 발송, `Listen`으로 수신한다.
+- 구독은 반드시 ViewModel 수명과 함께 해제되어야 한다.
+- `ObserveOn(RxApp.MainThreadScheduler)`로 UI 스레드 안전을 보장한다.
+- 복잡한 앱에서는 계약 문자열이나 DI를 활용해 체계적으로 관리한다.
 
-```csharp
-public interface IMessageBusScope
-{
-    IMessageBus Bus { get; }
-}
-
-public sealed class DocumentScope : IMessageBusScope
-{
-    public IMessageBus Bus { get; } = new MessageBus();
-}
-```
-
-문서 탭마다 `new DocumentScope()`를 생성하여 **독립 채널**을 제공하면 충돌이 없다.
-
----
-
-## 예제 통합: 설정 화면 → 대시보드·헤더·알림창 동시 갱신
-
-### 메시지
-
-```csharp
-public sealed record SettingsApplied(string UserName, bool IsDark);
-```
-
-### 발송자
-
-```csharp
-MessageBus.Current.SendMessage(new SettingsApplied(UserName, IsDark));
-```
-
-### 수신자들
-
-- 대시보드: 사용자명 표시
-- 헤더: 사용자명과 테마 토글 반영
-- 알림창: 토스트 알림
-
-```csharp
-// 공통 구독 헬퍼
-IDisposable SubscribeSettings(Action<SettingsApplied> onNext) =>
-    MessageBus.Current.Listen<SettingsApplied>()
-        .ObserveOn(RxApp.MainThreadScheduler)
-        .Subscribe(onNext);
-```
-
-각 ViewModel에서 `WhenActivated` 안에 `SubscribeSettings(...)`를 등록하고 `DisposeWith`.
-
----
-
-## 성능/신뢰성 팁
-
-- 잦은 발송 이벤트는 **`Throttle`/`Sample`** 로 줄인다.
-- 네트워크/디스크 작업은 **백그라운드 스레드**에서 실행하고 결과만 UI 스레드에 붙인다.
-- 장시간 구독은 앱 종료 시점에 명시 해제되도록 **호스트 서비스**로 묶는다.
-- 메시지 남발은 유지보수성을 떨어뜨린다. **DTO와 계약 네이밍 규칙**, **폴더 구조**로 설계도를 갖춘다.
-
----
-
-## 요약 체크리스트
-
-- 타입·계약 기반 MessageBus로 **느슨한 결합** 확보
-- `WhenActivated` + `DisposeWith`로 **누수 방지**
-- `ObserveOn(RxApp.MainThreadScheduler)`로 **UI 스레드 안전**
-- 계약 문자열로 **채널 분리**, CorrelationId로 **요청/응답 매칭**
-- 디바운스/재시도/타임아웃으로 **품질 보강**
-- DI로 **테스트 용이성** 확보, 필요 시 **스코프별 버스** 도입
-
----
-
-## 부록: 최소 동작 샘플 XAML
-
-### DashboardView.axaml
-
-```xml
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:MyAvaloniaApp.ViewModels"
-             x:Class="MyAvaloniaApp.Views.DashboardView">
-  <UserControl.DataContext>
-    <vm:DashboardViewModel/>
-  </UserControl.DataContext>
-  <StackPanel Margin="16" Spacing="8">
-    <TextBlock Text="{Binding DisplayUserName}" FontSize="20"/>
-  </StackPanel>
-</UserControl>
-```
-
-### SettingsView.axaml
-
-```xml
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:MyAvaloniaApp.ViewModels"
-             x:Class="MyAvaloniaApp.Views.SettingsView">
-  <UserControl.DataContext>
-    <vm:SettingsViewModel/>
-  </UserControl.DataContext>
-  <StackPanel Margin="16" Spacing="8">
-    <TextBox Text="{Binding UserName}" Watermark="사용자 이름"/>
-    <Button Content="적용" Command="{Binding ApplyCommand}"/>
-  </StackPanel>
-</UserControl>
-```
-
----
-
-## 결론
-
-초안의 **MessageBus 개요**를 넘어, 본 글은 **계약 설계, 스레딩, 수명 관리, 스코프 분리, 요청/응답, 품질 연산자 적용, 테스트·DI**까지 포함한 **실전 운용 전략**을 제시했다.
-이 가이드를 토대로 프로젝트 초기에 **메시지 타입/계약·스코프 규칙**을 명확히 합의하면, 화면이 늘어나도 결합도를 낮게 유지하면서 기능을 안정적으로 확장할 수 있다.
+MVVM에서 메시지 버스를 적절히 활용하면 화면 간 의존성을 낮추고 유지보수성을 높일 수 있다. 처음에는 간단한 알림부터 시작해 점차 필요한 곳에 적용해 보자.

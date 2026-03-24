@@ -4,155 +4,177 @@ title: Avalonia - 환경 기반 설정 (dev, prod 분리)
 date: 2025-03-04 20:20:23 +0900
 category: Avalonia
 ---
-# 환경 기반 설정(dev/prod 분리): Avalonia에서 `appsettings.*.json` 로딩·DI·옵션 패턴·재로딩까지
+# Avalonia - 환경 기반 설정 (dev, prod 분리)
 
-## 디렉터리·파일 구성
-
-```
-📁 Project Root
-├── appsettings.json                 # 공통 기본값(필수)
-├── appsettings.dev.json             # 개발 환경
-├── appsettings.prod.json            # 운영 환경
-├── appsettings.local.json           # 개인 로컬 오버라이드(VC 제외 권장)
-├── src/
-│   └── MyApp/
-│       ├── Program.cs               # 설정/DI 초기화
-│       ├── App.xaml.cs
-│       ├── Options/
-│       │   ├── ApiOptions.cs
-│       │   ├── FeatureFlags.cs
-│       │   └── UiOptions.cs
-│       ├── Services/
-│       │   ├── IApiClient.cs
-│       │   └── ApiClient.cs
-│       └── ViewModels/
-│           └── HomeViewModel.cs
-└── MyApp.csproj
-```
-
-> 팁
-> - `appsettings.local.json`은 개인 개발자별 override 용. **소스관리 제외**(.gitignore).
-> - 실제 배포 아티팩트에 설정 파일을 포함하려면 `.csproj`의 `CopyToOutputDirectory`를 활용(아래 9장 참조).
+Avalonia 애플리케이션을 개발할 때는 개발(dev), 운영(prod) 환경에 따라 API 주소, 로깅 수준, 기능 플래그 등을 다르게 설정해야 합니다. .NET의 `Microsoft.Extensions.Configuration`과 `Microsoft.Extensions.DependencyInjection`을 활용하면 **환경별 설정 파일 분리**, **강타입 옵션 바인딩**, **런타임 재로딩**, **유효성 검증**을 손쉽게 구현할 수 있습니다. 이 글에서는 초중급 개발자를 기준으로, Avalonia 프로젝트에서 환경 기반 설정을 구축하는 방법을 단계별로 설명합니다.
 
 ---
 
-## 환경 변수와 우선순위
+## 파일 구조와 설정 파일
 
-`ConfigurationBuilder`는 **등록 순서가 중요**하다. 뒤에 오는 소스가 앞선 값을 **덮어쓴다**.
+프로젝트 루트에 다음과 같은 JSON 설정 파일을 둡니다.
 
-우선순위(권장 등록 순서):
+```
+Project Root/
+├── appsettings.json            # 공통 기본값 (필수)
+├── appsettings.dev.json        # 개발 환경 전용
+├── appsettings.prod.json       # 운영 환경 전용
+├── appsettings.local.json      # 개인 로컬 오버라이드 (소스 관리 제외)
+├── MyApp.csproj
+└── Program.cs
+```
+
+**설명**  
+- `appsettings.json`은 모든 환경의 공통 값(예: 기본 API 주소)을 담습니다.  
+- `appsettings.{env}.json`은 환경별 값을 담습니다. 예를 들어 개발용 API는 `https://dev-api.example.com`, 운영용은 `https://api.example.com`으로 설정합니다.  
+- `appsettings.local.json`은 개발자 개인 PC에서만 필요한 값(예: 로컬 디버깅용 API)을 담으며, `.gitignore`에 추가하여 소스 관리에서 제외합니다.
+
+---
+
+## 환경 선택
+
+.NET은 환경 변수 `DOTNET_ENVIRONMENT`로 현재 환경을 식별합니다. 값은 `Development`, `Staging`, `Production` 등이 일반적이나 간단히 `dev`, `prod`를 사용해도 됩니다.
+
+```csharp
+string env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "prod";
+```
+
+- 환경 변수가 설정되지 않았다면 기본값을 `prod`로 두어 운영 환경에서 안전하게 동작하도록 합니다.  
+- Visual Studio에서는 프로젝트 속성에서 환경 변수를 설정하거나, 디버그 시 명령줄 인자로 전달할 수 있습니다.
+
+---
+
+## 설정 로딩 (우선순위)
+
+`ConfigurationBuilder`는 **등록 순서가 중요**합니다. 나중에 등록된 소스가 앞선 값을 덮어씁니다. 일반적인 우선순위는 다음과 같습니다.
+
 1. `appsettings.json` (공통)
 2. `appsettings.{env}.json` (환경별)
-3. `appsettings.local.json` (개인 로컬)
-4. `EnvironmentVariables` (CI/비밀 주입)
-5. `CommandLine` (실행 시 오버라이드)
+3. `appsettings.local.json` (로컬 오버라이드)
+4. 환경 변수 (CI/CD나 Docker 등에서 주입)
+5. 명령줄 인수
 
-환경 선택:
-- `DOTNET_ENVIRONMENT=dev` → `appsettings.dev.json` 로딩
-- 미설정 시 기본값을 `prod`로 가정하면 보수적이며 안전
-
----
-
-## Program.cs — 구성 로딩의 표준 패턴
+`Program.cs` 또는 `App.axaml.cs`에서 다음과 같이 구성합니다.
 
 ```csharp
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Reflection;
 
-var env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "prod";
+string env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "prod";
 
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
+var config = new ConfigurationBuilder()
+    .SetBasePath(AppContext.BaseDirectory)                // 실행 파일 위치 기준
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
     .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
     .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables() // e.g. Api__BaseUrl, Logging__LogLevel__Default
-    .AddCommandLine(args)      // e.g. --Api:BaseUrl=https://override
+    .AddEnvironmentVariables()                             // 예: Api__BaseUrl
+    .AddCommandLine(args)                                  // 예: --Api:BaseUrl=https://override
     .Build();
-
-// DI
-var services = new ServiceCollection();
-
-// Options pattern 바인딩
-services.Configure<ApiOptions>(configuration.GetSection("Api"));
-services.Configure<FeatureFlags>(configuration.GetSection("Features"));
-services.Configure<UiOptions>(configuration.GetSection("Ui"));
-
-// 로깅(기본 콘솔)
-services.AddLogging(b =>
-{
-    b.AddConfiguration(configuration.GetSection("Logging"));
-    b.AddSimpleConsole();
-});
-
-// HttpClient + 베이스 주소를 Options에서 주입
-services.AddHttpClient<IApiClient, ApiClient>((sp, http) =>
-{
-    var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptionsMonitor<ApiOptions>>().CurrentValue;
-    http.BaseAddress = new Uri(opts.BaseUrl);
-    // 타임아웃, 기본헤더 등도 Options 반영 가능
-});
-
-// ViewModel 등
-services.AddTransient<ViewModels.HomeViewModel>();
-
-var provider = services.BuildServiceProvider();
-
-// 이후 Avalonia AppBuilder 초기화 시 provider를 전달하거나 정적 보관
-// (예: App.Services = provider;)
 ```
 
-> `reloadOnChange: true`를 사용하면 설정 파일 변경 시 `IOptionsMonitor<T>` 구독자를 통해 **런타임 갱신**이 가능하다(아래 6장).
+`reloadOnChange: true`를 설정하면 파일 변경 시 구성이 다시 로드되어, 앱을 재시작하지 않고도 설정을 반영할 수 있습니다.
 
 ---
 
-## Options 클래스(강타입)와 스키마
+## 강타입 옵션 클래스
 
-### API 옵션
+설정 값은 문자열이 아닌 강타입 클래스로 바인딩하면 코드 안정성이 높아집니다. 예를 들어 API, 기능 플래그, UI 설정을 위한 클래스를 만듭니다.
 
 ```csharp
-namespace MyApp.Options;
-
+// Options/ApiOptions.cs
 public sealed class ApiOptions
 {
     public string BaseUrl { get; set; } = "https://api.example.com";
     public int TimeoutSeconds { get; set; } = 30;
     public bool UseCompression { get; set; } = true;
 }
-```
 
-### 기능 플래그
-
-```csharp
-namespace MyApp.Options;
-
+// Options/FeatureFlags.cs
 public sealed class FeatureFlags
 {
     public bool EnableNewDashboard { get; set; } = false;
     public bool DevToolsVisible { get; set; } = false;
     public bool UseMockData { get; set; } = false;
 }
-```
 
-### UI 옵션(테마/로캘 등)
-
-```csharp
-namespace MyApp.Options;
-
+// Options/UiOptions.cs
 public sealed class UiOptions
 {
-    public string Theme { get; set; } = "Light";     // Light/Dark/System
-    public string Language { get; set; } = "ko";     // ko/en/...
+    public string Theme { get; set; } = "Light";
+    public string Language { get; set; } = "ko";
     public double DefaultFontSize { get; set; } = 13;
 }
 ```
 
-### appsettings 예시
+---
+
+## DI 등록과 IOptionsMonitor
+
+Microsoft.Extensions.DependencyInjection을 사용하여 옵션을 DI 컨테이너에 등록합니다.
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+
+services.Configure<ApiOptions>(config.GetSection("Api"));
+services.Configure<FeatureFlags>(config.GetSection("Features"));
+services.Configure<UiOptions>(config.GetSection("Ui"));
+
+// 추가 서비스 등록...
+```
+
+**IOptionsMonitor<T>**를 주입하면 설정 파일이 변경될 때 이벤트를 수신할 수 있습니다. 예를 들어 `ApiClient`에서 API 주소 변경을 실시간 반영하려면:
+
+```csharp
+public class ApiClient : IApiClient
+{
+    private readonly HttpClient _http;
+    private readonly IOptionsMonitor<ApiOptions> _apiOptions;
+
+    public ApiClient(HttpClient http, IOptionsMonitor<ApiOptions> apiOptions)
+    {
+        _http = http;
+        _apiOptions = apiOptions;
+        ApplyOptions(_apiOptions.CurrentValue);
+        _apiOptions.OnChange(ApplyOptions);   // 파일 변경 시 콜백
+    }
+
+    private void ApplyOptions(ApiOptions opts)
+    {
+        _http.BaseAddress = new Uri(opts.BaseUrl);
+        _http.Timeout = TimeSpan.FromSeconds(opts.TimeoutSeconds);
+    }
+}
+```
+
+ViewModel에서 UI 설정을 실시간 반영하려면:
+
+```csharp
+public class HomeViewModel : ReactiveObject
+{
+    private readonly IOptionsMonitor<UiOptions> _uiOptions;
+    public string Theme { get; private set; }
+
+    public HomeViewModel(IOptionsMonitor<UiOptions> uiOptions)
+    {
+        _uiOptions = uiOptions;
+        Theme = uiOptions.CurrentValue.Theme;
+        uiOptions.OnChange(o => Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            Theme = o.Theme;
+            this.RaisePropertyChanged(nameof(Theme));
+        }));
+    }
+}
+```
+
+---
+
+## 설정 파일 예시
+
+### appsettings.json (공통)
 
 ```json
-// appsettings.json
 {
   "Api": {
     "BaseUrl": "https://api.example.com",
@@ -175,11 +197,12 @@ public sealed class UiOptions
 }
 ```
 
+### appsettings.dev.json (개발 환경)
+
 ```json
-// appsettings.dev.json
 {
   "Api": {
-    "BaseUrl": "https://api-dev.example.com",
+    "BaseUrl": "https://dev-api.example.com",
     "TimeoutSeconds": 10,
     "UseCompression": false
   },
@@ -194,8 +217,9 @@ public sealed class UiOptions
 }
 ```
 
+### appsettings.prod.json (운영 환경)
+
 ```json
-// appsettings.prod.json
 {
   "Api": {
     "BaseUrl": "https://api.example.com",
@@ -215,511 +239,138 @@ public sealed class UiOptions
 
 ---
 
-## HttpClient + Options 연동
+## 유효성 검증 (Fail Fast)
+
+설정 값이 올바르지 않으면 앱 시작 시 즉시 예외를 발생시켜 문제를 조기에 발견할 수 있습니다. `IValidateOptions<T>` 인터페이스를 구현합니다.
 
 ```csharp
-public interface IApiClient
-{
-    Task<string> GetStatusAsync(CancellationToken ct = default);
-}
-
-public sealed class ApiClient : IApiClient
-{
-    private readonly HttpClient _http;
-    private readonly Microsoft.Extensions.Options.IOptionsMonitor<ApiOptions> _api;
-
-    public ApiClient(HttpClient http, Microsoft.Extensions.Options.IOptionsMonitor<ApiOptions> api)
-    {
-        _http = http;
-        _api = api;
-        ApplyOptions(_api.CurrentValue);
-        _api.OnChange(ApplyOptions); // 설정 파일 변경 시 즉시 반영
-    }
-
-    private void ApplyOptions(ApiOptions o)
-    {
-        if (_http.BaseAddress is null || _http.BaseAddress.ToString() != o.BaseUrl)
-            _http.BaseAddress = new Uri(o.BaseUrl);
-
-        _http.Timeout = TimeSpan.FromSeconds(o.TimeoutSeconds);
-        _http.DefaultRequestHeaders.AcceptEncoding.Clear();
-        if (o.UseCompression)
-            _http.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate, br");
-    }
-
-    public async Task<string> GetStatusAsync(CancellationToken ct = default)
-    {
-        using var res = await _http.GetAsync("/status", ct);
-        res.EnsureSuccessStatusCode();
-        return await res.Content.ReadAsStringAsync(ct);
-    }
-}
-```
-
-> 핵심: `IOptionsMonitor<T>.OnChange`로 **재시작 없이** 설정값 반영.
-
----
-
-## ViewModel에서 `IOptionsMonitor`로 실시간 반영
-
-```csharp
-public sealed class HomeViewModel : ReactiveUI.ReactiveObject
-{
-    private readonly Microsoft.Extensions.Options.IOptionsMonitor<UiOptions> _ui;
-    private string _theme;
-    private string _language;
-    private double _fontSize;
-
-    public string Theme { get => _theme; private set => this.RaiseAndSetIfChanged(ref _theme, value); }
-    public string Language { get => _language; private set => this.RaiseAndSetIfChanged(ref _language, value); }
-    public double FontSize { get => _fontSize; private set => this.RaiseAndSetIfChanged(ref _fontSize, value); }
-
-    public HomeViewModel(Microsoft.Extensions.Options.IOptionsMonitor<UiOptions> ui)
-    {
-        _ui = ui;
-        ApplyUi(ui.CurrentValue);
-        _ui.OnChange(o => Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyUi(o)));
-    }
-
-    private void ApplyUi(UiOptions o)
-    {
-        Theme = o.Theme;
-        Language = o.Language;
-        FontSize = o.DefaultFontSize;
-
-        // 여기서 Avalonia Theme/RequestedTheme 교체, 리소스 딕셔너리 스왑 등 적용 가능
-        // LocalizationService.SetCulture(Language) 등
-    }
-}
-```
-
-> `reloadOnChange: true`일 때, `appsettings.*.json` 파일 저장 → UI가 **즉시 반응**.
-
----
-
-## 설정 유효성 검증(스타트업 Fail Fast)
-
-실전에서는 잘못된 설정(예: 빈 URL, 음수 타임아웃)을 **초기 구동에서 차단**해야 한다.
-
-```csharp
-using Microsoft.Extensions.Options;
-
-public sealed class ApiOptionsValidator : IValidateOptions<ApiOptions>
+public class ApiOptionsValidator : IValidateOptions<ApiOptions>
 {
     public ValidateOptionsResult Validate(string name, ApiOptions options)
     {
         if (string.IsNullOrWhiteSpace(options.BaseUrl))
             return ValidateOptionsResult.Fail("Api:BaseUrl is required.");
-
         if (!Uri.IsWellFormedUriString(options.BaseUrl, UriKind.Absolute))
             return ValidateOptionsResult.Fail("Api:BaseUrl must be an absolute URI.");
-
         if (options.TimeoutSeconds <= 0 || options.TimeoutSeconds > 600)
-            return ValidateOptionsResult.Fail("Api:TimeoutSeconds must be 1..600.");
-
+            return ValidateOptionsResult.Fail("Api:TimeoutSeconds must be between 1 and 600.");
         return ValidateOptionsResult.Success;
     }
 }
+```
 
-// DI 등록
+DI 등록 시 검증을 추가합니다.
+
+```csharp
 services.AddOptions<ApiOptions>()
-        .Bind(configuration.GetSection("Api"))
-        .ValidateOnStart()                     // 앱 시작 시 검증
+        .Bind(config.GetSection("Api"))
+        .ValidateOnStart()   // 앱 시작 시 검증
         .Services.AddSingleton<IValidateOptions<ApiOptions>, ApiOptionsValidator>();
 ```
 
 ---
 
-## 비밀/민감정보 처리(토큰·키)
+## 민감 정보 (비밀) 관리
 
-**금지**: `appsettings*.json`에 평문 비밀 저장.
-권장 대안:
+**절대** 설정 파일에 API 키나 비밀번호를 평문으로 저장하지 마세요. 대신 운영체제가 제공하는 안전한 저장소를 사용합니다.
 
-| OS | 권장 저장소 |
-|---|---|
-| Windows | DPAPI(ProtectedData), Credential Manager |
+| 운영체제 | 권장 저장소 |
+|----------|------------|
+| Windows | DPAPI (ProtectedData), Windows Credential Manager |
 | macOS | Keychain |
-| Linux | Secret Service(KWallet/GNOME Keyring), `keyring` 라이브러리 |
+| Linux | Secret Service (GNOME Keyring, KWallet) |
 
-### 예: DPAPI로 민감정보 암복호(Windows)
+예를 들어 Windows DPAPI를 사용해 문자열을 암호화하고 복호화하는 유틸리티를 만들 수 있습니다.
 
 ```csharp
-using System.Security.Cryptography;
-using System.Text;
-
 public static class SecretStore
 {
     public static string Protect(string plain)
     {
-        var bytes = Encoding.UTF8.GetBytes(plain);
-        var prot = ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser);
-        return Convert.ToBase64String(prot);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(plain);
+        var cipher = System.Security.Cryptography.ProtectedData.Protect(bytes, null, System.Security.Cryptography.DataProtectionScope.CurrentUser);
+        return Convert.ToBase64String(cipher);
     }
 
     public static string Unprotect(string cipher)
     {
         var data = Convert.FromBase64String(cipher);
-        var unprot = ProtectedData.Unprotect(data, null, DataProtectionScope.CurrentUser);
-        return Encoding.UTF8.GetString(unprot);
+        var plain = System.Security.Cryptography.ProtectedData.Unprotect(data, null, System.Security.Cryptography.DataProtectionScope.CurrentUser);
+        return System.Text.Encoding.UTF8.GetString(plain);
     }
 }
 ```
 
-> 전략: **구성(옵션)**에는 민감정보의 **Key 이름/슬롯**만 두고, 실제 값은 OS 보안 저장소에서 읽어 DI를 통해 주입.
+실제 키는 이 저장소에서 읽어와 DI로 주입합니다.
 
 ---
 
-## 배포 시 설정 파일 포함/변형
+## 배포 시 설정 파일 포함
 
-### .csproj에서 출력에 포함
+.csproj 파일에서 설정 파일을 출력 디렉터리에 복사하도록 지정합니다.
 
 ```xml
 <ItemGroup>
-  <None Include="appsettings.json" CopyToOutputDirectory="Always" />
-  <None Include="appsettings.dev.json" CopyToOutputDirectory="PreserveNewest" />
-  <None Include="appsettings.prod.json" CopyToOutputDirectory="PreserveNewest" />
-  <None Include="appsettings.local.json" CopyToOutputDirectory="Never" />
+  <None Update="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+  <None Update="appsettings.dev.json" CopyToOutputDirectory="PreserveNewest" />
+  <None Update="appsettings.prod.json" CopyToOutputDirectory="PreserveNewest" />
+  <None Update="appsettings.local.json" CopyToOutputDirectory="Never" />
 </ItemGroup>
 ```
 
-- 운영 빌드: `appsettings.prod.json`만 포함하거나, CI에서 **환경에 맞는 파일만** 복사.
-- `local`은 절대 포함 금지.
-
-### CI에서 환경 주입(우선순위 상단인 환경 변수 활용)
-
-GitHub Actions 예:
+CI 파이프라인에서 환경 변수 `DOTNET_ENVIRONMENT`를 설정하고, 필요한 파일만 포함하도록 합니다. GitHub Actions 예시:
 
 ```yaml
 - name: Publish
   run: dotnet publish -c Release -r win-x64 --self-contained true -o out
-
-- name: Set env override
-  env:
-    Api__BaseUrl: https://api-prod.example.com
-  run: |
-    # 실행 시 환경이 이 값을 덮어쓰게 설계되어 있으면 별도 파일 교체 불필요
+- name: Set environment
+  run: echo "DOTNET_ENVIRONMENT=prod" >> $GITHUB_ENV
 ```
 
 ---
 
-## 플랫폼별 설정 경로(사용자 오버라이드 파일)
+## 테스트
 
-사용자별 오버라이드 파일을 OS 표준 경로에 저장/로딩하면, 배포 파일은 불변으로 유지하고 **러런타임 사용자 설정만 덮어쓰기** 가능.
-
-```csharp
-static string GetUserConfigPath()
-{
-    if (OperatingSystem.IsWindows())
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MyApp", "usersettings.json");
-    if (OperatingSystem.IsMacOS())
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), "Library", "Application Support", "MyApp", "usersettings.json");
-    // Linux
-    var dir = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
-              ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".config");
-    return Path.Combine(dir, "MyApp", "usersettings.json");
-}
-
-// Program.cs 빌더에 추가
-var userConfigPath = GetUserConfigPath();
-var cfgBuilder = new ConfigurationBuilder()
-    .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFile("appsettings.json", false, true)
-    .AddJsonFile($"appsettings.{env}.json", true, true);
-
-if (File.Exists(userConfigPath))
-    cfgBuilder.AddJsonFile(userConfigPath, optional: true, reloadOnChange: true);
-
-cfgBuilder.AddEnvironmentVariables().AddCommandLine(args);
-
-var configuration = cfgBuilder.Build();
-```
-
----
-
-## 기능 플래그(Feature Flags)로 UX 제어(A/B 실험)
-
-```csharp
-public sealed class FeatureGate
-{
-    private readonly Microsoft.Extensions.Options.IOptionsMonitor<FeatureFlags> _flags;
-    public FeatureGate(Microsoft.Extensions.Options.IOptionsMonitor<FeatureFlags> flags) => _flags = flags;
-
-    public bool IsNewDashboardEnabled => _flags.CurrentValue.EnableNewDashboard;
-
-    // 뷰모델/뷰에서는 이 게이트만 의존 → 설정 변경 시 즉시 반영
-}
-```
-
-View XAML:
-
-```xml
-<!-- DataTriggers/IsVisible 바인딩으로 조건부 렌더링 -->
-<StackPanel>
-  <views:NewDashboardView IsVisible="{Binding FeatureGate.IsNewDashboardEnabled}" />
-  <views:LegacyDashboardView IsVisible="{Binding FeatureGate.IsNewDashboardEnabled, Converter={StaticResource InverseBool}}" />
-</StackPanel>
-```
-
----
-
-## 로깅 체계: 환경별 레벨·싱크
-
-```json
-// dev
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Debug",
-      "Microsoft": "Warning"
-    }
-  }
-}
-```
-
-```json
-// prod
-{
-  "Logging": {
-    "LogLevel": {
-      "Default": "Warning"
-    }
-  }
-}
-```
-
-Serilog를 쓰는 경우:
-
-```csharp
-// Program.cs
-using Serilog;
-Log.Logger = new LoggerConfiguration()
-   .ReadFrom.Configuration(configuration)
-   .Enrich.FromLogContext()
-   .CreateLogger();
-
-services.AddLogging(lb => lb.ClearProviders().AddSerilog());
-```
-
-`serilog` 섹션을 `appsettings.*.json`에 분리 관리.
-
----
-
-## 커맨드라인/환경변수 오버라이드 실전
-
-- 환경변수: `Api__BaseUrl=https://stg.example.com`
-- CLI: `--Api:TimeoutSeconds=5 --Features:UseMockData=true`
-
-> 네임스페이스 구분은 `:`이며, 환경변수에서는 `__`(더블 언더스코어) 사용.
-
----
-
-## 설정 스키마 버전 관리·마이그레이션
-
-배포 후 시간이 지나면 설정 키가 바뀐다. 앱 시작 시 버전을 점검해 **자동 마이그레이션**을 수행하면 사용자가 손대지 않아도 안정적으로 전환된다.
-
-```csharp
-public sealed class SettingsMigrator
-{
-    public void MigrateIfNeeded(IConfiguration cfg, string userConfigPath)
-    {
-        var version = cfg["SchemaVersion"] ?? "1";
-        if (version == "1")
-        {
-            // 예: Ui:ThemeName -> Ui:Theme 로 키 이동
-            // userConfigPath JSON을 로드→변환→백업 후 저장
-        }
-    }
-}
-```
-
----
-
-## 테스트 전략
-
-- **Options 바인딩 단위 테스트**: `ConfigurationBuilder().AddInMemoryCollection()`으로 가짜 설정 주입 → `services.Configure<T>()` 바인딩 검증
-- **IOptionsMonitor 변경 이벤트**: `reloadOnChange` 대신, 테스트에선 `IOptionsMonitorCache<T>`를 써서 `TryAdd/Reset`으로 변경 시뮬레이션
-- **ApiClient**: `HttpMessageHandler`를 mock으로 대체 → `HttpClient` 주입 테스트
+구성 바인딩을 단위 테스트로 검증할 수 있습니다.
 
 ```csharp
 [Fact]
-public void ApiOptions_Binds_From_Config()
+public void ApiOptions_Binds_Correctly()
 {
     var dict = new Dictionary<string, string?>
     {
-        ["Api:BaseUrl"] = "https://dev.example.com",
-        ["Api:TimeoutSeconds"] = "5",
-        ["Api:UseCompression"] = "false"
+        ["Api:BaseUrl"] = "https://test.com",
+        ["Api:TimeoutSeconds"] = "15"
     };
-    var cfg = new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
+    var config = new ConfigurationBuilder().AddInMemoryCollection(dict).Build();
 
     var services = new ServiceCollection();
-    services.Configure<ApiOptions>(cfg.GetSection("Api"));
+    services.Configure<ApiOptions>(config.GetSection("Api"));
     var sp = services.BuildServiceProvider();
-    var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ApiOptions>>().Value;
+    var opts = sp.GetRequiredService<IOptions<ApiOptions>>().Value;
 
-    Assert.Equal("https://dev.example.com", opts.BaseUrl);
-    Assert.Equal(5, opts.TimeoutSeconds);
-    Assert.False(opts.UseCompression);
+    Assert.Equal("https://test.com", opts.BaseUrl);
+    Assert.Equal(15, opts.TimeoutSeconds);
 }
 ```
 
 ---
 
-## 예시: dev/prod 분기에 따른 UI·API 자동 전환
+## 요약
 
-- dev:
-  - API = `https://api-dev.example.com`
-  - 로깅 = Debug
-  - FeatureFlags.UseMockData = true → 샘플 카드 표시
-- prod:
-  - API = `https://api.example.com`
-  - 로깅 = Warning
-  - FeatureFlags.UseMockData = false → 실제 API만 사용
-
-결과: 빌드/실행 환경만 바꿔도 앱은 **자연스럽게 다른 동작**을 한다.
-
----
-
-## 빌드/배포 파이프라인에서 환경 주입
-
-### GitHub Actions 매트릭스 예시(발췌)
-
-```yaml
-- name: Set environment
-  run: echo "DOTNET_ENVIRONMENT=prod" >> $GITHUB_ENV
-
-- name: Publish
-  run: dotnet publish -c Release -r win-x64 --self-contained true -o out
-```
-
-> 필요 시 **환경변수**로 민감정보 주입(토큰/키) → 런타임에 OS 보안 저장소와 결합해 사용.
-
----
-
-## 성능·안정성 고려사항
-
-- `reloadOnChange`는 파일 시스템 감시를 사용. 빈번한 저장(에디터 자동 저장) 시 변경 이벤트가 잦을 수 있으므로, **구독처에서 속도 완충(Throttle)** 또는 **핵심만 반영**.
-- XAML Theme/리소스 스왑은 **UI 스레드**에서 수행.
-- `PublishTrimmed=true` 사용 시 리플렉션/리소스 키가 트리밍 대상인지 확인(링커 지시파일 사용).
-
----
-
-## 요약 표
-
-| 주제 | 핵심 요점 |
-|---|---|
-| 로딩 순서 | 공통 → 환경 → 로컬 → 환경변수 → CLI(뒤가 앞 덮음) |
-| 환경 선택 | `DOTNET_ENVIRONMENT`(dev/prod) |
-| DI 바인딩 | `services.Configure<T>(section)` + `IOptionsMonitor<T>` |
-| 즉시 반영 | `reloadOnChange` + `OnChange` |
-| 검증 | `IValidateOptions<T>` + `.ValidateOnStart()` |
-| 비밀 | OS 보안 저장소/환경변수 활용, 설정 파일 평문 금지 |
-| 배포 포함 | `.csproj` CopyToOutputDirectory 및 CI에서 선택 포함 |
-| 테스트 | InMemoryConfiguration, HttpMessageHandler mock |
-| UX | 기능 플래그/테마/언어 런타임 전환으로 QA/실험 가속 |
-
----
-
-## 부록: 전체 미니 샘플
-
-### `appsettings.dev.json`
-
-```json
-{
-  "Api": { "BaseUrl": "https://api-dev.example.com", "TimeoutSeconds": 10 },
-  "Features": { "EnableNewDashboard": true, "UseMockData": true },
-  "Ui": { "Theme": "Dark", "Language": "ko", "DefaultFontSize": 14 },
-  "Logging": { "LogLevel": { "Default": "Debug" } }
-}
-```
-
-### `Options/ApiOptions.cs`
-
-```csharp
-namespace MyApp.Options
-{
-    public sealed class ApiOptions
-    {
-        public string BaseUrl { get; set; } = "";
-        public int TimeoutSeconds { get; set; } = 30;
-        public bool UseCompression { get; set; } = true;
-    }
-}
-```
-
-### `Services/ApiClient.cs`(재로딩 반영)
-
-```csharp
-public sealed class ApiClient : IApiClient
-{
-    private readonly HttpClient _http;
-    private readonly Microsoft.Extensions.Options.IOptionsMonitor<ApiOptions> _api;
-
-    public ApiClient(HttpClient http, Microsoft.Extensions.Options.IOptionsMonitor<ApiOptions> api)
-    {
-        _http = http; _api = api;
-        Apply(_api.CurrentValue);
-        _api.OnChange(Apply);
-    }
-
-    private void Apply(ApiOptions o)
-    {
-        _http.BaseAddress = new Uri(o.BaseUrl);
-        _http.Timeout = TimeSpan.FromSeconds(o.TimeoutSeconds);
-    }
-
-    public async Task<string> GetStatusAsync(CancellationToken ct = default)
-    {
-        using var res = await _http.GetAsync("/status", ct);
-        res.EnsureSuccessStatusCode();
-        return await res.Content.ReadAsStringAsync(ct);
-    }
-}
-```
-
-### `ViewModels/HomeViewModel.cs`
-
-```csharp
-public sealed class HomeViewModel : ReactiveUI.ReactiveObject
-{
-    private readonly IApiClient _api;
-    private readonly Microsoft.Extensions.Options.IOptionsMonitor<UiOptions> _ui;
-
-    public string Title { get; } = "환경 기반 설정 데모";
-    public string CurrentTheme { get; private set; } = "";
-    public string CurrentLanguage { get; private set; } = "";
-    public string ApiStatus { get; private set; } = "";
-
-    public ReactiveUI.ReactiveCommand<Unit, Unit> RefreshCommand { get; }
-
-    public HomeViewModel(IApiClient api, Microsoft.Extensions.Options.IOptionsMonitor<UiOptions> ui)
-    {
-        _api = api; _ui = ui;
-
-        ApplyUi(ui.CurrentValue);
-        _ui.OnChange(o => Avalonia.Threading.Dispatcher.UIThread.Post(() => ApplyUi(o)));
-
-        RefreshCommand = ReactiveUI.ReactiveCommand.CreateFromTask(async () =>
-        {
-            ApiStatus = await _api.GetStatusAsync();
-            this.RaisePropertyChanged(nameof(ApiStatus));
-        });
-    }
-
-    private void ApplyUi(UiOptions o)
-    {
-        CurrentTheme = o.Theme;
-        CurrentLanguage = o.Language;
-        this.RaisePropertyChanged(nameof(CurrentTheme));
-        this.RaisePropertyChanged(nameof(CurrentLanguage));
-    }
-}
-```
+| 주제 | 핵심 내용 |
+|------|----------|
+| 환경 선택 | `DOTNET_ENVIRONMENT` 환경 변수 |
+| 로딩 순서 | 공통 → 환경 → 로컬 → 환경변수 → 명령줄 |
+| 옵션 패턴 | `services.Configure<T>()` + `IOptionsMonitor<T>` |
+| 재로딩 | `reloadOnChange: true` + `OnChange` 이벤트 |
+| 유효성 검증 | `IValidateOptions<T>` + `ValidateOnStart()` |
+| 민감 정보 | OS 보안 저장소, 환경 변수 |
+| 배포 | `.csproj` 복사 설정, CI 환경 변수 |
+| 테스트 | `InMemoryCollection`으로 구성 모의 |
 
 ---
 
 ## 결론
 
-- Avalonia에서도 .NET의 **구성 시스템**을 그대로 활용하면 **환경(dev/prod)별 설정 분리**가 쉽고 강력하다.
-- `Options 패턴 + IOptionsMonitor + reloadOnChange` 조합으로 **런타임 재로딩**까지 매끄럽게 지원한다.
-- 운영상 필수인 **유효성 검증, 비밀 관리, 경로 설계, CI/CD 주입, 테스트 가능성**을 함께 설계하면 **유지보수성과 배포 안정성, UX**를 모두 확보할 수 있다.
+Avalonia 앱에서도 .NET의 표준 구성 시스템을 그대로 활용하면 환경별 설정 분리, 강타입 옵션, 런타임 재로딩, 유효성 검증을 쉽게 구현할 수 있습니다. 이렇게 구축된 설정 체계는 개발/운영 환경을 명확히 구분하고, 민감 정보를 안전하게 관리하며, 배포 자동화를 원활하게 만듭니다. 위 패턴을 자신의 프로젝트에 적용하여 안정적이고 유지보수하기 쉬운 Avalonia 애플리케이션을 만들어 보세요.

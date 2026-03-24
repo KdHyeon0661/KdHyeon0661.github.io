@@ -4,24 +4,13 @@ title: Avalonia - DI(Dependency Injection)
 date: 2025-02-01 20:20:23 +0900
 category: Avalonia
 ---
-# Avalonia MVVM에서의 Dependency Injection 구조, 베스트 프랙티스 총정리
+# Avalonia MVVM에서의 의존성 주입(DI) 구조와 베스트 프랙티스
 
-초안의 핵심(서비스/뷰모델 DI, 수명 주기, 생성자 주입)을 그대로 유지하면서, **조금 더 실전적이고 확장 가능한 DI 설계**로 넓힌다.
-본 문서는 다음을 모두 다룬다.
-
-- DI 구성(두 가지 방식)
-  - [A] 단순 `ServiceCollection` (App에서 직접 구성)
-  - [B] .NET Generic Host(`Host.CreateDefaultBuilder`) 연동 — 구성/로깅/옵션을 한 번에
-- 수명 주기 전략(Singleton/Transient + “유사 Scoped(윈도우/페이지 단위)”)
-- ViewModel Factory / `Func<T>` / `IServiceScopeFactory` 활용
-- View 연결: ViewLocator/`DataTemplates`와 DI
-- HTTP/파일/설정 서비스, MessageBus, NavigationService, DialogService, ThemeService 등 **서비스 레이어 표준화**
-- 테스트/목 객체 주입 전략, 디자인 타임 데이터
-- 다중 윈도우/모듈/플러그인 아키텍처로 확장
+의존성 주입(Dependency Injection, DI)은 객체가 직접 의존 객체를 생성하지 않고 외부에서 받아 사용하는 설계 패턴입니다. Avalonia 애플리케이션에서 DI를 도입하면 ViewModel과 서비스 간 결합도를 낮추고, 테스트 용이성과 유지보수성을 크게 향상시킬 수 있습니다. 이 글에서는 초중급 개발자를 위해 DI의 기본 개념부터 실전 적용, 그리고 프로젝트 규모에 따른 구성 전략까지 단계별로 설명합니다.
 
 ---
 
-## 예시 솔루션 구조
+## 프로젝트 구조
 
 ```
 MyAvaloniaApp/
@@ -31,9 +20,6 @@ MyAvaloniaApp/
 ├─ Infrastructure/               # DI·Host·Options·Logging 등 인프라
 │  ├─ Bootstrapper.cs
 │  ├─ ViewLocator.cs
-│  ├─ Extensions/
-│  │  ├─ ServiceCollectionExtensions.cs
-│  │  └─ HostExtensions.cs
 │  └─ Options/
 │     └─ AppOptions.cs
 ├─ Services/
@@ -57,30 +43,24 @@ MyAvaloniaApp/
 ├─ ViewModels/
 │  ├─ MainViewModel.cs
 │  ├─ LoginViewModel.cs
-│  ├─ DashboardViewModel.cs
-│  └─ SettingsViewModel.cs
+│  └─ DashboardViewModel.cs
 ├─ Views/
 │  ├─ MainView.axaml
-│  ├─ MainView.axaml.cs
 │  ├─ LoginView.axaml
-│  ├─ LoginView.axaml.cs
-│  ├─ DashboardView.axaml
-│  ├─ DashboardView.axaml.cs
-│  ├─ SettingsView.axaml
-│  └─ SettingsView.axaml.cs
-├─ Themes/
-│  ├─ LightTheme.axaml
-│  └─ DarkTheme.axaml
+│  └─ DashboardView.axaml
 └─ Tests/
-   ├─ MyAvaloniaApp.Tests.csproj
    └─ LoginViewModelTests.cs
 ```
 
+위 구조는 관심사를 명확히 분리합니다. `Services/Abstractions`에는 인터페이스, `Services/Implementations`에는 구체 클래스, `ViewModels`에는 프레젠테이션 로직, `Views`에는 XAML UI를 배치합니다. `Infrastructure`에는 DI 구성, 뷰 로케이터, 옵션 설정 등 인프라 관련 코드를 모읍니다.
+
 ---
 
-## 서비스 인터페이스와 구현
+## 서비스 인터페이스와 구현 예시
 
-### 인증 서비스
+DI를 적용하려면 먼저 서비스의 인터페이스를 정의하고, 이를 구현한 클래스를 만듭니다. 여기서는 몇 가지 필수적인 서비스를 예시로 보여줍니다.
+
+### 인증 서비스 (IAuthService)
 
 ```csharp
 // Services/Abstractions/IAuthService.cs
@@ -111,7 +91,7 @@ public sealed class AuthService : IAuthService
 
     public Task<bool> LoginAsync(string username, string password)
     {
-        // 실제 환경에서는 API 호출/토큰 저장 등을 수행
+        // 실제 환경에서는 API 호출, 토큰 저장 등을 수행
         IsAuthenticated = (username == "admin" && password == "1234");
         CurrentUser = IsAuthenticated ? username : null;
         return Task.FromResult(IsAuthenticated);
@@ -126,7 +106,7 @@ public sealed class AuthService : IAuthService
 }
 ```
 
-### 파일 다이얼로그 서비스
+### 파일 다이얼로그 서비스 (IFileDialogService)
 
 ```csharp
 // Services/Abstractions/IFileDialogService.cs
@@ -143,6 +123,7 @@ public interface IFileDialogService
 
 ```csharp
 // Services/Implementations/FileDialogService.cs
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using MyAvaloniaApp.Services.Abstractions;
@@ -155,7 +136,7 @@ public sealed class FileDialogService : IFileDialogService
 
     public FileDialogService()
     {
-        // MainWindow가 뜬 후에는 NavigationService 등에서 Owner를 주입해 줄 수도 있다
+        // MainWindow가 나타난 후에 Owner를 얻을 수 있음
         _owner = (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
     }
 
@@ -178,7 +159,7 @@ public sealed class FileDialogService : IFileDialogService
 }
 ```
 
-### NavigationService
+### 네비게이션 서비스 (INavigationService)
 
 ```csharp
 // Services/Abstractions/INavigationService.cs
@@ -207,7 +188,7 @@ public sealed class NavigationService : INavigationService
 }
 ```
 
-### MessageBus (간단 구현)
+### 메시지 버스 (IMessageBus)
 
 ```csharp
 // Services/Abstractions/IMessageBus.cs
@@ -260,7 +241,7 @@ public sealed class MessageBus : IMessageBus
 }
 ```
 
-### ThemeService
+### 테마 서비스 (IThemeService)
 
 ```csharp
 // Services/Abstractions/IThemeService.cs
@@ -294,10 +275,12 @@ public sealed class ThemeService : IThemeService
         var app = Avalonia.Application.Current;
         if (app is null) return;
 
-        var remove = app.Styles.FirstOrDefault(s =>
+        // 기존 테마 리소스 제거
+        var existing = app.Styles.FirstOrDefault(s =>
             s is ResourceInclude ri && ri.Source?.ToString()?.Contains("Theme") == true);
-        if (remove is not null) app.Styles.Remove(remove);
+        if (existing is not null) app.Styles.Remove(existing);
 
+        // 새 테마 추가
         var include = new ResourceInclude(new Uri(uri)) { Source = new Uri(uri) };
         app.Styles.Add(include);
         IsDark = isDark;
@@ -305,7 +288,7 @@ public sealed class ThemeService : IThemeService
 }
 ```
 
-### 간단한 JSON 저장소
+### JSON 저장소 (IJsonStore)
 
 ```csharp
 // Services/Abstractions/IJsonStore.cs
@@ -351,7 +334,9 @@ public sealed class JsonStore : IJsonStore
 
 ---
 
-## ViewModel — 생성자 주입
+## ViewModel에 서비스 주입
+
+DI의 핵심은 필요한 서비스를 생성자 매개변수로 받는 것입니다. ViewModel은 자신이 의존하는 서비스의 인터페이스만 알면 됩니다.
 
 ### LoginViewModel
 
@@ -424,8 +409,7 @@ public sealed class DashboardViewModel : ReactiveObject
     {
         _auth = auth;
         _nav = nav;
-
-        _title = $"환영합니다, {_auth.CurrentUser ?? "Guest"}";
+        Title = $"환영합니다, {_auth.CurrentUser ?? "Guest"}";
     }
 
     private string _title;
@@ -437,10 +421,13 @@ public sealed class DashboardViewModel : ReactiveObject
 }
 ```
 
-### MainViewModel — Navigation 바인딩
+### MainViewModel
+
+`MainViewModel`은 네비게이션 서비스를 통해 현재 화면을 바꿉니다.
 
 ```csharp
 // ViewModels/MainViewModel.cs
+using System.Reactive;
 using ReactiveUI;
 using MyAvaloniaApp.Services.Abstractions;
 
@@ -448,7 +435,9 @@ namespace MyAvaloniaApp.ViewModels;
 
 public sealed class MainViewModel : ReactiveObject
 {
+    private readonly INavigationService _nav;
     private object? _current;
+
     public object? Current
     {
         get => _current;
@@ -457,22 +446,22 @@ public sealed class MainViewModel : ReactiveObject
 
     public MainViewModel(INavigationService nav, LoginViewModel loginVm)
     {
-        // 초기 페이지
+        _nav = nav;
         Current = loginVm;
-
-        // 페이지 전환 이벤트 수신
-        nav.Navigated += vm => Current = vm;
+        _nav.Navigated += vm => Current = vm;
     }
 }
 ```
 
-> 초안에서의 “View 내부에서 ViewModel 생성 금지” 원칙을 지키기 위해, **항상 생성자 주입**으로 ViewModel을 제공한다.
+> **주의**: `DashboardViewModel`이 `MainViewModel` 대신 `LoginViewModel`에서 직접 생성되는 구조는 `DashboardViewModel`의 생성자 인자를 위해 `IAuthService`와 `INavigationService`를 다시 전달해야 합니다. 더 나은 설계를 위해 `IServiceProvider`나 팩토리를 활용할 수도 있지만, 이 예제에서는 간단히 보여주기 위해 생성자 인자를 전달했습니다.
 
 ---
 
-## DI 구성 — 두 가지 방식
+## DI 구성 방식
 
-### [A] App에서 간단 구성 (`ServiceCollection` 직접)
+Avalonia 앱에서 DI 컨테이너를 구성하는 방법은 크게 두 가지로 나눌 수 있습니다. 작은 프로젝트에는 간단한 `ServiceCollection` 방식이, 중대형 프로젝트에는 .NET Generic Host 방식이 적합합니다.
+
+### 방식 A: App.axaml.cs에서 직접 구성
 
 ```csharp
 // App.axaml.cs
@@ -491,14 +480,13 @@ public partial class App : Application
 {
     public static ServiceProvider Services = default!;
 
-    public override void Initialize()
-        => AvaloniaXamlLoader.Load(this);
+    public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted()
     {
         var sc = new ServiceCollection();
 
-        // Services
+        // 서비스 등록
         sc.AddSingleton<IAuthService, AuthService>();
         sc.AddSingleton<INavigationService, NavigationService>();
         sc.AddSingleton<IMessageBus, MessageBus>();
@@ -506,23 +494,17 @@ public partial class App : Application
         sc.AddSingleton<IThemeService, ThemeService>();
         sc.AddSingleton<IJsonStore, JsonStore>();
 
-        // ViewModels
+        // ViewModel 등록
         sc.AddSingleton<MainViewModel>();
         sc.AddTransient<LoginViewModel>();
         sc.AddTransient<DashboardViewModel>();
-
-        // ViewLocator(선택) DI가 필요하면 등록
-        sc.AddSingleton<Infrastructure.ViewLocator>();
 
         Services = sc.BuildServiceProvider();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            var main = new MainWindow
-            {
-                DataContext = Services.GetRequiredService<MainViewModel>()
-            };
-            desktop.MainWindow = main;
+            var mainVm = Services.GetRequiredService<MainViewModel>();
+            desktop.MainWindow = new MainWindow { DataContext = mainVm };
         }
 
         base.OnFrameworkInitializationCompleted();
@@ -530,36 +512,15 @@ public partial class App : Application
 }
 ```
 
-**장점**: 단순/직관.
-**단점**: 구성/로깅/환경변수/설정(AppSettings) 같은 “호스트 기능”은 직접 마련해야 한다.
+**장점**: 단순하고 이해하기 쉽습니다.  
+**단점**: 구성, 로깅, 옵션 바인딩 등이 내장되어 있지 않아 직접 구현해야 합니다.
 
----
+### 방식 B: .NET Generic Host 연동
 
-### [B] Generic Host 연동 — 구성/로깅/옵션/HttpClient까지 표준대로
-
-```csharp
-// Program.cs
-using Avalonia;
-using System;
-
-namespace MyAvaloniaApp;
-
-internal static class Program
-{
-    [STAThread]
-    public static void Main(string[] args)
-        => BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-
-    public static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-                     .UsePlatformDetect()
-                     .LogToTrace();
-}
-```
+Generic Host는 `appsettings.json`, 환경 변수, 로깅, `IOptions<T>` 등을 표준 방식으로 제공합니다.
 
 ```csharp
 // Infrastructure/Bootstrapper.cs
-using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -574,7 +535,6 @@ public static class Bootstrapper
 {
     public static IHost BuildHost()
     {
-        // HostBuilder의 기본 구성을 활용(환경변수, appsettings.json, 로깅 등 활성화)
         var host = Host.CreateDefaultBuilder()
             .ConfigureAppConfiguration(cfg =>
             {
@@ -583,19 +543,18 @@ public static class Bootstrapper
             })
             .ConfigureServices((ctx, services) =>
             {
-                // Options 바인딩 예시
+                // 옵션 바인딩
                 services.Configure<Options.AppOptions>(ctx.Configuration.GetSection("App"));
 
-                // HttpClient/Typed Client(선택)
+                // HTTP 클라이언트 등록
                 services.AddHttpClient<Services.Http.ApiClient>(client =>
                 {
-                    // appsettings.json에서 ApiBaseUrl 불러와 설정할 수 있음
                     var apiBase = ctx.Configuration["Api:BaseUrl"];
                     if (!string.IsNullOrWhiteSpace(apiBase))
                         client.BaseAddress = new Uri(apiBase);
                 });
 
-                // Services
+                // 서비스 등록
                 services.AddSingleton<IAuthService, AuthService>();
                 services.AddSingleton<INavigationService, NavigationService>();
                 services.AddSingleton<IMessageBus, MessageBus>();
@@ -603,13 +562,10 @@ public static class Bootstrapper
                 services.AddSingleton<IThemeService, ThemeService>();
                 services.AddSingleton<IJsonStore, JsonStore>();
 
-                // ViewModels
+                // ViewModel 등록
                 services.AddSingleton<MainViewModel>();
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<DashboardViewModel>();
-
-                // ViewLocator (선택)
-                services.AddSingleton<ViewLocator>();
             })
             .ConfigureLogging(b =>
             {
@@ -625,7 +581,7 @@ public static class Bootstrapper
 ```
 
 ```csharp
-// App.axaml.cs (Host 통합 버전)
+// App.axaml.cs (Host 버전)
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
@@ -641,8 +597,7 @@ public partial class App : Application
 {
     public static IHost Host { get; private set; } = default!;
 
-    public override void Initialize()
-        => AvaloniaXamlLoader.Load(this);
+    public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted()
     {
@@ -659,18 +614,16 @@ public partial class App : Application
 }
 ```
 
-**장점**
-- `appsettings.json` / 환경 변수 / 사용자 비밀 등 “구성”을 그대로 사용
-- `IOptions<T>` / `IOptionsMonitor<T>` / `IOptionsSnapshot<T>` 패턴 적용
-- `HttpClientFactory`, 로깅, 백그라운드 서비스 등 .NET 표준 기능 활용
-
-**단점**: 진입 장벽이 약간 높음. 하지만 중대형 앱에서는 권장.
+**장점**: 구성, 로깅, 옵션, HTTP 클라이언트 팩토리 등 .NET 표준 기능을 그대로 활용할 수 있습니다.  
+**단점**: 초기 설정이 다소 복잡할 수 있습니다.
 
 ---
 
-## View 연결 — ViewLocator + DataTemplates
+## View와 ViewModel 연결
 
-### ViewLocator
+DI로 생성된 ViewModel을 View에 주입하는 방법은 다양합니다. 가장 깔끔한 방법은 **ViewLocator**를 사용하는 것입니다.
+
+### ViewLocator 구현
 
 ```csharp
 // Infrastructure/ViewLocator.cs
@@ -678,7 +631,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using MyAvaloniaApp.ViewModels;
 using MyAvaloniaApp.Views;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace MyAvaloniaApp.Infrastructure;
 
@@ -690,143 +642,80 @@ public sealed class ViewLocator : IDataTemplate
         {
             LoginViewModel      => new LoginView(),
             DashboardViewModel  => new DashboardView(),
-            SettingsViewModel   => new SettingsView(),
             MainViewModel       => new MainView(),
             _                   => new TextBlock { Text = "View Not Found" }
         };
     }
 
-    public bool Match(object? data) => data is ViewModelBase || data is ReactiveUI.ReactiveObject;
+    public bool Match(object? data) => data is ViewModelBase;
 }
 ```
 
-> DI를 통해 **View까지** 만들고 싶다면 `Build` 내부에서 `App.Host.Services.GetRequiredService<SomeView>()`로 해결할 수 있다.
-> 단, Avalonia의 XAML 로더와의 균형을 맞추기 위해 View는 보통 XAML 인스턴스화를 그대로 두고, **DataContext만 DI**로 공급하는 패턴이 흔하다.
-
-### App.axaml — DataTemplates 등록
+### App.axaml에서 DataTemplate 등록
 
 ```xml
 <!-- App.axaml -->
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:infra="clr-namespace:MyAvaloniaApp.Infrastructure;assembly=MyAvaloniaApp"
+             xmlns:infra="clr-namespace:MyAvaloniaApp.Infrastructure"
              x:Class="MyAvaloniaApp.App">
-  <Application.Styles>
-    <FluentTheme Mode="Light"/>
-    <ResourceInclude Source="avares://MyAvaloniaApp/Themes/LightTheme.axaml"/>
-  </Application.Styles>
+    <Application.Styles>
+        <FluentTheme Mode="Light"/>
+    </Application.Styles>
 
-  <Application.DataTemplates>
-    <infra:ViewLocator/>
-  </Application.DataTemplates>
+    <Application.DataTemplates>
+        <infra:ViewLocator/>
+    </Application.DataTemplates>
 </Application>
 ```
 
-### MainView — ContentControl로 페이지 교체
+### MainView에서 ContentControl로 현재 ViewModel 표시
 
 ```xml
 <!-- Views/MainView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MyAvaloniaApp.Views.MainView">
-  <DockPanel>
-    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Spacing="8" Margin="8">
-      <Button Content="Login" Command="{Binding NavigateLogin}"/>
-      <Button Content="Dashboard" Command="{Binding NavigateDashboard}"/>
-      <Button Content="Settings" Command="{Binding NavigateSettings}"/>
-    </StackPanel>
-
-    <ContentControl Content="{Binding Current}"/>
-  </DockPanel>
+    <ContentControl Content="{Binding Current}" />
 </UserControl>
 ```
 
-```csharp
-// Views/MainView.axaml.cs
-using Avalonia.Controls;
-
-namespace MyAvaloniaApp.Views;
-
-public partial class MainView : UserControl
-{
-    public MainView() => InitializeComponent();
-}
-```
-
-```csharp
-// ViewModels/MainViewModel.cs (네비게이션 커맨드 추가)
-using System.Reactive;
-using ReactiveUI;
-using MyAvaloniaApp.Services.Abstractions;
-
-namespace MyAvaloniaApp.ViewModels;
-
-public sealed class MainViewModel : ReactiveObject
-{
-    private readonly INavigationService _nav;
-    private readonly LoginViewModel _loginVm;
-    private readonly DashboardViewModel _dashVm;
-    private readonly SettingsViewModel _settingsVm;
-
-    public ReactiveCommand<Unit, Unit> NavigateLogin { get; }
-    public ReactiveCommand<Unit, Unit> NavigateDashboard { get; }
-    public ReactiveCommand<Unit, Unit> NavigateSettings { get; }
-
-    private object? _current;
-    public object? Current
-    {
-        get => _current;
-        set => this.RaiseAndSetIfChanged(ref _current, value);
-    }
-
-    public MainViewModel(INavigationService nav, LoginViewModel loginVm,
-                         DashboardViewModel dashVm, SettingsViewModel settingsVm)
-    {
-        _nav = nav;
-        _loginVm = loginVm;
-        _dashVm = dashVm;
-        _settingsVm = settingsVm;
-
-        _nav.Navigated += vm => Current = vm;
-
-        NavigateLogin      = ReactiveCommand.Create(() => _nav.NavigateTo(_loginVm));
-        NavigateDashboard  = ReactiveCommand.Create(() => _nav.NavigateTo(_dashVm));
-        NavigateSettings   = ReactiveCommand.Create(() => _nav.NavigateTo(_settingsVm));
-
-        Current = _loginVm;
-    }
-}
-```
-
-> **대안**: `Func<LoginViewModel>`을 DI 받아 **새 인스턴스 생성**(Transient) 구조로 바꿀 수 있다. 페이지 전환 시마다 “깨끗한 VM”이 필요하면 `Func<T>`/Factory 패턴이 유용하다.
+이제 `Current` 속성이 `LoginViewModel`이나 `DashboardViewModel`로 바뀌면 ViewLocator가 적절한 View를 자동으로 렌더링합니다.
 
 ---
 
-## 선택과 “유사 Scoped”
+## 수명 주기 전략
 
-| 등록 | 권장 사용 |
-|---|---|
-| `AddSingleton<T>` | 전역 서비스(설정, 네비, 메시지버스, 테마 등) |
-| `AddTransient<T>` | ViewModel, 값 변경을 가져가는 가벼운 서비스 |
-| `AddScoped<T>` | 웹/DI 범주 개념. Avalonia에서는 기본적으로 사용하지 않음 |
+DI 컨테이너에서 객체의 수명을 결정하는 것은 중요합니다. Avalonia 앱에서는 주로 두 가지 수명을 사용합니다.
 
-**유사 Scoped**: 윈도우/다이얼로그 단위로 별도의 DI 범위를 두고 싶다면:
+| 등록 방식 | 설명 | 적합한 대상 |
+|-----------|------|-------------|
+| `AddSingleton<T>` | 앱 전체에서 하나의 인스턴스만 생성 | 전역 서비스 (네비게이션, 테마, 메시지 버스, 설정) |
+| `AddTransient<T>` | 요청할 때마다 새 인스턴스 생성 | ViewModel (각 화면마다 독립적인 상태가 필요) |
+
+`AddScoped<T>`는 웹 애플리케이션에서 요청 단위로 수명을 관리하는 데 사용되지만, 데스크톱 앱에서는 기본적으로 지원되지 않습니다. 대신 **윈도우 단위 스코프**를 직접 구현할 수 있습니다.
+
+### 윈도우 단위 스코프 (유사 Scoped)
+
+새 윈도우를 열 때마다 별도의 DI 스코프를 생성하여 해당 윈도우의 ViewModel과 서비스를 독립적으로 관리할 수 있습니다.
 
 ```csharp
-// 윈도우를 열 때 스코프를 만들어 해당 윈도우 수명에 맞춰 해제
-using var scope = App.Host.Services.CreateScope();
-var childVm = scope.ServiceProvider.GetRequiredService<SomeWindowViewModel>();
-var window = new SomeWindow { DataContext = childVm };
-await window.ShowDialog(owner);
+var scope = App.Host.Services.CreateScope();
+var vm = scope.ServiceProvider.GetRequiredService<SomeWindowViewModel>();
+var window = new SomeWindow { DataContext = vm };
+window.Closing += (_, _) => scope.Dispose(); // 윈도우 닫히면 스코프 해제
+window.Show();
 ```
 
-이렇게 하면 윈도우의 생애 동안만 필요한 객체(Transient 포함)를 묶어 관리할 수 있다.
+이렇게 하면 윈도우가 닫힐 때 해당 윈도우에 연결된 모든 Transient 객체가 정리됩니다.
 
 ---
 
-## Settings/Options 패턴과 저장
+## 설정(Options) 패턴과 저장
 
-### Options 정의/바인딩
+Generic Host를 사용하면 `appsettings.json` 파일을 통해 설정을 관리할 수 있습니다.
+
+### Options 클래스 정의
 
 ```csharp
 // Infrastructure/Options/AppOptions.cs
@@ -839,7 +728,7 @@ public sealed class AppOptions
 }
 ```
 
-`appsettings.json`:
+### appsettings.json 예시
 
 ```json
 {
@@ -853,13 +742,12 @@ public sealed class AppOptions
 }
 ```
 
-DI 바인딩은 위의 Host 구성에서 이미 보였다(`services.Configure<AppOptions>(...)`).
-VM에서 읽으려면 `IOptionsMonitor<AppOptions>` 주입:
+### ViewModel에서 옵션 사용
 
 ```csharp
 using Microsoft.Extensions.Options;
 using MyAvaloniaApp.Infrastructure.Options;
-using ReactiveUI;
+using MyAvaloniaApp.Services.Abstractions;
 
 public sealed class SettingsViewModel : ReactiveObject
 {
@@ -877,55 +765,16 @@ public sealed class SettingsViewModel : ReactiveObject
 }
 ```
 
-### 저장
-
-서비스(`IJsonStore`)로 AppData 경로에 저장/불러오기:
-
-```csharp
-public sealed class SettingsViewModel : ReactiveObject
-{
-    private readonly IJsonStore _store;
-    private readonly string _path;
-
-    private string _theme = "Light";
-    public string Theme
-    {
-        get => _theme;
-        set => this.RaiseAndSetIfChanged(ref _theme, value);
-    }
-
-    public SettingsViewModel(IJsonStore store, IOptionsMonitor<AppOptions> opts)
-    {
-        _store = store;
-        _path = Path.Combine(opts.CurrentValue.DataFolder, "settings.json");
-    }
-
-    public async Task SaveAsync()  => await _store.SaveAsync(_path, new { Theme });
-    public async Task LoadAsync()
-    {
-        var data = await _store.LoadAsync<dynamic>(_path);
-        if (data is not null && data.Theme is string th) Theme = th;
-    }
-}
-```
+옵션 변경 시 실시간 반영이 필요하면 `IOptionsMonitor<T>`의 `OnChange` 이벤트를 구독할 수 있습니다.
 
 ---
 
-## HTTP 클라이언트(typed client)와 DI
+## HTTP 클라이언트와 DI
 
-```csharp
-// Services/Http/ApiClientOptions.cs
-namespace MyAvaloniaApp.Services.Http;
-
-public sealed class ApiClientOptions
-{
-    public string? BaseUrl { get; set; }
-}
-```
+Typed HTTP 클라이언트를 사용하면 API 호출을 깔끔하게 캡슐화할 수 있습니다.
 
 ```csharp
 // Services/Http/ApiClient.cs
-using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -934,44 +783,36 @@ namespace MyAvaloniaApp.Services.Http;
 public sealed class ApiClient
 {
     private readonly HttpClient _http;
-
     public ApiClient(HttpClient http) => _http = http;
 
     public async Task<string> GetHelloAsync()
     {
-        var res = await _http.GetStringAsync("hello");
-        return res;
+        return await _http.GetStringAsync("hello");
     }
 }
 ```
 
-등록은 Generic Host 예시에서 `AddHttpClient<ApiClient>`로 수행했다.
-VM에서 주입받아 사용:
+등록은 Generic Host 구성에서 `AddHttpClient<ApiClient>`로 처리했습니다. ViewModel에서 주입받아 사용합니다.
 
 ```csharp
 public sealed class DashboardViewModel : ReactiveObject
 {
-    private readonly Services.Http.ApiClient _api;
-    public DashboardViewModel(IAuthService auth, INavigationService nav, Services.Http.ApiClient api) { _api = api; }
+    private readonly ApiClient _api;
 
-    public async Task<string> LoadFromServerAsync() => await _api.GetHelloAsync();
+    public DashboardViewModel(ApiClient api)
+    {
+        _api = api;
+    }
+
+    public async Task<string> LoadDataAsync() => await _api.GetHelloAsync();
 }
 ```
 
 ---
 
-## Dialog/Navigation/Theme/MessageBus DI 결합
+## 단위 테스트: 목 주입으로 ViewModel 검증
 
-- **Dialog**: `IFileDialogService`를 주입받아 모든 열기/저장 상호작용을 **VM에서** 트리거
-- **Navigation**: `INavigationService.NavigateTo(vm)`로 페이지 교체 — **ViewModel끼리 종속 제거**
-- **Theme**: `IThemeService`로 라이트/다크 전환을 **서비스 한 곳**에서
-- **MessageBus**: `IMessageBus`로 브로드캐스트/구독 — **헐겁게 결합**
-
-이들 모두 **생성자 주입**으로 전달하므로, 테스트 시 **Fake/Mock**으로 치환하기 쉽다.
-
----
-
-## 테스트 — 목 주입으로 VM 단위 테스트
+DI의 큰 장점은 ViewModel을 실제 서비스 없이 독립적으로 테스트할 수 있다는 점입니다.
 
 ```csharp
 // Tests/LoginViewModelTests.cs
@@ -987,7 +828,8 @@ public sealed class FakeAuth : IAuthService
     public string? CurrentUser { get; private set; }
     public Task<bool> LoginAsync(string u, string p)
     {
-        IsAuthenticated = true; CurrentUser = u;
+        IsAuthenticated = true;
+        CurrentUser = u;
         return Task.FromResult(true);
     }
     public Task LogoutAsync() { IsAuthenticated = false; CurrentUser = null; return Task.CompletedTask; }
@@ -1009,8 +851,8 @@ public class LoginViewModelTests
         sc.AddSingleton<IAuthService, FakeAuth>();
         sc.AddSingleton<INavigationService, FakeNav>();
         sc.AddTransient<LoginViewModel>();
-        var sp = sc.BuildServiceProvider();
 
+        var sp = sc.BuildServiceProvider();
         var vm = sp.GetRequiredService<LoginViewModel>();
         vm.Username = "tester";
         vm.Password = "pw";
@@ -1018,18 +860,18 @@ public class LoginViewModelTests
         var ok = await vm.LoginCommand.Execute();
         Assert.True(ok);
 
-        var nav = (FakeNav) sp.GetRequiredService<INavigationService>();
+        var nav = (FakeNav)sp.GetRequiredService<INavigationService>();
         Assert.NotNull(nav.LastVm);
         Assert.IsType<DashboardViewModel>(nav.LastVm);
     }
 }
 ```
 
-> “View가 없는 순수 ViewModel 테스트”가 **DI의 가장 큰 이점**이다.
-
 ---
 
-## 디자인-타임 데이터 (XAML 프리뷰)
+## 디자인 타임 데이터 (XAML 프리뷰)
+
+XAML 디자이너에서 ViewModel의 데이터를 미리 보려면 `d:DesignInstance`를 사용합니다.
 
 ```xml
 <!-- Views/LoginView.axaml -->
@@ -1042,8 +884,6 @@ public class LoginViewModelTests
     <vm:LoginViewModel d:DesignInstance="True" />
   </UserControl.DataContext>
 
-  <!-- 디자인 시에는 DI가 없으므로, d:DesignInstance로 임시 VM 제공.
-       런타임에서는 Host에서 DataContext 주입(또는 MainView에서 전개) -->
   <StackPanel Margin="20" Spacing="8">
     <TextBox Watermark="ID" Text="{Binding Username}"/>
     <TextBox Watermark="PW" Text="{Binding Password}"/>
@@ -1052,13 +892,13 @@ public class LoginViewModelTests
 </UserControl>
 ```
 
-> 디자인 타임에서는 DI 컨테이너가 없으므로, `d:` 네임스페이스를 활용해 임시 인스턴스를 붙인다. 런타임 연결은 MainView/MainWindow에서 수행.
+디자인 타임에는 DI 컨테이너가 없으므로, `d:DesignInstance`로 임시 ViewModel을 생성해 UI를 미리 볼 수 있습니다. 런타임에는 실제 DI로 생성된 ViewModel이 주입됩니다.
 
 ---
 
-## 모듈/플러그인 아키텍처(확장)
+## 모듈/플러그인 아키텍처 확장
 
-크게 나누어 **기본 모듈**과 **기능 모듈**로 나누고, 각 모듈에서 `IServiceCollection` 확장 메서드로 자기 등록을 수행:
+대규모 앱에서는 기능을 모듈로 분리하고, 각 모듈이 자신의 서비스를 DI 컨테이너에 등록하게 할 수 있습니다.
 
 ```csharp
 // Infrastructure/Extensions/ServiceCollectionExtensions.cs
@@ -1071,49 +911,34 @@ namespace MyAvaloniaApp.Infrastructure.Extensions;
 public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddCoreServices(this IServiceCollection s)
-        => s.AddSingleton<IAuthService, AuthService>()
-            .AddSingleton<INavigationService, NavigationService>()
-            .AddSingleton<IMessageBus, MessageBus>()
-            .AddSingleton<IFileDialogService, FileDialogService>()
-            .AddSingleton<IThemeService, ThemeService>()
-            .AddSingleton<IJsonStore, JsonStore>();
+    {
+        return s.AddSingleton<IAuthService, AuthService>()
+                .AddSingleton<INavigationService, NavigationService>()
+                .AddSingleton<IMessageBus, MessageBus>()
+                .AddSingleton<IFileDialogService, FileDialogService>()
+                .AddSingleton<IThemeService, ThemeService>()
+                .AddSingleton<IJsonStore, JsonStore>();
+    }
 }
 ```
 
-Host 구성:
-
-```csharp
-services.AddCoreServices()
-        .AddTransient<LoginViewModel>()
-        .AddTransient<DashboardViewModel>()
-        .AddSingleton<MainViewModel>();
-```
-
-플러그인 라이브러리가 있을 경우, **IServiceCollection 확장**을 외부 어셈블리가 노출하면 주 애플리케이션에서 `services.AddPluginXyz()`로 모듈을 조립할 수 있다.
+Host 구성에서 `services.AddCoreServices()`를 호출하면 됩니다. 플러그인 어셈블리가 있다면 해당 어셈블리의 확장 메서드를 호출하여 등록할 수 있습니다.
 
 ---
 
-## 다중 윈도우와 스코프
+## 백그라운드 작업과 DI
 
-여러 윈도우를 동시에 띄우면서 **각 윈도우마다 다른 DI 스코프**를 주고 싶다면:
-
-```csharp
-var scope = App.Host.Services.CreateScope();
-var vm = scope.ServiceProvider.GetRequiredService<SomeWindowViewModel>();
-var win = new SomeWindow { DataContext = vm };
-win.Closing += (_, __) => scope.Dispose(); // 윈도우 닫히면 스코프 해제
-win.Show();
-```
-
-윈도우-스코프 간 결합을 **NavigationService**에서 지원하도록 만들어도 된다(윈도우 생성 책임을 서비스로 승격).
-
----
-
-## 백그라운드 작업/타이머와 DI
-
-`.NET`의 `PeriodicTimer`를 통한 폴링/백그라운드 작업:
+`PeriodicTimer`를 이용해 주기적으로 실행되는 백그라운드 작업을 DI로 관리할 수 있습니다.
 
 ```csharp
+// Services/Implementations/BackgroundRefresher.cs
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using MyAvaloniaApp.Services.Abstractions;
+
+public sealed record RefreshTick();
+
 public sealed class BackgroundRefresher
 {
     private readonly IMessageBus _bus;
@@ -1132,86 +957,37 @@ public sealed class BackgroundRefresher
 
     public void Stop() => _cts.Cancel();
 }
-
-public sealed record RefreshTick();
 ```
 
-**DI로 싱글턴** 등록 후 `App.OnFrameworkInitializationCompleted`에서 시작.
-종료 시 `Stop`. 메시지는 `DashboardViewModel` 등에서 구독하여 UI 갱신.
+이 서비스를 싱글턴으로 등록하고, `App.OnFrameworkInitializationCompleted`에서 시작합니다.
+
+```csharp
+var refresher = Host.Services.GetRequiredService<BackgroundRefresher>();
+_ = refresher.RunAsync(); // 백그라운드에서 실행
+```
+
+종료 시 `refresher.Stop()`을 호출합니다.
 
 ---
 
-## 요약/가이드라인
+## 요약 및 가이드라인
 
-- **생성자 주입** 고정: ViewModel/Service는 항상 DI에서 제공
-- **Singleton**: 전역 상태/라우팅/테마/메시지버스/저장소
-- **Transient**: ViewModel(페이지마다 새 인스턴스가 유리한 경우)
-- “Scoped”가 필요하면 **윈도우 단위 스코프**를 직접 만든다
-- **Navigation**/MessageBus/Theme/FileDialog 등 **UI 인프라**는 서비스화
-- 중대형 앱: **Generic Host**로 가서 구성/로깅/HttpClient/Options를 한 번에
-- 테스트에서는 **Fake/Mock** 서비스 주입으로 **View 없이** 검증
-- 디자인 타임은 `d:`로 해결, 런타임은 DI
-
----
-
-## 부록 A. 전체 실행 흐름(Host 버전)
-
-1) `App.OnFrameworkInitializationCompleted()` → `Host = Bootstrapper.BuildHost()`
-2) `MainViewModel`을 `Host.Services.GetRequiredService<MainViewModel>()`로 호출 → DI가 내부적으로 `LoginViewModel` 등 생성
-3) `MainWindow`의 `DataContext = MainViewModel`
-4) `MainView`에는 `<ContentControl Content="{Binding Current}" />` + `ViewLocator`
-5) 페이지 전환은 `INavigationService.NavigateTo(vm)` 호출로 UI 반영
-
----
-
-## 부록 B. 간단 View 코드 (Login/Dashboard/Settings)
-
-```xml
-<!-- Views/LoginView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="MyAvaloniaApp.Views.LoginView">
-  <StackPanel Margin="20" Spacing="8">
-    <TextBox Watermark="Username" Text="{Binding Username}"/>
-    <TextBox Watermark="Password" Text="{Binding Password}"/>
-    <Button Content="Login" Command="{Binding LoginCommand}"/>
-  </StackPanel>
-</UserControl>
-```
-
-```xml
-<!-- Views/DashboardView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="MyAvaloniaApp.Views.DashboardView">
-  <StackPanel Margin="20" Spacing="8">
-    <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold"/>
-  </StackPanel>
-</UserControl>
-```
-
-```xml
-<!-- Views/SettingsView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="MyAvaloniaApp.Views.SettingsView">
-  <StackPanel Margin="20" Spacing="8">
-    <TextBlock Text="Settings"/>
-  </StackPanel>
-</UserControl>
-```
+| 항목 | 권장 사항 |
+|------|-----------|
+| 서비스 인터페이스 | 항상 인터페이스로 정의하고, 구현은 별도 클래스로 분리 |
+| 등록 수명 | 전역 서비스는 `Singleton`, ViewModel은 `Transient` |
+| ViewModel 생성 | 생성자로 필요한 서비스 주입 (절대 `new`로 직접 생성 금지) |
+| View 연결 | ViewLocator 또는 DataTemplate을 사용해 VM→View 자동 매핑 |
+| 구성 | 작은 앱은 App.axaml.cs, 중대형 앱은 Generic Host 활용 |
+| 설정 | `appsettings.json` + `IOptions<T>` 사용 |
+| HTTP 통신 | `AddHttpClient<T>`로 Typed Client 등록 |
+| 테스트 | Fake/Mock 서비스로 ViewModel 단위 테스트 작성 |
+| 디자인 타임 | `d:DesignInstance`로 임시 ViewModel 제공 |
+| 모듈화 | 확장 메서드로 서비스 등록을 캡슐화 |
+| 백그라운드 | DI로 서비스 등록 후 앱 수명에 맞게 시작/종료 |
 
 ---
 
 ## 결론
 
-- 본 문서는 초안의 DI 구성을 **확장/일반화**했다.
-- 작은 프로젝트는 **App에서 간단 DI**로 시작해도 충분하다.
-- 규모가 커질수록 **Generic Host**로 전환해 구성/로깅/옵션/HTTP/백그라운드까지 **표준화**하라.
-- ViewModel/Service는 항상 **생성자 주입**, View는 **XAML + DataContext만 DI**를 유지하면 MVVM과 DI가 자연스럽게 결합된다.
-
-필요 시 다음 단계로:
-- 네임드/키드(Named/Keyed) 서비스 등록(멀티 구현)
-- 플러그인(어셈블리 스캔) 자동 등록
-- 다국어(리소스) + Options 변경 시 실시간 반영(IOptionsMonitor)
-- 고급 네비게이션(스택, 매개변수, 히스토리)과 상태 보존(StateContainer) 설계
+Avalonia 애플리케이션에 DI를 도입하면 ViewModel과 서비스 간 결합도가 낮아지고, 테스트 용이성과 유지보수성이 크게 향상됩니다. 작은 프로젝트는 `ServiceCollection`으로 간단히 시작하고, 프로젝트가 성장함에 따라 Generic Host로 전환하여 구성, 로깅, 옵션 등을 표준화하는 것이 좋습니다. 이 글에서 소개한 패턴을 기반으로 자신의 앱에 맞는 DI 구조를 설계해 보세요.

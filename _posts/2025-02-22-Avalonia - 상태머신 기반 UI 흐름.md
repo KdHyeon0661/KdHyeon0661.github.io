@@ -6,80 +6,97 @@ category: Avalonia
 ---
 # Avalonia MVVM에서 상태머신 기반 UI 흐름 구현하기
 
-핵심은 다음 다섯 가지다.
-
-1) **명확한 상태 모델**: 상태·이벤트·전이·가드(전이 조건)·효과(사이드이펙트)를 분리
-2) **UI-상태 분리**: ViewModel은 상태머신을 구독하고, View는 바인딩만 담당
-3) **유효성 검증**: Step별 검증 실패 시 전이 거부, 오류 메시지/에러 템플릿 연계
-4) **비동기/서버 연동**: 이메일 중복 검사 등 전이 효과(Effect)에서 수행
-5) **운영성**: 상태 기록, 재진입/복구, 직렬화/복원, 단위 테스트/시뮬레이션
+복잡한 사용자 흐름(회원가입 위저드, 주문 단계, 인증 프로세스 등)을 관리할 때 **상태머신(State Machine)** 은 매우 효과적인 패턴입니다. 상태머신을 도입하면 UI의 흐름 제어, 입력 검증, 서버 연동, 오류 처리를 체계적으로 분리할 수 있습니다. 이 글에서는 Avalonia와 MVVM 환경에서 상태머신을 어떻게 설계하고 구현하는지, 초중급 개발자 관점에서 단계별로 설명합니다.
 
 ---
 
-## 용어와 표기
+## 상태머신의 핵심 요소
 
-- **State(상태)**: UI의 단계(예: `Email` → `Password` → `Complete`)
-- **Event(이벤트)**: 사용자/시스템 입력(예: `NEXT`, `BACK`, `SUBMIT`)
-- **Transition(전이)**: `(현재 상태, 이벤트, 가드 충족) → 다음 상태`
-- **Guard(가드)**: 전이 조건(예: 이메일 형식·중복 검사 통과)
-- **Effect(효과)**: 전이 시 부수 효과(예: 서버 호출, 로깅, 토스트)
+상태머신은 다음 다섯 가지 요소로 구성됩니다.
 
-상태머신을 간단히 수식으로 적으면 다음과 같다.
+- **상태(State)**: UI가 위치한 단계 (예: 이메일 입력, 비밀번호 입력, 완료)
+- **이벤트(Event)**: 사용자 또는 시스템의 입력 (예: 다음, 이전, 제출)
+- **전이(Transition)**: 현재 상태와 이벤트, 조건(가드)에 따라 다음 상태로 이동
+- **가드(Guard)**: 전이가 가능한지 판단하는 조건 (예: 이메일 형식 확인, 서버 중복 검사)
+- **효과(Effect)**: 전이 성공 시 실행되는 부수 작업 (예: 서버 가입 요청, 로깅)
+
+상태 전이 함수를 수식으로 표현하면 다음과 같습니다.
 
 $$
 \delta : (S \times E) \times G \to S
 $$
 
-여기서 \( S \)는 상태 집합, \( E \)는 이벤트 집합, \( G \)는 가드(불리언)이며, \(\delta\)는 전이 함수이다.
+여기서 \( S \)는 상태 집합, \( E \)는 이벤트 집합, \( G \)는 가드(참/거짓)입니다.
 
 ---
 
-## 예제 도메인 시나리오(회원가입 Wizard)
+## 예제: 회원가입 위저드
 
-- Step1: 이메일 입력 및 **서버 중복 검사**
-- Step2: 비밀번호/확인 입력 및 **규칙 검증**
-- Step3: 완료 화면
-- 제약: 유효하지 않으면 `Next` 불가, `Back`은 항상 가능(옵션)
+간단한 회원가입 위저드를 예로 들어보겠습니다.
 
-디렉터리 구조(확장판):
+- **Step1**: 이메일 입력 (서버 중복 검사)
+- **Step2**: 비밀번호 및 확인 입력
+- **Step3**: 완료 화면
+
+사용자는 `다음`, `이전`, `제출` 버튼으로 이동하며, 각 단계에서 유효성 검증이 이루어집니다.
+
+### 프로젝트 구조
 
 ```
 MyApp/
 ├── Models/
-│   ├── SignupData.cs
-│   └── ValidationResult.cs
+│   └── SignupData.cs
 ├── StateMachine/
 │   ├── SignupStep.cs
 │   ├── SignupEvent.cs
-│   ├── IStateManager.cs
-│   ├── GuardResult.cs
 │   ├── Transition.cs
-│   ├── StateMachineCore.cs            // 범용 상태머신 코어
-│   ├── SignupFlowStateMachine.cs      // 도메인 상태머신 정의
-│   └── StateLogger.cs
+│   ├── StateMachineCore.cs
+│   └── SignupFlowStateMachine.cs
 ├── Services/
-│   ├── IAccountService.cs             // 서버 연동(중복 검사, 가입 등)
-│   └── AccountService.cs
+│   └── IAccountService.cs
 ├── ViewModels/
 │   ├── Step1ViewModel.cs
 │   ├── Step2ViewModel.cs
 │   ├── Step3ViewModel.cs
-│   └── SignupFlowViewModel.cs         // Shell/Orchestrator
+│   └── SignupFlowViewModel.cs
 ├── Views/
 │   ├── Step1View.axaml
 │   ├── Step2View.axaml
 │   ├── Step3View.axaml
 │   └── SignupFlowView.axaml
-└── App.axaml(.cs)
+└── App.axaml.cs
 ```
 
 ---
 
-## 모델과 상태/이벤트 정의
-
-### Models/SignupData.cs
+## 상태와 이벤트 정의
 
 ```csharp
+// StateMachine/SignupStep.cs
+public enum SignupStep
+{
+    Step1_Email,
+    Step2_Password,
+    Step3_Complete
+}
+
+// StateMachine/SignupEvent.cs
+public enum SignupEvent
+{
+    Next,
+    Back,
+    Submit
+}
+```
+
+---
+
+## 모델과 서비스
+
+### 사용자 입력 데이터
+
+```csharp
+// Models/SignupData.cs
 public class SignupData
 {
     public string Email { get; set; } = "";
@@ -88,71 +105,33 @@ public class SignupData
 }
 ```
 
-### Models/ValidationResult.cs
+### 서버 연동 서비스 (이메일 중복 검사, 가입)
 
 ```csharp
-public sealed class ValidationResult
+// Services/IAccountService.cs
+public interface IAccountService
 {
-    public bool IsValid { get; }
-    public string? ErrorMessage { get; }
-
-    private ValidationResult(bool ok, string? msg)
-    {
-        IsValid = ok;
-        ErrorMessage = msg;
-    }
-
-    public static ValidationResult Ok() => new(true, null);
-    public static ValidationResult Fail(string message) => new(false, message);
-}
-```
-
-### StateMachine/SignupStep.cs
-
-```csharp
-public enum SignupStep
-{
-    Step1_Email,
-    Step2_Password,
-    Step3_Complete
-}
-```
-
-### StateMachine/SignupEvent.cs
-
-```csharp
-public enum SignupEvent
-{
-    Next,
-    Back,
-    Submit // Step2 -> Step3 전용 이벤트로 사용 가능
+    Task<bool> CheckEmailAvailableAsync(string email, CancellationToken ct = default);
+    Task<bool> SignupAsync(string email, string password, CancellationToken ct = default);
 }
 ```
 
 ---
 
-## 상태머신 코어(범용)와 가드/전이
+## 상태머신 코어 (범용)
 
-### StateMachine/IStateManager.cs (범용 인터페이스)
+상태머신의 핵심 로직을 재사용 가능한 클래스로 분리합니다.
 
-```csharp
-public interface IStateManager<TState, TEvent>
-{
-    TState Current { get; }
-    Task<bool> SendAsync(TEvent @event, CancellationToken ct = default);
-    bool Can(TEvent @event);
-}
-```
-
-### StateMachine/GuardResult.cs
+### 가드 결과
 
 ```csharp
+// StateMachine/GuardResult.cs
 public readonly struct GuardResult
 {
     public bool Allow { get; }
     public string? Reason { get; }
 
-    public GuardResult(bool allow, string? reason)
+    private GuardResult(bool allow, string? reason)
     {
         Allow = allow;
         Reason = reason;
@@ -163,30 +142,26 @@ public readonly struct GuardResult
 }
 ```
 
-### StateMachine/Transition.cs
+### 전이 정의
 
 ```csharp
+// StateMachine/Transition.cs
 public sealed class Transition<TState, TEvent>
 {
     public TState From { get; init; }
     public TEvent When { get; init; }
     public TState To { get; init; }
-
-    // 가드: 비동기 허용 (서버검증)
     public Func<Task<GuardResult>>? GuardAsync { get; init; }
-
-    // 효과: 전이 성공 시 실행
     public Func<Task>? EffectAsync { get; init; }
-
-    // 전이 불가 시(가드 실패) 실행되는 후크(옵션)
     public Func<string, Task>? OnDeniedAsync { get; init; }
 }
 ```
 
-### StateMachine/StateMachineCore.cs
+### 상태머신 코어
 
 ```csharp
-public sealed class StateMachineCore<TState, TEvent> : IStateManager<TState, TEvent>
+// StateMachine/StateMachineCore.cs
+public sealed class StateMachineCore<TState, TEvent>
 {
     private readonly List<Transition<TState, TEvent>> _transitions;
     private readonly Action<TState>? _onStateChanged;
@@ -212,28 +187,22 @@ public sealed class StateMachineCore<TState, TEvent> : IStateManager<TState, TEv
             .Where(t => Equals(t.From, Current) && Equals(t.When, @event))
             .ToList();
 
-        if (candidates.Count == 0)
-            return false;
-
         foreach (var tr in candidates)
         {
             ct.ThrowIfCancellationRequested();
 
-            GuardResult guard = GuardResult.Ok();
-            if (tr.GuardAsync != null)
-            {
-                guard = await tr.GuardAsync();
-            }
+            var guard = tr.GuardAsync == null
+                ? GuardResult.Ok()
+                : await tr.GuardAsync();
 
             if (!guard.Allow)
             {
                 if (tr.OnDeniedAsync != null)
                     await tr.OnDeniedAsync(guard.Reason ?? "Guard denied");
-                continue; // 다른 후보 전이 시도(있다면)
+                continue;
             }
 
-            // Effect 먼저 실행할지, 상태 변경 후 실행할지는 정책에 따라 선택
-            // 여기서는 상태 변경 후 Effect 실행
+            // 상태 변경
             Current = tr.To;
             _onStateChanged?.Invoke(Current);
 
@@ -242,7 +211,6 @@ public sealed class StateMachineCore<TState, TEvent> : IStateManager<TState, TEv
 
             return true;
         }
-
         return false;
     }
 }
@@ -250,59 +218,17 @@ public sealed class StateMachineCore<TState, TEvent> : IStateManager<TState, TEv
 
 ---
 
-## 도메인 상태머신 작성: SignupFlowStateMachine
+## 도메인 상태머신 작성
 
-서버 연동(이메일 중복 검사, 가입 API 호출)은 Service에 위임한다.
-
-### Services/IAccountService.cs
+실제 회원가입 흐름에 맞춰 상태머신을 구성합니다.
 
 ```csharp
-public interface IAccountService
-{
-    Task<bool> CheckEmailAvailableAsync(string email, CancellationToken ct = default);
-    Task<bool> SignupAsync(string email, string password, CancellationToken ct = default);
-}
-```
-
-### Services/AccountService.cs (예시: 샘플 구현)
-
-```csharp
-public sealed class AccountService : IAccountService
-{
-    public async Task<bool> CheckEmailAvailableAsync(string email, CancellationToken ct = default)
-    {
-        await Task.Delay(200, ct); // API 호출 시뮬
-        return !email.Contains("used@example.com", StringComparison.OrdinalIgnoreCase);
-    }
-
-    public async Task<bool> SignupAsync(string email, string password, CancellationToken ct = default)
-    {
-        await Task.Delay(300, ct); // API 호출 시뮬
-        return password.Length >= 8;
-    }
-}
-```
-
-### StateMachine/StateLogger.cs
-
-```csharp
-public sealed class StateLogger<TState>
-{
-    private readonly List<TState> _history = new();
-    public IReadOnlyList<TState> History => _history;
-
-    public void OnChanged(TState s) => _history.Add(s);
-}
-```
-
-### StateMachine/SignupFlowStateMachine.cs
-
-```csharp
+// StateMachine/SignupFlowStateMachine.cs
 public sealed class SignupFlowStateMachine
 {
     private readonly SignupData _data;
     private readonly IAccountService _account;
-    private readonly StateLogger<SignupStep> _logger;
+    private string? _lastError;
 
     public IStateManager<SignupStep, SignupEvent> Machine { get; }
 
@@ -310,16 +236,15 @@ public sealed class SignupFlowStateMachine
     {
         _data = data;
         _account = account;
-        _logger = new StateLogger<SignupStep>();
 
         var transitions = new List<Transition<SignupStep, SignupEvent>>
         {
-            // Step1 -> Step2 (NEXT)
+            // Step1 → Step2 (Next)
             new()
             {
                 From = SignupStep.Step1_Email,
                 When = SignupEvent.Next,
-                To   = SignupStep.Step2_Password,
+                To = SignupStep.Step2_Password,
                 GuardAsync = async () =>
                 {
                     if (string.IsNullOrWhiteSpace(_data.Email))
@@ -328,18 +253,19 @@ public sealed class SignupFlowStateMachine
                         return GuardResult.Deny("이메일 형식이 올바르지 않습니다.");
                     bool available = await _account.CheckEmailAvailableAsync(_data.Email);
                     return available ? GuardResult.Ok() : GuardResult.Deny("이미 사용 중인 이메일입니다.");
-                }
+                },
+                OnDeniedAsync = reason => { _lastError = reason; return Task.CompletedTask; }
             },
 
-            // Step2 -> Step3 (SUBMIT or NEXT)
+            // Step2 → Step3 (Submit)
             new()
             {
                 From = SignupStep.Step2_Password,
                 When = SignupEvent.Submit,
-                To   = SignupStep.Step3_Complete,
+                To = SignupStep.Step3_Complete,
                 GuardAsync = async () =>
                 {
-                    if (string.IsNullOrWhiteSpace(_data.Password) || string.IsNullOrWhiteSpace(_data.ConfirmPassword))
+                    if (string.IsNullOrWhiteSpace(_data.Password))
                         return GuardResult.Deny("비밀번호를 입력하세요.");
                     if (_data.Password != _data.ConfirmPassword)
                         return GuardResult.Deny("비밀번호가 일치하지 않습니다.");
@@ -348,109 +274,65 @@ public sealed class SignupFlowStateMachine
 
                     bool ok = await _account.SignupAsync(_data.Email, _data.Password);
                     return ok ? GuardResult.Ok() : GuardResult.Deny("서버 가입에 실패했습니다.");
-                }
+                },
+                OnDeniedAsync = reason => { _lastError = reason; return Task.CompletedTask; }
             },
 
-            // Back
+            // Back 전이 (Step2 → Step1, Step3 → Step2)
             new()
             {
-                From = SignupStep.Step2_Password, When = SignupEvent.Back, To = SignupStep.Step1_Email
+                From = SignupStep.Step2_Password,
+                When = SignupEvent.Back,
+                To = SignupStep.Step1_Email
             },
             new()
             {
-                From = SignupStep.Step3_Complete, When = SignupEvent.Back, To = SignupStep.Step2_Password
+                From = SignupStep.Step3_Complete,
+                When = SignupEvent.Back,
+                To = SignupStep.Step2_Password
             }
         };
 
         Machine = new StateMachineCore<SignupStep, SignupEvent>(
             initial: SignupStep.Step1_Email,
-            transitions: transitions,
-            onStateChanged: _logger.OnChanged);
+            transitions: transitions);
     }
 
-    public IReadOnlyList<SignupStep> History => (_logger.History);
+    public string? GetLastError() => _lastError;
+    public void ClearError() => _lastError = null;
 }
 ```
 
+> 가드 실패 시 `OnDeniedAsync`를 통해 에러 메시지를 저장합니다. 이 메시지는 ViewModel이 가져가 사용자에게 표시할 수 있습니다.
+
 ---
 
-## 각 Step ViewModel + Shell(SignupFlowViewModel)
+## ViewModel 구성
 
-### ViewModels/Step1ViewModel.cs
+### 각 Step의 ViewModel (입력만 바인딩)
 
 ```csharp
-using ReactiveUI;
-
-public sealed class Step1ViewModel : ReactiveObject
+// ViewModels/Step1ViewModel.cs
+public class Step1ViewModel : ReactiveObject
 {
     private readonly SignupData _data;
-
-    public Step1ViewModel(SignupData data)
-    {
-        _data = data;
-    }
+    public Step1ViewModel(SignupData data) => _data = data;
 
     public string Email
     {
         get => _data.Email;
-        set
-        {
-            if (_data.Email != value)
-            {
-                _data.Email = value;
-                this.RaisePropertyChanged();
-            }
-        }
+        set => this.RaiseAndSetIfChanged(ref _data.Email, value);
     }
 }
+
+// Step2ViewModel, Step3ViewModel도 유사하게 구현
 ```
 
-### ViewModels/Step2ViewModel.cs
+### 셸 ViewModel (오케스트레이터)
 
 ```csharp
-using ReactiveUI;
-
-public sealed class Step2ViewModel : ReactiveObject
-{
-    private readonly SignupData _data;
-
-    public Step2ViewModel(SignupData data)
-    {
-        _data = data;
-    }
-
-    public string Password
-    {
-        get => _data.Password;
-        set { if (_data.Password != value) { _data.Password = value; this.RaisePropertyChanged(); } }
-    }
-
-    public string ConfirmPassword
-    {
-        get => _data.ConfirmPassword;
-        set { if (_data.ConfirmPassword != value) { _data.ConfirmPassword = value; this.RaisePropertyChanged(); } }
-    }
-}
-```
-
-### ViewModels/Step3ViewModel.cs
-
-```csharp
-public sealed class Step3ViewModel
-{
-    public string Message => "가입이 완료되었습니다.";
-}
-```
-
-### ViewModels/SignupFlowViewModel.cs
-
-```csharp
-using ReactiveUI;
-using System.Reactive;
-using System.Threading;
-using System.Threading.Tasks;
-
-public sealed class SignupFlowViewModel : ReactiveObject
+// ViewModels/SignupFlowViewModel.cs
+public class SignupFlowViewModel : ReactiveObject
 {
     private readonly SignupFlowStateMachine _flow;
     private readonly SignupData _data;
@@ -468,53 +350,33 @@ public sealed class SignupFlowViewModel : ReactiveObject
         _data = new SignupData();
         _flow = new SignupFlowStateMachine(_data, account);
 
-        NextCommand   = ReactiveCommand.CreateFromTask(NextAsync);
-        BackCommand   = ReactiveCommand.CreateFromTask(BackAsync);
+        NextCommand = ReactiveCommand.CreateFromTask(NextAsync);
+        BackCommand = ReactiveCommand.CreateFromTask(BackAsync);
         SubmitCommand = ReactiveCommand.CreateFromTask(SubmitAsync);
 
         UpdateCurrentView();
     }
 
-    private async Task NextAsync()
-    {
-        await TransitAsync(SignupEvent.Next);
-    }
+    private async Task NextAsync() => await TransitAsync(SignupEvent.Next);
+    private async Task BackAsync() => await TransitAsync(SignupEvent.Back);
+    private async Task SubmitAsync() => await TransitAsync(SignupEvent.Submit);
 
-    private async Task BackAsync()
+    private async Task TransitAsync(SignupEvent ev)
     {
-        await TransitAsync(SignupEvent.Back);
-    }
-
-    private async Task SubmitAsync()
-    {
-        await TransitAsync(SignupEvent.Submit);
-    }
-
-    private async Task TransitAsync(SignupEvent e, CancellationToken ct = default)
-    {
+        _flow.ClearError();
         Error = null;
         IsBusy = true;
         this.RaisePropertyChanged(nameof(Error));
         this.RaisePropertyChanged(nameof(IsBusy));
 
-        // 가드 실패 사유를 UI로 올리려면 OnDenied 훅이 필요하다.
-        // 간단히: 전이 시도 후 상태 변화를 보고 Step 유지 시 에러로 간주하는 전략도 가능.
         var before = _flow.Machine.Current;
-        bool ok = await _flow.Machine.SendAsync(e, ct);
+        bool success = await _flow.Machine.SendAsync(ev);
+
         IsBusy = false;
 
-        if (!ok)
+        if (!success || _flow.Machine.Current == before)
         {
-            // 전이 후보 없음 또는 모든 가드 실패
-            Error = "이동할 수 없습니다. 입력을 확인하세요.";
-        }
-        else
-        {
-            if (_flow.Machine.Current == before)
-            {
-                // 동일 상태면 거부된 것. GuardResult.Deny 사유를 꺼내려면 OnDenied 훅에서 저장해둔다.
-                Error = Error ?? "조건을 충족하지 못했습니다.";
-            }
+            Error = _flow.GetLastError() ?? "이동할 수 없습니다.";
         }
 
         this.RaisePropertyChanged(nameof(Error));
@@ -526,7 +388,7 @@ public sealed class SignupFlowViewModel : ReactiveObject
     {
         CurrentViewModel = _flow.Machine.Current switch
         {
-            SignupStep.Step1_Email    => new Step1ViewModel(_data),
+            SignupStep.Step1_Email => new Step1ViewModel(_data),
             SignupStep.Step2_Password => new Step2ViewModel(_data),
             SignupStep.Step3_Complete => new Step3ViewModel(),
             _ => null
@@ -536,64 +398,38 @@ public sealed class SignupFlowViewModel : ReactiveObject
 }
 ```
 
-> 가드 실패 사유를 뷰모델에 전달하려면 `Transition.OnDeniedAsync = reason => { _lastError = reason; }`와 같은 저장소를 두고, `TransitAsync` 끝에서 `Error = _lastError`로 반영하는 패턴이 더 명확하다.
-
 ---
 
-## 뷰 구성과 DataTemplate 바인딩
+## View 구성
 
-### Views/Step1View.axaml
+### 각 Step의 View
 
 ```xml
-<UserControl xmlns="https://github.com/avaloniaui"
-             x:Class="MyApp.Views.Step1View">
-  <StackPanel Spacing="8" Margin="16">
+<!-- Views/Step1View.axaml -->
+<UserControl ...>
+  <StackPanel Margin="16" Spacing="8">
     <TextBlock Text="이메일"/>
     <TextBox Text="{Binding Email}" Watermark="example@domain.com"/>
   </StackPanel>
 </UserControl>
 ```
 
-### Views/Step2View.axaml
+### 셸 View (데이터 템플릿으로 Step View 자동 선택)
 
 ```xml
-<UserControl xmlns="https://github.com/avaloniaui"
-             x:Class="MyApp.Views.Step2View">
-  <StackPanel Spacing="8" Margin="16">
-    <TextBlock Text="비밀번호"/>
-    <TextBox Text="{Binding Password}" PasswordChar="*"/>
-    <TextBlock Text="비밀번호 확인"/>
-    <TextBox Text="{Binding ConfirmPassword}" PasswordChar="*"/>
-  </StackPanel>
-</UserControl>
-```
-
-### Views/Step3View.axaml
-
-```xml
-<UserControl xmlns="https://github.com/avaloniaui"
-             x:Class="MyApp.Views.Step3View">
-  <StackPanel Margin="16">
-    <TextBlock Text="{Binding Message}" FontSize="18" />
-  </StackPanel>
-</UserControl>
-```
-
-### Views/SignupFlowView.axaml
-
-```xml
+<!-- Views/SignupFlowView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:views="clr-namespace:MyApp.Views"
              x:Class="MyApp.Views.SignupFlowView">
 
   <UserControl.DataTemplates>
-    <DataTemplate DataType="vm:Step1ViewModel">
+    <DataTemplate DataType="{x:Type vm:Step1ViewModel}">
       <views:Step1View/>
     </DataTemplate>
-    <DataTemplate DataType="vm:Step2ViewModel">
+    <DataTemplate DataType="{x:Type vm:Step2ViewModel}">
       <views:Step2View/>
     </DataTemplate>
-    <DataTemplate DataType="vm:Step3ViewModel">
+    <DataTemplate DataType="{x:Type vm:Step3ViewModel}">
       <views:Step3View/>
     </DataTemplate>
   </UserControl.DataTemplates>
@@ -614,39 +450,74 @@ public sealed class SignupFlowViewModel : ReactiveObject
 </UserControl>
 ```
 
-> 버튼 활성화/비활성 논리는 `Can(...)`로도 가능하다. 예: `IsEnabled="{Binding Path=CanSubmit}"` 같은 파생 속성을 Shell VM에서 노출.
+---
+
+## 상태 다이어그램
+
+```
+[Step1_Email] --Next(이메일 형식/중복 OK)--> [Step2_Password]
+[Step2_Password] --Submit(비밀번호 규칙 OK, 서버 가입 OK)--> [Step3_Complete]
+[Step2_Password] --Back--> [Step1_Email]
+[Step3_Complete] --Back--> [Step2_Password]
+```
 
 ---
 
-## 가드 실패 사유를 UI로 전달하는 방법
+## 테스트
 
-위 VM에서 `Error`를 단순 메시지 슬롯으로 사용했다. 더 정교하게 하려면:
-
-- `Transition.OnDeniedAsync = reason => _errors.Enqueue(reason);`
-- `TransitAsync` 완료 후 `_errors.TryDequeue(out var msg)` → `Error = msg;`
-
-또는 상태별 에러 컬렉션을 두고 컨트롤 옆에 툴팁/에러 템플릿을 표시한다(Validation 글과 결합).
-
----
-
-## 고급 전이: 조건부 분기, 스킵, 루프, 타임아웃
-
-복잡한 흐름에서 특정 조건에 따라 **스텝 스킵**이 필요할 수 있다.
-예: 이메일이 사내 도메인이면 `Step2_Password`로, 외부 도메인이면 추가 Step `Step2B_ExtraVerification`을 거치도록.
+상태머신의 가장 큰 장점은 테스트 용이성입니다. ViewModel 없이 상태머신만 단독으로 테스트할 수 있습니다.
 
 ```csharp
-new Transition<SignupStep, SignupEvent>
+[Fact]
+public async Task Next_From_Step1_To_Step2_When_Email_Valid()
 {
-    From = SignupStep.Step1_Email,
-    When = SignupEvent.Next,
-    To   = ShouldGoExtra(_data.Email)
-          ? SignupStep.Step2_Password  // false이면 다른 상태로 전이하도록 스위칭
-          : SignupStep.Step2_Password, // 데모상 동일하게 두었지만, 실제로는 다른 상태
-    GuardAsync = async () => { /* ... */ return GuardResult.Ok(); }
+    var mockService = new Mock<IAccountService>();
+    mockService.Setup(s => s.CheckEmailAvailableAsync("test@example.com", It.IsAny<CancellationToken>()))
+               .ReturnsAsync(true);
+
+    var data = new SignupData { Email = "test@example.com" };
+    var flow = new SignupFlowStateMachine(data, mockService.Object);
+
+    bool result = await flow.Machine.SendAsync(SignupEvent.Next);
+
+    Assert.True(result);
+    Assert.Equal(SignupStep.Step2_Password, flow.Machine.Current);
+}
+
+[Fact]
+public async Task Submit_Fails_When_Password_TooShort()
+{
+    var mockService = new Mock<IAccountService>();
+    var data = new SignupData
+    {
+        Email = "test@example.com",
+        Password = "short",
+        ConfirmPassword = "short"
+    };
+    var flow = new SignupFlowStateMachine(data, mockService.Object);
+
+    // Step1 통과
+    await flow.Machine.SendAsync(SignupEvent.Next);
+    // Step2 시도
+    bool result = await flow.Machine.SendAsync(SignupEvent.Submit);
+
+    Assert.False(result);
+    Assert.Equal(SignupStep.Step2_Password, flow.Machine.Current);
+    Assert.Contains("8자 이상", flow.GetLastError());
 }
 ```
 
-**타임아웃 가드**: 서버 검증이 지연되면 거부 처리.
+---
+
+## 고급 주제
+
+### 가드 실패 메시지 다국어 지원
+
+`GuardResult.Deny`에 리소스 키를 전달하고, ViewModel에서 `ILocalizer`를 통해 실제 메시지로 변환할 수 있습니다.
+
+### 타임아웃 처리
+
+서버 검증에 타임아웃을 걸고, 시간 초과 시 거부 처리합니다.
 
 ```csharp
 GuardAsync = async () =>
@@ -659,16 +530,14 @@ GuardAsync = async () =>
     }
     catch (OperationCanceledException)
     {
-        return GuardResult.Deny("검증이 시간 초과되었습니다.");
+        return GuardResult.Deny("서버 응답이 지연됩니다. 잠시 후 다시 시도해주세요.");
     }
-}
+};
 ```
 
----
+### 상태 복원 (앱 재시작 후 이어하기)
 
-## 상태 유지/복원(직렬화)
-
-위저드가 길거나 앱 재시작 후 이어하기가 필요하면 `SignupData` + 현재 상태를 저장한다.
+상태머신의 현재 상태와 입력 데이터를 직렬화해 저장하고, 앱 시작 시 복원합니다.
 
 ```csharp
 public sealed class FlowSnapshot
@@ -677,267 +546,29 @@ public sealed class FlowSnapshot
     public SignupData Data { get; set; } = new();
 }
 
-public static class FlowPersistence
-{
-    public static string Serialize(FlowSnapshot snap)
-        => System.Text.Json.JsonSerializer.Serialize(snap);
-
-    public static FlowSnapshot Deserialize(string json)
-        => System.Text.Json.JsonSerializer.Deserialize<FlowSnapshot>(json) ?? new();
-}
+public static string Serialize(FlowSnapshot snap) => JsonSerializer.Serialize(snap);
+public static FlowSnapshot Deserialize(string json) => JsonSerializer.Deserialize<FlowSnapshot>(json) ?? new();
 ```
 
-앱 종료 시 스냅샷 저장, 시작 시 복원해 `SignupFlowStateMachine` 초기 상태를 바꿔준다.
+### 로깅 및 분석
+
+상태 변경 시마다 텔레메트리를 전송해 사용자 이탈 지점을 분석할 수 있습니다.
 
 ---
 
-## DI 구성과 테스트 전략
+## 설계 체크리스트
 
-DI 등록:
-
-```csharp
-services.AddSingleton<IAccountService, AccountService>();
-services.AddTransient<SignupFlowViewModel>();
-```
-
-테스트(중복 검사/가입 성공/실패):
-
-```csharp
-[Fact]
-public async Task Next_From_Step1_To_Step2_When_Email_Valid_And_Available()
-{
-    var fake = new Mock<IAccountService>();
-    fake.Setup(s => s.CheckEmailAvailableAsync("ok@dom.com", It.IsAny<CancellationToken>()))
-        .ReturnsAsync(true);
-
-    var data = new SignupData { Email = "ok@dom.com" };
-    var flow = new SignupFlowStateMachine(data, fake.Object);
-
-    (await flow.Machine.SendAsync(SignupEvent.Next)).Should().BeTrue();
-    flow.Machine.Current.Should().Be(SignupStep.Step2_Password);
-}
-
-[Fact]
-public async Task Submit_To_Step3_Fails_When_Server_Signup_Fails()
-{
-    var fake = new Mock<IAccountService>();
-    fake.Setup(s => s.SignupAsync("u@d.com", "weak", It.IsAny<CancellationToken>()))
-        .ReturnsAsync(false);
-
-    var data = new SignupData { Email = "u@d.com", Password = "weak", ConfirmPassword = "weak" };
-    var flow = new SignupFlowStateMachine(data, fake.Object);
-
-    // Step1 -> Step2는 통과했다고 가정
-    // (테스트 짧게 하려면 초기 상태를 Step2로 구성하는 생성자 오버로드도 가능)
-    await flow.Machine.SendAsync(SignupEvent.Next);
-    var ok = await flow.Machine.SendAsync(SignupEvent.Submit);
-
-    ok.Should().BeFalse();
-    flow.Machine.Current.Should().Be(SignupStep.Step2_Password);
-}
-```
-
----
-
-## UI/UX 향상: 버튼 상태, 진행 표시, 단축키
-
-- 버튼 활성화: `IsBusy` 동안 `Next`/`Submit` 비활성화
-- 단축키: `Enter` → Next/Submit, `Esc` → Back 바인딩
-- 진행 바(ProgressBar): 현재 Step/총 Step 바인딩
-
-예: Shell VM에 파생 속성 추가
-
-```csharp
-public int StepIndex => _flow.Machine.Current switch
-{
-    SignupStep.Step1_Email => 1,
-    SignupStep.Step2_Password => 2,
-    SignupStep.Step3_Complete => 3,
-    _ => 0
-};
-
-public int StepCount => 3;
-```
-
-XAML:
-
-```xml
-<StackPanel Orientation="Horizontal" Spacing="6">
-  <TextBlock Text="{Binding StepIndex}"/>
-  <TextBlock Text="/"/>
-  <TextBlock Text="{Binding StepCount}"/>
-</StackPanel>
-```
-
----
-
-## 상태 전이 로깅/관측/테레메트리
-
-`StateLogger`로 이력 저장 외에, 전이 시 마다 이벤트를 발행하여 로그/분석에 보낸다.
-
-```csharp
-public sealed class TelemetryService
-{
-    public void TrackTransition(SignupStep from, SignupEvent ev, SignupStep to) { /* ... */ }
-}
-```
-
-`StateMachineCore.SendAsync`에서 전이 성공 후 호출하도록 확장 가능.
-
----
-
-## 상태 패턴(객체지향)과의 비교
-
-본 글은 테이블 기반(Transition 리스트) 상태머신이다.
-대안: 각 상태를 클래스로 만들고 `Handle(event)`에서 다음 상태를 반환(GoF **State 패턴**).
-장점: 상태별 규칙을 클래스에 캡슐화, 다형 확장 용이.
-단점: 전이 테이블 가독성이 떨어질 수 있음.
-규모/팀 선호에 따라 선택.
-
-간단 스켈레톤:
-
-```csharp
-public abstract class SignupState
-{
-    protected readonly SignupData Data;
-    protected readonly IAccountService Account;
-
-    protected SignupState(SignupData d, IAccountService a) { Data = d; Account = a; }
-
-    public abstract Task<SignupState> HandleAsync(SignupEvent ev, CancellationToken ct);
-}
-
-public sealed class EmailState : SignupState
-{
-    public EmailState(SignupData d, IAccountService a) : base(d, a) { }
-
-    public override async Task<SignupState> HandleAsync(SignupEvent ev, CancellationToken ct)
-    {
-        if (ev == SignupEvent.Next)
-        {
-            // 가드/검증...
-            return new PasswordState(Data, Account);
-        }
-        return this; // 변화 없음
-    }
-}
-```
-
----
-
-## 계층형/병렬 상태(HFSM), 타이머 상태
-
-복잡한 플로우에서 **서브머신**(예: 인증 과정 내에서 또 다른 wizard)을 상태 하나로 포함시키거나,
-타이머 이벤트(예: 일정 시간 후 자동 Next)를 도입할 수 있다.
-
-- 타이머: `System.Threading.Timer` 또는 Rx `Observable.Timer`로 이벤트를 발행 → `Machine.SendAsync(TimedOut)`
-- 병렬: 두 서브 상태를 독립적으로 진행시키고, 특정 동기화 지점에서 합류(복잡 → 상태차트 도구 권장)
-
----
-
-## 라우팅/딥링크와 상태 진입 제한
-
-URL 쿼리로 직접 `Step2`로 진입하려는 시도가 있을 수 있다(웹/하이브리드).
-상태머신 입구에서 “이전 단계 완료 여부”를 가드로 체크하여 **진입 제한**한다.
-
-```csharp
-new Transition<SignupStep, SignupEvent>
-{
-    From = SignupStep.Step1_Email,
-    When = SignupEvent.Next,
-    To   = SignupStep.Step2_Password,
-    GuardAsync = async () =>
-    {
-        if (string.IsNullOrWhiteSpace(_data.Email)) return GuardResult.Deny("먼저 이메일을 입력하십시오.");
-        // ...
-        return GuardResult.Ok();
-    }
-}
-```
-
----
-
-## 검증(ReactiveUI.Validation 등)과 결합
-
-- 각 Step VM에 필드 검증(동기)
-- 서버 연동은 Guard(비동기)
-- 에러 표현: `:invalid` 스타일 또는 `ToolTip`/`ErrorText` 표시
-
-예: Step2 비밀번호 길이 동기 검증(간단형)
-
-```csharp
-public bool CanSubmitLocal =>
-    !string.IsNullOrEmpty(Password) &&
-    Password == ConfirmPassword &&
-    Password.Length >= 8;
-```
-
-Shell에서는 `Submit` 클릭 시 먼저 `CanSubmitLocal` 확인 → 실패면 즉시 메시지, 성공이면 Guard로 서버 호출.
-
----
-
-## 실전 체크리스트
-
-- 가드 실패 사유를 사용자에게 **명확히** 전달
-- 재시도 UX: 실패 후 다시 시도 버튼/자동 재시도
-- 취소/중단: 비동기 가드/효과에 `CancellationToken` 전달
-- 텔레메트리: 상태 체류 시간, 실패율, Drop-off 지점 수집
-- 복구: 앱 재시작 시 스냅샷으로 상태·입력 복원
-
----
-
-## 전체 흐름 요약(개념)
-
-1) Shell VM이 **상태머신을 소유**하고, 상태가 바뀔 때 현재 Step VM을 새로 생성
-2) 각 Step VM은 **입력 모델**에 바인딩
-3) 버튼(Next/Back/Submit)은 **이벤트**를 상태머신에 보냄
-4) 상태머신은 전이 목록에서 일치 항목을 찾아 **가드**를 검사
-5) 가드 통과 시 상태 변경 및 **효과** 실행, 실패 시 **사유 반환**
-6) Shell VM은 상태/에러/바쁜 상태를 UI에 반영
+| 항목 | 설명 |
+|------|------|
+| 상태 정의 | 명확한 enum 또는 클래스로 정의 |
+| 전이 테이블 | 가독성 높게 구성, 가드와 효과 분리 |
+| 비동기 처리 | GuardAsync/EffectAsync에서 CancellationToken 지원 |
+| 에러 전달 | 가드 실패 시 사용자 메시지 체계적으로 반환 |
+| 테스트 | 상태머신 단위 테스트로 흐름 검증 |
+| 복구 | 직렬화로 상태 저장/복원 가능하게 설계 |
 
 ---
 
 ## 결론
 
-- 상태머신을 도입하면 **흐름 제어, 검증, 서버 연동**을 체계화할 수 있다.
-- Guard/Effect로 비즈니스 조건과 사이드이펙트를 분리하면 테스트 용이성이 높아진다.
-- Shell VM은 오케스트레이터로서 상태머신을 구동하고, View는 **DataTemplate**로 화면을 렌더링한다.
-- 운영 단계에서는 **로깅·복구·분석**을 접목해 사용자 여정을 개선하자.
-
----
-
-## 최소 동작 샘플(조립)
-
-DI 예시:
-
-```csharp
-services.AddSingleton<IAccountService, AccountService>();
-services.AddTransient<SignupFlowViewModel>();
-```
-
-뷰 인스턴스:
-
-```csharp
-var vm = Services.GetRequiredService<SignupFlowViewModel>();
-var view = new SignupFlowView { DataContext = vm };
-```
-
----
-
-## 상태 차트(간단)
-
-```
-[Step1_Email] --Next(이메일 형식/중복 OK)--> [Step2_Password]
-[Step2_Password] --Submit(비번 규칙 OK, 서버 가입 OK)--> [Step3_Complete]
-[Step2_Password] --Back--> [Step1_Email]
-[Step3_Complete] --Back--> [Step2_Password]
-```
-
----
-
-## 확장 아이디어
-
-- 모듈형 플러그인: 외부 모듈이 **자신의 상태/전이**를 등록해 Wizard 확장
-- 다국어(i18n): 가드 실패 메시지를 리소스 키로 정의 → `LocalizationService`로 조회
-- 접근성(A11y): 상태 변경 시 포커스 이동, 스크린 리더 공지
-- E2E 테스트: Playwright/WinAppDriver로 Step 이동 흐름 검증
+상태머신은 복잡한 UI 흐름을 체계적으로 관리하는 강력한 도구입니다. Avalonia MVVM 환경에서 위와 같이 상태머신을 도입하면 **흐름 제어, 입력 검증, 서버 연동, 오류 처리**를 깔끔하게 분리할 수 있습니다. 이 패턴은 회원가입 위저드뿐 아니라 주문 프로세스, 설정 마법사, 인증 흐름 등 다양한 도메인에 적용할 수 있습니다. 초기 설계 비용은 있지만, 유지보수성과 테스트 용이성 측면에서 큰 이점을 얻을 수 있습니다.

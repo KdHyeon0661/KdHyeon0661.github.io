@@ -4,64 +4,42 @@ title: Avalonia - MVVM에서 서비스 계층 분리 구조
 date: 2025-02-03 21:20:23 +0900
 category: Avalonia
 ---
-# Avalonia MVVM에서 서비스 계층 분리 구조 (Service / Repository / Unit of Work / Mapper / Caching)
+# Avalonia MVVM에서 서비스 계층 분리 구조
 
-## 설계 원칙 요약
-
-- **SRP / SoC**: UI(상태/이벤트), 도메인 유즈케이스, 데이터 접근을 분리한다.
-- **DI**: 모든 경계(서비스/리포지토리/매퍼)를 인터페이스화 → 테스트/교체 용이.
-- **계층 경계의 명확화**
-  - ViewModel: 화면/상태/커맨드/네비게이션
-  - Service: 유즈케이스 조합, 트랜잭션/정합성/캐시 정책
-  - Repository: 구체 저장소(API/DB/파일/메모리 등) 접근
-- **오프라인/캐시/동기화**: API 실패 시 로컬 데이터 사용, 재시도 정책, 캐시 만료(TTL).
-- **검증/에러 처리**: 입력/도메인 검증은 Service, 저장소 오류는 Repository에서 캡슐화.
-- **테스트**: VM 테스트는 Service를 모킹, Service 테스트는 Repository를 모킹.
+애플리케이션이 커질수록 ViewModel이 비대해지고, 데이터 접근, 비즈니스 규칙, 캐시 정책 등이 뒤섞이기 쉽습니다. 이를 방지하기 위해 **서비스 계층(Service Layer)** 을 도입해 **관심사 분리(Separation of Concerns)** 를 명확히 하는 구조가 필요합니다. 이 글에서는 ViewModel, Service, Repository, Unit of Work, Mapper, Cache 계층을 어떻게 나누고 조립할지, 초중급 개발자 관점에서 실전 예제와 함께 설명합니다.
 
 ---
 
-## 참조 프로젝트 구조(확장형)
+## 설계 원칙
+
+- **단일 책임 원칙(SRP)**: ViewModel은 UI 상태와 사용자 인터랙션에만 집중합니다. Service는 비즈니스 유즈케이스, 검증, 트랜잭션, 캐시 정책을 담당합니다. Repository는 데이터 소스(API, DB, 파일) 접근만 캡슐화합니다.
+- **의존성 역전(DIP)**: 고수준 모듈(Service)이 저수준 모듈(Repository)에 의존하지 않도록 인터페이스로 추상화합니다. DI 컨테이너를 통해 구현체를 주입합니다.
+- **테스트 용이성**: 각 계층을 인터페이스로 분리하면 단위 테스트에서 모킹(Mocking)이 쉬워집니다.
+- **캐시 및 폴백 전략**: Service 계층이 캐시 TTL, 오프라인 폴백, 재시도 정책 등을 중앙에서 관리합니다.
+
+---
+
+## 프로젝트 구조
 
 ```
 MyApp/
-├── App.axaml / App.axaml.cs
-├── Models/
-│   ├── User.cs                   // 도메인 모델
-│   ├── PagedResult.cs            // 페이지네이션 모델
-│   └── Errors.cs                 // 도메인/인프라 오류 표현
-├── Dtos/
-│   └── UserDto.cs                // API/DB 전송용 DTO
-├── Mapping/
-│   └── IUserMapper.cs            // Mapper 인터페이스
-│   └── UserMapper.cs             // 수동 매핑 or AutoMapper 대체 가능
-├── Repositories/
-│   ├── IUserRepository.cs
-│   ├── IUnitOfWork.cs
-│   ├── api/
-│   │   └── UserApiRepository.cs  // 원격
-│   └── sqlite/
-│       ├── SqliteUnitOfWork.cs   // 트랜잭션/커넥션 수명
-│       └── UserSqliteRepository.cs
-├── Services/
-│   ├── IUserService.cs
-│   ├── UserService.cs
-│   ├── IClock.cs / SystemClock.cs // 시간 추상화(테스트/TTL)
-│   ├── ICache.cs / MemoryCache.cs // 간단 캐시
-│   └── Policies.cs                // Polly 재시도/회로차단 설정
-├── ViewModels/
-│   └── UserViewModel.cs
-├── Views/
-│   └── UserView.axaml
-└── Tests/
-    ├── UserViewModelTests.cs
-    └── UserServiceTests.cs
+├── Models/               # 도메인 모델 (불변 또는 단순 POCO)
+├── Dtos/                 # 데이터 전송 객체 (API/DB 스키마)
+├── Mapping/              # DTO ↔ 도메인 매핑
+├── Repositories/         # 데이터 접근 인터페이스 및 구현
+├── Services/             # 비즈니스 로직, 캐시, 정책
+├── ViewModels/           # UI 상태 및 커맨드
+├── Views/                # XAML 뷰
+└── App.axaml.cs          # DI 컨테이너 구성
 ```
 
 ---
 
-## 모델·DTO·매퍼
+## 도메인 모델, DTO, 매퍼
 
 ### 도메인 모델
+
+도메인 모델은 애플리케이션의 핵심 비즈니스 객체입니다. 여기서는 불변(immutable) 성향을 가지되, UI 바인딩 편의를 위해 가변 프로퍼티를 사용할 수 있습니다. 검증 로직은 모델 내부에 두는 것이 좋습니다.
 
 ```csharp
 // Models/User.cs
@@ -73,14 +51,25 @@ public sealed class User
 
     public bool IsValid(out string? reason)
     {
-        if (string.IsNullOrWhiteSpace(Name)) { reason = "Name is required."; return false; }
-        if (string.IsNullOrWhiteSpace(Email) || !Email.Contains('@')) { reason = "Invalid email."; return false; }
-        reason = null; return true;
+        if (string.IsNullOrWhiteSpace(Name))
+        {
+            reason = "이름을 입력하세요.";
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(Email) || !Email.Contains('@'))
+        {
+            reason = "올바른 이메일 형식이 아닙니다.";
+            return false;
+        }
+        reason = null;
+        return true;
     }
 }
 ```
 
-### DTO
+### DTO (Data Transfer Object)
+
+네트워크 전송이나 DB 저장에 최적화된 구조입니다.
 
 ```csharp
 // Dtos/UserDto.cs
@@ -92,27 +81,16 @@ public sealed class UserDto
 }
 ```
 
-### 페이지네이션 공통 모델
+### 매퍼 (Mapper)
 
-```csharp
-// Models/PagedResult.cs
-public sealed class PagedResult<T>
-{
-    public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
-    public int TotalCount { get; init; }
-    public int Page { get; init; }
-    public int PageSize { get; init; }
-}
-```
-
-### 매퍼
+DTO ↔ 도메인 변환을 전담합니다. 수동 매핑을 사용하면 디버깅이 쉽고 성능 저하가 없습니다. AutoMapper 같은 라이브러리를 사용할 수도 있습니다.
 
 ```csharp
 // Mapping/IUserMapper.cs
 public interface IUserMapper
 {
     User ToDomain(UserDto dto);
-    UserDto ToDto(User model);
+    UserDto ToDto(User domain);
 }
 ```
 
@@ -127,22 +105,22 @@ public sealed class UserMapper : IUserMapper
         Email = dto.email ?? ""
     };
 
-    public UserDto ToDto(User model) => new()
+    public UserDto ToDto(User domain) => new()
     {
-        id = model.Id,
-        name = model.Name,
-        email = model.Email
+        id = domain.Id,
+        name = domain.Name,
+        email = domain.Email
     };
 }
 ```
 
-> AutoMapper를 사용할 수도 있으나, **바운더리 명시성**과 **성능/디버그 용이성** 측면에서 수동 매핑을 권장하는 케이스도 많다.
-
 ---
 
-## 저장소 계층(Repository / Unit of Work)
+## Repository 계층
 
-### 인터페이스
+Repository는 데이터 소스에 대한 CRUD 작업을 캡슐화합니다. 여기서는 API와 SQLite 두 가지 구현을 예로 듭니다.
+
+### 공통 인터페이스
 
 ```csharp
 // Repositories/IUserRepository.cs
@@ -150,26 +128,28 @@ public interface IUserRepository
 {
     Task<User?> GetByIdAsync(int id, CancellationToken ct = default);
     Task<PagedResult<User>> GetAllAsync(int page, int pageSize, string? keyword, CancellationToken ct = default);
-    Task<int> UpsertAsync(User user, CancellationToken ct = default);   // Insert or Update
+    Task<int> UpsertAsync(User user, CancellationToken ct = default);
     Task<int> DeleteAsync(int id, CancellationToken ct = default);
 }
 ```
 
+`PagedResult<T>`는 페이지네이션 정보를 담는 공통 모델입니다.
+
 ```csharp
-// Repositories/IUnitOfWork.cs
-public interface IUnitOfWork : IAsyncDisposable
+// Models/PagedResult.cs
+public sealed class PagedResult<T>
 {
-    Task CommitAsync(CancellationToken ct = default);
-    Task RollbackAsync(CancellationToken ct = default);
+    public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
+    public int TotalCount { get; init; }
+    public int Page { get; init; }
+    public int PageSize { get; init; }
 }
 ```
 
-### API 저장소 구현(원격 데이터 소스)
+### API Repository (원격)
 
 ```csharp
-// Repositories/api/UserApiRepository.cs
-using System.Net.Http.Json;
-
+// Repositories/Api/UserApiRepository.cs
 public sealed class UserApiRepository : IUserRepository
 {
     private readonly HttpClient _http;
@@ -177,105 +157,69 @@ public sealed class UserApiRepository : IUserRepository
 
     public UserApiRepository(HttpClient http, IUserMapper mapper)
     {
-        _http = http; _mapper = mapper;
+        _http = http;
+        _mapper = mapper;
     }
 
     public async Task<User?> GetByIdAsync(int id, CancellationToken ct = default)
     {
-        using var res = await _http.GetAsync($"/api/users/{id}", ct);
-        if (!res.IsSuccessStatusCode) return null;
-        var dto = await res.Content.ReadFromJsonAsync<UserDto>(cancellationToken: ct);
+        var response = await _http.GetAsync($"/api/users/{id}", ct);
+        if (!response.IsSuccessStatusCode) return null;
+        var dto = await response.Content.ReadFromJsonAsync<UserDto>(ct);
         return dto is null ? null : _mapper.ToDomain(dto);
     }
 
-    public async Task<PagedResult<User>> GetAllAsync(int page, int pageSize, string? keyword, CancellationToken ct = default)
-    {
-        var url = $"/api/users?page={page}&pageSize={pageSize}&q={Uri.EscapeDataString(keyword ?? "")}";
-        using var res = await _http.GetAsync(url, ct);
-        res.EnsureSuccessStatusCode();
-        var list = await res.Content.ReadFromJsonAsync<List<UserDto>>(cancellationToken: ct) ?? new();
-        // 총수는 헤더나 별도 엔드포인트에서 받을 수 있음(예시로 목록 길이 사용)
-        var items = list.Select(_mapper.ToDomain).ToList();
-        return new PagedResult<User> { Items = items, TotalCount = items.Count, Page = page, PageSize = pageSize };
-    }
-
-    public async Task<int> UpsertAsync(User user, CancellationToken ct = default)
-    {
-        var dto = _mapper.ToDto(user);
-        HttpResponseMessage res;
-        if (user.Id == 0)
-            res = await _http.PostAsJsonAsync("/api/users", dto, ct);
-        else
-            res = await _http.PutAsJsonAsync($"/api/users/{user.Id}", dto, ct);
-
-        res.EnsureSuccessStatusCode();
-        // 생성된 ID를 응답으로 돌려주는 API라면 파싱해서 반환
-        return user.Id == 0 ? int.Parse(await res.Content.ReadAsStringAsync(ct)) : user.Id;
-    }
-
-    public async Task<int> DeleteAsync(int id, CancellationToken ct = default)
-    {
-        using var res = await _http.DeleteAsync($"/api/users/{id}", ct);
-        res.EnsureSuccessStatusCode();
-        return id;
-    }
+    // GetAllAsync, UpsertAsync, DeleteAsync 생략 (유사한 패턴)
 }
 ```
 
-> API 저장소는 네트워크 예외/상태코드를 캡슐화한다. 서비스 계층은 “성공/실패” 의미에만 집중하도록 한다.
+### SQLite Repository (로컬)
 
-### SQLite + Dapper 저장소(로컬 캐시/오프라인)
+SQLite를 사용할 때는 Dapper 같은 마이크로 ORM을 활용합니다. Unit of Work로 트랜잭션을 관리합니다.
 
 ```csharp
-// Repositories/sqlite/SqliteUnitOfWork.cs
-using Dapper;
-using Microsoft.Data.Sqlite;
-using System.Data;
-
-public sealed class SqliteUnitOfWork : IUnitOfWork
+// Repositories/Sqlite/SqliteUnitOfWork.cs
+public sealed class SqliteUnitOfWork : IUnitOfWork, IAsyncDisposable
 {
-    private readonly SqliteConnection _conn;
-    private SqliteTransaction? _tx;
-
-    public IDbConnection Connection => _conn;
-    public IDbTransaction? Transaction => _tx;
+    private readonly SqliteConnection _connection;
+    private SqliteTransaction? _transaction;
 
     public SqliteUnitOfWork(string dbPath = "app.db")
     {
-        _conn = new SqliteConnection($"Data Source={dbPath};Cache=Shared");
-        _conn.Open();
-        _tx = _conn.BeginTransaction();
+        _connection = new SqliteConnection($"Data Source={dbPath};Cache=Shared");
+        _connection.Open();
+        _transaction = _connection.BeginTransaction();
     }
+
+    public IDbConnection Connection => _connection;
+    public IDbTransaction? Transaction => _transaction;
 
     public Task CommitAsync(CancellationToken ct = default)
     {
-        _tx?.Commit();
-        _tx?.Dispose();
-        _tx = _conn.BeginTransaction();
+        _transaction?.Commit();
+        _transaction?.Dispose();
+        _transaction = _connection.BeginTransaction();
         return Task.CompletedTask;
     }
 
     public Task RollbackAsync(CancellationToken ct = default)
     {
-        _tx?.Rollback();
-        _tx?.Dispose();
-        _tx = _conn.BeginTransaction();
+        _transaction?.Rollback();
+        _transaction?.Dispose();
+        _transaction = _connection.BeginTransaction();
         return Task.CompletedTask;
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        _tx?.Dispose();
-        _conn.Dispose();
-        return ValueTask.CompletedTask;
+        _transaction?.Dispose();
+        await _connection.DisposeAsync();
     }
 }
 ```
 
 ```csharp
-// Repositories/sqlite/UserSqliteRepository.cs
-using Dapper;
-
+// Repositories/Sqlite/UserSqliteRepository.cs
 public sealed class UserSqliteRepository : IUserRepository
 {
     private readonly SqliteUnitOfWork _uow;
@@ -295,75 +239,38 @@ public sealed class UserSqliteRepository : IUserRepository
     public async Task<User?> GetByIdAsync(int id, CancellationToken ct = default)
     {
         var row = await _uow.Connection.QuerySingleOrDefaultAsync<(int Id, string Name, string Email)>(
-            "SELECT Id,Name,Email FROM Users WHERE Id=@id", new { id }, _uow.Transaction);
-        return row.Equals(default((int, string, string))) ? null : new User { Id = row.Id, Name = row.Name, Email = row.Email };
+            "SELECT Id, Name, Email FROM Users WHERE Id = @id",
+            new { id }, _uow.Transaction);
+        if (row == default) return null;
+        return new User { Id = row.Id, Name = row.Name, Email = row.Email };
     }
 
-    public async Task<PagedResult<User>> GetAllAsync(int page, int pageSize, string? keyword, CancellationToken ct = default)
-    {
-        var skip = (page - 1) * pageSize;
-        keyword ??= "";
-        var where = string.IsNullOrWhiteSpace(keyword) ? "" : "WHERE Name LIKE @kw OR Email LIKE @kw";
-        var kw = $"%{keyword}%";
-
-        var items = (await _uow.Connection.QueryAsync<User>(
-            $"SELECT Id,Name,Email FROM Users {where} ORDER BY Id DESC LIMIT @pageSize OFFSET @skip",
-            new { kw, pageSize, skip }, _uow.Transaction)).ToList();
-
-        var total = await _uow.Connection.ExecuteScalarAsync<int>(
-            $"SELECT COUNT(*) FROM Users {where}", new { kw }, _uow.Transaction);
-
-        return new PagedResult<User> { Items = items, TotalCount = total, Page = page, PageSize = pageSize };
-    }
-
-    public async Task<int> UpsertAsync(User user, CancellationToken ct = default)
-    {
-        if (user.Id == 0)
-        {
-            var id = await _uow.Connection.ExecuteScalarAsync<long>(
-                "INSERT INTO Users(Name,Email) VALUES(@Name,@Email); SELECT last_insert_rowid();",
-                new { user.Name, user.Email }, _uow.Transaction);
-            return (int)id;
-        }
-        else
-        {
-            await _uow.Connection.ExecuteAsync(
-                "UPDATE Users SET Name=@Name, Email=@Email WHERE Id=@Id",
-                new { user.Name, user.Email, user.Id }, _uow.Transaction);
-            return user.Id;
-        }
-    }
-
-    public Task<int> DeleteAsync(int id, CancellationToken ct = default)
-        => _uow.Connection.ExecuteAsync("DELETE FROM Users WHERE Id=@id", new { id }, _uow.Transaction)
-           .ContinueWith(_ => id, ct);
+    // GetAllAsync, UpsertAsync, DeleteAsync 구현 (유사)
 }
 ```
 
 ---
 
-## 서비스 계층(유즈케이스/정책/캐시)
+## 서비스 계층 (Service)
 
-### 기본 인터페이스
+Service는 **유즈케이스**를 조합하고, 캐시, 재시도, 오프라인 폴백, 트랜잭션 등의 **정책**을 적용합니다.
 
-```csharp
-// Services/IUserService.cs
-public interface IUserService
-{
-    Task<User?> GetUserAsync(int id, CancellationToken ct = default);
-    Task<PagedResult<User>> SearchAsync(int page, int pageSize, string? keyword, CancellationToken ct = default);
-    Task<int> SaveAsync(User user, CancellationToken ct = default);
-    Task<int> RemoveAsync(int id, CancellationToken ct = default);
-}
-```
-
-### 시간/캐시 추상화
+### 시간 추상화 (테스트 용이)
 
 ```csharp
 // Services/IClock.cs
-public interface IClock { DateTimeOffset Now { get; } }
-public sealed class SystemClock : IClock { public DateTimeOffset Now => DateTimeOffset.UtcNow; }
+public interface IClock
+{
+    DateTimeOffset Now { get; }
+}
+
+public sealed class SystemClock : IClock
+{
+    public DateTimeOffset Now => DateTimeOffset.UtcNow;
+}
 ```
+
+### 캐시 추상화
 
 ```csharp
 // Services/ICache.cs
@@ -373,45 +280,39 @@ public interface ICache
     void Set<T>(string key, T value, TimeSpan ttl);
     void Remove(string key);
 }
-```
 
-```csharp
 // Services/MemoryCache.cs
 public sealed class MemoryCache : ICache
 {
-    private sealed record Entry(object Value, DateTimeOffset ExpireAt);
-    private readonly Dictionary<string, Entry> _store = new();
+    private readonly Dictionary<string, (object Value, DateTimeOffset ExpireAt)> _store = new();
 
     public T? Get<T>(string key)
     {
-        if (!_store.TryGetValue(key, out var e)) return default;
-        if (DateTimeOffset.UtcNow >= e.ExpireAt) { _store.Remove(key); return default; }
-        return (T)e.Value;
+        if (_store.TryGetValue(key, out var entry) && entry.ExpireAt > DateTimeOffset.UtcNow)
+            return (T)entry.Value;
+        _store.Remove(key);
+        return default;
     }
 
     public void Set<T>(string key, T value, TimeSpan ttl)
-        => _store[key] = new Entry(value!, DateTimeOffset.UtcNow.Add(ttl));
+        => _store[key] = (value!, DateTimeOffset.UtcNow.Add(ttl));
 
-    public void Remove(string key) { _store.Remove(key); }
+    public void Remove(string key) => _store.Remove(key);
 }
 ```
 
-> TTL 정책은 **서비스 계층**이 소유한다. 예: 목록 30초, 단건 60초 등.
-
-### Polly 정책
+### 폴백 정책 (예: Polly 재시도)
 
 ```csharp
 // Services/Policies.cs
 using Polly;
 using Polly.Extensions.Http;
-using System.Net;
 
 public static class Policies
 {
     public static IAsyncPolicy<HttpResponseMessage> TransientHttpPolicy =>
         HttpPolicyExtensions
             .HandleTransientHttpError()
-            .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
             .WaitAndRetryAsync(new[]
             {
                 TimeSpan.FromMilliseconds(200),
@@ -421,7 +322,7 @@ public static class Policies
 }
 ```
 
-### 서비스 구현: API 우선, 실패 시 로컬 폴백 + 캐시
+### 서비스 구현 (API 우선 + 로컬 폴백 + 캐시)
 
 ```csharp
 // Services/UserService.cs
@@ -434,94 +335,98 @@ public sealed class UserService : IUserService
     private readonly IClock _clock;
 
     private static readonly TimeSpan SingleTtl = TimeSpan.FromSeconds(60);
-    private static readonly TimeSpan ListTtl   = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan ListTtl = TimeSpan.FromSeconds(30);
 
     public UserService(
-        UserApiRepository apiRepo,    // 명시적으로 타입 주입(인터페이스도 가능)
+        UserApiRepository apiRepo,
         UserSqliteRepository localRepo,
         SqliteUnitOfWork localUow,
         ICache cache,
         IClock clock)
     {
-        _apiRepo = apiRepo; _localRepo = localRepo; _localUow = localUow; _cache = cache; _clock = clock;
+        _apiRepo = apiRepo;
+        _localRepo = localRepo;
+        _localUow = localUow;
+        _cache = cache;
+        _clock = clock;
     }
 
     public async Task<User?> GetUserAsync(int id, CancellationToken ct = default)
     {
-        var key = $"user:{id}";
-        if (_cache.Get<User>(key) is { } cached) return cached;
+        var cacheKey = $"user:{id}";
+        if (_cache.Get<User>(cacheKey) is { } cached)
+            return cached;
 
         try
         {
-            // 1) API 우선
-            var u = await _apiRepo.GetByIdAsync(id, ct);
-            if (u is not null)
+            var user = await _apiRepo.GetByIdAsync(id, ct);
+            if (user != null)
             {
-                _cache.Set(key, u, SingleTtl);
-                await _localRepo.UpsertAsync(u, ct);
+                _cache.Set(cacheKey, user, SingleTtl);
+                await _localRepo.UpsertAsync(user, ct);
                 await _localUow.CommitAsync(ct);
-                return u;
+                return user;
             }
         }
         catch { /* 로깅 */ }
 
-        // 2) 폴백: 로컬
+        // API 실패 시 로컬 폴백
         var local = await _localRepo.GetByIdAsync(id, ct);
-        if (local is not null) _cache.Set(key, local, SingleTtl);
+        if (local != null)
+            _cache.Set(cacheKey, local, SingleTtl);
         return local;
     }
 
     public async Task<PagedResult<User>> SearchAsync(int page, int pageSize, string? keyword, CancellationToken ct = default)
     {
-        var key = $"users:{page}:{pageSize}:{keyword}";
-        if (_cache.Get<PagedResult<User>>(key) is { } cached) return cached;
+        var cacheKey = $"users:{page}:{pageSize}:{keyword}";
+        if (_cache.Get<PagedResult<User>>(cacheKey) is { } cached)
+            return cached;
 
         try
         {
-            var list = await _apiRepo.GetAllAsync(page, pageSize, keyword, ct);
-            _cache.Set(key, list, ListTtl);
+            var result = await _apiRepo.GetAllAsync(page, pageSize, keyword, ct);
+            _cache.Set(cacheKey, result, ListTtl);
 
-            // 로컬 동기화(단순히 최신 페이지만 반영)
-            foreach (var u in list.Items) await _localRepo.UpsertAsync(u, ct);
+            // 백그라운드 로컬 동기화 (단순 예)
+            foreach (var u in result.Items)
+                await _localRepo.UpsertAsync(u, ct);
             await _localUow.CommitAsync(ct);
-            return list;
+            return result;
         }
-        catch { /* 로깅 */ }
-
-        // 폴백: 로컬
-        var local = await _localRepo.GetAllAsync(page, pageSize, keyword, ct);
-        _cache.Set(key, local, ListTtl);
-        return local;
+        catch
+        {
+            var local = await _localRepo.GetAllAsync(page, pageSize, keyword, ct);
+            _cache.Set(cacheKey, local, ListTtl);
+            return local;
+        }
     }
 
     public async Task<int> SaveAsync(User user, CancellationToken ct = default)
     {
-        if (!user.IsValid(out var why)) throw new InvalidOperationException(why);
+        if (!user.IsValid(out var why))
+            throw new InvalidOperationException(why);
 
-        // API 우선
         try
         {
             var id = await _apiRepo.UpsertAsync(user, ct);
             var merged = user with { Id = id };
             await _localRepo.UpsertAsync(merged, ct);
             await _localUow.CommitAsync(ct);
-
-            // 캐시 무효화
             _cache.Remove($"user:{id}");
-            // 목록 캐시 키 전략: prefix purge (간단화를 위해 전체 목록 캐시를 비운다)
-            // 실제로는 키 인덱스 보관 후 타겟 무효화 구현
+            // 목록 캐시는 전체 무효화 (간략화)
             return id;
         }
         catch
         {
-            // 오프라인 저장 전략(선택): 로컬 큐/아웃박스에 저장 후 백그라운드 동기화
-            await _localRepo.UpsertAsync(user, ct);
+            // 오프라인 저장: 로컬에만 반영
+            var localId = await _localRepo.UpsertAsync(user, ct);
             await _localUow.CommitAsync(ct);
-            return user.Id;
+            return localId;
         }
     }
 
-    public async Task<int> RemoveAsync(int id, CancellationToken ct = default)
+    public async Task<int> DeleteAsync(int id, CancellationToken ct = default)
     {
         try
         {
@@ -533,7 +438,6 @@ public sealed class UserService : IUserService
         }
         catch
         {
-            // 오프라인 삭제 예약(플래그) 등 처리 가능
             await _localRepo.DeleteAsync(id, ct);
             await _localUow.CommitAsync(ct);
             _cache.Remove($"user:{id}");
@@ -543,166 +447,129 @@ public sealed class UserService : IUserService
 }
 ```
 
-> **핵심**
-> - 서비스는 **정책 소유자**: 캐시 TTL/폴백/동기화/검증/트랜잭션.
-> - 저장소는 **구현 상세 캡슐화**: API/SQL 쿼리/파일 I/O.
+> **핵심**: Service는 API 호출, 로컬 저장, 캐시, 예외 처리, 트랜잭션을 모두 책임집니다. Repository는 단순 데이터 접근에만 집중합니다.
 
 ---
 
 ## ViewModel과의 결합
 
+ViewModel은 Service 인터페이스에만 의존합니다. UI 상태와 커맨드만 관리합니다.
+
 ```csharp
 // ViewModels/UserViewModel.cs
-using ReactiveUI;
-using System.Collections.ObjectModel;
-using System.Reactive;
-using System.Reactive.Linq;
-
 public sealed class UserViewModel : ReactiveObject
 {
-    private readonly IUserService _svc;
+    private readonly IUserService _userService;
 
-    public UserViewModel(IUserService svc)
+    public UserViewModel(IUserService userService)
     {
-        _svc = svc;
+        _userService = userService;
 
-        var canSearch = this.WhenAnyValue(x => x.Keyword, k => !string.IsNullOrWhiteSpace(k));
-        SearchCommand = ReactiveCommand.CreateFromTask(async () =>
-        {
-            IsBusy = true;
-            try
-            {
-                var result = await _svc.SearchAsync(Page, PageSize, Keyword);
-                Users = new ObservableCollection<User>(result.Items);
-                Total = result.TotalCount;
-            }
-            finally { IsBusy = false; }
-        }, canSearch);
-
-        SaveCommand = ReactiveCommand.CreateFromTask(async () =>
-        {
-            IsBusy = true;
-            try
-            {
-                var model = new User { Id = EditId, Name = EditName, Email = EditEmail };
-                var id = await _svc.SaveAsync(model);
-                EditId = id;
-                await SearchCommand.Execute(); // 목록 갱신
-            }
-            finally { IsBusy = false; }
-        });
-
-        DeleteCommand = ReactiveCommand.CreateFromTask<int>(async id =>
-        {
-            IsBusy = true;
-            try
-            {
-                await _svc.RemoveAsync(id);
-                await SearchCommand.Execute();
-            }
-            finally { IsBusy = false; }
-        });
+        SearchCommand = ReactiveCommand.CreateFromTask(SearchAsync);
+        SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
+        DeleteCommand = ReactiveCommand.CreateFromTask<int>(DeleteAsync);
     }
 
-    // 조회 상태
     private ObservableCollection<User> _users = new();
-    public ObservableCollection<User> Users { get => _users; set => this.RaiseAndSetIfChanged(ref _users, value); }
+    public ObservableCollection<User> Users
+    {
+        get => _users;
+        set => this.RaiseAndSetIfChanged(ref _users, value);
+    }
 
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 20;
+    private string _keyword = "";
+    public string Keyword
+    {
+        get => _keyword;
+        set => this.RaiseAndSetIfChanged(ref _keyword, value);
+    }
+
+    private int _page = 1;
+    private int _pageSize = 20;
     private int _total;
-    public int Total { get => _total; set => this.RaiseAndSetIfChanged(ref _total, value); }
-
-    public string? Keyword { get; set; } = "";
-
-    // 편집 상태
-    public int EditId { get; set; }
-    public string EditName { get; set; } = "";
-    public string EditEmail { get; set; } = "";
-
-    private bool _isBusy;
-    public bool IsBusy { get => _isBusy; set => this.RaiseAndSetIfChanged(ref _isBusy, value); }
+    // ... 기타 상태 (IsBusy, EditName 등)
 
     public ReactiveCommand<Unit, Unit> SearchCommand { get; }
     public ReactiveCommand<Unit, Unit> SaveCommand { get; }
     public ReactiveCommand<int, Unit> DeleteCommand { get; }
+
+    private async Task SearchAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            var result = await _userService.SearchAsync(_page, _pageSize, _keyword);
+            Users = new ObservableCollection<User>(result.Items);
+            Total = result.TotalCount;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            var user = new User { Id = EditId, Name = EditName, Email = EditEmail };
+            await _userService.SaveAsync(user);
+            await SearchAsync();
+        }
+        finally { IsBusy = false; }
+    }
+
+    // DeleteAsync 유사
 }
-```
-
-### 간단 View
-
-```xml
-<!-- Views/UserView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui" x:Class="MyApp.Views.UserView">
-  <StackPanel Margin="16" Spacing="8">
-    <StackPanel Orientation="Horizontal" Spacing="8">
-      <TextBox Width="200" Watermark="검색어" Text="{Binding Keyword}"/>
-      <Button Content="검색" Command="{Binding SearchCommand}"/>
-      <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" Height="6" Width="80"/>
-    </StackPanel>
-
-    <DataGrid Items="{Binding Users}" AutoGenerateColumns="False" Height="220">
-      <DataGrid.Columns>
-        <DataGridTextColumn Header="ID" Binding="{Binding Id}"/>
-        <DataGridTextColumn Header="Name" Binding="{Binding Name}"/>
-        <DataGridTextColumn Header="Email" Binding="{Binding Email}"/>
-      </DataGrid.Columns>
-    </DataGrid>
-
-    <StackPanel Orientation="Horizontal" Spacing="8">
-      <TextBox Width="150" Watermark="Name" Text="{Binding EditName}"/>
-      <TextBox Width="200" Watermark="Email" Text="{Binding EditEmail}"/>
-      <Button Content="저장" Command="{Binding SaveCommand}"/>
-    </StackPanel>
-  </StackPanel>
-</UserControl>
 ```
 
 ---
 
-## DI 구성(App.axaml.cs)
+## DI 구성 (App.axaml.cs)
 
 ```csharp
-// App.axaml.cs (중요 부분)
-using Microsoft.Extensions.DependencyInjection;
-using Polly;
-
-public class App : Application
+public partial class App : Application
 {
     public static IServiceProvider Services { get; private set; } = default!;
 
     public override void OnFrameworkInitializationCompleted()
     {
-        var sc = new ServiceCollection();
+        var services = new ServiceCollection();
 
-        // 시간/캐시
-        sc.AddSingleton<IClock, SystemClock>();
-        sc.AddSingleton<ICache, MemoryCache>();
+        // 기본 서비스
+        services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<ICache, MemoryCache>();
 
         // 매퍼
-        sc.AddSingleton<IUserMapper, UserMapper>();
+        services.AddSingleton<IUserMapper, UserMapper>();
 
-        // SQLite UnitOfWork & Repo
-        sc.AddSingleton<SqliteUnitOfWork>(); // 앱 수명 내 공유(간단 예)
-        sc.AddSingleton<UserSqliteRepository>();
+        // SQLite (Unit of Work는 Singleton으로 공유)
+        services.AddSingleton<SqliteUnitOfWork>();
+        services.AddSingleton<UserSqliteRepository>();
 
         // HttpClient with Polly
-        sc.AddHttpClient<UserApiRepository>(client =>
+        services.AddHttpClient<UserApiRepository>(client =>
         {
             client.BaseAddress = new Uri("https://api.example.com");
-            client.Timeout = TimeSpan.FromSeconds(10);
         }).AddPolicyHandler(Policies.TransientHttpPolicy);
 
         // 서비스
-        sc.AddSingleton<IUserService, UserService>();
+        services.AddSingleton<IUserService, UserService>();
 
         // ViewModel
-        sc.AddTransient<UserViewModel>();
+        services.AddTransient<UserViewModel>();
 
-        Services = sc.BuildServiceProvider();
+        Services = services.BuildServiceProvider();
 
-        var win = new Window { Content = new Views.UserView(), DataContext = Services.GetRequiredService<UserViewModel>() };
-        win.Show();
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var mainWindow = new MainWindow
+            {
+                DataContext = Services.GetRequiredService<UserViewModel>()
+            };
+            desktop.MainWindow = mainWindow;
+        }
 
         base.OnFrameworkInitializationCompleted();
     }
@@ -711,176 +578,90 @@ public class App : Application
 
 ---
 
-## 고급 설계 포인트
-
-### 정렬/필터/페이지네이션 기준의 서비스 책임
-
-- Repository는 **기술적 쿼리 능력**(WHERE/ORDER/LIMIT)을 제공.
-- Service는 **도메인 규칙**(권한별 필터, 기본 정렬, 클리닝)과 **페이징 UI 정책**(기본 page=1, pageSize=20)을 소유.
-
-### 입력/도메인 검증 위치
-
-- **ViewModel**: 사용자 피드백용 **UI 레벨** 검증(빈 값/포맷).
-- **Service**: 시스템 일관성을 보장하는 **도메인 검증**(User.IsValid 등)을 반드시 재검증.
-- **Repository**: 무결성 제약(UNIQUE 등) 실패 시 **인프라 오류**로 승격 → Service에서 적절히 메시지 변환.
-
-### 캐시 만료/동기화 수식
-
-만료 시각을 \( T_\text{exp} \), 현재 시각을 \( t \), TTL을 \( \tau \)라 하면
-캐시 유효 조건은
-$$
-t - T_\text{set} < \tau
-$$
-이며, API 성공 시 **쓰기 직후 캐시 갱신**으로 일관성을 유지한다.
-
-### 오프라인 전략
-
-- 모든 쓰기(Upsert/Delete)는 로컬에 반영 후, 백그라운드 동기화 큐(Outbox)로 서버 반영 가능.
-- 충돌 정책: “서버 우선”, “최신 타임스탬프 우선”, “필드 병합” 등 결정.
-
-### 사양 패턴/쿼리 오브젝트(선택)
-
-- 복잡한 검색/정렬 조건을 `UserQuery` 객체로 캡슐화 → Repository가 Query를 해석.
-- Service는 Query 빌더를 제공하여 UI 요구를 단순화.
-
----
-
 ## 테스트 전략
 
-### ViewModel 테스트: Service 모킹
+### ViewModel 테스트 (Service 모킹)
 
 ```csharp
-// Tests/UserViewModelTests.cs
-using Moq;
-using FluentAssertions;
-using Xunit;
-
-public class UserViewModelTests
+[Fact]
+public async Task SearchCommand_LoadsUsers()
 {
-    [Fact]
-    public async Task SearchCommand_FillsUsers_FromService()
-    {
-        var svc = new Mock<IUserService>();
-        svc.Setup(s => s.SearchAsync(1, 20, "kim", default))
-           .ReturnsAsync(new PagedResult<User>
-           {
-               Items = new[] { new User { Id=1, Name="Kim", Email="k@a.com" } },
-               Page = 1, PageSize = 20, TotalCount = 1
-           });
+    var mockService = new Mock<IUserService>();
+    mockService.Setup(s => s.SearchAsync(1, 20, "test", default))
+               .ReturnsAsync(new PagedResult<User>
+               {
+                   Items = new[] { new User { Id = 1, Name = "Test" } },
+                   TotalCount = 1
+               });
 
-        var vm = new UserViewModel(svc.Object) { Keyword = "kim", Page=1, PageSize=20 };
-        await vm.SearchCommand.Execute();
+    var vm = new UserViewModel(mockService.Object);
+    vm.Keyword = "test";
+    await vm.SearchCommand.Execute();
 
-        vm.Users.Count.Should().Be(1);
-        vm.Users[0].Name.Should().Be("Kim");
-    }
+    Assert.Single(vm.Users);
+    Assert.Equal("Test", vm.Users[0].Name);
 }
 ```
 
-### Service 테스트: Repository 모킹
+### Service 테스트 (Repository 모킹)
 
 ```csharp
-// Tests/UserServiceTests.cs
-public class UserServiceTests
+[Fact]
+public async Task GetUserAsync_ReturnsFromCache_AfterFirstCall()
 {
-    [Fact]
-    public async Task GetUserAsync_UsesApiThenCaches_AndSyncsLocal()
-    {
-        var api = new Mock<IUserRepository>();
-        var local = new Mock<IUserRepository>();
-        var uow = new Mock<IUnitOfWork>();
-        var cache = new MemoryCache();
-        var clock = new SystemClock();
+    var apiMock = new Mock<IUserRepository>();
+    var localMock = new Mock<IUserRepository>();
+    var uowMock = new Mock<IUnitOfWork>();
+    var cache = new MemoryCache();
+    var clock = new SystemClock();
 
-        api.Setup(a => a.GetByIdAsync(1, default))
-           .ReturnsAsync(new User { Id=1, Name="A", Email="a@a.com" });
+    var user = new User { Id = 1, Name = "Alice" };
+    apiMock.Setup(r => r.GetByIdAsync(1, default)).ReturnsAsync(user);
 
-        var svc = new UserService(
-            (UserApiRepository)Activator.CreateInstance(typeof(UserApiRepository), true)!,
-            (UserSqliteRepository)Activator.CreateInstance(typeof(UserSqliteRepository), true)!,
-            (SqliteUnitOfWork)Activator.CreateInstance(typeof(SqliteUnitOfWork), "test.db")!,
-            cache, clock);
+    var service = new UserService(apiMock.Object, localMock.Object, uowMock.Object, cache, clock);
 
-        // 위 코드는 실제 타입 주입용이므로, 실무에선 생성자 오버로드를 두거나
-        // 인터페이스 기반 주입 + 테스트 더블 구현을 권장한다.
-        // (여기서는 개념을 보여주기 위한 단순 예시)
+    var result1 = await service.GetUserAsync(1);
+    var result2 = await service.GetUserAsync(1);
 
-        // 개념상 검증 포인트:
-        // 1) API 호출 후 결과 캐시 존재
-        cache.Get<User>("user:1").Should().NotBeNull();
-    }
+    Assert.Same(result1, result2); // 캐시에서 반환되었는지 확인
+    apiMock.Verify(r => r.GetByIdAsync(1, default), Times.Once);
 }
 ```
 
-> 실제 테스트에서는 `UserService` 생성자를 **인터페이스 기반**으로 구성하고, **Mock<IUserRepository>**를 직접 주입하는 구조가 이상적이다.
-
 ---
 
-## CQRS/유즈케이스 분해(선택)
+## 성능과 확장
 
-읽기/쓰기 파이프라인을 분리하여 **읽기 최적화(캐시/인덱스)**와 **쓰기 검증/트랜잭션**을 독립적으로 확장할 수 있다.
-예) `IUserQueries`, `IUserCommands`로 인터페이스 분리.
+### 캐시 히트율 근사
 
----
-
-## 오류 모델
-
-```csharp
-// Models/Errors.cs
-public abstract record AppError(string Code, string Message);
-
-public sealed record NotFoundError(string Resource, string Key)
-    : AppError("not_found", $"{Resource}({Key}) not found");
-
-public sealed record ValidationError(string Field, string Detail)
-    : AppError("validation", $"{Field}: {Detail}");
-
-public sealed record InfraError(string Operation, string Detail)
-    : AppError("infra", $"{Operation}: {Detail}");
-```
-
-Service는 저장소에서 발생한 예외를 `InfraError` 등으로 **의미화**하여 ViewModel이 사용자가 이해 가능한 메시지로 매핑하도록 돕는다.
-
----
-
-## 성능·운영 팁
-
-- **HttpClient 재사용**: DI 컨테이너로 관리, 소켓 고갈 방지
-- **Polly**: 429/5xx 재시도, 서킷브레이커로 폭주 방지
-- **로깅**: Serilog/NLog로 **계층별**(Repo/Service/VM) 로그 분리
-- **측정**: Stopwatch/Activities(OpenTelemetry)로 API/DB 지연 파악
-- **캐시 키 전략**: prefix+인덱스 키로 부분 무효화 구현
-
----
-
-## 요약 표
-
-| 계층 | 책임 | 구현 포인트 | 테스트 포인트 |
-|------|------|------------|---------------|
-| ViewModel | UI 상태/커맨드/바인딩 | ReactiveCommand, IsBusy, 오류 표시 | Service 모킹으로 플로우 검증 |
-| Service | 유즈케이스, 검증, 캐시, 폴백 | TTL, 트랜잭션, 오프라인 동기화 | Repository 모킹, 정책 검증 |
-| Repository | 데이터 소스 접근(API/DB/파일) | 예외 캡슐화, 쿼리 최적화 | 쿼리 단위 테스트(로컬 DB) |
-| Mapper | DTO↔모델 | 명시 매핑(성능/가독) | 필드 매핑 누락 검증 |
-
----
-
-## 부록: 간단 수학(캐시 히트율 근사)
-
-요청 빈도를 \( \lambda \), 캐시 TTL을 \( \tau \), 원천 적중 확률을 \( p \)라 할 때, 단순 포아송 근사에서 캐시 적중 확률 \( H \)는
+캐시 TTL을 \(\tau\), 요청 도착률을 \(\lambda\)라 할 때, 단순 포아송 근사에서 캐시 적중 확률 \(H\)는
 
 $$
 H \approx 1 - e^{-\lambda \tau} (1 - p)
 $$
 
-으로 근사할 수 있다. \( \lambda \tau \)가 클수록(요청이 잦고 TTL이 길수록) 캐시 히트율은 상승한다.
-서비스 계층에서 TTL을 조정할 때, 대략적인 영향도를 가늠하는 직관으로 활용할 수 있다.
+여기서 \(p\)는 원본 데이터가 캐시에 없을 때 실제 원천에서 성공할 확률입니다. TTL이 클수록 히트율이 높아지지만, 데이터 신선도와의 트레이드오프를 고려해야 합니다.
+
+### 추가 고려 사항
+
+- **Outbox 패턴**: 오프라인 상태에서 생성된 변경사항을 큐에 저장했다가 네트워크 복구 시 서버와 동기화합니다.
+- **CQRS 분리**: 읽기와 쓰기 모델을 분리하여 읽기 전용 쿼리를 최적화합니다.
+- **로깅 및 모니터링**: Serilog, OpenTelemetry로 각 계층의 호출을 추적합니다.
+
+---
+
+## 계층별 책임 요약
+
+| 계층         | 책임                                                                 |
+|--------------|----------------------------------------------------------------------|
+| **ViewModel**| UI 상태 관리, 사용자 커맨드, 바인딩. Service 호출만 수행.            |
+| **Service**  | 유즈케이스 조합, 검증, 캐시, 재시도, 오프라인 폴백, 트랜잭션 경계.   |
+| **Repository**| 데이터 소스(API, DB, 파일)에 대한 CRUD 캡슐화. 예외를 도메인 오류로 변환. |
+| **Unit of Work** | 트랜잭션 관리 (Commit/Rollback).                                   |
+| **Mapper**   | DTO ↔ 도메인 모델 변환.                                              |
 
 ---
 
 ## 결론
 
-- **ViewModel–Service–Repository** 분리는 UI/도메인/인프라의 콘크리트 결합을 끊고, 테스트성·유지보수성·확장성을 극대화한다.
-- **Service**는 캐시·오프라인·동기화·검증·트랜잭션·정책의 주체이며, **Repository**는 데이터 접근 구현에만 집중한다.
-- DI·Polly·로깅·매퍼·UoW를 적절히 조합하면 **실서비스 품질**의 Avalonia MVVM 아키텍처를 수립할 수 있다.
-
-> 다음 단계: Outbox 패턴(쓰기 동기화), Change Tracking(로컬 편집 이력), Role/Policy 기반 읽기 필터, AutoMapper/Mapster 도입 시 장단점 비교, OpenTelemetry 연동으로 성능/에러 관측.
+ViewModel에서 Service, Repository, Unit of Work, Cache, Mapper를 분리하면 각 계층의 책임이 명확해지고, 테스트 용이성과 유지보수성이 크게 향상됩니다. Service 계층이 정책(캐시 TTL, 오프라인 폴백, 재시도)을 중앙에서 관리하므로, 전체 애플리케이션의 동작을 일관되게 제어할 수 있습니다. 초기에는 코드량이 다소 늘어날 수 있지만, 장기적으로 견고한 크로스 플랫폼 애플리케이션을 만드는 데 필수적인 구조입니다.

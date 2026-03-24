@@ -4,24 +4,9 @@ title: Avalonia - 입력 검증 및 ErrorTemplate
 date: 2025-01-22 20:20:23 +0900
 category: Avalonia
 ---
-# Avalonia MVVM: 입력 검증(Validation)과 시각화(Error UI)
+# Avalonia MVVM: 입력 검증과 오류 시각화
 
-여기서는 세 가지 축으로 정리한다.
-
-1) **검증 소스**
-- `ReactiveUI.Validation` (권장: 선언적, 테스트 용이)
-- `INotifyDataErrorInfo` 직접 구현 (프레임워크 의존↓, 세밀 제어)
-- `DataAnnotations` (간단 명료, 모델 재사용)
-
-2) **오류 시각화**
-- `:invalid` 의사 클래스 기반 스타일(테두리/배경/아이콘)
-- `DataValidationErrors`(첨부 속성)로 **필드 단위 메시지 바인딩**
-- 폼 헤더/푸터에 **ValidationSummary** 패턴
-
-3) **고급 기능**
-- 교차 필드/복합 규칙, 비동기(서버) 검증, 디바운스
-- 커맨드 활성화(CanExecute)와 검증 연동
-- JSON 저장/복구, 단위 테스트
+사용자 입력을 받는 애플리케이션에서 검증(validation)은 필수적입니다. Avalonia는 `INotifyDataErrorInfo` 인터페이스를 기본으로 지원하며, `:invalid` 의사 클래스와 `DataValidationErrors` 첨부 속성을 통해 일관된 오류 시각화를 제공합니다. 이 글에서는 **검증 소스(ReactiveUI.Validation, 수동 구현, DataAnnotations)**, **오류 시각화 스타일**, **교차 필드/비동기 검증**, **커맨드 연동**까지 초중급 개발자 관점에서 정리합니다.
 
 ---
 
@@ -44,13 +29,27 @@ ValidationSamples/
    └─ FakeUserService.cs                 // 비동기 중복 검사 시뮬레이션
 ```
 
-> 초안에서 제시한 뷰/뷰모델을 그대로 확장하는 느낌으로, **대체 가능한 3가지 VM**을 나란히 제시한다.
+세 가지 뷰모델은 모두 같은 뷰와 함께 사용할 수 있도록 설계되었습니다. 실제 프로젝트에서는 하나의 방식을 선택해 사용합니다.
 
 ---
 
-## ReactiveUI.Validation 기반 — 선언적 규칙/교차 필드/비동기
+## 검증 소스
 
-### ViewModel (권장)
+Avalonia는 `INotifyDataErrorInfo`를 구현한 객체를 자동으로 인식합니다. 검증을 구현하는 방법은 크게 세 가지입니다.
+
+| 방식 | 특징 |
+|------|------|
+| **ReactiveUI.Validation** | 선언적 규칙, 교차/비동기 지원, 코드 간결. MVVM 패턴에 최적. |
+| **INotifyDataErrorInfo 수동** | 프레임워크 의존성 최소, 세밀한 제어 가능. 코드량 증가. |
+| **DataAnnotations** | 모델 재사용성 높음, 특성 기반 선언. 뷰모델에서 래핑 필요. |
+
+이 글에서는 세 가지 방식을 모두 소개하지만, **ReactiveUI.Validation**이 가장 생산성이 높으므로 중점적으로 다룹니다.
+
+---
+
+### ReactiveUI.Validation 기반 뷰모델
+
+`ReactiveValidationObject`를 상속받아 규칙을 선언적으로 정의합니다.
 
 ```csharp
 // ViewModels/ValidationViewModel.cs
@@ -124,14 +123,13 @@ public sealed class ValidationViewModel : ReactiveValidationObject
             email => Regex.IsMatch(email ?? "", @"^[^@\s]+@[^@\s]+\.[^@\s]+$"),
             "이메일 형식이 올바르지 않습니다.");
 
-        // 교차 필드 규칙(비밀번호 확인)
+        // 교차 필드 규칙 (비밀번호 확인)
         this.ValidationRule(
             vm => vm.ConfirmPassword,
             _ => Password == ConfirmPassword,
             "비밀번호가 일치하지 않습니다.");
 
-        // 비동기 규칙(사용자명 중복 검사) — 디바운스 + 서버 호출 시뮬
-        // ReactiveUI.Validation은 Sync/Async 규칙 모두 지원
+        // 비동기 규칙 (사용자명 중복 검사) – 디바운스 + 서버 호출 시뮬레이션
         this.ValidationRule(
             vm => vm.UserName,
             vm => vm.WhenAnyValue(x => x.UserName)
@@ -143,45 +141,29 @@ public sealed class ValidationViewModel : ReactiveValidationObject
                     .Switch(),
             _ => "이미 사용 중인 사용자명입니다.");
 
-        // Submit 가능 여부: 전체 오류 없음
+        // 제출 가능 여부: 전체 오류 없음
         var canSubmit = this.IsValid(); // IObservable<bool>
         SubmitCommand = ReactiveCommand.Create(OnSubmit, canSubmit);
     }
 
     private void OnSubmit()
     {
-        // 저장/전송 등의 로직. 폼이 유효할 때만 호출됨.
+        // 저장/전송 로직
     }
 }
 ```
 
-> `ReactiveValidationObject`는 `INotifyDataErrorInfo`를 구현한다. Avalonia는 이 인터페이스를 인식하여 컨트롤을 `:invalid` 상태로 만든다.
-
-### 비동기 검증용 서비스 (시뮬레이션)
-
-```csharp
-// Services/FakeUserService.cs
-using System.Threading.Tasks;
-
-public interface IFakeUserService
-{
-    Task<bool> ExistsAsync(string userName);
-}
-
-public sealed class FakeUserService : IFakeUserService
-{
-    // 아주 단순한 샘플: 특정 아이디만 "중복"이라고 가정
-    public Task<bool> ExistsAsync(string userName)
-        => Task.FromResult(userName.Trim().ToLower() is "admin" or "root" or "guest");
-}
-```
+**주요 포인트**
+- `ValidationRule`로 각 속성의 규칙을 선언합니다.
+- 교차 필드 규칙은 람다 내에서 다른 속성을 참조할 수 있습니다.
+- 비동기 규칙은 `WhenAnyValue`와 `SelectMany`를 결합해 구현합니다.
+- `IsValid()`는 전체 오류 상태를 관찰 가능한 스트림으로 반환하므로, 커맨드의 `canExecute`로 바로 사용할 수 있습니다.
 
 ---
 
-## INotifyDataErrorInfo 수동 구현 — 프레임워크 의존↓/세밀 제어
+### INotifyDataErrorInfo 수동 구현
 
-ReactiveUI.Validation 없이도 가능하다.
-장점: 의존성↓, 런타임 제어↑. 단점: 코드량↑.
+의존성을 최소화하고 싶다면 직접 구현할 수 있습니다.
 
 ```csharp
 // ViewModels/ValidationViewModel_INDEI.cs
@@ -265,9 +247,13 @@ public sealed class ValidationViewModel_INDEI : INotifyPropertyChanged, INotifyD
 }
 ```
 
+이 방식은 완전히 수동이므로 규칙 추가 시마다 검증 메서드를 작성해야 합니다. 하지만 외부 라이브러리 없이도 작동합니다.
+
 ---
 
-## DataAnnotations — 모델/DTO 재사용에 유리
+### DataAnnotations 기반 뷰모델
+
+모델 클래스에 검증 특성을 부여하고, 뷰모델에서 `INotifyDataErrorInfo`를 구현해 모델을 감쌉니다.
 
 ```csharp
 // ViewModels/ValidationViewModel_DataAnno.cs
@@ -340,36 +326,20 @@ public sealed class UserForm : INotifyPropertyChanged, INotifyDataErrorInfo
 }
 ```
 
+뷰모델에서는 이 `UserForm` 인스턴스를 속성으로 노출하고, 바인딩은 `Form.Name` 등으로 합니다. 검증은 `ValidateAll` 또는 각 속성 변경 시 `Validate(propertyName)`을 호출합니다.
+
 ---
 
-## + 메시지 바인딩
+## 오류 시각화
 
-### 공통 리소스 (컨버터)
+Avalonia는 `INotifyDataErrorInfo`를 구현한 객체에 대해 자동으로 컨트롤의 `:invalid` 의사 클래스를 활성화합니다. 또한 `DataValidationErrors.Errors` 첨부 속성을 통해 현재 오류 컬렉션에 접근할 수 있습니다.
 
-```csharp
-// Converters/InverseBooleanConverter.cs
-using Avalonia.Data.Converters;
-using System;
-using System.Globalization;
+### 공통 컨버터
 
-public sealed class InverseBooleanConverter : IValueConverter
-{
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is bool b ? !b : Avalonia.Data.BindingOperations.DoNothing;
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
-```
+첫 번째 오류 메시지를 추출하는 컨버터와 불리언 반전 컨버터를 준비합니다.
 
 ```csharp
 // Converters/FirstErrorConverter.cs
-using Avalonia.Data.Converters;
-using System;
-using System.Collections;
-using System.Globalization;
-using System.Linq;
-
 public sealed class FirstErrorConverter : IValueConverter
 {
     public static FirstErrorConverter Instance { get; } = new();
@@ -380,25 +350,30 @@ public sealed class FirstErrorConverter : IValueConverter
 }
 ```
 
-### 뷰(XAML)
+```csharp
+// Converters/InverseBooleanConverter.cs
+public sealed class InverseBooleanConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is bool b ? !b : Avalonia.Data.BindingOperations.DoNothing;
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+```
 
-> 핵심: Avalonia는 `:invalid` 의사 클래스와 `DataValidationErrors`(첨부 속성)를 제공한다.
-
-- `:invalid` → 컨트롤이 오류일 때 스타일 적용
-- `ac:DataValidationErrors.Errors` → 필드의 에러 컬렉션
+### 뷰에서 검증 UI 구현
 
 ```xml
 <!-- Views/ValidationView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:ValidationSamples.ViewModels"
-             xmlns:conv="clr-namespace:ValidationSamples.Converters"
-             xmlns:ac="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls"
+             xmlns:vm="using:ValidationSamples.ViewModels"
+             xmlns:conv="using:ValidationSamples.Converters"
+             xmlns:ac="using:Avalonia.Controls"
              x:Class="ValidationSamples.Views.ValidationView">
+
   <UserControl.DataContext>
-    <!-- 세 가지 중 하나를 주입해서 실험 가능 -->
-    <!--<vm:ValidationViewModel />-->
-    <!--<vm:ValidationViewModel_INDEI />-->
+    <!-- 세 가지 중 하나를 선택 -->
     <vm:ValidationViewModel>
       <vm:ValidationViewModel.UserService>
         <services:FakeUserService/>
@@ -407,17 +382,13 @@ public sealed class FirstErrorConverter : IValueConverter
   </UserControl.DataContext>
 
   <UserControl.Styles>
-    <!-- 오류 시각화: 빨간 테두리 + 배경 살짝 -->
+    <!-- 오류 상태의 TextBox 스타일 -->
     <Style Selector="TextBox:invalid">
       <Setter Property="BorderBrush" Value="#E53935"/>
       <Setter Property="BorderThickness" Value="2"/>
       <Setter Property="Background" Value="#FFF3F3"/>
-    </Style>
-
-    <!-- Tooltip에 첫 에러 노출 -->
-    <Style Selector="TextBox:invalid">
       <Setter Property="ToolTip.Tip"
-              Value="{Binding #This.(ac:DataValidationErrors.Errors), ElementName=This, Converter={x:Static conv:FirstErrorConverter.Instance}}"/>
+              Value="{Binding (ac:DataValidationErrors.Errors), RelativeSource={RelativeSource Self}, Converter={x:Static conv:FirstErrorConverter.Instance}}"/>
     </Style>
   </UserControl.Styles>
 
@@ -426,10 +397,9 @@ public sealed class FirstErrorConverter : IValueConverter
       <TextBlock Text="회원 가입 폼" FontSize="18" FontWeight="Bold"/>
 
       <!-- 이름 -->
-      <StackPanel x:Name="This" Spacing="4">
+      <StackPanel Spacing="4">
         <TextBlock Text="이름"/>
         <TextBox Text="{Binding Name, Mode=TwoWay}" />
-        <!-- 인라인 에러 -->
         <TextBlock Foreground="#E53935" FontSize="12"
                    Text="{Binding (ac:DataValidationErrors.Errors), RelativeSource={RelativeSource Previous}, Converter={x:Static conv:FirstErrorConverter.Instance}}"/>
       </StackPanel>
@@ -450,7 +420,7 @@ public sealed class FirstErrorConverter : IValueConverter
                    Text="{Binding (ac:DataValidationErrors.Errors), RelativeSource={RelativeSource Previous}, Converter={x:Static conv:FirstErrorConverter.Instance}}"/>
       </StackPanel>
 
-      <!-- 사용자명 (비동기 중복 검사: ReactiveUI.Validation 버전일 때 동작) -->
+      <!-- 사용자명 (비동기 중복 검사) -->
       <StackPanel Spacing="4">
         <TextBlock Text="사용자명"/>
         <TextBox Text="{Binding UserName, Mode=TwoWay}" />
@@ -466,7 +436,7 @@ public sealed class FirstErrorConverter : IValueConverter
                    Text="{Binding (ac:DataValidationErrors.Errors), RelativeSource={RelativeSource Previous}, Converter={x:Static conv:FirstErrorConverter.Instance}}"/>
       </StackPanel>
 
-      <!-- 비밀번호 확인 (교차 규칙) -->
+      <!-- 비밀번호 확인 -->
       <StackPanel Spacing="4">
         <TextBlock Text="비밀번호 확인"/>
         <TextBox PasswordChar="●" Text="{Binding ConfirmPassword, Mode=TwoWay}"/>
@@ -476,11 +446,9 @@ public sealed class FirstErrorConverter : IValueConverter
 
       <Separator/>
 
-      <!-- 폼 단위: HasErrors/IsValid를 버튼 활성화와 연결 -->
       <StackPanel Orientation="Horizontal" Spacing="8">
         <Button Content="제출" Command="{Binding SubmitCommand}" />
-        <!-- ReactiveUI.Validation: SubmitCommand CanExecute==IsValid -->
-        <!-- INotifyDataErrorInfo/Annotations 버전을 쓸 때는 다음처럼: -->
+        <!-- ReactiveUI.Validation이 아닌 경우 아래와 같이 IsEnabled 직접 바인딩 -->
         <!-- <Button Content="제출" IsEnabled="{Binding HasErrors, Converter={StaticResource InverseBooleanConverter}}"/> -->
       </StackPanel>
     </StackPanel>
@@ -488,121 +456,114 @@ public sealed class FirstErrorConverter : IValueConverter
 </UserControl>
 ```
 
-> **포인트**
-> - `TextBox:invalid` selector로 오류 테두리/배경을 통일 스타일로 적용
-> - `ac:DataValidationErrors.Errors`에 바인딩해 **첫 번째 에러**를 인라인 표기
-> - 버튼 활성화는 `SubmitCommand`의 CanExecute 또는 `HasErrors`와 `InverseBooleanConverter`로 처리
+**시각화 포인트**
+- `TextBox:invalid` 스타일로 오류 시 테두리와 배경을 변경합니다.
+- `ToolTip.Tip`에 첫 번째 오류 메시지를 표시합니다.
+- 각 필드 아래에 인라인 오류 메시지를 배치합니다.
+- 버튼의 `IsEnabled`는 `HasErrors`의 반전으로 처리하거나, ReactiveUI.Validation의 `SubmitCommand`가 자동 처리합니다.
 
 ---
 
-## 고급 규칙 모음
+## 교차 필드 검증과 비동기 검증
 
-### 다중 규칙(이름 길이 + 허용 문자)
+### 교차 필드 (비밀번호 확인)
 
-```csharp
-this.ValidationRule(vm => vm.Name,
-    name => !string.IsNullOrWhiteSpace(name),
-    "이름은 필수입니다.");
-
-this.ValidationRule(vm => vm.Name,
-    name => name.Length is >= 2 and <= 16,
-    "이름은 2~16자여야 합니다.");
-
-this.ValidationRule(vm => vm.Name,
-    name => Regex.IsMatch(name ?? "", @"^[가-힣a-zA-Z\s]+$"),
-    "이름에는 한글/영문/공백만 허용됩니다.");
-```
-
-> 한 속성에 **여러 개의 룰**을 선언하면, 실패한 모든 규칙의 메시지가 Errors 컬렉션에 누적된다.
-
-### 날짜 범위/구간 검증
+ReactiveUI.Validation에서 교차 필드 규칙은 다음과 같이 작성합니다.
 
 ```csharp
-private DateTimeOffset? _from, _to;
-public DateTimeOffset? From { get => _from; set => this.RaiseAndSetIfChanged(ref _from, value); }
-public DateTimeOffset? To   { get => _to;   set => this.RaiseAndSetIfChanged(ref _to,   value); }
-
-this.ValidationRule(vm => vm.To,
-    _ => (From, To) is (not null, not null) && From <= To,
-    "종료일은 시작일 이후여야 합니다.");
+this.ValidationRule(
+    vm => vm.ConfirmPassword,
+    _ => Password == ConfirmPassword,
+    "비밀번호가 일치하지 않습니다.");
 ```
 
-### + 디바운스
+이 규칙은 `Password` 또는 `ConfirmPassword`가 변경될 때마다 재평가됩니다.
 
-앞서 `UserName`에서 구현한 패턴처럼,
-`WhenAnyValue(...).Throttle(...).SelectMany(async ...)` 형태로 비동기 호출을 연결한다.
-오래 걸리는 호출에는 타임아웃/취소 토큰을 더한다.
+### 비동기 검증 (사용자명 중복)
+
+`WhenAnyValue`와 `Throttle`, `SelectMany`를 결합해 서버 호출을 디바운스합니다.
+
+```csharp
+this.ValidationRule(
+    vm => vm.UserName,
+    vm => vm.WhenAnyValue(x => x.UserName)
+            .Throttle(TimeSpan.FromMilliseconds(300))
+            .SelectMany(async user =>
+                string.IsNullOrWhiteSpace(user)
+                    ? Observable.Return(false)
+                    : Observable.Return(!await userService.ExistsAsync(user)))
+            .Switch(),
+    _ => "이미 사용 중인 사용자명입니다.");
+```
+
+`Throttle`로 타이핑 중에 빈번한 호출을 막고, `Switch`로 최신 요청만 처리합니다.
 
 ---
 
-## 검증과 Command 활성화 연동
+## 폼 수준 요약 (ValidationSummary)
 
-- **ReactiveUI.Validation**: `this.IsValid()`가 `IObservable<bool>`을 내어주므로 Command 생성 시 그대로 적용
-- **수동(INotifyDataErrorInfo)**: `HasErrors` 변화에 대응해 `RaiseCanExecuteChanged()`(표준 ICommand) 또는 ReactiveCommand의 `canExecute`를 구성
+전체 오류를 한 곳에 모아 보여주는 `ValidationSummary`는 뷰모델에서 파생 속성으로 쉽게 구현할 수 있습니다.
 
 ```csharp
-// ReactiveCommand 예
-var canSubmit = this.IsValid(); // ReactiveUI.Validation
-SubmitCommand = ReactiveCommand.Create(OnSubmit, canSubmit);
+public string AllErrors =>
+    string.Join(Environment.NewLine,
+        from prop in new[] { nameof(Name), nameof(Age), nameof(Email), nameof(UserName), nameof(Password), nameof(ConfirmPassword) }
+        from string err in (GetErrors(prop) ?? Enumerable.Empty<object>())
+        select $"{prop}: {err}");
 ```
 
+XAML에서 바인딩:
+
+```xml
+<TextBlock Text="{Binding AllErrors}" Foreground="#E53935" TextWrapping="Wrap"/>
+```
+
+---
+
+## 검증과 커맨드 연동
+
+### ReactiveUI.Validation
+
+`this.IsValid()`은 전체 유효성 상태를 `IObservable<bool>`로 반환하므로, `ReactiveCommand`의 `canExecute` 인자로 바로 사용합니다.
+
 ```csharp
-// 수동: INDEI 버전에서
+SubmitCommand = ReactiveCommand.Create(OnSubmit, this.IsValid());
+```
+
+### 수동 구현 시
+
+`HasErrors` 속성이 변경될 때마다 `ICommand`의 `CanExecuteChanged`를 발생시킵니다.
+
+```csharp
+// INotifyPropertyChanged를 상속한 경우
+private void OnPropertyChanged(string p)
+{
+    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
+    if (p == nameof(HasErrors))
+        SubmitCommand.RaiseCanExecuteChanged();
+}
+```
+
+또는 `ReactiveCommand`의 `canExecute`를 직접 구성합니다.
+
+```csharp
 var canSubmit = this.WhenAnyValue(vm => vm.HasErrors).Select(h => !h);
 SubmitCommand = ReactiveCommand.Create(OnSubmit, canSubmit);
 ```
 
 ---
 
-## ValidationSummary 패턴 (폼 상단/하단에 전역 메시지)
+## 단위 테스트
 
-`INotifyDataErrorInfo`의 모든 에러를 한데 모아 사용자에게 요약을 보여준다.
-간단한 구현은 VM에서 `AllErrors` 파생 속성을 제공하면 된다.
-
-```csharp
-public string AllErrors =>
-    string.Join(Environment.NewLine,
-        from prop in new[] { nameof(Name), nameof(Age), nameof(Email), nameof(UserName), nameof(Password), nameof(ConfirmPassword) }
-        from string err in (GetErrors(prop) ?? Array.Empty<object>())
-        select $"{prop}: {err}");
-```
-
-```xml
-<TextBlock Text="{Binding AllErrors}" Foreground="#E53935" TextWrapping="Wrap" />
-```
-
----
-
-## 저장/복원(옵션)
-
-검증과 무관하지만 폼 UX에서는 유용하다.
+검증 로직은 뷰 없이도 테스트할 수 있어야 합니다.
 
 ```csharp
-// 폼 스냅샷
-private record FormSnapshot(string Name, int Age, string Email, string UserName);
-
-private FormSnapshot ToSnapshot() => new(Name, Age, Email, UserName);
-private void Restore(FormSnapshot s)
-{
-    Name = s.Name; Age = s.Age; Email = s.Email; UserName = s.UserName;
-}
-```
-
----
-
-## 단위 테스트(요지)
-
-검증 로직은 **View 없이** 테스트 가능해야 한다.
-
-```csharp
-// xUnit 샘플
 [Fact]
-public void Name_Required()
+public void Name_Required_ValidationFails()
 {
     var vm = new ValidationViewModel(new FakeUserService());
     vm.Name = "";
-    // ReactiveUI.Validation: HasErrors는 Aggregated
-    Assert.True(vm.ValidationContext?.IsValid == false || vm.HasErrors);
+    Assert.True(vm.HasErrors); // 또는 vm.ValidationContext.IsValid == false
 }
 
 [Fact]
@@ -610,32 +571,23 @@ public async Task UserName_Duplicate_Fails()
 {
     var vm = new ValidationViewModel(new FakeUserService());
     vm.UserName = "admin";
-    await Task.Delay(400); // debounce + async
+    await Task.Delay(400); // 디바운스 대기
     Assert.True(vm.HasErrors);
 }
 ```
 
 ---
 
-## 성능/설계 팁
+## 성능과 설계 팁
 
-- **규칙은 VM**에, **스타일은 XAML**에: 관심사 분리
-- **데이터 흐름은 단방향**으로(입력 → 검증 → 요약/상태)
-- **비동기 검증은 디바운스**로 과도한 호출 억제
-- **ErrorTemplate-like UI**는 `:invalid` + `DataValidationErrors.Errors`로 일관되게
-- 다국어/로캘: **리소스 키** 기반 메시지로 국제화 준비
-- 공용 규칙은 **확장 메서드**나 **Validator 유틸**로 모듈화
+- **검증 규칙은 뷰모델에**, 스타일은 XAML에 배치해 관심사를 분리합니다.
+- 비동기 검증에는 반드시 **디바운스**와 **취소 토큰**을 적용해 불필요한 호출을 막습니다.
+- `DataValidationErrors.Errors`에 바인딩할 때는 `FirstErrorConverter` 같은 컨버터로 첫 번째 메시지만 표시하는 것이 일반적입니다.
+- 다국어를 고려한다면 메시지를 리소스 키로 분리합니다.
+- 복잡한 규칙은 확장 메서드나 헬퍼 클래스로 모듈화합니다.
 
 ---
 
 ## 결론
 
-- Avalonia는 `INotifyDataErrorInfo` + `:invalid` + `DataValidationErrors`로 **검증/시각화 경로**를 명확히 제공한다.
-- **ReactiveUI.Validation**을 쓰면 규칙 선언, 교차/비동기, Command 연동이 대폭 간단해진다.
-- 팀/프로젝트 성격에 따라
-  - 빠른 생산성: **ReactiveUI.Validation**,
-  - 의존성 최소화: **INotifyDataErrorInfo 수동**,
-  - 모델 재사용: **DataAnnotations**
-  를 선택하되, **시각화 스타일과 바인딩 패턴은 동일**하게 유지하면 된다.
-
-위 설계를 토대로 기존 문서의 핵심(필드 검증/오류 시각화/폼 유효성)을 그대로 살리면서, **교차/비동기/요약/테스트**까지 한 번에 끌어올릴 수 있다.
+Avalonia에서 입력 검증은 `INotifyDataErrorInfo`를 기반으로 하며, `:invalid`와 `DataValidationErrors`를 통해 일관된 시각화를 제공합니다. 세 가지 구현 방식 중 **ReactiveUI.Validation**이 선언적이고 생산성이 높아 가장 권장됩니다. 교차 필드, 비동기 검증, 커맨드 연동까지 자연스럽게 처리할 수 있으며, 단위 테스트도 용이합니다. 이 글의 패턴을 활용하면 사용자 친화적이고 유지보수하기 쉬운 입력 폼을 구축할 수 있습니다.

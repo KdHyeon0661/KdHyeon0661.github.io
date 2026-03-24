@@ -6,41 +6,42 @@ category: Avalonia
 ---
 # Avalonia의 모바일 대응 및 PWA 내장 전략
 
-## 지원 현황 요약과 프로젝트 전략
+Avalonia는 데스크톱(Windows, macOS, Linux)에서 안정적인 크로스 플랫폼 UI 프레임워크다. 하지만 모바일(Android, iOS)과 웹(PWA) 지원은 아직 성숙 단계가 아니다. 이 글에서는 **지금 당장 실무에 적용 가능한 전략**으로, 데스크톱을 중심으로 하면서도 **코어 재사용**을 통해 모바일과 웹을 부분적으로 활용하는 방법을 소개한다.
 
-| 플랫폼 | 현재 상태 | 실전 권장 전략 |
-|---|---|---|
-| Windows/macOS/Linux | 안정적 | 순수 Avalonia로 구현/배포 |
-| Android/iOS | 실험적(Avalonia.Mobile) | 멀티타겟팅 + 조건부 컴파일로 “시도” 수준. 입력/제스처/성능 검증 필수 |
-| Web(PWA) | 정식 미지원 | 데스크톱 앱에 **WebView** 내장, 로컬 웹앱(PWA) 바인딩으로 “하이브리드” 접근 |
+## 지원 현황과 전략 개요
 
-핵심 구조 아이디어:
-- **UI/도메인 코어**(ViewModel, Services, Domain)는 `net8.0` 클래스 라이브러리에 집약.
-- 데스크톱/모바일/웹뷰 호스트는 **얇은 플랫폼 프로젝트**로 분리, `#if` 전처리로 기능 차등화.
-- 웹 기능은 **내장 WebView**(데스크톱/모바일 모두) 위에서 공통 JS 번들 사용 → “한 벌의 웹 UI”를 각 플랫폼에서 재생.
+| 플랫폼 | 공식 지원 상태 | 현실적인 전략 |
+|--------|----------------|----------------|
+| Windows / macOS / Linux | 안정적 | 순수 Avalonia로 개발 및 배포 |
+| Android / iOS | 실험적 (Avalonia.Mobile) | 소규모 검증용으로 사용, 입력/제스처/성능 테스트 필수 |
+| Web (PWA) | 정식 지원 없음 | 데스크톱 앱 내에 **WebView**를 내장하고, 로컬에 번들링한 PWA를 로드하는 하이브리드 방식 |
 
----
+핵심 아이디어는 **비즈니스 로직과 ViewModel을 공통 라이브러리(`MyApp.Core`)**에 모으고, 각 플랫폼용 프로젝트는 얇게 유지하는 것이다. 웹 기능은 내장 WebView 위에서 실행되는 **하나의 웹 UI 번들**로 통합해, 데스크톱과 모바일에서 같은 웹 화면을 재사용한다.
 
-## 예시
+## 프로젝트 구조 예시
 
 ```
 MySuite/
-├─ src/
-│  ├─ MyApp.Core/                    # ViewModel/Domain/Services (net8.0)
-│  ├─ MyApp.Desktop/                 # Avalonia 데스크톱 호스트 (win/mac/linux)
-│  ├─ MyApp.Mobile/                  # Android/iOS 호스트(실험적)
-│  └─ MyApp.WebHost/                 # WebView+내장 PWA 리더(데스크톱 우선)
-└─ web/
-   ├─ index.html
-   ├─ manifest.webmanifest
-   └─ sw.js                          # Service Worker(오프라인 캐시)
+├── src/
+│   ├── MyApp.Core/                  # 공통 ViewModel, 서비스, 모델 (net8.0)
+│   ├── MyApp.Desktop/               # 데스크톱 호스트 (Avalonia)
+│   ├── MyApp.Mobile/                # Android/iOS 호스트 (실험적)
+│   └── MyApp.WebHost/               # WebView를 포함한 데스크톱 호스트 (PWA 내장)
+└── web/
+    ├── index.html
+    ├── manifest.webmanifest
+    ├── sw.js                        # Service Worker
+    ├── styles.css
+    └── app.js
 ```
 
-### 공통 코드 예시 (ViewModel)
+## 공통 코어(Core) 설계
+
+`MyApp.Core`는 UI 프레임워크에 의존하지 않는 순수 .NET 라이브러리다. ViewModel과 서비스 인터페이스, 모델을 이곳에 배치한다.
 
 ```csharp
 // MyApp.Core/ViewModels/DashboardViewModel.cs
-public class DashboardViewModel : ReactiveUI.ReactiveObject
+public class DashboardViewModel : ReactiveObject
 {
     private string _title = "대시보드";
     public string Title
@@ -51,25 +52,21 @@ public class DashboardViewModel : ReactiveUI.ReactiveObject
 
     public ObservableCollection<double> Series { get; } = new();
 
-    public void Tick(double v) => Series.Add(v);
+    public void Tick(double value) => Series.Add(value);
 }
 ```
 
----
+## 데스크톱 앱에 WebView 내장하기
 
-## 설계
+Avalonia 공식 WebView 패키지를 사용해 데스크톱 앱 안에 브라우저를 띄운다. 로컬에 위치한 PWA 번들(`web/` 폴더)을 `file://` 스킴으로 로드한다.
 
-> 정식 Web(PWA) 실행은 아직 이르므로, **데스크톱 앱 안에 WebView**를 넣고 로컬에 번들링한 웹앱을 **파일 또는 커스텀 스킴**으로 로드하는 접근이 가장 실용적이다.
-
-### 패키지 설치
+### 패키지 추가
 
 ```bash
 dotnet add package Avalonia.WebView.Desktop
 ```
 
-> 구현체에 따라 WebView2(Windows)·CEF(크로스) 등이 사용된다. 프로젝트에 맞는 변형 패키지를 선택한다.
-
-### XAML: WebView 자리 배치
+### XAML: WebView 배치
 
 ```xml
 <!-- MyApp.WebHost/Views/WebShellView.axaml -->
@@ -81,32 +78,22 @@ dotnet add package Avalonia.WebView.Desktop
       <Button Content="홈" Command="{Binding HomeCommand}"/>
       <TextBlock Text="{Binding Status}" Margin="8,0,0,0"/>
     </StackPanel>
-
-    <wv:WebView Grid.Row="1"
-                x:Name="Web"
-                Source="{Binding CurrentUri}"/>
+    <wv:WebView Grid.Row="1" x:Name="Web" Source="{Binding CurrentUri}"/>
   </Grid>
 </UserControl>
 ```
 
-### Code-behind: 로컬 파일/커스텀 스킴 로드
+### ViewModel: 로컬 파일 경로 바인딩
 
 ```csharp
 // MyApp.WebHost/ViewModels/WebShellViewModel.cs
-public class WebShellViewModel : ReactiveUI.ReactiveObject
+public class WebShellViewModel : ReactiveObject
 {
-    private Uri _currentUri = new("file:///" + Path.GetFullPath("web/index.html"));
+    private Uri _currentUri = new Uri("file:///" + Path.GetFullPath("web/index.html"));
     public Uri CurrentUri
     {
         get => _currentUri;
         set => this.RaiseAndSetIfChanged(ref _currentUri, value);
-    }
-
-    private string _status = "Ready";
-    public string Status
-    {
-        get => _status;
-        set => this.RaiseAndSetIfChanged(ref _status, value);
     }
 
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
@@ -114,343 +101,64 @@ public class WebShellViewModel : ReactiveUI.ReactiveObject
 
     public WebShellViewModel()
     {
-        ReloadCommand = ReactiveCommand.Create(() => CurrentUri = new Uri(CurrentUri.ToString()));
-        HomeCommand   = ReactiveCommand.Create(() =>
+        ReloadCommand = ReactiveCommand.Create(() =>
+            CurrentUri = new Uri(CurrentUri.ToString())); // 간단히 같은 Uri 재할당
+        HomeCommand = ReactiveCommand.Create(() =>
             CurrentUri = new Uri("file:///" + Path.GetFullPath("web/index.html")));
     }
 }
 ```
 
-> 배포 시 `web/` 폴더를 Publish 출력물과 함께 배치하거나, **임베디드 리소스**로 넣고 런타임에 임시 폴더로 복사해 로드한다.
+> 배포 시 `web/` 폴더를 실행 파일과 함께 복사하거나, **임베디드 리소스**로 포함해 최초 실행 시 사용자 디렉터리에 풀어내는 방식을 쓸 수 있다.
 
----
+## JS ↔ .NET 양방향 통신 (메시지 브리지)
 
-## JS ↔ .NET 브리지(양방향 메시징)
+웹 화면과 네이티브 코드가 서로 데이터를 주고받으려면 **메시지 브리지**가 필요하다. WebView2(Windows)나 CEF 등 엔진마다 API가 다르므로, 인터페이스로 추상화한다.
 
-WebView 기반 하이브리드는 **로그인/결제/지도** 등 “웹으로 구현한 화면”과 “Avalonia 네이티브 화면”을 연결해야 한다.
-대표적인 패턴은 **postMessage/MessageReceived** 이벤트 기반 브리지다.
-
-### JS 측(웹 번들)
-
-```html
-<!-- web/index.html 일부 -->
-<script>
-  // 앱으로 메시지 보내기
-  function sendToHost(payload) {
-    // 구현체별 메시지 API가 다를 수 있음: window.chrome.webview.postMessage, or externalHost, or custom
-    if (window.chrome && window.chrome.webview) {
-      window.chrome.webview.postMessage(JSON.stringify(payload));
-    } else if (window.external && window.external.sendMessage) {
-      window.external.sendMessage(JSON.stringify(payload));
-    } else {
-      console.warn('Host messaging API not available.');
-    }
-  }
-
-  // 예: 버튼 클릭 → 호스트에 "refresh-data" 명령 전송
-  function requestRefresh() {
-    sendToHost({ type: 'refresh-data' });
-  }
-
-  // 호스트에서 JS로 푸시(예: 초기 상태 주입)
-  window.addEventListener('message', (ev) => {
-    const msg = ev.data;
-    console.log('host->web', msg);
-    // TODO: 그래프/상태 갱신
-  });
-</script>
-```
-
-### .NET 측(메시지 수신/응답)
-
-구현체마다 이벤트 명이 다르므로 “어댑터” 클래스로 추상화한다.
+### 인터페이스 정의
 
 ```csharp
+// MyApp.Core/Services/IWebBridge.cs
 public interface IWebBridge
 {
     IObservable<string> Messages { get; }
     void PostJson(object payload);
 }
+```
 
+### WebViewBridge 구현 (Avalonia.WebView 기준)
+
+```csharp
+// MyApp.WebHost/Services/WebViewBridge.cs
 public class WebViewBridge : IWebBridge
 {
     private readonly Subject<string> _messages = new();
     public IObservable<string> Messages => _messages;
 
-    private readonly object _webViewControl;
+    private readonly WebView _webView;
 
-    public WebViewBridge(object webViewControl /* WebView 구체 타입 */)
+    public WebViewBridge(WebView webView)
     {
-        _webViewControl = webViewControl;
-
-        // TODO: 실제 구현체 이벤트 연결
-        // 예시: webView.CoreWebView2.WebMessageReceived += (s,e) => _messages.OnNext(e.TryGetAsString());
+        _webView = webView;
+        // WebView에서 제공하는 메시지 이벤트 구독
+        _webView.WebView?.WebMessageReceived += (s, e) =>
+            _messages.OnNext(e.Message);
     }
 
     public void PostJson(object payload)
     {
         var json = JsonSerializer.Serialize(payload);
-        // TODO: JS로 메시지 push (구현체 API 호출)
-        // 예: webView.CoreWebView2.PostWebMessageAsString(json);
+        _webView.WebView?.PostWebMessageAsString(json);
     }
 }
 ```
 
-ViewModel에 결합:
+> 실제 WebView 컨트롤에 접근하려면 XAML에서 `x:Name`을 지정하고 코드 비하인드에서 연결해야 한다. 이 예시는 개념 전달용이다.
+
+### ViewModel에서 브리지 사용
 
 ```csharp
-public class WebShellViewModel : ReactiveUI.ReactiveObject
-{
-    private readonly IWebBridge _bridge;
-    public WebShellViewModel(IWebBridge bridge)
-    {
-        _bridge = bridge;
-        _bridge.Messages.Subscribe(OnWebMessage);
-    }
-
-    private void OnWebMessage(string raw)
-    {
-        try
-        {
-            var msg = JsonSerializer.Deserialize<Dictionary<string, object>>(raw);
-            if (msg is null) return;
-
-            if ((string?)msg["type"] == "refresh-data")
-            {
-                // 예: 코어 VM에서 데이터 갱신 → 결과를 웹으로 push
-                var payload = new { type = "chart-data", series = new[] { 1, 2, 3, 5, 8 } };
-                _bridge.PostJson(payload);
-            }
-        }
-        catch { /* 로깅 */ }
-    }
-}
-```
-
-> 실전에서는 **일관된 프로토콜(예: `{type, id, payload}`)**로 정의하고, 요청/응답/알림을 구분해 라우팅한다.
-
----
-
-## 반응형 레이아웃/입력/스케일링(모바일 대비)
-
-모바일/임베디드 타겟을 고려하면 **크기/밀도/입력**을 재검토해야 한다.
-
-### 화면 크기에 따른 레이아웃 전환
-
-```xml
-<!-- RootView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui">
-  <UserControl.Styles>
-    <Style>
-      <Style.Triggers>
-        <!-- 폭이 720 미만이면 모바일 레이아웃 -->
-        <DataTrigger Binding="{Binding $parent[Window].Bounds.Width}" Value="720">
-          <!-- DataTrigger가 직접 비교를 못하므로 아래처럼 변형: -->
-        </DataTrigger>
-      </Style.Triggers>
-    </Style>
-  </UserControl.Styles>
-
-  <!-- 간단 대안: 두 컨테이너를 두고 Visible 스위치 -->
-  <Grid>
-    <local:DesktopLayout IsVisible="{Binding IsDesktop}"/>
-    <local:MobileLayout  IsVisible="{Binding IsMobile}"/>
-  </Grid>
-</UserControl>
-```
-
-```csharp
-// RootViewModel.cs
-public class RootViewModel : ReactiveUI.ReactiveObject
-{
-    private double _width;
-    public double Width
-    {
-        get => _width;
-        set => this.RaiseAndSetIfChanged(ref _width, value);
-    }
-
-    public bool IsMobile => Width < 720;
-    public bool IsDesktop => !IsMobile;
-}
-```
-
-윈도우 크기 변경 시 Width 바인딩:
-
-```csharp
-// RootView.axaml.cs
-this.AttachedToVisualTree += (_,__) =>
-{
-    var win = this.VisualRoot as Window;
-    if (win is null) return;
-    win.GetObservable(Visual.BoundsProperty)
-       .Select(b => b.Width)
-       .Subscribe(w => (DataContext as RootViewModel)!.Width = w);
-};
-```
-
-### 입력(터치/제스처)
-
-- 리스트 아이템의 **HitTarget**을 넓힌다(버튼 최소 44px).
-- 스와이프/두 손가락 확대 등은 **제스처 라이브러리**나 **PointerPressed/Released/Pinch 계산**으로 구현.
-- ScrollViewer 속성: 터치관성/오버스크롤을 검토.
-
-### DPI/리소스 스케일
-
-- **벡터(Geometry/IconFont)** 사용 권장.
-- 래스터 이미지는 `1x/2x/3x` 분기(테마 리소스 키를 이용해 런타임 선택).
-- 폰트 크기/Spacing은 **상대값(ThemeResource)**로 묶어 스케일 조정.
-
----
-
-## 타겟팅: 빌드와 조건부 컴파일
-
-> Avalonia.Mobile 흐름은 실험적이다. 빌드 파이프라인을 시도하고, UI/입력 시나리오를 작은 화면에서 검증하는 수준으로 접근한다.
-
-### 프로젝트 파일(예시)
-
-```xml
-<!-- MyApp.Mobile.csproj -->
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFrameworks>net8.0-android;net8.0-ios</TargetFrameworks>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\MyApp.Core\MyApp.Core.csproj" />
-  </ItemGroup>
-
-  <PropertyGroup Condition="'$(TargetFramework)'=='net8.0-android'">
-    <DefineConstants>$(DefineConstants);ANDROID</DefineConstants>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(TargetFramework)'=='net8.0-ios'">
-    <DefineConstants>$(DefineConstants);IOS</DefineConstants>
-  </PropertyGroup>
-</Project>
-```
-
-### 조건부 컴파일
-
-```csharp
-public static class Platform
-{
-#if ANDROID
-
-    public static string Name => "Android";
-#elif IOS
-
-    public static string Name => "iOS";
-#else
-
-    public static string Name => "Desktop";
-#endif
-
-}
-```
-
-> 모바일에서는 네이티브 권한(카메라/파일)과 라이프사이클(백그라운드/포그라운드)을 고려해야 한다. 실험 단계에서는 **WebView 기반 화면**을 우선 띄워 UX를 검증하는 것이 현실적이다.
-
----
-
-## 내장 PWA: 오프라인 웹앱 번들 + 캐시
-
-> “앱 안에 웹앱”을 **로컬로 포함**하고, **Service Worker**로 오프라인 캐시를 활성화하면 네트워크 없이도 WebView UI가 동작한다.
-
-### manifest.webmanifest
-
-```json
-{
-  "name": "MyApp Embedded PWA",
-  "short_name": "MyApp",
-  "display": "standalone",
-  "start_url": "./index.html",
-  "icons": [
-    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
-  ],
-  "background_color": "#121212",
-  "theme_color": "#121212"
-}
-```
-
-### Service Worker(sw.js)
-
-```js
-const CACHE_NAME = 'myapp-cache-v1';
-const ASSETS = [
-  './index.html',
-  './manifest.webmanifest',
-  './styles.css',
-  './app.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
-];
-
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
-});
-
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
-  );
-});
-
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(r => r || fetch(e.request))
-  );
-});
-```
-
-### index.html에 등록
-
-```html
-<link rel="manifest" href="manifest.webmanifest">
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
-  }
-</script>
-```
-
-> 이 번들을 앱 리소스로 포함하고 **file:///…** 또는 **http://app.local/** 같은 커스텀 스킴으로 로드하면 인터넷 없이도 WebView UI가 동작한다.
-
----
-
-## 인증/보안 고려(하이브리드 기준)
-
-- OAuth/OIDC는 **WebView**로 로그인 페이지를 띄우고, **리디렉션 URI**를 커스텀 스킴으로 돌려받아 **토큰 추출**.
-- 토큰은 **보안 저장소**(Windows DPAPI, macOS Keychain, Android Keystore 등)에 저장. 데스크톱은 가능한 **OS 보안 저장소** 사용.
-- JS↔.NET 브리지는 **화이트리스트 메시지 타입**만 허용하고, **서명된 요청/Nonce**로 재생 공격 방지.
-
----
-
-## 성능 팁
-
-- WebView는 **한 화면에서만** 유지하고 내부 라우팅으로 페이지를 바꾼다(매번 생성/파괴 금지).
-- 대용량 데이터는 **스트리밍/가상화**(리스트/테이블).
-- 그래픽은 가능하면 **Skia 기반 Avalonia 네이티브**를 사용하고, 웹 파트는 **CSS 애니메이션 최소화**.
-
----
-
-## 빌드·배포·업데이트
-
-- 데스크톱: `dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true`
-- 웹 번들은 `web/` 폴더 채로 포함(또는 임베디드 리소스 → 최초 실행 시 사용자 캐시 폴더에 풀기).
-- 자동 업데이트는 데스크톱 파트에서 처리(Squirrel, Zip-SelfUpdate 등). 웹 파트는 **sw.js 버전**을 바꿔 **오프라인 캐시 갱신**.
-
----
-
-## 통합 예제: 네이티브 + WebView + JS 브리지 + PWA
-
-### ViewModel: 차트 데이터 송수신
-
-```csharp
-public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
+public class HybridDashboardViewModel : ReactiveObject
 {
     private readonly IWebBridge _bridge;
     private readonly DashboardViewModel _core;
@@ -461,15 +169,15 @@ public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
         _core = core;
 
         _bridge.Messages.Subscribe(OnWebMessage);
-        StartFeeder();
+        StartFeeder(); // 가상 데이터 피드
     }
 
     private void OnWebMessage(string raw)
     {
-        var m = JsonSerializer.Deserialize<Dictionary<string, object>>(raw);
-        if (m?["type"] as string == "ack")
+        var msg = JsonSerializer.Deserialize<Dictionary<string, object>>(raw);
+        if (msg?["type"] as string == "ack")
         {
-            // 웹에서 ack 수신
+            // 웹에서 확인 응답 받음
         }
     }
 
@@ -487,49 +195,215 @@ public class HybridDashboardViewModel : ReactiveUI.ReactiveObject
 }
 ```
 
-### JS 측: 차트 갱신
+### JS 측: 메시지 송수신
 
 ```html
 <script>
-  const points = [];
+  // 호스트로 메시지 보내기 (엔진에 따라 API 이름이 다를 수 있음)
+  function sendToHost(payload) {
+    if (window.chrome?.webview) {
+      window.chrome.webview.postMessage(JSON.stringify(payload));
+    } else if (window.external?.sendMessage) {
+      window.external.sendMessage(JSON.stringify(payload));
+    } else {
+      console.warn('Host messaging API not available');
+    }
+  }
+
+  // 호스트에서 메시지 수신
   window.addEventListener('message', ev => {
     const msg = ev.data;
     if (msg.type === 'chart-data') {
-      points.push(msg.value);
-      renderChart(points); // 캔버스/차트 라이브러리 갱신
+      updateChart(msg.value);
       sendToHost({ type: 'ack' });
     }
   });
 </script>
 ```
 
----
+## 반응형 레이아웃과 모바일 대응
 
-## 리스크와 완화책
+모바일 환경에서는 화면 크기, 터치 입력, DPI 변화를 고려해야 한다.
 
-| 리스크 | 완화 전략 |
-|---|---|
-| 모바일 렌더링/입력 이슈 | 작은 단위부터 시도(MVP 화면 1~2개). 제스처/키보드 정책 정리 |
-| WebView 엔진 차이 | WebKit/Chromium 간 CSS/JS 차이 최소화. 공통 기능만 사용 |
-| 보안 | 토큰/비밀키는 OS 보안 저장소. 메시징 화이트리스트/서명/Nonce |
-| 오프라인 캐시 동기화 | sw.js 버전 증가 → 강제 캐시 무효화. 앱 업데이트와 연동 |
-| 유지보수 복잡도 | 코어/호스트 분리, 명확한 인터페이스(IWebBridge, IService) 유지 |
+### 화면 크기에 따른 분기
 
----
+ViewModel에 창 너비를 바인딩하고, 너비에 따라 `IsMobile` 플래그를 계산한다.
 
-## 체크리스트
+```csharp
+public class RootViewModel : ReactiveObject
+{
+    private double _windowWidth;
+    public double WindowWidth
+    {
+        get => _windowWidth;
+        set => this.RaiseAndSetIfChanged(ref _windowWidth, value);
+    }
 
-- 공통 코드 80% 이상을 **MyApp.Core**에 유지
-- 데스크톱/모바일 호스트는 **최소 기능**만(창/권한/파일/브라우저 호스팅)
-- WebView 브리지는 **추상화 인터페이스**로 감싸기
-- 반응형/입력/스케일을 **초기에** 확정(폰트/버튼 최소 크기 등)
-- 오프라인 웹앱(PWA) 캐시 전략 **문서화**
+    public bool IsMobile => WindowWidth < 720;
+    public bool IsDesktop => !IsMobile;
+}
+```
 
----
+View에서 너비를 추적해 ViewModel에 전달한다.
+
+```csharp
+// RootView.axaml.cs
+this.AttachedToVisualTree += (_, _) =>
+{
+    var win = this.VisualRoot as Window;
+    if (win == null) return;
+    win.GetObservable(Window.BoundsProperty)
+        .Select(b => b.Width)
+        .Subscribe(w => (DataContext as RootViewModel)!.WindowWidth = w);
+};
+```
+
+XAML에서는 `IsVisible`로 두 가지 레이아웃을 전환한다.
+
+```xml
+<Grid>
+    <local:DesktopLayout IsVisible="{Binding IsDesktop}"/>
+    <local:MobileLayout  IsVisible="{Binding IsMobile}"/>
+</Grid>
+```
+
+### 터치 대응
+
+- 버튼과 탭 영역은 최소 44×44pt 크기를 권장한다.
+- 스크롤 뷰어에 `AllowOverscroll` 같은 속성을 검토한다.
+- 제스처(스와이프, 핀치)는 `Pointer` 이벤트를 직접 계산하거나 라이브러리를 사용한다.
+
+### DPI 및 이미지 스케일
+
+- 아이콘은 폰트 아이콘(예: Material Icons)이나 벡터 그래픽을 사용한다.
+- 래스터 이미지는 1x, 2x, 3x 해상도를 분기해 제공한다.
+
+## 모바일 호스트 (Android/iOS)
+
+Avalonia.Mobile는 아직 실험 단계이므로, 전체 기능을 구현하기보다는 **WebView를 띄워 웹 UI로 대체**하는 접근이 현실적이다. 네이티브 권한(카메라, 파일)이 필요하다면 해당 부분만 네이티브 코드로 처리한다.
+
+### Android 호스트 예시 (프로젝트 파일)
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-android</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.0.0" />
+    <PackageReference Include="Avalonia.Android" Version="11.0.0" />
+    <ProjectReference Include="..\MyApp.Core\MyApp.Core.csproj" />
+  </ItemGroup>
+</Project>
+```
+
+### 조건부 컴파일
+
+플랫폼별로 다른 코드를 작성하려면 `#if` 전처리기를 사용한다.
+
+```csharp
+public static class Platform
+{
+#if ANDROID
+    public static string Name => "Android";
+#elif IOS
+    public static string Name => "iOS";
+#else
+    public static string Name => "Desktop";
+#endif
+}
+```
+
+## 내장 PWA: 오프라인 캐시와 Service Worker
+
+WebView로 로컬 HTML을 로드할 때 **Service Worker**를 활용하면 오프라인에서도 웹 UI가 동작한다. `web/` 폴더에 `manifest.webmanifest`와 `sw.js`를 추가한다.
+
+### manifest.webmanifest
+
+```json
+{
+  "name": "MyApp Embedded PWA",
+  "short_name": "MyApp",
+  "display": "standalone",
+  "start_url": "./index.html",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
+```
+
+### sw.js (Service Worker)
+
+```js
+const CACHE_NAME = 'myapp-cache-v1';
+const ASSETS = [
+  './index.html',
+  './manifest.webmanifest',
+  './styles.css',
+  './app.js'
+];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});
+```
+
+### index.html에 등록
+
+```html
+<link rel="manifest" href="manifest.webmanifest">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+```
+
+이제 WebView가 `file://.../index.html`을 로드하면 Service Worker가 자산을 캐시하고, 인터넷 연결 없이도 UI를 표시할 수 있다.
+
+## 보안 고려사항 (하이브리드)
+
+- OAuth 로그인은 WebView로 진행하고, 커스텀 URI 스킴(`myapp://`)으로 토큰을 받는다.
+- 토큰은 **OS 보안 저장소**에 저장한다 (Windows DPAPI, macOS Keychain, Android Keystore).
+- JS ↔ .NET 메시지는 화이트리스트 기반 타입만 허용하고, 필요시 Nonce나 서명을 추가한다.
+
+## 배포와 업데이트
+
+- 데스크톱: `dotnet publish -c Release -r win-x64 --self-contained true`
+- 웹 번들(`web/` 폴더)을 실행 파일과 함께 배포하거나, 리소스로 포함한다.
+- 자동 업데이트는 데스크톱 파트(Squirrel, ClickOnce 등)로 처리하고, 웹 파트는 `sw.js` 버전을 바꿔 캐시를 갱신한다.
+
+## 리스크와 대응 전략
+
+| 리스크 | 대응 |
+|--------|------|
+| 모바일 렌더링/입력 불안정 | WebView 위주로 UI를 구성하고, 네이티브 화면은 최소화 |
+| WebView 엔진 차이 | 공통 HTML/CSS 기능만 사용, 브라우저 호환성 테스트 |
+| 오프라인 캐시 동기화 | 앱 버전 변경 시 Service Worker 버전 증가 및 캐시 삭제 |
+| 유지보수 복잡성 | 코어 라이브러리에 대부분 로직을 두고, 플랫폼별 코드는 최소화 |
 
 ## 결론
 
-- **지금 당장 실전 배포** 기준으로는 데스크톱이 가장 안정적이다.
-- **모바일은 실험적**이므로 작은 범위로 검증하며 **하이브리드(WebView)** 전략을 병행한다.
-- PWA는 **내장 WebView + 로컬 번들 + Service Worker**로 충분히 “앱 같은 웹” UX를 제공할 수 있다.
-- 장기적으로는 Avalonia의 웹/모바일 지원이 성숙 시, **코어 재사용**을 극대화해 자연스레 이행한다.
+Avalonia는 데스크톱 애플리케이션 개발에 매우 적합하지만, 모바일과 웹 지원은 아직 성숙하지 않다. 따라서 **실용적인 접근법**으로는:
+
+1. **공통 비즈니스 로직**을 순수 .NET 라이브러리로 분리한다.
+2. 데스크톱 앱에는 **WebView**를 내장해 웹 UI(PWA)를 표시하고, JS ↔ .NET 브리지로 상호작용한다.
+3. 모바일에서는 같은 WebView 기반 UI를 재사용하고, 필수적인 네이티브 기능만 조건부로 추가한다.
+4. Service Worker로 오프라인 캐시를 구성해 웹 UI가 네트워크 없이도 동작하게 한다.
+
+이 전략을 따르면 **코드 재사용성을 극대화**하면서도, 현 시점에서 모바일과 웹을 포함한 멀티 플랫폼 대응이 가능하다. 향후 Avalonia가 모바일과 웹을 정식 지원하게 되면, 핵심 코어를 그대로 두고 호스트 프로젝트만 교체하는 식으로 자연스럽게 전환할 수 있다.

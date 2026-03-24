@@ -6,48 +6,55 @@ category: Avalonia
 ---
 # Avalonia 설정 저장 및 불러오기 (JSON, SQLite, 암호화, 마이그레이션)
 
-## 무엇을 만들 것인가
-
-- 설정 모델 `AppSettings`(버전 포함) 정의
-- **JSON 저장**(원자적 쓰기 + 백업)과 **SQLite 저장**(스키마/마이그레이션) 2가지 경로 제공
-- 민감정보(토큰 등) **AES-256** 대칭 암호화
-- 앱 시작 시 설정 로드 → `AppState`에 적용(테마/언어/로그인)
-- UI에서 수정 → 즉시 저장(자동/수동 선택)
-- 예외/경합/파일락/손상 대응
-- 단위 테스트(임시 경로, 인메모리 DB)로 회귀 방지
+Avalonia 애플리케이션에서 사용자 설정(테마, 언어, 자동 로그인 여부 등)을 저장하고 불러오는 기능은 필수적입니다. 이 글에서는 JSON 파일과 SQLite 데이터베이스 두 가지 방식을 모두 다루고, 민감 정보(토큰 등)는 암호화하여 저장하며, 스키마 버전 관리와 마이그레이션까지 고려한 실전 구조를 설명합니다. 초중급 개발자를 기준으로, 직접 코드를 따라 하며 이해할 수 있도록 구성했습니다.
 
 ---
 
-## 디렉터리 구조(확장판)
+## 목표
+
+- 설정 모델(`AppSettings`)에 버전 정보를 포함하여 확장성 확보
+- JSON 저장소(원자적 쓰기 + 백업)와 SQLite 저장소(트랜잭션 + 스키마 관리)를 모두 구현
+- AES-256-GCM으로 민감 정보 암호화
+- 앱 시작 시 설정을 불러와 전역 상태(`AppState`)에 반영하고, UI 변경 시 즉시 저장
+- 예외(파일 손상, 동시 접근 등)에 대한 대비 및 단위 테스트
+
+---
+
+## 디렉터리 구조 (확장판)
 
 ```
 MyApp/
 ├── App.axaml / App.axaml.cs
 ├── Config/
-│   ├── AppSettings.cs              // 모델(+ 버전/마이그레이션)
-│   ├── ISettingsService.cs         // 저장소 추상화
-│   ├── JsonSettingsService.cs      // JSON 저장소 구현
-│   ├── SqliteSettingsService.cs    // SQLite 저장소 구현 (Microsoft.Data.Sqlite)
-│   ├── ICryptoService.cs           // 민감정보 암호화 인터페이스
-│   └── AesCryptoService.cs         // AES-256 GCM 등 구현
+│   ├── AppSettings.cs              // 설정 모델 (버전, 유효성 검사)
+│   ├── ISettingsService.cs         // 저장소 추상화 인터페이스
+│   ├── JsonSettingsService.cs      // JSON 파일 저장 구현
+│   ├── SqliteSettingsService.cs    // SQLite 저장 구현
+│   ├── ICryptoService.cs           // 암호화 인터페이스
+│   └── AesCryptoService.cs         // AES-256-GCM 구현
 ├── Services/
-│   ├── AppState.cs                 // 전역 상태(테마/언어/토큰 등)
-│   └── SettingsFacade.cs           // ViewModel이 쓰기 편한 파사드(자동 저장/검증/이벤트)
+│   ├── AppState.cs                 // 전역 상태 (반응형)
+│   ├── SettingsFacade.cs           // ViewModel에서 쓰기 편한 파사드
+│   └── Paths.cs                    // OS별 저장 경로 결정
 ├── ViewModels/
-│   ├── SettingsViewModel.cs        // UI 바인딩용
-│   └── LoginViewModel.cs           // 예: 로그인 후 토큰 저장
+│   ├── SettingsViewModel.cs
+│   └── LoginViewModel.cs
 ├── Views/
-│   └── SettingsView.axaml          // UI
-├── Test/
-│   └── SettingsTests.cs            // 단위 테스트 샘플
-└── README.md
+│   └── SettingsView.axaml
+└── Tests/
+    └── SettingsTests.cs
 ```
+
+**설명**:  
+- `Config` 폴더에는 설정 관련 모델, 인터페이스, 구현체를 모았습니다.  
+- `Services`에는 전역 상태와 파사드를 두어 ViewModel이 저장소의 종류를 알지 못하게 했습니다.  
+- `Paths.cs`는 OS별 권장 디렉터리를 반환하는 유틸리티입니다.
 
 ---
 
-## 저장 위치 설계(크로스플랫폼/포터블)
+## 저장 위치 설계 (크로스 플랫폼)
 
-**원칙:** OS 권장 디렉터리 사용 + 포터블 모드(실행 파일 옆 저장) 옵션
+사용자 설정은 OS가 권장하는 위치에 저장하는 것이 일반적입니다. 여기에 포터블 모드(실행 파일 옆에 저장)도 지원할 수 있도록 합니다.
 
 ```csharp
 // Config/Paths.cs
@@ -55,16 +62,12 @@ public static class Paths
 {
     public static string GetSettingsDirectory(string? appName = "MyApp")
     {
-        // 1) 포터블 모드 우선
+        // 1) 포터블 모드: 환경 변수로 지정
         var portable = Environment.GetEnvironmentVariable("MYAPP_PORTABLE");
         if (!string.IsNullOrEmpty(portable))
-        {
-            var exeDir = AppContext.BaseDirectory;
-            return Path.Combine(exeDir, "data");
-        }
+            return Path.Combine(AppContext.BaseDirectory, "data");
 
         // 2) OS 권장 위치
-        var platform = Environment.OSVersion.Platform;
         if (OperatingSystem.IsWindows())
         {
             var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -75,9 +78,9 @@ public static class Paths
             var home = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
             return Path.Combine(home, "Library", "Application Support", appName!);
         }
-        // Linux/Unix
+        // Linux / Unix
         var config = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
-                    ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".config");
+                     ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), ".config");
         return Path.Combine(config, appName!);
     }
 
@@ -89,7 +92,9 @@ public static class Paths
 
 ---
 
-## 모델: 버전/민감정보/유효성
+## 설정 모델 (AppSettings)
+
+설정 모델에는 스키마 버전, 일반 필드, 암호화 저장용 필드를 포함합니다. `DataAnnotations`를 사용해 유효성 검사를 할 수 있습니다.
 
 ```csharp
 // Config/AppSettings.cs
@@ -97,32 +102,36 @@ using System.ComponentModel.DataAnnotations;
 
 public class AppSettings
 {
-    // 스키마/마이그레이션용
     public int SchemaVersion { get; set; } = 1;
 
-    [Required, RegularExpression(@"^(en|ko|ja)$")]
+    [Required, RegularExpression(@"^(ko|en|ja)$")]
     public string Language { get; set; } = "ko";
 
     [Required, RegularExpression(@"^(Light|Dark)$")]
     public string Theme { get; set; } = "Light";
 
-    // 민감정보(암호화 저장): 실제 저장은 EncryptedAuthToken 필드에
-    public string? AuthToken { get; set; }
     public bool AutoLogin { get; set; } = false;
 
-    // 내부 저장용 암호문 필드(직렬화 대상)
+    // 실제 저장되는 암호화된 토큰
     public string? EncryptedAuthToken { get; set; }
 
-    // 사용자 기타 설정(예시)
+    // 사용자 편의를 위한 평문 토큰 (암호화/복호화 후 사용)
+    [JsonIgnore]
+    public string? AuthToken { get; set; }
+
     public bool UseHardwareAcceleration { get; set; } = true;
     public int WindowWidth { get; set; } = 1280;
     public int WindowHeight { get; set; } = 800;
 }
 ```
 
+**참고**: `AuthToken`은 `JsonIgnore` 속성을 붙여 직렬화하지 않도록 하고, 대신 `EncryptedAuthToken`에 암호화된 값을 저장합니다.
+
 ---
 
-## 암호화 서비스: AES-256-GCM
+## 암호화 서비스 (AES-256-GCM)
+
+민감 정보는 AES-GCM 알고리즘으로 암호화합니다. 키는 외부에서 안전하게 관리해야 하지만, 여기서는 예시로 고정 키를 사용합니다.
 
 ```csharp
 // Config/ICryptoService.cs
@@ -140,7 +149,6 @@ using System.Text;
 
 public sealed class AesCryptoService : ICryptoService
 {
-    // 키 관리: 실제 프로덕션에서는 OS 보호 API/DPAPI, KMS, .NET user-secrets 등을 고려
     private readonly byte[] _key;
 
     public AesCryptoService(byte[] key) => _key = key;
@@ -177,11 +185,11 @@ public sealed class AesCryptoService : ICryptoService
 }
 ```
 
-> 키는 예제로 `byte[32]` 고정. 실제로는 사용자별/장치별 안전한 저장소를 사용해야 한다.
-
 ---
 
 ## 저장소 인터페이스
+
+`ISettingsService`는 설정을 로드하고 저장하는 표준 인터페이스입니다. 구현체는 JSON 또는 SQLite 방식으로 제공합니다.
 
 ```csharp
 // Config/ISettingsService.cs
@@ -194,7 +202,9 @@ public interface ISettingsService
 
 ---
 
-## JSON 저장 구현(원자적 쓰기 + 백업/롤백)
+## JSON 저장소 구현 (원자적 쓰기 + 백업)
+
+JSON 파일을 안전하게 다루려면 **임시 파일 → 덮어쓰기** 방식으로 원자적 쓰기를 보장하고, 저장 전에 백업 파일을 만듭니다.
 
 ```csharp
 // Config/JsonSettingsService.cs
@@ -220,7 +230,6 @@ public sealed class JsonSettingsService : ISettingsService
 
         if (!File.Exists(path))
         {
-            // 백업이 있다면 복구 시도
             if (File.Exists(backup))
                 File.Copy(backup, path, overwrite: true);
             else
@@ -233,18 +242,15 @@ public sealed class JsonSettingsService : ISettingsService
             var loaded = await JsonSerializer.DeserializeAsync<AppSettings>(fs, _opt, ct)
                          ?? new AppSettings();
 
-            // 복호화 → 메모리 상 AuthToken 채움
             if (!string.IsNullOrWhiteSpace(loaded.EncryptedAuthToken))
                 loaded.AuthToken = _crypto.Decrypt(loaded.EncryptedAuthToken);
 
-            // 스키마 마이그레이션
             MigrateIfNeeded(loaded);
-
             return loaded;
         }
         catch
         {
-            // 손상 시 백업 복구 시도
+            // 파일 손상 시 백업 복구 시도
             if (File.Exists(backup))
             {
                 File.Copy(backup, path, true);
@@ -261,10 +267,8 @@ public sealed class JsonSettingsService : ISettingsService
 
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-        // 민감정보 암호화하여 저장 필드에 쓰기
         s.EncryptedAuthToken = string.IsNullOrWhiteSpace(s.AuthToken) ? null : _crypto.Encrypt(s.AuthToken);
 
-        // 원자적 쓰기: 임시 파일 → Move
         var temp = Path.GetTempFileName();
         try
         {
@@ -273,17 +277,14 @@ public sealed class JsonSettingsService : ISettingsService
                 await JsonSerializer.SerializeAsync(fs, s, _opt, ct);
             }
 
-            // 백업 갱신
             if (File.Exists(path))
                 File.Copy(path, backup, overwrite: true);
 
-            // 교체(가능하면 ReplaceFile 유사 동작)
             if (File.Exists(path)) File.Delete(path);
             File.Move(temp, path);
         }
         catch
         {
-            // temp 삭제
             try { if (File.Exists(temp)) File.Delete(temp); } catch { /* ignore */ }
             throw;
         }
@@ -291,23 +292,32 @@ public sealed class JsonSettingsService : ISettingsService
 
     private static void MigrateIfNeeded(AppSettings s)
     {
-        // 예: 스키마 1 → 2 업그레이드(샘플)
-        // if (s.SchemaVersion < 2) { s.NewField = ...; s.SchemaVersion = 2; }
+        // 예: SchemaVersion 1 → 2로 업그레이드
+        if (s.SchemaVersion < 2)
+        {
+            // s.NewField = ...;
+            s.SchemaVersion = 2;
+        }
     }
 }
 ```
 
-**핵심 포인트**
-- 임시파일 → Move 로 **원자적 쓰기** 보장(부분 쓰기/전원장애 대비)
-- 저장 전 암호화, 로드 후 복호화
-- 손상 시 **백업 복구** 경로
-- `SchemaVersion` 기반 마이그레이션 훅
+**핵심 포인트**  
+- 임시 파일에 저장 후 `File.Move`로 원자적 교체  
+- 저장 전 백업 생성, 로드 시 백업 복구 가능  
+- 암호화/복호화는 저장/로드 시점에 적용  
 
 ---
 
-## SQLite 저장 구현(스키마/마이그레이션)
+## SQLite 저장소 구현 (스키마 + 마이그레이션)
 
-**라이브러리:** `Microsoft.Data.Sqlite` (System.Data.SQLite 대체 가능)
+SQLite를 사용하려면 `Microsoft.Data.Sqlite` 패키지를 추가합니다.
+
+```bash
+dotnet add package Microsoft.Data.Sqlite
+```
+
+스키마는 단일 레코드 테이블로 관리하며, 트랜잭션으로 일관성을 보장합니다.
 
 ```csharp
 // Config/SqliteSettingsService.cs
@@ -326,21 +336,18 @@ public sealed class SqliteSettingsService : ISettingsService
 
         using var conn = new SqliteConnection($"Data Source={path}");
         await conn.OpenAsync(ct);
-
         await EnsureSchemaAsync(conn, ct);
 
-        // 단일 레코드 테이블 가정(키=1)
         var cmd = conn.CreateCommand();
         cmd.CommandText = """
-            SELECT SchemaVersion, Language, Theme, EncryptedAuthToken, AutoLogin, UseHardwareAcceleration, WindowWidth, WindowHeight
-            FROM AppSettings
-            WHERE Id = 1
+            SELECT SchemaVersion, Language, Theme, EncryptedAuthToken, AutoLogin,
+                   UseHardwareAcceleration, WindowWidth, WindowHeight
+            FROM AppSettings WHERE Id = 1
         """;
 
         using var reader = await cmd.ExecuteReaderAsync(ct);
-
         if (!await reader.ReadAsync(ct))
-            return new AppSettings(); // 기본값
+            return new AppSettings();
 
         var s = new AppSettings
         {
@@ -357,7 +364,7 @@ public sealed class SqliteSettingsService : ISettingsService
         if (!string.IsNullOrWhiteSpace(s.EncryptedAuthToken))
             s.AuthToken = _crypto.Decrypt(s.EncryptedAuthToken);
 
-        MigrateIfNeeded(conn, s, ct); // 필요 시 DB 업데이트
+        MigrateIfNeeded(conn, s, ct);
         return s;
     }
 
@@ -377,11 +384,12 @@ public sealed class SqliteSettingsService : ISettingsService
         cmd.Transaction = tx;
 
         cmd.CommandText = """
-            INSERT INTO AppSettings(Id, SchemaVersion, Language, Theme, EncryptedAuthToken, AutoLogin, UseHardwareAcceleration, WindowWidth, WindowHeight)
+            INSERT INTO AppSettings(Id, SchemaVersion, Language, Theme, EncryptedAuthToken, AutoLogin,
+                                    UseHardwareAcceleration, WindowWidth, WindowHeight)
             VALUES(1, $sv, $lang, $theme, $token, $auto, $hwa, $w, $h)
             ON CONFLICT(Id) DO UPDATE SET
-              SchemaVersion=$sv, Language=$lang, Theme=$theme, EncryptedAuthToken=$token,
-              AutoLogin=$auto, UseHardwareAcceleration=$hwa, WindowWidth=$w, WindowHeight=$h
+                SchemaVersion=$sv, Language=$lang, Theme=$theme, EncryptedAuthToken=$token,
+                AutoLogin=$auto, UseHardwareAcceleration=$hwa, WindowWidth=$w, WindowHeight=$h
         """;
 
         cmd.Parameters.AddWithValue("$sv", s.SchemaVersion);
@@ -401,53 +409,59 @@ public sealed class SqliteSettingsService : ISettingsService
     {
         var sql = """
             CREATE TABLE IF NOT EXISTS AppSettings(
-              Id INTEGER PRIMARY KEY CHECK (Id = 1),
-              SchemaVersion INTEGER NOT NULL,
-              Language TEXT NOT NULL,
-              Theme TEXT NOT NULL,
-              EncryptedAuthToken TEXT NULL,
-              AutoLogin INTEGER NOT NULL,
-              UseHardwareAcceleration INTEGER NOT NULL,
-              WindowWidth INTEGER NOT NULL,
-              WindowHeight INTEGER NOT NULL
+                Id INTEGER PRIMARY KEY CHECK (Id = 1),
+                SchemaVersion INTEGER NOT NULL,
+                Language TEXT NOT NULL,
+                Theme TEXT NOT NULL,
+                EncryptedAuthToken TEXT NULL,
+                AutoLogin INTEGER NOT NULL,
+                UseHardwareAcceleration INTEGER NOT NULL,
+                WindowWidth INTEGER NOT NULL,
+                WindowHeight INTEGER NOT NULL
             )
         """;
         var cmd = conn.CreateCommand();
         cmd.CommandText = sql;
         await cmd.ExecuteNonQueryAsync(ct);
 
-        // 최초 레코드 없으면 시드
-        var exists = conn.CreateCommand();
-        exists.CommandText = "SELECT COUNT(*) FROM AppSettings WHERE Id=1";
-        var count = (long)(await exists.ExecuteScalarAsync(ct) ?? 0L);
+        var existsCmd = conn.CreateCommand();
+        existsCmd.CommandText = "SELECT COUNT(*) FROM AppSettings WHERE Id = 1";
+        var count = (long)(await existsCmd.ExecuteScalarAsync(ct) ?? 0L);
         if (count == 0)
         {
-            var seed = conn.CreateCommand();
-            seed.CommandText = """
-                INSERT INTO AppSettings(Id, SchemaVersion, Language, Theme, EncryptedAuthToken, AutoLogin, UseHardwareAcceleration, WindowWidth, WindowHeight)
+            var seedCmd = conn.CreateCommand();
+            seedCmd.CommandText = """
+                INSERT INTO AppSettings(Id, SchemaVersion, Language, Theme, EncryptedAuthToken,
+                                        AutoLogin, UseHardwareAcceleration, WindowWidth, WindowHeight)
                 VALUES(1, 1, 'ko', 'Light', NULL, 0, 1, 1280, 800)
             """;
-            await seed.ExecuteNonQueryAsync(ct);
+            await seedCmd.ExecuteNonQueryAsync(ct);
         }
     }
 
     private static void MigrateIfNeeded(SqliteConnection conn, AppSettings s, CancellationToken ct)
     {
-        // 예: SchemaVersion < 2 → 열 추가/데이터 변환 등
-        // if (s.SchemaVersion < 2) { ...; s.SchemaVersion = 2; Save... }
+        // 예: SchemaVersion 1 → 2 마이그레이션
+        if (s.SchemaVersion < 2)
+        {
+            // ALTER TABLE 등 실행
+            s.SchemaVersion = 2;
+            // 저장은 SaveAsync에서 다시 호출되므로 여기서는 생략
+        }
     }
 }
 ```
 
-**핵심 포인트**
-- 단일 레코드 스키마(간단/안정)
-- `ON CONFLICT(Id) DO UPDATE`로 UPSERT
-- 마이그레이션 훅(`MigrateIfNeeded`) 제공
-- 트랜잭션으로 **부분 저장 방지**
+**핵심 포인트**  
+- `ON CONFLICT` 구문으로 UPSERT 구현  
+- 트랜잭션으로 부분 저장 방지  
+- 스키마 생성과 시드 데이터를 `EnsureSchemaAsync`에서 처리  
 
 ---
 
-## 전역 상태(AppState)와 반응형 연결
+## 전역 상태와 파사드
+
+`AppState`는 설정의 값을 반응형으로 보관합니다. `SettingsFacade`는 저장소와 `AppState`를 연결하며, ViewModel이 저장소의 종류를 몰라도 되게 합니다.
 
 ```csharp
 // Services/AppState.cs
@@ -464,11 +478,13 @@ public sealed class AppState : ReactiveObject
         get => _language;
         set => this.RaiseAndSetIfChanged(ref _language, value);
     }
+
     public string Theme
     {
         get => _theme;
         set => this.RaiseAndSetIfChanged(ref _theme, value);
     }
+
     public string? AuthToken
     {
         get => _authToken;
@@ -476,10 +492,6 @@ public sealed class AppState : ReactiveObject
     }
 }
 ```
-
----
-
-## 파사드(SettingsFacade): 검증/동기화/자동 저장
 
 ```csharp
 // Services/SettingsFacade.cs
@@ -492,14 +504,14 @@ public sealed class SettingsFacade
 
     public SettingsFacade(ISettingsService repo, AppState state)
     {
-        _repo = repo; _state = state;
+        _repo = repo;
+        _state = state;
     }
 
-    public async Task<AppSettings> LoadIntoStateAsync(CancellationToken ct = default)
+    public async Task LoadIntoStateAsync(CancellationToken ct = default)
     {
         var s = await _repo.LoadAsync(ct);
         ApplyToState(s);
-        return s;
     }
 
     public async Task SaveFromStateAsync(CancellationToken ct = default)
@@ -509,18 +521,19 @@ public sealed class SettingsFacade
         await _repo.SaveAsync(s, ct);
     }
 
-    public void ApplyToState(AppSettings s)
+    private void ApplyToState(AppSettings s)
     {
         _state.Language = s.Language;
         _state.Theme = s.Theme;
         _state.AuthToken = s.AuthToken;
     }
 
-    public AppSettings FromState() => new()
+    private AppSettings FromState() => new()
     {
         Language = _state.Language,
         Theme = _state.Theme,
-        AuthToken = _state.AuthToken
+        AuthToken = _state.AuthToken,
+        // 기타 필드는 필요 시 채움
     };
 
     private static void Validate(AppSettings s)
@@ -533,60 +546,65 @@ public sealed class SettingsFacade
 }
 ```
 
-> ViewModel은 저장소가 JSON인지 SQLite인지 신경 쓰지 않고 `SettingsFacade`를 호출한다.
-
 ---
 
-## App 초기화/DI 등록
+## DI 구성 및 앱 초기화
+
+`App.axaml.cs`에서 DI 컨테이너를 구성하고, 앱 시작 시 설정을 로드합니다.
 
 ```csharp
-// App.axaml.cs (요지)
+// App.axaml.cs (일부)
 using Microsoft.Extensions.DependencyInjection;
 
-private void ConfigureServices(IServiceCollection services)
+public partial class App : Application
 {
-    // 32바이트 키(예제): 반드시 안전한 저장소/프로비저닝으로 대체
-    var key = Enumerable.Repeat((byte)0x11, 32).ToArray();
+    public static ServiceProvider Services { get; private set; } = default!;
 
-    services.AddSingleton<ICryptoService>(_ => new AesCryptoService(key));
+    public override void OnFrameworkInitializationCompleted()
+    {
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        Services = services.BuildServiceProvider();
 
-    // 둘 중 하나를 선택 등록(런타임 스위치도 가능)
-    services.AddSingleton<ISettingsService, JsonSettingsService>();
-    // services.AddSingleton<ISettingsService, SqliteSettingsService>();
+        var facade = Services.GetRequiredService<SettingsFacade>();
+        // 설정 로드 (비동기)
+        _ = facade.LoadIntoStateAsync();
 
-    services.AddSingleton<AppState>();
-    services.AddSingleton<SettingsFacade>();
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var mainVm = Services.GetRequiredService<MainViewModel>();
+            desktop.MainWindow = new MainWindow { DataContext = mainVm };
+        }
 
-    // ViewModel 등...
-}
-```
+        base.OnFrameworkInitializationCompleted();
+    }
 
-앱 시작 시 로드:
+    private void ConfigureServices(IServiceCollection services)
+    {
+        // 예제 키 (실제로는 안전한 저장소에서 로드)
+        var key = Enumerable.Repeat((byte)0x11, 32).ToArray();
+        services.AddSingleton<ICryptoService>(_ => new AesCryptoService(key));
 
-```csharp
-public override async void OnFrameworkInitializationCompleted()
-{
-    var sp = Services;
-    var facade = sp.GetRequiredService<SettingsFacade>();
+        // 저장소 선택: 환경 변수로 JSON 또는 SQLite 결정
+        var engine = Environment.GetEnvironmentVariable("MYAPP_SETTINGS_ENGINE") ?? "json";
+        if (engine.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
+            services.AddSingleton<ISettingsService, SqliteSettingsService>();
+        else
+            services.AddSingleton<ISettingsService, JsonSettingsService>();
 
-    var loaded = await facade.LoadIntoStateAsync();
-
-    // 테마/언어 초기화(I18N/Theme 매니저와 결합 가능)
-    // 예: ThemeManager.Apply(loaded.Theme); LocalizationManager.SetCulture(loaded.Language);
-
-    // 자동 로그인 분기
-    if (loaded.AutoLogin && !string.IsNullOrWhiteSpace(loaded.AuthToken))
-        ShowMainWindow();
-    else
-        ShowLoginWindow();
-
-    base.OnFrameworkInitializationCompleted();
+        services.AddSingleton<AppState>();
+        services.AddSingleton<SettingsFacade>();
+        services.AddTransient<SettingsViewModel>();
+        // 기타 ViewModel 등록
+    }
 }
 ```
 
 ---
 
-## Settings UI: ViewModel & View
+## 설정 UI (SettingsViewModel & View)
+
+설정 화면은 `AppState`를 직접 바인딩하고, 저장/불러오기는 `SettingsFacade`를 통해 처리합니다.
 
 ```csharp
 // ViewModels/SettingsViewModel.cs
@@ -596,44 +614,44 @@ using System.Threading.Tasks;
 
 public sealed class SettingsViewModel : ReactiveObject
 {
-    private readonly SettingsFacade _settings;
+    private readonly SettingsFacade _facade;
     private readonly AppState _state;
 
-    public SettingsViewModel(SettingsFacade settings, AppState state)
+    public SettingsViewModel(SettingsFacade facade, AppState state)
     {
-        _settings = settings; _state = state;
+        _facade = facade;
+        _state = state;
 
         SaveCommand = ReactiveCommand.CreateFromTask(SaveAsync);
         ReloadCommand = ReactiveCommand.CreateFromTask(ReloadAsync);
     }
 
-    // 바인딩은 AppState에 그대로 연결(간단)
     public string Language
     {
         get => _state.Language;
         set => _state.Language = value;
     }
+
     public string Theme
     {
         get => _state.Theme;
         set => _state.Theme = value;
     }
-    public bool AutoLogin { get; set; } // JSON/SQLite 모델과 연결하려면 저장 시 반영
+
+    public bool AutoLogin { get; set; } // 실제 저장 시 반영
 
     public ReactiveCommand<Unit, Unit> SaveCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
 
     private async Task SaveAsync()
     {
-        // AutoLogin 반영 예시
-        var s = _settings.FromState();
-        s.AutoLogin = AutoLogin;
-        await _settings.SaveFromStateAsync();
+        // AutoLogin을 포함하려면 FromState() 확장 필요
+        await _facade.SaveFromStateAsync();
     }
 
     private async Task ReloadAsync()
     {
-        await _settings.LoadIntoStateAsync();
+        await _facade.LoadIntoStateAsync();
         this.RaisePropertyChanged(nameof(Language));
         this.RaisePropertyChanged(nameof(Theme));
     }
@@ -643,120 +661,77 @@ public sealed class SettingsViewModel : ReactiveObject
 ```xml
 <!-- Views/SettingsView.axaml -->
 <UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:vm="clr-namespace:MyApp.ViewModels"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="MyApp.Views.SettingsView">
-  <UserControl.DataContext>
-    <vm:SettingsViewModel />
-  </UserControl.DataContext>
+    <StackPanel Margin="20" Spacing="10">
+        <TextBlock Text="설정" FontSize="20"/>
 
-  <StackPanel Margin="20" Spacing="10">
-    <TextBlock Text="설정" FontSize="20"/>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="언어" Width="80"/>
+            <ComboBox SelectedItem="{Binding Language}">
+                <ComboBoxItem>ko</ComboBoxItem>
+                <ComboBoxItem>en</ComboBoxItem>
+                <ComboBoxItem>ja</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
 
-    <StackPanel Orientation="Horizontal" Spacing="8">
-      <TextBlock Text="언어" Width="80"/>
-      <ComboBox SelectedItem="{Binding Language}">
-        <ComboBoxItem Content="ko"/>
-        <ComboBoxItem Content="en"/>
-        <ComboBoxItem Content="ja"/>
-      </ComboBox>
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="테마" Width="80"/>
+            <ComboBox SelectedItem="{Binding Theme}">
+                <ComboBoxItem>Light</ComboBoxItem>
+                <ComboBoxItem>Dark</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
+
+        <CheckBox Content="자동 로그인" IsChecked="{Binding AutoLogin}"/>
+
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Content="저장" Command="{Binding SaveCommand}"/>
+            <Button Content="다시 불러오기" Command="{Binding ReloadCommand}"/>
+        </StackPanel>
     </StackPanel>
-
-    <StackPanel Orientation="Horizontal" Spacing="8">
-      <TextBlock Text="테마" Width="80"/>
-      <ComboBox SelectedItem="{Binding Theme}">
-        <ComboBoxItem Content="Light"/>
-        <ComboBoxItem Content="Dark"/>
-      </ComboBox>
-    </StackPanel>
-
-    <CheckBox Content="자동 로그인" IsChecked="{Binding AutoLogin}"/>
-
-    <StackPanel Orientation="Horizontal" Spacing="8">
-      <Button Content="저장" Command="{Binding SaveCommand}"/>
-      <Button Content="다시 불러오기" Command="{Binding ReloadCommand}"/>
-    </StackPanel>
-  </StackPanel>
 </UserControl>
 ```
 
 ---
 
-## 로그인 후 토큰 저장(민감정보 암호화)
+## 로그인 후 토큰 저장
+
+로그인 성공 시 `AppState.AuthToken`에 토큰을 설정하고, `SettingsFacade.SaveFromStateAsync()`를 호출하여 암호화 저장합니다.
 
 ```csharp
-// ViewModels/LoginViewModel.cs (요지)
-public sealed class LoginViewModel : ReactiveObject
+// ViewModels/LoginViewModel.cs (일부)
+private async Task<bool> LoginAsync()
 {
-    private readonly SettingsFacade _facade;
-    private readonly AppState _state;
+    // 실제 인증 로직
+    var ok = await _authService.LoginAsync(Username, Password);
+    if (!ok) return false;
 
-    public LoginViewModel(SettingsFacade facade, AppState state)
-    {
-        _facade = facade; _state = state;
-
-        LoginCommand = ReactiveCommand.CreateFromTask(LoginAsync);
-    }
-
-    public string Username { get; set; } = "";
-    public string Password { get; set; } = "";
-
-    public ReactiveCommand<Unit, bool> LoginCommand { get; }
-
-    private async Task<bool> LoginAsync()
-    {
-        // 실제 인증 로직
-        var ok = Username == "admin" && Password == "1234";
-        if (!ok) return false;
-
-        // 예제 토큰
-        _state.AuthToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-        // 필요 시 AutoLogin도 온
-        var s = _facade.FromState();
-        s.AutoLogin = true;
-        await _facade.SaveFromStateAsync();
-        return true;
-    }
+    _state.AuthToken = _authService.GetToken();
+    var s = _facade.FromState();
+    s.AutoLogin = true; // 필요 시
+    await _facade.SaveFromStateAsync();
+    return true;
 }
 ```
 
 ---
 
-## 실패/경합/잠금/손상 대응
+## 단위 테스트
 
-- **JSON**
-  - 임시 파일 → Move로 **원자성**
-  - 쓰기 전에 **백업** 생성, 로드시 손상 시 **백업 복구**
-  - 파일 잠금은 OS별로 보수적 공유 모드 사용
-- **SQLite**
-  - 트랜잭션 필수
-  - PRAGMA 설정(필요 시 `journal_mode=WAL`)로 동시 접근 안정성 개선
-  - 백업은 파일 복사 또는 `VACUUM INTO` 활용 가능
-
----
-
-## 성능/최적화
-
-- 설정은 일반적으로 **작고 드문 쓰기** → JSON이 간단/빠름
-- 복잡한 구조/조회/부분 업데이트/버전 다중 관리 → SQLite가 유리
-- 대량 I/O 시 배치 적용(메모리 캐시 → 주기 저장)
-
----
-
-## 단위 테스트(요지)
+테스트에서는 임시 경로(포터블 모드)를 사용하여 실제 파일 시스템에 영향을 주지 않도록 합니다.
 
 ```csharp
-// Test/SettingsTests.cs
+// Tests/SettingsTests.cs
 using Xunit;
 using FluentAssertions;
 
 public sealed class SettingsTests
 {
     [Fact]
-    public async Task Json_SaveLoad_Roundtrip()
+    public async Task Json_Roundtrip_Works()
     {
-        // 임시 경로(포터블 모드)
         Environment.SetEnvironmentVariable("MYAPP_PORTABLE", "1");
-
         var key = Enumerable.Repeat((byte)0x22, 32).ToArray();
         var crypto = new AesCryptoService(key);
         var repo = new JsonSettingsService(crypto);
@@ -768,126 +743,66 @@ public sealed class SettingsTests
         state.AuthToken = "secret";
 
         await facade.SaveFromStateAsync();
+
         state.Language = "ko";
         state.Theme = "Light";
         state.AuthToken = null;
 
-        var loaded = await repo.LoadAsync();
+        await facade.LoadIntoStateAsync();
 
-        loaded.Language.Should().Be("en");
-        loaded.Theme.Should().Be("Dark");
-        loaded.AuthToken.Should().Be("secret");
+        state.Language.Should().Be("en");
+        state.Theme.Should().Be("Dark");
+        state.AuthToken.Should().Be("secret");
     }
 
     [Fact]
-    public async Task Sqlite_SaveLoad_Roundtrip()
+    public async Task Sqlite_Roundtrip_Works()
     {
         Environment.SetEnvironmentVariable("MYAPP_PORTABLE", "1");
-
         var key = Enumerable.Repeat((byte)0x33, 32).ToArray();
         var crypto = new AesCryptoService(key);
         var repo = new SqliteSettingsService(crypto);
 
-        var s = await repo.LoadAsync();
-        s.Language = "ja";
-        s.Theme = "Dark";
-        s.AuthToken = "tok";
+        var s = new AppSettings { Language = "ja", Theme = "Dark", AuthToken = "tok" };
         await repo.SaveAsync(s);
 
-        var s2 = await repo.LoadAsync();
-        s2.Language.Should().Be("ja");
-        s2.Theme.Should().Be("Dark");
-        s2.AuthToken.Should().Be("tok");
+        var loaded = await repo.LoadAsync();
+        loaded.Language.Should().Be("ja");
+        loaded.Theme.Should().Be("Dark");
+        loaded.AuthToken.Should().Be("tok");
     }
 }
 ```
 
 ---
 
-## 검증/에러 메시지(UI와 결합)
-
-- 저장 전 `DataAnnotations`로 **유효성 검사**
-- UI에서는 `ReactiveUI.Validation` 또는 `INotifyDataErrorInfo`로 바인딩
-- 실패 시 사용자에게 토스트/다이얼로그로 안내
-
----
-
-## 테마/언어/i18n과의 결합(요점)
-
-- `AppState.Theme` 변경 → ThemeManager(리소스 교체) 호출
-- `AppState.Language` 변경 → LocalizationManager.SetCulture → ViewModels `RaisePropertyChanged`
-- 설정 저장 시 이 두 값은 **즉시 반영**되어 다음 실행에도 동일
-
----
-
-## 저장 방식 선택 가이드(확장판)
+## JSON vs SQLite 선택 기준
 
 | 기준 | JSON | SQLite |
 |------|------|--------|
-| 설정 규모가 작고 단순 | 매우 적합 | 과한 선택일 수 있음 |
-| 다계층/복잡/조회/필터 | 한계 | 적합 |
-| 원자성/백업/복구 | 임시파일+백업으로 해결 | 트랜잭션으로 자연스러움 |
-| 마이그레이션 | 코드 변환/키 이동 | DDL/데이터 변환 |
-| 외부 수정/툴링 | 손쉬움(에디터) | SQL 도구 필요 |
+| 설정 규모 | 작고 단순할 때 적합 | 복잡한 구조나 다수 설정에 적합 |
+| 원자성 | 임시 파일+백업으로 구현 가능 | 트랜잭션으로 자연스럽게 보장 |
+| 마이그레이션 | 코드 수준에서 직접 처리 | DDL + 코드 병행 |
+| 외부 편집 | 메모장으로 쉽게 확인 가능 | SQL 도구 필요 |
 | 성능 | 매우 빠름 | 충분히 빠름 |
+| 권장 사용 | 간단한 앱, 포터블 | 여러 설정 테이블, 로그 기록 등 |
 
 ---
 
-## 체크리스트(운영 관점)
+## 체크리스트 (운영 관점)
 
-- [ ] 저장 경로 존재/권한 확인
-- [ ] JSON 원자적 쓰기 + 백업/복구
-- [ ] SQLite 트랜잭션/압축/VACUUM 전략
-- [ ] 민감정보 암호화 강제(`AuthToken` 등)
-- [ ] 스키마 버전 및 마이그레이션 코드 유지
-- [ ] 예외 로깅(Serilog 등)
-- [ ] 단위/통합 테스트(CI)
-- [ ] 포터블 모드/리소스 경로 오버라이드 옵션
-- [ ] 다국어/테마와의 즉시 반영
+- [ ] 저장 경로에 대한 읽기/쓰기 권한 확인
+- [ ] JSON 원자적 쓰기 + 백업 복구 테스트
+- [ ] SQLite 트랜잭션과 `WAL` 모드 검토
+- [ ] 민감 정보 암호화 여부 확인 (`AuthToken` 등)
+- [ ] 스키마 버전 관리 및 마이그레이션 코드 유지
+- [ ] 예외 발생 시 로깅 (Serilog 등)
+- [ ] 단위 테스트 CI 연동
+- [ ] 포터블 모드 환경 변수 지원
+- [ ] 테마, 언어 변경 시 앱 전반에 즉시 반영되도록 연동
 
 ---
 
 ## 결론
 
-- **인터페이스(`ISettingsService`)로 저장소를 추상화**하면 JSON ↔ SQLite 전환이 쉽다.
-- **원자적 쓰기/백업/트랜잭션/암호화/마이그레이션**은 실제 배포에서 반드시 필요하다.
-- `AppState`(+ Theme/Localization 매니저)와 결합해 **UI/경험 전반을 일관되게 유지**할 수 있다.
-- 단위 테스트로 회귀를 막고, CI에서 **GUI 없는 빠른 검증**이 가능하다.
-
----
-
-## DI 예시(App.axaml.cs)
-
-```csharp
-private void ConfigureServices(IServiceCollection services)
-{
-    var key = Enumerable.Repeat((byte)0x11, 32).ToArray();
-    services.AddSingleton<ICryptoService>(_ => new AesCryptoService(key));
-
-    // 스위치로 저장 엔진 선택
-    var engine = Environment.GetEnvironmentVariable("MYAPP_SETTINGS_ENGINE") ?? "json";
-    if (engine.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
-        services.AddSingleton<ISettingsService, SqliteSettingsService>();
-    else
-        services.AddSingleton<ISettingsService, JsonSettingsService>();
-
-    services.AddSingleton<AppState>();
-    services.AddSingleton<SettingsFacade>();
-
-    services.AddTransient<SettingsViewModel>();
-    services.AddTransient<LoginViewModel>();
-}
-```
-
----
-
-## 수학적 표기(버전 정책의 간단한 모델)
-
-스키마 버전의 업데이트를 **그래프**로 생각하면, 각 노드는 버전, 간선은 마이그레이션 함수이다:
-
-$$
-\mathcal{V} = \{1,2,\ldots\},\quad
-\mathcal{M}_{i\to j} : S_i \to S_j,\quad i<j
-$$
-
-**불변식**: 모든 런타임 시점에 로드된 설정 \( s \in S_i \) 에 대해 유효한 경로 \( i \to \cdots \to N \) 가 존재해야 하며, 최종형 \( S_N \) 은 코드가 기대하는 현재 스키마다.
+이 글에서는 Avalonia 앱에서 설정을 안전하게 저장하고 불러오는 전체적인 구조를 다루었습니다. 인터페이스 기반의 저장소 추상화 덕분에 JSON과 SQLite를 쉽게 교체할 수 있고, 암호화와 마이그레이션까지 포함하여 실전에 바로 적용할 수 있는 코드를 제공했습니다. `AppState`와 `SettingsFacade`를 활용하면 ViewModel에서 저장소의 구현을 몰라도 되며, 단위 테스트를 통해 안정성을 확보할 수 있습니다. 이 구조를 기반으로 자신의 앱에 맞게 확장해 보시기 바랍니다.

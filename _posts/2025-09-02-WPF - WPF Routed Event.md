@@ -6,17 +6,22 @@ category: WPF
 ---
 # WPF Routed Event 이해하기
 
-## Routed Event란 무엇인가?
+## Routed Event란 무엇인가
 
-**Routed Event**(라우트된 이벤트)는 WPF의 독특한 이벤트 시스템으로, 이벤트가 발생한 지점에서 멈추지 않고 시각적 트리를 따라 이동하며 전파됩니다. 이는 기존 WinForms의 CLR 이벤트와 구별되는 WPF의 핵심 특징 중 하나입니다.
+Routed Event(라우트된 이벤트)는 WPF의 독특한 이벤트 시스템으로, 이벤트가 발생한 지점에서 멈추지 않고 시각적 트리를 따라 이동하며 전파됩니다. 이는 기존 WinForms의 CLR 이벤트와 구별되는 WPF의 핵심 특징 중 하나입니다.
 
 ### 세 가지 라우팅 전략
 
-1. **Direct(직접)**: 이벤트가 발생한 요소에서만 처리됩니다. WinForms의 전통적 이벤트 처리 방식과 유사합니다.
-2. **Bubbling(버블링)**: 이벤트가 자식 요소에서 시작하여 부모 요소로 상향 전파됩니다.
-3. **Tunneling(터널링)**: 이벤트가 루트에서 시작하여 자식 요소로 하향 전파됩니다. WPF 관례상 이름에 `Preview` 접두사를 사용합니다.
+**Direct(직접)**
+이벤트가 발생한 요소에서만 처리됩니다. WinForms의 전통적 이벤트 처리 방식과 유사합니다.
 
-### 왜 라우트된 이벤트가 필요한가?
+**Bubbling(버블링)**
+이벤트가 자식 요소에서 시작하여 부모 요소로 상향 전파됩니다.
+
+**Tunneling(터널링)**
+이벤트가 루트에서 시작하여 자식 요소로 하향 전파됩니다. WPF 관례상 이름에 `Preview` 접두사를 사용합니다.
+
+### 왜 라우트된 이벤트가 필요한가
 
 - **관심사 분리**: 하위 컨트롤의 내부 구현을 알지 못해도 상위 레벨에서 일괄적으로 이벤트를 처리할 수 있습니다.
 - **입력 정책 관리**: 윈도우나 페이지 수준에서 Preview 이벤트를 통해 입력을 사전에 필터링하거나 차단할 수 있습니다.
@@ -46,15 +51,23 @@ category: WPF
 
 버튼 위에서 마우스를 클릭하면 이벤트는 다음과 같은 순서로 처리됩니다:
 
-1. **터널링 단계 (Preview)**: `Window.PreviewMouseDown` → `Grid.PreviewMouseDown` → `Border.PreviewMouseDown` → `Button.PreviewMouseDown`
-2. **버블링 단계**: `Button.MouseDown` → `Border.MouseDown` → `Grid.MouseDown` → `Window.MouseDown`
-3. **Click 이벤트**: 버튼의 클릭 제스처가 완료되면 `Button.Click` 이벤트가 버블링 방식으로 발생합니다.
+1. **터널링 단계 (Preview)**  
+   `Window.PreviewMouseDown` → `Grid.PreviewMouseDown` → `Border.PreviewMouseDown` → `Button.PreviewMouseDown`
 
-### Source vs OriginalSource 이해하기
+2. **버블링 단계**  
+   `Button.MouseDown` → `Border.MouseDown` → `Grid.MouseDown` → `Window.MouseDown`
+
+3. **Click 이벤트**  
+   버튼의 클릭 제스처가 완료되면 `Button.Click` 이벤트가 버블링 방식으로 발생합니다.
+
+이 흐름은 터널링 이벤트가 먼저 하향식으로 전달되고, 이후 실제 이벤트(버블링)가 상향식으로 전달된다는 점을 보여줍니다.
+
+### Source와 OriginalSource의 차이
 
 라우트된 이벤트에는 두 가지 중요한 속성이 있습니다:
-- **`Source`**: 이벤트 핸들러 관점에서의 논리적 발신자입니다.
-- **`OriginalSource`**: 실제 히트 테스트를 통과한 가장 안쪽의 시각적 요소입니다. 템플릿 내부 요소일 수 있습니다.
+
+- **Source**: 이벤트 핸들러 관점에서의 논리적 발신자입니다. 일반적으로 이벤트를 발생시킨 컨트롤입니다.
+- **OriginalSource**: 실제 히트 테스트를 통과한 가장 안쪽의 시각적 요소입니다. 템플릿 내부의 요소일 수 있습니다.
 
 예를 들어, 버튼의 템플릿 내부에 있는 `ContentPresenter`를 클릭하면:
 - `OriginalSource`는 `ContentPresenter`가 됩니다.
@@ -69,8 +82,7 @@ category: WPF
 ```csharp
 private void Button_PreviewMouseDown(object sender, MouseButtonEventArgs e)
 {
-    // 버튼 단계에서 이벤트 처리 완료 선언
-    e.Handled = true;
+    e.Handled = true; // 버튼 단계에서 이벤트 처리 완료 선언
     Debug.WriteLine("Button PreviewMouseDown - 이벤트 차단됨");
 }
 // 결과: 이후의 모든 MouseDown 이벤트 핸들러는 호출되지 않음
@@ -185,6 +197,7 @@ public class Stepper : Control
 ```
 
 XAML에서 이 이벤트를 사용하는 방법:
+
 ```xml
 <local:Stepper StepChanged="Stepper_StepChanged"/>
 ```
@@ -242,18 +255,11 @@ private void ModalOverlay_PreviewMouseDown(object sender, MouseButtonEventArgs e
 
 라우트된 이벤트 관련 문제가 발생했을 때 확인해야 할 사항들:
 
-1. **이벤트가 전혀 도착하지 않는 경우**
-   - 다른 핸들러에서 `e.Handled = true`를 설정했는지 확인
-   - `AddHandler(..., handledEventsToo: true)`로 강제 수신 시도
-   - 포커스가 올바른 요소에 있는지 확인
-
-2. **이벤트 순서가 예상과 다른 경우**
-   - 터널링 → 버블링의 기본 순서 이해
-   - 클래스 핸들러와 인스턴스 핸들러의 실행 순서 확인
-
-3. **템플릿 내부 요소의 이벤트를 잡지 못하는 경우**
-   - `OriginalSource`를 사용하여 실제 발신자 확인
-   - `FindAncestor<T>()` 메서드로 원하는 타입까지 트리를 탐색
+| 문제 유형 | 점검 포인트 |
+|----------|------------|
+| 이벤트가 전혀 도착하지 않는 경우 | 다른 핸들러에서 `e.Handled = true`를 설정했는지 확인 / `AddHandler(..., handledEventsToo: true)`로 강제 수신 시도 / 포커스가 올바른 요소에 있는지 확인 |
+| 이벤트 순서가 예상과 다른 경우 | 터널링 → 버블링의 기본 순서 이해 / 클래스 핸들러와 인스턴스 핸들러의 실행 순서 확인 |
+| 템플릿 내부 요소의 이벤트를 잡지 못하는 경우 | `OriginalSource`를 사용하여 실제 발신자 확인 / `FindAncestor<T>()` 메서드로 원하는 타입까지 트리를 탐색 |
 
 ## 성능 고려사항
 
@@ -268,6 +274,7 @@ private void ModalOverlay_PreviewMouseDown(object sender, MouseButtonEventArgs e
 WPF의 라우트된 이벤트 시스템은 단순한 이벤트 전달 메커니즘을 넘어, 애플리케이션의 입력 정책을 체계적으로 관리할 수 있는 강력한 도구입니다. 터널링과 버블링의 이중 구조를 이해하고, `Handled` 속성을 적절히 활용하며, 클래스 핸들러를 통해 템플릿과의 결합도를 낮추는 것이 효과적인 WPF 개발의 핵심입니다.
 
 실제 프로젝트에서는 다음과 같은 원칙을 기억하세요:
+
 - **Preview(터널링)은 필터링과 차단에**, **일반 이벤트(버블링)은 실제 동작 수행에** 사용하세요.
 - 다른 컨트롤이나 라이브러리에서 처리한 이벤트도 필요하면 `handledEventsToo` 옵션으로 수신하세요.
 - 템플릿 기반 컨트롤을 설계할 때는 클래스 핸들러를 활용하여 내부 구현을 캡슐화하세요.

@@ -6,122 +6,30 @@ category: Avalonia
 ---
 # Avalonia MVVM: 다양한 컨트롤 바인딩
 
-## 예제 프로젝트 스캐폴드
+MVVM 패턴에서는 View가 ViewModel의 속성과 명령에 바인딩된다. TextBox 외에도 날짜 선택, 콤보박스, 체크박스 등 다양한 컨트롤을 ViewModel과 연결하는 방법을 익히면 대부분의 폼 기반 UI를 구현할 수 있다.
+
+## 프로젝트 구조
 
 ```
 MyAvaloniaApp/
-├── App.axaml
-├── Themes/
-│   ├── Colors.axaml
-│   └── Controls.axaml
-├── Views/
-│   └── ControlsDemoView.axaml
 ├── ViewModels/
 │   └── ControlsDemoViewModel.cs
+├── Views/
+│   └── ControlsDemoView.axaml
 ├── Models/
 │   └── User.cs
 ├── Converters/
 │   ├── BoolToTextConverter.cs
 │   └── DateTimeOffsetFormatConverter.cs
-├── Services/
-│   └── JsonStorageService.cs
-└── MyAvaloniaApp.csproj
+└── Services/
+    └── JsonStorageService.cs
 ```
 
-> 본문은 **초안의 ViewModel/뷰 구조를 그대로 사용**하면서, 필요한 클래스를 덧붙이는 식으로 확장한다.
+## DatePicker: 날짜 선택
 
----
-
-## DatePicker — 날짜 선택 바인딩 (기본형 → 실전형)
-
-### 기본형
-
-```xml
-<!-- Views/ControlsDemoView.axaml (발췌) -->
-<StackPanel Spacing="8">
-  <DatePicker SelectedDate="{Binding SelectedDate}" />
-  <TextBlock
-    Text="{Binding SelectedDate,
-                   StringFormat='선택한 날짜: {0:yyyy-MM-dd}'}" />
-</StackPanel>
-```
+DatePicker의 `SelectedDate` 속성은 `DateTimeOffset?` 타입이다. ViewModel에서도 동일한 타입으로 속성을 만들고 양방향 바인딩한다.
 
 ```csharp
-// ViewModels/ControlsDemoViewModel.cs (발췌)
-using ReactiveUI;
-using System;
-
-public class ControlsDemoViewModel : ReactiveObject
-{
-    private DateTimeOffset? _selectedDate = DateTimeOffset.Now;
-
-    public DateTimeOffset? SelectedDate
-    {
-        get => _selectedDate;
-        set => this.RaiseAndSetIfChanged(ref _selectedDate, value);
-    }
-}
-```
-
-핵심 포인트
-
-- `DatePicker.SelectedDate` 타입은 `DateTimeOffset?`.
-- `null` 허용 → 초기 미선택 처리 가능.
-- 문자열 포맷은 `StringFormat` 혹은 `IValueConverter`로 수행.
-
-### 포맷/빈값 처리 — Converter 활용
-
-```csharp
-// Converters/DateTimeOffsetFormatConverter.cs
-using System;
-using Avalonia.Data.Converters;
-using System.Globalization;
-
-public sealed class DateTimeOffsetFormatConverter : IValueConverter
-{
-    public string Format { get; set; } = "yyyy-MM-dd";
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is DateTimeOffset dto)
-            return dto.ToString(Format, culture);
-        return string.Empty; // null 또는 잘못된 형식 처리
-    }
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-    {
-        if (value is string s && DateTimeOffset.TryParse(s, culture, DateTimeStyles.None, out var dto))
-            return dto;
-        return null;
-    }
-}
-```
-
-```xml
-<!-- App.axaml (리소스 등록 예) -->
-<Application ... xmlns:conv="clr-namespace:MyAvaloniaApp.Converters">
-  <Application.Styles>
-    <FluentTheme Mode="Light"/>
-  </Application.Styles>
-  <Application.Resources>
-    <conv:DateTimeOffsetFormatConverter x:Key="DateFmt" Format="yyyy-MM-dd"/>
-  </Application.Resources>
-</Application>
-```
-
-```xml
-<!-- Views/ControlsDemoView.axaml (발췌) -->
-<TextBlock
-  Text="{Binding SelectedDate, Converter={StaticResource DateFmt}}"/>
-```
-
-### 최소/최대 범위(가드), 적용 버튼 활성화
-
-```csharp
-// ViewModels/ControlsDemoViewModel.cs (발췌)
-using System.Reactive;
-using System.Reactive.Linq;
-
 public class ControlsDemoViewModel : ReactiveObject
 {
     private DateTimeOffset? _selectedDate = DateTimeOffset.Now;
@@ -130,88 +38,78 @@ public class ControlsDemoViewModel : ReactiveObject
         get => _selectedDate;
         set => this.RaiseAndSetIfChanged(ref _selectedDate, value);
     }
-
-    public DateTimeOffset MinDate { get; } = new DateTimeOffset(2020,1,1,0,0,0,TimeSpan.Zero);
-    public DateTimeOffset MaxDate { get; } = new DateTimeOffset(2030,12,31,0,0,0,TimeSpan.Zero);
-
-    public ReactiveCommand<Unit, Unit> ApplyDateCommand { get; }
-
-    public ControlsDemoViewModel()
-    {
-        var canApply =
-            this.WhenAnyValue(vm => vm.SelectedDate)
-                .Select(d => d.HasValue && d.Value >= MinDate && d.Value <= MaxDate);
-
-        ApplyDateCommand = ReactiveCommand.Create(
-            () => { /* 저장/적용 로직 */ },
-            canApply);
-    }
 }
 ```
 
-```xml
-<!-- Views/ControlsDemoView.axaml (발췌) -->
-<StackPanel Spacing="8">
-  <TextBlock Text="날짜 범위: 2020-01-01 ~ 2030-12-31"/>
-  <DatePicker SelectedDate="{Binding SelectedDate}"/>
-  <Button Content="날짜 적용" Command="{Binding ApplyDateCommand}" />
-</StackPanel>
-```
-
-핵심 포인트
-
-- UI에서 직접 `MinDate/MaxDate` 속성이 노출되지 않더라도, **버튼 활성화 조건**으로 간접 제약을 건다.
-- 날짜 범위가 필요하면 커스텀 Validation과 `DataValidationErrors`(고급)로도 가능.
-
----
-
-## ComboBox — 문자열/객체/Enum/Id 바인딩
-
-### 문자열 컬렉션 선택
+XAML에서는 다음과 같이 바인딩한다.
 
 ```xml
-<StackPanel Spacing="8">
-  <ComboBox Items="{Binding Fruits}" SelectedItem="{Binding SelectedFruit}" />
-  <TextBlock Text="{Binding SelectedFruit, StringFormat='선택: {0}'}" />
-</StackPanel>
+<DatePicker SelectedDate="{Binding SelectedDate}" />
+<TextBlock Text="{Binding SelectedDate, StringFormat='선택: {0:yyyy-MM-dd}'}" />
 ```
+
+### 날짜 범위 제한
+
+날짜 선택의 범위를 제한해야 할 때가 있다. ViewModel에서 `MinDate`와 `MaxDate` 속성을 제공하고, 저장 버튼의 활성화 여부를 날짜 유효성에 따라 결정할 수 있다.
 
 ```csharp
-public partial class ControlsDemoViewModel : ReactiveObject
+public DateTimeOffset MinDate { get; } = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero);
+public DateTimeOffset MaxDate { get; } = new DateTimeOffset(2030, 12, 31, 0, 0, 0, TimeSpan.Zero);
+
+public ReactiveCommand<Unit, Unit> ApplyDateCommand { get; }
+
+public ControlsDemoViewModel()
 {
-    public ObservableCollection<string> Fruits { get; } = new()
-    {
-        "사과", "바나나", "포도", "오렌지"
-    };
+    var canApply = this.WhenAnyValue(x => x.SelectedDate)
+        .Select(d => d.HasValue && d.Value >= MinDate && d.Value <= MaxDate);
+    ApplyDateCommand = ReactiveCommand.Create(ApplyDate, canApply);
+}
 
-    private string? _selectedFruit;
-    public string? SelectedFruit
-    {
-        get => _selectedFruit;
-        set => this.RaiseAndSetIfChanged(ref _selectedFruit, value);
-    }
+private void ApplyDate() { /* 저장 로직 */ }
+```
+
+버튼은 Command에 바인딩하면 자동으로 활성/비활성 상태가 관리된다.
+
+```xml
+<Button Content="날짜 적용" Command="{Binding ApplyDateCommand}" />
+```
+
+## ComboBox: 선택형 컨트롤
+
+ComboBox는 여러 항목 중 하나를 선택할 때 사용한다. 항목은 단순 문자열일 수도 있고, 복잡한 객체일 수도 있다.
+
+### 문자열 목록
+
+```csharp
+public ObservableCollection<string> Fruits { get; } = new() { "사과", "바나나", "포도" };
+private string? _selectedFruit;
+public string? SelectedFruit
+{
+    get => _selectedFruit;
+    set => this.RaiseAndSetIfChanged(ref _selectedFruit, value);
 }
 ```
 
-### 객체 컬렉션(표시/값 분리)
+```xml
+<ComboBox Items="{Binding Fruits}" SelectedItem="{Binding SelectedFruit}" />
+```
+
+### 객체 목록
+
+객체를 표시할 때는 `ToString()`을 오버라이드하거나 ItemTemplate을 사용해 원하는 형식으로 보여줄 수 있다.
 
 ```csharp
-// Models/User.cs
-public sealed class User
+public class User
 {
     public int Id { get; init; }
     public string Name { get; init; } = "";
     public override string ToString() => Name;
 }
-```
 
-```csharp
-// ViewModels/ControlsDemoViewModel.cs (발췌)
 public ObservableCollection<User> Users { get; } = new()
 {
     new User { Id = 1, Name = "홍길동" },
-    new User { Id = 2, Name = "이순신" },
-    new User { Id = 3, Name = "신사임당" },
+    new User { Id = 2, Name = "이순신" }
 };
 
 private User? _selectedUser;
@@ -221,45 +119,31 @@ public User? SelectedUser
     set => this.RaiseAndSetIfChanged(ref _selectedUser, value);
 }
 
-// Id만 따로 보관/활용하고 싶을 때
-public int? SelectedUserId
-    => SelectedUser?.Id;
+// 선택된 사용자의 ID만 따로 관리하고 싶다면 파생 속성 활용
+public int? SelectedUserId => SelectedUser?.Id;
 ```
 
 ```xml
-<!-- ToString() 표시 사용 -->
-<ComboBox Items="{Binding Users}"
-          SelectedItem="{Binding SelectedUser}" />
-<TextBlock Text="{Binding SelectedUser.Name, StringFormat='사용자: {0}'}" />
-<TextBlock Text="{Binding SelectedUserId, StringFormat='Id: {0}'}" />
-```
-
-> Avalonia는 WPF의 `SelectedValuePath`와 완전히 동일하진 않다. 실전에서는 **`SelectedItem`로 객체를 바인딩**하고, ViewModel에서 **파생 속성**(예: `SelectedUserId`)을 노출하는 패턴이 가장 예측 가능하고 테스트하기 쉽다.
-
-### DataTemplate로 표시 커스터마이징
-
-```xml
-<ComboBox Items="{Binding Users}"
-          SelectedItem="{Binding SelectedUser}">
-  <ComboBox.ItemTemplate>
-    <DataTemplate>
-      <StackPanel Orientation="Horizontal" Spacing="6">
-        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-        <TextBlock Text="{Binding Id, StringFormat='(ID: {0})'}"
-                   Foreground="Gray"/>
-      </StackPanel>
-    </DataTemplate>
-  </ComboBox.ItemTemplate>
+<ComboBox Items="{Binding Users}" SelectedItem="{Binding SelectedUser}">
+    <ComboBox.ItemTemplate>
+        <DataTemplate>
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Id, StringFormat='(ID: {0})'}" Foreground="Gray"/>
+            </StackPanel>
+        </DataTemplate>
+    </ComboBox.ItemTemplate>
 </ComboBox>
+<TextBlock Text="{Binding SelectedUser.Name, StringFormat='선택: {0}'}" />
 ```
 
 ### Enum 바인딩
 
+Enum 타입은 `Enum.GetValues`로 배열을 만들어 ItemsSource로 제공한다.
+
 ```csharp
 public enum Priority { Low, Normal, High }
-
 public Priority[] Priorities { get; } = (Priority[])Enum.GetValues(typeof(Priority));
-
 private Priority _selectedPriority = Priority.Normal;
 public Priority SelectedPriority
 {
@@ -269,25 +153,12 @@ public Priority SelectedPriority
 ```
 
 ```xml
-<ComboBox Items="{Binding Priorities}"
-          SelectedItem="{Binding SelectedPriority}"/>
-<TextBlock Text="{Binding SelectedPriority}"/>
+<ComboBox Items="{Binding Priorities}" SelectedItem="{Binding SelectedPriority}" />
 ```
 
----
+## CheckBox: 불리언 상태
 
-## CheckBox — bool/nullable/마스터-디테일 패턴
-
-### 단일 체크
-
-```xml
-<StackPanel Spacing="8">
-  <CheckBox Content="약관에 동의합니다"
-            IsChecked="{Binding IsAccepted}" />
-  <Button Content="계속"
-          IsEnabled="{Binding IsAccepted}" />
-</StackPanel>
-```
+CheckBox는 `IsChecked` 속성을 `bool` 또는 `bool?`에 바인딩한다. 일반 체크박스는 두 가지 상태(true/false)를, `IsThreeState="True"`를 설정하면 세 가지 상태(true/false/null)를 사용할 수 있다.
 
 ```csharp
 private bool _isAccepted;
@@ -298,14 +169,17 @@ public bool IsAccepted
 }
 ```
 
-### 삼상 체크(bool?)와 마스터 체크
+```xml
+<CheckBox Content="약관 동의" IsChecked="{Binding IsAccepted}" />
+<Button Content="계속" IsEnabled="{Binding IsAccepted}" />
+```
 
-- 모든 항목이 체크 → `true`
-- 아무 항목도 체크 아님 → `false`
-- 혼합(일부만 체크) → `null` (Indeterminate)
+### 마스터 체크박스
+
+전체 선택/해제를 위한 마스터 체크박스는 세 가지 상태를 활용한다. 모든 하위 항목이 체크되면 true, 모두 해제되면 false, 일부만 체크되면 null(Indeterminate)로 표시한다.
 
 ```csharp
-public sealed class OptionItem : ReactiveObject
+public class OptionItem : ReactiveObject
 {
     private bool _checked;
     public string Name { get; init; } = "";
@@ -319,8 +193,7 @@ public sealed class OptionItem : ReactiveObject
 public ObservableCollection<OptionItem> Options { get; } = new()
 {
     new OptionItem { Name = "메일 알림" },
-    new OptionItem { Name = "SMS 알림" },
-    new OptionItem { Name = "푸시 알림" },
+    new OptionItem { Name = "SMS 알림" }
 };
 
 private bool? _checkAll = false;
@@ -332,16 +205,17 @@ public bool? CheckAll
         this.RaiseAndSetIfChanged(ref _checkAll, value);
         if (value.HasValue)
         {
-            foreach (var o in Options) o.Checked = value.Value;
+            foreach (var opt in Options)
+                opt.Checked = value.Value;
         }
     }
 }
 
+// 하위 항목의 변경을 감지해 마스터 상태 갱신
 public ControlsDemoViewModel()
 {
-    // 항목의 개별 변경 → 마스터 상태 갱신
     Options
-        .ToObservableChangeSet() // DynamicData 사용 시
+        .ToObservableChangeSet()
         .AutoRefresh(x => x.Checked)
         .Throttle(TimeSpan.FromMilliseconds(50))
         .Subscribe(_ => UpdateMasterCheck());
@@ -349,42 +223,30 @@ public ControlsDemoViewModel()
 
 private void UpdateMasterCheck()
 {
-    var cnt = Options.Count;
-    var checkedCnt = Options.Count(o => o.Checked);
-
-    if (checkedCnt == 0) CheckAll = false;
-    else if (checkedCnt == cnt) CheckAll = true;
-    else CheckAll = null;
+    var all = Options.All(x => x.Checked);
+    var any = Options.Any(x => x.Checked);
+    CheckAll = all ? true : any ? null : false;
 }
 ```
 
-```xml
-<StackPanel Spacing="6">
-  <CheckBox Content="전체 선택"
-            IsThreeState="True"
-            IsChecked="{Binding CheckAll}"/>
+XAML에서는 마스터 체크박스에 `IsThreeState="True"`를 설정한다.
 
-  <ItemsControl Items="{Binding Options}">
+```xml
+<CheckBox Content="전체 선택" IsThreeState="True" IsChecked="{Binding CheckAll}" />
+<ItemsControl Items="{Binding Options}">
     <ItemsControl.ItemTemplate>
-      <DataTemplate>
-        <CheckBox Content="{Binding Name}" IsChecked="{Binding Checked, Mode=TwoWay}"/>
-      </DataTemplate>
+        <DataTemplate>
+            <CheckBox Content="{Binding Name}" IsChecked="{Binding Checked, Mode=TwoWay}" />
+        </DataTemplate>
     </ItemsControl.ItemTemplate>
-  </ItemsControl>
-</StackPanel>
+</ItemsControl>
 ```
 
-> DynamicData 없이도 `Options.CollectionChanged` + 각 항목 `PropertyChanged` 구독으로 동일 구현 가능.
+## 라디오 버튼 그룹
 
----
-
-## 라디오 버튼 · 토글 스위치 · 슬라이더/프로그레스
-
-### RadioButton — 단일 선택(그룹)
+라디오 버튼은 그룹 내에서 단일 선택을 구현한다. ViewModel에서는 선택된 값을 문자열이나 Enum으로 관리하고, 변환기로 체크 상태를 바인딩한다.
 
 ```csharp
-public string[] PaymentMethods { get; } = { "카드", "계좌이체", "포인트" };
-
 private string _payment = "카드";
 public string Payment
 {
@@ -393,53 +255,31 @@ public string Payment
 }
 ```
 
+변환기: 현재 값과 파라미터가 같으면 true, 다르면 false를 반환한다.
+
+```csharp
+public class StringEqualsConverter : IValueConverter
+{
+    public static StringEqualsConverter Instance { get; } = new();
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => string.Equals(value?.ToString(), parameter?.ToString(), StringComparison.Ordinal);
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => (value is true) ? parameter?.ToString() : BindingOperations.DoNothing;
+}
+```
+
 ```xml
-<StackPanel>
-  <TextBlock Text="결제 수단"/>
-  <StackPanel Orientation="Horizontal" Spacing="12">
-    <RadioButton Content="카드"       GroupName="Pay" IsChecked="{Binding Payment, Converter={x:Static converters:StringEqualsConverter.Instance}, ConverterParameter=카드}"/>
-    <RadioButton Content="계좌이체"   GroupName="Pay" IsChecked="{Binding Payment, Converter={x:Static converters:StringEqualsConverter.Instance}, ConverterParameter=계좌이체}"/>
-    <RadioButton Content="포인트"     GroupName="Pay" IsChecked="{Binding Payment, Converter={x:Static converters:StringEqualsConverter.Instance}, ConverterParameter=포인트}"/>
-  </StackPanel>
+<StackPanel Orientation="Horizontal" Spacing="12">
+    <RadioButton Content="카드" GroupName="Pay"
+                 IsChecked="{Binding Payment, Converter={x:Static conv:StringEqualsConverter.Instance}, ConverterParameter=카드}" />
+    <RadioButton Content="계좌이체" GroupName="Pay"
+                 IsChecked="{Binding Payment, Converter={x:Static conv:StringEqualsConverter.Instance}, ConverterParameter=계좌이체}" />
 </StackPanel>
 ```
 
-간단히 하려면, 각 라디오의 `Checked` 이벤트에서 ViewModel 속성 변경(코드비하인드)도 가능하지만 **Converter**로 MVVM 유지가 깔끔하다. 아래와 같은 `StringEqualsConverter`를 하나 만들어두면 여러 곳에 재사용 가능하다.
+## 슬라이더와 프로그레스 바
 
-```csharp
-// Converters/StringEqualsConverter.cs
-using Avalonia.Data.Converters;
-using System;
-using System.Globalization;
-
-public sealed class StringEqualsConverter : IValueConverter
-{
-    public static StringEqualsConverter Instance { get; } = new();
-
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => string.Equals(value?.ToString(), parameter?.ToString(), StringComparison.Ordinal);
-
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => (value is bool b && b) ? parameter?.ToString() : BindingOperations.DoNothing;
-}
-```
-
-### ToggleSwitch — On/Off 설정
-
-```csharp
-private bool _darkMode;
-public bool DarkMode
-{
-    get => _darkMode;
-    set => this.RaiseAndSetIfChanged(ref _darkMode, value);
-}
-```
-
-```xml
-<ToggleSwitch IsChecked="{Binding DarkMode}" Content="다크 모드"/>
-```
-
-### Slider/ProgressBar — 숫자 바인딩
+슬라이더와 프로그레스 바는 `double` 타입의 값에 바인딩한다.
 
 ```csharp
 private double _progress;
@@ -451,303 +291,99 @@ public double Progress
 ```
 
 ```xml
-<Slider Minimum="0" Maximum="100" Value="{Binding Progress}"/>
-<ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}"/>
+<Slider Minimum="0" Maximum="100" Value="{Binding Progress}" />
+<ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}" />
 ```
 
----
+## ToggleSwitch
 
-## 종합 ViewModel — 파생 상태 · 명령 활성화
+토글 스위치는 `bool` 값에 바인딩한다.
 
 ```csharp
-// ViewModels/ControlsDemoViewModel.cs (전체형 예시)
-using ReactiveUI;
-using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Reactive;
-using System.Reactive.Linq;
-
-public partial class ControlsDemoViewModel : ReactiveObject
+private bool _darkMode;
+public bool DarkMode
 {
-    // DatePicker
-    private DateTimeOffset? _selectedDate = DateTimeOffset.Now;
-    public DateTimeOffset? SelectedDate
-    {
-        get => _selectedDate;
-        set => this.RaiseAndSetIfChanged(ref _selectedDate, value);
-    }
-
-    // ComboBox
-    public ObservableCollection<User> Users { get; } = new()
-    {
-        new User { Id = 1, Name = "홍길동" },
-        new User { Id = 2, Name = "이순신" },
-        new User { Id = 3, Name = "신사임당" },
-    };
-
-    private User? _selectedUser;
-    public User? SelectedUser
-    {
-        get => _selectedUser;
-        set => this.RaiseAndSetIfChanged(ref _selectedUser, value);
-    }
-
-    // CheckBox
-    private bool _isAccepted;
-    public bool IsAccepted
-    {
-        get => _isAccepted;
-        set => this.RaiseAndSetIfChanged(ref _isAccepted, value);
-    }
-
-    // Toggle
-    private bool _darkMode;
-    public bool DarkMode
-    {
-        get => _darkMode;
-        set => this.RaiseAndSetIfChanged(ref _darkMode, value);
-    }
-
-    // Slider/Progress
-    private double _progress;
-    public double Progress
-    {
-        get => _progress;
-        set => this.RaiseAndSetIfChanged(ref _progress, value);
-    }
-
-    // Summary (파생 상태)
-    public string Summary =>
-        $"날짜: {SelectedDate:yyyy-MM-dd}, 사용자: {SelectedUser?.Name ?? "-"}, 동의: {(IsAccepted ? "예" : "아니오")}";
-
-    // 버튼 커맨드
-    public ReactiveCommand<Unit, Unit> SaveCommand { get; }
-    public ReactiveCommand<Unit, Unit> LoadCommand { get; }
-
-    public ControlsDemoViewModel()
-    {
-        // 파생 상태 변경 알림
-        this.WhenAnyValue(vm => vm.SelectedDate, vm => vm.SelectedUser, vm => vm.IsAccepted)
-            .Subscribe(_ => this.RaisePropertyChanged(nameof(Summary)));
-
-        // 저장 가능 조건: 날짜 선택 + 사용자 선택 + 동의
-        var canSave = this.WhenAnyValue(
-            vm => vm.SelectedDate,
-            vm => vm.SelectedUser,
-            vm => vm.IsAccepted,
-            (d, u, a) => d.HasValue && u != null && a);
-
-        SaveCommand = ReactiveCommand.Create(Save, canSave);
-        LoadCommand = ReactiveCommand.Create(Load);
-    }
-
-    private void Save()
-    {
-        // 저장: 파일/서비스/메시지 등
-    }
-
-    private void Load()
-    {
-        // 불러오기: 파일/서비스/메시지 등
-    }
-}
-```
-
----
-
-## 종합 View — 컨트롤 배치/템플릿/포맷
-
-```xml
-<!-- Views/ControlsDemoView.axaml -->
-<UserControl xmlns="https://github.com/avaloniaui"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="clr-namespace:MyAvaloniaApp.ViewModels"
-             xmlns:conv="clr-namespace:MyAvaloniaApp.Converters"
-             x:Class="MyAvaloniaApp.Views.ControlsDemoView">
-
-  <UserControl.DataContext>
-    <vm:ControlsDemoViewModel/>
-  </UserControl.DataContext>
-
-  <ScrollViewer>
-    <StackPanel Margin="20" Spacing="16">
-
-      <!-- DatePicker -->
-      <StackPanel Spacing="6">
-        <TextBlock Text="날짜 선택"/>
-        <DatePicker SelectedDate="{Binding SelectedDate}"/>
-        <TextBlock Text="{Binding SelectedDate,
-                                  StringFormat='선택한 날짜: {0:yyyy-MM-dd}'}"/>
-      </StackPanel>
-
-      <!-- ComboBox (User) -->
-      <StackPanel Spacing="6">
-        <TextBlock Text="사용자 선택"/>
-        <ComboBox Items="{Binding Users}" SelectedItem="{Binding SelectedUser}">
-          <ComboBox.ItemTemplate>
-            <DataTemplate>
-              <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
-                <TextBlock Text="{Binding Id, StringFormat='(ID: {0})'}" Foreground="Gray"/>
-              </StackPanel>
-            </DataTemplate>
-          </ComboBox.ItemTemplate>
-        </ComboBox>
-        <TextBlock Text="{Binding SelectedUser.Name, StringFormat='선택: {0}'}"/>
-      </StackPanel>
-
-      <!-- CheckBox -->
-      <StackPanel Spacing="6">
-        <CheckBox Content="약관 동의" IsChecked="{Binding IsAccepted}"/>
-        <Button Content="저장" Command="{Binding SaveCommand}"/>
-      </StackPanel>
-
-      <!-- Toggle & Slider/Progress -->
-      <StackPanel Spacing="6">
-        <ToggleSwitch IsChecked="{Binding DarkMode}" Content="다크 모드"/>
-        <Slider Minimum="0" Maximum="100" Value="{Binding Progress}"/>
-        <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress}"/>
-      </StackPanel>
-
-      <Separator/>
-
-      <!-- Summary -->
-      <TextBlock Text="{Binding Summary}" FontWeight="Bold" FontSize="16"/>
-
-    </StackPanel>
-  </ScrollViewer>
-</UserControl>
-```
-
----
-
-## 검증(Validation)과 커맨드 활성화
-
-### DataAnnotations (간단)
-
-```csharp
-using System.ComponentModel.DataAnnotations;
-
-public sealed class ProfileForm : ReactiveObject
-{
-    private string? _name;
-
-    [Required(ErrorMessage = "이름은 필수입니다.")]
-    public string? Name
-    {
-        get => _name;
-        set => this.RaiseAndSetIfChanged(ref _name, value);
-    }
-
-    private int _age;
-
-    [Range(1, 120, ErrorMessage = "나이는 1~120 사이여야 합니다.")]
-    public int Age
-    {
-        get => _age;
-        set => this.RaiseAndSetIfChanged(ref _age, value);
-    }
-}
-```
-
-```csharp
-// VM에서 폼 검증 → 에러 문자열 바인딩
-public string? Errors { get; private set; }
-
-public ReactiveCommand<Unit, Unit> SubmitCommand { get; }
-
-public ControlsDemoViewModel()
-{
-    SubmitCommand = ReactiveCommand.Create(Submit);
-}
-
-private void Submit()
-{
-    var form = new ProfileForm { Name = SelectedUser?.Name, Age = 30 };
-    var ctx = new ValidationContext(form);
-    var results = new List<ValidationResult>();
-    var ok = Validator.TryValidateObject(form, ctx, results, true);
-
-    Errors = ok ? "검증 통과" : string.Join(Environment.NewLine, results.Select(r => r.ErrorMessage));
-    this.RaisePropertyChanged(nameof(Errors));
+    get => _darkMode;
+    set => this.RaiseAndSetIfChanged(ref _darkMode, value);
 }
 ```
 
 ```xml
-<TextBlock Text="{Binding Errors}" Foreground="Tomato" TextWrapping="Wrap"/>
+<ToggleSwitch IsChecked="{Binding DarkMode}" Content="다크 모드" />
 ```
 
-> Avalonia의 `DataValidationErrors`(Attached)와 `INotifyDataErrorInfo`를 사용하면 컨트롤 옆에 에러 템플릿을 표시하는 고급 UX도 가능하다.
+## 변환기(Converter) 모음
 
----
+자주 사용하는 변환기를 미리 만들어 두면 XAML에서 재사용할 수 있다.
 
-## Converter 모음(실무 유용)
+### 불리언을 텍스트로 변환
 
 ```csharp
-// Converters/BoolToTextConverter.cs
-using Avalonia.Data.Converters;
-using System;
-using System.Globalization;
-
-public sealed class BoolToTextConverter : IValueConverter
+public class BoolToTextConverter : IValueConverter
 {
     public string TrueText { get; set; } = "예";
     public string FalseText { get; set; } = "아니오";
-
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => (value is bool b && b) ? TrueText : FalseText;
-
+        => (value is true) ? TrueText : FalseText;
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => throw new NotSupportedException();
 }
 ```
 
-```xml
-<!-- App.axaml -->
-<Application ... xmlns:conv="clr-namespace:MyAvaloniaApp.Converters">
-  <Application.Resources>
-    <conv:BoolToTextConverter x:Key="BoolText" TrueText="예" FalseText="아니오"/>
-  </Application.Resources>
-</Application>
-```
-
-```xml
-<TextBlock Text="{Binding IsAccepted, Converter={StaticResource BoolText}}"/>
-```
-
----
-
-## 저장/복원(간단 JSON 스토리지)
+### DateTimeOffset을 문자열로 포맷
 
 ```csharp
-// Services/JsonStorageService.cs
-using System.Text.Json;
-
-public sealed class JsonStorageService
+public class DateTimeOffsetFormatConverter : IValueConverter
 {
-    private readonly string _path;
-    public JsonStorageService(string path = "controls-demo.json") => _path = path;
-
-    public async Task SaveAsync(object data)
-    {
-        var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
-        await File.WriteAllTextAsync(_path, json);
-    }
-
-    public async Task<T?> LoadAsync<T>() where T : class
-    {
-        if (!File.Exists(_path)) return null;
-        var json = await File.ReadAllTextAsync(_path);
-        return JsonSerializer.Deserialize<T>(json);
-    }
+    public string Format { get; set; } = "yyyy-MM-dd";
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is DateTimeOffset dto ? dto.ToString(Format, culture) : string.Empty;
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => DateTimeOffset.TryParse(value?.ToString(), culture, DateTimeStyles.None, out var dto) ? dto : null;
 }
 ```
 
-```csharp
-// ViewModels/ControlsDemoViewModel.cs (발췌)
-private readonly JsonStorageService _storage = new();
+## 파생 상태와 명령 활성화
 
+ViewModel에서는 여러 속성의 조합으로 버튼 활성화 여부나 요약 텍스트를 자동으로 계산할 수 있다.
+
+```csharp
+public string Summary =>
+    $"날짜: {SelectedDate:yyyy-MM-dd}, 사용자: {SelectedUser?.Name ?? "-"}, 동의: {(IsAccepted ? "예" : "아니오")}";
+
+public ReactiveCommand<Unit, Unit> SaveCommand { get; }
+
+public ControlsDemoViewModel()
+{
+    // Summary 갱신
+    this.WhenAnyValue(x => x.SelectedDate, x => x.SelectedUser, x => x.IsAccepted)
+        .Subscribe(_ => this.RaisePropertyChanged(nameof(Summary)));
+
+    var canSave = this.WhenAnyValue(
+        x => x.SelectedDate,
+        x => x.SelectedUser,
+        x => x.IsAccepted,
+        (d, u, a) => d.HasValue && u != null && a);
+    SaveCommand = ReactiveCommand.Create(Save, canSave);
+}
+```
+
+## 저장과 복원 (JSON)
+
+간단한 JSON 파일로 ViewModel의 상태를 저장하고 복원할 수 있다.
+
+```csharp
+public class JsonStorageService
+{
+    private readonly string _path;
+    public JsonStorageService(string path = "demo.json") => _path = path;
+    public async Task SaveAsync(object data) =>
+        await File.WriteAllTextAsync(_path, JsonSerializer.Serialize(data));
+    public async Task<T?> LoadAsync<T>() where T : class =>
+        File.Exists(_path) ? JsonSerializer.Deserialize<T>(await File.ReadAllTextAsync(_path)) : null;
+}
+
+// 스냅샷 레코드 정의
 private sealed record ControlsSnapshot(
     DateTimeOffset? SelectedDate,
     int? SelectedUserId,
@@ -755,23 +391,19 @@ private sealed record ControlsSnapshot(
     bool DarkMode,
     double Progress);
 
-private ControlsSnapshot Snapshot()
-    => new(SelectedDate, SelectedUser?.Id, IsAccepted, DarkMode, Progress);
+private ControlsSnapshot Snapshot() =>
+    new(SelectedDate, SelectedUser?.Id, IsAccepted, DarkMode, Progress);
 
 private void Restore(ControlsSnapshot s)
 {
     SelectedDate = s.SelectedDate;
     SelectedUser = Users.FirstOrDefault(u => u.Id == s.SelectedUserId);
     IsAccepted = s.IsAccepted;
-    DarkMode   = s.DarkMode;
-    Progress   = s.Progress;
+    DarkMode = s.DarkMode;
+    Progress = s.Progress;
 }
 
-private async void Save()
-{
-    await _storage.SaveAsync(Snapshot());
-}
-
+private async void Save() => await _storage.SaveAsync(Snapshot());
 private async void Load()
 {
     var s = await _storage.LoadAsync<ControlsSnapshot>();
@@ -779,38 +411,72 @@ private async void Load()
 }
 ```
 
----
+## 검증(Validation)
 
-## 성능/유지보수 팁
+간단한 검증은 DataAnnotations를 활용할 수 있다. ViewModel에서 `Validator.TryValidateObject`로 검증 결과를 문자열로 제공한다.
 
-- **바인딩 경로 단순화**: `SelectedItem` → 파생 속성(Id/Name)을 VM에서 노출.
-- **DataTemplate** 정적 선언: 런타임 탐색 줄이고 유지보수 가시성 향상.
-- **ReactiveUI WhenAnyValue**: 파생 속성 재계산을 한 곳에서.
-- **Converter**는 가볍게, 무거운 로직은 VM/서비스에서 처리.
-- **검증/저장**은 UI 이벤트에 넣지 말고 **Command**로 일원화.
-- **테스트**는 VM 중심으로(컨트롤은 스냅샷/시나리오 소수만).
+```csharp
+public class ProfileForm
+{
+    [Required(ErrorMessage = "이름은 필수입니다.")]
+    public string? Name { get; set; }
+    [Range(1, 120, ErrorMessage = "나이는 1~120 사이여야 합니다.")]
+    public int Age { get; set; }
+}
 
----
+private string? _validationErrors;
+public string? ValidationErrors
+{
+    get => _validationErrors;
+    private set => this.RaiseAndSetIfChanged(ref _validationErrors, value);
+}
 
-## 통합 미니 과제
+private bool Validate()
+{
+    var form = new ProfileForm { Name = SelectedUser?.Name, Age = 30 };
+    var context = new ValidationContext(form);
+    var results = new List<ValidationResult>();
+    var isValid = Validator.TryValidateObject(form, context, results, true);
+    ValidationErrors = isValid ? null : string.Join(Environment.NewLine, results.Select(r => r.ErrorMessage));
+    return isValid;
+}
+```
 
-요구
+XAML에서는 오류를 표시할 TextBlock을 두고 바인딩한다.
 
-1) 날짜를 선택하고
-2) 사용자 콤보에서 사용자 선택,
-3) 약관 체크 후 저장 버튼 활성화,
-4) 저장 시 JSON 스냅샷,
-5) 다음 실행에서 불러오기.
+```xml
+<TextBlock Text="{Binding ValidationErrors}" Foreground="Red" TextWrapping="Wrap" />
+```
 
-구성
+## 성능과 유지보수 팁
 
-- 위의 `ControlsDemoViewModel` + `ControlsDemoView.axaml` + `JsonStorageService` 조합이면 그대로 충족한다.
-- 커맨드 촉발(저장/불러오기)을 단축키(예: Ctrl+S/Ctrl+O)로 추가하는 것도 쉽다(키 바인딩은 `InputBindings` 또는 코드비하인드 이벤트 → Command 라우팅).
+| 상황 | 권장 방법 |
+|------|-----------|
+| 자주 바뀌는 파생 속성 | WhenAnyValue로 자동 갱신, 수동 RaisePropertyChanged 최소화 |
+| 복잡한 ItemTemplate | 정적 리소스로 정의해 재사용 |
+| 많은 항목의 ComboBox | 가상화가 적용되는 ItemsControl 사용 (기본적으로 지원됨) |
+| 저장/복원 | ViewModel 스냅샷을 직렬화, 불필요한 속성 제외 |
+| 테스트 | ViewModel 단위 테스트로 로직 검증, Converter는 별도 테스트 |
 
----
+## 종합 예제 ViewModel
+
+위의 모든 요소를 포함한 ViewModel과 View를 조합하면 다양한 컨트롤을 MVVM 패턴으로 관리할 수 있다. XAML에서는 각 컨트롤을 적절히 배치하고, ViewModel의 속성과 명령에 바인딩한다.
+
+```xml
+<StackPanel Margin="20" Spacing="16">
+    <!-- 날짜 선택 -->
+    <DatePicker SelectedDate="{Binding SelectedDate}" />
+    <!-- 사용자 선택 -->
+    <ComboBox Items="{Binding Users}" SelectedItem="{Binding SelectedUser}" />
+    <!-- 약관 동의 -->
+    <CheckBox Content="약관 동의" IsChecked="{Binding IsAccepted}" />
+    <!-- 저장 버튼 -->
+    <Button Content="저장" Command="{Binding SaveCommand}" />
+    <!-- 요약 표시 -->
+    <TextBlock Text="{Binding Summary}" />
+</StackPanel>
+```
 
 ## 결론
 
-- **DatePicker/ComboBox/CheckBox**는 MVVM에서 **값·객체·상태**를 표현하는 기본 축이다.
-- 단순 바인딩에서 출발하되, **DataTemplate/Converter/Validation/Command**를 조합하면 현업의 대부분 요구(표시/검증/저장/복원/조건 활성화)에 충분히 대응한다.
-- 선택 모델이 복잡해질수록(멀티/삼상/의존) **파생 속성**과 **반응형 조합(WhenAnyValue)** 으로 VM 로직을 정돈하라. View는 최대한 얇게 유지하는 게 유지보수·테스트 모두에 유리하다.
+Avalonia에서 DatePicker, ComboBox, CheckBox 등 다양한 컨트롤을 MVVM 패턴으로 바인딩하는 방법은 기본적인 원칙을 따르면 복잡하지 않다. 각 컨트롤의 핵심 속성(SelectedDate, SelectedItem, IsChecked, Value 등)을 ViewModel의 속성과 양방향 바인딩하고, 필요에 따라 변환기나 검증, 파생 상태 계산을 추가하면 된다. 이렇게 구성하면 UI와 로직이 분리되어 유지보수와 테스트가 훨씬 쉬워진다.
