@@ -1,6 +1,6 @@
 ---
 layout: post
-title: C# - PInvoke, Marshal, NativeMemory
+title: C# - Span와 Memory 심화
 date: 2024-11-01 19:20:23 +0900
 category: Csharp
 ---
