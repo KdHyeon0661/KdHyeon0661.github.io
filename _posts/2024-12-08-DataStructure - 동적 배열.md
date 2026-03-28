@@ -34,80 +34,74 @@ vec.push_back(20);               // 크기가 2로 증가
 C++ 표준 라이브러리는 `std::vector`라는 템플릿 클래스를 제공합니다.  
 가장 많이 사용하는 컨테이너 중 하나이며, 성능과 편의성 모두 뛰어납니다.
 
-### `std::vector` 기본 사용법
+### 기본 사용법
 
-#### 헤더 포함
-
-```cpp
-#include <vector>
-```
-
-#### 생성
+**생성**
 
 ```cpp
 std::vector<int> v1;                // 빈 벡터
-std::vector<int> v2(10);            // 10개의 0으로 초기화된 벡터
-std::vector<int> v3(5, 100);        // 5개의 100으로 채워진 벡터
+std::vector<int> v2(10);            // 10개의 0으로 초기화
+std::vector<int> v3(5, 100);        // 5개의 100으로 채움
 std::vector<int> v4 = {1, 2, 3, 4}; // 초기화 리스트
 ```
 
-#### 요소 추가 (끝에 삽입)
+**요소 추가 (끝에 삽입)**
 
 ```cpp
-std::vector<int> v;
 v.push_back(10);    // v: [10]
 v.push_back(20);    // v: [10, 20]
-v.push_back(30);    // v: [10, 20, 30]
 ```
 
-#### 요소 접근
+**요소 접근**
 
 ```cpp
-int x = v[1];           // 20 (범위 검사 없음)
-int y = v.at(1);        // 20 (범위 검사 있음, 예외 발생 가능)
-int first = v.front();  // 첫 요소 (10)
-int last = v.back();    // 마지막 요소 (30)
+int x = v[1];        // 20 (범위 검사 없음)
+int y = v.at(1);     // 20 (범위 검사 있음, 예외 발생 가능)
+int first = v.front();  // 첫 요소
+int last = v.back();    // 마지막 요소
 ```
 
-#### 요소 삭제
+**요소 삭제**
 
 ```cpp
-v.pop_back();           // 마지막 요소 제거 → [10, 20]
-v.clear();              // 모든 요소 제거 → []
+v.pop_back();        // 마지막 요소 제거
+v.clear();           // 모든 요소 제거
 ```
 
-#### 크기와 용량
+**크기와 용량**
 
-- `size()` : 현재 저장된 요소의 개수
-- `capacity()` : 현재 할당된 메모리 공간이 저장할 수 있는 요소의 최대 개수 (재할당 없이)
+- `size()` : 현재 저장된 요소 개수
+- `capacity()` : 현재 할당된 메모리 공간이 저장할 수 있는 최대 요소 개수 (재할당 없이)
 
 ```cpp
 std::vector<int> v;
 std::cout << v.size() << ", " << v.capacity(); // 0, 0
-
 v.push_back(1);
-std::cout << v.size() << ", " << v.capacity(); // 1, 1 (컴파일러마다 다를 수 있음)
-
-v.push_back(2);
-// size:2, capacity:2 (또는 3, 구현에 따라 다름)
+std::cout << v.size() << ", " << v.capacity(); // 1, 1 (구현에 따라 다름)
 ```
 
-#### 미리 공간 예약하기
+**미리 공간 예약하기**
 
 ```cpp
-std::vector<int> v;
 v.reserve(100);         // 최소 100개의 공간을 미리 확보
-std::cout << v.capacity(); // 100 (또는 그 이상)
 ```
 
 `reserve`를 사용하면 잦은 재할당을 피할 수 있습니다.
 
-#### 불필요한 용량 줄이기
+### 반복자 (Iterator)
+
+`vector`는 반복자를 제공하여 요소를 순회할 수 있습니다.
 
 ```cpp
-std::vector<int> v(100);   // size=100, capacity>=100
-v.clear();                 // size=0, capacity는 그대로
-v.shrink_to_fit();         // capacity를 size에 맞춤 (요청)
+std::vector<int> v = {10, 20, 30};
+
+for (auto it = v.begin(); it != v.end(); ++it) {
+    std::cout << *it << " ";   // 10 20 30
+}
+
+for (int x : v) {              // 범위 기반 for 문
+    std::cout << x << " ";
+}
 ```
 
 ---
@@ -129,69 +123,37 @@ $$
 \sum_{i=0}^{\lfloor \log_2 n \rfloor} \frac{n}{2^i} \le 2n = O(n)
 $$
 
-입니다. 따라서 **평균적으로 1회 삽입당 O(1)**의 시간이 걸린다고 말합니다.
-
----
-
-## 반복자 (Iterator)
-
-`vector`는 반복자를 제공하여 요소들을 순회할 수 있습니다.
-
-```cpp
-std::vector<int> v = {10, 20, 30};
-
-// begin()은 첫 요소를 가리키는 반복자, end()는 마지막 다음을 가리킴
-for (auto it = v.begin(); it != v.end(); ++it) {
-    std::cout << *it << " ";   // 10 20 30
-}
-
-// 범위 기반 for 문 (C++11)
-for (int x : v) {
-    std::cout << x << " ";
-}
-```
+입니다. 따라서 **평균적으로 1회 삽입당 $$O(1)$$** 의 시간이 걸린다고 말합니다.
 
 ---
 
 ## 실전 예제
 
-### 예제 1: 학생 점수 관리
+### 학생 점수 관리
 
 ```cpp
 #include <iostream>
 #include <vector>
-#include <numeric>   // accumulate
 
 int main() {
-    std::vector<int> scores;
+    std::vector<int> scores = {85, 92, 78, 94, 88};
 
-    // 점수 입력
-    scores.push_back(85);
-    scores.push_back(92);
-    scores.push_back(78);
-    scores.push_back(94);
-    scores.push_back(88);
-
-    // 총점 계산
+    // 평균 계산
     int sum = 0;
-    for (int s : scores) {
-        sum += s;
-    }
-    double average = static_cast<double>(sum) / scores.size();
-    std::cout << "평균: " << average << std::endl;
+    for (int s : scores) sum += s;
+    double avg = static_cast<double>(sum) / scores.size();
+    std::cout << "평균: " << avg << std::endl;
 
-    // 90점 이상인 학생 수
+    // 90점 이상 학생 수
     int cnt = 0;
-    for (int s : scores) {
-        if (s >= 90) ++cnt;
-    }
+    for (int s : scores) if (s >= 90) ++cnt;
     std::cout << "90점 이상: " << cnt << "명" << std::endl;
 
     return 0;
 }
 ```
 
-### 예제 2: 짝수만 남기기
+### 짝수만 남기기
 
 ```cpp
 #include <vector>
@@ -200,43 +162,12 @@ int main() {
 int main() {
     std::vector<int> v = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    // 짝수만 남기고 홀수는 제거 (뒤에서부터 순회하며 erase)
     for (auto it = v.begin(); it != v.end(); ) {
-        if (*it % 2 != 0) {
-            it = v.erase(it);   // erase는 다음 요소 반복자를 반환
-        } else {
-            ++it;
-        }
+        if (*it % 2 != 0) it = v.erase(it); // 홀수 제거
+        else ++it;
     }
 
-    for (int x : v) {
-        std::cout << x << " ";   // 2 4 6 8 10
-    }
-    return 0;
-}
-```
-
-### 예제 3: 동적 배열을 함수에 전달
-
-```cpp
-#include <vector>
-#include <iostream>
-
-// 값 복사 (벡터 전체가 복사됨)
-void print_vector(std::vector<int> v) {
-    for (int x : v) std::cout << x << " ";
-    std::cout << std::endl;
-}
-
-// 참조 전달 (복사 없음)
-void add_one(std::vector<int>& v) {
-    for (int& x : v) ++x;
-}
-
-int main() {
-    std::vector<int> data = {1, 2, 3};
-    add_one(data);
-    print_vector(data);   // 2 3 4
+    for (int x : v) std::cout << x << " "; // 2 4 6 8 10
     return 0;
 }
 ```
@@ -284,4 +215,4 @@ int y = v.at(20); // std::out_of_range 예외 발생
 - `reserve()`로 재할당 횟수를 줄일 수 있습니다.
 - 반복자 무효화에 주의해야 합니다.
 
-동적 배열은 프로그래밍에서 가장 널리 쓰이는 자료구조 중 하나이며, C++의 `std::vector`는 그 강력하고 안전한 구현체입니다. 기본 사용법을 익히고, 필요에 따라 고급 기능(예: 사용자 정의 할당자, 이동 의미론)을 학습해 나가면 됩니다.
+동적 배열은 프로그래밍에서 가장 널리 쓰이는 자료구조 중 하나이며, C++의 `std::vector`는 그 강력하고 안전한 구현체입니다. 기본 사용법을 익히고, 필요에 따라 고급 기능을 학습해 나가면 됩니다.

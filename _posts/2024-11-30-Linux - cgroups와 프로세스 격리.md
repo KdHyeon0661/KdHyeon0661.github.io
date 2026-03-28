@@ -8,429 +8,265 @@ category: Linux
 
 ## 왜 cgroups, namespace, seccomp인가
 
-리눅스에서 프로세스 격리와 리소스 관리는 세 가지 핵심 기술의 조합으로 이루어집니다:
+리눅스에서 프로세스 격리와 리소스 관리는 세 가지 핵심 기술의 조합으로 이루어진다.
 
-- **cgroups**: CPU, 메모리, IO, PIDs 등의 **리소스 사용량 한계**를 **그룹 단위**로 강제하고 계측
-- **namespaces**: PID, Network, Mount, UTS, User, IPC, Cgroup 등의 **시스템 자원 가시성**을 분리
-- **seccomp**: **시스템콜 접근**을 필터링하여 프로세스의 실행 가능한 작업 제한
+- **cgroups**: CPU, 메모리, I/O, 프로세스 수 등의 **리소스 사용량**을 그룹 단위로 제한하고 계측한다.
+- **namespaces**: PID, 네트워크, 마운트, 호스트명 등 **시스템 자원의 가시성**을 분리한다.
+- **seccomp**: 프로세스가 호출할 수 있는 **시스템콜**을 필터링한다.
 
-이 세 가지 기술이 결합되어 컨테이너, 샌드박스, 멀티테넌트 서버의 **격리·안전·예측가능성**을 제공합니다.
+이 세 기술이 결합되어 컨테이너, 샌드박스, 멀티테넌트 서버의 격리와 안정성을 제공한다.
 
 ---
 
-## cgroups 전체 지도 — v1 vs v2, 컨트롤러
-
-### 버전 차이 요약
+## cgroups 버전 비교
 
 | 항목 | cgroups v1 | cgroups v2 |
-|---|---|---|
+|------|------------|------------|
 | 계층 구조 | 컨트롤러별 개별 계층 | **단일 통합 계층** |
-| 컨트롤러 | cpu, cpuacct, cpuset, memory, blkio, pids, freezer, devices 등 | **cpu, io, memory, pids, cpuset, rdma, misc** |
-| 인터페이스 | 다양한 파일명 (예: `memory.limit_in_bytes`) | **일관된 명명 규칙** (예: `memory.max`, `cpu.max`) |
-| 트리 규칙 | 혼합 가능, 복잡 | 부모-자식 규율 엄격, **위임(delegation)** 설계 용이 |
-| 구현 난이도 | 도구/배포판 따라 상이 | 현대적 배포판 기본(컨테이너 런타임도 주류) |
+| 주요 컨트롤러 | cpu, memory, blkio, pids, devices 등 | cpu, memory, io, pids, cpuset 등 |
+| 인터페이스 | 컨트롤러마다 파일명 상이 (예: `memory.limit_in_bytes`) | **일관된 명명 규칙** (예: `memory.max`, `cpu.max`) |
+| 운영 복잡도 | 혼재 시 관리 어려움 | 구조 단순, 현대 배포판 기본 |
 
-> 새로운 설계와 운영은 **cgroups v2를 권장**합니다. 레거시 시스템(특히 구버전 커널/도구)에서는 v1 문법에 대한 이해도 필요합니다.
-
-### 대표 컨트롤러 및 핵심 파일 (v2 기준)
-
-- **CPU**: `cpu.max`(쿼터/주기), `cpu.weight`(비율 가중치), `cpu.stat`
-- **Memory**: `memory.max`(경성 상한), `memory.high`(소프트 압박선), `memory.swap.max`, `memory.min/low`, `memory.current`, `memory.events`
-- **IO(blk)**: `io.max`(bps/iops 상한), `io.weight`, `io.stat`
-- **PIDs**: `pids.max`, `pids.current`
-- **cpuset**: NUMA/CPU 핀닝 (`cpuset.cpus`, `cpuset.mems`)
-- **misc/rdma**: 특수 자원 쿼터
-
-> v1에서 자주 보던 `memory.limit_in_bytes`, `blkio.throttle.*`, `cpu.shares` 등은 v2에서 **의미가 대응**되거나 통합되었습니다.
+> 새로운 설계는 **cgroups v2**를 기준으로 한다. 구형 시스템에서는 v1에 대한 이해도 필요하다.
 
 ---
 
-## cgroups v2: 실습으로 이해
+## cgroups v2 핵심 파일
 
-### 마운트 및 준비
+| 컨트롤러 | 핵심 파일 | 설명 |
+|----------|-----------|------|
+| CPU | `cpu.max` | 쿼터/주기 (예: `50000 100000` → 50%) |
+| | `cpu.weight` | 상대적 가중치 (1~10000, 기본 100) |
+| 메모리 | `memory.max` | 하드 상한 (초과 시 OOM) |
+| | `memory.high` | 소프트 압박선 (초과 시 회수 시도) |
+| | `memory.current` | 현재 사용량 |
+| I/O | `io.max` | 디바이스별 bps/iops 상한 |
+| | `io.weight` | I/O 가중치 |
+| 프로세스 | `pids.max` | 최대 프로세스 수 |
+| | `pids.current` | 현재 수 |
+
+---
+
+## cgroups v2 실습
+
+### 1. 제한 그룹 만들기
 
 ```bash
-# (대부분의 최신 배포판은 이미 v2 마운트됨. 확인:)
-mount | grep cgroup2 || sudo mount -t cgroup2 none /sys/fs/cgroup
-
-# 루트 cgroup에 하위 그룹을 만들 준비: subtree에 컨트롤러 활성화
-echo "+cpu +memory +io +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control
+sudo mkdir /sys/fs/cgroup/work
 ```
 
-### 메모리 상한 + CPU 쿼터 설정
+### 2. 리소스 제한 설정
 
 ```bash
-# 워크로드 그룹 생성
-sudo mkdir /sys/fs/cgroup/work
+# CPU 50% (50ms/100ms)
+echo "50000 100000" | sudo tee /sys/fs/cgroup/work/cpu.max
 
-# work 하위에서 사용할 컨트롤러를 부모에서 허가
-echo "+cpu +memory +io +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control
+# 메모리 상한 200MB, 스왑 상한 100MB
+echo 200M | sudo tee /sys/fs/cgroup/work/memory.max
+echo 100M | sudo tee /sys/fs/cgroup/work/memory.swap.max
 
-# 제한 설정
-echo 200M       | sudo tee /sys/fs/cgroup/work/memory.max        # OOM 발생 상한
-echo 100M       | sudo tee /sys/fs/cgroup/work/memory.swap.max   # swap 상한
-echo "50000 100000" | sudo tee /sys/fs/cgroup/work/cpu.max       # 50ms/100ms → 50% 쿼터
-echo 100        | sudo tee /sys/fs/cgroup/work/pids.max          # 최대 PID 수
+# 최대 프로세스 100개
+echo 100 | sudo tee /sys/fs/cgroup/work/pids.max
+```
 
-# 프로세스 편입(현재 셸 PID)
+### 3. 프로세스를 그룹에 추가
+
+```bash
+# 현재 셸을 그룹에 포함
 echo $$ | sudo tee /sys/fs/cgroup/work/cgroup.procs
 ```
 
-> `cpu.max` 형식: `"<quota> <period>"`. 위 예시는 **주기 100ms 중 50ms만 실행 → 50%**입니다.
-> 가중치 기반 공정 배분은 `cpu.weight`(1~10000, 기본 100)를 사용합니다.
-
-### 관측 포인트
+### 4. 상태 확인
 
 ```bash
 cat /sys/fs/cgroup/work/memory.current
-cat /sys/fs/cgroup/work/memory.events     # oom, oom_kill 카운트
-cat /sys/fs/cgroup/work/cpu.stat          # usage_usec, throttled_usec, nr_throttled
-cat /sys/fs/cgroup/work/io.stat
+cat /sys/fs/cgroup/work/memory.events   # OOM 발생 여부
+cat /sys/fs/cgroup/work/cpu.stat        # throttle 통계
 cat /sys/fs/cgroup/work/pids.current
 ```
-- **OOM** 발생 여부, CPU **throttle** 여부, IO 사용 상한 도달 여부 등을 숫자로 확인할 수 있습니다.
 
-### memory.high vs memory.max
+### 메모리 하드 한도와 소프트 압박
 
-- `memory.max`: **하드 상한**. 넘으면 즉시 OOM 대상
-- `memory.high`: **소프트 압박선**. 넘어가면 **메모리 회수 압박**(쓰로틀링/리클레임) 후에도 안 줄면 결국 OOM 가능
-- **튜닝 팁**: 배경작업/캐시가 많은 워크로드에 `memory.high`를 먼저 설정하여 캐시부터 줄이게 하고, 최후 방어선으로 `memory.max` 설정
+- `memory.max`: **하드 상한** – 넘으면 즉시 OOM으로 프로세스 종료
+- `memory.high`: **소프트 압박선** – 넘으면 커널이 캐시 등을 회수하려 시도. 그래도 부족하면 결국 OOM
 
----
-
-## cgroups v1: 레거시 인터페이스 빠르게 익히기
-
-### 메모리 제한 (v1)
-
-```bash
-sudo mkdir -p /sys/fs/cgroup/memory/mygroup
-echo 100000000 | sudo tee /sys/fs/cgroup/memory/mygroup/memory.limit_in_bytes
-echo $$          | sudo tee /sys/fs/cgroup/memory/mygroup/tasks
-```
-
-### CPU 공유/쿼터 (v1)
-
-```bash
-sudo mkdir -p /sys/fs/cgroup/cpu/mycg
-echo 1024 | sudo tee /sys/fs/cgroup/cpu/mycg/cpu.shares     # 비율
-echo 50000 | sudo tee /sys/fs/cgroup/cpu/mycg/cpu.cfs_quota_us
-echo 100000 | sudo tee /sys/fs/cgroup/cpu/mycg/cpu.cfs_period_us
-```
-
-### 블록 IO (v1, blkio)
-
-```bash
-# 특정 디바이스(메이저:마이너)에 iops/bps 상한
-echo "8:0 10485760" | sudo tee /sys/fs/cgroup/blkio/mycg/blkio.throttle.read_bps_device
-```
-
-> v1/v2 혼재 환경은 **컨테이너 런타임**이 알아서 처리하지만, 수동 튜닝 시 파일명이 다름에 유의하세요.
+운영 시에는 `memory.high`를 먼저 걸어 캐시부터 줄이고, 최후 방어선으로 `memory.max`를 설정하는 것이 좋다.
 
 ---
 
-## systemd와 cgroups — services/slices/scopes의 세계
+## systemd와 cgroups 통합
 
-systemd는 **모든 유닛을 cgroup으로 표현**합니다.
+systemd는 모든 유닛(서비스, 스코프, 슬라이스)을 cgroup으로 표현한다.
 
-### 빠른 시작: 제한이 걸린 임시 유닛 실행
+### 임시 제한 실행
 
 ```bash
-# 메모리 200M, CPU 80%로 제한된 쉘 실행
-systemd-run -t --property=MemoryMax=200M --property=CPUQuota=80% bash
+# CPU 80%, 메모리 200MB로 제한된 셸 실행
+systemd-run -t --property=CPUQuota=80% --property=MemoryMax=200M bash
 ```
 
-### 서비스 유닛에 자원정책 선언
+### 서비스 유닛에 제한 선언
 
 ```ini
-# /etc/systemd/system/my-limited.service
-
-[Unit]
-Description=Limited Worker
-
+# /etc/systemd/system/limited.service
 [Service]
-ExecStart=/usr/bin/sleep 10000
-MemoryMax=150M
+ExecStart=/usr/bin/myapp
 CPUQuota=50%
-IOReadBandwidthMax=/dev/vda 10M
-IOWriteBandwidthMax=/dev/vda 5M
-# cpuset 예시(systemd ≥ 247, 커널 지원 필요)
+MemoryMax=1G
+IOReadBandwidthMax=/dev/sda 10M
 AllowedCPUs=0-3
-AllowedMemoryNodes=0
-
-[Install]
-WantedBy=multi-user.target
 ```
+
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now my-limited.service
-systemctl status my-limited.service
+sudo systemctl enable --now limited.service
 ```
 
-### 슬라이스/스코프
-
-- **slices**: 대역 클래스(예: `system.slice`, `user.slice`, `machine.slice`)로 **예산** 나누기
-- **scopes**: 외부에서 이미 시작된 프로세스 묶기(예: `systemd-run --scope -p MemoryMax=... <cmd>`)
-
-### 어디에 생성되었는지 확인
+### 모니터링
 
 ```bash
-systemd-cgls                  # cgroup 트리 요약
-systemd-cgtop                 # 유닛별 소비량 top
-systemctl show my-limited.service -p ControlGroup
-cat /sys/fs/cgroup/<unit path>/memory.current
+systemd-cgtop                 # cgroup별 리소스 사용량
+systemctl show limited.service -p ControlGroup
+cat /sys/fs/cgroup/<경로>/memory.current
 ```
 
 ---
 
-## 네임스페이스: 무엇을 보게 할 것인가
+## 네임스페이스: 가시성 분리
 
-### 종류와 용도
+| 네임스페이스 | 격리 대상 |
+|--------------|-----------|
+| `pid` | 프로세스 ID 트리 |
+| `net` | 네트워크 인터페이스, 포트 |
+| `mnt` | 마운트 포인트 |
+| `uts` | 호스트명 |
+| `user` | UID/GID 매핑 |
+| `ipc` | 공유 메모리, 세마포어 |
 
-| 네임스페이스 | 격리 객체 | 예시 도구 |
-|---|---|---|
-| **pid** | PID 트리 | `unshare --pid` |
-| **net** | NIC/라우팅/포트 | `ip netns`, `unshare --net` |
-| **mnt** | 마운트 트리, 전파 | `unshare --mount` |
-| **uts** | hostname/domain | `unshare --uts` |
-| **ipc** | shm/msg/sem | `unshare --ipc` |
-| **user** | UID/GID 맵핑 | `unshare --user` |
-| **cgroup** | cgroup 계층 가시성 | `unshare --cgroup` |
-
-### 실습: 완전 격리된 미니 컨테이너 셸
+### 직접 실험
 
 ```bash
-sudo unshare --fork --pid --mount --uts --ipc --net --user --map-root-user bash -l
-# 새 셸 내부:
-hostname mini
-mount -t proc proc /proc
-ip link add veth0 type veth peer name veth1   # netns 단독이라면 더 설정 필요
+# 격리된 환경에서 셸 실행
+sudo unshare --pid --net --mount --uts --ipc --user --map-root-user bash
+
+# 새 셸 내부에서
+hostname isolated
+ip link
 ```
 
-### nsenter: 다른 프로세스의 네임스페이스로 진입
+### 다른 프로세스 네임스페이스 진입
 
 ```bash
-# pid 1234가 가진 네임스페이스로 들어가 bash 실행
-sudo nsenter --target 1234 --mount --uts --ipc --net --pid bash
-```
-
-### 마운트 전파(propagation)
-
-- `shared`/`slave`/`private`/`rshared` 등 전파 플래그로 **호스트↔컨테이너** 마운트 영향 범위 결정
-```bash
-mount --make-rshared /
+sudo nsenter --target <PID> --pid --net --mount bash
 ```
 
 ---
 
-## seccomp: 시스템콜 필터로 공격면 축소
+## seccomp: 시스템콜 필터링
 
-### 개념
-
-- BPF(또는 eBPF) 기반 **시스템콜 허용/거부** 정책
-- 컨테이너 런타임(Docker/K8s)은 기본 프로파일로 광범위 차단
-
-### 간단한 실행 예(Docker)
+컨테이너 런타임(Docker, Podman)은 기본적으로 seccomp 프로파일을 적용하여 불필요한 시스템콜을 차단한다.
 
 ```bash
-# Allowlist 기반 최소 syscalls(예시 json)를 지정해 컨테이너 실행
-docker run --security-opt seccomp=/path/seccomp-min.json alpine:3.20
+# seccomp 프로파일을 지정해 컨테이너 실행
+docker run --security-opt seccomp=/path/to/profile.json alpine
 ```
 
-> 네이티브로는 `seccomp()`(C) 또는 `libseccomp`로 규칙 설치
-> 실무에서는 런타임이 제공하는 **프로파일** 튜닝이 일반적
+운영 환경에서는 기본 프로파일로도 충분한 경우가 많지만, 보안이 중요한 서비스는 더 엄격한 프로파일을 적용할 수 있다.
 
 ---
 
 ## 실전 시나리오
 
-### "빌드 작업은 CPU 200%·메모리 2GiB 이내로 제한"
-#### cgroups v2 수동 설정
-
-```bash
-sudo mkdir /sys/fs/cgroup/build
-echo "+cpu +memory +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control
-echo "200000 100000" | sudo tee /sys/fs/cgroup/build/cpu.max  # 200%
-echo $((2*1024*1024*1024)) | sudo tee /sys/fs/cgroup/build/memory.max
-echo $$ | sudo tee /sys/fs/cgroup/build/cgroup.procs
-make -j
-```
-#### systemd-run 사용
+### 시나리오 1: 빌드 작업 제한
 
 ```bash
 systemd-run --scope -p CPUQuota=200% -p MemoryMax=2G make -j
 ```
 
-### "백그라운드 캐시 데몬은 메모리 압박 우선 적용"
-
-```bash
-systemd-run --scope -p MemoryHigh=1G -p MemoryMax=2G -p CPUWeight=25 ./cached
-```
-- 캐시층부터 리클레임 압박(`memory.high`) → 전체 한도(`memory.max`)
-
-### "IO 가디언: 로그 폭주 서비스의 디스크 쓰기 제한"
+### 시나리오 2: 로그 서비스 I/O 제한
 
 ```bash
 systemd-run --scope -p IOWriteBandwidthMax=/dev/nvme0n1 5M ./loggy
 ```
-- v2 io 컨트롤러를 systemd 속성으로 간결히 설정
 
----
-
-## 컨테이너 런타임과의 연결
-
-### Docker
+### 시나리오 3: cgroups v2 수동으로 빌드 그룹 생성
 
 ```bash
-docker run --cpus=1.5 --memory=512m --pids-limit=128 --memory-swap=512m \
-  --cpuset-cpus=0-3 --device-read-bps /dev/sda:10mb \
-  -it ubuntu:24.04 bash
-```
-- 옵션이 내부적으로 cgroup v2 파일에 매핑됩니다
-- `--security-opt seccomp=…`, `--cap-drop=…`로 커널 표면 축소
-
-### Kubernetes(참고)
-
-- `resources.requests/limits` → 노드의 cgroup 정책으로 투영
-- Burstable/Guaranteed QoS 클래스가 cgroup weight/limit에 영향
-
----
-
-## 관측·디버깅·안정성
-
-### PSI(Pressure Stall Information)
-
-리소스 압박을 퍼센트로 노출하여 **스로틀/경합**을 수치화합니다
-```bash
-cat /proc/pressure/cpu
-cat /proc/pressure/memory
-cat /proc/pressure/io
-```
-
-### cgroup 이벤트 파일
-
-```bash
-cat /sys/fs/cgroup/<grp>/memory.events
-cat /sys/fs/cgroup/<grp>/cgroup.events      # frozen, populated 등
-```
-
-### OOM의 이해
-
-- **cgroup OOM**: 그룹 내부에서만 프로세스 종료
-- **시스템 OOM**: 전역 메모리 부족
-- `memory.oom.group=1`(v2)로 **그룹 단위 종료**를 유도해 **부분적 누수** 방지
-
-### 흔한 함정·해결
-
-- **권한**: `/sys/fs/cgroup` 쓰기는 root 필요. delegation 시 `cgroup.procs`/`cgroup.subtree_control` 권한 설계
-- **혼합 계층**: v1과 v2 혼용 피하기
-- **cpuset**: 부모가 먼저 `cpuset.cpus/mems` 설정해야 자식에 반영 가능
-- **IO 제한**: 디바이스 메이저:마이너 번호 정확히 지정
-- **스왑**: v2의 `memory.swap.max`로 별도 상한 명시, 예측성 확보
-
----
-
-## 자동화 스니펫
-
-### 워크로드를 묶어 실행하는 스크립트(v2)
-
-```bash
-#!/usr/bin/env bash
-
-set -euo pipefail
-GRP="/sys/fs/cgroup/jobs/${1:?group}"
-shift
-sudo mkdir -p "$GRP"
-# 부모 subtree 활성화 보장(필요 시 상위에서 echo)
-echo "+cpu +memory +io +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control >/dev/null
-echo "100000 100000" | sudo tee "$GRP/cpu.max"       >/dev/null   # 100% (=1 vCPU)
-echo 1G               | sudo tee "$GRP/memory.max"   >/dev/null
-echo 512M             | sudo tee "$GRP/memory.high"  >/dev/null
-echo 256              | sudo tee "$GRP/pids.max"     >/dev/null
-sudo bash -c "echo $$ > '$GRP/cgroup.procs'"
-exec "$@"
-```
-
-### systemd 서비스 템플릿
-
-```ini
-# /etc/systemd/system/worker@.service
-
-[Unit]
-Description=Worker %i with limits
-
-[Service]
-ExecStart=/usr/local/bin/worker --team=%i
-CPUQuota=150%
-CPUWeight=200
-MemoryHigh=1G
-MemoryMax=2G
-IOReadBandwidthMax=/dev/nvme0n1 20M
-IOWriteBandwidthMax=/dev/nvme0n1 10M
-TasksMax=512
-AmbientCapabilities=
-NoNewPrivileges=yes
-ProtectSystem=strict
-ProtectHome=yes
-PrivateTmp=yes
-LockPersonality=yes
-
-[Install]
-WantedBy=multi-user.target
-```
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now worker@alpha worker@beta
+sudo mkdir /sys/fs/cgroup/build
+echo "+cpu +memory +pids" | sudo tee /sys/fs/cgroup/cgroup.subtree_control
+echo "200000 100000" | sudo tee /sys/fs/cgroup/build/cpu.max   # 200%
+echo 2G | sudo tee /sys/fs/cgroup/build/memory.max
+echo $$ | sudo tee /sys/fs/cgroup/build/cgroup.procs
+make -j
 ```
 
 ---
 
 ## CPU 쿼터 계산
 
-CPU 쿼터가 `T` 주기 동안 `Q`만큼 허용될 때 **최대 사용률**은:
+CPU 쿼터가 $T$ 주기 동안 $Q$만큼 허용될 때 최대 사용률은:
 $$
-\text{CPU Utilization}_{\max} = \frac{Q}{T}\times 100\ \%.
+\text{CPU 사용률}_{\max} = \frac{Q}{T} \times 100\ \%
 $$
-예: `cpu.max = "50000 100000"`인 경우:
-$$
-\frac{50\text{ ms}}{100\text{ ms}} \times 100 = 50\%.
-$$
+예: `cpu.max = "50000 100000"` → 50%.
 
 ---
 
-## 명령·파일 요약표
+## 흔한 함정과 해결
 
-| 범주 | v2 파일/명령 | 요지 |
-|---|---|---|
-| CPU | `cpu.max`, `cpu.weight`, `cpu.stat` | 쿼터/주기, 가중치, 쓰로틀 통계 |
-| Memory | `memory.max/high/low/min`, `memory.swap.max`, `memory.events/current` | 상·중·하한, 스왑, OOM 이벤트 |
-| IO | `io.max`, `io.weight`, `io.stat` | 디바이스별 bps/iops 상한, 가중치 |
-| PIDs | `pids.max/current` | 포크 폭주 차단 |
-| cpuset | `cpuset.cpus/mems` | NUMA/CPU 고정 |
-| PSI | `/proc/pressure/*` | 압박 관측 |
-| systemd | `systemd-run`, unit props | Quota/Max/Weight/IO* |
-| 네임스페이스 | `unshare`, `nsenter` | 보이는 세계 분리 |
-| seccomp | 런타임 프로파일 | 시스템콜 표면 축소 |
+| 문제 | 해결 |
+|------|------|
+| 권한 없음 | `/sys/fs/cgroup` 쓰기는 root 필요. delegation이 필요한 경우 적절히 구성 |
+| v1/v2 혼용 | 현대 시스템은 v2로 통일. 혼용은 피할 것 |
+| cpuset 설정 안 됨 | 부모 그룹에 먼저 `cpuset.cpus`를 설정해야 자식에 반영 |
+| I/O 제한 적용 안 됨 | 디바이스 메이저:마이너 번호 정확히 확인 (`lsblk`) |
+| OOM 발생 시 전체 그룹 종료 | v2에서 `memory.oom.group=1`로 설정하면 그룹 전체 종료 가능 |
+
+---
+
+## 관측 도구
+
+```bash
+# PSI (Pressure Stall Information)
+cat /proc/pressure/cpu
+cat /proc/pressure/memory
+cat /proc/pressure/io
+
+# cgroup 이벤트
+cat /sys/fs/cgroup/<그룹>/memory.events
+cat /sys/fs/cgroup/<그룹>/cgroup.events
+```
+
+---
+
+## 핵심 명령어 요약
+
+| 작업 | 명령어 / 파일 |
+|------|----------------|
+| cgroup v2 그룹 생성 | `mkdir /sys/fs/cgroup/그룹명` |
+| CPU 제한 | `echo "50000 100000" > cpu.max` |
+| 메모리 제한 | `echo 200M > memory.max` |
+| 프로세스 추가 | `echo $$ > cgroup.procs` |
+| systemd 임시 제한 | `systemd-run -t --property=CPUQuota=... --property=MemoryMax=... bash` |
+| 서비스 제한 설정 | `/etc/systemd/system/서비스.service`에 `CPUQuota=`, `MemoryMax=` 등 추가 |
+| 네임스페이스 격리 | `unshare --pid --net --mount bash` |
+| nsenter로 진입 | `nsenter --target PID --pid --net bash` |
+| seccomp 확인 | `docker run --security-opt seccomp=...` |
 
 ---
 
 ## 결론
 
-리눅스의 cgroups, 네임스페이스, seccomp는 현대적인 프로세스 격리와 리소스 관리를 위한 강력한 기술 조합입니다. 효과적인 운영을 위해 다음 원칙들을 기억하세요:
+cgroups, 네임스페이스, seccomp는 리눅스에서 프로세스를 격리하고 자원을 제어하는 핵심 기술이다.
 
-**기술적 조합의 이해**:
-- **cgroups v2 + systemd**는 현대 리눅스의 표준 리소스 정책 프레임워크입니다
-- **네임스페이스**로 "보이는 세계"를 분리하고, **cgroups**로 "사용 가능한 양"을 규정하며, **seccomp**로 "수행 가능한 행위"를 제한하여 컨테이너 수준의 격리와 예측 가능성을 달성합니다
+- **cgroups**는 리소스 사용량을 그룹 단위로 제한한다. v2 + systemd 조합이 현대적인 표준이다.
+- **네임스페이스**는 프로세스가 보는 시스템 자원의 뷰를 분리한다.
+- **seccomp**는 시스템콜 접근을 제한하여 공격 표면을 줄인다.
 
-**체계적인 운영 접근법**:
-1. **관측 우선**: PSI, cgroup.events, cpu.stat 등을 활용한 수치 기반 모니터링
-2. **점진적 정책 적용**: 새로운 워크로드는 기본 상한(최소한의 Max/Quota/Tasks/PIDs)부터 시작
-3. **서비스 SLO 기반 튜닝**: 하향식으로 완화하며 성능과 안정성 균형 찾기
-4. **자동화 통합**: systemd 유닛과 스크립트를 활용한 일관된 정책 적용
+운영 시에는 다음을 기억하자:
+- `memory.high`로 캐시부터 압박, `memory.max`로 최종 상한 설정
+- CPU는 쿼터(`cpu.max`)로 할당량을, 가중치(`cpu.weight`)로 비율을 조정
+- I/O 제한은 디바이스별로 bps/iops를 지정
+- systemd 유닛에 제한을 선언하면 cgroup이 자동으로 구성된다
 
-**실무 중심의 문제 해결**:
-- 메모리 문제는 `memory.high`와 `memory.max`의 차이를 이해하고 적절히 활용
-- CPU 할당은 쿼터(`cpu.max`)와 가중치(`cpu.weight`)를 상황에 맞게 조합
-- IO 제한은 디바이스별 특성을 고려한 bps/iops 설정
-- 네임스페이스 격리는 보안 경계와 성능 요구사항의 균형에서 설계
-
-이러한 기술들을 효과적으로 활용하면 멀티테넌트 환경에서의 리소스 분배, 컨테이너 기반 배포, 서비스 안정성 향상 등 다양한 운영 요구사항을 충족시킬 수 있습니다. 각 환경의 특성에 맞게 적절히 조정하고 지속적으로 최적화하는 것이 장기적인 성공의 핵심입니다.
+이러한 기술을 적절히 활용하면 멀티테넌트 환경에서의 공정한 자원 분배, 컨테이너의 안정성, 장애 격리를 달성할 수 있다.
